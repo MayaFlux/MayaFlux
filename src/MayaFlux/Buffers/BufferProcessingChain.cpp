@@ -9,7 +9,7 @@ namespace MayaFlux::Buffers {
 bool BufferProcessingChain::add_processor(const std::shared_ptr<BufferProcessor>& processor, const std::shared_ptr<Buffer>& buffer, std::string* rejection_reason)
 {
     if (m_is_processing.load(std::memory_order_acquire) || processor->m_active_processing.load(std::memory_order_acquire) > 0) {
-        return queue_pending_processor_op(processor, buffer, true, rejection_reason);
+        return queue_pending_processor_op(processor, buffer, true, false, rejection_reason);
     }
 
     return add_processor_direct(processor, buffer, rejection_reason);
@@ -73,12 +73,29 @@ bool BufferProcessingChain::add_processor_direct(const std::shared_ptr<BufferPro
 
 void BufferProcessingChain::remove_processor(const std::shared_ptr<BufferProcessor>& processor, const std::shared_ptr<Buffer>& buffer)
 {
+    remove_processor_internal(processor, buffer, false);
+}
+
+void BufferProcessingChain::remove_processor_anywhere(const std::shared_ptr<BufferProcessor>& processor, const std::shared_ptr<Buffer>& buffer)
+{
+    remove_processor_internal(processor, buffer, true);
+}
+
+void BufferProcessingChain::remove_processor_internal(
+    const std::shared_ptr<BufferProcessor>& processor,
+    const std::shared_ptr<Buffer>& buffer,
+    bool search_all_slots)
+{
     if (m_is_processing.load(std::memory_order_acquire)) {
-        queue_pending_processor_op(processor, buffer, false);
+        queue_pending_processor_op(processor, buffer, false, search_all_slots);
         return;
     }
 
-    remove_processor_direct(processor, buffer);
+    if (search_all_slots) {
+        remove_processor_anywhere_direct(processor, buffer);
+    } else {
+        remove_processor_direct(processor, buffer);
+    }
 }
 
 void BufferProcessingChain::remove_processor_direct(const std::shared_ptr<BufferProcessor>& processor, const std::shared_ptr<Buffer>& buffer)
@@ -92,6 +109,37 @@ void BufferProcessingChain::remove_processor_direct(const std::shared_ptr<Buffer
 
         m_conditional_processors[buffer].erase(processor);
         m_pending_removal[buffer].erase(processor);
+    }
+}
+
+void BufferProcessingChain::remove_processor_anywhere_direct(const std::shared_ptr<BufferProcessor>& processor, const std::shared_ptr<Buffer>& buffer)
+{
+    auto regular_it = m_buffer_processors.find(buffer);
+    if (regular_it != m_buffer_processors.end()) {
+        auto processor_it = std::ranges::find(regular_it->second, processor);
+        if (processor_it != regular_it->second.end()) {
+            processor->on_detach(buffer);
+            regular_it->second.erase(processor_it);
+            m_conditional_processors[buffer].erase(processor);
+            m_pending_removal[buffer].erase(processor);
+            return;
+        }
+    }
+
+    auto remove_slot = [&processor, &buffer](auto& slots, const auto& key) {
+        auto it = slots.find(key);
+        if (it == slots.end() || it->second != processor)
+            return false;
+
+        it->second->on_detach(buffer);
+        slots.erase(it);
+        return true;
+    };
+
+    if (remove_slot(m_preprocessors, buffer)
+        || remove_slot(m_postprocessors, buffer)
+        || remove_slot(m_final_processors, buffer)) {
+        return;
     }
 }
 
@@ -178,6 +226,8 @@ void BufferProcessingChain::process_pending_processor_operations()
 
             if (op.is_addition) {
                 add_processor_direct(op.processor, op.buffer);
+            } else if (op.search_all_slots) {
+                remove_processor_anywhere_direct(op.processor, op.buffer);
             } else {
                 remove_processor_direct(op.processor, op.buffer);
             }
@@ -395,7 +445,12 @@ void BufferProcessingChain::enforce_chain_token_on_processors()
     }
 }
 
-bool BufferProcessingChain::queue_pending_processor_op(const std::shared_ptr<BufferProcessor>& processor, const std::shared_ptr<Buffer>& buffer, bool is_addition, std::string* rejection_reason)
+bool BufferProcessingChain::queue_pending_processor_op(
+    const std::shared_ptr<BufferProcessor>& processor,
+    const std::shared_ptr<Buffer>& buffer,
+    bool is_addition,
+    bool search_all_slots,
+    std::string* rejection_reason)
 {
     for (auto& m_pending_op : m_pending_ops) {
         bool expected = false;
@@ -407,6 +462,7 @@ bool BufferProcessingChain::queue_pending_processor_op(const std::shared_ptr<Buf
             m_pending_op.processor = processor;
             m_pending_op.buffer = buffer;
             m_pending_op.is_addition = is_addition;
+            m_pending_op.search_all_slots = search_all_slots;
             m_pending_count.fetch_add(1, std::memory_order_relaxed);
             return true;
         }

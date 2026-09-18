@@ -827,7 +827,35 @@ void RenderProcessor::on_detach(const std::shared_ptr<Buffer>& buffer)
         return;
 
     vk_buffer->remove_pipeline_window(m_pipeline_id);
-    vk_buffer->request_presentation_refresh(m_target_window);
+
+    if (m_target_window) {
+        bool has_other_pipeline = false;
+        for (const auto& [id, window] : vk_buffer->get_render_pipelines()) {
+            if (window == m_target_window) {
+                has_other_pipeline = true;
+                break;
+            }
+        }
+
+        if (!has_other_pipeline) {
+            auto primary = vk_buffer->get_render_processor();
+            has_other_pipeline = primary && primary.get() != this
+                && primary->get_target_window() == m_target_window;
+
+            if (!has_other_pipeline) {
+                for (const auto& render : vk_buffer->get_additional_render_processors()) {
+                    if (render.get() != this && render->get_target_window() == m_target_window) {
+                        has_other_pipeline = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (!has_other_pipeline)
+            m_target_window->unregister_rendering_buffer(vk_buffer);
+    }
+
     std::erase(m_hidden_buffers, vk_buffer.get());
     m_buffer_info.erase(vk_buffer);
     ShaderProcessor::on_detach(buffer);

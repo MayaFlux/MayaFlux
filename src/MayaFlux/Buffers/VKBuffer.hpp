@@ -605,6 +605,13 @@ public:
     /** @brief Find the attached render processor responsible for a pipeline. */
     std::shared_ptr<RenderProcessor> get_render_processor(RenderPipelineID id);
 
+    /**
+     * @brief Get additional live render processors attached through the chain.
+     *
+     * The processor returned by get_render_processor() is excluded.
+     */
+    std::vector<std::shared_ptr<RenderProcessor>> get_additional_render_processors();
+
     inline void set_render_processor(std::shared_ptr<RenderProcessor> rp) { m_render_processor = std::move(rp); }
 
 protected:

@@ -208,6 +208,13 @@ public:
         m_pending_presentation_refreshes.erase(window);
     }
 
+    /**
+     * @brief Stop all render processors from presenting to a window.
+     *
+     * Child buffers and non-render processors remain attached to this root.
+     */
+    void detach_window(const std::shared_ptr<Core::Window>& window);
+
 private:
     friend class GraphicsBatchProcessor;
 

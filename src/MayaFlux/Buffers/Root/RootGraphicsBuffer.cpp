@@ -458,6 +458,45 @@ std::vector<std::shared_ptr<VKBuffer>> RootGraphicsBuffer::get_buffers_by_usage(
     return filtered_buffers;
 }
 
+void RootGraphicsBuffer::detach_window(const std::shared_ptr<Core::Window>& window)
+{
+    if (!window)
+        return;
+
+    std::erase_if(m_renderable_buffers, [&window](const RenderableBufferInfo& info) {
+        return info.target_window == window;
+    });
+
+    for (const auto& buffer : m_child_buffers) {
+        if (!buffer)
+            continue;
+
+        auto chain = buffer->get_processing_chain();
+        auto remove_render = [&buffer, &chain, &window](const std::shared_ptr<RenderProcessor>& render) {
+            if (!render || render->get_target_window() != window)
+                return;
+
+            if (buffer->get_default_processor() == render) {
+                buffer->set_default_processor(nullptr);
+                return;
+            }
+
+            if (!chain)
+                return;
+
+            chain->remove_processor_anywhere(render, buffer);
+        };
+
+        if (auto render = buffer->get_render_processor())
+            remove_render(render);
+
+        for (const auto& render : buffer->get_additional_render_processors())
+            remove_render(render);
+    }
+
+    m_pending_presentation_refreshes.erase(window);
+}
+
 std::shared_ptr<BufferProcessor> RootGraphicsBuffer::create_default_processor()
 {
     return std::make_shared<GraphicsBatchProcessor>(shared_from_this());

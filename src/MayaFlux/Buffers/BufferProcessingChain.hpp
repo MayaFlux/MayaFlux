@@ -79,6 +79,15 @@ public:
     void remove_processor(const std::shared_ptr<BufferProcessor>& processor, const std::shared_ptr<Buffer>& buffer);
 
     /**
+     * @brief Removes a processor from any slot associated with a buffer.
+     * @param processor Processor to remove
+     * @param buffer Buffer to remove the processor from
+     *
+     * Searches the regular, preprocessor, postprocessor, and final slots.
+     */
+    void remove_processor_anywhere(const std::shared_ptr<BufferProcessor>& processor, const std::shared_ptr<Buffer>& buffer);
+
+    /**
      * @brief Applies the transformation pipeline to a buffer with intelligent execution
      * @param buffer Buffer to transform
      *
@@ -367,8 +376,14 @@ public:
 protected:
     bool add_processor_direct(const std::shared_ptr<BufferProcessor>& processor, const std::shared_ptr<Buffer>& buffer, std::string* rejection_reason = nullptr);
     void remove_processor_direct(const std::shared_ptr<BufferProcessor>& processor, const std::shared_ptr<Buffer>& buffer);
+    void remove_processor_anywhere_direct(const std::shared_ptr<BufferProcessor>& processor, const std::shared_ptr<Buffer>& buffer);
 
 private:
+    void remove_processor_internal(
+        const std::shared_ptr<BufferProcessor>& processor,
+        const std::shared_ptr<Buffer>& buffer,
+        bool search_all_slots);
+
     /**
      * @brief Internal processing method for non-owning buffer contexts
      * @param buffer Buffer to process
@@ -390,7 +405,12 @@ private:
      */
     void process_pending_processor_operations();
 
-    bool queue_pending_processor_op(const std::shared_ptr<BufferProcessor>& processor, const std::shared_ptr<Buffer>& buffer, bool is_addition, std::string* rejection_reason = nullptr);
+    bool queue_pending_processor_op(
+        const std::shared_ptr<BufferProcessor>& processor,
+        const std::shared_ptr<Buffer>& buffer,
+        bool is_addition,
+        bool search_all_slots = false,
+        std::string* rejection_reason = nullptr);
 
     /**
      * @brief Map of buffers to their processor sequences
@@ -461,6 +481,7 @@ private:
         std::shared_ptr<BufferProcessor> processor;
         std::shared_ptr<Buffer> buffer;
         bool is_addition { true }; // true = add, false = remove
+        bool search_all_slots { false };
     };
 
     std::atomic<bool> m_is_processing;

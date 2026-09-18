@@ -34,11 +34,18 @@ public:
     void set_fragment_shader(const std::string& fragment_path);
     void set_target_window(const std::shared_ptr<Core::Window>& window, const std::shared_ptr<VKBuffer>& buffer);
 
+    /** @brief Get the window targeted by this processor. */
+    std::shared_ptr<Core::Window> get_target_window() const { return m_target_window; }
+
     Portal::Graphics::RenderPipelineID get_render_pipeline_id() const { return m_pipeline_id; }
 
     void on_attach(const std::shared_ptr<Buffer>& buffer) override;
 
-    /** @brief Withdraw presentation on chain detachment; resource teardown remains in cleanup. */
+    /**
+     * @brief Remove a buffer from this processor and its target window.
+     *
+     * Processor-wide pipeline and window state remain active for other buffers.
+     */
     void on_detach(const std::shared_ptr<Buffer>& buffer) override;
 
     /** @brief Change an attached buffer's visibility without stopping its processing. */
