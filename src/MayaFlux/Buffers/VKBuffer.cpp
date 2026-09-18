@@ -351,6 +351,33 @@ void VKBuffer::apply_render_config(const RenderConfig& config, const ShaderConfi
     apply_render_config(m_render_processor, config, shader_config);
 }
 
+std::shared_ptr<RenderProcessor> VKBuffer::get_render_processor(RenderPipelineID id)
+{
+    auto default_render = std::dynamic_pointer_cast<RenderProcessor>(m_default_processor);
+    if (default_render && default_render->get_render_pipeline_id() == id)
+        return default_render;
+
+    if (!m_processing_chain)
+        return nullptr;
+
+    auto buffer = shared_from_this();
+    for (const auto& processor : m_processing_chain->get_processors(buffer)) {
+        auto render = std::dynamic_pointer_cast<RenderProcessor>(processor);
+        if (render && render->get_render_pipeline_id() == id)
+            return render;
+    }
+
+    for (const auto& processor : {
+             m_processing_chain->get_preprocessor(buffer),
+             m_processing_chain->get_postprocessor(buffer),
+             m_processing_chain->get_final_processor(buffer) }) {
+        auto render = std::dynamic_pointer_cast<RenderProcessor>(processor);
+        if (render && render->get_render_pipeline_id() == id)
+            return render;
+    }
+    return nullptr;
+}
+
 void VKBuffer::apply_render_config(
     std::shared_ptr<RenderProcessor>& render_processor,
     const RenderConfig& config,

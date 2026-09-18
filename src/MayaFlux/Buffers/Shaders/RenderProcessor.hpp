@@ -38,6 +38,24 @@ public:
 
     void on_attach(const std::shared_ptr<Buffer>& buffer) override;
 
+    /** @brief Withdraw presentation on chain detachment; resource teardown remains in cleanup. */
+    void on_detach(const std::shared_ptr<Buffer>& buffer) override;
+
+    /** @brief Change an attached buffer's visibility without stopping its processing. */
+    void set_visible(bool visible, const std::shared_ptr<VKBuffer>& buffer);
+
+    /** @brief Whether this processor contributes to presentation. */
+    bool is_visible(const std::shared_ptr<VKBuffer>& buffer) const;
+
+    /**
+     * @brief Record the buffer's prepared geometry into a fresh secondary command buffer.
+     *
+     * Does not advance feeds, upload geometry, or dispatch milling. Both normal
+     * processing and presentation refreshes use this operation. A buffer that has
+     * not prepared geometry yet records nothing.
+     */
+    void record_draw(const std::shared_ptr<VKBuffer>& buffer);
+
     /// Set primitive topology (e.g., triangle list, line list, point list)
     inline void set_primitive_topology(Portal::Graphics::PrimitiveTopology topology)
     {
@@ -254,15 +272,12 @@ protected:
     void initialize_pipeline(const std::shared_ptr<VKBuffer>& buffer) override;
 
     /**
-     * @brief Records and registers a secondary command buffer every call,
-     *        even with nothing to draw (a GraphicsOperator with zero items,
-     *        or a triangulated span nothing was milled from this cycle).
+     * @brief Prepare this buffer's geometry and record its draw commands.
      *
-     * RootGraphicsBuffer's present pass only acquires/presents a window
-     * once at least one of its buffers has a valid recorded command buffer;
-     * a buffer that never registers one (because it always bailed out
-     * early while empty) leaves that window permanently unpresented, not
-     * merely blank, for as long as it stays empty.
+     * Publishes the view transform and advances triangulation before recording.
+     * Valid empty geometry still records a secondary command buffer so normal
+     * processing can present an empty frame. Presentation refreshes call
+     * record_draw() directly to reuse the prepared geometry.
      */
     void execute_shader(const std::shared_ptr<VKBuffer>& buffer) override;
     void initialize_descriptors(const std::shared_ptr<VKBuffer>& buffer) override;
@@ -292,9 +307,15 @@ protected:
     [[nodiscard]] vk::Rect2D resolve_scissor_rect(uint32_t width, uint32_t height) const noexcept;
 
 private:
-    struct VertexInfo {
+    struct BufferState {
         Kakshya::VertexLayout semantic_layout;
         bool use_reflection {};
+        std::unique_ptr<Portal::Graphics::PrimitiveMill> mill;
+        std::shared_ptr<VKBuffer> draw_source;
+        uint32_t first_vertex {};
+        uint32_t vertex_count {};
+        uint32_t index_count {};
+        bool geometry_prepared {};
     };
 
     Portal::Graphics::RenderPipelineID m_pipeline_id = Portal::Graphics::INVALID_RENDER_PIPELINE;
@@ -307,7 +328,9 @@ private:
     };
     std::shared_ptr<Core::Window> m_target_window;
 
-    std::unordered_map<std::shared_ptr<VKBuffer>, VertexInfo> m_buffer_info;
+    std::unordered_map<std::shared_ptr<VKBuffer>, BufferState> m_buffer_info;
+    /** @brief Non-owning exceptions to default visibility, removed on detach. */
+    std::vector<const VKBuffer*> m_hidden_buffers;
     Registry::Service::DisplayService* m_display_service = nullptr;
 
     Portal::Graphics::PrimitiveTopology m_primitive_topology { Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST };
@@ -340,8 +363,7 @@ private:
     std::vector<Portal::Graphics::DrawRun> m_runs;
     Portal::Graphics::MillSpec m_mill_spec {};
 
-    /// Created on first triangulated frame, so a plain draw pays one pointer.
-    std::unique_ptr<Portal::Graphics::PrimitiveMill> m_mill;
+    uint32_t m_last_milled_vertex_count {};
 
     /**
      * @brief Topology the pipeline is built with, as opposed to the topology
@@ -350,18 +372,18 @@ private:
     [[nodiscard]] Portal::Graphics::PrimitiveTopology pipeline_topology() const;
 
     /**
-     * @brief Mill m_runs into the private buffer and set the draw range.
-     * @return false when this frame has nothing to draw.
+     * @brief Mill m_runs into this attachment's output.
+     * @return Number of vertices prepared for drawing.
      */
-    bool mill_runs(const std::shared_ptr<VKBuffer>& buffer);
+    uint32_t mill_runs(const std::shared_ptr<VKBuffer>& buffer, Portal::Graphics::PrimitiveMill& mill);
 
-    /** @brief Buffer the draw sources vertices and indices from. */
-    [[nodiscard]] std::shared_ptr<VKBuffer> draw_source(
-        const std::shared_ptr<VKBuffer>& attached) const;
+    /** @brief Prepare and retain the source and draw range for one attached buffer. */
+    void prepare_geometry(const std::shared_ptr<VKBuffer>& buffer, BufferState& state);
 
-    const Kakshya::VertexLayout* get_or_cache_vertex_layout(
-        std::unordered_map<std::shared_ptr<VKBuffer>, VertexInfo>& buffer_info,
-        const std::shared_ptr<VKBuffer>& buffer);
+    /** @brief Record an already validated attachment without repeating its lookup. */
+    void record_draw(const std::shared_ptr<VKBuffer>& buffer, const BufferState& state);
+
+    BufferState* get_or_cache_buffer_state(const std::shared_ptr<VKBuffer>& buffer);
 };
 
 } // namespace MayaFlux::Buffers

@@ -193,6 +193,16 @@ public:
     bool set_visible(uint32_t id, bool visible);
 
     /**
+     * @brief Set every element in the layer visible or hidden.
+     *
+     * Same effect as calling set_visible(id, visible) for every element
+     * currently registered. Each element's render processor changes visibility
+     * and requests a presentation refresh. Buffers retain their processing state,
+     * pipelines, and window associations while hidden.
+     */
+    void set_all_visible(bool visible);
+
+    /**
      * @brief Move element to the top of the hit-test and paint order
      *        (drawn last), cascading to every related element.
      */

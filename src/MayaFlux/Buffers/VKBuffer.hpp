@@ -416,6 +416,28 @@ public:
         m_window_pipelines[id] = window;
     }
 
+    /** @brief Withdraw one pipeline and request presentation of its former window. */
+    void remove_pipeline_window(RenderPipelineID id)
+    {
+        if (auto window = get_pipeline_window(id))
+            request_presentation_refresh(window);
+        m_window_pipelines.erase(id);
+        m_pipeline_commands.erase(id);
+    }
+
+    /** @brief Queue a composition change independently of buffer processing. */
+    void request_presentation_refresh(const std::shared_ptr<Core::Window>& window)
+    {
+        if (window)
+            m_pending_presentation_refreshes.insert(window);
+    }
+
+    /** @brief Transfer pending composition changes to the owning graphics root. */
+    std::unordered_set<std::shared_ptr<Core::Window>> take_presentation_refreshes()
+    {
+        return std::exchange(m_pending_presentation_refreshes, {});
+    }
+
     /**
      * @brief Get the window associated with this buffer
      * @return Target window, or nullptr if not set
@@ -580,6 +602,9 @@ public:
      */
     virtual std::shared_ptr<RenderProcessor> get_render_processor() const { return m_render_processor; }
 
+    /** @brief Find the attached render processor responsible for a pipeline. */
+    std::shared_ptr<RenderProcessor> get_render_processor(RenderPipelineID id);
+
     inline void set_render_processor(std::shared_ptr<RenderProcessor> rp) { m_render_processor = std::move(rp); }
 
 protected:
@@ -647,6 +672,7 @@ private:
 
     std::unordered_map<RenderPipelineID, std::shared_ptr<Core::Window>> m_window_pipelines;
     std::unordered_map<RenderPipelineID, CommandBufferID> m_pipeline_commands;
+    std::unordered_set<std::shared_ptr<Core::Window>> m_pending_presentation_refreshes;
 
     std::vector<std::pair<size_t, size_t>> m_dirty_ranges;
     std::vector<std::pair<size_t, size_t>> m_invalid_ranges;
