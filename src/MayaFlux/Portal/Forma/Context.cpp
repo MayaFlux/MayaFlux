@@ -133,9 +133,9 @@ void Context::on_resize(uint32_t id, ResizeFn fn)
     m_callbacks[id].resize = std::move(fn);
 }
 
-void Context::detach_window()
+void Context::detach_window(bool cancel_close)
 {
-    cancel_handlers();
+    cancel_handlers(cancel_close);
     m_window.reset();
     m_hovered.reset();
     m_focused.reset();
@@ -299,16 +299,19 @@ void Context::register_handlers()
         m_name + "_close");
 }
 
-void Context::cancel_handlers()
+void Context::cancel_handlers(bool cancel_close)
 {
     for (const char* suffix : {
              "_move",
              "_press_left", "_release_left",
              "_press_right", "_release_right",
-             "_scroll", "_text", "_resize", "_close",
+             "_scroll", "_text", "_resize",
              "_drag_left", "_drag_right" }) {
         m_event_manager.cancel_event(m_name + suffix);
     }
+
+    if (cancel_close)
+        m_event_manager.cancel_event(m_name + "_close");
 
     for (const auto& [key_code, handlers] : m_registered_keys) {
         const std::string key_name = std::to_string(key_code);
@@ -520,6 +523,9 @@ void Context::handle_resize(uint32_t width, uint32_t height)
 
 void Context::handle_close()
 {
+    auto* event_source = &m_window->get_event_source();
+    const std::string close_event_name = m_name + "_close";
+
     for (auto& [id, callbacks] : m_callbacks) {
         if (callbacks.close)
             callbacks.close();
@@ -527,7 +533,11 @@ void Context::handle_close()
             callbacks.focus_lost(id);
     }
     m_focused = std::nullopt;
-    detach_window();
+    detach_window(false);
+    event_source->defer([event_manager = &m_event_manager,
+                            name = std::move(close_event_name)]() {
+        event_manager->cancel_event(name);
+    });
 }
 
 } // namespace MayaFlux::Portal::Forma

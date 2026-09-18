@@ -28,7 +28,29 @@ void WindowEventSource::signal(Core::WindowEvent event)
     }
 
     m_pending_events.push(event);
+    ++m_signal_depth;
     dispatch(&event);
+    --m_signal_depth;
+    if (m_signal_depth != 0 || m_deferred_actions.empty())
+        return;
+
+    std::vector<std::function<void()>> deferred_actions;
+    deferred_actions.swap(m_deferred_actions);
+    for (auto& action : deferred_actions)
+        action();
+}
+
+void WindowEventSource::defer(std::function<void()> action)
+{
+    if (!action)
+        return;
+
+    if (m_signal_depth == 0) {
+        action();
+        return;
+    }
+
+    m_deferred_actions.push_back(std::move(action));
 }
 
 Kriya::WindowEventAwaiter WindowEventSource::next_event()

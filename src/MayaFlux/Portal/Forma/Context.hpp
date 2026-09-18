@@ -349,7 +349,7 @@ private:
     std::unordered_map<uint32_t, ElementCallbacks> m_callbacks;
 
     void register_handlers();
-    void cancel_handlers();
+    void cancel_handlers(bool cancel_close = true);
 
     [[nodiscard]] glm::vec2 to_ndc(double px, double py) const noexcept;
 
@@ -364,7 +364,7 @@ private:
     void handle_text(uint32_t codepoint);
     void handle_resize(uint32_t width, uint32_t height);
     void handle_close();
-    void detach_window();
+    void detach_window(bool cancel_close = true);
 
     std::optional<uint32_t> m_dragging[3];
     std::optional<uint32_t> m_focused;

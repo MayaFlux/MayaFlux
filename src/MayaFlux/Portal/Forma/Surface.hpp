@@ -120,7 +120,7 @@ public:
      */
     [[nodiscard]] const std::shared_ptr<Core::Window>& window() const noexcept
     {
-        return m_window;
+        return m_window_ownership->window;
     }
 
     /**
@@ -244,9 +244,16 @@ public:
     }
 
 private:
-    void handle_close();
+    struct WindowOwnership {
+        explicit WindowOwnership(std::shared_ptr<Core::Window> value)
+            : window(std::move(value))
+        {
+        }
 
-    std::shared_ptr<Core::Window> m_window;
+        std::shared_ptr<Core::Window> window;
+    };
+
+    std::shared_ptr<WindowOwnership> m_window_ownership;
     std::shared_ptr<Layer> m_layer;
     std::shared_ptr<Context> m_ctx;
 };
