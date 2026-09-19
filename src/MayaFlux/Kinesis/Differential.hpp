@@ -583,6 +583,32 @@ template <typename T>
     return history;
 }
 
+/**
+ * @brief Copy the newest @p window samples out of a history buffer in
+ *        chronological order
+ * @tparam T Sample type
+ * @param history Buffer of samples, newest at index 0
+ * @param window Number of samples to take, minimum 2
+ * @return Vector with the oldest of those samples first, newest last
+ *
+ * The bridge from HistoryBuffer's and Differential's newest-first
+ * convention to the chronological order required by functions that
+ * compute signed, order-sensitive quantities (path shape, turning,
+ * trend) where reversing the input silently negates the answer rather
+ * than degrading it.
+ */
+template <typename T>
+[[nodiscard]] inline std::vector<T> chronological_window(
+    const Memory::HistoryBuffer<T>& history, size_t window) noexcept
+{
+    window = window < 2 ? 2 : window;
+    std::vector<T> out;
+    out.reserve(window);
+    for (size_t i = window; i-- > 0;)
+        out.push_back(history[i]);
+    return out;
+}
+
 /** @brief Convenience overload of backward_difference<N> over a raw span. */
 template <size_t N, typename T>
 [[nodiscard]] inline T backward_difference(std::span<const T> samples, double dt) noexcept

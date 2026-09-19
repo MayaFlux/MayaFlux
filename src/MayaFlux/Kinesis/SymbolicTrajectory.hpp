@@ -77,6 +77,7 @@ public:
         if (!m_has_prior) {
             m_has_prior = true;
             m_current_cell = cell;
+            m_dwell = 1;
             return false;
         }
 
@@ -84,6 +85,9 @@ public:
         if (crossed) {
             ++m_crossing_count;
             m_current_cell = cell;
+            m_dwell = 1;
+        } else {
+            ++m_dwell;
         }
         return crossed;
     }
@@ -102,6 +106,18 @@ public:
      * the sequence later returns to a previously visited cell.
      */
     [[nodiscard]] size_t crossing_count() const { return m_crossing_count; }
+
+    /**
+     * @brief Consecutive observations that have fallen in the current cell
+     *
+     * Counts how long the trajectory has held its present symbol without
+     * crossing. crossings_in_window answers how much movement there has
+     * been recently; this answers how settled the point is right now,
+     * which is what distinguishes resting inside a cell from passing
+     * through it. Reset to one on every crossing, since the observation
+     * that crossed is the first one in the new cell.
+     */
+    [[nodiscard]] size_t dwell_count() const { return m_dwell; }
 
     /**
      * @brief Crossings within the most recent @p window observations
@@ -211,6 +227,7 @@ public:
         m_current_cell = CellT {};
         m_has_prior = false;
         m_crossing_count = 0;
+        m_dwell = 0;
     }
 
     /**
@@ -224,6 +241,7 @@ private:
     CellT m_current_cell {};
     bool m_has_prior { false };
     size_t m_crossing_count { 0 };
+    size_t m_dwell { 0 };
 };
 
 } // namespace MayaFlux::Kinesis
