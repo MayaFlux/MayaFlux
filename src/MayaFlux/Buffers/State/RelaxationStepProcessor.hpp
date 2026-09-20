@@ -8,30 +8,28 @@ class RelaxationGridBuffer;
 
 /**
  * @class RelaxationStepProcessor
- * @brief ComputeProcessor specialization driving one generation step of a
+ * @brief ComputeProcessor driving one generation step of a
  *        RelaxationGridBuffer per dispatch.
  *
- * Pipeline and descriptor set layout creation follow the normal
- * ShaderProcessor path via m_config.bindings ("state_in" at binding 0,
- * "state_out" at binding 1), identical to how SDFFieldProcessor declares
- * its "sdf_grid" binding. Because the two state buffers are raw handle
- * pairs with no VKBuffer wrapper, the per-generation WRITE of those two
- * descriptor bindings is issued directly via
- * ShaderFoundry::update_descriptor_buffer in on_before_execute, bypassing
- * ShaderProcessor::bind_buffer / m_bound_buffers entirely for these two
- * names.
+ * Bindings: "state_in" at (0,0) and "state_out" at (0,1), the grid's raw
+ * double-buffered state handles, written through
+ * ShaderFoundry::update_descriptor_buffer in processing_function before the
+ * parent binds the set.
  *
- * After dispatch, on_after_execute swaps which back_buffers index is
- * considered front and, if requested via
- * RelaxationGridBuffer::request_snapshot(), reads the newly-front state
- * buffer directly via its mapped_ptr. back_buffers are HostVisible |
- * HostCoherent, so no staging buffer or fenced transfer is required.
+ * Per cycle the step predicate is evaluated once. If it declines, nothing
+ * changes: no descriptor write, no dispatch, no generation swap, no
+ * snapshot. Otherwise the parent records and submits the dispatch, and when
+ * a dispatch was recorded the front generation is swapped once and a
+ * pending snapshot request is served from the newly-front buffer.
  *
- * Runs on the normal buffer processing cycle. Whether a generation
- * actually advances this cycle is decided by an optional step predicate,
- * checked in on_before_execute after the descriptor write. Returning
- * false there skips execute_shader entirely for that cycle: no dispatch,
- * no swap, no snapshot check.
+ * Layout creation follows the normal ShaderProcessor path through
+ * m_config.bindings. Only the per-generation descriptor write bypasses
+ * ShaderProcessor::bind_buffer and m_bound_buffers, since the state buffers
+ * are raw handle pairs with no VKBuffer wrapper.
+ *
+ * ComputeProcessor fires on_before_execute and on_after_execute twice per
+ * cycle, once inside execute_shader at record time and once from
+ * processing_function, so neither hook owns generation state here.
  */
 class MAYAFLUX_API RelaxationStepProcessor : public ComputeProcessor {
 public:
@@ -77,59 +75,70 @@ public:
      * @param predicate Callable returning true to step, false to skip.
      *        Pass nullptr to always step (default).
      *
-     * Checked once per on_before_execute, after the state descriptor
-     * bindings have already been written for the current front/back
-     * assignment. Returning false skips execute_shader for that cycle
-     * without side effects beyond the descriptor write already performed.
+     * Evaluated once per cycle at the top of processing_function, before
+     * any state changes. Returning false skips the cycle entirely.
      */
     void set_step_predicate(StepPredicate predicate) { m_step_predicate = std::move(predicate); }
 
 protected:
     /**
-     * @brief Write the state_in / state_out descriptor bindings for the
-     *        current front/back assignment, then evaluate the step
-     *        predicate.
-     * @param cmd_id Command buffer this cycle's dispatch will be recorded into.
-     * @param buffer The attached RelaxationGridBuffer, received as VKBuffer.
-     * @return True if execute_shader should proceed this cycle.
+     * @brief Accept only a RelaxationGridBuffer.
+     * @param cmd_id Command buffer, unused.
+     * @param buffer Buffer being processed.
+     * @return False for any other buffer, which skips execution.
+     *
+     * Fires twice per cycle. Holds no state.
      */
     bool on_before_execute(Portal::Graphics::CommandBufferID cmd_id, const std::shared_ptr<VKBuffer>& buffer) override;
 
     /**
-     * @brief Swap front/back generation index and, if requested, snapshot
-     *        the newly-front state buffer via a direct host-visible read.
-     * @param cmd_id Command buffer the completed dispatch was recorded into.
-     * @param buffer The attached RelaxationGridBuffer, received as VKBuffer.
+     * @brief Record that this cycle reached a dispatch.
+     * @param cmd_id Command buffer, unused.
+     * @param buffer Buffer being processed, unused.
+     * @param index Iteration index, unused.
+     * @return Always true.
+     *
+     * ComputeProcessor calls this only when a dispatch is about to be
+     * recorded. processing_function reads the flag to decide whether the
+     * generation swaps.
      */
-    void on_after_execute(Portal::Graphics::CommandBufferID cmd_id, const std::shared_ptr<VKBuffer>& buffer) override;
+    bool on_iteration(Portal::Graphics::CommandBufferID cmd_id, const std::shared_ptr<VKBuffer>& buffer, uint32_t index) override;
+
+    /**
+     * @brief Serve a pending snapshot when a deferred dispatch completes.
+     * @param buffer Buffer the completed dispatch processed, unused.
+     */
+    void on_dispatch_complete(const std::shared_ptr<VKBuffer>& buffer) override;
 
     /**
      * @brief Write the state_in / state_out descriptor bindings for the
      *        current front/back assignment.
      *
-     * Called once after the descriptor set is created, and again after
-     * any reallocation of the attached RelaxationGridBuffer's back_buffers.
+     * Called once after the descriptor set is created, and again after any
+     * rebuild of it.
      */
     void on_descriptors_created() override;
 
     /**
-     * @brief When attached to a RelaxationGridBuffer, sets up the dispatch
-     *        configuration to cover the entire grid with a single workgroup
-     *        dimension along Y and Z, and a workgroup size along X that is
-     *        either the default 16 or the value supplied at construction.
+     * @brief Cover the grid with a 2D dispatch and write GridExtent.
      * @param buffer The attached buffer, expected to be a RelaxationGridBuffer.
+     *
+     * The local size is fixed at 16x16x1 and the group counts are
+     * ceil(width / 16) by ceil(height / 16). The workgroup_x constructor
+     * argument and ShaderSpec::workgroup_size are not consulted once
+     * attached to a grid.
      */
     void on_attach(const std::shared_ptr<Buffer>& buffer) override;
 
     /**
-     * @brief Write the state descriptors for the current front/back
-     *        assignment, then run the normal shader processing path.
+     * @brief Run one cycle: evaluate the predicate, write the state
+     *        descriptors, run the parent, then swap and serve a snapshot if
+     *        a dispatch was recorded.
      *
-     * The descriptor write must precede execute_shader's
-     * vkCmdBindDescriptorSets. Writing from on_before_execute updates a set
-     * already bound into the open command buffer, which the driver has
-     * consumed by then, freezing the bindings at whatever
-     * on_descriptors_created wrote.
+     * The descriptor write must precede the parent's bind_descriptor_sets.
+     * A write from on_before_execute lands on a set already bound into the
+     * open command buffer, which the driver has consumed by then, freezing
+     * the bindings at whatever on_descriptors_created wrote.
      */
     void processing_function(const std::shared_ptr<Buffer>& buffer) override;
 
@@ -145,14 +154,28 @@ private:
      * @brief Size the push constant block to at least GridExtent and write
      *        the attached grid's dimensions into its leading 8 bytes.
      *
-     * Called from on_attach, the first point at which grid dimensions are
-     * known. A ShaderSpec-constructed processor already carries
-     * spec.push_constant_bytes in m_config; that size is preserved and only
-     * the leading extent fields are written, leaving trailing rule
-     * parameters available to set_push_constant_data_raw at any offset
-     * past sizeof(GridExtent).
+     * Called from on_attach. A ShaderSpec-constructed processor keeps the
+     * size spec.push_constant_bytes gave it. Bytes past sizeof(GridExtent)
+     * are rule constants, written by RelaxationGridBuffer from
+     * GridConfig::Stage::constants, or per cycle by ShaderProcessor::feed at
+     * an explicit offset. set_push_constant_data_raw is unsuitable: it
+     * writes from offset 0 and resizes the block to the size passed.
      */
     void write_grid_extent_constants();
+
+    /**
+     * @brief Copy the front state buffer to the host and signal
+     *        RelaxationGridBuffer::snapshot_source(), if a request is pending.
+     *
+     * back_buffers are HostVisible | HostCoherent, so download_back_buffer
+     * reads mapped_ptr directly with no staging buffer or fenced transfer.
+     * The dispatch has completed by this point: submit_and_wait has returned
+     * under synchronous submission, and on_dispatch_complete fires under
+     * deferred submission.
+     */
+    void serve_snapshot();
+
+    bool m_dispatched { false }; ///< True when the current cycle recorded a dispatch.
 
     /**
      * @brief Fallback staging buffer for download_back_buffer, unused while

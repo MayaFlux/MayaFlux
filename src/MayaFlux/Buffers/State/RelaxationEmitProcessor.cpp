@@ -33,17 +33,10 @@ void RelaxationEmitProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
     }
 }
 
-bool RelaxationEmitProcessor::on_before_execute(
-    Portal::Graphics::CommandBufferID /*cmd_id*/,
-    const std::shared_ptr<VKBuffer>& buffer)
+void RelaxationEmitProcessor::write_state_descriptors(const std::shared_ptr<RelaxationGridBuffer>& grid)
 {
-    auto* grid = dynamic_cast<RelaxationGridBuffer*>(buffer.get());
-    if (!grid) {
-        return false;
-    }
-
-    if (!are_descriptors_ready()) {
-        return true;
+    if (m_descriptor_set_ids.empty()) {
+        return;
     }
 
     auto& foundry = Portal::Graphics::get_shader_foundry();
@@ -55,25 +48,27 @@ bool RelaxationEmitProcessor::on_before_execute(
 
     foundry.update_descriptor_buffer(
         m_descriptor_set_ids[0], 1, vk::DescriptorType::eStorageBuffer,
-        buffer->get_buffer(), 0, buffer->get_size_bytes());
+        grid->get_buffer(), 0, grid->get_size_bytes());
+}
 
-    return true;
+void RelaxationEmitProcessor::on_descriptors_created()
+{
+    if (m_grid) {
+        write_state_descriptors(m_grid);
+    }
+}
+
+bool RelaxationEmitProcessor::on_before_execute(
+    Portal::Graphics::CommandBufferID /*cmd_id*/,
+    const std::shared_ptr<VKBuffer>& buffer)
+{
+    return std::dynamic_pointer_cast<RelaxationGridBuffer>(buffer) != nullptr;
 }
 
 void RelaxationEmitProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
 {
-    auto grid = std::dynamic_pointer_cast<RelaxationGridBuffer>(buffer);
-    if (grid && are_descriptors_ready()) {
-        auto& foundry = Portal::Graphics::get_shader_foundry();
-        auto& resources = grid->get_buffer_resources();
-
-        foundry.update_descriptor_buffer(
-            m_descriptor_set_ids[0], 0, vk::DescriptorType::eStorageBuffer,
-            resources.back_buffers[grid->front_index()].buffer, 0, grid->get_state_bytes());
-
-        foundry.update_descriptor_buffer(
-            m_descriptor_set_ids[0], 1, vk::DescriptorType::eStorageBuffer,
-            grid->get_buffer(), 0, grid->get_size_bytes());
+    if (m_grid && are_descriptors_ready()) {
+        write_state_descriptors(m_grid);
     }
 
     ComputeProcessor::processing_function(buffer);
