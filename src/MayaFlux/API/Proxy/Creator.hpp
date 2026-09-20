@@ -1,10 +1,10 @@
 #pragma once
 
 #include "Domain.hpp"
-#include "MayaFlux/API/Depot.hpp"
+#include "Evolve.hpp"
 #include "Registry.hpp"
 
-#include "MayaFlux/Transitive/Memory/LiveArena.hpp"
+#include "MayaFlux/API/Depot.hpp"
 
 namespace MayaFlux {
 
@@ -103,6 +103,8 @@ private:
 
 class MAYAFLUX_API Creator {
 public:
+    Evolve evolve;
+
 #define N(method_name, full_type_name)                                            \
     template <typename... Args>                                                   \
         requires std::constructible_from<full_type_name, Args...>                 \
