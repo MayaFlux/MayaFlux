@@ -2,6 +2,7 @@
 
 #include "Domain.hpp"
 #include "Evolve.hpp"
+#include "Mint.hpp"
 #include "Registry.hpp"
 
 #include "MayaFlux/API/Depot.hpp"
@@ -104,6 +105,8 @@ private:
 class MAYAFLUX_API Creator {
 public:
     Evolve evolve;
+
+    Mint mint;
 
 #define N(method_name, full_type_name)                                            \
     template <typename... Args>                                                   \
