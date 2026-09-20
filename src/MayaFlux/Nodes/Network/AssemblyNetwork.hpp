@@ -27,6 +27,18 @@ namespace MayaFlux::Nodes::Network {
  */
 class MAYAFLUX_API AssemblyNetwork : public NodeNetwork {
 public:
+    struct VertexInput {
+        std::vector<Kakshya::Vertex> values;
+        Portal::Graphics::PrimitiveTopology topology {
+            Portal::Graphics::PrimitiveTopology::POINT_LIST
+        };
+    };
+
+    using Source = std::variant<
+        VertexInput,
+        Kakshya::MeshData,
+        std::shared_ptr<GpuSync::GeometryWriterNode>>;
+
     AssemblyNetwork();
 
     void process_batch(unsigned int num_samples) override;
@@ -52,6 +64,11 @@ public:
         return m_operator->add_geometry(std::move(vertices), topology);
     }
 
+    std::shared_ptr<GpuSync::GeometryLeafNode> add_geometry(const VertexInput& input)
+    {
+        return add_geometry(input.values, input.topology);
+    }
+
     std::shared_ptr<GpuSync::MeshWriterNode> add_geometry(const Kakshya::MeshData& mesh)
     {
         return m_operator->add_geometry(mesh);
@@ -60,6 +77,11 @@ public:
     void add_geometry(std::shared_ptr<GpuSync::GeometryWriterNode> node)
     {
         m_operator->add_geometry(std::move(node));
+    }
+
+    void add_geometry(const Source& source)
+    {
+        std::visit([this](const auto& value) { add_geometry(value); }, source);
     }
 
     bool remove_geometry(const std::shared_ptr<GpuSync::GeometryWriterNode>& node)

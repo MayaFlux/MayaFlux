@@ -215,6 +215,10 @@ void BufferAccessControl::add_graphics_buffer(
     if (auto vk_buffer = std::dynamic_pointer_cast<VKBuffer>(buffer)) {
 
         auto& unit = m_unit_manager.get_or_create_graphics_unit(token);
+        if (unit.get_buffer()->has_buffer(vk_buffer)) {
+            return;
+        }
+
         auto processing_chain = unit.get_chain();
 
         if (auto buf_chain = buffer->get_processing_chain()) {

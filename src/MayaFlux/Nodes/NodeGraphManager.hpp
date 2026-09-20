@@ -402,6 +402,15 @@ public:
     NodeConfig& get_node_config() { return m_node_config; }
     const NodeConfig& get_node_config() const { return m_node_config; }
 
+    [[nodiscard]] bool is_network_registered(
+        const std::shared_ptr<Network::NodeNetwork>& network,
+        ProcessingToken token) const;
+
+    /**
+     * @brief Check if network is registered globally
+     */
+    bool is_network_registered(const std::shared_ptr<Network::NodeNetwork>& network);
+
 private:
     /**
      * @brief Registry of all nodes by their string identifiers
@@ -543,11 +552,6 @@ private:
      * Ensures that the sample value is within the valid range for audio processing.
      */
     void normalize_sample(double& sample, uint32_t num_nodes);
-
-    /**
-     * @brief Check if network is registered globally
-     */
-    bool is_network_registered(const std::shared_ptr<Network::NodeNetwork>& network);
 
     /**
      * @brief Get all networks for a specific token across all channels
