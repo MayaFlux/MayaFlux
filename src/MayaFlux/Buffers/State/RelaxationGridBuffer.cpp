@@ -14,6 +14,121 @@
 
 namespace MayaFlux::Buffers {
 
+namespace {
+
+    /**
+     * @brief Format a stage declares, or the one its ShaderSpec binding carries.
+     * @param stage Stage to resolve.
+     * @param binding Binding whose format a spec stage is read from.
+     * @return The format, or nullopt when a path stage declares none.
+     */
+    std::optional<Kakshya::GpuDataFormat> resolve_state(
+        const RelaxationGridBuffer::GridConfig::Stage& stage,
+        std::string_view binding)
+    {
+        if (stage.state) {
+            return stage.state;
+        }
+
+        const auto* spec = std::get_if<Portal::Graphics::ShaderSpec>(&stage.shader);
+        if (!spec) {
+            return std::nullopt;
+        }
+
+        const auto it = std::ranges::find_if(
+            spec->bindings,
+            [binding](const auto& slot) { return slot.name == binding; });
+
+        if (it == spec->bindings.end()) {
+            return std::nullopt;
+        }
+
+        return it->format;
+    }
+
+    /**
+     * @brief Cell stride in bytes for a GridConfig, after checking its stages.
+     * @param config Grid arrangement.
+     * @return gpu_data_format_bytes of the shared cell format.
+     */
+    size_t resolve_stride(const RelaxationGridBuffer::GridConfig& config)
+    {
+        const auto rule = resolve_state(config.rule, "state_in");
+        const auto emit = resolve_state(config.emit, "cell_state");
+
+        if (!rule || !emit) {
+            error<std::invalid_argument>(
+                Journal::Component::Buffers, Journal::Context::Init,
+                std::source_location::current(),
+                "GridConfig: a stage whose shader is a path must declare its state format");
+        }
+
+        if (*rule != *emit) {
+            error<std::invalid_argument>(
+                Journal::Component::Buffers, Journal::Context::Init,
+                std::source_location::current(),
+                "GridConfig: rule and emit disagree on the cell format");
+        }
+
+        if (*rule == Kakshya::GpuDataFormat::VEC3_F32 || *rule == Kakshya::GpuDataFormat::VEC3_F64) {
+            error<std::invalid_argument>(
+                Journal::Component::Buffers, Journal::Context::Init,
+                std::source_location::current(),
+                "GridConfig: a three component cell strides 16 bytes in std430, declare a four component format");
+        }
+
+        return Kakshya::gpu_data_format_bytes(*rule);
+    }
+
+    /**
+     * @brief Write constants after a stage's fixed prefix in its push constant block.
+     * @param processor Stage processor, attached and not yet dispatched.
+     * @param offset Byte offset of the first constant.
+     * @param constants Words to write, in shader declaration order.
+     *
+     * Grows the block through set_push_constant_size so the pipeline range is
+     * created at the final width on the first cycle.
+     */
+    template <typename Processor>
+    void apply_constants(
+        const std::shared_ptr<Processor>& processor,
+        size_t offset,
+        const std::vector<RelaxationGridBuffer::GridConfig::Constant>& constants)
+    {
+        if (constants.empty()) {
+            return;
+        }
+
+        const size_t end = offset + constants.size() * sizeof(uint32_t);
+        if (processor->get_push_constant_data().size() < end) {
+            processor->set_push_constant_size(end);
+        }
+
+        auto& data = processor->get_push_constant_data();
+        if (data.size() < end) {
+            data.resize(end);
+        }
+
+        size_t at = offset;
+        for (const auto& constant : constants) {
+            std::visit([&](auto value) { std::memcpy(data.data() + at, &value, sizeof(value)); }, constant);
+            at += sizeof(uint32_t);
+        }
+    }
+
+} // namespace
+
+RelaxationGridBuffer::RelaxationGridBuffer(const GridConfig& config)
+    : RelaxationGridBuffer(
+          config.width, config.height, resolve_stride(config),
+          config.rule.shader, config.emit.shader)
+{
+    m_rule_constants = config.rule.constants;
+    m_emit_constants = config.emit.constants;
+    m_extent = config.extent;
+    m_point_size = config.point_size;
+}
+
 RelaxationGridBuffer::RelaxationGridBuffer(
     uint32_t width,
     uint32_t height,
@@ -81,6 +196,7 @@ void RelaxationGridBuffer::setup_processors(ProcessingToken token)
 
     m_step_processor->set_processing_token(token);
     set_default_processor(m_step_processor);
+    apply_constants(m_step_processor, sizeof(RelaxationStepProcessor::GridExtent), m_rule_constants);
 
     auto chain = get_processing_chain();
     if (!chain) {
@@ -94,6 +210,9 @@ void RelaxationGridBuffer::setup_processors(ProcessingToken token)
         m_emit_source);
     m_emit_processor->set_processing_token(token);
     chain->add_processor(m_emit_processor, shared_from_this());
+    apply_constants(m_emit_processor, sizeof(RelaxationEmitProcessor::EmitParams), m_emit_constants);
+    m_emit_processor->set_extent(m_extent);
+    m_emit_processor->set_point_size(m_point_size);
 
     MF_DEBUG(Journal::Component::Buffers, Journal::Context::Init,
         "RelaxationGridBuffer setup_processors: step + emit attached");
