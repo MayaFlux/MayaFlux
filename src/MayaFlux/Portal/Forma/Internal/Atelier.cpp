@@ -143,10 +143,14 @@ Atelier::create_layer(const std::shared_ptr<Core::Window>& window, std::string n
     return { std::move(layer), std::move(ctx) };
 }
 
-Surface Atelier::create_surface(std::shared_ptr<Core::Window> window, std::string name)
+Surface Atelier::create_surface(SurfaceConfig config)
 {
-    auto [layer, ctx] = create_layer(window, std::move(name));
-    return { std::move(window), std::move(layer), std::move(ctx) };
+    if (!config.layer || !config.ctx) {
+        auto [layer, ctx] = create_layer(config.window, config.name);
+        config.layer = std::move(layer);
+        config.ctx = std::move(ctx);
+    }
+    return Surface(std::move(config));
 }
 
 void Atelier::place_adornments(

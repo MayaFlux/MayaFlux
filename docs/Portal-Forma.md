@@ -41,7 +41,8 @@ directions.
 auto window = MayaFlux::create_window({ "My Surface", 1280, 720 });
 window->show();
 
-auto surface = Portal::Forma::create_surface(window, "my_surface");
+auto surface = Portal::Forma::create_surface(
+    Portal::Forma::SurfaceConfig { .window = window, .name = "my_surface" });
 ```
 
 `create_surface` builds the `Layer` and `Context` internally and wires them

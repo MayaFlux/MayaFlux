@@ -202,27 +202,22 @@ template <typename V>
 // =============================================================================
 
 /**
- * @brief Construct a Surface, creating Layer and Context internally.
+ * @brief Construct a Surface from a SurfaceConfig.
  *
- * Builds a fresh Layer and a Context wired to @p window using the
- * EventManager stored by Portal::Forma::initialize. Equivalent to
- * Portal::Forma::create_layer(window, name) plus owning the window
- * pointer alongside.
+ * When @p config.layer/@p config.ctx are unset, builds a fresh Layer and a
+ * Context wired to @p config.window using the EventManager stored by
+ * Portal::Forma::initialize, from @p config.name. Set @p config.layer/
+ * @p config.ctx yourself for the power-tinkerer case (custom Context
+ * subclass, shared Layer across multiple Contexts, etc.) - @p config.name is
+ * ignored when both are already set.
  *
- * For the power-tinkerer case (custom Context subclass, shared Layer
- * across multiple Contexts, etc.), construct Surface directly via its
- * (Window, Layer, Context) constructor.
- *
- * @param window  Target window. Must outlive the Surface.
- * @param name    Unique name scoping the Context's event coroutines.
- *                Must be unique across all live Contexts.
+ * @param config Window, name, optional pre-built Layer/Context, and
+ *               close-handling behavior.
  * @pre Portal::Forma::initialize() must have been called.
- * @return A new Surface owning the window pointer plus the freshly
- *         created Layer and Context.
+ * @return A new Surface owning the window pointer plus the Layer and
+ *         Context, built fresh or supplied.
  */
-[[nodiscard]] MAYAFLUX_API Surface create_surface(
-    std::shared_ptr<Core::Window> window,
-    std::string name);
+[[nodiscard]] MAYAFLUX_API Surface create_surface(SurfaceConfig config);
 
 /**
  * @brief Build a FormaBuffer, register it, construct a Mapped<T>, and add

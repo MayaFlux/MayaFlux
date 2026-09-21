@@ -10,6 +10,67 @@ class Window;
 namespace MayaFlux::Portal::Forma {
 
 /**
+ * @struct SurfaceConfig
+ * @brief The single argument every Surface-creating function in this module
+ *        takes, at every level of abstraction.
+ *
+ * Surface, Atelier::create_surface, and Portal::Forma::create_surface all
+ * take this instead of a loose (window, name) pair: when @c layer/@c ctx are
+ * unset, a fresh Layer and Context are built from @c window/@c name against
+ * the global EventManager and filled in; when both are already set (the
+ * power-tinkerer case) they are used as-is and @c name is ignored. This type
+ * must not itself reach into internal::atelier() - only Forma.hpp/.cpp touch
+ * that singleton - building stays the job of whichever function is given
+ * the config.
+ */
+struct SurfaceConfig {
+    /// @brief Target window. Must outlive the Surface.
+    std::shared_ptr<Core::Window> window;
+
+    /**
+     * @brief Unique name scoping the Context's event coroutines.
+     *
+     * Only consulted when @c layer/@c ctx are unset and need to be built.
+     * Ignored when both are already supplied.
+     */
+    std::string name;
+
+    /// @brief Pre-built Layer, constructed against @c window. Optional -
+    ///        built automatically from @c name when unset.
+    std::shared_ptr<Layer> layer;
+
+    /// @brief Pre-built Context, already wired to @c window. Optional -
+    ///        built automatically from @c name when unset.
+    std::shared_ptr<Context> ctx;
+
+    /**
+     * @brief Whether the built-in close handling (Bridge::stop_sync plus a
+     *        deferred window release, see Surface::Surface) runs. Forced
+     *        true whenever on_close is set - see should_detach_on_close().
+     */
+    bool detach_on_close { true };
+
+    /**
+     * @brief Runs in addition to, never instead of, the built-in close
+     *        handling. Setting this forces should_detach_on_close() true
+     *        regardless of detach_on_close, so supplying a hook can never
+     *        silently lose the window-release cleanup.
+     *
+     *        Context::on_close is a single slot per id, last write wins -
+     *        a bare replacement field here would silently clobber
+     *        Surface's own close handler on first use. This exists so that
+     *        can't happen.
+     */
+    std::function<void()> on_close;
+
+    /// @brief Whether the built-in detach behavior actually runs.
+    [[nodiscard]] bool should_detach_on_close() const noexcept
+    {
+        return detach_on_close || static_cast<bool>(on_close);
+    }
+};
+
+/**
  * @class Surface
  * @brief Named owner of a (Window, Layer, Context) triple - the Forma canvas.
  *
@@ -33,18 +94,20 @@ namespace MayaFlux::Portal::Forma {
  * Anything that worked against Layer or Context before continues to work
  * against surface.layer() and surface.ctx().
  *
- * Surface has two constructors:
- *   1. The default: takes Window + name. Internally creates Layer and
- *      Context. This is the path covered by Portal::Forma::create_surface
- *      in Forma.hpp.
- *   2. The power-tinkerer: takes Window + pre-built Layer + pre-built
- *      Context. Use this when you need a custom Context subclass, want
- *      to share one Layer across multiple Contexts (split-pane editing),
- *      or are constructing in a test against a non-global EventManager.
+ * Surface(SurfaceConfig) never creates the Layer or Context itself - only
+ * ever wraps ones already built. Portal::Forma::create_surface (in
+ * Forma.hpp) also takes a SurfaceConfig: the default path leaves layer/ctx
+ * unset, so a fresh Layer and Context are built against the global
+ * EventManager from window/name and the Surface is constructed from those.
+ * Set layer/ctx yourself in the same SurfaceConfig - the power-tinkerer path
+ * - when you need a custom Context subclass, want to share one Layer across
+ * multiple Contexts (split-pane editing), or are constructing in a test
+ * against a non-global EventManager.
  *
  * @code
  * // Default path
- * auto surface = Portal::Forma::create_surface(window, "plot_live");
+ * auto surface = Portal::Forma::create_surface(
+ *     SurfaceConfig { .window = window, .name = "plot_live" });
  *
  * auto el = Portal::Forma::create_element<float>(surface, geom, 0.5F);
  * surface.ctx().on_press(el.element.id, IO::MouseButtons::Left, ...);
@@ -52,7 +115,7 @@ namespace MayaFlux::Portal::Forma {
  * // Power-tinkerer path: pre-built layer and context
  * auto layer = std::make_shared<Layer>();
  * auto ctx = std::make_shared<MyCustomContext>(layer, window, em, "custom");
- * Surface surface(window, layer, ctx);
+ * Surface surface(SurfaceConfig { .window = window, .layer = layer, .ctx = ctx });
  * @endcode
  */
 class MAYAFLUX_API Surface {
@@ -62,25 +125,19 @@ public:
     // =========================================================================
 
     /**
-     * @brief Construct a Surface around a pre-built Layer and Context.
+     * @brief Construct a Surface from a SurfaceConfig.
      *
      * Surface takes shared ownership of all three components. The caller is
      * responsible for ensuring the Layer and Context were constructed
-     * against @p window.
+     * against @c config.window. Wires the built-in close handling
+     * (Bridge::stop_sync plus a deferred window release) per
+     * @c config.should_detach_on_close(), then runs @c config.on_close if
+     * set - see SurfaceConfig's own doc for the composition rule between
+     * the two.
      *
-     * The default factory Portal::Forma::create_surface delegates here
-     * after building a fresh Layer and Context against the global
-     * EventManager. Call this constructor directly when you need a custom
-     * Context subclass or want to share a Layer across multiple Contexts.
-     *
-     * @param window  Target window. Must match the window the Context was
-     *                constructed against.
-     * @param layer   Pre-built Layer.
-     * @param ctx     Pre-built Context, already wired to @p window.
+     * @param config Window, Layer, Context, and close-handling behavior.
      */
-    Surface(std::shared_ptr<Core::Window> window,
-        std::shared_ptr<Layer> layer,
-        std::shared_ptr<Context> ctx);
+    explicit Surface(SurfaceConfig config);
 
     ~Surface() = default;
 

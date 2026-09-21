@@ -82,9 +82,9 @@ create_layer(const std::shared_ptr<Core::Window>& window, std::string name)
     return internal::atelier().create_layer(window, std::move(name));
 }
 
-Surface create_surface(std::shared_ptr<Core::Window> window, std::string name)
+Surface create_surface(SurfaceConfig config)
 {
-    return internal::atelier().create_surface(std::move(window), std::move(name));
+    return internal::atelier().create_surface(std::move(config));
 }
 
 void destroy(Surface& surface, uint32_t id)
@@ -176,7 +176,10 @@ plot(
     auto window = atelier.create_window(
         Core::WindowCreateInfo { .title = std::move(title), .width = width, .height = height });
 
-    auto surface = atelier.create_surface(window, window->get_create_info().title);
+    auto surface = atelier.create_surface(SurfaceConfig {
+        .window = window,
+        .name = window->get_create_info().title,
+    });
 
     if (spec.background_fn) {
         auto bg = atelier.create_element<float>(
@@ -230,7 +233,11 @@ void inspect_node_graph()
         Core::WindowCreateInfo { .title = "NodeGraphManager", .width = k_inspect_w, .height = k_inspect_h });
 
     auto [layer, ctx] = atelier.create_layer(window, "NodeGraphManager");
-    g_inspect_nodes_surface.emplace(window, std::move(layer), std::move(ctx));
+    g_inspect_nodes_surface.emplace(SurfaceConfig {
+        .window = std::move(window),
+        .layer = std::move(layer),
+        .ctx = std::move(ctx),
+    });
     LayoutCursor cursor;
     auto& result = atelier.inspector().node_graph_manager(*g_inspect_nodes_surface, cursor);
     atelier.bridge().spawn_sync(g_inspect_nodes_surface->layer(),
@@ -258,7 +265,11 @@ void inspect_buffers()
         Core::WindowCreateInfo { .title = "BufferManager", .width = k_inspect_w, .height = k_inspect_h });
 
     auto [layer, ctx] = atelier.create_layer(window, "BufferManager");
-    g_inspect_buffers_surface.emplace(window, std::move(layer), std::move(ctx));
+    g_inspect_buffers_surface.emplace(SurfaceConfig {
+        .window = std::move(window),
+        .layer = std::move(layer),
+        .ctx = std::move(ctx),
+    });
     LayoutCursor cursor;
     auto& result = atelier.inspector().buffer_manager(*g_inspect_buffers_surface, cursor);
     atelier.bridge().spawn_sync(g_inspect_buffers_surface->layer(),
@@ -286,7 +297,11 @@ void inspect_scheduler()
         Core::WindowCreateInfo { .title = "TaskScheduler", .width = k_inspect_w, .height = k_inspect_h });
 
     auto [layer, ctx] = atelier.create_layer(window, "TaskScheduler");
-    g_inspect_scheduler_surface.emplace(window, std::move(layer), std::move(ctx));
+    g_inspect_scheduler_surface.emplace(SurfaceConfig {
+        .window = std::move(window),
+        .layer = std::move(layer),
+        .ctx = std::move(ctx),
+    });
     LayoutCursor cursor;
     auto& result = atelier.inspector().scheduler(*g_inspect_scheduler_surface, cursor);
     atelier.bridge().spawn_sync(g_inspect_scheduler_surface->layer(),
@@ -309,7 +324,11 @@ void inspect_events()
         Core::WindowCreateInfo { .title = "EventManager", .width = k_inspect_w, .height = k_inspect_h });
 
     auto [layer, ctx] = atelier.create_layer(window, "EventManager");
-    g_inspect_events_surface.emplace(window, std::move(layer), std::move(ctx));
+    g_inspect_events_surface.emplace(SurfaceConfig {
+        .window = std::move(window),
+        .layer = std::move(layer),
+        .ctx = std::move(ctx),
+    });
     LayoutCursor cursor;
     auto& result = atelier.inspector().event_manager(*g_inspect_events_surface, cursor);
     atelier.bridge().spawn_sync(g_inspect_events_surface->layer(),
@@ -325,8 +344,11 @@ void inspect(const std::shared_ptr<Nodes::Node>& node)
         Core::WindowCreateInfo { .title = title, .width = k_inspect_w, .height = k_inspect_h });
 
     auto [layer, ctx] = atelier.create_layer(window, title);
-    g_inspect_surfaces.push_back(std::make_unique<Surface>(
-        window, std::move(layer), std::move(ctx)));
+    g_inspect_surfaces.push_back(std::make_unique<Surface>(SurfaceConfig {
+        .window = std::move(window),
+        .layer = std::move(layer),
+        .ctx = std::move(ctx),
+    }));
     auto& surface = *g_inspect_surfaces.back();
     LayoutCursor cursor;
     auto result = std::make_shared<InspectResult>(atelier.inspector().node(node, surface, cursor));
@@ -343,8 +365,11 @@ void inspect(const std::shared_ptr<Buffers::Buffer>& buf)
         Core::WindowCreateInfo { .title = title, .width = k_inspect_w, .height = k_inspect_h });
 
     auto [layer, ctx] = atelier.create_layer(window, title);
-    g_inspect_surfaces.push_back(std::make_unique<Surface>(
-        window, std::move(layer), std::move(ctx)));
+    g_inspect_surfaces.push_back(std::make_unique<Surface>(SurfaceConfig {
+        .window = std::move(window),
+        .layer = std::move(layer),
+        .ctx = std::move(ctx),
+    }));
     auto& surface = *g_inspect_surfaces.back();
     LayoutCursor cursor;
     auto result = std::make_shared<InspectResult>(atelier.inspector().buffer(buf, surface, cursor));
@@ -360,8 +385,11 @@ void inspect(const std::shared_ptr<Nodes::Network::NodeNetwork>& net)
         Core::WindowCreateInfo { .title = "NodeNetwork", .width = k_inspect_w, .height = k_inspect_h });
 
     auto [layer, ctx] = atelier.create_layer(window, "NodeNetwork");
-    g_inspect_surfaces.push_back(std::make_unique<Surface>(
-        window, std::move(layer), std::move(ctx)));
+    g_inspect_surfaces.push_back(std::make_unique<Surface>(SurfaceConfig {
+        .window = std::move(window),
+        .layer = std::move(layer),
+        .ctx = std::move(ctx),
+    }));
     auto& surface = *g_inspect_surfaces.back();
     LayoutCursor cursor;
     auto result = std::make_shared<InspectResult>(atelier.inspector().node_network(net, surface, cursor));
@@ -378,8 +406,11 @@ void inspect(const std::shared_ptr<Vruta::Event>& ev, std::string_view name)
         Core::WindowCreateInfo { .title = title, .width = k_inspect_w, .height = k_inspect_h });
 
     auto [layer, ctx] = atelier.create_layer(window, title);
-    g_inspect_surfaces.push_back(std::make_unique<Surface>(
-        window, std::move(layer), std::move(ctx)));
+    g_inspect_surfaces.push_back(std::make_unique<Surface>(SurfaceConfig {
+        .window = std::move(window),
+        .layer = std::move(layer),
+        .ctx = std::move(ctx),
+    }));
     auto& surface = *g_inspect_surfaces.back();
     LayoutCursor cursor;
     auto result = std::make_shared<InspectResult>(atelier.inspector().event(ev, name, surface, cursor));

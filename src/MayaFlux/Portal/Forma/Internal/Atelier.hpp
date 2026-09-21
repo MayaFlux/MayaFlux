@@ -125,9 +125,11 @@ namespace internal {
         [[nodiscard]] std::pair<std::shared_ptr<Layer>, std::shared_ptr<Context>>
         create_layer(const std::shared_ptr<Core::Window>& window, std::string name);
 
-        /// @brief create_layer plus ownership of the window, as a Surface.
-        [[nodiscard]] Surface create_surface(
-            std::shared_ptr<Core::Window> window, std::string name);
+        /**
+         * @brief Build a Surface from a SurfaceConfig, creating Layer and
+         *        Context when config.layer/config.ctx are unset.
+         */
+        [[nodiscard]] Surface create_surface(SurfaceConfig config);
 
         /**
          * @brief Build a FormaBuffer, construct a Mapped<T>, register the
