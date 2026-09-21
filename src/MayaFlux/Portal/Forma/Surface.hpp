@@ -19,8 +19,8 @@ namespace MayaFlux::Portal::Forma {
  * unset, a fresh Layer and Context are built from @c window/@c name against
  * the global EventManager and filled in; when both are already set (the
  * power-tinkerer case) they are used as-is and @c name is ignored. This type
- * must not itself reach into internal::atelier() - only Forma.hpp/.cpp touch
- * that singleton - building stays the job of whichever function is given
+ * must not itself reach into internal::atelier(). Only Forma.hpp/.cpp touch
+ * that singleton. Building stays the job of whichever function is given
  * the config.
  */
 struct SurfaceConfig {
@@ -35,18 +35,18 @@ struct SurfaceConfig {
      */
     std::string name;
 
-    /// @brief Pre-built Layer, constructed against @c window. Optional -
+    /// @brief Pre-built Layer, constructed against @c window. Optional,
     ///        built automatically from @c name when unset.
     std::shared_ptr<Layer> layer;
 
-    /// @brief Pre-built Context, already wired to @c window. Optional -
+    /// @brief Pre-built Context, already wired to @c window. Optional,
     ///        built automatically from @c name when unset.
     std::shared_ptr<Context> ctx;
 
     /**
      * @brief Whether the built-in close handling (Bridge::stop_sync plus a
      *        deferred window release, see Surface::Surface) runs. Forced
-     *        true whenever on_close is set - see should_detach_on_close().
+     *        true whenever on_close is set. See should_detach_on_close().
      */
     bool detach_on_close { true };
 
@@ -56,10 +56,10 @@ struct SurfaceConfig {
      *        regardless of detach_on_close, so supplying a hook can never
      *        silently lose the window-release cleanup.
      *
-     *        Context::on_close is a single slot per id, last write wins -
-     *        a bare replacement field here would silently clobber
-     *        Surface's own close handler on first use. This exists so that
-     *        can't happen.
+     *        Context::on_close is a single slot per id, and the last write
+     *        wins, so a bare replacement field here would silently clobber
+     *        Surface's own close handler on first use. This field exists so
+     *        that cannot happen.
      */
     std::function<void()> on_close;
 
@@ -72,7 +72,7 @@ struct SurfaceConfig {
 
 /**
  * @class Surface
- * @brief Named owner of a (Window, Layer, Context) triple - the Forma canvas.
+ * @brief Named owner of a (Window, Layer, Context) triple: the Forma canvas.
  *
  * In Forma, three things always travel together: a Window (the rendering
  * target and coordinate space), a Layer (the spatial registry of elements),
@@ -94,15 +94,15 @@ struct SurfaceConfig {
  * Anything that worked against Layer or Context before continues to work
  * against surface.layer() and surface.ctx().
  *
- * Surface(SurfaceConfig) never creates the Layer or Context itself - only
+ * Surface(SurfaceConfig) never creates the Layer or Context itself. It only
  * ever wraps ones already built. Portal::Forma::create_surface (in
  * Forma.hpp) also takes a SurfaceConfig: the default path leaves layer/ctx
  * unset, so a fresh Layer and Context are built against the global
  * EventManager from window/name and the Surface is constructed from those.
- * Set layer/ctx yourself in the same SurfaceConfig - the power-tinkerer path
- * - when you need a custom Context subclass, want to share one Layer across
- * multiple Contexts (split-pane editing), or are constructing in a test
- * against a non-global EventManager.
+ * Set layer/ctx yourself in the same SurfaceConfig for the power-tinkerer
+ * path, when you need a custom Context subclass, want to share one Layer
+ * across multiple Contexts (split-pane editing), or are constructing in a
+ * test against a non-global EventManager.
  *
  * @code
  * // Default path
@@ -132,7 +132,7 @@ public:
      * against @c config.window. Wires the built-in close handling
      * (Bridge::stop_sync plus a deferred window release) per
      * @c config.should_detach_on_close(), then runs @c config.on_close if
-     * set - see SurfaceConfig's own doc for the composition rule between
+     * set. See SurfaceConfig's own doc for the composition rule between
      * the two.
      *
      * @param config Window, Layer, Context, and close-handling behavior.
@@ -147,7 +147,7 @@ public:
     Surface& operator=(Surface&&) noexcept = default;
 
     // =========================================================================
-    // Accessors - the canvas is never walled off
+    // Accessors: the canvas is never walled off
     // =========================================================================
 
     /**
