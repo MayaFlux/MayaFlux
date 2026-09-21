@@ -1,8 +1,6 @@
 #pragma once
 
-#include "Internal/Atelier.hpp"
-#include "Primitives/Geometry.hpp"
-#include "Primitives/TextField.hpp"
+#include "Tend.hpp"
 
 namespace MayaFlux::Vruta {
 class Event;
@@ -220,117 +218,6 @@ template <typename V>
 [[nodiscard]] MAYAFLUX_API Surface create_surface(SurfaceConfig config);
 
 /**
- * @brief Build a FormaBuffer, register it, construct a Mapped<T>, and add
- *        the element to @p layer.
- *
- * BufferManager is taken from the stored initialize() state.
- * Returns the fully constructed Mapped<T>. The caller holds it.
- * element.id is stable and can be passed to Context callbacks and Bridge.
- *
- * @tparam T         MappedState value type: float, glm::vec2, etc.
- * @param layer      Layer to register the element on.
- * @param window     Target window for rendering.
- * @param geom       Geometry function producing vertex bytes from T.
- * @param initial    Starting value written into MappedState.
- * @param topology   Primitive topology for the FormaBuffer.
- * @param capacity   Initial FormaBuffer capacity in bytes.
- * @param project    Optional T -> float projection for outbound readers.
- * @return Fully constructed Mapped<T> with element registered in @p layer.
- */
-template <typename T>
-[[nodiscard]] Mapped<T> create_element(
-    Layer& layer,
-    std::shared_ptr<Core::Window> window,
-    GeometryFn<T> geom,
-    T initial,
-    Graphics::PrimitiveTopology topology = Graphics::PrimitiveTopology::TRIANGLE_STRIP,
-    size_t capacity = internal::k_capacity_bytes,
-    std::function<float(T)> project = {})
-{
-    return internal::atelier().create_element<T>(
-        layer, std::move(window), std::move(geom), std::move(initial),
-        topology, capacity, std::move(project));
-}
-
-/**
- * @brief Realize a Form on @p surface.
- *
- * Builds the buffer at the Form's capacity and topology, registers the
- * element, syncs so the geometry function's bounds_hint and contains reach
- * the Layer before the first frame, then runs the Form's interaction wiring.
- *
- * A bare GeometryFn converts to a Form, so this also serves as the simplest
- * element construction path for a caller's own geometry.
- *
- * @tparam T       MappedState value type.
- * @param surface  Canvas to register on.
- * @param form     Geometry, topology, capacity, and interaction.
- * @param initial  Starting value written into MappedState.
- * @param project  Optional T to float projection for outbound readers.
- * @return Fully constructed Mapped<T>, wired.
- */
-template <typename T>
-[[nodiscard]] Mapped<T> create(
-    Surface& surface,
-    Geometry::Form<T> form,
-    T initial,
-    std::function<float(T)> project = {})
-{
-    auto mapped = internal::atelier().create_element<T>(
-        surface.layer(), surface.window(),
-        std::move(form.geometry), std::move(initial),
-        form.topology, form.capacity, std::move(project));
-
-    mapped.sync(&surface.layer());
-
-    if (form.wire)
-        form.wire(surface.ctx(), mapped.element.id, mapped.state);
-
-    return mapped;
-}
-
-/**
- * @brief Build a FormaBuffer, register it, construct a Mapped<T>, add the
- *        element to @p surface's layer, and register it with the
- *        application Bridge.
- *
- * Surface-accepting overload of create_element. Reads the layer and
- * window from @p surface; everything else matches the existing
- * (Layer&, Window) overload.
- *
- * After registration, one sync() is run so that bounds_hint and contains
- * populated by the geometry function are visible on the Element before
- * the first frame. This removes the manual
- * @code
- *   layer->set_bounds(el.element.id, ...);
- *   layer->set_contains(el.element.id, ...);
- * @endcode
- * boilerplate seen at fader-style call sites: those values now arrive
- * directly from the geometry function on construction. The geometry
- * function remains the user's; the sync is the same one that runs every
- * frame.
- *
- * @tparam T        MappedState value type.
- * @param surface   Canvas to register the element on.
- * @param geom      Geometry function producing vertex bytes from T.
- * @param initial   Starting value written into MappedState.
- * @param topology  Primitive topology for the FormaBuffer.
- * @param project   Optional T -> float projection for outbound readers.
- * @return Fully constructed Mapped<T> with element registered.
- */
-template <typename T>
-[[nodiscard]] Mapped<T> create_element(
-    Surface& surface,
-    GeometryFn<T> geom,
-    T initial,
-    Graphics::PrimitiveTopology topology = Graphics::PrimitiveTopology::TRIANGLE_STRIP,
-    std::function<float(T)> project = {})
-{
-    return internal::atelier().create_element<T>(
-        surface, std::move(geom), std::move(initial), topology, std::move(project));
-}
-
-/**
  * @brief Tear down an element and everything related to it.
  *
  * The symmetric counterpart to create_element/create<T>/create_text_field:
@@ -351,52 +238,6 @@ template <typename T>
  * @param id      Element id to remove, as returned by layer().add()/Slot::id().
  */
 MAYAFLUX_API void destroy(Surface& surface, uint32_t id);
-
-// =============================================================================
-// Text field
-// =============================================================================
-
-/**
- * @brief Build a text-capable FormaBuffer, register a TextField, and wire
- *        text editing onto it in one call.
- *
- * The one-call convenience over TextField::place() - same split
- * Portal::Forma::create<T> already has with a bare Form<T>: this builds
- * the buffer (create_buffer, which TextField.cpp itself may never call -
- * see TextField.hpp) and delegates. Build the buffer and TextField by hand
- * instead for anything needing a non-default buffer setup (a shared
- * texture slot alongside a background quad, for instance).
- *
- * @p scrollable composes a second primitive in, the same way: false (the
- * default) matches every prior call exactly - @p bounds is the field's own
- * region. True builds a plain Scrollable (Scrollable::place(), @p bounds as
- * its viewport) and calls TextField::scrollable() instead of place() - the
- * same composition test_text_input() (test_8.hpp) once wired by hand, now
- * living at the TextField primitive level; this is only the one-call
- * convenience over it. That Scrollable is local to this call and not
- * returned, so no indicator is added and nothing else can be tracked into
- * the same viewport - build the Scrollable yourself and call
- * TextField::scrollable() directly (or place() + Scrollable::track() by
- * hand) for either of those.
- *
- * @param surface      Surface whose window, layer, and context own the field.
- * @param bounds       NDC region for both hit testing and the text quad -
- *                     or, when scrollable, the fixed clipped viewport.
- * @param params       Shared render params. A default-constructed one is
- *                     allocated if null.
- * @param initial_text Starting text. Cursor starts at its end.
- * @param scrollable   When true, wraps the field in a Scrollable viewport.
- * @return Registered, wired TextField. Portal::Forma::destroy(surface,
- *         field.element_id) is sufficient to tear the whole thing down,
- *         scrollable viewport included when @p scrollable is true - no
- *         manual multi-id cleanup needed.
- */
-[[nodiscard]] MAYAFLUX_API TextField create_text_field(
-    Surface& surface,
-    Kinesis::AABB2D bounds,
-    std::shared_ptr<Portal::Text::PressParams> params = nullptr,
-    std::string initial_text = {},
-    bool scrollable = false);
 
 /**
  * @brief Create a live plot in a new window.
