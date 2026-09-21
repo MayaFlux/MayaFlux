@@ -76,11 +76,15 @@ public:
      *
      * Structural: width, height, and every Stage::state and Stage::shader.
      * They decide buffer sizes and which processors are built, so they are
-     * fixed at construction. Stage::constants are written once at
-     * setup_processors. extent and point_size are live-tunable through
-     * RelaxationEmitProcessor::set_extent and set_point_size. A constant that
-     * must change per cycle is a float fed through ShaderProcessor::feed at
-     * its byte offset.
+     * fixed at construction. Stage::constants initialize trailing push
+     * constant words during setup_processors. They establish that footprint
+     * for path shaders, while generated specs declare it themselves. Every
+     * word in the resulting block remains live-tunable through
+     * RelaxationStepProcessor::set_constant and
+     * RelaxationEmitProcessor::set_constant. extent and point_size are
+     * live-tunable through RelaxationEmitProcessor::set_extent and
+     * set_point_size. Float feeds remain available through
+     * ShaderProcessor::feed at an explicit byte offset.
      */
     struct GridConfig {
         /** @brief One 4-byte push constant word, in the scalar types a shader block can hold. */
@@ -93,7 +97,7 @@ public:
         struct Stage {
             std::optional<Kakshya::GpuDataFormat> state; ///< Format of one cell as this stage reads it. Nullopt derives it from the ShaderSpec binding ("state_in" for a rule, "cell_state" for an emit). Required when shader is a path.
             ShaderSource shader; ///< Hand-written shader path or generated ShaderSpec.
-            std::vector<Constant> constants; ///< Words written after the stage's fixed prefix (GridExtent for a rule, EmitParams for an emit), in shader declaration order.
+            std::vector<Constant> constants; ///< Initial words after the stage's fixed prefix (GridExtent for a rule, EmitParams for an emit), in shader declaration order. Required to establish trailing words for path shaders.
         };
 
         uint32_t width; ///< Grid width in cells. Required.
@@ -113,12 +117,11 @@ public:
      *        rules needing branchy multi-state logic, e.g. Conway, Wireworld)
      *        or a generated ShaderSpec (e.g. RelaxationSpecs::jacobi_diffusion()).
      * @param emit_source Either a path to a hand-written emit shader, or a
-     *        generated ShaderSpec (e.g. RelaxationSpecs::emit_binary()).
+     *        generated ShaderSpec that meets the packed vertex contract.
      *
-     * rule_source and emit_source are independent: a hand-written rule paired
-     * with a generated emit spec, or any other combination, is fully
-     * supported. Processors are constructed from whichever alternative each
-     * holds in setup_processors().
+     * rule_source and emit_source are independent: any pairing meeting their
+     * respective contracts is supported. Processors are constructed from
+     * whichever alternative each holds in setup_processors().
      */
     RelaxationGridBuffer(
         uint32_t width,
