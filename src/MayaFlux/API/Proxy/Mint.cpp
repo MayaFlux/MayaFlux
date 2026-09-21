@@ -9,105 +9,105 @@
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Nodes/Graphics/MeshWriterNode.hpp"
-#include "MayaFlux/Nodes/NodeGraphManager.hpp"
 #include "MayaFlux/Nodes/Network/AssemblyNetwork.hpp"
 #include "MayaFlux/Nodes/Network/InstanceNetwork.hpp"
 #include "MayaFlux/Nodes/Network/MeshNetwork.hpp"
+#include "MayaFlux/Nodes/NodeGraphManager.hpp"
 
 namespace MayaFlux {
 
 namespace {
 
-[[nodiscard]] bool has_target(const StructureConfig::RenderConfig& render)
-{
-    if (render.target_window) {
-        return true;
-    }
+    [[nodiscard]] bool has_target(const StructureConfig::RenderConfig& render)
+    {
+        if (render.target_window) {
+            return true;
+        }
 
-    MF_ERROR(Journal::Component::API, Journal::Context::Init,
-        "mint: RenderConfig::target_window is required, there is no default window");
-    return false;
-}
-
-[[nodiscard]] std::shared_ptr<Nodes::GpuSync::MeshWriterNode> resolve_writer(
-    const std::optional<Kakshya::MeshData>& mesh,
-    const StructureConfig::MeshExpression& expression,
-    const std::shared_ptr<Nodes::GpuSync::MeshWriterNode>& writer,
-    std::string_view context)
-{
-    const unsigned int source_count = static_cast<unsigned int>(mesh.has_value())
-        + static_cast<unsigned int>(static_cast<bool>(expression))
-        + static_cast<unsigned int>(writer != nullptr);
-
-    if (source_count != 1) {
         MF_ERROR(Journal::Component::API, Journal::Context::Init,
-            "mint: {} requires exactly one mesh, expression or writer source", context);
-        return nullptr;
+            "mint: RenderConfig::target_window is required, there is no default window");
+        return false;
     }
 
-    if (writer) {
-        return writer;
+    [[nodiscard]] std::shared_ptr<Nodes::GpuSync::MeshWriterNode> resolve_writer(
+        const std::optional<Kakshya::MeshData>& mesh,
+        const StructureConfig::MeshExpression& expression,
+        const std::shared_ptr<Nodes::GpuSync::MeshWriterNode>& writer,
+        std::string_view context)
+    {
+        const unsigned int source_count = static_cast<unsigned int>(mesh.has_value())
+            + static_cast<unsigned int>(static_cast<bool>(expression))
+            + static_cast<unsigned int>(writer != nullptr);
+
+        if (source_count != 1) {
+            MF_ERROR(Journal::Component::API, Journal::Context::Init,
+                "mint: {} requires exactly one mesh, expression or writer source", context);
+            return nullptr;
+        }
+
+        if (writer) {
+            return writer;
+        }
+
+        Kakshya::MeshData data = mesh ? *mesh : expression();
+        if (!data.is_valid()) {
+            MF_ERROR(Journal::Component::API, Journal::Context::Init,
+                "mint: {} produced invalid MeshData", context);
+            return nullptr;
+        }
+
+        auto resolved = std::make_shared<Nodes::GpuSync::MeshWriterNode>(data.vertex_count());
+        resolved->set_mesh(data);
+        return resolved;
     }
 
-    Kakshya::MeshData data = mesh ? *mesh : expression();
-    if (!data.is_valid()) {
-        MF_ERROR(Journal::Component::API, Journal::Context::Init,
-            "mint: {} produced invalid MeshData", context);
-        return nullptr;
-    }
-
-    auto resolved = std::make_shared<Nodes::GpuSync::MeshWriterNode>(data.vertex_count());
-    resolved->set_mesh(data);
-    return resolved;
-}
-
-void add_extra_textures(
-    StructureConfig::RenderConfig& render,
-    const std::vector<std::shared_ptr<Core::VKImage>>& textures,
-    size_t first)
-{
-    for (size_t index = first; index < textures.size(); ++index) {
-        if (textures[index]) {
-            render.additional_textures.emplace_back(
-                "texture" + std::to_string(index), textures[index]);
+    void add_extra_textures(
+        StructureConfig::RenderConfig& render,
+        const std::vector<std::shared_ptr<Core::VKImage>>& textures,
+        size_t first)
+    {
+        for (size_t index = first; index < textures.size(); ++index) {
+            if (textures[index]) {
+                render.additional_textures.emplace_back(
+                    "texture" + std::to_string(index), textures[index]);
+            }
         }
     }
-}
 
-void add_all_textures(
-    StructureConfig::RenderConfig& render,
-    const std::vector<std::shared_ptr<Core::VKImage>>& textures)
-{
-    if (!textures.empty() && textures.front()) {
-        render.additional_textures.emplace_back("diffuseTex", textures.front());
+    void add_all_textures(
+        StructureConfig::RenderConfig& render,
+        const std::vector<std::shared_ptr<Core::VKImage>>& textures)
+    {
+        if (!textures.empty() && textures.front()) {
+            render.additional_textures.emplace_back("diffuseTex", textures.front());
+        }
+        add_extra_textures(render, textures, 1);
     }
-    add_extra_textures(render, textures, 1);
-}
 
-void register_network_if_needed(
-    const std::shared_ptr<Nodes::Network::NodeNetwork>& network)
-{
-    if (!get_node_graph_manager()->is_network_registered(
-            network, Nodes::ProcessingToken::VISUAL_RATE)) {
-        register_node_network(network, Nodes::ProcessingToken::VISUAL_RATE);
+    void register_network_if_needed(
+        const std::shared_ptr<Nodes::Network::NodeNetwork>& network)
+    {
+        if (!get_node_graph_manager()->is_network_registered(
+                network, Nodes::ProcessingToken::VISUAL_RATE)) {
+            register_node_network(network, Nodes::ProcessingToken::VISUAL_RATE);
+        }
     }
-}
 
-template <typename Buffer>
-void bind_mesh_textures(
-    const std::shared_ptr<Buffer>& buffer,
-    StructureConfig::RenderConfig& render,
-    const std::vector<std::shared_ptr<Core::VKImage>>& textures)
-{
-    if (!textures.empty() && textures.front()) {
-        const std::string binding = render.default_texture_binding.empty()
-            ? "diffuseTex"
-            : render.default_texture_binding;
-        buffer->bind_diffuse_texture(textures.front(), binding);
-        render.default_texture_binding = binding;
+    template <typename Buffer>
+    void bind_mesh_textures(
+        const std::shared_ptr<Buffer>& buffer,
+        StructureConfig::RenderConfig& render,
+        const std::vector<std::shared_ptr<Core::VKImage>>& textures)
+    {
+        if (!textures.empty() && textures.front()) {
+            const std::string binding = render.default_texture_binding.empty()
+                ? "diffuseTex"
+                : render.default_texture_binding;
+            buffer->bind_diffuse_texture(textures.front(), binding);
+            render.default_texture_binding = binding;
+        }
+        add_extra_textures(render, textures, 1);
     }
-    add_extra_textures(render, textures, 1);
-}
 
 } // namespace
 
@@ -154,6 +154,7 @@ struct Mint::Impl {
         auto network = config.network
             ? config.network
             : std::make_shared<Nodes::Network::MeshNetwork>();
+        const auto first_component_slot = static_cast<uint32_t>(network->slot_count());
 
         for (size_t index = 0; index < config.components.size(); ++index) {
             const auto& component = config.components[index];
@@ -163,8 +164,34 @@ struct Mint::Impl {
                 return nullptr;
             }
 
+            if (component.parent_component && component.parent_slot) {
+                MF_ERROR(Journal::Component::API, Journal::Context::Init,
+                    "mint: Model component {} cannot name both a component and slot parent",
+                    index);
+                return nullptr;
+            }
+
+            std::optional<uint32_t> parent;
+            if (component.parent_component) {
+                if (*component.parent_component >= index) {
+                    MF_ERROR(Journal::Component::API, Journal::Context::Init,
+                        "mint: Model component {} must name an earlier component as parent",
+                        index);
+                    return nullptr;
+                }
+                parent = first_component_slot + *component.parent_component;
+            } else if (component.parent_slot) {
+                if (*component.parent_slot >= first_component_slot) {
+                    MF_ERROR(Journal::Component::API, Journal::Context::Init,
+                        "mint: Model component {} parent slot is not in the supplied network",
+                        index);
+                    return nullptr;
+                }
+                parent = component.parent_slot;
+            }
+
             const uint32_t slot_index = network->add_slot(
-                "component_" + std::to_string(index), writer, component.parent);
+                "component_" + std::to_string(index), writer, parent);
             network->get_slot(slot_index).local_transform = component.local_transform;
         }
 

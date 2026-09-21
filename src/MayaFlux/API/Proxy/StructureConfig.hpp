@@ -71,8 +71,10 @@ struct StructureConfig {
         std::shared_ptr<Nodes::GpuSync::MeshWriterNode> writer;
         /** @brief Fixed local transform within the hierarchy. */
         glm::mat4 local_transform { 1.0F };
-        /** @brief Fixed parent component index, or no parent for a root. */
-        std::optional<uint32_t> parent;
+        /** @brief Parent index within Model::components, or no local parent. */
+        std::optional<uint32_t> parent_component;
+        /** @brief Parent slot index in an existing Model::network, or no existing parent. */
+        std::optional<uint32_t> parent_slot;
     };
 
     /**
