@@ -153,6 +153,14 @@ Surface Atelier::create_surface(SurfaceConfig config)
     return Surface(std::move(config));
 }
 
+Surface Atelier::create_surface(const Core::WindowCreateInfo& window_info, std::string name)
+{
+    return create_surface(SurfaceConfig {
+        .window = create_window(window_info),
+        .name = std::move(name),
+    });
+}
+
 void Atelier::place_adornments(
     Surface& surface,
     const Plot::SeriesSpec& spec,

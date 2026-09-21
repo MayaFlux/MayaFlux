@@ -2,6 +2,7 @@
 
 #include "MayaFlux/Portal/Forma/Bridge.hpp"
 #include "MayaFlux/Portal/Forma/Primitives/Mapped.hpp"
+#include "MayaFlux/Portal/Forma/Primitives/Scrollable.hpp"
 #include "MayaFlux/Portal/Forma/Surface.hpp"
 
 #include "MayaFlux/Portal/Forma/Plot/Plot.hpp"
@@ -132,6 +133,18 @@ namespace internal {
         [[nodiscard]] Surface create_surface(SurfaceConfig config);
 
         /**
+         * @brief Build a window through create_window, then a Surface on it.
+         *
+         * One step further back than create_surface(SurfaceConfig): for
+         * when there is no window yet either. Uses default close-handling
+         * behavior (SurfaceConfig::detach_on_close true, no on_close). Call
+         * create_surface(SurfaceConfig) directly instead when that needs
+         * configuring.
+         */
+        [[nodiscard]] Surface create_surface(
+            const Core::WindowCreateInfo& window_info, std::string name);
+
+        /**
          * @brief Build a FormaBuffer, construct a Mapped<T>, register the
          *        element on @p layer, and register it with the Bridge.
          *
@@ -185,6 +198,64 @@ namespace internal {
             mapped.sync(&surface.layer());
 
             return mapped;
+        }
+
+        /**
+         * @brief Register mapped's element for scroll reflow in panel.
+         *
+         * When reposition is empty, one is built from mapped's own buffer,
+         * geometry_fn, and state: it reruns geometry_fn unconditionally
+         * (assumes the Form was built with live_offset wired to panel's own
+         * offset, so it reads the new position itself) and pushes the
+         * resulting bounds_hint/contains to layer. These are the same two
+         * effects Mapped<T>::sync(Layer*) has, replicated rather than
+         * called through, so the closure captures only independently-owned
+         * pieces (buffer and state are shared_ptr, geometry_fn is a
+         * copyable std::function), never a pointer back to mapped itself,
+         * since the closure outlives this call, stored inside panel.
+         *
+         * @param panel       Scrollable to track into.
+         * @param layer       Layer both panel and mapped's element were
+         *                    registered on.
+         * @param mapped      Element to track. Only buffer/geometry_fn/
+         *                    state/element.id are read, nothing is stored.
+         * @param base_bounds mapped's current on-screen NDC bounds.
+         * @param reposition  Called with the scrolled bounds on every
+         *                    scroll. Built as described above when empty.
+         */
+        template <typename T>
+        void track(
+            Scrollable& panel,
+            Layer& layer,
+            const Mapped<T>& mapped,
+            Kinesis::AABB2D base_bounds,
+            std::function<void(Kinesis::AABB2D)> reposition = {})
+        {
+            if (!reposition) {
+                auto buffer = mapped.element.buffer;
+                auto geometry_fn = mapped.geometry_fn;
+                auto state = mapped.state;
+                auto id = mapped.element.id;
+                auto* layer_ptr = &layer;
+
+                reposition = [buffer, geometry_fn, state, id, layer_ptr](Kinesis::AABB2D) {
+                    if (!buffer || !geometry_fn || !state)
+                        return;
+
+                    std::vector<uint8_t> bytes;
+                    Element el;
+                    el.id = id;
+                    geometry_fn(state->value, bytes, el);
+                    buffer->submit(bytes);
+
+                    if (el.bounds_hint)
+                        layer_ptr->set_bounds(id, *el.bounds_hint);
+                    if (el.contains)
+                        layer_ptr->set_contains(id, el.contains);
+                };
+            }
+
+            panel.track(layer, mapped.element.id, base_bounds, std::move(reposition));
         }
 
         /**
