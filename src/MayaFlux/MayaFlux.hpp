@@ -61,6 +61,7 @@
 #include "Nodes/Network/ModalNetwork.hpp"
 #include "Nodes/Network/ParticleNetwork.hpp"
 #include "Nodes/Network/PointCloudNetwork.hpp"
+#include "Nodes/Network/RelationNetwork.hpp"
 #include "Nodes/Network/ResonatorNetwork.hpp"
 #include "Nodes/Network/WaveguideNetwork.hpp"
 

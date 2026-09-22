@@ -545,6 +545,20 @@ NodeGraphManager::get_all_networks(ProcessingToken token) const
     return all_networks;
 }
 
+bool NodeGraphManager::is_network_registered(
+    const std::shared_ptr<Network::NodeNetwork>& network,
+    ProcessingToken token) const
+{
+    const auto networks = get_all_networks(token);
+    return std::ranges::any_of(networks,
+        [&network](const auto& registered) { return registered == network; });
+}
+
+bool NodeGraphManager::is_network_registered(const std::shared_ptr<Network::NodeNetwork>& network)
+{
+    return m_network_registry.contains(network);
+}
+
 size_t NodeGraphManager::get_network_count(ProcessingToken token) const
 {
     size_t count = 0;
@@ -579,11 +593,6 @@ void NodeGraphManager::register_network_global(const std::shared_ptr<Network::No
 void NodeGraphManager::unregister_network_global(const std::shared_ptr<Network::NodeNetwork>& network)
 {
     m_network_registry.erase(network);
-}
-
-bool NodeGraphManager::is_network_registered(const std::shared_ptr<Network::NodeNetwork>& network)
-{
-    return m_network_registry.contains(network);
 }
 
 void NodeGraphManager::terminate_active_processing()

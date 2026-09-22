@@ -35,6 +35,22 @@ class SDFMeshProcessor;
  */
 class MAYAFLUX_API ComputeMeshBuffer : public VKBuffer {
 public:
+    using FieldSource = std::variant<
+        Kinesis::SpatialField,
+        std::filesystem::path>;
+
+    struct Config {
+        FieldSource source;
+        glm::vec3 bounds_min { -1.0F };
+        glm::vec3 bounds_max { 1.0F };
+        uint32_t resolution_x { 32 };
+        uint32_t resolution_y { 32 };
+        uint32_t resolution_z { 32 };
+        float iso_level { 0.0F };
+    };
+
+    explicit ComputeMeshBuffer(Config config);
+
     /**
      * @param field      SpatialField evaluated on CPU each dirty frame.
      * @param bounds_min World-space minimum corner.

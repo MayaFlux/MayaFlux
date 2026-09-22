@@ -1,4 +1,4 @@
-# Portal::Forma - UI Patterns
+# Portal::Forma: UI Patterns
 
 Forma has no widget hierarchy, no retained tree, no retained state beyond
 what you explicitly create. If you are coming from ImGui, that is the core
@@ -17,6 +17,13 @@ mapping and now carries them.
 
 Every field of a `Form` is public. Clearing `wire` hands interaction back to
 you, which several patterns below do.
+
+Most patterns below construct a `Form<T>` and then bind it to something with
+`Bridge`. `Tend<T>` chains both into one statement (`place(surface).bridge()`)
+whenever they happen together, see [Portal-Forma.md](Portal-Forma.md)'s
+"Tend\<T\>" section. Patterns that construct and stop there, with nothing to
+bind or nothing reused past construction, are left as plain `create` calls
+below, since `Tend<T>` only shortens the cases with something to chain onto.
 
 ---
 
@@ -201,17 +208,18 @@ ImGui:
 ImGui::SliderFloat("Gain", &gain, 0.0f, 1.0f);
 ```
 
-Forma: the `horizontal_fader` Form carries the drag.
+Forma: the `horizontal_fader` Form carries the drag. `Tend<T>` chains its
+construction straight into the bridge binding:
 
 ```cpp
 constexpr Kinesis::AABB2D track { { -0.8F, -0.05F }, { 0.8F, 0.05F } };
-
-auto el = Portal::Forma::create(
-    surface, Portal::Forma::Geometry::horizontal_fader(track, 0.04F), 0.5F);
-
-// Wire to a node:
 auto constant = vega.Constant(0.5) | Audio[0];
-Portal::Forma::bridge().at(el.state).write(constant);
+
+Portal::Forma::Tend<float> fader {
+    .form = Portal::Forma::Geometry::horizontal_fader(track, 0.04F),
+    .initial = 0.5F,
+};
+fader.place(surface).bridge().write(constant);
 ```
 
 The drag maps the cursor onto the handle's travel, which is shorter than the
@@ -222,7 +230,7 @@ Arrow-key fine adjustment is separate, since the Form carries pointer
 interaction only. Focus transfers on click:
 
 ```cpp
-surface.ctx().key_step(el.element.id, el.state,
+surface.ctx().key_step(fader.result->element.id, fader.result->state,
     IO::Keys::ArrowLeft, IO::Keys::ArrowRight, 0.005F);
 ```
 
@@ -329,7 +337,7 @@ auto group = make_entry_group(
     specs, "Oscillator", std::move(hdr_buf), row_bufs,
     surface, cursor, row_h, true);
 
-// Each graphics tick - tap all links to repress live values
+// Each graphics tick, tap all links to repress live values
 schedule_metro(1.0 / 30.0, [g = std::move(group)]() mutable {
     for (auto& row : g.rows)
         row.link.tap();
@@ -343,9 +351,9 @@ For deeply nested trees (node graph inspection, buffer chains), use
 
 ## Drawable canvas / array editor
 
-ImGui has no direct equivalent. The closest approximation - a sequence of
-`SliderFloat` calls - gives N discrete sliders with no drawn curve, no drag
-interpolation, and no direct routing to an audio buffer.
+ImGui has no direct equivalent. The closest approximation is a sequence of
+`SliderFloat` calls, which produces N discrete sliders with no drawn curve,
+no drag interpolation, and no direct routing to an audio buffer.
 
 Forma's `drawable_canvas` renders a `vector<float>` of N samples as a
 continuous polyline. Its Form carries the painting interaction: NDC to sample
@@ -389,20 +397,23 @@ Portal::Forma::bridge().at(el.state).write(
     [](std::span<const float> s) { /* s.data(), s.size() */ });
 ```
 
-Two canvases on one surface give independent control over separate arrays -
+Two canvases on one surface give independent control over separate arrays,
 for example IIR a-coefs and b-coefs simultaneously:
 
 ```cpp
-auto b_el = Portal::Forma::create(surface,
-    Portal::Forma::Geometry::drawable_canvas(b_bounds, { 0.3F, 0.8F, 0.4F }), b_init);
-
-auto a_el = Portal::Forma::create(surface,
-    Portal::Forma::Geometry::drawable_canvas(a_bounds, { 0.8F, 0.4F, 0.3F }), a_init);
-
-Portal::Forma::bridge().at(b_el.state).write([iir](std::span<const float> s) {
+Portal::Forma::Tend<std::vector<float>> b_canvas {
+    .form = Portal::Forma::Geometry::drawable_canvas(b_bounds, { 0.3F, 0.8F, 0.4F }),
+    .initial = b_init,
+};
+b_canvas.place(surface).bridge().write([iir](std::span<const float> s) {
     iir->setBCoefficients({ s.begin(), s.end() });
 });
-Portal::Forma::bridge().at(a_el.state).write([iir](std::span<const float> s) {
+
+Portal::Forma::Tend<std::vector<float>> a_canvas {
+    .form = Portal::Forma::Geometry::drawable_canvas(a_bounds, { 0.8F, 0.4F, 0.3F }),
+    .initial = a_init,
+};
+a_canvas.place(surface).bridge().write([iir](std::span<const float> s) {
     if (!s.empty() && s[0] != 0.F)
         iir->setACoefficients({ s.begin(), s.end() });
 });
@@ -479,7 +490,7 @@ same viewport directly.
 | Implicit layout engine                            | Explicit NDC arithmetic + LayoutCursor                                                                 |
 | Internal widget state                             | Your state, written via `MappedState<T>::write`                                                        |
 | `if (Button(...))` inline action                  | `on_press` callback registered once                                                                    |
-| `SliderFloat` with press+drag implicit            | `on_drag` callback - no press flag                                                                     |
+| `SliderFloat` with press+drag implicit            | `on_drag` callback with no press flag                                                                  |
 | No keyboard routing to widgets                    | Per-element key focus: `on_press(key)`, `on_held(key)`, `on_release(key)`                              |
 | Style stack                                       | Per-element color/geometry at construction                                                             |
 | Docking, tables built-in                          | Build from primitives; no built-in containers. `Scrollable` ships a scroll viewport                    |

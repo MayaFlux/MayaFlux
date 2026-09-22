@@ -211,6 +211,64 @@ public:
      */
     void write(uint32_t id, std::function<void(std::span<const float>)> sink);
 
+    /**
+     * @brief Route an ordered set of scalar states as one float range each frame.
+     *
+     * The range order is exactly the order of @p states. This is a
+     * layer-owned route rather than an element-owned one: it does not consume
+     * an element id, replace a control's existing outbound bindings, or
+     * require a synthetic owner element. The task stops when @p layer stops.
+     *
+     * @param layer  Layer whose lifetime owns the aggregate route.
+     * @param states Non-null scalar states to sample in range order.
+     * @param sink   Consumer of the sampled range. The span is valid only
+     *               for the duration of the call.
+     */
+    void write(
+        Layer& layer,
+        const std::vector<std::shared_ptr<MappedState<float>>>& states,
+        std::function<void(std::span<const float>)> sink);
+
+    /**
+     * @brief Assemble a typed state range into DataVariant for a write processor.
+     *
+     * Each tick copies the current values of @p states, in order, into a
+     * contiguous span of their native @p T type. @p assemble authors the
+     * conversion from that span to DataVariant. Bridge owns the repeated
+     * sampling, layer lifetime, and delivery through
+     * @c Processor::set_data(DataVariant).
+     *
+     * @tparam T         Mapped state value type.
+     * @tparam Processor Destination exposing set_data(DataVariant).
+     * @tparam Assemble  Callable returning DataVariant from span<const T>.
+     * @param layer    Layer whose lifetime owns the aggregate route.
+     * @param states   Non-null states to sample in range order.
+     * @param assemble Author-supplied conversion into DataVariant.
+     * @param target   Processor receiving each assembled result.
+     */
+    template <typename T, typename Processor, typename Assemble>
+    void write(
+        Layer& layer,
+        const std::vector<std::shared_ptr<MappedState<T>>>& states,
+        Assemble assemble,
+        std::shared_ptr<Processor> target)
+    {
+        static_assert(std::is_same_v<
+                          std::remove_cvref_t<std::invoke_result_t<Assemble&, std::span<const T>>>,
+                          Kakshya::DataVariant>,
+            "Bridge aggregate assembly must return Kakshya::DataVariant");
+
+        auto sources = states;
+        auto assembler = std::make_shared<Assemble>(std::move(assemble));
+        auto values = std::make_shared<std::vector<T>>();
+
+        write_assembled_data(layer, [sources = std::move(sources), assembler, values]() mutable {
+                values->resize(sources.size());
+                for (size_t i = 0; i < sources.size(); ++i)
+                    (*values)[i] = sources[i]->value;
+                return (*assembler)(std::span<const T>(*values)); }, [target = std::move(target)](Kakshya::DataVariant data) { target->set_data(std::move(data)); });
+    }
+
     // =========================================================================
     // Outbound — MappedState overloads
     // =========================================================================
@@ -384,11 +442,12 @@ public:
     void unbind(uint32_t id);
 
     /**
-     * @brief Stop presentation sync tasks owned by a Layer.
+     * @brief Stop Bridge tasks owned by a Layer.
      *
-     * Other Bridge bindings associated with the element ids remain active.
+     * Stops presentation sync and aggregate routes. Element-owned
+     * bindings associated with individual ids remain active.
      *
-     * @param layer Layer whose presentation sync tasks should stop.
+     * @param layer Layer whose Bridge tasks should stop.
      */
     void stop_sync(Layer& layer);
 
@@ -563,12 +622,21 @@ private:
     mutable uint32_t m_next_id { 0 };
 
     std::unordered_map<uint32_t, ElementRecord> m_records;
-    std::unordered_map<const Layer*, std::vector<std::string>> m_sync_tasks;
+    std::unordered_map<const Layer*, std::vector<std::string>> m_layer_tasks;
 
     std::string make_task_name(uint32_t id, const char* suffix) const;
+    std::string make_layer_task_name(const char* suffix) const;
     void cancel_inbound(ElementRecord& rec);
     void cancel_outbound(ElementRecord& rec);
     void spawn_inbound(uint32_t id, std::function<float()> source);
+    void write_aggregate(
+        Layer& layer,
+        std::vector<std::function<float()>> readers,
+        std::function<void(std::span<const float>)> sink);
+    void write_assembled_data(
+        Layer& layer,
+        std::function<Kakshya::DataVariant()> assemble,
+        std::function<void(Kakshya::DataVariant)> write);
 };
 
 } // namespace MayaFlux::Portal::Forma

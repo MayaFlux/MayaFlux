@@ -60,6 +60,55 @@ public:
     using ShaderSource = std::variant<std::string, Portal::Graphics::ShaderSpec>;
 
     /**
+     * @struct GridConfig
+     * @brief Arrangement of a relaxation grid: extent, the update rule, the
+     *        emit stage that draws it, and their constants.
+     *
+     * Carries what varies between grids. What does not vary is fixed by the
+     * processors: stage order (rule, then emit, then render), the leading
+     * push constant prefixes, and the dispatch tiling. A rule shader
+     * declares GridExtent first and uses a 16x16 local size. An emit shader
+     * declares EmitParams first, uses a 256 local size, and writes one packed
+     * Kakshya::Vertex per cell.
+     *
+     * Names no rule. Any ShaderSource meeting those contracts is a rule,
+     * generated or hand-written.
+     *
+     * Structural: width, height, and every Stage::state and Stage::shader.
+     * They decide buffer sizes and which processors are built, so they are
+     * fixed at construction. Stage::constants initialize trailing push
+     * constant words during setup_processors. They establish that footprint
+     * for path shaders, while generated specs declare it themselves. Every
+     * word in the resulting block remains live-tunable through
+     * RelaxationStepProcessor::set_constant and
+     * RelaxationEmitProcessor::set_constant. extent and point_size are
+     * live-tunable through RelaxationEmitProcessor::set_extent and
+     * set_point_size. Float feeds remain available through
+     * ShaderProcessor::feed at an explicit byte offset.
+     */
+    struct GridConfig {
+        /** @brief One 4-byte push constant word, in the scalar types a shader block can hold. */
+        using Constant = std::variant<uint32_t, int32_t, float>;
+
+        /**
+         * @struct Stage
+         * @brief One compute stage of the grid, rule or emit.
+         */
+        struct Stage {
+            std::optional<Kakshya::GpuDataFormat> state; ///< Format of one cell as this stage reads it. Nullopt derives it from the ShaderSpec binding ("state_in" for a rule, "cell_state" for an emit). Required when shader is a path.
+            ShaderSource shader; ///< Hand-written shader path or generated ShaderSpec.
+            std::vector<Constant> constants; ///< Initial words after the stage's fixed prefix (GridExtent for a rule, EmitParams for an emit), in shader declaration order. Required to establish trailing words for path shaders.
+        };
+
+        uint32_t width; ///< Grid width in cells. Required.
+        uint32_t height; ///< Grid height in cells. Required.
+        Stage rule; ///< Required. Reads "state_in", writes "state_out".
+        Stage emit; ///< Required. Reads "cell_state", writes packed vertices.
+        float extent { 1.0F }; ///< NDC half-span the grid occupies.
+        float point_size { 2.0F }; ///< Per-point size written to the vertex scalar field.
+    };
+
+    /**
      * @brief Construct an unregistered double-buffered grid buffer.
      * @param width Grid width in cells.
      * @param height Grid height in cells.
@@ -68,12 +117,11 @@ public:
      *        rules needing branchy multi-state logic, e.g. Conway, Wireworld)
      *        or a generated ShaderSpec (e.g. RelaxationSpecs::jacobi_diffusion()).
      * @param emit_source Either a path to a hand-written emit shader, or a
-     *        generated ShaderSpec (e.g. RelaxationSpecs::emit_binary()).
+     *        generated ShaderSpec that meets the packed vertex contract.
      *
-     * rule_source and emit_source are independent: a hand-written rule paired
-     * with a generated emit spec, or any other combination, is fully
-     * supported. Processors are constructed from whichever alternative each
-     * holds in setup_processors().
+     * rule_source and emit_source are independent: any pairing meeting their
+     * respective contracts is supported. Processors are constructed from
+     * whichever alternative each holds in setup_processors().
      */
     RelaxationGridBuffer(
         uint32_t width,
@@ -81,6 +129,19 @@ public:
         size_t cell_stride_bytes,
         ShaderSource rule_source,
         ShaderSource emit_source);
+
+    /**
+     * @brief Construct from a GridConfig.
+     * @param config Grid arrangement.
+     * @throws std::invalid_argument When a path stage declares no state,
+     *         when rule and emit disagree on the cell format, or when the
+     *         format is a three component vector, whose std430 array stride
+     *         (16 bytes) differs from gpu_data_format_bytes.
+     *
+     * Derives the cell stride from the stage format and delegates to the
+     * positional constructor.
+     */
+    explicit RelaxationGridBuffer(const GridConfig& config);
 
     /**
      * @brief Destructor.
@@ -165,9 +226,9 @@ public:
     /**
      * @brief Request a snapshot of the next completed generation.
      *
-     * Wait-free. Consumed by RelaxationStepProcessor on the next
-     * on_after_execute call, which stages a device-to-host download of the
-     * newly-front state buffer and signals snapshot_source() with the result.
+     * Wait-free. Served by RelaxationStepProcessor after the next cycle that
+     * dispatches, once that dispatch has completed: a device-to-host copy of
+     * the newly-front state buffer is signalled on snapshot_source().
      */
     void request_snapshot() { m_snapshot_requested.store(true, std::memory_order_release); }
 
@@ -223,6 +284,10 @@ private:
     uint32_t m_width; ///< Grid width in cells.
     uint32_t m_height; ///< Grid height in cells.
     size_t m_cell_stride_bytes; ///< Size in bytes of one cell's state, fixed at construction.
+    std::vector<GridConfig::Constant> m_rule_constants; ///< Rule constants from GridConfig, written at setup_processors.
+    std::vector<GridConfig::Constant> m_emit_constants; ///< Emit constants from GridConfig, written at setup_processors.
+    float m_extent { 1.0F }; ///< Emit extent applied at setup_processors.
+    float m_point_size { 2.0F }; ///< Emit point size applied at setup_processors.
 
     ShaderSource m_rule_source; ///< Either a path to a hand-written rule shader or a generated ShaderSpec.
     ShaderSource m_emit_source; ///< Either a path to a hand-written emit shader or a generated ShaderSpec.

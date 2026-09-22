@@ -6,22 +6,27 @@
 
 namespace MayaFlux::Portal::Forma {
 
-Surface::Surface(std::shared_ptr<Core::Window> window,
-    std::shared_ptr<Layer> layer,
-    std::shared_ptr<Context> ctx)
-    : m_window_ownership(std::make_shared<WindowOwnership>(std::move(window)))
-    , m_layer(std::move(layer))
-    , m_ctx(std::move(ctx))
+Surface::Surface(SurfaceConfig config)
+    : m_window_ownership(std::make_shared<WindowOwnership>(std::move(config.window)))
+    , m_layer(std::move(config.layer))
+    , m_ctx(std::move(config.ctx))
 {
+    const bool detach = config.should_detach_on_close();
+
     auto close_ownership = m_window_ownership;
     auto close_layer = m_layer;
     auto* event_source = &close_ownership->window->get_event_source();
 
-    m_ctx->on_close(0, [ownership = std::move(close_ownership), layer = std::move(close_layer), event_source]() {
-        if (layer)
-            internal::atelier().bridge().stop_sync(*layer);
+    m_ctx->on_close(0, [ownership = std::move(close_ownership), layer = std::move(close_layer), event_source, detach, on_close = std::move(config.on_close)]() {
+        if (on_close)
+            on_close();
 
-        event_source->defer([ownership]() { ownership->window.reset(); });
+        if (detach) {
+            if (layer)
+                internal::atelier().bridge().stop_sync(*layer);
+
+            event_source->defer([ownership]() { ownership->window.reset(); });
+        }
     });
 }
 

@@ -33,6 +33,10 @@ geometry function if the version has advanced.
 **Bridge** wires `Mapped<T>` elements to the rest of the graph, in both
 directions.
 
+**Tend\<T\>** chains a `Form<T>`'s construction into a `Bridge` binding in one
+fluent statement, the same `place()` pattern `Collapsible`, `Scrollable`, and
+`TextField` already follow with their own construction.
+
 ---
 
 ## Creating a surface
@@ -41,7 +45,8 @@ directions.
 auto window = MayaFlux::create_window({ "My Surface", 1280, 720 });
 window->show();
 
-auto surface = Portal::Forma::create_surface(window, "my_surface");
+auto surface = Portal::Forma::create_surface(
+    Portal::Forma::SurfaceConfig { .window = window, .name = "my_surface" });
 ```
 
 `create_surface` builds the `Layer` and `Context` internally and wires them
@@ -80,13 +85,13 @@ buffer that you fill via `buf->submit(...)` yourself.
 
 ---
 
-## Kinesis::Geometry2D - static vertex data
+## Kinesis::Geometry2D : static vertex data
 
 `Kinesis::Geometry2D.hpp` produces raw vertex arrays. Pass the result directly
 to `create_buffer`, `buf->submit()`, or `write_verts` inside a geometry
 function. All coordinates are NDC (z = 0).
 
-### Filled shapes - `Kakshya::Vertex`, TRIANGLE_LIST
+### Filled shapes : `Kakshya::Vertex`, TRIANGLE_LIST
 
 | Function                                                  | Description                                                     |
 | --------------------------------------------------------- | --------------------------------------------------------------- |
@@ -112,7 +117,7 @@ auto buf = Portal::Forma::create_buffer(
     Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST);
 ```
 
-### Outlines - `Kakshya::LineVertex`, LINE_LIST
+### Outlines : `Kakshya::LineVertex`, LINE_LIST
 
 | Function                                                              | Description                           |
 | --------------------------------------------------------------------- | ------------------------------------- |
@@ -194,6 +199,9 @@ Portal::Forma::bridge().at(el.state).write(constant);
 
 That is the whole fader: geometry, correct topology, correct buffer size, and
 a drag whose inverse matches the handle placement.
+
+`Tend<T>`, introduced after Bridge below, chains this same construction
+directly into a binding for the common case where both happen together.
 
 Nothing enumerates the set of Forms. Any function returning one participates
 identically, including one you write. A bare `GeometryFn<T>` converts to a
@@ -319,7 +327,7 @@ surface.ctx().on_scroll (id, [](uint32_t id, glm::vec2 ndc, double dx, double dy
 `on_drag` is the preferred callback for continuous gestures (sliders, faders, canvas drawing). It tracks the originating element even when the cursor leaves its bounds, and fires on every motion event while the button is held. It does not require a separate press flag. Use `on_press`/`on_release` only when you need to detect the transition itself.
 
 ```cpp
-// Fader using on_drag - no pressed flag needed
+// Fader using on_drag, which needs no pressed flag
 surface.ctx().on_drag(el.element.id, IO::MouseButtons::Left,
     [state = el.state, track](uint32_t, glm::vec2 ndc) {
         state->write(std::clamp(
@@ -340,7 +348,7 @@ surface.ctx().on_press(id, IO::Keys::Enter, [](uint32_t id) { });
 // Key released
 surface.ctx().on_release(id, IO::Keys::Escape, [](uint32_t id) { });
 
-// Key held - fires on initial press and each OS repeat tick
+// Key held, fires on initial press and on each OS repeat tick
 // Useful for continuous adjustment (arrow key nudge, value increment)
 surface.ctx().on_held(id, IO::Keys::ArrowUp, [](uint32_t id) { });
 
@@ -551,7 +559,7 @@ Portal::Forma::bridge().at(el.state).write(audio_write_processor);
 // Route vector<float> state to any bulk float consumer
 Portal::Forma::bridge().at(el.state).write(
     [](std::span<const float> s) {
-        // s.data(), s.size() - full vector for vector<float> state,
+        // s.data() and s.size() give the full vector for vector<float> state,
         // single element for scalar state
     });
 ```
@@ -570,17 +578,29 @@ Portal::Forma::bridge().at(el.state)
     .write(compute_buf, "effect.frag.spv", offsetof(PC, cutoff));
 ```
 
-### Draggable fader writing to a node : full example
+### Tend\<T\> : place and bridge in one chain
+
+`create` and `bridge().at(...)` are two separate calls because they are two
+separate concerns: realizing a `Form<T>` on a surface, and wiring the result
+into the graph. `Tend<T>` is the everyday path when both happen together. It
+follows the same `place()` pattern `Collapsible`, `Scrollable`, and
+`TextField` already use for their own construction:
 
 ```cpp
-constexpr Kinesis::AABB2D track { glm::vec2(-0.8F, -0.08F), glm::vec2(0.8F, 0.08F) };
-
-auto el = Portal::Forma::create(
-    surface, Portal::Forma::Geometry::horizontal_fader(track, 0.04F), 0.5F);
-
 auto constant = vega.Constant(0.0) | Audio[0];
-Portal::Forma::bridge().at(el.state).write(constant);
+
+Portal::Forma::Tend<float> {
+    .form = Portal::Forma::Geometry::horizontal_fader(
+        { glm::vec2(-0.8F, -0.08F), glm::vec2(0.8F, 0.08F) }, 0.04F),
+    .initial = 0.5F,
+}.place(surface).bridge().write(constant);
 ```
+
+`place(surface)` calls `Portal::Forma::create` exactly as the fader example
+above does, and keeps a copy of `surface` so `result`, `surface`, `bridge()`,
+and `track()` all stay reachable afterward. `bridge()` returns the same
+`Binding` that `bridge().at(...)` does, so every `bind`/`write` overload
+above chains directly off it.
 
 ---
 

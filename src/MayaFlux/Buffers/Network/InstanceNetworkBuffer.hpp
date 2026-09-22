@@ -50,6 +50,12 @@ public:
         return m_ssbo_processor;
     }
 
+    /** @brief Return the live instance network driving this buffer. */
+    [[nodiscard]] std::shared_ptr<Nodes::Network::InstanceNetwork> get_network() const
+    {
+        return m_network;
+    }
+
 private:
     std::shared_ptr<Nodes::Network::InstanceNetwork> m_network;
     std::shared_ptr<InstanceSSBOProcessor> m_ssbo_processor;

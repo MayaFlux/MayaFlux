@@ -14,6 +14,11 @@ std::shared_ptr<Vruta::Routine> metro(double interval_seconds, std::function<voi
     if (token == Vruta::ProcessingToken::FRAME_ACCURATE) {
         auto coro = [](double interval, std::function<void()> cb) -> Vruta::GraphicsRoutine {
             uint64_t units = Vruta::seconds_to_frames(interval);
+            if (units < 1) {
+                MF_RT_WARN(Journal::Component::Kriya, Journal::Context::CoroutineScheduling,
+                    "metro interval {}s is shorter than one frame, clamping to 1 frame", interval);
+            }
+            units = std::max<uint64_t>(1, units);
             auto& p = co_await GetGraphicsPromise {};
             while (!p.should_terminate) {
                 cb();
@@ -24,6 +29,11 @@ std::shared_ptr<Vruta::Routine> metro(double interval_seconds, std::function<voi
     }
     auto coro = [](double interval, std::function<void()> cb) -> Vruta::SoundRoutine {
         uint64_t units = Vruta::seconds_to_samples(interval);
+        if (units < 1) {
+            MF_RT_WARN(Journal::Component::Kriya, Journal::Context::CoroutineScheduling,
+                "metro interval {}s is shorter than one sample, clamping to 1 sample", interval);
+        }
+        units = std::max<uint64_t>(1, units);
         auto& p = co_await GetAudioPromise {};
         while (!p.should_terminate) {
             cb();

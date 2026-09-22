@@ -30,7 +30,7 @@ Bridge::~Bridge()
         cancel_outbound(rec);
     }
 
-    for (auto& [layer, tasks] : m_sync_tasks) {
+    for (auto& [layer, tasks] : m_layer_tasks) {
         for (const auto& name : tasks)
             m_scheduler.cancel_task(name);
     }
@@ -330,6 +330,21 @@ void Bridge::write(uint32_t id, std::function<void(std::span<const float>)> sink
     }
 }
 
+void Bridge::write(
+    Layer& layer,
+    const std::vector<std::shared_ptr<MappedState<float>>>& states,
+    std::function<void(std::span<const float>)> sink)
+{
+    std::vector<std::function<float()>> readers;
+    readers.reserve(states.size());
+    for (const auto& state : states) {
+        readers.emplace_back([state] {
+            return state->value;
+        });
+    }
+    write_aggregate(layer, std::move(readers), std::move(sink));
+}
+
 // =============================================================================
 // Lifecycle
 // =============================================================================
@@ -346,14 +361,14 @@ void Bridge::unbind(uint32_t id)
 
 void Bridge::stop_sync(Layer& layer)
 {
-    auto it = m_sync_tasks.find(&layer);
-    if (it == m_sync_tasks.end())
+    auto it = m_layer_tasks.find(&layer);
+    if (it == m_layer_tasks.end())
         return;
 
     for (const auto& name : it->second)
         m_scheduler.cancel_task(name);
 
-    m_sync_tasks.erase(it);
+    m_layer_tasks.erase(it);
 }
 
 // =============================================================================
@@ -363,6 +378,12 @@ void Bridge::stop_sync(Layer& layer)
 std::string Bridge::make_task_name(uint32_t id, const char* suffix) const
 {
     return "forma_bridge_" + std::to_string(id) + "_" + suffix
+        + "_" + std::to_string(m_next_id++);
+}
+
+std::string Bridge::make_layer_task_name(const char* suffix) const
+{
+    return "forma_bridge_layer_" + std::string(suffix)
         + "_" + std::to_string(m_next_id++);
 }
 
@@ -405,7 +426,7 @@ void Bridge::spawn_sync(uint32_t id, std::function<void()> sync_fn)
 void Bridge::spawn_sync(Layer& layer, uint32_t id, std::function<void()> sync_fn)
 {
     auto name = make_task_name(id, "sync");
-    m_sync_tasks[&layer].push_back(name);
+    m_layer_tasks[&layer].push_back(name);
 
     auto routine = [](Vruta::TaskScheduler&,
                        std::function<void()> fn) -> Vruta::GraphicsRoutine {
@@ -419,6 +440,59 @@ void Bridge::spawn_sync(Layer& layer, uint32_t id, std::function<void()> sync_fn
     m_scheduler.add_task(
         std::make_shared<Vruta::GraphicsRoutine>(
             routine(m_scheduler, std::move(sync_fn))),
+        name, false);
+}
+
+void Bridge::write_aggregate(
+    Layer& layer,
+    std::vector<std::function<float()>> readers,
+    std::function<void(std::span<const float>)> sink)
+{
+    auto name = make_layer_task_name("bulk_sink");
+    m_layer_tasks[&layer].push_back(name);
+
+    auto routine = [](Vruta::TaskScheduler&,
+                       std::vector<std::function<float()>> sources,
+                       std::function<void(std::span<const float>)> target)
+        -> Vruta::GraphicsRoutine {
+        auto& p = co_await Kriya::GetGraphicsPromise {};
+        std::vector<float> values(sources.size());
+        while (!p.should_terminate) {
+            for (size_t i = 0; i < sources.size(); ++i)
+                values[i] = sources[i]();
+            target(values);
+            co_await Kriya::FrameDelay { .frames_to_wait = 1 };
+        }
+    };
+
+    m_scheduler.add_task(
+        std::make_shared<Vruta::GraphicsRoutine>(
+            routine(m_scheduler, std::move(readers), std::move(sink))),
+        name, false);
+}
+
+void Bridge::write_assembled_data(
+    Layer& layer,
+    std::function<Kakshya::DataVariant()> assemble,
+    std::function<void(Kakshya::DataVariant)> write)
+{
+    auto name = make_layer_task_name("assembled_data");
+    m_layer_tasks[&layer].push_back(name);
+
+    auto routine = [](Vruta::TaskScheduler&,
+                       std::function<Kakshya::DataVariant()> make_data,
+                       std::function<void(Kakshya::DataVariant)> target)
+        -> Vruta::GraphicsRoutine {
+        auto& p = co_await Kriya::GetGraphicsPromise {};
+        while (!p.should_terminate) {
+            target(make_data());
+            co_await Kriya::FrameDelay { .frames_to_wait = 1 };
+        }
+    };
+
+    m_scheduler.add_task(
+        std::make_shared<Vruta::GraphicsRoutine>(
+            routine(m_scheduler, std::move(assemble), std::move(write))),
         name, false);
 }
 

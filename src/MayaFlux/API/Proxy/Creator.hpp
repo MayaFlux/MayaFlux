@@ -1,10 +1,11 @@
 #pragma once
 
 #include "Domain.hpp"
-#include "MayaFlux/API/Depot.hpp"
+#include "Evolve.hpp"
+#include "Mint.hpp"
 #include "Registry.hpp"
 
-#include "MayaFlux/Transitive/Memory/LiveArena.hpp"
+#include "MayaFlux/API/Depot.hpp"
 
 namespace MayaFlux {
 
@@ -103,6 +104,49 @@ private:
 
 class MAYAFLUX_API Creator {
 public:
+    /**
+     * @brief Sets a system going from a config: state that persists, a rule
+     *        that advances it every cycle, and rendering attached.
+     *
+     * Overloaded on the config it is given: RelaxationGridBuffer::GridConfig
+     * (optionally with a seed callable), VolumeGridBuffer::FlowConfig over a
+     * volume, or SpatialFieldConfig over a field-compatible network. Each call
+     * performs the whole sequence and returns the real object, which then
+     * advances on its own each cycle. The call sets it going and does not step
+     * it. Every call requires RenderConfig::target_window.
+     *
+     * @code
+     * auto life  = vega.evolve(grid_config, seed, { .target_window = window });
+     * auto smoke = vega.evolve(volume, flow_config, { .target_window = window });
+     * @endcode
+     *
+     * @see Evolve
+     */
+    Evolve evolve;
+
+    /**
+     * @brief Builds a visible structure from a StructureConfig: resolves its
+     *        source, constructs and registers what it needs, and attaches
+     *        rendering.
+     *
+     * Overloaded on the arrangement: StructureConfig::Object, Model, Instances,
+     * Assembly or Isosurface. Each call returns the real buffer. For Object,
+     * Model and Instances the node or network is reached through the buffer's
+     * get_node or get_network. Mint builds form and does not advance state,
+     * which is what evolve is for. Every config requires
+     * RenderConfig::target_window.
+     *
+     * @code
+     * auto form = vega.mint(StructureConfig::Object {
+     *     .mesh = mesh,
+     *     .render = { .target_window = window } });
+     * @endcode
+     *
+     * @see Mint
+     * @see StructureConfig
+     */
+    Mint mint;
+
 #define N(method_name, full_type_name)                                            \
     template <typename... Args>                                                   \
         requires std::constructible_from<full_type_name, Args...>                 \
@@ -320,12 +364,35 @@ static constexpr DomainSpec Graphics { .value = Domain::GRAPHICS };
 /**
  * @brief Global Creator instance.
  *
+ * Every call on vega is one of three kinds:
+ * - Class-named factories (Sine, AudioBuffer, ModalNetwork, TextureBuffer and
+ *   the rest of the registry) construct the class with exactly its
+ *   constructor arguments. The pipe registers the result in a domain.
+ * - read_* loaders take a source and return the real object. read_audio,
+ *   read_image, read_mesh and read_mesh_network load from a path or, with no
+ *   argument, from the matching choose_* call. read_mesh returns a
+ *   MeshGroupHandle that the pipe registers. read_hid, read_midi, read_osc,
+ *   read_tablet and read_input create an input node and register it against
+ *   a binding.
+ * - evolve and mint take a config and perform the whole sequence, returning
+ *   the real object with rendering attached.
+ *
  * @code
  * auto wave = vega.Sine(440.f) | Audio[0];
  * auto buf  = vega.AudioBuffer(0, 512) | Audio[0];
  * auto net  = vega.ModalNetwork(16, 220.0) | Audio[{0, 1}];
  * auto tex  = vega.TextureBuffer(...) | Graphics;
- * auto sfx  = vega.read_audio("x.wav") | Audio;
+ *
+ * auto sfx    = vega.read_audio("x.wav") | Audio;
+ * auto image  = vega.read_image("x.png") | Graphics;
+ * auto meshes = vega.read_mesh("x.fbx") | Graphics;
+ * auto pad    = vega.read_midi(config, binding);
+ *
+ * auto life  = vega.evolve(grid_config, seed, { .target_window = window });
+ * auto smoke = vega.evolve(volume, flow_config, { .target_window = window });
+ * auto form  = vega.mint(StructureConfig::Object {
+ *     .mesh = mesh,
+ *     .render = { .target_window = window } });
  * @endcode
  */
 extern MAYAFLUX_API Creator vega;

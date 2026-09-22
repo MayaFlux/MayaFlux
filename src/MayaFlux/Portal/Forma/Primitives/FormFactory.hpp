@@ -58,7 +58,7 @@ void wire_drag(
 MAYAFLUX_API void wire_canvas_drag(
     Context& ctx,
     uint32_t id,
-    std::shared_ptr<MappedState<std::vector<float>>> state,
+    const std::shared_ptr<MappedState<std::vector<float>>>& state,
     Kinesis::AABB2D bounds);
 
 /**
@@ -97,8 +97,8 @@ template <typename T>
 [[nodiscard]] inline auto paint_over(Kinesis::AABB2D bounds)
 {
     return [bounds](Context& ctx, uint32_t id,
-               std::shared_ptr<MappedState<std::vector<float>>> state) {
-        wire_canvas_drag(ctx, id, std::move(state), bounds);
+               const std::shared_ptr<MappedState<std::vector<float>>>& state) {
+        wire_canvas_drag(ctx, id, state, bounds);
     };
 }
 
@@ -132,16 +132,20 @@ template <typename T>
 
 /**
  * @brief Geometry function for a horizontal fader in NDC space.
- * @param bounds      Full extent of the fader in NDC.
- * @param handle_w    Handle width in NDC units.
- * @param track_color Track quad color.
+ * @param bounds       Full extent of the fader in NDC.
+ * @param handle_w     Handle width in NDC units.
+ * @param track_color  Track quad color.
  * @param handle_color Handle quad color.
+ * @param live_offset  Optional. Current translation of the drawn fader,
+ *                      e.g. a Scrollable's live scroll offset. Shifts both
+ *                      the rendered geometry and the drag's cursor mapping.
  */
 [[nodiscard]] MAYAFLUX_API Form<float> horizontal_fader(
     Kinesis::AABB2D bounds,
     float handle_w,
     glm::vec3 track_color = glm::vec3(0.3F),
-    glm::vec3 handle_color = glm::vec3(0.9F));
+    glm::vec3 handle_color = glm::vec3(0.9F),
+    const std::function<glm::vec2()>& live_offset = {});
 
 // =============================================================================
 // Vertical fader
@@ -162,12 +166,14 @@ template <typename T>
  * @param handle_h     Handle height in NDC units.
  * @param track_color  Track quad color.
  * @param handle_color Handle quad color.
+ * @param live_offset  Optional. Current translation of the drawn fader.
  */
 [[nodiscard]] MAYAFLUX_API Form<float> vertical_fader(
     Kinesis::AABB2D bounds,
     float handle_h,
     glm::vec3 track_color = glm::vec3(0.3F),
-    glm::vec3 handle_color = glm::vec3(0.9F));
+    glm::vec3 handle_color = glm::vec3(0.9F),
+    const std::function<glm::vec2()>& live_offset = {});
 
 // =============================================================================
 // Radial / arc
@@ -187,12 +193,14 @@ template <typename T>
  * @param angle_start Start angle in radians (value = 0).
  * @param angle_end   End angle in radians (value = 1).
  * @param color       Line color.
+ * @param live_offset Optional. Current translation of the drawn indicator.
  */
 [[nodiscard]] MAYAFLUX_API Form<float> radial(
     Kinesis::AABB2D region,
     float angle_start,
     float angle_end,
-    glm::vec3 color = glm::vec3(0.9F));
+    glm::vec3 color = glm::vec3(0.9F),
+    const std::function<glm::vec2()>& live_offset = {});
 
 // =============================================================================
 // Point
@@ -227,14 +235,16 @@ template <typename T>
 
 /**
  * @brief Geometry function for a 2D position picker in NDC space.
- * @param bounds Full extent of the pick area in NDC.
- * @param color  Point color.
- * @param size   Point size in pixels.
+ * @param bounds      Full extent of the pick area in NDC.
+ * @param color       Point color.
+ * @param size        Point size in pixels.
+ * @param live_offset Optional. Current translation of the drawn area.
  */
 [[nodiscard]] MAYAFLUX_API Form<glm::vec2> position_picker(
     Kinesis::AABB2D bounds,
     glm::vec3 color = glm::vec3(0.9F),
-    float size = 8.0F);
+    float size = 8.0F,
+    const std::function<glm::vec2()>& live_offset = {});
 
 // =============================================================================
 // Stroke slider
@@ -272,6 +282,7 @@ template <typename T>
  * @param fill_color     Color of the prefix segment up to the handle.
  * @param handle_color   Color of the handle point.
  * @param handle_size    Handle point size in pixels.
+ * @param live_offset    Optional. Current translation of the drawn path.
  */
 [[nodiscard]] MAYAFLUX_API Form<float> stroke_slider(
     std::span<const glm::vec2> path,
@@ -280,7 +291,8 @@ template <typename T>
     glm::vec3 track_color = glm::vec3(0.3F),
     glm::vec3 fill_color = glm::vec3(0.2F, 0.6F, 1.0F),
     glm::vec3 handle_color = glm::vec3(0.95F),
-    float handle_size = 10.0F);
+    float handle_size = 10.0F,
+    const std::function<glm::vec2()>& live_offset = {});
 
 // =============================================================================
 // Toggle
@@ -303,14 +315,18 @@ template <typename T>
  * Renders @p region as a filled rect in @p color_off or @p color_on based
  * on the current bool value. Interaction is the caller's responsibility.
  *
- * @param region    NDC bounds of the toggle.
- * @param color_off Fill color when false.
- * @param color_on  Fill color when true.
+ * @param region      NDC bounds of the toggle.
+ * @param color_off   Fill color when false.
+ * @param color_on    Fill color when true.
+ * @param live_offset Optional. Current translation of the drawn toggle -
+ *                     the wire (press_flip) does no coordinate math itself,
+ *                     so only the geometry needs this.
  */
 [[nodiscard]] MAYAFLUX_API Form<bool> toggle(
     Kinesis::AABB2D region,
     glm::vec3 color_off = glm::vec3(0.25F),
-    glm::vec3 color_on = glm::vec3(0.2F, 0.7F, 0.4F));
+    glm::vec3 color_on = glm::vec3(0.2F, 0.7F, 0.4F),
+    const std::function<glm::vec2()>& live_offset = {});
 
 // =============================================================================
 // Level meter
@@ -335,12 +351,14 @@ template <typename T>
  * @param horizontal  True for left-to-right fill, false for bottom-to-top.
  * @param fill_color  Color of the active (filled) portion.
  * @param track_color Color of the inactive remainder.
+ * @param live_offset Optional. Current translation of the drawn meter.
  */
 [[nodiscard]] MAYAFLUX_API Form<float> level_meter(
     Kinesis::AABB2D bounds,
     bool horizontal = true,
     glm::vec3 fill_color = glm::vec3(0.2F, 0.7F, 0.3F),
-    glm::vec3 track_color = glm::vec3(0.15F));
+    glm::vec3 track_color = glm::vec3(0.15F),
+    const std::function<glm::vec2()>& live_offset = {});
 
 // =============================================================================
 // Crosshair
@@ -401,17 +419,22 @@ template <typename T>
  * @param bounds      Canvas extent in NDC.
  * @param color       Line color.
  * @param thickness   LineVertex thickness value.
+ * @param live_offset Optional. Current translation of the drawn canvas -
+ *                     geometry only. paint_over()/wire_canvas_drag() do
+ *                     their own inline cursor math, not routed through
+ *                     Kinesis::Projection, and are not offset-aware here.
  */
 [[nodiscard]] MAYAFLUX_API Form<std::vector<float>> drawable_canvas(
     Kinesis::AABB2D bounds,
     glm::vec3 color = glm::vec3(0.8F),
-    float thickness = 1.5F);
+    float thickness = 1.5F,
+    const std::function<glm::vec2()>& live_offset = {});
 
 // =============================================================================
 // Scroll indicator
 //
 // Value type: glm::vec2, matching Scrollable::indicator()'s
-// (position_frac, extent_frac) contract exactly - x is 0 at the top of
+// (position_frac, extent_frac) contract exactly. x is 0 at the top of
 // content, 1 at the fully scrolled bottom; y is the viewport/content
 // height ratio. Renders a single filled bar within track: length is
 // extent_frac of track's height, position slides from track's top to its
@@ -423,7 +446,7 @@ template <typename T>
 //
 // The obvious default, not a privileged one: any GeometryFn<glm::vec2>
 // reacting to the same pair works identically with
-// Scrollable::indicator() - a squiggle, a sampled texture, anything
+// Scrollable::indicator(). A squiggle, a sampled texture, anything
 // computable.
 //
 // Topology: TRIANGLE_STRIP (4 MeshVertex via to_mesh_vertices).
@@ -432,7 +455,7 @@ template <typename T>
 /**
  * @brief Geometry function for Scrollable's default scroll indicator visual.
  *
- * @param track NDC region the bar travels within - the same region passed
+ * @param track NDC region the bar travels within, the same region passed
  *              to Scrollable::indicator()'s own track parameter.
  * @param color Bar fill color.
  */

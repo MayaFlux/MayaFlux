@@ -47,12 +47,27 @@ void RelaxationStepProcessor::write_state_descriptors(const std::shared_ptr<Rela
 
 void RelaxationStepProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
 {
+    if (m_step_predicate && !m_step_predicate()) {
+        return;
+    }
+
+    m_dispatched = false;
+
     if (m_grid && are_descriptors_ready()) {
         write_state_descriptors(m_grid);
-        m_grid->swap_generation();
     }
 
     ComputeProcessor::processing_function(buffer);
+
+    if (!m_dispatched || !m_grid) {
+        return;
+    }
+
+    m_grid->swap_generation();
+
+    if (!is_deferred_submission()) {
+        serve_snapshot();
+    }
 }
 
 void RelaxationStepProcessor::write_grid_extent_constants()
@@ -99,34 +114,37 @@ bool RelaxationStepProcessor::on_before_execute(
     Portal::Graphics::CommandBufferID /*cmd_id*/,
     const std::shared_ptr<VKBuffer>& buffer)
 {
-    if (!std::dynamic_pointer_cast<RelaxationGridBuffer>(buffer)) {
-        return false;
-    }
-
-    return !m_step_predicate || m_step_predicate();
+    return std::dynamic_pointer_cast<RelaxationGridBuffer>(buffer) != nullptr;
 }
 
-void RelaxationStepProcessor::on_after_execute(
+bool RelaxationStepProcessor::on_iteration(
     Portal::Graphics::CommandBufferID /*cmd_id*/,
-    const std::shared_ptr<VKBuffer>& buffer)
+    const std::shared_ptr<VKBuffer>& /*buffer*/,
+    uint32_t /*index*/)
 {
-    auto grid = std::dynamic_pointer_cast<RelaxationGridBuffer>(buffer);
-    if (!grid) {
+    m_dispatched = true;
+    return true;
+}
+
+void RelaxationStepProcessor::on_dispatch_complete(const std::shared_ptr<VKBuffer>& /*buffer*/)
+{
+    if (m_grid) {
+        serve_snapshot();
+    }
+}
+
+void RelaxationStepProcessor::serve_snapshot()
+{
+    if (!m_grid->consume_snapshot_request()) {
         return;
     }
 
-    grid->swap_generation();
+    const auto& front = m_grid->get_buffer_resources().back_buffers[m_grid->front_index()];
 
-    if (!grid->consume_snapshot_request()) {
-        return;
-    }
-
-    const auto& front = grid->get_buffer_resources().back_buffers[grid->front_index()];
-
-    std::vector<uint8_t> bytes(grid->get_state_bytes());
+    std::vector<uint8_t> bytes(m_grid->get_state_bytes());
     download_back_buffer(front, bytes.data(), bytes.size(), m_snapshot_staging);
 
-    grid->snapshot_source()->signal(bytes);
+    m_grid->snapshot_source()->signal(bytes);
 }
 
 } // namespace MayaFlux::Buffers

@@ -34,6 +34,7 @@ namespace Nodes {
         class ModalNetwork;
         class WaveguideNetwork;
         class ResonatorNetwork;
+        class RelationNetwork;
         class ParticleNetwork;
         class PointCloudNetwork;
         class MeshNetwork;
@@ -121,6 +122,7 @@ namespace IO {
     W(ModalNetwork, MayaFlux::Nodes::Network::ModalNetwork)           \
     W(WaveguideNetwork, MayaFlux::Nodes::Network::WaveguideNetwork)   \
     W(ResonatorNetwork, MayaFlux::Nodes::Network::ResonatorNetwork)   \
+    W(RelationNetwork, MayaFlux::Nodes::Network::RelationNetwork)     \
     W(ParticleNetwork, MayaFlux::Nodes::Network::ParticleNetwork)     \
     W(PointCloudNetwork, MayaFlux::Nodes::Network::PointCloudNetwork) \
     W(InstanceNetwork, MayaFlux::Nodes::Network::InstanceNetwork)     \

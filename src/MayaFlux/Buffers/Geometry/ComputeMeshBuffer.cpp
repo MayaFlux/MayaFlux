@@ -15,6 +15,37 @@ namespace MayaFlux::Buffers {
 // ============================================================================
 
 ComputeMeshBuffer::ComputeMeshBuffer(
+    Config config)
+    : VKBuffer(
+          worst_case_bytes(
+              config.resolution_x, config.resolution_y, config.resolution_z),
+          Usage::VERTEX,
+          Kakshya::DataModality::VERTEX_POSITIONS_3D)
+    , m_res_x(std::max(config.resolution_x, 1U))
+    , m_res_y(std::max(config.resolution_y, 1U))
+    , m_res_z(std::max(config.resolution_z, 1U))
+    , m_bounds_min(config.bounds_min)
+    , m_bounds_max(config.bounds_max)
+    , m_iso_level(config.iso_level)
+{
+    std::visit([this](auto&& source) {
+        using Source = std::remove_cvref_t<decltype(source)>;
+        if constexpr (std::is_same_v<Source, Kinesis::SpatialField>) {
+            m_field = std::move(source);
+        } else {
+            m_gpu_field = true;
+            m_field_shader = std::move(source).string();
+        }
+    }, std::move(config.source));
+
+    MF_INFO(Journal::Component::Buffers, Journal::Context::Init,
+        "ComputeMeshBuffer{}: {}x{}x{} grid, {:.1f} MB worst-case",
+        m_gpu_field ? " (GPU field)" : "",
+        m_res_x, m_res_y, m_res_z,
+        static_cast<float>(get_size_bytes()) / (1024.F * 1024.F));
+}
+
+ComputeMeshBuffer::ComputeMeshBuffer(
     Kinesis::SpatialField field,
     const glm::vec3& bounds_min,
     const glm::vec3& bounds_max,
@@ -22,22 +53,16 @@ ComputeMeshBuffer::ComputeMeshBuffer(
     uint32_t res_y,
     uint32_t res_z,
     float iso_level)
-    : VKBuffer(
-          worst_case_bytes(res_x, res_y, res_z),
-          Usage::VERTEX,
-          Kakshya::DataModality::VERTEX_POSITIONS_3D)
-    , m_res_x(std::max(res_x, 1U))
-    , m_res_y(std::max(res_y, 1U))
-    , m_res_z(std::max(res_z, 1U))
-    , m_field(std::move(field))
-    , m_bounds_min(bounds_min)
-    , m_bounds_max(bounds_max)
-    , m_iso_level(iso_level)
+    : ComputeMeshBuffer(Config {
+          .source = std::move(field),
+          .bounds_min = bounds_min,
+          .bounds_max = bounds_max,
+          .resolution_x = res_x,
+          .resolution_y = res_y,
+          .resolution_z = res_z,
+          .iso_level = iso_level,
+      })
 {
-    MF_INFO(Journal::Component::Buffers, Journal::Context::Init,
-        "ComputeMeshBuffer: {}x{}x{} grid, {:.1f} MB worst-case",
-        m_res_x, m_res_y, m_res_z,
-        static_cast<float>(get_size_bytes()) / (1024.F * 1024.F));
 }
 
 ComputeMeshBuffer::ComputeMeshBuffer(
@@ -48,23 +73,16 @@ ComputeMeshBuffer::ComputeMeshBuffer(
     uint32_t res_z,
     float iso_level,
     std::string field_shader)
-    : VKBuffer(
-          worst_case_bytes(res_x, res_y, res_z),
-          Usage::VERTEX,
-          Kakshya::DataModality::VERTEX_POSITIONS_3D)
-    , m_res_x(std::max(res_x, 1U))
-    , m_res_y(std::max(res_y, 1U))
-    , m_res_z(std::max(res_z, 1U))
-    , m_bounds_min(bounds_min)
-    , m_bounds_max(bounds_max)
-    , m_iso_level(iso_level)
-    , m_gpu_field(true)
-    , m_field_shader(std::move(field_shader))
+    : ComputeMeshBuffer(Config {
+          .source = std::filesystem::path { std::move(field_shader) },
+          .bounds_min = bounds_min,
+          .bounds_max = bounds_max,
+          .resolution_x = res_x,
+          .resolution_y = res_y,
+          .resolution_z = res_z,
+          .iso_level = iso_level,
+      })
 {
-    MF_INFO(Journal::Component::Buffers, Journal::Context::Init,
-        "ComputeMeshBuffer (GPU field): {}x{}x{} grid, {:.1f} MB worst-case",
-        m_res_x, m_res_y, m_res_z,
-        static_cast<float>(get_size_bytes()) / (1024.F * 1024.F));
 }
 
 // ============================================================================
