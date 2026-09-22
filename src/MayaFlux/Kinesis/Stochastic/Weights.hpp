@@ -183,6 +183,63 @@ public:
     }
 
     /**
+     * @brief Every cell uniform except the diagonal, each row normalized
+     *        to sum to one
+     * @note Assumes a square table. A row beyond the column count has no
+     *       diagonal cell to zero and is filled uniformly as-is.
+     *
+     * The common starting point for a transition table that should never
+     * pick its own row: every other cell equally likely, before any
+     * further shaping.
+     */
+    void uniform_excluding_self() noexcept
+    {
+        fill(1.0);
+        for (size_t i = 0; i < m_rows; ++i) {
+            if (i < m_cols) {
+                (*this)(i, i) = 0.0;
+            }
+            normalize_row(i);
+        }
+    }
+
+    /**
+     * @brief Write an adjacency edge list into this table
+     * @param edges Index pairs, the same shape Kinesis::EdgeList is
+     *        (Spatial::ProximityGraphs' sequential_chain(),
+     *        k_nearest_neighbors(), minimum_spanning_tree(), and so on
+     *        all return one)
+     * @param weight Value written at each edge
+     * @param symmetric When true (the default), also writes the reverse
+     *        direction for every edge, matching an undirected graph. Some
+     *        EdgeList producers (k_nearest_neighbors, nearest_neighbor_graph)
+     *        are already directed; pass false for those.
+     * @param normalize When true (the default), every row touched by an
+     *        edge is normalized afterward, so the result is directly
+     *        usable as a transition table.
+     * @note An index outside this table's bounds is skipped rather than
+     *       trusted, since edges typically comes from an external
+     *       computation over a possibly different point count.
+     */
+    void apply_edges(std::span<const std::pair<size_t, size_t>> edges,
+        double weight = 1.0, bool symmetric = true, bool normalize = true) noexcept
+    {
+        for (const auto& [a, b] : edges) {
+            if (a < m_rows && b < m_cols) {
+                (*this)(a, b) = weight;
+            }
+            if (symmetric && b < m_rows && a < m_cols) {
+                (*this)(b, a) = weight;
+            }
+        }
+        if (normalize) {
+            for (size_t i = 0; i < m_rows; ++i) {
+                normalize_row(i);
+            }
+        }
+    }
+
+    /**
      * @brief Weighted random draw over a row of nonnegative weights
      * @param weights Row to draw from. Negative entries are treated as zero.
      * @param generator Entropy source for the draw

@@ -42,14 +42,37 @@ public:
 
     /**
      * @brief Add a slot to the network
-     * @param name Logical name for lookup and logging. May be empty.
+     * @param slot Fields not set take RelationSlot's own defaults. index is
+     *             overwritten regardless of what is passed; a .node set
+     *             directly still gets its hooks enabled, the same as
+     *             RelationSlot::set_node().
      * @return Stable index of the new slot. Never changes after insertion,
      *         though the slot's address may, on this or any later add_slot().
      */
-    uint32_t add_slot(std::string name = {});
+    uint32_t add_slot(RelationSlot slot = {});
+
+    /**
+     * @brief Add several slots at once
+     * @param slots One slot per new entry, in order
+     * @return The new slots' indices, in the same order as slots
+     */
+    std::vector<uint32_t> add_slots(std::initializer_list<RelationSlot> slots);
 
     [[nodiscard]] RelationSlot& get_slot(uint32_t index);
     [[nodiscard]] const RelationSlot& get_slot(uint32_t index) const;
+
+    /**
+     * @brief Find a slot by name
+     * @return A reference to the slot, or nullopt if not found
+     */
+    [[nodiscard]] std::optional<std::reference_wrapper<RelationSlot>> find_slot(std::string_view name);
+    [[nodiscard]] std::optional<std::reference_wrapper<const RelationSlot>> find_slot(std::string_view name) const;
+
+    /**
+     * @brief Find the index of a slot by name
+     * @return Index, or nullopt if not found
+     */
+    [[nodiscard]] std::optional<uint32_t> find_slot_index(std::string_view name) const;
 
     [[nodiscard]] size_t slot_count() const noexcept { return m_slots.size(); }
 

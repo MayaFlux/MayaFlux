@@ -8,19 +8,30 @@ RelationNetwork::RelationNetwork()
     m_operator_chain = std::make_shared<OperatorChain>();
 }
 
-uint32_t RelationNetwork::add_slot(std::string name)
+uint32_t RelationNetwork::add_slot(RelationSlot slot)
 {
     constexpr uint32_t k_default_block_frames = 512;
 
-    const auto index = static_cast<uint32_t>(m_slots.size());
-
-    RelationSlot slot;
-    slot.index = index;
-    slot.name = std::move(name);
+    slot.index = static_cast<uint32_t>(m_slots.size());
+    if (slot.node) {
+        slot.node->m_fire_events_during_snapshot = true;
+    }
     slot.reserve_block(k_default_block_frames);
+
+    const uint32_t index = slot.index;
     m_slots.push_back(std::move(slot));
 
     return index;
+}
+
+std::vector<uint32_t> RelationNetwork::add_slots(std::initializer_list<RelationSlot> slots)
+{
+    std::vector<uint32_t> indices;
+    indices.reserve(slots.size());
+    for (const auto& slot : slots) {
+        indices.push_back(add_slot(slot));
+    }
+    return indices;
 }
 
 RelationSlot& RelationNetwork::get_slot(uint32_t index)
@@ -31,6 +42,34 @@ RelationSlot& RelationNetwork::get_slot(uint32_t index)
 const RelationSlot& RelationNetwork::get_slot(uint32_t index) const
 {
     return m_slots[index];
+}
+
+std::optional<std::reference_wrapper<RelationSlot>> RelationNetwork::find_slot(std::string_view name)
+{
+    auto it = std::ranges::find_if(m_slots, [name](const RelationSlot& slot) { return slot.name == name; });
+    if (it == m_slots.end()) {
+        return std::nullopt;
+    }
+    return std::ref(*it);
+}
+
+std::optional<std::reference_wrapper<const RelationSlot>> RelationNetwork::find_slot(std::string_view name) const
+{
+    auto it = std::ranges::find_if(m_slots, [name](const RelationSlot& slot) { return slot.name == name; });
+    if (it == m_slots.end()) {
+        return std::nullopt;
+    }
+    return std::cref(*it);
+}
+
+std::optional<uint32_t> RelationNetwork::find_slot_index(std::string_view name) const
+{
+    for (uint32_t i = 0; i < static_cast<uint32_t>(m_slots.size()); ++i) {
+        if (m_slots[i].name == name) {
+            return i;
+        }
+    }
+    return std::nullopt;
 }
 
 void RelationNetwork::process_batch(unsigned int num_samples)

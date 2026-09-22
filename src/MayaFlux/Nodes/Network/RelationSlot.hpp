@@ -21,6 +21,19 @@ namespace MayaFlux::Nodes::Network {
  *
  * Structural edits (assigning a node, registering callbacks) must happen
  * outside process_batch().
+ *
+ * A plain aggregate: RelationNetwork::add_slot() takes one by value, so it
+ * can be built with a designated initializer instead of a set_node() call
+ * afterward.
+ *
+ * @code
+ * n->add_slot({ .name = "carrier", .node = vega.Sine(220.0, 1.0) });
+ * n->add_slot({ .name = "product" }); // no node
+ * @endcode
+ *
+ * @note .node set this way still gets its hooks enabled: add_slot()
+ *       applies that regardless of whether the node arrived through
+ *       set_node() or through the .node field directly.
  */
 struct RelationSlot {
     uint32_t index {};

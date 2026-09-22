@@ -33,12 +33,12 @@ namespace MayaFlux::Nodes::Network {
  * (UNIFORM by default).
  *
  * The first call to process(), advance(), or jump() establishes the single-
- * active-slot state: it activates slot 0 (or whichever slot m_current
- * already names) and deactivates every other slot that exists at that
- * moment, before doing anything else. A slot added by add_slot() afterward
- * starts at RelationSlot's own default (active) like any other new slot;
- * WalkOperator does not retroactively enforce its invariant on it. jump() it
- * explicitly to bring it into the walk.
+ * active-slot state: it activates starting_index (0 unless the constructor
+ * was given a different one) and deactivates every other slot that exists
+ * at that moment, before doing anything else. A slot added by add_slot()
+ * afterward starts at RelationSlot's own default (active) like any other
+ * new slot; WalkOperator does not retroactively enforce its invariant on
+ * it. jump() it explicitly to bring it into the walk.
  *
  * Parameters:
  * - "current": jumps to that slot index when it differs from the current one,
@@ -67,8 +67,11 @@ public:
      *                       needed. When zero (the default), process() does
      *                       nothing and only explicit advance()/jump() calls,
      *                       or a mapped "current" Source, move the walk.
+     * @param starting_index Slot established as active on the first call to
+     *                       process(), advance(), or jump(). 0 by default.
      */
-    explicit WalkOperator(std::shared_ptr<Kinesis::Stochastic::Weights> table, Pick pick = {}, uint32_t every_n_blocks = 0);
+    explicit WalkOperator(std::shared_ptr<Kinesis::Stochastic::Weights> table, Pick pick = {},
+        uint32_t every_n_blocks = 0, size_t starting_index = 0);
 
     /**
      * @brief Step once
@@ -78,7 +81,9 @@ public:
 
     /**
      * @brief Make a slot the active one
-     * @param index Slot index. Out of range is ignored.
+     * @param index Slot index. Ignored if out of range for the network's
+     *              current slot count or for the table's own row count,
+     *              whichever is smaller.
      */
     void jump(size_t index);
 

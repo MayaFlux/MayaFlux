@@ -2,12 +2,14 @@
 
 namespace MayaFlux::Nodes::Network {
 
-WalkOperator::WalkOperator(std::shared_ptr<Kinesis::Stochastic::Weights> table, Pick pick, uint32_t every_n_blocks)
+WalkOperator::WalkOperator(std::shared_ptr<Kinesis::Stochastic::Weights> table, Pick pick,
+    uint32_t every_n_blocks, size_t starting_index)
     : m_table(std::move(table))
     , m_pick(std::move(pick))
+    , m_current(starting_index)
+    , m_blocks_until(every_n_blocks)
 {
     m_every_n_blocks.store(every_n_blocks, std::memory_order_relaxed);
-    m_blocks_until = every_n_blocks;
 }
 
 void WalkOperator::ensure_established()
@@ -70,7 +72,7 @@ void WalkOperator::jump(size_t index)
     ensure_established();
 
     auto all = slots();
-    if (index >= all.size()) {
+    if (index >= all.size() || index >= m_table->rows()) {
         return;
     }
 
