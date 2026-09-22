@@ -1,6 +1,7 @@
 #pragma once
 
-#include "CameraReader.hpp"
+#include "CameraSource.hpp"
+#include "FFmpegCameraReader.hpp"
 #include "ImageWriter.hpp"
 #include "ModelWriter.hpp"
 #include "SoundFileWriter.hpp"
@@ -339,17 +340,21 @@ public:
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
-     * @brief Open a camera device and create a CameraContainer.
+     * @brief Open an FFmpeg camera device and create a CameraContainer.
      *
-     * Constructs a CameraReader, opens the device, creates the container,
-     * configures its FrameAccessProcessor (auto_advance disabled), assigns
-     * a globally unique reader_id, registers the reader for IOService
-     * dispatch, and wires the container's IOService callback via
-     * CameraContainer::setup_io().
+     * Convenience wrapper over the backend-agnostic hosting path: constructs
+     * an FFmpegCameraReader, opens the device, creates the container,
+     * configures its FrameAccessProcessor (auto_advance disabled), then
+     * calls register_camera_source() to assign a reader_id and wire the
+     * container's IOService callback via CameraContainer::setup_io().
+     *
+     * A non-FFmpeg backend does not go through this call at all — it opens
+     * itself however its own backend requires, then calls
+     * register_camera_source() directly with the resulting CameraSource.
      *
      * After this call, the normal processing pipeline drives frame pulls:
      * CameraContainer::process_default() → IOService::request_frame(reader_id)
-     * → dispatch_frame_request() → CameraReader::pull_frame_all()
+     * → dispatch_frame_request() → CameraSource::pull_frame_all()
      * → decode thread → pull_frame() → mutable_frame_ptr() write → READY.
      *
      * @param config Device and resolution configuration.
@@ -384,6 +389,33 @@ public:
      */
     [[nodiscard]] std::shared_ptr<Buffers::VideoContainerBuffer>
     get_camera_buffer(const std::shared_ptr<Kakshya::CameraContainer>& container) const;
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Camera source management
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * @brief Assign a globally unique reader_id and take ownership of a
+     *        CameraSource that is already open.
+     *
+     * The backend-agnostic entry point for camera hosting: any CameraSource
+     * implementation, from any backend, is registered identically. open()
+     * and configuration are entirely the caller's concern beforehand — this
+     * call never touches either.
+     *
+     * @param source Fully-opened CameraSource.
+     * @return Globally unique reader_id assigned to this source.
+     */
+    [[nodiscard]] uint64_t register_camera_source(std::shared_ptr<CameraSource> source);
+
+    /**
+     * @brief Release ownership of the camera source identified by reader_id.
+     *
+     * No-op with a warning if reader_id is unknown.
+     *
+     * @param reader_id Id returned by register_camera_source().
+     */
+    void release_camera_source(uint64_t reader_id);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Video reader management
@@ -896,9 +928,9 @@ public:
     [[nodiscard]] std::vector<uint64_t> get_camera_reader_ids() const;
 
     /**
-     * @brief Returns the camera reader assigned to the given ID, or nullptr.
+     * @brief Returns the camera source assigned to the given ID, or nullptr.
      */
-    [[nodiscard]] std::shared_ptr<CameraReader> get_camera_reader(uint64_t id) const;
+    [[nodiscard]] std::shared_ptr<CameraSource> get_camera_reader(uint64_t id) const;
 
     /**
      * @brief Returns all retained audio readers.
@@ -1007,7 +1039,7 @@ private:
     mutable std::shared_mutex m_readers_mutex;
     mutable std::shared_mutex m_camera_mutex;
     std::unordered_map<uint64_t, std::shared_ptr<VideoFileReader>> m_video_readers;
-    std::unordered_map<uint64_t, std::shared_ptr<CameraReader>> m_camera_readers;
+    std::unordered_map<uint64_t, std::shared_ptr<CameraSource>> m_camera_readers;
 
     std::vector<std::shared_ptr<SoundFileReader>> m_audio_readers;
 
