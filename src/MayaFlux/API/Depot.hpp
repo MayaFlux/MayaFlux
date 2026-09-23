@@ -214,6 +214,20 @@ MAYAFLUX_API bool save_image(
     const IO::ImageWriteOptions& options);
 
 /**
+ * @brief Choose a CSV or TSV destination and save a CompositeContainer.
+ *
+ * The dialog and write are synchronous. Returns false on cancellation,
+ * backend or write failure, or if Portal::System is not initialized.
+ *
+ * @param container Source container to encode.
+ * @param suggested_name Filename pre-filled in the dialog.
+ * @return True only when the complete file was written successfully.
+ */
+MAYAFLUX_API bool save_composite(
+    const std::shared_ptr<Kakshya::CompositeContainer>& container,
+    const std::string& suggested_name = "output.csv");
+
+/**
  * @brief Present a native save-file dialog filtered to 3D model formats and
  *        save @p buffer to the chosen path via IOManager::save_mesh().
  *

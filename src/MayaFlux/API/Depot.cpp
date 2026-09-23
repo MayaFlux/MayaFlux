@@ -302,6 +302,29 @@ bool save_image(
         k_image_save_filters);
 }
 
+bool save_composite(
+    const std::shared_ptr<Kakshya::CompositeContainer>& container,
+    const std::string& suggested_name)
+{
+    if (!require_portal("save_composite"))
+        return false;
+
+    auto iom = get_io_manager();
+    if (!iom) {
+        MF_ERROR(Journal::Component::API, Journal::Context::Runtime,
+            "save_composite: IOManager unavailable");
+        return false;
+    }
+
+    return Portal::System::Dialog::save_file<bool>(
+        [&iom, &container](const fs::path& p) {
+            return iom->save_composite(container, p.string());
+        },
+        [](Core::SystemDialogError) { },
+        suggested_name,
+        k_composite_filters);
+}
+
 bool save_mesh(
     const std::shared_ptr<Buffers::MeshBuffer>& buffer,
     const std::string& suggested_name)
