@@ -65,7 +65,7 @@ public:
      * @return True on success; false for an invalid index, name, or type.
      */
     template <typename T>
-        requires std::is_arithmetic_v<T>
+        requires ArithmeticData<T>
     bool set(size_t index, std::string_view field_name, T value)
     {
         return m_array->set(index, field_name, value);

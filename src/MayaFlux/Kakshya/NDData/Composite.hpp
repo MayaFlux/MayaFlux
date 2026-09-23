@@ -51,7 +51,7 @@ public:
      * the layout has already been finalized.
      */
     template <typename T>
-        requires(std::is_arithmetic_v<T> || std::same_as<std::remove_cvref_t<T>, std::string>)
+        requires(ArithmeticData<T> || std::same_as<std::remove_cvref_t<T>, std::string>)
     bool add_field(std::string name)
     {
         if constexpr (std::same_as<std::remove_cvref_t<T>, std::string>) {
@@ -126,7 +126,7 @@ public:
      * @return Copied value, or std::nullopt for an absent field or type mismatch.
      */
     template <typename T>
-        requires std::is_arithmetic_v<T>
+        requires ArithmeticData<T>
     [[nodiscard]] std::optional<T> get(std::string_view field_name) const noexcept;
 
     /**
@@ -164,8 +164,7 @@ private:
  * Owns two uint8_t DataVariants: fixed-stride packed elements and variable-
  * length UTF-8 text. The layout carries field names, types, offsets, and
  * stride; the presence bitmap distinguishes absent fields from zero or
- * empty values. Composite is not a SignalSourceContainer and has no
- * processing state.
+ * empty values.
  *
  * Usage:
  * @code
@@ -234,7 +233,7 @@ public:
      * without copying through access() and element_data().
      */
     template <typename T>
-        requires(std::is_arithmetic_v<T> && DataVariantElement<T>)
+        requires(ArithmeticData<T> && DataVariantElement<T>)
     [[nodiscard]] std::optional<CompositeProjection> to_nddata(std::string_view field_name) const;
 
     /**
@@ -253,7 +252,7 @@ public:
      * @return True on success; false for an invalid index, name, or type.
      */
     template <typename T>
-        requires std::is_arithmetic_v<T>
+        requires ArithmeticData<T>
     bool set(size_t index, std::string_view field_name, T value)
     {
         const auto field_index = validate_write(index, field_name, typeid(T));
@@ -305,7 +304,7 @@ private:
 };
 
 template <typename T>
-    requires std::is_arithmetic_v<T>
+    requires ArithmeticData<T>
 std::optional<T> Composite::get(std::string_view field_name) const noexcept
 {
     const auto field_index = m_layout->find_field(field_name);

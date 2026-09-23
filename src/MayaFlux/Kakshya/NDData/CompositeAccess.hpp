@@ -183,7 +183,7 @@ public:
      * Missing values are zero-filled and marked absent in the mask.
      */
     template <typename T>
-        requires(std::is_arithmetic_v<T> && DataVariantElement<T>)
+        requires(ArithmeticData<T> && DataVariantElement<T>)
     [[nodiscard]] std::optional<CompositeProjection> to_nddata(std::string_view field_name) const;
 
 private:
@@ -205,7 +205,7 @@ private:
 };
 
 template <typename T>
-    requires(std::is_arithmetic_v<T> && DataVariantElement<T>)
+    requires(ArithmeticData<T> && DataVariantElement<T>)
 std::optional<CompositeProjection> CompositeSlice::to_nddata(std::string_view field_name) const
 {
     const auto field_index = layout().find_field(field_name);
@@ -232,7 +232,7 @@ std::optional<CompositeProjection> CompositeSlice::to_nddata(std::string_view fi
 }
 
 template <typename T>
-    requires(std::is_arithmetic_v<T> && DataVariantElement<T>)
+    requires(ArithmeticData<T> && DataVariantElement<T>)
 std::optional<CompositeProjection> CompositeArray::to_nddata(std::string_view field_name) const
 {
     const auto selection = slice(0, size());
