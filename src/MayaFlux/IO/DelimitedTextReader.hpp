@@ -14,11 +14,11 @@ namespace MayaFlux::IO {
  * every field is stored as UTF-8 text, preserving values without speculative
  * numeric inference. Supply a CompositeLayout before open() to select exact
  * arithmetic field types; header names must then match its field order.
- * Empty numeric cells and missing trailing cells remain absent. An empty
- * text cell is present and contains an empty string. char, signed char,
- * and unsigned char fields parse as small integers via from_chars, the
- * same path as every other arithmetic type; a cell must contain a number
- * such as "65", not a literal character such as "A".
+ * Empty numeric cells and missing trailing cells remain absent. An
+ * unquoted empty text cell is absent; a quoted empty cell is present.
+ * char, signed char, and unsigned char fields parse as small integers via
+ * from_chars, the same path as every other arithmetic type; a cell must
+ * contain a number such as "65", not a literal character such as "A".
  *
  * Usage:
  * @code
@@ -151,6 +151,11 @@ public:
     [[nodiscard]] std::vector<uint64_t> get_dimension_sizes() const override { return {}; }
 
 private:
+    struct ParsedField {
+        std::string value;
+        bool quoted {};
+    };
+
     std::ifstream m_file;
     std::string m_filepath;
     std::optional<Kakshya::CompositeLayout> m_requested_layout;
@@ -164,10 +169,12 @@ private:
     bool m_has_header { true };
     bool m_at_end {};
 
-    [[nodiscard]] bool read_record(std::vector<std::string>& fields, bool& at_end);
+    [[nodiscard]] bool read_record(
+        std::vector<ParsedField>& fields, bool& at_end);
 
     [[nodiscard]] bool append_record(
-        Kakshya::CompositeArray& array, const std::vector<std::string>& fields);
+        Kakshya::CompositeArray& array,
+        const std::vector<ParsedField>& fields);
 };
 
 }

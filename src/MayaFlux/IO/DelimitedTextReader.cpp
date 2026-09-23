@@ -100,13 +100,18 @@ namespace {
     }
 
     bool set_field(Kakshya::CompositeInsertion& insertion, size_t row,
-        const Kakshya::CompositeField& field, std::string_view text)
+        const Kakshya::CompositeField& field, std::string_view text,
+        bool quoted)
     {
         const auto name = std::string_view(field.name);
         const auto type = field.type;
 
-        if (type == typeid(std::string))
+        if (type == typeid(std::string)) {
+            if (text.empty() && !quoted)
+                return true;
+
             return insertion.set_text(row, name, text);
+        }
 
         if (trim_numeric(text).empty())
             return true;
@@ -215,7 +220,7 @@ bool DelimitedTextReader::open(
         return false;
     }
 
-    std::vector<std::string> names;
+    std::vector<ParsedField> names;
     bool at_end = false;
     if (m_has_header) {
         if (!read_record(names, at_end) || at_end) {
@@ -225,8 +230,8 @@ bool DelimitedTextReader::open(
             return false;
         }
 
-        if (!names.empty() && names.front().starts_with("\xEF\xBB\xBF"))
-            names.front().erase(0, 3);
+        if (!names.empty() && names.front().value.starts_with("\xEF\xBB\xBF"))
+            names.front().value.erase(0, 3);
     }
 
     if (m_requested_layout) {
@@ -240,7 +245,7 @@ bool DelimitedTextReader::open(
 
         for (size_t i = 0; i < fields.size(); ++i) {
             if (!supported_field(fields[i])
-                || (m_has_header && fields[i].name != names[i])) {
+                || (m_has_header && fields[i].name != names[i].value)) {
                 m_last_error = "Unsupported or mismatched Composite field: " + fields[i].name;
                 close();
                 return false;
@@ -249,7 +254,7 @@ bool DelimitedTextReader::open(
     } else {
         Kakshya::CompositeLayout layout;
         for (auto& name : names) {
-            if (!layout.add_field<std::string>(std::move(name))) {
+            if (!layout.add_field<std::string>(std::move(name.value))) {
                 m_last_error = "Header field names must be nonempty and unique";
                 close();
                 return false;
@@ -328,7 +333,7 @@ DelimitedTextReader::read_next(size_t max_elements)
     }
 
     Kakshya::CompositeArray result(*m_layout);
-    std::vector<std::string> fields;
+    std::vector<ParsedField> fields;
 
     while (result.size() < max_elements && !m_at_end) {
         bool at_end = false;
@@ -363,7 +368,7 @@ bool DelimitedTextReader::seek(
     m_row_position = 0;
     m_at_end = false;
 
-    std::vector<std::string> fields;
+    std::vector<ParsedField> fields;
 
     while (m_row_position < position[0]) {
         bool at_end = false;
@@ -385,7 +390,7 @@ bool DelimitedTextReader::seek(
 }
 
 bool DelimitedTextReader::read_record(
-    std::vector<std::string>& fields, bool& at_end)
+    std::vector<ParsedField>& fields, bool& at_end)
 {
     fields.clear();
     at_end = false;
@@ -394,6 +399,7 @@ bool DelimitedTextReader::read_record(
     bool quoted = false;
     bool closed_quote = false;
     bool field_start = true;
+    bool field_quoted = false;
     bool saw_input = false;
 
     while (true) {
@@ -414,7 +420,7 @@ bool DelimitedTextReader::read_record(
                 return true;
             }
 
-            fields.push_back(std::move(value));
+            fields.push_back({ .value = std::move(value), .quoted = field_quoted });
             return true;
         }
 
@@ -437,9 +443,10 @@ bool DelimitedTextReader::read_record(
         }
 
         if (c == m_active_delimiter || c == '\n' || c == '\r') {
-            fields.push_back(std::move(value));
+            fields.push_back({ .value = std::move(value), .quoted = field_quoted });
             value.clear();
             field_start = true;
+            field_quoted = false;
             closed_quote = false;
             if (c == '\r' && m_file.peek() == '\n')
                 m_file.get();
@@ -453,6 +460,7 @@ bool DelimitedTextReader::read_record(
         if (c == '"' && field_start) {
             quoted = true;
             field_start = false;
+            field_quoted = true;
             continue;
         }
 
@@ -467,7 +475,8 @@ bool DelimitedTextReader::read_record(
 }
 
 bool DelimitedTextReader::append_record(
-    Kakshya::CompositeArray& array, const std::vector<std::string>& fields)
+    Kakshya::CompositeArray& array,
+    const std::vector<ParsedField>& fields)
 {
     const auto& layout_fields = array.layout().fields();
     if (fields.size() > layout_fields.size()) {
@@ -479,7 +488,8 @@ bool DelimitedTextReader::append_record(
     const auto row = insertion.append();
 
     for (size_t i = 0; i < fields.size(); ++i) {
-        if (!set_field(insertion, row, layout_fields[i], fields[i])) {
+        if (!set_field(insertion, row, layout_fields[i],
+                fields[i].value, fields[i].quoted)) {
             m_last_error = "Invalid value in field '" + layout_fields[i].name
                 + "' at record " + std::to_string(m_row_position);
             return false;
