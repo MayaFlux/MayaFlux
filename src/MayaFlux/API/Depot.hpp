@@ -2,14 +2,14 @@
 
 /**
  * @file API/Depot.hpp
- * @brief Audio file loading and container management API
+ * @brief Dialog-backed loading and file-type helpers
  *
  * This header provides the public API for working with IOManager,
  * container creation, and file type checking within the MayaFlux engine.
  * It includes:
  * - `create_container<ContainerType>(args...)`: Template function to create signal source containers.
- * - `is_audio(filepath)`: Check if a file is an audio file based on its extension.
- * - `is_image(filepath)`: Check if a file is an image file based on its extension.
+ * - `is_audio(filepath)`, `is_image(filepath)`, and
+ *   `is_composite(filepath)`: Check supported file categories.
  * - `get_io_manager()`: Access the global IOManager instance for file loading and buffer management.
  */
 
@@ -29,6 +29,7 @@ namespace IO {
 }
 
 namespace Kakshya {
+    class CompositeContainer;
     class SoundStreamContainer;
     class SoundFileContainer;
     class SignalSourceContainer;
@@ -82,6 +83,13 @@ MAYAFLUX_API bool is_audio(const std::filesystem::path& filepath);
  */
 MAYAFLUX_API bool is_image(const std::filesystem::path& filepath);
 
+/**
+ * @brief Check whether an existing file has a supported Composite format.
+ * @param filepath Path to a CSV or TSV file.
+ * @return True for an existing regular file with a supported extension.
+ */
+MAYAFLUX_API bool is_composite(const std::filesystem::path& filepath);
+
 // ─────────────────────────────────────────────────────────────────────────
 // Dialog-backed load — open
 // ─────────────────────────────────────────────────────────────────────────
@@ -112,6 +120,16 @@ MAYAFLUX_API std::shared_ptr<Kakshya::VideoFileContainer> choose_video();
  * backend error, or if Portal::System is not initialized.
  */
 MAYAFLUX_API std::shared_ptr<Buffers::TextureBuffer> choose_image();
+
+/**
+ * @brief Choose a CSV or TSV file and load it as a CompositeContainer.
+ *
+ * Uses the reader's default text-field layout. For an exact numeric layout
+ * or bounded reading, use IOManager directly.
+ *
+ * @return Loaded container, or nullptr on cancellation or failure.
+ */
+MAYAFLUX_API std::shared_ptr<Kakshya::CompositeContainer> choose_composite();
 
 /**
  * @brief Present a native open-file dialog filtered to 3D model formats and load

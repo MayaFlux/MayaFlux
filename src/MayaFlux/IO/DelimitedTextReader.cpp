@@ -259,6 +259,9 @@ bool DelimitedTextReader::open(
         m_layout = std::move(layout);
     }
 
+    Kakshya::CompositeArray empty(*m_layout);
+    m_layout = empty.layout();
+
     m_data_start = m_file.tellg();
     if (m_data_start == std::streampos(-1)) {
         m_file.clear();

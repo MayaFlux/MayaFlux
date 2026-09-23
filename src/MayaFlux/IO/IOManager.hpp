@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CameraSource.hpp"
+#include "CompositeReader.hpp"
 #include "FFmpegCameraReader.hpp"
 #include "ImageWriter.hpp"
 #include "ModelWriter.hpp"
@@ -530,6 +531,40 @@ public:
      */
     [[nodiscard]] std::shared_ptr<Buffers::TextureBuffer>
     load_image(const std::string& filepath);
+
+    /**
+     * @brief Open a schema-bearing reader selected by file format.
+     *
+     * CSV and TSV currently use DelimitedTextReader. The returned reader is
+     * owned by the caller and can inspect its layout or read bounded batches.
+     * IOManager does not retain it or register it with IOService.
+     *
+     * @param filepath Path to a supported Composite file.
+     * @param layout Optional exact field layout. Without one, CSV/TSV fields
+     * are preserved as UTF-8 text.
+     * @return Open reader, or nullptr for an unsupported or invalid file.
+     */
+    [[nodiscard]] std::shared_ptr<CompositeReader>
+    open_composite_reader(
+        const std::string& filepath,
+        std::optional<Kakshya::CompositeLayout> layout = std::nullopt);
+
+    /**
+     * @brief Load a complete Composite file into an owning container.
+     *
+     * Dispatches by supported file format. The reader is local to this call;
+     * use open_composite_reader() for bounded reading of large files.
+     *
+     * @param filepath Path to a supported Composite file.
+     * @param layout Optional exact field layout for typed CSV/TSV values.
+     * @param batch_size Default container materialization batch size.
+     * @return Owning CompositeContainer, or nullptr on failure.
+     */
+    [[nodiscard]] std::shared_ptr<Kakshya::CompositeContainer>
+    load_composite(
+        const std::string& filepath,
+        std::optional<Kakshya::CompositeLayout> layout = std::nullopt,
+        size_t batch_size = 1);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Mesh — load

@@ -113,6 +113,14 @@ std::shared_ptr<Kakshya::SoundFileContainer> Creator::load_sound_container(const
     return get_io_manager()->load_audio(filepath);
 }
 
+std::shared_ptr<Kakshya::CompositeContainer>
+Creator::load_composite_container(
+    const std::string& filepath,
+    std::optional<Kakshya::CompositeLayout> layout)
+{
+    return get_io_manager()->load_composite(filepath, std::move(layout));
+}
+
 MeshGroupHandle::MeshGroupHandle(
     std::vector<std::shared_ptr<Buffers::MeshBuffer>> buffers)
     : m_buffers(std::move(buffers))

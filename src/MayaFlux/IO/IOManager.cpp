@@ -26,6 +26,7 @@
 #include "MayaFlux/Registry/Service/IOService.hpp"
 
 #include "AssimpModelWriter.hpp"
+#include "DelimitedTextReader.hpp"
 #include "EXRWriter.hpp"
 #include "ImageExport.hpp"
 #include "ModelExport.hpp"
@@ -674,6 +675,59 @@ IOManager::load_image(const std::string& filepath)
         texture_buffer->get_height());
 
     return texture_buffer;
+}
+
+std::shared_ptr<CompositeReader>
+IOManager::open_composite_reader(
+    const std::string& filepath,
+    std::optional<Kakshya::CompositeLayout> layout)
+{
+    auto delimited = std::make_shared<DelimitedTextReader>();
+    if (!delimited->can_read(filepath)) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "IOManager::open_composite_reader: unsupported format '{}'", filepath);
+        return nullptr;
+    }
+
+    if (layout && !delimited->set_layout(std::move(*layout))) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "IOManager::open_composite_reader: failed to set layout for '{}'", filepath);
+        return nullptr;
+    }
+
+    if (!delimited->open(filepath)) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "IOManager::open_composite_reader: failed to open '{}' because {}",
+            filepath, delimited->get_last_error());
+        return nullptr;
+    }
+
+    return delimited;
+}
+
+std::shared_ptr<Kakshya::CompositeContainer>
+IOManager::load_composite(
+    const std::string& filepath,
+    std::optional<Kakshya::CompositeLayout> layout,
+    size_t batch_size)
+{
+    auto reader = open_composite_reader(filepath, std::move(layout));
+    if (!reader)
+        return nullptr;
+
+    auto container = reader->create_composite_container(batch_size);
+    if (!container) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "IOManager::load_composite: failed to read '{}' because {}",
+            filepath, reader->get_last_error());
+        return nullptr;
+    }
+
+    MF_INFO(Journal::Component::API, Journal::Context::FileIO,
+        "IOManager::load_composite: loaded '{}'",
+        std::filesystem::path(filepath).filename().string());
+
+    return container;
 }
 
 std::vector<std::shared_ptr<Buffers::MeshBuffer>>

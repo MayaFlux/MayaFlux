@@ -59,6 +59,9 @@ public:
      * currently open or open() did not succeed in establishing one.
      * @note Returned by value: the copy remains valid after the reader is
      * closed or destroyed, unlike a borrowed CompositeArray::layout().
+     * Implementations must return a finalized layout, one whose
+     * stride_bytes() and field offsets are already assigned; a layout only
+     * becomes finalized when a CompositeArray is constructed from it.
      */
     [[nodiscard]] virtual std::optional<Kakshya::CompositeLayout>
     get_layout() const = 0;
