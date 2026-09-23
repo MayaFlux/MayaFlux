@@ -1,6 +1,8 @@
 #pragma once
 
 #include "CameraSource.hpp"
+#include "CompositeReader.hpp"
+#include "CompositeWriter.hpp"
 #include "FFmpegCameraReader.hpp"
 #include "ImageWriter.hpp"
 #include "ModelWriter.hpp"
@@ -530,6 +532,73 @@ public:
      */
     [[nodiscard]] std::shared_ptr<Buffers::TextureBuffer>
     load_image(const std::string& filepath);
+
+    /**
+     * @brief Open a schema-bearing reader selected by file format.
+     *
+     * CSV and TSV currently use DelimitedTextReader. The returned reader is
+     * owned by the caller and can inspect its layout or read bounded batches.
+     * IOManager does not retain it or register it with IOService.
+     *
+     * @param filepath Path to a supported Composite file.
+     * @param layout Optional exact field layout. Without one, CSV/TSV fields
+     * are preserved as UTF-8 text.
+     * @return Open reader, or nullptr for an unsupported or invalid file.
+     */
+    [[nodiscard]] std::shared_ptr<CompositeReader>
+    open_composite_reader(
+        const std::string& filepath,
+        std::optional<Kakshya::CompositeLayout> layout = std::nullopt);
+
+    /**
+     * @brief Load a complete Composite file into an owning container.
+     *
+     * Dispatches by supported file format. The reader is local to this call;
+     * use open_composite_reader() for bounded reading of large files.
+     *
+     * @param filepath Path to a supported Composite file.
+     * @param layout Optional exact field layout for typed CSV/TSV values.
+     * @param batch_size Default container materialization batch size.
+     * @return Owning CompositeContainer, or nullptr on failure.
+     */
+    [[nodiscard]] std::shared_ptr<Kakshya::CompositeContainer>
+    load_composite(
+        const std::string& filepath,
+        std::optional<Kakshya::CompositeLayout> layout = std::nullopt,
+        size_t batch_size = 1);
+
+    /**
+     * @brief Open a Composite writer selected by the output file format.
+     *
+     * CSV and TSV currently use DelimitedTextWriter. The caller owns the
+     * returned writer and must call write_rows() and close(). IOManager
+     * does not retain it or enqueue its writes.
+     *
+     * @param filepath Destination path with a supported extension.
+     * @param layout Field layout for every slice written to the file.
+     * @return Open writer, or nullptr if the format or layout is unsupported
+     * or the file could not be opened.
+     */
+    [[nodiscard]] std::shared_ptr<CompositeWriter>
+    open_composite_writer(
+        const std::string& filepath,
+        const Kakshya::CompositeLayout& layout);
+
+    /**
+     * @brief Save a complete CompositeContainer in a supported format.
+     *
+     * The write is synchronous, unlike the queued save_image, save_mesh, and
+     * save_volume. For bounded writes of large data, use
+     * open_composite_writer() and supply slices directly. A partial file
+     * may remain on failure.
+     *
+     * @param container Source container.
+     * @param filepath Destination CSV or TSV path.
+     * @return True only if every element was written and the file closed.
+     */
+    bool save_composite(
+        const std::shared_ptr<Kakshya::CompositeContainer>& container,
+        const std::string& filepath);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Mesh — load

@@ -6,6 +6,7 @@
 #include "Registry.hpp"
 
 #include "MayaFlux/API/Depot.hpp"
+#include "MayaFlux/Kakshya/Source/CompositeContainer.hpp"
 
 namespace MayaFlux {
 
@@ -218,6 +219,39 @@ public:
         return buffer;
     }
 
+    /**
+     * @brief Load a supported Composite file into an owning container.
+     *
+     * CSV and TSV are supported now. Without a supplied layout, fields
+     * remain UTF-8 text. This does not register the container as a signal.
+     *
+     * @param filepath Source file path.
+     * @param layout Optional exact field layout for typed values.
+     * @return Loaded container, or nullptr on failure.
+     */
+    auto read_file(
+        const std::string& filepath,
+        std::optional<Kakshya::CompositeLayout> layout = std::nullopt)
+        -> std::shared_ptr<Kakshya::CompositeContainer>
+    {
+        auto container = load_composite_container(filepath, std::move(layout));
+        if (container)
+            MF_LIVE_EXPOSE_AUTO(container);
+        return container;
+    }
+
+    /**
+     * @brief Choose a CSV or TSV file and load it as Composite data.
+     * @return Loaded container, or nullptr on cancellation or failure.
+     */
+    auto read_file() -> std::shared_ptr<Kakshya::CompositeContainer>
+    {
+        auto container = choose_composite();
+        if (container)
+            MF_LIVE_EXPOSE_AUTO(container);
+        return container;
+    }
+
     auto read_volume(const std::string& filepath) -> std::shared_ptr<Buffers::VolumeGridBuffer>
     {
         auto buffer = load_volume_buffer(filepath);
@@ -339,6 +373,9 @@ public:
 
 private:
     std::shared_ptr<Kakshya::SoundFileContainer> load_sound_container(const std::string& filepath);
+    std::shared_ptr<Kakshya::CompositeContainer> load_composite_container(
+        const std::string& filepath,
+        std::optional<Kakshya::CompositeLayout> layout);
     std::shared_ptr<Buffers::TextureBuffer> load_image_buffer(const std::string& filepath);
     std::shared_ptr<Buffers::VolumeGridBuffer> load_volume_buffer(const std::string& filepath);
     std::vector<std::shared_ptr<Buffers::MeshBuffer>> load_mesh_buffers(const std::string& filepath);
@@ -412,11 +449,12 @@ static constexpr DomainSpec Graphics { .value = Domain::GRAPHICS };
  *   the rest of the registry) construct the class with exactly its
  *   constructor arguments. The pipe registers the result in a domain.
  * - read_* loaders take a source and return the real object. read_audio,
- *   read_image, read_mesh and read_mesh_network load from a path or, with no
- *   argument, from the matching choose_* call. read_mesh returns a
- *   MeshGroupHandle that the pipe registers. read_hid, read_midi, read_osc,
- *   read_tablet and read_input create an input node and register it against
- *   a binding.
+ *   read_image, read_file, read_mesh and read_mesh_network load from a path
+ *   or, with no argument, from the matching choose_* call. read_file
+ *   returns a CompositeContainer for supported structured formats.
+ *   read_mesh returns a MeshGroupHandle that the pipe registers. read_hid,
+ *   read_midi, read_osc, read_tablet and read_input create an input node and
+ *   register it against a binding.
  * - evolve and mint take a config and perform the whole sequence, returning
  *   the real object with rendering attached.
  *
@@ -428,6 +466,7 @@ static constexpr DomainSpec Graphics { .value = Domain::GRAPHICS };
  *
  * auto sfx    = vega.read_audio("x.wav") | Audio;
  * auto image  = vega.read_image("x.png") | Graphics;
+ * auto records = vega.read_file("x.csv");
  * auto meshes = vega.read_mesh("x.fbx") | Graphics;
  * auto pad    = vega.read_midi(config, binding);
  *

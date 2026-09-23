@@ -57,6 +57,11 @@ namespace {
         { .name = "All Files", .extensions = { "*" } }
     };
 
+    const std::vector<Portal::System::Dialog::ChooserFilter> k_composite_filters {
+        { .name = "Composite data", .extensions = { "csv", "tsv" } },
+        { .name = "All Files", .extensions = { "*" } }
+    };
+
     const std::vector<Portal::System::Dialog::ChooserFilter> k_mesh_filters {
         { .name = "3D Model", .extensions = { "glb", "gltf", "fbx", "obj", "ply", "stl", "dae" } },
         { .name = "All Files", .extensions = { "*" } }
@@ -134,6 +139,11 @@ bool is_audio(const fs::path& filepath)
     return check_extension(filepath, k_audio_open_filters[0]);
 }
 
+bool is_composite(const fs::path& filepath)
+{
+    return check_extension(filepath, k_composite_filters[0]);
+}
+
 // ---------------------------------------------------------------------------
 // Dialog-backed load
 // ---------------------------------------------------------------------------
@@ -169,6 +179,17 @@ std::shared_ptr<Buffers::TextureBuffer> choose_image()
         [](const fs::path& p) { return get_io_manager()->load_image(p.string()); },
         [](Core::SystemDialogError) { },
         k_image_filters);
+}
+
+std::shared_ptr<Kakshya::CompositeContainer> choose_composite()
+{
+    if (!require_portal("choose_composite"))
+        return nullptr;
+
+    return Portal::System::Dialog::open_file<std::shared_ptr<Kakshya::CompositeContainer>>(
+        [](const fs::path& p) { return get_io_manager()->load_composite(p.string()); },
+        [](Core::SystemDialogError) { },
+        k_composite_filters);
 }
 
 std::vector<std::shared_ptr<Buffers::MeshBuffer>> choose_mesh()
@@ -279,6 +300,29 @@ bool save_image(
         [](Core::SystemDialogError) { },
         suggested_name,
         k_image_save_filters);
+}
+
+bool save_composite(
+    const std::shared_ptr<Kakshya::CompositeContainer>& container,
+    const std::string& suggested_name)
+{
+    if (!require_portal("save_composite"))
+        return false;
+
+    auto iom = get_io_manager();
+    if (!iom) {
+        MF_ERROR(Journal::Component::API, Journal::Context::Runtime,
+            "save_composite: IOManager unavailable");
+        return false;
+    }
+
+    return Portal::System::Dialog::save_file<bool>(
+        [&iom, &container](const fs::path& p) {
+            return iom->save_composite(container, p.string());
+        },
+        [](Core::SystemDialogError) { },
+        suggested_name,
+        k_composite_filters);
 }
 
 bool save_mesh(

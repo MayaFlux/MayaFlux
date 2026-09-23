@@ -10,6 +10,7 @@
 #include "MayaFlux/Kakshya/Processors/FrameAccessProcessor.hpp"
 #include "MayaFlux/Kakshya/Source/AudioOutputContainer.hpp"
 #include "MayaFlux/Kakshya/Source/CameraContainer.hpp"
+#include "MayaFlux/Kakshya/Source/CompositeContainer.hpp"
 #include "MayaFlux/Kakshya/Source/SoundFileContainer.hpp"
 #include "MayaFlux/Kakshya/Source/VideoFileContainer.hpp"
 
@@ -26,6 +27,8 @@
 #include "MayaFlux/Registry/Service/IOService.hpp"
 
 #include "AssimpModelWriter.hpp"
+#include "DelimitedTextReader.hpp"
+#include "DelimitedTextWriter.hpp"
 #include "EXRWriter.hpp"
 #include "ImageExport.hpp"
 #include "ModelExport.hpp"
@@ -674,6 +677,117 @@ IOManager::load_image(const std::string& filepath)
         texture_buffer->get_height());
 
     return texture_buffer;
+}
+
+std::shared_ptr<CompositeReader>
+IOManager::open_composite_reader(
+    const std::string& filepath,
+    std::optional<Kakshya::CompositeLayout> layout)
+{
+    auto delimited = std::make_shared<DelimitedTextReader>();
+    if (!delimited->can_read(filepath)) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "IOManager::open_composite_reader: unsupported format '{}'", filepath);
+        return nullptr;
+    }
+
+    if (layout && !delimited->set_layout(std::move(*layout))) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "IOManager::open_composite_reader: failed to set layout for '{}'", filepath);
+        return nullptr;
+    }
+
+    if (!delimited->open(filepath)) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "IOManager::open_composite_reader: failed to open '{}' because {}",
+            filepath, delimited->get_last_error());
+        return nullptr;
+    }
+
+    return delimited;
+}
+
+std::shared_ptr<Kakshya::CompositeContainer>
+IOManager::load_composite(
+    const std::string& filepath,
+    std::optional<Kakshya::CompositeLayout> layout,
+    size_t batch_size)
+{
+    auto reader = open_composite_reader(filepath, std::move(layout));
+    if (!reader)
+        return nullptr;
+
+    auto container = reader->create_composite_container(batch_size);
+    if (!container) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "IOManager::load_composite: failed to read '{}' because {}",
+            filepath, reader->get_last_error());
+        return nullptr;
+    }
+
+    MF_INFO(Journal::Component::API, Journal::Context::FileIO,
+        "IOManager::load_composite: loaded '{}'",
+        std::filesystem::path(filepath).filename().string());
+
+    return container;
+}
+
+std::shared_ptr<CompositeWriter>
+IOManager::open_composite_writer(
+    const std::string& filepath,
+    const Kakshya::CompositeLayout& layout)
+{
+    auto writer = std::make_shared<DelimitedTextWriter>();
+    if (!writer->can_write(filepath)) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "IOManager::open_composite_writer: unsupported format '{}'", filepath);
+        return nullptr;
+    }
+
+    if (!writer->open(filepath, layout)) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "IOManager::open_composite_writer: failed to open '{}' because {}",
+            filepath, writer->get_last_error());
+        return nullptr;
+    }
+
+    return writer;
+}
+
+bool IOManager::save_composite(
+    const std::shared_ptr<Kakshya::CompositeContainer>& container,
+    const std::string& filepath)
+{
+    if (!container) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "IOManager::save_composite: null container");
+        return false;
+    }
+
+    const auto& array = container->get_data();
+    auto writer = open_composite_writer(filepath, array.layout());
+    if (!writer)
+        return false;
+
+    const auto rows = array.slice(0, array.size());
+    const bool written = rows && writer->write_rows(*rows);
+    const std::string write_error = !rows
+        ? "could not access the container's elements"
+        : writer->get_last_error();
+    const bool closed = writer->close();
+
+    if (!written || !closed) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "IOManager::save_composite: failed to write '{}' because {}",
+            filepath, written ? writer->get_last_error() : write_error);
+        return false;
+    }
+
+    MF_INFO(Journal::Component::API, Journal::Context::FileIO,
+        "IOManager::save_composite: wrote '{}'",
+        std::filesystem::path(filepath).filename().string());
+
+    return true;
 }
 
 std::vector<std::shared_ptr<Buffers::MeshBuffer>>
