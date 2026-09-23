@@ -5,8 +5,10 @@
 #include "MayaFlux/API/Input.hpp"
 
 #include "MayaFlux/Buffers/AudioBuffer.hpp"
+#include "MayaFlux/Buffers/Container/VideoContainerBuffer.hpp"
 #include "MayaFlux/Buffers/Geometry/MeshBuffer.hpp"
 #include "MayaFlux/Buffers/VKBuffer.hpp"
+#include "MayaFlux/IO/FFmpegCameraReader.hpp"
 #include "MayaFlux/IO/IOManager.hpp"
 #include "MayaFlux/Kakshya/Source/SoundFileContainer.hpp"
 #include "MayaFlux/Nodes/Network/NodeNetwork.hpp"
@@ -134,6 +136,11 @@ std::shared_ptr<Buffers::TextureBuffer> Creator::load_image_buffer(const std::st
     return get_io_manager()->load_image(filepath);
 }
 
+std::shared_ptr<Buffers::VolumeGridBuffer> Creator::load_volume_buffer(const std::string& filepath)
+{
+    return get_io_manager()->load_volume(filepath);
+}
+
 std::vector<std::shared_ptr<Buffers::MeshBuffer>> Creator::load_mesh_buffers(const std::string& filepath)
 {
     return get_io_manager()->load_mesh(filepath);
@@ -143,6 +150,23 @@ std::shared_ptr<Nodes::Network::MeshNetwork>
 Creator::load_mesh_network(const std::string& filepath, IO::TextureResolver resolver)
 {
     return get_io_manager()->load_mesh_network(filepath, std::move(resolver));
+}
+
+std::shared_ptr<Buffers::VideoContainerBuffer> Creator::read_camera(const IO::CameraConfig& config)
+{
+    auto iom = get_io_manager();
+
+    auto container = iom->open_camera(config);
+    if (!container) {
+        MF_ERROR(Journal::Component::API, Journal::Context::Runtime,
+            "read_camera: open_camera failed for device '{}'", config.device_name);
+        return nullptr;
+    }
+
+    auto buffer = iom->hook_camera_to_buffer(container);
+    if (buffer)
+        MF_LIVE_EXPOSE_AUTO(buffer);
+    return buffer;
 }
 
 std::shared_ptr<Nodes::Input::HIDNode> Creator::read_hid(

@@ -15,6 +15,11 @@ namespace Core {
 
 namespace IO {
     using TextureResolver = std::function<std::shared_ptr<Core::VKImage>(const std::string& path)>;
+    struct CameraConfig;
+}
+
+namespace Buffers {
+    class VideoContainerBuffer;
 }
 
 struct CreationContext {
@@ -213,6 +218,21 @@ public:
         return buffer;
     }
 
+    auto read_volume(const std::string& filepath) -> std::shared_ptr<Buffers::VolumeGridBuffer>
+    {
+        auto buffer = load_volume_buffer(filepath);
+        MF_LIVE_EXPOSE_AUTO(buffer);
+        return buffer;
+    }
+
+    auto read_volume() -> std::shared_ptr<Buffers::VolumeGridBuffer>
+    {
+        auto buffer = choose_volume();
+        if (buffer)
+            MF_LIVE_EXPOSE_AUTO(buffer);
+        return buffer;
+    }
+
     auto read_mesh(const std::string& filepath) -> MeshGroupHandle
     {
         return MeshGroupHandle(load_mesh_buffers(filepath));
@@ -240,6 +260,28 @@ public:
             MF_LIVE_EXPOSE_AUTO(network);
         return network;
     }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Camera (Special - defined in Creator.cpp)
+    // ═══════════════════════════════════════════════════════════════
+
+    /**
+     * @brief Open a camera device and register it as a pipeable live source.
+     *
+     * Opens via IOManager::open_camera(), hooks the resulting CameraContainer
+     * to a VideoContainerBuffer via IOManager::hook_camera_to_buffer(), and
+     * returns the buffer — already pipeable through the generic VKBuffer
+     * path (register_buffer), the same way read_image() returns an
+     * already-pipeable TextureBuffer instead of a raw container.
+     *
+     * There is no dialog-backed no-argument overload: a camera is a device
+     * to configure, not a file to browse to, the same reasoning behind
+     * read_hid/read_midi/read_osc/read_tablet taking a config directly.
+     *
+     * @param config Device name, resolution hint, fps hint, format override.
+     * @return Hooked VideoContainerBuffer, or nullptr on failure.
+     */
+    std::shared_ptr<Buffers::VideoContainerBuffer> read_camera(const IO::CameraConfig& config);
 
     // ═══════════════════════════════════════════════════════════════
     // Input Node Creation (Special - defined in Creator.cpp)
@@ -298,6 +340,7 @@ public:
 private:
     std::shared_ptr<Kakshya::SoundFileContainer> load_sound_container(const std::string& filepath);
     std::shared_ptr<Buffers::TextureBuffer> load_image_buffer(const std::string& filepath);
+    std::shared_ptr<Buffers::VolumeGridBuffer> load_volume_buffer(const std::string& filepath);
     std::vector<std::shared_ptr<Buffers::MeshBuffer>> load_mesh_buffers(const std::string& filepath);
     std::shared_ptr<Nodes::Network::MeshNetwork> load_mesh_network(const std::string& filepath, IO::TextureResolver resolver);
 };
