@@ -200,6 +200,7 @@ struct MAYAFLUX_API ContainerDataStructure {
 
 /**
  * @class NDDataContainer
+ * @tparam T Element type of region data.
  * @brief Abstract interface for N-dimensional data containers.
  *
  * NDDataContainer provides a dimension-agnostic API for accessing and manipulating
@@ -219,6 +220,7 @@ struct MAYAFLUX_API ContainerDataStructure {
  * enabling advanced workflows such as real-time streaming, offline analysis, and
  * hybrid computational models.
  */
+template <typename T>
 class MAYAFLUX_API NDDataContainer {
 public:
     virtual ~NDDataContainer() = default;
@@ -264,30 +266,30 @@ public:
     /**
      * @brief Get data for a specific region.
      * @param region The region to extract data from
-     * @return std::vector<DataVariant> containing the region's data
+     * @return Vector containing the region's data
      */
-    [[nodiscard]] virtual std::vector<DataVariant> get_region_data(const Region& region) const = 0;
+    [[nodiscard]] virtual std::vector<T> get_region_data(const Region& region) const = 0;
 
     /**
      * @brief Get data for multiple regions efficiently.
      * @param regions Vector of regions to extract data from
-     * @return Vector of DataVariant vectors, one per region
+     * @return Region data in the container's element type
      */
-    [[nodiscard]] virtual std::vector<DataVariant> get_region_group_data(const RegionGroup& regions) const = 0;
+    [[nodiscard]] virtual std::vector<T> get_region_group_data(const RegionGroup& regions) const = 0;
 
     /**
      * @brief Get data for multiple region segments efficiently.
      * @param segments Vector of region segments to extract data from
-     * @return Vector of DataVariant vectors, one per segment
+     * @return Segment data in the container's element type
      */
-    [[nodiscard]] virtual std::vector<DataVariant> get_segments_data(const std::vector<RegionSegment>& segments) const = 0;
+    [[nodiscard]] virtual std::vector<T> get_segments_data(const std::vector<RegionSegment>& segments) const = 0;
 
     /**
      * @brief Set data for a specific region.
      * @param region The region to write data to
      * @param data The data to write
      */
-    virtual void set_region_data(const Region& region, const std::vector<DataVariant>& data) = 0;
+    virtual void set_region_data(const Region& region, const std::vector<T>& data) = 0;
 
     /**
      * @brief Get a single frame of data efficiently.
@@ -305,22 +307,22 @@ public:
      * @param start_frame First frame index
      * @param num_frames Number of frames to retrieve
      */
-    template <DataVariantElement T>
-    void get_frames(std::span<T> output, uint64_t start_frame, uint64_t num_frames) const
+    template <DataVariantElement ValueT>
+    void get_frames(std::span<ValueT> output, uint64_t start_frame, uint64_t num_frames) const
     {
-        get_frames_impl(output.data(), output.size(), start_frame, num_frames, typeid(T));
+        get_frames_impl(output.data(), output.size(), start_frame, num_frames, typeid(ValueT));
     }
 
     /**
      * @brief Get a single frame of data as a typed span.
-     * @tparam T Element type to interpret the frame data as
+     * @tparam ValueT Element type to interpret the frame data as
      * @param frame_index Index of the frame (in the temporal dimension)
-     * @return Span of data representing one complete frame, interpreted as type T
+     * @return Span of data representing one complete frame, interpreted as ValueT
      */
-    template <DataVariantElement T>
-    [[nodiscard]] auto get_frame_as(uint64_t frame_index) const -> std::span<const T>
+    template <DataVariantElement ValueT>
+    [[nodiscard]] auto get_frame_as(uint64_t frame_index) const -> std::span<const ValueT>
     {
-        return get_frame(frame_index).template as<T>();
+        return get_frame(frame_index).template as<ValueT>();
     }
 
     /**
@@ -328,10 +330,10 @@ public:
      *
      * Convenience wrapper over get_frames() for callers that know the element
      * type statically but hold the output buffer as a plain vector rather than
-     * a typed span. Deduces T from the vector element type; no visitor, no
+     * a typed span. Deduces ValueT from the vector element type; no visitor, no
      * type query needed at the call site.
      *
-     * @tparam T Element type. Must satisfy DataVariantElement and match the
+     * @tparam ValueT Element type. Must satisfy DataVariantElement and match the
      *           container's native element type. The impl silently no-ops or
      *           errors on mismatch depending on the container.
      * @param output      Destination vector. Resized to num_frames * frame_size
@@ -339,10 +341,10 @@ public:
      * @param start_frame First frame index.
      * @param num_frames  Number of frames to retrieve.
      */
-    template <DataVariantElement T>
-    void get_frames_as(std::vector<T>& output, uint64_t start_frame, uint64_t num_frames) const
+    template <DataVariantElement ValueT>
+    void get_frames_as(std::vector<ValueT>& output, uint64_t start_frame, uint64_t num_frames) const
     {
-        get_frames_impl(output.data(), output.size(), start_frame, num_frames, typeid(T));
+        get_frames_impl(output.data(), output.size(), start_frame, num_frames, typeid(ValueT));
     }
 
     /**
@@ -354,7 +356,7 @@ public:
      * - typeid(float)    -- HDR image
      * - typeid(double)   -- audio / plot
      *
-     * Use this to branch once before calling get_value_at<T>() when the
+     * Use this to branch once before calling get_value_at<ValueT>() when the
      * container's native type is not statically known at the call site.
      */
     [[nodiscard]] virtual std::type_index value_element_type() const = 0;
@@ -362,19 +364,19 @@ public:
     /**
      * @brief Read a single element at the given N-dimensional coordinates.
      *
-     * Returns a default-constructed T on coordinate out-of-range or type mismatch.
-     * No conversion is performed: T must match the container's native element type
+     * Returns a default-constructed ValueT on coordinate out-of-range or type mismatch.
+     * No conversion is performed: ValueT must match the container's native element type
      * (query value_element_type() first when the type is not statically known).
      *
-     * @tparam T Element type. Must satisfy DataVariantElement.
+     * @tparam ValueT Element type. Must satisfy DataVariantElement.
      * @param coordinates N-dimensional coordinate vector.
      * @return Native-typed value, zero-initialised on error.
      */
-    template <DataVariantElement T>
-    [[nodiscard]] T get_value_at(const std::vector<uint64_t>& coordinates) const
+    template <DataVariantElement ValueT>
+    [[nodiscard]] ValueT get_value_at(const std::vector<uint64_t>& coordinates) const
     {
-        T v {};
-        get_value_impl(coordinates, &v, typeid(T));
+        ValueT v {};
+        get_value_impl(coordinates, &v, typeid(ValueT));
         return v;
     }
 
@@ -382,16 +384,16 @@ public:
      * @brief Write a single element at the given N-dimensional coordinates.
      *
      * No-ops on coordinate out-of-range or type mismatch.
-     * T must match the container's native element type.
+     * ValueT must match the container's native element type.
      *
-     * @tparam T Element type. Must satisfy DataVariantElement.
+     * @tparam ValueT Element type. Must satisfy DataVariantElement.
      * @param coordinates N-dimensional coordinate vector.
      * @param value       Value to write.
      */
-    template <DataVariantElement T>
-    void set_value_at(const std::vector<uint64_t>& coordinates, T value)
+    template <DataVariantElement ValueT>
+    void set_value_at(const std::vector<uint64_t>& coordinates, ValueT value)
     {
-        set_value_impl(coordinates, &value, typeid(T));
+        set_value_impl(coordinates, &value, typeid(ValueT));
     }
 
     /**
