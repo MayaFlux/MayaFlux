@@ -3,6 +3,8 @@
 #include "MayaFlux/Kakshya/NDData/CompositeInsertion.hpp"
 
 #include <charconv>
+#include <cerrno>
+#include <cstdlib>
 
 namespace MayaFlux::IO {
 
@@ -60,6 +62,18 @@ namespace {
                 return false;
 
             value = static_cast<T>(parsed);
+            return true;
+        } else if constexpr (std::same_as<T, long double>) {
+            std::string value_copy(text);
+            char* end = nullptr;
+            errno = 0;
+            const auto parsed = std::strtold(value_copy.c_str(), &end);
+
+            if (errno == ERANGE || end != value_copy.c_str() + value_copy.size()
+                || !std::isfinite(parsed))
+                return false;
+
+            value = static_cast<long double>(parsed);
             return true;
         } else {
             const auto [end, error] = std::from_chars(
