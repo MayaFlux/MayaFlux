@@ -2,6 +2,8 @@
 
 #include "MayaFlux/Kakshya/NDData/CompositeInsertion.hpp"
 
+#include <charconv>
+
 namespace MayaFlux::IO {
 
 namespace {

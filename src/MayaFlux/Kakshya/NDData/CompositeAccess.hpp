@@ -29,6 +29,18 @@ struct CompositeProjection {
 };
 
 /**
+ * @brief Validate and borrow packed Composite-compatible NDData.
+ * @param elements DataVariant holding vector<uint8_t> packed elements.
+ * @param text DataVariant holding vector<uint8_t> UTF-8 bytes.
+ * @param layout Finalized layout for the packed elements.
+ * @return Access view, or std::nullopt for incompatible storage or layout.
+ * @note This validates storage types, stride, and field extents. Individual
+ * text offset bounds are checked when Composite::text() is called.
+ */
+[[nodiscard]] MAYAFLUX_API std::optional<CompositeAccess> as_composite_access(
+    const DataVariant& elements, const DataVariant& text, const CompositeLayout& layout);
+
+/**
  * @class CompositeAccess
  * @brief Validated, non-owning access to packed Composite NDData storage.
  *
@@ -110,18 +122,6 @@ private:
     const DataVariant* m_text;
     const CompositeLayout* m_layout;
 };
-
-/**
- * @brief Validate and borrow packed Composite-compatible NDData.
- * @param elements DataVariant holding vector<uint8_t> packed elements.
- * @param text DataVariant holding vector<uint8_t> UTF-8 bytes.
- * @param layout Finalized layout for the packed elements.
- * @return Access view, or std::nullopt for incompatible storage or layout.
- * @note This validates storage types, stride, and field extents. Individual
- * text offset bounds are checked when Composite::text() is called.
- */
-[[nodiscard]] MAYAFLUX_API std::optional<CompositeAccess> as_composite_access(
-    const DataVariant& elements, const DataVariant& text, const CompositeLayout& layout);
 
 /**
  * @class CompositeSlice
