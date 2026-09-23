@@ -1,4 +1,4 @@
-#include "CameraReader.hpp"
+#include "FFmpegCameraReader.hpp"
 
 #include "MayaFlux/Kakshya/Source/CameraContainer.hpp"
 
@@ -19,15 +19,13 @@ extern "C" {
 
 namespace MayaFlux::IO {
 
-// std::once_flag CameraReader::s_avdevice_init;
-
-CameraReader::CameraReader()
+FFmpegCameraReader::FFmpegCameraReader()
     : m_demux(std::make_shared<FFmpegDemuxContext>())
     , m_video(std::make_shared<VideoStreamContext>())
 {
 }
 
-void CameraReader::setup_io_service(uint64_t reader_id)
+void FFmpegCameraReader::setup_io_service(uint64_t reader_id)
 {
     m_standalone_reader_id = reader_id;
 
@@ -48,7 +46,7 @@ void CameraReader::setup_io_service(uint64_t reader_id)
     }
 }
 
-CameraReader::~CameraReader()
+FFmpegCameraReader::~FFmpegCameraReader()
 {
     close();
 
@@ -58,7 +56,7 @@ CameraReader::~CameraReader()
     }
 }
 
-bool CameraReader::open(const CameraConfig& config)
+bool FFmpegCameraReader::open(const CameraConfig& config)
 {
     close();
 
@@ -80,7 +78,7 @@ bool CameraReader::open(const CameraConfig& config)
     if (!m_demux->open_device(config.device_name, fmt_name, &opts)) {
         m_last_error = "Device open failed: " + m_demux->last_error();
         MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
-            "CameraReader::open — {}", m_last_error);
+            "FFmpegCameraReader::open — {}", m_last_error);
         return false;
     }
 
@@ -92,7 +90,7 @@ bool CameraReader::open(const CameraConfig& config)
             config.pixel_format)) {
         m_last_error = "Video stream open failed: " + m_video->last_error();
         MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
-            "CameraReader::open — {}", m_last_error);
+            "FFmpegCameraReader::open — {}", m_last_error);
         m_demux->close();
         return false;
     }
@@ -101,14 +99,14 @@ bool CameraReader::open(const CameraConfig& config)
     m_scaler_ready = false;
 
     MF_INFO(Journal::Component::IO, Journal::Context::FileIO,
-        "CameraReader: opened '{}' via {} — {}x{} @{:.1f}fps (scaler deferred)",
+        "FFmpegCameraReader: opened '{}' via {} — {}x{} @{:.1f}fps (scaler deferred)",
         config.device_name, fmt_name,
         m_video->width, m_video->height, m_video->frame_rate);
 
     return true;
 }
 
-void CameraReader::close()
+void FFmpegCameraReader::close()
 {
     stop_decode_thread();
 
@@ -121,14 +119,14 @@ void CameraReader::close()
     m_last_error.clear();
 }
 
-bool CameraReader::is_open() const
+bool FFmpegCameraReader::is_open() const
 {
     std::shared_lock lock(m_ctx_mutex);
     return m_demux->is_open() && m_video->is_codec_valid();
 }
 
 std::shared_ptr<Kakshya::CameraContainer>
-CameraReader::create_container() const
+FFmpegCameraReader::create_container() const
 {
     std::shared_lock lock(m_ctx_mutex);
     if (!m_video->is_codec_valid()) {
@@ -149,7 +147,7 @@ CameraReader::create_container() const
         m_video->frame_rate);
 }
 
-bool CameraReader::pull_frame(
+bool FFmpegCameraReader::pull_frame(
     const std::shared_ptr<Kakshya::CameraContainer>& container)
 {
     if (!container)
@@ -203,7 +201,7 @@ bool CameraReader::pull_frame(
                     static_cast<uint32_t>(frame->width),
                     static_cast<uint32_t>(frame->height))) {
                 MF_ERROR(Journal::Component::IO, Journal::Context::Runtime,
-                    "CameraReader: scaler init failed: {}",
+                    "FFmpegCameraReader: scaler init failed: {}",
                     m_video->last_error());
                 break;
             }
@@ -244,32 +242,32 @@ bool CameraReader::pull_frame(
     return got_frame;
 }
 
-uint32_t CameraReader::width() const
+uint32_t FFmpegCameraReader::width() const
 {
     std::shared_lock lock(m_ctx_mutex);
     return m_video->out_width;
 }
 
-uint32_t CameraReader::height() const
+uint32_t FFmpegCameraReader::height() const
 {
     std::shared_lock lock(m_ctx_mutex);
     return m_video->out_height;
 }
 
-double CameraReader::frame_rate() const
+double FFmpegCameraReader::frame_rate() const
 {
     std::shared_lock lock(m_ctx_mutex);
     return m_video->frame_rate;
 }
 
-void CameraReader::set_container(
+void FFmpegCameraReader::set_container(
     const std::shared_ptr<Kakshya::CameraContainer>& container)
 {
     m_container_ref = container;
     start_decode_thread();
 }
 
-void CameraReader::pull_frame_all()
+void FFmpegCameraReader::pull_frame_all()
 {
     {
         std::lock_guard lock(m_decode_mutex);
@@ -278,21 +276,21 @@ void CameraReader::pull_frame_all()
     m_decode_cv.notify_one();
 }
 
-const std::string& CameraReader::last_error() const
+const std::string& FFmpegCameraReader::last_error() const
 {
     return m_last_error;
 }
 
-void CameraReader::start_decode_thread()
+void FFmpegCameraReader::start_decode_thread()
 {
     stop_decode_thread();
 
     m_decode_stop.store(false);
     m_decode_active.store(true);
-    m_decode_thread = std::thread(&CameraReader::decode_thread_func, this);
+    m_decode_thread = std::thread(&FFmpegCameraReader::decode_thread_func, this);
 }
 
-void CameraReader::stop_decode_thread()
+void FFmpegCameraReader::stop_decode_thread()
 {
     if (!m_decode_active.load())
         return;
@@ -306,7 +304,7 @@ void CameraReader::stop_decode_thread()
     m_decode_active.store(false);
 }
 
-void CameraReader::decode_thread_func()
+void FFmpegCameraReader::decode_thread_func()
 {
     while (!m_decode_stop.load()) {
         {

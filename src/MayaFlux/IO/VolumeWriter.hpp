@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/IO/WriterRegistry.hpp"
 #include "MayaFlux/Kakshya/NDData/VolumeData.hpp"
 
 namespace MayaFlux::IO {
@@ -109,64 +110,14 @@ public:
     [[nodiscard]] virtual std::string get_last_error() const = 0;
 };
 
-using VolumeWriterFactory = std::function<std::unique_ptr<VolumeWriter>()>;
+using VolumeWriterFactory = WriterFactory<VolumeWriter>;
 
 /**
- * @class VolumeWriterRegistry
  * @brief Singleton registry dispatching volume writes by file extension.
  *
- * Mirrors ImageWriterRegistry. Concrete writers register themselves during
- * subsystem init. create_writer(path) looks up the extension and returns a
- * fresh instance, or nullptr if none is registered.
- *
- * The nullptr is the whole point of the indirection: a format whose backing
- * library is not present on a given build simply has no entry, and the
- * caller gets a logged miss at the call site rather than a link error at
- * startup.
+ * See WriterRegistry for behavior. Concrete writers register themselves
+ * during subsystem init.
  */
-class MAYAFLUX_API VolumeWriterRegistry {
-public:
-    static VolumeWriterRegistry& instance()
-    {
-        static VolumeWriterRegistry registry;
-        return registry;
-    }
-
-    void register_writer(
-        const std::vector<std::string>& extensions,
-        const VolumeWriterFactory& factory)
-    {
-        for (const auto& ext : extensions) {
-            m_factories[ext] = factory;
-        }
-    }
-
-    [[nodiscard]] std::unique_ptr<VolumeWriter> create_writer(const std::string& filepath) const
-    {
-        auto ext = std::filesystem::path(filepath).extension().string();
-        if (!ext.empty() && ext[0] == '.') {
-            ext = ext.substr(1);
-        }
-
-        auto it = m_factories.find(ext);
-        if (it != m_factories.end()) {
-            return it->second();
-        }
-        return nullptr;
-    }
-
-    [[nodiscard]] std::vector<std::string> get_registered_extensions() const
-    {
-        std::vector<std::string> exts;
-        exts.reserve(m_factories.size());
-        for (const auto& [ext, _] : m_factories) {
-            exts.push_back(ext);
-        }
-        return exts;
-    }
-
-private:
-    std::unordered_map<std::string, VolumeWriterFactory> m_factories;
-};
+using VolumeWriterRegistry = WriterRegistry<VolumeWriter>;
 
 } // namespace MayaFlux::IO

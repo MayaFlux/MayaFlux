@@ -34,7 +34,7 @@ struct IOService {
      * @brief Request the identified camera reader to pull the next frame.
      *
      * Called from CameraContainer when FrameAccessProcessor completes
-     * a process cycle. The implementation looks up the CameraReader by
+     * a process cycle. The implementation looks up the CameraSource by
      * reader_id and calls pull_frame_all(). Must be non-blocking.
      * Safe to call from any thread.
      *

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CameraSource.hpp"
 #include "FFmpegDemuxContext.hpp"
 #include "VideoStreamContext.hpp"
 
@@ -37,7 +38,11 @@ inline constexpr std::string_view CAMERA_FORMAT = "dshow";
  *
  * Resolution and frame rate values are hints passed to the device driver
  * via AVDictionary options. The device may negotiate different parameters;
- * the actual negotiated values are available from CameraReader after open().
+ * the actual negotiated values are available from FFmpegCameraReader after
+ * open().
+ *
+ * This type is FFmpeg-specific by design and does not appear anywhere in
+ * CameraSource. Another backend defines its own config type entirely.
  */
 struct MAYAFLUX_API CameraConfig {
     std::string device_name; ///< Platform device string.
@@ -49,7 +54,7 @@ struct MAYAFLUX_API CameraConfig {
 };
 
 /**
- * @class CameraReader
+ * @class FFmpegCameraReader
  * @brief FFmpeg device reader for live camera input with background decode.
  *
  * Owns the FFmpeg demux and video codec contexts for a single camera device.
@@ -58,26 +63,25 @@ struct MAYAFLUX_API CameraConfig {
  * marking the container READY. The graphics thread is never blocked by device
  * I/O.
  *
- * Two integration paths:
- *   - Managed:    IOManager::open_camera() handles registration, reader_id
- *                 assignment, container wiring, and avdevice initialisation.
- *   - Standalone: open() → create_container() → setup_io_service(id) →
- *                 set_container() → close(). Caller is responsible for
- *                 avdevice_register_all() before open().
+ * Implements CameraSource for the post-open lifecycle; see CameraSource for
+ * the shared contract (demand-driven single-frame pulls, Managed/Standalone
+ * integration paths). open()/close() and CameraConfig are specific to this
+ * backend — IOManager and CameraContainer only ever see this class through
+ * the CameraSource interface once open.
  *
- * Unlike VideoFileReader there is no ring buffer, no seek, and no batch
- * decode — the device is a live unbounded source. One frame is pulled per
- * process cycle, demand-driven by CameraContainer::process_default().
+ * IOManager::open_camera() drives the Managed path and calls
+ * avdevice_register_all() once via std::call_once. A Standalone caller is
+ * responsible for that call itself before open().
  */
-class MAYAFLUX_API CameraReader {
+class MAYAFLUX_API FFmpegCameraReader : public CameraSource {
 public:
-    CameraReader();
-    ~CameraReader();
+    FFmpegCameraReader();
+    ~FFmpegCameraReader() override;
 
-    CameraReader(const CameraReader&) = delete;
-    CameraReader& operator=(const CameraReader&) = delete;
-    CameraReader(CameraReader&&) = delete;
-    CameraReader& operator=(CameraReader&&) = delete;
+    FFmpegCameraReader(const FFmpegCameraReader&) = delete;
+    FFmpegCameraReader& operator=(const FFmpegCameraReader&) = delete;
+    FFmpegCameraReader(FFmpegCameraReader&&) = delete;
+    FFmpegCameraReader& operator=(FFmpegCameraReader&&) = delete;
 
     /**
      * @brief Open a camera device using the supplied config.
@@ -86,71 +90,21 @@ public:
      */
     [[nodiscard]] bool open(const CameraConfig& config);
 
-    /**
-     * @brief Release codec, demux, and scratch buffer resources.
-     */
-    void close();
+    void close() override;
+    [[nodiscard]] bool is_open() const override;
 
-    /**
-     * @brief True if the device is open and codec is ready.
-     */
-    [[nodiscard]] bool is_open() const;
+    [[nodiscard]] std::shared_ptr<Kakshya::CameraContainer> create_container() const override;
 
-    /**
-     * @brief Create a CameraContainer sized to the negotiated device resolution.
-     * @return Initialised container with slot-0 allocated, ready for pull_frame().
-     */
-    [[nodiscard]] std::shared_ptr<Kakshya::CameraContainer> create_container() const;
+    bool pull_frame(const std::shared_ptr<Kakshya::CameraContainer>& container) override;
 
-    /**
-     * @brief Decode one frame from the device into the container's m_data[0].
-     *
-     * Pumps packets until one decoded frame is available, converts to RGBA
-     * via swscale into container->mutable_frame_ptr(), then calls
-     * container->mark_ready_for_processing(true). Returns false on EAGAIN
-     * (no frame yet) — not an error, just no data available this cycle.
-     *
-     * The caller is responsible for invoking this once per graphics cycle,
-     * before the container's process_default() is triggered by downstream
-     * consumers. Typical integration: register as a graphics pre_process_hook
-     * or call explicitly before buffer processing.
-     *
-     * @param container Target CameraContainer.
-     * @return True if a new frame was written, false if no frame was available.
-     */
-    bool pull_frame(const std::shared_ptr<Kakshya::CameraContainer>& container);
+    [[nodiscard]] uint32_t width() const override;
+    [[nodiscard]] uint32_t height() const override;
+    [[nodiscard]] double frame_rate() const override;
 
-    /** @brief Negotiated output width in pixels. */
-    [[nodiscard]] uint32_t width() const;
+    void set_container(const std::shared_ptr<Kakshya::CameraContainer>& container) override;
+    void pull_frame_all() override;
 
-    /** @brief Negotiated output height in pixels. */
-    [[nodiscard]] uint32_t height() const;
-
-    /** @brief Negotiated frame rate in fps. */
-    [[nodiscard]] double frame_rate() const;
-
-    /**
-     * @brief Store a weak reference to the container for IOService dispatch.
-     *
-     * Called by IOManager::open_camera() after create_container(). Enables
-     * pull_frame_all() to resolve the container without an explicit argument.
-     *
-     * @param container CameraContainer created by this reader.
-     */
-    void set_container(const std::shared_ptr<Kakshya::CameraContainer>& container);
-
-    /**
-     * @brief Signal the background decode thread to pull one frame.
-     *
-     * Non-blocking. Called by IOManager::dispatch_frame_request() or the
-     * standalone IOService lambda. The decode thread wakes, calls pull_frame(),
-     * writes pixels into the container, marks it READY, then sleeps until the
-     * next signal. Safe to call from any thread.
-     */
-    void pull_frame_all();
-
-    /** @brief Last error string, empty if no error. */
-    [[nodiscard]] const std::string& last_error() const;
+    [[nodiscard]] const std::string& last_error() const override;
 
     /**
      * @brief Setup an IOService for this reader with the given reader_id.
@@ -159,7 +113,7 @@ public:
      * This is method is called when working outside of IOManager for self registration.
      * IOManager::open_camera() handles this automatically for managed readers.
      */
-    void setup_io_service(uint64_t reader_id);
+    void setup_io_service(uint64_t reader_id) override;
 
 private:
     std::shared_ptr<FFmpegDemuxContext> m_demux;

@@ -17,8 +17,8 @@ namespace MayaFlux::Kakshya {
  * seek capability, and no total_frames — the container always holds
  * exactly one frame: the most recently decoded one.
  *
- * The container is pure storage. CameraReader writes decoded RGBA pixels
- * directly into m_data[0] via mutable_frame_ptr(), exactly as
+ * The container is pure storage. The registered CameraSource writes decoded
+ * RGBA pixels directly into m_data[0] via mutable_frame_ptr(), exactly as
  * VideoFileReader writes into mutable_slot_ptr() for ring buffer slots.
  * FrameAccessProcessor reads from the container via get_frame_pixels(0)
  * during the normal process_default() cycle.
@@ -26,7 +26,7 @@ namespace MayaFlux::Kakshya {
  * Data flow is driven by CameraIOService. After each process() cycle
  * the overridden update_read_position_for_channel() calls
  * IOService::request_frame(reader_id). IOManager dispatches this
- * to CameraReader::pull_frame_all(), which writes the next decoded frame
+ * to CameraSource::pull_frame_all(), which writes the next decoded frame
  * into mutable_frame_ptr() and marks the container READY.
  *
  * Dimensions follow VIDEO_COLOR convention:
@@ -53,9 +53,9 @@ public:
      * @brief Mutable pointer into m_data[0] for the caller to write decoded pixels.
      *
      * Mirrors VideoStreamContainer::mutable_slot_ptr() for ring mode, but
-     * operates on the single flat-mode frame. The caller (CameraReader)
-     * writes width * height * channels bytes at this address, then calls
-     * mark_ready_for_processing(true).
+     * operates on the single flat-mode frame. The caller (the registered
+     * CameraSource) writes width * height * channels bytes at this
+     * address, then calls mark_ready_for_processing(true).
      *
      * @return Pointer to the start of the frame pixel buffer, or nullptr if
      *         the container is not properly initialised.
@@ -71,7 +71,7 @@ public:
      * completes a process cycle.
      *
      * @param reader_id Opaque id assigned by IOManager, matching the
-     *                  CameraReader registered in dispatch.
+     *                  CameraSource registered in dispatch.
      */
     void setup_io(uint64_t reader_id);
 
@@ -97,7 +97,8 @@ public:
      * PROCESSING → PROCESSED but never calls update_read_position_for_channel,
      * because FrameAccessProcessor::auto_advance is disabled for live input.
      * Without auto_advance there is no call site for update_read_position_for_channel,
-     * so IOService::request_frame never fires and CameraReader never pulls a new frame.
+     * so IOService::request_frame never fires and the registered CameraSource
+     * never pulls a new frame.
      *
      * This override calls the base implementation then immediately issues
      * request_frame, replacing the position-advance trigger with a direct

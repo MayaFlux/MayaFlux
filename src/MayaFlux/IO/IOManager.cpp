@@ -279,6 +279,44 @@ void IOManager::dispatch_frame_request(uint64_t reader_id)
     it->second->pull_frame_all();
 }
 
+uint64_t IOManager::register_camera_source(std::shared_ptr<CameraSource> source)
+{
+    if (!source) {
+        MF_WARN(Journal::Component::Core, Journal::Context::FileIO,
+            "IOManager::register_camera_source called with null source");
+        return 0;
+    }
+
+    const uint64_t id = m_next_reader_id.fetch_add(1, std::memory_order_relaxed);
+
+    {
+        std::unique_lock lock(m_camera_mutex);
+        m_camera_readers.emplace(id, std::move(source));
+    }
+
+    MF_DEBUG(Journal::Component::Core, Journal::Context::FileIO,
+        "IOManager: registered CameraSource id={}", id);
+
+    return id;
+}
+
+void IOManager::release_camera_source(uint64_t reader_id)
+{
+    std::unique_lock lock(m_camera_mutex);
+    auto it = m_camera_readers.find(reader_id);
+
+    if (it == m_camera_readers.end()) {
+        MF_WARN(Journal::Component::Core, Journal::Context::FileIO,
+            "IOManager::release_camera_source: unknown id={}", reader_id);
+        return;
+    }
+
+    m_camera_readers.erase(it);
+
+    MF_DEBUG(Journal::Component::Core, Journal::Context::FileIO,
+        "IOManager: released CameraSource id={}", reader_id);
+}
+
 std::shared_ptr<Kakshya::SoundFileContainer> IOManager::load_audio(const std::string& filepath, LoadConfig config)
 {
     auto reader = std::make_shared<IO::SoundFileReader>();
@@ -577,7 +615,7 @@ IOManager::open_camera(const CameraConfig& config)
     static std::once_flag s_avdevice_init;
     std::call_once(s_avdevice_init, [] { avdevice_register_all(); });
 
-    auto reader = std::make_shared<CameraReader>();
+    auto reader = std::make_shared<FFmpegCameraReader>();
 
     if (!reader->open(config)) {
         MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
@@ -594,15 +632,9 @@ IOManager::open_camera(const CameraConfig& config)
     }
 
     container->create_default_processor();
-
-    uint64_t rid = m_next_reader_id.fetch_add(1, std::memory_order_relaxed);
     reader->set_container(container);
 
-    {
-        std::unique_lock lock(m_camera_mutex);
-        m_camera_readers[rid] = reader;
-    }
-
+    const uint64_t rid = register_camera_source(reader);
     container->setup_io(rid);
     container->mark_ready_for_processing(true);
 
@@ -1482,7 +1514,7 @@ std::vector<uint64_t> IOManager::get_camera_reader_ids() const
     return ids;
 }
 
-std::shared_ptr<CameraReader> IOManager::get_camera_reader(uint64_t id) const
+std::shared_ptr<CameraSource> IOManager::get_camera_reader(uint64_t id) const
 {
     std::shared_lock lock(m_camera_mutex);
     auto it = m_camera_readers.find(id);

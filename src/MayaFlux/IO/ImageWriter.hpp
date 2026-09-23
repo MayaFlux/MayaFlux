@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MayaFlux/IO/ImageReader.hpp"
+#include "MayaFlux/IO/WriterRegistry.hpp"
 
 namespace MayaFlux::IO {
 
@@ -67,59 +68,14 @@ public:
     [[nodiscard]] virtual std::string get_last_error() const = 0;
 };
 
-using ImageWriterFactory = std::function<std::unique_ptr<ImageWriter>()>;
+using ImageWriterFactory = WriterFactory<ImageWriter>;
 
 /**
- * @class ImageWriterRegistry
  * @brief Singleton registry dispatching image writes by file extension.
  *
- * Mirrors FileReaderRegistry. Concrete writers register themselves on static
- * initialization. create_writer(path) looks up the extension and returns a
- * fresh instance of the appropriate writer, or nullptr if none is registered.
+ * See WriterRegistry for behavior. Concrete writers register themselves on
+ * static initialization.
  */
-class MAYAFLUX_API ImageWriterRegistry {
-public:
-    static ImageWriterRegistry& instance()
-    {
-        static ImageWriterRegistry registry;
-        return registry;
-    }
-
-    void register_writer(
-        const std::vector<std::string>& extensions,
-        const ImageWriterFactory& factory)
-    {
-        for (const auto& ext : extensions) {
-            m_factories[ext] = factory;
-        }
-    }
-
-    [[nodiscard]] std::unique_ptr<ImageWriter> create_writer(const std::string& filepath) const
-    {
-        auto ext = std::filesystem::path(filepath).extension().string();
-        if (!ext.empty() && ext[0] == '.') {
-            ext = ext.substr(1);
-        }
-
-        auto it = m_factories.find(ext);
-        if (it != m_factories.end()) {
-            return it->second();
-        }
-        return nullptr;
-    }
-
-    [[nodiscard]] std::vector<std::string> get_registered_extensions() const
-    {
-        std::vector<std::string> exts;
-        exts.reserve(m_factories.size());
-        for (const auto& [ext, _] : m_factories) {
-            exts.push_back(ext);
-        }
-        return exts;
-    }
-
-private:
-    std::unordered_map<std::string, ImageWriterFactory> m_factories;
-};
+using ImageWriterRegistry = WriterRegistry<ImageWriter>;
 
 } // namespace MayaFlux::IO
