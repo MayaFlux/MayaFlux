@@ -148,6 +148,29 @@ public:
         const std::vector<std::vector<Portal::Graphics::HazardResource>>& hazards_per_key);
 
     /**
+     * @brief Non-blocking counterpart of dispatch_sequence.
+     *
+     * Records the identical command buffer and submits it via
+     * ShaderFoundry::submit_async instead of submit_and_wait. Barriers owed to
+     * each stage's hazards are recorded as in dispatch_sequence, including the
+     * one after the final stage, so a caller that does not await the fence
+     * still gets the trailing dependency for anything submitted later.
+     *
+     * Like dispatch_sequence, and unlike dispatch_async, no shader-write to
+     * host-read barrier is recorded. Host reads after the fence has signaled
+     * rely on the fence's own visibility guarantee and on the buffers being
+     * host coherent.
+     *
+     * @return FenceID to poll with ShaderFoundry::is_fence_signaled and to
+     *         release once signaled.
+     */
+    [[nodiscard]] Portal::Graphics::FenceID dispatch_sequence_async(
+        const std::vector<std::string>& keys,
+        const std::vector<std::array<uint32_t, 3>>& groups_per_key,
+        const std::vector<std::vector<uint8_t>>& push_constants_per_key,
+        const std::vector<std::vector<Portal::Graphics::HazardResource>>& hazards_per_key);
+
+    /**
      * @brief Destroy the pipeline, shader, descriptor sets, and buffers
      *        for a single key, without affecting any other key.
      */
@@ -177,6 +200,19 @@ private:
 
         bool ready {};
     };
+
+    /**
+     * @brief Record one command buffer holding a dispatch per key, with the
+     *        barriers each stage's hazards owe the next.
+     *
+     * Shared by dispatch_sequence and dispatch_sequence_async, which differ
+     * only in how they submit the returned buffer.
+     */
+    [[nodiscard]] Portal::Graphics::CommandBufferID record_sequence_commands(
+        const std::vector<std::string>& keys,
+        const std::vector<std::array<uint32_t, 3>>& groups_per_key,
+        const std::vector<std::vector<uint8_t>>& push_constants_per_key,
+        const std::vector<std::vector<Portal::Graphics::HazardResource>>& hazards_per_key);
 
     struct SharedBuffers;
     std::unique_ptr<SharedBuffers> m_shared;

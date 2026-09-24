@@ -692,7 +692,7 @@ Portal::Graphics::FenceID GpuResourceManager::dispatch_async(const std::string& 
     return foundry.submit_async(cmd_id);
 }
 
-void GpuResourceManager::dispatch_sequence(
+Portal::Graphics::CommandBufferID GpuResourceManager::record_sequence_commands(
     const std::vector<std::string>& keys,
     const std::vector<std::array<uint32_t, 3>>& groups_per_key,
     const std::vector<std::vector<uint8_t>>& push_constants_per_key,
@@ -718,7 +718,29 @@ void GpuResourceManager::dispatch_sequence(
     auto cmd_id = foundry.begin_commands(
         Portal::Graphics::ShaderFoundry::CommandBufferType::COMPUTE);
     compute_press.record_sequence(cmd_id, stages);
-    foundry.submit_and_wait(cmd_id);
+    return cmd_id;
+}
+
+void GpuResourceManager::dispatch_sequence(
+    const std::vector<std::string>& keys,
+    const std::vector<std::array<uint32_t, 3>>& groups_per_key,
+    const std::vector<std::vector<uint8_t>>& push_constants_per_key,
+    const std::vector<std::vector<Portal::Graphics::HazardResource>>& hazards_per_key)
+{
+    auto& foundry = Portal::Graphics::get_shader_foundry();
+    foundry.submit_and_wait(
+        record_sequence_commands(keys, groups_per_key, push_constants_per_key, hazards_per_key));
+}
+
+Portal::Graphics::FenceID GpuResourceManager::dispatch_sequence_async(
+    const std::vector<std::string>& keys,
+    const std::vector<std::array<uint32_t, 3>>& groups_per_key,
+    const std::vector<std::vector<uint8_t>>& push_constants_per_key,
+    const std::vector<std::vector<Portal::Graphics::HazardResource>>& hazards_per_key)
+{
+    auto& foundry = Portal::Graphics::get_shader_foundry();
+    return foundry.submit_async(
+        record_sequence_commands(keys, groups_per_key, push_constants_per_key, hazards_per_key));
 }
 
 } // namespace MayaFlux::Yantra

@@ -357,6 +357,18 @@ Portal::Graphics::FenceID GpuDispatchCore::dispatch_core_async(
 
 void GpuDispatchCore::dispatch_core_dependency(const std::vector<DependencyStage>& stages)
 {
+    const auto plan = prepare_dependency(stages);
+    m_resources.dispatch_sequence(plan.keys, plan.groups, plan.push_constants, plan.hazards);
+}
+
+Portal::Graphics::FenceID GpuDispatchCore::dispatch_core_dependency_async(const std::vector<DependencyStage>& stages)
+{
+    const auto plan = prepare_dependency(stages);
+    return m_resources.dispatch_sequence_async(plan.keys, plan.groups, plan.push_constants, plan.hazards);
+}
+
+GpuDispatchCore::DependencyPlan GpuDispatchCore::prepare_dependency(const std::vector<DependencyStage>& stages)
+{
     const GpuComputeConfig original_config = m_gpu_config;
     const auto original_bindings = m_bindings;
     const auto original_image_bindings = m_image_bindings;
@@ -364,10 +376,11 @@ void GpuDispatchCore::dispatch_core_dependency(const std::vector<DependencyStage
     const auto original_passthrough_bytes = m_passthrough_bytes;
     const auto original_push_constants = m_push_constants;
 
-    std::vector<std::string> keys;
-    std::vector<std::array<uint32_t, 3>> groups_per_key;
-    std::vector<std::vector<uint8_t>> pc_per_key;
-    std::vector<std::vector<Portal::Graphics::HazardResource>> hazards_per_key;
+    DependencyPlan plan;
+    auto& keys = plan.keys;
+    auto& groups_per_key = plan.groups;
+    auto& pc_per_key = plan.push_constants;
+    auto& hazards_per_key = plan.hazards;
 
     keys.reserve(stages.size());
     groups_per_key.reserve(stages.size());
@@ -403,8 +416,6 @@ void GpuDispatchCore::dispatch_core_dependency(const std::vector<DependencyStage
         hazards_per_key.push_back(stage.hazard_fn ? stage.hazard_fn(*this) : std::vector<Portal::Graphics::HazardResource> {});
     }
 
-    m_resources.dispatch_sequence(keys, groups_per_key, pc_per_key, hazards_per_key);
-
     m_gpu_config = original_config;
     update_dispatch_key_cache();
     m_bindings = original_bindings;
@@ -412,6 +423,8 @@ void GpuDispatchCore::dispatch_core_dependency(const std::vector<DependencyStage
     m_binding_data = original_binding_data;
     m_passthrough_bytes = original_passthrough_bytes;
     m_push_constants = original_push_constants;
+
+    return plan;
 }
 
 //==============================================================================

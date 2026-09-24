@@ -374,6 +374,33 @@ protected:
     void dispatch_core_dependency(const std::vector<DependencyStage>& stages);
 
     /**
+     * @brief Non-blocking variant of dispatch_core_dependency.
+     *
+     * Stages are prepared exactly as in dispatch_core_dependency, then the
+     * whole sequence is recorded into one command buffer and submitted
+     * without waiting. The context's own shader config, bindings and staged
+     * data are restored before this returns, so the caller may reconfigure
+     * the context immediately. Descriptor sets already written for the
+     * stages' shader keys must not be rebound until the returned fence has
+     * signaled.
+     *
+     * The barrier owed to the final stage's INPUT_OUTPUT hazards is still
+     * recorded, which orders anything submitted afterwards behind this
+     * sequence's writes.
+     *
+     * Unlike dispatch_core_async, no shader-write to host-read barrier is
+     * recorded for the stages' buffers. As with dispatch_core_dependency,
+     * host reads after the fence has signaled rely on the fence's own
+     * visibility guarantee and on the buffers being host coherent.
+     *
+     * @param stages Ordered stage descriptions, as for DependencyParams.
+     * @return FenceID to poll with ShaderFoundry::is_fence_signaled and to
+     *         release once signaled. INVALID_FENCE on submission failure.
+     */
+    [[nodiscard]] Portal::Graphics::FenceID dispatch_core_dependency_async(
+        const std::vector<DependencyStage>& stages);
+
+    /**
      * @brief Effective element count used by the last dispatch_core or
      *        dispatch_core_async call.
      *
@@ -451,6 +478,15 @@ protected:
     std::vector<ImageBinding> m_image_bindings;
 
 private:
+    struct DependencyPlan {
+        std::vector<std::string> keys;
+        std::vector<std::array<uint32_t, 3>> groups;
+        std::vector<std::vector<uint8_t>> push_constants;
+        std::vector<std::vector<Portal::Graphics::HazardResource>> hazards;
+    };
+
+    [[nodiscard]] DependencyPlan prepare_dependency(const std::vector<DependencyStage>& stages);
+
     GpuComputeConfig m_gpu_config;
     std::string m_cached_dispatch_key;
 
