@@ -7,6 +7,23 @@ namespace MayaFlux {
 namespace internal {
 
     /**
+     * @brief Turns on exposure for the MF_LIVE_EXPOSE macros in the linked library.
+     *
+     * Called at load time by any translation unit compiled with MAYAFLUX_LIVE.
+     * Library code such as the Creator factories cannot see the caller's define,
+     * so they consult this flag instead. There is no way to turn it off again.
+     */
+    MAYAFLUX_API void enable_live_exposure() noexcept;
+
+    /**
+     * @brief Reports whether live exposure has been enabled.
+     *
+     * @return true once any translation unit compiled with MAYAFLUX_LIVE has
+     *         loaded, false otherwise.
+     */
+    MAYAFLUX_API bool live_exposure_enabled() noexcept;
+
+    /**
      * @brief Maximum number of objects that can be registered in the live arena.
      */
     inline constexpr std::size_t LIVE_ARENA_MAX_ENTRIES = 256;
@@ -70,6 +87,13 @@ namespace internal {
      * via static_pointer_cast. Null for bump-allocated entries.
      */
     extern MAYAFLUX_API std::shared_ptr<void> g_live_arena_shared_ptrs[LIVE_ARENA_MAX_ENTRIES];
+
+    /**
+     * @brief Whether the MF_LIVE_EXPOSE macros publish objects to the arena.
+     *
+     * Set through enable_live_exposure() and read through live_exposure_enabled().
+     */
+    extern MAYAFLUX_API std::atomic<bool> g_live_exposure_enabled;
 
     // =========================================================================
 
@@ -209,7 +233,7 @@ namespace internal {
      *
      * @param buf   Destination buffer of at least LIVE_ARENA_KEY_MAX bytes.
      * @param name  Unqualified type name, typically from live_type_name<T>().
-     * @param count Per-type monotonic counter value.
+     * @param count Index appended after the name.
      */
     inline void live_format_key(char* buf, std::string_view name, uint32_t count) noexcept
     {
@@ -219,68 +243,67 @@ namespace internal {
 
 } // namespace MayaFlux::internal
 
-/**
- * @brief Exposes @p ptr to the live arena under a user-supplied key when MAYAFLUX_LIVE is defined.
- *
- * Expands to a no-op when MAYAFLUX_LIVE is not defined.
- */
 #ifdef MAYAFLUX_LIVE
-#define MF_LIVE_EXPOSE(key, ptr) ::MayaFlux::expose_live((key), (ptr))
-#else
-#define MF_LIVE_EXPOSE(key, ptr) ((void)0)
+namespace internal {
+    /**
+     * @brief Enables live exposure at load time in any translation unit compiled with MAYAFLUX_LIVE.
+     */
+    [[maybe_unused]] static const bool live_exposure_registration = []() noexcept {
+        enable_live_exposure();
+        return true;
+    }();
+}
 #endif
+
+/**
+ * @brief Exposes @p ptr to the live arena under a user-supplied key when live exposure is enabled.
+ *
+ * Exposure is enabled by defining MAYAFLUX_LIVE before including MayaFlux
+ * headers in the client. Without it the macro does nothing at runtime.
+ */
+#define MF_LIVE_EXPOSE(key, ptr)                           \
+    do {                                                   \
+        if (::MayaFlux::internal::live_exposure_enabled()) \
+            ::MayaFlux::expose_live((key), (ptr));         \
+    } while (0)
 
 /**
  * @brief Auto-expose variant that deduces the key prefix from the shared_ptr element type.
  *
- * Generates keys of the form "TypeName_N" where N is a per-type monotonic counter.
- * The static counter is local to each template instantiation so each type maintains
- * its own independent sequence: Sine_0, Sine_1, Phasor_0, Phasor_1, etc.
+ * Generates keys of the form "TypeName_N" where N is the first index not yet
+ * taken for that type, so each type keeps one sequence across every call site:
+ * Sine_0, Sine_1, Phasor_0, Phasor_1, etc.
  *
  * Use when no explicit name is available at the call site (e.g. read_* methods).
  *
- * @param ptr shared_ptr whose element_type drives both the key prefix and the counter.
+ * @param ptr shared_ptr whose element_type drives the key prefix.
  */
-#ifdef MAYAFLUX_LIVE
-#define MF_LIVE_EXPOSE_AUTO(ptr)                                \
-    do {                                                        \
-        using _MfT = typename decltype(ptr)::element_type;      \
-        static std::atomic<uint32_t> s_live_counter { 0 };      \
-        char _mf_key[::MayaFlux::internal::LIVE_ARENA_KEY_MAX]; \
-        ::MayaFlux::internal::live_format_key(                  \
-            _mf_key,                                            \
-            ::MayaFlux::internal::live_type_name<_MfT>(),       \
-            s_live_counter.fetch_add(1));                       \
-        ::MayaFlux::expose_live(_mf_key, (ptr));                \
+#define MF_LIVE_EXPOSE_AUTO(ptr)                                                    \
+    do {                                                                            \
+        if (::MayaFlux::internal::live_exposure_enabled()) {                        \
+            using _MfT = typename std::remove_cvref_t<decltype(ptr)>::element_type; \
+            ::MayaFlux::expose_live_indexed(                                        \
+                ::MayaFlux::internal::live_type_name<_MfT>(), (ptr));               \
+        }                                                                           \
     } while (0)
-#else
-#define MF_LIVE_EXPOSE_AUTO(ptr) ((void)0)
-#endif
 
 /**
- * @brief Auto-expose variant with an explicit name prefix and per-name counter.
+ * @brief Auto-expose variant with an explicit name prefix.
  *
- * Generates keys of the form "name_N" where N is a monotonic counter local to
- * the call site's template instantiation. Use inside Creator macro expansions
- * where the method name is available via the stringified macro parameter.
+ * Generates keys of the form "name_N" where N is the first index not yet taken
+ * for that name, so every overload of a Creator factory shares one sequence.
+ * Use inside Creator factories where the method name is a string literal.
  *
- * @param name String literal key prefix, typically #method_name.
+ * @param name String literal key prefix, typically the factory name.
  * @param ptr  shared_ptr to expose.
  */
-#ifdef MAYAFLUX_LIVE
-#define MF_LIVE_EXPOSE_NAMED(name, ptr)                         \
-    do {                                                        \
-        static std::atomic<uint32_t> s_live_counter { 0 };      \
-        char _mf_key[::MayaFlux::internal::LIVE_ARENA_KEY_MAX]; \
-        ::MayaFlux::internal::live_format_key(                  \
-            _mf_key,                                            \
-            std::string_view { (name) },                        \
-            s_live_counter.fetch_add(1));                       \
-        ::MayaFlux::expose_live(_mf_key, (ptr));                \
+#define MF_LIVE_EXPOSE_NAMED(name, ptr)                          \
+    do {                                                         \
+        if (::MayaFlux::internal::live_exposure_enabled()) {     \
+            ::MayaFlux::expose_live_indexed(                     \
+                std::string_view { (name) }, (ptr));             \
+        }                                                        \
     } while (0)
-#else
-#define MF_LIVE_EXPOSE_NAMED(name, ptr) ((void)0)
-#endif
 // =============================================================================
 
 /**
@@ -350,6 +373,35 @@ template <typename T>
 bool expose_live(const char* key, T* ptr) noexcept
 {
     return internal::live_arena_expose(key, std::shared_ptr<void>(ptr, [](void*) { }));
+}
+
+/**
+ * @brief Exposes @p obj under the first free key of the form "prefix_N".
+ *
+ * N starts at 0 and advances past keys already in the arena, so every call
+ * site sharing a prefix, such as the overloads of one Creator factory, draws
+ * from one sequence and none of them collide.
+ *
+ * @tparam T      Type of the object.
+ * @param  prefix Key prefix.
+ * @param  obj    shared_ptr to the existing object.
+ * @return true on success, false if the directory is full.
+ */
+template <typename T>
+bool expose_live_indexed(std::string_view prefix, const std::shared_ptr<T>& obj) noexcept
+{
+    if (internal::live_arena_header()->entry_count >= internal::LIVE_ARENA_MAX_ENTRIES) {
+        return false;
+    }
+
+    char key[internal::LIVE_ARENA_KEY_MAX];
+    for (uint32_t index = 0; index < internal::LIVE_ARENA_MAX_ENTRIES; ++index) {
+        internal::live_format_key(key, prefix, index);
+        if (internal::live_arena_expose(key, std::static_pointer_cast<void>(obj))) {
+            return true;
+        }
+    }
+    return false;
 }
 
 /**

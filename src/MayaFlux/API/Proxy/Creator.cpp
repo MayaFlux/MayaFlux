@@ -1,4 +1,5 @@
 #include "Creator.hpp"
+#include "Generated/CreatorClasses.hpp"
 
 #include "MayaFlux/API/Depot.hpp"
 #include "MayaFlux/API/Graph.hpp"
@@ -23,6 +24,8 @@
 namespace MayaFlux {
 
 Creator vega {};
+
+#include "Generated/CreatorDefinitions.inc"
 
 void register_node(const std::shared_ptr<Nodes::Node>& node, const CreationContext& ctx)
 {

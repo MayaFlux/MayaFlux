@@ -7,6 +7,7 @@
 
 #include "MayaFlux/API/Depot.hpp"
 #include "MayaFlux/Kakshya/Source/CompositeContainer.hpp"
+#include "Generated/CreatorIncludes.hpp"
 
 namespace MayaFlux {
 
@@ -153,41 +154,7 @@ public:
      */
     Mint mint;
 
-#define N(method_name, full_type_name)                                            \
-    template <typename... Args>                                                   \
-        requires std::constructible_from<full_type_name, Args...>                 \
-    auto method_name(Args&&... args) -> std::shared_ptr<full_type_name>           \
-    {                                                                             \
-        auto obj = std::make_shared<full_type_name>(std::forward<Args>(args)...); \
-        MF_LIVE_EXPOSE_NAMED(#method_name, obj);                                  \
-        return obj;                                                               \
-    }
-    ALL_NODE_REGISTRATIONS
-#undef N
-
-#define W(method_name, full_type_name)                                            \
-    template <typename... Args>                                                   \
-        requires std::constructible_from<full_type_name, Args...>                 \
-    auto method_name(Args&&... args) -> std::shared_ptr<full_type_name>           \
-    {                                                                             \
-        auto obj = std::make_shared<full_type_name>(std::forward<Args>(args)...); \
-        MF_LIVE_EXPOSE_NAMED(#method_name, obj);                                  \
-        return obj;                                                               \
-    }
-    ALL_NODE_NETWORK_REGISTRATIONS
-#undef W
-
-#define B(method_name, full_type_name)                                            \
-    template <typename... Args>                                                   \
-        requires std::constructible_from<full_type_name, Args...>                 \
-    auto method_name(Args&&... args) -> std::shared_ptr<full_type_name>           \
-    {                                                                             \
-        auto obj = std::make_shared<full_type_name>(std::forward<Args>(args)...); \
-        MF_LIVE_EXPOSE_NAMED(#method_name, obj);                                  \
-        return obj;                                                               \
-    }
-    ALL_BUFFER_REGISTRATION
-#undef B
+#include "Generated/CreatorDeclarations.inc"
 
     auto read_audio(const std::string& filepath) -> std::shared_ptr<Kakshya::SoundFileContainer>
     {

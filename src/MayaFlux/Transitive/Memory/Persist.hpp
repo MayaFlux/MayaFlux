@@ -37,7 +37,7 @@ std::shared_ptr<T> store(std::shared_ptr<T> obj)
  *
  * The persistent store retains the object for process lifetime. The live arena
  * entry allows JIT'd code to reach the object via live_cast<T>(key).
- * No-op on the arena side when MAYAFLUX_LIVE is not defined.
+ * No-op on the arena side when live exposure is disabled.
  *
  * @tparam T   Any type managed by shared_ptr.
  * @param  key Arena key used to locate the object from JIT'd code.
