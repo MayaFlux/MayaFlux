@@ -37,9 +37,9 @@ bool ShaderFoundry::initialize(
     m_backend = backend;
     m_config = config;
 
-    m_config.include_directories.emplace_back(Core::SHADER_SOURCE_DIR);
-    m_config.include_directories.emplace_back(std::string(Core::SHADER_SOURCE_DIR) + "/include");
-    m_config.include_directories.emplace_back(Core::SHADER_BUILD_OUTPUT_DIR);
+    m_config.include_directories.emplace_back(Config::SHADER_SOURCE_DIR);
+    m_config.include_directories.emplace_back(std::string(Config::SHADER_SOURCE_DIR) + "/include");
+    m_config.include_directories.emplace_back(Config::SHADER_BUILD_OUTPUT_DIR);
 
     m_global_descriptor_manager = std::make_shared<Core::VKDescriptorManager>();
     m_global_descriptor_manager->initialize(get_device(), 1024);
@@ -447,9 +447,9 @@ std::optional<std::filesystem::path> ShaderFoundry::resolve_shader_path(const st
     }
 
     std::vector<std::string> search_paths = {
-        Core::SHADER_BUILD_OUTPUT_DIR,
-        Core::SHADER_INSTALL_DIR,
-        Core::SHADER_SOURCE_DIR,
+        Config::SHADER_BUILD_OUTPUT_DIR,
+        Config::SHADER_INSTALL_DIR,
+        Config::SHADER_SOURCE_DIR,
         "./shaders",
         "../shaders",
         "data/shaders",
@@ -457,8 +457,8 @@ std::optional<std::filesystem::path> ShaderFoundry::resolve_shader_path(const st
         "../data/shaders"
     };
 
-    if (std::string_view(Core::SHADER_EXAMPLE_DIR).length() > 0) {
-        search_paths.emplace_back(Core::SHADER_EXAMPLE_DIR);
+    if (std::string_view(Config::SHADER_EXAMPLE_DIR).length() > 0) {
+        search_paths.emplace_back(Config::SHADER_EXAMPLE_DIR);
     }
 
 #ifdef MAYAFLUX_PROJECT_SHADER_DIR

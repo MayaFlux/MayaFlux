@@ -143,17 +143,19 @@ namespace Config {
     constexpr std::string_view PCH_RUNTIME_PATH = "@CMAKE_INSTALL_PREFIX@/share/MayaFlux/runtime/pch.h";
     constexpr std::string_view INSTALL_PREFIX = "@CMAKE_INSTALL_PREFIX@";
 #endif
-}
-
-namespace Core {
     constexpr const char* SHADER_BUILD_OUTPUT_DIR = "@SHADER_OUTPUT_DIR@";
     constexpr const char* SHADER_SOURCE_DIR = "@SHADERS_DIR@";
     constexpr const char* SHADER_EXAMPLE_DIR      = "@EXAMPLE_SHADER_DIR@";  // empty string in non-dev builds
+    constexpr const char* OUT_DIR = "@OUT_DIR@";
+    constexpr const char* LOG_DIR = "@LOG_DIR@";
 #if defined(MAYAFLUX_PLATFORM_MACOS) && (defined(__aarch64__) || defined(_M_ARM64))
     constexpr const char* SHADER_INSTALL_DIR = "/opt/homebrew/share/MayaFlux/shaders";
 #else
     constexpr const char* SHADER_INSTALL_DIR = "@CMAKE_INSTALL_PREFIX@/share/MayaFlux/shaders";
 #endif
+}
+
+namespace Core {
 
 constexpr std::string_view get_platform_name()
 {

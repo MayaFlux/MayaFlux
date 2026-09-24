@@ -13,7 +13,7 @@ TextFileWriter::~TextFileWriter()
 
 bool TextFileWriter::can_write(const std::string& filepath) const
 {
-    std::filesystem::path path(filepath);
+    std::filesystem::path path(resolve_write_path(filepath));
 
     auto parent = path.parent_path();
     if (parent.empty()) {
@@ -31,7 +31,7 @@ bool TextFileWriter::open(const std::string& filepath, FileWriteOptions options)
         close();
     }
 
-    m_filepath = filepath;
+    m_filepath = resolve_write_path(filepath);
     m_options = options;
 
     std::ios_base::openmode mode = std::ios_base::out;
@@ -45,7 +45,7 @@ bool TextFileWriter::open(const std::string& filepath, FileWriteOptions options)
     }
 
     try {
-        std::filesystem::path path(filepath);
+        std::filesystem::path path(m_filepath);
         if (auto parent = path.parent_path(); !parent.empty()) {
             std::filesystem::create_directories(parent);
         }
@@ -54,10 +54,10 @@ bool TextFileWriter::open(const std::string& filepath, FileWriteOptions options)
         return false;
     }
 
-    m_file.open(filepath, mode);
+    m_file.open(m_filepath, mode);
 
     if (!m_file.is_open()) {
-        m_last_error = "Failed to open file: " + filepath;
+        m_last_error = "Failed to open file: " + m_filepath;
         return false;
     }
 
@@ -66,7 +66,7 @@ bool TextFileWriter::open(const std::string& filepath, FileWriteOptions options)
 
     if ((options & FileWriteOptions::APPEND) != FileWriteOptions::NONE) {
         try {
-            m_bytes_written = std::filesystem::file_size(filepath);
+            m_bytes_written = std::filesystem::file_size(m_filepath);
         } catch (...) {
             m_bytes_written = 0;
         }

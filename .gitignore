@@ -25,6 +25,10 @@ compile_commands.json
 
 # User resources (not tracked)
 res/
+mayaflux.json
+planning/
+data/out/
+data/log/
 
 # Media and 3D assets
 *.jpg

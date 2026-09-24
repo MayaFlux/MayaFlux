@@ -15,9 +15,9 @@ namespace {
     std::vector<std::string> get_shader_search_paths()
     {
         std::vector<std::string> paths {
-            SHADER_BUILD_OUTPUT_DIR, // 1. Build directory (development)
-            SHADER_INSTALL_DIR, // 2. Install directory (production)
-            SHADER_SOURCE_DIR, // 3. Source directory (fallback)
+            Config::SHADER_BUILD_OUTPUT_DIR, // 1. Build directory (development)
+            Config::SHADER_INSTALL_DIR, // 2. Install directory (production)
+            Config::SHADER_SOURCE_DIR, // 3. Source directory (fallback)
             "./shaders", // 4. Current working directory
             "../shaders", // 5. Parent directory
             "data/shaders", // 6. Weave project root convention
@@ -25,8 +25,8 @@ namespace {
             "../data/shaders" // 7. if running from build/
         };
 
-        if (std::string_view(SHADER_EXAMPLE_DIR).length() > 0) {
-            paths.emplace_back(SHADER_EXAMPLE_DIR);
+        if (std::string_view(Config::SHADER_EXAMPLE_DIR).length() > 0) {
+            paths.emplace_back(Config::SHADER_EXAMPLE_DIR);
         }
 
 #ifdef MAYAFLUX_PROJECT_SHADER_DIR

@@ -48,6 +48,9 @@ else()
 endif()
 
 set(DATA_DIR "${CMAKE_SOURCE_DIR}/data")
+set(OUT_DIR "${DATA_DIR}/out")
+set(LOG_DIR "${DATA_DIR}/log")
+file(MAKE_DIRECTORY "${OUT_DIR}" "${LOG_DIR}")
 
 if(WIN32)
     set(CMAKE_INSTALL_PREFIX "C:/MayaFlux" CACHE PATH "Installation directory"

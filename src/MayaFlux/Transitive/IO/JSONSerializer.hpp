@@ -2,6 +2,8 @@
 
 #include "Serializer.hpp"
 
+#include "MayaFlux/IO/FileWriter.hpp"
+
 #include "MayaFlux/Transitive/Reflect/Mirror.hpp"
 
 #include <nlohmann/json.hpp>
@@ -61,14 +63,15 @@ public:
     [[nodiscard]] bool write(const std::string& path, const T& value, int indent = 2)
     {
         m_last_error.clear();
-        std::ofstream file(path, std::ios::out | std::ios::trunc);
+        const auto resolved = resolve_write_path(path);
+        std::ofstream file(resolved, std::ios::out | std::ios::trunc);
         if (!file.is_open()) {
-            m_last_error = "Failed to open for writing: " + path;
+            m_last_error = "Failed to open for writing: " + resolved;
             return false;
         }
         file << encode(value, indent);
         if (!file.good()) {
-            m_last_error = "Write failed: " + path;
+            m_last_error = "Write failed: " + resolved;
             return false;
         }
         return true;
