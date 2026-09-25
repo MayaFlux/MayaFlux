@@ -299,42 +299,6 @@ namespace {
         return cache.emplace(key, std::move(k)).first->second;
     }
 
-    /**
-     * @brief 1D Gaussian kernel for separable convolution, cached by
-     *        (radius, sigma bit pattern).
-     *
-     * Sigma is a tuning parameter that rarely changes frame to frame;
-     * recomputing exp() per tap and reallocating the kernel every call
-     * is pure repeated work for an identical result. Mirrors
-     * VisionExecutor::gaussian_kernel's caching rationale for the CPU path.
-     *
-     * @param radius Radius of the kernel in pixels. Kernel size is (2*radius + 1).
-     * @param sigma  Standard deviation of the Gaussian.
-     * @return       Normalized kernel weights.
-     */
-    const std::vector<float>& gaussian_kernel_1d(uint32_t radius, float sigma)
-    {
-        static std::unordered_map<uint64_t, std::vector<float>> cache;
-        const uint64_t key = (static_cast<uint64_t>(std::bit_cast<uint32_t>(sigma)) << 32)
-            | radius;
-        auto it = cache.find(key);
-        if (it != cache.end())
-            return it->second;
-
-        const uint32_t size = 2 * radius + 1;
-        std::vector<float> k(size);
-        float sum = 0.0F;
-        for (uint32_t i = 0; i < size; ++i) {
-            const float x = static_cast<float>(i) - static_cast<float>(radius);
-            k[i] = std::exp(-(x * x) / (2.0F * sigma * sigma));
-            sum += k[i];
-        }
-        for (auto& v : k)
-            v /= sum;
-
-        return cache.emplace(key, std::move(k)).first->second;
-    }
-
     GpuVisionPass::Completed op_threshold_otsu(VisionGpuContexts& contexts)
     {
         auto& pixel_ctx = contexts.pixel;
@@ -495,7 +459,7 @@ namespace {
             blurred = it->second.output;
         } else {
             const auto radius = static_cast<uint32_t>(std::ceil(p.sigma * 3.0F));
-            const auto& weights = gaussian_kernel_1d(radius, p.sigma);
+            const auto& weights = gaussian_kernel_2d(radius, p.sigma);
             const auto blur_cfg = VisionGpuExecutor::config(VisionOp::GaussianBlur, GaussianBlurParams { .sigma = p.sigma });
             pixel_ctx.swap_shader(blur_cfg);
             pixel_ctx.stage_image(canny_input);
@@ -631,7 +595,7 @@ namespace {
         auto& foundry = Portal::Graphics::get_shader_foundry();
 
         const auto radius = static_cast<uint32_t>(std::ceil(p.sigma * 3.0F));
-        const auto& weights = gaussian_kernel_1d(radius, p.sigma);
+        const auto& weights = gaussian_kernel_2d(radius, p.sigma);
 
         const auto harris_input = contexts.pass.current;
 
