@@ -37,6 +37,7 @@ layout(push_constant) uniform PC {
     float eigen_threshold;
     float max_step;
     float visual_range;
+    float visual_min_motion;
     uint last_iteration;
 } pc;
 
@@ -119,12 +120,24 @@ void flow_store(ivec2 c, vec4 v)
  */
 float median9(float p[9])
 {
-    SORT2(p[1], p[2]) SORT2(p[4], p[5]) SORT2(p[7], p[8])
-    SORT2(p[0], p[1]) SORT2(p[3], p[4]) SORT2(p[6], p[7])
-    SORT2(p[1], p[2]) SORT2(p[4], p[5]) SORT2(p[7], p[8])
-    SORT2(p[0], p[3]) SORT2(p[5], p[8]) SORT2(p[4], p[7])
-    SORT2(p[3], p[6]) SORT2(p[1], p[4]) SORT2(p[2], p[5])
-    SORT2(p[4], p[7]) SORT2(p[4], p[2]) SORT2(p[6], p[4])
+    SORT2(p[1], p[2])
+    SORT2(p[4], p[5])
+    SORT2(p[7], p[8])
+    SORT2(p[0], p[1])
+    SORT2(p[3], p[4])
+    SORT2(p[6], p[7])
+    SORT2(p[1], p[2])
+    SORT2(p[4], p[5])
+    SORT2(p[7], p[8])
+    SORT2(p[0], p[3])
+    SORT2(p[5], p[8])
+    SORT2(p[4], p[7])
+    SORT2(p[3], p[6])
+    SORT2(p[1], p[4])
+    SORT2(p[2], p[5])
+    SORT2(p[4], p[7])
+    SORT2(p[4], p[2])
+    SORT2(p[6], p[4])
     SORT2(p[4], p[2])
     return p[4];
 }
@@ -233,91 +246,105 @@ void main()
     const float n = w1 * w1;
 
     switch (pc.phase) {
-    case PHASE_TENSOR_H: {
-        vec3 acc = vec3(0.0);
-        for (int k = -r; k <= r; ++k) {
-            const vec4 t = prev_texel(c + ivec2(k, 0));
-            acc += gauss_weight(k, sigma) * vec3(t.g * t.g, t.g * t.b, t.b * t.b);
-        }
-        imageStore(scratch_a, c + o, vec4(acc, 0.0));
-        break;
-    }
-    case PHASE_TENSOR_V: {
-        vec3 acc = vec3(0.0);
-        for (int k = -r; k <= r; ++k)
-            acc += gauss_weight(k, sigma) * scratch_a_at(c + ivec2(0, k)).xyz;
-
-        const float tr = acc.x + acc.z;
-        const float det = acc.x * acc.z - acc.y * acc.y;
-        const float min_eig = (0.5 * tr - sqrt(max(0.0, 0.25 * tr * tr - det))) / n;
-        imageStore(tensor_img, c + o, vec4(acc, min_eig));
-        break;
-    }
-    case PHASE_WARP_INIT:
-    case PHASE_WARP: {
-        vec2 v;
-        if (pc.phase == PHASE_WARP_INIT) {
-            v = coarse_flow(c);
-            flow_store(c, vec4(v, v));
-        } else {
-            v = flow_load(c).xy;
-        }
-
-        const vec4 t = prev_texel(c);
-        vec4 cur;
-        SAMPLE_CURR(vec2(c) + v, cur);
-        const float it = cur.r - t.r;
-        imageStore(scratch_a, c + o, vec4(t.g * it, t.b * it, it * it, 0.0));
-        break;
-    }
-    case PHASE_BOX_H: {
-        vec3 acc = vec3(0.0);
-        for (int k = -r; k <= r; ++k)
-            acc += gauss_weight(k, sigma) * scratch_a_at(c + ivec2(k, 0)).xyz;
-        imageStore(scratch_b, c + o, vec4(acc, 0.0));
-        break;
-    }
-    case PHASE_SOLVE: {
-        vec3 b = vec3(0.0);
-        for (int k = -r; k <= r; ++k)
-            b += gauss_weight(k, sigma) * scratch_b_at(c + ivec2(0, k)).xyz;
-
-        const vec4 g = imageLoad(tensor_img, c + o);
-        const vec4 state = flow_load(c);
-        vec2 v = state.xy;
-        const vec2 v0 = state.zw;
-
-        const float damping = pc.eigen_threshold * n;
-        const vec2 pull = b.xy + 0.25 * damping * (v - v0);
-        const float sxx = g.x + damping;
-        const float syy = g.z + damping;
-        const float det = sxx * syy - g.y * g.y;
-        if (det > 1e-12) {
-            vec2 delta = vec2(syy * pull.x - g.y * pull.y, sxx * pull.y - g.y * pull.x) / det;
-            const float len = length(delta);
-            if (len > pc.max_step)
-                delta *= pc.max_step / len;
-            v -= delta;
-        }
-
-        if (pc.last_iteration != 0u)
-            flow_store(c, vec4(v, g.w, sqrt(max(b.z, 0.0) / n)));
-        else
-            flow_store(c, vec4(v, v0));
-        break;
-    }
-    case PHASE_VISUALIZE: {
-        if (meta[1] <= DUPLICATE_ENERGY)
+        case PHASE_TENSOR_H:
+        {
+            vec3 acc = vec3(0.0);
+            for (int k = -r; k <= r; ++k) {
+                const vec4 t = prev_texel(c + ivec2(k, 0));
+                acc += gauss_weight(k, sigma) * vec3(t.g * t.g, t.g * t.b, t.b * t.b);
+            }
+            imageStore(scratch_a, c + o, vec4(acc, 0.0));
             break;
+        }
+        case PHASE_TENSOR_V:
+        {
+            vec3 acc = vec3(0.0);
+            for (int k = -r; k <= r; ++k)
+                acc += gauss_weight(k, sigma) * scratch_a_at(c + ivec2(0, k)).xyz;
 
-        const vec4 f = flow_load(c);
-        const float magnitude = length(f.xy);
-        const float hue = atan(f.y, f.x) / TWO_PI + 0.5;
-        const float value = sqrt(clamp(magnitude / max(pc.visual_range, 1e-6), 0.0, 1.0));
-        const float certainty = clamp(f.z / (4.0 * max(pc.eigen_threshold, 1e-9)), 0.0, 1.0);
-        const vec3 rgb = hsv_to_rgb(vec3(hue, mix(0.3, 1.0, certainty), value));
-        imageStore(flow_vis, c, vec4(rgb, 1.0));
-        break;
-    }
+            const float tr = acc.x + acc.z;
+            const float det = acc.x * acc.z - acc.y * acc.y;
+            const float min_eig = (0.5 * tr - sqrt(max(0.0, 0.25 * tr * tr - det))) / n;
+            imageStore(tensor_img, c + o, vec4(acc, min_eig));
+            break;
+        }
+        case PHASE_WARP_INIT:
+        case PHASE_WARP:
+        {
+            vec2 v;
+            if (pc.phase == PHASE_WARP_INIT) {
+                v = coarse_flow(c);
+                flow_store(c, vec4(v, v));
+            } else {
+                v = flow_load(c).xy;
+            }
+
+            const vec4 t = prev_texel(c);
+            vec4 cur;
+            SAMPLE_CURR(vec2(c) + v, cur);
+            const float it = cur.r - t.r;
+            imageStore(scratch_a, c + o, vec4(t.g * it, t.b * it, it * it, 0.0));
+            break;
+        }
+        case PHASE_BOX_H:
+        {
+            vec3 acc = vec3(0.0);
+            for (int k = -r; k <= r; ++k)
+                acc += gauss_weight(k, sigma) * scratch_a_at(c + ivec2(k, 0)).xyz;
+            imageStore(scratch_b, c + o, vec4(acc, 0.0));
+            break;
+        }
+        case PHASE_SOLVE:
+        {
+            vec3 b = vec3(0.0);
+            for (int k = -r; k <= r; ++k)
+                b += gauss_weight(k, sigma) * scratch_b_at(c + ivec2(0, k)).xyz;
+
+            const vec4 g = imageLoad(tensor_img, c + o);
+            const vec4 state = flow_load(c);
+            vec2 v = state.xy;
+            const vec2 v0 = state.zw;
+
+            const float damping = pc.eigen_threshold * n;
+            const vec2 pull = b.xy + 0.25 * damping * (v - v0);
+            const float sxx = g.x + damping;
+            const float syy = g.z + damping;
+            const float det = sxx * syy - g.y * g.y;
+            if (det > 1e-12) {
+                vec2 delta = vec2(syy * pull.x - g.y * pull.y, sxx * pull.y - g.y * pull.x) / det;
+                const float len = length(delta);
+                if (len > pc.max_step)
+                    delta *= pc.max_step / len;
+                v -= delta;
+            }
+
+            if (pc.last_iteration != 0u)
+                flow_store(c, vec4(v, g.w, sqrt(max(b.z, 0.0) / n)));
+            else
+                flow_store(c, vec4(v, v0));
+            break;
+        }
+        case PHASE_VISUALIZE:
+        {
+            if (meta[1] <= DUPLICATE_ENERGY) {
+                imageStore(flow_vis, c, vec4(0.0, 0.0, 0.0, 1.0));
+                break;
+            }
+
+            const vec4 f = flow_load(c);
+            const float magnitude = length(f.xy);
+            const float hue = atan(f.y, f.x) / TWO_PI + 0.5;
+            const float certainty = smoothstep(0.0, max(pc.eigen_threshold, 1e-9), f.z);
+
+            float motion = 1.0;
+            if (pc.visual_min_motion > 0.0)
+                motion = smoothstep(pc.visual_min_motion, 2.0 * pc.visual_min_motion, magnitude);
+
+            const float value = sqrt(clamp(magnitude / max(pc.visual_range, 1e-6), 0.0, 1.0)) * certainty * motion;
+            const vec3 rgb = hsv_to_rgb(vec3(hue, 1.0, value));
+
+            imageStore(flow_vis, c, vec4(rgb, 1.0));
+            break;
+        }
     }
 }

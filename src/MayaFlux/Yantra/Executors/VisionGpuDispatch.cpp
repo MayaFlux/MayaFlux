@@ -196,6 +196,8 @@ namespace {
         float error_threshold;
         uint32_t max_points;
         uint32_t pad1;
+        uint32_t backward;
+        float forward_backward_threshold;
     };
     /** Occupancy grid capacity in cells; the cell size grows to fit large frames */
     constexpr uint32_t k_flow_grid_capacity = 1U << 18;
@@ -1352,17 +1354,22 @@ namespace {
             return;
 
         uint32_t levels = 0;
+        bool needs_flow = false;
         for (size_t i = index + 1; i < steps.size(); ++i) {
             if (steps[i].op == VisionOp::TrackKeypoints) {
-                if (const auto* p = std::get_if<TrackKeypointsParams>(&steps[i].params))
+                if (const auto* p = std::get_if<TrackKeypointsParams>(&steps[i].params)) {
+                    needs_flow = true;
                     levels = std::max(levels, p->levels);
+                }
             } else if (steps[i].op == VisionOp::OpticalFlowDense) {
-                if (const auto* p = std::get_if<OpticalFlowDenseParams>(&steps[i].params))
+                if (const auto* p = std::get_if<OpticalFlowDenseParams>(&steps[i].params)) {
+                    needs_flow = true;
                     levels = std::max(levels, p->levels);
+                }
             }
         }
 
-        if (levels > 0)
+        if (needs_flow)
             build_flow_pyramid(contexts, levels);
     }
 
@@ -1541,7 +1548,7 @@ namespace {
         };
 
         std::vector<DependencyStage> stages;
-        stages.reserve(layout.levels + 8U);
+        stages.reserve(layout.levels * (p.forward_backward_threshold > 0.0F ? 2U : 1U) + 8U);
 
         stages.push_back({
             .config = { .shader_path = "extract_peaks.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(ExtractPeaksPC) },
@@ -1555,7 +1562,7 @@ namespace {
             .explicit_groups = std::array<uint32_t, 3> { (w + k_wg2d[0] - 1U) / k_wg2d[0], (h + k_wg2d[1] - 1U) / k_wg2d[1], 1U },
         });
 
-        if (state.have_prev) {
+        const auto add_lk = [&](bool backward) {
             for (uint32_t level = layout.levels; level-- > 0;) {
                 const PyramidLevel lv = layout.level[level];
                 const bool finest = level == 0;
@@ -1577,6 +1584,8 @@ namespace {
                     .error_threshold = p.error_threshold,
                     .max_points = max_points,
                     .pad1 = 0,
+                    .backward = backward ? 1U : 0U,
+                    .forward_backward_threshold = p.forward_backward_threshold,
                 };
 
                 stages.push_back({
@@ -1586,14 +1595,19 @@ namespace {
                         ctx.stage_image_at(4, atlas_b, GpuBufferBinding::ElementType::IMAGE_STORAGE);
                         ctx.set_push_constants(pc);
                     },
-                    .hazard_fn = [finest](GpuDispatchCore& ctx) {
-                        if (finest)
+                    .hazard_fn = [finest, backward](GpuDispatchCore& ctx) {
+                        if (finest || backward)
                             return flow_hazards(ctx, { k_flow_tracks, k_flow_meta, k_flow_prev_count, k_flow_prev_points });
                         return flow_hazards(ctx, { k_flow_tracks, k_flow_meta });
                     },
                     .explicit_groups = std::array<uint32_t, 3> { k_flow_max_points, 1U, 1U },
                 });
             }
+        };
+        if (state.have_prev) {
+            add_lk(false);
+            if (p.forward_backward_threshold > 0.0F)
+                add_lk(true);
         }
 
         const auto base_w = static_cast<float>(layout.level[0].w);
@@ -1690,6 +1704,7 @@ namespace {
         float eigen_threshold;
         float max_step;
         float visual_range;
+        float visual_min_motion;
         uint32_t last_iteration;
     };
 
@@ -1886,6 +1901,7 @@ namespace {
                 .eigen_threshold = p.eigen_threshold,
                 .max_step = p.max_step,
                 .visual_range = p.visual_range,
+                .visual_min_motion = p.visual_min_motion,
                 .last_iteration = 0,
             };
 
@@ -1924,6 +1940,7 @@ namespace {
                 .eigen_threshold = p.eigen_threshold,
                 .max_step = p.max_step,
                 .visual_range = p.visual_range,
+                .visual_min_motion = p.visual_min_motion,
                 .last_iteration = 0,
             };
             push_stage(vis_pc, finest, { out_hazard, image_hazard(images->vis, 11U) });

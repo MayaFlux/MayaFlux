@@ -115,7 +115,9 @@ struct ExtractPeaksParams {
  * they do not depend on window_radius. levels, max_points and min_distance
  * apply to the persistent GPU tracker: levels is the pyramid depth including
  * full resolution, max_points caps live tracks, and min_distance is the grid
- * cell size in pixels that admits at most one new track.
+ * cell size in pixels that admits at most one new track. A positive
+ * forward_backward_threshold rejects a track when its backward estimate
+ * misses the source point by more than that many pixels; zero disables it.
  */
 struct TrackKeypointsParams {
     uint32_t window_radius = 7;
@@ -125,6 +127,7 @@ struct TrackKeypointsParams {
     uint32_t levels = 4;
     uint32_t max_points = 512;
     float min_distance = 8.0F;
+    float forward_backward_threshold = 0.0F;
 };
 
 /**
@@ -137,7 +140,8 @@ struct TrackKeypointsParams {
  * untextured pixels take small steps, and max_step caps one increment in
  * pixels. With visualize set, a hue and brightness rendering of the flow is
  * delivered in VisionResult::debug_labels, at full brightness from
- * visual_range pixels.
+ * visual_range pixels. visual_min_motion keeps smaller displacements dark in
+ * the visualization, in pixels of the flow image.
  */
 struct OpticalFlowDenseParams {
     uint32_t window_radius = 5;
@@ -147,6 +151,7 @@ struct OpticalFlowDenseParams {
     float max_step = 4.0F;
     bool visualize = false;
     float visual_range = 2.0F;
+    float visual_min_motion = 0.0F;
 };
 
 struct ConnectedComponentsParams {
@@ -345,11 +350,12 @@ struct VisionSequence {
             float error_threshold = 0.3F,
             uint32_t levels = 4,
             uint32_t max_points = 512,
-            float min_distance = 8.0F)
+            float min_distance = 8.0F,
+            float forward_backward_threshold = 0.0F)
         {
             return push(VisionOp::TrackKeypoints,
                 TrackKeypointsParams {
-                    .window_radius = window_radius, .max_iterations = max_iterations, .eigen_threshold = eigen_threshold, .error_threshold = error_threshold, .levels = levels, .max_points = max_points, .min_distance = min_distance });
+                    .window_radius = window_radius, .max_iterations = max_iterations, .eigen_threshold = eigen_threshold, .error_threshold = error_threshold, .levels = levels, .max_points = max_points, .min_distance = min_distance, .forward_backward_threshold = forward_backward_threshold });
         }
 
         Builder& find_contours(float min_area = 0.0F, uint32_t max_contours = 0, uint32_t max_points_per_contour = 0, bool as_image = false)
@@ -370,11 +376,12 @@ struct VisionSequence {
             float eigen_threshold = 1e-3F,
             float max_step = 4.0F,
             bool visualize = false,
-            float visual_range = 2.0F)
+            float visual_range = 2.0F,
+            float visual_min_motion = 0.0F)
         {
             return push(VisionOp::OpticalFlowDense,
                 OpticalFlowDenseParams {
-                    .window_radius = window_radius, .iterations = iterations, .levels = levels, .eigen_threshold = eigen_threshold, .max_step = max_step, .visualize = visualize, .visual_range = visual_range });
+                    .window_radius = window_radius, .iterations = iterations, .levels = levels, .eigen_threshold = eigen_threshold, .max_step = max_step, .visualize = visualize, .visual_range = visual_range, .visual_min_motion = visual_min_motion });
         }
 
         [[nodiscard]] VisionSequence build()
@@ -460,6 +467,7 @@ inline size_t hash_vision_step(VisionOp op, const VisionParams& params)
             hash_combine(seed, std::hash<uint32_t> {}(p.levels));
             hash_combine(seed, std::hash<uint32_t> {}(p.max_points));
             hash_combine(seed, std::hash<float> {}(p.min_distance));
+            hash_combine(seed, std::hash<float> {}(p.forward_backward_threshold));
         } else if constexpr (std::is_same_v<T, FindContoursParams>) {
             hash_combine(seed, std::hash<float> {}(p.min_area));
             hash_combine(seed, std::hash<uint32_t> {}(p.max_contours));
@@ -476,6 +484,7 @@ inline size_t hash_vision_step(VisionOp op, const VisionParams& params)
             hash_combine(seed, std::hash<float> {}(p.max_step));
             hash_combine(seed, std::hash<bool> {}(p.visualize));
             hash_combine(seed, std::hash<float> {}(p.visual_range));
+            hash_combine(seed, std::hash<float> {}(p.visual_min_motion));
         }
     },
         params);

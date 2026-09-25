@@ -402,7 +402,8 @@ VisionResult VisionExecutor::run(
                 prev_vec, slot_vec(m_pass.current),
                 w, h, prev_pos,
                 p.window_radius, p.max_iterations,
-                p.eigen_threshold, p.error_threshold);
+                p.eigen_threshold, p.error_threshold,
+                p.forward_backward_threshold);
 
             std::swap(prev_vec, slot_vec(m_pass.current));
             m_pass.result.structured = std::move(tracked);
