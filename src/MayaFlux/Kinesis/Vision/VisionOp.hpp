@@ -60,6 +60,8 @@ enum class VisionOp : uint8_t {
 
     TrackKeypoints,
     Snapshot,
+
+    OpticalFlowDense,
 };
 
 // ============================================================================
@@ -106,11 +108,45 @@ struct ExtractPeaksParams {
     uint32_t nms_radius;
 };
 
+/**
+ * @brief Parameters for TrackKeypoints.
+ *
+ * eigen_threshold and error_threshold are normalised by the window area, so
+ * they do not depend on window_radius. levels, max_points and min_distance
+ * apply to the persistent GPU tracker: levels is the pyramid depth including
+ * full resolution, max_points caps live tracks, and min_distance is the grid
+ * cell size in pixels that admits at most one new track.
+ */
 struct TrackKeypointsParams {
     uint32_t window_radius = 7;
     uint32_t max_iterations = 20;
     float eigen_threshold = 1e-4F;
     float error_threshold = 0.3F;
+    uint32_t levels = 4;
+    uint32_t max_points = 512;
+    float min_distance = 8.0F;
+};
+
+/**
+ * @brief Parameters for OpticalFlowDense.
+ *
+ * Dense coarse-to-fine Lucas-Kanade. window_radius is the half size of the
+ * Gaussian weighted window in pixels of the level being solved, iterations the
+ * refinement steps per level, and levels the pyramid depth including full
+ * resolution (lowered for small images). eigen_threshold damps the solve so
+ * untextured pixels take small steps, and max_step caps one increment in
+ * pixels. With visualize set, a hue and brightness rendering of the flow is
+ * delivered in VisionResult::debug_labels, at full brightness from
+ * visual_range pixels.
+ */
+struct OpticalFlowDenseParams {
+    uint32_t window_radius = 5;
+    uint32_t iterations = 3;
+    uint32_t levels = 4;
+    float eigen_threshold = 1e-3F;
+    float max_step = 4.0F;
+    bool visualize = false;
+    float visual_range = 2.0F;
 };
 
 struct ConnectedComponentsParams {
@@ -145,7 +181,8 @@ using VisionParams = std::variant<
     ExtractPeaksParams,
     TrackKeypointsParams,
     ConnectedComponentsParams,
-    FindContoursParams>;
+    FindContoursParams,
+    OpticalFlowDenseParams>;
 
 /**
  * @brief One step in a VisionSequence: an op and its parameters.
@@ -305,11 +342,14 @@ struct VisionSequence {
             uint32_t window_radius = 7,
             uint32_t max_iterations = 20,
             float eigen_threshold = 1e-4F,
-            float error_threshold = 0.3F)
+            float error_threshold = 0.3F,
+            uint32_t levels = 4,
+            uint32_t max_points = 512,
+            float min_distance = 8.0F)
         {
             return push(VisionOp::TrackKeypoints,
                 TrackKeypointsParams {
-                    .window_radius = window_radius, .max_iterations = max_iterations, .eigen_threshold = eigen_threshold, .error_threshold = error_threshold });
+                    .window_radius = window_radius, .max_iterations = max_iterations, .eigen_threshold = eigen_threshold, .error_threshold = error_threshold, .levels = levels, .max_points = max_points, .min_distance = min_distance });
         }
 
         Builder& find_contours(float min_area = 0.0F, uint32_t max_contours = 0, uint32_t max_points_per_contour = 0, bool as_image = false)
@@ -321,6 +361,20 @@ struct VisionSequence {
         Builder& snapshot()
         {
             return push(VisionOp::Snapshot);
+        }
+
+        Builder& optical_flow_dense(
+            uint32_t window_radius = 5,
+            uint32_t iterations = 3,
+            uint32_t levels = 4,
+            float eigen_threshold = 1e-3F,
+            float max_step = 4.0F,
+            bool visualize = false,
+            float visual_range = 2.0F)
+        {
+            return push(VisionOp::OpticalFlowDense,
+                OpticalFlowDenseParams {
+                    .window_radius = window_radius, .iterations = iterations, .levels = levels, .eigen_threshold = eigen_threshold, .max_step = max_step, .visualize = visualize, .visual_range = visual_range });
         }
 
         [[nodiscard]] VisionSequence build()
@@ -403,6 +457,9 @@ inline size_t hash_vision_step(VisionOp op, const VisionParams& params)
             hash_combine(seed, std::hash<uint32_t> {}(p.max_iterations));
             hash_combine(seed, std::hash<float> {}(p.eigen_threshold));
             hash_combine(seed, std::hash<float> {}(p.error_threshold));
+            hash_combine(seed, std::hash<uint32_t> {}(p.levels));
+            hash_combine(seed, std::hash<uint32_t> {}(p.max_points));
+            hash_combine(seed, std::hash<float> {}(p.min_distance));
         } else if constexpr (std::is_same_v<T, FindContoursParams>) {
             hash_combine(seed, std::hash<float> {}(p.min_area));
             hash_combine(seed, std::hash<uint32_t> {}(p.max_contours));
@@ -411,6 +468,14 @@ inline size_t hash_vision_step(VisionOp op, const VisionParams& params)
         } else if constexpr (std::is_same_v<T, ConnectedComponentsParams>) {
             hash_combine(seed, std::hash<bool> {}(p.export_labels));
             hash_combine(seed, std::hash<bool> {}(p.with_colors));
+        } else if constexpr (std::is_same_v<T, OpticalFlowDenseParams>) {
+            hash_combine(seed, std::hash<uint32_t> {}(p.window_radius));
+            hash_combine(seed, std::hash<uint32_t> {}(p.iterations));
+            hash_combine(seed, std::hash<uint32_t> {}(p.levels));
+            hash_combine(seed, std::hash<float> {}(p.eigen_threshold));
+            hash_combine(seed, std::hash<float> {}(p.max_step));
+            hash_combine(seed, std::hash<bool> {}(p.visualize));
+            hash_combine(seed, std::hash<float> {}(p.visual_range));
         }
     },
         params);

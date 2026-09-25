@@ -424,6 +424,11 @@ VisionResult VisionExecutor::run(
             m_pass.result.snapshots.push_back(std::move(entry));
             break;
         }
+
+        case VisionOp::OpticalFlowDense:
+            MF_ERROR(Journal::Component::Kinesis, Journal::Context::Runtime,
+                "VisionExecutor: OpticalFlowDense has no CPU implementation");
+            break;
         }
     }
 

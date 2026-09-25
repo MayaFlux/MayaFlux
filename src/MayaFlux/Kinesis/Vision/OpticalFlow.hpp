@@ -27,6 +27,9 @@ struct TrackResult {
     glm::vec2 position; ///< Tracked position in normalised [0, 1] coordinates.
     float error; ///< Residual photometric error after convergence.
     bool tracked; ///< False if tracking failed or diverged.
+    glm::vec2 previous { 0.0F }; ///< Position of the point in the previous frame, normalised [0, 1].
+    uint32_t id { 0 }; ///< Stable identifier of a persistent track. Zero for stateless trackers.
+    uint32_t age { 0 }; ///< Frames the track was successfully followed before this one.
 };
 
 /**

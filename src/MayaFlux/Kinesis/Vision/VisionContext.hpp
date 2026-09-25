@@ -54,6 +54,14 @@ struct VisionResult {
     std::vector<SnapshotEntry> snapshots;
     std::shared_ptr<Core::VKImage> debug_labels;
     std::shared_ptr<Core::VKImage> debug_contours;
+
+    /**
+     * @brief Dense optical flow field from OpticalFlowDense, or null.
+     *
+     * RGBA32F at the resolution of the tracked frame: r and g are the flow in
+     * pixels, b the confidence, a the residual.
+     */
+    std::shared_ptr<Core::VKImage> flow;
     uint32_t w { 0 };
     uint32_t h { 0 };
     VisionStatus status { VisionStatus::COMPLETE };
