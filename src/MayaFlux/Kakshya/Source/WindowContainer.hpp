@@ -2,6 +2,7 @@
 
 #include "MayaFlux/Kakshya/SignalSourceContainer.hpp"
 #include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
+#include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 
 #include "MayaFlux/Transitive/Memory/SeqLock.hpp"
 
@@ -42,10 +43,9 @@ namespace MayaFlux::Kakshya {
  *     non-empty; returns empty if no readback has occurred yet.
  *   - The container never calls process() itself — callers drive the chain.
  * GPU bridge:
- *   - to_image() uploads processed_data[0] to a new VKImage via TextureLoom.
- *   - to_image(staging) does the same reusing a caller-supplied staging buffer
- *     to avoid per-call VkBuffer allocation in per-frame paths.
- *   - region_to_image() performs a CPU-side crop then uploads the result.
+ *   - to_image() refreshes a container-owned VKImage from processed_data[0].
+ *   - image_at() refreshes a container-owned VKImage for the selected slot.
+ *   - region_to_image() crops on the CPU and refreshes an image for that region.
  *   - get_image_format() returns the live swapchain format as a Portal
  *     ImageFormat, suitable for constructing a matching TextureBuffer.
  *
@@ -119,35 +119,33 @@ public:
     [[nodiscard]] std::vector<DataVariant> get_region_data(const Region& region) const override;
 
     /**
-     * @brief Upload the full surface readback to a new VKImage.
+     * @brief Upload the full surface readback to a container-owned VKImage.
      *
      * Requires at least one completed readback (processed_data[0] non-empty
-     * and of type vector<uint8_t>). A fresh VKImage is created and uploaded
-     * on each call via TextureLoom; callers driving a per-frame path should
-     * prefer the staging-buffer overload to avoid per-call VkBuffer churn.
+     * and of type vector<uint8_t>). Reuses the image while dimensions and
+     * format match. The returned image is refreshed in place
+     * by later calls, so it is a live image rather than a snapshot.
      *
-     * @return Newly created VKImage, or nullptr on failure.
+     * @return Cached VKImage, or nullptr on failure.
      */
     [[nodiscard]] std::shared_ptr<Core::VKImage> to_image() const;
 
     /**
-     * @brief Upload the full surface readback to a new VKImage, reusing a
+     * @brief Refresh the full surface VKImage, reusing a
      *        caller-supplied persistent staging buffer.
      *
-     * Allocates the VKImage without pixel data, then uploads via the
-     * provided staging buffer, bypassing the per-call VkBuffer allocation
-     * inside TextureLoom. Use TextureLoom::create_streaming_staging() to
-     * allocate the staging buffer once before the render loop.
+     * The container retains the image. The supplied staging buffer is used
+     * for this upload.
      *
      * @param staging Host-visible staging VKBuffer sized to at least
      *                width * height * bytes_per_pixel.
-     * @return Newly created VKImage, or nullptr on failure.
+     * @return Cached VKImage, or nullptr on failure.
      */
     [[nodiscard]] std::shared_ptr<Core::VKImage> to_image(
         const std::shared_ptr<Buffers::VKBuffer>& staging) const;
 
     /**
-     * @brief Upload m_data[frame_index] to a new VKImage.
+     * @brief Refresh the cached VKImage for m_data[frame_index].
      * @param frame_index Index into m_data in [0, frame_capacity).
      */
     [[nodiscard]] std::shared_ptr<Core::VKImage> image_at(uint32_t frame_index) const;
@@ -162,12 +160,13 @@ public:
         const std::shared_ptr<Buffers::VKBuffer>& staging) const;
 
     /**
-     * @brief Crop a region from the last readback and upload it as a VKImage.
+     * @brief Crop a region from the last readback and refresh its cached VKImage.
      *
-     * Performs a CPU-side crop via extract_region_data; no additional GPU
-     * work beyond the readback that populated processed_data[0]. Region
+     * Performs a CPU-side crop via extract_region_data and uploads it. Region
      * coordinates follow IMAGE_COLOR convention: [SPATIAL_Y, SPATIAL_X].
-     * The returned image dimensions are derived from the region extent.
+     * The returned image dimensions are derived from the region extent. The
+     * image is retained by the container and refreshed for any later region
+     * with the same width and height.
      *
      * @param region Pixel rectangle. Must have at least 2 coordinates.
      * @return VKImage sized to the region, or nullptr on failure.
@@ -311,7 +310,18 @@ protected:
         const void* in, const std::type_info& type) override { }
 
 private:
+    struct PixelSnapshot {
+        std::vector<uint8_t> pixels;
+        std::vector<DataDimension> dimensions;
+        uint32_t width { 0 };
+        uint32_t height { 0 };
+    };
+
     std::shared_ptr<Core::Window> m_window;
+
+    mutable Portal::Graphics::ImageCacheEntry m_surface_image;
+    mutable std::vector<Portal::Graphics::ImageCacheEntry> m_frame_images;
+    mutable std::map<std::pair<uint32_t, uint32_t>, Portal::Graphics::ImageCacheEntry> m_region_images;
 
     ContainerDataStructure m_structure;
     std::vector<DataVariant> m_data;
@@ -343,6 +353,8 @@ private:
 
     void setup_dimensions();
 
+    [[nodiscard]] std::optional<PixelSnapshot> snapshot_pixels(
+        std::optional<uint32_t> frame_index = std::nullopt) const;
     [[nodiscard]] auto get_frame_typed(uint64_t frame_index) const -> std::span<const uint8_t>;
     void get_frames_typed(std::span<uint8_t> output, uint64_t start_frame, uint64_t num_frames) const;
 };

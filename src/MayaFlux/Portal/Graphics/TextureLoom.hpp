@@ -17,6 +17,35 @@ class VKBuffer;
 
 namespace MayaFlux::Portal::Graphics {
 
+/** @brief Immutable properties that determine whether an image can be reused. */
+struct ImageKey {
+    enum class Kind : uint8_t {
+        SAMPLED_2D,
+        SAMPLED_ARRAY,
+        STORAGE_2D
+    };
+
+    uint32_t width {};
+    uint32_t height {};
+    uint32_t layers { 1 };
+    uint32_t mip_levels { 1 };
+    ImageFormat format {};
+    Kind kind { Kind::SAMPLED_2D };
+
+    [[nodiscard]] bool operator==(const ImageKey&) const = default;
+};
+
+/** @brief Hash image allocation properties for keyed reuse. */
+struct MAYAFLUX_API ImageKeyHash {
+    [[nodiscard]] size_t operator()(const ImageKey& key) const noexcept;
+};
+
+/** @brief Image retained by the producing owner. */
+struct ImageCacheEntry {
+    ImageKey key;
+    std::shared_ptr<Core::VKImage> image;
+};
+
 /**
  * @class TextureLoom
  * @brief Portal-level texture creation and management
@@ -237,6 +266,30 @@ public:
         ImageFormat format = ImageFormat::RGBA8);
 
     /**
+     * @brief Reuse a matching image in an owner-held entry or create it once.
+     * @param entry Cache entry retained by the image producer.
+     * @param key Immutable image allocation properties.
+     * @return Matching image, or nullptr on failure.
+     */
+    [[nodiscard]] std::shared_ptr<Core::VKImage> acquire_cached_image(
+        ImageCacheEntry& entry, const ImageKey& key);
+
+    /**
+     * @brief Refresh a sampled image in an owner-held cache entry.
+     * @param entry Cache entry retained by the image producer.
+     * @param key Sampled image allocation properties.
+     * @param pixels Complete pixel bytes for every layer.
+     * @param staging Optional caller staging buffer. Without one, upload_data
+     *                uses its existing transient staging path.
+     * @return Refreshed image, or nullptr when validation or creation fails.
+     */
+    [[nodiscard]] std::shared_ptr<Core::VKImage> refresh_cached_image(
+        ImageCacheEntry& entry,
+        const ImageKey& key,
+        std::span<const uint8_t> pixels,
+        const std::shared_ptr<Buffers::VKBuffer>& staging = {});
+
+    /**
      * @brief Create a 2D texture from a DataVariant in one shot.
      * @param variant  Source data. Conversion and validation delegated to
      *                 Kakshya::as_texture_access(): vec3 is promoted to vec4
@@ -418,6 +471,42 @@ private:
     static size_t hash_sampler_config(const SamplerConfig& config);
 
     static bool s_initialized;
+};
+
+/**
+ * @brief Budgeted cache of images keyed by immutable allocation properties.
+ *
+ * The budget limits references held by this cache. TextureLoom continues to
+ * retain created images until shutdown.
+ */
+class MAYAFLUX_API ImageCacheSet {
+public:
+    explicit ImageCacheSet(size_t byte_budget)
+        : m_byte_budget(byte_budget)
+    {
+    }
+
+    ImageCacheSet(const ImageCacheSet&) = delete;
+    ImageCacheSet& operator=(const ImageCacheSet&) = delete;
+    ImageCacheSet(ImageCacheSet&&) noexcept = default;
+    ImageCacheSet& operator=(ImageCacheSet&&) noexcept = default;
+    ~ImageCacheSet() = default;
+
+    [[nodiscard]] std::shared_ptr<Core::VKImage> acquire(
+        TextureLoom& loom, const ImageKey& key);
+
+private:
+    struct Entry {
+        ImageCacheEntry cache;
+        uint64_t last_use {};
+    };
+
+    std::unordered_map<ImageKey, Entry, ImageKeyHash> m_entries;
+    size_t m_byte_budget;
+    size_t m_cached_bytes {};
+    uint64_t m_tick {};
+    std::optional<ImageKey> m_last_key;
+    Entry* m_last_entry {};
 };
 
 /**

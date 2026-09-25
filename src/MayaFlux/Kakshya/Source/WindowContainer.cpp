@@ -46,6 +46,12 @@ namespace {
         }
     }
 
+    Portal::Graphics::ImageKey sampled_image_key(
+        uint32_t width, uint32_t height, Portal::Graphics::ImageFormat format)
+    {
+        return { .width = width, .height = height, .layers = 1, .format = format };
+    }
+
 } // namespace
 
 WindowContainer::WindowContainer(std::shared_ptr<Core::Window> window,
@@ -63,6 +69,7 @@ WindowContainer::WindowContainer(std::shared_ptr<Core::Window> window,
 
     m_processing_chain = std::make_shared<DataProcessingChain>();
     setup_dimensions();
+    m_frame_images.resize(m_frame_capacity);
 
     MF_INFO(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
         "WindowContainer created for window '{}' ({}x{} frames={})",
@@ -182,66 +189,27 @@ std::vector<DataVariant> WindowContainer::get_region_data(const Region& region) 
 
 std::shared_ptr<Core::VKImage> WindowContainer::to_image() const
 {
-    std::shared_ptr<Core::VKImage> img;
-    seqlock_read_void(m_data_lock, 8, [&] {
-        if (m_processed_data.empty()) {
-            MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-                "WindowContainer::to_image : no readback data available for '{}'",
-                m_window->get_create_info().title);
-            return;
-        }
+    auto pixels = snapshot_pixels();
+    if (!pixels)
+        return nullptr;
 
-        const auto* pixels = std::get_if<std::vector<uint8_t>>(&m_processed_data[0]);
-        if (!pixels || pixels->empty()) {
-            MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-                "WindowContainer::to_image : processed_data[0] is not uint8_t or is empty for '{}'",
-                m_window->get_create_info().title);
-            return;
-        }
-
-        const auto img_fmt = surface_format_to_image_format(query_surface_format(m_window));
-        img = Portal::Graphics::TextureLoom::instance().create_2d(
-            m_structure.get_width(), m_structure.get_height(), img_fmt, pixels->data());
-
-        if (!img) {
-            MF_RT_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-                "WindowContainer::to_image : TextureLoom::create_2d failed for '{}'",
-                m_window->get_create_info().title);
-        }
-    });
-    return img;
+    const auto format = get_image_format();
+    return Portal::Graphics::TextureLoom::instance().refresh_cached_image(
+        m_surface_image, sampled_image_key(pixels->width, pixels->height, format),
+        pixels->pixels);
 }
 
 std::shared_ptr<Core::VKImage> WindowContainer::to_image(
     const std::shared_ptr<Buffers::VKBuffer>& staging) const
 {
-    std::shared_ptr<Core::VKImage> img;
-    seqlock_read_void(m_data_lock, 8, [&] {
-        if (m_processed_data.empty()) {
-            MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-                "WindowContainer::to_image(staging) : no readback data for '{}'",
-                m_window->get_create_info().title);
-            return;
-        }
-        const auto* pixels = std::get_if<std::vector<uint8_t>>(&m_processed_data[0]);
-        if (!pixels || pixels->empty()) {
-            MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-                "WindowContainer::to_image(staging) : processed_data[0] is not uint8_t or is empty for '{}'",
-                m_window->get_create_info().title);
-            return;
-        }
-        const auto img_fmt = surface_format_to_image_format(query_surface_format(m_window));
-        auto& loom = Portal::Graphics::TextureLoom::instance();
-        img = loom.create_2d(m_structure.get_width(), m_structure.get_height(), img_fmt, nullptr);
-        if (!img) {
-            MF_RT_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-                "WindowContainer::to_image(staging) : VKImage allocation failed for '{}'",
-                m_window->get_create_info().title);
-            return;
-        }
-        loom.upload_data(img, pixels->data(), pixels->size(), staging);
-    });
-    return img;
+    auto pixels = snapshot_pixels();
+    if (!pixels)
+        return nullptr;
+
+    const auto format = get_image_format();
+    return Portal::Graphics::TextureLoom::instance().refresh_cached_image(
+        m_surface_image, sampled_image_key(pixels->width, pixels->height, format),
+        pixels->pixels, staging);
 }
 
 std::shared_ptr<Core::VKImage> WindowContainer::image_at(uint32_t frame_index) const
@@ -264,26 +232,14 @@ std::shared_ptr<Core::VKImage> WindowContainer::image_at(uint32_t frame_index) c
         return nullptr;
     }
 
-    std::shared_ptr<Core::VKImage> img;
+    auto pixels = snapshot_pixels(frame_index);
+    if (!pixels)
+        return nullptr;
 
-    seqlock_read_void(m_data_lock, 8, [&] {
-        const auto* pixels = std::get_if<std::vector<uint8_t>>(&m_data[frame_index]);
-        if (!pixels || pixels->empty()) {
-            MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-                "WindowContainer::image_at({}) : slot is empty", frame_index);
-            return;
-        }
-
-        const auto img_fmt = surface_format_to_image_format(query_surface_format(m_window));
-        img = Portal::Graphics::TextureLoom::instance().create_2d(
-            m_structure.get_width(), m_structure.get_height(), img_fmt, pixels->data());
-
-        if (!img) {
-            MF_RT_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-                "WindowContainer::image_at({}) : TextureLoom::create_2d failed", frame_index);
-        }
-    });
-    return img;
+    const auto format = get_image_format();
+    return Portal::Graphics::TextureLoom::instance().refresh_cached_image(
+        m_frame_images[frame_index], sampled_image_key(pixels->width, pixels->height, format),
+        pixels->pixels);
 }
 
 std::shared_ptr<Core::VKImage> WindowContainer::image_at(
@@ -306,27 +262,14 @@ std::shared_ptr<Core::VKImage> WindowContainer::image_at(
         return nullptr;
     }
 
-    std::shared_ptr<Core::VKImage> img;
-    seqlock_read_void(m_data_lock, 8, [&] {
-        const auto* pixels = std::get_if<std::vector<uint8_t>>(&m_data[frame_index]);
-        if (!pixels || pixels->empty()) {
-            MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-                "WindowContainer::image_at(staging, {}) — slot is empty", frame_index);
-            return;
-        }
+    auto pixels = snapshot_pixels(frame_index);
+    if (!pixels)
+        return nullptr;
 
-        const auto img_fmt = surface_format_to_image_format(query_surface_format(m_window));
-        auto& loom = Portal::Graphics::TextureLoom::instance();
-        img = loom.create_2d(m_structure.get_width(), m_structure.get_height(), img_fmt, nullptr);
-
-        if (!img) {
-            MF_RT_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-                "WindowContainer::image_at(staging, {}) : VKImage allocation failed", frame_index);
-            return;
-        }
-        loom.upload_data(img, pixels->data(), pixels->size(), staging);
-    });
-    return img;
+    const auto format = get_image_format();
+    return Portal::Graphics::TextureLoom::instance().refresh_cached_image(
+        m_frame_images[frame_index], sampled_image_key(pixels->width, pixels->height, format),
+        pixels->pixels, staging);
 }
 
 std::shared_ptr<Core::VKImage> WindowContainer::region_to_image(const Region& region) const
@@ -337,49 +280,68 @@ std::shared_ptr<Core::VKImage> WindowContainer::region_to_image(const Region& re
         return nullptr;
     }
 
-    std::shared_ptr<Core::VKImage> img;
-    seqlock_read_void(m_data_lock, 8, [&] {
-        if (m_processed_data.empty()) {
-            MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-                "WindowContainer::region_to_image — no readback data for '{}'",
-                m_window->get_create_info().title);
-            return;
-        }
+    if (region.start_coordinates[0] > region.end_coordinates[0]
+        || region.start_coordinates[1] > region.end_coordinates[1]) {
+        MF_RT_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "WindowContainer::region_to_image : inverted region");
+        return nullptr;
+    }
 
-        const auto* src = std::get_if<std::vector<uint8_t>>(&m_processed_data[0]);
-        if (!src || src->empty()) {
-            MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-                "WindowContainer::region_to_image — processed_data[0] is not uint8_t or is empty for '{}'",
-                m_window->get_create_info().title);
-            return;
-        }
+    auto pixels = snapshot_pixels();
+    if (!pixels)
+        return nullptr;
 
-        std::vector<uint8_t> cropped;
-        try {
-            cropped = extract_region_data<uint8_t>(
-                std::span<const uint8_t> { src->data(), src->size() },
-                region,
-                m_structure.dimensions);
-        } catch (const std::exception& e) {
-            MF_RT_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-                "WindowContainer::region_to_image — crop failed for '{}': {}",
-                m_window->get_create_info().title, e.what());
-            return;
-        }
+    std::vector<uint8_t> cropped;
+    try {
+        cropped = extract_region_data<uint8_t>(
+            std::span<const uint8_t> { pixels->pixels.data(), pixels->pixels.size() },
+            region,
+            pixels->dimensions);
+    } catch (const std::exception& e) {
+        MF_RT_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "WindowContainer::region_to_image : crop failed for '{}': {}",
+            m_window->get_create_info().title, e.what());
+        return nullptr;
+    }
 
-        const auto rh = static_cast<uint32_t>(region.end_coordinates[0] - region.start_coordinates[0] + 1);
-        const auto rw = static_cast<uint32_t>(region.end_coordinates[1] - region.start_coordinates[1] + 1);
-        const auto img_fmt = surface_format_to_image_format(query_surface_format(m_window));
+    const auto rh = static_cast<uint32_t>(region.end_coordinates[0] - region.start_coordinates[0] + 1);
+    const auto rw = static_cast<uint32_t>(region.end_coordinates[1] - region.start_coordinates[1] + 1);
+    const auto key = std::pair { rw, rh };
+    const auto format = get_image_format();
+    return Portal::Graphics::TextureLoom::instance().refresh_cached_image(
+        m_region_images[key], sampled_image_key(rw, rh, format), cropped);
+}
 
-        img = Portal::Graphics::TextureLoom::instance().create_2d(rw, rh, img_fmt, cropped.data());
-        if (!img) {
-            MF_RT_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-                "WindowContainer::region_to_image — TextureLoom::create_2d failed ({}x{}) for '{}'",
-                rw, rh, m_window->get_create_info().title);
-        }
+std::optional<WindowContainer::PixelSnapshot> WindowContainer::snapshot_pixels(
+    std::optional<uint32_t> frame_index) const
+{
+    auto snapshot = seqlock_read(m_data_lock, 8, [&]() -> PixelSnapshot {
+        const auto& data = frame_index ? m_data : m_processed_data;
+        const auto index = frame_index.value_or(0);
+
+        if (index >= data.size())
+            return {};
+
+        const auto* source = std::get_if<std::vector<uint8_t>>(&data[index]);
+
+        if (!source)
+            return {};
+
+        return {
+            .pixels = *source,
+            .dimensions = m_structure.dimensions,
+            .width = static_cast<uint32_t>(m_structure.get_width()),
+            .height = static_cast<uint32_t>(m_structure.get_height())
+        };
     });
 
-    return img;
+    if (!snapshot || snapshot->pixels.empty()) {
+        MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "WindowContainer : no usable pixel data for '{}'",
+            m_window->get_create_info().title);
+        return std::nullopt;
+    }
+    return snapshot;
 }
 
 void WindowContainer::set_region_data(const Region& /*region*/, const std::vector<DataVariant>& /*data*/)

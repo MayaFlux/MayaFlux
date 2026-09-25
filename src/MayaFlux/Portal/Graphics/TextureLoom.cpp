@@ -7,12 +7,27 @@
 #include "MayaFlux/Kakshya/NDData/TextureAccess.hpp"
 
 #include "MayaFlux/Buffers/VKBuffer.hpp"
-#include "MayaFlux/Registry/BackendRegistry.hpp"
-#include "MayaFlux/Registry/Service/BufferService.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Portal::Graphics {
+
+size_t ImageKeyHash::operator()(const ImageKey& key) const noexcept
+{
+    uint64_t hash = 14695981039346656037ULL;
+    const auto mix = [&hash](uint64_t value) {
+        hash = (hash ^ value) * 1099511628211ULL;
+    };
+
+    mix(key.width);
+    mix(key.height);
+    mix(key.layers);
+    mix(key.mip_levels);
+    mix(static_cast<uint64_t>(key.format));
+    mix(static_cast<uint64_t>(key.kind));
+
+    return static_cast<size_t>(hash);
+}
 
 bool TextureLoom::s_initialized = false;
 
@@ -413,6 +428,140 @@ std::shared_ptr<Core::VKImage> TextureLoom::create_storage_image(
     MF_INFO(Journal::Component::Portal, Journal::Context::ImageProcessing,
         "Created storage image: {}x{}, format: {}",
         width, height, vk::to_string(vk_format));
+    return image;
+}
+
+std::shared_ptr<Core::VKImage> TextureLoom::acquire_cached_image(
+    ImageCacheEntry& entry, const ImageKey& key)
+{
+    if (key.width == 0 || key.height == 0 || key.layers == 0
+        || key.mip_levels == 0)
+        return nullptr;
+
+    const auto usage = key.kind == ImageKey::Kind::STORAGE_2D
+        ? Core::VKImage::Usage::STORAGE
+        : Core::VKImage::Usage::TEXTURE_2D;
+    if (entry.image && entry.key == key && entry.image->is_initialized()
+        && entry.image->get_width() == key.width
+        && entry.image->get_height() == key.height
+        && entry.image->get_array_layers() == key.layers
+        && entry.image->get_mip_levels() == key.mip_levels
+        && entry.image->get_format() == to_vulkan_format(key.format)
+        && entry.image->get_usage() == usage) {
+        return entry.image;
+    }
+
+    std::shared_ptr<Core::VKImage> image;
+    switch (key.kind) {
+    case ImageKey::Kind::SAMPLED_2D:
+        if (key.layers != 1)
+            return nullptr;
+        image = create_2d(key.width, key.height, key.format, nullptr, key.mip_levels);
+        break;
+    case ImageKey::Kind::SAMPLED_ARRAY:
+        if (key.mip_levels != 1)
+            return nullptr;
+        image = create_2d_array(key.width, key.height, key.layers, key.format, nullptr);
+        break;
+    case ImageKey::Kind::STORAGE_2D:
+        if (key.layers != 1 || key.mip_levels != 1)
+            return nullptr;
+        image = create_storage_image(key.width, key.height, key.format);
+        break;
+    }
+
+    if (image) {
+        entry.key = key;
+        entry.image = image;
+    }
+    return image;
+}
+
+std::shared_ptr<Core::VKImage> TextureLoom::refresh_cached_image(
+    ImageCacheEntry& entry,
+    const ImageKey& key,
+    std::span<const uint8_t> pixels,
+    const std::shared_ptr<Buffers::VKBuffer>& staging)
+{
+    if (key.kind == ImageKey::Kind::STORAGE_2D || key.width == 0
+        || key.height == 0 || key.layers == 0)
+        return nullptr;
+
+    const size_t required = calculate_image_size(key.width, key.height, 1, key.format)
+        * key.layers;
+    if (pixels.size() != required) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "Cached image upload has {} bytes, expected {}", pixels.size(), required);
+        return nullptr;
+    }
+
+    if (staging && (staging->get_size() < required || !staging->get_mapped_ptr())) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "Cached image staging buffer is unavailable or too small");
+        return nullptr;
+    }
+
+    auto image = acquire_cached_image(entry, key);
+    if (!image)
+        return nullptr;
+
+    if (staging) {
+        upload_data(image, pixels.data(), pixels.size(), staging);
+    } else {
+        upload_data(image, pixels.data(), pixels.size());
+    }
+
+    return image;
+}
+
+std::shared_ptr<Core::VKImage> ImageCacheSet::acquire(
+    TextureLoom& loom, const ImageKey& key)
+{
+    ++m_tick;
+    if (m_last_entry && m_last_key == key) {
+        m_last_entry->last_use = m_tick;
+        return m_last_entry->cache.image;
+    }
+
+    auto found = m_entries.find(key);
+    if (found != m_entries.end()) {
+        found->second.last_use = m_tick;
+        m_last_key = key;
+        m_last_entry = &found->second;
+        return found->second.cache.image;
+    }
+
+    ImageCacheEntry cache;
+    auto image = loom.acquire_cached_image(cache, key);
+    if (!image)
+        return nullptr;
+
+    m_last_key.reset();
+    m_last_entry = nullptr;
+
+    auto [added, inserted] = m_entries.emplace(key, Entry { .cache = std::move(cache), .last_use = m_tick });
+    if (!inserted)
+        return added->second.cache.image;
+
+    m_cached_bytes += image->get_size_bytes();
+
+    while (m_entries.size() > 1 && m_cached_bytes > m_byte_budget) {
+        auto oldest = m_entries.end();
+        for (auto it = m_entries.begin(); it != m_entries.end(); ++it) {
+            if (it == added)
+                continue;
+            if (oldest == m_entries.end() || it->second.last_use < oldest->second.last_use)
+                oldest = it;
+        }
+
+        if (oldest == m_entries.end())
+            break;
+        m_cached_bytes -= oldest->second.cache.image->get_size_bytes();
+        m_entries.erase(oldest);
+    }
+
+    m_last_key = key;
+    m_last_entry = &added->second;
     return image;
 }
 

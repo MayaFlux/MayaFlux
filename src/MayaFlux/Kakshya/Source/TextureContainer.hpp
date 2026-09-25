@@ -2,6 +2,7 @@
 
 #include "MayaFlux/Kakshya/SignalSourceContainer.hpp"
 #include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
+#include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 
 #include "MayaFlux/Transitive/Memory/SeqLock.hpp"
 
@@ -135,32 +136,25 @@ public:
         const std::shared_ptr<Buffers::VKBuffer>& staging);
 
     /**
-     * @brief Upload the pixel buffer to a new VKImage via TextureLoom.
+     * @brief Refresh the container-owned VKImage for one layer.
      * @param layer Array layer index for array textures (default 0).
-     * @return Newly created and uploaded VKImage. Null on failure.
+     * @return Cached and uploaded VKImage. Null on failure.
      *
-     * Creates a fresh 2D texture each call. Does not cache the result.
-     * The returned image is owned by TextureLoom's internal registry.
-     * A caller that refreshes the same texture repeatedly should create it
-     * once and update it with upload_image, since each image created here
-     * lives as long as TextureLoom retains it.
+     * Reuses a container-owned image for this layer while dimensions and
+     * format match. Later calls refresh the same image, so it is live rather
+     * than a snapshot.
      */
     [[nodiscard]] std::shared_ptr<Core::VKImage> to_image(uint32_t layer = 0) const;
 
     /**
-     * @brief Upload one layer to a new VKImage, reusing a caller-supplied staging buffer.
+     * @brief Refresh one layer's cached VKImage with caller-supplied staging.
      *
-     * Allocates the VKImage without pixel data (create_2d with nullptr), then
-     * uploads via the provided staging buffer, bypassing the per-call VkBuffer
-     * allocation inside TextureLoom. Use TextureLoom::create_streaming_staging()
-     * to allocate the staging buffer once before the render loop.
-     *
-     * The upload itself is upload_image, so creating and refreshing an image
-     * share one implementation.
+     * Reuses the container-owned image and uploads via the supplied staging
+     * buffer.
      *
      * @param layer   Array layer index (default 0).
      * @param staging Host-visible staging VKBuffer sized to at least byte_size().
-     * @return Newly created VKImage, or nullptr on failure.
+     * @return Cached VKImage, or nullptr on failure.
      */
     [[nodiscard]] std::shared_ptr<Core::VKImage> to_image(
         uint32_t layer,
@@ -170,15 +164,15 @@ public:
      * @brief Upload all layers as a Vulkan 2D array texture.
      *
      * Concatenates pixel data from all layers in order (layer 0 first) and
-     * calls TextureLoom::create_2d_array. The returned VKImage has
+     * refreshes a container-owned array image. The returned VKImage has
      * array_layers == get_layer_count() and an image view of type
      * VK_IMAGE_VIEW_TYPE_2D_ARRAY, making it bindable as sampler2DArray
      * in GLSL.
      *
-     * All layers must have been populated before calling this. Empty layers
-     * contribute zero bytes and will produce incorrect GPU data.
+     * All layers must have the expected byte count; otherwise this returns null.
      *
-     * @return Initialised VKImage with array_layers > 1, or nullptr on failure.
+     * @return Cached array image when multiple layers exist, or a cached 2D
+     *         image for one layer. Null on failure.
      */
     [[nodiscard]] std::shared_ptr<Core::VKImage> to_image_array() const;
 
@@ -186,16 +180,17 @@ public:
      * @brief Upload all layers as a Vulkan 2D array texture, reusing a staging buffer.
      *
      * Concatenates pixel data from all layers in order (layer 0 first) and
-     * calls TextureLoom::create_2d_array. The returned VKImage has
+     * refreshes a container-owned array image. The returned VKImage has
      * array_layers == get_layer_count() and an image view of type
      * VK_IMAGE_VIEW_TYPE_2D_ARRAY, making it bindable as sampler2DArray
      * in GLSL.
      *
-     * All layers must have been populated before calling this. Empty layers
-     * contribute zero bytes and will produce incorrect GPU data.
+     * All layers must have the expected byte count; otherwise this returns null.
      *
-     * @param staging Host-visible staging VKBuffer sized to at least byte_size().
-     * @return Initialised VKImage with array_layers > 1, or nullptr on failure.
+     * @param staging Host-visible staging VKBuffer sized to at least
+     *                byte_size() * get_layer_count().
+     * @return Cached array image when multiple layers exist, or a cached 2D
+     *         image for one layer. Null on failure.
      */
     [[nodiscard]] std::shared_ptr<Core::VKImage> to_image_array(
         const std::shared_ptr<Buffers::VKBuffer>& staging) const;
@@ -203,11 +198,8 @@ public:
     /**
      * @brief Upload one layer into an existing VKImage instead of creating one.
      *
-     * The counterpart of to_image(layer, staging) for callers that hold an
-     * image across frames. Creating an image per frame allocates device
-     * memory and stalls the queue every time, so a caller that updates the
-     * same texture repeatedly should create it once with to_image and refresh
-     * it with this.
+     * Use this for an image retained separately from the container, such as
+     * an execution context's input image.
      *
      * @param image   Target image. Must match this container's width, height
      *                and format, and be a single layer 2D image.
@@ -486,6 +478,8 @@ private:
 
     std::vector<DataVariant> m_data;
     std::vector<DataVariant> m_processed_data;
+    mutable std::vector<Portal::Graphics::ImageCacheEntry> m_layer_image_cache;
+    mutable Portal::Graphics::ImageCacheEntry m_array_image_cache;
     std::shared_ptr<DataProcessor> m_processor;
     std::shared_ptr<DataProcessingChain> m_chain;
 
@@ -507,6 +501,11 @@ private:
 
     /** @brief Row cache backing the double span returned by get_frame(). */
     mutable std::vector<double> m_frame_cache;
+
+    [[nodiscard]] std::shared_ptr<Core::VKImage> cached_layer_image(
+        uint32_t layer, const std::shared_ptr<Buffers::VKBuffer>& staging) const;
+    [[nodiscard]] std::shared_ptr<Core::VKImage> cached_array_image(
+        const std::shared_ptr<Buffers::VKBuffer>& staging) const;
 
     [[nodiscard]] auto get_frame_typed(uint64_t frame_index) const -> DataSpanVariant;
     void get_frames_typed(void* output, size_t count, uint64_t start_frame, uint64_t num_frames, const std::type_info& type) const;
