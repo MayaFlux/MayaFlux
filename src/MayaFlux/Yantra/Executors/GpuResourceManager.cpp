@@ -33,10 +33,9 @@ struct GpuResourceManagerImpl {
 
 namespace {
 
-    uint32_t find_memory_type(vk::PhysicalDevice phys,
+    std::optional<uint32_t> try_memory_type(vk::PhysicalDevice phys,
         uint32_t type_filter,
-        vk::MemoryPropertyFlags props,
-        vk::MemoryPropertyFlags fallback_props = {})
+        vk::MemoryPropertyFlags props)
     {
         auto mem_props = phys.getMemoryProperties();
         for (uint32_t i = 0; i < mem_props.memoryTypeCount; ++i) {
@@ -45,13 +44,19 @@ namespace {
                 return i;
             }
         }
+        return std::nullopt;
+    }
+
+    uint32_t find_memory_type(vk::PhysicalDevice phys,
+        uint32_t type_filter,
+        vk::MemoryPropertyFlags props,
+        vk::MemoryPropertyFlags fallback_props = {})
+    {
+        if (const auto type = try_memory_type(phys, type_filter, props))
+            return *type;
         if (fallback_props) {
-            for (uint32_t i = 0; i < mem_props.memoryTypeCount; ++i) {
-                if ((type_filter & (1U << i))
-                    && (mem_props.memoryTypes[i].propertyFlags & fallback_props) == fallback_props) {
-                    return i;
-                }
-            }
+            if (const auto type = try_memory_type(phys, type_filter, fallback_props))
+                return *type;
         }
         error<std::runtime_error>(
             Journal::Component::Yantra,
@@ -77,9 +82,22 @@ namespace {
         slot.allocated_bytes = 0;
     }
 
+    /**
+     * @brief Allocate and map a host visible buffer slot.
+     *
+     * By default the memory is host cached system memory, which suits buffers
+     * the host reads back. With prefer_device_local the slot first tries
+     * device local, host visible, host coherent memory (the BAR heap), so a
+     * buffer that only shaders touch is read and written at device speed
+     * instead of across the bus. When no such memory type exists, or the heap
+     * is full, the default memory is used, so the request never fails where
+     * the default would succeed. Host reads of device local memory are
+     * uncached, so it is meant for small or write only host access.
+     */
     void allocate_slot(vk::Device device, vk::PhysicalDevice phys,
         VulkanBufferSlot& slot, size_t byte_size,
-        vk::BufferUsageFlags extra_usage = vk::BufferUsageFlagBits::eStorageBuffer)
+        vk::BufferUsageFlags extra_usage = vk::BufferUsageFlagBits::eStorageBuffer,
+        bool prefer_device_local = false)
     {
         free_slot(device, slot);
 
@@ -93,14 +111,32 @@ namespace {
 
         vk::MemoryAllocateInfo ai;
         ai.allocationSize = req.size;
-        ai.memoryTypeIndex = find_memory_type(phys, req.memoryTypeBits,
-            vk::MemoryPropertyFlagBits::eHostVisible
-                | vk::MemoryPropertyFlagBits::eHostCoherent
-                | vk::MemoryPropertyFlagBits::eHostCached,
-            vk::MemoryPropertyFlagBits::eHostVisible
-                | vk::MemoryPropertyFlagBits::eHostCoherent);
 
-        slot.memory = device.allocateMemory(ai);
+        if (prefer_device_local) {
+            const auto resident = try_memory_type(phys, req.memoryTypeBits,
+                vk::MemoryPropertyFlagBits::eDeviceLocal
+                    | vk::MemoryPropertyFlagBits::eHostVisible
+                    | vk::MemoryPropertyFlagBits::eHostCoherent);
+            if (resident) {
+                ai.memoryTypeIndex = *resident;
+                try {
+                    slot.memory = device.allocateMemory(ai);
+                } catch (const vk::SystemError&) {
+                    slot.memory = vk::DeviceMemory {};
+                }
+            }
+        }
+
+        if (!slot.memory) {
+            ai.memoryTypeIndex = find_memory_type(phys, req.memoryTypeBits,
+                vk::MemoryPropertyFlagBits::eHostVisible
+                    | vk::MemoryPropertyFlagBits::eHostCoherent
+                    | vk::MemoryPropertyFlagBits::eHostCached,
+                vk::MemoryPropertyFlagBits::eHostVisible
+                    | vk::MemoryPropertyFlagBits::eHostCoherent);
+            slot.memory = device.allocateMemory(ai);
+        }
+
         device.bindBufferMemory(slot.buffer, slot.memory, 0);
         slot.mapped_ptr = device.mapMemory(slot.memory, 0, VK_WHOLE_SIZE);
         slot.allocated_bytes = byte_size;
@@ -371,8 +407,10 @@ void GpuResourceManager::ensure_shared_buffer(uint32_t set, size_t binding_index
         return;
 
     auto& foundry = Portal::Graphics::get_shader_foundry();
+    const bool gpu_resident = usage_hint == Portal::Graphics::BufferUsageHint::DEVICE
+        || usage_hint == Portal::Graphics::BufferUsageHint::COMPUTE;
     allocate_slot(foundry.get_device(), foundry.get_physical_device(),
-        slot, required_bytes, Portal::Graphics::to_buffer_usage_flags(usage_hint));
+        slot, required_bytes, Portal::Graphics::to_buffer_usage_flags(usage_hint), gpu_resident);
 }
 
 void GpuResourceManager::bind_shared_descriptor(const std::string& key, uint32_t set, size_t binding_index, const GpuBufferBinding& spec)

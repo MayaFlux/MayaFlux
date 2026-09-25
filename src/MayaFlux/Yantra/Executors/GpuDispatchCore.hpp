@@ -110,6 +110,17 @@ public:
         set_binding_data(index, std::span<const T>(data));
     }
 
+    /**
+     * @brief Ensure a shared storage buffer of at least element_count elements
+     *        exists at (set, binding_index).
+     *
+     * The default hint allocates host cached memory, suited to buffers the
+     * host reads back. DEVICE and COMPUTE request device local, host visible
+     * memory instead, so buffers only shaders touch avoid crossing the bus;
+     * the request falls back to host cached memory when none is available.
+     * Host reads of device local memory are uncached, so keep bulk readback
+     * buffers on the default hint.
+     */
     void ensure_shared_buffer(uint32_t set, size_t binding_index, size_t element_count,
         GpuBufferBinding::ElementType element_type,
         Portal::Graphics::BufferUsageHint usage_hint = Portal::Graphics::BufferUsageHint::COMPUTE_STORAGE)

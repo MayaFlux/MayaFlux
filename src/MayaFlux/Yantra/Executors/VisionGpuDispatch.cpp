@@ -1240,6 +1240,11 @@ namespace {
     /**
      * @brief Allocate the flow context's shared buffers and zero its counters
      *        with a GPU dispatch. Runs once per executor.
+     *
+     * Buffers only shaders touch (detections, retained points, counters,
+     * histogram, occupancy grid) request device local memory. The tracks and
+     * meta buffers stay in host cached memory because the host reads them back
+     * every frame.
      */
     void ensure_flow_resources(VisionGpuContexts& contexts)
     {
@@ -1250,16 +1255,16 @@ namespace {
         auto& flow = contexts.flow;
         auto& foundry = Portal::Graphics::get_shader_foundry();
 
-        flow.ensure_shared_buffer(0, 1, 4, GpuBufferBinding::ElementType::UINT32);
-        flow.ensure_shared_buffer(0, 2, static_cast<size_t>(k_flow_max_points) * 4, GpuBufferBinding::ElementType::FLOAT32);
-        flow.ensure_shared_buffer(1, 0, 4, GpuBufferBinding::ElementType::UINT32);
-        flow.ensure_shared_buffer(1, 1, static_cast<size_t>(k_flow_max_points) * 8, GpuBufferBinding::ElementType::FLOAT32);
+        flow.ensure_shared_buffer(0, 1, 4, GpuBufferBinding::ElementType::UINT32, Portal::Graphics::BufferUsageHint::COMPUTE);
+        flow.ensure_shared_buffer(0, 2, static_cast<size_t>(k_flow_max_points) * 4, GpuBufferBinding::ElementType::FLOAT32, Portal::Graphics::BufferUsageHint::COMPUTE);
+        flow.ensure_shared_buffer(1, 0, 4, GpuBufferBinding::ElementType::UINT32, Portal::Graphics::BufferUsageHint::COMPUTE);
+        flow.ensure_shared_buffer(1, 1, static_cast<size_t>(k_flow_max_points) * 8, GpuBufferBinding::ElementType::FLOAT32, Portal::Graphics::BufferUsageHint::COMPUTE);
         flow.ensure_shared_buffer(1, 2, static_cast<size_t>(k_flow_max_points) * 8, GpuBufferBinding::ElementType::FLOAT32);
         flow.ensure_shared_buffer(1, 3, 4, GpuBufferBinding::ElementType::UINT32);
-        flow.ensure_shared_buffer(1, 4, static_cast<size_t>(k_flow_max_points) * 8, GpuBufferBinding::ElementType::FLOAT32);
-        flow.ensure_shared_buffer(1, 5, 16, GpuBufferBinding::ElementType::UINT32);
-        flow.ensure_shared_buffer(1, 6, 256, GpuBufferBinding::ElementType::UINT32);
-        flow.ensure_shared_buffer(1, 7, k_flow_grid_capacity, GpuBufferBinding::ElementType::UINT32);
+        flow.ensure_shared_buffer(1, 4, static_cast<size_t>(k_flow_max_points) * 8, GpuBufferBinding::ElementType::FLOAT32, Portal::Graphics::BufferUsageHint::COMPUTE);
+        flow.ensure_shared_buffer(1, 5, 16, GpuBufferBinding::ElementType::UINT32, Portal::Graphics::BufferUsageHint::COMPUTE);
+        flow.ensure_shared_buffer(1, 6, 256, GpuBufferBinding::ElementType::UINT32, Portal::Graphics::BufferUsageHint::COMPUTE);
+        flow.ensure_shared_buffer(1, 7, k_flow_grid_capacity, GpuBufferBinding::ElementType::UINT32, Portal::Graphics::BufferUsageHint::COMPUTE);
 
         flow.swap_shader({ .shader_path = "flow_reset.comp.spv", .workgroup_size = { 64, 1, 1 } });
         flow.set_output_dimensions(1, 1);
@@ -1431,22 +1436,30 @@ namespace {
     }
 
     /**
+     * @brief Read the flow meta words the GPU finished writing: the live track
+     *        count in [0] and the frame change energy in [1].
+     *
+     * One sixteen byte host read after the fence. Zeros, without a read, when
+     * there is no previous frame, since nothing was tracked or compared.
+     */
+    std::array<uint32_t, 4> read_flow_meta(VisionGpuContexts& contexts)
+    {
+        std::array<uint32_t, 4> meta {};
+        if (contexts.flow_state.have_prev)
+            contexts.flow.download_shared(1, 3, meta.data(), sizeof(meta));
+        return meta;
+    }
+
+    /**
      * @brief True when the frame just processed is a repeat of the one before.
      *
      * The pyramid build accumulates the total intensity change of the new
-     * frame against the previous one into meta[1]. It is zeroed before each
-     * build and read here after the fence, so this is one four byte host read
-     * of memory the GPU has finished with. Without a previous frame there is
-     * nothing to repeat.
+     * frame against the previous one into meta[1]. Without a previous frame
+     * there is nothing to repeat.
      */
-    bool frame_is_duplicate(VisionGpuContexts& contexts)
+    bool frame_is_duplicate(const VisionGpuContexts& contexts, const std::array<uint32_t, 4>& meta)
     {
-        if (!contexts.flow_state.have_prev)
-            return false;
-
-        std::array<uint32_t, 4> meta {};
-        contexts.flow.download_shared(1, 3, meta.data(), sizeof(meta));
-        return meta[1] <= k_flow_duplicate_energy;
+        return contexts.flow_state.have_prev && meta[1] <= k_flow_duplicate_energy;
     }
 
     /**
@@ -1462,14 +1475,13 @@ namespace {
         auto& state = contexts.flow_state;
         auto& flow = contexts.flow;
         std::vector<Kinesis::Vision::TrackResult> tracks;
-        const bool duplicate = frame_is_duplicate(contexts) && !state.last_tracks.empty();
+        const auto meta = read_flow_meta(contexts);
+        const bool duplicate = frame_is_duplicate(contexts, meta) && !state.last_tracks.empty();
 
         if (duplicate) {
             tracks = state.last_tracks;
         } else if (state.have_prev) {
-            uint32_t count = 0;
-            flow.download_shared(1, 3, &count, sizeof(uint32_t));
-            count = std::min(count, k_flow_max_points);
+            const uint32_t count = std::min(meta[0], k_flow_max_points);
 
             if (count > 0) {
                 std::vector<glm::vec4> records(static_cast<size_t>(count) * 2U);
@@ -1761,7 +1773,7 @@ namespace {
     void finish_dense(VisionGpuContexts& contexts, bool visualized)
     {
         auto& state = contexts.flow_state;
-        const bool duplicate = frame_is_duplicate(contexts) && state.last_flow;
+        const bool duplicate = frame_is_duplicate(contexts, read_flow_meta(contexts)) && state.last_flow;
         if (!duplicate)
             state.last_flow = state.flow_out[state.curr];
 
