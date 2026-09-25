@@ -2057,6 +2057,7 @@ VisionGpuContexts::VisionGpuContexts()
         TextureExecutionContext::OutputMode::SCALAR,
     }
 {
+    pixel.set_avoid_output_alias(true);
     structured.set_output_size(1, sizeof(uint32_t));
     structured.set_output_size(2, static_cast<size_t>(4096) * 4 * sizeof(float));
     structured.set_output_size(3, static_cast<size_t>(256) * sizeof(uint32_t));
@@ -2266,6 +2267,7 @@ VisionResult VisionGpuExecutor::run(
         reap_fences(contexts);
         contexts.flow_state.curr_ready = false;
         contexts.pass.begin(sequence, w, h);
+        contexts.bound_staged.reset();
         const auto seed = op_ingest(contexts, image, w, h);
         contexts.pass.current = seed;
         contexts.source = seed;
@@ -2295,7 +2297,8 @@ VisionResult VisionGpuExecutor::run(
             pixel_ctx.stage_image(contexts.pass.current);
             contexts.bound_staged = contexts.pass.current;
         }
-        if (w != contexts.pass.storage_w || h != contexts.pass.storage_h) {
+        if (w != contexts.pass.storage_w || h != contexts.pass.storage_h
+            || (contexts.pass.current && contexts.pass.current == pixel_ctx.get_output_image(0))) {
             pixel_ctx.prepare_output_image(w, h);
             contexts.pass.storage_w = w;
             contexts.pass.storage_h = h;
@@ -2345,7 +2348,7 @@ VisionResult VisionGpuExecutor::run(
         case VisionOp::GaussianBlur: {
             const auto& p = std::get<GaussianBlurParams>(step.params);
             const auto radius = static_cast<uint32_t>(std::ceil(p.sigma * 3.0F));
-            const auto& weights = gaussian_kernel_1d(radius, p.sigma);
+            const auto& weights = gaussian_kernel_2d(radius, p.sigma);
             pixel_ctx.set_binding_data(2, std::span<const float>(weights));
             pixel_ctx.set_push_constants(GaussianPC { .radius = radius, .width = w, .height = h });
             break;
@@ -2424,7 +2427,7 @@ VisionResult VisionGpuExecutor::run(
         if (step.deferred) {
             pixel_ctx.clear_output_dimensions();
             contexts.pass.current = pixel_ctx.get_output_image(0);
-            contexts.bound_staged = contexts.pass.current;
+            contexts.bound_staged.reset();
 
             const Kinesis::Vision::GpuVisionPass::Completed done {
                 .output = contexts.pass.current,
@@ -2446,7 +2449,7 @@ VisionResult VisionGpuExecutor::run(
 
         pixel_ctx.clear_output_dimensions();
         contexts.pass.current = pixel_ctx.get_output_image(0);
-        contexts.bound_staged = contexts.pass.current;
+        contexts.bound_staged.reset();
         completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = { .output = contexts.pass.current, .input = dispatch_input };
 
         after_step(contexts, contexts.pass.index);

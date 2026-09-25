@@ -178,6 +178,15 @@ public:
     }
 
     /**
+     * @brief Select a distinct cached output image when the input is the
+     *        current output image.
+     */
+    void set_avoid_output_alias(bool enabled)
+    {
+        m_avoid_output_alias = enabled;
+    }
+
+    /**
      * @brief Direct access to an image slot's binding descriptor by index.
      *
      * Mutating .direction is used by callers driving dispatch_core_chained
@@ -366,7 +375,15 @@ public:
     void prepare_output_image(uint32_t width, uint32_t height)
     {
         auto& slot = output_slot();
-        if (!slot.image || slot.width != width || slot.height != height) {
+        if (m_avoid_output_alias) {
+            auto primary = acquire_output_image(slot, width, height);
+            const auto input = input_slot().image;
+            slot.image = primary && primary == input
+                ? acquire_output_image(slot, width, height, true)
+                : std::move(primary);
+            slot.width = width;
+            slot.height = height;
+        } else if (!slot.image || slot.width != width || slot.height != height) {
             slot.image = acquire_output_image(slot, width, height);
             slot.width = width;
             slot.height = height;
@@ -553,10 +570,12 @@ private:
         uint32_t width {};
         uint32_t height {};
         Portal::Graphics::ImageCacheSet cache { k_slot_cache_budget_bytes };
+        Portal::Graphics::ImageCacheSet alternate_cache { k_slot_cache_budget_bytes };
     };
 
     Portal::Graphics::ImageFormat m_output_format;
     OutputMode m_output_mode;
+    bool m_avoid_output_alias { false };
     uint32_t m_pending_layer {};
     std::vector<ImageSlot> m_image_slots;
 
@@ -629,7 +648,7 @@ private:
      * once because TextureLoom retains created images until shutdown.
      */
     [[nodiscard]] std::shared_ptr<Core::VKImage> acquire_output_image(
-        ImageSlot& slot, uint32_t width, uint32_t height)
+        ImageSlot& slot, uint32_t width, uint32_t height, bool alternate = false)
     {
         const ImageKey key {
             .width = width,
@@ -638,7 +657,8 @@ private:
             .format = m_output_format,
             .kind = ImageKey::Kind::STORAGE_2D,
         };
-        return slot.cache.acquire(Portal::Graphics::TextureLoom::instance(), key);
+        auto& cache = alternate ? slot.alternate_cache : slot.cache;
+        return cache.acquire(Portal::Graphics::TextureLoom::instance(), key);
     }
 
     /**
