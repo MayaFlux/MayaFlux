@@ -58,7 +58,7 @@ public:
      * @brief Construct from an existing managed window.
      * @param window         Live window whose surface will be addressed as NDData.
      * @param frame_capacity Number of rendered images to retain in m_data.
-     *                       Defaults to 1 (current behaviour).
+     *                       Defaults to 60.
      */
     explicit WindowContainer(std::shared_ptr<Core::Window> window,
         uint32_t frame_capacity = 60);
@@ -221,7 +221,7 @@ public:
     /**
      * @brief Reallocate m_data and m_processed_data to match the current window
      *        dimensions. Called by WindowAccessProcessor when a surface resize is
-     *        detected. Acquires m_data_mutex exclusively.
+     *        detected. Holds the data seqlock's serialized write claim.
      */
     void handle_surface_resize();
 

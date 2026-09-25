@@ -385,11 +385,14 @@ std::vector<uint64_t> WindowContainer::linear_index_to_coordinates(uint64_t inde
 
 void WindowContainer::clear()
 {
-    const size_t sz = m_structure.get_total_elements();
     {
         Memory::SeqlockWriteGuard g(m_data_lock);
+        const size_t sz = m_structure.get_width() * m_structure.get_height()
+            * m_structure.get_channel_count();
         m_processed_data.resize(1);
         m_processed_data[0] = std::vector<uint8_t>(sz, 0U);
+        if (!m_normalised_dirty.empty())
+            m_normalised_dirty[0].store(true, std::memory_order_release);
     }
     update_processing_state(ProcessingState::IDLE);
 }
