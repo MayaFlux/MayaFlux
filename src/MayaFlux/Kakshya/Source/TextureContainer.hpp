@@ -141,6 +141,9 @@ public:
      *
      * Creates a fresh 2D texture each call. Does not cache the result.
      * The returned image is owned by TextureLoom's internal registry.
+     * A caller that refreshes the same texture repeatedly should create it
+     * once and update it with upload_image, since each image created here
+     * lives as long as TextureLoom retains it.
      */
     [[nodiscard]] std::shared_ptr<Core::VKImage> to_image(uint32_t layer = 0) const;
 
@@ -151,6 +154,9 @@ public:
      * uploads via the provided staging buffer, bypassing the per-call VkBuffer
      * allocation inside TextureLoom. Use TextureLoom::create_streaming_staging()
      * to allocate the staging buffer once before the render loop.
+     *
+     * The upload itself is upload_image, so creating and refreshing an image
+     * share one implementation.
      *
      * @param layer   Array layer index (default 0).
      * @param staging Host-visible staging VKBuffer sized to at least byte_size().
@@ -192,6 +198,44 @@ public:
      * @return Initialised VKImage with array_layers > 1, or nullptr on failure.
      */
     [[nodiscard]] std::shared_ptr<Core::VKImage> to_image_array(
+        const std::shared_ptr<Buffers::VKBuffer>& staging) const;
+
+    /**
+     * @brief Upload one layer into an existing VKImage instead of creating one.
+     *
+     * The counterpart of to_image(layer, staging) for callers that hold an
+     * image across frames. Creating an image per frame allocates device
+     * memory and stalls the queue every time, so a caller that updates the
+     * same texture repeatedly should create it once with to_image and refresh
+     * it with this.
+     *
+     * @param image   Target image. Must match this container's width, height
+     *                and format, and be a single layer 2D image.
+     * @param layer   Array layer index (default 0).
+     * @param staging Host-visible staging VKBuffer sized to at least byte_size().
+     * @return True when the layer was uploaded, false when the layer is out of
+     *         range, empty, or the image is null.
+     */
+    bool upload_image(
+        const std::shared_ptr<Core::VKImage>& image,
+        uint32_t layer,
+        const std::shared_ptr<Buffers::VKBuffer>& staging) const;
+
+    /**
+     * @brief Upload all layers into an existing VKImage instead of creating one.
+     *
+     * The counterpart of to_image_array(staging). A single layer container
+     * targets a plain 2D image, more layers a 2D array image with
+     * array_layers == get_layer_count().
+     *
+     * @param image   Target image created by to_image_array.
+     * @param staging Host-visible staging VKBuffer sized to at least
+     *                byte_size() * get_layer_count().
+     * @return True when every layer was uploaded, false on a null image, an
+     *         empty container, or a layer of unexpected size.
+     */
+    bool upload_image_array(
+        const std::shared_ptr<Core::VKImage>& image,
         const std::shared_ptr<Buffers::VKBuffer>& staging) const;
 
     //=========================================================================

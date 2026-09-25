@@ -334,7 +334,7 @@ public:
         vk::Sampler sampler = nullptr)
     {
         auto& slot = input_slot();
-        auto img = container.to_image(layer);
+        auto img = container_image(container, layer);
         auto s = sampler
             ? sampler
             : Portal::Graphics::SamplerForge::instance().get_default_linear();
@@ -348,16 +348,21 @@ public:
      *        declared output binding.
      *
      * Only called in CONTAINER or IMAGE mode, from on_before_gpu_dispatch
-     * or per-step by callers chaining multi-pass sequences. Caches by
-     * dimension: reallocates only when width or height change from the
-     * previously staged output.
+     * or per-step by callers chaining multi-pass sequences. The output slot
+     * keeps the images it has used, keyed by their creation parameters, so a
+     * caller that alternates between a few sizes, such as a sequence that
+     * downsamples every run, reuses them instead of allocating on every
+     * change. Images beyond a byte budget are dropped least recently used
+     * first, and asking for a dropped shape allocates again.
+     *
+     * TextureLoom retains every image it creates for the life of the process,
+     * so an image that is dropped from the cache is not freed.
      */
     void prepare_output_image(uint32_t width, uint32_t height)
     {
         auto& slot = output_slot();
         if (!slot.image || slot.width != width || slot.height != height) {
-            slot.image = Portal::Graphics::TextureLoom::instance()
-                             .create_storage_image(width, height, m_output_format);
+            slot.image = acquire_output_image(slot, width, height);
             slot.width = width;
             slot.height = height;
         }
@@ -405,20 +410,7 @@ protected:
     {
         if (m_pending_container) {
             const auto sampler = Portal::Graphics::SamplerForge::instance().get_default_linear();
-            std::shared_ptr<Core::VKImage> img;
-            if (m_pending_container->get_layer_count() > 1) {
-                if (!m_upload_staging) {
-                    m_upload_staging = Buffers::create_image_staging_buffer(
-                        m_pending_container->byte_size() * m_pending_container->get_layer_count());
-                }
-                img = m_pending_container->to_image_array(m_upload_staging);
-            } else {
-                if (!m_upload_staging) {
-                    m_upload_staging = Buffers::create_image_staging_buffer(
-                        m_pending_container->byte_size());
-                }
-                img = m_pending_container->to_image(m_pending_layer, m_upload_staging);
-            }
+            const auto img = container_image(*m_pending_container, m_pending_layer);
 
             auto& in_slot = input_slot();
             if (in_slot.binding.element_type == GpuBufferBinding::ElementType::IMAGE_STORAGE) {
@@ -526,6 +518,28 @@ protected:
 
 private:
     /**
+     * @struct ImageKey
+     * @brief The creation parameters of an image.
+     *
+     * These are what decide whether an image can stand in for another. Its
+     * layout and contents change by transition and upload, so they are not
+     * part of the key and never cause a new image.
+     */
+    struct ImageKey {
+        uint32_t width {};
+        uint32_t height {};
+        uint32_t layers {};
+        Portal::Graphics::ImageFormat format {};
+
+        [[nodiscard]] bool operator==(const ImageKey&) const = default;
+    };
+
+    struct CachedImage {
+        ImageKey key;
+        std::shared_ptr<Core::VKImage> image;
+    };
+
+    /**
      * @struct ImageSlot
      * @brief One declared image binding: its GpuBufferBinding descriptor,
      *        the currently staged VKImage, and cached dimensions.
@@ -534,12 +548,16 @@ private:
      * from the output slot; element_type distinguishes IMAGE_STORAGE from
      * IMAGE_SAMPLED. Binding index is caller-configurable at construction,
      * never hardcoded elsewhere in this class.
+     *
+     * cache holds the images this slot has used, least recently used first,
+     * so a slot that alternates between a few shapes reuses its images.
      */
     struct ImageSlot {
         GpuBufferBinding binding;
         std::shared_ptr<Core::VKImage> image;
         uint32_t width {};
         uint32_t height {};
+        std::vector<CachedImage> cache;
     };
 
     Portal::Graphics::ImageFormat m_output_format;
@@ -555,9 +573,110 @@ private:
 
     std::optional<std::pair<uint32_t, uint32_t>> m_output_dim_override;
 
+    /**
+     * Bytes of images a slot keeps for reuse. Least recently used images are
+     * dropped once the total exceeds it, but the image just used is always kept.
+     */
+    static constexpr size_t k_slot_cache_budget_bytes = size_t { 256 } << 20;
+
+    ImageKey m_input_key;
+    std::shared_ptr<Core::VKImage> m_input_image;
+
     // =========================================================================
     // Helpers
     // =========================================================================
+
+    /**
+     * @brief The container's pixels as a GPU image, without allocating one per
+     *        call.
+     *
+     * The first call for a given width, height, layer count and format creates
+     * the image with the container's to_image producers. Every later call for
+     * the same parameters uploads into that image instead, so a container
+     * dispatched every frame costs one image, not one per frame. The image is
+     * replaced only when the container's shape changes.
+     *
+     * The image is reused in place, so the previous dispatch on this context
+     * must have completed before the next call, as it must for the output
+     * image.
+     *
+     * @return The input image, or nullptr when the container has no usable data.
+     */
+    [[nodiscard]] std::shared_ptr<Core::VKImage> container_image(
+        const Kakshya::TextureContainer& container, uint32_t layer)
+    {
+        const uint32_t layers = container.get_layer_count();
+        const bool array = layers > 1;
+        const ImageKey key {
+            .width = container.get_width(),
+            .height = container.get_height(),
+            .layers = layers,
+            .format = container.get_format(),
+        };
+
+        const size_t staging_bytes = container.byte_size() * (array ? layers : 1U);
+        if (!m_upload_staging) {
+            m_upload_staging = Buffers::create_image_staging_buffer(staging_bytes);
+        } else if (staging_bytes > m_upload_staging->get_size_bytes()) {
+            m_upload_staging->resize(
+                static_cast<size_t>(static_cast<float>(staging_bytes) * Buffers::k_buffer_growth_factor), false);
+        }
+
+        if (m_input_image && m_input_key == key) {
+            const bool uploaded = array
+                ? container.upload_image_array(m_input_image, m_upload_staging)
+                : container.upload_image(m_input_image, layer, m_upload_staging);
+            return uploaded ? m_input_image : nullptr;
+        }
+
+        m_input_image = array
+            ? container.to_image_array(m_upload_staging)
+            : container.to_image(layer, m_upload_staging);
+        m_input_key = key;
+        return m_input_image;
+    }
+
+    /**
+     * @brief Return this slot's cached image for these creation parameters,
+     *        creating and caching one when there is none.
+     *
+     * A hit moves the image to the most recently used end. After a new image is
+     * added, least recently used images are dropped from the cache until the
+     * total is within k_slot_cache_budget_bytes, always keeping the image just
+     * returned. A dropped image stays alive as long as TextureLoom retains it.
+     */
+    [[nodiscard]] std::shared_ptr<Core::VKImage> acquire_output_image(
+        ImageSlot& slot, uint32_t width, uint32_t height)
+    {
+        const ImageKey key {
+            .width = width,
+            .height = height,
+            .layers = 1,
+            .format = m_output_format,
+        };
+
+        const auto hit = std::ranges::find_if(slot.cache, [&key](const CachedImage& c) { return c.key == key; });
+        if (hit != slot.cache.end()) {
+            std::rotate(hit, hit + 1, slot.cache.end());
+            return slot.cache.back().image;
+        }
+
+        auto image = Portal::Graphics::TextureLoom::instance()
+                         .create_storage_image(width, height, m_output_format);
+        if (!image)
+            return nullptr;
+
+        slot.cache.push_back({ .key = key, .image = image });
+
+        size_t bytes = 0;
+        for (const auto& c : slot.cache)
+            bytes += c.image->get_size_bytes();
+        while (slot.cache.size() > 1 && bytes > k_slot_cache_budget_bytes) {
+            bytes -= slot.cache.front().image->get_size_bytes();
+            slot.cache.erase(slot.cache.begin());
+        }
+        return image;
+    }
 
     /**
      * @brief Find the declared input image slot.
