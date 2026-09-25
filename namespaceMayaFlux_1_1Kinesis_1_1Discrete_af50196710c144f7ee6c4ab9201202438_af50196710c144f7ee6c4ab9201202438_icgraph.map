@@ -1,0 +1,17 @@
+<map id="MayaFlux::Kinesis::Discrete::mean" name="MayaFlux::Kinesis::Discrete::mean">
+<area shape="rect" id="Node000001" title="Arithmetic mean per window." alt="" coords="616,101,765,141"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1StatisticalAnalyzer_ac6b9656bbc2b37d4603de52ef0115d85.html#ac6b9656bbc2b37d4603de52ef0115d85" title="Compute statistical values using span (zero&#45;copy processing)" alt="" coords="303,5,568,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="643,97,567,60,530,48,532,43,569,55,646,92"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1StatisticalAnalyzer_a853e8c531c62174e89938bf0eae8a7d9.html#a853e8c531c62174e89938bf0eae8a7d9" title="Create comprehensive analysis result." alt="" coords="319,69,552,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="602,113,552,107,552,101,603,108"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Yantra_a599f6157469391d88c0afdcc9c08d1d2.html#a599f6157469391d88c0afdcc9c08d1d2" title=" " alt="" coords="341,133,529,173"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="603,135,530,144,529,139,602,130"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Yantra_a33957cc2e40e2d6acc33295b88af9dee.html#a33957cc2e40e2d6acc33295b88af9dee" title=" " alt="" coords="341,197,529,237"/>
+<area shape="poly" id="edge7_Node000001_Node000007" title=" " alt="" coords="646,151,569,188,530,200,529,195,567,183,643,146"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1StatisticalAnalyzer_ada59b9d30d969a895d8693fc96381700.html#ada59b9d30d969a895d8693fc96381700" title="Core analysis implementation &#45; creates analysis result AND pipeline output." alt="" coords="5,53,255,93"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="295,50,255,56,254,51,294,45"/>
+<area shape="poly" id="edge4_Node000004_Node000003" title=" " alt="" coords="304,85,255,83,255,77,305,80"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1FeatureExtractor_a6625311b756518d90e3d5ef2e4125e10.html#a6625311b756518d90e3d5ef2e4125e10" title="Core extraction implementation &#45; delegates to ExtractionHelper." alt="" coords="7,149,253,189"/>
+<area shape="poly" id="edge6_Node000005_Node000006" title=" " alt="" coords="328,162,254,166,253,160,327,156"/>
+<area shape="poly" id="edge8_Node000007_Node000006" title=" " alt="" coords="327,203,253,191,254,186,328,198"/>
+</map>

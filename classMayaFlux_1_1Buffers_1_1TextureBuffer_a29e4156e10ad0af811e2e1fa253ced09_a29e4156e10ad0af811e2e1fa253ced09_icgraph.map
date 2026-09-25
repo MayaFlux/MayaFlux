@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::TextureBuffer::get_texture_processor" name="MayaFlux::Buffers::TextureBuffer::get_texture_processor">
+<area shape="rect" id="Node000001" title=" " alt="" coords="255,41,447,96"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1TextureBuffer_aa2167fa79b632d5edb8b61aabfb0c36b.html#aa2167fa79b632d5edb8b61aabfb0c36b" title="Reallocate the GPU texture at new dimensions." alt="" coords="28,5,184,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="241,55,184,47,184,41,242,50"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1TextBuffer_a20bb5344ba60f4af317a00cde144f63a.html#a20bb5344ba60f4af317a00cde144f63a" title="Delegates to TextureBuffer::setup_rendering, then enables streaming mode on the TextureProcessor and ..." alt="" coords="5,85,207,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="241,87,207,93,206,87,241,82"/>
+</map>

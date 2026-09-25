@@ -1,0 +1,8 @@
+<map id="MayaFlux::Kakshya::EigenAccess::component_count" name="MayaFlux::Kakshya::EigenAccess::component_count">
+<area shape="rect" id="Node000001" title="Get number of components per element (rows in matrix representation)" alt="" coords="212,65,439,105"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_ad749165fadbbc95da3bed4335964be7d.html#ad749165fadbbc95da3bed4335964be7d" title="Process DataVariant through interpolation." alt="" coords="10,29,159,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="198,69,159,63,160,58,199,64"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1EigenAccess_a6562c3dc351c1570e5836020bd16c170.html#a6562c3dc351c1570e5836020bd16c170" title="Get matrix dimensions as (rows, cols)" alt="" coords="5,94,164,149"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="199,107,165,112,164,107,198,102"/>
+<area shape="poly" id="edge2_Node000002_Node000002" title=" " alt="" coords="126,18,111,11,85,8,61,10,48,15,42,21,45,28,40,30,37,20,44,10,60,5,85,3,113,6,128,13"/>
+</map>

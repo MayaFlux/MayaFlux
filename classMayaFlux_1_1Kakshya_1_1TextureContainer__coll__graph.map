@@ -1,0 +1,19 @@
+<map id="MayaFlux::Kakshya::TextureContainer" name="MayaFlux::Kakshya::TextureContainer">
+<area shape="rect" id="Node000001" title="SignalSourceContainer wrapping GPU texture data as addressable pixel bytes." alt="" coords="503,1743,713,2403"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1SignalSourceContainer.html" title="Data&#45;driven interface for managing arbitrary processable signal sources." alt="" coords="152,1126,363,1406"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="296,1419,331,1540,377,1664,438,1789,505,1907,500,1909,433,1792,372,1666,326,1542,291,1420"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1NDDataContainer.html" title=" " alt="" coords="5,443,240,817"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="168,830,230,1125,225,1127,162,831"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1NDDataContainer.html" title="Abstract interface for N&#45;dimensional data containers." alt="" coords="32,5,213,380"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="125,394,125,442,120,442,120,394"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="263,590,523,670"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="385,684,290,1126,285,1125,379,683"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="387,1233,488,1299"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="444,1299,466,1456,503,1665,516,1726,511,1727,497,1666,460,1457,439,1299"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure.html" title="Container structure for consistent dimension ordering." alt="" coords="512,867,704,1665"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="611,1666,611,1726,605,1726,605,1666"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Memory_1_1SeqlockArray.html" title="Indexed collection of independent, equal&#45;ranked Seqlock instances." alt="" coords="729,1126,927,1406"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="793,1407,705,1728,700,1726,787,1405"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Memory_1_1Seqlock.html" title="Single&#45;writer multiple&#45;reader sequence lock for fixed&#45;size data regions." alt="" coords="951,1133,1150,1399"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="1031,1399,997,1531,972,1601,942,1667,895,1747,840,1824,783,1895,727,1957,723,1954,779,1892,836,1821,891,1744,938,1664,967,1599,992,1530,1026,1398"/>
+</map>

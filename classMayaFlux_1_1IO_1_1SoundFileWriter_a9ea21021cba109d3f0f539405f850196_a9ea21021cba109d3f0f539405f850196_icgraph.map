@@ -1,0 +1,5 @@
+<map id="MayaFlux::IO::SoundFileWriter::write" name="MayaFlux::IO::SoundFileWriter::write">
+<area shape="rect" id="Node000001" title="Post interleaved double&#45;precision frames to the work queue." alt="" coords="272,5,491,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1SoundFileWriter_a59bb813328ff757df3353f10312116b1.html#a59bb813328ff757df3353f10312116b1" title="Post a SoundStreamContainer&#39;s planar channel data to the work queue." alt="" coords="5,5,224,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="258,28,224,28,224,23,258,23"/>
+</map>

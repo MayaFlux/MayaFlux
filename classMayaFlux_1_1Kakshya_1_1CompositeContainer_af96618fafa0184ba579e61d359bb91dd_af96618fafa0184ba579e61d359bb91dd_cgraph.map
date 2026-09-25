@@ -1,0 +1,11 @@
+<map id="MayaFlux::Kakshya::CompositeContainer::get_segments_data" name="MayaFlux::Kakshya::CompositeContainer::get_segments_data">
+<area shape="rect" id="Node000001" title="Copy valid one&#45;dimensional segments into separate arrays." alt="" coords="5,5,168,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1CompositeContainer_a8e6ff049798c791fdda8ce5922cead15.html#a8e6ff049798c791fdda8ce5922cead15" title="Copy a one&#45;dimensional Region into an owning CompositeArray." alt="" coords="216,5,379,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="168,30,202,30,202,35,168,35"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_ac4663132a467ebeca9c9c864c1606cc4.html#ac4663132a467ebeca9c9c864c1606cc4" title="Borrow consecutive elements without copying." alt="" coords="427,13,591,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="379,30,413,30,413,35,379,35"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_a92c33f8d97b049766838299ca27390d1.html#a92c33f8d97b049766838299ca27390d1" title="Validate and borrow the packed NDData stores and layout." alt="" coords="639,13,817,53"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="591,30,625,30,625,35,591,35"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kakshya_aa5676e4aa06e2977ff02c27e12abfc58.html#aa5676e4aa06e2977ff02c27e12abfc58" title="Validate and borrow packed Composite&#45;compatible NDData." alt="" coords="865,13,1028,53"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="818,30,852,30,852,35,818,35"/>
+</map>

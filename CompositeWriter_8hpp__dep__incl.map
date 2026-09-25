@@ -1,0 +1,24 @@
+<map id="CompositeWriter.hpp" name="CompositeWriter.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="199,5,357,31"/>
+<area shape="rect" id="Node000002" href="$CompositeWriter_8cpp.html" title=" " alt="" coords="5,79,164,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="235,38,117,81,115,76,233,33"/>
+<area shape="rect" id="Node000003" href="$DelimitedTextWriter_8hpp.html" title=" " alt="" coords="188,79,368,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="281,44,281,79,275,79,275,44"/>
+<area shape="rect" id="Node000006" href="$IOManager_8hpp.html" title=" " alt="" coords="526,79,646,104"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="341,31,537,76,536,81,340,36"/>
+<area shape="rect" id="Node000004" href="$DelimitedTextWriter_8cpp.html" title=" " alt="" coords="15,152,194,177"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="239,112,134,154,132,149,237,107"/>
+<area shape="rect" id="Node000005" href="$IOManager_8cpp.html" title=" " alt="" coords="219,152,337,177"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="281,118,281,152,275,152,275,118"/>
+<area shape="poly" id="edge10_Node000006_Node000005" title=" " alt="" coords="524,110,328,154,327,149,523,104"/>
+<area shape="rect" id="Node000007" href="$BufferOperation_8cpp.html" title=" " alt="" coords="362,152,514,177"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="551,112,463,154,461,149,549,107"/>
+<area shape="rect" id="Node000008" href="$Creator_8cpp.html" title=" " alt="" coords="538,152,634,177"/>
+<area shape="poly" id="edge7_Node000006_Node000008" title=" " alt="" coords="589,118,589,152,583,152,583,118"/>
+<area shape="rect" id="Node000009" href="$Depot_8cpp.html" title=" " alt="" coords="658,152,746,177"/>
+<area shape="poly" id="edge8_Node000006_Node000009" title=" " alt="" coords="618,109,684,149,682,154,615,113"/>
+<area shape="rect" id="Node000010" href="$Engine_8cpp.html" title=" " alt="" coords="770,152,863,177"/>
+<area shape="poly" id="edge9_Node000006_Node000010" title=" " alt="" coords="637,106,780,149,779,154,636,111"/>
+<area shape="rect" id="Node000011" href="$Rigs_8cpp.html" title=" " alt="" coords="887,152,965,177"/>
+<area shape="poly" id="edge11_Node000006_Node000011" title=" " alt="" coords="657,104,876,149,888,152,887,157,875,155,656,109"/>
+</map>

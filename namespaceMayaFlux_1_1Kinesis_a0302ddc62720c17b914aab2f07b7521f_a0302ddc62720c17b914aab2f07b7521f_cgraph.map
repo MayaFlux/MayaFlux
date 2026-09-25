@@ -1,0 +1,11 @@
+<map id="MayaFlux::Kinesis::shape_distance" name="MayaFlux::Kinesis::shape_distance">
+<area shape="rect" id="Node000001" title="Root mean square point distance between two paths after resampling and normalization." alt="" coords="5,54,155,94"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a630ecb835038f72e058330832ed69dc0.html#a630ecb835038f72e058330832ed69dc0" title="Centre a path at the origin and scale it to unit spread." alt="" coords="203,22,352,62"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="154,59,189,54,189,59,155,65"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_a7102df8cd91e6a089c4c5fcbcc7c4c1b.html#a7102df8cd91e6a089c4c5fcbcc7c4c1b" title="Resample a path to a fixed point count at uniform arc length." alt="" coords="203,86,352,126"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="155,83,189,89,189,94,154,89"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_ad2f0572dfef62bb7629c7ef74ff29449.html#ad2f0572dfef62bb7629c7ef74ff29449" title="Calculate mean of single&#45;channel data." alt="" coords="400,5,531,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="352,30,386,25,386,31,353,35"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_a61d20bae4fc7bd5ad68fe80712b53d9c.html#a61d20bae4fc7bd5ad68fe80712b53d9c" title="Calculate RMS (Root Mean Square) energy of single&#45;channel data." alt="" coords="406,55,525,80"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="353,49,393,55,392,60,352,55"/>
+</map>

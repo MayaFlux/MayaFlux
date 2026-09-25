@@ -1,0 +1,15 @@
+<map id="MayaFlux::Buffers::InfluxProcessor::write_tail" name="MayaFlux::Buffers::InfluxProcessor::write_tail">
+<area shape="rect" id="Node000001" title="Write every parameter past the shared prefix." alt="" coords="236,210,427,250"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1InfluxProcessor_a32ce482fadb6758138f24c1e77f96f41.html#a32ce482fadb6758138f24c1e77f96f41" title="Raise the parameter block and write everything past the prefix." alt="" coords="23,5,171,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="307,201,256,137,223,104,186,73,168,62,171,58,190,69,226,100,260,134,311,197"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1InfluxProcessor_a8102a55d8436c93bff3cae030de89ccc.html#a8102a55d8436c93bff3cae030de89ccc" title="Set the shape&#39;s world&#45;space centre." alt="" coords="22,84,171,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="284,205,187,152,163,141,165,136,189,148,286,201"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1InfluxProcessor_acb8728512f3ac6dc31a7f3cf5f28a595.html#acb8728512f3ac6dc31a7f3cf5f28a595" title="Set the shape&#39;s edge softness." alt="" coords="22,163,171,217"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="222,214,171,205,172,200,223,209"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1InfluxProcessor_acd735348f27c31bc7f75e12faa165272.html#acd735348f27c31bc7f75e12faa165272" title="Set the shape&#39;s characteristic size." alt="" coords="22,241,171,296"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="223,251,172,259,171,254,222,245"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1InfluxProcessor_af6eca8cdf922c07e942349a6d4c69628.html#af6eca8cdf922c07e942349a6d4c69628" title="Set the amount added per unit time at shape value one." alt="" coords="5,321,188,361"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="286,259,189,310,157,323,155,318,187,305,283,254"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1InfluxProcessor_a3a62d9b9fce0f3fa03c98b7c2da34879.html#a3a62d9b9fce0f3fa03c98b7c2da34879" title="Set the integration step." alt="" coords="22,385,171,440"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="307,262,256,318,224,348,190,375,168,388,165,383,186,370,221,344,252,315,303,259"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Graphics::PrimitiveMill" name="MayaFlux::Portal::Graphics::PrimitiveMill">
+<area shape="rect" id="Node000001" title="Mills spans of mixed primitive topology into one TRIANGLE_LIST vertex buffer on the GPU." alt="" coords="5,248,195,848"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Portal_1_1Graphics_1_1MillSpec.html" title="How a PrimitiveMill shapes spans." alt="" coords="5,5,195,185"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="103,186,103,231,97,231,97,186"/>
+</map>

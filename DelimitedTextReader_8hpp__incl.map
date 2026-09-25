@@ -1,0 +1,20 @@
+<map id="DelimitedTextReader.hpp" name="DelimitedTextReader.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="192,5,379,31"/>
+<area shape="rect" id="Node000002" href="$CompositeReader_8hpp.html" title=" " alt="" coords="131,79,296,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="275,33,237,71,233,67,272,29"/>
+<area shape="rect" id="Node000009" title=" " alt="" coords="321,79,394,104"/>
+<area shape="poly" id="edge9_Node000001_Node000009" title=" " alt="" coords="299,29,338,67,334,71,295,33"/>
+<area shape="rect" id="Node000003" href="$FileReader_8hpp.html" title=" " alt="" coords="106,152,225,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="208,106,183,142,178,139,203,103"/>
+<area shape="rect" id="Node000008" href="$Composite_8hpp.html" title=" " alt="" coords="225,225,426,265"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="224,102,305,212,301,216,220,106"/>
+<area shape="rect" id="Node000004" href="$Region_8hpp.html" title=" " alt="" coords="5,225,200,265"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="158,179,129,216,124,213,154,176"/>
+<area shape="rect" id="Node000005" href="$NDData_8hpp.html" title=" " alt="" coords="113,313,314,353"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="129,263,180,303,176,307,126,268"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="101,401,205,427"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="201,355,173,392,168,389,197,352"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="230,401,317,427"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="230,352,258,389,254,392,226,355"/>
+<area shape="poly" id="edge8_Node000008_Node000005" title=" " alt="" coords="302,268,251,307,248,303,299,263"/>
+</map>

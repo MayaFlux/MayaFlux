@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::GpuSync::PathGeneratorNode::refresh_attributes" name="MayaFlux::Nodes::GpuSync::PathGeneratorNode::refresh_attributes">
+<area shape="rect" id="Node000001" title="Rewrite colour and thickness over existing geometry, no curve evaluation." alt="" coords="5,45,216,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PathGeneratorNode_a3589630da979f758a3bf60f9ac7f18e9.html#a3589630da979f758a3bf60f9ac7f18e9" title="Vertices emitted per four&#45;point window." alt="" coords="264,5,481,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="216,54,250,49,251,54,217,59"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PathGeneratorNode_af397575bfc8596ee095c189f5e28c6ff.html#af397575bfc8596ee095c189f5e28c6ff" title="Write colour and thickness for one window, leaving positions intact." alt="" coords="273,84,473,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="217,86,260,92,259,97,216,91"/>
+</map>

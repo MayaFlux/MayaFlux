@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::RenderProcessor" name="MayaFlux::Buffers::RenderProcessor">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,1443,216,2197"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor.html" title="Abstract base class for shader&#45;based buffer processing." alt="" coords="11,516,210,1395"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="113,1409,113,1443,108,1443,108,1409"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VKBufferProcessor.html" title=" " alt="" coords="14,313,207,468"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="113,482,113,516,108,516,108,482"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1BufferProcessor.html" title="Central computational transformation interface for continuous buffer processing." alt="" coords="21,5,201,265"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="113,279,113,313,108,313,108,279"/>
+</map>

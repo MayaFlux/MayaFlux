@@ -1,0 +1,19 @@
+<map id="MayaFlux::Nodes::Network::WaveguideNetwork::get_metadata" name="MayaFlux::Nodes::Network::WaveguideNetwork::get_metadata">
+<area shape="rect" id="Node000001" title="Get network metadata for debugging/visualization." alt="" coords="5,58,204,113"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Reflect_aad91118cbd25bd9e35a3ced9aa4e6dbd.html#aad91118cbd25bd9e35a3ced9aa4e6dbd" title="Universal enum to string converter using magic_enum (original case)" alt="" coords="797,98,944,138"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="145,56,194,28,251,7,344,3,510,4,750,11,779,26,805,44,847,85,843,89,802,49,776,30,749,16,510,9,344,8,253,12,196,33,147,60"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1WaveguideNetwork_ab84df083aac671010b485fca97e283ec.html#ab84df083aac671010b485fca97e283ec" title="Get current loss factor." alt="" coords="262,22,461,77"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="204,69,248,63,249,68,205,74"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork_ad6c14660b161b3f6174a1528fd3c2fe9.html#ad6c14660b161b3f6174a1528fd3c2fe9" title="Get network metadata for debugging/visualization." alt="" coords="252,102,471,142"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="205,97,239,102,238,107,204,102"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1Network_1_1WaveguideNetwork_a96b8b7db78d71f8dc5f0cc613a6f8cf3.html#a96b8b7db78d71f8dc5f0cc613a6f8cf3" title="Get current pickup position." alt="" coords="262,166,461,221"/>
+<area shape="poly" id="edge9_Node000001_Node000008" title=" " alt="" coords="163,111,253,151,272,159,270,164,251,156,161,116"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork_af24c0ffef2666eb05f2f14b7e297c14b.html#af24c0ffef2666eb05f2f14b7e297c14b" title="Get the number of nodes in the network." alt="" coords="519,26,749,66"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="433,99,518,75,547,67,548,72,519,80,434,104"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork_ad5a21f007cb5e6328667ee852b6ad5fa.html#ad5a21f007cb5e6328667ee852b6ad5fa" title=" " alt="" coords="527,90,741,145"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="471,117,513,117,514,122,471,123"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork_a578ed1a9dcdf428b49a853724219e8c9.html#a578ed1a9dcdf428b49a853724219e8c9" title=" " alt="" coords="535,169,733,224"/>
+<area shape="poly" id="edge7_Node000004_Node000007" title=" " alt="" coords="436,139,522,163,520,168,434,144"/>
+<area shape="poly" id="edge6_Node000006_Node000002" title=" " alt="" coords="741,115,783,115,783,120,741,120"/>
+<area shape="poly" id="edge8_Node000007_Node000002" title=" " alt="" coords="716,166,796,140,798,145,718,171"/>
+</map>

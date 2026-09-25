@@ -1,0 +1,7 @@
+<map id="MayaFlux::IO::FFmpegCameraReader::close" name="MayaFlux::IO::FFmpegCameraReader::close">
+<area shape="rect" id="Node000001" title="Release device, decode, and scratch resources." alt="" coords="291,37,511,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1FFmpegCameraReader_a6be2fa08a87e7c8171d4ee61433f803b.html#a6be2fa08a87e7c8171d4ee61433f803b" title="Open a camera device using the supplied config." alt="" coords="14,5,234,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="277,46,234,41,235,35,277,40"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1FFmpegCameraReader_a87be3d5a9e28a5e084ecba65d6c5385d.html#a87be3d5a9e28a5e084ecba65d6c5385d" title=" " alt="" coords="5,69,243,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="278,74,243,78,243,73,277,69"/>
+</map>

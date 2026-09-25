@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::HampelFilter::accept" name="MayaFlux::Kinesis::HampelFilter::accept">
+<area shape="rect" id="Node000001" title="Test a candidate value and return the value to actually use." alt="" coords="5,5,163,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kinesis_1_1HampelFilter_aff41e8462ccee9821be279ebaff4c6b7.html#aff41e8462ccee9821be279ebaff4c6b7" title="Scalar reduction used for the MAD comparison." alt="" coords="211,5,415,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="163,23,197,23,197,28,163,28"/>
+</map>

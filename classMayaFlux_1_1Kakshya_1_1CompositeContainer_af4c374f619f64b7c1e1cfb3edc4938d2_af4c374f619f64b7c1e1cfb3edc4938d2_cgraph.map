@@ -1,0 +1,15 @@
+<map id="MayaFlux::Kakshya::CompositeContainer::set_region_data" name="MayaFlux::Kakshya::CompositeContainer::set_region_data">
+<area shape="rect" id="Node000001" title="Replace a Region with an equal number of compatible elements." alt="" coords="5,62,168,117"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_a35d329f829da02eb1e4a2993e19e721c.html#a35d329f829da02eb1e4a2993e19e721c" title="Finalized layout shared by all elements." alt="" coords="216,5,391,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="168,63,221,47,223,52,169,68"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_a27600792242257eee9b70539967aba2b.html#a27600792242257eee9b70539967aba2b" title="Number of packed elements." alt="" coords="223,69,383,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="168,87,209,87,209,92,168,92"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_ac4663132a467ebeca9c9c864c1606cc4.html#ac4663132a467ebeca9c9c864c1606cc4" title="Borrow consecutive elements without copying." alt="" coords="221,133,385,173"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="169,111,223,127,221,132,168,116"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1CompositeLayout_a04d7cccd3b3bb8e93f3909f55a970198.html#a04d7cccd3b3bb8e93f3909f55a970198" title="Bytes per packed element after finalization." alt="" coords="439,69,663,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="383,87,425,87,425,92,383,92"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_a92c33f8d97b049766838299ca27390d1.html#a92c33f8d97b049766838299ca27390d1" title="Validate and borrow the packed NDData stores and layout." alt="" coords="461,133,640,173"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="385,151,448,151,448,156,385,156"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Kakshya_aa5676e4aa06e2977ff02c27e12abfc58.html#aa5676e4aa06e2977ff02c27e12abfc58" title="Validate and borrow packed Composite&#45;compatible NDData." alt="" coords="711,133,873,173"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="640,151,697,151,697,156,640,156"/>
+</map>

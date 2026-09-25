@@ -1,0 +1,13 @@
+<map id="MayaFlux::Yantra::UniversalAnalyzer::get_current_analysis" name="MayaFlux::Yantra::UniversalAnalyzer::get_current_analysis">
+<area shape="rect" id="Node000001" title="Access cached analysis from last operation." alt="" coords="739,77,961,117"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1EnergyAnalyzer_afcd23924e79d7c4af37cb51d5ff12cd5.html#afcd23924e79d7c4af37cb51d5ff12cd5" title="Get last energy analysis result (type&#45;safe)" alt="" coords="469,5,691,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="760,76,655,48,657,43,762,71"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1StatisticalAnalyzer_a2fe36f95f3c358cbcb74d13d68d32893.html#a2fe36f95f3c358cbcb74d13d68d32893" title="Get last statistical analysis result (type&#45;safe)" alt="" coords="477,70,683,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="725,100,684,100,684,95,725,95"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1VisionAnalyzer_ab58fc7daa0cbcbbaae57c7ef81cd5556.html#ab58fc7daa0cbcbbaae57c7ef81cd5556" title="Get the last VisionAnalysis result." alt="" coords="473,149,687,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="762,124,657,152,655,147,760,118"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1VisionAnalyzer_aaa86f0af44bc37b8d1f2084323a30744.html#aaa86f0af44bc37b8d1f2084323a30744" title="Type&#45;safe vision analysis." alt="" coords="237,149,421,189"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="459,172,421,172,421,167,459,167"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1VisionAnalyzer_aba89348be2dd0eea648f7357f3b5e279.html#aba89348be2dd0eea648f7357f3b5e279" title=" " alt="" coords="5,149,189,189"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="223,172,190,172,190,167,223,167"/>
+</map>

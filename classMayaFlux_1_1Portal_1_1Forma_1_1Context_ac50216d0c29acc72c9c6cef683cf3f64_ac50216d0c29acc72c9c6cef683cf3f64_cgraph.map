@@ -1,0 +1,13 @@
+<map id="MayaFlux::Portal::Forma::Context::handle_close" name="MayaFlux::Portal::Forma::Context::handle_close">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,69,187,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1WindowEventSource_a69dcd486f2d42b80270f7701033a2bfe.html#a69dcd486f2d42b80270f7701033a2bfe" title="Run an action after the active outermost window&#45;event dispatch." alt="" coords="235,5,461,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="175,67,255,46,256,51,176,72"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_aeaa680440ab8606a4f40760f0960dd41.html#aeaa680440ab8606a4f40760f0960dd41" title=" " alt="" coords="253,69,443,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="187,87,239,87,239,92,187,92"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_a992390bf2d036977f743369b10f07b65.html#a992390bf2d036977f743369b10f07b65" title=" " alt="" coords="257,133,439,173"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="176,107,256,127,255,133,175,112"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_aa13e7ea257f9fd23e7c17542bd72bdd9.html#aa13e7ea257f9fd23e7c17542bd72bdd9" title=" " alt="" coords="509,69,704,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="444,87,495,87,495,92,444,92"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Vruta_1_1EventManager_af5dec990ab647fdd7a99ca272211b08e.html#af5dec990ab647fdd7a99ca272211b08e" title="Cancels and removes a event from the manager." alt="" coords="752,69,983,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="704,87,738,87,738,92,704,92"/>
+</map>

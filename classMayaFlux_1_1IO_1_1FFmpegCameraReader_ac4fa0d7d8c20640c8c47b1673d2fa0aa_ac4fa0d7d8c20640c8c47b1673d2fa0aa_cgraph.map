@@ -1,0 +1,5 @@
+<map id="MayaFlux::IO::FFmpegCameraReader::create_container" name="MayaFlux::IO::FFmpegCameraReader::create_container">
+<area shape="rect" id="Node000001" title="Create a CameraContainer sized to the negotiated device resolution." alt="" coords="5,5,225,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1IO_af4b933beeff795cd2065686468b70829.html#af4b933beeff795cd2065686468b70829" title="Map an AVPixelFormat to the Portal ImageFormat backing it." alt="" coords="273,5,451,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="225,23,260,23,260,28,225,28"/>
+</map>

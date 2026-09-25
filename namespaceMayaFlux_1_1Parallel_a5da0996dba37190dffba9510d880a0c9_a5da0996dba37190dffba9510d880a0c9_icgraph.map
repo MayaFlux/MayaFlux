@@ -1,0 +1,16 @@
+<map id="MayaFlux::Parallel::dispatch_main_sync" name="MayaFlux::Parallel::dispatch_main_sync">
+<area shape="rect" id="Node000001" title=" " alt="" coords="873,101,1036,141"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VKContext_a6382877e444e62689aefafc83802ddb4.html#a6382877e444e62689aefafc83802ddb4" title="Create surface from window&#39;s native handles." alt="" coords="605,21,805,61"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="877,100,767,64,769,59,879,95"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1WindowManager_aee2217ec1caa91ae8e6c976909661779.html#aee2217ec1caa91ae8e6c976909661779" title="Destroys a window by pointer." alt="" coords="584,101,825,141"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="860,124,825,124,825,119,860,119"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Core_1_1WindowManager_a40e562572ff2ba72f7e5eeadc21aaa9b.html#a40e562572ff2ba72f7e5eeadc21aaa9b" title="Process windows for one frame." alt="" coords="5,131,247,171"/>
+<area shape="poly" id="edge7_Node000001_Node000006" title=" " alt="" coords="868,147,826,156,678,182,561,197,444,199,294,188,207,173,208,168,295,183,444,194,561,191,677,177,825,151,867,142"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1BackendWindowHandler_a2179912b3470858a70a12e7a94691a1f.html#a2179912b3470858a70a12e7a94691a1f" title=" " alt="" coords="296,5,535,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="590,38,535,35,535,29,591,32"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1WindowManager_a9b4fbb193419543cd5aeeee7a4cc349a.html#a9b4fbb193419543cd5aeeee7a4cc349a" title="Destroys all windows that should close." alt="" coords="295,69,536,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="570,109,536,105,537,100,571,104"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Core_1_1WindowManager_ac9e4a63cbea960dda7f7da8ce8eeff6a.html#ac9e4a63cbea960dda7f7da8ce8eeff6a" title="Destroys a window by title." alt="" coords="295,133,536,173"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="571,139,537,143,536,137,570,134"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="307,115,221,133,220,128,306,110"/>
+</map>

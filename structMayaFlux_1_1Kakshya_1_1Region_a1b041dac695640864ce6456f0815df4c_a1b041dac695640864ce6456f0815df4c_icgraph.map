@@ -1,0 +1,11 @@
+<map id="MayaFlux::Kakshya::Region::time_span" name="MayaFlux::Kakshya::Region::time_span">
+<area shape="rect" id="Node000001" title="Create a Region representing a time span (e.g., a segment of frames)." alt="" coords="460,89,619,129"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a1c63bd4249d63fc2ba58568bedf63ebc.html#a1c63bd4249d63fc2ba58568bedf63ebc" title="Enable or disable looping behavior for the stream." alt="" coords="234,45,406,100"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="446,96,406,89,406,84,447,91"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1IO_1_1FileRegion_a3e60dc74e7f6385377e4b66bd154192f.html#a3e60dc74e7f6385377e4b66bd154192f" title="Convert this FileRegion to a Region for use in processing." alt="" coords="228,125,412,165"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="447,126,413,132,412,127,446,121"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_ab68f447003a3786f4d2add7eb52cd9c3.html#ab68f447003a3786f4d2add7eb52cd9c3" title="Disable circular buffer mode and return to linear operation." alt="" coords="5,5,180,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="220,58,180,51,181,45,221,53"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_a9cfe8b08aab3f3a06d83844e3d0ac864.html#a9cfe8b08aab3f3a06d83844e3d0ac864" title="Enable circular buffer mode with fixed capacity." alt="" coords="5,84,180,139"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="221,92,181,99,180,94,220,87"/>
+</map>

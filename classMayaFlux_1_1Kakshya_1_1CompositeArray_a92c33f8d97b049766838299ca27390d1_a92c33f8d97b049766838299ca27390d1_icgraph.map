@@ -1,0 +1,23 @@
+<map id="MayaFlux::Kakshya::CompositeArray::access" name="MayaFlux::Kakshya::CompositeArray::access">
+<area shape="rect" id="Node000001" title="Validate and borrow the packed NDData stores and layout." alt="" coords="711,177,889,217"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_a716c940b7dd6735db61ac62353a2f183.html#a716c940b7dd6735db61ac62353a2f183" title="Borrow an inclusive, one&#45;dimensional Region of elements." alt="" coords="499,145,663,185"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="697,184,662,179,663,174,697,179"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_ac4663132a467ebeca9c9c864c1606cc4.html#ac4663132a467ebeca9c9c864c1606cc4" title="Borrow consecutive elements without copying." alt="" coords="499,209,663,249"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="697,214,663,219,662,214,697,209"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1CompositeContainer_a8e6ff049798c791fdda8ce5922cead15.html#a8e6ff049798c791fdda8ce5922cead15" title="Copy a one&#45;dimensional Region into an owning CompositeArray." alt="" coords="256,44,419,99"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="503,203,497,199,480,176,472,154,465,133,449,112,418,93,420,89,452,108,470,130,477,152,484,174,501,195,506,199"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1CompositeContainer_a23d4c0d0b5dda99ad5b5629b58fcbae1.html#a23d4c0d0b5dda99ad5b5629b58fcbae1" title="Valid element regions are already resident in the array." alt="" coords="256,123,419,177"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="504,207,418,179,420,174,506,202"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Kakshya_1_1CompositeContainer_af4c374f619f64b7c1e1cfb3edc4938d2.html#af4c374f619f64b7c1e1cfb3edc4938d2" title="Replace a Region with an equal number of compatible elements." alt="" coords="256,201,419,256"/>
+<area shape="poly" id="edge7_Node000003_Node000008" title=" " alt="" coords="485,231,419,231,419,226,485,226"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_af179779c8b4123355fd50fdbe5b2a9bc.html#af179779c8b4123355fd50fdbe5b2a9bc" title="Write UTF&#45;8 bytes to a std::string field." alt="" coords="244,281,431,321"/>
+<area shape="poly" id="edge8_Node000003_Node000009" title=" " alt="" coords="504,255,451,271,411,283,409,278,450,266,502,250"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1IO_1_1CompositeWriter_a3ab2d2f1fa46334134439d94aa9eb9d8.html#a3ab2d2f1fa46334134439d94aa9eb9d8" title="Write a complete array in one call." alt="" coords="224,345,451,385"/>
+<area shape="poly" id="edge10_Node000003_Node000011" title=" " alt="" coords="552,260,507,299,452,335,424,347,422,342,449,330,504,295,548,256"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1CompositeContainer_a254798419c997b7802b7f8c624a007fe.html#a254798419c997b7802b7f8c624a007fe" title="Copy the valid regions of a group into separate arrays." alt="" coords="5,5,176,60"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="242,59,176,49,176,43,243,54"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1CompositeContainer_af96618fafa0184ba579e61d359bb91dd.html#af96618fafa0184ba579e61d359bb91dd" title="Copy valid one&#45;dimensional segments into separate arrays." alt="" coords="9,84,172,139"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="243,89,173,101,172,96,242,84"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Kakshya_1_1CompositeInsertion_a70237433e67948a735b93ee3eaebd6ff.html#a70237433e67948a735b93ee3eaebd6ff" title="Copy one Composite with a matching layout into this array." alt="" coords="11,273,170,328"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="230,303,170,303,170,298,230,298"/>
+</map>

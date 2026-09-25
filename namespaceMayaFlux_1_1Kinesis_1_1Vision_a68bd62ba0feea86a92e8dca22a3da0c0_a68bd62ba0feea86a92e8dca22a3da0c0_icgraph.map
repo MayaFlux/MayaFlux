@@ -1,0 +1,27 @@
+<map id="MayaFlux::Kinesis::Vision::sobel" name="MayaFlux::Kinesis::Vision::sobel">
+<area shape="rect" id="Node000001" title="Sobel gradient writing dx and dy into caller&#45;supplied buffers." alt="" coords="767,152,916,192"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a1a9454235bea896a97476f0fac3a93f0.html#a1a9454235bea896a97476f0fac3a93f0" title="Canny edge detector." alt="" coords="557,5,707,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="809,144,767,104,717,66,683,48,686,43,720,62,771,100,813,140"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kinesis_1_1Vision_1_1VisionExecutor_a6ea94c5c8d90c5890b7715a0e4ff2df5.html#a6ea94c5c8d90c5890b7715a0e4ff2df5" title="Execute a VisionSequence on one frame." alt="" coords="303,127,497,167"/>
+<area shape="poly" id="edge10_Node000001_Node000004" title=" " alt="" coords="799,147,760,126,718,111,650,102,581,105,517,115,462,129,461,124,516,110,581,100,650,96,719,105,763,121,801,142"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a3d75c4db76d3177fc27d05cfeb97806a.html#a3d75c4db76d3177fc27d05cfeb97806a" title="Compute the Harris corner response map into caller&#45;supplied buffers." alt="" coords="545,120,719,160"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="753,161,718,156,719,151,754,156"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a34f8f0aa7bc1c3f64bc41832cca0b4b9.html#a34f8f0aa7bc1c3f64bc41832cca0b4b9" title="Compute the Harris corner response map." alt="" coords="545,184,719,224"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="754,188,719,193,718,188,753,183"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a6cbf48aad865ab1d2553cadfe2fe43e8.html#a6cbf48aad865ab1d2553cadfe2fe43e8" title="Sobel gradient operator." alt="" coords="557,248,707,288"/>
+<area shape="poly" id="edge11_Node000001_Node000010" title=" " alt="" coords="794,201,720,238,691,250,689,245,718,234,792,196"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_aa6176a6ce2a5ab346931cfe9b5bfe0fb.html#aa6176a6ce2a5ab346931cfe9b5bfe0fb" title="Track keypoints from prev_gray to curr_gray via Lucas&#45;Kanade." alt="" coords="545,336,719,376"/>
+<area shape="poly" id="edge12_Node000001_Node000011" title=" " alt="" coords="817,204,773,252,720,302,669,338,666,334,717,298,770,248,813,201"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a8096bb8535ca667027d61673d4b50bdb.html#a8096bb8535ca667027d61673d4b50bdb" title="Canny edge detector writing into a caller&#45;supplied buffer." alt="" coords="325,5,475,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="543,28,475,28,475,23,543,23"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="573,53,547,66,436,129,433,124,544,62,571,49"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1VisionAnalyzer_a6894626eb161191d2811f594d04914bd.html#a6894626eb161191d2811f594d04914bd" title="Pure virtual analysis implementation &#45; derived classes implement this." alt="" coords="5,63,255,103"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="301,126,214,105,216,100,302,121"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1VisionProcessor_ab9b6b50546df64540aee0f0bbbb7939a.html#ab9b6b50546df64540aee0f0bbbb7939a" title="Execute the VisionSequence on processed_data[0]." alt="" coords="39,127,221,167"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="289,149,222,149,222,144,289,144"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1ImageCVProcessor_a03dd11926b797b52ccbdfa37c2b5e4e1.html#a03dd11926b797b52ccbdfa37c2b5e4e1" title="Download the current GPU image, run the VisionSequence, store the result." alt="" coords="19,191,241,246"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="312,173,234,194,232,189,310,168"/>
+<area shape="poly" id="edge9_Node000009_Node000004" title=" " alt="" coords="537,183,481,169,482,164,538,178"/>
+<area shape="poly" id="edge13_Node000011_Node000004" title=" " alt="" coords="583,331,544,302,470,231,416,169,420,165,474,227,547,298,586,327"/>
+<area shape="poly" id="edge14_Node000011_Node000011" title=" " alt="" coords="667,324,655,317,632,315,612,317,600,321,596,327,598,335,593,336,591,326,597,317,611,311,632,309,656,312,670,320"/>
+</map>

@@ -1,0 +1,33 @@
+<map id="SamplerForge.hpp" name="SamplerForge.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="235,5,375,31"/>
+<area shape="rect" id="Node000002" href="$Graphics_8cpp.html" title=" " alt="" coords="5,79,112,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="253,37,99,81,98,76,252,32"/>
+<area shape="rect" id="Node000003" href="$SamplerForge_8cpp.html" title=" " alt="" coords="136,79,275,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="280,41,223,81,220,76,277,36"/>
+<area shape="rect" id="Node000004" href="$TextureExecutionContext_8hpp.html" title=" " alt="" coords="299,79,511,104"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="334,36,391,76,387,81,331,41"/>
+<area shape="rect" id="Node000011" href="$UVFieldProcessor_8hpp.html" title=" " alt="" coords="611,79,773,104"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="381,31,630,76,629,81,381,36"/>
+<area shape="rect" id="Node000005" href="$VisionExtractor_8hpp.html" title=" " alt="" coords="146,152,294,177"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="364,111,251,154,249,149,362,106"/>
+<area shape="rect" id="Node000006" href="$VisionGpuDispatch_8hpp.html" title="GPU execution layer for Kinesis::Vision::VisionSequence." alt="" coords="319,152,492,177"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="408,118,408,152,403,152,403,118"/>
+<area shape="rect" id="Node000007" href="$ImageCVProcessor_8hpp.html" title=" " alt="" coords="49,225,220,251"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="350,183,179,228,178,223,348,178"/>
+<area shape="rect" id="Node000008" href="$VisionGpuDispatch_8cpp.html" title=" " alt="" coords="245,225,417,251"/>
+<area shape="poly" id="edge7_Node000006_Node000008" title=" " alt="" coords="385,189,345,227,341,223,382,185"/>
+<area shape="rect" id="Node000009" href="$VisionProcessor_8hpp.html" title=" " alt="" coords="441,225,593,251"/>
+<area shape="poly" id="edge8_Node000006_Node000009" title=" " alt="" coords="437,183,500,223,498,227,434,187"/>
+<area shape="rect" id="Node000010" href="$VisionProcessor_8cpp.html" title=" " alt="" coords="442,299,593,324"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="520,264,520,299,515,299,515,264"/>
+<area shape="rect" id="Node000012" href="$NetworkTextureBuffer_8hpp.html" title=" " alt="" coords="597,152,787,177"/>
+<area shape="poly" id="edge11_Node000011_Node000012" title=" " alt="" coords="695,118,695,152,689,152,689,118"/>
+<area shape="rect" id="Node000016" href="$UVFieldProcessor_8cpp.html" title=" " alt="" coords="811,152,973,177"/>
+<area shape="poly" id="edge15_Node000011_Node000016" title=" " alt="" coords="738,106,860,149,858,154,736,111"/>
+<area shape="rect" id="Node000013" href="$CreatorClasses_8hpp.html" title=" " alt="" coords="618,225,766,251"/>
+<area shape="poly" id="edge12_Node000012_Node000013" title=" " alt="" coords="695,191,695,225,689,225,689,191"/>
+<area shape="rect" id="Node000015" href="$NetworkTextureBuffer_8cpp.html" title=" " alt="" coords="790,225,981,251"/>
+<area shape="poly" id="edge14_Node000012_Node000015" title=" " alt="" coords="737,179,855,223,853,228,735,184"/>
+<area shape="rect" id="Node000014" href="$Creator_8cpp.html" title=" " alt="" coords="644,299,740,324"/>
+<area shape="poly" id="edge13_Node000013_Node000014" title=" " alt="" coords="695,264,695,299,689,299,689,264"/>
+</map>

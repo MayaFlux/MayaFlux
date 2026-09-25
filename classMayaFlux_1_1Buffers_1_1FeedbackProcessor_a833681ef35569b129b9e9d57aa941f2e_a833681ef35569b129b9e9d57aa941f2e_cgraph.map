@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::FeedbackProcessor::processing_function" name="MayaFlux::Buffers::FeedbackProcessor::processing_function">
+<area shape="rect" id="Node000001" title="The core processing function that must be implemented by derived classes." alt="" coords="5,5,231,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Memory_1_1HistoryBuffer_a6f256636f3f3fc99269c77a8dc096b09.html#a6f256636f3f3fc99269c77a8dc096b09" title="Push new value to front of history." alt="" coords="279,13,481,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="231,30,265,30,265,35,231,35"/>
+</map>

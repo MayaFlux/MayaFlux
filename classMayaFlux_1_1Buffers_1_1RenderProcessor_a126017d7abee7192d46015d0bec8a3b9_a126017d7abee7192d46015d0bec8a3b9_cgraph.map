@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::RenderProcessor::on_detach" name="MayaFlux::Buffers::RenderProcessor::on_detach">
+<area shape="rect" id="Node000001" title="Remove a buffer from this processor and its target window." alt="" coords="5,5,160,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a6ae738723c1a085c31d77d51d40c37b9.html#a6ae738723c1a085c31d77d51d40c37b9" title="Called when this processor is detached from a buffer." alt="" coords="208,5,363,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="160,30,194,30,194,35,160,35"/>
+</map>

@@ -1,0 +1,13 @@
+<map id="MayaFlux::Kakshya::RegionOrganizationProcessor::process_organized_regions" name="MayaFlux::Kakshya::RegionOrganizationProcessor::process_organized_regions">
+<area shape="rect" id="Node000001" title="Process regions according to their selection pattern." alt="" coords="5,113,219,168"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1RegionOrganizationProcessor_a4ef39aa467134325fbcfefa5c4810f28.html#a4ef39aa467134325fbcfefa5c4810f28" title="Apply a transition between two regions." alt="" coords="267,5,480,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="172,111,266,70,285,63,287,67,268,75,174,116"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kakshya_a4f4d80add8013fb73fabc262edc2e76c.html#a4f4d80add8013fb73fabc262edc2e76c" title=" " alt="" coords="291,85,456,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="219,123,277,115,277,121,219,129"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1RegionOrganizationProcessor_af6a1c2965bd840ff51bafe759e8e4cb5.html#af6a1c2965bd840ff51bafe759e8e4cb5" title="Process a single region segment." alt="" coords="267,149,480,204"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="219,153,253,157,253,163,219,158"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1RegionOrganizationProcessor_ac1aefba0e5745f0a4998f2d80d8209b3.html#ac1aefba0e5745f0a4998f2d80d8209b3" title="Select the next segment to process according to the region&#39;s pattern." alt="" coords="267,228,480,283"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="168,166,268,213,286,220,284,225,266,218,166,171"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kakshya_aa54974c0e7035a5e1d91aa1c3c29d49c.html#aa54974c0e7035a5e1d91aa1c3c29d49c" title="Safely copy data from a DataVariant to another DataVariant, handling type conversion." alt="" coords="528,157,705,197"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="480,174,514,174,514,179,480,179"/>
+</map>

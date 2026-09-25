@@ -1,0 +1,39 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="Node000000" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NetworkOperator.html" title="Domain&#45;agnostic interpretive lens for network processing." alt="" coords="5,325,204,365"/>
+<area shape="rect" id="Node000001" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GpuFieldOperator.html" title="Chain operator that declares Tendency field deformation as a compute shader rather than evaluating it..." alt="" coords="252,133,451,173"/>
+<area shape="poly" id="edge157_Node000000_Node000001" title=" " alt="" coords="125,312,177,247,212,213,251,183,274,171,276,176,253,188,215,217,181,251,129,315"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GraphicsOperator.html" title="Operator that produces GPU&#45;renderable geometry." alt="" coords="252,197,451,237"/>
+<area shape="poly" id="edge158_Node000000_Node000002" title=" " alt="" coords="155,317,311,235,313,240,157,321"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1Network_1_1InstanceOperator.html" title="Abstract base for operators that process InstanceNetwork slots." alt="" coords="252,325,451,365"/>
+<area shape="poly" id="edge164_Node000000_Node000008" title=" " alt="" coords="218,343,252,343,252,348,218,348"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Nodes_1_1Network_1_1MeshOperator.html" title="Abstract base for operators that process MeshNetwork slots." alt="" coords="252,389,451,429"/>
+<area shape="poly" id="edge166_Node000000_Node000010" title=" " alt="" coords="196,366,274,387,273,392,195,371"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Nodes_1_1Network_1_1RelationOperator.html" title="Operator that acts on a network&#39;s slots over one block at a time." alt="" coords="252,613,451,653"/>
+<area shape="poly" id="edge169_Node000000_Node000013" title=" " alt="" coords="134,374,335,611,331,615,130,377"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1AssemblyOperator.html" title="Holds an unordered set of independent geometry items, rendered as one milled draw." alt="" coords="499,5,697,45"/>
+<area shape="poly" id="edge159_Node000002_Node000003" title=" " alt="" coords="444,187,449,183,461,168,468,153,472,121,476,88,484,72,497,55,513,43,516,48,501,59,488,75,481,90,477,122,473,154,466,171,453,187,448,191"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Network_1_1FieldOperator.html" title="Pure field&#45;driven vertex manipulation via Tendency evaluation." alt="" coords="499,69,697,109"/>
+<area shape="poly" id="edge160_Node000002_Node000004" title=" " alt="" coords="440,189,449,183,464,168,472,152,481,136,497,119,518,107,521,112,500,123,485,139,477,155,468,171,452,187,443,193"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PathOperator.html" title=" " alt="" coords="499,133,697,173"/>
+<area shape="poly" id="edge161_Node000002_Node000005" title=" " alt="" coords="442,191,520,171,521,176,443,196"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PhysicsOperator.html" title="N&#45;body physics simulation with point rendering." alt="" coords="499,197,697,237"/>
+<area shape="poly" id="edge162_Node000002_Node000006" title=" " alt="" coords="465,215,498,215,498,220,465,220"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1Network_1_1TopologyOperator.html" title=" " alt="" coords="499,261,697,301"/>
+<area shape="poly" id="edge163_Node000002_Node000007" title=" " alt="" coords="443,238,521,259,520,264,442,243"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nodes_1_1Network_1_1InstanceFieldOperator.html" title="Drives GeometrySlot transforms from stateless Kinesis fields." alt="" coords="499,325,697,365"/>
+<area shape="poly" id="edge165_Node000008_Node000009" title=" " alt="" coords="465,343,498,343,498,348,465,348"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Nodes_1_1Network_1_1MeshFieldOperator.html" title="Chain operator that applies Tendency field deformation to the vertex data of individual MeshNetwork s..." alt="" coords="499,389,697,429"/>
+<area shape="poly" id="edge167_Node000010_Node000011" title=" " alt="" coords="465,407,498,407,498,412,465,412"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Nodes_1_1Network_1_1MeshTransformOperator.html" title="Primary operator that drives slot local transforms via Tendency fields and propagates world transform..." alt="" coords="499,453,697,493"/>
+<area shape="poly" id="edge168_Node000010_Node000012" title=" " alt="" coords="443,430,521,451,520,456,442,435"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Nodes_1_1Network_1_1AdvanceOperator.html" title="Produces every slot&#39;s signal for the block." alt="" coords="499,517,697,557"/>
+<area shape="poly" id="edge170_Node000013_Node000014" title=" " alt="" coords="407,605,498,567,531,555,533,560,500,572,409,610"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Nodes_1_1Network_1_1CombineOperator.html" title="Turns slot blocks into published outputs." alt="" coords="499,581,697,621"/>
+<area shape="poly" id="edge171_Node000013_Node000015" title=" " alt="" coords="464,616,498,612,499,617,464,621"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Nodes_1_1Network_1_1DeriveOperator.html" title="Defines one slot&#39;s block as a function of other slots&#39; blocks." alt="" coords="499,645,697,685"/>
+<area shape="poly" id="edge172_Node000013_Node000016" title=" " alt="" coords="464,645,499,650,498,655,464,651"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1Nodes_1_1Network_1_1StepOperator.html" title="General operator whose body is a callable, run once per block." alt="" coords="499,709,697,749"/>
+<area shape="poly" id="edge173_Node000013_Node000017" title=" " alt="" coords="409,657,500,695,533,707,531,712,498,700,407,662"/>
+<area shape="rect" id="Node000018" href="$classMayaFlux_1_1Nodes_1_1Network_1_1WalkOperator.html" title="Moves a single active slot along the rows of a weight table." alt="" coords="499,773,697,813"/>
+<area shape="poly" id="edge174_Node000013_Node000018" title=" " alt="" coords="382,661,434,711,466,737,500,759,525,771,523,776,497,764,463,741,430,715,378,665"/>
+</map>

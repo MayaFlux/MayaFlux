@@ -1,0 +1,11 @@
+<map id="MayaFlux::Nodes::Network::FieldOperator::store_reference" name="MayaFlux::Nodes::Network::FieldOperator::store_reference">
+<area shape="rect" id="Node000001" title=" " alt="" coords="252,94,451,149"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1FieldOperator_a1f13aecf8a83a8926c1d7bca35a2e246.html#a1f13aecf8a83a8926c1d7bca35a2e246" title="Initialize from LineVertex data." alt="" coords="5,5,204,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="277,91,203,60,170,48,172,43,205,55,279,86"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1FieldOperator_af1af7f76b5de450f511a322638784be3.html#af1af7f76b5de450f511a322638784be3" title="Initialize from MeshVertex data." alt="" coords="5,69,204,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="238,109,204,105,205,100,239,104"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Network_1_1FieldOperator_adbe9395500315b33191fde59e34288fd.html#adbe9395500315b33191fde59e34288fd" title="Initialize from PointVertex data." alt="" coords="5,133,204,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="239,139,205,143,204,138,238,133"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Network_1_1FieldOperator_a37c560c008b5eb6cf3e143c664efca00.html#a37c560c008b5eb6cf3e143c664efca00" title="Seed vertex data from the upstream operator&#39;s current output." alt="" coords="5,198,204,253"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="277,157,205,188,175,200,173,195,203,183,275,152"/>
+</map>

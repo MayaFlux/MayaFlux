@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kinesis::detail::ramp" name="MayaFlux::Kinesis::detail::ramp">
+<area shape="rect" id="Node000001" title="Hermite ramp from 0 at edge0 to 1 at edge1." alt="" coords="203,37,352,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a487679e8e99a333a45a80cea545f1112.html#a487679e8e99a333a45a80cea545f1112" title="Graded membership of a point in a box extent." alt="" coords="5,5,155,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="189,46,155,40,155,35,190,40"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_a5bae2e57f19b01225c3eed74acef7268.html#a5bae2e57f19b01225c3eed74acef7268" title="Graded membership of a point in an ellipsoid extent." alt="" coords="5,69,155,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="190,74,155,80,155,75,189,69"/>
+</map>

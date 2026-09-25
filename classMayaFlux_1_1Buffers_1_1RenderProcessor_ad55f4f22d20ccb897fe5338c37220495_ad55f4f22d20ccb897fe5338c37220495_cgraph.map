@@ -1,0 +1,12 @@
+<map id="MayaFlux::Buffers::RenderProcessor::set_alpha_blending" name="MayaFlux::Buffers::RenderProcessor::set_alpha_blending">
+<area shape="rect" id="Node000001" title="Toggle standard alpha blending." alt="" coords="5,45,164,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a17639c739fc2085375eef2b95d637bb2.html#a17639c739fc2085375eef2b95d637bb2" title="Disable blending on the color attachment, restoring opaque writes." alt="" coords="212,5,399,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="164,56,198,49,199,55,165,61"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a53201a69676fbc7e095aa77e7d64f200.html#a53201a69676fbc7e095aa77e7d64f200" title="Enable standard alpha blending (src_alpha, one_minus_src_alpha)." alt="" coords="214,84,397,139"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="165,84,201,90,200,96,164,89"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a136e2f3b1509673fac3f61277056d0a1.html#a136e2f3b1509673fac3f61277056d0a1" title="Set blend mode for color attachment." alt="" coords="466,5,625,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="399,30,452,30,452,35,399,35"/>
+<area shape="poly" id="edge5_Node000004_Node000003" title=" " alt="" coords="389,81,452,60,454,65,391,86"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Portal_1_1Graphics_1_1BlendAttachmentConfig_af93edf92edfeae2c1d5a5ace90e86053.html#af93edf92edfeae2c1d5a5ace90e86053" title="Create standard alpha blending configuration." alt="" coords="447,84,644,139"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="397,109,433,109,433,114,397,114"/>
+</map>

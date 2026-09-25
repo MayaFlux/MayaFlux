@@ -1,0 +1,5 @@
+<map id="MayaFlux::IO::IOManager::load_composite" name="MayaFlux::IO::IOManager::load_composite">
+<area shape="rect" id="Node000001" title="Load a complete Composite file into an owning container." alt="" coords="5,5,192,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1IOManager_a81ee2ebc3ade643cc685d607c9df33db.html#a81ee2ebc3ade643cc685d607c9df33db" title="Open a schema&#45;bearing reader selected by file format." alt="" coords="240,5,427,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="192,23,226,23,226,28,192,28"/>
+</map>

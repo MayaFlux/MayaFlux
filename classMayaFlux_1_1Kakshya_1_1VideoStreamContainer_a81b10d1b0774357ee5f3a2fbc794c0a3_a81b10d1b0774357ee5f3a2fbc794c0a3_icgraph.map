@@ -1,0 +1,13 @@
+<map id="MayaFlux::Kakshya::VideoStreamContainer::has_data" name="MayaFlux::Kakshya::VideoStreamContainer::has_data">
+<area shape="rect" id="Node000001" title="Check if the container currently holds any data." alt="" coords="724,84,893,139"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_a31e3538cf16d50c5502c03d36e5a5697.html#a31e3538cf16d50c5502c03d36e5a5697" title="Check if the stream is ready for reading." alt="" coords="486,5,655,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="711,82,653,63,655,58,713,77"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_ae11a6aebfd95ab9dafcb84ac2d2fa7ab.html#ae11a6aebfd95ab9dafcb84ac2d2fa7ab" title="Check if the container is ready for processing." alt="" coords="477,84,664,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="710,114,664,114,664,109,710,109"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_acc9379a359299f4bb6632afa6f6aeabe.html#acc9379a359299f4bb6632afa6f6aeabe" title="Mark the container as ready or not ready for processing." alt="" coords="465,163,676,217"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="713,146,655,165,653,160,711,141"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_ad119ceeea666b00728bcb4d087d54f19.html#ad119ceeea666b00728bcb4d087d54f19" title="Process the container&#39;s data using the default processor." alt="" coords="248,84,417,139"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="464,114,418,114,418,109,464,109"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1CameraContainer_a55cca5bc67bab9ac239a43d15646419e.html#a55cca5bc67bab9ac239a43d15646419e" title="Override to fire request_frame after each processor cycle." alt="" coords="5,84,200,139"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="234,114,200,114,200,109,234,109"/>
+</map>

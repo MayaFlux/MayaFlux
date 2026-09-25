@@ -1,0 +1,11 @@
+<map id="JournalEntry.hpp" name="JournalEntry.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="245,5,372,31"/>
+<area shape="rect" id="Node000002" href="$EnumReflect_8hpp.html" title=" " alt="" coords="5,79,191,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="279,33,162,76,160,71,277,28"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="215,86,282,111"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="302,32,268,76,264,73,298,29"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="307,86,431,111"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="320,29,353,73,349,76,315,32"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="455,86,552,111"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="338,28,463,78,461,83,336,33"/>
+</map>

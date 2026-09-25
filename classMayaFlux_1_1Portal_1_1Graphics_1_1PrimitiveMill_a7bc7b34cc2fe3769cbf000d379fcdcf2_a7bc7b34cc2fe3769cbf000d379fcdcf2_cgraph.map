@@ -1,0 +1,13 @@
+<map id="MayaFlux::Portal::Graphics::PrimitiveMill::ensure_buffers" name="MayaFlux::Portal::Graphics::PrimitiveMill::ensure_buffers">
+<area shape="rect" id="Node000001" title="Grows the destination ring, run and prefix buffers to fit." alt="" coords="5,106,203,161"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a06d5e0088b84aa0558459af3ef85b534.html#a06d5e0088b84aa0558459af3ef85b534" title="Get Vulkan graphics queue." alt="" coords="251,5,515,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="150,103,197,78,250,55,274,47,276,52,252,60,200,83,152,108"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="299,70,466,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="203,118,286,107,286,112,203,123"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a715d57394465ff2924727d7c82d87e7b.html#a715d57394465ff2924727d7c82d87e7b" title="Get the global shader compiler instance." alt="" coords="284,149,481,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="203,143,270,152,270,157,203,149"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="282,213,483,253"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="158,158,252,199,277,207,276,212,250,204,156,163"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="563,149,760,189"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="482,167,549,167,549,172,482,172"/>
+</map>

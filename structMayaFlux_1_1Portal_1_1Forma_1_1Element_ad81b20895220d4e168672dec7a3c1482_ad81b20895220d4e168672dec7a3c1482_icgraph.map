@@ -1,0 +1,27 @@
+<map id="MayaFlux::Portal::Forma::Element::with_name" name="MayaFlux::Portal::Forma::Element::with_name">
+<area shape="rect" id="Node000001" title="Set the human&#45;readable name used in Lila introspection and debug output." alt="" coords="693,124,875,164"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Portal_1_1Forma_1_1TextField_a20b101aef26d8710a14abb0b3c705f4c.html#a20b101aef26d8710a14abb0b3c705f4c" title="Register the text field element and wire text editing onto it." alt="" coords="464,28,645,68"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="729,120,644,82,613,71,615,66,646,78,731,116"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Scrollable_a35235f112f4f9f9eead110668fca88f7.html#a35235f112f4f9f9eead110668fca88f7" title="Register the viewport element, wire wheel scrolling, and populate scroll, offset, buf,..." alt="" coords="464,92,645,132"/>
+<area shape="poly" id="edge6_Node000001_Node000005" title=" " alt="" coords="679,132,645,127,646,122,680,127"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Plot_ac76725b0c967171fcbaa2ccb619fb6d7.html#ac76725b0c967171fcbaa2ccb619fb6d7" title="Place a text label element onto surface using a pre&#45;built buffer." alt="" coords="464,156,645,196"/>
+<area shape="poly" id="edge10_Node000001_Node000007" title=" " alt="" coords="680,161,646,166,645,161,679,156"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Plot_aef7e0518151068c038cbcddd1916052d.html#aef7e0518151068c038cbcddd1916052d" title="Place a filled rectangle element onto surface using a pre&#45;built buffer." alt="" coords="464,244,645,284"/>
+<area shape="poly" id="edge13_Node000001_Node000010" title=" " alt="" coords="734,173,595,246,593,241,732,168"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a4d8d6a3f54c57284141331e37153b682.html#a4d8d6a3f54c57284141331e37153b682" title="Build a text&#45;capable FormaBuffer, register a TextField, and wire text editing onto it in one call." alt="" coords="5,29,187,69"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="464,28,416,20,325,13,235,20,170,32,169,27,234,15,325,8,416,15,465,23"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Portal_1_1Forma_1_1TextField_ab37d173483ea4e704f5c55865e384d72.html#ab37d173483ea4e704f5c55865e384d72" title="Fluent creator: place this field inside an already&#45;placed Scrollable, growing itself taller than its ..." alt="" coords="235,29,416,69"/>
+<area shape="poly" id="edge4_Node000002_Node000004" title=" " alt="" coords="450,51,416,51,416,46,450,46"/>
+<area shape="poly" id="edge3_Node000003_Node000003" title=" " alt="" coords="135,18,121,11,96,8,74,10,61,15,56,21,58,28,53,30,51,20,57,10,73,5,96,3,123,6,137,13"/>
+<area shape="poly" id="edge5_Node000004_Node000003" title=" " alt="" coords="221,52,187,52,187,47,221,47"/>
+<area shape="poly" id="edge7_Node000005_Node000003" title=" " alt="" coords="450,108,346,99,234,84,175,72,176,67,235,79,346,93,451,103"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Portal_1_1Forma_aef42f7d8c0db50373605643eb762a89a.html#aef42f7d8c0db50373605643eb762a89a" title="Construct a scrollable viewport." alt="" coords="235,168,416,208"/>
+<area shape="poly" id="edge8_Node000005_Node000006" title=" " alt="" coords="481,139,388,170,386,165,480,134"/>
+<area shape="poly" id="edge9_Node000006_Node000006" title=" " alt="" coords="364,156,351,149,325,147,303,149,290,153,285,159,288,167,282,168,280,158,287,149,302,143,325,141,352,144,367,151"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Portal_1_1Forma_1_1internal_1_1Atelier_a88e3c1e6a8d3d5b535378537eb934326.html#a88e3c1e6a8d3d5b535378537eb934326" title="Create and place every adornment declared on spec." alt="" coords="235,234,416,289"/>
+<area shape="poly" id="edge11_Node000007_Node000008" title=" " alt="" coords="485,203,465,210,397,236,395,231,463,206,483,198"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a0134941e72f794b2ad2318f03eacb98b.html#a0134941e72f794b2ad2318f03eacb98b" title="Create a live plot in a new window." alt="" coords="5,241,187,281"/>
+<area shape="poly" id="edge12_Node000008_Node000009" title=" " alt="" coords="221,264,187,264,187,259,221,259"/>
+<area shape="poly" id="edge14_Node000010_Node000008" title=" " alt="" coords="450,265,416,265,416,260,450,260"/>
+<area shape="poly" id="edge15_Node000010_Node000010" title=" " alt="" coords="594,232,580,225,555,223,533,225,519,229,514,235,517,243,512,244,509,234,516,225,531,219,555,217,581,220,596,227"/>
+</map>

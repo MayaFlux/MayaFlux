@@ -1,0 +1,21 @@
+<map id="MayaFlux::Kakshya::CompositeLayout::find_field" name="MayaFlux::Kakshya::CompositeLayout::find_field">
+<area shape="rect" id="Node000001" title="Find a field index by name, or std::nullopt if absent." alt="" coords="789,117,992,157"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1CompositeLayout_a56e595176a1ff196924ca047ca2e85f1.html#a56e595176a1ff196924ca047ca2e85f1" title=" " alt="" coords="544,5,712,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="831,113,740,75,708,63,709,58,742,70,833,109"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_a5179bbed83a1cfd37144e1fb8c355ec2.html#a5179bbed83a1cfd37144e1fb8c355ec2" title="Mark a field absent without removing its stored bytes." alt="" coords="545,85,711,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="776,125,711,117,712,112,776,120"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1Composite_a16d07a50dd894cc938a3606fc7294596.html#a16d07a50dd894cc938a3606fc7294596" title="Read a present std::string field as borrowed UTF&#45;8 bytes." alt="" coords="549,149,707,189"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="776,153,708,162,707,156,775,148"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_ac900d8eee86d5774bad27259d0f39efa.html#ac900d8eee86d5774bad27259d0f39efa" title=" " alt="" coords="515,214,741,254"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="835,165,742,203,702,216,701,211,740,198,833,160"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1DelimitedTextReader_a9401002a63c2f90b2c0a04e58bb94bd3.html#a9401002a63c2f90b2c0a04e58bb94bd3" title="Seek to a zero&#45;based data record by replaying from the first." alt="" coords="260,85,467,125"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="531,107,467,107,467,102,531,102"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1IO_1_1DelimitedTextWriter_a9ef28ab3f3fce06513b8ef22a08db8c8.html#a9ef28ab3f3fce06513b8ef22a08db8c8" title=" " alt="" coords="260,149,467,189"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="535,171,467,171,467,166,535,166"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1IO_1_1DelimitedTextWriter_a828aa791115c552bb7534d73d680ac61.html#a828aa791115c552bb7534d73d680ac61" title="Encode a bounded slice using the open file&#39;s layout." alt="" coords="5,147,212,187"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="247,171,212,171,212,165,247,165"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_af179779c8b4123355fd50fdbe5b2a9bc.html#af179779c8b4123355fd50fdbe5b2a9bc" title="Write UTF&#45;8 bytes to a std::string field." alt="" coords="270,215,457,255"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="501,237,457,238,457,232,501,232"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Kakshya_1_1CompositeInsertion_a70237433e67948a735b93ee3eaebd6ff.html#a70237433e67948a735b93ee3eaebd6ff" title="Copy one Composite with a matching layout into this array." alt="" coords="29,212,188,267"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="257,240,188,241,188,235,257,234"/>
+</map>

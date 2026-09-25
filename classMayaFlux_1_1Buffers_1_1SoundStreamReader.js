@@ -1,0 +1,28 @@
+var classMayaFlux_1_1Buffers_1_1SoundStreamReader =
+[
+    [ "SoundStreamReader", "classMayaFlux_1_1Buffers_1_1SoundStreamReader_afecfefb4fcfba9cc4ca5ada0bca2175e.html#afecfefb4fcfba9cc4ca5ada0bca2175e", null ],
+    [ "analyze_container_dimensions", "classMayaFlux_1_1Buffers_1_1SoundStreamReader_afb14ab367d042a432f87df7f1be453ff.html#afb14ab367d042a432f87df7f1be453ff", null ],
+    [ "extract_channel_data", "classMayaFlux_1_1Buffers_1_1SoundStreamReader_a561ff0506f9cf67a9a28221bc426e707.html#a561ff0506f9cf67a9a28221bc426e707", null ],
+    [ "get_auto_advance", "classMayaFlux_1_1Buffers_1_1SoundStreamReader_a8a127ec344705bb96d6f56192dc0e6a3.html#a8a127ec344705bb96d6f56192dc0e6a3", null ],
+    [ "get_container", "classMayaFlux_1_1Buffers_1_1SoundStreamReader_ace5572c95fb05640b0a85fad11dc4c38.html#ace5572c95fb05640b0a85fad11dc4c38", null ],
+    [ "get_source_channel", "classMayaFlux_1_1Buffers_1_1SoundStreamReader_ab01a8d42114e2f2e66017b1e84336c00.html#ab01a8d42114e2f2e66017b1e84336c00", null ],
+    [ "get_update_flags", "classMayaFlux_1_1Buffers_1_1SoundStreamReader_af2951c262bf15c619de9c78df5443d3c.html#af2951c262bf15c619de9c78df5443d3c", null ],
+    [ "on_attach", "classMayaFlux_1_1Buffers_1_1SoundStreamReader_ab6a94c7681a0c71da55d99b23e6b344e.html#ab6a94c7681a0c71da55d99b23e6b344e", null ],
+    [ "on_container_state_change", "classMayaFlux_1_1Buffers_1_1SoundStreamReader_ae8897da25e0b24c516ab2e30aa7e5bf9.html#ae8897da25e0b24c516ab2e30aa7e5bf9", null ],
+    [ "on_detach", "classMayaFlux_1_1Buffers_1_1SoundStreamReader_a23aa370bacd44957c607bf9fd9b87c74.html#a23aa370bacd44957c607bf9fd9b87c74", null ],
+    [ "processing_function", "classMayaFlux_1_1Buffers_1_1SoundStreamReader_ad4011fce560f9b7db87e6e98d351d670.html#ad4011fce560f9b7db87e6e98d351d670", null ],
+    [ "set_auto_advance", "classMayaFlux_1_1Buffers_1_1SoundStreamReader_af742d7c5fb7559188bdd09a1fe549f6c.html#af742d7c5fb7559188bdd09a1fe549f6c", null ],
+    [ "set_container", "classMayaFlux_1_1Buffers_1_1SoundStreamReader_a0fa9a3eb56a22d6eeb3ee09554d533a3.html#a0fa9a3eb56a22d6eeb3ee09554d533a3", null ],
+    [ "set_source_channel", "classMayaFlux_1_1Buffers_1_1SoundStreamReader_af3b5df01f5917ee08765ecad6a2844f1.html#af3b5df01f5917ee08765ecad6a2844f1", null ],
+    [ "set_update_flags", "classMayaFlux_1_1Buffers_1_1SoundStreamReader_a2f69d9af122d9a82bf12c1adbb922d84.html#a2f69d9af122d9a82bf12c1adbb922d84", null ],
+    [ "m_auto_advance", "classMayaFlux_1_1Buffers_1_1SoundStreamReader_a22b324d6e52e64f2d977d9626f946f92.html#a22b324d6e52e64f2d977d9626f946f92", null ],
+    [ "m_channel_reader_id", "classMayaFlux_1_1Buffers_1_1SoundStreamReader_a0683c364c55702a4fb9a1f48ef639937.html#a0683c364c55702a4fb9a1f48ef639937", null ],
+    [ "m_consumption_offset", "classMayaFlux_1_1Buffers_1_1SoundStreamReader_a786d00d058a59e7640caf3822ac7fbdf.html#a786d00d058a59e7640caf3822ac7fbdf", null ],
+    [ "m_container", "classMayaFlux_1_1Buffers_1_1SoundStreamReader_a36840bd16a00ab1dab102fac2309526c.html#a36840bd16a00ab1dab102fac2309526c", null ],
+    [ "m_num_channels", "classMayaFlux_1_1Buffers_1_1SoundStreamReader_a12f548fdba0683c24c23e08cbca586ea.html#a12f548fdba0683c24c23e08cbca586ea", null ],
+    [ "m_reader_id", "classMayaFlux_1_1Buffers_1_1SoundStreamReader_a80640273d28222f6b4a1572fc58ca740.html#a80640273d28222f6b4a1572fc58ca740", null ],
+    [ "m_source_channel", "classMayaFlux_1_1Buffers_1_1SoundStreamReader_a4dfd5dc9fd76308604f890166a94e017.html#a4dfd5dc9fd76308604f890166a94e017", null ],
+    [ "m_temp_buffer", "classMayaFlux_1_1Buffers_1_1SoundStreamReader_adbe2aca2b19fd6946ad42c1089c54a50.html#adbe2aca2b19fd6946ad42c1089c54a50", null ],
+    [ "m_time_reader_id", "classMayaFlux_1_1Buffers_1_1SoundStreamReader_ade0cbae532b16c23c7260a9e603f30dc.html#ade0cbae532b16c23c7260a9e603f30dc", null ],
+    [ "m_update_flags", "classMayaFlux_1_1Buffers_1_1SoundStreamReader_a0b71a3796a3d5fbca9fdaa1cdabb0a10.html#a0b71a3796a3d5fbca9fdaa1cdabb0a10", null ]
+];

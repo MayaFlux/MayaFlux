@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::SDFMeshProcessor::rebuild_owned_buffers" name="MayaFlux::Buffers::SDFMeshProcessor::rebuild_owned_buffers">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,70,204,125"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1SDFMeshProcessor_a7141a3bf580a8b2df47958b5edbe51e8.html#a7141a3bf580a8b2df47958b5edbe51e8" title=" " alt="" coords="252,5,491,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="203,68,251,55,282,46,283,52,253,60,205,73"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="288,70,455,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="204,95,274,95,274,100,204,100"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="271,149,472,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="205,122,284,143,283,148,204,127"/>
+</map>

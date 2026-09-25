@@ -1,0 +1,29 @@
+<map id="MayaFlux::Kakshya::StreamContainer" name="MayaFlux::Kakshya::StreamContainer">
+<area shape="rect" id="Node000001" title="Data&#45;driven interface for temporal stream containers with navigable read position." alt="" coords="365,1196,555,1476"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1FileContainer.html" title="Marker interface for containers backed by file storage (in&#45;memory only)." alt="" coords="379,1833,541,2013"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="463,1490,463,1833,457,1833,457,1490"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer.html" title="Concrete base implementation for streaming audio containers." alt="" coords="145,1538,356,2307"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="385,1490,369,1526,359,1554,354,1552,364,1524,380,1488"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer.html" title="Concrete base implementation for streaming video containers." alt="" coords="565,1525,776,2320"/>
+<area shape="poly" id="edge12_Node000001_Node000012" title=" " alt="" coords="539,1488,554,1524,568,1560,563,1562,550,1526,534,1490"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1SignalSourceContainer.html" title="Data&#45;driven interface for managing arbitrary processable signal sources." alt="" coords="355,867,565,1147"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="463,1161,463,1196,457,1196,457,1161"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1NDDataContainer.html" title=" " alt="" coords="208,443,443,817"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="400,829,412,865,407,867,394,831"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1NDDataContainer.html" title="Abstract interface for N&#45;dimensional data containers." alt="" coords="235,5,416,380"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="328,394,328,442,323,442,323,394"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="466,590,726,670"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="580,684,513,867,508,866,575,682"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1SoundFileContainer.html" title="File&#45;backed audio container with complete streaming functionality." alt="" coords="229,2519,411,2699"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="442,2027,341,2519,336,2518,436,2026"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Kakshya_1_1VideoFileContainer.html" title="File&#45;backed video container — semantic marker over VideoStreamContainer." alt="" coords="435,2539,616,2679"/>
+<area shape="poly" id="edge7_Node000006_Node000008" title=" " alt="" coords="472,2026,521,2539,516,2539,467,2026"/>
+<area shape="poly" id="edge11_Node000009_Node000007" title=" " alt="" coords="294,2321,314,2519,308,2519,288,2321"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Kakshya_1_1DynamicSoundStream.html" title="Dynamic capacity streaming audio container with automatic resizing and circular buffering." alt="" coords="9,2369,205,2849"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="170,2321,160,2370,154,2369,165,2320"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Kakshya_1_1AudioOutputContainer.html" title="DynamicSoundStream subclass wrapping the live engine audio output." alt="" coords="5,2899,208,3159"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="109,2863,109,2898,104,2898,104,2863"/>
+<area shape="poly" id="edge14_Node000012_Node000008" title=" " alt="" coords="586,2334,543,2540,537,2539,581,2333"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Kakshya_1_1CameraContainer.html" title="Single&#45;slot live video container for camera device streams." alt="" coords="640,2499,843,2719"/>
+<area shape="poly" id="edge13_Node000012_Node000013" title=" " alt="" coords="716,2334,733,2499,727,2499,710,2334"/>
+</map>

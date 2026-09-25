@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Generator::Sine::reset" name="MayaFlux::Nodes::Generator::Sine::reset">
+<area shape="rect" id="Node000001" title="Resets the oscillator&#39;s phase and parameters." alt="" coords="261,5,469,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Sine_a5227185d6fbc53492cde42c480f78d03.html#a5227185d6fbc53492cde42c480f78d03" title="Removes all modulation connections." alt="" coords="5,5,213,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="248,28,213,28,213,23,248,23"/>
+</map>

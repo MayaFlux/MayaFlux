@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nexus::Agent::invoke_influence" name="MayaFlux::Nexus::Agent::invoke_influence">
+<area shape="rect" id="Node000001" title="Invoke the influence function with the supplied context." alt="" coords="256,37,437,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1Locus_a0bb203c2b2d2ac58739e0705e0fb6ae0.html#a0bb203c2b2d2ac58739e0705e0fb6ae0" title="Influence: run the user influence callable, then push the current view to every view target." alt="" coords="17,5,197,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="242,46,197,40,197,35,243,41"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nexus_1_1Presence_aa6a8b8593f1257dd923026e5ae115d53.html#aa6a8b8593f1257dd923026e5ae115d53" title="Invoke the influence function with the supplied context." alt="" coords="5,69,208,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="243,74,208,78,208,73,242,69"/>
+</map>

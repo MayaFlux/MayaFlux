@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kinesis::spread_radius" name="MayaFlux::Kinesis::spread_radius">
+<area shape="rect" id="Node000001" title="Bounding radius of a window around its centroid." alt="" coords="5,5,155,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a1f900447d934e9d0d88d4377cd6e6019.html#a1f900447d934e9d0d88d4377cd6e6019" title="Mean position across a window." alt="" coords="203,5,352,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="155,23,189,23,189,28,155,28"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_a0e0d3fef51c28469d86c6f9501d37439.html#a0e0d3fef51c28469d86c6f9501d37439" title="Simple moving average over the newest window samples." alt="" coords="400,5,549,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="352,23,386,23,386,28,352,28"/>
+</map>

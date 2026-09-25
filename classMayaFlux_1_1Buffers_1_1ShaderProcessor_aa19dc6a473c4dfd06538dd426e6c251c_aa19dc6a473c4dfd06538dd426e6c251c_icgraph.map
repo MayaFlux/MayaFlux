@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::ShaderProcessor::add_binding" name="MayaFlux::Buffers::ShaderProcessor::add_binding">
+<area shape="rect" id="Node000001" title="Add descriptor binding configuration." alt="" coords="427,45,589,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VertexFieldProcessor_ab6f4a8e2f483583ddda5b78f6ebc8b48.html#ab6f4a8e2f483583ddda5b78f6ebc8b48" title="Recompile and rebuild the pipeline when the operator has changed." alt="" coords="216,5,375,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="412,57,374,50,375,45,413,52"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1VertexFieldProcessor_af77f90a1ecc060fa50004c66900212d4.html#af77f90a1ecc060fa50004c66900212d4" title=" " alt="" coords="212,84,379,139"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="413,93,379,99,378,94,412,87"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VertexFieldProcessor_a1b40eb331f5f050b3034fe50c36aa90f.html#a1b40eb331f5f050b3034fe50c36aa90f" title="Rebuild on a stale revision, resolve the range, write push constants." alt="" coords="5,5,164,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="202,35,164,35,164,30,202,30"/>
+</map>

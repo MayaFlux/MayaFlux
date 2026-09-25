@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kinesis::FeatureMetric::delta" name="MayaFlux::Kinesis::FeatureMetric::delta">
+<area shape="rect" id="Node000001" title="Componentwise difference, wrapped on any axis with a period." alt="" coords="251,37,404,77"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1FeatureMetric_a938611f4a63578035ceccfefbeda354c.html#a938611f4a63578035ceccfefbeda354c" title="Weighted squared distance under this metric." alt="" coords="5,5,203,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="236,47,202,42,203,37,237,42"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_a5bae2e57f19b01225c3eed74acef7268.html#a5bae2e57f19b01225c3eed74acef7268" title="Graded membership of a point in an ellipsoid extent." alt="" coords="29,69,179,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="237,73,179,81,178,76,236,68"/>
+</map>

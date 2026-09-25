@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::VolumeFieldProcessor::write_lattice_params" name="MayaFlux::Buffers::VolumeFieldProcessor::write_lattice_params">
+<area shape="rect" id="Node000001" title="Write the lattice dimensions and cell size into the staged push constant block, preserving word three..." alt="" coords="5,34,172,89"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1Lattice3D_a1c680e02cfe8a54011cb7538bf33f3ee.html#a1c680e02cfe8a54011cb7538bf33f3ee" title="Edge length of one cell along each axis." alt="" coords="225,5,374,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="172,44,211,38,212,43,173,50"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a08f86ff68a93950b07208ee936badf8e.html#a08f86ff68a93950b07208ee936badf8e" title="Get current push constant data." alt="" coords="220,70,379,125"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="173,73,207,79,206,84,172,78"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kinesis_1_1AABB3D_aeab9cee1b78baf556b0b7e14c99541c2.html#aeab9cee1b78baf556b0b7e14c99541c2" title=" " alt="" coords="427,5,576,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="374,23,413,23,413,28,374,28"/>
+</map>

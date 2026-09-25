@@ -1,0 +1,11 @@
+<map id="MayaFlux::Buffers::VolumeSurfaceProcessor::write_field_descriptor" name="MayaFlux::Buffers::VolumeSurfaceProcessor::write_field_descriptor">
+<area shape="rect" id="Node000001" title="Issue the direct ShaderFoundry descriptor write for the field read slot." alt="" coords="5,34,188,89"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a715d57394465ff2924727d7c82d87e7b.html#a715d57394465ff2924727d7c82d87e7b" title="Get the global shader compiler instance." alt="" coords="236,5,433,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="188,45,222,40,223,45,189,50"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a719358a33a9349c7dd676ae673dabdd1.html#a719358a33a9349c7dd676ae673dabdd1" title="Update descriptor set with buffer binding." alt="" coords="236,70,433,125"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="189,73,223,78,222,83,188,78"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="485,5,683,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="433,23,471,23,471,28,433,28"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a148fdbfbb76b1df59986ea791e772885.html#a148fdbfbb76b1df59986ea791e772885" title="Get logical device handle." alt="" coords="481,77,687,117"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="433,95,468,95,468,100,433,100"/>
+</map>

@@ -1,0 +1,11 @@
+<map id="MayaFlux::Yantra::GpuResourceManager::dispatch_batched" name="MayaFlux::Yantra::GpuResourceManager::dispatch_batched">
+<area shape="rect" id="Node000001" title=" " alt="" coords="1031,13,1259,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_ab2351a76c5db238842099c55a1d08386.html#ab2351a76c5db238842099c55a1d08386" title="Multi&#45;pass (chained) dispatch." alt="" coords="757,13,983,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1017,35,983,35,983,30,1017,30"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1GpuExecutionContext_a1dbe3b76ec8aefe2f57803a889443155.html#a1dbe3b76ec8aefe2f57803a889443155" title="Dispatch to GPU and reconstruct a typed output Datum." alt="" coords="479,13,709,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="743,35,710,35,710,30,743,30"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1ShaderExecutionContext_a61530137eabb72da29cf4248b7600bde.html#a61530137eabb72da29cf4248b7600bde" title="Injects multipass configuration into the context before dispatch when set_multipass() has been called..." alt="" coords="236,13,431,53"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="465,35,431,35,431,30,465,30"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1VisionSorter_a483c2ee16a7b5c7475d69842a4505c24.html#a483c2ee16a7b5c7475d69842a4505c24" title="Internal execution method &#45; ComputeMatrix can access this." alt="" coords="5,5,188,60"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="222,35,188,35,188,30,222,30"/>
+</map>

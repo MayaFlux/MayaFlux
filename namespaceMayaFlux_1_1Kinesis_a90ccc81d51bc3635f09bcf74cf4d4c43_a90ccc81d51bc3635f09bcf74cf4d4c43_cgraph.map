@@ -1,0 +1,6 @@
+<map id="MayaFlux::Kinesis::project_onto_plane" name="MayaFlux::Kinesis::project_onto_plane">
+<area shape="rect" id="Node000001" title="Project vertices onto plane defined by normal." alt="" coords="5,29,155,69"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_aa7c4bdadf6a59ad467edbcc8b9b61c9d.html#aa7c4bdadf6a59ad467edbcc8b9b61c9d" title="Normalized distance from an anchor point using the specified metric." alt="" coords="203,29,352,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="155,47,189,47,189,52,155,52"/>
+<area shape="poly" id="edge2_Node000002_Node000002" title=" " alt="" coords="240,30,238,20,244,11,257,5,277,3,301,6,313,13,311,18,299,11,277,8,258,10,247,15,243,21,245,28"/>
+</map>

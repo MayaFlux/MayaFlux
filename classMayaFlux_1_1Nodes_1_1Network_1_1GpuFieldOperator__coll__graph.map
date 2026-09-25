@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nodes::Network::GpuFieldOperator" name="MayaFlux::Nodes::Network::GpuFieldOperator">
+<area shape="rect" id="Node000001" title="Chain operator that declares Tendency field deformation as a compute shader rather than evaluating it..." alt="" coords="212,423,403,897"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NetworkOperator.html" title="Domain&#45;agnostic interpretive lens for network processing." alt="" coords="5,75,196,290"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="155,302,214,438,209,440,150,304"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kakshya_1_1VertexLayout.html" title="Complete description of vertex data layout in a buffer." alt="" coords="221,53,394,313"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="310,313,310,406,305,406,305,313"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Nodes_1_1Network_1_1SpatialFieldConfig.html" title="Declarative configuration for the GPU&#45;side spatial&#45;relational work a GpuFieldOperator can drive beyon..." alt="" coords="419,5,612,360"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="441,361,412,427,407,425,436,359"/>
+</map>

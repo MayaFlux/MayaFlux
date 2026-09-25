@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::DataProcessingChain::remove_processor" name="MayaFlux::Kakshya::DataProcessingChain::remove_processor">
+<area shape="rect" id="Node000001" title="Removes a processor from a container&#39;s chain." alt="" coords="5,5,165,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1DataProcessingChain_a76249557d2a80bab157b285d00cf6955.html#a76249557d2a80bab157b285d00cf6955" title="Performs immediate removal of a processor from the chain." alt="" coords="213,5,408,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="166,30,200,30,200,35,166,35"/>
+</map>

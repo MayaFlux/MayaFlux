@@ -1,0 +1,23 @@
+<map id="MayaFlux::IO::SpatialCache::get_last_error" name="MayaFlux::IO::SpatialCache::get_last_error">
+<area shape="rect" id="Node000001" title=" " alt="" coords="1197,120,1399,160"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1IO_a430ed054a912a2f2110723d9a5f9a0df.html#a430ed054a912a2f2110723d9a5f9a0df" title="Open a fresh SpatialCache, write every source once, then close it." alt="" coords="975,5,1122,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1247,116,1148,66,1104,48,1106,43,1150,62,1249,111"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1SpatialCache_ac96ac81ab8d0066f81b9e89b47fe47f2.html#ac96ac81ab8d0066f81b9e89b47fe47f2" title="Append one sample to a named stream." alt="" coords="699,120,900,160"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="1205,120,1149,111,1049,104,948,111,879,123,878,117,948,105,1049,98,1150,105,1206,114"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1IO_1_1SpatialCache_a56eebd45abf6d1b878966d70cc350872.html#a56eebd45abf6d1b878966d70cc350872" title=" " alt="" coords="948,120,1149,160"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="1183,143,1150,143,1150,137,1183,137"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1IO_1_1SpatialCache_a556f600e3e3971dad0967c40cccde720.html#a556f600e3e3971dad0967c40cccde720" title="Queue object&#45;level metadata tags for a named stream." alt="" coords="948,184,1149,224"/>
+<area shape="poly" id="edge9_Node000001_Node000009" title=" " alt="" coords="1207,166,1128,187,1126,181,1206,161"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1IO_1_1SpatialCache_a749b6a053d761b36c218aa766cbaa769.html#a749b6a053d761b36c218aa766cbaa769" title=" " alt="" coords="948,248,1149,288"/>
+<area shape="poly" id="edge10_Node000001_Node000010" title=" " alt="" coords="1261,170,1210,205,1150,238,1121,250,1119,245,1148,234,1207,201,1258,166"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1IOManager_a2d21d40e32848f18d7d7e9d4ed28e826.html#a2d21d40e32848f18d7d7e9d4ed28e826" title="Save every source once, as a single time sample, with a millisecond epoch timestamp spliced into the ..." alt="" coords="706,5,893,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="962,28,893,28,893,23,962,23"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1IO_a3a1b54ced20c455280b3c44556e9826c.html#a3a1b54ced20c455280b3c44556e9826c" title="Pack one GraphicsOperator&#39;s current vertex state into a SpatialCache stream, as a Points or Curves sa..." alt="" coords="501,120,651,160"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="685,143,651,143,651,137,685,137"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1IO_abf3ff9b53394b31d75ac2980abc4ea2d.html#abf3ff9b53394b31d75ac2980abc4ea2d" title="Pack a NetworkGeometryBuffer&#39;s driving network into one or more SpatialCache streams,..." alt="" coords="256,113,453,167"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="488,143,454,143,454,137,488,137"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1IO_aff105666b9119fd8c7a0484e9a046b20.html#aff105666b9119fd8c7a0484e9a046b20" title="Build a SpatialCaptureSource that packs a NetworkGeometryBuffer&#39;s driving network through write_netwo..." alt="" coords="5,120,208,160"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="242,143,208,143,208,137,242,137"/>
+<area shape="poly" id="edge8_Node000008_Node000004" title=" " alt="" coords="934,143,900,143,900,137,934,137"/>
+<area shape="poly" id="edge11_Node000010_Node000004" title=" " alt="" coords="963,246,947,238,880,200,826,163,829,158,883,196,949,234,966,241"/>
+</map>

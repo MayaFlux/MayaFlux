@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::VKCommandManager::has_deferred_commands" name="MayaFlux::Core::VKCommandManager::has_deferred_commands">
+<area shape="rect" id="Node000001" title="End and submit single&#45;time command for compute operations." alt="" coords="312,5,563,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1BackendResourceManager_ae5bdab12f648e852beacba0ffa8fc256.html#ae5bdab12f648e852beacba0ffa8fc256" title="Flush deferred commands and return a semaphore that signals when they are complete." alt="" coords="5,5,264,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="298,28,264,28,264,23,298,23"/>
+</map>

@@ -1,0 +1,18 @@
+<map id="MayaFlux::Portal::Forma::Plot::series" name="MayaFlux::Portal::Forma::Plot::series">
+<area shape="rect" id="Node000001" title="Begin a Series chain." alt="" coords="763,97,944,137"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Plot_a57543618b11e96799aa2fc84a1fe46fb.html#a57543618b11e96799aa2fc84a1fe46fb" title="Apply auto&#45;scaling to an AxisRange from a set of series." alt="" coords="304,95,485,135"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="749,117,715,116,486,116,486,111,715,111,749,111"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Plot_1_1WaveformBuilder_a457f5beb06f5407a7992630de29fbfc3.html#a457f5beb06f5407a7992630de29fbfc3" title=" " alt="" coords="23,5,239,45"/>
+<area shape="poly" id="edge8_Node000001_Node000003" title=" " alt="" coords="748,102,714,97,458,64,239,39,239,34,459,59,715,92,749,97"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Plot_1_1BarsBuilder_af362f3613c57110cd011c8a7bd155b2c.html#af362f3613c57110cd011c8a7bd155b2c" title=" " alt="" coords="40,197,221,237"/>
+<area shape="poly" id="edge9_Node000001_Node000005" title=" " alt="" coords="804,146,762,165,715,180,582,205,448,218,324,223,222,223,222,218,324,218,447,213,582,199,714,175,760,160,802,141"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Plot_a33d7c625b8a94ba599dd685f3c07e331.html#a33d7c625b8a94ba599dd685f3c07e331" title="Compute [min, max] over a scalar series." alt="" coords="533,125,715,165"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="749,133,715,137,715,132,749,127"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="336,92,255,60,216,48,217,43,257,55,338,87"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Plot_1_1ScatterBuilder_a6496c1d9cf8d631f39b319aaecaa55ac.html#a6496c1d9cf8d631f39b319aaecaa55ac" title=" " alt="" coords="33,69,228,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="290,107,228,101,228,96,291,102"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="349,144,305,167,257,188,221,200,219,195,255,183,303,162,346,139"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Plot_1_1FilledWaveformBuilder_acc7d864ebf238ed0c026d3cf64c67105.html#acc7d864ebf238ed0c026d3cf64c67105" title=" " alt="" coords="5,133,256,173"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="291,133,256,138,256,132,290,127"/>
+<area shape="poly" id="edge7_Node000007_Node000002" title=" " alt="" coords="519,134,485,129,486,124,520,129"/>
+</map>

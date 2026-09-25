@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kakshya::DataFieldTraversal::remaining" name="MayaFlux::Kakshya::DataFieldTraversal::remaining">
+<area shape="rect" id="Node000001" title="Number of elements after the current position." alt="" coords="419,45,577,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1DataFieldTraversal_a4798cde770e160888b04012718b423a4.html#a4798cde770e160888b04012718b423a4" title="Move forward without passing the end of the array." alt="" coords="212,5,371,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="405,57,370,51,371,45,406,52"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1DataFieldTraversal_ae1bb255d488a959f6eaee64913e872cd.html#ae1bb255d488a959f6eaee64913e872cd" title="Borrow the current window, including a short final window." alt="" coords="212,84,371,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="406,93,371,99,370,94,405,87"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1DataFieldTraversal_a01e4d67cee5293b79c05c831af8e20ce.html#a01e4d67cee5293b79c05c831af8e20ce" title="Apply a callable to each available element in the current window." alt="" coords="5,84,164,139"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="198,114,164,114,164,109,198,109"/>
+</map>

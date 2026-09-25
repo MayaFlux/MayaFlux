@@ -1,0 +1,9 @@
+<map id="MayaFlux::Core::HIDBackend::refresh_devices" name="MayaFlux::Core::HIDBackend::refresh_devices">
+<area shape="rect" id="Node000001" title="Refresh the device list." alt="" coords="5,69,216,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1HIDBackend_acfaed8e8edda3af91b81e139a433b70e.html#acfaed8e8edda3af91b81e139a433b70e" title=" " alt="" coords="264,5,475,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="192,67,274,46,276,51,193,72"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1HIDBackend_a64affcd85db8974d0be9793ac872db31.html#a64affcd85db8974d0be9793ac872db31" title=" " alt="" coords="264,69,475,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="216,87,251,87,251,92,216,92"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1HIDBackend_ad7ca6153c9850b240c82ba36581124c1.html#ad7ca6153c9850b240c82ba36581124c1" title=" " alt="" coords="264,133,475,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="193,107,276,127,274,133,192,112"/>
+</map>

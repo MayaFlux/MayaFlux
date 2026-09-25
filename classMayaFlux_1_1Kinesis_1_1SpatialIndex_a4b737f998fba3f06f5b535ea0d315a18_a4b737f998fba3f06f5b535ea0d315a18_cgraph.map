@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::SpatialIndex::k_nearest" name="MayaFlux::Kinesis::SpatialIndex::k_nearest">
+<area shape="rect" id="Node000001" title="Find the k nearest entities to a point." alt="" coords="5,5,180,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a31247312c35641202ffc7008252f088d.html#a31247312c35641202ffc7008252f088d" title="Round x to the nearest multiple of step." alt="" coords="228,13,408,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="180,23,214,23,214,28,180,28"/>
+</map>

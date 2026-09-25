@@ -1,0 +1,16 @@
+<map id="CompositeReader.hpp" name="CompositeReader.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="131,5,296,31"/>
+<area shape="rect" id="Node000002" href="$FileReader_8hpp.html" title=" " alt="" coords="106,79,225,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="208,33,183,69,178,66,203,30"/>
+<area shape="rect" id="Node000007" href="$Composite_8hpp.html" title=" " alt="" coords="225,152,426,192"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="224,29,305,139,301,142,220,32"/>
+<area shape="rect" id="Node000003" href="$Region_8hpp.html" title=" " alt="" coords="5,152,200,192"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="158,106,129,143,124,139,154,103"/>
+<area shape="rect" id="Node000004" href="$NDData_8hpp.html" title=" " alt="" coords="113,240,314,280"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="129,190,180,229,176,233,126,194"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="101,328,205,353"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="201,282,173,319,168,315,197,279"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="230,328,317,353"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="230,279,258,315,254,319,226,282"/>
+<area shape="poly" id="edge7_Node000007_Node000004" title=" " alt="" coords="302,194,251,233,248,229,299,190"/>
+</map>

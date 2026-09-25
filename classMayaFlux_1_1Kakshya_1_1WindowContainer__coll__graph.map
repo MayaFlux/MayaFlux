@@ -1,0 +1,15 @@
+<map id="MayaFlux::Kakshya::WindowContainer" name="MayaFlux::Kakshya::WindowContainer">
+<area shape="rect" id="Node000001" title="SignalSourceContainer wrapping a live GLFW/Vulkan window surface." alt="" coords="377,1757,588,2392"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1SignalSourceContainer.html" title="Data&#45;driven interface for managing arbitrary processable signal sources." alt="" coords="152,1126,363,1406"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="302,1419,397,1757,392,1758,297,1420"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1NDDataContainer.html" title=" " alt="" coords="5,443,240,817"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="168,830,230,1125,225,1127,162,831"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1NDDataContainer.html" title="Abstract interface for N&#45;dimensional data containers." alt="" coords="32,5,213,380"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="125,394,125,442,120,442,120,394"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="263,590,523,670"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="385,684,290,1126,285,1125,379,683"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure.html" title="Container structure for consistent dimension ordering." alt="" coords="387,867,579,1665"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="485,1666,485,1741,480,1741,480,1666"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Memory_1_1Seqlock.html" title="Single&#45;writer multiple&#45;reader sequence lock for fixed&#45;size data regions." alt="" coords="603,1133,802,1399"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="670,1400,579,1734,576,1742,571,1741,573,1733,664,1398"/>
+</map>

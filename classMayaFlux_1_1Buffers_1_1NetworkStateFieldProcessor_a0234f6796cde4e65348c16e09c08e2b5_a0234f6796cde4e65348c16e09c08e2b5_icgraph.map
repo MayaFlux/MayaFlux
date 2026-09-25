@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::NetworkStateFieldProcessor::write_field_descriptors" name="MayaFlux::Buffers::NetworkStateFieldProcessor::write_field_descriptors">
+<area shape="rect" id="Node000001" title="Issue descriptor writes for every entry in the binding table." alt="" coords="507,45,712,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1NetworkStateFieldProcessor_a5ff2824260c00a90d2eccf0f5919f66c.html#a5ff2824260c00a90d2eccf0f5919f66c" title="Write every binding in the table for the current buffer state." alt="" coords="253,5,459,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="493,57,459,52,459,46,494,52"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1NetworkStateFieldProcessor_ad7f18e535c7e89480ee5113ffa5c311f.html#ad7f18e535c7e89480ee5113ffa5c311f" title="Rewrite field descriptors, then run the shader." alt="" coords="253,84,459,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="494,93,459,98,459,93,493,88"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1ClaimAccumulateProcessor_a647d18931fa71b692f0ce0bb97b778ba.html#a647d18931fa71b692f0ce0bb97b778ba" title="Dispatch as usual, then conditionally read back the result." alt="" coords="5,84,205,139"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="239,114,206,114,206,109,239,109"/>
+</map>

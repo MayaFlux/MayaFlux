@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::PresentProcessor::has_callback" name="MayaFlux::Buffers::PresentProcessor::has_callback">
+<area shape="rect" id="Node000001" title="Checks if a callback is configured." alt="" coords="212,5,377,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1PresentProcessor_a7c8e1d9356d3a7d6e88209d631b76aaf.html#a7c8e1d9356d3a7d6e88209d631b76aaf" title="Called when processor is attached to a buffer." alt="" coords="5,5,164,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="199,35,164,35,164,30,199,30"/>
+</map>

@@ -1,0 +1,39 @@
+<map id="MayaFlux::Nodes::Network::NetworkOperator" name="MayaFlux::Nodes::Network::NetworkOperator">
+<area shape="rect" id="Node000001" title="Domain&#45;agnostic interpretive lens for network processing." alt="" coords="1142,5,1333,220"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GpuFieldOperator.html" title="Chain operator that declares Tendency field deformation as a compute shader rather than evaluating it..." alt="" coords="459,268,650,783"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1128,118,1021,129,960,140,898,154,835,174,774,199,717,231,664,270,652,282,648,278,661,266,714,227,772,195,833,169,896,149,959,134,1020,124,1128,113"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GraphicsOperator.html" title="Operator that produces GPU&#45;renderable geometry." alt="" coords="675,355,888,695"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="1133,211,890,430,887,426,1130,207"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nodes_1_1Network_1_1InstanceOperator.html" title="Abstract base for operators that process InstanceNetwork slots." alt="" coords="1142,435,1333,615"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="1240,234,1240,435,1235,435,1235,234"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Nodes_1_1Network_1_1MeshOperator.html" title="Abstract base for operators that process MeshNetwork slots." alt="" coords="1363,425,1554,625"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="1324,230,1346,267,1387,346,1422,424,1417,426,1382,348,1342,269,1320,233"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Nodes_1_1Network_1_1RelationOperator.html" title="Operator that acts on a network&#39;s slots over one block at a time." alt="" coords="2137,405,2327,645"/>
+<area shape="poly" id="edge13_Node000001_Node000014" title=" " alt="" coords="1346,156,2138,482,2136,487,1344,161"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Network_1_1AssemblyOperator.html" title="Holds an unordered set of independent geometry items, rendered as one milled draw." alt="" coords="5,1055,205,1375"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="728,709,699,751,663,785,633,803,603,815,574,822,545,824,490,818,435,805,382,793,328,788,302,791,274,799,247,813,219,833,197,855,177,879,147,935,127,995,114,1055,109,1054,122,993,142,933,173,876,193,851,216,829,244,808,273,794,300,786,328,783,383,787,436,800,490,812,545,818,573,816,601,810,630,798,660,781,695,747,723,706"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Network_1_1FieldOperator.html" title="Pure field&#45;driven vertex manipulation via Tendency evaluation." alt="" coords="230,845,421,1585"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="725,709,698,750,663,785,632,803,602,810,573,810,545,807,517,804,490,805,463,813,435,833,421,847,417,843,432,829,460,809,489,800,517,799,546,802,574,805,602,805,630,798,660,781,694,746,721,706"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PathOperator.html" title=" " alt="" coords="445,998,645,1433"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="705,709,659,832,606,999,601,997,653,830,700,707"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PhysicsOperator.html" title="N&#45;body physics simulation with point rendering." alt="" coords="669,831,894,1600"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="784,709,784,831,779,831,779,709"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1Network_1_1TopologyOperator.html" title=" " alt="" coords="917,1015,1117,1415"/>
+<area shape="poly" id="edge7_Node000003_Node000008" title=" " alt="" coords="861,707,908,830,966,1014,961,1016,903,832,856,709"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Nodes_1_1Network_1_1InstanceFieldOperator.html" title="Drives GeometrySlot transforms from stateless Kinesis fields." alt="" coords="1142,1055,1333,1375"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="1240,629,1240,1055,1235,1055,1235,629"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Nodes_1_1Network_1_1MeshFieldOperator.html" title="Chain operator that applies Tendency field deformation to the vertex data of individual MeshNetwork s..." alt="" coords="1357,995,1560,1435"/>
+<area shape="poly" id="edge11_Node000011_Node000012" title=" " alt="" coords="1461,639,1461,995,1456,995,1456,639"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Nodes_1_1Network_1_1MeshTransformOperator.html" title="Primary operator that drives slot local transforms via Tendency fields and propagates world transform..." alt="" coords="1585,1075,1791,1355"/>
+<area shape="poly" id="edge12_Node000011_Node000013" title=" " alt="" coords="1505,637,1575,830,1651,1074,1646,1076,1569,832,1500,639"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Nodes_1_1Network_1_1AdvanceOperator.html" title="Produces every slot&#39;s signal for the block." alt="" coords="1815,1115,2006,1315"/>
+<area shape="poly" id="edge14_Node000014_Node000015" title=" " alt="" coords="2130,654,2071,739,2020,832,1990,904,1965,978,1931,1116,1926,1114,1960,977,1985,902,2015,830,2067,737,2126,651"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Nodes_1_1Network_1_1CombineOperator.html" title="Turns slot blocks into published outputs." alt="" coords="2030,1045,2221,1385"/>
+<area shape="poly" id="edge15_Node000014_Node000016" title=" " alt="" coords="2214,660,2154,1045,2149,1045,2209,659"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1Nodes_1_1Network_1_1DeriveOperator.html" title="Defines one slot&#39;s block as a function of other slots&#39; blocks." alt="" coords="2245,1105,2435,1325"/>
+<area shape="poly" id="edge16_Node000014_Node000017" title=" " alt="" coords="2255,659,2326,1105,2320,1105,2250,660"/>
+<area shape="rect" id="Node000018" href="$classMayaFlux_1_1Nodes_1_1Network_1_1StepOperator.html" title="General operator whose body is a callable, run once per block." alt="" coords="2459,1115,2650,1315"/>
+<area shape="poly" id="edge17_Node000014_Node000018" title=" " alt="" coords="2338,650,2398,736,2450,829,2481,902,2505,977,2540,1114,2534,1116,2500,978,2476,904,2446,832,2393,739,2334,654"/>
+<area shape="rect" id="Node000019" href="$classMayaFlux_1_1Nodes_1_1Network_1_1WalkOperator.html" title="Moves a single active slot along the rows of a weight table." alt="" coords="2674,1005,2865,1425"/>
+<area shape="poly" id="edge18_Node000014_Node000019" title=" " alt="" coords="2341,574,2422,618,2509,676,2593,747,2631,787,2665,829,2690,870,2711,914,2741,1004,2736,1006,2706,916,2685,872,2660,832,2627,790,2590,751,2506,681,2419,623,2339,578"/>
+</map>

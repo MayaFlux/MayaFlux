@@ -1,0 +1,27 @@
+<map id="MayaFlux::Nodes::GpuSync::GeometryWriterNode::set_vertex_stride" name="MayaFlux::Nodes::GpuSync::GeometryWriterNode::set_vertex_stride">
+<area shape="rect" id="Node000001" title="Set vertex stride (bytes per vertex)" alt="" coords="365,366,565,421"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GeometryLeafNode_a421ace8a41a58634ad423d66bd9f52d3.html#a421ace8a41a58634ad423d66bd9f52d3" title=" " alt="" coords="15,5,307,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="456,353,442,287,416,207,398,166,375,127,348,91,316,59,298,48,301,43,319,55,352,87,379,124,402,164,421,206,447,286,461,352"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GeometryLeafNode_a69c154fd179ff74e64994d79089bc300.html#a69c154fd179ff74e64994d79089bc300" title=" " alt="" coords="15,69,307,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="451,354,434,300,406,237,367,175,343,147,316,123,296,112,299,107,319,119,347,144,371,172,411,235,439,298,456,352"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GeometryReadbackNode_a093a0a90c3f9025c77bff581a3d1b997.html#a093a0a90c3f9025c77bff581a3d1b997" title="Construct from a GPU vertex buffer." alt="" coords="61,134,261,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="442,355,420,318,391,277,356,237,316,204,289,189,261,179,263,174,292,185,319,199,360,233,396,274,425,315,446,352"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GlyphGeometryNode_aa2c050b302cf38e5125047fd4f1cd6d7.html#aa2c050b302cf38e5125047fd4f1cd6d7" title="Construct from a UTF&#45;8 string with an explicit FontFace." alt="" coords="5,213,317,253"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="430,358,379,310,349,287,316,268,287,256,289,251,319,263,352,283,383,306,433,354"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GlyphGeometryNode_ae6d0646f782caeb8a210c8344e63130b.html#ae6d0646f782caeb8a210c8344e63130b" title="Construct from a UTF&#45;8 string using the default font." alt="" coords="5,277,317,317"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="395,363,316,332,273,320,274,315,318,327,397,358"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1MeshWriterNode_a1bd7b484b9414cafed5105c4f0322e64.html#a1bd7b484b9414cafed5105c4f0322e64" title=" " alt="" coords="33,341,289,381"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="351,384,289,377,290,372,352,379"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PathGeneratorNode_a2311404755197ec5b4aad0fb2e2639a4.html#a2311404755197ec5b4aad0fb2e2639a4" title="Create path generator with custom interpolation function." alt="" coords="15,405,307,445"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="352,408,308,413,307,407,351,403"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PathGeneratorNode_a3d7dbfa965115dd6284a5e96cb20e180.html#a3d7dbfa965115dd6284a5e96cb20e180" title="Create path generator with interpolation mode." alt="" coords="15,469,307,509"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="397,429,318,460,274,472,273,467,316,455,395,424"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PointCollectionNode_a6529267bb12caf59f4e93c3a82e62c00.html#a6529267bb12caf59f4e93c3a82e62c00" title="Create empty point source." alt="" coords="61,534,261,589"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="432,433,382,480,351,504,319,524,262,546,260,541,316,519,348,499,378,476,429,429"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PointCollectionNode_a39a470fe14b0ebdf43cc45f4820b2ec7.html#a39a470fe14b0ebdf43cc45f4820b2ec7" title="Create with initial points." alt="" coords="61,613,261,667"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="449,435,427,475,398,520,362,565,319,602,292,617,263,628,261,623,289,612,316,598,358,561,394,517,423,472,444,432"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1TopologyGeneratorNode_ae848f76ace7050e302c2d0401490c0aa.html#ae848f76ace7050e302c2d0401490c0aa" title="Create with custom connection function." alt="" coords="61,691,261,746"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="457,435,440,491,412,557,372,624,347,654,319,681,292,697,263,709,261,704,290,693,316,677,343,651,368,621,407,555,435,489,452,433"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1TopologyGeneratorNode_a9cfcecca907cd156259693c33e2ac2dd.html#a9cfcecca907cd156259693c33e2ac2dd" title="Create topology generator." alt="" coords="61,770,261,825"/>
+<area shape="poly" id="edge12_Node000001_Node000013" title=" " alt="" coords="462,435,449,505,424,593,405,638,382,683,353,724,319,759,292,777,262,789,260,784,290,772,316,755,349,720,377,680,400,636,419,591,444,504,457,434"/>
+</map>

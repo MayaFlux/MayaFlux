@@ -1,0 +1,13 @@
+<map id="MayaFlux::Yantra::UniversalExtractor::operation_function" name="MayaFlux::Yantra::UniversalExtractor::operation_function">
+<area shape="rect" id="Node000001" title="Core operation implementation &#45; called by ComputeOperation interface." alt="" coords="5,117,216,157"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1UniversalExtractor_ab5944006bcd00920e40149451f125050.html#ab5944006bcd00920e40149451f125050" title="Apply scope filtering to results." alt="" coords="274,85,501,125"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="216,122,260,117,261,122,217,127"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1UniversalExtractor_a37ec9e24638713bb07502e60a415c9f1.html#a37ec9e24638713bb07502e60a415c9f1" title="Pure virtual extraction implementation &#45; derived classes implement this." alt="" coords="264,149,511,189"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="217,146,251,150,250,155,216,152"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1UniversalExtractor_a9d4741cadeb96283919b0925065cb9fd.html#a9d4741cadeb96283919b0925065cb9fd" title="Apply content&#45;based filtering (override for custom filtering)" alt="" coords="571,5,775,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="467,82,556,59,558,64,468,87"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1UniversalExtractor_a38ff22dd95a260af94e31857aaec4760.html#a38ff22dd95a260af94e31857aaec4760" title="Apply data sampling (override for custom sampling)" alt="" coords="559,85,787,125"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="501,102,545,102,545,107,501,107"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1UniversalExtractor_a36cb2c3d5f8f7d73960d6f6486f286b7.html#a36cb2c3d5f8f7d73960d6f6486f286b7" title="Filter results to target regions (override for custom filtering)" alt="" coords="571,149,775,204"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="468,122,558,145,556,150,467,127"/>
+</map>

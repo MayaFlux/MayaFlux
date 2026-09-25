@@ -1,0 +1,7 @@
+<map id="MayaFlux::Yantra::UniversalAnalyzer::add_attribution_metadata" name="MayaFlux::Yantra::UniversalAnalyzer::add_attribution_metadata">
+<area shape="rect" id="Node000001" title="Add attribution metadata to results (override for custom attribution)" alt="" coords="5,30,209,85"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1UniversalAnalyzer_a1c728257fcc6b2ffe3e7b01aaa41cf98.html#a1c728257fcc6b2ffe3e7b01aaa41cf98" title="Gets the analysis type category for this analyzer." alt="" coords="262,5,467,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="209,42,248,37,249,42,210,47"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1UniversalAnalyzer_accb8a50b514dc4d55f12ea261444f33e.html#accb8a50b514dc4d55f12ea261444f33e" title="Get analyzer&#45;specific name (derived classes override this)" alt="" coords="257,69,472,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="210,67,244,72,243,77,209,73"/>
+</map>

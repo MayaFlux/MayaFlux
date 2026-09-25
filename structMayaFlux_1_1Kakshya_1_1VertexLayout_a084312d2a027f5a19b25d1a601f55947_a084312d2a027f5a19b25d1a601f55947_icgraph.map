@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kakshya::VertexLayout::for_raw" name="MayaFlux::Kakshya::VertexLayout::for_raw">
+<area shape="rect" id="Node000001" title="Factory: layout for raw vertex data with common attributes." alt="" coords="212,91,377,131"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1DataWriteProcessor_aca8cf954a0c10aad3ed46ee95c2705d2.html#aca8cf954a0c10aad3ed46ee95c2705d2" title="Called when this processor is attached to a buffer." alt="" coords="5,5,164,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="227,89,157,63,159,58,229,84"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1RelaxationGridBuffer_a4c90a977c6dcb7edf0abced15bc7d798.html#a4c90a977c6dcb7edf0abced15bc7d798" title="Create and attach RelaxationStepProcessor (default processor) and RelaxationEmitProcessor (flat proce..." alt="" coords="5,84,164,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="199,114,164,114,164,109,199,109"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kakshya_a669ad32b77cbaaba65566c05bfb277c3.html#a669ad32b77cbaaba65566c05bfb277c3" title="Deduce a VertexLayout from a vertex struct type." alt="" coords="5,163,164,203"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="224,138,145,166,143,161,222,133"/>
+</map>

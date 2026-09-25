@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::AudioStream" name="MayaFlux::Core::AudioStream">
+<area shape="rect" id="Node000001" title="Manages digital audio data flow between the engine and hardware." alt="" coords="5,5,213,251"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1PipewireStream.html" title="PipeWire implementation of the audio stream interface." alt="" coords="19,299,199,659"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="112,264,112,298,107,298,107,264"/>
+</map>

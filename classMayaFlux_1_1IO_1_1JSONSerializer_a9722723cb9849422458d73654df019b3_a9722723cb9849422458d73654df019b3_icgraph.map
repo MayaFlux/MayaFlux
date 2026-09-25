@@ -1,0 +1,16 @@
+<map id="MayaFlux::IO::JSONSerializer::last_error" name="MayaFlux::IO::JSONSerializer::last_error">
+<area shape="rect" id="Node000001" title="Last error message, empty if no error." alt="" coords="563,133,772,173"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1StateDecoder_aaaa98335e2669252675c7eef36693d08.html#aaaa98335e2669252675c7eef36693d08" title="Decode and apply to fabric." alt="" coords="284,5,515,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="627,127,575,92,514,60,482,48,484,43,516,55,577,88,630,123"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nexus_1_1StateEncoder_a14697ea6d42e4d8d0b00a882ae6eae77.html#a14697ea6d42e4d8d0b00a882ae6eae77" title="Encode all Fabrics in tapestry to base_dir." alt="" coords="285,69,514,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="569,133,483,112,484,107,570,127"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Config_a926b14a6baa31cfcd77dcb32ca8a2417.html#a926b14a6baa31cfcd77dcb32ca8a2417" title="Load engine configuration from a JSON file, applying any present fields to the pre&#45;Init config struct..." alt="" coords="314,133,485,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="549,156,485,156,485,151,549,151"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nexus_1_1StateDecoder_a4bbc19256f60fe110344ba93422ab45c.html#a4bbc19256f60fe110344ba93422ab45c" title="Patch existing entities and construct missing ones from schema." alt="" coords="284,197,515,237"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="570,179,484,200,483,195,569,174"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nexus_1_1StateDecoder_ab8adc484d13d63fc196d40e45179e27d.html#ab8adc484d13d63fc196d40e45179e27d" title="Reconstruct all Fabrics in tapestry from base_dir." alt="" coords="5,225,236,265"/>
+<area shape="poly" id="edge7_Node000001_Node000007" title=" " alt="" coords="635,184,581,222,549,239,515,252,444,267,371,272,300,271,236,266,236,261,301,266,371,267,444,261,514,247,547,234,579,217,632,180"/>
+<area shape="rect" id="Node000005" href="$main_8cpp_a0ddf1224851353fc92bfbff6f499fa97.html#a0ddf1224851353fc92bfbff6f499fa97" title=" " alt="" coords="93,141,148,166"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="300,156,148,156,148,151,300,151"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="271,233,236,236,236,231,270,228"/>
+</map>

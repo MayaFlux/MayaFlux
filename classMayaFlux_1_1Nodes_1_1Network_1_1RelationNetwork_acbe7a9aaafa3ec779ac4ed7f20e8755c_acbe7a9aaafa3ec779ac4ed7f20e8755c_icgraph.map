@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::RelationNetwork::get_output_count" name="MayaFlux::Nodes::Network::RelationNetwork::get_output_count">
+<area shape="rect" id="Node000001" title="Total published outputs across all publishing operators, in chain order." alt="" coords="252,5,451,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1RelationNetwork_a402ecbcfcfbe9fce0c9b84be3fe5d0f2.html#a402ecbcfcfbe9fce0c9b84be3fe5d0f2" title="Get network metadata for debugging/visualization." alt="" coords="5,5,204,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="238,35,204,35,204,30,238,30"/>
+</map>

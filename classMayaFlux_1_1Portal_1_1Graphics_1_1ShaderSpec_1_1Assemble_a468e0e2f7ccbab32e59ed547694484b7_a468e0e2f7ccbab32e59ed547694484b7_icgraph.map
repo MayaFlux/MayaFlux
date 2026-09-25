@@ -1,0 +1,11 @@
+<map id="MayaFlux::Portal::Graphics::ShaderSpec::Assemble::pc" name="MayaFlux::Portal::Graphics::ShaderSpec::Assemble::pc">
+<area shape="rect" id="Node000001" title="Declare a push constant field with explicit format." alt="" coords="275,105,476,145"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GpuFieldOperator_a3ad4b99e462122dbf5f6b1c00d3632ff.html#a3ad4b99e462122dbf5f6b1c00d3632ff" title="Assemble the compute spec for the current bindings." alt="" coords="5,5,227,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="321,102,226,60,190,48,192,43,228,55,323,97"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1VisionGpuExecutor_a37b115d59dbe1593c58ef631942b363e.html#a37b115d59dbe1593c58ef631942b363e" title="GpuComputeConfig for a given VisionOp and its parameters." alt="" coords="25,69,207,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="261,112,207,105,208,99,261,107"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Buffers_1_1RelaxationSpecs_afe4907c6e3660650e5e21427e6c1f9a7.html#afe4907c6e3660650e5e21427e6c1f9a7" title="Jacobi&#45;style diffusion rule: each cell blends toward the average of its 8 Moore neighbors." alt="" coords="27,134,205,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="261,144,205,152,204,146,260,139"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderSpec_1_1Assemble_a80b96bcb6c1fec6cb46d4b58c03cc3bf.html#a80b96bcb6c1fec6cb46d4b58c03cc3bf" title="Declare a float push constant field." alt="" coords="15,213,217,253"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="328,154,228,202,191,216,189,211,226,198,325,150"/>
+</map>

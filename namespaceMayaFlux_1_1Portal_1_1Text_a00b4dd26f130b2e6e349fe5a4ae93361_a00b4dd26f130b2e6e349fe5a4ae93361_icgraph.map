@@ -1,0 +1,13 @@
+<map id="MayaFlux::Portal::Text::move" name="MayaFlux::Portal::Text::move">
+<area shape="rect" id="Node000001" title="Move the cursor by n codepoints." alt="" coords="923,29,1089,69"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Portal_1_1Forma_1_1TextField_abae518577372556cbec65a69bb2d26a3.html#abae518577372556cbec65a69bb2d26a3" title=" " alt="" coords="693,29,875,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="909,52,875,52,875,47,909,47"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Portal_1_1Forma_1_1TextField_a20b101aef26d8710a14abb0b3c705f4c.html#a20b101aef26d8710a14abb0b3c705f4c" title="Register the text field element and wire text editing onto it." alt="" coords="464,29,645,69"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="679,52,646,52,646,47,679,47"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a4d8d6a3f54c57284141331e37153b682.html#a4d8d6a3f54c57284141331e37153b682" title="Build a text&#45;capable FormaBuffer, register a TextField, and wire text editing onto it in one call." alt="" coords="5,29,187,69"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="450,49,416,48,235,48,187,49,187,44,235,43,416,43,450,43"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Portal_1_1Forma_1_1TextField_ab37d173483ea4e704f5c55865e384d72.html#ab37d173483ea4e704f5c55865e384d72" title="Fluent creator: place this field inside an already&#45;placed Scrollable, growing itself taller than its ..." alt="" coords="235,57,416,97"/>
+<area shape="poly" id="edge5_Node000003_Node000005" title=" " alt="" coords="451,65,417,69,416,64,450,59"/>
+<area shape="poly" id="edge4_Node000004_Node000004" title=" " alt="" coords="135,18,121,11,96,8,74,10,61,15,56,21,58,28,53,30,51,20,57,10,73,5,96,3,123,6,137,13"/>
+<area shape="poly" id="edge6_Node000005_Node000004" title=" " alt="" coords="221,67,187,63,187,58,221,62"/>
+</map>

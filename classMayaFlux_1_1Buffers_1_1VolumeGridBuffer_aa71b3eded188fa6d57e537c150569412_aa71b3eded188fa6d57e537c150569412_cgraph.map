@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::VolumeGridBuffer::ensure_fields" name="MayaFlux::Buffers::VolumeGridBuffer::ensure_fields">
+<area shape="rect" id="Node000001" title="Declare whichever of decls are not already present." alt="" coords="5,30,195,85"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_aca30ddb3fe275b513308b2bfeb98d98c.html#aca30ddb3fe275b513308b2bfeb98d98c" title="Allocate one field&#39;s slots and register it." alt="" coords="243,5,475,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="195,43,229,39,229,44,195,48"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_ad2ce68cbd0c2b9195eb814432dd9f61b.html#ad2ce68cbd0c2b9195eb814432dd9f61b" title="Whether a field of this name was declared." alt="" coords="257,69,460,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="195,66,244,72,243,78,195,72"/>
+</map>

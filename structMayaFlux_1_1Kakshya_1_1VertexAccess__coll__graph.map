@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::VertexAccess" name="MayaFlux::Kakshya::VertexAccess">
+<area shape="rect" id="Node000001" title="Memory&#45;compatible view of channel data assembled into full 60&#45;byte vertices." alt="" coords="17,328,167,448"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1VertexLayout.html" title="Complete description of vertex data layout in a buffer." alt="" coords="5,5,179,265"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="95,266,95,311,89,311,89,266"/>
+</map>

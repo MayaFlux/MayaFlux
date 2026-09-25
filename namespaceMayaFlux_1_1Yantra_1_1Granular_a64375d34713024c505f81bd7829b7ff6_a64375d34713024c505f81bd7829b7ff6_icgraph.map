@@ -1,0 +1,15 @@
+<map id="MayaFlux::Yantra::Granular::make_granular_context" name="MayaFlux::Yantra::Granular::make_granular_context">
+<area shape="rect" id="Node000001" title="Construct an ExecutionContext for the granular pipeline using a built&#45;in AnalysisType." alt="" coords="252,165,451,205"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Yantra_1_1Granular_aafab8515e0b5635b93aa83cfbec61fdf.html#aafab8515e0b5635b93aa83cfbec61fdf" title="Run segment &#45;&gt; attribute &#45;&gt; sort and return the attributed RegionGroup." alt="" coords="5,5,204,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="321,157,269,107,237,82,203,60,177,48,180,43,205,55,240,78,272,103,325,153"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Yantra_1_1Granular_aec22f480d0c35db4b30b5022ee7b63bf.html#aec22f480d0c35db4b30b5022ee7b63bf" title="Run segment &#45;&gt; attribute &#45;&gt; sort using a span&#45;level attribution lambda." alt="" coords="5,69,204,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="294,162,203,124,170,112,172,107,205,119,296,157"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Yantra_1_1Granular_adf6aca922aa665a8f51fa67e887db128.html#adf6aca922aa665a8f51fa67e887db128" title="Offline granular pipeline terminating in a SoundFileContainer." alt="" coords="5,133,204,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="238,173,204,169,205,164,239,168"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Yantra_1_1Granular_ad7ea69b51d9140fca988c70a8db77d20.html#ad7ea69b51d9140fca988c70a8db77d20" title="Offline granular pipeline using a span&#45;level attribution lambda." alt="" coords="5,197,204,237"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="239,203,205,207,204,202,238,197"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Yantra_1_1Granular_afa376fe5693f0febbea65bbc08be94de.html#afa376fe5693f0febbea65bbc08be94de" title="Offline granular pipeline terminating in a DynamicSoundStream." alt="" coords="5,261,204,301"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="296,214,205,252,172,264,170,259,203,247,294,209"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Yantra_1_1Granular_af881a713e4c8a62896470da9497e323f.html#af881a713e4c8a62896470da9497e323f" title="Offline granular pipeline using a span&#45;level attribution lambda, terminating in a DynamicSoundStream." alt="" coords="5,325,204,365"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="325,217,272,267,240,293,205,316,180,328,177,323,203,311,237,289,269,263,321,213"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="MayaFlux::Portal::Graphics::ShaderFoundry::buffer_barrier" name="MayaFlux::Portal::Graphics::ShaderFoundry::buffer_barrier">
+<area shape="rect" id="Node000001" title="Insert buffer memory barrier." alt="" coords="473,45,671,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ComputeProcessor_a0d2117ace2bb7bc3e1644cda84e8267a.html#a0d2117ace2bb7bc3e1644cda84e8267a" title="Called after each iteration except the last." alt="" coords="257,5,425,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="459,56,424,50,425,45,460,51"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1ClaimFlattenProcessor_ab2ab37d7d2a8e4f0b4b675853dd05c59.html#ab2ab37d7d2a8e4f0b4b675853dd05c59" title="Called after each iteration except the last." alt="" coords="256,84,425,139"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="460,94,426,100,425,95,459,89"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1ComputeProcessor_a73dacb014d3d5c7ad1f060fad72f8681.html#a73dacb014d3d5c7ad1f060fad72f8681" title=" " alt="" coords="5,5,208,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="243,35,208,35,208,30,243,30"/>
+</map>

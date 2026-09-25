@@ -1,0 +1,5 @@
+<map id="MayaFlux::Yantra::VisionAnalyzer::set_sequence" name="MayaFlux::Yantra::VisionAnalyzer::set_sequence">
+<area shape="rect" id="Node000001" title="Replace the pipeline and reset inter&#45;frame executor state." alt="" coords="5,13,188,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kinesis_1_1Vision_1_1VisionExecutor_a359ccf1b01d2241f6865f860c7565de5.html#a359ccf1b01d2241f6865f860c7565de5" title="Clear stored inter&#45;frame state." alt="" coords="236,5,403,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="188,30,222,30,222,35,188,35"/>
+</map>

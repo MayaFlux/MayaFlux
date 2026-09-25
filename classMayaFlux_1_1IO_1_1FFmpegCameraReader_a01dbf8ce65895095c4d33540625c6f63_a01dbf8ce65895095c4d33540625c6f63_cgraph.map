@@ -1,0 +1,9 @@
+<map id="MayaFlux::IO::FFmpegCameraReader::setup_io_service" name="MayaFlux::IO::FFmpegCameraReader::setup_io_service">
+<area shape="rect" id="Node000001" title="Setup an IOService for this reader with the given reader_id." alt="" coords="5,69,225,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="283,5,484,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="199,67,285,46,287,51,201,72"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1FFmpegCameraReader_a3f6131c6f58e8ec5b71cbbebb421a8f0.html#a3f6131c6f58e8ec5b71cbbebb421a8f0" title="Signal the source to pull one frame." alt="" coords="273,69,493,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="225,87,260,87,260,92,225,92"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a22c6ffe496c721c1bdfe28c9a86c1c4f.html#a22c6ffe496c721c1bdfe28c9a86c1c4f" title="Register a backend service capability." alt="" coords="285,134,481,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="191,107,273,129,272,134,190,112"/>
+</map>

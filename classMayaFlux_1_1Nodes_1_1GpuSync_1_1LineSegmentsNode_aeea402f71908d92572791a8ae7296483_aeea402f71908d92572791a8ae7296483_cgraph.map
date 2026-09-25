@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::GpuSync::LineSegmentsNode::LineSegmentsNode" name="MayaFlux::Nodes::GpuSync::LineSegmentsNode::LineSegmentsNode">
+<area shape="rect" id="Node000001" title="Construct an empty segment accumulator." alt="" coords="5,41,296,81"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1VertexLayout_a35c3aa5d9780535ccc1391e60789260c.html#a35c3aa5d9780535ccc1391e60789260c" title="Factory: layout for LineVertex (position, color, thickness, uv, normal, tangent)" alt="" coords="358,5,530,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="296,41,344,35,345,40,296,46"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GeometryWriterNode_a79b8530548d0f4b4c464071439faaac5.html#a79b8530548d0f4b4c464071439faaac5" title="Set cached vertex layout." alt="" coords="344,70,544,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="296,77,331,81,330,86,296,82"/>
+</map>

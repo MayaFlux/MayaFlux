@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Generator::Random::set_normal_spread" name="MayaFlux::Nodes::Generator::Random::set_normal_spread">
+<area shape="rect" id="Node000001" title="Sets the variance parameter for normal distribution." alt="" coords="5,13,221,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Stochastic_a3d9ccb5e9a02ac2382c8ba58c8e6f2cd.html#a3d9ccb5e9a02ac2382c8ba58c8e6f2cd" title="Configures algorithm&#45;specific parameters." alt="" coords="269,5,433,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="222,30,256,30,256,35,222,35"/>
+</map>

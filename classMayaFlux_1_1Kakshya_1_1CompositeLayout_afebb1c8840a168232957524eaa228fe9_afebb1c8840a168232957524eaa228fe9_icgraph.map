@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::CompositeLayout::add_field" name="MayaFlux::Kakshya::CompositeLayout::add_field">
+<area shape="rect" id="Node000001" title="Declare a named arithmetic or UTF&#45;8 text field." alt="" coords="260,5,463,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1DelimitedTextReader_a26caa332df01c8062918d8756490d885.html#a26caa332df01c8062918d8756490d885" title="Open a CSV or TSV file and establish its Composite layout." alt="" coords="5,5,212,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="246,28,212,28,212,23,246,23"/>
+</map>

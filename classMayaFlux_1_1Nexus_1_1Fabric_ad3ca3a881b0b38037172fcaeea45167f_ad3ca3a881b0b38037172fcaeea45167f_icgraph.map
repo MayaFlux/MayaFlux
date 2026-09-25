@@ -1,0 +1,22 @@
+<map id="MayaFlux::Nexus::Fabric::id" name="MayaFlux::Nexus::Fabric::id">
+<area shape="rect" id="Node000001" title="Stable id for this Fabric, assigned by Tapestry at construction." alt="" coords="1119,162,1320,187"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1Fabric_aade08c978cd3577569308e185ab76937.html#aade08c978cd3577569308e185ab76937" title="Register an Expanse for per&#45;commit crossing detection." alt="" coords="865,63,1047,103"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1168,160,1013,105,1015,100,1170,155"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nexus_1_1Fabric_ac855aedd03d3bbeec79a28c7610a541b.html#ac855aedd03d3bbeec79a28c7610a541b" title=" " alt="" coords="865,155,1047,195"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="1105,177,1047,177,1047,172,1105,172"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Nexus_1_1StateEncoder_ad8fc616eab6adf9f0af8ec03db3f3b3e.html#ad8fc616eab6adf9f0af8ec03db3f3b3e" title="Encode the given Fabric to {base_path}.exr and {base_path}.json." alt="" coords="841,219,1071,259"/>
+<area shape="poly" id="edge10_Node000001_Node000010" title=" " alt="" coords="1153,193,1040,221,1038,216,1152,188"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nexus_1_1StateDecoder_aaaa98335e2669252675c7eef36693d08.html#aaaa98335e2669252675c7eef36693d08" title="Decode and apply to fabric." alt="" coords="563,5,793,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="851,64,775,48,776,43,852,59"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nexus_1_1StateDecoder_a4bbc19256f60fe110344ba93422ab45c.html#a4bbc19256f60fe110344ba93422ab45c" title="Patch existing entities and construct missing ones from schema." alt="" coords="284,124,515,164"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="852,88,714,95,563,111,480,127,479,121,562,105,714,90,852,82"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nexus_1_1StateDecoder_ab8adc484d13d63fc196d40e45179e27d.html#ab8adc484d13d63fc196d40e45179e27d" title="Reconstruct all Fabrics in tapestry from base_dir." alt="" coords="5,124,236,164"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="270,147,236,147,236,141,270,141"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nexus_1_1Fabric_ab83de43badb20cfb3f12b863777e71a9.html#ab83de43badb20cfb3f12b863777e71a9" title="Begin wiring an Agent into the Fabric." alt="" coords="587,120,769,160"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="852,164,768,154,769,149,852,159"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nexus_1_1Fabric_ae2ed78ffdc65b33f6a871aecc34162ab.html#ae2ed78ffdc65b33f6a871aecc34162ab" title="Begin wiring an Emitter into the Fabric." alt="" coords="587,184,769,224"/>
+<area shape="poly" id="edge7_Node000006_Node000008" title=" " alt="" coords="852,188,769,197,768,192,851,183"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nexus_1_1Fabric_a360955dfcf545c868510660e4a13ca89.html#a360955dfcf545c868510660e4a13ca89" title="Begin wiring a Sensor into the Fabric." alt="" coords="587,248,769,288"/>
+<area shape="poly" id="edge9_Node000006_Node000009" title=" " alt="" coords="861,202,843,209,819,224,794,238,762,250,760,245,792,234,816,219,840,204,860,197"/>
+<area shape="poly" id="edge8_Node000008_Node000004" title=" " alt="" coords="573,184,493,167,494,161,574,179"/>
+</map>

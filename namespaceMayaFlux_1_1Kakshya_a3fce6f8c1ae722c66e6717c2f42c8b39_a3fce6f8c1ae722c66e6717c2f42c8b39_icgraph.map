@@ -1,0 +1,13 @@
+<map id="MayaFlux::Kakshya::as_normalised_float" name="MayaFlux::Kakshya::as_normalised_float">
+<area shape="rect" id="Node000001" title="Extract a DataVariant holding pixel data as a normalised float span." alt="" coords="573,105,732,145"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1VisionAnalyzer_a6894626eb161191d2811f594d04914bd.html#a6894626eb161191d2811f594d04914bd" title="Pure virtual analysis implementation &#45; derived classes implement this." alt="" coords="276,5,525,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="606,101,567,79,524,60,490,48,491,43,526,55,569,74,609,96"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Buffers_a5388bfa76cc5244415f1f3a85e936ab0.html#a5388bfa76cc5244415f1f3a85e936ab0" title="Download a VKImage to CPU and return a normalised float span." alt="" coords="307,69,495,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="559,115,494,105,495,100,560,109"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_ac15d6a35a7deb9165fa2d8ef52655510.html#ac15d6a35a7deb9165fa2d8ef52655510" title="processed_data[frame_index] as a normalised float span." alt="" coords="295,134,506,189"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="560,141,507,149,506,144,559,136"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_a8a10f89d52a123f1476faa9c76c52a25.html#a8a10f89d52a123f1476faa9c76c52a25" title="Processed frame at frame_index as a normalised float span." alt="" coords="301,213,501,267"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="611,155,526,202,495,215,493,210,524,198,609,151"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1ImageCVProcessor_a03dd11926b797b52ccbdfa37c2b5e4e1.html#a03dd11926b797b52ccbdfa37c2b5e4e1" title="Download the current GPU image, run the VisionSequence, store the result." alt="" coords="5,62,228,117"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="293,92,228,92,228,87,293,87"/>
+</map>

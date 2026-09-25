@@ -1,0 +1,5 @@
+<map id="MayaFlux::IO::IOManager::open_composite_writer" name="MayaFlux::IO::IOManager::open_composite_writer">
+<area shape="rect" id="Node000001" title="Open a Composite writer selected by the output file format." alt="" coords="240,5,427,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1IOManager_a0f2c6061e09780042df3e37b14aad90a.html#a0f2c6061e09780042df3e37b14aad90a" title="Save a complete CompositeContainer in a supported format." alt="" coords="5,5,192,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="227,28,192,28,192,23,227,23"/>
+</map>

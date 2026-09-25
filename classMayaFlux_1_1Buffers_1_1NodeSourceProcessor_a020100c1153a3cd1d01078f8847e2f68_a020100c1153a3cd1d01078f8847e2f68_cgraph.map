@@ -1,0 +1,10 @@
+<map id="MayaFlux::Buffers::NodeSourceProcessor::set_mix" name="MayaFlux::Buffers::NodeSourceProcessor::set_mix">
+<area shape="rect" id="Node000001" title="Sets the interpolation coefficient between existing and incoming data." alt="" coords="5,15,168,69"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_aeeb5db3214dcd90b0778eea361e62276.html#aeeb5db3214dcd90b0778eea361e62276" title="Mix multiple data streams with equal weighting." alt="" coords="216,29,335,55"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="169,39,202,39,202,45,169,45"/>
+<area shape="poly" id="edge4_Node000002_Node000002" title=" " alt="" coords="244,31,238,21,241,11,254,5,275,3,301,6,312,15,308,19,299,11,275,8,256,10,245,15,243,20,249,28"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_aec6eff0979aee0842a5ba73791661498.html#aec6eff0979aee0842a5ba73791661498" title="Apply gain to single&#45;channel data (in&#45;place)" alt="" coords="383,29,548,55"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="335,39,369,39,369,45,335,45"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_aee40e89d5a4f3c24d38829506034425d.html#aee40e89d5a4f3c24d38829506034425d" title="Linear map y = a*x + b applied in&#45;place." alt="" coords="596,22,745,62"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="549,39,582,39,582,45,549,45"/>
+</map>

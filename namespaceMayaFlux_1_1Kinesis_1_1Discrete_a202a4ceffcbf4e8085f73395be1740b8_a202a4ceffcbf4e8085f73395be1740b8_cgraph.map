@@ -1,0 +1,8 @@
+<map id="MayaFlux::Kinesis::Discrete::coefficient_of_variation" name="MayaFlux::Kinesis::Discrete::coefficient_of_variation">
+<area shape="rect" id="Node000001" title="Coefficient of variation (std_dev / mean) per window." alt="" coords="5,29,157,84"/>
+<area shape="poly" id="edge1_Node000001_Node000001" title=" " alt="" coords="43,29,43,19,50,10,63,5,81,3,104,6,116,14,113,18,102,11,81,8,64,10,53,15,48,21,48,29"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_ad2f0572dfef62bb7629c7ef74ff29449.html#ad2f0572dfef62bb7629c7ef74ff29449" title="Calculate mean of single&#45;channel data." alt="" coords="213,19,343,44"/>
+<area shape="poly" id="edge2_Node000001_Node000002" title=" " alt="" coords="157,44,199,39,199,44,158,50"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_ac5d314d2c7c7550f063afda336d7a5c1.html#ac5d314d2c7c7550f063afda336d7a5c1" title="Calculate standard deviation of single&#45;channel data." alt="" coords="205,68,351,93"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="158,63,192,67,191,73,157,69"/>
+</map>

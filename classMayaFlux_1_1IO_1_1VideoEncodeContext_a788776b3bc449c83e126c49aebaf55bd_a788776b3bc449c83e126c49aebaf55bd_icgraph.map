@@ -1,0 +1,14 @@
+<map id="MayaFlux::IO::VideoEncodeContext::is_valid" name="MayaFlux::IO::VideoEncodeContext::is_valid">
+<area shape="rect" id="Node000001" title="True if codec, scaler, and scratch frame are all ready." alt="" coords="1045,37,1245,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1VideoEncodeContext_a4c1014717853f1f36376ea68ffe6766d.html#a4c1014717853f1f36376ea68ffe6766d" title="Flush all buffered frames from the encoder to the mux." alt="" coords="797,5,997,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1032,45,997,41,998,36,1032,40"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1IO_1_1VideoEncodeContext_a737bc7557cae3f63d53aed62c89ad083.html#a737bc7557cae3f63d53aed62c89ad083" title="Encode one raw pixel frame into the mux context." alt="" coords="797,69,997,109"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="1032,75,998,79,997,74,1032,69"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1VideoFileWriter_a696c64fcff4d95462a6640f48495c71f.html#a696c64fcff4d95462a6640f48495c71f" title=" " alt="" coords="533,37,749,77"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="784,42,750,46,749,41,784,37"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1VideoFileWriter_a2fd67ecbf341032261b25a5a835c288f.html#a2fd67ecbf341032261b25a5a835c288f" title=" " alt="" coords="269,37,485,77"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="520,60,485,60,485,55,520,55"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1IO_1_1VideoFileWriter_a65a25d8b5e52b1d9b54806c73b4d89aa.html#a65a25d8b5e52b1d9b54806c73b4d89aa" title=" " alt="" coords="5,37,221,77"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="256,60,221,60,221,55,256,55"/>
+<area shape="poly" id="edge6_Node000006_Node000003" title=" " alt="" coords="784,78,749,73,750,68,784,73"/>
+</map>

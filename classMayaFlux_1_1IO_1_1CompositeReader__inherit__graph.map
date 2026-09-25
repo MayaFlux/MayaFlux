@@ -1,0 +1,7 @@
+<map id="MayaFlux::IO::CompositeReader" name="MayaFlux::IO::CompositeReader">
+<area shape="rect" id="Node000001" title="Typed FileReader boundary for schema&#45;bearing Composite data." alt="" coords="5,373,229,679"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1DelimitedTextReader.html" title="Incremental CSV and TSV reader producing CompositeArray values." alt="" coords="18,727,217,1241"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="120,692,120,726,115,726,115,692"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1FileReader.html" title="Abstract interface for reading various file formats into containers." alt="" coords="29,5,206,325"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="120,339,120,373,115,373,115,339"/>
+</map>

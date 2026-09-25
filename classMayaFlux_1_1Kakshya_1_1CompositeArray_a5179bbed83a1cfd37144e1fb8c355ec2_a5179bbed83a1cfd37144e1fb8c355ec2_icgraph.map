@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::CompositeArray::clear" name="MayaFlux::Kakshya::CompositeArray::clear">
+<area shape="rect" id="Node000001" title="Mark a field absent without removing its stored bytes." alt="" coords="260,5,427,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1DelimitedTextReader_a9401002a63c2f90b2c0a04e58bb94bd3.html#a9401002a63c2f90b2c0a04e58bb94bd3" title="Seek to a zero&#45;based data record by replaying from the first." alt="" coords="5,5,212,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="246,28,212,28,212,23,246,23"/>
+</map>

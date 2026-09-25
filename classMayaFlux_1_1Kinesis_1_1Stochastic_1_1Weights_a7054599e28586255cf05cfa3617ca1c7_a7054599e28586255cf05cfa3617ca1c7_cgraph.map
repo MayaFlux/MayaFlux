@@ -1,0 +1,20 @@
+<map id="MayaFlux::Kinesis::Stochastic::Weights::apply_edges" name="MayaFlux::Kinesis::Stochastic::Weights::apply_edges">
+<area shape="rect" id="Node000001" title="Write an adjacency edge list into this table." alt="" coords="5,75,155,129"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a878fe1820a72f64efebc516b1749f77d.html#a878fe1820a72f64efebc516b1749f77d" title="Normalize single&#45;channel data to specified peak level (in&#45;place)" alt="" coords="203,29,361,55"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="154,77,225,56,226,61,156,82"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Weights_afcaa4d43734fecbffbaf69454b2e9da6.html#afcaa4d43734fecbffbaf69454b2e9da6" title="Scale a row so its cells sum to one." alt="" coords="207,107,357,161"/>
+<area shape="poly" id="edge5_Node000001_Node000004" title=" " alt="" coords="155,111,194,117,194,123,155,116"/>
+<area shape="poly" id="edge4_Node000002_Node000002" title=" " alt="" coords="249,31,242,21,246,11,259,5,282,3,310,6,321,16,318,20,308,11,282,8,261,10,250,15,247,20,253,28"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a5de3d13e1b9ceb59d3acb04361e2a5e5.html#a5de3d13e1b9ceb59d3acb04361e2a5e5" title="Normalize to [target_min, target_max] in&#45;place Single&#45;pass min/max reduction followed by a single tra..." alt="" coords="424,22,573,62"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="362,48,411,48,410,54,362,53"/>
+<area shape="poly" id="edge3_Node000003_Node000002" title=" " alt="" coords="424,36,375,36,375,30,424,31"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Weights_ae887f9f18e9559b77ab7692fd5c469d0.html#ae887f9f18e9559b77ab7692fd5c469d0" title="Atomic read of one cell." alt="" coords="409,86,588,126"/>
+<area shape="poly" id="edge6_Node000004_Node000005" title=" " alt="" coords="357,122,395,117,396,122,357,127"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Weights_a09e43b5a845040464dbed8b83a754c92.html#a09e43b5a845040464dbed8b83a754c92" title="Non&#45;atomic view of one row." alt="" coords="636,143,817,183"/>
+<area shape="poly" id="edge9_Node000004_Node000006" title=" " alt="" coords="357,136,622,154,622,159,357,142"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Weights_ac59a1767c7313db6d977559b39664deb.html#ac59a1767c7313db6d977559b39664deb" title=" " alt="" coords="424,201,573,256"/>
+<area shape="poly" id="edge10_Node000004_Node000007" title=" " alt="" coords="346,159,424,193,422,198,344,164"/>
+<area shape="poly" id="edge7_Node000005_Node000006" title=" " alt="" coords="579,123,634,137,633,143,578,129"/>
+<area shape="poly" id="edge8_Node000006_Node000006" title=" " alt="" coords="684,144,682,134,689,124,704,119,727,117,753,120,768,127,765,132,752,125,727,122,705,124,692,129,687,135,689,142"/>
+<area shape="poly" id="edge11_Node000007_Node000006" title=" " alt="" coords="573,205,642,185,644,190,575,210"/>
+</map>

@@ -1,0 +1,11 @@
+<map id="MayaFlux::Buffers::BufferProcessingChain::queue_pending_processor_op" name="MayaFlux::Buffers::BufferProcessingChain::queue_pending_processor_op">
+<area shape="rect" id="Node000001" title=" " alt="" coords="529,45,752,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_a8a06f46d7b89b81b87a256f188b53c81.html#a8a06f46d7b89b81b87a256f188b53c81" title="Adds a processor to the transformation pipeline for a specific buffer." alt="" coords="294,5,462,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="515,56,462,48,463,43,516,51"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_a3f49ac5def1875caa775f772fbd43097.html#a3f49ac5def1875caa775f772fbd43097" title=" " alt="" coords="275,84,481,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="516,94,482,99,481,94,515,88"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_a9f8055bfaadaeaccacd1490883703e82.html#a9f8055bfaadaeaccacd1490883703e82" title="Removes a processor from the pipeline for a specific buffer." alt="" coords="32,44,200,99"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="261,96,200,87,201,81,262,91"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_a221071c9ed1b5f8bc3a6982c12ea505d.html#a221071c9ed1b5f8bc3a6982c12ea505d" title="Removes a processor from any slot associated with a buffer." alt="" coords="5,123,227,177"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="262,131,227,136,227,131,261,126"/>
+</map>

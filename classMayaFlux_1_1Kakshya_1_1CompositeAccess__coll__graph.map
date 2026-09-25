@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::CompositeAccess" name="MayaFlux::Kakshya::CompositeAccess">
+<area shape="rect" id="Node000001" title="Validated, non&#45;owning access to packed Composite NDData storage." alt="" coords="5,328,159,608"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1CompositeLayout.html" title="Shared field description and byte layout for a CompositeArray." alt="" coords="7,5,157,265"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="85,266,85,312,79,312,79,266"/>
+</map>

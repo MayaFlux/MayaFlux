@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Text::rasterize_quads" name="MayaFlux::Portal::Text::rasterize_quads">
+<area shape="rect" id="Node000001" title="Write glyph quads into a caller&#45;provided RGBA8 pixel buffer." alt="" coords="220,5,387,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Text_a1fb556972dbde4930e55c243f8581a36.html#a1fb556972dbde4930e55c243f8581a36" title="Rasterize a mutated quad span into an existing TextBuffer." alt="" coords="5,5,172,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="206,28,172,28,172,23,206,23"/>
+</map>

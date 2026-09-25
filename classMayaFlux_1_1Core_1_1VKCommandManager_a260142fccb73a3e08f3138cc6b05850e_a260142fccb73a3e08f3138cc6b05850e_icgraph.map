@@ -1,0 +1,15 @@
+<map id="MayaFlux::Core::VKCommandManager::record_deferred_commands" name="MayaFlux::Core::VKCommandManager::record_deferred_commands">
+<area shape="rect" id="Node000001" title="Record deferred commands for later submission." alt="" coords="904,94,1120,149"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1BackendResourceManager_ae611d961802ca76657d758d0a834b5aa.html#ae611d961802ca76657d758d0a834b5aa" title="Record deferred command recording for buffer operations." alt="" coords="587,101,856,141"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="890,124,856,124,856,119,890,119"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1BackendResourceManager_a4bfdbf4af7a333cc7a719b136e90121a.html#a4bfdbf4af7a333cc7a719b136e90121a" title="Download image data to a host pointer." alt="" coords="292,37,539,77"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="611,101,511,80,512,75,612,96"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Core_1_1BackendResourceManager_ae3f1ac9a86e74efe0b8afa6a4f57168f.html#ae3f1ac9a86e74efe0b8afa6a4f57168f" title=" " alt="" coords="292,101,539,141"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="573,124,539,124,539,119,573,119"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Core_1_1BackendResourceManager_a6be487a58202182335fcd5817998449c.html#a6be487a58202182335fcd5817998449c" title="Upload image data using a caller&#45;supplied persistent staging buffer." alt="" coords="292,165,539,205"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="612,147,512,168,511,163,611,142"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a44e76368fe70e45a1b7a3f6cb91fdd9c.html#a44e76368fe70e45a1b7a3f6cb91fdd9c" title="Download pixel data from a VKImage, reusing a caller&#45;supplied persistent staging buffer." alt="" coords="14,5,235,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="278,45,235,40,236,35,278,40"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1BackendWindowHandler_aa812bf045d7548824a757d712b1b3e75.html#aa812bf045d7548824a757d712b1b3e75" title=" " alt="" coords="5,69,244,109"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="279,75,244,79,244,74,278,70"/>
+</map>

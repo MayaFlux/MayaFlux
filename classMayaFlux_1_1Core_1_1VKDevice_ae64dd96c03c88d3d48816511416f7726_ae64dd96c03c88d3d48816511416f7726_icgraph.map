@@ -1,0 +1,9 @@
+<map id="MayaFlux::Core::VKDevice::get_present_queue" name="MayaFlux::Core::VKDevice::get_present_queue">
+<area shape="rect" id="Node000001" title="Queue for a presentation&#45;capable family." alt="" coords="544,37,739,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VKDevice_a702feebbf49ee57e90670e87a00caef2.html#a702feebbf49ee57e90670e87a00caef2" title="Queue for the preferred presentation family." alt="" coords="275,5,496,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="530,46,496,42,497,37,531,41"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1VKContext_a1ff7cd83dd71fd5d0047380648a13c2a.html#a1ff7cd83dd71fd5d0047380648a13c2a" title="Queue for a presentation&#45;capable family." alt="" coords="285,69,485,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="531,74,486,79,485,74,530,69"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1VKContext_a56ed4e8311a116a915c14e40e4122a29.html#a56ed4e8311a116a915c14e40e4122a29" title="Queue for the preferred presentation family." alt="" coords="5,5,227,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="261,28,227,28,227,23,261,23"/>
+</map>

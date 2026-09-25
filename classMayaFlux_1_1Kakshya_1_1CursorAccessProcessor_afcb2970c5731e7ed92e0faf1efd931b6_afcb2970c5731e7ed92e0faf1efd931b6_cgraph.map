@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::CursorAccessProcessor::on_attach" name="MayaFlux::Kakshya::CursorAccessProcessor::on_attach">
+<area shape="rect" id="Node000001" title="Called when this processor is attached to a container." alt="" coords="5,5,177,60"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure_a27b9d48a60ea2512b02a8196c6581eec.html#a27b9d48a60ea2512b02a8196c6581eec" title="Extract channel count from dimensions." alt="" coords="225,5,400,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="178,30,212,30,212,35,178,35"/>
+</map>

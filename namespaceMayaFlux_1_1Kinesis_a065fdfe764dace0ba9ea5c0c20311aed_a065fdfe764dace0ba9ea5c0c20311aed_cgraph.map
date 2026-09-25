@@ -1,0 +1,13 @@
+<map id="MayaFlux::Kinesis::generate_sdf_mesh" name="MayaFlux::Kinesis::generate_sdf_mesh">
+<area shape="rect" id="Node000001" title="Extract an isosurface mesh from a scalar field over a lattice." alt="" coords="5,101,156,141"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_aae90616312e63c025dfc44f6245c3b43.html#aae90616312e63c025dfc44f6245c3b43" title="Extract an isosurface from a scalar field using marching cubes." alt="" coords="204,101,355,141"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="156,119,190,119,190,124,156,124"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_a3e6ac0a203b99a3e1d7d6becd8aec41f.html#a3e6ac0a203b99a3e1d7d6becd8aec41f" title=" " alt="" coords="419,5,579,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="315,99,402,55,420,48,422,53,404,60,317,103"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kakshya_1_1MeshData_a3cecabe70345deaa8c2da479a1a8193a.html#a3cecabe70345deaa8c2da479a1a8193a" title="Construct an empty MeshData with the canonical 60&#45;byte mesh layout." alt="" coords="419,69,578,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="355,108,406,100,406,105,356,113"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Kakshya_1_1VertexLayout_a7b7a30b2a13cb2676713a352f298f607.html#a7b7a30b2a13cb2676713a352f298f607" title="Factory: layout for MeshVertex (position, color, weight, uv, normal, tangent)" alt="" coords="403,133,595,173"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="356,130,389,135,389,140,355,135"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1MeshInsertion_a618b35166b14858aca7b8f8c8ce693c8.html#a618b35166b14858aca7b8f8c8ce693c8" title="Insert a single flat mesh (no submesh tracking)." alt="" coords="405,197,592,237"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="317,139,404,183,422,190,420,195,402,188,315,144"/>
+</map>

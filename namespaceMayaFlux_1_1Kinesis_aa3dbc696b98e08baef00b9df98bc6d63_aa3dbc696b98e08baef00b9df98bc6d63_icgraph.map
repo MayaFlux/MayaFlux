@@ -1,0 +1,11 @@
+<map id="MayaFlux::Kinesis::correlation" name="MayaFlux::Kinesis::correlation">
+<area shape="rect" id="Node000001" title="Pearson correlation between two equal&#45;length windows." alt="" coords="400,69,549,109"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_ad6b60625bc8c09a8430e14d67c78c5fe.html#ad6b60625bc8c09a8430e14d67c78c5fe" title="How tightly a set of streams move together." alt="" coords="203,5,352,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="399,68,339,48,340,43,400,63"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_aafa948ab4085ed9b618db86833571308.html#aafa948ab4085ed9b618db86833571308" title="Estimate a repetition period by direct autocorrelation over a bounded lag range." alt="" coords="203,69,352,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="386,92,352,92,352,87,386,87"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_a7c5edc7091879dba2284cbd0abbd1d6b.html#a7c5edc7091879dba2284cbd0abbd1d6b" title="Correlation between two spans at a single fixed lag." alt="" coords="203,133,352,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="400,116,340,136,339,131,399,111"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_aaa4a12fd2735fe4794f747ca74c45633.html#aaa4a12fd2735fe4794f747ca74c45633" title="Search a bounded lag range for the offset at which two streams correlate most strongly." alt="" coords="5,133,155,173"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="189,156,155,156,155,151,189,151"/>
+</map>

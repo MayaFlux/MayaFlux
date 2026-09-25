@@ -1,0 +1,6 @@
+<map id="MayaFlux::Kinesis::SpatialIndex::SpatialIndex" name="MayaFlux::Kinesis::SpatialIndex::SpatialIndex">
+<area shape="rect" id="Node000001" title="Construct a spatial index." alt="" coords="5,29,197,69"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_aa7c4bdadf6a59ad467edbcc8b9b61c9d.html#aa7c4bdadf6a59ad467edbcc8b9b61c9d" title="Normalized distance from an anchor point using the specified metric." alt="" coords="245,29,395,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="197,47,231,47,231,52,197,52"/>
+<area shape="poly" id="edge2_Node000002_Node000002" title=" " alt="" coords="279,30,277,20,283,10,298,5,320,3,346,6,360,13,357,18,344,11,320,8,299,10,286,15,282,21,284,28"/>
+</map>

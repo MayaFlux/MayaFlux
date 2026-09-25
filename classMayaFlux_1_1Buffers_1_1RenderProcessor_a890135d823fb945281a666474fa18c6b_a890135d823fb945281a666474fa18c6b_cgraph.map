@@ -1,0 +1,27 @@
+<map id="MayaFlux::Buffers::RenderProcessor::initialize_descriptors" name="MayaFlux::Buffers::RenderProcessor::initialize_descriptors">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,268,200,323"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VKBufferProcessor_ad871cad95dbb2a178d1752aa8573eabc.html#ad871cad95dbb2a178d1752aa8573eabc" title=" " alt="" coords="250,73,445,128"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="122,266,174,203,208,169,246,138,256,132,259,137,250,143,212,173,178,207,126,270"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a54c4e0f2eb44a261d8463e8423e3746d.html#a54c4e0f2eb44a261d8463e8423e3746d" title="Get the global render flow instance." alt="" coords="249,153,446,193"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="146,265,247,209,277,195,280,200,249,214,148,270"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a715d57394465ff2924727d7c82d87e7b.html#a715d57394465ff2924727d7c82d87e7b" title="Get the global shader compiler instance." alt="" coords="497,305,694,345"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="187,265,248,253,348,241,392,243,447,253,503,271,551,295,549,300,501,276,446,258,391,248,348,246,248,258,188,271"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_aace8d2404745710021e77367dac9d2dc.html#aace8d2404745710021e77367dac9d2dc" title="Called before descriptor sets are created." alt="" coords="248,268,447,323"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="200,293,234,293,234,298,200,298"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a40d54556d57076dcaf67bf30e1063c52.html#a40d54556d57076dcaf67bf30e1063c52" title="Called after descriptor sets are created." alt="" coords="269,347,426,401"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="189,320,257,342,255,347,187,325"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a1fd501788f3b88dcf76ff38d6812e81b.html#a1fd501788f3b88dcf76ff38d6812e81b" title="Resolve logical descriptor set index to actual index." alt="" coords="502,457,689,512"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="117,322,136,362,164,410,202,455,224,475,249,490,278,502,307,511,369,519,431,517,488,509,489,515,431,522,369,524,306,516,276,507,247,495,221,479,198,459,159,413,131,365,112,324"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a4adab2a16b3c9e0df7b5ad8db5a4a1f0.html#a4adab2a16b3c9e0df7b5ad8db5a4a1f0" title=" " alt="" coords="256,425,439,480"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="134,321,186,366,249,410,261,417,258,422,247,415,183,370,131,325"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="512,5,679,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="444,71,498,57,499,62,446,77"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="495,85,696,125"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="445,100,481,100,481,105,445,105"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1RenderFlow_a427f34bcec94e920d4dbbb76ae7f175f.html#a427f34bcec94e920d4dbbb76ae7f175f" title=" " alt="" coords="497,153,694,193"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="446,170,483,170,483,175,446,175"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="744,305,941,345"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="694,322,730,322,730,327,694,327"/>
+<area shape="poly" id="edge12_Node000012_Node000007" title=" " alt="" coords="418,423,445,410,551,350,553,354,448,415,420,428"/>
+<area shape="poly" id="edge13_Node000012_Node000011" title=" " alt="" coords="439,462,489,468,488,474,439,467"/>
+</map>

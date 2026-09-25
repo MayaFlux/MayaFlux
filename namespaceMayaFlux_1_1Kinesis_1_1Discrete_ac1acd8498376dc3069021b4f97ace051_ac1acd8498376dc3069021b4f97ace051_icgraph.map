@@ -1,0 +1,12 @@
+<map id="MayaFlux::Kinesis::Discrete::span_sort_indices" name="MayaFlux::Kinesis::Discrete::span_sort_indices">
+<area shape="rect" id="Node000001" title="Indices that would sort a span in the given direction." alt="" coords="977,39,1127,93"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a58fb6ebc04ea9849db050e4c38478706.html#a58fb6ebc04ea9849db050e4c38478706" title="Per&#45;channel sort indices." alt="" coords="755,5,929,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="963,55,929,49,930,44,964,49"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Yantra_a50bfcff81fce3d8535a738866b9e32ba.html#a50bfcff81fce3d8535a738866b9e32ba" title="Generate sort indices for any ComputeData type." alt="" coords="507,46,707,86"/>
+<area shape="poly" id="edge5_Node000001_Node000003" title=" " alt="" coords="964,73,929,74,755,74,707,73,707,67,755,69,929,69,963,68"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="741,50,707,54,706,49,740,44"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1StandardSorter_a1187d263424d60d6834853aa7230e081.html#a1187d263424d60d6834853aa7230e081" title="Generate sort indices only." alt="" coords="259,46,459,86"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="493,69,459,69,459,63,493,63"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1StandardSorter_a6413f024a99f05c81b4f461ed4e4d7ee.html#a6413f024a99f05c81b4f461ed4e4d7ee" title="Main sorting implementation with type dispatch." alt="" coords="5,46,211,86"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="245,69,211,69,211,63,245,63"/>
+</map>

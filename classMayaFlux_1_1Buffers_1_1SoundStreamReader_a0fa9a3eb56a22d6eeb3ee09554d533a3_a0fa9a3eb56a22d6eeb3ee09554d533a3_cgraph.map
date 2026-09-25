@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::SoundStreamReader::set_container" name="MayaFlux::Buffers::SoundStreamReader::set_container">
+<area shape="rect" id="Node000001" title="Set the container to adapt." alt="" coords="5,5,188,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1SoundStreamReader_ae8897da25e0b24c516ab2e30aa7e5bf9.html#ae8897da25e0b24c516ab2e30aa7e5bf9" title="Respond to container state changes (e.g., READY, PROCESSED, NEEDS_REMOVAL)." alt="" coords="236,5,420,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="188,30,222,30,222,35,188,35"/>
+</map>

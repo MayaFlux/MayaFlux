@@ -1,0 +1,16 @@
+<map id="MayaFlux::IO::IOManager::save_volume" name="MayaFlux::IO::IOManager::save_volume">
+<area shape="rect" id="Node000001" title="Download and save a GPU&#45;resident volume to disk asynchronously." alt="" coords="5,69,192,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1WriterRegistry_aa46ea7ad375565657b552522e327ceee.html#aa46ea7ad375565657b552522e327ceee" title=" " alt="" coords="240,5,451,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="176,67,254,46,255,51,177,72"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1IO_ab10ae94f4c8e87f07a69e27630596c20.html#ab10ae94f4c8e87f07a69e27630596c20" title="Download named fields from a GPU&#45;resident volume into host VolumeData." alt="" coords="256,69,435,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="192,87,242,87,242,92,192,92"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1IO_1_1WriterRegistry_a9ffbd681909928bb45748f2a1c578fb8.html#a9ffbd681909928bb45748f2a1c578fb8" title=" " alt="" coords="240,133,451,173"/>
+<area shape="poly" id="edge7_Node000001_Node000007" title=" " alt="" coords="177,107,255,127,254,132,176,112"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kakshya_1_1VolumeData_ad18c3092c8a26b207df1a6ff8ad8bbef.html#ad18c3092c8a26b207df1a6ff8ad8bbef" title="Cells in the lattice, which every field&#39;s element_count() must equal." alt="" coords="741,71,917,111"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="435,85,499,84,693,84,728,85,728,90,693,89,499,89,435,90"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Kakshya_1_1VolumeData_a6eb5ed3d17b6580cc64d6a94088f8b5a.html#a6eb5ed3d17b6580cc64d6a94088f8b5a" title="Check that every field is densely populated over the lattice." alt="" coords="499,99,693,139"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="435,97,485,103,485,108,434,102"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Kinesis_1_1Lattice3D_a544eb1555cf9cbaca83638e71bfb0395.html#a544eb1555cf9cbaca83638e71bfb0395" title="Total cell count." alt="" coords="965,71,1124,111"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="918,88,952,88,952,93,918,93"/>
+<area shape="poly" id="edge6_Node000006_Node000004" title=" " alt="" coords="693,104,728,100,728,105,694,110"/>
+</map>

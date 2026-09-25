@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::CompositeInsertion" name="MayaFlux::Kakshya::CompositeInsertion">
+<area shape="rect" id="Node000001" title="Mutable insertion adapter for a CompositeArray." alt="" coords="5,831,171,1011"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray.html" title="Owns a sequence of values that share a CompositeLayout." alt="" coords="13,328,163,768"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="91,768,91,814,85,814,85,768"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1CompositeLayout.html" title="Shared field description and byte layout for a CompositeArray." alt="" coords="13,5,163,265"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="91,266,91,311,85,311,85,266"/>
+</map>

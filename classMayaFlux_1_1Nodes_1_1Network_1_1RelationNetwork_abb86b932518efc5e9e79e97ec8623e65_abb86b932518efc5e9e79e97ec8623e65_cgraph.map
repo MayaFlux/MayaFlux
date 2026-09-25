@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::RelationNetwork::add_slot" name="MayaFlux::Nodes::Network::RelationNetwork::add_slot">
+<area shape="rect" id="Node000001" title="Add a slot to the network." alt="" coords="5,5,208,45"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Nodes_1_1Network_1_1RelationSlot_a512ad5661c10d03b2b28731d3b23f3ae.html#a512ad5661c10d03b2b28731d3b23f3ae" title="Preallocate this slot&#39;s block storage without changing its size." alt="" coords="256,5,464,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="208,23,242,23,242,28,208,28"/>
+</map>

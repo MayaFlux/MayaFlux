@@ -1,0 +1,23 @@
+<map id="MayaFlux::Nodes::Network::GpuFieldOperator::build_spec" name="MayaFlux::Nodes::Network::GpuFieldOperator::build_spec">
+<area shape="rect" id="Node000001" title="Assemble the compute spec for the current bindings." alt="" coords="5,293,227,333"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderSpec_1_1Assemble_a44f5c516ff6ccfe853b704dffbdd1749.html#a44f5c516ff6ccfe853b704dffbdd1749" title="Finalise and return the ShaderSpec." alt="" coords="289,5,507,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="121,292,140,244,171,179,215,112,243,82,273,55,281,50,284,54,276,59,246,85,220,116,176,182,145,246,126,294"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderSpec_1_1Assemble_a155d90298b041d5007e79fd55d610f5e.html#a155d90298b041d5007e79fd55d610f5e" title="Declare a function emitted before main() in the generated GLSL." alt="" coords="299,70,497,125"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="128,291,185,216,226,172,273,135,286,128,288,132,276,140,230,176,189,219,132,294"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderSpec_1_1Assemble_a5f58cbf0f6dd48fa0e858efc067f345e.html#a5f58cbf0f6dd48fa0e858efc067f345e" title="Supply a user kernel via MF_KERNEL." alt="" coords="285,149,511,189"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="139,291,197,245,234,220,274,199,292,191,294,196,276,204,237,225,200,249,142,295"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GpuFieldOperator_afafd2127aa18baf52a9ed7ecac31b22b.html#afafd2127aa18baf52a9ed7ecac31b22b" title="Whether build_spec() needs a per&#45;vertex cluster id this cycle." alt="" coords="299,214,497,269"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="194,291,284,268,286,273,196,296"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderSpec_1_1Assemble_a468e0e2f7ccbab32e59ed547694484b7.html#a468e0e2f7ccbab32e59ed547694484b7" title="Declare a push constant field with explicit format." alt="" coords="297,293,499,333"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="227,311,283,311,283,316,227,316"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GpuFieldOperator_af0948c64557984ec42018adc54c4c85a.html#af0948c64557984ec42018adc54c4c85a" title="Locate a target&#39;s word offset and component count in the layout." alt="" coords="275,357,521,397"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="206,331,297,352,296,357,204,336"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderSpec_1_1Assemble_a59cdd9a2ab439b42c89835809aae45f4.html#a59cdd9a2ab439b42c89835809aae45f4" title="Declare an SSBO binding." alt="" coords="290,421,506,461"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="146,331,204,370,276,407,295,414,294,419,274,412,202,374,144,336"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderSpec_1_1Assemble_afde92dafcd11bb416b08c83af5122a4c.html#afde92dafcd11bb416b08c83af5122a4c" title=" " alt="" coords="299,486,497,541"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="134,332,192,400,232,438,276,471,288,478,286,483,273,476,228,442,188,404,130,335"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderSpec_1_1Assemble_ab349ded3d71596d2354921387c82f84c.html#ab349ded3d71596d2354921387c82f84c" title="Override workgroup size." alt="" coords="299,565,497,619"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="128,333,148,377,180,436,223,497,248,525,276,550,289,558,286,563,273,554,244,529,218,500,175,439,143,380,123,335"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kakshya_a1a6f442f75e19775fcf77da154f74990.html#a1a6f442f75e19775fcf77da154f74990" title="Byte size of one element of a GpuDataFormat." alt="" coords="569,5,745,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="507,23,555,23,555,28,507,28"/>
+</map>

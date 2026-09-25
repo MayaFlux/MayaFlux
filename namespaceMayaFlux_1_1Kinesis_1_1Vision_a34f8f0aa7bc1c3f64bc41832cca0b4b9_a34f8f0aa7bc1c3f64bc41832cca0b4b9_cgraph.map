@@ -1,0 +1,10 @@
+<map id="MayaFlux::Kinesis::Vision::harris_response" name="MayaFlux::Kinesis::Vision::harris_response">
+<area shape="rect" id="Node000001" title="Compute the Harris corner response map." alt="" coords="5,87,179,127"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_aabf55f6ea7ae15d5c5e05e27075aa54b.html#aabf55f6ea7ae15d5c5e05e27075aa54b" title="Separable Gaussian blur." alt="" coords="227,29,387,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="167,84,217,70,219,76,168,89"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_aeab6358bb22d5e99a73934d063aeb7ba.html#aeab6358bb22d5e99a73934d063aeb7ba" title="Find peak amplitude in single&#45;channel data." alt="" coords="243,94,370,119"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="179,104,229,104,229,109,179,109"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a68bd62ba0feea86a92e8dca22a3da0c0.html#a68bd62ba0feea86a92e8dca22a3da0c0" title="Sobel gradient writing dx and dy into caller&#45;supplied buffers." alt="" coords="232,144,381,184"/>
+<area shape="poly" id="edge4_Node000001_Node000004" title=" " alt="" coords="168,124,220,138,218,143,167,129"/>
+<area shape="poly" id="edge2_Node000002_Node000002" title=" " alt="" coords="267,30,264,20,271,10,285,5,307,3,332,6,345,13,343,18,330,11,307,8,286,10,274,15,269,21,272,28"/>
+</map>

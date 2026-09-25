@@ -1,0 +1,30 @@
+<map id="MayaFlux::Kriya::TemporalActivation::cancel" name="MayaFlux::Kriya::TemporalActivation::cancel">
+<area shape="rect" id="Node000001" title="Cancels any currently active node." alt="" coords="5,165,201,205"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1Timer_af3c122d5e399123a2d7a58e23269e8ad.html#af3c122d5e399123a2d7a58e23269e8ad" title="Cancels any scheduled callback." alt="" coords="262,61,437,101"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="151,163,287,104,289,109,153,168"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kriya_1_1TemporalActivation_a65d420344629b85e2d038b9641496b03.html#a65d420344629b85e2d038b9641496b03" title="Cleans up the current operation, disconnecting the entity and resetting state." alt="" coords="249,158,449,213"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="202,183,236,183,236,188,202,188"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Kriya_1_1Timer_a5432fa70b1f9585873e264bf76393760.html#a5432fa70b1f9585873e264bf76393760" title="Checks if a callback is currently scheduled." alt="" coords="262,237,437,277"/>
+<area shape="poly" id="edge14_Node000001_Node000014" title=" " alt="" coords="173,203,268,231,267,236,172,208"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_aefd214af5e476f686dc86cc7d7220c96.html#aefd214af5e476f686dc86cc7d7220c96" title="Cancels and removes a task from the scheduler." alt="" coords="497,29,728,69"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="436,68,483,62,484,68,437,73"/>
+<area shape="poly" id="edge3_Node000003_Node000003" title=" " alt="" coords="564,30,561,20,569,10,586,5,613,3,643,6,659,13,657,18,642,11,613,8,587,10,572,15,566,21,569,28"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_afb823dfb8ca7ec5182cfaa8e3ee93649.html#afb823dfb8ca7ec5182cfaa8e3ee93649" title="Find task entry by routine pointer." alt="" coords="791,29,1021,69"/>
+<area shape="poly" id="edge4_Node000003_Node000004" title=" " alt="" coords="728,47,777,47,777,52,728,52"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_ab7485f6b5bd28a3d64ffaa5034d3ed9a.html#ab7485f6b5bd28a3d64ffaa5034d3ed9a" title="Gets or creates the root node for a specific token and channel." alt="" coords="505,93,721,133"/>
+<area shape="poly" id="edge6_Node000005_Node000006" title=" " alt="" coords="449,155,525,134,527,139,450,161"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1BufferManager_ad22127b9243ca6e62b2464d6bb5e8f1a.html#ad22127b9243ca6e62b2464d6bb5e8f1a" title="Removes a buffer from a token." alt="" coords="525,158,701,213"/>
+<area shape="poly" id="edge8_Node000005_Node000008" title=" " alt="" coords="450,183,511,183,511,188,450,188"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_a08ad52a5c6a952fcaaea8bffce9f5795.html#a08ad52a5c6a952fcaaea8bffce9f5795" title="Remove a network from a processing token." alt="" coords="505,237,721,277"/>
+<area shape="poly" id="edge9_Node000005_Node000009" title=" " alt="" coords="450,210,527,231,525,236,449,215"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Nodes_1_1RootNode_a3223d79efd0c1efec1bbbc0ac0e70902.html#a3223d79efd0c1efec1bbbc0ac0e70902" title="Removes a node from this root node." alt="" coords="509,301,716,341"/>
+<area shape="poly" id="edge11_Node000005_Node000011" title=" " alt="" coords="431,211,451,223,467,240,475,257,484,272,499,287,508,293,505,297,496,291,479,276,471,259,462,243,448,227,428,215"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_a9c43d6dbcd53013e4d61fa43f038384a.html#a9c43d6dbcd53013e4d61fa43f038384a" title="Ensures a root node exists for the given token and channel." alt="" coords="798,93,1014,133"/>
+<area shape="poly" id="edge7_Node000006_Node000007" title=" " alt="" coords="721,111,784,111,784,116,721,116"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_adc75a7be1c84a5d43f4c4b71da4de404.html#adc75a7be1c84a5d43f4c4b71da4de404" title="Unregister network globally." alt="" coords="776,237,1036,277"/>
+<area shape="poly" id="edge10_Node000009_Node000010" title=" " alt="" coords="721,255,762,255,762,260,721,260"/>
+<area shape="rect" id="Node000012" href="$namespaceMayaFlux_1_1Nodes_a2b661b58f860423fa6cf1d12c5accbd8.html#a2b661b58f860423fa6cf1d12c5accbd8" title="Atomically adds a flag to a node state." alt="" coords="812,301,1000,341"/>
+<area shape="poly" id="edge12_Node000011_Node000012" title=" " alt="" coords="716,319,798,319,798,324,716,324"/>
+<area shape="rect" id="Node000013" href="$namespaceMayaFlux_1_1Nodes_a8abc7b8f33819075e738d5ed027bd9ec.html#a8abc7b8f33819075e738d5ed027bd9ec" title="Atomically sets a node state flag to a specific value." alt="" coords="812,365,1000,405"/>
+<area shape="poly" id="edge13_Node000011_Node000013" title=" " alt="" coords="706,339,801,360,800,365,705,344"/>
+</map>

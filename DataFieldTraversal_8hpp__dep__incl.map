@@ -1,0 +1,24 @@
+<map id="DataFieldTraversal.hpp" name="DataFieldTraversal.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="285,5,456,31"/>
+<area shape="rect" id="Node000002" href="$CompositeContainer_8hpp.html" title=" " alt="" coords="279,79,462,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="373,44,373,79,368,79,368,44"/>
+<area shape="rect" id="Node000003" href="$CompositeContainer_8cpp.html" title=" " alt="" coords="5,152,187,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="314,110,141,154,140,149,313,105"/>
+<area shape="rect" id="Node000004" href="$CompositeReader_8cpp.html" title=" " alt="" coords="211,152,375,177"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="350,115,308,154,304,150,346,111"/>
+<area shape="rect" id="Node000005" href="$Creator_8hpp.html" title=" " alt="" coords="399,152,497,177"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="395,111,437,150,434,154,391,115"/>
+<area shape="rect" id="Node000011" href="$IOManager_8cpp.html" title=" " alt="" coords="521,152,639,177"/>
+<area shape="poly" id="edge11_Node000002_Node000011" title=" " alt="" coords="418,106,547,149,545,154,417,111"/>
+<area shape="rect" id="Node000006" href="$Creator_8cpp.html" title=" " alt="" coords="315,225,411,251"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="426,188,378,227,375,223,422,184"/>
+<area shape="rect" id="Node000007" href="$MayaFlux_8hpp.html" title=" " alt="" coords="391,299,505,324"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="451,191,451,298,445,298,445,191"/>
+<area shape="rect" id="Node000009" href="$Temporal_8hpp.html" title=" " alt="" coords="486,225,597,251"/>
+<area shape="poly" id="edge8_Node000005_Node000009" title=" " alt="" coords="475,183,528,223,524,227,472,188"/>
+<area shape="rect" id="Node000008" href="$LiveAid_8hpp.html" title=" " alt="" coords="399,372,497,397"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="451,338,451,372,445,372,445,338"/>
+<area shape="poly" id="edge9_Node000009_Node000007" title=" " alt="" coords="517,261,465,301,462,296,514,257"/>
+<area shape="rect" id="Node000010" href="$Temporal_8cpp.html" title=" " alt="" coords="529,299,639,324"/>
+<area shape="poly" id="edge10_Node000009_Node000010" title=" " alt="" coords="558,261,579,297,575,300,553,264"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::VKBuffer::get_render_processor" name="MayaFlux::Buffers::VKBuffer::get_render_processor">
+<area shape="rect" id="Node000001" title="Get a RenderProcessor suitable for rendering this buffer." alt="" coords="255,41,412,96"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_acd9e85e4d00e68f4839bd14adaf9cdd8.html#acd9e85e4d00e68f4839bd14adaf9cdd8" title="Get additional live render processors attached through the chain." alt="" coords="16,5,196,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="240,57,196,50,197,44,241,51"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1TextBuffer_a20bb5344ba60f4af317a00cde144f63a.html#a20bb5344ba60f4af317a00cde144f63a" title="Delegates to TextureBuffer::setup_rendering, then enables streaming mode on the TextureProcessor and ..." alt="" coords="5,85,207,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="241,86,207,91,206,86,240,81"/>
+</map>

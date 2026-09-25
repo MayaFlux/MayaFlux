@@ -1,0 +1,10 @@
+<map id="MayaFlux::Kinesis::estimate_period" name="MayaFlux::Kinesis::estimate_period">
+<area shape="rect" id="Node000001" title="Estimate a repetition period by direct autocorrelation over a bounded lag range." alt="" coords="5,63,155,103"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_aa3dbc696b98e08baef00b9df98bc6d63.html#aa3dbc696b98e08baef00b9df98bc6d63" title="Pearson correlation between two equal&#45;length windows." alt="" coords="205,5,355,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="150,60,196,47,198,52,151,65"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_ad2f0572dfef62bb7629c7ef74ff29449.html#ad2f0572dfef62bb7629c7ef74ff29449" title="Calculate mean of single&#45;channel data." alt="" coords="405,103,536,129"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="155,86,392,107,392,112,155,92"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Estimate_a60372cd858f0f63d5bc45028e354406d.html#a60372cd858f0f63d5bc45028e354406d" title="Sample variance of a span." alt="" coords="203,121,357,175"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="143,100,190,116,189,121,141,105"/>
+<area shape="poly" id="edge4_Node000004_Node000003" title=" " alt="" coords="357,132,391,127,392,132,358,138"/>
+</map>

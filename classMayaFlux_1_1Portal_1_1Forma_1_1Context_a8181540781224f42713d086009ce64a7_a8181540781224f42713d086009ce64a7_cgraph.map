@@ -1,0 +1,19 @@
+<map id="MayaFlux::Portal::Forma::Context::press_and_hold" name="MayaFlux::Portal::Forma::Context::press_and_hold">
+<area shape="rect" id="Node000001" title="Register a key handler that fires on the initial press and on every repeat, with a deterministic firs..." alt="" coords="5,133,196,173"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_ae213a276596a93e469537511b17630ee.html#ae213a276596a93e469537511b17630ee" title="Called repeatedly while a key is held and the element has focus." alt="" coords="244,101,425,141"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="196,138,230,133,231,138,196,143"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_ad0761e5a7699167e0151d2a97fe89a2c.html#ad0761e5a7699167e0151d2a97fe89a2c" title="Called when a mouse button is pressed over an element." alt="" coords="244,165,425,205"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="196,164,231,168,230,174,196,169"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1EventManager_ab03d9c23414e27d09de89a8d30ff475b.html#ab03d9c23414e27d09de89a8d30ff475b" title="Add a event to the manager." alt="" coords="473,37,704,77"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="414,99,495,78,496,83,415,104"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_a741021dcc0b156901e034adb9178f3af.html#a741021dcc0b156901e034adb9178f3af" title=" " alt="" coords="489,101,688,141"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="426,119,476,119,476,124,426,124"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Kriya_a53f50e57b6d4c568f9f9a4edbfbdf077.html#a53f50e57b6d4c568f9f9a4edbfbdf077" title="Creates an Event coroutine that triggers on key press and repeats while held." alt="" coords="491,166,686,191"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="422,139,474,151,517,160,515,166,473,156,421,144"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Vruta_1_1EventManager_a57dfab40ee4b14db2bef10e6c4c5e9d2.html#a57dfab40ee4b14db2bef10e6c4c5e9d2" title="Generate automatic name for a event based on its type." alt="" coords="752,5,983,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="704,41,738,37,739,43,705,47"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Vruta_1_1EventManager_a3b542907af4a0afa35f1b87a604932e4.html#a3b542907af4a0afa35f1b87a604932e4" title="Remove an event by name." alt="" coords="752,69,983,109"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="705,68,739,72,738,77,704,73"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Vruta_1_1EventManager_ac3366b2763d938f824fa0c47b28c6bab.html#ac3366b2763d938f824fa0c47b28c6bab" title="Generates a unique event ID for new events." alt="" coords="1031,5,1261,45"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="983,23,1017,23,1017,28,983,28"/>
+</map>

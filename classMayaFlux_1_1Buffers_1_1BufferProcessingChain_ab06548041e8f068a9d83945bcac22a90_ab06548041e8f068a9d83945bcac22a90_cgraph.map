@@ -1,0 +1,11 @@
+<map id="MayaFlux::Buffers::BufferProcessingChain::process_pending_processor_operations" name="MayaFlux::Buffers::BufferProcessingChain::process_pending_processor_operations">
+<area shape="rect" id="Node000001" title="Process pending processor operations." alt="" coords="5,85,215,154"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_aef4792499996ee8634cf1b7ed0ee7aaa.html#aef4792499996ee8634cf1b7ed0ee7aaa" title=" " alt="" coords="289,5,457,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="214,82,276,62,277,67,216,87"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_a46d8239850f11d0ec31e275232bb011c.html#a46d8239850f11d0ec31e275232bb011c" title=" " alt="" coords="263,85,484,154"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="215,117,249,117,249,122,215,122"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_ac7fd9f1f3cf9d993aac0a4d64b1601b0.html#ac7fd9f1f3cf9d993aac0a4d64b1601b0" title=" " alt="" coords="276,179,471,233"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="216,151,277,172,276,177,214,156"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Buffers_a38e5853247532e5155b787a4d89b20cb.html#a38e5853247532e5155b787a4d89b20cb" title="Determines if two processing tokens are compatible for joint execution." alt="" coords="532,13,705,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="458,30,518,30,518,35,458,35"/>
+</map>

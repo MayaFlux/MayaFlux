@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::CompositeContainer::get_raw_data" name="MayaFlux::Kakshya::CompositeContainer::get_raw_data">
+<area shape="rect" id="Node000001" title="Borrow the packed element bytes, or nullptr when empty." alt="" coords="5,5,168,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_a39cef37bb57153bec51f40aa0a72b232.html#a39cef37bb57153bec51f40aa0a72b232" title="Borrow the full packed&#45;element DataVariant without conversion." alt="" coords="216,13,440,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="168,30,202,30,202,35,168,35"/>
+</map>

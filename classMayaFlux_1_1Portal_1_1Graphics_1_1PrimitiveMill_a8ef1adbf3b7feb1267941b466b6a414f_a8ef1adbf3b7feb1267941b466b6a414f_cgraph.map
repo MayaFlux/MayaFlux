@@ -1,0 +1,14 @@
+<map id="MayaFlux::Portal::Graphics::PrimitiveMill::release" name="MayaFlux::Portal::Graphics::PrimitiveMill::release">
+<area shape="rect" id="Node000001" title="Destroy the kernel, pipeline, descriptor sets and buffers." alt="" coords="5,63,203,103"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_af50ca0aa0cb7511c99eaf758430efdce.html#af50ca0aa0cb7511c99eaf758430efdce" title=" " alt="" coords="251,5,448,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="190,60,249,46,250,51,191,65"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a715d57394465ff2924727d7c82d87e7b.html#a715d57394465ff2924727d7c82d87e7b" title="Get the global shader compiler instance." alt="" coords="496,99,693,139"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="203,87,482,108,482,113,203,93"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1PrimitiveMill_aeb933bef78c66b4f9ff29ec75cd0e380.html#aeb933bef78c66b4f9ff29ec75cd0e380" title="Wait on and reclaim the previous dispatch, if one is outstanding." alt="" coords="251,121,448,175"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="181,100,238,116,237,121,179,105"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ComputePress_a89b259adf28ef041294928959e03fa9c.html#a89b259adf28ef041294928959e03fa9c" title=" " alt="" coords="496,5,693,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="448,23,482,23,482,28,448,28"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="741,99,939,139"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="694,116,728,116,728,121,694,121"/>
+<area shape="poly" id="edge6_Node000006_Node000004" title=" " alt="" coords="448,134,482,129,483,135,449,139"/>
+</map>

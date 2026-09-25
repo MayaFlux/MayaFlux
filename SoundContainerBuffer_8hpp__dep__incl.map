@@ -1,0 +1,20 @@
+<map id="SoundContainerBuffer.hpp" name="SoundContainerBuffer.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="344,5,535,31"/>
+<area shape="rect" id="Node000002" href="$CreatorClasses_8hpp.html" title=" " alt="" coords="5,79,153,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="369,36,138,81,137,76,368,31"/>
+<area shape="rect" id="Node000004" href="$Depot_8cpp.html" title=" " alt="" coords="178,79,266,104"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="392,37,258,81,256,76,391,32"/>
+<area shape="rect" id="Node000005" href="$IOManager_8cpp.html" title=" " alt="" coords="291,79,409,104"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="416,41,366,81,363,76,413,37"/>
+<area shape="rect" id="Node000006" href="$SoundContainerBuffer_8cpp.html" title=" " alt="" coords="433,79,624,104"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="466,37,516,76,512,81,463,41"/>
+<area shape="rect" id="Node000007" href="$SoundFileBridge_8cpp.html" title=" " alt="" coords="585,152,739,177"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="549,30,597,47,619,60,639,77,651,95,659,115,664,151,659,152,654,117,647,97,635,80,616,65,594,52,547,35"/>
+<area shape="rect" id="Node000008" href="$SoundFileBridge_8hpp.html" title=" " alt="" coords="699,79,854,104"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="507,31,723,76,721,81,506,36"/>
+<area shape="rect" id="Node000003" href="$Creator_8cpp.html" title=" " alt="" coords="31,152,127,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="82,118,82,152,77,152,77,118"/>
+<area shape="poly" id="edge9_Node000008_Node000007" title=" " alt="" coords="748,113,682,154,679,150,745,109"/>
+<area shape="rect" id="Node000009" href="$BufferOperation_8cpp.html" title=" " alt="" coords="763,152,915,177"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="798,113,831,150,827,154,794,116"/>
+</map>

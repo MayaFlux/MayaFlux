@@ -1,0 +1,26 @@
+<map id="MayaFlux::internal::live_arena_header" name="MayaFlux::internal::live_arena_header">
+<area shape="rect" id="Node000001" title="Returns a pointer to the header block at the start of arena storage." alt="" coords="680,143,831,183"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a906e2136e39b1bcf9e5a10c4f121f6b9.html#a906e2136e39b1bcf9e5a10c4f121f6b9" title="Exposes obj under the first free key of the form &quot;prefix_N&quot;." alt="" coords="5,5,177,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="723,135,681,102,631,74,573,55,512,41,388,24,273,19,178,21,178,16,273,14,389,19,513,36,574,50,633,70,684,98,726,131"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1internal_ac198c636ae0efb46000323e05c20824c.html#ac198c636ae0efb46000323e05c20824c" title="Allocates size bytes from the arena with alignment." alt="" coords="229,167,373,207"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="667,170,374,186,373,180,667,165"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_a5e6f7f5efd8933733f33f51850222657.html#a5e6f7f5efd8933733f33f51850222657" title="Dumps all live arena entries to stderr." alt="" coords="425,229,632,254"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="691,190,633,212,574,231,572,226,631,207,690,185"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1internal_a874455c63042dd543efe24006b6b2a00.html#a874455c63042dd543efe24006b6b2a00" title="Registers an externally owned shared_ptr under key." alt="" coords="225,63,377,103"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="710,138,672,119,631,104,566,91,498,83,378,81,378,76,499,78,566,85,633,99,674,114,712,133"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1internal_ac11d625c73518d5edeea37d66f4f1add.html#ac11d625c73518d5edeea37d66f4f1add" title="Locates an existing directory entry by key." alt="" coords="457,113,601,153"/>
+<area shape="poly" id="edge9_Node000001_Node000009" title=" " alt="" coords="666,154,601,145,601,140,666,149"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_a08d29324268998e88e89de586487e418.html#a08d29324268998e88e89de586487e418" title="Internal implementation for live_cast." alt="" coords="435,278,623,303"/>
+<area shape="poly" id="edge12_Node000001_Node000010" title=" " alt="" coords="728,195,686,234,633,269,604,280,602,275,631,264,683,230,725,191"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_a85dab72a57cc4840e446959f4ead11b1.html#a85dab72a57cc4840e446959f4ead11b1" title="Constructs a T in&#45;place inside the live arena and registers it under key." alt="" coords="11,174,172,199"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="216,189,172,189,172,184,216,184"/>
+<area shape="poly" id="edge8_Node000006_Node000002" title=" " alt="" coords="214,62,164,48,166,43,215,56"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_a134fdf828e5fdf7b5b829b7238b81a34.html#a134fdf828e5fdf7b5b829b7238b81a34" title="Exposes an existing shared_ptr&#45;managed object to the live arena under key." alt="" coords="5,70,177,95"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="212,85,178,85,178,80,212,80"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_ade26929a1c20b6917d14f66308095ccc.html#ade26929a1c20b6917d14f66308095ccc" title="Exposes an existing raw pointer to the live arena under key." alt="" coords="5,119,177,145"/>
+<area shape="poly" id="edge7_Node000006_Node000008" title=" " alt="" coords="213,106,147,122,145,117,211,101"/>
+<area shape="poly" id="edge10_Node000009_Node000003" title=" " alt="" coords="444,156,374,172,373,167,442,151"/>
+<area shape="poly" id="edge11_Node000009_Node000006" title=" " alt="" coords="442,117,377,102,378,97,444,112"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_a8096eed31bb3e0b19e7a7b65e84f11a2.html#a8096eed31bb3e0b19e7a7b65e84f11a2" title="Retrieves a live&#45;arena object by key as a shared_ptr&lt;T&gt;." alt="" coords="225,278,377,303"/>
+<area shape="poly" id="edge13_Node000010_Node000011" title=" " alt="" coords="421,293,378,293,378,288,421,288"/>
+</map>

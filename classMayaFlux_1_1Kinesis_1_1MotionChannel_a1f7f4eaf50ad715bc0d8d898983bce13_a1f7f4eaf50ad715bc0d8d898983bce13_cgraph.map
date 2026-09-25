@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::MotionChannel::update" name="MayaFlux::Kinesis::MotionChannel::update">
+<area shape="rect" id="Node000001" title="Feed one raw sample, denoise it, and push the cleaned value." alt="" coords="5,5,179,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a836913d22560b84a08b2dc914136f111.html#a836913d22560b84a08b2dc914136f111" title="Read T&#39;s components into an array of doubles." alt="" coords="227,5,376,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="179,23,213,23,213,28,179,28"/>
+</map>

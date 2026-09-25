@@ -1,0 +1,5 @@
+<map id="MayaFlux::IO::IOManager::open_camera" name="MayaFlux::IO::IOManager::open_camera">
+<area shape="rect" id="Node000001" title="Open an FFmpeg camera device and create a CameraContainer." alt="" coords="5,5,192,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1IOManager_a07df526ba0306d30624162750deeee92.html#a07df526ba0306d30624162750deeee92" title="Assign a globally unique reader_id and take ownership of a CameraSource that is already open." alt="" coords="240,5,427,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="192,23,226,23,226,28,192,28"/>
+</map>

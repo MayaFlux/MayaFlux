@@ -1,0 +1,23 @@
+<map id="CameraSource.hpp" name="CameraSource.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="209,5,354,31"/>
+<area shape="rect" id="Node000002" href="$FFmpegCameraReader_8hpp.html" title=" " alt="" coords="114,79,313,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="263,42,226,80,222,77,259,39"/>
+<area shape="rect" id="Node000005" href="$IOManager_8hpp.html" title=" " alt="" coords="313,152,433,177"/>
+<area shape="poly" id="edge11_Node000001_Node000005" title=" " alt="" coords="300,40,326,77,369,150,365,153,322,80,296,43"/>
+<area shape="rect" id="Node000003" href="$Creator_8cpp.html" title=" " alt="" coords="5,225,101,251"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="149,111,111,128,79,154,68,171,62,190,56,225,51,224,56,189,64,169,75,150,109,123,147,106"/>
+<area shape="rect" id="Node000004" href="$FFmpegCameraReader_8cpp.html" title=" " alt="" coords="90,152,289,177"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="208,118,196,153,191,151,203,116"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="252,107,348,149,346,154,250,112"/>
+<area shape="poly" id="edge6_Node000005_Node000003" title=" " alt="" coords="309,183,102,229,101,223,308,178"/>
+<area shape="rect" id="Node000006" href="$BufferOperation_8cpp.html" title=" " alt="" coords="125,225,277,251"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="334,185,230,228,228,223,332,180"/>
+<area shape="rect" id="Node000007" href="$Depot_8cpp.html" title=" " alt="" coords="301,225,389,251"/>
+<area shape="poly" id="edge7_Node000005_Node000007" title=" " alt="" coords="366,191,352,226,347,224,361,189"/>
+<area shape="rect" id="Node000008" href="$Engine_8cpp.html" title=" " alt="" coords="413,225,507,251"/>
+<area shape="poly" id="edge8_Node000005_Node000008" title=" " alt="" coords="399,184,448,223,444,227,396,188"/>
+<area shape="rect" id="Node000009" href="$IOManager_8cpp.html" title=" " alt="" coords="531,225,650,251"/>
+<area shape="poly" id="edge9_Node000005_Node000009" title=" " alt="" coords="422,179,556,223,555,228,420,184"/>
+<area shape="rect" id="Node000010" href="$Rigs_8cpp.html" title=" " alt="" coords="673,225,751,251"/>
+<area shape="poly" id="edge10_Node000005_Node000010" title=" " alt="" coords="445,177,663,223,674,225,673,230,662,228,444,183"/>
+</map>

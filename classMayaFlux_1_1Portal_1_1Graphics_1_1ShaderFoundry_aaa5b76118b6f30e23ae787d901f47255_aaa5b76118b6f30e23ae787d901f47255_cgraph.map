@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Graphics::ShaderFoundry::destroy_shader" name="MayaFlux::Portal::Graphics::ShaderFoundry::destroy_shader">
+<area shape="rect" id="Node000001" title="Destroy shader (cleanup internal state)" alt="" coords="5,5,240,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a148fdbfbb76b1df59986ea791e772885.html#a148fdbfbb76b1df59986ea791e772885" title="Get logical device handle." alt="" coords="288,5,493,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="240,23,274,23,274,28,240,28"/>
+</map>

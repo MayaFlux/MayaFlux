@@ -1,0 +1,47 @@
+<map id="PerceptionContext.hpp" name="PerceptionContext.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="159,5,330,31"/>
+<area shape="rect" id="Node000002" href="$Agent_8hpp.html" title=" " alt="" coords="143,79,231,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="228,43,198,80,194,77,224,40"/>
+<area shape="rect" id="Node000019" href="$Sensor_8hpp.html" title=" " alt="" coords="255,79,348,104"/>
+<area shape="poly" id="edge25_Node000001_Node000019" title=" " alt="" coords="264,40,294,77,290,80,260,43"/>
+<area shape="rect" id="Node000003" href="$Agent_8cpp.html" title=" " alt="" coords="50,152,137,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="163,114,110,154,107,150,160,110"/>
+<area shape="rect" id="Node000004" href="$Locus_8hpp.html" title=" " alt="" coords="26,372,113,397"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="130,103,81,121,58,135,40,154,16,196,8,234,14,275,28,323,42,349,60,370,56,374,38,352,23,325,8,276,3,234,11,194,35,150,55,131,78,116,128,98"/>
+<area shape="rect" id="Node000008" href="$Presence_8hpp.html" title=" " alt="" coords="408,152,518,177"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="245,105,419,149,418,154,244,110"/>
+<area shape="rect" id="Node000018" href="$Wiring_8hpp.html" title=" " alt="" coords="161,152,253,177"/>
+<area shape="poly" id="edge22_Node000002_Node000018" title=" " alt="" coords="196,117,206,151,201,153,191,118"/>
+<area shape="rect" id="Node000005" href="$Decoder_8cpp.html" title=" " alt="" coords="137,445,240,471"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="102,402,170,443,167,447,99,407"/>
+<area shape="rect" id="Node000006" href="$Encoder_8cpp.html" title=" " alt="" coords="265,445,365,471"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="123,399,276,443,274,448,121,404"/>
+<area shape="rect" id="Node000007" href="$Locus_8cpp.html" title=" " alt="" coords="26,445,113,471"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="72,411,72,445,67,445,67,411"/>
+<area shape="poly" id="edge8_Node000008_Node000006" title=" " alt="" coords="480,188,502,230,522,285,527,315,527,344,521,373,508,399,478,427,441,445,402,455,366,459,365,454,401,449,439,439,475,422,503,396,516,371,522,344,522,315,516,287,497,233,475,190"/>
+<area shape="rect" id="Node000009" href="$Fabric_8hpp.html" title=" " alt="" coords="258,225,346,251"/>
+<area shape="poly" id="edge9_Node000008_Node000009" title=" " alt="" coords="426,185,329,228,327,223,423,180"/>
+<area shape="rect" id="Node000017" href="$Presence_8cpp.html" title=" " alt="" coords="569,225,677,251"/>
+<area shape="poly" id="edge21_Node000008_Node000017" title=" " alt="" coords="502,180,598,223,596,228,500,185"/>
+<area shape="rect" id="Node000010" href="$Fabric_8cpp.html" title=" " alt="" coords="280,299,366,324"/>
+<area shape="poly" id="edge10_Node000009_Node000010" title=" " alt="" coords="312,263,322,298,317,299,307,265"/>
+<area shape="rect" id="Node000011" href="$Schema_8hpp.html" title=" " alt="" coords="153,299,256,324"/>
+<area shape="poly" id="edge11_Node000009_Node000011" title=" " alt="" coords="276,261,222,301,219,296,273,257"/>
+<area shape="rect" id="Node000014" href="$Tapestry_8hpp.html" title=" " alt="" coords="390,299,493,324"/>
+<area shape="poly" id="edge16_Node000009_Node000014" title=" " alt="" coords="337,254,420,296,417,301,335,259"/>
+<area shape="rect" id="Node000016" href="$Wiring_8cpp.html" title=" " alt="" coords="38,299,128,324"/>
+<area shape="poly" id="edge20_Node000009_Node000016" title=" " alt="" coords="254,257,119,301,118,296,252,252"/>
+<area shape="rect" id="Node000012" href="$Decoder_8hpp.html" title=" " alt="" coords="137,372,240,397"/>
+<area shape="poly" id="edge12_Node000011_Node000012" title=" " alt="" coords="201,338,193,372,188,371,196,337"/>
+<area shape="rect" id="Node000013" href="$Encoder_8hpp.html" title=" " alt="" coords="264,372,366,397"/>
+<area shape="poly" id="edge14_Node000011_Node000013" title=" " alt="" coords="235,329,298,370,295,374,232,334"/>
+<area shape="poly" id="edge13_Node000012_Node000005" title=" " alt="" coords="191,411,191,445,186,445,186,411"/>
+<area shape="poly" id="edge15_Node000013_Node000006" title=" " alt="" coords="318,411,318,445,312,445,312,411"/>
+<area shape="poly" id="edge17_Node000014_Node000012" title=" " alt="" coords="388,330,230,374,229,369,387,325"/>
+<area shape="poly" id="edge18_Node000014_Node000013" title=" " alt="" coords="411,333,337,374,334,369,408,328"/>
+<area shape="rect" id="Node000015" href="$Tapestry_8cpp.html" title=" " alt="" coords="390,372,493,397"/>
+<area shape="poly" id="edge19_Node000014_Node000015" title=" " alt="" coords="444,338,444,372,439,372,439,338"/>
+<area shape="poly" id="edge23_Node000018_Node000009" title=" " alt="" coords="235,183,288,223,285,227,231,188"/>
+<area shape="poly" id="edge24_Node000018_Node000016" title=" " alt="" coords="190,190,95,300,91,297,186,186"/>
+<area shape="poly" id="edge26_Node000019_Node000009" title=" " alt="" coords="304,118,304,225,299,225,299,118"/>
+</map>

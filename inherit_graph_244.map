@@ -1,0 +1,5 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="Node000000" href="$classMayaFlux_1_1IO_1_1CameraSource.html" title="Abstract interface for a live camera backend hosted by IOManager." alt="" coords="5,13,216,38"/>
+<area shape="rect" id="Node000001" href="$classMayaFlux_1_1IO_1_1FFmpegCameraReader.html" title="FFmpeg device reader for live camera input with background decode." alt="" coords="264,5,484,45"/>
+<area shape="poly" id="edge89_Node000000_Node000001" title=" " alt="" coords="230,23,264,23,264,28,230,28"/>
+</map>

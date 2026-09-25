@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Forma::Tracked" name="MayaFlux::Portal::Forma::Tracked">
+<area shape="rect" id="Node000001" title="One element registered with a Scrollable for reflow on scroll." alt="" coords="11,348,185,448"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1AABB2D.html" title="Axis&#45;aligned bounding rectangle in a 2D coordinate space." alt="" coords="5,5,191,285"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="101,286,101,332,95,332,95,286"/>
+</map>

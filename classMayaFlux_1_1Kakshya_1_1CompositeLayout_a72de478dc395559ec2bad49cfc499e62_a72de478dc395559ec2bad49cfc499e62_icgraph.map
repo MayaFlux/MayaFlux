@@ -1,0 +1,18 @@
+<map id="MayaFlux::Kakshya::CompositeLayout::fields" name="MayaFlux::Kakshya::CompositeLayout::fields">
+<area shape="rect" id="Node000001" title="Declared fields in element order, with finalized byte offsets." alt="" coords="789,99,968,139"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1DelimitedTextReader_ac39539682276d3ad0fb9d687171f7693.html#ac39539682276d3ad0fb9d687171f7693" title=" " alt="" coords="525,5,731,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="824,95,740,60,704,48,706,43,742,55,826,90"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1IO_1_1DelimitedTextWriter_ae5b38ad4299bda6b4859c7da1242f06e.html#ae5b38ad4299bda6b4859c7da1242f06e" title="Create or truncate a CSV or TSV file." alt="" coords="525,69,731,109"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="776,109,731,104,732,99,776,104"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_af179779c8b4123355fd50fdbe5b2a9bc.html#af179779c8b4123355fd50fdbe5b2a9bc" title="Write UTF&#45;8 bytes to a std::string field." alt="" coords="270,155,457,195"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="776,132,457,167,457,162,776,127"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_ac900d8eee86d5774bad27259d0f39efa.html#ac900d8eee86d5774bad27259d0f39efa" title=" " alt="" coords="515,184,741,224"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="807,146,688,186,687,181,805,141"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1DelimitedTextReader_a502ce5c32745cb3a3bc98df29df01e0c.html#a502ce5c32745cb3a3bc98df29df01e0c" title="Consume a bounded number of records." alt="" coords="260,5,467,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="511,28,467,28,467,23,511,23"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1DelimitedTextReader_a11b7ae4f55cd81f380049b4165ec2eb8.html#a11b7ae4f55cd81f380049b4165ec2eb8" title="Consume all remaining records into one array." alt="" coords="5,5,212,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="247,28,212,28,212,23,247,23"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1CompositeInsertion_a70237433e67948a735b93ee3eaebd6ff.html#a70237433e67948a735b93ee3eaebd6ff" title="Copy one Composite with a matching layout into this array." alt="" coords="29,147,188,202"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="257,177,188,177,188,172,257,172"/>
+<area shape="poly" id="edge8_Node000008_Node000006" title=" " alt="" coords="501,193,457,188,457,182,501,187"/>
+</map>

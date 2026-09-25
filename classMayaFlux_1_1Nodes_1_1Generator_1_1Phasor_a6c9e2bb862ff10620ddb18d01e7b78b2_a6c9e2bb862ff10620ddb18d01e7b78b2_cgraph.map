@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Generator::Phasor::Phasor" name="MayaFlux::Nodes::Generator::Phasor::Phasor">
+<area shape="rect" id="Node000001" title="Constructor with frequency modulation." alt="" coords="5,5,213,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Phasor_a58e3b2e02dc973a103d22abd90d75e64.html#a58e3b2e02dc973a103d22abd90d75e64" title="Updates the phase increment based on a new frequency." alt="" coords="261,5,508,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="213,23,248,23,248,28,213,28"/>
+</map>

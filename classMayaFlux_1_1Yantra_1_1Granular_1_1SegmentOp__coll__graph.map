@@ -1,0 +1,23 @@
+<map id="MayaFlux::Yantra::Granular::SegmentOp" name="MayaFlux::Yantra::Granular::SegmentOp">
+<area shape="rect" id="Node000001" title="Segments container audio into fixed hop&#45;size grain windows." alt="" coords="702,3032,898,3172"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1FeatureExtractor.html" title=" " alt="" coords="680,2493,920,2983"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="803,2996,803,3031,798,3031,798,2996"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1UniversalExtractor.html" title=" " alt="" coords="542,1787,790,2416"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="738,2429,751,2492,746,2494,733,2430"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation.html" title=" " alt="" coords="270,1147,523,1671"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="506,1684,546,1786,541,1788,501,1686"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Yantra_1_1ExecutionContext.html" title="Context information controlling how a compute operation executes." alt="" coords="298,5,495,445"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="299,283,238,324,175,376,118,438,94,473,75,509,44,583,23,649,11,710,8,768,14,826,27,887,48,955,75,1031,110,1104,155,1173,207,1236,260,1291,256,1294,203,1239,151,1176,105,1107,70,1033,43,956,22,888,9,827,3,768,6,709,18,648,39,581,70,507,90,470,114,435,171,373,235,320,296,278"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation.html" title="Base interface for all computational operations in the processing pipeline." alt="" coords="270,508,523,1032"/>
+<area shape="poly" id="edge6_Node000006_Node000005" title=" " alt="" coords="399,446,399,491,394,491,394,446"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation.html" title="Base interface for all computational operations in the processing pipeline." alt="" coords="547,508,800,1032"/>
+<area shape="poly" id="edge9_Node000008_Node000005" title=" " alt="" coords="497,332,547,397,589,468,601,492,596,494,585,471,542,400,493,336"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="399,1046,399,1147,394,1147,394,1046"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Yantra_1_1UniversalExtractor.html" title="Template&#45;flexible extractor base with instance&#45;defined I/O types." alt="" coords="548,1095,796,1724"/>
+<area shape="poly" id="edge7_Node000003_Node000007" title=" " alt="" coords="672,1738,671,1787,666,1787,667,1738"/>
+<area shape="poly" id="edge8_Node000007_Node000008" title=" " alt="" coords="676,1046,676,1095,670,1095,671,1046"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Yantra_1_1FeatureExtractor.html" title="Analyzer&#45;guided feature extractor with enum&#45;based configuration." alt="" coords="814,1864,1062,2339"/>
+<area shape="poly" id="edge10_Node000002_Node000009" title=" " alt="" coords="886,2352,856,2494,851,2492,881,2351"/>
+<area shape="rect" id="Node000010" title=" " alt="" coords="822,1355,1053,1464"/>
+<area shape="poly" id="edge11_Node000009_Node000010" title=" " alt="" coords="940,1478,940,1864,935,1864,935,1478"/>
+</map>

@@ -1,0 +1,15 @@
+<map id="MayaFlux::Kinesis::membership" name="MayaFlux::Kinesis::membership">
+<area shape="rect" id="Node000001" title="Graded membership of a point in an ellipsoid extent." alt="" coords="5,63,155,103"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1FeatureMetric_acad04a97861f68afc7fdaeec6533ed11.html#acad04a97861f68afc7fdaeec6533ed11" title="Componentwise difference, wrapped on any axis with a period." alt="" coords="209,5,363,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="152,60,200,47,201,52,153,65"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_ac8ded33a4e354a3259e25ea984c19053.html#ac8ded33a4e354a3259e25ea984c19053" title="Normalize single&#45;channel data (non&#45;destructive)" alt="" coords="203,70,369,95"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="155,80,189,80,189,85,155,85"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kinesis_1_1detail_af548cee01f59ea4efa64af34f6ee3b36.html#af548cee01f59ea4efa64af34f6ee3b36" title="Hermite ramp from 0 at edge0 to 1 at edge1." alt="" coords="211,120,361,160"/>
+<area shape="poly" id="edge7_Node000001_Node000006" title=" " alt="" coords="153,100,201,114,200,119,152,105"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a5de3d13e1b9ceb59d3acb04361e2a5e5.html#a5de3d13e1b9ceb59d3acb04361e2a5e5" title="Normalize to [target_min, target_max] in&#45;place Single&#45;pass min/max reduction followed by a single tra..." alt="" coords="417,63,567,103"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="369,80,403,80,403,85,369,85"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_a878fe1820a72f64efebc516b1749f77d.html#a878fe1820a72f64efebc516b1749f77d" title="Normalize single&#45;channel data to specified peak level (in&#45;place)" alt="" coords="615,70,773,95"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="567,89,601,89,601,94,567,94"/>
+<area shape="poly" id="edge5_Node000005_Node000004" title=" " alt="" coords="615,77,581,76,581,71,615,71"/>
+<area shape="poly" id="edge6_Node000005_Node000005" title=" " alt="" coords="661,71,654,62,658,52,671,46,694,43,722,47,733,56,730,60,720,52,694,49,673,51,662,55,659,61,665,68"/>
+</map>
