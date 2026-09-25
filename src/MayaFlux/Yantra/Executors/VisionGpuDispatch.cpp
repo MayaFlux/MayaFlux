@@ -1461,7 +1461,7 @@ VisionResult VisionGpuExecutor::run(
             auto downsampled = pixel_ctx.get_output_image(0);
             completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = { .output = downsampled, .input = contexts.pass.current };
             contexts.pass.current = downsampled;
-            contexts.bound_staged = contexts.pass.current;
+            contexts.bound_staged.reset();
 
             contexts.pass.set_geometry(new_w, new_h);
             contexts.pass.storage_w = new_w;
