@@ -47,6 +47,11 @@ namespace MayaFlux::Yantra {
  *
  * calculate_dispatch_size() uses image dimensions when a TextureContainer is
  * present, otherwise falls through to the standard element-count path.
+ *
+ * A context has one owner. Its image cache is accessed only after the previous
+ * dispatch has completed, so ImageCacheSet::acquire and
+ * TextureLoom::acquire_cached_image are not synchronized here. Do not invoke
+ * dispatch or image staging concurrently on the same context.
  */
 class MAYAFLUX_API TextureExecutionContext
     : public GpuExecutionContext<
@@ -619,9 +624,9 @@ private:
      * @brief Return this slot's cached image for these creation parameters,
      *        creating and caching one when there is none.
      *
-     * The hashed cache keeps the current image on a direct fast path. It drops
-     * older cache entries when its retained byte count exceeds the budget.
-     * TextureLoom still retains each created image until shutdown.
+     * The hashed cache keeps the current image on a direct fast path. Entries
+     * remain cached after the byte threshold is exceeded; the cache warns
+     * once because TextureLoom retains created images until shutdown.
      */
     [[nodiscard]] std::shared_ptr<Core::VKImage> acquire_output_image(
         ImageSlot& slot, uint32_t width, uint32_t height)

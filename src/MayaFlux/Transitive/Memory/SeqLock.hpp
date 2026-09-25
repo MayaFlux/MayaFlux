@@ -4,12 +4,12 @@ namespace MayaFlux::Memory {
 
 /**
  * @class Seqlock
- * @brief Single-writer multiple-reader sequence lock for fixed-size data regions.
+ * @brief Sequence lock for fixed-size data regions.
  *
  * Protects a data region that is written infrequently and read frequently.
  * Readers never block writers; a reader that observes a write in progress
- * simply retries. Writers are serialized externally (e.g. by the container's
- * existing state machine or a higher-level mutex on the write path only).
+ * simply retries. begin_write() requires externally serialized writers;
+ * begin_serialized_write() claims the writer sequence when callers may overlap.
  *
  * Sequence counter convention:
  *   even  — data is stable, safe to read
@@ -59,6 +59,25 @@ public:
     void begin_write() noexcept
     {
         m_seq.fetch_add(1U, std::memory_order_release);
+    }
+
+    /**
+     * @brief Claim the writer sequence after any active writer completes.
+     *
+     * Spins while the sequence is odd, then atomically advances it to odd.
+     * Pair with end_write(), or use SerializedSeqlockWriteGuard. All writers
+     * using this path must hold the claim for their entire mutation.
+     */
+    void begin_serialized_write() noexcept
+    {
+        uint32_t expected = m_seq.load(std::memory_order_relaxed);
+        for (;;) {
+            if (!(expected & 1U)
+                && m_seq.compare_exchange_weak(expected, expected + 1U,
+                    std::memory_order_acquire, std::memory_order_relaxed))
+                return;
+            expected = m_seq.load(std::memory_order_relaxed);
+        }
     }
 
     /**
@@ -150,6 +169,33 @@ public:
     SeqlockWriteGuard& operator=(const SeqlockWriteGuard&) = delete;
     SeqlockWriteGuard(SeqlockWriteGuard&&) = delete;
     SeqlockWriteGuard& operator=(SeqlockWriteGuard&&) = delete;
+
+private:
+    Seqlock& m_lock;
+};
+
+/**
+ * @brief Scope guard for a serialized Seqlock write.
+ *
+ * Waits for another writer to finish, claims the odd sequence for this scope,
+ * and restores an even sequence on destruction. Readers retry as with
+ * SeqlockWriteGuard. Use when multiple callers can write the guarded state.
+ */
+class SerializedSeqlockWriteGuard {
+public:
+    explicit SerializedSeqlockWriteGuard(Seqlock& lock) noexcept
+        : m_lock(lock)
+    {
+        m_lock.begin_serialized_write();
+    }
+
+    ~SerializedSeqlockWriteGuard() noexcept
+    {
+        m_lock.end_write();
+    }
+
+    SerializedSeqlockWriteGuard(const SerializedSeqlockWriteGuard&) = delete;
+    SerializedSeqlockWriteGuard& operator=(const SerializedSeqlockWriteGuard&) = delete;
 
 private:
     Seqlock& m_lock;

@@ -517,15 +517,11 @@ std::shared_ptr<Core::VKImage> TextureLoom::refresh_cached_image(
 std::shared_ptr<Core::VKImage> ImageCacheSet::acquire(
     TextureLoom& loom, const ImageKey& key)
 {
-    ++m_tick;
-    if (m_last_entry && m_last_key == key) {
-        m_last_entry->last_use = m_tick;
+    if (m_last_entry && m_last_key == key)
         return m_last_entry->cache.image;
-    }
 
     auto found = m_entries.find(key);
     if (found != m_entries.end()) {
-        found->second.last_use = m_tick;
         m_last_key = key;
         m_last_entry = &found->second;
         return found->second.cache.image;
@@ -539,25 +535,16 @@ std::shared_ptr<Core::VKImage> ImageCacheSet::acquire(
     m_last_key.reset();
     m_last_entry = nullptr;
 
-    auto [added, inserted] = m_entries.emplace(key, Entry { .cache = std::move(cache), .last_use = m_tick });
+    auto [added, inserted] = m_entries.emplace(key, Entry { .cache = std::move(cache) });
     if (!inserted)
         return added->second.cache.image;
 
     m_cached_bytes += image->get_size_bytes();
-
-    while (m_entries.size() > 1 && m_cached_bytes > m_byte_budget) {
-        auto oldest = m_entries.end();
-        for (auto it = m_entries.begin(); it != m_entries.end(); ++it) {
-            if (it == added)
-                continue;
-            if (oldest == m_entries.end() || it->second.last_use < oldest->second.last_use)
-                oldest = it;
-        }
-
-        if (oldest == m_entries.end())
-            break;
-        m_cached_bytes -= oldest->second.cache.image->get_size_bytes();
-        m_entries.erase(oldest);
+    if (!m_budget_warned && m_cached_bytes > m_byte_budget) {
+        m_budget_warned = true;
+        MF_WARN(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "Image cache holds {} bytes, exceeding its {}-byte warning threshold",
+            m_cached_bytes, m_byte_budget);
     }
 
     m_last_key = key;

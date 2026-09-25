@@ -48,6 +48,7 @@ namespace MayaFlux::Kakshya {
  *   - region_to_image() crops on the CPU and refreshes an image for that region.
  *   - get_image_format() returns the live swapchain format as a Portal
  *     ImageFormat, suitable for constructing a matching TextureBuffer.
+ *   - Concurrent image materialization calls on one container are serialized.
  *
  * Write semantics (compositing) are deferred to a future processor.
  */
@@ -322,6 +323,7 @@ private:
     mutable Portal::Graphics::ImageCacheEntry m_surface_image;
     mutable std::vector<Portal::Graphics::ImageCacheEntry> m_frame_images;
     mutable std::map<std::pair<uint32_t, uint32_t>, Portal::Graphics::ImageCacheEntry> m_region_images;
+    mutable Memory::Seqlock m_image_cache_lock;
 
     ContainerDataStructure m_structure;
     std::vector<DataVariant> m_data;

@@ -474,10 +474,11 @@ private:
 };
 
 /**
- * @brief Budgeted cache of images keyed by immutable allocation properties.
+ * @brief Cache images keyed by immutable allocation properties.
  *
- * The budget limits references held by this cache. TextureLoom continues to
- * retain created images until shutdown.
+ * The byte budget is a warning threshold. Entries remain cached after the
+ * threshold is exceeded because TextureLoom retains created images until
+ * shutdown and eviction would recreate them on a later request.
  */
 class MAYAFLUX_API ImageCacheSet {
 public:
@@ -498,13 +499,12 @@ public:
 private:
     struct Entry {
         ImageCacheEntry cache;
-        uint64_t last_use {};
     };
 
     std::unordered_map<ImageKey, Entry, ImageKeyHash> m_entries;
     size_t m_byte_budget;
     size_t m_cached_bytes {};
-    uint64_t m_tick {};
+    bool m_budget_warned {};
     std::optional<ImageKey> m_last_key;
     Entry* m_last_entry {};
 };

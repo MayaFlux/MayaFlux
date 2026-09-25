@@ -194,6 +194,7 @@ std::shared_ptr<Core::VKImage> WindowContainer::to_image() const
         return nullptr;
 
     const auto format = get_image_format();
+    Memory::SerializedSeqlockWriteGuard image_guard(m_image_cache_lock);
     return Portal::Graphics::TextureLoom::instance().refresh_cached_image(
         m_surface_image, sampled_image_key(pixels->width, pixels->height, format),
         pixels->pixels);
@@ -207,6 +208,7 @@ std::shared_ptr<Core::VKImage> WindowContainer::to_image(
         return nullptr;
 
     const auto format = get_image_format();
+    Memory::SerializedSeqlockWriteGuard image_guard(m_image_cache_lock);
     return Portal::Graphics::TextureLoom::instance().refresh_cached_image(
         m_surface_image, sampled_image_key(pixels->width, pixels->height, format),
         pixels->pixels, staging);
@@ -237,6 +239,7 @@ std::shared_ptr<Core::VKImage> WindowContainer::image_at(uint32_t frame_index) c
         return nullptr;
 
     const auto format = get_image_format();
+    Memory::SerializedSeqlockWriteGuard image_guard(m_image_cache_lock);
     return Portal::Graphics::TextureLoom::instance().refresh_cached_image(
         m_frame_images[frame_index], sampled_image_key(pixels->width, pixels->height, format),
         pixels->pixels);
@@ -267,6 +270,7 @@ std::shared_ptr<Core::VKImage> WindowContainer::image_at(
         return nullptr;
 
     const auto format = get_image_format();
+    Memory::SerializedSeqlockWriteGuard image_guard(m_image_cache_lock);
     return Portal::Graphics::TextureLoom::instance().refresh_cached_image(
         m_frame_images[frame_index], sampled_image_key(pixels->width, pixels->height, format),
         pixels->pixels, staging);
@@ -308,6 +312,7 @@ std::shared_ptr<Core::VKImage> WindowContainer::region_to_image(const Region& re
     const auto rw = static_cast<uint32_t>(region.end_coordinates[1] - region.start_coordinates[1] + 1);
     const auto key = std::pair { rw, rh };
     const auto format = get_image_format();
+    Memory::SerializedSeqlockWriteGuard image_guard(m_image_cache_lock);
     return Portal::Graphics::TextureLoom::instance().refresh_cached_image(
         m_region_images[key], sampled_image_key(rw, rh, format), cropped);
 }

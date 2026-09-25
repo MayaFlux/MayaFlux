@@ -38,6 +38,7 @@ namespace MayaFlux::Kakshya {
  *   No default processor is created. The container holds bytes passively.
  *   Workflow operations receive and return TextureContainer instances;
  *   TextureExecutionContext dispatches compute shaders against them.
+ *   Concurrent image materialization calls on one container are serialized.
  */
 class MAYAFLUX_API TextureContainer : public SignalSourceContainer {
 public:
@@ -480,6 +481,7 @@ private:
     std::vector<DataVariant> m_processed_data;
     mutable std::vector<Portal::Graphics::ImageCacheEntry> m_layer_image_cache;
     mutable Portal::Graphics::ImageCacheEntry m_array_image_cache;
+    mutable Memory::Seqlock m_image_cache_lock;
     std::shared_ptr<DataProcessor> m_processor;
     std::shared_ptr<DataProcessingChain> m_chain;
 

@@ -262,6 +262,7 @@ std::shared_ptr<Core::VKImage> TextureContainer::cached_layer_image(
     const Portal::Graphics::ImageKey key {
         .width = m_width, .height = m_height, .layers = 1, .format = m_format
     };
+    Memory::SerializedSeqlockWriteGuard image_guard(m_image_cache_lock);
     return TextureLoom::instance().refresh_cached_image(
         m_layer_image_cache[layer], key, *pixels, staging);
 }
@@ -307,6 +308,7 @@ std::shared_ptr<Core::VKImage> TextureContainer::cached_array_image(
     const Portal::Graphics::ImageKey key {
         .width = m_width, .height = m_height, .layers = n, .format = m_format, .kind = Portal::Graphics::ImageKey::Kind::SAMPLED_ARRAY
     };
+    Memory::SerializedSeqlockWriteGuard image_guard(m_image_cache_lock);
     return TextureLoom::instance().refresh_cached_image(
         m_array_image_cache, key, combined, staging);
 }
