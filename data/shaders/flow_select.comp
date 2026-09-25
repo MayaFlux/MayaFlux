@@ -1,0 +1,223 @@
+#version 460
+
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+
+layout(set = 0, binding = 1, std430) buffer DetCountBuf {
+    uint det_count[];
+};
+
+layout(set = 0, binding = 2, std430) buffer DetPointsBuf {
+    vec4 det_points[];
+};
+
+layout(set = 1, binding = 0, std430) buffer PrevCountBuf {
+    uint prev_count[];
+};
+
+layout(set = 1, binding = 1, std430) buffer PrevPointsBuf {
+    vec4 prev_points[];
+};
+
+layout(set = 1, binding = 2, std430) buffer TracksBuf {
+    vec4 tracks[];
+};
+
+layout(set = 1, binding = 4, std430) buffer NextPointsBuf {
+    vec4 next_points[];
+};
+
+layout(set = 1, binding = 5, std430) buffer CounterBuf {
+    uint ctr[];
+};
+
+layout(set = 1, binding = 6, std430) buffer HistogramBuf {
+    uint hist[];
+};
+
+layout(set = 1, binding = 7, std430) buffer GridBuf {
+    uint grid[];
+};
+
+layout(push_constant) uniform PC {
+    uint phase;
+    uint max_points;
+    uint have_prev;
+    uint grid_w;
+    uint grid_h;
+    uint grid_cells;
+    float cell;
+    float base_w;
+    float base_h;
+    float pad;
+} pc;
+
+const uint PHASE_CLEAR = 0u;
+const uint PHASE_SURVIVORS = 1u;
+const uint PHASE_HISTOGRAM = 2u;
+const uint PHASE_THRESHOLD = 3u;
+const uint PHASE_ADD_STRONG = 4u;
+const uint PHASE_ADD_MARGINAL = 5u;
+const uint PHASE_COMMIT = 6u;
+
+const uint CTR_NEXT_COUNT = 0u;
+const uint CTR_NEXT_ID = 1u;
+const uint CTR_FULL_FROM = 2u;
+
+const uint MAX_DETECTIONS = 4096u;
+const uint BINS = 256u;
+
+/**
+ * @brief Occupancy grid cell of a normalised position. One new point is
+ *        admitted per cell, which keeps detections from clumping.
+ */
+uint cell_of(vec2 p)
+{
+    const vec2 px = max(p, vec2(0.0)) * vec2(pc.base_w, pc.base_h) / pc.cell;
+    const uvec2 c = min(uvec2(px), uvec2(pc.grid_w - 1u, pc.grid_h - 1u));
+    return c.y * pc.grid_w + c.x;
+}
+
+uint response_bin(float response)
+{
+    return min(uint(clamp(response, 0.0, 1.0) * 255.0), BINS - 1u);
+}
+
+/**
+ * @brief Claim the point's grid cell and append it to the next point list as
+ *        a new track with a fresh id and age zero.
+ */
+void add_detection(vec4 d)
+{
+    if (atomicCompSwap(grid[cell_of(d.xy)], 0u, 1u) != 0u)
+        return;
+
+    const uint slot = atomicAdd(ctr[CTR_NEXT_COUNT], 1u);
+    if (slot >= pc.max_points)
+        return;
+
+    const uint id = atomicAdd(ctr[CTR_NEXT_ID], 1u);
+    next_points[2u * slot] = vec4(d.xy, d.z, uintBitsToFloat(id));
+    next_points[2u * slot + 1u] = vec4(0.0);
+}
+
+/**
+ * @brief Builds the next frame's point list on the GPU, one phase per
+ *        dispatch, selected by push constant.
+ *
+ * Survivors keep their id and age and move to their tracked position. New
+ * detections then fill only the free capacity, strongest response first: a
+ * 256 bin response histogram of the candidates in free grid cells yields the
+ * lowest bin whose suffix still fits, everything at or above it is admitted,
+ * and the one bin just below competes for what remains. This ranks without a
+ * sort, and the cell claim admits at most one new point per grid cell.
+ *
+ * The final phase runs in a single workgroup and promotes the next list to
+ * the previous list, so the count is read before anything it describes is
+ * overwritten. The detection counter is left at zero for the next frame.
+ */
+void main()
+{
+    const uint i = gl_GlobalInvocationID.x;
+    const uint lid = gl_LocalInvocationIndex;
+
+    switch (pc.phase) {
+    case PHASE_CLEAR: {
+        if (i < pc.grid_cells)
+            grid[i] = 0u;
+        if (i < BINS)
+            hist[i] = 0u;
+        if (i == 0u)
+            ctr[CTR_NEXT_COUNT] = 0u;
+        break;
+    }
+    case PHASE_SURVIVORS: {
+        if (pc.have_prev == 0u)
+            break;
+        if (i >= min(prev_count[0], pc.max_points))
+            break;
+
+        const vec4 status = tracks[2u * i + 1u];
+        if (status.y < 0.5)
+            break;
+
+        const vec4 pose = tracks[2u * i];
+        const vec4 old_point = prev_points[2u * i];
+        const vec4 old_meta = prev_points[2u * i + 1u];
+
+        const uint slot = atomicAdd(ctr[CTR_NEXT_COUNT], 1u);
+        if (slot >= pc.max_points)
+            break;
+
+        next_points[2u * slot] = vec4(pose.xy, old_point.z, old_point.w);
+        next_points[2u * slot + 1u] = vec4(uintBitsToFloat(floatBitsToUint(old_meta.x) + 1u), 0.0, 0.0, 0.0);
+        grid[cell_of(pose.xy)] = 1u;
+        break;
+    }
+    case PHASE_HISTOGRAM: {
+        if (i >= min(det_count[0], MAX_DETECTIONS))
+            break;
+
+        const vec4 d = det_points[i];
+        if (grid[cell_of(d.xy)] != 0u)
+            break;
+
+        atomicAdd(hist[response_bin(d.z)], 1u);
+        break;
+    }
+    case PHASE_THRESHOLD: {
+        if (i != 0u)
+            break;
+
+        const uint free_slots = pc.max_points - min(ctr[CTR_NEXT_COUNT], pc.max_points);
+        uint cumulative = 0u;
+        uint full_from = BINS;
+        for (int b = int(BINS) - 1; b >= 0; --b) {
+            const uint h = hist[b];
+            if (cumulative + h > free_slots)
+                break;
+            cumulative += h;
+            full_from = uint(b);
+        }
+        ctr[CTR_FULL_FROM] = full_from;
+        break;
+    }
+    case PHASE_ADD_STRONG: {
+        if (i >= min(det_count[0], MAX_DETECTIONS))
+            break;
+
+        const vec4 d = det_points[i];
+        if (response_bin(d.z) < ctr[CTR_FULL_FROM])
+            break;
+        add_detection(d);
+        break;
+    }
+    case PHASE_ADD_MARGINAL: {
+        const uint full_from = ctr[CTR_FULL_FROM];
+        if (full_from == 0u || i >= min(det_count[0], MAX_DETECTIONS))
+            break;
+
+        const vec4 d = det_points[i];
+        if (response_bin(d.z) != full_from - 1u)
+            break;
+        add_detection(d);
+        break;
+    }
+    case PHASE_COMMIT: {
+        const uint n = min(ctr[CTR_NEXT_COUNT], pc.max_points);
+        memoryBarrierBuffer();
+        barrier();
+
+        for (uint k = lid; k < n * 2u; k += 256u)
+            prev_points[k] = next_points[k];
+
+        memoryBarrierBuffer();
+        barrier();
+
+        if (lid == 0u) {
+            prev_count[0] = n;
+            det_count[0] = 0u;
+        }
+        break;
+    }
+    }
+}

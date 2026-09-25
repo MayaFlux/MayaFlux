@@ -2,6 +2,7 @@
 
 #include "TextureExecutionContext.hpp"
 
+#include "MayaFlux/Kinesis/Vision/Pyramid.hpp"
 #include "MayaFlux/Kinesis/Vision/VisionContext.hpp"
 
 namespace MayaFlux::Yantra {
@@ -26,6 +27,54 @@ namespace MayaFlux::Yantra {
  * whose config is valid. run() logs an error and returns a default
  * VisionResult on encountering INVALID_SHADER mid-sequence.
  */
+
+/**
+ * @brief Cross-run state of the flow context.
+ *
+ * Two atlases are bound for their whole life. Which one holds the current
+ * frame is the curr parity, passed to shaders as a push constant, so ping-pong
+ * is a bit flip and never rewrites a descriptor. Detections, retained previous
+ * points and tracks live in the flow context's shared buffers and never leave
+ * the GPU except for the final tracks readback.
+ */
+struct FlowState {
+    std::shared_ptr<Core::VKImage> atlas[2];
+    Kinesis::Vision::PyramidLayout layout;
+
+    /**
+     * @brief Dense flow images, allocated on first use of OpticalFlowDense.
+     *
+     * flow_out holds the finest-level result at frame resolution, alternated
+     * by the same parity as the atlases so a result stays valid for one more
+     * run. The rest share the atlas layout: flow_lvl holds the coarser levels,
+     * dense_a and dense_b are the box filter scratch, and dense_tensor holds
+     * the previous frame's summed structure tensor and confidence.
+     */
+    std::shared_ptr<Core::VKImage> flow_out[2];
+    std::shared_ptr<Core::VKImage> flow_lvl;
+    std::shared_ptr<Core::VKImage> dense_a;
+    std::shared_ptr<Core::VKImage> dense_b;
+    std::shared_ptr<Core::VKImage> dense_tensor;
+    std::shared_ptr<Core::VKImage> flow_vis;
+    Kinesis::Vision::PyramidLayout dense_layout;
+
+    /**
+     * @brief Most recent flow image and track list produced from a frame that
+     *        differed from the one before it.
+     *
+     * A repeated camera frame carries no motion, so a run on one republishes
+     * these instead of a field of zeros. Before any result exists, the fresh
+     * result is published as is.
+     */
+    std::shared_ptr<Core::VKImage> last_flow;
+    std::vector<Kinesis::Vision::TrackResult> last_tracks;
+
+    uint32_t curr { 0 };
+    bool have_prev { false };
+    bool curr_ready { false };
+    bool buffers_ready { false };
+    Portal::Graphics::FenceID build_fence { Portal::Graphics::INVALID_FENCE };
+};
 
 /**
  * @brief Fixed set of TextureExecutionContexts covering every GPU-implemented
@@ -58,6 +107,16 @@ struct MAYAFLUX_API VisionGpuContexts {
                                     ///< at the top of a fresh run to convert
                                     ///< a non-storage seed frame before any
                                     ///< rgba32f op reads it.
+    TextureExecutionContext flow; ///< Pyramidal optical flow. Fixed layout:
+                                  ///< gray source image, two rgba16f pyramid
+                                  ///< atlases, the dense flow images, and
+                                  ///< shared buffers for detections, retained
+                                  ///< points, tracks, and selection state.
+                                  ///< Drives TrackKeypoints and
+                                  ///< OpticalFlowDense, and reuses the
+                                  ///< extract_peaks layout unchanged.
+
+    FlowState flow_state;
 
     /**
      * @brief Walk state for the current run: sequence position, geometry,
@@ -104,6 +163,15 @@ struct MAYAFLUX_API VisionGpuContexts {
      */
     struct Suspension {
         Portal::Graphics::FenceID fence { Portal::Graphics::INVALID_FENCE };
+
+        /**
+         * @brief Work to run once the fence has signaled, before the walk
+         *        resumes. Empty for steps that need none.
+         *
+         * Lets a deferred step read back or commit state on completion
+         * rather than on submission. Dropped without running by reset().
+         */
+        std::function<void(VisionGpuContexts&)> finalize;
 
         [[nodiscard]] bool is_active() const
         {

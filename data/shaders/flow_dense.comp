@@ -1,0 +1,323 @@
+#version 460
+
+#include "include/vision_colorspace.glsl"
+#include "include/vision_sampling.glsl"
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+layout(set = 0, binding = 3, rgba16f) uniform readonly image2D atlas_a;
+layout(set = 0, binding = 4, rgba16f) uniform readonly image2D atlas_b;
+layout(set = 0, binding = 5, rgba32f) uniform image2D flow_out_a;
+layout(set = 0, binding = 6, rgba32f) uniform image2D flow_out_b;
+layout(set = 0, binding = 7, rgba32f) uniform image2D flow_lvl;
+layout(set = 0, binding = 8, rgba32f) uniform image2D scratch_a;
+layout(set = 0, binding = 9, rgba32f) uniform image2D scratch_b;
+layout(set = 0, binding = 10, rgba32f) uniform image2D tensor_img;
+layout(set = 0, binding = 11, rgba32f) uniform writeonly image2D flow_vis;
+
+layout(set = 1, binding = 3, std430) buffer MetaBuf {
+    uint meta[];
+};
+
+layout(push_constant) uniform PC {
+    uint phase;
+    uint curr_atlas;
+    uint out_parity;
+    uint level;
+    uint lvl_ox;
+    uint lvl_oy;
+    uint lvl_w;
+    uint lvl_h;
+    uint crs_ox;
+    uint crs_oy;
+    uint crs_w;
+    uint crs_h;
+    uint has_coarse;
+    uint radius;
+    float eigen_threshold;
+    float max_step;
+    float visual_range;
+    uint last_iteration;
+} pc;
+
+const uint PHASE_TENSOR_H = 0u;
+const uint PHASE_TENSOR_V = 1u;
+const uint PHASE_WARP_INIT = 2u;
+const uint PHASE_WARP = 3u;
+const uint PHASE_BOX_H = 4u;
+const uint PHASE_SOLVE = 5u;
+const uint PHASE_VISUALIZE = 6u;
+const float TWO_PI = 6.28318530718;
+
+const uint DUPLICATE_ENERGY = 16u;
+
+ivec2 lvl_origin()
+{
+    return ivec2(int(pc.lvl_ox), int(pc.lvl_oy));
+}
+
+ivec2 lvl_extent()
+{
+    return ivec2(int(pc.lvl_w), int(pc.lvl_h));
+}
+
+/**
+ * @brief Texel of the previous frame's atlas at a level-local coordinate,
+ *        clamped to the level.
+ */
+vec4 prev_texel(ivec2 p)
+{
+    const ivec2 q = clamp(p, ivec2(0), lvl_extent() - ivec2(1)) + lvl_origin();
+    return pc.curr_atlas == 0u ? imageLoad(atlas_b, q) : imageLoad(atlas_a, q);
+}
+
+/**
+ * @brief Bilinear fetch of the current frame's atlas within this level.
+ */
+#define SAMPLE_CURR(pos, out_val) \
+    do { \
+        if (pc.curr_atlas == 0u) { \
+            SAMPLE_BILINEAR_REGION(atlas_a, (pos), lvl_origin(), lvl_extent(), (out_val)); \
+        } else { \
+            SAMPLE_BILINEAR_REGION(atlas_b, (pos), lvl_origin(), lvl_extent(), (out_val)); \
+        } \
+    } while (false)
+
+/**
+ * @brief The flow field of the level being solved. Level 0 is the output
+ *        image selected by parity, every coarser level lives in the flow
+ *        atlas at its region.
+ */
+vec4 flow_load(ivec2 c)
+{
+    if (pc.level == 0u)
+        return pc.out_parity == 0u ? imageLoad(flow_out_a, c) : imageLoad(flow_out_b, c);
+    return imageLoad(flow_lvl, c + lvl_origin());
+}
+
+void flow_store(ivec2 c, vec4 v)
+{
+    if (pc.level == 0u) {
+        if (pc.out_parity == 0u)
+            imageStore(flow_out_a, c, v);
+        else
+            imageStore(flow_out_b, c, v);
+    } else {
+        imageStore(flow_lvl, c + lvl_origin(), v);
+    }
+}
+
+#define SORT2(a, b) \
+    { \
+        const float t = min(a, b); \
+        b = max(a, b); \
+        a = t; \
+    }
+
+/**
+ * @brief Median of nine values by a fixed compare-exchange network.
+ */
+float median9(float p[9])
+{
+    SORT2(p[1], p[2]) SORT2(p[4], p[5]) SORT2(p[7], p[8])
+    SORT2(p[0], p[1]) SORT2(p[3], p[4]) SORT2(p[6], p[7])
+    SORT2(p[1], p[2]) SORT2(p[4], p[5]) SORT2(p[7], p[8])
+    SORT2(p[0], p[3]) SORT2(p[5], p[8]) SORT2(p[4], p[7])
+    SORT2(p[3], p[6]) SORT2(p[1], p[4]) SORT2(p[2], p[5])
+    SORT2(p[4], p[7]) SORT2(p[4], p[2]) SORT2(p[6], p[4])
+    SORT2(p[4], p[2])
+    return p[4];
+}
+
+/**
+ * @brief Flow of the next coarser level at this pixel, doubled to this
+ *        level's pixel scale. Zero at the coarsest level.
+ *
+ * Each component is the median of the 3x3 neighbourhood around the coarse
+ * pixel covering this one. Median filtering the flow between levels is what
+ * keeps a few badly conditioned coarse pixels from being doubled into every
+ * finer level, and it leaves smooth regions unchanged.
+ */
+vec2 coarse_flow(ivec2 c)
+{
+    if (pc.has_coarse == 0u)
+        return vec2(0.0);
+
+    const ivec2 origin = ivec2(int(pc.crs_ox), int(pc.crs_oy));
+    const ivec2 extent = ivec2(int(pc.crs_w), int(pc.crs_h));
+    const ivec2 centre = clamp(c / 2, ivec2(0), extent - ivec2(1));
+
+    float xs[9];
+    float ys[9];
+    int i = 0;
+    for (int dy = -1; dy <= 1; ++dy) {
+        for (int dx = -1; dx <= 1; ++dx) {
+            const ivec2 q = clamp(centre + ivec2(dx, dy), ivec2(0), extent - ivec2(1));
+            const vec4 f = imageLoad(flow_lvl, q + origin);
+            xs[i] = f.x;
+            ys[i] = f.y;
+            ++i;
+        }
+    }
+    return 2.0 * vec2(median9(xs), median9(ys));
+}
+
+/**
+ * @brief Weight of one tap of the Gaussian summation window.
+ *
+ * The window is Gaussian rather than a box on purpose. Each iteration replaces
+ * the flow error e by e minus a windowed average of e. A box filter has
+ * negative frequency lobes, so some error components are multiplied by more
+ * than one and the iteration diverges as it is repeated. A Gaussian response
+ * is never negative, which makes every iteration a contraction.
+ */
+float gauss_weight(int k, float sigma)
+{
+    return exp(-0.5 * float(k * k) / (sigma * sigma));
+}
+
+vec4 scratch_a_at(ivec2 c)
+{
+    return imageLoad(scratch_a, clamp(c, ivec2(0), lvl_extent() - ivec2(1)) + lvl_origin());
+}
+
+vec4 scratch_b_at(ivec2 c)
+{
+    return imageLoad(scratch_b, clamp(c, ivec2(0), lvl_extent() - ivec2(1)) + lvl_origin());
+}
+
+/**
+ * @brief One step of dense windowed Lucas-Kanade on one pyramid level, chosen
+ *        by push constant. Every phase is one pass over the level, and the
+ *        host chains them in a single submission.
+ *
+ * The previous frame is the template, so its structure tensor is summed once
+ * per level (TENSOR_H, TENSOR_V). Each iteration then warps the current frame
+ * by the running flow and forms the per-pixel residual products (WARP_INIT on
+ * the first iteration, which also seeds the flow from the coarser level, and
+ * WARP afterwards), sums them along x (BOX_H), and sums along y and solves for
+ * the increment (SOLVE). The flow is read and written only at the pixel a
+ * thread owns, so it updates in place.
+ *
+ * The solve is damped: eigen_threshold, scaled to the window sum, is added to
+ * the diagonal of the structure tensor. A pixel with little texture then takes
+ * a small step instead of amplifying noise, which would otherwise be clamped,
+ * doubled into every finer level, and never recovered. It is also anchored: a
+ * quarter of the damping pulls the flow back toward the value the level
+ * started from, so a pixel whose data term can never be satisfied settles at a
+ * bounded offset instead of drifting a step per iteration. The starting value
+ * is kept in the z and w channels of the flow until the last iteration, which
+ * replaces them with confidence (the undamped minimum eigenvalue) and residual.
+ *
+ * The visualization tone maps magnitude with a square root and desaturates,
+ * rather than blackens, pixels of low confidence, so edges and smooth regions
+ * that carry only partial or propagated flow are still visible.
+ *
+ * The window is separable and Gaussian weighted with sigma half the radius, so
+ * each sum costs two passes of 2r+1 taps per pixel instead of a full window.
+ * Sums are normalised by the total weight, which keeps confidence, damping and
+ * residual in per-area units regardless of the radius.
+ */
+void main()
+{
+    const ivec2 c = ivec2(gl_GlobalInvocationID.xy);
+    if (c.x >= int(pc.lvl_w) || c.y >= int(pc.lvl_h))
+        return;
+
+    const int r = int(pc.radius);
+    const ivec2 o = lvl_origin();
+    const float sigma = max(0.5 * float(r), 0.75);
+    float w1 = 0.0;
+    for (int k = -r; k <= r; ++k)
+        w1 += gauss_weight(k, sigma);
+    const float n = w1 * w1;
+
+    switch (pc.phase) {
+    case PHASE_TENSOR_H: {
+        vec3 acc = vec3(0.0);
+        for (int k = -r; k <= r; ++k) {
+            const vec4 t = prev_texel(c + ivec2(k, 0));
+            acc += gauss_weight(k, sigma) * vec3(t.g * t.g, t.g * t.b, t.b * t.b);
+        }
+        imageStore(scratch_a, c + o, vec4(acc, 0.0));
+        break;
+    }
+    case PHASE_TENSOR_V: {
+        vec3 acc = vec3(0.0);
+        for (int k = -r; k <= r; ++k)
+            acc += gauss_weight(k, sigma) * scratch_a_at(c + ivec2(0, k)).xyz;
+
+        const float tr = acc.x + acc.z;
+        const float det = acc.x * acc.z - acc.y * acc.y;
+        const float min_eig = (0.5 * tr - sqrt(max(0.0, 0.25 * tr * tr - det))) / n;
+        imageStore(tensor_img, c + o, vec4(acc, min_eig));
+        break;
+    }
+    case PHASE_WARP_INIT:
+    case PHASE_WARP: {
+        vec2 v;
+        if (pc.phase == PHASE_WARP_INIT) {
+            v = coarse_flow(c);
+            flow_store(c, vec4(v, v));
+        } else {
+            v = flow_load(c).xy;
+        }
+
+        const vec4 t = prev_texel(c);
+        vec4 cur;
+        SAMPLE_CURR(vec2(c) + v, cur);
+        const float it = cur.r - t.r;
+        imageStore(scratch_a, c + o, vec4(t.g * it, t.b * it, it * it, 0.0));
+        break;
+    }
+    case PHASE_BOX_H: {
+        vec3 acc = vec3(0.0);
+        for (int k = -r; k <= r; ++k)
+            acc += gauss_weight(k, sigma) * scratch_a_at(c + ivec2(k, 0)).xyz;
+        imageStore(scratch_b, c + o, vec4(acc, 0.0));
+        break;
+    }
+    case PHASE_SOLVE: {
+        vec3 b = vec3(0.0);
+        for (int k = -r; k <= r; ++k)
+            b += gauss_weight(k, sigma) * scratch_b_at(c + ivec2(0, k)).xyz;
+
+        const vec4 g = imageLoad(tensor_img, c + o);
+        const vec4 state = flow_load(c);
+        vec2 v = state.xy;
+        const vec2 v0 = state.zw;
+
+        const float damping = pc.eigen_threshold * n;
+        const vec2 pull = b.xy + 0.25 * damping * (v - v0);
+        const float sxx = g.x + damping;
+        const float syy = g.z + damping;
+        const float det = sxx * syy - g.y * g.y;
+        if (det > 1e-12) {
+            vec2 delta = vec2(syy * pull.x - g.y * pull.y, sxx * pull.y - g.y * pull.x) / det;
+            const float len = length(delta);
+            if (len > pc.max_step)
+                delta *= pc.max_step / len;
+            v -= delta;
+        }
+
+        if (pc.last_iteration != 0u)
+            flow_store(c, vec4(v, g.w, sqrt(max(b.z, 0.0) / n)));
+        else
+            flow_store(c, vec4(v, v0));
+        break;
+    }
+    case PHASE_VISUALIZE: {
+        if (meta[1] <= DUPLICATE_ENERGY)
+            break;
+
+        const vec4 f = flow_load(c);
+        const float magnitude = length(f.xy);
+        const float hue = atan(f.y, f.x) / TWO_PI + 0.5;
+        const float value = sqrt(clamp(magnitude / max(pc.visual_range, 1e-6), 0.0, 1.0));
+        const float certainty = clamp(f.z / (4.0 * max(pc.eigen_threshold, 1e-9)), 0.0, 1.0);
+        const vec3 rgb = hsv_to_rgb(vec3(hue, mix(0.3, 1.0, certainty), value));
+        imageStore(flow_vis, c, vec4(rgb, 1.0));
+        break;
+    }
+    }
+}

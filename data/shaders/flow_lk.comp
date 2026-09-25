@@ -1,0 +1,208 @@
+#version 460
+
+#extension GL_KHR_shader_subgroup_basic : require
+#extension GL_KHR_shader_subgroup_arithmetic : require
+
+#include "include/vision_sampling.glsl"
+
+layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
+
+layout(set = 0, binding = 3, rgba16f) uniform readonly image2D atlas_a;
+layout(set = 0, binding = 4, rgba16f) uniform readonly image2D atlas_b;
+
+layout(set = 1, binding = 0, std430) buffer PrevCountBuf {
+    uint prev_count[];
+};
+
+layout(set = 1, binding = 1, std430) buffer PrevPointsBuf {
+    vec4 prev_points[];
+};
+
+layout(set = 1, binding = 2, std430) buffer TracksBuf {
+    vec4 tracks[];
+};
+
+layout(set = 1, binding = 3, std430) buffer MetaBuf {
+    uint meta[];
+};
+
+layout(push_constant) uniform PC {
+    uint curr_atlas;
+    uint level;
+    uint coarsest;
+    uint pad0;
+    uint lvl_ox;
+    uint lvl_oy;
+    uint lvl_w;
+    uint lvl_h;
+    uint base_w;
+    uint base_h;
+    uint window_radius;
+    uint max_iterations;
+    float eigen_threshold;
+    float error_threshold;
+    uint max_points;
+    uint pad1;
+} pc;
+
+const int MAX_RADIUS = 15;
+const int MAX_TAPS = (2 * MAX_RADIUS + 1) * (2 * MAX_RADIUS + 1);
+const float CONVERGED = 0.03;
+
+shared vec3 s_template[MAX_TAPS];
+shared vec4 s_partial[64];
+
+#define SAMPLE_LEVEL(which, pos, out_val) \
+    do { \
+        if ((which) == 0u) { \
+            SAMPLE_BILINEAR_REGION(atlas_a, (pos), ivec2(int(pc.lvl_ox), int(pc.lvl_oy)), ivec2(int(pc.lvl_w), int(pc.lvl_h)), (out_val)); \
+        } else { \
+            SAMPLE_BILINEAR_REGION(atlas_b, (pos), ivec2(int(pc.lvl_ox), int(pc.lvl_oy)), ivec2(int(pc.lvl_w), int(pc.lvl_h)), (out_val)); \
+        } \
+    } while (false)
+
+/**
+ * @brief Workgroup-wide sum of up to four values.
+ *
+ * Reduces inside each subgroup, exchanges the per-subgroup partials through
+ * shared memory, and has every invocation fold the same partials in the same
+ * order so the result is bit-identical across the workgroup and needs no
+ * broadcast. The trailing barrier lets the next call reuse the scratch.
+ */
+vec4 workgroup_sum(vec4 v)
+{
+    v = subgroupAdd(v);
+    if (subgroupElect())
+        s_partial[gl_SubgroupID] = v;
+    memoryBarrierShared();
+    barrier();
+
+    vec4 total = vec4(0.0);
+    for (uint i = 0u; i < gl_NumSubgroups; ++i)
+        total += s_partial[i];
+
+    memoryBarrierShared();
+    barrier();
+    return total;
+}
+
+/**
+ * @brief One pyramidal Lucas-Kanade level for one keypoint per workgroup.
+ *
+ * Inverse compositional form: the template window, its gradient, and the 2x2
+ * structure tensor are computed once per level from the previous frame's
+ * atlas and cached in shared memory, so each refinement iteration only
+ * fetches the current frame. The flow guess travels between levels in the
+ * tracks buffer in level 0 pixels and is rescaled here.
+ *
+ * Levels run coarse to fine as separate dispatches of the same shader. Only
+ * level 0 decides whether a track survives: a textureless window, a track that
+ * leaves the frame, or a residual above the threshold marks it untracked. Coarser
+ * levels with a degenerate window simply keep the incoming guess.
+ *
+ * Workgroups beyond the GPU-resident keypoint count return immediately, so the
+ * dispatch is sized to the maximum without the count ever reaching the host.
+ */
+void main()
+{
+    const uint gid = gl_WorkGroupID.x;
+    const uint lid = gl_LocalInvocationIndex;
+
+    const uint count = min(prev_count[0], pc.max_points);
+
+    if (pc.level == 0u && gid == 0u && lid == 0u)
+        meta[0] = count;
+
+    if (gid >= count)
+        return;
+
+    const vec4 point = prev_points[2u * gid];
+    const vec4 point_meta = prev_points[2u * gid + 1u];
+    const vec2 base = vec2(float(pc.base_w), float(pc.base_h));
+    const vec2 p0 = point.xy * base - vec2(0.5);
+    const float scale = 1.0 / float(1u << pc.level);
+    const vec2 pl = (p0 + vec2(0.5)) * scale - vec2(0.5);
+    const uint prev_atlas = 1u - pc.curr_atlas;
+
+    vec2 v = vec2(0.0);
+    if (pc.coarsest == 0u)
+        v = tracks[2u * gid].zw * scale;
+
+    const int r = int(min(pc.window_radius, uint(MAX_RADIUS)));
+    const int side = 2 * r + 1;
+    const int taps = side * side;
+
+    vec4 tensor = vec4(0.0);
+    for (int t = int(lid); t < taps; t += 64) {
+        const vec2 off = vec2(float(t % side - r), float(t / side - r));
+        vec4 s;
+        SAMPLE_LEVEL(prev_atlas, pl + off, s);
+        s_template[t] = s.rgb;
+        tensor += vec4(s.g * s.g, s.g * s.b, s.b * s.b, 0.0);
+    }
+    memoryBarrierShared();
+    barrier();
+
+    const vec4 gsum = workgroup_sum(tensor);
+    const float sxx = gsum.x;
+    const float sxy = gsum.y;
+    const float syy = gsum.z;
+    const float det = sxx * syy - sxy * sxy;
+    const float tr = sxx + syy;
+    const float min_eig = (0.5 * tr - sqrt(max(0.0, 0.25 * tr * tr - det))) / float(taps);
+    const bool textured = min_eig >= pc.eigen_threshold && det > 1e-12;
+
+    if (textured) {
+        const float inv_det = 1.0 / det;
+        const vec2 limit = vec2(float(pc.lvl_w), float(pc.lvl_h));
+
+        for (uint it = 0u; it < pc.max_iterations; ++it) {
+            vec2 b = vec2(0.0);
+            for (int t = int(lid); t < taps; t += 64) {
+                const vec2 off = vec2(float(t % side - r), float(t / side - r));
+                vec4 c;
+                SAMPLE_LEVEL(pc.curr_atlas, pl + off + v, c);
+                const vec3 tm = s_template[t];
+                b += vec2(tm.y, tm.z) * (c.r - tm.x);
+            }
+
+            const vec4 bs = workgroup_sum(vec4(b, 0.0, 0.0));
+            const vec2 delta = vec2(syy * bs.x - sxy * bs.y, sxx * bs.y - sxy * bs.x) * inv_det;
+            v = clamp(v - delta, -limit, limit);
+
+            if (dot(delta, delta) < CONVERGED * CONVERGED)
+                break;
+        }
+    }
+
+    if (pc.level != 0u) {
+        if (lid == 0u) {
+            tracks[2u * gid].zw = v / scale;
+            tracks[2u * gid + 1u].y = 1.0;
+        }
+        return;
+    }
+
+    float sq = 0.0;
+    for (int t = int(lid); t < taps; t += 64) {
+        const vec2 off = vec2(float(t % side - r), float(t / side - r));
+        vec4 c;
+        SAMPLE_LEVEL(pc.curr_atlas, pl + off + v, c);
+        const float d = c.r - s_template[t].x;
+        sq += d * d;
+    }
+    const float residual = sqrt(workgroup_sum(vec4(sq, 0.0, 0.0, 0.0)).x / float(taps));
+
+    if (lid != 0u)
+        return;
+
+    const vec2 tracked_px = p0 + v;
+    const float margin = float(r) + 1.0;
+    const bool inside = tracked_px.x >= margin && tracked_px.y >= margin
+        && tracked_px.x <= base.x - 1.0 - margin && tracked_px.y <= base.y - 1.0 - margin;
+    const bool ok = textured && inside && residual <= pc.error_threshold;
+
+    const vec2 position = ok ? (tracked_px + vec2(0.5)) / base : point.xy;
+    tracks[2u * gid] = vec4(position, point.xy);
+    tracks[2u * gid + 1u] = vec4(ok ? residual : 1.0, ok ? 1.0 : 0.0, point.w, point_meta.x);
+}
