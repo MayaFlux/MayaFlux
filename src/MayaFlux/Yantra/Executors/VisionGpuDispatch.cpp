@@ -864,7 +864,7 @@ namespace {
         cc_ctx.parameters = params;
         cc_pipeline.execute(Datum<> {}, cc_ctx);
 
-        cc_pipeline.ensure_shared_buffer(0, 10, 3, GpuBufferBinding::ElementType::UINT32,
+        cc_pipeline.ensure_shared_buffer(0, 10, 6, GpuBufferBinding::ElementType::UINT32,
             Portal::Graphics::BufferUsageHint::INDIRECT);
         const std::array<uint32_t, 3> full_grid_indirect {
             (block_width + 7U) / 8U,
@@ -1012,37 +1012,57 @@ namespace {
 
         cc_pipeline.clear_output_dimensions();
 
-        cc_pipeline.swap_shader({ .shader_path = "contour_compact.comp.spv", .workgroup_size = { 256, 1, 1 }, .push_constant_size = sizeof(ContourCompactPC) });
-        cc_pipeline.set_push_constants(ContourCompactPC { .max_components = k_max_components, .max_holes_per_label = k_max_holes_per_label });
         const uint32_t total_owner_slots = k_max_components * (1U + k_max_holes_per_label);
-        cc_pipeline.set_output_dimensions(total_owner_slots, 1);
-        {
-            const auto fence = cc_pipeline.dispatch_async({});
-            foundry.wait_for_fence(fence);
-            foundry.release_fence(fence);
-        }
-        cc_pipeline.clear_output_dimensions();
+        const auto owner_hazards = [](GpuDispatchCore& ctx) {
+            return std::vector<HazardResource> {
+                ctx.shared_buffer_hazard({ .set = 1, .binding = 6, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 }),
+                ctx.shared_buffer_hazard({ .set = 1, .binding = 7, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 }),
+            };
+        };
+        const auto trace_pc = [&](uint32_t phase) {
+            return ContourMarchPC {
+                .width = w,
+                .height = h,
+                .max_components = k_max_components,
+                .max_points_per_contour = max_points,
+                .max_holes_per_label = k_max_holes_per_label,
+                .phase = phase,
+                .min_area = p.min_area,
+                .compacted_count = 0U
+            };
+        };
+        const GpuComputeConfig march_config { .shader_path = "contour_march.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(ContourMarchPC) };
+
+        std::vector<DependencyStage> trace_stages;
+        trace_stages.push_back({
+            .config = { .shader_path = "contour_compact.comp.spv", .workgroup_size = { 256, 1, 1 }, .push_constant_size = sizeof(ContourCompactPC) },
+            .stage_fn = [](GpuDispatchCore& ctx) {
+                ctx.set_push_constants(ContourCompactPC { .max_components = k_max_components, .max_holes_per_label = k_max_holes_per_label });
+            },
+            .hazard_fn = owner_hazards,
+            .explicit_groups = std::array<uint32_t, 3> { (total_owner_slots + 255U) / 256U, 1U, 1U },
+        });
+        trace_stages.push_back({
+            .config = march_config,
+            .stage_fn = [pc = trace_pc(3U)](GpuDispatchCore& ctx) { ctx.set_push_constants(pc); },
+            .explicit_groups = std::array<uint32_t, 3> { 1U, 1U, 1U },
+        });
+        trace_stages.push_back({
+            .config = march_config,
+            .stage_fn = [pc = trace_pc(2U)](GpuDispatchCore& ctx) { ctx.set_push_constants(pc); },
+            .explicit_groups = std::array<uint32_t, 3> { 1U, 1U, 1U },
+            .indirect_groups = IndirectGroupsSource { .set = 0, .binding = 10, .offset_bytes = 3U * sizeof(uint32_t) },
+        });
+
+        ExecutionContext trace_ctx;
+        trace_ctx.mode = ExecutionMode::DEPENDENCY;
+        DependencyParams trace_params;
+        trace_params.stages = trace_stages;
+        trace_ctx.parameters = trace_params;
+        cc_pipeline.execute(Datum<> {}, trace_ctx);
 
         uint32_t compacted_count = 0;
         cc_pipeline.download_shared(1, 7, &compacted_count, sizeof(uint32_t));
-
-        cc_pipeline.swap_shader({ .shader_path = "contour_march.comp.spv", .workgroup_size = { 256, 1, 1 }, .push_constant_size = sizeof(ContourMarchPC) });
-        cc_pipeline.set_push_constants(ContourMarchPC {
-            .width = w,
-            .height = h,
-            .max_components = k_max_components,
-            .max_points_per_contour = max_points,
-            .max_holes_per_label = k_max_holes_per_label,
-            .phase = 2U,
-            .min_area = p.min_area,
-            .compacted_count = compacted_count });
-        cc_pipeline.set_output_dimensions(std::max(compacted_count, 1U), 1);
-        {
-            const auto fence = cc_pipeline.dispatch_async({});
-            foundry.wait_for_fence(fence);
-            foundry.release_fence(fence);
-        }
-        cc_pipeline.clear_output_dimensions();
 
         if (p.max_contours > 0U) {
             constexpr uint32_t k = 12U;

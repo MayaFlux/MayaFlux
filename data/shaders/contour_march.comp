@@ -62,6 +62,10 @@ layout(set = 2, binding = 1, std430) buffer SortIndicesBuf {
     float sort_indices[];
 };
 
+layout(set = 0, binding = 10, std430) buffer TraceArgsBuf {
+    uint trace_args[];
+};
+
 layout(push_constant) uniform PushConstants {
     uint width;
     uint height;
@@ -72,6 +76,9 @@ layout(push_constant) uniform PushConstants {
     float min_area;
     uint compacted_count;
 } pc;
+
+const uint TRACE_ARGS_OFFSET = 3u;
+const uint TRACE_LOCAL_SIZE = 64u;
 
 const float NEG_INFINITY = -1.0 / 0.0;
 
@@ -263,16 +270,33 @@ void shoelace_area_perimeter(uint out_base, uint n, out float area_out, out floa
 }
 
 /**
- * @brief Phase 2, compacted variant. Dispatched over compacted_count
- *        threads instead of w*h pixels. Each thread reads its owner's
- *        linear_idx and packed metadata directly, deriving coord from
- *        linear_idx rather than gl_GlobalInvocationID, and runs exactly
+ * @brief Phase 3. Turns the GPU-resident compacted count into the workgroup
+ *        counts of the phase 2 dispatch, at least one group, so phase 2
+ *        can be dispatched indirectly without the count reaching the host.
+ *        The counts occupy the three words at TRACE_ARGS_OFFSET. Runs in one
+ *        thread.
+ */
+void write_trace_args()
+{
+    if (gl_LocalInvocationIndex != 0u)
+        return;
+
+    trace_args[TRACE_ARGS_OFFSET] = max((compacted_count_buf[0] + TRACE_LOCAL_SIZE - 1u) / TRACE_LOCAL_SIZE, 1u);
+    trace_args[TRACE_ARGS_OFFSET + 1u] = 1u;
+    trace_args[TRACE_ARGS_OFFSET + 2u] = 1u;
+}
+
+/**
+ * @brief Phase 2, compacted variant. Dispatched over the GPU-resident
+ *        compacted count of threads instead of w*h pixels. Each thread reads
+ *        its owner's linear_idx and packed metadata directly, deriving coord
+ *        from linear_idx rather than gl_GlobalInvocationID, and runs exactly
  *        one boundary walk with no non-owner early-return waste.
  */
 void trace_phase_compacted()
 {
-    const uint i = gl_GlobalInvocationID.x;
-    if (i >= pc.compacted_count)
+    const uint i = gl_WorkGroupID.x * TRACE_LOCAL_SIZE + gl_LocalInvocationIndex;
+    if (i >= compacted_count_buf[0])
         return;
 
     const uvec2 entry = compacted_owners[i];
@@ -320,6 +344,8 @@ void main()
         claim_outer_phase();
     else if (pc.phase == 1u)
         claim_hole_phase();
+    else if (pc.phase == 3u)
+        write_trace_args();
     else
         trace_phase_compacted();
 }
