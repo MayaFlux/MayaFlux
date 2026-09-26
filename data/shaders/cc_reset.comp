@@ -29,7 +29,7 @@ layout(push_constant) uniform PushConstants {
 } pc;
 
 /**
- * @brief Resets FinalLabeling's claim/bounds state on GPU. Replaces a
+ * @brief Resets compact-id and bounds state on GPU. Replaces a
  *        3-upload CPU round trip every frame with a single dispatch.
  *        Thread count covers max(lut_size, max_components); each thread
  *        clears whichever buffers its index is in range for.

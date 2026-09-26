@@ -9,6 +9,14 @@ layout(set = 0, binding = 2, std430) coherent volatile buffer BlockLabelBuf {
     uint block_label[];
 };
 
+layout(set = 0, binding = 4, std430) buffer LabelLutBuf {
+    uint label_lut[];
+};
+
+layout(set = 0, binding = 5, std430) buffer CountBuf {
+    uint compact_count[1];
+};
+
 layout(push_constant) uniform PushConstants {
     uint block_width;
     uint block_height;
@@ -16,9 +24,7 @@ layout(push_constant) uniform PushConstants {
 
 /**
  * @brief Resolves idx's root via full pointer-chasing with path halving,
- *        matching cc_merge's find_root. Single dispatch: every thread
- *        walks its own chain to convergence in one invocation, replacing
- *        the prior CHAINED_INDIRECT multi-pass grandparent-jump gate.
+ *        matching cc_merge's find_root.
  */
 uint find_root(uint x)
 {
@@ -32,6 +38,12 @@ uint find_root(uint x)
     return x;
 }
 
+/**
+ * @brief Flatten each block's label and assign one compact id per root.
+ *
+ * Only the invocation whose index equals the resolved root writes its lookup
+ * entry. FinalLabel can then read the completed lookup in a later dispatch.
+ */
 void main()
 {
     const uvec2 block_coord = gl_GlobalInvocationID.xy;
@@ -44,4 +56,7 @@ void main()
 
     const uint root = find_root(idx);
     block_label[idx] = root;
+
+    if (idx == root)
+        label_lut[root] = atomicAdd(compact_count[0], 1u) + 1u;
 }

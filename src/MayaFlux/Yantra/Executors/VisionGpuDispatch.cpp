@@ -897,6 +897,9 @@ namespace {
 
         contexts.pass.result.debug_labels = p.with_colors ? cc_pipeline.get_output_image(0) : nullptr;
 
+        if (contours_follow)
+            return;
+
         uint32_t compact_count = 0;
         cc_pipeline.download_shared(0, 5, &compact_count, sizeof(uint32_t));
         compact_count = std::min(compact_count, k_max_components);
@@ -1339,8 +1342,7 @@ namespace {
                     ctx.stage_image_at(0, gray, GpuBufferBinding::ElementType::IMAGE_STORAGE);
                     ctx.stage_image_at(3, atlas_a, GpuBufferBinding::ElementType::IMAGE_STORAGE);
                     ctx.stage_image_at(4, atlas_b, GpuBufferBinding::ElementType::IMAGE_STORAGE);
-                    ctx.set_push_constants(pc);
-                },
+                    ctx.set_push_constants(pc); },
                 .hazard_fn = [target, gray, level](GpuDispatchCore&) {
                     std::vector<HazardResource> hazards;
                     hazards.push_back({
@@ -1353,8 +1355,7 @@ namespace {
                             .image = gray->get_image(),
                         });
                     }
-                    return hazards;
-                },
+                    return hazards; },
                 .explicit_groups = std::array<uint32_t, 3> { (dst.w + k_wg2d[0] - 1U) / k_wg2d[0], (dst.h + k_wg2d[1] - 1U) / k_wg2d[1], 1U },
             });
         }
@@ -1626,11 +1627,8 @@ namespace {
             .config = { .shader_path = "extract_peaks.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(ExtractPeaksPC) },
             .stage_fn = [response, peaks_pc](GpuDispatchCore& ctx) {
                 ctx.stage_image_at(0, response, GpuBufferBinding::ElementType::IMAGE_STORAGE);
-                ctx.set_push_constants(peaks_pc);
-            },
-            .hazard_fn = [](GpuDispatchCore& ctx) {
-                return flow_hazards(ctx, { k_flow_det_count, k_flow_det_points });
-            },
+                ctx.set_push_constants(peaks_pc); },
+            .hazard_fn = [](GpuDispatchCore& ctx) { return flow_hazards(ctx, { k_flow_det_count, k_flow_det_points }); },
             .explicit_groups = std::array<uint32_t, 3> { (w + k_wg2d[0] - 1U) / k_wg2d[0], (h + k_wg2d[1] - 1U) / k_wg2d[1], 1U },
         });
 
@@ -1705,13 +1703,11 @@ namespace {
                     .stage_fn = [atlas_a, atlas_b, pc](GpuDispatchCore& ctx) {
                         ctx.stage_image_at(3, atlas_a, GpuBufferBinding::ElementType::IMAGE_STORAGE);
                         ctx.stage_image_at(4, atlas_b, GpuBufferBinding::ElementType::IMAGE_STORAGE);
-                        ctx.set_push_constants(pc);
-                    },
+                        ctx.set_push_constants(pc); },
                     .hazard_fn = [finest, backward](GpuDispatchCore& ctx) {
                         if (finest || backward)
                             return flow_hazards(ctx, { k_flow_tracks, k_flow_meta, k_flow_prev_count, k_flow_prev_points });
-                        return flow_hazards(ctx, { k_flow_tracks, k_flow_meta });
-                    },
+                        return flow_hazards(ctx, { k_flow_tracks, k_flow_meta }); },
                     .explicit_groups = std::array<uint32_t, 3> { k_flow_max_points, 1U, 1U },
                     .indirect_groups = flow_args_source(FlowArgs::LK),
                 });
@@ -1951,8 +1947,7 @@ namespace {
                     ctx.stage_image_at(9, images->scratch_b, Kind::IMAGE_STORAGE);
                     ctx.stage_image_at(10, images->tensor, Kind::IMAGE_STORAGE);
                     ctx.stage_image_at(11, images->vis, Kind::IMAGE_STORAGE);
-                    ctx.set_push_constants(stage_pc);
-                },
+                    ctx.set_push_constants(stage_pc); },
                 .hazard_fn = [hazards = std::move(hazards)](GpuDispatchCore&) { return hazards; },
                 .explicit_groups = std::array<uint32_t, 3> { (region.w + k_wg2d[0] - 1U) / k_wg2d[0], (region.h + k_wg2d[1] - 1U) / k_wg2d[1], 1U },
             });
