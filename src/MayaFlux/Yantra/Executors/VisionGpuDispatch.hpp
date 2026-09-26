@@ -70,6 +70,14 @@ struct FlowState {
     std::vector<Kinesis::Vision::TrackResult> last_tracks;
 
     /**
+     * @brief Track count of the last distinct frame, independent of whether a
+     *        host list was produced for it, and whether the submitted track
+     *        sequence should read its tracks back to the host.
+     */
+    uint32_t last_track_count { 0 };
+    bool host_pending { true };
+
+    /**
      * @brief Bookkeeping for the device resident track export.
      *
      * The two export buffers are shared buffers of the flow context and
@@ -254,6 +262,22 @@ public:
     [[nodiscard]] static GpuComputeConfig config(
         Kinesis::Vision::VisionOp op,
         const Kinesis::Vision::VisionParams& params);
+
+    /**
+     * @brief Host tracks decoded on demand from a result's exported buffer.
+     *
+     * For sequences run with export_tracks and without host_tracks, where the
+     * structured result is empty. Reads the buffer through its host mapping,
+     * so it is meant for occasional host access, not per frame use on a
+     * device local buffer. The buffer is valid for one more run after the
+     * result was delivered.
+     *
+     * @param result A result whose tracks_buffer came from this executor.
+     * @return The exported tracks, or empty when the result carries no
+     *         readable export.
+     */
+    [[nodiscard]] static std::vector<Kinesis::Vision::TrackResult> read_exported_tracks(
+        const Kinesis::Vision::VisionResult& result);
 
     /**
      * @brief Execute a VisionSequence on the GPU through an explicit context set.

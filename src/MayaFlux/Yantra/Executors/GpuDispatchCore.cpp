@@ -358,13 +358,13 @@ Portal::Graphics::FenceID GpuDispatchCore::dispatch_core_async(
 void GpuDispatchCore::dispatch_core_dependency(const std::vector<DependencyStage>& stages)
 {
     const auto plan = prepare_dependency(stages);
-    m_resources.dispatch_sequence(plan.keys, plan.groups, plan.push_constants, plan.hazards);
+    m_resources.dispatch_sequence(plan.keys, plan.groups, plan.push_constants, plan.hazards, plan.indirect);
 }
 
 Portal::Graphics::FenceID GpuDispatchCore::dispatch_core_dependency_async(const std::vector<DependencyStage>& stages)
 {
     const auto plan = prepare_dependency(stages);
-    return m_resources.dispatch_sequence_async(plan.keys, plan.groups, plan.push_constants, plan.hazards);
+    return m_resources.dispatch_sequence_async(plan.keys, plan.groups, plan.push_constants, plan.hazards, plan.indirect);
 }
 
 GpuDispatchCore::DependencyPlan GpuDispatchCore::prepare_dependency(const std::vector<DependencyStage>& stages)
@@ -381,11 +381,13 @@ GpuDispatchCore::DependencyPlan GpuDispatchCore::prepare_dependency(const std::v
     auto& groups_per_key = plan.groups;
     auto& pc_per_key = plan.push_constants;
     auto& hazards_per_key = plan.hazards;
+    auto& indirect_per_key = plan.indirect;
 
     keys.reserve(stages.size());
     groups_per_key.reserve(stages.size());
     pc_per_key.reserve(stages.size());
     hazards_per_key.reserve(stages.size());
+    indirect_per_key.reserve(stages.size());
 
     for (const auto& stage : stages) {
         m_gpu_config = stage.config;
@@ -414,6 +416,13 @@ GpuDispatchCore::DependencyPlan GpuDispatchCore::prepare_dependency(const std::v
         groups_per_key.push_back(stage.explicit_groups ? *stage.explicit_groups : calculate_dispatch_size(largest_binding_data_element_count(), {}));
         pc_per_key.push_back(m_push_constants);
         hazards_per_key.push_back(stage.hazard_fn ? stage.hazard_fn(*this) : std::vector<Portal::Graphics::HazardResource> {});
+
+        Portal::Graphics::IndirectDispatch indirect;
+        if (stage.indirect_groups) {
+            indirect.buffer = m_resources.shared_buffer_handle(stage.indirect_groups->set, stage.indirect_groups->binding).buffer;
+            indirect.offset = stage.indirect_groups->offset_bytes;
+        }
+        indirect_per_key.push_back(indirect);
     }
 
     m_gpu_config = original_config;

@@ -742,7 +742,8 @@ Portal::Graphics::CommandBufferID GpuResourceManager::record_sequence_commands(
     const std::vector<std::string>& keys,
     const std::vector<std::array<uint32_t, 3>>& groups_per_key,
     const std::vector<std::vector<uint8_t>>& push_constants_per_key,
-    const std::vector<std::vector<Portal::Graphics::HazardResource>>& hazards_per_key)
+    const std::vector<std::vector<Portal::Graphics::HazardResource>>& hazards_per_key,
+    const std::vector<Portal::Graphics::IndirectDispatch>& indirect_per_key)
 {
     auto& foundry = Portal::Graphics::get_shader_foundry();
     auto& compute_press = Portal::Graphics::get_compute_press();
@@ -758,6 +759,7 @@ Portal::Graphics::CommandBufferID GpuResourceManager::record_sequence_commands(
             .groups = groups_per_key[i],
             .push_constant_data = push_constants_per_key[i],
             .hazard_resources = hazards_per_key[i],
+            .indirect = i < indirect_per_key.size() ? indirect_per_key[i] : Portal::Graphics::IndirectDispatch {},
         });
     }
 
@@ -771,22 +773,24 @@ void GpuResourceManager::dispatch_sequence(
     const std::vector<std::string>& keys,
     const std::vector<std::array<uint32_t, 3>>& groups_per_key,
     const std::vector<std::vector<uint8_t>>& push_constants_per_key,
-    const std::vector<std::vector<Portal::Graphics::HazardResource>>& hazards_per_key)
+    const std::vector<std::vector<Portal::Graphics::HazardResource>>& hazards_per_key,
+    const std::vector<Portal::Graphics::IndirectDispatch>& indirect_per_key)
 {
     auto& foundry = Portal::Graphics::get_shader_foundry();
     foundry.submit_and_wait(
-        record_sequence_commands(keys, groups_per_key, push_constants_per_key, hazards_per_key));
+        record_sequence_commands(keys, groups_per_key, push_constants_per_key, hazards_per_key, indirect_per_key));
 }
 
 Portal::Graphics::FenceID GpuResourceManager::dispatch_sequence_async(
     const std::vector<std::string>& keys,
     const std::vector<std::array<uint32_t, 3>>& groups_per_key,
     const std::vector<std::vector<uint8_t>>& push_constants_per_key,
-    const std::vector<std::vector<Portal::Graphics::HazardResource>>& hazards_per_key)
+    const std::vector<std::vector<Portal::Graphics::HazardResource>>& hazards_per_key,
+    const std::vector<Portal::Graphics::IndirectDispatch>& indirect_per_key)
 {
     auto& foundry = Portal::Graphics::get_shader_foundry();
     return foundry.submit_async(
-        record_sequence_commands(keys, groups_per_key, push_constants_per_key, hazards_per_key));
+        record_sequence_commands(keys, groups_per_key, push_constants_per_key, hazards_per_key, indirect_per_key));
 }
 
 } // namespace MayaFlux::Yantra

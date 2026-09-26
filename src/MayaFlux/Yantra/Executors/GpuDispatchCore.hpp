@@ -25,6 +25,21 @@ struct GpuChannelResult {
 };
 
 /**
+ * @struct IndirectGroupsSource
+ * @brief Location of GPU-resident workgroup counts for a DependencyStage.
+ *
+ * Names a shared buffer of the dispatching context, allocated with
+ * BufferUsageHint::INDIRECT, that holds {x, y, z} as three uint32 values at
+ * offset_bytes. An earlier stage of the same call writes it, so the dispatch
+ * size never reaches the host.
+ */
+struct IndirectGroupsSource {
+    uint32_t set {};
+    size_t binding {};
+    uint64_t offset_bytes { 0 };
+};
+
+/**
  * @struct DependencyStage
  * @brief One stage in a dispatch_core_dependency call.
  *
@@ -45,6 +60,12 @@ struct DependencyStage {
     std::function<void(GpuDispatchCore&)> stage_fn;
     std::function<std::vector<Portal::Graphics::HazardResource>(GpuDispatchCore&)> hazard_fn;
     std::optional<std::array<uint32_t, 3>> explicit_groups;
+
+    /**
+     * @brief Shared buffer holding this stage's workgroup counts, when they
+     *        come from GPU data. explicit_groups is then ignored.
+     */
+    std::optional<IndirectGroupsSource> indirect_groups;
 };
 
 /**
@@ -506,6 +527,7 @@ private:
         std::vector<std::array<uint32_t, 3>> groups;
         std::vector<std::vector<uint8_t>> push_constants;
         std::vector<std::vector<Portal::Graphics::HazardResource>> hazards;
+        std::vector<Portal::Graphics::IndirectDispatch> indirect;
     };
 
     [[nodiscard]] DependencyPlan prepare_dependency(const std::vector<DependencyStage>& stages);

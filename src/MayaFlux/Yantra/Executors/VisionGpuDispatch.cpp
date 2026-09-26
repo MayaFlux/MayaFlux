@@ -212,6 +212,7 @@ namespace {
         ADD_MARGINAL = 5,
         COMMIT = 6,
         PUBLISH = 7,
+        ARGS = 8,
     };
 
     struct FlowSelectPC {
@@ -248,6 +249,27 @@ namespace {
         FlowBufferSpec { .set = 1, .binding = 8, .type = GpuBufferBinding::ElementType::FLOAT32 },
         FlowBufferSpec { .set = 1, .binding = 9, .type = GpuBufferBinding::ElementType::FLOAT32 },
     };
+    constexpr FlowBufferSpec k_flow_args { .set = 1, .binding = 10, .type = GpuBufferBinding::ElementType::UINT32 };
+
+    /**
+     * @brief Dispatch triples written by the args phase of flow_select.comp,
+     *        in the order they are stored.
+     */
+    enum class FlowArgs : uint8_t {
+        LK = 0,
+        RETAINED = 1,
+        DETECTED = 2,
+        PUBLISH = 3,
+    };
+    constexpr size_t k_flow_args_count = 4;
+    constexpr uint64_t k_flow_args_stride = 3 * sizeof(uint32_t);
+
+    /** Location of one dispatch triple in the flow context's args buffer */
+    IndirectGroupsSource flow_args_source(FlowArgs slot)
+    {
+        return { .set = k_flow_args.set, .binding = k_flow_args.binding, .offset_bytes = static_cast<uint64_t>(slot) * k_flow_args_stride };
+    }
+
     /** Export buffer size in vec4: one header plus two per track */
     constexpr size_t k_flow_export_vec4 = size_t { 1 } + size_t { k_flow_max_points } * 2;
 
@@ -1243,6 +1265,7 @@ namespace {
         flow.ensure_shared_buffer(1, 7, k_flow_grid_capacity, GpuBufferBinding::ElementType::UINT32, Portal::Graphics::BufferUsageHint::COMPUTE);
         for (const auto& spec : k_flow_export)
             flow.ensure_shared_buffer(spec.set, spec.binding, k_flow_export_vec4 * 4, spec.type, Portal::Graphics::BufferUsageHint::COMPUTE);
+        flow.ensure_shared_buffer(k_flow_args.set, k_flow_args.binding, k_flow_args_count * 3, k_flow_args.type, Portal::Graphics::BufferUsageHint::INDIRECT);
 
         flow.swap_shader({ .shader_path = "flow_reset.comp.spv", .workgroup_size = { 64, 1, 1 } });
         flow.set_output_dimensions(1, 1);
@@ -1446,12 +1469,42 @@ namespace {
     }
 
     /**
-     * @brief Publish a finished tracking sequence: read the tracks back, flip
+     * @brief Decode count track records, two vec4 each, into host results.
+     *
+     * Shared by the tracks buffer readback and the exported buffer reader, so
+     * the two layouts cannot drift apart.
+     */
+    std::vector<Kinesis::Vision::TrackResult> decode_track_records(const glm::vec4* records, uint32_t count)
+    {
+        std::vector<Kinesis::Vision::TrackResult> tracks;
+        tracks.reserve(count);
+        for (uint32_t i = 0; i < count; ++i) {
+            const auto& pose = records[static_cast<size_t>(i) * 2U];
+            const auto& status = records[static_cast<size_t>(i) * 2U + 1U];
+            tracks.push_back({
+                .position = { pose.x, pose.y },
+                .error = status.x,
+                .tracked = status.y > 0.5F,
+                .previous = { pose.z, pose.w },
+                .id = std::bit_cast<uint32_t>(status.z),
+                .age = std::bit_cast<uint32_t>(status.w),
+            });
+        }
+        return tracks;
+    }
+
+    /**
+     * @brief Publish a finished tracking sequence: deliver the tracks, flip
      *        the atlas parity, and mark the flow context as having a previous
      *        frame.
      *
-     * The tracks region is the only host transfer in the feature. The
-     * detection promotion already happened on the GPU inside the sequence.
+     * The host readback of the tracks region is the only host transfer in the
+     * feature, and only happens when the step asked for host tracks. The
+     * detection promotion already happened on the GPU inside the sequence, so
+     * a step that only exports skips the transfer entirely and reads just the
+     * 16 byte meta block. The repeated frame decision uses the track count of
+     * the last distinct frame rather than the host list, so it holds without
+     * a host result.
      */
     void finish_track(VisionGpuContexts& contexts)
     {
@@ -1459,35 +1512,24 @@ namespace {
         auto& flow = contexts.flow;
         std::vector<Kinesis::Vision::TrackResult> tracks;
         const auto meta = read_flow_meta(contexts);
-        const bool duplicate = frame_is_duplicate(contexts, meta) && !state.last_tracks.empty();
+        const bool duplicate = frame_is_duplicate(contexts, meta) && state.last_track_count > 0;
+        const uint32_t count = state.have_prev ? std::min(meta[0], k_flow_max_points) : 0U;
 
-        if (duplicate) {
-            tracks = state.last_tracks;
-        } else if (state.have_prev) {
-            const uint32_t count = std::min(meta[0], k_flow_max_points);
-
-            if (count > 0) {
-                std::vector<glm::vec4> records(static_cast<size_t>(count) * 2U);
-                flow.download_shared(1, 2, records.data(), records.size() * sizeof(glm::vec4));
-
-                tracks.reserve(count);
-                for (uint32_t i = 0; i < count; ++i) {
-                    const auto& pose = records[static_cast<size_t>(i) * 2U];
-                    const auto& status = records[static_cast<size_t>(i) * 2U + 1U];
-                    tracks.push_back({
-                        .position = { pose.x, pose.y },
-                        .error = status.x,
-                        .tracked = status.y > 0.5F,
-                        .previous = { pose.z, pose.w },
-                        .id = std::bit_cast<uint32_t>(status.z),
-                        .age = std::bit_cast<uint32_t>(status.w),
-                    });
+        if (state.host_pending) {
+            if (duplicate && !state.last_tracks.empty()) {
+                tracks = state.last_tracks;
+            } else {
+                if (count > 0) {
+                    std::vector<glm::vec4> records(static_cast<size_t>(count) * 2U);
+                    flow.download_shared(1, 2, records.data(), records.size() * sizeof(glm::vec4));
+                    tracks = decode_track_records(records.data(), count);
                 }
+                state.last_tracks = tracks;
             }
         }
 
         if (!duplicate)
-            state.last_tracks = tracks;
+            state.last_track_count = count;
 
         if (state.export_pending) {
             if (!duplicate || !state.last_export) {
@@ -1561,7 +1603,7 @@ namespace {
         }
 
         const bool export_tracks = p.export_tracks;
-        const uint32_t duplicate_cutoff = (!state.last_tracks.empty() && state.last_export)
+        const uint32_t duplicate_cutoff = (state.last_track_count > 0 && state.last_export)
             ? k_flow_duplicate_energy + 1U
             : 0U;
 
@@ -1591,6 +1633,46 @@ namespace {
             },
             .explicit_groups = std::array<uint32_t, 3> { (w + k_wg2d[0] - 1U) / k_wg2d[0], (h + k_wg2d[1] - 1U) / k_wg2d[1], 1U },
         });
+
+        const auto base_w = static_cast<float>(layout.level[0].w);
+        const auto base_h = static_cast<float>(layout.level[0].h);
+        float cell = std::max(p.min_distance, 1.0F);
+        auto grid_w = static_cast<uint32_t>(std::ceil(base_w / cell));
+        auto grid_h = static_cast<uint32_t>(std::ceil(base_h / cell));
+        while (static_cast<uint64_t>(grid_w) * grid_h > k_flow_grid_capacity) {
+            cell *= 1.1F;
+            grid_w = static_cast<uint32_t>(std::ceil(base_w / cell));
+            grid_h = static_cast<uint32_t>(std::ceil(base_h / cell));
+        }
+        const uint32_t grid_cells = grid_w * grid_h;
+        const uint32_t clear_groups = std::max(1U, (grid_cells + k_flow_select_local - 1U) / k_flow_select_local);
+        const uint32_t candidate_groups = (k_flow_max_points + k_flow_select_local - 1U) / k_flow_select_local;
+        const uint32_t have_prev = state.have_prev ? 1U : 0U;
+
+        const auto add_select = [&](FlowSelectPhase phase, uint32_t groups, std::vector<FlowBufferSpec> touched, std::optional<FlowArgs> args = std::nullopt) {
+            const FlowSelectPC pc {
+                .phase = static_cast<uint32_t>(phase),
+                .max_points = max_points,
+                .have_prev = have_prev,
+                .grid_w = grid_w,
+                .grid_h = grid_h,
+                .grid_cells = grid_cells,
+                .cell = cell,
+                .base_w = base_w,
+                .base_h = base_h,
+                .publish_slot = state.export_slot,
+                .duplicate_cutoff = duplicate_cutoff,
+            };
+            stages.push_back({
+                .config = { .shader_path = "flow_select.comp.spv", .workgroup_size = { k_flow_select_local, 1, 1 }, .push_constant_size = sizeof(FlowSelectPC) },
+                .stage_fn = [pc](GpuDispatchCore& ctx) { ctx.set_push_constants(pc); },
+                .hazard_fn = [touched = std::move(touched)](GpuDispatchCore& ctx) { return flow_hazards(ctx, touched); },
+                .explicit_groups = std::array<uint32_t, 3> { groups, 1U, 1U },
+                .indirect_groups = args ? std::optional<IndirectGroupsSource> { flow_args_source(*args) } : std::nullopt,
+            });
+        };
+
+        add_select(FlowSelectPhase::ARGS, 1U, {});
 
         const auto add_lk = [&](bool backward) {
             for (uint32_t level = layout.levels; level-- > 0;) {
@@ -1631,6 +1713,7 @@ namespace {
                         return flow_hazards(ctx, { k_flow_tracks, k_flow_meta });
                     },
                     .explicit_groups = std::array<uint32_t, 3> { k_flow_max_points, 1U, 1U },
+                    .indirect_groups = flow_args_source(FlowArgs::LK),
                 });
             }
         };
@@ -1640,52 +1723,15 @@ namespace {
                 add_lk(true);
         }
 
-        const auto base_w = static_cast<float>(layout.level[0].w);
-        const auto base_h = static_cast<float>(layout.level[0].h);
-        float cell = std::max(p.min_distance, 1.0F);
-        auto grid_w = static_cast<uint32_t>(std::ceil(base_w / cell));
-        auto grid_h = static_cast<uint32_t>(std::ceil(base_h / cell));
-        while (static_cast<uint64_t>(grid_w) * grid_h > k_flow_grid_capacity) {
-            cell *= 1.1F;
-            grid_w = static_cast<uint32_t>(std::ceil(base_w / cell));
-            grid_h = static_cast<uint32_t>(std::ceil(base_h / cell));
-        }
-        const uint32_t grid_cells = grid_w * grid_h;
-        const uint32_t clear_groups = std::max(1U, (grid_cells + k_flow_select_local - 1U) / k_flow_select_local);
-        const uint32_t candidate_groups = (k_flow_max_points + k_flow_select_local - 1U) / k_flow_select_local;
-        const uint32_t have_prev = state.have_prev ? 1U : 0U;
-
-        const auto add_select = [&](FlowSelectPhase phase, uint32_t groups, std::vector<FlowBufferSpec> touched) {
-            const FlowSelectPC pc {
-                .phase = static_cast<uint32_t>(phase),
-                .max_points = max_points,
-                .have_prev = have_prev,
-                .grid_w = grid_w,
-                .grid_h = grid_h,
-                .grid_cells = grid_cells,
-                .cell = cell,
-                .base_w = base_w,
-                .base_h = base_h,
-                .publish_slot = state.export_slot,
-                .duplicate_cutoff = duplicate_cutoff,
-            };
-            stages.push_back({
-                .config = { .shader_path = "flow_select.comp.spv", .workgroup_size = { k_flow_select_local, 1, 1 }, .push_constant_size = sizeof(FlowSelectPC) },
-                .stage_fn = [pc](GpuDispatchCore& ctx) { ctx.set_push_constants(pc); },
-                .hazard_fn = [touched = std::move(touched)](GpuDispatchCore& ctx) { return flow_hazards(ctx, touched); },
-                .explicit_groups = std::array<uint32_t, 3> { groups, 1U, 1U },
-            });
-        };
-
         add_select(FlowSelectPhase::CLEAR, clear_groups, { k_flow_grid, k_flow_histogram, k_flow_counters });
-        add_select(FlowSelectPhase::SURVIVORS, candidate_groups, { k_flow_next_points, k_flow_counters, k_flow_grid });
-        add_select(FlowSelectPhase::HISTOGRAM, candidate_groups, { k_flow_histogram });
+        add_select(FlowSelectPhase::SURVIVORS, candidate_groups, { k_flow_next_points, k_flow_counters, k_flow_grid }, FlowArgs::RETAINED);
+        add_select(FlowSelectPhase::HISTOGRAM, candidate_groups, { k_flow_histogram }, FlowArgs::DETECTED);
         add_select(FlowSelectPhase::THRESHOLD, 1U, { k_flow_counters });
-        add_select(FlowSelectPhase::ADD_STRONG, candidate_groups, { k_flow_next_points, k_flow_counters, k_flow_grid });
-        add_select(FlowSelectPhase::ADD_MARGINAL, candidate_groups, { k_flow_next_points, k_flow_counters, k_flow_grid });
+        add_select(FlowSelectPhase::ADD_STRONG, candidate_groups, { k_flow_next_points, k_flow_counters, k_flow_grid }, FlowArgs::DETECTED);
+        add_select(FlowSelectPhase::ADD_MARGINAL, candidate_groups, { k_flow_next_points, k_flow_counters, k_flow_grid }, FlowArgs::DETECTED);
         add_select(FlowSelectPhase::COMMIT, 1U, {});
         if (export_tracks)
-            add_select(FlowSelectPhase::PUBLISH, candidate_groups, { k_flow_export[0], k_flow_export[1] });
+            add_select(FlowSelectPhase::PUBLISH, candidate_groups, { k_flow_export[0], k_flow_export[1] }, FlowArgs::PUBLISH);
 
         const auto fence = flow.dispatch_dependency_async(stages);
         if (fence == Portal::Graphics::INVALID_FENCE) {
@@ -1694,6 +1740,7 @@ namespace {
             return false;
         }
         state.export_pending = export_tracks;
+        state.host_pending = p.host_tracks;
 
         if (step.deferred) {
             contexts.suspended.fence = fence;
@@ -2099,6 +2146,7 @@ VisionGpuContexts::VisionGpuContexts()
             { .set = 1, .binding = 7, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
             { .set = 1, .binding = 8, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::FLOAT32 },
             { .set = 1, .binding = 9, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::FLOAT32 },
+            { .set = 1, .binding = 10, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
             { .set = 0, .binding = 5, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::IMAGE_STORAGE },
             { .set = 0, .binding = 6, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::IMAGE_STORAGE },
             { .set = 0, .binding = 7, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::IMAGE_STORAGE },
@@ -2241,6 +2289,18 @@ GpuComputeConfig VisionGpuExecutor::config(VisionOp op, const VisionParams& /*pa
     }
 }
 
+std::vector<Kinesis::Vision::TrackResult> VisionGpuExecutor::read_exported_tracks(const Kinesis::Vision::VisionResult& result)
+{
+    const auto& handle = result.tracks_buffer;
+    if (!handle || !handle->mapped_ptr || handle->size_bytes < sizeof(glm::vec4))
+        return {};
+
+    const auto* header = static_cast<const glm::vec4*>(handle->mapped_ptr);
+    const size_t capacity = (handle->size_bytes / sizeof(glm::vec4) - 1U) / 2U;
+    const auto count = static_cast<uint32_t>(std::min<size_t>(std::bit_cast<uint32_t>(header[0].x), capacity));
+    return decode_track_records(header + 1, count);
+}
+
 void VisionGpuExecutor::reset()
 {
     if (!m_contexts)
@@ -2262,6 +2322,7 @@ void VisionGpuExecutor::reset()
     contexts.flow_state.curr_ready = false;
     contexts.flow_state.last_flow.reset();
     contexts.flow_state.last_tracks.clear();
+    contexts.flow_state.last_track_count = 0;
     contexts.flow_state.last_export.reset();
     contexts.flow_state.export_pending = false;
 

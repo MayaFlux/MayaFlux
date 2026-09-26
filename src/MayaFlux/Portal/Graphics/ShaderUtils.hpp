@@ -37,7 +37,7 @@ struct GpuBufferHandle {
 {
     switch (hint) {
     case BufferUsageHint::INDIRECT:
-        return vk::BufferUsageFlagBits::eIndirectBuffer;
+        return vk::BufferUsageFlagBits::eIndirectBuffer | vk::BufferUsageFlagBits::eStorageBuffer;
     case BufferUsageHint::COMPUTE_STORAGE:
         return vk::BufferUsageFlagBits::eStorageBuffer;
     default:

@@ -50,6 +50,10 @@ layout(set = 1, binding = 9, std430) buffer ExportBufB {
     vec4 export_b[];
 };
 
+layout(set = 1, binding = 10, std430) buffer DispatchArgsBuf {
+    uint args[];
+};
+
 layout(push_constant) uniform PC {
     uint phase;
     uint max_points;
@@ -72,6 +76,9 @@ const uint PHASE_ADD_STRONG = 4u;
 const uint PHASE_ADD_MARGINAL = 5u;
 const uint PHASE_COMMIT = 6u;
 const uint PHASE_PUBLISH = 7u;
+const uint PHASE_ARGS = 8u;
+
+const uint LOCAL_SIZE = 256u;
 
 const uint CTR_NEXT_COUNT = 0u;
 const uint CTR_NEXT_ID = 1u;
@@ -134,6 +141,14 @@ void add_detection(vec4 d)
  * then the track records unchanged. It writes nothing when the frame repeats
  * the previous one and a cutoff above the frame's intensity change was
  * supplied, so the buffer of the last distinct frame stays intact.
+ *
+ * The args phase runs once, right after detection, and writes the workgroup
+ * counts of the stages that follow as four {x, y, z} triples, so those stages
+ * launch exactly the groups they need and the counts never reach the host:
+ * the Lucas-Kanade dispatches (one group per retained point), the survivor
+ * and publish phases (one thread per retained point, at least one group so the
+ * publish header is always written), and the detection phases (one thread per
+ * detection).
  */
 void main()
 {
@@ -237,6 +252,29 @@ void main()
             prev_count[0] = n;
             det_count[0] = 0u;
         }
+        break;
+    }
+    case PHASE_ARGS: {
+        if (i != 0u)
+            break;
+
+        const uint retained = pc.have_prev != 0u ? min(prev_count[0], pc.max_points) : 0u;
+        const uint detected = min(det_count[0], MAX_DETECTIONS);
+        const uint retained_groups = (retained + LOCAL_SIZE - 1u) / LOCAL_SIZE;
+        const uint detected_groups = (detected + LOCAL_SIZE - 1u) / LOCAL_SIZE;
+
+        args[0] = retained;
+        args[1] = 1u;
+        args[2] = 1u;
+        args[3] = retained_groups;
+        args[4] = 1u;
+        args[5] = 1u;
+        args[6] = detected_groups;
+        args[7] = 1u;
+        args[8] = 1u;
+        args[9] = max(retained_groups, 1u);
+        args[10] = 1u;
+        args[11] = 1u;
         break;
     }
     case PHASE_PUBLISH: {

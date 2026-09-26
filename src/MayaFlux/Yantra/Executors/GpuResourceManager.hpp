@@ -149,12 +149,16 @@ public:
      *
      * Each key must already be initialise()'d. Vectors are parallel,
      * indexed by position, one entry per key in the same order as keys.
+     * indirect_per_key is either empty or parallel too; a stage whose entry
+     * has a buffer dispatches with the counts stored there instead of its
+     * fixed groups.
      */
     void dispatch_sequence(
         const std::vector<std::string>& keys,
         const std::vector<std::array<uint32_t, 3>>& groups_per_key,
         const std::vector<std::vector<uint8_t>>& push_constants_per_key,
-        const std::vector<std::vector<Portal::Graphics::HazardResource>>& hazards_per_key);
+        const std::vector<std::vector<Portal::Graphics::HazardResource>>& hazards_per_key,
+        const std::vector<Portal::Graphics::IndirectDispatch>& indirect_per_key = {});
 
     /**
      * @brief Non-blocking counterpart of dispatch_sequence.
@@ -177,7 +181,8 @@ public:
         const std::vector<std::string>& keys,
         const std::vector<std::array<uint32_t, 3>>& groups_per_key,
         const std::vector<std::vector<uint8_t>>& push_constants_per_key,
-        const std::vector<std::vector<Portal::Graphics::HazardResource>>& hazards_per_key);
+        const std::vector<std::vector<Portal::Graphics::HazardResource>>& hazards_per_key,
+        const std::vector<Portal::Graphics::IndirectDispatch>& indirect_per_key = {});
 
     /**
      * @brief Destroy the pipeline, shader, descriptor sets, and buffers
@@ -221,7 +226,8 @@ private:
         const std::vector<std::string>& keys,
         const std::vector<std::array<uint32_t, 3>>& groups_per_key,
         const std::vector<std::vector<uint8_t>>& push_constants_per_key,
-        const std::vector<std::vector<Portal::Graphics::HazardResource>>& hazards_per_key);
+        const std::vector<std::vector<Portal::Graphics::HazardResource>>& hazards_per_key,
+        const std::vector<Portal::Graphics::IndirectDispatch>& indirect_per_key);
 
     struct SharedBuffers;
     std::unique_ptr<SharedBuffers> m_shared;
