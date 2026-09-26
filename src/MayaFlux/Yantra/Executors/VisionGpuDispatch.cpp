@@ -782,7 +782,8 @@ namespace {
         cc_pipeline.ensure_shared_buffer(0, 3, 1, GpuBufferBinding::ElementType::UINT32);
         cc_pipeline.ensure_shared_buffer(0, 4, static_cast<size_t>(block_width) * block_height, GpuBufferBinding::ElementType::UINT32);
         cc_pipeline.ensure_shared_buffer(0, 5, 1, GpuBufferBinding::ElementType::UINT32);
-        cc_pipeline.ensure_shared_buffer(0, 6, static_cast<size_t>(w) * h, GpuBufferBinding::ElementType::UINT32);
+        cc_pipeline.ensure_shared_buffer(0, 6, static_cast<size_t>(w) * h, GpuBufferBinding::ElementType::UINT32,
+            Portal::Graphics::BufferUsageHint::COMPUTE);
         cc_pipeline.ensure_shared_buffer(0, 7, static_cast<size_t>(k_max_components) * 2, GpuBufferBinding::ElementType::UINT32);
         cc_pipeline.ensure_shared_buffer(0, 8, static_cast<size_t>(k_max_components) * 2, GpuBufferBinding::ElementType::UINT32);
         cc_pipeline.ensure_shared_buffer(0, 9, k_max_components, GpuBufferBinding::ElementType::UINT32);
@@ -931,7 +932,8 @@ namespace {
 
         cc_pipeline.ensure_shared_buffer(1, 4, static_cast<size_t>(k_max_components) + 1U, GpuBufferBinding::ElementType::UINT32);
         cc_pipeline.ensure_shared_buffer(1, 5, static_cast<size_t>(k_max_components) * k_max_holes_per_label, GpuBufferBinding::ElementType::UINT32);
-        cc_pipeline.ensure_shared_buffer(1, 6, static_cast<size_t>(k_max_trace_slots) * 2U, GpuBufferBinding::ElementType::UINT32);
+        cc_pipeline.ensure_shared_buffer(1, 6, static_cast<size_t>(k_max_trace_slots) * 2U, GpuBufferBinding::ElementType::UINT32,
+            Portal::Graphics::BufferUsageHint::COMPUTE);
         cc_pipeline.ensure_shared_buffer(1, 7, 1U, GpuBufferBinding::ElementType::UINT32);
         cc_pipeline.ensure_shared_buffer(1, 8, static_cast<size_t>(k_max_trace_slots) * k_max_points_per_contour * 2U, GpuBufferBinding::ElementType::FLOAT32);
         cc_pipeline.ensure_shared_buffer(1, 9, 1U, GpuBufferBinding::ElementType::UINT32);
