@@ -225,6 +225,18 @@ public:
         vk::Sampler sampler = nullptr);
 
     /**
+     * @brief Non-owning view of the shared buffer at (set, binding_index).
+     *
+     * Lets a consumer read a context's GPU output in place instead of through
+     * a host readback. The context keeps ownership, so the view is only valid
+     * while the context lives and until the buffer is grown.
+     */
+    [[nodiscard]] Portal::Graphics::GpuBufferHandle shared_buffer_handle(uint32_t set, size_t binding_index) const
+    {
+        return m_resources.shared_buffer_handle(set, binding_index);
+    }
+
+    /**
      * @brief The key used for this context's GpuResourceManager unit.
      *
      * shader_path when non-empty (named .comp files). Falls back to the

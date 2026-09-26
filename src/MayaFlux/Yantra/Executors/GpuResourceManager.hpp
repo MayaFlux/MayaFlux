@@ -50,6 +50,15 @@ public:
     void ensure_shared_buffer(uint32_t set, size_t binding_index, size_t element_count,
         GpuBufferBinding::ElementType element_type,
         Portal::Graphics::BufferUsageHint usage_hint = Portal::Graphics::BufferUsageHint::COMPUTE_STORAGE);
+
+    /**
+     * @brief Non-owning view of the shared buffer at (set, binding_index).
+     *
+     * The manager keeps ownership. A null handle is returned when no such
+     * buffer exists, and the view is invalidated if ensure_shared_buffer later
+     * grows the slot.
+     */
+    [[nodiscard]] Portal::Graphics::GpuBufferHandle shared_buffer_handle(uint32_t set, size_t binding_index) const;
     void bind_shared_descriptor(const std::string& key, uint32_t set, size_t binding_index, const GpuBufferBinding& spec);
     void download_shared(uint32_t set, size_t binding_index, void* dest, size_t byte_size);
     void upload_shared_raw(uint32_t set, size_t binding_index, const uint8_t* data, size_t byte_size);

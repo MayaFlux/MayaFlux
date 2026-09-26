@@ -22,6 +22,10 @@ layout(set = 1, binding = 2, std430) buffer TracksBuf {
     vec4 tracks[];
 };
 
+layout(set = 1, binding = 3, std430) buffer MetaBuf {
+    uint meta[];
+};
+
 layout(set = 1, binding = 4, std430) buffer NextPointsBuf {
     vec4 next_points[];
 };
@@ -38,6 +42,14 @@ layout(set = 1, binding = 7, std430) buffer GridBuf {
     uint grid[];
 };
 
+layout(set = 1, binding = 8, std430) buffer ExportBufA {
+    vec4 export_a[];
+};
+
+layout(set = 1, binding = 9, std430) buffer ExportBufB {
+    vec4 export_b[];
+};
+
 layout(push_constant) uniform PC {
     uint phase;
     uint max_points;
@@ -48,7 +60,8 @@ layout(push_constant) uniform PC {
     float cell;
     float base_w;
     float base_h;
-    float pad;
+    uint publish_slot;
+    uint duplicate_cutoff;
 } pc;
 
 const uint PHASE_CLEAR = 0u;
@@ -58,6 +71,7 @@ const uint PHASE_THRESHOLD = 3u;
 const uint PHASE_ADD_STRONG = 4u;
 const uint PHASE_ADD_MARGINAL = 5u;
 const uint PHASE_COMMIT = 6u;
+const uint PHASE_PUBLISH = 7u;
 
 const uint CTR_NEXT_COUNT = 0u;
 const uint CTR_NEXT_ID = 1u;
@@ -114,6 +128,12 @@ void add_detection(vec4 d)
  * The final phase runs in a single workgroup and promotes the next list to
  * the previous list, so the count is read before anything it describes is
  * overwritten. The detection counter is left at zero for the next frame.
+ *
+ * The publish phase copies this frame's tracks into the export buffer chosen
+ * by publish_slot: a header vec4 carrying the track count as uint bits in x,
+ * then the track records unchanged. It writes nothing when the frame repeats
+ * the previous one and a cutoff above the frame's intensity change was
+ * supplied, so the buffer of the last distinct frame stays intact.
  */
 void main()
 {
@@ -216,6 +236,29 @@ void main()
         if (lid == 0u) {
             prev_count[0] = n;
             det_count[0] = 0u;
+        }
+        break;
+    }
+    case PHASE_PUBLISH: {
+        if (pc.have_prev != 0u && meta[1] < pc.duplicate_cutoff)
+            break;
+
+        const uint count = pc.have_prev != 0u ? min(meta[0], pc.max_points) : 0u;
+
+        if (pc.publish_slot == 0u) {
+            if (i == 0u)
+                export_a[0] = vec4(uintBitsToFloat(count), 0.0, 0.0, 0.0);
+            if (i < count) {
+                export_a[1u + 2u * i] = tracks[2u * i];
+                export_a[2u + 2u * i] = tracks[2u * i + 1u];
+            }
+        } else {
+            if (i == 0u)
+                export_b[0] = vec4(uintBitsToFloat(count), 0.0, 0.0, 0.0);
+            if (i < count) {
+                export_b[1u + 2u * i] = tracks[2u * i];
+                export_b[2u + 2u * i] = tracks[2u * i + 1u];
+            }
         }
         break;
     }

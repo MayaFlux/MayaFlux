@@ -413,6 +413,14 @@ void GpuResourceManager::ensure_shared_buffer(uint32_t set, size_t binding_index
         slot, required_bytes, Portal::Graphics::to_buffer_usage_flags(usage_hint), gpu_resident);
 }
 
+Portal::Graphics::GpuBufferHandle GpuResourceManager::shared_buffer_handle(uint32_t set, size_t binding_index) const
+{
+    const auto it = m_shared->slots.find({ set, binding_index });
+    if (it == m_shared->slots.end())
+        return {};
+    return { .buffer = it->second.buffer, .mapped_ptr = it->second.mapped_ptr, .size_bytes = it->second.allocated_bytes };
+}
+
 void GpuResourceManager::bind_shared_descriptor(const std::string& key, uint32_t set, size_t binding_index, const GpuBufferBinding& spec)
 {
     auto& unit = unit_for(key);

@@ -118,6 +118,8 @@ struct ExtractPeaksParams {
  * cell size in pixels that admits at most one new track. A positive
  * forward_backward_threshold rejects a track when its backward estimate
  * misses the source point by more than that many pixels; zero disables it.
+ * With export_tracks set, the tracks are also delivered in
+ * VisionResult::tracks_buffer for consumers that stay on the GPU.
  */
 struct TrackKeypointsParams {
     uint32_t window_radius = 7;
@@ -128,6 +130,7 @@ struct TrackKeypointsParams {
     uint32_t max_points = 512;
     float min_distance = 8.0F;
     float forward_backward_threshold = 0.0F;
+    bool export_tracks = false;
 };
 
 /**
@@ -351,11 +354,12 @@ struct VisionSequence {
             uint32_t levels = 4,
             uint32_t max_points = 512,
             float min_distance = 8.0F,
-            float forward_backward_threshold = 0.0F)
+            float forward_backward_threshold = 0.0F,
+            bool export_tracks = false)
         {
             return push(VisionOp::TrackKeypoints,
                 TrackKeypointsParams {
-                    .window_radius = window_radius, .max_iterations = max_iterations, .eigen_threshold = eigen_threshold, .error_threshold = error_threshold, .levels = levels, .max_points = max_points, .min_distance = min_distance, .forward_backward_threshold = forward_backward_threshold });
+                    .window_radius = window_radius, .max_iterations = max_iterations, .eigen_threshold = eigen_threshold, .error_threshold = error_threshold, .levels = levels, .max_points = max_points, .min_distance = min_distance, .forward_backward_threshold = forward_backward_threshold, .export_tracks = export_tracks });
         }
 
         Builder& find_contours(float min_area = 0.0F, uint32_t max_contours = 0, uint32_t max_points_per_contour = 0, bool as_image = false)
@@ -468,6 +472,7 @@ inline size_t hash_vision_step(VisionOp op, const VisionParams& params)
             hash_combine(seed, std::hash<uint32_t> {}(p.max_points));
             hash_combine(seed, std::hash<float> {}(p.min_distance));
             hash_combine(seed, std::hash<float> {}(p.forward_backward_threshold));
+            hash_combine(seed, std::hash<bool> {}(p.export_tracks));
         } else if constexpr (std::is_same_v<T, FindContoursParams>) {
             hash_combine(seed, std::hash<float> {}(p.min_area));
             hash_combine(seed, std::hash<uint32_t> {}(p.max_contours));

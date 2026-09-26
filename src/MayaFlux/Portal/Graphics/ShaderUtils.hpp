@@ -14,6 +14,22 @@ struct VertexAttribute;
 namespace MayaFlux::Portal::Graphics {
 
 /**
+ * @struct GpuBufferHandle
+ * @brief Non-owning view of a GPU storage buffer produced by a compute path.
+ *
+ * Names the buffer, its host mapping when the memory is host visible, and its
+ * size in bytes. The producer owns the memory: a handle stays valid until the
+ * producer says otherwise, and a null buffer means no data.
+ */
+struct GpuBufferHandle {
+    vk::Buffer buffer {};
+    void* mapped_ptr { nullptr };
+    size_t size_bytes { 0 };
+
+    [[nodiscard]] explicit operator bool() const noexcept { return static_cast<bool>(buffer); }
+};
+
+/**
  * @brief Resolve the extra vk::BufferUsageFlags a BufferUsageHint requires,
  *        on top of whatever base usage the caller already applies.
  */

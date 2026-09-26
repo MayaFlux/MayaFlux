@@ -12,6 +12,9 @@ namespace MayaFlux::Core {
 class VKImage;
 }
 
+namespace MayaFlux::Portal::Graphics {
+struct GpuBufferHandle;
+}
 namespace MayaFlux::Kinesis::Vision {
 
 using StructuredOutput = std::variant<
@@ -62,6 +65,19 @@ struct VisionResult {
      * pixels, b the confidence, a the residual.
      */
     std::shared_ptr<Core::VKImage> flow;
+
+    /**
+     * @brief Device resident tracks from TrackKeypoints with export_tracks,
+     *        or null.
+     *
+     * One vec4 header followed by two vec4 per track. The header holds the
+     * track count as uint bits in x. Track record i is
+     * (position.xy, previous.xy) then (error, tracked, id bits, age bits),
+     * the fields of TrackResult, in the same order as the host result. The
+     * executor owns the memory: the view stays valid for one more run before
+     * its buffer is rewritten, and never outlives the executor.
+     */
+    std::shared_ptr<Portal::Graphics::GpuBufferHandle> tracks_buffer;
     uint32_t w { 0 };
     uint32_t h { 0 };
     VisionStatus status { VisionStatus::COMPLETE };

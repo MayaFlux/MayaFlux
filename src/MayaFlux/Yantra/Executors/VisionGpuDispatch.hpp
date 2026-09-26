@@ -69,6 +69,22 @@ struct FlowState {
     std::shared_ptr<Core::VKImage> last_flow;
     std::vector<Kinesis::Vision::TrackResult> last_tracks;
 
+    /**
+     * @brief Bookkeeping for the device resident track export.
+     *
+     * The two export buffers are shared buffers of the flow context and
+     * alternate per published frame, so a delivered buffer stays valid for one
+     * more publish. export_slot is the buffer the next publish writes,
+     * last_export the view of the most recent distinct frame, and
+     * export_pending marks a submitted track sequence whose export has not
+     * been delivered yet. export_view caches one handle per buffer, created on
+     * first delivery, so publishing allocates nothing per frame.
+     */
+    std::shared_ptr<Portal::Graphics::GpuBufferHandle> export_view[2];
+    std::shared_ptr<Portal::Graphics::GpuBufferHandle> last_export;
+    uint32_t export_slot { 0 };
+    bool export_pending { false };
+
     uint32_t curr { 0 };
     bool have_prev { false };
     bool curr_ready { false };

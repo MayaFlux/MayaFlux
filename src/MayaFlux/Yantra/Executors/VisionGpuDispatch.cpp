@@ -211,6 +211,7 @@ namespace {
         ADD_STRONG = 4,
         ADD_MARGINAL = 5,
         COMMIT = 6,
+        PUBLISH = 7,
     };
 
     struct FlowSelectPC {
@@ -223,7 +224,8 @@ namespace {
         float cell;
         float base_w;
         float base_h;
-        float pad;
+        uint32_t publish_slot;
+        uint32_t duplicate_cutoff;
     };
 
     struct FlowBufferSpec {
@@ -242,6 +244,12 @@ namespace {
     constexpr FlowBufferSpec k_flow_counters { .set = 1, .binding = 5, .type = GpuBufferBinding::ElementType::UINT32 };
     constexpr FlowBufferSpec k_flow_histogram { .set = 1, .binding = 6, .type = GpuBufferBinding::ElementType::UINT32 };
     constexpr FlowBufferSpec k_flow_grid { .set = 1, .binding = 7, .type = GpuBufferBinding::ElementType::UINT32 };
+    constexpr std::array<FlowBufferSpec, 2> k_flow_export {
+        FlowBufferSpec { .set = 1, .binding = 8, .type = GpuBufferBinding::ElementType::FLOAT32 },
+        FlowBufferSpec { .set = 1, .binding = 9, .type = GpuBufferBinding::ElementType::FLOAT32 },
+    };
+    /** Export buffer size in vec4: one header plus two per track */
+    constexpr size_t k_flow_export_vec4 = size_t { 1 } + size_t { k_flow_max_points } * 2;
 
     /**
      * @brief Hazard list covering the named shared buffers of the flow
@@ -1210,7 +1218,9 @@ namespace {
      * Buffers only shaders touch (detections, retained points, counters,
      * histogram, occupancy grid) request device local memory. The tracks and
      * meta buffers stay in host cached memory because the host reads them back
-     * every frame.
+     * every frame. The two export buffers are device local and always
+     * allocated, so every unit of the context can bind the full table and the
+     * export never reallocates.
      */
     void ensure_flow_resources(VisionGpuContexts& contexts)
     {
@@ -1231,6 +1241,8 @@ namespace {
         flow.ensure_shared_buffer(1, 5, 16, GpuBufferBinding::ElementType::UINT32, Portal::Graphics::BufferUsageHint::COMPUTE);
         flow.ensure_shared_buffer(1, 6, 256, GpuBufferBinding::ElementType::UINT32, Portal::Graphics::BufferUsageHint::COMPUTE);
         flow.ensure_shared_buffer(1, 7, k_flow_grid_capacity, GpuBufferBinding::ElementType::UINT32, Portal::Graphics::BufferUsageHint::COMPUTE);
+        for (const auto& spec : k_flow_export)
+            flow.ensure_shared_buffer(spec.set, spec.binding, k_flow_export_vec4 * 4, spec.type, Portal::Graphics::BufferUsageHint::COMPUTE);
 
         flow.swap_shader({ .shader_path = "flow_reset.comp.spv", .workgroup_size = { 64, 1, 1 } });
         flow.set_output_dimensions(1, 1);
@@ -1476,6 +1488,19 @@ namespace {
 
         if (!duplicate)
             state.last_tracks = tracks;
+
+        if (state.export_pending) {
+            if (!duplicate || !state.last_export) {
+                const auto& slot = k_flow_export[state.export_slot];
+                auto& view = state.export_view[state.export_slot];
+                if (!view)
+                    view = std::make_shared<Portal::Graphics::GpuBufferHandle>(flow.shared_buffer_handle(slot.set, slot.binding));
+                state.last_export = view;
+                state.export_slot ^= 1U;
+            }
+            contexts.pass.result.tracks_buffer = state.last_export;
+            state.export_pending = false;
+        }
         commit_flow_frame(contexts);
 
         contexts.pass.result.structured = std::move(tracks);
@@ -1534,6 +1559,11 @@ namespace {
                 w, h, layout.level[0].w, layout.level[0].h);
             return false;
         }
+
+        const bool export_tracks = p.export_tracks;
+        const uint32_t duplicate_cutoff = (!state.last_tracks.empty() && state.last_export)
+            ? k_flow_duplicate_energy + 1U
+            : 0U;
 
         const auto response = contexts.pass.current;
         const auto atlas_a = state.atlas[0];
@@ -1636,7 +1666,8 @@ namespace {
                 .cell = cell,
                 .base_w = base_w,
                 .base_h = base_h,
-                .pad = 0.0F,
+                .publish_slot = state.export_slot,
+                .duplicate_cutoff = duplicate_cutoff,
             };
             stages.push_back({
                 .config = { .shader_path = "flow_select.comp.spv", .workgroup_size = { k_flow_select_local, 1, 1 }, .push_constant_size = sizeof(FlowSelectPC) },
@@ -1653,6 +1684,8 @@ namespace {
         add_select(FlowSelectPhase::ADD_STRONG, candidate_groups, { k_flow_next_points, k_flow_counters, k_flow_grid });
         add_select(FlowSelectPhase::ADD_MARGINAL, candidate_groups, { k_flow_next_points, k_flow_counters, k_flow_grid });
         add_select(FlowSelectPhase::COMMIT, 1U, {});
+        if (export_tracks)
+            add_select(FlowSelectPhase::PUBLISH, candidate_groups, { k_flow_export[0], k_flow_export[1] });
 
         const auto fence = flow.dispatch_dependency_async(stages);
         if (fence == Portal::Graphics::INVALID_FENCE) {
@@ -1660,6 +1693,7 @@ namespace {
                 "run_gpu: TrackKeypoints failed to submit its dispatch sequence");
             return false;
         }
+        state.export_pending = export_tracks;
 
         if (step.deferred) {
             contexts.suspended.fence = fence;
@@ -2063,6 +2097,8 @@ VisionGpuContexts::VisionGpuContexts()
             { .set = 1, .binding = 5, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
             { .set = 1, .binding = 6, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
             { .set = 1, .binding = 7, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
+            { .set = 1, .binding = 8, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::FLOAT32 },
+            { .set = 1, .binding = 9, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::FLOAT32 },
             { .set = 0, .binding = 5, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::IMAGE_STORAGE },
             { .set = 0, .binding = 6, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::IMAGE_STORAGE },
             { .set = 0, .binding = 7, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::IMAGE_STORAGE },
@@ -2226,6 +2262,8 @@ void VisionGpuExecutor::reset()
     contexts.flow_state.curr_ready = false;
     contexts.flow_state.last_flow.reset();
     contexts.flow_state.last_tracks.clear();
+    contexts.flow_state.last_export.reset();
+    contexts.flow_state.export_pending = false;
 
     contexts.pass.sequence = nullptr;
     contexts.pass.index = 0;
