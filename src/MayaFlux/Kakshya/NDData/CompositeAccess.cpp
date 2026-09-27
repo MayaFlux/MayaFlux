@@ -6,7 +6,7 @@ namespace MayaFlux::Kakshya {
 
 std::optional<CompositeAccess> CompositeArray::access() const
 {
-    return as_composite_access(m_rows, m_text, m_layout);
+    return as_composite_access(m_rows, m_text, m_blob, m_layout);
 }
 
 std::optional<CompositeSlice> CompositeArray::slice(size_t start, size_t count) const
@@ -22,12 +22,15 @@ std::optional<CompositeSlice> CompositeArray::slice(const Region& region) const
 }
 
 std::optional<CompositeAccess> as_composite_access(
-    const DataVariant& elements, const DataVariant& text, const CompositeLayout& layout)
+    const DataVariant& elements, const DataVariant& text, const DataVariant& blob,
+    const CompositeLayout& layout)
 {
     const auto* element_bytes = std::get_if<std::vector<uint8_t>>(&elements);
     const auto* text_bytes = std::get_if<std::vector<uint8_t>>(&text);
+    const auto* blob_bytes = std::get_if<std::vector<uint8_t>>(&blob);
     const size_t stride = layout.stride_bytes();
-    if (!element_bytes || !text_bytes || stride == 0 || element_bytes->size() % stride != 0) {
+    if (!element_bytes || !text_bytes || !blob_bytes || stride == 0
+        || element_bytes->size() % stride != 0) {
         MF_WARN(Journal::Component::Kakshya, Journal::Context::Runtime,
             "as_composite_access: invalid storage or element stride");
         return std::nullopt;
@@ -35,21 +38,25 @@ std::optional<CompositeAccess> as_composite_access(
 
     for (const auto& field : layout.fields()) {
         if (field.offset_bytes > stride || field.size_bytes > stride - field.offset_bytes
-            || (field.type == typeid(std::string) && field.size_bytes != 2 * sizeof(uint64_t))) {
+            || ((field.type == typeid(std::string)
+                    || field.type == typeid(std::vector<uint8_t>))
+                && field.size_bytes != 2 * sizeof(uint64_t))
+            || (field.type == typeid(detail::CompositeDynamic)
+                && field.size_bytes != 3 * sizeof(uint64_t))) {
             MF_WARN(Journal::Component::Kakshya, Journal::Context::Runtime,
                 "as_composite_access: invalid layout for field '{}'", field.name);
             return std::nullopt;
         }
     }
 
-    return CompositeAccess(elements, text, layout);
+    return CompositeAccess(elements, text, blob, layout);
 }
 
 std::optional<Composite> CompositeAccess::at(size_t index) const noexcept
 {
     if (index >= size())
         return std::nullopt;
-    return Composite(*m_layout, *m_elements, *m_text, index);
+    return Composite(*m_layout, *m_elements, *m_text, *m_blob, index);
 }
 
 std::span<const uint8_t> CompositeAccess::element_bytes() const noexcept

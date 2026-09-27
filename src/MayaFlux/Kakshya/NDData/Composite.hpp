@@ -8,10 +8,10 @@ namespace MayaFlux::Kakshya {
  * @struct CompositeField
  * @brief Description of one named value in a Composite.
  *
- * Numeric fields use their exact C++ scalar type. A std::string field stores
- * an offset and length into the array's UTF-8 byte storage, not a string
- * object in the fixed-width element buffer. Offsets are assigned when a
- * CompositeArray finalizes its layout.
+ * Numeric fields use their exact C++ scalar type. Text and binary fields
+ * store offsets and lengths into separate byte stores. Dynamic fields also
+ * store a value kind per element. Offsets are assigned when a CompositeArray
+ * finalizes its layout.
  */
 struct CompositeField {
     std::string name;
@@ -20,14 +20,22 @@ struct CompositeField {
     size_t size_bytes {};
 };
 
+namespace detail {
+struct CompositeDynamic { };
+}
+
+/** @brief Borrowed value of a present dynamic field; monostate represents NULL. */
+using CompositeValue = std::variant<std::monostate, int64_t, double,
+    std::string_view, std::span<const uint8_t>>;
+
 /**
  * @class CompositeLayout
  * @brief Shared field description and byte layout for a CompositeArray.
  *
  * Declare fields before constructing an array. Construction finalizes the
  * layout, placing a presence bitmap before the fields in each element.
- * Field order determines byte offsets. A field may be an arithmetic type or
- * std::string; text uses the array's separate UTF-8 byte storage.
+ * Field order determines byte offsets. A field may be an arithmetic type,
+ * std::string, binary bytes, or a dynamic value.
  *
  * Usage:
  * @code
@@ -44,21 +52,30 @@ struct CompositeField {
 class MAYAFLUX_API CompositeLayout {
 public:
     /**
-     * @brief Declare a named arithmetic or UTF-8 text field.
-     * @tparam T Exact stored type; use std::string for text.
+     * @brief Declare a named arithmetic, text, or binary field.
+     * @tparam T Exact stored type; use std::string for text or
+     * std::vector<uint8_t> for binary bytes.
      * @param name Nonempty unique field name.
      * @return True if added; false if the name is invalid, duplicated, or
      * the layout has already been finalized.
      */
     template <typename T>
-        requires(ArithmeticData<T> || std::same_as<std::remove_cvref_t<T>, std::string>)
+        requires(ArithmeticData<T> || std::same_as<std::remove_cvref_t<T>, std::string>
+            || std::same_as<std::remove_cvref_t<T>, std::vector<uint8_t>>)
     bool add_field(std::string name)
     {
-        if constexpr (std::same_as<std::remove_cvref_t<T>, std::string>) {
-            return add_field_impl(std::move(name), typeid(std::string), 2 * sizeof(uint64_t));
+        if constexpr (std::same_as<std::remove_cvref_t<T>, std::string>
+            || std::same_as<std::remove_cvref_t<T>, std::vector<uint8_t>>) {
+            return add_field_impl(std::move(name), typeid(T), 2 * sizeof(uint64_t));
         } else {
             return add_field_impl(std::move(name), typeid(T), sizeof(T));
         }
+    }
+
+    /** @brief Declare a field with a per-element NULL, INTEGER, REAL, TEXT, or BLOB kind. */
+    bool add_dynamic_field(std::string name)
+    {
+        return add_field_impl(std::move(name), typeid(detail::CompositeDynamic), 3 * sizeof(uint64_t));
     }
 
     /** @brief Declared fields in element order, with finalized byte offsets. */
@@ -93,10 +110,11 @@ struct Region;
  * @class Composite
  * @brief Read view of one value in a CompositeArray.
  *
- * Borrows a layout and two DataVariant stores. Arithmetic access copies one
+ * Borrows a layout and three DataVariant stores. Arithmetic access copies one
  * value from packed bytes, so the field need not be naturally aligned.
- * Numeric getters require an exact declared type. Missing and mismatched
- * fields return std::nullopt.
+ * Numeric getters require an exact declared type, except dynamic INTEGER
+ * and REAL fields which accept int64_t and double respectively. Missing
+ * and mismatched fields return std::nullopt.
  *
  * Usage:
  * @code
@@ -107,7 +125,7 @@ struct Region;
  * @endcode
  *
  * @note The backing layout and DataVariant objects must outlive this view.
- * A string_view returned by text() may be invalidated by later text writes.
+ * Text and byte views may be invalidated by later writes to their stores.
  */
 class MAYAFLUX_API Composite {
 public:
@@ -120,8 +138,8 @@ public:
     [[nodiscard]] bool has(std::string_view field_name) const noexcept;
 
     /**
-     * @brief Read a present arithmetic field by exact declared type.
-     * @tparam T Arithmetic type declared through CompositeLayout::add_field().
+     * @brief Read a present arithmetic field by exact value type.
+     * @tparam T Declared arithmetic type, or int64_t/double for a dynamic field.
      * @param field_name Field to read.
      * @return Copied value, or std::nullopt for an absent field or type mismatch.
      */
@@ -136,6 +154,10 @@ public:
      * or invalid stored text bounds. An empty string is a present value.
      */
     [[nodiscard]] std::optional<std::string_view> text(std::string_view field_name) const noexcept;
+    /** @brief Borrow a dynamic value; an absent field returns std::nullopt. */
+    [[nodiscard]] std::optional<CompositeValue> value(std::string_view field_name) const noexcept;
+    /** @brief Borrow the bytes of a fixed or dynamic BLOB field. */
+    [[nodiscard]] std::optional<std::span<const uint8_t>> blob(std::string_view field_name) const noexcept;
 
 private:
     friend class CompositeArray;
@@ -143,10 +165,11 @@ private:
     friend class CompositeInsertion;
 
     Composite(const CompositeLayout& layout, const DataVariant& rows,
-        const DataVariant& text, size_t index) noexcept
+        const DataVariant& text, const DataVariant& blob, size_t index) noexcept
         : m_layout(&layout)
         , m_rows(&rows)
         , m_text(&text)
+        , m_blob(&blob)
         , m_index(index)
     {
     }
@@ -154,6 +177,7 @@ private:
     const CompositeLayout* m_layout;
     const DataVariant* m_rows;
     const DataVariant* m_text;
+    const DataVariant* m_blob;
     size_t m_index;
 };
 
@@ -161,8 +185,8 @@ private:
  * @class CompositeArray
  * @brief Owns a sequence of values that share a CompositeLayout.
  *
- * Owns two uint8_t DataVariants: fixed-stride packed elements and variable-
- * length UTF-8 text. The layout carries field names, types, offsets, and
+ * Owns three uint8_t DataVariants: fixed-stride packed elements, variable-
+ * length UTF-8 text, and binary bytes. The layout carries field names, types, offsets, and
  * stride; the presence bitmap distinguishes absent fields from zero or
  * empty values.
  *
@@ -245,7 +269,7 @@ public:
 
     /**
      * @brief Write an arithmetic field of an existing element.
-     * @tparam T Exact type declared for the field.
+     * @tparam T Declared arithmetic type, or int64_t/double for a dynamic field.
      * @param index Element index.
      * @param field_name Field to write.
      * @param value Value to store.
@@ -255,6 +279,15 @@ public:
         requires ArithmeticData<T>
     bool set(size_t index, std::string_view field_name, T value)
     {
+        if constexpr (std::same_as<T, int64_t> || std::same_as<T, double>) {
+            const auto field_index = m_layout.find_field(field_name);
+            if (field_index && m_layout.fields()[*field_index].type == typeid(detail::CompositeDynamic)) {
+                if constexpr (std::same_as<T, int64_t>)
+                    return set_integer(index, field_name, value);
+                else
+                    return set_real(index, field_name, value);
+            }
+        }
         const auto field_index = validate_write(index, field_name, typeid(T));
         if (!field_index)
             return false;
@@ -276,6 +309,10 @@ public:
      * text storage size. Existing text views may be invalidated.
      */
     bool set_text(size_t index, std::string_view field_name, std::string_view value);
+    /** @brief Write a present NULL to a dynamic field. */
+    bool set_null(size_t index, std::string_view field_name);
+    /** @brief Write binary bytes to a fixed or dynamic BLOB field. */
+    bool set_blob(size_t index, std::string_view field_name, std::span<const uint8_t> value);
     /**
      * @brief Mark a field absent without removing its stored bytes.
      * @param index Element index.
@@ -288,6 +325,8 @@ public:
     [[nodiscard]] const DataVariant& element_data() const noexcept { return m_rows; }
     /** @brief Borrow the UTF-8 byte DataVariant used by text fields. */
     [[nodiscard]] const DataVariant& text_data() const noexcept { return m_text; }
+    /** @brief Borrow the binary byte store used by BLOB fields. */
+    [[nodiscard]] const DataVariant& blob_data() const noexcept { return m_blob; }
 
 private:
     friend class Composite;
@@ -296,11 +335,16 @@ private:
     CompositeLayout m_layout;
     DataVariant m_rows { std::vector<uint8_t> {} };
     DataVariant m_text { std::vector<uint8_t> {} };
+    DataVariant m_blob { std::vector<uint8_t> {} };
 
     [[nodiscard]] bool is_present(size_t index, size_t field_index) const noexcept;
     void set_present(size_t index, size_t field_index, bool present) noexcept;
     [[nodiscard]] std::optional<size_t> validate_write(
         size_t index, std::string_view field_name, std::type_index type) const;
+    [[nodiscard]] std::optional<size_t> validate_dynamic_write(
+        size_t index, std::string_view field_name) const;
+    bool set_integer(size_t index, std::string_view field_name, int64_t value);
+    bool set_real(size_t index, std::string_view field_name, double value);
 };
 
 template <typename T>
@@ -312,6 +356,16 @@ std::optional<T> Composite::get(std::string_view field_name) const noexcept
         return std::nullopt;
 
     const auto& field = m_layout->fields()[*field_index];
+    if (field.type == typeid(detail::CompositeDynamic)) {
+        if constexpr (std::same_as<T, int64_t> || std::same_as<T, double>) {
+            const auto dynamic = value(field_name);
+            if (dynamic) {
+                if (const auto* typed = std::get_if<T>(&*dynamic))
+                    return *typed;
+            }
+        }
+        return std::nullopt;
+    }
     if (field.type != std::type_index(typeid(T)))
         return std::nullopt;
 

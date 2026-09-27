@@ -84,6 +84,17 @@ public:
         return m_array->set_text(index, field_name, value);
     }
 
+    /** @brief Write a present NULL to a dynamic field. */
+    bool set_null(size_t index, std::string_view field_name)
+    {
+        return m_array->set_null(index, field_name);
+    }
+    /** @brief Write binary bytes to a fixed or dynamic BLOB field. */
+    bool set_blob(size_t index, std::string_view field_name, std::span<const uint8_t> value)
+    {
+        return m_array->set_blob(index, field_name, value);
+    }
+
     /**
      * @brief Mark a named field absent in an existing element.
      * @param index Element index.

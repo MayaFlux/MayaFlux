@@ -32,19 +32,21 @@ struct CompositeProjection {
  * @brief Validate and borrow packed Composite-compatible NDData.
  * @param elements DataVariant holding vector<uint8_t> packed elements.
  * @param text DataVariant holding vector<uint8_t> UTF-8 bytes.
+ * @param blob DataVariant holding vector<uint8_t> binary bytes.
  * @param layout Finalized layout for the packed elements.
  * @return Access view, or std::nullopt for incompatible storage or layout.
  * @note This validates storage types, stride, and field extents. Individual
- * text offset bounds are checked when Composite::text() is called.
+ * text and binary offset bounds are checked when fields are read.
  */
 [[nodiscard]] MAYAFLUX_API std::optional<CompositeAccess> as_composite_access(
-    const DataVariant& elements, const DataVariant& text, const CompositeLayout& layout);
+    const DataVariant& elements, const DataVariant& text, const DataVariant& blob,
+    const CompositeLayout& layout);
 
 /**
  * @class CompositeAccess
  * @brief Validated, non-owning access to packed Composite NDData storage.
  *
- * The element and text stores remain DataVariant instances holding
+ * The element, text, and binary stores remain DataVariant instances holding
  * vector<uint8_t>. The layout interprets field offsets within each packed
  * element. No byte or field conversion occurs when creating this view.
  *
@@ -58,7 +60,7 @@ struct CompositeProjection {
  *
  * Access to externally owned packed variants:
  * @code
- * auto access = as_composite_access(elements, text, layout);
+ * auto access = as_composite_access(elements, text, blob, layout);
  * @endcode
  *
  * @note The backing DataVariant objects and layout must outlive this view.
@@ -86,6 +88,8 @@ public:
     [[nodiscard]] const DataVariant& element_data() const noexcept { return *m_elements; }
     /** @brief Borrow the UTF-8 byte DataVariant without conversion. */
     [[nodiscard]] const DataVariant& text_data() const noexcept { return *m_text; }
+    /** @brief Borrow the binary byte DataVariant without conversion. */
+    [[nodiscard]] const DataVariant& blob_data() const noexcept { return *m_blob; }
     /**
      * @brief Describe packed bytes as [elements, bytes-per-element].
      * @return Two CUSTOM DataDimensions for the uint8_t element store.
@@ -108,18 +112,20 @@ public:
 
 private:
     friend std::optional<CompositeAccess> as_composite_access(
-        const DataVariant&, const DataVariant&, const CompositeLayout&);
+        const DataVariant&, const DataVariant&, const DataVariant&, const CompositeLayout&);
 
-    CompositeAccess(const DataVariant& elements, const DataVariant& text,
+    CompositeAccess(const DataVariant& elements, const DataVariant& text, const DataVariant& blob,
         const CompositeLayout& layout) noexcept
         : m_elements(&elements)
         , m_text(&text)
+        , m_blob(&blob)
         , m_layout(&layout)
     {
     }
 
     const DataVariant* m_elements;
     const DataVariant* m_text;
+    const DataVariant* m_blob;
     const CompositeLayout* m_layout;
 };
 
@@ -129,8 +135,8 @@ private:
  *
  * A slice retains the original Region and its attributes when created from
  * one. Offset/count slices have no Region. Field access still uses the
- * original CompositeLayout and text store, so text offsets do not need to be
- * rewritten. The slice does not own either byte store.
+ * original CompositeLayout and byte stores, so payload offsets do not need
+ * to be rewritten. The slice does not own the stores.
  *
  * Usage:
  * @code
@@ -168,6 +174,8 @@ public:
     [[nodiscard]] std::span<const uint8_t> element_bytes() const noexcept;
     /** @brief Borrow the full text store used by selected elements. */
     [[nodiscard]] const DataVariant& text_data() const noexcept { return m_access.text_data(); }
+    /** @brief Borrow the full binary store used by selected elements. */
+    [[nodiscard]] const DataVariant& blob_data() const noexcept { return m_access.blob_data(); }
     /** @brief Original Region when selected by Region; otherwise nullptr. */
     [[nodiscard]] const Region* region() const noexcept
     {

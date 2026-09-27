@@ -13,6 +13,20 @@ namespace {
 
     static_assert(sizeof(TextSlice) == 2 * sizeof(uint64_t));
 
+    struct DynamicCell {
+        uint64_t kind {};
+        uint64_t payload {};
+        uint64_t length {};
+    };
+
+    static_assert(sizeof(DynamicCell) == 3 * sizeof(uint64_t));
+
+    constexpr uint64_t null_kind = 0;
+    constexpr uint64_t integer_kind = 1;
+    constexpr uint64_t real_kind = 2;
+    constexpr uint64_t text_kind = 3;
+    constexpr uint64_t blob_kind = 4;
+
 }
 
 bool CompositeLayout::add_field_impl(std::string name, std::type_index type, size_t size_bytes)
@@ -95,7 +109,7 @@ std::optional<Composite> CompositeArray::at(size_t index) const noexcept
     if (index >= size())
         return std::nullopt;
 
-    return Composite(m_layout, m_rows, m_text, index);
+    return Composite(m_layout, m_rows, m_text, m_blob, index);
 }
 
 size_t CompositeArray::append()
@@ -163,9 +177,19 @@ std::optional<size_t> CompositeArray::validate_write(
     return field_index;
 }
 
+std::optional<size_t> CompositeArray::validate_dynamic_write(
+    size_t index, std::string_view field_name) const
+{
+    return validate_write(index, field_name, typeid(detail::CompositeDynamic));
+}
+
 bool CompositeArray::set_text(size_t index, std::string_view field_name, std::string_view value)
 {
-    const auto field_index = validate_write(index, field_name, typeid(std::string));
+    const auto declared = m_layout.find_field(field_name);
+    const std::type_index expected = declared
+            && m_layout.fields()[*declared].type == typeid(detail::CompositeDynamic)
+        ? typeid(detail::CompositeDynamic) : typeid(std::string);
+    const auto field_index = validate_write(index, field_name, expected);
     if (!field_index)
         return false;
 
@@ -185,9 +209,85 @@ bool CompositeArray::set_text(size_t index, std::string_view field_name, std::st
     text.insert(text.end(), value_copy.begin(), value_copy.end());
 
     auto& rows = std::get<std::vector<uint8_t>>(m_rows);
-    std::memcpy(rows.data() + index * m_layout.stride_bytes() + field.offset_bytes,
-        &slice, sizeof(slice));
+    auto* destination = rows.data() + index * m_layout.stride_bytes() + field.offset_bytes;
+    if (field.type == typeid(detail::CompositeDynamic)) {
+        const DynamicCell cell { text_kind, slice.offset, slice.length };
+        std::memcpy(destination, &cell, sizeof(cell));
+    } else {
+        std::memcpy(destination, &slice, sizeof(slice));
+    }
 
+    set_present(index, *field_index, true);
+    return true;
+}
+
+bool CompositeArray::set_null(size_t index, std::string_view field_name)
+{
+    const auto field_index = validate_dynamic_write(index, field_name);
+    if (!field_index)
+        return false;
+    const auto& field = m_layout.fields()[*field_index];
+    const DynamicCell cell { null_kind, 0, 0 };
+    auto& rows = std::get<std::vector<uint8_t>>(m_rows);
+    std::memcpy(rows.data() + index * m_layout.stride_bytes() + field.offset_bytes, &cell, sizeof(cell));
+    set_present(index, *field_index, true);
+    return true;
+}
+
+bool CompositeArray::set_integer(size_t index, std::string_view field_name, int64_t value)
+{
+    const auto field_index = validate_dynamic_write(index, field_name);
+    if (!field_index)
+        return false;
+    DynamicCell cell { integer_kind, 0, 0 };
+    std::memcpy(&cell.payload, &value, sizeof(value));
+    const auto& field = m_layout.fields()[*field_index];
+    auto& rows = std::get<std::vector<uint8_t>>(m_rows);
+    std::memcpy(rows.data() + index * m_layout.stride_bytes() + field.offset_bytes, &cell, sizeof(cell));
+    set_present(index, *field_index, true);
+    return true;
+}
+
+bool CompositeArray::set_real(size_t index, std::string_view field_name, double value)
+{
+    const auto field_index = validate_dynamic_write(index, field_name);
+    if (!field_index)
+        return false;
+    DynamicCell cell { real_kind, 0, 0 };
+    std::memcpy(&cell.payload, &value, sizeof(value));
+    const auto& field = m_layout.fields()[*field_index];
+    auto& rows = std::get<std::vector<uint8_t>>(m_rows);
+    std::memcpy(rows.data() + index * m_layout.stride_bytes() + field.offset_bytes, &cell, sizeof(cell));
+    set_present(index, *field_index, true);
+    return true;
+}
+
+bool CompositeArray::set_blob(size_t index, std::string_view field_name, std::span<const uint8_t> value)
+{
+    const auto declared = m_layout.find_field(field_name);
+    const std::type_index expected = declared
+            && m_layout.fields()[*declared].type == typeid(detail::CompositeDynamic)
+        ? typeid(detail::CompositeDynamic) : typeid(std::vector<uint8_t>);
+    const auto field_index = validate_write(index, field_name, expected);
+    if (!field_index)
+        return false;
+
+    auto& blob = std::get<std::vector<uint8_t>>(m_blob);
+    if (value.size() > blob.max_size() - blob.size())
+        return false;
+    const std::vector<uint8_t> value_copy(value.begin(), value.end());
+    const TextSlice slice { static_cast<uint64_t>(blob.size()), static_cast<uint64_t>(value_copy.size()) };
+    blob.insert(blob.end(), value_copy.begin(), value_copy.end());
+
+    const auto& field = m_layout.fields()[*field_index];
+    auto& rows = std::get<std::vector<uint8_t>>(m_rows);
+    auto* destination = rows.data() + index * m_layout.stride_bytes() + field.offset_bytes;
+    if (field.type == typeid(detail::CompositeDynamic)) {
+        const DynamicCell cell { blob_kind, slice.offset, slice.length };
+        std::memcpy(destination, &cell, sizeof(cell));
+    } else {
+        std::memcpy(destination, &slice, sizeof(slice));
+    }
     set_present(index, *field_index, true);
     return true;
 }
@@ -236,14 +336,21 @@ std::optional<std::string_view> Composite::text(std::string_view field_name) con
         return std::nullopt;
 
     const auto& field = m_layout->fields()[*field_index];
-    if (field.type != typeid(std::string))
+    if (field.type != typeid(std::string) && field.type != typeid(detail::CompositeDynamic))
         return std::nullopt;
 
     const auto& rows = std::get<std::vector<uint8_t>>(*m_rows);
+    const auto* source = rows.data() + m_index * m_layout->stride_bytes() + field.offset_bytes;
     TextSlice slice;
-    std::memcpy(&slice,
-        rows.data() + m_index * m_layout->stride_bytes() + field.offset_bytes,
-        sizeof(slice));
+    if (field.type == typeid(detail::CompositeDynamic)) {
+        DynamicCell cell;
+        std::memcpy(&cell, source, sizeof(cell));
+        if (cell.kind != text_kind)
+            return std::nullopt;
+        slice = { cell.payload, cell.length };
+    } else {
+        std::memcpy(&slice, source, sizeof(slice));
+    }
 
     const auto& text = std::get<std::vector<uint8_t>>(*m_text);
     if (slice.offset > text.size() || slice.length > text.size() - slice.offset)
@@ -255,6 +362,69 @@ std::optional<std::string_view> Composite::text(std::string_view field_name) con
     return std::string_view(
         reinterpret_cast<const char*>(text.data() + slice.offset),
         static_cast<size_t>(slice.length));
+}
+
+std::optional<std::span<const uint8_t>> Composite::blob(std::string_view field_name) const noexcept
+{
+    const auto field_index = m_layout->find_field(field_name);
+    if (!field_index || !has(field_name))
+        return std::nullopt;
+    const auto& field = m_layout->fields()[*field_index];
+    if (field.type != typeid(std::vector<uint8_t>) && field.type != typeid(detail::CompositeDynamic))
+        return std::nullopt;
+
+    const auto& rows = std::get<std::vector<uint8_t>>(*m_rows);
+    const auto* source = rows.data() + m_index * m_layout->stride_bytes() + field.offset_bytes;
+    TextSlice slice;
+    if (field.type == typeid(detail::CompositeDynamic)) {
+        DynamicCell cell;
+        std::memcpy(&cell, source, sizeof(cell));
+        if (cell.kind != blob_kind)
+            return std::nullopt;
+        slice = { cell.payload, cell.length };
+    } else {
+        std::memcpy(&slice, source, sizeof(slice));
+    }
+    const auto& blob = std::get<std::vector<uint8_t>>(*m_blob);
+    if (slice.offset > blob.size() || slice.length > blob.size() - slice.offset)
+        return std::nullopt;
+    if (slice.length == 0)
+        return std::span<const uint8_t> {};
+    return std::span<const uint8_t>(blob.data() + slice.offset, static_cast<size_t>(slice.length));
+}
+
+std::optional<CompositeValue> Composite::value(std::string_view field_name) const noexcept
+{
+    const auto field_index = m_layout->find_field(field_name);
+    if (!field_index || !has(field_name)
+        || m_layout->fields()[*field_index].type != typeid(detail::CompositeDynamic))
+        return std::nullopt;
+
+    const auto& rows = std::get<std::vector<uint8_t>>(*m_rows);
+    DynamicCell cell;
+    std::memcpy(&cell, rows.data() + m_index * m_layout->stride_bytes()
+            + m_layout->fields()[*field_index].offset_bytes, sizeof(cell));
+    if (cell.kind == null_kind)
+        return CompositeValue { std::monostate {} };
+    if (cell.kind == integer_kind) {
+        int64_t result;
+        std::memcpy(&result, &cell.payload, sizeof(result));
+        return CompositeValue { result };
+    }
+    if (cell.kind == real_kind) {
+        double result;
+        std::memcpy(&result, &cell.payload, sizeof(result));
+        return CompositeValue { result };
+    }
+    if (cell.kind == text_kind) {
+        if (auto result = text(field_name))
+            return CompositeValue { *result };
+    }
+    if (cell.kind == blob_kind) {
+        if (auto result = blob(field_name))
+            return CompositeValue { *result };
+    }
+    return std::nullopt;
 }
 
 }
