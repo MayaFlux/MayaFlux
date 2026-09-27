@@ -10,11 +10,10 @@
 
 namespace MayaFlux::Kakshya {
 
-VisionProcessor::VisionProcessor(Kinesis::Vision::VisionSequence sequence, bool force_cpu)
+VisionProcessor::VisionProcessor(Kinesis::Vision::VisionSequence sequence)
     : m_sequence(std::move(sequence))
-    , m_force_cpu(force_cpu)
 {
-    if (!m_force_cpu)
+    if (m_sequence.backend == Kinesis::Vision::VisionBackend::GPU)
         m_executor = std::make_unique<Yantra::VisionGpuExecutor>();
 }
 
@@ -41,7 +40,7 @@ void VisionProcessor::on_attach(const std::shared_ptr<SignalSourceContainer>& co
     m_width = static_cast<uint32_t>(structure.get_width());
     m_height = static_cast<uint32_t>(structure.get_height());
 
-    if (m_force_cpu) {
+    if (m_sequence.backend == Kinesis::Vision::VisionBackend::CPU) {
         m_cpu_executor.reset();
     } else if (m_width > 0 && m_height > 0) {
         if (!m_executor)
@@ -66,7 +65,7 @@ void VisionProcessor::on_detach(const std::shared_ptr<SignalSourceContainer>& /*
     m_width = 0;
     m_height = 0;
 
-    if (m_force_cpu)
+    if (m_sequence.backend == Kinesis::Vision::VisionBackend::CPU)
         m_cpu_executor.reset();
 
     m_gpu_frame.reset();
@@ -79,7 +78,7 @@ void VisionProcessor::process(const std::shared_ptr<SignalSourceContainer>& cont
 
     m_is_processing.store(true, std::memory_order_release);
 
-    if (m_force_cpu) {
+    if (m_sequence.backend == Kinesis::Vision::VisionBackend::CPU) {
         std::span<const float> frame;
         if (auto vc = std::dynamic_pointer_cast<VideoStreamContainer>(container)) {
             frame = vc->processed_frame_as_float(0);
@@ -124,6 +123,20 @@ void VisionProcessor::set_sequence(Kinesis::Vision::VisionSequence sequence)
 {
     m_sequence = std::move(sequence);
     m_executor.reset();
+    m_cpu_executor.reset();
+    m_result = {};
+
+    if (m_sequence.backend == Kinesis::Vision::VisionBackend::GPU) {
+        m_executor = std::make_unique<Yantra::VisionGpuExecutor>();
+        if (m_width > 0 && m_height > 0 && !m_gpu_frame) {
+            auto& loom = Portal::Graphics::TextureLoom::instance();
+            m_gpu_frame = loom.create_2d(m_width, m_height, Portal::Graphics::ImageFormat::RGBA8, nullptr);
+            m_upload_staging = Buffers::create_image_staging_buffer(m_gpu_frame->get_size_bytes());
+        }
+    } else {
+        m_gpu_frame.reset();
+        m_upload_staging.reset();
+    }
 }
 
 std::shared_ptr<Vruta::BroadcastSource<Kinesis::Vision::VisionResult>> VisionProcessor::get_result_source()

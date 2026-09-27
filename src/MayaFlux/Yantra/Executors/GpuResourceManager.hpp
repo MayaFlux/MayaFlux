@@ -47,9 +47,31 @@ public:
     void download(const std::string& key, size_t index, float* dest, size_t byte_size);
     void bind_descriptor(const std::string& key, size_t index, const GpuBufferBinding& spec);
 
+    /**
+     * @brief Bind every non-image buffer binding in one Vulkan call.
+     *
+     * Equivalent to calling bind_descriptor or bind_shared_descriptor once
+     * per non-image entry in bindings (routed the same way, by whether a
+     * shared slot exists at that (set, binding)), except every entry is
+     * submitted through a single vkUpdateDescriptorSets call. Image entries
+     * are skipped, matching bind_all_descriptors' existing split between
+     * buffer descriptors here and image descriptors bound separately per
+     * staged image.
+     */
+    void bind_descriptors_batch(const std::string& key, const std::vector<GpuBufferBinding>& bindings);
+
     void ensure_shared_buffer(uint32_t set, size_t binding_index, size_t element_count,
         GpuBufferBinding::ElementType element_type,
         Portal::Graphics::BufferUsageHint usage_hint = Portal::Graphics::BufferUsageHint::COMPUTE_STORAGE);
+
+    /**
+     * @brief Non-owning view of the shared buffer at (set, binding_index).
+     *
+     * The manager keeps ownership. A null handle is returned when no such
+     * buffer exists, and the view is invalidated if ensure_shared_buffer later
+     * grows the slot.
+     */
+    [[nodiscard]] Portal::Graphics::GpuBufferHandle shared_buffer_handle(uint32_t set, size_t binding_index) const;
     void bind_shared_descriptor(const std::string& key, uint32_t set, size_t binding_index, const GpuBufferBinding& spec);
     void download_shared(uint32_t set, size_t binding_index, void* dest, size_t byte_size);
     void upload_shared_raw(uint32_t set, size_t binding_index, const uint8_t* data, size_t byte_size);
@@ -80,6 +102,28 @@ public:
         const std::shared_ptr<Core::VKImage>& image,
         vk::Sampler sampler,
         const GpuBufferBinding& spec);
+
+    /**
+     * @brief One image slot for bind_images_batch: a storage image entry
+     *        leaves sampler null.
+     */
+    struct ImageBind {
+        size_t index;
+        std::shared_ptr<Core::VKImage> image;
+        vk::Sampler sampler;
+        GpuBufferBinding spec;
+    };
+
+    /**
+     * @brief Bind every image in one Vulkan call.
+     *
+     * Equivalent to calling bind_image_storage or bind_image_sampled once
+     * per entry (routed by spec.element_type), except every entry is
+     * submitted through a single vkUpdateDescriptorSets call. Also records
+     * each image in the pipeline unit's image_slots, same as the per-call
+     * methods.
+     */
+    void bind_images_batch(const std::string& key, const std::vector<ImageBind>& images);
 
     /**
      * @brief Transition a VKImage layout via an immediate command submission.
@@ -140,12 +184,40 @@ public:
      *
      * Each key must already be initialise()'d. Vectors are parallel,
      * indexed by position, one entry per key in the same order as keys.
+     * indirect_per_key is either empty or parallel too; a stage whose entry
+     * has a buffer dispatches with the counts stored there instead of its
+     * fixed groups.
      */
     void dispatch_sequence(
         const std::vector<std::string>& keys,
         const std::vector<std::array<uint32_t, 3>>& groups_per_key,
         const std::vector<std::vector<uint8_t>>& push_constants_per_key,
-        const std::vector<std::vector<Portal::Graphics::HazardResource>>& hazards_per_key);
+        const std::vector<std::vector<Portal::Graphics::HazardResource>>& hazards_per_key,
+        const std::vector<Portal::Graphics::IndirectDispatch>& indirect_per_key = {});
+
+    /**
+     * @brief Non-blocking counterpart of dispatch_sequence.
+     *
+     * Records the identical command buffer and submits it via
+     * ShaderFoundry::submit_async instead of submit_and_wait. Barriers owed to
+     * each stage's hazards are recorded as in dispatch_sequence, including the
+     * one after the final stage, so a caller that does not await the fence
+     * still gets the trailing dependency for anything submitted later.
+     *
+     * Like dispatch_sequence, and unlike dispatch_async, no shader-write to
+     * host-read barrier is recorded. Host reads after the fence has signaled
+     * rely on the fence's own visibility guarantee and on the buffers being
+     * host coherent.
+     *
+     * @return FenceID to poll with ShaderFoundry::is_fence_signaled and to
+     *         release once signaled.
+     */
+    [[nodiscard]] Portal::Graphics::FenceID dispatch_sequence_async(
+        const std::vector<std::string>& keys,
+        const std::vector<std::array<uint32_t, 3>>& groups_per_key,
+        const std::vector<std::vector<uint8_t>>& push_constants_per_key,
+        const std::vector<std::vector<Portal::Graphics::HazardResource>>& hazards_per_key,
+        const std::vector<Portal::Graphics::IndirectDispatch>& indirect_per_key = {});
 
     /**
      * @brief Destroy the pipeline, shader, descriptor sets, and buffers
@@ -177,6 +249,20 @@ private:
 
         bool ready {};
     };
+
+    /**
+     * @brief Record one command buffer holding a dispatch per key, with the
+     *        barriers each stage's hazards owe the next.
+     *
+     * Shared by dispatch_sequence and dispatch_sequence_async, which differ
+     * only in how they submit the returned buffer.
+     */
+    [[nodiscard]] Portal::Graphics::CommandBufferID record_sequence_commands(
+        const std::vector<std::string>& keys,
+        const std::vector<std::array<uint32_t, 3>>& groups_per_key,
+        const std::vector<std::vector<uint8_t>>& push_constants_per_key,
+        const std::vector<std::vector<Portal::Graphics::HazardResource>>& hazards_per_key,
+        const std::vector<Portal::Graphics::IndirectDispatch>& indirect_per_key);
 
     struct SharedBuffers;
     std::unique_ptr<SharedBuffers> m_shared;

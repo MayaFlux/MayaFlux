@@ -23,8 +23,8 @@ namespace MayaFlux::Kakshya {
  *   - TextureContainer:     as_normalised_float(0) on m_data
  *
  * on_attach throws std::invalid_argument for any other container type.
- * Runs the configured VisionSequence through VisionExecutor and stores the
- * VisionResult as member state for polling via get_result().
+ * Runs the configured VisionSequence through its selected CPU or GPU executor
+ * and stores the VisionResult as member state for polling via get_result().
  *
  * Width and height are read from get_structure() at on_attach time.
  * m_float_storage is reused across calls to avoid per-frame allocation.
@@ -35,9 +35,9 @@ class MAYAFLUX_API VisionProcessor : public DataProcessor {
 public:
     /**
      * @brief Construct with the vision pipeline to execute each process() call.
-     * @param sequence Ordered VisionSteps describing the pipeline.
+     * @param sequence Ordered VisionSteps and their executor backend.
      */
-    explicit VisionProcessor(Kinesis::Vision::VisionSequence sequence, bool force_cpu = false);
+    explicit VisionProcessor(Kinesis::Vision::VisionSequence sequence);
 
     ~VisionProcessor() override = default;
 
@@ -107,7 +107,6 @@ private:
     Kinesis::Vision::VisionSequence m_sequence;
     std::unique_ptr<Yantra::VisionGpuExecutor> m_executor;
     Kinesis::Vision::VisionExecutor m_cpu_executor;
-    bool m_force_cpu {};
 
     std::shared_ptr<Buffers::VKBuffer> m_upload_staging;
     std::shared_ptr<Core::VKImage> m_gpu_frame;

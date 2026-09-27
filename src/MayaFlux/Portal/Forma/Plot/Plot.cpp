@@ -28,7 +28,7 @@ uint32_t place_label(
     const LabelSpec& spec,
     uint32_t relate_to)
 {
-    const bool auto_render_bounds = !(spec.render_bounds.x > 0 && spec.render_bounds.y > 0);
+    const bool auto_render_bounds = spec.render_bounds.x <= 0 || spec.render_bounds.y <= 0;
 
     const auto render_bounds = auto_render_bounds
         ? Kinesis::ndc_size_to_pixels(
@@ -60,8 +60,8 @@ uint32_t place_label(
             static_cast<size_t>(render_bounds.x) * render_bounds.y * 4 * k_staging_margin);
 
         surface.ctx().on_resize(id,
-            [buf, surface, text = spec.text, color = spec.color, bounds = spec.bounds,
-                staging](uint32_t, uint32_t) {
+            [buf, surface, id, text = spec.text, color = spec.color, bounds = spec.bounds,
+                staging](uint32_t, uint32_t) mutable {
                 const auto dims = Kinesis::ndc_size_to_pixels(
                     { bounds.width(), bounds.height() },
                     surface.window()->get_state().current_width,
@@ -75,6 +75,8 @@ uint32_t place_label(
 
                 auto image = Portal::Text::press(
                     text, dims, { .color = color }, staging);
+                if (auto* element = surface.layer().get(id))
+                    element->texture = image;
                 buf->bind_texture(0, image);
             });
     }

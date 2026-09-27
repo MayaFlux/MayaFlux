@@ -1,0 +1,40 @@
+#version 460
+
+#include "include/vision_common.glsl"
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+layout(set = 0, binding = 0, rgba32f) writeonly uniform image2D out_image;
+layout(set = 0, binding = 1, rgba32f) readonly uniform image2D in_image;
+
+layout(set = 0, binding = 4, std430) readonly buffer ThresholdBuf {
+    uint best_bin[1];
+};
+
+/**
+ * @brief Binarise every channel against the bin selected by otsu_select.
+ *        The threshold is read from best_bin on the device, so the host
+ *        never sees it.
+ *
+ * best_bin is the last bin otsu_select.comp assigned to the background
+ * class, not a continuous cutoff: any v with floor(v * 255) == best_bin
+ * belongs to the background class by that assignment, and floor(v*255)/255
+ * <= v always, so comparing v >= best_bin/255 directly would put that
+ * whole bin on the foreground side instead. Using (best_bin + 1)/255 as
+ * the boundary instead makes the comparison exclude every value that
+ * quantised into best_bin or below, matching otsu_select's own class
+ * split. otsu_select's scan cannot select best_bin = 255 (it stops before
+ * scoring a candidate that would leave the foreground class empty), so
+ * this never exceeds 1.0.
+ */
+void main()
+{
+    const ivec2 coord = thread_coord();
+    const ivec2 sz = imageSize(out_image);
+    if (coord.x >= sz.x || coord.y >= sz.y)
+        return;
+
+    const float threshold = float(best_bin[0] + 1u) / 255.0;
+    const vec4 px = imageLoad(in_image, coord);
+    imageStore(out_image, coord, vec4(greaterThanEqual(px, vec4(threshold))));
+}

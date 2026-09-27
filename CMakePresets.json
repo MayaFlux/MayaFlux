@@ -54,12 +54,21 @@
         "rhs": "Windows"
       },
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
         "MAYAFLUX_DEV": "ON",
         "MAYAFLUX_BUILD_PROJECT": "ON",
-        "MAYAFLUX_BUILD_TESTS": "ON",
+        "MAYAFLUX_BUILD_TESTS": "OFF",
         "MAYAFLUX_PORTABLE": "ON",
         "EXAMPLE_SHADER_DIR": "${sourceDir}/src/examples/shaders"
+      }
+    },
+    {
+      "name": "unix-test",
+      "inherits": "unix-dev",
+      "displayName": "Unix : Debug builds and testing",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "MAYAFLUX_BUILD_TESTS": "ON"
       }
     },
     {
@@ -197,6 +206,7 @@
   ],
   "buildPresets": [
     { "name": "unix-dev",         "configurePreset": "unix-dev", "jobs": 0 },
+    { "name": "unix-test",         "configurePreset": "unix-test", "jobs": 0 },
     { "name": "linux-ship-dev",    "configurePreset": "linux-ship-dev", "jobs": 0 },
     { "name": "linux-ship-rel",    "configurePreset": "linux-ship-rel", "jobs": 0 },
     { "name": "macos-ship-dev",    "configurePreset": "macos-ship-dev", "jobs": 0 },
@@ -209,8 +219,8 @@
   ],
   "testPresets": [
     {
-      "name": "unix-dev",
-      "configurePreset": "unix-dev",
+      "name": "unix-test",
+      "configurePreset": "unix-test",
       "output": { "outputOnFailure": true }
     }
   ]

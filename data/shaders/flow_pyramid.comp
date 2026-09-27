@@ -1,0 +1,135 @@
+#version 460
+
+#extension GL_KHR_shader_subgroup_basic : require
+#extension GL_KHR_shader_subgroup_arithmetic : require
+
+#include "include/vision_common.glsl"
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+layout(set = 0, binding = 0, rgba32f) uniform readonly image2D src_image;
+layout(set = 0, binding = 3, rgba16f) uniform image2D atlas_a;
+layout(set = 0, binding = 4, rgba16f) uniform image2D atlas_b;
+
+layout(set = 1, binding = 3, std430) buffer MetaBuf {
+    uint meta[];
+};
+
+layout(push_constant) uniform PC {
+    uint target_atlas;
+    uint level;
+    uint src_w;
+    uint src_h;
+    uint src_ox;
+    uint src_oy;
+    uint dst_w;
+    uint dst_h;
+    uint dst_ox;
+    uint dst_oy;
+} pc;
+
+shared float s_tile[10][10];
+
+float atlas_intensity(ivec2 c)
+{
+    return pc.target_atlas == 0u ? imageLoad(atlas_a, c).r : imageLoad(atlas_b, c).r;
+}
+
+/**
+ * @brief Intensity of the source level at a clamped coordinate. Level 0 reads
+ *        the caller's gray image, every other level reads the previous level
+ *        of the same atlas.
+ */
+float src_intensity(ivec2 c)
+{
+    c = clamp(c, ivec2(0), ivec2(int(pc.src_w), int(pc.src_h)) - ivec2(1));
+    if (pc.level == 0u)
+        return imageLoad(src_image, c).r;
+    return atlas_intensity(c + ivec2(int(pc.src_ox), int(pc.src_oy)));
+}
+
+/**
+ * @brief Intensity of this level at a destination coordinate, clamped to the
+ *        level. Level 0 is a straight pack. Deeper levels apply a 4x4 binomial
+ *        (1 3 3 1) x (1 3 3 1) centred on the 2x2 source block, which is a
+ *        proper low-pass for the 2x decimation in one pass.
+ */
+float level_intensity(ivec2 d)
+{
+    d = clamp(d, ivec2(0), ivec2(int(pc.dst_w), int(pc.dst_h)) - ivec2(1));
+    if (pc.level == 0u)
+        return src_intensity(d);
+
+    const float w[4] = float[4](1.0, 3.0, 3.0, 1.0);
+    const ivec2 s = d * 2;
+    float acc = 0.0;
+    for (int j = 0; j < 4; ++j) {
+        for (int i = 0; i < 4; ++i)
+            acc += w[i] * w[j] * src_intensity(s + ivec2(i - 1, j - 1));
+    }
+    return acc * (1.0 / 64.0);
+}
+
+/**
+ * @brief Fused pyramid level: intensity and Scharr gradients in one dispatch.
+ *
+ * Each workgroup computes intensity for its 8x8 tile plus a one texel halo
+ * into shared memory, then derives the Scharr gradient of every tile texel
+ * from that tile alone, so a level costs one pass and one write per texel
+ * instead of an intensity pass followed by a gradient pass. Halo coordinates
+ * are clamped to the level, which replicates the edge.
+ *
+ * The texel written is (I, dI/dx, dI/dy, 0) with the gradient in intensity per
+ * pixel of this level, so the tracker needs a single fetch per tap.
+ *
+ * Level 0 also measures how much the frame changed from the previous one, as
+ * the sum over pixels of the absolute intensity difference in units of 1/1024,
+ * accumulated into meta[1] with one atomic per subgroup. The new intensity is
+ * rounded to half precision first, so an unchanged frame gives exactly zero.
+ * The flow steps use it to tell a repeated camera frame from a new one.
+ */
+void main()
+{
+    const ivec2 tile_origin = ivec2(gl_WorkGroupID.xy) * 8;
+    const uint lid = gl_LocalInvocationIndex;
+
+    for (uint i = lid; i < 100u; i += 64u) {
+        const ivec2 t = ivec2(int(i % 10u), int(i / 10u));
+        s_tile[t.y][t.x] = level_intensity(tile_origin + t - ivec2(1));
+    }
+    memoryBarrierShared();
+    barrier();
+
+    const ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
+    if (coord.x >= int(pc.dst_w) || coord.y >= int(pc.dst_h))
+        return;
+
+    const ivec2 l = ivec2(gl_LocalInvocationID.xy) + ivec2(1);
+    const float tl = s_tile[l.y - 1][l.x - 1];
+    const float tc = s_tile[l.y - 1][l.x];
+    const float tr = s_tile[l.y - 1][l.x + 1];
+    const float ml = s_tile[l.y][l.x - 1];
+    const float mc = s_tile[l.y][l.x];
+    const float mr = s_tile[l.y][l.x + 1];
+    const float bl = s_tile[l.y + 1][l.x - 1];
+    const float bc = s_tile[l.y + 1][l.x];
+    const float br = s_tile[l.y + 1][l.x + 1];
+
+    const float gx = (3.0 * (tr - tl) + 10.0 * (mr - ml) + 3.0 * (br - bl)) * (1.0 / 32.0);
+    const float gy = (3.0 * (bl - tl) + 10.0 * (bc - tc) + 3.0 * (br - tr)) * (1.0 / 32.0);
+
+    const ivec2 out_coord = coord + ivec2(int(pc.dst_ox), int(pc.dst_oy));
+    const vec4 texel = vec4(mc, gx, gy, 0.0);
+
+    if (pc.level == 0u) {
+        const float stored = unpackHalf2x16(packHalf2x16(vec2(mc, 0.0))).x;
+        const float before = pc.target_atlas == 0u ? imageLoad(atlas_b, out_coord).r : imageLoad(atlas_a, out_coord).r;
+        const uint energy = subgroupAdd(uint(clamp(abs(stored - before), 0.0, 1.0) * 1024.0));
+        if (subgroupElect() && energy > 0u)
+            atomicAdd(meta[1], energy);
+    }
+    if (pc.target_atlas == 0u)
+        imageStore(atlas_a, out_coord, texel);
+    else
+        imageStore(atlas_b, out_coord, texel);
+}

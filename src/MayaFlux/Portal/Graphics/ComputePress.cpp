@@ -408,7 +408,18 @@ void ComputePress::record_sequence(
             stage.push_constant_data.empty() ? nullptr : stage.push_constant_data.data(),
             stage.push_constant_data.size());
 
-        dispatch(cmd_id, stage.groups[0], stage.groups[1], stage.groups[2]);
+        if (stage.indirect.buffer) {
+            foundry.buffer_barrier(
+                cmd_id,
+                stage.indirect.buffer,
+                vk::AccessFlagBits::eShaderWrite,
+                vk::AccessFlagBits::eIndirectCommandRead,
+                vk::PipelineStageFlagBits::eComputeShader,
+                vk::PipelineStageFlagBits::eDrawIndirect);
+            dispatch_indirect(cmd_id, stage.indirect.buffer, stage.indirect.offset);
+        } else {
+            dispatch(cmd_id, stage.groups[0], stage.groups[1], stage.groups[2]);
+        }
 
         for (const auto& hazard : stage.hazard_resources) {
             if (hazard.binding.direction != GpuBufferBinding::Direction::INPUT_OUTPUT)

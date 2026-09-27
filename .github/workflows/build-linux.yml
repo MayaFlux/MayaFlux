@@ -88,6 +88,7 @@ jobs:
             fontconfig-devel \
             json-devel \
             ninja-build \
+            mold \
             wayland-devel \
             wayland-protocols-devel \
             libxkbcommon-devel \

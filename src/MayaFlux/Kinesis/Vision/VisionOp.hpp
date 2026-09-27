@@ -60,6 +60,37 @@ enum class VisionOp : uint8_t {
 
     TrackKeypoints,
     Snapshot,
+
+    OpticalFlowDense,
+};
+
+/**
+ * @brief Selects where a VisionSequence executes.
+ *
+ * GPU uses MayaFlux::Yantra::VisionGpuExecutor, the Vulkan implementation in
+ * Yantra. It accepts a GPU image, runs the vision steps through GPU dispatches,
+ * and can keep image results on the device. This is the default because it
+ * suits GPU image pipelines and avoids transferring intermediate images to
+ * the host. Host input may still require an upload, and requesting host data
+ * from a GPU result may require a readback and synchronization. GPU resource
+ * setup and dispatch also have costs, particularly for small workloads.
+ *
+ * CPU uses MayaFlux::Kinesis::Vision::VisionExecutor, the host implementation
+ * in Kinesis. It accepts normalized floating-point pixels in host memory and
+ * produces host-side results. Choose it when the input and desired output are
+ * already on the host, when a GPU is unavailable, or when a sequence needs an
+ * operation implemented only by the CPU executor. Supplying a GPU image to a
+ * CPU pipeline requires a transfer to host memory.
+ *
+ * The selected backend applies to the whole sequence. VisionProcessor and
+ * ImageCVProcessor do not switch backend for individual steps or fall back to
+ * the other executor when an operation is unsupported. The default expresses
+ * the preferred path for GPU image processing, not a guarantee that it will
+ * be faster for every input size or transfer pattern.
+ */
+enum class VisionBackend : uint8_t {
+    GPU, ///< Execute the sequence with the Yantra Vulkan executor.
+    CPU, ///< Execute the sequence with the Kinesis host executor.
 };
 
 // ============================================================================
@@ -106,11 +137,58 @@ struct ExtractPeaksParams {
     uint32_t nms_radius;
 };
 
+/**
+ * @brief Parameters for TrackKeypoints.
+ *
+ * eigen_threshold and error_threshold are normalised by the window area, so
+ * they do not depend on window_radius. levels, max_points and min_distance
+ * apply to the persistent GPU tracker: levels is the pyramid depth including
+ * full resolution, max_points caps live tracks, and min_distance is the grid
+ * cell size in pixels that admits at most one new track. A positive
+ * forward_backward_threshold rejects a track when its backward estimate
+ * misses the source point by more than that many pixels; zero disables it.
+ * With export_tracks set, the tracks are also delivered in
+ * VisionResult::tracks_buffer for consumers that stay on the GPU. With
+ * host_tracks cleared, the tracks are not read back to the host and the
+ * structured result stays empty, so a sequence that only feeds GPU consumers
+ * pays no transfer. It has no effect on the CPU executor, which always
+ * produces the host result.
+ */
 struct TrackKeypointsParams {
     uint32_t window_radius = 7;
     uint32_t max_iterations = 20;
     float eigen_threshold = 1e-4F;
     float error_threshold = 0.3F;
+    uint32_t levels = 4;
+    uint32_t max_points = 512;
+    float min_distance = 8.0F;
+    float forward_backward_threshold = 0.0F;
+    bool export_tracks = false;
+    bool host_tracks = true;
+};
+
+/**
+ * @brief Parameters for OpticalFlowDense.
+ *
+ * Dense coarse-to-fine Lucas-Kanade. window_radius is the half size of the
+ * Gaussian weighted window in pixels of the level being solved, iterations the
+ * refinement steps per level, and levels the pyramid depth including full
+ * resolution (lowered for small images). eigen_threshold damps the solve so
+ * untextured pixels take small steps, and max_step caps one increment in
+ * pixels. With visualize set, a hue and brightness rendering of the flow is
+ * delivered in VisionResult::debug_labels, at full brightness from
+ * visual_range pixels. visual_min_motion keeps smaller displacements dark in
+ * the visualization, in pixels of the flow image.
+ */
+struct OpticalFlowDenseParams {
+    uint32_t window_radius = 5;
+    uint32_t iterations = 3;
+    uint32_t levels = 4;
+    float eigen_threshold = 1e-3F;
+    float max_step = 4.0F;
+    bool visualize = false;
+    float visual_range = 2.0F;
+    float visual_min_motion = 0.0F;
 };
 
 struct ConnectedComponentsParams {
@@ -145,7 +223,8 @@ using VisionParams = std::variant<
     ExtractPeaksParams,
     TrackKeypointsParams,
     ConnectedComponentsParams,
-    FindContoursParams>;
+    FindContoursParams,
+    OpticalFlowDenseParams>;
 
 /**
  * @brief One step in a VisionSequence: an op and its parameters.
@@ -162,12 +241,15 @@ struct VisionStep {
 };
 
 /**
- * @brief Ordered sequence of VisionSteps describing a complete vision pipeline.
+ * @brief Ordered VisionSteps and the backend chosen to execute them.
  *
- * Constructed via the fluent VisionSequence::Builder.
+ * Construct with the fluent VisionSequence::Builder. The backend belongs to
+ * the sequence, so a processor uses the same executor for every step. Directly
+ * constructed sequences default to VisionBackend::GPU.
  */
 struct VisionSequence {
     std::vector<VisionStep> steps;
+    VisionBackend backend { VisionBackend::GPU }; ///< Backend used for every step.
 
     /**
      * @brief Fluent builder for VisionSequence.
@@ -305,11 +387,17 @@ struct VisionSequence {
             uint32_t window_radius = 7,
             uint32_t max_iterations = 20,
             float eigen_threshold = 1e-4F,
-            float error_threshold = 0.3F)
+            float error_threshold = 0.3F,
+            uint32_t levels = 4,
+            uint32_t max_points = 512,
+            float min_distance = 8.0F,
+            float forward_backward_threshold = 0.0F,
+            bool export_tracks = false,
+            bool host_tracks = true)
         {
             return push(VisionOp::TrackKeypoints,
                 TrackKeypointsParams {
-                    .window_radius = window_radius, .max_iterations = max_iterations, .eigen_threshold = eigen_threshold, .error_threshold = error_threshold });
+                    .window_radius = window_radius, .max_iterations = max_iterations, .eigen_threshold = eigen_threshold, .error_threshold = error_threshold, .levels = levels, .max_points = max_points, .min_distance = min_distance, .forward_backward_threshold = forward_backward_threshold, .export_tracks = export_tracks, .host_tracks = host_tracks });
         }
 
         Builder& find_contours(float min_area = 0.0F, uint32_t max_contours = 0, uint32_t max_points_per_contour = 0, bool as_image = false)
@@ -323,9 +411,43 @@ struct VisionSequence {
             return push(VisionOp::Snapshot);
         }
 
-        [[nodiscard]] VisionSequence build()
+        Builder& optical_flow_dense(
+            uint32_t window_radius = 5,
+            uint32_t iterations = 3,
+            uint32_t levels = 4,
+            float eigen_threshold = 1e-3F,
+            float max_step = 4.0F,
+            bool visualize = false,
+            float visual_range = 2.0F,
+            float visual_min_motion = 0.0F)
         {
-            return VisionSequence { .steps = std::move(m_steps) };
+            return push(VisionOp::OpticalFlowDense,
+                OpticalFlowDenseParams {
+                    .window_radius = window_radius, .iterations = iterations, .levels = levels, .eigen_threshold = eigen_threshold, .max_step = max_step, .visualize = visualize, .visual_range = visual_range, .visual_min_motion = visual_min_motion });
+        }
+
+        /**
+         * @brief Finish the sequence and select its execution backend.
+         *
+         * Calling build() selects VisionBackend::GPU for GPU image pipelines.
+         * Pass VisionBackend::CPU to run the entire sequence through the
+         * Kinesis host executor instead. The choice is stored in the returned
+         * VisionSequence and used by VisionProcessor or ImageCVProcessor when
+         * that sequence is processed.
+         *
+         * @code
+         * auto host_sequence = VisionSequence::Builder{}
+         *     .rgba_to_gray()
+         *     .build(VisionBackend::CPU);
+         * @endcode
+         *
+         * @param backend Backend for all steps. Defaults to the Yantra GPU
+         *                executor; no per-step fallback is performed.
+         * @return The completed sequence with its selected backend.
+         */
+        [[nodiscard]] VisionSequence build(VisionBackend backend = VisionBackend::GPU)
+        {
+            return VisionSequence { .steps = std::move(m_steps), .backend = backend };
         }
 
         /**
@@ -403,6 +525,12 @@ inline size_t hash_vision_step(VisionOp op, const VisionParams& params)
             hash_combine(seed, std::hash<uint32_t> {}(p.max_iterations));
             hash_combine(seed, std::hash<float> {}(p.eigen_threshold));
             hash_combine(seed, std::hash<float> {}(p.error_threshold));
+            hash_combine(seed, std::hash<uint32_t> {}(p.levels));
+            hash_combine(seed, std::hash<uint32_t> {}(p.max_points));
+            hash_combine(seed, std::hash<float> {}(p.min_distance));
+            hash_combine(seed, std::hash<float> {}(p.forward_backward_threshold));
+            hash_combine(seed, std::hash<bool> {}(p.export_tracks));
+            hash_combine(seed, std::hash<bool> {}(p.host_tracks));
         } else if constexpr (std::is_same_v<T, FindContoursParams>) {
             hash_combine(seed, std::hash<float> {}(p.min_area));
             hash_combine(seed, std::hash<uint32_t> {}(p.max_contours));
@@ -411,6 +539,15 @@ inline size_t hash_vision_step(VisionOp op, const VisionParams& params)
         } else if constexpr (std::is_same_v<T, ConnectedComponentsParams>) {
             hash_combine(seed, std::hash<bool> {}(p.export_labels));
             hash_combine(seed, std::hash<bool> {}(p.with_colors));
+        } else if constexpr (std::is_same_v<T, OpticalFlowDenseParams>) {
+            hash_combine(seed, std::hash<uint32_t> {}(p.window_radius));
+            hash_combine(seed, std::hash<uint32_t> {}(p.iterations));
+            hash_combine(seed, std::hash<uint32_t> {}(p.levels));
+            hash_combine(seed, std::hash<float> {}(p.eigen_threshold));
+            hash_combine(seed, std::hash<float> {}(p.max_step));
+            hash_combine(seed, std::hash<bool> {}(p.visualize));
+            hash_combine(seed, std::hash<float> {}(p.visual_range));
+            hash_combine(seed, std::hash<float> {}(p.visual_min_motion));
         }
     },
         params);

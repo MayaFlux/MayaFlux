@@ -25,6 +25,21 @@ struct GpuChannelResult {
 };
 
 /**
+ * @struct IndirectGroupsSource
+ * @brief Location of GPU-resident workgroup counts for a DependencyStage.
+ *
+ * Names a shared buffer of the dispatching context, allocated with
+ * BufferUsageHint::INDIRECT, that holds {x, y, z} as three uint32 values at
+ * offset_bytes. An earlier stage of the same call writes it, so the dispatch
+ * size never reaches the host.
+ */
+struct IndirectGroupsSource {
+    uint32_t set {};
+    size_t binding {};
+    uint64_t offset_bytes { 0 };
+};
+
+/**
  * @struct DependencyStage
  * @brief One stage in a dispatch_core_dependency call.
  *
@@ -45,6 +60,12 @@ struct DependencyStage {
     std::function<void(GpuDispatchCore&)> stage_fn;
     std::function<std::vector<Portal::Graphics::HazardResource>(GpuDispatchCore&)> hazard_fn;
     std::optional<std::array<uint32_t, 3>> explicit_groups;
+
+    /**
+     * @brief Shared buffer holding this stage's workgroup counts, when they
+     *        come from GPU data. explicit_groups is then ignored.
+     */
+    std::optional<IndirectGroupsSource> indirect_groups;
 };
 
 /**
@@ -110,12 +131,22 @@ public:
         set_binding_data(index, std::span<const T>(data));
     }
 
+    /**
+     * @brief Ensure a shared storage buffer of at least element_count elements
+     *        exists at (set, binding_index).
+     *
+     * The default hint allocates host cached memory, suited to buffers the
+     * host reads back. DEVICE and COMPUTE request device local, host visible
+     * memory instead, so buffers only shaders touch avoid crossing the bus;
+     * the request falls back to host cached memory when none is available.
+     * Host reads of device local memory are uncached, so keep bulk readback
+     * buffers on the default hint.
+     */
     void ensure_shared_buffer(uint32_t set, size_t binding_index, size_t element_count,
         GpuBufferBinding::ElementType element_type,
         Portal::Graphics::BufferUsageHint usage_hint = Portal::Graphics::BufferUsageHint::COMPUTE_STORAGE)
     {
         m_resources.ensure_shared_buffer(set, binding_index, element_count, element_type, usage_hint);
-        m_shared_bindings.insert({ set, binding_index });
     }
 
     void upload_shared_raw(uint32_t set, size_t binding_index, const uint8_t* data, size_t byte_size)
@@ -212,6 +243,18 @@ public:
         std::shared_ptr<Core::VKImage> image,
         GpuBufferBinding::ElementType kind,
         vk::Sampler sampler = nullptr);
+
+    /**
+     * @brief Non-owning view of the shared buffer at (set, binding_index).
+     *
+     * Lets a consumer read a context's GPU output in place instead of through
+     * a host readback. The context keeps ownership, so the view is only valid
+     * while the context lives and until the buffer is grown.
+     */
+    [[nodiscard]] Portal::Graphics::GpuBufferHandle shared_buffer_handle(uint32_t set, size_t binding_index) const
+    {
+        return m_resources.shared_buffer_handle(set, binding_index);
+    }
 
     /**
      * @brief The key used for this context's GpuResourceManager unit.
@@ -374,6 +417,33 @@ protected:
     void dispatch_core_dependency(const std::vector<DependencyStage>& stages);
 
     /**
+     * @brief Non-blocking variant of dispatch_core_dependency.
+     *
+     * Stages are prepared exactly as in dispatch_core_dependency, then the
+     * whole sequence is recorded into one command buffer and submitted
+     * without waiting. The context's own shader config, bindings and staged
+     * data are restored before this returns, so the caller may reconfigure
+     * the context immediately. Descriptor sets already written for the
+     * stages' shader keys must not be rebound until the returned fence has
+     * signaled.
+     *
+     * The barrier owed to the final stage's INPUT_OUTPUT hazards is still
+     * recorded, which orders anything submitted afterwards behind this
+     * sequence's writes.
+     *
+     * Unlike dispatch_core_async, no shader-write to host-read barrier is
+     * recorded for the stages' buffers. As with dispatch_core_dependency,
+     * host reads after the fence has signaled rely on the fence's own
+     * visibility guarantee and on the buffers being host coherent.
+     *
+     * @param stages Ordered stage descriptions, as for DependencyParams.
+     * @return FenceID to poll with ShaderFoundry::is_fence_signaled and to
+     *         release once signaled. INVALID_FENCE on submission failure.
+     */
+    [[nodiscard]] Portal::Graphics::FenceID dispatch_core_dependency_async(
+        const std::vector<DependencyStage>& stages);
+
+    /**
      * @brief Effective element count used by the last dispatch_core or
      *        dispatch_core_async call.
      *
@@ -441,7 +511,6 @@ protected:
     std::vector<size_t> m_output_size_overrides;
     std::vector<std::vector<uint8_t>> m_passthrough_bytes;
     std::vector<std::vector<uint8_t>> m_binding_data;
-    std::set<std::pair<uint32_t, size_t>> m_shared_bindings;
 
     struct ImageBinding {
         std::shared_ptr<Core::VKImage> image;
@@ -451,6 +520,16 @@ protected:
     std::vector<ImageBinding> m_image_bindings;
 
 private:
+    struct DependencyPlan {
+        std::vector<std::string> keys;
+        std::vector<std::array<uint32_t, 3>> groups;
+        std::vector<std::vector<uint8_t>> push_constants;
+        std::vector<std::vector<Portal::Graphics::HazardResource>> hazards;
+        std::vector<Portal::Graphics::IndirectDispatch> indirect;
+    };
+
+    [[nodiscard]] DependencyPlan prepare_dependency(const std::vector<DependencyStage>& stages);
+
     GpuComputeConfig m_gpu_config;
     std::string m_cached_dispatch_key;
 

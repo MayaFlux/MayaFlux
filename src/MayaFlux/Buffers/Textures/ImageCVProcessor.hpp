@@ -33,14 +33,13 @@ class ImageCVProcessor : public BufferProcessor {
 public:
     /**
      * @brief Construct with the vision pipeline to execute each processing_function call.
-     * @param sequence Ordered VisionSteps describing the pipeline.
+     * @param sequence Ordered VisionSteps and their executor backend.
      */
-    explicit ImageCVProcessor(Kinesis::Vision::VisionSequence sequence, bool force_cpu = false)
+    explicit ImageCVProcessor(Kinesis::Vision::VisionSequence sequence)
         : m_sequence(std::move(sequence))
-        , m_force_cpu(force_cpu)
     {
         m_processing_token = ProcessingToken::GRAPHICS_BACKEND;
-        if (!m_force_cpu) {
+        if (m_sequence.backend == Kinesis::Vision::VisionBackend::GPU) {
             m_executor = std::make_unique<Yantra::VisionGpuExecutor>();
         }
     }
@@ -67,7 +66,7 @@ public:
         }
         m_buffer = typed;
 
-        if (m_force_cpu) {
+        if (m_sequence.backend == Kinesis::Vision::VisionBackend::CPU) {
             m_cpu_executor.reset();
         } else {
             if (!m_executor) {
@@ -92,7 +91,7 @@ public:
     {
         m_buffer.reset();
 
-        if (m_force_cpu) {
+        if (m_sequence.backend == Kinesis::Vision::VisionBackend::CPU) {
             m_cpu_executor.reset();
         }
 
@@ -124,7 +123,7 @@ public:
 
         m_is_processing.store(true, std::memory_order_release);
 
-        if (m_force_cpu) {
+        if (m_sequence.backend == Kinesis::Vision::VisionBackend::CPU) {
             auto frame = download_and_normalise(image, m_raw_staging, m_float_work, m_gpu_staging);
             if (!frame.empty()) {
                 m_result = m_cpu_executor.run(
@@ -161,6 +160,10 @@ public:
     {
         m_sequence = std::move(sequence);
         m_executor.reset();
+        m_cpu_executor.reset();
+        m_result = {};
+        if (m_sequence.backend == Kinesis::Vision::VisionBackend::GPU)
+            m_executor = std::make_unique<Yantra::VisionGpuExecutor>();
     }
 
     /**
@@ -247,7 +250,6 @@ private:
     std::shared_ptr<Vruta::BroadcastSource<Kinesis::Vision::VisionResult>> m_result_source;
     std::atomic<bool> m_is_processing { false };
 
-    bool m_force_cpu {};
     uint32_t m_eval_delta { 1 };
     uint32_t m_skipped_frames { 0 };
 };

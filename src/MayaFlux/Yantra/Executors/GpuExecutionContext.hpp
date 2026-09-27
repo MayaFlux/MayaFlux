@@ -92,6 +92,27 @@ public:
         return collect_gpu_outputs(raw, ch_copies, structure_info);
     }
 
+    /**
+     * @brief Non-blocking counterpart of execute() in DEPENDENCY mode.
+     *
+     * Runs the stages of a DependencyParams as one command buffer and returns
+     * its fence instead of waiting, for callers that overlap the sequence
+     * with other work or defer its completion. execute() cannot serve this
+     * because its Datum result has no channel for a fence.
+     *
+     * See dispatch_core_dependency_async for the descriptor lifetime and host
+     * readback rules that apply to an un-awaited sequence.
+     *
+     * @param stages Ordered stage descriptions.
+     * @return FenceID to poll and release, or INVALID_FENCE on failure.
+     * @throws std::runtime_error If GPU initialisation of a stage fails.
+     */
+    [[nodiscard]] Portal::Graphics::FenceID dispatch_dependency_async(
+        const std::vector<DependencyStage>& stages)
+    {
+        return dispatch_core_dependency_async(stages);
+    }
+
 protected:
     /**
      * @brief Extract channel data and structure metadata from the input Datum.

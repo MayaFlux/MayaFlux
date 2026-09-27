@@ -27,6 +27,9 @@ struct TrackResult {
     glm::vec2 position; ///< Tracked position in normalised [0, 1] coordinates.
     float error; ///< Residual photometric error after convergence.
     bool tracked; ///< False if tracking failed or diverged.
+    glm::vec2 previous { 0.0F }; ///< Position of the point in the previous frame, normalised [0, 1].
+    uint32_t id { 0 }; ///< Stable identifier of a persistent track. Zero for stateless trackers.
+    uint32_t age { 0 }; ///< Frames the track was successfully followed before this one.
 };
 
 /**
@@ -42,6 +45,8 @@ struct TrackResult {
  *     (min eigenvalue below eigen_threshold)
  *   - The tracked position moves outside the image boundary
  *   - The residual error after convergence exceeds error_threshold
+ *   - An enabled backward check misses the source by more than
+ *     forward_backward_threshold pixels
  *
  * prev_points and the returned vector have the same length and order.
  * Callers should discard points where tracked == false before passing
@@ -56,6 +61,7 @@ struct TrackResult {
  * @param max_iterations  Maximum Newton-Raphson iterations per point.
  * @param eigen_threshold Minimum eigenvalue for structure tensor validity.
  * @param error_threshold Maximum residual error to accept a track.
+ * @param forward_backward_threshold Maximum return error in pixels; zero disables the check.
  * @return                TrackResult per input point, same order.
  */
 [[nodiscard]] MAYAFLUX_API std::vector<TrackResult> track_keypoints(
@@ -66,7 +72,8 @@ struct TrackResult {
     uint32_t window_radius = 7,
     uint32_t max_iterations = 20,
     float eigen_threshold = 1e-4F,
-    float error_threshold = 0.3F);
+    float error_threshold = 0.3F,
+    float forward_backward_threshold = 0.0F);
 
 /**
  * @brief Track keypoints using a pre-computed Sobel gradient of prev_gray.
@@ -87,6 +94,7 @@ struct TrackResult {
  * @param max_iterations  Maximum Newton-Raphson iterations per point.
  * @param eigen_threshold Minimum eigenvalue for structure tensor validity.
  * @param error_threshold Maximum residual error to accept a track.
+ * @param forward_backward_threshold Maximum return error in pixels; zero disables the check.
  * @return TrackResult per input point, same order.
  */
 [[nodiscard]] MAYAFLUX_API std::vector<TrackResult> track_keypoints(
@@ -99,6 +107,7 @@ struct TrackResult {
     uint32_t window_radius = 7,
     uint32_t max_iterations = 20,
     float eigen_threshold = 1e-4F,
-    float error_threshold = 0.3F);
+    float error_threshold = 0.3F,
+    float forward_backward_threshold = 0.0F);
 
 } // namespace MayaFlux::Kinesis::Vision

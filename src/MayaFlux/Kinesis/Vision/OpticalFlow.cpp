@@ -5,6 +5,8 @@
 
 #include "MayaFlux/Transitive/Parallel/Execution.hpp"
 
+#include <utility>
+
 namespace P = MayaFlux::Parallel;
 
 namespace MayaFlux::Kinesis::Vision {
@@ -176,14 +178,16 @@ std::vector<TrackResult> track_keypoints(
     uint32_t window_radius,
     uint32_t max_iterations,
     float eigen_threshold,
-    float error_threshold)
+    float error_threshold,
+    float forward_backward_threshold)
 {
     auto grad = sobel(prev_gray, w, h);
     return track_keypoints(prev_gray, curr_gray,
         grad.dx, grad.dy,
         w, h, prev_points,
         window_radius, max_iterations,
-        eigen_threshold, error_threshold);
+        eigen_threshold, error_threshold,
+        forward_backward_threshold);
 }
 
 std::vector<TrackResult> track_keypoints(
@@ -196,16 +200,24 @@ std::vector<TrackResult> track_keypoints(
     uint32_t window_radius,
     uint32_t max_iterations,
     float eigen_threshold,
-    float error_threshold)
+    float error_threshold,
+    float forward_backward_threshold)
 {
     const size_t np = prev_points.size();
     std::vector<TrackResult> results(np);
+    std::vector<float> curr_dx;
+    std::vector<float> curr_dy;
+    if (forward_backward_threshold > 0.0F) {
+        auto grad = sobel(curr_gray, w, h);
+        curr_dx = std::move(grad.dx);
+        curr_dy = std::move(grad.dy);
+    }
 
     P::for_each(P::par_unseq,
         std::views::iota(size_t { 0 }, np).begin(),
         std::views::iota(size_t { 0 }, np).end(),
         [&](size_t i) {
-            results[i] = lk_point(
+            auto result = lk_point(
                 prev_gray, curr_gray,
                 grad_dx, grad_dy,
                 w, h,
@@ -214,6 +226,26 @@ std::vector<TrackResult> track_keypoints(
                 max_iterations,
                 eigen_threshold,
                 error_threshold);
+
+            if (forward_backward_threshold > 0.0F && result.tracked) {
+                const auto reverse = lk_point(
+                    curr_gray, prev_gray,
+                    curr_dx, curr_dy,
+                    w, h,
+                    result.position,
+                    window_radius,
+                    max_iterations,
+                    eigen_threshold,
+                    error_threshold);
+                const glm::vec2 error_px = (reverse.position - prev_points[i])
+                    * glm::vec2(static_cast<float>(w), static_cast<float>(h));
+                if (!reverse.tracked || glm::length(error_px) > forward_backward_threshold) {
+                    result.position = prev_points[i];
+                    result.error = 1.0F;
+                    result.tracked = false;
+                }
+            }
+            results[i] = result;
         });
 
     return results;

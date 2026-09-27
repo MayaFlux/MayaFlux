@@ -2,6 +2,7 @@
 
 #include "TextureExecutionContext.hpp"
 
+#include "MayaFlux/Kinesis/Vision/Pyramid.hpp"
 #include "MayaFlux/Kinesis/Vision/VisionContext.hpp"
 
 namespace MayaFlux::Yantra {
@@ -28,6 +29,78 @@ namespace MayaFlux::Yantra {
  */
 
 /**
+ * @brief Cross-run state of the flow context.
+ *
+ * Two atlases are bound for their whole life. Which one holds the current
+ * frame is the curr parity, passed to shaders as a push constant, so ping-pong
+ * is a bit flip and never rewrites a descriptor. Detections, retained previous
+ * points and tracks live in the flow context's shared buffers and never leave
+ * the GPU except for the final tracks readback.
+ */
+struct FlowState {
+    std::shared_ptr<Core::VKImage> atlas[2];
+    Kinesis::Vision::PyramidLayout layout;
+
+    /**
+     * @brief Dense flow images, allocated on first use of OpticalFlowDense.
+     *
+     * flow_out holds the finest-level result at frame resolution, alternated
+     * by the same parity as the atlases so a result stays valid for one more
+     * run. The rest share the atlas layout: flow_lvl holds the coarser levels,
+     * dense_a and dense_b are the box filter scratch, and dense_tensor holds
+     * the previous frame's summed structure tensor and confidence.
+     */
+    std::shared_ptr<Core::VKImage> flow_out[2];
+    std::shared_ptr<Core::VKImage> flow_lvl;
+    std::shared_ptr<Core::VKImage> dense_a;
+    std::shared_ptr<Core::VKImage> dense_b;
+    std::shared_ptr<Core::VKImage> dense_tensor;
+    std::shared_ptr<Core::VKImage> flow_vis;
+    Kinesis::Vision::PyramidLayout dense_layout;
+
+    /**
+     * @brief Most recent flow image and track list produced from a frame that
+     *        differed from the one before it.
+     *
+     * A repeated camera frame carries no motion, so a run on one republishes
+     * these instead of a field of zeros. Before any result exists, the fresh
+     * result is published as is.
+     */
+    std::shared_ptr<Core::VKImage> last_flow;
+    std::vector<Kinesis::Vision::TrackResult> last_tracks;
+
+    /**
+     * @brief Track count of the last distinct frame, independent of whether a
+     *        host list was produced for it, and whether the submitted track
+     *        sequence should read its tracks back to the host.
+     */
+    uint32_t last_track_count { 0 };
+    bool host_pending { true };
+
+    /**
+     * @brief Bookkeeping for the device resident track export.
+     *
+     * The two export buffers are shared buffers of the flow context and
+     * alternate per published frame, so a delivered buffer stays valid for one
+     * more publish. export_slot is the buffer the next publish writes,
+     * last_export the view of the most recent distinct frame, and
+     * export_pending marks a submitted track sequence whose export has not
+     * been delivered yet. export_view caches one handle per buffer, created on
+     * first delivery, so publishing allocates nothing per frame.
+     */
+    std::shared_ptr<Portal::Graphics::GpuBufferHandle> export_view[2];
+    std::shared_ptr<Portal::Graphics::GpuBufferHandle> last_export;
+    uint32_t export_slot { 0 };
+    bool export_pending { false };
+
+    uint32_t curr { 0 };
+    bool have_prev { false };
+    bool curr_ready { false };
+    bool buffers_ready { false };
+    Portal::Graphics::FenceID build_fence { Portal::Graphics::INVALID_FENCE };
+};
+
+/**
  * @brief Fixed set of TextureExecutionContexts covering every GPU-implemented
  *        VisionOp shape.
  *
@@ -52,12 +125,29 @@ struct MAYAFLUX_API VisionGpuContexts {
                                     ///< image output and structured aux
                                     ///< data (ConnectedComponents,
                                     ///< FindContours).
-    TextureExecutionContext cc_pipeline;
+    TextureExecutionContext component_contours; ///< Shared image and buffer
+                                                ///< pipeline for
+                                                ///< ConnectedComponents and
+                                                ///< FindContours. Holds labels,
+                                                ///< component bounds, trace
+                                                ///< points, and contour
+                                                ///< metadata across the two
+                                                ///< steps.
     TextureExecutionContext ingest; ///< Sampled-in, rgba32f-storage-out.
                                     ///< IMAGE mode. Runs vision_ingest.comp
                                     ///< at the top of a fresh run to convert
                                     ///< a non-storage seed frame before any
                                     ///< rgba32f op reads it.
+    TextureExecutionContext flow; ///< Pyramidal optical flow. Fixed layout:
+                                  ///< gray source image, two rgba16f pyramid
+                                  ///< atlases, the dense flow images, and
+                                  ///< shared buffers for detections, retained
+                                  ///< points, tracks, and selection state.
+                                  ///< Drives TrackKeypoints and
+                                  ///< OpticalFlowDense, and reuses the
+                                  ///< extract_peaks layout unchanged.
+
+    FlowState flow_state;
 
     /**
      * @brief Walk state for the current run: sequence position, geometry,
@@ -104,6 +194,15 @@ struct MAYAFLUX_API VisionGpuContexts {
      */
     struct Suspension {
         Portal::Graphics::FenceID fence { Portal::Graphics::INVALID_FENCE };
+
+        /**
+         * @brief Work to run once the fence has signaled, before the walk
+         *        resumes. Empty for steps that need none.
+         *
+         * Lets a deferred step read back or commit state on completion
+         * rather than on submission. Dropped without running by reset().
+         */
+        std::function<void(VisionGpuContexts&)> finalize;
 
         [[nodiscard]] bool is_active() const
         {
@@ -170,6 +269,22 @@ public:
     [[nodiscard]] static GpuComputeConfig config(
         Kinesis::Vision::VisionOp op,
         const Kinesis::Vision::VisionParams& params);
+
+    /**
+     * @brief Host tracks decoded on demand from a result's exported buffer.
+     *
+     * For sequences run with export_tracks and without host_tracks, where the
+     * structured result is empty. Reads the buffer through its host mapping,
+     * so it is meant for occasional host access, not per frame use on a
+     * device local buffer. The buffer is valid for one more run after the
+     * result was delivered.
+     *
+     * @param result A result whose tracks_buffer came from this executor.
+     * @return The exported tracks, or empty when the result carries no
+     *         readable export.
+     */
+    [[nodiscard]] static std::vector<Kinesis::Vision::TrackResult> read_exported_tracks(
+        const Kinesis::Vision::VisionResult& result);
 
     /**
      * @brief Execute a VisionSequence on the GPU through an explicit context set.
@@ -239,6 +354,158 @@ public:
 
 private:
     std::unique_ptr<VisionGpuContexts> m_contexts;
+
+    /**
+     * @brief 2D Gaussian kernel for convolution, cached by (radius, sigma
+     *        bit pattern).
+     *
+     * Sigma is a tuning parameter that rarely changes frame to frame;
+     * recomputing exp() over (2*radius+1)^2 taps and reallocating the
+     * kernel every call is pure repeated work for an identical result.
+     *
+     * @param radius Radius of the kernel in pixels. Kernel size is (2*radius + 1)^2.
+     * @param sigma  Standard deviation of the Gaussian.
+     * @return       Normalized kernel weights as a flat vector in row-major order.
+     */
+    const std::vector<float>& gaussian_kernel_2d(uint32_t radius, float sigma);
+
+    /**
+     * @brief Apply an Otsu threshold to the current image.
+     *
+     * Computes the histogram and threshold on the GPU, then replaces the
+     * working image with the binary result and publishes it as debug_labels.
+     *
+     * @return The resulting image and the image it was derived from.
+     */
+    Kinesis::Vision::GpuVisionPass::Completed op_threshold_otsu(VisionGpuContexts& contexts);
+
+    /**
+     * @brief Apply morphological opening or closing to the current image.
+     *
+     * Opening erodes then dilates; closing dilates then erodes. The final
+     * image becomes the working image for the following step.
+     *
+     * @return The resulting image and the image it was derived from.
+     */
+    Kinesis::Vision::GpuVisionPass::Completed op_open_close(
+        VisionGpuContexts& contexts,
+        Kinesis::Vision::VisionOp op,
+        const Kinesis::Vision::MorphParams& p);
+
+    /**
+     * @brief Detect edges in the current image with the Canny pipeline.
+     *
+     * Applies smoothing, gradients, suppression, threshold classification,
+     * and hysteresis. The final edge image becomes the working image and is
+     * published as debug_labels.
+     *
+     * @return The resulting edge image and the original input image.
+     */
+    Kinesis::Vision::GpuVisionPass::Completed op_canny(
+        VisionGpuContexts& contexts,
+        const Kinesis::Vision::VisionParams& params,
+        const Kinesis::Vision::CannyParams& p);
+
+    /**
+     * @brief Compute the Harris response of the current image.
+     *
+     * Packs and smooths image gradients before evaluating the response. The
+     * response image becomes the working image for a following ExtractPeaks.
+     *
+     * @return The response image and the original input image.
+     */
+    Kinesis::Vision::GpuVisionPass::Completed op_harris_response(
+        VisionGpuContexts& contexts,
+        const Kinesis::Vision::HarrisParams& p);
+
+    /**
+     * @brief Extract and rank keypoints from the current response image.
+     *
+     * Produces structured host keypoints unless TrackKeypoints follows
+     * immediately. In that sequence, tracking extracts detections directly
+     * into its GPU buffers.
+     */
+    void op_extract_peaks(
+        VisionGpuContexts& contexts,
+        const Kinesis::Vision::ExtractPeaksParams& p);
+
+    /**
+     * @brief Label components in the current image on the GPU.
+     *
+     * Produces component counts and bounds for structured output. When
+     * FindContours follows immediately, the labels stay on the GPU for that
+     * step and component bounds are not read back to the host.
+     */
+    void op_connected_components(
+        VisionGpuContexts& contexts,
+        const Kinesis::Vision::ConnectedComponentsParams& p);
+
+    /**
+     * @brief Trace contours from the immediately preceding component labels.
+     *
+     * Publishes either structured contours or a rendered contour image,
+     * according to the step parameters.
+     *
+     * @return False if ConnectedComponents is not the preceding step.
+     */
+    bool op_find_contours(
+        VisionGpuContexts& contexts,
+        const Kinesis::Vision::FindContoursParams& p);
+
+    /**
+     * @brief Track the previous frame's keypoints into the current frame.
+     *
+     * Adjacency mirrors ConnectedComponents into FindContours: ExtractPeaks
+     * must immediately precede, and its work is folded into this step so the
+     * detections are written straight into the flow context's buffers. The
+     * whole step is one dependency sequence: peaks, one Lucas-Kanade dispatch
+     * per pyramid level from coarse to fine, and the selection phases that
+     * build the next point list. Tracks persist: survivors carry over with
+     * their id and age, and new detections fill only the freed capacity,
+     * strongest first, one per grid cell. The first frame after a reset runs
+     * peaks and selection only.
+     *
+     * @return True when the step was deferred and the run must suspend.
+     */
+    bool op_track_keypoints(VisionGpuContexts& contexts, const Kinesis::Vision::VisionStep& step);
+
+    /**
+     * @brief Dense optical flow from the previous frame to the current one.
+     *
+     * Needs an earlier RgbaToGray step, whose gray frame the pyramid hook has
+     * already turned into the current atlas. The whole solve is one dependency
+     * sequence: for each level from coarsest to finest, the previous frame's
+     * structure tensor and then a number of warp, box sum and solve
+     * iterations. The flow of a finer level starts from the coarser one
+     * upsampled and doubled, seeded inside the first warp of the level.
+     *
+     * The first frame after a reset has no previous frame, so it only ends
+     * the frame and produces no flow.
+     *
+     * @return True when the step was deferred and the run must suspend.
+     */
+    bool op_dense_flow(VisionGpuContexts& contexts, const Kinesis::Vision::VisionStep& step);
+
+    /**
+     * @brief Build the current frame's pyramid atlas from the working gray image.
+     *
+     * Submitted as one un-awaited dependency sequence, one fused dispatch per
+     * level. The level 0 stage carries a hazard on the gray image, which
+     * orders any later dispatch that overwrites it after this read. The
+     * fence is reaped on the next fresh run and in reset().
+     */
+    static void build_flow_pyramid(VisionGpuContexts& contexts, uint32_t requested_levels);
+
+    /**
+     * @brief Run any work a finished step owes the flow context.
+     *
+     * The step that produces the gray image feeds it to the flow context
+     * before the next pixel dispatch overwrites it, when a TrackKeypoints or
+     * OpticalFlowDense step lies ahead. Sequences without one never take this
+     * branch, and when both are present the pyramid gets the larger level
+     * count.
+     */
+    static void after_step(VisionGpuContexts& contexts, size_t index);
 };
 
 } // namespace MayaFlux::Yantra

@@ -16,10 +16,6 @@ layout(set = 0, binding = 4, std430) coherent volatile buffer LabelLutBuf {
     uint label_lut[];
 };
 
-layout(set = 0, binding = 5, std430) buffer CountBuf {
-    uint compact_count[1];
-};
-
 layout(set = 0, binding = 6, std430) buffer DenseLabelBuf {
     uint dense_label[];
 };
@@ -44,32 +40,6 @@ layout(push_constant) uniform PushConstants {
     uint max_components;
     uint export_labels;
 } pc;
-
-/**
- * @brief Claim a dense sequential id for a root, first-writer-wins via
- *        atomicCompSwap against the CC_UNCLAIMED sentinel. Losing threads
- *        observe a non-CC_UNCLAIMED value and never increment
- *        compact_count. Mirrors the existing per-pixel claim pattern,
- *        now operating on block roots instead of pixel roots, so at most
- *        (block_width * block_height) claims occur instead of (w * h).
- */
-uint claim_dense_id(uint root)
-{
-    uint prev = atomicCompSwap(label_lut[root], CC_UNCLAIMED, 0xFFFFFFFEu);
-    if (prev == CC_UNCLAIMED) {
-        uint new_id = atomicAdd(compact_count[0], 1u) + 1u;
-        atomicExchange(label_lut[root], new_id);
-        return new_id;
-    }
-    // Spin until the winning thread finishes writing the real id. Bounded:
-    // the winner is a single atomicExchange away from completion at the
-    // point any other thread observes the in-flight sentinel.
-    uint id = label_lut[root];
-    while (id == 0xFFFFFFFEu) {
-        id = label_lut[root];
-    }
-    return id;
-}
 
 bool cc_pixel_foreground(ivec2 coord, uint width, uint height)
 {
@@ -103,7 +73,7 @@ void write_dense_label_row(int y, int x0, uint v0, uint v1)
 
 /**
  * @brief FinalLabeling. Each thread resolves its block's already-flat
- *        root, claims or retrieves that root's dense compact id, writes
+ *        root, reads that root's dense compact id, writes
  *        the colorized label to all 4 pixel positions of the block
  *        (block-quantized, matching the debug/visual convention), and
  *        folds ONLY the block's genuinely-foreground pixels into that
@@ -144,7 +114,7 @@ void main()
         return;
     }
 
-    const uint dense_id = claim_dense_id(root);
+    const uint dense_id = label_lut[root];
 
     if (dense_id != CC_UNCLAIMED && dense_id <= pc.max_components) {
         const uint bi = dense_id - 1u;

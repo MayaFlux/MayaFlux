@@ -402,7 +402,8 @@ VisionResult VisionExecutor::run(
                 prev_vec, slot_vec(m_pass.current),
                 w, h, prev_pos,
                 p.window_radius, p.max_iterations,
-                p.eigen_threshold, p.error_threshold);
+                p.eigen_threshold, p.error_threshold,
+                p.forward_backward_threshold);
 
             std::swap(prev_vec, slot_vec(m_pass.current));
             m_pass.result.structured = std::move(tracked);
@@ -424,6 +425,11 @@ VisionResult VisionExecutor::run(
             m_pass.result.snapshots.push_back(std::move(entry));
             break;
         }
+
+        case VisionOp::OpticalFlowDense:
+            MF_ERROR(Journal::Component::Kinesis, Journal::Context::Runtime,
+                "VisionExecutor: OpticalFlowDense has no CPU implementation");
+            break;
         }
     }
 

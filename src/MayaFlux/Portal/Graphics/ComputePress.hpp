@@ -29,6 +29,23 @@ struct HazardResource {
 };
 
 /**
+ * @struct IndirectDispatch
+ * @brief Optional GPU-resident source of a stage's workgroup counts.
+ *
+ * The buffer holds three consecutive uint32 values {x, y, z} at offset, and
+ * must have been created with indirect usage. A null buffer means the stage
+ * dispatches its fixed counts.
+ *
+ * The counts are expected to be written by an earlier compute stage of the
+ * same sequence, or by the host before submission. Any offset may be used, so
+ * one buffer can hold the counts of several stages.
+ */
+struct IndirectDispatch {
+    vk::Buffer buffer {};
+    vk::DeviceSize offset { 0 };
+};
+
+/**
  * @struct ComputeStage
  * @brief One pipeline dispatch within a ComputePress::record_sequence call.
  *
@@ -57,6 +74,16 @@ struct ComputeStage {
      * depends on this stage's output within the sequence.
      */
     std::vector<HazardResource> hazard_resources;
+
+    /**
+     * @brief When set, the stage dispatches with counts read from this buffer
+     *        and groups is ignored.
+     *
+     * record_sequence orders the read after earlier shader writes to the
+     * buffer, so the stage that produces the counts needs no hazard entry for
+     * it.
+     */
+    IndirectDispatch indirect;
 };
 
 /**

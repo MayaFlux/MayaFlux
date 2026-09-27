@@ -92,6 +92,7 @@ jobs:
             nlohmann-json \
             libpipewire \
             ninja \
+            mold \
             shaderc \
             ccache \
             git

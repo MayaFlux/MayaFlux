@@ -33,10 +33,9 @@ struct GpuResourceManagerImpl {
 
 namespace {
 
-    uint32_t find_memory_type(vk::PhysicalDevice phys,
+    std::optional<uint32_t> try_memory_type(vk::PhysicalDevice phys,
         uint32_t type_filter,
-        vk::MemoryPropertyFlags props,
-        vk::MemoryPropertyFlags fallback_props = {})
+        vk::MemoryPropertyFlags props)
     {
         auto mem_props = phys.getMemoryProperties();
         for (uint32_t i = 0; i < mem_props.memoryTypeCount; ++i) {
@@ -45,13 +44,19 @@ namespace {
                 return i;
             }
         }
+        return std::nullopt;
+    }
+
+    uint32_t find_memory_type(vk::PhysicalDevice phys,
+        uint32_t type_filter,
+        vk::MemoryPropertyFlags props,
+        vk::MemoryPropertyFlags fallback_props = {})
+    {
+        if (const auto type = try_memory_type(phys, type_filter, props))
+            return *type;
         if (fallback_props) {
-            for (uint32_t i = 0; i < mem_props.memoryTypeCount; ++i) {
-                if ((type_filter & (1U << i))
-                    && (mem_props.memoryTypes[i].propertyFlags & fallback_props) == fallback_props) {
-                    return i;
-                }
-            }
+            if (const auto type = try_memory_type(phys, type_filter, fallback_props))
+                return *type;
         }
         error<std::runtime_error>(
             Journal::Component::Yantra,
@@ -77,9 +82,22 @@ namespace {
         slot.allocated_bytes = 0;
     }
 
+    /**
+     * @brief Allocate and map a host visible buffer slot.
+     *
+     * By default the memory is host cached system memory, which suits buffers
+     * the host reads back. With prefer_device_local the slot first tries
+     * device local, host visible, host coherent memory (the BAR heap), so a
+     * buffer that only shaders touch is read and written at device speed
+     * instead of across the bus. When no such memory type exists, or the heap
+     * is full, the default memory is used, so the request never fails where
+     * the default would succeed. Host reads of device local memory are
+     * uncached, so it is meant for small or write only host access.
+     */
     void allocate_slot(vk::Device device, vk::PhysicalDevice phys,
         VulkanBufferSlot& slot, size_t byte_size,
-        vk::BufferUsageFlags extra_usage = vk::BufferUsageFlagBits::eStorageBuffer)
+        vk::BufferUsageFlags extra_usage = vk::BufferUsageFlagBits::eStorageBuffer,
+        bool prefer_device_local = false)
     {
         free_slot(device, slot);
 
@@ -93,14 +111,32 @@ namespace {
 
         vk::MemoryAllocateInfo ai;
         ai.allocationSize = req.size;
-        ai.memoryTypeIndex = find_memory_type(phys, req.memoryTypeBits,
-            vk::MemoryPropertyFlagBits::eHostVisible
-                | vk::MemoryPropertyFlagBits::eHostCoherent
-                | vk::MemoryPropertyFlagBits::eHostCached,
-            vk::MemoryPropertyFlagBits::eHostVisible
-                | vk::MemoryPropertyFlagBits::eHostCoherent);
 
-        slot.memory = device.allocateMemory(ai);
+        if (prefer_device_local) {
+            const auto resident = try_memory_type(phys, req.memoryTypeBits,
+                vk::MemoryPropertyFlagBits::eDeviceLocal
+                    | vk::MemoryPropertyFlagBits::eHostVisible
+                    | vk::MemoryPropertyFlagBits::eHostCoherent);
+            if (resident) {
+                ai.memoryTypeIndex = *resident;
+                try {
+                    slot.memory = device.allocateMemory(ai);
+                } catch (const vk::SystemError&) {
+                    slot.memory = vk::DeviceMemory {};
+                }
+            }
+        }
+
+        if (!slot.memory) {
+            ai.memoryTypeIndex = find_memory_type(phys, req.memoryTypeBits,
+                vk::MemoryPropertyFlagBits::eHostVisible
+                    | vk::MemoryPropertyFlagBits::eHostCoherent
+                    | vk::MemoryPropertyFlagBits::eHostCached,
+                vk::MemoryPropertyFlagBits::eHostVisible
+                    | vk::MemoryPropertyFlagBits::eHostCoherent);
+            slot.memory = device.allocateMemory(ai);
+        }
+
         device.bindBufferMemory(slot.buffer, slot.memory, 0);
         slot.mapped_ptr = device.mapMemory(slot.memory, 0, VK_WHOLE_SIZE);
         slot.allocated_bytes = byte_size;
@@ -347,6 +383,49 @@ void GpuResourceManager::bind_descriptor(const std::string& key, size_t index, c
         vk_slot.buffer, 0, vk_slot.allocated_bytes);
 }
 
+void GpuResourceManager::bind_descriptors_batch(const std::string& key, const std::vector<GpuBufferBinding>& bindings)
+{
+    auto& unit = unit_for(key);
+    auto& foundry = Portal::Graphics::get_shader_foundry();
+
+    std::vector<Portal::Graphics::DescriptorBufferWrite> writes;
+    writes.reserve(bindings.size());
+
+    for (const auto& b : bindings) {
+        const auto et = b.element_type;
+        if (et == GpuBufferBinding::ElementType::IMAGE_STORAGE
+            || et == GpuBufferBinding::ElementType::IMAGE_SAMPLED) {
+            continue;
+        }
+
+        const auto shared_it = m_shared->slots.find({ b.set, static_cast<size_t>(b.binding) });
+        vk::Buffer buffer;
+        size_t allocated_bytes = 0;
+        if (shared_it != m_shared->slots.end()) {
+            buffer = shared_it->second.buffer;
+            allocated_bytes = shared_it->second.allocated_bytes;
+        } else {
+            if (static_cast<size_t>(b.binding) >= unit.impl->buffers.size()) {
+                continue;
+            }
+            const auto& vk_slot = unit.impl->buffers[b.binding];
+            buffer = vk_slot.buffer;
+            allocated_bytes = vk_slot.allocated_bytes;
+        }
+
+        writes.push_back({
+            .descriptor_set_id = unit.descriptor_set_ids[b.set],
+            .binding = b.binding,
+            .type = vk::DescriptorType::eStorageBuffer,
+            .buffer = buffer,
+            .offset = 0,
+            .size = allocated_bytes,
+        });
+    }
+
+    foundry.update_descriptor_buffers(writes);
+}
+
 size_t GpuResourceManager::buffer_allocated_bytes(const std::string& key, size_t index) const
 {
     return find_unit(key)->buffer_slots[index].allocated_bytes;
@@ -371,8 +450,18 @@ void GpuResourceManager::ensure_shared_buffer(uint32_t set, size_t binding_index
         return;
 
     auto& foundry = Portal::Graphics::get_shader_foundry();
+    const bool gpu_resident = usage_hint == Portal::Graphics::BufferUsageHint::DEVICE
+        || usage_hint == Portal::Graphics::BufferUsageHint::COMPUTE;
     allocate_slot(foundry.get_device(), foundry.get_physical_device(),
-        slot, required_bytes, Portal::Graphics::to_buffer_usage_flags(usage_hint));
+        slot, required_bytes, Portal::Graphics::to_buffer_usage_flags(usage_hint), gpu_resident);
+}
+
+Portal::Graphics::GpuBufferHandle GpuResourceManager::shared_buffer_handle(uint32_t set, size_t binding_index) const
+{
+    const auto it = m_shared->slots.find({ set, binding_index });
+    if (it == m_shared->slots.end())
+        return {};
+    return { .buffer = it->second.buffer, .mapped_ptr = it->second.mapped_ptr, .size_bytes = it->second.allocated_bytes };
 }
 
 void GpuResourceManager::bind_shared_descriptor(const std::string& key, uint32_t set, size_t binding_index, const GpuBufferBinding& spec)
@@ -450,6 +539,33 @@ void GpuResourceManager::bind_image_sampled(
         image->get_image_view(),
         sampler,
         vk::ImageLayout::eShaderReadOnlyOptimal);
+}
+
+void GpuResourceManager::bind_images_batch(const std::string& key, const std::vector<ImageBind>& images)
+{
+    auto& unit = unit_for(key);
+    auto& foundry = Portal::Graphics::get_shader_foundry();
+
+    std::vector<Portal::Graphics::DescriptorImageWrite> writes;
+    writes.reserve(images.size());
+
+    for (const auto& entry : images) {
+        if (entry.index >= unit.image_slots.size())
+            unit.image_slots.resize(entry.index + 1);
+        unit.image_slots[entry.index] = entry.image;
+
+        const bool is_storage = entry.spec.element_type == GpuBufferBinding::ElementType::IMAGE_STORAGE;
+        writes.push_back({
+            .descriptor_set_id = unit.descriptor_set_ids[entry.spec.set],
+            .binding = entry.spec.binding,
+            .type = is_storage ? vk::DescriptorType::eStorageImage : vk::DescriptorType::eCombinedImageSampler,
+            .image_view = entry.image->get_image_view(),
+            .sampler = entry.sampler,
+            .layout = is_storage ? vk::ImageLayout::eGeneral : vk::ImageLayout::eShaderReadOnlyOptimal,
+        });
+    }
+
+    foundry.update_descriptor_images(writes);
 }
 
 void GpuResourceManager::transition_image(
@@ -678,7 +794,10 @@ Portal::Graphics::FenceID GpuResourceManager::dispatch_async(const std::string& 
             || et == GpuBufferBinding::ElementType::IMAGE_SAMPLED;
         const bool is_output = b.direction == GpuBufferBinding::Direction::OUTPUT
             || b.direction == GpuBufferBinding::Direction::INPUT_OUTPUT;
-        if (is_output && !is_image) {
+        const bool is_shared = m_shared->slots.contains({ b.set, static_cast<size_t>(b.binding) });
+
+        if (is_output && !is_image && !is_shared
+            && static_cast<size_t>(b.binding) < unit.impl->buffers.size()) {
             foundry.buffer_barrier(
                 cmd_id,
                 unit.impl->buffers[b.binding].buffer,
@@ -692,11 +811,12 @@ Portal::Graphics::FenceID GpuResourceManager::dispatch_async(const std::string& 
     return foundry.submit_async(cmd_id);
 }
 
-void GpuResourceManager::dispatch_sequence(
+Portal::Graphics::CommandBufferID GpuResourceManager::record_sequence_commands(
     const std::vector<std::string>& keys,
     const std::vector<std::array<uint32_t, 3>>& groups_per_key,
     const std::vector<std::vector<uint8_t>>& push_constants_per_key,
-    const std::vector<std::vector<Portal::Graphics::HazardResource>>& hazards_per_key)
+    const std::vector<std::vector<Portal::Graphics::HazardResource>>& hazards_per_key,
+    const std::vector<Portal::Graphics::IndirectDispatch>& indirect_per_key)
 {
     auto& foundry = Portal::Graphics::get_shader_foundry();
     auto& compute_press = Portal::Graphics::get_compute_press();
@@ -712,13 +832,38 @@ void GpuResourceManager::dispatch_sequence(
             .groups = groups_per_key[i],
             .push_constant_data = push_constants_per_key[i],
             .hazard_resources = hazards_per_key[i],
+            .indirect = i < indirect_per_key.size() ? indirect_per_key[i] : Portal::Graphics::IndirectDispatch {},
         });
     }
 
     auto cmd_id = foundry.begin_commands(
         Portal::Graphics::ShaderFoundry::CommandBufferType::COMPUTE);
     compute_press.record_sequence(cmd_id, stages);
-    foundry.submit_and_wait(cmd_id);
+    return cmd_id;
+}
+
+void GpuResourceManager::dispatch_sequence(
+    const std::vector<std::string>& keys,
+    const std::vector<std::array<uint32_t, 3>>& groups_per_key,
+    const std::vector<std::vector<uint8_t>>& push_constants_per_key,
+    const std::vector<std::vector<Portal::Graphics::HazardResource>>& hazards_per_key,
+    const std::vector<Portal::Graphics::IndirectDispatch>& indirect_per_key)
+{
+    auto& foundry = Portal::Graphics::get_shader_foundry();
+    foundry.submit_and_wait(
+        record_sequence_commands(keys, groups_per_key, push_constants_per_key, hazards_per_key, indirect_per_key));
+}
+
+Portal::Graphics::FenceID GpuResourceManager::dispatch_sequence_async(
+    const std::vector<std::string>& keys,
+    const std::vector<std::array<uint32_t, 3>>& groups_per_key,
+    const std::vector<std::vector<uint8_t>>& push_constants_per_key,
+    const std::vector<std::vector<Portal::Graphics::HazardResource>>& hazards_per_key,
+    const std::vector<Portal::Graphics::IndirectDispatch>& indirect_per_key)
+{
+    auto& foundry = Portal::Graphics::get_shader_foundry();
+    return foundry.submit_async(
+        record_sequence_commands(keys, groups_per_key, push_constants_per_key, hazards_per_key, indirect_per_key));
 }
 
 } // namespace MayaFlux::Yantra
