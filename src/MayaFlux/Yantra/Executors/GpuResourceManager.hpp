@@ -104,6 +104,28 @@ public:
         const GpuBufferBinding& spec);
 
     /**
+     * @brief One image slot for bind_images_batch: a storage image entry
+     *        leaves sampler null.
+     */
+    struct ImageBind {
+        size_t index;
+        std::shared_ptr<Core::VKImage> image;
+        vk::Sampler sampler;
+        GpuBufferBinding spec;
+    };
+
+    /**
+     * @brief Bind every image in one Vulkan call.
+     *
+     * Equivalent to calling bind_image_storage or bind_image_sampled once
+     * per entry (routed by spec.element_type), except every entry is
+     * submitted through a single vkUpdateDescriptorSets call. Also records
+     * each image in the pipeline unit's image_slots, same as the per-call
+     * methods.
+     */
+    void bind_images_batch(const std::string& key, const std::vector<ImageBind>& images);
+
+    /**
      * @brief Transition a VKImage layout via an immediate command submission.
      *
      * Not tied to any pipeline unit; operates on the image directly.

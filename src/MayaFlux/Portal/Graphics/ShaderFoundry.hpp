@@ -35,6 +35,25 @@ struct DescriptorBufferWrite {
     size_t size;
 };
 
+/**
+ * @struct DescriptorImageWrite
+ * @brief One descriptor set slot to update, for ShaderFoundry::update_descriptor_images.
+ *
+ * Covers both update_descriptor_image (combined image sampler) and
+ * update_descriptor_storage_image (storage image) shapes; sampler is
+ * ignored for a storage image write. Collected the same way as
+ * DescriptorBufferWrite, so several image slots can be written with a
+ * single vkUpdateDescriptorSets call instead of one call per slot.
+ */
+struct DescriptorImageWrite {
+    DescriptorSetID descriptor_set_id;
+    uint32_t binding;
+    vk::DescriptorType type;
+    vk::ImageView image_view;
+    vk::Sampler sampler;
+    vk::ImageLayout layout;
+};
+
 namespace detail {
     /**
      * @brief Emit complete SPIR-V assembly text for a generated compute kernel.
@@ -448,6 +467,19 @@ public:
         uint32_t binding,
         vk::ImageView image_view,
         vk::ImageLayout layout = vk::ImageLayout::eGeneral);
+
+    /**
+     * @brief Update several image descriptor slots in one Vulkan call.
+     *
+     * Equivalent to calling update_descriptor_image or
+     * update_descriptor_storage_image once per entry, except every entry is
+     * submitted through a single vkUpdateDescriptorSets call. An entry
+     * naming an unknown descriptor_set_id is skipped. A call with an empty
+     * span does nothing.
+     *
+     * @param writes Slots to update.
+     */
+    void update_descriptor_images(std::span<const DescriptorImageWrite> writes);
 
     /**
      * @brief Get Vulkan descriptor set handle from DescriptorSetID

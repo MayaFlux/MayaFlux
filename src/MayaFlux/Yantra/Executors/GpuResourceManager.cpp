@@ -541,6 +541,33 @@ void GpuResourceManager::bind_image_sampled(
         vk::ImageLayout::eShaderReadOnlyOptimal);
 }
 
+void GpuResourceManager::bind_images_batch(const std::string& key, const std::vector<ImageBind>& images)
+{
+    auto& unit = unit_for(key);
+    auto& foundry = Portal::Graphics::get_shader_foundry();
+
+    std::vector<Portal::Graphics::DescriptorImageWrite> writes;
+    writes.reserve(images.size());
+
+    for (const auto& entry : images) {
+        if (entry.index >= unit.image_slots.size())
+            unit.image_slots.resize(entry.index + 1);
+        unit.image_slots[entry.index] = entry.image;
+
+        const bool is_storage = entry.spec.element_type == GpuBufferBinding::ElementType::IMAGE_STORAGE;
+        writes.push_back({
+            .descriptor_set_id = unit.descriptor_set_ids[entry.spec.set],
+            .binding = entry.spec.binding,
+            .type = is_storage ? vk::DescriptorType::eStorageImage : vk::DescriptorType::eCombinedImageSampler,
+            .image_view = entry.image->get_image_view(),
+            .sampler = entry.sampler,
+            .layout = is_storage ? vk::ImageLayout::eGeneral : vk::ImageLayout::eShaderReadOnlyOptimal,
+        });
+    }
+
+    foundry.update_descriptor_images(writes);
+}
+
 void GpuResourceManager::transition_image(
     const std::shared_ptr<Core::VKImage>& image,
     vk::ImageLayout old_layout,

@@ -799,6 +799,45 @@ void ShaderFoundry::update_descriptor_storage_image(
     get_device().updateDescriptorSets(1, &write, 0, nullptr);
 }
 
+void ShaderFoundry::update_descriptor_images(std::span<const DescriptorImageWrite> writes)
+{
+    if (writes.empty()) {
+        return;
+    }
+
+    std::vector<vk::DescriptorImageInfo> image_infos;
+    image_infos.reserve(writes.size());
+    std::vector<vk::WriteDescriptorSet> descriptor_writes;
+    descriptor_writes.reserve(writes.size());
+
+    for (const auto& w : writes) {
+        auto it = m_descriptor_sets.find(w.descriptor_set_id);
+        if (it == m_descriptor_sets.end()) {
+            continue;
+        }
+
+        vk::DescriptorImageInfo info;
+        info.imageView = w.image_view;
+        info.sampler = w.sampler;
+        info.imageLayout = w.layout;
+        image_infos.push_back(info);
+
+        vk::WriteDescriptorSet write;
+        write.dstSet = it->second.descriptor_set;
+        write.dstBinding = w.binding;
+        write.dstArrayElement = 0;
+        write.descriptorCount = 1;
+        write.descriptorType = w.type;
+        write.pImageInfo = &image_infos.back();
+        descriptor_writes.push_back(write);
+    }
+
+    if (!descriptor_writes.empty()) {
+        get_device().updateDescriptorSets(
+            static_cast<uint32_t>(descriptor_writes.size()), descriptor_writes.data(), 0, nullptr);
+    }
+}
+
 vk::DescriptorSet ShaderFoundry::get_descriptor_set(DescriptorSetID descriptor_set_id)
 {
     auto it = m_descriptor_sets.find(descriptor_set_id);

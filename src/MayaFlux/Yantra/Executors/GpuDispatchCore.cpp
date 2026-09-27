@@ -119,6 +119,8 @@ void GpuDispatchCore::prepare_gpu_inputs(
         ? float_byte_size
         : Kakshya::ContainerDataStructure::get_total_elements(structure_info.dimensions) * sizeof(float);
 
+    std::vector<GpuResourceManager::ImageBind> image_binds;
+
     for (auto b : m_bindings) {
         const size_t idx = b.binding;
 
@@ -162,7 +164,7 @@ void GpuDispatchCore::prepare_gpu_inputs(
                 m_resources.transition_image(img, img->get_current_layout(),
                     vk::ImageLayout::eGeneral);
             }
-            m_resources.bind_image_storage(key, idx, img, b);
+            image_binds.push_back({ .index = idx, .image = img, .sampler = nullptr, .spec = b });
         } break;
 
         case GpuBufferBinding::ElementType::IMAGE_SAMPLED: {
@@ -174,7 +176,7 @@ void GpuDispatchCore::prepare_gpu_inputs(
                 m_resources.transition_image(img, img->get_current_layout(),
                     vk::ImageLayout::eShaderReadOnlyOptimal);
             }
-            m_resources.bind_image_sampled(key, idx, img, sampler, b);
+            image_binds.push_back({ .index = idx, .image = img, .sampler = sampler, .spec = b });
         } break;
 
         case GpuBufferBinding::ElementType::UINT32:
@@ -203,6 +205,9 @@ void GpuDispatchCore::prepare_gpu_inputs(
             break;
         }
     }
+
+    if (!image_binds.empty())
+        m_resources.bind_images_batch(key, image_binds);
 }
 
 std::array<uint32_t, 3> GpuDispatchCore::calculate_dispatch_size(
