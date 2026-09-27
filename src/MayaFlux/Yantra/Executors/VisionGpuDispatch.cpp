@@ -334,80 +334,65 @@ namespace {
     GpuVisionPass::Completed op_threshold_otsu(VisionGpuContexts& contexts)
     {
         auto& pixel_ctx = contexts.pixel;
-        auto& structured_ctx = contexts.structured;
         auto w = contexts.pass.w;
         auto h = contexts.pass.h;
         auto& foundry = Portal::Graphics::get_shader_foundry();
 
         const auto otsu_input = contexts.pass.current;
 
-        structured_ctx.swap_shader({
-            .shader_path = "otsu_histogram.comp.spv",
-            .workgroup_size = k_wg2d,
-            .push_constant_size = sizeof(OtsuHistPC),
+        pixel_ctx.ensure_shared_buffer(0, 3, 256, GpuBufferBinding::ElementType::UINT32,
+            Portal::Graphics::BufferUsageHint::COMPUTE);
+        pixel_ctx.ensure_shared_buffer(0, 4, 1, GpuBufferBinding::ElementType::UINT32,
+            Portal::Graphics::BufferUsageHint::COMPUTE);
+
+        const std::array<uint32_t, 256> histogram_reset {};
+        pixel_ctx.upload_shared_raw(0, 3, reinterpret_cast<const uint8_t*>(histogram_reset.data()), sizeof(histogram_reset));
+
+        const OtsuHistPC hist_pc { .width = w, .height = h };
+        const auto otsu_hazard = [](uint32_t binding) {
+            return [binding](GpuDispatchCore& ctx) {
+                return std::vector<HazardResource> {
+                    ctx.shared_buffer_hazard({ .set = 0, .binding = binding, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 }),
+                };
+            };
+        };
+        const std::array<uint32_t, 3> image_groups { (w + k_wg2d[0] - 1U) / k_wg2d[0], (h + k_wg2d[1] - 1U) / k_wg2d[1], 1U };
+
+        std::shared_ptr<Core::VKImage> thresholded;
+        std::vector<DependencyStage> otsu_stages;
+        otsu_stages.reserve(3);
+        otsu_stages.push_back({
+            .config = { .shader_path = "otsu_histogram.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(OtsuHistPC) },
+            .stage_fn = [&pixel_ctx, otsu_input, hist_pc](GpuDispatchCore& ctx) {
+                pixel_ctx.stage_image(otsu_input);
+                ctx.set_push_constants(hist_pc); },
+            .hazard_fn = otsu_hazard(3),
+            .explicit_groups = image_groups,
         });
-        std::vector<uint32_t> zeros(256, 0);
-        structured_ctx.set_binding_data(3, std::span<const uint32_t>(zeros));
-        structured_ctx.stage_image(contexts.pass.current);
-        structured_ctx.set_push_constants(OtsuHistPC { .width = w, .height = h });
-        structured_ctx.set_output_dimensions(w, h);
-        {
-            const auto f = structured_ctx.dispatch_async({});
-            structured_ctx.clear_output_dimensions();
-            foundry.wait_for_fence(f);
-            foundry.release_fence(f);
-        }
-
-        const auto hist_check = structured_ctx.collect_result();
-        std::vector<uint32_t> hist_readback(256, 0);
-        if (auto it = hist_check.aux.find(3); it != hist_check.aux.end())
-            std::memcpy(hist_readback.data(), it->second.data(), 256 * sizeof(uint32_t));
-
-        structured_ctx.swap_shader({
-            .shader_path = "otsu_select.comp.spv",
-            .workgroup_size = { 256, 1, 1 },
+        otsu_stages.push_back({
+            .config = { .shader_path = "otsu_select.comp.spv", .workgroup_size = { 256, 1, 1 } },
+            .stage_fn = [&pixel_ctx, otsu_input](GpuDispatchCore&) { pixel_ctx.stage_image(otsu_input); },
+            .hazard_fn = otsu_hazard(4),
+            .explicit_groups = std::array<uint32_t, 3> { 1U, 1U, 1U },
         });
-        structured_ctx.set_binding_data(3, std::span<const uint32_t>(hist_readback));
-        structured_ctx.set_output_dimensions(256, 1);
+        otsu_stages.push_back({
+            .config = { .shader_path = "otsu_apply.comp.spv", .workgroup_size = k_wg2d },
+            .stage_fn = [&pixel_ctx, &thresholded, otsu_input, w, h](GpuDispatchCore&) {
+                pixel_ctx.stage_image(otsu_input);
+                pixel_ctx.prepare_output_image(w, h);
+                thresholded = pixel_ctx.get_output_image(0); },
+            .explicit_groups = image_groups,
+        });
 
         {
-            const auto f = structured_ctx.dispatch_async({});
-            structured_ctx.clear_output_dimensions();
+            const auto f = pixel_ctx.dispatch_dependency_async(otsu_stages);
             foundry.wait_for_fence(f);
             foundry.release_fence(f);
         }
-
-        const auto sel_result = structured_ctx.collect_result();
-        uint32_t best_bin = 0;
-        if (auto it = sel_result.aux.find(4); it != sel_result.aux.end())
-            std::memcpy(&best_bin, it->second.data(), sizeof(uint32_t));
-        const float t_norm = static_cast<float>(best_bin) / 255.0F;
-
-        const auto apply_cfg = config_from_spec(
-            ShaderSpec::Assemble {}
-                .storage_image("out", BindingDirection::Output)
-                .storage_image("src", BindingDirection::Input)
-                .pc("threshold")
-                .op(KernelOp::CompareGE)
-                .workgroup(k_wg2d[0], k_wg2d[1])
-                .build());
-        pixel_ctx.swap_shader(apply_cfg);
-        pixel_ctx.stage_image(contexts.pass.current);
-        pixel_ctx.set_push_constants(ThresholdPC { .value = t_norm });
-        pixel_ctx.prepare_output_image(w, h);
-        {
-            const auto f = pixel_ctx.dispatch_async({});
-            foundry.wait_for_fence(f);
-            foundry.release_fence(f);
-        }
-        auto thresholded = pixel_ctx.get_output_image(0);
 
         contexts.pass.result.debug_labels = thresholded;
         contexts.pass.current = thresholded;
         contexts.pass.result.structured = std::monostate {};
-
-        contexts.bound_config = apply_cfg;
-        contexts.bound_staged = otsu_input;
 
         return { .output = thresholded, .input = otsu_input };
     }
@@ -2053,6 +2038,8 @@ VisionGpuContexts::VisionGpuContexts()
         1,
         std::vector<GpuBufferBinding> {
             { .set = 0, .binding = 2, .direction = GpuBufferBinding::Direction::INPUT, .element_type = GpuBufferBinding::ElementType::FLOAT32 },
+            { .set = 0, .binding = 3, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
+            { .set = 0, .binding = 4, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
         },
         GpuBufferBinding::ElementType::IMAGE_STORAGE,
     }
