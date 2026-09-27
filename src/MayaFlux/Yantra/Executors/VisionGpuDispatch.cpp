@@ -410,46 +410,57 @@ namespace {
         const auto morph_input = contexts.pass.current;
         const auto radius = p.radius;
         const bool is_open = (op == VisionOp::Open);
+        const MorphPC morph_pc { .radius = radius };
 
         const GpuComputeConfig first_cfg {
             .shader_path = is_open ? "erode.comp.spv" : "dilate.comp.spv",
             .workgroup_size = k_wg2d,
             .push_constant_size = sizeof(MorphPC),
         };
-        pixel_ctx.swap_shader(first_cfg);
-        pixel_ctx.stage_image(contexts.pass.current);
-        pixel_ctx.set_push_constants(MorphPC { .radius = radius });
-        pixel_ctx.prepare_output_image(w, h);
-        pixel_ctx.set_output_dimensions(w, h);
-        {
-            const auto f = pixel_ctx.dispatch_async({});
-            foundry.wait_for_fence(f);
-            foundry.release_fence(f);
-        }
-        auto intermediate = pixel_ctx.get_output_image(0);
-
         const GpuComputeConfig second_cfg {
             .shader_path = is_open ? "dilate.comp.spv" : "erode.comp.spv",
             .workgroup_size = k_wg2d,
             .push_constant_size = sizeof(MorphPC),
         };
-        pixel_ctx.swap_shader(second_cfg);
-        pixel_ctx.stage_image(intermediate);
-        pixel_ctx.set_push_constants(MorphPC { .radius = radius });
-        pixel_ctx.prepare_output_image(w, h);
-        pixel_ctx.set_output_dimensions(w, h);
+        const std::array<uint32_t, 3> image_groups { (w + k_wg2d[0] - 1U) / k_wg2d[0], (h + k_wg2d[1] - 1U) / k_wg2d[1], 1U };
+
+        std::shared_ptr<Core::VKImage> intermediate;
+        std::shared_ptr<Core::VKImage> opened_closed;
+
+        std::vector<DependencyStage> morph_stages;
+        morph_stages.reserve(2);
+        morph_stages.push_back({
+            .config = first_cfg,
+            .stage_fn = [&pixel_ctx, &intermediate, morph_input, morph_pc, w, h](GpuDispatchCore& ctx) {
+                pixel_ctx.stage_image(morph_input);
+                pixel_ctx.prepare_output_image(w, h);
+                intermediate = pixel_ctx.get_output_image(0);
+                ctx.set_push_constants(morph_pc); },
+            .hazard_fn = [&intermediate](GpuDispatchCore&) {
+                return std::vector<HazardResource> {
+                    { .binding = { .set = 0, .binding = 1, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::IMAGE_STORAGE },
+                        .image = intermediate->get_image() },
+                }; },
+            .explicit_groups = image_groups,
+        });
+        morph_stages.push_back({
+            .config = second_cfg,
+            .stage_fn = [&pixel_ctx, &intermediate, &opened_closed, morph_pc, w, h](GpuDispatchCore& ctx) {
+                pixel_ctx.stage_image(intermediate);
+                pixel_ctx.prepare_output_image(w, h);
+                opened_closed = pixel_ctx.get_output_image(0);
+                ctx.set_push_constants(morph_pc); },
+            .explicit_groups = image_groups,
+        });
+
         {
-            const auto f = pixel_ctx.dispatch_async({});
+            const auto f = pixel_ctx.dispatch_dependency_async(morph_stages);
             foundry.wait_for_fence(f);
             foundry.release_fence(f);
         }
 
-        auto opened_closed = pixel_ctx.get_output_image(0);
         contexts.pass.current = opened_closed;
         contexts.pass.result.structured = std::monostate {};
-
-        contexts.bound_config = second_cfg;
-        contexts.bound_staged = intermediate;
 
         return { .output = opened_closed, .input = morph_input };
     }
