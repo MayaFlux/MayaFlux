@@ -1,0 +1,68 @@
+#version 460
+
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+
+layout(set = 2, binding = 0, std430) buffer SortKeysBuf {
+    float sort_keys[];
+};
+
+layout(set = 2, binding = 1, std430) buffer SortIndicesBuf {
+    float sort_indices[];
+};
+
+layout(push_constant) uniform PushConstants {
+    uint round;
+    uint count;
+} pc;
+
+shared float s_val[256];
+shared uint s_idx[256];
+
+/**
+ * @brief One round of top-K selection by descending sort_keys: find the
+ *        single largest remaining entry, record its index at
+ *        sort_indices[round], then remove it from further consideration.
+ *
+ * Replaces a full bitonic sort over all count slots with K single-workgroup
+ * reduction rounds, one per requested contour, so a small cap costs less
+ * than sorting everything, not more. Each thread scans a strided slice of
+ * sort_keys, then a standard shared memory tree reduction finds the
+ * workgroup-wide maximum and its index. Ties keep the lowest index, since
+ * the reduction only replaces the current best on strict improvement.
+ *
+ * Invocation 0's write of -1.0/0.0 into the winning slot is what makes the
+ * next round's scan skip it; contour_march.comp already writes every slot
+ * of both buffers fresh on the next FindContours call, so this mutation
+ * never persists past the run it happens in.
+ */
+void main()
+{
+    const uint tid = gl_LocalInvocationID.x;
+
+    float best_val = -1.0 / 0.0;
+    uint best_idx = 0u;
+    for (uint i = tid; i < pc.count; i += 256u) {
+        const float v = sort_keys[i];
+        if (v > best_val) {
+            best_val = v;
+            best_idx = i;
+        }
+    }
+    s_val[tid] = best_val;
+    s_idx[tid] = best_idx;
+    barrier();
+
+    for (uint stride = 128u; stride > 0u; stride >>= 1u) {
+        if (tid < stride && s_val[tid + stride] > s_val[tid]) {
+            s_val[tid] = s_val[tid + stride];
+            s_idx[tid] = s_idx[tid + stride];
+        }
+        barrier();
+    }
+
+    if (tid == 0u) {
+        const uint winner = s_idx[0];
+        sort_indices[pc.round] = float(winner);
+        sort_keys[winner] = -1.0 / 0.0;
+    }
+}

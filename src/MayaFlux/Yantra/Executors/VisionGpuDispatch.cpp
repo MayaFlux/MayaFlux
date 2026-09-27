@@ -157,11 +157,9 @@ namespace {
         uint32_t max_components;
         uint32_t max_holes_per_label;
     };
-    struct BitonicPC {
-        uint32_t stage;
-        uint32_t pass;
+    struct ContourTopKPC {
+        uint32_t round;
         uint32_t count;
-        uint32_t descending;
     };
 
     /** Upper bound on tracked keypoints, matching extract_peaks' buffer capacity */
@@ -1059,40 +1057,20 @@ namespace {
         trace_stages.push_back(std::move(trace_stage));
 
         if (sort_requested) {
-            constexpr uint32_t k = 12U;
-            constexpr uint32_t total_passes = k * (k + 1U) / 2U;
+            const uint32_t rounds = std::min(p.max_contours, k_max_components);
+            const GpuComputeConfig topk_config {
+                .shader_path = "contour_topk_select.comp.spv",
+                .workgroup_size = { 256, 1, 1 },
+                .push_constant_size = sizeof(ContourTopKPC),
+            };
 
-            const auto sort_config = config_from_spec(
-                ShaderSpec::Assemble {}
-                    .tmpl(KernelTemplate::BitonicSort)
-                    .start_set(2)
-                    .ssbo("keys", BindingDirection::InOut, Kakshya::GpuDataFormat::FLOAT32)
-                    .ssbo("indices", BindingDirection::InOut, Kakshya::GpuDataFormat::FLOAT32)
-                    .pc("stage", Kakshya::GpuDataFormat::UINT32)
-                    .pc("pass", Kakshya::GpuDataFormat::UINT32)
-                    .pc("count", Kakshya::GpuDataFormat::UINT32)
-                    .pc("descending", Kakshya::GpuDataFormat::UINT32)
-                    .workgroup(256)
-                    .build());
-            const std::array<uint32_t, 3> sort_groups { (k_max_components + 255U) / 256U, 1U, 1U };
-
-            for (uint32_t pass_index = 0; pass_index < total_passes; ++pass_index) {
-                BitonicPC sort_pc { .stage = 0, .pass = 0, .count = k_max_components, .descending = 1U };
-                uint32_t remaining = pass_index;
-                for (uint32_t s = 0; s < k; ++s) {
-                    if (remaining <= s) {
-                        sort_pc.stage = s;
-                        sort_pc.pass = remaining;
-                        break;
-                    }
-                    remaining -= (s + 1U);
-                }
-
+            for (uint32_t round = 0; round < rounds; ++round) {
+                const ContourTopKPC topk_pc { .round = round, .count = k_max_components };
                 trace_stages.push_back({
-                    .config = sort_config,
-                    .stage_fn = [sort_pc](GpuDispatchCore& ctx) { ctx.set_push_constants(sort_pc); },
+                    .config = topk_config,
+                    .stage_fn = [topk_pc](GpuDispatchCore& ctx) { ctx.set_push_constants(topk_pc); },
                     .hazard_fn = sort_hazards,
-                    .explicit_groups = sort_groups,
+                    .explicit_groups = std::array<uint32_t, 3> { 1U, 1U, 1U },
                 });
             }
         }
