@@ -34,6 +34,7 @@ install_arch() {
         "llvm-libs"
         "clang"
         "cmake"
+        "mold"
         "pkg-config"
         "glm"
         "eigen"
@@ -89,6 +90,7 @@ install_fedora() {
         "clang-devel"
         "cmake"
         "ninja-build"
+        "mold"
         "pkgconfig"
         "glm-devel"
         "eigen3-devel"
@@ -135,6 +137,7 @@ install_ubuntu() {
 
     PACKAGES=(
         "cmake"
+        "mold"
         "git"
         "gcc"
         "g++"
@@ -187,6 +190,7 @@ install_opensuse() {
         "llvm-devel"
         "clang"
         "cmake"
+        "mold"
         "pkg-config"
         "vulkan-devel"
         "ffmpeg-devel"

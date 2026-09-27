@@ -22,6 +22,7 @@ BuildRequires:  llvm-libs >= 21
 BuildRequires:  clang-devel >= 21
 BuildRequires:  cmake >= 3.25
 BuildRequires:  ninja-build
+BuildRequires:  mold
 BuildRequires:  pkgconfig
 BuildRequires:  glm-devel
 BuildRequires:  eigen3-devel

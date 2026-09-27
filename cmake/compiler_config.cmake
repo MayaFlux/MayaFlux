@@ -3,6 +3,27 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 
+if(CMAKE_BUILD_TYPE STREQUAL "Release" OR
+   CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+
+    include(CheckIPOSupported)
+    check_ipo_supported(RESULT ipo_supported OUTPUT error)
+
+    if(ipo_supported)
+        set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+
+        set_property(GLOBAL PROPERTY
+    INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
+
+        set_property(GLOBAL PROPERTY
+    INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
+
+        message(STATUS "LTO enabled for ${CMAKE_BUILD_TYPE}")
+    else()
+        message(WARNING "LTO is not supported: ${error}")
+    endif()
+endif()
+
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     find_program(CCACHE_PROGRAM ccache)
     if(CCACHE_PROGRAM)
@@ -10,6 +31,17 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         message(STATUS "ccache found: ${CCACHE_PROGRAM}")
     else()
         message(STATUS "ccache not found, building without cache")
+    endif()
+
+    if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        find_program(MOLD_PROGRAM mold)
+        if(MOLD_PROGRAM)
+            add_link_options(-fuse-ld=mold)
+            message(STATUS "mold linker found and enabled: ${MOLD_PROGRAM}")
+        else()
+            message(STATUS
+                    "mold linker not found, falling back to default linker")
+        endif()
     endif()
 
     add_compile_options(-pipe)
@@ -22,9 +54,10 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
 
     if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
         add_compile_options(-mavx -mavx2 -mfma)
-        message(STATUS "AVX, AVX2 and FMA support enabled for x86_64 architecture")
+        message(STATUS
+                "AVX, AVX2 and FMA support enabled for x86_64 architecture")
     endif()
 
 elseif(MSVC)
-    add_compile_options( /MP)
+    add_compile_options(/MP)
 endif()

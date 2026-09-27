@@ -67,7 +67,7 @@ enum class VisionOp : uint8_t {
 /**
  * @brief Selects where a VisionSequence executes.
  *
- * GPU uses MayaFlux::Yantra::VisionGPUExecutor, the Vulkan implementation in
+ * GPU uses MayaFlux::Yantra::VisionGpuExecutor, the Vulkan implementation in
  * Yantra. It accepts a GPU image, runs the vision steps through GPU dispatches,
  * and can keep image results on the device. This is the default because it
  * suits GPU image pipelines and avoids transferring intermediate images to
