@@ -724,7 +724,10 @@ Portal::Graphics::FenceID GpuResourceManager::dispatch_async(const std::string& 
             || et == GpuBufferBinding::ElementType::IMAGE_SAMPLED;
         const bool is_output = b.direction == GpuBufferBinding::Direction::OUTPUT
             || b.direction == GpuBufferBinding::Direction::INPUT_OUTPUT;
-        if (is_output && !is_image) {
+        const bool is_shared = m_shared->slots.contains({ b.set, static_cast<size_t>(b.binding) });
+
+        if (is_output && !is_image && !is_shared
+            && static_cast<size_t>(b.binding) < unit.impl->buffers.size()) {
             foundry.buffer_barrier(
                 cmd_id,
                 unit.impl->buffers[b.binding].buffer,
