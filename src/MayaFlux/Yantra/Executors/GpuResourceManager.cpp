@@ -383,6 +383,49 @@ void GpuResourceManager::bind_descriptor(const std::string& key, size_t index, c
         vk_slot.buffer, 0, vk_slot.allocated_bytes);
 }
 
+void GpuResourceManager::bind_descriptors_batch(const std::string& key, const std::vector<GpuBufferBinding>& bindings)
+{
+    auto& unit = unit_for(key);
+    auto& foundry = Portal::Graphics::get_shader_foundry();
+
+    std::vector<Portal::Graphics::DescriptorBufferWrite> writes;
+    writes.reserve(bindings.size());
+
+    for (const auto& b : bindings) {
+        const auto et = b.element_type;
+        if (et == GpuBufferBinding::ElementType::IMAGE_STORAGE
+            || et == GpuBufferBinding::ElementType::IMAGE_SAMPLED) {
+            continue;
+        }
+
+        const auto shared_it = m_shared->slots.find({ b.set, static_cast<size_t>(b.binding) });
+        vk::Buffer buffer;
+        size_t allocated_bytes = 0;
+        if (shared_it != m_shared->slots.end()) {
+            buffer = shared_it->second.buffer;
+            allocated_bytes = shared_it->second.allocated_bytes;
+        } else {
+            if (static_cast<size_t>(b.binding) >= unit.impl->buffers.size()) {
+                continue;
+            }
+            const auto& vk_slot = unit.impl->buffers[b.binding];
+            buffer = vk_slot.buffer;
+            allocated_bytes = vk_slot.allocated_bytes;
+        }
+
+        writes.push_back({
+            .descriptor_set_id = unit.descriptor_set_ids[b.set],
+            .binding = b.binding,
+            .type = vk::DescriptorType::eStorageBuffer,
+            .buffer = buffer,
+            .offset = 0,
+            .size = allocated_bytes,
+        });
+    }
+
+    foundry.update_descriptor_buffers(writes);
+}
+
 size_t GpuResourceManager::buffer_allocated_bytes(const std::string& key, size_t index) const
 {
     return find_unit(key)->buffer_slots[index].allocated_bytes;

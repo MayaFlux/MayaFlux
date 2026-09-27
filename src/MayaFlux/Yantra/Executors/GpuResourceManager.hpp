@@ -47,6 +47,19 @@ public:
     void download(const std::string& key, size_t index, float* dest, size_t byte_size);
     void bind_descriptor(const std::string& key, size_t index, const GpuBufferBinding& spec);
 
+    /**
+     * @brief Bind every non-image buffer binding in one Vulkan call.
+     *
+     * Equivalent to calling bind_descriptor or bind_shared_descriptor once
+     * per non-image entry in bindings (routed the same way, by whether a
+     * shared slot exists at that (set, binding)), except every entry is
+     * submitted through a single vkUpdateDescriptorSets call. Image entries
+     * are skipped, matching bind_all_descriptors' existing split between
+     * buffer descriptors here and image descriptors bound separately per
+     * staged image.
+     */
+    void bind_descriptors_batch(const std::string& key, const std::vector<GpuBufferBinding>& bindings);
+
     void ensure_shared_buffer(uint32_t set, size_t binding_index, size_t element_count,
         GpuBufferBinding::ElementType element_type,
         Portal::Graphics::BufferUsageHint usage_hint = Portal::Graphics::BufferUsageHint::COMPUTE_STORAGE);

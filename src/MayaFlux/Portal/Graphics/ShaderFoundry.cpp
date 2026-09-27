@@ -709,6 +709,41 @@ void ShaderFoundry::update_descriptor_buffer(
     get_device().updateDescriptorSets(1, &write, 0, nullptr);
 }
 
+void ShaderFoundry::update_descriptor_buffers(std::span<const DescriptorBufferWrite> writes)
+{
+    if (writes.empty()) {
+        return;
+    }
+
+    std::vector<vk::DescriptorBufferInfo> buffer_infos;
+    buffer_infos.reserve(writes.size());
+    std::vector<vk::WriteDescriptorSet> descriptor_writes;
+    descriptor_writes.reserve(writes.size());
+
+    for (const auto& w : writes) {
+        auto it = m_descriptor_sets.find(w.descriptor_set_id);
+        if (it == m_descriptor_sets.end()) {
+            continue;
+        }
+
+        buffer_infos.emplace_back(w.buffer, w.offset, w.size);
+
+        vk::WriteDescriptorSet write;
+        write.dstSet = it->second.descriptor_set;
+        write.dstBinding = w.binding;
+        write.dstArrayElement = 0;
+        write.descriptorCount = 1;
+        write.descriptorType = w.type;
+        write.pBufferInfo = &buffer_infos.back();
+        descriptor_writes.push_back(write);
+    }
+
+    if (!descriptor_writes.empty()) {
+        get_device().updateDescriptorSets(
+            static_cast<uint32_t>(descriptor_writes.size()), descriptor_writes.data(), 0, nullptr);
+    }
+}
+
 void ShaderFoundry::update_descriptor_image(
     DescriptorSetID descriptor_set_id,
     uint32_t binding,

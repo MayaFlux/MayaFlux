@@ -4,6 +4,8 @@
 
 #include "ShaderSpec.hpp"
 
+#include <span>
+
 namespace MayaFlux::Core {
 class VulkanBackend;
 class VKShaderModule;
@@ -15,6 +17,23 @@ namespace MayaFlux::Portal::Graphics {
 
 class ComputePress;
 class RenderFlow;
+
+/**
+ * @struct DescriptorBufferWrite
+ * @brief One descriptor set slot to update, for ShaderFoundry::update_descriptor_buffers.
+ *
+ * Same fields as update_descriptor_buffer's parameter list, collected so
+ * several slots, across one or more descriptor sets, can be written with a
+ * single vkUpdateDescriptorSets call instead of one call per slot.
+ */
+struct DescriptorBufferWrite {
+    DescriptorSetID descriptor_set_id;
+    uint32_t binding;
+    vk::DescriptorType type;
+    vk::Buffer buffer;
+    size_t offset;
+    size_t size;
+};
 
 namespace detail {
     /**
@@ -384,6 +403,21 @@ public:
         vk::Buffer buffer,
         size_t offset,
         size_t size);
+
+    /**
+     * @brief Update several buffer descriptor slots in one Vulkan call.
+     *
+     * Equivalent to calling update_descriptor_buffer once per entry, except
+     * every entry is submitted through a single vkUpdateDescriptorSets call
+     * instead of one call per entry. Entries may target different descriptor
+     * sets; order among them does not matter since each names a distinct
+     * (descriptor set, binding). An entry naming an unknown descriptor_set_id
+     * is skipped, matching update_descriptor_buffer's behaviour for the same
+     * case. A call with an empty span does nothing.
+     *
+     * @param writes Slots to update.
+     */
+    void update_descriptor_buffers(std::span<const DescriptorBufferWrite> writes);
 
     /**
      * @brief Update descriptor set with image binding

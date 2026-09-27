@@ -147,7 +147,6 @@ public:
         Portal::Graphics::BufferUsageHint usage_hint = Portal::Graphics::BufferUsageHint::COMPUTE_STORAGE)
     {
         m_resources.ensure_shared_buffer(set, binding_index, element_count, element_type, usage_hint);
-        m_shared_bindings.insert({ set, binding_index });
     }
 
     void upload_shared_raw(uint32_t set, size_t binding_index, const uint8_t* data, size_t byte_size)
@@ -512,7 +511,6 @@ protected:
     std::vector<size_t> m_output_size_overrides;
     std::vector<std::vector<uint8_t>> m_passthrough_bytes;
     std::vector<std::vector<uint8_t>> m_binding_data;
-    std::set<std::pair<uint32_t, size_t>> m_shared_bindings;
 
     struct ImageBinding {
         std::shared_ptr<Core::VKImage> image;
