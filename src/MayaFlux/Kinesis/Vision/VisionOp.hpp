@@ -64,6 +64,35 @@ enum class VisionOp : uint8_t {
     OpticalFlowDense,
 };
 
+/**
+ * @brief Selects where a VisionSequence executes.
+ *
+ * GPU uses MayaFlux::Yantra::VisionGPUExecutor, the Vulkan implementation in
+ * Yantra. It accepts a GPU image, runs the vision steps through GPU dispatches,
+ * and can keep image results on the device. This is the default because it
+ * suits GPU image pipelines and avoids transferring intermediate images to
+ * the host. Host input may still require an upload, and requesting host data
+ * from a GPU result may require a readback and synchronization. GPU resource
+ * setup and dispatch also have costs, particularly for small workloads.
+ *
+ * CPU uses MayaFlux::Kinesis::Vision::VisionExecutor, the host implementation
+ * in Kinesis. It accepts normalized floating-point pixels in host memory and
+ * produces host-side results. Choose it when the input and desired output are
+ * already on the host, when a GPU is unavailable, or when a sequence needs an
+ * operation implemented only by the CPU executor. Supplying a GPU image to a
+ * CPU pipeline requires a transfer to host memory.
+ *
+ * The selected backend applies to the whole sequence. VisionProcessor and
+ * ImageCVProcessor do not switch backend for individual steps or fall back to
+ * the other executor when an operation is unsupported. The default expresses
+ * the preferred path for GPU image processing, not a guarantee that it will
+ * be faster for every input size or transfer pattern.
+ */
+enum class VisionBackend : uint8_t {
+    GPU, ///< Execute the sequence with the Yantra Vulkan executor.
+    CPU, ///< Execute the sequence with the Kinesis host executor.
+};
+
 // ============================================================================
 // Per-op parameter structs
 // ============================================================================
@@ -212,12 +241,15 @@ struct VisionStep {
 };
 
 /**
- * @brief Ordered sequence of VisionSteps describing a complete vision pipeline.
+ * @brief Ordered VisionSteps and the backend chosen to execute them.
  *
- * Constructed via the fluent VisionSequence::Builder.
+ * Construct with the fluent VisionSequence::Builder. The backend belongs to
+ * the sequence, so a processor uses the same executor for every step. Directly
+ * constructed sequences default to VisionBackend::GPU.
  */
 struct VisionSequence {
     std::vector<VisionStep> steps;
+    VisionBackend backend { VisionBackend::GPU }; ///< Backend used for every step.
 
     /**
      * @brief Fluent builder for VisionSequence.
@@ -394,9 +426,28 @@ struct VisionSequence {
                     .window_radius = window_radius, .iterations = iterations, .levels = levels, .eigen_threshold = eigen_threshold, .max_step = max_step, .visualize = visualize, .visual_range = visual_range, .visual_min_motion = visual_min_motion });
         }
 
-        [[nodiscard]] VisionSequence build()
+        /**
+         * @brief Finish the sequence and select its execution backend.
+         *
+         * Calling build() selects VisionBackend::GPU for GPU image pipelines.
+         * Pass VisionBackend::CPU to run the entire sequence through the
+         * Kinesis host executor instead. The choice is stored in the returned
+         * VisionSequence and used by VisionProcessor or ImageCVProcessor when
+         * that sequence is processed.
+         *
+         * @code
+         * auto host_sequence = VisionSequence::Builder{}
+         *     .rgba_to_gray()
+         *     .build(VisionBackend::CPU);
+         * @endcode
+         *
+         * @param backend Backend for all steps. Defaults to the Yantra GPU
+         *                executor; no per-step fallback is performed.
+         * @return The completed sequence with its selected backend.
+         */
+        [[nodiscard]] VisionSequence build(VisionBackend backend = VisionBackend::GPU)
         {
-            return VisionSequence { .steps = std::move(m_steps) };
+            return VisionSequence { .steps = std::move(m_steps), .backend = backend };
         }
 
         /**
