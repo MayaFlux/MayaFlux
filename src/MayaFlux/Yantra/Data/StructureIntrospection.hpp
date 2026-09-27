@@ -23,6 +23,20 @@ std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
 infer_from_container(const std::shared_ptr<Kakshya::SignalSourceContainer>& container);
 
 /**
+ * @brief Infer the element axis and modality of a CompositeArray.
+ * @note Field names and types remain in the array's CompositeLayout.
+ */
+std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
+infer_from_composite_array(const Kakshya::CompositeArray& data);
+
+/**
+ * @brief Infer the element axis and modality of a CompositeContainer.
+ * @note Field names and types remain in the container's CompositeLayout.
+ */
+std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
+infer_from_composite_container(const std::shared_ptr<Kakshya::CompositeContainer>& container);
+
+/**
  * @brief Infer structure from Region (placeholder since regions are markers)
  */
 std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
@@ -133,7 +147,11 @@ static std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
 infer_structure(const T& data, const std::shared_ptr<Kakshya::SignalSourceContainer>& container = nullptr)
 {
 
-    if constexpr (std::is_same_v<T, Kakshya::DataVariant>) {
+    if constexpr (CompositeArrayData<T>) {
+        return infer_from_composite_array(data);
+    } else if constexpr (CompositeContainerData<T>) {
+        return infer_from_composite_container(data);
+    } else if constexpr (std::is_same_v<T, Kakshya::DataVariant>) {
         return infer_from_data_variant(data);
     } else if constexpr (std::is_same_v<T, std::shared_ptr<Kakshya::SignalSourceContainer>>) {
         return infer_from_container(data);

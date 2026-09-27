@@ -5,6 +5,11 @@
 #include "MayaFlux/Kakshya/Region/RegionSegment.hpp"
 #include "MayaFlux/Kakshya/SignalSourceContainer.hpp"
 
+namespace MayaFlux::Kakshya {
+class CompositeArray;
+class CompositeContainer;
+}
+
 namespace MayaFlux::Yantra {
 
 // =============================================================================
@@ -31,6 +36,18 @@ struct is_eigen_matrix<Eigen::Matrix<Scalar, Rows, Cols, Options, MaxRows, MaxCo
 template <typename T>
 inline constexpr bool is_eigen_matrix_v = is_eigen_matrix<T>::value;
 
+/** @brief An owning array of schema-bearing Composite elements. */
+template <typename T>
+concept CompositeArrayData = std::same_as<T, Kakshya::CompositeArray>;
+
+/** @brief Shared ownership of a CompositeContainer. */
+template <typename T>
+concept CompositeContainerData = std::same_as<T, std::shared_ptr<Kakshya::CompositeContainer>>;
+
+/** @brief Composite data that retains its field layout and presence information. */
+template <typename T>
+concept CompositeData = CompositeArrayData<T> || CompositeContainerData<T>;
+
 // =============================================================================
 // ComputeData concept
 // =============================================================================
@@ -43,6 +60,8 @@ inline constexpr bool is_eigen_matrix_v = is_eigen_matrix<T>::value;
  * - Kakshya::DataVariant
  * - std::vector<Kakshya::DataVariant>
  * - std::shared_ptr<Kakshya::SignalSourceContainer>
+ * - Kakshya::CompositeArray
+ * - std::shared_ptr<Kakshya::CompositeContainer>
  * - Kakshya::Region
  * - Kakshya::RegionGroup
  * - std::vector<Kakshya::RegionSegment>
@@ -53,6 +72,7 @@ inline constexpr bool is_eigen_matrix_v = is_eigen_matrix<T>::value;
 // clang-format off
 template <typename T>
 concept ComputeData =
+    CompositeData<T>                                               ||
     std::same_as<T, Kakshya::DataVariant>                          ||
     std::same_as<T, std::vector<Kakshya::DataVariant>>             ||
     std::same_as<T, std::shared_ptr<Kakshya::SignalSourceContainer>> ||
@@ -194,6 +214,16 @@ struct extraction_traits_d<std::vector<Kakshya::RegionSegment>> {
     using variant_result_type = std::vector<Kakshya::DataVariant>;
 };
 
+/** @brief Composite data has no implicit double or DataVariant extraction. */
+template <CompositeData T>
+struct extraction_traits_d<T> {
+    static constexpr bool is_multi_variant = false;
+    static constexpr bool requires_container = false;
+    static constexpr bool is_region_like = false;
+    using result_type = void;
+    using variant_result_type = void;
+};
+
 /**
  * @brief extraction_traits_d for any Eigen matrix type.
  *
@@ -299,6 +329,17 @@ struct extraction_traits<std::shared_ptr<Kakshya::SignalSourceContainer>> {
     using native_element_type = void;
     using algorithm_result_type = std::vector<std::span<double>>;
     using native_result_type = algorithm_result_type;
+};
+
+/** @brief Declare borrowed CompositeArray as the native result type. */
+template <CompositeData T>
+struct extraction_traits<T> {
+    static constexpr bool is_multi_variant = false;
+    static constexpr bool requires_container = false;
+    static constexpr bool is_region_like = false;
+    using native_element_type = void;
+    using algorithm_result_type = void;
+    using native_result_type = const Kakshya::CompositeArray&;
 };
 
 template <typename T>

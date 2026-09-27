@@ -1,5 +1,7 @@
 #pragma once
 
+#include "MayaFlux/Kakshya/NDData/Composite.hpp"
+#include "MayaFlux/Kakshya/Source/CompositeContainer.hpp"
 #include "MayaFlux/Kakshya/Utils/DataUtils.hpp"
 #include "StructureIntrospection.hpp"
 
@@ -30,7 +32,8 @@ struct MAYAFLUX_API Datum {
 
     std::optional<std::shared_ptr<Kakshya::SignalSourceContainer>> container; ///< Optional reference to container, required for regions
 
-    Datum() = default; ///< Default constructor
+    /** @brief Construct an empty datum when its data type has a valid default. */
+    Datum() requires std::default_initializable<T> = default;
 
     /**
      * @brief Construct from data by copy with automatic structure inference
@@ -369,15 +372,18 @@ std::vector<Datum<T>> as_io_batch(std::vector<T>&& inputs)
  *
  * Ensures that types used in operation units are either:
  * - MultiVariant (universal data variant)
+ * - CompositeData (schema-bearing records or their owning container)
  * - RegionLike (regions or region groups)
  * - EigenMatrixLike (Eigen matrices/vectors)
  * - Datum (input/output containers with structure)
  */
 template <typename T>
-concept OperationReadyData = MultiVariant<T> || RegionLike<T> || EigenMatrixLike<T> || is_IO<T>::value;
+concept OperationReadyData = CompositeData<T> || MultiVariant<T> || RegionLike<T> || EigenMatrixLike<T> || is_IO<T>::value;
 
 using DataIO = Datum<std::vector<Kakshya::DataVariant>>; ///< IO for universal data variant
 using ContainerIO = Datum<std::shared_ptr<Kakshya::SignalSourceContainer>>; ///< IO for signal containers
+using CompositeIO = Datum<Kakshya::CompositeArray>; ///< IO for owning Composite records
+using CompositeContainerIO = Datum<std::shared_ptr<Kakshya::CompositeContainer>>; ///< IO for Composite containers
 using RegionIO = Datum<Kakshya::Region>; ///< IO for single regions
 using RegionGroupIO = Datum<Kakshya::RegionGroup>; ///< IO for region groups
 using SegmentIO = Datum<std::vector<Kakshya::RegionSegment>>; ///< IO for region segments

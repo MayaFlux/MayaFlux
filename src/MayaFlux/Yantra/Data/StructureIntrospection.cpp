@@ -1,5 +1,7 @@
 #include "StructureIntrospection.hpp"
 
+#include "MayaFlux/Kakshya/NDData/Composite.hpp"
+#include "MayaFlux/Kakshya/Source/CompositeContainer.hpp"
 #include "MayaFlux/Kakshya/Utils/DataUtils.hpp"
 #include "MayaFlux/Kakshya/Utils/RegionUtils.hpp"
 
@@ -48,6 +50,30 @@ infer_from_container(const std::shared_ptr<Kakshya::SignalSourceContainer>& cont
     }
 
     return std::make_pair(std::move(dimensions), modality);
+}
+
+std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
+infer_from_composite_array(const Kakshya::CompositeArray& data)
+{
+    std::vector<Kakshya::DataDimension> dimensions;
+    dimensions.emplace_back("elements", data.size(), 1, Kakshya::DataDimension::Role::CUSTOM);
+    return { std::move(dimensions), Kakshya::DataModality::TENSOR_ND };
+}
+
+std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
+infer_from_composite_container(const std::shared_ptr<Kakshya::CompositeContainer>& container)
+{
+    if (!container) {
+        error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::Runtime,
+            std::source_location::current(), "Cannot infer structure from null CompositeContainer");
+    }
+
+    auto dimensions = container->get_dimensions();
+    auto modality = container->get_structure().modality;
+    if (modality == Kakshya::DataModality::UNKNOWN)
+        modality = Kakshya::DataModality::TENSOR_ND;
+
+    return { std::move(dimensions), modality };
 }
 
 std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>

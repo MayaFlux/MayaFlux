@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Kakshya/NDData/CompositeAccess.hpp"
 #include "MayaFlux/Kakshya/Utils/ContainerUtils.hpp"
 #include "MayaFlux/Yantra/Data/DataIO.hpp"
 
@@ -9,12 +10,13 @@ namespace MayaFlux::Yantra {
 
 /**
  * @struct DataStructureInfo
- * @brief Metadata about data structure for reconstruction
+ * @brief Dimensions, modality, source type, and optional Composite field schema.
  */
 struct DataStructureInfo {
     Kakshya::DataModality modality = Kakshya::DataModality::UNKNOWN;
     std::vector<Kakshya::DataDimension> dimensions;
     std::type_index original_type = std::type_index(typeid(void));
+    std::optional<Kakshya::CompositeLayout> composite_layout;
 
     DataStructureInfo() = default;
     DataStructureInfo(Kakshya::DataModality mod,
@@ -28,26 +30,200 @@ struct DataStructureInfo {
 };
 
 /**
+ * @struct CompositeFieldDoubleData
+ * @brief Owning double projection of one Composite field with its presence mask.
+ *
+ * Values for absent elements are zero-filled. Operations must consult presence
+ * before interpreting or changing those values. Source structure retains the
+ * full record layout for field-level reconstruction.
+ */
+struct CompositeFieldDoubleData {
+    std::vector<double> values;
+    std::vector<uint8_t> presence;
+    std::vector<Kakshya::DataDimension> dimensions;
+    Kakshya::DataModality modality { Kakshya::DataModality::TENSOR_ND };
+    DataStructureInfo source_structure;
+    std::string field_name;
+};
+
+namespace detail {
+
+    template <typename T>
+    struct is_composite_operation_data : std::bool_constant<CompositeData<T>> { };
+
+    template <ComputeData T>
+    struct is_composite_operation_data<Datum<T>> : std::bool_constant<CompositeData<T>> { };
+
+    template <typename T>
+    inline constexpr bool is_composite_operation_data_v = is_composite_operation_data<T>::value;
+
+}
+
+/**
  * @class OperationHelper
- * @brief Universal data conversion helper for all Yantra operations
+ * @brief Structure and extraction helpers for Yantra operation data.
  *
- * Provides a unified interface for converting between ComputeData types and
- * processing formats. All operations (analyzers, sorters, extractors, transformers)
- * can use this helper to:
+ * Numeric operations can use this helper to:
  *
- * 1. Convert any ComputeData → DataVariant → std::vector<double>
+ * 1. Convert compatible numeric data to std::vector<double>
  * 2. Process data in double format (universal algorithms)
  * 3. Reconstruct results back to target ComputeData types
  *
  * Key Features:
- * - Universal conversion path for all ComputeData types
+ * - Explicit Composite access with field schema and presence-aware projection
  * - Structure preservation via metadata
  * - Configurable complex number handling
- * - Lossless conversions (except complex → double)
- * - Thread-safe operation
  */
 class MAYAFLUX_API OperationHelper {
 public:
+    /** @brief Borrow an owning Composite array without converting its fields. */
+    static const Kakshya::CompositeArray& extract_composite_data(
+        const Kakshya::CompositeArray& data) noexcept
+    {
+        return data;
+    }
+
+    /**
+     * @brief Borrow the array owned by a Composite container.
+     * @throws std::invalid_argument If the container is null.
+     */
+    static const Kakshya::CompositeArray& extract_composite_data(
+        const std::shared_ptr<Kakshya::CompositeContainer>& container)
+    {
+        if (!container) {
+            error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::Runtime,
+                std::source_location::current(), "Cannot extract data from null CompositeContainer");
+        }
+        return container->get_data();
+    }
+
+    /** @brief Borrow Composite data carried by a Datum. */
+    template <CompositeData T>
+    static const Kakshya::CompositeArray& extract_composite_data(const Datum<T>& datum)
+    {
+        return extract_composite_data(datum.data);
+    }
+
+    /**
+     * @brief Borrow Composite records together with their row axis and field layout.
+     * @note The returned array reference remains valid only while the source does.
+     */
+    template <typename T>
+        requires detail::is_composite_operation_data_v<T>
+    static std::pair<std::reference_wrapper<const Kakshya::CompositeArray>, DataStructureInfo>
+    extract_structured_composite(const T& compute_data)
+    {
+        return { std::cref(extract_composite_data(compute_data)),
+            get_structure_info(compute_data) };
+    }
+
+    /**
+     * @brief Project one exact-type numeric Composite field to compatible NDData.
+     * @return Values and a presence mask, or nullopt for a missing or mismatched field.
+     */
+    template <typename ValueT, typename T>
+        requires(detail::is_composite_operation_data_v<T>
+            && ArithmeticData<ValueT> && Kakshya::DataVariantElement<ValueT>)
+    static std::optional<Kakshya::CompositeProjection> project_composite_field(
+        const T& compute_data, std::string_view field_name)
+    {
+        return extract_composite_data(compute_data).template to_nddata<ValueT>(field_name);
+    }
+
+    /**
+     * @brief Extract one compatible numeric field for double-based operations.
+     * @tparam ValueT Exact field type in the Composite layout.
+     * @return Owning values, presence, projected dimensions, and source schema.
+     */
+    template <typename ValueT, typename T>
+        requires(detail::is_composite_operation_data_v<T>
+            && ArithmeticData<ValueT> && Kakshya::DataVariantElement<ValueT>)
+    static std::optional<CompositeFieldDoubleData> extract_projected_composite_double(
+        const T& compute_data, std::string_view field_name)
+    {
+        auto projection = project_composite_field<ValueT>(compute_data, field_name);
+        if (!projection)
+            return std::nullopt;
+
+        const auto& values = std::get<std::vector<ValueT>>(projection->values);
+        CompositeFieldDoubleData result;
+        result.values.reserve(values.size());
+        for (const auto value : values)
+            result.values.push_back(static_cast<double>(value));
+        result.presence = std::get<std::vector<uint8_t>>(std::move(projection->presence));
+        result.dimensions = std::move(projection->dimensions);
+        result.modality = projection->modality;
+        result.source_structure = get_structure_info(compute_data);
+        result.field_name = field_name;
+        return result;
+    }
+
+    /**
+     * @brief Copy Composite records and replace one projected numeric field.
+     * @tparam ValueT Exact destination field type.
+     * @return Updated records, or nullopt for incompatible shape, type, or value.
+     * @note Unprojected fields are retained; the mask sets field presence.
+     */
+    template <typename ValueT, typename T>
+        requires(detail::is_composite_operation_data_v<T>
+            && ArithmeticData<ValueT> && Kakshya::DataVariantElement<ValueT>)
+    static std::optional<Kakshya::CompositeArray> reconstruct_projected_composite(
+        const T& compute_data, const CompositeFieldDoubleData& projected)
+    {
+        const auto& source = extract_composite_data(compute_data);
+        if (!projected.source_structure.composite_layout)
+            return std::nullopt;
+
+        const auto& original_layout = *projected.source_structure.composite_layout;
+        const auto& current_layout = source.layout();
+        if (original_layout.stride_bytes() != current_layout.stride_bytes()
+            || original_layout.presence_bytes() != current_layout.presence_bytes()
+            || original_layout.fields().size() != current_layout.fields().size())
+            return std::nullopt;
+
+        for (size_t i = 0; i < current_layout.fields().size(); ++i) {
+            const auto& original = original_layout.fields()[i];
+            const auto& current = current_layout.fields()[i];
+            if (original.name != current.name || original.type != current.type
+                || original.offset_bytes != current.offset_bytes
+                || original.size_bytes != current.size_bytes)
+                return std::nullopt;
+        }
+
+        const auto field_index = source.layout().find_field(projected.field_name);
+        if (!field_index || source.layout().fields()[*field_index].type != typeid(ValueT)
+            || projected.values.size() != source.size()
+            || projected.presence.size() != source.size())
+            return std::nullopt;
+
+        Kakshya::CompositeArray result(source);
+        for (size_t row = 0; row < source.size(); ++row) {
+            if (!projected.presence[row]) {
+                if (!result.clear(row, projected.field_name))
+                    return std::nullopt;
+                continue;
+            }
+
+            const double value = projected.values[row];
+            if constexpr (std::integral<ValueT>) {
+                if (!std::isfinite(value) || std::trunc(value) != value
+                    || value < static_cast<double>(std::numeric_limits<ValueT>::lowest())
+                    || value > static_cast<double>(std::numeric_limits<ValueT>::max()))
+                    return std::nullopt;
+            } else if constexpr (std::same_as<ValueT, float>) {
+                if (std::isfinite(value)
+                    && (value < -static_cast<double>(std::numeric_limits<float>::max())
+                        || value > static_cast<double>(std::numeric_limits<float>::max())))
+                    return std::nullopt;
+            }
+
+            if (!result.set(row, projected.field_name, static_cast<ValueT>(value)))
+                return std::nullopt;
+        }
+
+        return std::optional<Kakshya::CompositeArray>(std::move(result));
+    }
+
     /**
      * @brief Set global complex conversion strategy
      * @param strategy How to convert complex numbers to doubles
@@ -313,13 +489,15 @@ public:
      * @return DataStructureInfo with original_type, dimensions, modality populated.
      */
     template <OperationReadyData T>
-    static DataStructureInfo get_structure_info(T& compute_data)
+    static DataStructureInfo get_structure_info(const T& compute_data)
     {
         if constexpr (is_IO<T>::value) {
             DataStructureInfo info {};
             info.original_type = std::type_index(typeid(std::decay_t<decltype(compute_data.data)>));
             info.dimensions = compute_data.dimensions;
             info.modality = compute_data.modality;
+            if constexpr (CompositeData<std::decay_t<decltype(compute_data.data)>>)
+                info.composite_layout = extract_composite_data(compute_data.data).layout();
             return info;
         } else {
             DataStructureInfo info {};
@@ -327,6 +505,8 @@ public:
             auto [dims, mod] = infer_structure(compute_data);
             info.dimensions = std::move(dims);
             info.modality = mod;
+            if constexpr (CompositeData<T>)
+                info.composite_layout = extract_composite_data(compute_data).layout();
             return info;
         }
     }
@@ -339,6 +519,7 @@ public:
      * @throws std::runtime_error if container required but not provided
      */
     template <OperationReadyData T>
+        requires(!detail::is_composite_operation_data_v<T>)
     static std::tuple<std::vector<std::span<double>>, DataStructureInfo>
     extract_structured_double(T& compute_data)
     {
@@ -397,6 +578,7 @@ public:
      * @throws std::runtime_error if a container is required but absent.
      */
     template <OperationReadyData T>
+        requires(!detail::is_composite_operation_data_v<T>)
     static std::tuple<std::vector<Kakshya::DataSpanVariant>, DataStructureInfo>
     extract_structured_native(T& compute_data)
     {
@@ -448,7 +630,7 @@ public:
      * @return Reconstructed data of type T
      */
     template <ComputeData T>
-        requires(!is_IO<T>::value)
+        requires(!is_IO<T>::value && !CompositeData<T>)
     static T reconstruct_from_double(const std::vector<std::vector<double>>& double_data,
         const DataStructureInfo& structure_info)
     {
@@ -480,7 +662,7 @@ public:
      * @return Reconstructed data of type T
      */
     template <typename T>
-        requires is_IO<T>::value
+        requires(is_IO<T>::value && !detail::is_composite_operation_data_v<T>)
     static T reconstruct_from_double(const std::vector<std::vector<double>>& double_data,
         const DataStructureInfo& structure_info)
     {
@@ -503,6 +685,7 @@ public:
      * @return Tuple of [working_spans, structure_info]
      */
     template <OperationReadyData T>
+        requires(!detail::is_composite_operation_data_v<T>)
     static auto setup_operation_buffer(T& input, std::vector<std::vector<double>>& working_buffer)
     {
         auto [data_spans, structure_info] = extract_structured_double(input);
