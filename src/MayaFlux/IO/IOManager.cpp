@@ -95,7 +95,31 @@ IOManager::~IOManager()
                 ids.push_back(id);
         }
         for (auto id : ids)
-            stop_capture(id);
+            stop_audio_capture(id);
+    }
+
+    {
+        std::vector<uint32_t> ids;
+        {
+            std::lock_guard lock(m_video_captures_mutex);
+            ids.reserve(m_video_captures.size());
+            for (const auto& [id, _] : m_video_captures)
+                ids.push_back(id);
+        }
+        for (auto id : ids)
+            stop_video_capture(id);
+    }
+
+    {
+        std::vector<uint32_t> ids;
+        {
+            std::lock_guard lock(m_volume_captures_mutex);
+            ids.reserve(m_volume_captures.size());
+            for (const auto& [id, _] : m_volume_captures)
+                ids.push_back(id);
+        }
+        for (auto id : ids)
+            stop_volume_capture(id);
     }
 
     {
@@ -480,7 +504,7 @@ uint32_t IOManager::capture_output(const std::string& filepath, AVCodecID codec_
     return obs_id;
 }
 
-void IOManager::stop_capture(uint32_t capture_id)
+void IOManager::stop_audio_capture(uint32_t capture_id)
 {
     AudioCaptureState state;
     {
@@ -488,7 +512,7 @@ void IOManager::stop_capture(uint32_t capture_id)
         auto it = m_audio_captures.find(capture_id);
         if (it == m_audio_captures.end()) {
             MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
-                "stop_capture: unknown capture_id={}", capture_id);
+                "stop_audio_capture: unknown capture_id={}", capture_id);
             return;
         }
         state = std::move(it->second);
@@ -500,13 +524,7 @@ void IOManager::stop_capture(uint32_t capture_id)
     if (svc)
         svc->unregister_output_observer(state.observer_id);
 
-    auto fut = state.writer->close();
-
-    std::lock_guard lock(m_save_tasks_mutex);
-    m_save_tasks.push_back(std::move(fut));
-    std::erase_if(m_save_tasks, [](std::future<bool>& f) {
-        return f.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
-    });
+    track_save_task(state.writer->close());
 }
 
 std::vector<uint32_t> IOManager::get_audio_capture_ids() const
@@ -566,6 +584,24 @@ uint32_t IOManager::capture_window(
     return id;
 }
 
+void IOManager::stop_video_capture(uint32_t capture_id)
+{
+    VideoCaptureState state;
+    {
+        std::lock_guard lock(m_video_captures_mutex);
+        auto it = m_video_captures.find(capture_id);
+        if (it == m_video_captures.end()) {
+            MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
+                "stop_video_capture: unknown capture_id={}", capture_id);
+            return;
+        }
+        state = std::move(it->second);
+        m_video_captures.erase(it);
+    }
+
+    track_save_task(state.writer->stop_recording());
+}
+
 void IOManager::stop_capture(const std::shared_ptr<Core::Window>& window)
 {
     if (!window) {
@@ -592,7 +628,7 @@ void IOManager::stop_capture(const std::shared_ptr<Core::Window>& window)
         return;
     }
 
-    stop_capture(found_id);
+    stop_video_capture(found_id);
 }
 
 std::vector<uint32_t> IOManager::get_video_capture_ids() const

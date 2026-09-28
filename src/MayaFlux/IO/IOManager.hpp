@@ -126,12 +126,16 @@ public:
     /**
      * @brief Unregisters IOService, releases all owned readers, clears stored buffers.
      *
-     * Also drains any still-running spatial captures through
-     * stop_spatial_capture() rather than leaving them to plain unique_ptr
-     * destruction, the same way active audio captures are drained above:
-     * an Ogawa archive left open is not a valid file, only a growing one,
-     * so a capture the caller never explicitly stopped must still be
-     * finalized here.
+     * Also drains any still-running audio, video, volume, and spatial
+     * captures through their respective stop_*_capture() calls, rather
+     * than leaving them to plain member destruction. This matters for two
+     * reasons: a capture the caller never explicitly stopped must still be
+     * finalized (an Ogawa archive or video container left open is not a
+     * valid file, only a growing one), and volume/spatial captures hold a
+     * reference to m_scheduler, which is declared, and therefore destroyed,
+     * after them; stopping them here, before the rest of this destructor's
+     * body runs, avoids their stop() reaching into an already-destroyed
+     * scheduler during implicit member teardown.
      */
     ~IOManager();
 
@@ -288,26 +292,26 @@ public:
      * Registers an observer with AudioBackendService. Each output cycle the
      * observer drives an AudioOutputContainer and posts its processed_data
      * to a SoundFileWriter. Returns an opaque capture id for use with
-     * stop_capture().
+     * stop_audio_capture().
      *
      * Returns 0 and logs an error if AudioBackendService is unavailable.
      *
      * @param filepath    Output file path.
      * @param codec_id    Encoder override; AV_CODEC_ID_NONE = container default.
-     * @return Capture handle; pass to stop_capture() to finalise.
+     * @return Capture handle; pass to stop_audio_capture() to finalise.
      */
     [[nodiscard]] uint32_t capture_output(const std::string& filepath,
         AVCodecID codec_id = AV_CODEC_ID_NONE);
 
     /**
-     * @brief Stop a running capture and finalise the file.
+     * @brief Stop a running audio capture and finalise the file.
      *
      * Unregisters the AudioBackendService observer, calls writer->close(),
      * and stores the encode future in m_save_tasks. Non-blocking.
      *
      * @param capture_id Handle returned by capture_output().
      */
-    void stop_capture(uint32_t capture_id);
+    void stop_audio_capture(uint32_t capture_id);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Audio — hook
@@ -490,7 +494,8 @@ public:
      *
      * Delegates to VideoFileWriter::record(). The encoder is opened lazily on
      * the first delivered frame so pixel format and dimensions come from the
-     * live swapchain. Returns an opaque capture id for use with stop_capture().
+     * live swapchain. Returns an opaque capture id for use with
+     * stop_video_capture().
      *
      * Returns 0 if the window is null or record() fails.
      *
@@ -498,7 +503,7 @@ public:
      * @param filepath   Output file path. Extension determines container format.
      * @param frame_rate Nominal frame rate written into the container header.
      * @param codec_id   Encoder override; AV_CODEC_ID_NONE = container default.
-     * @return Capture handle; pass to stop_capture() to finalise.
+     * @return Capture handle; pass to stop_video_capture() to finalise.
      */
     [[nodiscard]] uint32_t capture_window(
         const std::shared_ptr<Core::Window>& window,
@@ -507,10 +512,22 @@ public:
         AVCodecID codec_id = AV_CODEC_ID_NONE);
 
     /**
+     * @brief Stop a running video capture and finalise the file.
+     *
+     * Calls writer->stop_recording(), the counterpart to the record() call
+     * capture_window() made, and stores the encode future in m_save_tasks.
+     * Non-blocking.
+     *
+     * @param capture_id Handle returned by capture_window().
+     */
+    void stop_video_capture(uint32_t capture_id);
+
+    /**
      * @brief Stop the active window capture and finalise the file.
      *
-     * Convenience overload that resolves the capture id by window pointer.
-     * No-op with a warning if no capture is active for this window.
+     * Convenience overload that resolves the capture id by window pointer,
+     * then calls stop_video_capture(). No-op with a warning if no capture
+     * is active for this window.
      *
      * @param window Window previously passed to capture_window().
      */
