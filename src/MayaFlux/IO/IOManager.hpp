@@ -1060,10 +1060,10 @@ private:
     void track_save_task(std::future<bool> fut);
 
     void configure_frame_processor(
-        const std::shared_ptr<Kakshya::VideoFileContainer>& container);
+        const std::shared_ptr<Kakshya::VideoFileContainer>& container) const;
 
     void configure_audio_processor(
-        const std::shared_ptr<Kakshya::SoundFileContainer>& container);
+        const std::shared_ptr<Kakshya::SoundFileContainer>& container) const;
 
     // ── Audio capture ──────────────────────────────────────────────────────
 

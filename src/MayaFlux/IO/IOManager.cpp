@@ -1,13 +1,14 @@
 #include "IOManager.hpp"
 
+#include "Detail/IOTransitions.hpp"
+
 #include "MayaFlux/Buffers/BufferManager.hpp"
 #include "MayaFlux/Core/Backends/Windowing/Window.hpp"
+
 #include "MayaFlux/Kakshya/Source/DynamicSoundStream.hpp"
 
 #include "MayaFlux/Nodes/Network/MeshNetwork.hpp"
 
-#include "MayaFlux/Kakshya/Processors/ContiguousAccessProcessor.hpp"
-#include "MayaFlux/Kakshya/Processors/FrameAccessProcessor.hpp"
 #include "MayaFlux/Kakshya/Source/AudioOutputContainer.hpp"
 #include "MayaFlux/Kakshya/Source/CameraContainer.hpp"
 #include "MayaFlux/Kakshya/Source/CompositeContainer.hpp"
@@ -46,19 +47,6 @@ extern "C" {
 }
 
 namespace MayaFlux::IO {
-
-namespace {
-
-    TextureResolver make_default_resolver(const std::string& filepath)
-    {
-        const auto base_dir = std::filesystem::path(filepath).parent_path();
-        return [base_dir](const std::string& raw) -> std::shared_ptr<Core::VKImage> {
-            auto tex_path = FileReader::resolve_path((base_dir / raw).generic_string());
-            return IO::ImageReader::load_texture(tex_path);
-        };
-    }
-
-}
 
 IOManager::IOManager(Core::GlobalStreamInfo& stream_info, uint32_t frame_rate, const std::shared_ptr<Buffers::BufferManager>& buffer_manager, const std::shared_ptr<Vruta::TaskScheduler>& scheduler)
     : m_stream_info(stream_info)
@@ -641,8 +629,7 @@ IOManager::open_camera(const CameraConfig& config)
     reader->set_container(container);
 
     const uint64_t rid = register_camera_source(reader);
-    container->setup_io(rid);
-    container->mark_ready_for_processing(true);
+    Detail::configure_camera_container(container, rid);
 
     MF_INFO(Journal::Component::API, Journal::Context::FileIO,
         "open_camera: reader_id={} device='{}' {}x{} @{:.1f}fps",
@@ -812,7 +799,7 @@ IOManager::load_mesh(const std::string& filepath, TextureResolver resolver)
     }
 
     if (!resolver)
-        resolver = make_default_resolver(filepath);
+        resolver = Detail::make_default_resolver(filepath);
 
     auto buffers = reader->create_mesh_buffers(resolver);
     reader->close();
@@ -850,7 +837,7 @@ IOManager::load_mesh_network(const std::string& filepath, TextureResolver resolv
     }
 
     if (!resolver)
-        resolver = make_default_resolver(filepath);
+        resolver = Detail::make_default_resolver(filepath);
 
     auto net = reader->create_mesh_network(resolver);
     reader->close();
@@ -898,22 +885,7 @@ bool IOManager::save_mesh(
 {
     track_save_task(std::async(std::launch::async,
         [meshes, filepath, options]() -> bool {
-            auto writer = IO::ModelWriterRegistry::instance().create_writer(filepath);
-            if (!writer) {
-                MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
-                    "save_mesh: no writer registered for '{}'", filepath);
-                return false;
-            }
-
-            const bool ok = writer->write(filepath, meshes, options);
-            if (!ok) {
-                MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
-                    "save_mesh: writer failed for '{}': {}", filepath, writer->get_last_error());
-            } else {
-                MF_INFO(Journal::Component::API, Journal::Context::FileIO,
-                    "save_mesh: wrote '{}'", filepath);
-            }
-            return ok;
+            return Detail::execute_mesh_write(filepath, meshes, options);
         }));
 
     return true;
@@ -964,59 +936,22 @@ bool IOManager::save_mesh_snapshot(
 
     track_save_task(std::async(std::launch::async,
         [buffer, path_pattern, options]() -> bool {
-            return IO::save_mesh_snapshot(buffer, path_pattern, options);
+            return Detail::execute_mesh_snapshot(buffer, path_pattern, options);
         }));
 
     return true;
 }
 
 void IOManager::configure_frame_processor(
-    const std::shared_ptr<Kakshya::VideoFileContainer>& container)
+    const std::shared_ptr<Kakshya::VideoFileContainer>& container) const
 {
-    auto existing = std::dynamic_pointer_cast<Kakshya::FrameAccessProcessor>(
-        container->get_default_processor());
-
-    if (existing) {
-        existing->set_global_fps(m_frame_rate);
-        existing->set_auto_advance(true);
-        MF_DEBUG(Journal::Component::API, Journal::Context::ContainerProcessing,
-            "Configured existing FrameAccessProcessor");
-    } else {
-        auto processor = std::make_shared<Kakshya::FrameAccessProcessor>();
-        processor->set_global_fps(m_frame_rate);
-        processor->set_auto_advance(true);
-        container->set_default_processor(processor);
-        MF_DEBUG(Journal::Component::API, Journal::Context::ContainerProcessing,
-            "Created and set FrameAccessProcessor");
-    }
+    Detail::configure_video_container(container, m_frame_rate);
 }
 
 void IOManager::configure_audio_processor(
-    const std::shared_ptr<Kakshya::SoundFileContainer>& container)
+    const std::shared_ptr<Kakshya::SoundFileContainer>& container) const
 {
-    container->set_memory_layout(Kakshya::MemoryLayout::ROW_MAJOR);
-
-    const std::vector<uint64_t> output_shape = {
-        m_stream_info.buffer_size,
-        container->get_num_channels()
-    };
-
-    auto existing = std::dynamic_pointer_cast<Kakshya::ContiguousAccessProcessor>(
-        container->get_default_processor());
-
-    if (existing) {
-        existing->set_output_size(output_shape);
-        existing->set_auto_advance(true);
-        MF_DEBUG(Journal::Component::API, Journal::Context::ContainerProcessing,
-            "Configured existing ContiguousAccessProcessor");
-    } else {
-        auto processor = std::make_shared<Kakshya::ContiguousAccessProcessor>();
-        processor->set_output_size(output_shape);
-        processor->set_auto_advance(true);
-        container->set_default_processor(processor);
-        MF_DEBUG(Journal::Component::API, Journal::Context::ContainerProcessing,
-            "Created and set ContiguousAccessProcessor");
-    }
+    Detail::configure_audio_container(container, m_stream_info.buffer_size);
 }
 
 std::shared_ptr<Buffers::VideoContainerBuffer>
@@ -1037,9 +972,7 @@ IOManager::hook_video_container_to_buffer(
         return nullptr;
     }
 
-    auto video_buffer = m_buffer_manager->create_graphics_buffer<Buffers::VideoContainerBuffer>(
-        Buffers::ProcessingToken::GRAPHICS_BACKEND,
-        stream_container);
+    auto video_buffer = Detail::create_video_container_buffer(m_buffer_manager, stream_container);
 
     {
         std::unique_lock lock(m_buffers_mutex);
@@ -1063,26 +996,15 @@ IOManager::hook_audio_container_to_buffers(
         return {};
     }
 
-    uint32_t num_channels = container->get_num_channels();
-    std::vector<std::shared_ptr<Buffers::SoundContainerBuffer>> created_buffers;
-
     MF_TRACE(
         Journal::Component::API,
         Journal::Context::BufferManagement,
         "Setting up audio playback for {} channels...",
-        num_channels);
+        container->get_num_channels());
 
-    for (uint32_t channel = 0; channel < num_channels; ++channel) {
-        auto container_buffer = m_buffer_manager->create_audio_buffer<MayaFlux::Buffers::SoundContainerBuffer>(
-            MayaFlux::Buffers::ProcessingToken::AUDIO_BACKEND,
-            channel,
-            container,
-            channel);
+    auto created_buffers = Detail::create_audio_container_buffers(m_buffer_manager, container);
 
-        container_buffer->initialize();
-
-        created_buffers.push_back(std::move(container_buffer));
-
+    for (size_t channel = 0; channel < created_buffers.size(); ++channel) {
         MF_INFO(
             Journal::Component::API,
             Journal::Context::BufferManagement,
@@ -1112,9 +1034,7 @@ IOManager::hook_camera_to_buffer(
         return nullptr;
     }
 
-    auto video_buffer = m_buffer_manager->create_graphics_buffer<Buffers::VideoContainerBuffer>(
-        Buffers::ProcessingToken::GRAPHICS_BACKEND,
-        stream_container);
+    auto video_buffer = Detail::create_video_container_buffer(m_buffer_manager, stream_container);
 
     if (!video_buffer) {
         MF_ERROR(Journal::Component::API, Journal::Context::BufferManagement,
@@ -1189,23 +1109,7 @@ bool IOManager::save_image(
                 return false;
             }
 
-            auto writer = IO::ImageWriterRegistry::instance().create_writer(filepath);
-            if (!writer) {
-                MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
-                    "save_image task: no writer registered for '{}'", filepath);
-                return false;
-            }
-
-            const bool ok = writer->write(filepath, *data, options);
-            if (!ok) {
-                MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
-                    "save_image task: writer failed for '{}': {}",
-                    filepath, writer->get_last_error());
-            } else {
-                MF_INFO(Journal::Component::IO, Journal::Context::FileIO,
-                    "save_image task: wrote '{}'", filepath);
-            }
-            return ok;
+            return Detail::execute_image_write(filepath, *data, options);
         });
 
     std::lock_guard lock(m_save_tasks_mutex);
@@ -1257,22 +1161,7 @@ bool IOManager::save_image(
         [data = std::move(data),
             filepath,
             options]() -> bool {
-            auto writer = IO::ImageWriterRegistry::instance().create_writer(filepath);
-            if (!writer) {
-                MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
-                    "save_image task: no writer registered for '{}'", filepath);
-                return false;
-            }
-            const bool ok = writer->write(filepath, data, options);
-            if (!ok) {
-                MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
-                    "save_image task: writer failed for '{}': {}",
-                    filepath, writer->get_last_error());
-            } else {
-                MF_INFO(Journal::Component::IO, Journal::Context::FileIO,
-                    "save_image task: wrote '{}'", filepath);
-            }
-            return ok;
+            return Detail::execute_image_write(filepath, data, options);
         });
 
     std::lock_guard lock(m_save_tasks_mutex);
@@ -1304,30 +1193,11 @@ IOManager::load_volume(const std::string& filepath, const IO::VolumeReadOptions&
         return nullptr;
     }
 
-    std::vector<Buffers::VolumeGridBuffer::FieldDecl> decls;
-    decls.reserve(data->fields.size());
-    for (const auto& field : data->fields) {
-        decls.push_back({
-            .name = field.name,
-            .stride_bytes = field.is_vector() ? sizeof(glm::vec4) : sizeof(float),
-            .double_buffered = true,
-            .semantics = field.semantics,
-        });
-    }
-
-    auto buffer = m_buffer_manager->create_graphics_buffer<Buffers::VolumeGridBuffer>(
-        Buffers::ProcessingToken::GRAPHICS_BACKEND,
-        data->lattice, decls);
+    auto buffer = Detail::create_volume_grid_buffer(m_buffer_manager, *data);
 
     if (!buffer) {
         MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
-            "IOManager::load_volume: failed to construct VolumeGridBuffer for '{}'", filepath);
-        return nullptr;
-    }
-
-    if (!IO::upload_volume(*data, buffer)) {
-        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
-            "IOManager::load_volume: upload failed for '{}'", filepath);
+            "IOManager::load_volume: failed to construct or upload VolumeGridBuffer for '{}'", filepath);
         return nullptr;
     }
 
@@ -1350,22 +1220,7 @@ bool IOManager::save_volume(
         [data = std::move(data),
             filepath,
             options]() -> bool {
-            auto writer = IO::VolumeWriterRegistry::instance().create_writer(filepath);
-            if (!writer) {
-                MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
-                    "save_volume task: no writer registered for '{}'", filepath);
-                return false;
-            }
-            const bool ok = writer->write(filepath, data, options);
-            if (!ok) {
-                MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
-                    "save_volume task: writer failed for '{}': {}",
-                    filepath, writer->get_last_error());
-            } else {
-                MF_INFO(Journal::Component::IO, Journal::Context::FileIO,
-                    "save_volume task: wrote '{}'", filepath);
-            }
-            return ok;
+            return Detail::execute_volume_write(filepath, data, options);
         });
 
     std::lock_guard lock(m_save_tasks_mutex);
@@ -1399,23 +1254,7 @@ bool IOManager::save_volume(
                 return false;
             }
 
-            auto writer = IO::VolumeWriterRegistry::instance().create_writer(filepath);
-            if (!writer) {
-                MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
-                    "save_volume task: no writer registered for '{}'", filepath);
-                return false;
-            }
-
-            const bool ok = writer->write(filepath, *data, options);
-            if (!ok) {
-                MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
-                    "save_volume task: writer failed for '{}': {}",
-                    filepath, writer->get_last_error());
-            } else {
-                MF_INFO(Journal::Component::IO, Journal::Context::FileIO,
-                    "save_volume task: wrote '{}'", filepath);
-            }
-            return ok;
+            return Detail::execute_volume_write(filepath, *data, options);
         });
 
     std::lock_guard lock(m_save_tasks_mutex);
@@ -1448,15 +1287,14 @@ uint32_t IOManager::capture_volume(
         return 0;
     }
 
-    auto capture = std::make_unique<IO::VolumeCapture>(
+    auto capture = Detail::create_volume_capture(
         *m_scheduler, volume, path_pattern, field_names, options,
         [this](Kakshya::VolumeData&& data,
             const std::string& path,
             const IO::VolumeWriteOptions& opts) {
             return save_volume(std::move(data), path, opts);
-        });
-
-    capture->start(max_frames, frame_interval);
+        },
+        max_frames, frame_interval);
 
     const uint32_t id = m_next_volume_capture_id.fetch_add(1, std::memory_order_relaxed);
 
@@ -1528,8 +1366,7 @@ uint32_t IOManager::capture_spatial(
         ++m_spatial_cache_refcounts[filepath];
     }
 
-    auto capture = std::make_unique<IO::SpatialCapture>(*m_scheduler, cache, std::move(sources));
-    capture->start(max_frames, frame_interval);
+    auto capture = Detail::create_spatial_capture(*m_scheduler, cache, std::move(sources), max_frames, frame_interval);
 
     const uint32_t id = m_next_spatial_capture_id.fetch_add(1, std::memory_order_relaxed);
 
@@ -1587,7 +1424,7 @@ bool IOManager::save_spatial_snapshot(
 {
     track_save_task(std::async(std::launch::async,
         [sources = std::move(sources), path_pattern]() -> bool {
-            return IO::save_spatial_snapshot(path_pattern, sources);
+            return Detail::execute_spatial_snapshot(path_pattern, sources);
         }));
     return true;
 }
