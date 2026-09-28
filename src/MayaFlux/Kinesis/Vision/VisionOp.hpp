@@ -281,12 +281,22 @@ struct VisionSequence {
      *
      * Each method appends one step and returns *this for chaining.
      * Call build() to produce the final VisionSequence.
+     * Parameterized operations accept their parameter struct,
+     * allowing designated initializers in member declaration order. Omitted
+     * settings use the struct's defaults. Operations whose settings have no
+     * defaults require an explicit parameter struct.
      *
      * @code
      * auto seq = VisionSequence::Builder{}
      *     .rgba_to_gray()
-     *     .gaussian_blur(1.5f)
-     *     .threshold(0.4f)
+     *     .gaussian_blur({ .sigma = 1.5F })
+     *     .threshold({ .value = 0.4F })
+     *     .build();
+     * auto features = VisionSequence::Builder{}
+     *     .rgba_to_gray()
+     *     .harris_response({ .sigma = 1.5F })
+     *     .extract_peaks({ .threshold = 0.05F, .nms_radius = 6 })
+     *     .track_keypoints({ .error_threshold = 0.08F })
      *     .build();
      * @endcode
      */
@@ -312,15 +322,14 @@ struct VisionSequence {
             return push(VisionOp::Downsample2x);
         }
 
-        Builder& threshold(float value)
+        Builder& threshold(ThresholdParams params)
         {
-            return push(VisionOp::Threshold, ThresholdParams { .value = value });
+            return push(VisionOp::Threshold, params);
         }
 
-        Builder& threshold_adaptive(uint32_t block_size, float offset)
+        Builder& threshold_adaptive(ThresholdAdaptiveParams params)
         {
-            return push(VisionOp::ThresholdAdaptive,
-                ThresholdAdaptiveParams { .block_size = block_size, .offset = offset });
+            return push(VisionOp::ThresholdAdaptive, params);
         }
 
         Builder& threshold_otsu()
@@ -333,22 +342,19 @@ struct VisionSequence {
             return push(VisionOp::NormalizeInplace);
         }
 
-        Builder& normalize_range(float lo, float hi)
+        Builder& normalize_range(NormalizeRangeParams params)
         {
-            return push(VisionOp::NormalizeRange,
-                NormalizeRangeParams { .lo = lo, .hi = hi });
+            return push(VisionOp::NormalizeRange, params);
         }
 
-        Builder& gaussian_blur(float sigma)
+        Builder& gaussian_blur(GaussianBlurParams params)
         {
-            return push(VisionOp::GaussianBlur, GaussianBlurParams { .sigma = sigma });
+            return push(VisionOp::GaussianBlur, params);
         }
 
-        Builder& filter_separable(
-            std::vector<float> kx, std::vector<float> ky)
+        Builder& filter_separable(FilterSeparableParams params)
         {
-            return push(VisionOp::FilterSeparable,
-                FilterSeparableParams { .kernel_x = std::move(kx), .kernel_y = std::move(ky) });
+            return push(VisionOp::FilterSeparable, std::move(params));
         }
 
         Builder& sobel()
@@ -361,74 +367,59 @@ struct VisionSequence {
             return push(VisionOp::Scharr);
         }
 
-        Builder& canny(float sigma, float lo, float hi)
+        Builder& canny(CannyParams params)
         {
-            return push(VisionOp::Canny, CannyParams { .sigma = sigma, .low_threshold = lo, .high_threshold = hi });
+            return push(VisionOp::Canny, params);
         }
 
-        Builder& erode(uint32_t radius)
+        Builder& erode(MorphParams params)
         {
-            return push(VisionOp::Erode, MorphParams { .radius = radius });
+            return push(VisionOp::Erode, params);
         }
 
-        Builder& dilate(uint32_t radius)
+        Builder& dilate(MorphParams params)
         {
-            return push(VisionOp::Dilate, MorphParams { .radius = radius });
+            return push(VisionOp::Dilate, params);
         }
 
-        Builder& open(uint32_t radius)
+        Builder& open(MorphParams params)
         {
-            return push(VisionOp::Open, MorphParams { .radius = radius });
+            return push(VisionOp::Open, params);
         }
 
-        Builder& close(uint32_t radius)
+        Builder& close(MorphParams params)
         {
-            return push(VisionOp::Close, MorphParams { .radius = radius });
+            return push(VisionOp::Close, params);
         }
 
-        Builder& morph_gradient(uint32_t radius)
+        Builder& morph_gradient(MorphParams params)
         {
-            return push(VisionOp::MorphGradient, MorphParams { .radius = radius });
+            return push(VisionOp::MorphGradient, params);
         }
 
-        Builder& harris_response(float k = 0.04F, float sigma = 1.0F)
+        Builder& harris_response(HarrisParams params = {})
         {
-            return push(VisionOp::HarrisResponse, HarrisParams { .k = k, .sigma = sigma });
+            return push(VisionOp::HarrisResponse, params);
         }
 
-        Builder& extract_peaks(float threshold, uint32_t nms_radius)
+        Builder& extract_peaks(ExtractPeaksParams params)
         {
-            return push(VisionOp::ExtractPeaks,
-                ExtractPeaksParams { .threshold = threshold, .nms_radius = nms_radius });
+            return push(VisionOp::ExtractPeaks, params);
         }
 
-        Builder& connected_components(bool export_labels = false, bool with_colors = false)
+        Builder& connected_components(ConnectedComponentsParams params = {})
         {
-            return push(VisionOp::ConnectedComponents,
-                ConnectedComponentsParams { .export_labels = export_labels, .with_colors = with_colors });
+            return push(VisionOp::ConnectedComponents, params);
         }
 
-        Builder& track_keypoints(
-            uint32_t window_radius = 7,
-            uint32_t max_iterations = 20,
-            float eigen_threshold = 1e-4F,
-            float error_threshold = 0.3F,
-            uint32_t levels = 4,
-            uint32_t max_points = 512,
-            float min_distance = 8.0F,
-            float forward_backward_threshold = 0.0F,
-            bool export_tracks = false,
-            bool host_tracks = true)
+        Builder& track_keypoints(TrackKeypointsParams params = {})
         {
-            return push(VisionOp::TrackKeypoints,
-                TrackKeypointsParams {
-                    .window_radius = window_radius, .max_iterations = max_iterations, .eigen_threshold = eigen_threshold, .error_threshold = error_threshold, .levels = levels, .max_points = max_points, .min_distance = min_distance, .forward_backward_threshold = forward_backward_threshold, .export_tracks = export_tracks, .host_tracks = host_tracks });
+            return push(VisionOp::TrackKeypoints, params);
         }
 
-        Builder& find_contours(float min_area = 0.0F, uint32_t max_contours = 0, uint32_t max_points_per_contour = 0, bool as_image = false)
+        Builder& find_contours(FindContoursParams params = {})
         {
-            return push(VisionOp::FindContours,
-                FindContoursParams { .min_area = min_area, .max_contours = max_contours, .max_points_per_contour = max_points_per_contour, .as_image = as_image });
+            return push(VisionOp::FindContours, params);
         }
 
         Builder& snapshot()
@@ -436,19 +427,9 @@ struct VisionSequence {
             return push(VisionOp::Snapshot);
         }
 
-        Builder& optical_flow_dense(
-            uint32_t window_radius = 5,
-            uint32_t iterations = 3,
-            uint32_t levels = 4,
-            float eigen_threshold = 1e-3F,
-            float max_step = 4.0F,
-            bool visualize = false,
-            float visual_range = 2.0F,
-            float visual_min_motion = 0.0F)
+        Builder& optical_flow_dense(OpticalFlowDenseParams params = {})
         {
-            return push(VisionOp::OpticalFlowDense,
-                OpticalFlowDenseParams {
-                    .window_radius = window_radius, .iterations = iterations, .levels = levels, .eigen_threshold = eigen_threshold, .max_step = max_step, .visualize = visualize, .visual_range = visual_range, .visual_min_motion = visual_min_motion });
+            return push(VisionOp::OpticalFlowDense, params);
         }
 
         /**
