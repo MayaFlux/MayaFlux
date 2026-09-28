@@ -67,6 +67,18 @@ struct VisionResult {
     std::shared_ptr<Core::VKImage> flow;
 
     /**
+     * @brief Output of a RgbaToGray step in this sequence, or null.
+     *
+     * A storage image, so passing it as the image argument to a later
+     * VisionGpuExecutor::run() call skips re-ingesting and re-converting:
+     * op_ingest passes any frame already carrying storage usage through
+     * unchanged. Intended for a caller resolving one VisionRequest into
+     * several VisionSequences that all start from the same gray frame, so
+     * only the first pays for RgbaToGray.
+     */
+    std::shared_ptr<Core::VKImage> gray;
+
+    /**
      * @brief Device resident tracks from TrackKeypoints with export_tracks,
      *        or null.
      *
@@ -103,6 +115,75 @@ struct VisionResult {
             return {};
         return { v->data(), v->size() };
     }
+};
+
+/**
+ * @brief Caller-supplied context for VisionIntent::TrackObjects.
+ *
+ * subject_bounds narrows which tracked points count as the subject when
+ * more than one candidate is present in the raw TrackResult list, for the
+ * frame that first identifies a subject. subject_track_id continues an
+ * already-identified subject on later frames by its stable TrackResult::id
+ * instead of re-filtering by region every call, which is the case
+ * DetectFeaturesContext has no equivalent for: Keypoint carries no
+ * persistent identity at all, only TrackResult does. Not derived either
+ * way: the caller decides what the subject is, from whatever source (a
+ * previous frame's result, a UI selection, another sensor).
+ */
+struct TrackObjectsContext {
+    std::optional<BoundingBox> subject_bounds;
+    std::optional<uint32_t> subject_track_id;
+};
+
+/**
+ * @brief Composed context: caller-supplied data for whichever intents need
+ *        it, consulted after a VisionRequest's resolved sequences have run.
+ *
+ * detect_features_bounds stands alone rather than in its own named
+ * struct like TrackObjectsContext: Keypoint has no persistent identity to
+ * grow a second field around the way TrackResult does, so a bare bounds
+ * value is the whole story.
+ *
+ * FindElements/DetectEdges/EstimateMotion/MeasureAppearance have no field
+ * here: FindElements's contours are already complete with nothing left for
+ * the caller to supply, and the other three have no concrete
+ * caller-suppliable need identified yet.
+ */
+struct VisionAnalysisContext {
+    std::optional<TrackObjectsContext> track_objects;
+    std::optional<BoundingBox> detect_features_bounds;
+};
+
+/**
+ * @brief Composed analysis output: one populated field per active intent
+ *        that produced a result this call.
+ *
+ * Each field is the existing result type itself, not a wrapper struct
+ * around it: contours/tracks/keypoints are exactly VisionResult::structured's
+ * content once its active alternative identifies which intent produced it;
+ * detect_edges/estimate_motion are exactly VisionResult::debug_labels/flow.
+ * optional<vector<T>> (rather than a bare, possibly-empty vector) is what
+ * distinguishes an intent that did not run from one that ran and found
+ * nothing; detect_edges/estimate_motion skip that wrapper since a null
+ * shared_ptr already means "did not run" the same way VisionResult's own
+ * image fields do.
+ *
+ * find_contours's underlying VisionResult::structured holds one alternative
+ * at a time, and FindContours runs after ConnectedComponents in that chain,
+ * so the intermediate ComponentResult is not retrievable from the final
+ * result; only the compacted contours survive.
+ *
+ * MeasureAppearance has no field: its VisionOp (Sobel) writes its output
+ * only to the working image via the generic dispatch path, which
+ * VisionGpuExecutor does not surface through any VisionResult field, so
+ * there is currently nothing to collect for it.
+ */
+struct VisionAnalysis {
+    std::optional<std::vector<Contour>> find_elements;
+    std::optional<std::vector<TrackResult>> track_objects;
+    std::optional<std::vector<Keypoint>> detect_features;
+    std::shared_ptr<Core::VKImage> detect_edges;
+    std::shared_ptr<Core::VKImage> estimate_motion;
 };
 
 /**

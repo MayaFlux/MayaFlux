@@ -615,6 +615,9 @@ VisionResult VisionGpuExecutor::run(
         contexts.bound_staged.reset();
         completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = { .output = contexts.pass.current, .input = dispatch_input };
 
+        if (step.op == VisionOp::RgbaToGray)
+            contexts.pass.result.gray = contexts.pass.current;
+
         after_step(contexts, contexts.pass.index);
     }
 

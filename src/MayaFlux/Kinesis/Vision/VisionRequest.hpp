@@ -93,10 +93,11 @@ struct VisionRequest {
  * VisionGpuExecutor::run() call re-ingests its image argument and clears
  * its per-run memo unconditionally (GpuVisionPass::begin), so nothing
  * carries between separate run() calls automatically. The caller is
- * responsible for running the first sequence, retrieving the gray image it
- * produced (its RgbaToGray step's output), and passing that image, not the
- * original frame, into run() for every subsequent sequence in the returned
- * list, so RgbaToGray is not paid for twice.
+ * responsible for running the first sequence, then passing its result's
+ * VisionResult::gray (not the original frame) as the image argument to
+ * run() for every subsequent sequence in the returned list. gray is a
+ * storage image, so op_ingest passes it straight through with no
+ * re-conversion, and RgbaToGray is not paid for twice.
  *
  * @param request Active intents and their parameters.
  * @return Ordered VisionSequences to run against the same frame; empty when
