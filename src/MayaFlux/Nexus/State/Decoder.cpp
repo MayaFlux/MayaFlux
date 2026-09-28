@@ -2,7 +2,7 @@
 
 #include "MayaFlux/Nexus/Principals/Locus.hpp"
 
-#include "MayaFlux/IO/ImageReader.hpp"
+#include "MayaFlux/IO/Image/ImageReader.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 
 #include "MayaFlux/Transitive/IO/JSONSerializer.hpp"

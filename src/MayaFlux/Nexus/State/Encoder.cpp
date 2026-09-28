@@ -5,7 +5,7 @@
 #include "MayaFlux/Nexus/Principals/Locus.hpp"
 #include "MayaFlux/Nexus/Principals/Presence.hpp"
 
-#include "MayaFlux/IO/ImageWriter.hpp"
+#include "MayaFlux/IO/Image/ImageWriter.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 
 #include "MayaFlux/Transitive/IO/JSONSerializer.hpp"

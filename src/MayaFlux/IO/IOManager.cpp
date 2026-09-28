@@ -26,15 +26,18 @@
 #include "MayaFlux/Registry/Service/AudioBackendService.hpp"
 #include "MayaFlux/Registry/Service/IOService.hpp"
 
-#include "AssimpModelWriter.hpp"
-#include "DelimitedTextReader.hpp"
-#include "DelimitedTextWriter.hpp"
-#include "EXRWriter.hpp"
-#include "ImageExport.hpp"
-#include "ModelExport.hpp"
-#include "ModelReader.hpp"
-#include "STBImageWriter.hpp"
-#include "VDBWriter.hpp"
+#include "Composite/DelimitedTextReader.hpp"
+#include "Composite/DelimitedTextWriter.hpp"
+
+#include "Image/EXRWriter.hpp"
+#include "Image/ImageExport.hpp"
+#include "Image/STBImageWriter.hpp"
+
+#include "Model/AssimpModelWriter.hpp"
+#include "Model/ModelExport.hpp"
+#include "Model/ModelReader.hpp"
+
+#include "Volume/VDBWriter.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 

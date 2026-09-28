@@ -1,18 +1,25 @@
 #pragma once
 
-#include "CameraSource.hpp"
-#include "CompositeReader.hpp"
-#include "CompositeWriter.hpp"
-#include "FFmpegCameraReader.hpp"
-#include "ImageWriter.hpp"
-#include "ModelWriter.hpp"
-#include "SoundFileWriter.hpp"
-#include "SpatialTransfer.hpp"
-#include "VideoFileReader.hpp"
-#include "VideoFileWriter.hpp"
-#include "VolumeReader.hpp"
-#include "VolumeTransfer.hpp"
-#include "VolumeWriter.hpp"
+#include "Audio/SoundFileWriter.hpp"
+
+#include "Camera/CameraSource.hpp"
+#include "Camera/FFmpegCameraReader.hpp"
+
+#include "Composite/CompositeReader.hpp"
+#include "Composite/CompositeWriter.hpp"
+
+#include "Image/ImageWriter.hpp"
+
+#include "Model/ModelWriter.hpp"
+
+#include "Spatial/SpatialTransfer.hpp"
+
+#include "Video/VideoFileReader.hpp"
+#include "Video/VideoFileWriter.hpp"
+
+#include "Volume/VolumeReader.hpp"
+#include "Volume/VolumeTransfer.hpp"
+#include "Volume/VolumeWriter.hpp"
 
 #include <future>
 

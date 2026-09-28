@@ -9,7 +9,6 @@
 #include "MayaFlux/Buffers/Container/VideoContainerBuffer.hpp"
 #include "MayaFlux/Buffers/Geometry/MeshBuffer.hpp"
 #include "MayaFlux/Buffers/VKBuffer.hpp"
-#include "MayaFlux/IO/FFmpegCameraReader.hpp"
 #include "MayaFlux/IO/IOManager.hpp"
 #include "MayaFlux/Kakshya/Source/SoundFileContainer.hpp"
 #include "MayaFlux/Nodes/Network/NodeNetwork.hpp"

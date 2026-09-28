@@ -155,7 +155,7 @@
 #include "Portal/System/System.hpp"
 
 #include "IO/IOManager.hpp"
-#include "IO/ImageReader.hpp"
+#include "IO/Image/ImageReader.hpp"
 
 #include "Nexus/Tapestry.hpp"
 
