@@ -8,59 +8,85 @@
 
 /**
  * @file VisionAnalyzer.hpp
- * @brief One stop shop: given a VisionRequest, a VisionAnalysisContext, and
- *        a frame, resolves the request, runs it, and runs the actual
- *        analysis on GPU (track_reduce.comp), returning a finished
- *        Kinesis::Vision::VisionAnalysis directly.
+ * @brief FunctionalOperation<shared_ptr<SignalSourceContainer>,
+ *        vector<DataVariant>> whose real API matches EnergyAnalyzer/
+ *        StatisticalAnalyzer's own convention: request/context are
+ *        constructor arguments and setters, not call arguments, and
+ *        analyze_vision(source) takes only the data, the same shape as
+ *        analyze_energy(data)/analyze_statistics(data).
  *
- * run() is the real entry point: intent and params as actual function
- * parameters, not smuggled through Datum metadata. The ComputeOperation
- * path (run_operation, inherited from FunctionalOperation) is a thin
- * adapter underneath for graph compatibility. It pulls the same
- * parameters out of Datum metadata and calls run(); the work happens
- * inside run(), not here.
+ * width/height are never passed in: VKImage and every container Vision
+ * accepts (TextureContainer, VideoStreamContainer, WindowContainer) already
+ * report their own get_width()/get_height().
  */
+
+namespace MayaFlux::Kakshya {
+class SignalSourceContainer;
+}
 
 namespace MayaFlux::Yantra {
 
 /**
  * @class VisionAnalyzer
- * @brief FunctionalOperation<vector<DataVariant>, vector<DataVariant>>
- *        whose real API is run(): resolve the request, run every resolved
- *        VisionSequence against a persistent VisionGpuExecutor, then run
- *        track_reduce.comp (a real GPU reduction shader) over the
- *        (context-filtered) subject tracks for centroid/velocity/bounds.
+ * @brief Resolves its configured VisionRequest, runs every resolved
+ *        VisionSequence against a persistent VisionGpuExecutor, then runs
+ *        the GPU reductions (track_reduce.comp) over the (context-filtered)
+ *        subject tracks/keypoints for centroid/velocity/bounds.
  *
  * Owns its VisionGpuExecutor for the same reason VisionProcessor does:
  * cross-frame state (retained optical flow atlases and detections) lives
  * on the executor's contexts and must survive between calls.
- *
- * request/context are call parameters, not stored configuration: resolve()
- * is cheap (pure CPU, no GPU work), so there is nothing to cache by
- * pre-configuring the request ahead of time.
  */
 class MAYAFLUX_API VisionAnalyzer
-    : public FunctionalOperation<std::vector<Kakshya::DataVariant>, std::vector<Kakshya::DataVariant>> {
+    : public FunctionalOperation<std::shared_ptr<Kakshya::SignalSourceContainer>, std::vector<Kakshya::DataVariant>> {
 public:
-    using Base = FunctionalOperation<std::vector<Kakshya::DataVariant>, std::vector<Kakshya::DataVariant>>;
-
-    VisionAnalyzer();
+    using Base = FunctionalOperation<std::shared_ptr<Kakshya::SignalSourceContainer>, std::vector<Kakshya::DataVariant>>;
 
     /**
-     * @brief Resolve request, run it, and run the GPU analysis. The real
-     *        entry point.
-     *
-     * @param request Which intents to satisfy and their run parameters.
-     * @param context Caller-supplied subject filtering, applied after run.
-     * @param image   GPU image in eShaderReadOnlyOptimal layout.
-     * @param w       Frame width in pixels.
-     * @param h       Frame height in pixels.
+     * @brief Construct with the intents to satisfy and the caller-supplied
+     *        filtering context, matching EnergyAnalyzer's
+     *        constructor-configures-the-run convention.
      */
-    [[nodiscard]] Kinesis::Vision::VisionAnalysis run(
-        const Kinesis::Vision::VisionRequest& request,
-        const Kinesis::Vision::VisionAnalysisContext& context,
-        const std::shared_ptr<Core::VKImage>& image,
-        uint32_t w, uint32_t h);
+    explicit VisionAnalyzer(
+        Kinesis::Vision::VisionRequest request = {},
+        Kinesis::Vision::VisionAnalysisContext context = {});
+
+    void set_request(const Kinesis::Vision::VisionRequest& request) { m_request = request; }
+    [[nodiscard]] const Kinesis::Vision::VisionRequest& get_request() const { return m_request; }
+
+    void set_context(const Kinesis::Vision::VisionAnalysisContext& context) { m_context = context; }
+    [[nodiscard]] const Kinesis::Vision::VisionAnalysisContext& get_context() const { return m_context; }
+
+    /**
+     * @brief Real entry point: resolve the configured request against
+     *        source, run it, run the GPU analysis. Same shape as
+     *        analyze_energy(data)/analyze_statistics(data): only the data
+     *        is a call argument. To change what a later call does, call
+     *        set_request()/set_context() first, the same way a caller
+     *        changes EnergyAnalyzer's behaviour with set_method() before
+     *        the next analyze_energy(), not by passing it alongside data.
+     *
+     * @param source Image-bearing container (VideoStreamContainer,
+     *               WindowContainer, or TextureContainer; the same set
+     *               VisionProcessor accepts). Anything else yields an
+     *               empty VisionAnalysis.
+     * @param index  Layer/frame index, used only for a TextureContainer's
+     *               to_image(index); ignored for the other two, which have
+     *               no multi-index concept and always give their current
+     *               frame.
+     */
+    [[nodiscard]] Kinesis::Vision::VisionAnalysis analyze_vision(
+        const std::shared_ptr<Kakshya::SignalSourceContainer>& source,
+        size_t index = 0);
+
+    /**
+     * @brief analyze_vision(), for a caller that already has a resolved
+     *        GPU image (e.g. VisionExtractor's own output) rather than a
+     *        container. Skips container resolution entirely; otherwise
+     *        identical.
+     */
+    [[nodiscard]] Kinesis::Vision::VisionAnalysis analyze_vision(
+        const std::shared_ptr<Core::VKImage>& image);
 
     /**
      * @brief Abandon outstanding work and clear retained executor state.
@@ -71,11 +97,34 @@ public:
 
 private:
     /**
-     * @brief ComputeOperation adapter: pulls request/context/width/height
-     *        out of Datum metadata, uploads input.data[0], calls run().
-     *        See run() for the real API.
+     * @brief ComputeOperation adapter: uses input.data as the source
+     *        container, pulls index out of Datum metadata (defaulting to
+     *        0), calls analyze_vision(). See analyze_vision() for the real
+     *        API; request/context come from this instance's own
+     *        configured state, not from the Datum, matching every other
+     *        UniversalAnalyzer-family operation_function.
      */
     output_type run_operation(const input_type& input);
+
+    /**
+     * @brief Resolve source/index to a GPU image, the same way
+     *        VisionProcessor does: TextureContainer's own to_image(index)
+     *        (zero-copy cache), or get_raw_data() uploaded into a
+     *        persistent m_upload_image for VideoStreamContainer/
+     *        WindowContainer. Null on an unsupported container type.
+     */
+    [[nodiscard]] std::shared_ptr<Core::VKImage> resolve_image(
+        const std::shared_ptr<Kakshya::SignalSourceContainer>& source,
+        size_t index);
+
+    /**
+     * @brief Shared body of both analyze_vision() overloads, once a GPU
+     *        image is in hand: resolve the configured request, run every
+     *        resolved VisionSequence, apply context filtering, run the
+     *        GPU reductions. w/h are the image's own dimensions.
+     */
+    [[nodiscard]] Kinesis::Vision::VisionAnalysis analyze_resolved(
+        const std::shared_ptr<Core::VKImage>& image);
 
     /**
      * @brief Dispatch track_reduce.comp over tracks and fill
@@ -96,6 +145,9 @@ private:
      */
     [[nodiscard]] Kinesis::Vision::DetectFeaturesAnalysis reduce_keypoints(
         const std::vector<Kinesis::Vision::Keypoint>& keypoints);
+
+    Kinesis::Vision::VisionRequest m_request;
+    Kinesis::Vision::VisionAnalysisContext m_context;
 
     std::unique_ptr<VisionGpuExecutor> m_executor;
     std::shared_ptr<ShaderExecutionContext<>> m_track_reducer;

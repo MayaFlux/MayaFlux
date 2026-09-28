@@ -1,5 +1,8 @@
 #include "VisionAnalyzer.hpp"
 
+#include "MayaFlux/Kakshya/Source/TextureContainer.hpp"
+#include "MayaFlux/Kakshya/Source/VideoStreamContainer.hpp"
+#include "MayaFlux/Kakshya/Source/WindowContainer.hpp"
 #include "MayaFlux/Kakshya/Utils/DataUtils.hpp"
 #include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 
@@ -77,8 +80,12 @@ namespace {
 
 } // namespace
 
-VisionAnalyzer::VisionAnalyzer()
+VisionAnalyzer::VisionAnalyzer(
+    Kinesis::Vision::VisionRequest request,
+    Kinesis::Vision::VisionAnalysisContext context)
     : Base([this](const input_type& input) { return run_operation(input); })
+    , m_request(request)
+    , m_context(context)
 {
 }
 
@@ -183,16 +190,69 @@ Kinesis::Vision::DetectFeaturesAnalysis VisionAnalyzer::reduce_keypoints(
     return result;
 }
 
-Kinesis::Vision::VisionAnalysis VisionAnalyzer::run(
-    const Kinesis::Vision::VisionRequest& request,
-    const Kinesis::Vision::VisionAnalysisContext& context,
-    const std::shared_ptr<Core::VKImage>& image,
-    uint32_t w, uint32_t h)
+std::shared_ptr<Core::VKImage> VisionAnalyzer::resolve_image(
+    const std::shared_ptr<Kakshya::SignalSourceContainer>& source,
+    size_t index)
+{
+    if (!source)
+        return nullptr;
+
+    if (auto tc = std::dynamic_pointer_cast<Kakshya::TextureContainer>(source))
+        return tc->to_image(static_cast<uint32_t>(index));
+
+    if (auto wc = std::dynamic_pointer_cast<Kakshya::WindowContainer>(source))
+        return wc->to_image();
+
+    auto vc = std::dynamic_pointer_cast<Kakshya::VideoStreamContainer>(source);
+    if (!vc)
+        return nullptr;
+
+    const uint32_t w = vc->get_width();
+    const uint32_t h = vc->get_height();
+
+    const void* raw = source->get_raw_data();
+    if (!raw)
+        return nullptr;
+
+    if (!m_upload_image || m_upload_w != w || m_upload_h != h) {
+        m_upload_image = Portal::Graphics::TextureLoom::instance().create_2d(
+            w, h, Portal::Graphics::ImageFormat::RGBA8, nullptr);
+        m_upload_w = w;
+        m_upload_h = h;
+    }
+    if (!m_upload_image)
+        return nullptr;
+
+    Portal::Graphics::TextureLoom::instance().upload_data(m_upload_image, raw, m_upload_image->get_size_bytes());
+    return m_upload_image;
+}
+
+Kinesis::Vision::VisionAnalysis VisionAnalyzer::analyze_vision(
+    const std::shared_ptr<Kakshya::SignalSourceContainer>& source,
+    size_t index)
+{
+    const auto image = resolve_image(source, index);
+    if (!image)
+        return {};
+
+    return analyze_resolved(image);
+}
+
+Kinesis::Vision::VisionAnalysis VisionAnalyzer::analyze_vision(
+    const std::shared_ptr<Core::VKImage>& image)
+{
+    return analyze_resolved(image);
+}
+
+Kinesis::Vision::VisionAnalysis VisionAnalyzer::analyze_resolved(
+    const std::shared_ptr<Core::VKImage>& image)
 {
     if (!m_executor)
         m_executor = std::make_unique<VisionGpuExecutor>();
 
-    const auto sequences = Kinesis::Vision::resolve(request);
+    const auto w = image->get_width();
+    const auto h = image->get_height();
+    const auto sequences = Kinesis::Vision::resolve(m_request);
 
     Kinesis::Vision::VisionAnalysis analysis;
     std::optional<std::vector<Kinesis::Vision::TrackResult>> raw_tracks;
@@ -211,8 +271,8 @@ Kinesis::Vision::VisionAnalysis VisionAnalyzer::run(
         collect_into(raw_tracks, raw_keypoints, analysis, result);
     }
 
-    if (raw_tracks && context.track_objects) {
-        const auto& ctx = *context.track_objects;
+    if (raw_tracks && m_context.track_objects) {
+        const auto& ctx = *m_context.track_objects;
         if (ctx.subject_track_id) {
             const auto id = *ctx.subject_track_id;
             std::erase_if(*raw_tracks, [&](const auto& t) { return t.id != id; });
@@ -225,8 +285,8 @@ Kinesis::Vision::VisionAnalysis VisionAnalyzer::run(
     if (raw_tracks)
         analysis.track_objects = reduce_tracks(*raw_tracks);
 
-    if (raw_keypoints && context.detect_features_bounds) {
-        const auto& bounds = *context.detect_features_bounds;
+    if (raw_keypoints && m_context.detect_features_bounds) {
+        const auto& bounds = *m_context.detect_features_bounds;
         std::erase_if(*raw_keypoints, [&](const auto& k) { return !inside(bounds, k.position); });
     }
 
@@ -241,34 +301,14 @@ VisionAnalyzer::output_type VisionAnalyzer::run_operation(const input_type& inpu
     output_type output;
     output.metadata = input.metadata;
 
-    const auto request = Kakshya::get_metadata_value<Kinesis::Vision::VisionRequest>(
-        input.metadata, "vision_request");
-    const auto context = Kakshya::get_metadata_value<Kinesis::Vision::VisionAnalysisContext>(
-        input.metadata, "vision_context")
-                              .value_or(Kinesis::Vision::VisionAnalysisContext {});
-    const auto w = Kakshya::get_metadata_value<uint32_t>(input.metadata, "width").value_or(0);
-    const auto h = Kakshya::get_metadata_value<uint32_t>(input.metadata, "height").value_or(0);
-
-    if (!request || w == 0 || h == 0 || input.data.empty()) {
-        output.metadata["error"] = std::string("VisionAnalyzer: missing vision_request/width/height/pixel data");
+    if (!input.data) {
+        output.metadata["error"] = std::string("VisionAnalyzer: missing container");
         return output;
     }
 
-    if (!m_upload_image || m_upload_w != w || m_upload_h != h) {
-        m_upload_image = Portal::Graphics::TextureLoom::instance().create_2d(input.data[0], w, h);
-        m_upload_w = w;
-        m_upload_h = h;
-    } else if (const auto* pixels = std::get_if<std::vector<float>>(&input.data[0])) {
-        Portal::Graphics::TextureLoom::instance().upload_data(
-            m_upload_image, pixels->data(), pixels->size() * sizeof(float));
-    }
+    const auto index = Kakshya::get_metadata_value<size_t>(input.metadata, "container_index").value_or(0);
 
-    if (!m_upload_image) {
-        output.metadata["error"] = std::string("VisionAnalyzer: TextureLoom upload failed");
-        return output;
-    }
-
-    output.metadata["vision_analysis"] = run(*request, context, m_upload_image, w, h);
+    output.metadata["vision_analysis"] = analyze_vision(input.data, index);
     return output;
 }
 
