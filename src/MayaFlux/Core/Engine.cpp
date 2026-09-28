@@ -332,6 +332,10 @@ void Engine::End()
         m_node_graph_manager->terminate_active_processing();
     }
 
+    if (m_io_manager) {
+        m_io_manager->shutdown();
+    }
+
     if (m_subsystem_manager) {
         m_subsystem_manager->stop();
     }

@@ -13,6 +13,8 @@
 #include "Volume/VolumeReader.hpp"
 #include "Volume/VolumeWriter.hpp"
 
+#include "MayaFlux/Transitive/Parallel/AsyncGroup.hpp"
+
 #include <future>
 
 #include <libavcodec/avcodec.h>
@@ -124,6 +126,19 @@ public:
     IOManager(Core::GlobalStreamInfo& stream_info, uint32_t frame_rate, const std::shared_ptr<Buffers::BufferManager>& buffer_manager, const std::shared_ptr<Vruta::TaskScheduler>& scheduler);
 
     /**
+     * @brief Calls shutdown() if it has not already run.
+     *
+     * shutdown() is safe to call earlier and explicitly; the destructor
+     * exists only to catch a caller that never did.
+     */
+    ~IOManager();
+
+    IOManager(const IOManager&) = delete;
+    IOManager& operator=(const IOManager&) = delete;
+    IOManager(IOManager&&) = delete;
+    IOManager& operator=(IOManager&&) = delete;
+
+    /**
      * @brief Unregisters IOService, releases all owned readers, clears stored buffers.
      *
      * Also drains any still-running audio, video, volume, and spatial
@@ -132,17 +147,19 @@ public:
      * reasons: a capture the caller never explicitly stopped must still be
      * finalized (an Ogawa archive or video container left open is not a
      * valid file, only a growing one), and volume/spatial captures hold a
-     * reference to m_scheduler, which is declared, and therefore destroyed,
-     * after them; stopping them here, before the rest of this destructor's
-     * body runs, avoids their stop() reaching into an already-destroyed
-     * scheduler during implicit member teardown.
+     * reference to m_scheduler, which may be torn down independently of
+     * this object's own lifetime; stopping them here avoids their stop()
+     * reaching into an already-destroyed scheduler.
+     *
+     * Idempotent: a second call is a no-op. Safe, and expected, to call
+     * this explicitly before destruction, from whatever orchestrates this
+     * object's owner's shutdown sequence (see Engine::End()), so that
+     * capture teardown and any resulting save-failure logging still runs
+     * while the backend services and logging sinks it depends on are
+     * still alive. The destructor calls this too, only to guarantee it
+     * eventually runs even if no caller did.
      */
-    ~IOManager();
-
-    IOManager(const IOManager&) = delete;
-    IOManager& operator=(const IOManager&) = delete;
-    IOManager(IOManager&&) = delete;
-    IOManager& operator=(IOManager&&) = delete;
+    void shutdown();
 
     // ─────────────────────────────────────────────────────────────────────────
     // Video — load
@@ -1057,6 +1074,8 @@ private:
     Core::GlobalStreamInfo& m_stream_info;
     uint32_t m_frame_rate;
 
+    std::atomic<bool> m_shutdown_done { false };
+
     /**
      * @brief IOService::request_decode target — shared-lock lookup + signal_decode().
      * Non-blocking. Safe from any thread.
@@ -1070,12 +1089,18 @@ private:
     void dispatch_frame_request(uint64_t reader_id);
 
     /**
-     * @brief Queue a save task and prune finished ones, under one short lock.
+     * @brief Retain a save task in m_save_tasks and opportunistically reclaim
+     *        finished ones.
      *
-     * The lock covers only the push_back and the erase_if scan against
-     * m_save_tasks itself; nothing about the task's own work (already
-     * running on its own thread via std::async before this is called)
-     * holds it.
+     * Lock-free: delegates to Parallel::AsyncGroup, which never blocks one
+     * caller on another's future. Failed saves are logged through the
+     * group's exception handler set up in the constructor, which reuses
+     * Journal::error_rethrow for the catch(const std::exception&) vs
+     * catch(...) message dispatch and then swallows the rethrow, since
+     * AsyncGroup's contract is to report a task's exception, not propagate
+     * it into whichever thread happens to call submit()/drain() next.
+     * Nothing about a task's own work (already running on its own thread
+     * via std::async before this is called) is affected by tracking it here.
      */
     void track_save_task(std::future<bool> fut);
 
@@ -1143,13 +1168,13 @@ private:
 
     std::vector<std::shared_ptr<ModelReader>> m_model_readers;
 
+    std::mutex m_writers_mutex;
     std::vector<std::shared_ptr<SoundFileWriter>> m_writers;
 
     // ── Stored buffers ─────────────────────────────────────────────────────
 
     mutable std::shared_mutex m_buffers_mutex;
-    std::mutex m_save_tasks_mutex;
-    std::vector<std::future<bool>> m_save_tasks;
+    Parallel::AsyncGroup<bool> m_save_tasks;
 
     std::unordered_map<
         std::shared_ptr<Kakshya::VideoFileContainer>,

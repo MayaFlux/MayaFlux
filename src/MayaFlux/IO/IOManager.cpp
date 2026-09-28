@@ -61,6 +61,19 @@ IOManager::IOManager(Core::GlobalStreamInfo& stream_info, uint32_t frame_rate, c
     , m_frame_rate(frame_rate)
     , m_buffer_manager(buffer_manager)
     , m_scheduler(scheduler)
+    , m_save_tasks([](std::exception_ptr ep) {
+        try {
+            std::rethrow_exception(std::move(ep));
+        } catch (...) {
+            try {
+                Journal::error_rethrow(Journal::Component::IO, Journal::Context::FileIO,
+                    std::source_location::current(), "save task failed");
+            }
+            // NOLINTNEXTLINE(bugprone-empty-catch)
+            catch (...) {
+            }
+        }
+    })
 {
     m_io_service = std::make_shared<Registry::Service::IOService>();
 
@@ -86,6 +99,15 @@ IOManager::IOManager(Core::GlobalStreamInfo& stream_info, uint32_t frame_rate, c
 
 IOManager::~IOManager()
 {
+    shutdown();
+}
+
+void IOManager::shutdown()
+{
+    if (m_shutdown_done.exchange(true)) {
+        return;
+    }
+
     {
         std::vector<uint32_t> ids;
         {
@@ -141,6 +163,8 @@ IOManager::~IOManager()
         }
     }
 
+    wait_for_pending_saves();
+
     Registry::BackendRegistry::instance()
         .unregister_service<Registry::Service::IOService>();
 
@@ -162,7 +186,7 @@ IOManager::~IOManager()
         m_audio_buffers.clear();
     }
 
-    MF_INFO(Journal::Component::Core, Journal::Context::Init, "IOManager destroyed");
+    MF_INFO(Journal::Component::IO, Journal::Context::Init, "IOManager shutdown complete");
 }
 
 std::shared_ptr<Kakshya::VideoFileContainer>
@@ -424,7 +448,7 @@ IOManager::create_writer(const std::string& filepath,
     }
 
     {
-        std::lock_guard lock(m_save_tasks_mutex);
+        std::lock_guard lock(m_writers_mutex);
         m_writers.push_back(writer);
     }
     return writer;
@@ -451,13 +475,7 @@ void IOManager::write(const std::shared_ptr<Kakshya::SoundStreamContainer>& cont
     }
 
     writer->write(container->get_data());
-    auto fut = writer->close();
-
-    std::lock_guard lock(m_save_tasks_mutex);
-    m_save_tasks.push_back(std::move(fut));
-    std::erase_if(m_save_tasks, [](std::future<bool>& f) {
-        return f.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
-    });
+    track_save_task(writer->close());
 }
 
 uint32_t IOManager::capture_output(const std::string& filepath, AVCodecID codec_id)
@@ -495,7 +513,7 @@ uint32_t IOManager::capture_output(const std::string& filepath, AVCodecID codec_
         });
 
     {
-        std::lock_guard lock(m_save_tasks_mutex);
+        std::lock_guard lock(m_writers_mutex);
         m_writers.push_back(writer);
     }
 
@@ -902,11 +920,7 @@ IOManager::load_mesh_network(const std::string& filepath, TextureResolver resolv
 
 void IOManager::track_save_task(std::future<bool> fut)
 {
-    std::lock_guard lock(m_save_tasks_mutex);
-    m_save_tasks.push_back(std::move(fut));
-    std::erase_if(m_save_tasks, [](std::future<bool>& f) {
-        return f.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
-    });
+    m_save_tasks.submit(std::move(fut));
 }
 
 bool IOManager::save_mesh(
@@ -1144,7 +1158,7 @@ bool IOManager::save_image(
         return false;
     }
 
-    auto fut = std::async(std::launch::async,
+    track_save_task(std::async(std::launch::async,
         [image, filepath, options]() -> bool {
             auto data = IO::download_image(image);
             if (!data) {
@@ -1154,14 +1168,7 @@ bool IOManager::save_image(
             }
 
             return Detail::execute_image_write(filepath, *data, options);
-        });
-
-    std::lock_guard lock(m_save_tasks_mutex);
-    m_save_tasks.push_back(std::move(fut));
-
-    std::erase_if(m_save_tasks, [](std::future<bool>& f) {
-        return f.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
-    });
+        }));
 
     return true;
 }
@@ -1201,19 +1208,12 @@ bool IOManager::save_image(
     const std::string& filepath,
     const IO::ImageWriteOptions& options)
 {
-    auto fut = std::async(std::launch::async,
+    track_save_task(std::async(std::launch::async,
         [data = std::move(data),
             filepath,
             options]() -> bool {
             return Detail::execute_image_write(filepath, data, options);
-        });
-
-    std::lock_guard lock(m_save_tasks_mutex);
-    m_save_tasks.push_back(std::move(fut));
-
-    std::erase_if(m_save_tasks, [](std::future<bool>& f) {
-        return f.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
-    });
+        }));
 
     return true;
 }
@@ -1260,19 +1260,12 @@ bool IOManager::save_volume(
     const std::string& filepath,
     const IO::VolumeWriteOptions& options)
 {
-    auto fut = std::async(std::launch::async,
+    track_save_task(std::async(std::launch::async,
         [data = std::move(data),
             filepath,
             options]() -> bool {
             return Detail::execute_volume_write(filepath, data, options);
-        });
-
-    std::lock_guard lock(m_save_tasks_mutex);
-    m_save_tasks.push_back(std::move(fut));
-
-    std::erase_if(m_save_tasks, [](std::future<bool>& f) {
-        return f.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
-    });
+        }));
 
     return true;
 }
@@ -1289,7 +1282,7 @@ bool IOManager::save_volume(
         return false;
     }
 
-    auto fut = std::async(std::launch::async,
+    track_save_task(std::async(std::launch::async,
         [volume, filepath, options, field_names]() -> bool {
             auto data = IO::download_volume(volume, field_names);
             if (!data) {
@@ -1299,14 +1292,7 @@ bool IOManager::save_volume(
             }
 
             return Detail::execute_volume_write(filepath, *data, options);
-        });
-
-    std::lock_guard lock(m_save_tasks_mutex);
-    m_save_tasks.push_back(std::move(fut));
-
-    std::erase_if(m_save_tasks, [](std::future<bool>& f) {
-        return f.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
-    });
+        }));
 
     return true;
 }
@@ -1475,14 +1461,7 @@ bool IOManager::save_spatial_snapshot(
 
 void IOManager::wait_for_pending_saves()
 {
-    std::vector<std::future<bool>> tasks;
-    {
-        std::lock_guard lock(m_save_tasks_mutex);
-        tasks.swap(m_save_tasks);
-    }
-    for (auto& f : tasks) {
-        f.wait();
-    }
+    m_save_tasks.drain();
 }
 
 std::vector<uint64_t> IOManager::get_video_reader_ids() const
