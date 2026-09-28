@@ -46,8 +46,8 @@ enum class VisionStatus : uint8_t {
  * only structured output.
  *
  * Callers access pixel data via:
- *   EigenAccess(result.pixel_image).view<Eigen::VectorXf>()  -- zero-copy Eigen map
- *   std::get<std::vector<float>>(result.pixel_image)          -- direct vector access
+ *   EigenAccess(result.pixel_image).view<Eigen::VectorXf>(): zero-copy Eigen map
+ *   std::get<std::vector<float>>(result.pixel_image): direct vector access
  *
  * w and h are the dimensions of pixel_image. Both are 0 when pixel_image is empty.
  */
@@ -155,32 +155,47 @@ struct VisionAnalysisContext {
 };
 
 /**
+ * @brief Track reduction, computed on GPU (Yantra's track_reduce.comp) from
+ *        the (context-filtered) subject tracks: sum reduced to mean for
+ *        centroid/velocity, min/max reduced to bounds. Not a CPU loop over
+ *        the downloaded track list.
+ */
+struct TrackObjectsAnalysis {
+    std::vector<TrackResult> tracks;
+    glm::vec2 centroid {};
+    glm::vec2 velocity {};
+    BoundingBox bounds {};
+};
+
+/**
  * @brief Composed analysis output: one populated field per active intent
  *        that produced a result this call.
  *
- * Each field is the existing result type itself, not a wrapper struct
- * around it: contours/tracks/keypoints are exactly VisionResult::structured's
- * content once its active alternative identifies which intent produced it;
+ * find_elements/detect_features are the existing GPU-produced result type
+ * directly: VisionResult::structured's content, routed by intent.
  * detect_edges/estimate_motion are exactly VisionResult::debug_labels/flow.
- * optional<vector<T>> (rather than a bare, possibly-empty vector) is what
- * distinguishes an intent that did not run from one that ran and found
- * nothing; detect_edges/estimate_motion skip that wrapper since a null
- * shared_ptr already means "did not run" the same way VisionResult's own
- * image fields do.
  *
- * find_contours's underlying VisionResult::structured holds one alternative
- * at a time, and FindContours runs after ConnectedComponents in that chain,
- * so the intermediate ComponentResult is not retrievable from the final
- * result; only the compacted contours survive.
+ * find_elements arrives already sorted by area, largest first, when the
+ * caller set FindContoursParams::max_contours > 0 on the request: that cap
+ * is driven by contour_topk_select.comp, a real GPU top-K-by-area
+ * reduction already in the FindContours pipeline, so "the largest
+ * contour" is find_elements->front() for a caller who asked for one, with
+ * no separate derived field needed.
  *
- * MeasureAppearance has no field: its VisionOp (Sobel) writes its output
- * only to the working image via the generic dispatch path, which
- * VisionGpuExecutor does not surface through any VisionResult field, so
- * there is currently nothing to collect for it.
+ * track_objects is TrackObjectsAnalysis, not a bare vector: its
+ * centroid/velocity/bounds are GPU-computed (see track_reduce.comp), the
+ * one intent with a real reduction shader today. detect_features has no
+ * equivalent GPU-computed reduction (strongest-by-response) yet.
+ *
+ * detect_edges/estimate_motion have no derived field: nothing in the GPU
+ * dispatch path reduces or downloads their content. MeasureAppearance has
+ * no field at all: its VisionOp (Sobel) writes its output only to the
+ * working image via the generic dispatch path, which VisionGpuExecutor
+ * does not surface through any VisionResult field.
  */
 struct VisionAnalysis {
     std::optional<std::vector<Contour>> find_elements;
-    std::optional<std::vector<TrackResult>> track_objects;
+    std::optional<TrackObjectsAnalysis> track_objects;
     std::optional<std::vector<Keypoint>> detect_features;
     std::shared_ptr<Core::VKImage> detect_edges;
     std::shared_ptr<Core::VKImage> estimate_motion;
