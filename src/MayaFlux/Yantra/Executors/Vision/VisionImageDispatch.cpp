@@ -88,7 +88,14 @@ GpuVisionPass::Completed VisionGpuExecutor::op_threshold_otsu(VisionGpuContexts&
     });
 
     {
-        const auto f = pixel_ctx.dispatch_dependency_async(otsu_stages);
+        ExecutionContext otsu_ctx;
+        otsu_ctx.mode = ExecutionMode::DEPENDENCY;
+        DependencyParams otsu_params;
+        otsu_params.stages = otsu_stages;
+        otsu_params.async = true;
+        otsu_ctx.parameters = otsu_params;
+        const auto result = pixel_ctx.execute(Datum<> {}, otsu_ctx);
+        const auto f = result.get_metadata<FenceID>("gpu_fence").value_or(INVALID_FENCE);
         foundry.wait_for_fence(f);
         foundry.release_fence(f);
     }
@@ -156,7 +163,14 @@ GpuVisionPass::Completed VisionGpuExecutor::op_open_close(
     });
 
     {
-        const auto f = pixel_ctx.dispatch_dependency_async(morph_stages);
+        ExecutionContext morph_ctx;
+        morph_ctx.mode = ExecutionMode::DEPENDENCY;
+        DependencyParams morph_params;
+        morph_params.stages = morph_stages;
+        morph_params.async = true;
+        morph_ctx.parameters = morph_params;
+        const auto result = pixel_ctx.execute(Datum<> {}, morph_ctx);
+        const auto f = result.get_metadata<FenceID>("gpu_fence").value_or(INVALID_FENCE);
         foundry.wait_for_fence(f);
         foundry.release_fence(f);
     }

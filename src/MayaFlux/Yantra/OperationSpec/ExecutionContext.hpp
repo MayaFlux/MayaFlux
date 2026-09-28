@@ -70,6 +70,18 @@ struct ChainedIndirectParams {
 struct DependencyParams {
     std::vector<DependencyStage> stages;
 
+    /**
+     * @brief Submit the sequence without waiting for it to complete.
+     *
+     * When true, execute() returns immediately after submission with the
+     * resulting FenceID in the output Datum's metadata under "gpu_fence"
+     * (Portal::Graphics::INVALID_FENCE on submission failure). The caller
+     * polls or waits on that fence and releases it once signaled. When
+     * false (default), execute() blocks until the sequence completes and
+     * returns an empty Datum, as dispatch_core_dependency always has.
+     */
+    bool async { false };
+
     ~DependencyParams();
     DependencyParams();
     DependencyParams(const DependencyParams&);

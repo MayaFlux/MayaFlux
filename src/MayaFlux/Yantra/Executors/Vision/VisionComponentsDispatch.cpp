@@ -111,7 +111,14 @@ void VisionGpuExecutor::op_connected_components(
         .explicit_groups = std::array<uint32_t, 3> { (w + k_wg2d[0] - 1U) / k_wg2d[0], (h + k_wg2d[1] - 1U) / k_wg2d[1], 1U },
     });
 
-    const auto fence = cc_pipeline.dispatch_dependency_async(cc_stages);
+    ExecutionContext cc_ctx;
+    cc_ctx.mode = ExecutionMode::DEPENDENCY;
+    DependencyParams cc_params;
+    cc_params.stages = cc_stages;
+    cc_params.async = true;
+    cc_ctx.parameters = cc_params;
+    const auto cc_dispatch_result = cc_pipeline.execute(Datum<> {}, cc_ctx);
+    const auto fence = cc_dispatch_result.get_metadata<FenceID>("gpu_fence").value_or(INVALID_FENCE);
     foundry.wait_for_fence(fence);
     foundry.release_fence(fence);
     cc_pipeline.clear_output_dimensions();

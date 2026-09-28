@@ -466,7 +466,14 @@ bool VisionGpuExecutor::op_track_keypoints(VisionGpuContexts& contexts, const Vi
     if (export_tracks)
         add_select(FlowSelectPhase::PUBLISH, candidate_groups, { k_flow_export[0], k_flow_export[1] }, FlowArgs::PUBLISH);
 
-    const auto fence = flow.dispatch_dependency_async(stages);
+    ExecutionContext track_ctx;
+    track_ctx.mode = ExecutionMode::DEPENDENCY;
+    DependencyParams track_params;
+    track_params.stages = stages;
+    track_params.async = true;
+    track_ctx.parameters = track_params;
+    const auto track_dispatch_result = flow.execute(Datum<> {}, track_ctx);
+    const auto fence = track_dispatch_result.get_metadata<Portal::Graphics::FenceID>("gpu_fence").value_or(Portal::Graphics::INVALID_FENCE);
     if (fence == Portal::Graphics::INVALID_FENCE) {
         MF_ERROR(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
             "run_gpu: TrackKeypoints failed to submit its dispatch sequence");
@@ -655,7 +662,14 @@ bool VisionGpuExecutor::op_dense_flow(VisionGpuContexts& contexts, const VisionS
         push_stage(vis_pc, finest, { out_hazard, image_hazard(images->vis, 11U) });
     }
 
-    const auto fence = flow.dispatch_dependency_async(stages);
+    ExecutionContext dense_ctx;
+    dense_ctx.mode = ExecutionMode::DEPENDENCY;
+    DependencyParams dense_params;
+    dense_params.stages = stages;
+    dense_params.async = true;
+    dense_ctx.parameters = dense_params;
+    const auto dense_dispatch_result = flow.execute(Datum<> {}, dense_ctx);
+    const auto fence = dense_dispatch_result.get_metadata<Portal::Graphics::FenceID>("gpu_fence").value_or(Portal::Graphics::INVALID_FENCE);
     if (fence == Portal::Graphics::INVALID_FENCE) {
         MF_ERROR(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
             "run_gpu: OpticalFlowDense failed to submit its dispatch sequence");
@@ -768,7 +782,14 @@ void VisionGpuExecutor::build_flow_pyramid(VisionGpuContexts& contexts, uint32_t
     const std::array<uint32_t, 4> cleared {};
     flow.upload_shared_raw(1, 3, reinterpret_cast<const uint8_t*>(cleared.data()), sizeof(cleared));
 
-    state.build_fence = flow.dispatch_dependency_async(stages);
+    ExecutionContext pyramid_ctx;
+    pyramid_ctx.mode = ExecutionMode::DEPENDENCY;
+    DependencyParams pyramid_params;
+    pyramid_params.stages = stages;
+    pyramid_params.async = true;
+    pyramid_ctx.parameters = pyramid_params;
+    const auto pyramid_dispatch_result = flow.execute(Datum<> {}, pyramid_ctx);
+    state.build_fence = pyramid_dispatch_result.get_metadata<Portal::Graphics::FenceID>("gpu_fence").value_or(Portal::Graphics::INVALID_FENCE);
     state.curr_ready = state.build_fence != Portal::Graphics::INVALID_FENCE;
 }
 
