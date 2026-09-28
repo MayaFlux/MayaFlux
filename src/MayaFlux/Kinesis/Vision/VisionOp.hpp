@@ -211,6 +211,9 @@ struct ConnectedComponentsParams {
 /**
  * @brief Contour filtering, trace limits, and output selection.
  *
+ * FindContours requires ConnectedComponents as the immediately preceding
+ * sequence step on both backends.
+ *
  * min_area is pixel coverage normalised by image area. A positive
  * max_contours selects contours by descending area, counting both outer
  * boundaries and holes. Zero imposes no caller count limit.

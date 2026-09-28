@@ -40,16 +40,18 @@ struct BoundingBox {
  * Points are in normalised image coordinates [0, 1], top-left origin.
  */
 struct Contour {
+    static constexpr uint32_t no_parent = 0xFFFFFFFFU; ///< Outer contour parent sentinel.
+
     std::vector<glm::vec2> points;
     float area; ///< Pixel coverage divided by total image area.
     float perimeter; ///< Closed boundary length in pixels.
 
     /**
-     * @brief 0 for an outer contour. For a hole contour, the label id
+     * @brief no_parent for an outer contour. For a hole contour, the label id
      *        (1-based) of the foreground component this hole is
      *        enclosed by.
      */
-    uint32_t parent_label { 0U };
+    uint32_t parent_label { no_parent };
 };
 
 /**

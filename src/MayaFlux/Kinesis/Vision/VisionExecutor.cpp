@@ -416,14 +416,23 @@ VisionResult VisionExecutor::run(
         }
 
         case VisionOp::FindContours: {
-            const auto& p = get_params<FindContoursParams>(step.params, step.op);
-            const size_t n = m_pass.plane_size();
             const auto* prev = m_pass.behind();
+            if (!prev || prev->op != VisionOp::ConnectedComponents) {
+                MF_ERROR(Journal::Component::Kinesis, Journal::Context::Runtime,
+                    "VisionExecutor: FindContours requires ConnectedComponents as the immediately preceding step");
+                return {};
+            }
+
             const auto* components = std::get_if<ComponentResult>(&m_pass.result.structured);
-            auto contours = prev && prev->op == VisionOp::ConnectedComponents && components
-                ? find_contours(*components, w, h, p.min_area, p.max_contours, p.max_points_per_contour)
-                : find_contours(std::span<const float>(slot_vec(m_pass.current)).subspan(0, n),
-                      w, h, p.min_area, p.max_contours, p.max_points_per_contour);
+            if (!components) {
+                MF_ERROR(Journal::Component::Kinesis, Journal::Context::Runtime,
+                    "VisionExecutor: FindContours requires a connected-component result");
+                return {};
+            }
+
+            const auto& p = get_params<FindContoursParams>(step.params, step.op);
+            auto contours = find_contours(*components, w, h,
+                p.min_area, p.max_contours, p.max_points_per_contour);
             if (p.as_image) {
                 render_contours(slot_vec(m_pass.current), contours, w, h);
                 m_pass.channels = 4;

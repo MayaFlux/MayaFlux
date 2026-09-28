@@ -73,7 +73,7 @@ namespace {
             .area = (std::abs(area) * 0.5F + perimeter * 0.5F + 1.0F)
                 / (static_cast<float>(w) * static_cast<float>(h)),
             .perimeter = perimeter,
-            .parent_label = parent,
+            .parent_label = parent == 0 ? Contour::no_parent : parent,
         };
         contour.points.reserve(pixels.size());
         const glm::vec2 extent(static_cast<float>(w), static_cast<float>(h));

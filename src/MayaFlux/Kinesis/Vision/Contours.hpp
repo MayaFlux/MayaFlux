@@ -25,6 +25,7 @@ namespace MayaFlux::Kinesis::Vision {
  * with Moore neighborhood following. Enclosed 4-connected background regions
  * are traced as holes, with parent_label naming their enclosing foreground
  * component. Background connected to an image edge is excluded.
+ * Outer contours use Contour::no_parent (0xFFFFFFFF) as their parent_label.
  * Each contour closes from its last point to its first. Closure follows the
  * starting directed edge so touching branches may revisit the start pixel.
  *
