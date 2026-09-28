@@ -4,6 +4,7 @@
 #include "OperationSpec/OperationChain.hpp"
 #include "OperationSpec/OperationPool.hpp"
 
+#include "MayaFlux/Transitive/Parallel/AsyncGroup.hpp"
 #include "MayaFlux/Transitive/Parallel/Execution.hpp"
 
 namespace MayaFlux::Yantra {
@@ -477,7 +478,10 @@ public:
         m_default_timeout = timeout;
     }
 
-    ComputeMatrix() = default;
+    ComputeMatrix()
+        : m_async_tasks([this](std::exception_ptr ep) { handle_async_error(std::move(ep)); })
+    {
+    }
 
 private:
     /**
@@ -566,12 +570,28 @@ private:
 
     void register_async(std::future<void> f)
     {
-        std::lock_guard lk(m_async_mtx);
+        m_async_tasks.submit(std::move(f));
+    }
 
-        std::erase_if(m_async_futures, [](std::future<void>& f) {
-            return f.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
-        });
-        m_async_futures.push_back(std::move(f));
+    /**
+     * @brief Routes an async chain's exception into the same reporting
+     *        surface as a synchronous operation failure.
+     *
+     * There is no single operation type to attribute the failure to here,
+     * since the exception may have escaped the chain itself rather than
+     * one operation's apply_operation_internal(). typeid(void) marks that
+     * absence, matching m_last_error_type's own default.
+     */
+    void handle_async_error(std::exception_ptr ep)
+    {
+        try {
+            std::rethrow_exception(std::move(ep));
+        } catch (const std::exception& e) {
+            handle_execution_error(e, typeid(void));
+        } catch (...) {
+            m_last_error = "async chain failed with unrecognized exception";
+            m_last_error_type = typeid(void);
+        }
     }
 
     OperationPool m_operations;
@@ -585,8 +605,7 @@ private:
     std::atomic<double> m_average_execution_time { 0.0 };
     bool m_profiling_enabled = false;
 
-    std::mutex m_async_mtx;
-    std::vector<std::future<void>> m_async_futures;
+    Parallel::AsyncGroup<void> m_async_tasks;
 
     std::string m_last_error;
     std::type_index m_last_error_type { typeid(void) };
@@ -618,12 +637,7 @@ public:
      */
     void drain_async()
     {
-        std::lock_guard lk(m_async_mtx);
-        for (auto& f : m_async_futures) {
-            f.wait();
-        }
-
-        m_async_futures.clear();
+        m_async_tasks.drain();
     }
 
     ~ComputeMatrix()
