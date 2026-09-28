@@ -58,16 +58,60 @@ VisionExtractor::VisionExtractor(VisionExtractMode mode)
 {
 }
 
+std::optional<Kinesis::Vision::BoundingBox> VisionExtractor::region_for_analysis(
+    const Kinesis::Vision::VisionAnalysis& analysis) const
+{
+    if (analysis.find_elements && m_element_index < analysis.find_elements->boxes.size())
+        return analysis.find_elements->boxes[m_element_index];
+    if (analysis.track_objects)
+        return analysis.track_objects->bounds;
+    if (analysis.detect_features)
+        return analysis.detect_features->bounds;
+    return std::nullopt;
+}
+
+std::optional<uint32_t> VisionExtractor::label_for_analysis(
+    const Kinesis::Vision::VisionAnalysis& analysis) const
+{
+    if (!analysis.find_elements || m_element_index >= analysis.find_elements->contours.size())
+        return std::nullopt;
+
+    const auto label = analysis.find_elements->contours[m_element_index].label_id;
+    if (label == 0)
+        return std::nullopt;
+    return label;
+}
+
+std::vector<glm::vec2> VisionExtractor::points_for_analysis(
+    const Kinesis::Vision::VisionAnalysis& analysis) const
+{
+    std::vector<glm::vec2> points;
+    if (analysis.detect_features) {
+        points.reserve(analysis.detect_features->keypoints.size());
+        for (const auto& k : analysis.detect_features->keypoints)
+            points.push_back(k.position);
+    } else if (analysis.track_objects) {
+        points.reserve(analysis.track_objects->tracks.size());
+        for (const auto& t : analysis.track_objects->tracks)
+            points.push_back(t.position);
+    }
+    return points;
+}
+
 std::shared_ptr<Core::VKImage> VisionExtractor::crop(
     const std::shared_ptr<Core::VKImage>& source,
-    const Kinesis::Vision::BoundingBox& region,
+    const Kinesis::Vision::VisionAnalysis& analysis,
     uint32_t out_w, uint32_t out_h)
 {
+    const auto region = region_for_analysis(analysis);
+    if (!region)
+        return nullptr;
+
     auto& foundry = Portal::Graphics::get_shader_foundry();
 
     m_crop_ctx->stage_image(source);
     m_crop_ctx->set_push_constants(CropPC {
-        .src_x = region.x, .src_y = region.y, .src_w = region.w, .src_h = region.h,
+        .src_x = region->x, .src_y = region->y, .src_w = region->w, .src_h = region->h,
         .out_w = out_w, .out_h = out_h });
     m_crop_ctx->prepare_output_image(out_w, out_h);
     m_crop_ctx->set_output_dimensions(out_w, out_h);
@@ -83,23 +127,31 @@ std::shared_ptr<Core::VKImage> VisionExtractor::crop(
 std::shared_ptr<Core::VKImage> VisionExtractor::mask(
     VisionGpuExecutor& executor,
     const std::shared_ptr<Core::VKImage>& source,
-    uint32_t target_label,
+    const Kinesis::Vision::VisionAnalysis& analysis,
     uint32_t w, uint32_t h)
 {
-    return executor.select_label(source, target_label, w, h);
+    const auto label = label_for_analysis(analysis);
+    if (!label)
+        return nullptr;
+
+    return executor.select_label(source, *label, w, h);
 }
 
 Kinesis::Vision::FieldSample VisionExtractor::sample(
     const std::shared_ptr<Core::VKImage>& source,
-    const Kinesis::Vision::BoundingBox& region,
+    const Kinesis::Vision::VisionAnalysis& analysis,
     uint32_t source_w, uint32_t source_h)
 {
+    const auto region = region_for_analysis(analysis);
+    if (!region)
+        return {};
+
     auto& foundry = Portal::Graphics::get_shader_foundry();
 
-    const auto px = static_cast<uint32_t>(region.x * static_cast<float>(source_w));
-    const auto py = static_cast<uint32_t>(region.y * static_cast<float>(source_h));
-    const auto pw = std::max<uint32_t>(1U, static_cast<uint32_t>(region.w * static_cast<float>(source_w)));
-    const auto ph = std::max<uint32_t>(1U, static_cast<uint32_t>(region.h * static_cast<float>(source_h)));
+    const auto px = static_cast<uint32_t>(region->x * static_cast<float>(source_w));
+    const auto py = static_cast<uint32_t>(region->y * static_cast<float>(source_h));
+    const auto pw = std::max<uint32_t>(1U, static_cast<uint32_t>(region->w * static_cast<float>(source_w)));
+    const auto ph = std::max<uint32_t>(1U, static_cast<uint32_t>(region->h * static_cast<float>(source_h)));
 
     m_sample_ctx->stage_image(source);
     m_sample_ctx->set_push_constants(RegionSamplePC { .px = px, .py = py, .pw = pw, .ph = ph });
@@ -126,10 +178,11 @@ Kinesis::Vision::FieldSample VisionExtractor::sample(
 
 std::shared_ptr<Core::VKImage> VisionExtractor::patches(
     const std::shared_ptr<Core::VKImage>& source,
-    const std::vector<glm::vec2>& centers,
+    const Kinesis::Vision::VisionAnalysis& analysis,
     uint32_t patch_w, uint32_t patch_h,
     uint32_t source_w, uint32_t source_h)
 {
+    const auto centers = points_for_analysis(analysis);
     if (centers.empty())
         return nullptr;
 
@@ -201,6 +254,13 @@ VisionExtractor::output_type VisionExtractor::run_operation(const input_type& in
         return output;
     }
 
+    const auto analysis = Kakshya::get_metadata_value<Kinesis::Vision::VisionAnalysis>(
+        input.metadata, "vision_analysis");
+    if (!analysis) {
+        output.metadata["error"] = std::string("VisionExtractor: missing vision_analysis metadata");
+        return output;
+    }
+
     const auto index = Kakshya::get_metadata_value<size_t>(input.metadata, "container_index").value_or(0);
     const auto image = resolve_image(input.data, index);
     if (!image) {
@@ -210,14 +270,14 @@ VisionExtractor::output_type VisionExtractor::run_operation(const input_type& in
 
     switch (m_mode) {
     case VisionExtractMode::Crop:
-        output.metadata["vision_extraction"] = crop(image, m_region, m_out_w, m_out_h);
+        output.metadata["vision_extraction"] = crop(image, *analysis, m_out_w, m_out_h);
         break;
     case VisionExtractMode::Sample:
-        output.metadata["vision_extraction"] = sample(image, m_region, image->get_width(), image->get_height());
+        output.metadata["vision_extraction"] = sample(image, *analysis, image->get_width(), image->get_height());
         break;
     case VisionExtractMode::Patches:
         output.metadata["vision_extraction"] = patches(
-            image, m_centers, m_patch_w, m_patch_h, image->get_width(), image->get_height());
+            image, *analysis, m_patch_w, m_patch_h, image->get_width(), image->get_height());
         break;
     }
 

@@ -95,6 +95,21 @@ public:
      */
     void reset();
 
+    /**
+     * @brief The executor this analyzer's run just used.
+     *
+     * VisionExtractor::mask() needs both a label id from this analyzer's own
+     * VisionAnalysis::find_elements and the executor whose device label
+     * buffer that id indexes into: the two are inseparable, since the label
+     * buffer only lives on the executor that produced it. Exposing this is
+     * what lets extraction actually depend on analysis having run, rather
+     * than a caller re-deriving the same contours through a second, separate
+     * VisionGpuExecutor::run() call that never touches this analyzer at all.
+     *
+     * Valid after at least one analyze_vision() call; null before that.
+     */
+    [[nodiscard]] VisionGpuExecutor* get_executor() const { return m_executor.get(); }
+
 private:
     /**
      * @brief ComputeOperation adapter: uses input.data as the source
