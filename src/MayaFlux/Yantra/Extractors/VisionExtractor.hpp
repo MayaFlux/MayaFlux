@@ -1,284 +1,211 @@
 #pragma once
 
-#include "UniversalExtractor.hpp"
-
-#include "MayaFlux/Yantra/Analyzers/VisionAnalyzer.hpp"
+#include "MayaFlux/Kinesis/Vision/Features.hpp"
+#include "MayaFlux/Kinesis/Vision/VisionInsight.hpp"
 #include "MayaFlux/Yantra/Executors/TextureExecutionContext.hpp"
+#include "MayaFlux/Yantra/Executors/VisionGpuDispatch.hpp"
+#include "MayaFlux/Yantra/FunctionalOperation.hpp"
 
-#include "MayaFlux/Kakshya/Utils/CoordUtils.hpp"
-#include "MayaFlux/Kinesis/Vision/Contours.hpp"
+/**
+ * @file VisionExtractor.hpp
+ * @brief GPU-native getter for whatever VisionAnalyzer found: given a
+ *        region or a set of points, pulls out the corresponding image
+ *        content or field values.
+ *
+ * FunctionalOperation<shared_ptr<SignalSourceContainer>, vector<DataVariant>>,
+ * the same InputType VisionAnalyzer landed on and for the same reason:
+ * shared_ptr<Core::VKImage> does not satisfy ComputeData (DataSpec.hpp lists
+ * shared_ptr<SignalSourceContainer>, not VKImage), so a container is the
+ * only real Operation input available. crop()/sample()/patches() stay real,
+ * directly-callable, clearly-named methods for a caller who already has a
+ * resolved VKImage and is not going through ComputeMatrix at all; the
+ * inherited run_operation is a thin adapter beneath them, selecting one via
+ * m_mode (VisionExtractMode) the same way FeatureExtractor::extract_implementation
+ * switches on its own ExtractionMethod.
+ *
+ * mask() is excluded from this: it needs a VisionGpuExecutor&, the one that
+ * ran the analysis and still owns the label buffer, not a container or
+ * image. No ComputeData shape fits that, so it stays its own method, not
+ * reachable through run_operation.
+ */
+
+namespace MayaFlux::Kakshya {
+class SignalSourceContainer;
+}
 
 namespace MayaFlux::Yantra {
 
 /**
- * @enum VisionExtractionMode
- * @brief Selects the spatial mask used to crop pixels from a container.
+ * @enum VisionExtractMode
+ * @brief Which of VisionExtractor's real methods run_operation dispatches
+ *        to, mirroring FeatureExtractor::ExtractionMethod.
  */
-enum class VisionExtractionMode : uint8_t {
-    BBOX, ///< Crop the axis-aligned rectangle of a BoundingBox.
-    CONTOUR_TIGHT, ///< Crop the tight bounding rect of a Contour; no polygon mask.
-    CONTOUR_MASKED, ///< Crop the tight bounding rect of a Contour; zero pixels outside polygon.
+enum class VisionExtractMode : uint8_t {
+    Crop,
+    Sample,
+    Patches,
 };
 
 /**
  * @class VisionExtractor
- * @brief Extracts a pixel sub-region guided by a VisionAnalysis in input metadata.
+ * @brief Three GPU dispatches reachable through the Operation contract,
+ *        plus mask() alongside them for API symmetry:
  *
- * Accepts any pixel-bearing InputType: vector<DataVariant>, shared_ptr<SignalSourceContainer>,
- * Region, or RegionGroup. extract_structured_native handles all unwrapping.
- * VisionAnalysis must be present in input.metadata["vision_analysis"].
+ *        crop()    Rectangular sub-image of any source image at a
+ *                   BoundingBox (vision_crop.comp).
+ *        mask()     Pixel-precise silhouette of one ConnectedComponents
+ *                   label, not just its bounding rectangle
+ *                   (vision_label_select.comp, dispatched through the same
+ *                   VisionGpuExecutor that produced the label buffer).
+ *        sample()   Per-channel mean/min/max over a BoundingBox region of
+ *                   any source image, computed on GPU and never downloaded
+ *                   as a full region (region_sample.comp). The one shape
+ *                   that answers "what is the flow/gradient/appearance
+ *                   like here" for the whole-frame VisionAnalysis fields
+ *                   (estimate_motion, detect_edges) that have no bounds of
+ *                   their own to crop or mask against.
+ *        patches()  One fixed-size crop per point in a batch (Keypoint or
+ *                   TrackResult positions), all in one dispatch
+ *                   (vision_patch_extract.comp), laid out side by side in
+ *                   a single atlas image.
  *
- * CPU path: reads pixel data via extract_structured_native, converts normalised
- * bbox or contour rect to a pixel Region via CoordUtils, copies the sub-region,
- * and optionally applies apply_contour_mask. Output data is vector<DataVariant>
- * carrying the cropped float pixels with IMAGE_2D dimensions set.
+ * crop/sample/patches each own a persistent TextureExecutionContext,
+ * constructed once and reused: no per-call shader reload, matching
+ * VisionAnalyzer's own m_track_reducer precedent.
  *
- * GPU path: attach a TextureExecutionContext configured with vision_crop.comp.
- * Before calling apply_operation, use compute_normalised_rect() to get the crop
- * rect, then call set_output_dimensions() and set_push_constants() on the context.
- * apply_operation_internal routes to the backend automatically.
- *
- * @tparam InputType  Any ComputeData type carrying pixel data.
- *                    Defaults to shared_ptr<SignalSourceContainer>.
- * @tparam OutputType Output pixel data type. Defaults to vector<DataVariant>.
+ * set_region()/set_output_size()/set_patch_size()/set_patch_centers() are
+ * run_operation's recipe state, the same role request/context play for
+ * VisionAnalyzer: configured ahead of a ComputeMatrix run, not passed
+ * alongside the data. A direct caller of crop()/sample()/patches() ignores
+ * all of this and passes its own arguments instead.
  */
-template <ComputeData InputType = std::shared_ptr<Kakshya::SignalSourceContainer>,
-    ComputeData OutputType = std::vector<Kakshya::DataVariant>>
-class VisionExtractor
-    : public UniversalExtractor<InputType, OutputType> {
+class MAYAFLUX_API VisionExtractor
+    : public FunctionalOperation<std::shared_ptr<Kakshya::SignalSourceContainer>, std::vector<Kakshya::DataVariant>> {
 public:
-    using input_type = Datum<InputType>;
-    using output_type = Datum<OutputType>;
+    using Base = FunctionalOperation<std::shared_ptr<Kakshya::SignalSourceContainer>, std::vector<Kakshya::DataVariant>>;
+
+    explicit VisionExtractor(VisionExtractMode mode = VisionExtractMode::Crop);
+
+    void set_mode(VisionExtractMode mode) { m_mode = mode; }
+    [[nodiscard]] VisionExtractMode get_mode() const { return m_mode; }
+
+    void set_region(const Kinesis::Vision::BoundingBox& region) { m_region = region; }
+    [[nodiscard]] const Kinesis::Vision::BoundingBox& get_region() const { return m_region; }
+
+    /** @brief Crop mode's output size. */
+    void set_output_size(uint32_t w, uint32_t h) { m_out_w = w; m_out_h = h; }
+
+    /** @brief Patches mode's per-patch size. */
+    void set_patch_size(uint32_t w, uint32_t h) { m_patch_w = w; m_patch_h = h; }
+
+    /** @brief Patches mode's centres. */
+    void set_patch_centers(std::vector<glm::vec2> centers) { m_centers = std::move(centers); }
+    [[nodiscard]] const std::vector<glm::vec2>& get_patch_centers() const { return m_centers; }
 
     /**
-     * @brief Construct with extraction mode and target index.
-     * @param mode  Crop strategy to apply.
-     * @param index Zero-based index into boxes or contours in VisionAnalysis.
+     * @brief Rectangular crop of any source image at a normalised region.
+     *
+     * @param source Image to crop, eShaderReadOnlyOptimal.
+     * @param region Normalised [0,1] crop rectangle in source's own space.
+     * @param out_w  Output width in pixels.
+     * @param out_h  Output height in pixels.
      */
-    explicit VisionExtractor(
-        VisionExtractionMode mode = VisionExtractionMode::BBOX,
-        uint32_t index = 0)
-        : m_mode(mode)
-        , m_index(index)
-    {
-    }
-
-    void set_mode(VisionExtractionMode mode) { m_mode = mode; }
-    void set_index(uint32_t index) { m_index = index; }
-
-    [[nodiscard]] VisionExtractionMode get_mode() const { return m_mode; }
-    [[nodiscard]] uint32_t get_index() const { return m_index; }
-
-    [[nodiscard]] ExtractionType get_extraction_type() const override
-    {
-        return ExtractionType::REGION_BASED;
-    }
-
-    [[nodiscard]] std::string get_extractor_name() const override
-    {
-        return "VisionExtractor";
-    }
-
-    [[nodiscard]] std::vector<std::string> get_available_methods() const override
-    {
-        return { "bbox", "contour_tight", "contour_masked" };
-    }
+    [[nodiscard]] std::shared_ptr<Core::VKImage> crop(
+        const std::shared_ptr<Core::VKImage>& source,
+        const Kinesis::Vision::BoundingBox& region,
+        uint32_t out_w, uint32_t out_h);
 
     /**
-     * @brief Compute the normalised crop rectangle for a given VisionAnalysis.
+     * @brief Pixel-precise silhouette of one ConnectedComponents label.
      *
-     * Returns { nx, ny, nw, nh } in image space [0,1]. Used by callers
-     * to configure a TextureExecutionContext before GPU dispatch:
-     * @code
-     * auto rect = extractor->compute_normalised_rect(analysis);
-     * ctx->set_output_dimensions(crop_w, crop_h);
-     * ctx->set_push_constants(CropPC { rect[0], rect[1], rect[2], rect[3], crop_w, crop_h });
-     * extractor->apply_operation(datum);
-     * @endcode
-     *
-     * @throws std::out_of_range if index exceeds the relevant detection collection.
+     * @param executor     The same VisionGpuExecutor a VisionAnalyzer run
+     *                     used, with ConnectedComponentsParams::export_boxes
+     *                     or export_label_buffer set on that run, so its
+     *                     dense label buffer is populated and live.
+     * @param source       Image to select pixels from, eShaderReadOnlyOptimal.
+     * @param target_label 1-based label id, matching BoundingBox::label_id /
+     *                     Contour::label_id from that same run.
+     * @param w            Frame width in pixels.
+     * @param h            Frame height in pixels.
      */
-    [[nodiscard]] std::array<float, 4> compute_normalised_rect(
-        const VisionAnalysis& analysis) const
-    {
-        switch (m_mode) {
-        case VisionExtractionMode::BBOX: {
-            if (m_index >= analysis.frame.boxes.size()) {
-                error<std::out_of_range>(
-                    Journal::Component::Yantra,
-                    Journal::Context::ComputeMatrix,
-                    std::source_location::current(),
-                    "VisionExtractor: bbox index {} out of range ({})",
-                    m_index, analysis.frame.boxes.size());
-            }
-            const auto& b = analysis.frame.boxes[m_index];
-            return { b.x, b.y, b.w, b.h };
-        }
-        case VisionExtractionMode::CONTOUR_TIGHT:
-        case VisionExtractionMode::CONTOUR_MASKED: {
-            if (m_index >= analysis.frame.contours.size()) {
-                error<std::out_of_range>(
-                    Journal::Component::Yantra,
-                    Journal::Context::ComputeMatrix,
-                    std::source_location::current(),
-                    "VisionExtractor: contour index {} out of range ({})",
-                    m_index, analysis.frame.contours.size());
-            }
-            const auto& pts = analysis.frame.contours[m_index].points;
-            float min_x = pts[0].x, max_x = pts[0].x;
-            float min_y = pts[0].y, max_y = pts[0].y;
-            for (const auto& p : pts) {
-                if (p.x < min_x)
-                    min_x = p.x;
-                if (p.x > max_x)
-                    max_x = p.x;
-                if (p.y < min_y)
-                    min_y = p.y;
-                if (p.y > max_y)
-                    max_y = p.y;
-            }
-            return { min_x, min_y, max_x - min_x, max_y - min_y };
-        }
-        }
-        return { 0.F, 0.F, 1.F, 1.F };
-    }
+    [[nodiscard]] std::shared_ptr<Core::VKImage> mask(
+        VisionGpuExecutor& executor,
+        const std::shared_ptr<Core::VKImage>& source,
+        uint32_t target_label,
+        uint32_t w, uint32_t h);
 
-protected:
-    output_type apply_operation_internal(
-        const input_type& input, const ExecutionContext& context) override
-    {
-        if (this->m_gpu_backend && this->m_gpu_backend->ensure_gpu_ready()) {
-            const auto analysis_it = input.metadata.find("vision_analysis");
-            if (analysis_it != input.metadata.end() && analysis_it->second.has_value()) {
-                const auto& analysis = safe_any_cast_or_throw<VisionAnalysis>(
-                    analysis_it->second);
+    /**
+     * @brief Per-channel mean/min/max over a normalised region, computed on
+     *        GPU and never downloaded as a full region.
+     *
+     * @param source    Image to sample, eShaderReadOnlyOptimal. Any of
+     *                  VisionAnalysis's image fields (estimate_motion,
+     *                  detect_edges) or the original/gray frame.
+     * @param region    Normalised [0,1] region in source's own space.
+     * @param source_w  source's width in pixels.
+     * @param source_h  source's height in pixels.
+     */
+    [[nodiscard]] Kinesis::Vision::FieldSample sample(
+        const std::shared_ptr<Core::VKImage>& source,
+        const Kinesis::Vision::BoundingBox& region,
+        uint32_t source_w, uint32_t source_h);
 
-                auto [nx, ny, nw, nh] = compute_normalised_rect(analysis);
-                const auto crop_w = static_cast<uint32_t>(
-                    std::max(1.0F, std::round(nw * static_cast<float>(analysis.w))));
-                const auto crop_h = static_cast<uint32_t>(
-                    std::max(1.0F, std::round(nh * static_cast<float>(analysis.h))));
-
-                auto* ctx = dynamic_cast<TextureExecutionContext*>(
-                    this->m_gpu_backend.get());
-                if (ctx) {
-                    ctx->set_output_dimensions(crop_w, crop_h);
-                    ctx->set_push_constants(
-                        CropPC { nx, ny, nw, nh, crop_w, crop_h });
-                }
-            }
-        }
-
-        return UniversalExtractor<InputType, OutputType>::apply_operation_internal(input, context);
-    }
-
-    output_type extract_implementation(const input_type& input) override
-    {
-        const auto analysis_it = input.metadata.find("vision_analysis");
-        if (analysis_it == input.metadata.end() || !analysis_it->second.has_value()) {
-            error<std::runtime_error>(
-                Journal::Component::Yantra,
-                Journal::Context::ComputeMatrix,
-                std::source_location::current(),
-                "VisionExtractor: no vision_analysis in input metadata");
-        }
-
-        const auto& analysis = safe_any_cast_or_throw<VisionAnalysis>(
-            analysis_it->second);
-
-        if (analysis.pixel_image.empty()) {
-            error<std::runtime_error>(
-                Journal::Component::Yantra,
-                Journal::Context::ComputeMatrix,
-                std::source_location::current(),
-                "VisionExtractor: VisionAnalysis carries no pixel data");
-        }
-
-        const uint32_t w = analysis.w;
-        const uint32_t h = analysis.h;
-        const auto channels = static_cast<uint32_t>(
-            analysis.pixel_image.size() / (static_cast<size_t>(w) * h));
-
-        const auto [nx, ny, nw, nh] = compute_normalised_rect(analysis);
-
-        Kakshya::Region region = Kakshya::normalised_rect_to_region(nx, ny, nw, nh, w, h);
-
-        const auto crop_w = static_cast<uint32_t>(
-            region.end_coordinates[1] - region.start_coordinates[1] + 1);
-        const auto crop_h = static_cast<uint32_t>(
-            region.end_coordinates[0] - region.start_coordinates[0] + 1);
-
-        const uint32_t stride = w * channels;
-        const uint32_t crop_stride = crop_w * channels;
-        std::vector<float> cropped(static_cast<size_t>(crop_w) * crop_h * channels);
-
-        const float* src = analysis.pixel_image.data();
-        float* dst = cropped.data();
-
-        const auto y0 = static_cast<uint32_t>(region.start_coordinates[0]);
-        const auto x0 = static_cast<uint32_t>(region.start_coordinates[1]);
-
-        for (uint32_t row = 0; row < crop_h; ++row) {
-            std::memcpy(
-                dst + static_cast<size_t>(row * crop_stride),
-                src + (static_cast<size_t>(y0 + row) * stride) + static_cast<size_t>(x0 * channels),
-                crop_stride * sizeof(float));
-        }
-
-        if (m_mode == VisionExtractionMode::CONTOUR_MASKED) {
-            const auto& contour = analysis.frame.contours[m_index];
-            const float origin_x = nx;
-            const float origin_y = ny;
-            const float scale_x = nw / static_cast<float>(crop_w);
-            const float scale_y = nh / static_cast<float>(crop_h);
-            Kinesis::Vision::apply_contour_mask(
-                std::span<float>(cropped),
-                crop_w, crop_h, channels,
-                contour,
-                origin_x, origin_y, scale_x, scale_y);
-        }
-
-        output_type out;
-        if constexpr (std::is_same_v<OutputType, std::vector<Kakshya::DataVariant>>) {
-            out.data = std::vector<Kakshya::DataVariant> { std::move(cropped) };
-        } else {
-            out.data = OperationHelper::reconstruct_from_double<OutputType>({}, {});
-        }
-
-        out.dimensions = { Kakshya::DataDimension::spatial_2d(crop_w, crop_h) };
-        out.modality = (channels == 1)
-            ? Kakshya::DataModality::IMAGE_2D
-            : Kakshya::DataModality::IMAGE_COLOR;
-        out.metadata = input.metadata;
-        out.metadata["crop_w"] = crop_w;
-        out.metadata["crop_h"] = crop_h;
-        out.metadata["vision_extractor_mode"] = static_cast<int>(m_mode);
-        out.metadata["vision_extractor_index"] = m_index;
-        return out;
-    }
+    /**
+     * @brief One fixed-size crop per centre, all in one dispatch, laid out
+     *        side by side in a single atlas image of size
+     *        (patch_w * centers.size(), patch_h).
+     *
+     * @param source    Image to crop from, eShaderReadOnlyOptimal.
+     * @param centers   Normalised [0,1] patch centres, e.g. Keypoint or
+     *                  TrackResult positions.
+     * @param patch_w   Patch width in pixels.
+     * @param patch_h   Patch height in pixels.
+     * @param source_w  source's width in pixels.
+     * @param source_h  source's height in pixels.
+     */
+    [[nodiscard]] std::shared_ptr<Core::VKImage> patches(
+        const std::shared_ptr<Core::VKImage>& source,
+        const std::vector<glm::vec2>& centers,
+        uint32_t patch_w, uint32_t patch_h,
+        uint32_t source_w, uint32_t source_h);
 
 private:
-    struct CropPC {
-        float src_x, src_y, src_w, src_h;
-        uint32_t out_w, out_h;
-    };
+    /**
+     * @brief ComputeOperation adapter: resolves input.data (a container) to
+     *        a GPU image, then runs whichever of crop()/sample()/patches()
+     *        m_mode selects, using this instance's own configured recipe
+     *        state. mask() has no place here: it needs a VisionGpuExecutor,
+     *        which no Datum carries.
+     */
+    output_type run_operation(const input_type& input);
 
-    VisionExtractionMode m_mode { VisionExtractionMode::BBOX };
-    uint32_t m_index { 0 };
+    /**
+     * @brief Resolve source/index to a GPU image, the same way
+     *        VisionAnalyzer::resolve_image does: TextureContainer's own
+     *        to_image(index) or WindowContainer's own to_image() (both
+     *        zero-copy cache hits), or get_raw_data() uploaded into a
+     *        persistent m_upload_image for VideoStreamContainer. Null on an
+     *        unsupported container type.
+     */
+    [[nodiscard]] std::shared_ptr<Core::VKImage> resolve_image(
+        const std::shared_ptr<Kakshya::SignalSourceContainer>& source,
+        size_t index);
+
+    VisionExtractMode m_mode;
+    Kinesis::Vision::BoundingBox m_region {};
+    uint32_t m_out_w { 0 };
+    uint32_t m_out_h { 0 };
+    uint32_t m_patch_w { 0 };
+    uint32_t m_patch_h { 0 };
+    std::vector<glm::vec2> m_centers;
+
+    std::shared_ptr<Core::VKImage> m_upload_image;
+    uint32_t m_upload_w { 0 };
+    uint32_t m_upload_h { 0 };
+
+    std::shared_ptr<TextureExecutionContext> m_crop_ctx;
+    std::shared_ptr<TextureExecutionContext> m_sample_ctx;
+    std::shared_ptr<TextureExecutionContext> m_patch_ctx;
 };
-
-// ============================================================================
-// Aliases
-// ============================================================================
-
-/// Default: container in, DataVariant pixels out.
-using StandardVisionExtractor = VisionExtractor<
-    std::shared_ptr<Kakshya::SignalSourceContainer>,
-    std::vector<Kakshya::DataVariant>>;
-
-/// DataVariant pixels in, DataVariant pixels out.
-using DataVisionExtractor = VisionExtractor<
-    std::vector<Kakshya::DataVariant>,
-    std::vector<Kakshya::DataVariant>>;
 
 } // namespace MayaFlux::Yantra

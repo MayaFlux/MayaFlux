@@ -1,0 +1,56 @@
+#version 460
+
+layout(local_size_x = 16, local_size_y = 16) in;
+
+/// @brief Atlas output: count patches side by side, out_w = patch_w * count,
+///        out_h = patch_h. Patch i occupies columns [i*patch_w, (i+1)*patch_w).
+///        Dispatched as one flat 2D grid over the atlas, same shape as
+///        vision_crop.comp, rather than a 3D per-patch dispatch: the patch
+///        index is derived from the atlas x coordinate instead of gl_GlobalInvocationID.z.
+layout(set = 0, binding = 0, rgba8) uniform image2D out_image;
+
+/// @brief Full source frame patches are sampled from.
+layout(set = 0, binding = 1) uniform sampler2D src_tex;
+
+/// @brief One normalised [0,1] centre per patch, indexed by atlas_x / patch_w.
+layout(set = 0, binding = 2, std430) readonly buffer CentersBuf {
+    vec2 centers[];
+};
+
+layout(push_constant) uniform PC {
+    uint patch_w;
+    uint patch_h;
+    uint count;
+    uint src_w;
+    uint src_h;
+} pc;
+
+/**
+ * @brief Batch crop: one fixed-size patch per supplied centre, all in one
+ *        dispatch, laid out side by side in a single atlas image. Avoids
+ *        count separate dispatches for e.g. one crop per DetectFeatures
+ *        keypoint or per TrackObjects track. Patches whose centre puts them
+ *        partly off-frame are sampled with clamped UVs rather than being
+ *        rejected: the border pixel repeats instead of the patch tearing.
+ */
+void main()
+{
+    const ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
+    if (coord.x >= int(pc.patch_w * pc.count) || coord.y >= int(pc.patch_h))
+        return;
+
+    const uint patch_index = uint(coord.x) / pc.patch_w;
+    const uint local_x = uint(coord.x) % pc.patch_w;
+    const uint local_y = uint(coord.y);
+
+    const vec2 center = centers[patch_index];
+    const vec2 half_extent_uv = vec2(
+        (float(pc.patch_w) * 0.5) / float(pc.src_w),
+        (float(pc.patch_h) * 0.5) / float(pc.src_h));
+
+    const vec2 local_uv = (vec2(local_x, local_y) + 0.5) / vec2(float(pc.patch_w), float(pc.patch_h));
+    vec2 src_uv = center + (local_uv - 0.5) * 2.0 * half_extent_uv;
+    src_uv = clamp(src_uv, vec2(0.0), vec2(1.0));
+
+    imageStore(out_image, coord, texture(src_tex, src_uv));
+}
