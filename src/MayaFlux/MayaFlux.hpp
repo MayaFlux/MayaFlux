@@ -156,6 +156,13 @@
 
 #include "IO/IOManager.hpp"
 #include "IO/Image/ImageReader.hpp"
+#include "IO/Audio/SoundFileWriter.hpp"
+#include "IO/Camera/CameraSource.hpp"
+#include "IO/Camera/FFmpegCameraReader.hpp"
+#include "IO/Composite/CompositeReader.hpp"
+#include "IO/Composite/CompositeWriter.hpp"
+#include "IO/Video/VideoFileWriter.hpp"
+#include "IO/Volume/VolumeTransfer.hpp"
 
 #include "Nexus/Tapestry.hpp"
 

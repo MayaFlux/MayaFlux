@@ -15,6 +15,14 @@
 #include "MayaFlux/Kakshya/Source/SoundFileContainer.hpp"
 #include "MayaFlux/Kakshya/Source/VideoFileContainer.hpp"
 
+#include "Audio/SoundFileWriter.hpp"
+#include "Camera/CameraSource.hpp"
+#include "Camera/FFmpegCameraReader.hpp"
+#include "Composite/CompositeReader.hpp"
+#include "Composite/CompositeWriter.hpp"
+#include "Video/VideoFileWriter.hpp"
+#include "Volume/VolumeTransfer.hpp"
+
 #include "MayaFlux/Buffers/Container/SoundContainerBuffer.hpp"
 #include "MayaFlux/Buffers/Container/VideoContainerBuffer.hpp"
 #include "MayaFlux/Buffers/Textures/TextureBuffer.hpp"

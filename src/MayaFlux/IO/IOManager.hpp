@@ -1,27 +1,22 @@
 #pragma once
 
-#include "Audio/SoundFileWriter.hpp"
-
-#include "Camera/CameraSource.hpp"
-#include "Camera/FFmpegCameraReader.hpp"
-
-#include "Composite/CompositeReader.hpp"
-#include "Composite/CompositeWriter.hpp"
-
 #include "Image/ImageWriter.hpp"
 
 #include "Model/ModelWriter.hpp"
 
+#include "MayaFlux/Kakshya/NDData/Composite.hpp"
+
 #include "Spatial/SpatialTransfer.hpp"
 
 #include "Video/VideoFileReader.hpp"
-#include "Video/VideoFileWriter.hpp"
 
 #include "Volume/VolumeReader.hpp"
-#include "Volume/VolumeTransfer.hpp"
 #include "Volume/VolumeWriter.hpp"
 
 #include <future>
+
+#include <libavcodec/avcodec.h>
+#include <libavutil/pixfmt.h>
 
 namespace MayaFlux::Core {
 class VKImage;
@@ -38,6 +33,7 @@ class VideoFileContainer;
 class SoundFileContainer;
 class CameraContainer;
 class AudioOutputContainer;
+class CompositeContainer;
 }
 
 namespace MayaFlux::Buffers {
@@ -62,6 +58,13 @@ using TextureResolver = std::function<std::shared_ptr<Core::VKImage>(const std::
 
 class ImageReader;
 class ModelReader;
+class SoundFileWriter;
+class CameraSource;
+struct CameraConfig;
+class CompositeReader;
+class CompositeWriter;
+class VideoFileWriter;
+class VolumeCapture;
 
 struct LoadConfig {
     FileReadOptions file_options { FileReadOptions::EXTRACT_METADATA | FileReadOptions::EXTRACT_REGIONS };
