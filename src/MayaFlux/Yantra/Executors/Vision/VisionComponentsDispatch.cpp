@@ -125,7 +125,12 @@ void VisionGpuExecutor::op_connected_components(
 
     contexts.pass.result.debug_labels = p.with_colors ? cc_image : nullptr;
 
-    if (contours_follow)
+    if (p.export_label_buffer) {
+        contexts.pass.result.label_buffer = std::make_shared<Portal::Graphics::GpuBufferHandle>(
+            cc_pipeline.shared_buffer_handle(0, 6));
+    }
+
+    if (contours_follow && !p.export_boxes)
         return;
 
     uint32_t compact_count = 0;
@@ -157,6 +162,11 @@ void VisionGpuExecutor::op_connected_components(
             cc_result.boxes.push_back({ .x = x, .y = y, .w = bw, .h = bh, .confidence = 1.0F, .label_id = i + 1 });
         }
     }
+
+    contexts.pass.result.component_boxes = cc_result.boxes;
+
+    if (contours_follow)
+        return;
 
     contexts.pass.result.structured = std::move(cc_result);
     contexts.pass.result.w = 0;
@@ -418,13 +428,52 @@ bool VisionGpuExecutor::op_find_contours(
             flat_points_full.begin() + m.x,
             flat_points_full.begin() + m.x + m.y);
         const glm::vec2 ap = area_perim[idx];
-        out_contours.push_back({ .points = std::move(pts), .area = ap.x, .perimeter = ap.y, .parent_label = m.z });
+        out_contours.push_back({ .points = std::move(pts), .area = ap.x, .perimeter = ap.y, .parent_label = m.z, .label_id = m.w });
     }
 
     contexts.pass.result.structured = std::move(out_contours);
     contexts.pass.result.w = 0;
     contexts.pass.result.h = 0;
     return true;
+}
+
+std::shared_ptr<Core::VKImage> VisionGpuExecutor::select_label(
+    VisionGpuContexts& contexts,
+    const std::shared_ptr<Core::VKImage>& source,
+    uint32_t target_label,
+    uint32_t w, uint32_t h)
+{
+    auto& component_contours = contexts.component_contours;
+    auto& foundry = Portal::Graphics::get_shader_foundry();
+
+    component_contours.swap_shader({
+        .shader_path = "vision_label_select.comp.spv",
+        .workgroup_size = k_wg2d,
+        .push_constant_size = sizeof(SelectLabelPC),
+    });
+    component_contours.stage_image_at(1, source, GpuBufferBinding::ElementType::IMAGE_SAMPLED);
+    component_contours.set_push_constants(SelectLabelPC {
+        .target_label = target_label, .width = w, .height = h });
+    component_contours.prepare_output_image(w, h);
+    component_contours.set_output_dimensions(w, h);
+
+    const auto fence = component_contours.dispatch_async({});
+    component_contours.clear_output_dimensions();
+    foundry.wait_for_fence(fence);
+    foundry.release_fence(fence);
+
+    return component_contours.get_output_image(0);
+}
+
+std::shared_ptr<Core::VKImage> VisionGpuExecutor::select_label(
+    const std::shared_ptr<Core::VKImage>& source,
+    uint32_t target_label,
+    uint32_t w, uint32_t h)
+{
+    if (!m_contexts)
+        m_contexts = std::make_unique<VisionGpuContexts>();
+
+    return select_label(*m_contexts, source, target_label, w, h);
 }
 
 } // namespace MayaFlux::Yantra

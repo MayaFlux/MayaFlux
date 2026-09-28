@@ -6,10 +6,13 @@ namespace {
 
     VisionSequence find_elements_chain(const FindElementsRequest& r)
     {
+        auto components = r.components;
+        components.export_boxes = true;
+
         return VisionSequence::Builder {}
             .rgba_to_gray()
             .threshold_otsu()
-            .connected_components(r.components)
+            .connected_components(components)
             .find_contours(r.contours)
             .build();
     }

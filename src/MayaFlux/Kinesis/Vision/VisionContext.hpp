@@ -90,6 +90,33 @@ struct VisionResult {
      * its buffer is rewritten, and never outlives the executor.
      */
     std::shared_ptr<Portal::Graphics::GpuBufferHandle> tracks_buffer;
+
+    /**
+     * @brief One BoundingBox per component from a ConnectedComponents step
+     *        in this sequence, label 1..count, or empty.
+     *
+     * Populated whenever ConnectedComponents ran, whether or not FindContours
+     * immediately follows: the box computation is a small readback of
+     * already GPU-reduced min/max buffers, not per-pixel work, so it costs
+     * nothing extra to keep regardless of what the sequence does next.
+     * label_id on each box matches Contour::label_id from a following
+     * FindContours step exactly, letting a caller join a contour's polygon
+     * to its own bounding box without re-deriving one from the polygon.
+     */
+    std::vector<BoundingBox> component_boxes;
+
+    /**
+     * @brief Live device view of ConnectedComponents' per-pixel compact
+     *        label buffer, when ConnectedComponentsParams::export_label_buffer
+     *        was set, or null.
+     *
+     * One uint32 per pixel: 0 for background, 1..count for foreground,
+     * matching component_boxes/Contour::label_id numbering. The executor
+     * owns the memory: the view stays valid for one more run before its
+     * buffer is rewritten, and never outlives the executor.
+     */
+    std::shared_ptr<Portal::Graphics::GpuBufferHandle> label_buffer;
+
     uint32_t w { 0 };
     uint32_t h { 0 };
     VisionStatus status { VisionStatus::COMPLETE };

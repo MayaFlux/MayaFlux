@@ -328,6 +328,43 @@ public:
         uint32_t w, uint32_t h);
 
     /**
+     * @brief Isolate one ConnectedComponents label's silhouette on GPU,
+     *        through the explicit context set that produced the label
+     *        buffer.
+     *
+     * Dispatches vision_label_select.comp through contexts.component_contours,
+     * the same context ConnectedComponents/FindContours already own: reads
+     * dense_label in place at its existing binding, no cross-context buffer
+     * copy. Requires a ConnectedComponents step to have already run against
+     * these exact contexts (this run or an earlier one); dense_label holds
+     * whichever frame's labels were computed last.
+     *
+     * @param contexts     The same context set a prior run() populated.
+     * @param source       Frame to select pixels from, eShaderReadOnlyOptimal.
+     * @param target_label 1-based label id, matching BoundingBox::label_id /
+     *                     Contour::label_id from that same run.
+     * @param w            Frame width in pixels.
+     * @param h            Frame height in pixels.
+     * @return             New image, transparent everywhere outside the
+     *                     selected label's silhouette.
+     */
+    [[nodiscard]] std::shared_ptr<Core::VKImage> select_label(
+        VisionGpuContexts& contexts,
+        const std::shared_ptr<Core::VKImage>& source,
+        uint32_t target_label,
+        uint32_t w, uint32_t h);
+
+    /**
+     * @brief select_label() using this instance's own lazily-constructed
+     *        context set. See the explicit-contexts overload for the
+     *        ConnectedComponents-must-have-already-run requirement.
+     */
+    [[nodiscard]] std::shared_ptr<Core::VKImage> select_label(
+        const std::shared_ptr<Core::VKImage>& source,
+        uint32_t target_label,
+        uint32_t w, uint32_t h);
+
+    /**
      * @brief Abandon outstanding work and clear the resume point.
      *
      * Waits on the fence before releasing it, then discards the retained

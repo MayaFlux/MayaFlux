@@ -1,0 +1,55 @@
+#version 460
+
+layout(local_size_x = 16, local_size_y = 16) in;
+
+/// @brief Selected-component output. Binding matches component_contours'
+///        own output image slot (binding 0, rgba32f) so this shader runs
+///        through the same context ConnectedComponents/FindContours use,
+///        reading dense_label in place with no cross-context buffer copy.
+layout(set = 0, binding = 0, rgba32f) uniform image2D out_image;
+
+/// @brief Full source frame to select pixels from. Staged per-dispatch as
+///        IMAGE_SAMPLED at this binding regardless of the context's default
+///        access mode, the same override contour_march.comp uses for its
+///        own source frame.
+layout(set = 0, binding = 1) uniform sampler2D src_tex;
+
+/// @brief Per-pixel compact component label, 0 = background, 1..count =
+///        foreground. Same buffer, same binding, as contour_march.comp's
+///        DenseLabelBuf: already populated by ConnectedComponents, read
+///        here unchanged.
+layout(set = 0, binding = 6, std430) readonly buffer DenseLabelBuf {
+    uint dense_label[];
+};
+
+layout(push_constant) uniform PC {
+    uint target_label;
+    uint width;
+    uint height;
+} pc;
+
+/**
+ * @brief Isolate one connected component's silhouette on GPU: copies the
+ *        source pixel where dense_label matches target_label, writes
+ *        transparent black everywhere else. A hole inside target_label's
+ *        silhouette is already background (label 0) in dense_label, so it
+ *        comes out transparent automatically with no extra handling.
+ */
+void main()
+{
+    ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
+
+    if (coord.x >= int(pc.width) || coord.y >= int(pc.height))
+        return;
+
+    const uint idx = uint(coord.y) * pc.width + uint(coord.x);
+    const uint label = dense_label[idx];
+
+    vec4 out_pixel = vec4(0.0);
+    if (label == pc.target_label) {
+        vec2 uv = (vec2(coord) + 0.5) / vec2(float(pc.width), float(pc.height));
+        out_pixel = texture(src_tex, uv);
+    }
+
+    imageStore(out_image, coord, out_pixel);
+}

@@ -52,6 +52,17 @@ struct Contour {
      *        enclosed by.
      */
     uint32_t parent_label { no_parent };
+
+    /**
+     * @brief 1-based label id of the component this contour traces, matching
+     *        ComponentResult::boxes and BoundingBox::label_id numbering, and
+     *        the value written per pixel in ConnectedComponents' device
+     *        label buffer. 0 for a hole contour: a hole has no foreground
+     *        pixels of its own to select by label, it is already absent
+     *        from the label buffer wherever it opens through the parent's
+     *        silhouette.
+     */
+    uint32_t label_id { 0 };
 };
 
 /**

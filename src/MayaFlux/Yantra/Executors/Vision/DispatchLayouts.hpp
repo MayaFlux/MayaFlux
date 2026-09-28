@@ -135,6 +135,11 @@ struct CCResetPC {
     uint32_t lut_size;
     uint32_t max_components;
 };
+struct SelectLabelPC {
+    uint32_t target_label;
+    uint32_t width;
+    uint32_t height;
+};
 struct ContourSegmentsPC {
     uint32_t width;
     uint32_t height;

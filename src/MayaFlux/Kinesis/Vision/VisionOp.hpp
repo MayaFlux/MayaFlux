@@ -201,11 +201,22 @@ struct OpticalFlowDenseParams {
  * per foreground label. Subsequent steps may replace that image.
  *
  * GPU export_labels requests a device label map and with_colors selects the
- * device color image in debug_labels.
+ * device color image in debug_labels. When FindContours follows in the same
+ * sequence, the box readback is skipped unless export_boxes or
+ * export_label_buffer asks for it, since FindContours needs neither.
+ *
+ * export_boxes populates VisionResult::component_boxes even when FindContours
+ * follows, for joining a Contour back to its box via Contour::label_id.
+ * export_label_buffer hands out a live device view of the per-pixel compact
+ * label buffer (VisionResult::label_buffer, matching that same label_id
+ * numbering) to mask a component's silhouette on GPU. Valid for one more run
+ * of the owning executor before its buffer is reused.
  */
 struct ConnectedComponentsParams {
     bool export_labels { false };
     bool with_colors { false };
+    bool export_boxes { false };
+    bool export_label_buffer { false };
 };
 
 /**
