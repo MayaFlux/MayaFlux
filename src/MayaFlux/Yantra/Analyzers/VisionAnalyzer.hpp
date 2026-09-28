@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Kinesis/Vision/VisionInsight.hpp"
 #include "MayaFlux/Kinesis/Vision/VisionRequest.hpp"
 #include "MayaFlux/Yantra/Executors/ShaderExecutionContext.hpp"
 #include "MayaFlux/Yantra/Executors/VisionGpuDispatch.hpp"
@@ -83,6 +84,18 @@ private:
      */
     [[nodiscard]] Kinesis::Vision::TrackObjectsAnalysis reduce_tracks(
         const std::vector<Kinesis::Vision::TrackResult>& tracks);
+
+    /**
+     * @brief Dispatch track_reduce.comp over keypoint positions (fed as
+     *        their own previous, so velocity reduces to zero and is simply
+     *        not surfaced) and fill centroid/bounds on the result. No-op
+     *        (default fields) when keypoints is empty. Same shader as
+     *        reduce_tracks, not a duplicate: a keypoint has no persistent
+     *        identity or previous position of its own, but its bounds and
+     *        centroid are the same min/max/sum reduction either way.
+     */
+    [[nodiscard]] Kinesis::Vision::DetectFeaturesAnalysis reduce_keypoints(
+        const std::vector<Kinesis::Vision::Keypoint>& keypoints);
 
     std::unique_ptr<VisionGpuExecutor> m_executor;
     std::shared_ptr<ShaderExecutionContext<>> m_track_reducer;
