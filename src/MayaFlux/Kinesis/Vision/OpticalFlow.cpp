@@ -88,7 +88,8 @@ namespace {
         const float det = sxx * syy - sxy * sxy;
         const float disc = std::sqrt(std::max(0.0F,
             trace * trace * 0.25F - det));
-        const float min_eig = trace * 0.5F - disc;
+        const float side = 2.0F * static_cast<float>(window_radius) + 1.0F;
+        const float min_eig = (trace * 0.5F - disc) / (side * side);
 
         if (min_eig < eigen_threshold)
             return { .position = pt, .error = 1.0F, .tracked = false };
@@ -245,6 +246,7 @@ std::vector<TrackResult> track_keypoints(
                     result.tracked = false;
                 }
             }
+            result.previous = prev_points[i];
             results[i] = result;
         });
 

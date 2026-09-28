@@ -191,11 +191,36 @@ struct OpticalFlowDenseParams {
     float visual_min_motion = 0.0F;
 };
 
+/**
+ * @brief Connected-component label export and color output.
+ *
+ * CPU always returns component counts and bounding boxes. export_labels also
+ * retains the per-pixel host label_map; otherwise labels remain internal when
+ * the next step extracts contours. with_colors produces a pixel-precision,
+ * opaque RGBA host image in pixel_image, with black background and one color
+ * per foreground label. Subsequent steps may replace that image.
+ *
+ * GPU export_labels requests a device label map and with_colors selects the
+ * device color image in debug_labels.
+ */
 struct ConnectedComponentsParams {
     bool export_labels { false };
     bool with_colors { false };
 };
 
+/**
+ * @brief Contour filtering, trace limits, and output selection.
+ *
+ * min_area is pixel coverage normalised by image area. A positive
+ * max_contours selects contours by descending area, counting both outer
+ * boundaries and holes. Zero imposes no caller count limit.
+ * max_points_per_contour bounds each trace; zero imposes no caller point
+ * limit. The GPU additionally applies its storage capacities.
+ *
+ * as_image replaces structured contours with white closed boundaries on an
+ * opaque black background. CPU returns host RGBA pixels in pixel_image with
+ * their dimensions; GPU returns a device image in debug_contours.
+ */
 struct FindContoursParams {
     float min_area { 0.0F };
     uint32_t max_contours { 0 };

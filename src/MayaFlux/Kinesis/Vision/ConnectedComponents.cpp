@@ -62,24 +62,24 @@ ComponentResult connected_components(
             if (!is_fg(mask[idx]))
                 continue;
 
-            uint32_t left = 0;
-            uint32_t above = 0;
+            const std::array<uint32_t, 4> neighbors {
+                px > 0 ? labels[idx - 1] : 0U,
+                py > 0 && px > 0 ? labels[idx - w - 1] : 0U,
+                py > 0 ? labels[idx - w] : 0U,
+                py > 0 && px + 1 < w ? labels[idx - w + 1] : 0U,
+            };
 
-            if (px > 0 && is_fg(mask[idx - 1]))
-                left = labels[idx - 1];
-            if (py > 0 && is_fg(mask[idx - w]))
-                above = labels[idx - w];
-
-            if (left == 0 && above == 0) {
-                labels[idx] = next_label++;
-            } else if (left != 0 && above == 0) {
-                labels[idx] = left;
-            } else if (left == 0 && above != 0) {
-                labels[idx] = above;
-            } else {
-                labels[idx] = left;
-                uf.unite(left, above);
+            uint32_t label = 0;
+            for (uint32_t neighbor : neighbors) {
+                if (neighbor == 0)
+                    continue;
+                if (label == 0)
+                    label = neighbor;
+                else
+                    uf.unite(label, neighbor);
             }
+
+            labels[idx] = label != 0 ? label : next_label++;
         }
     }
 

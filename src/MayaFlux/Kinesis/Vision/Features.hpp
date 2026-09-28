@@ -41,8 +41,8 @@ struct BoundingBox {
  */
 struct Contour {
     std::vector<glm::vec2> points;
-    float area;
-    float perimeter;
+    float area; ///< Pixel coverage divided by total image area.
+    float perimeter; ///< Closed boundary length in pixels.
 
     /**
      * @brief 0 for an outer contour. For a hole contour, the label id

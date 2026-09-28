@@ -16,6 +16,25 @@ namespace P = MayaFlux::Parallel;
 
 namespace MayaFlux::Kinesis::Vision {
 
+namespace {
+
+    void normalize_response(std::span<float> response)
+    {
+        if (response.empty())
+            return;
+
+        const float peak = *std::ranges::max_element(response);
+        if (peak > 1e-6F) {
+            P::transform(P::par_unseq,
+                response.begin(), response.end(), response.begin(),
+                [peak](float v) { return std::clamp(v / peak, 0.0F, 1.0F); });
+        } else {
+            std::ranges::fill(response, 0.0F);
+        }
+    }
+
+}
+
 std::vector<float> harris_response(
     std::span<const float> gray, uint32_t w, uint32_t h,
     float k, float sigma)
@@ -52,13 +71,7 @@ std::vector<float> harris_response(
             response[i] = std::max(0.0F, det - k * trace * trace);
         });
 
-    const float peak = *std::ranges::max_element(response);
-    if (peak > 0.0F) {
-        const float inv = 1.0F / peak;
-        P::transform(P::par_unseq,
-            response.begin(), response.end(), response.begin(),
-            [inv](float v) { return v * inv; });
-    }
+    normalize_response(response);
 
     return response;
 }
@@ -179,6 +192,8 @@ void harris_response(
         }
 #endif
     }
+
+    normalize_response(dst.first(n));
 }
 
 std::vector<Keypoint> extract_peaks(

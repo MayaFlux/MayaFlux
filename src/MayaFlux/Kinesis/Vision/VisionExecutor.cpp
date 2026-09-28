@@ -30,6 +30,66 @@ namespace {
         return *ptr;
     }
 
+    void render_labels(std::vector<float>& pixels, std::span<const uint32_t> labels)
+    {
+        pixels.resize(labels.size() * 4);
+        P::for_each(P::par_unseq,
+            std::views::iota(size_t { 0 }, labels.size()).begin(),
+            std::views::iota(size_t { 0 }, labels.size()).end(),
+            [&](size_t i) {
+                const uint32_t color = labels[i] * 2654435761U;
+                const size_t pixel = i * 4;
+                pixels[pixel] = static_cast<float>((color >> 16) & 0xFFU) / 255.0F;
+                pixels[pixel + 1] = static_cast<float>((color >> 8) & 0xFFU) / 255.0F;
+                pixels[pixel + 2] = static_cast<float>(color & 0xFFU) / 255.0F;
+                pixels[pixel + 3] = 1.0F;
+            });
+    }
+
+    void render_contours(
+        std::vector<float>& pixels, std::span<const Contour> contours,
+        uint32_t w, uint32_t h)
+    {
+        pixels.assign(static_cast<size_t>(w) * h * 4, 0.0F);
+        for (size_t i = 3; i < pixels.size(); i += 4)
+            pixels[i] = 1.0F;
+
+        const glm::vec2 extent(static_cast<float>(w), static_cast<float>(h));
+        for (const auto& contour : contours) {
+            for (size_t i = 0; i < contour.points.size(); ++i) {
+                const glm::vec2 a = contour.points[i] * extent;
+                const glm::vec2 b = contour.points[(i + 1) % contour.points.size()] * extent;
+                int32_t x = static_cast<int32_t>(std::round(a.x));
+                int32_t y = static_cast<int32_t>(std::round(a.y));
+                const auto end_x = static_cast<int32_t>(std::round(b.x));
+                const auto end_y = static_cast<int32_t>(std::round(b.y));
+                const int32_t dx = std::abs(end_x - x);
+                const int32_t dy = -std::abs(end_y - y);
+                const int32_t sx = x < end_x ? 1 : -1;
+                const int32_t sy = y < end_y ? 1 : -1;
+                int32_t error = dx + dy;
+
+                while (true) {
+                    if (x >= 0 && y >= 0 && static_cast<uint32_t>(x) < w && static_cast<uint32_t>(y) < h) {
+                        const size_t pixel = (static_cast<size_t>(y) * w + static_cast<uint32_t>(x)) * 4;
+                        pixels[pixel] = pixels[pixel + 1] = pixels[pixel + 2] = 1.0F;
+                    }
+                    if (x == end_x && y == end_y)
+                        break;
+                    const int32_t twice_error = 2 * error;
+                    if (twice_error >= dy) {
+                        error += dy;
+                        x += sx;
+                    }
+                    if (twice_error <= dx) {
+                        error += dx;
+                        y += sy;
+                    }
+                }
+            }
+        }
+    }
+
 } // namespace
 
 // =============================================================================
@@ -41,6 +101,7 @@ void VisionExecutor::ensure_slots(uint32_t w, uint32_t h)
     if (m_slot_w == w && m_slot_h == h)
         return;
 
+    reset();
     const size_t n = static_cast<size_t>(w) * h;
 
     for (size_t i = 0; i < k_slot_count; ++i)
@@ -115,7 +176,7 @@ VisionResult VisionExecutor::run(
     size_t nxt = k_slot_nxt;
     auto en = static_cast<Eigen::Index>(m_pass.plane_size());
     const bool wants_tracking = tracks_keypoints(sequence);
-    const bool peaks_feed_track = track_follows_peaks(sequence);
+    std::vector<Keypoint> current_keypoints;
 
     for (m_pass.index = 0; m_pass.index < sequence.steps.size(); ++m_pass.index) {
         const auto& step = m_pass.step();
@@ -138,7 +199,7 @@ VisionResult VisionExecutor::run(
             m_pass.channels = 1;
             std::swap(m_pass.current, nxt);
 
-            if (wants_tracking && !peaks_feed_track) {
+            if (wants_tracking) {
                 m_curr_gray_cache.assign(slot_vec(m_pass.current).begin(),
                     slot_vec(m_pass.current).begin() + m_pass.plane_size());
             }
@@ -179,7 +240,10 @@ VisionResult VisionExecutor::run(
         }
 
         case VisionOp::ThresholdOtsu: {
-            threshold_otsu(slot_vec(m_pass.current), slot_vec(nxt));
+            const size_t n = m_pass.plane_size();
+            threshold_otsu(
+                std::span<const float>(slot_vec(m_pass.current)).first(n),
+                std::span<float>(slot_vec(nxt)).first(n));
             std::swap(m_pass.current, nxt);
             m_pass.result.structured = std::monostate {};
             break;
@@ -327,25 +391,50 @@ VisionResult VisionExecutor::run(
         }
 
         case VisionOp::ConnectedComponents: {
+            const auto& p = get_params<ConnectedComponentsParams>(step.params, step.op);
             const size_t n = m_pass.plane_size();
-            m_pass.result.structured = connected_components(
+            auto components = connected_components(
                 std::span<const float>(slot_vec(m_pass.current)).subspan(0, n),
                 w, h);
-            slot_vec(m_pass.current).clear();
-            m_pass.result.w = 0;
-            m_pass.result.h = 0;
+
+            const auto* next = m_pass.ahead();
+            const bool contours_follow = next && next->op == VisionOp::FindContours;
+            if (p.with_colors) {
+                render_labels(slot_vec(m_pass.current), components.label_map);
+                m_pass.channels = 4;
+                m_pass.set_geometry(w, h);
+            } else if (!contours_follow) {
+                slot_vec(m_pass.current).clear();
+                m_pass.result.w = 0;
+                m_pass.result.h = 0;
+            }
+
+            if (!p.export_labels && !contours_follow)
+                components.label_map.clear();
+            m_pass.result.structured = std::move(components);
             break;
         }
 
         case VisionOp::FindContours: {
             const auto& p = get_params<FindContoursParams>(step.params, step.op);
             const size_t n = m_pass.plane_size();
-            m_pass.result.structured = find_contours(
-                std::span<const float>(slot_vec(m_pass.current)).subspan(0, n),
-                w, h, p.min_area, p.max_contours);
-            slot_vec(m_pass.current).clear();
-            m_pass.result.w = 0;
-            m_pass.result.h = 0;
+            const auto* prev = m_pass.behind();
+            const auto* components = std::get_if<ComponentResult>(&m_pass.result.structured);
+            auto contours = prev && prev->op == VisionOp::ConnectedComponents && components
+                ? find_contours(*components, w, h, p.min_area, p.max_contours, p.max_points_per_contour)
+                : find_contours(std::span<const float>(slot_vec(m_pass.current)).subspan(0, n),
+                      w, h, p.min_area, p.max_contours, p.max_points_per_contour);
+            if (p.as_image) {
+                render_contours(slot_vec(m_pass.current), contours, w, h);
+                m_pass.channels = 4;
+                m_pass.set_geometry(w, h);
+                m_pass.result.structured = std::monostate {};
+            } else {
+                m_pass.result.structured = std::move(contours);
+                slot_vec(m_pass.current).clear();
+                m_pass.result.w = 0;
+                m_pass.result.h = 0;
+            }
             break;
         }
 
@@ -366,7 +455,12 @@ VisionResult VisionExecutor::run(
         case VisionOp::ExtractPeaks: {
             const auto& p = get_params<ExtractPeaksParams>(step.params, step.op);
             auto kpts = extract_peaks(slot_vec(m_pass.current), w, h, p.threshold, p.nms_radius);
-            m_prev_keypoints = kpts;
+            const auto* next = m_pass.ahead();
+            const bool peaks_feed_track = next && next->op == VisionOp::TrackKeypoints;
+            if (peaks_feed_track)
+                current_keypoints = kpts;
+            else
+                m_prev_keypoints = kpts;
 
             if (wants_tracking && !peaks_feed_track)
                 std::swap(std::get<std::vector<float>>(m_prev_gray), m_curr_gray_cache);
@@ -382,30 +476,33 @@ VisionResult VisionExecutor::run(
 
         case VisionOp::TrackKeypoints: {
             const auto& p = get_params<TrackKeypointsParams>(step.params, step.op);
-
+            const auto* prev = m_pass.behind();
+            const bool peaks_feed_track = prev && prev->op == VisionOp::ExtractPeaks;
+            const auto curr_gray = peaks_feed_track
+                ? std::span<const float>(m_curr_gray_cache)
+                : std::span<const float>(slot_vec(m_pass.current)).first(m_pass.plane_size());
             auto& prev_vec = std::get<std::vector<float>>(m_prev_gray);
-            if (prev_vec.empty() || m_prev_keypoints.empty()) {
-                std::swap(prev_vec, slot_vec(m_pass.current));
-                m_pass.result.structured = std::vector<TrackResult> {};
-                slot_vec(m_pass.current).clear();
-                m_pass.result.w = 0;
-                m_pass.result.h = 0;
-                break;
+            std::vector<TrackResult> tracked;
+            if (!prev_vec.empty() && !m_prev_keypoints.empty()) {
+                std::vector<glm::vec2> prev_pos;
+                prev_pos.reserve(m_prev_keypoints.size());
+                for (const auto& kp : m_prev_keypoints)
+                    prev_pos.push_back(kp.position);
+
+                tracked = track_keypoints(
+                    prev_vec, curr_gray,
+                    w, h, prev_pos,
+                    p.window_radius, p.max_iterations,
+                    p.eigen_threshold, p.error_threshold,
+                    p.forward_backward_threshold);
             }
 
-            std::vector<glm::vec2> prev_pos;
-            prev_pos.reserve(m_prev_keypoints.size());
-            for (const auto& kp : m_prev_keypoints)
-                prev_pos.push_back(kp.position);
-
-            auto tracked = track_keypoints(
-                prev_vec, slot_vec(m_pass.current),
-                w, h, prev_pos,
-                p.window_radius, p.max_iterations,
-                p.eigen_threshold, p.error_threshold,
-                p.forward_backward_threshold);
-
-            std::swap(prev_vec, slot_vec(m_pass.current));
+            if (peaks_feed_track) {
+                std::swap(prev_vec, m_curr_gray_cache);
+                m_prev_keypoints = std::move(current_keypoints);
+            } else {
+                std::swap(prev_vec, slot_vec(m_pass.current));
+            }
             m_pass.result.structured = std::move(tracked);
             slot_vec(m_pass.current).clear();
             m_pass.result.w = 0;
@@ -432,6 +529,9 @@ VisionResult VisionExecutor::run(
             break;
         }
     }
+
+    if (!slot_vec(m_pass.current).empty())
+        slot_vec(m_pass.current).resize(m_pass.plane_size() * m_pass.channels);
 
     m_pass.result.pixel_image = std::move(m_slots[m_pass.current]);
     slot_vec(m_pass.current).reserve(static_cast<size_t>(m_slot_w) * m_slot_h * 4);

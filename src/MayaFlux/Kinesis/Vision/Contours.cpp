@@ -10,33 +10,76 @@ namespace MayaFlux::Kinesis::Vision {
 
 namespace {
 
-    // 8-connected clockwise direction offsets starting from right (+x)
-    // Order: E, SE, S, SW, W, NW, N, NE
     constexpr int32_t dx8[] = { 1, 1, 0, -1, -1, -1, 0, 1 };
     constexpr int32_t dy8[] = { 0, 1, 1, 1, 0, -1, -1, -1 };
 
-    // =========================================================================
-    // Shoelace area and perimeter
-    // =========================================================================
+    struct TraceSeed {
+        size_t pixel;
+        uint32_t label;
+        uint32_t parent;
+    };
 
-    float polygon_area(const std::vector<glm::vec2>& pts)
+    template <typename Inside>
+    std::vector<glm::ivec2> walk_boundary(
+        glm::ivec2 start, size_t max_points, Inside inside)
     {
-        float area = 0.0F;
-        const size_t n = pts.size();
-        for (size_t i = 0, j = n - 1; i < n; j = i++) {
-            area += pts[j].x * pts[i].y;
-            area -= pts[i].x * pts[j].y;
+        std::vector<glm::ivec2> points;
+        glm::ivec2 current = start;
+        glm::ivec2 first_next {};
+        int32_t backtrack = 4;
+
+        while (points.size() < max_points) {
+            int32_t direction = -1;
+            glm::ivec2 next {};
+            for (int32_t i = 1; i <= 8; ++i) {
+                const int32_t d = (backtrack + i) % 8;
+                next = current + glm::ivec2(dx8[d], dy8[d]);
+                if (inside(next)) {
+                    direction = d;
+                    break;
+                }
+            }
+
+            if (direction < 0)
+                break;
+            if (!points.empty() && current == start && next == first_next)
+                break;
+            if (points.empty())
+                first_next = next;
+
+            points.push_back(current);
+            current = next;
+            backtrack = (direction + 6 - direction % 2) % 8;
         }
-        return std::abs(area) * 0.5F;
+
+        return points;
     }
 
-    float polygon_perimeter(const std::vector<glm::vec2>& pts)
+    Contour measure_contour(
+        const std::vector<glm::ivec2>& pixels, uint32_t w, uint32_t h,
+        uint32_t parent)
     {
-        float perim = 0.0F;
-        const size_t n = pts.size();
-        for (size_t i = 0, j = n - 1; i < n; j = i++)
-            perim += glm::length(pts[i] - pts[j]);
-        return perim;
+        float area = 0.0F;
+        float perimeter = 0.0F;
+        for (size_t i = 0; i < pixels.size(); ++i) {
+            const glm::vec2 a(pixels[i]);
+            const glm::vec2 b(pixels[(i + 1) % pixels.size()]);
+            area += a.x * b.y - b.x * a.y;
+            perimeter += glm::length(b - a);
+        }
+
+        Contour contour {
+            .points = {},
+            .area = (std::abs(area) * 0.5F + perimeter * 0.5F + 1.0F)
+                / (static_cast<float>(w) * static_cast<float>(h)),
+            .perimeter = perimeter,
+            .parent_label = parent,
+        };
+        contour.points.reserve(pixels.size());
+        const glm::vec2 extent(static_cast<float>(w), static_cast<float>(h));
+        for (const auto& p : pixels)
+            contour.points.push_back(glm::vec2(p) / extent);
+        return contour;
     }
 
     bool point_in_contour(const std::vector<glm::vec2>& pts, float px, float py) noexcept
@@ -69,140 +112,114 @@ namespace {
 
 std::vector<Contour> find_contours(
     std::span<const float> mask, uint32_t w, uint32_t h,
-    float min_area, uint32_t max_contours)
+    float min_area, uint32_t max_contours, uint32_t max_points_per_contour)
 {
-    const auto cc = connected_components(mask, w, h);
-    if (cc.count == 0)
+    if (w == 0 || h == 0)
         return {};
 
-    std::vector<Contour> result(cc.count);
-    std::vector<uint8_t> valid(cc.count, 0);
+    const auto cc = connected_components(mask, w, h);
+    return find_contours(cc, w, h, min_area, max_contours, max_points_per_contour);
+}
+
+std::vector<Contour> find_contours(
+    const ComponentResult& cc, uint32_t w, uint32_t h,
+    float min_area, uint32_t max_contours, uint32_t max_points_per_contour)
+{
+    if (w == 0 || h == 0 || cc.count == 0)
+        return {};
+
+    const size_t n = static_cast<size_t>(w) * h;
+    std::vector<TraceSeed> seeds(cc.count, TraceSeed { .pixel = n, .label = 0, .parent = 0 });
+    for (size_t i = 0; i < n; ++i) {
+        const uint32_t label = cc.label_map[i];
+        if (label != 0 && seeds[label - 1].pixel == n)
+            seeds[label - 1] = { .pixel = i, .label = label, .parent = 0 };
+    }
+
+    std::vector<uint32_t> background(n, 0);
+    std::vector<size_t> pending;
+    uint32_t region = 0;
+    for (size_t seed = 0; seed < n; ++seed) {
+        if (cc.label_map[seed] != 0 || background[seed] != 0)
+            continue;
+
+        ++region;
+        pending.clear();
+        pending.push_back(seed);
+        background[seed] = region;
+        bool exterior = false;
+        for (size_t head = 0; head < pending.size(); ++head) {
+            const size_t pixel = pending[head];
+            const auto x = static_cast<uint32_t>(pixel % w);
+            const auto y = static_cast<uint32_t>(pixel / w);
+            exterior = exterior || x == 0 || y == 0 || x + 1 == w || y + 1 == h;
+
+            const auto visit = [&](size_t neighbor) {
+                if (cc.label_map[neighbor] == 0 && background[neighbor] == 0) {
+                    background[neighbor] = region;
+                    pending.push_back(neighbor);
+                }
+            };
+            if (x > 0)
+                visit(pixel - 1);
+            if (x + 1 < w)
+                visit(pixel + 1);
+            if (y > 0)
+                visit(pixel - w);
+            if (y + 1 < h)
+                visit(pixel + w);
+        }
+
+        if (!exterior) {
+            const uint32_t parent = cc.label_map[seed - w];
+            seeds.push_back({ .pixel = seed, .label = region, .parent = parent });
+        }
+    }
+
+    std::vector<Contour> result(seeds.size());
+    std::vector<uint8_t> valid(seeds.size(), 0);
+    const size_t max_points = max_points_per_contour > 0
+        ? static_cast<size_t>(max_points_per_contour)
+        : n * 8;
 
     P::for_each(P::par_unseq,
-        std::views::iota(uint32_t { 0 }, cc.count).begin(),
-        std::views::iota(uint32_t { 0 }, cc.count).end(),
-        [&](uint32_t ci) {
-            const uint32_t lbl = ci + 1;
-            const auto& box = cc.boxes[ci];
-
-            const auto x0 = static_cast<uint32_t>(box.x * static_cast<float>(w));
-            const auto y0 = static_cast<uint32_t>(box.y * static_cast<float>(h));
-            const auto x1 = std::min(x0 + static_cast<uint32_t>(box.w * static_cast<float>(w)) - 1U, w - 1);
-            const auto y1 = std::min(y0 + static_cast<uint32_t>(box.h * static_cast<float>(h)) - 1U, h - 1);
-
-            uint32_t start_x = 0, start_y = 0;
-            bool found = false;
-            for (uint32_t py = y0; py <= y1 && !found; ++py) {
-                for (uint32_t px = x0; px <= x1 && !found; ++px) {
-                    if (cc.label_map[static_cast<size_t>(py) * w + px] == lbl) {
-                        start_x = px;
-                        start_y = py;
-                        found = true;
-                    }
-                }
-            }
-
-            if (!found)
-                return;
-
-            const uint32_t bw = x1 - x0 + 1;
-            const uint32_t bh = y1 - y0 + 1;
-
-            if (bw < 2 || bh < 2)
-                return;
-
-            std::vector<uint8_t> visited(static_cast<size_t>(bw) * bh, 0);
-
-            auto is_component_fg = [&](int32_t px, int32_t py) -> bool {
-                if (px < 0 || py < 0
-                    || static_cast<uint32_t>(px) >= w
-                    || static_cast<uint32_t>(py) >= h)
+        std::views::iota(size_t { 0 }, seeds.size()).begin(),
+        std::views::iota(size_t { 0 }, seeds.size()).end(),
+        [&](size_t ci) {
+            const auto& seed = seeds[ci];
+            const glm::ivec2 start(static_cast<int32_t>(seed.pixel % w), static_cast<int32_t>(seed.pixel / w));
+            const auto inside = [&](glm::ivec2 p) {
+                if (p.x < 0 || p.y < 0 || static_cast<uint32_t>(p.x) >= w || static_cast<uint32_t>(p.y) >= h)
                     return false;
-                return cc.label_map[static_cast<size_t>(py) * w + px] == lbl;
+                const size_t index = static_cast<size_t>(p.y) * w + static_cast<uint32_t>(p.x);
+                return seed.parent == 0 ? cc.label_map[index] == seed.label : background[index] == seed.label;
             };
-
-            auto mark_visited = [&](int32_t px, int32_t py) {
-                if (static_cast<uint32_t>(px) < x0 || static_cast<uint32_t>(py) < y0
-                    || static_cast<uint32_t>(px) > x1 || static_cast<uint32_t>(py) > y1)
-                    return;
-                const uint32_t lx = static_cast<uint32_t>(px) - x0;
-                const uint32_t ly = static_cast<uint32_t>(py) - y0;
-                visited[static_cast<size_t>(ly) * bw + lx] = 1;
-            };
-
-            auto cx = static_cast<int32_t>(start_x);
-            auto cy = static_cast<int32_t>(start_y);
-
-            int32_t start_dir = 0;
-            for (int32_t d = 0; d < 8; ++d) {
-                const int32_t nx = cx + dx8[d];
-                const int32_t ny = cy + dy8[d];
-                if (!is_component_fg(nx, ny)) {
-                    start_dir = d;
-                    break;
-                }
-            }
-
-            const int32_t orig_x = cx;
-            const int32_t orig_y = cy;
-            int32_t dir = start_dir;
-            bool first = true;
-            std::vector<glm::vec2> points;
-
-            while (true) {
-                bool step_found = false;
-                for (int32_t i = 0; i < 8; ++i) {
-                    const int32_t d = (dir + 6 + i) % 8;
-                    const int32_t nx = cx + dx8[d];
-                    const int32_t ny = cy + dy8[d];
-
-                    if (!is_component_fg(nx, ny))
-                        continue;
-
-                    points.emplace_back(
-                        static_cast<float>(cx) / static_cast<float>(w),
-                        static_cast<float>(cy) / static_cast<float>(h));
-                    mark_visited(cx, cy);
-                    cx = nx;
-                    cy = ny;
-                    dir = d;
-                    step_found = true;
-                    break;
-                }
-
-                if (!step_found)
-                    break;
-                if (!first && cx == orig_x && cy == orig_y)
-                    break;
-                first = false;
-                if (points.size() > static_cast<size_t>(w) * h)
-                    break;
-            }
-
+            const auto points = walk_boundary(start, max_points, inside);
             if (points.size() < 3)
                 return;
 
-            const float area = polygon_area(points);
-            if (area < min_area)
+            auto contour = measure_contour(points, w, h, seed.parent);
+            if (contour.area < min_area)
                 return;
 
-            result[ci] = { .points = std::move(points), .area = area, .perimeter = polygon_perimeter(points) };
+            result[ci] = std::move(contour);
             valid[ci] = 1;
         });
 
     std::vector<Contour> out;
-    out.reserve(cc.count);
-    for (uint32_t i = 0; i < cc.count; ++i) {
+    out.reserve(seeds.size());
+    for (size_t i = 0; i < seeds.size(); ++i) {
         if (valid[i])
             out.push_back(std::move(result[i]));
     }
 
-    if (max_contours > 0 && out.size() > static_cast<size_t>(max_contours)) {
+    if (max_contours > 0) {
+        const size_t count = std::min(out.size(), static_cast<size_t>(max_contours));
         std::partial_sort(out.begin(),
-            out.begin() + static_cast<ptrdiff_t>(max_contours),
+            out.begin() + static_cast<ptrdiff_t>(count),
             out.end(),
             [](const Contour& a, const Contour& b) { return a.area > b.area; });
-        out.resize(max_contours);
+        out.resize(count);
     }
 
     return out;
