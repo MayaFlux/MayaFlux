@@ -193,7 +193,7 @@ namespace {
                 state.last_export = view;
                 state.export_slot ^= 1U;
             }
-            contexts.pass.result.tracks_buffer = state.last_export;
+            contexts.pass.result.buffers.tracks = state.last_export;
             state.export_pending = false;
         }
         commit_flow_frame(contexts);
@@ -690,14 +690,14 @@ bool VisionGpuExecutor::op_dense_flow(VisionGpuContexts& contexts, const VisionS
 
 std::vector<Kinesis::Vision::TrackResult> VisionGpuExecutor::read_exported_tracks(const Kinesis::Vision::VisionResult& result)
 {
-    const auto& handle = result.tracks_buffer;
-    if (!handle || !handle->mapped_ptr || handle->size_bytes < sizeof(glm::vec4))
+    const auto& handle = result.buffers.tracks;
+    const auto count = exported_record_count(handle, 2);
+
+    if (!count)
         return {};
 
     const auto* header = static_cast<const glm::vec4*>(handle->mapped_ptr);
-    const size_t capacity = (handle->size_bytes / sizeof(glm::vec4) - 1U) / 2U;
-    const auto count = static_cast<uint32_t>(std::min<size_t>(std::bit_cast<uint32_t>(header[0].x), capacity));
-    return decode_track_records(header + 1, count);
+    return decode_track_records(header + 1, *count);
 }
 
 void VisionGpuExecutor::build_flow_pyramid(VisionGpuContexts& contexts, uint32_t requested_levels)

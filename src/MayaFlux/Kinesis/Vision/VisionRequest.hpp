@@ -78,26 +78,17 @@ struct VisionRequest {
 };
 
 /**
- * @brief Selects a VisionResult field to seed a later ResolvedSequence's
- *        image argument with, in place of the request's own raw frame.
- *
- * A plain function pointer, not std::function: resolve() picks one once per
- * request, the caller calls it once per sequence run. No allocation, no
- * lookup, matching ImageOutputs' own "direct field, not a keyed container"
- * shape.
+ * @brief Picks a VisionResult field to seed a later sequence's image
+ *        argument with, instead of the request's own raw frame.
  */
 using SeedAccessor = std::shared_ptr<Core::VKImage> (*)(const VisionResult&);
 
 /**
- * @brief One VisionSequence to run, plus where its image argument comes from.
+ * @brief One VisionSequence to run, and where its image argument comes from.
  *
- * seed_field null means seed from the request's own raw frame: true for the
- * first entry always, and for any later entry that shares nothing
- * image-producing with it. Non-null means run sequences[seed_lane] first,
- * call seed_field on its VisionResult, and pass that in place of the raw
- * frame; the leading steps that produced it are already stripped from
- * sequence itself, so paying for them again would be pure repeated work for
- * an identical result.
+ * seed_field null means seed from the request's own raw frame. Otherwise,
+ * run sequences[seed_lane] first and pass seed_field(its result) as the
+ * image argument in place of the raw frame.
  */
 struct ResolvedSequence {
     VisionSequence sequence;
@@ -107,35 +98,13 @@ struct ResolvedSequence {
 
 /**
  * @brief Resolve a VisionRequest into the ResolvedSequences needed to
- *        satisfy every active intent, sharing whatever leading work two
- *        active intents' chains turn out to need in common.
+ *        satisfy every active intent.
  *
  * TrackObjects and EstimateMotion, when both active, resolve into one
- * sequence: VisionGpuExecutor::after_step already builds one shared flow
- * pyramid for whichever of TrackKeypoints/OpticalFlowDense is ahead, so
- * they share a tail rather than forking. Every other active intent gets its
- * own sequence, since each one's chain overwrites the single working-image
- * slot a VisionSequence walk carries, and nothing lets two chains diverge
- * from a shared point and both continue (VisionOp::Snapshot is a one-way
- * output tap, not a restore point).
- *
- * The first entry always seeds from the raw frame. Every later entry is
- * compared against the first entry's own chain, leading step by leading
- * step (VisionOp and params, via hash_vision_step), for as long as each
- * matching step also has a named VisionResult field to hand its output off
- * through (VisionResult::gray for RgbaToGray, VisionResult::images.* for
- * every other image-producing op) - a match stops at the first divergence
- * or the first step with nothing to seed from (ExtractPeaks, or any other
- * structured/buffer-only op), never partway through a still-matching image
- * op. Only TrackObjects and DetectFeatures currently share anything beyond
- * RgbaToGray (both run HarrisResponse then ExtractPeaks with their own,
- * independently settable params), but nothing here is specific to that
- * pair: any future chain sharing a longer or different leading run gets the
- * same treatment for free.
- *
- * A caller does not thread anything by hand: seed_lane/seed_field on each
- * entry say exactly which prior result's which field to pass as the image
- * argument, or to use the request's own raw frame when both are default.
+ * sequence sharing a tail; neither can be split back apart afterward.
+ * Every other active intent gets its own sequence, seeded from whichever
+ * leading steps it has in common with the first sequence (matched by
+ * VisionOp and params) instead of recomputing them.
  *
  * @param request Active intents and their parameters.
  * @return Ordered ResolvedSequences to run against the same frame; empty

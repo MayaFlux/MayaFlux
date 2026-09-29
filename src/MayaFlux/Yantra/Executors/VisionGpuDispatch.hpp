@@ -271,19 +271,33 @@ public:
         const Kinesis::Vision::VisionParams& params);
 
     /**
-     * @brief Host tracks decoded on demand from a result's exported buffer.
+     * @brief Host tracks decoded from result.buffers.tracks, or empty.
      *
-     * For sequences run with export_tracks and without host_tracks, where the
-     * structured result is empty. Reads the buffer through its host mapping,
-     * so it is meant for occasional host access, not per frame use on a
-     * device local buffer. The buffer is valid for one more run after the
+     * For occasional host access, not per-frame use: reads a device-local
+     * buffer through its host mapping. Valid for one more run after the
      * result was delivered.
-     *
-     * @param result A result whose tracks_buffer came from this executor.
-     * @return The exported tracks, or empty when the result carries no
-     *         readable export.
      */
     [[nodiscard]] static std::vector<Kinesis::Vision::TrackResult> read_exported_tracks(
+        const Kinesis::Vision::VisionResult& result);
+
+    /**
+     * @brief Host keypoints decoded from result.buffers.keypoints, or empty.
+     *
+     * Independent of VisionResult::structured. For occasional host access,
+     * not per-frame use. Valid for one more run after the result was
+     * delivered.
+     */
+    [[nodiscard]] static std::vector<Kinesis::Vision::Keypoint> read_exported_keypoints(
+        const Kinesis::Vision::VisionResult& result);
+
+    /**
+     * @brief Host contours decoded from result.buffers.contours, or empty.
+     *
+     * Always in compacted (unsorted) order; sort the returned list yourself
+     * if you need top-K-by-area order. For occasional host access, not
+     * per-frame use. Valid for one more run after the result was delivered.
+     */
+    [[nodiscard]] static std::vector<Kinesis::Vision::Contour> read_exported_contours(
         const Kinesis::Vision::VisionResult& result);
 
     /**

@@ -20,27 +20,7 @@ namespace {
             && p.y >= box.y && p.y <= box.y + box.h;
     }
 
-    /**
-     * @brief Route one VisionResult into the VisionAnalysis field its
-     *        StructuredOutput alternative or dedicated image field belongs
-     *        to. Raw data only. reduce_tracks()/reduce_keypoints() run the
-     *        GPU analysis afterward, on whatever list survives context
-     *        filtering.
-     *
-     * A result's active StructuredOutput alternative identifies its intent
-     * unambiguously: only TrackKeypoints produces vector<TrackResult>, only
-     * a standalone ExtractPeaks produces vector<Keypoint>, only FindContours
-     * produces vector<Contour>. flow is written only by OpticalFlowDense and
-     * checked independently, since a TrackObjects+EstimateMotion merged
-     * sequence's result carries both a structured TrackResult list and a
-     * flow image at once. result.images.canny is Canny's own slot, unambiguous
-     * regardless of what else ran earlier in the sequence.
-     *
-     * result.component_boxes travels with the same FindContours result
-     * (ConnectedComponents populates it earlier in the same sequence and
-     * nothing after that clears it), so it is read here in the same branch
-     * as the contour list, not searched for separately.
-     */
+    /** @brief Route one VisionResult into its matching VisionAnalysis field. */
     void collect_into(
         std::optional<std::vector<Kinesis::Vision::TrackResult>>& raw_tracks,
         std::optional<std::vector<Kinesis::Vision::Keypoint>>& raw_keypoints,

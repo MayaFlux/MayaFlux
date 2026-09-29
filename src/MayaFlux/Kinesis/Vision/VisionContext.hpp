@@ -39,23 +39,53 @@ enum class VisionStatus : uint8_t {
 };
 
 /**
- * @brief One image slot per VisionOp whose output is an image, populated
- *        only for whichever of these ops actually ran in the sequence.
+ * @brief Live device view of FindContours' traced contours, when
+ *        FindContoursParams::export_contours_buffer is set.
  *
- * Two groups. The pure image-transform ops (RgbaToHsv through
- * MorphGradient) produce nothing but an image; RgbaToGray is the one
- * exception, kept on its own top-level VisionResult::gray since
- * VisionRequest::resolve() already depends on that field by name. The
- * three visualization fields (component_colors, contour_image,
- * flow_visualization) come from ops that also produce real structured or
- * buffer output (ConnectedComponents, FindContours, OpticalFlowDense);
- * they are named here individually rather than sharing one field, since a
- * shared field silently collides the moment more than one of these ops
- * appears in the same sequence.
+ * meta is one uvec4 per contour (point_offset, point_count, parent_label,
+ * label_id), points is the flat point array, area_perim is one vec2
+ * (area, perimeter) per contour. Decode via
+ * VisionGpuExecutor::read_exported_contours(). Default constructed (all
+ * null, count 0) when not requested. Valid for one more run before the
+ * executor reuses it.
+ */
+struct ContoursBufferView {
+    uint32_t count { 0 };
+    uint32_t points_written { 0 };
+    std::shared_ptr<Portal::Graphics::GpuBufferHandle> meta;
+    std::shared_ptr<Portal::Graphics::GpuBufferHandle> points;
+    std::shared_ptr<Portal::Graphics::GpuBufferHandle> area_perim;
+};
+
+/**
+ * @brief Live device views of the GPU-resident export buffers, one named
+ *        slot per exporting op, populated only when its own export flag was
+ *        set. Null/default otherwise. The executor owns the memory: each
+ *        view is valid for one more run before its buffer is reused.
  *
- * Every field is a plain shared_ptr, matching tracks_buffer/
- * keypoints_buffer/label_buffer/contours_buffer's own convention: null
- * means the op did not run, nothing more.
+ * tracks/keypoints decode via VisionGpuExecutor::read_exported_tracks()/
+ * read_exported_keypoints(). labels is ConnectedComponents' per-pixel
+ * compact label map (one uint32 per pixel, 0 background, 1..count
+ * foreground, matching component_boxes/Contour::label_id), consumed via
+ * VisionGpuExecutor::select_label() rather than decoded to a host list.
+ * contours decodes via read_exported_contours(); see ContoursBufferView.
+ */
+struct BufferOutputs {
+    std::shared_ptr<Portal::Graphics::GpuBufferHandle> tracks;
+    std::shared_ptr<Portal::Graphics::GpuBufferHandle> keypoints;
+    std::shared_ptr<Portal::Graphics::GpuBufferHandle> labels;
+    ContoursBufferView contours;
+};
+
+/**
+ * @brief One image slot per VisionOp that produces an image, populated
+ *        only for whichever of these ops ran in the sequence. Null means
+ *        the op did not run.
+ *
+ * RgbaToGray uses the separate top-level VisionResult::gray instead.
+ * component_colors, contour_image, and flow_visualization come from
+ * ConnectedComponents::with_colors, FindContours::as_image, and
+ * OpticalFlowDense::visualize respectively.
  */
 struct ImageOutputs {
     std::shared_ptr<Core::VKImage> rgba_to_hsv;
@@ -122,19 +152,6 @@ struct VisionResult {
     std::shared_ptr<Core::VKImage> gray;
 
     /**
-     * @brief Device resident tracks from TrackKeypoints with export_tracks,
-     *        or null.
-     *
-     * One vec4 header followed by two vec4 per track. The header holds the
-     * track count as uint bits in x. Track record i is
-     * (position.xy, previous.xy) then (error, tracked, id bits, age bits),
-     * the fields of TrackResult, in the same order as the host result. The
-     * executor owns the memory: the view stays valid for one more run before
-     * its buffer is rewritten, and never outlives the executor.
-     */
-    std::shared_ptr<Portal::Graphics::GpuBufferHandle> tracks_buffer;
-
-    /**
      * @brief One BoundingBox per component from a ConnectedComponents step
      *        in this sequence, label 1..count, or empty.
      *
@@ -149,16 +166,10 @@ struct VisionResult {
     std::vector<BoundingBox> component_boxes;
 
     /**
-     * @brief Live device view of ConnectedComponents' per-pixel compact
-     *        label buffer, when ConnectedComponentsParams::export_label_buffer
-     *        was set, or null.
-     *
-     * One uint32 per pixel: 0 for background, 1..count for foreground,
-     * matching component_boxes/Contour::label_id numbering. The executor
-     * owns the memory: the view stays valid for one more run before its
-     * buffer is rewritten, and never outlives the executor.
+     * @brief GPU-resident export buffers, one named slot per exporting op.
+     *        See BufferOutputs.
      */
-    std::shared_ptr<Portal::Graphics::GpuBufferHandle> label_buffer;
+    BufferOutputs buffers;
 
     /**
      * @brief Image output of whichever image-producing ops ran in this

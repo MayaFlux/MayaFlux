@@ -60,16 +60,7 @@ namespace {
             .build();
     }
 
-    /**
-     * @brief VisionResult field a given op's output can be handed off
-     *        through, or nullptr if it has none.
-     *
-     * Only covers ops that actually appear as a leading (non-final) step in
-     * one of the chains above today: RgbaToGray in all of them, HarrisResponse
-     * in track_objects_chain/detect_features_chain. Extending this list is
-     * exactly what's needed to let a future chain share a longer or
-     * different prefix; nothing else about shared_prefix_length changes.
-     */
+    /** @brief VisionResult field an op's output can be handed off through, or nullptr. */
     SeedAccessor seed_accessor_for(VisionOp op)
     {
         switch (op) {
@@ -82,11 +73,7 @@ namespace {
         }
     }
 
-    /**
-     * @brief How many of candidate's leading steps are identical (op and
-     *        params) to reference's own leading steps, stopping at the
-     *        first divergence or the first step with no seed_accessor_for.
-     */
+    /** @brief Leading steps identical to reference's own, up to the first divergence or unseedable step. */
     size_t shared_prefix_length(
         const std::vector<VisionStep>& reference,
         const std::vector<VisionStep>& candidate)

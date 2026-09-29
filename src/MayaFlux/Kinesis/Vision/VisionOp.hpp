@@ -135,6 +135,7 @@ struct HarrisParams {
 struct ExtractPeaksParams {
     float threshold;
     uint32_t nms_radius;
+    bool export_keypoints { false };
 };
 
 /**
@@ -147,12 +148,9 @@ struct ExtractPeaksParams {
  * cell size in pixels that admits at most one new track. A positive
  * forward_backward_threshold rejects a track when its backward estimate
  * misses the source point by more than that many pixels; zero disables it.
- * With export_tracks set, the tracks are also delivered in
- * VisionResult::tracks_buffer for consumers that stay on the GPU. With
- * host_tracks cleared, the tracks are not read back to the host and the
- * structured result stays empty, so a sequence that only feeds GPU consumers
- * pays no transfer. It has no effect on the CPU executor, which always
- * produces the host result.
+ * host_tracks false skips the host readback entirely (structured stays
+ * empty) when export_tracks is set; it has no effect on the CPU executor,
+ * which always produces the host result.
  */
 struct TrackKeypointsParams {
     uint32_t window_radius = 7;
@@ -201,16 +199,15 @@ struct OpticalFlowDenseParams {
  * per foreground label. Subsequent steps may replace that image.
  *
  * GPU export_labels requests a device label map and with_colors selects the
- * device color image in debug_labels. When FindContours follows in the same
- * sequence, the box readback is skipped unless export_boxes or
- * export_label_buffer asks for it, since FindContours needs neither.
+ * device color image in VisionResult::images.component_colors. When
+ * FindContours follows in the same sequence, the box readback is skipped
+ * unless export_boxes or export_label_buffer asks for it, since FindContours
+ * needs neither.
  *
  * export_boxes populates VisionResult::component_boxes even when FindContours
  * follows, for joining a Contour back to its box via Contour::label_id.
- * export_label_buffer hands out a live device view of the per-pixel compact
- * label buffer (VisionResult::label_buffer, matching that same label_id
- * numbering) to mask a component's silhouette on GPU. Valid for one more run
- * of the owning executor before its buffer is reused.
+ * export_label_buffer's label map is consumed via
+ * VisionGpuExecutor::select_label(), not decoded to a host list.
  */
 struct ConnectedComponentsParams {
     bool export_labels { false };
@@ -241,6 +238,8 @@ struct FindContoursParams {
     uint32_t max_contours { 0 };
     uint32_t max_points_per_contour { 0 };
     bool as_image { false };
+
+    bool export_contours_buffer { false };
 };
 
 /**
@@ -541,6 +540,7 @@ inline size_t hash_vision_step(VisionOp op, const VisionParams& params)
         } else if constexpr (std::is_same_v<T, ExtractPeaksParams>) {
             hash_combine(seed, std::hash<float> {}(p.threshold));
             hash_combine(seed, std::hash<uint32_t> {}(p.nms_radius));
+            hash_combine(seed, std::hash<bool> {}(p.export_keypoints));
         } else if constexpr (std::is_same_v<T, TrackKeypointsParams>) {
             hash_combine(seed, std::hash<uint32_t> {}(p.window_radius));
             hash_combine(seed, std::hash<uint32_t> {}(p.max_iterations));
@@ -557,9 +557,12 @@ inline size_t hash_vision_step(VisionOp op, const VisionParams& params)
             hash_combine(seed, std::hash<uint32_t> {}(p.max_contours));
             hash_combine(seed, std::hash<uint32_t> {}(p.max_points_per_contour));
             hash_combine(seed, std::hash<bool> {}(p.as_image));
+            hash_combine(seed, std::hash<bool> {}(p.export_contours_buffer));
         } else if constexpr (std::is_same_v<T, ConnectedComponentsParams>) {
             hash_combine(seed, std::hash<bool> {}(p.export_labels));
             hash_combine(seed, std::hash<bool> {}(p.with_colors));
+            hash_combine(seed, std::hash<bool> {}(p.export_boxes));
+            hash_combine(seed, std::hash<bool> {}(p.export_label_buffer));
         } else if constexpr (std::is_same_v<T, OpticalFlowDenseParams>) {
             hash_combine(seed, std::hash<uint32_t> {}(p.window_radius));
             hash_combine(seed, std::hash<uint32_t> {}(p.iterations));

@@ -277,4 +277,24 @@ struct FlowDensePC {
     uint32_t last_iteration;
 };
 
+/**
+ * @brief Clamped record count from an exported buffer's vec4 header, or
+ *        nullopt when the buffer isn't readable.
+ *
+ * Shared by every read_exported_* decode: header[0].x holds the count as
+ * uint bits, clamped to the buffer's actual capacity at stride_vec4 per
+ * record (one header vec4 assumed).
+ */
+inline std::optional<uint32_t> exported_record_count(
+    const std::shared_ptr<Portal::Graphics::GpuBufferHandle>& handle,
+    size_t stride_vec4)
+{
+    if (!handle || !handle->mapped_ptr || handle->size_bytes < sizeof(glm::vec4))
+        return std::nullopt;
+
+    const auto* header = static_cast<const glm::vec4*>(handle->mapped_ptr);
+    const size_t capacity = (handle->size_bytes / sizeof(glm::vec4) - 1U) / stride_vec4;
+    return static_cast<uint32_t>(std::min<size_t>(std::bit_cast<uint32_t>(header[0].x), capacity));
+}
+
 } // namespace MayaFlux::Yantra::VisionInternal
