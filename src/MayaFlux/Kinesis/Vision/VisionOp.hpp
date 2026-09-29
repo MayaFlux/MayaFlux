@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Features.hpp"
 #include "MayaFlux/Transitive/Reflect/EnumReflect.hpp"
 
 /**
@@ -62,6 +63,8 @@ enum class VisionOp : uint8_t {
     Snapshot,
 
     OpticalFlowDense,
+
+    Confine,
 };
 
 /**
@@ -190,6 +193,28 @@ struct OpticalFlowDenseParams {
 };
 
 /**
+ * @brief Parameters for Confine.
+ *
+ * bounds is a normalised [0, 1] rectangle anywhere in the current image,
+ * not limited to a found region. resize_to_source false (the default)
+ * leaves the working image at bounds' own pixel size; true nearest-resamples
+ * the confined region back to the frame's own size before this step, e.g.
+ * to keep a fixed working resolution for whatever follows.
+ *
+ * Every later step, and every result coordinate, is in the confined image's
+ * space; the caller remaps to the full frame. In a sequence with
+ * TrackKeypoints or OpticalFlowDense, place Confine before RgbaToGray: the
+ * flow pyramid is built from the gray frame at that point, so a later Confine
+ * is rejected, or with resize_to_source silently mismatches the pyramid. Flow
+ * state resets when the confined size changes, and bounds that move at a
+ * constant size compare frames of different content.
+ */
+struct ConfineParams {
+    BoundingBox bounds;
+    bool resize_to_source { false };
+};
+
+/**
  * @brief Connected-component label export and color output.
  *
  * CPU always returns component counts and bounding boxes. export_labels also
@@ -263,7 +288,8 @@ using VisionParams = std::variant<
     TrackKeypointsParams,
     ConnectedComponentsParams,
     FindContoursParams,
-    OpticalFlowDenseParams>;
+    OpticalFlowDenseParams,
+    ConfineParams>;
 
 /**
  * @brief One step in a VisionSequence: an op and its parameters.
@@ -446,6 +472,11 @@ struct VisionSequence {
             return push(VisionOp::OpticalFlowDense, params);
         }
 
+        Builder& confine(ConfineParams params)
+        {
+            return push(VisionOp::Confine, params);
+        }
+
         /**
          * @brief Finish the sequence and select its execution backend.
          *
@@ -572,6 +603,12 @@ inline size_t hash_vision_step(VisionOp op, const VisionParams& params)
             hash_combine(seed, std::hash<bool> {}(p.visualize));
             hash_combine(seed, std::hash<float> {}(p.visual_range));
             hash_combine(seed, std::hash<float> {}(p.visual_min_motion));
+        } else if constexpr (std::is_same_v<T, ConfineParams>) {
+            hash_combine(seed, std::hash<float> {}(p.bounds.x));
+            hash_combine(seed, std::hash<float> {}(p.bounds.y));
+            hash_combine(seed, std::hash<float> {}(p.bounds.w));
+            hash_combine(seed, std::hash<float> {}(p.bounds.h));
+            hash_combine(seed, std::hash<bool> {}(p.resize_to_source));
         }
     },
         params);

@@ -107,6 +107,56 @@ GpuVisionPass::Completed VisionGpuExecutor::op_threshold_otsu(VisionGpuContexts&
     return { .output = thresholded, .input = otsu_input };
 }
 
+GpuVisionPass::Completed VisionGpuExecutor::op_confine(
+    VisionGpuContexts& contexts,
+    const ConfineParams& p)
+{
+    auto& pixel_ctx = contexts.pixel;
+    auto w = contexts.pass.w;
+    auto h = contexts.pass.h;
+    auto& foundry = Portal::Graphics::get_shader_foundry();
+
+    const auto confine_input = contexts.pass.current;
+
+    const auto src_x = static_cast<uint32_t>(p.bounds.x * static_cast<float>(w));
+    const auto src_y = static_cast<uint32_t>(p.bounds.y * static_cast<float>(h));
+    const auto src_w = std::max<uint32_t>(1U, static_cast<uint32_t>(p.bounds.w * static_cast<float>(w)));
+    const auto src_h = std::max<uint32_t>(1U, static_cast<uint32_t>(p.bounds.h * static_cast<float>(h)));
+
+    const uint32_t out_w = p.resize_to_source ? w : src_w;
+    const uint32_t out_h = p.resize_to_source ? h : src_h;
+
+    pixel_ctx.swap_shader({
+        .shader_path = "vision_confine.comp.spv",
+        .workgroup_size = k_wg2d,
+        .push_constant_size = sizeof(ConfinePC),
+    });
+    pixel_ctx.stage_image(confine_input);
+    pixel_ctx.set_push_constants(ConfinePC {
+        .src_x = src_x, .src_y = src_y, .src_w = src_w, .src_h = src_h,
+        .out_w = out_w, .out_h = out_h });
+    pixel_ctx.prepare_output_image(out_w, out_h);
+    pixel_ctx.set_output_dimensions(out_w, out_h);
+
+    const auto fence = pixel_ctx.dispatch_async({});
+    pixel_ctx.clear_output_dimensions();
+    foundry.wait_for_fence(fence);
+    foundry.release_fence(fence);
+
+    auto confined = pixel_ctx.get_output_image(0);
+
+    contexts.pass.result.images.confine = confined;
+    contexts.pass.current = confined;
+    contexts.pass.result.structured = std::monostate {};
+    contexts.bound_staged.reset();
+
+    contexts.pass.set_geometry(out_w, out_h);
+    contexts.pass.storage_w = out_w;
+    contexts.pass.storage_h = out_h;
+
+    return { .output = confined, .input = confine_input };
+}
+
 GpuVisionPass::Completed VisionGpuExecutor::op_open_close(
     VisionGpuContexts& contexts,
     VisionOp op,

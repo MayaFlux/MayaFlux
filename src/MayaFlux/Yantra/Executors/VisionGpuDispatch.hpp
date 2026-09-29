@@ -432,6 +432,17 @@ private:
     Kinesis::Vision::GpuVisionPass::Completed op_threshold_otsu(VisionGpuContexts& contexts);
 
     /**
+     * @brief Arbitrary rectangular sub-region of the current image,
+     *        optionally resized back to the frame's own size before this
+     *        step. Publishes the result as VisionResult::images.confine.
+     *
+     * @return The resulting image and the image it was derived from.
+     */
+    Kinesis::Vision::GpuVisionPass::Completed op_confine(
+        VisionGpuContexts& contexts,
+        const Kinesis::Vision::ConfineParams& p);
+
+    /**
      * @brief Apply morphological opening or closing to the current image.
      *
      * Opening erodes then dilates; closing dilates then erodes. The final

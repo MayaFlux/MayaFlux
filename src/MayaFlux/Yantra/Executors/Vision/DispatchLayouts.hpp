@@ -277,6 +277,11 @@ struct FlowDensePC {
     uint32_t last_iteration;
 };
 
+struct ConfinePC {
+    uint32_t src_x, src_y, src_w, src_h;
+    uint32_t out_w, out_h;
+};
+
 /**
  * @brief Clamped record count from an exported buffer's vec4 header, or
  *        nullopt when the buffer isn't readable.

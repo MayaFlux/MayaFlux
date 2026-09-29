@@ -317,6 +317,8 @@ GpuComputeConfig VisionGpuExecutor::config(VisionOp op, const VisionParams& /*pa
         return { .shader_path = "flow_lk.comp.spv", .workgroup_size = { 64, 1, 1 }, .push_constant_size = sizeof(FlowLkPC) };
     case VisionOp::OpticalFlowDense:
         return { .shader_path = "flow_dense.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(FlowDensePC) };
+    case VisionOp::Confine:
+        return { .shader_path = "vision_confine.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(ConfinePC) };
     default:
         return GpuComputeConfig { .shader_id = Portal::Graphics::INVALID_SHADER };
     }
@@ -366,7 +368,21 @@ void VisionGpuExecutor::after_step(VisionGpuContexts& contexts, size_t index)
 
     uint32_t levels = 0;
     bool needs_flow = false;
+    bool confine_seen = false;
+    bool warned = false;
     for (size_t i = index + 1; i < steps.size(); ++i) {
+        if (steps[i].op == VisionOp::Confine)
+            confine_seen = true;
+
+        const bool is_flow = steps[i].op == VisionOp::TrackKeypoints || steps[i].op == VisionOp::OpticalFlowDense;
+        if (is_flow && confine_seen && !warned) {
+            MF_WARN(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+                "run_gpu: Confine sits between RgbaToGray and a flow step; the flow pyramid is "
+                "built from the unconfined gray frame, so results are wrong or rejected. "
+                "Place Confine before RgbaToGray");
+            warned = true;
+        }
+
         if (steps[i].op == VisionOp::TrackKeypoints) {
             if (const auto* p = std::get_if<TrackKeypointsParams>(&steps[i].params)) {
                 needs_flow = true;
@@ -530,6 +546,10 @@ VisionResult VisionGpuExecutor::run(
         }
         case VisionOp::ThresholdOtsu: {
             contexts.pass.completed[Kinesis::Vision::hash_vision_step(step.op, step.params)] = op_threshold_otsu(contexts);
+            continue;
+        }
+        case VisionOp::Confine: {
+            contexts.pass.completed[Kinesis::Vision::hash_vision_step(step.op, step.params)] = op_confine(contexts, std::get<ConfineParams>(step.params));
             continue;
         }
         case VisionOp::Open:
