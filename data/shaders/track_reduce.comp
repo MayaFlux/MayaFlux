@@ -1,0 +1,99 @@
+#version 460
+
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+
+layout(set = 0, binding = 0, std430) readonly buffer TrackDataBuf {
+    vec4 track_data[]; // xy = position, zw = previous
+};
+
+layout(set = 0, binding = 1, std430) writeonly buffer ReduceOutBuf {
+    vec4 sum_pos_vel;   // xy = sum(position), zw = sum(position - previous)
+    vec4 min_max;       // xy = min(position), zw = max(position)
+    vec4 extra_sum_max; // x = sum(extra.x), y = max(extra.x), z = sum(extra.y), w unused
+};
+
+/// @brief Per-record extra scalars, reduced alongside position/velocity.
+///        x = age (TrackObjects) or response (DetectFeatures); y = tracked
+///        flag as 0.0/1.0 (TrackObjects) or 0.0, unused (DetectFeatures).
+layout(set = 0, binding = 2, std430) readonly buffer ExtraDataBuf {
+    vec2 extra_data[];
+};
+
+layout(push_constant) uniform PushConstants {
+    uint count;
+} pc;
+
+shared vec2 s_sum_pos[256];
+shared vec2 s_sum_vel[256];
+shared vec2 s_min[256];
+shared vec2 s_max[256];
+shared float s_sum_extra_x[256];
+shared float s_max_extra_x[256];
+shared float s_sum_extra_y[256];
+
+/**
+ * @brief Single-workgroup reduction over a track list: sum of position and
+ *        velocity (position - previous), the min/max position bounds, and
+ *        sum/max/sum of the two extra per-record scalars.
+ *
+ * Same shape as contour_topk_select.comp's top-K reduction: each thread
+ * scans a strided slice, then a shared-memory tree reduction combines the
+ * 256 partial results into one. Centroid, mean velocity, mean_age, and
+ * mean_response are sum / count, done host-side after readback since count
+ * is already known there; tracked_count is round(extra_sum_max.z), and
+ * lost_count is count - tracked_count.
+ */
+void main()
+{
+    const uint tid = gl_LocalInvocationID.x;
+
+    vec2 sum_pos = vec2(0.0);
+    vec2 sum_vel = vec2(0.0);
+    vec2 mn = vec2(1.0 / 0.0);
+    vec2 mx = vec2(-1.0 / 0.0);
+    float sum_extra_x = 0.0;
+    float max_extra_x = -1.0 / 0.0;
+    float sum_extra_y = 0.0;
+
+    for (uint i = tid; i < pc.count; i += 256u) {
+        const vec2 p = track_data[i].xy;
+        const vec2 prev = track_data[i].zw;
+        sum_pos += p;
+        sum_vel += (p - prev);
+        mn = min(mn, p);
+        mx = max(mx, p);
+
+        const vec2 extra = extra_data[i];
+        sum_extra_x += extra.x;
+        max_extra_x = max(max_extra_x, extra.x);
+        sum_extra_y += extra.y;
+    }
+
+    s_sum_pos[tid] = sum_pos;
+    s_sum_vel[tid] = sum_vel;
+    s_min[tid] = mn;
+    s_max[tid] = mx;
+    s_sum_extra_x[tid] = sum_extra_x;
+    s_max_extra_x[tid] = max_extra_x;
+    s_sum_extra_y[tid] = sum_extra_y;
+    barrier();
+
+    for (uint stride = 128u; stride > 0u; stride >>= 1u) {
+        if (tid < stride) {
+            s_sum_pos[tid] += s_sum_pos[tid + stride];
+            s_sum_vel[tid] += s_sum_vel[tid + stride];
+            s_min[tid] = min(s_min[tid], s_min[tid + stride]);
+            s_max[tid] = max(s_max[tid], s_max[tid + stride]);
+            s_sum_extra_x[tid] += s_sum_extra_x[tid + stride];
+            s_max_extra_x[tid] = max(s_max_extra_x[tid], s_max_extra_x[tid + stride]);
+            s_sum_extra_y[tid] += s_sum_extra_y[tid + stride];
+        }
+        barrier();
+    }
+
+    if (tid == 0u) {
+        sum_pos_vel = vec4(s_sum_pos[0], s_sum_vel[0]);
+        min_max = vec4(s_min[0], s_max[0]);
+        extra_sum_max = vec4(s_sum_extra_x[0], s_max_extra_x[0], s_sum_extra_y[0], 0.0);
+    }
+}

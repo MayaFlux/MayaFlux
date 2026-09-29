@@ -62,6 +62,13 @@ public:
         if (ctx.mode == ExecutionMode::DEPENDENCY) {
             const auto& dependency_params = safe_variant_get_or_throw<DependencyParams>(ctx.parameters,
                 "GpuExecutionContext: DEPENDENCY mode requires DependencyParams");
+
+            if (dependency_params.async) {
+                output_type result;
+                result.set_metadata("gpu_fence", dispatch_core_dependency_async(dependency_params.stages));
+                return result;
+            }
+
             dispatch_core_dependency(dependency_params.stages);
             return output_type {};
         }
@@ -90,27 +97,6 @@ public:
         }
 
         return collect_gpu_outputs(raw, ch_copies, structure_info);
-    }
-
-    /**
-     * @brief Non-blocking counterpart of execute() in DEPENDENCY mode.
-     *
-     * Runs the stages of a DependencyParams as one command buffer and returns
-     * its fence instead of waiting, for callers that overlap the sequence
-     * with other work or defer its completion. execute() cannot serve this
-     * because its Datum result has no channel for a fence.
-     *
-     * See dispatch_core_dependency_async for the descriptor lifetime and host
-     * readback rules that apply to an un-awaited sequence.
-     *
-     * @param stages Ordered stage descriptions.
-     * @return FenceID to poll and release, or INVALID_FENCE on failure.
-     * @throws std::runtime_error If GPU initialisation of a stage fails.
-     */
-    [[nodiscard]] Portal::Graphics::FenceID dispatch_dependency_async(
-        const std::vector<DependencyStage>& stages)
-    {
-        return dispatch_core_dependency_async(stages);
     }
 
 protected:

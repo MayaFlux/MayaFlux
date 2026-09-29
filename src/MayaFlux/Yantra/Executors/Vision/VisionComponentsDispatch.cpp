@@ -111,14 +111,26 @@ void VisionGpuExecutor::op_connected_components(
         .explicit_groups = std::array<uint32_t, 3> { (w + k_wg2d[0] - 1U) / k_wg2d[0], (h + k_wg2d[1] - 1U) / k_wg2d[1], 1U },
     });
 
-    const auto fence = cc_pipeline.dispatch_dependency_async(cc_stages);
+    ExecutionContext cc_ctx;
+    cc_ctx.mode = ExecutionMode::DEPENDENCY;
+    DependencyParams cc_params;
+    cc_params.stages = cc_stages;
+    cc_params.async = true;
+    cc_ctx.parameters = cc_params;
+    const auto cc_dispatch_result = cc_pipeline.execute(Datum<> {}, cc_ctx);
+    const auto fence = cc_dispatch_result.get_metadata<FenceID>("gpu_fence").value_or(INVALID_FENCE);
     foundry.wait_for_fence(fence);
     foundry.release_fence(fence);
     cc_pipeline.clear_output_dimensions();
 
-    contexts.pass.result.debug_labels = p.with_colors ? cc_image : nullptr;
+    contexts.pass.result.images.component_colors = p.with_colors ? cc_image : nullptr;
 
-    if (contours_follow)
+    if (p.export_label_buffer) {
+        contexts.pass.result.buffers.labels = std::make_shared<Portal::Graphics::GpuBufferHandle>(
+            cc_pipeline.shared_buffer_handle(0, 6));
+    }
+
+    if (contours_follow && !p.export_boxes)
         return;
 
     uint32_t compact_count = 0;
@@ -150,6 +162,11 @@ void VisionGpuExecutor::op_connected_components(
             cc_result.boxes.push_back({ .x = x, .y = y, .w = bw, .h = bh, .confidence = 1.0F, .label_id = i + 1 });
         }
     }
+
+    contexts.pass.result.component_boxes = cc_result.boxes;
+
+    if (contours_follow)
+        return;
 
     contexts.pass.result.structured = std::move(cc_result);
     contexts.pass.result.w = 0;
@@ -358,7 +375,7 @@ bool VisionGpuExecutor::op_find_contours(
     component_contours.execute(Datum<> {}, trace_ctx);
 
     if (p.as_image) {
-        contexts.pass.result.debug_contours = contour_image;
+        contexts.pass.result.images.contour_image = contour_image;
         contexts.pass.result.structured = std::monostate {};
         contexts.pass.result.w = 0;
         contexts.pass.result.h = 0;
@@ -380,6 +397,16 @@ bool VisionGpuExecutor::op_find_contours(
 
     if (points_written > 0)
         component_contours.download_shared(1, 8, flat_points_full.data(), static_cast<size_t>(points_written) * sizeof(glm::vec2));
+
+    if (p.export_contours_buffer) {
+        contexts.pass.result.buffers.contours = Kinesis::Vision::ContoursBufferView {
+            .count = compacted_count,
+            .points_written = points_written,
+            .meta = std::make_shared<Portal::Graphics::GpuBufferHandle>(component_contours.shared_buffer_handle(1, 10)),
+            .points = std::make_shared<Portal::Graphics::GpuBufferHandle>(component_contours.shared_buffer_handle(1, 8)),
+            .area_perim = std::make_shared<Portal::Graphics::GpuBufferHandle>(component_contours.shared_buffer_handle(1, 11)),
+        };
+    }
 
     std::vector<uint32_t> order;
     if (p.max_contours > 0U) {
@@ -411,13 +438,88 @@ bool VisionGpuExecutor::op_find_contours(
             flat_points_full.begin() + m.x,
             flat_points_full.begin() + m.x + m.y);
         const glm::vec2 ap = area_perim[idx];
-        out_contours.push_back({ .points = std::move(pts), .area = ap.x, .perimeter = ap.y, .parent_label = m.z });
+        out_contours.push_back({ .points = std::move(pts), .area = ap.x, .perimeter = ap.y, .parent_label = m.z, .label_id = m.w });
     }
 
     contexts.pass.result.structured = std::move(out_contours);
     contexts.pass.result.w = 0;
     contexts.pass.result.h = 0;
     return true;
+}
+
+std::shared_ptr<Core::VKImage> VisionGpuExecutor::select_label(
+    VisionGpuContexts& contexts,
+    const std::shared_ptr<Core::VKImage>& source,
+    uint32_t target_label,
+    uint32_t w, uint32_t h)
+{
+    auto& component_contours = contexts.component_contours;
+    auto& foundry = Portal::Graphics::get_shader_foundry();
+
+    component_contours.swap_shader({
+        .shader_path = "vision_label_select.comp.spv",
+        .workgroup_size = k_wg2d,
+        .push_constant_size = sizeof(SelectLabelPC),
+    });
+    component_contours.stage_image_at(1, source, GpuBufferBinding::ElementType::IMAGE_SAMPLED);
+    component_contours.set_push_constants(SelectLabelPC {
+        .target_label = target_label, .width = w, .height = h });
+    component_contours.prepare_output_image(w, h);
+    component_contours.set_output_dimensions(w, h);
+
+    const auto fence = component_contours.dispatch_async({});
+    component_contours.clear_output_dimensions();
+    foundry.wait_for_fence(fence);
+    foundry.release_fence(fence);
+
+    return component_contours.get_output_image(0);
+}
+
+std::shared_ptr<Core::VKImage> VisionGpuExecutor::select_label(
+    const std::shared_ptr<Core::VKImage>& source,
+    uint32_t target_label,
+    uint32_t w, uint32_t h)
+{
+    if (!m_contexts)
+        m_contexts = std::make_unique<VisionGpuContexts>();
+
+    return select_label(*m_contexts, source, target_label, w, h);
+}
+
+std::vector<Kinesis::Vision::Contour> VisionGpuExecutor::read_exported_contours(
+    const Kinesis::Vision::VisionResult& result)
+{
+    const auto& view = result.buffers.contours;
+    if (!view.meta || !view.meta->mapped_ptr || !view.points || !view.points->mapped_ptr
+        || !view.area_perim || !view.area_perim->mapped_ptr) {
+        return {};
+    }
+
+    const auto* meta = static_cast<const glm::uvec4*>(view.meta->mapped_ptr);
+    const auto* points = static_cast<const glm::vec2*>(view.points->mapped_ptr);
+    const auto* area_perim = static_cast<const glm::vec2*>(view.area_perim->mapped_ptr);
+
+    const size_t meta_capacity = view.meta->size_bytes / sizeof(glm::uvec4);
+    const size_t area_capacity = view.area_perim->size_bytes / sizeof(glm::vec2);
+    const size_t points_capacity = view.points->size_bytes / sizeof(glm::vec2);
+    const auto count = static_cast<uint32_t>(
+        std::min<size_t>({ view.count, meta_capacity, area_capacity }));
+    const auto points_written = static_cast<uint32_t>(std::min<size_t>(view.points_written, points_capacity));
+
+    std::vector<Kinesis::Vision::Contour> out;
+    out.reserve(count);
+    for (uint32_t idx = 0; idx < count; ++idx) {
+        const auto& m = meta[idx];
+        if (m.y < 3U)
+            continue;
+        if (m.x > points_written || m.y > points_written - m.x)
+            continue;
+
+        std::vector<glm::vec2> pts(points + m.x, points + m.x + m.y);
+        const glm::vec2 ap = area_perim[idx];
+        out.push_back({ .points = std::move(pts), .area = ap.x, .perimeter = ap.y, .parent_label = m.z, .label_id = m.w });
+    }
+    return out;
 }
 
 } // namespace MayaFlux::Yantra

@@ -39,6 +39,82 @@ enum class VisionStatus : uint8_t {
 };
 
 /**
+ * @brief Live device view of FindContours' traced contours, when
+ *        FindContoursParams::export_contours_buffer is set.
+ *
+ * meta is one uvec4 per contour (point_offset, point_count, parent_label,
+ * label_id), points is the flat point array, area_perim is one vec2
+ * (area, perimeter) per contour. Decode via
+ * VisionGpuExecutor::read_exported_contours(). Default constructed (all
+ * null, count 0) when not requested. Valid for one more run before the
+ * executor reuses it.
+ */
+struct ContoursBufferView {
+    uint32_t count { 0 };
+    uint32_t points_written { 0 };
+    std::shared_ptr<Portal::Graphics::GpuBufferHandle> meta;
+    std::shared_ptr<Portal::Graphics::GpuBufferHandle> points;
+    std::shared_ptr<Portal::Graphics::GpuBufferHandle> area_perim;
+};
+
+/**
+ * @brief Live device views of the GPU-resident export buffers, one named
+ *        slot per exporting op, populated only when its own export flag was
+ *        set. Null/default otherwise. The executor owns the memory: each
+ *        view is valid for one more run before its buffer is reused.
+ *
+ * tracks/keypoints decode via VisionGpuExecutor::read_exported_tracks()/
+ * read_exported_keypoints(). labels is ConnectedComponents' per-pixel
+ * compact label map (one uint32 per pixel, 0 background, 1..count
+ * foreground, matching component_boxes/Contour::label_id), consumed via
+ * VisionGpuExecutor::select_label() rather than decoded to a host list.
+ * contours decodes via read_exported_contours(); see ContoursBufferView.
+ */
+struct BufferOutputs {
+    std::shared_ptr<Portal::Graphics::GpuBufferHandle> tracks;
+    std::shared_ptr<Portal::Graphics::GpuBufferHandle> keypoints;
+    std::shared_ptr<Portal::Graphics::GpuBufferHandle> labels;
+    ContoursBufferView contours;
+};
+
+/**
+ * @brief One image slot per VisionOp that produces an image, populated
+ *        only for whichever of these ops ran in the sequence. Null means
+ *        the op did not run.
+ *
+ * RgbaToGray uses the separate top-level VisionResult::gray instead.
+ * component_colors, contour_image, and flow_visualization come from
+ * ConnectedComponents::with_colors, FindContours::as_image, and
+ * OpticalFlowDense::visualize respectively.
+ */
+struct ImageOutputs {
+    std::shared_ptr<Core::VKImage> rgba_to_hsv;
+    std::shared_ptr<Core::VKImage> gray_to_rgba;
+    std::shared_ptr<Core::VKImage> downsample_2x;
+    std::shared_ptr<Core::VKImage> threshold;
+    std::shared_ptr<Core::VKImage> threshold_adaptive;
+    std::shared_ptr<Core::VKImage> threshold_otsu;
+    std::shared_ptr<Core::VKImage> normalize_inplace;
+    std::shared_ptr<Core::VKImage> normalize_range;
+    std::shared_ptr<Core::VKImage> gaussian_blur;
+    std::shared_ptr<Core::VKImage> filter_separable;
+    std::shared_ptr<Core::VKImage> sobel;
+    std::shared_ptr<Core::VKImage> scharr;
+    std::shared_ptr<Core::VKImage> canny;
+    std::shared_ptr<Core::VKImage> erode;
+    std::shared_ptr<Core::VKImage> dilate;
+    std::shared_ptr<Core::VKImage> open;
+    std::shared_ptr<Core::VKImage> close;
+    std::shared_ptr<Core::VKImage> morph_gradient;
+    std::shared_ptr<Core::VKImage> harris_response;
+    std::shared_ptr<Core::VKImage> confine;
+
+    std::shared_ptr<Core::VKImage> component_colors; ///< ConnectedComponents::with_colors
+    std::shared_ptr<Core::VKImage> contour_image; ///< FindContours::as_image
+    std::shared_ptr<Core::VKImage> flow_visualization; ///< OpticalFlowDense::visualize
+};
+
+/**
  * @brief Result of executing a VisionSequence on one frame.
  *
  * pixel_image holds the final normalised float pixel buffer as a DataVariant
@@ -46,8 +122,8 @@ enum class VisionStatus : uint8_t {
  * only structured output.
  *
  * Callers access pixel data via:
- *   EigenAccess(result.pixel_image).view<Eigen::VectorXf>()  -- zero-copy Eigen map
- *   std::get<std::vector<float>>(result.pixel_image)          -- direct vector access
+ *   EigenAccess(result.pixel_image).view<Eigen::VectorXf>(): zero-copy Eigen map
+ *   std::get<std::vector<float>>(result.pixel_image): direct vector access
  *
  * w and h are the dimensions of pixel_image. Both are 0 when pixel_image is empty.
  */
@@ -55,8 +131,6 @@ struct VisionResult {
     Kakshya::DataVariant pixel_image { std::vector<float> {} };
     StructuredOutput structured { std::monostate {} };
     std::vector<SnapshotEntry> snapshots;
-    std::shared_ptr<Core::VKImage> debug_labels;
-    std::shared_ptr<Core::VKImage> debug_contours;
 
     /**
      * @brief Dense optical flow field from OpticalFlowDense, or null.
@@ -67,17 +141,49 @@ struct VisionResult {
     std::shared_ptr<Core::VKImage> flow;
 
     /**
-     * @brief Device resident tracks from TrackKeypoints with export_tracks,
-     *        or null.
-     *
-     * One vec4 header followed by two vec4 per track. The header holds the
-     * track count as uint bits in x. Track record i is
-     * (position.xy, previous.xy) then (error, tracked, id bits, age bits),
-     * the fields of TrackResult, in the same order as the host result. The
-     * executor owns the memory: the view stays valid for one more run before
-     * its buffer is rewritten, and never outlives the executor.
+     * @brief Mean per-pixel intensity change from OpticalFlowDense's own
+     *        frame-to-frame comparison, 0 when there is no previous frame.
      */
-    std::shared_ptr<Portal::Graphics::GpuBufferHandle> tracks_buffer;
+    float motion_energy { 0.0F };
+
+    /**
+     * @brief Output of a RgbaToGray step in this sequence, or null.
+     *
+     * A storage image, so passing it as the image argument to a later
+     * VisionGpuExecutor::run() call skips re-ingesting and re-converting:
+     * op_ingest passes any frame already carrying storage usage through
+     * unchanged. Intended for a caller resolving one VisionQuery into
+     * several VisionSequences that all start from the same gray frame, so
+     * only the first pays for RgbaToGray.
+     */
+    std::shared_ptr<Core::VKImage> gray;
+
+    /**
+     * @brief One BoundingBox per component from a ConnectedComponents step
+     *        in this sequence, label 1..count, or empty.
+     *
+     * Populated whenever ConnectedComponents ran, whether or not FindContours
+     * immediately follows: the box computation is a small readback of
+     * already GPU-reduced min/max buffers, not per-pixel work, so it costs
+     * nothing extra to keep regardless of what the sequence does next.
+     * label_id on each box matches Contour::label_id from a following
+     * FindContours step exactly, letting a caller join a contour's polygon
+     * to its own bounding box without re-deriving one from the polygon.
+     */
+    std::vector<BoundingBox> component_boxes;
+
+    /**
+     * @brief GPU-resident export buffers, one named slot per exporting op.
+     *        See BufferOutputs.
+     */
+    BufferOutputs buffers;
+
+    /**
+     * @brief Image output of whichever image-producing ops ran in this
+     *        sequence, one named slot per op. See ImageOutputs.
+     */
+    ImageOutputs images;
+
     uint32_t w { 0 };
     uint32_t h { 0 };
     VisionStatus status { VisionStatus::COMPLETE };

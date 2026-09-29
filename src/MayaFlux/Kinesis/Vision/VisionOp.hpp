@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Features.hpp"
 #include "MayaFlux/Transitive/Reflect/EnumReflect.hpp"
 
 /**
@@ -62,6 +63,8 @@ enum class VisionOp : uint8_t {
     Snapshot,
 
     OpticalFlowDense,
+
+    Confine,
 };
 
 /**
@@ -97,12 +100,62 @@ enum class VisionBackend : uint8_t {
 // Per-op parameter structs
 // ============================================================================
 
+/**
+ * @brief Selects channels of the current image for a multichannel threshold.
+ *
+ * Ch0, Ch1 and Ch2 are the first three channels as stored: red, green, blue
+ * on an RGBA image, hue, saturation, value after RgbaToHsv. NONE selects the
+ * legacy single-channel path, which reads channel 0 only. Multichannel
+ * selection is implemented by the GPU backend only.
+ */
+enum class ChannelMask : uint8_t {
+    NONE = 0U,
+    Ch0 = 1U << 0U,
+    Ch1 = 1U << 1U,
+    Ch2 = 1U << 2U,
+};
+MF_BITMASK_OPERATORS(ChannelMask)
+
+/**
+ * @brief Inclusive accepted range of one channel. lo greater than hi wraps
+ *        around, so a hue band may straddle 0.
+ */
+struct ChannelBand {
+    float lo { 0.0F };
+    float hi { 1.0F };
+};
+
+/**
+ * @brief Fixed threshold.
+ *
+ * With channels NONE the pixel passes when channel 0 is at least value. With
+ * any channel selected, value is ignored and the pixel passes only when every
+ * selected channel lies inside its band.
+ */
 struct ThresholdParams {
     float value;
+    ChannelMask channels { ChannelMask::NONE };
+    std::array<ChannelBand, 3> bands {};
 };
+
+/**
+ * @brief Adaptive threshold. With channels NONE only channel 0 is tested;
+ *        otherwise the pixel passes when every selected channel passes its
+ *        own neighbourhood test.
+ */
 struct ThresholdAdaptiveParams {
     uint32_t block_size;
     float offset;
+    ChannelMask channels { ChannelMask::NONE };
+};
+
+/**
+ * @brief Otsu threshold. With channels NONE only channel 0 is thresholded;
+ *        otherwise each selected channel gets its own Otsu threshold and the
+ *        pixel passes when every selected channel does.
+ */
+struct OtsuParams {
+    ChannelMask channels { ChannelMask::NONE };
 };
 struct NormalizeRangeParams {
     float lo;
@@ -127,14 +180,30 @@ struct MorphParams {
     uint32_t radius;
 };
 
+/**
+ * @brief Harris response parameters.
+ *
+ * region, a normalised rectangle, zeroes the response outside it, which also
+ * makes the response's peak normalisation relative to the region. Coordinates
+ * and image size stay full-frame. Empty is the whole frame. GPU backend only.
+ */
 struct HarrisParams {
     float k = 0.04F;
     float sigma = 1.0F;
+    std::optional<BoundingBox> region;
 };
 
+/**
+ * @brief Peak extraction parameters.
+ *
+ * region, a normalised rectangle, restricts detection to it while keypoint
+ * coordinates stay full-frame. Empty is the whole frame. GPU backend only.
+ */
 struct ExtractPeaksParams {
     float threshold;
     uint32_t nms_radius;
+    bool export_keypoints { false };
+    std::optional<BoundingBox> region;
 };
 
 /**
@@ -147,12 +216,9 @@ struct ExtractPeaksParams {
  * cell size in pixels that admits at most one new track. A positive
  * forward_backward_threshold rejects a track when its backward estimate
  * misses the source point by more than that many pixels; zero disables it.
- * With export_tracks set, the tracks are also delivered in
- * VisionResult::tracks_buffer for consumers that stay on the GPU. With
- * host_tracks cleared, the tracks are not read back to the host and the
- * structured result stays empty, so a sequence that only feeds GPU consumers
- * pays no transfer. It has no effect on the CPU executor, which always
- * produces the host result.
+ * host_tracks false skips the host readback entirely (structured stays
+ * empty) when export_tracks is set; it has no effect on the CPU executor,
+ * which always produces the host result.
  */
 struct TrackKeypointsParams {
     uint32_t window_radius = 7;
@@ -176,8 +242,8 @@ struct TrackKeypointsParams {
  * resolution (lowered for small images). eigen_threshold damps the solve so
  * untextured pixels take small steps, and max_step caps one increment in
  * pixels. With visualize set, a hue and brightness rendering of the flow is
- * delivered in VisionResult::debug_labels, at full brightness from
- * visual_range pixels. visual_min_motion keeps smaller displacements dark in
+ * delivered in VisionResult::images.flow_visualization, at full brightness
+ * from visual_range pixels. visual_min_motion keeps smaller displacements dark in
  * the visualization, in pixels of the flow image.
  */
 struct OpticalFlowDenseParams {
@@ -191,22 +257,85 @@ struct OpticalFlowDenseParams {
     float visual_min_motion = 0.0F;
 };
 
+/**
+ * @brief Parameters for Confine.
+ *
+ * bounds is a normalised [0, 1] rectangle anywhere in the current image,
+ * not limited to a found region. resize_to_source false (the default)
+ * leaves the working image at bounds' own pixel size; true nearest-resamples
+ * the confined region back to the frame's own size before this step, e.g.
+ * to keep a fixed working resolution for whatever follows.
+ *
+ * Every later step, and every result coordinate, is in the confined image's
+ * space; the caller remaps to the full frame. In a sequence with
+ * TrackKeypoints or OpticalFlowDense, place Confine before RgbaToGray: the
+ * flow pyramid is built from the gray frame at that point, so a later Confine
+ * is rejected, or with resize_to_source silently mismatches the pyramid. Flow
+ * state resets when the confined size changes, and bounds that move at a
+ * constant size compare frames of different content.
+ */
+struct ConfineParams {
+    BoundingBox bounds;
+    bool resize_to_source { false };
+};
+
+/**
+ * @brief Connected-component label export and color output.
+ *
+ * CPU always returns component counts and bounding boxes. export_labels also
+ * retains the per-pixel host label_map; otherwise labels remain internal when
+ * the next step extracts contours. with_colors produces a pixel-precision,
+ * opaque RGBA host image in pixel_image, with black background and one color
+ * per foreground label. Subsequent steps may replace that image.
+ *
+ * GPU export_labels requests a device label map and with_colors selects the
+ * device color image in VisionResult::images.component_colors. When
+ * FindContours follows in the same sequence, the box readback is skipped
+ * unless export_boxes or export_label_buffer asks for it, since FindContours
+ * needs neither.
+ *
+ * export_boxes populates VisionResult::component_boxes even when FindContours
+ * follows, for joining a Contour back to its box via Contour::label_id.
+ * export_label_buffer's label map is consumed via
+ * VisionGpuExecutor::select_label(), not decoded to a host list.
+ */
 struct ConnectedComponentsParams {
     bool export_labels { false };
     bool with_colors { false };
+    bool export_boxes { false };
+    bool export_label_buffer { false };
 };
 
+/**
+ * @brief Contour filtering, trace limits, and output selection.
+ *
+ * FindContours requires ConnectedComponents as the immediately preceding
+ * sequence step on both backends.
+ *
+ * min_area is pixel coverage normalised by image area. A positive
+ * max_contours selects contours by descending area, counting both outer
+ * boundaries and holes. Zero imposes no caller count limit.
+ * max_points_per_contour bounds each trace; zero imposes no caller point
+ * limit. The GPU additionally applies its storage capacities.
+ *
+ * as_image replaces structured contours with white closed boundaries on an
+ * opaque black background. CPU returns host RGBA pixels in pixel_image with
+ * their dimensions; GPU returns a device image in
+ * VisionResult::images.contour_image.
+ */
 struct FindContoursParams {
     float min_area { 0.0F };
     uint32_t max_contours { 0 };
     uint32_t max_points_per_contour { 0 };
     bool as_image { false };
+
+    bool export_contours_buffer { false };
 };
 
 /**
  * @brief Parameter variant covering all ops that carry parameters.
  *
- * Ops with no parameters (RgbaToGray, Sobel, Scharr, ThresholdOtsu,
+ * Ops with no parameters (RgbaToGray, Sobel, Scharr,
  * NormalizeInplace, GrayToRgba, RgbaToHsv, MorphGradient, Erode, Dilate,
  * Open, Close) use std::monostate.
  */
@@ -214,6 +343,7 @@ using VisionParams = std::variant<
     std::monostate,
     ThresholdParams,
     ThresholdAdaptiveParams,
+    OtsuParams,
     NormalizeRangeParams,
     GaussianBlurParams,
     FilterSeparableParams,
@@ -224,7 +354,8 @@ using VisionParams = std::variant<
     TrackKeypointsParams,
     ConnectedComponentsParams,
     FindContoursParams,
-    OpticalFlowDenseParams>;
+    OpticalFlowDenseParams,
+    ConfineParams>;
 
 /**
  * @brief One step in a VisionSequence: an op and its parameters.
@@ -256,12 +387,22 @@ struct VisionSequence {
      *
      * Each method appends one step and returns *this for chaining.
      * Call build() to produce the final VisionSequence.
+     * Parameterized operations accept their parameter struct,
+     * allowing designated initializers in member declaration order. Omitted
+     * settings use the struct's defaults. Operations whose settings have no
+     * defaults require an explicit parameter struct.
      *
      * @code
      * auto seq = VisionSequence::Builder{}
      *     .rgba_to_gray()
-     *     .gaussian_blur(1.5f)
-     *     .threshold(0.4f)
+     *     .gaussian_blur({ .sigma = 1.5F })
+     *     .threshold({ .value = 0.4F })
+     *     .build();
+     * auto features = VisionSequence::Builder{}
+     *     .rgba_to_gray()
+     *     .harris_response({ .sigma = 1.5F })
+     *     .extract_peaks({ .threshold = 0.05F, .nms_radius = 6 })
+     *     .track_keypoints({ .error_threshold = 0.08F })
      *     .build();
      * @endcode
      */
@@ -287,20 +428,19 @@ struct VisionSequence {
             return push(VisionOp::Downsample2x);
         }
 
-        Builder& threshold(float value)
+        Builder& threshold(ThresholdParams params)
         {
-            return push(VisionOp::Threshold, ThresholdParams { .value = value });
+            return push(VisionOp::Threshold, params);
         }
 
-        Builder& threshold_adaptive(uint32_t block_size, float offset)
+        Builder& threshold_adaptive(ThresholdAdaptiveParams params)
         {
-            return push(VisionOp::ThresholdAdaptive,
-                ThresholdAdaptiveParams { .block_size = block_size, .offset = offset });
+            return push(VisionOp::ThresholdAdaptive, params);
         }
 
-        Builder& threshold_otsu()
+        Builder& threshold_otsu(OtsuParams params = {})
         {
-            return push(VisionOp::ThresholdOtsu);
+            return push(VisionOp::ThresholdOtsu, params);
         }
 
         Builder& normalize()
@@ -308,22 +448,19 @@ struct VisionSequence {
             return push(VisionOp::NormalizeInplace);
         }
 
-        Builder& normalize_range(float lo, float hi)
+        Builder& normalize_range(NormalizeRangeParams params)
         {
-            return push(VisionOp::NormalizeRange,
-                NormalizeRangeParams { .lo = lo, .hi = hi });
+            return push(VisionOp::NormalizeRange, params);
         }
 
-        Builder& gaussian_blur(float sigma)
+        Builder& gaussian_blur(GaussianBlurParams params)
         {
-            return push(VisionOp::GaussianBlur, GaussianBlurParams { .sigma = sigma });
+            return push(VisionOp::GaussianBlur, params);
         }
 
-        Builder& filter_separable(
-            std::vector<float> kx, std::vector<float> ky)
+        Builder& filter_separable(FilterSeparableParams params)
         {
-            return push(VisionOp::FilterSeparable,
-                FilterSeparableParams { .kernel_x = std::move(kx), .kernel_y = std::move(ky) });
+            return push(VisionOp::FilterSeparable, std::move(params));
         }
 
         Builder& sobel()
@@ -336,74 +473,59 @@ struct VisionSequence {
             return push(VisionOp::Scharr);
         }
 
-        Builder& canny(float sigma, float lo, float hi)
+        Builder& canny(CannyParams params)
         {
-            return push(VisionOp::Canny, CannyParams { .sigma = sigma, .low_threshold = lo, .high_threshold = hi });
+            return push(VisionOp::Canny, params);
         }
 
-        Builder& erode(uint32_t radius)
+        Builder& erode(MorphParams params)
         {
-            return push(VisionOp::Erode, MorphParams { .radius = radius });
+            return push(VisionOp::Erode, params);
         }
 
-        Builder& dilate(uint32_t radius)
+        Builder& dilate(MorphParams params)
         {
-            return push(VisionOp::Dilate, MorphParams { .radius = radius });
+            return push(VisionOp::Dilate, params);
         }
 
-        Builder& open(uint32_t radius)
+        Builder& open(MorphParams params)
         {
-            return push(VisionOp::Open, MorphParams { .radius = radius });
+            return push(VisionOp::Open, params);
         }
 
-        Builder& close(uint32_t radius)
+        Builder& close(MorphParams params)
         {
-            return push(VisionOp::Close, MorphParams { .radius = radius });
+            return push(VisionOp::Close, params);
         }
 
-        Builder& morph_gradient(uint32_t radius)
+        Builder& morph_gradient(MorphParams params)
         {
-            return push(VisionOp::MorphGradient, MorphParams { .radius = radius });
+            return push(VisionOp::MorphGradient, params);
         }
 
-        Builder& harris_response(float k = 0.04F, float sigma = 1.0F)
+        Builder& harris_response(HarrisParams params = {})
         {
-            return push(VisionOp::HarrisResponse, HarrisParams { .k = k, .sigma = sigma });
+            return push(VisionOp::HarrisResponse, params);
         }
 
-        Builder& extract_peaks(float threshold, uint32_t nms_radius)
+        Builder& extract_peaks(ExtractPeaksParams params)
         {
-            return push(VisionOp::ExtractPeaks,
-                ExtractPeaksParams { .threshold = threshold, .nms_radius = nms_radius });
+            return push(VisionOp::ExtractPeaks, params);
         }
 
-        Builder& connected_components(bool export_labels = false, bool with_colors = false)
+        Builder& connected_components(ConnectedComponentsParams params = {})
         {
-            return push(VisionOp::ConnectedComponents,
-                ConnectedComponentsParams { .export_labels = export_labels, .with_colors = with_colors });
+            return push(VisionOp::ConnectedComponents, params);
         }
 
-        Builder& track_keypoints(
-            uint32_t window_radius = 7,
-            uint32_t max_iterations = 20,
-            float eigen_threshold = 1e-4F,
-            float error_threshold = 0.3F,
-            uint32_t levels = 4,
-            uint32_t max_points = 512,
-            float min_distance = 8.0F,
-            float forward_backward_threshold = 0.0F,
-            bool export_tracks = false,
-            bool host_tracks = true)
+        Builder& track_keypoints(TrackKeypointsParams params = {})
         {
-            return push(VisionOp::TrackKeypoints,
-                TrackKeypointsParams {
-                    .window_radius = window_radius, .max_iterations = max_iterations, .eigen_threshold = eigen_threshold, .error_threshold = error_threshold, .levels = levels, .max_points = max_points, .min_distance = min_distance, .forward_backward_threshold = forward_backward_threshold, .export_tracks = export_tracks, .host_tracks = host_tracks });
+            return push(VisionOp::TrackKeypoints, params);
         }
 
-        Builder& find_contours(float min_area = 0.0F, uint32_t max_contours = 0, uint32_t max_points_per_contour = 0, bool as_image = false)
+        Builder& find_contours(FindContoursParams params = {})
         {
-            return push(VisionOp::FindContours,
-                FindContoursParams { .min_area = min_area, .max_contours = max_contours, .max_points_per_contour = max_points_per_contour, .as_image = as_image });
+            return push(VisionOp::FindContours, params);
         }
 
         Builder& snapshot()
@@ -411,19 +533,14 @@ struct VisionSequence {
             return push(VisionOp::Snapshot);
         }
 
-        Builder& optical_flow_dense(
-            uint32_t window_radius = 5,
-            uint32_t iterations = 3,
-            uint32_t levels = 4,
-            float eigen_threshold = 1e-3F,
-            float max_step = 4.0F,
-            bool visualize = false,
-            float visual_range = 2.0F,
-            float visual_min_motion = 0.0F)
+        Builder& optical_flow_dense(OpticalFlowDenseParams params = {})
         {
-            return push(VisionOp::OpticalFlowDense,
-                OpticalFlowDenseParams {
-                    .window_radius = window_radius, .iterations = iterations, .levels = levels, .eigen_threshold = eigen_threshold, .max_step = max_step, .visualize = visualize, .visual_range = visual_range, .visual_min_motion = visual_min_motion });
+            return push(VisionOp::OpticalFlowDense, params);
+        }
+
+        Builder& confine(ConfineParams params)
+        {
+            return push(VisionOp::Confine, params);
         }
 
         /**
@@ -480,6 +597,21 @@ inline void hash_combine(size_t& seed, size_t value)
 }
 
 /**
+ * @brief Combine an optional region into a hash: absence and presence hash
+ *        differently, presence by its four bounds.
+ */
+inline void hash_region(size_t& seed, const std::optional<BoundingBox>& region)
+{
+    hash_combine(seed, std::hash<bool> {}(region.has_value()));
+    if (!region)
+        return;
+    hash_combine(seed, std::hash<float> {}(region->x));
+    hash_combine(seed, std::hash<float> {}(region->y));
+    hash_combine(seed, std::hash<float> {}(region->w));
+    hash_combine(seed, std::hash<float> {}(region->h));
+}
+
+/**
  * @brief Hash a VisionStep's op and parameters together.
  *
  * Keys GPU dispatch memoization on VisionPass::completed, which spans one
@@ -495,9 +627,17 @@ inline size_t hash_vision_step(VisionOp op, const VisionParams& params)
         if constexpr (std::is_same_v<T, std::monostate>) {
         } else if constexpr (std::is_same_v<T, ThresholdParams>) {
             hash_combine(seed, std::hash<float> {}(p.value));
+            hash_combine(seed, std::hash<uint8_t> {}(static_cast<uint8_t>(p.channels)));
+            for (const auto& band : p.bands) {
+                hash_combine(seed, std::hash<float> {}(band.lo));
+                hash_combine(seed, std::hash<float> {}(band.hi));
+            }
         } else if constexpr (std::is_same_v<T, ThresholdAdaptiveParams>) {
             hash_combine(seed, std::hash<uint32_t> {}(p.block_size));
             hash_combine(seed, std::hash<float> {}(p.offset));
+            hash_combine(seed, std::hash<uint8_t> {}(static_cast<uint8_t>(p.channels)));
+        } else if constexpr (std::is_same_v<T, OtsuParams>) {
+            hash_combine(seed, std::hash<uint8_t> {}(static_cast<uint8_t>(p.channels)));
         } else if constexpr (std::is_same_v<T, NormalizeRangeParams>) {
             hash_combine(seed, std::hash<float> {}(p.lo));
             hash_combine(seed, std::hash<float> {}(p.hi));
@@ -517,9 +657,12 @@ inline size_t hash_vision_step(VisionOp op, const VisionParams& params)
         } else if constexpr (std::is_same_v<T, HarrisParams>) {
             hash_combine(seed, std::hash<float> {}(p.k));
             hash_combine(seed, std::hash<float> {}(p.sigma));
+            hash_region(seed, p.region);
         } else if constexpr (std::is_same_v<T, ExtractPeaksParams>) {
             hash_combine(seed, std::hash<float> {}(p.threshold));
             hash_combine(seed, std::hash<uint32_t> {}(p.nms_radius));
+            hash_combine(seed, std::hash<bool> {}(p.export_keypoints));
+            hash_region(seed, p.region);
         } else if constexpr (std::is_same_v<T, TrackKeypointsParams>) {
             hash_combine(seed, std::hash<uint32_t> {}(p.window_radius));
             hash_combine(seed, std::hash<uint32_t> {}(p.max_iterations));
@@ -536,9 +679,12 @@ inline size_t hash_vision_step(VisionOp op, const VisionParams& params)
             hash_combine(seed, std::hash<uint32_t> {}(p.max_contours));
             hash_combine(seed, std::hash<uint32_t> {}(p.max_points_per_contour));
             hash_combine(seed, std::hash<bool> {}(p.as_image));
+            hash_combine(seed, std::hash<bool> {}(p.export_contours_buffer));
         } else if constexpr (std::is_same_v<T, ConnectedComponentsParams>) {
             hash_combine(seed, std::hash<bool> {}(p.export_labels));
             hash_combine(seed, std::hash<bool> {}(p.with_colors));
+            hash_combine(seed, std::hash<bool> {}(p.export_boxes));
+            hash_combine(seed, std::hash<bool> {}(p.export_label_buffer));
         } else if constexpr (std::is_same_v<T, OpticalFlowDenseParams>) {
             hash_combine(seed, std::hash<uint32_t> {}(p.window_radius));
             hash_combine(seed, std::hash<uint32_t> {}(p.iterations));
@@ -548,6 +694,12 @@ inline size_t hash_vision_step(VisionOp op, const VisionParams& params)
             hash_combine(seed, std::hash<bool> {}(p.visualize));
             hash_combine(seed, std::hash<float> {}(p.visual_range));
             hash_combine(seed, std::hash<float> {}(p.visual_min_motion));
+        } else if constexpr (std::is_same_v<T, ConfineParams>) {
+            hash_combine(seed, std::hash<float> {}(p.bounds.x));
+            hash_combine(seed, std::hash<float> {}(p.bounds.y));
+            hash_combine(seed, std::hash<float> {}(p.bounds.w));
+            hash_combine(seed, std::hash<float> {}(p.bounds.h));
+            hash_combine(seed, std::hash<bool> {}(p.resize_to_source));
         }
     },
         params);

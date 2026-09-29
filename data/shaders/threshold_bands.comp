@@ -1,0 +1,50 @@
+#version 460
+
+#include "include/vision_common.glsl"
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+layout(set = 0, binding = 0, rgba32f) writeonly uniform image2D out_image;
+layout(set = 0, binding = 1, rgba32f) readonly uniform image2D in_image;
+
+layout(push_constant) uniform PC {
+    float lo0;
+    float lo1;
+    float lo2;
+    float hi0;
+    float hi1;
+    float hi2;
+    uint channels;
+} pc;
+
+bool in_band(float v, float lo, float hi)
+{
+    return lo <= hi ? (v >= lo && v <= hi) : (v >= lo || v <= hi);
+}
+
+/**
+ * @brief Multichannel fixed threshold. A pixel passes when every channel
+ *        selected in pc.channels lies inside its own inclusive band, where
+ *        lo greater than hi wraps around. Writes a binary mask replicated
+ *        across rgb with alpha 1.
+ */
+void main()
+{
+    const ivec2 coord = thread_coord();
+    const ivec2 sz = imageSize(out_image);
+    if (coord.x >= sz.x || coord.y >= sz.y)
+        return;
+
+    const vec4 px = imageLoad(in_image, coord);
+
+    bool pass = true;
+    if ((pc.channels & 1u) != 0u)
+        pass = pass && in_band(px.r, pc.lo0, pc.hi0);
+    if ((pc.channels & 2u) != 0u)
+        pass = pass && in_band(px.g, pc.lo1, pc.hi1);
+    if ((pc.channels & 4u) != 0u)
+        pass = pass && in_band(px.b, pc.lo2, pc.hi2);
+
+    const float m = pass ? 1.0 : 0.0;
+    imageStore(out_image, coord, vec4(m, m, m, 1.0));
+}

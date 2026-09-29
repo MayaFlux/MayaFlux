@@ -56,7 +56,8 @@ GpuVisionPass::Completed VisionGpuExecutor::op_harris_response(
      *  clear the staged bytes before pass 1 so the accumulated max survives. */
     const uint32_t peak_reset = 0U;
     pixel_ctx.set_binding_data(2, std::span<const uint32_t>(&peak_reset, 1));
-    pixel_ctx.set_push_constants(HarrisPC { .k = p.k, .pass = 0U, .width = w, .height = h });
+    const auto rect = region_rect(p.region, w, h);
+    pixel_ctx.set_push_constants(HarrisPC { .k = p.k, .pass = 0U, .width = w, .height = h, .rect = rect });
     pixel_ctx.prepare_output_image(w, h);
     {
         const auto f = pixel_ctx.dispatch_async({});
@@ -65,7 +66,7 @@ GpuVisionPass::Completed VisionGpuExecutor::op_harris_response(
     }
 
     pixel_ctx.set_binding_data(2, std::span<const uint32_t>(&peak_reset, 0));
-    pixel_ctx.set_push_constants(HarrisPC { .k = p.k, .pass = 1U, .width = w, .height = h });
+    pixel_ctx.set_push_constants(HarrisPC { .k = p.k, .pass = 1U, .width = w, .height = h, .rect = rect });
     {
         const auto f = pixel_ctx.dispatch_async({});
         foundry.wait_for_fence(f);
@@ -74,6 +75,7 @@ GpuVisionPass::Completed VisionGpuExecutor::op_harris_response(
 
     contexts.pass.current = pixel_ctx.get_output_image(0);
     contexts.pass.result.structured = std::monostate {};
+    contexts.pass.result.images.harris_response = contexts.pass.current;
 
     contexts.bound_config = harris_resp_cfg;
     contexts.bound_staged = smoothed;
@@ -108,6 +110,8 @@ void VisionGpuExecutor::op_extract_peaks(
 
     structured_ctx.set_output_size(1, sizeof(uint32_t));
     structured_ctx.set_output_size(2, static_cast<size_t>(k_max_kp) * 4 * sizeof(float));
+    structured_ctx.ensure_shared_buffer(0, 3, (static_cast<size_t>(k_max_kp) + 1U) * 4U,
+        GpuBufferBinding::ElementType::FLOAT32, Portal::Graphics::BufferUsageHint::COMPUTE);
 
     structured_ctx.stage_image(contexts.pass.current);
     structured_ctx.set_push_constants(ExtractPeaksPC {
@@ -116,6 +120,7 @@ void VisionGpuExecutor::op_extract_peaks(
         .width = w,
         .height = h,
         .max_keypoints = k_max_kp,
+        .rect = region_rect(p.region, w, h),
     });
 
     structured_ctx.set_output_dimensions(w, h);
@@ -130,6 +135,13 @@ void VisionGpuExecutor::op_extract_peaks(
     if (auto it = gpu_result.aux.find(1); it != gpu_result.aux.end())
         std::memcpy(&count, it->second.data(), sizeof(uint32_t));
     count = std::min(count, k_max_kp);
+
+    if (p.export_keypoints) {
+        const glm::vec4 header { std::bit_cast<float>(count), 0.0F, 0.0F, 0.0F };
+        structured_ctx.upload_shared_raw(0, 3, reinterpret_cast<const uint8_t*>(&header), sizeof(glm::vec4));
+        contexts.pass.result.buffers.keypoints = std::make_shared<Portal::Graphics::GpuBufferHandle>(
+            structured_ctx.shared_buffer_handle(0, 3));
+    }
 
     struct GpuKp {
         float x, y, response, pad;
@@ -153,6 +165,28 @@ void VisionGpuExecutor::op_extract_peaks(
     contexts.pass.result.structured = std::move(kpts);
     contexts.pass.result.w = 0;
     contexts.pass.result.h = 0;
+}
+
+std::vector<Kinesis::Vision::Keypoint> VisionGpuExecutor::read_exported_keypoints(
+    const Kinesis::Vision::VisionResult& result)
+{
+    const auto& handle = result.buffers.keypoints;
+    const auto count = exported_record_count(handle, 1);
+    if (!count)
+        return {};
+
+    const auto* records = static_cast<const glm::vec4*>(handle->mapped_ptr) + 1;
+    std::vector<Kinesis::Vision::Keypoint> out;
+    out.reserve(*count);
+    for (uint32_t i = 0; i < *count; ++i) {
+        out.push_back({
+            .position = { records[i].x, records[i].y },
+            .response = records[i].z,
+            .scale = 1.0F,
+            .angle = 0.0F,
+        });
+    }
+    return out;
 }
 
 } // namespace MayaFlux::Yantra

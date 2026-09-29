@@ -44,13 +44,23 @@ constexpr size_t k_flow_export_vec4 = size_t { 1 } + size_t { k_flow_max_points 
 struct ThresholdPC {
     float value;
 };
+struct ThresholdBandsPC {
+    float lo0, lo1, lo2;
+    float hi0, hi1, hi2;
+    uint32_t channels;
+};
 struct ThresholdAdaptivePC {
     uint32_t block_size;
     float offset;
+    uint32_t channels;
 };
 struct OtsuHistPC {
     uint32_t width;
     uint32_t height;
+    uint32_t channels;
+};
+struct OtsuApplyPC {
+    uint32_t channels;
 };
 struct NormalizePC {
     float scale;
@@ -63,11 +73,44 @@ struct IngestPC {
     uint32_t width;
     uint32_t height;
 };
+/** Half-open pixel rectangle [x0, x1) x [y0, y1) */
+struct PixelRect {
+    uint32_t x0;
+    uint32_t y0;
+    uint32_t x1;
+    uint32_t y1;
+};
+
+/**
+ * @brief Pixel rectangle of a normalised region over a w x h image, clamped
+ *        to the image. No region is the whole image. A region that clamps to
+ *        nothing gives an empty rectangle, which masks everything.
+ */
+inline PixelRect region_rect(
+    const std::optional<Kinesis::Vision::BoundingBox>& region, uint32_t w, uint32_t h)
+{
+    if (!region)
+        return { .x0 = 0U, .y0 = 0U, .x1 = w, .y1 = h };
+
+    const auto fw = static_cast<float>(w);
+    const auto fh = static_cast<float>(h);
+    const auto clamp_to = [](float v, uint32_t hi) {
+        return static_cast<uint32_t>(std::clamp(v, 0.0F, static_cast<float>(hi)));
+    };
+    return {
+        .x0 = clamp_to(std::floor(region->x * fw), w),
+        .y0 = clamp_to(std::floor(region->y * fh), h),
+        .x1 = clamp_to(std::ceil((region->x + region->w) * fw), w),
+        .y1 = clamp_to(std::ceil((region->y + region->h) * fh), h),
+    };
+}
+
 struct HarrisPC {
     float k;
     uint32_t pass;
     uint32_t width;
     uint32_t height;
+    PixelRect rect;
 };
 struct CannyPC {
     float sigma;
@@ -106,6 +149,7 @@ struct ExtractPeaksPC {
     uint32_t width;
     uint32_t height;
     uint32_t max_keypoints;
+    PixelRect rect;
 };
 struct CCBlockInitPC {
     uint32_t width;
@@ -134,6 +178,11 @@ struct CCFinalLabelPC {
 struct CCResetPC {
     uint32_t lut_size;
     uint32_t max_components;
+};
+struct SelectLabelPC {
+    uint32_t target_label;
+    uint32_t width;
+    uint32_t height;
 };
 struct ContourSegmentsPC {
     uint32_t width;
@@ -186,6 +235,7 @@ struct FlowPyramidPC {
     uint32_t dst_h;
     uint32_t dst_ox;
     uint32_t dst_oy;
+    uint32_t src_channel;
 };
 struct FlowLkPC {
     uint32_t curr_atlas;
@@ -271,5 +321,30 @@ struct FlowDensePC {
     float visual_min_motion;
     uint32_t last_iteration;
 };
+
+struct ConfinePC {
+    uint32_t src_x, src_y, src_w, src_h;
+    uint32_t out_w, out_h;
+};
+
+/**
+ * @brief Clamped record count from an exported buffer's vec4 header, or
+ *        nullopt when the buffer isn't readable.
+ *
+ * Shared by every read_exported_* decode: header[0].x holds the count as
+ * uint bits, clamped to the buffer's actual capacity at stride_vec4 per
+ * record (one header vec4 assumed).
+ */
+inline std::optional<uint32_t> exported_record_count(
+    const std::shared_ptr<Portal::Graphics::GpuBufferHandle>& handle,
+    size_t stride_vec4)
+{
+    if (!handle || !handle->mapped_ptr || handle->size_bytes < sizeof(glm::vec4))
+        return std::nullopt;
+
+    const auto* header = static_cast<const glm::vec4*>(handle->mapped_ptr);
+    const size_t capacity = (handle->size_bytes / sizeof(glm::vec4) - 1U) / stride_vec4;
+    return static_cast<uint32_t>(std::min<size_t>(std::bit_cast<uint32_t>(header[0].x), capacity));
+}
 
 } // namespace MayaFlux::Yantra::VisionInternal

@@ -1,0 +1,51 @@
+#version 460
+
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+
+/// @brief Field to sample, read by texel.
+layout(set = 0, binding = 1) uniform sampler2D src_tex;
+
+/// @brief One normalised [0, 1] point per record.
+layout(set = 0, binding = 3, std430) readonly buffer PointBuf {
+    vec2 points[];
+};
+
+/// @brief Window mean at each point, in point order.
+layout(set = 0, binding = 6, std430) writeonly buffer MeanBuf {
+    vec4 means[];
+};
+
+layout(push_constant) uniform PC {
+    uint count;
+    uint radius;
+    uint src_w;
+    uint src_h;
+} pc;
+
+/**
+ * @brief Mean of the (2 * radius + 1) squared texel window around each point,
+ *        one thread per point. Window texels outside the image clamp to the
+ *        edge. Answers "what is the colour, flow or gradient under this
+ *        keypoint or track" for every point in one dispatch.
+ */
+void main()
+{
+    const uint i = gl_GlobalInvocationID.x;
+    if (i >= pc.count)
+        return;
+
+    const ivec2 size = ivec2(int(pc.src_w), int(pc.src_h));
+    const ivec2 center = ivec2(points[i] * vec2(size));
+    const int r = int(pc.radius);
+
+    vec4 sum = vec4(0.0);
+    for (int dy = -r; dy <= r; ++dy) {
+        for (int dx = -r; dx <= r; ++dx) {
+            const ivec2 p = clamp(center + ivec2(dx, dy), ivec2(0), size - ivec2(1));
+            sum += texelFetch(src_tex, p, 0);
+        }
+    }
+
+    const int side = 2 * r + 1;
+    means[i] = sum / float(side * side);
+}

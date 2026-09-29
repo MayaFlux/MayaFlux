@@ -271,19 +271,33 @@ public:
         const Kinesis::Vision::VisionParams& params);
 
     /**
-     * @brief Host tracks decoded on demand from a result's exported buffer.
+     * @brief Host tracks decoded from result.buffers.tracks, or empty.
      *
-     * For sequences run with export_tracks and without host_tracks, where the
-     * structured result is empty. Reads the buffer through its host mapping,
-     * so it is meant for occasional host access, not per frame use on a
-     * device local buffer. The buffer is valid for one more run after the
+     * For occasional host access, not per-frame use: reads a device-local
+     * buffer through its host mapping. Valid for one more run after the
      * result was delivered.
-     *
-     * @param result A result whose tracks_buffer came from this executor.
-     * @return The exported tracks, or empty when the result carries no
-     *         readable export.
      */
     [[nodiscard]] static std::vector<Kinesis::Vision::TrackResult> read_exported_tracks(
+        const Kinesis::Vision::VisionResult& result);
+
+    /**
+     * @brief Host keypoints decoded from result.buffers.keypoints, or empty.
+     *
+     * Independent of VisionResult::structured. For occasional host access,
+     * not per-frame use. Valid for one more run after the result was
+     * delivered.
+     */
+    [[nodiscard]] static std::vector<Kinesis::Vision::Keypoint> read_exported_keypoints(
+        const Kinesis::Vision::VisionResult& result);
+
+    /**
+     * @brief Host contours decoded from result.buffers.contours, or empty.
+     *
+     * Always in compacted (unsorted) order; sort the returned list yourself
+     * if you need top-K-by-area order. For occasional host access, not
+     * per-frame use. Valid for one more run after the result was delivered.
+     */
+    [[nodiscard]] static std::vector<Kinesis::Vision::Contour> read_exported_contours(
         const Kinesis::Vision::VisionResult& result);
 
     /**
@@ -325,6 +339,43 @@ public:
     [[nodiscard]] Kinesis::Vision::VisionResult run(
         const Kinesis::Vision::VisionSequence& sequence,
         const std::shared_ptr<Core::VKImage>& image,
+        uint32_t w, uint32_t h);
+
+    /**
+     * @brief Isolate one ConnectedComponents label's silhouette on GPU,
+     *        through the explicit context set that produced the label
+     *        buffer.
+     *
+     * Dispatches vision_label_select.comp through contexts.component_contours,
+     * the same context ConnectedComponents/FindContours already own: reads
+     * dense_label in place at its existing binding, no cross-context buffer
+     * copy. Requires a ConnectedComponents step to have already run against
+     * these exact contexts (this run or an earlier one); dense_label holds
+     * whichever frame's labels were computed last.
+     *
+     * @param contexts     The same context set a prior run() populated.
+     * @param source       Frame to select pixels from, eShaderReadOnlyOptimal.
+     * @param target_label 1-based label id, matching BoundingBox::label_id /
+     *                     Contour::label_id from that same run.
+     * @param w            Frame width in pixels.
+     * @param h            Frame height in pixels.
+     * @return             New image, transparent everywhere outside the
+     *                     selected label's silhouette.
+     */
+    [[nodiscard]] std::shared_ptr<Core::VKImage> select_label(
+        VisionGpuContexts& contexts,
+        const std::shared_ptr<Core::VKImage>& source,
+        uint32_t target_label,
+        uint32_t w, uint32_t h);
+
+    /**
+     * @brief select_label() using this instance's own lazily-constructed
+     *        context set. See the explicit-contexts overload for the
+     *        ConnectedComponents-must-have-already-run requirement.
+     */
+    [[nodiscard]] std::shared_ptr<Core::VKImage> select_label(
+        const std::shared_ptr<Core::VKImage>& source,
+        uint32_t target_label,
         uint32_t w, uint32_t h);
 
     /**
@@ -373,11 +424,25 @@ private:
      * @brief Apply an Otsu threshold to the current image.
      *
      * Computes the histogram and threshold on the GPU, then replaces the
-     * working image with the binary result and publishes it as debug_labels.
+     * working image with the binary result and publishes it as
+     * VisionResult::images.threshold_otsu.
      *
      * @return The resulting image and the image it was derived from.
      */
-    Kinesis::Vision::GpuVisionPass::Completed op_threshold_otsu(VisionGpuContexts& contexts);
+    Kinesis::Vision::GpuVisionPass::Completed op_threshold_otsu(
+        VisionGpuContexts& contexts,
+        const Kinesis::Vision::OtsuParams& p);
+
+    /**
+     * @brief Arbitrary rectangular sub-region of the current image,
+     *        optionally resized back to the frame's own size before this
+     *        step. Publishes the result as VisionResult::images.confine.
+     *
+     * @return The resulting image and the image it was derived from.
+     */
+    Kinesis::Vision::GpuVisionPass::Completed op_confine(
+        VisionGpuContexts& contexts,
+        const Kinesis::Vision::ConfineParams& p);
 
     /**
      * @brief Apply morphological opening or closing to the current image.
@@ -397,7 +462,7 @@ private:
      *
      * Applies smoothing, gradients, suppression, threshold classification,
      * and hysteresis. The final edge image becomes the working image and is
-     * published as debug_labels.
+     * published as VisionResult::images.canny.
      *
      * @return The resulting edge image and the original input image.
      */
@@ -487,23 +552,27 @@ private:
     bool op_dense_flow(VisionGpuContexts& contexts, const Kinesis::Vision::VisionStep& step);
 
     /**
-     * @brief Build the current frame's pyramid atlas from the working gray image.
+     * @brief Build the current frame's pyramid atlas from the working image.
      *
      * Submitted as one un-awaited dependency sequence, one fused dispatch per
-     * level. The level 0 stage carries a hazard on the gray image, which
+     * level. The level 0 stage carries a hazard on the working image, which
      * orders any later dispatch that overwrites it after this read. The
      * fence is reaped on the next fresh run and in reset().
+     *
+     * @param src_channel Channel of the working image read as intensity: 0
+     *                    for a gray frame, 2 for the value channel of an HSV
+     *                    frame.
      */
-    static void build_flow_pyramid(VisionGpuContexts& contexts, uint32_t requested_levels);
+    static void build_flow_pyramid(VisionGpuContexts& contexts, uint32_t requested_levels, uint32_t src_channel);
 
     /**
      * @brief Run any work a finished step owes the flow context.
      *
-     * The step that produces the gray image feeds it to the flow context
-     * before the next pixel dispatch overwrites it, when a TrackKeypoints or
-     * OpticalFlowDense step lies ahead. Sequences without one never take this
-     * branch, and when both are present the pyramid gets the larger level
-     * count.
+     * The step that produces the gray or HSV image (RgbaToGray or RgbaToHsv)
+     * feeds it to the flow context before the next pixel dispatch overwrites
+     * it, when a TrackKeypoints or OpticalFlowDense step lies ahead.
+     * Sequences without one never take this branch, and when both are
+     * present the pyramid gets the larger level count.
      */
     static void after_step(VisionGpuContexts& contexts, size_t index);
 };

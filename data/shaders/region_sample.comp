@@ -1,0 +1,74 @@
+#version 460
+
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+
+/// @brief Field to sample: the source image, sampled unfiltered by texel.
+layout(set = 0, binding = 1) uniform sampler2D src_tex;
+
+/// @brief mean/min/max, one vec4 (rgba) each, over the pixel rect below.
+layout(set = 0, binding = 2, std430) writeonly buffer ReduceOutBuf {
+    vec4 mean_val;
+    vec4 min_val;
+    vec4 max_val;
+};
+
+/// @brief px, py: pixel-space top-left of the region. pw, ph: pixel-space
+///        extent. Precomputed host-side from a normalised BoundingBox
+///        against the source image's own dimensions, not derived here.
+layout(push_constant) uniform PC {
+    uint px;
+    uint py;
+    uint pw;
+    uint ph;
+} pc;
+
+shared vec4 s_sum[256];
+shared vec4 s_min[256];
+shared vec4 s_max[256];
+
+/**
+ * @brief Single-workgroup reduction over a rectangular pixel window of an
+ *        image: per-channel mean, min, and max. Same shape as
+ *        track_reduce.comp's tree reduction, over texelFetch samples in a
+ *        rect instead of an SSBO list. Lets VisionExtractor answer "what is
+ *        the flow/gradient/appearance like in this region" without ever
+ *        downloading the region itself.
+ */
+void main()
+{
+    const uint tid = gl_LocalInvocationID.x;
+    const uint count = pc.pw * pc.ph;
+
+    vec4 sum = vec4(0.0);
+    vec4 mn = vec4(1.0 / 0.0);
+    vec4 mx = vec4(-1.0 / 0.0);
+
+    for (uint i = tid; i < count; i += 256u) {
+        const uint lx = i % pc.pw;
+        const uint ly = i / pc.pw;
+        const vec4 px = texelFetch(src_tex, ivec2(int(pc.px + lx), int(pc.py + ly)), 0);
+        sum += px;
+        mn = min(mn, px);
+        mx = max(mx, px);
+    }
+
+    s_sum[tid] = sum;
+    s_min[tid] = mn;
+    s_max[tid] = mx;
+    barrier();
+
+    for (uint stride = 128u; stride > 0u; stride >>= 1u) {
+        if (tid < stride) {
+            s_sum[tid] += s_sum[tid + stride];
+            s_min[tid] = min(s_min[tid], s_min[tid + stride]);
+            s_max[tid] = max(s_max[tid], s_max[tid + stride]);
+        }
+        barrier();
+    }
+
+    if (tid == 0u) {
+        mean_val = count > 0u ? s_sum[0] / float(count) : vec4(0.0);
+        min_val = s_min[0];
+        max_val = s_max[0];
+    }
+}

@@ -1,0 +1,35 @@
+#version 460
+
+layout(local_size_x = 16, local_size_y = 16) in;
+
+layout(set = 0, binding = 0, rgba8) uniform image2D out_image;
+layout(set = 0, binding = 1) uniform sampler2D src_tex;
+
+/// @brief Edge image from the analyzer (DetectEdges), read by texel.
+layout(set = 0, binding = 2) uniform sampler2D edge_tex;
+
+layout(push_constant) uniform PC {
+    float threshold;
+    uint out_w;
+    uint out_h;
+} pc;
+
+/**
+ * @brief Keep the source only where the edge image marks an edge: a pixel
+ *        whose edge value (red channel) reaches the threshold copies the
+ *        source, every other pixel is transparent black. The edge image is
+ *        looked up by normalised position, so its resolution need not match
+ *        the source's.
+ */
+void main()
+{
+    const ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
+    if (coord.x >= int(pc.out_w) || coord.y >= int(pc.out_h))
+        return;
+
+    const vec2 uv = (vec2(coord) + 0.5) / vec2(float(pc.out_w), float(pc.out_h));
+    const ivec2 edge_size = textureSize(edge_tex, 0);
+    const float edge = texelFetch(edge_tex, clamp(ivec2(uv * vec2(edge_size)), ivec2(0), edge_size - ivec2(1)), 0).r;
+
+    imageStore(out_image, coord, edge >= pc.threshold ? texture(src_tex, uv) : vec4(0.0));
+}

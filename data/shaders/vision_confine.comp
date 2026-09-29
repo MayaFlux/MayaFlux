@@ -1,0 +1,40 @@
+#version 460
+
+#include "include/vision_common.glsl"
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+layout(set = 0, binding = 0, rgba32f) writeonly uniform image2D out_image;
+layout(set = 0, binding = 1, rgba32f) readonly uniform image2D in_image;
+
+/// @brief src_x, src_y, src_w, src_h: pixel-space rectangle into the current
+///        image, anywhere in it. out_w, out_h: output pixel dimensions -
+///        equal to src_w/src_h for a plain, pixel-exact confine (the
+///        default), or the pre-confine frame size to resize back to it.
+layout(push_constant) uniform PC {
+    uint src_x;
+    uint src_y;
+    uint src_w;
+    uint src_h;
+    uint out_w;
+    uint out_h;
+} pc;
+
+/**
+ * @brief Arbitrary rectangular sub-region of the current image, nearest-
+ *        resampled into out_w x out_h. out_w == src_w and out_h == src_h is
+ *        a pixel-exact confine with no resampling at all; any other
+ *        out_w/out_h nearest-resamples the confined region to fit, e.g.
+ *        back to the frame's own size before this step.
+ */
+void main()
+{
+    const ivec2 coord = thread_coord();
+    if (coord.x >= int(pc.out_w) || coord.y >= int(pc.out_h))
+        return;
+
+    const uint sx = pc.src_x + (uint(coord.x) * pc.src_w) / pc.out_w;
+    const uint sy = pc.src_y + (uint(coord.y) * pc.src_h) / pc.out_h;
+
+    imageStore(out_image, coord, imageLoad(in_image, ivec2(int(sx), int(sy))));
+}

@@ -309,10 +309,12 @@ void trace_phase_compacted()
     const uint out_base = atomicAdd(point_cursor[0], pc.max_points_per_contour);
     uint n = 0u;
     uint parent = 0xFFFFFFFFu;
+    uint own_label = 0u;
 
     if ((meta & HOLE_FLAG) == 0u) {
         const uint here = meta;
         walk_boundary(cx, cy, here + 1u, false, out_base, pc.max_points_per_contour, n);
+        own_label = here + 1u;
     } else {
         const uint label = meta & 0xFFFu;
         walk_boundary(cx + 1, cy, label + 1u, true, out_base, pc.max_points_per_contour, n);
@@ -335,7 +337,7 @@ void trace_phase_compacted()
     }
     sort_indices[i] = float(i);
 
-    contour_meta[i] = uvec4(out_base, ok ? n : 0u, parent, 0u);
+    contour_meta[i] = uvec4(out_base, ok ? n : 0u, parent, ok ? own_label : 0u);
 }
 
 void main()

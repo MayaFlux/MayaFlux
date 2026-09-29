@@ -193,7 +193,7 @@ namespace {
                 state.last_export = view;
                 state.export_slot ^= 1U;
             }
-            contexts.pass.result.tracks_buffer = state.last_export;
+            contexts.pass.result.buffers.tracks = state.last_export;
             state.export_pending = false;
         }
         commit_flow_frame(contexts);
@@ -247,13 +247,18 @@ namespace {
     void finish_dense(VisionGpuContexts& contexts, bool visualized)
     {
         auto& state = contexts.flow_state;
-        const bool duplicate = frame_is_duplicate(contexts, read_flow_meta(contexts)) && state.last_flow;
+        const auto meta = read_flow_meta(contexts);
+        const bool duplicate = frame_is_duplicate(contexts, meta) && state.last_flow;
         if (!duplicate)
             state.last_flow = state.flow_out[state.curr];
 
         contexts.pass.result.flow = state.last_flow;
+        const auto pixel_count = static_cast<float>(contexts.pass.w) * static_cast<float>(contexts.pass.h);
+        contexts.pass.result.motion_energy = pixel_count > 0.0F
+            ? static_cast<float>(meta[1]) / 1024.0F / pixel_count
+            : 0.0F;
         if (visualized && state.last_flow)
-            contexts.pass.result.debug_labels = state.flow_vis;
+            contexts.pass.result.images.flow_visualization = state.flow_vis;
         commit_flow_frame(contexts);
     }
 
@@ -355,6 +360,7 @@ bool VisionGpuExecutor::op_track_keypoints(VisionGpuContexts& contexts, const Vi
         .width = w,
         .height = h,
         .max_keypoints = k_flow_max_points,
+        .rect = region_rect(pk.region, w, h),
     };
 
     std::vector<DependencyStage> stages;
@@ -466,7 +472,14 @@ bool VisionGpuExecutor::op_track_keypoints(VisionGpuContexts& contexts, const Vi
     if (export_tracks)
         add_select(FlowSelectPhase::PUBLISH, candidate_groups, { k_flow_export[0], k_flow_export[1] }, FlowArgs::PUBLISH);
 
-    const auto fence = flow.dispatch_dependency_async(stages);
+    ExecutionContext track_ctx;
+    track_ctx.mode = ExecutionMode::DEPENDENCY;
+    DependencyParams track_params;
+    track_params.stages = stages;
+    track_params.async = true;
+    track_ctx.parameters = track_params;
+    const auto track_dispatch_result = flow.execute(Datum<> {}, track_ctx);
+    const auto fence = track_dispatch_result.get_metadata<Portal::Graphics::FenceID>("gpu_fence").value_or(Portal::Graphics::INVALID_FENCE);
     if (fence == Portal::Graphics::INVALID_FENCE) {
         MF_ERROR(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
             "run_gpu: TrackKeypoints failed to submit its dispatch sequence");
@@ -655,7 +668,14 @@ bool VisionGpuExecutor::op_dense_flow(VisionGpuContexts& contexts, const VisionS
         push_stage(vis_pc, finest, { out_hazard, image_hazard(images->vis, 11U) });
     }
 
-    const auto fence = flow.dispatch_dependency_async(stages);
+    ExecutionContext dense_ctx;
+    dense_ctx.mode = ExecutionMode::DEPENDENCY;
+    DependencyParams dense_params;
+    dense_params.stages = stages;
+    dense_params.async = true;
+    dense_ctx.parameters = dense_params;
+    const auto dense_dispatch_result = flow.execute(Datum<> {}, dense_ctx);
+    const auto fence = dense_dispatch_result.get_metadata<Portal::Graphics::FenceID>("gpu_fence").value_or(Portal::Graphics::INVALID_FENCE);
     if (fence == Portal::Graphics::INVALID_FENCE) {
         MF_ERROR(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
             "run_gpu: OpticalFlowDense failed to submit its dispatch sequence");
@@ -676,17 +696,17 @@ bool VisionGpuExecutor::op_dense_flow(VisionGpuContexts& contexts, const VisionS
 
 std::vector<Kinesis::Vision::TrackResult> VisionGpuExecutor::read_exported_tracks(const Kinesis::Vision::VisionResult& result)
 {
-    const auto& handle = result.tracks_buffer;
-    if (!handle || !handle->mapped_ptr || handle->size_bytes < sizeof(glm::vec4))
+    const auto& handle = result.buffers.tracks;
+    const auto count = exported_record_count(handle, 2);
+
+    if (!count)
         return {};
 
     const auto* header = static_cast<const glm::vec4*>(handle->mapped_ptr);
-    const size_t capacity = (handle->size_bytes / sizeof(glm::vec4) - 1U) / 2U;
-    const auto count = static_cast<uint32_t>(std::min<size_t>(std::bit_cast<uint32_t>(header[0].x), capacity));
-    return decode_track_records(header + 1, count);
+    return decode_track_records(header + 1, *count);
 }
 
-void VisionGpuExecutor::build_flow_pyramid(VisionGpuContexts& contexts, uint32_t requested_levels)
+void VisionGpuExecutor::build_flow_pyramid(VisionGpuContexts& contexts, uint32_t requested_levels, uint32_t src_channel)
 {
     auto& flow = contexts.flow;
     auto& state = contexts.flow_state;
@@ -732,6 +752,7 @@ void VisionGpuExecutor::build_flow_pyramid(VisionGpuContexts& contexts, uint32_t
             .dst_h = dst.h,
             .dst_ox = dst.ox,
             .dst_oy = dst.oy,
+            .src_channel = src_channel,
         };
 
         stages.push_back({
@@ -768,7 +789,14 @@ void VisionGpuExecutor::build_flow_pyramid(VisionGpuContexts& contexts, uint32_t
     const std::array<uint32_t, 4> cleared {};
     flow.upload_shared_raw(1, 3, reinterpret_cast<const uint8_t*>(cleared.data()), sizeof(cleared));
 
-    state.build_fence = flow.dispatch_dependency_async(stages);
+    ExecutionContext pyramid_ctx;
+    pyramid_ctx.mode = ExecutionMode::DEPENDENCY;
+    DependencyParams pyramid_params;
+    pyramid_params.stages = stages;
+    pyramid_params.async = true;
+    pyramid_ctx.parameters = pyramid_params;
+    const auto pyramid_dispatch_result = flow.execute(Datum<> {}, pyramid_ctx);
+    state.build_fence = pyramid_dispatch_result.get_metadata<Portal::Graphics::FenceID>("gpu_fence").value_or(Portal::Graphics::INVALID_FENCE);
     state.curr_ready = state.build_fence != Portal::Graphics::INVALID_FENCE;
 }
 

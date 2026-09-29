@@ -21,18 +21,41 @@ layout(set = 0, binding = 2, std430) buffer KeypointBuf {
     GpuKeypoint keypoints[];
 };
 
+/// @brief Slot 0 is the header, written host-side after this dispatch
+///        completes (the final count is not known to any one invocation
+///        mid-dispatch). Slots 1..max_keypoints are this shader's own
+///        records, written directly here so the bulk keypoint data never
+///        leaves the GPU for a caller that only wants the device view.
+layout(set = 0, binding = 3, std430) buffer ExportBuf {
+    GpuKeypoint export_slots[];
+};
+
 layout(push_constant) uniform PC {
     float threshold;
     uint nms_radius;
     uint width;
     uint height;
     uint max_keypoints;
+    uint x0;
+    uint y0;
+    uint x1;
+    uint y1;
 } pc;
 
+/**
+ * @brief Peaks are only reported inside the half-open pixel rectangle
+ *        [x0, x1) x [y0, y1); the default rectangle is the whole image.
+ *        Coordinates written stay full-frame. Neighbours outside the
+ *        rectangle still take part in non-maximum suppression.
+ */
 void main()
 {
     const ivec2 coord = thread_coord();
     if (coord.x >= int(pc.width) || coord.y >= int(pc.height))
+        return;
+
+    if (uint(coord.x) < pc.x0 || uint(coord.x) >= pc.x1
+        || uint(coord.y) < pc.y0 || uint(coord.y) >= pc.y1)
         return;
 
     const float val = imageLoad(in_image, coord).r;
@@ -62,4 +85,9 @@ void main()
     keypoints[idx].y = (float(coord.y) + 0.5) / float(pc.height);
     keypoints[idx].response = val;
     keypoints[idx].pad = 0.0;
+
+    export_slots[idx + 1u].x = keypoints[idx].x;
+    export_slots[idx + 1u].y = keypoints[idx].y;
+    export_slots[idx + 1u].response = keypoints[idx].response;
+    export_slots[idx + 1u].pad = 0.0;
 }

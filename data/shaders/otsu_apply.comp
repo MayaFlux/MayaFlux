@@ -8,8 +8,12 @@ layout(set = 0, binding = 0, rgba32f) writeonly uniform image2D out_image;
 layout(set = 0, binding = 1, rgba32f) readonly uniform image2D in_image;
 
 layout(set = 0, binding = 4, std430) readonly buffer ThresholdBuf {
-    uint best_bin[1];
+    uint best_bin[3];
 };
+
+layout(push_constant) uniform PC {
+    uint channels;
+} pc;
 
 /**
  * @brief Binarise every channel against the bin selected by otsu_select.
@@ -26,6 +30,11 @@ layout(set = 0, binding = 4, std430) readonly buffer ThresholdBuf {
  * split. otsu_select's scan cannot select best_bin = 255 (it stops before
  * scoring a candidate that would leave the foreground class empty), so
  * this never exceeds 1.0.
+ *
+ * pc.channels zero is the single-channel path: every channel of the pixel
+ * is compared against best_bin[0]. Otherwise each selected channel is
+ * compared against its own best_bin, the pixel passes only when all of them
+ * do, and the result is a binary mask replicated across rgb with alpha 1.
  */
 void main()
 {
@@ -34,7 +43,20 @@ void main()
     if (coord.x >= sz.x || coord.y >= sz.y)
         return;
 
-    const float threshold = float(best_bin[0] + 1u) / 255.0;
     const vec4 px = imageLoad(in_image, coord);
-    imageStore(out_image, coord, vec4(greaterThanEqual(px, vec4(threshold))));
+
+    if (pc.channels == 0u) {
+        const float threshold = float(best_bin[0] + 1u) / 255.0;
+        imageStore(out_image, coord, vec4(greaterThanEqual(px, vec4(threshold))));
+        return;
+    }
+
+    bool pass = true;
+    for (uint c = 0u; c < 3u; ++c) {
+        if ((pc.channels & (1u << c)) != 0u)
+            pass = pass && (px[c] >= float(best_bin[c] + 1u) / 255.0);
+    }
+
+    const float m = pass ? 1.0 : 0.0;
+    imageStore(out_image, coord, vec4(m, m, m, 1.0));
 }

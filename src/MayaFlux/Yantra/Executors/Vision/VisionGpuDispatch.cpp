@@ -202,10 +202,13 @@ VisionGpuContexts::VisionGpuContexts()
 // vision_gpu_config
 // ============================================================================
 
-GpuComputeConfig VisionGpuExecutor::config(VisionOp op, const VisionParams& /*params*/)
+GpuComputeConfig VisionGpuExecutor::config(VisionOp op, const VisionParams& params)
 {
     switch (op) {
     case VisionOp::Threshold: {
+        if (const auto* p = std::get_if<ThresholdParams>(&params); p && p->channels != ChannelMask::NONE)
+            return { .shader_path = "threshold_bands.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(ThresholdBandsPC) };
+
         const auto spec = ShaderSpec::Assemble {}
                               .storage_image("out", BindingDirection::Output)
                               .storage_image("src", BindingDirection::Input)
@@ -317,6 +320,8 @@ GpuComputeConfig VisionGpuExecutor::config(VisionOp op, const VisionParams& /*pa
         return { .shader_path = "flow_lk.comp.spv", .workgroup_size = { 64, 1, 1 }, .push_constant_size = sizeof(FlowLkPC) };
     case VisionOp::OpticalFlowDense:
         return { .shader_path = "flow_dense.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(FlowDensePC) };
+    case VisionOp::Confine:
+        return { .shader_path = "vision_confine.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(ConfinePC) };
     default:
         return GpuComputeConfig { .shader_id = Portal::Graphics::INVALID_SHADER };
     }
@@ -361,12 +366,29 @@ void VisionGpuExecutor::reset()
 void VisionGpuExecutor::after_step(VisionGpuContexts& contexts, size_t index)
 {
     const auto& steps = contexts.pass.sequence->steps;
-    if (steps[index].op != VisionOp::RgbaToGray)
+    const VisionOp source_op = steps[index].op;
+    if (source_op != VisionOp::RgbaToGray && source_op != VisionOp::RgbaToHsv)
         return;
+
+    const uint32_t src_channel = source_op == VisionOp::RgbaToHsv ? 2U : 0U;
 
     uint32_t levels = 0;
     bool needs_flow = false;
+    bool confine_seen = false;
+    bool warned = false;
     for (size_t i = index + 1; i < steps.size(); ++i) {
+        if (steps[i].op == VisionOp::Confine)
+            confine_seen = true;
+
+        const bool is_flow = steps[i].op == VisionOp::TrackKeypoints || steps[i].op == VisionOp::OpticalFlowDense;
+        if (is_flow && confine_seen && !warned) {
+            MF_WARN(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+                "run_gpu: Confine sits between RgbaToGray and a flow step; the flow pyramid is "
+                "built from the unconfined gray frame, so results are wrong or rejected. "
+                "Place Confine before RgbaToGray");
+            warned = true;
+        }
+
         if (steps[i].op == VisionOp::TrackKeypoints) {
             if (const auto* p = std::get_if<TrackKeypointsParams>(&steps[i].params)) {
                 needs_flow = true;
@@ -381,7 +403,7 @@ void VisionGpuExecutor::after_step(VisionGpuContexts& contexts, size_t index)
     }
 
     if (needs_flow)
-        build_flow_pyramid(contexts, levels);
+        build_flow_pyramid(contexts, levels, src_channel);
 }
 
 // ============================================================================
@@ -484,6 +506,7 @@ VisionResult VisionGpuExecutor::run(
 
             auto downsampled = pixel_ctx.get_output_image(0);
             completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = { .output = downsampled, .input = contexts.pass.current };
+            contexts.pass.result.images.downsample_2x = downsampled;
             contexts.pass.current = downsampled;
             contexts.bound_staged.reset();
 
@@ -493,10 +516,18 @@ VisionResult VisionGpuExecutor::run(
 
             continue;
         }
-        case VisionOp::Threshold:
-            pixel_ctx.set_push_constants(ThresholdPC {
-                .value = std::get<ThresholdParams>(step.params).value });
+        case VisionOp::Threshold: {
+            const auto& p = std::get<ThresholdParams>(step.params);
+            if (p.channels == ChannelMask::NONE) {
+                pixel_ctx.set_push_constants(ThresholdPC { .value = p.value });
+            } else {
+                pixel_ctx.set_push_constants(ThresholdBandsPC {
+                    .lo0 = p.bands[0].lo, .lo1 = p.bands[1].lo, .lo2 = p.bands[2].lo,
+                    .hi0 = p.bands[0].hi, .hi1 = p.bands[1].hi, .hi2 = p.bands[2].hi,
+                    .channels = static_cast<uint32_t>(p.channels) });
+            }
             break;
+        }
         case VisionOp::NormalizeRange: {
             const auto& p = std::get<NormalizeRangeParams>(step.params);
             const float scale = (p.hi > p.lo) ? 1.0F / (p.hi - p.lo) : 1.0F;
@@ -524,11 +555,16 @@ VisionResult VisionGpuExecutor::run(
             break;
         case VisionOp::ThresholdAdaptive: {
             const auto& p = std::get<ThresholdAdaptiveParams>(step.params);
-            pixel_ctx.set_push_constants(ThresholdAdaptivePC { .block_size = p.block_size, .offset = p.offset });
+            pixel_ctx.set_push_constants(ThresholdAdaptivePC { .block_size = p.block_size, .offset = p.offset, .channels = static_cast<uint32_t>(p.channels) });
             break;
         }
         case VisionOp::ThresholdOtsu: {
-            contexts.pass.completed[Kinesis::Vision::hash_vision_step(step.op, step.params)] = op_threshold_otsu(contexts);
+            const auto* otsu = std::get_if<OtsuParams>(&step.params);
+            contexts.pass.completed[Kinesis::Vision::hash_vision_step(step.op, step.params)] = op_threshold_otsu(contexts, otsu ? *otsu : OtsuParams {});
+            continue;
+        }
+        case VisionOp::Confine: {
+            contexts.pass.completed[Kinesis::Vision::hash_vision_step(step.op, step.params)] = op_confine(contexts, std::get<ConfineParams>(step.params));
             continue;
         }
         case VisionOp::Open:
@@ -614,6 +650,53 @@ VisionResult VisionGpuExecutor::run(
         contexts.pass.current = pixel_ctx.get_output_image(0);
         contexts.bound_staged.reset();
         completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = { .output = contexts.pass.current, .input = dispatch_input };
+
+        switch (step.op) {
+        case VisionOp::RgbaToGray:
+            contexts.pass.result.gray = contexts.pass.current;
+            break;
+        case VisionOp::RgbaToHsv:
+            contexts.pass.result.images.rgba_to_hsv = contexts.pass.current;
+            break;
+        case VisionOp::GrayToRgba:
+            contexts.pass.result.images.gray_to_rgba = contexts.pass.current;
+            break;
+        case VisionOp::Threshold:
+            contexts.pass.result.images.threshold = contexts.pass.current;
+            break;
+        case VisionOp::ThresholdAdaptive:
+            contexts.pass.result.images.threshold_adaptive = contexts.pass.current;
+            break;
+        case VisionOp::NormalizeInplace:
+            contexts.pass.result.images.normalize_inplace = contexts.pass.current;
+            break;
+        case VisionOp::NormalizeRange:
+            contexts.pass.result.images.normalize_range = contexts.pass.current;
+            break;
+        case VisionOp::GaussianBlur:
+            contexts.pass.result.images.gaussian_blur = contexts.pass.current;
+            break;
+        case VisionOp::FilterSeparable:
+            contexts.pass.result.images.filter_separable = contexts.pass.current;
+            break;
+        case VisionOp::Sobel:
+            contexts.pass.result.images.sobel = contexts.pass.current;
+            break;
+        case VisionOp::Scharr:
+            contexts.pass.result.images.scharr = contexts.pass.current;
+            break;
+        case VisionOp::Erode:
+            contexts.pass.result.images.erode = contexts.pass.current;
+            break;
+        case VisionOp::Dilate:
+            contexts.pass.result.images.dilate = contexts.pass.current;
+            break;
+        case VisionOp::MorphGradient:
+            contexts.pass.result.images.morph_gradient = contexts.pass.current;
+            break;
+        default:
+            break;
+        }
 
         after_step(contexts, contexts.pass.index);
     }

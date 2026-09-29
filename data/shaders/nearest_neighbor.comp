@@ -1,0 +1,34 @@
+#version 460
+
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+
+layout(set = 0, binding = 0, std430) readonly buffer CentroidBuf {
+    vec2 centroids[];
+};
+
+layout(set = 0, binding = 1, std430) writeonly buffer DistOutBuf {
+    float nearest_distance[];
+};
+
+layout(push_constant) uniform PushConstants {
+    uint count;
+} pc;
+
+/**
+ * @brief All-pairs nearest-neighbour distance between element centroids.
+ *        Each of 256 threads strides over its slice of elements, each doing
+ *        an O(count) scan against every other element: O(count^2) total,
+ *        fine for the small element counts FindElements actually returns.
+ */
+void main()
+{
+    const uint tid = gl_LocalInvocationID.x;
+    for (uint i = tid; i < pc.count; i += 256u) {
+        float best = 1.0 / 0.0;
+        for (uint j = 0u; j < pc.count; ++j) {
+            if (j != i)
+                best = min(best, distance(centroids[i], centroids[j]));
+        }
+        nearest_distance[i] = pc.count > 1u ? best : 0.0;
+    }
+}

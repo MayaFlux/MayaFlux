@@ -3,25 +3,27 @@
 layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 
 layout(set = 0, binding = 3, std430) buffer HistBuf {
-    uint hist[256];
+    uint hist[768];
 };
 
 layout(set = 0, binding = 4, std430) buffer ThresholdBuf {
-    uint best_bin[1];
+    uint best_bin[3];
 };
 
 shared float s_prob[256];
 
 /**
- * @brief Single-workgroup Otsu threshold selection. Loads the 256-bin
- *        histogram into shared memory as normalised probabilities, then
- *        invocation 0 performs a serial cumulative scan maximising
- *        inter-class variance. Writes the winning bin index to best_bin[0].
+ * @brief Single-workgroup Otsu threshold selection, one workgroup per
+ *        channel. Loads that channel's 256-bin histogram into shared memory
+ *        as normalised probabilities, then invocation 0 performs a serial
+ *        cumulative scan maximising inter-class variance. Writes the winning
+ *        bin index to best_bin[channel]. An empty histogram yields 0.
  */
 void main()
 {
     const uint tid = gl_LocalInvocationID.x;
-    s_prob[tid] = float(hist[tid]);
+    const uint channel = gl_WorkGroupID.x;
+    s_prob[tid] = float(hist[channel * 256u + tid]);
     barrier();
 
     if (tid != 0u)
@@ -32,7 +34,7 @@ void main()
         total += s_prob[i];
 
     if (total <= 0.0) {
-        best_bin[0] = 0u;
+        best_bin[channel] = 0u;
         return;
     }
 
@@ -70,5 +72,5 @@ void main()
         }
     }
 
-    best_bin[0] = best_t;
+    best_bin[channel] = best_t;
 }

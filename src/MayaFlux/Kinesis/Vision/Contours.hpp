@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Features.hpp"
+#include "ConnectedComponents.hpp"
 
 /**
  * @file Contours.hpp
@@ -12,35 +12,65 @@
  * - Input masks are single-channel float where >= 0.5f is foreground
  * - Contour points are in normalised image coordinates [0, 1]
  * - 8-connectivity is used for contour tracing
- * - Area is normalised to [0, 1] relative to total image area (w * h)
- * - Perimeter is normalised to [0, 1] relative to image diagonal
+ * - Area is pixel coverage normalised by total image area (w * h)
+ * - Perimeter is measured in pixels
  */
 
 namespace MayaFlux::Kinesis::Vision {
 
 /**
- * @brief Extract outer contours from a binary mask.
+ * @brief Extract outer and hole contours from a binary mask.
  *
- * Uses the Suzuki-Abe border following algorithm (single pass).
- * Only outer contours are extracted; holes are not traced.
- * Each contour is a closed polygon; the last point connects back
- * to the first.
+ * Labels 8-connected foreground components and traces their outer boundaries
+ * with Moore neighborhood following. Enclosed 4-connected background regions
+ * are traced as holes, with parent_label naming their enclosing foreground
+ * component. Background connected to an image edge is excluded.
+ * Outer contours use Contour::no_parent (0xFFFFFFFF) as their parent_label.
+ * Each contour closes from its last point to its first. Closure follows the
+ * starting directed edge so touching branches may revisit the start pixel.
+ *
+ * Area is (absolute pixel polygon area + half the pixel perimeter + 1) divided
+ * by w * h. Perimeter is the closed polygon length in pixels.
  *
  * Contours with fewer than 3 points are discarded.
  * Contours whose normalised area is below min_area are discarded after tracing.
- * If max_contours is non-zero, only the largest max_contours contours by area
- * are returned; excess contours are dropped before the result is returned.
+ * A nonzero max_contours sorts by descending area and retains at most that
+ * many contours. Outer boundaries and holes share this limit.
+ * A nonzero max_points_per_contour stops each trace at that many points;
+ * measurements use the retained polygon, including its closing edge.
  *
  * @param mask         Single-channel float span, size must be w * h.
  * @param w            Image width in pixels.
  * @param h            Image height in pixels.
  * @param min_area     Minimum normalised area [0,1] to retain. Default 0 (no filter).
  * @param max_contours Maximum number of contours to return. 0 means no limit.
- * @return             Vector of Contour, each with normalised points, area, and perimeter.
+ * @param max_points_per_contour Maximum trace length. 0 means no caller limit.
+ * @return             Contours with normalised points and area, and pixel perimeter.
  */
 [[nodiscard]] MAYAFLUX_API std::vector<Contour> find_contours(
     std::span<const float> mask, uint32_t w, uint32_t h,
-    float min_area = 0.0F, uint32_t max_contours = 0);
+    float min_area = 0.0F, uint32_t max_contours = 0,
+    uint32_t max_points_per_contour = 0);
+
+/**
+ * @brief Extract contours from an existing CPU component labeling.
+ *
+ * Applies the same tracing, filtering, and measurement rules as mask-based
+ * extraction without repeating connected-component labeling.
+ *
+ * @param components CPU labeling with a complete w * h label_map and compact
+ *                   foreground labels in 1..count; zero labels are background.
+ * @param w Image width in pixels.
+ * @param h Image height in pixels.
+ * @param min_area Minimum normalised area to retain.
+ * @param max_contours Maximum number of contours to return; zero is unlimited.
+ * @param max_points_per_contour Maximum trace length; zero is unlimited.
+ * @return Outer and hole contours with normalized points and pixel perimeter.
+ */
+[[nodiscard]] MAYAFLUX_API std::vector<Contour> find_contours(
+    const ComponentResult& components, uint32_t w, uint32_t h,
+    float min_area = 0.0F, uint32_t max_contours = 0,
+    uint32_t max_points_per_contour = 0);
 
 /**
  * @brief Zero all pixels in @p pixels that fall outside @p contour.

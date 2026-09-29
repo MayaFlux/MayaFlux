@@ -7,17 +7,19 @@ layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 layout(set = 0, binding = 1, rgba32f) readonly uniform image2D in_image;
 
 layout(set = 0, binding = 3, std430) buffer HistBuf {
-    uint hist[256];
+    uint hist[768];
 };
 
 layout(push_constant) uniform PC {
     uint width;
     uint height;
+    uint channels;
 } pc;
 
 /**
- * @brief Accumulate a 256-bin intensity histogram via atomic increments.
- *        Caller must zero-initialise hist before dispatch.
+ * @brief Accumulate one 256-bin histogram per selected channel via atomic
+ *        increments, channel c at hist[c * 256]. pc.channels zero selects
+ *        channel 0 only. Caller must zero-initialise hist before dispatch.
  */
 void main()
 {
@@ -25,7 +27,13 @@ void main()
     if (coord.x >= int(pc.width) || coord.y >= int(pc.height))
         return;
 
-    const float v = clamp(imageLoad(in_image, coord).r, 0.0, 1.0);
-    const uint bin = uint(v * 255.0);
-    atomicAdd(hist[bin], 1u);
+    const uint mask = pc.channels == 0u ? 1u : pc.channels;
+    const vec4 px = imageLoad(in_image, coord);
+    for (uint c = 0u; c < 3u; ++c) {
+        if ((mask & (1u << c)) == 0u)
+            continue;
+        const float v = clamp(px[c], 0.0, 1.0);
+        const uint bin = uint(v * 255.0);
+        atomicAdd(hist[c * 256u + bin], 1u);
+    }
 }
