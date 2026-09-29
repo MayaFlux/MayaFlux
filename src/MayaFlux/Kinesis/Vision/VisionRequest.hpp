@@ -147,7 +147,12 @@ struct ResolvedSequence {
  * sequence sharing a tail; neither can be split back apart afterward.
  * Every other active intent gets its own sequence, seeded from whichever
  * leading steps it has in common with the first sequence (matched by
- * VisionOp and params) instead of recomputing them.
+ * VisionOp and params) instead of recomputing them. Sharing happens only
+ * when neither sequence runs a step that overwrites the executor's shared
+ * output images after the shared prefix, because such a step would already
+ * have destroyed the seed. Seeded sequences are returned right after the
+ * first, unseeded ones last, and DetectEdges last of all so the edge image
+ * it hands back is not overwritten by a later sequence.
  *
  * @param request Active intents and their parameters.
  * @return Ordered ResolvedSequences to run against the same frame; empty

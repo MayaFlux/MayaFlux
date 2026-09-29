@@ -109,7 +109,43 @@ namespace {
         }
     }
 
-    /** @brief Leading steps identical to reference's own, up to the first divergence or unseedable step. */
+    /**
+     * @brief True when an op writes the executor's shared output images.
+     *
+     * Those images rotate between two per size, so anything a later op of this
+     * kind writes can land on an image an earlier step handed out. Only the
+     * ops below run on other contexts.
+     */
+    bool overwrites_shared_images(VisionOp op)
+    {
+        switch (op) {
+        case VisionOp::ExtractPeaks:
+        case VisionOp::TrackKeypoints:
+        case VisionOp::OpticalFlowDense:
+        case VisionOp::Snapshot:
+            return false;
+        default:
+            return true;
+        }
+    }
+
+    /** @brief True when no step from index from onward overwrites the shared output images. */
+    bool preserves_shared_images(const std::vector<VisionStep>& steps, size_t from)
+    {
+        return std::none_of(steps.begin() + static_cast<std::ptrdiff_t>(std::min(from, steps.size())), steps.end(),
+            [](const VisionStep& s) { return overwrites_shared_images(s.op); });
+    }
+
+    /**
+     * @brief Leading steps identical to reference's own, up to the first
+     *        divergence or unseedable step.
+     *
+     * Sharing hands a later sequence the image the reference produced at the
+     * end of the prefix, so it is only allowed when that image survives:
+     * neither sequence may run a step that overwrites the shared images after
+     * the prefix, or the seed would already be gone. Otherwise nothing is
+     * shared and the candidate recomputes its own prefix.
+     */
     size_t shared_prefix_length(
         const std::vector<VisionStep>& reference,
         const std::vector<VisionStep>& candidate)
@@ -123,6 +159,9 @@ namespace {
                 break;
             ++n;
         }
+
+        if (n > 0 && !(preserves_shared_images(reference, n) && preserves_shared_images(candidate, n)))
+            return 0;
         return n;
     }
 
@@ -154,11 +193,11 @@ std::vector<ResolvedSequence> resolve(const VisionRequest& request)
     if (has_flag(request.intents, VisionIntent::DetectFeatures) && request.detect_features)
         other_chains.push_back(detect_features_chain(*request.detect_features).steps);
 
-    if (has_flag(request.intents, VisionIntent::DetectEdges) && request.detect_edges)
-        other_chains.push_back(detect_edges_chain(*request.detect_edges).steps);
-
     if (has_flag(request.intents, VisionIntent::MeasureAppearance) && request.measure_appearance)
         other_chains.push_back(measure_appearance_chain(*request.measure_appearance).steps);
+
+    if (has_flag(request.intents, VisionIntent::DetectEdges) && request.detect_edges)
+        other_chains.push_back(detect_edges_chain(*request.detect_edges).steps);
 
     std::vector<ResolvedSequence> sequences;
     sequences.reserve(1 + other_chains.size());
@@ -168,6 +207,9 @@ std::vector<ResolvedSequence> resolve(const VisionRequest& request)
         sequences.push_back({ .sequence = VisionSequence { .steps = std::move(flow_lane) } });
         reference_index = 0;
     }
+
+    std::vector<ResolvedSequence> seeded;
+    std::vector<ResolvedSequence> unseeded;
 
     for (auto& steps : other_chains) {
         if (!reference_index) {
@@ -185,8 +227,11 @@ std::vector<ResolvedSequence> resolve(const VisionRequest& request)
             steps.erase(steps.begin(), steps.begin() + static_cast<std::ptrdiff_t>(shared));
         }
         resolved.sequence = VisionSequence { .steps = std::move(steps) };
-        sequences.push_back(std::move(resolved));
+        (resolved.seed_field ? seeded : unseeded).push_back(std::move(resolved));
     }
+
+    sequences.insert(sequences.end(), std::make_move_iterator(seeded.begin()), std::make_move_iterator(seeded.end()));
+    sequences.insert(sequences.end(), std::make_move_iterator(unseeded.begin()), std::make_move_iterator(unseeded.end()));
 
     return sequences;
 }

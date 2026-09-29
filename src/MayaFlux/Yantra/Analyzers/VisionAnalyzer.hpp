@@ -173,11 +173,15 @@ private:
     /**
      * @brief MeasureAppearance's whole-frame gradient sample (region_sample.comp
      *        over result.images.sobel) and brightness histogram
-     *        (otsu_histogram.comp over result.gray). Empty fields for
+     *        (otsu_histogram.comp over gray). gray is the frame's gray image,
+     *        which a sequence seeded from another lane's RgbaToGray does not
+     *        produce itself, so the caller supplies it. Empty fields for
      *        whichever input image is null.
      */
     [[nodiscard]] Kinesis::Vision::MeasureAppearanceAnalysis measure_appearance(
-        const Kinesis::Vision::VisionResult& result, uint32_t w, uint32_t h);
+        const Kinesis::Vision::VisionResult& result,
+        const std::shared_ptr<Core::VKImage>& gray,
+        uint32_t w, uint32_t h);
 
     /** @brief Dispatch region_sample.comp over the whole image (no region concept for MeasureAppearance). */
     [[nodiscard]] Kinesis::Vision::FieldSample sample_full_frame(

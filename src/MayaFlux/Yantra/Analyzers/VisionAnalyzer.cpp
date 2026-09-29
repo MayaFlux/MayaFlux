@@ -259,15 +259,17 @@ void VisionAnalyzer::compute_shapes(Kinesis::Vision::FindElementsAnalysis& fe, u
 }
 
 Kinesis::Vision::MeasureAppearanceAnalysis VisionAnalyzer::measure_appearance(
-    const Kinesis::Vision::VisionResult& result, uint32_t w, uint32_t h)
+    const Kinesis::Vision::VisionResult& result,
+    const std::shared_ptr<Core::VKImage>& gray,
+    uint32_t w, uint32_t h)
 {
     Kinesis::Vision::MeasureAppearanceAnalysis out;
 
     if (result.images.sobel)
         out.gradient = sample_full_frame(result.images.sobel, w, h);
 
-    if (result.gray) {
-        out.histogram = compute_histogram(result.gray, w, h);
+    if (gray) {
+        out.histogram = compute_histogram(gray, w, h);
         out.mean_brightness = compute_mean_brightness(out.histogram);
     }
 
@@ -454,8 +456,10 @@ Kinesis::Vision::VisionAnalysis VisionAnalyzer::analyze_resolved(
 
         collect_into(raw_tracks, raw_keypoints, analysis, result);
 
-        if (result.images.sobel)
-            analysis.measure_appearance = measure_appearance(result, w, h);
+        if (result.images.sobel) {
+            const auto& gray = result.gray || !entry.seed_field ? result.gray : results[entry.seed_lane].gray;
+            analysis.measure_appearance = measure_appearance(result, gray, w, h);
+        }
 
         results.push_back(std::move(result));
     }
