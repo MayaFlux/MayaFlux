@@ -60,33 +60,63 @@ namespace {
             .build();
     }
 
-    std::vector<VisionStep> steps_from(VisionSequence chain, bool drop_leading_rgba_to_gray)
+    /**
+     * @brief VisionResult field a given op's output can be handed off
+     *        through, or nullptr if it has none.
+     *
+     * Only covers ops that actually appear as a leading (non-final) step in
+     * one of the chains above today: RgbaToGray in all of them, HarrisResponse
+     * in track_objects_chain/detect_features_chain. Extending this list is
+     * exactly what's needed to let a future chain share a longer or
+     * different prefix; nothing else about shared_prefix_length changes.
+     */
+    SeedAccessor seed_accessor_for(VisionOp op)
     {
-        auto steps = std::move(chain.steps);
-        if (drop_leading_rgba_to_gray && !steps.empty() && steps.front().op == VisionOp::RgbaToGray)
-            steps.erase(steps.begin());
-        return steps;
+        switch (op) {
+        case VisionOp::RgbaToGray:
+            return [](const VisionResult& r) { return r.gray; };
+        case VisionOp::HarrisResponse:
+            return [](const VisionResult& r) { return r.images.harris_response; };
+        default:
+            return nullptr;
+        }
+    }
+
+    /**
+     * @brief How many of candidate's leading steps are identical (op and
+     *        params) to reference's own leading steps, stopping at the
+     *        first divergence or the first step with no seed_accessor_for.
+     */
+    size_t shared_prefix_length(
+        const std::vector<VisionStep>& reference,
+        const std::vector<VisionStep>& candidate)
+    {
+        size_t n = 0;
+        while (n < reference.size() && n < candidate.size()) {
+            if (!seed_accessor_for(candidate[n].op))
+                break;
+            if (hash_vision_step(reference[n].op, reference[n].params)
+                != hash_vision_step(candidate[n].op, candidate[n].params))
+                break;
+            ++n;
+        }
+        return n;
     }
 
 } // namespace
 
-std::vector<VisionSequence> resolve(const VisionRequest& request)
+std::vector<ResolvedSequence> resolve(const VisionRequest& request)
 {
     std::vector<VisionStep> flow_lane;
-    std::vector<std::vector<VisionStep>> other_lanes;
-    bool have_first = false;
+    std::vector<std::vector<VisionStep>> other_chains;
 
     auto append_to_flow_lane = [&](VisionSequence chain) {
-        auto steps = steps_from(std::move(chain), have_first);
+        auto steps = std::move(chain.steps);
+        if (!flow_lane.empty() && !steps.empty() && steps.front().op == VisionOp::RgbaToGray)
+            steps.erase(steps.begin());
         flow_lane.insert(flow_lane.end(),
             std::make_move_iterator(steps.begin()),
             std::make_move_iterator(steps.end()));
-        have_first = true;
-    };
-
-    auto new_lane = [&](VisionSequence chain) {
-        other_lanes.push_back(steps_from(std::move(chain), have_first));
-        have_first = true;
     };
 
     if (has_flag(request.intents, VisionIntent::TrackObjects) && request.track_objects)
@@ -96,22 +126,44 @@ std::vector<VisionSequence> resolve(const VisionRequest& request)
         append_to_flow_lane(estimate_motion_chain(*request.estimate_motion));
 
     if (has_flag(request.intents, VisionIntent::FindElements) && request.find_elements)
-        new_lane(find_elements_chain(*request.find_elements));
+        other_chains.push_back(find_elements_chain(*request.find_elements).steps);
 
     if (has_flag(request.intents, VisionIntent::DetectFeatures) && request.detect_features)
-        new_lane(detect_features_chain(*request.detect_features));
+        other_chains.push_back(detect_features_chain(*request.detect_features).steps);
 
     if (has_flag(request.intents, VisionIntent::DetectEdges) && request.detect_edges)
-        new_lane(detect_edges_chain(*request.detect_edges));
+        other_chains.push_back(detect_edges_chain(*request.detect_edges).steps);
 
     if (has_flag(request.intents, VisionIntent::MeasureAppearance) && request.measure_appearance)
-        new_lane(measure_appearance_chain(*request.measure_appearance));
+        other_chains.push_back(measure_appearance_chain(*request.measure_appearance).steps);
 
-    std::vector<VisionSequence> sequences;
-    if (!flow_lane.empty())
-        sequences.push_back(VisionSequence { .steps = std::move(flow_lane) });
-    for (auto& lane : other_lanes)
-        sequences.push_back(VisionSequence { .steps = std::move(lane) });
+    std::vector<ResolvedSequence> sequences;
+    sequences.reserve(1 + other_chains.size());
+    std::optional<size_t> reference_index;
+
+    if (!flow_lane.empty()) {
+        sequences.push_back({ .sequence = VisionSequence { .steps = std::move(flow_lane) } });
+        reference_index = 0;
+    }
+
+    for (auto& steps : other_chains) {
+        if (!reference_index) {
+            sequences.push_back({ .sequence = VisionSequence { .steps = std::move(steps) } });
+            reference_index = 0;
+            continue;
+        }
+
+        const auto& reference = sequences[*reference_index].sequence.steps;
+        ResolvedSequence resolved;
+        const size_t shared = shared_prefix_length(reference, steps);
+        if (shared > 0) {
+            resolved.seed_lane = *reference_index;
+            resolved.seed_field = seed_accessor_for(reference[shared - 1].op);
+            steps.erase(steps.begin(), steps.begin() + static_cast<std::ptrdiff_t>(shared));
+        }
+        resolved.sequence = VisionSequence { .steps = std::move(steps) };
+        sequences.push_back(std::move(resolved));
+    }
 
     return sequences;
 }

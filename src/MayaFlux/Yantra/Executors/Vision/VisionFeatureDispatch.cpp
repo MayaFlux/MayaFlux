@@ -74,6 +74,7 @@ GpuVisionPass::Completed VisionGpuExecutor::op_harris_response(
 
     contexts.pass.current = pixel_ctx.get_output_image(0);
     contexts.pass.result.structured = std::monostate {};
+    contexts.pass.result.images.harris_response = contexts.pass.current;
 
     contexts.bound_config = harris_resp_cfg;
     contexts.bound_staged = smoothed;

@@ -76,6 +76,7 @@ struct ImageOutputs {
     std::shared_ptr<Core::VKImage> open;
     std::shared_ptr<Core::VKImage> close;
     std::shared_ptr<Core::VKImage> morph_gradient;
+    std::shared_ptr<Core::VKImage> harris_response;
 
     std::shared_ptr<Core::VKImage> component_colors; ///< ConnectedComponents::with_colors
     std::shared_ptr<Core::VKImage> contour_image; ///< FindContours::as_image

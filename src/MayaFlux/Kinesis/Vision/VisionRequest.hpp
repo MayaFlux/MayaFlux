@@ -1,5 +1,6 @@
 #pragma once
 
+#include "VisionContext.hpp"
 #include "VisionIntent.hpp"
 #include "VisionOp.hpp"
 
@@ -77,8 +78,37 @@ struct VisionRequest {
 };
 
 /**
- * @brief Resolve a VisionRequest into the VisionSequences needed to satisfy
- *        every active intent.
+ * @brief Selects a VisionResult field to seed a later ResolvedSequence's
+ *        image argument with, in place of the request's own raw frame.
+ *
+ * A plain function pointer, not std::function: resolve() picks one once per
+ * request, the caller calls it once per sequence run. No allocation, no
+ * lookup, matching ImageOutputs' own "direct field, not a keyed container"
+ * shape.
+ */
+using SeedAccessor = std::shared_ptr<Core::VKImage> (*)(const VisionResult&);
+
+/**
+ * @brief One VisionSequence to run, plus where its image argument comes from.
+ *
+ * seed_field null means seed from the request's own raw frame: true for the
+ * first entry always, and for any later entry that shares nothing
+ * image-producing with it. Non-null means run sequences[seed_lane] first,
+ * call seed_field on its VisionResult, and pass that in place of the raw
+ * frame; the leading steps that produced it are already stripped from
+ * sequence itself, so paying for them again would be pure repeated work for
+ * an identical result.
+ */
+struct ResolvedSequence {
+    VisionSequence sequence;
+    size_t seed_lane { 0 };
+    SeedAccessor seed_field { nullptr };
+};
+
+/**
+ * @brief Resolve a VisionRequest into the ResolvedSequences needed to
+ *        satisfy every active intent, sharing whatever leading work two
+ *        active intents' chains turn out to need in common.
  *
  * TrackObjects and EstimateMotion, when both active, resolve into one
  * sequence: VisionGpuExecutor::after_step already builds one shared flow
@@ -89,20 +119,29 @@ struct VisionRequest {
  * from a shared point and both continue (VisionOp::Snapshot is a one-way
  * output tap, not a restore point).
  *
- * Only the first returned VisionSequence begins with RgbaToGray. Every
- * VisionGpuExecutor::run() call re-ingests its image argument and clears
- * its per-run memo unconditionally (GpuVisionPass::begin), so nothing
- * carries between separate run() calls automatically. The caller is
- * responsible for running the first sequence, then passing its result's
- * VisionResult::gray (not the original frame) as the image argument to
- * run() for every subsequent sequence in the returned list. gray is a
- * storage image, so op_ingest passes it straight through with no
- * re-conversion, and RgbaToGray is not paid for twice.
+ * The first entry always seeds from the raw frame. Every later entry is
+ * compared against the first entry's own chain, leading step by leading
+ * step (VisionOp and params, via hash_vision_step), for as long as each
+ * matching step also has a named VisionResult field to hand its output off
+ * through (VisionResult::gray for RgbaToGray, VisionResult::images.* for
+ * every other image-producing op) - a match stops at the first divergence
+ * or the first step with nothing to seed from (ExtractPeaks, or any other
+ * structured/buffer-only op), never partway through a still-matching image
+ * op. Only TrackObjects and DetectFeatures currently share anything beyond
+ * RgbaToGray (both run HarrisResponse then ExtractPeaks with their own,
+ * independently settable params), but nothing here is specific to that
+ * pair: any future chain sharing a longer or different leading run gets the
+ * same treatment for free.
+ *
+ * A caller does not thread anything by hand: seed_lane/seed_field on each
+ * entry say exactly which prior result's which field to pass as the image
+ * argument, or to use the request's own raw frame when both are default.
  *
  * @param request Active intents and their parameters.
- * @return Ordered VisionSequences to run against the same frame; empty when
- *         no intent in request.intents has a populated parameter field.
+ * @return Ordered ResolvedSequences to run against the same frame; empty
+ *         when no intent in request.intents has a populated parameter
+ *         field.
  */
-[[nodiscard]] std::vector<VisionSequence> resolve(const VisionRequest& request);
+[[nodiscard]] std::vector<ResolvedSequence> resolve(const VisionRequest& request);
 
 } // namespace MayaFlux::Kinesis::Vision

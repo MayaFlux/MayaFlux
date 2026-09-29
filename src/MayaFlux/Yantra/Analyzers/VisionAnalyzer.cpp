@@ -241,23 +241,25 @@ Kinesis::Vision::VisionAnalysis VisionAnalyzer::analyze_resolved(
 
     const auto w = image->get_width();
     const auto h = image->get_height();
-    const auto sequences = Kinesis::Vision::resolve(m_request);
+    const auto resolved = Kinesis::Vision::resolve(m_request);
 
     Kinesis::Vision::VisionAnalysis analysis;
     std::optional<std::vector<Kinesis::Vision::TrackResult>> raw_tracks;
     std::optional<std::vector<Kinesis::Vision::Keypoint>> raw_keypoints;
-    auto next_image = image;
+    std::vector<Kinesis::Vision::VisionResult> results;
+    results.reserve(resolved.size());
 
-    for (size_t i = 0; i < sequences.size(); ++i) {
-        const auto result = m_executor->run(sequences[i], next_image, w, h);
+    for (const auto& entry : resolved) {
+        const auto seeded = entry.seed_field ? entry.seed_field(results[entry.seed_lane]) : nullptr;
+        auto result = m_executor->run(entry.sequence, seeded ? seeded : image, w, h);
 
-        if (result.status != Kinesis::Vision::VisionStatus::COMPLETE)
+        if (result.status != Kinesis::Vision::VisionStatus::COMPLETE) {
+            results.emplace_back();
             continue;
-
-        if (i == 0 && result.gray)
-            next_image = result.gray;
+        }
 
         collect_into(raw_tracks, raw_keypoints, analysis, result);
+        results.push_back(std::move(result));
     }
 
     if (raw_tracks && m_context.track_objects) {
