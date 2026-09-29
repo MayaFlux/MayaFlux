@@ -63,10 +63,10 @@ namespace {
 } // namespace
 
 VisionAnalyzer::VisionAnalyzer(
-    Kinesis::Vision::VisionRequest request,
+    Kinesis::Vision::VisionQuery query,
     Kinesis::Vision::VisionAnalysisContext context)
     : Base([this](const input_type& input) { return run_operation(input); })
-    , m_request(request)
+    , m_query(query)
     , m_context(context)
 {
 }
@@ -436,7 +436,7 @@ Kinesis::Vision::VisionAnalysis VisionAnalyzer::analyze_resolved(
 
     const auto w = image->get_width();
     const auto h = image->get_height();
-    const auto resolved = Kinesis::Vision::resolve(m_request);
+    const auto resolved = Kinesis::Vision::resolve(m_query);
 
     Kinesis::Vision::VisionAnalysis analysis;
     std::optional<std::vector<Kinesis::Vision::TrackResult>> raw_tracks;

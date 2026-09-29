@@ -5,7 +5,7 @@
 #include "VisionOp.hpp"
 
 /**
- * @file VisionRequest.hpp
+ * @file VisionQuery.hpp
  * @brief Per-intent parameters and resolution into a set of VisionSequences.
  */
 
@@ -34,7 +34,7 @@ using SegmentationMethod = std::variant<OtsuParams, ThresholdAdaptiveParams, Thr
  * @brief How FindElements separates foreground from background. The default
  *        is grayscale Otsu.
  */
-struct SegmentationRequest {
+struct SegmentationParams {
     SegmentationSpace space { SegmentationSpace::Gray };
     SegmentationMethod method { OtsuParams {} };
 };
@@ -42,10 +42,10 @@ struct SegmentationRequest {
 /**
  * @brief Parameters for VisionIntent::FindElements.
  */
-struct FindElementsRequest {
+struct FindElementsParams {
     ConnectedComponentsParams components {};
     FindContoursParams contours {};
-    SegmentationRequest segmentation {};
+    SegmentationParams segmentation {};
 };
 
 /**
@@ -59,7 +59,7 @@ struct FindElementsRequest {
  * region; only detection is confined. EstimateMotion, when also active,
  * still covers the whole frame.
  */
-struct TrackObjectsRequest {
+struct TrackObjectsParams {
     HarrisParams harris {};
     ExtractPeaksParams peaks {};
     TrackKeypointsParams track {};
@@ -73,7 +73,7 @@ struct TrackObjectsRequest {
  * chain's HarrisParams and ExtractPeaksParams. Keypoints stay in full-frame
  * coordinates.
  */
-struct DetectFeaturesRequest {
+struct DetectFeaturesParams {
     HarrisParams harris {};
     ExtractPeaksParams peaks {};
     std::optional<BoundingBox> region;
@@ -82,14 +82,14 @@ struct DetectFeaturesRequest {
 /**
  * @brief Parameters for VisionIntent::DetectEdges.
  */
-struct DetectEdgesRequest {
+struct DetectEdgesParams {
     CannyParams canny {};
 };
 
 /**
  * @brief Parameters for VisionIntent::EstimateMotion.
  */
-struct EstimateMotionRequest {
+struct EstimateMotionParams {
     OpticalFlowDenseParams flow {};
 };
 
@@ -97,39 +97,39 @@ struct EstimateMotionRequest {
  * @brief Parameters for VisionIntent::MeasureAppearance.
  *
  * Empty: its VisionOp (Sobel) takes no parameters. Present as a named type
- * rather than a bare flag so VisionRequest's per-intent fields stay uniform.
+ * rather than a bare flag so VisionQuery's per-intent fields stay uniform.
  */
-struct MeasureAppearanceRequest { };
+struct MeasureAppearanceParams { };
 
 /**
- * @brief Composed request: which VisionIntents are active, and each active
+ * @brief Composed query: which VisionIntents are active, and each active
  *        one's parameters.
  *
  * A field is read by resolve() only when its VisionIntent bit is set in
  * intents; an unset bit's field is ignored even if populated, and a set bit
  * with no populated field resolves to nothing for that intent.
  */
-struct VisionRequest {
+struct VisionQuery {
     VisionIntent intents { VisionIntent::NONE };
 
-    std::optional<FindElementsRequest> find_elements;
-    std::optional<TrackObjectsRequest> track_objects;
-    std::optional<DetectFeaturesRequest> detect_features;
-    std::optional<DetectEdgesRequest> detect_edges;
-    std::optional<EstimateMotionRequest> estimate_motion;
-    std::optional<MeasureAppearanceRequest> measure_appearance;
+    std::optional<FindElementsParams> find_elements;
+    std::optional<TrackObjectsParams> track_objects;
+    std::optional<DetectFeaturesParams> detect_features;
+    std::optional<DetectEdgesParams> detect_edges;
+    std::optional<EstimateMotionParams> estimate_motion;
+    std::optional<MeasureAppearanceParams> measure_appearance;
 };
 
 /**
  * @brief Picks a VisionResult field to seed a later sequence's image
- *        argument with, instead of the request's own raw frame.
+ *        argument with, instead of the query's own raw frame.
  */
 using SeedAccessor = std::shared_ptr<Core::VKImage> (*)(const VisionResult&);
 
 /**
  * @brief One VisionSequence to run, and where its image argument comes from.
  *
- * seed_field null means seed from the request's own raw frame. Otherwise,
+ * seed_field null means seed from the query's own raw frame. Otherwise,
  * run sequences[seed_lane] first and pass seed_field(its result) as the
  * image argument in place of the raw frame.
  */
@@ -140,7 +140,7 @@ struct ResolvedSequence {
 };
 
 /**
- * @brief Resolve a VisionRequest into the ResolvedSequences needed to
+ * @brief Resolve a VisionQuery into the ResolvedSequences needed to
  *        satisfy every active intent.
  *
  * TrackObjects and EstimateMotion, when both active, resolve into one
@@ -154,11 +154,11 @@ struct ResolvedSequence {
  * first, unseeded ones last, and DetectEdges last of all so the edge image
  * it hands back is not overwritten by a later sequence.
  *
- * @param request Active intents and their parameters.
+ * @param query Active intents and their parameters.
  * @return Ordered ResolvedSequences to run against the same frame; empty
- *         when no intent in request.intents has a populated parameter
+ *         when no intent in query.intents has a populated parameter
  *         field.
  */
-[[nodiscard]] std::vector<ResolvedSequence> resolve(const VisionRequest& request);
+[[nodiscard]] std::vector<ResolvedSequence> resolve(const VisionQuery& query);
 
 } // namespace MayaFlux::Kinesis::Vision

@@ -34,7 +34,7 @@ struct TrackObjectsContext {
 
 /**
  * @brief Composed context: caller-supplied data for whichever intents need
- *        it, consulted after a VisionRequest's resolved sequences have run.
+ *        it, consulted after a VisionQuery's resolved sequences have run.
  *
  * detect_features_bounds stands alone rather than in its own named
  * struct like TrackObjectsContext: Keypoint has no persistent identity to
@@ -159,7 +159,7 @@ struct MeasureAppearanceAnalysis {
  * detect_edges/estimate_motion are exactly VisionResult::images.canny/flow.
  *
  * find_elements.contours arrives already sorted by area, largest first,
- * when the caller set FindContoursParams::max_contours > 0 on the request:
+ * when the caller set FindContoursParams::max_contours > 0 on the query:
  * that cap is driven by contour_topk_select.comp, a real GPU top-K-by-area
  * reduction already in the FindContours pipeline, so "the largest
  * contour" is find_elements->contours.front() for a caller who asked for

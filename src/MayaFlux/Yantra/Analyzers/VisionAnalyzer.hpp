@@ -1,7 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Kinesis/Vision/VisionInsight.hpp"
-#include "MayaFlux/Kinesis/Vision/VisionRequest.hpp"
+#include "MayaFlux/Kinesis/Vision/VisionQuery.hpp"
 #include "MayaFlux/Yantra/Executors/ShaderExecutionContext.hpp"
 #include "MayaFlux/Yantra/Executors/TextureExecutionContext.hpp"
 #include "MayaFlux/Yantra/Executors/VisionGpuDispatch.hpp"
@@ -11,7 +11,7 @@
  * @file VisionAnalyzer.hpp
  * @brief FunctionalOperation<shared_ptr<SignalSourceContainer>,
  *        vector<DataVariant>> whose real API matches EnergyAnalyzer/
- *        StatisticalAnalyzer's own convention: request/context are
+ *        StatisticalAnalyzer's own convention: query/context are
  *        constructor arguments and setters, not call arguments, and
  *        analyze_vision(source) takes only the data, the same shape as
  *        analyze_energy(data)/analyze_statistics(data).
@@ -29,7 +29,7 @@ namespace MayaFlux::Yantra {
 
 /**
  * @class VisionAnalyzer
- * @brief Resolves its configured VisionRequest, runs every resolved
+ * @brief Resolves its configured VisionQuery, runs every resolved
  *        VisionSequence against a persistent VisionGpuExecutor, then runs
  *        the GPU reductions (track_reduce.comp) over the (context-filtered)
  *        subject tracks/keypoints for centroid/velocity/bounds.
@@ -49,21 +49,21 @@ public:
      *        constructor-configures-the-run convention.
      */
     explicit VisionAnalyzer(
-        Kinesis::Vision::VisionRequest request = {},
+        Kinesis::Vision::VisionQuery query = {},
         Kinesis::Vision::VisionAnalysisContext context = {});
 
-    void set_request(const Kinesis::Vision::VisionRequest& request) { m_request = request; }
-    [[nodiscard]] const Kinesis::Vision::VisionRequest& get_request() const { return m_request; }
+    void set_query(const Kinesis::Vision::VisionQuery& query) { m_query = query; }
+    [[nodiscard]] const Kinesis::Vision::VisionQuery& get_query() const { return m_query; }
 
     void set_context(const Kinesis::Vision::VisionAnalysisContext& context) { m_context = context; }
     [[nodiscard]] const Kinesis::Vision::VisionAnalysisContext& get_context() const { return m_context; }
 
     /**
-     * @brief Real entry point: resolve the configured request against
+     * @brief Real entry point: resolve the configured query against
      *        source, run it, run the GPU analysis. Same shape as
      *        analyze_energy(data)/analyze_statistics(data): only the data
      *        is a call argument. To change what a later call does, call
-     *        set_request()/set_context() first, the same way a caller
+     *        set_query()/set_context() first, the same way a caller
      *        changes EnergyAnalyzer's behaviour with set_method() before
      *        the next analyze_energy(), not by passing it alongside data.
      *
@@ -116,7 +116,7 @@ private:
      * @brief ComputeOperation adapter: uses input.data as the source
      *        container, pulls index out of Datum metadata (defaulting to
      *        0), calls analyze_vision(). See analyze_vision() for the real
-     *        API; request/context come from this instance's own
+     *        API; query/context come from this instance's own
      *        configured state, not from the Datum, matching every other
      *        UniversalAnalyzer-family operation_function.
      */
@@ -135,7 +135,7 @@ private:
 
     /**
      * @brief Shared body of both analyze_vision() overloads, once a GPU
-     *        image is in hand: resolve the configured request, run every
+     *        image is in hand: resolve the configured query, run every
      *        resolved VisionSequence, apply context filtering, run the
      *        GPU reductions. w/h are the image's own dimensions.
      */
@@ -194,7 +194,7 @@ private:
     /** @brief Dispatch histogram_reduce.comp over an already-computed histogram. */
     [[nodiscard]] float compute_mean_brightness(const std::array<uint32_t, 256>& histogram);
 
-    Kinesis::Vision::VisionRequest m_request;
+    Kinesis::Vision::VisionQuery m_query;
     Kinesis::Vision::VisionAnalysisContext m_context;
 
     std::unique_ptr<VisionGpuExecutor> m_executor;

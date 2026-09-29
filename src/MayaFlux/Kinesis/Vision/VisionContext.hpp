@@ -152,7 +152,7 @@ struct VisionResult {
      * A storage image, so passing it as the image argument to a later
      * VisionGpuExecutor::run() call skips re-ingesting and re-converting:
      * op_ingest passes any frame already carrying storage usage through
-     * unchanged. Intended for a caller resolving one VisionRequest into
+     * unchanged. Intended for a caller resolving one VisionQuery into
      * several VisionSequences that all start from the same gray frame, so
      * only the first pays for RgbaToGray.
      */
