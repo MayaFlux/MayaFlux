@@ -123,7 +123,7 @@ void VisionGpuExecutor::op_connected_components(
     foundry.release_fence(fence);
     cc_pipeline.clear_output_dimensions();
 
-    contexts.pass.result.debug_labels = p.with_colors ? cc_image : nullptr;
+    contexts.pass.result.images.component_colors = p.with_colors ? cc_image : nullptr;
 
     if (p.export_label_buffer) {
         contexts.pass.result.label_buffer = std::make_shared<Portal::Graphics::GpuBufferHandle>(
@@ -375,7 +375,7 @@ bool VisionGpuExecutor::op_find_contours(
     component_contours.execute(Datum<> {}, trace_ctx);
 
     if (p.as_image) {
-        contexts.pass.result.debug_contours = contour_image;
+        contexts.pass.result.images.contour_image = contour_image;
         contexts.pass.result.structured = std::monostate {};
         contexts.pass.result.w = 0;
         contexts.pass.result.h = 0;

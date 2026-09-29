@@ -410,7 +410,8 @@ private:
      * @brief Apply an Otsu threshold to the current image.
      *
      * Computes the histogram and threshold on the GPU, then replaces the
-     * working image with the binary result and publishes it as debug_labels.
+     * working image with the binary result and publishes it as
+     * VisionResult::images.threshold_otsu.
      *
      * @return The resulting image and the image it was derived from.
      */
@@ -434,7 +435,7 @@ private:
      *
      * Applies smoothing, gradients, suppression, threshold classification,
      * and hysteresis. The final edge image becomes the working image and is
-     * published as debug_labels.
+     * published as VisionResult::images.canny.
      *
      * @return The resulting edge image and the original input image.
      */

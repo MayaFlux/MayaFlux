@@ -100,7 +100,7 @@ GpuVisionPass::Completed VisionGpuExecutor::op_threshold_otsu(VisionGpuContexts&
         foundry.release_fence(f);
     }
 
-    contexts.pass.result.debug_labels = thresholded;
+    contexts.pass.result.images.threshold_otsu = thresholded;
     contexts.pass.current = thresholded;
     contexts.pass.result.structured = std::monostate {};
 
@@ -175,6 +175,11 @@ GpuVisionPass::Completed VisionGpuExecutor::op_open_close(
         foundry.release_fence(f);
     }
 
+    if (is_open) {
+        contexts.pass.result.images.open = opened_closed;
+    } else {
+        contexts.pass.result.images.close = opened_closed;
+    }
     contexts.pass.current = opened_closed;
     contexts.pass.result.structured = std::monostate {};
 
@@ -319,7 +324,7 @@ GpuVisionPass::Completed VisionGpuExecutor::op_canny(
     }
     auto finalized = pixel_ctx.get_output_image(0);
 
-    contexts.pass.result.debug_labels = finalized;
+    contexts.pass.result.images.canny = finalized;
     contexts.pass.current = finalized;
     contexts.pass.result.structured = std::monostate {};
 

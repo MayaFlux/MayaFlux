@@ -253,7 +253,7 @@ namespace {
 
         contexts.pass.result.flow = state.last_flow;
         if (visualized && state.last_flow)
-            contexts.pass.result.debug_labels = state.flow_vis;
+            contexts.pass.result.images.flow_visualization = state.flow_vis;
         commit_flow_frame(contexts);
     }
 

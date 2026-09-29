@@ -484,6 +484,7 @@ VisionResult VisionGpuExecutor::run(
 
             auto downsampled = pixel_ctx.get_output_image(0);
             completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = { .output = downsampled, .input = contexts.pass.current };
+            contexts.pass.result.images.downsample_2x = downsampled;
             contexts.pass.current = downsampled;
             contexts.bound_staged.reset();
 
@@ -615,8 +616,52 @@ VisionResult VisionGpuExecutor::run(
         contexts.bound_staged.reset();
         completed_ops[Kinesis::Vision::hash_vision_step(step.op, step.params)] = { .output = contexts.pass.current, .input = dispatch_input };
 
-        if (step.op == VisionOp::RgbaToGray)
+        switch (step.op) {
+        case VisionOp::RgbaToGray:
             contexts.pass.result.gray = contexts.pass.current;
+            break;
+        case VisionOp::RgbaToHsv:
+            contexts.pass.result.images.rgba_to_hsv = contexts.pass.current;
+            break;
+        case VisionOp::GrayToRgba:
+            contexts.pass.result.images.gray_to_rgba = contexts.pass.current;
+            break;
+        case VisionOp::Threshold:
+            contexts.pass.result.images.threshold = contexts.pass.current;
+            break;
+        case VisionOp::ThresholdAdaptive:
+            contexts.pass.result.images.threshold_adaptive = contexts.pass.current;
+            break;
+        case VisionOp::NormalizeInplace:
+            contexts.pass.result.images.normalize_inplace = contexts.pass.current;
+            break;
+        case VisionOp::NormalizeRange:
+            contexts.pass.result.images.normalize_range = contexts.pass.current;
+            break;
+        case VisionOp::GaussianBlur:
+            contexts.pass.result.images.gaussian_blur = contexts.pass.current;
+            break;
+        case VisionOp::FilterSeparable:
+            contexts.pass.result.images.filter_separable = contexts.pass.current;
+            break;
+        case VisionOp::Sobel:
+            contexts.pass.result.images.sobel = contexts.pass.current;
+            break;
+        case VisionOp::Scharr:
+            contexts.pass.result.images.scharr = contexts.pass.current;
+            break;
+        case VisionOp::Erode:
+            contexts.pass.result.images.erode = contexts.pass.current;
+            break;
+        case VisionOp::Dilate:
+            contexts.pass.result.images.dilate = contexts.pass.current;
+            break;
+        case VisionOp::MorphGradient:
+            contexts.pass.result.images.morph_gradient = contexts.pass.current;
+            break;
+        default:
+            break;
+        }
 
         after_step(contexts, contexts.pass.index);
     }

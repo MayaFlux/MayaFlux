@@ -176,8 +176,8 @@ struct TrackKeypointsParams {
  * resolution (lowered for small images). eigen_threshold damps the solve so
  * untextured pixels take small steps, and max_step caps one increment in
  * pixels. With visualize set, a hue and brightness rendering of the flow is
- * delivered in VisionResult::debug_labels, at full brightness from
- * visual_range pixels. visual_min_motion keeps smaller displacements dark in
+ * delivered in VisionResult::images.flow_visualization, at full brightness
+ * from visual_range pixels. visual_min_motion keeps smaller displacements dark in
  * the visualization, in pixels of the flow image.
  */
 struct OpticalFlowDenseParams {
@@ -233,7 +233,8 @@ struct ConnectedComponentsParams {
  *
  * as_image replaces structured contours with white closed boundaries on an
  * opaque black background. CPU returns host RGBA pixels in pixel_image with
- * their dimensions; GPU returns a device image in debug_contours.
+ * their dimensions; GPU returns a device image in
+ * VisionResult::images.contour_image.
  */
 struct FindContoursParams {
     float min_area { 0.0F };

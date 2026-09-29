@@ -33,12 +33,8 @@ namespace {
      * produces vector<Contour>. flow is written only by OpticalFlowDense and
      * checked independently, since a TrackObjects+EstimateMotion merged
      * sequence's result carries both a structured TrackResult list and a
-     * flow image at once. A monostate result with a non-null debug_labels
-     * is Canny's edge image; both ThresholdOtsu and ConnectedComponents also
-     * write debug_labels, but their sequences end with FindContours, whose
-     * vector<Contour> already claims the structured slot by then, so the
-     * fallback only fires for a sequence that produced no structured output
-     * at all.
+     * flow image at once. result.images.canny is Canny's own slot, unambiguous
+     * regardless of what else ran earlier in the sequence.
      *
      * result.component_boxes travels with the same FindContours result
      * (ConnectedComponents populates it earlier in the same sequence and
@@ -51,31 +47,24 @@ namespace {
         Kinesis::Vision::VisionAnalysis& analysis,
         const Kinesis::Vision::VisionResult& result)
     {
-        bool structured_claimed = false;
-
-        if (const auto* tracks = std::get_if<std::vector<Kinesis::Vision::TrackResult>>(&result.structured)) {
+        if (const auto* tracks = std::get_if<std::vector<Kinesis::Vision::TrackResult>>(&result.structured))
             raw_tracks = *tracks;
-            structured_claimed = true;
-        }
 
-        if (const auto* keypoints = std::get_if<std::vector<Kinesis::Vision::Keypoint>>(&result.structured)) {
+        if (const auto* keypoints = std::get_if<std::vector<Kinesis::Vision::Keypoint>>(&result.structured))
             raw_keypoints = *keypoints;
-            structured_claimed = true;
-        }
 
         if (const auto* contours = std::get_if<std::vector<Kinesis::Vision::Contour>>(&result.structured)) {
             analysis.find_elements = Kinesis::Vision::FindElementsAnalysis {
                 .contours = *contours,
                 .boxes = result.component_boxes,
             };
-            structured_claimed = true;
         }
 
         if (result.flow)
             analysis.estimate_motion = result.flow;
 
-        if (!structured_claimed && result.debug_labels)
-            analysis.detect_edges = result.debug_labels;
+        if (result.images.canny)
+            analysis.detect_edges = result.images.canny;
     }
 
 } // namespace

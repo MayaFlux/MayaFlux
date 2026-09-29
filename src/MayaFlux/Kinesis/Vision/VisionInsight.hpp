@@ -99,7 +99,7 @@ struct FindElementsAnalysis {
  *
  * find_elements/detect_features are GPU-produced/GPU-reduced result types:
  * see FindElementsAnalysis and DetectFeaturesAnalysis respectively.
- * detect_edges/estimate_motion are exactly VisionResult::debug_labels/flow.
+ * detect_edges/estimate_motion are exactly VisionResult::images.canny/flow.
  *
  * find_elements.contours arrives already sorted by area, largest first,
  * when the caller set FindContoursParams::max_contours > 0 on the request:

@@ -39,6 +39,50 @@ enum class VisionStatus : uint8_t {
 };
 
 /**
+ * @brief One image slot per VisionOp whose output is an image, populated
+ *        only for whichever of these ops actually ran in the sequence.
+ *
+ * Two groups. The pure image-transform ops (RgbaToHsv through
+ * MorphGradient) produce nothing but an image; RgbaToGray is the one
+ * exception, kept on its own top-level VisionResult::gray since
+ * VisionRequest::resolve() already depends on that field by name. The
+ * three visualization fields (component_colors, contour_image,
+ * flow_visualization) come from ops that also produce real structured or
+ * buffer output (ConnectedComponents, FindContours, OpticalFlowDense);
+ * they are named here individually rather than sharing one field, since a
+ * shared field silently collides the moment more than one of these ops
+ * appears in the same sequence.
+ *
+ * Every field is a plain shared_ptr, matching tracks_buffer/
+ * keypoints_buffer/label_buffer/contours_buffer's own convention: null
+ * means the op did not run, nothing more.
+ */
+struct ImageOutputs {
+    std::shared_ptr<Core::VKImage> rgba_to_hsv;
+    std::shared_ptr<Core::VKImage> gray_to_rgba;
+    std::shared_ptr<Core::VKImage> downsample_2x;
+    std::shared_ptr<Core::VKImage> threshold;
+    std::shared_ptr<Core::VKImage> threshold_adaptive;
+    std::shared_ptr<Core::VKImage> threshold_otsu;
+    std::shared_ptr<Core::VKImage> normalize_inplace;
+    std::shared_ptr<Core::VKImage> normalize_range;
+    std::shared_ptr<Core::VKImage> gaussian_blur;
+    std::shared_ptr<Core::VKImage> filter_separable;
+    std::shared_ptr<Core::VKImage> sobel;
+    std::shared_ptr<Core::VKImage> scharr;
+    std::shared_ptr<Core::VKImage> canny;
+    std::shared_ptr<Core::VKImage> erode;
+    std::shared_ptr<Core::VKImage> dilate;
+    std::shared_ptr<Core::VKImage> open;
+    std::shared_ptr<Core::VKImage> close;
+    std::shared_ptr<Core::VKImage> morph_gradient;
+
+    std::shared_ptr<Core::VKImage> component_colors; ///< ConnectedComponents::with_colors
+    std::shared_ptr<Core::VKImage> contour_image; ///< FindContours::as_image
+    std::shared_ptr<Core::VKImage> flow_visualization; ///< OpticalFlowDense::visualize
+};
+
+/**
  * @brief Result of executing a VisionSequence on one frame.
  *
  * pixel_image holds the final normalised float pixel buffer as a DataVariant
@@ -55,8 +99,6 @@ struct VisionResult {
     Kakshya::DataVariant pixel_image { std::vector<float> {} };
     StructuredOutput structured { std::monostate {} };
     std::vector<SnapshotEntry> snapshots;
-    std::shared_ptr<Core::VKImage> debug_labels;
-    std::shared_ptr<Core::VKImage> debug_contours;
 
     /**
      * @brief Dense optical flow field from OpticalFlowDense, or null.
@@ -116,6 +158,12 @@ struct VisionResult {
      * buffer is rewritten, and never outlives the executor.
      */
     std::shared_ptr<Portal::Graphics::GpuBufferHandle> label_buffer;
+
+    /**
+     * @brief Image output of whichever image-producing ops ran in this
+     *        sequence, one named slot per op. See ImageOutputs.
+     */
+    ImageOutputs images;
 
     uint32_t w { 0 };
     uint32_t h { 0 };
