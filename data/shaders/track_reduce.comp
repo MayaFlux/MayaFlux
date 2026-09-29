@@ -19,19 +19,8 @@ layout(set = 0, binding = 2, std430) readonly buffer ExtraDataBuf {
     vec2 extra_data[];
 };
 
-/// @brief Position and previous of every record mapped through pc.origin and
-///        pc.scale, the same values the reduction consumed. xy = position,
-///        zw = previous.
-layout(set = 0, binding = 3, std430) writeonly buffer RemappedBuf {
-    vec4 remapped[];
-};
-
 layout(push_constant) uniform PushConstants {
     uint count;
-    float origin_x;
-    float origin_y;
-    float scale_x;
-    float scale_y;
 } pc;
 
 shared vec2 s_sum_pos[256];
@@ -46,11 +35,6 @@ shared float s_sum_extra_y[256];
  * @brief Single-workgroup reduction over a track list: sum of position and
  *        velocity (position - previous), the min/max position bounds, and
  *        sum/max/sum of the two extra per-record scalars.
- *
- * Positions are first mapped through pc.origin + p * pc.scale (identity is
- * origin 0, scale 1), so a result computed inside a confined region reduces
- * and is written out in full-frame coordinates. Velocity, being a
- * difference, scales by pc.scale.
  *
  * Same shape as contour_topk_select.comp's top-K reduction: each thread
  * scans a strided slice, then a shared-memory tree reduction combines the
@@ -71,13 +55,9 @@ void main()
     float max_extra_x = -1.0 / 0.0;
     float sum_extra_y = 0.0;
 
-    const vec2 origin = vec2(pc.origin_x, pc.origin_y);
-    const vec2 scale = vec2(pc.scale_x, pc.scale_y);
-
     for (uint i = tid; i < pc.count; i += 256u) {
-        const vec2 p = origin + track_data[i].xy * scale;
-        const vec2 prev = origin + track_data[i].zw * scale;
-        remapped[i] = vec4(p, prev);
+        const vec2 p = track_data[i].xy;
+        const vec2 prev = track_data[i].zw;
         sum_pos += p;
         sum_vel += (p - prev);
         mn = min(mn, p);

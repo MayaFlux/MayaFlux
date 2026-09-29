@@ -56,7 +56,8 @@ GpuVisionPass::Completed VisionGpuExecutor::op_harris_response(
      *  clear the staged bytes before pass 1 so the accumulated max survives. */
     const uint32_t peak_reset = 0U;
     pixel_ctx.set_binding_data(2, std::span<const uint32_t>(&peak_reset, 1));
-    pixel_ctx.set_push_constants(HarrisPC { .k = p.k, .pass = 0U, .width = w, .height = h });
+    const auto rect = region_rect(p.region, w, h);
+    pixel_ctx.set_push_constants(HarrisPC { .k = p.k, .pass = 0U, .width = w, .height = h, .rect = rect });
     pixel_ctx.prepare_output_image(w, h);
     {
         const auto f = pixel_ctx.dispatch_async({});
@@ -65,7 +66,7 @@ GpuVisionPass::Completed VisionGpuExecutor::op_harris_response(
     }
 
     pixel_ctx.set_binding_data(2, std::span<const uint32_t>(&peak_reset, 0));
-    pixel_ctx.set_push_constants(HarrisPC { .k = p.k, .pass = 1U, .width = w, .height = h });
+    pixel_ctx.set_push_constants(HarrisPC { .k = p.k, .pass = 1U, .width = w, .height = h, .rect = rect });
     {
         const auto f = pixel_ctx.dispatch_async({});
         foundry.wait_for_fence(f);
@@ -119,6 +120,7 @@ void VisionGpuExecutor::op_extract_peaks(
         .width = w,
         .height = h,
         .max_keypoints = k_max_kp,
+        .rect = region_rect(p.region, w, h),
     });
 
     structured_ctx.set_output_dimensions(w, h);

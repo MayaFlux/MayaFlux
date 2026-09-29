@@ -73,11 +73,44 @@ struct IngestPC {
     uint32_t width;
     uint32_t height;
 };
+/** Half-open pixel rectangle [x0, x1) x [y0, y1) */
+struct PixelRect {
+    uint32_t x0;
+    uint32_t y0;
+    uint32_t x1;
+    uint32_t y1;
+};
+
+/**
+ * @brief Pixel rectangle of a normalised region over a w x h image, clamped
+ *        to the image. No region is the whole image. A region that clamps to
+ *        nothing gives an empty rectangle, which masks everything.
+ */
+inline PixelRect region_rect(
+    const std::optional<Kinesis::Vision::BoundingBox>& region, uint32_t w, uint32_t h)
+{
+    if (!region)
+        return { .x0 = 0U, .y0 = 0U, .x1 = w, .y1 = h };
+
+    const auto fw = static_cast<float>(w);
+    const auto fh = static_cast<float>(h);
+    const auto clamp_to = [](float v, uint32_t hi) {
+        return static_cast<uint32_t>(std::clamp(v, 0.0F, static_cast<float>(hi)));
+    };
+    return {
+        .x0 = clamp_to(std::floor(region->x * fw), w),
+        .y0 = clamp_to(std::floor(region->y * fh), h),
+        .x1 = clamp_to(std::ceil((region->x + region->w) * fw), w),
+        .y1 = clamp_to(std::ceil((region->y + region->h) * fh), h),
+    };
+}
+
 struct HarrisPC {
     float k;
     uint32_t pass;
     uint32_t width;
     uint32_t height;
+    PixelRect rect;
 };
 struct CannyPC {
     float sigma;
@@ -116,6 +149,7 @@ struct ExtractPeaksPC {
     uint32_t width;
     uint32_t height;
     uint32_t max_keypoints;
+    PixelRect rect;
 };
 struct CCBlockInitPC {
     uint32_t width;

@@ -180,15 +180,30 @@ struct MorphParams {
     uint32_t radius;
 };
 
+/**
+ * @brief Harris response parameters.
+ *
+ * region, a normalised rectangle, zeroes the response outside it, which also
+ * makes the response's peak normalisation relative to the region. Coordinates
+ * and image size stay full-frame. Empty is the whole frame. GPU backend only.
+ */
 struct HarrisParams {
     float k = 0.04F;
     float sigma = 1.0F;
+    std::optional<BoundingBox> region;
 };
 
+/**
+ * @brief Peak extraction parameters.
+ *
+ * region, a normalised rectangle, restricts detection to it while keypoint
+ * coordinates stay full-frame. Empty is the whole frame. GPU backend only.
+ */
 struct ExtractPeaksParams {
     float threshold;
     uint32_t nms_radius;
     bool export_keypoints { false };
+    std::optional<BoundingBox> region;
 };
 
 /**
@@ -582,6 +597,21 @@ inline void hash_combine(size_t& seed, size_t value)
 }
 
 /**
+ * @brief Combine an optional region into a hash: absence and presence hash
+ *        differently, presence by its four bounds.
+ */
+inline void hash_region(size_t& seed, const std::optional<BoundingBox>& region)
+{
+    hash_combine(seed, std::hash<bool> {}(region.has_value()));
+    if (!region)
+        return;
+    hash_combine(seed, std::hash<float> {}(region->x));
+    hash_combine(seed, std::hash<float> {}(region->y));
+    hash_combine(seed, std::hash<float> {}(region->w));
+    hash_combine(seed, std::hash<float> {}(region->h));
+}
+
+/**
  * @brief Hash a VisionStep's op and parameters together.
  *
  * Keys GPU dispatch memoization on VisionPass::completed, which spans one
@@ -627,10 +657,12 @@ inline size_t hash_vision_step(VisionOp op, const VisionParams& params)
         } else if constexpr (std::is_same_v<T, HarrisParams>) {
             hash_combine(seed, std::hash<float> {}(p.k));
             hash_combine(seed, std::hash<float> {}(p.sigma));
+            hash_region(seed, p.region);
         } else if constexpr (std::is_same_v<T, ExtractPeaksParams>) {
             hash_combine(seed, std::hash<float> {}(p.threshold));
             hash_combine(seed, std::hash<uint32_t> {}(p.nms_radius));
             hash_combine(seed, std::hash<bool> {}(p.export_keypoints));
+            hash_region(seed, p.region);
         } else if constexpr (std::is_same_v<T, TrackKeypointsParams>) {
             hash_combine(seed, std::hash<uint32_t> {}(p.window_radius));
             hash_combine(seed, std::hash<uint32_t> {}(p.max_iterations));

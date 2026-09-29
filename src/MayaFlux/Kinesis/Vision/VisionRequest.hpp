@@ -51,13 +51,13 @@ struct FindElementsRequest {
 /**
  * @brief Parameters for VisionIntent::TrackObjects.
  *
- * region confines detection and tracking to a normalised rectangle by
- * leading the chain with Confine. Results are remapped to full-frame
- * coordinates on the GPU before they reach VisionAnalysis. When
- * EstimateMotion is also active it shares this lane, so its flow image
- * covers the same region (VisionAnalysis::motion_region). Changing region
- * between calls resets the analyzer's flow state, since flow compared across
- * different content is meaningless.
+ * region, a normalised rectangle, restricts where new points are detected:
+ * it is written into the chain's HarrisParams and ExtractPeaksParams. The
+ * frame, pyramid and every result coordinate stay full-frame, and flow state
+ * is unaffected by changing region between calls. Points already being
+ * tracked keep being tracked wherever they move, including out of the
+ * region; only detection is confined. EstimateMotion, when also active,
+ * still covers the whole frame.
  */
 struct TrackObjectsRequest {
     HarrisParams harris {};
@@ -69,8 +69,9 @@ struct TrackObjectsRequest {
 /**
  * @brief Parameters for VisionIntent::DetectFeatures.
  *
- * region confines detection to a normalised rectangle by leading the chain
- * with Confine. Keypoints are remapped to full-frame coordinates on the GPU.
+ * region, a normalised rectangle, restricts detection to it through the
+ * chain's HarrisParams and ExtractPeaksParams. Keypoints stay in full-frame
+ * coordinates.
  */
 struct DetectFeaturesRequest {
     HarrisParams harris {};

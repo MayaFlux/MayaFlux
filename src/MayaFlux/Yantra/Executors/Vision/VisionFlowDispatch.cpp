@@ -360,6 +360,7 @@ bool VisionGpuExecutor::op_track_keypoints(VisionGpuContexts& contexts, const Vi
         .width = w,
         .height = h,
         .max_keypoints = k_flow_max_points,
+        .rect = region_rect(pk.region, w, h),
     };
 
     std::vector<DependencyStage> stages;

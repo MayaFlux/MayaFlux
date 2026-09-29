@@ -148,8 +148,7 @@ private:
      *        result. No-op (default fields) when tracks is empty.
      */
     [[nodiscard]] Kinesis::Vision::TrackObjectsAnalysis reduce_tracks(
-        const std::vector<Kinesis::Vision::TrackResult>& tracks, uint32_t w, uint32_t h,
-        const std::optional<Kinesis::Vision::BoundingBox>& region);
+        const std::vector<Kinesis::Vision::TrackResult>& tracks, uint32_t w, uint32_t h);
 
     /**
      * @brief Dispatch track_reduce.comp over keypoint positions (fed as
@@ -162,8 +161,7 @@ private:
      *        way.
      */
     [[nodiscard]] Kinesis::Vision::DetectFeaturesAnalysis reduce_keypoints(
-        const std::vector<Kinesis::Vision::Keypoint>& keypoints,
-        const std::optional<Kinesis::Vision::BoundingBox>& region);
+        const std::vector<Kinesis::Vision::Keypoint>& keypoints);
 
     /**
      * @brief Shape descriptors (element_shape.comp) and nearest-neighbour
@@ -196,16 +194,6 @@ private:
     Kinesis::Vision::VisionAnalysisContext m_context;
 
     std::unique_ptr<VisionGpuExecutor> m_executor;
-
-    /**
-     * @brief Confinement the flow lane last ran with. A change resets the
-     *        executor's flow state before the next run: previous-frame
-     *        tracks and pyramid belong to different content once the region
-     *        moves.
-     */
-    std::optional<Kinesis::Vision::BoundingBox> m_flow_region;
-    bool m_flow_region_known { false };
-
     std::shared_ptr<ShaderExecutionContext<>> m_track_reducer;
     std::shared_ptr<ShaderExecutionContext<>> m_brightness_reducer;
     std::shared_ptr<ShaderExecutionContext<>> m_shape_ctx;

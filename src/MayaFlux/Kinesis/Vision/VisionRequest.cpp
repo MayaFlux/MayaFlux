@@ -41,28 +41,30 @@ namespace {
 
     VisionSequence track_objects_chain(const TrackObjectsRequest& r)
     {
-        VisionSequence::Builder builder;
-        if (r.region)
-            builder.confine({ .bounds = *r.region });
+        auto harris = r.harris;
+        auto peaks = r.peaks;
+        harris.region = r.region;
+        peaks.region = r.region;
 
-        return builder
+        return VisionSequence::Builder {}
             .rgba_to_gray()
-            .harris_response(r.harris)
-            .extract_peaks(r.peaks)
+            .harris_response(harris)
+            .extract_peaks(peaks)
             .track_keypoints(r.track)
             .build();
     }
 
     VisionSequence detect_features_chain(const DetectFeaturesRequest& r)
     {
-        VisionSequence::Builder builder;
-        if (r.region)
-            builder.confine({ .bounds = *r.region });
+        auto harris = r.harris;
+        auto peaks = r.peaks;
+        harris.region = r.region;
+        peaks.region = r.region;
 
-        return builder
+        return VisionSequence::Builder {}
             .rgba_to_gray()
-            .harris_response(r.harris)
-            .extract_peaks(r.peaks)
+            .harris_response(harris)
+            .extract_peaks(peaks)
             .build();
     }
 

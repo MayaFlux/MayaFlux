@@ -36,12 +36,26 @@ layout(push_constant) uniform PC {
     uint width;
     uint height;
     uint max_keypoints;
+    uint x0;
+    uint y0;
+    uint x1;
+    uint y1;
 } pc;
 
+/**
+ * @brief Peaks are only reported inside the half-open pixel rectangle
+ *        [x0, x1) x [y0, y1); the default rectangle is the whole image.
+ *        Coordinates written stay full-frame. Neighbours outside the
+ *        rectangle still take part in non-maximum suppression.
+ */
 void main()
 {
     const ivec2 coord = thread_coord();
     if (coord.x >= int(pc.width) || coord.y >= int(pc.height))
+        return;
+
+    if (uint(coord.x) < pc.x0 || uint(coord.x) >= pc.x1
+        || uint(coord.y) < pc.y0 || uint(coord.y) >= pc.y1)
         return;
 
     const float val = imageLoad(in_image, coord).r;
