@@ -202,10 +202,13 @@ VisionGpuContexts::VisionGpuContexts()
 // vision_gpu_config
 // ============================================================================
 
-GpuComputeConfig VisionGpuExecutor::config(VisionOp op, const VisionParams& /*params*/)
+GpuComputeConfig VisionGpuExecutor::config(VisionOp op, const VisionParams& params)
 {
     switch (op) {
     case VisionOp::Threshold: {
+        if (const auto* p = std::get_if<ThresholdParams>(&params); p && p->channels != ChannelMask::NONE)
+            return { .shader_path = "threshold_bands.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(ThresholdBandsPC) };
+
         const auto spec = ShaderSpec::Assemble {}
                               .storage_image("out", BindingDirection::Output)
                               .storage_image("src", BindingDirection::Input)
@@ -363,8 +366,11 @@ void VisionGpuExecutor::reset()
 void VisionGpuExecutor::after_step(VisionGpuContexts& contexts, size_t index)
 {
     const auto& steps = contexts.pass.sequence->steps;
-    if (steps[index].op != VisionOp::RgbaToGray)
+    const VisionOp source_op = steps[index].op;
+    if (source_op != VisionOp::RgbaToGray && source_op != VisionOp::RgbaToHsv)
         return;
+
+    const uint32_t src_channel = source_op == VisionOp::RgbaToHsv ? 2U : 0U;
 
     uint32_t levels = 0;
     bool needs_flow = false;
@@ -397,7 +403,7 @@ void VisionGpuExecutor::after_step(VisionGpuContexts& contexts, size_t index)
     }
 
     if (needs_flow)
-        build_flow_pyramid(contexts, levels);
+        build_flow_pyramid(contexts, levels, src_channel);
 }
 
 // ============================================================================
@@ -510,10 +516,18 @@ VisionResult VisionGpuExecutor::run(
 
             continue;
         }
-        case VisionOp::Threshold:
-            pixel_ctx.set_push_constants(ThresholdPC {
-                .value = std::get<ThresholdParams>(step.params).value });
+        case VisionOp::Threshold: {
+            const auto& p = std::get<ThresholdParams>(step.params);
+            if (p.channels == ChannelMask::NONE) {
+                pixel_ctx.set_push_constants(ThresholdPC { .value = p.value });
+            } else {
+                pixel_ctx.set_push_constants(ThresholdBandsPC {
+                    .lo0 = p.bands[0].lo, .lo1 = p.bands[1].lo, .lo2 = p.bands[2].lo,
+                    .hi0 = p.bands[0].hi, .hi1 = p.bands[1].hi, .hi2 = p.bands[2].hi,
+                    .channels = static_cast<uint32_t>(p.channels) });
+            }
             break;
+        }
         case VisionOp::NormalizeRange: {
             const auto& p = std::get<NormalizeRangeParams>(step.params);
             const float scale = (p.hi > p.lo) ? 1.0F / (p.hi - p.lo) : 1.0F;
@@ -541,11 +555,12 @@ VisionResult VisionGpuExecutor::run(
             break;
         case VisionOp::ThresholdAdaptive: {
             const auto& p = std::get<ThresholdAdaptiveParams>(step.params);
-            pixel_ctx.set_push_constants(ThresholdAdaptivePC { .block_size = p.block_size, .offset = p.offset });
+            pixel_ctx.set_push_constants(ThresholdAdaptivePC { .block_size = p.block_size, .offset = p.offset, .channels = static_cast<uint32_t>(p.channels) });
             break;
         }
         case VisionOp::ThresholdOtsu: {
-            contexts.pass.completed[Kinesis::Vision::hash_vision_step(step.op, step.params)] = op_threshold_otsu(contexts);
+            const auto* otsu = std::get_if<OtsuParams>(&step.params);
+            contexts.pass.completed[Kinesis::Vision::hash_vision_step(step.op, step.params)] = op_threshold_otsu(contexts, otsu ? *otsu : OtsuParams {});
             continue;
         }
         case VisionOp::Confine: {

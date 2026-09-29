@@ -34,7 +34,7 @@ const std::vector<float>& VisionGpuExecutor::gaussian_kernel_2d(uint32_t radius,
     return cache.emplace(key, std::move(k)).first->second;
 }
 
-GpuVisionPass::Completed VisionGpuExecutor::op_threshold_otsu(VisionGpuContexts& contexts)
+GpuVisionPass::Completed VisionGpuExecutor::op_threshold_otsu(VisionGpuContexts& contexts, const OtsuParams& p)
 {
     auto& pixel_ctx = contexts.pixel;
     auto w = contexts.pass.w;
@@ -43,15 +43,18 @@ GpuVisionPass::Completed VisionGpuExecutor::op_threshold_otsu(VisionGpuContexts&
 
     const auto otsu_input = contexts.pass.current;
 
-    pixel_ctx.ensure_shared_buffer(0, 3, 256, GpuBufferBinding::ElementType::UINT32,
+    pixel_ctx.ensure_shared_buffer(0, 3, 768, GpuBufferBinding::ElementType::UINT32,
         Portal::Graphics::BufferUsageHint::COMPUTE);
-    pixel_ctx.ensure_shared_buffer(0, 4, 1, GpuBufferBinding::ElementType::UINT32,
+    pixel_ctx.ensure_shared_buffer(0, 4, 3, GpuBufferBinding::ElementType::UINT32,
         Portal::Graphics::BufferUsageHint::COMPUTE);
 
-    const std::array<uint32_t, 256> histogram_reset {};
+    const std::array<uint32_t, 768> histogram_reset {};
     pixel_ctx.upload_shared_raw(0, 3, reinterpret_cast<const uint8_t*>(histogram_reset.data()), sizeof(histogram_reset));
 
-    const OtsuHistPC hist_pc { .width = w, .height = h };
+    const auto channels = static_cast<uint32_t>(p.channels);
+    const OtsuHistPC hist_pc { .width = w, .height = h, .channels = channels };
+    const OtsuApplyPC apply_pc { .channels = channels };
+    const uint32_t select_groups = channels == 0U ? 1U : 3U;
     const auto otsu_hazard = [](uint32_t binding) {
         return [binding](GpuDispatchCore& ctx) {
             return std::vector<HazardResource> {
@@ -76,12 +79,13 @@ GpuVisionPass::Completed VisionGpuExecutor::op_threshold_otsu(VisionGpuContexts&
         .config = { .shader_path = "otsu_select.comp.spv", .workgroup_size = { 256, 1, 1 } },
         .stage_fn = [&pixel_ctx, otsu_input](GpuDispatchCore&) { pixel_ctx.stage_image(otsu_input); },
         .hazard_fn = otsu_hazard(4),
-        .explicit_groups = std::array<uint32_t, 3> { 1U, 1U, 1U },
+        .explicit_groups = std::array<uint32_t, 3> { select_groups, 1U, 1U },
     });
     otsu_stages.push_back({
-        .config = { .shader_path = "otsu_apply.comp.spv", .workgroup_size = k_wg2d },
-        .stage_fn = [&pixel_ctx, &thresholded, otsu_input, w, h](GpuDispatchCore&) {
+        .config = { .shader_path = "otsu_apply.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(OtsuApplyPC) },
+        .stage_fn = [&pixel_ctx, &thresholded, otsu_input, w, h, apply_pc](GpuDispatchCore& ctx) {
                 pixel_ctx.stage_image(otsu_input);
+                ctx.set_push_constants(apply_pc);
                 pixel_ctx.prepare_output_image(w, h);
                 thresholded = pixel_ctx.get_output_image(0); },
         .explicit_groups = image_groups,

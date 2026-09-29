@@ -17,6 +17,7 @@ namespace {
     struct HistogramPC {
         uint32_t width;
         uint32_t height;
+        uint32_t channels;
     };
 
     struct RegionSamplePC {
@@ -330,14 +331,14 @@ std::array<uint32_t, 256> VisionAnalyzer::compute_histogram(
             GpuBufferBinding::ElementType::IMAGE_STORAGE);
     }
 
-    m_histogram_ctx->ensure_shared_buffer(0, 3, 256, GpuBufferBinding::ElementType::UINT32,
+    m_histogram_ctx->ensure_shared_buffer(0, 3, 768, GpuBufferBinding::ElementType::UINT32,
         Portal::Graphics::BufferUsageHint::COMPUTE);
 
-    const std::array<uint32_t, 256> zero {};
+    const std::array<uint32_t, 768> zero {};
     m_histogram_ctx->upload_shared_raw(0, 3, reinterpret_cast<const uint8_t*>(zero.data()), sizeof(zero));
 
     m_histogram_ctx->stage_image(image);
-    m_histogram_ctx->set_push_constants(HistogramPC { .width = w, .height = h });
+    m_histogram_ctx->set_push_constants(HistogramPC { .width = w, .height = h, .channels = 0 });
     m_histogram_ctx->set_output_dimensions(w, h);
 
     auto& foundry = Portal::Graphics::get_shader_foundry();

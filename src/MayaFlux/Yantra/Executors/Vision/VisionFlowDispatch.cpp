@@ -705,7 +705,7 @@ std::vector<Kinesis::Vision::TrackResult> VisionGpuExecutor::read_exported_track
     return decode_track_records(header + 1, *count);
 }
 
-void VisionGpuExecutor::build_flow_pyramid(VisionGpuContexts& contexts, uint32_t requested_levels)
+void VisionGpuExecutor::build_flow_pyramid(VisionGpuContexts& contexts, uint32_t requested_levels, uint32_t src_channel)
 {
     auto& flow = contexts.flow;
     auto& state = contexts.flow_state;
@@ -751,6 +751,7 @@ void VisionGpuExecutor::build_flow_pyramid(VisionGpuContexts& contexts, uint32_t
             .dst_h = dst.h,
             .dst_ox = dst.ox,
             .dst_oy = dst.oy,
+            .src_channel = src_channel,
         };
 
         stages.push_back({

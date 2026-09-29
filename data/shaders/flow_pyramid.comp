@@ -26,6 +26,7 @@ layout(push_constant) uniform PC {
     uint dst_h;
     uint dst_ox;
     uint dst_oy;
+    uint src_channel;
 } pc;
 
 shared float s_tile[10][10];
@@ -37,14 +38,15 @@ float atlas_intensity(ivec2 c)
 
 /**
  * @brief Intensity of the source level at a clamped coordinate. Level 0 reads
- *        the caller's gray image, every other level reads the previous level
+ *        pc.src_channel of the caller's image (0 for gray, 2 for the value
+ *        channel of an HSV frame), every other level reads the previous level
  *        of the same atlas.
  */
 float src_intensity(ivec2 c)
 {
     c = clamp(c, ivec2(0), ivec2(int(pc.src_w), int(pc.src_h)) - ivec2(1));
     if (pc.level == 0u)
-        return imageLoad(src_image, c).r;
+        return imageLoad(src_image, c)[pc.src_channel];
     return atlas_intensity(c + ivec2(int(pc.src_ox), int(pc.src_oy)));
 }
 

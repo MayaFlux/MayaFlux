@@ -44,13 +44,23 @@ constexpr size_t k_flow_export_vec4 = size_t { 1 } + size_t { k_flow_max_points 
 struct ThresholdPC {
     float value;
 };
+struct ThresholdBandsPC {
+    float lo0, lo1, lo2;
+    float hi0, hi1, hi2;
+    uint32_t channels;
+};
 struct ThresholdAdaptivePC {
     uint32_t block_size;
     float offset;
+    uint32_t channels;
 };
 struct OtsuHistPC {
     uint32_t width;
     uint32_t height;
+    uint32_t channels;
+};
+struct OtsuApplyPC {
+    uint32_t channels;
 };
 struct NormalizePC {
     float scale;
@@ -191,6 +201,7 @@ struct FlowPyramidPC {
     uint32_t dst_h;
     uint32_t dst_ox;
     uint32_t dst_oy;
+    uint32_t src_channel;
 };
 struct FlowLkPC {
     uint32_t curr_atlas;

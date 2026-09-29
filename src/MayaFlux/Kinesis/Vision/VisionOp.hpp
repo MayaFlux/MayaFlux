@@ -100,12 +100,62 @@ enum class VisionBackend : uint8_t {
 // Per-op parameter structs
 // ============================================================================
 
+/**
+ * @brief Selects channels of the current image for a multichannel threshold.
+ *
+ * Ch0, Ch1 and Ch2 are the first three channels as stored: red, green, blue
+ * on an RGBA image, hue, saturation, value after RgbaToHsv. NONE selects the
+ * legacy single-channel path, which reads channel 0 only. Multichannel
+ * selection is implemented by the GPU backend only.
+ */
+enum class ChannelMask : uint8_t {
+    NONE = 0U,
+    Ch0 = 1U << 0U,
+    Ch1 = 1U << 1U,
+    Ch2 = 1U << 2U,
+};
+MF_BITMASK_OPERATORS(ChannelMask)
+
+/**
+ * @brief Inclusive accepted range of one channel. lo greater than hi wraps
+ *        around, so a hue band may straddle 0.
+ */
+struct ChannelBand {
+    float lo { 0.0F };
+    float hi { 1.0F };
+};
+
+/**
+ * @brief Fixed threshold.
+ *
+ * With channels NONE the pixel passes when channel 0 is at least value. With
+ * any channel selected, value is ignored and the pixel passes only when every
+ * selected channel lies inside its band.
+ */
 struct ThresholdParams {
     float value;
+    ChannelMask channels { ChannelMask::NONE };
+    std::array<ChannelBand, 3> bands {};
 };
+
+/**
+ * @brief Adaptive threshold. With channels NONE only channel 0 is tested;
+ *        otherwise the pixel passes when every selected channel passes its
+ *        own neighbourhood test.
+ */
 struct ThresholdAdaptiveParams {
     uint32_t block_size;
     float offset;
+    ChannelMask channels { ChannelMask::NONE };
+};
+
+/**
+ * @brief Otsu threshold. With channels NONE only channel 0 is thresholded;
+ *        otherwise each selected channel gets its own Otsu threshold and the
+ *        pixel passes when every selected channel does.
+ */
+struct OtsuParams {
+    ChannelMask channels { ChannelMask::NONE };
 };
 struct NormalizeRangeParams {
     float lo;
@@ -270,7 +320,7 @@ struct FindContoursParams {
 /**
  * @brief Parameter variant covering all ops that carry parameters.
  *
- * Ops with no parameters (RgbaToGray, Sobel, Scharr, ThresholdOtsu,
+ * Ops with no parameters (RgbaToGray, Sobel, Scharr,
  * NormalizeInplace, GrayToRgba, RgbaToHsv, MorphGradient, Erode, Dilate,
  * Open, Close) use std::monostate.
  */
@@ -278,6 +328,7 @@ using VisionParams = std::variant<
     std::monostate,
     ThresholdParams,
     ThresholdAdaptiveParams,
+    OtsuParams,
     NormalizeRangeParams,
     GaussianBlurParams,
     FilterSeparableParams,
@@ -372,9 +423,9 @@ struct VisionSequence {
             return push(VisionOp::ThresholdAdaptive, params);
         }
 
-        Builder& threshold_otsu()
+        Builder& threshold_otsu(OtsuParams params = {})
         {
-            return push(VisionOp::ThresholdOtsu);
+            return push(VisionOp::ThresholdOtsu, params);
         }
 
         Builder& normalize()
@@ -546,9 +597,17 @@ inline size_t hash_vision_step(VisionOp op, const VisionParams& params)
         if constexpr (std::is_same_v<T, std::monostate>) {
         } else if constexpr (std::is_same_v<T, ThresholdParams>) {
             hash_combine(seed, std::hash<float> {}(p.value));
+            hash_combine(seed, std::hash<uint8_t> {}(static_cast<uint8_t>(p.channels)));
+            for (const auto& band : p.bands) {
+                hash_combine(seed, std::hash<float> {}(band.lo));
+                hash_combine(seed, std::hash<float> {}(band.hi));
+            }
         } else if constexpr (std::is_same_v<T, ThresholdAdaptiveParams>) {
             hash_combine(seed, std::hash<uint32_t> {}(p.block_size));
             hash_combine(seed, std::hash<float> {}(p.offset));
+            hash_combine(seed, std::hash<uint8_t> {}(static_cast<uint8_t>(p.channels)));
+        } else if constexpr (std::is_same_v<T, OtsuParams>) {
+            hash_combine(seed, std::hash<uint8_t> {}(static_cast<uint8_t>(p.channels)));
         } else if constexpr (std::is_same_v<T, NormalizeRangeParams>) {
             hash_combine(seed, std::hash<float> {}(p.lo));
             hash_combine(seed, std::hash<float> {}(p.hi));

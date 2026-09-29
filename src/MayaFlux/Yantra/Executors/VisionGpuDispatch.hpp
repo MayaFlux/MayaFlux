@@ -429,7 +429,9 @@ private:
      *
      * @return The resulting image and the image it was derived from.
      */
-    Kinesis::Vision::GpuVisionPass::Completed op_threshold_otsu(VisionGpuContexts& contexts);
+    Kinesis::Vision::GpuVisionPass::Completed op_threshold_otsu(
+        VisionGpuContexts& contexts,
+        const Kinesis::Vision::OtsuParams& p);
 
     /**
      * @brief Arbitrary rectangular sub-region of the current image,
@@ -550,23 +552,27 @@ private:
     bool op_dense_flow(VisionGpuContexts& contexts, const Kinesis::Vision::VisionStep& step);
 
     /**
-     * @brief Build the current frame's pyramid atlas from the working gray image.
+     * @brief Build the current frame's pyramid atlas from the working image.
      *
      * Submitted as one un-awaited dependency sequence, one fused dispatch per
-     * level. The level 0 stage carries a hazard on the gray image, which
+     * level. The level 0 stage carries a hazard on the working image, which
      * orders any later dispatch that overwrites it after this read. The
      * fence is reaped on the next fresh run and in reset().
+     *
+     * @param src_channel Channel of the working image read as intensity: 0
+     *                    for a gray frame, 2 for the value channel of an HSV
+     *                    frame.
      */
-    static void build_flow_pyramid(VisionGpuContexts& contexts, uint32_t requested_levels);
+    static void build_flow_pyramid(VisionGpuContexts& contexts, uint32_t requested_levels, uint32_t src_channel);
 
     /**
      * @brief Run any work a finished step owes the flow context.
      *
-     * The step that produces the gray image feeds it to the flow context
-     * before the next pixel dispatch overwrites it, when a TrackKeypoints or
-     * OpticalFlowDense step lies ahead. Sequences without one never take this
-     * branch, and when both are present the pyramid gets the larger level
-     * count.
+     * The step that produces the gray or HSV image (RgbaToGray or RgbaToHsv)
+     * feeds it to the flow context before the next pixel dispatch overwrites
+     * it, when a TrackKeypoints or OpticalFlowDense step lies ahead.
+     * Sequences without one never take this branch, and when both are
+     * present the pyramid gets the larger level count.
      */
     static void after_step(VisionGpuContexts& contexts, size_t index);
 };
