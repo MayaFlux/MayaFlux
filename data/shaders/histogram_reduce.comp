@@ -1,0 +1,41 @@
+#version 460
+
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+
+layout(set = 0, binding = 0, std430) readonly buffer HistBuf {
+    uint hist[256];
+};
+
+layout(set = 0, binding = 1, std430) writeonly buffer ReduceOutBuf {
+    float mean_brightness;
+};
+
+shared float s_weighted[256];
+shared float s_total[256];
+
+/**
+ * @brief Single-workgroup reduction of a 256-bin intensity histogram into
+ *        its own weighted mean, normalised to [0, 1]. One thread per bin,
+ *        no loop: the histogram is always exactly 256 elements.
+ */
+void main()
+{
+    const uint tid = gl_LocalInvocationID.x;
+    const float count = float(hist[tid]);
+
+    s_weighted[tid] = float(tid) * count;
+    s_total[tid] = count;
+    barrier();
+
+    for (uint stride = 128u; stride > 0u; stride >>= 1u) {
+        if (tid < stride) {
+            s_weighted[tid] += s_weighted[tid + stride];
+            s_total[tid] += s_total[tid + stride];
+        }
+        barrier();
+    }
+
+    if (tid == 0u) {
+        mean_brightness = s_total[0] > 0.0 ? (s_weighted[0] / s_total[0]) / 255.0 : 0.0;
+    }
+}

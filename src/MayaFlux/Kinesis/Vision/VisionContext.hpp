@@ -140,6 +140,12 @@ struct VisionResult {
     std::shared_ptr<Core::VKImage> flow;
 
     /**
+     * @brief Mean per-pixel intensity change from OpticalFlowDense's own
+     *        frame-to-frame comparison, 0 when there is no previous frame.
+     */
+    float motion_energy { 0.0F };
+
+    /**
      * @brief Output of a RgbaToGray step in this sequence, or null.
      *
      * A storage image, so passing it as the image argument to a later

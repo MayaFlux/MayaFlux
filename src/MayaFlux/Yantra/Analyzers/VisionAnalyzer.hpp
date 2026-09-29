@@ -3,6 +3,7 @@
 #include "MayaFlux/Kinesis/Vision/VisionInsight.hpp"
 #include "MayaFlux/Kinesis/Vision/VisionRequest.hpp"
 #include "MayaFlux/Yantra/Executors/ShaderExecutionContext.hpp"
+#include "MayaFlux/Yantra/Executors/TextureExecutionContext.hpp"
 #include "MayaFlux/Yantra/Executors/VisionGpuDispatch.hpp"
 #include "MayaFlux/Yantra/FunctionalOperation.hpp"
 
@@ -143,29 +144,62 @@ private:
 
     /**
      * @brief Dispatch track_reduce.comp over tracks and fill
-     *        centroid/velocity/bounds on the result. No-op (default
-     *        fields) when tracks is empty.
+     *        centroid/velocity/bounds/mean_speed_px/age stats on the
+     *        result. No-op (default fields) when tracks is empty.
      */
     [[nodiscard]] Kinesis::Vision::TrackObjectsAnalysis reduce_tracks(
-        const std::vector<Kinesis::Vision::TrackResult>& tracks);
+        const std::vector<Kinesis::Vision::TrackResult>& tracks, uint32_t w, uint32_t h);
 
     /**
      * @brief Dispatch track_reduce.comp over keypoint positions (fed as
      *        their own previous, so velocity reduces to zero and is simply
-     *        not surfaced) and fill centroid/bounds on the result. No-op
-     *        (default fields) when keypoints is empty. Same shader as
-     *        reduce_tracks, not a duplicate: a keypoint has no persistent
-     *        identity or previous position of its own, but its bounds and
-     *        centroid are the same min/max/sum reduction either way.
+     *        not surfaced) and fill centroid/bounds/mean_response on the
+     *        result. No-op (default fields) when keypoints is empty. Same
+     *        shader as reduce_tracks, not a duplicate: a keypoint has no
+     *        persistent identity or previous position of its own, but its
+     *        bounds and centroid are the same min/max/sum reduction either
+     *        way.
      */
     [[nodiscard]] Kinesis::Vision::DetectFeaturesAnalysis reduce_keypoints(
         const std::vector<Kinesis::Vision::Keypoint>& keypoints);
+
+    /**
+     * @brief Shape descriptors (element_shape.comp) and nearest-neighbour
+     *        distances (nearest_neighbor.comp) over fe.boxes, filled in
+     *        place. No-op when fe.boxes is empty.
+     */
+    void compute_shapes(Kinesis::Vision::FindElementsAnalysis& fe, uint32_t w, uint32_t h);
+
+    /**
+     * @brief MeasureAppearance's whole-frame gradient sample (region_sample.comp
+     *        over result.images.sobel) and brightness histogram
+     *        (otsu_histogram.comp over result.gray). Empty fields for
+     *        whichever input image is null.
+     */
+    [[nodiscard]] Kinesis::Vision::MeasureAppearanceAnalysis measure_appearance(
+        const Kinesis::Vision::VisionResult& result, uint32_t w, uint32_t h);
+
+    /** @brief Dispatch region_sample.comp over the whole image (no region concept for MeasureAppearance). */
+    [[nodiscard]] Kinesis::Vision::FieldSample sample_full_frame(
+        const std::shared_ptr<Core::VKImage>& image, uint32_t w, uint32_t h);
+
+    /** @brief Dispatch otsu_histogram.comp over image, zeroing the buffer first. */
+    [[nodiscard]] std::array<uint32_t, 256> compute_histogram(
+        const std::shared_ptr<Core::VKImage>& image, uint32_t w, uint32_t h);
+
+    /** @brief Dispatch histogram_reduce.comp over an already-computed histogram. */
+    [[nodiscard]] float compute_mean_brightness(const std::array<uint32_t, 256>& histogram);
 
     Kinesis::Vision::VisionRequest m_request;
     Kinesis::Vision::VisionAnalysisContext m_context;
 
     std::unique_ptr<VisionGpuExecutor> m_executor;
     std::shared_ptr<ShaderExecutionContext<>> m_track_reducer;
+    std::shared_ptr<ShaderExecutionContext<>> m_brightness_reducer;
+    std::shared_ptr<ShaderExecutionContext<>> m_shape_ctx;
+    std::shared_ptr<ShaderExecutionContext<>> m_neighbor_ctx;
+    std::shared_ptr<TextureExecutionContext> m_gradient_sample_ctx;
+    std::shared_ptr<TextureExecutionContext> m_histogram_ctx;
 
     std::shared_ptr<Core::VKImage> m_upload_image;
     uint32_t m_upload_w { 0 };

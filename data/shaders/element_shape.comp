@@ -1,0 +1,34 @@
+#version 460
+
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+
+layout(set = 0, binding = 0, std430) readonly buffer ElementDataBuf {
+    vec4 element_data[]; // x = area_px, y = perimeter_px, z = box_w_px, w = box_h_px
+};
+
+layout(set = 0, binding = 1, std430) writeonly buffer ShapeOutBuf {
+    vec2 shapes[]; // x = compactness, y = aspect_ratio
+};
+
+layout(push_constant) uniform PushConstants {
+    uint count;
+} pc;
+
+const float PI = 3.14159265358979323846;
+
+/**
+ * @brief Elementwise per-component shape descriptors (compactness,
+ *        aspect ratio). No reduction: each of 256 threads strides over its
+ *        slice of the element list, every output independent of the rest.
+ *        Same dispatch shape as track_reduce.comp, minus the tree reduction.
+ */
+void main()
+{
+    const uint tid = gl_LocalInvocationID.x;
+    for (uint i = tid; i < pc.count; i += 256u) {
+        const vec4 e = element_data[i];
+        const float compactness = e.y > 0.0 ? (4.0 * PI * e.x) / (e.y * e.y) : 0.0;
+        const float aspect_ratio = e.w > 0.0 ? e.z / e.w : 0.0;
+        shapes[i] = vec2(compactness, aspect_ratio);
+    }
+}

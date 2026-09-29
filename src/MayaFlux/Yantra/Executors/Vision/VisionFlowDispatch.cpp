@@ -247,11 +247,16 @@ namespace {
     void finish_dense(VisionGpuContexts& contexts, bool visualized)
     {
         auto& state = contexts.flow_state;
-        const bool duplicate = frame_is_duplicate(contexts, read_flow_meta(contexts)) && state.last_flow;
+        const auto meta = read_flow_meta(contexts);
+        const bool duplicate = frame_is_duplicate(contexts, meta) && state.last_flow;
         if (!duplicate)
             state.last_flow = state.flow_out[state.curr];
 
         contexts.pass.result.flow = state.last_flow;
+        const auto pixel_count = static_cast<float>(contexts.pass.w) * static_cast<float>(contexts.pass.h);
+        contexts.pass.result.motion_energy = pixel_count > 0.0F
+            ? static_cast<float>(meta[1]) / 1024.0F / pixel_count
+            : 0.0F;
         if (visualized && state.last_flow)
             contexts.pass.result.images.flow_visualization = state.flow_vis;
         commit_flow_frame(contexts);

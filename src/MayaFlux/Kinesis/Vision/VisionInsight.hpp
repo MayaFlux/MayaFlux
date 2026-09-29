@@ -62,6 +62,12 @@ struct TrackObjectsAnalysis {
     glm::vec2 centroid {};
     glm::vec2 velocity {};
     BoundingBox bounds {};
+
+    float mean_speed_px { 0.0F };
+    float mean_age { 0.0F };
+    uint32_t max_age { 0 };
+    uint32_t tracked_count { 0 };
+    uint32_t lost_count { 0 };
 };
 
 /**
@@ -75,6 +81,20 @@ struct DetectFeaturesAnalysis {
     std::vector<Keypoint> keypoints;
     glm::vec2 centroid {};
     BoundingBox bounds {};
+    float mean_response { 0.0F };
+};
+
+/**
+ * @brief Per-element shape descriptors, parallel to FindElementsAnalysis::boxes
+ *        (shapes[i] describes boxes[i]).
+ *
+ * compactness is 4*pi*area/perimeter^2 in pixel units (1.0 for a perfect
+ * circle, lower for elongated or irregular shapes). aspect_ratio is the
+ * element's own bounding box width/height in pixel units.
+ */
+struct ElementShape {
+    float compactness { 0.0F };
+    float aspect_ratio { 0.0F };
 };
 
 /**
@@ -87,10 +107,47 @@ struct DetectFeaturesAnalysis {
  * contour to its own box via contour.label_id: boxes[contour.label_id - 1].
  * A hole contour's label_id is 0 and has no corresponding box; a hole is
  * not itself a component.
+ *
+ * shapes and nearest_neighbor_distance_px are both parallel to boxes (one
+ * entry per real component, holes excluded): shapes[i] is boxes[i]'s own
+ * compactness/aspect ratio, nearest_neighbor_distance_px[i] is the pixel
+ * distance from boxes[i]'s centroid to the closest other box's centroid
+ * (0 when boxes has fewer than two elements).
  */
 struct FindElementsAnalysis {
     std::vector<Contour> contours;
     std::vector<BoundingBox> boxes;
+    std::vector<ElementShape> shapes;
+    std::vector<float> nearest_neighbor_distance_px;
+};
+
+/**
+ * @brief Per-channel mean/min/max over a sampled image region, computed on
+ *        GPU (Yantra's region_sample.comp) rather than downloaded and
+ *        reduced on the caller's side.
+ *
+ * The channel semantics depend entirely on what image was sampled: rgb for
+ * a colour frame, r/g = flow vector with b = confidence and a = residual
+ * for VisionAnalysis::estimate_motion, and so on. VisionExtractor does not
+ * interpret the channels, only reduces them.
+ */
+struct FieldSample {
+    glm::vec4 mean {};
+    glm::vec4 min_val {};
+    glm::vec4 max_val {};
+};
+
+/**
+ * @brief MeasureAppearance output: whole-frame photometric characterisation,
+ *        computed on GPU (region_sample.comp over VisionResult::images.sobel,
+ *        and a 256-bin brightness histogram over VisionResult::gray).
+ *
+ * mean_brightness is the histogram's own weighted mean, in [0, 1].
+ */
+struct MeasureAppearanceAnalysis {
+    FieldSample gradient;
+    std::array<uint32_t, 256> histogram {};
+    float mean_brightness { 0.0F };
 };
 
 /**
@@ -112,35 +169,20 @@ struct FindElementsAnalysis {
  * their own struct docs) rather than a bare vector: both are real reduction
  * shader dispatches, not CPU loops.
  *
- * detect_edges/estimate_motion have no derived field: nothing in the GPU
- * dispatch path reduces or downloads their content; VisionExtractor samples
- * them directly by region instead of Analyzer deriving a summary up front.
- * MeasureAppearance has no field at all: its VisionOp (Sobel) writes its
- * output only to the working image via the generic dispatch path, which
- * VisionGpuExecutor does not surface through any VisionResult field.
+ * detect_edges/estimate_motion have no derived field of their own beyond
+ * motion_activity: VisionExtractor::sample() answers "what is it like here"
+ * for a region a caller supplies, on demand.
  */
 struct VisionAnalysis {
     std::optional<FindElementsAnalysis> find_elements;
     std::optional<TrackObjectsAnalysis> track_objects;
     std::optional<DetectFeaturesAnalysis> detect_features;
+    std::optional<MeasureAppearanceAnalysis> measure_appearance;
     std::shared_ptr<Core::VKImage> detect_edges;
     std::shared_ptr<Core::VKImage> estimate_motion;
-};
 
-/**
- * @brief Per-channel mean/min/max over a sampled image region, computed on
- *        GPU (Yantra's region_sample.comp) rather than downloaded and
- *        reduced on the caller's side.
- *
- * The channel semantics depend entirely on what image was sampled: rgb for
- * a colour frame, r/g = flow vector with b = confidence and a = residual
- * for VisionAnalysis::estimate_motion, and so on. VisionExtractor does not
- * interpret the channels, only reduces them.
- */
-struct FieldSample {
-    glm::vec4 mean {};
-    glm::vec4 min_val {};
-    glm::vec4 max_val {};
+    /** @brief VisionResult::motion_energy from an active EstimateMotion sequence. */
+    std::optional<float> motion_activity;
 };
 
 } // namespace MayaFlux::Kinesis::Vision
