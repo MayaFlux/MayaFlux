@@ -14,6 +14,52 @@ namespace {
         uint32_t count;
     };
 
+    struct TrackReduceRegionPC {
+        uint32_t count;
+        float origin_x;
+        float origin_y;
+        float scale_x;
+        float scale_y;
+    };
+
+    [[nodiscard]] TrackReduceRegionPC region_pc(
+        uint32_t count, const std::optional<Kinesis::Vision::BoundingBox>& region)
+    {
+        return {
+            .count = count,
+            .origin_x = region ? region->x : 0.0F,
+            .origin_y = region ? region->y : 0.0F,
+            .scale_x = region ? region->w : 1.0F,
+            .scale_y = region ? region->h : 1.0F,
+        };
+    }
+
+    [[nodiscard]] bool same_region(
+        const std::optional<Kinesis::Vision::BoundingBox>& a,
+        const std::optional<Kinesis::Vision::BoundingBox>& b)
+    {
+        if (a.has_value() != b.has_value())
+            return false;
+        if (!a)
+            return true;
+        return a->x == b->x && a->y == b->y && a->w == b->w && a->h == b->h;
+    }
+
+    /** @brief A full-frame box expressed in the coordinates of a confined region. */
+    [[nodiscard]] Kinesis::Vision::BoundingBox into_region_space(
+        const Kinesis::Vision::BoundingBox& box,
+        const std::optional<Kinesis::Vision::BoundingBox>& region)
+    {
+        if (!region || region->w <= 0.0F || region->h <= 0.0F)
+            return box;
+        return {
+            .x = (box.x - region->x) / region->w,
+            .y = (box.y - region->y) / region->h,
+            .w = box.w / region->w,
+            .h = box.h / region->h,
+        };
+    }
+
     struct HistogramPC {
         uint32_t width;
         uint32_t height;
@@ -77,7 +123,8 @@ void VisionAnalyzer::reset()
 }
 
 Kinesis::Vision::TrackObjectsAnalysis VisionAnalyzer::reduce_tracks(
-    const std::vector<Kinesis::Vision::TrackResult>& tracks, uint32_t w, uint32_t h)
+    const std::vector<Kinesis::Vision::TrackResult>& tracks, uint32_t w, uint32_t h,
+    const std::optional<Kinesis::Vision::BoundingBox>& region)
 {
     Kinesis::Vision::TrackObjectsAnalysis result;
     result.tracks = tracks;
@@ -103,16 +150,25 @@ Kinesis::Vision::TrackObjectsAnalysis VisionAnalyzer::reduce_tracks(
             GpuComputeConfig {
                 .shader_path = "track_reduce.comp.spv",
                 .workgroup_size = { 256, 1, 1 },
-                .push_constant_size = sizeof(TrackReducePC) });
+                .push_constant_size = sizeof(TrackReduceRegionPC) });
     }
 
     m_track_reducer->input(0, track_data)
         .output(1, 3 * sizeof(glm::vec4))
         .input(2, extra_data)
-        .push(TrackReducePC { .count = static_cast<uint32_t>(tracks.size()) });
+        .output(3, tracks.size() * sizeof(glm::vec4))
+        .push(region_pc(static_cast<uint32_t>(tracks.size()), region));
 
     const auto output = m_track_reducer->execute(Datum<std::vector<Kakshya::DataVariant>> {}, ExecutionContext {});
     const auto raw = ShaderExecutionContext<>::read_output<float>(output, 1);
+
+    if (region) {
+        const auto remapped = ShaderExecutionContext<>::read_output<float>(output, 3);
+        for (size_t i = 0; i < tracks.size() && (i + 1) * 4 <= remapped.size(); ++i) {
+            result.tracks[i].position = { remapped[i * 4], remapped[i * 4 + 1] };
+            result.tracks[i].previous = { remapped[i * 4 + 2], remapped[i * 4 + 3] };
+        }
+    }
 
     if (raw.size() >= 12) {
         const auto n = static_cast<float>(tracks.size());
@@ -137,7 +193,8 @@ Kinesis::Vision::TrackObjectsAnalysis VisionAnalyzer::reduce_tracks(
 }
 
 Kinesis::Vision::DetectFeaturesAnalysis VisionAnalyzer::reduce_keypoints(
-    const std::vector<Kinesis::Vision::Keypoint>& keypoints)
+    const std::vector<Kinesis::Vision::Keypoint>& keypoints,
+    const std::optional<Kinesis::Vision::BoundingBox>& region)
 {
     Kinesis::Vision::DetectFeaturesAnalysis result;
     result.keypoints = keypoints;
@@ -163,16 +220,23 @@ Kinesis::Vision::DetectFeaturesAnalysis VisionAnalyzer::reduce_keypoints(
             GpuComputeConfig {
                 .shader_path = "track_reduce.comp.spv",
                 .workgroup_size = { 256, 1, 1 },
-                .push_constant_size = sizeof(TrackReducePC) });
+                .push_constant_size = sizeof(TrackReduceRegionPC) });
     }
 
     m_track_reducer->input(0, point_data)
         .output(1, 3 * sizeof(glm::vec4))
         .input(2, extra_data)
-        .push(TrackReducePC { .count = static_cast<uint32_t>(keypoints.size()) });
+        .output(3, keypoints.size() * sizeof(glm::vec4))
+        .push(region_pc(static_cast<uint32_t>(keypoints.size()), region));
 
     const auto output = m_track_reducer->execute(Datum<std::vector<Kakshya::DataVariant>> {}, ExecutionContext {});
     const auto raw = ShaderExecutionContext<>::read_output<float>(output, 1);
+
+    if (region) {
+        const auto remapped = ShaderExecutionContext<>::read_output<float>(output, 3);
+        for (size_t i = 0; i < keypoints.size() && (i + 1) * 4 <= remapped.size(); ++i)
+            result.keypoints[i].position = { remapped[i * 4], remapped[i * 4 + 1] };
+    }
 
     if (raw.size() >= 12) {
         const auto n = static_cast<float>(keypoints.size());
@@ -435,6 +499,21 @@ Kinesis::Vision::VisionAnalysis VisionAnalyzer::analyze_resolved(
     const auto h = image->get_height();
     const auto resolved = Kinesis::Vision::resolve(m_request);
 
+    using Kinesis::Vision::VisionIntent;
+    const bool tracking = has_flag(m_request.intents, VisionIntent::TrackObjects) && m_request.track_objects;
+    const bool detecting = has_flag(m_request.intents, VisionIntent::DetectFeatures) && m_request.detect_features;
+    const bool moving = has_flag(m_request.intents, VisionIntent::EstimateMotion) && m_request.estimate_motion;
+
+    const std::optional<Kinesis::Vision::BoundingBox> track_region = tracking ? m_request.track_objects->region : std::nullopt;
+    const std::optional<Kinesis::Vision::BoundingBox> features_region = detecting ? m_request.detect_features->region : std::nullopt;
+
+    if (tracking || moving) {
+        if (m_flow_region_known && !same_region(m_flow_region, track_region))
+            m_executor->reset();
+        m_flow_region = track_region;
+        m_flow_region_known = true;
+    }
+
     Kinesis::Vision::VisionAnalysis analysis;
     std::optional<std::vector<Kinesis::Vision::TrackResult>> raw_tracks;
     std::optional<std::vector<Kinesis::Vision::Keypoint>> raw_keypoints;
@@ -443,7 +522,8 @@ Kinesis::Vision::VisionAnalysis VisionAnalyzer::analyze_resolved(
 
     for (const auto& entry : resolved) {
         const auto seeded = entry.seed_field ? entry.seed_field(results[entry.seed_lane]) : nullptr;
-        auto result = m_executor->run(entry.sequence, seeded ? seeded : image, w, h);
+        const auto& source = seeded ? seeded : image;
+        auto result = m_executor->run(entry.sequence, source, source->get_width(), source->get_height());
 
         if (result.status != Kinesis::Vision::VisionStatus::COMPLETE) {
             results.emplace_back();
@@ -458,27 +538,30 @@ Kinesis::Vision::VisionAnalysis VisionAnalyzer::analyze_resolved(
         results.push_back(std::move(result));
     }
 
+    if (analysis.estimate_motion && track_region)
+        analysis.motion_region = track_region;
+
     if (raw_tracks && m_context.track_objects) {
         const auto& ctx = *m_context.track_objects;
         if (ctx.subject_track_id) {
             const auto id = *ctx.subject_track_id;
             std::erase_if(*raw_tracks, [&](const auto& t) { return t.id != id; });
         } else if (ctx.subject_bounds) {
-            const auto& bounds = *ctx.subject_bounds;
+            const auto bounds = into_region_space(*ctx.subject_bounds, track_region);
             std::erase_if(*raw_tracks, [&](const auto& t) { return !inside(bounds, t.position); });
         }
     }
 
     if (raw_tracks)
-        analysis.track_objects = reduce_tracks(*raw_tracks, w, h);
+        analysis.track_objects = reduce_tracks(*raw_tracks, w, h, track_region);
 
     if (raw_keypoints && m_context.detect_features_bounds) {
-        const auto& bounds = *m_context.detect_features_bounds;
+        const auto bounds = into_region_space(*m_context.detect_features_bounds, features_region);
         std::erase_if(*raw_keypoints, [&](const auto& k) { return !inside(bounds, k.position); });
     }
 
     if (raw_keypoints)
-        analysis.detect_features = reduce_keypoints(*raw_keypoints);
+        analysis.detect_features = reduce_keypoints(*raw_keypoints, features_region);
 
     if (analysis.find_elements)
         compute_shapes(*analysis.find_elements, w, h);

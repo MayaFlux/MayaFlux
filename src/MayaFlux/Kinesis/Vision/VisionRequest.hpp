@@ -12,28 +12,70 @@
 namespace MayaFlux::Kinesis::Vision {
 
 /**
+ * @brief Colour representation FindElements segments in, which decides the
+ *        conversion its chain leads with.
+ *
+ * Gray leads with RgbaToGray, Hsv with RgbaToHsv (channels are then hue,
+ * saturation, value), Rgba with no conversion at all.
+ */
+enum class SegmentationSpace : uint8_t {
+    Gray,
+    Rgba,
+    Hsv,
+};
+
+/**
+ * @brief Threshold applied to the converted frame. Multichannel selection
+ *        and bands live in the params themselves (ChannelMask, ChannelBand).
+ */
+using SegmentationMethod = std::variant<OtsuParams, ThresholdAdaptiveParams, ThresholdParams>;
+
+/**
+ * @brief How FindElements separates foreground from background. The default
+ *        is grayscale Otsu.
+ */
+struct SegmentationRequest {
+    SegmentationSpace space { SegmentationSpace::Gray };
+    SegmentationMethod method { OtsuParams {} };
+};
+
+/**
  * @brief Parameters for VisionIntent::FindElements.
  */
 struct FindElementsRequest {
     ConnectedComponentsParams components {};
     FindContoursParams contours {};
+    SegmentationRequest segmentation {};
 };
 
 /**
  * @brief Parameters for VisionIntent::TrackObjects.
+ *
+ * region confines detection and tracking to a normalised rectangle by
+ * leading the chain with Confine. Results are remapped to full-frame
+ * coordinates on the GPU before they reach VisionAnalysis. When
+ * EstimateMotion is also active it shares this lane, so its flow image
+ * covers the same region (VisionAnalysis::motion_region). Changing region
+ * between calls resets the analyzer's flow state, since flow compared across
+ * different content is meaningless.
  */
 struct TrackObjectsRequest {
     HarrisParams harris {};
     ExtractPeaksParams peaks {};
     TrackKeypointsParams track {};
+    std::optional<BoundingBox> region;
 };
 
 /**
  * @brief Parameters for VisionIntent::DetectFeatures.
+ *
+ * region confines detection to a normalised rectangle by leading the chain
+ * with Confine. Keypoints are remapped to full-frame coordinates on the GPU.
  */
 struct DetectFeaturesRequest {
     HarrisParams harris {};
     ExtractPeaksParams peaks {};
+    std::optional<BoundingBox> region;
 };
 
 /**

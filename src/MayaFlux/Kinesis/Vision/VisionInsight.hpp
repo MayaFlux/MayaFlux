@@ -183,6 +183,18 @@ struct VisionAnalysis {
 
     /** @brief VisionResult::motion_energy from an active EstimateMotion sequence. */
     std::optional<float> motion_activity;
+
+    /**
+     * @brief Region estimate_motion covers when it shares a lane with a
+     *        confined TrackObjects request, else empty (the flow image spans
+     *        the whole frame).
+     *
+     * Track and keypoint coordinates are always full-frame, remapped on the
+     * GPU when their request was confined. The dense flow image is not
+     * remapped: it is the confined region's own pixels, so a caller sampling
+     * it maps a full-frame box into this region first.
+     */
+    std::optional<BoundingBox> motion_region;
 };
 
 } // namespace MayaFlux::Kinesis::Vision

@@ -9,9 +9,31 @@ namespace {
         auto components = r.components;
         components.export_boxes = true;
 
-        return VisionSequence::Builder {}
-            .rgba_to_gray()
-            .threshold_otsu()
+        VisionSequence::Builder builder;
+        switch (r.segmentation.space) {
+        case SegmentationSpace::Gray:
+            builder.rgba_to_gray();
+            break;
+        case SegmentationSpace::Hsv:
+            builder.rgba_to_hsv();
+            break;
+        case SegmentationSpace::Rgba:
+            break;
+        }
+
+        std::visit([&builder](const auto& method) {
+            using T = std::decay_t<decltype(method)>;
+            if constexpr (std::is_same_v<T, OtsuParams>) {
+                builder.threshold_otsu(method);
+            } else if constexpr (std::is_same_v<T, ThresholdAdaptiveParams>) {
+                builder.threshold_adaptive(method);
+            } else {
+                builder.threshold(method);
+            }
+        },
+            r.segmentation.method);
+
+        return builder
             .connected_components(components)
             .find_contours(r.contours)
             .build();
@@ -19,7 +41,11 @@ namespace {
 
     VisionSequence track_objects_chain(const TrackObjectsRequest& r)
     {
-        return VisionSequence::Builder {}
+        VisionSequence::Builder builder;
+        if (r.region)
+            builder.confine({ .bounds = *r.region });
+
+        return builder
             .rgba_to_gray()
             .harris_response(r.harris)
             .extract_peaks(r.peaks)
@@ -29,7 +55,11 @@ namespace {
 
     VisionSequence detect_features_chain(const DetectFeaturesRequest& r)
     {
-        return VisionSequence::Builder {}
+        VisionSequence::Builder builder;
+        if (r.region)
+            builder.confine({ .bounds = *r.region });
+
+        return builder
             .rgba_to_gray()
             .harris_response(r.harris)
             .extract_peaks(r.peaks)
@@ -66,6 +96,10 @@ namespace {
         switch (op) {
         case VisionOp::RgbaToGray:
             return [](const VisionResult& r) { return r.gray; };
+        case VisionOp::RgbaToHsv:
+            return [](const VisionResult& r) { return r.images.rgba_to_hsv; };
+        case VisionOp::Confine:
+            return [](const VisionResult& r) { return r.images.confine; };
         case VisionOp::HarrisResponse:
             return [](const VisionResult& r) { return r.images.harris_response; };
         default:
