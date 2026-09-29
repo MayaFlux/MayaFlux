@@ -8,32 +8,18 @@
 
 /**
  * @file VisionExtractor.hpp
- * @brief GPU-native getter for whatever VisionAnalyzer found. Not an image
- *        editing layer: every real method takes a Kinesis::Vision::VisionAnalysis
- *        directly and derives its region/label/points from whichever field
- *        analysis actually populated, rather than accepting a bare
- *        BoundingBox/label id/point list a caller could invent without any
- *        analysis having run at all. An analysis with nothing populated
- *        extracts nothing; that is the point, not a case to work around.
+ * @brief GPU getter for what VisionAnalyzer found. Every method takes a
+ *        Kinesis::Vision::VisionAnalysis and derives its geometry from
+ *        whichever field is populated; an analysis with nothing in it
+ *        extracts nothing. All pixel work runs on the GPU, the host only
+ *        packs the analysis into buffers and dispatches.
  *
  * FunctionalOperation<shared_ptr<SignalSourceContainer>, vector<DataVariant>>,
- * the same InputType VisionAnalyzer landed on and for the same reason:
- * shared_ptr<Core::VKImage> does not satisfy ComputeData (DataSpec.hpp lists
- * shared_ptr<SignalSourceContainer>, not VKImage), so a container is the
- * only real Operation input available. crop()/sample()/patches() stay real,
- * directly-callable, clearly-named methods for a caller who already has a
- * resolved VKImage and is not going through ComputeMatrix at all; the
- * inherited run_operation is a thin adapter beneath them, selecting one via
- * m_mode (VisionExtractMode) the same way FeatureExtractor::extract_implementation
- * switches on its own ExtractionMethod. Through that path the analysis
- * travels as Datum metadata under "vision_analysis", the exact key
- * VisionAnalyzer::run_operation already writes its own result to: a
- * VisionAnalyzer -> VisionExtractor ComputeMatrix chain needs no adapter
- * step in between.
- *
- * mask() is excluded from run_operation: it needs a VisionGpuExecutor&, the
- * one that ran the analysis and still owns the label buffer, not a container
- * or image. No ComputeData shape fits that, so it stays its own method.
+ * like VisionAnalyzer. run_operation reads the analysis from Datum metadata
+ * key "vision_analysis" (the key VisionAnalyzer::run_operation writes) and
+ * runs the method selected by VisionExtractMode, so a VisionAnalyzer ->
+ * VisionExtractor chain needs no adapter. mask() alone stays outside that
+ * path: it needs the VisionGpuExecutor that owns the label buffer.
  */
 
 namespace MayaFlux::Kakshya {
@@ -44,55 +30,74 @@ namespace MayaFlux::Yantra {
 
 /**
  * @enum VisionExtractMode
- * @brief Which of VisionExtractor's real methods run_operation dispatches
- *        to, mirroring FeatureExtractor::ExtractionMethod.
+ * @brief Which method run_operation dispatches to.
  */
 enum class VisionExtractMode : uint8_t {
     Crop,
     Sample,
     Patches,
+    Crops,
+    SampleRegions,
+    SamplePoints,
+    Silhouettes,
+    Equalize,
+    Expose,
+    Edges,
+    MotionMask,
+    Annotate,
+    SelectElement,
+};
+
+/**
+ * @enum ElementCriterion
+ * @brief Per-element measure select_element() ranks find_elements by, taken
+ *        from what the analyzer already computed: contour area, shape
+ *        compactness, aspect ratio, nearest-neighbour distance (isolation),
+ *        or distance from a point.
+ */
+enum class ElementCriterion : uint8_t {
+    Area,
+    Compactness,
+    AspectRatio,
+    Isolation,
+    Proximity,
+};
+
+/**
+ * @brief How the extractor chooses among several found elements: rank by
+ *        criterion, highest first when largest, lowest first otherwise.
+ *        Proximity ignores largest and picks the element whose centre is
+ *        closest to point.
+ */
+struct ElementFocus {
+    ElementCriterion criterion { ElementCriterion::Area };
+    bool largest { true };
+    glm::vec2 point { 0.5F, 0.5F };
 };
 
 /**
  * @class VisionExtractor
- * @brief Three GPU dispatches reachable through the Operation contract,
- *        plus mask() alongside them for API symmetry:
+ * @brief Extraction from each VisionAnalysis field.
  *
- *        crop()    Rectangular sub-image of any source image at the region
- *                   analysis found (vision_crop.comp).
- *        mask()     Pixel-precise silhouette of the ConnectedComponents
- *                   label analysis found, not just its bounding rectangle
- *                   (vision_label_select.comp, dispatched through the same
- *                   VisionGpuExecutor that produced the label buffer).
- *        sample()   Per-channel mean/min/max over the region analysis
- *                   found, on any source image, computed on GPU and never
- *                   downloaded as a full region (region_sample.comp). The
- *                   one shape that answers "what is the flow/gradient/
- *                   appearance like here" for the whole-frame
- *                   VisionAnalysis fields (estimate_motion, detect_edges)
- *                   that have no bounds of their own: source is that field,
- *                   analysis is where the region comes from, deliberately
- *                   two different things.
- *        patches()  One fixed-size crop per point analysis found (Keypoint
- *                   or TrackResult positions), all in one dispatch
- *                   (vision_patch_extract.comp), laid out side by side in
- *                   a single atlas image.
+ * find_elements: crop() one element, crops() all, mask() by label buffer,
+ * silhouettes() by contour polygon (no executor), sample_regions(), and
+ * select_element() to rank by shape. tracks and keypoints: patches() and
+ * sample_points(). measure_appearance: equalize() and expose(). detect_edges:
+ * edges(). estimate_motion: motion_mask(). Any field: annotate() draws
+ * everything found onto the frame.
  *
- * Each method resolves its own geometry from the VisionAnalysis it is
- * given, in the same priority order (region_for_analysis()/
- * label_for_analysis()/points_for_analysis(), private): find_elements's
- * element at get_element_index() first, falling back to track_objects then
- * detect_features for a region (mask has no fallback: only find_elements
- * carries a label at all). set_element_index() selects which
- * find_elements contour/box to use when more than one was found
- * (find_elements.contours is already sorted by area, largest first, when
- * the request set max_contours > 0), the same role a constructor argument
- * or set_x() plays for every other configured operation in this codebase;
- * it is not passed alongside the analysis on each call.
+ * Which find_elements entry the single-element methods use comes from
+ * set_element_focus() when set (GPU-ranked by shape), otherwise from
+ * set_element_index() into contours (sorted by area when max_contours was
+ * set) or, with no contours, into boxes.
  *
- * crop/sample/patches each own a persistent TextureExecutionContext,
- * constructed once and reused: no per-call shader reload, matching
- * VisionAnalyzer's own m_track_reducer precedent.
+ * Thresholds and sizes used by run_operation are set through setters, the
+ * same convention as the other operations; the direct methods take only
+ * the data and the dimensions of what they read or write.
+ *
+ * Image-producing methods share one output slot, so a returned image stays
+ * valid only until the next call that produces an image of the same size.
+ * Hold on to a result by using it (display, copy) before extracting again.
  */
 class MAYAFLUX_API VisionExtractor
     : public FunctionalOperation<std::shared_ptr<Kakshya::SignalSourceContainer>, std::vector<Kakshya::DataVariant>> {
@@ -104,42 +109,58 @@ public:
     void set_mode(VisionExtractMode mode) { m_mode = mode; }
     [[nodiscard]] VisionExtractMode get_mode() const { return m_mode; }
 
-    /** @brief Which find_elements contour/box to use when several were found. */
     void set_element_index(size_t index) { m_element_index = index; }
     [[nodiscard]] size_t get_element_index() const { return m_element_index; }
 
-    /** @brief Crop mode's output size. */
-    void set_output_size(uint32_t w, uint32_t h) { m_out_w = w; m_out_h = h; }
+    /** @brief Rank elements by shape instead of using a fixed index; empty restores the index. */
+    void set_element_focus(std::optional<ElementFocus> focus) { m_focus = focus; }
+    [[nodiscard]] const std::optional<ElementFocus>& get_element_focus() const { return m_focus; }
 
-    /** @brief Patches mode's per-patch size. */
+    void set_output_size(uint32_t w, uint32_t h) { m_out_w = w; m_out_h = h; }
     void set_patch_size(uint32_t w, uint32_t h) { m_patch_w = w; m_patch_h = h; }
+    void set_tile_size(uint32_t w, uint32_t h) { m_tile_w = w; m_tile_h = h; }
+
+    /** @brief Window radius sample_points() averages over. */
+    void set_sample_radius(uint32_t radius) { m_sample_radius = radius; }
+
+    /** @brief Edge value edges() keeps a pixel at. */
+    void set_edge_threshold(float threshold) { m_edge_threshold = threshold; }
 
     /**
-     * @brief Rectangular crop of source at the region analysis found.
-     *
-     * @param source   Image to crop, eShaderReadOnlyOptimal.
-     * @param analysis Must have find_elements, track_objects, or
-     *                  detect_features populated; null result otherwise.
-     * @param out_w    Output width in pixels.
-     * @param out_h    Output height in pixels.
+     * @brief motion_mask() limits: minimum flow speed in pixels of the flow
+     *        image, minimum solver confidence, and a minimum
+     *        VisionAnalysis::motion_activity below which nothing is
+     *        dispatched.
      */
+    void set_motion_limits(float min_speed, float min_confidence, float min_activity)
+    {
+        m_min_speed = min_speed;
+        m_min_confidence = min_confidence;
+        m_min_activity = min_activity;
+    }
+
+    /** @brief Mean brightness expose() scales the frame to. */
+    void set_exposure_target(float target) { m_exposure_target = target; }
+
+    /** @brief Crop of source at the focused element, or track/keypoint bounds. Null with nothing to crop. */
     [[nodiscard]] std::shared_ptr<Core::VKImage> crop(
         const std::shared_ptr<Core::VKImage>& source,
         const Kinesis::Vision::VisionAnalysis& analysis,
         uint32_t out_w, uint32_t out_h);
 
     /**
-     * @brief Pixel-precise silhouette of the label analysis found.
-     *
-     * @param executor The same VisionGpuExecutor a VisionAnalyzer run used,
-     *                 with ConnectedComponentsParams::export_boxes or
-     *                 export_label_buffer set on that run, so its dense
-     *                 label buffer is populated and live.
-     * @param source   Image to select pixels from, eShaderReadOnlyOptimal.
-     * @param analysis Must have find_elements populated with a real (non-hole)
-     *                 contour at get_element_index(); null result otherwise.
-     * @param w        Frame width in pixels.
-     * @param h        Frame height in pixels.
+     * @brief Every find_elements box resampled to tile_w x tile_h, side by
+     *        side in one atlas (tile_w * count, tile_h), in box order.
+     */
+    [[nodiscard]] std::shared_ptr<Core::VKImage> crops(
+        const std::shared_ptr<Core::VKImage>& source,
+        const Kinesis::Vision::VisionAnalysis& analysis,
+        uint32_t tile_w, uint32_t tile_h);
+
+    /**
+     * @brief Pixel-precise silhouette of the focused element from the
+     *        executor's label buffer. The executor must be the one that ran
+     *        the analysis, with export_label_buffer set.
      */
     [[nodiscard]] std::shared_ptr<Core::VKImage> mask(
         VisionGpuExecutor& executor,
@@ -148,94 +169,172 @@ public:
         uint32_t w, uint32_t h);
 
     /**
-     * @brief Per-channel mean/min/max over the region analysis found,
-     *        computed on GPU and never downloaded as a full region.
-     *
-     * @param source    Image to sample, eShaderReadOnlyOptimal. Independent
-     *                  of analysis: often one of analysis's own image
-     *                  fields (estimate_motion, detect_edges), but analysis
-     *                  is only ever consulted for the region, never the
-     *                  source image itself.
-     * @param analysis  Must have find_elements, track_objects, or
-     *                  detect_features populated; empty result otherwise.
-     * @param source_w  source's width in pixels.
-     * @param source_h  source's height in pixels.
+     * @brief Silhouette of every element cut from its contour polygons: the
+     *        outer contour and its holes, even-odd filled. Needs no executor
+     *        and no label buffer, so it works on any analysis kept from
+     *        earlier. Same atlas layout as crops(). Contours truncated by
+     *        max_points_per_contour fill wrongly.
      */
+    [[nodiscard]] std::shared_ptr<Core::VKImage> silhouettes(
+        const std::shared_ptr<Core::VKImage>& source,
+        const Kinesis::Vision::VisionAnalysis& analysis,
+        uint32_t tile_w, uint32_t tile_h);
+
+    /** @brief silhouettes() for the focused element only. */
+    [[nodiscard]] std::shared_ptr<Core::VKImage> silhouette(
+        const std::shared_ptr<Core::VKImage>& source,
+        const Kinesis::Vision::VisionAnalysis& analysis,
+        uint32_t tile_w, uint32_t tile_h);
+
+    /** @brief Mean, min and max over the focused element or track/keypoint bounds. */
     [[nodiscard]] Kinesis::Vision::FieldSample sample(
         const std::shared_ptr<Core::VKImage>& source,
         const Kinesis::Vision::VisionAnalysis& analysis,
         uint32_t source_w, uint32_t source_h);
 
+    /** @brief sample() for every find_elements box in one dispatch, in box order. */
+    [[nodiscard]] std::vector<Kinesis::Vision::FieldSample> sample_regions(
+        const std::shared_ptr<Core::VKImage>& source,
+        const Kinesis::Vision::VisionAnalysis& analysis,
+        uint32_t source_w, uint32_t source_h);
+
     /**
-     * @brief One fixed-size crop per point analysis found, all in one
-     *        dispatch, laid out side by side in a single atlas image of
-     *        size (patch_w * point_count, patch_h).
-     *
-     * @param source    Image to crop from, eShaderReadOnlyOptimal.
-     * @param analysis  Must have detect_features or track_objects
-     *                  populated; null result otherwise.
-     * @param patch_w   Patch width in pixels.
-     * @param patch_h   Patch height in pixels.
-     * @param source_w  source's width in pixels.
-     * @param source_h  source's height in pixels.
+     * @brief Mean over a (2 * radius + 1) squared window at every keypoint,
+     *        else every track, in one dispatch, in point order. With flow as
+     *        the source this is the motion under each point, with the frame
+     *        the colour under it.
      */
+    [[nodiscard]] std::vector<glm::vec4> sample_points(
+        const std::shared_ptr<Core::VKImage>& source,
+        const Kinesis::Vision::VisionAnalysis& analysis,
+        uint32_t radius,
+        uint32_t source_w, uint32_t source_h);
+
+    /** @brief One fixed-size crop per keypoint, else per track, side by side in one atlas. */
     [[nodiscard]] std::shared_ptr<Core::VKImage> patches(
         const std::shared_ptr<Core::VKImage>& source,
         const Kinesis::Vision::VisionAnalysis& analysis,
         uint32_t patch_w, uint32_t patch_h,
         uint32_t source_w, uint32_t source_h);
 
-private:
     /**
-     * @brief ComputeOperation adapter: resolves input.data (a container) to
-     *        a GPU image, reads the VisionAnalysis a prior VisionAnalyzer
-     *        stage left under Datum metadata key "vision_analysis", then
-     *        runs whichever of crop()/sample()/patches() m_mode selects.
-     *        mask() has no place here: it needs a VisionGpuExecutor, which
-     *        no Datum carries. Errors (missing container or missing
-     *        analysis metadata) land in the output Datum's "error" key,
-     *        the same convention VisionAnalyzer::run_operation uses.
+     * @brief Index into find_elements boxes of the element ranked first by
+     *        focus, chosen on the GPU from the analyzer's own area, shape and
+     *        nearest-neighbour results. Empty without find_elements boxes.
      */
-    output_type run_operation(const input_type& input);
+    [[nodiscard]] std::optional<size_t> select_element(
+        const Kinesis::Vision::VisionAnalysis& analysis,
+        const ElementFocus& focus);
 
     /**
-     * @brief Resolve source/index to a GPU image, the same way
-     *        VisionAnalyzer::resolve_image does: TextureContainer's own
-     *        to_image(index) or WindowContainer's own to_image() (both
-     *        zero-copy cache hits), or get_raw_data() uploaded into a
-     *        persistent m_upload_image for VideoStreamContainer. Null on an
-     *        unsupported container type.
+     * @brief Histogram equalisation of source from the histogram
+     *        measure_appearance measured. Null without measure_appearance.
      */
+    [[nodiscard]] std::shared_ptr<Core::VKImage> equalize(
+        const std::shared_ptr<Core::VKImage>& source,
+        const Kinesis::Vision::VisionAnalysis& analysis,
+        uint32_t source_w, uint32_t source_h);
+
+    /**
+     * @brief source scaled so its measured mean brightness reaches
+     *        target. Null without measure_appearance.
+     */
+    [[nodiscard]] std::shared_ptr<Core::VKImage> expose(
+        const std::shared_ptr<Core::VKImage>& source,
+        const Kinesis::Vision::VisionAnalysis& analysis,
+        float target,
+        uint32_t source_w, uint32_t source_h);
+
+    /** @brief source kept where analysis.detect_edges reaches the edge threshold, transparent elsewhere. */
+    [[nodiscard]] std::shared_ptr<Core::VKImage> edges(
+        const std::shared_ptr<Core::VKImage>& source,
+        const Kinesis::Vision::VisionAnalysis& analysis,
+        uint32_t source_w, uint32_t source_h);
+
+    /**
+     * @brief source kept where analysis.estimate_motion moves faster than
+     *        the motion limits with enough confidence. Null when no flow was
+     *        computed or motion_activity is below the activity limit.
+     */
+    [[nodiscard]] std::shared_ptr<Core::VKImage> motion_mask(
+        const std::shared_ptr<Core::VKImage>& source,
+        const Kinesis::Vision::VisionAnalysis& analysis,
+        uint32_t source_w, uint32_t source_h);
+
+    /**
+     * @brief source with everything the analysis found drawn on it: element
+     *        boxes (yellow) and contours (cyan), track arrows from previous
+     *        to current position (green tracked, red lost) with their bounds
+     *        and centroid (white), keypoints (magenta) with their bounds.
+     */
+    [[nodiscard]] std::shared_ptr<Core::VKImage> annotate(
+        const std::shared_ptr<Core::VKImage>& source,
+        const Kinesis::Vision::VisionAnalysis& analysis,
+        uint32_t source_w, uint32_t source_h);
+
+private:
+    output_type run_operation(const input_type& input);
+
     [[nodiscard]] std::shared_ptr<Core::VKImage> resolve_image(
         const std::shared_ptr<Kakshya::SignalSourceContainer>& source,
         size_t index);
 
-    /** @brief find_elements[element_index]/track_objects/detect_features's bounds, in that order. */
+    /** @brief Box index of the element the single-element methods act on. */
+    [[nodiscard]] std::optional<size_t> focus_box_index(const Kinesis::Vision::VisionAnalysis& analysis);
+
     [[nodiscard]] std::optional<Kinesis::Vision::BoundingBox> region_for_analysis(
-        const Kinesis::Vision::VisionAnalysis& analysis) const;
+        const Kinesis::Vision::VisionAnalysis& analysis);
 
-    /** @brief find_elements[element_index]'s own label id, if it is a real (non-hole) contour. */
     [[nodiscard]] std::optional<uint32_t> label_for_analysis(
-        const Kinesis::Vision::VisionAnalysis& analysis) const;
+        const Kinesis::Vision::VisionAnalysis& analysis);
 
-    /** @brief detect_features's keypoint positions, else track_objects's track positions. */
     [[nodiscard]] std::vector<glm::vec2> points_for_analysis(
         const Kinesis::Vision::VisionAnalysis& analysis) const;
 
+    [[nodiscard]] std::shared_ptr<Core::VKImage> fill_elements(
+        const std::shared_ptr<Core::VKImage>& source,
+        const Kinesis::Vision::FindElementsAnalysis& elements,
+        const std::vector<size_t>& indices,
+        uint32_t tile_w, uint32_t tile_h);
+
+    [[nodiscard]] std::shared_ptr<Core::VKImage> tone(
+        const std::shared_ptr<Core::VKImage>& source,
+        const Kinesis::Vision::MeasureAppearanceAnalysis& appearance,
+        uint32_t mode, float gain,
+        uint32_t source_w, uint32_t source_h);
+
     VisionExtractMode m_mode;
     size_t m_element_index { 0 };
+    std::optional<ElementFocus> m_focus;
     uint32_t m_out_w { 0 };
     uint32_t m_out_h { 0 };
     uint32_t m_patch_w { 0 };
     uint32_t m_patch_h { 0 };
+    uint32_t m_tile_w { 0 };
+    uint32_t m_tile_h { 0 };
+    uint32_t m_sample_radius { 1 };
+    float m_edge_threshold { 0.5F };
+    float m_min_speed { 0.5F };
+    float m_min_confidence { 0.1F };
+    float m_min_activity { 0.0F };
+    float m_exposure_target { 0.5F };
 
     std::shared_ptr<Core::VKImage> m_upload_image;
     uint32_t m_upload_w { 0 };
     uint32_t m_upload_h { 0 };
 
-    std::shared_ptr<TextureExecutionContext> m_crop_ctx;
-    std::shared_ptr<TextureExecutionContext> m_sample_ctx;
-    std::shared_ptr<TextureExecutionContext> m_patch_ctx;
+    /**
+     * @brief The two contexts every method shares, one shader swapped in per
+     *        call. All extractor shaders use one binding layout: 0 output
+     *        image, 1 source image, 2 second image, 3 to 5 input buffers, 6
+     *        output buffer. m_image_ctx serves the image-producing methods,
+     *        m_reduce_ctx the ones that read back numbers.
+     */
+    [[nodiscard]] TextureExecutionContext& image_context();
+    [[nodiscard]] TextureExecutionContext& reduce_context();
+
+    std::shared_ptr<TextureExecutionContext> m_image_ctx;
+    std::shared_ptr<TextureExecutionContext> m_reduce_ctx;
 };
 
 } // namespace MayaFlux::Yantra

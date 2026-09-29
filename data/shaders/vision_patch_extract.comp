@@ -13,7 +13,7 @@ layout(set = 0, binding = 0, rgba8) uniform image2D out_image;
 layout(set = 0, binding = 1) uniform sampler2D src_tex;
 
 /// @brief One normalised [0,1] centre per patch, indexed by atlas_x / patch_w.
-layout(set = 0, binding = 2, std430) readonly buffer CentersBuf {
+layout(set = 0, binding = 3, std430) readonly buffer CentersBuf {
     vec2 centers[];
 };
 

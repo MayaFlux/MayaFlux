@@ -1,0 +1,75 @@
+#version 460
+
+layout(local_size_x = 16, local_size_y = 16) in;
+
+layout(set = 0, binding = 0, rgba8) uniform image2D out_image;
+layout(set = 0, binding = 1) uniform sampler2D src_tex;
+
+/// @brief 256-bin luminance histogram of the frame, as the analyzer measured it.
+layout(set = 0, binding = 3, std430) readonly buffer HistBuf {
+    uint hist[];
+};
+
+/// @brief mode 0: histogram equalisation. mode 1: plain gain by pc.gain.
+layout(push_constant) uniform PC {
+    uint mode;
+    float gain;
+    uint width;
+    uint height;
+} pc;
+
+shared uint s_cdf[256];
+shared uint s_min_cdf;
+
+/**
+ * @brief Tone correction driven by a histogram the analyzer already measured.
+ *        Mode 0 builds the cumulative distribution in shared memory (each
+ *        workgroup's 256 invocations run an inclusive scan over the 256 bins,
+ *        so no separate lookup-table pass or host round trip is needed) and
+ *        remaps luminance through the equalising curve, scaling rgb by the
+ *        luminance ratio so hue is kept. Mode 1 multiplies rgb by pc.gain.
+ *        Alpha passes through.
+ */
+void main()
+{
+    const uint lid = gl_LocalInvocationIndex;
+
+    if (pc.mode == 0u) {
+        s_cdf[lid] = hist[lid];
+        if (lid == 0u)
+            s_min_cdf = 0xFFFFFFFFu;
+        barrier();
+
+        for (uint offset = 1u; offset < 256u; offset <<= 1u) {
+            const uint add = lid >= offset ? s_cdf[lid - offset] : 0u;
+            barrier();
+            s_cdf[lid] += add;
+            barrier();
+        }
+
+        if (hist[lid] > 0u)
+            atomicMin(s_min_cdf, s_cdf[lid]);
+        barrier();
+    }
+
+    const ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
+    if (coord.x >= int(pc.width) || coord.y >= int(pc.height))
+        return;
+
+    const vec2 uv = (vec2(coord) + 0.5) / vec2(float(pc.width), float(pc.height));
+    const vec4 c = texture(src_tex, uv);
+
+    vec3 rgb = c.rgb * pc.gain;
+    if (pc.mode == 0u) {
+        const float luma = dot(c.rgb, vec3(0.299, 0.587, 0.114));
+        const uint bin = min(255u, uint(clamp(luma, 0.0, 1.0) * 255.0));
+        const uint total = s_cdf[255];
+        const float denom = float(total - min(s_min_cdf, total));
+        const float mapped = denom > 0.0
+            ? float(max(s_cdf[bin], s_min_cdf) - s_min_cdf) / denom
+            : luma;
+        rgb = luma > 1e-4 ? c.rgb * (mapped / luma) : vec3(mapped);
+    }
+
+    imageStore(out_image, coord, vec4(clamp(rgb, vec3(0.0), vec3(1.0)), c.a));
+}

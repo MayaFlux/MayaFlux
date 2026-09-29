@@ -1,0 +1,82 @@
+#version 460
+
+layout(local_size_x = 16, local_size_y = 16) in;
+
+/// @brief Atlas output: count tiles side by side, width tile_w * count.
+layout(set = 0, binding = 0, rgba8) uniform image2D out_image;
+
+/// @brief Full source frame the silhouettes are cut from.
+layout(set = 0, binding = 1) uniform sampler2D src_tex;
+
+/// @brief Every polygon's points, normalised source coordinates, concatenated.
+layout(set = 0, binding = 3, std430) readonly buffer PointBuf {
+    vec2 pts[];
+};
+
+/// @brief Two uints per polygon: first point index and point count.
+layout(set = 0, binding = 4, std430) readonly buffer PolyBuf {
+    uint polys[];
+};
+
+/// @brief Six uints per element: rect x, y, w, h as float bits, then the first
+///        polygon index and polygon count of this element.
+layout(set = 0, binding = 5, std430) readonly buffer ElemBuf {
+    uint elems[];
+};
+
+layout(push_constant) uniform PC {
+    uint tile_w;
+    uint tile_h;
+    uint count;
+} pc;
+
+/**
+ * @brief Silhouette of each element from its contour polygons, no label
+ *        buffer needed. A tile pixel maps into the element's rectangle; it is
+ *        inside when a ray to +x crosses an odd number of edges across all of
+ *        the element's polygons (its outer contour and its holes together, so
+ *        a hole comes out transparent). Inside pixels copy the source, the
+ *        rest are transparent black.
+ */
+void main()
+{
+    const ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
+    if (coord.x >= int(pc.tile_w * pc.count) || coord.y >= int(pc.tile_h))
+        return;
+
+    const uint tile = uint(coord.x) / pc.tile_w;
+    const uint local_x = uint(coord.x) % pc.tile_w;
+
+    const uint base = tile * 6u;
+    const vec4 rect = vec4(
+        uintBitsToFloat(elems[base + 0u]),
+        uintBitsToFloat(elems[base + 1u]),
+        uintBitsToFloat(elems[base + 2u]),
+        uintBitsToFloat(elems[base + 3u]));
+    const uint poly_begin = elems[base + 4u];
+    const uint poly_count = elems[base + 5u];
+
+    const vec2 local_uv = (vec2(float(local_x), float(coord.y)) + 0.5) / vec2(float(pc.tile_w), float(pc.tile_h));
+    const vec2 p = rect.xy + local_uv * rect.zw;
+
+    bool inside = false;
+    for (uint j = poly_begin; j < poly_begin + poly_count; ++j) {
+        const uint start = polys[j * 2u];
+        const uint n = polys[j * 2u + 1u];
+        for (uint k = 0u; k < n; ++k) {
+            const vec2 a = pts[start + k];
+            const vec2 b = pts[start + (k + 1u) % n];
+            if ((a.y > p.y) != (b.y > p.y)) {
+                const float x = a.x + (p.y - a.y) * (b.x - a.x) / (b.y - a.y);
+                if (p.x < x)
+                    inside = !inside;
+            }
+        }
+    }
+
+    vec4 out_pixel = vec4(0.0);
+    if (inside)
+        out_pixel = texture(src_tex, clamp(p, vec2(0.0), vec2(1.0)));
+
+    imageStore(out_image, coord, out_pixel);
+}

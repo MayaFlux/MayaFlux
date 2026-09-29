@@ -1,0 +1,52 @@
+#version 460
+
+layout(local_size_x = 16, local_size_y = 16) in;
+
+/// @brief Image drawn onto in place. Already holds the frame the overlay sits
+///        on when this dispatch runs.
+layout(set = 0, binding = 0, rgba8) uniform image2D out_image;
+
+/// @brief Two vec4 per segment: (x0, y0, x1, y1) in normalised image
+///        coordinates, then the segment's rgba colour.
+layout(set = 0, binding = 3, std430) readonly buffer SegBuf {
+    vec4 seg[];
+};
+
+layout(push_constant) uniform PC {
+    uint count;
+    uint width;
+    uint height;
+} pc;
+
+const int MAX_STEPS = 4096;
+
+/**
+ * @brief Draw line segments onto an image, one invocation per segment, each
+ *        stepping along its own line. The sample count is the line's longest
+ *        axis rounded up, plus one, so consecutive samples are never more than
+ *        one pixel apart and no column or row is skipped. The dispatch grid
+ *        is the image's, so the segment index is the invocation's linear
+ *        position in it; that covers any segment count up to width * height.
+ *        Overlapping segments overwrite each other, which is fine for an
+ *        overlay.
+ */
+void main()
+{
+    const uint id = gl_GlobalInvocationID.y * pc.width + gl_GlobalInvocationID.x;
+    if (gl_GlobalInvocationID.x >= pc.width || gl_GlobalInvocationID.y >= pc.height || id >= pc.count)
+        return;
+
+    const vec4 line = seg[id * 2u];
+    const vec4 color = seg[id * 2u + 1u];
+    const vec2 size = vec2(float(pc.width), float(pc.height));
+    const vec2 a = line.xy * size;
+    const vec2 b = line.zw * size;
+
+    const int steps = min(int(ceil(max(abs(b.x - a.x), abs(b.y - a.y)))) + 1, MAX_STEPS);
+    for (int s = 0; s < steps; ++s) {
+        const float t = steps > 1 ? float(s) / float(steps - 1) : 0.0;
+        const ivec2 p = ivec2(round(mix(a, b, t)));
+        if (p.x >= 0 && p.y >= 0 && p.x < int(pc.width) && p.y < int(pc.height))
+            imageStore(out_image, p, color);
+    }
+}

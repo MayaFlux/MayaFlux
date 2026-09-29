@@ -1,0 +1,43 @@
+#version 460
+
+layout(local_size_x = 16, local_size_y = 16) in;
+
+/// @brief Atlas output: count tiles side by side, width tile_w * count, height
+///        tile_h. Tile i occupies columns [i * tile_w, (i + 1) * tile_w).
+layout(set = 0, binding = 0, rgba8) uniform image2D out_image;
+
+/// @brief Full source frame the tiles are sampled from.
+layout(set = 0, binding = 1) uniform sampler2D src_tex;
+
+/// @brief One normalised rectangle per tile: xy = top-left, zw = extent.
+layout(set = 0, binding = 3, std430) readonly buffer RectBuf {
+    vec4 rects[];
+};
+
+layout(push_constant) uniform PC {
+    uint tile_w;
+    uint tile_h;
+    uint count;
+} pc;
+
+/**
+ * @brief Batch crop of arbitrary rectangles: each rectangle is resampled to
+ *        tile_w x tile_h and laid out side by side in one atlas, in one
+ *        dispatch. Unlike vision_patch_extract.comp the tiles have their own
+ *        extents, so a differently sized element fills its tile completely.
+ */
+void main()
+{
+    const ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
+    if (coord.x >= int(pc.tile_w * pc.count) || coord.y >= int(pc.tile_h))
+        return;
+
+    const uint tile = uint(coord.x) / pc.tile_w;
+    const uint local_x = uint(coord.x) % pc.tile_w;
+
+    const vec4 rect = rects[tile];
+    const vec2 local_uv = (vec2(float(local_x), float(coord.y)) + 0.5) / vec2(float(pc.tile_w), float(pc.tile_h));
+    const vec2 src_uv = clamp(rect.xy + local_uv * rect.zw, vec2(0.0), vec2(1.0));
+
+    imageStore(out_image, coord, texture(src_tex, src_uv));
+}

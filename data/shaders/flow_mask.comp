@@ -1,0 +1,38 @@
+#version 460
+
+layout(local_size_x = 16, local_size_y = 16) in;
+
+layout(set = 0, binding = 0, rgba8) uniform image2D out_image;
+layout(set = 0, binding = 1) uniform sampler2D src_tex;
+
+/// @brief Dense flow image from the analyzer (EstimateMotion): r, g = flow
+///        vector in pixels of the flow image, b = confidence.
+layout(set = 0, binding = 2) uniform sampler2D flow_tex;
+
+layout(push_constant) uniform PC {
+    float min_speed;
+    float min_confidence;
+    uint out_w;
+    uint out_h;
+} pc;
+
+/**
+ * @brief Keep the source only where something moved: a pixel passes when the
+ *        flow vector's length reaches min_speed and the solver's confidence
+ *        reaches min_confidence, so untextured pixels with a meaningless
+ *        vector are dropped rather than trusted. Everything else is
+ *        transparent black.
+ */
+void main()
+{
+    const ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
+    if (coord.x >= int(pc.out_w) || coord.y >= int(pc.out_h))
+        return;
+
+    const vec2 uv = (vec2(coord) + 0.5) / vec2(float(pc.out_w), float(pc.out_h));
+    const ivec2 flow_size = textureSize(flow_tex, 0);
+    const vec4 flow = texelFetch(flow_tex, clamp(ivec2(uv * vec2(flow_size)), ivec2(0), flow_size - ivec2(1)), 0);
+
+    const bool moving = length(flow.rg) >= pc.min_speed && flow.b >= pc.min_confidence;
+    imageStore(out_image, coord, moving ? texture(src_tex, uv) : vec4(0.0));
+}

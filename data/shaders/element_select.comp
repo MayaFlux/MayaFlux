@@ -1,0 +1,84 @@
+#version 460
+
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+
+/// @brief Six floats per element: area, compactness, aspect ratio, nearest
+///        neighbour distance, centre x, centre y.
+layout(set = 0, binding = 3, std430) readonly buffer MetricBuf {
+    float metrics[];
+};
+
+/// @brief result[0] = winning element index as a float, result[1] = its score.
+layout(set = 0, binding = 6, std430) writeonly buffer ResultBuf {
+    float result[];
+};
+
+/// @brief criterion: 0 area, 1 compactness, 2 aspect ratio, 3 isolation,
+///        4 proximity to (px, py). largest: 1 picks the highest value, 0 the
+///        lowest; proximity always picks the closest.
+layout(push_constant) uniform PC {
+    uint count;
+    uint criterion;
+    uint largest;
+    float px;
+    float py;
+} pc;
+
+shared float s_score[256];
+shared uint s_index[256];
+
+float score_of(uint i)
+{
+    if (pc.criterion == 4u) {
+        const vec2 center = vec2(metrics[i * 6u + 4u], metrics[i * 6u + 5u]);
+        return -distance(center, vec2(pc.px, pc.py));
+    }
+    const float v = metrics[i * 6u + pc.criterion];
+    return pc.largest != 0u ? v : -v;
+}
+
+bool better(float a, uint ia, float b, uint ib)
+{
+    return a > b || (a == b && ia < ib);
+}
+
+/**
+ * @brief Argmax of one per-element criterion on the GPU. Each thread keeps the
+ *        best of a strided slice, then a shared-memory tree reduction picks
+ *        the overall winner. Ties go to the lower index.
+ */
+void main()
+{
+    const uint tid = gl_LocalInvocationID.x;
+
+    float best = -1.0 / 0.0;
+    uint best_i = 0xFFFFFFFFu;
+    for (uint i = tid; i < pc.count; i += 256u) {
+        const float s = score_of(i);
+        if (best_i == 0xFFFFFFFFu || better(s, i, best, best_i)) {
+            best = s;
+            best_i = i;
+        }
+    }
+
+    s_score[tid] = best;
+    s_index[tid] = best_i;
+    barrier();
+
+    for (uint stride = 128u; stride > 0u; stride >>= 1u) {
+        if (tid < stride) {
+            const uint other = tid + stride;
+            const bool other_valid = s_index[other] != 0xFFFFFFFFu;
+            if (other_valid && (s_index[tid] == 0xFFFFFFFFu || better(s_score[other], s_index[other], s_score[tid], s_index[tid]))) {
+                s_score[tid] = s_score[other];
+                s_index[tid] = s_index[other];
+            }
+        }
+        barrier();
+    }
+
+    if (tid == 0u) {
+        result[0] = float(s_index[0]);
+        result[1] = pc.largest != 0u || pc.criterion == 4u ? s_score[0] : -s_score[0];
+    }
+}

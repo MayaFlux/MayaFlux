@@ -1,0 +1,74 @@
+#version 460
+
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+
+/// @brief Field to sample, read by texel.
+layout(set = 0, binding = 1) uniform sampler2D src_tex;
+
+/// @brief One pixel rectangle per region, four uints each: x, y, width, height.
+layout(set = 0, binding = 3, std430) readonly buffer RectBuf {
+    uint rects[];
+};
+
+/// @brief mean, min and max as three vec4 per region, in region order.
+layout(set = 0, binding = 6, std430) writeonly buffer StatsBuf {
+    vec4 stats[];
+};
+
+layout(push_constant) uniform PC {
+    uint count;
+} pc;
+
+shared vec4 s_sum[256];
+shared vec4 s_min[256];
+shared vec4 s_max[256];
+
+/**
+ * @brief region_sample.comp for many regions at once: one workgroup per
+ *        region, each doing the same strided scan and tree reduction over its
+ *        own pixel rectangle. Region i writes stats[3 * i .. 3 * i + 2].
+ */
+void main()
+{
+    const uint region = gl_WorkGroupID.x;
+    if (region >= pc.count)
+        return;
+
+    const uint tid = gl_LocalInvocationID.x;
+    const uint px = rects[region * 4u + 0u];
+    const uint py = rects[region * 4u + 1u];
+    const uint pw = max(rects[region * 4u + 2u], 1u);
+    const uint ph = max(rects[region * 4u + 3u], 1u);
+    const uint total = pw * ph;
+
+    vec4 sum = vec4(0.0);
+    vec4 mn = vec4(1.0 / 0.0);
+    vec4 mx = vec4(-1.0 / 0.0);
+
+    for (uint i = tid; i < total; i += 256u) {
+        const vec4 v = texelFetch(src_tex, ivec2(int(px + i % pw), int(py + i / pw)), 0);
+        sum += v;
+        mn = min(mn, v);
+        mx = max(mx, v);
+    }
+
+    s_sum[tid] = sum;
+    s_min[tid] = mn;
+    s_max[tid] = mx;
+    barrier();
+
+    for (uint stride = 128u; stride > 0u; stride >>= 1u) {
+        if (tid < stride) {
+            s_sum[tid] += s_sum[tid + stride];
+            s_min[tid] = min(s_min[tid], s_min[tid + stride]);
+            s_max[tid] = max(s_max[tid], s_max[tid + stride]);
+        }
+        barrier();
+    }
+
+    if (tid == 0u) {
+        stats[region * 3u + 0u] = s_sum[0] / float(total);
+        stats[region * 3u + 1u] = s_min[0];
+        stats[region * 3u + 2u] = s_max[0];
+    }
+}
