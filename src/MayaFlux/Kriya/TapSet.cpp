@@ -113,6 +113,17 @@ TapSetBuilder& TapSetBuilder::from_channel(uint32_t channel)
     return *this;
 }
 
+TapSetBuilder& TapSetBuilder::lag(double seconds)
+{
+    return lag(Kinesis::constant<double, double>(seconds));
+}
+
+TapSetBuilder& TapSetBuilder::lag(Kinesis::TimeMap seconds)
+{
+    current().lag = std::make_shared<const Kinesis::TimeMap>(std::move(seconds));
+    return *this;
+}
+
 TapSetBuilder& TapSetBuilder::repeat_every(double seconds)
 {
     return repeat_every(Kinesis::constant<double, double>(seconds));
@@ -164,6 +175,7 @@ TapSet TapSetBuilder::start()
     const auto first = static_cast<double>(m_start_frame);
     const auto last = static_cast<double>(end_frame - 1);
     const uint32_t source_count = std::max<uint32_t>(m_stream->get_num_channels(), 1);
+    const double shortest = 2.0 * static_cast<double>(m_buf_size) / rate;
 
     std::vector<uint32_t> channels;
     std::vector<size_t> slot_counts;
@@ -172,6 +184,14 @@ TapSet TapSetBuilder::start()
         TapSet::Tap built;
         built.rate = rate;
         built.velocity = std::make_shared<double>((spec.backward ? -spec.ratio : spec.ratio) * rate);
+
+        Kinesis::TimeMap lag_frames;
+        if (spec.lag) {
+            lag_frames = Kinesis::TimeMap { .fn = [lag = spec.lag, rate, shortest](const double& t) -> double {
+                return std::max((*lag)(t), shortest) * rate;
+            } };
+        }
+        const double origin = static_cast<double>(m_stream->get_write_head(0)) + rate * spec.delay;
 
         for (const uint32_t output : spec.channels) {
             auto found = std::ranges::find(channels, output);
@@ -193,8 +213,12 @@ TapSet TapSetBuilder::start()
             slice.looping = m_looping;
             slice.scale = spec.level;
             slice.source_channel = spec.source.value_or(output % source_count);
-            slice.repeat = spec.repeat;
-            slice.with_time_map(Kinesis::TimeMaps::integrated(spec.backward ? last : first, built.velocity));
+            if (!spec.lag) {
+                slice.repeat = spec.repeat;
+            }
+            slice.with_time_map(spec.lag
+                    ? Kinesis::TimeMaps::lagged(origin, rate, lag_frames)
+                    : Kinesis::TimeMaps::integrated(spec.backward ? last : first, built.velocity));
             sampler->load(slot, std::move(slice));
 
             built.seats.push_back({ .sampler = sampler, .slot = slot });

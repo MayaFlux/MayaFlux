@@ -35,7 +35,7 @@ public:
      *
      * The tap carries on from where it is, so the change never jumps, and all
      * of its outputs change together. Zero holds the tap in place and a
-     * negative ratio reads backwards.
+     * negative ratio reads backwards. It has no effect on a tap made with lag.
      *
      * @param tap   Tap number, in declaration order.
      * @param ratio Speed relative to the source.
@@ -162,6 +162,25 @@ public:
     TapSetBuilder& from_channel(uint32_t channel);
 
     /**
+     * @brief Make the current tap trail the write head of a live ring by @p seconds.
+     *
+     * For a stream that is being filled through append_frames in circular mode,
+     * for example one made by create_ring and fed by record_into. The tap plays
+     * what was written that long ago. It replaces speed and direction, so speed()
+     * and repeat_every do not apply to it. Lags shorter than two blocks are
+     * raised to two blocks so the tap stays behind the frames being written.
+     */
+    TapSetBuilder& lag(double seconds);
+
+    /**
+     * @brief Make the current tap trail a live ring by a lag that follows a time map.
+     * @param seconds Map from seconds since the tap entered to the lag in seconds.
+     *        A lag that grows plays slower and one that shrinks plays faster, so a
+     *        moving lag glides or wobbles in pitch.
+     */
+    TapSetBuilder& lag(Kinesis::TimeMap seconds);
+
+    /**
      * @brief Restart the current tap every @p seconds.
      *
      * Each repeat plays from the start of the region. Shorten it by giving a time
@@ -204,6 +223,7 @@ private:
         std::vector<uint32_t> channels { 0 };
         std::optional<uint32_t> source;
         std::shared_ptr<const Kinesis::TimeMap> repeat;
+        std::shared_ptr<const Kinesis::TimeMap> lag;
     };
 
     Spec& current();

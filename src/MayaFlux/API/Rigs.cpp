@@ -109,4 +109,38 @@ Kriya::TapSetBuilder create_tap_set_from_stream(
         std::move(stream), *get_buffer_manager(), *get_scheduler(), Config::get_buffer_size());
 }
 
+std::shared_ptr<Kakshya::DynamicSoundStream> create_ring(double seconds, uint32_t channels)
+{
+    const uint32_t rate = Config::get_sample_rate();
+    const auto capacity = static_cast<uint64_t>(seconds * static_cast<double>(rate));
+
+    if (capacity == 0 || channels == 0) {
+        MF_ERROR(Journal::Component::API, Journal::Context::Configuration,
+            "create_ring: {} seconds on {} channels is empty", seconds, channels);
+        return nullptr;
+    }
+
+    auto ring = std::make_shared<Kakshya::DynamicSoundStream>(rate, channels);
+    ring->enable_circular_buffer(capacity);
+    return ring;
+}
+
+std::shared_ptr<Kriya::BufferPipeline> record_into(
+    const std::shared_ptr<Kakshya::DynamicSoundStream>& stream,
+    Kriya::CaptureBuilder source, uint32_t channel)
+{
+    if (!stream) {
+        return nullptr;
+    }
+
+    source.for_cycles(1);
+
+    auto pipeline = create_buffer_pipeline();
+    *pipeline >> static_cast<Kriya::BufferOperation>(source)
+        >> Kriya::BufferOperation::route_to_container(stream, channel);
+    pipeline->execute_buffer_rate();
+
+    return pipeline;
+}
+
 } // namespace MayaFlux

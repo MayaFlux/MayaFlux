@@ -19,6 +19,8 @@ namespace MayaFlux {
 namespace Kriya {
     class SamplingPipeline;
     class TapSetBuilder;
+    class BufferPipeline;
+    class CaptureBuilder;
 }
 
 namespace Kakshya {
@@ -138,5 +140,45 @@ MAYAFLUX_API Kriya::TapSetBuilder create_tap_set(
  */
 MAYAFLUX_API Kriya::TapSetBuilder create_tap_set_from_stream(
     std::shared_ptr<Kakshya::DynamicSoundStream> stream);
+
+/**
+ * @brief Make a circular stream that keeps the most recent seconds of a signal.
+ *
+ * The stream runs at the engine sample rate. Fill it with record_into and read
+ * it with taps that use lag, or copy its recent past with snapshot.
+ *
+ * @param seconds  How much of the past to keep.
+ * @param channels Number of channels.
+ * @return The ring, or nullptr if it would be empty.
+ */
+MAYAFLUX_API std::shared_ptr<Kakshya::DynamicSoundStream> create_ring(
+    double seconds, uint32_t channels = 1);
+
+/**
+ * @brief Record a signal into one channel of a stream, a block at a time.
+ *
+ * Captures @p source every cycle and appends each block at the stream's write
+ * head for @p channel, wrapping if the stream is a ring. A stereo ring needs a
+ * call per channel. Keep the returned pipeline alive for as long as the
+ * recording should run.
+ *
+ * @code
+ * auto ring = MayaFlux::create_ring(10.0);
+ * auto recorder = MayaFlux::record_into(ring,
+ *     Kriya::BufferOperation::capture_file_from(get_io_manager(), "res/audio.wav"));
+ * auto taps = MayaFlux::create_tap_set_from_stream(ring)
+ *     .tap().lag(0.05)
+ *     .tap().lag(Kinesis::TimeMaps::linear(0.3, 4.0, 30.0)).level(0.6)
+ *     .start();
+ * @endcode
+ *
+ * @param stream  Stream to record into.
+ * @param source  What to capture, for example from capture_file_from, capture_input_from or capture_from.
+ * @param channel Channel of the stream that receives the signal.
+ * @return The running pipeline, or nullptr if the stream is null.
+ */
+MAYAFLUX_API std::shared_ptr<Kriya::BufferPipeline> record_into(
+    const std::shared_ptr<Kakshya::DynamicSoundStream>& stream,
+    Kriya::CaptureBuilder source, uint32_t channel = 0);
 
 } // namespace MayaFlux
