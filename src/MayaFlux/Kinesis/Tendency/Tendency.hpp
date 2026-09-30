@@ -45,6 +45,7 @@ using ScalarField = Tendency<float, float>;
 using SpatialField = Tendency<glm::vec3, float>;
 using VectorField = Tendency<glm::vec3, glm::vec3>;
 using TimedField = Tendency<float, float>;
+using TimeMap = Tendency<double, double>;
 using UVField = Tendency<glm::vec3, glm::vec2>;
 
 // =========================================================================
