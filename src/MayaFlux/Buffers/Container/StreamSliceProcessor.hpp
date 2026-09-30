@@ -57,6 +57,10 @@ public:
 
     /**
      * @brief Activate a slot, resetting its processor cursor to region start.
+     *
+     * The slice's current region, speed, looping and loop count are applied
+     * first. The same parameters are re-applied every block, so edits made
+     * through slice() take effect on a playing voice at the next block.
      * @param index Slot index
      */
     void bind(size_t index);

@@ -129,6 +129,7 @@ public:
     [[nodiscard]] uint64_t cursor() const { return m_cursor[0]; }
     [[nodiscard]] uint64_t loop_start() const { return m_loop_start; }
     [[nodiscard]] uint64_t loop_end() const { return m_loop_end; }
+    [[nodiscard]] size_t loop_count() const { return m_loop_count; }
     [[nodiscard]] uint32_t get_slot_index() const { return m_slot_index; }
 
 private:
