@@ -975,6 +975,10 @@ Vruta::SoundRoutine BufferPipeline::execute_streaming(uint64_t max_cycles, uint6
                 continue;
             }
 
+            if (m_data_states[i] == DataState::CONSUMED) {
+                continue;
+            }
+
             uint32_t op_iterations = 1;
             if (op.get_type() == BufferOperation::OpType::CAPTURE) {
                 op_iterations = op.m_capture.get_cycle_count();
@@ -988,7 +992,8 @@ Vruta::SoundRoutine BufferPipeline::execute_streaming(uint64_t max_cycles, uint6
                 for (size_t j = i + 1; j < m_operations.size(); ++j) {
                     auto& dependent_op = m_operations[j];
 
-                    if (BufferOperation::is_process_phase_operation(dependent_op)) {
+                    if (m_data_states[j] != DataState::CONSUMED
+                        && BufferOperation::is_process_phase_operation(dependent_op)) {
                         process_operation(dependent_op, m_current_cycle + iter);
                         m_data_states[j] = DataState::READY;
                     }

@@ -144,7 +144,7 @@ void StreamSliceProcessor::processing_function(const std::shared_ptr<Buffer>& bu
         Kakshya::extract_processed_data(pd, structure.organization, structure.get_channel_count(), ch, tmp);
 
         for (size_t s = 0; s < dst.size(); ++s)
-            dst[s] += tmp[s];
+            dst[s] += tmp[s] * slot.slice.scale;
     }
 }
 

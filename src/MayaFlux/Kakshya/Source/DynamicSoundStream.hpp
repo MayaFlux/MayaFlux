@@ -84,6 +84,19 @@ public:
     uint64_t append_frames(std::span<const double> data, uint32_t channel = 0);
 
     /**
+     * @brief Copy the most recent frames into a new stream, oldest first.
+     *
+     * Reads back from channel 0's write head, so it is meant for streams filled
+     * with append_frames. A ring is unrolled across its wrap; frames from before
+     * the first write are silence. The copy is independent of this stream.
+     *
+     * @param frames Frames to keep, capped at the ring capacity, or at the frames
+     *        written for a linear stream.
+     * @return New stream with the same rate and channels, or null if empty.
+     */
+    [[nodiscard]] std::shared_ptr<DynamicSoundStream> snapshot(uint64_t frames) const;
+
+    /**
      * @brief Index of the next frame append_frames will write for a channel.
      *
      * In a full ring this is also the oldest frame. Writes made with

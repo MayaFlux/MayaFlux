@@ -253,6 +253,46 @@ uint64_t DynamicSoundStream::append_frames(std::span<const double> data, uint32_
     return written;
 }
 
+std::shared_ptr<DynamicSoundStream> DynamicSoundStream::snapshot(uint64_t frames) const
+{
+    const uint64_t head = get_write_head(0);
+    const uint64_t available = m_is_circular ? m_circular_capacity : head;
+    const uint64_t count = std::min(frames, available);
+
+    if (count == 0) {
+        return nullptr;
+    }
+
+    const uint64_t first = m_is_circular ? head + m_circular_capacity - count : head - count;
+
+    std::vector<uint64_t> indices(count);
+    for (uint64_t i = 0; i < count; ++i) {
+        indices[i] = m_is_circular ? (first + i) % m_circular_capacity : first + i;
+    }
+
+    const uint64_t channels = get_num_channels();
+    std::vector<double> taps(count * channels);
+    gather_frames(indices, taps);
+
+    auto copy = std::make_shared<DynamicSoundStream>(get_sample_rate(), get_num_channels());
+
+    if (copy->get_structure().organization == OrganizationStrategy::INTERLEAVED) {
+        copy->write_frames(std::vector<std::span<const double>> { taps }, 0);
+        return copy;
+    }
+
+    std::vector<std::vector<double>> planar(channels, std::vector<double>(count));
+    for (uint64_t i = 0; i < count; ++i) {
+        for (uint64_t c = 0; c < channels; ++c) {
+            planar[c][i] = taps[i * channels + c];
+        }
+    }
+
+    std::vector<std::span<const double>> spans(planar.begin(), planar.end());
+    copy->write_frames(std::move(spans), 0);
+    return copy;
+}
+
 std::span<const double> DynamicSoundStream::get_channel_frames(uint32_t channel, uint64_t start_frame, uint64_t num_frames) const
 {
     if (channel >= get_num_channels())

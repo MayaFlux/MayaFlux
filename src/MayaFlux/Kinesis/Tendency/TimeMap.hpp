@@ -63,6 +63,23 @@ inline TimeMap triangle(double lo, double hi, double velocity, double start)
 }
 
 /**
+ * @brief Position of a moving reference minus a lag that can itself change
+ * @param origin Reference position at time zero, for a recording its write head
+ * @param rate Reference velocity in position units per second, the write rate
+ * @param lag Distance behind the reference at each time, in position units
+ *
+ * Reading a ring that is still being written gives a tap that trails the
+ * write head. Keep the lag above a couple of blocks so the tap stays behind
+ * the frames being written.
+ */
+inline TimeMap lagged(double origin, double rate, TimeMap lag)
+{
+    return { .fn = [origin, rate, lag = std::move(lag)](const double& t) -> double {
+        return origin + rate * t - lag(t);
+    } };
+}
+
+/**
  * @brief Piecewise linear path through evenly spaced positions
  * @param points Positions spread across [0, duration], for example a sampled
  *        Kinesis curve. Empty gives zero, one gives a constant.
