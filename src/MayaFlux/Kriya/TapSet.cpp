@@ -7,9 +7,22 @@
 
 namespace MayaFlux::Kriya {
 
-Kakshya::StreamSlice& TapSet::tap(size_t index)
+void TapSet::level(size_t tap, double gain)
 {
-    const auto& seat = m_seats.at(index);
+    for (const auto& seat : m_taps.at(tap).seats) {
+        seat.sampler->slice(seat.slot).scale = gain;
+    }
+}
+
+void TapSet::speed(size_t tap, double ratio)
+{
+    const auto& target = m_taps.at(tap);
+    *target.velocity = ratio * target.rate;
+}
+
+Kakshya::StreamSlice& TapSet::slice(size_t tap, size_t output)
+{
+    const auto& seat = m_taps.at(tap).seats.at(output);
     return seat.sampler->slice(seat.slot);
 }
 
@@ -20,8 +33,10 @@ void TapSet::stop()
         m_entries.reset();
     }
 
-    for (const auto& seat : m_seats) {
-        seat.sampler->stop(seat.slot);
+    for (const auto& tap : m_taps) {
+        for (const auto& seat : tap.seats) {
+            seat.sampler->stop(seat.slot);
+        }
     }
 }
 
@@ -79,7 +94,21 @@ TapSetBuilder& TapSetBuilder::level(double gain)
 
 TapSetBuilder& TapSetBuilder::on_channel(uint32_t channel)
 {
-    current().channel = channel;
+    current().channels = { channel };
+    return *this;
+}
+
+TapSetBuilder& TapSetBuilder::on_channels(const std::vector<uint32_t>& channels)
+{
+    if (!channels.empty()) {
+        current().channels = channels;
+    }
+    return *this;
+}
+
+TapSetBuilder& TapSetBuilder::from_channel(uint32_t channel)
+{
+    current().source = channel;
     return *this;
 }
 
@@ -122,36 +151,43 @@ TapSet TapSetBuilder::start()
     const auto rate = static_cast<double>(m_stream->get_sample_rate());
     const auto first = static_cast<double>(m_start_frame);
     const auto last = static_cast<double>(end_frame - 1);
+    const uint32_t source_count = std::max<uint32_t>(m_stream->get_num_channels(), 1);
 
     std::vector<uint32_t> channels;
     std::vector<size_t> slot_counts;
 
     for (const auto& spec : m_specs) {
-        auto found = std::ranges::find(channels, spec.channel);
-        if (found == channels.end()) {
-            auto made = std::make_shared<SamplingPipeline>(
-                m_stream, m_mgr, m_scheduler, spec.channel, m_buf_size);
-            made->build();
-            taps.m_pipelines.push_back(std::move(made));
-            channels.push_back(spec.channel);
-            slot_counts.push_back(0);
-            found = std::prev(channels.end());
+        TapSet::Tap built;
+        built.rate = rate;
+        built.velocity = std::make_shared<double>((spec.backward ? -spec.ratio : spec.ratio) * rate);
+
+        for (const uint32_t output : spec.channels) {
+            auto found = std::ranges::find(channels, output);
+            if (found == channels.end()) {
+                auto made = std::make_shared<SamplingPipeline>(
+                    m_stream, m_mgr, m_scheduler, output, m_buf_size);
+                made->build();
+                taps.m_pipelines.push_back(std::move(made));
+                channels.push_back(output);
+                slot_counts.push_back(0);
+                found = std::prev(channels.end());
+            }
+
+            const auto pipeline = static_cast<size_t>(std::distance(channels.begin(), found));
+            const auto& sampler = taps.m_pipelines[pipeline];
+            const size_t slot = slot_counts[pipeline]++;
+
+            auto slice = sampler->slice_from_range(m_start_frame, end_frame, static_cast<uint8_t>(slot));
+            slice.looping = m_looping;
+            slice.scale = spec.level;
+            slice.source_channel = spec.source.value_or(output % source_count);
+            slice.with_time_map(Kinesis::TimeMaps::integrated(spec.backward ? last : first, built.velocity));
+            sampler->load(slot, std::move(slice));
+
+            built.seats.push_back({ .sampler = sampler, .slot = slot });
         }
 
-        const auto pipeline = static_cast<size_t>(std::distance(channels.begin(), found));
-        const auto& sampler = taps.m_pipelines[pipeline];
-        const size_t slot = slot_counts[pipeline]++;
-
-        auto slice = sampler->slice_from_range(m_start_frame, end_frame, static_cast<uint8_t>(slot));
-        slice.looping = m_looping;
-        slice.scale = spec.level;
-        slice.with_time_map(Kinesis::TimeMaps::quadratic(
-            spec.backward ? last : first,
-            (spec.backward ? -spec.ratio : spec.ratio) * rate,
-            0.0));
-        sampler->load(slot, std::move(slice));
-
-        taps.m_seats.push_back({ .sampler = sampler, .slot = slot });
+        taps.m_taps.push_back(std::move(built));
     }
 
     std::vector<size_t> order(m_specs.size());
@@ -164,15 +200,21 @@ TapSet TapSetBuilder::start()
     double elapsed = 0.0;
 
     for (const size_t i : order) {
-        const auto& seat = taps.m_seats[i];
+        const auto& seats = taps.m_taps[i].seats;
         const double delay = m_specs[i].delay;
 
         if (delay <= 0.0) {
-            seat.sampler->play(seat.slot);
+            for (const auto& seat : seats) {
+                seat.sampler->play(seat.slot);
+            }
             continue;
         }
 
-        entries->then([sampler = seat.sampler, slot = seat.slot] { sampler->play(slot); },
+        entries->then([seats] {
+            for (const auto& seat : seats) {
+                seat.sampler->play(seat.slot);
+            }
+        },
             delay - elapsed);
         elapsed = delay;
     }

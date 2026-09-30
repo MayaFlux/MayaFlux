@@ -5,6 +5,8 @@
 
 #include "MayaFlux/Kinesis/Tendency/Tendency.hpp"
 
+#include <optional>
+
 namespace MayaFlux::Kakshya {
 
 /**
@@ -29,6 +31,9 @@ namespace MayaFlux::Kakshya {
  * time_map, when set, replaces speed: it gives the read position in frames as
  * a function of seconds since the voice was bound (see Kinesis::TimeMaps).
  * Like the other fields it can be changed while the voice plays.
+ *
+ * source_channel picks which channel of the stream is played. Unset, the voice
+ * plays the stream channel with the same number as its output channel.
  */
 struct StreamSlice {
     std::shared_ptr<DynamicSoundStream> stream;
@@ -42,6 +47,7 @@ struct StreamSlice {
     uint8_t index {};
     size_t loop_count {};
     std::shared_ptr<const Kinesis::TimeMap> time_map;
+    std::optional<uint32_t> source_channel;
 
     /**
      * @brief Construct a slice spanning the full stream across all channels.
@@ -144,6 +150,12 @@ struct StreamSlice {
     StreamSlice& with_time_map(Kinesis::TimeMap map)
     {
         time_map = std::make_shared<const Kinesis::TimeMap>(std::move(map));
+        return *this;
+    }
+
+    StreamSlice& with_source_channel(uint32_t channel)
+    {
+        source_channel = channel;
         return *this;
     }
 };

@@ -10,9 +10,9 @@ namespace MayaFlux::Kriya {
  * @brief One stream read by several independent taps.
  *
  * Like several samplers sharing a stream, each tap has its own entry time,
- * speed, direction, level and channel. Made by TapSetBuilder::start(). Taps are
- * numbered in the order they were declared. Copies share the same taps, so keep
- * one alive for as long as the set should sound.
+ * speed, direction, level and output channels. Made by TapSetBuilder::start().
+ * Taps are numbered in the order they were declared. Copies share the same
+ * taps, so keep one alive for as long as the set should sound.
  */
 class MAYAFLUX_API TapSet {
 public:
@@ -21,18 +21,37 @@ public:
     /**
      * @brief Number of taps.
      */
-    [[nodiscard]] size_t tap_count() const { return m_seats.size(); }
+    [[nodiscard]] size_t tap_count() const { return m_taps.size(); }
 
     /**
-     * @brief The slice of a tap, editable while it plays.
-     *
-     * Level (scale), looping and the region take effect on the next block.
-     * Speed and direction come from the tap's time map, so change them by
-     * assigning a new one with with_time_map, which restarts that tap's clock.
-     *
-     * @param index Tap number, in declaration order.
+     * @brief Change the level of a tap on all of its outputs.
+     * @param tap  Tap number, in declaration order.
+     * @param gain Linear gain.
      */
-    [[nodiscard]] Kakshya::StreamSlice& tap(size_t index);
+    void level(size_t tap, double gain);
+
+    /**
+     * @brief Change the speed of a tap while it plays.
+     *
+     * The tap carries on from where it is, so the change never jumps, and all
+     * of its outputs change together. Zero holds the tap in place and a
+     * negative ratio reads backwards.
+     *
+     * @param tap   Tap number, in declaration order.
+     * @param ratio Speed relative to the source.
+     */
+    void speed(size_t tap, double ratio);
+
+    /**
+     * @brief The slice behind one output of a tap, for looping and region edits.
+     *
+     * Changes take effect on the next block and apply to that output only. Use
+     * level() and speed() to change every output of a tap at once.
+     *
+     * @param tap    Tap number, in declaration order.
+     * @param output Which of the tap's outputs, in the order its channels were given.
+     */
+    [[nodiscard]] Kakshya::StreamSlice& slice(size_t tap, size_t output = 0);
 
     /**
      * @brief Silence every tap and cancel entries that have not happened yet.
@@ -47,8 +66,14 @@ private:
         size_t slot;
     };
 
+    struct Tap {
+        std::vector<Seat> seats;
+        std::shared_ptr<double> velocity;
+        double rate;
+    };
+
     std::vector<std::shared_ptr<SamplingPipeline>> m_pipelines;
-    std::vector<Seat> m_seats;
+    std::vector<Tap> m_taps;
     std::shared_ptr<EventChain> m_entries;
 };
 
@@ -57,22 +82,28 @@ private:
  * @brief Describes a tap set one tap at a time, then starts it.
  *
  * Each tap() begins a tap with defaults: enters at once, normal speed, forward,
- * full level, channel 0. The calls that follow describe that tap until the next
- * tap(). Calling one before any tap() starts the first. loop() and region()
- * apply to every tap.
+ * full level, output channel 0. The calls that follow describe that tap until
+ * the next tap(). Calling one before any tap() starts the first. loop() and
+ * region() apply to every tap.
  *
  * @code
  * auto taps = MayaFlux::create_tap_set("res/h.wav")
  *     .tap().speed(1.0)
  *     .tap().enters_after(2.0).speed(3.0 / 2.0).level(0.8)
- *     .tap().enters_after(4.0).speed(2.0).backward().level(0.6)
+ *     .tap().enters_after(4.0).speed(2.0).backward().level(0.6).on_channels({ 0, 1 })
  *     .start();
  *
+ * taps.speed(0, 0.5);
  * taps.stop();
  * @endcode
  *
  * Two taps at speeds 1.0 and 1.001 drift slowly out of phase. Speeds change
  * pitch, since taps read with interpolation.
+ *
+ * A tap plays the source channel with the same number as each output channel,
+ * wrapping when the source has fewer, so a mono source sounds on every output
+ * and a stereo one keeps left and right. from_channel() picks one source
+ * channel for all of a tap's outputs.
  */
 class MAYAFLUX_API TapSetBuilder {
 public:
@@ -109,7 +140,7 @@ public:
     TapSetBuilder& backward(bool enable = true);
 
     /**
-     * @brief Linear gain of the current tap.
+     * @brief Linear gain of the current tap on each of its outputs.
      */
     TapSetBuilder& level(double gain);
 
@@ -117,6 +148,18 @@ public:
      * @brief Output channel of the current tap.
      */
     TapSetBuilder& on_channel(uint32_t channel);
+
+    /**
+     * @brief Several output channels for the current tap, which stay in step.
+     *
+     * An empty list is ignored.
+     */
+    TapSetBuilder& on_channels(const std::vector<uint32_t>& channels);
+
+    /**
+     * @brief Source channel the current tap plays on every output.
+     */
+    TapSetBuilder& from_channel(uint32_t channel);
 
     /**
      * @brief Whether taps loop the region (default) or play it once.
@@ -142,7 +185,8 @@ private:
         double ratio { 1.0 };
         bool backward { false };
         double level { 1.0 };
-        uint32_t channel { 0 };
+        std::vector<uint32_t> channels { 0 };
+        std::optional<uint32_t> source;
     };
 
     Spec& current();

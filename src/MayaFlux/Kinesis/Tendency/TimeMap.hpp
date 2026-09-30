@@ -80,6 +80,38 @@ inline TimeMap lagged(double origin, double rate, TimeMap lag)
 }
 
 /**
+ * @brief Position that integrates a velocity you can change while it plays
+ * @param start Position at time zero
+ * @param velocity Position units per second, read at every evaluation. Negative
+ *        reverses and zero holds.
+ *
+ * The position carries on from wherever it is when the velocity changes, so
+ * speeding up, slowing down, reversing or stopping never jumps. Unlike the other
+ * factories this map keeps a running position, so give each voice its own
+ * instance. Time going backwards restarts it from @p start.
+ */
+inline TimeMap integrated(double start, std::shared_ptr<const double> velocity)
+{
+    struct State {
+        double position;
+        double last;
+    };
+
+    auto state = std::make_shared<State>(State { .position = start, .last = 0.0 });
+
+    return { .fn = [state, start, velocity = std::move(velocity)](const double& t) -> double {
+        if (t < state->last) {
+            state->position = start;
+            state->last = 0.0;
+        }
+
+        state->position += *velocity * (t - state->last);
+        state->last = t;
+        return state->position;
+    } };
+}
+
+/**
  * @brief Piecewise linear path through evenly spaced positions
  * @param points Positions spread across [0, duration], for example a sampled
  *        Kinesis curve. Empty gives zero, one gives a constant.

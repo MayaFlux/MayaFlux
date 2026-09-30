@@ -141,7 +141,8 @@ void StreamSliceProcessor::processing_function(const std::shared_ptr<Buffer>& bu
 
         const auto structure = slot.slice.stream->get_structure();
         std::vector<double> tmp(dst.size(), 0.0);
-        Kakshya::extract_processed_data(pd, structure.organization, structure.get_channel_count(), ch, tmp);
+        Kakshya::extract_processed_data(pd, structure.organization, structure.get_channel_count(),
+            slot.slice.source_channel.value_or(ch), tmp);
 
         for (size_t s = 0; s < dst.size(); ++s)
             dst[s] += tmp[s] * slot.slice.scale;
