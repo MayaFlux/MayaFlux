@@ -33,6 +33,26 @@ inline TimeMap linear(double from, double to, double duration)
 }
 
 /**
+ * @brief Geometric path from one value to another, then constant
+ * @param from Value at time zero, must be positive
+ * @param to Value reached at @p duration and kept after, must be positive
+ * @param duration Seconds to travel, zero or less gives @p to at every time
+ *
+ * Each equal step of time multiplies the value by the same factor, so it
+ * suits lengths and rates that should shrink or grow by a constant ratio.
+ * A non-positive @p from or @p to gives @p to at every time.
+ */
+inline TimeMap exponential(double from, double to, double duration)
+{
+    return { .fn = [from, to, duration](const double& t) -> double {
+        if (duration <= 0.0 || from <= 0.0 || to <= 0.0) {
+            return to;
+        }
+        return from * std::pow(to / from, std::clamp(t / duration, 0.0, 1.0));
+    } };
+}
+
+/**
  * @brief Constant acceleration from an initial velocity
  * @param start Position at time zero
  * @param velocity Initial velocity in position units per second, negative reverses

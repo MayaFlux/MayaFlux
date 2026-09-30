@@ -162,6 +162,22 @@ public:
     TapSetBuilder& from_channel(uint32_t channel);
 
     /**
+     * @brief Restart the current tap every @p seconds.
+     *
+     * Each repeat plays from the start of the region. Shorten it by giving a time
+     * map instead: it is read at the start of each repeat, so a shrinking length
+     * gives a stutter or bouncing repeat.
+     */
+    TapSetBuilder& repeat_every(double seconds);
+
+    /**
+     * @brief Restart the current tap with a repeat length that follows a time map.
+     * @param seconds Map from seconds since start() to the length of the repeat
+     *        that begins then, in seconds, for example TimeMaps::exponential.
+     */
+    TapSetBuilder& repeat_every(Kinesis::TimeMap seconds);
+
+    /**
      * @brief Whether taps loop the region (default) or play it once.
      */
     TapSetBuilder& loop(bool enable = true);
@@ -187,6 +203,7 @@ private:
         double level { 1.0 };
         std::vector<uint32_t> channels { 0 };
         std::optional<uint32_t> source;
+        std::shared_ptr<const Kinesis::TimeMap> repeat;
     };
 
     Spec& current();

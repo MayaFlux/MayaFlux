@@ -1,6 +1,7 @@
 #include "TapSet.hpp"
 
 #include "MayaFlux/Kakshya/Source/DynamicSoundStream.hpp"
+#include "MayaFlux/Kinesis/Tendency/TendencyFactories.hpp"
 #include "MayaFlux/Kinesis/Tendency/TimeMap.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -112,6 +113,17 @@ TapSetBuilder& TapSetBuilder::from_channel(uint32_t channel)
     return *this;
 }
 
+TapSetBuilder& TapSetBuilder::repeat_every(double seconds)
+{
+    return repeat_every(Kinesis::constant<double, double>(seconds));
+}
+
+TapSetBuilder& TapSetBuilder::repeat_every(Kinesis::TimeMap seconds)
+{
+    current().repeat = std::make_shared<const Kinesis::TimeMap>(std::move(seconds));
+    return *this;
+}
+
 TapSetBuilder& TapSetBuilder::loop(bool enable)
 {
     m_looping = enable;
@@ -181,6 +193,7 @@ TapSet TapSetBuilder::start()
             slice.looping = m_looping;
             slice.scale = spec.level;
             slice.source_channel = spec.source.value_or(output % source_count);
+            slice.repeat = spec.repeat;
             slice.with_time_map(Kinesis::TimeMaps::integrated(spec.backward ? last : first, built.velocity));
             sampler->load(slot, std::move(slice));
 

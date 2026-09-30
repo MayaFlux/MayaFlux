@@ -34,6 +34,10 @@ namespace MayaFlux::Kakshya {
  *
  * source_channel picks which channel of the stream is played. Unset, the voice
  * plays the stream channel with the same number as its output channel.
+ *
+ * repeat, with a time_map, restarts the map over and over. Its value is how
+ * many seconds each repeat lasts, read when the repeat begins, so a length that
+ * shrinks over time gives a stutter or bouncing repeat.
  */
 struct StreamSlice {
     std::shared_ptr<DynamicSoundStream> stream;
@@ -48,6 +52,7 @@ struct StreamSlice {
     size_t loop_count {};
     std::shared_ptr<const Kinesis::TimeMap> time_map;
     std::optional<uint32_t> source_channel;
+    std::shared_ptr<const Kinesis::TimeMap> repeat;
 
     /**
      * @brief Construct a slice spanning the full stream across all channels.
@@ -156,6 +161,12 @@ struct StreamSlice {
     StreamSlice& with_source_channel(uint32_t channel)
     {
         source_channel = channel;
+        return *this;
+    }
+
+    StreamSlice& with_repeat(Kinesis::TimeMap length)
+    {
+        repeat = std::make_shared<const Kinesis::TimeMap>(std::move(length));
         return *this;
     }
 };

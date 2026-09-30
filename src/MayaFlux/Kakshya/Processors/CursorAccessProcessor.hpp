@@ -142,6 +142,20 @@ public:
      */
     void set_time_map(const std::shared_ptr<const Kinesis::TimeMap>& map);
 
+    /**
+     * @brief Restart the time map over and over, with a length that can change.
+     *
+     * Needs a time map. The length map takes seconds since the last reset() and
+     * returns how long, in seconds, the repeat that starts then should last. It
+     * is evaluated once per repeat. Each repeat restarts the time map from zero
+     * and plays its first stretch of that length, with the jump back exact to
+     * the frame, so a shrinking length gives a stutter or bouncing repeat.
+     * Passing the map already set is a no-op.
+     *
+     * @param length Repeat length in seconds, or null for no repeating.
+     */
+    void set_repeat(const std::shared_ptr<const Kinesis::TimeMap>& length);
+
     [[nodiscard]] bool is_active() const { return m_active; }
     [[nodiscard]] uint64_t cursor() const { return m_cursor[0]; }
     [[nodiscard]] uint64_t loop_start() const { return m_loop_start; }
@@ -163,6 +177,9 @@ private:
 
     std::shared_ptr<const Kinesis::TimeMap> m_time_map;
     uint64_t m_clock_frames {};
+    std::shared_ptr<const Kinesis::TimeMap> m_repeat;
+    uint64_t m_repeat_start {};
+    uint64_t m_repeat_length {};
     std::vector<uint64_t> m_gather_frames;
     std::vector<double> m_gather_weights;
     std::vector<double> m_gather_taps;

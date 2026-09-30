@@ -150,32 +150,53 @@ void CursorAccessProcessor::process_mapped(DynamicSoundStream& stream, std::vect
     const auto rate = static_cast<double>(stream.get_sample_rate());
     const auto lo = static_cast<double>(m_loop_start);
     const auto hi = static_cast<double>(m_loop_end);
-    const double p0 = (*m_time_map)(static_cast<double>(m_clock_frames) / rate);
-    const double p1 = (*m_time_map)(static_cast<double>(m_clock_frames + block) / rate);
-
     m_gather_frames.resize(2 * block);
     m_gather_weights.resize(block);
 
-    uint64_t valid = 0;
+    const bool repeating = m_repeat && m_repeat->fn;
     bool exited = m_loop_end <= m_loop_start;
+    double last_position = lo;
+    uint64_t valid = 0;
 
     while (!exited && valid < block) {
-        const double u = p0 + (p1 - p0) * static_cast<double>(valid) / static_cast<double>(block);
+        const uint64_t clock = m_clock_frames + valid;
+        uint64_t stop = block;
 
-        if (!m_looping && (u < lo || u >= hi)) {
-            exited = true;
-            break;
+        if (repeating) {
+            if (m_repeat_length == 0 || clock - m_repeat_start >= m_repeat_length) {
+                m_repeat_start = clock;
+                const double seconds = std::max((*m_repeat)(static_cast<double>(clock) / rate), 0.0);
+                m_repeat_length = std::max<uint64_t>(1, static_cast<uint64_t>(std::llround(seconds * rate)));
+            }
+
+            stop = std::min(block, valid + (m_repeat_start + m_repeat_length - clock));
         }
 
-        const double s = m_looping ? Kinesis::wrap<double>(u, lo, hi) : u;
-        const double whole = std::floor(s);
-        const uint64_t i = std::min(static_cast<uint64_t>(whole), m_loop_end - 1);
-        const uint64_t next = i + 1 < m_loop_end ? i + 1 : (m_looping ? m_loop_start : i);
+        const uint64_t origin = repeating ? m_repeat_start : 0;
+        const uint64_t begin = valid;
+        const uint64_t frames = stop - begin;
+        const auto span = static_cast<double>(frames);
+        const double p_a = (*m_time_map)(static_cast<double>(clock - origin) / rate);
+        const double p_b = (*m_time_map)(static_cast<double>(clock + frames - origin) / rate);
+        last_position = p_b;
 
-        m_gather_frames[2 * valid] = i;
-        m_gather_frames[2 * valid + 1] = next;
-        m_gather_weights[valid] = s - whole;
-        ++valid;
+        for (; valid < stop; ++valid) {
+            const double u = p_a + (p_b - p_a) * static_cast<double>(valid - begin) / span;
+
+            if (!m_looping && (u < lo || u >= hi)) {
+                exited = true;
+                break;
+            }
+
+            const double s = m_looping ? Kinesis::wrap<double>(u, lo, hi) : u;
+            const double whole = std::floor(s);
+            const uint64_t i = std::min(static_cast<uint64_t>(whole), m_loop_end - 1);
+            const uint64_t next = i + 1 < m_loop_end ? i + 1 : (m_looping ? m_loop_start : i);
+
+            m_gather_frames[2 * valid] = i;
+            m_gather_frames[2 * valid + 1] = next;
+            m_gather_weights[valid] = s - whole;
+        }
     }
 
     m_gather_taps.resize(2 * block * channels);
@@ -220,7 +241,7 @@ void CursorAccessProcessor::process_mapped(DynamicSoundStream& stream, std::vect
         return;
     }
 
-    const double end = m_looping ? Kinesis::wrap<double>(p1, lo, hi) : std::clamp(p1, lo, hi - 1.0);
+    const double end = m_looping ? Kinesis::wrap<double>(last_position, lo, hi) : std::clamp(last_position, lo, hi - 1.0);
     m_cursor.assign(m_cursor.size(), static_cast<uint64_t>(std::max(end, lo)));
 }
 
@@ -231,6 +252,18 @@ void CursorAccessProcessor::set_time_map(const std::shared_ptr<const Kinesis::Ti
 
     m_time_map = map;
     m_clock_frames = 0;
+    m_repeat_start = 0;
+    m_repeat_length = 0;
+}
+
+void CursorAccessProcessor::set_repeat(const std::shared_ptr<const Kinesis::TimeMap>& length)
+{
+    if (length == m_repeat)
+        return;
+
+    m_repeat = length;
+    m_repeat_start = 0;
+    m_repeat_length = 0;
 }
 
 void CursorAccessProcessor::reset()
@@ -238,6 +271,8 @@ void CursorAccessProcessor::reset()
     m_cursor.assign(m_cursor.size(), m_loop_start);
     m_loops_remaining = m_loop_count;
     m_clock_frames = 0;
+    m_repeat_start = 0;
+    m_repeat_length = 0;
     m_active = true;
 }
 
