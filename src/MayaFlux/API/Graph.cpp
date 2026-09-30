@@ -320,6 +320,23 @@ void remove_supplied_buffer_from_channels(const std::shared_ptr<Buffers::AudioBu
     }
 }
 
+void set_mix_normalization_for_channel(uint32_t channel, bool enabled)
+{
+    auto manager = get_buffer_manager();
+
+    if (channel < manager->get_num_channels(Buffers::ProcessingToken::AUDIO_BACKEND)) {
+        manager->get_root_audio_buffer(Buffers::ProcessingToken::AUDIO_BACKEND, channel)
+            ->set_mix_normalization(enabled);
+    }
+}
+
+void set_mix_normalization_for_channels(const std::vector<uint32_t>& channels, bool enabled)
+{
+    for (const auto& channel : channels) {
+        set_mix_normalization_for_channel(channel, enabled);
+    }
+}
+
 void route_buffer(
     const std::shared_ptr<Buffers::AudioBuffer>& buffer,
     uint32_t target_channel,

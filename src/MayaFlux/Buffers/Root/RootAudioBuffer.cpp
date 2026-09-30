@@ -45,6 +45,8 @@ void ChannelProcessor::processing_function(const std::shared_ptr<Buffer>& buffer
     }
 
     if (active_buffers > 0) {
+        const double divisor = m_root_buffer->is_mix_normalized() ? active_buffers : 1.0;
+
         for (auto& child : m_root_buffer->get_child_buffers()) {
             if (child->has_data_for_cycle() && !child->needs_removal() && !child->is_internal_only()) {
                 double scale = 1.0;
@@ -56,7 +58,7 @@ void ChannelProcessor::processing_function(const std::shared_ptr<Buffer>& buffer
                 }
                 const auto& child_data = child->get_data();
                 for (size_t i = 0; i < std::min(child_data.size(), output_data.size()); i++) {
-                    output_data[i] += (child_data[i] * scale) / active_buffers;
+                    output_data[i] += (child_data[i] * scale) / divisor;
                 }
             }
         }

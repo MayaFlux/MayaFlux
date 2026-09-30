@@ -60,6 +60,7 @@ void MixProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
         validate_sources();
 
         auto& data = root_buffer->get_data();
+        const bool normalize = root_buffer->is_mix_normalized();
 
         for (uint32_t i = 0; i < data.size(); i++) {
             for (const auto& source : m_sources) {
@@ -68,7 +69,9 @@ void MixProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
                 }
             }
 
-            data[i] /= (double)m_sources.size();
+            if (normalize) {
+                data[i] /= (double)m_sources.size();
+            }
         }
 
         cleanup();
