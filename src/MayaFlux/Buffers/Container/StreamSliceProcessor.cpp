@@ -14,6 +14,7 @@ namespace {
         proc.set_loop_region(slice.start_frame(), slice.end_frame());
         proc.set_looping(slice.looping);
         proc.set_speed(slice.speed);
+        proc.set_time_map(slice.time_map);
 
         if (slice.loop_count != proc.loop_count())
             proc.set_loop_count(slice.loop_count);

@@ -3,6 +3,8 @@
 #include "MayaFlux/Kakshya/Source/DynamicSoundStream.hpp"
 #include "MayaFlux/Kakshya/Utils/DataUtils.hpp"
 
+#include "MayaFlux/Kinesis/Scalar.hpp"
+
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Kakshya {
@@ -71,6 +73,12 @@ void CursorAccessProcessor::process(const std::shared_ptr<SignalSourceContainer>
         return;
     }
 
+    if (m_time_map && m_time_map->fn) {
+        process_mapped(*stream, pd);
+        m_is_processing.store(false, std::memory_order_relaxed);
+        return;
+    }
+
     const uint64_t frame = m_cursor.empty() ? 0 : m_cursor[0];
 
     const uint64_t total_frames = m_structure.get_samples_count_per_channel();
@@ -133,10 +141,103 @@ void CursorAccessProcessor::process(const std::shared_ptr<SignalSourceContainer>
     m_is_processing.store(false, std::memory_order_relaxed);
 }
 
+void CursorAccessProcessor::process_mapped(DynamicSoundStream& stream, std::vector<DataVariant>& pd)
+{
+    const uint64_t block = m_frames_per_block;
+    const uint64_t channels = m_structure.get_channel_count();
+    const bool interleaved = m_structure.organization == OrganizationStrategy::INTERLEAVED;
+
+    const auto rate = static_cast<double>(stream.get_sample_rate());
+    const auto lo = static_cast<double>(m_loop_start);
+    const auto hi = static_cast<double>(m_loop_end);
+    const double p0 = (*m_time_map)(static_cast<double>(m_clock_frames) / rate);
+    const double p1 = (*m_time_map)(static_cast<double>(m_clock_frames + block) / rate);
+
+    m_gather_frames.resize(2 * block);
+    m_gather_weights.resize(block);
+
+    uint64_t valid = 0;
+    bool exited = m_loop_end <= m_loop_start;
+
+    while (!exited && valid < block) {
+        const double u = p0 + (p1 - p0) * static_cast<double>(valid) / static_cast<double>(block);
+
+        if (!m_looping && (u < lo || u >= hi)) {
+            exited = true;
+            break;
+        }
+
+        const double s = m_looping ? Kinesis::wrap<double>(u, lo, hi) : u;
+        const double whole = std::floor(s);
+        const uint64_t i = std::min(static_cast<uint64_t>(whole), m_loop_end - 1);
+        const uint64_t next = i + 1 < m_loop_end ? i + 1 : (m_looping ? m_loop_start : i);
+
+        m_gather_frames[2 * valid] = i;
+        m_gather_frames[2 * valid + 1] = next;
+        m_gather_weights[valid] = s - whole;
+        ++valid;
+    }
+
+    m_gather_taps.resize(2 * block * channels);
+    stream.gather_frames(
+        std::span<const uint64_t>(m_gather_frames.data(), 2 * valid),
+        std::span<double>(m_gather_taps.data(), 2 * valid * channels));
+
+    const auto blend = [&](uint64_t n, uint64_t c) {
+        const double w = m_gather_weights[n];
+        return m_gather_taps[(2 * n) * channels + c] * (1.0 - w)
+            + m_gather_taps[(2 * n + 1) * channels + c] * w;
+    };
+
+    if (interleaved) {
+        pd.resize(1);
+        auto& out = std::get<std::vector<double>>(pd[0]);
+        out.assign(block * channels, 0.0);
+        for (uint64_t n = 0; n < valid; ++n) {
+            for (uint64_t c = 0; c < channels; ++c) {
+                out[n * channels + c] = blend(n, c);
+            }
+        }
+    } else {
+        pd.resize(channels);
+        for (uint64_t c = 0; c < channels; ++c) {
+            auto& out = std::get<std::vector<double>>(pd[c]);
+            out.assign(block, 0.0);
+            for (uint64_t n = 0; n < valid; ++n) {
+                out[n] = blend(n, c);
+            }
+        }
+    }
+
+    m_clock_frames += block;
+
+    if (exited) {
+        m_active = false;
+        m_clock_frames = 0;
+        m_cursor.assign(m_cursor.size(), m_loop_start);
+        if (m_on_end)
+            m_on_end();
+        return;
+    }
+
+    const double end = m_looping ? Kinesis::wrap<double>(p1, lo, hi) : std::clamp(p1, lo, hi - 1.0);
+    m_cursor.assign(m_cursor.size(), static_cast<uint64_t>(std::max(end, lo)));
+}
+
+void CursorAccessProcessor::set_time_map(const std::shared_ptr<const Kinesis::TimeMap>& map)
+{
+    if (map == m_time_map)
+        return;
+
+    m_time_map = map;
+    m_clock_frames = 0;
+}
+
 void CursorAccessProcessor::reset()
 {
     m_cursor.assign(m_cursor.size(), m_loop_start);
     m_loops_remaining = m_loop_count;
+    m_clock_frames = 0;
     m_active = true;
 }
 

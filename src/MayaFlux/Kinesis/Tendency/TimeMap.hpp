@@ -8,17 +8,12 @@ namespace MayaFlux::Kinesis::TimeMaps {
 
 /**
  * @file TimeMap.hpp
- * @brief Factories for TimeMap, a double precision map from local clock time
- *        to a position in recorded material.
+ * @brief Factories for TimeMap: seconds since a voice started in, position in
+ *        recorded material out (frames for a sample stream).
  *
- * The domain is seconds on a clock that starts at zero when the map's owner
- * starts. The range is a position in whatever unit the reader indexes by,
- * frames for a sample stream. Doubles are used on both sides because float
- * positions lose sub-frame precision past a few minutes of audio.
- *
- * A map may return positions outside the material. Bounds are the reader's
- * concern, not the map's. For a fixed position use
- * constant<double, double>(position).
+ * Doubles keep sub-frame precision on long recordings. Positions outside the
+ * material are allowed; the reader decides what they mean. For a fixed
+ * position use constant<double, double>(position).
  */
 
 /**

@@ -50,6 +50,15 @@ public:
     uint64_t get_num_frames() const override;
 
     std::vector<DataVariant> get_region_data(const Region& region) const override;
+
+    /**
+     * @brief Copy arbitrary frames into a caller-owned buffer without allocating.
+     * @param frames Frame indices, in any order, repeats allowed.
+     * @param out Receives frames.size() * channel count values, frame-major.
+     *            Indices past the end of the stream yield zeros.
+     */
+    void gather_frames(std::span<const uint64_t> frames, std::span<double> out) const;
+
     void set_region_data(const Region& region, const std::vector<DataVariant>& data) override;
 
     std::vector<DataVariant> get_region_group_data(const RegionGroup& group) const override;
