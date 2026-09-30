@@ -143,4 +143,33 @@ std::shared_ptr<Kriya::BufferPipeline> record_into(
     return pipeline;
 }
 
+std::shared_ptr<Kriya::BufferPipeline> record_into(
+    const std::shared_ptr<Kakshya::DynamicSoundStream>& stream,
+    const std::shared_ptr<Buffers::AudioBuffer>& buffer, uint32_t channel)
+{
+    if (!buffer) {
+        return nullptr;
+    }
+
+    return record_into(stream, Kriya::BufferOperation::capture_from(buffer), channel);
+}
+
+std::vector<std::shared_ptr<Kriya::BufferPipeline>> record_into(
+    const std::shared_ptr<Kakshya::DynamicSoundStream>& stream,
+    std::vector<Kriya::CaptureBuilder> sources)
+{
+    std::vector<std::shared_ptr<Kriya::BufferPipeline>> pipelines;
+
+    if (!stream) {
+        return pipelines;
+    }
+
+    pipelines.reserve(sources.size());
+    for (size_t channel = 0; channel < sources.size(); ++channel) {
+        pipelines.push_back(record_into(stream, std::move(sources[channel]), static_cast<uint32_t>(channel)));
+    }
+
+    return pipelines;
+}
+
 } // namespace MayaFlux

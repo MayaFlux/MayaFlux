@@ -27,6 +27,10 @@ namespace Kakshya {
     class DynamicSoundStream;
 }
 
+namespace Buffers {
+    class AudioBuffer;
+}
+
 /**
  * @brief Construct a built SamplingPipeline from an audio file.
  *
@@ -180,5 +184,35 @@ MAYAFLUX_API std::shared_ptr<Kakshya::DynamicSoundStream> create_ring(
 MAYAFLUX_API std::shared_ptr<Kriya::BufferPipeline> record_into(
     const std::shared_ptr<Kakshya::DynamicSoundStream>& stream,
     Kriya::CaptureBuilder source, uint32_t channel = 0);
+
+/**
+ * @brief Record a live buffer into one channel of a stream.
+ *
+ * Works for any buffer that something else already processes each cycle, such as
+ * a node buffer, a supplied buffer or an input listener. For a buffer nobody
+ * processes, pass a capture with on_capture_processing() to the other overload.
+ *
+ * @param stream  Stream to record into.
+ * @param buffer  Buffer to read each cycle.
+ * @param channel Channel of the stream that receives the signal.
+ * @return The running pipeline, or nullptr if the stream or buffer is null.
+ */
+MAYAFLUX_API std::shared_ptr<Kriya::BufferPipeline> record_into(
+    const std::shared_ptr<Kakshya::DynamicSoundStream>& stream,
+    const std::shared_ptr<Buffers::AudioBuffer>& buffer, uint32_t channel = 0);
+
+/**
+ * @brief Record several sources into consecutive channels of a stream.
+ *
+ * Source i goes to channel i, so a stereo ring is two sources. Each source gets
+ * its own pipeline, because one pipeline spends a cycle per capture.
+ *
+ * @param stream  Stream to record into.
+ * @param sources What to capture, one per channel starting at channel 0.
+ * @return One running pipeline per source, in order. Empty if the stream is null.
+ */
+MAYAFLUX_API std::vector<std::shared_ptr<Kriya::BufferPipeline>> record_into(
+    const std::shared_ptr<Kakshya::DynamicSoundStream>& stream,
+    std::vector<Kriya::CaptureBuilder> sources);
 
 } // namespace MayaFlux
