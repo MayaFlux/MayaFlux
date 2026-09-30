@@ -447,16 +447,17 @@ private:
     Vruta::DelayContext m_capture_timing { Vruta::DelayContext::BUFFER_BASED };
     Vruta::DelayContext m_process_timing { Vruta::DelayContext::SAMPLE_BASED };
 
-    static Kakshya::DataVariant extract_buffer_data(const std::shared_ptr<Buffers::AudioBuffer>& buffer, bool should_process = false);
-    static void write_to_buffer(const std::shared_ptr<Buffers::AudioBuffer>& buffer, const Kakshya::DataVariant& data);
-    static void write_to_container(const std::shared_ptr<Kakshya::DynamicSoundStream>& container, const Kakshya::DataVariant& data, uint32_t channel);
-    static Kakshya::DataVariant read_from_container(const std::shared_ptr<Kakshya::DynamicSoundStream>& container, uint64_t start, uint32_t length);
-
     void capture_operation(BufferOperation& op, uint64_t cycle);
     void reset_accumulated_data();
     bool has_immediate_routing(const BufferOperation& op) const;
 
     void process_operation(BufferOperation& op, uint64_t cycle);
+    void process_transform(BufferOperation& op, uint64_t cycle);
+    void process_route(BufferOperation& op);
+    void process_load(BufferOperation& op);
+    void process_fuse(BufferOperation& op, uint64_t cycle);
+    void process_dispatch(BufferOperation& op, uint64_t cycle);
+    void process_modify(BufferOperation& op, uint64_t cycle);
     std::shared_ptr<Vruta::SoundRoutine> dispatch_branch_async(BranchInfo& branch, uint64_t cycle);
     void await_timing(Vruta::DelayContext mode, uint64_t units);
 
