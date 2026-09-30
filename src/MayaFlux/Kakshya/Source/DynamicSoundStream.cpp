@@ -218,6 +218,41 @@ uint64_t DynamicSoundStream::write_frames(
     return num_frames;
 }
 
+uint64_t DynamicSoundStream::append_frames(std::span<const double> data, uint32_t channel)
+{
+    if (data.empty() || channel >= get_num_channels()) {
+        return 0;
+    }
+
+    if (m_write_heads.size() < get_num_channels()) {
+        m_write_heads.resize(get_num_channels(), 0);
+    }
+
+    uint64_t& head = m_write_heads[channel];
+
+    if (!m_is_circular) {
+        const uint64_t written = write_frames(data, head, channel);
+        head += written;
+        return written;
+    }
+
+    if (data.size() > m_circular_capacity) {
+        const uint64_t skip = data.size() - m_circular_capacity;
+        head = (head + skip) % m_circular_capacity;
+        data = data.subspan(skip);
+    }
+
+    const uint64_t first = std::min<uint64_t>(data.size(), m_circular_capacity - head);
+    uint64_t written = write_frames(data.subspan(0, first), head, channel);
+
+    if (first < data.size()) {
+        written += write_frames(data.subspan(first), 0, channel);
+    }
+
+    head = (head + data.size()) % m_circular_capacity;
+    return written;
+}
+
 std::span<const double> DynamicSoundStream::get_channel_frames(uint32_t channel, uint64_t start_frame, uint64_t num_frames) const
 {
     if (channel >= get_num_channels())
@@ -301,6 +336,10 @@ void DynamicSoundStream::enable_circular_buffer(uint64_t capacity)
 
     m_circular_capacity = capacity;
     m_is_circular = true;
+
+    for (uint64_t& head : m_write_heads) {
+        head %= capacity;
+    }
 }
 
 uint32_t DynamicSoundStream::allocate_dynamic_slot()

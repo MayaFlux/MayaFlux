@@ -113,10 +113,11 @@ BufferOperation BufferOperation::route_to_buffer(std::shared_ptr<Buffers::AudioB
     return op;
 }
 
-BufferOperation BufferOperation::route_to_container(std::shared_ptr<Kakshya::DynamicSoundStream> target)
+BufferOperation BufferOperation::route_to_container(std::shared_ptr<Kakshya::DynamicSoundStream> target, uint32_t channel)
 {
     BufferOperation op(OpType::ROUTE);
     op.m_target_container = std::move(target);
+    op.m_target_channel = channel;
     return op;
 }
 

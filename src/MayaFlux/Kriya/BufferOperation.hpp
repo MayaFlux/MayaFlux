@@ -263,12 +263,18 @@ namespace Kriya {
 
         /**
          * @brief Create a routing operation to DynamicSoundStream destination.
+         *
+         * Each routed block is appended at the stream's write head for
+         * @p channel, wrapping if the stream is circular, so repeated routing
+         * records a continuous signal.
+         *
          * @param target Target container to receive data.
+         * @param channel Channel of the target that receives the data.
          * @return BufferOperation configured for container routing.
          *
          * @see route_to_buffer for usage intent and constraints.
          */
-        static BufferOperation route_to_container(std::shared_ptr<Kakshya::DynamicSoundStream> target);
+        static BufferOperation route_to_container(std::shared_ptr<Kakshya::DynamicSoundStream> target, uint32_t channel = 0);
 
         /**
          * @brief Create a load operation from container to buffer.
@@ -446,6 +452,7 @@ namespace Kriya {
 
         std::shared_ptr<Buffers::AudioBuffer> m_target_buffer;
         std::shared_ptr<Kakshya::DynamicSoundStream> m_target_container;
+        uint32_t m_target_channel {};
 
         std::shared_ptr<Buffers::BufferProcessor> m_attached_processor;
 

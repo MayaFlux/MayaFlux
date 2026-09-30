@@ -250,13 +250,13 @@ void BufferPipeline::write_to_buffer(const std::shared_ptr<Buffers::AudioBuffer>
     // TODO: Handle other buffer types
 }
 
-void BufferPipeline::write_to_container(const std::shared_ptr<Kakshya::DynamicSoundStream>& container, const Kakshya::DataVariant& data)
+void BufferPipeline::write_to_container(const std::shared_ptr<Kakshya::DynamicSoundStream>& container, const Kakshya::DataVariant& data, uint32_t channel)
 {
     try {
-        auto audio_data = std::get<std::vector<double>>(data);
+        const auto& audio_data = std::get<std::vector<double>>(data);
         std::span<const double> data_span(audio_data.data(), audio_data.size());
 
-        container->write_frames(data_span, 0);
+        container->append_frames(data_span, channel);
 
     } catch (const std::bad_variant_access& e) {
         error_rethrow(Journal::Component::Kriya,
@@ -471,7 +471,7 @@ void BufferPipeline::capture_operation(BufferOperation& op, uint64_t cycle)
                     std::static_pointer_cast<Buffers::AudioWriteProcessor>(next_it->m_attached_processor)
                         ->set_data(buffer_data);
                 } else if (next_it->m_target_container) {
-                    write_to_container(next_it->m_target_container, buffer_data);
+                    write_to_container(next_it->m_target_container, buffer_data, next_it->m_target_channel);
                 }
 
                 size_t route_index = std::distance(m_operations.begin(), next_it);
@@ -589,7 +589,7 @@ void BufferPipeline::process_operation(BufferOperation& op, uint64_t cycle)
                     ->set_data(data_to_route);
 
             } else if (op.m_target_container) {
-                write_to_container(op.m_target_container, data_to_route);
+                write_to_container(op.m_target_container, data_to_route, op.m_target_channel);
             }
             break;
         }
@@ -627,7 +627,7 @@ void BufferPipeline::process_operation(BufferOperation& op, uint64_t cycle)
                 if (op.m_target_buffer) {
                     write_to_buffer(op.m_target_buffer, fused_data);
                 } else if (op.m_target_container) {
-                    write_to_container(op.m_target_container, fused_data);
+                    write_to_container(op.m_target_container, fused_data, op.m_target_channel);
                 }
 
                 m_operation_data[&op] = fused_data;
