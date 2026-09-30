@@ -114,6 +114,7 @@
 #include "Kriya/InputEvents.hpp"
 #include "Kriya/NetworkEvents.hpp"
 #include "Kriya/SamplingPipeline.hpp"
+#include "Kriya/TapSet.hpp"
 #include "Kriya/Tasks.hpp"
 
 #include "Vruta/Event.hpp"

@@ -18,6 +18,7 @@ namespace MayaFlux {
 
 namespace Kriya {
     class SamplingPipeline;
+    class TapSetBuilder;
 }
 
 namespace Kakshya {
@@ -101,5 +102,41 @@ MAYAFLUX_API std::shared_ptr<Kriya::SamplingPipeline> create_sampler_from_stream
 MAYAFLUX_API std::vector<std::shared_ptr<Kriya::SamplingPipeline>> create_samplers(
     const std::string& filepath, uint32_t num_samples = 48000 * 5, bool truncate = true,
     uint64_t max_dur_ms = 0, uint32_t max_channels = 0);
+
+/**
+ * @brief Begin describing several taps that read one audio file.
+ *
+ * Loads the file like create_sampler and returns a builder. Each tap() adds a
+ * tap with its own entry time, speed, direction, level and channel, and
+ * start() plays them. Keep the resulting TapSet alive for as long as it should
+ * sound.
+ *
+ * @code
+ * auto taps = MayaFlux::create_tap_set("res/h.wav")
+ *     .tap().speed(1.0)
+ *     .tap().enters_after(2.0).speed(3.0 / 2.0).level(0.8)
+ *     .tap().enters_after(4.0).speed(2.0).backward().level(0.6)
+ *     .start();
+ * @endcode
+ *
+ * @param filepath    Path to the audio file (any FFmpeg-supported format).
+ * @param num_samples Number of samples to load from the file (default: 48000 * 5).
+ * @param truncate    Truncate stream to num_samples if true (default: true).
+ * @return Builder. If the file cannot be loaded, start() returns an empty TapSet.
+ */
+MAYAFLUX_API Kriya::TapSetBuilder create_tap_set(
+    const std::string& filepath, uint32_t num_samples = 48000 * 5, bool truncate = true);
+
+/**
+ * @brief Begin describing several taps that read an existing DynamicSoundStream.
+ *
+ * Like create_tap_set, but reads a stream already in memory, for example one
+ * shared with a sampler or filled by a recording.
+ *
+ * @param stream Source stream.
+ * @return Builder. A null stream makes start() return an empty TapSet.
+ */
+MAYAFLUX_API Kriya::TapSetBuilder create_tap_set_from_stream(
+    std::shared_ptr<Kakshya::DynamicSoundStream> stream);
 
 } // namespace MayaFlux

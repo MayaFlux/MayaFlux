@@ -7,6 +7,7 @@
 
 #include "MayaFlux/IO/IOManager.hpp"
 #include "MayaFlux/Kriya/SamplingPipeline.hpp"
+#include "MayaFlux/Kriya/TapSet.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
@@ -86,6 +87,26 @@ std::vector<std::shared_ptr<Kriya::SamplingPipeline>> create_samplers(
         result.push_back(create_sampler_from_stream(stream, i, max_dur_ms));
 
     return result;
+}
+
+Kriya::TapSetBuilder create_tap_set(
+    const std::string& filepath, uint32_t num_samples, bool truncate)
+{
+    auto stream = get_io_manager()->load_audio_bounded(filepath, num_samples, truncate);
+
+    if (!stream) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "create_tap_set: failed to load '{}'", filepath);
+    }
+
+    return create_tap_set_from_stream(std::move(stream));
+}
+
+Kriya::TapSetBuilder create_tap_set_from_stream(
+    std::shared_ptr<Kakshya::DynamicSoundStream> stream)
+{
+    return Kriya::TapSetBuilder(
+        std::move(stream), *get_buffer_manager(), *get_scheduler(), Config::get_buffer_size());
 }
 
 } // namespace MayaFlux
