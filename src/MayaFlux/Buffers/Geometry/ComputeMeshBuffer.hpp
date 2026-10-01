@@ -118,6 +118,16 @@ public:
         return m_sdf_processor;
     }
 
+    /**
+     * @brief The live vertex count from the most recent dispatch.
+     *
+     * get_size_bytes() and the vertex layout describe worst-case capacity; this
+     * is the count a readback must be sized to.
+     *
+     * @return The count, or nullopt before setup_processors() or when the counter is not mapped.
+     */
+    [[nodiscard]] std::optional<uint32_t> get_live_vertex_count() const;
+
     ~ComputeMeshBuffer() override = default;
 
     void setup_processors(ProcessingToken token) override;

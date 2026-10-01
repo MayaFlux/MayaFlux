@@ -744,4 +744,9 @@ size_t VolumeGridBuffer::surface_storage_bytes(const std::optional<SurfaceConfig
     return static_cast<size_t>(voxels * 15U * sizeof(Kakshya::MeshVertex));
 }
 
+std::optional<uint32_t> VolumeGridBuffer::get_live_vertex_count() const
+{
+    return m_mesh_processor ? m_mesh_processor->live_vertex_count() : std::nullopt;
+}
+
 } // namespace MayaFlux::Buffers

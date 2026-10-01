@@ -469,19 +469,6 @@ MAYAFLUX_API bool is_device_local(const std::shared_ptr<VKBuffer>& buffer);
     const std::shared_ptr<VKBuffer>& source);
 
 /**
- * @brief Read the live vertex count of a ComputeMeshBuffer.
- * @param buffer Source buffer. setup_processors() must have run.
- * @return The atomic counter's current value, read from its host-visible
- *         mapping with no transfer; nullopt if the buffer has no mesh
- *         processor or its counter buffer is not allocated and mapped.
- *
- * The buffer's own allocation and layout describe worst-case capacity, not
- * this count.
- */
-[[nodiscard]] MAYAFLUX_API std::optional<uint32_t> compute_mesh_vertex_count(
-    const std::shared_ptr<ComputeMeshBuffer>& buffer);
-
-/**
  * @brief Wrap non-indexed triangle vertices as MeshData.
  * @param vertex_bytes Interleaved Kakshya::MeshVertex records; the vertex
  *        count must be a nonzero multiple of 3.
@@ -495,7 +482,7 @@ MAYAFLUX_API bool is_device_local(const std::shared_ptr<VKBuffer>& buffer);
  * @brief Download a ComputeMeshBuffer's current live geometry to CPU.
  *
  * One-shot and blocking, via download_from_gpu_async: call it off the
- * graphics thread. Downloads exactly compute_mesh_vertex_count() vertices
+ * graphics thread. Downloads exactly ComputeMeshBuffer::get_live_vertex_count() vertices
  * rather than the worst-case allocation.
  *
  * @param buffer Source buffer. setup_processors() must have run.

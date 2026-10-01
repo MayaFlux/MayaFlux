@@ -126,6 +126,16 @@ public:
      */
     [[nodiscard]] std::shared_ptr<VKBuffer> counter_buf() const { return m_counter_buf; }
 
+    /**
+     * @brief The live vertex count the most recent dispatch produced.
+     *
+     * Read from counter_buf()'s host mapping with no transfer. The owning
+     * buffer's allocation is worst-case capacity, not this count.
+     *
+     * @return The count, or nullopt when the counter buffer is not allocated and mapped.
+     */
+    [[nodiscard]] std::optional<uint32_t> live_vertex_count() const;
+
 protected:
     void on_attach(const std::shared_ptr<Buffer>& buffer) override;
     void on_descriptors_created() override;

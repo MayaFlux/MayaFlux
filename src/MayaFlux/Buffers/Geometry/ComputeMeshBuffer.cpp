@@ -237,4 +237,9 @@ void ComputeMeshBuffer::set_texture(std::shared_ptr<Core::VKImage> image, std::s
         m_render_processor->bind_texture(m_diffuse_binding, m_diffuse_texture);
 }
 
+std::optional<uint32_t> ComputeMeshBuffer::get_live_vertex_count() const
+{
+    return m_sdf_processor ? m_sdf_processor->live_vertex_count() : std::nullopt;
+}
+
 } // namespace MayaFlux::Buffers

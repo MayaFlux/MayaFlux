@@ -2,7 +2,6 @@
 
 #include "MayaFlux/Buffers/AudioBuffer.hpp"
 #include "MayaFlux/Buffers/Geometry/ComputeMeshBuffer.hpp"
-#include "MayaFlux/Buffers/Shaders/SDFMeshProcessor.hpp"
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
 
 #include "MayaFlux/Kakshya/NDData/MeshInsertion.hpp"
@@ -435,29 +434,6 @@ std::optional<Kakshya::VertexLayout> resolve_vertex_layout(
     return layout;
 }
 
-std::optional<uint32_t> compute_mesh_vertex_count(
-    const std::shared_ptr<ComputeMeshBuffer>& buffer)
-{
-    if (!buffer) {
-        return std::nullopt;
-    }
-
-    const auto processor = buffer->get_mesh_processor();
-    if (!processor) {
-        return std::nullopt;
-    }
-
-    const auto counter = processor->counter_buf();
-    const auto* counter_ptr = counter
-        ? static_cast<const uint32_t*>(counter->get_mapped_ptr())
-        : nullptr;
-    if (!counter_ptr) {
-        return std::nullopt;
-    }
-
-    return *counter_ptr;
-}
-
 std::optional<Kakshya::MeshData> triangle_soup_mesh(std::span<const uint8_t> vertex_bytes)
 {
     std::vector<uint32_t> indices(vertex_bytes.size() / sizeof(Kakshya::MeshVertex));
@@ -489,7 +465,7 @@ std::optional<Kakshya::MeshData> download_compute_mesh(
         return std::nullopt;
     }
 
-    const auto vertex_count = compute_mesh_vertex_count(buffer);
+    const auto vertex_count = buffer->get_live_vertex_count();
     if (!vertex_count) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             "download_compute_mesh: no mesh processor (setup_processors() has not been called) "
