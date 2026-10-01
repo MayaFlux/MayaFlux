@@ -57,6 +57,25 @@ public:
     void set_blend(bool enable) { m_blend = enable; }
 
     /**
+     * @brief Trail a stream that is being written, by a lag that can change.
+     *
+     * Sets a time map that follows @p write_head at this processor's frame rate
+     * minus the lag, so the rate is the one frames are appended at. The clock
+     * restarts at zero, so pass the write head as it is now.
+     *
+     * @param write_head Index of the next frame to be written.
+     * @param lag Distance behind the head in frames, per second since the restart.
+     */
+    void trail(double write_head, Kinesis::TimeMap lag);
+
+    /**
+     * @brief Trail a stream that is being written by a fixed number of frames.
+     * @param write_head Index of the next frame to be written.
+     * @param lag_frames Distance behind the head in frames.
+     */
+    void trail(double write_head, double lag_frames);
+
+    /**
      * @brief Restart the clock and the repeat.
      */
     void reset();

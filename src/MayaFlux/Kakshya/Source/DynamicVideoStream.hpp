@@ -13,6 +13,7 @@ class VKBuffer;
 namespace MayaFlux::Kakshya {
 
 struct ImageData;
+class FrameSeekProcessor;
 
 /**
  * @class DynamicVideoStream
@@ -123,9 +124,29 @@ public:
     /**
      * @brief Install a FrameSeekProcessor as the default processor.
      *
-     * It reads like FrameAccessProcessor until a time map is set on it.
+     * It reads like FrameAccessProcessor until a time map is set on it. Its clock
+     * runs at the stream's frame rate, which should be the rate frames are
+     * appended at.
      */
     void create_default_processor() override;
+
+    /**
+     * @brief The FrameSeekProcessor that reads this stream, installed on first use.
+     *
+     * Hooking the stream to a display buffer installs it too.
+     */
+    [[nodiscard]] std::shared_ptr<FrameSeekProcessor> seek_processor();
+
+    /**
+     * @brief Play back a fixed number of frames behind the write head.
+     *
+     * Call it after enable_circular_buffer and before frames are appended, and
+     * keep @p frames below the ring capacity. Playback holds the first frame
+     * until the lag has elapsed.
+     *
+     * @param frames Distance behind the head in frames.
+     */
+    void lag_behind_head(double frames);
 
 private:
     uint64_t m_write_head {};

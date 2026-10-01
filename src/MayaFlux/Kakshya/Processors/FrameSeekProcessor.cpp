@@ -3,6 +3,8 @@
 #include "MayaFlux/Kakshya/Source/VideoStreamContainer.hpp"
 
 #include "MayaFlux/Kinesis/Scalar.hpp"
+#include "MayaFlux/Kinesis/Tendency/TendencyFactories.hpp"
+#include "MayaFlux/Kinesis/Tendency/TimeMap.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
@@ -71,6 +73,19 @@ void FrameSeekProcessor::set_repeat(const std::shared_ptr<const Kinesis::TimeMap
     m_repeat = length;
     m_repeat_start = 0;
     m_repeat_length = 0;
+}
+
+void FrameSeekProcessor::trail(double write_head, Kinesis::TimeMap lag)
+{
+    const double fps = m_global_fps > 0.0 ? m_global_fps : 60.0;
+
+    set_time_map(std::make_shared<const Kinesis::TimeMap>(
+        Kinesis::TimeMaps::lagged(write_head, fps, std::move(lag))));
+}
+
+void FrameSeekProcessor::trail(double write_head, double lag_frames)
+{
+    trail(write_head, Kinesis::constant<double, double>(lag_frames));
 }
 
 void FrameSeekProcessor::reset()

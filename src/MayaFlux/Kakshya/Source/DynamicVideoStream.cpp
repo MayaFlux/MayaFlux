@@ -37,6 +37,10 @@ void DynamicVideoStream::publish_frame_count()
     if (!m_structure.dimensions.empty()) {
         m_structure.dimensions[0].size = m_num_frames;
     }
+
+    if (get_processing_state() == ProcessingState::IDLE) {
+        mark_ready_for_processing(true);
+    }
 }
 
 uint8_t* DynamicVideoStream::claim_frame_slot()
@@ -176,7 +180,26 @@ std::shared_ptr<DynamicVideoStream> DynamicVideoStream::snapshot(uint64_t frames
 
 void DynamicVideoStream::create_default_processor()
 {
-    set_default_processor(std::make_shared<FrameSeekProcessor>());
+    auto processor = std::make_shared<FrameSeekProcessor>();
+    if (get_frame_rate() > 0.0) {
+        processor->set_global_fps(get_frame_rate());
+    }
+    set_default_processor(processor);
+}
+
+std::shared_ptr<FrameSeekProcessor> DynamicVideoStream::seek_processor()
+{
+    auto seek = std::dynamic_pointer_cast<FrameSeekProcessor>(get_default_processor());
+    if (!seek) {
+        create_default_processor();
+        seek = std::dynamic_pointer_cast<FrameSeekProcessor>(get_default_processor());
+    }
+    return seek;
+}
+
+void DynamicVideoStream::lag_behind_head(double frames)
+{
+    seek_processor()->trail(static_cast<double>(m_write_head), frames);
 }
 
 void DynamicVideoStream::clear()
