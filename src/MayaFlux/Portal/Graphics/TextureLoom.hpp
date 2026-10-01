@@ -4,7 +4,6 @@
 
 #include "GraphicsUtils.hpp"
 
-#include "MayaFlux/Kakshya/NDData/ImageData.hpp"
 #include "MayaFlux/Kakshya/NDData/NDData.hpp"
 
 namespace MayaFlux::Core {

@@ -85,6 +85,32 @@ struct ImageData {
     }
 
     /**
+     * @brief Writable raw data pointer, dispatched on variant. For download paths.
+     */
+    [[nodiscard]] void* data()
+    {
+        return std::visit(
+            [](auto& vec) -> void* { return vec.data(); },
+            pixels);
+    }
+
+    /**
+     * @brief Allocate zeroed pixel storage of the variant @p format calls for.
+     *
+     * The variant matches what is_consistent() expects: uint8 for the 8-bit
+     * formats, uint16 for the 16-bit and half-float formats, float for the
+     * 32-bit float formats. Holds width * height * channels elements.
+     *
+     * @return The sized ImageData, or nullopt when any dimension or the
+     *         channel count is zero, or the format has no storage mapping.
+     */
+    [[nodiscard]] static std::optional<ImageData> allocate(
+        uint32_t width,
+        uint32_t height,
+        uint32_t channels,
+        ImageFormat format);
+
+    /**
      * @brief Number of pixel elements (not bytes), dispatched on variant.
      */
     [[nodiscard]] size_t element_count() const

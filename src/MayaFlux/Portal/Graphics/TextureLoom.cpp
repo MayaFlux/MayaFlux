@@ -653,43 +653,19 @@ std::optional<Kakshya::ImageData> TextureLoom::download_image(
         return std::nullopt;
     }
 
-    const uint32_t channels = get_channel_count(*format);
-    const size_t bytes_per_pixel = get_bytes_per_pixel(*format);
-    if (channels == 0 || bytes_per_pixel % channels != 0) {
+    const size_t byte_count = calculate_image_size(image->get_width(), image->get_height(), 1, *format);
+
+    auto result = Kakshya::ImageData::allocate(
+        image->get_width(), image->get_height(), get_channel_count(*format), *format);
+    if (!result || result->byte_size() != byte_count) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
-            "download_image: format {} has no whole bytes per channel", static_cast<int>(*format));
+            "download_image: format {} has no typed pixel storage matching its size", static_cast<int>(*format));
         return std::nullopt;
     }
 
-    const size_t element_count = static_cast<size_t>(image->get_width()) * image->get_height() * channels;
+    download_data(image, result->data(), byte_count, staging, false, restore_layout, restore_stage);
 
-    Kakshya::ImageData result;
-    result.width = image->get_width();
-    result.height = image->get_height();
-    result.channels = channels;
-    result.format = *format;
-
-    switch (bytes_per_pixel / channels) {
-    case 1:
-        result.pixels.emplace<std::vector<uint8_t>>(element_count);
-        break;
-    case 2:
-        result.pixels.emplace<std::vector<uint16_t>>(element_count);
-        break;
-    case 4:
-        result.pixels.emplace<std::vector<float>>(element_count);
-        break;
-    default:
-        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
-            "download_image: unsupported bytes per channel for format {}", static_cast<int>(*format));
-        return std::nullopt;
-    }
-
-    void* destination = std::visit([](auto& pixels) -> void* { return pixels.data(); }, result.pixels);
-    download_data(image, destination, calculate_image_size(result.width, result.height, 1, *format),
-        staging, false, restore_layout, restore_stage);
-
-    if (!result.is_consistent()) {
+    if (!result->is_consistent()) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
             "download_image: downloaded pixels do not match format {}", static_cast<int>(*format));
         return std::nullopt;
