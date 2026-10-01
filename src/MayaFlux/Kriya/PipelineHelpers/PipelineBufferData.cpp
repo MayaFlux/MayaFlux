@@ -3,6 +3,7 @@
 #include "MayaFlux/Buffers/AudioBuffer.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Kakshya/Source/DynamicSoundStream.hpp"
+#include "MayaFlux/Kakshya/Source/DynamicVideoStream.hpp"
 
 namespace MayaFlux::Kriya::detail {
 
@@ -98,6 +99,56 @@ Kakshya::DataVariant read_from_container(const std::shared_ptr<Kakshya::DynamicS
 
         return std::vector<double> {};
     }
+}
+
+void write_to_container(const std::shared_ptr<Kakshya::DynamicVideoStream>& container, const Kakshya::DataVariant& data)
+{
+    try {
+        const auto& pixels = std::get<std::vector<uint8_t>>(data);
+        const size_t frame_bytes = container->get_frame_byte_size();
+
+        if (frame_bytes == 0 || pixels.size() % frame_bytes != 0) {
+            error<std::invalid_argument>(Journal::Component::Kriya,
+                Journal::Context::CoroutineScheduling,
+                std::source_location::current(),
+                "Pixel data of {} bytes is not a whole number of {} byte frames",
+                pixels.size(), frame_bytes);
+        }
+
+        for (size_t offset = 0; offset < pixels.size(); offset += frame_bytes) {
+            container->append_frame(std::span<const uint8_t>(pixels.data() + offset, frame_bytes));
+        }
+
+    } catch (const std::bad_variant_access& e) {
+        error_rethrow(Journal::Component::Kriya,
+            Journal::Context::CoroutineScheduling,
+            std::source_location::current(),
+            "Data type mismatch when writing to video container: {}",
+            e.what());
+    } catch (const std::exception& e) {
+        error_rethrow(Journal::Component::Kriya,
+            Journal::Context::CoroutineScheduling,
+            std::source_location::current(),
+            "Error writing to video container: {}",
+            e.what());
+    }
+}
+
+Kakshya::DataVariant read_from_container(const std::shared_ptr<Kakshya::VideoStreamContainer>& container,
+    uint64_t start,
+    uint32_t length)
+{
+    std::vector<uint8_t> output;
+
+    const uint64_t total = container->get_total_source_frames();
+    const uint64_t end = length == 0 ? total : std::min<uint64_t>(total, start + length);
+
+    for (uint64_t frame = start; frame < end && container->is_frame_available(frame); ++frame) {
+        const auto pixels = container->get_frame_pixels(frame);
+        output.insert(output.end(), pixels.begin(), pixels.end());
+    }
+
+    return output;
 }
 
 }

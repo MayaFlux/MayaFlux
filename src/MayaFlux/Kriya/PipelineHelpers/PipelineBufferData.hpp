@@ -8,6 +8,8 @@ class AudioBuffer;
 
 namespace MayaFlux::Kakshya {
 class DynamicSoundStream;
+class DynamicVideoStream;
+class VideoStreamContainer;
 }
 
 namespace MayaFlux::Kriya::detail {
@@ -16,5 +18,8 @@ Kakshya::DataVariant extract_buffer_data(const std::shared_ptr<Buffers::AudioBuf
 void write_to_buffer(const std::shared_ptr<Buffers::AudioBuffer>& buffer, const Kakshya::DataVariant& data);
 void write_to_container(const std::shared_ptr<Kakshya::DynamicSoundStream>& container, const Kakshya::DataVariant& data, uint32_t channel);
 Kakshya::DataVariant read_from_container(const std::shared_ptr<Kakshya::DynamicSoundStream>& container, uint64_t start, uint32_t length);
+
+void write_to_container(const std::shared_ptr<Kakshya::DynamicVideoStream>& container, const Kakshya::DataVariant& data);
+Kakshya::DataVariant read_from_container(const std::shared_ptr<Kakshya::VideoStreamContainer>& container, uint64_t start, uint32_t length);
 
 }
