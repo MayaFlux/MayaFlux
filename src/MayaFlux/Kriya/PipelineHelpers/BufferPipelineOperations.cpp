@@ -16,7 +16,8 @@ namespace {
 
     std::optional<Kakshya::DataVariant> select_operation_data(
         const std::unordered_map<BufferOperation*, Kakshya::DataVariant>& operation_data,
-        BufferOperation& op)
+        BufferOperation& op,
+        bool graphics_read_pending)
     {
         if (const auto own = operation_data.find(&op); own != operation_data.end()) {
             return own->second;
@@ -26,7 +27,11 @@ namespace {
             return operation_data.begin()->second;
         }
 
-        return std::nullopt;
+        if (graphics_read_pending) {
+            return std::nullopt;
+        }
+
+        return Kakshya::DataVariant {};
     }
 
     bool same_extent(const Kakshya::DataVariant& a, const Kakshya::DataVariant& b)
@@ -90,7 +95,7 @@ void BufferPipeline::process_operation(BufferOperation& op, uint64_t cycle)
 
 void BufferPipeline::process_transform(BufferOperation& op, uint64_t cycle)
 {
-    auto selected = select_operation_data(m_operation_data, op);
+    auto selected = select_operation_data(m_operation_data, op, !m_readers.empty());
     if (!selected) {
         return;
     }
@@ -138,7 +143,7 @@ void BufferPipeline::process_transform(BufferOperation& op, uint64_t cycle)
 
 void BufferPipeline::process_route(BufferOperation& op)
 {
-    const auto selected = select_operation_data(m_operation_data, op);
+    const auto selected = select_operation_data(m_operation_data, op, !m_readers.empty());
     if (!selected) {
         return;
     }
@@ -239,7 +244,7 @@ void BufferPipeline::process_fuse(BufferOperation& op, uint64_t cycle)
 
 void BufferPipeline::process_dispatch(BufferOperation& op, uint64_t cycle)
 {
-    auto selected = select_operation_data(m_operation_data, op);
+    auto selected = select_operation_data(m_operation_data, op, !m_readers.empty());
     if (!selected) {
         return;
     }

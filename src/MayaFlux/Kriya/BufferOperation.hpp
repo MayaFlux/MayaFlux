@@ -348,7 +348,7 @@ namespace Kriya {
          * @return BufferOperation configured for conditional execution
          */
         static BufferOperation when(std::function<bool(uint32_t)> condition,
-            Buffers::ProcessingToken token);
+            Buffers::ProcessingToken token = Buffers::ProcessingToken::AUDIO_BACKEND);
 
         /**
          * @brief Create a dispatch operation for external processing.
