@@ -2,11 +2,13 @@
 
 #include "MayaFlux/Buffers/VKBuffer.hpp"
 #include "MayaFlux/Kakshya/NDData/DataAccess.hpp"
+#include "MayaFlux/Kakshya/NDData/MeshData.hpp"
 
 namespace MayaFlux::Buffers {
 
 class VKBuffer;
 class AudioBuffer;
+class ComputeMeshBuffer;
 
 inline constexpr float k_buffer_growth_factor = 1.5F;
 
@@ -413,6 +415,55 @@ MAYAFLUX_API std::shared_ptr<VKBuffer> create_staging_buffer(size_t size);
  * @return True if buffer is device-local
  */
 MAYAFLUX_API bool is_device_local(const std::shared_ptr<VKBuffer>& buffer);
+
+/**
+ * @brief Resolve the vertex extent of a buffer's primary storage for reading.
+ * @param source Initialized buffer carrying a vertex layout.
+ * @return The buffer's layout when it has a nonzero stride and count and
+ *         vertex_count * stride_bytes fits inside the allocation; nullopt otherwise.
+ *
+ * vertex_count is whatever the layout declares. On buffers whose geometry is
+ * generated on the GPU it may describe capacity rather than live vertices.
+ */
+[[nodiscard]] MAYAFLUX_API std::optional<Kakshya::VertexLayout> resolve_vertex_layout(
+    const std::shared_ptr<VKBuffer>& source);
+
+/**
+ * @brief Read the live vertex count of a ComputeMeshBuffer.
+ * @param buffer Source buffer. setup_processors() must have run.
+ * @return The atomic counter's current value, read from its host-visible
+ *         mapping with no transfer; nullopt if the buffer has no mesh
+ *         processor or its counter buffer is not allocated and mapped.
+ *
+ * The buffer's own allocation and layout describe worst-case capacity, not
+ * this count.
+ */
+[[nodiscard]] MAYAFLUX_API std::optional<uint32_t> compute_mesh_vertex_count(
+    const std::shared_ptr<ComputeMeshBuffer>& buffer);
+
+/**
+ * @brief Wrap non-indexed triangle vertices as MeshData.
+ * @param vertex_bytes Interleaved Kakshya::MeshVertex records; the vertex
+ *        count must be a nonzero multiple of 3.
+ * @return MeshData with a sequential index array (0..N-1) and the canonical
+ *         mesh layout; nullopt, with an error logged, if MeshInsertion rejects it.
+ */
+[[nodiscard]] MAYAFLUX_API std::optional<Kakshya::MeshData> triangle_soup_mesh(
+    std::span<const uint8_t> vertex_bytes);
+
+/**
+ * @brief Download a ComputeMeshBuffer's current live geometry to CPU.
+ *
+ * One-shot and blocking, via download_from_gpu_async: call it off the
+ * graphics thread. Downloads exactly compute_mesh_vertex_count() vertices
+ * rather than the worst-case allocation.
+ *
+ * @param buffer Source buffer. setup_processors() must have run.
+ * @return The geometry as non-indexed triangles, or nullopt if the buffer is
+ *         null, has no readable counter, or the live vertex count is zero.
+ */
+[[nodiscard]] MAYAFLUX_API std::optional<Kakshya::MeshData> download_compute_mesh(
+    const std::shared_ptr<ComputeMeshBuffer>& buffer);
 
 /**
  * @brief Grow a GPU buffer (and its paired staging buffer) to fit @p required bytes.

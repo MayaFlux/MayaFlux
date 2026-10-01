@@ -1,8 +1,12 @@
 #include "StagingUtils.hpp"
 
 #include "MayaFlux/Buffers/AudioBuffer.hpp"
+#include "MayaFlux/Buffers/Geometry/ComputeMeshBuffer.hpp"
+#include "MayaFlux/Buffers/Shaders/SDFMeshProcessor.hpp"
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
 
+#include "MayaFlux/Kakshya/NDData/MeshInsertion.hpp"
+#include "MayaFlux/Kakshya/NDData/VertexFormats.hpp"
 #include "MayaFlux/Kakshya/Utils/DataUtils.hpp"
 #include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 
@@ -370,6 +374,96 @@ void download_back_buffer(
 bool is_device_local(const std::shared_ptr<VKBuffer>& buffer)
 {
     return buffer && !buffer->is_host_visible();
+}
+
+std::optional<Kakshya::VertexLayout> resolve_vertex_layout(
+    const std::shared_ptr<VKBuffer>& source)
+{
+    if (!source || !source->is_initialized()) {
+        return std::nullopt;
+    }
+
+    auto layout = source->get_vertex_layout();
+    if (!layout || layout->stride_bytes == 0 || layout->vertex_count == 0
+        || layout->vertex_count > source->get_size_bytes() / layout->stride_bytes) {
+        return std::nullopt;
+    }
+
+    return layout;
+}
+
+std::optional<uint32_t> compute_mesh_vertex_count(
+    const std::shared_ptr<ComputeMeshBuffer>& buffer)
+{
+    if (!buffer) {
+        return std::nullopt;
+    }
+
+    const auto processor = buffer->get_mesh_processor();
+    if (!processor) {
+        return std::nullopt;
+    }
+
+    const auto counter = processor->counter_buf();
+    const auto* counter_ptr = counter
+        ? static_cast<const uint32_t*>(counter->get_mapped_ptr())
+        : nullptr;
+    if (!counter_ptr) {
+        return std::nullopt;
+    }
+
+    return *counter_ptr;
+}
+
+std::optional<Kakshya::MeshData> triangle_soup_mesh(std::span<const uint8_t> vertex_bytes)
+{
+    std::vector<uint32_t> indices(vertex_bytes.size() / sizeof(Kakshya::MeshVertex));
+    std::ranges::iota(indices, 0U);
+
+    auto mesh_data = Kakshya::MeshData::empty();
+    Kakshya::MeshInsertion ins(mesh_data.vertex_variant, mesh_data.index_variant);
+    ins.insert_flat(
+        vertex_bytes,
+        std::span<const uint32_t>(indices),
+        Kakshya::VertexLayout::for_meshes(sizeof(Kakshya::MeshVertex)));
+    auto access = ins.build();
+    if (!access) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "triangle_soup_mesh: MeshInsertion::build() failed");
+        return std::nullopt;
+    }
+    mesh_data.layout = access->layout;
+
+    return mesh_data;
+}
+
+std::optional<Kakshya::MeshData> download_compute_mesh(
+    const std::shared_ptr<ComputeMeshBuffer>& buffer)
+{
+    if (!buffer) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "download_compute_mesh: null buffer");
+        return std::nullopt;
+    }
+
+    const auto vertex_count = compute_mesh_vertex_count(buffer);
+    if (!vertex_count) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "download_compute_mesh: no mesh processor (setup_processors() has not been called) "
+            "or the counter buffer is not host-visible or not allocated yet");
+        return std::nullopt;
+    }
+    if (*vertex_count == 0) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "download_compute_mesh: live vertex count is zero");
+        return std::nullopt;
+    }
+
+    std::vector<uint8_t> bytes(static_cast<size_t>(*vertex_count) * sizeof(Kakshya::MeshVertex));
+    std::shared_ptr<VKBuffer> staging;
+    download_from_gpu_async(buffer, bytes.data(), bytes.size(), staging);
+
+    return triangle_soup_mesh(bytes);
 }
 
 std::shared_ptr<VKBuffer> create_staging_buffer(size_t size)
