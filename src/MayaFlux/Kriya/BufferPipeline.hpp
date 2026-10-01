@@ -3,6 +3,12 @@
 #include "BufferOperation.hpp"
 #include "MayaFlux/Vruta/Scheduler.hpp"
 
+#include <map>
+
+namespace MayaFlux::Buffers {
+class DataReadProcessor;
+}
+
 namespace MayaFlux::Kriya {
 
 class CycleCoordinator;
@@ -357,6 +363,23 @@ public:
     void execute_scheduled_at_rate(uint32_t max_cycles = 0, double seconds_per_operation = 1);
 
     /**
+     * @brief Execute the pipeline at graphics frame rate.
+     * @param max_cycles Maximum number of cycles to execute (0 = infinite)
+     * @param frames_per_operation Frames to wait after each processing operation (0 = none)
+     *
+     * Runs the configured strategy on a GraphicsRoutine. Each capture iteration
+     * takes one frame, so a graphics capture armed in one frame resolves in the
+     * next. The capture and process timing modes apply only to buffer and sample
+     * rate execution. A pipeline with no waiting operation still advances one
+     * cycle per frame.
+     *
+     * @throws std::runtime_error if pipeline has no scheduler
+     *
+     * @note Execution is asynchronous. The pipeline keeps itself alive until completion.
+     */
+    void execute_frame_rate(uint64_t max_cycles = 0, uint64_t frames_per_operation = 0);
+
+    /**
      * @brief Execute pipeline synchronized to audio hardware cycle boundaries
      *
      * Creates a coroutine and registers it with the scheduler using the processing hook
@@ -434,8 +457,14 @@ private:
     std::vector<BufferOperation> m_operations;
     std::vector<DataState> m_data_states;
     std::unordered_map<BufferOperation*, Kakshya::DataVariant> m_operation_data;
+    struct GraphicsReader {
+        std::shared_ptr<Buffers::VKBuffer> buffer;
+        std::shared_ptr<Buffers::DataReadProcessor> processor;
+    };
+
+    std::map<std::pair<const BufferOperation*, const Buffers::VKBuffer*>, GraphicsReader> m_readers;
     std::vector<BranchInfo> m_branches;
-    std::vector<std::shared_ptr<Vruta::SoundRoutine>> m_branch_tasks;
+    std::vector<std::shared_ptr<Vruta::Routine>> m_branch_tasks;
     std::function<void(uint32_t)> m_cycle_start_callback;
     std::function<void(uint32_t)> m_cycle_end_callback;
     std::function<void()> m_on_complete;
@@ -448,6 +477,7 @@ private:
     Vruta::DelayContext m_process_timing { Vruta::DelayContext::SAMPLE_BASED };
 
     void capture_operation(BufferOperation& op, uint64_t cycle);
+    std::optional<Kakshya::DataVariant> read_graphics_buffer(BufferOperation& op, const std::shared_ptr<Buffers::VKBuffer>& buffer);
     void reset_accumulated_data();
     bool has_immediate_routing(const BufferOperation& op) const;
 
@@ -458,7 +488,18 @@ private:
     void process_fuse(BufferOperation& op, uint64_t cycle);
     void process_dispatch(BufferOperation& op, uint64_t cycle);
     void process_modify(BufferOperation& op, uint64_t cycle);
+    void queue_graphics_write(BufferOperation& op, const std::shared_ptr<Buffers::VKBuffer>& target, const Kakshya::DataVariant& data);
     std::shared_ptr<Vruta::SoundRoutine> dispatch_branch_async(BranchInfo& branch, uint64_t cycle);
+    std::shared_ptr<Vruta::GraphicsRoutine> dispatch_frame_branch(BranchInfo& branch);
+    std::vector<std::shared_ptr<Vruta::Routine>> dispatch_cycle_branches(bool frame_rate);
+    static bool any_active(const std::vector<std::shared_ptr<Vruta::Routine>>& tasks);
+
+    bool operation_due(const BufferOperation& op) const;
+    uint32_t operation_iterations(const BufferOperation& op) const;
+    void start_cycle();
+    void reset_cycle_state();
+    void flow_through(size_t index, uint64_t cycle);
+    void finish_cycle();
     void await_timing(Vruta::DelayContext mode, uint64_t units);
 
     void cleanup_expired_data();
@@ -469,6 +510,10 @@ private:
     Vruta::SoundRoutine execute_streaming(uint64_t max_cycles, uint64_t samples_per_operation);
     Vruta::SoundRoutine execute_parallel(uint64_t max_cycles, uint64_t samples_per_operation);
     Vruta::SoundRoutine execute_reactive(uint64_t max_cycles, uint64_t samples_per_operation);
+
+    Vruta::GraphicsRoutine execute_frame_internal(uint64_t max_cycles, uint64_t frames_per_operation);
+    Vruta::GraphicsRoutine execute_frame_phased(uint64_t max_cycles, uint64_t frames_per_operation);
+    Vruta::GraphicsRoutine execute_frame_streaming(uint64_t max_cycles, uint64_t frames_per_operation);
 
     void execute_capture_phase(uint64_t cycle_base);
     void execute_process_phase(uint64_t cycle);

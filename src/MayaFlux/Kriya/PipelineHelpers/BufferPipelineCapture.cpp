@@ -72,10 +72,36 @@ namespace {
 
 }
 
+std::optional<Kakshya::DataVariant> BufferPipeline::read_graphics_buffer(
+    BufferOperation& op, const std::shared_ptr<Buffers::VKBuffer>& buffer)
+{
+    auto& entry = m_readers[{ &op, buffer.get() }];
+    if (!entry.processor) {
+        entry.buffer = buffer;
+        entry.processor = std::make_shared<Buffers::DataReadProcessor>();
+        buffer->get_processing_chain()->add_processor(entry.processor, buffer);
+        entry.processor->set_skip_while_pending(true);
+    }
+
+    auto data = detail::resolve_graphics_read(*entry.processor);
+    detail::arm_graphics_read(*entry.processor, buffer);
+    return data;
+}
+
 void BufferPipeline::capture_operation(BufferOperation& op, uint64_t cycle)
 {
-    bool should_process = op.m_capture.get_processing_control() == BufferCapture::ProcessingControl::ON_CAPTURE;
-    auto buffer_data = detail::extract_buffer_data(op.m_capture.get_buffer(), should_process);
+    Kakshya::DataVariant buffer_data;
+
+    if (op.m_capture.get_audio_buffer()) {
+        bool should_process = op.m_capture.get_processing_control() == BufferCapture::ProcessingControl::ON_CAPTURE;
+        buffer_data = detail::extract_buffer_data(op.m_capture.get_audio_buffer(), should_process);
+    } else if (op.m_capture.get_graphics_buffer()) {
+        auto graphics_data = read_graphics_buffer(op, op.m_capture.get_graphics_buffer());
+        if (!graphics_data) {
+            return;
+        }
+        buffer_data = std::move(*graphics_data);
+    }
 
     if (op.m_capture.m_data_ready_callback) {
         op.m_capture.m_data_ready_callback(buffer_data, cycle);
@@ -184,7 +210,7 @@ void BufferPipeline::capture_operation(BufferOperation& op, uint64_t cycle)
             auto next_it = std::next(current_it);
             if (next_it != m_operations.end() && next_it->get_type() == BufferOperation::OpType::ROUTE) {
 
-                if (next_it->m_target_buffer) {
+                if (next_it->m_target_audio_buffer) {
                     if (!m_buffer_manager) {
                         error<std::invalid_argument>(Journal::Component::Kriya,
                             Journal::Context::CoroutineScheduling,
@@ -194,15 +220,19 @@ void BufferPipeline::capture_operation(BufferOperation& op, uint64_t cycle)
 
                     if (!next_it->m_attached_processor) {
                         auto writer = std::make_shared<Buffers::AudioWriteProcessor>();
-                        m_buffer_manager->add_processor(writer, next_it->m_target_buffer,
+                        m_buffer_manager->add_processor(writer, next_it->m_target_audio_buffer,
                             Buffers::ProcessingToken::AUDIO_BACKEND);
                         next_it->m_attached_processor = writer;
                     }
 
                     std::static_pointer_cast<Buffers::AudioWriteProcessor>(next_it->m_attached_processor)
                         ->set_data(buffer_data);
-                } else if (next_it->m_target_container) {
-                    detail::write_to_container(next_it->m_target_container, buffer_data, next_it->m_target_channel);
+                } else if (next_it->m_target_graphics_buffer) {
+                    queue_graphics_write(*next_it, next_it->m_target_graphics_buffer, buffer_data);
+                } else if (next_it->m_target_audio_stream) {
+                    detail::write_to_container(next_it->m_target_audio_stream, buffer_data, next_it->m_target_audio_channel);
+                } else if (next_it->m_target_graphics_stream) {
+                    detail::write_to_container(next_it->m_target_graphics_stream, buffer_data);
                 }
 
                 size_t route_index = std::distance(m_operations.begin(), next_it);

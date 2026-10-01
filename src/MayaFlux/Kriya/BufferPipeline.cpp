@@ -3,6 +3,8 @@
 #include "CycleCoordinator.hpp"
 
 #include "MayaFlux/Buffers/BufferManager.hpp"
+#include "MayaFlux/Buffers/BufferProcessingChain.hpp"
+#include "MayaFlux/Buffers/Staging/DataReadProcessor.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Kriya {
@@ -16,17 +18,26 @@ BufferPipeline::BufferPipeline(Vruta::TaskScheduler& scheduler, std::shared_ptr<
 
 BufferPipeline::~BufferPipeline()
 {
+    for (auto& [key, entry] : m_readers) {
+        entry.buffer->get_processing_chain()->remove_processor(entry.processor, entry.buffer);
+    }
+
     if (!m_buffer_manager) {
         return;
     }
 
     for (auto& op : m_operations) {
         if (op.m_attached_processor) {
-            if (op.get_type() == BufferOperation::OpType::ROUTE && op.m_target_buffer) {
-                m_buffer_manager->remove_processor(op.m_attached_processor, op.m_target_buffer);
+            const bool detachable = op.get_type() == BufferOperation::OpType::ROUTE
+                || op.get_type() == BufferOperation::OpType::LOAD
+                || op.get_type() == BufferOperation::OpType::FUSE
+                || op.get_type() == BufferOperation::OpType::MODIFY;
+
+            if (detachable && op.m_target_audio_buffer) {
+                m_buffer_manager->remove_processor(op.m_attached_processor, op.m_target_audio_buffer);
             }
-            if (op.get_type() == BufferOperation::OpType::MODIFY && op.m_target_buffer) {
-                m_buffer_manager->remove_processor(op.m_attached_processor, op.m_target_buffer);
+            if (detachable && op.m_target_graphics_buffer) {
+                m_buffer_manager->remove_processor(op.m_attached_processor, op.m_target_graphics_buffer);
             }
             op.m_attached_processor = nullptr;
         }
@@ -71,6 +82,31 @@ void BufferPipeline::execute_buffer_rate(uint64_t max_cycles)
 
     auto routine = std::make_shared<Vruta::SoundRoutine>(
         execute_internal(max_cycles, 0));
+
+    m_scheduler->add_task(std::move(routine));
+
+    m_active_self = self;
+}
+
+void BufferPipeline::execute_frame_rate(uint64_t max_cycles, uint64_t frames_per_operation)
+{
+    if (!m_scheduler) {
+        error<std::runtime_error>(Journal::Component::Kriya,
+            Journal::Context::CoroutineScheduling,
+            std::source_location::current(),
+            "Pipeline requires scheduler for execution");
+    }
+
+    auto self = shared_from_this();
+
+    if (max_cycles == 0) {
+        max_cycles = UINT64_MAX;
+        m_continuous_execution = true;
+    }
+    m_max_cycles = max_cycles;
+
+    auto routine = std::make_shared<Vruta::GraphicsRoutine>(
+        execute_frame_internal(max_cycles, frames_per_operation));
 
     m_scheduler->add_task(std::move(routine));
 

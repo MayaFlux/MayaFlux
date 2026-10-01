@@ -14,10 +14,14 @@ namespace Buffers {
 
 namespace Kakshya {
     class DynamicSoundStream;
+    class DynamicVideoStream;
+    class VideoStreamContainer;
 }
 
 namespace IO {
     class IOManager;
+    struct CameraConfig;
+    struct LoadConfig;
 }
 
 namespace Kriya {
@@ -80,9 +84,9 @@ namespace Kriya {
      * sophisticated scheduling and priority management.
      *
      * **Operation Types:**
-     * - **CAPTURE**: Extract data from AudioBuffer using configurable capture strategies
+     * - **CAPTURE**: Extract data from a buffer using configurable capture strategies
      * - **TRANSFORM**: Apply functional transformations to data variants
-     * - **ROUTE**: Direct data to AudioBuffer or DynamicSoundStream destinations
+     * - **ROUTE**: Direct data to audio or graphics buffers and streams
      * - **LOAD**: Read data from containers into buffers with position control
      * - **SYNC**: Coordinate timing and synchronization across pipeline stages
      * - **CONDITION**: Apply conditional logic and branching to data flow
@@ -103,7 +107,7 @@ namespace Kriya {
      *     >> capture_op
      *     >> BufferOperation::transform([](const auto& data, uint32_t cycle) {
      *         return apply_reverb(data);
-     *     })
+     *     }, Buffers::ProcessingToken::AUDIO_BACKEND)
      *     >> BufferOperation::route_to_container(output_stream);
      * ```
      * @class BufferCapture
@@ -199,6 +203,18 @@ namespace Kriya {
             const std::shared_ptr<Buffers::BufferManager>& buffer_manager,
             uint32_t input_channel);
 
+        /** @brief Open and capture a camera through IOManager. */
+        static BufferOperation capture_camera(
+            const std::shared_ptr<IO::IOManager>& io_manager,
+            const IO::CameraConfig& config,
+            BufferCapture::CaptureMode mode = BufferCapture::CaptureMode::TRANSIENT,
+            uint32_t cycle_count = 1);
+
+        /** @brief Open a camera and return its capture builder. */
+        static CaptureBuilder capture_camera_from(
+            const std::shared_ptr<IO::IOManager>& io_manager,
+            const IO::CameraConfig& config);
+
         /**
          * @brief Create a file capture operation that reads from file and stores in stream.
          * @param io_manager IOManager for file loading
@@ -213,6 +229,13 @@ namespace Kriya {
             uint32_t channel = 0,
             uint32_t cycle_count = 0);
 
+        /** @brief Capture a video file with explicit video load configuration. */
+        static BufferOperation capture_file(
+            const std::shared_ptr<IO::IOManager>& io_manager,
+            const std::string& filepath,
+            IO::LoadConfig config,
+            uint32_t cycle_count = 1);
+
         /**
          * @brief Create CaptureBuilder for file with fluent configuration.
          * @param io_manager IOManager for file loading
@@ -224,6 +247,12 @@ namespace Kriya {
             const std::shared_ptr<IO::IOManager>& io_manager,
             const std::string& filepath,
             uint32_t channel = 0);
+
+        /** @brief Create a capture builder for a video file. */
+        static CaptureBuilder capture_file_from(
+            const std::shared_ptr<IO::IOManager>& io_manager,
+            const std::string& filepath,
+            IO::LoadConfig config);
 
         /**
          * @brief Create operation to route file data to DynamicSoundStream.
@@ -239,12 +268,22 @@ namespace Kriya {
             std::shared_ptr<Kakshya::DynamicSoundStream> target_stream,
             uint32_t cycle_count = 0);
 
+        /** @brief Route frames from a video file to a dynamic video stream. */
+        static BufferOperation file_to_stream(
+            const std::shared_ptr<IO::IOManager>& io_manager,
+            const std::string& filepath,
+            std::shared_ptr<Kakshya::DynamicVideoStream> target_stream,
+            IO::LoadConfig config,
+            uint32_t cycle_count = 0);
+
         /**
          * @brief Create a transform operation with custom transformation function.
          * @param transformer Function that transforms DataVariant with cycle information
+         * @param token Processing domain for the operation
          * @return BufferOperation configured for data transformation
          */
-        static BufferOperation transform(TransformationFunction transformer);
+        static BufferOperation transform(TransformationFunction transformer,
+            Buffers::ProcessingToken token = Buffers::ProcessingToken::AUDIO_BACKEND);
 
         /**
          * @brief Create a routing operation to AudioBuffer destination.
@@ -261,6 +300,9 @@ namespace Kriya {
          */
         static BufferOperation route_to_buffer(std::shared_ptr<Buffers::AudioBuffer> target);
 
+        /** @brief Route data to a graphics buffer. */
+        static BufferOperation route_to_buffer(std::shared_ptr<Buffers::VKBuffer> target);
+
         /**
          * @brief Create a routing operation to DynamicSoundStream destination.
          *
@@ -276,6 +318,9 @@ namespace Kriya {
          */
         static BufferOperation route_to_container(std::shared_ptr<Kakshya::DynamicSoundStream> target, uint32_t channel = 0);
 
+        /** @brief Append frames to a dynamic video stream. */
+        static BufferOperation route_to_container(std::shared_ptr<Kakshya::DynamicVideoStream> target);
+
         /**
          * @brief Create a load operation from container to buffer.
          * @param source Source container to read from
@@ -289,19 +334,30 @@ namespace Kriya {
             uint64_t start_frame = 0,
             uint32_t length = 0);
 
+        /** @brief Load video frames from a dynamic stream into a graphics buffer. */
+        static BufferOperation load_from_container(
+            std::shared_ptr<Kakshya::DynamicVideoStream> source,
+            std::shared_ptr<Buffers::VKBuffer> target,
+            uint64_t start_frame = 0,
+            uint32_t length = 0);
+
         /**
          * @brief Create a conditional operation for pipeline branching.
          * @param condition Function that returns true when condition is met
+         * @param token Processing domain for the operation
          * @return BufferOperation configured for conditional execution
          */
-        static BufferOperation when(std::function<bool(uint32_t)> condition);
+        static BufferOperation when(std::function<bool(uint32_t)> condition,
+            Buffers::ProcessingToken token);
 
         /**
          * @brief Create a dispatch operation for external processing.
          * @param handler Function to handle data with cycle information
+         * @param token Processing domain for the operation
          * @return BufferOperation configured for external dispatch
          */
-        static BufferOperation dispatch_to(OperationFunction handler);
+        static BufferOperation dispatch_to(OperationFunction handler,
+            Buffers::ProcessingToken token = Buffers::ProcessingToken::AUDIO_BACKEND);
 
         /**
          * @brief Create a modify operation for direct buffer manipulation.
@@ -317,6 +373,11 @@ namespace Kriya {
             std::shared_ptr<Buffers::AudioBuffer> buffer,
             Buffers::AudioProcessingFunction modifier);
 
+        /** @brief Attach a graphics quick processor to a Vulkan buffer. */
+        static BufferOperation modify_buffer(
+            std::shared_ptr<Buffers::VKBuffer> buffer,
+            Buffers::GraphicsProcessingFunction modifier);
+
         /**
          * @brief Create a fusion operation for multiple AudioBuffer sources.
          * @param sources Vector of source buffers to fuse
@@ -327,6 +388,12 @@ namespace Kriya {
         static BufferOperation fuse_data(std::vector<std::shared_ptr<Buffers::AudioBuffer>> sources,
             TransformVectorFunction fusion_func,
             std::shared_ptr<Buffers::AudioBuffer> target);
+
+        /** @brief Fuse graphics buffer data into a graphics destination. */
+        static BufferOperation fuse_data(
+            std::vector<std::shared_ptr<Buffers::VKBuffer>> sources,
+            TransformVectorFunction fusion_func,
+            std::shared_ptr<Buffers::VKBuffer> target);
 
         /**
          * @brief Create a fusion operation for multiple DynamicSoundStream sources.
@@ -339,15 +406,22 @@ namespace Kriya {
             TransformVectorFunction fusion_func,
             std::shared_ptr<Kakshya::DynamicSoundStream> target);
 
+        /** @brief Fuse video stream frames into a dynamic video stream. */
+        static BufferOperation fuse_containers(
+            std::vector<std::shared_ptr<Kakshya::DynamicVideoStream>> sources,
+            TransformVectorFunction fusion_func,
+            std::shared_ptr<Kakshya::DynamicVideoStream> target);
+
         /**
          * @brief Create a CaptureBuilder for fluent capture configuration.
-         * @param buffer AudioBuffer to capture from (must be registered with BufferManager if using AUTOMATIC processing)
+         * @param buffer Buffer to capture from
          * @return CaptureBuilder for fluent operation construction
          *
-         * @note If the buffer uses ProcessingControl::AUTOMATIC, ensure it's registered with
-         *       the BufferManager via add_audio_buffer() before pipeline execution.
+         * @note Register the buffer with BufferManager before automatic processing.
          */
         static CaptureBuilder capture_from(std::shared_ptr<Buffers::AudioBuffer> buffer);
+        static CaptureBuilder capture_from(std::shared_ptr<Buffers::VKBuffer> buffer);
+        static CaptureBuilder capture_from(std::nullptr_t);
 
         /**
          * @brief Set execution priority for scheduler ordering.
@@ -389,9 +463,7 @@ namespace Kriya {
          */
         inline uint8_t get_priority() const { return m_priority; }
 
-        /**
-         * @brief Getters for processing token
-         */
+        /** @brief Return the operation's processing token. */
         inline Buffers::ProcessingToken get_token() const { return m_token; }
 
         /**
@@ -434,7 +506,7 @@ namespace Kriya {
 
         BufferOperation(OpType type, BufferCapture capture);
 
-        explicit BufferOperation(OpType type);
+        BufferOperation(OpType type, Buffers::ProcessingToken token);
 
         static bool is_capture_phase_operation(const BufferOperation& op);
 
@@ -448,27 +520,33 @@ namespace Kriya {
         bool m_is_streaming {};
 
         TransformationFunction m_transformer;
-        Buffers::AudioProcessingFunction m_buffer_modifier;
+        Buffers::AudioProcessingFunction m_audio_buffer_modifier;
+        Buffers::GraphicsProcessingFunction m_graphics_buffer_modifier;
 
-        std::shared_ptr<Buffers::AudioBuffer> m_target_buffer;
-        std::shared_ptr<Kakshya::DynamicSoundStream> m_target_container;
-        uint32_t m_target_channel {};
+        std::shared_ptr<Buffers::AudioBuffer> m_target_audio_buffer;
+        std::shared_ptr<Buffers::VKBuffer> m_target_graphics_buffer;
+        std::shared_ptr<Kakshya::DynamicSoundStream> m_target_audio_stream;
+        std::shared_ptr<Kakshya::DynamicVideoStream> m_target_graphics_stream;
+        uint32_t m_target_audio_channel {};
 
         std::shared_ptr<Buffers::BufferProcessor> m_attached_processor;
 
-        std::shared_ptr<Kakshya::DynamicSoundStream> m_source_container;
+        std::shared_ptr<Kakshya::DynamicSoundStream> m_source_audio_stream;
+        std::shared_ptr<Kakshya::VideoStreamContainer> m_source_graphics_stream;
         uint64_t m_start_frame {};
         uint32_t m_load_length {};
 
         std::function<bool(uint32_t)> m_condition;
         OperationFunction m_dispatch_handler;
 
-        std::vector<std::shared_ptr<Buffers::AudioBuffer>> m_source_buffers;
-        std::vector<std::shared_ptr<Kakshya::DynamicSoundStream>> m_source_containers;
+        std::vector<std::shared_ptr<Buffers::AudioBuffer>> m_source_audio_buffers;
+        std::vector<std::shared_ptr<Buffers::VKBuffer>> m_source_graphics_buffers;
+        std::vector<std::shared_ptr<Kakshya::DynamicSoundStream>> m_source_audio_streams;
+        std::vector<std::shared_ptr<Kakshya::DynamicVideoStream>> m_source_graphics_streams;
         TransformVectorFunction m_fusion_function;
 
         uint8_t m_priority = 128;
-        Buffers::ProcessingToken m_token = Buffers::ProcessingToken::AUDIO_BACKEND;
+        Buffers::ProcessingToken m_token { Buffers::ProcessingToken::AUDIO_BACKEND };
         uint32_t m_cycle_interval = 1;
         std::string m_tag;
 
