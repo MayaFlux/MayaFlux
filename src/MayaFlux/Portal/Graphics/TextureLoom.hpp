@@ -4,6 +4,7 @@
 
 #include "GraphicsUtils.hpp"
 
+#include "MayaFlux/Kakshya/NDData/ImageData.hpp"
 #include "MayaFlux/Kakshya/NDData/NDData.hpp"
 
 namespace MayaFlux::Core {
@@ -362,13 +363,39 @@ public:
      * @param staging  Persistent staging buffer, or nullptr for per-call path.
      * @param deferred When true and staging is supplied, records for deferred
      *                 submission rather than immediate fenced execution.
+     * @param restore_layout Layout the image is left in. The default matches the
+     *                 layout the download previously always restored.
+     * @param restore_stage  Pipeline stage that consumes the image after restore.
      */
     void download_data(
         const std::shared_ptr<Core::VKImage>& image,
         void* data,
         size_t size,
         const std::shared_ptr<Buffers::VKBuffer>& staging,
-        bool deferred = false);
+        bool deferred = false,
+        vk::ImageLayout restore_layout = vk::ImageLayout::eShaderReadOnlyOptimal,
+        vk::PipelineStageFlags restore_stage = vk::PipelineStageFlagBits::eFragmentShader);
+
+    /**
+     * @brief Download the base level of an image as typed pixels.
+     *
+     * Blocking. The element type of the returned storage follows the format:
+     * one byte per channel gives uint8, two gives uint16, four gives float.
+     *
+     * @param image          Source image. Must satisfy readable_format().
+     * @param staging        Persistent host-visible staging buffer of at least
+     *                       the base level's byte size, or nullptr for a per-call one.
+     * @param restore_layout Layout the image is left in.
+     * @param restore_stage  Pipeline stage that consumes the image after restore.
+     * @return The pixels with width, height, channels and format set, or
+     *         nullopt, with an error logged, if the image is not readable or
+     *         the loom is not initialised.
+     */
+    [[nodiscard]] std::optional<Kakshya::ImageData> download_image(
+        const std::shared_ptr<Core::VKImage>& image,
+        const std::shared_ptr<Buffers::VKBuffer>& staging = nullptr,
+        vk::ImageLayout restore_layout = vk::ImageLayout::eShaderReadOnlyOptimal,
+        vk::PipelineStageFlags restore_stage = vk::PipelineStageFlagBits::eFragmentShader);
 
     /**
      * @brief Transition a VKImage to a new Vulkan layout via an immediate submission.
@@ -436,6 +463,23 @@ public:
      * formats with no ImageFormat equivalent rather than guessing.
      */
     static std::optional<ImageFormat> from_vulkan_format(vk::Format vk_format);
+
+    /**
+     * @brief ImageFormat of an image that can be read back as one flat block.
+     *
+     * Requires an initialised 2D image of one layer and depth 1 with a
+     * transfer-source usage, a format with an ImageFormat mapping that is not
+     * combined depth-stencil, and a nonzero base level that fits the image's
+     * allocation. The base level's byte count is
+     * calculate_image_size(width, height, 1, format).
+     *
+     * Checks structure only: it says nothing about the image's current layout
+     * or whether anything has been written to it.
+     *
+     * @return The format, or nullopt when any requirement is not met.
+     */
+    [[nodiscard]] static std::optional<ImageFormat> readable_format(
+        const std::shared_ptr<Core::VKImage>& image);
 
     /**
      * @brief Calculate image data size

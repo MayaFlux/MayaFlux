@@ -620,7 +620,9 @@ void TextureLoom::download_data(
     void* data,
     size_t size,
     const std::shared_ptr<Buffers::VKBuffer>& staging,
-    bool deferred)
+    bool deferred,
+    vk::ImageLayout restore_layout,
+    vk::PipelineStageFlags restore_stage)
 {
     if (!is_initialized() || !image || !data) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
@@ -628,7 +630,72 @@ void TextureLoom::download_data(
         return;
     }
 
-    m_resource_manager->download_image_data(image, data, size, staging, deferred);
+    m_resource_manager->download_image_data(
+        image, data, size, staging, deferred, restore_layout, restore_stage);
+}
+
+std::optional<Kakshya::ImageData> TextureLoom::download_image(
+    const std::shared_ptr<Core::VKImage>& image,
+    const std::shared_ptr<Buffers::VKBuffer>& staging,
+    vk::ImageLayout restore_layout,
+    vk::PipelineStageFlags restore_stage)
+{
+    if (!is_initialized()) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "download_image: TextureLoom is not initialised");
+        return std::nullopt;
+    }
+
+    const auto format = readable_format(image);
+    if (!format) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "download_image: image is not readable as a single-layer 2D base level");
+        return std::nullopt;
+    }
+
+    const uint32_t channels = get_channel_count(*format);
+    const size_t bytes_per_pixel = get_bytes_per_pixel(*format);
+    if (channels == 0 || bytes_per_pixel % channels != 0) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "download_image: format {} has no whole bytes per channel", static_cast<int>(*format));
+        return std::nullopt;
+    }
+
+    const size_t element_count = static_cast<size_t>(image->get_width()) * image->get_height() * channels;
+
+    Kakshya::ImageData result;
+    result.width = image->get_width();
+    result.height = image->get_height();
+    result.channels = channels;
+    result.format = *format;
+
+    switch (bytes_per_pixel / channels) {
+    case 1:
+        result.pixels.emplace<std::vector<uint8_t>>(element_count);
+        break;
+    case 2:
+        result.pixels.emplace<std::vector<uint16_t>>(element_count);
+        break;
+    case 4:
+        result.pixels.emplace<std::vector<float>>(element_count);
+        break;
+    default:
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "download_image: unsupported bytes per channel for format {}", static_cast<int>(*format));
+        return std::nullopt;
+    }
+
+    void* destination = std::visit([](auto& pixels) -> void* { return pixels.data(); }, result.pixels);
+    download_data(image, destination, calculate_image_size(result.width, result.height, 1, *format),
+        staging, false, restore_layout, restore_stage);
+
+    if (!result.is_consistent()) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "download_image: downloaded pixels do not match format {}", static_cast<int>(*format));
+        return std::nullopt;
+    }
+
+    return result;
 }
 
 void TextureLoom::transition_layout(
@@ -857,6 +924,41 @@ std::optional<ImageFormat> TextureLoom::from_vulkan_format(vk::Format vk_format)
     default:
         return std::nullopt;
     }
+}
+
+std::optional<ImageFormat> TextureLoom::readable_format(
+    const std::shared_ptr<Core::VKImage>& image)
+{
+    if (!image || !image->is_initialized()) {
+        return std::nullopt;
+    }
+
+    if (image->get_type() != Core::VKImage::Type::TYPE_2D
+        || image->get_depth() != 1 || image->get_array_layers() != 1) {
+        return std::nullopt;
+    }
+
+    if (!static_cast<bool>(image->get_usage_flags() & vk::ImageUsageFlagBits::eTransferSrc)) {
+        return std::nullopt;
+    }
+
+    const auto aspects = image->get_aspect_flags();
+    if (static_cast<bool>(aspects & vk::ImageAspectFlagBits::eDepth)
+        && static_cast<bool>(aspects & vk::ImageAspectFlagBits::eStencil)) {
+        return std::nullopt;
+    }
+
+    const auto format = from_vulkan_format(image->get_format());
+    if (!format) {
+        return std::nullopt;
+    }
+
+    const size_t byte_count = calculate_image_size(image->get_width(), image->get_height(), 1, *format);
+    if (byte_count == 0 || byte_count > image->get_size_bytes()) {
+        return std::nullopt;
+    }
+
+    return format;
 }
 
 size_t TextureLoom::calculate_image_size(
