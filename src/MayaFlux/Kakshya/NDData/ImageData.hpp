@@ -111,6 +111,21 @@ struct ImageData {
         ImageFormat format);
 
     /**
+     * @brief Build an ImageData from raw pixel bytes in @p format's layout.
+     *
+     * Allocates as allocate() does and copies @p bytes in.
+     *
+     * @return The populated ImageData, or nullopt when allocate() would fail
+     *         or @p bytes is not exactly width * height * channels elements.
+     */
+    [[nodiscard]] static std::optional<ImageData> from_bytes(
+        uint32_t width,
+        uint32_t height,
+        uint32_t channels,
+        ImageFormat format,
+        std::span<const uint8_t> bytes);
+
+    /**
      * @brief Number of pixel elements (not bytes), dispatched on variant.
      */
     [[nodiscard]] size_t element_count() const

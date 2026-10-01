@@ -52,6 +52,22 @@ std::optional<ImageData> ImageData::allocate(
     return result;
 }
 
+std::optional<ImageData> ImageData::from_bytes(
+    uint32_t width,
+    uint32_t height,
+    uint32_t channels,
+    ImageFormat format,
+    std::span<const uint8_t> bytes)
+{
+    auto result = allocate(width, height, channels, format);
+    if (!result || result->byte_size() != bytes.size()) {
+        return std::nullopt;
+    }
+
+    std::memcpy(result->data(), bytes.data(), bytes.size());
+    return result;
+}
+
 bool ImageData::is_consistent() const
 {
     using F = ImageFormat;
