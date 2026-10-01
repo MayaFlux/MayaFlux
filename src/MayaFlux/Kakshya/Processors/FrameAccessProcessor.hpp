@@ -125,7 +125,7 @@ public:
 
     void set_global_fps(double fps) { m_global_fps = fps; }
 
-private:
+protected:
     std::atomic<bool> m_is_processing { false };
     bool m_prepared {};
     bool m_auto_advance { true };
