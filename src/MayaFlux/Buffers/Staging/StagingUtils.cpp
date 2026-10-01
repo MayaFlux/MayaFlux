@@ -376,6 +376,49 @@ bool is_device_local(const std::shared_ptr<VKBuffer>& buffer)
     return buffer && !buffer->is_host_visible();
 }
 
+bool is_transfer_source(const std::shared_ptr<VKBuffer>& buffer)
+{
+    return buffer
+        && static_cast<bool>(buffer->get_usage_flags() & vk::BufferUsageFlagBits::eTransferSrc);
+}
+
+Portal::Graphics::GpuBufferHandle gpu_buffer_handle(const std::shared_ptr<VKBuffer>& buffer)
+{
+    if (!buffer) {
+        return {};
+    }
+
+    const auto& resources = buffer->get_buffer_resources();
+    return {
+        .buffer = resources.buffer,
+        .mapped_ptr = resources.mapped_ptr,
+        .size_bytes = buffer->get_size_bytes(),
+    };
+}
+
+Portal::Graphics::GpuBufferHandle gpu_buffer_handle(
+    const VKBufferResources::GenerationSlot& slot,
+    size_t size_bytes)
+{
+    if (!slot.buffer) {
+        return {};
+    }
+
+    return {
+        .buffer = slot.buffer,
+        .mapped_ptr = slot.mapped_ptr,
+        .size_bytes = size_bytes,
+    };
+}
+
+VKBufferResources::GenerationSlot generation_slot(const Portal::Graphics::GpuBufferHandle& handle)
+{
+    VKBufferResources::GenerationSlot slot;
+    slot.buffer = handle.buffer;
+    slot.mapped_ptr = handle.mapped_ptr;
+    return slot;
+}
+
 std::optional<Kakshya::VertexLayout> resolve_vertex_layout(
     const std::shared_ptr<VKBuffer>& source)
 {

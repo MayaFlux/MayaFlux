@@ -3,6 +3,7 @@
 #include "MayaFlux/Buffers/VKBuffer.hpp"
 #include "MayaFlux/Kakshya/NDData/DataAccess.hpp"
 #include "MayaFlux/Kakshya/NDData/MeshData.hpp"
+#include "MayaFlux/Portal/Graphics/ShaderUtils.hpp"
 
 namespace MayaFlux::Buffers {
 
@@ -415,6 +416,45 @@ MAYAFLUX_API std::shared_ptr<VKBuffer> create_staging_buffer(size_t size);
  * @return True if buffer is device-local
  */
 MAYAFLUX_API bool is_device_local(const std::shared_ptr<VKBuffer>& buffer);
+
+/**
+ * @brief Whether a buffer's memory can be the source of a transfer.
+ * @param buffer Buffer to query; null yields false.
+ * @return True when its usage flags include transfer-source.
+ */
+[[nodiscard]] MAYAFLUX_API bool is_transfer_source(const std::shared_ptr<VKBuffer>& buffer);
+
+/**
+ * @brief View a buffer's primary GPU storage without reading it back.
+ * @param buffer Buffer to view; null yields an empty handle.
+ * @return Non-owning handle carrying the Vulkan buffer, its host mapping when
+ *         the memory is host visible, and the buffer's size in bytes. The
+ *         caller must keep @p buffer alive while using it.
+ */
+[[nodiscard]] MAYAFLUX_API Portal::Graphics::GpuBufferHandle gpu_buffer_handle(
+    const std::shared_ptr<VKBuffer>& buffer);
+
+/**
+ * @brief View a raw back_buffers slot without reading it back.
+ * @param slot Slot, typically from VKBuffer::get_buffer_resources().back_buffers
+ *        or a named state accessor such as NetworkGeometryBuffer::read_state_slot().
+ * @param size_bytes Byte size of the slot's contents. A slot does not carry its
+ *        size, so the owning buffer's own accessor supplies it.
+ * @return Non-owning handle carrying the slot's Vulkan buffer and host mapping,
+ *         or an empty handle when the slot's buffer is null.
+ */
+[[nodiscard]] MAYAFLUX_API Portal::Graphics::GpuBufferHandle gpu_buffer_handle(
+    const VKBufferResources::GenerationSlot& slot,
+    size_t size_bytes);
+
+/**
+ * @brief Express a buffer handle as the slot the back_buffers transfer helpers take.
+ * @param handle Handle to convert.
+ * @return Slot carrying the handle's Vulkan buffer and host mapping. Its memory
+ *         handle is left null, which the transfer helpers do not use.
+ */
+[[nodiscard]] MAYAFLUX_API VKBufferResources::GenerationSlot generation_slot(
+    const Portal::Graphics::GpuBufferHandle& handle);
 
 /**
  * @brief Resolve the vertex extent of a buffer's primary storage for reading.
