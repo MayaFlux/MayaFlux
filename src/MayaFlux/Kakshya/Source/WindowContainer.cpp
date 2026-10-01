@@ -10,8 +10,6 @@
 #include "MayaFlux/Kakshya/Utils/RegionUtils.hpp"
 #include "MayaFlux/Kakshya/Utils/SurfaceUtils.hpp"
 
-#include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
-
 namespace MayaFlux::Kakshya {
 
 namespace {
@@ -22,11 +20,11 @@ namespace {
      * Packed A2B10G10R10 has no direct ImageFormat equivalent; it is widened
      * to RGBA16F so TextureLoom can allocate a sampled image without data loss.
      */
-    Portal::Graphics::ImageFormat surface_format_to_image_format(
+    ImageFormat surface_format_to_image_format(
         Core::GraphicsSurfaceInfo::SurfaceFormat fmt) noexcept
     {
         using SF = Core::GraphicsSurfaceInfo::SurfaceFormat;
-        using IF = Portal::Graphics::ImageFormat;
+        using IF = ImageFormat;
         switch (fmt) {
         case SF::B8G8R8A8_SRGB:
             return IF::BGRA8_SRGB;
@@ -47,7 +45,7 @@ namespace {
     }
 
     Portal::Graphics::ImageKey sampled_image_key(
-        uint32_t width, uint32_t height, Portal::Graphics::ImageFormat format)
+        uint32_t width, uint32_t height, ImageFormat format)
     {
         return { .width = width, .height = height, .layers = 1, .format = format };
     }
@@ -77,7 +75,7 @@ WindowContainer::WindowContainer(std::shared_ptr<Core::Window> window,
         m_structure.get_width(), m_structure.get_height(), m_frame_capacity);
 }
 
-Portal::Graphics::ImageFormat WindowContainer::get_image_format() const
+ImageFormat WindowContainer::get_image_format() const
 {
     return surface_format_to_image_format(query_surface_format(m_window));
 }

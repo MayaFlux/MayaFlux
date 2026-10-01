@@ -35,7 +35,7 @@ public:
      */
     VideoFileContainer(uint32_t width,
         uint32_t height,
-        Portal::Graphics::ImageFormat format,
+        ImageFormat format,
         double frame_rate);
 
     ~VideoFileContainer() override = default;

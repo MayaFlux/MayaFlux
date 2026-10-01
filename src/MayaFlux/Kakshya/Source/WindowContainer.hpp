@@ -1,7 +1,6 @@
 #pragma once
 
 #include "MayaFlux/Kakshya/SignalSourceContainer.hpp"
-#include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
 #include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 
 #include "MayaFlux/Transitive/Memory/SeqLock.hpp"
@@ -82,7 +81,7 @@ public:
      * not from the WindowCreateInfo declaration. Use this when constructing a
      * TextureBuffer to receive the output of to_image().
      */
-    [[nodiscard]] Portal::Graphics::ImageFormat get_image_format() const;
+    [[nodiscard]] ImageFormat get_image_format() const;
 
     /**
      * @brief Mutable pointer into m_data[frame_index] for the processor to write into.

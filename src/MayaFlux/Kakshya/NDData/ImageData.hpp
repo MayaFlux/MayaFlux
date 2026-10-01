@@ -1,8 +1,43 @@
 #pragma once
 
-#include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
-
 namespace MayaFlux::Kakshya {
+
+/**
+ * @enum ImageFormat
+ * @brief User-friendly image format enum
+ *
+ * Abstracts Vulkan formats for API convenience. Portal maps it to
+ * vk::Format; this layer carries no Vulkan types.
+ */
+enum class ImageFormat : uint8_t {
+    // Normalized formats
+    R8, ///< Single channel 8-bit
+    RG8, ///< Two channel 8-bit
+    RGB8, ///< Three channel 8-bit
+    RGBA8, ///< Four channel 8-bit
+    RGBA8_SRGB, ///< Four channel 8-bit sRGB
+
+    BGRA8, ///< 8-bit BGRA unsigned normalized
+    BGRA8_SRGB, ///< 8-bit BGRA sRGB
+
+    // Floating point formats
+    R16F, ///< Single channel 16-bit float
+    RG16F, ///< Two channel 16-bit float
+    RGBA16F, ///< Four channel 16-bit float
+    R32F, ///< Single channel 32-bit float
+    RG32F, ///< Two channel 32-bit float
+    RGBA32F, ///< Four channel 32-bit float
+
+    R16, ///< Single channel 16-bit unsigned integer
+    RG16, ///< Two channel 16-bit unsigned integer
+    RGBA16, ///< Four channel 16-bit unsigned integer
+
+    // Depth/stencil formats
+    DEPTH16, ///< 16-bit depth
+    DEPTH24, ///< 24-bit depth
+    DEPTH32F, ///< 32-bit float depth
+    DEPTH24_STENCIL8 ///< 24-bit depth + 8-bit stencil
+};
 
 /**
  * @struct ImageData
@@ -27,7 +62,7 @@ struct ImageData {
     uint32_t width { 0 };
     uint32_t height { 0 };
     uint32_t channels { 0 };
-    Portal::Graphics::ImageFormat format { Portal::Graphics::ImageFormat::RGBA8 };
+    ImageFormat format { ImageFormat::RGBA8 };
 
     /**
      * @brief Total byte size of pixel storage, dispatched on variant.

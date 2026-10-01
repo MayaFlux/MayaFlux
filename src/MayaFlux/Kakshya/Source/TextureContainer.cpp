@@ -9,13 +9,10 @@
 #include "MayaFlux/Kakshya/Utils/PixelStorage.hpp"
 #include "MayaFlux/Kakshya/Utils/RegionUtils.hpp"
 
-#include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
-
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Kakshya {
 
-using Portal::Graphics::ImageFormat;
 using Portal::Graphics::TextureLoom;
 
 //=============================================================================

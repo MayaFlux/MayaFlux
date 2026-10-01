@@ -54,7 +54,7 @@ public:
      */
     VideoStreamContainer(uint32_t width = 0,
         uint32_t height = 0,
-        Portal::Graphics::ImageFormat format = Portal::Graphics::ImageFormat::RGBA8,
+        ImageFormat format = ImageFormat::RGBA8,
         double frame_rate = 0.0);
 
     ~VideoStreamContainer() override = default;
@@ -116,7 +116,7 @@ public:
         uint32_t ring_capacity,
         uint32_t width,
         uint32_t height,
-        Portal::Graphics::ImageFormat format,
+        ImageFormat format,
         double frame_rate,
         uint32_t refill_threshold,
         uint64_t reader_id = 0);
@@ -317,7 +317,7 @@ public:
     [[nodiscard]] double get_frame_rate() const { return m_frame_rate; }
 
     /** @brief Pixel format governing storage type, channel count, and modality. */
-    [[nodiscard]] Portal::Graphics::ImageFormat get_format() const { return m_format; }
+    [[nodiscard]] ImageFormat get_format() const { return m_format; }
 
     /** @brief Component channels per pixel. Not bytes per pixel. */
     [[nodiscard]] uint32_t get_channels() const { return m_channels; }
@@ -351,7 +351,7 @@ protected:
     uint32_t m_height = 0;
     uint32_t m_channels = 4;
     size_t m_bpp = 4;
-    Portal::Graphics::ImageFormat m_format = Portal::Graphics::ImageFormat::RGBA8;
+    ImageFormat m_format = ImageFormat::RGBA8;
     double m_frame_rate = 0.0;
     uint64_t m_num_frames = 0;
 

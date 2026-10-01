@@ -1,7 +1,6 @@
 #pragma once
 
 #include "MayaFlux/Kakshya/SignalSourceContainer.hpp"
-#include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
 #include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 
 #include "MayaFlux/Transitive/Memory/SeqLock.hpp"
@@ -51,7 +50,7 @@ public:
      *
      * Allocates a zeroed pixel buffer. No GPU resource is created.
      */
-    TextureContainer(uint32_t width, uint32_t height, Portal::Graphics::ImageFormat format, uint32_t layers = 1);
+    TextureContainer(uint32_t width, uint32_t height, ImageFormat format, uint32_t layers = 1);
 
     /**
      * @brief Construct from an existing VKImage, downloading its pixel data.
@@ -63,7 +62,7 @@ public:
      */
     TextureContainer(
         const std::shared_ptr<Core::VKImage>& image,
-        Portal::Graphics::ImageFormat format);
+        ImageFormat format);
 
     ~TextureContainer() override = default;
 
@@ -320,7 +319,7 @@ public:
 
     [[nodiscard]] uint32_t get_width() const { return m_width; }
     [[nodiscard]] uint32_t get_height() const { return m_height; }
-    [[nodiscard]] Portal::Graphics::ImageFormat get_format() const { return m_format; }
+    [[nodiscard]] ImageFormat get_format() const { return m_format; }
     [[nodiscard]] uint32_t get_channel_count() const { return m_channels; }
 
     /** @brief Byte count of one complete pixel row. */
@@ -473,7 +472,7 @@ private:
 
     uint32_t m_width {};
     uint32_t m_height {};
-    Portal::Graphics::ImageFormat m_format {};
+    ImageFormat m_format {};
     uint32_t m_channels {};
     size_t m_bpp {};
 

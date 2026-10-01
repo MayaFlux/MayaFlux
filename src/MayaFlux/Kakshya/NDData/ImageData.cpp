@@ -4,7 +4,7 @@ namespace MayaFlux::Kakshya {
 
 bool ImageData::is_consistent() const
 {
-    using F = Portal::Graphics::ImageFormat;
+    using F = ImageFormat;
 
     const bool has_u8 = std::holds_alternative<std::vector<uint8_t>>(pixels);
     const bool has_u16 = std::holds_alternative<std::vector<uint16_t>>(pixels);

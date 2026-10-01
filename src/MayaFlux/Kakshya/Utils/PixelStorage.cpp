@@ -63,8 +63,6 @@ namespace {
 
 } // namespace
 
-using Portal::Graphics::ImageFormat;
-
 size_t storage_element_size(ImageFormat format)
 {
     switch (format) {
