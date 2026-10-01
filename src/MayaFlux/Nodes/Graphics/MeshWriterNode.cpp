@@ -1,6 +1,7 @@
 #include "MeshWriterNode.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
+#include "MayaFlux/Kakshya/NDData/MeshInsertion.hpp"
 
 namespace MayaFlux::Nodes::GpuSync {
 
@@ -33,6 +34,30 @@ void MeshWriterNode::set_mesh(const Kakshya::MeshData& data)
     set_mesh(
         std::span { reinterpret_cast<const MeshVertex*>(vb->data()), n },
         std::span { ib->data(), ib->size() });
+}
+
+std::optional<Kakshya::MeshData> MeshWriterNode::get_mesh_data() const
+{
+    if (m_vertices.empty() || m_indices.empty()) {
+        return std::nullopt;
+    }
+
+    auto mesh_data = Kakshya::MeshData::empty();
+    Kakshya::MeshInsertion ins(mesh_data.vertex_variant, mesh_data.index_variant);
+    ins.insert_flat(
+        std::span<const uint8_t>(
+            reinterpret_cast<const uint8_t*>(m_vertices.data()),
+            m_vertices.size() * sizeof(MeshVertex)),
+        std::span<const uint32_t>(m_indices),
+        Kakshya::VertexLayout::for_meshes(sizeof(MeshVertex)));
+
+    const auto access = ins.build();
+    if (!access) {
+        return std::nullopt;
+    }
+    mesh_data.layout = access->layout;
+
+    return mesh_data;
 }
 
 void MeshWriterNode::set_mesh(

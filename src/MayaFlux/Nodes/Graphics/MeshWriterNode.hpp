@@ -49,6 +49,16 @@ public:
      */
     void set_mesh_indices(std::span<const uint32_t> indices);
 
+    /**
+     * @brief The node's current geometry as MeshData, the inverse of set_mesh(const MeshData&).
+     *
+     * Vertices and indices are copied as stored, in the node's own space with
+     * no transform applied. The canonical mesh layout is used.
+     *
+     * @return The mesh, or nullopt when the node has no vertices or no indices.
+     */
+    [[nodiscard]] std::optional<Kakshya::MeshData> get_mesh_data() const;
+
     [[nodiscard]] const std::vector<MeshVertex>& get_mesh_vertices() const { return m_vertices; }
     [[nodiscard]] const std::vector<uint32_t>& get_mesh_indices() const { return m_indices; }
     [[nodiscard]] size_t get_mesh_vertex_count() const { return m_vertices.size(); }
