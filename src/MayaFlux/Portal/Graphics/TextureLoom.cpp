@@ -902,8 +902,9 @@ std::optional<ImageFormat> TextureLoom::from_vulkan_format(vk::Format vk_format)
     }
 }
 
-std::optional<ImageFormat> TextureLoom::readable_format(
-    const std::shared_ptr<Core::VKImage>& image)
+std::optional<ImageFormat> TextureLoom::transfer_format(
+    const std::shared_ptr<Core::VKImage>& image,
+    vk::ImageUsageFlagBits required_usage)
 {
     if (!image || !image->is_initialized()) {
         return std::nullopt;
@@ -914,7 +915,7 @@ std::optional<ImageFormat> TextureLoom::readable_format(
         return std::nullopt;
     }
 
-    if (!static_cast<bool>(image->get_usage_flags() & vk::ImageUsageFlagBits::eTransferSrc)) {
+    if (!static_cast<bool>(image->get_usage_flags() & required_usage)) {
         return std::nullopt;
     }
 
@@ -935,6 +936,18 @@ std::optional<ImageFormat> TextureLoom::readable_format(
     }
 
     return format;
+}
+
+std::optional<ImageFormat> TextureLoom::readable_format(
+    const std::shared_ptr<Core::VKImage>& image)
+{
+    return transfer_format(image, vk::ImageUsageFlagBits::eTransferSrc);
+}
+
+std::optional<ImageFormat> TextureLoom::writable_format(
+    const std::shared_ptr<Core::VKImage>& image)
+{
+    return transfer_format(image, vk::ImageUsageFlagBits::eTransferDst);
 }
 
 size_t TextureLoom::calculate_image_size(

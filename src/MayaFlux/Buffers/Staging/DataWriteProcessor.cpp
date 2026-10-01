@@ -3,7 +3,15 @@
 #include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 #include "StagingUtils.hpp"
 
+#include "MayaFlux/Buffers/Geometry/GeometryBuffer.hpp"
+#include "MayaFlux/Buffers/Geometry/MeshBuffer.hpp"
+#include "MayaFlux/Buffers/Network/MeshNetworkBuffer.hpp"
+#include "MayaFlux/Buffers/Network/NetworkGeometryBuffer.hpp"
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
+#include "MayaFlux/Buffers/State/VolumeGridBuffer.hpp"
+#include "MayaFlux/Buffers/Textures/TextureBuffer.hpp"
+#include "MayaFlux/Nodes/Graphics/MeshWriterNode.hpp"
+#include "MayaFlux/Nodes/Network/MeshNetwork.hpp"
 
 #include "MayaFlux/Kakshya/NDData/DataAccess.hpp"
 #include "MayaFlux/Kakshya/NDData/TextureAccess.hpp"
@@ -17,9 +25,182 @@
 
 namespace MayaFlux::Buffers {
 
+namespace {
+
+    void ensure_staging(std::shared_ptr<VKBuffer>& staging, size_t size)
+    {
+        if (!staging || staging->get_size_bytes() < size) {
+            staging = create_staging_buffer(size);
+        }
+    }
+
+}
+
 DataWriteProcessor::DataWriteProcessor()
+    : m_writes(std::make_unique<Memory::LockFreeQueue<WriteFn, k_write_queue_capacity>>())
 {
     m_processing_token = ProcessingToken::GRAPHICS_BACKEND;
+}
+
+void DataWriteProcessor::enqueue_write(WriteFn fn)
+{
+    if (!m_writes->push(fn)) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "DataWriteProcessor write queue is full; the write was dropped");
+    }
+}
+
+void DataWriteProcessor::write_buffer(std::shared_ptr<VKBuffer> target, Kakshya::DataVariant data, size_t dst_offset)
+{
+    auto payload = std::make_shared<Kakshya::DataVariant>(std::move(data));
+    enqueue_write([target = std::move(target), payload, dst_offset](DataWriteProcessor& self, const std::shared_ptr<VKBuffer>&) {
+        const auto bytes = Kakshya::convert_variant<uint8_t>(*payload);
+        if (!target || !target->is_initialized() || bytes.size_bytes() == 0
+            || dst_offset + bytes.size_bytes() > target->get_size_bytes()) {
+            MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "DataWriteProcessor write_buffer needs an initialized target with room for the data");
+            return;
+        }
+        if (is_device_local(target)) {
+            ensure_staging(self.m_write_staging, bytes.size_bytes());
+        }
+        upload_to_gpu(bytes.data(), bytes.size_bytes(), target, self.m_write_staging, dst_offset);
+    });
+}
+
+void DataWriteProcessor::write_field(std::string name, Kakshya::DataVariant data)
+{
+    auto payload = std::make_shared<Kakshya::DataVariant>(std::move(data));
+    enqueue_write([name = std::move(name), payload](DataWriteProcessor& self, const std::shared_ptr<VKBuffer>& vk) {
+        const auto bytes = Kakshya::convert_variant<uint8_t>(*payload);
+        const size_t size = bytes.size_bytes();
+
+        if (const auto volume = std::dynamic_pointer_cast<VolumeGridBuffer>(vk);
+            volume && volume->has_field(name)) {
+            if (size != volume->get_field_bytes(name)) {
+                MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                    "DataWriteProcessor write_field '{}' needs exactly {} bytes", name, volume->get_field_bytes(name));
+                return;
+            }
+            volume->seed_raw(name, bytes.data(), size);
+            return;
+        }
+
+        if (const auto network = std::dynamic_pointer_cast<NetworkGeometryBuffer>(vk);
+            network && network->has_state(name)) {
+            if (size != network->get_state_bytes(name)) {
+                MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                    "DataWriteProcessor write_field '{}' needs exactly {} bytes", name, network->get_state_bytes(name));
+                return;
+            }
+            const auto slot = network->read_state_slot(name);
+            if (!slot.mapped_ptr) {
+                ensure_staging(self.m_write_staging, size);
+            }
+            upload_back_buffer(slot, bytes.data(), size, self.m_write_staging);
+            return;
+        }
+
+        MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "DataWriteProcessor write_field found no field named '{}' on the attached buffer", name);
+    });
+}
+
+void DataWriteProcessor::write_back_buffer(size_t index, Kakshya::DataVariant data)
+{
+    auto payload = std::make_shared<Kakshya::DataVariant>(std::move(data));
+    enqueue_write([index, payload](DataWriteProcessor& self, const std::shared_ptr<VKBuffer>& vk) {
+        const auto bytes = Kakshya::convert_variant<uint8_t>(*payload);
+        const auto& slots = vk->get_buffer_resources().back_buffers;
+        if (index >= slots.size() || bytes.size_bytes() == 0) {
+            MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "DataWriteProcessor write_back_buffer needs an existing slot and nonempty data");
+            return;
+        }
+        if (!slots[index].mapped_ptr) {
+            ensure_staging(self.m_write_staging, bytes.size_bytes());
+        }
+        upload_back_buffer(slots[index], bytes.data(), bytes.size_bytes(), self.m_write_staging);
+    });
+}
+
+void DataWriteProcessor::write_mesh(Kakshya::MeshData data, std::string slot)
+{
+    auto mesh = std::make_shared<Kakshya::MeshData>(std::move(data));
+    enqueue_write([mesh, slot = std::move(slot)](DataWriteProcessor&, const std::shared_ptr<VKBuffer>& vk) {
+        if (const auto mesh_buffer = std::dynamic_pointer_cast<MeshBuffer>(vk)) {
+            mesh_buffer->set_mesh_data(std::move(*mesh));
+            return;
+        }
+
+        if (const auto geometry_buffer = std::dynamic_pointer_cast<GeometryBuffer>(vk)) {
+            if (const auto node = std::dynamic_pointer_cast<Nodes::GpuSync::MeshWriterNode>(
+                    geometry_buffer->get_geometry_node())) {
+                node->set_mesh(*mesh);
+                return;
+            }
+        }
+
+        if (const auto network_buffer = std::dynamic_pointer_cast<MeshNetworkBuffer>(vk)) {
+            const auto network = network_buffer->get_network();
+            const auto* found = network ? network->find_slot(slot) : nullptr;
+            if (found && found->node) {
+                found->node->set_mesh(*mesh);
+                return;
+            }
+        }
+
+        MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "DataWriteProcessor write_mesh needs a MeshBuffer, a GeometryBuffer driven by a MeshWriterNode, "
+            "or a MeshNetworkBuffer with a named slot that has a node");
+    });
+}
+
+void DataWriteProcessor::write_pixels(Kakshya::ImageData image)
+{
+    auto payload = std::make_shared<Kakshya::ImageData>(std::move(image));
+    enqueue_write([payload](DataWriteProcessor&, const std::shared_ptr<VKBuffer>& vk) {
+        const auto texture = std::dynamic_pointer_cast<TextureBuffer>(vk);
+        if (!texture || payload->format != texture->get_format()
+            || payload->width != texture->get_width() || payload->height != texture->get_height()
+            || !payload->is_consistent()) {
+            MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "DataWriteProcessor write_pixels needs a TextureBuffer and an image of its format and size");
+            return;
+        }
+        texture->set_pixel_data(payload->data(), payload->byte_size());
+    });
+}
+
+void DataWriteProcessor::write_texture_pixels(Kakshya::ImageData image)
+{
+    auto payload = std::make_shared<Kakshya::ImageData>(std::move(image));
+    enqueue_write([payload](DataWriteProcessor& self, const std::shared_ptr<VKBuffer>& vk) {
+        using Portal::Graphics::TextureLoom;
+
+        const auto texture = std::dynamic_pointer_cast<TextureBuffer>(vk);
+        const auto gpu_image = texture ? resolve_gpu_image(*texture) : nullptr;
+        auto& loom = TextureLoom::instance();
+        const auto format = TextureLoom::writable_format(gpu_image);
+        if (!loom.is_initialized() || !format || payload->format != *format
+            || payload->width != gpu_image->get_width() || payload->height != gpu_image->get_height()
+            || !payload->is_consistent()) {
+            MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "DataWriteProcessor write_texture_pixels needs a TextureBuffer with a writable GPU image "
+                "and an image of its format and size");
+            return;
+        }
+
+        const size_t size = payload->byte_size();
+        if (!self.m_write_image_staging || self.m_write_image_staging->get_size_bytes() < size) {
+            self.m_write_image_staging = create_image_staging_buffer(size);
+        }
+        if (self.m_write_image_staging) {
+            loom.upload_data(gpu_image, payload->data(), size, self.m_write_image_staging);
+        } else {
+            loom.upload_data(gpu_image, payload->data(), size);
+        }
+    });
 }
 
 void DataWriteProcessor::set_data(Kakshya::DataVariant variant)
@@ -122,6 +303,10 @@ void DataWriteProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
 
 void DataWriteProcessor::on_detach(const std::shared_ptr<Buffer>& /*buffer*/)
 {
+    while (m_writes->pop()) {
+    }
+    m_write_staging.reset();
+    m_write_image_staging.reset();
     m_staging.reset();
     m_pending_texture.reset();
     m_data_pending.clear();
@@ -141,6 +326,10 @@ void DataWriteProcessor::processing_function(const std::shared_ptr<Buffer>& buff
         MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             "DataWriteProcessor attached to non-VKBuffer");
         return;
+    }
+
+    while (auto write = m_writes->pop()) {
+        (*write)(*this, vk);
     }
 
     if (m_texture_dirty.test(std::memory_order_acquire)) {

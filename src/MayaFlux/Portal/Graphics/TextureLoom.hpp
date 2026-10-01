@@ -481,6 +481,19 @@ public:
         const std::shared_ptr<Core::VKImage>& image);
 
     /**
+     * @brief ImageFormat of an image that can be written as one flat block.
+     *
+     * The mirror of readable_format() with transfer-destination usage in
+     * place of transfer-source: an initialised single-layer 2D image of depth 1,
+     * a mapped format that is not combined depth-stencil, and a nonzero base
+     * level that fits the image's allocation.
+     *
+     * @return The format, or nullopt when any requirement is not met.
+     */
+    [[nodiscard]] static std::optional<ImageFormat> writable_format(
+        const std::shared_ptr<Core::VKImage>& image);
+
+    /**
      * @brief Calculate image data size
      */
     static size_t calculate_image_size(
@@ -495,6 +508,10 @@ public:
     static uint32_t get_channel_count(ImageFormat format);
 
 private:
+    static std::optional<ImageFormat> transfer_format(
+        const std::shared_ptr<Core::VKImage>& image,
+        vk::ImageUsageFlagBits required_usage);
+
     TextureLoom() = default;
     ~TextureLoom() { shutdown(); }
 
