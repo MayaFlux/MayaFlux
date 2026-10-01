@@ -1,65 +1,73 @@
 #include "MayaFlux/Kriya/BufferPipeline.hpp"
 
 #include "MayaFlux/Kriya/PipelineHelpers/PipelineBufferData.hpp"
+#include "MayaFlux/Kriya/PipelineHelpers/PipelineGraphicsData.hpp"
 
 #include "MayaFlux/Buffers/BufferManager.hpp"
+#include "MayaFlux/Buffers/BufferProcessingChain.hpp"
 #include "MayaFlux/Buffers/Staging/AudioWriteProcessor.hpp"
+#include "MayaFlux/Buffers/Staging/DataReadProcessor.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Kriya {
 
 namespace {
 
+    template <typename Fn>
+    void visit_matching(Kakshya::DataVariant& existing, const Kakshya::DataVariant& incoming, const Fn& fn)
+    {
+        if (existing.index() != incoming.index()) {
+            throw std::bad_variant_access();
+        }
+
+        std::visit([&](auto& stored) {
+            fn(stored, std::get<std::decay_t<decltype(stored)>>(incoming));
+        },
+            existing);
+    }
+
+    template <typename Vec>
+    void drop_front(Vec& values, size_t count)
+    {
+        values.erase(values.begin(), values.begin() + static_cast<std::ptrdiff_t>(count));
+    }
+
     void append_capture_data(Kakshya::DataVariant& existing, const Kakshya::DataVariant& incoming)
     {
-        auto& existing_data = std::get<std::vector<double>>(existing);
-        const auto& new_data = std::get<std::vector<double>>(incoming);
-        existing_data.insert(existing_data.end(), new_data.begin(), new_data.end());
+        visit_matching(existing, incoming, [](auto& stored, const auto& added) {
+            stored.insert(stored.end(), added.begin(), added.end());
+        });
     }
 
     void update_circular_capture(Kakshya::DataVariant& existing, const Kakshya::DataVariant& incoming, uint32_t circular_size)
     {
-        auto& circular = std::get<std::vector<double>>(existing);
-        const auto& new_data = std::get<std::vector<double>>(incoming);
+        visit_matching(existing, incoming, [circular_size](auto& circular, const auto& added) {
+            circular.insert(circular.end(), added.begin(), added.end());
 
-        circular.insert(circular.end(), new_data.begin(), new_data.end());
-
-        if (circular.size() > circular_size) {
-            circular.erase(circular.begin(),
-                circular.begin() + static_cast<int64_t>(circular.size() - circular_size));
-        }
+            if (circular.size() > circular_size) {
+                drop_front(circular, circular.size() - circular_size);
+            }
+        });
     }
 
     void update_windowed_capture(Kakshya::DataVariant& existing, const Kakshya::DataVariant& incoming,
         uint32_t window_size, uint32_t hop_size)
     {
-        auto& windowed = std::get<std::vector<double>>(existing);
-        const auto& new_data = std::get<std::vector<double>>(incoming);
-
-        if (windowed.size() >= window_size) {
-            if (hop_size >= windowed.size()) {
-                windowed = std::get<std::vector<double>>(incoming);
-            } else {
-                windowed.erase(windowed.begin(),
-                    windowed.begin() + hop_size);
-
-                windowed.insert(windowed.end(), new_data.begin(), new_data.end());
-
-                if (windowed.size() > window_size) {
-                    size_t excess = windowed.size() - window_size;
-                    windowed.erase(windowed.begin(),
-                        windowed.begin() + excess);
+        visit_matching(existing, incoming, [window_size, hop_size](auto& windowed, const auto& added) {
+            if (windowed.size() >= window_size) {
+                if (hop_size >= windowed.size()) {
+                    windowed = added;
+                    return;
                 }
+                drop_front(windowed, hop_size);
             }
-        } else {
-            windowed.insert(windowed.end(), new_data.begin(), new_data.end());
+
+            windowed.insert(windowed.end(), added.begin(), added.end());
 
             if (windowed.size() > window_size) {
-                size_t excess = windowed.size() - window_size;
-                windowed.erase(windowed.begin(),
-                    windowed.begin() + excess);
+                drop_front(windowed, windowed.size() - window_size);
             }
-        }
+        });
     }
 
 }
