@@ -300,6 +300,59 @@ namespace Kriya {
             std::optional<Portal::Graphics::RenderConfig> render = std::nullopt);
 
         /**
+         * @brief Capture a camera straight into a dynamic video stream it creates.
+         *
+         * One operation opens the camera, hooks it to a buffer, makes a ring sized
+         * from that buffer's real frame size and format, and each cycle appends the
+         * camera frame to it. The stream is reached through get_graphics_stream() so
+         * playback can be set up, for example lag_behind_head.
+         *
+         * @param ring_frames Frames the ring keeps; zero keeps three seconds at the
+         *        registered frame rate.
+         * @param live Draws the live camera when given.
+         * @param display Draws the stream through the pipeline's IOManager when
+         *        given; the pipeline needs one.
+         */
+        static BufferOperation capture_to_stream(
+            const std::shared_ptr<IO::IOManager>& io_manager,
+            const IO::CameraConfig& config,
+            uint64_t ring_frames = 0,
+            std::optional<Portal::Graphics::RenderConfig> live = std::nullopt,
+            std::optional<Portal::Graphics::RenderConfig> display = std::nullopt);
+
+        /**
+         * @brief Capture a video file straight into a dynamic video stream it creates.
+         *
+         * The video counterpart of the camera form: it loads the file, hooks it to
+         * a buffer and appends each played frame to a ring sized from that buffer.
+         *
+         * @param ring_frames Frames the ring keeps; zero keeps three seconds at the
+         *        registered frame rate.
+         * @param live Draws the playing file when given.
+         * @param display Draws the stream through the pipeline's IOManager when
+         *        given; the pipeline needs one.
+         */
+        static BufferOperation capture_to_stream(
+            const std::shared_ptr<IO::IOManager>& io_manager,
+            const std::string& filepath,
+            IO::LoadConfig config,
+            uint64_t ring_frames = 0,
+            std::optional<Portal::Graphics::RenderConfig> live = std::nullopt,
+            std::optional<Portal::Graphics::RenderConfig> display = std::nullopt);
+
+        /**
+         * @brief The dynamic video stream this operation writes to.
+         *
+         * For capture_to_stream it is the stream the operation created; for a
+         * route it is the stream routed to. Null for other operations. The audio
+         * counterpart would be get_audio_stream.
+         */
+        [[nodiscard]] std::shared_ptr<Kakshya::DynamicVideoStream> get_graphics_stream() const
+        {
+            return m_target_graphics_stream;
+        }
+
+        /**
          * @brief Create a transform operation with custom transformation function.
          * @param transformer Function that transforms DataVariant with cycle information
          * @param token Processing domain for the operation
@@ -562,6 +615,7 @@ namespace Kriya {
         std::shared_ptr<Buffers::VKBuffer> m_target_graphics_buffer;
         std::shared_ptr<Kakshya::DynamicSoundStream> m_target_audio_stream;
         std::shared_ptr<Kakshya::DynamicVideoStream> m_target_graphics_stream;
+        std::shared_ptr<Buffers::VKBuffer> m_source_graphics_buffer;
         std::optional<Portal::Graphics::RenderConfig> m_render;
         bool m_display_attached {};
         uint32_t m_target_audio_channel {};

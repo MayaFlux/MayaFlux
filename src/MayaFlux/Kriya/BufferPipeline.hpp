@@ -430,6 +430,23 @@ public:
     uint32_t get_current_cycle() const { return m_current_cycle; }
 
     /**
+     * @brief The dynamic video stream of the first operation that writes one.
+     *
+     * An operation chained with >> is moved into the pipeline, so this is how to
+     * reach the stream that capture_to_stream created, for example to set up
+     * playback with lag_behind_head. Null if no operation has a stream.
+     */
+    [[nodiscard]] std::shared_ptr<Kakshya::DynamicVideoStream> get_graphics_stream() const
+    {
+        for (const auto& op : m_operations) {
+            if (auto stream = op.get_graphics_stream()) {
+                return stream;
+            }
+        }
+        return nullptr;
+    }
+
+    /**
      * @brief Register a callback fired once when pipeline execution ends.
      *
      * Fires when the cycle limit exhausts or stop_continuous() terminates the loop.

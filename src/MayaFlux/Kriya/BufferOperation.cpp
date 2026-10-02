@@ -6,6 +6,7 @@
 #include "MayaFlux/Kakshya/Source/DynamicVideoStream.hpp"
 #include "MayaFlux/Kakshya/Source/VideoFileContainer.hpp"
 #include "MayaFlux/Kriya/PipelineHelpers/PipelineGraphicsData.hpp"
+#include "MayaFlux/Vruta/ChronUtils.hpp"
 
 #include "MayaFlux/IO/IOManager.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -13,6 +14,20 @@
 namespace MayaFlux::Kriya {
 
 namespace {
+
+std::shared_ptr<Kakshya::DynamicVideoStream> make_ring(
+    const std::shared_ptr<Buffers::VideoContainerBuffer>& source,
+    uint64_t ring_frames)
+{
+    const uint64_t frames = ring_frames > 0 ? ring_frames : 3ULL * Vruta::s_registered_frame_rate;
+
+    return std::make_shared<Kakshya::DynamicVideoStream>(Kakshya::VideoStreamSpec {
+        .width = source->get_width(),
+        .height = source->get_height(),
+        .format = source->get_format(),
+        .frame_rate = static_cast<double>(Vruta::s_registered_frame_rate),
+        .ring_frames = frames });
+}
 
 Buffers::ProcessingToken capture_token(const BufferCapture& capture)
 {
@@ -248,6 +263,67 @@ BufferOperation BufferOperation::file_to_stream(
     op.m_source_graphics_stream = std::move(video);
     op.m_target_graphics_stream = std::move(target_stream);
     op.m_load_length = cycle_count;
+    return op;
+}
+
+BufferOperation BufferOperation::capture_to_stream(
+    const std::shared_ptr<IO::IOManager>& io_manager,
+    const IO::CameraConfig& config,
+    uint64_t ring_frames,
+    std::optional<Portal::Graphics::RenderConfig> live,
+    std::optional<Portal::Graphics::RenderConfig> display)
+{
+    auto camera = io_manager->open_camera(config);
+    if (!camera) {
+        error<std::runtime_error>(Journal::Component::Kriya, Journal::Context::AsyncIO,
+            std::source_location::current(), "Failed to open camera");
+    }
+
+    auto buffer = io_manager->hook_camera_to_buffer(camera);
+    if (!buffer) {
+        error<std::runtime_error>(Journal::Component::Kriya, Journal::Context::AsyncIO,
+            std::source_location::current(), "Failed to hook camera to graphics buffer");
+    }
+
+    if (live) {
+        detail::ensure_rendering(buffer, *live);
+    }
+
+    BufferOperation op(OpType::ROUTE, Buffers::ProcessingToken::GRAPHICS_BACKEND);
+    op.m_source_graphics_buffer = buffer;
+    op.m_target_graphics_stream = make_ring(buffer, ring_frames);
+    op.m_render = std::move(display);
+    return op;
+}
+
+BufferOperation BufferOperation::capture_to_stream(
+    const std::shared_ptr<IO::IOManager>& io_manager,
+    const std::string& filepath,
+    IO::LoadConfig config,
+    uint64_t ring_frames,
+    std::optional<Portal::Graphics::RenderConfig> live,
+    std::optional<Portal::Graphics::RenderConfig> display)
+{
+    auto video = io_manager->load_video(filepath, config).video;
+    if (!video) {
+        error<std::runtime_error>(Journal::Component::Kriya, Journal::Context::AsyncIO,
+            std::source_location::current(), "Failed to load video file: {}", filepath);
+    }
+
+    auto buffer = io_manager->hook_video_container_to_buffer(video);
+    if (!buffer) {
+        error<std::runtime_error>(Journal::Component::Kriya, Journal::Context::AsyncIO,
+            std::source_location::current(), "Failed to hook video file to graphics buffer: {}", filepath);
+    }
+
+    if (live) {
+        detail::ensure_rendering(buffer, *live);
+    }
+
+    BufferOperation op(OpType::ROUTE, Buffers::ProcessingToken::GRAPHICS_BACKEND);
+    op.m_source_graphics_buffer = buffer;
+    op.m_target_graphics_stream = make_ring(buffer, ring_frames);
+    op.m_render = std::move(display);
     return op;
 }
 

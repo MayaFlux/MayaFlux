@@ -9,12 +9,12 @@
 
 namespace MayaFlux::Kakshya {
 
-DynamicVideoStream::DynamicVideoStream(uint32_t width,
-    uint32_t height,
-    ImageFormat format,
-    double frame_rate)
-    : VideoStreamContainer(width, height, format, frame_rate)
+DynamicVideoStream::DynamicVideoStream(const VideoStreamSpec& spec)
+    : VideoStreamContainer(spec.width, spec.height, spec.format, spec.frame_rate)
 {
+    if (spec.ring_frames > 0) {
+        enable_circular_buffer(spec.ring_frames);
+    }
 }
 
 std::vector<uint8_t>& DynamicVideoStream::flat_bytes()
@@ -165,7 +165,11 @@ std::shared_ptr<DynamicVideoStream> DynamicVideoStream::snapshot(uint64_t frames
         return nullptr;
     }
 
-    auto copy = std::make_shared<DynamicVideoStream>(m_width, m_height, m_format, m_frame_rate);
+    auto copy = std::make_shared<DynamicVideoStream>(VideoStreamSpec {
+        .width = m_width,
+        .height = m_height,
+        .format = m_format,
+        .frame_rate = m_frame_rate });
     copy->ensure_capacity(count);
 
     const std::vector<uint8_t> blank(get_frame_byte_size(), 0);

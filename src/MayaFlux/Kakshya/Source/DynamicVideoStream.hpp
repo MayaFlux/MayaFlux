@@ -16,6 +16,22 @@ struct ImageData;
 class FrameSeekProcessor;
 
 /**
+ * @struct VideoStreamSpec
+ * @brief Describes a DynamicVideoStream so it can be built by designated initializer.
+ *
+ * Sizes and format are those of the frames that will be appended. The frame rate
+ * should be the rate they are appended at, which is also the rate playback readers
+ * count in. A ring size above zero enables circular mode.
+ */
+struct VideoStreamSpec {
+    uint32_t width {};
+    uint32_t height {};
+    ImageFormat format { ImageFormat::RGBA8 };
+    double frame_rate {};
+    uint64_t ring_frames {};
+};
+
+/**
  * @class DynamicVideoStream
  * @brief Video container that frames are appended to at runtime, the counterpart
  *        of DynamicSoundStream.
@@ -36,15 +52,11 @@ class FrameSeekProcessor;
 class MAYAFLUX_API DynamicVideoStream : public VideoStreamContainer {
 public:
     /**
-     * @param width      Frame width in pixels.
-     * @param height     Frame height in pixels.
-     * @param format     Pixel format of appended frames.
-     * @param frame_rate Frames per second, used by readers that auto advance.
+     * @brief Build a stream from a spec, enabling the ring when it asks for one.
+     * @param spec Frame size, format, rate and optional ring size. The rate is
+     *        used by readers that auto advance; zero leaves it unset.
      */
-    DynamicVideoStream(uint32_t width,
-        uint32_t height,
-        ImageFormat format = ImageFormat::RGBA8,
-        double frame_rate = 0.0);
+    explicit DynamicVideoStream(const VideoStreamSpec& spec);
 
     /**
      * @brief Write one frame at the write head and advance it.

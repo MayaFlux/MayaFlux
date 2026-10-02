@@ -145,6 +145,17 @@ void BufferPipeline::process_transform(BufferOperation& op, uint64_t cycle)
 
 void BufferPipeline::process_route(BufferOperation& op)
 {
+    if (op.m_source_graphics_buffer) {
+        auto frame = read_graphics_buffer(op, op.m_source_graphics_buffer);
+        if (!frame) {
+            return;
+        }
+
+        detail::write_to_container(op.m_target_graphics_stream, *frame);
+        m_operation_data[&op] = std::move(*frame);
+        return;
+    }
+
     const auto selected = select_operation_data(m_operation_data, op, !m_readers.empty());
     if (!selected) {
         return;
