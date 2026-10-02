@@ -5,6 +5,7 @@
 #include "MayaFlux/Buffers/Container/VideoContainerBuffer.hpp"
 #include "MayaFlux/Kakshya/Source/DynamicVideoStream.hpp"
 #include "MayaFlux/Kakshya/Source/VideoFileContainer.hpp"
+#include "MayaFlux/Kriya/PipelineHelpers/PipelineGraphicsData.hpp"
 
 #include "MayaFlux/IO/IOManager.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -58,7 +59,8 @@ BufferOperation BufferOperation::capture_camera(
     const std::shared_ptr<IO::IOManager>& io_manager,
     const IO::CameraConfig& config,
     BufferCapture::CaptureMode mode,
-    uint32_t cycle_count)
+    uint32_t cycle_count,
+    std::optional<Portal::Graphics::RenderConfig> render)
 {
     auto camera = io_manager->open_camera(config);
     if (!camera) {
@@ -70,6 +72,10 @@ BufferOperation BufferOperation::capture_camera(
     if (!buffer) {
         error<std::runtime_error>(Journal::Component::Kriya, Journal::Context::AsyncIO,
             std::source_location::current(), "Failed to hook camera to graphics buffer");
+    }
+
+    if (render) {
+        detail::ensure_rendering(buffer, *render);
     }
 
     return { OpType::CAPTURE, BufferCapture(buffer, mode, cycle_count) };
@@ -77,7 +83,8 @@ BufferOperation BufferOperation::capture_camera(
 
 CaptureBuilder BufferOperation::capture_camera_from(
     const std::shared_ptr<IO::IOManager>& io_manager,
-    const IO::CameraConfig& config)
+    const IO::CameraConfig& config,
+    std::optional<Portal::Graphics::RenderConfig> render)
 {
     auto camera = io_manager->open_camera(config);
     if (!camera) {
@@ -89,6 +96,10 @@ CaptureBuilder BufferOperation::capture_camera_from(
     if (!buffer) {
         error<std::runtime_error>(Journal::Component::Kriya, Journal::Context::AsyncIO,
             std::source_location::current(), "Failed to hook camera to graphics buffer");
+    }
+
+    if (render) {
+        detail::ensure_rendering(buffer, *render);
     }
 
     return CaptureBuilder(buffer);
@@ -122,7 +133,8 @@ BufferOperation BufferOperation::capture_file(
     const std::shared_ptr<IO::IOManager>& io_manager,
     const std::string& filepath,
     IO::LoadConfig config,
-    uint32_t cycle_count)
+    uint32_t cycle_count,
+    std::optional<Portal::Graphics::RenderConfig> render)
 {
     auto video = io_manager->load_video(filepath, config).video;
     if (!video) {
@@ -134,6 +146,10 @@ BufferOperation BufferOperation::capture_file(
     if (!buffer) {
         error<std::runtime_error>(Journal::Component::Kriya, Journal::Context::AsyncIO,
             std::source_location::current(), "Failed to hook video file to graphics buffer: {}", filepath);
+    }
+
+    if (render) {
+        detail::ensure_rendering(buffer, *render);
     }
 
     return { OpType::CAPTURE, BufferCapture(buffer,
@@ -161,7 +177,8 @@ CaptureBuilder BufferOperation::capture_file_from(
 CaptureBuilder BufferOperation::capture_file_from(
     const std::shared_ptr<IO::IOManager>& io_manager,
     const std::string& filepath,
-    IO::LoadConfig config)
+    IO::LoadConfig config,
+    std::optional<Portal::Graphics::RenderConfig> render)
 {
     auto video = io_manager->load_video(filepath, config).video;
     if (!video) {
@@ -173,6 +190,10 @@ CaptureBuilder BufferOperation::capture_file_from(
     if (!buffer) {
         error<std::runtime_error>(Journal::Component::Kriya, Journal::Context::AsyncIO,
             std::source_location::current(), "Failed to hook video file to graphics buffer: {}", filepath);
+    }
+
+    if (render) {
+        detail::ensure_rendering(buffer, *render);
     }
 
     return CaptureBuilder(buffer);
@@ -205,12 +226,22 @@ BufferOperation BufferOperation::file_to_stream(
     const std::string& filepath,
     std::shared_ptr<Kakshya::DynamicVideoStream> target_stream,
     IO::LoadConfig config,
-    uint32_t cycle_count)
+    uint32_t cycle_count,
+    std::optional<Portal::Graphics::RenderConfig> render)
 {
     auto video = io_manager->load_video(filepath, config).video;
     if (!video) {
         error<std::runtime_error>(Journal::Component::Kriya, Journal::Context::AsyncIO,
             std::source_location::current(), "Failed to load video file: {}", filepath);
+    }
+
+    if (render) {
+        auto buffer = io_manager->hook_video_container_to_buffer(video);
+        if (!buffer) {
+            error<std::runtime_error>(Journal::Component::Kriya, Journal::Context::AsyncIO,
+                std::source_location::current(), "Failed to hook video file to graphics buffer: {}", filepath);
+        }
+        detail::ensure_rendering(buffer, *render);
     }
 
     BufferOperation op(OpType::ROUTE, Buffers::ProcessingToken::GRAPHICS_BACKEND);
@@ -250,10 +281,13 @@ BufferOperation BufferOperation::route_to_container(std::shared_ptr<Kakshya::Dyn
     return op;
 }
 
-BufferOperation BufferOperation::route_to_container(std::shared_ptr<Kakshya::DynamicVideoStream> target)
+BufferOperation BufferOperation::route_to_container(
+    std::shared_ptr<Kakshya::DynamicVideoStream> target,
+    std::optional<Portal::Graphics::RenderConfig> render)
 {
     BufferOperation op(OpType::ROUTE, Buffers::ProcessingToken::GRAPHICS_BACKEND);
     op.m_target_graphics_stream = std::move(target);
+    op.m_render = std::move(render);
     return op;
 }
 
@@ -371,8 +405,14 @@ CaptureBuilder BufferOperation::capture_from(std::shared_ptr<Buffers::AudioBuffe
     return CaptureBuilder(std::move(buffer));
 }
 
-CaptureBuilder BufferOperation::capture_from(std::shared_ptr<Buffers::VKBuffer> buffer)
+CaptureBuilder BufferOperation::capture_from(
+    std::shared_ptr<Buffers::VKBuffer> buffer,
+    std::optional<Portal::Graphics::RenderConfig> render)
 {
+    if (render) {
+        detail::ensure_rendering(buffer, *render);
+    }
+
     return CaptureBuilder(std::move(buffer));
 }
 

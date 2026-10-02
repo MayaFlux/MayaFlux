@@ -9,9 +9,13 @@
 
 namespace MayaFlux::Kriya {
 
-BufferPipeline::BufferPipeline(Vruta::TaskScheduler& scheduler, std::shared_ptr<Buffers::BufferManager> buffer_manager)
+BufferPipeline::BufferPipeline(
+    Vruta::TaskScheduler& scheduler,
+    std::shared_ptr<Buffers::BufferManager> buffer_manager,
+    std::shared_ptr<IO::IOManager> io_manager)
     : m_coordinator(std::make_shared<CycleCoordinator>(scheduler))
     , m_buffer_manager(std::move(buffer_manager))
+    , m_io_manager(std::move(io_manager))
     , m_scheduler(&scheduler)
 {
 }
@@ -222,6 +226,8 @@ BufferPipeline& BufferPipeline::on_complete(std::function<void()> cb)
 
 Vruta::SoundRoutine BufferPipeline::execute_internal(uint64_t max_cycles, uint64_t samples_per_operation)
 {
+    prepare_displays();
+
     switch (m_execution_strategy) {
     case ExecutionStrategy::PHASED:
         return execute_phased(max_cycles, samples_per_operation);

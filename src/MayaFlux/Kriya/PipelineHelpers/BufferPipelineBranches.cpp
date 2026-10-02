@@ -15,6 +15,7 @@ BufferPipeline& BufferPipeline::branch_if(
         branch_pipeline->m_scheduler = m_scheduler;
     }
     branch_pipeline->m_buffer_manager = m_buffer_manager;
+    branch_pipeline->m_io_manager = m_io_manager;
     branch_builder(*branch_pipeline);
 
     m_branches.push_back({ .condition = std::move(condition),

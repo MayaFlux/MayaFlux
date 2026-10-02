@@ -6,7 +6,9 @@
 #include "MayaFlux/Buffers/AudioBuffer.hpp"
 #include "MayaFlux/Buffers/BufferManager.hpp"
 #include "MayaFlux/Buffers/Staging/AudioWriteProcessor.hpp"
+#include "MayaFlux/Buffers/Container/VideoContainerBuffer.hpp"
 #include "MayaFlux/Buffers/Staging/DataWriteProcessor.hpp"
+#include "MayaFlux/IO/IOManager.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Kakshya/Source/DynamicVideoStream.hpp"
 
@@ -291,6 +293,33 @@ void BufferPipeline::process_modify(BufferOperation& op, uint64_t cycle)
             }
             op.m_attached_processor = nullptr;
         }
+    }
+}
+
+void BufferPipeline::prepare_displays()
+{
+    for (auto& op : m_operations) {
+        if (!op.m_render || op.m_display_attached || !op.m_target_graphics_stream) {
+            continue;
+        }
+
+        if (!m_io_manager) {
+            error<std::invalid_argument>(Journal::Component::Kriya,
+                Journal::Context::CoroutineScheduling,
+                std::source_location::current(),
+                "BufferPipeline has no IOManager to display a stream route");
+        }
+
+        auto display = m_io_manager->hook_video_container_to_buffer(op.m_target_graphics_stream);
+        if (!display) {
+            error<std::runtime_error>(Journal::Component::Kriya,
+                Journal::Context::CoroutineScheduling,
+                std::source_location::current(),
+                "Failed to hook the stream to a display buffer");
+        }
+
+        detail::ensure_rendering(display, *op.m_render);
+        op.m_display_attached = true;
     }
 }
 

@@ -4,6 +4,7 @@
 
 #include "MayaFlux/Buffers/BufferSpec.hpp"
 #include "MayaFlux/Core/ProcessingTokens.hpp"
+#include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
 
 namespace MayaFlux {
 
@@ -203,17 +204,27 @@ namespace Kriya {
             const std::shared_ptr<Buffers::BufferManager>& buffer_manager,
             uint32_t input_channel);
 
-        /** @brief Open and capture a camera through IOManager. */
+        /**
+         * @brief Open and capture a camera through IOManager.
+         * @param render Draws the live camera when given; a camera buffer that
+         *        already renders is left as it is. Without it the capture only
+         *        routes the frames.
+         */
         static BufferOperation capture_camera(
             const std::shared_ptr<IO::IOManager>& io_manager,
             const IO::CameraConfig& config,
             BufferCapture::CaptureMode mode = BufferCapture::CaptureMode::TRANSIENT,
-            uint32_t cycle_count = 1);
+            uint32_t cycle_count = 1,
+            std::optional<Portal::Graphics::RenderConfig> render = std::nullopt);
 
-        /** @brief Open a camera and return its capture builder. */
+        /**
+         * @brief Open a camera and return its capture builder.
+         * @param render Draws the live camera when given.
+         */
         static CaptureBuilder capture_camera_from(
             const std::shared_ptr<IO::IOManager>& io_manager,
-            const IO::CameraConfig& config);
+            const IO::CameraConfig& config,
+            std::optional<Portal::Graphics::RenderConfig> render = std::nullopt);
 
         /**
          * @brief Create a file capture operation that reads from file and stores in stream.
@@ -229,12 +240,16 @@ namespace Kriya {
             uint32_t channel = 0,
             uint32_t cycle_count = 0);
 
-        /** @brief Capture a video file with explicit video load configuration. */
+        /**
+         * @brief Capture a video file with explicit video load configuration.
+         * @param render Draws the video when given.
+         */
         static BufferOperation capture_file(
             const std::shared_ptr<IO::IOManager>& io_manager,
             const std::string& filepath,
             IO::LoadConfig config,
-            uint32_t cycle_count = 1);
+            uint32_t cycle_count = 1,
+            std::optional<Portal::Graphics::RenderConfig> render = std::nullopt);
 
         /**
          * @brief Create CaptureBuilder for file with fluent configuration.
@@ -248,11 +263,15 @@ namespace Kriya {
             const std::string& filepath,
             uint32_t channel = 0);
 
-        /** @brief Create a capture builder for a video file. */
+        /**
+         * @brief Create a capture builder for a video file.
+         * @param render Draws the video when given.
+         */
         static CaptureBuilder capture_file_from(
             const std::shared_ptr<IO::IOManager>& io_manager,
             const std::string& filepath,
-            IO::LoadConfig config);
+            IO::LoadConfig config,
+            std::optional<Portal::Graphics::RenderConfig> render = std::nullopt);
 
         /**
          * @brief Create operation to route file data to DynamicSoundStream.
@@ -268,13 +287,17 @@ namespace Kriya {
             std::shared_ptr<Kakshya::DynamicSoundStream> target_stream,
             uint32_t cycle_count = 0);
 
-        /** @brief Route frames from a video file to a dynamic video stream. */
+        /**
+         * @brief Route frames from a video file to a dynamic video stream.
+         * @param render Draws the video file while it routes when given.
+         */
         static BufferOperation file_to_stream(
             const std::shared_ptr<IO::IOManager>& io_manager,
             const std::string& filepath,
             std::shared_ptr<Kakshya::DynamicVideoStream> target_stream,
             IO::LoadConfig config,
-            uint32_t cycle_count = 0);
+            uint32_t cycle_count = 0,
+            std::optional<Portal::Graphics::RenderConfig> render = std::nullopt);
 
         /**
          * @brief Create a transform operation with custom transformation function.
@@ -318,8 +341,18 @@ namespace Kriya {
          */
         static BufferOperation route_to_container(std::shared_ptr<Kakshya::DynamicSoundStream> target, uint32_t channel = 0);
 
-        /** @brief Append frames to a dynamic video stream. */
-        static BufferOperation route_to_container(std::shared_ptr<Kakshya::DynamicVideoStream> target);
+        /**
+         * @brief Append frames to a dynamic video stream.
+         *
+         * @param render Draws the stream in a window when given. The pipeline
+         *        hooks the stream to a display buffer through its IOManager when
+         *        it starts, as the audio route attaches its writer through the
+         *        BufferManager, so the pipeline needs an IOManager and the stream
+         *        must already hold data or have its ring enabled.
+         */
+        static BufferOperation route_to_container(
+            std::shared_ptr<Kakshya::DynamicVideoStream> target,
+            std::optional<Portal::Graphics::RenderConfig> render = std::nullopt);
 
         /**
          * @brief Create a load operation from container to buffer.
@@ -420,7 +453,9 @@ namespace Kriya {
          * @note Register the buffer with BufferManager before automatic processing.
          */
         static CaptureBuilder capture_from(std::shared_ptr<Buffers::AudioBuffer> buffer);
-        static CaptureBuilder capture_from(std::shared_ptr<Buffers::VKBuffer> buffer);
+        static CaptureBuilder capture_from(
+            std::shared_ptr<Buffers::VKBuffer> buffer,
+            std::optional<Portal::Graphics::RenderConfig> render = std::nullopt);
         static CaptureBuilder capture_from(std::nullptr_t);
 
         /**
@@ -527,6 +562,8 @@ namespace Kriya {
         std::shared_ptr<Buffers::VKBuffer> m_target_graphics_buffer;
         std::shared_ptr<Kakshya::DynamicSoundStream> m_target_audio_stream;
         std::shared_ptr<Kakshya::DynamicVideoStream> m_target_graphics_stream;
+        std::optional<Portal::Graphics::RenderConfig> m_render;
+        bool m_display_attached {};
         uint32_t m_target_audio_channel {};
 
         std::shared_ptr<Buffers::BufferProcessor> m_attached_processor;

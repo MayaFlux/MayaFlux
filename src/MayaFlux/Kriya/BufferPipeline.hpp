@@ -173,13 +173,19 @@ class CycleCoordinator;
  */
 class MAYAFLUX_API BufferPipeline : public std::enable_shared_from_this<BufferPipeline> {
 public:
-    static std::shared_ptr<BufferPipeline> create(Vruta::TaskScheduler& scheduler, std::shared_ptr<Buffers::BufferManager> buffer_manager = nullptr)
+    static std::shared_ptr<BufferPipeline> create(
+        Vruta::TaskScheduler& scheduler,
+        std::shared_ptr<Buffers::BufferManager> buffer_manager = nullptr,
+        std::shared_ptr<IO::IOManager> io_manager = nullptr)
     {
-        return std::make_shared<BufferPipeline>(scheduler, std::move(buffer_manager));
+        return std::make_shared<BufferPipeline>(scheduler, std::move(buffer_manager), std::move(io_manager));
     }
 
     BufferPipeline() = default;
-    explicit BufferPipeline(Vruta::TaskScheduler& scheduler, std::shared_ptr<Buffers::BufferManager> buffer_manager = nullptr);
+    explicit BufferPipeline(
+        Vruta::TaskScheduler& scheduler,
+        std::shared_ptr<Buffers::BufferManager> buffer_manager = nullptr,
+        std::shared_ptr<IO::IOManager> io_manager = nullptr);
 
     ~BufferPipeline();
 
@@ -452,6 +458,7 @@ private:
     std::shared_ptr<BufferPipeline> m_active_self;
     std::shared_ptr<CycleCoordinator> m_coordinator;
     std::shared_ptr<Buffers::BufferManager> m_buffer_manager;
+    std::shared_ptr<IO::IOManager> m_io_manager;
     Vruta::TaskScheduler* m_scheduler = nullptr;
 
     std::vector<BufferOperation> m_operations;
@@ -488,6 +495,7 @@ private:
     void process_fuse(BufferOperation& op, uint64_t cycle);
     void process_dispatch(BufferOperation& op, uint64_t cycle);
     void process_modify(BufferOperation& op, uint64_t cycle);
+    void prepare_displays();
     void queue_graphics_write(BufferOperation& op, const std::shared_ptr<Buffers::VKBuffer>& target, const Kakshya::DataVariant& data);
     std::shared_ptr<Vruta::SoundRoutine> dispatch_branch_async(BranchInfo& branch, uint64_t cycle);
     std::shared_ptr<Vruta::GraphicsRoutine> dispatch_frame_branch(BranchInfo& branch);

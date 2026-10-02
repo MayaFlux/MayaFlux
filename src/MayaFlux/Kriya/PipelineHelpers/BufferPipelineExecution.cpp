@@ -410,6 +410,8 @@ Vruta::GraphicsRoutine BufferPipeline::execute_frame_streaming(uint64_t max_cycl
 
 Vruta::GraphicsRoutine BufferPipeline::execute_frame_internal(uint64_t max_cycles, uint64_t frames_per_operation)
 {
+    prepare_displays();
+
     switch (m_execution_strategy) {
     case ExecutionStrategy::STREAMING:
         return execute_frame_streaming(max_cycles, frames_per_operation);
