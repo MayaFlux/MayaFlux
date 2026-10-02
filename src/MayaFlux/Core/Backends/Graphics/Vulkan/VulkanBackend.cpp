@@ -35,7 +35,7 @@ bool VulkanBackend::initialize(const GlobalGraphicsConfig& config)
     if (m_is_initialized) {
         return true;
     }
-    if (!m_context->initialize(config, true)) {
+    if (!m_context->initialize(config, config.backend_info.enable_validation)) {
         MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
             "Failed to initialize Vulkan context!");
         return false;

@@ -81,6 +81,7 @@ enum class Context : uint8_t {
     // ============================================================================
     GPUCompute, ///< GPU compute operations (shaders, GPGPU tasks)
     Rendering, ///< GPU rendering operations (graphics pipeline, frame rendering)
+    Validation,
 
     // ============================================================================
     // SUBSYSTEM CONTEXTS

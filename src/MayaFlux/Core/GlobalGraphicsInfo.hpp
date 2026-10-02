@@ -16,8 +16,12 @@ namespace MayaFlux::Core {
  * GraphicsSurfaceInfo handles windows, this handles the graphics API.
  */
 struct MAYAFLUX_API GraphicsBackendInfo {
-    /** @brief Enable validation layers (debug builds) */
+    /** @brief Enable validation layers; defaults on in debug builds. */
+#if defined(MAYAFLUX_DEBUG) && MAYAFLUX_DEBUG
     bool enable_validation = true;
+#else
+    bool enable_validation = false;
+#endif
 
     /** @brief Enable GPU debug markers (for profiling tools) */
     bool enable_debug_markers = false;
