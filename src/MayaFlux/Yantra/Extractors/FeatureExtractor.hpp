@@ -52,6 +52,26 @@ enum class ExtractionMethod : uint8_t {
 };
 
 /**
+ * @struct FeatureExtractorConfig
+ * @brief Initial settings for feature guided extraction.
+ *
+ * Pass this aggregate with designated initializers to the config constructor.
+ * Named parameters are applied after the typed settings.
+ */
+struct FeatureExtractorConfig {
+    /** Analysis window length in samples. */
+    uint32_t window_size { 512 };
+    /** Distance between successive windows in samples. */
+    uint32_t hop_size { 256 };
+    /** Feature selection method. */
+    ExtractionMethod method { ExtractionMethod::HIGH_ENERGY_DATA };
+    /** Portion of the input to extract from. */
+    ExtractionScope scope { ExtractionScope::FULL_DATA };
+    /** Additional named parameters applied last. */
+    std::map<std::string, std::any> parameters;
+};
+
+/**
  * @class FeatureExtractor
  * @brief Analyzer-guided feature extractor with enum-based configuration
  *
@@ -80,6 +100,21 @@ public:
         , m_method(method)
     {
         validate_parameters();
+    }
+
+    /**
+     * @brief Construct and configure a feature extractor in one step.
+     * @param config Initial extraction settings.
+     */
+    explicit FeatureExtractor(const FeatureExtractorConfig& config)
+        : FeatureExtractor(config.window_size, config.hop_size, config.method)
+    {
+        set_extraction_method(config.method);
+        this->set_parameter("scope", config.scope);
+
+        for (const auto& [name, value] : config.parameters) {
+            this->set_parameter(name, value);
+        }
     }
 
     /**

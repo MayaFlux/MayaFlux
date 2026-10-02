@@ -23,6 +23,9 @@ enum class MathematicalOperation : uint8_t {
     POLYNOMIAL ///< Polynomial transform
 };
 
+/** @brief Construction settings for MathematicalTransformer. */
+using MathematicalTransformerConfig = TransformerConfig<MathematicalOperation>;
+
 /**
  * @class MathematicalTransformer
  * @brief Concrete transformer for mathematical operations
@@ -48,6 +51,27 @@ public:
         : m_operation(op)
     {
         set_default_parameters();
+    }
+
+    /**
+     * @brief Construct and configure a mathematical transformer in one step.
+     * @param config Initial transformation settings.
+     */
+    explicit MathematicalTransformer(const MathematicalTransformerConfig& config)
+        : MathematicalTransformer(config.operation)
+    {
+        this->set_strategy(config.strategy);
+        this->set_quality(config.quality);
+        this->set_scope(config.scope);
+        this->set_intensity(config.intensity);
+
+        for (const auto& key : config.keys) {
+            this->add_transformation_key(key);
+        }
+
+        for (const auto& [name, value] : config.parameters) {
+            this->set_parameter(name, value);
+        }
     }
 
     /**

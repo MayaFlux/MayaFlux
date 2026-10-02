@@ -104,6 +104,32 @@ struct MAYAFLUX_API StatisticalAnalysis {
 };
 
 /**
+ * @struct StatisticalAnalyzerConfig
+ * @brief Initial settings for statistical analysis.
+ *
+ * Pass this aggregate with designated initializers to the config constructor.
+ * Named parameters are applied after the typed settings.
+ */
+struct StatisticalAnalyzerConfig {
+    /** Analysis window length in samples. */
+    uint32_t window_size { 512 };
+    /** Distance between successive windows in samples. */
+    uint32_t hop_size { 256 };
+    /** Statistic to compute. */
+    StatisticalMethod method { StatisticalMethod::MEAN };
+    /** Whether to classify statistical values. */
+    bool classification_enabled { true };
+    /** Level at which the analyzer processes input. */
+    AnalysisGranularity granularity { AnalysisGranularity::RAW_VALUES };
+    /** Percentile to compute when method is PERCENTILE, from 0 to 100. */
+    double percentile { 50.0 };
+    /** Whether variance calculations use the sample formula. */
+    bool sample_variance { true };
+    /** Additional named parameters applied last. */
+    std::map<std::string, std::any> parameters;
+};
+
+/**
  * @class StatisticalAnalyzer
  * @brief High-performance statistical analyzer with zero-copy processing
  *
@@ -141,6 +167,24 @@ public:
         , m_hop_size(hop_size)
     {
         validate_window_parameters();
+    }
+
+    /**
+     * @brief Construct and configure a statistical analyzer in one step.
+     * @param config Initial analysis settings.
+     */
+    explicit StatisticalAnalyzer(const StatisticalAnalyzerConfig& config)
+        : StatisticalAnalyzer(config.window_size, config.hop_size)
+    {
+        set_method(config.method);
+        set_classification_enabled(config.classification_enabled);
+        this->set_analysis_granularity(config.granularity);
+        this->set_parameter("percentile", config.percentile);
+        this->set_parameter("sample_variance", config.sample_variance);
+
+        for (const auto& [name, value] : config.parameters) {
+            this->set_parameter(name, value);
+        }
     }
 
     /**

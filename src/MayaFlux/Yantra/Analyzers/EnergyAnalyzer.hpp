@@ -85,6 +85,30 @@ struct MAYAFLUX_API EnergyAnalysis {
 };
 
 /**
+ * @struct EnergyAnalyzerConfig
+ * @brief Initial settings for energy analysis.
+ *
+ * Pass this aggregate with designated initializers to the config constructor.
+ * Named parameters are applied after the typed settings.
+ */
+struct EnergyAnalyzerConfig {
+    /** Analysis window length in samples. */
+    uint32_t window_size { 256 };
+    /** Distance between successive windows in samples. */
+    uint32_t hop_size { 128 };
+    /** Energy calculation to perform. */
+    EnergyMethod method { EnergyMethod::RMS };
+    /** Whether to classify energy levels. */
+    bool classification_enabled { false };
+    /** Silent, quiet, moderate, and loud boundaries, in that order. */
+    std::array<double, 4> thresholds { 0.01, 0.1, 0.5, 0.8 };
+    /** Level at which the analyzer processes input. */
+    AnalysisGranularity granularity { AnalysisGranularity::RAW_VALUES };
+    /** Additional named parameters applied last. */
+    std::map<std::string, std::any> parameters;
+};
+
+/**
  * @class EnergyAnalyzer
  * @brief High-performance energy analyzer with zero-copy processing
  *
@@ -122,6 +146,27 @@ public:
         , m_hop_size(hop_size)
     {
         validate_window_parameters();
+    }
+
+    /**
+     * @brief Construct and configure an energy analyzer in one step.
+     * @param config Initial analysis settings.
+     */
+    explicit EnergyAnalyzer(const EnergyAnalyzerConfig& config)
+        : EnergyAnalyzer(config.window_size, config.hop_size)
+    {
+        set_energy_method(config.method);
+        enable_classification(config.classification_enabled);
+        set_energy_thresholds(
+            config.thresholds[0],
+            config.thresholds[1],
+            config.thresholds[2],
+            config.thresholds[3]);
+        this->set_analysis_granularity(config.granularity);
+
+        for (const auto& [name, value] : config.parameters) {
+            this->set_parameter(name, value);
+        }
     }
 
     /**

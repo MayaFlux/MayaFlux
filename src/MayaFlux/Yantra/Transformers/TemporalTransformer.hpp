@@ -21,6 +21,9 @@ enum class TemporalOperation : uint8_t {
     INTERPOLATE ///< Temporal interpolation
 };
 
+/** @brief Construction settings for TemporalTransformer. */
+using TemporalTransformerConfig = TransformerConfig<TemporalOperation>;
+
 /**
  * @class TemporalTransformer
  * @brief Concrete transformer for time-domain operations
@@ -45,6 +48,27 @@ public:
         : m_operation(op)
     {
         set_default_parameters();
+    }
+
+    /**
+     * @brief Construct and configure a temporal transformer in one step.
+     * @param config Initial transformation settings.
+     */
+    explicit TemporalTransformer(const TemporalTransformerConfig& config)
+        : TemporalTransformer(config.operation)
+    {
+        this->set_strategy(config.strategy);
+        this->set_quality(config.quality);
+        this->set_scope(config.scope);
+        this->set_intensity(config.intensity);
+
+        for (const auto& key : config.keys) {
+            this->add_transformation_key(key);
+        }
+
+        for (const auto& [name, value] : config.parameters) {
+            this->set_parameter(name, value);
+        }
     }
 
     /**

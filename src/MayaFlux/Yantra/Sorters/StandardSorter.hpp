@@ -14,6 +14,30 @@
 namespace MayaFlux::Yantra {
 
 /**
+ * @struct StandardSorterConfig
+ * @brief Initial settings for standard sorting.
+ *
+ * Pass this aggregate with designated initializers to the config constructor.
+ * Named parameters are applied after the typed settings.
+ */
+struct StandardSorterConfig {
+    /** Sorting algorithm to use. */
+    SortingAlgorithm algorithm { SortingAlgorithm::STANDARD };
+    /** Order of the sorted result. */
+    SortingDirection direction { SortingDirection::ASCENDING };
+    /** How the input is handled during sorting. */
+    SortingStrategy strategy { SortingStrategy::COPY_SORT };
+    /** Level at which values are sorted. */
+    SortingGranularity granularity { SortingGranularity::RAW_DATA };
+    /** Number of elements per chunk for chunked sorting. */
+    size_t chunk_size { 1024 };
+    /** Sort keys and their relative weights. */
+    std::vector<SortKey> keys;
+    /** Additional named parameters applied last. */
+    std::map<std::string, std::any> parameters;
+};
+
+/**
  * @class StandardSorter
  * @brief Concrete implementation for standard comparison-based sorting
  *
@@ -41,6 +65,25 @@ public:
         this->set_direction(SortingDirection::ASCENDING);
         this->set_strategy(SortingStrategy::COPY_SORT);
         this->set_granularity(SortingGranularity::RAW_DATA);
+    }
+
+    /**
+     * @brief Construct and configure a standard sorter in one step.
+     * @param config Initial sorting settings.
+     */
+    explicit StandardSorter(const StandardSorterConfig& config)
+        : StandardSorter()
+    {
+        set_algorithm(config.algorithm);
+        this->set_direction(config.direction);
+        this->set_strategy(config.strategy);
+        this->set_granularity(config.granularity);
+        this->set_sort_keys(config.keys);
+        this->set_parameter("chunk_size", config.chunk_size);
+
+        for (const auto& [name, value] : config.parameters) {
+            this->set_parameter(name, value);
+        }
     }
 
     /**

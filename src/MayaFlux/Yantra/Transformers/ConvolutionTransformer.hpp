@@ -19,6 +19,9 @@ enum class ConvolutionOperation : uint8_t {
     AUTO_CORRELATION ///< Auto-correlation
 };
 
+/** @brief Construction settings for ConvolutionTransformer. */
+using ConvolutionTransformerConfig = TransformerConfig<ConvolutionOperation>;
+
 /**
  * @class ConvolutionTransformer
  * @brief Concrete transformer for convolution-based operations
@@ -43,6 +46,27 @@ public:
         : m_operation(op)
     {
         set_default_parameters();
+    }
+
+    /**
+     * @brief Construct and configure a convolution transformer in one step.
+     * @param config Initial transformation settings.
+     */
+    explicit ConvolutionTransformer(const ConvolutionTransformerConfig& config)
+        : ConvolutionTransformer(config.operation)
+    {
+        this->set_strategy(config.strategy);
+        this->set_quality(config.quality);
+        this->set_scope(config.scope);
+        this->set_intensity(config.intensity);
+
+        for (const auto& key : config.keys) {
+            this->add_transformation_key(key);
+        }
+
+        for (const auto& [name, value] : config.parameters) {
+            this->set_parameter(name, value);
+        }
     }
 
     /**

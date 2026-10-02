@@ -159,6 +159,32 @@ struct TransformationKey {
 };
 
 /**
+ * @struct TransformerConfig
+ * @brief Initial settings shared by concrete transformer families.
+ * @tparam Operation Operation enum of the selected transformer family.
+ *
+ * Pass this aggregate with designated initializers to a concrete transformer.
+ * Named parameters are applied after the typed settings and keys.
+ */
+template <typename Operation>
+struct TransformerConfig {
+    /** Operation to perform within the selected family. */
+    Operation operation {};
+    /** How transformation work is performed. */
+    TransformationStrategy strategy { TransformationStrategy::BUFFERED };
+    /** Requested transformation quality. */
+    TransformationQuality quality { TransformationQuality::STANDARD };
+    /** Portion of the input to transform. */
+    TransformationScope scope { TransformationScope::FULL_DATA };
+    /** Overall transformation strength. */
+    double intensity { 1.0 };
+    /** Transformation keys to register before processing. */
+    std::vector<TransformationKey> keys;
+    /** Additional named parameters applied last. */
+    std::map<std::string, std::any> parameters;
+};
+
+/**
  * @class UniversalTransformer
  * @brief Template-flexible transformer base with instance-defined I/O types
  * @tparam InputType Input data type (defaults to Kakshya::DataVariant)

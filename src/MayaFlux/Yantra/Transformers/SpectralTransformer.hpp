@@ -19,6 +19,9 @@ enum class SpectralOperation : uint8_t {
     SPECTRAL_GATE, ///< Hard magnitude gate
 };
 
+/** @brief Construction settings for SpectralTransformer. */
+using SpectralTransformerConfig = TransformerConfig<SpectralOperation>;
+
 /**
  * @class SpectralTransformer
  * @brief Concrete transformer for frequency-domain operations
@@ -43,6 +46,27 @@ public:
         : m_operation(op)
     {
         set_default_parameters();
+    }
+
+    /**
+     * @brief Construct and configure a spectral transformer in one step.
+     * @param config Initial transformation settings.
+     */
+    explicit SpectralTransformer(const SpectralTransformerConfig& config)
+        : SpectralTransformer(config.operation)
+    {
+        this->set_strategy(config.strategy);
+        this->set_quality(config.quality);
+        this->set_scope(config.scope);
+        this->set_intensity(config.intensity);
+
+        for (const auto& key : config.keys) {
+            this->add_transformation_key(key);
+        }
+
+        for (const auto& [name, value] : config.parameters) {
+            this->set_parameter(name, value);
+        }
     }
 
     /**
