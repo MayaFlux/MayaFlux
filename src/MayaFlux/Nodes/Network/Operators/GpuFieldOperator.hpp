@@ -358,6 +358,47 @@ public:
         std::optional<uint32_t> cluster = std::nullopt);
 
     /**
+     * @brief Bind a three-component field of position, time and live parameters.
+     * @param target Mask over POSITION, COLOR, NORMAL and TANGENT.
+     * @param field  Parametric field with a usable shader half.
+     * @param cluster See the DualVectorField overload's own doc.
+     *
+     * Validation matches the DualField overload. The emitted function takes the
+     * time push constant and the vec4 set with set_params(), so changing the
+     * parameters never rebuilds the spec.
+     */
+    void bind(FieldTarget target, const Kinesis::ParametricVectorField& field,
+        std::optional<uint32_t> cluster = std::nullopt);
+
+    /**
+     * @brief Bind a scalar field of position, time and live parameters. Target must be SCALAR.
+     * @param cluster See the DualVectorField overload's own doc.
+     */
+    void bind(FieldTarget target, const Kinesis::ParametricSpatialField& field,
+        std::optional<uint32_t> cluster = std::nullopt);
+
+    /**
+     * @brief Bind a two-component field of position, time and live parameters. Target must be UV.
+     * @param cluster See the DualVectorField overload's own doc.
+     */
+    void bind(FieldTarget target, const Kinesis::ParametricUVField& field,
+        std::optional<uint32_t> cluster = std::nullopt);
+
+    /**
+     * @brief Set the parameter block parametric fields receive.
+     *
+     * Pushed with every dispatch, so it takes effect on the next cycle and
+     * costs no pipeline rebuild. Written and read on the same tick domain.
+     */
+    void set_params(const glm::vec4& params) noexcept { m_params = params; }
+
+    /** @brief The parameter block parametric fields currently receive. */
+    [[nodiscard]] const glm::vec4& get_params() const noexcept { return m_params; }
+
+    /** @brief Whether any current binding is parametric, so the spec carries the block. */
+    [[nodiscard]] bool uses_params() const;
+
+    /**
      * @brief Clear the given targets.
      *
      * Removes each bit in the mask from every binding that carries it. A
@@ -549,6 +590,7 @@ private:
         uint32_t components;
         bool temporal;
         std::optional<uint32_t> cluster;
+        bool parametric {};
     };
 
     Kakshya::VertexLayout m_layout;
@@ -557,6 +599,7 @@ private:
     uint32_t m_vertex_binding {};
     uint32_t m_workgroup_size { 256 };
     std::vector<Binding> m_bindings;
+    glm::vec4 m_params {};
     uint64_t m_revision {};
 
     mutable std::optional<Portal::Graphics::ShaderSpec> m_spec_cache;
@@ -578,7 +621,7 @@ private:
      * @brief Store a binding after validation.
      */
     void store(FieldTarget, const Kinesis::FieldSource&, uint32_t, bool,
-        std::optional<uint32_t> cluster);
+        std::optional<uint32_t> cluster, bool parametric = false);
 };
 
 } // namespace MayaFlux::Nodes::Network

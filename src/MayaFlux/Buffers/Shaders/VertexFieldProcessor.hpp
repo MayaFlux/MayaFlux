@@ -48,6 +48,9 @@ class NetworkGeometryBuffer;
  *   offset  8  uint   stride_words
  *   offset 12  float  time
  *
+ * When the operator carries parametric fields, the block grows to 32 bytes:
+ *   offset 16  vec4   params, from GpuFieldOperator::get_params()
+ *
  * time is seconds since the processor was constructed, and it is the only
  * varying input a field has. MF_FIELD bakes every literal into the shader text,
  * and the producing operator re-uploads identical records each cycle, so a
@@ -160,6 +163,17 @@ private:
         uint32_t stride_words {};
         float time {};
     };
+
+    /**
+     * @struct ParamsBlock
+     * @brief Push constant block when the operator carries parametric fields.
+     */
+    struct ParamsBlock {
+        RangeParams range;
+        std::array<float, 4> params;
+    };
+
+    static_assert(sizeof(ParamsBlock) == 32);
 
     std::shared_ptr<Nodes::Network::GpuFieldOperator> m_operator;
 

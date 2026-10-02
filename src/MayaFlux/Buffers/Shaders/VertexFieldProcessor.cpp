@@ -205,7 +205,12 @@ bool VertexFieldProcessor::on_before_execute(
         m_params.stride_words,
         m_params.time);
 
-    set_push_constant_data(m_params);
+    if (m_operator->uses_params()) {
+        const glm::vec4& params = m_operator->get_params();
+        set_push_constant_data(ParamsBlock { m_params, { params.x, params.y, params.z, params.w } });
+    } else {
+        set_push_constant_data(m_params);
+    }
     return true;
 }
 
