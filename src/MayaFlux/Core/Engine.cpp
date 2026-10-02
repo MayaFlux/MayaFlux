@@ -324,6 +324,8 @@ void Engine::End()
 
     Portal::Forma::shutdown();
 
+    Portal::System::shutdown();
+
     if (m_event_manager) {
         m_event_manager->terminate_all_events();
     }
