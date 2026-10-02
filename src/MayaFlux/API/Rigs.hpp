@@ -19,6 +19,7 @@ namespace MayaFlux {
 namespace Kriya {
     class SamplingPipeline;
     class TapSetBuilder;
+    class ChimeraBuilder;
     class BufferPipeline;
     class CaptureBuilder;
 }
@@ -29,6 +30,7 @@ namespace Kakshya {
 
 namespace Buffers {
     class AudioBuffer;
+    class TextureArrayBuffer;
 }
 
 /**
@@ -144,6 +146,27 @@ MAYAFLUX_API Kriya::TapSetBuilder create_tap_set(
  */
 MAYAFLUX_API Kriya::TapSetBuilder create_tap_set_from_stream(
     std::shared_ptr<Kakshya::DynamicSoundStream> stream);
+
+/**
+ * @brief Begin assembling the layers of a TextureArrayBuffer from what feeds each.
+ *
+ * A layer holds a still image or file, a GPU image copied every frame, or a moment
+ * of a ring that is being recorded, read at a lag or played freely. start() begins
+ * feeding on the frame clock. Keep the resulting Chimera alive for as long as it
+ * should run.
+ *
+ * @code{.cpp}
+ * auto chimera = MayaFlux::create_chimera(array)
+ *                    .layer().from("res/eye.png").params({ 0.3F, 0.4F, 0.2F, 0.F })
+ *                    .layer().from(ring).lag(0.5).smooth().level(0.6)
+ *                    .start();
+ * @endcode
+ *
+ * @param buffer Array buffer whose layers are fed.
+ * @return Builder. A null buffer makes start() return an empty Chimera.
+ */
+MAYAFLUX_API Kriya::ChimeraBuilder create_chimera(
+    std::shared_ptr<Buffers::TextureArrayBuffer> buffer);
 
 /**
  * @brief Make a circular stream that keeps the most recent seconds of a signal.

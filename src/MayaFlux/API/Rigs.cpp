@@ -6,6 +6,7 @@
 #include "MayaFlux/API/Graph.hpp"
 
 #include "MayaFlux/IO/IOManager.hpp"
+#include "MayaFlux/Kriya/Chimera.hpp"
 #include "MayaFlux/Kriya/SamplingPipeline.hpp"
 #include "MayaFlux/Kriya/TapSet.hpp"
 
@@ -107,6 +108,11 @@ Kriya::TapSetBuilder create_tap_set_from_stream(
 {
     return Kriya::TapSetBuilder(
         std::move(stream), *get_buffer_manager(), *get_scheduler(), Config::get_buffer_size());
+}
+
+Kriya::ChimeraBuilder create_chimera(std::shared_ptr<Buffers::TextureArrayBuffer> buffer)
+{
+    return Kriya::ChimeraBuilder(std::move(buffer), *get_scheduler());
 }
 
 std::shared_ptr<Kakshya::DynamicSoundStream> create_ring(double seconds, uint32_t channels)
