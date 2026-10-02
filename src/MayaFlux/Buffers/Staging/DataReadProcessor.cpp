@@ -52,9 +52,8 @@ void DataReadProcessor::arm(ReadFill fill)
         return;
     }
 
-    auto request = std::make_shared<ReadRequest>();
-    request->fill = std::move(fill);
-    m_request.store(std::move(request), std::memory_order_release);
+    m_request.drain([](ReadRequest&) { });
+    m_request.push(ReadRequest { .fill = std::move(fill) });
 }
 
 void DataReadProcessor::read_bytes(size_t byte_count)
@@ -274,42 +273,56 @@ void DataReadProcessor::read_texture_pixels()
 
 bool DataReadProcessor::has_result() const noexcept
 {
-    return m_result.load(std::memory_order_acquire) != nullptr;
+    return m_result_ready.load(std::memory_order_acquire);
 }
 
 bool DataReadProcessor::is_pending() const noexcept
 {
-    return m_request.load(std::memory_order_acquire) != nullptr
-        || m_result.load(std::memory_order_acquire) != nullptr;
+    return !m_request.empty() || m_result_occupied.load(std::memory_order_acquire);
 }
 
-std::shared_ptr<DataReadProcessor::PendingRead> DataReadProcessor::collect_result()
+std::unique_ptr<DataReadProcessor::PendingRead> DataReadProcessor::collect_result(ReadKind kind)
 {
-    const auto pending = m_result.load(std::memory_order_acquire);
-    if (!pending) {
+    if (!m_result_ready.load(std::memory_order_acquire)) {
         return nullptr;
     }
 
-    if (pending->transfer) {
-        resolve_back_buffer_read(
-            pending->transfer,
-            generation_slot(pending->handle),
-            pending->bytes.data(),
-            pending->bytes.size(),
-            m_staging);
+    std::unique_ptr<PendingRead> result;
+    m_result.sweep(
+        [kind](std::unique_ptr<PendingRead>& pending) {
+            switch (kind) {
+            case ReadKind::Bytes:
+                return !pending->mesh;
+            case ReadKind::Vertices:
+                return pending->layout.has_value();
+            case ReadKind::Mesh:
+                return pending->mesh.has_value() || pending->triangle_soup;
+            case ReadKind::Pixels:
+                return pending->image.has_value();
+            }
+            return false;
+        },
+        [this, &result](std::unique_ptr<PendingRead>& pending) {
+            if (pending->transfer) {
+                resolve_back_buffer_read(
+                    pending->transfer,
+                    generation_slot(pending->handle),
+                    pending->bytes.data(),
+                    pending->bytes.size(),
+                    m_staging);
+            }
+            result = std::move(pending);
+        });
+    if (result) {
+        m_result_ready.store(false, std::memory_order_release);
+        m_result_occupied.store(false, std::memory_order_release);
     }
-
-    return m_result.exchange(nullptr, std::memory_order_acq_rel);
+    return result;
 }
 
 std::optional<Kakshya::DataVariant> DataReadProcessor::resolve_bytes()
 {
-    const auto peek = m_result.load(std::memory_order_acquire);
-    if (peek && peek->mesh) {
-        return std::nullopt;
-    }
-
-    auto pending = collect_result();
+    auto pending = collect_result(ReadKind::Bytes);
     if (!pending) {
         return std::nullopt;
     }
@@ -324,12 +337,7 @@ std::optional<Kakshya::DataVariant> DataReadProcessor::resolve_bytes()
 
 std::optional<std::vector<Kakshya::DataVariant>> DataReadProcessor::resolve_vertices()
 {
-    const auto peek = m_result.load(std::memory_order_acquire);
-    if (!peek || !peek->layout) {
-        return std::nullopt;
-    }
-
-    auto pending = collect_result();
+    auto pending = collect_result(ReadKind::Vertices);
     if (!pending || !pending->layout) {
         return std::nullopt;
     }
@@ -345,12 +353,7 @@ std::optional<std::vector<Kakshya::DataVariant>> DataReadProcessor::resolve_vert
 
 std::optional<Kakshya::MeshData> DataReadProcessor::resolve_mesh()
 {
-    const auto peek = m_result.load(std::memory_order_acquire);
-    if (!peek || !(peek->mesh || peek->triangle_soup)) {
-        return std::nullopt;
-    }
-
-    auto pending = collect_result();
+    auto pending = collect_result(ReadKind::Mesh);
     if (!pending) {
         return std::nullopt;
     }
@@ -364,12 +367,7 @@ std::optional<Kakshya::MeshData> DataReadProcessor::resolve_mesh()
 
 std::optional<Kakshya::ImageData> DataReadProcessor::resolve_pixels()
 {
-    const auto peek = m_result.load(std::memory_order_acquire);
-    if (!peek || !peek->image) {
-        return std::nullopt;
-    }
-
-    auto pending = collect_result();
+    auto pending = collect_result(ReadKind::Pixels);
     if (!pending) {
         return std::nullopt;
     }
@@ -407,8 +405,10 @@ void DataReadProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
 
 void DataReadProcessor::on_detach(const std::shared_ptr<Buffer>&)
 {
-    m_request.exchange(nullptr, std::memory_order_acq_rel);
-    m_result.exchange(nullptr, std::memory_order_acq_rel);
+    m_request.drain([](ReadRequest&) { });
+    m_result.drain([](std::unique_ptr<PendingRead>&) { });
+    m_result_ready.store(false, std::memory_order_release);
+    m_result_occupied.store(false, std::memory_order_release);
     m_staging.reset();
     m_texture_staging.reset();
 }
@@ -464,7 +464,7 @@ void DataReadProcessor::processing_function(const std::shared_ptr<Buffer>& buffe
         return;
     }
 
-    if (m_result.load(std::memory_order_acquire)) {
+    if (m_result_occupied.load(std::memory_order_acquire)) {
         return;
     }
 
@@ -473,19 +473,26 @@ void DataReadProcessor::processing_function(const std::shared_ptr<Buffer>& buffe
         return;
     }
 
-    auto request = m_request.exchange(nullptr, std::memory_order_acq_rel);
+    std::optional<ReadRequest> request;
+    m_request.drain([&request](ReadRequest& next) {
+        if (!request) {
+            request.emplace(std::move(next));
+        }
+    });
     if (!request) {
         return;
     }
 
-    auto pending = std::make_shared<PendingRead>();
+    auto pending = std::make_unique<PendingRead>();
     pending->source = vk_buffer;
 
     if (!request->fill(*this, vk_buffer, *pending)) {
         return;
     }
 
-    m_result.store(std::move(pending), std::memory_order_release);
+    m_result_occupied.store(true, std::memory_order_release);
+    m_result.push(std::move(pending));
+    m_result_ready.store(true, std::memory_order_release);
 }
 
 }

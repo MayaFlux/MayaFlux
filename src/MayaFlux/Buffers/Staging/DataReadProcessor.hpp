@@ -4,6 +4,7 @@
 #include "MayaFlux/Kakshya/NDData/ImageData.hpp"
 #include "MayaFlux/Kakshya/NDData/MeshData.hpp"
 #include "MayaFlux/Kakshya/NDData/NDData.hpp"
+#include "MayaFlux/Transitive/Memory/SweepList.hpp"
 
 namespace MayaFlux::Buffers {
 
@@ -142,6 +143,7 @@ protected:
 private:
     struct ReadRequest;
     struct PendingRead;
+    enum class ReadKind { Bytes, Vertices, Mesh, Pixels };
 
     using ReadFill = std::function<bool(DataReadProcessor&, const std::shared_ptr<VKBuffer>&, PendingRead&)>;
 
@@ -155,10 +157,12 @@ private:
         bool mapped,
         bool transferable);
 
-    std::shared_ptr<PendingRead> collect_result();
+    std::unique_ptr<PendingRead> collect_result(ReadKind kind);
 
-    std::atomic<std::shared_ptr<ReadRequest>> m_request;
-    std::atomic<std::shared_ptr<PendingRead>> m_result;
+    Memory::SweepList<ReadRequest> m_request;
+    Memory::SweepList<std::unique_ptr<PendingRead>> m_result;
+    std::atomic<bool> m_result_occupied { false };
+    std::atomic<bool> m_result_ready { false };
     std::shared_ptr<VKBuffer> m_staging;
     std::shared_ptr<VKBuffer> m_texture_staging;
     bool m_skip_while_pending {};
