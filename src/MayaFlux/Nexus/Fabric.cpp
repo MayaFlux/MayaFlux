@@ -176,14 +176,17 @@ std::shared_ptr<Agent> Fabric::get_agent(uint32_t id) const
 void Fabric::commit()
 {
     for (auto& [id, reg] : m_registrations) {
-        if (reg.spatial_id.has_value()) {
-            std::visit([&](const auto& ptr) {
-                if (ptr->m_position.has_value()) {
-                    m_index->update(*reg.spatial_id, *ptr->m_position);
-                }
-            },
-                reg.member);
-        }
+        std::visit([&](const auto& ptr) {
+            if (!ptr->m_position.has_value()) {
+                return;
+            }
+            if (reg.spatial_id.has_value()) {
+                m_index->update(*reg.spatial_id, *ptr->m_position);
+            } else {
+                reg.spatial_id = m_index->insert(*ptr->m_position);
+            }
+        },
+            reg.member);
     }
 
     m_index->publish();
