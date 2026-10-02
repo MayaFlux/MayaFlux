@@ -45,7 +45,7 @@ public:
      * @param frame_rate Device frame rate in fps.
      */
     CameraContainer(uint32_t width, uint32_t height,
-        Portal::Graphics::ImageFormat format, double frame_rate = 30.0);
+        ImageFormat format, double frame_rate = 30.0);
 
     ~CameraContainer() override = default;
 

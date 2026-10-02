@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Kakshya/NDData/ImageData.hpp"
 #include "MayaFlux/Kinesis/Viewport/Scissor.hpp"
 
 namespace MayaFlux::Core {
@@ -242,41 +243,9 @@ enum class ShaderStage : uint8_t {
 //============================================================================
 
 /**
- * @enum ImageFormat
- * @brief User-friendly image format enum
- *
- * Abstracts Vulkan formats for Portal API convenience.
- * Maps to vk::Format internally.
+ * @brief Portal name for Kakshya::ImageFormat, which maps to vk::Format in TextureLoom.
  */
-enum class ImageFormat : uint8_t {
-    // Normalized formats
-    R8, ///< Single channel 8-bit
-    RG8, ///< Two channel 8-bit
-    RGB8, ///< Three channel 8-bit
-    RGBA8, ///< Four channel 8-bit
-    RGBA8_SRGB, ///< Four channel 8-bit sRGB
-
-    BGRA8, ///< 8-bit BGRA unsigned normalized
-    BGRA8_SRGB, ///< 8-bit BGRA sRGB
-
-    // Floating point formats
-    R16F, ///< Single channel 16-bit float
-    RG16F, ///< Two channel 16-bit float
-    RGBA16F, ///< Four channel 16-bit float
-    R32F, ///< Single channel 32-bit float
-    RG32F, ///< Two channel 32-bit float
-    RGBA32F, ///< Four channel 32-bit float
-
-    R16, ///< Single channel 16-bit unsigned integer
-    RG16, ///< Two channel 16-bit unsigned integer
-    RGBA16, ///< Four channel 16-bit unsigned integer
-
-    // Depth/stencil formats
-    DEPTH16, ///< 16-bit depth
-    DEPTH24, ///< 24-bit depth
-    DEPTH32F, ///< 32-bit float depth
-    DEPTH24_STENCIL8 ///< 24-bit depth + 8-bit stencil
-};
+using ImageFormat = Kakshya::ImageFormat;
 
 /**
  * @enum FilterMode
@@ -300,6 +269,17 @@ enum class AddressMode : uint8_t {
 };
 
 /**
+ * @enum BorderColor
+ * @brief Color read outside the texture when an address mode is CLAMP_TO_BORDER
+ */
+enum class BorderColor : uint8_t {
+    DEFAULT, ///< The sampler's historical border, opaque black
+    TRANSPARENT_BLACK, ///< Zero in every channel
+    OPAQUE_BLACK, ///< Black with full alpha
+    OPAQUE_WHITE ///< White with full alpha
+};
+
+/**
  * @struct SamplerConfig
  * @brief Sampler configuration
  */
@@ -311,7 +291,22 @@ struct SamplerConfig {
     AddressMode address_mode_w = AddressMode::REPEAT;
     float max_anisotropy = 1.0F; // 1.0 = disabled, 16.0 = max quality
     bool enable_mipmaps = false;
+    BorderColor border_color = BorderColor::DEFAULT;
 };
+
+/**
+ * @enum FitMode
+ * @brief How a source extent is mapped onto a destination extent
+ */
+enum class FitMode : uint8_t {
+    STRETCH, ///< Whole source onto whole destination, aspect ignored
+    CONTAIN, ///< Whole source, aspect kept, centered, the rest left uncovered
+    COVER, ///< Aspect kept, destination filled, source cropped
+    CENTER, ///< No scaling, centered, clipped to the destination
+    TILE, ///< Source repeated at its own size
+    TILE_MIRRORED ///< Source repeated, every other tile mirrored
+};
+
 
 /**
  * @struct RenderConfig

@@ -7,6 +7,22 @@
 
 namespace MayaFlux::Buffers {
 
+namespace {
+
+    void apply_slice(const Kakshya::StreamSlice& slice, Kakshya::CursorAccessProcessor& proc)
+    {
+        proc.set_loop_region(slice.start_frame(), slice.end_frame());
+        proc.set_looping(slice.looping);
+        proc.set_speed(slice.speed);
+        proc.set_time_map(slice.time_map);
+        proc.set_repeat(slice.repeat);
+
+        if (slice.loop_count != proc.loop_count())
+            proc.set_loop_count(slice.loop_count);
+    }
+
+}
+
 void StreamSliceProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
 {
     auto audio = std::dynamic_pointer_cast<AudioBuffer>(buffer);
@@ -63,12 +79,7 @@ void StreamSliceProcessor::load(size_t index, Kakshya::StreamSlice slice)
     slice.index = static_cast<uint8_t>(index);
 
     auto proc = std::make_shared<Kakshya::CursorAccessProcessor>(m_frames_per_block);
-    proc->set_loop_region(slice.start_frame(), slice.end_frame());
-    proc->set_looping(slice.looping);
-    proc->set_loop_count(slice.loop_count);
-
-    if (slice.speed != 1.0)
-        proc->set_speed(slice.speed);
+    apply_slice(slice, *proc);
 
     proc->set_on_end([this, index] {
         m_slots[index].slice.active = false;
@@ -87,6 +98,7 @@ void StreamSliceProcessor::bind(size_t index)
     if (index >= m_slots.size() || !m_slots[index].proc)
         return;
 
+    apply_slice(m_slots[index].slice, *m_slots[index].proc);
     m_slots[index].proc->reset();
     m_slots[index].slice.active = true;
 }
@@ -121,6 +133,7 @@ void StreamSliceProcessor::processing_function(const std::shared_ptr<Buffer>& bu
         if (!slot.slice.active || !slot.slice.stream || !slot.proc)
             continue;
 
+        apply_slice(slot.slice, *slot.proc);
         slot.proc->process(slot.slice.stream);
 
         const auto& pd = slot.slice.stream->get_dynamic_data(slot.proc->get_slot_index());
@@ -129,10 +142,11 @@ void StreamSliceProcessor::processing_function(const std::shared_ptr<Buffer>& bu
 
         const auto structure = slot.slice.stream->get_structure();
         std::vector<double> tmp(dst.size(), 0.0);
-        Kakshya::extract_processed_data(pd, structure.organization, structure.get_channel_count(), ch, tmp);
+        Kakshya::extract_processed_data(pd, structure.organization, structure.get_channel_count(),
+            slot.slice.source_channel.value_or(ch), tmp);
 
         for (size_t s = 0; s < dst.size(); ++s)
-            dst[s] += tmp[s];
+            dst[s] += tmp[s] * slot.slice.scale;
     }
 }
 

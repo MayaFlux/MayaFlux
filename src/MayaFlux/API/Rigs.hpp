@@ -1,5 +1,8 @@
 #pragma once
 
+#include "MayaFlux/Kakshya/Source/DynamicVideoStream.hpp"
+#include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
+
 /**
  * @file API/Rigs.hpp
  * @brief Pre-assembled, purpose-built signal flow configurations.
@@ -18,10 +21,19 @@ namespace MayaFlux {
 
 namespace Kriya {
     class SamplingPipeline;
+    class TapSetBuilder;
+    class ChimeraBuilder;
+    class BufferPipeline;
+    class CaptureBuilder;
 }
 
 namespace Kakshya {
     class DynamicSoundStream;
+}
+
+namespace Buffers {
+    class AudioBuffer;
+    class TextureArrayBuffer;
 }
 
 /**
@@ -101,5 +113,180 @@ MAYAFLUX_API std::shared_ptr<Kriya::SamplingPipeline> create_sampler_from_stream
 MAYAFLUX_API std::vector<std::shared_ptr<Kriya::SamplingPipeline>> create_samplers(
     const std::string& filepath, uint32_t num_samples = 48000 * 5, bool truncate = true,
     uint64_t max_dur_ms = 0, uint32_t max_channels = 0);
+
+/**
+ * @brief Begin describing several taps that read one audio file.
+ *
+ * Loads the file like create_sampler and returns a builder. Each tap() adds a
+ * tap with its own entry time, speed, direction, level and channel, and
+ * start() plays them. Keep the resulting TapSet alive for as long as it should
+ * sound.
+ *
+ * @code
+ * auto taps = MayaFlux::create_tap_set("res/h.wav")
+ *     .tap().speed(1.0)
+ *     .tap().enters_after(2.0).speed(3.0 / 2.0).level(0.8)
+ *     .tap().enters_after(4.0).speed(2.0).backward().level(0.6)
+ *     .start();
+ * @endcode
+ *
+ * @param filepath    Path to the audio file (any FFmpeg-supported format).
+ * @param num_samples Number of samples to load from the file (default: 48000 * 5).
+ * @param truncate    Truncate stream to num_samples if true (default: true).
+ * @return Builder. If the file cannot be loaded, start() returns an empty TapSet.
+ */
+MAYAFLUX_API Kriya::TapSetBuilder create_tap_set(
+    const std::string& filepath, uint32_t num_samples = 48000 * 5, bool truncate = true);
+
+/**
+ * @brief Begin describing several taps that read an existing DynamicSoundStream.
+ *
+ * Like create_tap_set, but reads a stream already in memory, for example one
+ * shared with a sampler or filled by a recording.
+ *
+ * @param stream Source stream.
+ * @return Builder. A null stream makes start() return an empty TapSet.
+ */
+MAYAFLUX_API Kriya::TapSetBuilder create_tap_set_from_stream(
+    std::shared_ptr<Kakshya::DynamicSoundStream> stream);
+
+/**
+ * @brief Begin assembling the layers of a TextureArrayBuffer from what feeds each.
+ *
+ * A layer holds a still image or file, a GPU image copied every frame, or a moment
+ * of a ring that is being recorded, read at a lag or played freely. start() begins
+ * feeding on the frame clock. Keep the resulting Chimera alive for as long as it
+ * should run.
+ *
+ * @code{.cpp}
+ * auto chimera = MayaFlux::create_chimera(array)
+ *                    .layer().from("res/eye.png").params({ 0.3F, 0.4F, 0.2F, 0.F })
+ *                    .layer().from(ring).lag(0.5).smooth().level(0.6)
+ *                    .start();
+ * @endcode
+ *
+ * The builder comes with a pipeline made from the engine's managers. Reach it with
+ * get_pipeline(), replace it with use_pipeline(), or record into it with record()
+ * and read its stream with from_pipeline().
+ *
+ * @param buffer Array buffer whose layers are fed.
+ * @return Builder. A null buffer makes start() return an empty Chimera.
+ */
+MAYAFLUX_API Kriya::ChimeraBuilder create_chimera(
+    std::shared_ptr<Buffers::TextureArrayBuffer> buffer);
+
+/**
+ * @brief Begin a Chimera over an array buffer made and drawn here.
+ *
+ * The buffer is made from the spec and starts to render when start() runs, after the
+ * layers' params and layer_data() are in place. Show the window after this call.
+ *
+ * @code{.cpp}
+ * auto chimera = MayaFlux::create_chimera(
+ *                    { .width = 1280, .height = 720, .ring_frames = 4 },
+ *                    { .target_window = window, .fragment_shader = "texture_array_ghost.frag" })
+ *                    .layer_data()
+ *                    .record(Kriya::BufferOperation::capture_to_stream(io, camera, 240))
+ *                    .layer().from_pipeline().lag(0.0)
+ *                    .start();
+ * @endcode
+ *
+ * @param spec   Extent and format of every layer; ring_frames is the layer count.
+ * @param render How the array is drawn.
+ * @param fit    How a frame of another extent is fitted, or nullopt to drop it.
+ * @return Builder.
+ */
+MAYAFLUX_API Kriya::ChimeraBuilder create_chimera(
+    const Kakshya::VideoStreamSpec& spec,
+    Portal::Graphics::RenderConfig render,
+    std::optional<Portal::Graphics::FitMode> fit = Portal::Graphics::FitMode::STRETCH);
+
+/**
+ * @brief Make a layered texture buffer that draws to a window.
+ *
+ * For writing its layers through pipeline routes or by hand. A Chimera over the
+ * result is create_chimera(buffer).
+ *
+ * @param spec   Extent and format of every layer; ring_frames is the layer count.
+ * @param render How the array is drawn.
+ * @param fit    How a frame of another extent is fitted, or nullopt to drop it.
+ * @param mode   Mode number passed to the fragment shader.
+ * @return The buffer, already in the buffer manager.
+ */
+MAYAFLUX_API std::shared_ptr<Buffers::TextureArrayBuffer> create_texture_array(
+    const Kakshya::VideoStreamSpec& spec,
+    const Portal::Graphics::RenderConfig& render,
+    std::optional<Portal::Graphics::FitMode> fit = Portal::Graphics::FitMode::STRETCH,
+    uint32_t mode = 0);
+
+/**
+ * @brief Make a circular stream that keeps the most recent seconds of a signal.
+ *
+ * The stream runs at the engine sample rate. Fill it with record_into and read
+ * it with taps that use lag, or copy its recent past with snapshot.
+ *
+ * @param seconds  How much of the past to keep.
+ * @param channels Number of channels.
+ * @return The ring, or nullptr if it would be empty.
+ */
+MAYAFLUX_API std::shared_ptr<Kakshya::DynamicSoundStream> create_ring(
+    double seconds, uint32_t channels = 1);
+
+/**
+ * @brief Record a signal into one channel of a stream, a block at a time.
+ *
+ * Captures @p source every cycle and appends each block at the stream's write
+ * head for @p channel, wrapping if the stream is a ring. A stereo ring needs a
+ * call per channel. Keep the returned pipeline alive for as long as the
+ * recording should run.
+ *
+ * @code
+ * auto ring = MayaFlux::create_ring(10.0);
+ * auto recorder = MayaFlux::record_into(ring,
+ *     Kriya::BufferOperation::capture_file_from(get_io_manager(), "res/audio.wav"));
+ * auto taps = MayaFlux::create_tap_set_from_stream(ring)
+ *     .tap().lag(0.05)
+ *     .tap().lag(Kinesis::TimeMaps::linear(0.3, 4.0, 30.0)).level(0.6)
+ *     .start();
+ * @endcode
+ *
+ * @param stream  Stream to record into.
+ * @param source  What to capture, for example from capture_file_from, capture_input_from or capture_from.
+ * @param channel Channel of the stream that receives the signal.
+ * @return The running pipeline, or nullptr if the stream is null.
+ */
+MAYAFLUX_API std::shared_ptr<Kriya::BufferPipeline> record_into(
+    const std::shared_ptr<Kakshya::DynamicSoundStream>& stream,
+    Kriya::CaptureBuilder source, uint32_t channel = 0);
+
+/**
+ * @brief Record a live buffer into one channel of a stream.
+ *
+ * Works for any buffer that something else already processes each cycle, such as
+ * a node buffer, a supplied buffer or an input listener. For a buffer nobody
+ * processes, pass a capture with on_capture_processing() to the other overload.
+ *
+ * @param stream  Stream to record into.
+ * @param buffer  Buffer to read each cycle.
+ * @param channel Channel of the stream that receives the signal.
+ * @return The running pipeline, or nullptr if the stream or buffer is null.
+ */
+MAYAFLUX_API std::shared_ptr<Kriya::BufferPipeline> record_into(
+    const std::shared_ptr<Kakshya::DynamicSoundStream>& stream,
+    const std::shared_ptr<Buffers::AudioBuffer>& buffer, uint32_t channel = 0);
+
+/**
+ * @brief Record several sources into consecutive channels of a stream.
+ *
+ * Source i goes to channel i, so a stereo ring is two sources. Each source gets
+ * its own pipeline, because one pipeline spends a cycle per capture.
+ *
+ * @param stream  Stream to record into.
+ * @param sources What to capture, one per channel starting at channel 0.
+ * @return One running pipeline per source, in order. Empty if the stream is null.
+ */
+MAYAFLUX_API std::vector<std::shared_ptr<Kriya::BufferPipeline>> record_into(
+    const std::shared_ptr<Kakshya::DynamicSoundStream>& stream,
+    std::vector<Kriya::CaptureBuilder> sources);
 
 } // namespace MayaFlux

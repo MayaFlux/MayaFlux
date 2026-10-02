@@ -182,6 +182,43 @@ std::vector<DataVariant> SoundStreamContainer::get_segments_data(const std::vect
         | std::ranges::to<std::vector>();
 }
 
+void SoundStreamContainer::gather_frames(std::span<const uint64_t> frames, std::span<double> out) const
+{
+    std::ranges::fill(out, 0.0);
+
+    const uint64_t channels = m_num_channels;
+    const auto& spans = get_span_cache();
+    if (spans.empty() || channels == 0) {
+        return;
+    }
+
+    const bool interleaved = m_structure.organization == OrganizationStrategy::INTERLEAVED;
+    const size_t count = std::min<size_t>(frames.size(), out.size() / channels);
+
+    for (size_t k = 0; k < count; ++k) {
+        const uint64_t frame = frames[k];
+        if (frame >= m_num_frames) {
+            continue;
+        }
+
+        double* dst = out.data() + k * channels;
+
+        if (interleaved) {
+            const uint64_t base = frame * channels;
+            if (base + channels <= spans[0].size()) {
+                std::copy_n(spans[0].data() + base, channels, dst);
+            }
+            continue;
+        }
+
+        for (uint64_t c = 0; c < channels && c < spans.size(); ++c) {
+            if (frame < spans[c].size()) {
+                dst[c] = spans[c][frame];
+            }
+        }
+    }
+}
+
 void SoundStreamContainer::get_frames_impl(void* output, size_t count, uint64_t start_frame, uint64_t num_frames, const std::type_info& type) const
 {
     if (type == typeid(double)) {

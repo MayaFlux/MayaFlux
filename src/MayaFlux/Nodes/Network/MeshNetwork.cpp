@@ -1,6 +1,7 @@
 #include "MeshNetwork.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
+#include "MayaFlux/Kakshya/NDData/MeshInsertion.hpp"
 #include "MayaFlux/Nodes/Network/Operators/MeshOperator.hpp"
 
 namespace MayaFlux::Nodes::Network {
@@ -235,6 +236,39 @@ void MeshNetwork::propagate_world_transforms()
             slot.world_transform = slot.local_transform;
         }
     }
+}
+
+std::optional<Kakshya::MeshData> MeshNetwork::get_mesh_data() const
+{
+    auto mesh_data = Kakshya::MeshData::empty();
+    Kakshya::MeshInsertion ins(mesh_data.vertex_variant, mesh_data.index_variant);
+
+    for (const auto& slot : m_slots) {
+        if (!slot.node) {
+            continue;
+        }
+
+        const auto packed = slot.node->get_mesh_data();
+        if (!packed) {
+            continue;
+        }
+
+        ins.insert_submesh(
+            std::get<std::vector<uint8_t>>(packed->vertex_variant),
+            std::get<std::vector<uint32_t>>(packed->index_variant),
+            slot.name.empty() ? std::to_string(slot.index) : slot.name,
+            {},
+            packed->layout);
+    }
+
+    const auto access = ins.build();
+    if (!access) {
+        return std::nullopt;
+    }
+    mesh_data.layout = access->layout;
+    mesh_data.submeshes = access->submeshes;
+
+    return mesh_data;
 }
 
 } // namespace MayaFlux::Nodes::Network

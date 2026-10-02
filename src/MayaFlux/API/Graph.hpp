@@ -576,6 +576,22 @@ MAYAFLUX_API void remove_supplied_buffer_from_channels(const std::shared_ptr<Buf
     const std::vector<uint32_t>& channels);
 
 /**
+ * @brief Sets whether a channel's mix is averaged over its sources
+ * @param channel Channel index
+ * @param enabled True (the default) divides every source by the number of sources on
+ *                the channel, so adding one makes the others quieter. False sums the
+ *                sources at their own levels.
+ */
+MAYAFLUX_API void set_mix_normalization_for_channel(uint32_t channel, bool enabled);
+
+/**
+ * @brief Sets whether the mix of several channels is averaged over their sources
+ * @param channels Channel indices
+ * @param enabled See set_mix_normalization_for_channel
+ */
+MAYAFLUX_API void set_mix_normalization_for_channels(const std::vector<uint32_t>& channels, bool enabled);
+
+/**
  * @brief Routes a buffer from its current channel to a target channel with fade
  * @param buffer Buffer to route
  * @param target_channel Destination channel

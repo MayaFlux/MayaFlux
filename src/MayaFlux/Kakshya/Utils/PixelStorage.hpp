@@ -1,7 +1,7 @@
 #pragma once
 
+#include "MayaFlux/Kakshya/NDData/ImageData.hpp"
 #include "MayaFlux/Kakshya/NDData/NDData.hpp"
-#include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
 
 namespace MayaFlux::Kakshya {
 
@@ -20,7 +20,23 @@ namespace MayaFlux::Kakshya {
  * @param format Pixel format.
  * @return Element size in bytes.
  */
-[[nodiscard]] MAYAFLUX_API size_t storage_element_size(Portal::Graphics::ImageFormat format);
+[[nodiscard]] MAYAFLUX_API size_t storage_element_size(ImageFormat format);
+
+/**
+ * @brief Linearly blend two frames of the same size and format.
+ *
+ * Works on 8-bit and 32-bit float storage. Returns false, leaving @p out
+ * untouched, for any other element size or when the frames differ in size.
+ *
+ * @param format Pixel format of both frames.
+ * @param a      Frame at weight 0.
+ * @param b      Frame at weight 1.
+ * @param out    Destination for a.size() bytes.
+ * @param weight Blend factor from @p a to @p b.
+ * @return True if @p out holds the blend.
+ */
+MAYAFLUX_API bool blend_frames(ImageFormat format, std::span<const uint8_t> a, std::span<const uint8_t> b,
+    uint8_t* out, double weight);
 
 /**
  * @brief True when the format's numeric interpretation is floating point.
@@ -30,7 +46,7 @@ namespace MayaFlux::Kakshya {
  *
  * @param format Pixel format.
  */
-[[nodiscard]] MAYAFLUX_API bool is_float_format(Portal::Graphics::ImageFormat format);
+[[nodiscard]] MAYAFLUX_API bool is_float_format(ImageFormat format);
 
 /**
  * @brief Allocate a zeroed DataVariant of the alternative backing a format.
@@ -40,7 +56,7 @@ namespace MayaFlux::Kakshya {
  * @return Zero-filled variant of the matching alternative.
  */
 [[nodiscard]] MAYAFLUX_API DataVariant make_empty_storage(
-    Portal::Graphics::ImageFormat format, size_t element_count);
+    ImageFormat format, size_t element_count);
 
 /**
  * @brief Read one element as a normalised double.
@@ -54,7 +70,7 @@ namespace MayaFlux::Kakshya {
  * @param elem_index Element index. Returns 0.0 when out of range.
  */
 [[nodiscard]] MAYAFLUX_API double read_normalized_at(
-    const DataVariant& v, Portal::Graphics::ImageFormat format, size_t elem_index);
+    const DataVariant& v, ImageFormat format, size_t elem_index);
 
 /**
  * @brief Read one element as a normalised double, with optional range remapping.
@@ -70,7 +86,7 @@ namespace MayaFlux::Kakshya {
  */
 [[nodiscard]]
 MAYAFLUX_API double read_normalized_at(const DataVariant& v,
-    Portal::Graphics::ImageFormat format,
+    ImageFormat format,
     const std::optional<DataDimension::ValueRange>& range,
     size_t elem_index);
 
@@ -86,7 +102,7 @@ MAYAFLUX_API double read_normalized_at(const DataVariant& v,
  * @param value      Normalised value.
  */
 MAYAFLUX_API void write_normalized_at(
-    DataVariant& v, Portal::Graphics::ImageFormat format, size_t elem_index, double value);
+    DataVariant& v, ImageFormat format, size_t elem_index, double value);
 
 /**
  * @brief Write one element from a normalised double, with optional range remapping.
@@ -102,7 +118,7 @@ MAYAFLUX_API void write_normalized_at(
  * @param value      Normalised value.
  */
 MAYAFLUX_API void write_normalized_at(DataVariant& v,
-    Portal::Graphics::ImageFormat format,
+    ImageFormat format,
     const std::optional<DataDimension::ValueRange>& range,
     size_t elem_index,
     double value);
@@ -120,7 +136,7 @@ MAYAFLUX_API void write_normalized_at(DataVariant& v,
  *
  * @param format Pixel format.
  */
-[[nodiscard]] MAYAFLUX_API bool format_has_variant_storage(Portal::Graphics::ImageFormat format);
+[[nodiscard]] MAYAFLUX_API bool format_has_variant_storage(ImageFormat format);
 
 /**
  * @brief True when the format's values are range measurements rather than colour.
@@ -130,6 +146,6 @@ MAYAFLUX_API void write_normalized_at(DataVariant& v,
  *
  * @param format Pixel format.
  */
-[[nodiscard]] MAYAFLUX_API bool is_depth_format(Portal::Graphics::ImageFormat format);
+[[nodiscard]] MAYAFLUX_API bool is_depth_format(ImageFormat format);
 
 } // namespace MayaFlux::Kakshya

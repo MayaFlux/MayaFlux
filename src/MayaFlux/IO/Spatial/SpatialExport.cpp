@@ -4,6 +4,7 @@
 #include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
 #include "MayaFlux/Buffers/State/RelaxationGridBuffer.hpp"
 #include "MayaFlux/Kakshya/NDData/VertexFormats.hpp"
+#include "MayaFlux/Kakshya/NDData/VertexInsertion.hpp"
 #include "MayaFlux/Nodes/Network/Operators/GpuFieldOperator.hpp"
 #include "MayaFlux/Nodes/Network/Operators/GraphicsOperator.hpp"
 #include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
@@ -16,6 +17,8 @@ namespace {
 
     /**
      * @brief Read every vertex, whole, into SpatialSample-ready columns.
+     *
+     * Decoded by Kakshya::VertexInsertion against the canonical Vertex layout.
      *
      * A GraphicsOperator's raw vertex buffer is Kakshya::Vertex records:
      * PointVertex/LineVertex/MeshVertex all share its exact 60-byte layout,
@@ -40,34 +43,21 @@ namespace {
             return false;
         }
 
-        const auto* verts = reinterpret_cast<const Kakshya::Vertex*>(raw.data());
-
-        positions.resize(vertex_count);
-        std::vector<glm::vec3> colors(vertex_count);
-        std::vector<float> scalars(vertex_count);
-        std::vector<glm::vec2> uvs(vertex_count);
-        std::vector<glm::vec3> normals(vertex_count);
-        std::vector<glm::vec3> tangents(vertex_count);
-
-        for (size_t i = 0; i < vertex_count; ++i) {
-            positions[i] = verts[i].position;
-            colors[i] = verts[i].color;
-            scalars[i] = verts[i].scalar;
-            uvs[i] = verts[i].uv;
-            normals[i] = verts[i].normal;
-            tangents[i] = verts[i].tangent;
+        std::vector<Kakshya::DataVariant> channels;
+        Kakshya::VertexInsertion insertion(channels);
+        if (!insertion.insert_interleaved(
+                raw.first(vertex_count * sizeof(Kakshya::Vertex)),
+                Kakshya::VertexLayout::for_points(sizeof(Kakshya::Vertex)))) {
+            return false;
         }
 
-        attributes.push_back(SpatialAttribute { .name = "color", .scope = SpatialScope::Varying,
-            .values = Kakshya::DataVariant { std::move(colors) } });
-        attributes.push_back(SpatialAttribute { .name = "scalar", .scope = SpatialScope::Varying,
-            .values = Kakshya::DataVariant { std::move(scalars) } });
-        attributes.push_back(SpatialAttribute { .name = "uv", .scope = SpatialScope::Varying,
-            .values = Kakshya::DataVariant { std::move(uvs) } });
-        attributes.push_back(SpatialAttribute { .name = "normal", .scope = SpatialScope::Varying,
-            .values = Kakshya::DataVariant { std::move(normals) } });
-        attributes.push_back(SpatialAttribute { .name = "tangent", .scope = SpatialScope::Varying,
-            .values = Kakshya::DataVariant { std::move(tangents) } });
+        constexpr std::array<const char*, 5> column_names { "color", "scalar", "uv", "normal", "tangent" };
+
+        positions = std::move(std::get<std::vector<glm::vec3>>(channels[0]));
+        for (size_t i = 0; i < column_names.size(); ++i) {
+            attributes.push_back(SpatialAttribute { .name = column_names[i], .scope = SpatialScope::Varying,
+                .values = std::move(channels[i + 1]) });
+        }
 
         return true;
     }

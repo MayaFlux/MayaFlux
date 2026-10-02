@@ -9,7 +9,7 @@
 namespace MayaFlux::Kakshya {
 
 CameraContainer::CameraContainer(uint32_t width, uint32_t height,
-    Portal::Graphics::ImageFormat format, double frame_rate)
+    ImageFormat format, double frame_rate)
     : VideoStreamContainer(width, height, format, frame_rate)
 {
     m_num_frames = 1;

@@ -47,7 +47,7 @@ void VisionProcessor::on_attach(const std::shared_ptr<SignalSourceContainer>& co
             m_executor = std::make_unique<Yantra::VisionGpuExecutor>();
 
         auto& loom = Portal::Graphics::TextureLoom::instance();
-        m_gpu_frame = loom.create_2d(m_width, m_height, Portal::Graphics::ImageFormat::RGBA8, nullptr);
+        m_gpu_frame = loom.create_2d(m_width, m_height, ImageFormat::RGBA8, nullptr);
         m_upload_staging = Buffers::create_image_staging_buffer(m_gpu_frame->get_size_bytes());
     }
 
@@ -130,7 +130,7 @@ void VisionProcessor::set_sequence(Kinesis::Vision::VisionSequence sequence)
         m_executor = std::make_unique<Yantra::VisionGpuExecutor>();
         if (m_width > 0 && m_height > 0 && !m_gpu_frame) {
             auto& loom = Portal::Graphics::TextureLoom::instance();
-            m_gpu_frame = loom.create_2d(m_width, m_height, Portal::Graphics::ImageFormat::RGBA8, nullptr);
+            m_gpu_frame = loom.create_2d(m_width, m_height, ImageFormat::RGBA8, nullptr);
             m_upload_staging = Buffers::create_image_staging_buffer(m_gpu_frame->get_size_bytes());
         }
     } else {

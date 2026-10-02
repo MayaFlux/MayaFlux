@@ -3,7 +3,11 @@
 #include "MayaFlux/Kakshya/DataProcessor.hpp"
 #include "MayaFlux/Kakshya/NDimensionalContainer.hpp"
 
+#include "MayaFlux/Kinesis/Tendency/Tendency.hpp"
+
 namespace MayaFlux::Kakshya {
+
+class DynamicSoundStream;
 
 /**
  * @class CursorAccessProcessor
@@ -125,10 +129,38 @@ public:
      */
     void set_speed(double speed);
 
+    /**
+     * @brief Drive the read position from a function of time instead of speed.
+     *
+     * The map takes seconds since the last reset() and returns a source
+     * position in frames, read with linear interpolation. Reverse, scrubbing
+     * and a fixed position are all valid. Speed and loop count are ignored
+     * while a map is set. Positions outside the loop region wrap if looping,
+     * otherwise the voice ends. A different map restarts its clock at zero.
+     *
+     * @param map Time map, or null to go back to speed based reading.
+     */
+    void set_time_map(const std::shared_ptr<const Kinesis::TimeMap>& map);
+
+    /**
+     * @brief Restart the time map over and over, with a length that can change.
+     *
+     * Needs a time map. The length map takes seconds since the last reset() and
+     * returns how long, in seconds, the repeat that starts then should last. It
+     * is evaluated once per repeat. Each repeat restarts the time map from zero
+     * and plays its first stretch of that length, with the jump back exact to
+     * the frame, so a shrinking length gives a stutter or bouncing repeat.
+     * Passing the map already set is a no-op.
+     *
+     * @param length Repeat length in seconds, or null for no repeating.
+     */
+    void set_repeat(const std::shared_ptr<const Kinesis::TimeMap>& length);
+
     [[nodiscard]] bool is_active() const { return m_active; }
     [[nodiscard]] uint64_t cursor() const { return m_cursor[0]; }
     [[nodiscard]] uint64_t loop_start() const { return m_loop_start; }
     [[nodiscard]] uint64_t loop_end() const { return m_loop_end; }
+    [[nodiscard]] size_t loop_count() const { return m_loop_count; }
     [[nodiscard]] uint32_t get_slot_index() const { return m_slot_index; }
 
 private:
@@ -142,6 +174,17 @@ private:
     size_t m_loops_remaining {};
     double m_speed_remainder {};
     double m_speed { 1.0 };
+
+    std::shared_ptr<const Kinesis::TimeMap> m_time_map;
+    uint64_t m_clock_frames {};
+    std::shared_ptr<const Kinesis::TimeMap> m_repeat;
+    uint64_t m_repeat_start {};
+    uint64_t m_repeat_length {};
+    std::vector<uint64_t> m_gather_frames;
+    std::vector<double> m_gather_weights;
+    std::vector<double> m_gather_taps;
+
+    void process_mapped(DynamicSoundStream& stream, std::vector<DataVariant>& pd);
 
     uint32_t m_slot_index { std::numeric_limits<uint32_t>::max() };
 

@@ -93,6 +93,18 @@ public:
     [[nodiscard]] const std::vector<MeshSlot>& slots() const { return m_slots; }
     [[nodiscard]] std::vector<MeshSlot>& slots() { return m_slots; }
 
+    /**
+     * @brief Every slot's geometry merged into one MeshData, one submesh per slot.
+     *
+     * Slots with no node or no geometry are skipped. Each submesh is named for
+     * its slot, or by its index when the slot is unnamed, and its indices are
+     * offset into the shared vertex array. Vertices are in each slot's local
+     * space: no slot or world transform is applied.
+     *
+     * @return The merged mesh, or nullopt when no slot has geometry.
+     */
+    [[nodiscard]] std::optional<Kakshya::MeshData> get_mesh_data() const;
+
     // -------------------------------------------------------------------------
     // NodeNetwork interface
     // -------------------------------------------------------------------------

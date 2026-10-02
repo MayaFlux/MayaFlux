@@ -1,4 +1,5 @@
 #pragma once
+
 #include "MayaFlux/Kakshya/NDData/NDData.hpp"
 
 namespace MayaFlux {
@@ -6,6 +7,7 @@ namespace MayaFlux {
 namespace Buffers {
     class Buffer;
     class AudioBuffer;
+    class VKBuffer;
 }
 
 namespace Kriya {
@@ -36,10 +38,11 @@ namespace Kriya {
      * - Callback system for data lifecycle events
      * - Metadata and tagging support for organization
      * - Integration with BufferPipeline and BufferOperation
-     * - Sample-accurate timing and synchronization
+     * - Scheduler timing and synchronization
      *
      * **Use Cases:**
      * - Real-time audio analysis and feature extraction
+     * - Frame capture from graphics buffers
      * - Streaming data collection for machine learning
      * - Circular delay lines and feedback systems
      * - Windowed processing for spectral analysis
@@ -73,13 +76,23 @@ namespace Kriya {
             MANUAL // User controls processing explicitly
         };
 
+        BufferCapture() = default;
+        BufferCapture(std::nullptr_t)
+            : BufferCapture()
+        {
+        }
+
         /**
          * @brief Construct a BufferCapture with specified mode and parameters.
-         * @param buffer Target AudioBuffer to capture from
+         * @param buffer Source buffer to capture from
          * @param mode Capture strategy to use (default: TRANSIENT)
          * @param cycle_count Number of cycles for multi-cycle modes (default: 1)
          */
         BufferCapture(std::shared_ptr<Buffers::AudioBuffer> buffer,
+            CaptureMode mode = CaptureMode::TRANSIENT,
+            uint32_t cycle_count = 1);
+
+        BufferCapture(std::shared_ptr<Buffers::VKBuffer> buffer,
             CaptureMode mode = CaptureMode::TRANSIENT,
             uint32_t cycle_count = 1);
 
@@ -98,7 +111,7 @@ namespace Kriya {
          * Controls how many times the capture operation executes within a single
          * pipeline cycle. Each execution receives an incrementing cycle number
          * and calls the `on_data_ready` callback. The buffer is re-read for
-         * each iteration, allowing accumulation of multiple samples.
+         * each iteration, allowing accumulation of multiple data blocks.
          *
          * @note This affects only CAPTURE operations. Other operation types
          *       (TRANSFORM, ROUTE, etc.) always execute once per pipeline cycle.
@@ -163,8 +176,12 @@ namespace Kriya {
          */
         BufferCapture& with_metadata(const std::string& key, const std::string& value);
 
-        // Accessors
-        inline std::shared_ptr<Buffers::AudioBuffer> get_buffer() const { return m_buffer; }
+        /** @brief Return the configured audio source. */
+        inline std::shared_ptr<Buffers::AudioBuffer> get_audio_buffer() const { return m_audio_buffer; }
+        /** @brief Return the configured graphics source. */
+        inline std::shared_ptr<Buffers::VKBuffer> get_graphics_buffer() const { return m_graphics_buffer; }
+        /** @brief Return the configured source buffer. */
+        std::shared_ptr<Buffers::Buffer> get_source_buffer() const;
         inline CaptureMode get_mode() const { return m_mode; }
         inline ProcessingControl get_processing_control() const { return m_processing_control; }
         inline uint32_t get_cycle_count() const { return m_cycle_count; }
@@ -175,13 +192,14 @@ namespace Kriya {
         inline void set_processing_control(ProcessingControl control) { m_processing_control = control; }
 
     private:
-        std::shared_ptr<Buffers::AudioBuffer> m_buffer;
-        CaptureMode m_mode;
+        std::shared_ptr<Buffers::AudioBuffer> m_audio_buffer;
+        std::shared_ptr<Buffers::VKBuffer> m_graphics_buffer;
+        CaptureMode m_mode { CaptureMode::TRANSIENT };
         ProcessingControl m_processing_control = ProcessingControl::AUTOMATIC;
-        uint32_t m_cycle_count;
-        uint32_t m_window_size;
-        uint32_t m_circular_size;
-        float m_overlap_ratio;
+        uint32_t m_cycle_count { 1 };
+        uint32_t m_window_size {};
+        uint32_t m_circular_size {};
+        float m_overlap_ratio {};
 
         std::function<bool()> m_stop_condition;
         OperationFunction m_data_ready_callback;
@@ -231,10 +249,12 @@ namespace Kriya {
     class MAYAFLUX_API CaptureBuilder {
     public:
         /**
-         * @brief Construct builder with target AudioBuffer.
-         * @param buffer AudioBuffer to capture from
+         * @brief Construct builder with a buffer source.
+         * @param buffer Buffer to capture from
          */
         explicit CaptureBuilder(std::shared_ptr<Buffers::AudioBuffer> buffer);
+        explicit CaptureBuilder(std::shared_ptr<Buffers::VKBuffer> buffer);
+        explicit CaptureBuilder(std::nullptr_t);
 
         /**
          * @brief Set number of cycles to capture (enables ACCUMULATE mode).

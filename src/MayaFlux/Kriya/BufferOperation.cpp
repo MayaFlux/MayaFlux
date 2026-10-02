@@ -2,11 +2,46 @@
 
 #include "MayaFlux/Buffers/BufferManager.hpp"
 #include "MayaFlux/Buffers/Container/SoundFileBridge.hpp"
+#include "MayaFlux/Buffers/Container/VideoContainerBuffer.hpp"
+#include "MayaFlux/Buffers/Textures/TextureArrayBuffer.hpp"
+#include "MayaFlux/Kakshya/Source/DynamicVideoStream.hpp"
+#include "MayaFlux/Kakshya/Source/VideoFileContainer.hpp"
+#include "MayaFlux/Kriya/PipelineHelpers/PipelineGraphicsData.hpp"
+#include "MayaFlux/Vruta/ChronUtils.hpp"
 
 #include "MayaFlux/IO/IOManager.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Kriya {
+
+namespace {
+
+std::shared_ptr<Kakshya::DynamicVideoStream> make_ring(
+    const std::shared_ptr<Buffers::VideoContainerBuffer>& source,
+    uint64_t ring_frames)
+{
+    const uint64_t frames = ring_frames > 0 ? ring_frames : 3ULL * Vruta::s_registered_frame_rate;
+
+    return std::make_shared<Kakshya::DynamicVideoStream>(Kakshya::VideoStreamSpec {
+        .width = source->get_width(),
+        .height = source->get_height(),
+        .format = source->get_format(),
+        .frame_rate = static_cast<double>(Vruta::s_registered_frame_rate),
+        .ring_frames = frames });
+}
+
+Buffers::ProcessingToken capture_token(const BufferCapture& capture)
+{
+    if (capture.get_audio_buffer()) {
+        return Buffers::ProcessingToken::AUDIO_BACKEND;
+    }
+    if (capture.get_graphics_buffer()) {
+        return Buffers::ProcessingToken::GRAPHICS_BACKEND;
+    }
+    throw std::invalid_argument("Capture operation requires a source buffer");
+}
+
+}
 
 BufferOperation BufferOperation::capture_input(
     const std::shared_ptr<Buffers::BufferManager>& buffer_manager,
@@ -36,6 +71,56 @@ CaptureBuilder BufferOperation::capture_input_from(
     return CaptureBuilder(input_buffer);
 }
 
+BufferOperation BufferOperation::capture_camera(
+    const std::shared_ptr<IO::IOManager>& io_manager,
+    const IO::CameraConfig& config,
+    BufferCapture::CaptureMode mode,
+    uint32_t cycle_count,
+    std::optional<Portal::Graphics::RenderConfig> render)
+{
+    auto camera = io_manager->open_camera(config);
+    if (!camera) {
+        error<std::runtime_error>(Journal::Component::Kriya, Journal::Context::AsyncIO,
+            std::source_location::current(), "Failed to open camera");
+    }
+
+    auto buffer = io_manager->hook_camera_to_buffer(camera);
+    if (!buffer) {
+        error<std::runtime_error>(Journal::Component::Kriya, Journal::Context::AsyncIO,
+            std::source_location::current(), "Failed to hook camera to graphics buffer");
+    }
+
+    if (render) {
+        detail::ensure_rendering(buffer, *render);
+    }
+
+    return { OpType::CAPTURE, BufferCapture(buffer, mode, cycle_count) };
+}
+
+CaptureBuilder BufferOperation::capture_camera_from(
+    const std::shared_ptr<IO::IOManager>& io_manager,
+    const IO::CameraConfig& config,
+    std::optional<Portal::Graphics::RenderConfig> render)
+{
+    auto camera = io_manager->open_camera(config);
+    if (!camera) {
+        error<std::runtime_error>(Journal::Component::Kriya, Journal::Context::AsyncIO,
+            std::source_location::current(), "Failed to open camera");
+    }
+
+    auto buffer = io_manager->hook_camera_to_buffer(camera);
+    if (!buffer) {
+        error<std::runtime_error>(Journal::Component::Kriya, Journal::Context::AsyncIO,
+            std::source_location::current(), "Failed to hook camera to graphics buffer");
+    }
+
+    if (render) {
+        detail::ensure_rendering(buffer, *render);
+    }
+
+    return CaptureBuilder(buffer);
+}
+
 BufferOperation BufferOperation::capture_file(
     const std::shared_ptr<IO::IOManager>& io_manager,
     const std::string& filepath,
@@ -60,6 +145,34 @@ BufferOperation BufferOperation::capture_file(
     return { BufferOperation::OpType::CAPTURE, std::move(capture) };
 }
 
+BufferOperation BufferOperation::capture_file(
+    const std::shared_ptr<IO::IOManager>& io_manager,
+    const std::string& filepath,
+    IO::LoadConfig config,
+    uint32_t cycle_count,
+    std::optional<Portal::Graphics::RenderConfig> render)
+{
+    auto video = io_manager->load_video(filepath, config).video;
+    if (!video) {
+        error<std::runtime_error>(Journal::Component::Kriya, Journal::Context::AsyncIO,
+            std::source_location::current(), "Failed to load video file: {}", filepath);
+    }
+
+    auto buffer = io_manager->hook_video_container_to_buffer(video);
+    if (!buffer) {
+        error<std::runtime_error>(Journal::Component::Kriya, Journal::Context::AsyncIO,
+            std::source_location::current(), "Failed to hook video file to graphics buffer: {}", filepath);
+    }
+
+    if (render) {
+        detail::ensure_rendering(buffer, *render);
+    }
+
+    return { OpType::CAPTURE, BufferCapture(buffer,
+        cycle_count > 1 ? BufferCapture::CaptureMode::ACCUMULATE : BufferCapture::CaptureMode::TRANSIENT,
+        cycle_count) };
+}
+
 CaptureBuilder BufferOperation::capture_file_from(
     const std::shared_ptr<IO::IOManager>& io_manager,
     const std::string& filepath,
@@ -77,6 +190,31 @@ CaptureBuilder BufferOperation::capture_file_from(
     return CaptureBuilder(file_buffer).on_capture_processing();
 }
 
+CaptureBuilder BufferOperation::capture_file_from(
+    const std::shared_ptr<IO::IOManager>& io_manager,
+    const std::string& filepath,
+    IO::LoadConfig config,
+    std::optional<Portal::Graphics::RenderConfig> render)
+{
+    auto video = io_manager->load_video(filepath, config).video;
+    if (!video) {
+        error<std::runtime_error>(Journal::Component::Kriya, Journal::Context::AsyncIO,
+            std::source_location::current(), "Failed to load video file: {}", filepath);
+    }
+
+    auto buffer = io_manager->hook_video_container_to_buffer(video);
+    if (!buffer) {
+        error<std::runtime_error>(Journal::Component::Kriya, Journal::Context::AsyncIO,
+            std::source_location::current(), "Failed to hook video file to graphics buffer: {}", filepath);
+    }
+
+    if (render) {
+        detail::ensure_rendering(buffer, *render);
+    }
+
+    return CaptureBuilder(buffer);
+}
+
 BufferOperation BufferOperation::file_to_stream(
     const std::shared_ptr<IO::IOManager>& io_manager,
     const std::string& filepath,
@@ -92,31 +230,158 @@ BufferOperation BufferOperation::file_to_stream(
     auto temp_buffer = std::make_shared<Buffers::SoundFileBridge>(0, file_container);
     temp_buffer->setup_processors(Buffers::ProcessingToken::AUDIO_BACKEND);
 
-    BufferOperation op(OpType::ROUTE);
-    op.m_source_container = temp_buffer->get_capture_stream();
-    op.m_target_container = std::move(target_stream);
+    BufferOperation op(OpType::ROUTE, Buffers::ProcessingToken::AUDIO_BACKEND);
+    op.m_source_audio_stream = temp_buffer->get_capture_stream();
+    op.m_target_audio_stream = std::move(target_stream);
     op.m_load_length = cycle_count;
     return op;
 }
 
-BufferOperation BufferOperation::transform(TransformationFunction transformer)
+BufferOperation BufferOperation::file_to_stream(
+    const std::shared_ptr<IO::IOManager>& io_manager,
+    const std::string& filepath,
+    std::shared_ptr<Kakshya::DynamicVideoStream> target_stream,
+    IO::LoadConfig config,
+    uint32_t cycle_count,
+    std::optional<Portal::Graphics::RenderConfig> render)
 {
-    BufferOperation op(OpType::TRANSFORM);
+    auto video = io_manager->load_video(filepath, config).video;
+    if (!video) {
+        error<std::runtime_error>(Journal::Component::Kriya, Journal::Context::AsyncIO,
+            std::source_location::current(), "Failed to load video file: {}", filepath);
+    }
+
+    if (render) {
+        auto buffer = io_manager->hook_video_container_to_buffer(video);
+        if (!buffer) {
+            error<std::runtime_error>(Journal::Component::Kriya, Journal::Context::AsyncIO,
+                std::source_location::current(), "Failed to hook video file to graphics buffer: {}", filepath);
+        }
+        detail::ensure_rendering(buffer, *render);
+    }
+
+    BufferOperation op(OpType::ROUTE, Buffers::ProcessingToken::GRAPHICS_BACKEND);
+    op.m_source_graphics_stream = std::move(video);
+    op.m_target_graphics_stream = std::move(target_stream);
+    op.m_load_length = cycle_count;
+    return op;
+}
+
+BufferOperation BufferOperation::capture_to_stream(
+    const std::shared_ptr<IO::IOManager>& io_manager,
+    const IO::CameraConfig& config,
+    uint64_t ring_frames,
+    std::optional<Portal::Graphics::RenderConfig> live,
+    std::optional<Portal::Graphics::RenderConfig> display)
+{
+    auto camera = io_manager->open_camera(config);
+    if (!camera) {
+        error<std::runtime_error>(Journal::Component::Kriya, Journal::Context::AsyncIO,
+            std::source_location::current(), "Failed to open camera");
+    }
+
+    auto buffer = io_manager->hook_camera_to_buffer(camera);
+    if (!buffer) {
+        error<std::runtime_error>(Journal::Component::Kriya, Journal::Context::AsyncIO,
+            std::source_location::current(), "Failed to hook camera to graphics buffer");
+    }
+
+    if (live) {
+        detail::ensure_rendering(buffer, *live);
+    }
+
+    BufferOperation op(OpType::ROUTE, Buffers::ProcessingToken::GRAPHICS_BACKEND);
+    op.m_source_graphics_buffer = buffer;
+    op.m_target_graphics_stream = make_ring(buffer, ring_frames);
+    op.m_render = std::move(display);
+    return op;
+}
+
+BufferOperation BufferOperation::capture_to_stream(
+    const std::shared_ptr<IO::IOManager>& io_manager,
+    const std::string& filepath,
+    IO::LoadConfig config,
+    uint64_t ring_frames,
+    std::optional<Portal::Graphics::RenderConfig> live,
+    std::optional<Portal::Graphics::RenderConfig> display)
+{
+    auto video = io_manager->load_video(filepath, config).video;
+    if (!video) {
+        error<std::runtime_error>(Journal::Component::Kriya, Journal::Context::AsyncIO,
+            std::source_location::current(), "Failed to load video file: {}", filepath);
+    }
+
+    auto buffer = io_manager->hook_video_container_to_buffer(video);
+    if (!buffer) {
+        error<std::runtime_error>(Journal::Component::Kriya, Journal::Context::AsyncIO,
+            std::source_location::current(), "Failed to hook video file to graphics buffer: {}", filepath);
+    }
+
+    if (live) {
+        detail::ensure_rendering(buffer, *live);
+    }
+
+    BufferOperation op(OpType::ROUTE, Buffers::ProcessingToken::GRAPHICS_BACKEND);
+    op.m_source_graphics_buffer = buffer;
+    op.m_target_graphics_stream = make_ring(buffer, ring_frames);
+    op.m_render = std::move(display);
+    return op;
+}
+
+BufferOperation BufferOperation::transform(TransformationFunction transformer,
+    Buffers::ProcessingToken token)
+{
+    BufferOperation op(OpType::TRANSFORM, token);
     op.m_transformer = std::move(transformer);
     return op;
 }
 
 BufferOperation BufferOperation::route_to_buffer(std::shared_ptr<Buffers::AudioBuffer> target)
 {
-    BufferOperation op(OpType::ROUTE);
-    op.m_target_buffer = std::move(target);
+    BufferOperation op(OpType::ROUTE, Buffers::ProcessingToken::AUDIO_BACKEND);
+    op.m_target_audio_buffer = std::move(target);
     return op;
 }
 
-BufferOperation BufferOperation::route_to_container(std::shared_ptr<Kakshya::DynamicSoundStream> target)
+BufferOperation BufferOperation::route_to_buffer(std::shared_ptr<Buffers::VKBuffer> target)
 {
-    BufferOperation op(OpType::ROUTE);
-    op.m_target_container = std::move(target);
+    BufferOperation op(OpType::ROUTE, Buffers::ProcessingToken::GRAPHICS_BACKEND);
+    op.m_target_graphics_buffer = std::move(target);
+    return op;
+}
+
+BufferOperation BufferOperation::route_to_buffer(
+    std::shared_ptr<Buffers::TextureArrayBuffer> target, uint32_t layer)
+{
+    BufferOperation op = route_to_buffer(std::static_pointer_cast<Buffers::VKBuffer>(std::move(target)));
+    op.m_target_layer = layer;
+    return op;
+}
+
+BufferOperation BufferOperation::route_to_buffer(
+    std::shared_ptr<Buffers::TextureArrayBuffer> target,
+    std::vector<std::shared_ptr<Core::VKImage>> images)
+{
+    BufferOperation op = route_to_buffer(std::static_pointer_cast<Buffers::VKBuffer>(std::move(target)));
+    op.m_source_images = std::move(images);
+    return op;
+}
+
+BufferOperation BufferOperation::route_to_container(std::shared_ptr<Kakshya::DynamicSoundStream> target, uint32_t channel)
+{
+    BufferOperation op(OpType::ROUTE, Buffers::ProcessingToken::AUDIO_BACKEND);
+    op.m_target_audio_stream = std::move(target);
+    op.m_target_audio_channel = channel;
+    return op;
+}
+
+BufferOperation BufferOperation::route_to_container(
+    std::shared_ptr<Kakshya::DynamicVideoStream> target,
+    std::optional<Portal::Graphics::RenderConfig> render)
+{
+    BufferOperation op(OpType::ROUTE, Buffers::ProcessingToken::GRAPHICS_BACKEND);
+    op.m_target_graphics_stream = std::move(target);
+    op.m_render = std::move(render);
     return op;
 }
 
@@ -125,24 +390,40 @@ BufferOperation BufferOperation::load_from_container(std::shared_ptr<Kakshya::Dy
     uint64_t start_frame,
     uint32_t length)
 {
-    BufferOperation op(OpType::LOAD);
-    op.m_source_container = std::move(source);
-    op.m_target_buffer = std::move(target);
+    BufferOperation op(OpType::LOAD, Buffers::ProcessingToken::AUDIO_BACKEND);
+    op.m_source_audio_stream = std::move(source);
+    op.m_target_audio_buffer = std::move(target);
     op.m_start_frame = start_frame;
     op.m_load_length = length;
     return op;
 }
 
-BufferOperation BufferOperation::when(std::function<bool(uint32_t)> condition)
+BufferOperation BufferOperation::load_from_container(
+    std::shared_ptr<Kakshya::DynamicVideoStream> source,
+    std::shared_ptr<Buffers::VKBuffer> target,
+    uint64_t start_frame,
+    uint32_t length)
 {
-    BufferOperation op(OpType::CONDITION);
+    BufferOperation op(OpType::LOAD, Buffers::ProcessingToken::GRAPHICS_BACKEND);
+    op.m_source_graphics_stream = std::move(source);
+    op.m_target_graphics_buffer = std::move(target);
+    op.m_start_frame = start_frame;
+    op.m_load_length = length;
+    return op;
+}
+
+BufferOperation BufferOperation::when(std::function<bool(uint32_t)> condition,
+    Buffers::ProcessingToken token)
+{
+    BufferOperation op(OpType::CONDITION, token);
     op.m_condition = std::move(condition);
     return op;
 }
 
-BufferOperation BufferOperation::dispatch_to(OperationFunction handler)
+BufferOperation BufferOperation::dispatch_to(OperationFunction handler,
+    Buffers::ProcessingToken token)
 {
-    BufferOperation op(OpType::DISPATCH);
+    BufferOperation op(OpType::DISPATCH, token);
     op.m_dispatch_handler = std::move(handler);
     return op;
 }
@@ -151,10 +432,22 @@ BufferOperation BufferOperation::fuse_data(std::vector<std::shared_ptr<Buffers::
     TransformVectorFunction fusion_func,
     std::shared_ptr<Buffers::AudioBuffer> target)
 {
-    BufferOperation op(OpType::FUSE);
-    op.m_source_buffers = std::move(sources);
+    BufferOperation op(OpType::FUSE, Buffers::ProcessingToken::AUDIO_BACKEND);
+    op.m_source_audio_buffers = std::move(sources);
     op.m_fusion_function = std::move(fusion_func);
-    op.m_target_buffer = std::move(target);
+    op.m_target_audio_buffer = std::move(target);
+    return op;
+}
+
+BufferOperation BufferOperation::fuse_data(
+    std::vector<std::shared_ptr<Buffers::VKBuffer>> sources,
+    TransformVectorFunction fusion_func,
+    std::shared_ptr<Buffers::VKBuffer> target)
+{
+    BufferOperation op(OpType::FUSE, Buffers::ProcessingToken::GRAPHICS_BACKEND);
+    op.m_source_graphics_buffers = std::move(sources);
+    op.m_fusion_function = std::move(fusion_func);
+    op.m_target_graphics_buffer = std::move(target);
     return op;
 }
 
@@ -162,10 +455,22 @@ BufferOperation BufferOperation::fuse_containers(std::vector<std::shared_ptr<Kak
     TransformVectorFunction fusion_func,
     std::shared_ptr<Kakshya::DynamicSoundStream> target)
 {
-    BufferOperation op(OpType::FUSE);
-    op.m_source_containers = std::move(sources);
+    BufferOperation op(OpType::FUSE, Buffers::ProcessingToken::AUDIO_BACKEND);
+    op.m_source_audio_streams = std::move(sources);
     op.m_fusion_function = std::move(fusion_func);
-    op.m_target_container = std::move(target);
+    op.m_target_audio_stream = std::move(target);
+    return op;
+}
+
+BufferOperation BufferOperation::fuse_containers(
+    std::vector<std::shared_ptr<Kakshya::DynamicVideoStream>> sources,
+    TransformVectorFunction fusion_func,
+    std::shared_ptr<Kakshya::DynamicVideoStream> target)
+{
+    BufferOperation op(OpType::FUSE, Buffers::ProcessingToken::GRAPHICS_BACKEND);
+    op.m_source_graphics_streams = std::move(sources);
+    op.m_fusion_function = std::move(fusion_func);
+    op.m_target_graphics_stream = std::move(target);
     return op;
 }
 
@@ -173,15 +478,41 @@ BufferOperation BufferOperation::modify_buffer(
     std::shared_ptr<Buffers::AudioBuffer> buffer,
     Buffers::AudioProcessingFunction modifier)
 {
-    BufferOperation op(OpType::MODIFY);
-    op.m_target_buffer = std::move(buffer);
-    op.m_buffer_modifier = std::move(modifier);
+    BufferOperation op(OpType::MODIFY, Buffers::ProcessingToken::AUDIO_BACKEND);
+    op.m_target_audio_buffer = std::move(buffer);
+    op.m_audio_buffer_modifier = std::move(modifier);
+    return op;
+}
+
+BufferOperation BufferOperation::modify_buffer(
+    std::shared_ptr<Buffers::VKBuffer> buffer,
+    Buffers::GraphicsProcessingFunction modifier)
+{
+    BufferOperation op(OpType::MODIFY, Buffers::ProcessingToken::GRAPHICS_BACKEND);
+    op.m_target_graphics_buffer = std::move(buffer);
+    op.m_graphics_buffer_modifier = std::move(modifier);
     return op;
 }
 
 CaptureBuilder BufferOperation::capture_from(std::shared_ptr<Buffers::AudioBuffer> buffer)
 {
     return CaptureBuilder(std::move(buffer));
+}
+
+CaptureBuilder BufferOperation::capture_from(
+    std::shared_ptr<Buffers::VKBuffer> buffer,
+    std::optional<Portal::Graphics::RenderConfig> render)
+{
+    if (render) {
+        detail::ensure_rendering(buffer, *render);
+    }
+
+    return CaptureBuilder(std::move(buffer));
+}
+
+CaptureBuilder BufferOperation::capture_from(std::nullptr_t)
+{
+    return CaptureBuilder(nullptr);
 }
 
 BufferOperation& BufferOperation::with_priority(uint8_t priority)
@@ -233,13 +564,14 @@ BufferOperation& BufferOperation::as_streaming()
 BufferOperation::BufferOperation(OpType type, BufferCapture capture)
     : m_type(type)
     , m_capture(std::move(capture))
+    , m_token(capture_token(m_capture))
     , m_tag(m_capture.get_tag())
 {
 }
 
-BufferOperation::BufferOperation(OpType type)
+BufferOperation::BufferOperation(OpType type, Buffers::ProcessingToken token)
     : m_type(type)
-    , m_capture(nullptr)
+    , m_token(token)
 {
 }
 

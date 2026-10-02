@@ -1,7 +1,10 @@
 #pragma once
 
 #include "MayaFlux/Buffers/VKBuffer.hpp"
+#include "MayaFlux/Kakshya/NDData/ImageData.hpp"
+#include "MayaFlux/Kakshya/NDData/MeshData.hpp"
 #include "MayaFlux/Kakshya/NDData/NDData.hpp"
+#include "MayaFlux/Transitive/Memory/RingBuffer.hpp"
 
 namespace MayaFlux::Buffers {
 
@@ -43,6 +46,16 @@ namespace MayaFlux::Buffers {
  *
  * Staging: a persistent host-visible staging buffer is allocated on
  * on_attach() when the target is device-local, and reused every cycle.
+ *
+ * The write_* requests reach targets beyond the primary storage: another
+ * VKBuffer, a named field, a raw back_buffers slot, mesh geometry, and
+ * texture pixels. Each is a one-shot request applied at the start of the next
+ * graphics cycle, ahead of the set_* upload, in the order it was made. Each
+ * writes to the authority of its target, never to a GPU copy that its owner
+ * regenerates: meshes go to the owning MeshData or node, retained pixels to the
+ * TextureBuffer, and the rest to the GPU storage their owners read from. Attach
+ * the processor before the producers that consume the written data. Requests
+ * come from one supplier thread, as with set_data().
  *
  * Intended for use with plain VKBuffer where no specialised child class
  * exists for the data being contributed. The caller is responsible for
@@ -175,6 +188,63 @@ public:
      */
     [[nodiscard]] Kakshya::GpuDataFormat last_texture_format() const noexcept;
 
+    /**
+     * @brief Write bytes into another VKBuffer, such as a plain descriptor-bound buffer.
+     *
+     * The target is not resized. A device-local target is written through a
+     * persistent staging buffer. A buffer whose descriptor binding has a node,
+     * audio, or host-buffer source is rewritten from that source each cycle, so
+     * write to the source instead.
+     *
+     * @param target     Buffer to write; retained until the request runs.
+     * @param data       Source data, converted to bytes when the request runs.
+     * @param dst_offset Byte offset into @p target. offset plus data size must fit its allocation.
+     */
+    void write_buffer(std::shared_ptr<VKBuffer> target, Kakshya::DataVariant data, size_t dst_offset = 0);
+
+    /**
+     * @brief Write a named field of the attached buffer.
+     *
+     * A VolumeGridBuffer field is written through seed_raw, and a
+     * NetworkGeometryBuffer state field into the slot its next stage reads.
+     * The data size must equal the field's byte size.
+     */
+    void write_field(std::string name, Kakshya::DataVariant data);
+
+    /**
+     * @brief Write a raw back_buffers slot of the attached buffer.
+     * @param index Slot index into its back_buffers.
+     * @param data  Source data; a slot does not carry its size, so the data must
+     *              not exceed what the buffer's owner allocated for it.
+     */
+    void write_back_buffer(size_t index, Kakshya::DataVariant data);
+
+    /**
+     * @brief Write mesh geometry to the attached buffer's authoritative copy.
+     *
+     * A MeshBuffer takes it as its MeshData, and a GeometryBuffer driven by a
+     * MeshWriterNode sets it on that node. A MeshNetworkBuffer needs @p slot to
+     * name the slot whose node is set. No transform is applied.
+     */
+    void write_mesh(Kakshya::MeshData data, std::string slot = {});
+
+    /**
+     * @brief Write the retained host pixels of the attached TextureBuffer.
+     *
+     * The image must match the texture's format and size. The buffer re-uploads
+     * to its GPU image on its own cycle.
+     */
+    void write_pixels(Kakshya::ImageData image);
+
+    /**
+     * @brief Write pixels straight into the attached TextureBuffer's GPU image.
+     *
+     * The image must match the GPU image's format and size, which must be
+     * writable (transfer-destination usage). Retained host pixels that are
+     * marked dirty re-upload over this write.
+     */
+    void write_texture_pixels(Kakshya::ImageData image);
+
 protected:
     void on_attach(const std::shared_ptr<Buffer>& buffer) override;
     void on_detach(const std::shared_ptr<Buffer>& buffer) override;
@@ -210,6 +280,15 @@ private:
     std::atomic_flag m_data_dirty;
 
     std::shared_ptr<VKBuffer> m_staging;
+
+    using WriteFn = std::function<void(DataWriteProcessor&, const std::shared_ptr<VKBuffer>&)>;
+    static constexpr size_t k_write_queue_capacity = 64;
+
+    std::unique_ptr<Memory::LockFreeQueue<WriteFn, k_write_queue_capacity>> m_writes;
+    std::shared_ptr<VKBuffer> m_write_staging;
+    std::shared_ptr<VKBuffer> m_write_image_staging;
+
+    void enqueue_write(WriteFn fn);
 
     void upload_primary(const std::shared_ptr<VKBuffer>& vk, std::vector<Kakshya::DataVariant>& slots);
     void upload_secondary(const std::shared_ptr<VKBuffer>& vk, Kakshya::DataVariant& slot);

@@ -31,6 +31,7 @@ class MeshNetwork;
 
 namespace MayaFlux::Kakshya {
 class SignalSourceContainer;
+class VideoStreamContainer;
 class VideoFileContainer;
 class SoundFileContainer;
 class CameraContainer;
@@ -205,17 +206,19 @@ public:
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
-     * @brief Wire a VideoFileContainer to the graphics buffer system.
+     * @brief Wire a video container to the graphics buffer system.
      *
      * Creates a VideoContainerBuffer via BufferManager with GRAPHICS_BACKEND token,
-     * stores it keyed by container pointer, and returns it.
+     * stores it keyed by container pointer, and returns it. A VideoFileContainer
+     * or a DynamicVideoStream can be wired. A DynamicVideoStream needs frames or
+     * an enabled ring before it can be hooked, and gets its seek processor.
      *
-     * @param container Loaded VideoFileContainer to wire.
+     * @param container Video container to wire.
      * @return Created VideoContainerBuffer, or nullptr on failure.
      */
     [[nodiscard]] std::shared_ptr<Buffers::VideoContainerBuffer>
     hook_video_container_to_buffer(
-        const std::shared_ptr<Kakshya::VideoFileContainer>& container);
+        const std::shared_ptr<Kakshya::VideoStreamContainer>& container);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Video — retrieve
@@ -228,7 +231,7 @@ public:
      */
     [[nodiscard]] std::shared_ptr<Buffers::VideoContainerBuffer>
     get_video_buffer(
-        const std::shared_ptr<Kakshya::VideoFileContainer>& container) const;
+        const std::shared_ptr<Kakshya::VideoStreamContainer>& container) const;
 
     // ─────────────────────────────────────────────────────────────────────────
     // Audio — load
@@ -1177,7 +1180,7 @@ private:
     Parallel::AsyncGroup<bool> m_save_tasks;
 
     std::unordered_map<
-        std::shared_ptr<Kakshya::VideoFileContainer>,
+        std::shared_ptr<Kakshya::VideoStreamContainer>,
         std::shared_ptr<Buffers::VideoContainerBuffer>>
         m_video_buffers;
 

@@ -102,6 +102,7 @@
 #include "Buffers/Staging/BufferUploadProcessor.hpp"
 #include "Buffers/Staging/DataWriteProcessor.hpp"
 #include "Buffers/Textures/NodeTextureBuffer.hpp"
+#include "Buffers/Textures/TextureArrayBuffer.hpp"
 #include "Buffers/Textures/TextureBuffer.hpp"
 
 #include "Kriya/Awaiters/DelayAwaiters.hpp"
@@ -110,10 +111,12 @@
 #include "Kriya/BroadcastEvents.hpp"
 #include "Kriya/BufferPipeline.hpp"
 #include "Kriya/Chain.hpp"
+#include "Kriya/Chimera.hpp"
 #include "Kriya/CycleCoordinator.hpp"
 #include "Kriya/InputEvents.hpp"
 #include "Kriya/NetworkEvents.hpp"
 #include "Kriya/SamplingPipeline.hpp"
+#include "Kriya/TapSet.hpp"
 #include "Kriya/Tasks.hpp"
 
 #include "Vruta/Event.hpp"

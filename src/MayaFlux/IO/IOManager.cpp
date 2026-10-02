@@ -12,6 +12,7 @@
 #include "MayaFlux/Kakshya/Source/AudioOutputContainer.hpp"
 #include "MayaFlux/Kakshya/Source/CameraContainer.hpp"
 #include "MayaFlux/Kakshya/Source/CompositeContainer.hpp"
+#include "MayaFlux/Kakshya/Source/DynamicVideoStream.hpp"
 #include "MayaFlux/Kakshya/Source/SoundFileContainer.hpp"
 #include "MayaFlux/Kakshya/Source/VideoFileContainer.hpp"
 
@@ -1014,12 +1015,17 @@ void IOManager::configure_audio_processor(
 
 std::shared_ptr<Buffers::VideoContainerBuffer>
 IOManager::hook_video_container_to_buffer(
-    const std::shared_ptr<Kakshya::VideoFileContainer>& container)
+    const std::shared_ptr<Kakshya::VideoStreamContainer>& container)
 {
     if (!container) {
         MF_ERROR(Journal::Component::API, Journal::Context::Runtime,
             "hook_video_container_to_buffer: null container");
         return nullptr;
+    }
+
+    if (const auto dynamic = std::dynamic_pointer_cast<Kakshya::DynamicVideoStream>(container);
+        dynamic && !dynamic->get_default_processor()) {
+        dynamic->create_default_processor();
     }
 
     auto stream_container = std::dynamic_pointer_cast<Kakshya::StreamContainer>(container);
@@ -1114,7 +1120,7 @@ IOManager::hook_camera_to_buffer(
 
 std::shared_ptr<Buffers::VideoContainerBuffer>
 IOManager::get_video_buffer(
-    const std::shared_ptr<Kakshya::VideoFileContainer>& container) const
+    const std::shared_ptr<Kakshya::VideoStreamContainer>& container) const
 {
     std::shared_lock lock(m_buffers_mutex);
     auto it = m_video_buffers.find(container);

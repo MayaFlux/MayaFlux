@@ -61,12 +61,51 @@ public:
     /**
      * @brief Write audio frame data to the container with automatic capacity management.
      * @param data Span of interleaved audio samples to write
-     * @param start_frame Frame index where writing begins (default: append at end)
-     % @param channel Channel index for planar data (default: 0)
+     * @param start_frame Frame index where writing begins (default: 0). Use append_frames to write at the end.
+     * @param channel Channel index for planar data (default: 0)
      * @return Number of frames actually written
      */
     uint64_t write_frames(std::span<const double> data, uint64_t start_frame = 0, uint32_t channel = 0);
     uint64_t write_frames(std::vector<std::span<const double>> data, uint64_t start_frame = 0);
+
+    /**
+     * @brief Write one channel at its write head and advance the head.
+     *
+     * Linear mode appends after the last frame written, growing the stream if
+     * auto-resize is on. Circular mode wraps at capacity and overwrites the
+     * oldest frames; a block larger than the capacity keeps only its newest
+     * frames. Each channel has its own head, so writing every channel of a
+     * stream once per cycle keeps them aligned.
+     *
+     * @param data Samples for one channel.
+     * @param channel Channel to write.
+     * @return Number of frames written.
+     */
+    uint64_t append_frames(std::span<const double> data, uint32_t channel = 0);
+
+    /**
+     * @brief Copy the most recent frames into a new stream, oldest first.
+     *
+     * Reads back from channel 0's write head, so it is meant for streams filled
+     * with append_frames. A ring is unrolled across its wrap; frames from before
+     * the first write are silence. The copy is independent of this stream.
+     *
+     * @param frames Frames to keep, capped at the ring capacity, or at the frames
+     *        written for a linear stream.
+     * @return New stream with the same rate and channels, or null if empty.
+     */
+    [[nodiscard]] std::shared_ptr<DynamicSoundStream> snapshot(uint64_t frames) const;
+
+    /**
+     * @brief Index of the next frame append_frames will write for a channel.
+     *
+     * In a full ring this is also the oldest frame. Writes made with
+     * write_frames do not move it.
+     */
+    [[nodiscard]] uint64_t get_write_head(uint32_t channel = 0) const
+    {
+        return channel < m_write_heads.size() ? m_write_heads[channel] : 0;
+    }
 
     /**
      * @brief Read audio frames using sequential reading with automatic position management.
@@ -156,6 +195,7 @@ private:
     bool m_auto_resize; ///< Enable automatic capacity expansion
     bool m_is_circular {}; ///< True when operating in circular buffer mode
     uint64_t m_circular_capacity {}; ///< Fixed capacity for circular mode
+    std::vector<uint64_t> m_write_heads; ///< Next append_frames index per channel
     std::vector<std::vector<DataVariant>> m_dynamic_data;
     std::vector<bool> m_dynamic_slots;
 

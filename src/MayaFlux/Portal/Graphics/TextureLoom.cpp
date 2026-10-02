@@ -620,7 +620,9 @@ void TextureLoom::download_data(
     void* data,
     size_t size,
     const std::shared_ptr<Buffers::VKBuffer>& staging,
-    bool deferred)
+    bool deferred,
+    vk::ImageLayout restore_layout,
+    vk::PipelineStageFlags restore_stage)
 {
     if (!is_initialized() || !image || !data) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
@@ -628,7 +630,48 @@ void TextureLoom::download_data(
         return;
     }
 
-    m_resource_manager->download_image_data(image, data, size, staging, deferred);
+    m_resource_manager->download_image_data(
+        image, data, size, staging, deferred, restore_layout, restore_stage);
+}
+
+std::optional<Kakshya::ImageData> TextureLoom::download_image(
+    const std::shared_ptr<Core::VKImage>& image,
+    const std::shared_ptr<Buffers::VKBuffer>& staging,
+    vk::ImageLayout restore_layout,
+    vk::PipelineStageFlags restore_stage)
+{
+    if (!is_initialized()) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "download_image: TextureLoom is not initialised");
+        return std::nullopt;
+    }
+
+    const auto format = readable_format(image);
+    if (!format) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "download_image: image is not readable as a single-layer 2D base level");
+        return std::nullopt;
+    }
+
+    const size_t byte_count = calculate_image_size(image->get_width(), image->get_height(), 1, *format);
+
+    auto result = Kakshya::ImageData::allocate(
+        image->get_width(), image->get_height(), get_channel_count(*format), *format);
+    if (!result || result->byte_size() != byte_count) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "download_image: format {} has no typed pixel storage matching its size", static_cast<int>(*format));
+        return std::nullopt;
+    }
+
+    download_data(image, result->data(), byte_count, staging, false, restore_layout, restore_stage);
+
+    if (!result->is_consistent()) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "download_image: downloaded pixels do not match format {}", static_cast<int>(*format));
+        return std::nullopt;
+    }
+
+    return result;
 }
 
 void TextureLoom::transition_layout(
@@ -652,6 +695,128 @@ void TextureLoom::transition_layout(
         mip_levels, array_layers, aspect_mask);
 
     image->set_current_layout(new_layout);
+}
+
+namespace {
+
+    vk::Filter to_blit_filter(FilterMode mode)
+    {
+        return mode == FilterMode::NEAREST ? vk::Filter::eNearest : vk::Filter::eLinear;
+    }
+
+    std::optional<std::pair<vk::Offset3D, vk::Offset3D>> region_offsets(
+        const vk::Rect2D& region, const Core::VKImage& image)
+    {
+        const int32_t left = region.offset.x;
+        const int32_t top = region.offset.y;
+
+        if (left < 0 || top < 0
+            || static_cast<uint32_t>(left) >= image.get_width()
+            || static_cast<uint32_t>(top) >= image.get_height()) {
+            return std::nullopt;
+        }
+
+        const auto x = static_cast<uint32_t>(left);
+        const auto y = static_cast<uint32_t>(top);
+        const uint32_t width = region.extent.width != 0 ? region.extent.width : image.get_width() - x;
+        const uint32_t height = region.extent.height != 0 ? region.extent.height : image.get_height() - y;
+
+        if (x + width > image.get_width() || y + height > image.get_height()) {
+            return std::nullopt;
+        }
+
+        return std::pair {
+            vk::Offset3D { left, top, 0 },
+            vk::Offset3D { static_cast<int32_t>(x + width), static_cast<int32_t>(y + height), 1 }
+        };
+    }
+
+}
+
+bool TextureLoom::upload_layer(
+    const std::shared_ptr<Core::VKImage>& image,
+    uint32_t layer,
+    const void* data,
+    size_t size,
+    const std::shared_ptr<Buffers::VKBuffer>& staging,
+    bool deferred)
+{
+    if (!is_initialized() || !image || !data) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "Invalid parameters for upload_layer");
+        return false;
+    }
+
+    return m_resource_manager->upload_image_layer(image, layer, data, size, staging, deferred);
+}
+
+bool TextureLoom::can_blit(
+    const std::shared_ptr<Core::VKImage>& src,
+    const std::shared_ptr<Core::VKImage>& dst,
+    FilterMode filter) const
+{
+    if (!is_initialized() || !src || !dst) {
+        return false;
+    }
+
+    return m_resource_manager->supports_blit(
+        src->get_format(), dst->get_format(), to_blit_filter(filter));
+}
+
+bool TextureLoom::blit_layer(
+    const std::shared_ptr<Core::VKImage>& src,
+    const std::shared_ptr<Core::VKImage>& dst,
+    const LayerBlit& blit,
+    bool deferred)
+{
+    if (!is_initialized() || !src || !dst) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "Invalid parameters for blit_layer");
+        return false;
+    }
+
+    if (blit.src_layer >= src->get_array_layers() || blit.dst_layer >= dst->get_array_layers()) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "blit_layer: layer {} of {} or layer {} of {} does not exist",
+            blit.src_layer, src->get_array_layers(), blit.dst_layer, dst->get_array_layers());
+        return false;
+    }
+
+    constexpr auto color = vk::ImageAspectFlagBits::eColor;
+    if (src->get_aspect_flags() != color || dst->get_aspect_flags() != color) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "blit_layer: only color images can be blitted");
+        return false;
+    }
+
+    const auto src_offsets = region_offsets(blit.src, *src);
+    auto dst_offsets = region_offsets(blit.dst, *dst);
+    if (!src_offsets || !dst_offsets) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "blit_layer: a rectangle lies outside its image");
+        return false;
+    }
+
+    if (blit.filter == FilterMode::CUBIC) {
+        MF_WARN(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "blit_layer: cubic filtering is not available, using linear");
+    }
+
+    if (blit.flip_x) {
+        std::swap(dst_offsets->first.x, dst_offsets->second.x);
+    }
+    if (blit.flip_y) {
+        std::swap(dst_offsets->first.y, dst_offsets->second.y);
+    }
+
+    const vk::ImageBlit region {
+        vk::ImageSubresourceLayers { color, 0, blit.src_layer, 1 },
+        { src_offsets->first, src_offsets->second },
+        vk::ImageSubresourceLayers { color, 0, blit.dst_layer, 1 },
+        { dst_offsets->first, dst_offsets->second }
+    };
+
+    return m_resource_manager->blit_image(src, dst, region, to_blit_filter(blit.filter), deferred);
 }
 
 //==============================================================================
@@ -857,6 +1022,54 @@ std::optional<ImageFormat> TextureLoom::from_vulkan_format(vk::Format vk_format)
     default:
         return std::nullopt;
     }
+}
+
+std::optional<ImageFormat> TextureLoom::transfer_format(
+    const std::shared_ptr<Core::VKImage>& image,
+    vk::ImageUsageFlagBits required_usage)
+{
+    if (!image || !image->is_initialized()) {
+        return std::nullopt;
+    }
+
+    if (image->get_type() != Core::VKImage::Type::TYPE_2D
+        || image->get_depth() != 1 || image->get_array_layers() != 1) {
+        return std::nullopt;
+    }
+
+    if (!static_cast<bool>(image->get_usage_flags() & required_usage)) {
+        return std::nullopt;
+    }
+
+    const auto aspects = image->get_aspect_flags();
+    if (static_cast<bool>(aspects & vk::ImageAspectFlagBits::eDepth)
+        && static_cast<bool>(aspects & vk::ImageAspectFlagBits::eStencil)) {
+        return std::nullopt;
+    }
+
+    const auto format = from_vulkan_format(image->get_format());
+    if (!format) {
+        return std::nullopt;
+    }
+
+    const size_t byte_count = calculate_image_size(image->get_width(), image->get_height(), 1, *format);
+    if (byte_count == 0 || byte_count > image->get_size_bytes()) {
+        return std::nullopt;
+    }
+
+    return format;
+}
+
+std::optional<ImageFormat> TextureLoom::readable_format(
+    const std::shared_ptr<Core::VKImage>& image)
+{
+    return transfer_format(image, vk::ImageUsageFlagBits::eTransferSrc);
+}
+
+std::optional<ImageFormat> TextureLoom::writable_format(
+    const std::shared_ptr<Core::VKImage>& image)
+{
+    return transfer_format(image, vk::ImageUsageFlagBits::eTransferDst);
 }
 
 size_t TextureLoom::calculate_image_size(

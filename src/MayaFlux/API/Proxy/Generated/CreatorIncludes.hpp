@@ -4,6 +4,7 @@
 #include "MayaFlux/Buffers/VKBuffer.hpp"
 #include "MayaFlux/Kakshya/NDData/MeshData.hpp"
 #include "MayaFlux/Kakshya/NDData/NDData.hpp"
+#include "MayaFlux/Kakshya/Source/DynamicVideoStream.hpp"
 #include "MayaFlux/Kakshya/StreamContainer.hpp"
 #include "MayaFlux/Kinesis/MotionCurves.hpp"
 #include "MayaFlux/Kinesis/Spatial/ProximityGraphs.hpp"

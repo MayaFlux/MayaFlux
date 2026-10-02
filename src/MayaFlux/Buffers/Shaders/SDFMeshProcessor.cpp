@@ -299,4 +299,16 @@ void SDFMeshProcessor::rebuild_lookup_buffers()
     svc->initialize_buffer(m_tri_buf);
 }
 
+std::optional<uint32_t> SDFMeshProcessor::live_vertex_count() const
+{
+    const auto* counter = m_counter_buf
+        ? static_cast<const uint32_t*>(m_counter_buf->get_mapped_ptr())
+        : nullptr;
+    if (!counter) {
+        return std::nullopt;
+    }
+
+    return *counter;
+}
+
 } // namespace MayaFlux::Buffers

@@ -332,6 +332,15 @@ public:
     /** @brief The marching cubes stage, valid after setup_rendering. */
     [[nodiscard]] std::shared_ptr<SDFMeshProcessor> mesh_processor() const { return m_mesh_processor; }
 
+    /**
+     * @brief The live vertex count of the extracted surface from the most recent dispatch.
+     *
+     * The buffer's allocation is worst-case capacity, not this count.
+     *
+     * @return The count, or nullopt when no surface is configured or its counter is not mapped.
+     */
+    [[nodiscard]] std::optional<uint32_t> get_live_vertex_count() const;
+
     /** @brief The lattice every field is discretized over. */
     [[nodiscard]] const Kinesis::Lattice3D& get_lattice() const { return m_lattice; }
 

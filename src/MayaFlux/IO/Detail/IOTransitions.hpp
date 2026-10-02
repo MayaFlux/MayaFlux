@@ -25,11 +25,15 @@ namespace MayaFlux::Vruta {
 class TaskScheduler;
 }
 
+namespace MayaFlux::Kakshya {
+struct ImageData;
+}
+
 namespace MayaFlux::IO {
+using ImageData = Kakshya::ImageData;
 struct ModelWriteOptions;
 struct ImageWriteOptions;
 struct VolumeWriteOptions;
-struct ImageData;
 struct SpatialCaptureSource;
 class VolumeCapture;
 class SpatialCapture;

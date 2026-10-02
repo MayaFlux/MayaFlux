@@ -22,7 +22,7 @@ namespace MayaFlux::Kakshya {
 
 VideoStreamContainer::VideoStreamContainer(uint32_t width,
     uint32_t height,
-    Portal::Graphics::ImageFormat format,
+    ImageFormat format,
     double frame_rate)
     : m_width(width)
     , m_height(height)
@@ -119,7 +119,7 @@ void VideoStreamContainer::setup_ring(uint64_t total_frames,
     uint32_t ring_capacity,
     uint32_t width,
     uint32_t height,
-    Portal::Graphics::ImageFormat format,
+    ImageFormat format,
     double frame_rate,
     uint32_t refill_threshold,
     uint64_t reader_id)

@@ -24,6 +24,10 @@ namespace Vruta {
     class NetworkSource;
 }
 
+namespace IO {
+class IOManager;
+}
+
 namespace Kriya {
     class BufferPipeline;
 }
@@ -161,6 +165,17 @@ MAYAFLUX_API bool update_task_params(const std::string& name, Args... args);
  * Uses the task scheduler from the default engine.
  */
 MAYAFLUX_API std::shared_ptr<Kriya::BufferPipeline> create_buffer_pipeline();
+
+/**
+ * @brief Creates a buffer pipeline that can reach an IOManager
+ * @param io_manager IOManager the pipeline uses to display stream routes
+ * @return Shared pointer to the created BufferPipeline
+ *
+ * Needed only for operations that open a display on a video stream, such as
+ * route_to_container with a render config. Pipelines made without it, audio
+ * ones included, carry no IOManager.
+ */
+MAYAFLUX_API std::shared_ptr<Kriya::BufferPipeline> create_buffer_pipeline(std::shared_ptr<IO::IOManager> io_manager);
 
 /**
  * @brief Schedule a key press handler

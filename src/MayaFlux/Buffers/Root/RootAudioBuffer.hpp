@@ -89,6 +89,20 @@ public:
     inline bool has_node_output() const { return m_has_node_output; }
 
     /**
+     * @brief Choose whether this channel's mix is averaged over its sources.
+     *
+     * On by default: every source is divided by the number of sources, so adding
+     * one makes the others quieter. Off sums the sources at their own levels and
+     * leaves headroom to the caller; the final limiter still applies.
+     */
+    inline void set_mix_normalization(bool enabled) { m_normalize_mix = enabled; }
+
+    /**
+     * @brief Whether this channel's mix is averaged over its sources.
+     */
+    [[nodiscard]] inline bool is_mix_normalized() const { return m_normalize_mix; }
+
+    /**
      * @brief Activates/deactivates processing for the current token
      * @param active Whether this buffer should process when its token is active
      *
@@ -124,6 +138,11 @@ private:
      * @brief Flag indicating if node network output data is present
      */
     bool m_has_node_output;
+
+    /**
+     * @brief Whether the channel mix is divided by the number of sources
+     */
+    bool m_normalize_mix { true };
 
     /**
      * @brief Flag indicating if this buffer is active for token processing

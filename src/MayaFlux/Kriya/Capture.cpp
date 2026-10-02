@@ -1,19 +1,38 @@
 #include "Capture.hpp"
 
 #include "BufferOperation.hpp"
+#include "MayaFlux/Buffers/AudioBuffer.hpp"
+#include "MayaFlux/Buffers/VKBuffer.hpp"
 
 namespace MayaFlux::Kriya {
 
 BufferCapture::BufferCapture(std::shared_ptr<Buffers::AudioBuffer> buffer,
     CaptureMode mode,
     uint32_t cycle_count)
-    : m_buffer(std::move(buffer))
+    : m_audio_buffer(std::move(buffer))
     , m_mode(mode)
     , m_cycle_count(cycle_count)
-    , m_window_size(0)
-    , m_circular_size(0)
-    , m_overlap_ratio(0.0F)
 {
+}
+
+BufferCapture::BufferCapture(std::shared_ptr<Buffers::VKBuffer> buffer,
+    CaptureMode mode,
+    uint32_t cycle_count)
+    : m_graphics_buffer(std::move(buffer))
+    , m_mode(mode)
+    , m_cycle_count(cycle_count)
+{
+}
+
+std::shared_ptr<Buffers::Buffer> BufferCapture::get_source_buffer() const
+{
+    if (m_audio_buffer) {
+        return m_audio_buffer;
+    }
+    if (m_graphics_buffer) {
+        return m_graphics_buffer;
+    }
+    return nullptr;
 }
 
 BufferCapture& BufferCapture::with_processing_control(ProcessingControl control)
@@ -83,6 +102,16 @@ BufferCapture& BufferCapture::with_metadata(const std::string& key, const std::s
 
 CaptureBuilder::CaptureBuilder(std::shared_ptr<Buffers::AudioBuffer> buffer)
     : m_capture(std::move(buffer))
+{
+}
+
+CaptureBuilder::CaptureBuilder(std::shared_ptr<Buffers::VKBuffer> buffer)
+    : m_capture(std::move(buffer))
+{
+}
+
+CaptureBuilder::CaptureBuilder(std::nullptr_t)
+    : m_capture()
 {
 }
 

@@ -1005,6 +1005,229 @@ void BackendResourceManager::download_image_data(
         size, image->get_width(), image->get_height());
 }
 
+bool BackendResourceManager::upload_image_layer(
+    const std::shared_ptr<VKImage>& image,
+    uint32_t layer,
+    const void* data,
+    size_t size,
+    const std::shared_ptr<Buffers::VKBuffer>& staging,
+    bool deferred)
+{
+    if (!image || !data || layer >= image->get_array_layers()) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "upload_image_layer: invalid image, data or layer");
+        return false;
+    }
+
+    const size_t layer_bytes = image->get_size_bytes() / image->get_array_layers();
+    if (size != layer_bytes) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "upload_image_layer: {} bytes given, layer needs {}", size, layer_bytes);
+        return false;
+    }
+
+    if (deferred && !staging) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "upload_image_layer: a deferred upload needs a caller staging buffer");
+        return false;
+    }
+
+    std::shared_ptr<Buffers::VKBuffer> local_staging;
+    if (!staging) {
+        local_staging = std::make_shared<Buffers::VKBuffer>(
+            size,
+            Buffers::VKBuffer::Usage::STAGING,
+            Kakshya::DataModality::IMAGE_COLOR);
+        initialize_buffer(local_staging);
+    }
+    const auto& active_staging = staging ? staging : local_staging;
+
+    void* mapped = active_staging->get_mapped_ptr();
+    if (!mapped) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "upload_image_layer: staging buffer has no mapped pointer");
+        if (local_staging) {
+            cleanup_buffer(local_staging);
+        }
+        return false;
+    }
+
+    std::memcpy(mapped, data, size);
+    active_staging->mark_dirty_range(0, size);
+
+    vk::MappedMemoryRange range { active_staging->get_buffer_resources().memory, 0, VK_WHOLE_SIZE };
+    if (auto result = m_context.get_device().flushMappedMemoryRanges(1, &range);
+        result != vk::Result::eSuccess) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "upload_image_layer: flush failed: {}", vk::to_string(result));
+    }
+
+    auto record_command = [&](vk::CommandBuffer cmd) {
+        vk::ImageMemoryBarrier barrier {};
+        barrier.oldLayout = image->get_current_layout();
+        barrier.newLayout = vk::ImageLayout::eTransferDstOptimal;
+        barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.image = image->get_image();
+        barrier.subresourceRange = {
+            image->get_aspect_flags(), 0,
+            image->get_mip_levels(), 0,
+            image->get_array_layers()
+        };
+        barrier.srcAccessMask = vk::AccessFlagBits::eShaderRead;
+        barrier.dstAccessMask = vk::AccessFlagBits::eTransferWrite;
+
+        cmd.pipelineBarrier(
+            vk::PipelineStageFlagBits::eFragmentShader,
+            vk::PipelineStageFlagBits::eTransfer,
+            vk::DependencyFlags {}, {}, {}, barrier);
+
+        vk::BufferImageCopy region {};
+        region.imageSubresource = { image->get_aspect_flags(), 0, layer, 1 };
+        region.imageOffset = vk::Offset3D { 0, 0, 0 };
+        region.imageExtent = vk::Extent3D {
+            image->get_width(),
+            image->get_height(),
+            image->get_depth()
+        };
+
+        cmd.copyBufferToImage(
+            active_staging->get_buffer(),
+            image->get_image(),
+            vk::ImageLayout::eTransferDstOptimal,
+            1, &region);
+
+        barrier.oldLayout = vk::ImageLayout::eTransferDstOptimal;
+        barrier.newLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+        barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
+        barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+
+        cmd.pipelineBarrier(
+            vk::PipelineStageFlagBits::eTransfer,
+            vk::PipelineStageFlagBits::eFragmentShader,
+            vk::DependencyFlags {}, {}, {}, barrier);
+    };
+
+    if (deferred) {
+        record_deferred_commands(record_command);
+    } else {
+        execute_immediate_commands(record_command);
+    }
+
+    image->set_current_layout(vk::ImageLayout::eShaderReadOnlyOptimal);
+
+    if (local_staging) {
+        cleanup_buffer(local_staging);
+    }
+
+    return true;
+}
+
+bool BackendResourceManager::supports_blit(
+    vk::Format src_format, vk::Format dst_format, vk::Filter filter) const
+{
+    const auto physical = m_context.get_physical_device();
+    const auto src_features = physical.getFormatProperties(src_format).optimalTilingFeatures;
+    const auto dst_features = physical.getFormatProperties(dst_format).optimalTilingFeatures;
+
+    if (!(src_features & vk::FormatFeatureFlagBits::eBlitSrc)
+        || !(dst_features & vk::FormatFeatureFlagBits::eBlitDst)) {
+        return false;
+    }
+
+    return filter != vk::Filter::eLinear
+        || static_cast<bool>(src_features & vk::FormatFeatureFlagBits::eSampledImageFilterLinear);
+}
+
+bool BackendResourceManager::blit_image(
+    const std::shared_ptr<VKImage>& src,
+    const std::shared_ptr<VKImage>& dst,
+    const vk::ImageBlit& region,
+    vk::Filter filter,
+    bool deferred)
+{
+    if (!src || !dst || src == dst) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "blit_image: source and destination must be two distinct initialised images");
+        return false;
+    }
+
+    if (!supports_blit(src->get_format(), dst->get_format(), filter)) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "blit_image: formats {} to {} do not support a {} blit",
+            vk::to_string(src->get_format()), vk::to_string(dst->get_format()), vk::to_string(filter));
+        return false;
+    }
+
+    const auto settled_layout = [](const std::shared_ptr<VKImage>& image) {
+        const auto layout = image->get_current_layout();
+        const bool transient = layout == vk::ImageLayout::eUndefined
+            || layout == vk::ImageLayout::eTransferSrcOptimal
+            || layout == vk::ImageLayout::eTransferDstOptimal;
+        return transient ? vk::ImageLayout::eShaderReadOnlyOptimal : layout;
+    };
+    const auto src_restore = settled_layout(src);
+    const auto dst_restore = settled_layout(dst);
+
+    auto record_command = [&](vk::CommandBuffer cmd) {
+        const auto transition = [&cmd](
+                                    const std::shared_ptr<VKImage>& image,
+                                    vk::ImageLayout from,
+                                    vk::ImageLayout to,
+                                    vk::AccessFlags src_access,
+                                    vk::AccessFlags dst_access,
+                                    vk::PipelineStageFlags src_stage,
+                                    vk::PipelineStageFlags dst_stage) {
+            vk::ImageMemoryBarrier barrier {};
+            barrier.oldLayout = from;
+            barrier.newLayout = to;
+            barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+            barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+            barrier.image = image->get_image();
+            barrier.subresourceRange = {
+                image->get_aspect_flags(), 0,
+                image->get_mip_levels(), 0,
+                image->get_array_layers()
+            };
+            barrier.srcAccessMask = src_access;
+            barrier.dstAccessMask = dst_access;
+            cmd.pipelineBarrier(src_stage, dst_stage, vk::DependencyFlags {}, {}, {}, barrier);
+        };
+
+        constexpr auto any_access = vk::AccessFlagBits::eMemoryRead | vk::AccessFlagBits::eMemoryWrite;
+
+        transition(src, src->get_current_layout(), vk::ImageLayout::eTransferSrcOptimal,
+            any_access, vk::AccessFlagBits::eTransferRead,
+            vk::PipelineStageFlagBits::eAllCommands, vk::PipelineStageFlagBits::eTransfer);
+        transition(dst, dst->get_current_layout(), vk::ImageLayout::eTransferDstOptimal,
+            any_access, vk::AccessFlagBits::eTransferWrite,
+            vk::PipelineStageFlagBits::eAllCommands, vk::PipelineStageFlagBits::eTransfer);
+
+        cmd.blitImage(
+            src->get_image(), vk::ImageLayout::eTransferSrcOptimal,
+            dst->get_image(), vk::ImageLayout::eTransferDstOptimal,
+            1, &region, filter);
+
+        transition(src, vk::ImageLayout::eTransferSrcOptimal, src_restore,
+            vk::AccessFlagBits::eTransferRead, any_access,
+            vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eAllCommands);
+        transition(dst, vk::ImageLayout::eTransferDstOptimal, dst_restore,
+            vk::AccessFlagBits::eTransferWrite, any_access,
+            vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eAllCommands);
+    };
+
+    if (deferred) {
+        record_deferred_commands(record_command);
+    } else {
+        execute_immediate_commands(record_command);
+    }
+
+    src->set_current_layout(src_restore);
+    dst->set_current_layout(dst_restore);
+
+    return true;
+}
+
 vk::Sampler BackendResourceManager::create_sampler(
     vk::Filter filter,
     vk::SamplerAddressMode address_mode,

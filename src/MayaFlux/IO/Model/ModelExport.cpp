@@ -6,7 +6,6 @@
 #include "MayaFlux/Buffers/Geometry/ComputeMeshBuffer.hpp"
 #include "MayaFlux/Buffers/Geometry/MeshBuffer.hpp"
 #include "MayaFlux/Buffers/Network/MeshNetworkBuffer.hpp"
-#include "MayaFlux/Buffers/Shaders/SDFMeshProcessor.hpp"
 #include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
 
 #include "MayaFlux/Nodes/Graphics/MeshWriterNode.hpp"
@@ -114,43 +113,33 @@ namespace {
         const std::string& name,
         const std::string& diffuse_path = {})
     {
-        const auto& src_verts = node->get_mesh_vertices();
-        const auto& indices = node->get_mesh_indices();
-        if (src_verts.empty() || indices.empty()) {
+        auto mesh_data = node->get_mesh_data();
+        if (!mesh_data) {
             return std::nullopt;
         }
 
         const glm::mat3 normal_matrix(world);
 
-        std::vector<Kakshya::MeshVertex> verts(src_verts.begin(), src_verts.end());
+        auto& vertex_bytes = std::get<std::vector<uint8_t>>(mesh_data->vertex_variant);
+        std::vector<Kakshya::MeshVertex> verts(vertex_bytes.size() / sizeof(Kakshya::MeshVertex));
+        std::memcpy(verts.data(), vertex_bytes.data(), vertex_bytes.size());
         for (auto& v : verts) {
             v.position = glm::vec3(world * glm::vec4(v.position, 1.0F));
             v.normal = glm::normalize(normal_matrix * v.normal);
             v.tangent = glm::normalize(normal_matrix * v.tangent);
         }
+        std::memcpy(vertex_bytes.data(), verts.data(), vertex_bytes.size());
 
-        auto mesh_data = Kakshya::MeshData::empty();
-        Kakshya::MeshInsertion ins(mesh_data.vertex_variant, mesh_data.index_variant);
-        ins.insert_flat(
-            std::span<const uint8_t>(
-                reinterpret_cast<const uint8_t*>(verts.data()),
-                verts.size() * sizeof(Kakshya::MeshVertex)),
-            std::span<const uint32_t>(indices),
-            Kakshya::VertexLayout::for_meshes(sizeof(Kakshya::MeshVertex)));
-        auto access = ins.build();
-        if (!access) {
-            return std::nullopt;
-        }
-        mesh_data.layout = access->layout;
+        const auto index_count = std::get<std::vector<uint32_t>>(mesh_data->index_variant).size();
 
         Kakshya::MeshSubrange sub;
         sub.index_start = 0;
-        sub.index_count = static_cast<uint32_t>(indices.size());
+        sub.index_count = static_cast<uint32_t>(index_count);
         sub.name = name;
         sub.diffuse_path = diffuse_path;
         Kakshya::RegionGroup rg("submeshes");
         rg.add_region(sub.to_region());
-        mesh_data.submeshes = std::move(rg);
+        mesh_data->submeshes = std::move(rg);
 
         return mesh_data;
     }
@@ -290,60 +279,7 @@ bool save_mesh(
 std::optional<Kakshya::MeshData> download_compute_mesh(
     const std::shared_ptr<Buffers::ComputeMeshBuffer>& buffer)
 {
-    if (!buffer) {
-        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO, "download_compute_mesh: null buffer");
-        return std::nullopt;
-    }
-
-    auto processor = buffer->get_mesh_processor();
-    if (!processor) {
-        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
-            "download_compute_mesh: no mesh processor; setup_processors() has not been called");
-        return std::nullopt;
-    }
-
-    auto counter_buf = processor->counter_buf();
-    const auto* counter_ptr = counter_buf
-        ? static_cast<const uint32_t*>(counter_buf->get_mapped_ptr())
-        : nullptr;
-    if (!counter_ptr) {
-        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
-            "download_compute_mesh: counter buffer is not host-visible or not allocated yet");
-        return std::nullopt;
-    }
-
-    const uint32_t vertex_count = *counter_ptr;
-    if (vertex_count == 0) {
-        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
-            "download_compute_mesh: live vertex count is zero");
-        return std::nullopt;
-    }
-
-    std::vector<Kakshya::MeshVertex> verts(vertex_count);
-    std::shared_ptr<Buffers::VKBuffer> staging;
-    Buffers::download_from_gpu_async(
-        buffer, verts.data(), verts.size() * sizeof(Kakshya::MeshVertex), staging);
-
-    std::vector<uint32_t> indices(vertex_count);
-    std::ranges::iota(indices, 0U);
-
-    auto mesh_data = Kakshya::MeshData::empty();
-    Kakshya::MeshInsertion ins(mesh_data.vertex_variant, mesh_data.index_variant);
-    ins.insert_flat(
-        std::span<const uint8_t>(
-            reinterpret_cast<const uint8_t*>(verts.data()),
-            verts.size() * sizeof(Kakshya::MeshVertex)),
-        std::span<const uint32_t>(indices),
-        Kakshya::VertexLayout::for_meshes(sizeof(Kakshya::MeshVertex)));
-    auto access = ins.build();
-    if (!access) {
-        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
-            "download_compute_mesh: MeshInsertion::build() failed");
-        return std::nullopt;
-    }
-    mesh_data.layout = access->layout;
-
-    return mesh_data;
+    return Buffers::download_compute_mesh(buffer);
 }
 
 bool save_mesh(
@@ -351,7 +287,7 @@ bool save_mesh(
     const std::string& filepath,
     const ModelWriteOptions& options)
 {
-    auto mesh_data = download_compute_mesh(buffer);
+    auto mesh_data = IO::download_compute_mesh(buffer);
     if (!mesh_data) {
         return false;
     }

@@ -35,6 +35,7 @@
 #include "MayaFlux/Buffers/VKBuffer.hpp"
 #include "MayaFlux/Buffers/Textures/NodeTextureBuffer.hpp"
 #include "MayaFlux/Buffers/Textures/TextureBuffer.hpp"
+#include "MayaFlux/Buffers/Textures/TextureArrayBuffer.hpp"
 #include "MayaFlux/Buffers/Geometry/GeometryBuffer.hpp"
 #include "MayaFlux/Buffers/Geometry/CompositeGeometryBuffer.hpp"
 #include "MayaFlux/Buffers/Geometry/MeshBuffer.hpp"
