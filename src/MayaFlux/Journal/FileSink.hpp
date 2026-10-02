@@ -75,7 +75,7 @@ private:
             }
         } else {
             oss << entry.message;
-            if (entry.file_name != nullptr) {
+            if (entry.file_name != nullptr && entry.line != 0) {
                 oss << " (" << entry.file_name
                     << ":" << entry.line << ")";
             }
