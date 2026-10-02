@@ -35,6 +35,14 @@ namespace detail {
         using aux = std::decay_t<B>;
     };
 
+    template <typename C, typename R, typename A, typename B, typename P>
+    struct FieldSignature<R (C::*)(A, B, P) const> {
+        using domain = std::decay_t<A>;
+        using range = R;
+        using aux = std::decay_t<B>;
+        using params = std::decay_t<P>;
+    };
+
 } // namespace detail
 
 /**
@@ -126,6 +134,44 @@ using TemporalVectorField = TemporalField<glm::vec3, glm::vec3>;
 using TemporalUVField = TemporalField<glm::vec3, glm::vec2>;
 
 /**
+ * @struct ParametricField
+ * @brief An authored expression of position, time and a parameter block, shader-only.
+ * @tparam D Domain type.
+ * @tparam R Range type.
+ *
+ * Carries no Tendency, for the same reason TemporalField does not. The third
+ * argument is a vec4 supplied by whoever dispatches the shader, and it is what
+ * lets a field depend on state the shader text cannot hold, such as an Agent's
+ * position and radius. For GpuFieldOperator it is set with set_params() and
+ * pushed every dispatch, so changing it recompiles nothing.
+ *
+ * @code
+ * namespace MayaFlux::Fields {
+ * using namespace MayaFlux::ShaderCompat;
+ *
+ * const auto pull = MF_FIELD_P(pull, [](vec3 p, float t, vec4 a) -> vec3 {
+ *     vec3 d = vec3(a.x, a.y, a.z) - p;
+ *     float r = length(d);
+ *     return r > 0.001f ? (d / r) * (a.w / (r * r + 0.1f)) : vec3(0.0f);
+ * });
+ * }
+ * @endcode
+ */
+template <typename D, typename R>
+struct ParametricField {
+    FieldSource source;
+
+    /**
+     * @brief Whether the shader half parsed into a usable function definition.
+     */
+    [[nodiscard]] bool has_source() const noexcept { return source.valid(); }
+};
+
+using ParametricSpatialField = ParametricField<glm::vec3, float>;
+using ParametricVectorField = ParametricField<glm::vec3, glm::vec3>;
+using ParametricUVField = ParametricField<glm::vec3, glm::vec2>;
+
+/**
  * @brief Build a DualField from a lambda and its stringified text.
  * @param name Name the emitted GLSL function will carry.
  * @param fn   The lambda itself, compiled by the host.
@@ -171,6 +217,30 @@ template <typename Lambda>
     };
 }
 
+/**
+ * @brief Build a ParametricField from a lambda and its stringified text.
+ *
+ * The second parameter must be float and the third glm::vec4. Domain and range
+ * are deduced from the call operator. Prefer MF_FIELD_P: this cannot check that
+ * fn and text correspond.
+ */
+template <typename Lambda>
+[[nodiscard]] auto parametric_field(std::string name, Lambda&&, std::string_view text)
+{
+    using Sig = detail::FieldSignature<std::decay_t<Lambda>>;
+    using D = typename Sig::domain;
+    using R = typename Sig::range;
+
+    static_assert(std::is_same_v<typename Sig::aux, float>,
+        "MF_FIELD_P: the second parameter must be float");
+    static_assert(std::is_same_v<typename Sig::params, glm::vec4>,
+        "MF_FIELD_P: the third parameter must be vec4");
+
+    return ParametricField<D, R> {
+        .source = FieldSource::parse(std::move(name), text),
+    };
+}
+
 } // namespace MayaFlux::Kinesis
 
 /**
@@ -202,3 +272,12 @@ template <typename Lambda>
  */
 #define MF_FIELD_T(name, lambda) \
     MayaFlux::Kinesis::temporal_field(#name, lambda, #lambda)
+
+/**
+ * @brief Bind an authored expression of position, time and a vec4 parameter block to the shader backend.
+ *
+ * Same authoring rules as MF_FIELD_T, with a third vec4 parameter that carries
+ * live state in from outside the shader. Has no CPU half.
+ */
+#define MF_FIELD_P(name, lambda) \
+    MayaFlux::Kinesis::parametric_field(#name, lambda, #lambda)
