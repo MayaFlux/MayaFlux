@@ -1,5 +1,8 @@
 #pragma once
 
+#include "MayaFlux/Kakshya/Source/DynamicVideoStream.hpp"
+#include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
+
 /**
  * @file API/Rigs.hpp
  * @brief Pre-assembled, purpose-built signal flow configurations.
@@ -162,11 +165,59 @@ MAYAFLUX_API Kriya::TapSetBuilder create_tap_set_from_stream(
  *                    .start();
  * @endcode
  *
+ * The builder comes with a pipeline made from the engine's managers. Reach it with
+ * get_pipeline(), replace it with use_pipeline(), or record into it with record()
+ * and read its stream with from_pipeline().
+ *
  * @param buffer Array buffer whose layers are fed.
  * @return Builder. A null buffer makes start() return an empty Chimera.
  */
 MAYAFLUX_API Kriya::ChimeraBuilder create_chimera(
     std::shared_ptr<Buffers::TextureArrayBuffer> buffer);
+
+/**
+ * @brief Begin a Chimera over an array buffer made and drawn here.
+ *
+ * The buffer is made from the spec and starts to render when start() runs, after the
+ * layers' params and layer_data() are in place. Show the window after this call.
+ *
+ * @code{.cpp}
+ * auto chimera = MayaFlux::create_chimera(
+ *                    { .width = 1280, .height = 720, .ring_frames = 4 },
+ *                    { .target_window = window, .fragment_shader = "texture_array_ghost.frag" })
+ *                    .layer_data()
+ *                    .record(Kriya::BufferOperation::capture_to_stream(io, camera, 240))
+ *                    .layer().from_pipeline().lag(0.0)
+ *                    .start();
+ * @endcode
+ *
+ * @param spec   Extent and format of every layer; ring_frames is the layer count.
+ * @param render How the array is drawn.
+ * @param fit    How a frame of another extent is fitted, or nullopt to drop it.
+ * @return Builder.
+ */
+MAYAFLUX_API Kriya::ChimeraBuilder create_chimera(
+    const Kakshya::VideoStreamSpec& spec,
+    Portal::Graphics::RenderConfig render,
+    std::optional<Portal::Graphics::FitMode> fit = Portal::Graphics::FitMode::STRETCH);
+
+/**
+ * @brief Make a layered texture buffer that draws to a window.
+ *
+ * For writing its layers through pipeline routes or by hand. A Chimera over the
+ * result is create_chimera(buffer).
+ *
+ * @param spec   Extent and format of every layer; ring_frames is the layer count.
+ * @param render How the array is drawn.
+ * @param fit    How a frame of another extent is fitted, or nullopt to drop it.
+ * @param mode   Mode number passed to the fragment shader.
+ * @return The buffer, already in the buffer manager.
+ */
+MAYAFLUX_API std::shared_ptr<Buffers::TextureArrayBuffer> create_texture_array(
+    const Kakshya::VideoStreamSpec& spec,
+    const Portal::Graphics::RenderConfig& render,
+    std::optional<Portal::Graphics::FitMode> fit = Portal::Graphics::FitMode::STRETCH,
+    uint32_t mode = 0);
 
 /**
  * @brief Make a circular stream that keeps the most recent seconds of a signal.

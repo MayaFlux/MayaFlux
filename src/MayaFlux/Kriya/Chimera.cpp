@@ -1,5 +1,6 @@
 #include "Chimera.hpp"
 
+#include "BufferPipeline.hpp"
 #include "Tasks.hpp"
 
 #include "MayaFlux/Buffers/Textures/TextureArrayBuffer.hpp"
@@ -229,10 +230,56 @@ void Chimera::feed(State& state, Layer& layer, uint32_t index, double elapsed)
 
 ChimeraBuilder::ChimeraBuilder(
     std::shared_ptr<Buffers::TextureArrayBuffer> buffer,
-    Vruta::TaskScheduler& scheduler)
+    Vruta::TaskScheduler& scheduler,
+    std::shared_ptr<BufferPipeline> pipeline)
     : m_buffer(std::move(buffer))
     , m_scheduler(scheduler)
+    , m_pipeline(std::move(pipeline))
 {
+}
+
+ChimeraBuilder& ChimeraBuilder::use_pipeline(std::shared_ptr<BufferPipeline> pipeline)
+{
+    m_pipeline = std::move(pipeline);
+    m_recording = false;
+    return *this;
+}
+
+ChimeraBuilder& ChimeraBuilder::record(BufferOperation&& operation)
+{
+    if (!m_pipeline) {
+        MF_ERROR(Journal::Component::Kriya, Journal::Context::Configuration,
+            "ChimeraBuilder::record needs a pipeline");
+        return *this;
+    }
+
+    *m_pipeline >> std::move(operation);
+    m_recording = true;
+    return *this;
+}
+
+ChimeraBuilder& ChimeraBuilder::render(Portal::Graphics::RenderConfig config)
+{
+    m_render = std::move(config);
+    return *this;
+}
+
+ChimeraBuilder& ChimeraBuilder::layer_data()
+{
+    if (m_buffer) {
+        m_buffer->enable_layer_data();
+    }
+    return *this;
+}
+
+ChimeraBuilder& ChimeraBuilder::from_pipeline()
+{
+    auto& target = current();
+    target.ring.reset();
+    target.image.reset();
+    target.picture.reset();
+    target.piped = true;
+    return *this;
 }
 
 Chimera::Layer& ChimeraBuilder::current()
@@ -254,6 +301,7 @@ ChimeraBuilder& ChimeraBuilder::from(std::shared_ptr<Kakshya::DynamicVideoStream
     auto& target = current();
     target.image.reset();
     target.picture.reset();
+    target.piped = false;
     target.ring = std::move(ring);
     return *this;
 }
@@ -263,6 +311,7 @@ ChimeraBuilder& ChimeraBuilder::from(std::shared_ptr<Core::VKImage> image)
     auto& target = current();
     target.ring.reset();
     target.picture.reset();
+    target.piped = false;
     target.image = std::move(image);
     return *this;
 }
@@ -272,6 +321,7 @@ ChimeraBuilder& ChimeraBuilder::from(Kakshya::ImageData image)
     auto& target = current();
     target.ring.reset();
     target.image.reset();
+    target.piped = false;
     target.picture = std::make_shared<const Kakshya::ImageData>(std::move(image));
     target.dirty = true;
     return *this;
@@ -358,9 +408,23 @@ Chimera ChimeraBuilder::start()
         return set;
     }
 
+    for (auto& layer : m_layers) {
+        if (!layer.piped) {
+            continue;
+        }
+
+        layer.ring = m_pipeline ? m_pipeline->get_graphics_stream() : nullptr;
+        if (!layer.ring) {
+            MF_ERROR(Journal::Component::Kriya, Journal::Context::Configuration,
+                "ChimeraBuilder::start found no stream in the pipeline for from_pipeline");
+            return set;
+        }
+    }
+
     auto state = std::make_shared<Chimera::State>();
 
     state->buffer = m_buffer;
+    state->pipeline = m_pipeline;
     state->scheduler = &m_scheduler;
     state->layers = m_layers;
     state->frame_rate = std::max(
@@ -378,6 +442,11 @@ Chimera ChimeraBuilder::start()
         ++index;
     }
 
+    if (m_render) {
+        m_buffer->setup_rendering(*m_render);
+        m_render.reset();
+    }
+
     const std::weak_ptr<Chimera::State> weak = state;
     state->task = metro(1.0 / state->frame_rate, [weak]() {
         if (const auto running = weak.lock()) {
@@ -387,6 +456,11 @@ Chimera ChimeraBuilder::start()
         Vruta::ProcessingToken::FRAME_ACCURATE);
 
     m_scheduler.add_task(state->task, "Chimera_" + std::to_string(m_scheduler.get_next_task_id()), false);
+
+    if (m_recording) {
+        m_pipeline->execute_frame_rate();
+        m_recording = false;
+    }
 
     set.m_guard = std::shared_ptr<void>(nullptr, [state](void*) { state->halt(); });
     set.m_state = std::move(state);

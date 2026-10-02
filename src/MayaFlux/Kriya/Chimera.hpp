@@ -22,6 +22,9 @@ class Routine;
 
 namespace MayaFlux::Kriya {
 
+class BufferPipeline;
+class BufferOperation;
+
 /**
  * @class Chimera
  * @brief Assembles the layers of a TextureArrayBuffer from whatever feeds them, so a
@@ -120,10 +123,12 @@ private:
         bool entered {};
         bool missed {};
         bool dirty {};
+        bool piped {};
     };
 
     struct State {
         std::shared_ptr<Buffers::TextureArrayBuffer> buffer;
+        std::shared_ptr<BufferPipeline> pipeline;
         Vruta::TaskScheduler* scheduler {};
         std::vector<Layer> layers;
         std::shared_ptr<Vruta::Routine> task;
@@ -156,15 +161,71 @@ private:
  *                    .layer().from(ring).lag(0.5).smooth().level(0.6)
  *                    .start();
  * @endcode
+ *
+ * The builder holds one BufferPipeline, the one it was given or one it was made
+ * with, so what is recorded and what is assembled read as one chain:
+ *
+ * @code{.cpp}
+ * auto chimera = MayaFlux::create_chimera(array)
+ *                    .record(BufferOperation::capture_to_stream(io, camera, 240))
+ *                    .layer().from_pipeline().lag(0.0)
+ *                    .layer().from_pipeline().lag(0.5)
+ *                    .start();
+ * @endcode
  */
 class MAYAFLUX_API ChimeraBuilder {
 public:
+    /**
+     * @param buffer    Array buffer whose layers are fed.
+     * @param scheduler Scheduler the feeding task runs on.
+     * @param pipeline  The builder's pipeline, or nullptr for none.
+     */
     ChimeraBuilder(
         std::shared_ptr<Buffers::TextureArrayBuffer> buffer,
-        Vruta::TaskScheduler& scheduler);
+        Vruta::TaskScheduler& scheduler,
+        std::shared_ptr<BufferPipeline> pipeline = nullptr);
+
+    /** @brief The pipeline the builder records into. */
+    [[nodiscard]] std::shared_ptr<BufferPipeline> get_pipeline() const { return m_pipeline; }
+
+    /**
+     * @brief Replace the builder's pipeline with one made elsewhere.
+     *
+     * Operations the builder recorded earlier stay in the pipeline it had.
+     */
+    ChimeraBuilder& use_pipeline(std::shared_ptr<BufferPipeline> pipeline);
+
+    /**
+     * @brief Add an operation to the builder's pipeline.
+     *
+     * start() runs the pipeline at the frame rate when anything was recorded this
+     * way. A pipeline given with use_pipeline and never recorded into is left for its
+     * owner to run.
+     */
+    ChimeraBuilder& record(BufferOperation&& operation);
+
+    /**
+     * @brief Draw the buffer this way once start() runs.
+     *
+     * Rendering is set up after every layer's params and the layer data are in place,
+     * so a shader that reads layerData is bound correctly. Leave it out for a buffer
+     * that already renders.
+     */
+    ChimeraBuilder& render(Portal::Graphics::RenderConfig config);
+
+    /**
+     * @brief Create the per-layer buffer the shader reads as layerData.
+     *
+     * For a shader that reads the timing a Chimera writes and declares the buffer.
+     * Layers given params enable it without this call.
+     */
+    ChimeraBuilder& layer_data();
 
     /** @brief Open the next layer. */
     ChimeraBuilder& layer();
+
+    /** @brief Feed the layer from the stream the pipeline records, read when start() runs. */
+    ChimeraBuilder& from_pipeline();
 
     /** @brief Feed the layer from a ring that is being recorded. */
     ChimeraBuilder& from(std::shared_ptr<Kakshya::DynamicVideoStream> ring);
@@ -217,7 +278,10 @@ private:
 
     std::shared_ptr<Buffers::TextureArrayBuffer> m_buffer;
     Vruta::TaskScheduler& m_scheduler;
+    std::shared_ptr<BufferPipeline> m_pipeline;
+    std::optional<Portal::Graphics::RenderConfig> m_render;
     std::vector<Chimera::Layer> m_layers;
+    bool m_recording {};
 };
 
 } // namespace MayaFlux::Kriya

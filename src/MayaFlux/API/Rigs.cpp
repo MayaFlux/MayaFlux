@@ -5,6 +5,8 @@
 #include "MayaFlux/API/Depot.hpp"
 #include "MayaFlux/API/Graph.hpp"
 
+#include "MayaFlux/Buffers/BufferManager.hpp"
+#include "MayaFlux/Buffers/Textures/TextureArrayBuffer.hpp"
 #include "MayaFlux/IO/IOManager.hpp"
 #include "MayaFlux/Kriya/Chimera.hpp"
 #include "MayaFlux/Kriya/SamplingPipeline.hpp"
@@ -112,7 +114,34 @@ Kriya::TapSetBuilder create_tap_set_from_stream(
 
 Kriya::ChimeraBuilder create_chimera(std::shared_ptr<Buffers::TextureArrayBuffer> buffer)
 {
-    return Kriya::ChimeraBuilder(std::move(buffer), *get_scheduler());
+    return Kriya::ChimeraBuilder(std::move(buffer), *get_scheduler(), create_buffer_pipeline(get_io_manager()));
+}
+
+Kriya::ChimeraBuilder create_chimera(
+    const Kakshya::VideoStreamSpec& spec,
+    Portal::Graphics::RenderConfig render,
+    std::optional<Portal::Graphics::FitMode> fit)
+{
+    auto array = get_buffer_manager()->create_graphics_buffer<Buffers::TextureArrayBuffer>(
+        Buffers::ProcessingToken::GRAPHICS_BACKEND, spec, fit);
+
+    auto builder = create_chimera(std::move(array));
+    builder.render(std::move(render));
+    return builder;
+}
+
+std::shared_ptr<Buffers::TextureArrayBuffer> create_texture_array(
+    const Kakshya::VideoStreamSpec& spec,
+    const Portal::Graphics::RenderConfig& render,
+    std::optional<Portal::Graphics::FitMode> fit,
+    uint32_t mode)
+{
+    auto array = get_buffer_manager()->create_graphics_buffer<Buffers::TextureArrayBuffer>(
+        Buffers::ProcessingToken::GRAPHICS_BACKEND, spec, fit);
+
+    array->set_mode(mode);
+    array->setup_rendering(render);
+    return array;
 }
 
 std::shared_ptr<Kakshya::DynamicSoundStream> create_ring(double seconds, uint32_t channels)
