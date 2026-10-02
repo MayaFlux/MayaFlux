@@ -1,5 +1,6 @@
 #pragma once
 
+#include <glm/gtc/quaternion.hpp>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 
@@ -56,6 +57,8 @@ struct InfluenceContext {
     std::optional<float> size; ///< Optional size hint for the influence, may be used for visualisation or shader effects.
 
     std::optional<glm::vec2> cursor_pos; ///< Optional cursor position for pending interactions, useful for real-time editing or previewing influence effects.
+
+    std::optional<glm::quat> orientation; ///< Optional orientation of the influencer. Local +Z is its forward direction.
 
     // @note future: ShaderProcessor* shader_proc { nullptr };
     // @note future: std::span<const double> audio_snapshot;

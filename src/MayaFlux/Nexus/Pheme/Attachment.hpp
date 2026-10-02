@@ -1,0 +1,101 @@
+#pragma once
+
+#include "InfluenceContext.hpp"
+
+namespace MayaFlux::Buffers {
+class VKBuffer;
+class RenderProcessor;
+}
+
+namespace MayaFlux::Nexus {
+
+/**
+ * @struct AttachConfig
+ * @brief How an Agent attaches to a buffer that already exists.
+ */
+struct AttachConfig {
+    /** @brief What a move of the Agent from outside does to the attachment. */
+    enum class OnMove : uint8_t {
+        Offset, ///< The move becomes the Agent's new offset from the buffer.
+        Carry, ///< The buffer is moved along with the Agent.
+    };
+
+    /**
+     * @brief Vertex whose position anchors the Agent. Unset anchors at the
+     *        surface centroid, or the vertex mean for a mesh without faces.
+     *
+     * The geometry is read once, when attaching and on recenter(), by
+     * Buffers::snapshot_mesh. A buffer it cannot read anchors at its local origin.
+     */
+    std::optional<uint32_t> index;
+
+    /** @brief Offset of the Agent from the anchor, in world space. */
+    glm::vec3 offset {};
+
+    OnMove on_move { OnMove::Offset };
+};
+
+/**
+ * @struct Attachment
+ * @brief State of one Agent attached to an existing buffer.
+ *
+ * The transform is applied to every render processor the buffer has, by
+ * wrapping the view each processor already uses. Nothing is registered with
+ * a manager and nothing is written to the buffer.
+ */
+struct Attachment {
+    std::shared_ptr<Buffers::VKBuffer> buf;
+    AttachConfig config;
+    std::shared_ptr<glm::mat4> transform;
+    std::vector<std::shared_ptr<Buffers::RenderProcessor>> followed;
+    glm::vec3 anchor {};
+    glm::vec3 applied {};
+};
+
+/**
+ * @brief Build an attachment to @p buf.
+ * @param buf    Buffer to attach to. Must not be null.
+ * @param config Anchor vertex, offset and move behaviour.
+ */
+MAYAFLUX_API Attachment make_attachment(
+    std::shared_ptr<Buffers::VKBuffer> buf,
+    const AttachConfig& config);
+
+/**
+ * @brief Set @p position from the buffer, or fold an outside move into the attachment.
+ * @param attachment Attachment to follow.
+ * @param position   Position of the Agent. Set if empty.
+ */
+MAYAFLUX_API void follow_attachment(
+    Attachment& attachment,
+    std::optional<glm::vec3>& position);
+
+/**
+ * @brief Read the buffer's geometry again and move the anchor to match.
+ *
+ * The Agent stays where it is: its offset from the new anchor absorbs the
+ * difference. Blocks for a ComputeMeshBuffer, so call it off the graphics thread.
+ *
+ * @param attachment Attachment to recenter.
+ * @param position   Position of the Agent. Set if empty.
+ */
+MAYAFLUX_API void recenter_attachment(
+    Attachment& attachment,
+    std::optional<glm::vec3>& position);
+
+/**
+ * @brief Rebuild the transform from @p ctx and place every render processor of the buffer.
+ * @param attachment Attachment to apply.
+ * @param ctx        Current InfluenceContext.
+ */
+MAYAFLUX_API void apply_attachment(
+    Attachment& attachment,
+    const InfluenceContext& ctx);
+
+/**
+ * @brief Reset the buffer's placement to identity.
+ * @param attachment Attachment to release.
+ */
+MAYAFLUX_API void release_attachment(Attachment& attachment);
+
+} // namespace MayaFlux::Nexus
