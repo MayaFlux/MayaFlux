@@ -248,7 +248,13 @@ ChimeraBuilder& ChimeraBuilder::record(BufferOperation&& operation)
         return *this;
     }
 
-    *m_pipeline >> std::move(operation);
+    m_pipeline >> std::move(operation);
+    return *this;
+}
+
+ChimeraBuilder& ChimeraBuilder::every(double seconds, std::function<void(Chimera&)> action)
+{
+    m_actions.push_back({ .seconds = seconds, .run = std::move(action) });
     return *this;
 }
 
@@ -446,13 +452,33 @@ Chimera ChimeraBuilder::start()
     }
 
     const std::weak_ptr<Chimera::State> weak = state;
-    *m_pipeline >> BufferOperation::dispatch_to(
+    m_pipeline >> BufferOperation::dispatch_to(
         [weak](Kakshya::DataVariant&, uint32_t cycle) {
             if (const auto running = weak.lock()) {
                 Chimera::tick(*running, cycle);
             }
         },
         Buffers::ProcessingToken::GRAPHICS_BACKEND);
+
+    for (const auto& action : m_actions) {
+        const auto cycles = static_cast<uint32_t>(std::max(std::round(action.seconds * state->frame_rate), 1.0));
+
+        auto timed = BufferOperation::dispatch_to(
+            [weak, run = action.run](Kakshya::DataVariant&, uint32_t cycle) {
+                const auto running = weak.lock();
+                if (!running || cycle == 0) {
+                    return;
+                }
+
+                Chimera view;
+                view.m_state = running;
+                run(view);
+            },
+            Buffers::ProcessingToken::GRAPHICS_BACKEND);
+        timed.every_n_cycles(cycles);
+
+        m_pipeline >> std::move(timed);
+    }
 
     m_pipeline->execute_frame_rate();
 

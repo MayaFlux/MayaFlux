@@ -198,6 +198,18 @@ public:
     ChimeraBuilder& record(BufferOperation&& operation);
 
     /**
+     * @brief Call an action on the running Chimera every this many seconds.
+     *
+     * Runs in the pipeline after the layers are fed, on the frame clock, first one
+     * interval after start(). The action may call any control, such as cut, set,
+     * speed or level. It does not belong to a layer.
+     *
+     * @param seconds Interval, at least one frame.
+     * @param action  Called with the running Chimera.
+     */
+    ChimeraBuilder& every(double seconds, std::function<void(Chimera&)> action);
+
+    /**
      * @brief Draw the buffer this way once start() runs.
      *
      * Rendering is set up after every layer's params and the layer data are in place,
@@ -267,12 +279,18 @@ public:
     [[nodiscard]] Chimera start();
 
 private:
+    struct Action {
+        double seconds {};
+        std::function<void(Chimera&)> run;
+    };
+
     Chimera::Layer& current();
 
     std::shared_ptr<Buffers::TextureArrayBuffer> m_buffer;
     std::shared_ptr<BufferPipeline> m_pipeline;
     std::optional<Portal::Graphics::RenderConfig> m_render;
     std::vector<Chimera::Layer> m_layers;
+    std::vector<Action> m_actions;
 };
 
 } // namespace MayaFlux::Kriya
