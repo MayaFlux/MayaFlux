@@ -1,7 +1,9 @@
 #pragma once
 
 #include "MayaFlux/Nexus/Pheme/Attachment.hpp"
+#include "MayaFlux/Nexus/Pheme/Influence.hpp"
 #include "MayaFlux/Nexus/Pheme/InfluenceContext.hpp"
+#include "MayaFlux/Nexus/Pheme/Perception.hpp"
 #include "MayaFlux/Nexus/Pheme/PerceptionContext.hpp"
 
 #include "MayaFlux/Nexus/Pheme/Sinks.hpp"
@@ -197,6 +199,65 @@ public:
     /** @brief True while a buffer is attached. */
     [[nodiscard]] bool attached() const { return m_attachment.has_value(); }
 
+    /**
+     * @brief Add an influence of any type, with as many targets as are wanted.
+     * @tparam T Type the producer returns; whatever the targets take.
+     * @param producer Builds the value from the influence context.
+     * @return The influence, to add its targets with Influence::add_target.
+     *
+     * Runs on every influence after the influence function. Typed influences
+     * are runtime objects and are not part of encoded state.
+     */
+    template <typename T>
+    std::shared_ptr<Influence<T>> add_influence(typename Influence<T>::Producer producer)
+    {
+        auto influence = std::make_shared<Influence<T>>(std::move(producer));
+        m_influences.emplace_back(influence,
+            [influence](const InfluenceContext& ctx) { influence->invoke(ctx); });
+        return influence;
+    }
+
+    /** @brief Stop an influence added with add_influence(). */
+    template <typename T>
+    void remove_influence(const std::shared_ptr<Influence<T>>& influence)
+    {
+        std::erase_if(m_influences,
+            [&influence](const auto& entry) { return entry.first == influence; });
+    }
+
+    /** @brief Stop every influence added with add_influence(). */
+    void clear_influences() { m_influences.clear(); }
+
+    /**
+     * @brief Add a perception of any type, with as many targets as are wanted.
+     * @tparam T Type the source returns; whatever the targets take.
+     * @param source Reads the value, using the perception context.
+     * @return The perception, to add its targets with Perception::add_target.
+     *
+     * Runs on every perception before the perception function, so the function
+     * can use what the targets received. Typed perceptions are runtime objects
+     * and are not part of encoded state.
+     */
+    template <typename T>
+    std::shared_ptr<Perception<T>> add_perception(typename Perception<T>::Source source)
+    {
+        auto perception = std::make_shared<Perception<T>>(std::move(source));
+        m_perceptions.emplace_back(perception,
+            [perception](const PerceptionContext& ctx) { perception->invoke(ctx); });
+        return perception;
+    }
+
+    /** @brief Stop a perception added with add_perception(). */
+    template <typename T>
+    void remove_perception(const std::shared_ptr<Perception<T>>& perception)
+    {
+        std::erase_if(m_perceptions,
+            [&perception](const auto& entry) { return entry.first == perception; });
+    }
+
+    /** @brief Stop every perception added with add_perception(). */
+    void clear_perceptions() { m_perceptions.clear(); }
+
     /* @brief Return the render processor for the sink targeting @p window, or nullptr if not found. */
     std::shared_ptr<Buffers::RenderProcessor> get_render_processor(
         const std::shared_ptr<Core::Window>& window) const
@@ -310,6 +371,9 @@ public:
      */
     virtual void invoke_perception(const PerceptionContext& ctx)
     {
+        for (const auto& [handle, perception] : m_perceptions) {
+            perception(ctx);
+        }
         if (m_perception_fn) {
             m_perception_fn(ctx);
         }
@@ -328,6 +392,9 @@ public:
         dispatch_render_sinks(m_render_sinks, ctx);
         if (m_attachment)
             apply_attachment(*m_attachment, ctx);
+        for (const auto& [handle, influence] : m_influences) {
+            influence(ctx);
+        }
         if (m_influence_ubo)
             upload_influence_ubo(ctx);
     }
@@ -353,6 +420,8 @@ private:
     mutable std::vector<AudioSink> m_audio_sinks;
     mutable std::vector<RenderSink> m_render_sinks;
     mutable std::optional<Attachment> m_attachment;
+    std::vector<std::pair<std::shared_ptr<void>, InfluenceFn>> m_influences;
+    std::vector<std::pair<std::shared_ptr<void>, PerceptionFn>> m_perceptions;
 
     void upload_influence_ubo(const InfluenceContext& ctx) const;
     void follow_attachment();

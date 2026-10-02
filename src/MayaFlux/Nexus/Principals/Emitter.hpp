@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Nexus/Pheme/Influence.hpp"
 #include "MayaFlux/Nexus/Pheme/InfluenceContext.hpp"
 #include "MayaFlux/Nexus/Pheme/Sinks.hpp"
 
@@ -218,6 +219,27 @@ public:
     }
 
     /**
+     * @brief Set the one target of an influence of any type.
+     * @tparam T Type the producer returns; whatever the target takes.
+     * @param producer Builds the value from the influence context.
+     * @param target   Takes the value and decides what it affects.
+     *
+     * An Emitter has a single target: setting another replaces it. Runs on
+     * every invoke after the influence function, independent of the render
+     * processor target. Not part of encoded state.
+     */
+    template <typename T>
+    void set_influence(typename Influence<T>::Producer producer, typename Influence<T>::Target target)
+    {
+        auto influence = std::make_shared<Influence<T>>(std::move(producer));
+        influence->add_target(std::move(target));
+        m_influence = [influence](const InfluenceContext& ctx) { influence->invoke(ctx); };
+    }
+
+    /** @brief Remove the target set with set_influence(). */
+    void clear_influence() { m_influence = nullptr; }
+
+    /**
      * @brief Invoke the influence function with the supplied context.
      * @param ctx Populated context for this commit.
      */
@@ -228,6 +250,9 @@ public:
         }
         dispatch_audio_sinks(m_audio_sinks, ctx);
         dispatch_render_sinks(m_render_sinks, ctx);
+        if (m_influence) {
+            m_influence(ctx);
+        }
         if (m_influence_ubo)
             upload_influence_ubo(ctx);
     }
@@ -248,6 +273,7 @@ private:
 
     mutable std::vector<AudioSink> m_audio_sinks;
     mutable std::vector<RenderSink> m_render_sinks;
+    InfluenceFn m_influence;
 
     void upload_influence_ubo(const InfluenceContext& ctx) const;
 
