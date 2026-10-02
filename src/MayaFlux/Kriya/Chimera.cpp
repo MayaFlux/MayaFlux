@@ -1,14 +1,13 @@
 #include "Chimera.hpp"
 
 #include "BufferPipeline.hpp"
-#include "Tasks.hpp"
 
 #include "MayaFlux/Buffers/Textures/TextureArrayBuffer.hpp"
 #include "MayaFlux/IO/Image/ImageReader.hpp"
 #include "MayaFlux/Kakshya/Source/DynamicVideoStream.hpp"
 #include "MayaFlux/Kakshya/Utils/PixelStorage.hpp"
 #include "MayaFlux/Kinesis/Tendency/TendencyFactories.hpp"
-#include "MayaFlux/Vruta/Scheduler.hpp"
+#include "MayaFlux/Vruta/ChronUtils.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
@@ -16,10 +15,9 @@ namespace MayaFlux::Kriya {
 
 void Chimera::State::halt()
 {
-    if (task && scheduler) {
-        scheduler->cancel_task(task);
+    if (pipeline) {
+        pipeline->end();
     }
-    task.reset();
 }
 
 size_t Chimera::layer_count() const
@@ -122,9 +120,9 @@ void Chimera::stamp(State& state, uint32_t index, const glm::vec4& timing)
     }
 }
 
-void Chimera::tick(State& state)
+void Chimera::tick(State& state, uint64_t frame)
 {
-    const uint64_t frame = state.ticks++;
+    state.ticks = frame + 1;
     const double now = static_cast<double>(frame) / state.frame_rate;
 
     uint32_t index = 0;
@@ -230,10 +228,8 @@ void Chimera::feed(State& state, Layer& layer, uint32_t index, double elapsed)
 
 ChimeraBuilder::ChimeraBuilder(
     std::shared_ptr<Buffers::TextureArrayBuffer> buffer,
-    Vruta::TaskScheduler& scheduler,
     std::shared_ptr<BufferPipeline> pipeline)
     : m_buffer(std::move(buffer))
-    , m_scheduler(scheduler)
     , m_pipeline(std::move(pipeline))
 {
 }
@@ -241,7 +237,6 @@ ChimeraBuilder::ChimeraBuilder(
 ChimeraBuilder& ChimeraBuilder::use_pipeline(std::shared_ptr<BufferPipeline> pipeline)
 {
     m_pipeline = std::move(pipeline);
-    m_recording = false;
     return *this;
 }
 
@@ -254,7 +249,6 @@ ChimeraBuilder& ChimeraBuilder::record(BufferOperation&& operation)
     }
 
     *m_pipeline >> std::move(operation);
-    m_recording = true;
     return *this;
 }
 
@@ -408,12 +402,18 @@ Chimera ChimeraBuilder::start()
         return set;
     }
 
+    if (!m_pipeline) {
+        MF_ERROR(Journal::Component::Kriya, Journal::Context::Configuration,
+            "ChimeraBuilder::start needs a pipeline to feed the layers");
+        return set;
+    }
+
     for (auto& layer : m_layers) {
         if (!layer.piped) {
             continue;
         }
 
-        layer.ring = m_pipeline ? m_pipeline->get_graphics_stream() : nullptr;
+        layer.ring = m_pipeline->get_graphics_stream();
         if (!layer.ring) {
             MF_ERROR(Journal::Component::Kriya, Journal::Context::Configuration,
                 "ChimeraBuilder::start found no stream in the pipeline for from_pipeline");
@@ -425,10 +425,8 @@ Chimera ChimeraBuilder::start()
 
     state->buffer = m_buffer;
     state->pipeline = m_pipeline;
-    state->scheduler = &m_scheduler;
     state->layers = m_layers;
-    state->frame_rate = std::max(
-        static_cast<double>(m_scheduler.get_rate(Vruta::ProcessingToken::FRAME_ACCURATE)), 1.0);
+    state->frame_rate = std::max(static_cast<double>(Vruta::s_registered_frame_rate), 1.0);
 
     uint32_t index = 0;
     for (const auto& layer : state->layers) {
@@ -448,19 +446,15 @@ Chimera ChimeraBuilder::start()
     }
 
     const std::weak_ptr<Chimera::State> weak = state;
-    state->task = metro(1.0 / state->frame_rate, [weak]() {
-        if (const auto running = weak.lock()) {
-            Chimera::tick(*running);
-        }
-    },
-        Vruta::ProcessingToken::FRAME_ACCURATE);
+    *m_pipeline >> BufferOperation::dispatch_to(
+        [weak](Kakshya::DataVariant&, uint32_t cycle) {
+            if (const auto running = weak.lock()) {
+                Chimera::tick(*running, cycle);
+            }
+        },
+        Buffers::ProcessingToken::GRAPHICS_BACKEND);
 
-    m_scheduler.add_task(state->task, "Chimera_" + std::to_string(m_scheduler.get_next_task_id()), false);
-
-    if (m_recording) {
-        m_pipeline->execute_frame_rate();
-        m_recording = false;
-    }
+    m_pipeline->execute_frame_rate();
 
     set.m_guard = std::shared_ptr<void>(nullptr, [state](void*) { state->halt(); });
     set.m_state = std::move(state);

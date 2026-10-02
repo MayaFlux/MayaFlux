@@ -114,7 +114,7 @@ Kriya::TapSetBuilder create_tap_set_from_stream(
 
 Kriya::ChimeraBuilder create_chimera(std::shared_ptr<Buffers::TextureArrayBuffer> buffer)
 {
-    return Kriya::ChimeraBuilder(std::move(buffer), *get_scheduler(), create_buffer_pipeline(get_io_manager()));
+    return Kriya::ChimeraBuilder(std::move(buffer), create_buffer_pipeline(get_io_manager()));
 }
 
 Kriya::ChimeraBuilder create_chimera(

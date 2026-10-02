@@ -16,7 +16,6 @@ class DynamicVideoStream;
 }
 
 namespace MayaFlux::Vruta {
-class TaskScheduler;
 class Routine;
 }
 
@@ -42,8 +41,10 @@ class BufferOperation;
  * whose position falls outside what the ring still holds keeps its last frame and
  * reports once. stop() holds every layer on its last frame.
  *
- * Built from a buffer with ChimeraBuilder or create_chimera. What the layers mean
- * on screen is the buffer's fragment shader. Call the controls from the frame clock.
+ * Built from a buffer with ChimeraBuilder or create_chimera. The layers are fed by
+ * the cycles of the builder's pipeline, one per frame, after whatever the pipeline
+ * records. What the layers mean on screen is the buffer's fragment shader. Call the
+ * controls from the frame clock.
  */
 class MAYAFLUX_API Chimera {
 public:
@@ -129,16 +130,14 @@ private:
     struct State {
         std::shared_ptr<Buffers::TextureArrayBuffer> buffer;
         std::shared_ptr<BufferPipeline> pipeline;
-        Vruta::TaskScheduler* scheduler {};
         std::vector<Layer> layers;
-        std::shared_ptr<Vruta::Routine> task;
         double frame_rate { 60.0 };
         uint64_t ticks {};
 
         void halt();
     };
 
-    static void tick(State& state);
+    static void tick(State& state, uint64_t frame);
     static void feed(State& state, Layer& layer, uint32_t index, double elapsed);
     static void stamp(State& state, uint32_t index, const glm::vec4& timing);
 
@@ -176,14 +175,12 @@ private:
 class MAYAFLUX_API ChimeraBuilder {
 public:
     /**
-     * @param buffer    Array buffer whose layers are fed.
-     * @param scheduler Scheduler the feeding task runs on.
-     * @param pipeline  The builder's pipeline, or nullptr for none.
+     * @param buffer   Array buffer whose layers are fed.
+     * @param pipeline The pipeline that records, and whose cycles feed the layers.
      */
     ChimeraBuilder(
         std::shared_ptr<Buffers::TextureArrayBuffer> buffer,
-        Vruta::TaskScheduler& scheduler,
-        std::shared_ptr<BufferPipeline> pipeline = nullptr);
+        std::shared_ptr<BufferPipeline> pipeline);
 
     /** @brief The pipeline the builder records into. */
     [[nodiscard]] std::shared_ptr<BufferPipeline> get_pipeline() const { return m_pipeline; }
@@ -191,17 +188,13 @@ public:
     /**
      * @brief Replace the builder's pipeline with one made elsewhere.
      *
-     * Operations the builder recorded earlier stay in the pipeline it had.
+     * The pipeline must not be running. start() adds the feeding to the end of its
+     * operations and runs it at the frame rate, one cycle per frame, and stop() ends
+     * it. Operations the builder recorded earlier stay in the pipeline it had.
      */
     ChimeraBuilder& use_pipeline(std::shared_ptr<BufferPipeline> pipeline);
 
-    /**
-     * @brief Add an operation to the builder's pipeline.
-     *
-     * start() runs the pipeline at the frame rate when anything was recorded this
-     * way. A pipeline given with use_pipeline and never recorded into is left for its
-     * owner to run.
-     */
+    /** @brief Add an operation to the builder's pipeline, ahead of the feeding. */
     ChimeraBuilder& record(BufferOperation&& operation);
 
     /**
@@ -277,11 +270,9 @@ private:
     Chimera::Layer& current();
 
     std::shared_ptr<Buffers::TextureArrayBuffer> m_buffer;
-    Vruta::TaskScheduler& m_scheduler;
     std::shared_ptr<BufferPipeline> m_pipeline;
     std::optional<Portal::Graphics::RenderConfig> m_render;
     std::vector<Chimera::Layer> m_layers;
-    bool m_recording {};
 };
 
 } // namespace MayaFlux::Kriya
