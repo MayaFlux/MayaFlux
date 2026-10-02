@@ -104,6 +104,18 @@ MAYAFLUX_API void apply_translation(
     const glm::vec3& displacement);
 
 /**
+ * @brief Rigid transform that rotates about a local pivot and lands the pivot on a world point
+ * @param pivot Point in local space that stays fixed under the rotation
+ * @param target World-space point the pivot is placed on
+ * @param rotation Rotation applied about the pivot
+ * @return Matrix mapping local space to world space
+ */
+[[nodiscard]] MAYAFLUX_API glm::mat4 pivot_transform(
+    const glm::vec3& pivot,
+    const glm::vec3& target,
+    const glm::quat& rotation);
+
+/**
  * @brief Apply uniform scaling to vertex set
  * @param vertices Vertices to transform (modified in-place)
  * @param scale Scale factor (must be > 0)

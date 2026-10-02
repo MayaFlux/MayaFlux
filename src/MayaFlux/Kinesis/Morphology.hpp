@@ -118,6 +118,75 @@ template <typename T,
     return total > 0.0F ? acc / total : glm::vec3(0.0F);
 }
 
+/**
+ * @brief Arithmetic centroid of a plain position span.
+ *
+ * @param  pts Non-owning span of positions.
+ * @return Mean position, or the zero vector for an empty span.
+ */
+[[nodiscard]] inline glm::vec3 centroid(std::span<const glm::vec3> pts) noexcept
+{
+    if (pts.empty())
+        return glm::vec3(0.0F);
+    glm::vec3 acc(0.0F);
+    for (const auto& p : pts)
+        acc += p;
+    return acc / static_cast<float>(pts.size());
+}
+
+/**
+ * @brief Position of one record in interleaved vertex bytes.
+ *
+ * @param  bytes  Interleaved records.
+ * @param  stride Bytes per record.
+ * @param  offset Byte offset of the vec3 position within a record.
+ * @param  index  Record index.
+ * @return The position, or nullopt when the position does not lie inside
+ *         @p bytes or @p stride is too small to hold it.
+ */
+[[nodiscard]] inline std::optional<glm::vec3> position_at(
+    std::span<const std::byte> bytes,
+    size_t stride,
+    size_t offset,
+    size_t index) noexcept
+{
+    if (stride < offset + sizeof(glm::vec3)
+        || index * stride + offset + sizeof(glm::vec3) > bytes.size())
+        return std::nullopt;
+    glm::vec3 p;
+    std::memcpy(&p, bytes.data() + index * stride + offset, sizeof(glm::vec3));
+    return p;
+}
+
+/**
+ * @brief Arithmetic centroid of the positions in interleaved vertex bytes.
+ *
+ * Every Kakshya vertex record is 60 bytes with the position at offset 0, but
+ * any stride and offset work, so readback bytes, node vertex data and MeshData
+ * all go through here without a typed copy.
+ *
+ * @param  bytes  Interleaved records. A trailing partial record is ignored.
+ * @param  stride Bytes per record.
+ * @param  offset Byte offset of the vec3 position within a record.
+ * @return Mean position, or the zero vector when no whole record fits or
+ *         @p stride is too small to hold a position.
+ */
+[[nodiscard]] inline glm::vec3 centroid(
+    std::span<const std::byte> bytes,
+    size_t stride,
+    size_t offset = 0) noexcept
+{
+    if (stride < offset + sizeof(glm::vec3))
+        return glm::vec3(0.0F);
+    const size_t count = bytes.size() / stride;
+    if (count == 0)
+        return glm::vec3(0.0F);
+    glm::vec3 acc(0.0F);
+    for (size_t i = 0; i < count; ++i)
+        acc += position_at(bytes, stride, offset, i).value_or(glm::vec3(0.0F));
+    return acc / static_cast<float>(count);
+}
+
 // =============================================================================
 // aabb
 // =============================================================================

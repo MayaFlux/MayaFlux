@@ -2,6 +2,7 @@
 #include "MayaFlux/Kakshya/NDData/MeshInsertion.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 namespace MayaFlux::Kinesis {
 
@@ -211,6 +212,15 @@ void apply_translation(
     for (auto& vertex : vertices) {
         vertex += displacement;
     }
+}
+
+glm::mat4 pivot_transform(
+    const glm::vec3& pivot,
+    const glm::vec3& target,
+    const glm::quat& rotation)
+{
+    const glm::mat4 rotate = glm::mat4_cast(rotation);
+    return glm::translate(glm::mat4(1.0F), target - glm::vec3(rotate * glm::vec4(pivot, 1.0F))) * rotate;
 }
 
 void apply_uniform_scale(
