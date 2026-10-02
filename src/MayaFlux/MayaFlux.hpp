@@ -18,8 +18,6 @@
 
 #include "MayaFlux/API/ViewportPreset.hpp"
 
-#include "MayaFlux/API/Yantra.hpp"
-
 #include "MayaFlux/API/Proxy/Creator.hpp"
 
 #include "MayaFlux/API/Proxy/Temporal.hpp"
