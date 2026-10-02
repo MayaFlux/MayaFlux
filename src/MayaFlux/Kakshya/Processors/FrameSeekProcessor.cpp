@@ -1,6 +1,7 @@
 #include "FrameSeekProcessor.hpp"
 
 #include "MayaFlux/Kakshya/Source/VideoStreamContainer.hpp"
+#include "MayaFlux/Kakshya/Utils/PixelStorage.hpp"
 
 #include "MayaFlux/Kinesis/Scalar.hpp"
 #include "MayaFlux/Kinesis/Tendency/TendencyFactories.hpp"
@@ -9,44 +10,6 @@
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Kakshya {
-
-namespace {
-
-    template <typename T>
-    void blend_typed(std::span<const uint8_t> a, std::span<const uint8_t> b, uint8_t* out, double weight)
-    {
-        const auto* from = reinterpret_cast<const T*>(a.data());
-        const auto* to = reinterpret_cast<const T*>(b.data());
-        auto* dest = reinterpret_cast<T*>(out);
-        const size_t count = a.size() / sizeof(T);
-        const double rounding = std::is_integral_v<T> ? 0.5 : 0.0;
-
-        for (size_t i = 0; i < count; ++i) {
-            const auto x = static_cast<double>(from[i]);
-            dest[i] = static_cast<T>(x + (static_cast<double>(to[i]) - x) * weight + rounding);
-        }
-    }
-
-    bool blend_frames(ImageFormat format, std::span<const uint8_t> a, std::span<const uint8_t> b,
-        uint8_t* out, double weight)
-    {
-        if (a.size() != b.size()) {
-            return false;
-        }
-
-        switch (storage_element_size(format)) {
-        case 1:
-            blend_typed<uint8_t>(a, b, out, weight);
-            return true;
-        case 4:
-            blend_typed<float>(a, b, out, weight);
-            return true;
-        default:
-            return false;
-        }
-    }
-
-}
 
 void FrameSeekProcessor::on_attach(const std::shared_ptr<SignalSourceContainer>& container)
 {

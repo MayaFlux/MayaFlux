@@ -7,6 +7,8 @@
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
 #include "MayaFlux/Portal/Graphics/SamplerForge.hpp"
 #include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
+#include "MayaFlux/Registry/BackendRegistry.hpp"
+#include "MayaFlux/Registry/Service/BufferService.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
@@ -42,8 +44,8 @@ TextureArrayBuffer::TextureArrayBuffer(
 
 void TextureArrayBuffer::setup_processors(ProcessingToken token)
 {
-    TextureBuffer::setup_processors(token);
     ensure_array();
+    TextureBuffer::setup_processors(token);
 
     if (const auto processor = get_texture_processor()) {
         processor->set_streaming_mode(true);
@@ -59,6 +61,7 @@ void TextureArrayBuffer::setup_rendering(const RenderConfig& config)
         processor->set_push_constant_size(m_custom_push.empty() ? sizeof(Push) : m_custom_push.size());
     }
     flush_push();
+    bind_layer_data();
 }
 
 bool TextureArrayBuffer::submit_layer(uint32_t layer, std::span<const uint8_t> pixels)
@@ -103,7 +106,7 @@ bool TextureArrayBuffer::submit_layer(uint32_t layer, const Kakshya::ImageData& 
             std::span<const uint8_t>(static_cast<const uint8_t*>(image.data()), image.byte_size()));
     }
 
-    if (!same_extent && !m_fit) {
+    if (!same_extent && !fit_for(layer)) {
         return false;
     }
 
@@ -140,7 +143,8 @@ bool TextureArrayBuffer::submit_layer(uint32_t layer, const std::shared_ptr<Core
     }
 
     const bool same_extent = image->get_width() == get_width() && image->get_height() == get_height();
-    if (!same_extent && !m_fit) {
+    const auto fit = fit_for(layer);
+    if (!same_extent && !fit) {
         return false;
     }
 
@@ -151,16 +155,105 @@ bool TextureArrayBuffer::submit_layer(uint32_t layer, const std::shared_ptr<Core
 
     auto plan = Portal::Graphics::SamplerForge::plan_fit(
         image->get_width(), image->get_height(), get_width(), get_height(),
-        same_extent ? Portal::Graphics::FitMode::STRETCH : *m_fit, m_filter);
+        same_extent ? Portal::Graphics::FitMode::STRETCH : *fit, m_filter);
 
     auto& loom = Portal::Graphics::get_texture_manager();
     bool stored = !plan.blits.empty();
+
+    if (stored) {
+        const vk::Rect2D& first = plan.blits.front().dst;
+        const bool covers = plan.blits.size() == 1
+            && first.offset.x == 0 && first.offset.y == 0
+            && first.extent.width == get_width() && first.extent.height == get_height();
+        if (!covers) {
+            clear_layer(layer);
+        }
+    }
+
     for (auto& blit : plan.blits) {
         blit.dst_layer = layer;
         stored = loom.blit_layer(image, get_texture(), blit) && stored;
     }
 
     return stored;
+}
+
+void TextureArrayBuffer::enable_layer_data()
+{
+    if (m_layer_data) {
+        return;
+    }
+
+    const auto service = Registry::BackendRegistry::instance()
+                             .get_service<Registry::Service::BufferService>();
+    if (!service) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "TextureArrayBuffer: layer data needs a buffer service");
+        return;
+    }
+
+    m_layer_values.assign(static_cast<size_t>(m_layers) * 2, glm::vec4(0.0F));
+    m_layer_data = std::make_shared<VKBuffer>(
+        m_layer_values.size() * sizeof(glm::vec4),
+        VKBuffer::Usage::HOST_STORAGE,
+        Kakshya::DataModality::UNKNOWN);
+    service->initialize_buffer(m_layer_data);
+
+    std::memcpy(m_layer_data->get_mapped_ptr(), m_layer_values.data(),
+        m_layer_values.size() * sizeof(glm::vec4));
+    bind_layer_data();
+}
+
+void TextureArrayBuffer::set_layer_params(uint32_t layer, const glm::vec4& values)
+{
+    if (layer < m_layers) {
+        write_layer_value(static_cast<size_t>(layer) * 2, values);
+    }
+}
+
+void TextureArrayBuffer::set_layer_timing(uint32_t layer, const glm::vec4& values)
+{
+    if (layer < m_layers) {
+        write_layer_value(static_cast<size_t>(layer) * 2 + 1, values);
+    }
+}
+
+void TextureArrayBuffer::write_layer_value(size_t index, const glm::vec4& values)
+{
+    enable_layer_data();
+    if (!m_layer_data) {
+        return;
+    }
+
+    m_layer_values.at(index) = values;
+    std::memcpy(static_cast<uint8_t*>(m_layer_data->get_mapped_ptr()) + index * sizeof(glm::vec4),
+        &values, sizeof(glm::vec4));
+}
+
+void TextureArrayBuffer::bind_layer_data()
+{
+    if (const auto processor = get_render_processor(); processor && m_layer_data) {
+        processor->bind_buffer("layerData", m_layer_data);
+    }
+}
+
+void TextureArrayBuffer::clear_layer(uint32_t layer)
+{
+    if (m_blank.size() != m_layer_bytes) {
+        m_blank.assign(m_layer_bytes, 0);
+    }
+    if (!m_layer_staging) {
+        m_layer_staging = create_image_staging_buffer(m_layer_bytes);
+    }
+
+    Portal::Graphics::get_texture_manager().upload_layer(
+        get_texture(), layer, m_blank.data(), m_blank.size(), m_layer_staging);
+}
+
+std::optional<Portal::Graphics::FitMode> TextureArrayBuffer::fit_for(uint32_t layer) const
+{
+    const auto found = m_layer_fit.find(layer);
+    return found != m_layer_fit.end() ? found->second : m_fit;
 }
 
 void TextureArrayBuffer::set_weight(uint32_t layer, float weight)

@@ -2,7 +2,6 @@
 
 #include "TextureBuffer.hpp"
 
-#include "MayaFlux/Kakshya/NDData/ImageData.hpp"
 #include "MayaFlux/Kakshya/Source/DynamicVideoStream.hpp"
 #include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 
@@ -32,12 +31,26 @@ namespace MayaFlux::Buffers {
  * image, which keeps layers written either way intact. Every such write completes
  * before the call returns.
  *
+ * A fit that does not cover the whole layer clears the layer first, so a smaller
+ * part replacing a larger one leaves nothing of it behind. Each layer may have its
+ * own fit through set_layer_fit.
+ *
  * The shipped shader, texture_array.frag, takes a push constant block of the layer
  * count, a mode number whose meaning belongs to the shader, and a weight for each
  * of the first WEIGHT_SLOTS layers. Choose a shader with
- * setup_rendering({ .fragment_shader = ... }). Extra textures such as a delay map
- * go in RenderConfig::additional_textures and bind from binding 2. A shader with
- * its own push constants replaces the block through set_push_constants().
+ * setup_rendering({ .fragment_shader = ... }). Extra textures such as a delay map,
+ * or a second array, go in RenderConfig::additional_textures and bind from binding
+ * 2 by the sampler's name. A shader with its own push constants replaces the block
+ * through set_push_constants().
+ *
+ * Two vec4 per layer reach the shader beyond the push constants once
+ * enable_layer_data is called, or set_layer_params is, before the first frame. A
+ * shader reads them with
+ * `layout(set = 1, binding = 0) readonly buffer LayerData { vec4 layerData[]; };`
+ * where layerData[2 * layer] holds the params, which are the caller's to use for
+ * placement, scale, a mask or anything else, and layerData[2 * layer + 1] holds the
+ * timing, which a Chimera fills for the layers it feeds. A shader that does not
+ * declare the buffer must not enable it.
  *
  * Rendering, transform and window targeting are those of TextureBuffer. Reading
  * the buffer back through a texture read returns every layer and is not meant for
@@ -95,6 +108,45 @@ public:
         m_fit = fit;
         m_filter = filter;
     }
+
+    /**
+     * @brief Give one layer its own fit, replacing the one from set_fit for that layer.
+     * @param layer Layer index.
+     * @param fit   How a frame of another extent is fitted, or nullopt to drop it.
+     */
+    void set_layer_fit(uint32_t layer, std::optional<Portal::Graphics::FitMode> fit)
+    {
+        m_layer_fit[layer] = fit;
+    }
+
+    /**
+     * @brief Create the per-layer buffer the shader reads as layerData.
+     *
+     * Call it before the first frame, and only for a shader that declares the
+     * buffer. Calling it again does nothing.
+     */
+    void enable_layer_data();
+
+    /** @brief Whether the per-layer buffer exists. */
+    [[nodiscard]] bool has_layer_data() const { return m_layer_data != nullptr; }
+
+    /**
+     * @brief Set the params of one layer, layerData[2 * layer]. Enables layer data.
+     * @param layer  Layer index.
+     * @param values Four floats whose meaning belongs to the shader.
+     */
+    void set_layer_params(uint32_t layer, const glm::vec4& values);
+
+    /**
+     * @brief Set the timing of one layer, layerData[2 * layer + 1]. Enables layer data.
+     *
+     * A Chimera fills it for the layers it feeds, as age in seconds, frames behind
+     * the live head, ring position and 1 once the layer has been fed.
+     *
+     * @param layer  Layer index.
+     * @param values Four floats.
+     */
+    void set_layer_timing(uint32_t layer, const glm::vec4& values);
 
     /**
      * @brief Replace the frame of one layer with raw pixels.
@@ -196,15 +248,23 @@ private:
     bool m_layer_mode {};
     std::optional<Portal::Graphics::FitMode> m_fit { Portal::Graphics::FitMode::STRETCH };
     Portal::Graphics::FilterMode m_filter { Portal::Graphics::FilterMode::LINEAR };
+    std::unordered_map<uint32_t, std::optional<Portal::Graphics::FitMode>> m_layer_fit;
     std::shared_ptr<VKBuffer> m_layer_staging;
     std::shared_ptr<VKBuffer> m_source_staging;
     Portal::Graphics::ImageCacheEntry m_source_cache;
+    std::vector<uint8_t> m_blank;
+    std::shared_ptr<VKBuffer> m_layer_data;
+    std::vector<glm::vec4> m_layer_values;
     Push m_push;
     std::vector<uint8_t> m_custom_push;
 
     void ensure_array();
     void enter_layer_mode();
     void flush_push();
+    void clear_layer(uint32_t layer);
+    void bind_layer_data();
+    void write_layer_value(size_t index, const glm::vec4& values);
+    [[nodiscard]] std::optional<Portal::Graphics::FitMode> fit_for(uint32_t layer) const;
 };
 
 }

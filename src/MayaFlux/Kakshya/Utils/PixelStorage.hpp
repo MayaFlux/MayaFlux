@@ -23,6 +23,22 @@ namespace MayaFlux::Kakshya {
 [[nodiscard]] MAYAFLUX_API size_t storage_element_size(ImageFormat format);
 
 /**
+ * @brief Linearly blend two frames of the same size and format.
+ *
+ * Works on 8-bit and 32-bit float storage. Returns false, leaving @p out
+ * untouched, for any other element size or when the frames differ in size.
+ *
+ * @param format Pixel format of both frames.
+ * @param a      Frame at weight 0.
+ * @param b      Frame at weight 1.
+ * @param out    Destination for a.size() bytes.
+ * @param weight Blend factor from @p a to @p b.
+ * @return True if @p out holds the blend.
+ */
+MAYAFLUX_API bool blend_frames(ImageFormat format, std::span<const uint8_t> a, std::span<const uint8_t> b,
+    uint8_t* out, double weight);
+
+/**
  * @brief True when the format's numeric interpretation is floating point.
  *
  * Distinguishes R16F from R16: both occupy U16 storage, but only the
