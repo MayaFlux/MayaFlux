@@ -62,7 +62,6 @@ namespace Kriya {
          * - Multiple capture operations can run concurrently
          * - Explicit synchronization points coordinate data flow
          * - Best for: multi-source capture, independent data streams
-         * - Requires CycleCoordinator for proper synchronization
          */
         PARALLEL,
 
@@ -77,7 +76,6 @@ namespace Kriya {
     };
 
     class BufferPipeline;
-    class CycleCoordinator;
 
     /**
      * @class BufferOperation
@@ -145,7 +143,6 @@ namespace Kriya {
      *
      * @see BufferPipeline For pipeline construction and execution
      * @see BufferCapture For flexible data capture strategies
-     * @see CycleCoordinator For cross-pipeline synchronization
      */
     class MAYAFLUX_API BufferOperation {
     private:

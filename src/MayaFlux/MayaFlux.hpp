@@ -110,7 +110,6 @@
 #include "Kriya/BufferPipeline.hpp"
 #include "Kriya/Chain.hpp"
 #include "Kriya/Chimera.hpp"
-#include "Kriya/CycleCoordinator.hpp"
 #include "Kriya/InputEvents.hpp"
 #include "Kriya/NetworkEvents.hpp"
 #include "Kriya/SamplingPipeline.hpp"

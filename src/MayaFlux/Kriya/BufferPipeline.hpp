@@ -11,8 +11,6 @@ class DataReadProcessor;
 
 namespace MayaFlux::Kriya {
 
-class CycleCoordinator;
-
 /**
  * @class BufferPipeline
  * @brief Coroutine-based execution engine for composable, multi-strategy buffer processing.
@@ -167,7 +165,6 @@ class CycleCoordinator;
  *
  * @see BufferOperation For operation types and configuration
  * @see BufferCapture For capture modes and data accumulation strategies
- * @see CycleCoordinator For multi-pipeline synchronization
  * @see Vruta::TaskScheduler For coroutine scheduling and timing
  * @see ExecutionStrategy For execution coordination patterns
  */
@@ -483,7 +480,6 @@ private:
 
     std::shared_ptr<BufferPipeline> m_active_self;
     std::shared_ptr<Vruta::Routine> m_routine;
-    std::shared_ptr<CycleCoordinator> m_coordinator;
     std::shared_ptr<Buffers::BufferManager> m_buffer_manager;
     std::shared_ptr<IO::IOManager> m_io_manager;
     Vruta::TaskScheduler* m_scheduler = nullptr;

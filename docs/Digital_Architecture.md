@@ -128,7 +128,7 @@ The awaiters `SampleDelay`, `BufferDelay`, `FrameDelay`, and `MultiRateDelay` ex
 
 `Chain` (the `EventChain`) sequences discrete actions with sample-accurate delays via `then()`, `wait()`, `every()`, `repeat()`, `times()`.
 
-`CycleCoordinator` synchronizes multiple buffer pipelines to a common cycle count. `Timer` and `TimedAction` provide fire-once and fire-with-cleanup scheduling.
+`Timer` and `TimedAction` provide fire-once and fire-with-cleanup scheduling.
 
 Input events enter the scheduling system through `InputEvents`: `any_key`, `mouse_pressed`, `mouse_released`, `mouse_move`. Network events enter through `NetworkEvents`: `on_message`, `on_message_from`, `on_message_matching`.
 

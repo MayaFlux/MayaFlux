@@ -1,7 +1,5 @@
 #include "MayaFlux/Kriya/BufferPipeline.hpp"
 
-#include "MayaFlux/Kriya/CycleCoordinator.hpp"
-
 namespace MayaFlux::Kriya {
 
 BufferPipeline& BufferPipeline::branch_if(
@@ -30,10 +28,6 @@ std::shared_ptr<Vruta::SoundRoutine> BufferPipeline::dispatch_branch_async(Branc
 {
     if (!m_scheduler)
         return nullptr;
-
-    if (!m_coordinator) {
-        m_coordinator = std::make_unique<CycleCoordinator>(*m_scheduler);
-    }
 
     branch.pipeline->m_active_self = branch.pipeline;
 

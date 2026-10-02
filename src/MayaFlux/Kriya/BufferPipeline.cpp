@@ -1,7 +1,5 @@
 #include "BufferPipeline.hpp"
 
-#include "CycleCoordinator.hpp"
-
 #include "MayaFlux/Buffers/BufferManager.hpp"
 #include "MayaFlux/Buffers/BufferProcessingChain.hpp"
 #include "MayaFlux/Buffers/Staging/DataReadProcessor.hpp"
@@ -13,8 +11,7 @@ BufferPipeline::BufferPipeline(
     Vruta::TaskScheduler& scheduler,
     std::shared_ptr<Buffers::BufferManager> buffer_manager,
     std::shared_ptr<IO::IOManager> io_manager)
-    : m_coordinator(std::make_shared<CycleCoordinator>(scheduler))
-    , m_buffer_manager(std::move(buffer_manager))
+    : m_buffer_manager(std::move(buffer_manager))
     , m_io_manager(std::move(io_manager))
     , m_scheduler(&scheduler)
 {
