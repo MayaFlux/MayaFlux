@@ -87,6 +87,7 @@ void BufferPipeline::execute_buffer_rate(uint64_t max_cycles)
     auto routine = std::make_shared<Vruta::SoundRoutine>(
         execute_internal(max_cycles, 0));
 
+    m_routine = routine;
     m_scheduler->add_task(std::move(routine));
 
     m_active_self = self;
@@ -112,6 +113,7 @@ void BufferPipeline::execute_frame_rate(uint64_t max_cycles, uint64_t frames_per
     auto routine = std::make_shared<Vruta::GraphicsRoutine>(
         execute_frame_internal(max_cycles, frames_per_operation));
 
+    m_routine = routine;
     m_scheduler->add_task(std::move(routine));
 
     m_active_self = self;
@@ -130,6 +132,7 @@ void BufferPipeline::execute_once()
     m_max_cycles = 1;
     auto routine = std::make_shared<Vruta::SoundRoutine>(
         execute_internal(1, 0));
+    m_routine = routine;
     m_scheduler->add_task(std::move(routine));
     m_active_self = self;
 }
@@ -152,6 +155,7 @@ void BufferPipeline::execute_for_cycles(uint64_t cycles)
     m_max_cycles = cycles;
     auto routine = std::make_shared<Vruta::SoundRoutine>(
         execute_internal(cycles, 0));
+    m_routine = routine;
     m_scheduler->add_task(std::move(routine));
     m_active_self = self;
 }
@@ -185,6 +189,7 @@ void BufferPipeline::execute_scheduled(
     auto routine = std::make_shared<Vruta::SoundRoutine>(
         execute_internal(max_cycles, samples_per_operation));
 
+    m_routine = routine;
     m_scheduler->add_task(std::move(routine));
 
     m_active_self = self;
@@ -203,6 +208,28 @@ void BufferPipeline::execute_scheduled_at_rate(
 
     uint64_t samples = m_scheduler->seconds_to_samples(seconds_per_operation);
     execute_scheduled(max_cycles, samples);
+}
+
+void BufferPipeline::end()
+{
+    m_continuous_execution = false;
+
+    const auto routine = std::move(m_routine);
+    const auto self = std::move(m_active_self);
+
+    if (!routine) {
+        return;
+    }
+
+    const bool running = routine->is_active();
+
+    if (m_scheduler) {
+        m_scheduler->cancel_task(routine);
+    }
+
+    if (running && m_on_complete) {
+        m_on_complete();
+    }
 }
 
 void BufferPipeline::mark_data_consumed(uint32_t operation_index)

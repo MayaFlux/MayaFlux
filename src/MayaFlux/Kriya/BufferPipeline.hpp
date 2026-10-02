@@ -335,6 +335,15 @@ public:
     inline void stop_continuous() { m_continuous_execution = false; }
 
     /**
+     * @brief End a running pipeline now.
+     *
+     * Cancels the pipeline's routine, releases the reference it holds to itself and
+     * fires the on_complete callback once. Nothing runs after the cycle in progress.
+     * Does nothing if the pipeline is not running.
+     */
+    void end();
+
+    /**
      * @brief Execute pipeline with sample-accurate timing between operations.
      * @param max_cycles Maximum number of cycles to execute (0 = infinite)
      * @param samples_per_operation Number of samples to wait between operations (default: 1)
@@ -473,6 +482,7 @@ private:
     };
 
     std::shared_ptr<BufferPipeline> m_active_self;
+    std::shared_ptr<Vruta::Routine> m_routine;
     std::shared_ptr<CycleCoordinator> m_coordinator;
     std::shared_ptr<Buffers::BufferManager> m_buffer_manager;
     std::shared_ptr<IO::IOManager> m_io_manager;
