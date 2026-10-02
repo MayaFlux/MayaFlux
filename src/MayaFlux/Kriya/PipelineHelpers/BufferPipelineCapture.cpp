@@ -88,8 +88,42 @@ std::optional<Kakshya::DataVariant> BufferPipeline::read_graphics_buffer(
     return data;
 }
 
+bool BufferPipeline::route_image(BufferOperation& op)
+{
+    const auto source = op.m_capture.get_graphics_buffer();
+    if (!source || !has_immediate_routing(op)) {
+        return false;
+    }
+
+    const auto current = std::ranges::find_if(m_operations,
+        [&op](const BufferOperation& o) { return &o == &op; });
+    auto route = std::next(current);
+
+    if (!route->m_target_graphics_buffer || !detail::accepts_layer_write(route->m_target_graphics_buffer)) {
+        return false;
+    }
+
+    const auto image = detail::source_image(source);
+    if (!image) {
+        return false;
+    }
+
+    detail::write_layer(route->m_target_graphics_buffer, route->m_target_layer, image);
+
+    const auto route_index = static_cast<size_t>(std::distance(m_operations.begin(), route));
+    if (route_index < m_data_states.size()) {
+        m_data_states[route_index] = DataState::CONSUMED;
+    }
+
+    return true;
+}
+
 void BufferPipeline::capture_operation(BufferOperation& op, uint64_t cycle)
 {
+    if (route_image(op)) {
+        return;
+    }
+
     Kakshya::DataVariant buffer_data;
 
     if (op.m_capture.get_audio_buffer()) {

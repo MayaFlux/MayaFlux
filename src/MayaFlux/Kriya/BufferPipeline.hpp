@@ -501,6 +501,7 @@ private:
     Vruta::DelayContext m_process_timing { Vruta::DelayContext::SAMPLE_BASED };
 
     void capture_operation(BufferOperation& op, uint64_t cycle);
+    bool route_image(BufferOperation& op);
     std::optional<Kakshya::DataVariant> read_graphics_buffer(BufferOperation& op, const std::shared_ptr<Buffers::VKBuffer>& buffer);
     void reset_accumulated_data();
     bool has_immediate_routing(const BufferOperation& op) const;

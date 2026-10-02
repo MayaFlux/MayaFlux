@@ -145,6 +145,14 @@ void BufferPipeline::process_transform(BufferOperation& op, uint64_t cycle)
 
 void BufferPipeline::process_route(BufferOperation& op)
 {
+    if (!op.m_source_images.empty()) {
+        uint32_t layer = 0;
+        for (const auto& image : op.m_source_images) {
+            detail::write_layer(op.m_target_graphics_buffer, layer++, image);
+        }
+        return;
+    }
+
     if (op.m_source_graphics_buffer) {
         auto frame = read_graphics_buffer(op, op.m_source_graphics_buffer);
         if (!frame) {
@@ -336,6 +344,11 @@ void BufferPipeline::prepare_displays()
 
 void BufferPipeline::queue_graphics_write(BufferOperation& op, const std::shared_ptr<Buffers::VKBuffer>& target, const Kakshya::DataVariant& data)
 {
+    if (detail::accepts_layer_write(target)) {
+        detail::write_layer(target, op.m_target_layer, data);
+        return;
+    }
+
     if (!m_buffer_manager) {
         error<std::invalid_argument>(Journal::Component::Kriya,
             Journal::Context::CoroutineScheduling,

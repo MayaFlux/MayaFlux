@@ -8,6 +8,10 @@ class VKBuffer;
 class DataReadProcessor;
 }
 
+namespace MayaFlux::Core {
+class VKImage;
+}
+
 namespace MayaFlux::Kriya::detail {
 
 /**
@@ -38,6 +42,43 @@ std::optional<Kakshya::DataVariant> resolve_graphics_read(Buffers::DataReadProce
  * so a raw write would be lost or would corrupt it.
  */
 bool accepts_raw_write(const std::shared_ptr<Buffers::VKBuffer>& buffer);
+
+/**
+ * @brief Whether the buffer holds its frames as layers that can be written one at a time.
+ */
+bool accepts_layer_write(const std::shared_ptr<Buffers::VKBuffer>& buffer);
+
+/**
+ * @brief Write a DataVariant into one layer of a layered buffer.
+ *
+ * An empty variant is skipped, as when nothing has arrived yet. The bytes must
+ * match the layer's size, which the buffer reports when they do not.
+ *
+ * @param target Buffer that passed accepts_layer_write.
+ * @param layer  Layer to replace.
+ * @param data   Frame bytes.
+ */
+void write_layer(
+    const std::shared_ptr<Buffers::VKBuffer>& target,
+    uint32_t layer,
+    const Kakshya::DataVariant& data);
+
+/**
+ * @brief Write a GPU image into one layer of a layered buffer, with no host read.
+ *
+ * @param target Buffer that passed accepts_layer_write.
+ * @param layer  Layer to replace.
+ * @param image  Source image; the buffer fits it to the layer.
+ */
+void write_layer(
+    const std::shared_ptr<Buffers::VKBuffer>& target,
+    uint32_t layer,
+    const std::shared_ptr<Core::VKImage>& image);
+
+/**
+ * @brief The GPU image a buffer displays, or null when it has none to copy from.
+ */
+std::shared_ptr<Core::VKImage> source_image(const std::shared_ptr<Buffers::VKBuffer>& buffer);
 
 /**
  * @brief Make a buffer draw to the window in a render config, unless it already does.

@@ -8,9 +8,14 @@
 
 namespace MayaFlux {
 
+namespace Core {
+    class VKImage;
+}
+
 namespace Buffers {
     class BufferProcessor;
     class BufferManager;
+    class TextureArrayBuffer;
 }
 
 namespace Kakshya {
@@ -380,6 +385,33 @@ namespace Kriya {
         static BufferOperation route_to_buffer(std::shared_ptr<Buffers::VKBuffer> target);
 
         /**
+         * @brief Route frames into one layer of a texture array buffer.
+         *
+         * A capture of an image buffer followed directly by this route is copied
+         * on the GPU with no host read, and the array buffer fits the frame to its
+         * layer. Raw bytes carry no extent and must already match the layer.
+         *
+         * @param target Array buffer that receives the frames.
+         * @param layer  Layer that holds this source.
+         */
+        static BufferOperation route_to_buffer(
+            std::shared_ptr<Buffers::TextureArrayBuffer> target, uint32_t layer = 0);
+
+        /**
+         * @brief Route many GPU images into the layers of a texture array buffer.
+         *
+         * Each cycle images[i] is copied into layer i on the GPU, and the array
+         * buffer fits it to the layer. An image that stays the same object is copied
+         * again with whatever it holds that cycle.
+         *
+         * @param target Array buffer that receives the frames.
+         * @param images One image per layer, in layer order.
+         */
+        static BufferOperation route_to_buffer(
+            std::shared_ptr<Buffers::TextureArrayBuffer> target,
+            std::vector<std::shared_ptr<Core::VKImage>> images);
+
+        /**
          * @brief Create a routing operation to DynamicSoundStream destination.
          *
          * Each routed block is appended at the stream's write head for
@@ -619,6 +651,8 @@ namespace Kriya {
         std::optional<Portal::Graphics::RenderConfig> m_render;
         bool m_display_attached {};
         uint32_t m_target_audio_channel {};
+        uint32_t m_target_layer {};
+        std::vector<std::shared_ptr<Core::VKImage>> m_source_images;
 
         std::shared_ptr<Buffers::BufferProcessor> m_attached_processor;
 

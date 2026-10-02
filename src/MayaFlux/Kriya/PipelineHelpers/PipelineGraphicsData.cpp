@@ -13,7 +13,9 @@
 #include "MayaFlux/Buffers/State/RelaxationGridBuffer.hpp"
 #include "MayaFlux/Buffers/State/VolumeGridBuffer.hpp"
 #include "MayaFlux/Buffers/Textures/NodeTextureBuffer.hpp"
+#include "MayaFlux/Buffers/Textures/TextureArrayBuffer.hpp"
 #include "MayaFlux/Buffers/Textures/TextureBuffer.hpp"
+#include "MayaFlux/Kakshya/NDData/TextureAccess.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Nodes/Graphics/MeshWriterNode.hpp"
 
@@ -86,6 +88,43 @@ std::optional<Kakshya::DataVariant> resolve_graphics_read(Buffers::DataReadProce
     }
 
     return reader.resolve_bytes();
+}
+
+bool accepts_layer_write(const std::shared_ptr<Buffers::VKBuffer>& buffer)
+{
+    return std::dynamic_pointer_cast<Buffers::TextureArrayBuffer>(buffer) != nullptr;
+}
+
+void write_layer(
+    const std::shared_ptr<Buffers::VKBuffer>& target,
+    uint32_t layer,
+    const Kakshya::DataVariant& data)
+{
+    const auto array = std::dynamic_pointer_cast<Buffers::TextureArrayBuffer>(target);
+    const auto access = Kakshya::as_texture_access(data);
+    if (!array || !access || access->byte_count == 0) {
+        return;
+    }
+
+    array->submit_layer(layer,
+        std::span<const uint8_t>(static_cast<const uint8_t*>(access->data_ptr), access->byte_count));
+}
+
+void write_layer(
+    const std::shared_ptr<Buffers::VKBuffer>& target,
+    uint32_t layer,
+    const std::shared_ptr<Core::VKImage>& image)
+{
+    const auto array = std::dynamic_pointer_cast<Buffers::TextureArrayBuffer>(target);
+    if (array && image) {
+        array->submit_layer(layer, image);
+    }
+}
+
+std::shared_ptr<Core::VKImage> source_image(const std::shared_ptr<Buffers::VKBuffer>& buffer)
+{
+    const auto texture = std::dynamic_pointer_cast<Buffers::TextureBuffer>(buffer);
+    return texture && texture->has_texture() ? texture->get_texture() : nullptr;
 }
 
 bool ensure_rendering(const std::shared_ptr<Buffers::VKBuffer>& buffer, const Portal::Graphics::RenderConfig& config)

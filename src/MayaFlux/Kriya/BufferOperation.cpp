@@ -3,6 +3,7 @@
 #include "MayaFlux/Buffers/BufferManager.hpp"
 #include "MayaFlux/Buffers/Container/SoundFileBridge.hpp"
 #include "MayaFlux/Buffers/Container/VideoContainerBuffer.hpp"
+#include "MayaFlux/Buffers/Textures/TextureArrayBuffer.hpp"
 #include "MayaFlux/Kakshya/Source/DynamicVideoStream.hpp"
 #include "MayaFlux/Kakshya/Source/VideoFileContainer.hpp"
 #include "MayaFlux/Kriya/PipelineHelpers/PipelineGraphicsData.hpp"
@@ -346,6 +347,23 @@ BufferOperation BufferOperation::route_to_buffer(std::shared_ptr<Buffers::VKBuff
 {
     BufferOperation op(OpType::ROUTE, Buffers::ProcessingToken::GRAPHICS_BACKEND);
     op.m_target_graphics_buffer = std::move(target);
+    return op;
+}
+
+BufferOperation BufferOperation::route_to_buffer(
+    std::shared_ptr<Buffers::TextureArrayBuffer> target, uint32_t layer)
+{
+    BufferOperation op = route_to_buffer(std::static_pointer_cast<Buffers::VKBuffer>(std::move(target)));
+    op.m_target_layer = layer;
+    return op;
+}
+
+BufferOperation BufferOperation::route_to_buffer(
+    std::shared_ptr<Buffers::TextureArrayBuffer> target,
+    std::vector<std::shared_ptr<Core::VKImage>> images)
+{
+    BufferOperation op = route_to_buffer(std::static_pointer_cast<Buffers::VKBuffer>(std::move(target)));
+    op.m_source_images = std::move(images);
     return op;
 }
 
