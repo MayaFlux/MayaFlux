@@ -48,20 +48,27 @@ void Locus::invoke_perception(const PerceptionContext& ctx)
 {
     Agent::invoke_perception(ctx);
 
+    if (attached() && position()) {
+        m_nav.eye = *position();
+    }
+
     Kinesis::advance_navigation(m_nav);
     m_view = Kinesis::build_view_transform(m_nav, m_aspect);
     Agent::set_position(m_nav.eye);
+    Agent::set_orientation(
+        glm::angleAxis(m_nav.yaw, glm::vec3(0.0F, 1.0F, 0.0F))
+        * glm::angleAxis(-m_nav.pitch, glm::vec3(1.0F, 0.0F, 0.0F)));
 }
 
 void Locus::invoke_influence(const InfluenceContext& ctx) const
 {
-    Agent::invoke_influence(ctx);
-
     for (const auto& proc : m_view_targets) {
         if (proc) {
             proc->set_view_transform(m_view);
         }
     }
+
+    Agent::invoke_influence(ctx);
 }
 
 } // namespace MayaFlux::Nexus

@@ -283,6 +283,7 @@ void Fabric::fire(const Registration& reg) const
             ptr->invoke(ctx);
 
         } else if constexpr (std::is_same_v<T, Agent>) {
+            ptr->follow_attachment();
             if (ptr->m_position.has_value()) {
                 auto results = m_index->within_radius(*ptr->m_position, ptr->m_query_radius);
                 PerceptionContext pctx;
@@ -292,6 +293,7 @@ void Fabric::fire(const Registration& reg) const
 
                 InfluenceContext ictx;
                 ictx.position = *ptr->m_position;
+                ictx.orientation = ptr->m_orientation;
                 ictx.intensity = ptr->m_intensity;
                 ictx.radius = ptr->m_radius;
                 ictx.color = ptr->m_color;
@@ -301,6 +303,7 @@ void Fabric::fire(const Registration& reg) const
             } else {
                 ptr->invoke_perception(PerceptionContext {});
                 InfluenceContext ictx;
+                ictx.orientation = ptr->m_orientation;
                 ictx.intensity = ptr->m_intensity;
                 ictx.radius = ptr->m_radius;
                 ictx.color = ptr->m_color;

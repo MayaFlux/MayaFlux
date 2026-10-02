@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Nexus/Pheme/Attachment.hpp"
 #include "MayaFlux/Nexus/Pheme/InfluenceContext.hpp"
 #include "MayaFlux/Nexus/Pheme/PerceptionContext.hpp"
 
@@ -99,6 +100,15 @@ public:
      */
     void clear_position() { m_position.reset(); }
 
+    /** @brief Set the orientation. Local +Z is forward. Unset means no rotation. */
+    void set_orientation(const glm::quat& q) { m_orientation = q; }
+
+    /** @brief Clear the orientation. */
+    void clear_orientation() { m_orientation.reset(); }
+
+    /** @brief Get the current orientation, if set. */
+    [[nodiscard]] const std::optional<glm::quat>& orientation() const { return m_orientation; }
+
     /**
      * @brief Return the query radius.
      */
@@ -154,6 +164,38 @@ public:
 
     [[nodiscard]] const std::vector<AudioSink>& audio_sinks() const { return m_audio_sinks; }
     [[nodiscard]] const std::vector<RenderSink>& render_sinks() const { return m_render_sinks; }
+
+    /**
+     * @brief Make an existing, already rendered buffer the look of this object.
+     *
+     * The buffer is neither registered nor written to. Its geometry is read
+     * once and the object takes its position from the centroid, or from the
+     * vertex at config.index, plus config.offset. Every render processor the
+     * buffer has is placed at the object's position and orientation. If the
+     * object is moved from outside, config.on_move decides whether the move
+     * becomes the new offset or carries the buffer. If the object already has
+     * a position, that position is kept and becomes the offset. Replaces any
+     * previous attachment. The buffer is a live object, so an attachment is not
+     * part of encoded state and must be made again after decoding.
+     *
+     * @param buf    Buffer to attach. Ignored if null.
+     * @param config Anchor vertex, offset and move behaviour.
+     */
+    void attach(const std::shared_ptr<Buffers::VKBuffer>& buf, const AttachConfig& config = {});
+
+    /** @brief Release the attached buffer and reset its placement. */
+    void detach();
+
+    /**
+     * @brief Read the attached buffer's geometry again and move the anchor to match.
+     *
+     * The object keeps its position. Blocks for a ComputeMeshBuffer, so call it
+     * off the graphics thread.
+     */
+    void recenter();
+
+    /** @brief True while a buffer is attached. */
+    [[nodiscard]] bool attached() const { return m_attachment.has_value(); }
 
     /* @brief Return the render processor for the sink targeting @p window, or nullptr if not found. */
     std::shared_ptr<Buffers::RenderProcessor> get_render_processor(
@@ -284,12 +326,15 @@ public:
         }
         dispatch_audio_sinks(m_audio_sinks, ctx);
         dispatch_render_sinks(m_render_sinks, ctx);
+        if (m_attachment)
+            apply_attachment(*m_attachment, ctx);
         if (m_influence_ubo)
             upload_influence_ubo(ctx);
     }
 
 private:
     std::optional<glm::vec3> m_position;
+    std::optional<glm::quat> m_orientation;
     std::optional<glm::vec3> m_color;
     std::optional<float> m_size;
     float m_intensity { 1.0F };
@@ -307,8 +352,10 @@ private:
 
     mutable std::vector<AudioSink> m_audio_sinks;
     mutable std::vector<RenderSink> m_render_sinks;
+    mutable std::optional<Attachment> m_attachment;
 
     void upload_influence_ubo(const InfluenceContext& ctx) const;
+    void follow_attachment();
 
     friend class Fabric;
 };
