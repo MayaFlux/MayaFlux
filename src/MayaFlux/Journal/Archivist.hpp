@@ -111,11 +111,23 @@ public:
     void set_component_filter(Component comp, bool enabled);
 
     /**
+     * @brief Restrict logging to these components; an empty list includes all.
+     * Disabled component filters still apply.
+     */
+    void set_component_includes(const std::vector<Component>& components);
+
+    /**
      * @brief Enable or disable logging for a specific context.
      * @param ctx The context to enable or disable.
      * @param enabled True to enable logging for the context, false to disable.
      */
     void set_context_filter(Context ctx, bool enabled);
+
+    /**
+     * @brief Restrict logging to these contexts; an empty list includes all.
+     * Disabled context filters still apply.
+     */
+    void set_context_includes(const std::vector<Context>& contexts);
 
     Archivist(const Archivist&) = delete;
     Archivist& operator=(const Archivist&) = delete;

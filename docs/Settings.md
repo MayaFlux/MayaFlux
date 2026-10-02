@@ -82,7 +82,9 @@ A complete file covering all four sections plus journal:
     "sink_to_console": false,
     "log_file": "",
     "disable_components": [],
-    "disable_contexts": []
+    "disable_contexts": [],
+    "include_components": [],
+    "include_contexts": []
   }
 }
 ```
@@ -304,7 +306,7 @@ void settings() {
 }
 ```
 
-Via JSON the same fields are in the `"journal"` key. `"disable_components"` and `"disable_contexts"` take string names matching the enum values (case-insensitive).
+Via JSON the same fields are in the `"journal"` key. `"disable_components"`, `"disable_contexts"`, `"include_components"`, and `"include_contexts"` take string names matching the enum values (case-insensitive). Empty include lists allow all values; nonempty lists allow only their entries, subject to the disable lists.
 
 Journal configuration is the only part of `settings()` that takes effect immediately rather than at `Init()`.
 

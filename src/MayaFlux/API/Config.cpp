@@ -20,6 +20,8 @@ namespace {
         std::string log_file; // empty = no file sink
         std::vector<std::string> disable_components; // names from Journal::Component enum
         std::vector<std::string> disable_contexts; // names from Journal::Context enum
+        std::vector<std::string> include_components;
+        std::vector<std::string> include_contexts;
 
         static constexpr auto describe()
         {
@@ -28,7 +30,9 @@ namespace {
                 Reflect::member("sink_to_console", &JournalConfig::sink_to_console),
                 Reflect::member("log_file", &JournalConfig::log_file),
                 Reflect::member("disable_components", &JournalConfig::disable_components),
-                Reflect::member("disable_contexts", &JournalConfig::disable_contexts));
+                Reflect::member("disable_contexts", &JournalConfig::disable_contexts),
+                Reflect::member("include_components", &JournalConfig::include_components),
+                Reflect::member("include_contexts", &JournalConfig::include_contexts));
         }
     };
 
@@ -143,11 +147,21 @@ void set_journal_component_filter(const std::vector<Journal::Component>& compone
     }
 }
 
+void set_journal_component_includes(const std::vector<Journal::Component>& components)
+{
+    Journal::Archivist::instance().set_component_includes(components);
+}
+
 void set_journal_context_filter(const std::vector<Journal::Context>& context, bool enabled)
 {
     for (const auto& ctx : context) {
         Journal::Archivist::instance().set_context_filter(ctx, enabled);
     }
+}
+
+void set_journal_context_includes(const std::vector<Journal::Context>& contexts)
+{
+    Journal::Archivist::instance().set_context_includes(contexts);
 }
 
 void store_journal_entries(const std::string& file_name)
@@ -209,6 +223,30 @@ bool load_config_from_file(const std::string& path)
                 "Unknown journal context: {}", name);
         }
     }
+
+    std::vector<Journal::Component> included_components;
+    for (const auto& name : j.include_components) {
+        auto comp = Reflect::string_to_enum_case_insensitive<Journal::Component>(name);
+        if (comp) {
+            included_components.push_back(*comp);
+        } else {
+            MF_WARN(Journal::Component::API, Journal::Context::Configuration,
+                "Unknown journal component: {}", name);
+        }
+    }
+    Config::set_journal_component_includes(included_components);
+
+    std::vector<Journal::Context> included_contexts;
+    for (const auto& name : j.include_contexts) {
+        auto ctx = Reflect::string_to_enum_case_insensitive<Journal::Context>(name);
+        if (ctx) {
+            included_contexts.push_back(*ctx);
+        } else {
+            MF_WARN(Journal::Component::API, Journal::Context::Configuration,
+                "Unknown journal context: {}", name);
+        }
+    }
+    Config::set_journal_context_includes(included_contexts);
 
     return true;
 }

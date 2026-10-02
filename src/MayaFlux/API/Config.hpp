@@ -91,12 +91,18 @@ namespace Config {
      */
     MAYAFLUX_API void set_journal_component_filter(const std::vector<Journal::Component>& component, bool enabled);
 
+    /** @brief Restrict journal output to these components; an empty list includes all. */
+    MAYAFLUX_API void set_journal_component_includes(const std::vector<Journal::Component>& components);
+
     /**
      * @brief Enables or disables logging for specific journal contexts
      * @param context Vector of Journal::Context values to enable/disable
      * @param enabled True to enable logging for the specified contexts, false to disable
      */
     MAYAFLUX_API void set_journal_context_filter(const std::vector<Journal::Context>& context, bool enabled);
+
+    /** @brief Restrict journal output to these contexts; an empty list includes all. */
+    MAYAFLUX_API void set_journal_context_includes(const std::vector<Journal::Context>& contexts);
 
     /**
      * @brief Stores journal entries to a file by adding a FileSink to the Archivist

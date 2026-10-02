@@ -16,6 +16,8 @@ class Archivist::Impl {
 public:
     static constexpr size_t RING_BUFFER_SIZE = 8192;
     static constexpr size_t RT_RING_BUFFER_SIZE = 4096;
+    static_assert(magic_enum::enum_count<Component>() <= 64);
+    static_assert(magic_enum::enum_count<Context>() <= 64);
 
     Impl()
         : m_min_severity(Severity::WARN)
@@ -166,6 +168,28 @@ public:
         m_context_filters[ctx_idx].store(enabled, std::memory_order_release);
     }
 
+    void set_component_includes(const std::vector<Component>& components)
+    {
+        uint64_t includes = 0;
+        for (auto component : components) {
+            auto idx = static_cast<size_t>(component);
+            if (idx < m_component_filters.size())
+                includes |= uint64_t { 1 } << idx;
+        }
+        m_component_includes.store(includes, std::memory_order_release);
+    }
+
+    void set_context_includes(const std::vector<Context>& contexts)
+    {
+        uint64_t includes = 0;
+        for (auto context : contexts) {
+            auto idx = static_cast<size_t>(context);
+            if (idx < m_context_filters.size())
+                includes |= uint64_t { 1 } << idx;
+        }
+        m_context_includes.store(includes, std::memory_order_release);
+    }
+
 private:
     [[nodiscard]] bool should_log(Severity severity, Component component, Context context) const
     {
@@ -177,10 +201,18 @@ private:
             || !m_component_filters[comp_idx].load(std::memory_order_acquire))
             return false;
 
+        auto component_includes = m_component_includes.load(std::memory_order_acquire);
+        if (component_includes != 0 && !(component_includes & (uint64_t { 1 } << comp_idx)))
+            return false;
+
         auto ctx_idx = static_cast<size_t>(context);
 
-        return ctx_idx < m_context_filters.size()
-            && m_context_filters[ctx_idx].load(std::memory_order_acquire);
+        if (ctx_idx >= m_context_filters.size()
+            || !m_context_filters[ctx_idx].load(std::memory_order_acquire))
+            return false;
+
+        auto context_includes = m_context_includes.load(std::memory_order_acquire);
+        return context_includes == 0 || (context_includes & (uint64_t { 1 } << ctx_idx));
     }
 
     static void write_to_console(const RealtimeEntry& entry)
@@ -263,6 +295,8 @@ private:
     std::atomic<Severity> m_min_severity;
     std::array<std::atomic<bool>, magic_enum::enum_count<Component>()> m_component_filters {};
     std::array<std::atomic<bool>, magic_enum::enum_count<Context>()> m_context_filters {};
+    std::atomic<uint64_t> m_component_includes { 0 };
+    std::atomic<uint64_t> m_context_includes { 0 };
     std::atomic<bool> m_initialized;
     std::atomic<bool> m_worker_running;
     std::atomic<bool> m_accepting_entries;
@@ -342,6 +376,16 @@ void Archivist::set_component_filter(Component comp, bool enabled)
 void Archivist::set_context_filter(Context ctx, bool enabled)
 {
     m_impl->set_context_filter(ctx, enabled);
+}
+
+void Archivist::set_component_includes(const std::vector<Component>& components)
+{
+    m_impl->set_component_includes(components);
+}
+
+void Archivist::set_context_includes(const std::vector<Context>& contexts)
+{
+    m_impl->set_context_includes(contexts);
 }
 
 } // namespace MayaFlux::Journal
