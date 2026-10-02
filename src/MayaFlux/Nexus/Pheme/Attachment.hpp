@@ -29,7 +29,13 @@ struct AttachConfig {
      */
     std::optional<uint32_t> index;
 
-    /** @brief Offset of the Agent from the anchor, in world space. */
+    /**
+     * @brief Offset of the Agent from the anchor, in the Agent's own frame.
+     *
+     * Rotated by the Agent's orientation, so a look that sits in front of its
+     * Agent stays in front as the Agent turns. Without an orientation it is a
+     * world-space offset.
+     */
     glm::vec3 offset {};
 
     OnMove on_move { OnMove::Offset };
@@ -54,21 +60,25 @@ struct Attachment {
 
 /**
  * @brief Build an attachment to @p buf.
- * @param buf    Buffer to attach to. Must not be null.
- * @param config Anchor vertex, offset and move behaviour.
+ * @param buf         Buffer to attach to. Must not be null.
+ * @param config      Anchor vertex, offset and move behaviour.
+ * @param orientation Orientation of the Agent, if it has one.
  */
 MAYAFLUX_API Attachment make_attachment(
     std::shared_ptr<Buffers::VKBuffer> buf,
-    const AttachConfig& config);
+    const AttachConfig& config,
+    const std::optional<glm::quat>& orientation);
 
 /**
  * @brief Set @p position from the buffer, or fold an outside move into the attachment.
- * @param attachment Attachment to follow.
- * @param position   Position of the Agent. Set if empty.
+ * @param attachment  Attachment to follow.
+ * @param position    Position of the Agent. Set if empty.
+ * @param orientation Orientation of the Agent, if it has one.
  */
 MAYAFLUX_API void follow_attachment(
     Attachment& attachment,
-    std::optional<glm::vec3>& position);
+    std::optional<glm::vec3>& position,
+    const std::optional<glm::quat>& orientation);
 
 /**
  * @brief Read the buffer's geometry again and move the anchor to match.
@@ -76,12 +86,14 @@ MAYAFLUX_API void follow_attachment(
  * The Agent stays where it is: its offset from the new anchor absorbs the
  * difference. Blocks for a ComputeMeshBuffer, so call it off the graphics thread.
  *
- * @param attachment Attachment to recenter.
- * @param position   Position of the Agent. Set if empty.
+ * @param attachment  Attachment to recenter.
+ * @param position    Position of the Agent. Set if empty.
+ * @param orientation Orientation of the Agent, if it has one.
  */
 MAYAFLUX_API void recenter_attachment(
     Attachment& attachment,
-    std::optional<glm::vec3>& position);
+    std::optional<glm::vec3>& position,
+    const std::optional<glm::quat>& orientation);
 
 /**
  * @brief Rebuild the transform from @p ctx and place every render processor of the buffer.
