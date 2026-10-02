@@ -3,9 +3,9 @@
 layout(location = 0) in vec2 fragTexCoord;
 layout(location = 0) out vec4 outColor;
 
-/// @brief Tap layers. Bound at binding 1 as the buffer's default texture, a
+/// @brief Array layers. Bound at binding 1 as the buffer's default texture, a
 ///        VKImage created via TextureLoom::create_2d_array.
-layout(set = 0, binding = 1) uniform sampler2DArray tapArray;
+layout(set = 0, binding = 1) uniform sampler2DArray textureArray;
 
 const uint MAX_LAYERS = 30u;
 
@@ -30,7 +30,7 @@ void main()
             continue;
         }
 
-        vec4 c = texture(tapArray, vec3(fragTexCoord, float(i)));
+        vec4 c = texture(textureArray, vec3(fragTexCoord, float(i)));
 
         if (pc.mode == 0u) {
             accum += c * w;
