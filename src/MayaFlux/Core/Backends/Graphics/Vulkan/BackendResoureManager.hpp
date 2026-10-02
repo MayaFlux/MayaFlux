@@ -185,6 +185,61 @@ public:
         vk::ImageLayout restore_layout = vk::ImageLayout::eShaderReadOnlyOptimal,
         vk::PipelineStageFlags restore_stage = vk::PipelineStageFlagBits::eFragmentShader);
 
+    /**
+     * @brief Upload pixel data into one layer of an array image.
+     *
+     * The other layers keep their contents. @p size must equal one layer's byte
+     * count. With @p staging null a per-call staging buffer is made and released;
+     * a deferred upload needs a caller staging buffer.
+     *
+     * @param image    Target array image.
+     * @param layer    Layer index.
+     * @param data     Source pixels.
+     * @param size     Byte count of one layer.
+     * @param staging  Persistent host-visible staging buffer, or nullptr.
+     * @param deferred Record for deferred submission (requires staging).
+     * @return True if the upload was recorded or executed.
+     */
+    bool upload_image_layer(
+        const std::shared_ptr<VKImage>& image,
+        uint32_t layer,
+        const void* data,
+        size_t size,
+        const std::shared_ptr<Buffers::VKBuffer>& staging = nullptr,
+        bool deferred = false);
+
+    /**
+     * @brief Whether a blit between two formats is supported with a filter.
+     *
+     * Checks optimal tiling blit source and destination features, and linear
+     * sampling on the source for a linear filter.
+     */
+    [[nodiscard]] bool supports_blit(
+        vk::Format src_format,
+        vk::Format dst_format,
+        vk::Filter filter = vk::Filter::eNearest) const;
+
+    /**
+     * @brief Blit a region of one image into a region of another.
+     *
+     * Scales with @p filter and converts between supported formats. The
+     * subresources in @p region choose the array layers. Both images are
+     * returned to the layout they held, or shader read when it was transient.
+     *
+     * @param src      Source image.
+     * @param dst      Destination image, distinct from @p src.
+     * @param region   Subresources and offsets.
+     * @param filter   Nearest or linear.
+     * @param deferred Record for deferred submission.
+     * @return True if the blit was recorded or executed.
+     */
+    bool blit_image(
+        const std::shared_ptr<VKImage>& src,
+        const std::shared_ptr<VKImage>& dst,
+        const vk::ImageBlit& region,
+        vk::Filter filter,
+        bool deferred = false);
+
     // ========================================================================
     // Sampler management
     // ========================================================================

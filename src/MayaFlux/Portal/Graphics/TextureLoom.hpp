@@ -47,6 +47,23 @@ struct ImageCacheEntry {
 };
 
 /**
+ * @brief One layer to layer copy that scales and converts format.
+ *
+ * Whole images by default, stretched to fit. Rectangles are in pixels and a zero
+ * extent runs to the image edge. A smaller @c dst rectangle letterboxes, a smaller
+ * @c src rectangle crops, and the flips mirror the destination.
+ */
+struct LayerBlit {
+    uint32_t src_layer {};
+    uint32_t dst_layer {};
+    vk::Rect2D src {};
+    vk::Rect2D dst {};
+    FilterMode filter { FilterMode::LINEAR };
+    bool flip_x {};
+    bool flip_y {};
+};
+
+/**
  * @class TextureLoom
  * @brief Portal-level texture creation and management
  *
@@ -416,6 +433,54 @@ public:
         uint32_t mip_levels = 1,
         uint32_t array_layers = 1,
         vk::ImageAspectFlags aspect_mask = vk::ImageAspectFlagBits::eColor);
+
+    /**
+     * @brief Upload pixels into one layer of an array image.
+     *
+     * The other layers keep their contents. @p size must be one layer's byte count.
+     *
+     * @param image    Array image.
+     * @param layer    Layer index.
+     * @param data     Pixels of one layer.
+     * @param size     Byte count of one layer.
+     * @param staging  Persistent staging buffer, or nullptr for a per-call one.
+     * @param deferred Record for deferred submission (requires @p staging).
+     * @return True if the upload was recorded or executed.
+     */
+    bool upload_layer(
+        const std::shared_ptr<Core::VKImage>& image,
+        uint32_t layer,
+        const void* data,
+        size_t size,
+        const std::shared_ptr<Buffers::VKBuffer>& staging = nullptr,
+        bool deferred = false);
+
+    /**
+     * @brief Copy a layer of one image into a layer of another, scaling to fit.
+     *
+     * Works between any two color images, so it writes GPU images into an array
+     * layer without a host read, and also converts between supported formats. A
+     * cubic filter is not available and falls back to linear.
+     *
+     * @param src      Source image, distinct from @p dst.
+     * @param dst      Destination image.
+     * @param blit     Layers, rectangles, filter and flips.
+     * @param deferred Record for deferred submission.
+     * @return True if the blit was recorded or executed.
+     */
+    bool blit_layer(
+        const std::shared_ptr<Core::VKImage>& src,
+        const std::shared_ptr<Core::VKImage>& dst,
+        const LayerBlit& blit = {},
+        bool deferred = false);
+
+    /**
+     * @brief Whether the device can blit between two images with a filter.
+     */
+    [[nodiscard]] bool can_blit(
+        const std::shared_ptr<Core::VKImage>& src,
+        const std::shared_ptr<Core::VKImage>& dst,
+        FilterMode filter = FilterMode::LINEAR) const;
 
     //==========================================================================
     // Sampler Management

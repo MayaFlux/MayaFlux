@@ -697,6 +697,128 @@ void TextureLoom::transition_layout(
     image->set_current_layout(new_layout);
 }
 
+namespace {
+
+    vk::Filter to_blit_filter(FilterMode mode)
+    {
+        return mode == FilterMode::NEAREST ? vk::Filter::eNearest : vk::Filter::eLinear;
+    }
+
+    std::optional<std::pair<vk::Offset3D, vk::Offset3D>> region_offsets(
+        const vk::Rect2D& region, const Core::VKImage& image)
+    {
+        const int32_t left = region.offset.x;
+        const int32_t top = region.offset.y;
+
+        if (left < 0 || top < 0
+            || static_cast<uint32_t>(left) >= image.get_width()
+            || static_cast<uint32_t>(top) >= image.get_height()) {
+            return std::nullopt;
+        }
+
+        const auto x = static_cast<uint32_t>(left);
+        const auto y = static_cast<uint32_t>(top);
+        const uint32_t width = region.extent.width != 0 ? region.extent.width : image.get_width() - x;
+        const uint32_t height = region.extent.height != 0 ? region.extent.height : image.get_height() - y;
+
+        if (x + width > image.get_width() || y + height > image.get_height()) {
+            return std::nullopt;
+        }
+
+        return std::pair {
+            vk::Offset3D { left, top, 0 },
+            vk::Offset3D { static_cast<int32_t>(x + width), static_cast<int32_t>(y + height), 1 }
+        };
+    }
+
+}
+
+bool TextureLoom::upload_layer(
+    const std::shared_ptr<Core::VKImage>& image,
+    uint32_t layer,
+    const void* data,
+    size_t size,
+    const std::shared_ptr<Buffers::VKBuffer>& staging,
+    bool deferred)
+{
+    if (!is_initialized() || !image || !data) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "Invalid parameters for upload_layer");
+        return false;
+    }
+
+    return m_resource_manager->upload_image_layer(image, layer, data, size, staging, deferred);
+}
+
+bool TextureLoom::can_blit(
+    const std::shared_ptr<Core::VKImage>& src,
+    const std::shared_ptr<Core::VKImage>& dst,
+    FilterMode filter) const
+{
+    if (!is_initialized() || !src || !dst) {
+        return false;
+    }
+
+    return m_resource_manager->supports_blit(
+        src->get_format(), dst->get_format(), to_blit_filter(filter));
+}
+
+bool TextureLoom::blit_layer(
+    const std::shared_ptr<Core::VKImage>& src,
+    const std::shared_ptr<Core::VKImage>& dst,
+    const LayerBlit& blit,
+    bool deferred)
+{
+    if (!is_initialized() || !src || !dst) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "Invalid parameters for blit_layer");
+        return false;
+    }
+
+    if (blit.src_layer >= src->get_array_layers() || blit.dst_layer >= dst->get_array_layers()) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "blit_layer: layer {} of {} or layer {} of {} does not exist",
+            blit.src_layer, src->get_array_layers(), blit.dst_layer, dst->get_array_layers());
+        return false;
+    }
+
+    constexpr auto color = vk::ImageAspectFlagBits::eColor;
+    if (src->get_aspect_flags() != color || dst->get_aspect_flags() != color) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "blit_layer: only color images can be blitted");
+        return false;
+    }
+
+    const auto src_offsets = region_offsets(blit.src, *src);
+    auto dst_offsets = region_offsets(blit.dst, *dst);
+    if (!src_offsets || !dst_offsets) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "blit_layer: a rectangle lies outside its image");
+        return false;
+    }
+
+    if (blit.filter == FilterMode::CUBIC) {
+        MF_WARN(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "blit_layer: cubic filtering is not available, using linear");
+    }
+
+    if (blit.flip_x) {
+        std::swap(dst_offsets->first.x, dst_offsets->second.x);
+    }
+    if (blit.flip_y) {
+        std::swap(dst_offsets->first.y, dst_offsets->second.y);
+    }
+
+    const vk::ImageBlit region {
+        vk::ImageSubresourceLayers { color, 0, blit.src_layer, 1 },
+        { src_offsets->first, src_offsets->second },
+        vk::ImageSubresourceLayers { color, 0, blit.dst_layer, 1 },
+        { dst_offsets->first, dst_offsets->second }
+    };
+
+    return m_resource_manager->blit_image(src, dst, region, to_blit_filter(blit.filter), deferred);
+}
+
 //==============================================================================
 // Sampler Management
 //==============================================================================
