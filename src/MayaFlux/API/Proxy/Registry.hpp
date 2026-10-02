@@ -67,6 +67,7 @@ namespace Buffers {
     class VKBuffer;
     class NodeTextureBuffer;
     class TextureBuffer;
+    class TextureArrayBuffer;
     class GeometryBuffer;
     class CompositeGeometryBuffer;
     class MeshBuffer;
@@ -137,6 +138,7 @@ namespace IO {
     B(VKBuffer, MayaFlux::Buffers::VKBuffer)                               \
     B(NodeTextureBuffer, MayaFlux::Buffers::NodeTextureBuffer)             \
     B(TextureBuffer, MayaFlux::Buffers::TextureBuffer)                     \
+    B(TextureArrayBuffer, MayaFlux::Buffers::TextureArrayBuffer)           \
     B(GeometryBuffer, MayaFlux::Buffers::GeometryBuffer)                   \
     B(CompositeGeometryBuffer, MayaFlux::Buffers::CompositeGeometryBuffer) \
     B(MeshBuffer, MayaFlux::Buffers::MeshBuffer)                           \

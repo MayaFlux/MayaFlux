@@ -446,6 +446,20 @@ std::shared_ptr<MayaFlux::Buffers::TextureBuffer> Creator::TextureBuffer(uint32_
     return obj;
 }
 
+std::shared_ptr<MayaFlux::Buffers::TextureArrayBuffer> Creator::TextureArrayBuffer(uint32_t width, uint32_t height, Portal::Graphics::ImageFormat format, uint32_t layers)
+{
+    auto obj = std::make_shared<MayaFlux::Buffers::TextureArrayBuffer>(std::forward<decltype(width)>(width), std::forward<decltype(height)>(height), std::forward<decltype(format)>(format), std::forward<decltype(layers)>(layers));
+    MF_LIVE_EXPOSE_NAMED("TextureArrayBuffer", obj);
+    return obj;
+}
+
+std::shared_ptr<MayaFlux::Buffers::TextureArrayBuffer> Creator::TextureArrayBuffer(const Kakshya::VideoStreamSpec & spec, std::optional<Portal::Graphics::FitMode> fit)
+{
+    auto obj = std::make_shared<MayaFlux::Buffers::TextureArrayBuffer>(std::forward<decltype(spec)>(spec), std::forward<decltype(fit)>(fit));
+    MF_LIVE_EXPOSE_NAMED("TextureArrayBuffer", obj);
+    return obj;
+}
+
 std::shared_ptr<MayaFlux::Buffers::GeometryBuffer> Creator::GeometryBuffer(std::shared_ptr<Nodes::GpuSync::GeometryWriterNode> node, const std::string & binding_name, float over_allocate_factor)
 {
     auto obj = std::make_shared<MayaFlux::Buffers::GeometryBuffer>(std::forward<decltype(node)>(node), std::forward<decltype(binding_name)>(binding_name), std::forward<decltype(over_allocate_factor)>(over_allocate_factor));

@@ -62,6 +62,8 @@
     std::shared_ptr<MayaFlux::Buffers::VKBuffer> VKBuffer();
     std::shared_ptr<MayaFlux::Buffers::NodeTextureBuffer> NodeTextureBuffer(std::shared_ptr<Nodes::GpuSync::TextureNode> node, std::string binding_name = "texture");
     std::shared_ptr<MayaFlux::Buffers::TextureBuffer> TextureBuffer(uint32_t width, uint32_t height, Portal::Graphics::ImageFormat format, const void * initial_pixel_data = nullptr);
+    std::shared_ptr<MayaFlux::Buffers::TextureArrayBuffer> TextureArrayBuffer(uint32_t width, uint32_t height, Portal::Graphics::ImageFormat format, uint32_t layers);
+    std::shared_ptr<MayaFlux::Buffers::TextureArrayBuffer> TextureArrayBuffer(const Kakshya::VideoStreamSpec & spec, std::optional<Portal::Graphics::FitMode> fit = Portal::Graphics::FitMode::STRETCH);
     std::shared_ptr<MayaFlux::Buffers::GeometryBuffer> GeometryBuffer(std::shared_ptr<Nodes::GpuSync::GeometryWriterNode> node, const std::string & binding_name = "geometry", float over_allocate_factor = 1.5F);
     std::shared_ptr<MayaFlux::Buffers::CompositeGeometryBuffer> CompositeGeometryBuffer(size_t initial_capacity = 1024 * 1024, float over_allocate_factor = 1.5F);
     std::shared_ptr<MayaFlux::Buffers::MeshBuffer> MeshBuffer(Kakshya::MeshData data);
