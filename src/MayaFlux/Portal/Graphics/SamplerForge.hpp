@@ -2,6 +2,8 @@
 
 #include <vulkan/vulkan.hpp>
 
+#include "TextureLoom.hpp"
+
 namespace MayaFlux::Core {
 class VulkanBackend;
 }
@@ -10,7 +12,21 @@ namespace MayaFlux::Portal::Graphics {
 
 enum class FilterMode : uint8_t;
 enum class AddressMode : uint8_t;
+enum class BorderColor : uint8_t;
 struct SamplerConfig;
+
+/**
+ * @brief One fit expressed for both ways of applying it.
+ *
+ * @c blits copies the source into the destination when the fit is written into an
+ * image, with layers left at zero for the caller to set. @c sampler is the
+ * addressing that gives the same result when a shader samples the source directly;
+ * the scale and offset of that sampling follow from the rectangles in @c blits.
+ */
+struct FitPlan {
+    std::vector<LayerBlit> blits;
+    SamplerConfig sampler;
+};
 
 /**
  * @class SamplerForge
@@ -99,6 +115,29 @@ public:
      */
     [[nodiscard]] size_t get_sampler_count() const { return m_sampler_cache.size(); }
 
+    /**
+     * @brief Work out how a source extent maps onto a destination extent.
+     *
+     * Pure arithmetic, no device needed. Zero in any extent yields an empty plan.
+     * Tiling produces one blit per tile, so a source much smaller than the
+     * destination produces many.
+     *
+     * @param src_width  Source width in pixels.
+     * @param src_height Source height in pixels.
+     * @param dst_width  Destination width in pixels.
+     * @param dst_height Destination height in pixels.
+     * @param mode       How the source is fitted.
+     * @param filter     Filter for the blits and the sampler.
+     * @return Rectangles for an image write and the matching sampler.
+     */
+    [[nodiscard]] static FitPlan plan_fit(
+        uint32_t src_width,
+        uint32_t src_height,
+        uint32_t dst_width,
+        uint32_t dst_height,
+        FitMode mode = FitMode::STRETCH,
+        FilterMode filter = FilterMode::LINEAR);
+
 private:
     SamplerForge() = default;
     ~SamplerForge() { shutdown(); }
@@ -119,6 +158,9 @@ private:
 
     // Helper: Convert AddressMode to Vulkan address mode
     static vk::SamplerAddressMode to_vk_address_mode(AddressMode mode);
+
+    // Helper: Convert BorderColor to Vulkan border color
+    static vk::BorderColor to_vk_border_color(BorderColor color);
 
     static bool s_initialized;
 };

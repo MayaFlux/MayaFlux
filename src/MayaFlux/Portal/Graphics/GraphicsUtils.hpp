@@ -269,6 +269,17 @@ enum class AddressMode : uint8_t {
 };
 
 /**
+ * @enum BorderColor
+ * @brief Color read outside the texture when an address mode is CLAMP_TO_BORDER
+ */
+enum class BorderColor : uint8_t {
+    DEFAULT, ///< The sampler's historical border, opaque black
+    TRANSPARENT_BLACK, ///< Zero in every channel
+    OPAQUE_BLACK, ///< Black with full alpha
+    OPAQUE_WHITE ///< White with full alpha
+};
+
+/**
  * @struct SamplerConfig
  * @brief Sampler configuration
  */
@@ -280,7 +291,22 @@ struct SamplerConfig {
     AddressMode address_mode_w = AddressMode::REPEAT;
     float max_anisotropy = 1.0F; // 1.0 = disabled, 16.0 = max quality
     bool enable_mipmaps = false;
+    BorderColor border_color = BorderColor::DEFAULT;
 };
+
+/**
+ * @enum FitMode
+ * @brief How a source extent is mapped onto a destination extent
+ */
+enum class FitMode : uint8_t {
+    STRETCH, ///< Whole source onto whole destination, aspect ignored
+    CONTAIN, ///< Whole source, aspect kept, centered, the rest left uncovered
+    COVER, ///< Aspect kept, destination filled, source cropped
+    CENTER, ///< No scaling, centered, clipped to the destination
+    TILE, ///< Source repeated at its own size
+    TILE_MIRRORED ///< Source repeated, every other tile mirrored
+};
+
 
 /**
  * @struct RenderConfig

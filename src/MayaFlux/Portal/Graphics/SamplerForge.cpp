@@ -172,7 +172,7 @@ vk::Sampler SamplerForge::create_sampler(const SamplerConfig& config)
         sampler_info.maxAnisotropy = 1.0F;
     }
 
-    sampler_info.borderColor = vk::BorderColor::eIntOpaqueBlack;
+    sampler_info.borderColor = to_vk_border_color(config.border_color);
 
     sampler_info.unnormalizedCoordinates = VK_FALSE;
 
@@ -218,6 +218,7 @@ size_t SamplerForge::hash_config(const SamplerConfig& config)
     hash ^= std::hash<int> {}(static_cast<int>(config.address_mode_w)) << 16;
     hash ^= std::hash<float> {}(config.max_anisotropy) << 20;
     hash ^= std::hash<bool> {}(config.enable_mipmaps) << 24;
+    hash ^= std::hash<int> {}(static_cast<int>(config.border_color)) << 28;
     return hash;
 }
 
@@ -249,6 +250,130 @@ vk::SamplerAddressMode SamplerForge::to_vk_address_mode(AddressMode mode)
     default:
         return vk::SamplerAddressMode::eRepeat;
     }
+}
+
+vk::BorderColor SamplerForge::to_vk_border_color(BorderColor color)
+{
+    switch (color) {
+    case BorderColor::TRANSPARENT_BLACK:
+        return vk::BorderColor::eFloatTransparentBlack;
+    case BorderColor::OPAQUE_BLACK:
+        return vk::BorderColor::eFloatOpaqueBlack;
+    case BorderColor::OPAQUE_WHITE:
+        return vk::BorderColor::eFloatOpaqueWhite;
+    case BorderColor::DEFAULT:
+    default:
+        return vk::BorderColor::eIntOpaqueBlack;
+    }
+}
+
+FitPlan SamplerForge::plan_fit(
+    uint32_t src_width,
+    uint32_t src_height,
+    uint32_t dst_width,
+    uint32_t dst_height,
+    FitMode mode,
+    FilterMode filter)
+{
+    FitPlan plan;
+    plan.sampler.mag_filter = filter;
+    plan.sampler.min_filter = filter;
+
+    if (src_width == 0 || src_height == 0 || dst_width == 0 || dst_height == 0) {
+        return plan;
+    }
+
+    const auto addressing = [&plan](AddressMode address, BorderColor border = BorderColor::DEFAULT) {
+        plan.sampler.address_mode_u = address;
+        plan.sampler.address_mode_v = address;
+        plan.sampler.address_mode_w = address;
+        plan.sampler.border_color = border;
+    };
+
+    const auto place = [&plan, filter](
+                           vk::Rect2D src, vk::Rect2D dst, bool flip_x = false, bool flip_y = false) {
+        plan.blits.push_back(LayerBlit {
+            .src = src, .dst = dst, .filter = filter, .flip_x = flip_x, .flip_y = flip_y });
+    };
+
+    const auto region = [](int32_t x, int32_t y, uint32_t width, uint32_t height) {
+        return vk::Rect2D { vk::Offset2D { x, y }, vk::Extent2D { width, height } };
+    };
+
+    const auto centered = [](uint32_t outer, uint32_t inner) {
+        return static_cast<int32_t>((outer - inner) / 2);
+    };
+
+    const auto extent = [](double value, uint32_t limit) {
+        return std::clamp(static_cast<uint32_t>(std::lround(value)), 1U, limit);
+    };
+
+    const auto sw = static_cast<double>(src_width);
+    const auto sh = static_cast<double>(src_height);
+    const auto dw = static_cast<double>(dst_width);
+    const auto dh = static_cast<double>(dst_height);
+
+    switch (mode) {
+    case FitMode::STRETCH:
+        addressing(AddressMode::CLAMP_TO_EDGE);
+        place(region(0, 0, src_width, src_height), region(0, 0, dst_width, dst_height));
+        break;
+
+    case FitMode::CONTAIN: {
+        const double scale = std::min(dw / sw, dh / sh);
+        const uint32_t w = extent(sw * scale, dst_width);
+        const uint32_t h = extent(sh * scale, dst_height);
+        addressing(AddressMode::CLAMP_TO_BORDER, BorderColor::TRANSPARENT_BLACK);
+        place(region(0, 0, src_width, src_height),
+            region(centered(dst_width, w), centered(dst_height, h), w, h));
+        break;
+    }
+
+    case FitMode::COVER: {
+        const double scale = std::max(dw / sw, dh / sh);
+        const uint32_t w = extent(dw / scale, src_width);
+        const uint32_t h = extent(dh / scale, src_height);
+        addressing(AddressMode::CLAMP_TO_EDGE);
+        place(region(centered(src_width, w), centered(src_height, h), w, h),
+            region(0, 0, dst_width, dst_height));
+        break;
+    }
+
+    case FitMode::CENTER: {
+        const uint32_t w = std::min(src_width, dst_width);
+        const uint32_t h = std::min(src_height, dst_height);
+        addressing(AddressMode::CLAMP_TO_BORDER, BorderColor::TRANSPARENT_BLACK);
+        place(region(centered(src_width, w), centered(src_height, h), w, h),
+            region(centered(dst_width, w), centered(dst_height, h), w, h));
+        break;
+    }
+
+    case FitMode::TILE:
+    case FitMode::TILE_MIRRORED: {
+        const bool mirrored = mode == FitMode::TILE_MIRRORED;
+        addressing(mirrored ? AddressMode::MIRRORED_REPEAT : AddressMode::REPEAT);
+
+        uint32_t row = 0;
+        for (uint32_t y = 0; y < dst_height; y += src_height, ++row) {
+            const uint32_t h = std::min(src_height, dst_height - y);
+            const bool flip_y = mirrored && (row % 2 == 1);
+
+            uint32_t column = 0;
+            for (uint32_t x = 0; x < dst_width; x += src_width, ++column) {
+                const uint32_t w = std::min(src_width, dst_width - x);
+                const bool flip_x = mirrored && (column % 2 == 1);
+
+                place(region(flip_x ? static_cast<int32_t>(src_width - w) : 0,
+                          flip_y ? static_cast<int32_t>(src_height - h) : 0, w, h),
+                    region(static_cast<int32_t>(x), static_cast<int32_t>(y), w, h),
+                    flip_x, flip_y);
+            }
+        }
+        break;
+    }
+    }
+
+    return plan;
 }
 
 } // namespace MayaFlux::Portal::Graphics
