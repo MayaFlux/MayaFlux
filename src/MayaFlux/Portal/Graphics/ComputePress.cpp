@@ -203,10 +203,6 @@ void ComputePress::destroy_pipeline(ComputePipelineID pipeline_id)
         it->second.pipeline->cleanup(device);
     }
 
-    if (it->second.layout) {
-        device.destroyPipelineLayout(it->second.layout);
-    }
-
     m_pipelines.erase(it);
 
     MF_DEBUG(Journal::Component::Portal, Journal::Context::GPUCompute,
@@ -220,10 +216,6 @@ void ComputePress::cleanup_pipelines()
     for (auto& [id, state] : m_pipelines) {
         if (state.pipeline) {
             state.pipeline->cleanup(device);
-        }
-
-        if (state.layout) {
-            device.destroyPipelineLayout(state.layout);
         }
     }
 
