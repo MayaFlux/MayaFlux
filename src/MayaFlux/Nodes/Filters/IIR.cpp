@@ -45,7 +45,7 @@ double IIR::process_sample(double input)
 
     const size_t num_feedback = std::min(m_coef_a.size(), m_output_history.size());
     for (size_t i = 1; i < num_feedback; ++i) {
-        output -= m_coef_a[i] * m_output_history[i];
+        output -= m_coef_a[i] * m_output_history[i - 1];
     }
 
     update_outputs(output);
