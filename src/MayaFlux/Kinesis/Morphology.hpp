@@ -187,6 +187,41 @@ template <typename T,
     return acc / static_cast<float>(count);
 }
 
+/**
+ * @brief Area-weighted centroid of the triangles of an indexed mesh.
+ *
+ * Each triangle contributes its own centroid weighted by its area, so dense
+ * tessellation does not pull the result the way a vertex mean does. A triangle
+ * with an index outside @p bytes is skipped.
+ *
+ * @param  bytes   Interleaved vertex records.
+ * @param  stride  Bytes per record.
+ * @param  offset  Byte offset of the vec3 position within a record.
+ * @param  indices Triangle list, three indices per face.
+ * @return Surface centroid, or the vertex centroid when there is no
+ *         triangle of nonzero area.
+ */
+[[nodiscard]] inline glm::vec3 surface_centroid(
+    std::span<const std::byte> bytes,
+    size_t stride,
+    size_t offset,
+    std::span<const uint32_t> indices) noexcept
+{
+    glm::vec3 acc(0.0F);
+    float total = 0.0F;
+    for (size_t t = 0; t + 2 < indices.size(); t += 3) {
+        const auto a = position_at(bytes, stride, offset, indices[t]);
+        const auto b = position_at(bytes, stride, offset, indices[t + 1]);
+        const auto c = position_at(bytes, stride, offset, indices[t + 2]);
+        if (!a || !b || !c)
+            continue;
+        const float area = 0.5F * glm::length(glm::cross(*b - *a, *c - *a));
+        acc += (*a + *b + *c) * (area / 3.0F);
+        total += area;
+    }
+    return total > 0.0F ? acc / total : centroid(bytes, stride, offset);
+}
+
 // =============================================================================
 // aabb
 // =============================================================================
