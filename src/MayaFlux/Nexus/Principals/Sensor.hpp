@@ -8,7 +8,7 @@ namespace MayaFlux::Nexus {
  * @class Sensor
  * @brief Object that reacts to nearby entities when committed.
  *
- * Constructed with only a perception function and a query radius. Position
+ * Constructed with a query radius and, optionally, a perception function. Position
  * is optional: call @c set_position before registering with @c Fabric if
  * spatial queries are required. A Sensor without a position receives an
  * empty @c spatial_results span on each commit.
@@ -19,6 +19,17 @@ namespace MayaFlux::Nexus {
 class MAYAFLUX_API Sensor {
 public:
     using PerceptionFn = std::function<void(const PerceptionContext&)>;
+
+    /**
+     * @brief Construct with only a query radius, for a Sensor whose behaviour comes
+     *        from a typed perception.
+     * @param query_radius Radius passed to the spatial index on each commit.
+     *                     Ignored if no position has been set.
+     */
+    explicit Sensor(float query_radius = 1.0F)
+        : m_query_radius(query_radius)
+    {
+    }
 
     /**
      * @brief Construct with a query radius and a perception function.

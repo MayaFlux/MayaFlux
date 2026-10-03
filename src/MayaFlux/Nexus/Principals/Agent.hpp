@@ -16,8 +16,8 @@ namespace MayaFlux::Nexus {
  * @class Agent
  * @brief Object that both perceives nearby entities and acts on MayaFlux objects.
  *
- * Constructed with only a query radius, a perception function, and an influence
- * function. Position is optional: call @c set_position before registering with
+ * Constructed with a query radius and, optionally, a perception function and an
+ * influence function. Position is optional: call @c set_position before registering with
  * @c Fabric if spatial behaviour is required. Without a position the spatial
  * index is not consulted and @c spatial_results will be empty on each commit.
  *
@@ -37,6 +37,17 @@ class MAYAFLUX_API Agent {
 public:
     using InfluenceFn = std::function<void(const InfluenceContext&)>;
     using PerceptionFn = std::function<void(const PerceptionContext&)>;
+
+    /**
+     * @brief Construct with only a query radius, for an Agent whose behaviour comes
+     *        from typed influences and perceptions.
+     * @param query_radius Radius passed to the spatial index on each commit.
+     *                     Ignored if no position has been set.
+     */
+    explicit Agent(float query_radius = 1.0F)
+        : m_query_radius(query_radius)
+    {
+    }
 
     /**
      * @brief Construct with query radius, perception function, and influence function.

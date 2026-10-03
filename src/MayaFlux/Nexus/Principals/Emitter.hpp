@@ -14,7 +14,7 @@ namespace MayaFlux::Nexus {
  * @class Emitter
  * @brief Object that acts on existing MayaFlux objects when committed.
  *
- * Constructed with only an influence function. Position is optional: call
+ * Constructed with an optional influence function. Position is optional: call
  * @c set_position before registering with @c Fabric if spatial indexing is
  * required. Entities without a position are committed normally but are not
  * inserted into the spatial index.
@@ -32,6 +32,12 @@ namespace MayaFlux::Nexus {
 class MAYAFLUX_API Emitter {
 public:
     using InfluenceFn = std::function<void(const InfluenceContext&)>;
+
+    /**
+     * @brief Construct with no function, for an Emitter whose behaviour comes
+     *        from a typed influence.
+     */
+    Emitter() = default;
 
     /**
      * @brief Construct with an influence function.
