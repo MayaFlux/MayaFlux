@@ -579,11 +579,25 @@ uint32_t RenderProcessor::mill_runs(const std::shared_ptr<VKBuffer>& buffer, Por
         runs = { &whole, 1 };
     }
 
-    const Portal::Graphics::MillView view {
-        .eye = m_view_transform_active
-            ? glm::vec3(glm::inverse(publish_render_transform().view_transform.view)[3])
-            : glm::vec3(0.0F, 0.0F, 1.0e4F)
-    };
+    glm::vec3 eye = m_view_transform_active
+        ? glm::vec3(glm::inverse(published_render_transform().view_transform.view)[3])
+        : glm::vec3(0.0F, 0.0F, 1.0e4F);
+
+    if (m_mill_spec.ribbon == Portal::Graphics::MillSpec::Ribbon::WorldFacing
+        && (m_geometry_transform || m_geometry_transform_source)) {
+        const auto& geometry = published_render_transform().geometry;
+        const float determinant = glm::determinant(geometry);
+        if (std::isfinite(determinant) && determinant != 0.0F) {
+            const glm::vec4 local_eye = glm::inverse(geometry) * glm::vec4(eye, 1.0F);
+            if (std::isfinite(local_eye.x) && std::isfinite(local_eye.y)
+                && std::isfinite(local_eye.z) && std::isfinite(local_eye.w)
+                && local_eye.w != 0.0F) {
+                eye = glm::vec3(local_eye) / local_eye.w;
+            }
+        }
+    }
+
+    const Portal::Graphics::MillView view { .eye = eye };
 
     return mill.mill(buffer, runs, view);
 }

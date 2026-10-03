@@ -1,8 +1,9 @@
 #version 460
 
-layout(set = 0, binding = 0) uniform ViewTransformBlock {
+layout(set = 0, binding = 0) uniform RenderTransformBlock {
     mat4 view;
     mat4 projection;
+    mat4 geometry;
 } transform;
 
 layout(location = 0) in vec3 inPosition;
@@ -17,9 +18,10 @@ layout(location = 3) out vec3 out_world_pos;
 
 void main()
 {
-    gl_Position = transform.projection * transform.view * vec4(inPosition, 1.0);
+    vec4 world_pos = transform.geometry * vec4(inPosition, 1.0);
+    gl_Position = transform.projection * transform.view * world_pos;
     out_color = inColor;
     out_thickness = inThickness;
     out_uv = inUV;
-    out_world_pos = inPosition;
+    out_world_pos = world_pos.xyz;
 }
