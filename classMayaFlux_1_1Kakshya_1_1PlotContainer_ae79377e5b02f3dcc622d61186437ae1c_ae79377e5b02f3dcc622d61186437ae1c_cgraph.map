@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::PlotContainer::is_ready_for_processing" name="MayaFlux::Kakshya::PlotContainer::is_ready_for_processing">
+<area shape="rect" id="Node000001" title="Check if the container is ready for processing." alt="" coords="5,30,179,85"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1PlotContainer_aed969816a160fa1040d1100a141d787e.html#aed969816a160fa1040d1100a141d787e" title="Get the current processing state of the container." alt="" coords="227,5,483,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="179,44,212,40,213,45,179,49"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1PlotContainer_a67f0fa3bbd8be4ae7425767e9b779346.html#a67f0fa3bbd8be4ae7425767e9b779346" title="Check if the container currently holds any data." alt="" coords="266,69,443,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="179,65,253,74,252,80,179,71"/>
+</map>

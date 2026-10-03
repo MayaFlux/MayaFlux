@@ -1,0 +1,3 @@
+<map id="MayaFlux::Kinesis::Vision::ImageOutputs" name="MayaFlux::Kinesis::Vision::ImageOutputs">
+<area shape="rect" id="Node000001" title="One image slot per VisionOp that produces an image, populated only for whichever of these ops ran in ..." alt="" coords="5,5,160,285"/>
+</map>

@@ -1,0 +1,3 @@
+<map id="MayaFlux::IO::Detail::VDBArchive" name="MayaFlux::IO::Detail::VDBArchive">
+<area shape="rect" id="Node000001" title="RAII boundary around tinyvdb&#39;s C read and write paths." alt="" coords="5,5,167,305"/>
+</map>

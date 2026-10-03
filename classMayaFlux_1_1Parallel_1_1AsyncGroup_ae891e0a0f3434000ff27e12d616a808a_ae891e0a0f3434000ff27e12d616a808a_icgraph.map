@@ -1,0 +1,44 @@
+<map id="MayaFlux::Parallel::AsyncGroup::submit" name="MayaFlux::Parallel::AsyncGroup::submit">
+<area shape="rect" id="Node000001" title="Retains fut and opportunistically reclaims completed work." alt="" coords="944,421,1105,461"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1IOManager_a0604e2f246faf9ae9d598cd28140d814.html#a0604e2f246faf9ae9d598cd28140d814" title="Retain a save task in m_save_tasks and opportunistically reclaim finished ones." alt="" coords="709,421,896,461"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="930,444,896,444,896,439,930,439"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1IOManager_a20c6d4610f26db8604c8d2252a02c3a2.html#a20c6d4610f26db8604c8d2252a02c3a2" title="Save image data to disk asynchronously." alt="" coords="475,37,661,77"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="795,408,782,342,758,257,740,212,718,168,691,127,660,91,644,80,647,75,663,87,696,124,723,166,745,210,763,255,788,341,800,407"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1IO_1_1IOManager_adffe46d33f302a83a626b69a4573342b.html#adffe46d33f302a83a626b69a4573342b" title="Save an already&#45;downloaded ImageData to disk asynchronously." alt="" coords="475,101,661,141"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="791,409,776,354,749,286,711,216,687,184,660,155,643,144,646,139,663,151,691,180,716,213,754,284,781,352,797,407"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1IO_1_1IOManager_a99c97487e5b52b1ceb7f8efa6ac0ea75.html#a99c97487e5b52b1ceb7f8efa6ac0ea75" title="Save a ComputeMeshBuffer&#39;s current live geometry to disk asynchronously." alt="" coords="475,165,661,205"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="787,409,767,366,740,315,704,264,660,219,641,208,644,203,663,215,708,260,744,313,772,364,791,407"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1IO_1_1IOManager_a779e35585748fcbbdf55f7ec17b42cec.html#a779e35585748fcbbdf55f7ec17b42cec" title="Save a MeshBuffer&#39;s mesh data to disk asynchronously." alt="" coords="475,229,661,269"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="779,412,729,347,697,313,660,284,638,272,641,267,663,279,700,309,733,343,783,408"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1IO_1_1IOManager_a8d4713fe396fda2349b0709ec97b0751.html#a8d4713fe396fda2349b0709ec97b0751" title="Save a MeshNetwork&#39;s current slots to disk asynchronously." alt="" coords="475,293,661,333"/>
+<area shape="poly" id="edge8_Node000002_Node000009" title=" " alt="" coords="764,415,716,381,660,348,633,336,635,331,663,343,719,376,767,411"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1IO_1_1IOManager_a9fca1b11b77c34c890e703aacbf8b582.html#a9fca1b11b77c34c890e703aacbf8b582" title="Save one or more meshes to disk asynchronously." alt="" coords="475,357,661,397"/>
+<area shape="poly" id="edge9_Node000002_Node000010" title=" " alt="" coords="715,420,641,400,643,395,716,415"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1IO_1_1IOManager_aac730c67e44028579377a291c993c699.html#aac730c67e44028579377a291c993c699" title="Save a ComputeMeshBuffer with a millisecond epoch timestamp spliced into the path,..." alt="" coords="475,421,661,461"/>
+<area shape="poly" id="edge10_Node000002_Node000011" title=" " alt="" coords="696,444,662,444,662,439,696,439"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1IO_1_1IOManager_a2d21d40e32848f18d7d7e9d4ed28e826.html#a2d21d40e32848f18d7d7e9d4ed28e826" title="Save every source once, as a single time sample, with a millisecond epoch timestamp spliced into the ..." alt="" coords="475,485,661,525"/>
+<area shape="poly" id="edge11_Node000002_Node000012" title=" " alt="" coords="716,468,643,488,641,483,715,462"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1IO_1_1IOManager_ad018092eb065937d11a691d891b139fc.html#ad018092eb065937d11a691d891b139fc" title="Download and save a GPU&#45;resident volume to disk asynchronously." alt="" coords="475,549,661,589"/>
+<area shape="poly" id="edge12_Node000002_Node000013" title=" " alt="" coords="767,472,719,506,663,540,635,552,633,547,660,535,716,502,764,468"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1IO_1_1IOManager_add7c3d0e36556c60f2a8b5e221c1b677.html#add7c3d0e36556c60f2a8b5e221c1b677" title="Save an already&#45;downloaded VolumeData to disk asynchronously." alt="" coords="475,613,661,653"/>
+<area shape="poly" id="edge13_Node000002_Node000014" title=" " alt="" coords="783,474,733,539,700,574,663,604,641,616,638,611,660,599,697,570,729,536,779,471"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1IO_1_1IOManager_a42650825f04fa23729727446b2768f45.html#a42650825f04fa23729727446b2768f45" title="Stop a running audio capture and finalise the file." alt="" coords="475,677,661,717"/>
+<area shape="poly" id="edge15_Node000002_Node000016" title=" " alt="" coords="791,476,772,519,744,570,708,622,663,667,644,679,641,675,660,663,704,619,740,567,767,516,787,473"/>
+<area shape="rect" id="Node000019" href="$classMayaFlux_1_1IO_1_1IOManager_a8509dbec9694c955073cba278b0ca6c9.html#a8509dbec9694c955073cba278b0ca6c9" title="Stop a running video capture and finalise the file." alt="" coords="475,741,661,781"/>
+<area shape="poly" id="edge18_Node000002_Node000019" title=" " alt="" coords="797,475,781,531,754,599,716,670,691,702,663,731,646,743,643,739,660,727,687,699,711,667,749,597,776,529,791,474"/>
+<area shape="rect" id="Node000021" href="$classMayaFlux_1_1IO_1_1IOManager_ac6c9a6ce24848bc6aff24e64812c3bb6.html#ac6c9a6ce24848bc6aff24e64812c3bb6" title="Write a SoundStreamContainer to file in one shot." alt="" coords="475,805,661,845"/>
+<area shape="poly" id="edge21_Node000002_Node000021" title=" " alt="" coords="800,476,788,542,763,628,745,673,723,717,696,758,663,795,647,807,644,803,660,791,691,755,718,714,740,671,758,626,782,541,795,475"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1IOManager_ac91dd7d537b2c0090b05d8bd5b74847e.html#ac91dd7d537b2c0090b05d8bd5b74847e" title=" " alt="" coords="240,5,427,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="461,45,427,41,427,35,462,40"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1IO_1_1IOManager_abc5b4f20992fe093fcf290e073a12895.html#abc5b4f20992fe093fcf290e073a12895" title=" " alt="" coords="240,69,427,109"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="462,75,427,79,427,74,461,69"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1IO_1_1IOManager_af3d6ec863b643aadf95baeb7c8121e49.html#af3d6ec863b643aadf95baeb7c8121e49" title="Begin recording a numbered .vdb sequence from a volume." alt="" coords="240,613,427,653"/>
+<area shape="poly" id="edge14_Node000014_Node000015" title=" " alt="" coords="461,636,427,636,427,631,461,631"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1IO_1_1IOManager_ab42d3a6d5feeacaf3012eb79c8c8da6e.html#ab42d3a6d5feeacaf3012eb79c8c8da6e" title="Unregisters IOService, releases all owned readers, clears stored buffers." alt="" coords="240,677,427,717"/>
+<area shape="poly" id="edge16_Node000016_Node000017" title=" " alt="" coords="461,700,427,700,427,695,461,695"/>
+<area shape="rect" id="Node000018" href="$classMayaFlux_1_1IO_1_1IOManager_ad92be69cbeb3eaa2a270f7dd3ecd3b16.html#ad92be69cbeb3eaa2a270f7dd3ecd3b16" title="Calls shutdown() if it has not already run." alt="" coords="5,677,192,717"/>
+<area shape="poly" id="edge17_Node000017_Node000018" title=" " alt="" coords="227,700,192,700,192,695,227,695"/>
+<area shape="poly" id="edge19_Node000019_Node000017" title=" " alt="" coords="480,740,406,720,408,715,482,735"/>
+<area shape="rect" id="Node000020" href="$classMayaFlux_1_1IO_1_1IOManager_a82a7d24c1abc7044cbf39d7111c32828.html#a82a7d24c1abc7044cbf39d7111c32828" title="Stop the active window capture and finalise the file." alt="" coords="240,741,427,781"/>
+<area shape="poly" id="edge20_Node000019_Node000020" title=" " alt="" coords="461,764,427,764,427,759,461,759"/>
+</map>

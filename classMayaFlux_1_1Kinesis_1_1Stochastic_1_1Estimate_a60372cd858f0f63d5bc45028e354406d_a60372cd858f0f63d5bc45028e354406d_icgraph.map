@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kinesis::Stochastic::Estimate::variance" name="MayaFlux::Kinesis::Stochastic::Estimate::variance">
+<area shape="rect" id="Node000001" title="Sample variance of a span." alt="" coords="443,34,597,89"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_aafa948ab4085ed9b618db86833571308.html#aafa948ab4085ed9b618db86833571308" title="Estimate a repetition period by direct autocorrelation over a bounded lag range." alt="" coords="227,5,376,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="429,49,376,40,377,35,430,44"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Estimate_a24bde794a3ce27e3fa09d870a6532e1b.html#a24bde794a3ce27e3fa09d870a6532e1b" title=" " alt="" coords="208,70,395,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="430,79,395,85,394,79,429,74"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Estimate_a502f5a8057dafa0db29ae244dd666427.html#a502f5a8057dafa0db29ae244dd666427" title="Feed one new sample, updating the running estimate." alt="" coords="5,70,160,125"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="194,100,160,100,160,95,194,95"/>
+</map>

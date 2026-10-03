@@ -1,0 +1,7 @@
+<map id="MayaFlux::Yantra::GpuDispatchCore" name="MayaFlux::Yantra::GpuDispatchCore">
+<area shape="rect" id="Node000001" title="Non&#45;template base that owns all type&#45;independent GPU dispatch logic." alt="" coords="112,428,359,1241"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1GpuResourceManager.html" title="Encapsulates all Vulkan resource lifecycle behind Portal facades." alt="" coords="5,5,233,365"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="154,365,162,411,157,412,149,366"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Portal_1_1Graphics_1_1GpuComputeConfig.html" title="Plain&#45;data description of the compute shader to dispatch." alt="" coords="258,115,447,255"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="343,256,314,412,309,411,337,255"/>
+</map>

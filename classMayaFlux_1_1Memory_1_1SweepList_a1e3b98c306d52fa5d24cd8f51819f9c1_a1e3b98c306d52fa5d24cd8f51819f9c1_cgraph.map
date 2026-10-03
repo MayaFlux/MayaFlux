@@ -1,0 +1,5 @@
+<map id="MayaFlux::Memory::SweepList::~SweepList" name="MayaFlux::Memory::SweepList::~SweepList">
+<area shape="rect" id="Node000001" title="Drains and discards any remaining items without inspecting them." alt="" coords="5,5,227,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Memory_1_1SweepList_a4106febdc921026d5a1bf8ef08479338.html#a4106febdc921026d5a1bf8ef08479338" title="Blocking pass that finalizes every item currently held." alt="" coords="275,5,496,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="227,23,261,23,261,28,227,28"/>
+</map>

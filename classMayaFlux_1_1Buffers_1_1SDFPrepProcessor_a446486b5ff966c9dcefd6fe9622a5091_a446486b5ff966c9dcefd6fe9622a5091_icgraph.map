@@ -1,0 +1,11 @@
+<map id="MayaFlux::Buffers::SDFPrepProcessor::corner_count" name="MayaFlux::Buffers::SDFPrepProcessor::corner_count">
+<area shape="rect" id="Node000001" title=" " alt="" coords="488,53,720,93"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1SDFPrepProcessor_aeb0702fb7f9b09b0e99d6a8b3fcf6da9.html#aeb0702fb7f9b09b0e99d6a8b3fcf6da9" title="The core processing function that must be implemented by derived classes." alt="" coords="221,5,440,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="474,56,440,51,440,46,475,51"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1SDFPrepProcessor_a9b1c5db2d117c1b07dac69bb0eda4256.html#a9b1c5db2d117c1b07dac69bb0eda4256" title=" " alt="" coords="234,84,427,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="475,94,428,100,427,95,474,88"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1SDFPrepProcessor_a2bef649b10d7d21ac51375dd996f01d3.html#a2bef649b10d7d21ac51375dd996f01d3" title="Called when this processor is attached to a buffer." alt="" coords="7,44,171,99"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="220,96,171,88,172,82,221,91"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1SDFPrepProcessor_a67d94be13d83a0bc64a3b02760ffd1c1.html#a67d94be13d83a0bc64a3b02760ffd1c1" title="Rebuild owned buffers to match a new resolution." alt="" coords="5,123,173,177"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="221,132,174,139,173,134,220,126"/>
+</map>

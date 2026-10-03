@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nodes::Network::FieldOperator::get_vertex_layout" name="MayaFlux::Nodes::Network::FieldOperator::get_vertex_layout">
+<area shape="rect" id="Node000001" title="Get vertex layout describing vertex structure." alt="" coords="5,69,249,109"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1VertexLayout_a35c3aa5d9780535ccc1391e60789260c.html#a35c3aa5d9780535ccc1391e60789260c" title="Factory: layout for LineVertex (position, color, thickness, uv, normal, tangent)" alt="" coords="307,5,479,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="211,67,296,46,297,51,212,72"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kakshya_1_1VertexLayout_a7b7a30b2a13cb2676713a352f298f607.html#a7b7a30b2a13cb2676713a352f298f607" title="Factory: layout for MeshVertex (position, color, weight, uv, normal, tangent)" alt="" coords="297,69,489,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="250,87,284,87,284,92,250,92"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kakshya_1_1VertexLayout_ad0ac6ab6a88dd81d2ac8acda3c5c15bd.html#ad0ac6ab6a88dd81d2ac8acda3c5c15bd" title="Factory: layout for PointVertex (position, color, size, uv, normal, tangent)" alt="" coords="303,133,484,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="212,107,297,128,296,133,211,112"/>
+</map>

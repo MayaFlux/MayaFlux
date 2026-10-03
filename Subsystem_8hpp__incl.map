@@ -1,0 +1,7 @@
+<map id="Subsystem.hpp" name="Subsystem.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="41,5,164,31"/>
+<area shape="rect" id="Node000002" href="$ProcessingArchitecture_8hpp.html" title="Unified processing architecture for multimodal subsystem coordination." alt="" coords="5,79,200,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="105,31,105,65,100,65,100,31"/>
+<area shape="rect" id="Node000003" href="$ProcessingTokens_8hpp.html" title=" " alt="" coords="5,167,200,207"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="105,119,105,153,100,153,100,119"/>
+</map>

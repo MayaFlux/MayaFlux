@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::ImageData::allocate" name="MayaFlux::Kakshya::ImageData::allocate">
+<area shape="rect" id="Node000001" title="Allocate zeroed pixel storage of the variant format calls for." alt="" coords="5,5,164,45"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1ImageData_a21017cbe6ccc7ceec6b7fa9fb32e5aaf.html#a21017cbe6ccc7ceec6b7fa9fb32e5aaf" title="Number of pixel elements (not bytes), dispatched on variant." alt="" coords="212,5,411,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="164,23,198,23,198,28,164,28"/>
+</map>

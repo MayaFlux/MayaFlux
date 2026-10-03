@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::DataReadProcessor::is_compatible_with" name="MayaFlux::Buffers::DataReadProcessor::is_compatible_with">
+<area shape="rect" id="Node000001" title="Checks if this processor can handle the specified buffer type." alt="" coords="280,45,448,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1DataReadProcessor_a3ffbe7a15e665bfb39ddb82ea4e6eb1e.html#a3ffbe7a15e665bfb39ddb82ea4e6eb1e" title="Called when this processor is attached to a buffer." alt="" coords="32,5,205,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="266,59,205,49,206,44,267,54"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1DataReadProcessor_a4c8f071d87e2733972aadd2d41e74c7c.html#a4c8f071d87e2733972aadd2d41e74c7c" title="The core processing function that must be implemented by derived classes." alt="" coords="5,84,232,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="267,91,232,96,232,91,266,85"/>
+</map>

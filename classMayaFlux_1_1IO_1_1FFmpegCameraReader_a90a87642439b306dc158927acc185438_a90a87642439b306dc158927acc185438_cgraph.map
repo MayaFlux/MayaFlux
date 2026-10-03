@@ -1,0 +1,9 @@
+<map id="MayaFlux::IO::FFmpegCameraReader::start_decode_thread" name="MayaFlux::IO::FFmpegCameraReader::start_decode_thread">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,37,225,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1FFmpegCameraReader_a325f3cfd06c93db07e9b502b2203bc70.html#a325f3cfd06c93db07e9b502b2203bc70" title=" " alt="" coords="273,5,493,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="225,42,259,37,260,43,226,47"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1FFmpegCameraReader_ad6505780d79ee7cc58d9a7216ea2412d.html#ad6505780d79ee7cc58d9a7216ea2412d" title=" " alt="" coords="273,69,493,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="226,68,260,72,259,77,225,73"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1FFmpegCameraReader_aa1a9d92180d2b246f123f6c3c2958ca7.html#aa1a9d92180d2b246f123f6c3c2958ca7" title="Produce one frame into the container." alt="" coords="541,5,761,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="493,23,528,23,528,28,493,28"/>
+</map>

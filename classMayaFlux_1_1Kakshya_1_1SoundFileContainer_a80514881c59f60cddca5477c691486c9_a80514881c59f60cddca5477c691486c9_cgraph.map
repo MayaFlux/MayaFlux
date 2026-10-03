@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::SoundFileContainer::get_duration_seconds" name="MayaFlux::Kakshya::SoundFileContainer::get_duration_seconds">
+<area shape="rect" id="Node000001" title="Enable debug output for this container." alt="" coords="5,5,169,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a0defd3d1f54ad0b0d9f63c41d1d2e8f1.html#a0defd3d1f54ad0b0d9f63c41d1d2e8f1" title="Convert from position units (e.g., frame/sample index) to time (seconds)." alt="" coords="217,5,389,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="170,30,203,30,203,35,170,35"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kakshya_a908fc75a34a6f60dd98f379e4f2677d1.html#a908fc75a34a6f60dd98f379e4f2677d1" title="Convert position (samples/frames) to time (seconds) given a sample rate." alt="" coords="437,13,596,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="390,30,424,30,424,35,390,35"/>
+</map>

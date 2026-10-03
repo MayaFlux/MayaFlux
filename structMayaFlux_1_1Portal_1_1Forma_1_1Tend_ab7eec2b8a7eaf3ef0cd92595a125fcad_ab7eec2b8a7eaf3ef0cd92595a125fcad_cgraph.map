@@ -1,0 +1,11 @@
+<map id="MayaFlux::Portal::Forma::Tend::bridge" name="MayaFlux::Portal::Forma::Tend::bridge">
+<area shape="rect" id="Node000001" title="Bridge::Binding handle for result&#39;s element." alt="" coords="5,69,187,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Bridge_a406d01c8f66211d2ddefc151fdb68c82.html#a406d01c8f66211d2ddefc151fdb68c82" title="Return a Binding handle for the element registered under id." alt="" coords="235,5,416,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="168,67,240,46,241,52,169,72"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1internal_abdc2f8c3b42bcb7e0e99aae7e15a4615.html#abdc2f8c3b42bcb7e0e99aae7e15a4615" title="Accessor for the process&#45;wide Atelier." alt="" coords="235,69,416,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="187,87,221,87,221,92,187,92"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Forma_1_1internal_1_1Atelier_ae6a68b62f4ba807365f83dc74b9671dd.html#ae6a68b62f4ba807365f83dc74b9671dd" title="Bridge instance constructed during initialize." alt="" coords="235,133,416,173"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="169,107,241,127,240,132,168,112"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Forma_1_1internal_1_1Atelier_ad532f0c0c5f3b22f4c31e182c127b3df.html#ad532f0c0c5f3b22f4c31e182c127b3df" title=" " alt="" coords="464,69,659,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="416,87,450,87,450,92,416,92"/>
+</map>

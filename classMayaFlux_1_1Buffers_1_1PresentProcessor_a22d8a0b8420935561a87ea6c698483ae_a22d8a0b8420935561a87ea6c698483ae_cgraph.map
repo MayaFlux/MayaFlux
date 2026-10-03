@@ -1,0 +1,17 @@
+<map id="MayaFlux::Buffers::PresentProcessor::processing_function" name="MayaFlux::Buffers::PresentProcessor::processing_function">
+<area shape="rect" id="Node000001" title="Executes the render callback." alt="" coords="5,106,217,161"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1PresentProcessor_a6212541d4b11fad6638fe5117e8361c5.html#a6212541d4b11fad6638fe5117e8361c5" title=" " alt="" coords="265,106,460,161"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="217,131,251,131,251,136,217,136"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a54c4e0f2eb44a261d8463e8423e3746d.html#a54c4e0f2eb44a261d8463e8423e3746d" title="Get the global render flow instance." alt="" coords="510,5,707,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="410,103,507,55,525,48,527,53,509,60,412,108"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="525,70,692,125"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="460,116,511,109,512,114,461,122"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a715d57394465ff2924727d7c82d87e7b.html#a715d57394465ff2924727d7c82d87e7b" title="Get the global shader compiler instance." alt="" coords="510,149,707,189"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="461,145,497,150,496,156,460,150"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="508,213,709,253"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="419,158,509,199,529,206,527,211,507,204,417,163"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1RenderFlow_a427f34bcec94e920d4dbbb76ae7f175f.html#a427f34bcec94e920d4dbbb76ae7f175f" title=" " alt="" coords="757,5,955,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="707,23,744,23,744,28,707,28"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="757,149,955,189"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="707,167,744,167,744,172,707,172"/>
+</map>

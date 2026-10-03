@@ -1,0 +1,15 @@
+<map id="MayaFlux::Kakshya::ContainerDataStructure::image_interleaved" name="MayaFlux::Kakshya::ContainerDataStructure::image_interleaved">
+<area shape="rect" id="Node000001" title="Create structure for interleaved image data." alt="" coords="543,84,717,139"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_a3c3db06f96aa71048efbb69b369f25c7.html#a3c3db06f96aa71048efbb69b369f25c7" title=" " alt="" coords="315,5,493,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="537,82,482,63,484,58,538,77"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_a4f3732dbd3029c2933d6d2f2b3efde3f.html#a4f3732dbd3029c2933d6d2f2b3efde3f" title=" " alt="" coords="313,84,495,139"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="529,114,495,114,495,109,529,109"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_a159d938b0c8e93c31384ca00885bb900.html#a159d938b0c8e93c31384ca00885bb900" title="Construct a VideoStreamContainer with specified parameters." alt="" coords="315,163,493,217"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="538,146,484,165,482,160,537,141"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_a134ea188dc15effabb7d24cb33f658cc.html#a134ea188dc15effabb7d24cb33f658cc" title="Construct an empty container with declared dimensions." alt="" coords="9,13,261,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="302,35,262,35,262,30,302,30"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_adc912e0c1f0eca057044a7cfdf00ccf9.html#adc912e0c1f0eca057044a7cfdf00ccf9" title="Reallocate m_data and m_processed_data to match the current window dimensions." alt="" coords="41,81,230,136"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="299,113,230,112,230,107,299,108"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_a34919c923894042f1e21d380db8649d3.html#a34919c923894042f1e21d380db8649d3" title="Construct from an existing managed window." alt="" coords="5,161,265,201"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="301,142,266,151,219,163,218,158,265,146,299,137"/>
+</map>

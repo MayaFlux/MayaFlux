@@ -1,0 +1,41 @@
+<map id="MayaFlux::Core::VKSwapchain::recreate" name="MayaFlux::Core::VKSwapchain::recreate">
+<area shape="rect" id="Node000001" title="Recreate swapchain (for window resize)" alt="" coords="5,55,225,95"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VKSwapchain_abe5f9e7312b2874fd69f65d828aaafed.html#abe5f9e7312b2874fd69f65d828aaafed" title="Cleanup old swapchain during recreation." alt="" coords="541,55,761,95"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="226,72,527,72,527,77,226,77"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1VKContext_a41228db586851246809c40f704b64292.html#a41228db586851246809c40f704b64292" title="Get logical device." alt="" coords="809,148,1009,188"/>
+<area shape="poly" id="edge21_Node000001_Node000003" title=" " alt="" coords="183,52,296,26,366,14,443,6,523,3,604,6,685,18,762,40,800,59,834,83,886,135,882,139,830,87,797,63,760,45,684,23,604,11,523,8,443,11,367,20,297,31,184,57"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1VKSwapchain_aa5a470a3b0687d52cc913a8f9c4e0023.html#aa5a470a3b0687d52cc913a8f9c4e0023" title="Create swapchain for the given surface using VKContext." alt="" coords="273,329,493,369"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="138,93,355,317,351,321,134,97"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="726,92,762,104,852,140,850,145,760,109,724,97"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1VKDevice_ac91623c4b7b52f1f5f7460ef91021583.html#ac91623c4b7b52f1f5f7460ef91021583" title="Get logical device handle." alt="" coords="1057,148,1252,188"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="1009,165,1044,165,1044,171,1009,171"/>
+<area shape="poly" id="edge11_Node000005_Node000002" title=" " alt="" coords="389,328,409,282,441,222,484,159,511,130,540,104,548,99,551,103,543,109,514,133,488,162,445,224,414,284,394,330"/>
+<area shape="poly" id="edge15_Node000005_Node000003" title=" " alt="" coords="427,327,541,283,602,266,651,258,700,249,760,232,856,191,858,196,762,237,701,254,652,263,603,272,542,288,429,332"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Core_1_1VKSwapchain_a0310bb9d24c814e83790397489a0803f.html#a0310bb9d24c814e83790397489a0803f" title="Choose swap extent based on capabilities." alt="" coords="541,297,761,337"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="493,333,527,329,528,335,494,339"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Core_1_1VKSwapchain_a051118ab303da0441ebcb08a1b47c2fb.html#a051118ab303da0441ebcb08a1b47c2fb" title="Choose best present mode from available modes based on config." alt="" coords="541,425,761,465"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="431,367,542,411,565,418,564,423,540,416,429,372"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Core_1_1VKSwapchain_aaf073740edeebd7898331b08ba2c57cd.html#aaf073740edeebd7898331b08ba2c57cd" title="Choose best surface format from available formats based on config." alt="" coords="541,489,761,529"/>
+<area shape="poly" id="edge8_Node000005_Node000009" title=" " alt="" coords="406,368,464,421,502,450,543,475,557,482,555,487,540,480,499,454,461,425,402,371"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Core_1_1VKSwapchain_a1324c4bddf3ac8de7b3e03ebfd1e22da.html#a1324c4bddf3ac8de7b3e03ebfd1e22da" title="Create image views for swapchain images." alt="" coords="541,361,761,401"/>
+<area shape="poly" id="edge12_Node000005_Node000012" title=" " alt="" coords="494,360,528,364,527,369,493,365"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Core_1_1VKSwapchain_aa6302b6dd5e1bf68929ec2f0153f6094.html#aa6302b6dd5e1bf68929ec2f0153f6094" title="Find an HDR&#45;capable format from available formats." alt="" coords="541,553,761,593"/>
+<area shape="poly" id="edge14_Node000005_Node000013" title=" " alt="" coords="398,368,420,405,453,451,494,498,543,539,553,545,550,550,540,543,490,502,449,454,416,408,393,371"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Core_1_1VKContext_abb26eca0db297f0a9545aee095450aa1.html#abb26eca0db297f0a9545aee095450aa1" title="Get physical device." alt="" coords="551,617,751,657"/>
+<area shape="poly" id="edge16_Node000005_Node000014" title=" " alt="" coords="394,368,412,416,443,480,487,546,513,577,543,603,550,608,547,613,540,607,510,580,483,550,439,483,408,419,389,370"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Core_1_1VKContext_a78a07e47323ba73f5420e97642e1b90b.html#a78a07e47323ba73f5420e97642e1b90b" title="Get graphics surface info." alt="" coords="551,681,751,721"/>
+<area shape="poly" id="edge18_Node000005_Node000016" title=" " alt="" coords="391,369,406,428,435,508,455,552,480,594,509,633,543,667,549,672,546,676,540,671,505,637,475,597,451,554,430,510,401,429,386,370"/>
+<area shape="rect" id="Node000017" href="$structMayaFlux_1_1Core_1_1SwapchainSupportDetails_aba51ba0aa26259827040406335263ce0.html#aba51ba0aa26259827040406335263ce0" title=" " alt="" coords="549,119,754,159"/>
+<area shape="poly" id="edge19_Node000005_Node000017" title=" " alt="" coords="395,327,418,293,451,250,492,206,540,168,551,162,553,167,543,173,496,210,455,253,422,296,399,330"/>
+<area shape="rect" id="Node000018" href="$classMayaFlux_1_1Core_1_1VKSwapchain_a4cbb6f79982d6870316d521aa757d0c3.html#a4cbb6f79982d6870316d521aa757d0c3" title="Query swapchain support details for a device." alt="" coords="541,183,761,223"/>
+<area shape="poly" id="edge20_Node000005_Node000018" title=" " alt="" coords="408,327,466,284,540,239,571,225,573,230,543,244,469,288,411,331"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Core_a921ab21e40ccaba71211bac8aad94025.html#a921ab21e40ccaba71211bac8aad94025" title=" " alt="" coords="837,425,982,465"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="762,443,823,443,823,448,762,448"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_1_1Core_a92d87611501b97a1bc7b059c30b46d18.html#a92d87611501b97a1bc7b059c30b46d18" title=" " alt="" coords="837,553,982,593"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="733,527,824,549,823,555,732,532"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_1_1Core_a54d468030300d13e49f95e8db19b6a70.html#a54d468030300d13e49f95e8db19b6a70" title=" " alt="" coords="837,489,982,529"/>
+<area shape="poly" id="edge10_Node000009_Node000011" title=" " alt="" coords="762,507,823,507,823,512,762,512"/>
+<area shape="poly" id="edge13_Node000012_Node000003" title=" " alt="" coords="738,359,760,347,801,313,837,273,888,198,893,201,841,277,805,317,763,351,740,363"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Core_1_1VKDevice_a094d1ed720c72ced04293743f4b2a63e.html#a094d1ed720c72ced04293743f4b2a63e" title="Get physical device handle." alt="" coords="812,617,1007,657"/>
+<area shape="poly" id="edge17_Node000014_Node000015" title=" " alt="" coords="751,635,798,635,798,640,751,640"/>
+</map>

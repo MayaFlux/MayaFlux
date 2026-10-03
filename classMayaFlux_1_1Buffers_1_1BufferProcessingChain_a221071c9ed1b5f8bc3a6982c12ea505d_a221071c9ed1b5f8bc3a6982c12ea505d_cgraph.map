@@ -1,0 +1,11 @@
+<map id="MayaFlux::Buffers::BufferProcessingChain::remove_processor_anywhere" name="MayaFlux::Buffers::BufferProcessingChain::remove_processor_anywhere">
+<area shape="rect" id="Node000001" title="Removes a processor from any slot associated with a buffer." alt="" coords="5,92,227,147"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_a3f49ac5def1875caa775f772fbd43097.html#a3f49ac5def1875caa775f772fbd43097" title=" " alt="" coords="275,92,481,147"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="227,117,261,117,261,122,227,122"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_abca2644c7372664e91b42713966f2efa.html#abca2644c7372664e91b42713966f2efa" title=" " alt="" coords="529,5,752,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="461,89,544,62,545,67,462,94"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_a46d8239850f11d0ec31e275232bb011c.html#a46d8239850f11d0ec31e275232bb011c" title=" " alt="" coords="530,85,751,154"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="481,117,516,117,516,122,481,122"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_ac7fd9f1f3cf9d993aac0a4d64b1601b0.html#ac7fd9f1f3cf9d993aac0a4d64b1601b0" title=" " alt="" coords="543,179,738,233"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="462,144,545,172,544,177,461,149"/>
+</map>

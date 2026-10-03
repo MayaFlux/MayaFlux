@@ -1,0 +1,9 @@
+<map id="Transform.hpp" name="Transform.hpp">
+<area shape="rect" id="Node000001" title="Discrete sequence transformation primitives for MayaFlux::Kinesis." alt="" coords="283,5,398,31"/>
+<area shape="rect" id="Node000002" href="$MathematicalTransformer_8hpp.html" title=" " alt="" coords="5,79,223,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="292,37,151,81,150,76,290,32"/>
+<area shape="rect" id="Node000003" href="$TemporalTransformer_8hpp.html" title=" " alt="" coords="247,79,434,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="343,44,343,79,338,79,338,44"/>
+<area shape="rect" id="Node000004" href="$Transform_8cpp.html" title=" " alt="" coords="458,79,573,104"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="382,33,488,76,486,81,380,38"/>
+</map>

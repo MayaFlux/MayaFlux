@@ -1,0 +1,16 @@
+<map id="MayaFlux::Core::TaskSchedulerHandle::process" name="MayaFlux::Core::TaskSchedulerHandle::process">
+<area shape="rect" id="Node000001" title="Process all tasks in token domain." alt="" coords="873,37,1099,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1GraphicsSubsystem_af7661b41b9eb2e292868aca2f7116b9a.html#af7661b41b9eb2e292868aca2f7116b9a" title="Unified processing callback (alternative to separate methods)" alt="" coords="610,5,799,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="860,46,799,39,800,33,860,40"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1AudioSubsystem_a528e097a9ed4c0852b3d16be5ba37c75.html#a528e097a9ed4c0852b3d16be5ba37c75" title="Processes output data for audio interface." alt="" coords="584,69,825,109"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="860,74,826,78,825,73,860,69"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1GraphicsSubsystem_a5570e0e163a26bb602d622048a29c73f.html#a5570e0e163a26bb602d622048a29c73f" title="Graphics thread main loop." alt="" coords="295,5,536,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="596,28,536,28,536,23,596,23"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1GraphicsSubsystem_a34118595a38cba09a09a08824f4d0283.html#a34118595a38cba09a09a08824f4d0283" title="Start the subsystem&#39;s processing/event loops." alt="" coords="31,5,221,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="281,28,221,28,221,23,281,23"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Core_1_1AudioSubsystem_a5d75ecc901d686219b8b39ca4ad68ca4.html#a5d75ecc901d686219b8b39ca4ad68ca4" title="Processes both input and output data in full&#45;duplex mode." alt="" coords="295,69,536,109"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="570,92,536,92,536,87,570,87"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Core_1_1AudioSubsystem_aee1e241d09520e5661e05a4b50eead99.html#aee1e241d09520e5661e05a4b50eead99" title="Register audio backend callbacks for real&#45;time processing." alt="" coords="5,97,247,137"/>
+<area shape="poly" id="edge7_Node000005_Node000007" title=" " alt="" coords="602,115,536,124,386,131,247,128,247,122,386,125,536,119,602,109"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="281,105,247,108,247,103,281,100"/>
+</map>

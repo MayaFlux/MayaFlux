@@ -1,0 +1,22 @@
+<map id="MayaFlux::Kinesis::Discrete::mean" name="MayaFlux::Kinesis::Discrete::mean">
+<area shape="rect" id="Node000001" title="Arithmetic mean per window." alt="" coords="852,153,1001,193"/>
+<area shape="poly" id="edge12_Node000001_Node000001" title=" " alt="" coords="963,141,950,134,927,131,906,133,893,138,889,144,891,152,886,153,884,143,890,134,905,128,927,126,952,129,966,136"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a202a4ceffcbf4e8085f73395be1740b8.html#a202a4ceffcbf4e8085f73395be1740b8" title="Coefficient of variation (std_dev / mean) per window." alt="" coords="634,29,786,84"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="878,148,803,106,766,86,768,82,805,101,880,143"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1StatisticalAnalyzer_ac6b9656bbc2b37d4603de52ef0115d85.html#ac6b9656bbc2b37d4603de52ef0115d85" title="Compute statistical values using span (zero&#45;copy processing)" alt="" coords="303,89,568,129"/>
+<area shape="poly" id="edge5_Node000001_Node000003" title=" " alt="" coords="838,162,804,157,568,127,568,121,804,151,839,156"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1StatisticalAnalyzer_a853e8c531c62174e89938bf0eae8a7d9.html#a853e8c531c62174e89938bf0eae8a7d9" title="Create comprehensive analysis result." alt="" coords="319,153,552,193"/>
+<area shape="poly" id="edge6_Node000001_Node000005" title=" " alt="" coords="838,175,552,175,552,170,838,170"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Yantra_a599f6157469391d88c0afdcc9c08d1d2.html#a599f6157469391d88c0afdcc9c08d1d2" title=" " alt="" coords="616,210,804,250"/>
+<area shape="poly" id="edge8_Node000001_Node000006" title=" " alt="" coords="839,198,787,213,786,207,838,193"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Yantra_a33957cc2e40e2d6acc33295b88af9dee.html#a33957cc2e40e2d6acc33295b88af9dee" title=" " alt="" coords="616,274,804,314"/>
+<area shape="poly" id="edge10_Node000001_Node000008" title=" " alt="" coords="893,204,853,235,805,264,779,276,777,271,803,260,850,231,890,199"/>
+<area shape="poly" id="edge2_Node000002_Node000002" title=" " alt="" coords="746,18,733,11,710,8,691,10,679,15,673,21,673,29,668,29,668,19,675,10,690,5,710,3,735,6,748,14"/>
+<area shape="poly" id="edge3_Node000002_Node000003" title=" " alt="" coords="621,76,542,91,541,86,620,71"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1StatisticalAnalyzer_ada59b9d30d969a895d8693fc96381700.html#ada59b9d30d969a895d8693fc96381700" title="Core analysis implementation &#45; creates analysis result AND pipeline output." alt="" coords="5,121,255,161"/>
+<area shape="poly" id="edge4_Node000003_Node000004" title=" " alt="" coords="289,127,255,130,255,125,289,121"/>
+<area shape="poly" id="edge7_Node000005_Node000004" title=" " alt="" coords="304,162,255,156,255,151,305,156"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Yantra_1_1FeatureExtractor_a6625311b756518d90e3d5ef2e4125e10.html#a6625311b756518d90e3d5ef2e4125e10" title="Core extraction implementation &#45; delegates to ExtractionHelper." alt="" coords="312,245,559,285"/>
+<area shape="poly" id="edge9_Node000006_Node000007" title=" " alt="" coords="603,246,559,252,559,246,602,241"/>
+<area shape="poly" id="edge11_Node000008_Node000007" title=" " alt="" coords="602,285,559,281,559,275,603,280"/>
+</map>

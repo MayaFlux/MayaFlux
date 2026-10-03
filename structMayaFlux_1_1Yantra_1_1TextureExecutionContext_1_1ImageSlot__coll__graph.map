@@ -1,0 +1,13 @@
+<map id="MayaFlux::Yantra::TextureExecutionContext::ImageSlot" name="MayaFlux::Yantra::TextureExecutionContext::ImageSlot">
+<area shape="rect" id="Node000001" title="One declared image binding: its GpuBufferBinding descriptor, the currently staged VKImage,..." alt="" coords="75,891,277,1011"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Portal_1_1Graphics_1_1GpuBufferBinding.html" title="Declares a single storage buffer or image binding a compute shader expects." alt="" coords="5,583,195,763"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="127,763,158,874,153,875,122,764"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ImageCacheSet.html" title="Cache images keyed by immutable allocation properties." alt="" coords="219,533,408,813"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="249,815,222,868,218,877,213,875,218,865,244,812"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Portal_1_1Graphics_1_1ImageCacheSet_1_1Entry.html" title=" " alt="" coords="219,391,408,471"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="316,471,316,517,311,517,311,471"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Portal_1_1Graphics_1_1ImageCacheEntry.html" title="Image retained by the producing owner." alt="" coords="219,248,408,328"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="316,328,316,374,311,374,311,328"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Portal_1_1Graphics_1_1ImageKey.html" title="Immutable properties that determine whether an image can be reused." alt="" coords="219,5,408,185"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="316,186,316,232,311,232,311,186"/>
+</map>

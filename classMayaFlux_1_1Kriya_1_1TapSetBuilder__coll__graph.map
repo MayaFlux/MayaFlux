@@ -1,0 +1,15 @@
+<map id="MayaFlux::Kriya::TapSetBuilder" name="MayaFlux::Kriya::TapSetBuilder">
+<area shape="rect" id="Node000001" title="Describes a tap set one tap at a time, then starts it." alt="" coords="31,1483,249,1868"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferManager.html" title="Token&#45;based multimodal buffer management system for unified data stream processing." alt="" coords="5,753,189,1217"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="114,1217,130,1466,124,1466,109,1218"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler.html" title="Token&#45;based multimodal task scheduling system for unified coroutine processing." alt="" coords="213,551,437,1420"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="216,1403,198,1467,193,1466,211,1402"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Vruta_1_1SampleClock.html" title="Sample&#45;accurate timing system for audio processing domain." alt="" coords="79,233,294,459"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="214,458,230,534,225,535,208,460"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Vruta_1_1IClock.html" title="Abstract base interface for all clock types in the multimodal scheduling system." alt="" coords="102,5,271,171"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="189,185,189,233,184,233,184,185"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Vruta_1_1TaskScheduler_1_1PendingTaskOp.html" title=" " alt="" coords="318,296,541,396"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="424,397,401,535,396,534,419,396"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Vruta_1_1TaskEntry.html" title=" " alt="" coords="333,45,525,131"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="432,131,432,279,427,279,427,131"/>
+</map>

@@ -1,0 +1,11 @@
+<map id="MayaFlux::Portal::Forma::internal::Atelier::operator=" name="MayaFlux::Portal::Forma::internal::Atelier::operator=">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,37,211,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a2bcd2456c1f78a74fab895d79a68875c.html#a2bcd2456c1f78a74fab895d79a68875c" title="Release stored references." alt="" coords="259,37,440,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="211,55,245,55,245,60,211,60"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1internal_abdc2f8c3b42bcb7e0e99aae7e15a4615.html#abdc2f8c3b42bcb7e0e99aae7e15a4615" title="Accessor for the process&#45;wide Atelier." alt="" coords="499,5,680,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="440,43,484,37,485,42,440,48"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Forma_1_1internal_1_1Atelier_a033981bc857fb67239841a34907f1561.html#a033981bc857fb67239841a34907f1561" title=" " alt="" coords="488,69,691,109"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="440,67,475,71,474,77,440,72"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Forma_1_1internal_1_1Atelier_ad532f0c0c5f3b22f4c31e182c127b3df.html#ad532f0c0c5f3b22f4c31e182c127b3df" title=" " alt="" coords="739,5,933,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="680,23,725,23,725,28,680,28"/>
+</map>

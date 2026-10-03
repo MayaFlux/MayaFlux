@@ -1,0 +1,9 @@
+<map id="MayaFlux::Portal::Text::TypeFaceFoundry::shutdown" name="MayaFlux::Portal::Text::TypeFaceFoundry::shutdown">
+<area shape="rect" id="Node000001" title="Release the FreeType library handle." alt="" coords="509,41,720,81"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Text_a7614567fe42437ca2d87a88e48bd7893.html#a7614567fe42437ca2d87a88e48bd7893" title="Shutdown Portal::Text." alt="" coords="269,5,435,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="495,48,435,39,436,34,496,42"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Text_1_1TypeFaceFoundry_a880af4cfb956e3db69ed1fb81b809579.html#a880af4cfb956e3db69ed1fb81b809579" title=" " alt="" coords="243,70,461,125"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="496,80,462,85,461,80,495,75"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1GraphicsSubsystem_add3c53f617b297ce6b56ee3109fb931e.html#add3c53f617b297ce6b56ee3109fb931e" title="Shutdown and cleanup subsystem resources." alt="" coords="5,5,195,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="255,28,195,28,195,23,255,23"/>
+</map>

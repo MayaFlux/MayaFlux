@@ -1,0 +1,11 @@
+<map id="MayaFlux::Nexus::apply_attachment" name="MayaFlux::Nexus::apply_attachment">
+<area shape="rect" id="Node000001" title="Rebuild the transform from ctx and place every render processor of the buffer." alt="" coords="495,37,673,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1Emitter_ace3ccd027c99be69c82f09d89fbf1717.html#ace3ccd027c99be69c82f09d89fbf1717" title="Invoke the influence function with the supplied context." alt="" coords="256,5,447,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="481,46,446,41,447,36,481,41"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nexus_1_1Agent_a1d9dc25a849e8f3e6e70b8953a208189.html#a1d9dc25a849e8f3e6e70b8953a208189" title="Invoke the influence function with the supplied context." alt="" coords="261,69,442,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="481,74,443,80,442,74,481,69"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nexus_1_1Locus_a0bb203c2b2d2ac58739e0705e0fb6ae0.html#a0bb203c2b2d2ac58739e0705e0fb6ae0" title="Influence: push the current view to every view target, then run the inherited influence path." alt="" coords="17,37,197,77"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="247,78,197,72,197,66,248,73"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nexus_1_1Presence_aa6a8b8593f1257dd923026e5ae115d53.html#aa6a8b8593f1257dd923026e5ae115d53" title="Invoke the influence function with the supplied context." alt="" coords="5,101,208,141"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="248,106,208,111,208,105,247,100"/>
+</map>

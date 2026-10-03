@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Filters::Filter::get_frequency_response" name="MayaFlux::Nodes::Filters::Filter::get_frequency_response">
+<area shape="rect" id="Node000001" title="Calculates the complex frequency response at a specific frequency." alt="" coords="257,41,440,96"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Filters_1_1Filter_aed80cdbf3e99f4c3af3e98ba0ff0a4d9.html#aed80cdbf3e99f4c3af3e98ba0ff0a4d9" title="Calculates the magnitude response at a specific frequency." alt="" coords="16,5,199,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="243,56,199,49,199,44,244,50"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Filters_1_1Filter_adcfc7b6b2d8e6d1fc28b36beb9cf386a.html#adcfc7b6b2d8e6d1fc28b36beb9cf386a" title="Calculates the phase response at a specific frequency." alt="" coords="5,85,209,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="244,87,210,92,209,87,243,82"/>
+</map>

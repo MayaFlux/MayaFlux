@@ -1,0 +1,15 @@
+<map id="MayaFlux::Kriya::WindowEventAwaiter" name="MayaFlux::Kriya::WindowEventAwaiter">
+<area shape="rect" id="Node000001" title="Awaiter for suspending on GLFW window input events with optional filtering." alt="" coords="367,803,584,1083"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1EventAwaiter.html" title="Abstract base for all event&#45;driven awaiters." alt="" coords="5,417,220,643"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="176,653,204,697,235,738,299,805,368,862,365,867,296,808,231,742,199,700,172,656"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1WindowEventSource.html" title="Awaitable stream of GLFW window input events." alt="" coords="245,320,463,740"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="416,740,427,778,430,786,425,788,422,779,411,741"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Vruta_1_1EventSource.html" title="Abstract base for all awaitable signal sources." alt="" coords="249,5,459,271"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="357,285,357,320,351,320,351,285"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Vruta_1_1WindowEventFilter.html" title="Filter criteria for GLFW window input events." alt="" coords="487,450,706,610"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="576,611,524,788,519,786,571,610"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Vruta_1_1EventFilter.html" title="Base for event filters used by EventSources to match signals to awaiters." alt="" coords="497,105,696,171"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="599,185,599,450,594,450,594,185"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Core_1_1WindowEvent.html" title="Event data for window and input events." alt="" coords="730,427,943,633"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="791,634,758,689,720,742,662,803,599,857,595,853,658,799,716,738,754,686,786,631"/>
+</map>

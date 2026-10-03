@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nodes::NodeGraphManager::register_network_global" name="MayaFlux::Nodes::NodeGraphManager::register_network_global">
+<area shape="rect" id="Node000001" title="Register network globally (like nodes)" alt="" coords="527,41,771,81"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_a4208d43e56d6454dbc69b2f1ffb4aef0.html#a4208d43e56d6454dbc69b2f1ffb4aef0" title="Add a network to a processing token." alt="" coords="263,5,479,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="513,46,478,42,479,37,513,41"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_abc259d5ff92323060490dc7968c95ec6.html#abc259d5ff92323060490dc7968c95ec6" title="Routes a network&#39;s output to specific channels within a token domain." alt="" coords="263,70,479,125"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="513,82,479,86,478,81,513,76"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kriya_1_1TemporalActivation_a5472441ec2fd9cc067e55eb8f48f1a6d.html#a5472441ec2fd9cc067e55eb8f48f1a6d" title="Activates a node network for a specified duration." alt="" coords="5,5,215,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="249,28,215,28,215,23,249,23"/>
+</map>

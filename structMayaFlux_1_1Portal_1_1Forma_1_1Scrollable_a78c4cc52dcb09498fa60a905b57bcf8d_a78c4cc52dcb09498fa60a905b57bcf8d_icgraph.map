@@ -1,0 +1,16 @@
+<map id="MayaFlux::Portal::Forma::Scrollable::indicator" name="MayaFlux::Portal::Forma::Scrollable::indicator">
+<area shape="rect" id="Node000001" title="Attach a caller&#45;built element as a live, draggable scroll indicator." alt="" coords="709,61,891,101"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Scrollable_a197b5073f36918705a3ccfa42f25cc53.html#a197b5073f36918705a3ccfa42f25cc53" title="A self&#45;contained wheel&#45;scroll handler bound to this Scrollable&#39;s own state." alt="" coords="464,61,661,101"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="696,84,661,84,661,79,696,79"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Scrollable_a35235f112f4f9f9eead110668fca88f7.html#a35235f112f4f9f9eead110668fca88f7" title="Register the viewport element, wire wheel scrolling, and populate scroll, offset, buf,..." alt="" coords="235,93,416,133"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="451,99,417,104,416,98,450,94"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Portal_1_1Forma_1_1TextField_ab37d173483ea4e704f5c55865e384d72.html#ab37d173483ea4e704f5c55865e384d72" title="Fluent creator: place this field inside an already&#45;placed Scrollable, growing itself taller than its ..." alt="" coords="235,29,416,69"/>
+<area shape="poly" id="edge7_Node000002_Node000006" title=" " alt="" coords="450,69,416,64,417,59,451,64"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a4d8d6a3f54c57284141331e37153b682.html#a4d8d6a3f54c57284141331e37153b682" title="Build a text&#45;capable FormaBuffer, register a TextField, and wire text editing onto it in one call." alt="" coords="5,29,187,69"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="239,92,167,72,169,67,241,87"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Portal_1_1Forma_aef42f7d8c0db50373605643eb762a89a.html#aef42f7d8c0db50373605643eb762a89a" title="Construct a scrollable viewport." alt="" coords="5,117,187,157"/>
+<area shape="poly" id="edge5_Node000003_Node000005" title=" " alt="" coords="221,127,187,130,187,125,221,122"/>
+<area shape="poly" id="edge4_Node000004_Node000004" title=" " alt="" coords="135,18,121,11,96,8,74,10,61,15,56,21,58,28,53,30,51,20,57,10,73,5,96,3,123,6,137,13"/>
+<area shape="poly" id="edge6_Node000005_Node000005" title=" " alt="" coords="135,106,121,99,96,96,74,98,61,103,56,109,58,116,53,118,51,108,57,98,73,93,96,91,123,94,137,101"/>
+<area shape="poly" id="edge8_Node000006_Node000004" title=" " alt="" coords="221,52,187,52,187,47,221,47"/>
+</map>

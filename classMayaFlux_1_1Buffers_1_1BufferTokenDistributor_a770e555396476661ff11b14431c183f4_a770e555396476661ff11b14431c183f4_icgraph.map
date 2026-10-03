@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::BufferTokenDistributor::distribute" name="MayaFlux::Buffers::BufferTokenDistributor::distribute">
+<area shape="rect" id="Node000001" title="Distribute a buffer based on its type and requested token." alt="" coords="239,5,405,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferTokenDistributor_ad7575e0fb09c136cb890d448bbe486ac.html#ad7575e0fb09c136cb890d448bbe486ac" title="Distribute with optional transfer target (for cross&#45;domain routing)" alt="" coords="5,5,191,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="225,35,191,35,191,30,225,30"/>
+</map>

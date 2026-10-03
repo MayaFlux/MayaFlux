@@ -1,0 +1,7 @@
+<map id="MayaFlux::Vruta::NetworkSource::pop_message" name="MayaFlux::Vruta::NetworkSource::pop_message">
+<area shape="rect" id="Node000001" title=" " alt="" coords="244,37,436,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1NetworkAwaiter_ac47f6fa1fbe66997ccd34ebfb242dd11.html#ac47f6fa1fbe66997ccd34ebfb242dd11" title="Check if a message is already queued." alt="" coords="5,5,196,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="230,45,196,41,197,35,231,40"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kriya_1_1NetworkAwaiter_ad6f4f86abdc9de97eeb95ad21a1352c9.html#ad6f4f86abdc9de97eeb95ad21a1352c9" title="Suspend the coroutine and register with the source." alt="" coords="5,69,196,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="231,75,197,79,196,74,230,69"/>
+</map>

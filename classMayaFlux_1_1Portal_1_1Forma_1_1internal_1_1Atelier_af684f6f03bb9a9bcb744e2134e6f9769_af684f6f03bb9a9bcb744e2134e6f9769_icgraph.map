@@ -1,0 +1,29 @@
+<map id="MayaFlux::Portal::Forma::internal::Atelier::create_layer" name="MayaFlux::Portal::Forma::internal::Atelier::create_layer">
+<area shape="rect" id="Node000001" title="Construct a Layer and a Context wired to window." alt="" coords="464,317,684,357"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Forma_acc0e19957fa04def8004abe53daa52dc.html#acc0e19957fa04def8004abe53daa52dc" title="Construct a Layer and a Context wired to window." alt="" coords="235,13,416,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="560,305,540,253,509,189,467,123,442,93,414,67,397,55,399,51,418,63,446,90,471,120,514,186,545,251,565,303"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Forma_1_1internal_1_1Atelier_a18530bd8200cf89d10e03b80eab9c811.html#a18530bd8200cf89d10e03b80eab9c811" title="Build a Surface from a SurfaceConfig, creating Layer and Context when config.layer/config...." alt="" coords="235,77,416,132"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="551,306,495,228,457,185,414,147,395,134,398,130,418,143,461,181,499,225,556,303"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Portal_1_1Forma_ab3e026869fd591493f2f89ca4f152dc1.html#ab3e026869fd591493f2f89ca4f152dc1" title="Open a dedicated window inspecting a single Buffer and its processing chain." alt="" coords="235,157,416,197"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="541,309,485,260,415,211,390,199,392,194,417,206,488,255,545,305"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a375aa9c35d0d0831a7d4e0ea7107b227.html#a375aa9c35d0d0831a7d4e0ea7107b227" title="Open a dedicated window inspecting a NodeNetwork." alt="" coords="235,221,416,261"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="512,314,415,275,383,263,385,258,417,270,514,309"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Portal_1_1Forma_adfbdd6c42f9561d725521af7689c221b.html#adfbdd6c42f9561d725521af7689c221b" title="Open a dedicated window inspecting a single Node and its modulator tree." alt="" coords="235,285,416,325"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="450,323,416,319,416,314,451,318"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a9f9e5f02ae1d8a9a827ca06994151d60.html#a9f9e5f02ae1d8a9a827ca06994151d60" title="Open a dedicated window inspecting a single Event." alt="" coords="235,349,416,389"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="451,355,416,360,416,354,450,350"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a037879cc8c63869664d3b6c8e1e32973.html#a037879cc8c63869664d3b6c8e1e32973" title="Open or show the BufferManager inspection window." alt="" coords="235,413,416,453"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="514,364,417,403,385,415,383,410,415,398,512,359"/>
+<area shape="rect" id="Node000012" href="$namespaceMayaFlux_1_1Portal_1_1Forma_af41897be30156c06741f924722e654f5.html#af41897be30156c06741f924722e654f5" title="Open or show the EventManager inspection window." alt="" coords="235,477,416,517"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="545,368,488,418,417,467,392,479,390,474,415,462,485,414,541,364"/>
+<area shape="rect" id="Node000013" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a9563fe8292595a238e507c2ff54f787e.html#a9563fe8292595a238e507c2ff54f787e" title="Open or show the NodeGraphManager inspection window." alt="" coords="235,541,416,581"/>
+<area shape="poly" id="edge12_Node000001_Node000013" title=" " alt="" coords="556,370,501,450,462,493,418,531,396,543,394,538,414,526,458,489,497,446,552,367"/>
+<area shape="rect" id="Node000014" href="$namespaceMayaFlux_1_1Portal_1_1Forma_abb516f8bf31335193993acea55db7843.html#abb516f8bf31335193993acea55db7843" title="Open or show the TaskScheduler inspection window." alt="" coords="235,605,416,645"/>
+<area shape="poly" id="edge13_Node000001_Node000014" title=" " alt="" coords="563,370,543,419,511,480,470,541,445,570,418,595,399,607,396,602,414,591,441,566,465,538,507,477,538,417,559,368"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Forma_1_1internal_1_1Atelier_a8a30e91a17ae12f678b1e68181b538dc.html#a8a30e91a17ae12f678b1e68181b538dc" title="Build a window through create_window, then a Surface on it." alt="" coords="5,5,187,60"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="224,76,183,63,184,57,225,71"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Portal_1_1Forma_acfceb7b07d32e4dc0389ee3b033d970c.html#acfceb7b07d32e4dc0389ee3b033d970c" title="Construct a Surface from a SurfaceConfig." alt="" coords="5,85,187,125"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="221,107,187,107,187,102,221,102"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a0134941e72f794b2ad2318f03eacb98b.html#a0134941e72f794b2ad2318f03eacb98b" title="Create a live plot in a new window." alt="" coords="5,149,187,189"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="222,136,169,151,168,146,221,131"/>
+</map>

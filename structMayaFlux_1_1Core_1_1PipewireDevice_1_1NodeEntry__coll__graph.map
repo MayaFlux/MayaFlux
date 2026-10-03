@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::PipewireDevice::NodeEntry" name="MayaFlux::Core::PipewireDevice::NodeEntry">
+<area shape="rect" id="Node000001" title=" " alt="" coords="13,273,193,393"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Core_1_1DeviceInfo.html" title="Contains digital audio device configuration parameters." alt="" coords="5,5,200,211"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="105,211,105,257,100,257,100,211"/>
+</map>

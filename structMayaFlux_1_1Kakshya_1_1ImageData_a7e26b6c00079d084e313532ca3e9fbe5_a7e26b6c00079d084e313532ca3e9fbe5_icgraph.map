@@ -1,0 +1,11 @@
+<map id="MayaFlux::Kakshya::ImageData::from_bytes" name="MayaFlux::Kakshya::ImageData::from_bytes">
+<area shape="rect" id="Node000001" title="Build an ImageData from raw pixel bytes in format&#39;s layout." alt="" coords="483,41,659,81"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1Chimera_a9d162be6360583b59b65a921b8fecf7b.html#a9d162be6360583b59b65a921b8fecf7b" title=" " alt="" coords="244,5,435,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="469,48,434,43,435,38,469,43"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1DataReadProcessor_abbb570695875c4632888b2f926f2925f.html#abbb570695875c4632888b2f926f2925f" title="Read the host pixel data a TextureBuffer retains." alt="" coords="246,70,433,125"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="469,80,433,85,432,80,468,75"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kriya_1_1Chimera_a0ca1ced8e90b76c407bf414c3f503ad7.html#a0ca1ced8e90b76c407bf414c3f503ad7" title=" " alt="" coords="5,5,196,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="230,28,196,28,196,23,230,23"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kriya_1_1detail_a4fe0640b29321d9daa3c236e3898e01a.html#a4fe0640b29321d9daa3c236e3898e01a" title="Arm the read that suits what the buffer is." alt="" coords="14,77,187,117"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="232,100,188,100,188,95,232,95"/>
+</map>

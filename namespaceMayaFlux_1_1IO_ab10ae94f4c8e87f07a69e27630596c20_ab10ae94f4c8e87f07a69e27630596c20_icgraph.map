@@ -1,0 +1,9 @@
+<map id="MayaFlux::IO::download_volume" name="MayaFlux::IO::download_volume">
+<area shape="rect" id="Node000001" title="Download named fields from a GPU&#45;resident volume into host VolumeData." alt="" coords="269,69,448,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1VolumeCapture_a419dead693181a9f096d878b65c2dfa3.html#a419dead693181a9f096d878b65c2dfa3" title="One frame&#39;s readback and write." alt="" coords="5,5,221,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="267,68,190,48,191,43,269,63"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1IOManager_ad018092eb065937d11a691d891b139fc.html#ad018092eb065937d11a691d891b139fc" title="Download and save a GPU&#45;resident volume to disk asynchronously." alt="" coords="20,69,207,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="256,92,207,92,207,87,256,87"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1IO_abe34ed6ba5fcb4c267a579a2792bc5cf.html#abe34ed6ba5fcb4c267a579a2792bc5cf" title="Save a volume directly to disk via the VolumeWriter registry." alt="" coords="40,133,187,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="269,115,187,137,186,132,268,110"/>
+</map>

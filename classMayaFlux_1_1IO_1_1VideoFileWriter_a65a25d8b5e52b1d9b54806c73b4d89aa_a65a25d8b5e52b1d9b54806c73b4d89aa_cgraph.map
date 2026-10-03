@@ -1,0 +1,70 @@
+<map id="MayaFlux::IO::VideoFileWriter::record" name="MayaFlux::IO::VideoFileWriter::record">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,362,221,402"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="1134,218,1301,272"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="222,389,421,400,662,405,780,402,888,393,978,377,1015,366,1044,354,1060,339,1068,321,1075,302,1092,283,1120,267,1122,271,1095,287,1080,305,1073,323,1065,342,1047,358,1016,371,979,382,888,398,780,407,662,411,421,406,221,394"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="1117,153,1318,193"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="119,361,137,314,168,252,211,187,238,158,268,134,369,71,417,48,462,31,507,17,551,9,638,3,728,11,823,29,1046,84,1082,95,1117,110,1177,143,1174,148,1114,115,1080,100,1045,89,822,34,727,16,638,8,551,14,508,23,464,36,419,53,372,76,271,138,241,162,215,191,172,254,142,316,124,363"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1VideoFileWriter_ae74c871c9f9d3c0dd6a3b7aa130ca302.html#ae74c871c9f9d3c0dd6a3b7aa130ca302" title=" " alt="" coords="269,782,485,822"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="120,402,132,470,158,566,178,619,203,670,234,719,271,762,286,774,283,778,268,766,230,722,198,673,173,621,153,568,126,471,114,403"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1IO_1_1VideoFileWriter_a2fd67ecbf341032261b25a5a835c288f.html#a2fd67ecbf341032261b25a5a835c288f" title=" " alt="" coords="269,617,485,657"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="137,401,347,605,343,609,134,405"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1IO_1_1VideoFileWriter_a833f96b4a816162e8ab82028507c3136.html#a833f96b4a816162e8ab82028507c3136" title=" " alt="" coords="813,958,1029,998"/>
+<area shape="poly" id="edge34_Node000001_Node000006" title=" " alt="" coords="123,402,141,454,172,524,215,600,241,635,271,667,298,690,323,707,372,727,423,742,486,768,574,814,641,853,709,890,798,932,847,951,845,956,796,937,707,894,639,857,572,819,484,773,421,747,370,732,321,711,295,695,267,671,237,639,211,602,167,526,136,455,118,403"/>
+<area shape="rect" id="Node000027" href="$classMayaFlux_1_1IO_1_1VideoFileWriter_a525c5787720892de0339211a5a3c58b8.html#a525c5787720892de0339211a5a3c58b8" title=" " alt="" coords="813,98,1029,138"/>
+<area shape="poly" id="edge33_Node000001_Node000027" title=" " alt="" coords="124,361,146,325,178,279,220,233,268,192,331,157,399,130,469,112,541,100,612,94,680,93,799,99,799,104,680,98,612,100,542,106,471,117,400,135,333,162,271,197,223,236,183,283,150,328,128,364"/>
+<area shape="rect" id="Node000028" href="$classMayaFlux_1_1IO_1_1VideoFileWriter_a610aa34ce6d52c4a9d0e1fe0053d3e0c.html#a610aa34ce6d52c4a9d0e1fe0053d3e0c" title=" " alt="" coords="269,206,485,246"/>
+<area shape="poly" id="edge35_Node000001_Node000028" title=" " alt="" coords="147,360,329,251,332,256,150,365"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="473,655,648,694,718,712,751,724,771,751,779,778,780,806,777,833,774,859,774,886,782,912,799,938,812,949,809,953,795,942,777,914,769,886,769,859,772,832,774,805,774,779,766,754,748,729,716,717,647,699,472,660"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1IO_1_1VideoFileWriter_a696c64fcff4d95462a6640f48495c71f.html#a696c64fcff4d95462a6640f48495c71f" title=" " alt="" coords="533,617,749,657"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="485,634,520,634,520,640,485,640"/>
+<area shape="poly" id="edge31_Node000007_Node000006" title=" " alt="" coords="728,655,751,674,773,709,781,743,780,776,775,809,770,841,770,873,778,905,799,938,811,949,808,953,795,941,773,908,765,874,765,841,770,808,775,775,776,743,768,711,747,678,725,659"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1IO_1_1FFmpegMuxContext_a81f6c081e70f3ae170a1ce0ba77c546b.html#a81f6c081e70f3ae170a1ce0ba77c546b" title="Write the container trailer, flush avio, and release all resources." alt="" coords="1093,745,1341,785"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="716,655,751,674,766,689,775,705,783,719,799,731,867,757,939,772,1012,778,1080,778,1080,783,1012,784,939,778,865,762,796,735,779,722,770,707,762,692,748,678,713,660"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Buffers_a18cd4cb90edc64b2da0254917a13bfe3.html#a18cd4cb90edc64b2da0254917a13bfe3" title="Allocate a persistent host&#45;visible staging buffer sized for repeated streaming uploads to an image of..." alt="" coords="838,290,1005,344"/>
+<area shape="poly" id="edge8_Node000007_Node000009" title=" " alt="" coords="651,616,708,523,749,466,795,411,830,379,866,350,869,355,834,383,799,415,753,469,713,526,656,618"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1IO_1_1VideoEncodeContext_a4c1014717853f1f36376ea68ffe6766d.html#a4c1014717853f1f36376ea68ffe6766d" title="Flush all buffered frames from the encoder to the mux." alt="" coords="821,681,1021,721"/>
+<area shape="poly" id="edge11_Node000007_Node000010" title=" " alt="" coords="730,655,821,675,819,681,729,660"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1IO_1_1FFmpegMuxContext_a7313991de8a5200ecafad7b4e69f1ed0.html#a7313991de8a5200ecafad7b4e69f1ed0" title=" " alt="" coords="1389,837,1637,877"/>
+<area shape="poly" id="edge19_Node000007_Node000012" title=" " alt="" coords="720,655,751,678,767,701,774,725,774,770,773,792,775,813,783,834,799,855,818,870,842,883,903,904,977,919,1058,929,1140,933,1218,933,1287,930,1341,922,1404,904,1461,880,1463,885,1406,909,1342,928,1287,935,1218,939,1140,939,1057,934,976,924,902,909,840,888,815,874,795,859,778,837,770,815,768,792,769,770,769,726,762,704,747,682,717,659"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1IO_1_1VideoEncodeContext_a737bc7557cae3f63d53aed62c89ad083.html#a737bc7557cae3f63d53aed62c89ad083" title="Encode one raw pixel frame into the mux context." alt="" coords="821,617,1021,657"/>
+<area shape="poly" id="edge16_Node000007_Node000015" title=" " alt="" coords="749,634,807,634,807,640,749,640"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1IO_1_1VideoEncodeContext_a49bafb9d120619ce8bd57ba352f3d250.html#a49bafb9d120619ce8bd57ba352f3d250" title=" " alt="" coords="821,425,1021,465"/>
+<area shape="poly" id="edge20_Node000007_Node000016" title=" " alt="" coords="654,615,710,546,751,508,796,475,809,468,811,473,799,479,754,512,714,550,658,619"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1IO_1_1FFmpegMuxContext_a4783fa9b9307e87ce7450d8f140be6b5.html#a4783fa9b9307e87ce7450d8f140be6b5" title="Allocate an output context and open the avio layer for writing." alt="" coords="797,805,1045,845"/>
+<area shape="poly" id="edge21_Node000007_Node000017" title=" " alt="" coords="723,655,751,674,763,687,770,701,776,727,782,753,788,765,799,778,827,797,824,801,796,782,784,768,777,755,771,728,765,703,758,690,748,678,720,660"/>
+<area shape="rect" id="Node000020" href="$classMayaFlux_1_1IO_1_1VideoEncodeContext_a4ab278db5ffaa734991943992f2fa18f.html#a4ab278db5ffaa734991943992f2fa18f" title="Open the encoder and register a video stream in the mux context." alt="" coords="821,489,1021,529"/>
+<area shape="poly" id="edge25_Node000007_Node000020" title=" " alt="" coords="668,614,726,576,796,539,816,531,818,536,798,544,728,581,671,619"/>
+<area shape="rect" id="Node000026" href="$classMayaFlux_1_1IO_1_1FFmpegMuxContext_a52c6230dd3f9b6451247a64d13007d98.html#a52c6230dd3f9b6451247a64d13007d98" title="Write the container header to the output file." alt="" coords="797,553,1045,593"/>
+<area shape="poly" id="edge32_Node000007_Node000026" title=" " alt="" coords="729,614,819,594,821,599,730,620"/>
+<area shape="poly" id="edge9_Node000009_Node000002" title=" " alt="" coords="1004,294,1120,266,1122,271,1005,300"/>
+<area shape="poly" id="edge10_Node000009_Node000003" title=" " alt="" coords="956,287,1017,244,1092,203,1111,195,1113,200,1094,207,1020,248,959,292"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1IO_1_1VideoEncodeContext_ac7d4751768209cf153d60de5a5a34f77.html#ac7d4751768209cf153d60de5a5a34f77" title=" " alt="" coords="1117,681,1317,721"/>
+<area shape="poly" id="edge12_Node000010_Node000011" title=" " alt="" coords="1022,698,1104,698,1104,704,1022,704"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1IO_1_1VideoEncodeContext_a788776b3bc449c83e126c49aebaf55bd.html#a788776b3bc449c83e126c49aebaf55bd" title="True if codec, scaler, and scratch frame are all ready." alt="" coords="1117,617,1317,657"/>
+<area shape="poly" id="edge15_Node000010_Node000014" title=" " alt="" coords="1014,678,1110,657,1112,663,1015,684"/>
+<area shape="poly" id="edge13_Node000011_Node000012" title=" " alt="" coords="1312,719,1342,731,1382,752,1420,777,1481,826,1478,830,1416,781,1379,757,1340,735,1310,724"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1IO_1_1FFmpegMuxContext_ac5b4514b670ada5e611f4c5732c65433.html#ac5b4514b670ada5e611f4c5732c65433" title="Submit one encoded packet for interleaved writing." alt="" coords="1389,681,1637,721"/>
+<area shape="poly" id="edge14_Node000011_Node000013" title=" " alt="" coords="1318,698,1376,698,1376,704,1318,704"/>
+<area shape="poly" id="edge17_Node000015_Node000011" title=" " alt="" coords="1015,655,1112,676,1110,681,1014,660"/>
+<area shape="poly" id="edge18_Node000015_Node000014" title=" " alt="" coords="1022,634,1104,634,1104,640,1022,640"/>
+<area shape="poly" id="edge22_Node000017_Node000008" title=" " alt="" coords="1020,802,1104,785,1105,790,1021,808"/>
+<area shape="rect" id="Node000018" href="$classMayaFlux_1_1IO_1_1FFmpegDemuxContext_a8ea9c7c404909356ac05d7aa28270c3e.html#a8ea9c7c404909356ac05d7aa28270c3e" title="Initialise FFmpeg logging level once per process." alt="" coords="1109,873,1325,913"/>
+<area shape="poly" id="edge23_Node000017_Node000018" title=" " alt="" coords="1010,843,1117,867,1116,873,1008,848"/>
+<area shape="rect" id="Node000019" href="$namespaceMayaFlux_1_1IO_af70273974a6d4e868b4c016d2f944547.html#af70273974a6d4e868b4c016d2f944547" title="Resolve a writable path against the configured output directory." alt="" coords="1135,809,1299,849"/>
+<area shape="poly" id="edge24_Node000017_Node000019" title=" " alt="" coords="1045,824,1122,825,1121,830,1045,829"/>
+<area shape="rect" id="Node000021" href="$classMayaFlux_1_1IO_1_1FFmpegMuxContext_a2a6a7789a0549d4291d15496b661bd55.html#a2a6a7789a0549d4291d15496b661bd55" title="Allocate a new AVStream inside this context." alt="" coords="1093,489,1341,529"/>
+<area shape="poly" id="edge26_Node000020_Node000021" title=" " alt="" coords="1022,506,1080,506,1080,512,1022,512"/>
+<area shape="rect" id="Node000022" href="$classMayaFlux_1_1IO_1_1VideoEncodeContext_ad71f6ecfdae355c75e2c35a0252b28d9.html#ad71f6ecfdae355c75e2c35a0252b28d9" title="Release all owned resources." alt="" coords="1117,553,1317,593"/>
+<area shape="poly" id="edge27_Node000020_Node000022" title=" " alt="" coords="1015,527,1112,548,1110,553,1014,532"/>
+<area shape="rect" id="Node000023" href="$classMayaFlux_1_1IO_1_1VideoEncodeContext_aa31c11cafe73debec2033b6a9682971b.html#aa31c11cafe73debec2033b6a9682971b" title=" " alt="" coords="1117,297,1317,337"/>
+<area shape="poly" id="edge28_Node000020_Node000023" title=" " alt="" coords="1020,490,1044,475,1056,460,1063,445,1067,413,1071,380,1078,363,1092,347,1104,338,1107,342,1095,351,1082,366,1076,381,1072,413,1068,446,1061,463,1047,479,1023,495"/>
+<area shape="rect" id="Node000024" href="$classMayaFlux_1_1IO_1_1FFmpegMuxContext_a26039c6ddc9dc868ea574f66cc9c06c5.html#a26039c6ddc9dc868ea574f66cc9c06c5" title="True if the context is open and ready to accept streams / packets." alt="" coords="1093,361,1341,401"/>
+<area shape="poly" id="edge29_Node000020_Node000024" title=" " alt="" coords="1020,487,1044,475,1059,460,1067,444,1075,427,1092,411,1101,405,1104,410,1095,415,1080,430,1072,446,1063,463,1047,479,1023,492"/>
+<area shape="rect" id="Node000025" href="$classMayaFlux_1_1IO_1_1VideoEncodeContext_a90d78a0b77c8f1924a4d8f5d1540db6a.html#a90d78a0b77c8f1924a4d8f5d1540db6a" title=" " alt="" coords="1117,425,1317,465"/>
+<area shape="poly" id="edge30_Node000020_Node000025" title=" " alt="" coords="1014,486,1110,465,1112,471,1015,492"/>
+<area shape="poly" id="edge38_Node000028_Node000002" title=" " alt="" coords="486,226,1120,240,1120,246,486,231"/>
+<area shape="poly" id="edge39_Node000028_Node000003" title=" " alt="" coords="485,217,1103,178,1103,183,486,222"/>
+<area shape="rect" id="Node000029" href="$classMayaFlux_1_1IO_1_1VideoFileWriter_abb3a46542ba67391e8caff0efd0fa0f9.html#abb3a46542ba67391e8caff0efd0fa0f9" title=" " alt="" coords="533,124,749,164"/>
+<area shape="poly" id="edge36_Node000028_Node000029" title=" " alt="" coords="441,204,563,165,564,170,443,209"/>
+<area shape="poly" id="edge37_Node000029_Node000027" title=" " alt="" coords="749,131,800,127,800,132,750,137"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kinesis::Vision::FindElementsParams" name="MayaFlux::Kinesis::Vision::FindElementsParams">
+<area shape="rect" id="Node000001" title="Parameters for VisionIntent::FindElements." alt="" coords="241,228,439,308"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1ConnectedComponentsParams.html" title="Connected&#45;component label export and color output." alt="" coords="5,8,219,163"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="191,161,240,202,261,217,258,221,237,206,188,165"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1FindContoursParams.html" title="Contour filtering, trace limits, and output selection." alt="" coords="243,5,437,165"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="343,166,343,212,337,212,337,166"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1SegmentationParams.html" title="How FindElements separates foreground from background." alt="" coords="462,35,663,135"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="504,137,402,220,399,216,501,133"/>
+</map>

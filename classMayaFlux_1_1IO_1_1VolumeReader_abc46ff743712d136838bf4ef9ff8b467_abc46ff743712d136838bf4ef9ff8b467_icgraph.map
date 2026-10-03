@@ -1,0 +1,5 @@
+<map id="MayaFlux::IO::VolumeReader::get_last_error" name="MayaFlux::IO::VolumeReader::get_last_error">
+<area shape="rect" id="Node000001" title="Get the last error message." alt="" coords="240,5,451,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1IOManager_a8b66f9c5953bf2df92a20c61835783f5.html#a8b66f9c5953bf2df92a20c61835783f5" title="Load a volume file into a newly constructed VolumeGridBuffer." alt="" coords="5,5,192,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="226,28,192,28,192,23,226,23"/>
+</map>

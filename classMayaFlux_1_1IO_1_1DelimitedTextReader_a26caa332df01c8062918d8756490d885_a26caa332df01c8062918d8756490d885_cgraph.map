@@ -1,0 +1,15 @@
+<map id="MayaFlux::IO::DelimitedTextReader::open" name="MayaFlux::IO::DelimitedTextReader::open">
+<area shape="rect" id="Node000001" title="Open a CSV or TSV file and establish its Composite layout." alt="" coords="5,165,212,205"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1CompositeLayout_a4a3aa4440ea93c7514e7944fe9ed71dd.html#a4a3aa4440ea93c7514e7944fe9ed71dd" title="Declare a named arithmetic, text, or binary field." alt="" coords="262,5,465,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="127,163,182,110,219,81,259,55,272,48,275,53,261,60,222,85,186,114,130,167"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1DelimitedTextReader_a91bd677ffe31e18fb953927d4b83b2c0.html#a91bd677ffe31e18fb953927d4b83b2c0" title="Check for the .csv or .tsv extension." alt="" coords="260,69,467,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="153,163,259,119,281,111,282,116,261,124,155,168"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1DelimitedTextReader_ae0edea53df741cd830433f5a76d3fce3.html#ae0edea53df741cd830433f5a76d3fce3" title="Close the input and release its active layout." alt="" coords="260,133,467,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="212,170,246,165,247,171,212,175"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_a35d329f829da02eb1e4a2993e19e721c.html#a35d329f829da02eb1e4a2993e19e721c" title="Finalized layout shared by all elements." alt="" coords="276,197,451,237"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="212,196,263,202,262,207,212,201"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1IO_1_1DelimitedTextReader_a6d0148f02bd669240cfc394061a288f3.html#a6d0148f02bd669240cfc394061a288f3" title=" " alt="" coords="260,261,467,301"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="155,203,261,247,282,254,281,259,259,252,153,208"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1IO_1_1FileReader_a24d94d5bc8b4294d61f43ac86f933050.html#a24d94d5bc8b4294d61f43ac86f933050" title="Resolve a filepath against the project source root if not found as&#45;is." alt="" coords="271,325,456,365"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="130,204,186,257,222,286,261,311,275,318,272,322,259,316,219,290,182,261,127,207"/>
+</map>

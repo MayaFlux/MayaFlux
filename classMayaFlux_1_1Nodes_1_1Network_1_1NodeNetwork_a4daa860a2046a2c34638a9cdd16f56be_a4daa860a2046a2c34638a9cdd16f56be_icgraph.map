@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::NodeNetwork::get_audio_buffer" name="MayaFlux::Nodes::Network::NodeNetwork::get_audio_buffer">
+<area shape="rect" id="Node000001" title="Get cached audio buffer from last process_batch()" alt="" coords="252,13,488,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1RelationNetwork_a7f7ace1ecc74aa9fe62777685289f0d6.html#a7f7ace1ecc74aa9fe62777685289f0d6" title="Block of the first published output, or nullopt when none is published." alt="" coords="5,5,204,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="238,35,204,35,204,30,238,30"/>
+</map>

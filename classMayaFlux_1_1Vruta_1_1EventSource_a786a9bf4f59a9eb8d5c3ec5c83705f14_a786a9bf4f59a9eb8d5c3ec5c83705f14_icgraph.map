@@ -1,0 +1,5 @@
+<map id="MayaFlux::Vruta::EventSource::register_waiter" name="MayaFlux::Vruta::EventSource::register_waiter">
+<area shape="rect" id="Node000001" title=" " alt="" coords="279,5,497,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1WindowEventAwaiter_a3e9b42bdd5db96fdc963893ebcff51c2.html#a3e9b42bdd5db96fdc963893ebcff51c2" title="Registers with the source and suspends the coroutine." alt="" coords="5,5,231,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="265,28,231,28,231,23,265,23"/>
+</map>

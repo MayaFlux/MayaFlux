@@ -1,0 +1,18 @@
+<map id="RelationOperators.hpp" name="RelationOperators.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="359,5,527,31"/>
+<area shape="rect" id="Node000002" href="$RelationNetwork_8hpp.html" title=" " alt="" coords="212,79,371,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="408,39,317,81,315,76,406,34"/>
+<area shape="rect" id="Node000006" href="$RelationOperators_8cpp.html" title=" " alt="" coords="360,152,527,177"/>
+<area shape="poly" id="edge6_Node000001_Node000006" title=" " alt="" coords="446,45,446,152,441,152,441,45"/>
+<area shape="rect" id="Node000007" href="$WalkOperator_8hpp.html" title=" " alt="" coords="515,79,654,104"/>
+<area shape="poly" id="edge7_Node000001_Node000007" title=" " alt="" coords="479,34,563,76,560,81,477,39"/>
+<area shape="rect" id="Node000003" href="$CreatorClasses_8hpp.html" title=" " alt="" coords="5,152,153,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="245,111,115,154,113,149,244,106"/>
+<area shape="rect" id="Node000005" href="$RelationNetwork_8cpp.html" title=" " alt="" coords="177,152,336,177"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="282,118,265,153,260,151,277,115"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="329,107,420,149,417,154,327,112"/>
+<area shape="rect" id="Node000004" href="$Creator_8cpp.html" title=" " alt="" coords="31,225,127,251"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="82,191,82,225,77,225,77,191"/>
+<area shape="rect" id="Node000008" href="$WalkOperator_8cpp.html" title=" " alt="" coords="551,152,688,177"/>
+<area shape="poly" id="edge8_Node000007_Node000008" title=" " alt="" coords="599,115,616,151,611,153,594,118"/>
+</map>

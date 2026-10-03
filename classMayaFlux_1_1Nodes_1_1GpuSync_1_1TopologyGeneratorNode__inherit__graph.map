@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nodes::GpuSync::TopologyGeneratorNode" name="MayaFlux::Nodes::GpuSync::TopologyGeneratorNode">
+<area shape="rect" id="Node000001" title="Generates dynamic mesh topology from sparse control points." alt="" coords="5,1573,205,2188"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GeometryWriterNode.html" title="Base class for nodes that generate 3D geometry data." alt="" coords="9,1051,201,1525"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="108,1539,108,1573,103,1573,103,1539"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GpuSync.html" title=" " alt="" coords="9,803,201,1003"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="108,1017,108,1050,103,1050,103,1017"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Node.html" title="Base interface for all computational processing nodes." alt="" coords="7,5,204,755"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="108,768,108,802,103,802,103,768"/>
+</map>

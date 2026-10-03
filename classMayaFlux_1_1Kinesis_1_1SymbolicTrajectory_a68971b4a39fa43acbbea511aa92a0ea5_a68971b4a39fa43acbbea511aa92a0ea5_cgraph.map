@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kinesis::SymbolicTrajectory::unique_cells_in_window" name="MayaFlux::Kinesis::SymbolicTrajectory::unique_cells_in_window">
+<area shape="rect" id="Node000001" title="Count of distinct cells visited within the most recent window observations." alt="" coords="5,30,184,85"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Memory_1_1HistoryBuffer_ad88cb603850a43476f10adbbc9e3f673.html#ad88cb603850a43476f10adbbc9e3f673" title="Get buffer capacity." alt="" coords="232,5,435,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="184,43,218,38,219,43,185,48"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Memory_1_1HistoryBuffer_a2f1571f77762d0d35adfc01dae46509f.html#a2f1571f77762d0d35adfc01dae46509f" title="Get mutable linearized view of entire history." alt="" coords="232,69,435,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="185,67,219,71,218,77,184,72"/>
+</map>

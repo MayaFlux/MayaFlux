@@ -1,0 +1,15 @@
+<map id="MayaFlux::Buffers::BufferSupplyMixing::route_buffer_to_channel" name="MayaFlux::Buffers::BufferSupplyMixing::route_buffer_to_channel">
+<area shape="rect" id="Node000001" title="Routes a buffer&#39;s processing from one channel to another with fade." alt="" coords="5,77,184,132"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_a4d8b6658b8ba5a37086de5f4ddc07f88.html#a4d8b6658b8ba5a37086de5f4ddc07f88" title="Gets an existing audio unit without creating if missing (mutable)" alt="" coords="463,5,635,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="184,88,449,46,450,51,185,93"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_a4531a511fff4b519167f92818c4e6ed6.html#a4531a511fff4b519167f92818c4e6ed6" title="Checks if an audio unit exists for the given token." alt="" coords="461,84,636,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="184,103,448,107,448,113,184,109"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1BufferSupplyMixing_a8bf7ecf32728729ec63ce7fc7d13bdeb.html#a8bf7ecf32728729ec63ce7fc7d13bdeb" title="Supplies an external audio buffer to a specific token and channel." alt="" coords="232,143,405,197"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="185,128,220,138,218,143,183,133"/>
+<area shape="poly" id="edge5_Node000004_Node000002" title=" " alt="" coords="351,140,397,104,452,69,462,64,464,68,455,74,400,109,354,145"/>
+<area shape="poly" id="edge7_Node000004_Node000003" title=" " alt="" coords="405,145,447,134,449,140,407,150"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_a024917026d236981dc80eacbda01cb23.html#a024917026d236981dc80eacbda01cb23" title="Gets the number of channels in an audio unit." alt="" coords="463,163,635,217"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="406,175,449,179,449,184,406,180"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Buffers_1_1RootAudioUnit_ab300ec63a12ad8cde8c5ef4e7092367b.html#ab300ec63a12ad8cde8c5ef4e7092367b" title=" " alt="" coords="453,242,644,282"/>
+<area shape="poly" id="edge6_Node000004_Node000006" title=" " alt="" coords="379,195,454,228,474,235,472,240,452,232,377,200"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nodes::Input::HIDNode::extract_value" name="MayaFlux::Nodes::Input::HIDNode::extract_value">
+<area shape="rect" id="Node000001" title="Extract a scalar value from an InputValue." alt="" coords="5,37,191,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Input_1_1HIDNode_a9a5191762bc5b46f3fbfebdde29fb7a4.html#a9a5191762bc5b46f3fbfebdde29fb7a4" title="Parse axis value from HID report bytes." alt="" coords="241,5,417,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="191,42,227,37,228,42,191,47"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Input_1_1HIDNode_a07b6b53a0ac08245042db262ea4757bf.html#a07b6b53a0ac08245042db262ea4757bf" title="Parse button value from HID report bytes." alt="" coords="239,69,420,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="191,68,226,72,225,78,191,73"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Input_1_1HIDNode_aead79997c067cb55df35d99d61645983.html#aead79997c067cb55df35d99d61645983" title=" " alt="" coords="468,5,671,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="417,23,454,23,454,28,417,28"/>
+</map>

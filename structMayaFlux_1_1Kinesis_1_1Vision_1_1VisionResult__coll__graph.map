@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kinesis::Vision::VisionResult" name="MayaFlux::Kinesis::Vision::VisionResult">
+<area shape="rect" id="Node000001" title="Result of executing a VisionSequence on one frame." alt="" coords="158,571,305,871"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1BufferOutputs.html" title="Live device views of the GPU&#45;resident export buffers, one named slot per exporting op,..." alt="" coords="25,308,177,428"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="125,427,173,554,168,556,120,429"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1ContoursBufferView.html" title="Live device view of FindContours&#39; traced contours, when FindContoursParams::export_contours_buffer is..." alt="" coords="5,5,196,165"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="103,165,103,291,98,291,98,165"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1ImageOutputs.html" title="One image slot per VisionOp that produces an image, populated only for whichever of these ops ran in ..." alt="" coords="201,228,355,508"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="262,509,256,555,251,554,257,508"/>
+</map>

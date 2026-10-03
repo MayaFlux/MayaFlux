@@ -1,0 +1,7 @@
+<map id="MayaFlux::IO::save_image" name="MayaFlux::IO::save_image">
+<area shape="rect" id="Node000001" title="Save a VKImage directly to disk via the ImageWriter registry." alt="" coords="395,5,541,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1IO_a03a3f24fff1c3b2fc670ee5539f5ca80.html#a03a3f24fff1c3b2fc670ee5539f5ca80" title="Save a TextureBuffer&#39;s current GPU state to disk." alt="" coords="200,5,347,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="381,28,347,28,347,23,381,23"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1IO_a80678771111a87cd4dadffc367b550d7.html#a80678771111a87cd4dadffc367b550d7" title="Save a TextBuffer&#39;s rendered glyph texture to disk." alt="" coords="5,5,152,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="186,28,152,28,152,23,186,23"/>
+</map>

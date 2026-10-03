@@ -1,0 +1,5 @@
+<map id="MayaFlux::Vruta::NetworkSource::register_waiter" name="MayaFlux::Vruta::NetworkSource::register_waiter">
+<area shape="rect" id="Node000001" title=" " alt="" coords="244,5,436,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1NetworkAwaiter_ad6f4f86abdc9de97eeb95ad21a1352c9.html#ad6f4f86abdc9de97eeb95ad21a1352c9" title="Suspend the coroutine and register with the source." alt="" coords="5,5,196,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="230,28,196,28,196,23,230,23"/>
+</map>

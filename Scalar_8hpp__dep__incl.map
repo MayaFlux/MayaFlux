@@ -1,0 +1,12 @@
+<map id="Scalar.hpp" name="Scalar.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="196,5,285,31"/>
+<area shape="rect" id="Node000002" href="$CursorAccessProcessor_8cpp.html" title=" " alt="" coords="5,79,204,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="208,39,128,81,126,76,206,34"/>
+<area shape="rect" id="Node000003" href="$FrameSeekProcessor_8cpp.html" title=" " alt="" coords="149,152,333,177"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="243,45,243,152,238,152,238,45"/>
+<area shape="rect" id="Node000004" href="$TimeMap_8hpp.html" title="Factories for TimeMap: seconds since a voice started in, position in recorded material out (frames fo..." alt="" coords="279,79,389,104"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="268,37,320,76,317,81,265,41"/>
+<area shape="poly" id="edge4_Node000004_Node000003" title=" " alt="" coords="310,114,258,154,254,150,307,110"/>
+<area shape="rect" id="Node000005" href="$TapSet_8cpp.html" title=" " alt="" coords="357,152,449,177"/>
+<area shape="poly" id="edge5_Node000004_Node000005" title=" " alt="" coords="357,112,394,150,390,154,353,116"/>
+</map>

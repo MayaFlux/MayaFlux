@@ -1,0 +1,11 @@
+<map id="MayaFlux::Portal::Text::lay_out" name="MayaFlux::Portal::Text::lay_out">
+<area shape="rect" id="Node000001" title="Lay out a UTF&#45;8 string into a sequence of screen&#45;space quads." alt="" coords="435,69,601,109"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Text_aa58f542a4328e23327442498ad154f55.html#aa58f542a4328e23327442498ad154f55" title="Lay out a UTF&#45;8 string into screen&#45;space glyph quads using the default atlas." alt="" coords="220,5,387,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="436,68,370,48,372,43,438,63"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Text_a3978afa16e6b0b30f1118db6aee010a4.html#a3978afa16e6b0b30f1118db6aee010a4" title="Append a UTF&#45;8 string into an existing TextBuffer at the current cursor." alt="" coords="220,69,387,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="421,92,387,92,387,87,421,87"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Text_a824658103dd6662ae8197c3cdbe40172.html#a824658103dd6662ae8197c3cdbe40172" title="Pen position immediately before byte_offset, in lay_out()&#39;s space." alt="" coords="220,133,387,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="438,116,372,136,370,131,436,111"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Portal_1_1Text_ad8d4f282a04b651d4497bd3b62413f8c.html#ad8d4f282a04b651d4497bd3b62413f8c" title="Byte offset of the codepoint boundary nearest a screen&#45;space point." alt="" coords="5,133,172,173"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="206,156,172,156,172,151,206,151"/>
+</map>

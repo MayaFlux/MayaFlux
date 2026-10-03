@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::TextureArrayBuffer::enable_layer_data" name="MayaFlux::Buffers::TextureArrayBuffer::enable_layer_data">
+<area shape="rect" id="Node000001" title="Create the per&#45;layer buffer the shader reads as layerData." alt="" coords="405,45,557,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1TextureArrayBuffer_af10da116dad7523d9bec18225b679e02.html#af10da116dad7523d9bec18225b679e02" title=" " alt="" coords="205,45,357,100"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="391,75,358,75,358,70,391,70"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1TextureArrayBuffer_a178fe919a629041b190cdd25a5dde26b.html#a178fe919a629041b190cdd25a5dde26b" title="Set the params of one layer, layerData[2 * layer]." alt="" coords="5,5,157,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="191,57,157,50,158,45,192,52"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1TextureArrayBuffer_a759d53da225454d524585665cf83af1a.html#a759d53da225454d524585665cf83af1a" title="Set the timing of one layer, layerData[2 * layer + 1]." alt="" coords="5,84,157,139"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="192,93,158,99,157,94,191,87"/>
+</map>

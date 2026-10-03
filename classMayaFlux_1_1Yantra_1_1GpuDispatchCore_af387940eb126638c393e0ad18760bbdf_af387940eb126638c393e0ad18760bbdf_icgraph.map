@@ -1,0 +1,24 @@
+<map id="MayaFlux::Yantra::GpuDispatchCore::declare_buffer_bindings" name="MayaFlux::Yantra::GpuDispatchCore::declare_buffer_bindings">
+<area shape="rect" id="Node000001" title="Declare the storage buffers the shader expects." alt="" coords="1421,119,1647,159"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_ae61ec8192d0351c52666afe165975175.html#ae61ec8192d0351c52666afe165975175" title="Multi&#45;pass dispatch where a GPU&#45;resident indirect buffer gates each pass&#39;s workgroup count instead of..." alt="" coords="865,5,1091,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1420,119,1373,110,1091,56,1092,51,1374,105,1421,114"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_a8f1830a9946ac5ab0568192027de1d1b.html#a8f1830a9946ac5ab0568192027de1d1b" title="Ensure GPU resources are initialised." alt="" coords="1148,119,1373,159"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="1408,142,1373,142,1373,137,1408,137"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_a06f96b51d3f8f9f223f04781c8a2c6a9.html#a06f96b51d3f8f9f223f04781c8a2c6a9" title=" " alt="" coords="865,199,1091,239"/>
+<area shape="poly" id="edge13_Node000001_Node000007" title=" " alt="" coords="1426,165,1374,174,1227,195,1091,211,1091,205,1226,190,1373,169,1425,159"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1GpuExecutionContext_a1dbe3b76ec8aefe2f57803a889443155.html#a1dbe3b76ec8aefe2f57803a889443155" title="Dispatch to GPU and reconstruct a typed output Datum." alt="" coords="248,107,479,147"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="852,42,696,56,527,82,424,110,422,105,526,77,696,51,851,37"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1ShaderExecutionContext_a61530137eabb72da29cf4248b7600bde.html#a61530137eabb72da29cf4248b7600bde" title="Injects multipass configuration into the context before dispatch when set_multipass() has been called..." alt="" coords="5,107,200,147"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="234,130,200,130,200,125,234,125"/>
+<area shape="poly" id="edge6_Node000005_Node000002" title=" " alt="" coords="1193,117,1050,63,1052,58,1195,112"/>
+<area shape="poly" id="edge7_Node000005_Node000003" title=" " alt="" coords="1134,128,1100,126,931,121,761,120,479,125,479,120,761,114,931,115,1100,121,1134,123"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1ShaderExecutionContext_aa508e728d529df34441c28d62413bb0c.html#aa508e728d529df34441c28d62413bb0c" title="Dispatch asynchronously and return a fence for polling." alt="" coords="856,135,1100,175"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="1135,149,1100,151,1100,146,1134,144"/>
+<area shape="poly" id="edge8_Node000005_Node000007" title=" " alt="" coords="1182,166,1101,190,1057,202,1056,197,1099,185,1181,161"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_ab0c5cc3dbdbd8199eb213d74ea6a8204.html#ab0c5cc3dbdbd8199eb213d74ea6a8204" title="Multi&#45;pipeline dependency dispatch." alt="" coords="549,135,785,175"/>
+<area shape="poly" id="edge9_Node000007_Node000008" title=" " alt="" coords="866,199,764,178,765,173,868,194"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_a6ff87bab33a0feafc5498a13b3a51d67.html#a6ff87bab33a0feafc5498a13b3a51d67" title="Non&#45;blocking variant of dispatch_core_dependency." alt="" coords="527,199,808,239"/>
+<area shape="poly" id="edge11_Node000007_Node000009" title=" " alt="" coords="852,222,808,222,808,217,852,217"/>
+<area shape="poly" id="edge10_Node000008_Node000003" title=" " alt="" coords="535,146,479,141,479,135,536,141"/>
+<area shape="poly" id="edge12_Node000009_Node000003" title=" " alt="" coords="557,199,526,190,413,150,415,145,527,185,559,193"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::IO::CompositeReader::read_composite_region" name="MayaFlux::IO::CompositeReader::read_composite_region">
+<area shape="rect" id="Node000001" title="Read an inclusive one&#45;dimensional file region." alt="" coords="5,37,237,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1CompositeReader_a6d265653d5188d5571a0615e09139786.html#a6d265653d5188d5571a0615e09139786" title="Read at most max_elements from the current file position." alt="" coords="285,5,517,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="237,41,272,37,272,43,238,47"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1FileReader_a350b954b9faedc9790d4fbb5437baf1b.html#a350b954b9faedc9790d4fbb5437baf1b" title="Seek to a specific position in the file." alt="" coords="309,69,494,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="238,68,295,75,295,80,237,73"/>
+</map>

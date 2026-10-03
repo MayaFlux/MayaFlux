@@ -1,0 +1,7 @@
+<map id="MayaFlux::IO::save_volume" name="MayaFlux::IO::save_volume">
+<area shape="rect" id="Node000001" title="Save already&#45;downloaded VolumeData to disk via the registry." alt="" coords="269,37,416,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1IO_abe34ed6ba5fcb4c267a579a2792bc5cf.html#abe34ed6ba5fcb4c267a579a2792bc5cf" title="Save a volume directly to disk via the VolumeWriter registry." alt="" coords="40,5,187,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="255,48,186,38,187,33,256,43"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1VolumeCapture_a6fd1859939243d21f87169e2ee950637.html#a6fd1859939243d21f87169e2ee950637" title=" " alt="" coords="5,69,221,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="256,72,222,77,221,72,255,67"/>
+</map>

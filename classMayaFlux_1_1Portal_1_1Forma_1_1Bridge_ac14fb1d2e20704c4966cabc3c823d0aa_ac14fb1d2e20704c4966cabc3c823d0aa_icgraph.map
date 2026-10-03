@@ -1,0 +1,9 @@
+<map id="MayaFlux::Portal::Forma::Bridge::cancel_outbound" name="MayaFlux::Portal::Forma::Bridge::cancel_outbound">
+<area shape="rect" id="Node000001" title=" " alt="" coords="464,37,655,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Bridge_a367d65aefbad4e7a1d844a1a9be38d1a.html#a367d65aefbad4e7a1d844a1a9be38d1a" title="Cancel all inbound and outbound bindings for an element." alt="" coords="235,5,416,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="450,45,416,40,417,35,451,40"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Bridge_aadb281b88d67a45aae2377bc344ee500.html#aadb281b88d67a45aae2377bc344ee500" title=" " alt="" coords="235,69,416,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="451,75,417,80,416,74,450,70"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a0379b48a68772212c41ea6981991580a.html#a0379b48a68772212c41ea6981991580a" title="Tear down an element and everything related to it." alt="" coords="5,5,187,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="221,28,187,28,187,23,221,23"/>
+</map>

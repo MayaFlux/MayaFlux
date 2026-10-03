@@ -1,0 +1,19 @@
+<map id="MayaFlux::Yantra::UniversalTransformer::is_in_place" name="MayaFlux::Yantra::UniversalTransformer::is_in_place">
+<area shape="rect" id="Node000001" title="Indicates whether the transformation modifies the input data directly." alt="" coords="616,105,820,145"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1ConvolutionTransformer_a82b55525b3e4df731b5208a17928c7fc.html#a82b55525b3e4df731b5208a17928c7fc" title="Extracts per&#45;channel spans, applies func to each, and reconstructs." alt="" coords="337,5,567,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="664,102,567,60,531,48,532,43,569,55,666,97"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1MathematicalTransformer_ad8aaa1b597d2569e29d177d919360120.html#ad8aaa1b597d2569e29d177d919360120" title="Extracts per&#45;channel spans, applies an in&#45;place func to each, and reconstructs." alt="" coords="336,69,568,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="602,112,568,108,568,102,603,107"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1SpectralTransformer_a03e7bf2e5c976222f2e376b55195170b.html#a03e7bf2e5c976222f2e376b55195170b" title="Extracts per&#45;channel spans, applies func to each, and reconstructs." alt="" coords="355,134,549,189"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="603,144,550,151,549,146,602,138"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Yantra_1_1TemporalTransformer_ad19829f4971af1d2ed744d06a1c4b7f0.html#ad19829f4971af1d2ed744d06a1c4b7f0" title="Extracts per&#45;channel spans, applies func to each, and reconstructs." alt="" coords="351,213,553,267"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="670,154,569,204,540,215,538,210,567,199,668,150"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1ConvolutionTransformer_a9d070c72f78555559c94e86b6274fcab.html#a9d070c72f78555559c94e86b6274fcab" title="Applies the configured convolution operation." alt="" coords="5,5,288,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="323,28,288,28,288,23,323,23"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1MathematicalTransformer_a6e33d648c252e4cff7c42a3d50779efb.html#a6e33d648c252e4cff7c42a3d50779efb" title="Core transformation implementation." alt="" coords="5,69,288,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="322,92,288,92,288,87,322,87"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Yantra_1_1SpectralTransformer_a7823c1c101caf6098831e5ec802ebf19.html#a7823c1c101caf6098831e5ec802ebf19" title="Applies the configured spectral operation." alt="" coords="49,134,244,189"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="341,164,244,164,244,159,341,159"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Yantra_1_1TemporalTransformer_ad3890517ed8b6bb33c19146ce905c80e.html#ad3890517ed8b6bb33c19146ce905c80e" title="Core transformation implementation for temporal operations." alt="" coords="45,213,248,267"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="337,243,248,243,248,237,337,237"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="MayaFlux::Portal::Graphics::ShaderFoundry::update_descriptor_buffer" name="MayaFlux::Portal::Graphics::ShaderFoundry::update_descriptor_buffer">
+<area shape="rect" id="Node000001" title="Update descriptor set with buffer binding." alt="" coords="467,45,664,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VolumeSurfaceProcessor_a0e8197c3af15a8f3610001b9cfc5ddb3.html#a0e8197c3af15a8f3610001b9cfc5ddb3" title="Issue the direct ShaderFoundry descriptor write for the field read slot." alt="" coords="236,45,419,100"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="453,75,419,75,419,70,453,70"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VolumeSurfaceProcessor_a6eda7dee5cf3fc25a2156b365f11d687.html#a6eda7dee5cf3fc25a2156b365f11d687" title="Write the field descriptor for the current slot assignment." alt="" coords="5,5,188,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="222,57,188,51,189,46,223,52"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1VolumeSurfaceProcessor_ad94a494b2dd038ba69c819a40227e4a6.html#ad94a494b2dd038ba69c819a40227e4a6" title="Write the field descriptor for this cycle&#39;s slot assignment, then run the normal shader processing pa..." alt="" coords="5,84,188,139"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="223,93,189,99,188,93,222,88"/>
+</map>

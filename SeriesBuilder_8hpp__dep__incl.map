@@ -1,0 +1,26 @@
+<map id="SeriesBuilder.hpp" name="SeriesBuilder.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="69,5,203,31"/>
+<area shape="rect" id="Node000002" href="$Plot_8cpp.html" title=" " alt="" coords="24,152,99,177"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="117,43,89,80,74,119,66,152,61,151,69,117,84,77,112,39"/>
+<area shape="rect" id="Node000003" href="$Plot_8hpp.html" title=" " alt="" coords="99,79,173,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="139,44,139,79,133,79,133,44"/>
+<area shape="rect" id="Node000012" href="$SeriesBuilder_8cpp.html" title=" " alt="" coords="198,79,333,104"/>
+<area shape="poly" id="edge12_Node000001_Node000012" title=" " alt="" coords="170,35,245,76,243,81,168,40"/>
+<area shape="poly" id="edge11_Node000003_Node000002" title=" " alt="" coords="116,115,75,154,72,150,112,111"/>
+<area shape="rect" id="Node000004" href="$Atelier_8hpp.html" title=" " alt="" coords="123,152,215,177"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="150,115,166,151,162,153,145,118"/>
+<area shape="rect" id="Node000005" href="$Atelier_8cpp.html" title=" " alt="" coords="5,225,96,251"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="140,187,71,227,69,223,137,182"/>
+<area shape="rect" id="Node000006" href="$Surface_8cpp.html" title=" " alt="" coords="120,225,219,251"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="172,191,172,225,167,225,167,191"/>
+<area shape="rect" id="Node000007" href="$Tend_8hpp.html" title=" " alt="" coords="243,225,323,251"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="201,183,266,223,263,227,198,187"/>
+<area shape="rect" id="Node000008" href="$Forma_8hpp.html" title="Factory free functions for the Forma surface system." alt="" coords="183,299,273,324"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="267,263,239,300,235,297,263,260"/>
+<area shape="rect" id="Node000011" href="$Tend_8cpp.html" title=" " alt="" coords="298,299,377,324"/>
+<area shape="poly" id="edge10_Node000007_Node000011" title=" " alt="" coords="302,260,331,297,326,300,298,263"/>
+<area shape="rect" id="Node000009" href="$Engine_8cpp.html" title=" " alt="" coords="124,372,217,397"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="212,336,182,374,178,370,208,333"/>
+<area shape="rect" id="Node000010" href="$Forma_8cpp.html" title=" " alt="" coords="241,372,332,397"/>
+<area shape="poly" id="edge9_Node000008_Node000010" title=" " alt="" coords="248,333,279,370,275,374,244,336"/>
+</map>

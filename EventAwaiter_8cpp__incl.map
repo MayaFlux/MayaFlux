@@ -1,0 +1,20 @@
+<map id="EventAwaiter.cpp" name="EventAwaiter.cpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="249,5,384,31"/>
+<area shape="rect" id="Node000002" href="$EventAwaiter_8hpp.html" title=" " alt="" coords="249,79,385,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="319,31,319,65,314,65,314,31"/>
+<area shape="rect" id="Node000003" href="$GlobalGraphicsInfo_8hpp.html" title=" " alt="" coords="5,240,228,280"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="284,107,240,126,197,154,162,191,136,230,132,227,158,188,194,150,238,121,282,102"/>
+<area shape="rect" id="Node000005" href="$WindowEventSource_8hpp.html" title=" " alt="" coords="207,152,426,192"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="319,104,319,138,314,138,314,104"/>
+<area shape="rect" id="Node000009" title=" " alt="" coords="450,159,533,185"/>
+<area shape="poly" id="edge9_Node000002_Node000009" title=" " alt="" coords="343,102,454,151,452,156,341,106"/>
+<area shape="rect" id="Node000004" href="$Mirror_8hpp.html" title=" " alt="" coords="40,328,193,368"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="119,280,119,314,114,314,114,280"/>
+<area shape="poly" id="edge6_Node000005_Node000003" title=" " alt="" coords="274,195,174,237,172,232,272,190"/>
+<area shape="rect" id="Node000006" href="$EventSource_8hpp.html" title=" " alt="" coords="251,247,382,273"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="319,192,319,233,314,233,314,192"/>
+<area shape="rect" id="Node000007" href="$Keys_8hpp.html" title=" " alt="" coords="407,247,573,273"/>
+<area shape="poly" id="edge7_Node000005_Node000007" title=" " alt="" coords="356,190,456,239,454,244,354,194"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="597,247,660,273"/>
+<area shape="poly" id="edge8_Node000005_Node000008" title=" " alt="" coords="409,189,496,210,587,237,593,240,591,245,585,243,495,216,408,195"/>
+</map>

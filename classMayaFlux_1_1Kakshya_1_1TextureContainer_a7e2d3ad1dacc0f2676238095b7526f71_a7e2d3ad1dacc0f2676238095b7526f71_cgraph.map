@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::TextureContainer::pixel_bytes" name="MayaFlux::Kakshya::TextureContainer::pixel_bytes">
+<area shape="rect" id="Node000001" title="Read&#45;only byte&#45;level view over the pixel buffer." alt="" coords="5,5,220,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_a505a6355fca48fde66db9c0ca1e23a17.html#a505a6355fca48fde66db9c0ca1e23a17" title="Get a pointer to the raw bytes of a DataVariant and its size." alt="" coords="268,5,427,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="220,23,254,23,254,28,220,28"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="MayaFlux::Core::SubsystemManager::get_validated_handle" name="MayaFlux::Core::SubsystemManager::get_validated_handle">
+<area shape="rect" id="Node000001" title="Get processing handle with validation." alt="" coords="303,69,529,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1SubsystemManager_a02ec5c42a70feff700bda676467da1b0.html#a02ec5c42a70feff700bda676467da1b0" title="Check if a processing hook exists." alt="" coords="27,5,233,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="312,69,219,48,220,43,313,64"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1SubsystemManager_a571b698b850bbfc9220e0547e44e28bc.html#a571b698b850bbfc9220e0547e44e28bc" title="Register a processing hook for a specific subsystem." alt="" coords="13,69,247,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="289,92,247,92,247,87,289,87"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1SubsystemManager_a026fbb9a091161cb56e6b792cfbd1b98.html#a026fbb9a091161cb56e6b792cfbd1b98" title="Remove a previously registered processing hook." alt="" coords="5,133,255,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="313,115,220,136,219,131,312,110"/>
+</map>

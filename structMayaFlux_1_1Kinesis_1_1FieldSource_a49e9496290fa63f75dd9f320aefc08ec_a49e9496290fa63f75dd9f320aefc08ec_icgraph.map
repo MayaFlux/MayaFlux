@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kinesis::FieldSource::parse" name="MayaFlux::Kinesis::FieldSource::parse">
+<area shape="rect" id="Node000001" title="Extract return type, parameter list and body from lambda text." alt="" coords="203,69,352,109"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_ad9a29fb7fb9e9965764727bc86f91e8c.html#ad9a29fb7fb9e9965764727bc86f91e8c" title="Build a DualField from a lambda and its stringified text." alt="" coords="5,5,155,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="201,68,141,48,143,43,203,63"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_ac51d859863d0ed09c3dfc652e9729d0f.html#ac51d859863d0ed09c3dfc652e9729d0f" title="Build a ParametricField from a lambda and its stringified text." alt="" coords="5,69,155,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="189,92,155,92,155,87,189,87"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_a5e950de9150cc244ad9f4a92b9c168e1.html#a5e950de9150cc244ad9f4a92b9c168e1" title="Build a TemporalField from a lambda and its stringified text." alt="" coords="5,133,155,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="203,116,143,136,141,131,201,111"/>
+</map>

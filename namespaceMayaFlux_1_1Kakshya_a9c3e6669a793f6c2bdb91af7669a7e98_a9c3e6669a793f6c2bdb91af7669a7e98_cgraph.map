@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::blend_frames" name="MayaFlux::Kakshya::blend_frames">
+<area shape="rect" id="Node000001" title="Linearly blend two frames of the same size and format." alt="" coords="5,5,164,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_a7c5d5d6f0be24fe12ef6c67401c2c001.html#a7c5d5d6f0be24fe12ef6c67401c2c001" title="Byte width of the DataVariant element backing a given ImageFormat." alt="" coords="212,5,377,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="164,23,198,23,198,28,164,28"/>
+</map>

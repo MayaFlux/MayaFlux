@@ -1,0 +1,16 @@
+<map id="MayaFlux::Portal::Forma::Geometry::scroll_indicator" name="MayaFlux::Portal::Forma::Geometry::scroll_indicator">
+<area shape="rect" id="Node000001" title="Geometry function for Scrollable&#39;s default scroll indicator visual." alt="" coords="5,157,207,197"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1AABB2D_a6244e0bb95e47c9914259ac9f60bbe01.html#a6244e0bb95e47c9914259ac9f60bbe01" title=" " alt="" coords="271,5,420,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="126,155,181,106,216,79,253,55,266,49,268,53,256,60,219,83,184,110,129,159"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_ae7264d97a31a6219d1a0c63714eea28e.html#ae7264d97a31a6219d1a0c63714eea28e" title="Generate a filled TRIANGLE_STRIP quad from an AABB2D." alt="" coords="271,93,420,133"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="181,155,257,134,258,139,182,160"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kinesis_1_1AABB2D_a32bac0d1a4f876c992486eed5dc9fd6f.html#a32bac0d1a4f876c992486eed5dc9fd6f" title=" " alt="" coords="271,157,420,197"/>
+<area shape="poly" id="edge4_Node000001_Node000004" title=" " alt="" coords="207,175,257,175,257,180,207,180"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kakshya_af09aa07eacd20ac64c4d53ccfbf545e2.html#af09aa07eacd20ac64c4d53ccfbf545e2" title="Batch&#45;project raw Vertex vector to MeshVertex." alt="" coords="266,221,425,261"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="182,195,258,215,256,220,181,200"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_af668d56bbf7441d552c3ee5c38c3ae62.html#af668d56bbf7441d552c3ee5c38c3ae62" title="Write a vertex array into a GeometryFn output buffer." alt="" coords="255,285,436,325"/>
+<area shape="poly" id="edge7_Node000001_Node000007" title=" " alt="" coords="135,195,190,233,256,271,271,278,268,283,253,276,187,237,132,200"/>
+<area shape="poly" id="edge3_Node000003_Node000003" title=" " alt="" coords="305,94,302,84,309,74,323,69,345,67,371,70,384,77,382,82,369,75,345,72,325,74,312,79,308,85,310,92"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kakshya_a7aca11e65c3ec397c37645fe66faf18d.html#a7aca11e65c3ec397c37645fe66faf18d" title="Project raw Vertex to MeshVertex." alt="" coords="484,221,643,261"/>
+<area shape="poly" id="edge6_Node000005_Node000006" title=" " alt="" coords="425,239,470,239,470,244,425,244"/>
+</map>

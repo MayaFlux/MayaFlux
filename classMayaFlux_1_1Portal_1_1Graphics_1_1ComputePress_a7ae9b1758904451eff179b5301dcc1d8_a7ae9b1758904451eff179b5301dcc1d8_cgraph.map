@@ -1,0 +1,27 @@
+<map id="MayaFlux::Portal::Graphics::ComputePress::record_sequence" name="MayaFlux::Portal::Graphics::ComputePress::record_sequence">
+<area shape="rect" id="Node000001" title="Record multiple pipeline dispatches into one already&#45;open command buffer, inserting a barrier between..." alt="" coords="5,197,248,237"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ComputePress_a313d13f003f0f617d9e27addb3a3e7f3.html#a313d13f003f0f617d9e27addb3a3e7f3" title="All&#45;in&#45;one: bind pipeline + descriptors + push constants." alt="" coords="296,60,493,100"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="154,195,217,153,295,110,311,103,313,108,297,114,220,157,157,199"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_acbe00008128244bcb2902611e53eff80.html#acbe00008128244bcb2902611e53eff80" title="Insert buffer memory barrier." alt="" coords="296,125,493,179"/>
+<area shape="poly" id="edge9_Node000001_Node000008" title=" " alt="" coords="209,195,282,177,283,182,210,200"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ComputePress_a6d9d3d095a17e0a782e5c31a804663a4.html#a6d9d3d095a17e0a782e5c31a804663a4" title="Dispatch compute workgroups." alt="" coords="576,197,773,237"/>
+<area shape="poly" id="edge10_Node000001_Node000009" title=" " alt="" coords="248,215,562,215,562,220,248,220"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ComputePress_ac332c4ccfc787734b7e36f9033a9e0e6.html#ac332c4ccfc787734b7e36f9033a9e0e6" title="Dispatch compute workgroups indirectly." alt="" coords="296,255,493,310"/>
+<area shape="poly" id="edge12_Node000001_Node000010" title=" " alt="" coords="210,235,283,253,282,258,209,240"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_a08fa9b6412b634215b72b52676318691.html#a08fa9b6412b634215b72b52676318691" title=" " alt="" coords="318,334,471,359"/>
+<area shape="poly" id="edge14_Node000001_Node000011" title=" " alt="" coords="156,235,218,278,297,320,317,327,315,332,295,325,216,283,153,240"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ComputePress_a85438e9d6db2cc223c00c736f86661aa.html#a85438e9d6db2cc223c00c736f86661aa" title="Bind descriptor sets to active command buffer." alt="" coords="541,5,808,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="493,58,558,45,559,51,494,63"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ComputePress_a218fdd2df033d4258070a6e5079c46e2.html#a218fdd2df033d4258070a6e5079c46e2" title="Bind pipeline to active command buffer." alt="" coords="565,69,784,109"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="493,81,552,83,552,88,493,86"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ComputePress_a1fa102eb80c5e9b8008f485793dfe095.html#a1fa102eb80c5e9b8008f485793dfe095" title="Push constants to active command buffer." alt="" coords="558,133,791,173"/>
+<area shape="poly" id="edge7_Node000002_Node000007" title=" " alt="" coords="465,97,542,119,576,127,574,133,541,124,464,103"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab2be21f08a8e73058950c603e8a77020.html#ab2be21f08a8e73058950c603e8a77020" title="Get Vulkan command buffer handle from CommandBufferID." alt="" coords="856,133,1128,173"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="772,43,809,55,883,88,948,124,945,129,881,93,807,60,770,48"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a02ee5b654b338c921a582effccfc085f.html#a02ee5b654b338c921a582effccfc085f" title="Get Vulkan descriptor set handle from DescriptorSetID." alt="" coords="865,5,1119,45"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="808,23,851,23,851,28,808,28"/>
+<area shape="poly" id="edge6_Node000006_Node000004" title=" " alt="" coords="775,107,879,128,878,133,774,112"/>
+<area shape="poly" id="edge8_Node000007_Node000004" title=" " alt="" coords="791,151,842,151,842,156,791,156"/>
+<area shape="poly" id="edge11_Node000009_Node000004" title=" " alt="" coords="773,195,878,174,879,179,774,200"/>
+<area shape="poly" id="edge13_Node000010_Node000004" title=" " alt="" coords="494,283,564,282,643,276,726,265,807,247,846,233,884,216,949,179,951,183,886,220,848,238,809,252,727,270,644,282,564,287,494,288"/>
+</map>

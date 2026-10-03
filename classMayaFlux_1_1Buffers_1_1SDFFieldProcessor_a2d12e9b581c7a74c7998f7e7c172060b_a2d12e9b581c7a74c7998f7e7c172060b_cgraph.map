@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::SDFFieldProcessor::SDFFieldProcessor" name="MayaFlux::Buffers::SDFFieldProcessor::SDFFieldProcessor">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,45,212,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ComputeProcessor_ad0a4f166e8f9ed24f91e590f737a717f.html#ad0a4f166e8f9ed24f91e590f737a717f" title="Set dispatch mode." alt="" coords="260,5,432,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="212,53,246,47,247,52,213,58"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1ComputeProcessor_adaaeab4489b75f391e28461fe22613ba.html#adaaeab4489b75f391e28461fe22613ba" title="Set manual dispatch group counts." alt="" coords="260,84,432,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="213,87,247,93,246,98,212,92"/>
+</map>

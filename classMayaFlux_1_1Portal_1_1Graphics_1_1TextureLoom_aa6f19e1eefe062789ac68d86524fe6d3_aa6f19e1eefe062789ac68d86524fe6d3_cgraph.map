@@ -1,0 +1,11 @@
+<map id="MayaFlux::Portal::Graphics::TextureLoom::can_blit" name="MayaFlux::Portal::Graphics::TextureLoom::can_blit">
+<area shape="rect" id="Node000001" title="Whether the device can blit between two images with a filter." alt="" coords="5,37,203,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_af23625d18fe68e281f157b63a0466073.html#af23625d18fe68e281f157b63a0466073" title="Check if manager is initialized." alt="" coords="272,5,476,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="203,43,258,36,259,42,203,48"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1BackendResourceManager_a8f516b0c381469621bfff557cb55b39f.html#a8f516b0c381469621bfff557cb55b39f" title="Whether a blit between two formats is supported with a filter." alt="" coords="251,69,497,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="203,66,237,70,237,76,203,72"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1VKContext_abb26eca0db297f0a9545aee095450aa1.html#abb26eca0db297f0a9545aee095450aa1" title="Get physical device." alt="" coords="545,69,745,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="497,87,532,87,532,92,497,92"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1VKDevice_a094d1ed720c72ced04293743f4b2a63e.html#a094d1ed720c72ced04293743f4b2a63e" title="Get physical device handle." alt="" coords="793,69,988,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="745,87,780,87,780,92,745,92"/>
+</map>

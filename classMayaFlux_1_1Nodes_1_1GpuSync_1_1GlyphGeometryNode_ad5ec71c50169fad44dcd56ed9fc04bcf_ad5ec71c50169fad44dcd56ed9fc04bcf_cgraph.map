@@ -1,0 +1,25 @@
+<map id="MayaFlux::Nodes::GpuSync::GlyphGeometryNode::set_text" name="MayaFlux::Nodes::GpuSync::GlyphGeometryNode::set_text">
+<area shape="rect" id="Node000001" title="Replace the text string and rebuild outlines." alt="" coords="5,213,233,253"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GlyphGeometryNode_a39969c549307dc7b874fb9e794b4fb16.html#a39969c549307dc7b874fb9e794b4fb16" title="Rebuild outline geometry from the current text and pen settings." alt="" coords="281,206,501,261"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="234,231,267,231,267,236,234,236"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Text_a52d4e15913751b17016879514b4bc817.html#a52d4e15913751b17016879514b4bc817" title="Decompose a Unicode codepoint into a tessellated polyline outline." alt="" coords="574,37,741,77"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="414,204,471,145,508,114,548,87,561,80,563,85,551,92,511,118,475,149,418,207"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Text_1_1TypeFaceFoundry_a33297f10cf0efb8394bd219ba56f0f12.html#a33297f10cf0efb8394bd219ba56f0f12" title="Return the default GlyphAtlas, or nullptr if set_default_font() has not been called successfully." alt="" coords="573,102,742,157"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="457,203,548,167,568,159,570,164,550,172,459,208"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Portal_1_1Text_1_1TypeFaceFoundry_a939375a455bfd4510f6a7a8f506b600d.html#a939375a455bfd4510f6a7a8f506b600d" title=" " alt="" coords="556,181,759,221"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="501,217,542,212,543,218,502,223"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Portal_1_1Text_1_1GlyphAtlas_aa25526b9a1a236c84b59eefec8b52a56.html#aa25526b9a1a236c84b59eefec8b52a56" title="Pixel size passed at construction." alt="" coords="571,245,744,285"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="502,244,557,251,556,256,501,249"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GeometryWriterNode_ad5f8bb454545911e4cef60543eb8e6be.html#ad5f8bb454545911e4cef60543eb8e6be" title="Resize vertex buffer to hold specified number of vertices." alt="" coords="549,310,765,365"/>
+<area shape="poly" id="edge8_Node000002_Node000009" title=" " alt="" coords="459,258,550,295,570,302,568,307,548,300,457,263"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GlyphGeometryNode_a27d6f6164d242dadb7a991fab3e0566c.html#a27d6f6164d242dadb7a991fab3e0566c" title=" " alt="" coords="553,389,761,443"/>
+<area shape="poly" id="edge9_Node000002_Node000010" title=" " alt="" coords="418,259,475,317,512,348,551,375,560,380,557,385,548,380,508,352,472,321,414,263"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Text_1_1FontFace_accda82c104b9bee41559e89f118f5e5f.html#accda82c104b9bee41559e89f118f5e5f" title="Raw FT_Face handle for use by GlyphAtlas." alt="" coords="830,5,997,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="741,44,816,35,816,40,741,50"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Text_1_1FontFace_af72d12cd712a8117cffe4ce5f55e40fb.html#af72d12cd712a8117cffe4ce5f55e40fb" title="Returns true after a successful load() call." alt="" coords="830,69,997,109"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="741,65,816,75,816,80,741,70"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GeometryWriterNode_a63a86ccaf0960a88deb0b99785b6eb30.html#a63a86ccaf0960a88deb0b99785b6eb30" title="Get cached vertex layout." alt="" coords="813,349,1013,403"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="761,397,800,391,800,396,762,402"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GeometryWriterNode_a79b8530548d0f4b4c464071439faaac5.html#a79b8530548d0f4b4c464071439faaac5" title="Set cached vertex layout." alt="" coords="813,427,1013,482"/>
+<area shape="poly" id="edge11_Node000010_Node000012" title=" " alt="" coords="762,429,800,435,800,440,761,434"/>
+</map>

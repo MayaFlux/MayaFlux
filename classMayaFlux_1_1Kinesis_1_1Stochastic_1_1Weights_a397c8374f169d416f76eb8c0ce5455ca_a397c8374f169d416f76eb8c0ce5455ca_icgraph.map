@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::Stochastic::Weights::fill" name="MayaFlux::Kinesis::Stochastic::Weights::fill">
+<area shape="rect" id="Node000001" title=" " alt="" coords="236,13,409,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Weights_aa8bc6b414f3dab9fd09c9636b3d067e5.html#aa8bc6b414f3dab9fd09c9636b3d067e5" title="Every cell uniform except the diagonal, each row normalized to sum to one." alt="" coords="5,5,188,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="222,35,188,35,188,30,222,30"/>
+</map>

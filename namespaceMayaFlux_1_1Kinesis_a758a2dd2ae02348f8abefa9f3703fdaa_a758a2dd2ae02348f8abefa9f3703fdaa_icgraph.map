@@ -1,0 +1,33 @@
+<map id="MayaFlux::Kinesis::apply_scroll" name="MayaFlux::Kinesis::apply_scroll">
+<area shape="rect" id="Node000001" title="Dolly eye along the current forward vector." alt="" coords="757,133,907,173"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a6dcaefa7d6dad154c2609473032ad888.html#a6dcaefa7d6dad154c2609473032ad888" title="Apply a wheel&#45;tick delta, scaled by speed, and clamp." alt="" coords="529,5,679,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="798,126,757,91,708,60,678,47,680,42,711,55,760,87,802,122"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_afbca6a63a999ca7602156fffa2c7dcd3.html#afbca6a63a999ca7602156fffa2c7dcd3" title="Bind the fly navigation controller to a window and render processor." alt="" coords="531,69,677,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="746,132,675,112,676,107,748,127"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_a0c14a83b32a093a88b5e133b0a562502.html#a0c14a83b32a093a88b5e133b0a562502" title="Bind the screenspace navigation controller to a window and render processor." alt="" coords="499,133,709,173"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="744,156,710,156,710,151,744,151"/>
+<area shape="rect" id="Node000009" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Scrollable_a96baed51f4449f8c67e4afb9f1a8b2df.html#a96baed51f4449f8c67e4afb9f1a8b2df" title="Apply a scroll delta and reflow every tracked element." alt="" coords="513,197,695,237"/>
+<area shape="poly" id="edge9_Node000001_Node000009" title=" " alt="" coords="748,180,676,200,675,195,746,174"/>
+<area shape="rect" id="Node000010" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Scrollable_a197b5073f36918705a3ccfa42f25cc53.html#a197b5073f36918705a3ccfa42f25cc53" title="A self&#45;contained wheel&#45;scroll handler bound to this Scrollable&#39;s own state." alt="" coords="505,261,703,301"/>
+<area shape="poly" id="edge10_Node000001_Node000010" title=" " alt="" coords="802,185,760,219,711,252,683,264,681,259,708,247,757,215,798,181"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_a32225e71700958f2fd21448719ab1ba1.html#a32225e71700958f2fd21448719ab1ba1" title="Bind the fly navigation controller to all RenderProcessors currently registered against a window." alt="" coords="273,21,418,61"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="517,76,418,57,419,52,518,71"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_a9be701daac0c0484aed1f9ad9f8d130e.html#a9be701daac0c0484aed1f9ad9f8d130e" title="Bind a navigation preset to a window and render processor using default settings." alt="" coords="252,85,439,125"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="518,97,439,102,439,97,518,92"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_af2205e6997a812a91f5c4b88a8beb585.html#af2205e6997a812a91f5c4b88a8beb585" title="Bind a navigation preset to all RenderProcessors currently registered against a window using default ..." alt="" coords="5,85,192,125"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="238,108,192,108,192,103,238,103"/>
+<area shape="poly" id="edge8_Node000007_Node000005" title=" " alt="" coords="484,134,438,125,439,120,485,129"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_ab8f207a0abf830f659f2c24b8aedf172.html#ab8f207a0abf830f659f2c24b8aedf172" title="Bind the screenspace navigation controller to all RenderProcessors currently registered against a win..." alt="" coords="240,149,451,189"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="485,163,451,165,451,160,485,158"/>
+<area shape="rect" id="Node000011" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Scrollable_a35235f112f4f9f9eead110668fca88f7.html#a35235f112f4f9f9eead110668fca88f7" title="Register the viewport element, wire wheel scrolling, and populate scroll, offset, buf,..." alt="" coords="255,309,436,349"/>
+<area shape="poly" id="edge11_Node000010_Node000011" title=" " alt="" coords="492,305,437,315,436,310,491,300"/>
+<area shape="rect" id="Node000014" href="$structMayaFlux_1_1Portal_1_1Forma_1_1TextField_ab37d173483ea4e704f5c55865e384d72.html#ab37d173483ea4e704f5c55865e384d72" title="Fluent creator: place this field inside an already&#45;placed Scrollable, growing itself taller than its ..." alt="" coords="255,245,436,285"/>
+<area shape="poly" id="edge16_Node000010_Node000014" title=" " alt="" coords="492,277,436,274,437,268,492,272"/>
+<area shape="rect" id="Node000012" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a4d8d6a3f54c57284141331e37153b682.html#a4d8d6a3f54c57284141331e37153b682" title="Build a text&#45;capable FormaBuffer, register a TextField, and wire text editing onto it in one call." alt="" coords="8,245,189,285"/>
+<area shape="poly" id="edge12_Node000011_Node000012" title=" " alt="" coords="254,308,176,288,177,283,255,303"/>
+<area shape="rect" id="Node000013" href="$namespaceMayaFlux_1_1Portal_1_1Forma_aef42f7d8c0db50373605643eb762a89a.html#aef42f7d8c0db50373605643eb762a89a" title="Construct a scrollable viewport." alt="" coords="8,333,189,373"/>
+<area shape="poly" id="edge14_Node000011_Node000013" title=" " alt="" coords="241,342,190,347,189,342,241,337"/>
+<area shape="poly" id="edge13_Node000012_Node000012" title=" " alt="" coords="140,234,126,227,99,224,75,226,61,231,55,237,58,244,53,246,50,236,58,226,74,221,99,219,127,222,143,229"/>
+<area shape="poly" id="edge15_Node000013_Node000013" title=" " alt="" coords="140,322,126,315,99,312,75,314,61,319,55,325,58,332,53,334,50,324,58,314,74,309,99,307,127,310,143,317"/>
+<area shape="poly" id="edge17_Node000014_Node000012" title=" " alt="" coords="241,268,189,268,189,263,241,263"/>
+</map>

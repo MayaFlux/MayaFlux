@@ -1,0 +1,5 @@
+<map id="MayaFlux::IO::CameraSource" name="MayaFlux::IO::CameraSource">
+<area shape="rect" id="Node000001" title="Abstract interface for a live camera backend hosted by IOManager." alt="" coords="10,5,213,291"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1FFmpegCameraReader.html" title="FFmpeg device reader for live camera input with background decode." alt="" coords="5,339,217,879"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="114,304,114,338,109,338,109,304"/>
+</map>

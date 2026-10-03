@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::Vision::gray_to_rgba" name="MayaFlux::Kinesis::Vision::gray_to_rgba">
+<area shape="rect" id="Node000001" title="Convert single&#45;channel gray to RGBA." alt="" coords="5,5,160,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a231b7d570e2b2fb7021dd9404adf41eb.html#a231b7d570e2b2fb7021dd9404adf41eb" title="Global threshold writing into caller&#45;supplied buffer." alt="" coords="208,5,363,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="160,23,194,23,194,28,160,28"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::BufferProcessingChain::add_processor_direct" name="MayaFlux::Buffers::BufferProcessingChain::add_processor_direct">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,5,173,60"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Buffers_a38e5853247532e5155b787a4d89b20cb.html#a38e5853247532e5155b787a4d89b20cb" title="Determines if two processing tokens are compatible for joint execution." alt="" coords="221,13,395,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="174,30,208,30,208,35,174,35"/>
+</map>

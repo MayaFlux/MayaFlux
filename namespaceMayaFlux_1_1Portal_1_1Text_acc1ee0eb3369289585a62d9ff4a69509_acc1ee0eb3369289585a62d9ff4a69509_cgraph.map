@@ -1,0 +1,20 @@
+<map id="MayaFlux::Portal::Text::lay_out" name="MayaFlux::Portal::Text::lay_out">
+<area shape="rect" id="Node000001" title="Lay out a UTF&#45;8 string into a sequence of screen&#45;space quads." alt="" coords="5,92,172,132"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Text_1_1FontFace_accda82c104b9bee41559e89f118f5e5f.html#accda82c104b9bee41559e89f118f5e5f" title="Raw FT_Face handle for use by GlyphAtlas." alt="" coords="997,63,1164,103"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="172,107,220,105,983,83,984,88,220,111,172,112"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Text_1_1GlyphAtlas_acd3a40ac86a5630200940400072dccfa.html#acd3a40ac86a5630200940400072dccfa" title="Return metrics for a glyph, rasterizing it into the atlas if needed." alt="" coords="220,184,435,224"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="131,130,221,170,242,177,240,182,219,174,129,135"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Portal_1_1Text_a2bf43e50ce4368ec164564e34a396d67.html#a2bf43e50ce4368ec164564e34a396d67" title="True if a codepoint must never be rasterized or treated as printable content." alt="" coords="244,120,411,160"/>
+<area shape="poly" id="edge8_Node000001_Node000007" title=" " alt="" coords="173,119,230,126,230,131,172,124"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Portal_1_1Text_1_1GlyphAtlas_abcf654455e02ba66cb60f60dc3aa6880.html#abcf654455e02ba66cb60f60dc3aa6880" title="Line advance in pixels for this atlas&#39;s pixel_size." alt="" coords="518,5,699,45"/>
+<area shape="poly" id="edge9_Node000001_Node000008" title=" " alt="" coords="135,89,175,74,219,61,293,47,368,37,504,26,505,31,369,42,294,52,221,67,177,79,136,94"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Text_1_1GlyphAtlas_ada866d38baf8651161b30338ead62737.html#ada866d38baf8651161b30338ead62737" title=" " alt="" coords="483,169,735,209"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="435,196,469,194,469,199,435,201"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Text_1_1GlyphAtlas_a55d85ad969fe77c61a941fff10c8b03a.html#a55d85ad969fe77c61a941fff10c8b03a" title=" " alt="" coords="783,155,949,195"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="735,179,769,178,769,183,735,185"/>
+<area shape="poly" id="edge5_Node000005_Node000002" title=" " alt="" coords="913,152,1019,106,1022,111,915,157"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Text_1_1GlyphAtlas_acff341429235a57df8bef38219916457.html#acff341429235a57df8bef38219916457" title="Double the atlas texture and re&#45;rasterize every cached glyph into it." alt="" coords="997,155,1164,195"/>
+<area shape="poly" id="edge6_Node000005_Node000006" title=" " alt="" coords="950,181,983,181,983,186,950,186"/>
+<area shape="poly" id="edge7_Node000006_Node000005" title=" " alt="" coords="997,169,963,168,963,163,997,163"/>
+<area shape="poly" id="edge10_Node000008_Node000002" title=" " alt="" coords="700,32,950,61,984,66,983,71,949,67,699,37"/>
+</map>

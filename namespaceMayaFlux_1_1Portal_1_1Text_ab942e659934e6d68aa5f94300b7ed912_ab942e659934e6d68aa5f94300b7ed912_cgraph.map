@@ -1,0 +1,12 @@
+<map id="MayaFlux::Portal::Text::initialize" name="MayaFlux::Portal::Text::initialize">
+<area shape="rect" id="Node000001" title="Initialize Portal::Text." alt="" coords="5,55,172,95"/>
+<area shape="rect" id="Node000002" href="$main_8cpp_a25a40b6614565f755233080a384c35f1.html#a25a40b6614565f755233080a384c35f1" title=" " alt="" coords="282,5,361,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="170,53,268,28,269,33,171,58"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Text_1_1TypeFaceFoundry_a939375a455bfd4510f6a7a8f506b600d.html#a939375a455bfd4510f6a7a8f506b600d" title=" " alt="" coords="220,55,423,95"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="172,73,206,73,206,78,172,78"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Text_a6122faf76c34bdb1ad854e9641791839.html#a6122faf76c34bdb1ad854e9641791839" title="Locate a system font by family and style, then load it as the default." alt="" coords="238,143,405,183"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="144,93,256,136,254,141,142,98"/>
+<area shape="poly" id="edge5_Node000004_Node000004" title=" " alt="" coords="278,144,275,134,282,124,298,119,321,117,348,120,363,127,361,132,347,125,321,122,299,124,286,129,281,135,283,142"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Portal_1_1Text_a193d53550bb0c2046258f3e4df7f480a.html#a193d53550bb0c2046258f3e4df7f480a" title="Locate a system font file by family name and optional style." alt="" coords="471,143,637,183"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="405,161,457,161,457,166,405,166"/>
+</map>

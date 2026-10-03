@@ -1,0 +1,122 @@
+<map id="main" name="main">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,317,60,342"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_aeb6ac35d8d260d49b82cf9696396480a.html#aeb6ac35d8d260d49b82cf9696396480a" title="Blocks launcher until Ctrl&#45;C is pressed (optional convenience function)" alt="" coords="128,366,259,391"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="61,336,109,352,134,360,132,365,107,357,59,341"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_afe8d554b31c372f2e0df38b03b51569a.html#afe8d554b31c372f2e0df38b03b51569a" title="Stops and cleans up the default engine." alt="" coords="1342,119,1461,145"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="37,316,62,263,82,231,106,202,183,122,217,89,250,62,286,39,327,23,375,13,433,9,927,9,1024,6,1101,3,1176,9,1219,19,1269,35,1301,50,1331,69,1379,108,1376,112,1328,73,1299,55,1267,40,1218,24,1176,14,1101,8,1025,12,927,15,433,15,376,18,329,28,289,44,253,66,220,93,187,126,110,206,86,234,67,266,41,318"/>
+<area shape="rect" id="Node000012" href="$namespaceMayaFlux_a7d2ef01625e07aeb15550318d3cfb708.html#a7d2ef01625e07aeb15550318d3cfb708" title="Initializes the default engine with default settings." alt="" coords="869,266,983,291"/>
+<area shape="poly" id="edge12_Node000001_Node000012" title=" " alt="" coords="60,316,107,303,212,288,320,277,531,267,717,267,855,272,855,277,717,272,531,272,320,282,213,293,109,308,61,322"/>
+<area shape="rect" id="Node000013" href="$main_8cpp_a25a40b6614565f755233080a384c35f1.html#a25a40b6614565f755233080a384c35f1" title=" " alt="" coords="154,317,233,342"/>
+<area shape="poly" id="edge14_Node000001_Node000013" title=" " alt="" coords="60,327,140,327,140,332,60,332"/>
+<area shape="rect" id="Node000014" href="$namespaceMayaFlux_1_1Config_a926b14a6baa31cfcd77dcb32ca8a2417.html#a926b14a6baa31cfcd77dcb32ca8a2417" title="Load engine configuration from a JSON file, applying any present fields to the pre&#45;Init config struct..." alt="" coords="108,915,279,955"/>
+<area shape="poly" id="edge15_Node000001_Node000014" title=" " alt="" coords="40,342,186,900,181,902,35,343"/>
+<area shape="rect" id="Node000042" href="$main_8cpp_a13a43e6d814de94978c515cb084873b1.html#a13a43e6d814de94978c515cb084873b1" title=" " alt="" coords="172,415,215,441"/>
+<area shape="poly" id="edge60_Node000001_Node000042" title=" " alt="" coords="46,341,72,372,109,402,134,413,159,420,158,425,132,418,107,406,68,376,41,344"/>
+<area shape="rect" id="Node000043" href="$namespaceMayaFlux_a2955e2a3902c0ff3e7a7104fd584d27f.html#a2955e2a3902c0ff3e7a7104fd584d27f" title="Starts audio processing on the default engine." alt="" coords="131,215,256,241"/>
+<area shape="poly" id="edge61_Node000001_Node000043" title=" " alt="" coords="43,315,70,287,107,258,135,244,137,248,109,262,74,291,47,319"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1Engine_a1855ee90d6ed5860c25e0faee3e5098b.html#a1855ee90d6ed5860c25e0faee3e5098b" title="Blocks until shutdown is requested (main thread event loop)" alt="" coords="346,316,522,356"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="259,365,332,351,333,357,260,370"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_ac4ab74951370ff0dd899203f3b94c775.html#ac4ab74951370ff0dd899203f3b94c775" title="Gets the default engine instance." alt="" coords="1085,499,1256,525"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="259,374,399,373,591,379,698,388,808,401,919,419,1026,443,1086,465,1137,490,1135,495,1084,470,1025,448,918,424,808,406,698,393,591,385,399,378,259,379"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1internal_ac0f0b4b1cae6af4441db0ea022e15583.html#ac0f0b4b1cae6af4441db0ea022e15583" title=" " alt="" coords="1316,411,1487,451"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="1207,497,1330,453,1332,458,1209,502"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1internal_a3cc5413e05c2f9c9f04372841aa0a5b1.html#a3cc5413e05c2f9c9f04372841aa0a5b1" title=" " alt="" coords="1535,411,1679,451"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="1487,428,1521,428,1521,433,1487,433"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1internal_ac4d6952d58cdfd56964a883d40aa655d.html#ac4d6952d58cdfd56964a883d40aa655d" title=" " alt="" coords="1727,411,1920,451"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="1679,428,1713,428,1713,433,1679,433"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Journal_1_1Archivist_a82e2d12db8781df4afc43ef4c1fba2be.html#a82e2d12db8781df4afc43ef4c1fba2be" title="Shutdown the logging system." alt="" coords="1748,739,1899,779"/>
+<area shape="poly" id="edge8_Node000006_Node000009" title=" " alt="" coords="1623,449,1804,726,1799,729,1619,452"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1internal_ac26a7a92aa4af34c366aad03b68ea71e.html#ac26a7a92aa4af34c366aad03b68ea71e" title=" " alt="" coords="1969,411,2113,451"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="1920,428,1956,428,1956,433,1920,433"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Journal_1_1Archivist_a8b7829e34d79ec5bbbf02e3d4afbdab9.html#a8b7829e34d79ec5bbbf02e3d4afbdab9" title="Get the singleton instance of the Archivist." alt="" coords="1968,1291,2115,1331"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="1835,778,2030,1277,2025,1279,1830,780"/>
+<area shape="poly" id="edge11_Node000011_Node000006" title=" " alt="" coords="1414,143,1586,398,1582,401,1409,146"/>
+<area shape="poly" id="edge13_Node000012_Node000005" title=" " alt="" coords="968,289,1325,404,1323,409,966,294"/>
+<area shape="rect" id="Node000015" href="$namespaceMayaFlux_1_1Config_a1df79fdf780d55f831e3eb7e09733fe4.html#a1df79fdf780d55f831e3eb7e09733fe4" title="Gets the graphics configuration from the default engine." alt="" coords="345,595,523,635"/>
+<area shape="poly" id="edge16_Node000014_Node000015" title=" " alt="" coords="196,914,210,863,235,793,272,720,297,685,325,654,346,639,349,643,328,658,301,688,277,722,239,795,215,864,201,915"/>
+<area shape="rect" id="Node000021" href="$namespaceMayaFlux_1_1Config_a39911fc00824ff100a15abac405c045e.html#a39911fc00824ff100a15abac405c045e" title="Gets the input configuration from the default engine." alt="" coords="352,796,516,836"/>
+<area shape="poly" id="edge24_Node000014_Node000021" title=" " alt="" coords="232,912,325,864,376,840,379,845,328,869,234,917"/>
+<area shape="rect" id="Node000023" href="$namespaceMayaFlux_1_1Config_aedaa376a2d7263a40d700c2a05022516.html#aedaa376a2d7263a40d700c2a05022516" title="Gets the network configuration from the default engine." alt="" coords="347,879,521,919"/>
+<area shape="poly" id="edge28_Node000014_Node000023" title=" " alt="" coords="279,919,333,911,333,917,279,925"/>
+<area shape="rect" id="Node000025" href="$namespaceMayaFlux_1_1Config_add02a960f8fdc0d03e7d4c0aa3c2b518.html#add02a960f8fdc0d03e7d4c0aa3c2b518" title="Gets the stream configuration from the default engine." alt="" coords="352,503,516,543"/>
+<area shape="poly" id="edge32_Node000014_Node000025" title=" " alt="" coords="195,914,206,852,229,765,247,717,268,669,294,623,325,581,345,562,368,547,371,551,348,566,329,585,298,626,273,672,251,719,234,767,211,853,200,915"/>
+<area shape="rect" id="Node000027" href="$classMayaFlux_1_1IO_1_1JSONSerializer_a9722723cb9849422458d73654df019b3.html#a9722723cb9849422458d73654df019b3" title="Last error message, empty if no error." alt="" coords="329,668,539,708"/>
+<area shape="poly" id="edge36_Node000014_Node000027" title=" " alt="" coords="199,913,216,872,242,820,278,765,300,740,325,718,333,713,336,717,328,722,304,744,283,768,247,822,220,874,204,915"/>
+<area shape="rect" id="Node000028" href="$classMayaFlux_1_1IO_1_1JSONSerializer_a374e5e6d710241a9d67a77d73faa48f9.html#a374e5e6d710241a9d67a77d73faa48f9" title="Read path and deserialize into T." alt="" coords="329,732,539,772"/>
+<area shape="poly" id="edge37_Node000014_Node000028" title=" " alt="" coords="205,913,252,849,286,813,325,782,336,776,339,780,328,786,290,817,256,852,209,916"/>
+<area shape="rect" id="Node000029" href="$namespaceMayaFlux_1_1Config_a377f79870593ed00a95cb627cff19cb9.html#a377f79870593ed00a95cb627cff19cb9" title="Enables or disables logging for specific journal components." alt="" coords="339,955,529,995"/>
+<area shape="poly" id="edge38_Node000014_Node000029" title=" " alt="" coords="279,946,325,954,324,959,278,952"/>
+<area shape="rect" id="Node000031" href="$namespaceMayaFlux_1_1Config_a50b946f16c1c7ae396b2981b5f41efbe.html#a50b946f16c1c7ae396b2981b5f41efbe" title="Restrict journal output to these components; an empty list includes all." alt="" coords="327,1575,541,1615"/>
+<area shape="poly" id="edge41_Node000014_Node000031" title=" " alt="" coords="198,955,207,1042,228,1176,244,1252,267,1331,294,1408,329,1481,361,1527,398,1564,395,1568,357,1530,324,1484,290,1410,261,1333,239,1254,222,1177,201,1043,193,955"/>
+<area shape="rect" id="Node000033" href="$namespaceMayaFlux_1_1Config_ad6046ab275e8518b891fef05ef205ef5.html#ad6046ab275e8518b891fef05ef205ef5" title="Enables or disables logging for specific journal contexts." alt="" coords="351,1431,517,1471"/>
+<area shape="poly" id="edge44_Node000014_Node000033" title=" " alt="" coords="199,955,208,1029,229,1137,246,1198,268,1259,295,1318,329,1373,354,1400,383,1421,379,1426,350,1404,325,1376,290,1321,263,1261,241,1199,224,1139,202,1030,194,956"/>
+<area shape="rect" id="Node000035" href="$namespaceMayaFlux_1_1Config_aefdaf80ef00848aa2e9f669ec10385fd.html#aefdaf80ef00848aa2e9f669ec10385fd" title="Restrict journal output to these contexts; an empty list includes all." alt="" coords="339,1085,529,1125"/>
+<area shape="poly" id="edge47_Node000014_Node000035" title=" " alt="" coords="224,953,395,1075,392,1080,221,957"/>
+<area shape="rect" id="Node000037" href="$namespaceMayaFlux_1_1Config_ab127e81fe5c30eea2ed3fbf5f6c8da30.html#ab127e81fe5c30eea2ed3fbf5f6c8da30" title="Sets the minimum severity level for journal entries to be logged." alt="" coords="603,1208,765,1248"/>
+<area shape="poly" id="edge50_Node000014_Node000037" title=" " alt="" coords="204,954,221,993,247,1042,283,1093,305,1116,328,1135,391,1171,459,1195,527,1211,589,1220,589,1226,526,1216,457,1200,388,1175,325,1140,301,1120,279,1096,243,1045,216,995,200,956"/>
+<area shape="rect" id="Node000039" href="$namespaceMayaFlux_1_1Config_acbb1cccf0d87301df74cdfbabd681ac9.html#acbb1cccf0d87301df74cdfbabd681ac9" title="Outputs journal entries to the console by adding a ConsoleSink to the Archivist NOTE: This records th..." alt="" coords="349,1323,519,1363"/>
+<area shape="poly" id="edge53_Node000014_Node000039" title=" " alt="" coords="200,955,211,1016,234,1103,251,1150,272,1198,298,1243,329,1284,347,1300,368,1314,365,1319,343,1305,325,1287,293,1246,267,1200,246,1152,229,1104,206,1017,195,956"/>
+<area shape="rect" id="Node000041" href="$namespaceMayaFlux_1_1Config_aaf8d14451b8ad0864f0c0d7ea315a2c9.html#aaf8d14451b8ad0864f0c0d7ea315a2c9" title="Stores journal entries to a file by adding a FileSink to the Archivist." alt="" coords="346,1233,522,1273"/>
+<area shape="poly" id="edge56_Node000014_Node000041" title=" " alt="" coords="204,954,221,999,247,1059,283,1124,329,1184,353,1206,381,1224,378,1229,350,1210,325,1187,279,1127,243,1061,216,1001,199,956"/>
+<area shape="poly" id="edge17_Node000015_Node000004" title=" " alt="" coords="509,592,589,575,719,555,850,538,1072,517,1072,522,851,543,720,560,590,580,510,597"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Core_1_1Engine_aa93974ede9908a6730e04437b0937382.html#aa93974ede9908a6730e04437b0937382" title="Gets the current graphics configuration." alt="" coords="596,589,772,629"/>
+<area shape="poly" id="edge18_Node000015_Node000016" title=" " alt="" coords="523,610,582,609,582,614,523,616"/>
+<area shape="rect" id="Node000017" href="$namespaceMayaFlux_a00a57a9897c04aaa8ba5f11b97659982.html#a00a57a9897c04aaa8ba5f11b97659982" title="Checks if the default engine has currently accepted all configurations and initialized all managers." alt="" coords="606,653,762,693"/>
+<area shape="poly" id="edge19_Node000015_Node000017" title=" " alt="" coords="520,632,593,650,592,655,519,637"/>
+<area shape="rect" id="Node000018" href="$namespaceMayaFlux_a3fa338038ee2158c0084bf4cd10c0ef2.html#a3fa338038ee2158c0084bf4cd10c0ef2" title="Checks if the default engine has currently accepted all configurations and initialized all managers." alt="" coords="836,883,1016,909"/>
+<area shape="poly" id="edge20_Node000017_Node000018" title=" " alt="" coords="710,692,780,754,904,872,900,876,777,758,707,696"/>
+<area shape="poly" id="edge21_Node000018_Node000004" title=" " alt="" coords="992,881,1024,862,1057,825,1085,782,1108,737,1127,690,1152,603,1164,538,1169,539,1157,604,1132,692,1113,739,1090,785,1061,828,1027,866,995,886"/>
+<area shape="rect" id="Node000019" href="$classMayaFlux_1_1Core_1_1Engine_a2653ce411a939cf3f1e8285c4d63cd3c.html#a2653ce411a939cf3f1e8285c4d63cd3c" title="Checks if the engine has been initialized and configured." alt="" coords="1083,847,1259,887"/>
+<area shape="poly" id="edge22_Node000018_Node000019" title=" " alt="" coords="1016,883,1069,876,1070,882,1016,888"/>
+<area shape="rect" id="Node000020" href="$namespaceMayaFlux_af8d88ab6d6d525a04d706061bd841cdc.html#af8d88ab6d6d525a04d706061bd841cdc" title="Checks if the default engine has been initialized." alt="" coords="1083,911,1259,937"/>
+<area shape="poly" id="edge23_Node000018_Node000020" title=" " alt="" coords="1016,904,1070,910,1069,915,1016,909"/>
+<area shape="poly" id="edge25_Node000021_Node000004" title=" " alt="" coords="509,794,540,782,564,768,588,754,641,736,683,727,725,719,778,703,882,659,983,611,1135,529,1137,534,985,616,884,664,780,708,727,724,684,732,642,741,590,759,567,772,542,787,511,799"/>
+<area shape="poly" id="edge27_Node000021_Node000017" title=" " alt="" coords="515,796,540,782,555,765,563,748,571,729,588,710,606,698,609,702,591,714,576,732,568,750,560,768,543,786,518,801"/>
+<area shape="rect" id="Node000022" href="$classMayaFlux_1_1Core_1_1Engine_a9706885a0d549c5f0b5eb4b636941a8d.html#a9706885a0d549c5f0b5eb4b636941a8d" title="Gets the current input configuration." alt="" coords="596,768,772,808"/>
+<area shape="poly" id="edge26_Node000021_Node000022" title=" " alt="" coords="516,804,582,797,583,802,517,810"/>
+<area shape="poly" id="edge29_Node000023_Node000004" title=" " alt="" coords="521,879,664,848,778,818,852,790,908,765,961,734,1024,686,1063,649,1099,607,1152,535,1156,538,1104,611,1067,652,1027,690,964,738,911,770,854,795,779,823,665,854,522,884"/>
+<area shape="poly" id="edge31_Node000023_Node000017" title=" " alt="" coords="493,876,518,863,539,846,557,824,565,803,572,780,587,755,614,725,642,700,646,704,618,729,591,758,577,782,570,805,561,827,543,850,521,868,496,881"/>
+<area shape="rect" id="Node000024" href="$classMayaFlux_1_1Core_1_1Engine_a604dfc5e55affd0495b86940cdcb600b.html#a604dfc5e55affd0495b86940cdcb600b" title="Gets the current network configuration." alt="" coords="596,883,772,923"/>
+<area shape="poly" id="edge30_Node000023_Node000024" title=" " alt="" coords="522,898,582,899,582,904,521,903"/>
+<area shape="poly" id="edge33_Node000025_Node000004" title=" " alt="" coords="474,500,527,478,589,460,661,450,734,447,808,449,879,454,1009,473,1108,494,1107,499,1008,478,878,459,807,454,734,452,661,456,590,465,529,483,476,505"/>
+<area shape="poly" id="edge35_Node000025_Node000017" title=" " alt="" coords="480,541,512,559,543,581,558,597,567,612,576,626,591,639,600,645,597,649,588,644,572,629,562,615,554,600,540,585,509,563,478,545"/>
+<area shape="rect" id="Node000026" href="$classMayaFlux_1_1Core_1_1Engine_a02d736c044a7e700855ef3d8587ade79.html#a02d736c044a7e700855ef3d8587ade79" title="Gets the current stream configuration." alt="" coords="596,475,772,515"/>
+<area shape="poly" id="edge34_Node000025_Node000026" title=" " alt="" coords="516,511,582,504,583,509,517,516"/>
+<area shape="poly" id="edge39_Node000029_Node000010" title=" " alt="" coords="502,992,590,1012,683,1026,756,1034,925,1037,1608,1038,1675,1045,1739,1065,1800,1095,1857,1131,1908,1171,1952,1211,2016,1278,2013,1282,1948,1214,1904,1175,1854,1136,1798,1100,1737,1070,1674,1050,1608,1043,925,1043,756,1039,683,1032,589,1017,501,997"/>
+<area shape="rect" id="Node000030" href="$classMayaFlux_1_1Journal_1_1Archivist_a49c47124ebaf73e6843ac152822bbf75.html#a49c47124ebaf73e6843ac152822bbf75" title="Enable or disable logging for a specific component." alt="" coords="591,947,777,1002"/>
+<area shape="poly" id="edge40_Node000029_Node000030" title=" " alt="" coords="530,972,577,972,577,977,530,977"/>
+<area shape="poly" id="edge42_Node000031_Node000010" title=" " alt="" coords="502,1612,590,1632,683,1646,756,1654,925,1657,1608,1657,1645,1655,1681,1647,1715,1636,1749,1620,1812,1580,1868,1532,1918,1479,1961,1427,2019,1341,2024,1344,1965,1430,1922,1483,1872,1536,1815,1585,1751,1625,1717,1641,1682,1653,1646,1660,1608,1663,925,1663,756,1659,683,1652,589,1637,501,1617"/>
+<area shape="rect" id="Node000032" href="$classMayaFlux_1_1Journal_1_1Archivist_a1842834b0d5f6d7022e2940c9bb58375.html#a1842834b0d5f6d7022e2940c9bb58375" title="Restrict logging to these components; an empty list includes all." alt="" coords="591,1567,777,1622"/>
+<area shape="poly" id="edge43_Node000031_Node000032" title=" " alt="" coords="542,1592,577,1592,577,1597,542,1597"/>
+<area shape="poly" id="edge45_Node000033_Node000010" title=" " alt="" coords="518,1448,925,1448,1608,1448,1698,1448,1768,1443,1836,1429,1919,1398,1967,1370,2007,1338,2011,1343,1970,1375,1921,1403,1837,1434,1769,1449,1698,1453,1608,1453,925,1453,518,1453"/>
+<area shape="rect" id="Node000034" href="$classMayaFlux_1_1Journal_1_1Archivist_afd6e186c98502885db9428e6d2304905.html#afd6e186c98502885db9428e6d2304905" title="Enable or disable logging for a specific context." alt="" coords="603,1489,765,1543"/>
+<area shape="poly" id="edge46_Node000033_Node000034" title=" " alt="" coords="512,1468,590,1489,589,1494,511,1473"/>
+<area shape="poly" id="edge48_Node000035_Node000010" title=" " alt="" coords="502,1123,590,1143,683,1157,756,1165,925,1168,1608,1168,1663,1171,1719,1180,1826,1210,1921,1247,1993,1282,1991,1287,1919,1252,1825,1215,1718,1185,1663,1177,1608,1173,925,1173,756,1170,683,1162,589,1148,501,1128"/>
+<area shape="rect" id="Node000036" href="$classMayaFlux_1_1Journal_1_1Archivist_a8381e0fc8c0911e0df6c58dc95625779.html#a8381e0fc8c0911e0df6c58dc95625779" title="Restrict logging to these contexts; an empty list includes all." alt="" coords="603,1078,765,1133"/>
+<area shape="poly" id="edge49_Node000035_Node000036" title=" " alt="" coords="530,1103,589,1103,589,1108,530,1108"/>
+<area shape="poly" id="edge51_Node000037_Node000010" title=" " alt="" coords="765,1246,827,1258,998,1279,1169,1283,1608,1283,1794,1289,1955,1300,1954,1305,1793,1294,1608,1288,1169,1288,997,1284,826,1263,764,1251"/>
+<area shape="rect" id="Node000038" href="$classMayaFlux_1_1Journal_1_1Archivist_aa3b412f52649f428b64d69a2c200e05b.html#aa3b412f52649f428b64d69a2c200e05b" title="Set the minimum severity level for logging." alt="" coords="827,1208,1025,1248"/>
+<area shape="poly" id="edge52_Node000037_Node000038" title=" " alt="" coords="766,1225,813,1225,813,1231,766,1231"/>
+<area shape="poly" id="edge55_Node000039_Node000010" title=" " alt="" coords="520,1360,590,1372,757,1393,925,1397,1608,1397,1697,1395,1765,1388,1833,1374,1919,1352,1979,1333,1980,1338,1921,1357,1834,1379,1766,1393,1697,1401,1608,1403,925,1403,756,1398,589,1377,519,1365"/>
+<area shape="rect" id="Node000040" href="$classMayaFlux_1_1Journal_1_1Archivist_a129a86762e45b9743ff20b2b49d961b3.html#a129a86762e45b9743ff20b2b49d961b3" title="Add a log sink for output." alt="" coords="611,1323,757,1363"/>
+<area shape="poly" id="edge54_Node000039_Node000040" title=" " alt="" coords="519,1340,597,1340,597,1345,519,1345"/>
+<area shape="poly" id="edge58_Node000041_Node000010" title=" " alt="" coords="523,1267,649,1288,810,1309,989,1327,1169,1333,1608,1333,1793,1328,1954,1316,1955,1321,1794,1333,1608,1339,1169,1339,988,1332,809,1315,648,1293,522,1272"/>
+<area shape="poly" id="edge59_Node000041_Node000037" title=" " alt="" coords="522,1242,589,1235,589,1240,522,1247"/>
+<area shape="poly" id="edge57_Node000041_Node000040" title=" " alt="" coords="492,1271,615,1316,613,1321,490,1276"/>
+<area shape="poly" id="edge62_Node000043_Node000004" title=" " alt="" coords="257,230,399,245,593,276,701,299,812,328,921,363,1026,404,1062,423,1095,445,1148,488,1144,492,1092,449,1059,428,1024,409,920,368,810,333,700,304,592,281,398,251,256,235"/>
+<area shape="rect" id="Node000044" href="$classMayaFlux_1_1Core_1_1Engine_a780dcd6b2f3da01d574cba6e475e087c.html#a780dcd6b2f3da01d574cba6e475e087c" title="Starts the coordinated processing of all subsystems." alt="" coords="346,144,522,184"/>
+<area shape="poly" id="edge63_Node000043_Node000044" title=" " alt="" coords="242,213,344,185,346,190,243,218"/>
+<area shape="rect" id="Node000045" href="$classMayaFlux_1_1Core_1_1Engine_a0044b71bc1b400d9339a6e91312da074.html#a0044b71bc1b400d9339a6e91312da074" title="Initializes all system components and prepares for processing." alt="" coords="596,137,772,177"/>
+<area shape="poly" id="edge64_Node000044_Node000045" title=" " alt="" coords="522,159,582,158,582,163,522,164"/>
+<area shape="rect" id="Node000046" href="$namespaceMayaFlux_1_1Portal_1_1System_a51925160aa1000abf1704704938ceda2.html#a51925160aa1000abf1704704938ceda2" title="Initialize Portal::System." alt="" coords="589,201,779,241"/>
+<area shape="poly" id="edge66_Node000044_Node000046" title=" " alt="" coords="522,182,584,196,582,201,521,187"/>
+<area shape="rect" id="Node000047" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a6ae247b78d443c2a920e7cbbaa0dc93f.html#a6ae247b78d443c2a920e7cbbaa0dc93f" title="Store engine&#45;level references for use by all subsequent Forma calls." alt="" coords="593,49,775,89"/>
+<area shape="poly" id="edge67_Node000044_Node000047" title=" " alt="" coords="482,142,588,99,608,92,610,97,590,104,484,147"/>
+<area shape="poly" id="edge65_Node000045_Node000045" title=" " alt="" coords="639,138,637,128,644,119,660,113,684,111,712,114,727,121,725,126,710,119,684,116,661,118,647,123,642,129,644,136"/>
+<area shape="rect" id="Node000048" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1internal_abdc2f8c3b42bcb7e0e99aae7e15a4615.html#abdc2f8c3b42bcb7e0e99aae7e15a4615" title="Accessor for the process&#45;wide Atelier." alt="" coords="835,49,1017,89"/>
+<area shape="poly" id="edge68_Node000047_Node000048" title=" " alt="" coords="775,67,822,67,822,72,775,72"/>
+<area shape="rect" id="Node000050" href="$classMayaFlux_1_1Portal_1_1Forma_1_1internal_1_1Atelier_a2fb6e599a0001e4bb6c0c11dc5aa9154.html#a2fb6e599a0001e4bb6c0c11dc5aa9154" title=" " alt="" coords="829,113,1023,153"/>
+<area shape="poly" id="edge70_Node000047_Node000050" title=" " alt="" coords="761,87,838,107,836,113,760,92"/>
+<area shape="rect" id="Node000049" href="$classMayaFlux_1_1Portal_1_1Forma_1_1internal_1_1Atelier_ad532f0c0c5f3b22f4c31e182c127b3df.html#ad532f0c0c5f3b22f4c31e182c127b3df" title=" " alt="" coords="1073,49,1268,89"/>
+<area shape="poly" id="edge69_Node000048_Node000049" title=" " alt="" coords="1017,67,1059,67,1059,72,1017,72"/>
+</map>

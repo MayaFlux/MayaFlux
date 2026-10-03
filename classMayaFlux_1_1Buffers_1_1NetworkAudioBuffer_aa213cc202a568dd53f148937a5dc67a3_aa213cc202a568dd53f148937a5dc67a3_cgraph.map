@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::NetworkAudioBuffer::setup_processors" name="MayaFlux::Buffers::NetworkAudioBuffer::setup_processors">
+<area shape="rect" id="Node000001" title="Sets up audio processors for the specified processing token." alt="" coords="5,5,167,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1NetworkAudioBuffer_a890c34b012cb75c9817a00d26b0f763a.html#a890c34b012cb75c9817a00d26b0f763a" title="Creates a default audio transformation processor for this buffer type." alt="" coords="215,5,401,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="167,30,201,30,201,35,167,35"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::choose_mesh_network" name="MayaFlux::choose_mesh_network">
+<area shape="rect" id="Node000001" title="Present a native open&#45;file dialog filtered to 3D model formats and load the chosen file as a MeshNetw..." alt="" coords="208,5,391,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Creator_a916847654e5a7c9035c3e07f4b3b5953.html#a916847654e5a7c9035c3e07f4b3b5953" title=" " alt="" coords="5,5,160,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="194,28,160,28,160,23,194,23"/>
+</map>

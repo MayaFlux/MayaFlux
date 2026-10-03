@@ -1,0 +1,9 @@
+<map id="MayaFlux::Portal::Forma::internal::Atelier::create_surface" name="MayaFlux::Portal::Forma::internal::Atelier::create_surface">
+<area shape="rect" id="Node000001" title="Build a Surface from a SurfaceConfig, creating Layer and Context when config.layer/config...." alt="" coords="235,77,416,132"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Forma_1_1internal_1_1Atelier_a8a30e91a17ae12f678b1e68181b538dc.html#a8a30e91a17ae12f678b1e68181b538dc" title="Build a window through create_window, then a Surface on it." alt="" coords="5,5,187,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="224,76,183,63,184,57,225,71"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Forma_acfceb7b07d32e4dc0389ee3b033d970c.html#acfceb7b07d32e4dc0389ee3b033d970c" title="Construct a Surface from a SurfaceConfig." alt="" coords="5,85,187,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="221,107,187,107,187,102,221,102"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a0134941e72f794b2ad2318f03eacb98b.html#a0134941e72f794b2ad2318f03eacb98b" title="Create a live plot in a new window." alt="" coords="5,149,187,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="222,136,169,151,168,146,221,131"/>
+</map>

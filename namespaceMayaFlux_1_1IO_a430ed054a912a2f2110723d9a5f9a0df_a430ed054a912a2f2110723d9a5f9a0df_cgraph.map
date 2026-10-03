@@ -1,0 +1,14 @@
+<map id="MayaFlux::IO::save_spatial_snapshot" name="MayaFlux::IO::save_spatial_snapshot">
+<area shape="rect" id="Node000001" title="Open a fresh SpatialCache, write every source once, then close it." alt="" coords="5,101,152,141"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1SpatialCache_af4391ee94079d44e2c410c70ad7449bd.html#af4391ee94079d44e2c410c70ad7449bd" title="Finalize and close the archive." alt="" coords="200,5,401,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="113,99,199,55,217,48,219,53,201,60,115,104"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1SpatialCache_a76b7760ae664ada78f27312377790cf7.html#a76b7760ae664ada78f27312377790cf7" title=" " alt="" coords="200,69,401,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="152,108,186,103,187,108,153,113"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1SpatialCache_a7d53c246c7b2e8d6492b2d61286c860c.html#a7d53c246c7b2e8d6492b2d61286c860c" title="Open an Alembic archive for writing, Ogawa backend." alt="" coords="200,133,401,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="153,129,187,134,186,139,152,135"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1IO_a7a8c537450f6ce9496ebbd1d5886cddb.html#a7a8c537450f6ce9496ebbd1d5886cddb" title="Substitute a frame index into a numbered output pattern." alt="" coords="219,197,383,237"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="115,139,201,183,219,190,217,195,199,188,113,144"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1IO_af70273974a6d4e868b4c016d2f944547.html#af70273974a6d4e868b4c016d2f944547" title="Resolve a writable path against the configured output directory." alt="" coords="449,165,613,205"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="402,165,436,169,436,175,401,170"/>
+<area shape="poly" id="edge6_Node000006_Node000005" title=" " alt="" coords="383,203,436,196,436,201,383,209"/>
+</map>

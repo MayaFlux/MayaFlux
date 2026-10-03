@@ -1,0 +1,7 @@
+<map id="MayaFlux::Yantra::infer_from_container" name="MayaFlux::Yantra::infer_from_container">
+<area shape="rect" id="Node000001" title="Infer structure from SignalSourceContainer." alt="" coords="5,37,177,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_a88dd3a8013f6e990f4593616f261bc76.html#a88dd3a8013f6e990f4593616f261bc76" title="Detects data modality from dimension information." alt="" coords="225,5,389,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="177,42,212,37,212,42,178,47"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_aab0cac54b47602cb00e2fd99b50839c3.html#aab0cac54b47602cb00e2fd99b50839c3" title="Convenience constructor for a temporal (time) dimension." alt="" coords="227,69,388,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="178,67,214,73,213,78,177,73"/>
+</map>

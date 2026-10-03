@@ -1,0 +1,11 @@
+<map id="MayaFlux::Kinesis::Vision::rgba_to_hsv" name="MayaFlux::Kinesis::Vision::rgba_to_hsv">
+<area shape="rect" id="Node000001" title="Convert RGBA to HSV writing into caller&#45;supplied buffer." alt="" coords="519,37,668,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a54f8797cddde280f037d5dbec87a8d4a.html#a54f8797cddde280f037d5dbec87a8d4a" title="Convert RGBA to HSV." alt="" coords="299,5,448,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="505,47,448,39,449,34,505,42"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kinesis_1_1Vision_1_1VisionExecutor_a6ea94c5c8d90c5890b7715a0e4ff2df5.html#a6ea94c5c8d90c5890b7715a0e4ff2df5" title="Execute a VisionSequence on one frame." alt="" coords="276,69,471,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="505,73,471,78,471,73,505,68"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1VisionProcessor_ab9b6b50546df64540aee0f0bbbb7939a.html#ab9b6b50546df64540aee0f0bbbb7939a" title="Execute the VisionSequence on processed_data[0]." alt="" coords="25,33,208,73"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="262,76,208,69,209,63,263,71"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1ImageCVProcessor_a03dd11926b797b52ccbdfa37c2b5e4e1.html#a03dd11926b797b52ccbdfa37c2b5e4e1" title="Download the current GPU image, run the VisionSequence, store the result." alt="" coords="5,98,228,153"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="263,107,229,112,228,107,262,102"/>
+</map>

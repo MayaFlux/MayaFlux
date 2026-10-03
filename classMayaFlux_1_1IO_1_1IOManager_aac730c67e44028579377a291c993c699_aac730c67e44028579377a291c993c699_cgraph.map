@@ -1,0 +1,19 @@
+<map id="MayaFlux::IO::IOManager::save_mesh_snapshot" name="MayaFlux::IO::IOManager::save_mesh_snapshot">
+<area shape="rect" id="Node000001" title="Save a ComputeMeshBuffer with a millisecond epoch timestamp spliced into the path,..." alt="" coords="5,37,192,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1IO_1_1Detail_a1e3410176c528399abb892e8c3f44fb5.html#a1e3410176c528399abb892e8c3f44fb5" title=" " alt="" coords="240,5,431,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="192,42,226,37,227,43,193,47"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1IO_1_1IOManager_a0604e2f246faf9ae9d598cd28140d814.html#a0604e2f246faf9ae9d598cd28140d814" title="Retain a save task in m_save_tasks and opportunistically reclaim finished ones." alt="" coords="242,69,429,109"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="193,67,229,72,228,78,192,73"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1IO_a58f1f8023fc20779c46e7038f127c999.html#a58f1f8023fc20779c46e7038f127c999" title="Save a ComputeMeshBuffer with a millisecond epoch timestamp spliced into the path." alt="" coords="486,5,633,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="431,23,473,23,473,28,431,28"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1IO_aa56677bfbd9cdeaea14715e9b2236754.html#aa56677bfbd9cdeaea14715e9b2236754" title="Save a MeshBuffer&#39;s current mesh data to disk via ModelWriterRegistry." alt="" coords="688,13,879,38"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="633,23,675,23,675,28,633,28"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Parallel_1_1AsyncGroup_ae891e0a0f3434000ff27e12d616a808a.html#ae891e0a0f3434000ff27e12d616a808a" title="Retains fut and opportunistically reclaims completed work." alt="" coords="479,69,640,109"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="429,87,465,87,465,92,429,92"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Parallel_1_1AsyncGroup_ac5d3a0e96e4855b93c6fa4d545f5440d.html#ac5d3a0e96e4855b93c6fa4d545f5440d" title=" " alt="" coords="708,69,859,109"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="641,87,694,87,694,92,641,92"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Parallel_1_1AsyncGroup_a61de2e5f9b1c7bf6c744e2c6c299b5c9.html#a61de2e5f9b1c7bf6c744e2c6c299b5c9" title=" " alt="" coords="927,69,1081,109"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="859,87,913,87,913,92,859,92"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Memory_1_1SweepList_a08033a9c7623c750d27d7796db165f4d.html#a08033a9c7623c750d27d7796db165f4d" title="Publishes value for later sweep() or drain()." alt="" coords="1129,69,1351,109"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="1082,87,1116,87,1116,92,1082,92"/>
+</map>

@@ -1,0 +1,20 @@
+<map id="MayaFlux::Nexus::Mantle::set_bounds" name="MayaFlux::Nexus::Mantle::set_bounds">
+<area shape="rect" id="Node000001" title="Set or replace the box and place the buffer to match." alt="" coords="5,67,193,107"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1Expanse_a63f198036259d05c7f2d679884b4ff35.html#a63f198036259d05c7f2d679884b4ff35" title="The box, if set." alt="" coords="488,5,687,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="179,64,241,52,361,37,474,28,474,34,362,43,242,57,180,69"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nexus_1_1Mantle_ad57cad5c90326b7f9f99a51980332783.html#ad57cad5c90326b7f9f99a51980332783" title=" " alt="" coords="247,67,435,107"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="194,84,233,84,233,89,194,89"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nexus_1_1Expanse_a68c254e884bad15b2c9609cdec8a3fcb.html#a68c254e884bad15b2c9609cdec8a3fcb" title="Set or replace the box." alt="" coords="241,131,440,171"/>
+<area shape="poly" id="edge9_Node000001_Node000009" title=" " alt="" coords="176,104,253,125,251,130,175,109"/>
+<area shape="poly" id="edge3_Node000003_Node000002" title=" " alt="" coords="421,64,492,46,493,51,423,69"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_a724984551301a0715dc9e2113107b3b5.html#a724984551301a0715dc9e2113107b3b5" title="Transform that scales and translates one box onto another." alt="" coords="513,69,662,109"/>
+<area shape="poly" id="edge4_Node000003_Node000004" title=" " alt="" coords="435,85,499,86,499,91,435,90"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Nexus_a61beb68adf0686b0e0fe5c3339838a3c.html#a61beb68adf0686b0e0fe5c3339838a3c" title="Place every render processor of the buffer that is not placed yet." alt="" coords="498,133,677,173"/>
+<area shape="poly" id="edge8_Node000003_Node000008" title=" " alt="" coords="416,104,500,127,499,132,415,109"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Kinesis_1_1AABB3D_a0d85b0eaeb89c2c3d58fd1f8858c4ac8.html#a0d85b0eaeb89c2c3d58fd1f8858c4ac8" title=" " alt="" coords="735,5,884,45"/>
+<area shape="poly" id="edge5_Node000004_Node000005" title=" " alt="" coords="657,67,726,47,727,52,658,72"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Kinesis_1_1AABB3D_aeab9cee1b78baf556b0b7e14c99541c2.html#aeab9cee1b78baf556b0b7e14c99541c2" title=" " alt="" coords="735,69,884,109"/>
+<area shape="poly" id="edge6_Node000004_Node000006" title=" " alt="" coords="662,87,721,87,721,92,662,92"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Kinesis_ace716df2f40f1b0e620049c240637942.html#ace716df2f40f1b0e620049c240637942" title="Uniform scaling of a scalar&#45;output tendency." alt="" coords="735,133,884,173"/>
+<area shape="poly" id="edge7_Node000004_Node000007" title=" " alt="" coords="658,107,727,127,726,132,657,112"/>
+</map>

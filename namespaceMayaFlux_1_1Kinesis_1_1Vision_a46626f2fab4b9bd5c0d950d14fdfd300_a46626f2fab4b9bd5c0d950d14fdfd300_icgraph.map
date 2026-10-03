@@ -1,0 +1,12 @@
+<map id="MayaFlux::Kinesis::Vision::hash_combine" name="MayaFlux::Kinesis::Vision::hash_combine">
+<area shape="rect" id="Node000001" title="Combine a hash into an existing seed, FNV&#45;style." alt="" coords="664,37,828,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_af5e0a4ec30b9743e70feb940bb86a5b0.html#af5e0a4ec30b9743e70feb940bb86a5b0" title="Combine an optional region into a hash: absence and presence hash differently, presence by its four b..." alt="" coords="467,8,616,48"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="650,46,616,41,617,36,651,41"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a5566e8633a3304ad12b1f90a2f9fe69b.html#a5566e8633a3304ad12b1f90a2f9fe69b" title="Hash a VisionStep&#39;s op and parameters together." alt="" coords="236,37,419,77"/>
+<area shape="poly" id="edge5_Node000001_Node000003" title=" " alt="" coords="650,62,616,63,467,63,419,62,419,57,467,57,616,57,650,57"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="453,43,419,47,419,42,452,37"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1VisionGpuExecutor_a08ab089f0a700b0a70d6902294c38fb1.html#a08ab089f0a700b0a70d6902294c38fb1" title="Detect edges in the current image with the Canny pipeline." alt="" coords="5,5,188,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="222,45,188,41,189,35,223,40"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1VisionGpuExecutor_afdad8a5a64522f246a58a7f585bd34c6.html#afdad8a5a64522f246a58a7f585bd34c6" title="Execute a VisionSequence on the GPU through an explicit context set." alt="" coords="5,69,188,109"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="223,74,189,79,188,74,222,69"/>
+</map>

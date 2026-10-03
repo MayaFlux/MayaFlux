@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::VertexInsertion::layout" name="MayaFlux::Kakshya::VertexInsertion::layout">
+<area shape="rect" id="Node000001" title="Layout of the last successful insertion, with vertex_count set to the decoded count." alt="" coords="473,13,644,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1VertexInsertion_ae95c56387e4b1994f547e206500a6785.html#ae95c56387e4b1994f547e206500a6785" title="Replace the channel list with the attributes of interleaved vertices." alt="" coords="259,5,425,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="459,35,426,35,426,30,459,30"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1DataReadProcessor_a155bfe453f0fc0790f91cb3480c61432.html#a155bfe453f0fc0790f91cb3480c61432" title="Finish a read_vertices() read as typed channels." alt="" coords="5,5,211,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="245,35,211,35,211,30,245,30"/>
+</map>

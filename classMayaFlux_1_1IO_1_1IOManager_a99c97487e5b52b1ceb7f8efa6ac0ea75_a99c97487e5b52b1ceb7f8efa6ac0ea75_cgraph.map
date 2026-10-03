@@ -1,0 +1,15 @@
+<map id="MayaFlux::IO::IOManager::save_mesh" name="MayaFlux::IO::IOManager::save_mesh">
+<area shape="rect" id="Node000001" title="Save a ComputeMeshBuffer&#39;s current live geometry to disk asynchronously." alt="" coords="5,27,192,67"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1IO_aa56677bfbd9cdeaea14715e9b2236754.html#aa56677bfbd9cdeaea14715e9b2236754" title="Save a MeshBuffer&#39;s current mesh data to disk via ModelWriterRegistry." alt="" coords="240,5,431,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="192,33,226,29,227,34,192,38"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1IOManager_a0604e2f246faf9ae9d598cd28140d814.html#a0604e2f246faf9ae9d598cd28140d814" title="Retain a save task in m_save_tasks and opportunistically reclaim finished ones." alt="" coords="242,55,429,95"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="192,56,229,60,228,65,192,61"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Parallel_1_1AsyncGroup_ae891e0a0f3434000ff27e12d616a808a.html#ae891e0a0f3434000ff27e12d616a808a" title="Retains fut and opportunistically reclaims completed work." alt="" coords="479,55,640,95"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="429,73,465,73,465,78,429,78"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Parallel_1_1AsyncGroup_ac5d3a0e96e4855b93c6fa4d545f5440d.html#ac5d3a0e96e4855b93c6fa4d545f5440d" title=" " alt="" coords="688,55,839,95"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="640,73,674,73,674,78,640,78"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Parallel_1_1AsyncGroup_a61de2e5f9b1c7bf6c744e2c6c299b5c9.html#a61de2e5f9b1c7bf6c744e2c6c299b5c9" title=" " alt="" coords="887,55,1041,95"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="839,73,873,73,873,78,839,78"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Memory_1_1SweepList_a08033a9c7623c750d27d7796db165f4d.html#a08033a9c7623c750d27d7796db165f4d" title="Publishes value for later sweep() or drain()." alt="" coords="1089,55,1311,95"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="1042,73,1076,73,1076,78,1042,78"/>
+</map>

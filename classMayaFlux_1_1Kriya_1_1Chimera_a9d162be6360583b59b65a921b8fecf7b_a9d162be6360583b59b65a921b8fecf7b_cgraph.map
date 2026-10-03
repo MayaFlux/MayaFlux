@@ -1,0 +1,17 @@
+<map id="MayaFlux::Kriya::Chimera::feed" name="MayaFlux::Kriya::Chimera::feed">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,101,196,141"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_a9c3e6669a793f6c2bdb91af7669a7e98.html#a9c3e6669a793f6c2bdb91af7669a7e98" title="Linearly blend two frames of the same size and format." alt="" coords="287,5,445,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="141,99,243,55,272,45,274,50,245,60,143,104"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kakshya_1_1ImageData_a7e26b6c00079d084e313532ca3e9fbe5.html#a7e26b6c00079d084e313532ca3e9fbe5" title="Build an ImageData from raw pixel bytes in format&#39;s layout." alt="" coords="278,69,454,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="196,107,264,99,264,104,196,113"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a1d702ea8bef8765e8895776bd67b0cc8.html#a1d702ea8bef8765e8895776bd67b0cc8" title="Get the number of color channels for a given format." alt="" coords="244,133,488,173"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="196,130,231,134,230,140,196,135"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Kriya_1_1Chimera_a5765a2731f5a28ab57e10df97b9e6d18.html#a5765a2731f5a28ab57e10df97b9e6d18" title=" " alt="" coords="271,197,461,237"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="143,139,245,183,269,191,268,196,243,188,141,144"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kakshya_a7c5d5d6f0be24fe12ef6c67401c2c001.html#a7c5d5d6f0be24fe12ef6c67401c2c001" title="Byte width of the DataVariant element backing a given ImageFormat." alt="" coords="536,5,701,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="445,23,522,23,522,28,445,28"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Kakshya_1_1ImageData_a2d6731e0d90bf2d2332d20554a1cd02b.html#a2d6731e0d90bf2d2332d20554a1cd02b" title="Allocate zeroed pixel storage of the variant format calls for." alt="" coords="539,69,698,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="454,87,526,87,526,92,454,92"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Kakshya_1_1ImageData_a21017cbe6ccc7ceec6b7fa9fb32e5aaf.html#a21017cbe6ccc7ceec6b7fa9fb32e5aaf" title="Number of pixel elements (not bytes), dispatched on variant." alt="" coords="749,69,948,109"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="698,87,736,87,736,92,698,92"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::DynamicVideoStream::seek_processor" name="MayaFlux::Kakshya::DynamicVideoStream::seek_processor">
+<area shape="rect" id="Node000001" title="The FrameSeekProcessor that reads this stream, installed on first use." alt="" coords="225,5,397,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1DynamicVideoStream_a9e645d84e7eb133de77b4df6b45f02c0.html#a9e645d84e7eb133de77b4df6b45f02c0" title="Play back a fixed number of frames behind the write head." alt="" coords="5,5,177,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="211,35,177,35,177,30,211,30"/>
+</map>

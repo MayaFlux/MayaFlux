@@ -1,0 +1,21 @@
+<map id="MayaFlux::Yantra::VisionAnalyzer" name="MayaFlux::Yantra::VisionAnalyzer">
+<area shape="rect" id="Node000001" title="Resolves its configured VisionQuery, runs every resolved VisionSequence against a persistent VisionGp..." alt="" coords="684,2023,899,2643"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1FunctionalOperation.html" title=" " alt="" coords="391,1711,683,1960"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="609,1971,686,2122,682,2124,604,1974"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation.html" title=" " alt="" coords="273,1095,526,1619"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="481,1631,504,1710,498,1711,476,1633"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Yantra_1_1ExecutionContext.html" title="Context information controlling how a compute operation executes." alt="" coords="301,5,498,445"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="302,283,241,324,178,376,121,438,97,473,78,509,46,583,25,650,12,711,8,769,13,827,27,888,48,956,78,1031,112,1096,157,1156,209,1210,261,1256,258,1260,205,1214,153,1160,108,1099,73,1033,43,957,21,890,8,828,3,769,7,710,19,648,41,582,73,507,93,470,117,435,174,373,238,320,299,278"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation.html" title="Base interface for all computational operations in the processing pipeline." alt="" coords="273,508,526,1032"/>
+<area shape="poly" id="edge5_Node000005_Node000004" title=" " alt="" coords="402,446,402,491,397,491,397,446"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation.html" title="Base interface for all computational operations in the processing pipeline." alt="" coords="550,508,803,1032"/>
+<area shape="poly" id="edge8_Node000007_Node000004" title=" " alt="" coords="500,332,549,397,592,468,604,492,599,494,588,471,545,400,496,336"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="402,1046,402,1094,397,1094,397,1046"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1FunctionalOperation.html" title="Wraps a single callable as a ComputeOperation, for a wild or one&#45;off idea that does not warrant a han..." alt="" coords="550,1247,803,1467"/>
+<area shape="poly" id="edge6_Node000002_Node000006" title=" " alt="" coords="643,1481,575,1711,570,1710,638,1479"/>
+<area shape="poly" id="edge7_Node000006_Node000007" title=" " alt="" coords="679,1046,679,1247,674,1247,674,1046"/>
+<area shape="rect" id="Node000008" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1VisionQuery.html" title="Composed query: which VisionIntents are active, and each active one&#39;s parameters." alt="" coords="707,1735,876,1935"/>
+<area shape="poly" id="edge9_Node000001_Node000008" title=" " alt="" coords="794,1936,794,2006,789,2006,789,1936"/>
+<area shape="rect" id="Node000009" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1VisionAnalysisContext.html" title="Composed context: caller&#45;supplied data for whichever intents need it, consulted after a VisionQuery&#39;s..." alt="" coords="901,1785,1109,1885"/>
+<area shape="poly" id="edge10_Node000001_Node000009" title=" " alt="" coords="986,1887,908,2068,903,2066,981,1884"/>
+</map>

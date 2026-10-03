@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kinesis::Stochastic::Estimate::set_model" name="MayaFlux::Kinesis::Stochastic::Estimate::set_model">
+<area shape="rect" id="Node000001" title="Changes active model." alt="" coords="5,41,160,96"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Estimate_a0cb8930ef9acfae30101e97d0e893c21.html#a0cb8930ef9acfae30101e97d0e893c21" title="Resets internal state." alt="" coords="208,41,363,96"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="160,66,194,66,194,71,160,71"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kinesis_1_1Stochastic_1_1EstimateState_ad820d871631f8c60e32279cb123ddcea.html#ad820d871631f8c60e32279cb123ddcea" title=" " alt="" coords="417,5,607,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="363,54,403,47,404,53,364,59"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Memory_1_1HistoryBuffer_a8803d9de8c837825b2421712933ce827.html#a8803d9de8c837825b2421712933ce827" title="Reset buffer to initial state (all zeros)" alt="" coords="411,85,613,125"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="364,78,397,84,397,89,363,84"/>
+</map>

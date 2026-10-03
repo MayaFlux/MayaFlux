@@ -1,0 +1,3 @@
+<map id="MayaFlux::Kakshya::RegionCacheManager" name="MayaFlux::Kakshya::RegionCacheManager">
+<area shape="rect" id="Node000001" title="Manages caching of region data for efficient access and eviction." alt="" coords="5,5,223,445"/>
+</map>

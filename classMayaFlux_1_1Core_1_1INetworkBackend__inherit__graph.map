@@ -1,0 +1,7 @@
+<map id="MayaFlux::Core::INetworkBackend" name="MayaFlux::Core::INetworkBackend">
+<area shape="rect" id="Node000001" title="Abstract interface for network transport backends." alt="" coords="130,5,313,285"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1TCPBackend.html" title="Connection&#45;oriented reliable stream transport over TCP via standalone Asio." alt="" coords="5,333,208,959"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="189,299,181,334,176,332,184,298"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1UDPBackend.html" title="Connectionless datagram transport over UDP via standalone Asio." alt="" coords="233,356,439,936"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="259,298,272,355,267,356,254,299"/>
+</map>

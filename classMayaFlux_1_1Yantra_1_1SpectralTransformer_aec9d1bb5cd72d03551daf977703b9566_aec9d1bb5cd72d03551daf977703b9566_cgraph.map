@@ -1,0 +1,5 @@
+<map id="MayaFlux::Yantra::SpectralTransformer::set_transformation_parameter" name="MayaFlux::Yantra::SpectralTransformer::set_transformation_parameter">
+<area shape="rect" id="Node000001" title="Sets transformation parameters." alt="" coords="5,5,237,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1UniversalTransformer_ae86a6743c591b4585419dbbd8698c4b4.html#ae86a6743c591b4585419dbbd8698c4b4" title="Transformation&#45;specific parameter handling (override for custom parameters)" alt="" coords="285,5,517,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="237,30,272,30,272,35,237,35"/>
+</map>

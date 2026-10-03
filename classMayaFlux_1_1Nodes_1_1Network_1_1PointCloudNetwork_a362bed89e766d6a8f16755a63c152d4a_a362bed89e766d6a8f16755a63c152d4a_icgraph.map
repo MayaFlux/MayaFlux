@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::PointCloudNetwork::update_mapped_parameters" name="MayaFlux::Nodes::Network::PointCloudNetwork::update_mapped_parameters">
+<area shape="rect" id="Node000001" title="Update mapped parameters before path/topology processing." alt="" coords="309,5,517,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PointCloudNetwork_a73cf54bd6c1667528aa480b85b030f5a.html#a73cf54bd6c1667528aa480b85b030f5a" title="Process the network for the given number of samples." alt="" coords="5,13,261,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="295,35,261,35,261,30,295,30"/>
+</map>

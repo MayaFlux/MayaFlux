@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::ComputeProcessor::get_iteration_count" name="MayaFlux::Buffers::ComputeProcessor::get_iteration_count">
+<area shape="rect" id="Node000001" title="Dispatches recorded per execute cycle." alt="" coords="283,30,456,85"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1DiffuseProcessor_acd8e62a4112f32e734bf60e5c68c0bcf.html#acd8e62a4112f32e734bf60e5c68c0bcf" title="Swap only when the pass count leaves the result in the write slot." alt="" coords="11,5,229,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="269,47,229,42,230,37,269,42"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1PressureProcessor_a29c8ce6430021d2eebc6e08d86eb3603.html#a29c8ce6430021d2eebc6e08d86eb3603" title="Swap only when the pass count leaves the result in the write slot." alt="" coords="5,69,235,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="269,73,235,77,235,72,269,68"/>
+</map>

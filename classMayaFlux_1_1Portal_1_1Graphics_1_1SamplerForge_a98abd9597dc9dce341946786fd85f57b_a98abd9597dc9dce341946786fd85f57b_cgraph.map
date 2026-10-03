@@ -1,0 +1,17 @@
+<map id="MayaFlux::Portal::Graphics::SamplerForge::get_default_nearest" name="MayaFlux::Portal::Graphics::SamplerForge::get_default_nearest">
+<area shape="rect" id="Node000001" title="Get a default nearest sampler." alt="" coords="5,126,208,181"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_ad25bae266361d43df981d38d888b013e.html#ad25bae266361d43df981d38d888b013e" title="Get or create a sampler with the given configuration." alt="" coords="256,133,473,173"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="208,151,242,151,242,156,208,156"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_afa86f42384001799058f8318acca8434.html#afa86f42384001799058f8318acca8434" title=" " alt="" coords="521,69,751,109"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="450,131,537,110,538,115,451,136"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_a90db6c9ddb1c049e8481bf49af7bea3e.html#a90db6c9ddb1c049e8481bf49af7bea3e" title=" " alt="" coords="533,133,739,173"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="473,151,520,151,520,156,473,156"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_a15a0922824ec316d8aa5b8f8bb7e3e73.html#a15a0922824ec316d8aa5b8f8bb7e3e73" title="Check if factory is initialized." alt="" coords="531,197,741,237"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="451,171,538,192,537,197,450,176"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_a3601257f00f541625ec136c52dd88ce5.html#a3601257f00f541625ec136c52dd88ce5" title=" " alt="" coords="799,5,1065,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="729,67,825,46,826,51,730,72"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_aa9bc6ca865badcf685bd0c5dabced2e7.html#aa9bc6ca865badcf685bd0c5dabced2e7" title=" " alt="" coords="806,69,1058,109"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="751,87,793,87,793,92,751,92"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_a1f850f0d077848db00815e87087c3765.html#a1f850f0d077848db00815e87087c3765" title=" " alt="" coords="831,133,1033,173"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="730,107,826,128,825,133,729,112"/>
+</map>

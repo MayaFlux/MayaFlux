@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::CompositeAccess::byte_dimensions" name="MayaFlux::Kakshya::CompositeAccess::byte_dimensions">
+<area shape="rect" id="Node000001" title="Describe packed bytes as [elements, bytes&#45;per&#45;element]." alt="" coords="5,30,180,85"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1CompositeAccess_a86e24a8532dbe1a66002e4bfb46b48ff.html#a86e24a8532dbe1a66002e4bfb46b48ff" title="Number of packed elements in the current element store." alt="" coords="255,5,425,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="180,43,240,35,241,41,181,49"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1CompositeLayout_a04d7cccd3b3bb8e93f3909f55a970198.html#a04d7cccd3b3bb8e93f3909f55a970198" title="Bytes per packed element after finalization." alt="" coords="228,69,452,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="181,66,215,70,214,76,180,71"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::VKBuffer::get_data" name="MayaFlux::Buffers::VKBuffer::get_data">
+<area shape="rect" id="Node000001" title="Read buffer contents as Kakshya DataVariant." alt="" coords="201,5,349,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_af6dd001810af7fa06b5b2fd83d04303a.html#af6dd001810af7fa06b5b2fd83d04303a" title="Create a clone of this buffer with the same data and properties." alt="" coords="5,5,153,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="187,28,154,28,154,23,187,23"/>
+</map>

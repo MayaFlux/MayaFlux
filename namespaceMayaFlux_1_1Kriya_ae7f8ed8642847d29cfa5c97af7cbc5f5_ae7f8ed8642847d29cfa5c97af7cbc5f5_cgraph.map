@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kriya::audio_output_tick" name="MayaFlux::Kriya::audio_output_tick">
+<area shape="rect" id="Node000001" title="Create a BroadcastSource&lt;bool&gt; ticking once per audio output cycle." alt="" coords="5,49,177,89"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="243,5,409,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="177,53,228,45,229,50,178,58"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="225,85,427,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="178,79,212,85,211,90,177,85"/>
+</map>

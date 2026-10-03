@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::DynamicVideoStream::enable_circular_buffer" name="MayaFlux::Kakshya::DynamicVideoStream::enable_circular_buffer">
+<area shape="rect" id="Node000001" title="Keep only the most recent capacity frames." alt="" coords="257,34,429,89"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1DynamicVideoStream_ad6c9c3b8363c07af06006e1577563e07.html#ad6c9c3b8363c07af06006e1577563e07" title="Drop every frame and restart the write head at zero." alt="" coords="5,5,209,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="243,49,209,44,210,38,244,44"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1DynamicVideoStream_aec014335ed24825560c6e7c1503ef6bd.html#aec014335ed24825560c6e7c1503ef6bd" title="Build a stream from a spec, enabling the ring when it asks for one." alt="" coords="21,70,193,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="244,79,194,87,193,82,243,74"/>
+</map>

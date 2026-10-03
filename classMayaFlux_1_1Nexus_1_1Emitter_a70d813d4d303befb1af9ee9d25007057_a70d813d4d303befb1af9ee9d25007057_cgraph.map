@@ -1,0 +1,16 @@
+<map id="MayaFlux::Nexus::Emitter::attach" name="MayaFlux::Nexus::Emitter::attach">
+<area shape="rect" id="Node000001" title="Make an existing, already rendered buffer the look of this object." alt="" coords="5,69,196,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1Emitter_a37b66812ac0c3b9b33b8b139890fbd34.html#a37b66812ac0c3b9b33b8b139890fbd34" title="Release the attached buffer and reset its placement." alt="" coords="244,5,435,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="175,67,250,46,252,51,177,72"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nexus_1_1Emitter_a345a964ce8babed2187dc44e9aaaa67c.html#a345a964ce8babed2187dc44e9aaaa67c" title=" " alt="" coords="244,69,435,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="196,87,230,87,230,92,196,92"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Nexus_ad44add43b988749541d1a7d91239c707.html#ad44add43b988749541d1a7d91239c707" title="Build an attachment to buf." alt="" coords="250,145,429,185"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="165,107,264,139,262,144,164,112"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Nexus_abda682e9b2ea82c8618ecdb656510408.html#abda682e9b2ea82c8618ecdb656510408" title="Give every placed render processor back the geometry transform it had." alt="" coords="483,5,673,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="435,23,469,23,469,28,435,28"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Nexus_ab974630fd759536d53142fbabe801508.html#ab974630fd759536d53142fbabe801508" title="Set position from the buffer, or fold an outside move into the attachment." alt="" coords="487,69,669,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="435,87,473,87,473,92,435,92"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Nexus_a38a4ffb36a511a9879f5dee9e2f64099.html#a38a4ffb36a511a9879f5dee9e2f64099" title="Anchor of a buffer&#39;s geometry in its own stored coordinates." alt="" coords="492,157,664,197"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="429,167,478,170,478,175,429,172"/>
+<area shape="poly" id="edge7_Node000007_Node000007" title=" " alt="" coords="534,158,531,148,538,138,554,133,578,131,606,134,621,141,618,146,604,139,578,136,555,138,541,143,536,149,539,156"/>
+</map>

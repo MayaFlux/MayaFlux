@@ -1,0 +1,13 @@
+<map id="MayaFlux::Portal::Graphics::SamplerForge::is_initialized" name="MayaFlux::Portal::Graphics::SamplerForge::is_initialized">
+<area shape="rect" id="Node000001" title="Check if factory is initialized." alt="" coords="565,49,776,89"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_acfad50a7438053e9d70abce48312b0e7.html#acfad50a7438053e9d70abce48312b0e7" title="Destroy a specific sampler." alt="" coords="310,5,507,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="551,55,507,49,508,44,552,50"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_ad25bae266361d43df981d38d888b013e.html#ad25bae266361d43df981d38d888b013e" title="Get or create a sampler with the given configuration." alt="" coords="300,85,517,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="552,88,518,92,517,87,551,82"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_ade63c03afc20d0cee517408a7de6ba39.html#ade63c03afc20d0cee517408a7de6ba39" title="Get an anisotropic sampler (high quality)" alt="" coords="15,21,243,61"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="306,84,216,63,217,58,308,79"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_a46fed27700393079b4a9ba50bb2073b1.html#a46fed27700393079b4a9ba50bb2073b1" title="Get a default linear sampler." alt="" coords="5,85,252,125"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="286,107,252,107,252,102,286,102"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_a98abd9597dc9dce341946786fd85f57b.html#a98abd9597dc9dce341946786fd85f57b" title="Get a default nearest sampler." alt="" coords="27,149,230,204"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="318,131,231,153,230,148,316,126"/>
+</map>

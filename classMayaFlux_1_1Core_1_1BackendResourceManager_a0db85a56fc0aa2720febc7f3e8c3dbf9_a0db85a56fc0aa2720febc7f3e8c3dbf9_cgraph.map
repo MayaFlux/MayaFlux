@@ -1,0 +1,7 @@
+<map id="MayaFlux::Core::BackendResourceManager::cleanup_buffer" name="MayaFlux::Core::BackendResourceManager::cleanup_buffer">
+<area shape="rect" id="Node000001" title="Cleanup a buffer and release associated resources." alt="" coords="5,5,252,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VKContext_a41228db586851246809c40f704b64292.html#a41228db586851246809c40f704b64292" title="Get logical device." alt="" coords="300,5,500,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="252,23,286,23,286,28,252,28"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1VKDevice_ac91623c4b7b52f1f5f7460ef91021583.html#ac91623c4b7b52f1f5f7460ef91021583" title="Get logical device handle." alt="" coords="548,5,743,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="500,23,534,23,534,28,500,28"/>
+</map>

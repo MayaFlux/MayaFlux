@@ -1,0 +1,9 @@
+<map id="MayaFlux::IO::ImageReader::load_texture" name="MayaFlux::IO::ImageReader::load_texture">
+<area shape="rect" id="Node000001" title="Load image directly into GPU texture (static utility)" alt="" coords="467,37,669,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1IO_1_1Detail_a9ef31f3f43df1b36124c95021c5246b7.html#a9ef31f3f43df1b36124c95021c5246b7" title=" " alt="" coords="240,37,419,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="453,60,419,60,419,55,453,55"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1IOManager_a8ed0b44fe355cbf90e6e0953078817f1.html#a8ed0b44fe355cbf90e6e0953078817f1" title="Load all meshes from a 3D model file into MeshBuffer instances." alt="" coords="5,5,192,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="226,46,192,41,192,36,227,40"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1IOManager_a407774e778c9c6c402d04f8f0e9985e4.html#a407774e778c9c6c402d04f8f0e9985e4" title="Load a 3D model file as a MeshNetwork." alt="" coords="5,69,192,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="227,74,192,79,192,74,226,69"/>
+</map>

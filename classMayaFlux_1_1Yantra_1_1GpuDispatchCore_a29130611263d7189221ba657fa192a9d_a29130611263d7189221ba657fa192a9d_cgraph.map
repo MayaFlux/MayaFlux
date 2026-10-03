@@ -1,0 +1,9 @@
+<map id="MayaFlux::Yantra::GpuDispatchCore::is_gpu_ready" name="MayaFlux::Yantra::GpuDispatchCore::is_gpu_ready">
+<area shape="rect" id="Node000001" title="Query GPU readiness without attempting initialisation." alt="" coords="5,37,231,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_a73fff9156201c282780b637feeb7f7e1.html#a73fff9156201c282780b637feeb7f7e1" title="The key used for this context&#39;s GpuResourceManager unit." alt="" coords="280,5,505,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="230,42,266,37,267,43,231,47"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1GpuResourceManager_a2dfd32e6a6365a401e48b634d287852f.html#a2dfd32e6a6365a401e48b634d287852f" title=" " alt="" coords="279,69,507,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="231,68,265,72,265,77,230,73"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1GpuResourceManager_af582f5210754d7530e9dbaad98f1859a.html#af582f5210754d7530e9dbaad98f1859a" title=" " alt="" coords="555,69,783,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="507,87,541,87,541,92,507,92"/>
+</map>

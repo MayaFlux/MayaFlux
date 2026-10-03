@@ -1,0 +1,43 @@
+<map id="MayaFlux::Buffers::NetworkGeometryProcessor::processing_function" name="MayaFlux::Buffers::NetworkGeometryProcessor::processing_function">
+<area shape="rect" id="Node000001" title="BufferProcessor interface &#45; aggregates and uploads network geometry." alt="" coords="5,156,211,211"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1NetworkGeometryProcessor_aea965ecb21e72136174b3c4ec7db698a.html#aea965ecb21e72136174b3c4ec7db698a" title="Grow a binding&#39;s staging buffer to hold at least bytes." alt="" coords="513,5,719,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="127,154,181,96,217,67,258,45,318,26,380,17,442,14,500,15,500,21,442,19,381,22,319,32,260,50,220,72,185,100,131,158"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Buffers_ab1ec6afdd6a02006bb923d88c7c33708.html#ab1ec6afdd6a02006bb923d88c7c33708" title="Extract GPU geometry data from a NodeNetwork via its GraphicsOperator." alt="" coords="264,59,459,99"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="160,154,258,109,278,101,280,106,260,114,162,158"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GraphicsOperator_a7b8d6d5117c8244564ce6148eafd3549.html#a7b8d6d5117c8244564ce6148eafd3549" title="Get vertex layout describing vertex structure." alt="" coords="262,124,461,179"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="211,168,248,163,249,168,211,173"/>
+<area shape="rect" id="Node000008" href="$main_8cpp_a13a43e6d814de94978c515cb084873b1.html#a13a43e6d814de94978c515cb084873b1" title=" " alt="" coords="340,203,383,228"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="211,194,327,208,326,214,211,199"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1NetworkGeometryProcessor_a3ec7035b3ba7ca5531756a058e49fa28.html#a3ec7035b3ba7ca5531756a058e49fa28" title="Upload only the vertex sub&#45;ranges a multi&#45;group primary operator reports as dirty,..." alt="" coords="259,252,464,307"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="182,208,277,245,275,250,180,213"/>
+<area shape="rect" id="Node000014" href="$namespaceMayaFlux_1_1Buffers_aac5d05cf9bfc11ce6df03c3697b9e7ef.html#aac5d05cf9bfc11ce6df03c3697b9e7ef" title="Upload raw data to GPU buffer (auto&#45;detects host&#45;visible vs device&#45;local)" alt="" coords="542,399,690,439"/>
+<area shape="poly" id="edge24_Node000001_Node000014" title=" " alt="" coords="135,209,189,264,223,292,260,316,327,347,398,372,467,390,529,404,528,409,466,396,397,377,325,352,257,320,220,296,185,267,131,213"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Buffers_a64c6abe8842e398d178e4275a4d4b404.html#a64c6abe8842e398d178e4275a4d4b404" title="Create staging buffer for transfers." alt="" coords="768,299,931,339"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="706,58,722,69,746,94,767,121,801,180,826,238,842,285,837,287,821,240,797,182,762,124,742,97,718,73,703,62"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="996,361,1163,416"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="917,337,984,357,982,362,916,342"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="979,297,1180,337"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="931,316,965,315,965,321,931,321"/>
+<area shape="poly" id="edge10_Node000009_Node000002" title=" " alt="" coords="448,250,462,238,477,217,483,196,485,155,487,113,495,91,510,70,513,67,517,70,514,73,499,94,492,114,490,155,489,197,481,219,466,241,452,254"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GraphicsOperator_ade3efead144eea6bf4ddc62e1002693c.html#ade3efead144eea6bf4ddc62e1002693c" title="Vertex sub&#45;ranges that changed since the last mark_vertex_data_clean()." alt="" coords="517,241,715,296"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="464,272,503,271,503,276,464,278"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GraphicsOperator_a6965ef16e8671d547b8183ceab8b1fbf.html#a6965ef16e8671d547b8183ceab8b1fbf" title="Get vertex data for specific collection (if multiple)" alt="" coords="515,320,717,375"/>
+<area shape="poly" id="edge11_Node000009_Node000011" title=" " alt="" coords="465,304,502,314,501,319,463,309"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GraphicsOperator_ae0072e0bc2147c559144772d8e3bcf36.html#ae0072e0bc2147c559144772d8e3bcf36" title="Clear dirty flag after GPU upload." alt="" coords="517,84,715,139"/>
+<area shape="poly" id="edge12_Node000009_Node000012" title=" " alt="" coords="445,250,462,237,479,216,485,194,493,171,510,148,514,145,518,149,514,152,497,173,490,195,483,218,466,241,448,254"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GraphicsOperator_a894eccf0146d659f03e92b172313f5b4.html#a894eccf0146d659f03e92b172313f5b4" title="Whether every vertex mutation on this operator sets a group&#39;s dirty flag, so dirty_vertex_ranges() is..." alt="" coords="512,163,720,217"/>
+<area shape="poly" id="edge13_Node000009_Node000013" title=" " alt="" coords="439,249,524,219,525,224,441,254"/>
+<area shape="poly" id="edge14_Node000009_Node000014" title=" " alt="" coords="400,305,461,351,513,385,530,393,528,397,511,390,458,355,396,309"/>
+<area shape="poly" id="edge15_Node000014_Node000003" title=" " alt="" coords="689,397,719,385,743,370,767,353,787,343,789,347,769,358,746,374,721,390,691,402"/>
+<area shape="rect" id="Node000015" href="$namespaceMayaFlux_1_1Buffers_aef0500ee2ec9a75e2fe565ff287d81d5.html#aef0500ee2ec9a75e2fe565ff287d81d5" title="Upload data to a device&#45;local buffer using a staging buffer." alt="" coords="772,367,927,407"/>
+<area shape="poly" id="edge16_Node000014_Node000015" title=" " alt="" coords="690,407,758,397,758,402,691,412"/>
+<area shape="rect" id="Node000017" href="$namespaceMayaFlux_1_1Buffers_ade245c667165a5cba39db1a67391080c.html#ade245c667165a5cba39db1a67391080c" title="Upload data to a host&#45;visible buffer." alt="" coords="774,431,925,471"/>
+<area shape="poly" id="edge20_Node000014_Node000017" title=" " alt="" coords="691,427,761,437,760,442,690,432"/>
+<area shape="poly" id="edge17_Node000015_Node000004" title=" " alt="" coords="927,385,982,385,982,391,927,390"/>
+<area shape="poly" id="edge19_Node000015_Node000005" title=" " alt="" coords="914,365,1000,338,1001,343,916,370"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Kakshya_1_1DataAccess_a7893291a314cd16a4086b4af5547be3b.html#a7893291a314cd16a4086b4af5547be3b" title="Get raw buffer info for GPU upload." alt="" coords="992,441,1167,481"/>
+<area shape="poly" id="edge18_Node000015_Node000016" title=" " alt="" coords="914,405,979,426,1004,434,1002,439,978,431,912,410"/>
+<area shape="poly" id="edge21_Node000017_Node000004" title=" " alt="" coords="923,429,982,412,984,417,924,434"/>
+<area shape="poly" id="edge23_Node000017_Node000005" title=" " alt="" coords="911,429,929,417,944,400,952,383,960,364,977,347,985,341,988,346,980,351,965,367,957,385,949,403,932,421,914,433"/>
+<area shape="poly" id="edge22_Node000017_Node000016" title=" " alt="" coords="925,452,978,454,978,459,925,457"/>
+</map>

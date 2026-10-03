@@ -1,0 +1,15 @@
+<map id="MayaFlux::Buffers::DataReadProcessor::collect_result" name="MayaFlux::Buffers::DataReadProcessor::collect_result">
+<area shape="rect" id="Node000001" title=" " alt="" coords="525,98,725,153"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1DataReadProcessor_a4e739538a697e53381c8c93de0e6559d.html#a4e739538a697e53381c8c93de0e6559d" title="Finish the read as raw bytes." alt="" coords="229,5,477,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="558,94,476,60,439,48,441,43,478,55,560,90"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1DataReadProcessor_ab395e9e042bb50388d64751e7a06fd93.html#ab395e9e042bb50388d64751e7a06fd93" title="Finish a read_mesh() read as MeshData." alt="" coords="229,69,477,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="511,113,477,108,478,103,512,108"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1DataReadProcessor_a53b49c433748d98ace54b60a0884728b.html#a53b49c433748d98ace54b60a0884728b" title="Finish a pixel read as typed ImageData with its format and dimensions." alt="" coords="251,134,456,189"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="512,143,456,150,456,145,512,138"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1DataReadProcessor_a155bfe453f0fc0790f91cb3480c61432.html#a155bfe453f0fc0790f91cb3480c61432" title="Finish a read_vertices() read as typed channels." alt="" coords="251,213,456,267"/>
+<area shape="poly" id="edge7_Node000001_Node000006" title=" " alt="" coords="564,162,478,202,445,215,443,210,476,198,562,157"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kriya_1_1detail_ac59af9577ccacc4f598912038d765f5b.html#ac59af9577ccacc4f598912038d765f5b" title="Finish the pending read as one DataVariant." alt="" coords="5,69,181,109"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="259,51,176,72,174,67,257,46"/>
+<area shape="poly" id="edge4_Node000004_Node000003" title=" " alt="" coords="215,92,182,92,182,87,215,87"/>
+<area shape="poly" id="edge6_Node000005_Node000003" title=" " alt="" coords="240,133,166,112,167,107,242,128"/>
+</map>

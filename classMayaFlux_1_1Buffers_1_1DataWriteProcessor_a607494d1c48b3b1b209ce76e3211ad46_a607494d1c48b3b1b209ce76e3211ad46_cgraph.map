@@ -1,0 +1,19 @@
+<map id="MayaFlux::Buffers::DataWriteProcessor::upload_texture" name="MayaFlux::Buffers::DataWriteProcessor::upload_texture">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,109,164,164"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_afa023b19b2c5da8c14e9de60820601b1.html#afa023b19b2c5da8c14e9de60820601b1" title="Extract a TextureAccess from a DataVariant." alt="" coords="231,9,390,49"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="125,107,166,82,211,58,228,51,230,56,213,63,168,87,128,112"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Buffers_a18cd4cb90edc64b2da0254917a13bfe3.html#a18cd4cb90edc64b2da0254917a13bfe3" title="Allocate a persistent host&#45;visible staging buffer sized for repeated streaming uploads to an image of..." alt="" coords="227,73,394,128"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="164,121,213,113,214,119,165,127"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a335ffb0c43b53ec263ab6559ac29476b.html#a335ffb0c43b53ec263ab6559ac29476b" title="Get the global texture manager instance." alt="" coords="212,153,409,193"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="165,147,199,152,198,157,164,152"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Kakshya_aedc3538e77f59c4a4d91df28e181d066.html#aedc3538e77f59c4a4d91df28e181d066" title="Convert DataModality enum to string representation." alt="" coords="231,217,390,257"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="133,162,213,202,231,209,229,214,211,207,131,167"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="475,5,641,60"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="393,75,461,57,462,62,395,80"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="457,85,659,125"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="394,99,444,100,444,105,394,105"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a6887ad297693c2392be7960daab06002.html#a6887ad297693c2392be7960daab06002" title=" " alt="" coords="459,153,657,193"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="409,170,446,170,446,175,409,175"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Reflect_aad91118cbd25bd9e35a3ced9aa4e6dbd.html#aad91118cbd25bd9e35a3ced9aa4e6dbd" title="Universal enum to string converter using magic_enum (original case)" alt="" coords="485,217,631,257"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="390,234,471,234,471,239,390,239"/>
+</map>

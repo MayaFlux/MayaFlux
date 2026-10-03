@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nexus::dispatch_audio_sinks" name="MayaFlux::Nexus::dispatch_audio_sinks">
+<area shape="rect" id="Node000001" title="For each sink that has a producer fn, call it and push the result." alt="" coords="5,13,204,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1EigenAccess_a09e5c309b24fd567bcddab3ff3136894.html#a09e5c309b24fd567bcddab3ff3136894" title="Convert DataVariant to Eigen column vector." alt="" coords="252,13,424,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="204,30,238,30,238,35,204,35"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1EigenAccess_a9f0abf0a2e29fe0338333907b7e88869.html#a9f0abf0a2e29fe0338333907b7e88869" title=" " alt="" coords="472,5,631,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="424,30,458,30,458,35,424,35"/>
+</map>

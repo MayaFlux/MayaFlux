@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Filters::Filter::max_pole_magnitude" name="MayaFlux::Nodes::Filters::Filter::max_pole_magnitude">
+<area shape="rect" id="Node000001" title="Largest pole magnitude of the current denominator." alt="" coords="5,5,217,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a5ff43a74421372c42f84e72608cbb0e7.html#a5ff43a74421372c42f84e72608cbb0e7" title="Largest pole magnitude of a denominator polynomial." alt="" coords="265,5,491,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="217,23,252,23,252,28,217,28"/>
+</map>

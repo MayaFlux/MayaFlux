@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::SoundStreamContainer::get_data_as_double" name="MayaFlux::Kakshya::SoundStreamContainer::get_data_as_double">
+<area shape="rect" id="Node000001" title="Get the audio data as a specific type." alt="" coords="5,41,177,96"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a2321cbc62aa5f61be7f780c2c8735fcc.html#a2321cbc62aa5f61be7f780c2c8735fcc" title="Get the cached spans for each channel, recomputing if dirty." alt="" coords="225,5,397,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="178,52,212,46,213,52,178,57"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kakshya_aabeece17084e84e555c71c127aa66eb2.html#aabeece17084e84e555c71c127aa66eb2" title="Interleave multiple channels of data into a single vector." alt="" coords="232,85,391,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="178,80,219,87,218,92,178,85"/>
+</map>

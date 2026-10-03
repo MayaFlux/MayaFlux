@@ -1,0 +1,13 @@
+<map id="MayaFlux::Yantra::StatisticalAnalyzer::set_method" name="MayaFlux::Yantra::StatisticalAnalyzer::set_method">
+<area shape="rect" id="Node000001" title="Set statistical analysis method." alt="" coords="5,37,212,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1StatisticalAnalyzer_ac292d7da9cf0e19d1146fede9c9f783b.html#ac292d7da9cf0e19d1146fede9c9f783b" title="Convert statistical method enum to string." alt="" coords="260,5,467,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="212,42,246,37,247,43,212,47"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1UniversalAnalyzer_a4a53048a2fa21b022ac3f4ca4cebed86.html#a4a53048a2fa21b022ac3f4ca4cebed86" title="Type&#45;safe parameter management with analysis&#45;specific defaults." alt="" coords="261,69,465,109"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="212,68,248,72,247,77,212,73"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Reflect_a33dff0234606d8a7a9b4b026a3874e0a.html#a33dff0234606d8a7a9b4b026a3874e0a" title="Universal enum to lowercase string converter using magic_enum." alt="" coords="538,5,734,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="467,23,524,23,524,28,467,28"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Reflect_ab5371cce72bc91cd1babe7826f27f39a.html#ab5371cce72bc91cd1babe7826f27f39a" title="Convert string to lowercase." alt="" coords="805,5,952,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="734,23,792,23,792,28,734,28"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1UniversalAnalyzer_a0229c69da37c5ae9e28edb2d8f502a25.html#a0229c69da37c5ae9e28edb2d8f502a25" title="Analysis&#45;specific parameter handling (override for custom parameters)" alt="" coords="515,69,757,109"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="466,87,501,87,501,92,466,92"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::BufferProcessingControl::set_audio_final_processor" name="MayaFlux::Buffers::BufferProcessingControl::set_audio_final_processor">
+<area shape="rect" id="Node000001" title="Sets a final processor for an audio token (applied to all channels)" alt="" coords="232,5,431,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingControl_a897f4e00381ea15fb609a86ec3f65df9.html#a897f4e00381ea15fb609a86ec3f65df9" title="Sets a final processor for a token (dispatches based on token)" alt="" coords="5,5,184,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="218,35,184,35,184,30,218,30"/>
+</map>

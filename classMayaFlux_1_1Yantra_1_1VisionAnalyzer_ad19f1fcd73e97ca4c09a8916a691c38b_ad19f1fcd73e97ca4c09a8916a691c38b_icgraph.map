@@ -1,0 +1,7 @@
+<map id="MayaFlux::Yantra::VisionAnalyzer::analyze_vision" name="MayaFlux::Yantra::VisionAnalyzer::analyze_vision">
+<area shape="rect" id="Node000001" title="Real entry point: resolve the configured query against source, run it, run the GPU analysis." alt="" coords="468,5,652,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1VisionAnalyzer_af6bfe6ffc7fd77204ef4613cd6d8187b.html#af6bfe6ffc7fd77204ef4613cd6d8187b" title="ComputeOperation adapter: uses input.data as the source container, pulls index out of Datum metadata ..." alt="" coords="237,5,420,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="454,28,420,28,420,23,454,23"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1VisionAnalyzer_a4c7033e24b310ee050fc73cc23ca908e.html#a4c7033e24b310ee050fc73cc23ca908e" title="Construct with the intents to satisfy and the caller&#45;supplied filtering context, matching EnergyAnaly..." alt="" coords="5,5,189,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="223,28,190,28,190,23,223,23"/>
+</map>

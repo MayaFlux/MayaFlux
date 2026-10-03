@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nodes::Network::GpuFieldOperator::accept" name="MayaFlux::Nodes::Network::GpuFieldOperator::accept">
+<area shape="rect" id="Node000001" title="Shared validation for the three bind overloads." alt="" coords="252,69,451,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GpuFieldOperator_a357cec594ff11f845e60cc7903450f62.html#a357cec594ff11f845e60cc7903450f62" title="Bind a three&#45;component field to one or more vec3 targets." alt="" coords="5,5,204,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="260,68,182,48,183,43,261,63"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GpuFieldOperator_acf4ba5cb4fe4d2a841e1055c887cbf6a.html#acf4ba5cb4fe4d2a841e1055c887cbf6a" title="Bind a three&#45;component field of position, time and live parameters." alt="" coords="5,69,204,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="238,92,204,92,204,87,238,87"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GpuFieldOperator_ae95f07dfddaf57e71ce03b3aca792d79.html#ae95f07dfddaf57e71ce03b3aca792d79" title="Bind a three&#45;component field of position and time." alt="" coords="5,133,204,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="261,115,183,136,182,131,260,110"/>
+</map>

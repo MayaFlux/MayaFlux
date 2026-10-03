@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::VisionProcessor::on_detach" name="MayaFlux::Kakshya::VisionProcessor::on_detach">
+<area shape="rect" id="Node000001" title="Clear cached geometry and reset executor state." alt="" coords="5,5,164,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kinesis_1_1Vision_1_1VisionExecutor_a359ccf1b01d2241f6865f860c7565de5.html#a359ccf1b01d2241f6865f860c7565de5" title="Clear stored inter&#45;frame state." alt="" coords="212,5,379,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="164,30,198,30,198,35,164,35"/>
+</map>

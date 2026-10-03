@@ -1,0 +1,11 @@
+<map id="VisionIntent.hpp" name="VisionIntent.hpp">
+<area shape="rect" id="Node000001" title="Declarative &quot;what to do&quot; vocabulary, one layer above VisionOp." alt="" coords="95,5,223,31"/>
+<area shape="rect" id="Node000002" href="$VisionQuery_8hpp.html" title="Per&#45;intent parameters and resolution into a set of VisionSequences." alt="" coords="95,79,222,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="161,44,161,79,156,79,156,44"/>
+<area shape="rect" id="Node000003" href="$VisionAnalyzer_8hpp.html" title="FunctionalOperation&lt;shared_ptr&lt;SignalSourceContainer&gt;, vector&lt;DataVariant&gt;&gt; whose real API matches En..." alt="" coords="5,152,152,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="138,115,94,154,90,150,134,111"/>
+<area shape="rect" id="Node000005" href="$VisionQuery_8cpp.html" title=" " alt="" coords="177,152,303,177"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="184,111,228,150,225,154,180,115"/>
+<area shape="rect" id="Node000004" href="$VisionAnalyzer_8cpp.html" title=" " alt="" coords="6,225,151,251"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="81,191,81,225,76,225,76,191"/>
+</map>

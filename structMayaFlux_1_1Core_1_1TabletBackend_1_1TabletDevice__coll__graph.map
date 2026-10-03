@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::TabletBackend::TabletDevice" name="MayaFlux::Core::TabletBackend::TabletDevice">
+<area shape="rect" id="Node000001" title="One physical HID device and the tools it presents." alt="" coords="5,213,224,493"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Core_1_1TabletLayout.html" title="Parsed layout of one device&#39;s input reports." alt="" coords="11,5,218,151"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="117,151,117,197,112,197,112,151"/>
+</map>

@@ -1,0 +1,11 @@
+<map id="StreamReaderNode.hpp" name="StreamReaderNode.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="177,5,355,31"/>
+<area shape="rect" id="Node000002" href="$CreatorClasses_8hpp.html" title=" " alt="" coords="5,79,153,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="224,38,111,81,109,76,223,33"/>
+<area shape="rect" id="Node000004" href="$NodeFeedProcessor_8cpp.html" title=" " alt="" coords="178,79,354,104"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="269,44,269,79,263,79,263,44"/>
+<area shape="rect" id="Node000005" href="$StreamReaderNode_8cpp.html" title=" " alt="" coords="378,79,554,104"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="312,33,434,76,432,81,310,38"/>
+<area shape="rect" id="Node000003" href="$Creator_8cpp.html" title=" " alt="" coords="31,152,127,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="82,118,82,152,77,152,77,118"/>
+</map>

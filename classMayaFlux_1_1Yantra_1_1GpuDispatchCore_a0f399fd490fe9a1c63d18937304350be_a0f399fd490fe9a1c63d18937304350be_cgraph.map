@@ -1,0 +1,11 @@
+<map id="MayaFlux::Yantra::GpuDispatchCore::readback_aux" name="MayaFlux::Yantra::GpuDispatchCore::readback_aux">
+<area shape="rect" id="Node000001" title="Read back all OUTPUT bindings that have explicit size overrides into the aux map of a GpuChannelResul..." alt="" coords="5,69,231,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_a73fff9156201c282780b637feeb7f7e1.html#a73fff9156201c282780b637feeb7f7e1" title="The key used for this context&#39;s GpuResourceManager unit." alt="" coords="280,5,505,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="204,67,293,46,294,51,205,72"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1GpuResourceManager_a1b0b0ae208ba224d5594eadb820267c6.html#a1b0b0ae208ba224d5594eadb820267c6" title=" " alt="" coords="279,69,507,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="231,87,265,87,265,92,231,92"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_a08fa9b6412b634215b72b52676318691.html#a08fa9b6412b634215b72b52676318691" title=" " alt="" coords="316,134,469,159"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="215,107,318,129,317,134,214,112"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1GpuResourceManager_a93b9e87640ff7caf15e93874fb627541.html#a93b9e87640ff7caf15e93874fb627541" title=" " alt="" coords="555,69,783,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="507,87,541,87,541,92,507,92"/>
+</map>

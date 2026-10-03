@@ -1,0 +1,7 @@
+<map id="MayaFlux::Yantra::as_io_batch" name="MayaFlux::Yantra::as_io_batch">
+<area shape="rect" id="Node000001" title="Convert a vector of raw values into a vector of Datum wrappers." alt="" coords="257,37,415,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1UniversalAnalyzer_aa77bbc0612c8e2ab797193ac3fdd0aeb.html#aa77bbc0612c8e2ab797193ac3fdd0aeb" title=" " alt="" coords="5,5,209,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="243,47,209,42,210,37,244,42"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1UniversalExtractor_a1e05b2c99c977c84bab6d9c93730c3ca.html#a1e05b2c99c977c84bab6d9c93730c3ca" title=" " alt="" coords="5,69,209,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="244,73,210,78,209,72,243,68"/>
+</map>

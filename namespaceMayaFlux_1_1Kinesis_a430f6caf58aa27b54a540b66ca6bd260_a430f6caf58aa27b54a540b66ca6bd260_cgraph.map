@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kinesis::turning_profile" name="MayaFlux::Kinesis::turning_profile">
+<area shape="rect" id="Node000001" title="Build a turning profile from a path." alt="" coords="5,69,155,109"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a24e6b15161d46e1f90ac3bce7c503498.html#a24e6b15161d46e1f90ac3bce7c503498" title="Shortest signed angular difference between two headings." alt="" coords="203,5,352,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="142,67,202,47,203,52,143,72"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_ac5b1da8ec8674fb802ea4fc11e0e02e0.html#ac5b1da8ec8674fb802ea4fc11e0e02e0" title="Heading angle of a 2D vector." alt="" coords="203,69,352,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="155,87,189,87,189,92,155,92"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_a7102df8cd91e6a089c4c5fcbcc7c4c1b.html#a7102df8cd91e6a089c4c5fcbcc7c4c1b" title="Resample a path to a fixed point count at uniform arc length." alt="" coords="203,133,352,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="143,107,203,127,202,132,142,112"/>
+</map>

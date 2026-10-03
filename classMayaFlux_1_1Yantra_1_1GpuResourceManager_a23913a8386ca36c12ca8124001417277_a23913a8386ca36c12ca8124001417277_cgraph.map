@@ -1,0 +1,15 @@
+<map id="MayaFlux::Yantra::GpuResourceManager::~GpuResourceManager" name="MayaFlux::Yantra::GpuResourceManager::~GpuResourceManager">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,37,247,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1GpuResourceManager_a3e7299b17747ff24d43e3ce561e7a241.html#a3e7299b17747ff24d43e3ce561e7a241" title="Destroy every key currently held." alt="" coords="295,37,523,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="247,55,281,55,281,60,247,60"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1GpuResourceManager_a5c944faf26b927728ce9b275dffbbbde.html#a5c944faf26b927728ce9b275dffbbbde" title="Destroy the pipeline, shader, descriptor sets, and buffers for a single key, without affecting any ot..." alt="" coords="571,37,799,77"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="523,55,557,55,557,60,523,60"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_af50ca0aa0cb7511c99eaf758430efdce.html#af50ca0aa0cb7511c99eaf758430efdce" title=" " alt="" coords="847,5,1044,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="798,41,833,36,833,42,799,46"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a715d57394465ff2924727d7c82d87e7b.html#a715d57394465ff2924727d7c82d87e7b" title="Get the global shader compiler instance." alt="" coords="847,69,1044,109"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="799,69,833,73,833,78,798,74"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ComputePress_a89b259adf28ef041294928959e03fa9c.html#a89b259adf28ef041294928959e03fa9c" title=" " alt="" coords="1092,5,1289,45"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="1044,23,1078,23,1078,28,1044,28"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="1092,69,1289,109"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="1044,87,1078,87,1078,92,1044,92"/>
+</map>

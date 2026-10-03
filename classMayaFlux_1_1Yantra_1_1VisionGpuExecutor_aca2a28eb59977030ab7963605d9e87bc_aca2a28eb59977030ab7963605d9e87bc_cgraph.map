@@ -1,0 +1,9 @@
+<map id="MayaFlux::Yantra::VisionGpuExecutor::op_find_contours" name="MayaFlux::Yantra::VisionGpuExecutor::op_find_contours">
+<area shape="rect" id="Node000001" title="Trace contours from the immediately preceding component labels." alt="" coords="5,49,228,89"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1VisionPass_a7191b1393d8450912666196621966804.html#a7191b1393d8450912666196621966804" title="Op at offset steps back, or nullptr before the start." alt="" coords="300,5,449,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="228,50,286,42,287,48,229,56"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a715d57394465ff2924727d7c82d87e7b.html#a715d57394465ff2924727d7c82d87e7b" title="Get the global shader compiler instance." alt="" coords="276,85,473,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="229,82,263,86,262,92,228,87"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="521,85,719,125"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="474,102,508,102,508,107,474,107"/>
+</map>

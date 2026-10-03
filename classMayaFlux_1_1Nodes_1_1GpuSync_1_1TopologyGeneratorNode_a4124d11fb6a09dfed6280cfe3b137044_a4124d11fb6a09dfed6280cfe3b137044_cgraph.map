@@ -1,0 +1,25 @@
+<map id="MayaFlux::Nodes::GpuSync::TopologyGeneratorNode::build_interpolated_path" name="MayaFlux::Nodes::GpuSync::TopologyGeneratorNode::build_interpolated_path">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,214,205,269"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a35d638be94bbb4d5307c650183938820.html#a35d638be94bbb4d5307c650183938820" title="Tangents of a sampled curve by finite difference, coordinate&#45;major." alt="" coords="267,85,470,125"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="137,212,189,172,252,135,269,128,271,132,255,140,192,177,140,216"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kinesis_1_1CurveEvaluator_af0a1a1c0dc991633d3ba834c2fbab4b4.html#af0a1a1c0dc991633d3ba834c2fbab4b4" title="Re&#45;resolve the kernel." alt="" coords="273,149,464,189"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="205,211,281,190,283,195,206,217"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Kinesis_1_1CurveEvaluator_a9a785fdcd3e6afaa5cb6d485a5866e26.html#a9a785fdcd3e6afaa5cb6d485a5866e26" title="Evaluate a curve into coordinate&#45;major position and tangent buffers." alt="" coords="275,214,462,269"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="206,239,261,239,261,244,206,244"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Kinesis_1_1CurveEvaluator_ad58cd64be0c18579e7d94bbec4313cac.html#ad58cd64be0c18579e7d94bbec4313cac" title="Resample a polyline to uniform arc length, coordinate&#45;major." alt="" coords="253,293,484,347"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="198,266,264,286,262,291,197,271"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1TopologyGeneratorNode_aa694760005971dde5acd0ece946b30e1.html#aa694760005971dde5acd0ece946b30e1" title="Write colour and thickness for the interpolated path." alt="" coords="269,371,469,426"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="136,267,189,313,255,358,266,363,263,368,252,362,186,317,132,271"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kinesis_1_1CurveEvaluator_a3e0a731c84aedb639bbd49411e107423.html#a3e0a731c84aedb639bbd49411e107423" title="Currently configured mode." alt="" coords="538,5,705,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="463,147,482,135,499,117,506,97,513,76,530,55,537,50,540,55,534,59,518,79,511,99,503,119,486,139,466,152"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kinesis_1_1CurveEvaluator_a4dbfeb2ee1be35f2a16fc72d4b009959.html#a4dbfeb2ee1be35f2a16fc72d4b009959" title=" " alt="" coords="534,70,709,125"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="441,147,483,135,520,124,522,129,485,140,443,152"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kinesis_1_1CurveEvaluator_a52d5987bbb35043a04636108c02583be.html#a52d5987bbb35043a04636108c02583be" title="Currently configured tension." alt="" coords="532,149,711,189"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="464,167,518,167,518,172,464,172"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Kinesis_1_1BasisMatrices_a818351b64ca1e3653ad9c97cca70e765.html#a818351b64ca1e3653ad9c97cca70e765" title=" " alt="" coords="759,70,929,125"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="709,95,745,95,745,100,709,100"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Kinesis_1_1CurveEvaluator_a796b487bd268a58154a09c16f8e9bc7a.html#a796b487bd268a58154a09c16f8e9bc7a" title=" " alt="" coords="540,214,703,269"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="462,239,526,239,526,244,462,244"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Kinesis_1_1CurveEvaluator_a60000384b7d908119e0d006f8e1f52b1.html#a60000384b7d908119e0d006f8e1f52b1" title=" " alt="" coords="534,293,709,333"/>
+<area shape="poly" id="edge9_Node000008_Node000010" title=" " alt="" coords="463,265,538,287,537,292,461,270"/>
+</map>

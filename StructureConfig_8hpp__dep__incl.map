@@ -1,0 +1,20 @@
+<map id="StructureConfig.hpp" name="StructureConfig.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="119,5,270,31"/>
+<area shape="rect" id="Node000002" href="$Mint_8hpp.html" title=" " alt="" coords="155,79,234,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="197,44,197,79,192,79,192,44"/>
+<area shape="rect" id="Node000003" href="$Creator_8hpp.html" title=" " alt="" coords="90,152,187,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="179,117,150,154,146,150,175,113"/>
+<area shape="rect" id="Node000009" href="$Mint_8cpp.html" title=" " alt="" coords="211,152,290,177"/>
+<area shape="poly" id="edge9_Node000002_Node000009" title=" " alt="" coords="215,113,244,150,240,154,210,117"/>
+<area shape="rect" id="Node000004" href="$Creator_8cpp.html" title=" " alt="" coords="5,225,101,251"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="116,188,69,227,66,223,113,184"/>
+<area shape="rect" id="Node000005" href="$MayaFlux_8hpp.html" title=" " alt="" coords="81,299,196,324"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="141,191,141,298,136,298,136,191"/>
+<area shape="rect" id="Node000007" href="$Temporal_8hpp.html" title=" " alt="" coords="177,225,287,251"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="166,183,218,223,215,227,163,188"/>
+<area shape="rect" id="Node000006" href="$LiveAid_8hpp.html" title=" " alt="" coords="89,372,188,397"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="141,338,141,372,136,372,136,338"/>
+<area shape="poly" id="edge7_Node000007_Node000005" title=" " alt="" coords="208,261,156,301,152,296,205,257"/>
+<area shape="rect" id="Node000008" href="$Temporal_8cpp.html" title=" " alt="" coords="220,299,329,324"/>
+<area shape="poly" id="edge8_Node000007_Node000008" title=" " alt="" coords="248,261,270,297,265,300,244,264"/>
+</map>

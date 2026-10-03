@@ -1,0 +1,38 @@
+<map id="MayaFlux::IO::IOManager::load_volume" name="MayaFlux::IO::IOManager::load_volume">
+<area shape="rect" id="Node000001" title="Load a volume file into a newly constructed VolumeGridBuffer." alt="" coords="5,220,192,260"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1VolumeReader_a8235bd25a8e9730a69092812171ff116.html#a8235bd25a8e9730a69092812171ff116" title="Check if a file can be read by this reader." alt="" coords="757,5,968,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="135,217,183,193,239,169,372,127,508,92,743,42,744,48,509,97,374,132,241,175,186,198,137,222"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1IO_1_1Detail_a52099cbaf53903cce6af74aeb6961ac7.html#a52099cbaf53903cce6af74aeb6961ac7" title=" " alt="" coords="266,249,425,303"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="193,251,253,260,252,265,192,256"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1IO_1_1VolumeReader_abc46ff743712d136838bf4ef9ff8b467.html#abc46ff743712d136838bf4ef9ff8b467" title="Get the last error message." alt="" coords="240,328,451,368"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="134,258,184,286,241,314,260,321,258,326,239,318,181,291,131,262"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1IO_1_1VolumeReader_acb694bd5aa416bb2c8e96d869ccac0cd.html#acb694bd5aa416bb2c8e96d869ccac0cd" title="Load every selected grid from a file in one call." alt="" coords="240,184,451,224"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="192,224,226,219,227,224,193,229"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1IO_a08055eb8c8670fc6d06d3d801db7d852.html#a08055eb8c8670fc6d06d3d801db7d852" title="Upload every field of a host VolumeData into a GPU&#45;resident volume." alt="" coords="524,331,684,371"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="426,296,522,324,520,329,424,301"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Kakshya_1_1VolumeData_a6eb5ed3d17b6580cc64d6a94088f8b5a.html#a6eb5ed3d17b6580cc64d6a94088f8b5a" title="Check that every field is densely populated over the lattice." alt="" coords="1024,360,1219,400"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="684,352,1010,371,1010,376,684,358"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Kakshya_1_1VolumeData_ad18c3092c8a26b207df1a6ff8ad8bbef.html#ad18c3092c8a26b207df1a6ff8ad8bbef" title="Cells in the lattice, which every field&#39;s element_count() must equal." alt="" coords="1275,360,1451,400"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="1219,377,1261,377,1261,383,1219,383"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Kinesis_1_1Lattice3D_a544eb1555cf9cbaca83638e71bfb0395.html#a544eb1555cf9cbaca83638e71bfb0395" title="Total cell count." alt="" coords="1499,360,1657,400"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="1451,377,1485,377,1485,383,1451,383"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1IO_1_1VolumeReader_acdd35fcfabdd57bf47dbf009ef42937c.html#acdd35fcfabdd57bf47dbf009ef42937c" title="Close the currently open file." alt="" coords="757,184,968,224"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="451,201,744,201,744,207,451,207"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1IO_1_1VolumeReader_adaa55771cd8cc310eeb25d033bf0cda0.html#adaa55771cd8cc310eeb25d033bf0cda0" title="Extract every selected grid after open() has already been called." alt="" coords="499,241,709,281"/>
+<area shape="poly" id="edge10_Node000009_Node000011" title=" " alt="" coords="437,221,501,236,500,241,436,227"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1IO_1_1VolumeReader_a870f414ddeb0bf93dafdcabfc33160d3.html#a870f414ddeb0bf93dafdcabfc33160d3" title="Open a file for reading." alt="" coords="499,127,709,167"/>
+<area shape="poly" id="edge16_Node000009_Node000015" title=" " alt="" coords="436,181,500,167,501,172,437,187"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1IO_1_1VolumeReader_a7d7eb40bd71849fb7e37e7bdf42f42ae.html#a7d7eb40bd71849fb7e37e7bdf42f42ae" title="Build VolumeData from selected grids over an explicit region." alt="" coords="757,299,968,339"/>
+<area shape="poly" id="edge11_Node000011_Node000012" title=" " alt="" coords="695,279,759,293,758,298,694,284"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1IO_1_1VolumeReader_a3f50ca3b8122f3514a95e6be2f8f6460.html#a3f50ca3b8122f3514a95e6be2f8f6460" title=" " alt="" coords="1016,232,1227,272"/>
+<area shape="poly" id="edge15_Node000011_Node000014" title=" " alt="" coords="709,257,1002,251,1002,257,710,262"/>
+<area shape="poly" id="edge13_Node000012_Node000005" title=" " alt="" coords="948,336,1024,354,1023,359,947,341"/>
+<area shape="rect" id="Node000013" href="$structMayaFlux_1_1Kakshya_1_1VolumeField_ae602611d173d3534b8ca0e0fe464fce5.html#ae602611d173d3534b8ca0e0fe464fce5" title="Number of cells represented, dispatched on variant." alt="" coords="1018,296,1225,336"/>
+<area shape="poly" id="edge12_Node000012_Node000013" title=" " alt="" coords="968,315,1004,315,1004,320,968,320"/>
+<area shape="poly" id="edge14_Node000012_Node000014" title=" " alt="" coords="940,296,1029,273,1030,278,941,301"/>
+<area shape="poly" id="edge17_Node000015_Node000002" title=" " alt="" coords="634,124,689,89,756,55,775,48,777,52,758,60,692,94,636,129"/>
+<area shape="poly" id="edge18_Node000015_Node000010" title=" " alt="" coords="695,164,759,178,758,184,694,169"/>
+<area shape="poly" id="edge20_Node000015_Node000014" title=" " alt="" coords="710,140,835,146,903,155,969,169,1029,193,1081,222,1078,227,1026,198,967,175,902,160,834,151,710,145"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1IO_1_1FileReader_a24d94d5bc8b4294d61f43ac86f933050.html#a24d94d5bc8b4294d61f43ac86f933050" title="Resolve a filepath against the project source root if not found as&#45;is." alt="" coords="770,69,955,109"/>
+<area shape="poly" id="edge19_Node000015_Node000016" title=" " alt="" coords="694,124,758,110,759,115,695,129"/>
+</map>

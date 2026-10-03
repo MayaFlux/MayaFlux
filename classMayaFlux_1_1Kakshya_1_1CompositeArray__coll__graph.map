@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::CompositeArray" name="MayaFlux::Kakshya::CompositeArray">
+<area shape="rect" id="Node000001" title="Owns a sequence of values that share a CompositeLayout." alt="" coords="5,348,200,788"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1CompositeLayout.html" title="Shared field description and byte layout for a CompositeArray." alt="" coords="22,5,183,285"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="105,285,105,331,100,331,100,285"/>
+</map>

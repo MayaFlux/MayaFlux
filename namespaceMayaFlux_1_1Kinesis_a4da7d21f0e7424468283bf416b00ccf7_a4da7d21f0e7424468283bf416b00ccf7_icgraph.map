@@ -1,0 +1,16 @@
+<map id="MayaFlux::Kinesis::orbit_eye" name="MayaFlux::Kinesis::orbit_eye">
+<area shape="rect" id="Node000001" title="Derive eye position from the current orbit state." alt="" coords="955,37,1104,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a8cfcb27d8f60ecdb09499c5b3a0c3cb5.html#a8cfcb27d8f60ecdb09499c5b3a0c3cb5" title="Pan the focal point in the camera&#39;s local right/up plane." alt="" coords="719,5,869,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="940,48,869,38,869,33,941,43"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Kinesis_a769e83ad025b5225ead375eae1f009a6.html#a769e83ad025b5225ead375eae1f009a6" title="Build a ViewTransform from the current OrbitState." alt="" coords="681,69,907,109"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="941,72,907,77,906,71,941,67"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_ae1c3585aeff050b127d356422bf64f2a.html#ae1c3585aeff050b127d356422bf64f2a" title="Bind the orbit navigation controller to a window and render processor." alt="" coords="475,37,633,77"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="706,40,634,49,633,44,705,34"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_a48c5b40b6bfbe03a5edbe73ca9e305c8.html#a48c5b40b6bfbe03a5edbe73ca9e305c8" title="Bind the orbit navigation controller to all RenderProcessors currently registered against a window." alt="" coords="254,5,413,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="461,47,413,39,413,34,462,41"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_a9be701daac0c0484aed1f9ad9f8d130e.html#a9be701daac0c0484aed1f9ad9f8d130e" title="Bind a navigation preset to a window and render processor using default settings." alt="" coords="240,69,427,109"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="462,73,427,78,426,73,461,68"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_af2205e6997a812a91f5c4b88a8beb585.html#af2205e6997a812a91f5c4b88a8beb585" title="Bind a navigation preset to all RenderProcessors currently registered against a window using default ..." alt="" coords="5,69,192,109"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="227,92,192,92,192,87,227,87"/>
+<area shape="poly" id="edge7_Node000007_Node000003" title=" " alt="" coords="668,75,633,71,634,65,668,70"/>
+</map>

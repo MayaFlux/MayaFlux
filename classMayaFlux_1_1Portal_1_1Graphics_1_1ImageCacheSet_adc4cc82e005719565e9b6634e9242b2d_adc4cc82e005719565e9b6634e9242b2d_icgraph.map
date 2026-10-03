@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Graphics::ImageCacheSet::acquire" name="MayaFlux::Portal::Graphics::ImageCacheSet::acquire">
+<area shape="rect" id="Node000001" title=" " alt="" coords="245,13,443,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1TextureExecutionContext_aa3cf2253dd2d6b5700bf8965338e7ebd.html#aa3cf2253dd2d6b5700bf8965338e7ebd" title="Return this slot&#39;s cached image for these creation parameters, creating and caching one when there is..." alt="" coords="5,5,197,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="232,35,197,35,197,30,232,30"/>
+</map>

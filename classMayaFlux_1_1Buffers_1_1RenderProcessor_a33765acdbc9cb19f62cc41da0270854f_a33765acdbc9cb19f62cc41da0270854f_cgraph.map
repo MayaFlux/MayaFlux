@@ -1,0 +1,6 @@
+<map id="MayaFlux::Buffers::RenderProcessor::record_draw" name="MayaFlux::Buffers::RenderProcessor::record_draw">
+<area shape="rect" id="Node000001" title="Record the buffer&#39;s prepared geometry into a fresh secondary command buffer." alt="" coords="5,29,224,69"/>
+<area shape="poly" id="edge2_Node000001_Node000001" title=" " alt="" coords="71,30,69,20,76,10,91,5,115,3,142,6,156,13,154,18,140,11,115,8,92,10,79,15,74,21,76,28"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_ab542f6ff3477ec68e1bef27aa85b7482.html#ab542f6ff3477ec68e1bef27aa85b7482" title="Whether this processor contributes to presentation." alt="" coords="272,22,423,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="224,47,258,47,258,52,224,52"/>
+</map>

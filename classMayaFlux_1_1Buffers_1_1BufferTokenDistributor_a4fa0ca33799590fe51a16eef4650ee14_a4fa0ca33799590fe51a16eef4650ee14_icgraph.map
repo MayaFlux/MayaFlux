@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::BufferTokenDistributor::is_valid_vk_token" name="MayaFlux::Buffers::BufferTokenDistributor::is_valid_vk_token">
+<area shape="rect" id="Node000001" title=" " alt="" coords="668,5,835,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferTokenDistributor_ab405da6eb10db723c3611288b56f7703.html#ab405da6eb10db723c3611288b56f7703" title=" " alt="" coords="453,5,620,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="654,35,620,35,620,30,654,30"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1BufferTokenDistributor_a770e555396476661ff11b14431c183f4.html#a770e555396476661ff11b14431c183f4" title="Distribute a buffer based on its type and requested token." alt="" coords="239,5,405,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="439,35,406,35,406,30,439,30"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1BufferTokenDistributor_ad7575e0fb09c136cb890d448bbe486ac.html#ad7575e0fb09c136cb890d448bbe486ac" title="Distribute with optional transfer target (for cross&#45;domain routing)" alt="" coords="5,5,191,60"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="225,35,191,35,191,30,225,30"/>
+</map>

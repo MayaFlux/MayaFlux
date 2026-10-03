@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::SubsystemManager::get_audio_subsystem" name="MayaFlux::Core::SubsystemManager::get_audio_subsystem">
+<area shape="rect" id="Node000001" title="Get typed access to the audio subsystem." alt="" coords="289,5,519,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1SubsystemManager_abb674931c6f304f4ebead1d77f2fb4d0.html#abb674931c6f304f4ebead1d77f2fb4d0" title="Stop the audio subsystem." alt="" coords="5,5,241,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="276,28,241,28,241,23,276,23"/>
+</map>

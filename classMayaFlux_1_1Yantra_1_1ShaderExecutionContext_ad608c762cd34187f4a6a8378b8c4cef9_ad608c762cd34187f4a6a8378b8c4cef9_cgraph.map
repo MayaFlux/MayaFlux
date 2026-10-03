@@ -1,0 +1,25 @@
+<map id="MayaFlux::Yantra::ShaderExecutionContext::collect_result" name="MayaFlux::Yantra::ShaderExecutionContext::collect_result">
+<area shape="rect" id="Node000001" title="Collect the result of the last async dispatch." alt="" coords="5,62,192,117"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_ab8e04234ab2809c5fa2fc0520d666ee6.html#ab8e04234ab2809c5fa2fc0520d666ee6" title="Effective element count used by the last dispatch_core or dispatch_core_async call." alt="" coords="240,5,492,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="192,64,268,46,269,51,193,70"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_a0f399fd490fe9a1c63d18937304350be.html#a0f399fd490fe9a1c63d18937304350be" title="Read back all OUTPUT bindings that have explicit size overrides into the aux map of a GpuChannelResul..." alt="" coords="253,69,479,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="192,87,240,87,240,92,192,92"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_ae5e1220e72a191e7b1200563b38e2c64.html#ae5e1220e72a191e7b1200563b38e2c64" title="Read back the primary output buffer into a float vector." alt="" coords="253,133,479,173"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="193,109,269,127,268,133,192,114"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_a73fff9156201c282780b637feeb7f7e1.html#a73fff9156201c282780b637feeb7f7e1" title="The key used for this context&#39;s GpuResourceManager unit." alt="" coords="545,133,770,173"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="458,107,553,128,552,133,457,112"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1GpuResourceManager_a1b0b0ae208ba224d5594eadb820267c6.html#a1b0b0ae208ba224d5594eadb820267c6" title=" " alt="" coords="543,69,771,109"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="479,87,530,87,530,92,479,92"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_a08fa9b6412b634215b72b52676318691.html#a08fa9b6412b634215b72b52676318691" title=" " alt="" coords="581,19,734,45"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="468,67,578,45,579,50,469,72"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1GpuResourceManager_a93b9e87640ff7caf15e93874fb627541.html#a93b9e87640ff7caf15e93874fb627541" title=" " alt="" coords="823,69,1051,109"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="772,87,809,87,809,92,772,92"/>
+<area shape="poly" id="edge10_Node000008_Node000004" title=" " alt="" coords="479,151,531,151,531,156,479,156"/>
+<area shape="poly" id="edge11_Node000008_Node000005" title=" " alt="" coords="457,131,552,110,553,115,458,136"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Yantra_1_1GpuResourceManager_af38f8c4da6835dbcad3b5156f02e9e4d.html#af38f8c4da6835dbcad3b5156f02e9e4d" title=" " alt="" coords="540,261,775,301"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="399,171,463,209,541,247,562,255,560,260,539,252,461,214,397,176"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_afb7ae6dab399e80516b3c52eb9a03a8b.html#afb7ae6dab399e80516b3c52eb9a03a8b" title=" " alt="" coords="545,197,770,237"/>
+<area shape="poly" id="edge12_Node000008_Node000011" title=" " alt="" coords="458,171,553,192,552,197,457,176"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Yantra_1_1GpuResourceManager_af582f5210754d7530e9dbaad98f1859a.html#af582f5210754d7530e9dbaad98f1859a" title=" " alt="" coords="823,261,1051,301"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="775,279,809,279,809,284,775,284"/>
+</map>

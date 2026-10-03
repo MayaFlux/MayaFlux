@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::RelationOperator::Binding" name="MayaFlux::Nodes::Network::RelationOperator::Binding">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,228,196,308"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1Source.html" title="Anything that can supply a number when evaluated." alt="" coords="5,5,196,165"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="103,166,103,212,98,212,98,166"/>
+</map>

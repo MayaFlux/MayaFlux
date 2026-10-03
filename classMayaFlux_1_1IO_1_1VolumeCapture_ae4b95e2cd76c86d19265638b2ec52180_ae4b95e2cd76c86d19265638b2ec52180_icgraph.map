@@ -1,0 +1,7 @@
+<map id="MayaFlux::IO::VolumeCapture::stop" name="MayaFlux::IO::VolumeCapture::stop">
+<area shape="rect" id="Node000001" title="Cancel the capture routine." alt="" coords="269,37,485,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1VolumeCapture_aabbce744bd0328d8c55c5812650da488.html#aabbce744bd0328d8c55c5812650da488" title="Spawn the capture routine, resetting the frame counter." alt="" coords="5,5,221,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="256,45,221,41,222,36,256,40"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1VolumeCapture_a564d65131faaa738b51dd1d02138bce6.html#a564d65131faaa738b51dd1d02138bce6" title=" " alt="" coords="5,69,221,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="256,75,222,79,221,74,256,69"/>
+</map>

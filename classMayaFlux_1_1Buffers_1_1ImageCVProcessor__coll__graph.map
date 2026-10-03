@@ -1,0 +1,25 @@
+<map id="MayaFlux::Buffers::ImageCVProcessor&lt; T &gt;" name="MayaFlux::Buffers::ImageCVProcessor&lt; T &gt;">
+<area shape="rect" id="Node000001" title="BufferProcessor executing a Kinesis::Vision pipeline on a GpuImageSource buffer." alt="" coords="212,2591,387,3011"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferProcessor.html" title="Central computational transformation interface for continuous buffer processing." alt="" coords="5,2098,185,2358"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="141,2370,207,2566,216,2589,211,2591,202,2568,136,2372"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1VisionSequence.html" title="Ordered VisionSteps and the backend chosen to execute them." alt="" coords="202,671,367,771"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="276,772,244,938,231,1043,226,1149,226,2229,229,2317,236,2405,258,2574,253,2575,230,2406,223,2317,221,2229,221,1149,226,1043,239,938,270,771"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1VisionPass.html" title=" " alt="" coords="363,1431,505,1865"/>
+<area shape="poly" id="edge5_Node000005_Node000003" title=" " alt="" coords="281,771,271,880,266,1029,267,1112,272,1198,283,1284,299,1367,321,1424,358,1500,353,1502,316,1426,294,1369,278,1285,267,1199,262,1112,260,1029,266,879,276,770"/>
+<area shape="rect" id="Node000010" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1VisionPass.html" title="State threaded through one execution of a VisionSequence." alt="" coords="387,933,529,1368"/>
+<area shape="poly" id="edge11_Node000010_Node000003" title=" " alt="" coords="307,770,383,957,378,959,302,772"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kinesis_1_1Vision_1_1VisionExecutor.html" title="Stateful executor for a VisionSequence." alt="" coords="295,1928,453,2528"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="338,2528,331,2574,326,2574,332,2528"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="414,1866,409,1912,404,1911,409,1865"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1VisionResult.html" title="Result of executing a VisionSequence on one frame." alt="" coords="505,571,651,871"/>
+<area shape="poly" id="edge13_Node000001_Node000006" title=" " alt="" coords="628,870,658,1005,668,1077,671,1149,671,2229,664,2304,644,2376,614,2445,577,2510,534,2571,489,2626,401,2717,397,2713,485,2622,530,2567,572,2507,610,2442,639,2374,659,2303,666,2229,666,1149,662,1078,653,1006,623,871"/>
+<area shape="poly" id="edge6_Node000005_Node000006" title=" " alt="" coords="585,871,584,981,578,1107,565,1239,543,1369,513,1471,508,1469,538,1367,560,1238,573,1106,578,981,580,871"/>
+<area shape="poly" id="edge12_Node000010_Node000006" title=" " alt="" coords="516,872,509,895,502,918,497,917,503,894,511,870"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1BufferOutputs.html" title="Live device views of the GPU&#45;resident export buffers, one named slot per exporting op,..." alt="" coords="393,308,545,428"/>
+<area shape="poly" id="edge7_Node000006_Node000007" title=" " alt="" coords="490,428,529,554,524,556,485,429"/>
+<area shape="rect" id="Node000008" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1ContoursBufferView.html" title="Live device view of FindContours&#39; traced contours, when FindContoursParams::export_contours_buffer is..." alt="" coords="373,5,564,165"/>
+<area shape="poly" id="edge8_Node000007_Node000008" title=" " alt="" coords="471,165,471,291,466,291,466,165"/>
+<area shape="rect" id="Node000009" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1ImageOutputs.html" title="One image slot per VisionOp that produces an image, populated only for whichever of these ops ran in ..." alt="" coords="569,228,723,508"/>
+<area shape="poly" id="edge9_Node000006_Node000009" title=" " alt="" coords="622,509,613,555,607,554,616,508"/>
+<area shape="poly" id="edge10_Node000005_Node000010" title=" " alt="" coords="450,1382,447,1431,442,1430,444,1382"/>
+</map>

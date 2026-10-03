@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::DataReadProcessor::is_compatible_with" name="MayaFlux::Buffers::DataReadProcessor::is_compatible_with">
+<area shape="rect" id="Node000001" title="Checks if this processor can handle the specified buffer type." alt="" coords="5,5,173,60"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Buffers_ace3e81403ef9dc64d71f1717274e1922.html#ace3e81403ef9dc64d71f1717274e1922" title="Whether a buffer&#39;s memory can be the source of a transfer." alt="" coords="221,13,369,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="173,30,208,30,208,35,173,35"/>
+</map>

@@ -1,0 +1,12 @@
+<map id="MayaFlux::Nexus::read_bounds" name="MayaFlux::Nexus::read_bounds">
+<area shape="rect" id="Node000001" title="Bounds of a buffer&#39;s geometry in its own stored coordinates." alt="" coords="241,101,413,141"/>
+<area shape="poly" id="edge3_Node000001_Node000001" title=" " alt="" coords="366,90,352,83,327,80,306,82,292,87,288,93,290,100,285,102,282,92,289,82,304,77,327,75,354,78,368,85"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1Hull_a14871897f3b4587e6f93d625faffaddc.html#a14871897f3b4587e6f93d625faffaddc" title="Build from a buffer." alt="" coords="15,5,184,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="274,97,192,60,161,48,163,43,194,55,276,93"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nexus_1_1Mantle_aec56a122cb88646533bdf80a02613451.html#aec56a122cb88646533bdf80a02613451" title="Build from a box and a buffer." alt="" coords="5,69,193,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="227,110,193,105,194,100,228,105"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nexus_1_1Hull_a10a6dbf4b65efc68a436359a09d5842e.html#a10a6dbf4b65efc68a436359a09d5842e" title="Read the buffer&#39;s geometry again and take its bounds." alt="" coords="15,133,184,173"/>
+<area shape="poly" id="edge4_Node000001_Node000004" title=" " alt="" coords="228,138,184,144,184,139,227,133"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nexus_1_1Mantle_a06083bc88a1e28ba95ecfdf8fadf605d.html#a06083bc88a1e28ba95ecfdf8fadf605d" title="Read the buffer&#39;s geometry again and place it to match." alt="" coords="5,197,193,237"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="276,150,194,188,163,200,161,195,192,183,274,145"/>
+</map>

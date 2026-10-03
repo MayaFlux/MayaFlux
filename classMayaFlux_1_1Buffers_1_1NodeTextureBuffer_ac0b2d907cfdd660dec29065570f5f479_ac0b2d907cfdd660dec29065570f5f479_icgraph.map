@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::NodeTextureBuffer::generate_fullscreen_quad" name="MayaFlux::Buffers::NodeTextureBuffer::generate_fullscreen_quad">
+<area shape="rect" id="Node000001" title=" " alt="" coords="240,5,449,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1NodeTextureBuffer_ac67634c77e2bdb1c6e7c6f5bceb492c1.html#ac67634c77e2bdb1c6e7c6f5bceb492c1" title="Initialize the buffer, create GPU texture, and setup processors." alt="" coords="5,5,192,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="226,35,192,35,192,30,226,30"/>
+</map>

@@ -1,0 +1,11 @@
+<map id="MayaFlux::Vruta::seconds_to_blocks" name="MayaFlux::Vruta::seconds_to_blocks">
+<area shape="rect" id="Node000001" title="Convert seconds to number of processing blocks." alt="" coords="472,69,663,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1SamplingPipeline_a79b622257fc33fc7d37a3a7d9a5f0c86.html#a79b622257fc33fc7d37a3a7d9a5f0c86" title="Finalize configuration and start processing for a bounded duration." alt="" coords="227,5,424,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="477,68,401,48,402,43,479,63"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kriya_1_1SamplingPipeline_aee8de50896bfcb95689a97714673118a.html#aee8de50896bfcb95689a97714673118a" title="Stop and restart pipeline execution for a bounded duration." alt="" coords="227,69,424,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="458,92,424,92,424,87,458,87"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_a9b0f018819c16aeaf3c79625209b8898.html#a9b0f018819c16aeaf3c79625209b8898" title="Converts a time duration in seconds to the equivalent number of processing blocks." alt="" coords="242,133,409,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="479,115,402,136,401,131,477,110"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_a91a577cf9a518db7f561907cb51239a6.html#a91a577cf9a518db7f561907cb51239a6" title="Routes a buffer from its current channel to a target channel with fade." alt="" coords="5,141,179,166"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="228,156,179,156,179,151,228,151"/>
+</map>

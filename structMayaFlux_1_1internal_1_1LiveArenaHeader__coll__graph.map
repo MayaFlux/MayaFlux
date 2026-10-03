@@ -1,0 +1,5 @@
+<map id="MayaFlux::internal::LiveArenaHeader" name="MayaFlux::internal::LiveArenaHeader">
+<area shape="rect" id="Node000001" title="POD header block placed at the start of the arena storage." alt="" coords="5,208,141,288"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1internal_1_1LiveArenaEntry.html" title="Single directory entry mapping a string key to a location within the arena." alt="" coords="5,5,141,145"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="76,146,76,191,71,191,71,146"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::DynamicVideoStream::append_frame" name="MayaFlux::Kakshya::DynamicVideoStream::append_frame">
+<area shape="rect" id="Node000001" title="Write one frame at the write head and advance it." alt="" coords="225,5,397,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1DynamicVideoStream_a42dc09877d26a4868f362f9b2e317d15.html#a42dc09877d26a4868f362f9b2e317d15" title="Write one image, for example one read back from a GPU image." alt="" coords="5,5,177,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="211,35,177,35,177,30,211,30"/>
+</map>

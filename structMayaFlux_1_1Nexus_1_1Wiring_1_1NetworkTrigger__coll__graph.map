@@ -1,0 +1,11 @@
+<map id="MayaFlux::Nexus::Wiring::NetworkTrigger" name="MayaFlux::Nexus::Wiring::NetworkTrigger">
+<area shape="rect" id="Node000001" title=" " alt="" coords="97,1657,274,1737"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1NetworkSource.html" title="Awaitable broadcast message stream for a network endpoint." alt="" coords="93,1215,277,1595"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="188,1595,188,1641,183,1641,183,1595"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1EventSource.html" title="Abstract base for all awaitable signal sources." alt="" coords="5,752,216,1017"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="134,1031,161,1214,155,1215,129,1031"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Memory_1_1RingBuffer.html" title=" " alt="" coords="240,617,496,1152"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="277,1153,260,1200,255,1198,271,1151"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Memory_1_1RingBuffer.html" title="Policy&#45;driven unified circular buffer implementation." alt="" coords="235,5,501,540"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="371,554,371,617,365,617,365,554"/>
+</map>

@@ -1,0 +1,15 @@
+<map id="MayaFlux::Yantra::OperationHelper::reconstruct_projected_composite" name="MayaFlux::Yantra::OperationHelper::reconstruct_projected_composite">
+<area shape="rect" id="Node000001" title="Copy Composite records and replace one projected numeric field." alt="" coords="5,102,220,157"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_a5179bbed83a1cfd37144e1fb8c355ec2.html#a5179bbed83a1cfd37144e1fb8c355ec2" title="Mark a field absent without removing its stored bytes." alt="" coords="268,77,435,117"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="220,112,254,108,255,113,221,118"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_a79c543ebf4a08c14723944612b16f6ec.html#a79c543ebf4a08c14723944612b16f6ec" title="Write an arithmetic field of an existing element." alt="" coords="272,141,431,181"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="221,141,259,146,258,152,220,146"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1CompositeLayout_af4cd325e144ed9d1c95d00bf6bde2b34.html#af4cd325e144ed9d1c95d00bf6bde2b34" title="Find a field index by name, or std::nullopt if absent." alt="" coords="483,5,685,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="416,75,505,47,506,52,418,80"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_a924a02b7cad77d335986f58d85581381.html#a924a02b7cad77d335986f58d85581381" title=" " alt="" coords="505,70,663,125"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="435,95,490,95,490,100,435,100"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_a27600792242257eee9b70539967aba2b.html#a27600792242257eee9b70539967aba2b" title="Number of packed elements." alt="" coords="504,149,664,189"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="418,115,506,143,505,148,416,120"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1CompositeLayout_a04d7cccd3b3bb8e93f3909f55a970198.html#a04d7cccd3b3bb8e93f3909f55a970198" title="Bytes per packed element after finalization." alt="" coords="733,149,957,189"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="664,167,719,167,719,172,664,172"/>
+</map>

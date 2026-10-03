@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::RootBuffer::is_buffer_acceptable" name="MayaFlux::Buffers::RootBuffer::is_buffer_acceptable">
+<area shape="rect" id="Node000001" title="Validates if a buffer is acceptable based on current token enforcement strategy." alt="" coords="5,5,160,60"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Buffers_a38e5853247532e5155b787a4d89b20cb.html#a38e5853247532e5155b787a4d89b20cb" title="Determines if two processing tokens are compatible for joint execution." alt="" coords="208,13,381,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="160,30,194,30,194,35,160,35"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::IO::IOManager::register_video_reader" name="MayaFlux::IO::IOManager::register_video_reader">
+<area shape="rect" id="Node000001" title="Assign a globally unique reader_id and take ownership of a reader." alt="" coords="240,5,427,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1IOManager_aedebfcd58bb09a60f74b2057eb959d20.html#aedebfcd58bb09a60f74b2057eb959d20" title="Load a video file into a VideoFileContainer." alt="" coords="5,5,192,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="227,28,192,28,192,23,227,23"/>
+</map>

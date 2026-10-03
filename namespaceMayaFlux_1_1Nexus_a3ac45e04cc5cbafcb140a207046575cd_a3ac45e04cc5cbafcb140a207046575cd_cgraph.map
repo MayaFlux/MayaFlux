@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nexus::apply_attachment" name="MayaFlux::Nexus::apply_attachment">
+<area shape="rect" id="Node000001" title="Rebuild the transform from ctx and place every render processor of the buffer." alt="" coords="5,37,184,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a31c7405c0820777acb0f374e504e5ffd.html#a31c7405c0820777acb0f374e504e5ffd" title="Rigid transform that rotates about a local pivot and lands the pivot on a world point." alt="" coords="247,5,396,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="184,42,233,35,234,40,185,47"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Nexus_a61beb68adf0686b0e0fe5c3339838a3c.html#a61beb68adf0686b0e0fe5c3339838a3c" title="Place every render processor of the buffer that is not placed yet." alt="" coords="232,69,411,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="185,67,219,72,218,77,184,73"/>
+</map>

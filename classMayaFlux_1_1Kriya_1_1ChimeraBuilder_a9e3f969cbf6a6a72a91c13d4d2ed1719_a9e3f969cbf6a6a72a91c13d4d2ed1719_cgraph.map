@@ -1,0 +1,10 @@
+<map id="MayaFlux::Kriya::ChimeraBuilder::from" name="MayaFlux::Kriya::ChimeraBuilder::from">
+<area shape="rect" id="Node000001" title="Fill the layer once with an image file, loaded now as RGBA." alt="" coords="5,49,196,89"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1ChimeraBuilder_ab8f421a3d1d33ded5572fb6a8ee3ac6c.html#ab8f421a3d1d33ded5572fb6a8ee3ac6c" title="Feed the layer from a ring that is being recorded." alt="" coords="250,5,441,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="196,50,236,42,237,48,197,55"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1ImageReader_a35e7202cd51c429e0c56688344cc4746.html#a35e7202cd51c429e0c56688344cc4746" title="Load image from file (static utility)" alt="" coords="244,93,447,133"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="197,84,231,90,230,95,196,89"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kriya_1_1ChimeraBuilder_a64ae2ad508fa6ee5e327cb941a47d962.html#a64ae2ad508fa6ee5e327cb941a47d962" title=" " alt="" coords="495,5,685,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="441,23,481,23,481,28,441,28"/>
+<area shape="poly" id="edge4_Node000004_Node000004" title=" " alt="" coords="300,94,297,84,305,74,321,69,345,67,374,70,389,77,387,82,372,75,345,72,322,74,308,79,303,85,305,92"/>
+</map>

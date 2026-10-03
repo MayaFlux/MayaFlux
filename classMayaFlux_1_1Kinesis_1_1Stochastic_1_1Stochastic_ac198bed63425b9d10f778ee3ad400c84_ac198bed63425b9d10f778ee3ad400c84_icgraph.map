@@ -1,0 +1,16 @@
+<map id="MayaFlux::Kinesis::Stochastic::Stochastic::fast_uniform" name="MayaFlux::Kinesis::Stochastic::Stochastic::fast_uniform">
+<area shape="rect" id="Node000001" title=" " alt="" coords="487,124,651,179"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Stochastic_a864318a0cc2bbf82b2b3c72ec35b0120.html#a864318a0cc2bbf82b2b3c72ec35b0120" title=" " alt="" coords="233,5,423,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="515,118,437,74,412,63,414,58,440,69,518,114"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Stochastic_ad6c319a820a012a7444fdbe423d7910f.html#ad6c319a820a012a7444fdbe423d7910f" title=" " alt="" coords="217,84,439,139"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="472,138,438,132,439,127,473,133"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Stochastic_a2d3ce19cf0c4971f8ece8bbbdec35d66.html#a2d3ce19cf0c4971f8ece8bbbdec35d66" title=" " alt="" coords="243,163,413,217"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="473,169,414,179,413,174,472,164"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Stochastic_ac909906843ed49c852fe3bb41f43fa67.html#ac909906843ed49c852fe3bb41f43fa67" title=" " alt="" coords="240,241,416,296"/>
+<area shape="poly" id="edge7_Node000001_Node000006" title=" " alt="" coords="516,188,440,231,411,244,409,239,437,226,513,184"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Stochastic_a90f6258ef28fe6281d652f225d4c6255.html#a90f6258ef28fe6281d652f225d4c6255" title="Generates single value in range." alt="" coords="5,124,169,179"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="231,68,219,74,172,99,129,126,127,122,169,95,216,69,229,63"/>
+<area shape="poly" id="edge4_Node000004_Node000003" title=" " alt="" coords="204,135,170,140,169,135,203,129"/>
+<area shape="poly" id="edge6_Node000005_Node000003" title=" " alt="" coords="228,177,169,167,170,162,229,171"/>
+<area shape="poly" id="edge8_Node000006_Node000003" title=" " alt="" coords="232,238,216,231,129,181,131,177,219,226,234,233"/>
+</map>

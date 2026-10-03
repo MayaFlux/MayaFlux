@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::InputBinding::osc" name="MayaFlux::Core::InputBinding::osc">
+<area shape="rect" id="Node000001" title="Bind to OSC messages." alt="" coords="204,5,448,31"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a4261f8d74c43da7f4b0119c72901c067.html#a4261f8d74c43da7f4b0119c72901c067" title="Create binding for OSC messages." alt="" coords="5,5,156,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="190,21,156,21,156,15,190,15"/>
+</map>

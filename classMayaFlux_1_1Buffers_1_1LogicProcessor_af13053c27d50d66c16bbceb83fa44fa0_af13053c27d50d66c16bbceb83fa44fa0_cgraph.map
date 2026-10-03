@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::LogicProcessor::processing_function" name="MayaFlux::Buffers::LogicProcessor::processing_function">
+<area shape="rect" id="Node000001" title="Processes a buffer through the logic node." alt="" coords="5,30,203,85"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1LogicProcessor_af2bbf305942ee3c8f9ab638f564267ae.html#af2bbf305942ee3c8f9ab638f564267ae" title="Applies stored logic data to the given buffer." alt="" coords="262,5,425,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="203,41,248,35,249,41,203,47"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1LogicProcessor_a8227a4ef446e2529009afe0062f1bf67.html#a8227a4ef446e2529009afe0062f1bf67" title="Generates discrete logic data from input without modifying any buffer." alt="" coords="251,69,436,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="203,68,237,73,237,78,203,73"/>
+</map>

@@ -1,0 +1,8 @@
+<map id="MayaFlux::Buffers::NetworkGeometryProcessor::ensure_staging" name="MayaFlux::Buffers::NetworkGeometryProcessor::ensure_staging">
+<area shape="rect" id="Node000001" title="Grow a binding&#39;s staging buffer to hold at least bytes." alt="" coords="512,5,717,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1NetworkGeometryProcessor_ac6c764a77a3082815a103b602eddaf77.html#ac6c764a77a3082815a103b602eddaf77" title="BufferProcessor interface &#45; aggregates and uploads network geometry." alt="" coords="5,5,211,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="498,29,464,27,259,27,211,29,211,24,259,22,464,22,498,23"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1NetworkGeometryProcessor_a3ec7035b3ba7ca5531756a058e49fa28.html#a3ec7035b3ba7ca5531756a058e49fa28" title="Upload only the vertex sub&#45;ranges a multi&#45;group primary operator reports as dirty,..." alt="" coords="259,37,464,92"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="499,50,465,54,464,49,498,45"/>
+<area shape="poly" id="edge3_Node000003_Node000002" title=" " alt="" coords="245,53,211,48,211,43,245,47"/>
+</map>

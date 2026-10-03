@@ -1,0 +1,11 @@
+<map id="MayaFlux::Portal::Forma::LayoutCursor::bind_scroll" name="MayaFlux::Portal::Forma::LayoutCursor::bind_scroll">
+<area shape="rect" id="Node000001" title="Bind a live scroll offset." alt="" coords="464,73,659,113"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Scrollable_a35235f112f4f9f9eead110668fca88f7.html#a35235f112f4f9f9eead110668fca88f7" title="Register the viewport element, wire wheel scrolling, and populate scroll, offset, buf,..." alt="" coords="235,73,416,113"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="450,96,416,96,416,91,450,91"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a4d8d6a3f54c57284141331e37153b682.html#a4d8d6a3f54c57284141331e37153b682" title="Build a text&#45;capable FormaBuffer, register a TextField, and wire text editing onto it in one call." alt="" coords="5,29,187,69"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="221,76,187,69,188,64,222,71"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Forma_aef42f7d8c0db50373605643eb762a89a.html#aef42f7d8c0db50373605643eb762a89a" title="Construct a scrollable viewport." alt="" coords="5,117,187,157"/>
+<area shape="poly" id="edge4_Node000002_Node000004" title=" " alt="" coords="222,116,188,123,187,117,221,111"/>
+<area shape="poly" id="edge3_Node000003_Node000003" title=" " alt="" coords="135,18,121,11,96,8,74,10,61,15,56,21,58,28,53,30,51,20,57,10,73,5,96,3,123,6,137,13"/>
+<area shape="poly" id="edge5_Node000004_Node000004" title=" " alt="" coords="135,106,121,99,96,96,74,98,61,103,56,109,58,116,53,118,51,108,57,98,73,93,96,91,123,94,137,101"/>
+</map>

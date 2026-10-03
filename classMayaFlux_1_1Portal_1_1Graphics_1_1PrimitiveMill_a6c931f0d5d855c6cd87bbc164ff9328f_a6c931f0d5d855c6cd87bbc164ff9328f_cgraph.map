@@ -1,0 +1,7 @@
+<map id="MayaFlux::Portal::Graphics::PrimitiveMill::milled_vertex_count" name="MayaFlux::Portal::Graphics::PrimitiveMill::milled_vertex_count">
+<area shape="rect" id="Node000001" title="Vertices runs would mill to." alt="" coords="5,20,203,75"/>
+<area shape="rect" id="Node000002" href="$main_8cpp_a13a43e6d814de94978c515cb084873b1.html#a13a43e6d814de94978c515cb084873b1" title=" " alt="" coords="328,5,371,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="203,33,314,19,315,25,203,38"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_aaccc8e1fc59b35254e5010da08e664c0.html#aaccc8e1fc59b35254e5010da08e664c0" title="Vertices a span of n at topology yields once reduced to a TRIANGLE_LIST, with points becoming quads a..." alt="" coords="251,55,448,95"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="203,56,238,60,237,65,203,61"/>
+</map>

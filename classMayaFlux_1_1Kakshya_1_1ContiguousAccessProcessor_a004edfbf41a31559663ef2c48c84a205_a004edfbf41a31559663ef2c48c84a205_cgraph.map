@@ -1,0 +1,15 @@
+<map id="MayaFlux::Kakshya::ContiguousAccessProcessor::set_output_size" name="MayaFlux::Kakshya::ContiguousAccessProcessor::set_output_size">
+<area shape="rect" id="Node000001" title="Set the output buffer size (shape) for each processing call." alt="" coords="5,61,208,115"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1ContiguousAccessProcessor_aca05ee63009dd88d08bdb79c0fa821c0.html#aca05ee63009dd88d08bdb79c0fa821c0" title="Store dimension and layout metadata from the container." alt="" coords="256,99,459,154"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="209,101,243,106,242,112,208,106"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1ContiguousAccessProcessor_a39d753c064f0ccb0764dcb59c65f920e.html#a39d753c064f0ccb0764dcb59c65f920e" title="Validate the container&#39;s structure and output configuration." alt="" coords="256,21,459,75"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="208,69,242,64,243,69,209,74"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure_a27b9d48a60ea2512b02a8196c6581eec.html#a27b9d48a60ea2512b02a8196c6581eec" title="Extract channel count from dimensions." alt="" coords="511,99,686,154"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="459,124,497,124,497,129,459,129"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure_a707364e4c5a8e950a981eaf7ff5edff6.html#a707364e4c5a8e950a981eaf7ff5edff6" title="Get samples per channel (time dimension only)." alt="" coords="507,5,691,75"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="433,97,493,75,494,80,435,102"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure_ab431dba6cb69464326e81fe5e4bf83b0.html#ab431dba6cb69464326e81fe5e4bf83b0" title="Get total elements across all dimensions." alt="" coords="511,178,686,233"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="443,152,502,171,500,176,441,157"/>
+<area shape="poly" id="edge6_Node000006_Node000003" title=" " alt="" coords="443,73,502,92,500,98,441,78"/>
+<area shape="poly" id="edge7_Node000006_Node000004" title=" " alt="" coords="459,42,493,41,493,46,459,47"/>
+</map>

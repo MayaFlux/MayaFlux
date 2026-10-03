@@ -1,0 +1,21 @@
+<map id="NavigationState.hpp" name="NavigationState.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="250,5,405,31"/>
+<area shape="rect" id="Node000002" href="$Locus_8hpp.html" title=" " alt="" coords="139,79,225,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="293,39,207,81,205,76,291,34"/>
+<area shape="rect" id="Node000006" href="$NavigationState_8cpp.html" title=" " alt="" coords="250,79,405,104"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="330,44,330,79,325,79,325,44"/>
+<area shape="rect" id="Node000007" href="$ViewportPreset_8hpp.html" title=" " alt="" coords="429,79,578,104"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="369,33,476,76,474,81,367,38"/>
+<area shape="rect" id="Node000003" href="$Decoder_8cpp.html" title=" " alt="" coords="5,152,108,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="151,113,78,154,76,149,149,108"/>
+<area shape="rect" id="Node000004" href="$Encoder_8cpp.html" title=" " alt="" coords="132,152,232,177"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="185,118,185,152,179,152,179,118"/>
+<area shape="rect" id="Node000005" href="$Locus_8cpp.html" title=" " alt="" coords="256,152,343,177"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="214,109,282,149,279,154,211,113"/>
+<area shape="rect" id="Node000008" href="$MayaFlux_8hpp.html" title=" " alt="" coords="407,152,522,177"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="493,118,473,153,469,151,488,115"/>
+<area shape="rect" id="Node000010" href="$ViewportPreset_8cpp.html" title=" " alt="" coords="547,152,695,177"/>
+<area shape="poly" id="edge9_Node000007_Node000010" title=" " alt="" coords="535,109,603,149,600,154,533,113"/>
+<area shape="rect" id="Node000009" href="$LiveAid_8hpp.html" title=" " alt="" coords="415,225,514,251"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="467,191,467,225,462,225,462,191"/>
+</map>

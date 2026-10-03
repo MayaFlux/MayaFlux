@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::VertexFieldProcessor::VertexFieldProcessor" name="MayaFlux::Buffers::VertexFieldProcessor::VertexFieldProcessor">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,45,172,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_aa19dc6a473c4dfd06538dd426e6c251c.html#aa19dc6a473c4dfd06538dd426e6c251c" title="Add descriptor binding configuration." alt="" coords="220,5,383,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="172,54,206,48,207,53,173,60"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a957293274f9de20606b567a18ebc353c.html#a957293274f9de20606b567a18ebc353c" title="Update push constant data (type&#45;safe)" alt="" coords="222,84,381,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="173,85,209,92,208,97,172,90"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a85037a36fe7bced17fc296d213abcdff.html#a85037a36fe7bced17fc296d213abcdff" title="Set push constant size from type." alt="" coords="431,84,589,139"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="381,109,417,109,417,114,381,114"/>
+</map>

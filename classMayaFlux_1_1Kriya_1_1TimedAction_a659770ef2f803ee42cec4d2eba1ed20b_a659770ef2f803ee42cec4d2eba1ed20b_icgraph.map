@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kriya::TimedAction::cancel" name="MayaFlux::Kriya::TimedAction::cancel">
+<area shape="rect" id="Node000001" title="Cancels any active action." alt="" coords="272,5,491,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1TimedAction_ac54f279dd2bd1e1b20e0f25a9d5dea5c.html#ac54f279dd2bd1e1b20e0f25a9d5dea5c" title="Executes a pair of functions with a time interval between them." alt="" coords="5,5,224,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="258,28,224,28,224,23,258,23"/>
+</map>

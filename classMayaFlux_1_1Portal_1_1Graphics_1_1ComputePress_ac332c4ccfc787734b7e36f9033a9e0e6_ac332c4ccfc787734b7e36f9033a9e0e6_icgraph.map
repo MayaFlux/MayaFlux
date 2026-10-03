@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Graphics::ComputePress::dispatch_indirect" name="MayaFlux::Portal::Graphics::ComputePress::dispatch_indirect">
+<area shape="rect" id="Node000001" title="Dispatch compute workgroups indirectly." alt="" coords="296,5,493,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ComputePress_a7ae9b1758904451eff179b5301dcc1d8.html#a7ae9b1758904451eff179b5301dcc1d8" title="Record multiple pipeline dispatches into one already&#45;open command buffer, inserting a barrier between..." alt="" coords="5,13,248,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="282,35,248,35,248,30,282,30"/>
+</map>

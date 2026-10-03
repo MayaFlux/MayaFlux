@@ -1,0 +1,9 @@
+<map id="Rigs.hpp" name="Rigs.hpp">
+<area shape="rect" id="Node000001" title="Pre&#45;assembled, purpose&#45;built signal flow configurations." alt="" coords="83,5,162,31"/>
+<area shape="rect" id="Node000002" href="$MayaFlux_8hpp.html" title=" " alt="" coords="5,79,120,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="106,43,74,80,70,77,102,40"/>
+<area shape="rect" id="Node000004" href="$Rigs_8cpp.html" title=" " alt="" coords="144,79,221,104"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="143,40,175,77,171,80,139,43"/>
+<area shape="rect" id="Node000003" href="$LiveAid_8hpp.html" title=" " alt="" coords="13,152,112,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="65,118,65,152,60,152,60,118"/>
+</map>

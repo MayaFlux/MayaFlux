@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kinesis::Vision::hash_vision_step" name="MayaFlux::Kinesis::Vision::hash_vision_step">
+<area shape="rect" id="Node000001" title="Hash a VisionStep&#39;s op and parameters together." alt="" coords="236,37,419,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1VisionGpuExecutor_a08ab089f0a700b0a70d6902294c38fb1.html#a08ab089f0a700b0a70d6902294c38fb1" title="Detect edges in the current image with the Canny pipeline." alt="" coords="5,5,188,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="222,45,188,41,189,35,223,40"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1VisionGpuExecutor_afdad8a5a64522f246a58a7f585bd34c6.html#afdad8a5a64522f246a58a7f585bd34c6" title="Execute a VisionSequence on the GPU through an explicit context set." alt="" coords="5,69,188,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="223,74,189,79,188,74,222,69"/>
+</map>

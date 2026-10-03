@@ -1,0 +1,51 @@
+<map id="OpticalFlow.hpp" name="OpticalFlow.hpp">
+<area shape="rect" id="Node000001" title="Sparse optical flow via Lucas&#45;Kanade tracker." alt="" coords="126,5,253,31"/>
+<area shape="rect" id="Node000002" href="$OpticalFlow_8cpp.html" title=" " alt="" coords="27,79,152,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="164,41,107,81,104,76,161,36"/>
+<area shape="rect" id="Node000003" href="$VisionContext_8hpp.html" title=" " alt="" coords="500,79,641,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="264,31,509,76,508,81,263,36"/>
+<area shape="rect" id="Node000006" href="$VisionExecutor_8cpp.html" title=" " alt="" coords="5,225,149,251"/>
+<area shape="poly" id="edge27_Node000001_Node000006" title=" " alt="" coords="186,45,166,105,126,176,89,227,84,224,121,173,162,103,181,44"/>
+<area shape="rect" id="Node000004" href="$VisionExecutor_8hpp.html" title="Dispatch engine for VisionSequence execution." alt="" coords="338,152,483,177"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="534,112,438,154,436,149,532,107"/>
+<area shape="rect" id="Node000009" href="$VisionGpuDispatch_8hpp.html" title="GPU execution layer for Kinesis::Vision::VisionSequence." alt="" coords="659,152,832,177"/>
+<area shape="poly" id="edge8_Node000003_Node000009" title=" " alt="" coords="612,107,718,149,716,154,610,112"/>
+<area shape="rect" id="Node000020" href="$VisionInsight_8hpp.html" title="Caller&#45;supplied context and GPU&#45;derived output for turning a raw VisionResult into something a caller..." alt="" coords="857,152,991,177"/>
+<area shape="poly" id="edge21_Node000003_Node000020" title=" " alt="" coords="641,104,867,149,866,155,640,109"/>
+<area shape="rect" id="Node000021" href="$VisionQuery_8hpp.html" title="Per&#45;intent parameters and resolution into a set of VisionSequences." alt="" coords="507,152,634,177"/>
+<area shape="poly" id="edge24_Node000003_Node000021" title=" " alt="" coords="573,118,573,152,568,152,568,118"/>
+<area shape="rect" id="Node000005" href="$ImageCVProcessor_8hpp.html" title=" " alt="" coords="325,225,496,251"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="413,191,413,225,408,225,408,191"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="344,183,132,228,131,223,343,178"/>
+<area shape="rect" id="Node000007" href="$VisionProcessor_8hpp.html" title=" " alt="" coords="520,225,672,251"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="454,180,567,223,565,228,452,185"/>
+<area shape="rect" id="Node000008" href="$VisionProcessor_8cpp.html" title=" " alt="" coords="213,299,363,324"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="534,256,338,301,337,296,533,251"/>
+<area shape="poly" id="edge15_Node000009_Node000005" title=" " alt="" coords="679,183,465,228,464,223,678,178"/>
+<area shape="poly" id="edge20_Node000009_Node000007" title=" " alt="" coords="710,186,622,228,619,223,708,181"/>
+<area shape="rect" id="Node000010" href="$DispatchLayouts_8hpp.html" title=" " alt="" coords="867,225,1026,251"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="792,179,915,223,913,228,790,184"/>
+<area shape="rect" id="Node000016" href="$VisionAnalyzer_8hpp.html" title="FunctionalOperation&lt;shared_ptr&lt;SignalSourceContainer&gt;, vector&lt;DataVariant&gt;&gt; whose real API matches En..." alt="" coords="696,225,843,251"/>
+<area shape="poly" id="edge16_Node000009_Node000016" title=" " alt="" coords="756,189,768,224,763,226,751,191"/>
+<area shape="rect" id="Node000018" href="$VisionExtractor_8hpp.html" title="GPU getter for what VisionAnalyzer found." alt="" coords="1050,225,1198,251"/>
+<area shape="poly" id="edge18_Node000009_Node000018" title=" " alt="" coords="820,177,1063,223,1062,228,819,182"/>
+<area shape="rect" id="Node000011" href="$VisionComponentsDispatch_8cpp.html" title=" " alt="" coords="1166,299,1394,324"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="1014,251,1227,296,1225,301,1013,256"/>
+<area shape="rect" id="Node000012" href="$VisionFeatureDispatch_8cpp.html" title=" " alt="" coords="1419,299,1613,324"/>
+<area shape="poly" id="edge11_Node000010_Node000012" title=" " alt="" coords="1040,248,1425,296,1424,301,1039,254"/>
+<area shape="rect" id="Node000013" href="$VisionFlowDispatch_8cpp.html" title=" " alt="" coords="557,299,734,324"/>
+<area shape="poly" id="edge12_Node000010_Node000013" title=" " alt="" coords="886,256,695,301,694,296,885,251"/>
+<area shape="rect" id="Node000014" href="$VisionGpuDispatch_8cpp.html" title=" " alt="" coords="758,299,930,324"/>
+<area shape="poly" id="edge13_Node000010_Node000014" title=" " alt="" coords="920,261,862,301,859,296,917,256"/>
+<area shape="rect" id="Node000015" href="$VisionImageDispatch_8cpp.html" title=" " alt="" coords="955,299,1141,324"/>
+<area shape="poly" id="edge14_Node000010_Node000015" title=" " alt="" coords="976,256,1033,296,1030,301,973,261"/>
+<area shape="rect" id="Node000017" href="$VisionAnalyzer_8cpp.html" title=" " alt="" coords="387,299,533,324"/>
+<area shape="poly" id="edge17_Node000016_Node000017" title=" " alt="" coords="707,256,511,301,509,296,706,251"/>
+<area shape="rect" id="Node000019" href="$VisionExtractor_8cpp.html" title=" " alt="" coords="1637,299,1784,324"/>
+<area shape="poly" id="edge19_Node000018_Node000019" title=" " alt="" coords="1212,247,1626,296,1637,298,1637,303,1625,301,1212,252"/>
+<area shape="poly" id="edge22_Node000020_Node000016" title=" " alt="" coords="888,185,796,228,794,223,886,181"/>
+<area shape="poly" id="edge23_Node000020_Node000018" title=" " alt="" coords="970,179,1092,223,1090,228,968,184"/>
+<area shape="poly" id="edge25_Node000021_Node000016" title=" " alt="" coords="616,179,738,223,736,228,615,184"/>
+<area shape="rect" id="Node000022" href="$VisionQuery_8cpp.html" title=" " alt="" coords="174,225,301,251"/>
+<area shape="poly" id="edge26_Node000021_Node000022" title=" " alt="" coords="504,183,292,228,291,223,503,178"/>
+</map>

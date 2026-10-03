@@ -1,0 +1,5 @@
+<map id="MayaFlux::Yantra::UniversalAnalyzer::supports_method" name="MayaFlux::Yantra::UniversalAnalyzer::supports_method">
+<area shape="rect" id="Node000001" title="Check if a specific analysis method is supported." alt="" coords="5,13,209,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1UniversalAnalyzer_a5a77e81c82a3d82acd708a6226c5b07d.html#a5a77e81c82a3d82acd708a6226c5b07d" title="Get available analysis methods for this analyzer." alt="" coords="257,5,461,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="209,30,244,30,244,35,209,35"/>
+</map>

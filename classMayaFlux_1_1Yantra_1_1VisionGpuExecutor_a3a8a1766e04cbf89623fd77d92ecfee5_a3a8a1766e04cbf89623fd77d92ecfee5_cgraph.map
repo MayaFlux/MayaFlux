@@ -1,0 +1,11 @@
+<map id="MayaFlux::Yantra::VisionGpuExecutor::op_track_keypoints" name="MayaFlux::Yantra::VisionGpuExecutor::op_track_keypoints">
+<area shape="rect" id="Node000001" title="Track the previous frame&#39;s keypoints into the current frame." alt="" coords="5,77,188,132"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1VisionPass_a7191b1393d8450912666196621966804.html#a7191b1393d8450912666196621966804" title="Op at offset steps back, or nullptr before the start." alt="" coords="260,5,409,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="187,75,246,57,248,62,188,80"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a715d57394465ff2924727d7c82d87e7b.html#a715d57394465ff2924727d7c82d87e7b" title="Get the global shader compiler instance." alt="" coords="236,85,433,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="188,102,222,102,222,107,188,107"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Yantra_1_1VisionInternal_ab1a84195fda82348c6c234129f08cf37.html#ab1a84195fda82348c6c234129f08cf37" title="Pixel rectangle of a normalised region over a w x h image, clamped to the image." alt="" coords="243,149,426,189"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="189,127,247,143,246,148,188,132"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="481,85,679,125"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="434,102,468,102,468,107,434,107"/>
+</map>

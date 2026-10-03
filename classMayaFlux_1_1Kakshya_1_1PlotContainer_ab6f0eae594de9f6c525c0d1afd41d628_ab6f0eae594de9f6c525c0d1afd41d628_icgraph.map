@@ -1,0 +1,15 @@
+<map id="MayaFlux::Kakshya::PlotContainer::create_default_processor" name="MayaFlux::Kakshya::PlotContainer::create_default_processor">
+<area shape="rect" id="Node000001" title="Create and configure a default processor for this container." alt="" coords="433,126,592,181"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1PlotContainer_a0d7026e5d49589ff8cbe2080c6033b10.html#a0d7026e5d49589ff8cbe2080c6033b10" title="Return the PlotProcessor, creating and attaching it if absent." alt="" coords="223,126,385,181"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="419,156,386,156,386,151,419,151"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1PlotContainer_acb65a08627ab0c088d2b7194d3cba36c.html#acb65a08627ab0c088d2b7194d3cba36c" title="Bind a series to a callable." alt="" coords="11,5,169,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="259,119,219,88,173,60,149,48,151,43,176,55,222,84,262,115"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1PlotContainer_a3ab1b0f9519a336ffdd30d8cfa3d26ad.html#a3ab1b0f9519a336ffdd30d8cfa3d26ad" title="Bind a series to an AudioBuffer." alt="" coords="11,69,169,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="208,128,157,112,158,107,210,122"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1PlotContainer_a91ea704eb99083d5316b68b514226f29.html#a91ea704eb99083d5316b68b514226f29" title="Bind a series to a NodeNetwork with audio output." alt="" coords="11,133,169,173"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="209,156,170,156,170,151,209,151"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1PlotContainer_a0072a7307529a0ac932725dd009866e1.html#a0072a7307529a0ac932725dd009866e1" title="Bind a series to a Node." alt="" coords="11,197,169,237"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="210,184,158,200,157,195,208,179"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1PlotContainer_ae3eb0422e37baf35f124e7d60942b354.html#ae3eb0422e37baf35f124e7d60942b354" title="Push raw sample data into a series." alt="" coords="5,261,175,301"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="262,192,222,223,176,252,151,264,149,259,173,247,219,218,259,187"/>
+</map>

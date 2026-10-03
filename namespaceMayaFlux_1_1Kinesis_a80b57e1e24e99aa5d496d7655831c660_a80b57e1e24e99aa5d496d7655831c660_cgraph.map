@@ -1,0 +1,6 @@
+<map id="MayaFlux::Kinesis::generate_interpolated_points" name="MayaFlux::Kinesis::generate_interpolated_points">
+<area shape="rect" id="Node000001" title="Generate interpolated points from control points." alt="" coords="5,29,172,84"/>
+<area shape="poly" id="edge2_Node000001_Node000001" title=" " alt="" coords="45,29,45,19,53,10,68,5,89,3,114,6,129,14,126,18,112,11,89,8,69,10,56,15,50,21,50,29"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kinesis_1_1CurveEvaluator_a191277fa62a79ff56c66ee548d40544f.html#a191277fa62a79ff56c66ee548d40544f" title="Evaluate a curve into a caller&#45;owned matrix." alt="" coords="220,37,407,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="172,54,206,54,206,59,172,59"/>
+</map>

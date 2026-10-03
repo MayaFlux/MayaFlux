@@ -1,0 +1,22 @@
+<map id="MayaFlux::Yantra::GrammarAwareComputeMatrix" name="MayaFlux::Yantra::GrammarAwareComputeMatrix">
+<area shape="rect" id="Node000001" title="ComputeMatrix extension that integrates grammar&#45;based operation selection." alt="" coords="237,2231,479,2431"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1ComputeMatrix.html" title="Local execution orchestrator for computational operations." alt="" coords="253,1567,463,2181"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="361,2195,361,2231,355,2231,355,2195"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="5,1281,220,1361"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="138,1372,256,1637,251,1639,133,1375"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1OperationPool.html" title="Thread&#45;safe pool for managing named operation instances." alt="" coords="245,1139,471,1504"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="361,1504,361,1550,355,1550,355,1504"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Parallel_1_1AsyncGroup.html" title=" " alt="" coords="496,1161,655,1481"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="515,1482,471,1593,466,1591,510,1480"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Memory_1_1SweepList.html" title=" " alt="" coords="330,373,543,693"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="405,694,395,783,393,881,403,980,413,1028,428,1075,440,1095,453,1107,469,1119,485,1137,492,1146,487,1149,481,1140,465,1123,450,1111,436,1098,424,1077,408,1030,397,981,388,881,390,783,400,693"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Parallel_1_1AsyncGroup.html" title="Owns a set of in&#45;flight std::async futures on behalf of a subsystem." alt="" coords="504,756,647,1076"/>
+<area shape="poly" id="edge10_Node000009_Node000006" title=" " alt="" coords="497,693,514,739,509,741,492,695"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Memory_1_1SweepList.html" title="Lock&#45;free, unbounded, multi&#45;producer collection of in&#45;flight items." alt="" coords="429,5,679,311"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="479,324,475,335,465,374,459,373,470,334,474,323"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Memory_1_1SweepList.html" title=" " alt="" coords="567,373,781,693"/>
+<area shape="poly" id="edge8_Node000008_Node000007" title=" " alt="" coords="631,323,635,334,646,372,641,374,630,335,626,325"/>
+<area shape="poly" id="edge7_Node000005_Node000008" title=" " alt="" coords="679,694,679,717,682,898,676,977,661,1077,644,1146,638,1144,655,1075,671,976,676,898,674,717,674,694"/>
+<area shape="poly" id="edge11_Node000009_Node000008" title=" " alt="" coords="618,694,611,718,606,741,601,739,606,717,613,693"/>
+<area shape="poly" id="edge9_Node000005_Node000009" title=" " alt="" coords="578,1090,578,1161,573,1161,573,1090"/>
+</map>

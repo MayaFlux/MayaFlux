@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::VKImage::is_host_visible" name="MayaFlux::Core::VKImage::is_host_visible">
+<area shape="rect" id="Node000001" title="Whether this image should be host&#45;visible (staging images)" alt="" coords="244,5,435,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VKImage_a22223716fb7121e75c983ce9da7ac630.html#a22223716fb7121e75c983ce9da7ac630" title="Get appropriate VkMemoryPropertyFlags based on Usage." alt="" coords="5,5,196,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="230,28,196,28,196,23,230,23"/>
+</map>

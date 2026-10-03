@@ -1,0 +1,17 @@
+<map id="MayaFlux::Buffers::TextureArrayBuffer::ensure_array" name="MayaFlux::Buffers::TextureArrayBuffer::ensure_array">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,158,157,213"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1TextureBuffer_a5a87997228a8048647e422c15dbf2a13.html#a5a87997228a8048647e422c15dbf2a13" title=" " alt="" coords="209,5,399,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="101,156,144,105,173,78,204,55,215,49,218,53,207,60,176,82,148,108,105,159"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1TextureBuffer_a9b95a2ec52e43046fbfb16db23ac9f1e.html#a9b95a2ec52e43046fbfb16db23ac9f1e" title=" " alt="" coords="211,69,397,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="130,156,204,119,223,112,225,117,206,124,132,160"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a335ffb0c43b53ec263ab6559ac29476b.html#a335ffb0c43b53ec263ab6559ac29476b" title="Get the global texture manager instance." alt="" coords="205,133,403,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="157,172,191,167,192,172,158,177"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1TextureBuffer_a3a81f658a89643551b033fe1e0dd39c5.html#a3a81f658a89643551b033fe1e0dd39c5" title=" " alt="" coords="213,197,395,237"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="158,194,200,200,199,205,157,199"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1TextureBuffer_a6d9e10626ae8150e21923048853f4d07.html#a6d9e10626ae8150e21923048853f4d07" title=" " alt="" coords="207,261,401,301"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="132,210,206,247,225,254,223,259,204,252,130,215"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1TextureBuffer_a0d6c75d02c13f3d30b400103bed1812a.html#a0d6c75d02c13f3d30b400103bed1812a" title="Inject a pre&#45;existing GPU texture, bypassing TextureProcessor allocation." alt="" coords="220,326,388,381"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="105,211,149,261,177,288,207,311,216,317,213,321,204,316,173,292,145,265,101,215"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a6887ad297693c2392be7960daab06002.html#a6887ad297693c2392be7960daab06002" title=" " alt="" coords="451,133,648,173"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="403,151,437,151,437,156,403,156"/>
+</map>

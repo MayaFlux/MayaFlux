@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kakshya::TextureContainer::clear" name="MayaFlux::Kakshya::TextureContainer::clear">
+<area shape="rect" id="Node000001" title="Clear all data in the container." alt="" coords="5,41,179,81"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_a2ed230344b64dcf8cbcce94808dee8a3.html#a2ed230344b64dcf8cbcce94808dee8a3" title="Allocate a zeroed DataVariant of the alternative backing a format." alt="" coords="239,5,401,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="179,45,225,38,226,43,180,50"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_a607607f67bdc6e4054e3bae673e0547f.html#a607607f67bdc6e4054e3bae673e0547f" title="Update the processing state of the container." alt="" coords="227,70,413,125"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="180,72,213,78,213,83,179,78"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kakshya_a7c5d5d6f0be24fe12ef6c67401c2c001.html#a7c5d5d6f0be24fe12ef6c67401c2c001" title="Byte width of the DataVariant element backing a given ImageFormat." alt="" coords="461,5,627,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="402,23,447,23,447,28,402,28"/>
+</map>

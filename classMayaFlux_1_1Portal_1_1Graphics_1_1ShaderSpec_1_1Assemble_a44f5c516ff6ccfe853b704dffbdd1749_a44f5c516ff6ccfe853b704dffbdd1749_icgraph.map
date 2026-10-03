@@ -1,0 +1,13 @@
+<map id="MayaFlux::Portal::Graphics::ShaderSpec::Assemble::build" name="MayaFlux::Portal::Graphics::ShaderSpec::Assemble::build">
+<area shape="rect" id="Node000001" title="Finalise and return the ShaderSpec." alt="" coords="505,69,724,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GpuFieldOperator_a3ad4b99e462122dbf5f6b1c00d3632ff.html#a3ad4b99e462122dbf5f6b1c00d3632ff" title="Assemble the compute spec for the current bindings." alt="" coords="236,5,457,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="516,69,430,48,432,43,518,63"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1VisionGpuExecutor_a37b115d59dbe1593c58ef631942b363e.html#a37b115d59dbe1593c58ef631942b363e" title="GpuComputeConfig for a given VisionOp and its parameters." alt="" coords="255,69,438,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="491,92,438,92,438,87,491,87"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Buffers_1_1RelaxationSpecs_afe4907c6e3660650e5e21427e6c1f9a7.html#afe4907c6e3660650e5e21427e6c1f9a7" title="Jacobi&#45;style diffusion rule: each cell blends toward the average of its 8 Moore neighbors." alt="" coords="258,134,435,189"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="527,116,436,140,435,135,526,110"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1VisionGpuExecutor_a08ab089f0a700b0a70d6902294c38fb1.html#a08ab089f0a700b0a70d6902294c38fb1" title="Detect edges in the current image with the Canny pipeline." alt="" coords="5,33,188,73"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="241,77,188,69,188,64,242,72"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1VisionGpuExecutor_a48bca474121218135f8e80630f3eac82.html#a48bca474121218135f8e80630f3eac82" title="Compute the Harris response of the current image." alt="" coords="5,98,188,153"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="242,107,188,115,188,110,241,102"/>
+</map>

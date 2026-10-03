@@ -1,0 +1,6 @@
+<map id="MayaFlux::Kinesis::generate_revolution" name="MayaFlux::Kinesis::generate_revolution">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,29,159,69"/>
+<area shape="poly" id="edge1_Node000001_Node000001" title=" " alt="" coords="41,30,39,20,46,10,60,5,82,3,107,6,121,13,119,18,106,11,82,8,61,10,49,15,44,21,47,28"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1MeshInsertion_a618b35166b14858aca7b8f8c8ce693c8.html#a618b35166b14858aca7b8f8c8ce693c8" title="Insert a single flat mesh (no submesh tracking)." alt="" coords="207,29,393,69"/>
+<area shape="poly" id="edge2_Node000001_Node000002" title=" " alt="" coords="159,47,193,47,193,52,159,52"/>
+</map>

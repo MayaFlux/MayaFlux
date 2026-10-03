@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::CompositeAccess::element_bytes" name="MayaFlux::Kakshya::CompositeAccess::element_bytes">
+<area shape="rect" id="Node000001" title="Borrow all packed element bytes without conversion." alt="" coords="281,5,524,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1CompositeSlice_a16b77be4afcc0c27fde71b6205a59dad.html#a16b77be4afcc0c27fde71b6205a59dad" title="Borrow the selected contiguous packed bytes." alt="" coords="5,5,233,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="268,28,234,28,234,23,268,23"/>
+</map>

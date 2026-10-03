@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::UDPBackend::shutdown" name="MayaFlux::Core::UDPBackend::shutdown">
+<area shape="rect" id="Node000001" title="Release all resources, close all endpoints." alt="" coords="5,5,220,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1UDPBackend_a457ce3534426a45a7776d3ef2334de0e.html#a457ce3534426a45a7776d3ef2334de0e" title="Stop receive threads without releasing resources." alt="" coords="268,5,483,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="220,23,254,23,254,28,220,28"/>
+</map>

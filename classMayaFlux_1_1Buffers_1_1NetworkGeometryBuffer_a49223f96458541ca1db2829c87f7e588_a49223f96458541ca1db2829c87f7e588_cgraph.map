@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::NetworkGeometryBuffer::declare_state" name="MayaFlux::Buffers::NetworkGeometryBuffer::declare_state">
+<area shape="rect" id="Node000001" title="Declare a named auxiliary state field alongside the vertex data." alt="" coords="5,84,187,139"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_ade826fd1619beabe131e5bb65ecf2bcd.html#ade826fd1619beabe131e5bb65ecf2bcd" title="Get all buffer resources at once (read&#45;only)" alt="" coords="259,5,412,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="179,81,244,60,246,65,181,86"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="252,84,419,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="187,109,238,109,238,114,187,114"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="235,163,436,203"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="188,136,256,157,254,162,186,141"/>
+</map>

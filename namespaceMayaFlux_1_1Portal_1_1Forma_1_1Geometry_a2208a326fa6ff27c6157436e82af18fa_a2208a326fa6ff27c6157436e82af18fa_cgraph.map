@@ -1,0 +1,11 @@
+<map id="MayaFlux::Portal::Forma::Geometry::wire_canvas_drag" name="MayaFlux::Portal::Forma::Geometry::wire_canvas_drag">
+<area shape="rect" id="Node000001" title="Wire drag interaction for a drawable canvas element." alt="" coords="5,101,224,141"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1AABB2D_a32bac0d1a4f876c992486eed5dc9fd6f.html#a32bac0d1a4f876c992486eed5dc9fd6f" title=" " alt="" coords="288,5,437,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="162,99,271,55,290,48,292,53,273,60,164,104"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_ad0e5f6b54a528262568438b0354769bd.html#ad0e5f6b54a528262568438b0354769bd" title="Called on each mouse&#45;move event while btn is held, tracking the element where the drag began even whe..." alt="" coords="272,69,453,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="224,105,258,100,259,105,225,110"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_ace07c841c93ea1a4adfe4aa509335acb.html#ace07c841c93ea1a4adfe4aa509335acb" title="Called when a mouse button is released over an element." alt="" coords="272,133,453,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="225,133,259,137,258,143,224,138"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Kinesis_1_1AABB2D_ab8e372add789f6bd44fa66a92618456a.html#ab8e372add789f6bd44fa66a92618456a" title=" " alt="" coords="288,197,437,237"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="164,139,273,183,292,190,290,195,271,188,162,144"/>
+</map>

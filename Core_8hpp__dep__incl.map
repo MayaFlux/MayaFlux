@@ -1,0 +1,23 @@
+<map id="Core.hpp" name="Core.hpp">
+<area shape="rect" id="Node000001" title="Core engine lifecycle and configuration API." alt="" coords="463,5,543,31"/>
+<area shape="rect" id="Node000002" href="$Chronie_8cpp.html" title=" " alt="" coords="5,79,104,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="449,30,116,81,105,83,104,78,116,76,448,24"/>
+<area shape="rect" id="Node000003" href="$Config_8cpp.html" title=" " alt="" coords="128,79,219,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="449,33,219,83,218,78,448,28"/>
+<area shape="rect" id="Node000004" href="$Core_8cpp.html" title=" " alt="" coords="243,79,322,104"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="455,37,319,81,317,76,453,32"/>
+<area shape="rect" id="Node000005" href="$Depot_8cpp.html" title=" " alt="" coords="347,79,435,104"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="474,40,410,81,408,76,471,36"/>
+<area shape="rect" id="Node000006" href="$Graph_8cpp.html" title=" " alt="" coords="459,79,547,104"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="505,44,505,79,500,79,500,44"/>
+<area shape="rect" id="Node000007" href="$Input_8cpp.html" title=" " alt="" coords="571,79,653,104"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="533,36,596,76,593,81,530,40"/>
+<area shape="rect" id="Node000008" href="$MayaFlux_8hpp.html" title=" " alt="" coords="677,79,792,104"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="554,32,698,76,696,81,552,37"/>
+<area shape="rect" id="Node000010" href="$API_2Random_8cpp.html" title=" " alt="" coords="817,79,919,104"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="557,27,817,77,816,83,556,32"/>
+<area shape="rect" id="Node000011" href="$Windowing_8cpp.html" title=" " alt="" coords="943,79,1065,104"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="557,24,932,76,944,78,943,83,932,81,556,29"/>
+<area shape="rect" id="Node000009" href="$LiveAid_8hpp.html" title=" " alt="" coords="685,152,784,177"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="737,118,737,152,732,152,732,118"/>
+</map>

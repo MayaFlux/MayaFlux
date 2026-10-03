@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::SymbolicTrajectory::update" name="MayaFlux::Kinesis::SymbolicTrajectory::update">
+<area shape="rect" id="Node000001" title="Observe one new position, updating the cell sequence." alt="" coords="5,5,159,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Memory_1_1HistoryBuffer_a6f256636f3f3fc99269c77a8dc096b09.html#a6f256636f3f3fc99269c77a8dc096b09" title="Push new value to front of history." alt="" coords="207,13,409,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="159,30,193,30,193,35,159,35"/>
+</map>

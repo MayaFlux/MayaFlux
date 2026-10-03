@@ -1,0 +1,7 @@
+<map id="MayaFlux::Yantra::UniversalAnalyzer::create_summary_statistics" name="MayaFlux::Yantra::UniversalAnalyzer::create_summary_statistics">
+<area shape="rect" id="Node000001" title="Create summary statistics from results (override for custom summaries)" alt="" coords="515,5,719,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1UniversalAnalyzer_aa17041f06b3f457a9ce9a1262c07821f.html#aa17041f06b3f457a9ce9a1262c07821f" title="Apply granularity&#45;based output formatting." alt="" coords="263,5,467,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="501,35,467,35,467,30,501,30"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1UniversalAnalyzer_a78f67235857df9ebbc5edfe0bdab8a95.html#a78f67235857df9ebbc5edfe0bdab8a95" title="Core analysis implementation &#45; must be overridden by derived classes." alt="" coords="5,13,215,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="249,35,215,35,215,30,249,30"/>
+</map>

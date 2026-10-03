@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kinesis::compute_view_transform" name="MayaFlux::Kinesis::compute_view_transform">
+<area shape="rect" id="Node000001" title="Compute a ViewTransform from the current NavigationState." alt="" coords="5,37,193,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a2ca46156e4c80497361cf46a29703186.html#a2ca46156e4c80497361cf46a29703186" title="Advance eye position by held movement flags against elapsed time." alt="" coords="246,5,399,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="193,41,232,36,233,41,194,46"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_ae0906b7d41d8d5f13ff814247327d614.html#ae0906b7d41d8d5f13ff814247327d614" title="Build a ViewTransform from the current NavigationState without mutating it." alt="" coords="241,69,404,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="194,68,228,73,227,78,193,73"/>
+</map>

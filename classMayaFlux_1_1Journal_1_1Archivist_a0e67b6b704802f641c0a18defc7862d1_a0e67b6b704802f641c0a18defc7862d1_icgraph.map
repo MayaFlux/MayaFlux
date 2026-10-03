@@ -1,0 +1,9 @@
+<map id="MayaFlux::Journal::Archivist::scribe_simple" name="MayaFlux::Journal::Archivist::scribe_simple">
+<area shape="rect" id="Node000001" title="Log a simple message without source location information." alt="" coords="435,5,612,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Journal_a3317639fed3a1166f017a83d51c5f26f.html#a3317639fed3a1166f017a83d51c5f26f" title="printf&#45;style overload of log()." alt="" coords="5,13,172,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="421,18,387,16,303,13,220,16,172,19,172,14,220,11,303,8,387,11,421,13"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Journal_adaa7146408c5b2e3a9f5b4af380a6bba.html#adaa7146408c5b2e3a9f5b4af380a6bba" title="Log a simple message without source&#45;location." alt="" coords="220,50,387,75"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="421,45,379,53,378,47,420,40"/>
+<area shape="poly" id="edge3_Node000003_Node000002" title=" " alt="" coords="216,50,162,41,163,35,217,45"/>
+<area shape="poly" id="edge4_Node000003_Node000003" title=" " alt="" coords="342,40,331,32,303,29,281,31,269,36,266,41,273,48,268,52,261,42,265,32,279,26,303,23,333,27,345,36"/>
+</map>

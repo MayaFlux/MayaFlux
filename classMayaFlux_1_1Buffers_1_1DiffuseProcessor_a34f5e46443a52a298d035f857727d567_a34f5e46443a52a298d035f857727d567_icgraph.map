@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::DiffuseProcessor::write_coefficient" name="MayaFlux::Buffers::DiffuseProcessor::write_coefficient">
+<area shape="rect" id="Node000001" title="Write the product of rate and time step into word seven." alt="" coords="245,77,417,132"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1DiffuseProcessor_a713aebbfaf663d8931d764163b0f938e.html#a713aebbfaf663d8931d764163b0f938e" title="Write the coefficient into the shared prefix." alt="" coords="24,5,179,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="231,76,178,59,180,54,233,71"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1DiffuseProcessor_ae395f7d8c85937d96b2d3a4796268679.html#ae395f7d8c85937d96b2d3a4796268679" title="Set the diffusion rate." alt="" coords="5,85,197,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="231,107,198,107,198,102,231,102"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1DiffuseProcessor_adbcc5de8fec3562476e721fe9c9beeb5.html#adbcc5de8fec3562476e721fe9c9beeb5" title="Set the integration step." alt="" coords="22,149,181,204"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="233,138,182,154,180,149,231,133"/>
+</map>

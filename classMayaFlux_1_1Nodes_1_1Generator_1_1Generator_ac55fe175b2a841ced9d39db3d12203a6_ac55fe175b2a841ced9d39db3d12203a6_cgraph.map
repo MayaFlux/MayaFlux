@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Generator::Generator::get_last_context" name="MayaFlux::Nodes::Generator::Generator::get_last_context">
+<area shape="rect" id="Node000001" title="Gets the last created context object." alt="" coords="5,5,216,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Node_a9e543f00ad2066f1dd3641b32e7416db.html#a9e543f00ad2066f1dd3641b32e7416db" title="Checks if the node supports GPU processing." alt="" coords="264,5,441,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="216,23,250,23,250,28,216,28"/>
+</map>

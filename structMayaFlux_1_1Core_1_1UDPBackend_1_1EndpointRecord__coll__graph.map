@@ -1,0 +1,7 @@
+<map id="MayaFlux::Core::UDPBackend::EndpointRecord" name="MayaFlux::Core::UDPBackend::EndpointRecord">
+<area shape="rect" id="Node000001" title="Per&#45;endpoint state." alt="" coords="120,273,327,373"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Core_1_1EndpointInfo.html" title="Describes one logical send/receive endpoint managed by a backend." alt="" coords="5,5,212,211"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="166,209,192,258,187,260,161,212"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Core_1_1UDPBackend_1_1SocketState.html" title="Per&#45;bound&#45;port socket state." alt="" coords="236,28,443,188"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="298,190,260,260,256,257,294,187"/>
+</map>

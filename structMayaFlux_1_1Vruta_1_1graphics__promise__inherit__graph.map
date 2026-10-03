@@ -1,0 +1,7 @@
+<map id="MayaFlux::Vruta::graphics_promise" name="MayaFlux::Vruta::graphics_promise">
+<area shape="rect" id="Node000001" title="Coroutine promise type for graphics processing tasks with frame&#45;accurate timing." alt="" coords="19,757,203,917"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Vruta_1_1routine__promise.html" title=" " alt="" coords="5,388,216,708"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="113,722,113,757,108,757,108,722"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Vruta_1_1routine__promise.html" title="Base coroutine promise type for audio processing tasks." alt="" coords="12,5,209,325"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="113,339,113,388,108,388,108,339"/>
+</map>

@@ -1,0 +1,15 @@
+<map id="MayaFlux::Buffers::TextureArrayBuffer::set_layer_params" name="MayaFlux::Buffers::TextureArrayBuffer::set_layer_params">
+<area shape="rect" id="Node000001" title="Set the params of one layer, layerData[2 * layer]." alt="" coords="5,84,157,139"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1TextureArrayBuffer_af10da116dad7523d9bec18225b679e02.html#af10da116dad7523d9bec18225b679e02" title=" " alt="" coords="205,84,357,139"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="158,109,191,109,191,114,158,114"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1TextureArrayBuffer_a0ef07c36be777043835d06235ad2d438.html#a0ef07c36be777043835d06235ad2d438" title="Create the per&#45;layer buffer the shader reads as layerData." alt="" coords="405,84,557,139"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="358,109,391,109,391,114,358,114"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1TextureArrayBuffer_a8188f85b7556d1ef50e493990d1eb0e2.html#a8188f85b7556d1ef50e493990d1eb0e2" title=" " alt="" coords="630,5,782,60"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="557,82,616,61,618,66,559,87"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="623,84,789,139"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="558,109,609,109,609,114,558,114"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="605,163,807,203"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="559,133,630,156,629,162,557,138"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a7017d137d730b0d43e2a1e956ad8c6d2.html#a7017d137d730b0d43e2a1e956ad8c6d2" title="Get a RenderProcessor suitable for rendering this buffer." alt="" coords="855,5,1012,60"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="782,30,841,30,841,35,782,35"/>
+</map>

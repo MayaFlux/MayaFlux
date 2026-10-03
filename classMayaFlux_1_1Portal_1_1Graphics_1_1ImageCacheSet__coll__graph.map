@@ -1,0 +1,9 @@
+<map id="MayaFlux::Portal::Graphics::ImageCacheSet" name="MayaFlux::Portal::Graphics::ImageCacheSet">
+<area shape="rect" id="Node000001" title="Cache images keyed by immutable allocation properties." alt="" coords="5,533,195,813"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Portal_1_1Graphics_1_1ImageCacheSet_1_1Entry.html" title=" " alt="" coords="5,391,195,471"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="103,471,103,517,97,517,97,471"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Portal_1_1Graphics_1_1ImageCacheEntry.html" title="Image retained by the producing owner." alt="" coords="5,248,195,328"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="103,328,103,374,97,374,97,328"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Portal_1_1Graphics_1_1ImageKey.html" title="Immutable properties that determine whether an image can be reused." alt="" coords="5,5,195,185"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="103,186,103,232,97,232,97,186"/>
+</map>

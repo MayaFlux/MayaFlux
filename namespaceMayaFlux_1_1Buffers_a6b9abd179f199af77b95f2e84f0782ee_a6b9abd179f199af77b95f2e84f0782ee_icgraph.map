@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::is_device_local" name="MayaFlux::Buffers::is_device_local">
+<area shape="rect" id="Node000001" title="Check if buffer is device&#45;local (staging needed)" alt="" coords="212,13,360,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1DataWriteProcessor_a4c1c579523d74e1c47352ea869ecc1ba.html#a4c1c579523d74e1c47352ea869ecc1ba" title="Write bytes into another VKBuffer, such as a plain descriptor&#45;bound buffer." alt="" coords="5,5,164,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="198,35,164,35,164,30,198,30"/>
+</map>
