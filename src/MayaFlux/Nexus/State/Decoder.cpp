@@ -125,6 +125,14 @@ namespace {
         return true;
     }
 
+    template <typename Record>
+    void apply_bounds(Expanse& expanse, const Record& rec)
+    {
+        if (rec.bounds_min && rec.bounds_max) {
+            expanse.set_bounds({ .min = *rec.bounds_min, .max = *rec.bounds_max });
+        }
+    }
+
 } // namespace
 
 // -------------------------------------------------------------------------
@@ -296,17 +304,21 @@ bool StateDecoder::decode(Fabric& fabric, const std::string& base_path)
     }
 
     for (const auto& xrec : schema.expanses) {
-        if (xrec.fn_name.empty()) {
+        if (xrec.fn_name.empty() && !(xrec.bounds_min && xrec.bounds_max)) {
             MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
-                "StateDecoder: Expanse {} has no fn_name, skipping", xrec.id);
+                "StateDecoder: Expanse {} has neither fn_name nor bounds, skipping", xrec.id);
             continue;
         }
-        auto contains_fn = fabric.resolve_expanse_fn(xrec.fn_name);
-        if (!contains_fn || !*contains_fn) {
-            MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
-                "StateDecoder: Expanse {} fn '{}' not in registry, skipping",
-                xrec.id, xrec.fn_name);
-            continue;
+        Expanse::ContainsFn contains;
+        if (!xrec.fn_name.empty()) {
+            const auto resolved = fabric.resolve_expanse_fn(xrec.fn_name);
+            if (!resolved || !*resolved) {
+                MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
+                    "StateDecoder: Expanse {} fn '{}' not in registry, skipping",
+                    xrec.id, xrec.fn_name);
+                continue;
+            }
+            contains = *resolved;
         }
         auto on_enter_fn = xrec.on_enter_fn_name.empty()
             ? Expanse::CrossingFn {}
@@ -324,9 +336,10 @@ bool StateDecoder::decode(Fabric& fabric, const std::string& base_path)
             xrec.fn_name,
             xrec.on_enter_fn_name,
             xrec.on_exit_fn_name,
-            *contains_fn,
+            std::move(contains),
             std::move(on_enter_fn),
             std::move(on_exit_fn));
+        apply_bounds(*expanse, xrec);
         fabric.add_expanse(std::move(expanse));
     }
 
@@ -635,16 +648,20 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(Fabric& fabric, con
     }
 
     for (const auto& xrec : schema.expanses) {
-        if (xrec.fn_name.empty()) {
+        if (xrec.fn_name.empty() && !(xrec.bounds_min && xrec.bounds_max)) {
             result.warnings.push_back("Expanse " + std::to_string(xrec.id)
-                + ": no fn_name, skipping");
+                + ": neither fn_name nor bounds, skipping");
             continue;
         }
-        auto contains_fn = fabric.resolve_expanse_fn(xrec.fn_name);
-        if (!contains_fn || !*contains_fn) {
-            result.warnings.push_back("Expanse " + std::to_string(xrec.id)
-                + ": fn '" + xrec.fn_name + "' not in registry, skipping");
-            continue;
+        Expanse::ContainsFn contains;
+        if (!xrec.fn_name.empty()) {
+            const auto resolved = fabric.resolve_expanse_fn(xrec.fn_name);
+            if (!resolved || !*resolved) {
+                result.warnings.push_back("Expanse " + std::to_string(xrec.id)
+                    + ": fn '" + xrec.fn_name + "' not in registry, skipping");
+                continue;
+            }
+            contains = *resolved;
         }
         auto on_enter_fn = xrec.on_enter_fn_name.empty()
             ? Expanse::CrossingFn {}
@@ -662,9 +679,10 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(Fabric& fabric, con
             xrec.fn_name,
             xrec.on_enter_fn_name,
             xrec.on_exit_fn_name,
-            *contains_fn,
+            std::move(contains),
             std::move(on_enter_fn),
             std::move(on_exit_fn));
+        apply_bounds(*expanse, xrec);
         fabric.add_expanse(std::move(expanse));
         ++result.constructed;
     }
@@ -705,8 +723,10 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(
     }
 
     for (const auto& xrec : schema.expanses) {
-        if (xrec.fn_name.empty()) {
-            total.warnings.push_back("TapestryExpanse '" + xrec.name + "': no fn_name, skipping");
+        const bool has_bounds = xrec.bounds_min && xrec.bounds_max;
+        if (xrec.fn_name.empty() && !has_bounds) {
+            total.warnings.push_back("TapestryExpanse '" + xrec.name
+                + "': neither fn_name nor bounds, skipping");
             continue;
         }
         Expanse::ContainsFn contains_fn;
@@ -731,17 +751,27 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(
             }
         }
 
-        if (!contains_fn) {
+        if (!xrec.fn_name.empty() && !contains_fn) {
             total.warnings.push_back("TapestryExpanse '" + xrec.name
                 + "': fn '" + xrec.fn_name + "' not resolved, skipping");
             continue;
         }
 
-        auto expanse = tapestry.create_expanse(
-            xrec.name,
-            std::move(contains_fn),
-            std::move(on_enter_fn),
-            std::move(on_exit_fn));
+        std::shared_ptr<Expanse> expanse;
+        if (xrec.fn_name.empty()) {
+            expanse = tapestry.create_expanse<Expanse>(
+                xrec.name,
+                Kinesis::AABB3D { .min = *xrec.bounds_min, .max = *xrec.bounds_max },
+                std::move(on_enter_fn),
+                std::move(on_exit_fn));
+        } else {
+            expanse = tapestry.create_expanse(
+                xrec.name,
+                std::move(contains_fn),
+                std::move(on_enter_fn),
+                std::move(on_exit_fn));
+            apply_bounds(*expanse, xrec);
+        }
 
         for (const auto& fname : xrec.fabric_names) {
             if (auto fabric = tapestry.get_fabric(fname))

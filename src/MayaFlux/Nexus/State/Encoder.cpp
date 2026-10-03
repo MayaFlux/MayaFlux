@@ -382,17 +382,22 @@ bool StateEncoder::encode(const Fabric& fabric, const std::string& base_path)
         const auto x = fabric.get_expanse(xid);
         if (!x)
             continue;
-        if (x->fn_name().empty()) {
+        if (x->fn_name().empty() && !x->bounds()) {
             MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
-                "StateEncoder: Expanse {} has no fn_name, skipping", xid);
+                "StateEncoder: Expanse {} has neither fn_name nor bounds, skipping", xid);
             continue;
         }
-        schema.expanses.push_back(State::ExpanseRecord {
+        State::ExpanseRecord record {
             .id = xid,
             .fn_name = x->fn_name(),
             .on_enter_fn_name = x->on_enter_fn_name(),
             .on_exit_fn_name = x->on_exit_fn_name(),
-        });
+        };
+        if (x->bounds()) {
+            record.bounds_min = x->bounds()->min;
+            record.bounds_max = x->bounds()->max;
+        }
+        schema.expanses.push_back(std::move(record));
     }
 
     IO::JSONSerializer ser;
@@ -440,6 +445,10 @@ bool StateEncoder::encode(const Tapestry& tapestry, const std::string& base_dir,
             .on_enter_fn_name = xptr->on_enter_fn_name(),
             .on_exit_fn_name = xptr->on_exit_fn_name(),
         };
+        if (xptr->bounds()) {
+            xrec.bounds_min = xptr->bounds()->min;
+            xrec.bounds_max = xptr->bounds()->max;
+        }
         for (const auto& fabric : tapestry.all_fabrics()) {
             for (uint32_t xid : fabric->all_expanse_ids()) {
                 if (fabric->get_expanse(xid) == xptr) {

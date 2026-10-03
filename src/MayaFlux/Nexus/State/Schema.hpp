@@ -242,16 +242,19 @@ struct EntityRecord {
 /**
  * @brief Per-expanse JSON record.
  *
- * Only the function names are serializable; the containment predicate and
- * crossing callbacks are closures that must be resolved from the Fabric's
- * function registry on reconstruct. If fn_name is empty the expanse cannot
- * be reconstructed and the decoder skips it with a warning.
+ * The containment predicate and crossing callbacks are closures, so only their
+ * names are serializable and they are resolved from the Fabric's function
+ * registry on reconstruct. The box is plain data and is stored as is. If
+ * fn_name is empty and there is no box the expanse cannot be reconstructed and
+ * the decoder skips it with a warning.
  */
 struct ExpanseRecord {
     uint32_t id {};
     std::string fn_name;
     std::string on_enter_fn_name;
     std::string on_exit_fn_name;
+    std::optional<glm::vec3> bounds_min;
+    std::optional<glm::vec3> bounds_max;
 
     static constexpr auto describe()
     {
@@ -259,7 +262,9 @@ struct ExpanseRecord {
             Reflect::member("id", &ExpanseRecord::id),
             Reflect::member("fn_name", &ExpanseRecord::fn_name),
             Reflect::member("on_enter_fn_name", &ExpanseRecord::on_enter_fn_name),
-            Reflect::member("on_exit_fn_name", &ExpanseRecord::on_exit_fn_name));
+            Reflect::member("on_exit_fn_name", &ExpanseRecord::on_exit_fn_name),
+            Reflect::opt_member("bounds_min", &ExpanseRecord::bounds_min),
+            Reflect::opt_member("bounds_max", &ExpanseRecord::bounds_max));
     }
 };
 
@@ -318,6 +323,8 @@ struct TapestryExpanseRecord {
     std::string fn_name;
     std::string on_enter_fn_name;
     std::string on_exit_fn_name;
+    std::optional<glm::vec3> bounds_min;
+    std::optional<glm::vec3> bounds_max;
     std::vector<std::string> fabric_names;
 
     static constexpr auto describe()
@@ -327,6 +334,8 @@ struct TapestryExpanseRecord {
             Reflect::member("fn_name", &TapestryExpanseRecord::fn_name),
             Reflect::member("on_enter_fn_name", &TapestryExpanseRecord::on_enter_fn_name),
             Reflect::member("on_exit_fn_name", &TapestryExpanseRecord::on_exit_fn_name),
+            Reflect::opt_member("bounds_min", &TapestryExpanseRecord::bounds_min),
+            Reflect::opt_member("bounds_max", &TapestryExpanseRecord::bounds_max),
             Reflect::member("fabric_names", &TapestryExpanseRecord::fabric_names));
     }
 };
