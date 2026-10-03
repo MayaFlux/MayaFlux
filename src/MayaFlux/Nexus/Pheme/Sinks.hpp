@@ -1,6 +1,6 @@
 #pragma once
 
-#include "InfluenceContext.hpp"
+#include "Influence.hpp"
 
 #include "MayaFlux/Kakshya/NDData/VertexLayout.hpp"
 

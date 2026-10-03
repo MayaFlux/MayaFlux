@@ -41,13 +41,13 @@ void main()
     gl_Position = vec4((ndc1 + normal * t1) * p1.w, p1.z, p1.w);
     out_color = in_color[1];
     out_uv = vec2(1.0, 0.0);
-    out_world_pos = in_world_pos[0];
+    out_world_pos = in_world_pos[1];
     EmitVertex();
 
     gl_Position = vec4((ndc1 - normal * t1) * p1.w, p1.z, p1.w);
     out_color = in_color[1];
     out_uv = vec2(1.0, 1.0);
-    out_world_pos = in_world_pos[0];
+    out_world_pos = in_world_pos[1];
     EmitVertex();
 
     EndPrimitive();

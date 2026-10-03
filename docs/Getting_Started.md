@@ -123,6 +123,7 @@ The example below is complete and runnable. It loads a texture, generates a para
 #pragma once
 #define MAYASIMPLE
 #include "MayaFlux/MayaFlux.hpp"
+#include "MayaFlux/Nexus/Pheme/FieldTargets.hpp"
 #include "MayaFlux/Nexus/Tapestry.hpp"
 
 void settings()
@@ -192,7 +193,8 @@ void compose()
     light->set_vertices<LineVertex>(Kakshya::to_line_vertices(
         Kinesis::cuboid_wireframe(light_pos, half, glm::vec3(1.0F, 0.9F, 0.7F))));
 
-    light->add_influence_target(surf_buf->get_render_processor());
+    light->add_influence<Nexus::InfluenceBlock>(Nexus::InfluenceBlock::from)
+        ->add_target(Nexus::bind_push_constants<Nexus::InfluenceBlock>(surf_buf->get_render_processor()));
 
     auto fabric = make_persistent_shared<Nexus::Fabric>(
         *MayaFlux::get_scheduler(), *MayaFlux::get_event_manager());
@@ -246,7 +248,7 @@ What this shows:
 
 - `vega.read_image` and `vega.GeometryBuffer` are factory calls; domain annotation follows at the call site
 - A `GraphicsRoutine` coroutine inside a `Nexus::Emitter` owns its animation loop, suspended one frame at a time via `FrameDelay`
-- A `Nexus::Agent` acting as a light registers influence targets directly on render processors; moving the light position updates all of them simultaneously
+- A `Nexus::Agent` acting as a light pushes an `InfluenceBlock` to render processors as push constants; moving the light position updates all of them simultaneously
 - Keyboard input wires through `Wiring::on(key, held)` - each key is its own entity, each entity's influence function applies the delta
 
 ---

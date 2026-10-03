@@ -7,9 +7,10 @@ layout(location = 3) in vec2 in_uv;
 layout(location = 4) in vec3 in_normal;
 layout(location = 5) in vec3 in_tangent;
 
-layout(set = 0, binding = 0) uniform ViewTransformBlock {
+layout(set = 0, binding = 0) uniform RenderTransformBlock {
     mat4 view;
     mat4 projection;
+    mat4 geometry;
 } pc;
 
 layout(set = 0, binding = 1) readonly buffer ModelMatrices {
@@ -29,14 +30,15 @@ layout(location = 4) out vec3 out_world_pos;
 void main()
 {
     uint slot = slots.slot_index[gl_VertexIndex];
-    mat4 model = models.model[slot];
-    mat4 norm_mat = transpose(inverse(model));
+    mat4 slot_transform = models.model[slot];
+    mat4 world_transform = pc.geometry * slot_transform;
+    mat3 normal_mat = transpose(inverse(mat3(world_transform)));
 
-    vec4 world = model * vec4(in_position, 1.0);
+    vec4 world = world_transform * vec4(in_position, 1.0);
     gl_Position = pc.projection * pc.view * world;
     out_color = in_color;
     out_uv = in_uv;
-    out_normal = normalize(mat3(norm_mat) * in_normal);
+    out_normal = normalize(normal_mat * in_normal);
     out_slot = slot;
     out_world_pos = world.xyz;
 }

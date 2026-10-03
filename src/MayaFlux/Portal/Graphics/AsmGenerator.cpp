@@ -48,6 +48,8 @@ namespace {
             return "vec3";
         case Kakshya::GpuDataFormat::VEC4_F32:
             return "vec4";
+        case Kakshya::GpuDataFormat::MAT4_F32:
+            return "mat4";
         case Kakshya::GpuDataFormat::INT32:
             return "int";
         case Kakshya::GpuDataFormat::UINT32:

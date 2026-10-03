@@ -7,7 +7,7 @@ layout(location = 3) in vec3 in_world_pos;
 
 layout(set = 0, binding = 2) uniform sampler2D diffuseTex;
 
-layout(set = 1, binding = 0) uniform Influence {
+layout(push_constant) uniform Influence {
     vec3 position;
     float intensity;
     vec3 color;

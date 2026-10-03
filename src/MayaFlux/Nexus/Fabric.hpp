@@ -119,13 +119,13 @@ public:
      * evaluated against every indexed position and membership is diffed against
      * the previous commit. Entry and exit actions fire for the difference.
      *
-     * @param expanse Expanse to register. Its id is assigned here.
-     * @return Stable id assigned to the Expanse.
+     * @param expanse Expanse to register.
+     * @return The Expanse's own id, the same on every Fabric it is registered on.
      */
     uint32_t add_expanse(std::shared_ptr<Expanse> expanse);
 
     /**
-     * @brief Remove a registered Expanse. Does not fire exit actions.
+     * @brief Remove a registered Expanse, firing its exit actions for everything inside it here.
      * @param id Id assigned at registration.
      */
     void remove_expanse(uint32_t id);
@@ -263,6 +263,7 @@ public:
 
 private:
     friend class Wiring;
+    friend class StateEncoder;
 
     std::string m_name;
 
@@ -292,9 +293,9 @@ private:
     std::unordered_map<uint32_t, Registration> m_registrations;
     std::unordered_map<uint32_t, std::shared_ptr<Expanse>> m_expanses;
 
+    float m_cell_size;
     uint32_t m_fabric_id { 0 };
     uint32_t m_next_id { 1 };
-    uint32_t m_next_expanse_id { 1 };
 
     std::unordered_map<std::string, std::shared_ptr<Emitter::InfluenceFn>> m_influence_fns;
     std::unordered_map<std::string, std::shared_ptr<Sensor::PerceptionFn>> m_perception_fns;

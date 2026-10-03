@@ -4,29 +4,101 @@
 
 namespace MayaFlux::Nexus {
 
+uint32_t Expanse::allocate_id()
+{
+    static std::atomic<uint32_t> next { 1 };
+    return next.fetch_add(1, std::memory_order_relaxed);
+}
+
+void Expanse::evict(uint32_t fabric_id)
+{
+    const auto it = m_occupants_by_fabric.find(fabric_id);
+    if (it == m_occupants_by_fabric.end()) {
+        return;
+    }
+
+    const auto leaving = std::move(it->second);
+    m_occupants_by_fabric.erase(it);
+
+    for (uint32_t eid : leaving) {
+        if (m_on_exit)
+            m_on_exit(eid);
+
+        const CrossingContext ctx { .fabric_id = fabric_id, .entity = eid };
+        for (const auto& [handle, action] : m_exits)
+            action(ctx);
+    }
+}
+
 void Expanse::evaluate(uint32_t fabric_id,
     std::span<const std::pair<uint32_t, glm::vec3>> snapshot)
 {
+    begin_evaluate();
+
     auto& prev = m_occupants_by_fabric[fabric_id];
 
     std::unordered_set<uint32_t> inside;
     for (const auto& [eid, pos] : snapshot) {
-        if (m_contains && m_contains(pos))
+        if (contains(pos))
             inside.insert(eid);
     }
 
-    if (m_on_enter) {
-        for (uint32_t eid : inside) {
-            if (!prev.contains(eid))
-                m_on_enter(eid);
+    if (!m_perceptions.empty()) {
+        const auto [center, radius] = reach();
+
+        std::vector<Kinesis::QueryResult> occupants;
+        occupants.reserve(inside.size());
+        for (const auto& [eid, pos] : snapshot) {
+            if (inside.contains(eid)) {
+                const glm::vec3 offset = pos - center;
+                occupants.push_back({ .id = eid, .distance_sq = glm::dot(offset, offset) });
+            }
         }
+
+        const PerceptionContext pctx { .position = center, .radius = radius, .spatial_results = occupants };
+        for (const auto& [handle, perception] : m_perceptions)
+            perception(pctx);
     }
 
-    if (m_on_exit) {
-        for (uint32_t eid : prev) {
-            if (!inside.contains(eid))
-                m_on_exit(eid);
+    for (const auto& [eid, pos] : snapshot) {
+        if (!inside.contains(eid))
+            continue;
+
+        const CrossingContext ctx { .fabric_id = fabric_id, .entity = eid, .position = pos };
+
+        if (!prev.contains(eid)) {
+            if (m_on_enter)
+                m_on_enter(eid);
+            for (const auto& [handle, action] : m_entries)
+                action(ctx);
         }
+
+        for (const auto& [handle, action] : m_insides)
+            action(ctx);
+    }
+
+    std::unordered_map<uint32_t, glm::vec3> where;
+    if (!m_exits.empty() && !prev.empty()) {
+        where.reserve(snapshot.size());
+        for (const auto& [eid, pos] : snapshot)
+            where.emplace(eid, pos);
+    }
+
+    for (uint32_t eid : prev) {
+        if (inside.contains(eid))
+            continue;
+
+        if (m_on_exit)
+            m_on_exit(eid);
+
+        if (m_exits.empty())
+            continue;
+
+        CrossingContext ctx { .fabric_id = fabric_id, .entity = eid };
+        if (const auto it = where.find(eid); it != where.end())
+            ctx.position = it->second;
+        for (const auto& [handle, action] : m_exits)
+            action(ctx);
     }
 
     if (inside.empty()) {

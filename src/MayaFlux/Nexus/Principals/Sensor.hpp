@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MayaFlux/Nexus/Pheme/PerceptionContext.hpp"
+#include "MayaFlux/Nexus/Pheme/Perception.hpp"
 
 namespace MayaFlux::Nexus {
 
@@ -8,7 +8,7 @@ namespace MayaFlux::Nexus {
  * @class Sensor
  * @brief Object that reacts to nearby entities when committed.
  *
- * Constructed with only a perception function and a query radius. Position
+ * Constructed with a query radius and, optionally, a perception function. Position
  * is optional: call @c set_position before registering with @c Fabric if
  * spatial queries are required. A Sensor without a position receives an
  * empty @c spatial_results span on each commit.
@@ -19,6 +19,17 @@ namespace MayaFlux::Nexus {
 class MAYAFLUX_API Sensor {
 public:
     using PerceptionFn = std::function<void(const PerceptionContext&)>;
+
+    /**
+     * @brief Construct with only a query radius, for a Sensor whose behaviour comes
+     *        from a typed perception.
+     * @param query_radius Radius passed to the spatial index on each commit.
+     *                     Ignored if no position has been set.
+     */
+    explicit Sensor(float query_radius = 1.0F)
+        : m_query_radius(query_radius)
+    {
+    }
 
     /**
      * @brief Construct with a query radius and a perception function.
@@ -87,11 +98,34 @@ public:
     [[nodiscard]] uint32_t id() const { return m_id; }
 
     /**
+     * @brief Set the one source of a perception of any type.
+     * @tparam T Type the source returns; whatever the target takes.
+     * @param source Reads the value, using the perception context.
+     * @param target Takes the value and decides where it lands.
+     *
+     * A Sensor has a single source: setting another replaces it. Runs on every
+     * invoke before the perception function. Not part of encoded state.
+     */
+    template <typename T>
+    void set_perception(typename Perception<T>::Source source, typename Perception<T>::Target target)
+    {
+        auto perception = std::make_shared<Perception<T>>(std::move(source));
+        perception->add_target(std::move(target));
+        m_perception = [perception](const PerceptionContext& ctx) { perception->invoke(ctx); };
+    }
+
+    /** @brief Remove the source set with set_perception(). */
+    void clear_perception() { m_perception = nullptr; }
+
+    /**
      * @brief Invoke the perception function with the supplied context.
      * @param ctx Populated context for this commit.
      */
     void invoke(const PerceptionContext& ctx) const
     {
+        if (m_perception) {
+            m_perception(ctx);
+        }
         if (m_fn) {
             m_fn(ctx);
         }
@@ -102,6 +136,7 @@ private:
     float m_query_radius;
     std::string m_fn_name;
     PerceptionFn m_fn;
+    PerceptionFn m_perception;
     uint32_t m_id { 0 };
 
     friend class Fabric;

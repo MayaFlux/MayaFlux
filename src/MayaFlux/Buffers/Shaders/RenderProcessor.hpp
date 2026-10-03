@@ -218,6 +218,18 @@ public:
     /** @brief Get current dynamic view transform source, if set */
     const std::function<Kinesis::ViewTransform()>& get_view_transform_source() const { return m_view_transform_source; }
 
+    /** @brief Set a static geometry transform. */
+    void set_geometry_transform(const glm::mat4& transform);
+
+    /** @brief Set a geometry transform source evaluated on each render tick. */
+    void set_geometry_transform_source(std::function<glm::mat4()> fn);
+
+    /** @brief Get the static geometry transform, if set. */
+    const std::optional<glm::mat4>& get_geometry_transform() const { return m_geometry_transform; }
+
+    /** @brief Get the geometry transform source, if set. */
+    const std::function<glm::mat4()>& get_geometry_transform_source() const { return m_geometry_transform_source; }
+
     /**
      * @brief Set number of instances for the next draw call.
      * @param count Instance count. 1 is the default (non-instanced draw).
@@ -281,7 +293,7 @@ protected:
     /**
      * @brief Prepare this buffer's geometry and record its draw commands.
      *
-     * Publishes the view transform and advances triangulation before recording.
+     * Publishes the render transform and advances triangulation before recording.
      * Valid empty geometry still records a secondary command buffer so normal
      * processing can present an empty frame. Presentation refreshes call
      * record_draw() directly to reuse the prepared geometry.
@@ -294,20 +306,20 @@ protected:
     void cleanup() override;
 
     /**
-     * @brief Resolve the active view transform and write it to the UBO.
-     * @return The transform just published.
+     * @brief Resolve the view and geometry transforms and write them to the UBO.
+     * @return The render transform just published.
      *
      * Host-side only, no command recording. Runs before the triangulation
      * dispatch so that reads this frame's camera. Prefer pushing the returned
      * value into a dispatch over binding the UBO, which has no
      * per-frame-in-flight copies.
      */
-    const Kinesis::ViewTransform& publish_view_transform();
+    const Kinesis::RenderTransform& publish_render_transform();
 
-    /** @brief Transform published for this frame by publish_view_transform(). */
-    [[nodiscard]] const Kinesis::ViewTransform& published_view_transform() const
+    /** @brief Transform published for this frame by publish_render_transform(). */
+    [[nodiscard]] const Kinesis::RenderTransform& published_render_transform() const
     {
-        return m_published_view_transform;
+        return m_published_render_transform;
     }
 
     /** @brief Resolve the active scissor against a live framebuffer size. Full framebuffer when unset. */
@@ -330,7 +342,7 @@ private:
     Portal::Graphics::ShaderID m_tess_control_shader_id = Portal::Graphics::INVALID_SHADER;
     Portal::Graphics::ShaderID m_tess_eval_shader_id = Portal::Graphics::INVALID_SHADER;
     Portal::Graphics::ShaderID m_fragment_shader_id = Portal::Graphics::INVALID_SHADER;
-    Portal::Graphics::DescriptorSetID m_view_transform_descriptor_set_id {
+    Portal::Graphics::DescriptorSetID m_render_transform_descriptor_set_id {
         Portal::Graphics::INVALID_DESCRIPTOR_SET
     };
     std::shared_ptr<Core::Window> m_target_window;
@@ -355,7 +367,7 @@ private:
     Portal::Graphics::DepthStencilConfig m_depth_stencil;
 
     bool m_depth_enabled {};
-    std::shared_ptr<VKBuffer> m_view_transform_ubo;
+    std::shared_ptr<VKBuffer> m_render_transform_ubo;
     bool m_view_transform_active {};
     uint32_t m_first_vertex { 0 };
     uint32_t m_vertex_count { 0 };
@@ -363,7 +375,9 @@ private:
 
     std::optional<Kinesis::ViewTransform> m_view_transform;
     std::function<Kinesis::ViewTransform()> m_view_transform_source;
-    Kinesis::ViewTransform m_published_view_transform {};
+    Kinesis::RenderTransform m_published_render_transform {};
+    std::optional<glm::mat4> m_geometry_transform;
+    std::function<glm::mat4()> m_geometry_transform_source;
 
     bool m_triangulate {};
     std::optional<Kinesis::Scissor> m_scissor;

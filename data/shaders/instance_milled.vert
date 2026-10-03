@@ -1,8 +1,9 @@
 #version 460
 
-layout(set = 0, binding = 0) uniform ViewTransformBlock {
+layout(set = 0, binding = 0) uniform RenderTransformBlock {
     mat4 view;
     mat4 projection;
+    mat4 geometry;
 } vt;
 
 layout(set = 0, binding = 1) readonly buffer InstanceTransforms {
@@ -23,8 +24,8 @@ layout(location = 3) out vec3 out_world_pos;
 
 void main()
 {
-    mat4 model = transforms[gl_InstanceIndex];
-    vec4 world_pos = model * vec4(in_position, 1.0);
+    mat4 instance_transform = transforms[gl_InstanceIndex];
+    vec4 world_pos = vt.geometry * (instance_transform * vec4(in_position, 1.0));
     gl_Position = vt.projection * vt.view * world_pos;
     out_color = in_color;
     out_thickness = in_thickness;

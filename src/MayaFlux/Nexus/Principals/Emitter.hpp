@@ -1,6 +1,7 @@
 #pragma once
 
-#include "MayaFlux/Nexus/Pheme/InfluenceContext.hpp"
+#include "MayaFlux/Nexus/Pheme/Attachment.hpp"
+#include "MayaFlux/Nexus/Pheme/Influence.hpp"
 #include "MayaFlux/Nexus/Pheme/Sinks.hpp"
 
 namespace MayaFlux::Buffers {
@@ -13,17 +14,30 @@ namespace MayaFlux::Nexus {
  * @class Emitter
  * @brief Object that acts on existing MayaFlux objects when committed.
  *
- * Constructed with only an influence function. Position is optional: call
+ * Constructed with an optional influence function. Position is optional: call
  * @c set_position before registering with @c Fabric if spatial indexing is
  * required. Entities without a position are committed normally but are not
  * inserted into the spatial index.
  *
  * The id is assigned by @c Fabric::wire and is stable for the object's
  * lifetime. It is zero until the object has been registered.
+ *
+ * RenderConfig takes a designated initializer.
+ *
+ * @code
+ * emitter->set_influence<InfluenceBlock>(InfluenceBlock::from, bind_influence_block(proc));
+ * emitter->render(mgr, { .target_window = window });
+ * @endcode
  */
 class MAYAFLUX_API Emitter {
 public:
     using InfluenceFn = std::function<void(const InfluenceContext&)>;
+
+    /**
+     * @brief Construct with no function, for an Emitter whose behaviour comes
+     *        from a typed influence.
+     */
+    Emitter() = default;
 
     /**
      * @brief Construct with an influence function.
@@ -186,36 +200,54 @@ public:
     [[nodiscard]] const std::optional<float>& size() const { return m_size; }
 
     /**
-     * @brief Set the render processor to target for GPU-side influence delivery.
+     * @brief Make an existing, already rendered buffer the look of this object.
      *
-     * Creates a UBO matching the InfluenceUBO layout, registers a binding
-     * named "u_influence" at set=1 binding=0 on the target processor,
-     * and binds the UBO. On each subsequent invoke(), the context fields
-     * are packed into the UBO automatically.
+     * Works as Agent::attach does, except that an Emitter has no orientation:
+     * every render processor the buffer has is moved to the object's position
+     * and never rotated. If the object already has a position, that position is
+     * kept and becomes the offset. Replaces any previous attachment. An
+     * attachment is not part of encoded state and must be made again after
+     * decoding.
      *
-     * @param proc Target render processor. Must outlive this Emitter or
-     *             be cleared via clear_influence_target() first.
-     * @param set   Descriptor set index for the UBO binding. Default is 1.
-     * @param binding Descriptor binding index for the UBO. Default is 0.
+     * @param buf    Buffer to attach. Ignored if null.
+     * @param config Anchor vertex, offset and move behaviour.
      */
-    void set_influence_target(std::shared_ptr<Buffers::RenderProcessor> proc,
-        uint32_t set = 1, uint32_t binding = 0);
+    void attach(const std::shared_ptr<Buffers::VKBuffer>& buf, const AttachConfig& config = {});
+
+    /** @brief Release the attached buffer and reset its placement. */
+    void detach();
 
     /**
-     * @brief Disconnect from the current influence target.
+     * @brief Read the attached buffer's geometry again and move the anchor to match.
      *
-     * Unbinds the "u_influence" descriptor from the target processor
-     * and releases the UBO.
+     * The object keeps its position. Blocks for a ComputeMeshBuffer, so call it
+     * off the graphics thread.
      */
-    void clear_influence_target();
+    void recenter();
+
+    /** @brief True while a buffer is attached. */
+    [[nodiscard]] bool attached() const { return m_attachment.has_value(); }
 
     /**
-     * @brief Return the current influence target, if set.
+     * @brief Set the one target of an influence of any type.
+     * @tparam T Type the producer returns; whatever the target takes.
+     * @param producer Builds the value from the influence context.
+     * @param target   Takes the value and decides what it affects.
+     *
+     * An Emitter has a single target: setting another replaces it. Runs on
+     * every invoke after the influence function, independent of the render
+     * processor target. Not part of encoded state.
      */
-    [[nodiscard]] std::weak_ptr<Buffers::RenderProcessor> influence_target() const
+    template <typename T>
+    void set_influence(typename Influence<T>::Producer producer, typename Influence<T>::Target target)
     {
-        return m_influence_target;
+        auto influence = std::make_shared<Influence<T>>(std::move(producer));
+        influence->add_target(std::move(target));
+        m_influence = [influence](const InfluenceContext& ctx) { influence->invoke(ctx); };
     }
+
+    /** @brief Remove the target set with set_influence(). */
+    void clear_influence() { m_influence = nullptr; }
 
     /**
      * @brief Invoke the influence function with the supplied context.
@@ -228,8 +260,11 @@ public:
         }
         dispatch_audio_sinks(m_audio_sinks, ctx);
         dispatch_render_sinks(m_render_sinks, ctx);
-        if (m_influence_ubo)
-            upload_influence_ubo(ctx);
+        if (m_attachment)
+            apply_attachment(*m_attachment, ctx);
+        if (m_influence) {
+            m_influence(ctx);
+        }
     }
 
 private:
@@ -239,17 +274,16 @@ private:
     float m_intensity { 1.0F };
     float m_radius { 1.0F };
 
-    std::shared_ptr<Buffers::RenderProcessor> m_influence_target;
-    std::shared_ptr<Buffers::VKBuffer> m_influence_ubo;
-
     InfluenceFn m_fn;
     uint32_t m_id {};
     std::string m_fn_name;
 
     mutable std::vector<AudioSink> m_audio_sinks;
     mutable std::vector<RenderSink> m_render_sinks;
+    InfluenceFn m_influence;
+    mutable std::optional<Attachment> m_attachment;
 
-    void upload_influence_ubo(const InfluenceContext& ctx) const;
+    void follow_attachment();
 
     friend class Fabric;
 };

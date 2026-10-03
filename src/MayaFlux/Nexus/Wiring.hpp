@@ -25,6 +25,7 @@ class Event;
 namespace MayaFlux::Nexus {
 
 class Fabric;
+class StateEncoder;
 
 /**
  * @class Wiring
@@ -236,6 +237,7 @@ public:
 
 private:
     friend class Fabric;
+    friend class StateEncoder;
 
     explicit Wiring(Fabric& fabric, uint32_t entity_id)
         : m_fabric(fabric)

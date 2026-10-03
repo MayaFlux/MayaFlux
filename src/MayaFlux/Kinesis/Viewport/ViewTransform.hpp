@@ -28,6 +28,18 @@ static_assert(sizeof(ViewTransform) == 128,
     "ViewTransform must be exactly 128 bytes (Vulkan minimum push constant size)");
 
 /**
+ * @brief Packed view, projection, and geometry matrices for rendering.
+ *
+ * Geometry acts first; all matrices default to identity.
+ */
+struct RenderTransform {
+    ViewTransform view_transform {};
+    glm::mat4 geometry { 1.0F };
+};
+
+static_assert(sizeof(RenderTransform) == 3 * sizeof(glm::mat4));
+
+/**
  * @brief Construct view matrix from eye position, target, and up vector
  * @param eye Observer position in source space
  * @param target Point the observer is looking at

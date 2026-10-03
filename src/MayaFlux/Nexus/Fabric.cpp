@@ -14,6 +14,7 @@ Fabric::Fabric(
     : m_scheduler(scheduler)
     , m_event_manager(event_manager)
     , m_index(Kinesis::make_spatial_index_3d(cell_size))
+    , m_cell_size(cell_size)
 {
 }
 
@@ -99,15 +100,20 @@ void Fabric::remove(uint32_t id)
 
 uint32_t Fabric::add_expanse(std::shared_ptr<Expanse> expanse)
 {
-    const uint32_t id = m_next_id++;
-    expanse->m_id = id;
+    const uint32_t id = expanse->id();
     m_expanses.try_emplace(id, std::move(expanse));
     return id;
 }
 
 void Fabric::remove_expanse(uint32_t id)
 {
-    m_expanses.erase(id);
+    const auto it = m_expanses.find(id);
+    if (it == m_expanses.end()) {
+        return;
+    }
+
+    it->second->evict(m_fabric_id);
+    m_expanses.erase(it);
 }
 
 std::vector<uint32_t> Fabric::all_ids() const
@@ -176,20 +182,37 @@ std::shared_ptr<Agent> Fabric::get_agent(uint32_t id) const
 void Fabric::commit()
 {
     for (auto& [id, reg] : m_registrations) {
-        if (reg.spatial_id.has_value()) {
-            std::visit([&](const auto& ptr) {
-                if (ptr->m_position.has_value()) {
-                    m_index->update(*reg.spatial_id, *ptr->m_position);
-                }
-            },
-                reg.member);
-        }
+        std::visit([&](const auto& ptr) {
+            if (!ptr->m_position.has_value()) {
+                return;
+            }
+            if (reg.spatial_id.has_value()) {
+                m_index->update(*reg.spatial_id, *ptr->m_position);
+            } else {
+                reg.spatial_id = m_index->insert(*ptr->m_position);
+            }
+        },
+            reg.member);
     }
 
     m_index->publish();
 
     if (!m_expanses.empty()) {
-        const auto snapshot = m_index->all();
+        std::unordered_map<uint32_t, uint32_t> entity_of;
+        entity_of.reserve(m_registrations.size());
+        for (const auto& [id, reg] : m_registrations) {
+            if (reg.spatial_id.has_value()) {
+                entity_of.emplace(*reg.spatial_id, id);
+            }
+        }
+
+        auto snapshot = m_index->all();
+        for (auto& [spatial_id, position] : snapshot) {
+            if (const auto it = entity_of.find(spatial_id); it != entity_of.end()) {
+                spatial_id = it->second;
+            }
+        }
+
         for (auto& [xid, expanse] : m_expanses)
             expanse->evaluate(m_fabric_id, snapshot);
     }
@@ -258,6 +281,7 @@ void Fabric::fire(const Registration& reg) const
         using T = std::decay_t<decltype(*ptr)>;
 
         if constexpr (std::is_same_v<T, Emitter>) {
+            ptr->follow_attachment();
             InfluenceContext ctx;
             if (ptr->m_position.has_value()) {
                 ctx.position = *ptr->m_position;
@@ -266,12 +290,12 @@ void Fabric::fire(const Registration& reg) const
             ctx.radius = ptr->m_radius;
             ctx.color = ptr->m_color;
             ctx.size = ptr->m_size;
-            ctx.render_proc = ptr->m_influence_target;
             ctx.cursor_pos = reg.pending_cursor;
             ptr->invoke(ctx);
 
         } else if constexpr (std::is_same_v<T, Sensor>) {
             PerceptionContext ctx;
+            ctx.radius = ptr->m_query_radius;
             if (ptr->m_position.has_value()) {
                 ctx.position = *ptr->m_position;
                 auto results = m_index->within_radius(*ptr->m_position, ptr->m_query_radius);
@@ -280,15 +304,19 @@ void Fabric::fire(const Registration& reg) const
             ptr->invoke(ctx);
 
         } else if constexpr (std::is_same_v<T, Agent>) {
+            ptr->follow_attachment();
             if (ptr->m_position.has_value()) {
                 auto results = m_index->within_radius(*ptr->m_position, ptr->m_query_radius);
                 PerceptionContext pctx;
                 pctx.position = *ptr->m_position;
+                pctx.radius = ptr->m_query_radius;
+                pctx.orientation = ptr->m_orientation;
                 pctx.spatial_results = std::span(results);
                 ptr->invoke_perception(pctx);
 
                 InfluenceContext ictx;
                 ictx.position = *ptr->m_position;
+                ictx.orientation = ptr->m_orientation;
                 ictx.intensity = ptr->m_intensity;
                 ictx.radius = ptr->m_radius;
                 ictx.color = ptr->m_color;
@@ -296,8 +324,12 @@ void Fabric::fire(const Registration& reg) const
                 ictx.cursor_pos = reg.pending_cursor;
                 ptr->invoke_influence(ictx);
             } else {
-                ptr->invoke_perception(PerceptionContext {});
+                PerceptionContext pctx;
+                pctx.radius = ptr->m_query_radius;
+                pctx.orientation = ptr->m_orientation;
+                ptr->invoke_perception(pctx);
                 InfluenceContext ictx;
+                ictx.orientation = ptr->m_orientation;
                 ictx.intensity = ptr->m_intensity;
                 ictx.radius = ptr->m_radius;
                 ictx.color = ptr->m_color;

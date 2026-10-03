@@ -156,13 +156,14 @@ public:
     void invoke_perception(const PerceptionContext& ctx) override;
 
     /**
-     * @brief Influence: run the user influence callable, then push the current
-     *        view to every view target.
+     * @brief Influence: push the current view to every view target, then run
+     *        the inherited influence path.
      *
-     * Fires the inherited influence callable with @p ctx and dispatches the
-     * Locus's audio and render sinks, then sets the stored ViewTransform on
-     * each render processor in view_targets(). Everything under this Locus's
-     * influence is seen from its viewpoint.
+     * Sets the stored ViewTransform on each render processor in
+     * view_targets(), then fires the inherited influence callable with @p ctx
+     * and dispatches the Locus's audio and render sinks and its attachment.
+     * Everything under this Locus's influence is seen from its viewpoint, and an
+     * attached buffer that is also a view target is placed over the fresh view.
      *
      * @param ctx Influence context built by Fabric from the Locus's state.
      */
