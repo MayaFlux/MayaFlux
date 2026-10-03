@@ -4,7 +4,7 @@ layout(location = 0) in vec3 in_color;
 layout(location = 2) in vec2 in_uv;
 layout(location = 3) in vec3 in_world_pos;
 
-layout(set = 1, binding = 0) uniform Influence {
+layout(push_constant) uniform Influence {
     vec3 position;
     float intensity;
     vec3 color;
