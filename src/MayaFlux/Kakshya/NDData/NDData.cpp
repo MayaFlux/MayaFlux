@@ -29,6 +29,8 @@ size_t gpu_data_format_bytes(GpuDataFormat fmt) noexcept
         return 24;
     case GpuDataFormat::VEC4_F64:
         return 32;
+    case GpuDataFormat::MAT4_F32:
+        return 64;
     default:
         return 0;
     }

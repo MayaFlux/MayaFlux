@@ -38,6 +38,8 @@ enum class GpuDataFormat : uint8_t {
 
     UINT8, // uint8_t  — R8 / RGBA8 texel data
     UINT16, // uint16_t — R16F raw half-float storage, packed formats
+
+    MAT4_F32, // glm::mat4 (column-major) — not a sampled image format
 };
 
 /**
