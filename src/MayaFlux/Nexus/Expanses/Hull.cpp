@@ -5,9 +5,13 @@
 
 namespace MayaFlux::Nexus {
 
-Hull::Hull(std::shared_ptr<Buffers::VKBuffer> buf, CrossingFn on_enter, CrossingFn on_exit)
+Hull::Hull(std::shared_ptr<Buffers::VKBuffer> buf,
+    CrossingFn on_enter,
+    CrossingFn on_exit,
+    std::optional<uint32_t> collection)
     : Expanse(ContainsFn {}, std::move(on_enter), std::move(on_exit))
     , m_buf(std::move(buf))
+    , m_collection(collection)
 {
     if (!m_buf) {
         MF_ERROR(Journal::Component::Nexus, Journal::Context::Init,
@@ -15,7 +19,7 @@ Hull::Hull(std::shared_ptr<Buffers::VKBuffer> buf, CrossingFn on_enter, Crossing
         return;
     }
 
-    m_local = read_bounds(m_buf);
+    m_local = read_bounds(m_buf, m_collection);
     if (!m_local) {
         MF_WARN(Journal::Component::Nexus, Journal::Context::Init,
             "Hull contains nothing: no geometry could be read from the buffer");
@@ -64,7 +68,7 @@ void Hull::refit()
         return;
     }
 
-    if (const auto bounds = read_bounds(m_buf)) {
+    if (const auto bounds = read_bounds(m_buf, m_collection)) {
         m_local = bounds;
     } else {
         MF_WARN(Journal::Component::Nexus, Journal::Context::Runtime,
