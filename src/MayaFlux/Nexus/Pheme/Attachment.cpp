@@ -100,32 +100,25 @@ namespace {
 
     void place(Attachment& attachment, const std::shared_ptr<Buffers::RenderProcessor>& proc)
     {
-        const bool known = std::ranges::find(attachment.followed, proc) != attachment.followed.end();
-        if (known && !proc->get_view_transform()) {
+        const bool known = std::ranges::any_of(attachment.followed,
+            [&proc](const auto& entry) { return entry.first == proc; });
+        if (known) {
             return;
         }
 
-        std::function<Kinesis::ViewTransform()> base = proc->get_view_transform_source();
+        std::function<glm::mat4()> base = proc->get_geometry_transform_source();
         if (!base) {
-            if (const auto& vt = proc->get_view_transform()) {
-                base = [v = *vt] { return v; };
+            if (const auto& fixed = proc->get_geometry_transform()) {
+                base = [m = *fixed] { return m; };
             }
         }
 
-        const bool scene = static_cast<bool>(base);
+        proc->set_geometry_transform_source(
+            [base, transform = attachment.transform] {
+                return base ? *transform * base() : *transform;
+            });
 
-        proc->set_view_transform_source(
-            [base = std::move(base), transform = attachment.transform] {
-                Kinesis::ViewTransform vt = base ? base() : Kinesis::ViewTransform {};
-                vt.view = vt.view * *transform;
-                return vt;
-            },
-            scene,
-            scene ? Portal::Graphics::CullMode::BACK : Portal::Graphics::CullMode::NONE);
-
-        if (!known) {
-            attachment.followed.push_back(proc);
-        }
+        attachment.followed.emplace_back(proc, std::move(base));
     }
 
 }
@@ -214,6 +207,10 @@ void apply_attachment(Attachment& attachment, const InfluenceContext& ctx)
 
 void release_attachment(Attachment& attachment)
 {
+    for (auto& [proc, base] : attachment.followed) {
+        proc->set_geometry_transform_source(std::move(base));
+    }
+    attachment.followed.clear();
     *attachment.transform = glm::mat4(1.0F);
 }
 

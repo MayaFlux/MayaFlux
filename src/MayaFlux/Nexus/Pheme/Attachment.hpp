@@ -45,15 +45,16 @@ struct AttachConfig {
  * @struct Attachment
  * @brief State of one Agent attached to an existing buffer.
  *
- * The transform is applied to every render processor the buffer has, by
- * wrapping the view each processor already uses. Nothing is registered with
- * a manager and nothing is written to the buffer.
+ * The transform is applied to every render processor the buffer has, outside
+ * whatever geometry transform that processor already had, which is kept
+ * beside it and restored on release. Nothing is registered with a manager and
+ * nothing is written to the buffer.
  */
 struct Attachment {
     std::shared_ptr<Buffers::VKBuffer> buf;
     AttachConfig config;
     std::shared_ptr<glm::mat4> transform;
-    std::vector<std::shared_ptr<Buffers::RenderProcessor>> followed;
+    std::vector<std::pair<std::shared_ptr<Buffers::RenderProcessor>, std::function<glm::mat4()>>> followed;
     glm::vec3 anchor {};
     glm::vec3 applied {};
 };
@@ -105,7 +106,7 @@ MAYAFLUX_API void apply_attachment(
     const InfluenceContext& ctx);
 
 /**
- * @brief Reset the buffer's placement to identity.
+ * @brief Give every placed render processor back the geometry transform it had.
  * @param attachment Attachment to release.
  */
 MAYAFLUX_API void release_attachment(Attachment& attachment);
