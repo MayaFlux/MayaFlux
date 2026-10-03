@@ -2,6 +2,7 @@
 
 #include "MayaFlux/Kinesis/Spatial/Bounds.hpp"
 #include "MayaFlux/Nexus/Pheme/Influence.hpp"
+#include "MayaFlux/Nexus/Pheme/Perception.hpp"
 
 namespace MayaFlux::Nexus {
 
@@ -40,8 +41,13 @@ struct CrossingContext {
  * of typed actions added with add_entry, add_exit and add_inside. A typed
  * action builds a value from the CrossingContext and hands it to its targets,
  * so the targets in FieldTargets.hpp work here as they do for an Agent. What
- * crossing means computationally is the action's decision. Typed actions are
- * runtime objects and are not part of encoded state.
+ * crossing means computationally is the action's decision.
+ *
+ * An Expanse also perceives its own contents, as a Sensor perceives its
+ * neighbourhood. add_perception sources receive a PerceptionContext centred on
+ * the region, with the occupants as the spatial results, once per evaluate and
+ * before any crossing action. Typed actions and perceptions are runtime objects
+ * and are not part of encoded state.
  *
  * The id is assigned by Fabric on registration.
  */
@@ -240,6 +246,36 @@ public:
     }
 
     /**
+     * @brief Add a perception of any type over the entities inside, with as many targets as are wanted.
+     * @tparam T Type the source returns; whatever the targets take.
+     * @param source Reads the value from a PerceptionContext whose position and radius
+     *               are the region's centre and reach, and whose spatial results are
+     *               the occupants: entity id and squared distance from the centre.
+     * @return The perception, to add its targets with Perception::add_target.
+     *
+     * Runs once per evaluate for each Fabric, before the crossing actions.
+     */
+    template <typename T>
+    std::shared_ptr<Perception<T>> add_perception(typename Perception<T>::Source source)
+    {
+        auto perception = std::make_shared<Perception<T>>(std::move(source));
+        m_perceptions.emplace_back(perception,
+            [perception](const PerceptionContext& ctx) { perception->invoke(ctx); });
+        return perception;
+    }
+
+    /** @brief Stop a perception added with add_perception(). */
+    template <typename T>
+    void remove_perception(const std::shared_ptr<Perception<T>>& perception)
+    {
+        std::erase_if(m_perceptions,
+            [&perception](const auto& entry) { return entry.first == perception; });
+    }
+
+    /** @brief Stop every perception added with add_perception(). */
+    void clear_perceptions() { m_perceptions.clear(); }
+
+    /**
      * @brief Evaluate a spatial snapshot from one Fabric against this Expanse.
      *
      * Tests each position in @p snapshot with contains(), diffs the result
@@ -249,7 +285,7 @@ public:
      * occupant state.
      *
      * @param fabric_id  Stable id of the calling Fabric.
-     * @param snapshot   All indexed positions from that Fabric's spatial index.
+     * @param snapshot   Entity id and position of every positioned entity in that Fabric.
      */
     void evaluate(uint32_t fabric_id,
         std::span<const std::pair<uint32_t, glm::vec3>> snapshot);
@@ -258,9 +294,24 @@ protected:
     /** @brief Called at the start of every evaluate(), before any position is tested. */
     virtual void begin_evaluate() { }
 
+    /**
+     * @brief Where the region is centred and how far it reaches, for perceptions.
+     *
+     * The centre and the half diagonal of the box if there is one, else the
+     * origin and zero. A derived Expanse whose region is not the box overrides it.
+     */
+    [[nodiscard]] virtual std::pair<glm::vec3, float> reach() const
+    {
+        if (m_bounds) {
+            return { m_bounds->center(), glm::length(m_bounds->half_extent()) };
+        }
+        return { glm::vec3(0.0F), 0.0F };
+    }
+
 private:
     using Action = std::function<void(const CrossingContext&)>;
     using Actions = std::vector<std::pair<std::shared_ptr<void>, Action>>;
+    using PerceptionFn = std::function<void(const PerceptionContext&)>;
 
     template <typename T>
     static std::shared_ptr<Influence<T, CrossingContext>> add_action(
@@ -284,6 +335,7 @@ private:
     Actions m_entries;
     Actions m_exits;
     Actions m_insides;
+    std::vector<std::pair<std::shared_ptr<void>, PerceptionFn>> m_perceptions;
 
     uint32_t m_id { 0 };
     std::unordered_map<uint32_t, std::unordered_set<uint32_t>> m_occupants_by_fabric;

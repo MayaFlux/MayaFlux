@@ -43,6 +43,10 @@ public:
      */
     void refit();
 
+protected:
+    /** @brief The centre of the bounds as drawn, and the distance to their farthest corner. */
+    [[nodiscard]] std::pair<glm::vec3, float> reach() const override;
+
 private:
     std::shared_ptr<Buffers::VKBuffer> m_buf;
     std::optional<Kinesis::AABB3D> m_local;

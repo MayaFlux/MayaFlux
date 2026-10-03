@@ -37,6 +37,27 @@ bool Hull::contains(const glm::vec3& p) const
     return m_local->contains(glm::vec3(glm::inverse(drawn) * glm::vec4(p, 1.0F)));
 }
 
+std::pair<glm::vec3, float> Hull::reach() const
+{
+    if (!m_buf || !m_local) {
+        return Expanse::reach();
+    }
+
+    const glm::mat4 drawn = read_placement(m_buf);
+    const glm::vec3 center = glm::vec3(drawn * glm::vec4(m_local->center(), 1.0F));
+
+    float radius = 0.0F;
+    for (int corner = 0; corner < 8; ++corner) {
+        const glm::vec3 local {
+            (corner & 1) != 0 ? m_local->max.x : m_local->min.x,
+            (corner & 2) != 0 ? m_local->max.y : m_local->min.y,
+            (corner & 4) != 0 ? m_local->max.z : m_local->min.z,
+        };
+        radius = std::max(radius, glm::length(glm::vec3(drawn * glm::vec4(local, 1.0F)) - center));
+    }
+    return { center, radius };
+}
+
 void Hull::refit()
 {
     if (!m_buf) {

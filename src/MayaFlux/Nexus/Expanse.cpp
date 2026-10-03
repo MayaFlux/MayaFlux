@@ -17,6 +17,23 @@ void Expanse::evaluate(uint32_t fabric_id,
             inside.insert(eid);
     }
 
+    if (!m_perceptions.empty()) {
+        const auto [center, radius] = reach();
+
+        std::vector<Kinesis::QueryResult> occupants;
+        occupants.reserve(inside.size());
+        for (const auto& [eid, pos] : snapshot) {
+            if (inside.contains(eid)) {
+                const glm::vec3 offset = pos - center;
+                occupants.push_back({ .id = eid, .distance_sq = glm::dot(offset, offset) });
+            }
+        }
+
+        const PerceptionContext pctx { .position = center, .radius = radius, .spatial_results = occupants };
+        for (const auto& [handle, perception] : m_perceptions)
+            perception(pctx);
+    }
+
     for (const auto& [eid, pos] : snapshot) {
         if (!inside.contains(eid))
             continue;
