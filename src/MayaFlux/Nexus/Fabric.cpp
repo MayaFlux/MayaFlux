@@ -269,12 +269,12 @@ void Fabric::fire(const Registration& reg) const
             ctx.radius = ptr->m_radius;
             ctx.color = ptr->m_color;
             ctx.size = ptr->m_size;
-            ctx.render_proc = ptr->m_influence_target;
             ctx.cursor_pos = reg.pending_cursor;
             ptr->invoke(ctx);
 
         } else if constexpr (std::is_same_v<T, Sensor>) {
             PerceptionContext ctx;
+            ctx.radius = ptr->m_query_radius;
             if (ptr->m_position.has_value()) {
                 ctx.position = *ptr->m_position;
                 auto results = m_index->within_radius(*ptr->m_position, ptr->m_query_radius);
@@ -288,6 +288,8 @@ void Fabric::fire(const Registration& reg) const
                 auto results = m_index->within_radius(*ptr->m_position, ptr->m_query_radius);
                 PerceptionContext pctx;
                 pctx.position = *ptr->m_position;
+                pctx.radius = ptr->m_query_radius;
+                pctx.orientation = ptr->m_orientation;
                 pctx.spatial_results = std::span(results);
                 ptr->invoke_perception(pctx);
 
@@ -301,7 +303,10 @@ void Fabric::fire(const Registration& reg) const
                 ictx.cursor_pos = reg.pending_cursor;
                 ptr->invoke_influence(ictx);
             } else {
-                ptr->invoke_perception(PerceptionContext {});
+                PerceptionContext pctx;
+                pctx.radius = ptr->m_query_radius;
+                pctx.orientation = ptr->m_orientation;
+                ptr->invoke_perception(pctx);
                 InfluenceContext ictx;
                 ictx.orientation = ptr->m_orientation;
                 ictx.intensity = ptr->m_intensity;

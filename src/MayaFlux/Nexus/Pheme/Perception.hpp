@@ -1,8 +1,30 @@
 #pragma once
 
-#include "PerceptionContext.hpp"
+#include "MayaFlux/Kinesis/Spatial/SpatialIndex.hpp"
+
+#include <glm/gtc/quaternion.hpp>
 
 namespace MayaFlux::Nexus {
+
+/**
+ * @struct PerceptionContext
+ * @brief Data passed to a Sensor or Agent perception function on each commit.
+ *
+ * @c spatial_results contains the entities within @c radius of @c position
+ * at the moment of the last published snapshot. Results hold entity ids and
+ * squared distances as returned by @c SpatialIndex::within_radius.
+ *
+ * Fields marked @note future are reserved for later domain expansions.
+ */
+struct PerceptionContext {
+    glm::vec3 position {};
+    float radius { 1.0F }; ///< Query radius the spatial results were gathered with.
+    std::optional<glm::quat> orientation; ///< Optional orientation of the perceiver. Local +Z is its forward direction.
+    std::span<const Kinesis::QueryResult> spatial_results;
+
+    // @note future: EnergyAnalysis audio_energy {};
+    // @note future: std::span<const double> audio_snapshot {};
+};
 
 /**
  * @class Perception

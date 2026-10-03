@@ -1,7 +1,6 @@
 #pragma once
 
 #include "MayaFlux/Nexus/Pheme/Influence.hpp"
-#include "MayaFlux/Nexus/Pheme/InfluenceContext.hpp"
 #include "MayaFlux/Nexus/Pheme/Sinks.hpp"
 
 namespace MayaFlux::Buffers {

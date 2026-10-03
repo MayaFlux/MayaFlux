@@ -1,7 +1,6 @@
 #pragma once
 
 #include "MayaFlux/Nexus/Pheme/Perception.hpp"
-#include "MayaFlux/Nexus/Pheme/PerceptionContext.hpp"
 
 namespace MayaFlux::Nexus {
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "InfluenceContext.hpp"
+#include "Influence.hpp"
 
 namespace MayaFlux::Buffers {
 class VKBuffer;

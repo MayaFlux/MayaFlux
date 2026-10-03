@@ -2,9 +2,7 @@
 
 #include "MayaFlux/Nexus/Pheme/Attachment.hpp"
 #include "MayaFlux/Nexus/Pheme/Influence.hpp"
-#include "MayaFlux/Nexus/Pheme/InfluenceContext.hpp"
 #include "MayaFlux/Nexus/Pheme/Perception.hpp"
-#include "MayaFlux/Nexus/Pheme/PerceptionContext.hpp"
 
 #include "MayaFlux/Nexus/Pheme/Sinks.hpp"
 
