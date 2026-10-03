@@ -25,6 +25,13 @@ namespace MayaFlux::Nexus {
  * function. Both receive contexts populated from the same spatial snapshot.
  *
  * The id is assigned by @c Fabric::wire and is stable for the object's lifetime.
+ *
+ * RenderConfig and AttachConfig take designated initializers.
+ *
+ * @code
+ * agent->attach(buf, { .on_move = AttachConfig::OnMove::Carry });
+ * agent->render(mgr, { .target_window = window });
+ * @endcode
  */
 class MAYAFLUX_API Agent {
 public:

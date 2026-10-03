@@ -160,4 +160,17 @@ template <typename T, typename Receiver>
     };
 }
 
+/**
+ * @brief Target that pushes an InfluenceBlock to a render processor for the library's lit shaders.
+ * @param target A render processor, raw pointer or shared_ptr, retained by the target.
+ * @param offset Byte offset of the block when the shader keeps push constants ahead of it.
+ *
+ * Pairs with InfluenceBlock::from as the producer.
+ */
+template <typename Receiver>
+[[nodiscard]] Influence<InfluenceBlock>::Target bind_influence_block(const Receiver& target, size_t offset = 0)
+{
+    return bind_push_constants<InfluenceBlock>(target, offset);
+}
+
 } // namespace MayaFlux::Nexus

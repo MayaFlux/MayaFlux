@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Nexus/Pheme/Attachment.hpp"
 #include "MayaFlux/Nexus/Pheme/Influence.hpp"
 #include "MayaFlux/Nexus/Pheme/Sinks.hpp"
 
@@ -20,6 +21,13 @@ namespace MayaFlux::Nexus {
  *
  * The id is assigned by @c Fabric::wire and is stable for the object's
  * lifetime. It is zero until the object has been registered.
+ *
+ * RenderConfig takes a designated initializer.
+ *
+ * @code
+ * emitter->set_influence<InfluenceBlock>(InfluenceBlock::from, bind_influence_block(proc));
+ * emitter->render(mgr, { .target_window = window });
+ * @endcode
  */
 class MAYAFLUX_API Emitter {
 public:
@@ -186,6 +194,35 @@ public:
     [[nodiscard]] const std::optional<float>& size() const { return m_size; }
 
     /**
+     * @brief Make an existing, already rendered buffer the look of this object.
+     *
+     * Works as Agent::attach does, except that an Emitter has no orientation:
+     * every render processor the buffer has is moved to the object's position
+     * and never rotated. If the object already has a position, that position is
+     * kept and becomes the offset. Replaces any previous attachment. An
+     * attachment is not part of encoded state and must be made again after
+     * decoding.
+     *
+     * @param buf    Buffer to attach. Ignored if null.
+     * @param config Anchor vertex, offset and move behaviour.
+     */
+    void attach(const std::shared_ptr<Buffers::VKBuffer>& buf, const AttachConfig& config = {});
+
+    /** @brief Release the attached buffer and reset its placement. */
+    void detach();
+
+    /**
+     * @brief Read the attached buffer's geometry again and move the anchor to match.
+     *
+     * The object keeps its position. Blocks for a ComputeMeshBuffer, so call it
+     * off the graphics thread.
+     */
+    void recenter();
+
+    /** @brief True while a buffer is attached. */
+    [[nodiscard]] bool attached() const { return m_attachment.has_value(); }
+
+    /**
      * @brief Set the one target of an influence of any type.
      * @tparam T Type the producer returns; whatever the target takes.
      * @param producer Builds the value from the influence context.
@@ -217,6 +254,8 @@ public:
         }
         dispatch_audio_sinks(m_audio_sinks, ctx);
         dispatch_render_sinks(m_render_sinks, ctx);
+        if (m_attachment)
+            apply_attachment(*m_attachment, ctx);
         if (m_influence) {
             m_influence(ctx);
         }
@@ -236,6 +275,9 @@ private:
     mutable std::vector<AudioSink> m_audio_sinks;
     mutable std::vector<RenderSink> m_render_sinks;
     InfluenceFn m_influence;
+    mutable std::optional<Attachment> m_attachment;
+
+    void follow_attachment();
 
     friend class Fabric;
 };

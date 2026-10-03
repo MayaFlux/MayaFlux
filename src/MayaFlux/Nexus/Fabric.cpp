@@ -261,6 +261,7 @@ void Fabric::fire(const Registration& reg) const
         using T = std::decay_t<decltype(*ptr)>;
 
         if constexpr (std::is_same_v<T, Emitter>) {
+            ptr->follow_attachment();
             InfluenceContext ctx;
             if (ptr->m_position.has_value()) {
                 ctx.position = *ptr->m_position;
