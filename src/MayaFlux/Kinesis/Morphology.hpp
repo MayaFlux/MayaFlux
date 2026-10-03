@@ -251,4 +251,37 @@ template <PositionCarrying T>
     return box;
 }
 
+/**
+ * @brief Axis-aligned bounding box of the positions in interleaved vertex bytes.
+ *
+ * Counterpart of the byte centroid: any stride and offset work, so readback
+ * bytes, node vertex data and MeshData go through here without a typed copy.
+ *
+ * @param  bytes  Interleaved records. A trailing partial record is ignored.
+ * @param  stride Bytes per record.
+ * @param  offset Byte offset of the vec3 position within a record.
+ * @return Tightest box, or AABB3D{zero, zero} when no whole record fits or
+ *         @p stride is too small to hold a position.
+ */
+[[nodiscard]] inline AABB3D aabb(
+    std::span<const std::byte> bytes,
+    size_t stride,
+    size_t offset = 0) noexcept
+{
+    const AABB3D empty { .min = glm::vec3(0.0F), .max = glm::vec3(0.0F) };
+    if (stride < offset + sizeof(glm::vec3))
+        return empty;
+    const size_t count = bytes.size() / stride;
+    if (count == 0)
+        return empty;
+    constexpr float inf = std::numeric_limits<float>::max();
+    AABB3D box { .min = glm::vec3(inf), .max = glm::vec3(-inf) };
+    for (size_t i = 0; i < count; ++i) {
+        const glm::vec3 p = position_at(bytes, stride, offset, i).value_or(glm::vec3(0.0F));
+        box.min = glm::min(box.min, p);
+        box.max = glm::max(box.max, p);
+    }
+    return box;
+}
+
 } // namespace MayaFlux::Kinesis

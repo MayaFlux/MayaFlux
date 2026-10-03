@@ -1,16 +1,11 @@
 #include "Attachment.hpp"
 
-#include "MayaFlux/Buffers/Geometry/ComputeMeshBuffer.hpp"
-#include "MayaFlux/Buffers/Geometry/GeometryBuffer.hpp"
-#include "MayaFlux/Buffers/Geometry/MeshBuffer.hpp"
-#include "MayaFlux/Buffers/Network/MeshNetworkBuffer.hpp"
+#include "Survey.hpp"
+
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
-#include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Kinesis/GeometryPrimitives.hpp"
 #include "MayaFlux/Kinesis/Morphology.hpp"
-#include "MayaFlux/Nodes/Graphics/MeshWriterNode.hpp"
-#include "MayaFlux/Nodes/Network/MeshNetwork.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -21,68 +16,6 @@ namespace {
     glm::quat frame(const std::optional<glm::quat>& orientation)
     {
         return orientation.value_or(glm::quat(1.0F, 0.0F, 0.0F, 0.0F));
-    }
-
-    std::optional<Kakshya::MeshData> snapshot_mesh(const std::shared_ptr<Buffers::VKBuffer>& buffer)
-    {
-        if (const auto mesh = std::dynamic_pointer_cast<Buffers::MeshBuffer>(buffer)) {
-            return mesh->get_mesh_data();
-        }
-
-        if (const auto network_buffer = std::dynamic_pointer_cast<Buffers::MeshNetworkBuffer>(buffer)) {
-            const auto network = network_buffer->get_network();
-            return network ? network->get_mesh_data() : std::nullopt;
-        }
-
-        if (const auto geometry = std::dynamic_pointer_cast<Buffers::GeometryBuffer>(buffer)) {
-            const auto node = std::dynamic_pointer_cast<Nodes::GpuSync::MeshWriterNode>(
-                geometry->get_geometry_node());
-            return node ? node->get_mesh_data() : std::nullopt;
-        }
-
-        if (const auto compute = std::dynamic_pointer_cast<Buffers::ComputeMeshBuffer>(buffer)) {
-            return Buffers::download_compute_mesh(compute);
-        }
-
-        return std::nullopt;
-    }
-
-    size_t position_offset(const Kakshya::VertexLayout& layout)
-    {
-        const auto it = std::ranges::find_if(layout.attributes,
-            [](const auto& attribute) {
-                return attribute.component_modality == Kakshya::DataModality::VERTEX_POSITIONS_3D;
-            });
-        return it != layout.attributes.end() ? it->offset_in_vertex : 0;
-    }
-
-    std::optional<glm::vec3> read_anchor(
-        const std::shared_ptr<Buffers::VKBuffer>& buf,
-        const std::optional<uint32_t>& index)
-    {
-        const auto mesh = snapshot_mesh(buf);
-        if (!mesh) {
-            return std::nullopt;
-        }
-
-        const auto* vertices = std::get_if<std::vector<uint8_t>>(&mesh->vertex_variant);
-        if (!vertices || vertices->empty()) {
-            return std::nullopt;
-        }
-
-        const auto bytes = std::as_bytes(std::span(*vertices));
-        const size_t stride = mesh->layout.stride_bytes;
-        const size_t offset = position_offset(mesh->layout);
-
-        if (index) {
-            return Kinesis::position_at(bytes, stride, offset, *index);
-        }
-
-        if (const auto* faces = std::get_if<std::vector<uint32_t>>(&mesh->index_variant);
-            faces && !faces->empty()) {
-            return Kinesis::surface_centroid(bytes, stride, offset, *faces);
-        }
-        return Kinesis::centroid(bytes, stride, offset);
     }
 
     std::vector<std::shared_ptr<Buffers::RenderProcessor>> render_processors(

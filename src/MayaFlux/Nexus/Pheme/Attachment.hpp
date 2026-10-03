@@ -25,7 +25,7 @@ struct AttachConfig {
      *        surface centroid, or the vertex mean for a mesh without faces.
      *
      * The geometry is read once, when attaching and on recenter(), by
-     * Buffers::snapshot_mesh. A buffer it cannot read anchors at its local origin.
+     * read_anchor. A buffer it cannot read anchors at its local origin.
      */
     std::optional<uint32_t> index;
 
