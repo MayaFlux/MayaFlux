@@ -7,33 +7,6 @@
 namespace MayaFlux::Nexus {
 
 /**
- * @struct InfluenceUBO
- * @brief GPU-side std140 layout matching InfluenceContext plain data fields.
- *
- * Packs into two vec4 slots plus one partial (48 bytes total).
- * GLSL declaration:
- * @code
- * layout(set = 1, binding = 1) uniform Influence {
- *     vec3  position;
- *     float intensity;
- *     vec3  color;
- *     float radius;
- *     float size;
- * };
- * @endcode
- */
-struct alignas(16) InfluenceUBO {
-    glm::vec3 position { 0.0F };
-    float intensity { 1.0F };
-    glm::vec3 color { 1.0F, 1.0F, 1.0F };
-    float radius { 1.0F };
-    float size { 1.0F };
-    float _pad[3] {};
-};
-
-static_assert(sizeof(InfluenceUBO) == 48, "InfluenceUBO must be 48 bytes for std140 alignment");
-
-/**
  * @struct InfluenceContext
  * @brief Data passed to an Emitter or Agent influence function on each commit.
  *
@@ -59,6 +32,44 @@ struct InfluenceContext {
     // @note future: ShaderProcessor* shader_proc { nullptr };
     // @note future: std::span<const double> audio_snapshot;
 };
+
+/**
+ * @struct InfluenceBlock
+ * @brief Host mirror of the Influence push constant block the library's lit shaders declare.
+ *
+ * Build it from a context with from() and push it with bind_push_constants.
+ * @code
+ * layout(push_constant) uniform Influence {
+ *     vec3  position;
+ *     float intensity;
+ *     vec3  color;
+ *     float radius;
+ *     float size;
+ * };
+ * @endcode
+ */
+struct alignas(16) InfluenceBlock {
+    glm::vec3 position { 0.0F };
+    float intensity { 1.0F };
+    glm::vec3 color { 1.0F, 1.0F, 1.0F };
+    float radius { 1.0F };
+    float size { 1.0F };
+    float _pad[3] {};
+
+    /** @brief The block for @p ctx, with white and size 1 where the context has none. */
+    [[nodiscard]] static InfluenceBlock from(const InfluenceContext& ctx)
+    {
+        return {
+            .position = ctx.position,
+            .intensity = ctx.intensity,
+            .color = ctx.color.value_or(glm::vec3(1.0F)),
+            .radius = ctx.radius,
+            .size = ctx.size.value_or(1.0F),
+        };
+    }
+};
+
+static_assert(sizeof(InfluenceBlock) == 48);
 
 /**
  * @class Influence

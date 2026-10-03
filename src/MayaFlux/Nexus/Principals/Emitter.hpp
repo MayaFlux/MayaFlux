@@ -186,38 +186,6 @@ public:
     [[nodiscard]] const std::optional<float>& size() const { return m_size; }
 
     /**
-     * @brief Set the render processor to target for GPU-side influence delivery.
-     *
-     * Creates a UBO matching the InfluenceUBO layout, registers a binding
-     * named "u_influence" at set=1 binding=0 on the target processor,
-     * and binds the UBO. On each subsequent invoke(), the context fields
-     * are packed into the UBO automatically.
-     *
-     * @param proc Target render processor. Must outlive this Emitter or
-     *             be cleared via clear_influence_target() first.
-     * @param set   Descriptor set index for the UBO binding. Default is 1.
-     * @param binding Descriptor binding index for the UBO. Default is 0.
-     */
-    void set_influence_target(std::shared_ptr<Buffers::RenderProcessor> proc,
-        uint32_t set = 1, uint32_t binding = 0);
-
-    /**
-     * @brief Disconnect from the current influence target.
-     *
-     * Unbinds the "u_influence" descriptor from the target processor
-     * and releases the UBO.
-     */
-    void clear_influence_target();
-
-    /**
-     * @brief Return the current influence target, if set.
-     */
-    [[nodiscard]] std::weak_ptr<Buffers::RenderProcessor> influence_target() const
-    {
-        return m_influence_target;
-    }
-
-    /**
      * @brief Set the one target of an influence of any type.
      * @tparam T Type the producer returns; whatever the target takes.
      * @param producer Builds the value from the influence context.
@@ -252,8 +220,6 @@ public:
         if (m_influence) {
             m_influence(ctx);
         }
-        if (m_influence_ubo)
-            upload_influence_ubo(ctx);
     }
 
 private:
@@ -263,9 +229,6 @@ private:
     float m_intensity { 1.0F };
     float m_radius { 1.0F };
 
-    std::shared_ptr<Buffers::RenderProcessor> m_influence_target;
-    std::shared_ptr<Buffers::VKBuffer> m_influence_ubo;
-
     InfluenceFn m_fn;
     uint32_t m_id {};
     std::string m_fn_name;
@@ -273,8 +236,6 @@ private:
     mutable std::vector<AudioSink> m_audio_sinks;
     mutable std::vector<RenderSink> m_render_sinks;
     InfluenceFn m_influence;
-
-    void upload_influence_ubo(const InfluenceContext& ctx) const;
 
     friend class Fabric;
 };

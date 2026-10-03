@@ -133,16 +133,29 @@ template <typename Operator>
  *
  * For an operator this arms the next dispatch of its executor. This is how an
  * Agent's state reaches a slot-transform kernel, for example one assembled from
- * a DualField of mat4 through ShaderSpec::Assemble::function().
+ * a DualField of mat4 through ShaderSpec::Assemble::function(). For a shader
+ * processor the push block is grown to hold T at @p offset here, so a shader
+ * that already declares it is not drawn before the block exists. A shader that
+ * keeps push constants of its own passes the byte offset after them and
+ * declares both in one block.
  */
 template <typename T, typename Receiver>
-[[nodiscard]] typename Influence<T>::Target bind_push_constants(const Receiver& target)
+[[nodiscard]] typename Influence<T>::Target bind_push_constants(const Receiver& target, size_t offset = 0)
 {
-    return [target](const T& data) {
+    if constexpr (requires { target->get_push_constant_data(); }) {
+        if (target->get_push_constant_data().size() < offset + sizeof(T)) {
+            target->set_push_constant_size(offset + sizeof(T));
+        }
+    }
+
+    return [target, offset](const T& data) {
         if constexpr (requires { target->push_constants(data); }) {
             target->push_constants(data);
         } else {
-            target->set_push_constant_data(data);
+            if (target->get_push_constant_data().size() < offset + sizeof(T)) {
+                target->set_push_constant_size(offset + sizeof(T));
+            }
+            std::memcpy(target->get_push_constant_data().data() + offset, &data, sizeof(T));
         }
     };
 }

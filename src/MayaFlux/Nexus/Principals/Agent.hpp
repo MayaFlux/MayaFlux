@@ -327,43 +327,6 @@ public:
     [[nodiscard]] const std::optional<float>& size() const { return m_size; }
 
     /**
-     * @brief Add a render processor to receive GPU-side influence data.
-     *
-     * Allocates the shared influence UBO on the first call. Subsequent calls
-     * bind the same UBO to the new processor: all targets receive identical
-     * context data each commit. Adding the same processor twice is a no-op.
-     *
-     * @param proc Render processor to target. Ignored if null.
-     * @param set   Descriptor set index for the UBO binding. Default is 1.
-     * @param binding Descriptor binding index for the UBO. Default is 0.
-     */
-    void add_influence_target(std::shared_ptr<Buffers::RenderProcessor> proc,
-        uint32_t set = 1, uint32_t binding = 0);
-
-    /**
-     * @brief Remove a single influence target and unbind its UBO.
-     *
-     * If this was the last target the UBO is freed.
-     *
-     * @param proc Processor previously passed to add_influence_target().
-     */
-    void remove_influence_target(const std::shared_ptr<Buffers::RenderProcessor>& proc);
-
-    /**
-     * @brief Unbind and remove all influence targets and free the UBO.
-     */
-    void clear_influence_targets();
-
-    /**
-     * @brief All render processors currently receiving influence data.
-     */
-    [[nodiscard]] const std::vector<std::shared_ptr<Buffers::RenderProcessor>>&
-    influence_targets() const
-    {
-        return m_influence_targets;
-    }
-
-    /**
      * @brief Invoke the perception function with the supplied context.
      * @param ctx Populated context for this commit.
      */
@@ -393,8 +356,6 @@ public:
         for (const auto& [handle, influence] : m_influences) {
             influence(ctx);
         }
-        if (m_influence_ubo)
-            upload_influence_ubo(ctx);
     }
 
 private:
@@ -404,9 +365,6 @@ private:
     std::optional<float> m_size;
     float m_intensity { 1.0F };
     float m_radius { 1.0F };
-
-    std::vector<std::shared_ptr<Buffers::RenderProcessor>> m_influence_targets;
-    std::shared_ptr<Buffers::VKBuffer> m_influence_ubo;
 
     float m_query_radius;
     std::string m_perception_fn_name;
@@ -421,7 +379,6 @@ private:
     std::vector<std::pair<std::shared_ptr<void>, InfluenceFn>> m_influences;
     std::vector<std::pair<std::shared_ptr<void>, PerceptionFn>> m_perceptions;
 
-    void upload_influence_ubo(const InfluenceContext& ctx) const;
     void follow_attachment();
 
     friend class Fabric;
