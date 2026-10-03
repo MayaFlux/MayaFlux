@@ -2,6 +2,7 @@
 
 #include "Influence.hpp"
 
+#include "MayaFlux/Kinesis/Spatial/Bounds.hpp"
 #include "MayaFlux/Kinesis/Tendency/FieldBinding.hpp"
 #include "MayaFlux/Kinesis/Tendency/Tendency.hpp"
 
@@ -109,6 +110,16 @@ template <typename Operator>
         });
     }
     return typename Influence<Transform>::Target { [cell](const Transform& field) { *cell = field; } };
+}
+
+/**
+ * @brief Target that moves or resizes an Expanse's bounds from an influence of boxes.
+ * @param expanse Expanse, raw pointer or shared_ptr, retained by the target.
+ */
+template <typename Region>
+[[nodiscard]] Influence<Kinesis::AABB3D>::Target bind_bounds(const Region& expanse)
+{
+    return [expanse](const Kinesis::AABB3D& bounds) { expanse->set_bounds(bounds); };
 }
 
 /**

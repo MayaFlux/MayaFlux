@@ -100,6 +100,37 @@ public:
         Expanse::CrossingFn on_exit);
 
     /**
+     * @brief Create and register a named Expanse from a containment predicate alone.
+     * @return Shared pointer to the new Expanse, for passing to Fabric::add_expanse.
+     */
+    [[nodiscard]] std::shared_ptr<Expanse> create_expanse(
+        std::string name,
+        Expanse::ContainsFn contains);
+
+    /**
+     * @brief Create and register a named Expanse that is a box.
+     * @return Shared pointer to the new Expanse, for passing to Fabric::add_expanse.
+     */
+    [[nodiscard]] std::shared_ptr<Expanse> create_expanse(
+        std::string name,
+        const Kinesis::AABB3D& bounds);
+
+    /**
+     * @brief Create and register a named Expanse of a derived type.
+     * @tparam T Expanse subclass, for example Hull.
+     * @param args Forwarded to T's constructor.
+     * @return Shared pointer to the new Expanse, for passing to Fabric::add_expanse.
+     */
+    template <typename T, typename... Args>
+    [[nodiscard]] std::shared_ptr<T> create_expanse(std::string name, Args&&... args)
+    {
+        static_assert(std::is_base_of_v<Expanse, T>, "T must derive from Expanse");
+        auto expanse = std::make_shared<T>(std::forward<Args>(args)...);
+        m_expanses.emplace(std::move(name), expanse);
+        return expanse;
+    }
+
+    /**
      * @brief Look up a named Expanse.
      * @return The Expanse, or nullptr if name is not registered.
      */

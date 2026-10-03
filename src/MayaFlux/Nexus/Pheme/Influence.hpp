@@ -82,11 +82,15 @@ static_assert(sizeof(InfluenceBlock) == 48);
  *
  * How many targets an Influence may have is decided by its owner: an Emitter
  * keeps one, an Agent keeps as many as are added.
+ *
+ * Context is what the producer reads. Emitter and Agent supply an
+ * InfluenceContext, an Expanse supplies a CrossingContext. Targets take only
+ * const T&, so one target works with either.
  */
-template <typename T>
+template <typename T, typename Context = InfluenceContext>
 class Influence {
 public:
-    using Producer = std::function<T(const InfluenceContext&)>;
+    using Producer = std::function<T(const Context&)>;
     using Target = std::function<void(const T&)>;
 
     explicit Influence(Producer producer)
@@ -108,7 +112,7 @@ public:
     [[nodiscard]] size_t target_count() const { return m_targets.size(); }
 
     /** @brief Build the value from @p ctx and hand it to every target. */
-    void invoke(const InfluenceContext& ctx) const
+    void invoke(const Context& ctx) const
     {
         if (!m_producer) {
             return;

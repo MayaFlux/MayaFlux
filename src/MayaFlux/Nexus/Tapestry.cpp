@@ -96,6 +96,22 @@ std::shared_ptr<Expanse> Tapestry::create_expanse(
     return expanse;
 }
 
+std::shared_ptr<Expanse> Tapestry::create_expanse(
+    std::string name,
+    Expanse::ContainsFn contains)
+{
+    return create_expanse(std::move(name), std::move(contains), {}, {});
+}
+
+std::shared_ptr<Expanse> Tapestry::create_expanse(
+    std::string name,
+    const Kinesis::AABB3D& bounds)
+{
+    auto expanse = std::make_shared<Expanse>(bounds);
+    m_expanses.emplace(std::move(name), expanse);
+    return expanse;
+}
+
 std::shared_ptr<Expanse> Tapestry::get_expanse(std::string_view name) const
 {
     auto it = m_expanses.find(std::string(name));
