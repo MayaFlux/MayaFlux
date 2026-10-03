@@ -7,14 +7,22 @@ namespace MayaFlux::Nexus {
 
 /**
  * @class StateDecoder
- * @brief Patches Fabric state from a previously encoded EXR + JSON schema pair.
+ * @brief Patches or rebuilds Fabric state from a previously encoded EXR + JSON schema pair.
  *
- * v1 scope: reads {base_path}.exr (schema v2) and patches Emitters, Sensors,
- * and Agents by id. Dispatches per Kind; entities present in the schema but
- * absent from the Fabric are logged and counted in missing_count(). Optional
- * fields (color, size) are only patched when the schema records a non-null
- * value. Callable name mismatches between schema and live entity are warned
- * but do not abort the patch.
+ * Does what the classes allow and reports the rest. Emitters, Sensors, Agents
+ * (including Locus and Presence) are patched by id or constructed; their
+ * Expanses are restored. Optional fields (position, orientation, color, size)
+ * are applied only when the schema records them, except that an absent position
+ * clears the entity's position. Callable name mismatches between schema and
+ * live entity are warned but do not abort the patch.
+ *
+ * Live objects are never invented. Sinks, typed influences and perceptions,
+ * attachments, a Locus's view targets and every wiring source that needs a
+ * window, a network source or a callable are reported as warnings, and a wiring
+ * that cannot be restored falls back to commit_driven. A Hull needs a buffer
+ * and is skipped; a Mantle comes back as its plain box. Files from schema
+ * versions k_schema_min_version up to k_schema_version are read, with fields
+ * added since taking their defaults.
  */
 class MAYAFLUX_API StateDecoder {
 public:
@@ -40,7 +48,9 @@ public:
     /**
      * @brief Decode and apply to @p fabric.
      * @param fabric    Target fabric. Must already contain entities with
-     *                  ids matching the schema.
+     *                  ids matching the schema. Expanses are restored too; one
+     *                  that matches an Expanse already on the Fabric is left
+     *                  in place and only has its box updated.
      * @param base_path Path stem without extension, same value passed to
      *                  StateEncoder::encode.
      * @return True on success. Partial patches (some ids missing) still
@@ -53,9 +63,11 @@ public:
      *
      * Entities whose id exists in the fabric are patched in place. Missing
      * entities are constructed, their callables resolved via the fabric's
-     * function registry (no-op fallback with warning if absent), and wired.
-     * Supported wiring kinds for v2: every, move_to, commit_driven.
-     * Unsupported kinds (on, use, bind) fall back to commit_driven + warning.
+     * function registry (left empty with a warning if absent), and wired.
+     * Restorable wiring kinds: every (with its scheduler tokens), move_to and
+     * commit_driven. Any other kind falls back to commit_driven with a warning.
+     * Entity ids are assigned by the Fabric, so a reconstructed entity may get a
+     * different id, which is warned.
      * Hard failure (bad schema, unreadable EXR, dimension mismatch) sets
      * last_error() and returns a zeroed result.
      *
@@ -68,9 +80,10 @@ public:
     /**
      * @brief Reconstruct all Fabrics in @p tapestry from @p base_dir.
      *
-     * Reads tapestry.json, creates or finds Fabrics by name, calls
-     * reconstruct(fabric, base_path) for each, then restores Tapestry-level
-     * named Expanses and registers them on the listed Fabrics.
+     * Reads tapestry.json, creates or finds Fabrics by name (a created Fabric gets
+     * the cell size its file recorded), calls reconstruct(fabric, base_path) for
+     * each, then restores Tapestry-level named Expanses and registers them on the
+     * listed Fabrics. A name the Tapestry already holds is reused, not recreated.
      *
      * @param tapestry  Target Tapestry. May be empty or partially populated.
      * @param base_dir  Directory path matching the one passed to encode().

@@ -8,6 +8,8 @@ class VKBuffer;
 
 namespace MayaFlux::Nexus {
 
+class StateEncoder;
+
 /**
  * @class Hull
  * @brief An Expanse whose region is the bounds of a buffer that already exists.
@@ -54,6 +56,8 @@ protected:
     [[nodiscard]] std::pair<glm::vec3, float> reach() const override;
 
 private:
+    friend class StateEncoder;
+
     std::shared_ptr<Buffers::VKBuffer> m_buf;
     std::optional<uint32_t> m_collection;
     std::optional<Kinesis::AABB3D> m_local;

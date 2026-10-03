@@ -2,6 +2,11 @@
 
 #include "MayaFlux/Nexus/Pheme/Sinks.hpp"
 
+#include "MayaFlux/Nexus/Expanses/Hull.hpp"
+#include "MayaFlux/Nexus/Expanses/Mantle.hpp"
+
+#include "MayaFlux/Buffers/VKBuffer.hpp"
+
 #include "MayaFlux/Nexus/Principals/Locus.hpp"
 #include "MayaFlux/Nexus/Principals/Presence.hpp"
 
@@ -40,40 +45,34 @@ namespace {
     }
 
     // -------------------------------------------------------------------------
-    // Wiring builder
+    // Sink records
     // -------------------------------------------------------------------------
 
-    State::WiringRecord build_wiring(const Fabric& fabric, uint32_t id)
+    void fill_sinks(
+        State::EntityRecord& ent,
+        const std::vector<AudioSink>& audio_sinks,
+        const std::vector<RenderSink>& render_sinks)
     {
-        const Wiring* w = fabric.wiring_for(id);
-        if (!w)
-            return { .kind = State::WiringKind::Unsupported };
+        for (const auto& s : audio_sinks)
+            ent.audio_sinks.push_back({ .channel = s.channel, .fn_name = s.fn_name });
 
-        if (!w->move_steps().empty()) {
-            std::vector<State::WiringStep> steps;
-            steps.reserve(w->move_steps().size());
-            for (const auto& s : w->move_steps())
-                steps.push_back({ .position = s.position, .delay_seconds = s.delay_seconds });
-            State::WiringRecord rec { .kind = State::WiringKind::MoveTo, .steps = std::move(steps) };
-            if (w->times_count() > 1)
-                rec.times = w->times_count();
-
-            return rec;
+        for (const auto& s : render_sinks) {
+            State::RenderSinkRecord rec { .fn_name = s.fn_name };
+            if (s.buf) {
+                const auto config = s.buf->get_render_config();
+                rec.vertex_shader = config.vertex_shader;
+                rec.fragment_shader = config.fragment_shader;
+                rec.geometry_shader = config.geometry_shader;
+                rec.default_texture_binding = config.default_texture_binding;
+                rec.topology = config.topology;
+                rec.polygon_mode = config.polygon_mode;
+                rec.cull_mode = config.cull_mode;
+                rec.triangulate = config.triangulate;
+                rec.draw_priority = config.draw_priority;
+                rec.extra_string_params = config.extra_string_params;
+            }
+            ent.render_sinks.push_back(std::move(rec));
         }
-
-        if (w->interval().has_value()) {
-            State::WiringRecord rec { .kind = State::WiringKind::Every, .interval = w->interval() };
-            rec.duration = w->duration();
-            if (w->times_count() > 1)
-                rec.times = w->times_count();
-
-            return rec;
-        }
-
-        if (w->is_scroll())
-            return { .kind = State::WiringKind::Scroll };
-
-        return { .kind = State::WiringKind::CommitDriven };
     }
 
     void fill_wiring_pixels(const Fabric& fabric, uint32_t id, float& trigger_out, float& time_out)
@@ -94,6 +93,104 @@ namespace {
 
 } // namespace
 
+State::WiringRecord StateEncoder::build_wiring(const Fabric& fabric, uint32_t id)
+{
+    const Wiring* w = fabric.wiring_for(id);
+    if (!w)
+        return { .kind = State::WiringKind::Unsupported };
+
+    State::WiringRecord rec;
+    rec.position_fn_name = w->position_fn_name();
+
+    const auto take_times = [&] {
+        if (w->times_count() > 1)
+            rec.times = w->times_count();
+    };
+    const auto take_duration = [&] {
+        if (w->duration()) {
+            rec.duration = w->duration();
+            rec.duration_token = w->m_duration_token;
+        }
+    };
+
+    if (!std::holds_alternative<std::monostate>(w->factory()) || w->event_factory()) {
+        rec.kind = State::WiringKind::Factory;
+        rec.factory_name = w->factory_name();
+
+    } else if (w->has_bind()) {
+        rec.kind = State::WiringKind::Bind;
+        rec.attach_fn_name = w->bind_attach_name();
+        rec.detach_fn_name = w->bind_detach_name();
+        take_duration();
+
+    } else if (!w->move_steps().empty()) {
+        rec.kind = State::WiringKind::MoveTo;
+        std::vector<State::WiringStep> steps;
+        steps.reserve(w->move_steps().size());
+        for (const auto& s : w->move_steps())
+            steps.push_back({ .position = s.position, .delay_seconds = s.delay_seconds });
+        rec.steps = std::move(steps);
+        take_times();
+
+    } else if (!std::holds_alternative<std::monostate>(w->trigger())) {
+        std::visit([&rec](const auto& trigger) {
+            using T = std::decay_t<decltype(trigger)>;
+            if constexpr (std::is_same_v<T, Wiring::KeyTrigger>) {
+                rec.kind = State::WiringKind::Key;
+                rec.key = trigger.key;
+                rec.held = trigger.held;
+            } else if constexpr (std::is_same_v<T, Wiring::MouseTrigger>) {
+                rec.kind = State::WiringKind::Mouse;
+                rec.button = trigger.button;
+                rec.held = trigger.held;
+            } else if constexpr (std::is_same_v<T, Wiring::ScrollTrigger>) {
+                rec.kind = State::WiringKind::Scroll;
+            } else if constexpr (std::is_same_v<T, Wiring::NetworkTrigger>) {
+                rec.kind = State::WiringKind::Network;
+            } else if constexpr (std::is_same_v<T, Wiring::WindowEventTrigger>) {
+                rec.kind = State::WiringKind::WindowEvent;
+            } else {
+                rec.kind = State::WiringKind::Unsupported;
+            }
+        },
+            w->trigger());
+
+    } else if (w->interval()) {
+        rec.kind = State::WiringKind::Every;
+        rec.interval = w->interval();
+        rec.interval_token = w->m_metro_token;
+        take_duration();
+        take_times();
+    }
+
+    return rec;
+}
+
+template <typename Record>
+void StateEncoder::fill_expanse(Record& record, const Expanse& expanse)
+{
+    record.fn_name = expanse.fn_name();
+    record.on_enter_fn_name = expanse.on_enter_fn_name();
+    record.on_exit_fn_name = expanse.on_exit_fn_name();
+    if (expanse.bounds()) {
+        record.bounds_min = expanse.bounds()->min;
+        record.bounds_max = expanse.bounds()->max;
+    }
+
+    if (const auto* hull = dynamic_cast<const Hull*>(&expanse)) {
+        record.subkind = "hull";
+        record.collection = hull->m_collection;
+    } else if (const auto* mantle = dynamic_cast<const Mantle*>(&expanse)) {
+        record.subkind = "mantle";
+        record.fit_name = Reflect::enum_to_lowercase_string(mantle->m_fit);
+    }
+
+    if (!record.subkind.empty()) {
+        MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
+            "StateEncoder: {} wraps a live buffer that is not encoded", record.subkind);
+    }
+}
+
 bool StateEncoder::encode(const Fabric& fabric, const std::string& base_path)
 {
     return encode_fabric(fabric, base_path, {});
@@ -112,7 +209,8 @@ bool StateEncoder::encode_fabric(
     struct InternalRecord {
         uint32_t id;
         Fabric::Kind kind;
-        glm::vec3 position {};
+        std::optional<glm::vec3> position;
+        std::optional<glm::vec4> orientation;
         float intensity { 0.0F };
         float radius { 0.0F };
         float query_radius { 0.0F };
@@ -131,22 +229,25 @@ bool StateEncoder::encode_fabric(
 
     std::vector<InternalRecord> records;
 
-    for (uint32_t id : fabric.all_ids()) {
+    auto ids = fabric.all_ids();
+    std::ranges::sort(ids);
+
+    for (uint32_t id : ids) {
         const auto k = fabric.kind(id);
         switch (k) {
         case Fabric::Kind::Emitter: {
             auto e = fabric.get_emitter(id);
-            if (!e || !e->position()) {
+            if (!e) {
                 continue;
             }
-            if (e->fn_name().empty()) {
+            if (e->fn() && e->fn_name().empty()) {
                 MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
-                    "StateEncoder: Emitter {} has no fn_name", id);
+                    "StateEncoder: Emitter {} has a function but no fn_name", id);
             }
             auto& rec = records.emplace_back(InternalRecord {
                 .id = id,
                 .kind = k,
-                .position = *e->position(),
+                .position = e->position(),
                 .intensity = e->intensity(),
                 .radius = e->radius(),
                 .color = e->color(),
@@ -163,17 +264,17 @@ bool StateEncoder::encode_fabric(
         }
         case Fabric::Kind::Sensor: {
             auto s = fabric.get_sensor(id);
-            if (!s || !s->position()) {
+            if (!s) {
                 continue;
             }
-            if (s->fn_name().empty()) {
+            if (s->fn() && s->fn_name().empty()) {
                 MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
-                    "StateEncoder: Sensor {} has no fn_name", id);
+                    "StateEncoder: Sensor {} has a function but no fn_name", id);
             }
             auto& rec = records.emplace_back(InternalRecord {
                 .id = id,
                 .kind = k,
-                .position = *s->position(),
+                .position = s->position(),
                 .query_radius = s->query_radius(),
                 .perception_fn_name = s->fn_name(),
                 .entity_type_norm = 0.333F,
@@ -183,21 +284,21 @@ bool StateEncoder::encode_fabric(
         }
         case Fabric::Kind::Agent: {
             auto a = fabric.get_agent(id);
-            if (!a || !a->position()) {
+            if (!a) {
                 continue;
             }
-            if (a->perception_fn_name().empty()) {
+            if (a->perception_fn() && a->perception_fn_name().empty()) {
                 MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
-                    "StateEncoder: Agent {} has no perception_fn_name", id);
+                    "StateEncoder: Agent {} has a perception function but no perception_fn_name", id);
             }
-            if (a->influence_fn_name().empty()) {
+            if (a->influence_fn() && a->influence_fn_name().empty()) {
                 MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
-                    "StateEncoder: Agent {} has no influence_fn_name", id);
+                    "StateEncoder: Agent {} has an influence function but no influence_fn_name", id);
             }
             auto& rec = records.emplace_back(InternalRecord {
                 .id = id,
                 .kind = k,
-                .position = *a->position(),
+                .position = a->position(),
                 .intensity = a->intensity(),
                 .radius = a->radius(),
                 .query_radius = a->query_radius(),
@@ -207,6 +308,9 @@ bool StateEncoder::encode_fabric(
                 .perception_fn_name = a->perception_fn_name(),
                 .entity_type_norm = 0.667F,
             });
+            if (const auto& q = a->orientation()) {
+                rec.orientation = glm::vec4(q->x, q->y, q->z, q->w);
+            }
             fill_wiring_pixels(fabric, id, rec.trigger_kind, rec.time_kind);
             rec.sink_type = (a->audio_sinks().empty() ? 0U : 1U)
                 | (a->render_sinks().empty() ? 0U : 2U);
@@ -218,7 +322,7 @@ bool StateEncoder::encode_fabric(
     }
 
     if (records.empty()) {
-        m_last_error = "No entities with positions to encode";
+        m_last_error = "No entities to encode";
         MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
         return false;
     }
@@ -233,9 +337,11 @@ bool StateEncoder::encode_fabric(
     bool init_size = false;
 
     for (const auto& rec : records) {
-        expand_range(rs.pos_x, rec.position.x, init_pos_x);
-        expand_range(rs.pos_y, rec.position.y, init_pos_y);
-        expand_range(rs.pos_z, rec.position.z, init_pos_z);
+        if (rec.position) {
+            expand_range(rs.pos_x, rec.position->x, init_pos_x);
+            expand_range(rs.pos_y, rec.position->y, init_pos_y);
+            expand_range(rs.pos_z, rec.position->z, init_pos_z);
+        }
 
         if (rec.kind == Fabric::Kind::Emitter || rec.kind == Fabric::Kind::Agent) {
             expand_range(rs.intensity, rec.intensity, init_intensity);
@@ -271,9 +377,11 @@ bool StateEncoder::encode_fabric(
         const auto& rec = records[i];
 
         const size_t row0 = (static_cast<size_t>(0) * width + i) * State::k_channels;
-        pixels[row0 + 0] = normalize(rec.position.x, rs.pos_x);
-        pixels[row0 + 1] = normalize(rec.position.y, rs.pos_y);
-        pixels[row0 + 2] = normalize(rec.position.z, rs.pos_z);
+        if (rec.position) {
+            pixels[row0 + 0] = normalize(rec.position->x, rs.pos_x);
+            pixels[row0 + 1] = normalize(rec.position->y, rs.pos_y);
+            pixels[row0 + 2] = normalize(rec.position->z, rs.pos_z);
+        }
         pixels[row0 + 3] = normalize(rec.intensity, rs.intensity);
 
         const size_t row1 = (static_cast<size_t>(1) * width + i) * State::k_channels;
@@ -315,7 +423,6 @@ bool StateEncoder::encode_fabric(
     }
 
     IO::ImageWriteOptions options;
-    options.channel_names = { "R", "G", "B", "A" };
 
     if (!writer->write(exr_path, image, options)) {
         m_last_error = "EXR write failed: " + writer->get_last_error();
@@ -329,6 +436,7 @@ bool StateEncoder::encode_fabric(
     State::FabricSchema schema;
     schema.version = State::k_schema_version;
     schema.fabric_name = fabric.name();
+    schema.cell_size = fabric.m_cell_size;
     schema.ranges = rs;
     schema.entities.reserve(records.size());
 
@@ -337,6 +445,7 @@ bool StateEncoder::encode_fabric(
         ent.id = rec.id;
         ent.kind = State::kind_to_string(rec.kind);
         ent.position = rec.position;
+        ent.orientation = rec.orientation;
         ent.intensity = rec.intensity;
         ent.radius = rec.radius;
         ent.query_radius = rec.query_radius;
@@ -348,17 +457,10 @@ bool StateEncoder::encode_fabric(
 
         if (rec.kind == Fabric::Kind::Emitter) {
             auto e = fabric.get_emitter(rec.id);
-            for (const auto& s : e->audio_sinks())
-                ent.audio_sinks.push_back({ .channel = s.channel, .fn_name = s.fn_name });
-            for (const auto& s : e->render_sinks())
-                ent.render_sinks.push_back({ .fn_name = s.fn_name });
+            fill_sinks(ent, e->audio_sinks(), e->render_sinks());
         } else if (rec.kind == Fabric::Kind::Agent) {
             auto a = fabric.get_agent(rec.id);
-            for (const auto& s : a->audio_sinks())
-                ent.audio_sinks.push_back({ .channel = s.channel, .fn_name = s.fn_name });
-
-            for (const auto& s : a->render_sinks())
-                ent.render_sinks.push_back({ .fn_name = s.fn_name });
+            fill_sinks(ent, a->audio_sinks(), a->render_sinks());
 
             if (auto locus = std::dynamic_pointer_cast<Locus>(a)) {
                 ent.subkind = "locus";
@@ -366,11 +468,13 @@ bool StateEncoder::encode_fabric(
                 ent.locus_nav = State::LocusNavRecord {
                     .eye = nav.eye,
                     .target = nav.eye + glm::vec3 { std::cos(nav.pitch) * std::sin(nav.yaw), std::sin(nav.pitch), std::cos(nav.pitch) * std::cos(nav.yaw) },
-                    .up = { 0.0F, 1.0F, 0.0F },
                     .fov = nav.fov_radians,
                     .near_plane = nav.near_plane,
                     .far_plane = nav.far_plane,
                     .speed = nav.move_speed,
+                    .mouse_sensitivity = nav.mouse_sensitivity,
+                    .scroll_speed = nav.scroll_speed,
+                    .aspect = locus->aspect(),
                 };
             } else if (auto presence = std::dynamic_pointer_cast<Presence>(a)) {
                 ent.subkind = "presence";
@@ -378,8 +482,12 @@ bool StateEncoder::encode_fabric(
                 ent.falloff_radius = presence->falloff_radius() != presence->query_radius()
                     ? std::optional<float>(presence->falloff_radius())
                     : std::nullopt;
-                if (auto fc = presence->falloff_curve())
+                if (auto fc = presence->falloff_curve()) {
                     ent.falloff_curve_name = Reflect::enum_to_lowercase_string(*fc);
+                } else {
+                    MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
+                        "StateEncoder: Presence {} has a custom falloff, which is not encoded", rec.id);
+                }
             }
         }
 
@@ -390,20 +498,12 @@ bool StateEncoder::encode_fabric(
         const auto x = fabric.get_expanse(xid);
         if (!x || tapestry_owned.contains(x.get()))
             continue;
-        if (x->fn_name().empty() && !x->bounds()) {
+        State::ExpanseRecord record { .id = xid };
+        fill_expanse(record, *x);
+        if (record.subkind.empty() && record.fn_name.empty() && !record.bounds_min) {
             MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
                 "StateEncoder: Expanse {} has neither fn_name nor bounds, skipping", xid);
             continue;
-        }
-        State::ExpanseRecord record {
-            .id = xid,
-            .fn_name = x->fn_name(),
-            .on_enter_fn_name = x->on_enter_fn_name(),
-            .on_exit_fn_name = x->on_exit_fn_name(),
-        };
-        if (x->bounds()) {
-            record.bounds_min = x->bounds()->min;
-            record.bounds_max = x->bounds()->max;
         }
         schema.expanses.push_back(std::move(record));
     }
@@ -452,16 +552,8 @@ bool StateEncoder::encode(const Tapestry& tapestry, const std::string& base_dir,
     }
 
     for (const auto& [xname, xptr] : tapestry.all_expanses()) {
-        State::TapestryExpanseRecord xrec {
-            .name = xname,
-            .fn_name = xptr->fn_name(),
-            .on_enter_fn_name = xptr->on_enter_fn_name(),
-            .on_exit_fn_name = xptr->on_exit_fn_name(),
-        };
-        if (xptr->bounds()) {
-            xrec.bounds_min = xptr->bounds()->min;
-            xrec.bounds_max = xptr->bounds()->max;
-        }
+        State::TapestryExpanseRecord xrec { .name = xname };
+        fill_expanse(xrec, *xptr);
         for (const auto& fabric : tapestry.all_fabrics()) {
             for (uint32_t xid : fabric->all_expanse_ids()) {
                 if (fabric->get_expanse(xid) == xptr) {

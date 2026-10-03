@@ -14,6 +14,7 @@ Fabric::Fabric(
     : m_scheduler(scheduler)
     , m_event_manager(event_manager)
     , m_index(Kinesis::make_spatial_index_3d(cell_size))
+    , m_cell_size(cell_size)
 {
 }
 

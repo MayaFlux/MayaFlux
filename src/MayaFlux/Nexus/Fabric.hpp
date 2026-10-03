@@ -263,6 +263,7 @@ public:
 
 private:
     friend class Wiring;
+    friend class StateEncoder;
 
     std::string m_name;
 
@@ -292,6 +293,7 @@ private:
     std::unordered_map<uint32_t, Registration> m_registrations;
     std::unordered_map<uint32_t, std::shared_ptr<Expanse>> m_expanses;
 
+    float m_cell_size;
     uint32_t m_fabric_id { 0 };
     uint32_t m_next_id { 1 };
 

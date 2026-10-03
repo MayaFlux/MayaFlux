@@ -7,6 +7,8 @@
 
 namespace MayaFlux::Nexus {
 
+class StateEncoder;
+
 /**
  * @class Mantle
  * @brief An Expanse that is a box with a buffer that already exists as its visible body.
@@ -66,6 +68,8 @@ protected:
     void begin_evaluate() override;
 
 private:
+    friend class StateEncoder;
+
     void refresh();
 
     Attachment m_look;
