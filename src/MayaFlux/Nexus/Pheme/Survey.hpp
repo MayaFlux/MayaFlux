@@ -12,7 +12,9 @@ namespace MayaFlux::Nexus {
  * @brief Anchor of a buffer's geometry in its own stored coordinates.
  *
  * The position of the vertex at @p index, else the surface centroid, else the
- * vertex mean for a mesh without faces. Blocks for a ComputeMeshBuffer.
+ * vertex mean for a mesh without faces. A point or path buffer reports the mean of
+ * its vertices; an InstanceNetworkBuffer, with no index, the centre of its bounds.
+ * Blocks for a ComputeMeshBuffer and for a buffer a field processor drives.
  *
  * @param buf   Buffer to read.
  * @param index Vertex to anchor at, if any.
@@ -31,10 +33,13 @@ MAYAFLUX_API std::optional<glm::vec3> read_anchor(
  * GpuFieldOperator the bytes are downloaded from the device instead, as the spatial
  * export does; before the device buffer exists the operator's bytes are used. A
  * GeometryBuffer on a node other than a MeshWriterNode, a point or path node for
- * example, reports the node's own vertices. Other mesh buffers are read as
- * read_anchor reads them. Blocks for a ComputeMeshBuffer and for a buffer a
- * GpuFieldOperator drives: call it from a FRAME_ACCURATE metro or the main
- * thread, never the graphics thread.
+ * example, reports the node's own vertices, downloaded from the device when a
+ * VertexFieldProcessor is on the buffer. An InstanceNetworkBuffer reports the union
+ * of its slots' bounds through the slot transforms as the CPU holds them; the eight
+ * corners are placed, so a rotated slot is bounded loosely, and a transform a GPU
+ * kernel drives is not seen. Other mesh buffers are read as read_anchor reads them.
+ * Blocks for a ComputeMeshBuffer and for a buffer a field processor drives: call it
+ * from a FRAME_ACCURATE metro or the main thread, never the graphics thread.
  *
  * @param buf        Buffer to read.
  * @param collection Collection of a NetworkGeometryBuffer to bound, if not all of it.

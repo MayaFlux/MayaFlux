@@ -1,16 +1,20 @@
 #include "Survey.hpp"
 
+#include "MayaFlux/Buffers/BufferProcessingChain.hpp"
 #include "MayaFlux/Buffers/Geometry/ComputeMeshBuffer.hpp"
 #include "MayaFlux/Buffers/Geometry/GeometryBuffer.hpp"
 #include "MayaFlux/Buffers/Geometry/MeshBuffer.hpp"
+#include "MayaFlux/Buffers/Network/InstanceNetworkBuffer.hpp"
 #include "MayaFlux/Buffers/Network/MeshNetworkBuffer.hpp"
 #include "MayaFlux/Buffers/Network/NetworkGeometryBuffer.hpp"
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
+#include "MayaFlux/Buffers/Shaders/VertexFieldProcessor.hpp"
 #include "MayaFlux/Buffers/State/VolumeGridBuffer.hpp"
 #include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
 #include "MayaFlux/Kakshya/NDData/VertexInsertion.hpp"
 #include "MayaFlux/Kinesis/Morphology.hpp"
 #include "MayaFlux/Nodes/Graphics/MeshWriterNode.hpp"
+#include "MayaFlux/Nodes/Network/InstanceNetwork.hpp"
 #include "MayaFlux/Nodes/Network/MeshNetwork.hpp"
 #include "MayaFlux/Nodes/Network/Operators/GpuFieldOperator.hpp"
 #include "MayaFlux/Nodes/Network/Operators/GraphicsOperator.hpp"
@@ -115,7 +119,15 @@ namespace {
         return Cloud { .positions = std::move(*positions), .clusters = graphics->build_cluster_ids() };
     }
 
-    std::optional<std::vector<glm::vec3>> node_positions(const std::shared_ptr<Buffers::GeometryBuffer>& buffer)
+    bool field_driven(const std::shared_ptr<Buffers::VKBuffer>& buffer)
+    {
+        const auto chain = buffer->get_processing_chain();
+        return chain
+            && (std::dynamic_pointer_cast<Buffers::VertexFieldProcessor>(chain->get_postprocessor(buffer))
+                || chain->get_processor<Buffers::VertexFieldProcessor>(buffer));
+    }
+
+    std::optional<Cloud> node_cloud(const std::shared_ptr<Buffers::GeometryBuffer>& buffer)
     {
         const auto node = buffer->get_geometry_node();
         if (!node || std::dynamic_pointer_cast<Nodes::GpuSync::MeshWriterNode>(node)) {
@@ -123,7 +135,77 @@ namespace {
         }
 
         const auto layout = node->get_vertex_layout();
-        return layout ? decode_positions(node->get_vertex_data(), *layout) : std::nullopt;
+        if (!layout) {
+            return std::nullopt;
+        }
+
+        std::optional<std::vector<glm::vec3>> positions;
+        if (buffer->is_initialized() && field_driven(buffer)) {
+            std::vector<uint8_t> bytes(static_cast<size_t>(node->get_vertex_count()) * layout->stride_bytes);
+            std::shared_ptr<Buffers::VKBuffer> staging;
+            Buffers::download_from_gpu_async(buffer, bytes.data(), bytes.size(), staging);
+            positions = decode_positions(bytes, *layout);
+        } else {
+            positions = decode_positions(node->get_vertex_data(), *layout);
+        }
+
+        if (!positions) {
+            return std::nullopt;
+        }
+        return Cloud { .positions = std::move(*positions), .clusters = {} };
+    }
+
+    std::optional<Cloud> cloud_of(const std::shared_ptr<Buffers::VKBuffer>& buffer)
+    {
+        if (const auto network_buffer = std::dynamic_pointer_cast<Buffers::NetworkGeometryBuffer>(buffer)) {
+            return network_cloud(network_buffer);
+        }
+        if (const auto geometry = std::dynamic_pointer_cast<Buffers::GeometryBuffer>(buffer)) {
+            return node_cloud(geometry);
+        }
+        return std::nullopt;
+    }
+
+    std::optional<Kinesis::AABB3D> node_bounds(const std::shared_ptr<Nodes::GpuSync::GeometryWriterNode>& node)
+    {
+        if (const auto mesh = std::dynamic_pointer_cast<Nodes::GpuSync::MeshWriterNode>(node)) {
+            const auto& vertices = mesh->get_mesh_vertices();
+            return vertices.empty() ? std::nullopt : std::optional<Kinesis::AABB3D> { Kinesis::aabb(std::span(vertices)) };
+        }
+
+        const auto layout = node->get_vertex_layout();
+        const auto positions = layout ? decode_positions(node->get_vertex_data(), *layout) : std::nullopt;
+        return positions && !positions->empty() ? std::optional<Kinesis::AABB3D> { Kinesis::aabb(*positions) } : std::nullopt;
+    }
+
+    std::optional<Kinesis::AABB3D> instance_bounds(const std::shared_ptr<Buffers::InstanceNetworkBuffer>& buffer)
+    {
+        const auto network = buffer->get_network();
+        if (!network) {
+            return std::nullopt;
+        }
+
+        std::optional<Kinesis::AABB3D> total;
+        for (uint32_t i = 0; i < network->slot_count(); ++i) {
+            const auto& slot = network->get_slot(i);
+            const auto local = slot.node ? node_bounds(slot.node) : std::nullopt;
+            if (!local) {
+                continue;
+            }
+
+            for (int corner = 0; corner < 8; ++corner) {
+                const glm::vec3 point {
+                    (corner & 1) != 0 ? local->max.x : local->min.x,
+                    (corner & 2) != 0 ? local->max.y : local->min.y,
+                    (corner & 4) != 0 ? local->max.z : local->min.z,
+                };
+                const glm::vec3 placed = glm::vec3(slot.transform * glm::vec4(point, 1.0F));
+                total = total
+                    ? Kinesis::AABB3D { .min = glm::min(total->min, placed), .max = glm::max(total->max, placed) }
+                    : Kinesis::AABB3D { .min = placed, .max = placed };
+            }
+        }
+        return total;
     }
 
 }
@@ -132,6 +214,21 @@ std::optional<glm::vec3> read_anchor(
     const std::shared_ptr<Buffers::VKBuffer>& buf,
     const std::optional<uint32_t>& index)
 {
+    if (const auto cloud = cloud_of(buf); cloud && !cloud->positions.empty()) {
+        if (!index) {
+            return Kinesis::centroid(cloud->positions);
+        }
+        return *index < cloud->positions.size()
+            ? std::optional<glm::vec3> { cloud->positions.at(*index) }
+            : std::nullopt;
+    }
+
+    if (const auto instances = std::dynamic_pointer_cast<Buffers::InstanceNetworkBuffer>(buf);
+        instances && !index) {
+        const auto bounds = instance_bounds(instances);
+        return bounds ? std::optional<glm::vec3> { bounds->center() } : std::nullopt;
+    }
+
     const auto mesh = snapshot_mesh(buf);
     if (!mesh) {
         return std::nullopt;
@@ -184,9 +281,13 @@ std::optional<Kinesis::AABB3D> read_bounds(
     }
 
     if (const auto geometry = std::dynamic_pointer_cast<Buffers::GeometryBuffer>(buf)) {
-        if (const auto positions = node_positions(geometry); positions && !positions->empty()) {
-            return Kinesis::aabb(*positions);
+        if (const auto cloud = node_cloud(geometry); cloud && !cloud->positions.empty()) {
+            return Kinesis::aabb(cloud->positions);
         }
+    }
+
+    if (const auto instances = std::dynamic_pointer_cast<Buffers::InstanceNetworkBuffer>(buf)) {
+        return instance_bounds(instances);
     }
 
     const auto mesh = snapshot_mesh(buf);
