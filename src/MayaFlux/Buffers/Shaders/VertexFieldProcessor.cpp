@@ -1,6 +1,7 @@
 #include "VertexFieldProcessor.hpp"
 
 #include "MayaFlux/Buffers/Network/NetworkGeometryBuffer.hpp"
+#include "RenderProcessor.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Portal/Graphics/ShaderFoundry.hpp"
@@ -40,6 +41,21 @@ namespace {
         }
 
         return *spec;
+    }
+
+    [[nodiscard]] glm::mat4 geometry_transform(const std::shared_ptr<VKBuffer>& buffer)
+    {
+        glm::mat4 transform { 1.0F };
+        if (const auto render = buffer->get_render_processor()) {
+            if (const auto& source = render->get_geometry_transform_source()) {
+                transform = source();
+            } else if (const auto& fixed = render->get_geometry_transform()) {
+                transform = *fixed;
+            }
+        }
+
+        const float determinant = glm::determinant(glm::mat3(transform));
+        return std::isfinite(determinant) && determinant != 0.0F ? transform : glm::mat4 { 1.0F };
     }
 
 } // namespace
@@ -196,6 +212,7 @@ bool VertexFieldProcessor::on_before_execute(
         return false;
 
     m_params.time = elapsed();
+    m_params.transform = geometry_transform(buffer);
 
     MF_RT_TRACE(Journal::Component::Buffers, Journal::Context::BufferProcessing,
         "VertexFieldProcessor dispatch: [{}, {}) of {} records, stride {} words, t={:.3f}",

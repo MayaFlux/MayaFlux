@@ -42,14 +42,20 @@ class NetworkGeometryBuffer;
  * notices before the next dispatch and rebuilds its pipeline from the new spec,
  * which is what makes fields editable from Lila without tearing down the chain.
  *
- * Push constant block, written here and never by the caller (16 bytes):
+ * Push constant block, written here and never by the caller (80 bytes):
  *   offset  0  uint   first_vertex
  *   offset  4  uint   vertex_count
  *   offset  8  uint   stride_words
  *   offset 12  float  time
+ *   offset 16  mat4   transform
  *
- * When the operator carries parametric fields, the block grows to 32 bytes:
- *   offset 16  vec4   params, from GpuFieldOperator::get_params()
+ * When the operator carries parametric fields, the block grows to 96 bytes:
+ *   offset 80  vec4   params, from GpuFieldOperator::get_params()
+ *
+ * transform is the geometry transform of the buffer's render processor, or
+ * identity when it has none. Fields are evaluated at transform * position, so
+ * they see the buffer as it is drawn, and vector results are carried back
+ * through the inverse before they are stored.
  *
  * time is seconds since the processor was constructed, and it is the only
  * varying input a field has. MF_FIELD bakes every literal into the shader text,
@@ -162,6 +168,7 @@ private:
         uint32_t vertex_count {};
         uint32_t stride_words {};
         float time {};
+        glm::mat4 transform { 1.0F };
     };
 
     /**
@@ -173,7 +180,8 @@ private:
         std::array<float, 4> params;
     };
 
-    static_assert(sizeof(ParamsBlock) == 32);
+    static_assert(sizeof(RangeParams) == 80);
+    static_assert(sizeof(ParamsBlock) == 96);
 
     std::shared_ptr<Nodes::Network::GpuFieldOperator> m_operator;
 

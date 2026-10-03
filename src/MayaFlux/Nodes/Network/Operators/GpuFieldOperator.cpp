@@ -544,7 +544,8 @@ std::optional<Portal::Graphics::ShaderSpec> GpuFieldOperator::build_spec() const
     assemble.pc("first_vertex", Kakshya::GpuDataFormat::UINT32)
         .pc("vertex_count", Kakshya::GpuDataFormat::UINT32)
         .pc("stride_words", Kakshya::GpuDataFormat::UINT32)
-        .pc("time", Kakshya::GpuDataFormat::FLOAT32);
+        .pc("time", Kakshya::GpuDataFormat::FLOAT32)
+        .pc("geometry", Kakshya::GpuDataFormat::MAT4_F32);
 
     if (uses_params()) {
         assemble.pc("params", Kakshya::GpuDataFormat::VEC4_F32);
@@ -566,9 +567,9 @@ std::optional<Portal::Graphics::ShaderSpec> GpuFieldOperator::build_spec() const
     std::string body;
     body += "    if (i >= vertex_count) { return; }\n";
     body += "    uint b = (first_vertex + i) * stride_words;\n";
-    body += "    vec3 p = vec3(vertices[b + " + word(pw)
+    body += "    vec3 p = (geometry * vec4(vertices[b + " + word(pw)
         + "], vertices[b + " + word(pw + 1)
-        + "], vertices[b + " + word(pw + 2) + "]);\n";
+        + "], vertices[b + " + word(pw + 2) + "], 1.0f)).xyz;\n";
 
     if (needs_cluster) {
         body += "    uint my_cluster = cluster_id[first_vertex + i];\n";
@@ -608,6 +609,12 @@ std::optional<Portal::Graphics::ShaderSpec> GpuFieldOperator::build_spec() const
             } else {
                 body += "    " + acc + " += " + call + ";\n";
             }
+        }
+
+        if (t == Kinesis::FieldTarget::POSITION || t == Kinesis::FieldTarget::TANGENT) {
+            body += "    " + acc + " = inverse(mat3(geometry)) * " + acc + ";\n";
+        } else if (t == Kinesis::FieldTarget::NORMAL) {
+            body += "    " + acc + " = transpose(mat3(geometry)) * " + acc + ";\n";
         }
 
         if (t == Kinesis::FieldTarget::NORMAL || t == Kinesis::FieldTarget::TANGENT) {
