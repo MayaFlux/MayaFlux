@@ -60,6 +60,11 @@ public:
     [[nodiscard]] const std::string& last_error() const { return m_last_error; }
 
 private:
+    [[nodiscard]] bool encode_fabric(
+        const Fabric& fabric,
+        const std::string& base_path,
+        const std::unordered_set<const Expanse*>& tapestry_owned);
+
     std::string m_last_error;
 };
 

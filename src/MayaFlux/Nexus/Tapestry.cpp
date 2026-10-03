@@ -92,8 +92,7 @@ std::shared_ptr<Expanse> Tapestry::create_expanse(
         std::move(contains),
         std::move(on_enter),
         std::move(on_exit));
-    m_expanses.emplace(std::move(name), expanse);
-    return expanse;
+    return claim(std::move(name), std::move(expanse));
 }
 
 std::shared_ptr<Expanse> Tapestry::create_expanse(
@@ -107,9 +106,17 @@ std::shared_ptr<Expanse> Tapestry::create_expanse(
     std::string name,
     const Kinesis::AABB3D& bounds)
 {
-    auto expanse = std::make_shared<Expanse>(bounds);
-    m_expanses.emplace(std::move(name), expanse);
-    return expanse;
+    return claim(std::move(name), std::make_shared<Expanse>(bounds));
+}
+
+std::shared_ptr<Expanse> Tapestry::claim(std::string name, std::shared_ptr<Expanse> expanse)
+{
+    const auto [it, inserted] = m_expanses.try_emplace(std::move(name), std::move(expanse));
+    if (!inserted) {
+        MF_WARN(Journal::Component::Nexus, Journal::Context::Init,
+            "Tapestry::create_expanse: name '{}' already registered, returning existing", it->first);
+    }
+    return it->second;
 }
 
 std::shared_ptr<Expanse> Tapestry::get_expanse(std::string_view name) const

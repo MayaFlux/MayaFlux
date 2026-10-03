@@ -91,7 +91,12 @@ public:
 
     /**
      * @brief Create and register a named Expanse.
-     * @return Shared pointer to the new Expanse, for passing to Fabric::add_expanse.
+     *
+     * The name also serves as the containment function's registry name for state
+     * encoding, unless set_fn_name is called. A name already in use warns and
+     * returns the existing Expanse, as create_fabric does.
+     *
+     * @return Shared pointer to the Expanse, for passing to Fabric::add_expanse.
      */
     [[nodiscard]] std::shared_ptr<Expanse> create_expanse(
         std::string name,
@@ -119,15 +124,16 @@ public:
      * @brief Create and register a named Expanse of a derived type.
      * @tparam T Expanse subclass, for example Hull.
      * @param args Forwarded to T's constructor.
-     * @return Shared pointer to the new Expanse, for passing to Fabric::add_expanse.
+     * @return Shared pointer to the Expanse, for passing to Fabric::add_expanse. A name
+     *         already in use warns and returns the existing Expanse, or null if that
+     *         one is not a T.
      */
     template <typename T, typename... Args>
     [[nodiscard]] std::shared_ptr<T> create_expanse(std::string name, Args&&... args)
     {
         static_assert(std::is_base_of_v<Expanse, T>, "T must derive from Expanse");
-        auto expanse = std::make_shared<T>(std::forward<Args>(args)...);
-        m_expanses.emplace(std::move(name), expanse);
-        return expanse;
+        return std::dynamic_pointer_cast<T>(
+            claim(std::move(name), std::make_shared<T>(std::forward<Args>(args)...)));
     }
 
     /**
@@ -139,7 +145,8 @@ public:
     /**
      * @brief Remove Tapestry's owning reference to a named Expanse.
      *
-     * Fabrics holding the shared_ptr keep it alive and functional.
+     * Fabrics holding the shared_ptr keep it alive and functional, so nothing
+     * fires here; Fabric::remove_expanse fires the exits for its own occupants.
      */
     void remove_expanse(std::string_view name);
 
@@ -153,6 +160,8 @@ public:
     void commit_all();
 
 private:
+    std::shared_ptr<Expanse> claim(std::string name, std::shared_ptr<Expanse> expanse);
+
     std::shared_ptr<Vruta::TaskScheduler> m_scheduler;
     std::shared_ptr<Vruta::EventManager> m_event_manager;
 

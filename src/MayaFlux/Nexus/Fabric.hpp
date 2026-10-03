@@ -125,7 +125,7 @@ public:
     uint32_t add_expanse(std::shared_ptr<Expanse> expanse);
 
     /**
-     * @brief Remove a registered Expanse. Does not fire exit actions.
+     * @brief Remove a registered Expanse, firing its exit actions for everything inside it here.
      * @param id Id assigned at registration.
      */
     void remove_expanse(uint32_t id);

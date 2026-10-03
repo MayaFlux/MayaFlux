@@ -10,6 +10,26 @@ uint32_t Expanse::allocate_id()
     return next.fetch_add(1, std::memory_order_relaxed);
 }
 
+void Expanse::evict(uint32_t fabric_id)
+{
+    const auto it = m_occupants_by_fabric.find(fabric_id);
+    if (it == m_occupants_by_fabric.end()) {
+        return;
+    }
+
+    const auto leaving = std::move(it->second);
+    m_occupants_by_fabric.erase(it);
+
+    for (uint32_t eid : leaving) {
+        if (m_on_exit)
+            m_on_exit(eid);
+
+        const CrossingContext ctx { .fabric_id = fabric_id, .entity = eid };
+        for (const auto& [handle, action] : m_exits)
+            action(ctx);
+    }
+}
+
 void Expanse::evaluate(uint32_t fabric_id,
     std::span<const std::pair<uint32_t, glm::vec3>> snapshot)
 {

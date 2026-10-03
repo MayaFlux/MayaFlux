@@ -96,6 +96,14 @@ namespace {
 
 bool StateEncoder::encode(const Fabric& fabric, const std::string& base_path)
 {
+    return encode_fabric(fabric, base_path, {});
+}
+
+bool StateEncoder::encode_fabric(
+    const Fabric& fabric,
+    const std::string& base_path,
+    const std::unordered_set<const Expanse*>& tapestry_owned)
+{
     m_last_error.clear();
 
     // -------------------------------------------------------------------------
@@ -380,7 +388,7 @@ bool StateEncoder::encode(const Fabric& fabric, const std::string& base_path)
 
     for (uint32_t xid : fabric.all_expanse_ids()) {
         const auto x = fabric.get_expanse(xid);
-        if (!x)
+        if (!x || tapestry_owned.contains(x.get()))
             continue;
         if (x->fn_name().empty() && !x->bounds()) {
             MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
@@ -421,6 +429,11 @@ bool StateEncoder::encode(const Tapestry& tapestry, const std::string& base_dir,
 
     State::TapestrySchema schema;
 
+    std::unordered_set<const Expanse*> tapestry_owned;
+    for (const auto& [xname, xptr] : tapestry.all_expanses()) {
+        tapestry_owned.insert(xptr.get());
+    }
+
     for (const auto& fabric : tapestry.all_fabrics()) {
         const std::string fabric_id = fabric->name().empty()
             ? std::to_string(fabric->id())
@@ -428,7 +441,7 @@ bool StateEncoder::encode(const Tapestry& tapestry, const std::string& base_dir,
 
         const std::string base_path = base_dir + "/" + fabric_id;
 
-        if (!encode(*fabric, base_path)) {
+        if (!encode_fabric(*fabric, base_path, tapestry_owned)) {
             return false;
         }
 

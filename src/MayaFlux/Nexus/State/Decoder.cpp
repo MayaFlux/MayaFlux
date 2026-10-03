@@ -773,6 +773,12 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(
             apply_bounds(*expanse, xrec);
         }
 
+        if (expanse) {
+            expanse->set_fn_name(xrec.fn_name);
+            expanse->set_on_enter_fn_name(xrec.on_enter_fn_name);
+            expanse->set_on_exit_fn_name(xrec.on_exit_fn_name);
+        }
+
         for (const auto& fname : xrec.fabric_names) {
             if (auto fabric = tapestry.get_fabric(fname))
                 fabric->add_expanse(expanse);

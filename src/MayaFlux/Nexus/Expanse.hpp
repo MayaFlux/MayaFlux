@@ -291,6 +291,16 @@ public:
     void evaluate(uint32_t fabric_id,
         std::span<const std::pair<uint32_t, glm::vec3>> snapshot);
 
+    /**
+     * @brief Fire the exit actions for everything inside for @p fabric_id and forget it.
+     *
+     * Called by a Fabric when it drops this Expanse, so state an entry action
+     * changed is not left in the entered state.
+     *
+     * @param fabric_id Stable id of the Fabric dropping the Expanse.
+     */
+    void evict(uint32_t fabric_id);
+
 protected:
     /** @brief Called at the start of every evaluate(), before any position is tested. */
     virtual void begin_evaluate() { }

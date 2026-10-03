@@ -106,7 +106,13 @@ uint32_t Fabric::add_expanse(std::shared_ptr<Expanse> expanse)
 
 void Fabric::remove_expanse(uint32_t id)
 {
-    m_expanses.erase(id);
+    const auto it = m_expanses.find(id);
+    if (it == m_expanses.end()) {
+        return;
+    }
+
+    it->second->evict(m_fabric_id);
+    m_expanses.erase(it);
 }
 
 std::vector<uint32_t> Fabric::all_ids() const
