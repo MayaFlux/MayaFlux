@@ -42,19 +42,27 @@ struct AttachConfig {
 };
 
 /**
+ * @struct PlacementStack
+ * @brief The placements layered on one render processor, kept by its geometry transform source.
+ */
+struct PlacementStack;
+
+/**
  * @struct Attachment
  * @brief State of one Agent attached to an existing buffer.
  *
  * The transform is applied to every render processor the buffer has, outside
  * whatever geometry transform that processor already had, which is kept
- * beside it and restored on release. Nothing is registered with a manager and
- * nothing is written to the buffer.
+ * beside it and restored when the last placement on the processor is released.
+ * Placements on one processor stack, later ones outside earlier ones, and each
+ * is released on its own. Nothing is registered with a manager and nothing is
+ * written to the buffer.
  */
 struct Attachment {
     std::shared_ptr<Buffers::VKBuffer> buf;
     AttachConfig config;
     std::shared_ptr<glm::mat4> transform;
-    std::vector<std::pair<std::shared_ptr<Buffers::RenderProcessor>, std::function<glm::mat4()>>> followed;
+    std::vector<std::pair<std::shared_ptr<Buffers::RenderProcessor>, std::shared_ptr<PlacementStack>>> followed;
     glm::vec3 anchor {};
     glm::vec3 applied {};
 };

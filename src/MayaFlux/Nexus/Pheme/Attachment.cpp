@@ -11,7 +11,32 @@
 
 namespace MayaFlux::Nexus {
 
+struct PlacementStack {
+    std::function<glm::mat4()> base;
+    std::vector<std::shared_ptr<glm::mat4>> layers;
+};
+
 namespace {
+
+    struct StackedSource {
+        std::shared_ptr<PlacementStack> stack;
+
+        glm::mat4 operator()() const
+        {
+            glm::mat4 placed = stack->base ? stack->base() : glm::mat4(1.0F);
+            for (const auto& layer : stack->layers) {
+                placed = *layer * placed;
+            }
+            return placed;
+        }
+    };
+
+    std::shared_ptr<PlacementStack> stack_of(const std::shared_ptr<Buffers::RenderProcessor>& proc)
+    {
+        const auto& source = proc->get_geometry_transform_source();
+        const auto* stacked = source ? source.target<StackedSource>() : nullptr;
+        return stacked ? stacked->stack : nullptr;
+    }
 
     glm::quat frame(const std::optional<glm::quat>& orientation)
     {
@@ -39,19 +64,20 @@ namespace {
             return;
         }
 
-        std::function<glm::mat4()> base = proc->get_geometry_transform_source();
-        if (!base) {
-            if (const auto& fixed = proc->get_geometry_transform()) {
-                base = [m = *fixed] { return m; };
+        auto stack = stack_of(proc);
+        if (!stack) {
+            stack = std::make_shared<PlacementStack>();
+            stack->base = proc->get_geometry_transform_source();
+            if (!stack->base) {
+                if (const auto& fixed = proc->get_geometry_transform()) {
+                    stack->base = [m = *fixed] { return m; };
+                }
             }
+            proc->set_geometry_transform_source(StackedSource { stack });
         }
 
-        proc->set_geometry_transform_source(
-            [base, transform = attachment.transform] {
-                return base ? *transform * base() : *transform;
-            });
-
-        attachment.followed.emplace_back(proc, std::move(base));
+        stack->layers.push_back(attachment.transform);
+        attachment.followed.emplace_back(proc, std::move(stack));
     }
 
 }
@@ -145,8 +171,11 @@ void place_attachment(Attachment& attachment)
 
 void release_attachment(Attachment& attachment)
 {
-    for (auto& [proc, base] : attachment.followed) {
-        proc->set_geometry_transform_source(std::move(base));
+    for (auto& [proc, stack] : attachment.followed) {
+        std::erase(stack->layers, attachment.transform);
+        if (stack->layers.empty() && stack_of(proc) == stack) {
+            proc->set_geometry_transform_source(std::move(stack->base));
+        }
     }
     attachment.followed.clear();
     *attachment.transform = glm::mat4(1.0F);
