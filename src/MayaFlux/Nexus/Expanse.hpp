@@ -137,7 +137,7 @@ public:
     }
 
     /** @brief Set or replace the box. */
-    void set_bounds(const Kinesis::AABB3D& bounds) { m_bounds = bounds; }
+    virtual void set_bounds(const Kinesis::AABB3D& bounds) { m_bounds = bounds; }
 
     /** @brief Remove the box, leaving the predicate. */
     void clear_bounds() { m_bounds.reset(); }
@@ -253,6 +253,10 @@ public:
      */
     void evaluate(uint32_t fabric_id,
         std::span<const std::pair<uint32_t, glm::vec3>> snapshot);
+
+protected:
+    /** @brief Called at the start of every evaluate(), before any position is tested. */
+    virtual void begin_evaluate() { }
 
 private:
     using Action = std::function<void(const CrossingContext&)>;

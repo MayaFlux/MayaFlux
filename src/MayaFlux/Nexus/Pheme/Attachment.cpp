@@ -133,6 +133,11 @@ void apply_attachment(Attachment& attachment, const InfluenceContext& ctx)
         ctx.position - rotation * attachment.config.offset,
         rotation);
 
+    place_attachment(attachment);
+}
+
+void place_attachment(Attachment& attachment)
+{
     for (const auto& proc : render_processors(attachment.buf)) {
         place(attachment, proc);
     }

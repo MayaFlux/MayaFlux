@@ -106,6 +106,15 @@ MAYAFLUX_API void apply_attachment(
     const InfluenceContext& ctx);
 
 /**
+ * @brief Place every render processor of the buffer that is not placed yet.
+ *
+ * For an attachment whose transform is set by the caller. Processors already
+ * followed are left alone; they read the same transform.
+ * @param attachment Attachment to place.
+ */
+MAYAFLUX_API void place_attachment(Attachment& attachment);
+
+/**
  * @brief Give every placed render processor back the geometry transform it had.
  * @param attachment Attachment to release.
  */

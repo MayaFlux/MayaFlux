@@ -223,6 +223,20 @@ glm::mat4 pivot_transform(
     return glm::translate(glm::mat4(1.0F), target - glm::vec3(rotate * glm::vec4(pivot, 1.0F))) * rotate;
 }
 
+glm::mat4 box_transform(const AABB3D& source, const AABB3D& target)
+{
+    constexpr float epsilon = 1.0e-6F;
+
+    const glm::vec3 from = source.extent();
+    const glm::vec3 to = target.extent();
+    const glm::bvec3 scalable = glm::greaterThan(from, glm::vec3(epsilon));
+    const glm::vec3 scale = glm::mix(glm::vec3(1.0F), to / glm::max(from, glm::vec3(epsilon)), scalable);
+
+    return glm::translate(glm::mat4(1.0F), target.center())
+        * glm::scale(glm::mat4(1.0F), scale)
+        * glm::translate(glm::mat4(1.0F), -source.center());
+}
+
 void apply_uniform_scale(
     std::vector<glm::vec3>& vertices,
     float scale,

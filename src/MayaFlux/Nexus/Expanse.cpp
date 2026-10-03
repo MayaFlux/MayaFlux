@@ -7,6 +7,8 @@ namespace MayaFlux::Nexus {
 void Expanse::evaluate(uint32_t fabric_id,
     std::span<const std::pair<uint32_t, glm::vec3>> snapshot)
 {
+    begin_evaluate();
+
     auto& prev = m_occupants_by_fabric[fabric_id];
 
     std::unordered_set<uint32_t> inside;

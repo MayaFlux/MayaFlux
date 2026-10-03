@@ -116,6 +116,21 @@ MAYAFLUX_API void apply_translation(
     const glm::quat& rotation);
 
 /**
+ * @brief Transform that scales and translates one box onto another
+ * @param source Box to map from
+ * @param target Box to map onto
+ * @return Matrix taking @p source onto @p target, scaling each axis independently
+ *
+ * An axis along which @p source has no extent, a flat mesh for example, is not
+ * scaled and is only centered. A @p target with no extent along an axis flattens
+ * that axis. For a uniform or unscaled fit, pass a @p target already resized and
+ * centered to suit.
+ */
+[[nodiscard]] MAYAFLUX_API glm::mat4 box_transform(
+    const AABB3D& source,
+    const AABB3D& target);
+
+/**
  * @brief Apply uniform scaling to vertex set
  * @param vertices Vertices to transform (modified in-place)
  * @param scale Scale factor (must be > 0)
