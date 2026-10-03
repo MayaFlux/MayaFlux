@@ -158,6 +158,18 @@ void RenderProcessor::set_view_transform_source(
     set_cull_mode(cull);
 }
 
+void RenderProcessor::set_geometry_transform(const glm::mat4& transform)
+{
+    m_geometry_transform = transform;
+    m_geometry_transform_source = nullptr;
+}
+
+void RenderProcessor::set_geometry_transform_source(std::function<glm::mat4()> fn)
+{
+    m_geometry_transform_source = std::move(fn);
+    m_geometry_transform.reset();
+}
+
 void RenderProcessor::bind_texture(
     uint32_t binding,
     const std::shared_ptr<Core::VKImage>& texture,
@@ -189,13 +201,13 @@ void RenderProcessor::bind_texture(
         if (cfg_it != m_config.bindings.end() && !m_descriptor_set_ids.empty()) {
             const uint32_t cfg_set = cfg_it->second.set;
             if (cfg_set == 0) {
-                if (m_view_transform_descriptor_set_id != Portal::Graphics::INVALID_DESCRIPTOR_SET) {
+                if (m_render_transform_descriptor_set_id != Portal::Graphics::INVALID_DESCRIPTOR_SET) {
                     uint32_t array_idx = 0;
                     if (cfg_it->second.count > 1 && binding >= cfg_it->second.binding) {
                         array_idx = binding - cfg_it->second.binding;
                     }
                     foundry.update_descriptor_image(
-                        m_view_transform_descriptor_set_id,
+                        m_render_transform_descriptor_set_id,
                         cfg_it->second.binding,
                         texture->get_image_view(),
                         sampler,
@@ -358,26 +370,26 @@ void RenderProcessor::initialize_descriptors(const std::shared_ptr<VKBuffer>& bu
     auto& flow = Portal::Graphics::get_render_flow();
     auto& foundry = Portal::Graphics::get_shader_foundry();
 
-    auto vt_layout = flow.get_view_transform_layout(m_pipeline_id);
-    if (vt_layout) {
-        m_view_transform_descriptor_set_id = foundry.allocate_descriptor_set(vt_layout);
+    auto transform_layout = flow.get_view_transform_layout(m_pipeline_id);
+    if (transform_layout) {
+        m_render_transform_descriptor_set_id = foundry.allocate_descriptor_set(transform_layout);
 
-        m_view_transform_ubo = std::make_shared<VKBuffer>(
-            sizeof(Kinesis::ViewTransform),
+        m_render_transform_ubo = std::make_shared<VKBuffer>(
+            sizeof(Kinesis::RenderTransform),
             VKBuffer::Usage::UNIFORM,
             Kakshya::DataModality::UNKNOWN);
-        ensure_initialized(m_view_transform_ubo);
+        ensure_initialized(m_render_transform_ubo);
 
         foundry.update_descriptor_buffer(
-            m_view_transform_descriptor_set_id,
+            m_render_transform_descriptor_set_id,
             0,
             vk::DescriptorType::eUniformBuffer,
-            m_view_transform_ubo->get_buffer(),
+            m_render_transform_ubo->get_buffer(),
             0,
-            sizeof(Kinesis::ViewTransform));
+            sizeof(Kinesis::RenderTransform));
 
         MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "ViewTransform UBO allocated (pipeline {})", m_pipeline_id);
+            "RenderTransform UBO allocated (pipeline {})", m_pipeline_id);
     }
 
     m_descriptor_set_ids = flow.allocate_pipeline_descriptors(m_pipeline_id, 1);
@@ -404,13 +416,13 @@ void RenderProcessor::initialize_descriptors(const std::shared_ptr<VKBuffer>& bu
         const uint32_t set_index = config_it->second.set;
 
         if (set_index == 0) {
-            if (m_view_transform_descriptor_set_id == Portal::Graphics::INVALID_DESCRIPTOR_SET) {
+            if (m_render_transform_descriptor_set_id == Portal::Graphics::INVALID_DESCRIPTOR_SET) {
                 MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
                     "Engine descriptor set not allocated for set=0 texture binding {}", binding);
                 continue;
             }
             foundry.update_descriptor_image(
-                m_view_transform_descriptor_set_id,
+                m_render_transform_descriptor_set_id,
                 config_it->second.binding,
                 tex_binding.texture->get_image_view(),
                 tex_binding.sampler,
@@ -463,25 +475,28 @@ void RenderProcessor::set_buffer_vertex_layout(
     m_needs_pipeline_rebuild = true;
 }
 
-const Kinesis::ViewTransform& RenderProcessor::publish_view_transform()
+const Kinesis::RenderTransform& RenderProcessor::publish_render_transform()
 {
-    Kinesis::ViewTransform vt;
+    Kinesis::RenderTransform transform;
     if (m_view_transform_active) {
-        vt = m_view_transform_source
+        transform.view_transform = m_view_transform_source
             ? m_view_transform_source()
             : m_view_transform.value_or(Kinesis::ViewTransform {});
     }
+    transform.geometry = m_geometry_transform_source
+        ? m_geometry_transform_source()
+        : m_geometry_transform.value_or(glm::mat4 { 1.0F });
 
-    m_published_view_transform = vt;
+    m_published_render_transform = transform;
 
-    if (m_view_transform_ubo && m_view_transform_ubo->get_mapped_ptr()) {
+    if (m_render_transform_ubo && m_render_transform_ubo->get_mapped_ptr()) {
         std::memcpy(
-            m_view_transform_ubo->get_mapped_ptr(),
-            &vt,
-            sizeof(Kinesis::ViewTransform));
+            m_render_transform_ubo->get_mapped_ptr(),
+            &m_published_render_transform,
+            sizeof(Kinesis::RenderTransform));
     }
 
-    return m_published_view_transform;
+    return m_published_render_transform;
 }
 
 void RenderProcessor::set_triangulate(bool enabled)
@@ -566,7 +581,7 @@ uint32_t RenderProcessor::mill_runs(const std::shared_ptr<VKBuffer>& buffer, Por
 
     const Portal::Graphics::MillView view {
         .eye = m_view_transform_active
-            ? glm::vec3(glm::inverse(published_view_transform().view)[3])
+            ? glm::vec3(glm::inverse(publish_render_transform().view_transform.view)[3])
             : glm::vec3(0.0F, 0.0F, 1.0e4F)
     };
 
@@ -638,7 +653,7 @@ void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
         return;
     }
 
-    publish_view_transform();
+    publish_render_transform();
     prepare_geometry(buffer, *state);
     record_draw(buffer, *state);
 }
@@ -699,16 +714,16 @@ void RenderProcessor::record_draw(const std::shared_ptr<VKBuffer>& buffer, const
     for (const auto& binding : engine_bindings) {
         if (binding.set == 0 && binding.binding == 0) {
             MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                "Engine SSBO at binding=0 is reserved for ViewTransform UBO");
+                "Engine SSBO at binding=0 is reserved for RenderTransform UBO");
             continue;
         }
-        if (m_view_transform_descriptor_set_id == Portal::Graphics::INVALID_DESCRIPTOR_SET) {
+        if (m_render_transform_descriptor_set_id == Portal::Graphics::INVALID_DESCRIPTOR_SET) {
             MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
                 "Engine SSBO binding {} skipped: engine descriptor set not allocated", binding.binding);
             continue;
         }
         foundry.update_descriptor_buffer(
-            m_view_transform_descriptor_set_id,
+            m_render_transform_descriptor_set_id,
             binding.binding,
             binding.type,
             binding.buffer_info.buffer,
@@ -740,10 +755,10 @@ void RenderProcessor::record_draw(const std::shared_ptr<VKBuffer>& buffer, const
         flow.bind_descriptor_sets(cmd_id, m_pipeline_id, m_descriptor_set_ids);
     }
 
-    if (m_view_transform_descriptor_set_id != Portal::Graphics::INVALID_DESCRIPTOR_SET) {
+    if (m_render_transform_descriptor_set_id != Portal::Graphics::INVALID_DESCRIPTOR_SET) {
         flow.bind_descriptor_sets(
             cmd_id, m_pipeline_id,
-            { m_view_transform_descriptor_set_id },
+            { m_render_transform_descriptor_set_id },
             0);
     }
 
@@ -902,8 +917,8 @@ void RenderProcessor::cleanup()
     m_last_milled_vertex_count = 0;
     m_runs.clear();
 
-    m_view_transform_ubo.reset();
-    m_view_transform_descriptor_set_id = Portal::Graphics::INVALID_DESCRIPTOR_SET;
+    m_render_transform_ubo.reset();
+    m_render_transform_descriptor_set_id = Portal::Graphics::INVALID_DESCRIPTOR_SET;
     m_view_transform_active = false;
 
     if (m_target_window) {
