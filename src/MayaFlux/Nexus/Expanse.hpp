@@ -49,7 +49,8 @@ struct CrossingContext {
  * before any crossing action. Typed actions and perceptions are runtime objects
  * and are not part of encoded state.
  *
- * The id is assigned by Fabric on registration.
+ * The id is assigned at construction and is the same on every Fabric the
+ * Expanse is registered on.
  */
 class MAYAFLUX_API Expanse {
 public:
@@ -169,7 +170,7 @@ public:
     /** @brief Set or replace the on_exit callable identifier. */
     void set_on_exit_fn_name(std::string name) { m_on_exit_fn_name = std::move(name); }
 
-    /** @brief Stable id assigned by Fabric on registration. */
+    /** @brief Id assigned at construction. Unique across Expanses and stable for its lifetime. */
     [[nodiscard]] uint32_t id() const { return m_id; }
 
     /** @brief Entity ids inside this Expanse for @p fabric_id, or nullptr if that fabric has no occupants. */
@@ -337,10 +338,10 @@ private:
     Actions m_insides;
     std::vector<std::pair<std::shared_ptr<void>, PerceptionFn>> m_perceptions;
 
-    uint32_t m_id { 0 };
-    std::unordered_map<uint32_t, std::unordered_set<uint32_t>> m_occupants_by_fabric;
+    static uint32_t allocate_id();
 
-    friend class Fabric;
+    uint32_t m_id { allocate_id() };
+    std::unordered_map<uint32_t, std::unordered_set<uint32_t>> m_occupants_by_fabric;
 };
 
 } // namespace MayaFlux::Nexus

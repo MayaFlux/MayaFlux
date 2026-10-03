@@ -4,6 +4,12 @@
 
 namespace MayaFlux::Nexus {
 
+uint32_t Expanse::allocate_id()
+{
+    static std::atomic<uint32_t> next { 1 };
+    return next.fetch_add(1, std::memory_order_relaxed);
+}
+
 void Expanse::evaluate(uint32_t fabric_id,
     std::span<const std::pair<uint32_t, glm::vec3>> snapshot)
 {

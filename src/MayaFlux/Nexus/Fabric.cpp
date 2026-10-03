@@ -99,8 +99,7 @@ void Fabric::remove(uint32_t id)
 
 uint32_t Fabric::add_expanse(std::shared_ptr<Expanse> expanse)
 {
-    const uint32_t id = m_next_id++;
-    expanse->m_id = id;
+    const uint32_t id = expanse->id();
     m_expanses.try_emplace(id, std::move(expanse));
     return id;
 }
