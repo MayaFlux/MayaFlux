@@ -192,7 +192,21 @@ void Fabric::commit()
     m_index->publish();
 
     if (!m_expanses.empty()) {
-        const auto snapshot = m_index->all();
+        std::unordered_map<uint32_t, uint32_t> entity_of;
+        entity_of.reserve(m_registrations.size());
+        for (const auto& [id, reg] : m_registrations) {
+            if (reg.spatial_id.has_value()) {
+                entity_of.emplace(*reg.spatial_id, id);
+            }
+        }
+
+        auto snapshot = m_index->all();
+        for (auto& [spatial_id, position] : snapshot) {
+            if (const auto it = entity_of.find(spatial_id); it != entity_of.end()) {
+                spatial_id = it->second;
+            }
+        }
+
         for (auto& [xid, expanse] : m_expanses)
             expanse->evaluate(m_fabric_id, snapshot);
     }
