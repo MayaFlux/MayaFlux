@@ -21,6 +21,7 @@ namespace Core {
 
 namespace IO {
     class IOManager;
+    struct VideoLoadConfig;
     struct ImageWriteOptions;
     struct VolumeWriteOptions;
     struct ModelWriteOptions;
@@ -105,12 +106,20 @@ MAYAFLUX_API std::shared_ptr<Kakshya::SoundFileContainer> choose_audio();
 
 /**
  * @brief Present a native open-file dialog filtered to video formats and load
- *        the chosen file via IOManager::load_video().
+ *        the chosen file via IOManager::load_video(path, config).
  *
- * Blocks until the user confirms or cancels. Returns nullptr on cancellation,
+ * Returns IO::VideoLoadResult: the video container, then its audio. With
+ * VideoReadOptions::EXTRACT_AUDIO in config.video_options the audio track is
+ * decoded and returned; otherwise, or for a file with no audio track, the audio
+ * is nullptr.
+ *
+ * Blocks until the user confirms or cancels. Both are nullptr on cancellation,
  * backend error, or if Portal::System is not initialized.
+ *
+ * @param config Load options forwarded to IOManager::load_video.
  */
-MAYAFLUX_API std::shared_ptr<Kakshya::VideoFileContainer> choose_video();
+MAYAFLUX_API std::pair<std::shared_ptr<Kakshya::VideoFileContainer>, std::shared_ptr<Kakshya::SoundFileContainer>>
+choose_video(const IO::VideoLoadConfig& config);
 
 /**
  * @brief Present a native open-file dialog filtered to image formats and load

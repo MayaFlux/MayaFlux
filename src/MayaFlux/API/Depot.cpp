@@ -158,13 +158,13 @@ std::shared_ptr<Kakshya::SoundFileContainer> choose_audio()
         k_audio_open_filters);
 }
 
-std::shared_ptr<Kakshya::VideoFileContainer> choose_video()
+IO::VideoLoadResult choose_video(const IO::VideoLoadConfig& config)
 {
     if (!require_portal("choose_video"))
-        return nullptr;
+        return {};
 
-    return Portal::System::Dialog::open_file<std::shared_ptr<Kakshya::VideoFileContainer>>(
-        [](const fs::path& p) { return get_io_manager()->load_video(p.string()); },
+    return Portal::System::Dialog::open_file<IO::VideoLoadResult>(
+        [config](const fs::path& p) { return get_io_manager()->load_video(p.string(), config); },
         [](Core::SystemDialogError) { },
         k_video_filters);
 }
