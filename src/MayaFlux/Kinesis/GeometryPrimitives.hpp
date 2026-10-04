@@ -433,6 +433,36 @@ struct QuadGeometry {
     uint32_t v_segs);
 
 /**
+ * @brief Generate a mesh from the graph of a function sampled on a grid, y = f(x, z).
+ *
+ * @p heights holds one value per grid point, row-major, @p columns values along X
+ * for each of @p rows steps along Z. The surface is centred on @p center and spans
+ * @p extent in X and Z. Normals and tangents come from central differences of the
+ * heights, so they follow the surface and are never degenerate. The raw height is
+ * stored in each vertex's weight. UV runs (0, 1) at the first row and first column.
+ *
+ * Use it where the data is already a table of values: a sound's recent blocks,
+ * an image's brightness, a spectrogram, a column of a file. The triangle indices
+ * depend only on the grid size and are reused between calls, so regenerating every
+ * frame costs one pass over the heights; large grids are filled in parallel.
+ *
+ * @param heights       columns * rows values.
+ * @param columns       Grid points along X. Minimum 2.
+ * @param rows          Grid points along Z. Minimum 2.
+ * @param extent        World size in X and Z.
+ * @param height_scale  Multiplier from a height to a world Y offset.
+ * @param center        World position of the middle of the grid at zero height.
+ * @return MeshData ready for TRIANGLE_LIST draw, empty and logged if the sizes disagree.
+ */
+[[nodiscard]] MAYAFLUX_API Kakshya::MeshData generate_explicit_surface(
+    std::span<const float> heights,
+    uint32_t columns,
+    uint32_t rows,
+    const glm::vec2& extent,
+    float height_scale = 1.0F,
+    const glm::vec3& center = glm::vec3(0.0F));
+
+/**
  * @brief Extrude a circle along an arbitrary 3D path.
  *
  * Each path point becomes a ring of @p radial_segments vertices. The ring
