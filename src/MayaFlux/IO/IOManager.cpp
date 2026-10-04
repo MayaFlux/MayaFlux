@@ -193,11 +193,12 @@ void IOManager::shutdown()
 std::shared_ptr<Kakshya::VideoFileContainer>
 IOManager::load_video(const std::string& filepath)
 {
-    return load_video(filepath, {}).video;
+    auto [video, audio] = load_video(filepath, {});
+    return std::move(video);
 }
 
 VideoLoadResult
-IOManager::load_video(const std::string& filepath, LoadConfig config)
+IOManager::load_video(const std::string& filepath, VideoLoadConfig config)
 {
     auto reader = std::make_shared<IO::VideoFileReader>();
 
@@ -242,14 +243,12 @@ IOManager::load_video(const std::string& filepath, LoadConfig config)
 
     configure_frame_processor(video_container);
 
-    VideoLoadResult result;
-    result.video = video_container;
+    std::shared_ptr<Kakshya::SoundFileContainer> audio_container;
 
     if ((config.video_options & IO::VideoReadOptions::EXTRACT_AUDIO) == IO::VideoReadOptions::EXTRACT_AUDIO) {
-        auto audio_container = reader->get_audio_container();
+        audio_container = reader->get_audio_container();
         if (audio_container) {
             configure_audio_processor(audio_container);
-            result.audio = audio_container;
             m_extracted_audio[video_container] = audio_container;
         } else {
             MF_WARN(Journal::Component::API, Journal::Context::FileIO,
@@ -260,7 +259,7 @@ IOManager::load_video(const std::string& filepath, LoadConfig config)
     MF_INFO(Journal::Component::API, Journal::Context::FileIO,
         "Loaded video: {}", filepath);
 
-    return result;
+    return { std::move(video_container), std::move(audio_container) };
 }
 
 uint64_t IOManager::register_video_reader(std::shared_ptr<IO::VideoFileReader> reader)
@@ -368,7 +367,7 @@ void IOManager::release_camera_source(uint64_t reader_id)
         "IOManager: released CameraSource id={}", reader_id);
 }
 
-std::shared_ptr<Kakshya::SoundFileContainer> IOManager::load_audio(const std::string& filepath, LoadConfig config)
+std::shared_ptr<Kakshya::SoundFileContainer> IOManager::load_audio(const std::string& filepath, VideoLoadConfig config)
 {
     auto reader = std::make_shared<IO::SoundFileReader>();
 

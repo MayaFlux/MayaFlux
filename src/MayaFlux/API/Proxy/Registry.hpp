@@ -91,7 +91,7 @@ namespace Core {
 }
 
 namespace IO {
-    struct LoadConfig;
+    struct VideoLoadConfig;
 }
 
 }

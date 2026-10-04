@@ -69,7 +69,7 @@ class CompositeWriter;
 class VideoFileWriter;
 class VolumeCapture;
 
-struct LoadConfig {
+struct VideoLoadConfig {
     FileReadOptions file_options { FileReadOptions::EXTRACT_METADATA | FileReadOptions::EXTRACT_REGIONS };
     AudioReadOptions audio_options { AudioReadOptions::DEINTERLEAVE };
     VideoReadOptions video_options {};
@@ -78,17 +78,15 @@ struct LoadConfig {
 };
 
 /**
- * @struct VideoLoadResult
- * @brief Result of load_video() when audio extraction is requested via
- *        VideoReadOptions::EXTRACT_AUDIO.
+ * @brief Result of load_video(path, config): the video container, then its audio.
  *
- * @c audio is nullptr if the file has no audio track or EXTRACT_AUDIO was
- * not set in the options passed to load_video().
+ * Read it as `auto [video, audio] = load_video(path, config);`. The audio is
+ * nullptr if the file has no audio track or VideoReadOptions::EXTRACT_AUDIO was
+ * not set in the config. Both are nullptr on failure.
  */
-struct VideoLoadResult {
-    std::shared_ptr<Kakshya::VideoFileContainer> video;
-    std::shared_ptr<Kakshya::SoundFileContainer> audio;
-};
+using VideoLoadResult = std::pair<
+    std::shared_ptr<Kakshya::VideoFileContainer>,
+    std::shared_ptr<Kakshya::SoundFileContainer>>;
 
 /**
  * @class IOManager
@@ -192,14 +190,14 @@ public:
      *
      * Passing VideoReadOptions::EXTRACT_AUDIO also extracts the embedded
      * SoundFileContainer, configures its ContiguousAccessProcessor identically
-     * to load_audio_file() in Depot, and populates VideoLoadResult::audio.
+     * to load_audio_file() in Depot, and fills the audio half of the result.
      *
      * @param filepath Path to the video file.
-     * @param config LoadConfig struct containing options and target dimensions.
-     * @return VideoLoadResult containing video container and optional audio container.
+     * @param config VideoLoadConfig containing options and target dimensions.
+     * @return The video container and, if requested and present, its audio container.
      */
     [[nodiscard]] VideoLoadResult load_video(
-        const std::string& filepath, LoadConfig config);
+        const std::string& filepath, VideoLoadConfig config);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Video — hook
@@ -248,7 +246,7 @@ public:
      * @param config LoadConfig struct containing audio read options.
      * @return Loaded SoundFileContainer, or nullptr on failure.
      */
-    [[nodiscard]] std::shared_ptr<Kakshya::SoundFileContainer> load_audio(const std::string& filepath, LoadConfig config = {});
+    [[nodiscard]] std::shared_ptr<Kakshya::SoundFileContainer> load_audio(const std::string& filepath, VideoLoadConfig config = {});
 
     /**
      * @brief Load an audio file into a fully resident, size-bounded DynamicSoundStream.
