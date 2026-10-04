@@ -59,8 +59,44 @@ void RaymarchProcessor::write_lattice_params()
     m_params.cell_size_z = cell.z;
 }
 
-void RaymarchProcessor::set_max_steps(uint32_t steps) { m_params.max_steps = steps; }
-void RaymarchProcessor::set_step_scale(float scale) { m_params.step_scale = scale; }
+uint32_t RaymarchProcessor::auto_steps() const
+{
+    constexpr uint32_t k_cap = 512;
+
+    const glm::vec3 cell = m_lattice.cell_size();
+    const float step = std::min({ cell.x, cell.y, cell.z }) * std::max(m_params.step_scale, 1e-3F);
+    const float span = glm::length(m_lattice.bounds.max - m_lattice.bounds.min);
+
+    return std::min(k_cap, static_cast<uint32_t>(std::ceil(span / step)) + 1U);
+}
+
+void RaymarchProcessor::set_max_steps(uint32_t steps)
+{
+    m_params.max_steps = steps;
+    m_auto_steps = false;
+}
+
+void RaymarchProcessor::set_step_scale(float scale)
+{
+    m_params.step_scale = scale;
+    if (m_auto_steps) {
+        m_params.max_steps = auto_steps();
+    }
+}
+
+void RaymarchProcessor::configure(const MarchConfig& config)
+{
+    m_params.step_scale = config.step_scale;
+    m_params.density_scale = config.density_scale;
+    m_params.absorption = config.absorption;
+    m_params.emission = config.emission;
+    m_params.threshold = config.threshold;
+    set_emission_ramp(config.cool, config.hot);
+
+    m_auto_steps = config.max_steps == 0;
+    m_params.max_steps = m_auto_steps ? auto_steps() : config.max_steps;
+}
+
 void RaymarchProcessor::set_density_scale(float scale) { m_params.density_scale = scale; }
 void RaymarchProcessor::set_absorption(float absorption) { m_params.absorption = absorption; }
 void RaymarchProcessor::set_emission(float emission) { m_params.emission = emission; }

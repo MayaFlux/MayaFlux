@@ -296,6 +296,23 @@ void VolumeGridBuffer::setup_rendering(const RenderConfig& config)
     set_needs_depth_attachment(true);
 }
 
+std::shared_ptr<InfluxProcessor> VolumeGridBuffer::influx(
+    const std::string& field,
+    const InfluxProcessor::Spot& spot,
+    const std::string& shader)
+{
+    auto chain = get_processing_chain();
+    if (!chain) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
+            "influx: no processing chain, call after registration");
+        return nullptr;
+    }
+
+    auto stage = std::make_shared<InfluxProcessor>(field, shader, spot);
+    chain->add_processor(stage, std::dynamic_pointer_cast<VolumeGridBuffer>(shared_from_this()));
+    return stage;
+}
+
 VolumeGridBuffer::FlowStages VolumeGridBuffer::setup_flow(const FlowConfig& config)
 {
     FlowStages stages;
