@@ -45,12 +45,17 @@ enum NodeState : uint32_t {
     ACTIVE = 0x01, ///< Engine is processing this node
     PENDING_REMOVAL = 0x02, ///< Node is marked for removal
 
-    MOCK_PROCESS = 0x04, ///< Node should be processed but output ignored
+    OUTPUT_EXCLUDED = 0x04, ///< Node is processed but its output is left out of the graph
     PROCESSED = 0x08, ///< Node has been processed this cycle
 
     ENGINE_PROCESSED = ACTIVE | PROCESSED, ///< Engine has processed this node
     EXTERMAL_PROCESSED = INACTIVE | PROCESSED, ///< External source has processed this node
-    ENGINE_MOCK_PROCESSED = ACTIVE | MOCK_PROCESS | PROCESSED, ///< Engine has mock processed this node
+    ENGINE_OUTPUT_EXCLUDED_PROCESSED = ACTIVE | OUTPUT_EXCLUDED | PROCESSED, ///< Engine has processed this node with its output excluded
+
+    MOCK_PROCESS [[deprecated("use OUTPUT_EXCLUDED")]] = OUTPUT_EXCLUDED,
+    ENGINE_MOCK_PROCESSED [[deprecated("use ENGINE_OUTPUT_EXCLUDED_PROCESSED")]] = ENGINE_OUTPUT_EXCLUDED_PROCESSED,
+    OUTPUT_HIDDEN [[deprecated("use OUTPUT_EXCLUDED")]] = OUTPUT_EXCLUDED,
+    ENGINE_OUTPUT_HIDDEN_PROCESSED [[deprecated("use ENGINE_OUTPUT_EXCLUDED_PROCESSED")]] = ENGINE_OUTPUT_EXCLUDED_PROCESSED,
 };
 
 /**

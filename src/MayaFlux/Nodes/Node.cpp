@@ -2,18 +2,18 @@
 
 namespace MayaFlux::Nodes {
 
-void Node::enable_mock_process(bool mock_process)
+void Node::exclude_output_from_graph(bool excluded)
 {
-    if (mock_process) {
-        atomic_add_flag(m_state, NodeState::MOCK_PROCESS);
+    if (excluded) {
+        atomic_add_flag(m_state, NodeState::OUTPUT_EXCLUDED);
     } else {
-        atomic_remove_flag(m_state, NodeState::MOCK_PROCESS);
+        atomic_remove_flag(m_state, NodeState::OUTPUT_EXCLUDED);
     }
 }
 
-bool Node::should_mock_process() const
+bool Node::is_output_excluded_from_graph() const
 {
-    return m_state.load() & NodeState::MOCK_PROCESS;
+    return m_state.load() & NodeState::OUTPUT_EXCLUDED;
 }
 
 void Node::on_tick(const NodeHook& callback)

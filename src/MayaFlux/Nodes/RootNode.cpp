@@ -121,14 +121,14 @@ double RootNode::process_sample()
         double node_output = 0.0;
 
         if (!(state & NodeState::PROCESSED)) {
-            if (node->should_mock_process()) {
-                node->process_sample();
-            } else {
-                node_output = node->process_sample();
-            }
+            node_output = node->process_sample();
             atomic_add_flag(node->m_state, NodeState::PROCESSED);
         } else {
             node_output = node->get_last_output();
+        }
+
+        if (node->is_output_excluded_from_graph()) {
+            continue;
         }
 
         if (node->needs_channel_routing()) {

@@ -267,24 +267,30 @@ public:
     inline virtual double get_last_output() { return m_last_output; }
 
     /**
-     * @brief Allows RootNode to process the Generator without using the processed sample
-     * @param bMock_process True to mock process, false to process normally
+     * @brief Exclude this node's output from the graph it is registered in.
+     * @param excluded True to process the node without adding its output to the graph, false to restore.
      *
-     * NOTE: This has no effect on the behaviour of process_sample (or process_batch).
-     * This is ONLY used by the RootNode when processing the node graph.
-     * If the output of the Generator needs to be ignored elsewhere, simply discard the return value.
-     *
-     * Calling process manually can be cumbersome. Using a coroutine just to call process
-     * is overkill. This method allows the RootNode to process the Generator without
-     * using the processed sample, which is useful for mocking processing.
+     * The node is processed every cycle as usual: its state advances, its hooks fire and
+     * get_last_output() stays valid for anything that reads it. Only its contribution to the
+     * sum of the root it is registered on is left out. Calls to process_sample() or
+     * process_batch() are not affected.
      */
-    virtual void enable_mock_process(bool mock_process);
+    virtual void exclude_output_from_graph(bool excluded = true);
 
-    /**
-     * @brief Checks if the generator should mock process
-     * @return True if the generator should mock process, false otherwise
-     */
-    [[nodiscard]] virtual bool should_mock_process() const;
+    /** @brief True if the node's output is excluded from the graph. */
+    [[nodiscard]] virtual bool is_output_excluded_from_graph() const;
+
+    /** @brief Old name of exclude_output_from_graph(). */
+    [[deprecated("use exclude_output_from_graph")]] void enable_mock_process(bool mock_process)
+    {
+        exclude_output_from_graph(mock_process);
+    }
+
+    /** @brief Old name of is_output_excluded_from_graph(). */
+    [[deprecated("use is_output_excluded_from_graph")]] [[nodiscard]] bool should_mock_process() const
+    {
+        return is_output_excluded_from_graph();
+    }
 
     /**
      * @brief Mark the specificed channel as a processor/user
@@ -514,7 +520,7 @@ public:
      * - ACTIVE: Currently part of the processing graph
      * - PROCESSED: Has been processed in the current cycle
      * - PENDING_REMOVAL: Marked for removal from the processing graph
-     * - MOCK_PROCESS: Should be processed but output ignored
+     * - OUTPUT_EXCLUDED: Processed as usual but its output is left out of the graph
      *
      * The atomic nature ensures thread-safe state transitions, allowing the audio
      * engine to safely coordinate processing across multiple threads without data races.
