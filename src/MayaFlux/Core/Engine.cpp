@@ -17,6 +17,7 @@
 #ifdef MAYAFLUX_PLATFORM_MACOS
 #include <CoreFoundation/CoreFoundation.h>
 #include <csignal>
+#include <future>
 #include <unistd.h>
 #endif
 
@@ -317,6 +318,28 @@ void Engine::run_macos_event_loop()
 }
 #endif
 
+void Engine::stop_subsystems()
+{
+    if (!m_subsystem_manager) {
+        return;
+    }
+
+#ifdef MAYAFLUX_PLATFORM_MACOS
+    if (CFRunLoopGetCurrent() == CFRunLoopGetMain()) {
+        auto stopped = std::async(std::launch::async, [this]() {
+            m_subsystem_manager->stop();
+        });
+        while (stopped.wait_for(std::chrono::milliseconds(0)) != std::future_status::ready) {
+            CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0.01, false);
+        }
+        stopped.get();
+        return;
+    }
+#endif
+
+    m_subsystem_manager->stop();
+}
+
 void Engine::End()
 {
     if (!m_is_initialized)
@@ -338,9 +361,7 @@ void Engine::End()
         m_io_manager->shutdown();
     }
 
-    if (m_subsystem_manager) {
-        m_subsystem_manager->stop();
-    }
+    stop_subsystems();
 
     if (m_scheduler) {
         m_scheduler->terminate_all_tasks();

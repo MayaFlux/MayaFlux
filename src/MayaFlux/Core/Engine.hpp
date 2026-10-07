@@ -406,6 +406,11 @@ private:
     std::shared_ptr<IO::IOManager> m_io_manager; ///< IO manager for video/audio loading and dispatch
     std::unique_ptr<Kinesis::Stochastic::Stochastic> m_stochastic_engine; ///< Core stochastic engine for random generation
 
+    /**
+     * @brief Stops subsystems while servicing required main thread work on macOS.
+     */
+    void stop_subsystems();
+
 #ifdef MAYAFLUX_PLATFORM_MACOS
     void run_macos_event_loop();
 #endif
