@@ -158,6 +158,19 @@ std::shared_ptr<Kakshya::SoundFileContainer> choose_audio()
         k_audio_open_filters);
 }
 
+std::shared_ptr<Kakshya::DynamicSoundStream> choose_audio_bounded(uint64_t max_frames, bool truncate)
+{
+    if (!require_portal("choose_audio_bounded"))
+        return nullptr;
+
+    return Portal::System::Dialog::open_file<std::shared_ptr<Kakshya::DynamicSoundStream>>(
+        [max_frames, truncate](const fs::path& p) {
+            return get_io_manager()->load_audio_bounded(p.string(), max_frames, truncate);
+        },
+        [](Core::SystemDialogError) { },
+        k_audio_open_filters);
+}
+
 IO::VideoLoadResult choose_video(const IO::VideoLoadConfig& config)
 {
     if (!require_portal("choose_video"))
@@ -187,6 +200,20 @@ std::shared_ptr<Kakshya::CompositeContainer> choose_composite()
 
     return Portal::System::Dialog::open_file<std::shared_ptr<Kakshya::CompositeContainer>>(
         [](const fs::path& p) { return get_io_manager()->load_composite(p.string()); },
+        [](Core::SystemDialogError) { },
+        k_composite_filters);
+}
+
+std::shared_ptr<Kakshya::CompositeContainer> choose_composite(
+    const Kakshya::CompositeLayout& layout, size_t batch_size)
+{
+    if (!require_portal("choose_composite"))
+        return nullptr;
+
+    return Portal::System::Dialog::open_file<std::shared_ptr<Kakshya::CompositeContainer>>(
+        [&layout, batch_size](const fs::path& p) {
+            return get_io_manager()->load_composite(p.string(), layout, batch_size);
+        },
         [](Core::SystemDialogError) { },
         k_composite_filters);
 }

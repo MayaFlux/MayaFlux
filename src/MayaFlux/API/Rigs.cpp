@@ -67,6 +67,41 @@ std::shared_ptr<Kriya::SamplingPipeline> create_sampler_from_stream(
     return sampler;
 }
 
+namespace {
+
+    std::vector<std::shared_ptr<Kriya::SamplingPipeline>> samplers_from_stream(
+        const std::shared_ptr<Kakshya::DynamicSoundStream>& stream,
+        uint64_t max_dur_ms, uint32_t max_channels)
+    {
+        const uint32_t ch_count = (max_channels == 0)
+            ? stream->get_num_channels()
+            : std::min(max_channels, stream->get_num_channels());
+
+        std::vector<std::shared_ptr<Kriya::SamplingPipeline>> result;
+        result.reserve(ch_count);
+
+        for (uint32_t i = 0; i < ch_count; ++i)
+            result.push_back(create_sampler_from_stream(stream, i, max_dur_ms));
+
+        return result;
+    }
+
+} // namespace
+
+std::shared_ptr<Kriya::SamplingPipeline> create_sampler(
+    uint32_t num_samples, bool truncate, uint32_t channel, uint64_t max_dur_ms)
+{
+    auto stream = choose_audio_bounded(num_samples, truncate);
+
+    if (!stream) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "create_sampler: no file chosen");
+        return nullptr;
+    }
+
+    return create_sampler_from_stream(std::move(stream), channel, max_dur_ms);
+}
+
 std::vector<std::shared_ptr<Kriya::SamplingPipeline>> create_samplers(
     const std::string& filepath, uint32_t num_samples, bool truncate,
     uint64_t max_dur_ms, uint32_t max_channels)
@@ -79,17 +114,21 @@ std::vector<std::shared_ptr<Kriya::SamplingPipeline>> create_samplers(
         return {};
     }
 
-    const uint32_t ch_count = (max_channels == 0)
-        ? stream->get_num_channels()
-        : std::min(max_channels, stream->get_num_channels());
+    return samplers_from_stream(stream, max_dur_ms, max_channels);
+}
 
-    std::vector<std::shared_ptr<Kriya::SamplingPipeline>> result;
-    result.reserve(ch_count);
+std::vector<std::shared_ptr<Kriya::SamplingPipeline>> create_samplers(
+    uint32_t num_samples, bool truncate, uint64_t max_dur_ms, uint32_t max_channels)
+{
+    auto stream = choose_audio_bounded(num_samples, truncate);
 
-    for (uint32_t i = 0; i < ch_count; ++i)
-        result.push_back(create_sampler_from_stream(stream, i, max_dur_ms));
+    if (!stream) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "create_samplers: no file chosen");
+        return {};
+    }
 
-    return result;
+    return samplers_from_stream(stream, max_dur_ms, max_channels);
 }
 
 Kriya::TapSetBuilder create_tap_set(
@@ -100,6 +139,18 @@ Kriya::TapSetBuilder create_tap_set(
     if (!stream) {
         MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
             "create_tap_set: failed to load '{}'", filepath);
+    }
+
+    return create_tap_set_from_stream(std::move(stream));
+}
+
+Kriya::TapSetBuilder create_tap_set(uint32_t num_samples, bool truncate)
+{
+    auto stream = choose_audio_bounded(num_samples, truncate);
+
+    if (!stream) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "create_tap_set: no file chosen");
     }
 
     return create_tap_set_from_stream(std::move(stream));
