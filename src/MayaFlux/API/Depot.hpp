@@ -21,6 +21,7 @@ namespace Core {
 
 namespace IO {
     class IOManager;
+    struct VideoLoadConfig;
     struct ImageWriteOptions;
     struct VolumeWriteOptions;
     struct ModelWriteOptions;
@@ -30,8 +31,10 @@ namespace IO {
 
 namespace Kakshya {
     class CompositeContainer;
+    class CompositeLayout;
     class SoundStreamContainer;
     class SoundFileContainer;
+    class DynamicSoundStream;
     class SignalSourceContainer;
     class VideoFileContainer;
 }
@@ -104,13 +107,34 @@ MAYAFLUX_API bool is_composite(const std::filesystem::path& filepath);
 MAYAFLUX_API std::shared_ptr<Kakshya::SoundFileContainer> choose_audio();
 
 /**
- * @brief Present a native open-file dialog filtered to video formats and load
- *        the chosen file via IOManager::load_video().
+ * @brief Present a native open-file dialog filtered to audio formats and load
+ *        the chosen file via IOManager::load_audio_bounded().
  *
  * Blocks until the user confirms or cancels. Returns nullptr on cancellation,
  * backend error, or if Portal::System is not initialized.
+ *
+ * @param max_frames Upper bound on frame count. 0 loads five seconds.
+ * @param truncate   If true, truncate files longer than max_frames.
  */
-MAYAFLUX_API std::shared_ptr<Kakshya::VideoFileContainer> choose_video();
+MAYAFLUX_API std::shared_ptr<Kakshya::DynamicSoundStream> choose_audio_bounded(
+    uint64_t max_frames = 0, bool truncate = false);
+
+/**
+ * @brief Present a native open-file dialog filtered to video formats and load
+ *        the chosen file via IOManager::load_video(path, config).
+ *
+ * Returns IO::VideoLoadResult: the video container, then its audio. With
+ * VideoReadOptions::EXTRACT_AUDIO in config.video_options the audio track is
+ * decoded and returned; otherwise, or for a file with no audio track, the audio
+ * is nullptr.
+ *
+ * Blocks until the user confirms or cancels. Both are nullptr on cancellation,
+ * backend error, or if Portal::System is not initialized.
+ *
+ * @param config Load options forwarded to IOManager::load_video.
+ */
+MAYAFLUX_API std::pair<std::shared_ptr<Kakshya::VideoFileContainer>, std::shared_ptr<Kakshya::SoundFileContainer>>
+choose_video(const IO::VideoLoadConfig& config);
 
 /**
  * @brief Present a native open-file dialog filtered to image formats and load
@@ -124,12 +148,24 @@ MAYAFLUX_API std::shared_ptr<Buffers::TextureBuffer> choose_image();
 /**
  * @brief Choose a CSV or TSV file and load it as a CompositeContainer.
  *
- * Uses the reader's default text-field layout. For an exact numeric layout
- * or bounded reading, use IOManager directly.
+ * Every field is UTF-8 text. For bounded reading of large files, use
+ * IOManager directly.
  *
  * @return Loaded container, or nullptr on cancellation or failure.
  */
 MAYAFLUX_API std::shared_ptr<Kakshya::CompositeContainer> choose_composite();
+
+/**
+ * @brief Choose a CSV or TSV file and load it with an exact field layout.
+ *
+ * Mirrors IOManager::load_composite(path, layout, batch_size).
+ *
+ * @param layout     Field layout for typed CSV/TSV values.
+ * @param batch_size Container materialization batch size.
+ * @return Loaded container, or nullptr on cancellation or failure.
+ */
+MAYAFLUX_API std::shared_ptr<Kakshya::CompositeContainer> choose_composite(
+    const Kakshya::CompositeLayout& layout, size_t batch_size = 1);
 
 /**
  * @brief Present a native open-file dialog filtered to 3D model formats and load

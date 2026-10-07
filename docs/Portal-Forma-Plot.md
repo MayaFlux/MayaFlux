@@ -217,7 +217,7 @@ The data source is bound at container construction time. How often the series
 updates depends on the source type:
 
 **Node**: `process_default()` calls `extract_multiple_samples(node, N)` each
-frame. The node must be processing (mock process enabled or connected to a
+frame. The node must be processing (output excluded from the graph, or connected to a
 running audio graph).
 
 **Callable**: `process_default()` calls `fn(series_vector)` each frame. The
@@ -384,7 +384,7 @@ No `schedule_metro` needed for static data.
 ```cpp
 auto mod  = vega.Random();
 auto sine = vega.Sine(2) | Audio[0];
-sine->enable_mock_process(true);
+sine->exclude_output_from_graph();
 sine->set_amplitude_modulator(mod);
 
 auto [el, _] = Portal::Forma::plot("FM", 1280, 720,

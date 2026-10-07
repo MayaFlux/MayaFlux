@@ -75,7 +75,6 @@ A MayaFlux program has two entry points defined in `src/user_project.hpp`:
 
 ```cpp
 #pragma once
-#define MAYASIMPLE
 #include "MayaFlux/MayaFlux.hpp"
 
 void settings() {
@@ -95,9 +94,7 @@ void compose() {
 
 `main.cpp` calls `Init()`, `settings()`, `Start()`, `compose()`, `Await()`, and `End()` in order. You do not edit it unless you need custom engine configuration beyond what `settings()` exposes.
 
-### MAYASIMPLE
-
-Defining `MAYASIMPLE` before including `MayaFlux.hpp` pulls in the full concrete type set and brings all MayaFlux namespaces into scope. Without it you get the API surface only. User projects built via Weave define it by default.
+`MayaFlux.hpp` includes the common concrete types and namespace imports by default, so the examples can use names such as `Sine` without extra includes. To keep the global namespace clear and include only the types you use, define `MAYAFLUX_NO_CONVENIENCE` before including `MayaFlux.hpp`.
 
 ### The `vega` global
 
@@ -121,7 +118,6 @@ The example below is complete and runnable. It loads a texture, generates a para
 
 ```cpp
 #pragma once
-#define MAYASIMPLE
 #include "MayaFlux/MayaFlux.hpp"
 #include "MayaFlux/Nexus/Pheme/FieldTargets.hpp"
 #include "MayaFlux/Nexus/Tapestry.hpp"

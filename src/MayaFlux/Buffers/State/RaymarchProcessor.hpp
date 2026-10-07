@@ -78,6 +78,25 @@ public:
     static_assert(sizeof(MarchParams) % 16 == 0);
 
     /**
+     * @struct MarchConfig
+     * @brief Every march setting in one aggregate, for configure().
+     *
+     * Fields left out keep the processor's own defaults. A max_steps of zero
+     * means enough steps to cross the lattice diagonal at the step scale,
+     * capped at 512, and it follows later changes to the step scale.
+     */
+    struct MarchConfig {
+        uint32_t max_steps { 0 };
+        float step_scale { 0.5F };
+        float density_scale { 1.0F };
+        float absorption { 12.0F };
+        float emission { 2.2F };
+        glm::vec3 cool { 0.35F, 0.10F, 0.05F };
+        glm::vec3 hot { 1.0F, 0.82F, 0.45F };
+        float threshold { 0.02F };
+    };
+
+    /**
      * @brief Construct a march staging processor.
      * @param source Callable resolving the field handle each cycle.
      * @param field_bytes Byte size of one slot of that field.
@@ -139,6 +158,12 @@ public:
      */
     void set_threshold(float threshold);
 
+    /**
+     * @brief Replace every march setting at once.
+     * @param config Settings. Unnamed fields take their defaults, not the current values.
+     */
+    void configure(const MarchConfig& config);
+
     /** @brief The lattice the sampled field is stored over. */
     [[nodiscard]] const Kinesis::Lattice3D& get_lattice() const { return m_lattice; }
 
@@ -153,6 +178,11 @@ private:
      * @brief Write the lattice-derived words of the parameter block.
      */
     void write_lattice_params();
+
+    /**
+     * @brief Steps needed to cross the lattice diagonal at the current step scale, capped at 512.
+     */
+    [[nodiscard]] uint32_t auto_steps() const;
 
     /**
      * @brief Insert or replace the descriptor entry for the field handle.
@@ -174,6 +204,7 @@ private:
     uint32_t m_binding;
 
     MarchParams m_params {};
+    bool m_auto_steps { false };
 };
 
 } // namespace MayaFlux::Buffers

@@ -16,7 +16,11 @@ void settings() {
 }
 ```
 
-Fields absent from the file retain their defaults. A `--config-override path/to/file.json` flag on the launcher binary also loads a config file before `settings()` runs, which can be combined with in-code overrides afterward.
+Fields absent from the file retain their defaults.
+
+The launcher binary loads a config file for you, so no call is needed. It uses `mayaflux.json` in the project source folder if that file exists, or the file named by `--config path/to/file.json`. The file is read before `settings()` runs, so values set in `settings()` win.
+
+Pass `--config-override` (a flag, with no path) to reverse the order: `settings()` runs first and the file is loaded after it. The file then replaces every section, so anything it does not mention returns to its default. The same behaviour can be compiled in with the `MAYAFLUX_CONFIG_OVERRIDE` define.
 
 A complete file covering all four sections plus journal:
 

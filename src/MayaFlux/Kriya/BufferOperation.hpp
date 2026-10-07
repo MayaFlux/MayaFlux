@@ -27,7 +27,7 @@ namespace Kakshya {
 namespace IO {
     class IOManager;
     struct CameraConfig;
-    struct LoadConfig;
+    struct VideoLoadConfig;
 }
 
 namespace Kriya {
@@ -249,7 +249,7 @@ namespace Kriya {
         static BufferOperation capture_file(
             const std::shared_ptr<IO::IOManager>& io_manager,
             const std::string& filepath,
-            IO::LoadConfig config,
+            IO::VideoLoadConfig config,
             uint32_t cycle_count = 1,
             std::optional<Portal::Graphics::RenderConfig> render = std::nullopt);
 
@@ -272,7 +272,7 @@ namespace Kriya {
         static CaptureBuilder capture_file_from(
             const std::shared_ptr<IO::IOManager>& io_manager,
             const std::string& filepath,
-            IO::LoadConfig config,
+            IO::VideoLoadConfig config,
             std::optional<Portal::Graphics::RenderConfig> render = std::nullopt);
 
         /**
@@ -297,7 +297,7 @@ namespace Kriya {
             const std::shared_ptr<IO::IOManager>& io_manager,
             const std::string& filepath,
             std::shared_ptr<Kakshya::DynamicVideoStream> target_stream,
-            IO::LoadConfig config,
+            IO::VideoLoadConfig config,
             uint32_t cycle_count = 0,
             std::optional<Portal::Graphics::RenderConfig> render = std::nullopt);
 
@@ -337,7 +337,7 @@ namespace Kriya {
         static BufferOperation capture_to_stream(
             const std::shared_ptr<IO::IOManager>& io_manager,
             const std::string& filepath,
-            IO::LoadConfig config,
+            IO::VideoLoadConfig config,
             uint64_t ring_frames = 0,
             std::optional<Portal::Graphics::RenderConfig> live = std::nullopt,
             std::optional<Portal::Graphics::RenderConfig> display = std::nullopt);

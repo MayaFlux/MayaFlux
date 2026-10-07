@@ -64,6 +64,21 @@ public:
     static_assert(sizeof(InfluxParams) % 16 == 0);
 
     /**
+     * @struct Spot
+     * @brief Where and how an influx adds, in one aggregate, for configure().
+     *
+     * A radius of zero means 8 percent of the lattice's smallest side, which
+     * is 0.16 for a lattice two units across.
+     */
+    struct Spot {
+        glm::vec3 center { 0.0F };
+        float radius { 0.0F };
+        float rate { 1.0F };
+        float time_step { 1.0F / 60.0F };
+        float falloff { 1.0F };
+    };
+
+    /**
      * @brief Construct an influx stage.
      * @param field Name of the field added into. Must be double-buffered.
      *        Stride may be sizeof(float) or sizeof(glm::vec4) depending on
@@ -78,6 +93,20 @@ public:
      * @param spec ShaderSpec defining shape() and including the dispatch.
      */
     InfluxProcessor(std::string field, const Portal::Graphics::ShaderSpec& spec);
+
+    /**
+     * @brief Construct an influx stage already placed.
+     * @param field Name of the field added into.
+     * @param shader_path Path to a shader defining shape().
+     * @param spot Placement and strength.
+     */
+    InfluxProcessor(std::string field, const std::string& shader_path, const Spot& spot);
+
+    /**
+     * @brief Replace centre, radius, rate, time step and falloff at once.
+     * @param spot Settings. Unnamed fields take their defaults, not the current values.
+     */
+    void configure(const Spot& spot);
 
     /**
      * @brief Set the shape's world-space centre.
@@ -149,6 +178,7 @@ private:
 
     glm::vec3 m_center { 0.0F };
     float m_radius { 0.15F };
+    bool m_auto_radius { false };
     float m_rate { 1.0F };
     float m_time_step { 1.0F / 60.0F };
     float m_falloff { 1.0F };

@@ -6,6 +6,8 @@
 
 #include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
 
+#include "InfluxProcessor.hpp"
+
 namespace MayaFlux::Buffers {
 
 class VolumeSurfaceProcessor;
@@ -325,6 +327,23 @@ public:
      * ahead of it, which is where an influx stage belongs.
      */
     FlowStages setup_flow(const FlowConfig& config);
+
+    /**
+     * @brief Add an influx stage to this volume's chain and return it.
+     * @param field Name of the double buffered field added into.
+     * @param spot Placement and strength.
+     * @param shader Shader defining shape(). The default is a soft round blob.
+     * @return The stage, already in the chain, or nullptr if the volume is not
+     *         registered yet. Retune it with its own setters.
+     *
+     * Call after registration. A stage added before setup_flow runs ahead of
+     * the flow stages, which is where an influx belongs. One added after runs
+     * behind them, so what it adds is not transported until the next cycle.
+     */
+    std::shared_ptr<InfluxProcessor> influx(
+        const std::string& field,
+        const InfluxProcessor::Spot& spot,
+        const std::string& shader = "volume_influx_blob.comp");
 
     /** @brief The surface extraction stage, valid after setup_rendering. */
     [[nodiscard]] std::shared_ptr<VolumeSurfaceProcessor> surface_processor() const { return m_surface_processor; }

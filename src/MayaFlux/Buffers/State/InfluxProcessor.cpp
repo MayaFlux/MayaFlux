@@ -53,6 +53,25 @@ InfluxProcessor::InfluxProcessor(std::string field, const Portal::Graphics::Shad
     add_swap_field(m_field);
 }
 
+InfluxProcessor::InfluxProcessor(std::string field, const std::string& shader_path, const Spot& spot)
+    : InfluxProcessor(std::move(field), shader_path)
+{
+    configure(spot);
+}
+
+void InfluxProcessor::configure(const Spot& spot)
+{
+    m_center = spot.center;
+    m_radius = spot.radius;
+    m_auto_radius = spot.radius <= 0.0F;
+    m_rate = spot.rate;
+    m_time_step = spot.time_step;
+    m_falloff = spot.falloff;
+    if (get_volume()) {
+        write_tail();
+    }
+}
+
 void InfluxProcessor::on_volume_ready()
 {
     reserve_param_size(k_param_size);
@@ -68,11 +87,17 @@ void InfluxProcessor::write_tail()
         ? get_volume()->get_lattice().bounds.min
         : glm::vec3(0.0F);
 
+    float radius = m_radius;
+    if (m_auto_radius && get_volume()) {
+        const glm::vec3 extent = get_volume()->get_lattice().bounds.max - lo;
+        radius = 0.08F * std::min({ extent.x, extent.y, extent.z });
+    }
+
     const InfluxTail tail {
         .center_x = m_center.x,
         .center_y = m_center.y,
         .center_z = m_center.z,
-        .radius = m_radius,
+        .radius = radius,
         .rate = m_rate,
         .time_step = m_time_step,
         .falloff = m_falloff,
@@ -115,6 +140,7 @@ void InfluxProcessor::set_center(const glm::vec3& center)
 void InfluxProcessor::set_radius(float radius)
 {
     m_radius = radius;
+    m_auto_radius = false;
     if (get_volume()) {
         write_tail();
     }

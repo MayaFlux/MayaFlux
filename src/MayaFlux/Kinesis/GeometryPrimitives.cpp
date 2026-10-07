@@ -1,5 +1,8 @@
 #include "GeometryPrimitives.hpp"
 #include "MayaFlux/Kakshya/NDData/MeshInsertion.hpp"
+#include "MayaFlux/Transitive/Parallel/Execution.hpp"
+
+#include "MayaFlux/Journal/Archivist.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
@@ -13,6 +16,39 @@ namespace {
         { .position = { -1.0F, 1.0F, 0.0F }, .texcoord = { 0.0F, 0.0F } },
         { .position = { 1.0F, 1.0F, 0.0F }, .texcoord = { 1.0F, 0.0F } },
     } };
+
+    constexpr size_t k_parallel_vertex_threshold = 16384;
+
+    struct SurfaceTopology {
+        uint32_t columns {};
+        uint32_t rows {};
+        std::vector<uint32_t> indices;
+    };
+
+    [[nodiscard]] const std::vector<uint32_t>& surface_indices(uint32_t columns, uint32_t rows)
+    {
+        thread_local SurfaceTopology cache;
+
+        if (cache.columns != columns || cache.rows != rows) {
+            cache.indices.clear();
+            cache.indices.reserve(static_cast<size_t>(columns - 1) * (rows - 1) * 6);
+
+            for (uint32_t row = 0; row + 1 < rows; ++row) {
+                for (uint32_t col = 0; col + 1 < columns; ++col) {
+                    const uint32_t a = row * columns + col;
+                    const uint32_t b = a + 1;
+                    const uint32_t c = a + columns;
+                    const uint32_t d = c + 1;
+                    cache.indices.insert(cache.indices.end(), { a, c, b, b, c, d });
+                }
+            }
+
+            cache.columns = columns;
+            cache.rows = rows;
+        }
+
+        return cache.indices;
+    }
 
 } // namespace
 
@@ -1003,6 +1039,86 @@ Kakshya::MeshData generate_parametric_surface(
     return data;
 }
 
+Kakshya::MeshData generate_explicit_surface(
+    std::span<const float> heights,
+    uint32_t columns,
+    uint32_t rows,
+    const glm::vec2& extent,
+    float height_scale,
+    const glm::vec3& center)
+{
+    if (columns < 2 || rows < 2 || heights.size() != static_cast<size_t>(columns) * rows) {
+        MF_ERROR(Journal::Component::Kinesis, Journal::Context::Runtime,
+            "generate_explicit_surface needs at least 2 columns and rows and exactly columns * rows heights, got {} heights for {} by {}",
+            heights.size(), columns, rows);
+        return Kakshya::MeshData::empty();
+    }
+
+    constexpr size_t stride = sizeof(Kakshya::MeshVertex);
+    const size_t vertex_count = static_cast<size_t>(columns) * rows;
+
+    const float inv_columns = 1.0F / static_cast<float>(columns - 1);
+    const float inv_rows = 1.0F / static_cast<float>(rows - 1);
+    const float dx = std::max(extent.x, 1e-6F) * inv_columns;
+    const float dz = std::max(extent.y, 1e-6F) * inv_rows;
+    const float x0 = center.x - 0.5F * dx * static_cast<float>(columns - 1);
+    const float z0 = center.z - 0.5F * dz * static_cast<float>(rows - 1);
+
+    std::vector<uint8_t> bytes(vertex_count * stride);
+    uint8_t* const out = bytes.data();
+    const float* const h = heights.data();
+
+    const auto fill_row = [&](size_t row) {
+        const size_t row_prev = row > 0 ? row - 1 : row;
+        const size_t row_next = row + 1 < rows ? row + 1 : row;
+        const float inv_span_z = 1.0F / (static_cast<float>(row_next - row_prev) * dz);
+
+        const float* h_row = h + row * columns;
+        const float* h_prev = h + row_prev * columns;
+        const float* h_next = h + row_next * columns;
+
+        for (size_t col = 0; col < columns; ++col) {
+            const size_t col_prev = col > 0 ? col - 1 : col;
+            const size_t col_next = col + 1 < columns ? col + 1 : col;
+
+            const float slope_x = (h_row[col_next] - h_row[col_prev]) * height_scale
+                / (static_cast<float>(col_next - col_prev) * dx);
+            const float slope_z = (h_next[col] - h_prev[col]) * height_scale * inv_span_z;
+
+            const float normal_scale = glm::inversesqrt(1.0F + slope_x * slope_x + slope_z * slope_z);
+            const float tangent_scale = glm::inversesqrt(1.0F + slope_x * slope_x);
+
+            Kakshya::MeshVertex vertex;
+            vertex.position = { x0 + static_cast<float>(col) * dx,
+                center.y + h_row[col] * height_scale,
+                z0 + static_cast<float>(row) * dz };
+            vertex.weight = h_row[col];
+            vertex.uv = { static_cast<float>(col) * inv_columns, 1.0F - static_cast<float>(row) * inv_rows };
+            vertex.normal = { -slope_x * normal_scale, normal_scale, -slope_z * normal_scale };
+            vertex.tangent = { tangent_scale, slope_x * tangent_scale, 0.0F };
+
+            std::memcpy(out + (row * columns + col) * stride, &vertex, stride);
+        }
+    };
+
+    if (vertex_count >= k_parallel_vertex_threshold) {
+        std::vector<size_t> row_ids(rows);
+        std::iota(row_ids.begin(), row_ids.end(), size_t { 0 });
+        Parallel::for_each(Parallel::par_unseq, row_ids.begin(), row_ids.end(), fill_row);
+    } else {
+        for (size_t row = 0; row < rows; ++row) {
+            fill_row(row);
+        }
+    }
+
+    auto data = Kakshya::MeshData::empty();
+    data.vertex_variant = std::move(bytes);
+    data.index_variant = surface_indices(columns, rows);
+    data.layout = Kakshya::VertexLayout::for_meshes(stride);
+    data.layout.vertex_count = static_cast<uint32_t>(vertex_count);
+    return data;
+}
+
 Kakshya::MeshData generate_tube(
     std::span<const glm::vec3> path,
     const std::function<float(float)>& radius_fn,
@@ -1017,7 +1133,17 @@ Kakshya::MeshData generate_tube(
     verts.reserve(uint32_t(n_pts * (seg + 1) + (capped ? 2 * (seg + 1) : 0)));
     indices.reserve(uint32_t((n_pts - 1) * seg * 6 + (capped ? 2 * seg * 3 : 0)));
 
-    glm::vec3 tangent = glm::normalize(path[1] - path[0]);
+    constexpr float k_min_segment = 1e-6F;
+
+    glm::vec3 tangent(0.0F, 0.0F, 1.0F);
+    for (size_t i = 1; i < path.size(); ++i) {
+        const glm::vec3 segment = path[i] - path[i - 1];
+        if (glm::length(segment) > k_min_segment) {
+            tangent = glm::normalize(segment);
+            break;
+        }
+    }
+
     glm::vec3 u_axis;
     if (std::abs(tangent.y) < 0.9F) {
         u_axis = glm::normalize(glm::cross(tangent, glm::vec3(0.0F, 1.0F, 0.0F)));
@@ -1038,9 +1164,12 @@ Kakshya::MeshData generate_tube(
 
     for (uint32_t pi = 0; pi < n_pts; ++pi) {
         if (pi > 0) {
-            const glm::vec3 new_tan = (pi + 1 < n_pts)
-                ? glm::normalize(path[pi + 1] - path[pi - 1])
-                : glm::normalize(path[pi] - path[pi - 1]);
+            const glm::vec3 direction = (pi + 1 < n_pts)
+                ? path[pi + 1] - path[pi - 1]
+                : path[pi] - path[pi - 1];
+            const glm::vec3 new_tan = glm::length(direction) > k_min_segment
+                ? glm::normalize(direction)
+                : tangent;
             const glm::vec3 axis = glm::cross(tangent, new_tan);
             const float axis_len = glm::length(axis);
             if (axis_len > 1e-6F) {

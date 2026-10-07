@@ -68,6 +68,21 @@ MAYAFLUX_API std::shared_ptr<Kriya::SamplingPipeline> create_sampler(
     uint32_t channel = 0, uint64_t max_dur_ms = 0);
 
 /**
+ * @brief Construct a built SamplingPipeline from a file picked in a dialog.
+ *
+ * Same as the path form, with the file chosen in a native open-file dialog.
+ *
+ * @code
+ * auto sampler = MayaFlux::create_sampler();
+ * @endcode
+ *
+ * @return Built SamplingPipeline, or nullptr if nothing was chosen or loaded.
+ */
+MAYAFLUX_API std::shared_ptr<Kriya::SamplingPipeline> create_sampler(
+    uint32_t num_samples = 48000 * 5, bool truncate = true,
+    uint32_t channel = 0, uint64_t max_dur_ms = 0);
+
+/**
  * @brief Construct a built SamplingPipeline from an existing DynamicSoundStream.
  *
  * Allows multiple SamplingPipeline instances to share a single loaded stream,
@@ -115,6 +130,17 @@ MAYAFLUX_API std::vector<std::shared_ptr<Kriya::SamplingPipeline>> create_sample
     uint64_t max_dur_ms = 0, uint32_t max_channels = 0);
 
 /**
+ * @brief Construct one built SamplingPipeline per channel from a file picked in a dialog.
+ *
+ * Same as the path form, with the file chosen in a native open-file dialog.
+ *
+ * @return One pipeline per channel. Empty if nothing was chosen or loaded.
+ */
+MAYAFLUX_API std::vector<std::shared_ptr<Kriya::SamplingPipeline>> create_samplers(
+    uint32_t num_samples = 48000 * 5, bool truncate = true,
+    uint64_t max_dur_ms = 0, uint32_t max_channels = 0);
+
+/**
  * @brief Begin describing several taps that read one audio file.
  *
  * Loads the file like create_sampler and returns a builder. Each tap() adds a
@@ -137,6 +163,16 @@ MAYAFLUX_API std::vector<std::shared_ptr<Kriya::SamplingPipeline>> create_sample
  */
 MAYAFLUX_API Kriya::TapSetBuilder create_tap_set(
     const std::string& filepath, uint32_t num_samples = 48000 * 5, bool truncate = true);
+
+/**
+ * @brief Begin describing several taps that read a file picked in a dialog.
+ *
+ * Same as the path form, with the file chosen in a native open-file dialog.
+ *
+ * @return Builder. If nothing is chosen or loaded, start() returns an empty TapSet.
+ */
+MAYAFLUX_API Kriya::TapSetBuilder create_tap_set(
+    uint32_t num_samples = 48000 * 5, bool truncate = true);
 
 /**
  * @brief Begin describing several taps that read an existing DynamicSoundStream.

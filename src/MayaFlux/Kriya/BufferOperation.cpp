@@ -16,30 +16,30 @@ namespace MayaFlux::Kriya {
 
 namespace {
 
-std::shared_ptr<Kakshya::DynamicVideoStream> make_ring(
-    const std::shared_ptr<Buffers::VideoContainerBuffer>& source,
-    uint64_t ring_frames)
-{
-    const uint64_t frames = ring_frames > 0 ? ring_frames : 3ULL * Vruta::s_registered_frame_rate;
+    std::shared_ptr<Kakshya::DynamicVideoStream> make_ring(
+        const std::shared_ptr<Buffers::VideoContainerBuffer>& source,
+        uint64_t ring_frames)
+    {
+        const uint64_t frames = ring_frames > 0 ? ring_frames : 3ULL * Vruta::s_registered_frame_rate;
 
-    return std::make_shared<Kakshya::DynamicVideoStream>(Kakshya::VideoStreamSpec {
-        .width = source->get_width(),
-        .height = source->get_height(),
-        .format = source->get_format(),
-        .frame_rate = static_cast<double>(Vruta::s_registered_frame_rate),
-        .ring_frames = frames });
-}
+        return std::make_shared<Kakshya::DynamicVideoStream>(Kakshya::VideoStreamSpec {
+            .width = source->get_width(),
+            .height = source->get_height(),
+            .format = source->get_format(),
+            .frame_rate = static_cast<double>(Vruta::s_registered_frame_rate),
+            .ring_frames = frames });
+    }
 
-Buffers::ProcessingToken capture_token(const BufferCapture& capture)
-{
-    if (capture.get_audio_buffer()) {
-        return Buffers::ProcessingToken::AUDIO_BACKEND;
+    Buffers::ProcessingToken capture_token(const BufferCapture& capture)
+    {
+        if (capture.get_audio_buffer()) {
+            return Buffers::ProcessingToken::AUDIO_BACKEND;
+        }
+        if (capture.get_graphics_buffer()) {
+            return Buffers::ProcessingToken::GRAPHICS_BACKEND;
+        }
+        throw std::invalid_argument("Capture operation requires a source buffer");
     }
-    if (capture.get_graphics_buffer()) {
-        return Buffers::ProcessingToken::GRAPHICS_BACKEND;
-    }
-    throw std::invalid_argument("Capture operation requires a source buffer");
-}
 
 }
 
@@ -148,11 +148,11 @@ BufferOperation BufferOperation::capture_file(
 BufferOperation BufferOperation::capture_file(
     const std::shared_ptr<IO::IOManager>& io_manager,
     const std::string& filepath,
-    IO::LoadConfig config,
+    IO::VideoLoadConfig config,
     uint32_t cycle_count,
     std::optional<Portal::Graphics::RenderConfig> render)
 {
-    auto video = io_manager->load_video(filepath, config).video;
+    auto [video, audio] = io_manager->load_video(filepath, config);
     if (!video) {
         error<std::runtime_error>(Journal::Component::Kriya, Journal::Context::AsyncIO,
             std::source_location::current(), "Failed to load video file: {}", filepath);
@@ -168,9 +168,10 @@ BufferOperation BufferOperation::capture_file(
         detail::ensure_rendering(buffer, *render);
     }
 
-    return { OpType::CAPTURE, BufferCapture(buffer,
-        cycle_count > 1 ? BufferCapture::CaptureMode::ACCUMULATE : BufferCapture::CaptureMode::TRANSIENT,
-        cycle_count) };
+    return {
+        OpType::CAPTURE,
+        BufferCapture(buffer, cycle_count > 1 ? BufferCapture::CaptureMode::ACCUMULATE : BufferCapture::CaptureMode::TRANSIENT, cycle_count)
+    };
 }
 
 CaptureBuilder BufferOperation::capture_file_from(
@@ -193,10 +194,10 @@ CaptureBuilder BufferOperation::capture_file_from(
 CaptureBuilder BufferOperation::capture_file_from(
     const std::shared_ptr<IO::IOManager>& io_manager,
     const std::string& filepath,
-    IO::LoadConfig config,
+    IO::VideoLoadConfig config,
     std::optional<Portal::Graphics::RenderConfig> render)
 {
-    auto video = io_manager->load_video(filepath, config).video;
+    auto [video, audio] = io_manager->load_video(filepath, config);
     if (!video) {
         error<std::runtime_error>(Journal::Component::Kriya, Journal::Context::AsyncIO,
             std::source_location::current(), "Failed to load video file: {}", filepath);
@@ -241,11 +242,11 @@ BufferOperation BufferOperation::file_to_stream(
     const std::shared_ptr<IO::IOManager>& io_manager,
     const std::string& filepath,
     std::shared_ptr<Kakshya::DynamicVideoStream> target_stream,
-    IO::LoadConfig config,
+    IO::VideoLoadConfig config,
     uint32_t cycle_count,
     std::optional<Portal::Graphics::RenderConfig> render)
 {
-    auto video = io_manager->load_video(filepath, config).video;
+    auto [video, audio] = io_manager->load_video(filepath, config);
     if (!video) {
         error<std::runtime_error>(Journal::Component::Kriya, Journal::Context::AsyncIO,
             std::source_location::current(), "Failed to load video file: {}", filepath);
@@ -300,12 +301,12 @@ BufferOperation BufferOperation::capture_to_stream(
 BufferOperation BufferOperation::capture_to_stream(
     const std::shared_ptr<IO::IOManager>& io_manager,
     const std::string& filepath,
-    IO::LoadConfig config,
+    IO::VideoLoadConfig config,
     uint64_t ring_frames,
     std::optional<Portal::Graphics::RenderConfig> live,
     std::optional<Portal::Graphics::RenderConfig> display)
 {
-    auto video = io_manager->load_video(filepath, config).video;
+    auto [video, audio] = io_manager->load_video(filepath, config);
     if (!video) {
         error<std::runtime_error>(Journal::Component::Kriya, Journal::Context::AsyncIO,
             std::source_location::current(), "Failed to load video file: {}", filepath);
