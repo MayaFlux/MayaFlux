@@ -3,7 +3,6 @@
 #include "user_project.hpp"
 #define HAS_USER_PROJECT
 #else
-#define MAYASIMPLE
 #include "MayaFlux/MayaFlux.hpp"
 #endif
 #endif

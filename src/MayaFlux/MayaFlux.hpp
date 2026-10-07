@@ -1,5 +1,19 @@
 #pragma once
 
+/**
+ * @file MayaFlux.hpp
+ * @brief Single include for the user facing API.
+ *
+ * Includes the API headers (Config, Core, Graph, Chronie, Depot, Input, Random,
+ * Windowing, ViewportPreset, Creator, Temporal, Rigs) and the persistence
+ * helpers. Unless MAYAFLUX_NO_CONVENIENCE is defined it also includes
+ * Convenience.hpp, which adds the everyday headers and namespace imports.
+ *
+ * SimulationIncludes.hpp and WorkflowIncludes.hpp are not included here.
+ * Include them explicitly, and define their MAYAFLUX_*_NO_* macros first to
+ * leave a group out.
+ */
+
 #include "MayaFlux/API/Config.hpp"
 
 #include "MayaFlux/API/Core.hpp"
@@ -26,202 +40,8 @@
 
 #include "MayaFlux/Transitive/Memory/Persist.hpp"
 
-#ifdef MAYASIMPLE
-#include "Nodes/Conduit/Constant.hpp"
-#include "Nodes/Conduit/NodeChain.hpp"
-#include "Nodes/Conduit/NodeCombine.hpp"
-#include "Nodes/Conduit/StreamReaderNode.hpp"
-#include "Nodes/Filters/FIR.hpp"
-#include "Nodes/Filters/IIR.hpp"
-#include "Nodes/Generators/Counter.hpp"
-#include "Nodes/Generators/Impulse.hpp"
-#include "Nodes/Generators/Phasor.hpp"
-#include "Nodes/Generators/Random.hpp"
-#include "Nodes/Generators/Sine.hpp"
-#include "Nodes/Graphics/GeometryLeafNode.hpp"
-#include "Nodes/Graphics/GeometryReadbackNode.hpp"
-#include "Nodes/Graphics/GeometryWriterNode.hpp"
-#include "Nodes/Graphics/GlyphGeometryNode.hpp"
-#include "Nodes/Graphics/LineSegmentsNode.hpp"
-#include "Nodes/Graphics/MeshWriterNode.hpp"
-#include "Nodes/Graphics/PathGeneratorNode.hpp"
-#include "Nodes/Graphics/PointCollectionNode.hpp"
-#include "Nodes/Graphics/ProceduralTextureNode.hpp"
-#include "Nodes/Graphics/SDFNode.hpp"
-#include "Nodes/Graphics/TextureNode.hpp"
-#include "Nodes/Graphics/TopologyGeneratorNode.hpp"
-#include "Nodes/Network/NodeNetwork.hpp"
-#include "Nodes/NodeGraphManager.hpp"
-
-#include "Nodes/Network/AssemblyNetwork.hpp"
-#include "Nodes/Network/InstanceNetwork.hpp"
-#include "Nodes/Network/MeshNetwork.hpp"
-#include "Nodes/Network/ModalNetwork.hpp"
-#include "Nodes/Network/ParticleNetwork.hpp"
-#include "Nodes/Network/PointCloudNetwork.hpp"
-#include "Nodes/Network/RelationNetwork.hpp"
-#include "Nodes/Network/ResonatorNetwork.hpp"
-#include "Nodes/Network/WaveguideNetwork.hpp"
-
-#include "Nodes/Input/HIDNode.hpp"
-#include "Nodes/Input/MIDINode.hpp"
-#include "Nodes/Input/OSCNode.hpp"
-#include "Nodes/Input/TabletNode.hpp"
-
-#include "Buffers/BufferManager.hpp"
-#include "Buffers/BufferProcessingChain.hpp"
-#include "Buffers/Container/SoundContainerBuffer.hpp"
-#include "Buffers/Container/SoundStreamWriter.hpp"
-#include "Buffers/Container/VideoContainerBuffer.hpp"
-#include "Buffers/Forma/FormaBindingsProcessor.hpp"
-#include "Buffers/Forma/FormaBuffer.hpp"
-#include "Buffers/Geometry/CompositeGeometryBuffer.hpp"
-#include "Buffers/Geometry/ComputeMeshBuffer.hpp"
-#include "Buffers/Geometry/GeometryBuffer.hpp"
-#include "Buffers/Geometry/MeshBuffer.hpp"
-#include "Buffers/Network/InstanceNetworkBuffer.hpp"
-#include "Buffers/Network/MeshNetworkBuffer.hpp"
-#include "Buffers/Network/NetworkAudioBuffer.hpp"
-#include "Buffers/Network/NetworkGeometryBuffer.hpp"
-#include "Buffers/Network/NetworkTextureBuffer.hpp"
-#include "Buffers/Node/FilterProcessor.hpp"
-#include "Buffers/Node/LogicProcessor.hpp"
-#include "Buffers/Node/NodeBindingsProcessor.hpp"
-#include "Buffers/Node/NodeBuffer.hpp"
-#include "Buffers/Node/NodeFeedProcessor.hpp"
-#include "Buffers/Node/PolynomialProcessor.hpp"
-#include "Buffers/Recursive/FeedbackBuffer.hpp"
-#include "Buffers/Shaders/ComputeProcessor.hpp"
-#include "Buffers/Shaders/DescriptorBindingsProcessor.hpp"
-#include "Buffers/Shaders/RenderProcessor.hpp"
-#include "Buffers/Shaders/SDFFieldProcessor.hpp"
-#include "Buffers/Staging/AudioWriteProcessor.hpp"
-#include "Buffers/Staging/BufferDownloadProcessor.hpp"
-#include "Buffers/Staging/BufferUploadProcessor.hpp"
-#include "Buffers/Staging/DataWriteProcessor.hpp"
-#include "Buffers/Textures/NodeTextureBuffer.hpp"
-#include "Buffers/Textures/TextureArrayBuffer.hpp"
-#include "Buffers/Textures/TextureBuffer.hpp"
-
-#include "Kriya/Awaiters/DelayAwaiters.hpp"
-#include "Kriya/Awaiters/EventAwaiter.hpp"
-#include "Kriya/Awaiters/NetworkAwaiter.hpp"
-#include "Kriya/BroadcastEvents.hpp"
-#include "Kriya/BufferPipeline.hpp"
-#include "Kriya/Chain.hpp"
-#include "Kriya/Chimera.hpp"
-#include "Kriya/InputEvents.hpp"
-#include "Kriya/NetworkEvents.hpp"
-#include "Kriya/SamplingPipeline.hpp"
-#include "Kriya/TapSet.hpp"
-#include "Kriya/Tasks.hpp"
-
-#include "Vruta/Event.hpp"
-#include "Vruta/EventManager.hpp"
-#include "Vruta/EventSource.hpp"
-
-#include "Kakshya/Source/CameraContainer.hpp"
-#include "Kakshya/Source/DynamicSoundStream.hpp"
-#include "Kakshya/Source/SoundFileContainer.hpp"
-#include "Kakshya/Source/VideoFileContainer.hpp"
-#include "Kakshya/Source/WindowContainer.hpp"
-
-#include "Kinesis/GeometryPrimitives.hpp"
-
-#include "Journal/Archivist.hpp"
-
-#include "Core/Windowing/WindowManager.hpp"
-
-#include "Core/GlobalGraphicsInfo.hpp"
-#include "Core/GlobalInputConfig.hpp"
-#include "Core/GlobalNetworkConfig.hpp"
-#include "Core/GlobalStreamInfo.hpp"
-
-#include "Portal/Graphics/Graphics.hpp"
-#include "Portal/Graphics/SamplerForge.hpp"
-#include "Portal/Graphics/ShaderFoundry.hpp"
-#include "Portal/Graphics/TextureLoom.hpp"
-
-#include "Portal/Network/MessageUtils.hpp"
-#include "Portal/Network/Network.hpp"
-#include "Portal/Network/NetworkSink.hpp"
-
-#include "Portal/Text/InkPress.hpp"
-#include "Portal/Text/Text.hpp"
-
-#include "Portal/Forma/Forma.hpp"
-#include "Portal/Forma/Primitives/FormFactory.hpp"
-
-#include "Portal/System/System.hpp"
-
-#include "IO/IOManager.hpp"
-#include "IO/Image/ImageReader.hpp"
-#include "IO/Audio/SoundFileWriter.hpp"
-#include "IO/Camera/CameraSource.hpp"
-#include "IO/Camera/FFmpegCameraReader.hpp"
-#include "IO/Composite/CompositeReader.hpp"
-#include "IO/Composite/CompositeWriter.hpp"
-#include "IO/Video/VideoFileWriter.hpp"
-#include "IO/Volume/VolumeTransfer.hpp"
-
-#include "Nexus/Tapestry.hpp"
-
-using namespace MayaFlux::Kakshya;
-using namespace MayaFlux::Kriya;
-using namespace MayaFlux::Buffers;
-using namespace MayaFlux::Nodes::Input;
-using namespace MayaFlux::Nodes::GpuSync;
-using namespace MayaFlux::Nodes::Network;
-using namespace MayaFlux::Nodes::Filters;
-using namespace MayaFlux::Nodes::Generator;
-using namespace MayaFlux::Nodes;
-using namespace MayaFlux;
-
-#endif // MAYASIMPLE
-
-// ============================================================================
-// Workflows: opinionated, high-level processing pipelines.
-// Enable individually or use MAYAFLUX_ALL_WORKFLOWS to load all.
-// Advanced users who build directly with Yantra operations can ignore this.
-// ============================================================================
-
-#if defined(MAYAFLUX_ALL_WORKFLOWS)
-#define MAYAFLUX_WORKFLOW_GRANULAR
-// future: MAYAFLUX_WORKFLOW_MODAL, MAYAFLUX_WORKFLOW_SPECTRAL, etc.
-#endif
-
-#ifdef MAYAFLUX_WORKFLOW_GRANULAR
-#include "MayaFlux/Kinesis/Discrete/Taper.hpp"
-#include "MayaFlux/Yantra/Workflows/Granular/GranularWorkflow.hpp"
-using namespace MayaFlux::Yantra;
-#endif
-
-// ============================================================================
-// Simulations: physics-based processing pipelines.
-// Enable individually or use MAYAFLUX_ALL_SIMULATIONS to load all.
-// Advanced users who build directly with Yantra operations can ignore this.
-// ============================================================================
-
-#if defined(MAYAFLUX_ALL_SIMULATIONS)
-#define MAYAFLUX_GRID_SIMULATION
-#endif
-
-#ifdef MAYAFLUX_GRID_SIMULATION
-#include "Buffers/Shaders/SDFMeshProcessor.hpp"
-#include "Buffers/State/AdvectProcessor.hpp"
-#include "Buffers/State/BuoyancyProcessor.hpp"
-#include "Buffers/State/DiffuseProcessor.hpp"
-#include "Buffers/State/DivergenceProcessor.hpp"
-#include "Buffers/State/InfluxProcessor.hpp"
-#include "Buffers/State/PressureProcessor.hpp"
-#include "Buffers/State/RaymarchBuffer.hpp"
-#include "Buffers/State/RelaxationEmitProcessor.hpp"
-#include "Buffers/State/RelaxationGridBuffer.hpp"
-#include "Buffers/State/RelaxationStepProcessor.hpp"
-#include "Buffers/State/SolenoidalProcessor.hpp"
-#include "Buffers/State/VolumeGridBuffer.hpp"
-#include "Buffers/State/VolumeSurfaceProcessor.hpp"
-#include "Buffers/State/WallProcessor.hpp"
+#if (!defined(MAYAFLUX_NO_CONVENIENCE))
+#include "Convenience.hpp"
 #endif
 
 /**

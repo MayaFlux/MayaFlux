@@ -75,7 +75,6 @@ bool ClangInterpreter::initialize(bool skip_host_library_load)
 
     m_impl->compile_flags.clear();
     m_impl->compile_flags.emplace_back("-std=c++23");
-    m_impl->compile_flags.emplace_back("-DMAYASIMPLE");
 
 #ifdef MAYAFLUX_PLATFORM_LINUX
     m_impl->compile_flags.emplace_back("-mcmodel=large");

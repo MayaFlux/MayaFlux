@@ -1,5 +1,4 @@
 #pragma once
-#define MAYASIMPLE
 
 #include "MayaFlux/MayaFlux.hpp"
 
@@ -17,7 +16,6 @@ namespace MayaFlux {
  *
  * Once LLVM 21+ is standard, in-place lambdas will work directly without these wrappers.
  *
- * @note This header is automatically included in the PCH for JIT contexts (MAYASIMPLE mode).
  */
 
 #ifdef LILA_WORKAROUND

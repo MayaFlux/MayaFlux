@@ -89,7 +89,7 @@ cmake --build build
 **project_launcher**
 The executable that runs your code. Built from `main.cpp` plus `${USER_SOURCES}` (which includes `src/user_project.hpp`) plus anything under `src/examples/`. Gated behind `MAYAFLUX_BUILD_PROJECT`; the CMakeLists returns before defining this target if that option is off. This is the pre-install, pre-package way to exercise `MayaFluxLib` directly, not an official demo app; see below.
 
-`main.cpp` includes `user_project.hpp` via `__has_include`, falling back to `MAYASIMPLE` mode if the file is not found. It runs, in order: parse `--config` / `--config-override` args, load JSON config if present, call your `settings()`, `MayaFlux::Init()`, `MayaFlux::Start()`, call your `compose()`, block on Enter, `MayaFlux::End()`.
+`main.cpp` includes `user_project.hpp` via `__has_include`, falling back to `MayaFlux.hpp` with its default convenience includes if the file is not found. It runs, in order: parse `--config` / `--config-override` args, load JSON config if present, call your `settings()`, `MayaFlux::Init()`, `MayaFlux::Start()`, call your `compose()`, block on Enter, `MayaFlux::End()`.
 
 **MayaFluxLib**
 Core shared library and the actual deliverable. Built from `add_subdirectory(MayaFlux)`. Everything under `src/MayaFlux/` (Nexus, Yantra, Kakshya, Kinesis, Vruta, Kriya, Portal, and the rest) compiles into this target. No entry point. `project_launcher` links against this.

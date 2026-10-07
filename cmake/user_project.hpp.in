@@ -1,6 +1,5 @@
 // NOLINTBEGIN
 #pragma once
-#define MAYASIMPLE
 #include "MayaFlux/MayaFlux.hpp"
 
 /**
