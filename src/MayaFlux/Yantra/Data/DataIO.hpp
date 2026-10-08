@@ -23,7 +23,7 @@ namespace MayaFlux::Yantra {
  * - Move semantics for efficiency with large data
  */
 template <ComputeData T = std::vector<Kakshya::DataVariant>>
-struct MAYAFLUX_API Datum {
+struct Datum {
     T data; ///< The actual computation data
     std::vector<Kakshya::DataDimension> dimensions; ///< Data dimensional structure
     Kakshya::DataModality modality {}; ///< Data modality (audio, image, spectral, etc.)

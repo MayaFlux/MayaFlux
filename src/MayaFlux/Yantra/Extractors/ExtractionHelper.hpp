@@ -14,55 +14,55 @@
 
 namespace MayaFlux::Yantra {
 
-std::vector<std::vector<double>> extract_high_energy(
+MAYAFLUX_API std::vector<std::vector<double>> extract_high_energy(
     const std::vector<std::span<const double>>& channels,
     double energy_threshold,
     uint32_t window_size,
     uint32_t hop_size);
 
-std::vector<std::vector<double>> extract_peaks(
+MAYAFLUX_API std::vector<std::vector<double>> extract_peaks(
     const std::vector<std::span<const double>>& channels,
     double threshold,
     double min_distance,
     uint32_t region_size);
 
-std::vector<std::vector<double>> extract_outliers(
+MAYAFLUX_API std::vector<std::vector<double>> extract_outliers(
     const std::vector<std::span<const double>>& channels,
     double std_dev_threshold,
     uint32_t window_size,
     uint32_t hop_size);
 
-std::vector<std::vector<double>> extract_high_spectral(
+MAYAFLUX_API std::vector<std::vector<double>> extract_high_spectral(
     const std::vector<std::span<const double>>& channels,
     double spectral_threshold,
     uint32_t window_size,
     uint32_t hop_size);
 
-std::vector<std::vector<double>> extract_above_mean(
+MAYAFLUX_API std::vector<std::vector<double>> extract_above_mean(
     const std::vector<std::span<const double>>& channels,
     double mean_multiplier,
     uint32_t window_size,
     uint32_t hop_size);
 
-std::vector<std::vector<double>> extract_overlapping_windows(
+MAYAFLUX_API std::vector<std::vector<double>> extract_overlapping_windows(
     const std::vector<std::span<const double>>& channels,
     uint32_t window_size,
     double overlap);
 
-std::vector<std::vector<double>> extract_zero_crossings(
+MAYAFLUX_API std::vector<std::vector<double>> extract_zero_crossings(
     const std::vector<std::span<const double>>& channels,
     double threshold,
     double min_distance,
     uint32_t region_size);
 
-std::vector<std::vector<double>> extract_silence(
+MAYAFLUX_API std::vector<std::vector<double>> extract_silence(
     const std::vector<std::span<const double>>& channels,
     double silence_threshold,
     uint32_t min_duration,
     uint32_t window_size,
     uint32_t hop_size);
 
-std::vector<std::vector<double>> extract_onsets(
+MAYAFLUX_API std::vector<std::vector<double>> extract_onsets(
     const std::vector<std::span<const double>>& channels,
     double threshold,
     uint32_t region_size,

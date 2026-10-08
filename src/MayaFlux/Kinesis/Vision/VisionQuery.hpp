@@ -159,6 +159,6 @@ struct ResolvedSequence {
  *         when no intent in query.intents has a populated parameter
  *         field.
  */
-[[nodiscard]] std::vector<ResolvedSequence> resolve(const VisionQuery& query);
+[[nodiscard]] MAYAFLUX_API std::vector<ResolvedSequence> resolve(const VisionQuery& query);
 
 } // namespace MayaFlux::Kinesis::Vision

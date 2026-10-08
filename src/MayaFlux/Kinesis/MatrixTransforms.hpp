@@ -52,7 +52,7 @@ namespace MayaFlux::Kinesis {
  * @param dimensions Dimensionality
  * @return Combined transformation matrix
  */
-[[nodiscard]] Eigen::MatrixXd create_rotation_scaling_matrix(
+[[nodiscard]] MAYAFLUX_API Eigen::MatrixXd create_rotation_scaling_matrix(
     double angle,
     const std::vector<double>& scale_factors,
     uint32_t axis = 2,

@@ -269,8 +269,13 @@ private:
 using SpatialIndex3D = SpatialIndex<glm::vec3>;
 using SpatialIndexND = SpatialIndex<Eigen::VectorXd>;
 
+#ifdef MAYAFLUX_EXPORTS
 extern template class SpatialIndex<glm::vec3>;
 extern template class SpatialIndex<Eigen::VectorXd>;
+#else
+extern template class MAYAFLUX_API SpatialIndex<glm::vec3>;
+extern template class MAYAFLUX_API SpatialIndex<Eigen::VectorXd>;
+#endif
 
 // =========================================================================
 // Factory functions

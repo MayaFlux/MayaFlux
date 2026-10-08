@@ -111,7 +111,7 @@ public:
     [[nodiscard]] std::optional<CompositeSlice> slice(const Region& region) const;
 
 private:
-    friend std::optional<CompositeAccess> as_composite_access(
+    friend MAYAFLUX_API std::optional<CompositeAccess> as_composite_access(
         const DataVariant&, const DataVariant&, const DataVariant&, const CompositeLayout&);
 
     CompositeAccess(const DataVariant& elements, const DataVariant& text, const DataVariant& blob,

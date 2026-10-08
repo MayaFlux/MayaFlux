@@ -67,7 +67,7 @@ struct ChainedIndirectParams {
 /**
  * @brief Parameters for ExecutionMode::DEPENDENCY.
  */
-struct DependencyParams {
+struct MAYAFLUX_API DependencyParams {
     std::vector<DependencyStage> stages;
 
     /**

@@ -46,7 +46,7 @@ namespace MayaFlux::IO {
  * @param ids       Output, resized to grid->get_cell_count().
  * @return False if grid is null; positions/ids are left untouched in that case.
  */
-bool relaxation_grid_positions(
+MAYAFLUX_API bool relaxation_grid_positions(
     const std::shared_ptr<Buffers::RelaxationGridBuffer>& grid,
     float extent,
     std::vector<glm::vec3>& positions,
@@ -94,7 +94,7 @@ bool relaxation_grid_positions(
  *         disagrees with get_vertex_count() in size, or a LINE_LIST
  *         topology's vertex count is odd.
  */
-bool write_operator_sample(
+MAYAFLUX_API bool write_operator_sample(
     SpatialCache& cache,
     const std::string& stream_name,
     const Nodes::Network::GraphicsOperator* op);
@@ -152,7 +152,7 @@ bool write_operator_sample(
  *         or any underlying write_operator_sample()/cache.write() call
  *         fails.
  */
-bool write_network_geometry_buffer_sample(
+MAYAFLUX_API bool write_network_geometry_buffer_sample(
     SpatialCache& cache,
     const std::string& stream_name,
     const std::shared_ptr<Buffers::NetworkGeometryBuffer>& buffer);

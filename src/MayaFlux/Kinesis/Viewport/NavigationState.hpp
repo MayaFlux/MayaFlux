@@ -143,6 +143,6 @@ MAYAFLUX_API void advance_navigation(NavigationState& state);
  * @param aspect Framebuffer width / height
  * @return ViewTransform ready for push constant upload
  */
-[[nodiscard]] ViewTransform build_view_transform(const NavigationState& state, float aspect);
+[[nodiscard]] MAYAFLUX_API ViewTransform build_view_transform(const NavigationState& state, float aspect);
 
 } // namespace MayaFlux::Kinesis

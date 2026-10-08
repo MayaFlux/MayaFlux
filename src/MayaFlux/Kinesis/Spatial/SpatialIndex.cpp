@@ -557,7 +557,7 @@ std::unique_ptr<SpatialIndexND> make_spatial_index_nd(float cell_size, uint32_t 
 // Explicit template instantiations
 // =========================================================================
 
-template class SpatialIndex<glm::vec3>;
-template class SpatialIndex<Eigen::VectorXd>;
+template class MAYAFLUX_API SpatialIndex<glm::vec3>;
+template class MAYAFLUX_API SpatialIndex<Eigen::VectorXd>;
 
 } // namespace MayaFlux::Kinesis

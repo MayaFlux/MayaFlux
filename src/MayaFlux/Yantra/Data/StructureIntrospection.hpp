@@ -7,51 +7,51 @@ namespace MayaFlux::Yantra {
 /**
  * @brief Infer structure from DataVariant
  */
-std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
+MAYAFLUX_API std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
 infer_from_data_variant(const Kakshya::DataVariant& data);
 
 /**
  * @brief Infer structure from vector of DataVariants (NEW)
  */
-std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
+MAYAFLUX_API std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
 infer_from_data_variant_vector(const std::vector<Kakshya::DataVariant>& data);
 
 /**
  * @brief Infer structure from SignalSourceContainer
  */
-std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
+MAYAFLUX_API std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
 infer_from_container(const std::shared_ptr<Kakshya::SignalSourceContainer>& container);
 
 /**
  * @brief Infer the element axis and modality of a CompositeArray.
  * @note Field names and types remain in the array's CompositeLayout.
  */
-std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
+MAYAFLUX_API std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
 infer_from_composite_array(const Kakshya::CompositeArray& data);
 
 /**
  * @brief Infer the element axis and modality of a CompositeContainer.
  * @note Field names and types remain in the container's CompositeLayout.
  */
-std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
+MAYAFLUX_API std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
 infer_from_composite_container(const std::shared_ptr<Kakshya::CompositeContainer>& container);
 
 /**
  * @brief Infer structure from Region (placeholder since regions are markers)
  */
-std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
+MAYAFLUX_API std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
 infer_from_region(const Kakshya::Region& region, const std::shared_ptr<Kakshya::SignalSourceContainer>& container = nullptr);
 
 /**
  * @brief Infer structure from RegionGroup
  */
-std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
+MAYAFLUX_API std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
 infer_from_region_group(const Kakshya::RegionGroup& group, const std::shared_ptr<Kakshya::SignalSourceContainer>& container = nullptr);
 
 /**
  * @brief Infer structure from RegionSegments
  */
-std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
+MAYAFLUX_API std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
 infer_from_segments(const std::vector<Kakshya::RegionSegment>& segments, const std::shared_ptr<Kakshya::SignalSourceContainer>& container = nullptr);
 
 /**

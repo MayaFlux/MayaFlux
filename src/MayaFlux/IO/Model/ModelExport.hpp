@@ -31,7 +31,7 @@ namespace MayaFlux::IO {
  * @param options  Format-specific writer options.
  * @return True on success. Failure is logged.
  */
-[[nodiscard]] bool save_mesh(
+[[nodiscard]] MAYAFLUX_API bool save_mesh(
     const std::shared_ptr<Buffers::MeshBuffer>& buffer,
     const std::string& filepath,
     const ModelWriteOptions& options = {});
@@ -52,7 +52,7 @@ namespace MayaFlux::IO {
  * @param options        Format-specific writer options.
  * @return True on success. Failure is logged.
  */
-[[nodiscard]] bool save_mesh(
+[[nodiscard]] MAYAFLUX_API bool save_mesh(
     const std::shared_ptr<Buffers::MeshNetworkBuffer>& network_buffer,
     const std::string& filepath,
     const ModelWriteOptions& options = {});
@@ -72,7 +72,7 @@ namespace MayaFlux::IO {
  * @param options  Format-specific writer options.
  * @return True on success. Failure is logged.
  */
-[[nodiscard]] bool save_mesh(
+[[nodiscard]] MAYAFLUX_API bool save_mesh(
     const std::shared_ptr<Nodes::Network::MeshNetwork>& network,
     const std::string& filepath,
     const ModelWriteOptions& options = {});
@@ -89,7 +89,7 @@ namespace MayaFlux::IO {
  * @param options  Format-specific writer options.
  * @return True on success. Failure is logged.
  */
-[[nodiscard]] bool save_mesh(
+[[nodiscard]] MAYAFLUX_API bool save_mesh(
     const std::shared_ptr<Nodes::GpuSync::MeshWriterNode>& node,
     const std::string& filepath,
     const ModelWriteOptions& options = {});
@@ -109,7 +109,7 @@ namespace MayaFlux::IO {
  * @return The current geometry, or nullopt if the buffer is null, has no
  *         mesh processor yet, or the live vertex count is zero.
  */
-[[nodiscard]] std::optional<Kakshya::MeshData> download_compute_mesh(
+[[nodiscard]] MAYAFLUX_API std::optional<Kakshya::MeshData> download_compute_mesh(
     const std::shared_ptr<Buffers::ComputeMeshBuffer>& buffer);
 
 /**
@@ -118,7 +118,7 @@ namespace MayaFlux::IO {
  * Wraps download_compute_mesh() and write_via_registry() in one call. See
  * download_compute_mesh's own doc for the one-shot readback this performs.
  */
-[[nodiscard]] bool save_mesh(
+[[nodiscard]] MAYAFLUX_API bool save_mesh(
     const std::shared_ptr<Buffers::ComputeMeshBuffer>& buffer,
     const std::string& filepath,
     const ModelWriteOptions& options = {});
@@ -128,7 +128,7 @@ namespace MayaFlux::IO {
  *        spliced into the path. See the MeshBuffer overload's doc for the
  *        case this serves.
  */
-[[nodiscard]] bool save_mesh_snapshot(
+[[nodiscard]] MAYAFLUX_API bool save_mesh_snapshot(
     const std::shared_ptr<Buffers::ComputeMeshBuffer>& buffer,
     const std::string& path_pattern,
     const ModelWriteOptions& options = {});
@@ -148,7 +148,7 @@ namespace MayaFlux::IO {
  * @param options     Format-specific writer options.
  * @return True on success. Failure is logged.
  */
-[[nodiscard]] bool save_mesh_snapshot(
+[[nodiscard]] MAYAFLUX_API bool save_mesh_snapshot(
     const std::shared_ptr<Buffers::MeshBuffer>& buffer,
     const std::string& path_pattern,
     const ModelWriteOptions& options = {});
@@ -158,7 +158,7 @@ namespace MayaFlux::IO {
  *        into the path. See the MeshBuffer overload's doc for the case this
  *        serves.
  */
-[[nodiscard]] bool save_mesh_snapshot(
+[[nodiscard]] MAYAFLUX_API bool save_mesh_snapshot(
     const std::shared_ptr<Buffers::MeshNetworkBuffer>& network_buffer,
     const std::string& path_pattern,
     const ModelWriteOptions& options = {});
@@ -167,7 +167,7 @@ namespace MayaFlux::IO {
  * @brief Save a MeshNetwork with a millisecond epoch timestamp spliced into
  *        the path. See the MeshBuffer overload's doc for the case this serves.
  */
-[[nodiscard]] bool save_mesh_snapshot(
+[[nodiscard]] MAYAFLUX_API bool save_mesh_snapshot(
     const std::shared_ptr<Nodes::Network::MeshNetwork>& network,
     const std::string& path_pattern,
     const ModelWriteOptions& options = {});
@@ -177,7 +177,7 @@ namespace MayaFlux::IO {
  *        spliced into the path. See the MeshBuffer overload's doc for the
  *        case this serves.
  */
-[[nodiscard]] bool save_mesh_snapshot(
+[[nodiscard]] MAYAFLUX_API bool save_mesh_snapshot(
     const std::shared_ptr<Nodes::GpuSync::MeshWriterNode>& node,
     const std::string& path_pattern,
     const ModelWriteOptions& options = {});

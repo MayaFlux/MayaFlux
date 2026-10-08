@@ -194,7 +194,7 @@ enum class DataModality : uint8_t {
  * @param modality DataModality value
  * @return String view of the modality name
  */
-std::string_view modality_to_string(DataModality modality);
+MAYAFLUX_API std::string_view modality_to_string(DataModality modality);
 
 /**
  * @brief Check if a modality represents structured data (vectors, matrices).

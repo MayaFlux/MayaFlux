@@ -27,7 +27,7 @@ namespace MayaFlux::IO {
  * @param image  Fully-initialized VKImage to read from.
  * @return       Populated ImageData, or std::nullopt on failure.
  */
-[[nodiscard]] std::optional<ImageData> download_image(
+[[nodiscard]] MAYAFLUX_API std::optional<ImageData> download_image(
     const std::shared_ptr<Core::VKImage>& image);
 
 /**
@@ -37,7 +37,7 @@ namespace MayaFlux::IO {
  * TextureBuffer::get_gpu_texture(). Returns nullopt if the texture is not
  * yet allocated (buffer has not been processed at least once).
  */
-[[nodiscard]] std::optional<ImageData> download_texture_buffer(
+[[nodiscard]] MAYAFLUX_API std::optional<ImageData> download_texture_buffer(
     const std::shared_ptr<Buffers::TextureBuffer>& buffer);
 
 /**
@@ -53,7 +53,7 @@ namespace MayaFlux::IO {
  * @param options  Format-specific writer options.
  * @return         True on success.
  */
-bool save_image(
+MAYAFLUX_API bool save_image(
     const std::shared_ptr<Core::VKImage>& image,
     const std::string& filepath,
     const ImageWriteOptions& options = {});
@@ -64,7 +64,7 @@ bool save_image(
  * Equivalent to download_texture_buffer() + save_image(). Most common entry
  * point for writing rendered output to a file.
  */
-bool save_texture_buffer(
+MAYAFLUX_API bool save_texture_buffer(
     const std::shared_ptr<Buffers::TextureBuffer>& buffer,
     const std::string& filepath,
     const ImageWriteOptions& options = {});
@@ -77,7 +77,7 @@ bool save_texture_buffer(
  * to disk with transparency preserved when the target format supports it
  * (PNG, TGA, EXR). JPG discards alpha.
  */
-bool save_text_buffer(
+MAYAFLUX_API bool save_text_buffer(
     const std::shared_ptr<Buffers::TextBuffer>& buffer,
     const std::string& filepath,
     const ImageWriteOptions& options = {});
