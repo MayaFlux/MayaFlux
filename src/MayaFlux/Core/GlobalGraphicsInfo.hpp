@@ -412,6 +412,9 @@ struct MAYAFLUX_API GlobalGraphicsConfig {
 #elif defined(WAYLAND_BACKEND)
     /** @brief Selected windowing backend */
     WindowingBackend windowing_backend = WindowingBackend::WAYLAND;
+#elif defined(COCOA_BACKEND)
+    /** @brief Selected windowing backend */
+    WindowingBackend windowing_backend = WindowingBackend::COCOA;
 #else
     /** @brief Selected windowing backend */
     WindowingBackend windowing_backend = WindowingBackend::GLFW;
