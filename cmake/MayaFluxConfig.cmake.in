@@ -1,5 +1,19 @@
 @PACKAGE_INIT@
 
+if(APPLE)
+    if(CMAKE_OSX_ARCHITECTURES)
+        if(NOT CMAKE_OSX_ARCHITECTURES STREQUAL "arm64")
+            set(MayaFlux_FOUND FALSE)
+            set(MayaFlux_NOT_FOUND_MESSAGE "MayaFlux on macOS supports only Apple Silicon (arm64); Intel and universal targets are unsupported.")
+            return()
+        endif()
+    elseif(NOT CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64|ARM64)$")
+        set(MayaFlux_FOUND FALSE)
+        set(MayaFlux_NOT_FOUND_MESSAGE "MayaFlux on macOS requires an Apple Silicon (arm64) target.")
+        return()
+    endif()
+endif()
+
 include(CMakeFindDependencyMacro)
 
 set(_MAYAFLUX_LIBDIR "@CMAKE_INSTALL_LIBDIR@")

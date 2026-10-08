@@ -8,14 +8,21 @@ exec 3>&1 1>/dev/null
 
 err() { printf '%s\n' "$*" >&2; }
 
+if [[ "$(uname -m)" != "arm64" ]]; then
+    err 'MayaFlux macOS setup requires Apple Silicon and a native ARM64 shell.'
+    exit 1
+fi
+
 ENV_FILE="${ZDOTDIR:-$HOME}/.mayaflux_env.sh"
 PROFILE="${ZDOTDIR:-$HOME}/.zshenv"
 
 # --- 1) Homebrew setup --------------------------------------------------------
-if ! command -v brew >/dev/null 2>&1; then
+if [[ ! -x /opt/homebrew/bin/brew ]]; then
     printf 'Installing Homebrew...\n' >&3
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" >/dev/null
 fi
+
+eval "$(/opt/homebrew/bin/brew shellenv)"
 
 brew update >/dev/null
 # --- 3) Install All Dependencies ---------------------------------

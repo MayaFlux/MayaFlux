@@ -26,17 +26,8 @@ env:
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
-    name: ${{ matrix.name }}
-    strategy:
-      matrix:
-        include:
-          - os: macos-26
-            name: "macOS 26+ ARM64 (Apple Silicon)"
-            arch: arm64
-          - os: macos-26-intel
-            name: "macOS 26 x86_64 (Intel)"
-            arch: x64
+    runs-on: macos-26
+    name: "macOS 26+ ARM64 (Apple Silicon)"
 
     steps:
       - name: Checkout code
@@ -245,7 +236,7 @@ jobs:
         run: |
           VERSION="${{ inputs.version }}"
           SHORT_SHA=${GITHUB_SHA:0:8}
-          OS_NAME="macos-${{ matrix.arch }}"
+          OS_NAME="macos-arm64"
 
           PACKAGE_NAME="MayaFlux-${VERSION}-${OS_NAME}"
 
@@ -257,7 +248,7 @@ jobs:
         if: ${{ inputs.create_distribution != false }}
         uses: actions/upload-artifact@v4
         with:
-          name: MayaFlux-${{ inputs.version }}-macos-${{ matrix.arch }}
+          name: MayaFlux-${{ inputs.version }}-macos-arm64
           path: |
             ${{ env.PACKAGE_NAME }}.tar.gz
             ${{ env.PACKAGE_NAME }}.tar.gz.sha256
@@ -268,7 +259,7 @@ jobs:
         run: |
           echo "=== MayaFlux macOS Build Complete ==="
           echo "📦 Package: ${{ env.PACKAGE_NAME }}"
-          echo "  Platform: ${{ inputs.os_display_name }}"
+          echo "  Platform: macOS 26+ ARM64 (Apple Silicon)"
           echo "  Compiler: System Clang (Apple)"
           echo "  C++ Standard: C++23"
           echo ""
@@ -284,7 +275,7 @@ jobs:
           echo ""
           echo "Distribution Package:"
           echo "  ✓ ${{ env.PACKAGE_NAME }}.tar.gz"
-          echo "  ✓ Universal macOS ARM64 binaries"
+          echo "  ✓ macOS ARM64 binaries (Apple Silicon)"
           echo "  ✓ Ready for standalone deployment"
 
       - name: Upload build artifacts (on failure)
