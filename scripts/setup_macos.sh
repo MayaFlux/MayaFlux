@@ -32,7 +32,7 @@ brew tap mayaflux/mayaflux >/dev/null
 
 brew install \
     cmake pkg-config git wget curl llvm \
-    ffmpeg glm eigen onedpl googletest \
+    ffmpeg glm eigen googletest \
     vulkan-headers vulkan-loader vulkan-tools vulkan-validationlayers \
     vulkan-utility-libraries vulkan-extensionlayer spirv-tools spirv-cross \
     spirv-headers shaderc glslang molten-vk hidapi asio assimp alembic freetype utf8proc nlohmann-json mayaflux/mayaflux/stb >/dev/null

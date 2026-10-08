@@ -36,6 +36,70 @@ jobs:
       - name: Use version
         run: echo "Version is ${{ inputs.version }}"
 
+      - name: Verify native parallel algorithms (libc++ PSTL)
+        shell: bash
+        run: |
+          mkdir -p pstl_check
+          cat > pstl_check/pstl_check.cpp << 'EOF'
+          #include <algorithm>
+          #include <cmath>
+          #include <execution>
+          #include <iostream>
+          #include <thread>
+          #include <unordered_set>
+          #include <vector>
+
+          constexpr std::size_t N = 1'000'000;
+          constexpr std::size_t STRIDE = 10'000;
+          constexpr int ITERATIONS = 50;
+
+          template <typename Policy>
+          std::pair<std::size_t, double> run(const Policy& policy)
+          {
+              std::vector<double> data(N, 0.5);
+              std::vector<std::thread::id> samples(N / STRIDE);
+
+              std::for_each(policy, data.begin(), data.end(), [&](double& value) {
+                  double x = value;
+                  for (int i = 0; i < ITERATIONS; ++i)
+                      x = std::sin(x + 0.01) * std::cos(x - 0.02) + 0.001;
+                  value = x;
+                  const auto index = static_cast<std::size_t>(&value - data.data());
+                  if (index % STRIDE == 0)
+                      samples[index / STRIDE] = std::this_thread::get_id();
+              });
+
+              const std::unordered_set<std::thread::id> threads(samples.begin(), samples.end());
+              return { threads.size(), data[N / 2] };
+          }
+
+          int main()
+          {
+              const auto [seq_threads, seq_sum] = run(std::execution::seq);
+              const auto [par_threads, par_sum] = run(std::execution::par);
+              const auto [pu_threads, pu_sum] = run(std::execution::par_unseq);
+
+              std::cout << "hardware_concurrency: " << std::thread::hardware_concurrency() << "\n"
+                        << "seq threads: " << seq_threads << "\n"
+                        << "par threads: " << par_threads << "\n"
+                        << "par_unseq threads: " << pu_threads << "\n";
+
+              if (std::abs(seq_sum - par_sum) > 1e-9 || std::abs(seq_sum - pu_sum) > 1e-9) {
+                  std::cerr << "checksum mismatch\n";
+                  return 1;
+              }
+              if (std::thread::hardware_concurrency() > 1 && (par_threads < 2 || pu_threads < 2)) {
+                  std::cerr << "parallel policies ran on a single thread\n";
+                  return 1;
+              }
+              return 0;
+          }
+          EOF
+          xcrun clang++ --version
+          xcrun clang++ -std=c++23 -O2 -fexperimental-library -mmacosx-version-min=26.0 \
+            pstl_check/pstl_check.cpp -o pstl_check/pstl_check
+          ./pstl_check/pstl_check
+
       - name: Install build tools on macOS
         run: brew install md5sha1sum
 
@@ -59,7 +123,6 @@ jobs:
             pkg-config
             cmake
             eigen
-            onedpl
             glm
             llvm
             vulkan-headers
@@ -90,7 +153,7 @@ jobs:
           brew reinstall cmake
 
           # Re-establish all the paths when cache is hit
-          for tool in ffmpeg shaderc googletest pkg-config eigen onedpl glm llvm; do
+          for tool in ffmpeg shaderc googletest pkg-config eigen glm llvm; do
             if TOOL_PREFIX=$(brew --prefix $tool 2>/dev/null); then
               if [ -d "$TOOL_PREFIX/lib/pkgconfig" ]; then
                 export PKG_CONFIG_PATH="$TOOL_PREFIX/lib/pkgconfig:$PKG_CONFIG_PATH"

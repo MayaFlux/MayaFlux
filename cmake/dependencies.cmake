@@ -35,7 +35,6 @@ else()
     find_package(PkgConfig REQUIRED)
 
     if(APPLE)
-        find_package(oneDPL)
         find_package(Vulkan REQUIRED)
         pkg_check_modules(HIDAPI REQUIRED IMPORTED_TARGET hidapi)
     else()
@@ -57,9 +56,10 @@ else()
         pkg_get_variable(WAYLAND_PROTOCOLS_DIR wayland-protocols pkgdatadir)
 
         pkg_check_modules(DBUS REQUIRED dbus-1)
+
+        find_package(TBB REQUIRED)
     endif()
 
-    find_package(TBB REQUIRED)
     find_package(LLVM CONFIG REQUIRED)
     find_package(Clang CONFIG REQUIRED)
     find_package(Alembic CONFIG REQUIRED)

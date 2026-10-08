@@ -97,7 +97,6 @@ if(WIN32)
 endif()
 if(APPLE)
     target_include_directories(MayaFluxLib PRIVATE ${STB_INCLUDE_DIR})
-    target_include_directories(MayaFluxLib PUBLIC ${oneDPL_INCLUDE_DIRS})
 endif()
 
 if(UNIX AND NOT APPLE)
@@ -162,7 +161,8 @@ if(WIN32)
     )
 else()
     if(APPLE)
-        target_link_libraries(MayaFluxLib PRIVATE oneDPL)
+        target_compile_options(MayaFluxLib PUBLIC -fexperimental-library)
+        target_link_options(MayaFluxLib PUBLIC -fexperimental-library)
         target_link_libraries(MayaFluxLib PUBLIC Vulkan::Vulkan)
         target_link_libraries(MayaFluxLib PRIVATE "-framework CoreFoundation")
         target_link_libraries(MayaFluxLib PRIVATE "-framework AppKit" "-framework UniformTypeIdentifiers" "-framework QuartzCore")
@@ -179,6 +179,7 @@ else()
         PkgConfig::WAYLAND_CLIENT
         PkgConfig::XKBCOMMON
         PkgConfig::Fontconfig
+        TBB::tbb
         asound
         )
 
@@ -187,7 +188,6 @@ else()
     endif()
 
     target_link_libraries(MayaFluxLib PUBLIC
-        TBB::tbb
         glm::glm
         PkgConfig::Eigen
         PkgConfig::HIDAPI

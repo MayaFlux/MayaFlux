@@ -135,9 +135,8 @@ else()
 
     if(APPLE)
         message(STATUS "=== macOS-specific Dependencies ===")
-        find_dependency(oneDPL)
         find_dependency(Vulkan)
-        set(_MAYAFLUX_THREADING_BACKEND "oneDPL")
+        set(_MAYAFLUX_THREADING_BACKEND "libc++ PSTL")
 
         pkg_check_modules(HIDAPI REQUIRED IMPORTED_TARGET hidapi)
     else()
@@ -404,7 +403,8 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
     # Platform-specific threading backends
     # ========================================================================
     if(APPLE)
-        target_link_libraries(MayaFlux::MayaFluxLib INTERFACE oneDPL)
+        target_compile_options(MayaFlux::MayaFluxLib INTERFACE -fexperimental-library)
+        target_link_options(MayaFlux::MayaFluxLib INTERFACE -fexperimental-library)
     elseif(UNIX AND NOT APPLE)
         target_link_libraries(MayaFlux::MayaFluxLib INTERFACE TBB::tbb)
     endif()

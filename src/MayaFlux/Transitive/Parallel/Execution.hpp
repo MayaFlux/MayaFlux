@@ -1,11 +1,6 @@
 #pragma once
 
-#ifdef MAYAFLUX_PLATFORM_MACOS
-#include "oneapi/dpl/algorithm"
-#include "oneapi/dpl/execution"
-#else
 #include <execution>
-#endif
 
 namespace MayaFlux::Parallel {
 
