@@ -1,5 +1,6 @@
 #include "WindowManager.hpp"
 
+#include "MayaFlux/Core/Backends/Windowing/Cocoa/CocoaWindow.hpp"
 #include "MayaFlux/Core/Backends/Windowing/Glfw/GlfwSingleton.hpp"
 #include "MayaFlux/Core/Backends/Windowing/Glfw/GlfwWindow.hpp"
 #include "MayaFlux/Core/Backends/Windowing/Wayland/WaylandWindow.hpp"
@@ -173,6 +174,15 @@ std::shared_ptr<Window> WindowManager::create_window_internal(
         return nullptr;
 #endif
 
+    case GlobalGraphicsConfig::WindowingBackend::COCOA:
+#if defined(COCOA_BACKEND)
+        return std::make_shared<CocoaWindow>(create_info, m_config);
+#else
+        MF_ERROR(Journal::Component::Core, Journal::Context::WindowingSubsystem,
+            "Cocoa backend not compiled in");
+        return nullptr;
+#endif
+
     case GlobalGraphicsConfig::WindowingBackend::WINDOWS:
 #if defined(MAYAFLUX_PLATFORM_WINDOWS)
         return std::make_shared<Win32Window>(create_info, m_config);
@@ -208,6 +218,12 @@ void WindowManager::remove_from_lookup(const std::shared_ptr<Window>& window)
 bool WindowManager::process()
 {
 
+#if defined(COCOA_BACKEND)
+    if (m_config.windowing_backend == GlobalGraphicsConfig::WindowingBackend::COCOA) {
+        for (auto& w : m_processing_windows)
+            w->poll();
+    } else
+#endif
 #if defined(GLFW_BACKEND)
     Parallel::dispatch_main_sync([]() {
         glfwPollEvents();

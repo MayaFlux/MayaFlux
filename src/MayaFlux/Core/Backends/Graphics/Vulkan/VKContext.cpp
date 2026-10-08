@@ -1,6 +1,7 @@
 #include "VKContext.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 
+#include "MayaFlux/Core/Backends/Windowing/Cocoa/CocoaWindow.hpp"
 #include "MayaFlux/Core/Backends/Windowing/Glfw/GlfwSingleton.hpp"
 #include "MayaFlux/Core/Backends/Windowing/Glfw/GlfwWindow.hpp"
 #include "MayaFlux/Core/Backends/Windowing/Wayland/WaylandWindow.hpp"
@@ -10,6 +11,10 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #endif // GLFW_BACKEND
+
+#if defined(COCOA_BACKEND)
+#include <vulkan/vulkan_metal.h>
+#endif
 
 #if defined(WIN32_BACKEND)
 #include <vulkan/vulkan_win32.h>
@@ -35,6 +40,15 @@ bool VKContext::initialize(const GlobalGraphicsConfig& graphics_config, bool ena
     }
 
     std::vector<const char*> extensions = required_extensions;
+
+#if defined(COCOA_BACKEND)
+    if (graphics_config.windowing_backend == GlobalGraphicsConfig::WindowingBackend::COCOA) {
+        for (const char* ext : { VK_KHR_SURFACE_EXTENSION_NAME, VK_EXT_METAL_SURFACE_EXTENSION_NAME }) {
+            if (std::ranges::none_of(extensions, [ext](const char* e) { return std::strcmp(e, ext) == 0; }))
+                extensions.push_back(ext);
+        }
+    }
+#endif
 
 #if defined(GLFW_BACKEND)
     if (graphics_config.windowing_backend == GlobalGraphicsConfig::WindowingBackend::GLFW) {
@@ -77,6 +91,57 @@ vk::SurfaceKHR VKContext::create_surface(std::shared_ptr<Window> window)
             "Cannot create surface: null window");
         return nullptr;
     }
+
+#if defined(COCOA_BACKEND)
+    if (m_graphics_config.windowing_backend == GlobalGraphicsConfig::WindowingBackend::COCOA) {
+        auto* cocoa_window = dynamic_cast<CocoaWindow*>(window.get());
+        if (!cocoa_window) {
+            MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                "Cannot create surface: window is not a CocoaWindow");
+            return nullptr;
+        }
+
+        const void* layer = cocoa_window->get_metal_layer();
+        if (!layer) {
+            MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                "Cannot create surface: null CAMetalLayer");
+            return nullptr;
+        }
+
+        auto instance = static_cast<VkInstance>(m_instance.get_instance());
+        auto create_metal_surface = reinterpret_cast<PFN_vkCreateMetalSurfaceEXT>(
+            vkGetInstanceProcAddr(instance, "vkCreateMetalSurfaceEXT"));
+        if (!create_metal_surface) {
+            MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                "Cannot create surface: vkCreateMetalSurfaceEXT unavailable");
+            return nullptr;
+        }
+
+        VkMetalSurfaceCreateInfoEXT info {};
+        info.sType = VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT;
+        info.pLayer = static_cast<const CAMetalLayer*>(layer);
+
+        VkSurfaceKHR c_surface {};
+        VkResult result = Parallel::dispatch_main_sync([&]() {
+            return create_metal_surface(instance, &info, nullptr, &c_surface);
+        });
+
+        if (result != VK_SUCCESS) {
+            MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                "Failed to create Metal surface for window '{}'",
+                window->get_create_info().title);
+            return nullptr;
+        }
+
+        vk::SurfaceKHR surface(c_surface);
+        m_surfaces.push_back(surface);
+
+        MF_INFO(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Metal surface created for window '{}'", window->get_create_info().title);
+
+        return surface;
+    }
+#endif
 
 #if defined(GLFW_BACKEND)
     auto* glfw_window = dynamic_cast<GlfwWindow*>(window.get());
