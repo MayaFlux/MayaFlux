@@ -175,6 +175,18 @@ bool FFmpegCameraReader::open(const CameraConfig& config)
     return false;
 }
 
+std::vector<CameraMode> FFmpegCameraReader::preset_modes() const
+{
+    return {
+        { .label = "Device default" },
+        { .label = "640 x 480 @ 30 fps", .width = 640, .height = 480, .fps = 30.0 },
+        { .label = "1280 x 720 @ 30 fps", .width = 1280, .height = 720, .fps = 30.0 },
+        { .label = "1920 x 1080 @ 30 fps", .width = 1920, .height = 1080, .fps = 30.0 },
+        { .label = "1920 x 1080 @ 60 fps (high-end cameras)", .width = 1920, .height = 1080, .fps = 60.0, .high_end = true },
+        { .label = "2560 x 1440 @ 30 fps (high-end cameras)", .width = 2560, .height = 1440, .fps = 30.0, .high_end = true },
+    };
+}
+
 void FFmpegCameraReader::close()
 {
     stop_decode_thread();

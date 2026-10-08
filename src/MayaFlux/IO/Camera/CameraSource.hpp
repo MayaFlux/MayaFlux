@@ -33,6 +33,30 @@ struct MAYAFLUX_API CameraConfig {
 };
 
 /**
+ * @struct CameraMode
+ * @brief A requested capture mode offered by a source, for a chooser.
+ *
+ * A mode is a request, not a guarantee: open() falls back to the nearest
+ * mode the device accepts. Modes marked high_end ask for more than most
+ * webcams deliver and are likely to fall back on ordinary cameras.
+ */
+struct MAYAFLUX_API CameraMode {
+    std::string label; ///< Caption for a chooser.
+    uint32_t width {}; ///< Requested width in pixels, 0 leaves it to the device.
+    uint32_t height {}; ///< Requested height in pixels, 0 leaves it to the device.
+    double fps {}; ///< Requested frame rate, 0 leaves it to the device.
+    bool high_end {}; ///< Needs a capable camera.
+
+    /** @brief Write this mode's size and frame rate into @p config. */
+    void apply(CameraConfig& config) const
+    {
+        config.target_width = width;
+        config.target_height = height;
+        config.target_fps = fps;
+    }
+};
+
+/**
  * @class CameraSource
  * @brief Abstract interface for a live camera backend hosted by IOManager.
  *
@@ -60,6 +84,9 @@ public:
 
     /** @brief Discover ready-to-open camera configurations without starting capture. */
     [[nodiscard]] virtual std::vector<CameraConfig> enumerate_configs() const = 0;
+
+    /** @brief Capture modes this source offers as defaults, ordered from safest to most demanding. */
+    [[nodiscard]] virtual std::vector<CameraMode> preset_modes() const = 0;
 
     /** @brief Open a configuration returned by enumerate_configs(). */
     [[nodiscard]] virtual bool open(const CameraConfig& config) = 0;

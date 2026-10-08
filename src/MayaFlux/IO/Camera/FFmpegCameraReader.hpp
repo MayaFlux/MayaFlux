@@ -66,6 +66,8 @@ public:
 
     [[nodiscard]] std::vector<CameraConfig> enumerate_configs() const override;
 
+    [[nodiscard]] std::vector<CameraMode> preset_modes() const override;
+
     void close() override;
     [[nodiscard]] bool is_open() const override;
 
