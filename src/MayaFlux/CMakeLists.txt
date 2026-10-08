@@ -75,6 +75,11 @@ if(APPLE)
         PROPERTIES SKIP_PRECOMPILE_HEADERS ON
         COMPILE_OPTIONS "-include;${CMAKE_SOURCE_DIR}/cmake/pch.h"
     )
+    set_source_files_properties(
+        ${CMAKE_CURRENT_SOURCE_DIR}/Core/Backends/Windowing/Cocoa/CocoaWindow.mm
+        PROPERTIES SKIP_PRECOMPILE_HEADERS ON
+        COMPILE_OPTIONS "-include;${CMAKE_SOURCE_DIR}/cmake/pch.h;-fobjc-arc"
+    )
 endif()
 
 target_include_directories(MayaFluxLib PUBLIC
@@ -160,7 +165,7 @@ else()
         target_link_libraries(MayaFluxLib PRIVATE oneDPL)
         target_link_libraries(MayaFluxLib PUBLIC Vulkan::Vulkan PkgConfig::Glfw)
         target_link_libraries(MayaFluxLib PRIVATE "-framework CoreFoundation")
-        target_link_libraries(MayaFluxLib PRIVATE "-framework AppKit" "-framework UniformTypeIdentifiers")
+        target_link_libraries(MayaFluxLib PRIVATE "-framework AppKit" "-framework UniformTypeIdentifiers" "-framework QuartzCore")
         target_link_libraries(MayaFluxLib PRIVATE "-framework CoreMIDI")
         target_link_libraries(
             MayaFluxLib PRIVATE
