@@ -97,7 +97,7 @@ echo ""
 echo "[6] Checking Runtime Dependencies..."
 MISSING_DEPS=()
 
-for lib in libLLVM libglfw libvulkan libavcodec; do
+for lib in libLLVM libvulkan libavcodec; do
     if ldconfig -p 2>/dev/null | grep -q "$lib"; then
         echo "   ✅ $lib found"
     else
@@ -109,7 +109,7 @@ done
 if [ ${#MISSING_DEPS[@]} -gt 0 ]; then
     echo ""
     echo "   Missing dependencies detected. Install with:"
-    echo "   sudo dnf install -y llvm-libs glfw vulkan-loader ffmpeg-free-libs"
+    echo "   sudo dnf install -y llvm-libs vulkan-loader ffmpeg-free-libs"
     ERROR_LEVEL=1
 fi
 

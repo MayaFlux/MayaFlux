@@ -69,7 +69,6 @@ jobs:
             cmake
             eigen
             onedpl
-            glfw
             glm
             llvm
             vulkan-headers
@@ -100,7 +99,7 @@ jobs:
           brew reinstall cmake
 
           # Re-establish all the paths when cache is hit
-          for tool in ffmpeg shaderc googletest pkg-config eigen onedpl glfw glm llvm; do
+          for tool in ffmpeg shaderc googletest pkg-config eigen onedpl glm llvm; do
             if TOOL_PREFIX=$(brew --prefix $tool 2>/dev/null); then
               if [ -d "$TOOL_PREFIX/lib/pkgconfig" ]; then
                 export PKG_CONFIG_PATH="$TOOL_PREFIX/lib/pkgconfig:$PKG_CONFIG_PATH"
@@ -145,7 +144,6 @@ jobs:
           echo "CMAKE_ROOT: $CMAKE_ROOT"
           echo "CMAKE version: $(cmake --version | head -1)"
           echo "=== Verifying pkg-config can find packages ==="
-          pkg-config --exists glfw3 && echo "✅ glfw3 found" || echo "❌ glfw3 not found"
           pkg-config --exists eigen3 && echo "✅ eigen3 found" || echo "❌ eigen3 not found"
           pkg-config --exists glm && echo "✅ glm found" || echo "❌ glm not found"
           pkg-config --exists asio && echo "✅ asio found" || echo "❌ asio not found"
@@ -278,7 +276,7 @@ jobs:
           echo "  [Tier 1 - Homebrew Packages]"
           echo "  ✓ LLVM (Lila JIT - Homebrew)"
           echo "  [Tier 2 - Homebrew Libraries]"
-          echo "  ✓ GLFW, FFmpeg"
+          echo "  ✓ FFmpeg"
           echo "  ✓ Eigen3, GLM, magic_enum"
           echo "  ✓ Vulkan SDK"
           echo "  [Tier 3 - Header-Only Direct]"
