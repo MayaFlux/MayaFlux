@@ -1,8 +1,6 @@
 #include "WindowManager.hpp"
 
 #include "MayaFlux/Core/Backends/Windowing/Cocoa/CocoaWindow.hpp"
-#include "MayaFlux/Core/Backends/Windowing/Glfw/GlfwSingleton.hpp"
-#include "MayaFlux/Core/Backends/Windowing/Glfw/GlfwWindow.hpp"
 #include "MayaFlux/Core/Backends/Windowing/Wayland/WaylandWindow.hpp"
 #include "MayaFlux/Core/Backends/Windowing/Win32/Win32Window.hpp"
 
@@ -23,10 +21,6 @@ WindowManager::~WindowManager()
 {
     m_windows.clear();
     m_window_lookup.clear();
-
-#ifdef GLFW_BACKEND
-    GLFWSingleton::terminate();
-#endif // GLFW_BACKEND
 
     MF_INFO(Journal::Component::Core, Journal::Context::WindowingSubsystem,
         "WindowManager destroyed");
@@ -164,25 +158,6 @@ std::shared_ptr<Window> WindowManager::create_window_internal(
     const WindowCreateInfo& create_info)
 {
     switch (m_config.windowing_backend) {
-    case GlobalGraphicsConfig::WindowingBackend::GLFW:
-#if defined(GLFW_BACKEND)
-        return std::make_unique<GlfwWindow>(create_info, m_config.surface_info,
-            m_config.requested_api, m_config.glfw_preinit_config);
-#else
-        MF_ERROR(Journal::Component::Core, Journal::Context::WindowingSubsystem,
-            "GLFW backend not compiled in");
-        return nullptr;
-#endif
-
-    case GlobalGraphicsConfig::WindowingBackend::COCOA:
-#if defined(COCOA_BACKEND)
-        return std::make_shared<CocoaWindow>(create_info, m_config);
-#else
-        MF_ERROR(Journal::Component::Core, Journal::Context::WindowingSubsystem,
-            "Cocoa backend not compiled in");
-        return nullptr;
-#endif
-
     case GlobalGraphicsConfig::WindowingBackend::WINDOWS:
 #if defined(MAYAFLUX_PLATFORM_WINDOWS)
         return std::make_shared<Win32Window>(create_info, m_config);
@@ -197,7 +172,16 @@ std::shared_ptr<Window> WindowManager::create_window_internal(
         return std::make_shared<WaylandWindow>(create_info, m_config);
 #else
         MF_ERROR(Journal::Component::Core, Journal::Context::WindowingSubsystem,
-            "Wayland native backend not compiled in");
+            "Native Wayland backend not implemented on this platform");
+        return nullptr;
+#endif
+
+    case GlobalGraphicsConfig::WindowingBackend::COCOA:
+#if defined(MAYAFLUX_PLATFORM_MACOS)
+        return std::make_shared<CocoaWindow>(create_info, m_config);
+#else
+        MF_ERROR(Journal::Component::Core, Journal::Context::WindowingSubsystem,
+            "Native Cocoa backend not implemented on this platform");
         return nullptr;
 #endif
 
@@ -217,21 +201,8 @@ void WindowManager::remove_from_lookup(const std::shared_ptr<Window>& window)
 
 bool WindowManager::process()
 {
-
-#if defined(COCOA_BACKEND)
-    if (m_config.windowing_backend == GlobalGraphicsConfig::WindowingBackend::COCOA) {
-        for (auto& w : m_processing_windows)
-            w->poll();
-    } else
-#endif
-#if defined(GLFW_BACKEND)
-    Parallel::dispatch_main_sync([]() {
-        glfwPollEvents();
-    });
-#else
     for (auto& w : m_processing_windows)
         w->poll();
-#endif
 
     {
         std::lock_guard<std::mutex> lock(m_hooks_mutex);

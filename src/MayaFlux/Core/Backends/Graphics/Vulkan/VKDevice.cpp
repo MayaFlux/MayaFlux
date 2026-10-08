@@ -4,11 +4,6 @@
 
 #include "set"
 
-#ifdef GLFW_BACKEND
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
-#endif
-
 #if defined(WIN32_BACKEND)
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -55,10 +50,7 @@ namespace {
         explicit PresentationProbe(vk::Instance inst)
             : instance(inst)
         {
-#if defined(GLFW_BACKEND)
-            available = glfwVulkanSupported() == GLFW_TRUE;
-            mechanism = available ? "glfw" : "unavailable";
-#elif defined(WIN32_BACKEND)
+#if defined(WIN32_BACKEND)
             available = true;
             mechanism = "win32";
 #elif defined(WAYLAND_BACKEND)
@@ -81,18 +73,12 @@ namespace {
         PresentationProbe(PresentationProbe&&) = delete;
         PresentationProbe& operator=(PresentationProbe&&) = delete;
 
-        [[nodiscard]] bool supports(vk::PhysicalDevice device, uint32_t family_index) const
+        [[nodiscard]] bool supports([[maybe_unused]] vk::PhysicalDevice device, [[maybe_unused]] uint32_t family_index) const
         {
             if (!available)
                 return true;
 
-#if defined(GLFW_BACKEND)
-            return glfwGetPhysicalDevicePresentationSupport(
-                       static_cast<VkInstance>(instance),
-                       static_cast<VkPhysicalDevice>(device),
-                       family_index)
-                == GLFW_TRUE;
-#elif defined(WIN32_BACKEND)
+#if defined(WIN32_BACKEND)
             return vkGetPhysicalDeviceWin32PresentationSupportKHR(
                        static_cast<VkPhysicalDevice>(device), family_index)
                 == VK_TRUE;

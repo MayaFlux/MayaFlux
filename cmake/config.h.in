@@ -42,10 +42,6 @@
 #ifndef COREMIDI_BACKEND
 #define COREMIDI_BACKEND
 #endif
-#cmakedefine MAYAFLUX_GLFW_BACKEND
-#if defined(MAYAFLUX_GLFW_BACKEND) && !defined(GLFW_BACKEND)
-#define GLFW_BACKEND
-#endif
 #ifndef COCOA_BACKEND
 #define COCOA_BACKEND
 #endif

@@ -25,7 +25,7 @@ namespace MayaFlux::Parallel {
  * @param args Arguments to forward to the function
  *
  * Schedules work on the main queue asynchronously. Returns immediately.
- * Use this for GLFW operations that must execute on the main thread.
+ * Use this for AppKit operations that must execute on the main thread.
  */
 template <typename Func, typename... Args>
 void dispatch_main_async(Func&& func, Args&&... args)

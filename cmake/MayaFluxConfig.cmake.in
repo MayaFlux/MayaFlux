@@ -126,7 +126,6 @@ else()
         set(_MAYAFLUX_THREADING_BACKEND "oneDPL")
 
         pkg_check_modules(HIDAPI REQUIRED IMPORTED_TARGET hidapi)
-        pkg_check_modules(Glfw REQUIRED IMPORTED_TARGET glfw3>=3.4)
     else()
         message(STATUS "=== Linux-specific Dependencies ===")
         pkg_check_modules(Vulkan REQUIRED IMPORTED_TARGET vulkan)
@@ -375,7 +374,7 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
 
         # Unix Vulkan
         if(APPLE)
-            target_link_libraries(MayaFlux::MayaFluxLib INTERFACE Vulkan::Vulkan PkgConfig::Glfw)
+            target_link_libraries(MayaFlux::MayaFluxLib INTERFACE Vulkan::Vulkan)
         else()
             target_link_libraries(MayaFlux::MayaFluxLib INTERFACE 
             PkgConfig::Vulkan

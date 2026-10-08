@@ -37,7 +37,7 @@ public:
      * Examples:
      * - Audio: Audio callback registration for real-time audio processing
      * - Visual: Vulkan present callback / OpenFrameworks draw loop integration
-     * - Windowing: GLFW event loops for UI and input handling
+     * - Windowing: native window event polling for UI and input handling
      * - Custom: Application-specific timing or event-driven processing
      *
      * Called during subsystem setup before initialization. Should not start

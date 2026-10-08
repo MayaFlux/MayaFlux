@@ -184,7 +184,7 @@ IO::Keys from_win32_key(WPARAM vk) noexcept
     case VK_RWIN:
         return IO::Keys::RSuper;
     // Non-sided VK_SHIFT / VK_CONTROL / VK_MENU arrive only when the OS
-    // cannot distinguish sides; map to the left variant to match GLFW.
+    // cannot distinguish sides; map to the left variant.
     case VK_SHIFT:
         return IO::Keys::LShift;
     case VK_CONTROL:

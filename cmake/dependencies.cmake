@@ -38,7 +38,6 @@ else()
         find_package(oneDPL)
         find_package(Vulkan REQUIRED)
         pkg_check_modules(HIDAPI REQUIRED IMPORTED_TARGET hidapi)
-        pkg_check_modules(Glfw REQUIRED IMPORTED_TARGET glfw3>=3.4)
     else()
         pkg_check_modules(Vulkan REQUIRED IMPORTED_TARGET vulkan)
         pkg_search_module(HIDAPI REQUIRED IMPORTED_TARGET

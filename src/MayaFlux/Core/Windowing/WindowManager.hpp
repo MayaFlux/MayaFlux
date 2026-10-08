@@ -11,7 +11,7 @@ namespace MayaFlux::Core {
  *
  * Responsibilities:
  * - Create/destroy windows
- * - Poll Window events (calls window->poll() or glfwPollEvents)
+ * - Poll window events (calls window->poll())
  * - Query windows by title/index
  */
 class MAYAFLUX_API WindowManager {
@@ -94,10 +94,9 @@ public:
      *
      * This is the main per-frame operation that should be called
      * from the application's main loop. It:
-     * 1. Calls window->poll() for supported backends
-     * 2. Polls GLFW events (triggers EventSource) if defined
+     * 1. Calls window->poll() for each processing window
+     * 2. Runs per-frame hooks
      * 3. Cleans up closed windows
-     * 4. Optionally runs per-frame hooks
      *
      * @return True if processing should continue, false if all windows closed
      */

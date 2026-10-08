@@ -167,7 +167,7 @@ enum ProcessingToken : uint32_t {
      * @brief Standard graphics processing backend configuration
      *
      * Combines FRAME_RATE | GPU_PROCESS | PARALLEL for graphics processing.
-     * This processes video/graphics data on the chosen backend (default GLFW) using
+     * This processes video/graphics data on the selected graphics backend using
      * GPU hardware with parallel execution within the graphics callback loop.
      * Optimal for real-time graphics processing and video effects.
      */

@@ -143,9 +143,8 @@ public:
     /**
      * @brief Drain platform-native event queue into WindowEventSource.
      *
-     * Called once per frame by WindowManager::process() for backends that
-     * own their own event thread (e.g. Win32Window). The default no-op is
-     * correct for GLFW, which uses the global glfwPollEvents() instead.
+     * Called once per frame by WindowManager::process(), or directly for a
+     * standalone window. Callbacks and awaiters run on the calling thread.
      */
     virtual void poll() { }
 

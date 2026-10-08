@@ -355,7 +355,7 @@ public:
      * @brief Blocks until shutdown is requested (main thread event loop)
      *
      * Pumps platform-specific events on the main thread and waits for shutdown.
-     * On macOS: Runs CFRunLoop to process dispatch queue (required for GLFW)
+     * On macOS: Runs CFRunLoop to service the main dispatch queue (required for AppKit)
      * On other platforms: Simple blocking wait for user input
      *
      * Should be called on the main thread after Start().
@@ -401,7 +401,7 @@ private:
     std::shared_ptr<Buffers::BufferManager> m_buffer_manager; ///< Buffer manager
     std::shared_ptr<SubsystemManager> m_subsystem_manager;
     std::shared_ptr<WindowManager> m_window_manager; ///< Window manager (Windowing subsystem)
-    std::shared_ptr<Vruta::EventManager> m_event_manager; ///< Event manager (currently only glfw events)
+    std::shared_ptr<Vruta::EventManager> m_event_manager; ///< Event manager
     std::shared_ptr<InputManager> m_input_manager; ///< Input manager (HID/MIDI/etc.)
     std::shared_ptr<IO::IOManager> m_io_manager; ///< IO manager for video/audio loading and dispatch
     std::unique_ptr<Kinesis::Stochastic::Stochastic> m_stochastic_engine; ///< Core stochastic engine for random generation

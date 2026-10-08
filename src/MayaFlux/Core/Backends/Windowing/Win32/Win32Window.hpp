@@ -19,13 +19,12 @@ namespace MayaFlux::Core {
 
 /**
  * @class Win32Window
- * @brief Native Win32 window backend, no GLFW dependency.
+ * @brief Native Win32 window backend.
  *
  * The Win32 message loop runs on a dedicated UI thread spawned in the
  * constructor. WndProc enqueues WindowEvents under m_event_mutex; poll()
  * drains the queue on the graphics thread and signals m_event_source.
- * WindowManager::process() calls poll() instead of glfwPollEvents() when
- * the NATIVE windowing backend is selected.
+ * WindowManager::process() calls poll() once per frame.
  */
 class MAYAFLUX_API Win32Window : public Window {
 public:

@@ -2,15 +2,8 @@
 #include "MayaFlux/Journal/Archivist.hpp"
 
 #include "MayaFlux/Core/Backends/Windowing/Cocoa/CocoaWindow.hpp"
-#include "MayaFlux/Core/Backends/Windowing/Glfw/GlfwSingleton.hpp"
-#include "MayaFlux/Core/Backends/Windowing/Glfw/GlfwWindow.hpp"
 #include "MayaFlux/Core/Backends/Windowing/Wayland/WaylandWindow.hpp"
 #include "MayaFlux/Core/Backends/Windowing/Win32/Win32Window.hpp"
-
-#ifdef GLFW_BACKEND
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
-#endif // GLFW_BACKEND
 
 #if defined(COCOA_BACKEND)
 #include <vulkan/vulkan_metal.h>
@@ -50,15 +43,7 @@ bool VKContext::initialize(const GlobalGraphicsConfig& graphics_config, bool ena
     }
 #endif
 
-#if defined(GLFW_BACKEND)
-    if (graphics_config.windowing_backend == GlobalGraphicsConfig::WindowingBackend::GLFW) {
-        GLFWSingleton::configure(graphics_config.glfw_preinit_config);
-        for (const char* ext : GLFWSingleton::get_required_instance_extensions()) {
-            if (!std::ranges::contains(extensions, ext))
-                extensions.push_back(ext);
-        }
-    }
-#elif defined(WIN32_BACKEND)
+#if defined(WIN32_BACKEND)
     extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
     extensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
 #elif defined(WAYLAND_BACKEND)
@@ -143,46 +128,7 @@ vk::SurfaceKHR VKContext::create_surface(std::shared_ptr<Window> window)
     }
 #endif
 
-#if defined(GLFW_BACKEND)
-    auto* glfw_window = dynamic_cast<GlfwWindow*>(window.get());
-    if (!glfw_window) {
-        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "Cannot create surface: window is not a GlfwWindow");
-        return nullptr;
-    }
-
-    GLFWwindow* glfw_handle = glfw_window->get_glfw_handle();
-    if (!glfw_handle) {
-        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "Cannot create surface: null GLFW handle");
-        return nullptr;
-    }
-
-    VkSurfaceKHR c_surface {};
-    VkResult result = Parallel::dispatch_main_sync([&]() {
-        return glfwCreateWindowSurface(
-            static_cast<VkInstance>(m_instance.get_instance()),
-            glfw_handle,
-            nullptr,
-            &c_surface);
-    });
-
-    if (result != VK_SUCCESS) {
-        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "Failed to create GLFW window surface for window '{}'",
-            window->get_create_info().title);
-        return nullptr;
-    }
-
-    vk::SurfaceKHR surface(c_surface);
-    m_surfaces.push_back(surface);
-
-    MF_INFO(Journal::Component::Core, Journal::Context::GraphicsBackend,
-        "Surface created for window '{}'", window->get_create_info().title);
-
-    return surface;
-
-#elif defined(WIN32_BACKEND)
+#if defined(WIN32_BACKEND)
     if (m_graphics_config.windowing_backend == GlobalGraphicsConfig::WindowingBackend::WINDOWS) {
         auto hwnd = static_cast<HWND>(window->get_native_handle());
         if (!hwnd) {

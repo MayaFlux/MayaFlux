@@ -168,7 +168,7 @@ public:
      * @brief Blocks until server shutdown (main thread event loop)
      * @param external_flag std::atomic<bool> Whether to force shutdown externally
      *
-     * On macOS: Runs CFRunLoop to process main queue (required for JIT GLFW)
+     * On macOS: Runs CFRunLoop to process main queue (required for JIT AppKit work)
      * On other platforms: Simple blocking wait
      *
      * Should be called on main thread after initialize() in Server mode.

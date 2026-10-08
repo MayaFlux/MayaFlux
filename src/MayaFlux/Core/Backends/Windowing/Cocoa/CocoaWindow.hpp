@@ -11,7 +11,7 @@ namespace MayaFlux::Core {
 
 /**
  * @class CocoaWindow
- * @brief Native AppKit window backend, no GLFW dependency.
+ * @brief Native AppKit window backend.
  *
  * Usable on its own, without WindowManager, GraphicsSubsystem, or Engine.
  * Window operations may be called from any thread. Native events are queued
