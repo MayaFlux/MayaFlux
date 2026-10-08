@@ -45,6 +45,9 @@
 #ifndef GLFW_BACKEND
 #define GLFW_BACKEND
 #endif
+#ifndef COCOA_BACKEND
+#define COCOA_BACKEND
+#endif
 #endif
 
 // Cross-platform definitions
