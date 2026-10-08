@@ -648,7 +648,7 @@ bool VKDevice::create_logical_device(vk::Instance /*instance*/, const GraphicsBa
     device_features.geometryShader = backend_info.required_features.geometry_shaders;
     device_features.tessellationShader = backend_info.required_features.tessellation_shaders;
     device_features.multiViewport = backend_info.required_features.multi_viewport;
-    device_features.fillModeNonSolid = backend_info.required_features.fill_mode_non_solid;
+    device_features.fillModeNonSolid = m_physical_device.getFeatures().fillModeNonSolid;
 
     std::vector<const char*> device_extensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
