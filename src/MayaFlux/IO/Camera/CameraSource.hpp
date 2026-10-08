@@ -7,15 +7,37 @@ class CameraContainer;
 namespace MayaFlux::IO {
 
 /**
+ * @struct CameraConfig
+ * @brief Configuration for opening a camera device via FFmpeg.
+ *
+ * Platform device string conventions:
+ *   - Linux:   "/dev/video0", "/dev/video1", …
+ *   - macOS:   "0" (AVFoundation device index) or a camera name such as
+ *              "FaceTime HD Camera"; frame rate must equal a rate range maximum
+ *   - Windows: "video=Integrated Camera" (DirectShow filter name)
+ *
+ * Resolution, frame rate and input format are hints. If the device rejects
+ * them, open() retries without the input format, then without frame rate,
+ * then with device defaults. The negotiated values are available from
+ * FFmpegCameraReader after open().
+ */
+struct MAYAFLUX_API CameraConfig {
+    std::string device_name; ///< Platform device string.
+    uint32_t target_width { 1920 }; ///< Requested width in pixels.
+    uint32_t target_height { 1080 }; ///< Requested height in pixels.
+    double target_fps { 30.0 }; ///< Hint only; device may ignore.
+    std::string format_override; ///< Leave empty to use CAMERA_FORMAT for current platform.
+    int pixel_format { -1 }; ///< Target AVPixelFormat as int; negative selects AV_PIX_FMT_RGBA.
+    std::string display_name; ///< Human-readable device name for a chooser.
+    std::string input_format; ///< Capture format or codec (e.g. "mjpeg"); empty selects mjpeg where the platform supports it.
+};
+
+/**
  * @class CameraSource
  * @brief Abstract interface for a live camera backend hosted by IOManager.
  *
- * Covers only the post-open lifecycle: negotiated parameters, frame
- * delivery, and IOService wiring. Deliberately excludes device opening and
- * configuration — those are backend-specific by nature, and forcing them
- * into a shared signature would constrain every future backend to one
- * config shape. A concrete backend owns its own open()-equivalent and is
- * handed to IOManager already open, via IOManager::register_camera_source().
+ * Enumerates configurations, opens a selected device, then provides
+ * negotiated parameters, frame delivery, and IOService wiring.
  *
  * A camera source is a live, unbounded stream: no ring buffer, no seek, no
  * batch decode. One frame is pulled per process cycle, demand-driven by
@@ -35,6 +57,12 @@ namespace MayaFlux::IO {
 class MAYAFLUX_API CameraSource {
 public:
     virtual ~CameraSource() = default;
+
+    /** @brief Discover ready-to-open camera configurations without starting capture. */
+    [[nodiscard]] virtual std::vector<CameraConfig> enumerate_configs() const = 0;
+
+    /** @brief Open a configuration returned by enumerate_configs(). */
+    [[nodiscard]] virtual bool open(const CameraConfig& config) = 0;
 
     /**
      * @brief Release device, decode, and scratch resources.

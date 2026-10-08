@@ -80,6 +80,11 @@ if(APPLE)
         PROPERTIES SKIP_PRECOMPILE_HEADERS ON
         COMPILE_OPTIONS "-include;${CMAKE_SOURCE_DIR}/cmake/pch.h;-fobjc-arc"
     )
+    set_source_files_properties(
+        ${CMAKE_CURRENT_SOURCE_DIR}/IO/Camera/FFmpegCameraDiscoveryMac.mm
+        PROPERTIES SKIP_PRECOMPILE_HEADERS ON
+        COMPILE_OPTIONS "-include;${CMAKE_SOURCE_DIR}/cmake/pch.h;-fobjc-arc"
+    )
 endif()
 
 target_include_directories(MayaFluxLib PUBLIC
@@ -167,6 +172,7 @@ else()
         target_link_libraries(MayaFluxLib PRIVATE "-framework CoreFoundation")
         target_link_libraries(MayaFluxLib PRIVATE "-framework AppKit" "-framework UniformTypeIdentifiers" "-framework QuartzCore")
         target_link_libraries(MayaFluxLib PRIVATE "-framework CoreMIDI")
+        target_link_libraries(MayaFluxLib PRIVATE "-framework AVFoundation")
         target_link_libraries(
             MayaFluxLib PRIVATE
             "-framework CoreAudio"

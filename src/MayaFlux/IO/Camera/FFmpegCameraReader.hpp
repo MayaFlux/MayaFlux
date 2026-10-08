@@ -29,32 +29,6 @@ inline constexpr std::string_view CAMERA_FORMAT = "dshow";
 #endif
 
 /**
- * @struct CameraConfig
- * @brief Configuration for opening a camera device via FFmpeg.
- *
- * Platform device string conventions:
- *   - Linux:   "/dev/video0", "/dev/video1", …
- *   - macOS:   "0" (AVFoundation device index) or "FaceTime HD Camera"
- *   - Windows: "video=Integrated Camera" (DirectShow filter name)
- *
- * Resolution and frame rate values are hints passed to the device driver
- * via AVDictionary options. The device may negotiate different parameters;
- * the actual negotiated values are available from FFmpegCameraReader after
- * open().
- *
- * This type is FFmpeg-specific by design and does not appear anywhere in
- * CameraSource. Another backend defines its own config type entirely.
- */
-struct MAYAFLUX_API CameraConfig {
-    std::string device_name; ///< Platform device string.
-    uint32_t target_width { 1920 }; ///< Requested width in pixels.
-    uint32_t target_height { 1080 }; ///< Requested height in pixels.
-    double target_fps { 30.0 }; ///< Hint only; device may ignore.
-    std::string format_override; ///< Leave empty to use CAMERA_FORMAT for current platform.
-    int pixel_format { -1 }; ///< Target AVPixelFormat as int; negative selects AV_PIX_FMT_RGBA.
-};
-
-/**
  * @class FFmpegCameraReader
  * @brief FFmpeg device reader for live camera input with background decode.
  *
@@ -64,11 +38,10 @@ struct MAYAFLUX_API CameraConfig {
  * marking the container READY. The graphics thread is never blocked by device
  * I/O.
  *
- * Implements CameraSource for the post-open lifecycle; see CameraSource for
- * the shared contract (demand-driven single-frame pulls, Managed/Standalone
- * integration paths). open()/close() and CameraConfig are specific to this
- * backend — IOManager and CameraContainer only ever see this class through
- * the CameraSource interface once open.
+ * Implements CameraSource for discovery and the live-stream lifecycle; see
+ * CameraSource for the shared contract (demand-driven single-frame pulls,
+ * Managed/Standalone integration paths). IOManager and CameraContainer see
+ * this class through CameraSource once it is open.
  *
  * IOManager::open_camera() drives the Managed path and calls
  * avdevice_register_all() once via std::call_once. A Standalone caller is
@@ -89,7 +62,9 @@ public:
      * @param config Device name, resolution hint, fps hint, format override.
      * @return True on success.
      */
-    [[nodiscard]] bool open(const CameraConfig& config);
+    [[nodiscard]] bool open(const CameraConfig& config) override;
+
+    [[nodiscard]] std::vector<CameraConfig> enumerate_configs() const override;
 
     void close() override;
     [[nodiscard]] bool is_open() const override;

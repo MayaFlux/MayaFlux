@@ -56,6 +56,58 @@ FFmpegCameraReader::~FFmpegCameraReader()
     }
 }
 
+#ifdef MAYAFLUX_PLATFORM_MACOS
+double macos_camera_max_fps(const std::string& device_name);
+#endif
+
+namespace {
+
+    constexpr std::string_view PREFERRED_INPUT_FORMAT =
+#ifdef MAYAFLUX_PLATFORM_MACOS
+        "";
+#else
+        "mjpeg";
+#endif
+
+    struct OpenHints {
+        bool format;
+        bool size;
+        bool fps;
+    };
+
+    AVDictionary* build_options(const CameraConfig& config,
+        const std::string& input_format, const OpenHints& hints)
+    {
+        AVDictionary* opts = nullptr;
+
+        if (hints.fps && config.target_fps > 0.0)
+            av_dict_set(&opts, "framerate", std::to_string(config.target_fps).c_str(), 0);
+#ifdef MAYAFLUX_PLATFORM_MACOS
+        else if (const double native = macos_camera_max_fps(config.device_name); native > 0.0)
+            av_dict_set(&opts, "framerate", std::to_string(native).c_str(), 0);
+#endif
+
+        if (hints.size && config.target_width > 0 && config.target_height > 0) {
+            const std::string size_str = std::to_string(config.target_width)
+                + "x"
+                + std::to_string(config.target_height);
+            av_dict_set(&opts, "video_size", size_str.c_str(), 0);
+        }
+
+        if (hints.format && !input_format.empty()) {
+#if defined(MAYAFLUX_PLATFORM_LINUX)
+            av_dict_set(&opts, "input_format", input_format.c_str(), 0);
+#elif defined(MAYAFLUX_PLATFORM_WINDOWS)
+            const bool raw = av_get_pix_fmt(input_format.c_str()) != AV_PIX_FMT_NONE;
+            av_dict_set(&opts, raw ? "pixel_format" : "vcodec", input_format.c_str(), 0);
+#endif
+        }
+
+        return opts;
+    }
+
+}
+
 bool FFmpegCameraReader::open(const CameraConfig& config)
 {
     close();
@@ -64,46 +116,63 @@ bool FFmpegCameraReader::open(const CameraConfig& config)
         ? std::string(CAMERA_FORMAT)
         : config.format_override;
 
-    AVDictionary* opts = nullptr;
+    const std::string input_format = config.input_format.empty()
+        ? std::string(PREFERRED_INPUT_FORMAT)
+        : config.input_format;
 
-    std::string fps_str = std::to_string(static_cast<int>(config.target_fps));
-    av_dict_set(&opts, "framerate", fps_str.c_str(), 0);
-
-    std::string size_str = std::to_string(config.target_width)
-        + "x"
-        + std::to_string(config.target_height);
-
-    av_dict_set(&opts, "video_size", size_str.c_str(), 0);
-
-    if (!m_demux->open_device(config.device_name, fmt_name, &opts)) {
-        m_last_error = "Device open failed: " + m_demux->last_error();
-        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
-            "FFmpegCameraReader::open — {}", m_last_error);
-        return false;
-    }
+    constexpr std::array<OpenHints, 4> ladder { {
+        { .format = true, .size = true, .fps = true },
+        { .format = false, .size = true, .fps = true },
+        { .format = false, .size = true, .fps = false },
+        { .format = false, .size = false, .fps = false },
+    } };
 
     m_requested_pixel_format = config.pixel_format;
 
-    if (!m_video->open_device(*m_demux,
-            config.target_width,
-            config.target_height,
-            config.pixel_format)) {
-        m_last_error = "Video stream open failed: " + m_video->last_error();
-        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
-            "FFmpegCameraReader::open — {}", m_last_error);
-        m_demux->close();
-        return false;
+    for (size_t step = 0; step < ladder.size(); ++step) {
+        const OpenHints& hints = ladder.at(step);
+        if (hints.format && input_format.empty())
+            continue;
+
+        AVDictionary* opts = build_options(config, input_format, hints);
+        const bool opened = m_demux->open_device(config.device_name, fmt_name, &opts);
+        av_dict_free(&opts);
+
+        if (!opened) {
+            m_last_error = "Device open failed: " + m_demux->last_error();
+            continue;
+        }
+
+        if (!m_video->open_device(*m_demux,
+                hints.size ? config.target_width : 0,
+                hints.size ? config.target_height : 0,
+                config.pixel_format)) {
+            m_last_error = "Video stream open failed: " + m_video->last_error();
+            m_demux->close();
+            continue;
+        }
+
+        m_sws_buf.clear();
+        m_scaler_ready = false;
+
+        if (step > (input_format.empty() ? 1U : 0U)) {
+            MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
+                "FFmpegCameraReader::open: '{}' did not accept the requested mode, "
+                "opened with fallback step {}",
+                config.device_name, step + 1);
+        }
+
+        MF_INFO(Journal::Component::IO, Journal::Context::FileIO,
+            "FFmpegCameraReader: opened '{}' via {}: {}x{} @{:.1f}fps (scaler deferred)",
+            config.device_name, fmt_name,
+            m_video->width, m_video->height, m_video->frame_rate);
+
+        return true;
     }
 
-    m_sws_buf.clear();
-    m_scaler_ready = false;
-
-    MF_INFO(Journal::Component::IO, Journal::Context::FileIO,
-        "FFmpegCameraReader: opened '{}' via {} — {}x{} @{:.1f}fps (scaler deferred)",
-        config.device_name, fmt_name,
-        m_video->width, m_video->height, m_video->frame_rate);
-
-    return true;
+    MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+        "FFmpegCameraReader::open: {}", m_last_error);
+    return false;
 }
 
 void FFmpegCameraReader::close()
