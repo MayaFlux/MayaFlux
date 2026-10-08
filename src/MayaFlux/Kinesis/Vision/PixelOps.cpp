@@ -1,7 +1,7 @@
 // NOLINTBEGIN
 #include "PixelOps.hpp"
 
-#include "MayaFlux/Transitive/Parallel/Execution.hpp"
+#include <execution>
 #include <Eigen/Core>
 
 #ifdef MAYAFLUX_ARCH_X64
@@ -11,15 +11,13 @@
 #include <arm_neon.h>
 #endif
 
-namespace P = MayaFlux::Parallel;
-
 namespace MayaFlux::Kinesis::Vision {
 
 void rgba_to_gray(std::span<const float> rgba, std::span<float> dst, uint32_t w, uint32_t h)
 {
     const size_t n = static_cast<size_t>(w) * h;
 
-    P::for_each(P::par_unseq,
+    std::for_each(std::execution::par_unseq,
         std::views::iota(uint32_t { 0 }, h).begin(),
         std::views::iota(uint32_t { 0 }, h).end(),
         [&](uint32_t row) {
@@ -96,7 +94,7 @@ void rgba_to_hsv(
     uint32_t w, uint32_t h)
 {
     const size_t n = static_cast<size_t>(w) * h;
-    P::for_each(P::par_unseq,
+    std::for_each(std::execution::par_unseq,
         std::views::iota(size_t { 0 }, n).begin(),
         std::views::iota(size_t { 0 }, n).end(),
         [&](size_t i) {
@@ -139,7 +137,7 @@ void gray_to_rgba(std::span<const float> gray, std::span<float> dst, uint32_t w,
 {
     const size_t n = static_cast<size_t>(w) * h;
 
-    P::for_each(P::par_unseq,
+    std::for_each(std::execution::par_unseq,
         std::views::iota(uint32_t { 0 }, h).begin(),
         std::views::iota(uint32_t { 0 }, h).end(),
         [&](uint32_t row) {
@@ -243,7 +241,7 @@ void threshold(std::span<const float> gray, std::span<float> dst, float value)
         out[i] = src[i] >= value ? 1.0F : 0.0F;
 
 #else
-    P::transform(P::par_unseq, gray.begin(), gray.end(), dst.begin(),
+    std::transform(std::execution::par_unseq, gray.begin(), gray.end(), dst.begin(),
         [value](float v) { return v >= value ? 1.0F : 0.0F; });
 #endif
 }
@@ -263,7 +261,7 @@ void threshold_adaptive(
     const size_t n = static_cast<size_t>(w) * h;
     const auto half = static_cast<int32_t>(block_size / 2);
 
-    P::for_each(P::par_unseq,
+    std::for_each(std::execution::par_unseq,
         std::views::iota(size_t { 0 }, n).begin(),
         std::views::iota(size_t { 0 }, n).end(),
         [&](size_t idx) {
@@ -390,7 +388,7 @@ void normalize_inplace(std::span<float> data)
         out[i] = (out[i] - mn) * inv;
 
 #else
-    P::transform(P::par_unseq, data.begin(), data.end(), data.begin(),
+    std::transform(std::execution::par_unseq, data.begin(), data.end(), data.begin(),
         [mn, inv](float v) { return (v - mn) * inv; });
 #endif
 }
@@ -435,7 +433,7 @@ void normalize_range_inplace(std::span<float> data, float lo, float hi)
         out[i] = std::clamp((out[i] - lo) * inv, 0.0F, 1.0F);
 
 #else
-    P::transform(P::par_unseq, data.begin(), data.end(), data.begin(),
+    std::transform(std::execution::par_unseq, data.begin(), data.end(), data.begin(),
         [lo, inv](float v) { return std::clamp((v - lo) * inv, 0.0F, 1.0F); });
 #endif
 }
@@ -449,7 +447,7 @@ void downsample_2x(
     new_w = w / 2;
     new_h = h / 2;
 
-    P::for_each(P::par_unseq,
+    std::for_each(std::execution::par_unseq,
         std::views::iota(uint32_t { 0 }, new_h).begin(),
         std::views::iota(uint32_t { 0 }, new_h).end(),
         [&](uint32_t oy) {
@@ -543,7 +541,7 @@ void downsample_2x(
     const uint32_t row_stride = w * ch;
     const uint32_t out_stride = new_w * ch;
 
-    P::for_each(P::par_unseq,
+    std::for_each(std::execution::par_unseq,
         std::views::iota(uint32_t { 0 }, new_h).begin(),
         std::views::iota(uint32_t { 0 }, new_h).end(),
         [&](uint32_t oy) {

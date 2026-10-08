@@ -1,9 +1,7 @@
 #include "Morphology.hpp"
 
-#include "MayaFlux/Transitive/Parallel/Execution.hpp"
+#include <execution>
 #include <Eigen/Core>
-
-namespace P = MayaFlux::Parallel;
 
 namespace MayaFlux::Kinesis::Vision {
 
@@ -19,7 +17,7 @@ namespace {
         const auto r = static_cast<int32_t>(radius);
         std::vector<float> out(n);
 
-        P::for_each(P::par_unseq,
+        std::for_each(std::execution::par_unseq,
             std::views::iota(size_t { 0 }, n).begin(),
             std::views::iota(size_t { 0 }, n).end(),
             [&](size_t idx) {
@@ -54,7 +52,7 @@ namespace {
         const size_t n = static_cast<size_t>(w) * h;
         const auto r = static_cast<int32_t>(radius);
 
-        P::for_each(P::par_unseq,
+        std::for_each(std::execution::par_unseq,
             std::views::iota(size_t { 0 }, n).begin(),
             std::views::iota(size_t { 0 }, n).end(),
             [&](size_t idx) {

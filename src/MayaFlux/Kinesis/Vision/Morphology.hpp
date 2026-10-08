@@ -15,7 +15,7 @@
  * - radius is the structuring element half-size in pixels. A radius
  *   of 1 produces a 3x3 square structuring element.
  * - Border handling is clamp-to-edge throughout
- * - Parallelism handled internally via Parallel::par_unseq
+ * - Parallelism handled internally via std::execution::par_unseq
  */
 
 namespace MayaFlux::Kinesis::Vision {

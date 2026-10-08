@@ -3,11 +3,9 @@
 #include "Gradient.hpp"
 #include "ImageFilter.hpp"
 
-#include "MayaFlux/Transitive/Parallel/Execution.hpp"
+#include <execution>
 
 #include <utility>
-
-namespace P = MayaFlux::Parallel;
 
 namespace MayaFlux::Kinesis::Vision {
 
@@ -214,7 +212,7 @@ std::vector<TrackResult> track_keypoints(
         curr_dy = std::move(grad.dy);
     }
 
-    P::for_each(P::par_unseq,
+    std::for_each(std::execution::par_unseq,
         std::views::iota(size_t { 0 }, np).begin(),
         std::views::iota(size_t { 0 }, np).end(),
         [&](size_t i) {

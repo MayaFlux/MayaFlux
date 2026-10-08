@@ -8,9 +8,7 @@
 #include "OpticalFlow.hpp"
 #include "PixelOps.hpp"
 
-#include "MayaFlux/Transitive/Parallel/Execution.hpp"
-
-namespace P = MayaFlux::Parallel;
+#include <execution>
 
 namespace MayaFlux::Kinesis::Vision {
 
@@ -33,7 +31,7 @@ namespace {
     void render_labels(std::vector<float>& pixels, std::span<const uint32_t> labels)
     {
         pixels.resize(labels.size() * 4);
-        P::for_each(P::par_unseq,
+        std::for_each(std::execution::par_unseq,
             std::views::iota(size_t { 0 }, labels.size()).begin(),
             std::views::iota(size_t { 0 }, labels.size()).end(),
             [&](size_t i) {
@@ -304,7 +302,7 @@ VisionResult VisionExecutor::run(
             grad.magnitude.assign(slot_vec(nxt).begin(), slot_vec(nxt).begin() + en);
             grad.angle.resize(static_cast<size_t>(en));
 
-            P::transform(P::par_unseq,
+            std::transform(std::execution::par_unseq,
                 slot_vec(k_slot_dx).begin(), slot_vec(k_slot_dx).begin() + en,
                 slot_vec(k_slot_dy).begin(), grad.angle.begin(),
                 [](float gx, float gy) { return std::atan2(gy, gx); });
@@ -332,7 +330,7 @@ VisionResult VisionExecutor::run(
             grad.magnitude.assign(slot_vec(nxt).begin(), slot_vec(nxt).begin() + en);
             grad.angle.resize(static_cast<size_t>(en));
 
-            P::transform(P::par_unseq,
+            std::transform(std::execution::par_unseq,
                 slot_vec(k_slot_dx).begin(), slot_vec(k_slot_dx).begin() + en,
                 slot_vec(k_slot_dy).begin(), grad.angle.begin(),
                 [](float gx, float gy) { return std::atan2(gy, gx); });

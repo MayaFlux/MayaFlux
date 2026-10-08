@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MayaFlux/Transitive/Parallel/Execution.hpp"
+#include <execution>
 
 /**
  * @file Sort.hpp
@@ -44,7 +44,7 @@ enum class SortingAlgorithm : uint8_t {
     PARTIAL, ///< std::partial_sort — sorts first half by default
     NTH_ELEMENT, ///< std::nth_element — partitions at midpoint
     HEAP, ///< Heap sort via make_heap / sort_heap
-    PARALLEL, ///< MayaFlux::Parallel::sort with par_unseq
+    PARALLEL, ///< std::sort with par_unseq
     RADIX, ///< Not yet implemented, falls back to STANDARD
     COUNTING, ///< Not yet implemented, falls back to STANDARD
     BUCKET, ///< Not yet implemented, falls back to STANDARD
@@ -152,7 +152,7 @@ void execute(Iterator begin, Iterator end, Comparator comp, SortingAlgorithm alg
         return;
 
     case SortingAlgorithm::PARALLEL:
-        MayaFlux::Parallel::sort(MayaFlux::Parallel::par_unseq, begin, end, comp);
+        std::sort(std::execution::par_unseq, begin, end, comp);
         return;
 
     case SortingAlgorithm::STANDARD:

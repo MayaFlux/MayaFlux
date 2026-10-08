@@ -8,11 +8,9 @@
 #endif
 
 #include "MayaFlux/Journal/Archivist.hpp"
-#include "MayaFlux/Transitive/Parallel/Execution.hpp"
+#include <execution>
 
 #include <queue>
-
-namespace P = MayaFlux::Parallel;
 
 namespace MayaFlux::Kinesis {
 
@@ -188,7 +186,7 @@ namespace {
 
         std::vector<double> table(n * n);
 
-        P::for_each(P::par_unseq,
+        std::for_each(std::execution::par_unseq,
             std::views::iota(size_t { 0 }, n).begin(),
             std::views::iota(size_t { 0 }, n).end(),
             [&](size_t i) {
@@ -272,7 +270,7 @@ EdgeList k_nearest_neighbors(
 
     EdgeList edges(n * k);
 
-    P::for_each(P::par_unseq,
+    std::for_each(std::execution::par_unseq,
         std::views::iota(size_t { 0 }, n).begin(),
         std::views::iota(size_t { 0 }, n).end(),
         [&](size_t i) {
@@ -319,7 +317,7 @@ EdgeList radius_threshold_graph(
 
     std::vector<size_t> offsets(n + 1, 0);
 
-    P::for_each(P::par_unseq,
+    std::for_each(std::execution::par_unseq,
         std::views::iota(size_t { 0 }, n).begin(),
         std::views::iota(size_t { 0 }, n).end(),
         [&](size_t i) {
@@ -339,7 +337,7 @@ EdgeList radius_threshold_graph(
 
     EdgeList edges(offsets[n]);
 
-    P::for_each(P::par_unseq,
+    std::for_each(std::execution::par_unseq,
         std::views::iota(size_t { 0 }, n).begin(),
         std::views::iota(size_t { 0 }, n).end(),
         [&](size_t i) {
@@ -422,7 +420,7 @@ EdgeList gabriel_graph(const Eigen::MatrixXd& points)
 
     std::vector<EdgeList> bins(n);
 
-    P::for_each(P::par_unseq,
+    std::for_each(std::execution::par_unseq,
         std::views::iota(size_t { 0 }, n).begin(),
         std::views::iota(size_t { 0 }, n).end(),
         [&](size_t i) {
@@ -466,7 +464,7 @@ EdgeList nearest_neighbor_graph(const Eigen::MatrixXd& points)
 
     std::vector<size_t> nearest(n);
 
-    P::for_each(P::par_unseq,
+    std::for_each(std::execution::par_unseq,
         std::views::iota(size_t { 0 }, n).begin(),
         std::views::iota(size_t { 0 }, n).end(),
         [&](size_t i) {
@@ -518,7 +516,7 @@ EdgeList relative_neighborhood_graph(const Eigen::MatrixXd& points)
 
     std::vector<EdgeList> bins(n);
 
-    P::for_each(P::par_unseq,
+    std::for_each(std::execution::par_unseq,
         std::views::iota(size_t { 0 }, n).begin(),
         std::views::iota(size_t { 0 }, n).end(),
         [&](size_t i) {

@@ -1,11 +1,9 @@
 #include "Convolution.hpp"
 
-#include "MayaFlux/Transitive/Parallel/Execution.hpp"
+#include <execution>
 
 #include <Eigen/Dense>
 #include <unsupported/Eigen/FFT>
-
-namespace P = MayaFlux::Parallel;
 
 namespace MayaFlux::Kinesis::Discrete {
 
@@ -33,7 +31,7 @@ std::vector<double> apply_convolution(
     fft.fwd(ker_fft, padded_kernel);
 
     std::vector<std::complex<double>> sig(bins), ker(bins), res(bins);
-    P::for_each(P::par_unseq,
+    std::for_each(std::execution::par_unseq,
         std::views::iota(size_t { 0 }, bins).begin(),
         std::views::iota(size_t { 0 }, bins).end(),
         [&](size_t b) {
@@ -44,7 +42,7 @@ std::vector<double> apply_convolution(
     processor(sig, ker, res);
 
     Eigen::VectorXcd full_fft(static_cast<Eigen::Index>(fft_size));
-    P::for_each(P::par_unseq,
+    std::for_each(std::execution::par_unseq,
         std::views::iota(size_t { 0 }, fft_size).begin(),
         std::views::iota(size_t { 0 }, fft_size).end(),
         [&](size_t b) {
@@ -61,7 +59,7 @@ std::vector<double> apply_convolution(
 
     const size_t out_len = full_size ? conv_len : src.size();
     std::vector<double> out(out_len);
-    P::for_each(P::par_unseq,
+    std::for_each(std::execution::par_unseq,
         std::views::iota(size_t { 0 }, out_len).begin(),
         std::views::iota(size_t { 0 }, out_len).end(),
         [&](size_t i) { out[i] = time_result(static_cast<Eigen::Index>(i)); });
@@ -73,14 +71,14 @@ std::vector<double> convolve(std::span<const double> src, std::span<const double
     if (ir.size() == 1) {
         std::vector<double> out(src.size());
         const double g = ir[0];
-        P::transform(P::par_unseq, src.begin(), src.end(), out.begin(),
+        std::transform(std::execution::par_unseq, src.begin(), src.end(), out.begin(),
             [g](double x) { return x * g; });
         return out;
     }
 
     return apply_convolution(src, ir,
         [](const auto& s, const auto& k, auto& r) {
-            P::transform(P::par_unseq, s.begin(), s.end(), k.begin(), r.begin(),
+            std::transform(std::execution::par_unseq, s.begin(), s.end(), k.begin(), r.begin(),
                 [](const std::complex<double>& a, const std::complex<double>& b) {
                     return a * b;
                 });
@@ -96,7 +94,7 @@ std::vector<double> cross_correlate(
 
     auto out = apply_convolution(src, reversed,
         [](const auto& s, const auto& k, auto& r) {
-            P::transform(P::par_unseq, s.begin(), s.end(), k.begin(), r.begin(),
+            std::transform(std::execution::par_unseq, s.begin(), s.end(), k.begin(), r.begin(),
                 [](const std::complex<double>& a, const std::complex<double>& b) {
                     return a * std::conj(b);
                 });
@@ -106,7 +104,7 @@ std::vector<double> cross_correlate(
         const auto [mn, mx] = std::ranges::minmax_element(out);
         const double peak = std::max(std::abs(*mn), std::abs(*mx));
         if (peak > 0.0) {
-            P::transform(P::par_unseq, out.begin(), out.end(), out.begin(),
+            std::transform(std::execution::par_unseq, out.begin(), out.end(), out.begin(),
                 [peak](double v) { return v / peak; });
         }
     }
@@ -128,7 +126,7 @@ std::vector<double> deconvolve(
 {
     return apply_convolution(src, ir,
         [regularization](const auto& s, const auto& k, auto& r) {
-            P::transform(P::par_unseq, s.begin(), s.end(), k.begin(), r.begin(),
+            std::transform(std::execution::par_unseq, s.begin(), s.end(), k.begin(), r.begin(),
                 [regularization](const std::complex<double>& sig, const std::complex<double>& ker) {
                     const double mag_sq = std::norm(ker);
                     if (mag_sq < regularization)
@@ -142,7 +140,7 @@ std::vector<double> auto_correlate(std::span<const double> src, bool normalize)
 {
     auto out = apply_convolution(src, src,
         [](const auto& s, const auto&, auto& r) {
-            P::transform(P::par_unseq, s.begin(), s.end(), s.begin(), r.begin(),
+            std::transform(std::execution::par_unseq, s.begin(), s.end(), s.begin(), r.begin(),
                 [](const std::complex<double>& a, const std::complex<double>& b) {
                     return a * std::conj(b);
                 });
@@ -151,7 +149,7 @@ std::vector<double> auto_correlate(std::span<const double> src, bool normalize)
     if (normalize && !out.empty()) {
         const double peak = *std::max_element(out.begin(), out.end());
         if (peak > 0.0) {
-            P::transform(P::par_unseq, out.begin(), out.end(), out.begin(),
+            std::transform(std::execution::par_unseq, out.begin(), out.end(), out.begin(),
                 [peak](double v) { return v / peak; });
         }
     }

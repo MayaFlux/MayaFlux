@@ -1,7 +1,7 @@
 
 #include "Analysis.hpp"
 
-#include "MayaFlux/Transitive/Parallel/Execution.hpp"
+#include <execution>
 
 #include <Eigen/Dense>
 #include <unsupported/Eigen/FFT>
@@ -35,7 +35,7 @@ std::vector<double> rms(std::span<const double> data, size_t n_windows, uint32_t
     std::vector<size_t> idx(n_windows);
     std::iota(idx.begin(), idx.end(), 0);
 
-    Parallel::for_each(Parallel::par_unseq, idx.begin(), idx.end(),
+    std::for_each(std::execution::par_unseq, idx.begin(), idx.end(),
         [&](size_t i) {
             const size_t start = i * hop_size;
             auto w = data.subspan(start, std::min<size_t>(window_size, data.size() - start));
@@ -54,7 +54,7 @@ std::vector<double> peak(std::span<const double> data, size_t n_windows, uint32_
     std::vector<size_t> idx(n_windows);
     std::iota(idx.begin(), idx.end(), 0);
 
-    Parallel::for_each(Parallel::par_unseq, idx.begin(), idx.end(),
+    std::for_each(std::execution::par_unseq, idx.begin(), idx.end(),
         [&](size_t i) {
             const size_t start = i * hop_size;
             auto w = data.subspan(start, std::min<size_t>(window_size, data.size() - start));
@@ -73,7 +73,7 @@ std::vector<double> power(std::span<const double> data, size_t n_windows, uint32
     std::vector<size_t> idx(n_windows);
     std::iota(idx.begin(), idx.end(), 0);
 
-    Parallel::for_each(Parallel::par_unseq, idx.begin(), idx.end(),
+    std::for_each(std::execution::par_unseq, idx.begin(), idx.end(),
         [&](size_t i) {
             const size_t start = i * hop_size;
             auto w = data.subspan(start, std::min<size_t>(window_size, data.size() - start));
@@ -92,7 +92,7 @@ std::vector<double> dynamic_range(std::span<const double> data, size_t n_windows
     std::vector<size_t> idx(n_windows);
     std::iota(idx.begin(), idx.end(), 0);
 
-    Parallel::for_each(Parallel::par_unseq, idx.begin(), idx.end(),
+    std::for_each(std::execution::par_unseq, idx.begin(), idx.end(),
         [&](size_t i) {
             const size_t start = i * hop_size;
             auto w = data.subspan(start, std::min<size_t>(window_size, data.size() - start));
@@ -115,7 +115,7 @@ std::vector<double> zero_crossing_rate(std::span<const double> data, size_t n_wi
     std::vector<size_t> idx(n_windows);
     std::iota(idx.begin(), idx.end(), 0);
 
-    Parallel::for_each(Parallel::par_unseq, idx.begin(), idx.end(),
+    std::for_each(std::execution::par_unseq, idx.begin(), idx.end(),
         [&](size_t i) {
             const size_t start = i * hop_size;
             auto w = data.subspan(start, std::min<size_t>(window_size, data.size() - start));
@@ -138,7 +138,7 @@ std::vector<double> spectral_energy(std::span<const double> data, size_t n_windo
 
     const Eigen::VectorXd hw = hann_window(window_size);
 
-    Parallel::for_each(Parallel::par_unseq, idx.begin(), idx.end(),
+    std::for_each(std::execution::par_unseq, idx.begin(), idx.end(),
         [&](size_t i) {
             const size_t start = i * hop_size;
             auto w = data.subspan(start, std::min<size_t>(window_size, data.size() - start));
@@ -170,7 +170,7 @@ std::vector<double> low_frequency_energy(std::span<const double> data, size_t n_
     const Eigen::VectorXd hw = hann_window(window_size);
     const int low_bins = std::max(1, static_cast<int>(static_cast<double>((double)window_size / 2) * low_bin_fraction));
 
-    Parallel::for_each(Parallel::par_unseq, idx.begin(), idx.end(),
+    std::for_each(std::execution::par_unseq, idx.begin(), idx.end(),
         [&](size_t i) {
             const size_t start = i * hop_size;
             auto w = data.subspan(start, std::min<size_t>(window_size, data.size() - start));
@@ -203,7 +203,7 @@ std::vector<double> mean(std::span<const double> data, size_t n_windows, uint32_
     std::vector<size_t> idx(n_windows);
     std::iota(idx.begin(), idx.end(), 0);
 
-    Parallel::for_each(Parallel::par_unseq, idx.begin(), idx.end(),
+    std::for_each(std::execution::par_unseq, idx.begin(), idx.end(),
         [&](size_t i) {
             const size_t start = i * hop_size;
             auto w = data.subspan(start, std::min<size_t>(window_size, data.size() - start));
@@ -222,7 +222,7 @@ std::vector<double> variance(std::span<const double> data, size_t n_windows, uin
     std::vector<size_t> idx(n_windows);
     std::iota(idx.begin(), idx.end(), 0);
 
-    Parallel::for_each(Parallel::par_unseq, idx.begin(), idx.end(),
+    std::for_each(std::execution::par_unseq, idx.begin(), idx.end(),
         [&](size_t i) {
             const size_t start = i * hop_size;
             auto w = data.subspan(start, std::min<size_t>(window_size, data.size() - start));
@@ -251,7 +251,7 @@ std::vector<double> variance(std::span<const double> data, size_t n_windows, uin
 std::vector<double> std_dev(std::span<const double> data, size_t n_windows, uint32_t hop_size, uint32_t window_size, bool sample_variance)
 {
     auto v = variance(data, n_windows, hop_size, window_size, sample_variance);
-    Parallel::transform(Parallel::par_unseq, v.begin(), v.end(), v.begin(),
+    std::transform(std::execution::par_unseq, v.begin(), v.end(), v.begin(),
         [](double x) { return std::sqrt(x); });
     return v;
 }
@@ -262,7 +262,7 @@ std::vector<double> skewness(std::span<const double> data, size_t n_windows, uin
     std::vector<size_t> idx(n_windows);
     std::iota(idx.begin(), idx.end(), 0);
 
-    Parallel::for_each(Parallel::par_unseq, idx.begin(), idx.end(),
+    std::for_each(std::execution::par_unseq, idx.begin(), idx.end(),
         [&](size_t i) {
             const size_t start = i * hop_size;
             auto w = data.subspan(start, std::min<size_t>(window_size, data.size() - start));
@@ -295,7 +295,7 @@ std::vector<double> kurtosis(std::span<const double> data, size_t n_windows, uin
     std::vector<size_t> idx(n_windows);
     std::iota(idx.begin(), idx.end(), 0);
 
-    Parallel::for_each(Parallel::par_unseq, idx.begin(), idx.end(),
+    std::for_each(std::execution::par_unseq, idx.begin(), idx.end(),
         [&](size_t i) {
             const size_t start = i * hop_size;
             auto w = data.subspan(start, std::min<size_t>(window_size, data.size() - start));
@@ -328,7 +328,7 @@ std::vector<double> median(std::span<const double> data, size_t n_windows, uint3
     std::vector<size_t> idx(n_windows);
     std::iota(idx.begin(), idx.end(), 0);
 
-    Parallel::for_each(Parallel::par_unseq, idx.begin(), idx.end(),
+    std::for_each(std::execution::par_unseq, idx.begin(), idx.end(),
         [&](size_t i) {
             const size_t start = i * hop_size;
             auto w = data.subspan(start, std::min<size_t>(window_size, data.size() - start));
@@ -353,7 +353,7 @@ std::vector<double> percentile(std::span<const double> data, size_t n_windows, u
     std::vector<size_t> idx(n_windows);
     std::iota(idx.begin(), idx.end(), 0);
 
-    Parallel::for_each(Parallel::par_unseq, idx.begin(), idx.end(),
+    std::for_each(std::execution::par_unseq, idx.begin(), idx.end(),
         [&](size_t i) {
             const size_t start = i * hop_size;
             auto w = data.subspan(start, std::min<size_t>(window_size, data.size() - start));
@@ -378,7 +378,7 @@ std::vector<double> entropy(std::span<const double> data, size_t n_windows, uint
     std::vector<size_t> idx(n_windows);
     std::iota(idx.begin(), idx.end(), 0);
 
-    Parallel::for_each(Parallel::par_unseq, idx.begin(), idx.end(),
+    std::for_each(std::execution::par_unseq, idx.begin(), idx.end(),
         [&](size_t i) {
             const size_t start = i * hop_size;
             auto w = data.subspan(start, std::min<size_t>(window_size, data.size() - start));
@@ -423,7 +423,7 @@ std::vector<double> min(std::span<const double> data, size_t n_windows, uint32_t
     std::vector<size_t> idx(n_windows);
     std::iota(idx.begin(), idx.end(), 0);
 
-    Parallel::for_each(Parallel::par_unseq, idx.begin(), idx.end(),
+    std::for_each(std::execution::par_unseq, idx.begin(), idx.end(),
         [&](size_t i) {
             const size_t start = i * hop_size;
             auto w = data.subspan(start, std::min<size_t>(window_size, data.size() - start));
@@ -439,7 +439,7 @@ std::vector<double> max(std::span<const double> data, size_t n_windows, uint32_t
     std::vector<size_t> idx(n_windows);
     std::iota(idx.begin(), idx.end(), 0);
 
-    Parallel::for_each(Parallel::par_unseq, idx.begin(), idx.end(),
+    std::for_each(std::execution::par_unseq, idx.begin(), idx.end(),
         [&](size_t i) {
             const size_t start = i * hop_size;
             auto w = data.subspan(start, std::min<size_t>(window_size, data.size() - start));
@@ -455,7 +455,7 @@ std::vector<double> range(std::span<const double> data, size_t n_windows, uint32
     std::vector<size_t> idx(n_windows);
     std::iota(idx.begin(), idx.end(), 0);
 
-    Parallel::for_each(Parallel::par_unseq, idx.begin(), idx.end(),
+    std::for_each(std::execution::par_unseq, idx.begin(), idx.end(),
         [&](size_t i) {
             const size_t start = i * hop_size;
             auto w = data.subspan(start, std::min<size_t>(window_size, data.size() - start));
@@ -472,7 +472,7 @@ std::vector<double> sum(std::span<const double> data, size_t n_windows, uint32_t
     std::vector<size_t> idx(n_windows);
     std::iota(idx.begin(), idx.end(), 0);
 
-    Parallel::for_each(Parallel::par_unseq, idx.begin(), idx.end(),
+    std::for_each(std::execution::par_unseq, idx.begin(), idx.end(),
         [&](size_t i) {
             const size_t start = i * hop_size;
             auto w = data.subspan(start, std::min<size_t>(window_size, data.size() - start));
@@ -488,7 +488,7 @@ std::vector<double> count(std::span<const double> data, size_t n_windows, uint32
     std::vector<size_t> idx(n_windows);
     std::iota(idx.begin(), idx.end(), 0);
 
-    Parallel::for_each(Parallel::par_unseq, idx.begin(), idx.end(),
+    std::for_each(std::execution::par_unseq, idx.begin(), idx.end(),
         [&](size_t i) {
             const size_t start = i * hop_size;
             const size_t end = std::min(start + window_size, data.size());
@@ -504,7 +504,7 @@ std::vector<double> mad(std::span<const double> data, size_t n_windows, uint32_t
     std::vector<size_t> idx(n_windows);
     std::iota(idx.begin(), idx.end(), 0);
 
-    Parallel::for_each(Parallel::par_unseq, idx.begin(), idx.end(),
+    std::for_each(std::execution::par_unseq, idx.begin(), idx.end(),
         [&](size_t i) {
             const size_t start = i * hop_size;
             auto w = data.subspan(start, std::min<size_t>(window_size, data.size() - start));
@@ -548,7 +548,7 @@ std::vector<double> coefficient_of_variation(std::span<const double> data, size_
     auto s = std_dev(data, n_windows, hop_size, window_size, sample_variance);
 
     std::vector<double> out(n_windows);
-    Parallel::transform(Parallel::par_unseq, m.begin(), m.end(), s.begin(), out.begin(),
+    std::transform(std::execution::par_unseq, m.begin(), m.end(), s.begin(), out.begin(),
         [](double mv, double sv) {
             return (std::abs(mv) > 1e-15) ? sv / mv : 0.0;
         });
@@ -564,7 +564,7 @@ std::vector<double> mode(std::span<const double> data, size_t n_windows, uint32_
 
     constexpr double tol = 1e-10;
 
-    Parallel::for_each(Parallel::par_unseq, idx.begin(), idx.end(),
+    std::for_each(std::execution::par_unseq, idx.begin(), idx.end(),
         [&](size_t i) {
             const size_t start = i * hop_size;
             auto w = data.subspan(start, std::min<size_t>(window_size, data.size() - start));
@@ -593,7 +593,7 @@ std::vector<double> mean_zscore(std::span<const double> data, size_t n_windows, 
     std::vector<size_t> idx(n_windows);
     std::iota(idx.begin(), idx.end(), 0);
 
-    Parallel::for_each(Parallel::par_unseq, idx.begin(), idx.end(),
+    std::for_each(std::execution::par_unseq, idx.begin(), idx.end(),
         [&](size_t i) {
             const size_t start = i * hop_size;
             auto w = data.subspan(start, std::min<size_t>(window_size, data.size() - start));

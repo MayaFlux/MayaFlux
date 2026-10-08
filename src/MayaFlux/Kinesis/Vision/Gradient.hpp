@@ -11,7 +11,7 @@
  * - w and h are pixel dimensions; caller ensures span size == w * h
  * - Border handling is clamp-to-edge throughout
  * - Gradient angle is in radians in [-pi, pi], measured from +X axis
- * - Parallelism handled internally via Parallel::par_unseq
+ * - Parallelism handled internally via std::execution::par_unseq
  */
 
 namespace MayaFlux::Kinesis::Vision {
