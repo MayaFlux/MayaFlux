@@ -56,7 +56,7 @@ protected:
 
 /**
  * @class WindowEventAwaiter
- * @brief Awaiter for suspending on GLFW window input events with optional filtering.
+ * @brief Awaiter for suspending on window input events with optional filtering.
  *
  * Payload type is Core::WindowEvent. Filter criteria are WindowEventType,
  * IO::Keys, and IO::MouseButtons via EventFilter. Works with any coroutine

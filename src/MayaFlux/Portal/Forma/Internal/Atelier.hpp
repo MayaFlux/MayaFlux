@@ -52,11 +52,7 @@ namespace internal {
      */
     class MAYAFLUX_API Atelier {
     public:
-        static Atelier& instance()
-        {
-            static Atelier a;
-            return a;
-        }
+        static Atelier& instance();
 
         Atelier(const Atelier&) = delete;
         Atelier& operator=(const Atelier&) = delete;

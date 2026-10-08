@@ -28,7 +28,7 @@ public:
     /**
      * @brief Initialize Vulkan instance
      * @param enable_validation Enable validation layers (recommended for development)
-     * @param required_extensions Extensions required (e.g., for GLFW surface)
+     * @param required_extensions Extensions required (e.g., for window surfaces)
      * @return true if initialization succeeded
      */
     bool initialize(bool enable_validation = true,

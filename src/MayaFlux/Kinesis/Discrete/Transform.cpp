@@ -1,6 +1,6 @@
 #include "Transform.hpp"
 
-#include "MayaFlux/Transitive/Parallel/Execution.hpp"
+#include <execution>
 
 namespace MayaFlux::Kinesis::Discrete {
 
@@ -168,7 +168,7 @@ void interpolate_linear(std::span<const double> src, std::span<double> dst) noex
 
     const double step = static_cast<double>(src_n - 1) / static_cast<double>(dst_n - 1);
 
-    Parallel::for_each(Parallel::par_unseq,
+    std::for_each(std::execution::par_unseq,
         std::views::iota(size_t { 0 }, dst_n).begin(),
         std::views::iota(size_t { 0 }, dst_n).end(),
         [&src, &dst, step, src_n](size_t i) {
@@ -196,7 +196,7 @@ void interpolate_cubic(std::span<const double> src, std::span<double> dst) noexc
     const double step = static_cast<double>(src_n - 1) / static_cast<double>(dst_n - 1);
     const size_t last = src_n - 1;
 
-    Parallel::for_each(Parallel::par_unseq,
+    std::for_each(std::execution::par_unseq,
         std::views::iota(size_t { 0 }, dst_n).begin(),
         std::views::iota(size_t { 0 }, dst_n).end(),
         [&src, &dst, step, last](size_t i) {

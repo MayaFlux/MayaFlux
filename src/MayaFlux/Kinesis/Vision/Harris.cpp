@@ -3,7 +3,7 @@
 #include "Gradient.hpp"
 #include "ImageFilter.hpp"
 
-#include "MayaFlux/Transitive/Parallel/Execution.hpp"
+#include <execution>
 
 #ifdef MAYAFLUX_ARCH_X64
 #include <immintrin.h>
@@ -11,8 +11,6 @@
 #ifdef MAYAFLUX_ARCH_ARM64
 #include <arm_neon.h>
 #endif
-
-namespace P = MayaFlux::Parallel;
 
 namespace MayaFlux::Kinesis::Vision {
 
@@ -25,7 +23,7 @@ namespace {
 
         const float peak = *std::ranges::max_element(response);
         if (peak > 1e-6F) {
-            P::transform(P::par_unseq,
+            std::transform(std::execution::par_unseq,
                 response.begin(), response.end(), response.begin(),
                 [peak](float v) { return std::clamp(v / peak, 0.0F, 1.0F); });
         } else {
@@ -45,7 +43,7 @@ std::vector<float> harris_response(
 
     std::vector<float> ixx(n), iyy(n), ixy(n);
 
-    P::for_each(P::par_unseq,
+    std::for_each(std::execution::par_unseq,
         std::views::iota(size_t { 0 }, n).begin(),
         std::views::iota(size_t { 0 }, n).end(),
         [&](size_t i) {
@@ -62,7 +60,7 @@ std::vector<float> harris_response(
 
     std::vector<float> response(n);
 
-    P::for_each(P::par_unseq,
+    std::for_each(std::execution::par_unseq,
         std::views::iota(size_t { 0 }, n).begin(),
         std::views::iota(size_t { 0 }, n).end(),
         [&](size_t i) {
@@ -97,7 +95,7 @@ void harris_response(
         float* iyy_ptr = iyy.data();
         float* ixy_ptr = ixy.data();
 
-        P::for_each(P::par_unseq,
+        std::for_each(std::execution::par_unseq,
             std::views::iota(size_t { 0 }, n).begin(),
             std::views::iota(size_t { 0 }, n).end(),
             [&](size_t i) {

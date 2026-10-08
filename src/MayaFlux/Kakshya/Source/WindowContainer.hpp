@@ -18,7 +18,7 @@ namespace MayaFlux::Kakshya {
 
 /**
  * @class WindowContainer
- * @brief SignalSourceContainer wrapping a live GLFW/Vulkan window surface.
+ * @brief SignalSourceContainer wrapping a live Vulkan window surface.
  *
  * Exposes a window's rendered surface as addressable N-dimensional data.
  * Dimensions follow IMAGE_COLOR convention:

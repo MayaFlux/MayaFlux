@@ -1,6 +1,6 @@
 #include "GeometryPrimitives.hpp"
 #include "MayaFlux/Kakshya/NDData/MeshInsertion.hpp"
-#include "MayaFlux/Transitive/Parallel/Execution.hpp"
+#include <execution>
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
@@ -1104,7 +1104,7 @@ Kakshya::MeshData generate_explicit_surface(
     if (vertex_count >= k_parallel_vertex_threshold) {
         std::vector<size_t> row_ids(rows);
         std::iota(row_ids.begin(), row_ids.end(), size_t { 0 });
-        Parallel::for_each(Parallel::par_unseq, row_ids.begin(), row_ids.end(), fill_row);
+        std::for_each(std::execution::par_unseq, row_ids.begin(), row_ids.end(), fill_row);
     } else {
         for (size_t row = 0; row < rows; ++row) {
             fill_row(row);

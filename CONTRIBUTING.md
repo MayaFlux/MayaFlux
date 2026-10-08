@@ -53,21 +53,6 @@ Before opening a PR:
 
 ---
 
-## 🍎 Wanted: macOS Platform Maintainer
-
-This is the single highest-leverage contribution available right now.
-
-macOS currently uses GLFW for windowing, the only platform still on it. Windows has a native Win32 backend, Linux has native Wayland. macOS needs the same treatment: a native windowing backend built on Cocoa/AppKit, following the same shape as `WIN32_BACKEND` and `WAYLAND_BACKEND` (see `cmake/defines.cmake`, `MAYAFLUX_WINDOWING_BACKEND`). CAMetalLayer integration into the existing Vulkan (MoltenVK) swapchain path is part of the same effort.
-
-Beyond windowing, macOS as a whole needs an actual maintainer. The current author holds it together with a VM and no daily-driver access to real Apple hardware. If you have a Mac, know Cocoa/AppKit and Metal, and want ownership of a real subsystem rather than a starter task, open an issue tagged `platform-macos` or reach out directly before starting.
-
-This is not a "good first issue." It requires:
-
-* Working knowledge of Cocoa/AppKit windowing and event handling
-* Familiarity with CAMetalLayer and how MoltenVK expects to receive it
-* Willingness to own the backend going forward, not just land one PR and disappear
-* Real hardware to test on; a VM is not sufficient for this work
-
 ## 🔎 Current Help Wanted
 
 The current general contributor task is [issue #172: Refactor `IOManager` by extracting internal helper utilities into `MayaFlux::IO::Detail`](https://github.com/MayaFlux/MayaFlux/issues/172).
@@ -83,7 +68,6 @@ MayaFlux welcomes contributions across several domains:
 | Area                                | Description                                            | Reference                                      |
 | ----------------------------------- | ------------------------------------------------------ | ---------------------------------------------- |
 | **Core Development**                | Engine code, nodes, scheduling, DSP, graphics, runtime | Internal review required                       |
-| **macOS Platform**                  | Native windowing, CAMetal, Cocoa/AppKit; see above     | `platform-macos` issue label                   |
 | **Documentation & Tutorials**       | Guides, concept overviews, teaching materials          | `docs/`                                        |
 | **Research & Theory**               | Algorithmic or conceptual proposals                    | Open issue → Discussion thread                 |
 
@@ -157,7 +141,7 @@ This ensures MayaFlux remains open, sustainable, and publicly beneficial.
 If you're new, begin with:
 
 * [`docs/Dev_Getting_Started.md`](docs/Dev_Getting_Started.md) — build from source, targets, presets, the actual run loop
-* Open issues, especially [`platform-macos`](https://github.com/MayaFlux/MayaFlux/labels/platform-macos) if you have a Mac and want to own something real
+* Open issues for current contribution opportunities
 
 ---
 

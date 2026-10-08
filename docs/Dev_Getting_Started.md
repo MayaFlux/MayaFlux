@@ -35,7 +35,7 @@ Building from source currently tracks 0.5-dev, ahead of Weave's 0.4.1, and the m
 | Windows | 10, version 1909+ | 10, version 1909+ |
 | Fedora | 43 | 44 |
 | Ubuntu | 25.10 | 26.04 LTS |
-| macOS | 15 | 26 (Tahoe) |
+| macOS | 15 | 26 (Tahoe), Apple Silicon |
 
 The Windows floor is set by MSVC 2022's own minimum supported OS, not by anything in `scripts/win64/setup_windows.ps1` or `packages.psd1`, neither contains an OS version check. Win32 windowing, WinMM, and WASAPI all predate Windows 10 by a wide margin and impose no additional constraint.
 
@@ -46,7 +46,9 @@ All dependencies are required; CMake will not configure if any are missing.
 **Linux (Fedora 44+ / Ubuntu 26.04 LTS+):** PipeWire (audio and MIDI), libdbus-1 (XDG Portal file dialogs), wayland-protocols, libwayland-client, xkbcommon, fontconfig.
 **Note:** `jack2` conflicts with pipewire upstream. Use `pipewire-jack` which is functionally equivalent to jack2 but compatible with pipewire. If you have jack2 installed, remove it and install `pipewire-jack` instead.
 
-**macOS (26+, Tahoe):** Apple Silicon or Intel, Apple Clang 17+ via Xcode Command Line Tools, GLFW via Homebrew (windowing; see the macOS platform maintainer callout in `CONTRIBUTING.md`, this is expected to change). Frameworks linked automatically: CoreAudio, AudioUnit, AudioToolbox, CoreMIDI, AppKit, UniformTypeIdentifiers, CoreFoundation.
+**macOS (26+, Tahoe):** Apple Silicon (ARM64), Apple Clang 17+ via Xcode Command Line Tools, native Homebrew at `/opt/homebrew`. Run the setup script from a native ARM64 shell. Frameworks linked automatically: CoreAudio, AudioUnit, AudioToolbox, CoreMIDI, AppKit, UniformTypeIdentifiers, CoreFoundation, QuartzCore.
+
+Current macOS builds and binary distributions support Apple Silicon only. See [Why is Intel macOS support removed?](Getting_Started.md#why-is-intel-macos-support-removed) for the dependency constraints and why building from source is not a supported workaround.
 
 **Windows (10, version 1909+):** Visual Studio 2022+ (MSVC) or MinGW-w64, LLVM 22+ (for Lila JIT).
 

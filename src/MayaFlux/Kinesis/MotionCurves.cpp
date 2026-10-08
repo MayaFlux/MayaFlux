@@ -13,9 +13,7 @@
 #include "BasisMatrices.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
-#include "MayaFlux/Transitive/Parallel/Execution.hpp"
-
-namespace P = MayaFlux::Parallel;
+#include <execution>
 
 namespace MayaFlux::Kinesis {
 
@@ -776,7 +774,7 @@ void CurveEvaluator::evaluate_planar(
     double* tan_base = tangents.data();
 
     if (m_chunks.size() > 1 && num_samples >= k_parallel_min_samples) {
-        P::for_each(P::par_unseq, m_chunks.begin(), m_chunks.end(),
+        std::for_each(std::execution::par_unseq, m_chunks.begin(), m_chunks.end(),
             [&](const CurveChunk& chunk) {
                 const auto count = static_cast<size_t>(chunk.sample_count);
                 std::vector<double> params(count);
@@ -1017,7 +1015,7 @@ Eigen::VectorXd compute_arc_length_table(const Eigen::MatrixXd& points)
     }
 
     if (n >= k_parallel_min_points) {
-        P::for_each(P::par_unseq,
+        std::for_each(std::execution::par_unseq,
             std::views::iota(Eigen::Index { 1 }, n).begin(),
             std::views::iota(Eigen::Index { 1 }, n).end(),
             [&](Eigen::Index i) {

@@ -7,7 +7,7 @@
 #include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
 #include "MayaFlux/Registry/BackendRegistry.hpp"
 #include "MayaFlux/Registry/Service/BufferService.hpp"
-#include "MayaFlux/Transitive/Parallel/Execution.hpp"
+#include <execution>
 
 namespace MayaFlux::Buffers {
 
@@ -267,7 +267,7 @@ void SDFMeshProcessor::evaluate_grid()
 
     auto* grid = static_cast<float*>(m_grid_buf->get_mapped_ptr());
 
-    MayaFlux::Parallel::for_each(std::execution::par_unseq,
+    std::for_each(std::execution::par_unseq,
         std::views::iota(0UZ, total).begin(),
         std::views::iota(0UZ, total).end(),
         [&](size_t idx) {

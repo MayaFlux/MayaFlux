@@ -352,6 +352,13 @@ RenderPipelineID RenderFlow::create_pipeline(
     vk_config.primitive_restart_enable = false;
 
     vk_config.polygon_mode = to_vk_polygon_mode(config.rasterization.polygon_mode);
+    if (vk_config.polygon_mode != vk::PolygonMode::eFill
+        && !m_shader_foundry->get_physical_device().getFeatures().fillModeNonSolid) {
+        MF_WARN(Journal::Component::Portal, Journal::Context::Rendering,
+            "Polygon mode {} needs fillModeNonSolid, which this device lacks; drawing filled",
+            vk::to_string(vk_config.polygon_mode));
+        vk_config.polygon_mode = vk::PolygonMode::eFill;
+    }
     vk_config.cull_mode = to_vk_cull_mode(config.rasterization.cull_mode);
     vk_config.front_face = config.rasterization.front_face_ccw ? vk::FrontFace::eCounterClockwise : vk::FrontFace::eClockwise;
     vk_config.line_width = config.rasterization.line_width;

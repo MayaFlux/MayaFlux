@@ -17,7 +17,7 @@
  * **Graphics Configuration:**
  * - target_frame_rate: 60, 120, 144 Hz
  * - requested_api: VULKAN (default), OPENGL, METAL, DIRECTX12
- * - windowing_backend: GLFW (default), WINDOWS, WAYLAND, NONE (offscreen)
+ * - windowing_backend: WINDOWS, WAYLAND, COCOA (platform default), NONE (offscreen)
  *
  * **Logging:**
  * - set_journal_severity() for verbosity

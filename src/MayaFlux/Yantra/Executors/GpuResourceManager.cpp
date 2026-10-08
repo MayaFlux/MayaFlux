@@ -413,6 +413,9 @@ void GpuResourceManager::bind_descriptors_batch(const std::string& key, const st
             allocated_bytes = vk_slot.allocated_bytes;
         }
 
+        if (!buffer)
+            continue;
+
         writes.push_back({
             .descriptor_set_id = unit.descriptor_set_ids[b.set],
             .binding = b.binding,
@@ -615,7 +618,8 @@ void GpuResourceManager::dispatch(const std::string& key,
 
         const bool is_shared = m_shared->slots.contains({ b.set, static_cast<size_t>(b.binding) });
         if (is_output && !is_image && !is_shared
-            && static_cast<size_t>(b.binding) < unit.impl->buffers.size()) {
+            && static_cast<size_t>(b.binding) < unit.impl->buffers.size()
+            && unit.impl->buffers[b.binding].buffer) {
             foundry.buffer_barrier(
                 cmd_id,
                 unit.impl->buffers[b.binding].buffer,
@@ -680,7 +684,8 @@ void GpuResourceManager::dispatch_batched(const std::string& key,
                             vk::PipelineStageFlagBits::eComputeShader,
                             vk::PipelineStageFlagBits::eComputeShader);
                     }
-                } else if (!is_shared && static_cast<size_t>(b.binding) < unit.impl->buffers.size()) {
+                } else if (!is_shared && static_cast<size_t>(b.binding) < unit.impl->buffers.size()
+                    && unit.impl->buffers[b.binding].buffer) {
                     foundry.buffer_barrier(
                         cmd_id,
                         unit.impl->buffers[b.binding].buffer,
@@ -698,7 +703,8 @@ void GpuResourceManager::dispatch_batched(const std::string& key,
                 const bool is_image = b.element_type == GpuBufferBinding::ElementType::IMAGE_STORAGE
                     || b.element_type == GpuBufferBinding::ElementType::IMAGE_SAMPLED;
                 const bool is_shared = m_shared->slots.contains({ b.set, static_cast<size_t>(b.binding) });
-                if (!is_image && !is_shared && static_cast<size_t>(b.binding) < unit.impl->buffers.size()) {
+                if (!is_image && !is_shared && static_cast<size_t>(b.binding) < unit.impl->buffers.size()
+                    && unit.impl->buffers[b.binding].buffer) {
                     foundry.buffer_barrier(
                         cmd_id,
                         unit.impl->buffers[b.binding].buffer,
@@ -754,7 +760,8 @@ void GpuResourceManager::dispatch_batched_indirect(const std::string& key,
                     || b.direction == GpuBufferBinding::Direction::INPUT_OUTPUT;
                 const bool is_shared = m_shared->slots.contains({ b.set, static_cast<size_t>(b.binding) });
                 if (is_output && !is_image && !is_shared
-                    && static_cast<size_t>(b.binding) < unit.impl->buffers.size()) {
+                    && static_cast<size_t>(b.binding) < unit.impl->buffers.size()
+                    && unit.impl->buffers[b.binding].buffer) {
                     foundry.buffer_barrier(
                         cmd_id,
                         unit.impl->buffers[b.binding].buffer,
@@ -797,7 +804,8 @@ Portal::Graphics::FenceID GpuResourceManager::dispatch_async(const std::string& 
         const bool is_shared = m_shared->slots.contains({ b.set, static_cast<size_t>(b.binding) });
 
         if (is_output && !is_image && !is_shared
-            && static_cast<size_t>(b.binding) < unit.impl->buffers.size()) {
+            && static_cast<size_t>(b.binding) < unit.impl->buffers.size()
+            && unit.impl->buffers[b.binding].buffer) {
             foundry.buffer_barrier(
                 cmd_id,
                 unit.impl->buffers[b.binding].buffer,

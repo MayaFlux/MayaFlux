@@ -153,11 +153,9 @@ void settings() {
 
 `SurfaceFormat` options: `B8G8R8A8_SRGB` (default), `R8G8B8A8_SRGB`, `R16G16B16A16_SFLOAT` (HDR), `A2B10G10R10_UNORM`, others.
 
-The windowing backend (`GLFW` on macOS, `WAYLAND` on Linux, `WINDOWS` on Windows) is selected at compile time. `WindowingBackend::NONE` disables windowing entirely for headless/offline use and must be set if no windows are created.
+The windowing backend (`COCOA` on macOS, `WAYLAND` on Linux, `WINDOWS` on Windows) is selected at compile time. `WindowingBackend::NONE` disables windowing entirely for headless/offline use and must be set if no windows are created.
 
-On macOS, `gfx.glfw_preinit_config` exposes GLFW pre-init hints.
-
-Key repeat timing for native backends (Wayland, Win32) is in `gfx.key_repeat_config`.
+Key repeat timing for native backends (Wayland, Win32, Cocoa) is in `gfx.key_repeat_config`.
 
 ### GPU selection
 

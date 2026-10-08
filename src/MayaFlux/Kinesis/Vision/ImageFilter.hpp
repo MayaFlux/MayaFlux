@@ -12,7 +12,7 @@
  * - Border handling is clamp-to-edge throughout
  * - Separable filters decompose into two 1D passes for O(w*h*k) cost
  *   rather than O(w*h*k^2)
- * - Parallelism handled internally via Parallel::par_unseq
+ * - Parallelism handled internally via std::execution::par_unseq
  */
 
 namespace MayaFlux::Kinesis::Vision {

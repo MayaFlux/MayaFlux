@@ -15,7 +15,7 @@
  * - window_radius is the half-size of the tracking window in pixels
  * - Points that fail to track are returned at their previous position
  *   with tracked = false
- * - Parallelism handled internally via Parallel::par_unseq
+ * - Parallelism handled internally via std::execution::par_unseq
  */
 
 namespace MayaFlux::Kinesis::Vision {

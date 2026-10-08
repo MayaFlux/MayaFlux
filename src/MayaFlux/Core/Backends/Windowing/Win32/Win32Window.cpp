@@ -418,7 +418,7 @@ void Win32Window::set_color(const std::array<float, 4>& color)
 }
 
 // ============================================================================
-// Render tracking (mirrors GlfwWindow)
+// Render tracking
 // ============================================================================
 
 void Win32Window::register_rendering_buffer(std::shared_ptr<Buffers::VKBuffer> buffer)

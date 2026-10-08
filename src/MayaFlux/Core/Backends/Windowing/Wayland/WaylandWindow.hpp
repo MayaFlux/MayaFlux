@@ -15,7 +15,7 @@ namespace MayaFlux::Core {
 
 /**
  * @class WaylandWindow
- * @brief Native Wayland window backend, no GLFW dependency.
+ * @brief Native Wayland window backend.
  *
  * Connects directly to the Wayland compositor via wl_display. Keyboard
  * translation uses xkbcommon with the keymap supplied by the compositor

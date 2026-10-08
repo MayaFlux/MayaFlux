@@ -88,7 +88,7 @@ enum class Context : uint8_t {
     // ============================================================================
 
     AudioSubsystem, ///< Audio subsystem operations (backend, device, stream management)
-    WindowingSubsystem, ///< Windowing system operations (GLFW, SDL)
+    WindowingSubsystem, ///< Windowing system operations (Win32, Wayland, Cocoa)
     GraphicsSubsystem, ///< Graphics subsystem operations (Vulkan, rendering pipeline)
     InputSubsystem, ///< Input subsystem operations (device management, event dispatch)
     NetworkSubsystem, ///< Network subsystem operations (endpoint management, data routing)

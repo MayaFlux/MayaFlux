@@ -2,9 +2,7 @@
 
 #include "ConnectedComponents.hpp"
 
-#include "MayaFlux/Transitive/Parallel/Execution.hpp"
-
-namespace P = MayaFlux::Parallel;
+#include <execution>
 
 namespace MayaFlux::Kinesis::Vision {
 
@@ -182,7 +180,7 @@ std::vector<Contour> find_contours(
         ? static_cast<size_t>(max_points_per_contour)
         : n * 8;
 
-    P::for_each(P::par_unseq,
+    std::for_each(std::execution::par_unseq,
         std::views::iota(size_t { 0 }, seeds.size()).begin(),
         std::views::iota(size_t { 0 }, seeds.size()).end(),
         [&](size_t ci) {

@@ -3,13 +3,11 @@
 #include "ImageFilter.hpp"
 #include "KernelSpec.hpp"
 
-#include "MayaFlux/Transitive/Parallel/Execution.hpp"
+#include <execution>
 
 #include <Eigen/Core>
 
 namespace K = MayaFlux::Kinesis::Vision::Kernels;
-
-namespace P = MayaFlux::Parallel;
 
 namespace MayaFlux::Kinesis::Vision {
 
@@ -30,7 +28,7 @@ namespace {
 
         float max_mag = 0.0F;
 
-        P::for_each(P::par_unseq,
+        std::for_each(std::execution::par_unseq,
             std::views::iota(size_t { 0 }, n).begin(),
             std::views::iota(size_t { 0 }, n).end(),
             [&](size_t i) {
@@ -41,7 +39,7 @@ namespace {
         const float peak = *std::ranges::max_element(mag);
         if (peak > 0.0F) {
             const float inv = 1.0F / peak;
-            P::transform(P::par_unseq, mag.begin(), mag.end(), mag.begin(),
+            std::transform(std::execution::par_unseq, mag.begin(), mag.end(), mag.begin(),
                 [inv](float v) { return v * inv; });
         }
 
@@ -91,7 +89,7 @@ GradientResult sobel(std::span<const float> gray, uint32_t w, uint32_t h)
     if (peak > 0.0F)
         Eigen::Map<Eigen::ArrayXf>(r.magnitude.data(), en) /= peak;
 
-    P::transform(P::par_unseq, r.dx.begin(), r.dx.end(), r.dy.begin(), r.angle.begin(),
+    std::transform(std::execution::par_unseq, r.dx.begin(), r.dx.end(), r.dy.begin(), r.angle.begin(),
         [](float gx, float gy) { return std::atan2(gy, gx); });
     return r;
 }
@@ -124,7 +122,7 @@ GradientResult scharr(std::span<const float> gray, uint32_t w, uint32_t h)
     if (peak > 0.0F)
         Eigen::Map<Eigen::ArrayXf>(r.magnitude.data(), en) /= peak;
 
-    P::transform(P::par_unseq, r.dx.begin(), r.dx.end(), r.dy.begin(), r.angle.begin(),
+    std::transform(std::execution::par_unseq, r.dx.begin(), r.dx.end(), r.dy.begin(), r.angle.begin(),
         [](float gx, float gy) { return std::atan2(gy, gx); });
     return r;
 }
@@ -145,7 +143,7 @@ std::vector<float> canny(
     auto grad = sobel(src, w, h);
 
     std::vector<float> nms(n, 0.0F);
-    P::for_each(P::par_unseq,
+    std::for_each(std::execution::par_unseq,
         std::views::iota(size_t { 0 }, n).begin(),
         std::views::iota(size_t { 0 }, n).end(),
         [&](size_t idx) {

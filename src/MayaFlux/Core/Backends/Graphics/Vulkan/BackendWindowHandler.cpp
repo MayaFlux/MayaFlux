@@ -606,7 +606,8 @@ bool BackendWindowHandler::register_window(const std::shared_ptr<Window>& window
     window->set_graphics_registered(true);
 
     window->set_event_callback([this, window_ptr = window](const WindowEvent& event) {
-        if (event.type == WindowEventType::WINDOW_RESIZED) {
+        if (event.type == WindowEventType::WINDOW_RESIZED
+            || event.type == WindowEventType::FRAMEBUFFER_RESIZED) {
             auto* config = find_window_context(window_ptr);
             if (config) {
                 config->needs_recreation = true;

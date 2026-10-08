@@ -2,6 +2,7 @@
 
 #ifdef MAYAFLUX_PLATFORM_MACOS
 #include <dispatch/dispatch.h>
+#include <pthread.h>
 #endif
 
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
@@ -24,7 +25,7 @@ namespace MayaFlux::Parallel {
  * @param args Arguments to forward to the function
  *
  * Schedules work on the main queue asynchronously. Returns immediately.
- * Use this for GLFW operations that must execute on the main thread.
+ * Use this for AppKit operations that must execute on the main thread.
  */
 template <typename Func, typename... Args>
 void dispatch_main_async(Func&& func, Args&&... args)
@@ -42,8 +43,9 @@ void dispatch_main_async(Func&& func, Args&&... args)
  * @param args Arguments to forward to the function
  * @return The result returned by func
  *
- * Schedules work on the main queue synchronously. Blocks until complete.
- * WARNING: Can deadlock if called from main thread or during Cocoa modal loops.
+ * Runs directly when called on the main thread, otherwise schedules work on
+ * the main queue synchronously and blocks until complete.
+ * WARNING: Can deadlock during Cocoa modal loops.
  */
 template <typename Func, typename... Args>
 auto dispatch_main_sync(Func&& func, Args&&... args) -> decltype(auto)
@@ -51,10 +53,17 @@ auto dispatch_main_sync(Func&& func, Args&&... args) -> decltype(auto)
     using ResultType = std::invoke_result_t<Func, Args...>;
 
     if constexpr (std::is_void_v<ResultType>) {
+        if (pthread_main_np() != 0) {
+            std::invoke(std::forward<Func>(func), std::forward<Args>(args)...);
+            return;
+        }
         dispatch_sync(dispatch_get_main_queue(), ^{
             std::invoke(std::forward<Func>(func), std::forward<Args>(args)...);
         });
     } else {
+        if (pthread_main_np() != 0) {
+            return static_cast<ResultType>(std::invoke(std::forward<Func>(func), std::forward<Args>(args)...));
+        }
         __block ResultType result;
         dispatch_sync(dispatch_get_main_queue(), ^{
             result = std::invoke(std::forward<Func>(func), std::forward<Args>(args)...);

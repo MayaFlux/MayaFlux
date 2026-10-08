@@ -13,7 +13,7 @@
  * - w and h are pixel dimensions; caller ensures span size == w * h
  * - Response map is normalised to [0, 1] by observed peak
  * - Keypoint positions are normalised to [0, 1]
- * - Parallelism handled internally via Parallel::par_unseq
+ * - Parallelism handled internally via std::execution::par_unseq
  */
 
 namespace MayaFlux::Kinesis::Vision {

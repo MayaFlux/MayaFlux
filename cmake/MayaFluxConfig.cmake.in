@@ -1,5 +1,19 @@
 @PACKAGE_INIT@
 
+if(APPLE)
+    if(CMAKE_OSX_ARCHITECTURES)
+        if(NOT CMAKE_OSX_ARCHITECTURES STREQUAL "arm64")
+            set(MayaFlux_FOUND FALSE)
+            set(MayaFlux_NOT_FOUND_MESSAGE "MayaFlux on macOS supports only Apple Silicon (arm64); Intel and universal targets are unsupported.")
+            return()
+        endif()
+    elseif(NOT CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64|ARM64)$")
+        set(MayaFlux_FOUND FALSE)
+        set(MayaFlux_NOT_FOUND_MESSAGE "MayaFlux on macOS requires an Apple Silicon (arm64) target.")
+        return()
+    endif()
+endif()
+
 include(CMakeFindDependencyMacro)
 
 set(_MAYAFLUX_LIBDIR "@CMAKE_INSTALL_LIBDIR@")
@@ -121,12 +135,10 @@ else()
 
     if(APPLE)
         message(STATUS "=== macOS-specific Dependencies ===")
-        find_dependency(oneDPL)
         find_dependency(Vulkan)
-        set(_MAYAFLUX_THREADING_BACKEND "oneDPL")
+        set(_MAYAFLUX_THREADING_BACKEND "libc++ PSTL")
 
         pkg_check_modules(HIDAPI REQUIRED IMPORTED_TARGET hidapi)
-        pkg_check_modules(Glfw REQUIRED IMPORTED_TARGET glfw3>=3.4)
     else()
         message(STATUS "=== Linux-specific Dependencies ===")
         pkg_check_modules(Vulkan REQUIRED IMPORTED_TARGET vulkan)
@@ -375,7 +387,7 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
 
         # Unix Vulkan
         if(APPLE)
-            target_link_libraries(MayaFlux::MayaFluxLib INTERFACE Vulkan::Vulkan PkgConfig::Glfw)
+            target_link_libraries(MayaFlux::MayaFluxLib INTERFACE Vulkan::Vulkan)
         else()
             target_link_libraries(MayaFlux::MayaFluxLib INTERFACE 
             PkgConfig::Vulkan
@@ -391,7 +403,8 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
     # Platform-specific threading backends
     # ========================================================================
     if(APPLE)
-        target_link_libraries(MayaFlux::MayaFluxLib INTERFACE oneDPL)
+        target_compile_options(MayaFlux::MayaFluxLib INTERFACE -fexperimental-library)
+        target_link_options(MayaFlux::MayaFluxLib INTERFACE -fexperimental-library)
     elseif(UNIX AND NOT APPLE)
         target_link_libraries(MayaFlux::MayaFluxLib INTERFACE TBB::tbb)
     endif()

@@ -1,6 +1,6 @@
 #include "DataUtils.hpp"
 
-#include "MayaFlux/Transitive/Parallel/Execution.hpp"
+#include <execution>
 
 namespace MayaFlux::Kakshya {
 
@@ -71,7 +71,7 @@ std::span<const float> as_normalised_float(
             storage.resize(vec.size());
             constexpr float k = 1.0F / 255.0F;
 
-            std::transform(Parallel::par_unseq,
+            std::transform(std::execution::par_unseq,
                 vec.begin(), vec.end(), storage.begin(),
                 [](uint8_t v) { return static_cast<float>(v) * k; });
             return { storage.data(), storage.size() };
@@ -80,7 +80,7 @@ std::span<const float> as_normalised_float(
             storage.resize(vec.size());
             constexpr float k = 1.0F / 65535.0F;
 
-            std::transform(Parallel::par_unseq,
+            std::transform(std::execution::par_unseq,
                 vec.begin(), vec.end(), storage.begin(),
                 [](uint16_t v) { return static_cast<float>(v) * k; });
             return { storage.data(), storage.size() };
@@ -132,7 +132,7 @@ std::pair<uint8_t*, size_t> variant_bytes_mutable(DataVariant& v)
 
 void denormalise_to_uint8(std::span<const float> src, std::span<uint8_t> dst)
 {
-    Parallel::transform(Parallel::par_unseq, src.begin(), src.end(), dst.begin(),
+    std::transform(std::execution::par_unseq, src.begin(), src.end(), dst.begin(),
         [](float v) {
             return static_cast<uint8_t>(std::clamp(v * 255.0F, 0.0F, 255.0F));
         });

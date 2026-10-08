@@ -18,7 +18,7 @@ Version: @PROJECT_VERSION@
 URL: https://github.com/MayaFlux/MayaFlux
 
 # Core public dependencies (all platforms)
-Requires: glfw3 >= 3.4 libavcodec libavformat libavutil libswresample libswscale libavdevice
+Requires: libavcodec libavformat libavutil libswresample libswscale libavdevice
 
 # Vulkan (platform-specific: Windows via Vulkan::Vulkan, Unix via PkgConfig)
 # vulkan package name is portable across systems
@@ -32,7 +32,7 @@ Requires: glm
 
 # Platform-specific backend (pkg-config cannot express conditionals)
 # - Windows: PPL (built into MSVC runtime, no separate package needed)
-# - macOS: oneDPL (installed via Homebrew as onedpl)
+# - macOS: libc++ parallel algorithms (compile and link with -fexperimental-library)
 # - Linux: TBB (installed as tbb)
 # These should be resolved via find_package() in CMake, not pkg-config
 

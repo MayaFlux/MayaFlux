@@ -269,9 +269,19 @@ No. MayaFlux compiles with Apple Clang from Xcode Command Line Tools. Homebrew L
 
 Weave-installed MayaFlux (currently 0.4.1) targets: Windows 10 version 1909+, Fedora 43, Ubuntu 25.10, macOS 15.
 
-Building from source targets a newer floor, since source currently tracks 0.5-dev: Windows 10 version 1909+, Fedora 44, Ubuntu 26.04 LTS, macOS 26 (Tahoe). See [`docs/Dev_Getting_Started.md`](Dev_Getting_Started.md) for the from-source requirement list.
+Building from source targets a newer floor, since source currently tracks 0.5-dev: Windows 10 version 1909+, Fedora 44, Ubuntu 26.04 LTS, macOS 26 (Tahoe) on Apple Silicon (ARM64). See [`docs/Dev_Getting_Started.md`](Dev_Getting_Started.md) for the from-source requirement list.
 
 The Windows floor is set by MSVC 2022's own minimum supported OS. Win32 windowing, WinMM, and WASAPI all predate this by a wide margin and impose no additional constraint.
+
+### Why is Intel macOS support removed?
+
+Starting with 0.5-dev, MayaFlux supports macOS on Apple Silicon only, for both source builds and binary distributions. This does not change the hardware requirements of previously published releases.
+
+The constraint comes from the dependency ecosystem, beyond MayaFlux's control. In September 2026, [Homebrew stopped building new Intel macOS bottles](https://docs.brew.sh/Support-Tiers) and moved Intel Macs to Tier 3, without CI coverage or a commitment to fix platform-specific failures. Existing bottles may still work, but updated formulae may require source builds. Homebrew expects to remove Intel execution support in or after September 2027. [Homebrew's release announcement](https://brew.sh/2026/09/13/homebrew-7.0.0/) also identifies Apple and GitHub's retreat from Intel support as infrastructure its volunteers cannot replace. MayaFlux cannot replace that infrastructure or maintain a separate binary dependency stack where much larger, better-funded platform providers are withdrawing support.
+
+Building MayaFlux from source does not bypass this problem. Before reaching MayaFlux, a fresh Homebrew installation can require source builds of its dependency chain, including LLVM, FFmpeg, Vulkan components, and their dependencies where matching bottles are unavailable. Our Intel CI has already encountered a GCC source rebuild. GCC is not MayaFlux's macOS compiler, which remains Apple Clang; it can enter through dependency builds. The burden includes building the compiler's dependencies, packages that need it, and resolving failures on a platform Homebrew no longer tests. A cached CI installation can conceal that burden until the cache changes or expires; a new user's machine has no such protection.
+
+This is not a practical installation path we can support. Current setup scripts and CMake configurations reject Intel macOS targets, and universal macOS builds are unsupported. Existing Intel installations may continue to work with older dependencies, but they do not provide a reliable path to current releases.
 
 ### What happens if a dependency is missing?
 

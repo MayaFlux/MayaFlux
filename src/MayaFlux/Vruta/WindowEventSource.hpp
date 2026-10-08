@@ -19,7 +19,7 @@ namespace MayaFlux::Vruta {
 
 /**
  * @struct WindowEventFilter
- * @brief Filter criteria for GLFW window input events.
+ * @brief Filter criteria for window input events.
  *
  * Multiple criteria are ANDed. An empty filter matches any event.
  */
@@ -55,9 +55,9 @@ struct MAYAFLUX_API WindowEventFilter : public EventFilter {
 
 /**
  * @class WindowEventSource
- * @brief Awaitable stream of GLFW window input events.
+ * @brief Awaitable stream of window input events.
  *
- * Signals are produced by GLFW callbacks on the main thread. Coroutines
+ * Signals are produced by the window backend's poll(), on the polling thread. Coroutines
  * suspend via WindowEventAwaiter and are resumed synchronously from signal().
  * Tracks input state for immediate polling via is_key_pressed(),
  * is_mouse_pressed(), and get_mouse_position().
@@ -78,7 +78,7 @@ public:
 
     /**
      * @brief Enqueue a window event and resume matching waiters.
-     * @param event Event produced by the GLFW backend.
+     * @param event Event produced by the window backend.
      *
      * Updates input state caches before dispatching.
      */

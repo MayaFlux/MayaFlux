@@ -21,6 +21,12 @@ namespace {
 // Lifecycle
 // =============================================================================
 
+Atelier& Atelier::instance()
+{
+    static Atelier a;
+    return a;
+}
+
 Atelier::Atelier() = default;
 Atelier::~Atelier() = default;
 
@@ -100,6 +106,12 @@ Inspector& Atelier::inspector()
 
 std::shared_ptr<Core::Window> Atelier::create_window(const Core::WindowCreateInfo& info)
 {
+    if (!m_initialized) {
+        error<std::runtime_error>(Journal::Component::Portal, Journal::Context::API,
+            std::source_location::current(),
+            "Portal::Forma not initialized - cannot create window");
+    }
+
     auto window = m_window_manager->create_window(info);
     window->show();
     return window;
@@ -112,6 +124,12 @@ std::shared_ptr<Buffers::FormaBuffer> Atelier::create_buffer(
     const std::string& texture_binding,
     std::vector<std::pair<std::string, std::shared_ptr<Core::VKImage>>> additional_textures)
 {
+    if (!m_initialized) {
+        error<std::runtime_error>(Journal::Component::Portal, Journal::Context::API,
+            std::source_location::current(),
+            "Portal::Forma not initialized - cannot create buffer");
+    }
+
     auto buf = std::make_shared<Buffers::FormaBuffer>(capacity, topology);
     m_buffer_manager->add_buffer(buf, Buffers::ProcessingToken::GRAPHICS_BACKEND);
 

@@ -5,7 +5,7 @@
 #include "OperationSpec/OperationPool.hpp"
 
 #include "MayaFlux/Transitive/Parallel/AsyncGroup.hpp"
-#include "MayaFlux/Transitive/Parallel/Execution.hpp"
+#include <execution>
 
 namespace MayaFlux::Yantra {
 
@@ -322,7 +322,7 @@ public:
 
         std::vector<std::optional<Datum<OutputType>>> results(inputs.size());
 
-        MayaFlux::Parallel::transform(MayaFlux::Parallel::par_unseq,
+        std::transform(std::execution::par_unseq,
             inputs.begin(), inputs.end(),
             results.begin(),
             [this, operation](const Datum<InputType>& input) {

@@ -263,38 +263,11 @@ struct MAYAFLUX_API GraphicsSurfaceInfo {
     }
 };
 
-#ifdef MAYAFLUX_PLATFORM_MACOS
-
-/**
- * @struct GlfwPreInitConfig
- * @brief Configuration hints for GLFW initialization
- *
- * Set before initializing the GLFW library. These affect how GLFW sets up
- * its internal state and platform integration.
- */
-struct GlfwPreInitConfig {
-    bool cocoa_chdir_resources = true;
-    bool cocoa_menubar = true;
-
-    /** @brief Request OpenGL debug context (if using OpenGL backend) */
-    bool headless {};
-
-    static constexpr auto describe()
-    {
-        return std::make_tuple(
-            Reflect::member("cocoa_chdir_resources", &GlfwPreInitConfig::cocoa_chdir_resources),
-            Reflect::member("cocoa_menubar", &GlfwPreInitConfig::cocoa_menubar),
-            Reflect::member("headless", &GlfwPreInitConfig::headless));
-    }
-};
-#endif // MAYAFLUX_PLATFORM_MACOS
-
 /**
  * @struct KeyRepeatConfig
  * @brief Key repeat timing for native window backends.
  *
- * Wayland and Win32 backends implement client-side repeat using these values.
- * GLFW backend ignores this; OS repeat settings apply there.
+ * Wayland, Win32 and Cocoa backends implement client-side repeat using these values.
  */
 struct KeyRepeatConfig {
     /** @brief Delay before repeat starts in milliseconds. */
@@ -360,12 +333,7 @@ struct TextConfig {
 };
 
 struct MAYAFLUX_API GlobalGraphicsConfig {
-#ifdef MAYAFLUX_PLATFORM_MACOS
-    /** @brief Pre-initialization configuration for GLFW */
-    GlfwPreInitConfig glfw_preinit_config;
-#endif // MAYAFLUX_PLATFORM_MACOS
-
-    /** @brief Key repeat timing for native Wayland and Win32 backends. */
+    /** @brief Key repeat timing for native Wayland, Win32 and Cocoa backends. */
     KeyRepeatConfig key_repeat_config;
 
     /** @brief System-wide configuration for visual stream processing */
@@ -382,9 +350,9 @@ struct MAYAFLUX_API GlobalGraphicsConfig {
      * @brief Windowing library selection
      */
     enum class WindowingBackend : uint8_t {
-        GLFW, ///< GLFW3 (default, cross-platform)
         WINDOWS, ///< Native Win32
         WAYLAND, ///< Native Wayland
+        COCOA, ///< Native Cocoa
         NONE ///< No windowing (offscreen rendering only)
     };
 
@@ -411,9 +379,12 @@ struct MAYAFLUX_API GlobalGraphicsConfig {
 #elif defined(WAYLAND_BACKEND)
     /** @brief Selected windowing backend */
     WindowingBackend windowing_backend = WindowingBackend::WAYLAND;
+#elif defined(COCOA_BACKEND)
+    /** @brief Selected windowing backend */
+    WindowingBackend windowing_backend = WindowingBackend::COCOA;
 #else
     /** @brief Selected windowing backend */
-    WindowingBackend windowing_backend = WindowingBackend::GLFW;
+    WindowingBackend windowing_backend = WindowingBackend::NONE;
 #endif //  defined(MAYAFLUX_PLATFORM_WINDOWS) && defined (WIN32_BACKEND)
 
     /** @brief Selected graphics API for rendering */
@@ -432,21 +403,6 @@ struct MAYAFLUX_API GlobalGraphicsConfig {
 #endif
     };
 
-#ifdef MAYAFLUX_PLATFORM_MACOS
-    static constexpr auto describe()
-    {
-        return std::make_tuple(
-            Reflect::member("glfw_preinit_config", &GlobalGraphicsConfig::glfw_preinit_config),
-            Reflect::member("key_repeat_config", &GlobalGraphicsConfig::key_repeat_config),
-            Reflect::member("surface_info", &GlobalGraphicsConfig::surface_info),
-            Reflect::member("backend_info", &GlobalGraphicsConfig::backend_info),
-            Reflect::member("resource_limits", &GlobalGraphicsConfig::resource_limits),
-            Reflect::member("target_frame_rate", &GlobalGraphicsConfig::target_frame_rate),
-            Reflect::member("windowing_backend", &GlobalGraphicsConfig::windowing_backend),
-            Reflect::member("requested_api", &GlobalGraphicsConfig::requested_api),
-            Reflect::member("text_config", &GlobalGraphicsConfig::text_config));
-    }
-#else
     static constexpr auto describe()
     {
         return std::make_tuple(
@@ -459,8 +415,6 @@ struct MAYAFLUX_API GlobalGraphicsConfig {
             Reflect::member("requested_api", &GlobalGraphicsConfig::requested_api),
             Reflect::member("text_config", &GlobalGraphicsConfig::text_config));
     }
-
-#endif //     #ifdef MAYAFLUX_PLATFORM_MACOS
 };
 
 //==============================================================================

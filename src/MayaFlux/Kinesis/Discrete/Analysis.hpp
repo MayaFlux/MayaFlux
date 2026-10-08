@@ -11,7 +11,7 @@
  * ## Design constraints
  * - Inputs are immutable spans; outputs are value-returning vectors
  * - All windowed functions require pre-computed num_windows from the caller
- * - Parallelism is handled internally via MayaFlux::Parallel
+ * - Parallelism is handled internally via std::execution::par_unseq
  * - Spectral functions carry an Eigen::FFT dependency and are not portable
  *   to compute shader contexts; a future kernel-compatible variant will be
  *   a separate function set

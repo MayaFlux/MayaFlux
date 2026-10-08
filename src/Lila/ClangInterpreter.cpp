@@ -160,6 +160,7 @@ bool ClangInterpreter::initialize(bool skip_host_library_load)
         LILA_WARN(Emitter::INTERPRETER,
             "Could not find macOS SDK - JIT may fail to find system headers");
     }
+    m_impl->compile_flags.emplace_back("-fexperimental-library");
 #endif
 
     for (const auto& path : m_impl->include_paths) {

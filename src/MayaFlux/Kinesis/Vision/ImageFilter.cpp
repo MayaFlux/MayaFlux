@@ -7,11 +7,9 @@
 #include <arm_neon.h>
 #endif
 
-#include "MayaFlux/Transitive/Parallel/Execution.hpp"
+#include <execution>
 
 #include <Eigen/Core>
-
-namespace P = MayaFlux::Parallel;
 
 namespace MayaFlux::Kinesis::Vision {
 
@@ -25,7 +23,7 @@ namespace {
         const auto half = static_cast<int32_t>(kernel.size() / 2);
         const auto iw = static_cast<int32_t>(w);
 
-        P::for_each(P::par_unseq,
+        std::for_each(std::execution::par_unseq,
             std::views::iota(uint32_t { 0 }, h).begin(),
             std::views::iota(uint32_t { 0 }, h).end(),
             [&](uint32_t row) {
@@ -116,7 +114,7 @@ namespace {
         const auto ih = static_cast<int32_t>(h);
         const auto iw = static_cast<int32_t>(w);
 
-        P::for_each(P::par_unseq,
+        std::for_each(std::execution::par_unseq,
             std::views::iota(uint32_t { 0 }, h).begin(),
             std::views::iota(uint32_t { 0 }, h).end(),
             [&](uint32_t row) {
@@ -211,7 +209,7 @@ void filter_horizontal_planes(
     const float* kdata = kernel.data();
     const size_t n = src.size();
 
-    P::for_each(P::par_unseq,
+    std::for_each(std::execution::par_unseq,
         std::views::iota(uint32_t { 0 }, h).begin(),
         std::views::iota(uint32_t { 0 }, h).end(),
         [&](uint32_t row) {
@@ -356,7 +354,7 @@ void filter_vertical_planes(
     const float* kdata = kernel.data();
     const size_t n = src.size();
 
-    P::for_each(P::par_unseq,
+    std::for_each(std::execution::par_unseq,
         std::views::iota(uint32_t { 0 }, h).begin(),
         std::views::iota(uint32_t { 0 }, h).end(),
         [&](uint32_t row) {
