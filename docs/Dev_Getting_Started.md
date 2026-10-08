@@ -46,7 +46,7 @@ All dependencies are required; CMake will not configure if any are missing.
 **Linux (Fedora 44+ / Ubuntu 26.04 LTS+):** PipeWire (audio and MIDI), libdbus-1 (XDG Portal file dialogs), wayland-protocols, libwayland-client, xkbcommon, fontconfig.
 **Note:** `jack2` conflicts with pipewire upstream. Use `pipewire-jack` which is functionally equivalent to jack2 but compatible with pipewire. If you have jack2 installed, remove it and install `pipewire-jack` instead.
 
-**macOS (26+, Tahoe):** Apple Silicon or Intel, Apple Clang 17+ via Xcode Command Line Tools, GLFW via Homebrew (windowing; see the macOS platform maintainer callout in `CONTRIBUTING.md`, this is expected to change). Frameworks linked automatically: CoreAudio, AudioUnit, AudioToolbox, CoreMIDI, AppKit, UniformTypeIdentifiers, CoreFoundation.
+**macOS (26+, Tahoe):** Apple Silicon or Intel, Apple Clang 17+ via Xcode Command Line Tools. Frameworks linked automatically: CoreAudio, AudioUnit, AudioToolbox, CoreMIDI, AppKit, UniformTypeIdentifiers, CoreFoundation, QuartzCore.
 
 **Windows (10, version 1909+):** Visual Studio 2022+ (MSVC) or MinGW-w64, LLVM 22+ (for Lila JIT).
 

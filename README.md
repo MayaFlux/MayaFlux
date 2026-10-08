@@ -225,9 +225,9 @@ All abstractions are composable and concurrent. Processing domains are encoded v
 
 ### Windowing Backends
 
-- Wayland native backend (Linux): default on Linux; `xkb` key mapping, client-side key repeat via timerfd, scroll and scale corrections; `MAYAFLUX_LINUX_USE_GLFW` option to restore GLFW
-- Win32 native backend (Windows): replaces GLFW on Windows; lock-free event queue, client-side key repeat, numpad fix; GLFW retained as opt-in via `GLFW_BACKEND`
-- GLFW retained on macOS and for RenderDoc capture path
+- Wayland native backend (Linux): `xkb` key mapping, client-side key repeat via timerfd, scroll and scale corrections
+- Win32 native backend (Windows): lock-free event queue, client-side key repeat, numpad fix
+- Cocoa native backend (macOS): AppKit windowing and input, client-side key repeat, CAMetalLayer integration for Vulkan presentation through MoltenVK
 - `KeyRepeatConfig`: `initial_delay_ms`, `interval_ms`, `allow_compositor_override`
 
 ### Input
@@ -439,7 +439,7 @@ Auto-generated docs:
 | Core DSP Architecture       | Stable      | Lock-free, concurrent, sample-accurate                                   |
 | Audio Backends              | Stable      | PipeWire (Linux), WASAPI (Windows), CoreAudio (macOS); RtAudio removed   |
 | MIDI Backends               | Stable      | PipeWire/ALSA (Linux), WinMM (Windows), CoreMIDI (macOS); RtMidi removed |
-| Windowing Backends          | Stable      | Wayland native (Linux), Win32 native (Windows), GLFW (macOS)             |
+| Windowing Backends          | Stable      | Wayland native (Linux), Win32 native (Windows), Cocoa native (macOS)    |
 | Live Coding (Lila)          | Stable      | Sub-buffer JIT compilation via LLVM ORC; MayaFluxHost as standalone lib  |
 | Node Graphs                 | Stable      | Generator, filter, network, GpuSync, input, routing, compositing         |
 | IO and Containers           | Stable      | Audio, video, camera, image, mesh; full read and write paths via FFmpeg  |
