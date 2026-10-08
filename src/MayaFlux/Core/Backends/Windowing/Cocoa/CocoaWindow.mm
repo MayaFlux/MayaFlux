@@ -531,7 +531,7 @@ void activate_application()
 
 - (void)scrollWheel:(NSEvent*)event
 {
-    double dx = event.scrollingDeltaX;
+    double dx = -event.scrollingDeltaX;
     double dy = event.scrollingDeltaY;
 
     if (event.hasPreciseScrollingDeltas) {
