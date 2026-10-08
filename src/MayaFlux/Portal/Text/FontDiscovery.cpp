@@ -78,7 +78,9 @@ std::optional<std::string> find_font(std::string_view family, std::string_view s
 
     std::string lower_family(family);
     std::ranges::transform(lower_family,
-        lower_family.begin(), ::tolower);
+        lower_family.begin(), [](unsigned char c) { return std::tolower(c); });
+    std::erase_if(lower_family,
+        [](unsigned char c) { return std::isspace(c); });
 
     for (const auto& dir : search_dirs) {
         if (!fs::exists(dir)) {
@@ -86,12 +88,14 @@ std::optional<std::string> find_font(std::string_view family, std::string_view s
         }
         for (const auto& entry : fs::directory_iterator(dir)) {
             const std::string ext = entry.path().extension().string();
-            if (ext != ".ttf" && ext != ".otf") {
+            if (ext != ".ttf" && ext != ".otf" && ext != ".ttc" && ext != ".otc" && ext != ".dfont") {
                 continue;
             }
             std::string lower_name = entry.path().filename().string();
             std::ranges::transform(lower_name,
-                lower_name.begin(), ::tolower);
+                lower_name.begin(), [](unsigned char c) { return std::tolower(c); });
+            std::erase_if(lower_name,
+                [](unsigned char c) { return std::isspace(c); });
             if (lower_name.find(lower_family) != std::string::npos) {
                 MF_DEBUG(Journal::Component::Portal, Journal::Context::Init, "{} -> {}", family, entry.path().string());
                 return entry.path().string();
