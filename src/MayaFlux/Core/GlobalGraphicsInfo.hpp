@@ -293,7 +293,7 @@ struct GlfwPreInitConfig {
  * @struct KeyRepeatConfig
  * @brief Key repeat timing for native window backends.
  *
- * Wayland and Win32 backends implement client-side repeat using these values.
+ * Wayland, Win32 and Cocoa backends implement client-side repeat using these values.
  * GLFW backend ignores this; OS repeat settings apply there.
  */
 struct KeyRepeatConfig {
@@ -365,7 +365,7 @@ struct MAYAFLUX_API GlobalGraphicsConfig {
     GlfwPreInitConfig glfw_preinit_config;
 #endif // MAYAFLUX_PLATFORM_MACOS
 
-    /** @brief Key repeat timing for native Wayland and Win32 backends. */
+    /** @brief Key repeat timing for native Wayland, Win32 and Cocoa backends. */
     KeyRepeatConfig key_repeat_config;
 
     /** @brief System-wide configuration for visual stream processing */

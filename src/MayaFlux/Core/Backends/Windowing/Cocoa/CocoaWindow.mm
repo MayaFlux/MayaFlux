@@ -387,15 +387,16 @@ void activate_application()
 
 - (void)keyDown:(NSEvent*)event
 {
-    const MFC::WindowEvent::KeyData data {
-        .key = static_cast<int16_t>(MFC::from_cocoa_key(event.keyCode)),
-        .scancode = static_cast<int32_t>(event.keyCode),
-        .mods = translate_mods(event.modifierFlags)
-    };
+    if (!event.isARepeat) {
+        const MFC::WindowEvent::KeyData data {
+            .key = static_cast<int16_t>(MFC::from_cocoa_key(event.keyCode)),
+            .scancode = static_cast<int32_t>(event.keyCode),
+            .mods = translate_mods(event.modifierFlags)
+        };
 
-    _held_keys[data.key] = data;
-    const auto type = event.isARepeat ? MFC::WindowEventType::KEY_REPEAT : MFC::WindowEventType::KEY_PRESSED;
-    [self emit:type time:event_time(event) data:data];
+        _held_keys[data.key] = data;
+        [self emit:MFC::WindowEventType::KEY_PRESSED time:event_time(event) data:data];
+    }
 
     [self interpretKeyEvents:@[ event ]];
 }
@@ -425,8 +426,14 @@ void activate_application()
         .mods = translate_mods(event.modifierFlags)
     };
 
+    if (key == MayaFlux::IO::Keys::CapsLock) {
+        [self emit:MFC::WindowEventType::KEY_PRESSED time:event_time(event) data:data];
+        [self emit:MFC::WindowEventType::KEY_RELEASED time:event_time(event) data:data];
+        return;
+    }
+
     bool pressed = (event.modifierFlags & mask) != 0;
-    if (pressed && key != MayaFlux::IO::Keys::CapsLock && _held_keys.contains(data.key))
+    if (pressed && _held_keys.contains(data.key))
         pressed = false;
 
     if (pressed) {
@@ -734,9 +741,10 @@ struct CocoaWindow::Native {
 };
 
 CocoaWindow::CocoaWindow(const WindowCreateInfo& create_info,
-    [[maybe_unused]] const GlobalGraphicsConfig& graphics_config)
+    const GlobalGraphicsConfig& graphics_config)
     : m_native(std::make_shared<Native>())
     , m_create_info(create_info)
+    , m_key_repeat_config(graphics_config.key_repeat_config)
 {
     m_state.current_width = create_info.width;
     m_state.current_height = create_info.height;
@@ -855,9 +863,20 @@ void CocoaWindow::poll()
     Parallel::dispatch_main_sync([] { pump_app_events(); });
 
     const auto callback = m_event_callback;
+    const auto now = std::chrono::steady_clock::now();
 
     while (auto ev = m_event_queue.pop()) {
         switch (ev->type) {
+        case WindowEventType::KEY_PRESSED:
+            if (const auto* key = std::get_if<WindowEvent::KeyData>(&ev->data)) {
+                m_held_keys[key->key] = *key;
+                m_repeat_deadline = now + std::chrono::milliseconds(m_key_repeat_config.initial_delay_ms);
+            }
+            break;
+        case WindowEventType::KEY_RELEASED:
+            if (const auto* key = std::get_if<WindowEvent::KeyData>(&ev->data))
+                m_held_keys.erase(key->key);
+            break;
         case WindowEventType::WINDOW_RESIZED:
             if (const auto* size = std::get_if<WindowEvent::ResizeData>(&ev->data)) {
                 m_state.current_width = size->width;
@@ -896,6 +915,27 @@ void CocoaWindow::poll()
         m_event_source.signal(*ev);
         if (callback)
             callback(*ev);
+    }
+
+    if (m_held_keys.empty() || now < m_repeat_deadline)
+        return;
+
+    const auto interval = std::chrono::milliseconds(
+        m_key_repeat_config.interval_ms > 0 ? m_key_repeat_config.interval_ms : 16);
+    m_repeat_deadline = now + interval;
+
+    if (!input_allowed(m_input_config, WindowEventType::KEY_REPEAT))
+        return;
+
+    const double time = event_time(nil);
+    for (const auto& [key, data] : m_held_keys) {
+        WindowEvent ev;
+        ev.type = WindowEventType::KEY_REPEAT;
+        ev.timestamp = time;
+        ev.data = data;
+        m_event_source.signal(ev);
+        if (callback)
+            callback(ev);
     }
 }
 

@@ -16,7 +16,8 @@ namespace MayaFlux::Core {
  * Usable on its own, without WindowManager, GraphicsSubsystem, or Engine.
  * Window operations may be called from any thread. Native events are queued
  * per window and delivered to the callback and event source only from poll(),
- * on whichever thread calls it. Fullscreen is a borderless window covering the
+ * on whichever thread calls it. Held keys repeat at the KeyRepeatConfig rate,
+ * generated during poll(). Fullscreen is a borderless window covering the
  * target display. Raw mouse motion is not supported; CAPTURED behaves as DISABLED.
  */
 class MAYAFLUX_API CocoaWindow : public Window {
@@ -98,6 +99,10 @@ private:
     WindowState m_state;
     InputConfig m_input_config;
     WindowEventCallback m_event_callback;
+    KeyRepeatConfig m_key_repeat_config;
+
+    std::unordered_map<int16_t, WindowEvent::KeyData> m_held_keys;
+    std::chrono::steady_clock::time_point m_repeat_deadline;
 
     Vruta::WindowEventSource m_event_source;
 
