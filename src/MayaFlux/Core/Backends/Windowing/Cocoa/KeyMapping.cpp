@@ -2,7 +2,7 @@
 
 #ifdef MAYAFLUX_PLATFORM_MACOS
 
-#include <HIToolbox/Events.h>
+#include <Carbon/Carbon.h>
 
 #include <array>
 
@@ -128,7 +128,9 @@ constexpr auto key_map = [] {
     keys[kVK_RightShift] = IO::Keys::RShift;
     keys[kVK_RightControl] = IO::Keys::RCtrl;
     keys[kVK_RightOption] = IO::Keys::RAlt;
-    keys[0x36] = IO::Keys::RSuper;
+    keys[kVK_RightCommand] = IO::Keys::RSuper;
+
+    keys[kVK_ContextualMenu] = IO::Keys::Menu;
 
     return keys;
 }();
