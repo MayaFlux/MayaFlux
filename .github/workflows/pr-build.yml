@@ -2,6 +2,19 @@ name: PR Build Check
 
 on:
   workflow_dispatch:
+    inputs:
+      macos:
+        description: "Build macOS"
+        type: boolean
+        default: true
+      linux:
+        description: "Build Linux"
+        type: boolean
+        default: true
+      windows:
+        description: "Build Windows"
+        type: boolean
+        default: true
   pull_request:
     branches:
       - main
@@ -15,6 +28,7 @@ env:
 
 jobs:
   build_macos:
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.macos }}
     uses: ./.github/workflows/build-macos.yml
     with:
       version: "pr-${{ github.event.pull_request.number }}"
@@ -24,6 +38,7 @@ jobs:
       create_distribution: false
 
   build_linux:
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.linux }}
     uses: ./.github/workflows/build-linux.yml
     with:
       version: "pr-${{ github.event.pull_request.number }}"
@@ -36,6 +51,7 @@ jobs:
       os_display_name: Linux
 
   build_windows:
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.windows }}
     uses: ./.github/workflows/build-windows.yml
     with:
       version: "pr-${{ github.event.pull_request.number }}"
