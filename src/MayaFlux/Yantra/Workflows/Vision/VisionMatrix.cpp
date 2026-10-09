@@ -43,26 +43,46 @@ VisionMatrix::VisionMatrix(
     Kinesis::Vision::VisionQuery query,
     std::optional<VisionExtractMode> extract,
     Kinesis::Vision::VisionAnalysisContext context)
-    : m_analyzer(create_operation<VisionAnalyzer>("analyze", completed(query), context))
-    , m_extractor(extract ? create_operation<VisionExtractor>("extract", *extract) : nullptr)
 {
+    create_operation<VisionAnalyzer>("analyze", completed(query), context);
+    if (extract)
+        create_operation<VisionExtractor>("extract", *extract);
 }
 
 void VisionMatrix::execute(const std::shared_ptr<Core::VKImage>& image)
 {
     m_frame = image;
-    m_analysis = image ? m_analyzer->analyze_vision(image) : Kinesis::Vision::VisionAnalysis {};
+    m_extraction.reset();
+    m_analysis = image ? analyzer()->analyze_vision(image) : Kinesis::Vision::VisionAnalysis {};
+}
+
+void VisionMatrix::extract(const Kinesis::Vision::VisionAnalysis& analysis, const std::shared_ptr<Core::VKImage>& image)
+{
+    m_analysis = analysis;
+    m_frame = image;
+    m_extraction.reset();
+
+    if (!image || !extractor())
+        return;
+
+    ContainerIO input;
+    input.metadata["vision_analysis"] = analysis;
+    input.metadata["vision_image"] = image;
+
+    const auto output = with(std::move(input)).then<VisionExtractor>("extract").to_io();
+    if (const auto extracted = Kakshya::get_metadata_value<std::shared_ptr<Core::VKImage>>(output.metadata, "vision_extraction"))
+        m_extraction = *extracted;
 }
 
 Kinesis::Vision::VisionAnalysis VisionMatrix::analyze(const std::shared_ptr<Core::VKImage>& image)
 {
-    return m_analyzer->analyze_vision(image);
+    return analyzer()->analyze_vision(image);
 }
 
 Kinesis::Vision::VisionAnalysis VisionMatrix::analyze(
     const std::shared_ptr<Kakshya::SignalSourceContainer>& source, size_t index)
 {
-    return m_analyzer->analyze_vision(source, index);
+    return analyzer()->analyze_vision(source, index);
 }
 
 } // namespace MayaFlux::Yantra::Vision

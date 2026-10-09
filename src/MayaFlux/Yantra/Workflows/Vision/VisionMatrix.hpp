@@ -48,18 +48,36 @@ public:
      */
     void execute(const std::shared_ptr<Core::VKImage>& image);
 
-    /** @brief The analysis of the last execute(), empty before the first. */
+    /**
+     * @brief Extract from @p image with @p analysis and keep all three until
+     *        the next call.
+     *
+     * analysis() and frame() return @p analysis and @p image, extraction()
+     * what the extractor produced. The analysis may come from another frame.
+     */
+    void extract(const Kinesis::Vision::VisionAnalysis& analysis, const std::shared_ptr<Core::VKImage>& image);
+
+    /** @brief The analysis of the last execute() or extract(), empty before the first. */
     [[nodiscard]] const Kinesis::Vision::VisionAnalysis& analysis() const { return m_analysis; }
 
-    /** @brief The image the last execute() analyzed, null before the first. */
+    /** @brief The image the last execute() analyzed or extract() extracted from, null before the first. */
     [[nodiscard]] const std::shared_ptr<Core::VKImage>& frame() const { return m_frame; }
+
+    /**
+     * @brief The image the last extract() produced. Null before the first,
+     *        without an extractor, or when the mode gave no image.
+     *
+     * The extractor rewrites one image per output size, so the same image
+     * carries each later extraction of that size.
+     */
+    [[nodiscard]] const std::shared_ptr<Core::VKImage>& extraction() const { return m_extraction; }
 
     /**
      * @brief The VisionResult of every sequence the analyzer's last completed
      *        analysis ran, with each step's image named by its op. Valid until
      *        the next analysis.
      */
-    [[nodiscard]] const std::vector<Kinesis::Vision::VisionResult>& results() const { return m_analyzer->get_results(); }
+    [[nodiscard]] const std::vector<Kinesis::Vision::VisionResult>& results() { return analyzer()->get_results(); }
 
     /** @brief Analyze @p image with the matrix's query. */
     [[nodiscard]] Kinesis::Vision::VisionAnalysis analyze(const std::shared_ptr<Core::VKImage>& image);
@@ -68,16 +86,16 @@ public:
     [[nodiscard]] Kinesis::Vision::VisionAnalysis analyze(
         const std::shared_ptr<Kakshya::SignalSourceContainer>& source, size_t index = 0);
 
-    [[nodiscard]] const std::shared_ptr<VisionAnalyzer>& analyzer() const { return m_analyzer; }
+    /** @brief The matrix's "analyze" operation. */
+    [[nodiscard]] std::shared_ptr<VisionAnalyzer> analyzer() { return get_operation<VisionAnalyzer>("analyze"); }
 
-    /** @brief The extractor, or null when the matrix was built without a mode. */
-    [[nodiscard]] const std::shared_ptr<VisionExtractor>& extractor() const { return m_extractor; }
+    /** @brief The matrix's "extract" operation, or null when the matrix was built without a mode. */
+    [[nodiscard]] std::shared_ptr<VisionExtractor> extractor() { return get_operation<VisionExtractor>("extract"); }
 
 private:
-    std::shared_ptr<VisionAnalyzer> m_analyzer;
-    std::shared_ptr<VisionExtractor> m_extractor;
     Kinesis::Vision::VisionAnalysis m_analysis;
     std::shared_ptr<Core::VKImage> m_frame;
+    std::shared_ptr<Core::VKImage> m_extraction;
 };
 
 } // namespace MayaFlux::Yantra::Vision
