@@ -2,10 +2,12 @@
 
 #include "MayaFlux/Buffers/BufferManager.hpp"
 #include "MayaFlux/Buffers/Container/VideoContainerBuffer.hpp"
+#include "MayaFlux/Buffers/Textures/TextureArrayBuffer.hpp"
 #include "MayaFlux/IO/IOManager.hpp"
 #include "MayaFlux/Kakshya/Source/CameraContainer.hpp"
 #include "MayaFlux/Kakshya/Utils/DataUtils.hpp"
 #include "MayaFlux/Kriya/BroadcastEvents.hpp"
+#include "MayaFlux/Kriya/BufferPipeline.hpp"
 #include "MayaFlux/Kriya/Tasks.hpp"
 #include "MayaFlux/Vruta/EventManager.hpp"
 #include "MayaFlux/Vruta/Scheduler.hpp"
@@ -72,6 +74,21 @@ namespace {
     }
 
     /**
+     * @brief Cancel one live run: the producer named @p name and @p consumer.
+     */
+    void stop_run(
+        const std::weak_ptr<Vruta::TaskScheduler>& scheduler,
+        const std::weak_ptr<Vruta::EventManager>& events,
+        const std::weak_ptr<Vruta::Event>& consumer,
+        const std::string& name)
+    {
+        stop_producer(scheduler, name);
+        const auto manager = events.lock();
+        if (const auto event = consumer.lock(); event && manager)
+            manager->cancel_event(event);
+    }
+
+    /**
      * @brief Check run by the producer each tick: once @p source is at its
      *        end, cancels the producer named @p name and @p consumer, and
      *        reports true.
@@ -88,10 +105,7 @@ namespace {
             if (stream && !stream->is_at_end())
                 return false;
 
-            stop_producer(scheduler, name);
-            const auto manager = events.lock();
-            if (const auto event = consumer.lock(); event && manager)
-                manager->cancel_event(event);
+            stop_run(scheduler, events, consumer, name);
             return true;
         };
     }
@@ -452,7 +466,40 @@ std::shared_ptr<Kakshya::TextureCollection> VisionWorkflow::process_to_live_cont
     return collection;
 }
 
-void VisionWorkflow::start(
+Kriya::ChimeraBuilder VisionWorkflow::process_to_stream(const WorkflowStreamConfig& config)
+{
+    if (!config.matrix) {
+        MF_WARN(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+            "VisionWorkflow::process_to_stream: no matrix");
+        return { nullptr, nullptr };
+    }
+
+    const auto frames = source_frames(config.source, "process_to_stream");
+    const auto buffers = m_buffer_manager.lock();
+    if (!frames || !buffers)
+        return { nullptr, nullptr };
+
+    auto array = buffers->create_graphics_buffer<Buffers::TextureArrayBuffer>(
+        Buffers::ProcessingToken::GRAPHICS_BACKEND, config.layers, config.fit);
+    auto pipeline = Kriya::BufferPipeline::create(*m_scheduler.lock(), buffers, m_io_manager.lock());
+
+    const auto name = run_name("stream");
+    const auto consumer = start(config.source, frames, config.live.value_or(LiveConfig {}), config.matrix, name,
+        [matrix = config.matrix](const VisionIO& frame) {
+            const auto analysis = Kakshya::get_metadata_value<Kinesis::Vision::VisionAnalysis>(frame.metadata, "vision_analysis");
+            const auto image = Kakshya::get_metadata_value<std::shared_ptr<Core::VKImage>>(frame.metadata, "vision_image");
+            if (analysis && image)
+                matrix->extract(*analysis, *image);
+        });
+
+    pipeline->on_complete([scheduler = m_scheduler, events = m_event_manager, weak_consumer = std::weak_ptr(consumer), name]() {
+        stop_run(scheduler, events, weak_consumer, name);
+    });
+
+    return { std::move(array), std::move(pipeline) };
+}
+
+std::shared_ptr<Vruta::Event> VisionWorkflow::start(
     const std::shared_ptr<Kakshya::VideoStreamContainer>& source,
     const std::shared_ptr<Buffers::TextureBuffer>& frames,
     const LiveConfig& live,
@@ -466,6 +513,7 @@ void VisionWorkflow::start(
 
     start_producer(*m_scheduler.lock(), results, source, frames, live.apply_to, matrix, live.interval_seconds,
         stop_at_end(source, m_scheduler, m_event_manager, event, name), name);
+    return event;
 }
 
 std::shared_ptr<Kakshya::TextureCollection> VisionWorkflow::process_to_container(

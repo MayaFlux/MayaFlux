@@ -2,7 +2,9 @@
 
 #include "VisionMatrix.hpp"
 
+#include "MayaFlux/Kakshya/Source/DynamicVideoStream.hpp"
 #include "MayaFlux/Kakshya/Source/TextureCollection.hpp"
+#include "MayaFlux/Kriya/Chimera.hpp"
 
 namespace MayaFlux::Vruta {
 class TaskScheduler;
@@ -71,6 +73,23 @@ struct WorkflowContainerConfig {
     Kinesis::Vision::VisionQuery query;
     VisionExtractMode extract { VisionExtractMode::Crop };
     Kakshya::TextureCollectionSpec collection;
+    std::optional<LiveConfig> live;
+};
+
+/**
+ * @struct WorkflowStreamConfig
+ * @brief What VisionWorkflow::process_to_stream() runs: the stream to analyze,
+ *        the matrix that analyzes it, the layer array the Chimera feeds, and
+ *        optionally how the run is paced.
+ *
+ * @c layers gives the array's width, height, format and, as ring_frames, its
+ * layer count. @c fit places images of another extent in a layer.
+ */
+struct WorkflowStreamConfig {
+    std::shared_ptr<Kakshya::VideoStreamContainer> source;
+    std::shared_ptr<VisionMatrix> matrix;
+    Kakshya::VideoStreamSpec layers;
+    std::optional<Portal::Graphics::FitMode> fit;
     std::optional<LiveConfig> live;
 };
 
@@ -147,6 +166,24 @@ public:
         const WorkflowContainerConfig& config);
 
     /**
+     * @brief Run @p config's matrix on its source live and return a Chimera
+     *        builder over a new layer array, for any image the run produces.
+     *
+     * Paced and sourced as process_to_buffer(). The layers, their sources and
+     * the rendering are declared on the returned builder. Each analysis is
+     * handed to the matrix's extract(), so its analysis(), frame() and
+     * extraction() follow the run; the images of every sequence are read from
+     * its results(). The run stops as the other live runs do, and also when
+     * the Chimera is stopped or dropped. The Chimera outlives the run and
+     * keeps its last images. Replacing the pipeline's on_complete callback
+     * removes the second stop.
+     *
+     * @return The builder, or one without an array when the engine's managers
+     *         are gone, the matrix is null or the stream cannot be hooked.
+     */
+    [[nodiscard]] Kriya::ChimeraBuilder process_to_stream(const WorkflowStreamConfig& config);
+
+    /**
      * @brief Stop every live run this workflow started and release what they
      *        hold. Outputs already returned keep their content.
      */
@@ -201,8 +238,9 @@ private:
     /**
      * @brief Subscribe @p consumer and start the producer named @p name,
      *        which stops the run at @p source's end.
+     * @return The subscribed consumer event.
      */
-    void start(
+    std::shared_ptr<Vruta::Event> start(
         const std::shared_ptr<Kakshya::VideoStreamContainer>& source,
         const std::shared_ptr<Buffers::TextureBuffer>& frames,
         const LiveConfig& live,
