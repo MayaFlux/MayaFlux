@@ -97,19 +97,17 @@ public:
     void reset();
 
     /**
-     * @brief The executor this analyzer's run just used.
+     * @brief The executor that ran the FindElements sequence, or the first
+     *        executor when the query has none.
      *
-     * VisionExtractor::mask() needs both a label id from this analyzer's own
-     * VisionAnalysis::find_elements and the executor whose device label
-     * buffer that id indexes into: the two are inseparable, since the label
-     * buffer only lives on the executor that produced it. Exposing this is
-     * what lets extraction actually depend on analysis having run, rather
-     * than a caller re-deriving the same contours through a second, separate
-     * VisionGpuExecutor::run() call that never touches this analyzer at all.
+     * Each sequence of a query runs on its own executor, so the images one
+     * sequence leaves in its VisionResult are not overwritten by the next.
+     * VisionExtractor::mask() needs the executor holding the label buffer
+     * that VisionAnalysis::find_elements indexes into, which is this one.
      *
      * Valid after at least one analyze_vision() call; null before that.
      */
-    [[nodiscard]] VisionGpuExecutor* get_executor() const { return m_executor.get(); }
+    [[nodiscard]] VisionGpuExecutor* get_executor() const;
 
 private:
     /**
@@ -197,7 +195,8 @@ private:
     Kinesis::Vision::VisionQuery m_query;
     Kinesis::Vision::VisionAnalysisContext m_context;
 
-    std::unique_ptr<VisionGpuExecutor> m_executor;
+    std::vector<std::unique_ptr<VisionGpuExecutor>> m_executors;
+    size_t m_label_lane { 0 };
     std::shared_ptr<ShaderExecutionContext<>> m_track_reducer;
     std::shared_ptr<ShaderExecutionContext<>> m_brightness_reducer;
     std::shared_ptr<ShaderExecutionContext<>> m_shape_ctx;

@@ -73,8 +73,17 @@ VisionAnalyzer::VisionAnalyzer(
 
 void VisionAnalyzer::reset()
 {
-    if (m_executor)
-        m_executor->reset();
+    for (const auto& executor : m_executors) {
+        if (executor)
+            executor->reset();
+    }
+}
+
+VisionGpuExecutor* VisionAnalyzer::get_executor() const
+{
+    if (m_label_lane < m_executors.size() && m_executors[m_label_lane])
+        return m_executors[m_label_lane].get();
+    return m_executors.empty() ? nullptr : m_executors.front().get();
 }
 
 Kinesis::Vision::TrackObjectsAnalysis VisionAnalyzer::reduce_tracks(
@@ -431,23 +440,33 @@ Kinesis::Vision::VisionAnalysis VisionAnalyzer::analyze_vision(
 Kinesis::Vision::VisionAnalysis VisionAnalyzer::analyze_resolved(
     const std::shared_ptr<Core::VKImage>& image)
 {
-    if (!m_executor)
-        m_executor = std::make_unique<VisionGpuExecutor>();
-
     const auto w = image->get_width();
     const auto h = image->get_height();
     const auto resolved = Kinesis::Vision::resolve(m_query);
+
+    if (m_executors.size() < resolved.size())
+        m_executors.resize(resolved.size());
 
     Kinesis::Vision::VisionAnalysis analysis;
     std::optional<std::vector<Kinesis::Vision::TrackResult>> raw_tracks;
     std::optional<std::vector<Kinesis::Vision::Keypoint>> raw_keypoints;
     std::vector<Kinesis::Vision::VisionResult> results;
     results.reserve(resolved.size());
+    m_label_lane = 0;
 
-    for (const auto& entry : resolved) {
+    for (size_t lane = 0; lane < resolved.size(); ++lane) {
+        const auto& entry = resolved[lane];
+        auto& executor = m_executors[lane];
+        if (!executor)
+            executor = std::make_unique<VisionGpuExecutor>();
+
+        if (std::ranges::any_of(entry.sequence.steps,
+                [](const auto& step) { return step.op == Kinesis::Vision::VisionOp::ConnectedComponents; }))
+            m_label_lane = lane;
+
         const auto seeded = entry.seed_field ? entry.seed_field(results[entry.seed_lane]) : nullptr;
         const auto& source = seeded ? seeded : image;
-        auto result = m_executor->run(entry.sequence, source, source->get_width(), source->get_height());
+        auto result = executor->run(entry.sequence, source, source->get_width(), source->get_height());
 
         if (result.status != Kinesis::Vision::VisionStatus::COMPLETE) {
             results.emplace_back();
