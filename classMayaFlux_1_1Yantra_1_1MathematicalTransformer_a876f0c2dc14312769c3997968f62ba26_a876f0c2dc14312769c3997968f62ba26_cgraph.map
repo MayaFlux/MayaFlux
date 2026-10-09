@@ -1,0 +1,17 @@
+<map id="MayaFlux::Yantra::MathematicalTransformer::MathematicalTransformer" name="MayaFlux::Yantra::MathematicalTransformer::MathematicalTransformer">
+<area shape="rect" id="Node000001" title="Construct and configure a mathematical transformer in one step." alt="" coords="5,165,281,205"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1UniversalTransformer_aceda525bf95eee89b2f7acdf6b1cc04c.html#aceda525bf95eee89b2f7acdf6b1cc04c" title="Add transformation key for multi&#45;dimensional transformations." alt="" coords="329,5,596,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="166,163,235,109,280,80,328,55,348,47,349,52,330,60,283,85,239,114,169,167"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1UniversalTransformer_a7c264e7781dab83f55440d909ab16d8b.html#a7c264e7781dab83f55440d909ab16d8b" title="Set transformation intensity (0.0 = no transformation, 1.0 = full transformation)" alt="" coords="361,69,565,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="198,163,329,119,360,110,361,115,330,124,199,168"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1UniversalTransformer_aa787bdc8f1e1eb6da36f4ae9d000f623.html#aa787bdc8f1e1eb6da36f4ae9d000f623" title="Type&#45;safe parameter management with transformation&#45;specific defaults." alt="" coords="361,133,565,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="281,169,346,162,347,168,282,174"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1UniversalTransformer_aa79c73457b84e062329bf3f8782ed732.html#aa79c73457b84e062329bf3f8782ed732" title="Sets the transformation quality level." alt="" coords="361,197,565,237"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="282,197,347,203,346,208,281,202"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Yantra_1_1UniversalTransformer_a7d66740e6fffc31d7140fe3746db6d9c.html#a7d66740e6fffc31d7140fe3746db6d9c" title="Sets the transformation scope." alt="" coords="361,261,565,301"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="199,203,330,247,361,255,360,261,329,252,198,208"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Yantra_1_1UniversalTransformer_a58c588a05f0be691ba243137846f0106.html#a58c588a05f0be691ba243137846f0106" title="Sets the transformation strategy." alt="" coords="361,325,565,365"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="169,203,239,257,283,286,330,311,349,319,348,323,328,316,280,291,235,261,166,207"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1UniversalTransformer_ae86a6743c591b4585419dbbd8698c4b4.html#ae86a6743c591b4585419dbbd8698c4b4" title="Transformation&#45;specific parameter handling (override for custom parameters)" alt="" coords="644,126,876,181"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="565,151,630,151,630,156,565,156"/>
+</map>

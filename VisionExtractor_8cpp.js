@@ -1,0 +1,26 @@
+var VisionExtractor_8cpp =
+[
+    [ "count", "VisionExtractor_8cpp_a86988a65e0d3ece7990c032c159786d6.html#a86988a65e0d3ece7990c032c159786d6", null ],
+    [ "criterion", "VisionExtractor_8cpp_a2ef9c1bc3bf5eb08aff67204169e3da7.html#a2ef9c1bc3bf5eb08aff67204169e3da7", null ],
+    [ "gain", "VisionExtractor_8cpp_aca3852dab23cf0066809ecc1997fb58b.html#aca3852dab23cf0066809ecc1997fb58b", null ],
+    [ "height", "VisionExtractor_8cpp_a6ad4f820ce4e75cda0686fcaad5168be.html#a6ad4f820ce4e75cda0686fcaad5168be", null ],
+    [ "largest", "VisionExtractor_8cpp_a76de30a17b87bedb445777df56874466.html#a76de30a17b87bedb445777df56874466", null ],
+    [ "min_confidence", "VisionExtractor_8cpp_a42437f741eac3b59192baa70379ee9ec.html#a42437f741eac3b59192baa70379ee9ec", null ],
+    [ "min_speed", "VisionExtractor_8cpp_ad72c4875323fd7f6413aee8dd77d609d.html#ad72c4875323fd7f6413aee8dd77d609d", null ],
+    [ "mode", "VisionExtractor_8cpp_a6b29e4f37f4482274af785ad5ffe96a7.html#a6b29e4f37f4482274af785ad5ffe96a7", null ],
+    [ "out_h", "VisionExtractor_8cpp_a30d4e516fdc435c273291e9abb12db70.html#a30d4e516fdc435c273291e9abb12db70", null ],
+    [ "out_w", "VisionExtractor_8cpp_acd00b15732e9dec214b318fbdd9f358f.html#acd00b15732e9dec214b318fbdd9f358f", null ],
+    [ "patch_h", "VisionExtractor_8cpp_aa68a97bffb4cc68d9b16a1abb2b58cfb.html#aa68a97bffb4cc68d9b16a1abb2b58cfb", null ],
+    [ "patch_w", "VisionExtractor_8cpp_a87419cff94ff3d7ac8bee50db58cf7e9.html#a87419cff94ff3d7ac8bee50db58cf7e9", null ],
+    [ "px", "VisionExtractor_8cpp_a78b43084be0dc0d22055a701994a2a9e.html#a78b43084be0dc0d22055a701994a2a9e", null ],
+    [ "py", "VisionExtractor_8cpp_a709aad4619f93afb87fab238013812b2.html#a709aad4619f93afb87fab238013812b2", null ],
+    [ "radius", "VisionExtractor_8cpp_a717462214d2d8f1d768bccfb01a63d08.html#a717462214d2d8f1d768bccfb01a63d08", null ],
+    [ "src_h", "VisionExtractor_8cpp_a8e15ae34a001a9906fd3ab0fd60b3887.html#a8e15ae34a001a9906fd3ab0fd60b3887", null ],
+    [ "src_w", "VisionExtractor_8cpp_a31efbf085e85d723d4a0b41f7a453bac.html#a31efbf085e85d723d4a0b41f7a453bac", null ],
+    [ "src_x", "VisionExtractor_8cpp_ac48ffa830f303705f1389805ae7fe029.html#ac48ffa830f303705f1389805ae7fe029", null ],
+    [ "src_y", "VisionExtractor_8cpp_a8f41c5846c4aa31cea3781f460c6e90d.html#a8f41c5846c4aa31cea3781f460c6e90d", null ],
+    [ "threshold", "VisionExtractor_8cpp_a376acef8954eadc70f4b55e8e0588e13.html#a376acef8954eadc70f4b55e8e0588e13", null ],
+    [ "tile_h", "VisionExtractor_8cpp_a775e681dbb310e5b42c3bab14e4c365c.html#a775e681dbb310e5b42c3bab14e4c365c", null ],
+    [ "tile_w", "VisionExtractor_8cpp_a9c5ca57981b6dea07fde380222ae1e5a.html#a9c5ca57981b6dea07fde380222ae1e5a", null ],
+    [ "width", "VisionExtractor_8cpp_a325272ddd9a962f05deb905101d25cbd.html#a325272ddd9a962f05deb905101d25cbd", null ]
+];

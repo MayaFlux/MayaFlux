@@ -1,0 +1,15 @@
+<map id="MayaFlux::IO::IOManager::load_video" name="MayaFlux::IO::IOManager::load_video">
+<area shape="rect" id="Node000001" title="Load a video file into a VideoFileContainer." alt="" coords="5,101,192,141"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1IOManager_a0a57ee6a14c3712af8d1fbf5cfcb7a2e.html#a0a57ee6a14c3712af8d1fbf5cfcb7a2e" title=" " alt="" coords="242,5,445,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="139,99,239,55,260,47,262,52,241,60,142,104"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1IOManager_a6f9c6430067994ae3ed7bf797da06f82.html#a6f9c6430067994ae3ed7bf797da06f82" title=" " alt="" coords="240,69,447,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="192,107,226,102,227,107,193,112"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1IO_1_1IOManager_ad3b9ea0f142ad377c9f39e0f9c1642e1.html#ad3b9ea0f142ad377c9f39e0f9c1642e1" title="Assign a globally unique reader_id and take ownership of a reader." alt="" coords="250,133,437,173"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="193,131,237,137,236,142,192,136"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1IO_1_1IOManager_ab36381530e4c648dde95388099def431.html#ab36381530e4c648dde95388099def431" title="Release ownership of the reader identified by reader_id." alt="" coords="250,197,437,237"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="142,139,241,183,262,190,260,195,239,188,139,144"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1IO_1_1Detail_a0a3ffec1f2dd2fcea5ee1d202cb89bcf.html#a0a3ffec1f2dd2fcea5ee1d202cb89bcf" title=" " alt="" coords="495,5,696,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="445,23,481,23,481,28,445,28"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1IO_1_1Detail_a353ecdee04e3c883b94dcb914f3edb3e.html#a353ecdee04e3c883b94dcb914f3edb3e" title=" " alt="" coords="495,69,696,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="447,87,481,87,481,92,447,92"/>
+</map>

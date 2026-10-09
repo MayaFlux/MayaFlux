@@ -1,0 +1,18 @@
+<map id="MayaFlux::Nodes::Network::RelationNetwork::get_metadata" name="MayaFlux::Nodes::Network::RelationNetwork::get_metadata">
+<area shape="rect" id="Node000001" title="Get network metadata for debugging/visualization." alt="" coords="5,134,204,189"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork_ad6c14660b161b3f6174a1528fd3c2fe9.html#ad6c14660b161b3f6174a1528fd3c2fe9" title="Get network metadata for debugging/visualization." alt="" coords="269,77,487,117"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="203,136,278,118,279,123,205,141"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork_aad79b5bd2cdb8f80023f920bc142083f.html#aad79b5bd2cdb8f80023f920bc142083f" title="Access the secondary operator chain." alt="" coords="252,141,504,181"/>
+<area shape="poly" id="edge7_Node000001_Node000007" title=" " alt="" coords="204,159,238,159,238,164,204,164"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1Network_1_1RelationNetwork_acbe7a9aaafa3ec779ac4ed7f20e8755c.html#acbe7a9aaafa3ec779ac4ed7f20e8755c" title="Total published outputs across all publishing operators, in chain order." alt="" coords="279,206,477,261"/>
+<area shape="poly" id="edge8_Node000001_Node000008" title=" " alt="" coords="205,185,266,201,265,206,203,190"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork_af24c0ffef2666eb05f2f14b7e297c14b.html#af24c0ffef2666eb05f2f14b7e297c14b" title="Get the number of nodes in the network." alt="" coords="552,5,783,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="459,75,572,46,573,51,460,80"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork_ad5a21f007cb5e6328667ee852b6ad5fa.html#ad5a21f007cb5e6328667ee852b6ad5fa" title=" " alt="" coords="561,70,774,125"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="488,95,547,95,547,100,488,100"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork_a578ed1a9dcdf428b49a853724219e8c9.html#a578ed1a9dcdf428b49a853724219e8c9" title=" " alt="" coords="568,149,767,203"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="460,115,505,127,560,142,559,147,503,132,458,120"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Reflect_aad91118cbd25bd9e35a3ced9aa4e6dbd.html#aad91118cbd25bd9e35a3ced9aa4e6dbd" title="Universal enum to string converter using magic_enum (original case)" alt="" coords="831,117,977,157"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="774,113,818,120,817,125,774,118"/>
+<area shape="poly" id="edge6_Node000006_Node000005" title=" " alt="" coords="766,157,816,149,817,154,767,162"/>
+</map>

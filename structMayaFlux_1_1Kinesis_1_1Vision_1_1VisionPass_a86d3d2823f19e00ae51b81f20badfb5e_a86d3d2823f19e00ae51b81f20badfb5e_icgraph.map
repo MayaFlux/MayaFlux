@@ -1,0 +1,13 @@
+<map id="MayaFlux::Kinesis::Vision::VisionPass::ahead" name="MayaFlux::Kinesis::Vision::VisionPass::ahead">
+<area shape="rect" id="Node000001" title="Op at offset steps ahead, or nullptr past the end." alt="" coords="551,85,737,125"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1VisionGpuExecutor_a85b6496d55a7d154861cd5f79bb614b6.html#a85b6496d55a7d154861cd5f79bb614b6" title="Label components in the current image on the GPU." alt="" coords="288,5,491,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="558,83,486,63,487,57,560,78"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1VisionGpuExecutor_ae21da7949376592693235e5ccadaeda7.html#ae21da7949376592693235e5ccadaeda7" title="Extract and rank keypoints from the current response image." alt="" coords="276,85,503,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="537,107,503,107,503,102,537,102"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kinesis_1_1Vision_1_1VisionExecutor_a6ea94c5c8d90c5890b7715a0e4ff2df5.html#a6ea94c5c8d90c5890b7715a0e4ff2df5" title="Execute a VisionSequence on one frame." alt="" coords="292,149,487,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="551,131,470,151,469,146,550,126"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1VisionProcessor_ab9b6b50546df64540aee0f0bbbb7939a.html#ab9b6b50546df64540aee0f0bbbb7939a" title="Execute the VisionSequence on processed_data[0]." alt="" coords="25,113,208,153"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="278,157,208,147,209,142,279,151"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1ImageCVProcessor_a03dd11926b797b52ccbdfa37c2b5e4e1.html#a03dd11926b797b52ccbdfa37c2b5e4e1" title="Download the current GPU image, run the VisionSequence, store the result." alt="" coords="5,177,228,232"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="278,186,228,193,228,187,278,181"/>
+</map>

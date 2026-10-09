@@ -1,0 +1,3 @@
+<map id="MayaFlux::Portal::Text::PenPosition" name="MayaFlux::Portal::Text::PenPosition">
+<area shape="rect" id="Node000001" title="Pen coordinates returned by x_at(), in the same space as GlyphQuad." alt="" coords="5,5,164,105"/>
+</map>

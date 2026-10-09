@@ -1,0 +1,5 @@
+<map id="MayaFlux::Config::get_sample_rate" name="MayaFlux::Config::get_sample_rate">
+<area shape="rect" id="Node000001" title="Gets the sample rate from the default engine." alt="" coords="220,5,384,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a42b2c8e5c1d81bfa9612963f09ecaa1d.html#a42b2c8e5c1d81bfa9612963f09ecaa1d" title="Make a circular stream that keeps the most recent seconds of a signal." alt="" coords="5,13,172,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="206,28,172,28,172,23,206,23"/>
+</map>

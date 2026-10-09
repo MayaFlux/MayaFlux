@@ -1,0 +1,11 @@
+<map id="BufferDownloadProcessor.hpp" name="BufferDownloadProcessor.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="103,5,319,31"/>
+<area shape="rect" id="Node000002" href="$BufferDownloadProcessor_8cpp.html" title=" " alt="" coords="5,79,220,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="186,41,130,81,127,76,183,36"/>
+<area shape="rect" id="Node000003" href="$Convenience_8hpp.html" title="Everyday headers and namespace imports for user code." alt="" coords="244,79,379,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="240,36,297,76,293,81,237,41"/>
+<area shape="rect" id="Node000004" href="$MayaFlux_8hpp.html" title="Single include for the user facing API." alt="" coords="254,152,369,177"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="314,118,314,152,309,152,309,118"/>
+<area shape="rect" id="Node000005" href="$LiveAid_8hpp.html" title=" " alt="" coords="262,225,361,251"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="314,191,314,225,309,225,309,191"/>
+</map>

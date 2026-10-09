@@ -1,0 +1,7 @@
+<map id="MayaFlux::Core::VKSwapchain::present" name="MayaFlux::Core::VKSwapchain::present">
+<area shape="rect" id="Node000001" title="Present image to screen." alt="" coords="5,5,225,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VKContext_a87b4589aa8858027f09e7370552b4d50.html#a87b4589aa8858027f09e7370552b4d50" title="Get graphics queue." alt="" coords="273,5,473,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="226,23,259,23,259,28,226,28"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1VKDevice_af1941d43ae76316ef044a61450e7aa1c.html#af1941d43ae76316ef044a61450e7aa1c" title="Get graphics queue." alt="" coords="521,5,716,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="473,23,508,23,508,28,473,28"/>
+</map>

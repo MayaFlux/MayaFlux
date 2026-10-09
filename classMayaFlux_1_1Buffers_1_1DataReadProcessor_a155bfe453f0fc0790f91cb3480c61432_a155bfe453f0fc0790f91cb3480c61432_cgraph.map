@@ -1,0 +1,17 @@
+<map id="MayaFlux::Buffers::DataReadProcessor::resolve_vertices" name="MayaFlux::Buffers::DataReadProcessor::resolve_vertices">
+<area shape="rect" id="Node000001" title="Finish a read_vertices() read as typed channels." alt="" coords="5,94,211,149"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1DataReadProcessor_ac90e3861ca68b753670c9c266191c284.html#ac90e3861ca68b753670c9c266191c284" title=" " alt="" coords="259,54,459,109"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="210,102,245,97,245,102,211,108"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1VertexInsertion_ae95c56387e4b1994f547e206500a6785.html#ae95c56387e4b1994f547e206500a6785" title="Replace the channel list with the attributes of interleaved vertices." alt="" coords="275,133,442,187"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="211,135,262,143,262,148,211,140"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Buffers_a625b092777dc56b97d2f8a8033b71df5.html#a625b092777dc56b97d2f8a8033b71df5" title="Express a buffer handle as the slot the back_buffers transfer helpers take." alt="" coords="527,5,675,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="458,56,513,43,514,48,460,61"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Buffers_ac7562e9a3e4bfeda5e4dce28876c09e2.html#ac7562e9a3e4bfeda5e4dce28876c09e2" title="Wait for a recorded download, then copy it out of staging." alt="" coords="507,69,696,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="459,82,493,83,493,88,459,87"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="761,26,928,81"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="696,73,747,65,748,70,696,78"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="744,105,945,145"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="696,101,731,106,730,111,696,106"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Kakshya_1_1VertexInsertion_ae85b5adea8b4fbb71975239d1720f365.html#ae85b5adea8b4fbb71975239d1720f365" title="Layout of the last successful insertion, with vertex_count set to the decoded count." alt="" coords="516,140,687,180"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="442,157,502,157,502,163,442,163"/>
+</map>

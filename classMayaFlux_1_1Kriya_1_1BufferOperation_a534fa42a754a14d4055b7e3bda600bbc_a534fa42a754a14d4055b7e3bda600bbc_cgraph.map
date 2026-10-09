@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kriya::BufferOperation::file_to_stream" name="MayaFlux::Kriya::BufferOperation::file_to_stream">
+<area shape="rect" id="Node000001" title="Route frames from a video file to a dynamic video stream." alt="" coords="5,5,244,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kriya_1_1detail_a616ce47bf9431663da5ff7a534205bed.html#a616ce47bf9431663da5ff7a534205bed" title="Make a buffer draw to the window in a render config, unless it already does." alt="" coords="292,5,465,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="244,23,278,23,278,28,244,28"/>
+</map>

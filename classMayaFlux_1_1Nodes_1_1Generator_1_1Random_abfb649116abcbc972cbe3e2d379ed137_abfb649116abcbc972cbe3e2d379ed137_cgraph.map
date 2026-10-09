@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Generator::Random::process_batch" name="MayaFlux::Nodes::Generator::Random::process_batch">
+<area shape="rect" id="Node000001" title="Generates multiple stochastic values at once." alt="" coords="5,13,213,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Stochastic_a7a7d2515539722a278e2779a762e7493.html#a7a7d2515539722a278e2779a762e7493" title="Batch generation." alt="" coords="261,5,425,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="213,30,248,30,248,35,213,35"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Stochastic_a0468e3d9013d5f9f57d80fb3b231a00f.html#a0468e3d9013d5f9f57d80fb3b231a00f" title=" " alt="" coords="473,5,637,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="426,30,460,30,460,35,426,35"/>
+</map>

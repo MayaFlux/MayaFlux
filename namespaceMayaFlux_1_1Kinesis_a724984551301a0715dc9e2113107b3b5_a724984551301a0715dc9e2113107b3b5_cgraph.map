@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kinesis::box_transform" name="MayaFlux::Kinesis::box_transform">
+<area shape="rect" id="Node000001" title="Transform that scales and translates one box onto another." alt="" coords="5,69,155,109"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1AABB3D_a0d85b0eaeb89c2c3d58fd1f8858c4ac8.html#a0d85b0eaeb89c2c3d58fd1f8858c4ac8" title=" " alt="" coords="203,5,352,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="142,67,202,47,203,52,143,72"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kinesis_1_1AABB3D_aeab9cee1b78baf556b0b7e14c99541c2.html#aeab9cee1b78baf556b0b7e14c99541c2" title=" " alt="" coords="203,69,352,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="155,87,189,87,189,92,155,92"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_ace716df2f40f1b0e620049c240637942.html#ace716df2f40f1b0e620049c240637942" title="Uniform scaling of a scalar&#45;output tendency." alt="" coords="203,133,352,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="143,107,203,127,202,132,142,112"/>
+</map>

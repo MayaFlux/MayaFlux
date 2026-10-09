@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::FrameSeekProcessor::trail" name="MayaFlux::Kakshya::FrameSeekProcessor::trail">
+<area shape="rect" id="Node000001" title="Trail a stream that is being written, by a lag that can change." alt="" coords="245,5,437,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1FrameSeekProcessor_a46cf25d8586632f0dbe3457d9298fdb5.html#a46cf25d8586632f0dbe3457d9298fdb5" title="Trail a stream that is being written by a fixed number of frames." alt="" coords="5,5,197,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="232,28,197,28,197,23,232,23"/>
+</map>

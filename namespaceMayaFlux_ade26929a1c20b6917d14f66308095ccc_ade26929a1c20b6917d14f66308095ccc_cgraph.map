@@ -1,0 +1,10 @@
+<map id="MayaFlux::expose_live" name="MayaFlux::expose_live">
+<area shape="rect" id="Node000001" title="Exposes an existing raw pointer to the live arena under key." alt="" coords="5,42,177,67"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1internal_a874455c63042dd543efe24006b6b2a00.html#a874455c63042dd543efe24006b6b2a00" title="Registers an externally owned shared_ptr under key." alt="" coords="225,35,377,75"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="178,52,211,52,211,57,178,57"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1internal_ac11d625c73518d5edeea37d66f4f1add.html#ac11d625c73518d5edeea37d66f4f1add" title="Locates an existing directory entry by key." alt="" coords="425,5,569,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="377,41,412,35,412,41,378,46"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1internal_a7b0204ba7b00dc8bba221e2cf70d7ff4.html#a7b0204ba7b00dc8bba221e2cf70d7ff4" title="Returns a pointer to the header block at the start of arena storage." alt="" coords="617,35,768,75"/>
+<area shape="poly" id="edge4_Node000002_Node000004" title=" " alt="" coords="378,54,425,55,569,55,604,54,604,59,569,60,425,60,378,59"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="570,34,604,39,604,44,569,39"/>
+</map>

@@ -1,0 +1,17 @@
+<map id="MayaFlux::Buffers::BufferProcessingChain::remove_processor_direct" name="MayaFlux::Buffers::BufferProcessingChain::remove_processor_direct">
+<area shape="rect" id="Node000001" title=" " alt="" coords="748,127,943,181"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_ab06548041e8f068a9d83945bcac22a90.html#ab06548041e8f068a9d83945bcac22a90" title="Process pending processor operations." alt="" coords="491,75,700,145"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="734,137,700,131,701,126,735,132"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_a3f49ac5def1875caa775f772fbd43097.html#a3f49ac5def1875caa775f772fbd43097" title=" " alt="" coords="492,169,699,224"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="735,176,699,182,698,176,734,170"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_a23d4172a12da9ea88c8487ff720c824d.html#a23d4172a12da9ea88c8487ff720c824d" title="Applies the transformation pipeline to a buffer with intelligent execution." alt="" coords="248,5,416,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="477,78,415,60,417,55,479,73"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_a59d5a166df6cf4d18c4250548a8f4b81.html#a59d5a166df6cf4d18c4250548a8f4b81" title="Internal processing method for non&#45;owning buffer contexts." alt="" coords="248,84,416,139"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="477,113,416,114,416,108,477,108"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_a1b98bf6c28cf994a1cefad945b80817c.html#a1b98bf6c28cf994a1cefad945b80817c" title="Applies preprocessors, processing chain, post processors and final processors sequentially to a buffe..." alt="" coords="5,5,173,60"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="234,35,174,35,174,30,234,30"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_a9f8055bfaadaeaccacd1490883703e82.html#a9f8055bfaadaeaccacd1490883703e82" title="Removes a processor from the pipeline for a specific buffer." alt="" coords="248,167,416,221"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="478,198,416,198,416,192,478,193"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_a221071c9ed1b5f8bc3a6982c12ea505d.html#a221071c9ed1b5f8bc3a6982c12ea505d" title="Removes a processor from any slot associated with a buffer." alt="" coords="221,245,443,300"/>
+<area shape="poly" id="edge7_Node000006_Node000008" title=" " alt="" coords="488,230,428,248,427,243,486,225"/>
+</map>

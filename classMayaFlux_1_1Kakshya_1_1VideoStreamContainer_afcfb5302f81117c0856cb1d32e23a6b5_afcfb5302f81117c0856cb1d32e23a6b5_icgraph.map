@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::VideoStreamContainer::is_looping" name="MayaFlux::Kakshya::VideoStreamContainer::is_looping">
+<area shape="rect" id="Node000001" title="Check if looping is enabled for the stream." alt="" coords="223,5,392,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_a273f10854b199c93c76ad3f1110c1b59.html#a273f10854b199c93c76ad3f1110c1b59" title="Check if read position has reached the end of the stream." alt="" coords="5,5,175,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="209,35,175,35,175,30,209,30"/>
+</map>

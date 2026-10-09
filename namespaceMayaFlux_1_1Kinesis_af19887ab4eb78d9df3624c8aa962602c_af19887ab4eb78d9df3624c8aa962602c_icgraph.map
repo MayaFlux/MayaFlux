@@ -1,0 +1,4 @@
+<map id="MayaFlux::Kinesis::generate_explicit_surface" name="MayaFlux::Kinesis::generate_explicit_surface">
+<area shape="rect" id="Node000001" title="Generate a mesh from the graph of a function sampled on a grid, y = f(x, z)." alt="" coords="5,29,196,69"/>
+<area shape="poly" id="edge1_Node000001_Node000001" title=" " alt="" coords="132,17,121,11,101,8,83,10,72,15,68,21,70,28,65,30,63,20,68,11,81,5,101,3,123,6,135,13"/>
+</map>

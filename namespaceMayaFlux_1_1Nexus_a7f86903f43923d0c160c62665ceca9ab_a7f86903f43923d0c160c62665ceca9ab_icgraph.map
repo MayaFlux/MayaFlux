@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nexus::remove_render_sink" name="MayaFlux::Nexus::remove_render_sink">
+<area shape="rect" id="Node000001" title="Unregister and destroy the render sink targeting window." alt="" coords="244,37,437,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1Agent_ac3bde89755102bf23e753265207b1c01.html#ac3bde89755102bf23e753265207b1c01" title="Unregister the render sink targeting window." alt="" coords="10,5,191,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="230,45,191,40,192,35,231,40"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nexus_1_1Emitter_ac66797bd88ffa37ba8aa1610bb41e6cc.html#ac66797bd88ffa37ba8aa1610bb41e6cc" title="Unregister the render sink targeting window." alt="" coords="5,69,196,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="231,75,197,79,196,74,230,69"/>
+</map>

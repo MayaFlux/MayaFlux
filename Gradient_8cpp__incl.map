@@ -1,0 +1,13 @@
+<map id="Gradient.cpp" name="Gradient.cpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="291,5,397,31"/>
+<area shape="rect" id="Node000002" href="$Gradient_8hpp.html" title="Gradient and edge detection on normalised float image spans." alt="" coords="5,79,112,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="299,33,119,78,117,73,298,28"/>
+<area shape="rect" id="Node000003" href="$ImageFilter_8hpp.html" title="2D spatial filtering on normalised float image spans." alt="" coords="136,79,259,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="322,33,235,75,232,70,319,28"/>
+<area shape="rect" id="Node000004" href="$KernelSpec_8hpp.html" title="Compile&#45;time separable filter kernel definition and named kernel bank." alt="" coords="283,79,405,104"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="347,31,347,65,341,65,341,31"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="429,79,515,104"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="366,28,440,69,438,74,363,33"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="539,79,631,104"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="384,28,534,72,532,77,382,33"/>
+</map>

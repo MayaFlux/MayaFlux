@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kriya::BufferPipeline::process_modify" name="MayaFlux::Kriya::BufferPipeline::process_modify">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,37,232,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1BufferOperation_a4e61e95438b80ad8394552d3968d6490.html#a4e61e95438b80ad8394552d3968d6490" title="Return the operation&#39;s processing token." alt="" coords="280,5,519,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="232,42,266,38,267,43,233,47"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kriya_1_1BufferOperation_a792e3313503636c56cf26ec60dfc04fb.html#a792e3313503636c56cf26ec60dfc04fb" title="Check if this operation is a streaming operation." alt="" coords="280,69,519,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="233,68,267,72,266,77,232,73"/>
+</map>

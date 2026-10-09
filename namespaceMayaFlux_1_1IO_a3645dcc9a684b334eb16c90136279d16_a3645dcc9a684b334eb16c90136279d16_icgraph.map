@@ -1,0 +1,5 @@
+<map id="MayaFlux::IO::relaxation_grid_positions" name="MayaFlux::IO::relaxation_grid_positions">
+<area shape="rect" id="Node000001" title="Generate the fixed grid positions and cell ids a RelaxationGridBuffer&#39;s cells occupy,..." alt="" coords="309,5,492,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1RelaxationGridCapture_a773f944354bbd6d6093f5b1ee669fcff.html#a773f944354bbd6d6093f5b1ee669fcff" title=" " alt="" coords="5,5,261,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="296,28,262,28,262,23,296,23"/>
+</map>

@@ -1,0 +1,11 @@
+<map id="MayaFlux::Kinesis::Vision::extract_peaks" name="MayaFlux::Kinesis::Vision::extract_peaks">
+<area shape="rect" id="Node000001" title="Extract peaks from a response map via non&#45;maximum suppression." alt="" coords="571,37,733,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1FeatureExtractor_a6625311b756518d90e3d5ef2e4125e10.html#a6625311b756518d90e3d5ef2e4125e10" title="Core extraction implementation &#45; delegates to ExtractionHelper." alt="" coords="276,5,523,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="557,48,522,44,523,38,557,43"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kinesis_1_1Vision_1_1VisionExecutor_a6ea94c5c8d90c5890b7715a0e4ff2df5.html#a6ea94c5c8d90c5890b7715a0e4ff2df5" title="Execute a VisionSequence on one frame." alt="" coords="302,69,497,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="557,72,497,80,497,74,557,67"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1VisionProcessor_ab9b6b50546df64540aee0f0bbbb7939a.html#ab9b6b50546df64540aee0f0bbbb7939a" title="Execute the VisionSequence on processed_data[0]." alt="" coords="25,33,208,73"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="288,78,208,68,209,62,289,73"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1ImageCVProcessor_a03dd11926b797b52ccbdfa37c2b5e4e1.html#a03dd11926b797b52ccbdfa37c2b5e4e1" title="Download the current GPU image, run the VisionSequence, store the result." alt="" coords="5,98,228,153"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="288,106,228,114,228,109,288,101"/>
+</map>

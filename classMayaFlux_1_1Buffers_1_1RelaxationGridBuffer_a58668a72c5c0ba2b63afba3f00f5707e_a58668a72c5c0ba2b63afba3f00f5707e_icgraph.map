@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::RelaxationGridBuffer::get_cell_count" name="MayaFlux::Buffers::RelaxationGridBuffer::get_cell_count">
+<area shape="rect" id="Node000001" title="Total cell count, width * height." alt="" coords="212,5,371,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RelaxationGridBuffer_a4c90a977c6dcb7edf0abced15bc7d798.html#a4c90a977c6dcb7edf0abced15bc7d798" title="Create and attach RelaxationStepProcessor (default processor) and RelaxationEmitProcessor (flat proce..." alt="" coords="5,5,164,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="198,35,164,35,164,30,198,30"/>
+</map>

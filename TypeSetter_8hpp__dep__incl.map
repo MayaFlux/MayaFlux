@@ -1,0 +1,40 @@
+<map id="TypeSetter.hpp" name="TypeSetter.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="247,5,365,31"/>
+<area shape="rect" id="Node000002" href="$InkPress_8cpp.html" title=" " alt="" coords="121,79,225,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="274,39,196,81,193,76,271,35"/>
+<area shape="rect" id="Node000003" href="$Text_8hpp.html" title=" " alt="" coords="211,152,289,177"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="299,45,257,153,252,151,294,43"/>
+<area shape="rect" id="Node000010" href="$TextEdit_8hpp.html" title="Text editing operations: a mutable buffer plus a byte&#45;offset cursor, and the operations that keep it ..." alt="" coords="300,79,403,104"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="323,41,346,77,342,80,319,44"/>
+<area shape="rect" id="Node000018" href="$TypeSetter_8cpp.html" title=" " alt="" coords="427,79,545,104"/>
+<area shape="poly" id="edge20_Node000001_Node000018" title=" " alt="" coords="348,33,458,76,456,81,346,38"/>
+<area shape="rect" id="Node000004" href="$Convenience_8hpp.html" title="Everyday headers and namespace imports for user code." alt="" coords="5,372,140,397"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="198,170,163,174,127,185,94,201,67,227,57,244,52,264,52,304,60,342,70,371,65,372,55,344,47,305,47,263,52,242,63,224,91,197,125,180,162,169,197,164"/>
+<area shape="rect" id="Node000007" href="$GraphicsSubsystem_8cpp.html" title=" " alt="" coords="77,225,255,251"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="228,188,181,227,178,223,224,184"/>
+<area shape="rect" id="Node000008" href="$Text_8cpp.html" title=" " alt="" coords="280,225,356,251"/>
+<area shape="poly" id="edge7_Node000003_Node000008" title=" " alt="" coords="272,185,309,223,305,227,269,189"/>
+<area shape="rect" id="Node000009" href="$TextField_8cpp.html" title=" " alt="" coords="381,225,487,251"/>
+<area shape="poly" id="edge8_Node000003_Node000009" title=" " alt="" coords="293,180,405,223,403,228,291,185"/>
+<area shape="rect" id="Node000005" href="$MayaFlux_8hpp.html" title="Single include for the user facing API." alt="" coords="15,445,130,471"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="75,411,75,445,70,445,70,411"/>
+<area shape="rect" id="Node000006" href="$LiveAid_8hpp.html" title=" " alt="" coords="23,519,122,544"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="75,484,75,519,70,519,70,484"/>
+<area shape="poly" id="edge10_Node000010_Node000003" title=" " alt="" coords="325,114,268,154,265,150,322,110"/>
+<area shape="rect" id="Node000011" href="$TextEdit_8cpp.html" title=" " alt="" coords="313,152,414,177"/>
+<area shape="poly" id="edge11_Node000010_Node000011" title=" " alt="" coords="358,117,364,151,359,152,353,118"/>
+<area shape="rect" id="Node000012" href="$TextField_8hpp.html" title=" " alt="" coords="439,152,547,177"/>
+<area shape="poly" id="edge12_Node000010_Node000012" title=" " alt="" coords="387,108,471,149,468,154,385,112"/>
+<area shape="poly" id="edge19_Node000012_Node000009" title=" " alt="" coords="476,190,446,227,441,224,472,186"/>
+<area shape="rect" id="Node000013" href="$Tend_8hpp.html" title=" " alt="" coords="511,225,591,251"/>
+<area shape="poly" id="edge13_Node000012_Node000013" title=" " alt="" coords="513,186,544,224,540,227,509,190"/>
+<area shape="rect" id="Node000014" href="$Forma_8hpp.html" title="Factory free functions for the Forma surface system." alt="" coords="331,299,422,324"/>
+<area shape="poly" id="edge14_Node000013_Node000014" title=" " alt="" coords="512,258,406,301,404,296,510,253"/>
+<area shape="rect" id="Node000017" href="$Tend_8cpp.html" title=" " alt="" coords="512,299,591,324"/>
+<area shape="poly" id="edge18_Node000013_Node000017" title=" " alt="" coords="554,264,554,299,549,299,549,264"/>
+<area shape="poly" id="edge15_Node000014_Node000004" title=" " alt="" coords="319,329,122,375,121,369,317,324"/>
+<area shape="rect" id="Node000015" href="$Engine_8cpp.html" title=" " alt="" coords="297,372,390,397"/>
+<area shape="poly" id="edge16_Node000014_Node000015" title=" " alt="" coords="368,338,351,373,346,371,363,335"/>
+<area shape="rect" id="Node000016" href="$Forma_8cpp.html" title=" " alt="" coords="414,372,505,397"/>
+<area shape="poly" id="edge17_Node000014_Node000016" title=" " alt="" coords="402,331,448,370,444,374,399,335"/>
+</map>

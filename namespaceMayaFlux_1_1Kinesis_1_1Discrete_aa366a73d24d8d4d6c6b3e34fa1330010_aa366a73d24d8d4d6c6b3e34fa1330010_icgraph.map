@@ -1,0 +1,8 @@
+<map id="MayaFlux::Kinesis::Discrete::mad" name="MayaFlux::Kinesis::Discrete::mad">
+<area shape="rect" id="Node000001" title="Median absolute deviation per window." alt="" coords="616,29,765,69"/>
+<area shape="poly" id="edge3_Node000001_Node000001" title=" " alt="" coords="734,18,719,11,691,8,666,10,651,15,646,21,649,28,644,30,641,20,648,10,665,5,691,3,720,6,736,13"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1StatisticalAnalyzer_ac6b9656bbc2b37d4603de52ef0115d85.html#ac6b9656bbc2b37d4603de52ef0115d85" title="Compute statistical values using span (zero&#45;copy processing)" alt="" coords="303,29,568,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="602,52,568,52,568,47,602,47"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1StatisticalAnalyzer_ada59b9d30d969a895d8693fc96381700.html#ada59b9d30d969a895d8693fc96381700" title="Core analysis implementation &#45; creates analysis result AND pipeline output." alt="" coords="5,29,255,69"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="289,52,255,52,255,47,289,47"/>
+</map>

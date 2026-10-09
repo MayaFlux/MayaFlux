@@ -1,0 +1,29 @@
+<map id="MayaFlux::Kakshya::DataDimension::grouped" name="MayaFlux::Kakshya::DataDimension::grouped">
+<area shape="rect" id="Node000001" title="Create dimension with component grouping." alt="" coords="935,309,1119,349"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_a35d849b2e199a43e29238fdc3827276b.html#a35d849b2e199a43e29238fdc3827276b" title="Detect data dimensions from a DataVariant." alt="" coords="705,133,887,173"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1001,300,951,243,920,213,885,188,863,176,866,171,888,183,923,209,955,239,1005,297"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_1_1Kakshya_a7a4535ac441a3218d801f2dff76b597c.html#a7a4535ac441a3218d801f2dff76b597c" title=" " alt="" coords="705,197,887,237"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="981,304,886,252,857,240,859,235,888,247,984,300"/>
+<area shape="rect" id="Node000011" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_adb2bac98f840e5eadcbd69054b3ae05e.html#adb2bac98f840e5eadcbd69054b3ae05e" title="Create dimension for texture coordinates (vec2)" alt="" coords="707,262,885,317"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="921,314,885,307,886,302,922,308"/>
+<area shape="rect" id="Node000012" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_a45d62499ecfb2b909acc0ffa3f5603cb.html#a45d62499ecfb2b909acc0ffa3f5603cb" title="Create dimension for colors (vec3 or vec4)" alt="" coords="709,341,883,395"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="922,350,883,356,883,351,921,344"/>
+<area shape="rect" id="Node000013" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_a5a8d6438b133ceeec2753933ff295d43.html#a5a8d6438b133ceeec2753933ff295d43" title="Create dimension for vertex normals (vec3)" alt="" coords="709,419,883,474"/>
+<area shape="poly" id="edge12_Node000001_Node000013" title=" " alt="" coords="982,359,888,410,864,422,862,417,885,406,979,354"/>
+<area shape="rect" id="Node000014" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_a2f80e8eb7e0a8cfcb6d46d00a968929d.html#a2f80e8eb7e0a8cfcb6d46d00a968929d" title="Create dimension for vertex positions (vec3)" alt="" coords="709,498,883,553"/>
+<area shape="poly" id="edge13_Node000001_Node000014" title=" " alt="" coords="1006,363,956,425,924,459,888,489,870,500,867,496,885,485,920,455,952,422,1002,359"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Yantra_ac7ce5ec59c7c75f62517b8f6a0b27911.html#ac7ce5ec59c7c75f62517b8f6a0b27911" title="Infer structure from DataVariant." alt="" coords="473,101,645,141"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="691,142,645,136,645,130,692,137"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Yantra_a8807ce8b4f3be0dd4ffdc9bf5f4c5378.html#a8807ce8b4f3be0dd4ffdc9bf5f4c5378" title="Infer structure from vector of DataVariants (NEW)" alt="" coords="460,165,657,205"/>
+<area shape="poly" id="edge8_Node000002_Node000009" title=" " alt="" coords="692,170,658,175,657,169,692,165"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Yantra_ae05845067871689b0b43d88e2b97b4f2.html#ae05845067871689b0b43d88e2b97b4f2" title="Infer dimensions and modality from any ComputeData type." alt="" coords="240,101,412,141"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="459,124,412,124,412,119,459,119"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Yantra_1_1Datum_af60854443083d66271866d0bcffe6e2e.html#af60854443083d66271866d0bcffe6e2e" title="Construct from data by copy with automatic structure inference." alt="" coords="5,5,192,45"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="272,97,191,60,160,48,162,43,193,55,275,93"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Yantra_1_1Datum_afcbb7ba6d9662ba436c2c46406f2341f.html#afcbb7ba6d9662ba436c2c46406f2341f" title="Construct from data by copy with container reference and automatic structure inference." alt="" coords="5,69,192,109"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="226,110,192,105,193,100,227,105"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Yantra_1_1Datum_a938a7ae520687b3ef39b3c04da00c159.html#a938a7ae520687b3ef39b3c04da00c159" title="Construct from data by move with automatic structure inference." alt="" coords="5,133,192,173"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="227,138,193,143,192,138,226,133"/>
+<area shape="rect" id="Node000008" href="$structMayaFlux_1_1Yantra_1_1Datum_a462ba3b1a72eb90e6b5a0abb6f7586f1.html#a462ba3b1a72eb90e6b5a0abb6f7586f1" title="Construct from data by move with automatic structure inference." alt="" coords="5,197,192,237"/>
+<area shape="poly" id="edge7_Node000004_Node000008" title=" " alt="" coords="275,150,193,188,162,200,160,195,191,183,272,145"/>
+</map>

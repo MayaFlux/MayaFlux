@@ -1,0 +1,25 @@
+var classMayaFlux_1_1Kinesis_1_1MotionChannel =
+[
+    [ "DerivativeCacheEntry", "structMayaFlux_1_1Kinesis_1_1MotionChannel_1_1DerivativeCacheEntry.html", "structMayaFlux_1_1Kinesis_1_1MotionChannel_1_1DerivativeCacheEntry" ],
+    [ "MotionChannel", "classMayaFlux_1_1Kinesis_1_1MotionChannel_a30c0990f03fb9501a7179ea9ad8500cd.html#a30c0990f03fb9501a7179ea9ad8500cd", null ],
+    [ "derivative", "classMayaFlux_1_1Kinesis_1_1MotionChannel_ae8b4837c8f4954b2f80173d480b2f83f.html#ae8b4837c8f4954b2f80173d480b2f83f", null ],
+    [ "enable_trajectory_2d", "classMayaFlux_1_1Kinesis_1_1MotionChannel_a7b9a16f57cae793672367d2ebf785612.html#a7b9a16f57cae793672367d2ebf785612", null ],
+    [ "enable_trajectory_3d", "classMayaFlux_1_1Kinesis_1_1MotionChannel_a442dafd56e6d074686ce8918806cb839.html#a442dafd56e6d074686ce8918806cb839", null ],
+    [ "estimate_for_component", "classMayaFlux_1_1Kinesis_1_1MotionChannel_af64ee0effecd53f5f9e92c6cb10a5f15.html#af64ee0effecd53f5f9e92c6cb10a5f15", null ],
+    [ "filter_for_order", "classMayaFlux_1_1Kinesis_1_1MotionChannel_ad56a4bf2ff6f36cbc9064e73c308d091.html#ad56a4bf2ff6f36cbc9064e73c308d091", null ],
+    [ "filter_order", "classMayaFlux_1_1Kinesis_1_1MotionChannel_ab1a4722b5424bbd842047cf59a19b854.html#ab1a4722b5424bbd842047cf59a19b854", null ],
+    [ "history", "classMayaFlux_1_1Kinesis_1_1MotionChannel_aa3ea777490bcc70666da3bf31474118a.html#aa3ea777490bcc70666da3bf31474118a", null ],
+    [ "last_dt", "classMayaFlux_1_1Kinesis_1_1MotionChannel_a8d9dce18678525d138cb59a52d7d9930.html#a8d9dce18678525d138cb59a52d7d9930", null ],
+    [ "trajectory_2d", "classMayaFlux_1_1Kinesis_1_1MotionChannel_a7b039832cee950dee8b556612e9dbe5a.html#a7b039832cee950dee8b556612e9dbe5a", null ],
+    [ "trajectory_3d", "classMayaFlux_1_1Kinesis_1_1MotionChannel_aa7e9892fd4c478487c4d6032144dc9d3.html#aa7e9892fd4c478487c4d6032144dc9d3", null ],
+    [ "update", "classMayaFlux_1_1Kinesis_1_1MotionChannel_a1f7f4eaf50ad715bc0d8d898983bce13.html#a1f7f4eaf50ad715bc0d8d898983bce13", null ],
+    [ "component_count", "classMayaFlux_1_1Kinesis_1_1MotionChannel_acba2251f7c04422d72f1d5efe34ee0cf.html#acba2251f7c04422d72f1d5efe34ee0cf", null ],
+    [ "m_derivative_cache", "classMayaFlux_1_1Kinesis_1_1MotionChannel_af92f78a2ff6415082a5a02c4bfdb886a.html#af92f78a2ff6415082a5a02c4bfdb886a", null ],
+    [ "m_estimates", "classMayaFlux_1_1Kinesis_1_1MotionChannel_a5527f912b0dbf51834929cd4aca55093.html#a5527f912b0dbf51834929cd4aca55093", null ],
+    [ "m_filters", "classMayaFlux_1_1Kinesis_1_1MotionChannel_a9d7946f0cd3d389d4787e5f596d046bb.html#a9d7946f0cd3d389d4787e5f596d046bb", null ],
+    [ "m_generation", "classMayaFlux_1_1Kinesis_1_1MotionChannel_a2286413f0c99cbb6249d077d11e7273b.html#a2286413f0c99cbb6249d077d11e7273b", null ],
+    [ "m_history", "classMayaFlux_1_1Kinesis_1_1MotionChannel_a27212d1c11003693bcdecfca9f9dad05.html#a27212d1c11003693bcdecfca9f9dad05", null ],
+    [ "m_last_dt", "classMayaFlux_1_1Kinesis_1_1MotionChannel_a930a28fab6c5a82fbccd785ca6172211.html#a930a28fab6c5a82fbccd785ca6172211", null ],
+    [ "m_trajectory_2d", "classMayaFlux_1_1Kinesis_1_1MotionChannel_a96cff1b906068436d178217ad7e4477f.html#a96cff1b906068436d178217ad7e4477f", null ],
+    [ "m_trajectory_3d", "classMayaFlux_1_1Kinesis_1_1MotionChannel_a7e67315f1f9ef6259492b15c126ff6aa.html#a7e67315f1f9ef6259492b15c126ff6aa", null ]
+];

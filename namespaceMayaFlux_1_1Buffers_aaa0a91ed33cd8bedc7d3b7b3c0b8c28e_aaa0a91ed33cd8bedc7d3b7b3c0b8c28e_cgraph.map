@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::update_buffer_with_node_data" name="MayaFlux::Buffers::update_buffer_with_node_data">
+<area shape="rect" id="Node000001" title="Apply node output to an existing buffer with mixing." alt="" coords="5,5,228,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Buffers_ae642092d63445f1884326aba3d9b5189.html#ae642092d63445f1884326aba3d9b5189" title="Wait for an active snapshot context to complete using exponential backoff." alt="" coords="276,5,497,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="228,23,262,23,262,28,228,28"/>
+</map>

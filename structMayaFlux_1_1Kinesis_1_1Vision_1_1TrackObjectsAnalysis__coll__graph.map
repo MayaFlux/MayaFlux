@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::Vision::TrackObjectsAnalysis" name="MayaFlux::Kinesis::Vision::TrackObjectsAnalysis">
+<area shape="rect" id="Node000001" title="Track reduction, computed on GPU (Yantra&#39;s track_reduce.comp) from the (context&#45;filtered) subject tra..." alt="" coords="5,248,205,468"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1BoundingBox.html" title="Axis&#45;aligned bounding box in normalised image coordinates." alt="" coords="31,5,179,185"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="108,185,108,231,103,231,103,185"/>
+</map>

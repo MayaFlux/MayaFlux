@@ -1,0 +1,7 @@
+<map id="MayaFlux::Yantra::Vision::VisionMatrix::execute" name="MayaFlux::Yantra::Vision::VisionMatrix::execute">
+<area shape="rect" id="Node000001" title="Analyze image and keep it with its analysis until the next call." alt="" coords="5,37,188,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1Vision_1_1VisionMatrix_aac119f2c2148660efe48860483c24c7e.html#aac119f2c2148660efe48860483c24c7e" title="The matrix&#39;s &quot;analyze&quot; operation." alt="" coords="238,5,421,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="188,42,224,37,225,42,189,47"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1Vision_1_1VisionMatrix_a93254d1d91091821b4aaf40c0f80008f.html#a93254d1d91091821b4aaf40c0f80008f" title=" " alt="" coords="236,69,423,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="189,67,223,72,222,77,188,73"/>
+</map>

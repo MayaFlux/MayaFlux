@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::PhysicsOperator::query_state" name="MayaFlux::Nodes::Network::PhysicsOperator::query_state">
+<area shape="rect" id="Node000001" title="Query operator internal state." alt="" coords="5,13,227,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PhysicsOperator_a20b446d35e44a8152c2bc095d95f0e66.html#a20b446d35e44a8152c2bc095d95f0e66" title="Get source point count (before topology expansion)" alt="" coords="275,5,473,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="227,30,261,30,261,35,227,35"/>
+</map>

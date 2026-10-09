@@ -1,0 +1,39 @@
+<map id="VideoStreamContext.hpp" name="VideoStreamContext.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="128,5,313,31"/>
+<area shape="rect" id="Node000002" href="$FFmpegDemuxContext_8hpp.html" title=" " alt="" coords="11,86,212,111"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="206,33,140,80,137,76,203,29"/>
+<area shape="rect" id="Node000008" href="$GraphicsUtils_8hpp.html" title=" " alt="" coords="239,79,429,119"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="239,29,297,69,294,73,236,33"/>
+<area shape="rect" id="Node000003" href="$FileReader_8hpp.html" title=" " alt="" coords="5,174,209,199"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="113,112,111,160,106,160,108,111"/>
+<area shape="rect" id="Node000004" href="$Region_8hpp.html" title=" " alt="" coords="58,255,253,295"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="116,198,140,241,136,244,111,201"/>
+<area shape="rect" id="Node000005" href="$NDData_8hpp.html" title=" " alt="" coords="64,343,265,383"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="160,295,164,329,158,329,155,295"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="158,665,262,691"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="170,383,209,651,204,652,165,383"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="203,431,289,456"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="186,381,226,419,222,423,183,385"/>
+<area shape="rect" id="Node000009" href="$ImageData_8hpp.html" title=" " alt="" coords="233,167,435,207"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="337,119,337,153,331,153,331,119"/>
+<area shape="rect" id="Node000010" href="$Scissor_8hpp.html" title=" " alt="" coords="459,167,657,207"/>
+<area shape="poly" id="edge9_Node000008_Node000010" title=" " alt="" coords="384,116,497,159,495,164,382,121"/>
+<area shape="rect" id="Node000011" href="$ViewTransform_8hpp.html" title=" " alt="" coords="330,431,477,456"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="515,209,482,229,455,256,433,297,418,341,410,383,407,417,402,417,405,382,413,339,428,294,451,253,479,225,512,204"/>
+<area shape="rect" id="Node000013" href="$Bounds_8hpp.html" title=" " alt="" coords="465,255,651,295"/>
+<area shape="poly" id="edge12_Node000010_Node000013" title=" " alt="" coords="561,207,561,241,555,241,555,207"/>
+<area shape="rect" id="Node000012" title=" " alt="" coords="212,511,429,537"/>
+<area shape="poly" id="edge11_Node000011_Node000012" title=" " alt="" coords="393,458,345,504,341,500,389,454"/>
+<area shape="rect" id="Node000014" href="$HitTest_8hpp.html" title=" " alt="" coords="511,350,605,375"/>
+<area shape="poly" id="edge13_Node000013_Node000014" title=" " alt="" coords="561,295,561,336,555,336,555,295"/>
+<area shape="poly" id="edge19_Node000014_Node000011" title=" " alt="" coords="536,378,440,427,437,422,534,373"/>
+<area shape="rect" id="Node000015" href="$SpatialIndex_8hpp.html" title=" " alt="" coords="501,431,631,456"/>
+<area shape="poly" id="edge14_Node000014_Node000015" title=" " alt="" coords="562,375,566,417,561,417,557,376"/>
+<area shape="rect" id="Node000016" href="$TendencyFactories_8hpp.html" title=" " alt="" coords="454,504,657,544"/>
+<area shape="poly" id="edge15_Node000015_Node000016" title=" " alt="" coords="567,457,562,491,557,490,562,456"/>
+<area shape="rect" id="Node000018" title=" " alt="" coords="681,511,773,537"/>
+<area shape="poly" id="edge18_Node000015_Node000018" title=" " alt="" coords="591,454,693,503,691,508,588,458"/>
+<area shape="rect" id="Node000017" href="$Tendency_8hpp.html" title=" " alt="" coords="351,592,461,617"/>
+<area shape="poly" id="edge16_Node000016_Node000017" title=" " alt="" coords="521,546,442,588,439,583,518,542"/>
+<area shape="poly" id="edge17_Node000017_Node000006" title=" " alt="" coords="375,620,256,663,254,658,374,615"/>
+</map>

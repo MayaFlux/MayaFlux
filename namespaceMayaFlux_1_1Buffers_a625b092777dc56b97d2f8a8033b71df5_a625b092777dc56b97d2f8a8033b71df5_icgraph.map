@@ -1,0 +1,35 @@
+<map id="MayaFlux::Buffers::generation_slot" name="MayaFlux::Buffers::generation_slot">
+<area shape="rect" id="Node000001" title="Express a buffer handle as the slot the back_buffers transfer helpers take." alt="" coords="812,296,960,336"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1DataReadProcessor_ac90e3861ca68b753670c9c266191c284.html#ac90e3861ca68b753670c9c266191c284" title=" " alt="" coords="545,134,745,189"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="840,291,687,191,690,187,843,286"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1DataReadProcessor_a2c3dedb897d37fc75c5e3e8e3cd6e73e.html#a2c3dedb897d37fc75c5e3e8e3cd6e73e" title=" " alt="" coords="525,449,764,489"/>
+<area shape="poly" id="edge9_Node000001_Node000008" title=" " alt="" coords="844,346,679,452,676,447,841,341"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1DataReadProcessor_a4e739538a697e53381c8c93de0e6559d.html#a4e739538a697e53381c8c93de0e6559d" title="Finish the read as raw bytes." alt="" coords="229,5,477,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="594,128,539,92,476,60,444,48,446,43,478,55,542,88,597,124"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1DataReadProcessor_ab395e9e042bb50388d64751e7a06fd93.html#ab395e9e042bb50388d64751e7a06fd93" title="Finish a read_mesh() read as MeshData." alt="" coords="229,69,477,109"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="531,136,435,112,436,107,532,131"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1DataReadProcessor_a53b49c433748d98ace54b60a0884728b.html#a53b49c433748d98ace54b60a0884728b" title="Finish a pixel read as typed ImageData with its format and dimensions." alt="" coords="251,134,456,189"/>
+<area shape="poly" id="edge6_Node000002_Node000006" title=" " alt="" coords="531,164,456,164,456,159,531,159"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1DataReadProcessor_a155bfe453f0fc0790f91cb3480c61432.html#a155bfe453f0fc0790f91cb3480c61432" title="Finish a read_vertices() read as typed channels." alt="" coords="251,213,456,267"/>
+<area shape="poly" id="edge8_Node000002_Node000007" title=" " alt="" coords="532,194,456,215,455,210,531,189"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kriya_1_1detail_ac59af9577ccacc4f598912038d765f5b.html#ac59af9577ccacc4f598912038d765f5b" title="Finish the pending read as one DataVariant." alt="" coords="5,69,181,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="259,51,176,72,174,67,257,46"/>
+<area shape="poly" id="edge5_Node000005_Node000004" title=" " alt="" coords="215,92,182,92,182,87,215,87"/>
+<area shape="poly" id="edge7_Node000006_Node000004" title=" " alt="" coords="240,133,166,112,167,107,242,128"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1DataReadProcessor_a1310189e6201494f3b723a13a6273247.html#a1310189e6201494f3b723a13a6273247" title="Read a raw back_buffers slot of the attached buffer." alt="" coords="260,291,447,346"/>
+<area shape="poly" id="edge10_Node000008_Node000009" title=" " alt="" coords="606,443,547,401,476,360,446,347,448,342,479,355,550,396,609,439"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Buffers_1_1DataReadProcessor_a08aef863be83cec1f218ba574fc02ac2.html#a08aef863be83cec1f218ba574fc02ac2" title="Read another VKBuffer, such as a descriptor&#45;bound or instance buffer." alt="" coords="260,370,447,425"/>
+<area shape="poly" id="edge11_Node000008_Node000010" title=" " alt="" coords="549,449,446,423,448,418,550,443"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Buffers_1_1DataReadProcessor_a8de3f052e9a50814d29282dbe8c8196d.html#a8de3f052e9a50814d29282dbe8c8196d" title="Read the attached buffer&#39;s primary storage." alt="" coords="239,449,468,489"/>
+<area shape="poly" id="edge12_Node000008_Node000011" title=" " alt="" coords="511,472,468,472,468,467,511,467"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Buffers_1_1DataReadProcessor_aef698d9afa418ad2b6891a5fcc34d2d5.html#aef698d9afa418ad2b6891a5fcc34d2d5" title="Read the current read slot of a named field on the attached buffer." alt="" coords="243,513,464,553"/>
+<area shape="poly" id="edge14_Node000008_Node000013" title=" " alt="" coords="540,495,445,516,444,511,539,490"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Buffers_1_1DataReadProcessor_ae66ad65839089293b07639f7cb3fdd65.html#ae66ad65839089293b07639f7cb3fdd65" title="Read the attached mesh." alt="" coords="239,577,468,617"/>
+<area shape="poly" id="edge15_Node000008_Node000014" title=" " alt="" coords="604,499,546,535,478,568,444,580,443,575,476,563,543,530,601,495"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Buffers_1_1DataReadProcessor_ac927d05717eb9396a5b261c5856cb9fb.html#ac927d05717eb9396a5b261c5856cb9fb" title="Read the attached buffer&#39;s declared vertices; the layout count may represent capacity." alt="" coords="260,642,447,697"/>
+<area shape="poly" id="edge17_Node000008_Node000015" title=" " alt="" coords="621,502,560,567,521,602,479,632,448,647,446,642,476,627,518,597,557,563,617,498"/>
+<area shape="rect" id="Node000012" href="$namespaceMayaFlux_1_1Kriya_1_1detail_a4fe0640b29321d9daa3c236e3898e01a.html#a4fe0640b29321d9daa3c236e3898e01a" title="Arm the read that suits what the buffer is." alt="" coords="7,577,180,617"/>
+<area shape="poly" id="edge13_Node000011_Node000012" title=" " alt="" coords="248,496,231,504,168,541,119,579,116,575,165,536,228,499,246,491"/>
+<area shape="poly" id="edge16_Node000014_Node000012" title=" " alt="" coords="225,600,180,600,180,595,225,595"/>
+<area shape="poly" id="edge18_Node000015_Node000012" title=" " alt="" coords="246,642,166,620,167,615,247,637"/>
+</map>

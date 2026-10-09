@@ -1,0 +1,3 @@
+<map id="MayaFlux::Yantra::Vision::VisionWorkflow" name="MayaFlux::Yantra::Vision::VisionWorkflow">
+<area shape="rect" id="Node000001" title="Runs vision queries over video streams, image lists and texture containers, delivering what an extrac..." alt="" coords="5,5,213,485"/>
+</map>

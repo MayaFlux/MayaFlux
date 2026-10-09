@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nexus::Expanse" name="MayaFlux::Nexus::Expanse">
+<area shape="rect" id="Node000001" title="A defined region of space with a containment test and crossing actions." alt="" coords="88,5,279,591"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1Hull.html" title="An Expanse whose region is the bounds of a buffer that already exists." alt="" coords="5,699,167,864"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="124,605,105,699,100,698,119,603"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nexus_1_1Mantle.html" title="An Expanse that is a box with a buffer that already exists as its visible body." alt="" coords="191,639,371,924"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="248,604,255,638,249,639,242,605"/>
+</map>

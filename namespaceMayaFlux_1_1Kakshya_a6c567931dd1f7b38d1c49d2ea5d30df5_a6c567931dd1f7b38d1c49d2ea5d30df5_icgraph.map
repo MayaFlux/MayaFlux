@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::calculate_strides" name="MayaFlux::Kakshya::calculate_strides">
+<area shape="rect" id="Node000001" title="Calculate memory strides for each dimension (row&#45;major order)." alt="" coords="256,37,415,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_a14025538de14bab9a8a43365f6032c90.html#a14025538de14bab9a8a43365f6032c90" title="Determine optimal memory access pattern for region." alt="" coords="17,5,196,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="242,47,196,40,197,35,242,42"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kakshya_ab1d4d86d7f3183462598c145ce313388.html#ab1d4d86d7f3183462598c145ce313388" title="Create coordinate mapping information for container." alt="" coords="5,69,208,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="242,73,209,78,208,73,242,68"/>
+</map>

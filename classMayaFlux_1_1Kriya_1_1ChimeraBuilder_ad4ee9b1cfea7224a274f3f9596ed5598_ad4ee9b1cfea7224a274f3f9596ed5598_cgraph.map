@@ -1,0 +1,21 @@
+<map id="MayaFlux::Kriya::ChimeraBuilder::start" name="MayaFlux::Kriya::ChimeraBuilder::start">
+<area shape="rect" id="Node000001" title="Start feeding every declared layer on the frame clock." alt="" coords="5,197,196,237"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1BufferOperation_aa3f3f4930f38ed15014d2daecc6efc0f.html#aa3f3f4930f38ed15014d2daecc6efc0f" title="Create a dispatch operation for external processing." alt="" coords="244,5,483,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="112,196,163,127,200,88,243,55,254,49,257,53,245,60,204,92,167,130,116,199"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kriya_1_1BufferOperation_a62c49a0810696c2082c7b94b996fa8b1.html#a62c49a0810696c2082c7b94b996fa8b1" title="Set cycle interval for periodic execution." alt="" coords="244,69,483,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="125,195,177,157,243,119,261,111,263,116,245,124,180,161,128,199"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kriya_1_1ChimeraBuilder_a478662f92f6123dc6ade8cd66c0f74d3.html#a478662f92f6123dc6ade8cd66c0f74d3" title="Fit frames of another extent into this layer in this way, instead of the buffer&#39;s." alt="" coords="268,133,459,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="183,195,267,174,268,179,184,200"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kriya_1_1ChimeraBuilder_ac4c7cc372818d940ff0d5dec5ee8abd9.html#ac4c7cc372818d940ff0d5dec5ee8abd9" title="Open the next layer." alt="" coords="268,197,459,237"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="196,215,254,215,254,220,196,220"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kriya_1_1ChimeraBuilder_a56d001d689c7aa8c213717c8fa282871.html#a56d001d689c7aa8c213717c8fa282871" title="Weight passed to the shader for the layer." alt="" coords="268,261,459,301"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="184,235,268,255,267,261,183,240"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Kriya_1_1ChimeraBuilder_a218c8e499eaf76b8a12767a45c8b6673.html#a218c8e499eaf76b8a12767a45c8b6673" title="Params for the layer in the buffer&#39;s per&#45;layer data, such as placement." alt="" coords="268,325,459,365"/>
+<area shape="poly" id="edge8_Node000001_Node000008" title=" " alt="" coords="128,235,180,274,245,311,263,318,261,323,243,316,177,278,125,239"/>
+<area shape="rect" id="Node000009" href="$main_8cpp_a13a43e6d814de94978c515cb084873b1.html#a13a43e6d814de94978c515cb084873b1" title=" " alt="" coords="342,390,385,415"/>
+<area shape="poly" id="edge10_Node000001_Node000009" title=" " alt="" coords="116,236,137,268,166,306,203,344,245,375,287,391,329,398,328,404,286,396,243,380,199,348,162,309,133,271,112,239"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kriya_1_1ChimeraBuilder_a64ae2ad508fa6ee5e327cb941a47d962.html#a64ae2ad508fa6ee5e327cb941a47d962" title=" " alt="" coords="531,261,721,301"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="453,171,484,183,542,216,591,251,588,255,539,220,482,188,451,176"/>
+<area shape="poly" id="edge7_Node000007_Node000005" title=" " alt="" coords="459,279,517,279,517,284,459,284"/>
+<area shape="poly" id="edge9_Node000008_Node000005" title=" " alt="" coords="446,323,529,302,531,307,447,328"/>
+</map>

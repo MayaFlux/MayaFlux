@@ -1,0 +1,5 @@
+<map id="MayaFlux::Yantra::VisionExtractor::annotate" name="MayaFlux::Yantra::VisionExtractor::annotate">
+<area shape="rect" id="Node000001" title="source with everything the analysis found drawn on it: element boxes (yellow) and contours (cyan),..." alt="" coords="5,5,188,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_aef1440f4cdb4f7e74b9f6a9cbadf0294.html#aef1440f4cdb4f7e74b9f6a9cbadf0294" title="The two contexts every method shares, one shader swapped in per call." alt="" coords="236,5,423,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="188,23,222,23,222,28,188,28"/>
+</map>

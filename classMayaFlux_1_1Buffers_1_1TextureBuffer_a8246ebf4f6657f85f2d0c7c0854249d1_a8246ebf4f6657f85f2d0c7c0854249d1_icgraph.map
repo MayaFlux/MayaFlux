@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::TextureBuffer::setup_rendering" name="MayaFlux::Buffers::TextureBuffer::setup_rendering">
+<area shape="rect" id="Node000001" title="Setup rendering with RenderProcessor." alt="" coords="255,77,408,132"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1Vision_1_1VisionWorkflow_a4f3ca2f99963e36a9f19241e3ab27441.html#a4f3ca2f99963e36a9f19241e3ab27441" title="process_to_buffer() with a matrix the caller made and configured, such as its extractor&#39;s sizes,..." alt="" coords="13,5,199,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="241,79,191,63,193,58,243,74"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1TextBuffer_a20bb5344ba60f4af317a00cde144f63a.html#a20bb5344ba60f4af317a00cde144f63a" title="Delegates to TextureBuffer::setup_rendering, then enables streaming mode on the TextureProcessor and ..." alt="" coords="5,85,207,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="241,107,207,107,207,102,241,102"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1TextureArrayBuffer_a9501e9ea05d88ab230cb6491a9e03470.html#a9501e9ea05d88ab230cb6491a9e03470" title="Setup rendering with RenderProcessor." alt="" coords="30,149,182,204"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="243,136,183,155,181,150,241,131"/>
+</map>

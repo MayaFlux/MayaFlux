@@ -1,0 +1,21 @@
+<map id="MayaFlux::Journal::Archivist::scribe" name="MayaFlux::Journal::Archivist::scribe">
+<area shape="rect" id="Node000001" title="Log a message with the specified severity, component, and context." alt="" coords="435,197,581,237"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Journal_ac2862b5bb30393a889849c00d10cae9b.html#ac2862b5bb30393a889849c00d10cae9b" title="fmt&#45;style overload of error()." alt="" coords="240,5,387,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="487,186,445,123,417,89,385,59,367,48,370,43,388,55,421,86,449,120,491,184"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Journal_a7d07a72077601fd2b765ca2bdeff417e.html#a7d07a72077601fd2b765ca2bdeff417e" title="Log an error message and optionally throw an exception." alt="" coords="240,69,387,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="473,190,432,157,385,124,363,112,366,107,388,119,436,152,477,186"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Journal_a5398860cf404cbc127377393ab02096f.html#a5398860cf404cbc127377393ab02096f" title="Catch and log an exception, then rethrow it." alt="" coords="240,133,387,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="432,195,374,176,376,171,434,190"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Journal_a6c85d922f7a619e7bdb8fba69781cf6e.html#a6c85d922f7a619e7bdb8fba69781cf6e" title="fmt&#45;style overload of fatal()." alt="" coords="240,197,387,237"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="421,220,387,220,387,215,421,215"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Journal_aaa1e8235364258088bc0cdb575f41674.html#aaa1e8235364258088bc0cdb575f41674" title="Log a fatal message and abort the program." alt="" coords="240,261,387,301"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="434,244,376,264,374,259,432,239"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Journal_a2854c15df77e08d40078de9acebe411e.html#a2854c15df77e08d40078de9acebe411e" title="printf&#45;style overload of scribe()." alt="" coords="240,325,387,365"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="477,248,436,282,388,316,366,328,363,323,385,311,432,278,473,244"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_1_1Journal_accd3a5b2fc52896b3d9a0fb22448b3ab.html#accd3a5b2fc52896b3d9a0fb22448b3ab" title="Log a message with the specified severity, component, and context." alt="" coords="240,389,387,429"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="491,251,449,315,421,349,388,379,370,391,367,387,385,375,417,345,445,312,487,248"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Journal_a476f6cea5798ab5bc457b722cbc99d72.html#a476f6cea5798ab5bc457b722cbc99d72" title="fmt&#45;style overload of error_rethrow()." alt="" coords="25,101,172,141"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="226,143,172,135,172,130,227,138"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1IO_1_1IOManager_af982f9c79ae012eccf9dc9c726bc754c.html#af982f9c79ae012eccf9dc9c726bc754c" title="Construct IOManager and register the IOService into BackendRegistry." alt="" coords="5,165,192,205"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="227,169,193,174,192,169,226,164"/>
+</map>

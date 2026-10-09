@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::VolumeFieldProcessor::size_dispatch" name="MayaFlux::Buffers::VolumeFieldProcessor::size_dispatch">
+<area shape="rect" id="Node000001" title="Size the manual dispatch to cover the lattice." alt="" coords="219,5,384,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VolumeFieldProcessor_a85ff1d8555f41d205e6cf9d622cf2b74.html#a85ff1d8555f41d205e6cf9d622cf2b74" title="Cache and validate the volume, size the dispatch, write the shared parameter prefix,..." alt="" coords="5,5,171,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="205,35,171,35,171,30,205,30"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kinesis::Vision::VisionPass::begin" name="MayaFlux::Kinesis::Vision::VisionPass::begin">
+<area shape="rect" id="Node000001" title="Reset the walk band for a fresh run." alt="" coords="5,53,188,93"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1VisionPass_afb2117a1219245fe282794effe0e7ec2.html#afb2117a1219245fe282794effe0e7ec2" title="Discard retained cross&#45;run state." alt="" coords="236,5,385,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="188,53,222,46,223,52,189,58"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1VisionPass_ad2fd007b41c7edd136a0154bcf34a539.html#ad2fd007b41c7edd136a0154bcf34a539" title=" " alt="" coords="236,84,385,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="189,87,223,93,222,98,188,92"/>
+</map>

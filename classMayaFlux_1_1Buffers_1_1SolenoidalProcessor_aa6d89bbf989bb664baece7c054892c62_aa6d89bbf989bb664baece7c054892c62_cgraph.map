@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::SolenoidalProcessor::SolenoidalProcessor" name="MayaFlux::Buffers::SolenoidalProcessor::SolenoidalProcessor">
+<area shape="rect" id="Node000001" title="Construct a gradient subtraction stage from a generated ShaderSpec." alt="" coords="5,5,167,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VolumeFieldProcessor_ae3eb55e4157368419502814690bdcbb4.html#ae3eb55e4157368419502814690bdcbb4" title="Register a field to swap after each dispatch." alt="" coords="215,5,380,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="167,30,201,30,201,35,167,35"/>
+</map>

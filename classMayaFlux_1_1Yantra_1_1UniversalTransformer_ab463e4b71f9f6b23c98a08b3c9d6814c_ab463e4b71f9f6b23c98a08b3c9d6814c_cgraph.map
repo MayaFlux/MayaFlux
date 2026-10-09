@@ -1,0 +1,5 @@
+<map id="MayaFlux::Yantra::UniversalTransformer::get_name" name="MayaFlux::Yantra::UniversalTransformer::get_name">
+<area shape="rect" id="Node000001" title="Gets human&#45;readable name for this transformer." alt="" coords="5,5,209,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1UniversalTransformer_ac88f2cf714bb1fe8055dd4fa4ccbfdaa.html#ac88f2cf714bb1fe8055dd4fa4ccbfdaa" title="Get transformer&#45;specific name (derived classes override this)" alt="" coords="257,5,515,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="209,23,244,23,244,28,209,28"/>
+</map>

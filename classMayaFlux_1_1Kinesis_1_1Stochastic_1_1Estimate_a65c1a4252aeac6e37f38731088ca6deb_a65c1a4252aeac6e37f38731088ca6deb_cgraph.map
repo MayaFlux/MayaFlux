@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::Stochastic::Estimate::set_window" name="MayaFlux::Kinesis::Stochastic::Estimate::set_window">
+<area shape="rect" id="Node000001" title="Sets the window size used by windowed models." alt="" coords="5,5,160,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Memory_1_1HistoryBuffer_a0b1432247ff72f19a4124869c216b323.html#a0b1432247ff72f19a4124869c216b323" title="Resize buffer capacity." alt="" coords="208,13,411,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="160,30,194,30,194,35,160,35"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::VKCommandManager::end_single_time_commands" name="MayaFlux::Core::VKCommandManager::end_single_time_commands">
+<area shape="rect" id="Node000001" title="End and submit single&#45;time command." alt="" coords="5,5,221,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VKCommandManager_a59f7b69e5c3f53d77c1c5e8f2e206d89.html#a59f7b69e5c3f53d77c1c5e8f2e206d89" title="Free a command buffer back to the pool." alt="" coords="269,13,500,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="222,30,256,30,256,35,222,35"/>
+</map>

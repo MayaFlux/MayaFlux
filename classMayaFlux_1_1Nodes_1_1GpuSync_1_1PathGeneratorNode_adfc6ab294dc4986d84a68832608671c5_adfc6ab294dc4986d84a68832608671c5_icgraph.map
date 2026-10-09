@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::GpuSync::PathGeneratorNode::regenerate_segment_range" name="MayaFlux::Nodes::GpuSync::PathGeneratorNode::regenerate_segment_range">
+<area shape="rect" id="Node000001" title=" " alt="" coords="605,5,841,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PathGeneratorNode_a3313b74451cb1153fa66e705c0bbffbc.html#a3313b74451cb1153fa66e705c0bbffbc" title=" " alt="" coords="321,5,557,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="591,35,558,35,558,30,591,30"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PathGeneratorNode_a0bb983c3a14dd53e111349bc461d1250.html#a0bb983c3a14dd53e111349bc461d1250" title="Compute frame &#45; generates interpolated vertices from control points." alt="" coords="5,13,273,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="307,35,273,35,273,30,307,30"/>
+</map>

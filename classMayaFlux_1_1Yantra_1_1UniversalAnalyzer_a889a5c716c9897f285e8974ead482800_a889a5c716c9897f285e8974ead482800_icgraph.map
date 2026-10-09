@@ -1,0 +1,7 @@
+<map id="MayaFlux::Yantra::UniversalAnalyzer::set_analysis_granularity" name="MayaFlux::Yantra::UniversalAnalyzer::set_analysis_granularity">
+<area shape="rect" id="Node000001" title=" " alt="" coords="263,37,509,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1EnergyAnalyzer_a3a0bca6b4a164414e3186514dccaccca.html#a3a0bca6b4a164414e3186514dccaccca" title="Construct and configure an energy analyzer in one step." alt="" coords="15,5,205,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="248,44,204,39,205,34,249,39"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1StatisticalAnalyzer_a55a1913cc01ebaffb670dc053b97e482.html#a55a1913cc01ebaffb670dc053b97e482" title="Construct and configure a statistical analyzer in one step." alt="" coords="5,69,215,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="249,76,215,80,214,75,249,71"/>
+</map>

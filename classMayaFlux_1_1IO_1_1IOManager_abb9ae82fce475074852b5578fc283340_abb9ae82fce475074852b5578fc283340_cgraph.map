@@ -1,0 +1,5 @@
+<map id="MayaFlux::IO::IOManager::hook_video_container_to_buffer" name="MayaFlux::IO::IOManager::hook_video_container_to_buffer">
+<area shape="rect" id="Node000001" title="Wire a video container to the graphics buffer system." alt="" coords="5,5,192,60"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1IO_1_1Detail_adb36a19ae4e74fa8cf8660b9fde7ed21.html#adb36a19ae4e74fa8cf8660b9fde7ed21" title=" " alt="" coords="240,5,423,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="192,30,226,30,226,35,192,35"/>
+</map>

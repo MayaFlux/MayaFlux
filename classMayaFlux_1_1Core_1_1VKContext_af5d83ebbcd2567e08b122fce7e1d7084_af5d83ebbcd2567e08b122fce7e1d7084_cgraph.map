@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::VKContext::get_queue_families" name="MayaFlux::Core::VKContext::get_queue_families">
+<area shape="rect" id="Node000001" title="Get queue family indices." alt="" coords="5,5,205,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VKDevice_a30675b254cb8f094551f07cbf07933d9.html#a30675b254cb8f094551f07cbf07933d9" title="Get queue family indices." alt="" coords="253,5,448,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="205,23,240,23,240,28,205,28"/>
+</map>

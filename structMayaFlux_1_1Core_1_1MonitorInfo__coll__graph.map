@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::MonitorInfo" name="MayaFlux::Core::MonitorInfo">
+<area shape="rect" id="Node000001" title="Information about a physical display." alt="" coords="5,233,204,379"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Core_1_1VideoMode.html" title="Monitor video mode." alt="" coords="6,5,203,171"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="107,171,107,217,102,217,102,171"/>
+</map>

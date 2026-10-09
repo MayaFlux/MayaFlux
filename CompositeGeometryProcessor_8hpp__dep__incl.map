@@ -1,0 +1,22 @@
+<map id="CompositeGeometryProcessor.hpp" name="CompositeGeometryProcessor.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="236,5,483,31"/>
+<area shape="rect" id="Node000002" href="$CompositeGeometryBuffer_8hpp.html" title=" " alt="" coords="377,79,600,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="394,35,469,76,466,81,391,40"/>
+<area shape="rect" id="Node000004" href="$CompositeGeometryProcessor_8cpp.html" title=" " alt="" coords="5,152,252,177"/>
+<area shape="poly" id="edge10_Node000001_Node000004" title=" " alt="" coords="330,41,149,154,146,149,328,36"/>
+<area shape="rect" id="Node000003" href="$CompositeGeometryBuffer_8cpp.html" title=" " alt="" coords="276,152,499,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="463,114,405,154,402,150,460,110"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="418,109,187,155,186,149,417,104"/>
+<area shape="rect" id="Node000005" href="$Convenience_8hpp.html" title="Everyday headers and namespace imports for user code." alt="" coords="523,152,657,177"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="518,110,575,150,572,154,515,114"/>
+<area shape="rect" id="Node000008" href="$CreatorClasses_8hpp.html" title=" " alt="" coords="681,152,829,177"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="546,105,713,149,711,154,544,110"/>
+<area shape="rect" id="Node000010" href="$PipelineGraphicsData_8cpp.html" title=" " alt="" coords="854,152,1043,177"/>
+<area shape="poly" id="edge9_Node000002_Node000010" title=" " alt="" coords="576,103,875,149,874,155,576,109"/>
+<area shape="rect" id="Node000006" href="$MayaFlux_8hpp.html" title="Single include for the user facing API." alt="" coords="533,225,647,251"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="593,191,593,225,587,225,587,191"/>
+<area shape="rect" id="Node000007" href="$LiveAid_8hpp.html" title=" " alt="" coords="541,299,639,324"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="593,264,593,299,587,299,587,264"/>
+<area shape="rect" id="Node000009" href="$Creator_8cpp.html" title=" " alt="" coords="707,225,803,251"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="758,191,758,225,753,225,753,191"/>
+</map>

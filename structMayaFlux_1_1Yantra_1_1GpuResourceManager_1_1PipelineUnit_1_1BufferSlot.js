@@ -1,0 +1,4 @@
+var structMayaFlux_1_1Yantra_1_1GpuResourceManager_1_1PipelineUnit_1_1BufferSlot =
+[
+    [ "allocated_bytes", "structMayaFlux_1_1Yantra_1_1GpuResourceManager_1_1PipelineUnit_1_1BufferSlot_a36a546b3ebb349d68515f89cad61cae5.html#a36a546b3ebb349d68515f89cad61cae5", null ]
+];

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::BufferManager::get_buffer_size" name="MayaFlux::Buffers::BufferManager::get_buffer_size">
+<area shape="rect" id="Node000001" title="Gets the buffer size for a token." alt="" coords="251,37,476,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1SamplingPipeline_a79b622257fc33fc7d37a3a7d9a5f0c86.html#a79b622257fc33fc7d37a3a7d9a5f0c86" title="Finalize configuration and start processing for a bounded duration." alt="" coords="5,5,203,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="237,44,203,40,203,35,237,39"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kriya_1_1SamplingPipeline_aee8de50896bfcb95689a97714673118a.html#aee8de50896bfcb95689a97714673118a" title="Stop and restart pipeline execution for a bounded duration." alt="" coords="5,69,203,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="237,76,203,80,203,75,237,70"/>
+</map>

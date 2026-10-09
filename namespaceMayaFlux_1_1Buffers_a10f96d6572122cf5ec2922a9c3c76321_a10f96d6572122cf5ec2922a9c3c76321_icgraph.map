@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::extract_multiple_samples" name="MayaFlux::Buffers::extract_multiple_samples">
+<area shape="rect" id="Node000001" title="Extract multiple samples from a node into a vector." alt="" coords="436,53,627,93"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1PlotProcessor_ae05034f7f44104b2c78de61af091fd77.html#ae05034f7f44104b2c78de61af091fd77" title=" " alt="" coords="221,5,388,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="422,56,388,50,389,45,423,51"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1NodeSourceProcessor_abefe4bc1e3c19335b91708c2d4deec41.html#abefe4bc1e3c19335b91708c2d4deec41" title="Gets a batch of data from the node." alt="" coords="223,84,386,139"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="423,94,387,100,386,95,422,89"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1PlotProcessor_abe66f2b7082b18c7d9aa1320ebcb66eb.html#abe66f2b7082b18c7d9aa1320ebcb66eb" title="Acquire data from all bound sources and write into the container." alt="" coords="5,13,173,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="208,35,173,35,173,30,208,30"/>
+</map>

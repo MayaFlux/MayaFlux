@@ -1,0 +1,21 @@
+<map id="MayaFlux::Registry::BackendRegistry::unregister_service" name="MayaFlux::Registry::BackendRegistry::unregister_service">
+<area shape="rect" id="Node000001" title="Unregister a service." alt="" coords="619,190,831,245"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1VideoFileReader_aa7942958f72f9cc0f0549ffd9fdadd40.html#aa7942958f72f9cc0f0549ffd9fdadd40" title="Close the currently open file." alt="" coords="330,69,553,109"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="674,184,625,152,570,124,537,112,538,107,572,119,628,148,677,180"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1IO_1_1IOManager_ab42d3a6d5feeacaf3012eb79c8c8da6e.html#ab42d3a6d5feeacaf3012eb79c8c8da6e" title="Unregisters IOService, releases all owned readers, clears stored buffers." alt="" coords="348,133,535,173"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="605,193,530,176,531,171,606,188"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Core_1_1AudioSubsystem_a154604a3069bdf0c84b973ca45240bf3.html#a154604a3069bdf0c84b973ca45240bf3" title="Shutdown and cleanup audio resources." alt="" coords="321,197,562,237"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="605,220,562,220,562,215,605,215"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Core_1_1NetworkSubsystem_a0464d61f9752a0848157b14c1ff0b37d.html#a0464d61f9752a0848157b14c1ff0b37d" title="Shutdown and cleanup subsystem resources." alt="" coords="312,261,571,301"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="606,247,531,264,530,259,605,242"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1IO_1_1FFmpegCameraReader_a87be3d5a9e28a5e084ecba65d6c5385d.html#a87be3d5a9e28a5e084ecba65d6c5385d" title=" " alt="" coords="323,325,560,365"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="677,255,628,287,572,316,538,328,537,323,570,311,625,282,674,250"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1VideoFileReader_a4fde32d3018bb43d67972a0ff5fc0965.html#a4fde32d3018bb43d67972a0ff5fc0965" title="Open a file for reading." alt="" coords="23,5,246,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="331,69,230,48,232,43,332,64"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1VideoFileReader_af01d799de5c05dfbc69d9de7fcf36721.html#af01d799de5c05dfbc69d9de7fcf36721" title=" " alt="" coords="23,69,246,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="316,92,246,92,246,87,316,87"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1IO_1_1IOManager_ad92be69cbeb3eaa2a270f7dd3ecd3b16.html#ad92be69cbeb3eaa2a270f7dd3ecd3b16" title="Calls shutdown() if it has not already run." alt="" coords="41,133,228,173"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="334,156,228,156,228,151,334,151"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Core_1_1NetworkSubsystem_a381f631b4f9b5ac70877bd7c8de38a2f.html#a381f631b4f9b5ac70877bd7c8de38a2f" title=" " alt="" coords="5,261,264,301"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="299,284,264,284,264,279,299,279"/>
+</map>

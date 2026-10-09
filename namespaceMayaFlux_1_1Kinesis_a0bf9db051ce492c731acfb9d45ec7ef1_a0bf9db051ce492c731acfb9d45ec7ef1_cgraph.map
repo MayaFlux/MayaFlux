@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::snap" name="MayaFlux::Kinesis::snap">
+<area shape="rect" id="Node000001" title="Snap x to the nearest multiple of step within [lo, hi]." alt="" coords="5,5,185,31"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a31247312c35641202ffc7008252f088d.html#a31247312c35641202ffc7008252f088d" title="Round x to the nearest multiple of step." alt="" coords="233,5,413,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="186,15,220,15,220,21,186,21"/>
+</map>

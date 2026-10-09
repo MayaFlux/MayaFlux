@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kriya::BroadcastAwaiter&lt; T &gt;" name="MayaFlux::Kriya::BroadcastAwaiter&lt; T &gt;">
+<area shape="rect" id="Node000001" title="Awaiter for suspending a coroutine until a BroadcastSource&lt;T&gt; fires." alt="" coords="87,293,280,593"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1EventAwaiter.html" title="Abstract base for all event&#45;driven awaiters." alt="" coords="5,5,220,231"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="143,244,153,292,148,294,137,245"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="244,85,267,151"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="252,152,235,231,225,278,220,277,230,230,247,151"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Node::exclude_output_from_graph" name="MayaFlux::Nodes::Node::exclude_output_from_graph">
+<area shape="rect" id="Node000001" title="Exclude this node&#39;s output from the graph it is registered in." alt="" coords="5,37,217,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Nodes_a2b661b58f860423fa6cf1d12c5accbd8.html#a2b661b58f860423fa6cf1d12c5accbd8" title="Atomically adds a flag to a node state." alt="" coords="265,5,453,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="217,41,252,37,252,42,218,46"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Nodes_a88c692052149167c04433fa84013bf15.html#a88c692052149167c04433fa84013bf15" title="Atomically removes a flag from a node state." alt="" coords="265,69,453,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="218,68,252,73,252,78,217,74"/>
+</map>

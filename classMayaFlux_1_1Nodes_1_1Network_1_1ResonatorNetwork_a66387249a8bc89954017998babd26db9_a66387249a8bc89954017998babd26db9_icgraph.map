@@ -1,0 +1,14 @@
+<map id="MayaFlux::Nodes::Network::ResonatorNetwork::set_frequency" name="MayaFlux::Nodes::Network::ResonatorNetwork::set_frequency">
+<area shape="rect" id="Node000001" title="Set centre frequency of a single resonator and recompute its coefficients." alt="" coords="1051,45,1249,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ResonatorNetwork_aed915868aaa9e030e2fe8ead8cfbdbe9.html#aed915868aaa9e030e2fe8ead8cfbdbe9" title="Apply ONE_TO_ONE values from a source network to the named parameter." alt="" coords="557,5,756,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1037,66,756,43,757,38,1037,61"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ResonatorNetwork_a89422384f591cf7be40324957a734cba.html#a89422384f591cf7be40324957a734cba" title="Set centre frequency of all resonators uniformly." alt="" coords="804,77,1003,132"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="1038,90,1003,94,1003,89,1037,85"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ResonatorNetwork_aee31c5dd30c5a3f3dd7ad55c8ee2979e.html#aee31c5dd30c5a3f3dd7ad55c8ee2979e" title="Apply all registered parameter mappings for the current cycle." alt="" coords="305,45,509,100"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="544,53,510,59,509,54,543,48"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ResonatorNetwork_ab3fa42f883efda46b4961b24c3654c2f.html#ab3fa42f883efda46b4961b24c3654c2f" title="Processes num_samples through all resonators and accumulates output." alt="" coords="5,53,257,93"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="291,75,257,75,257,70,291,70"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ResonatorNetwork_a82469548f9169caa240ef3e7c8beabbd.html#a82469548f9169caa240ef3e7c8beabbd" title="Apply a BROADCAST value to the named parameter across all resonators." alt="" coords="557,84,756,139"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="790,110,756,111,756,106,790,105"/>
+<area shape="poly" id="edge6_Node000006_Node000003" title=" " alt="" coords="543,96,509,91,510,86,544,91"/>
+</map>

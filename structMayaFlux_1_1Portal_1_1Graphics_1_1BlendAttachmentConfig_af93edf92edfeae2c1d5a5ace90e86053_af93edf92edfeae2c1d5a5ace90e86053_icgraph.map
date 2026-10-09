@@ -1,0 +1,7 @@
+<map id="MayaFlux::Portal::Graphics::BlendAttachmentConfig::alpha_blend" name="MayaFlux::Portal::Graphics::BlendAttachmentConfig::alpha_blend">
+<area shape="rect" id="Node000001" title="Create standard alpha blending configuration." alt="" coords="443,5,640,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a53201a69676fbc7e095aa77e7d64f200.html#a53201a69676fbc7e095aa77e7d64f200" title="Enable standard alpha blending (src_alpha, one_minus_src_alpha)." alt="" coords="212,5,395,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="429,35,395,35,395,30,429,30"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_ad55f4f22d20ccb897fe5338c37220495.html#ad55f4f22d20ccb897fe5338c37220495" title="Toggle standard alpha blending." alt="" coords="5,5,164,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="198,35,164,35,164,30,198,30"/>
+</map>

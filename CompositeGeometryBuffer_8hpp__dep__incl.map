@@ -1,0 +1,19 @@
+<map id="CompositeGeometryBuffer.hpp" name="CompositeGeometryBuffer.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="479,5,701,31"/>
+<area shape="rect" id="Node000002" href="$CompositeGeometryBuffer_8cpp.html" title=" " alt="" coords="5,79,228,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="501,35,193,81,193,76,500,30"/>
+<area shape="rect" id="Node000003" href="$CompositeGeometryProcessor_8cpp.html" title=" " alt="" coords="252,79,499,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="543,37,411,81,409,76,542,32"/>
+<area shape="rect" id="Node000004" href="$Convenience_8hpp.html" title="Everyday headers and namespace imports for user code." alt="" coords="523,79,657,104"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="593,44,593,79,587,79,587,44"/>
+<area shape="rect" id="Node000007" href="$CreatorClasses_8hpp.html" title=" " alt="" coords="681,79,829,104"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="630,34,729,76,727,81,628,38"/>
+<area shape="rect" id="Node000009" href="$PipelineGraphicsData_8cpp.html" title=" " alt="" coords="854,79,1043,104"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="662,31,891,76,890,81,661,36"/>
+<area shape="rect" id="Node000005" href="$MayaFlux_8hpp.html" title="Single include for the user facing API." alt="" coords="533,152,647,177"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="593,118,593,152,587,152,587,118"/>
+<area shape="rect" id="Node000006" href="$LiveAid_8hpp.html" title=" " alt="" coords="541,225,639,251"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="593,191,593,225,587,225,587,191"/>
+<area shape="rect" id="Node000008" href="$Creator_8cpp.html" title=" " alt="" coords="707,152,803,177"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="758,118,758,152,753,152,753,118"/>
+</map>

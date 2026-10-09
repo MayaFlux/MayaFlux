@@ -1,0 +1,15 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="Node000000" title=" " alt="" coords="5,173,124,198"/>
+<area shape="rect" id="Node000001" href="$structMayaFlux_1_1Kakshya_1_1is__data__variant__element.html" title="Type traits to determine if a type is a valid DataVariant element." alt="" coords="172,5,393,45"/>
+<area shape="poly" id="edge338_Node000000_Node000001" title=" " alt="" coords="78,159,115,107,141,79,171,55,193,43,196,48,173,60,145,83,119,110,82,162"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Reflect_1_1is__optional.html" title=" " alt="" coords="209,69,356,109"/>
+<area shape="poly" id="edge339_Node000000_Node000002" title=" " alt="" coords="94,163,130,140,171,119,208,105,210,110,173,124,132,145,97,167"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Reflect_1_1is__string__map.html" title=" " alt="" coords="207,133,358,173"/>
+<area shape="poly" id="edge340_Node000000_Node000003" title=" " alt="" coords="137,172,207,162,208,167,138,177"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Reflect_1_1is__vector.html" title=" " alt="" coords="209,197,356,237"/>
+<area shape="poly" id="edge341_Node000000_Node000004" title=" " alt="" coords="138,193,210,204,209,209,137,199"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Yantra_1_1is__IO.html" title="Helper to detect if a type is an Datum." alt="" coords="206,261,359,301"/>
+<area shape="poly" id="edge342_Node000000_Node000005" title=" " alt="" coords="97,203,132,226,173,247,207,259,205,264,171,252,130,231,94,208"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Yantra_1_1is__eigen__matrix.html" title=" " alt="" coords="206,325,359,365"/>
+<area shape="poly" id="edge343_Node000000_Node000006" title=" " alt="" coords="82,208,119,261,145,288,173,311,207,327,205,332,171,316,141,292,115,264,78,211"/>
+</map>

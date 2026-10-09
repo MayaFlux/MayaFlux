@@ -1,0 +1,43 @@
+<map id="MayaFlux::Yantra::VisionGpuContexts" name="MayaFlux::Yantra::VisionGpuContexts">
+<area shape="rect" id="Node000001" title="Fixed set of TextureExecutionContexts covering every GPU&#45;implemented VisionOp shape." alt="" coords="641,3133,815,3293"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1TextureExecutionContext.html" title="GpuExecutionContext specialisation for image compute shaders." alt="" coords="315,2208,525,2997"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="376,2997,394,3055,424,3108,442,3130,464,3148,515,3176,571,3194,625,3205,624,3210,569,3199,513,3181,461,3152,439,3133,419,3111,389,3057,370,2998"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1GpuExecutionContext.html" title=" " alt="" coords="118,1779,341,2048"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="273,2060,318,2224,313,2225,267,2062"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore.html" title="Non&#45;template base that owns all type&#45;independent GPU dispatch logic." alt="" coords="205,428,451,1241"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="346,1255,337,1464,327,1569,312,1672,300,1726,284,1779,279,1778,295,1725,307,1672,322,1569,332,1463,340,1255"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Yantra_1_1GpuExecutionContext.html" title="Type&#45;parameterised shell over GpuDispatchCore." alt="" coords="5,1334,245,1574"/>
+<area shape="poly" id="edge7_Node000007_Node000004" title=" " alt="" coords="203,1225,167,1334,162,1333,198,1224"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1GpuResourceManager.html" title="Encapsulates all Vulkan resource lifecycle behind Portal facades." alt="" coords="214,5,442,365"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="331,366,331,411,325,411,325,366"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Portal_1_1Graphics_1_1GpuComputeConfig.html" title="Plain&#45;data description of the compute shader to dispatch." alt="" coords="483,115,672,255"/>
+<area shape="poly" id="edge21_Node000001_Node000006" title=" " alt="" coords="583,255,590,510,595,833,595,2604,590,2803,596,2889,620,2997,643,3059,672,3118,667,3120,638,3061,615,2998,591,2890,584,2803,589,2604,589,833,585,510,577,256"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="541,257,508,321,476,390,460,430,455,428,471,388,503,319,536,254"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="81,1588,78,1630,84,1671,104,1726,132,1777,127,1780,99,1728,79,1673,73,1630,76,1587"/>
+<area shape="rect" id="Node000008" href="$structMayaFlux_1_1Portal_1_1Graphics_1_1ImageCacheEntry.html" title="Image retained by the producing owner." alt="" coords="365,1873,555,1953"/>
+<area shape="poly" id="edge8_Node000002_Node000008" title=" " alt="" coords="460,1954,447,2192,441,2191,455,1953"/>
+<area shape="rect" id="Node000009" href="$structMayaFlux_1_1Portal_1_1Graphics_1_1ImageKey.html" title="Immutable properties that determine whether an image can be reused." alt="" coords="365,1364,555,1544"/>
+<area shape="poly" id="edge9_Node000008_Node000009" title=" " alt="" coords="463,1544,463,1857,457,1857,457,1544"/>
+<area shape="rect" id="Node000010" href="$structMayaFlux_1_1Yantra_1_1FlowState.html" title="Cross&#45;run state of the flow context." alt="" coords="629,2470,827,2735"/>
+<area shape="poly" id="edge10_Node000001_Node000010" title=" " alt="" coords="731,2736,731,3117,725,3117,725,2736"/>
+<area shape="rect" id="Node000011" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1PyramidLayout.html" title="Placement of every pyramid level in a single atlas." alt="" coords="639,1833,799,1993"/>
+<area shape="poly" id="edge11_Node000010_Node000011" title=" " alt="" coords="722,1993,729,2454,723,2454,717,1993"/>
+<area shape="rect" id="Node000012" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1VisionPass.html" title=" " alt="" coords="851,2378,1011,2827"/>
+<area shape="poly" id="edge12_Node000001_Node000012" title=" " alt="" coords="906,2828,892,2898,873,2971,848,3042,818,3111,813,3120,808,3118,814,3108,843,3040,867,2969,887,2897,901,2827"/>
+<area shape="rect" id="Node000013" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1VisionSequence.html" title="Ordered VisionSteps and the backend chosen to execute them." alt="" coords="804,1404,969,1504"/>
+<area shape="poly" id="edge13_Node000012_Node000013" title=" " alt="" coords="882,1504,871,1593,863,1696,853,1913,855,2008,863,2130,874,2246,890,2361,885,2362,869,2247,857,2131,850,2009,848,1913,857,1696,866,1593,877,1504"/>
+<area shape="rect" id="Node000018" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1VisionPass.html" title="State threaded through one execution of a VisionSequence." alt="" coords="949,1696,1091,2131"/>
+<area shape="poly" id="edge19_Node000018_Node000013" title=" " alt="" coords="903,1503,955,1679,950,1681,898,1505"/>
+<area shape="rect" id="Node000014" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1VisionResult.html" title="Result of executing a VisionSequence on one frame." alt="" coords="1013,1304,1160,1604"/>
+<area shape="poly" id="edge14_Node000012_Node000014" title=" " alt="" coords="1148,1603,1168,1668,1185,1739,1198,1814,1204,1893,1202,1971,1189,2047,1164,2120,1146,2154,1123,2186,1112,2196,1099,2201,1074,2200,1049,2198,1037,2202,1026,2210,998,2243,977,2281,960,2321,947,2363,942,2361,955,2319,972,2278,994,2240,1022,2206,1035,2197,1048,2193,1074,2195,1099,2195,1109,2192,1119,2182,1141,2151,1159,2117,1184,2046,1197,1970,1199,1893,1193,1815,1180,1740,1163,1669,1143,1605"/>
+<area shape="poly" id="edge20_Node000018_Node000014" title=" " alt="" coords="1068,1605,1057,1680,1051,1679,1062,1604"/>
+<area shape="rect" id="Node000015" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1BufferOutputs.html" title="Live device views of the GPU&#45;resident export buffers, one named slot per exporting op,..." alt="" coords="900,775,1052,895"/>
+<area shape="poly" id="edge15_Node000014_Node000015" title=" " alt="" coords="984,895,1006,1068,1022,1174,1041,1279,1043,1288,1038,1289,1036,1281,1016,1175,1000,1069,979,895"/>
+<area shape="rect" id="Node000016" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1ContoursBufferView.html" title="Live device view of FindContours&#39; traced contours, when FindContoursParams::export_contours_buffer is..." alt="" coords="881,105,1071,265"/>
+<area shape="poly" id="edge16_Node000015_Node000016" title=" " alt="" coords="979,266,979,758,973,758,973,266"/>
+<area shape="rect" id="Node000017" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1ImageOutputs.html" title="One image slot per VisionOp that produces an image, populated only for whichever of these ops ran in ..." alt="" coords="1076,695,1231,975"/>
+<area shape="poly" id="edge17_Node000014_Node000017" title=" " alt="" coords="1141,975,1107,1288,1102,1287,1136,974"/>
+<area shape="poly" id="edge18_Node000012_Node000018" title=" " alt="" coords="993,2145,962,2378,957,2377,987,2144"/>
+<area shape="rect" id="Node000019" href="$structMayaFlux_1_1Yantra_1_1VisionGpuContexts_1_1Suspension.html" title="Outstanding work at a deferred step, and the point to resume." alt="" coords="1035,2553,1215,2653"/>
+<area shape="poly" id="edge22_Node000001_Node000019" title=" " alt="" coords="1124,2653,1115,2724,1097,2813,1068,2908,1048,2955,1025,2999,985,3052,936,3097,883,3136,831,3167,828,3162,880,3131,932,3093,981,3048,1020,2996,1043,2953,1063,2907,1092,2812,1110,2723,1119,2652"/>
+</map>

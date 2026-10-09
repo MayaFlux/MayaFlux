@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Filters::Filter::build_input_history" name="MayaFlux::Nodes::Filters::Filter::build_input_history">
+<area shape="rect" id="Node000001" title="Builds input history from external context or internal accumulation." alt="" coords="5,5,200,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Filters_1_1Filter_ac0deee4838989b7c7066163cb1f33342.html#ac0deee4838989b7c7066163cb1f33342" title="Updates the input history buffer with a new sample." alt="" coords="248,5,431,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="200,23,234,23,234,28,200,28"/>
+</map>

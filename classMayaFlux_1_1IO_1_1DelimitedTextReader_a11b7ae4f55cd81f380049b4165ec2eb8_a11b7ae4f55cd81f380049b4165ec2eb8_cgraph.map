@@ -1,0 +1,21 @@
+<map id="MayaFlux::IO::DelimitedTextReader::read_composite" name="MayaFlux::IO::DelimitedTextReader::read_composite">
+<area shape="rect" id="Node000001" title="Consume all remaining records into one array." alt="" coords="5,181,212,221"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1DelimitedTextReader_a502ce5c32745cb3a3bc98df29df01e0c.html#a502ce5c32745cb3a3bc98df29df01e0c" title="Consume a bounded number of records." alt="" coords="260,181,467,221"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="212,198,246,198,246,203,212,203"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1DelimitedTextReader_ac39539682276d3ad0fb9d687171f7693.html#ac39539682276d3ad0fb9d687171f7693" title=" " alt="" coords="515,85,721,125"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="408,178,514,134,535,127,537,132,516,139,410,183"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1IO_1_1DelimitedTextReader_a7f9aa0e4a241730a86859705078023f9.html#a7f9aa0e4a241730a86859705078023f9" title="Whether a file is currently open." alt="" coords="515,149,721,189"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="466,185,501,181,501,186,467,190"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1IO_1_1DelimitedTextReader_a6d0148f02bd669240cfc394061a288f3.html#a6d0148f02bd669240cfc394061a288f3" title=" " alt="" coords="515,213,721,253"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="467,211,501,215,501,221,466,216"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_a27600792242257eee9b70539967aba2b.html#a27600792242257eee9b70539967aba2b" title="Number of packed elements." alt="" coords="538,277,698,317"/>
+<area shape="poly" id="edge8_Node000002_Node000009" title=" " alt="" coords="410,218,516,262,537,270,535,275,514,267,408,223"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1CompositeInsertion_a95c83056d0680719d06f20d91b971281.html#a95c83056d0680719d06f20d91b971281" title="Append an empty element." alt="" coords="802,5,961,60"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="691,82,788,55,790,60,693,87"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1CompositeLayout_a72de478dc395559ec2bad49cfc499e62.html#a72de478dc395559ec2bad49cfc499e62" title="Declared fields in element order, with finalized byte offsets." alt="" coords="792,85,971,125"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="722,102,779,102,779,107,722,107"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_a35d329f829da02eb1e4a2993e19e721c.html#a35d329f829da02eb1e4a2993e19e721c" title="Finalized layout shared by all elements." alt="" coords="794,149,969,189"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="702,122,786,143,785,148,700,127"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Kakshya_1_1CompositeLayout_a04d7cccd3b3bb8e93f3909f55a970198.html#a04d7cccd3b3bb8e93f3909f55a970198" title="Bytes per packed element after finalization." alt="" coords="769,277,993,317"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="698,294,756,294,756,299,698,299"/>
+</map>

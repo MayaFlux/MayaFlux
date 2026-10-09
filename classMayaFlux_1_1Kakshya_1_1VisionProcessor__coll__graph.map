@@ -1,0 +1,25 @@
+<map id="MayaFlux::Kakshya::VisionProcessor" name="MayaFlux::Kakshya::VisionProcessor">
+<area shape="rect" id="Node000001" title="DataProcessor executing a Kinesis::Vision pipeline on pixel container data." alt="" coords="193,2591,347,2971"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1DataProcessor.html" title="Interface for processing data within SignalSourceContainer objects." alt="" coords="5,2148,156,2308"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="105,2321,137,2438,178,2566,196,2612,191,2614,173,2568,132,2440,100,2322"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1VisionSequence.html" title="Ordered VisionSteps and the backend chosen to execute them." alt="" coords="173,671,338,771"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="246,772,215,938,202,1043,197,1149,197,2229,200,2317,207,2406,231,2574,225,2575,202,2407,194,2317,191,2229,191,1149,197,1043,210,938,241,771"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1VisionPass.html" title=" " alt="" coords="333,1431,476,1865"/>
+<area shape="poly" id="edge5_Node000005_Node000003" title=" " alt="" coords="252,771,242,880,236,1029,238,1112,243,1198,254,1284,270,1367,292,1424,328,1500,323,1502,287,1426,265,1369,248,1285,238,1199,232,1112,231,1029,237,879,246,770"/>
+<area shape="rect" id="Node000010" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1VisionPass.html" title="State threaded through one execution of a VisionSequence." alt="" coords="357,933,500,1368"/>
+<area shape="poly" id="edge11_Node000010_Node000003" title=" " alt="" coords="278,770,354,957,349,959,273,772"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kinesis_1_1Vision_1_1VisionExecutor.html" title="Stateful executor for a VisionSequence." alt="" coords="265,1928,424,2528"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="307,2528,300,2575,295,2574,301,2528"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="385,1866,380,1912,375,1911,380,1865"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1VisionResult.html" title="Result of executing a VisionSequence on one frame." alt="" coords="475,571,622,871"/>
+<area shape="poly" id="edge13_Node000001_Node000006" title=" " alt="" coords="599,870,629,1005,638,1077,642,1149,642,2229,634,2304,613,2376,582,2445,543,2509,498,2569,451,2623,361,2710,357,2706,447,2619,494,2565,538,2506,577,2442,608,2374,629,2303,637,2229,637,1149,633,1078,623,1006,594,871"/>
+<area shape="poly" id="edge6_Node000005_Node000006" title=" " alt="" coords="556,871,554,981,549,1107,536,1239,514,1369,484,1471,479,1469,509,1367,530,1238,543,1106,549,981,550,871"/>
+<area shape="poly" id="edge12_Node000010_Node000006" title=" " alt="" coords="487,872,479,895,473,918,468,917,474,894,482,870"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1BufferOutputs.html" title="Live device views of the GPU&#45;resident export buffers, one named slot per exporting op,..." alt="" coords="363,308,515,428"/>
+<area shape="poly" id="edge7_Node000006_Node000007" title=" " alt="" coords="460,428,500,554,495,556,455,429"/>
+<area shape="rect" id="Node000008" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1ContoursBufferView.html" title="Live device view of FindContours&#39; traced contours, when FindContoursParams::export_contours_buffer is..." alt="" coords="344,5,535,165"/>
+<area shape="poly" id="edge8_Node000007_Node000008" title=" " alt="" coords="442,165,442,291,437,291,437,165"/>
+<area shape="rect" id="Node000009" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1ImageOutputs.html" title="One image slot per VisionOp that produces an image, populated only for whichever of these ops ran in ..." alt="" coords="539,228,694,508"/>
+<area shape="poly" id="edge9_Node000006_Node000009" title=" " alt="" coords="592,509,583,555,578,554,587,508"/>
+<area shape="poly" id="edge10_Node000005_Node000010" title=" " alt="" coords="420,1382,418,1431,412,1430,415,1382"/>
+</map>

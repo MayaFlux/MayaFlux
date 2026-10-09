@@ -1,0 +1,7 @@
+<map id="MayaFlux::Yantra::Vision::WorkflowContainerConfig" name="MayaFlux::Yantra::Vision::WorkflowContainerConfig">
+<area shape="rect" id="Node000001" title="What VisionWorkflow::process_to_live_container() runs: the stream to analyze, the query and extractio..." alt="" coords="90,268,277,388"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1VisionQuery.html" title="Composed query: which VisionIntents are active, and each active one&#39;s parameters." alt="" coords="5,5,175,205"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="134,205,155,252,150,254,130,207"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kakshya_1_1TextureCollectionSpec.html" title="Describes a TextureCollection so it can be built by designated initializer." alt="" coords="199,25,357,185"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="247,187,218,254,213,251,242,184"/>
+</map>

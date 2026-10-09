@@ -1,0 +1,12 @@
+<map id="MayaFlux::IO::VolumeReader::can_read" name="MayaFlux::IO::VolumeReader::can_read">
+<area shape="rect" id="Node000001" title="Check if a file can be read by this reader." alt="" coords="757,5,968,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1IOManager_a8b66f9c5953bf2df92a20c61835783f5.html#a8b66f9c5953bf2df92a20c61835783f5" title="Load a volume file into a newly constructed VolumeGridBuffer." alt="" coords="5,37,192,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="743,18,636,12,510,10,375,13,240,24,164,40,163,35,240,19,374,7,510,4,637,7,744,13"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1VolumeReader_a870f414ddeb0bf93dafdcabfc33160d3.html#a870f414ddeb0bf93dafdcabfc33160d3" title="Open a file for reading." alt="" coords="499,33,709,73"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="744,41,710,45,709,39,744,36"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1VolumeReader_ac7d1e975545d7a79d371af04e49fc1fc.html#ac7d1e975545d7a79d371af04e49fc1fc" title="Load every selected grid onto a caller&#45;supplied lattice." alt="" coords="240,33,451,73"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="485,56,451,56,451,51,485,51"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1IO_1_1VolumeReader_acb694bd5aa416bb2c8e96d869ccac0cd.html#acb694bd5aa416bb2c8e96d869ccac0cd" title="Load every selected grid from a file in one call." alt="" coords="240,97,451,137"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="510,79,427,100,426,95,509,74"/>
+<area shape="poly" id="edge5_Node000005_Node000002" title=" " alt="" coords="249,97,181,80,182,75,250,91"/>
+</map>

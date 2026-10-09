@@ -1,0 +1,15 @@
+<map id="MayaFlux::Buffers::DataReadProcessor::read_host_pixels" name="MayaFlux::Buffers::DataReadProcessor::read_host_pixels">
+<area shape="rect" id="Node000001" title="Read the host pixel data a TextureBuffer retains." alt="" coords="5,76,192,131"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1DataReadProcessor_a9012c3de1ca899657e942ffead7ecf09.html#a9012c3de1ca899657e942ffead7ecf09" title=" " alt="" coords="271,15,453,55"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="192,77,270,56,271,61,193,82"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kakshya_1_1ImageData_a7e26b6c00079d084e313532ca3e9fbe5.html#a7e26b6c00079d084e313532ca3e9fbe5" title="Build an ImageData from raw pixel bytes in format&#39;s layout." alt="" coords="274,83,450,123"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="192,101,260,101,260,106,192,106"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a1d702ea8bef8765e8895776bd67b0cc8.html#a1d702ea8bef8765e8895776bd67b0cc8" title="Get the number of color channels for a given format." alt="" coords="240,147,484,187"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="193,123,266,141,265,147,192,129"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1DataReadProcessor_ac97543df2d7d3e06c1a6c7b9d25e596a.html#ac97543df2d7d3e06c1a6c7b9d25e596a" title="Whether a read is armed, or its result has not been resolved yet." alt="" coords="532,5,700,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="453,32,518,31,518,36,453,37"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Kakshya_1_1ImageData_a2d6731e0d90bf2d2332d20554a1cd02b.html#a2d6731e0d90bf2d2332d20554a1cd02b" title="Allocate zeroed pixel storage of the variant format calls for." alt="" coords="537,85,695,125"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="450,101,523,102,523,107,450,106"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Kakshya_1_1ImageData_a21017cbe6ccc7ceec6b7fa9fb32e5aaf.html#a21017cbe6ccc7ceec6b7fa9fb32e5aaf" title="Number of pixel elements (not bytes), dispatched on variant." alt="" coords="748,85,947,125"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="695,102,734,102,734,107,695,107"/>
+</map>

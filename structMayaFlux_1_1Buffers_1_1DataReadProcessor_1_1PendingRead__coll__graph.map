@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::DataReadProcessor::PendingRead" name="MayaFlux::Buffers::DataReadProcessor::PendingRead">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,188,240,388"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Portal_1_1Graphics_1_1GpuBufferHandle.html" title="Non&#45;owning view of a GPU storage buffer produced by a compute path." alt="" coords="28,5,217,125"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="125,126,125,171,120,171,120,126"/>
+</map>

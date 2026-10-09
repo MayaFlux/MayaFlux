@@ -1,0 +1,19 @@
+<map id="MayaFlux::Buffers::ComputeMeshBuffer::setup_processors" name="MayaFlux::Buffers::ComputeMeshBuffer::setup_processors">
+<area shape="rect" id="Node000001" title="Setup processors with a processing token." alt="" coords="5,170,204,225"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1VertexLayout_a7b7a30b2a13cb2676713a352f298f607.html#a7b7a30b2a13cb2676713a352f298f607" title="Factory: layout for MeshVertex (position, color, weight, uv, normal, tangent)" alt="" coords="269,5,461,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="126,168,179,111,213,81,251,55,263,48,266,53,253,60,216,85,182,114,130,171"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a6cf409969c192851ab2cf7f0315d2a49.html#a6cf409969c192851ab2cf7f0315d2a49" title="Access the buffer&#39;s processing chain." alt="" coords="252,69,479,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="152,167,199,142,251,119,272,111,274,116,253,124,201,147,154,172"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a6e843b1ce9e90e2df2501d28e60eab52.html#a6e843b1ce9e90e2df2501d28e60eab52" title="Set the buffer&#39;s default processor." alt="" coords="285,134,445,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="204,181,271,172,272,177,205,186"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a93f1d139e1fc4ab7689f2a205bf76563.html#a93f1d139e1fc4ab7689f2a205bf76563" title="Replace the buffer&#39;s processing chain." alt="" coords="252,213,479,253"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="205,208,239,213,238,218,204,214"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a16b3cbfb638d1ce2063d8b9436faf7ec.html#a16b3cbfb638d1ce2063d8b9436faf7ec" title="Set vertex layout for this buffer." alt="" coords="287,278,443,333"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="163,222,253,263,275,272,273,277,251,268,161,227"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1ComputeMeshBuffer_a43d76b02ccfd007be7e845aaf4d427c1.html#a43d76b02ccfd007be7e845aaf4d427c1" title=" " alt="" coords="266,357,465,411"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="129,223,182,282,216,314,253,342,265,348,262,353,251,346,213,318,178,286,125,227"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Kakshya_1_1VertexLayout_a69d6a400c22a219150d8b28007441d5d.html#a69d6a400c22a219150d8b28007441d5d" title="Helper: compute stride from attributes if not explicitly set." alt="" coords="527,278,700,333"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="444,303,513,303,513,308,444,308"/>
+<area shape="rect" id="Node000008" href="$structMayaFlux_1_1Kakshya_1_1VertexLayout_a544b48334c1b582e8bf50da8215d2095.html#a544b48334c1b582e8bf50da8215d2095" title="Get size in bytes for a given modality Mirrors VKBuffer::get_format() logic." alt="" coords="748,278,923,333"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="700,303,734,303,734,308,700,308"/>
+</map>

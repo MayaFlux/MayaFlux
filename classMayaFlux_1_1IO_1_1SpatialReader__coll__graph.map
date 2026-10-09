@@ -1,0 +1,3 @@
+<map id="MayaFlux::IO::SpatialReader" name="MayaFlux::IO::SpatialReader">
+<area shape="rect" id="Node000001" title="Reads back the time&#45;sampled streams a SpatialCache wrote, in the same SpatialSample format it writes." alt="" coords="5,5,204,311"/>
+</map>

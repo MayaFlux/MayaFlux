@@ -1,0 +1,5 @@
+<map id="MayaFlux::IO::Detail::create_spatial_capture" name="MayaFlux::IO::Detail::create_spatial_capture">
+<area shape="rect" id="Node000001" title=" " alt="" coords="240,5,419,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1IOManager_a3d344f61a7e860755e882c197c577e7c.html#a3d344f61a7e860755e882c197c577e7c" title="Begin (or join) recording time&#45;sampled streams into an Alembic archive." alt="" coords="5,5,192,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="226,28,192,28,192,23,226,23"/>
+</map>

@@ -1,0 +1,29 @@
+<map id="MayaFlux::Buffers::VertexFieldProcessor::on_before_execute" name="MayaFlux::Buffers::VertexFieldProcessor::on_before_execute">
+<area shape="rect" id="Node000001" title="Rebuild on a stale revision, resolve the range, write push constants." alt="" coords="5,124,164,179"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VertexFieldProcessor_a8e2a8293949335641f4b4e00af28721a.html#a8e2a8293949335641f4b4e00af28721a" title="Records the buffer can hold at the operator&#39;s stride." alt="" coords="212,5,371,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="125,122,211,69,220,64,222,69,213,74,128,126"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VertexFieldProcessor_afb23937a3f35053a1463ecaf30a7fd74.html#afb23937a3f35053a1463ecaf30a7fd74" title="Seconds since construction, the value bound to the time parameter." alt="" coords="212,84,371,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="164,133,198,127,199,132,165,139"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a957293274f9de20606b567a18ebc353c.html#a957293274f9de20606b567a18ebc353c" title="Update push constant data (type&#45;safe)" alt="" coords="212,163,371,217"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="165,164,199,170,198,175,164,169"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1VertexFieldProcessor_ab6f4a8e2f483583ddda5b78f6ebc8b48.html#ab6f4a8e2f483583ddda5b78f6ebc8b48" title="Recompile and rebuild the pipeline when the operator has changed." alt="" coords="212,261,371,316"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="128,177,239,251,236,256,125,181"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a85037a36fe7bced17fc296d213abcdff.html#a85037a36fe7bced17fc296d213abcdff" title="Set push constant size from type." alt="" coords="429,143,588,197"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="371,180,415,176,416,181,371,185"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_aa19dc6a473c4dfd06538dd426e6c251c.html#aa19dc6a473c4dfd06538dd426e6c251c" title="Add descriptor binding configuration." alt="" coords="427,221,590,276"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="370,271,414,263,414,269,371,277"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1VertexFieldProcessor_a1a85474c27a0f8e9cd7ef3771d802d5a.html#a1a85474c27a0f8e9cd7ef3771d802d5a" title="Ensure the backing hash_cluster_id state field exists, when m_needs_cluster_id is true." alt="" coords="419,300,599,355"/>
+<area shape="poly" id="edge7_Node000006_Node000008" title=" " alt="" coords="371,300,405,306,404,312,370,305"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_aadb3a42f427db73ee7f40139f8241c3a.html#aadb3a42f427db73ee7f40139f8241c3a" title="Update entire configuration." alt="" coords="429,379,588,433"/>
+<area shape="poly" id="edge8_Node000006_Node000009" title=" " alt="" coords="336,314,420,364,433,370,431,375,417,368,333,318"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_af6abf1b7268faeb627e3554e282bde9f.html#af6abf1b7268faeb627e3554e282bde9f" title=" " alt="" coords="647,379,841,433"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="588,403,633,403,633,409,588,409"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a715d57394465ff2924727d7c82d87e7b.html#a715d57394465ff2924727d7c82d87e7b" title="Get the global shader compiler instance." alt="" coords="889,314,1087,354"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="836,376,906,355,907,360,838,381"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a63a608f39752d50cb266c5b4707df317.html#a63a608f39752d50cb266c5b4707df317" title="Called before shader compilation." alt="" coords="911,379,1065,433"/>
+<area shape="poly" id="edge12_Node000010_Node000013" title=" " alt="" coords="841,403,897,403,897,409,841,409"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a9ddf119896e100407b3e33baa7f94985.html#a9ddf119896e100407b3e33baa7f94985" title="Called after shader is loaded." alt="" coords="911,457,1065,512"/>
+<area shape="poly" id="edge13_Node000010_Node000014" title=" " alt="" coords="830,431,898,453,897,458,829,436"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="1135,314,1332,354"/>
+<area shape="poly" id="edge11_Node000011_Node000012" title=" " alt="" coords="1087,331,1121,331,1121,337,1087,337"/>
+</map>

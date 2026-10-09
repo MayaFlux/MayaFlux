@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Generator::Polynomial" name="MayaFlux::Nodes::Generator::Polynomial">
+<area shape="rect" id="Node000001" title="Generator that produces values based on polynomial functions." alt="" coords="5,1205,225,1725"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Generator.html" title="Base class for all signal and pattern generators in Maya Flux." alt="" coords="15,817,215,1157"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="118,1171,118,1205,113,1205,113,1171"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Node.html" title="Base interface for all computational processing nodes." alt="" coords="17,5,214,769"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="118,783,118,817,113,817,113,783"/>
+</map>

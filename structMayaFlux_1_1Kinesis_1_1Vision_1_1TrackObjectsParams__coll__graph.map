@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kinesis::Vision::TrackObjectsParams" name="MayaFlux::Kinesis::Vision::TrackObjectsParams">
+<area shape="rect" id="Node000001" title="Parameters for VisionIntent::TrackObjects." alt="" coords="179,328,373,408"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1HarrisParams.html" title="Harris response parameters." alt="" coords="5,75,155,195"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="118,194,169,264,219,315,215,319,165,267,114,197"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1ExtractPeaksParams.html" title="Peak extraction parameters." alt="" coords="179,65,373,205"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="279,206,279,312,273,312,273,206"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1TrackKeypointsParams.html" title="Parameters for TrackKeypoints." alt="" coords="398,5,615,265"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="400,255,387,267,333,319,329,315,383,263,396,251"/>
+</map>

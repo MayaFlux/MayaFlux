@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kriya::WindowEventAwaiter::await_ready" name="MayaFlux::Kriya::WindowEventAwaiter::await_ready">
+<area shape="rect" id="Node000001" title="Returns true if a matching event is already queued; stores it if so." alt="" coords="5,5,231,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1WindowEventSource_abeb8b9c2b9c034ec69506ef555d47443.html#abeb8b9c2b9c034ec69506ef555d47443" title="Removes and returns the first pending event matching the filter." alt="" coords="279,5,505,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="231,23,265,23,265,28,231,28"/>
+</map>

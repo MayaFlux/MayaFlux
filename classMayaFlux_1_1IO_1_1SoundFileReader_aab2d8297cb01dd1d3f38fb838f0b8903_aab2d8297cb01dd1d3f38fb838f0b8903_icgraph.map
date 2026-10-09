@@ -1,0 +1,11 @@
+<map id="MayaFlux::IO::SoundFileReader::clear_error" name="MayaFlux::IO::SoundFileReader::clear_error">
+<area shape="rect" id="Node000001" title="Clear the last error message." alt="" coords="552,37,777,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a25d2ebc2d552f532a46fbb493f8d88d3.html#a25d2ebc2d552f532a46fbb493f8d88d3" title="Open an audio file for reading." alt="" coords="279,5,504,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="538,45,504,41,504,36,539,40"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1SoundFileReader_aa4f32713ee60f510a31ede3abf5df63a.html#aa4f32713ee60f510a31ede3abf5df63a" title="Open an audio stream from an already&#45;constructed demux and stream context." alt="" coords="279,69,504,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="539,75,504,79,504,74,538,69"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a52301b9864559415b9df442d6884d946.html#a52301b9864559415b9df442d6884d946" title="Load an audio file into a size&#45;bounded DynamicSoundStream." alt="" coords="5,5,231,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="265,28,231,28,231,23,265,23"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1IO_1_1VideoFileReader_a78b6b19d6d9126250ded73ea4b7b6629.html#a78b6b19d6d9126250ded73ea4b7b6629" title="Load file data into an existing container." alt="" coords="7,69,229,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="265,92,229,92,229,87,265,87"/>
+</map>

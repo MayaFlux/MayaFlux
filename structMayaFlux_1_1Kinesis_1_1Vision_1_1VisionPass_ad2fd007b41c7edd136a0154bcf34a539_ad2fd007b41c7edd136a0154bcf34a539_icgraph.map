@@ -1,0 +1,17 @@
+<map id="MayaFlux::Kinesis::Vision::VisionPass::set_geometry" name="MayaFlux::Kinesis::Vision::VisionPass::set_geometry">
+<area shape="rect" id="Node000001" title=" " alt="" coords="749,107,899,162"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1VisionPass_a148869cd4c47bb5c1f53f2dd328c7db5.html#a148869cd4c47bb5c1f53f2dd328c7db5" title="Reset the walk band for a fresh run." alt="" coords="519,85,701,125"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="735,125,701,120,702,115,736,120"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kinesis_1_1Vision_1_1VisionExecutor_a6ea94c5c8d90c5890b7715a0e4ff2df5.html#a6ea94c5c8d90c5890b7715a0e4ff2df5" title="Execute a VisionSequence on one frame." alt="" coords="276,41,471,81"/>
+<area shape="poly" id="edge7_Node000001_Node000003" title=" " alt="" coords="766,103,734,88,701,76,642,64,582,58,471,57,471,51,583,53,643,59,702,71,736,83,769,98"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1VisionGpuExecutor_afdad8a5a64522f246a58a7f585bd34c6.html#afdad8a5a64522f246a58a7f585bd34c6" title="Execute a VisionSequence on the GPU through an explicit context set." alt="" coords="282,117,465,157"/>
+<area shape="poly" id="edge8_Node000001_Node000006" title=" " alt="" coords="736,139,701,140,465,141,465,135,701,135,735,134"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Yantra_1_1VisionGpuExecutor_acd109192822f8aaded071b7f75785eab.html#acd109192822f8aaded071b7f75785eab" title="Arbitrary rectangular sub&#45;region of the current image, optionally resized back to the frame&#39;s own siz..." alt="" coords="519,200,701,240"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="743,170,662,202,660,197,741,165"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="505,89,470,82,471,77,506,83"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="506,122,465,128,464,122,505,117"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1VisionProcessor_ab9b6b50546df64540aee0f0bbbb7939a.html#ab9b6b50546df64540aee0f0bbbb7939a" title="Execute the VisionSequence on processed_data[0]." alt="" coords="25,5,208,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="262,48,208,41,209,35,263,43"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1ImageCVProcessor_a03dd11926b797b52ccbdfa37c2b5e4e1.html#a03dd11926b797b52ccbdfa37c2b5e4e1" title="Download the current GPU image, run the VisionSequence, store the result." alt="" coords="5,70,228,125"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="263,79,229,84,228,79,262,74"/>
+</map>

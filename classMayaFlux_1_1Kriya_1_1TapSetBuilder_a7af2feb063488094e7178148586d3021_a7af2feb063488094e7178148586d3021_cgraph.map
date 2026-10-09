@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kriya::TapSetBuilder::speed" name="MayaFlux::Kriya::TapSetBuilder::speed">
+<area shape="rect" id="Node000001" title="Speed of the current tap relative to the source." alt="" coords="5,5,231,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1TapSetBuilder_a025a12470608f0eda9af6b4437c54d1e.html#a025a12470608f0eda9af6b4437c54d1e" title=" " alt="" coords="279,5,504,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="231,23,265,23,265,28,231,28"/>
+</map>

@@ -1,0 +1,22 @@
+<map id="MayaFlux::Yantra::infer_from_container" name="MayaFlux::Yantra::infer_from_container">
+<area shape="rect" id="Node000001" title="Infer structure from SignalSourceContainer." alt="" coords="900,159,1072,199"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Yantra_aac54dc5608af20c4f3a133ac3d89b3d7.html#aac54dc5608af20c4f3a133ac3d89b3d7" title="Infer structure from Region (placeholder since regions are markers)" alt="" coords="680,101,852,141"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="895,158,843,144,844,139,896,153"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Yantra_ae05845067871689b0b43d88e2b97b4f2.html#ae05845067871689b0b43d88e2b97b4f2" title="Infer dimensions and modality from any ComputeData type." alt="" coords="240,101,412,141"/>
+<area shape="poly" id="edge11_Node000001_Node000004" title=" " alt="" coords="887,194,796,202,688,205,573,200,459,184,406,166,360,144,363,139,408,161,461,179,574,195,688,200,795,197,886,189"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Yantra_aee0070dd0dcc7f7db834346cf80a54e3.html#aee0070dd0dcc7f7db834346cf80a54e3" title="Infer structure from RegionGroup." alt="" coords="460,15,632,55"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="701,99,597,57,599,52,703,94"/>
+<area shape="poly" id="edge10_Node000002_Node000004" title=" " alt="" coords="666,121,632,120,460,120,412,121,412,116,460,115,632,115,666,115"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Yantra_ac05cd9cb08929970cc927e422935d4dd.html#ac05cd9cb08929970cc927e422935d4dd" title="Infer structure from RegionSegments." alt="" coords="460,129,632,169"/>
+<area shape="poly" id="edge8_Node000002_Node000009" title=" " alt="" coords="666,137,632,141,632,136,666,131"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="483,62,379,104,377,99,481,57"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Yantra_1_1Datum_af60854443083d66271866d0bcffe6e2e.html#af60854443083d66271866d0bcffe6e2e" title="Construct from data by copy with automatic structure inference." alt="" coords="5,5,192,45"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="272,97,191,60,160,48,162,43,193,55,275,93"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Yantra_1_1Datum_afcbb7ba6d9662ba436c2c46406f2341f.html#afcbb7ba6d9662ba436c2c46406f2341f" title="Construct from data by copy with container reference and automatic structure inference." alt="" coords="5,69,192,109"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="226,110,192,105,193,100,227,105"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Yantra_1_1Datum_a938a7ae520687b3ef39b3c04da00c159.html#a938a7ae520687b3ef39b3c04da00c159" title="Construct from data by move with automatic structure inference." alt="" coords="5,133,192,173"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="227,138,193,143,192,138,226,133"/>
+<area shape="rect" id="Node000008" href="$structMayaFlux_1_1Yantra_1_1Datum_a462ba3b1a72eb90e6b5a0abb6f7586f1.html#a462ba3b1a72eb90e6b5a0abb6f7586f1" title="Construct from data by move with automatic structure inference." alt="" coords="5,197,192,237"/>
+<area shape="poly" id="edge7_Node000004_Node000008" title=" " alt="" coords="275,150,193,188,162,200,160,195,191,183,272,145"/>
+<area shape="poly" id="edge9_Node000009_Node000004" title=" " alt="" coords="446,139,412,135,412,130,446,134"/>
+</map>

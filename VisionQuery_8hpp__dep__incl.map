@@ -1,0 +1,22 @@
+<map id="VisionQuery.hpp" name="VisionQuery.hpp">
+<area shape="rect" id="Node000001" title="Per&#45;intent parameters and resolution into a set of VisionSequences." alt="" coords="257,5,384,31"/>
+<area shape="rect" id="Node000002" href="$VisionAnalyzer_8hpp.html" title="FunctionalOperation&lt;shared_ptr&lt;SignalSourceContainer&gt;, vector&lt;DataVariant&gt;&gt; whose real API matches En..." alt="" coords="167,79,314,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="300,42,256,80,252,76,296,38"/>
+<area shape="rect" id="Node000010" href="$VisionQuery_8cpp.html" title=" " alt="" coords="339,79,465,104"/>
+<area shape="poly" id="edge10_Node000001_Node000010" title=" " alt="" coords="346,38,390,76,387,80,342,42"/>
+<area shape="rect" id="Node000003" href="$VisionAnalyzer_8cpp.html" title=" " alt="" coords="5,152,151,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="203,112,106,154,104,149,201,107"/>
+<area shape="rect" id="Node000004" href="$VisionMatrix_8hpp.html" title=" " alt="" coords="175,152,307,177"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="243,118,243,152,238,152,238,118"/>
+<area shape="rect" id="Node000009" href="$WorkflowIncludes_8hpp.html" title="Top level headers for the Yantra compute layer and its workflows." alt="" coords="321,299,485,324"/>
+<area shape="poly" id="edge9_Node000002_Node000009" title=" " alt="" coords="273,110,297,128,320,150,349,190,372,232,401,297,397,299,367,234,344,193,316,154,294,132,270,114"/>
+<area shape="rect" id="Node000005" href="$VisionMatrix_8cpp.html" title=" " alt="" coords="11,225,142,251"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="203,185,105,228,102,223,201,180"/>
+<area shape="rect" id="Node000006" href="$VisionWorkflow_8hpp.html" title=" " alt="" coords="166,225,315,251"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="243,191,243,225,238,225,238,191"/>
+<area shape="rect" id="Node000007" href="$Rigs_8cpp.html" title=" " alt="" coords="47,299,125,324"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="205,259,112,301,110,296,202,254"/>
+<area shape="rect" id="Node000008" href="$VisionWorkflow_8cpp.html" title=" " alt="" coords="149,299,297,324"/>
+<area shape="poly" id="edge7_Node000006_Node000008" title=" " alt="" coords="237,265,229,299,224,298,232,263"/>
+<area shape="poly" id="edge8_Node000006_Node000009" title=" " alt="" coords="280,254,378,296,376,301,278,259"/>
+</map>

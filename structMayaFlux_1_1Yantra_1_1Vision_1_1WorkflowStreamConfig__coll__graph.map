@@ -1,0 +1,5 @@
+<map id="MayaFlux::Yantra::Vision::WorkflowStreamConfig" name="MayaFlux::Yantra::Vision::WorkflowStreamConfig">
+<area shape="rect" id="Node000001" title="What VisionWorkflow::process_to_stream() runs: the stream to analyze, the matrix that analyzes it,..." alt="" coords="5,228,180,388"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1VideoStreamSpec.html" title="Describes a DynamicVideoStream so it can be built by designated initializer." alt="" coords="17,5,168,165"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="95,165,95,211,90,211,90,165"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::GpuSync::GeometryLeafNode::set_positions" name="MayaFlux::Nodes::GpuSync::GeometryLeafNode::set_positions">
+<area shape="rect" id="Node000001" title="Replace geometry with plain positions (color/scalar/normal/uv default)." alt="" coords="345,5,545,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GeometryLeafNode_a015ca0852159065a5056d9be324d3fb8.html#a015ca0852159065a5056d9be324d3fb8" title=" " alt="" coords="5,13,297,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="331,35,297,35,297,30,331,30"/>
+</map>

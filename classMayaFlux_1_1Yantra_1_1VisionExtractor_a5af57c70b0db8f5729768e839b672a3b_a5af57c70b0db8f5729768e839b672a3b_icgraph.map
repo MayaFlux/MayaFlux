@@ -1,0 +1,32 @@
+<map id="MayaFlux::Yantra::VisionExtractor::reduce_context" name="MayaFlux::Yantra::VisionExtractor::reduce_context">
+<area shape="rect" id="Node000001" title=" " alt="" coords="1428,92,1617,132"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_a46583381338f2cd8c77484bea9f09a37.html#a46583381338f2cd8c77484bea9f09a37" title="Mean, min and max over the focused element or track/keypoint bounds." alt="" coords="472,120,655,160"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1414,118,655,140,655,135,1414,112"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_a251f192f458dc5b54ed05d998a0b4e8c.html#a251f192f458dc5b54ed05d998a0b4e8c" title="Mean over a (2 * radius + 1) squared window at every keypoint, else every track, in one dispatch,..." alt="" coords="945,5,1129,45"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="1471,88,1427,69,1379,53,1315,41,1249,33,1129,27,1129,21,1250,27,1316,35,1381,48,1429,64,1473,83"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_ac35f3be2676a08b1893f0b132f82b912.html#ac35f3be2676a08b1893f0b132f82b912" title="sample() for every find_elements box in one dispatch, in box order." alt="" coords="1188,63,1380,103"/>
+<area shape="poly" id="edge6_Node000001_Node000006" title=" " alt="" coords="1414,101,1380,97,1381,92,1415,96"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_ad833822534b8ab909bb3099fe45aff61.html#ad833822534b8ab909bb3099fe45aff61" title="Index into find_elements boxes of the element ranked first by focus, chosen on the GPU from the analy..." alt="" coords="1189,285,1379,325"/>
+<area shape="poly" id="edge8_Node000001_Node000007" title=" " alt="" coords="1487,143,1312,287,1308,283,1484,139"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_a405349780e7eb0c7c7c7165acc0c6696.html#a405349780e7eb0c7c7c7165acc0c6696" title=" " alt="" coords="241,120,424,160"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="459,143,424,143,424,137,459,137"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_af4331c5582233c8d45975aaded7c2d96.html#af4331c5582233c8d45975aaded7c2d96" title=" " alt="" coords="5,120,193,160"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="227,143,194,143,194,137,227,137"/>
+<area shape="poly" id="edge5_Node000005_Node000003" title=" " alt="" coords="931,22,832,21,717,26,593,40,532,51,473,67,413,92,363,122,361,118,410,87,471,61,531,46,593,35,716,20,832,16,931,17"/>
+<area shape="poly" id="edge7_Node000006_Node000003" title=" " alt="" coords="1174,82,1034,81,858,83,665,92,472,111,409,123,408,117,472,105,665,87,858,78,1034,75,1174,77"/>
+<area shape="poly" id="edge17_Node000007_Node000003" title=" " alt="" coords="1176,319,1075,325,957,328,829,325,702,312,635,301,583,288,533,269,471,240,407,201,356,162,359,158,410,197,473,235,535,264,584,283,636,295,703,307,829,320,957,323,1075,320,1175,313"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_ac6c9930abd4e2a5e2ab149a681a014d8.html#ac6c9930abd4e2a5e2ab149a681a014d8" title="Box index of the element the single&#45;element methods act on." alt="" coords="937,257,1136,297"/>
+<area shape="poly" id="edge9_Node000007_Node000008" title=" " alt="" coords="1175,296,1136,291,1137,286,1176,290"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_a44bcb7e524c6247130342267b7767440.html#a44bcb7e524c6247130342267b7767440" title=" " alt="" coords="933,372,1140,412"/>
+<area shape="poly" id="edge15_Node000007_Node000012" title=" " alt="" coords="1214,333,1096,374,1094,369,1212,327"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_a72e375adc68bac374e21a7334db328ea.html#a72e375adc68bac374e21a7334db328ea" title=" " alt="" coords="703,178,885,233"/>
+<area shape="poly" id="edge10_Node000008_Node000009" title=" " alt="" coords="955,256,885,235,886,230,956,251"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_a46701537dbc2d4860efd5a35f308e57a.html#a46701537dbc2d4860efd5a35f308e57a" title="silhouettes() for the focused element only." alt="" coords="703,257,885,297"/>
+<area shape="poly" id="edge14_Node000008_Node000011" title=" " alt="" coords="923,280,885,280,885,275,923,275"/>
+<area shape="poly" id="edge13_Node000009_Node000002" title=" " alt="" coords="688,178,634,163,636,158,690,173"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_a4319d62aaf88219cea2e5e32dc282858.html#a4319d62aaf88219cea2e5e32dc282858" title="Crop of source at the focused element, or track/keypoint bounds." alt="" coords="472,185,655,225"/>
+<area shape="poly" id="edge11_Node000009_Node000010" title=" " alt="" coords="689,208,655,208,655,203,689,203"/>
+<area shape="poly" id="edge12_Node000010_Node000003" title=" " alt="" coords="478,184,403,163,405,158,479,179"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_acb02407bb5c9d194d0250f3537829df5.html#acb02407bb5c9d194d0250f3537829df5" title="Pixel&#45;precise silhouette of the focused element from the executor&#39;s label buffer." alt="" coords="703,372,885,412"/>
+<area shape="poly" id="edge16_Node000012_Node000013" title=" " alt="" coords="920,395,886,395,886,389,920,389"/>
+</map>

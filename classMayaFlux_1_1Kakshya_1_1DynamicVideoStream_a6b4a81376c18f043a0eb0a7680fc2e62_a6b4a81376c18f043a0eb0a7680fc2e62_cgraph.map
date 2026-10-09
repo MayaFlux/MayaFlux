@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kakshya::DynamicVideoStream::ensure_capacity" name="MayaFlux::Kakshya::DynamicVideoStream::ensure_capacity">
+<area shape="rect" id="Node000001" title="Pre&#45;allocate room for frames in linear mode." alt="" coords="5,84,177,139"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1DynamicVideoStream_a1e1b5cf08c5d1fce36e1a74f20880e2d.html#a1e1b5cf08c5d1fce36e1a74f20880e2d" title=" " alt="" coords="225,5,397,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="168,81,221,62,223,67,170,86"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_acd69a7c5e27cc6fd492c480c481ee9ea.html#acd69a7c5e27cc6fd492c480c481ee9ea" title="Total byte size of one frame: width * height * bytes_per_pixel." alt="" coords="227,84,396,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="178,109,213,109,213,114,178,114"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_a5d3384d0e8be81255720b8733e49d47e.html#a5d3384d0e8be81255720b8733e49d47e" title="True if the container is operating in ring mode." alt="" coords="227,163,396,217"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="170,136,223,156,221,161,168,141"/>
+</map>

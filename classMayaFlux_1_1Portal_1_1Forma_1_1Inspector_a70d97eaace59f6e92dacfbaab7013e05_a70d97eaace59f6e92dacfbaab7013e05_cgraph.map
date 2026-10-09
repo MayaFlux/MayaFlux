@@ -1,0 +1,13 @@
+<map id="MayaFlux::Portal::Forma::Inspector::make_row_buffer" name="MayaFlux::Portal::Forma::Inspector::make_row_buffer">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,62,187,117"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferManager_af51cd72c5f1d259a03a3e82371e55bab.html#af51cd72c5f1d259a03a3e82371e55bab" title="Adds a buffer to a token and channel." alt="" coords="235,5,429,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="186,62,244,46,245,52,188,67"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kakshya_1_1VertexLayout_a7b7a30b2a13cb2676713a352f298f607.html#a7b7a30b2a13cb2676713a352f298f607" title="Factory: layout for MeshVertex (position, color, weight, uv, normal, tangent)" alt="" coords="236,69,428,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="187,87,223,87,223,92,187,92"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Text_a71c27b0dcd02ac59fe97eb2acbac7053.html#a71c27b0dcd02ac59fe97eb2acbac7053" title="Composite a UTF&#45;8 string into a new TextBuffer." alt="" coords="249,133,415,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="188,111,245,127,244,132,186,116"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Text_1_1GlyphAtlas_abcf654455e02ba66cb60f60dc3aa6880.html#abcf654455e02ba66cb60f60dc3aa6880" title="Line advance in pixels for this atlas&#39;s pixel_size." alt="" coords="477,133,659,173"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="416,151,464,151,464,156,416,156"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Text_1_1FontFace_accda82c104b9bee41559e89f118f5e5f.html#accda82c104b9bee41559e89f118f5e5f" title="Raw FT_Face handle for use by GlyphAtlas." alt="" coords="707,133,873,173"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="659,151,693,151,693,156,659,156"/>
+</map>

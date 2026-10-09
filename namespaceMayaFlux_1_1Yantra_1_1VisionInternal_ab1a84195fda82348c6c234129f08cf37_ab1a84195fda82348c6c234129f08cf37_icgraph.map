@@ -1,0 +1,9 @@
+<map id="MayaFlux::Yantra::VisionInternal::region_rect" name="MayaFlux::Yantra::VisionInternal::region_rect">
+<area shape="rect" id="Node000001" title="Pixel rectangle of a normalised region over a w x h image, clamped to the image." alt="" coords="280,77,463,117"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1VisionGpuExecutor_ae21da7949376592693235e5ccadaeda7.html#ae21da7949376592693235e5ccadaeda7" title="Extract and rank keypoints from the current response image." alt="" coords="5,5,232,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="287,76,231,60,190,48,191,43,233,55,288,71"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1VisionGpuExecutor_a48bca474121218135f8e80630f3eac82.html#a48bca474121218135f8e80630f3eac82" title="Compute the Harris response of the current image." alt="" coords="27,70,210,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="266,100,210,100,210,95,266,95"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1VisionGpuExecutor_a3a8a1766e04cbf89623fd77d92ecfee5.html#a3a8a1766e04cbf89623fd77d92ecfee5" title="Track the previous frame&#39;s keypoints into the current frame." alt="" coords="27,149,210,203"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="294,124,208,151,206,146,292,119"/>
+</map>

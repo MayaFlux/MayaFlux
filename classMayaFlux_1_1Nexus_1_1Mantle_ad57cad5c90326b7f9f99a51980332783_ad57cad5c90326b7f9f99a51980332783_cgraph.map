@@ -1,0 +1,15 @@
+<map id="MayaFlux::Nexus::Mantle::refresh" name="MayaFlux::Nexus::Mantle::refresh">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,69,193,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1Expanse_a63f198036259d05c7f2d679884b4ff35.html#a63f198036259d05c7f2d679884b4ff35" title="The box, if set." alt="" coords="241,5,440,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="175,67,251,46,253,51,176,72"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_a724984551301a0715dc9e2113107b3b5.html#a724984551301a0715dc9e2113107b3b5" title="Transform that scales and translates one box onto another." alt="" coords="266,69,415,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="194,87,252,87,252,92,194,92"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Nexus_a61beb68adf0686b0e0fe5c3339838a3c.html#a61beb68adf0686b0e0fe5c3339838a3c" title="Place every render processor of the buffer that is not placed yet." alt="" coords="251,133,430,173"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="176,107,253,127,251,132,175,112"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kinesis_1_1AABB3D_a0d85b0eaeb89c2c3d58fd1f8858c4ac8.html#a0d85b0eaeb89c2c3d58fd1f8858c4ac8" title=" " alt="" coords="488,5,637,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="410,67,479,47,480,52,412,72"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Kinesis_1_1AABB3D_aeab9cee1b78baf556b0b7e14c99541c2.html#aeab9cee1b78baf556b0b7e14c99541c2" title=" " alt="" coords="488,69,637,109"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="416,87,474,87,474,92,416,92"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kinesis_ace716df2f40f1b0e620049c240637942.html#ace716df2f40f1b0e620049c240637942" title="Uniform scaling of a scalar&#45;output tendency." alt="" coords="488,133,637,173"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="412,107,480,127,479,132,410,112"/>
+</map>

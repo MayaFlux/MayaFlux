@@ -1,0 +1,122 @@
+<map id="MayaFlux::Yantra::VisionExtractor::VisionExtractor" name="MayaFlux::Yantra::VisionExtractor::VisionExtractor">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,403,193,443"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_a405349780e7eb0c7c7c7165acc0c6696.html#a405349780e7eb0c7c7c7165acc0c6696" title=" " alt="" coords="241,403,424,443"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="194,420,228,420,228,425,194,425"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_ab8feceae228c3e51df830f1b702f415d.html#ab8feceae228c3e51df830f1b702f415d" title="source with everything the analysis found drawn on it: element boxes (yellow) and contours (cyan),..." alt="" coords="713,69,895,109"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="335,402,349,350,374,281,392,245,414,210,440,177,470,150,524,119,583,99,643,88,699,83,699,89,643,93,584,104,526,124,474,154,444,181,418,213,397,248,379,283,354,352,341,403"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_a4319d62aaf88219cea2e5e32dc282858.html#a4319d62aaf88219cea2e5e32dc282858" title="Crop of source at the focused element, or track/keypoint bounds." alt="" coords="473,563,656,603"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="353,441,404,494,437,523,473,548,484,554,482,559,471,553,434,527,400,498,349,445"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_ad833822534b8ab909bb3099fe45aff61.html#ad833822534b8ab909bb3099fe45aff61" title="Index into find_elements boxes of the element ranked first by focus, chosen on the GPU from the analy..." alt="" coords="1263,624,1453,664"/>
+<area shape="poly" id="edge67_Node000002_Node000008" title=" " alt="" coords="340,442,353,493,378,559,395,593,417,625,443,653,473,676,525,703,579,724,634,739,692,750,750,755,808,757,924,751,1035,735,1136,713,1223,689,1291,666,1293,671,1224,694,1137,718,1036,741,925,757,808,763,749,761,691,755,633,744,577,729,522,708,471,681,439,657,413,628,391,595,373,561,348,494,335,443"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_a81dfdc758475860238f3107d01c1e240.html#a81dfdc758475860238f3107d01c1e240" title="Every find_elements box resampled to tile_w x tile_h, side by side in one atlas (tile_w * count,..." alt="" coords="713,133,895,173"/>
+<area shape="poly" id="edge10_Node000002_Node000010" title=" " alt="" coords="337,402,353,357,379,299,418,240,443,214,471,192,525,166,584,150,643,143,699,141,699,147,644,148,585,155,527,171,473,197,446,218,422,244,384,302,358,359,342,404"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_a0c91a782264c81dd24ef770bc4db553e.html#a0c91a782264c81dd24ef770bc4db553e" title="source kept where analysis.detect_edges reaches the edge threshold, transparent elsewhere." alt="" coords="713,197,895,237"/>
+<area shape="poly" id="edge12_Node000002_Node000011" title=" " alt="" coords="339,401,356,362,384,314,422,266,445,245,471,228,526,206,586,196,644,193,699,196,699,202,644,199,586,201,528,212,473,233,448,249,426,270,389,317,361,365,344,403"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_a446e32817084d7ee5ecf3d74e2833106.html#a446e32817084d7ee5ecf3d74e2833106" title="Histogram equalisation of source from the histogram measure_appearance measured." alt="" coords="473,307,656,347"/>
+<area shape="poly" id="edge14_Node000002_Node000012" title=" " alt="" coords="374,400,471,356,489,349,491,354,473,361,376,405"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_a8d66114ea24b4eed3f731e53855d0e99.html#a8d66114ea24b4eed3f731e53855d0e99" title="source scaled so its measured mean brightness reaches target." alt="" coords="473,243,656,283"/>
+<area shape="poly" id="edge17_Node000002_Node000014" title=" " alt="" coords="349,401,400,348,434,318,471,292,482,286,484,291,473,297,437,322,404,351,353,404"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_ae06251140369a9d5c6083089959740e6.html#ae06251140369a9d5c6083089959740e6" title="source kept where analysis.estimate_motion moves faster than the motion limits with enough confidence..." alt="" coords="473,371,656,411"/>
+<area shape="poly" id="edge19_Node000002_Node000015" title=" " alt="" coords="424,407,459,403,460,408,425,413"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_a713026d04f6052a5c3ed38dac78aff7e.html#a713026d04f6052a5c3ed38dac78aff7e" title="One fixed&#45;size crop per keypoint, else per track, side by side in one atlas." alt="" coords="473,435,656,475"/>
+<area shape="poly" id="edge21_Node000002_Node000016" title=" " alt="" coords="425,433,460,438,459,443,424,438"/>
+<area shape="rect" id="Node000018" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_a39f8687334db34ee2d4fbbeb9f7623ec.html#a39f8687334db34ee2d4fbbeb9f7623ec" title=" " alt="" coords="472,893,657,933"/>
+<area shape="poly" id="edge24_Node000002_Node000018" title=" " alt="" coords="340,442,355,508,381,605,421,714,446,769,474,820,500,853,529,882,525,886,496,857,470,823,441,771,416,716,376,606,349,510,335,443"/>
+<area shape="rect" id="Node000046" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_a46583381338f2cd8c77484bea9f09a37.html#a46583381338f2cd8c77484bea9f09a37" title="Mean, min and max over the focused element or track/keypoint bounds." alt="" coords="473,627,656,667"/>
+<area shape="poly" id="edge59_Node000002_Node000046" title=" " alt="" coords="346,442,365,478,393,524,430,572,474,613,481,618,478,622,470,617,426,575,389,527,360,481,341,444"/>
+<area shape="rect" id="Node000047" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_a251f192f458dc5b54ed05d998a0b4e8c.html#a251f192f458dc5b54ed05d998a0b4e8c" title="Mean over a (2 * radius + 1) squared window at every keypoint, else every track, in one dispatch,..." alt="" coords="473,499,657,539"/>
+<area shape="poly" id="edge62_Node000002_Node000047" title=" " alt="" coords="376,440,473,484,491,491,489,496,471,489,374,445"/>
+<area shape="rect" id="Node000048" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_ac35f3be2676a08b1893f0b132f82b912.html#ac35f3be2676a08b1893f0b132f82b912" title="sample() for every find_elements box in one dispatch, in box order." alt="" coords="1262,751,1454,791"/>
+<area shape="poly" id="edge65_Node000002_Node000048" title=" " alt="" coords="338,443,347,505,368,591,386,636,409,679,438,718,474,750,500,764,532,776,616,794,716,803,828,805,943,803,1056,797,1248,780,1248,786,1056,802,943,808,828,811,716,808,615,799,531,782,497,769,470,754,434,721,404,682,381,638,363,592,342,506,333,443"/>
+<area shape="rect" id="Node000049" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_ad98c7d3e9382de065b53fa52103adb53.html#ad98c7d3e9382de065b53fa52103adb53" title="Silhouette of every element cut from its contour polygons: the outer contour and its holes,..." alt="" coords="473,13,656,53"/>
+<area shape="poly" id="edge68_Node000002_Node000049" title=" " alt="" coords="334,402,347,341,371,255,389,208,411,162,438,117,470,77,493,58,497,62,474,81,443,120,416,164,394,211,376,257,352,342,340,403"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_aef1440f4cdb4f7e74b9f6a9cbadf0294.html#aef1440f4cdb4f7e74b9f6a9cbadf0294" title="The two contexts every method shares, one shader swapped in per call." alt="" coords="975,229,1162,269"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="877,107,904,119,978,168,1038,218,1035,222,975,172,901,124,875,112"/>
+<area shape="poly" id="edge5_Node000005_Node000004" title=" " alt="" coords="656,573,714,564,778,548,842,524,901,491,929,469,954,443,997,385,1030,328,1052,281,1057,283,1034,331,1001,388,958,446,932,473,904,496,845,529,780,553,716,569,657,579"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_a72e375adc68bac374e21a7334db328ea.html#a72e375adc68bac374e21a7334db328ea" title=" " alt="" coords="713,609,895,663"/>
+<area shape="poly" id="edge6_Node000005_Node000006" title=" " alt="" coords="655,600,700,610,699,615,654,605"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_ac6c9930abd4e2a5e2ab149a681a014d8.html#ac6c9930abd4e2a5e2ab149a681a014d8" title="Box index of the element the single&#45;element methods act on." alt="" coords="969,620,1168,660"/>
+<area shape="poly" id="edge7_Node000006_Node000007" title=" " alt="" coords="896,635,955,636,955,641,895,640"/>
+<area shape="poly" id="edge8_Node000007_Node000008" title=" " alt="" coords="1168,639,1250,640,1250,645,1168,644"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_a5af57c70b0db8f5729768e839b672a3b.html#a5af57c70b0db8f5729768e839b672a3b" title=" " alt="" coords="1558,659,1747,699"/>
+<area shape="poly" id="edge9_Node000008_Node000009" title=" " alt="" coords="1453,652,1545,663,1544,669,1453,658"/>
+<area shape="poly" id="edge11_Node000010_Node000004" title=" " alt="" coords="869,171,904,183,1006,222,1004,227,902,188,867,176"/>
+<area shape="poly" id="edge13_Node000011_Node000004" title=" " alt="" coords="896,226,962,234,961,239,895,231"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_a251853ba745024a6aed58c4abf023cb6.html#a251853ba745024a6aed58c4abf023cb6" title=" " alt="" coords="713,261,895,301"/>
+<area shape="poly" id="edge15_Node000012_Node000013" title=" " alt="" coords="656,307,698,299,699,304,657,312"/>
+<area shape="poly" id="edge16_Node000013_Node000004" title=" " alt="" coords="895,268,961,260,962,265,896,273"/>
+<area shape="poly" id="edge18_Node000014_Node000013" title=" " alt="" coords="656,267,699,270,699,276,656,272"/>
+<area shape="poly" id="edge20_Node000015_Node000004" title=" " alt="" coords="656,371,774,345,902,311,1008,272,1010,277,903,316,775,350,657,376"/>
+<area shape="poly" id="edge22_Node000016_Node000004" title=" " alt="" coords="633,432,705,412,761,400,806,394,849,385,902,366,939,346,974,323,1033,277,1036,281,977,327,941,350,904,370,850,390,806,399,762,406,706,417,634,437"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_a32c64524d4b1425f39bf83484f8e831f.html#a32c64524d4b1425f39bf83484f8e831f" title=" " alt="" coords="713,427,895,482"/>
+<area shape="poly" id="edge23_Node000016_Node000017" title=" " alt="" coords="656,452,699,452,699,457,656,457"/>
+<area shape="rect" id="Node000019" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_aaf5e48e2bb8325c1db70971a89cabec7.html#aaf5e48e2bb8325c1db70971a89cabec7" title="Create a 2D texture." alt="" coords="705,923,903,963"/>
+<area shape="poly" id="edge25_Node000018_Node000019" title=" " alt="" coords="658,922,692,926,691,932,657,927"/>
+<area shape="rect" id="Node000038" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a3a42e83f8a57c6ea8cf2e15cbaaf3892.html#a3a42e83f8a57c6ea8cf2e15cbaaf3892" title="Upload pixel data to an existing texture." alt="" coords="967,840,1170,880"/>
+<area shape="poly" id="edge58_Node000018_Node000038" title=" " alt="" coords="657,901,953,869,954,875,658,906"/>
+<area shape="rect" id="Node000045" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a6887ad297693c2392be7960daab06002.html#a6887ad297693c2392be7960daab06002" title=" " alt="" coords="705,987,903,1027"/>
+<area shape="poly" id="edge57_Node000018_Node000045" title=" " alt="" coords="610,931,706,972,726,980,724,985,704,977,608,936"/>
+<area shape="rect" id="Node000020" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a26861705b8952f21e0b0c8363d6d43e2.html#a26861705b8952f21e0b0c8363d6d43e2" title="Calculate image data size." alt="" coords="970,1057,1167,1111"/>
+<area shape="poly" id="edge26_Node000019_Node000020" title=" " alt="" coords="883,961,904,973,920,988,929,1004,938,1020,952,1035,972,1048,969,1053,949,1039,933,1023,925,1007,916,992,901,977,881,965"/>
+<area shape="rect" id="Node000022" href="$classMayaFlux_1_1Core_1_1BackendResourceManager_a679073bdea75b683dc38931d4ad17d8c.html#a679073bdea75b683dc38931d4ad17d8c" title="Initialize a VKImage (allocate VkImage, memory, and create image view)" alt="" coords="1824,913,2071,953"/>
+<area shape="poly" id="edge28_Node000019_Node000022" title=" " alt="" coords="903,941,1481,940,1810,934,1810,939,1481,945,903,946"/>
+<area shape="rect" id="Node000028" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_af23625d18fe68e281f157b63a0466073.html#af23625d18fe68e281f157b63a0466073" title="Check if manager is initialized." alt="" coords="1256,891,1460,931"/>
+<area shape="poly" id="edge34_Node000019_Node000028" title=" " alt="" coords="903,934,1242,915,1242,920,903,940"/>
+<area shape="rect" id="Node000029" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a26fc4ebc243a75ef0d115344b95a5b0c.html#a26fc4ebc243a75ef0d115344b95a5b0c" title="Convert Portal ImageFormat to Vulkan format." alt="" coords="951,1136,1187,1176"/>
+<area shape="poly" id="edge35_Node000019_Node000029" title=" " alt="" coords="889,961,905,973,919,992,926,1012,929,1050,931,1087,938,1104,953,1122,957,1126,953,1130,949,1126,934,1107,926,1088,924,1050,921,1013,914,995,901,977,886,965"/>
+<area shape="rect" id="Node000030" href="$classMayaFlux_1_1Core_1_1BackendResourceManager_ab9333b3ff9c0372c1bf8af57a449c3b0.html#ab9333b3ff9c0372c1bf8af57a449c3b0" title="Transition image layout using a pipeline barrier." alt="" coords="1235,1005,1481,1045"/>
+<area shape="poly" id="edge36_Node000019_Node000030" title=" " alt="" coords="868,960,951,984,1090,1005,1221,1017,1221,1022,1089,1010,950,989,866,965"/>
+<area shape="poly" id="edge44_Node000019_Node000038" title=" " alt="" coords="868,920,990,882,992,887,870,925"/>
+<area shape="rect" id="Node000021" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a1a8ce2b9ced17d9ff6137c563c58a0e0.html#a1a8ce2b9ced17d9ff6137c563c58a0e0" title="Get bytes per pixel for a format." alt="" coords="1259,1070,1457,1125"/>
+<area shape="poly" id="edge27_Node000020_Node000021" title=" " alt="" coords="1168,1086,1246,1090,1246,1095,1167,1091"/>
+<area shape="rect" id="Node000023" href="$classMayaFlux_1_1Core_1_1BackendResourceManager_ab4e39f5b542838628a267c0cfe94dba4.html#ab4e39f5b542838628a267c0cfe94dba4" title="Find a suitable memory type for Vulkan buffer allocation." alt="" coords="2123,899,2370,939"/>
+<area shape="poly" id="edge29_Node000022_Node000023" title=" " alt="" coords="2071,925,2110,923,2110,928,2071,930"/>
+<area shape="rect" id="Node000026" href="$classMayaFlux_1_1Core_1_1VKContext_a41228db586851246809c40f704b64292.html#a41228db586851246809c40f704b64292" title="Get logical device." alt="" coords="2147,807,2347,847"/>
+<area shape="poly" id="edge32_Node000022_Node000026" title=" " alt="" coords="2031,911,2070,899,2190,850,2192,855,2072,904,2033,916"/>
+<area shape="rect" id="Node000024" href="$classMayaFlux_1_1Core_1_1VKContext_abb26eca0db297f0a9545aee095450aa1.html#abb26eca0db297f0a9545aee095450aa1" title="Get physical device." alt="" coords="2423,899,2623,939"/>
+<area shape="poly" id="edge30_Node000023_Node000024" title=" " alt="" coords="2370,916,2409,916,2409,921,2370,921"/>
+<area shape="rect" id="Node000025" href="$classMayaFlux_1_1Core_1_1VKDevice_a094d1ed720c72ced04293743f4b2a63e.html#a094d1ed720c72ced04293743f4b2a63e" title="Get physical device handle." alt="" coords="2671,899,2865,939"/>
+<area shape="poly" id="edge31_Node000024_Node000025" title=" " alt="" coords="2623,916,2657,916,2657,921,2623,921"/>
+<area shape="rect" id="Node000027" href="$classMayaFlux_1_1Core_1_1VKDevice_ac91623c4b7b52f1f5f7460ef91021583.html#ac91623c4b7b52f1f5f7460ef91021583" title="Get logical device handle." alt="" coords="2425,807,2620,847"/>
+<area shape="poly" id="edge33_Node000026_Node000027" title=" " alt="" coords="2347,824,2411,824,2411,829,2347,829"/>
+<area shape="rect" id="Node000031" href="$classMayaFlux_1_1Core_1_1BackendResourceManager_a5dcf25547288ef33225a71929a05c358.html#a5dcf25547288ef33225a71929a05c358" title="Execute immediate command recording for buffer operations." alt="" coords="1529,1042,1776,1097"/>
+<area shape="poly" id="edge37_Node000030_Node000031" title=" " alt="" coords="1482,1041,1516,1046,1515,1052,1481,1046"/>
+<area shape="rect" id="Node000032" href="$classMayaFlux_1_1Core_1_1VKCommandManager_a8e859b77baae66a4cad3578d2a863f76.html#a8e859b77baae66a4cad3578d2a863f76" title="Begin single&#45;time command (for transfers, etc.)" alt="" coords="1839,1186,2055,1241"/>
+<area shape="poly" id="edge38_Node000031_Node000032" title=" " alt="" coords="1695,1095,1755,1133,1825,1171,1843,1179,1841,1183,1823,1176,1752,1138,1692,1099"/>
+<area shape="rect" id="Node000034" href="$classMayaFlux_1_1Core_1_1VKCommandManager_a37f459a66acc77d0b833ab5a993f8253.html#a37f459a66acc77d0b833ab5a993f8253" title="End and submit single&#45;time command." alt="" coords="1839,1042,2055,1097"/>
+<area shape="poly" id="edge40_Node000031_Node000034" title=" " alt="" coords="1776,1067,1826,1067,1826,1072,1776,1072"/>
+<area shape="rect" id="Node000036" href="$classMayaFlux_1_1Core_1_1VKContext_a87b4589aa8858027f09e7370552b4d50.html#a87b4589aa8858027f09e7370552b4d50" title="Get graphics queue." alt="" coords="1847,1121,2047,1161"/>
+<area shape="poly" id="edge42_Node000031_Node000036" title=" " alt="" coords="1766,1094,1852,1115,1851,1121,1765,1099"/>
+<area shape="rect" id="Node000033" href="$classMayaFlux_1_1Core_1_1VKCommandManager_ab25f2104b7f013fca0c7876ade0632b5.html#ab25f2104b7f013fca0c7876ade0632b5" title="Allocate a command buffer with specified level." alt="" coords="2119,1193,2375,1233"/>
+<area shape="poly" id="edge39_Node000032_Node000033" title=" " alt="" coords="2055,1211,2105,1211,2105,1216,2055,1216"/>
+<area shape="rect" id="Node000035" href="$classMayaFlux_1_1Core_1_1VKCommandManager_a59f7b69e5c3f53d77c1c5e8f2e206d89.html#a59f7b69e5c3f53d77c1c5e8f2e206d89" title="Free a command buffer back to the pool." alt="" coords="2131,1049,2362,1089"/>
+<area shape="poly" id="edge41_Node000034_Node000035" title=" " alt="" coords="2055,1067,2118,1067,2118,1072,2055,1072"/>
+<area shape="rect" id="Node000037" href="$classMayaFlux_1_1Core_1_1VKDevice_af1941d43ae76316ef044a61450e7aa1c.html#af1941d43ae76316ef044a61450e7aa1c" title="Get graphics queue." alt="" coords="2149,1121,2344,1161"/>
+<area shape="poly" id="edge43_Node000036_Node000037" title=" " alt="" coords="2047,1139,2135,1139,2135,1144,2047,1144"/>
+<area shape="poly" id="edge45_Node000038_Node000028" title=" " alt="" coords="1171,875,1243,888,1242,893,1170,880"/>
+<area shape="rect" id="Node000039" href="$classMayaFlux_1_1Core_1_1BackendResourceManager_ae6ec7e3044b266267de2e7fcb3c0f2e4.html#ae6ec7e3044b266267de2e7fcb3c0f2e4" title="Upload data to an image (creates staging buffer internally)" alt="" coords="1235,827,1481,867"/>
+<area shape="poly" id="edge46_Node000038_Node000039" title=" " alt="" coords="1170,853,1221,850,1221,856,1170,858"/>
+<area shape="poly" id="edge50_Node000039_Node000026" title=" " alt="" coords="1481,837,1529,835,1858,827,2133,824,2133,830,1858,832,1529,840,1482,842"/>
+<area shape="poly" id="edge49_Node000039_Node000031" title=" " alt="" coords="1459,864,1483,876,1528,910,1569,951,1603,992,1629,1029,1625,1032,1598,995,1565,954,1525,915,1480,881,1456,869"/>
+<area shape="rect" id="Node000040" href="$classMayaFlux_1_1Core_1_1BackendResourceManager_a0db85a56fc0aa2720febc7f3e8c3dbf9.html#a0db85a56fc0aa2720febc7f3e8c3dbf9" title="Cleanup a buffer and release associated resources." alt="" coords="1529,735,1776,775"/>
+<area shape="poly" id="edge47_Node000039_Node000040" title=" " alt="" coords="1422,824,1574,776,1576,781,1424,829"/>
+<area shape="rect" id="Node000041" href="$classMayaFlux_1_1Core_1_1BackendResourceManager_ad1bfc97eb921df611d3503d11e6e2347.html#ad1bfc97eb921df611d3503d11e6e2347" title="Initialize a buffer for use with the graphics backend." alt="" coords="1529,849,1776,889"/>
+<area shape="poly" id="edge51_Node000039_Node000041" title=" " alt="" coords="1482,853,1516,856,1516,861,1481,859"/>
+<area shape="poly" id="edge48_Node000040_Node000026" title=" " alt="" coords="1776,760,1918,773,2071,791,2137,802,2136,807,2070,796,1917,778,1776,766"/>
+<area shape="rect" id="Node000042" href="$classMayaFlux_1_1Core_1_1BackendResourceManager_ad5f783753dbe799e95ce480237b1c86b.html#ad5f783753dbe799e95ce480237b1c86b" title="Allocate a raw VkBuffer/VkDeviceMemory pair without an owning VKBuffer object." alt="" coords="1824,849,2071,889"/>
+<area shape="poly" id="edge52_Node000041_Node000042" title=" " alt="" coords="1776,867,1810,867,1810,872,1776,872"/>
+<area shape="rect" id="Node000043" href="$namespaceMayaFlux_1_1Kakshya_aa3a2745fea69caaef2cc6ed92d2f277d.html#aa3a2745fea69caaef2cc6ed92d2f277d" title="Convert DataModality enum to string representation." alt="" coords="1868,977,2027,1017"/>
+<area shape="poly" id="edge55_Node000041_Node000043" title=" " alt="" coords="1686,887,1748,925,1825,963,1856,974,1854,979,1823,968,1746,930,1683,892"/>
+<area shape="poly" id="edge53_Node000042_Node000023" title=" " alt="" coords="2070,887,2112,894,2111,899,2069,892"/>
+<area shape="poly" id="edge54_Node000042_Node000026" title=" " alt="" coords="2071,849,2132,840,2133,846,2071,854"/>
+<area shape="rect" id="Node000044" href="$namespaceMayaFlux_1_1Reflect_aad91118cbd25bd9e35a3ced9aa4e6dbd.html#aad91118cbd25bd9e35a3ced9aa4e6dbd" title="Universal enum to string converter using magic_enum (original case)" alt="" coords="2173,977,2320,1017"/>
+<area shape="poly" id="edge56_Node000043_Node000044" title=" " alt="" coords="2027,995,2159,995,2159,1000,2027,1000"/>
+<area shape="poly" id="edge61_Node000046_Node000006" title=" " alt="" coords="656,640,699,638,699,643,656,645"/>
+<area shape="poly" id="edge60_Node000046_Node000009" title=" " alt="" coords="653,664,706,672,940,688,1173,692,1382,689,1544,682,1544,688,1382,694,1173,697,939,693,705,677,652,669"/>
+<area shape="poly" id="edge64_Node000047_Node000009" title=" " alt="" coords="657,517,814,523,1021,538,1252,565,1368,585,1482,609,1543,628,1598,650,1596,655,1541,633,1481,615,1367,590,1251,571,1020,543,814,528,657,522"/>
+<area shape="poly" id="edge63_Node000047_Node000017" title=" " alt="" coords="640,496,699,480,700,485,641,501"/>
+<area shape="poly" id="edge66_Node000048_Node000009" title=" " alt="" coords="1422,748,1574,700,1576,705,1424,753"/>
+<area shape="rect" id="Node000050" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_adccb5c4da3eb1596796086522c7f5495.html#adccb5c4da3eb1596796086522c7f5495" title=" " alt="" coords="713,5,895,45"/>
+<area shape="poly" id="edge69_Node000049_Node000050" title=" " alt="" coords="656,28,699,26,699,32,656,33"/>
+<area shape="poly" id="edge70_Node000050_Node000004" title=" " alt="" coords="882,43,904,55,950,92,991,136,1050,216,1046,219,987,139,947,96,901,60,879,48"/>
+</map>

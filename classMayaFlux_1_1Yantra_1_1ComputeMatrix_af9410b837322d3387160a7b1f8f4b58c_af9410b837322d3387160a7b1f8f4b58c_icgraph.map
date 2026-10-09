@@ -1,0 +1,9 @@
+<map id="MayaFlux::Yantra::ComputeMatrix::create" name="MayaFlux::Yantra::ComputeMatrix::create">
+<area shape="rect" id="Node000001" title="Create a new ComputeMatrix instance." alt="" coords="240,89,441,129"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1Vision_1_1VisionWorkflow_a513ce8ce6f60a63c089542a6847ebf59.html#a513ce8ce6f60a63c089542a6847ebf59" title="Run config&#39;s query on its source live and show what its extraction takes from each frame in a texture..." alt="" coords="5,29,192,84"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="233,88,192,79,193,74,234,83"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1Vision_1_1VisionWorkflow_a4a5f7b33ae43b6765d1929b49b086e4d.html#a4a5f7b33ae43b6765d1929b49b086e4d" title="Run config&#39;s query on its source live and record what its extraction takes from each frame into a gro..." alt="" coords="5,132,192,187"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="232,134,193,142,192,137,231,129"/>
+<area shape="poly" id="edge2_Node000002_Node000002" title=" " alt="" coords="139,18,124,11,99,8,77,10,63,15,57,21,57,29,52,29,52,19,61,10,76,5,99,3,126,6,141,14"/>
+<area shape="poly" id="edge4_Node000003_Node000003" title=" " alt="" coords="139,121,124,114,99,111,77,113,63,117,57,124,57,132,52,132,52,122,61,113,76,107,99,105,126,108,141,116"/>
+</map>

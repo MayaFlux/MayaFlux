@@ -1,0 +1,25 @@
+<map id="run" name="run">
+<area shape="rect" id="Node000001" title=" " alt="" coords="981,227,1024,253"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1Vision_1_1VisionWorkflow_a964fd04cf360c5e433781c533a6d458b.html#a964fd04cf360c5e433781c533a6d458b" title=" " alt="" coords="739,5,922,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="996,214,990,179,978,137,959,95,931,59,916,48,919,43,935,55,964,93,983,136,995,178,1001,213"/>
+<area shape="rect" id="Node000003" href="$main_8cpp_a0ddf1224851353fc92bfbff6f499fa97.html#a0ddf1224851353fc92bfbff6f499fa97" title=" " alt="" coords="803,70,858,95"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="993,215,971,161,954,133,932,110,915,100,895,93,858,86,859,81,897,87,917,95,935,106,958,130,976,159,997,213"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1PrimitiveMill_ae149e0bc3f6ca0cce9034bc0f2e2b645.html#ae149e0bc3f6ca0cce9034bc0f2e2b645" title="Mill runs out of source into the owned buffer." alt="" coords="732,120,929,160"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="981,219,959,195,932,174,908,163,911,158,935,170,963,191,985,215"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a68a51766127515fd697f6110e741794e.html#a68a51766127515fd697f6110e741794e" title="Host equivalent of PrimitiveMill::mill, over raw bytes." alt="" coords="732,184,929,224"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="968,236,926,227,927,221,969,230"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1PrimitiveMill_a6c931f0d5d855c6cd87bbc164ff9328f.html#a6c931f0d5d855c6cd87bbc164ff9328f" title="Vertices runs would mill to." alt="" coords="732,249,929,303"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="969,250,930,258,929,253,967,244"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Buffers_1_1NetworkGeometryProcessor_ac6c764a77a3082815a103b602eddaf77.html#ac6c764a77a3082815a103b602eddaf77" title="BufferProcessor interface &#45; aggregates and uploads network geometry." alt="" coords="728,327,933,382"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="987,265,964,292,935,317,913,330,910,325,932,313,960,288,983,262"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Yantra_1_1VisionGpuExecutor_aa3891b5855d98bac1e8935cc91931aae.html#aa3891b5855d98bac1e8935cc91931aae" title="Execute a VisionSequence on the GPU using this instance&#39;s own lazily&#45;constructed context set." alt="" coords="739,407,922,447"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="999,267,979,331,960,365,935,395,916,409,913,404,932,391,956,362,974,329,994,265"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Kriya_1_1ChimeraBuilder_ad4ee9b1cfea7224a274f3f9596ed5598.html#ad4ee9b1cfea7224a274f3f9596ed5598" title="Start feeding every declared layer on the frame clock." alt="" coords="735,471,926,511"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="1003,267,999,309,988,360,968,414,953,439,935,461,920,473,916,468,931,457,949,435,963,411,983,359,994,308,998,266"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a6d6af6f212ace15b1100d0fc65634e9d.html#a6d6af6f212ace15b1100d0fc65634e9d" title="Mill m_runs into this attachment&#39;s output." alt="" coords="481,120,680,160"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="718,143,680,143,680,137,718,137"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a802c0733635cc376acc7c05ee33c5377.html#a802c0733635cc376acc7c05ee33c5377" title="Prepare and retain the source and draw range for one attached buffer." alt="" coords="244,113,433,167"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="468,143,434,143,434,137,468,137"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_acd3ee18a43b25af2aa06f17efacd6c5f.html#acd3ee18a43b25af2aa06f17efacd6c5f" title="Prepare this buffer&#39;s geometry and record its draw commands." alt="" coords="5,113,196,167"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="231,143,196,143,196,137,231,137"/>
+</map>

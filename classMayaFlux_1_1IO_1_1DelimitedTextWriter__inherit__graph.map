@@ -1,0 +1,5 @@
+<map id="MayaFlux::IO::DelimitedTextWriter" name="MayaFlux::IO::DelimitedTextWriter">
+<area shape="rect" id="Node000001" title="Streaming CSV and TSV writer for Composite arrays." alt="" coords="10,299,219,779"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1CompositeWriter.html" title="Typed writer contract for schema&#45;bearing Composite files." alt="" coords="5,5,224,251"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="117,265,117,298,112,298,112,265"/>
+</map>

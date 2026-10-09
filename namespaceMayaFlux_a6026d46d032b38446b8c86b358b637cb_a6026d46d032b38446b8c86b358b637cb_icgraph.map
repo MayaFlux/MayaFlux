@@ -1,0 +1,5 @@
+<map id="MayaFlux::attach_quick_process" name="MayaFlux::attach_quick_process">
+<area shape="rect" id="Node000001" title="Attaches a processing function to a specific channel." alt="" coords="251,13,428,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingControl_adcfa190d3e7daf83304304d055ad4ef7.html#adcfa190d3e7daf83304304d055ad4ef7" title=" " alt="" coords="5,5,203,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="236,35,203,35,203,30,236,30"/>
+</map>

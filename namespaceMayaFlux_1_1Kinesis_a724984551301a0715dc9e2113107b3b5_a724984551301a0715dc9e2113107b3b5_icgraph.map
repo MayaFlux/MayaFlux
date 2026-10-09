@@ -1,0 +1,11 @@
+<map id="MayaFlux::Kinesis::box_transform" name="MayaFlux::Kinesis::box_transform">
+<area shape="rect" id="Node000001" title="Transform that scales and translates one box onto another." alt="" coords="477,69,627,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1Mantle_ad57cad5c90326b7f9f99a51980332783.html#ad57cad5c90326b7f9f99a51980332783" title=" " alt="" coords="241,69,429,109"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="463,92,429,92,429,87,463,87"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nexus_1_1Mantle_aec56a122cb88646533bdf80a02613451.html#aec56a122cb88646533bdf80a02613451" title="Build from a box and a buffer." alt="" coords="5,5,193,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="247,68,173,48,174,43,249,63"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nexus_1_1Mantle_a06083bc88a1e28ba95ecfdf8fadf605d.html#a06083bc88a1e28ba95ecfdf8fadf605d" title="Read the buffer&#39;s geometry again and place it to match." alt="" coords="5,69,193,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="227,92,194,92,194,87,227,87"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nexus_1_1Mantle_aebbc7216b3cd7a8d3cd65f1590e46801.html#aebbc7216b3cd7a8d3cd65f1590e46801" title="Set or replace the box and place the buffer to match." alt="" coords="5,133,193,173"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="249,116,174,136,173,131,247,110"/>
+</map>

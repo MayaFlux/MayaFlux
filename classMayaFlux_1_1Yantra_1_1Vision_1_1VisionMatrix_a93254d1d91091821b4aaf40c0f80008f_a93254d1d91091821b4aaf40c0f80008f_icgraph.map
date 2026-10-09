@@ -1,0 +1,13 @@
+<map id="MayaFlux::Yantra::Vision::VisionMatrix::count_call" name="MayaFlux::Yantra::Vision::VisionMatrix::count_call">
+<area shape="rect" id="Node000001" title=" " alt="" coords="487,37,673,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1Vision_1_1VisionMatrix_a2b4603c6dfe456f170ee3b23740f8e8c.html#a2b4603c6dfe456f170ee3b23740f8e8c" title="Analyze image and keep it with its analysis until the next call." alt="" coords="256,5,439,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="473,45,439,41,439,35,474,40"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1Vision_1_1VisionMatrix_a9396645f14a650024aa7724c52cda201.html#a9396645f14a650024aa7724c52cda201" title="Extract from image with analysis and keep all three until the next call." alt="" coords="256,69,439,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="474,75,439,79,439,74,473,69"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1Vision_1_1VisionMatrix_a40cfb90e438c477e93b0941610a1bdc3.html#a40cfb90e438c477e93b0941610a1bdc3" title="execute() on frame index of source: a texture container&#39;s layer, or a video stream&#39;s or window&#39;s curr..." alt="" coords="15,5,198,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="242,28,198,28,198,23,242,23"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1Vision_1_1VisionMatrix_a25ca13f0e093395e60035bf472b2be3f.html#a25ca13f0e093395e60035bf472b2be3f" title=" " alt="" coords="15,69,198,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="242,92,198,92,198,87,242,87"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1Vision_1_1VisionMatrix_a5d254e3dd07a0a6fd7295839dca4d2b3.html#a5d254e3dd07a0a6fd7295839dca4d2b3" title=" " alt="" coords="5,133,208,173"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="259,116,183,136,182,131,257,110"/>
+</map>

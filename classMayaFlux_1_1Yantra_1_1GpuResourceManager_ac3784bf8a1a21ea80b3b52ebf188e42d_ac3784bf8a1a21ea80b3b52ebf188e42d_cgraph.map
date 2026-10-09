@@ -1,0 +1,16 @@
+<map id="MayaFlux::Yantra::GpuResourceManager::dispatch_sequence_async" name="MayaFlux::Yantra::GpuResourceManager::dispatch_sequence_async">
+<area shape="rect" id="Node000001" title="Non&#45;blocking counterpart of dispatch_sequence." alt="" coords="5,39,261,79"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a715d57394465ff2924727d7c82d87e7b.html#a715d57394465ff2924727d7c82d87e7b" title="Get the global shader compiler instance." alt="" coords="601,5,798,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="261,49,587,29,587,35,262,54"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1GpuResourceManager_a9beec548828a90be5b22a49cb5dfaa25.html#a9beec548828a90be5b22a49cb5dfaa25" title="Record one command buffer holding a dispatch per key, with the barriers each stage&#39;s hazards owe the ..." alt="" coords="309,63,537,118"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="262,70,296,74,295,79,261,75"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="861,5,1059,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="798,23,847,23,847,28,798,28"/>
+<area shape="poly" id="edge6_Node000004_Node000002" title=" " alt="" coords="537,61,600,46,602,51,538,66"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_af50ca0aa0cb7511c99eaf758430efdce.html#af50ca0aa0cb7511c99eaf758430efdce" title=" " alt="" coords="601,69,798,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="537,87,587,87,587,93,537,93"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Yantra_1_1GpuResourceManager_a93b9e87640ff7caf15e93874fb627541.html#a93b9e87640ff7caf15e93874fb627541" title=" " alt="" coords="585,133,813,173"/>
+<area shape="poly" id="edge7_Node000004_Node000007" title=" " alt="" coords="538,114,598,128,597,133,537,119"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ComputePress_a89b259adf28ef041294928959e03fa9c.html#a89b259adf28ef041294928959e03fa9c" title=" " alt="" coords="861,69,1059,109"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="798,87,847,87,847,92,798,92"/>
+</map>

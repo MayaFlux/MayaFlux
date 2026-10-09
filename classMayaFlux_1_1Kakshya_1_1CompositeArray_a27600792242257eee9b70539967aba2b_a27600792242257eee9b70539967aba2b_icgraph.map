@@ -1,0 +1,51 @@
+<map id="MayaFlux::Kakshya::CompositeArray::size" name="MayaFlux::Kakshya::CompositeArray::size">
+<area shape="rect" id="Node000001" title="Number of packed elements." alt="" coords="777,347,937,387"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_adb8b2ae5b04a8627a3b262e6b42fca1e.html#adb8b2ae5b04a8627a3b262e6b42fca1e" title="Append one zero&#45;initialized element with no fields present." alt="" coords="256,381,439,421"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="764,376,439,398,439,393,763,370"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_a5179bbed83a1cfd37144e1fb8c355ec2.html#a5179bbed83a1cfd37144e1fb8c355ec2" title="Mark a field absent without removing its stored bytes." alt="" coords="533,173,699,213"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="834,337,789,281,760,252,728,228,699,213,701,209,731,223,764,248,793,277,838,333"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1CompositeContainer_a62fb79d0ae892f3fe9346f227f22a84e.html#a62fb79d0ae892f3fe9346f227f22a84e" title="Describe the array&#39;s element axis." alt="" coords="535,238,697,293"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="804,343,728,308,696,295,698,290,730,303,806,338"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Yantra_a7d448004ae766fe0b6670f35f088fe2f.html#a7d448004ae766fe0b6670f35f088fe2f" title="Infer the element axis and modality of a CompositeArray." alt="" coords="528,105,704,145"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="842,335,824,295,800,249,767,203,728,163,701,148,704,143,731,159,771,200,804,246,829,293,847,333"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1IO_1_1DelimitedTextReader_a502ce5c32745cb3a3bc98df29df01e0c.html#a502ce5c32745cb3a3bc98df29df01e0c" title="Consume a bounded number of records." alt="" coords="513,317,719,357"/>
+<area shape="poly" id="edge13_Node000001_Node000014" title=" " alt="" coords="763,358,719,353,720,347,764,353"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Kakshya_1_1CompositeContainer_af4c374f619f64b7c1e1cfb3edc4938d2.html#af4c374f619f64b7c1e1cfb3edc4938d2" title="Replace a Region with an equal number of compatible elements." alt="" coords="535,433,697,487"/>
+<area shape="poly" id="edge15_Node000001_Node000016" title=" " alt="" coords="793,394,688,435,686,430,791,389"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_ac900d8eee86d5774bad27259d0f39efa.html#ac900d8eee86d5774bad27259d0f39efa" title=" " alt="" coords="503,512,729,552"/>
+<area shape="poly" id="edge16_Node000001_Node000017" title=" " alt="" coords="836,400,791,452,763,479,731,502,706,514,704,510,728,498,759,475,788,449,832,396"/>
+<area shape="rect" id="Node000024" href="$classMayaFlux_1_1IO_1_1CompositeWriter_a3ab2d2f1fa46334134439d94aa9eb9d8.html#a3ab2d2f1fa46334134439d94aa9eb9d8" title="Write a complete array in one call." alt="" coords="503,576,729,616"/>
+<area shape="poly" id="edge25_Node000001_Node000024" title=" " alt="" coords="846,400,829,439,804,484,771,528,731,566,711,578,708,574,728,562,767,525,799,481,824,436,841,398"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1CompositeInsertion_a70237433e67948a735b93ee3eaebd6ff.html#a70237433e67948a735b93ee3eaebd6ff" title="Copy one Composite with a matching layout into this array." alt="" coords="19,439,178,494"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="258,427,179,448,178,443,257,422"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1OperationHelper_a62ebfc1593a91638c9547dc32c2d7db5.html#a62ebfc1593a91638c9547dc32c2d7db5" title="Copy Composite records and replace one projected numeric field." alt="" coords="240,166,455,221"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="519,196,455,196,455,191,519,191"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1IO_1_1DelimitedTextReader_a9401002a63c2f90b2c0a04e58bb94bd3.html#a9401002a63c2f90b2c0a04e58bb94bd3" title="Seek to a zero&#45;based data record by replaying from the first." alt="" coords="244,245,451,285"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="528,220,424,248,422,243,527,214"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Yantra_ae05845067871689b0b43d88e2b97b4f2.html#ae05845067871689b0b43d88e2b97b4f2" title="Infer dimensions and modality from any ComputeData type." alt="" coords="261,101,433,141"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="515,126,433,125,434,120,515,121"/>
+<area shape="rect" id="Node000010" href="$structMayaFlux_1_1Yantra_1_1Datum_af60854443083d66271866d0bcffe6e2e.html#af60854443083d66271866d0bcffe6e2e" title="Construct from data by copy with automatic structure inference." alt="" coords="5,5,192,45"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="286,98,191,60,159,48,160,43,193,55,288,93"/>
+<area shape="rect" id="Node000011" href="$structMayaFlux_1_1Yantra_1_1Datum_afcbb7ba6d9662ba436c2c46406f2341f.html#afcbb7ba6d9662ba436c2c46406f2341f" title="Construct from data by copy with container reference and automatic structure inference." alt="" coords="5,69,192,109"/>
+<area shape="poly" id="edge10_Node000009_Node000011" title=" " alt="" coords="247,111,192,104,192,99,248,106"/>
+<area shape="rect" id="Node000012" href="$structMayaFlux_1_1Yantra_1_1Datum_a938a7ae520687b3ef39b3c04da00c159.html#a938a7ae520687b3ef39b3c04da00c159" title="Construct from data by move with automatic structure inference." alt="" coords="5,133,192,173"/>
+<area shape="poly" id="edge11_Node000009_Node000012" title=" " alt="" coords="248,137,192,144,192,139,247,132"/>
+<area shape="rect" id="Node000013" href="$structMayaFlux_1_1Yantra_1_1Datum_a462ba3b1a72eb90e6b5a0abb6f7586f1.html#a462ba3b1a72eb90e6b5a0abb6f7586f1" title="Construct from data by move with automatic structure inference." alt="" coords="5,197,192,237"/>
+<area shape="poly" id="edge12_Node000009_Node000013" title=" " alt="" coords="258,149,241,156,217,171,193,188,166,200,164,195,191,183,214,167,239,151,256,144"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1IO_1_1DelimitedTextReader_a11b7ae4f55cd81f380049b4165ec2eb8.html#a11b7ae4f55cd81f380049b4165ec2eb8" title="Consume all remaining records into one array." alt="" coords="244,317,451,357"/>
+<area shape="poly" id="edge14_Node000014_Node000015" title=" " alt="" coords="499,340,451,340,451,335,499,335"/>
+<area shape="rect" id="Node000018" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_a66d5d905fbd8548158d3a1edbd667e5e.html#a66d5d905fbd8548158d3a1edbd667e5e" title="Write binary bytes to a fixed or dynamic BLOB field." alt="" coords="253,511,442,551"/>
+<area shape="poly" id="edge17_Node000017_Node000018" title=" " alt="" coords="489,534,442,534,442,528,489,529"/>
+<area shape="rect" id="Node000019" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_af179779c8b4123355fd50fdbe5b2a9bc.html#af179779c8b4123355fd50fdbe5b2a9bc" title="Write UTF&#45;8 bytes to a std::string field." alt="" coords="254,447,441,487"/>
+<area shape="poly" id="edge19_Node000017_Node000019" title=" " alt="" coords="519,511,429,489,431,484,520,506"/>
+<area shape="rect" id="Node000020" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_ae1ceb015d2fb8e82f78445d4d6845b32.html#ae1ceb015d2fb8e82f78445d4d6845b32" title=" " alt="" coords="254,575,441,630"/>
+<area shape="poly" id="edge21_Node000017_Node000020" title=" " alt="" coords="527,558,442,581,440,576,525,553"/>
+<area shape="poly" id="edge18_Node000018_Node000003" title=" " alt="" coords="255,510,177,490,179,484,256,505"/>
+<area shape="poly" id="edge20_Node000019_Node000003" title=" " alt="" coords="240,469,178,469,178,464,240,464"/>
+<area shape="rect" id="Node000021" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_a117030cd49ab32440ff9786dc88f06db.html#a117030cd49ab32440ff9786dc88f06db" title=" " alt="" coords="19,647,178,702"/>
+<area shape="poly" id="edge22_Node000020_Node000021" title=" " alt="" coords="242,636,179,654,178,649,240,631"/>
+<area shape="rect" id="Node000022" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_a62eef0f91954281fa6f91eb44480db51.html#a62eef0f91954281fa6f91eb44480db51" title="Write a present NULL to a dynamic field." alt="" coords="6,519,191,559"/>
+<area shape="poly" id="edge23_Node000020_Node000022" title=" " alt="" coords="240,578,176,561,178,556,241,573"/>
+<area shape="rect" id="Node000023" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_ad783483b1f77b661d6acf009b0d97cb7.html#ad783483b1f77b661d6acf009b0d97cb7" title=" " alt="" coords="5,583,192,623"/>
+<area shape="poly" id="edge24_Node000020_Node000023" title=" " alt="" coords="240,605,192,605,192,600,240,600"/>
+</map>

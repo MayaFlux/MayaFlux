@@ -1,0 +1,15 @@
+<map id="MayaFlux::IO::Detail::make_default_resolver" name="MayaFlux::IO::Detail::make_default_resolver">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,127,184,167"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1ImageReader_ae660058c52405b4605ecce4c631a4b44.html#ae660058c52405b4605ecce4c631a4b44" title="Load image directly into GPU texture (static utility)" alt="" coords="232,96,435,136"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="184,133,218,128,219,133,185,138"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1IO_1_1FileReader_a24d94d5bc8b4294d61f43ac86f933050.html#a24d94d5bc8b4294d61f43ac86f933050" title="Resolve a filepath against the project source root if not found as&#45;is." alt="" coords="491,157,677,197"/>
+<area shape="poly" id="edge7_Node000001_Node000006" title=" " alt="" coords="184,150,477,168,477,173,184,155"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a335ffb0c43b53ec263ab6559ac29476b.html#a335ffb0c43b53ec263ab6559ac29476b" title="Get the global texture manager instance." alt="" coords="485,5,683,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="382,93,482,55,504,47,506,52,484,60,384,98"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1IO_1_1ImageReader_a35e7202cd51c429e0c56688344cc4746.html#a35e7202cd51c429e0c56688344cc4746" title="Load image from file (static utility)" alt="" coords="483,93,685,133"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="435,112,469,112,469,117,435,118"/>
+<area shape="poly" id="edge6_Node000002_Node000006" title=" " alt="" coords="417,133,489,151,488,157,415,139"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a6887ad297693c2392be7960daab06002.html#a6887ad297693c2392be7960daab06002" title=" " alt="" coords="733,5,931,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="683,23,719,23,719,28,683,28"/>
+<area shape="poly" id="edge5_Node000005_Node000005" title=" " alt="" coords="538,94,535,84,543,74,559,69,584,67,613,70,629,77,626,82,611,75,584,72,560,74,546,79,540,85,543,92"/>
+</map>

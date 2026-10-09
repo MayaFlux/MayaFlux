@@ -1,0 +1,11 @@
+<map id="MayaFlux::Buffers::ClaimFlattenProcessor::on_iteration_barrier" name="MayaFlux::Buffers::ClaimFlattenProcessor::on_iteration_barrier">
+<area shape="rect" id="Node000001" title="Called after each iteration except the last." alt="" coords="5,84,175,139"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_acbe00008128244bcb2902611e53eff80.html#acbe00008128244bcb2902611e53eff80" title="Insert buffer memory barrier." alt="" coords="227,5,424,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="172,81,229,62,231,67,174,86"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1NetworkStateFieldProcessor_ae5067724f1f4f16735d18dbe8468e498.html#ae5067724f1f4f16735d18dbe8468e498" title="The attached buffer, or null if attachment failed validation." alt="" coords="223,84,428,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="175,109,209,109,209,114,175,114"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a715d57394465ff2924727d7c82d87e7b.html#a715d57394465ff2924727d7c82d87e7b" title="Get the global shader compiler instance." alt="" coords="227,163,424,203"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="175,135,247,157,245,162,174,140"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="476,163,673,203"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="424,181,462,181,462,186,424,186"/>
+</map>

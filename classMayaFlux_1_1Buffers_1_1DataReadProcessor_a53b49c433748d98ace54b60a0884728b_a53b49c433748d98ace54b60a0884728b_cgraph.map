@@ -1,0 +1,13 @@
+<map id="MayaFlux::Buffers::DataReadProcessor::resolve_pixels" name="MayaFlux::Buffers::DataReadProcessor::resolve_pixels">
+<area shape="rect" id="Node000001" title="Finish a pixel read as typed ImageData with its format and dimensions." alt="" coords="5,30,211,85"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1DataReadProcessor_ac90e3861ca68b753670c9c266191c284.html#ac90e3861ca68b753670c9c266191c284" title=" " alt="" coords="259,30,459,85"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="211,55,245,55,245,60,211,60"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Buffers_a625b092777dc56b97d2f8a8033b71df5.html#a625b092777dc56b97d2f8a8033b71df5" title="Express a buffer handle as the slot the back_buffers transfer helpers take." alt="" coords="527,5,675,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="459,41,514,34,514,39,459,47"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Buffers_ac7562e9a3e4bfeda5e4dce28876c09e2.html#ac7562e9a3e4bfeda5e4dce28876c09e2" title="Wait for a recorded download, then copy it out of staging." alt="" coords="507,69,696,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="459,68,494,72,493,78,459,73"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="761,26,928,81"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="696,73,747,65,748,70,696,78"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="744,105,945,145"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="696,101,731,106,730,111,696,106"/>
+</map>

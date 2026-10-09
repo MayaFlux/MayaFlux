@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::NodeNetwork::ensure_initialized" name="MayaFlux::Nodes::Network::NodeNetwork::ensure_initialized">
+<area shape="rect" id="Node000001" title="Ensure initialize() is called exactly once." alt="" coords="5,5,248,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork_a46eab2ced115fa80605195fa154e3973.html#a46eab2ced115fa80605195fa154e3973" title="Called once before first process_batch()" alt="" coords="296,5,495,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="248,23,282,23,282,28,248,28"/>
+</map>

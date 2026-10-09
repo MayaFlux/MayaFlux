@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::NodeGraphManager::terminate_active_processing" name="MayaFlux::Nodes::NodeGraphManager::terminate_active_processing">
+<area shape="rect" id="Node000001" title="Terminates all active processing across all tokens and channels." alt="" coords="281,5,497,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_ac72e466978d6713dfcbc620c50567363.html#ac72e466978d6713dfcbc620c50567363" title="Destroys the NodeGraphManager." alt="" coords="5,13,233,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="268,35,233,35,233,30,268,30"/>
+</map>

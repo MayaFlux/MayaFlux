@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::RelaxationStepProcessor::write_state_descriptors" name="MayaFlux::Buffers::RelaxationStepProcessor::write_state_descriptors">
+<area shape="rect" id="Node000001" title="Issue direct ShaderFoundry descriptor writes for state_in and state_out against the grid&#39;s current fr..." alt="" coords="5,5,189,60"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a715d57394465ff2924727d7c82d87e7b.html#a715d57394465ff2924727d7c82d87e7b" title="Get the global shader compiler instance." alt="" coords="237,13,435,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="190,30,224,30,224,35,190,35"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="483,13,680,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="435,30,469,30,469,35,435,35"/>
+</map>

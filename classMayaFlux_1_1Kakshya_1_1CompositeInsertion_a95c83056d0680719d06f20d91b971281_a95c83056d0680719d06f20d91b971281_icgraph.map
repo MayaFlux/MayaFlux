@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kakshya::CompositeInsertion::append" name="MayaFlux::Kakshya::CompositeInsertion::append">
+<area shape="rect" id="Node000001" title="Append an empty element." alt="" coords="769,5,928,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1DelimitedTextReader_ac39539682276d3ad0fb9d687171f7693.html#ac39539682276d3ad0fb9d687171f7693" title=" " alt="" coords="515,13,721,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="755,35,722,35,722,30,755,30"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1DelimitedTextReader_a502ce5c32745cb3a3bc98df29df01e0c.html#a502ce5c32745cb3a3bc98df29df01e0c" title="Consume a bounded number of records." alt="" coords="260,13,467,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="501,35,467,35,467,30,501,30"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1DelimitedTextReader_a11b7ae4f55cd81f380049b4165ec2eb8.html#a11b7ae4f55cd81f380049b4165ec2eb8" title="Consume all remaining records into one array." alt="" coords="5,13,212,53"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="247,35,212,35,212,30,247,30"/>
+</map>

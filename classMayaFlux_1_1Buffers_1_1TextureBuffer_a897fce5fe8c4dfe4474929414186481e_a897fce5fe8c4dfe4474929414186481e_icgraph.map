@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::TextureBuffer::mark_pixels_dirty" name="MayaFlux::Buffers::TextureBuffer::mark_pixels_dirty">
+<area shape="rect" id="Node000001" title="Mark pixel data as changed Use this if you modify pixel data in&#45;place without calling set_pixel_data(..." alt="" coords="405,5,556,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1TextureArrayBuffer_abb308b7a1106c79c340bbffe547dfbe6.html#abb308b7a1106c79c340bbffe547dfbe6" title="Replace the frame of one layer with raw pixels." alt="" coords="205,5,357,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="391,35,358,35,358,30,391,30"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1TextureArrayBuffer_abf5479ab183067327913cf60adbcd4cc.html#abf5479ab183067327913cf60adbcd4cc" title="Replace the frame of one layer with an image." alt="" coords="5,5,157,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="191,35,158,35,158,30,191,30"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::RaymarchProcessor::set_step_scale" name="MayaFlux::Buffers::RaymarchProcessor::set_step_scale">
+<area shape="rect" id="Node000001" title="Set the step length as a fraction of one cell." alt="" coords="5,5,184,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RaymarchProcessor_a166240ad4af7c0d533c6cded9843b841.html#a166240ad4af7c0d533c6cded9843b841" title="Steps needed to cross the lattice diagonal at the current step scale, capped at 512." alt="" coords="232,13,463,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="184,30,218,30,218,35,184,35"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kinesis_1_1Lattice3D_a1c680e02cfe8a54011cb7538bf33f3ee.html#a1c680e02cfe8a54011cb7538bf33f3ee" title="Edge length of one cell along each axis." alt="" coords="511,13,660,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="463,30,497,30,497,35,463,35"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kinesis_1_1AABB3D_aeab9cee1b78baf556b0b7e14c99541c2.html#aeab9cee1b78baf556b0b7e14c99541c2" title=" " alt="" coords="708,13,857,53"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="660,30,694,30,694,35,660,35"/>
+</map>

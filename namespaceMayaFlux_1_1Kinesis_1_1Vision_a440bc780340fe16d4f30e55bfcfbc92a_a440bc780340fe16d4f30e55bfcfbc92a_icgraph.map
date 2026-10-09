@@ -1,0 +1,13 @@
+<map id="MayaFlux::Kinesis::Vision::connected_components" name="MayaFlux::Kinesis::Vision::connected_components">
+<area shape="rect" id="Node000001" title="Label connected foreground components in a binary mask." alt="" coords="724,59,948,99"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a69e7bdbb3d22af6603eff40d9043cc7c.html#a69e7bdbb3d22af6603eff40d9043cc7c" title="Extract outer and hole contours from a binary mask." alt="" coords="519,29,676,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="710,66,676,62,676,56,711,61"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kinesis_1_1Vision_1_1VisionExecutor_a6ea94c5c8d90c5890b7715a0e4ff2df5.html#a6ea94c5c8d90c5890b7715a0e4ff2df5" title="Execute a VisionSequence on one frame." alt="" coords="276,59,471,99"/>
+<area shape="poly" id="edge6_Node000001_Node000003" title=" " alt="" coords="710,84,676,84,519,84,471,83,471,78,519,79,676,79,710,78"/>
+<area shape="poly" id="edge2_Node000002_Node000002" title=" " alt="" coords="635,18,622,11,597,8,576,10,563,15,558,21,561,28,555,30,553,20,560,10,575,5,597,3,623,6,638,13"/>
+<area shape="poly" id="edge3_Node000002_Node000003" title=" " alt="" coords="506,64,471,69,470,63,505,59"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1VisionProcessor_ab9b6b50546df64540aee0f0bbbb7939a.html#ab9b6b50546df64540aee0f0bbbb7939a" title="Execute the VisionSequence on processed_data[0]." alt="" coords="25,23,208,63"/>
+<area shape="poly" id="edge4_Node000003_Node000004" title=" " alt="" coords="262,66,208,58,209,53,263,60"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1ImageCVProcessor_a03dd11926b797b52ccbdfa37c2b5e4e1.html#a03dd11926b797b52ccbdfa37c2b5e4e1" title="Download the current GPU image, run the VisionSequence, store the result." alt="" coords="5,87,228,142"/>
+<area shape="poly" id="edge5_Node000003_Node000005" title=" " alt="" coords="263,97,229,102,228,96,262,92"/>
+</map>

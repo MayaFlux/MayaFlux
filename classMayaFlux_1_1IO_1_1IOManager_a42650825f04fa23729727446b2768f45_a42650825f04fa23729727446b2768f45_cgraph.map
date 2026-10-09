@@ -1,0 +1,17 @@
+<map id="MayaFlux::IO::IOManager::stop_audio_capture" name="MayaFlux::IO::IOManager::stop_audio_capture">
+<area shape="rect" id="Node000001" title="Stop a running audio capture and finalise the file." alt="" coords="5,85,192,125"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="257,5,424,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="166,82,243,59,245,64,167,87"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="240,85,441,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="192,102,226,102,226,107,192,107"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1IOManager_a0604e2f246faf9ae9d598cd28140d814.html#a0604e2f246faf9ae9d598cd28140d814" title="Retain a save task in m_save_tasks and opportunistically reclaim finished ones." alt="" coords="247,149,434,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="176,122,252,143,251,148,174,127"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Parallel_1_1AsyncGroup_ae891e0a0f3434000ff27e12d616a808a.html#ae891e0a0f3434000ff27e12d616a808a" title="Retains fut and opportunistically reclaims completed work." alt="" coords="489,149,651,189"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="434,166,476,166,476,171,434,171"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Parallel_1_1AsyncGroup_ac5d3a0e96e4855b93c6fa4d545f5440d.html#ac5d3a0e96e4855b93c6fa4d545f5440d" title=" " alt="" coords="699,149,849,189"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="651,166,685,166,685,171,651,171"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Parallel_1_1AsyncGroup_a61de2e5f9b1c7bf6c744e2c6c299b5c9.html#a61de2e5f9b1c7bf6c744e2c6c299b5c9" title=" " alt="" coords="897,149,1052,189"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="850,166,884,166,884,171,850,171"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Memory_1_1SweepList_a08033a9c7623c750d27d7796db165f4d.html#a08033a9c7623c750d27d7796db165f4d" title="Publishes value for later sweep() or drain()." alt="" coords="1100,149,1321,189"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="1052,166,1086,166,1086,171,1052,171"/>
+</map>

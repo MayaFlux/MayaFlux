@@ -1,0 +1,17 @@
+<map id="MayaFlux::Buffers::InfluxProcessor::InfluxProcessor" name="MayaFlux::Buffers::InfluxProcessor::InfluxProcessor">
+<area shape="rect" id="Node000001" title="Construct an influx stage already placed." alt="" coords="5,53,233,93"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1InfluxProcessor_aab9d8eb17f37230f1c2a7ed51941afdd.html#aab9d8eb17f37230f1c2a7ed51941afdd" title="Replace centre, radius, rate, time step and falloff at once." alt="" coords="281,53,471,93"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="234,70,268,70,268,75,234,75"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VolumeFieldProcessor_acb1465f409e99804ba603f309a635818.html#acb1465f409e99804ba603f309a635818" title="The attached volume, or null if attachment failed validation." alt="" coords="757,5,923,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="470,62,743,38,744,44,471,67"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1InfluxProcessor_a01ca64335d4e3e111218cb774f9b1f54.html#a01ca64335d4e3e111218cb774f9b1f54" title="Write every parameter past the shared prefix." alt="" coords="519,81,709,121"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="471,81,506,85,505,91,470,86"/>
+<area shape="poly" id="edge4_Node000004_Node000003" title=" " alt="" coords="680,78,743,59,745,64,682,83"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1VolumeFieldProcessor_a4095b76d856fe604d407ff85813245d0.html#a4095b76d856fe604d407ff85813245d0" title="Write word seven of the parameter prefix, at byte offset 28." alt="" coords="757,84,923,139"/>
+<area shape="poly" id="edge5_Node000004_Node000005" title=" " alt="" coords="710,102,744,104,743,109,709,108"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1VolumeFieldProcessor_a31c30ba6b35e0eb1cab0490e7a4fc920.html#a31c30ba6b35e0eb1cab0490e7a4fc920" title="Write subclass parameters past the shared prefix." alt="" coords="757,163,923,217"/>
+<area shape="poly" id="edge7_Node000004_Node000007" title=" " alt="" coords="666,118,759,155,757,160,664,123"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a08f86ff68a93950b07208ee936badf8e.html#a08f86ff68a93950b07208ee936badf8e" title="Get current push constant data." alt="" coords="971,124,1129,179"/>
+<area shape="poly" id="edge6_Node000005_Node000006" title=" " alt="" coords="923,124,958,131,957,136,922,130"/>
+<area shape="poly" id="edge8_Node000007_Node000006" title=" " alt="" coords="922,172,957,166,958,171,923,177"/>
+</map>

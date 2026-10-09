@@ -1,0 +1,19 @@
+<map id="FFmpegCameraReader.hpp" name="FFmpegCameraReader.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="317,5,516,31"/>
+<area shape="rect" id="Node000002" href="$Convenience_8hpp.html" title="Everyday headers and namespace imports for user code." alt="" coords="5,79,140,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="349,36,129,81,128,76,348,31"/>
+<area shape="rect" id="Node000005" href="$Creator_8cpp.html" title=" " alt="" coords="165,79,261,104"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="372,38,247,81,245,76,370,33"/>
+<area shape="rect" id="Node000006" href="$Depot_8cpp.html" title=" " alt="" coords="285,79,373,104"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="394,41,345,81,341,76,390,37"/>
+<area shape="rect" id="Node000007" href="$FFmpegCameraDiscovery_8cpp.html" title=" " alt="" coords="397,79,613,104"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="443,37,492,76,489,81,440,41"/>
+<area shape="rect" id="Node000008" href="$FFmpegCameraReader_8cpp.html" title=" " alt="" coords="637,79,836,104"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="482,31,685,76,684,81,481,36"/>
+<area shape="rect" id="Node000009" href="$IOManager_8cpp.html" title=" " alt="" coords="860,79,979,104"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="518,30,849,76,860,78,860,83,848,81,517,35"/>
+<area shape="rect" id="Node000003" href="$MayaFlux_8hpp.html" title="Single include for the user facing API." alt="" coords="15,152,130,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="75,118,75,152,70,152,70,118"/>
+<area shape="rect" id="Node000004" href="$LiveAid_8hpp.html" title=" " alt="" coords="23,225,122,251"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="75,191,75,225,70,225,70,191"/>
+</map>

@@ -1,0 +1,19 @@
+<map id="Tapestry.hpp" name="Tapestry.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="227,5,329,31"/>
+<area shape="rect" id="Node000002" href="$Convenience_8hpp.html" title="Everyday headers and namespace imports for user code." alt="" coords="5,79,140,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="233,38,107,81,105,76,231,33"/>
+<area shape="rect" id="Node000005" href="$Decoder_8hpp.html" title=" " alt="" coords="164,79,267,104"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="261,43,227,80,223,77,257,39"/>
+<area shape="rect" id="Node000007" href="$Encoder_8hpp.html" title=" " alt="" coords="291,79,393,104"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="300,39,334,77,330,80,296,43"/>
+<area shape="rect" id="Node000009" href="$Tapestry_8cpp.html" title=" " alt="" coords="417,79,520,104"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="322,33,438,76,437,81,321,38"/>
+<area shape="rect" id="Node000003" href="$MayaFlux_8hpp.html" title="Single include for the user facing API." alt="" coords="15,152,130,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="75,118,75,152,70,152,70,118"/>
+<area shape="rect" id="Node000004" href="$LiveAid_8hpp.html" title=" " alt="" coords="23,225,122,251"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="75,191,75,225,70,225,70,191"/>
+<area shape="rect" id="Node000006" href="$Decoder_8cpp.html" title=" " alt="" coords="164,152,267,177"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="218,118,218,152,213,152,213,118"/>
+<area shape="rect" id="Node000008" href="$Encoder_8cpp.html" title=" " alt="" coords="292,152,392,177"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="345,118,345,152,339,152,339,118"/>
+</map>

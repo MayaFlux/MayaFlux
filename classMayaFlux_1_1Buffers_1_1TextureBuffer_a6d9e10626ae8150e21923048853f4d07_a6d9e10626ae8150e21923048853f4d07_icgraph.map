@@ -1,0 +1,14 @@
+<map id="MayaFlux::Buffers::TextureBuffer::has_texture" name="MayaFlux::Buffers::TextureBuffer::has_texture">
+<area shape="rect" id="Node000001" title=" " alt="" coords="605,53,800,93"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1TextureArrayBuffer_af369e1cbda115e1a3de43e5b3d15e0cb.html#af369e1cbda115e1a3de43e5b3d15e0cb" title=" " alt="" coords="405,77,557,132"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="592,91,558,96,557,91,591,86"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1TextureArrayBuffer_ad89d8d9eb94a9764b8d48ec135e23777.html#ad89d8d9eb94a9764b8d48ec135e23777" title=" " alt="" coords="205,5,357,60"/>
+<area shape="poly" id="edge6_Node000001_Node000003" title=" " alt="" coords="592,65,357,42,358,37,592,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="391,75,357,63,359,58,393,70"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1TextureArrayBuffer_a841c794d39ea4997820e5619d7ced9c5.html#a841c794d39ea4997820e5619d7ced9c5" title="Setup processors with a processing token." alt="" coords="205,84,357,139"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="391,110,358,111,358,106,391,105"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1TextureArrayBuffer_a9501e9ea05d88ab230cb6491a9e03470.html#a9501e9ea05d88ab230cb6491a9e03470" title="Setup rendering with RenderProcessor." alt="" coords="205,163,357,217"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="405,140,347,165,345,160,403,135"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1TextureArrayBuffer_a1d6d7ae0f2b8d9f619188372d0cdd853.html#a1d6d7ae0f2b8d9f619188372d0cdd853" title="Replace the frame of one layer with a GPU image, with no host read." alt="" coords="5,5,157,60"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="191,35,158,35,158,30,191,30"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="SolenoidalProcessor.hpp" name="SolenoidalProcessor.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="204,5,384,31"/>
+<area shape="rect" id="Node000002" href="$SimulationIncludes_8hpp.html" title="Headers for field, grid, volume and spatial cache simulations." alt="" coords="5,79,180,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="249,38,126,81,125,76,248,33"/>
+<area shape="rect" id="Node000003" href="$SolenoidalProcessor_8cpp.html" title=" " alt="" coords="205,79,383,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="297,44,297,79,291,79,291,44"/>
+<area shape="rect" id="Node000004" href="$VolumeGridBuffer_8cpp.html" title=" " alt="" coords="407,79,570,104"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="339,33,458,76,456,81,337,38"/>
+</map>

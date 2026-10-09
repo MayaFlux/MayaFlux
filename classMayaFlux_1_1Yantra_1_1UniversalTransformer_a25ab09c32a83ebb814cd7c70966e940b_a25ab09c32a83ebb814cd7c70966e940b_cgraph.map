@@ -1,0 +1,7 @@
+<map id="MayaFlux::Yantra::UniversalTransformer::validate_input" name="MayaFlux::Yantra::UniversalTransformer::validate_input">
+<area shape="rect" id="Node000001" title="Basic input validation that derived classes can override." alt="" coords="5,41,209,81"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1OperationHelper_ad367bd6ef37555bb3918e5545cac03bd.html#ad367bd6ef37555bb3918e5545cac03bd" title="extract numeric data from single&#45;variant types" alt="" coords="257,5,472,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="209,44,243,40,244,45,210,50"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1UniversalTransformer_aa793172b582b84117a5a9dc07e7ade78.html#aa793172b582b84117a5a9dc07e7ade78" title="Validates multi&#45;channel numeric data for NaN/Infinity values." alt="" coords="263,70,467,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="210,73,249,79,249,84,209,78"/>
+</map>

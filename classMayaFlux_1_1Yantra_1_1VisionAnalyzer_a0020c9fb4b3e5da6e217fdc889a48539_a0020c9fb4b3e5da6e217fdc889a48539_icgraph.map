@@ -1,0 +1,17 @@
+<map id="MayaFlux::Yantra::VisionAnalyzer::measure_appearance" name="MayaFlux::Yantra::VisionAnalyzer::measure_appearance">
+<area shape="rect" id="Node000001" title="MeasureAppearance&#39;s whole&#45;frame gradient sample (region_sample.comp over result.images...." alt="" coords="1180,37,1407,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1VisionAnalyzer_ac1ef9611a307d0c1b620545ef18b5a75.html#ac1ef9611a307d0c1b620545ef18b5a75" title="Route every completed sequence result into one VisionAnalysis, apply context filtering and run the GP..." alt="" coords="949,37,1132,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1166,60,1132,60,1132,55,1166,55"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1VisionAnalyzer_aa6d4952749ee6b714420f8bfb454f1e2.html#aa6d4952749ee6b714420f8bfb454f1e2" title="Advance an analysis of image by one sequence per call, without waiting on deferred GPU work." alt="" coords="709,5,892,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="936,46,892,40,892,35,936,41"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1VisionAnalyzer_a272065cfcb21cac187bb25affa3dab08.html#a272065cfcb21cac187bb25affa3dab08" title="Shared body of both analyze_vision() overloads, once a GPU image is in hand: resolve the configured q..." alt="" coords="700,69,901,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="936,74,902,79,901,73,936,69"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1VisionAnalyzer_a16ff2fbb8692778091e6a1209ed0e567.html#a16ff2fbb8692778091e6a1209ed0e567" title="analyze_vision(), for a caller that already has a resolved GPU image (e.g." alt="" coords="468,37,652,77"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="686,77,652,72,652,67,687,72"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1VisionAnalyzer_ad19f1fcd73e97ca4c09a8916a691c38b.html#ad19f1fcd73e97ca4c09a8916a691c38b" title="Real entry point: resolve the configured query against source, run it, run the GPU analysis." alt="" coords="468,101,652,141"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="687,107,652,112,652,106,686,102"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Yantra_1_1VisionAnalyzer_af6bfe6ffc7fd77204ef4613cd6d8187b.html#af6bfe6ffc7fd77204ef4613cd6d8187b" title="ComputeOperation adapter: uses input.data as the source container, pulls index out of Datum metadata ..." alt="" coords="237,101,420,141"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="454,124,420,124,420,119,454,119"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Yantra_1_1VisionAnalyzer_a4c7033e24b310ee050fc73cc23ca908e.html#a4c7033e24b310ee050fc73cc23ca908e" title="Construct with the intents to satisfy and the caller&#45;supplied filtering context, matching EnergyAnaly..." alt="" coords="5,101,189,141"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="223,124,190,124,190,119,223,119"/>
+</map>

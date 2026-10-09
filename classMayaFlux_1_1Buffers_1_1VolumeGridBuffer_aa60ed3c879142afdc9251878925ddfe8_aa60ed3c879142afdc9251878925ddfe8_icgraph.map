@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::VolumeGridBuffer::read_field" name="MayaFlux::Buffers::VolumeGridBuffer::read_field">
+<area shape="rect" id="Node000001" title="Copy the current read slot of a field to host memory." alt="" coords="275,5,484,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_a773ec1e7a228ad23abc879801b7a283b.html#a773ec1e7a228ad23abc879801b7a283b" title="Add sampled values into a scalar field." alt="" coords="5,5,227,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="261,28,227,28,227,23,261,23"/>
+</map>

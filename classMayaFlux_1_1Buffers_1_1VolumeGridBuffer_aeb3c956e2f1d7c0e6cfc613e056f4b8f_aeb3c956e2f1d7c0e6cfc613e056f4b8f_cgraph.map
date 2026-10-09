@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::VolumeGridBuffer::get_field_bytes" name="MayaFlux::Buffers::VolumeGridBuffer::get_field_bytes">
+<area shape="rect" id="Node000001" title="Byte size of one slot of the named field, or 0 if undeclared." alt="" coords="5,5,172,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_a27911e66982be61da77a3bbd0121cd3f.html#a27911e66982be61da77a3bbd0121cd3f" title="Total cell count." alt="" coords="220,5,387,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="173,30,206,30,206,35,173,35"/>
+</map>

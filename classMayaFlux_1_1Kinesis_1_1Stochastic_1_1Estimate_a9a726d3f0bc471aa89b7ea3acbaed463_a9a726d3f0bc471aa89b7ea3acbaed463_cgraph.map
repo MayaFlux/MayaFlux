@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kinesis::Stochastic::Estimate::update_mad" name="MayaFlux::Kinesis::Stochastic::Estimate::update_mad">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,70,160,125"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Memory_1_1HistoryBuffer_a2f1571f77762d0d35adfc01dae46509f.html#a2f1571f77762d0d35adfc01dae46509f" title="Get mutable linearized view of entire history." alt="" coords="212,5,415,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="159,70,207,55,232,47,234,52,209,60,161,75"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Estimate_ae1c48a1386727ee92630c6ac8015a107.html#ae1c48a1386727ee92630c6ac8015a107" title="Median absolute deviation of a span." alt="" coords="208,70,419,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="161,95,194,95,194,100,161,100"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Memory_1_1HistoryBuffer_a6f256636f3f3fc99269c77a8dc096b09.html#a6f256636f3f3fc99269c77a8dc096b09" title="Push new value to front of history." alt="" coords="212,149,415,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="161,119,237,143,235,148,160,124"/>
+</map>

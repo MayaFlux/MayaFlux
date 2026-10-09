@@ -1,0 +1,13 @@
+<map id="MayaFlux::Yantra::VisionExtractor::crop" name="MayaFlux::Yantra::VisionExtractor::crop">
+<area shape="rect" id="Node000001" title="Crop of source at the focused element, or track/keypoint bounds." alt="" coords="5,41,188,81"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_aef1440f4cdb4f7e74b9f6a9cbadf0294.html#aef1440f4cdb4f7e74b9f6a9cbadf0294" title="The two contexts every method shares, one shader swapped in per call." alt="" coords="236,5,423,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="188,45,222,39,223,44,189,50"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_a72e375adc68bac374e21a7334db328ea.html#a72e375adc68bac374e21a7334db328ea" title=" " alt="" coords="238,70,421,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="189,73,225,78,224,84,188,78"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_ac6c9930abd4e2a5e2ab149a681a014d8.html#ac6c9930abd4e2a5e2ab149a681a014d8" title="Box index of the element the single&#45;element methods act on." alt="" coords="471,77,669,117"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="421,95,457,95,457,100,421,100"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_ad833822534b8ab909bb3099fe45aff61.html#ad833822534b8ab909bb3099fe45aff61" title="Index into find_elements boxes of the element ranked first by focus, chosen on the GPU from the analy..." alt="" coords="717,77,907,117"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="669,95,703,95,703,100,669,100"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_a5af57c70b0db8f5729768e839b672a3b.html#a5af57c70b0db8f5729768e839b672a3b" title=" " alt="" coords="955,77,1144,117"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="907,95,941,95,941,100,907,100"/>
+</map>

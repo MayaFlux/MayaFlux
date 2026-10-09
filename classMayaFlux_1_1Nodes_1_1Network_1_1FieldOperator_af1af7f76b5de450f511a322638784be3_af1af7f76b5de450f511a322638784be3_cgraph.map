@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::FieldOperator::initialize" name="MayaFlux::Nodes::Network::FieldOperator::initialize">
+<area shape="rect" id="Node000001" title="Initialize from MeshVertex data." alt="" coords="5,13,204,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1FieldOperator_a1f8c8e5f13b94ddb62f393d20ab76c8b.html#a1f8c8e5f13b94ddb62f393d20ab76c8b" title=" " alt="" coords="252,5,451,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="204,30,238,30,238,35,204,35"/>
+</map>

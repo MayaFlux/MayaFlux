@@ -1,0 +1,13 @@
+<map id="MayaFlux::Kakshya::DynamicVideoStream::lag_behind_head" name="MayaFlux::Kakshya::DynamicVideoStream::lag_behind_head">
+<area shape="rect" id="Node000001" title="Play back a fixed number of frames behind the write head." alt="" coords="5,84,177,139"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1DynamicVideoStream_af63ff062008e5f10f0e7d2095124e5eb.html#af63ff062008e5f10f0e7d2095124e5eb" title="The FrameSeekProcessor that reads this stream, installed on first use." alt="" coords="225,84,397,139"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="178,109,212,109,212,114,178,114"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1DynamicVideoStream_a928634398e8f2101357633946403da5f.html#a928634398e8f2101357633946403da5f" title="Install a FrameSeekProcessor as the default processor." alt="" coords="445,44,632,99"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="397,94,431,88,432,93,398,99"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_a940580b7c744aab1fddc3da9eb64e583.html#a940580b7c744aab1fddc3da9eb64e583" title="Get the current default data processor." alt="" coords="451,123,626,177"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="398,123,438,130,437,136,397,129"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_a3cee1ef9a5f8c06d8e5a920dfc4588ab.html#a3cee1ef9a5f8c06d8e5a920dfc4588ab" title=" " alt="" coords="682,5,851,60"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="632,53,668,47,669,52,633,58"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_ac6f8254846dc58f51dc606f7e43ed280.html#ac6f8254846dc58f51dc606f7e43ed280" title="Set the default data processor for this container." alt="" coords="680,84,853,139"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="633,85,667,91,666,96,632,90"/>
+</map>

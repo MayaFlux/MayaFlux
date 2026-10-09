@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::SoundStreamReader" name="MayaFlux::Buffers::SoundStreamReader">
+<area shape="rect" id="Node000001" title="Adapter for bridging N&#45;dimensional containers and AudioBuffer interface." alt="" coords="5,313,245,868"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferProcessor.html" title="Central computational transformation interface for continuous buffer processing." alt="" coords="35,5,215,265"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="128,279,128,313,123,313,123,279"/>
+</map>

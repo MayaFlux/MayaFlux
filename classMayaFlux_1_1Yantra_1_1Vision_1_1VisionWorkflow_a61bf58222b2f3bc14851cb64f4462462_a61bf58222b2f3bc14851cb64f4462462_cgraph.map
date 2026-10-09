@@ -1,0 +1,5 @@
+<map id="MayaFlux::Yantra::Vision::VisionWorkflow::~VisionWorkflow" name="MayaFlux::Yantra::Vision::VisionWorkflow::~VisionWorkflow">
+<area shape="rect" id="Node000001" title="Stops every live run this workflow started." alt="" coords="5,5,253,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1Vision_1_1VisionWorkflow_a3add260de58316493b403131eb042438.html#a3add260de58316493b403131eb042438" title="Stop every live run this workflow started and release what they hold." alt="" coords="301,5,489,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="253,23,288,23,288,28,253,28"/>
+</map>

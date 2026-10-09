@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kinesis::Vision::VisionExecutor::gaussian_kernel" name="MayaFlux::Kinesis::Vision::VisionExecutor::gaussian_kernel">
+<area shape="rect" id="Node000001" title="Return a reference to the precomputed 1D Gaussian kernel for sigma." alt="" coords="519,34,685,89"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kinesis_1_1Vision_1_1VisionExecutor_a6ea94c5c8d90c5890b7715a0e4ff2df5.html#a6ea94c5c8d90c5890b7715a0e4ff2df5" title="Execute a VisionSequence on one frame." alt="" coords="276,41,471,81"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="505,64,471,64,471,59,505,59"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1VisionProcessor_ab9b6b50546df64540aee0f0bbbb7939a.html#ab9b6b50546df64540aee0f0bbbb7939a" title="Execute the VisionSequence on processed_data[0]." alt="" coords="25,5,208,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="262,48,208,41,209,35,263,43"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1ImageCVProcessor_a03dd11926b797b52ccbdfa37c2b5e4e1.html#a03dd11926b797b52ccbdfa37c2b5e4e1" title="Download the current GPU image, run the VisionSequence, store the result." alt="" coords="5,70,228,125"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="263,79,229,84,228,79,262,74"/>
+</map>

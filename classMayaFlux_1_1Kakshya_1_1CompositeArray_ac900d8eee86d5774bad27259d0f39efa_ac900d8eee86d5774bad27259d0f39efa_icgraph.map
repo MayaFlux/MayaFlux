@@ -1,0 +1,18 @@
+<map id="MayaFlux::Kakshya::CompositeArray::validate_write" name="MayaFlux::Kakshya::CompositeArray::validate_write">
+<area shape="rect" id="Node000001" title=" " alt="" coords="477,77,704,117"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_a66d5d905fbd8548158d3a1edbd667e5e.html#a66d5d905fbd8548158d3a1edbd667e5e" title="Write binary bytes to a fixed or dynamic BLOB field." alt="" coords="240,13,429,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="496,76,415,55,416,50,498,71"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_af179779c8b4123355fd50fdbe5b2a9bc.html#af179779c8b4123355fd50fdbe5b2a9bc" title="Write UTF&#45;8 bytes to a std::string field." alt="" coords="241,77,428,117"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="464,99,428,99,428,94,464,94"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_ae1ceb015d2fb8e82f78445d4d6845b32.html#ae1ceb015d2fb8e82f78445d4d6845b32" title=" " alt="" coords="241,148,428,203"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="513,123,425,150,424,145,511,118"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1CompositeInsertion_a70237433e67948a735b93ee3eaebd6ff.html#a70237433e67948a735b93ee3eaebd6ff" title="Copy one Composite with a matching layout into this array." alt="" coords="19,5,178,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="226,35,178,35,178,30,226,30"/>
+<area shape="poly" id="edge4_Node000004_Node000003" title=" " alt="" coords="246,76,177,57,179,52,248,70"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_a117030cd49ab32440ff9786dc88f06db.html#a117030cd49ab32440ff9786dc88f06db" title=" " alt="" coords="19,84,178,139"/>
+<area shape="poly" id="edge6_Node000005_Node000006" title=" " alt="" coords="227,149,177,135,179,130,228,144"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_a62eef0f91954281fa6f91eb44480db51.html#a62eef0f91954281fa6f91eb44480db51" title="Write a present NULL to a dynamic field." alt="" coords="6,163,191,203"/>
+<area shape="poly" id="edge7_Node000005_Node000007" title=" " alt="" coords="228,182,192,183,191,178,228,176"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_ad783483b1f77b661d6acf009b0d97cb7.html#ad783483b1f77b661d6acf009b0d97cb7" title=" " alt="" coords="5,227,192,267"/>
+<area shape="poly" id="edge8_Node000005_Node000008" title=" " alt="" coords="232,209,166,230,164,225,231,204"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kriya::BufferPipeline::execute_frame_streaming" name="MayaFlux::Kriya::BufferPipeline::execute_frame_streaming">
+<area shape="rect" id="Node000001" title=" " alt="" coords="555,5,781,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1BufferPipeline_a3813d94655e1b3f92dd24c30877baef2.html#a3813d94655e1b3f92dd24c30877baef2" title=" " alt="" coords="280,5,507,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="541,28,507,28,507,23,541,23"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kriya_1_1BufferPipeline_a9c0ae02acc9f39f2c28a43a76e2e3347.html#a9c0ae02acc9f39f2c28a43a76e2e3347" title="Execute the pipeline at graphics frame rate." alt="" coords="5,5,232,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="266,28,232,28,232,23,266,23"/>
+</map>

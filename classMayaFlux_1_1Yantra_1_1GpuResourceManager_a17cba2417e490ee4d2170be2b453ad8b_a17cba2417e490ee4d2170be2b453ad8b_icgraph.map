@@ -1,0 +1,9 @@
+<map id="MayaFlux::Yantra::GpuResourceManager::dispatch_batched_indirect" name="MayaFlux::Yantra::GpuResourceManager::dispatch_batched_indirect">
+<area shape="rect" id="Node000001" title=" " alt="" coords="800,5,1028,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_ae61ec8192d0351c52666afe165975175.html#ae61ec8192d0351c52666afe165975175" title="Multi&#45;pass dispatch where a GPU&#45;resident indirect buffer gates each pass&#39;s workgroup count instead of..." alt="" coords="527,5,752,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="786,35,752,35,752,30,786,30"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1GpuExecutionContext_a1dbe3b76ec8aefe2f57803a889443155.html#a1dbe3b76ec8aefe2f57803a889443155" title="Dispatch to GPU and reconstruct a typed output Datum." alt="" coords="248,13,479,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="513,35,479,35,479,30,513,30"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1ShaderExecutionContext_a61530137eabb72da29cf4248b7600bde.html#a61530137eabb72da29cf4248b7600bde" title="Injects multipass configuration into the context before dispatch when set_multipass() has been called..." alt="" coords="5,13,200,53"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="234,35,200,35,200,30,234,30"/>
+</map>

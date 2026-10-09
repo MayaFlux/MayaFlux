@@ -1,0 +1,16 @@
+<map id="MayaFlux::Nexus::Expanse::bounds" name="MayaFlux::Nexus::Expanse::bounds">
+<area shape="rect" id="Node000001" title="The box, if set." alt="" coords="519,101,717,141"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1StateEncoder_a1c554a284c62748c7dfb9f871ab789d5.html#a1c554a284c62748c7dfb9f871ab789d5" title=" " alt="" coords="241,5,471,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="562,98,470,60,433,48,435,43,472,55,564,93"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nexus_1_1Hull_a10a6dbf4b65efc68a436359a09d5842e.html#a10a6dbf4b65efc68a436359a09d5842e" title="Read the buffer&#39;s geometry again and take its bounds." alt="" coords="271,69,441,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="505,110,440,102,441,97,506,105"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nexus_1_1Mantle_ad57cad5c90326b7f9f99a51980332783.html#ad57cad5c90326b7f9f99a51980332783" title=" " alt="" coords="262,133,450,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="506,138,451,144,450,139,505,132"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nexus_1_1Mantle_aebbc7216b3cd7a8d3cd65f1590e46801.html#aebbc7216b3cd7a8d3cd65f1590e46801" title="Set or replace the box and place the buffer to match." alt="" coords="5,195,193,235"/>
+<area shape="poly" id="edge7_Node000001_Node000007" title=" " alt="" coords="569,150,523,171,471,188,399,202,326,212,194,218,194,213,326,206,399,197,470,183,521,166,567,145"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nexus_1_1Mantle_aec56a122cb88646533bdf80a02613451.html#aec56a122cb88646533bdf80a02613451" title="Build from a box and a buffer." alt="" coords="5,67,193,107"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="265,132,177,109,178,104,266,127"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nexus_1_1Mantle_a06083bc88a1e28ba95ecfdf8fadf605d.html#a06083bc88a1e28ba95ecfdf8fadf605d" title="Read the buffer&#39;s geometry again and place it to match." alt="" coords="5,131,193,171"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="248,155,194,154,194,149,248,150"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="259,179,184,197,183,192,258,174"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="MayaFlux::Memory::HistoryBuffer::capacity" name="MayaFlux::Memory::HistoryBuffer::capacity">
+<area shape="rect" id="Node000001" title="Get buffer capacity." alt="" coords="232,91,435,131"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kinesis_1_1SymbolicTrajectory_a19327432ef237f2437c4419182a25d2a.html#a19327432ef237f2437c4419182a25d2a" title="Crossings within the most recent window observations." alt="" coords="15,5,174,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="258,90,173,61,175,56,260,84"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kinesis_1_1SymbolicTrajectory_a727d7b0f4b87c972a5734c26dbc63cc8.html#a727d7b0f4b87c972a5734c26dbc63cc8" title="Cell with the most observations within the most recent window observations." alt="" coords="18,84,171,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="219,114,172,114,172,109,219,109"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kinesis_1_1SymbolicTrajectory_a68971b4a39fa43acbbea511aa92a0ea5.html#a68971b4a39fa43acbbea511aa92a0ea5" title="Count of distinct cells visited within the most recent window observations." alt="" coords="5,163,184,217"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="260,138,179,165,177,160,258,133"/>
+</map>

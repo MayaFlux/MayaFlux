@@ -1,0 +1,9 @@
+<map id="MayaFlux::IO::SpatialCache::open" name="MayaFlux::IO::SpatialCache::open">
+<area shape="rect" id="Node000001" title="Open an Alembic archive for writing, Ogawa backend." alt="" coords="681,5,883,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1IO_a430ed054a912a2f2110723d9a5f9a0df.html#a430ed054a912a2f2110723d9a5f9a0df" title="Open a fresh SpatialCache, write every source once, then close it." alt="" coords="487,5,633,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="668,28,633,28,633,23,668,23"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1IO_1_1Detail_a5165c36cdc9f5301d25f46e72cbf37e8.html#a5165c36cdc9f5301d25f46e72cbf37e8" title=" " alt="" coords="240,5,439,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="473,28,439,28,439,23,473,23"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1IOManager_a2d21d40e32848f18d7d7e9d4ed28e826.html#a2d21d40e32848f18d7d7e9d4ed28e826" title="Save every source once, as a single time sample, with a millisecond epoch timestamp spliced into the ..." alt="" coords="5,5,192,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="226,28,192,28,192,23,226,23"/>
+</map>

@@ -1,0 +1,6 @@
+<map id="MayaFlux::Nexus::Hull::Hull" name="MayaFlux::Nexus::Hull::Hull">
+<area shape="rect" id="Node000001" title="Build from a buffer." alt="" coords="5,29,175,69"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Nexus_ac83eaaa11160a38fddb2d351db78e2c6.html#ac83eaaa11160a38fddb2d351db78e2c6" title="Bounds of a buffer&#39;s geometry in its own stored coordinates." alt="" coords="223,29,395,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="175,47,209,47,209,52,175,52"/>
+<area shape="poly" id="edge2_Node000002_Node000002" title=" " alt="" coords="268,30,265,20,272,10,286,5,309,3,334,6,348,13,346,18,333,11,309,8,288,10,275,15,270,21,273,28"/>
+</map>

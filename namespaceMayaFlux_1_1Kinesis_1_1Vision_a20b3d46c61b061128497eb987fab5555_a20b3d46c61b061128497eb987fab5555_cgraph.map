@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::Vision::threshold_adaptive" name="MayaFlux::Kinesis::Vision::threshold_adaptive">
+<area shape="rect" id="Node000001" title="Adaptive threshold using local block mean minus offset." alt="" coords="5,5,200,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_ac34a7d1299cdc6af5382c30298e9a830.html#ac34a7d1299cdc6af5382c30298e9a830" title="Adaptive threshold writing into caller&#45;supplied buffer." alt="" coords="248,5,443,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="200,23,234,23,234,28,200,28"/>
+</map>

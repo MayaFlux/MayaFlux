@@ -1,0 +1,13 @@
+<map id="MayaFlux::IO::FFmpegDemuxContext::find_best_stream" name="MayaFlux::IO::FFmpegDemuxContext::find_best_stream">
+<area shape="rect" id="Node000001" title="Find the best stream of the requested media type." alt="" coords="552,101,768,141"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a55edd9ee43004846f85961b546c811c9.html#a55edd9ee43004846f85961b546c811c9" title="Check if this reader can open the given file." alt="" coords="279,5,504,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="601,98,503,60,466,48,468,43,505,55,602,93"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1AudioStreamContext_a463593071a0c4d4e507166a78a43ff45.html#a463593071a0c4d4e507166a78a43ff45" title="Open the audio stream from an already&#45;probed demux context." alt="" coords="291,69,491,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="538,109,491,104,492,99,538,104"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1IO_1_1VideoStreamContext_afc3578ec70340ca93f0e5871e58f9356.html#afc3578ec70340ca93f0e5871e58f9356" title="Open the video stream from an already&#45;probed demux context." alt="" coords="291,133,491,173"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="538,138,492,144,491,139,538,133"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1IO_1_1VideoStreamContext_a05609c7f47345d8bc63c9f95c6906e99.html#a05609c7f47345d8bc63c9f95c6906e99" title="Open codec only, without initialising the SwsContext scaler." alt="" coords="291,197,491,237"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="602,149,505,188,468,200,466,195,503,183,601,144"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a52301b9864559415b9df442d6884d946.html#a52301b9864559415b9df442d6884d946" title="Load an audio file into a size&#45;bounded DynamicSoundStream." alt="" coords="5,5,231,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="265,28,231,28,231,23,265,23"/>
+</map>

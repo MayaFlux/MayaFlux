@@ -1,0 +1,3 @@
+<map id="MayaFlux::Kinesis::ThresholdLatch" name="MayaFlux::Kinesis::ThresholdLatch">
+<area shape="rect" id="Node000001" title="Two&#45;level hysteresis turning a continuous value into a held boolean." alt="" coords="5,5,147,185"/>
+</map>

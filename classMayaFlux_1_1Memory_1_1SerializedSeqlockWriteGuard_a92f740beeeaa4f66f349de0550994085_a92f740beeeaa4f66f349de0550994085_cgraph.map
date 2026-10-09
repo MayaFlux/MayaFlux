@@ -1,0 +1,5 @@
+<map id="MayaFlux::Memory::SerializedSeqlockWriteGuard::~SerializedSeqlockWriteGuard" name="MayaFlux::Memory::SerializedSeqlockWriteGuard::~SerializedSeqlockWriteGuard">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,5,287,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Memory_1_1Seqlock_a2f642a6364ee0ff7dc779a67d338015e.html#a2f642a6364ee0ff7dc779a67d338015e" title="End a write: advances the counter back to an even value." alt="" coords="335,13,541,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="287,30,321,30,321,35,287,35"/>
+</map>

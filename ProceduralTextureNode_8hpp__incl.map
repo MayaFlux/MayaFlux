@@ -1,0 +1,17 @@
+<map id="ProceduralTextureNode.hpp" name="ProceduralTextureNode.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="140,5,341,31"/>
+<area shape="rect" id="Node000002" href="$TextureNode_8hpp.html" title=" " alt="" coords="103,79,235,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="231,33,192,71,188,67,227,29"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="259,79,369,104"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="255,29,294,67,290,71,251,33"/>
+<area shape="rect" id="Node000003" href="$GpuSync_8hpp.html" title=" " alt="" coords="115,152,222,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="171,104,171,138,166,138,166,104"/>
+<area shape="rect" id="Node000004" href="$Node_8hpp.html" title=" " alt="" coords="70,225,267,251"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="171,178,171,212,166,212,166,178"/>
+<area shape="rect" id="Node000005" href="$GpuContext_8hpp.html" title=" " alt="" coords="5,299,132,324"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="154,253,98,293,95,288,151,249"/>
+<area shape="rect" id="Node000006" href="$NodeUtils_8hpp.html" title=" " alt="" coords="157,299,383,324"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="186,248,244,288,241,293,183,253"/>
+<area shape="rect" id="Node000007" href="$NodeSpec_8hpp.html" title=" " alt="" coords="213,372,327,397"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="273,324,273,358,267,358,267,324"/>
+</map>

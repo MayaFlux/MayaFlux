@@ -1,0 +1,25 @@
+<map id="MayaFlux::IO::SpatialCache::get_last_error" name="MayaFlux::IO::SpatialCache::get_last_error">
+<area shape="rect" id="Node000001" title=" " alt="" coords="1235,120,1436,160"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1IO_a430ed054a912a2f2110723d9a5f9a0df.html#a430ed054a912a2f2110723d9a5f9a0df" title="Open a fresh SpatialCache, write every source once, then close it." alt="" coords="1013,5,1159,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1284,116,1186,66,1141,48,1143,43,1188,62,1287,111"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1IO_1_1SpatialCache_ac96ac81ab8d0066f81b9e89b47fe47f2.html#ac96ac81ab8d0066f81b9e89b47fe47f2" title="Append one sample to a named stream." alt="" coords="736,120,937,160"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="1243,120,1186,111,1086,104,986,111,916,123,915,117,985,105,1086,98,1187,105,1244,114"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1IO_1_1SpatialCache_a56eebd45abf6d1b878966d70cc350872.html#a56eebd45abf6d1b878966d70cc350872" title=" " alt="" coords="985,120,1187,160"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="1221,143,1187,143,1187,137,1221,137"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1IO_1_1SpatialCache_a556f600e3e3971dad0967c40cccde720.html#a556f600e3e3971dad0967c40cccde720" title="Queue object&#45;level metadata tags for a named stream." alt="" coords="985,184,1187,224"/>
+<area shape="poly" id="edge10_Node000001_Node000010" title=" " alt="" coords="1244,166,1165,187,1164,181,1243,161"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1IO_1_1SpatialCache_a749b6a053d761b36c218aa766cbaa769.html#a749b6a053d761b36c218aa766cbaa769" title=" " alt="" coords="985,248,1187,288"/>
+<area shape="poly" id="edge11_Node000001_Node000011" title=" " alt="" coords="1298,170,1247,205,1188,238,1159,250,1157,245,1186,234,1244,201,1295,166"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1IO_1_1Detail_a5165c36cdc9f5301d25f46e72cbf37e8.html#a5165c36cdc9f5301d25f46e72cbf37e8" title=" " alt="" coords="737,5,936,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="999,28,936,28,936,23,999,23"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1IOManager_a2d21d40e32848f18d7d7e9d4ed28e826.html#a2d21d40e32848f18d7d7e9d4ed28e826" title="Save every source once, as a single time sample, with a millisecond epoch timestamp spliced into the ..." alt="" coords="501,5,688,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="724,28,688,28,688,23,724,23"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1IO_a4270f76b4396b335247bd792ced07cc9.html#a4270f76b4396b335247bd792ced07cc9" title="Pack one GraphicsOperator&#39;s current vertex state into a SpatialCache stream, as a Points or Curves sa..." alt="" coords="520,120,669,160"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="722,143,670,143,670,137,722,137"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1IO_a41beed1d97ed23922e7b0effd3bdf833.html#a41beed1d97ed23922e7b0effd3bdf833" title="Pack a NetworkGeometryBuffer&#39;s driving network into one or more SpatialCache streams,..." alt="" coords="256,113,453,167"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="506,143,454,143,454,137,506,137"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1IO_aff105666b9119fd8c7a0484e9a046b20.html#aff105666b9119fd8c7a0484e9a046b20" title="Build a SpatialCaptureSource that packs a NetworkGeometryBuffer&#39;s driving network through write_netwo..." alt="" coords="5,120,208,160"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="242,143,208,143,208,137,242,137"/>
+<area shape="poly" id="edge9_Node000009_Node000005" title=" " alt="" coords="971,143,938,143,938,137,971,137"/>
+<area shape="poly" id="edge12_Node000011_Node000005" title=" " alt="" coords="1001,246,984,238,917,200,863,163,866,158,920,196,987,234,1003,241"/>
+</map>

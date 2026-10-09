@@ -1,0 +1,27 @@
+<map id="MayaFlux::Yantra::VisionAnalyzer" name="MayaFlux::Yantra::VisionAnalyzer">
+<area shape="rect" id="Node000001" title="Resolves its configured VisionQuery, runs every resolved VisionSequence against a persistent VisionGp..." alt="" coords="968,2023,1183,2883"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1FunctionalOperation.html" title=" " alt="" coords="461,1711,753,1960"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="712,1970,970,2309,966,2312,708,1973"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation.html" title=" " alt="" coords="273,1095,526,1619"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="521,1630,556,1709,551,1712,516,1632"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Yantra_1_1ExecutionContext.html" title="Context information controlling how a compute operation executes." alt="" coords="301,5,498,445"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="302,283,241,324,178,376,121,438,97,473,78,509,46,583,25,650,12,711,8,769,13,827,27,888,48,956,78,1031,112,1096,157,1156,209,1210,261,1256,258,1260,205,1214,153,1160,108,1099,73,1033,43,957,21,890,8,828,3,769,7,710,19,648,41,582,73,507,93,470,117,435,174,373,238,320,299,278"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation.html" title="Base interface for all computational operations in the processing pipeline." alt="" coords="273,508,526,1032"/>
+<area shape="poly" id="edge5_Node000005_Node000004" title=" " alt="" coords="402,446,402,491,397,491,397,446"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation.html" title="Base interface for all computational operations in the processing pipeline." alt="" coords="550,508,803,1032"/>
+<area shape="poly" id="edge8_Node000007_Node000004" title=" " alt="" coords="500,332,549,397,592,468,604,492,599,494,588,471,545,400,496,336"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="402,1046,402,1094,397,1094,397,1046"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1FunctionalOperation.html" title="Wraps a single callable as a ComputeOperation, for a wild or one&#45;off idea that does not warrant a han..." alt="" coords="550,1247,803,1467"/>
+<area shape="poly" id="edge6_Node000002_Node000006" title=" " alt="" coords="661,1481,628,1711,623,1710,656,1480"/>
+<area shape="poly" id="edge7_Node000006_Node000007" title=" " alt="" coords="679,1046,679,1247,674,1247,674,1046"/>
+<area shape="rect" id="Node000008" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1VisionQuery.html" title="Composed query: which VisionIntents are active, and each active one&#39;s parameters." alt="" coords="777,1735,947,1935"/>
+<area shape="poly" id="edge9_Node000001_Node000008" title=" " alt="" coords="899,1935,965,2126,960,2127,894,1936"/>
+<area shape="rect" id="Node000009" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1VisionAnalysisContext.html" title="Composed context: caller&#45;supplied data for whichever intents need it, consulted after a VisionQuery&#39;s..." alt="" coords="971,1785,1179,1885"/>
+<area shape="poly" id="edge10_Node000001_Node000009" title=" " alt="" coords="1078,1885,1078,2006,1073,2006,1073,1885"/>
+<area shape="rect" id="Node000010" href="$structMayaFlux_1_1Yantra_1_1VisionAnalyzer_1_1StepRun.html" title="State of the run advance() is stepping through." alt="" coords="1204,1755,1379,1915"/>
+<area shape="poly" id="edge11_Node000001_Node000010" title=" " alt="" coords="1266,1917,1191,2131,1186,2129,1261,1915"/>
+<area shape="rect" id="Node000011" href="$structMayaFlux_1_1Portal_1_1Graphics_1_1ImageCacheEntry.html" title="Image retained by the producing owner." alt="" coords="1403,1795,1593,1875"/>
+<area shape="poly" id="edge12_Node000001_Node000011" title=" " alt="" coords="1473,1877,1194,2283,1190,2280,1469,1874"/>
+<area shape="rect" id="Node000012" href="$structMayaFlux_1_1Portal_1_1Graphics_1_1ImageKey.html" title="Immutable properties that determine whether an image can be reused." alt="" coords="1403,1267,1593,1447"/>
+<area shape="poly" id="edge13_Node000011_Node000012" title=" " alt="" coords="1501,1447,1501,1779,1495,1779,1495,1447"/>
+</map>

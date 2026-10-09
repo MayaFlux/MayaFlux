@@ -1,0 +1,9 @@
+<map id="MayaFlux::Yantra::Datum&lt; T &gt;" name="MayaFlux::Yantra::Datum&lt; T &gt;">
+<area shape="rect" id="Node000001" title="Input/Output container for computation pipeline data flow with structure preservation." alt="" coords="211,5,427,371"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Yantra_1_1Datum.html" title=" " alt="" coords="5,455,199,835"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="213,384,207,396,179,456,175,454,202,394,208,382"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Yantra_1_1Datum.html" title=" " alt="" coords="223,455,416,835"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="322,385,322,455,317,455,317,385"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Yantra_1_1Datum.html" title=" " alt="" coords="440,448,633,843"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="418,382,423,394,448,447,443,449,418,396,413,385"/>
+</map>

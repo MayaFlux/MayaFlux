@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::AssemblyNetwork" name="MayaFlux::Nodes::Network::AssemblyNetwork">
+<area shape="rect" id="Node000001" title="Holds hundreds or thousands of independent geometry items with no shared topology,..." alt="" coords="9,813,199,1153"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork.html" title="Abstract base class for structured collections of nodes with defined relationships." alt="" coords="5,5,203,765"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="107,779,107,813,101,813,101,779"/>
+</map>

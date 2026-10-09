@@ -1,0 +1,5 @@
+<map id="MayaFlux::Yantra::Vision::VisionMatrix::results" name="MayaFlux::Yantra::Vision::VisionMatrix::results">
+<area shape="rect" id="Node000001" title="The VisionResult of every sequence the analyzer&#39;s last completed analysis ran, with each step&#39;s image..." alt="" coords="236,5,419,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1Vision_1_1VisionMatrix_a820291c935e3aba7e3293b9533e6360b.html#a820291c935e3aba7e3293b9533e6360b" title="The VisionResult of the sequence that served intent in the last completed analysis,..." alt="" coords="5,5,188,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="223,28,188,28,188,23,223,23"/>
+</map>

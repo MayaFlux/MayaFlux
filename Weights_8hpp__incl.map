@@ -1,0 +1,21 @@
+<map id="Weights.hpp" name="Weights.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="437,5,540,31"/>
+<area shape="rect" id="Node000002" href="$Archivist_8hpp.html" title=" " alt="" coords="257,86,481,111"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="472,33,400,80,397,76,470,29"/>
+<area shape="rect" id="Node000009" href="$Stochastic_8hpp.html" title=" " alt="" coords="505,79,713,119"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="508,29,570,69,567,73,505,33"/>
+<area shape="rect" id="Node000003" href="$JournalEntry_8hpp.html" title=" " alt="" coords="245,167,372,192"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="362,113,328,157,324,154,358,110"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="397,167,463,192"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="380,110,415,154,411,158,376,113"/>
+<area shape="rect" id="Node000004" href="$EnumReflect_8hpp.html" title=" " alt="" coords="5,240,191,280"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="279,195,162,238,160,233,277,190"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="215,247,282,273"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="302,194,268,238,264,234,298,191"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="307,247,431,273"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="320,191,353,234,349,238,315,194"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="455,247,552,273"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="338,190,463,240,461,245,336,194"/>
+<area shape="rect" id="Node000010" title=" " alt="" coords="573,167,645,192"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="611,119,611,153,606,153,606,119"/>
+</map>

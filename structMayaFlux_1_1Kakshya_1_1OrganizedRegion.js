@@ -1,0 +1,25 @@
+var structMayaFlux_1_1Kakshya_1_1OrganizedRegion =
+[
+    [ "OrganizedRegion", "structMayaFlux_1_1Kakshya_1_1OrganizedRegion_a5e6c35c114f3c84925de02024cc55b91.html#a5e6c35c114f3c84925de02024cc55b91", null ],
+    [ "OrganizedRegion", "structMayaFlux_1_1Kakshya_1_1OrganizedRegion_a2eb6d0444c6b319d8e384c6748f263bb.html#a2eb6d0444c6b319d8e384c6748f263bb", null ],
+    [ "contains_position", "structMayaFlux_1_1Kakshya_1_1OrganizedRegion_ad81e1ab716840d570ae74b562a05e736.html#ad81e1ab716840d570ae74b562a05e736", null ],
+    [ "find_segment_for_position", "structMayaFlux_1_1Kakshya_1_1OrganizedRegion_aca0ca4ad42ef0c151a131176ea39122c.html#aca0ca4ad42ef0c151a131176ea39122c", null ],
+    [ "get_active_segment", "structMayaFlux_1_1Kakshya_1_1OrganizedRegion_a3f119e09df239485e99e7273eff32c2e.html#a3f119e09df239485e99e7273eff32c2e", null ],
+    [ "get_attribute", "structMayaFlux_1_1Kakshya_1_1OrganizedRegion_a3016efba81c6053dc723f8a79dd3f44c.html#a3016efba81c6053dc723f8a79dd3f44c", null ],
+    [ "get_total_volume", "structMayaFlux_1_1Kakshya_1_1OrganizedRegion_a06671a2baa3a79e07ab4de29c1148048.html#a06671a2baa3a79e07ab4de29c1148048", null ],
+    [ "set_attribute", "structMayaFlux_1_1Kakshya_1_1OrganizedRegion_a35fe08ff857d199f1b42b09cbe975ba6.html#a35fe08ff857d199f1b42b09cbe975ba6", null ],
+    [ "active_segment_index", "structMayaFlux_1_1Kakshya_1_1OrganizedRegion_a54f4df85bbfd431ffdcc0c28029d541e.html#a54f4df85bbfd431ffdcc0c28029d541e", null ],
+    [ "active_segment_indices", "structMayaFlux_1_1Kakshya_1_1OrganizedRegion_a28a1986e74055f0bf382841a05863db1.html#a28a1986e74055f0bf382841a05863db1", null ],
+    [ "attributes", "structMayaFlux_1_1Kakshya_1_1OrganizedRegion_a61a2533decf28a29d3dcfe2ef3f89967.html#a61a2533decf28a29d3dcfe2ef3f89967", null ],
+    [ "current_position", "structMayaFlux_1_1Kakshya_1_1OrganizedRegion_a28457438cb346672d18e23166da27351.html#a28457438cb346672d18e23166da27351", null ],
+    [ "group_name", "structMayaFlux_1_1Kakshya_1_1OrganizedRegion_af1c82028f11803715c69fe1246da162b.html#af1c82028f11803715c69fe1246da162b", null ],
+    [ "loop_end", "structMayaFlux_1_1Kakshya_1_1OrganizedRegion_af27bbe4a23a7c5b26a8b0995dee72af9.html#af27bbe4a23a7c5b26a8b0995dee72af9", null ],
+    [ "loop_start", "structMayaFlux_1_1Kakshya_1_1OrganizedRegion_a20ed2f8b5314b8a62f25484e260a02ef.html#a20ed2f8b5314b8a62f25484e260a02ef", null ],
+    [ "looping_enabled", "structMayaFlux_1_1Kakshya_1_1OrganizedRegion_ac6787205a70d759a66edd2735f2f7f7b.html#ac6787205a70d759a66edd2735f2f7f7b", null ],
+    [ "region_index", "structMayaFlux_1_1Kakshya_1_1OrganizedRegion_a8b3995909bdacea4b30356a487d3c704.html#a8b3995909bdacea4b30356a487d3c704", null ],
+    [ "segments", "structMayaFlux_1_1Kakshya_1_1OrganizedRegion_a65d557721810b3090acea27c3759db2b.html#a65d557721810b3090acea27c3759db2b", null ],
+    [ "selection_pattern", "structMayaFlux_1_1Kakshya_1_1OrganizedRegion_ad8339d3c1537eb15ace55fd3e7a0499b.html#ad8339d3c1537eb15ace55fd3e7a0499b", null ],
+    [ "state", "structMayaFlux_1_1Kakshya_1_1OrganizedRegion_a914b425f3eeeb8074f6a0991a04c4227.html#a914b425f3eeeb8074f6a0991a04c4227", null ],
+    [ "transition_duration_ms", "structMayaFlux_1_1Kakshya_1_1OrganizedRegion_a717913ff9e2cc94f04e8bd699eb99ae0.html#a717913ff9e2cc94f04e8bd699eb99ae0", null ],
+    [ "transition_type", "structMayaFlux_1_1Kakshya_1_1OrganizedRegion_a30dd98fff113df9afea9814356938f0d.html#a30dd98fff113df9afea9814356938f0d", null ]
+];

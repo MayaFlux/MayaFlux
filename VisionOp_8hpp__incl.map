@@ -1,0 +1,25 @@
+<map id="VisionOp.hpp" name="VisionOp.hpp">
+<area shape="rect" id="Node000001" title="Declarative description of a Kinesis::Vision processing sequence." alt="" coords="399,5,507,31"/>
+<area shape="rect" id="Node000002" href="$Features_8hpp.html" title=" " alt="" coords="315,86,421,111"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="443,33,393,78,389,75,439,29"/>
+<area shape="rect" id="Node000012" href="$EnumReflect_8hpp.html" title=" " alt="" coords="446,79,631,119"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="468,29,510,67,506,71,464,33"/>
+<area shape="rect" id="Node000003" href="$Bounds_8hpp.html" title=" " alt="" coords="275,167,461,207"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="371,112,371,153,365,153,365,112"/>
+<area shape="rect" id="Node000004" href="$HitTest_8hpp.html" title=" " alt="" coords="321,255,415,280"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="371,207,371,241,365,241,365,207"/>
+<area shape="rect" id="Node000005" href="$SpatialIndex_8hpp.html" title=" " alt="" coords="208,335,339,361"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="356,282,300,328,296,324,352,278"/>
+<area shape="rect" id="Node000010" href="$ViewTransform_8hpp.html" title=" " alt="" coords="363,328,562,368"/>
+<area shape="poly" id="edge9_Node000004_Node000010" title=" " alt="" coords="384,278,431,317,427,321,380,282"/>
+<area shape="rect" id="Node000006" href="$TendencyFactories_8hpp.html" title=" " alt="" coords="5,416,208,456"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="252,363,157,412,154,407,250,358"/>
+<area shape="rect" id="Node000009" title=" " alt="" coords="233,423,325,449"/>
+<area shape="poly" id="edge8_Node000005_Node000009" title=" " alt="" coords="277,361,280,409,274,410,271,361"/>
+<area shape="rect" id="Node000007" href="$Tendency_8hpp.html" title=" " alt="" coords="52,504,161,529"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="109,456,109,490,104,490,104,456"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="55,577,159,603"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="109,530,109,564,104,564,104,530"/>
+<area shape="rect" id="Node000011" title=" " alt="" coords="354,423,571,449"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="465,368,465,409,460,409,460,368"/>
+</map>

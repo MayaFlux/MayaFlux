@@ -1,0 +1,59 @@
+<map id="MayaFlux::Memory::SweepList::push" name="MayaFlux::Memory::SweepList::push">
+<area shape="rect" id="Node000001" title="Publishes value for later sweep() or drain()." alt="" coords="1573,339,1795,379"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Parallel_1_1AsyncGroup_a61de2e5f9b1c7bf6c744e2c6c299b5c9.html#a61de2e5f9b1c7bf6c744e2c6c299b5c9" title=" " alt="" coords="1371,339,1525,379"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1560,361,1526,361,1526,356,1560,356"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Parallel_1_1AsyncGroup_ac5d3a0e96e4855b93c6fa4d545f5440d.html#ac5d3a0e96e4855b93c6fa4d545f5440d" title=" " alt="" coords="1172,339,1323,379"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="1357,361,1323,361,1323,356,1357,356"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Parallel_1_1AsyncGroup_acc4f41dfcce08a9ade658720b8ddec40.html#acc4f41dfcce08a9ade658720b8ddec40" title="Blocks until every currently submitted future completes." alt="" coords="969,291,1118,331"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="1158,340,1117,331,1119,326,1159,335"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Parallel_1_1AsyncGroup_ae891e0a0f3434000ff27e12d616a808a.html#ae891e0a0f3434000ff27e12d616a808a" title="Retains fut and opportunistically reclaims completed work." alt="" coords="963,371,1124,411"/>
+<area shape="poly" id="edge9_Node000003_Node000010" title=" " alt="" coords="1159,375,1125,381,1124,375,1158,370"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1ComputeMatrix_aeccf4d6a852c748274189a45929ec1f2.html#aeccf4d6a852c748274189a45929ec1f2" title="Block until all in&#45;flight async chains complete." alt="" coords="711,187,913,227"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="997,285,914,241,883,229,885,224,916,236,1000,281"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1IO_1_1IOManager_ad48a648dd6f4394b7e92a4948f64b303.html#ad48a648dd6f4394b7e92a4948f64b303" title="Wait for all in&#45;flight save operations to complete." alt="" coords="719,251,905,291"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="955,298,905,289,906,284,955,293"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Parallel_1_1AsyncGroup_a37900fb4a33d9720ea3ac21841c700bc.html#a37900fb4a33d9720ea3ac21841c700bc" title="Drains all in&#45;flight work before destruction." alt="" coords="709,315,915,355"/>
+<area shape="poly" id="edge8_Node000004_Node000009" title=" " alt="" coords="955,322,915,327,914,321,955,317"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1IO_1_1IOManager_ab42d3a6d5feeacaf3012eb79c8c8da6e.html#ab42d3a6d5feeacaf3012eb79c8c8da6e" title="Unregisters IOService, releases all owned readers, clears stored buffers." alt="" coords="240,51,427,91"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="711,244,707,240,690,214,683,187,683,161,686,135,689,109,688,85,679,62,660,41,627,21,590,11,552,8,512,11,437,29,376,53,374,48,435,24,511,6,552,3,591,6,629,17,663,37,684,59,693,84,694,109,692,135,688,161,688,187,695,212,711,237,715,240"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1IO_1_1IOManager_ad92be69cbeb3eaa2a270f7dd3ecd3b16.html#ad92be69cbeb3eaa2a270f7dd3ecd3b16" title="Calls shutdown() if it has not already run." alt="" coords="5,51,192,91"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="227,73,192,73,192,68,227,68"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1IO_1_1IOManager_a0604e2f246faf9ae9d598cd28140d814.html#a0604e2f246faf9ae9d598cd28140d814" title="Retain a save task in m_save_tasks and opportunistically reclaim finished ones." alt="" coords="719,403,905,443"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="949,406,906,412,905,407,949,401"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1IO_1_1IOManager_a20c6d4610f26db8604c8d2252a02c3a2.html#a20c6d4610f26db8604c8d2252a02c3a2" title="Save image data to disk asynchronously." alt="" coords="475,179,661,219"/>
+<area shape="poly" id="edge11_Node000011_Node000012" title=" " alt="" coords="744,398,725,385,707,368,695,350,688,332,684,298,680,265,672,249,659,233,644,221,648,217,663,229,677,246,685,263,689,297,693,331,700,347,711,365,728,381,747,394"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1IO_1_1IOManager_adffe46d33f302a83a626b69a4573342b.html#adffe46d33f302a83a626b69a4573342b" title="Save an already&#45;downloaded ImageData to disk asynchronously." alt="" coords="475,243,661,283"/>
+<area shape="poly" id="edge14_Node000011_Node000015" title=" " alt="" coords="750,398,708,369,692,349,684,331,675,314,660,297,641,285,643,281,663,293,680,311,689,329,696,346,711,365,753,394"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1IO_1_1IOManager_a99c97487e5b52b1ceb7f8efa6ac0ea75.html#a99c97487e5b52b1ceb7f8efa6ac0ea75" title="Save a ComputeMeshBuffer&#39;s current live geometry to disk asynchronously." alt="" coords="475,307,661,347"/>
+<area shape="poly" id="edge15_Node000011_Node000016" title=" " alt="" coords="753,400,660,361,628,349,630,344,662,356,755,395"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1IO_1_1IOManager_a779e35585748fcbbdf55f7ec17b42cec.html#a779e35585748fcbbdf55f7ec17b42cec" title="Save a MeshBuffer&#39;s mesh data to disk asynchronously." alt="" coords="475,371,661,411"/>
+<area shape="poly" id="edge16_Node000011_Node000017" title=" " alt="" coords="705,411,661,406,662,400,706,406"/>
+<area shape="rect" id="Node000018" href="$classMayaFlux_1_1IO_1_1IOManager_a8d4713fe396fda2349b0709ec97b0751.html#a8d4713fe396fda2349b0709ec97b0751" title="Save a MeshNetwork&#39;s current slots to disk asynchronously." alt="" coords="475,435,661,475"/>
+<area shape="poly" id="edge17_Node000011_Node000018" title=" " alt="" coords="706,439,662,445,661,440,705,434"/>
+<area shape="rect" id="Node000019" href="$classMayaFlux_1_1IO_1_1IOManager_a9fca1b11b77c34c890e703aacbf8b582.html#a9fca1b11b77c34c890e703aacbf8b582" title="Save one or more meshes to disk asynchronously." alt="" coords="475,499,661,539"/>
+<area shape="poly" id="edge18_Node000011_Node000019" title=" " alt="" coords="755,451,662,489,630,501,628,496,660,484,753,446"/>
+<area shape="rect" id="Node000020" href="$classMayaFlux_1_1IO_1_1IOManager_aac730c67e44028579377a291c993c699.html#aac730c67e44028579377a291c993c699" title="Save a ComputeMeshBuffer with a millisecond epoch timestamp spliced into the path,..." alt="" coords="475,563,661,603"/>
+<area shape="poly" id="edge19_Node000011_Node000020" title=" " alt="" coords="784,455,730,504,697,530,663,553,638,565,635,560,660,548,694,526,727,500,780,451"/>
+<area shape="rect" id="Node000021" href="$classMayaFlux_1_1IO_1_1IOManager_a2d21d40e32848f18d7d7e9d4ed28e826.html#a2d21d40e32848f18d7d7e9d4ed28e826" title="Save every source once, as a single time sample, with a millisecond epoch timestamp spliced into the ..." alt="" coords="475,627,661,667"/>
+<area shape="poly" id="edge20_Node000011_Node000021" title=" " alt="" coords="795,457,743,536,706,579,663,617,642,629,639,624,660,612,702,576,739,533,791,454"/>
+<area shape="rect" id="Node000022" href="$classMayaFlux_1_1IO_1_1IOManager_ad018092eb065937d11a691d891b139fc.html#ad018092eb065937d11a691d891b139fc" title="Download and save a GPU&#45;resident volume to disk asynchronously." alt="" coords="475,691,661,731"/>
+<area shape="poly" id="edge21_Node000011_Node000022" title=" " alt="" coords="802,457,783,506,753,566,714,627,690,656,663,681,645,693,642,688,660,677,686,652,709,624,749,563,778,504,797,455"/>
+<area shape="rect" id="Node000023" href="$classMayaFlux_1_1IO_1_1IOManager_add7c3d0e36556c60f2a8b5e221c1b677.html#add7c3d0e36556c60f2a8b5e221c1b677" title="Save an already&#45;downloaded VolumeData to disk asynchronously." alt="" coords="475,755,661,795"/>
+<area shape="poly" id="edge22_Node000011_Node000023" title=" " alt="" coords="807,457,791,518,763,595,744,635,721,675,694,712,663,745,646,757,643,752,660,741,690,708,717,672,739,633,758,593,786,516,802,455"/>
+<area shape="rect" id="Node000025" href="$classMayaFlux_1_1IO_1_1IOManager_a42650825f04fa23729727446b2768f45.html#a42650825f04fa23729727446b2768f45" title="Stop a running audio capture and finalise the file." alt="" coords="475,51,661,91"/>
+<area shape="poly" id="edge24_Node000011_Node000025" title=" " alt="" coords="741,398,723,385,707,368,688,332,681,298,681,264,686,232,690,200,689,169,680,137,659,104,646,93,649,89,663,101,685,135,694,168,695,201,691,233,687,265,686,297,693,330,712,365,726,381,744,394"/>
+<area shape="rect" id="Node000026" href="$classMayaFlux_1_1IO_1_1IOManager_a8509dbec9694c955073cba278b0ca6c9.html#a8509dbec9694c955073cba278b0ca6c9" title="Stop a running video capture and finalise the file." alt="" coords="475,115,661,155"/>
+<area shape="poly" id="edge26_Node000011_Node000026" title=" " alt="" coords="742,398,723,385,707,368,691,341,684,315,685,265,686,241,684,217,676,193,659,168,645,157,649,153,663,165,681,191,690,216,692,241,690,265,690,314,696,339,711,365,727,381,745,394"/>
+<area shape="rect" id="Node000028" href="$classMayaFlux_1_1IO_1_1IOManager_ac6c9a6ce24848bc6aff24e64812c3bb6.html#ac6c9a6ce24848bc6aff24e64812c3bb6" title="Write a SoundStreamContainer to file in one shot." alt="" coords="475,819,661,859"/>
+<area shape="poly" id="edge29_Node000011_Node000028" title=" " alt="" coords="810,457,797,529,772,623,752,673,728,722,699,768,663,809,647,821,644,816,660,805,695,765,724,719,747,671,766,621,792,528,804,456"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1IO_1_1IOManager_ac91dd7d537b2c0090b05d8bd5b74847e.html#ac91dd7d537b2c0090b05d8bd5b74847e" title=" " alt="" coords="240,179,427,219"/>
+<area shape="poly" id="edge12_Node000012_Node000013" title=" " alt="" coords="461,201,427,201,427,196,461,196"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1IO_1_1IOManager_abc5b4f20992fe093fcf290e073a12895.html#abc5b4f20992fe093fcf290e073a12895" title=" " alt="" coords="240,243,427,283"/>
+<area shape="poly" id="edge13_Node000012_Node000014" title=" " alt="" coords="482,225,408,245,406,240,480,220"/>
+<area shape="rect" id="Node000024" href="$classMayaFlux_1_1IO_1_1IOManager_af3d6ec863b643aadf95baeb7c8121e49.html#af3d6ec863b643aadf95baeb7c8121e49" title="Begin recording a numbered .vdb sequence from a volume." alt="" coords="240,755,427,795"/>
+<area shape="poly" id="edge23_Node000023_Node000024" title=" " alt="" coords="461,777,427,777,427,772,461,772"/>
+<area shape="poly" id="edge25_Node000025_Node000007" title=" " alt="" coords="461,73,427,73,427,68,461,68"/>
+<area shape="poly" id="edge27_Node000026_Node000007" title=" " alt="" coords="480,114,406,93,408,88,482,108"/>
+<area shape="rect" id="Node000027" href="$classMayaFlux_1_1IO_1_1IOManager_a82a7d24c1abc7044cbf39d7111c32828.html#a82a7d24c1abc7044cbf39d7111c32828" title="Stop the active window capture and finalise the file." alt="" coords="240,115,427,155"/>
+<area shape="poly" id="edge28_Node000026_Node000027" title=" " alt="" coords="461,137,427,137,427,132,461,132"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::VertexFieldProcessor::ParamsBlock" name="MayaFlux::Buffers::VertexFieldProcessor::ParamsBlock">
+<area shape="rect" id="Node000001" title="Push constant block when the operator carries parametric fields." alt="" coords="5,243,156,337"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Buffers_1_1VertexFieldProcessor_1_1RangeParams.html" title="Push constant block matching the prefix GpuFieldOperator declares." alt="" coords="5,5,156,180"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="83,181,83,226,78,226,78,181"/>
+</map>

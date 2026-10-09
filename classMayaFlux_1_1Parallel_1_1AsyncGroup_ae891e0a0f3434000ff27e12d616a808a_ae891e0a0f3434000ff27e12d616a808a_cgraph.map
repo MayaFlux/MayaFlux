@@ -1,0 +1,9 @@
+<map id="MayaFlux::Parallel::AsyncGroup::submit" name="MayaFlux::Parallel::AsyncGroup::submit">
+<area shape="rect" id="Node000001" title="Retains fut and opportunistically reclaims completed work." alt="" coords="5,5,167,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Parallel_1_1AsyncGroup_ac5d3a0e96e4855b93c6fa4d545f5440d.html#ac5d3a0e96e4855b93c6fa4d545f5440d" title=" " alt="" coords="215,5,365,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="167,23,201,23,201,28,167,28"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Parallel_1_1AsyncGroup_a61de2e5f9b1c7bf6c744e2c6c299b5c9.html#a61de2e5f9b1c7bf6c744e2c6c299b5c9" title=" " alt="" coords="413,5,568,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="366,23,400,23,400,28,366,28"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Memory_1_1SweepList_a08033a9c7623c750d27d7796db165f4d.html#a08033a9c7623c750d27d7796db165f4d" title="Publishes value for later sweep() or drain()." alt="" coords="616,5,837,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="568,23,602,23,602,28,568,28"/>
+</map>

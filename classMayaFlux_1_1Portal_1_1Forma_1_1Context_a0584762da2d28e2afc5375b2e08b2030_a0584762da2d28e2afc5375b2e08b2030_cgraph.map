@@ -1,0 +1,15 @@
+<map id="MayaFlux::Portal::Forma::Context::on_release" name="MayaFlux::Portal::Forma::Context::on_release">
+<area shape="rect" id="Node000001" title="Called when a key is released while the element has focus." alt="" coords="5,109,187,149"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1EventManager_ab03d9c23414e27d09de89a8d30ff475b.html#ab03d9c23414e27d09de89a8d30ff475b" title="Add a event to the manager." alt="" coords="235,37,465,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="165,107,234,87,263,79,264,84,235,92,166,112"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_a3110123d42ea5ecb3868f9cce3dbadd7.html#a3110123d42ea5ecb3868f9cce3dbadd7" title=" " alt="" coords="259,102,441,157"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="187,127,245,127,245,132,187,132"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Kriya_a01aa3f167bd1f04105be7ff4d6c63862.html#a01aa3f167bd1f04105be7ff4d6c63862" title="Creates an Event coroutine that triggers on specific key release." alt="" coords="271,181,429,221"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="166,147,235,167,264,175,263,180,234,172,165,152"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1EventManager_a57dfab40ee4b14db2bef10e6c4c5e9d2.html#a57dfab40ee4b14db2bef10e6c4c5e9d2" title="Generate automatic name for a event based on its type." alt="" coords="513,5,744,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="465,41,500,37,500,43,466,47"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Vruta_1_1EventManager_a3b542907af4a0afa35f1b87a604932e4.html#a3b542907af4a0afa35f1b87a604932e4" title="Remove an event by name." alt="" coords="513,69,744,109"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="466,68,500,72,500,77,465,73"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Vruta_1_1EventManager_ac3366b2763d938f824fa0c47b28c6bab.html#ac3366b2763d938f824fa0c47b28c6bab" title="Generates a unique event ID for new events." alt="" coords="792,5,1023,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="744,23,778,23,778,28,744,28"/>
+</map>

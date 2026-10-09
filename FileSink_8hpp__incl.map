@@ -1,0 +1,24 @@
+<map id="FileSink.hpp" name="FileSink.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="191,5,292,31"/>
+<area shape="rect" id="Node000002" href="$TextFileWriter_8hpp.html" title=" " alt="" coords="41,79,266,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="229,33,180,72,177,68,226,29"/>
+<area shape="rect" id="Node000005" href="$Sink_8hpp.html" title=" " alt="" coords="290,79,369,104"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="257,29,306,68,303,72,254,33"/>
+<area shape="rect" id="Node000003" href="$FileWriter_8hpp.html" title=" " alt="" coords="5,152,117,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="140,106,89,146,85,141,137,102"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="142,152,215,177"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="160,103,173,138,168,140,155,105"/>
+<area shape="rect" id="Node000006" href="$JournalEntry_8hpp.html" title=" " alt="" coords="294,225,421,251"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="330,105,328,137,332,177,346,212,341,214,327,178,323,137,325,104"/>
+<area shape="rect" id="Node000011" href="$RealtimeEntry_8hpp.html" title=" " alt="" coords="341,152,483,177"/>
+<area shape="poly" id="edge10_Node000005_Node000011" title=" " alt="" coords="344,102,390,141,386,145,341,106"/>
+<area shape="rect" id="Node000007" href="$EnumReflect_8hpp.html" title=" " alt="" coords="54,299,239,339"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="328,253,211,296,209,291,326,248"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="264,306,331,331"/>
+<area shape="poly" id="edge7_Node000006_Node000008" title=" " alt="" coords="351,252,317,296,313,293,346,249"/>
+<area shape="rect" id="Node000009" title=" " alt="" coords="355,306,479,331"/>
+<area shape="poly" id="edge8_Node000006_Node000009" title=" " alt="" coords="368,249,402,293,398,296,364,252"/>
+<area shape="rect" id="Node000010" title=" " alt="" coords="503,306,601,331"/>
+<area shape="poly" id="edge9_Node000006_Node000010" title=" " alt="" coords="387,248,512,298,510,303,385,253"/>
+<area shape="poly" id="edge11_Node000011_Node000006" title=" " alt="" coords="405,179,377,216,372,213,401,176"/>
+</map>

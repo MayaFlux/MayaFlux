@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::RelationNetwork::RelationNetwork" name="MayaFlux::Nodes::Network::RelationNetwork::RelationNetwork">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,5,261,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork_afb34b572315180e465878f1de6f5bb1b.html#afb34b572315180e465878f1de6f5bb1b" title="Set the network&#39;s output routing mode." alt="" coords="309,5,549,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="262,23,296,23,296,28,262,28"/>
+</map>

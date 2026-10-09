@@ -1,0 +1,26 @@
+<map id="MayaFlux::Yantra::Vision::VisionMatrix" name="MayaFlux::Yantra::Vision::VisionMatrix">
+<area shape="rect" id="Node000001" title="Compute matrix holding one VisionAnalyzer for a query and, when an extraction mode is given,..." alt="" coords="385,2493,560,2933"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1GrammarAwareComputeMatrix.html" title="ComputeMatrix extension that integrates grammar&#45;based operation selection." alt="" coords="237,2231,479,2431"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="394,2443,409,2492,404,2494,389,2445"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1ComputeMatrix.html" title="Local execution orchestrator for computational operations." alt="" coords="253,1567,463,2181"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="361,2195,361,2231,355,2231,355,2195"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="5,1281,220,1361"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="138,1372,256,1637,251,1639,133,1375"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1OperationPool.html" title="Thread&#45;safe pool for managing named operation instances." alt="" coords="245,1139,471,1504"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="361,1504,361,1550,355,1550,355,1504"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Parallel_1_1AsyncGroup.html" title=" " alt="" coords="496,1161,655,1481"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="515,1482,471,1593,466,1591,510,1480"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Memory_1_1SweepList.html" title=" " alt="" coords="330,373,543,693"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="406,694,397,783,395,880,404,980,415,1028,430,1075,441,1095,454,1107,469,1119,485,1137,492,1146,487,1149,481,1140,466,1123,451,1111,437,1098,425,1077,410,1030,399,981,389,881,391,783,401,693"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Parallel_1_1AsyncGroup.html" title="Owns a set of in&#45;flight std::async futures on behalf of a subsystem." alt="" coords="504,756,647,1076"/>
+<area shape="poly" id="edge11_Node000010_Node000007" title=" " alt="" coords="497,693,514,739,509,741,492,695"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Memory_1_1SweepList.html" title="Lock&#45;free, unbounded, multi&#45;producer collection of in&#45;flight items." alt="" coords="429,5,679,311"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="479,324,475,335,465,374,459,373,470,334,474,323"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Memory_1_1SweepList.html" title=" " alt="" coords="567,373,781,693"/>
+<area shape="poly" id="edge9_Node000009_Node000008" title=" " alt="" coords="631,323,635,334,646,372,641,374,630,335,626,325"/>
+<area shape="poly" id="edge8_Node000006_Node000009" title=" " alt="" coords="679,694,679,717,682,898,678,977,662,1077,645,1146,639,1144,657,1075,672,976,677,898,674,717,674,694"/>
+<area shape="poly" id="edge12_Node000010_Node000009" title=" " alt="" coords="618,694,611,718,606,741,601,739,606,717,613,693"/>
+<area shape="poly" id="edge10_Node000006_Node000010" title=" " alt="" coords="578,1090,578,1161,573,1161,573,1090"/>
+<area shape="rect" id="Node000011" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1VisionAnalysis.html" title="Composed analysis output: one populated field per active intent that produced a result this call." alt="" coords="504,2231,673,2431"/>
+<area shape="poly" id="edge13_Node000001_Node000011" title=" " alt="" coords="561,2432,547,2478,542,2477,556,2430"/>
+</map>

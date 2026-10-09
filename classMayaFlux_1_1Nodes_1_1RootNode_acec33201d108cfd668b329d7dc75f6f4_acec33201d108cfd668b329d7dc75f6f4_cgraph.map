@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::RootNode::postprocess" name="MayaFlux::Nodes::RootNode::postprocess">
+<area shape="rect" id="Node000001" title="Performs post&#45;processing after all nodes have been processed." alt="" coords="5,5,212,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1RootNode_a1a20847a779ea2b4d3f22f3b50e8dbc5.html#a1a20847a779ea2b4d3f22f3b50e8dbc5" title="Processes any pending node registration/unregistration operations." alt="" coords="260,5,475,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="212,23,246,23,246,28,212,28"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Nodes_a8abc7b8f33819075e738d5ed027bd9ec.html#a8abc7b8f33819075e738d5ed027bd9ec" title="Atomically sets a node state flag to a specific value." alt="" coords="523,5,711,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="475,23,509,23,509,28,475,28"/>
+</map>

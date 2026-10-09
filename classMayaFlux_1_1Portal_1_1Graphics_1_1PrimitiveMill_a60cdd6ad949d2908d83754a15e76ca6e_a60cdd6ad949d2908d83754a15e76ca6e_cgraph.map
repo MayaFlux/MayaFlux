@@ -1,0 +1,16 @@
+<map id="MayaFlux::Portal::Graphics::PrimitiveMill::~PrimitiveMill" name="MayaFlux::Portal::Graphics::PrimitiveMill::~PrimitiveMill">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,63,220,103"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1PrimitiveMill_a8ef1adbf3b7feb1267941b466b6a414f.html#a8ef1adbf3b7feb1267941b466b6a414f" title="Destroy the kernel, pipeline, descriptor sets and buffers." alt="" coords="268,63,465,103"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="220,80,254,80,254,85,220,85"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_af50ca0aa0cb7511c99eaf758430efdce.html#af50ca0aa0cb7511c99eaf758430efdce" title=" " alt="" coords="513,5,711,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="452,60,512,46,513,51,453,65"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a715d57394465ff2924727d7c82d87e7b.html#a715d57394465ff2924727d7c82d87e7b" title="Get the global shader compiler instance." alt="" coords="759,99,956,139"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="466,87,745,108,745,113,465,93"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1PrimitiveMill_aeb933bef78c66b4f9ff29ec75cd0e380.html#aeb933bef78c66b4f9ff29ec75cd0e380" title="Wait on and reclaim the previous dispatch, if one is outstanding." alt="" coords="513,121,711,175"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="443,100,501,116,499,121,442,105"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ComputePress_a89b259adf28ef041294928959e03fa9c.html#a89b259adf28ef041294928959e03fa9c" title=" " alt="" coords="759,5,956,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="711,23,745,23,745,28,711,28"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="1004,99,1201,139"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="956,116,990,116,990,121,956,121"/>
+<area shape="poly" id="edge7_Node000007_Node000005" title=" " alt="" coords="711,134,745,129,746,135,711,139"/>
+</map>

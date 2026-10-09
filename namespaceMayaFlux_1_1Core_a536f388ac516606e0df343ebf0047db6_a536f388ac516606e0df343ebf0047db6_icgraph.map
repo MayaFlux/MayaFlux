@@ -1,0 +1,24 @@
+<map id="MayaFlux::Core::from_vk_format" name="MayaFlux::Core::from_vk_format">
+<area shape="rect" id="Node000001" title="Reverse&#45;map a vk::Format to the nearest GraphicsSurfaceInfo::SurfaceFormat." alt="" coords="704,260,867,300"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_ae1dd319d71f7aa09fa3cca52132be64a.html#ae1dd319d71f7aa09fa3cca52132be64a" title="Query the actual vk::Format in use by the window&#39;s live swapchain, translated back to the MayaFlux su..." alt="" coords="491,224,656,264"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="690,267,656,261,657,255,691,261"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_1_1Kakshya_adf1a57ec9fd544212ad62643faacc3c3.html#adf1a57ec9fd544212ad62643faacc3c3" title="Read a pixel rectangle from the last completed swapchain frame into a DataVariant whose element type ..." alt="" coords="494,292,653,332"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="691,297,653,303,652,297,690,292"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_a1ab6a787e160d5dcdb1c692cc92a12a0.html#a1ab6a787e160d5dcdb1c692cc92a12a0" title="Portal ImageFormat corresponding to the live swapchain surface format." alt="" coords="268,134,435,189"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="505,222,425,191,427,186,507,217"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Kakshya_1_1WindowAccessProcessor_aaf082c0521c39ed5dd7c6bb078b08a0f.html#aaf082c0521c39ed5dd7c6bb078b08a0f" title="Attach to a WindowContainer." alt="" coords="260,213,443,267"/>
+<area shape="poly" id="edge8_Node000002_Node000009" title=" " alt="" coords="477,245,443,244,443,239,477,240"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Kakshya_1_1WindowAccessProcessor_aa8f3d77af39015f983f7e6d38e71a8d1.html#aa8f3d77af39015f983f7e6d38e71a8d1" title="Execute a full&#45;surface pixel readback." alt="" coords="260,291,443,346"/>
+<area shape="poly" id="edge9_Node000002_Node000010" title=" " alt="" coords="501,271,434,294,432,289,499,266"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_a36dc887f4398346c40f92bd77b67025a.html#a36dc887f4398346c40f92bd77b67025a" title="Refresh the cached VKImage for m_data[frame_index]." alt="" coords="5,5,212,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="308,127,263,92,211,60,184,48,186,43,213,55,266,87,311,123"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_ac0a13fcbc68d4d5414efe31c5647f73b.html#ac0a13fcbc68d4d5414efe31c5647f73b" title="Upload m_data[frame_index] reusing a caller&#45;supplied staging buffer." alt="" coords="5,69,212,109"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="254,135,176,112,178,107,255,130"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_a54e6f5327b1e6000a2c148781a8f6717.html#a54e6f5327b1e6000a2c148781a8f6717" title="Crop a region from the last readback and refresh its cached VKImage." alt="" coords="15,134,202,189"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="254,164,202,164,202,159,254,159"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_a31ff69a65227eb7c14504ae2c8ae5fe9.html#a31ff69a65227eb7c14504ae2c8ae5fe9" title="Upload the full surface readback to a container&#45;owned VKImage." alt="" coords="5,213,212,253"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="255,192,178,216,176,211,254,187"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_aa1f5046146a152b8287080c8c462bd43.html#aa1f5046146a152b8287080c8c462bd43" title="Refresh the full surface VKImage, reusing a caller&#45;supplied persistent staging buffer." alt="" coords="5,277,212,317"/>
+<area shape="poly" id="edge7_Node000003_Node000008" title=" " alt="" coords="267,198,262,202,247,218,239,234,230,251,214,267,193,279,190,275,210,263,226,248,234,232,243,215,258,198,264,194"/>
+<area shape="poly" id="edge11_Node000011_Node000010" title=" " alt="" coords="480,317,443,319,443,313,480,312"/>
+</map>

@@ -1,0 +1,17 @@
+<map id="InputSubsystem.hpp" name="InputSubsystem.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="285,5,440,31"/>
+<area shape="rect" id="Node000002" href="$InputBackend_8hpp.html" title=" " alt="" coords="160,79,347,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="348,33,293,73,289,68,345,29"/>
+<area shape="rect" id="Node000006" href="$Subsystem_8hpp.html" title=" " alt="" coords="371,79,573,119"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="380,29,436,68,433,73,377,33"/>
+<area shape="rect" id="Node000003" href="$GlobalInputConfig_8hpp.html" title=" " alt="" coords="153,167,351,207"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="256,119,255,153,250,153,250,119"/>
+<area shape="rect" id="Node000004" href="$InputBinding_8hpp.html" title=" " alt="" coords="5,255,163,295"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="216,209,134,251,132,246,214,204"/>
+<area shape="rect" id="Node000005" href="$Mirror_8hpp.html" title=" " alt="" coords="187,255,341,295"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="257,207,262,241,257,242,252,207"/>
+<area shape="rect" id="Node000007" href="$ProcessingArchitecture_8hpp.html" title="Unified processing architecture for multimodal subsystem coordination." alt="" coords="376,167,571,207"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="475,119,475,153,470,153,470,119"/>
+<area shape="rect" id="Node000008" href="$ProcessingTokens_8hpp.html" title=" " alt="" coords="376,255,571,295"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="476,207,476,241,471,241,471,207"/>
+</map>

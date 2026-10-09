@@ -1,0 +1,11 @@
+<map id="MayaFlux::Yantra::VisionExtractor::fill_elements" name="MayaFlux::Yantra::VisionExtractor::fill_elements">
+<area shape="rect" id="Node000001" title=" " alt="" coords="703,37,885,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_a46701537dbc2d4860efd5a35f308e57a.html#a46701537dbc2d4860efd5a35f308e57a" title="silhouettes() for the focused element only." alt="" coords="472,5,655,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="689,45,654,41,655,35,690,40"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_ad98c7d3e9382de065b53fa52103adb53.html#ad98c7d3e9382de065b53fa52103adb53" title="Silhouette of every element cut from its contour polygons: the outer contour and its holes,..." alt="" coords="472,69,655,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="690,74,655,79,654,74,689,69"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_a405349780e7eb0c7c7c7165acc0c6696.html#a405349780e7eb0c7c7c7165acc0c6696" title=" " alt="" coords="241,69,424,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="459,92,424,92,424,87,459,87"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_af4331c5582233c8d45975aaded7c2d96.html#af4331c5582233c8d45975aaded7c2d96" title=" " alt="" coords="5,69,193,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="227,92,194,92,194,87,227,87"/>
+</map>

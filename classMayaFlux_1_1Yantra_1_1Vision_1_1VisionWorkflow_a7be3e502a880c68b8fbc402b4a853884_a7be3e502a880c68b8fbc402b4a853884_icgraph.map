@@ -1,0 +1,9 @@
+<map id="MayaFlux::Yantra::Vision::VisionWorkflow::start" name="MayaFlux::Yantra::Vision::VisionWorkflow::start">
+<area shape="rect" id="Node000001" title="Subscribe consumer and start the producer named name, which stops the run at source&#39;s end,..." alt="" coords="240,91,423,131"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1Vision_1_1VisionWorkflow_a4f3ca2f99963e36a9f19241e3ab27441.html#a4f3ca2f99963e36a9f19241e3ab27441" title="process_to_buffer() with a matrix the caller made and configured, such as its extractor&#39;s sizes,..." alt="" coords="5,5,192,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="258,89,179,63,181,58,260,84"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1Vision_1_1VisionWorkflow_a65f5e261b0f415a8d3b8c59fe7394d7d.html#a65f5e261b0f415a8d3b8c59fe7394d7d" title="process_to_live_container() with a matrix the caller made and configured." alt="" coords="5,84,192,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="226,114,192,114,192,109,226,109"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1Vision_1_1VisionWorkflow_acbdbb0e51aaedb8f13609d7ec76fd5d9.html#acbdbb0e51aaedb8f13609d7ec76fd5d9" title="Run config&#39;s matrix on its source live and return a Chimera builder over a new layer array,..." alt="" coords="5,163,192,217"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="260,138,181,165,179,160,258,133"/>
+</map>

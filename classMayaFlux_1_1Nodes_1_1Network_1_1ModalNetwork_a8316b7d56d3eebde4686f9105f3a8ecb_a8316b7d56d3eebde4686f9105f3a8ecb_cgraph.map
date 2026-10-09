@@ -1,0 +1,14 @@
+<map id="MayaFlux::Nodes::Network::ModalNetwork::get_metadata" name="MayaFlux::Nodes::Network::ModalNetwork::get_metadata">
+<area shape="rect" id="Node000001" title="Get network metadata for debugging/visualization." alt="" coords="5,77,229,117"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork_ad6c14660b161b3f6174a1528fd3c2fe9.html#ad6c14660b161b3f6174a1528fd3c2fe9" title="Get network metadata for debugging/visualization." alt="" coords="277,77,496,117"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="229,95,264,95,264,100,229,100"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork_af24c0ffef2666eb05f2f14b7e297c14b.html#af24c0ffef2666eb05f2f14b7e297c14b" title="Get the number of nodes in the network." alt="" coords="544,5,775,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="463,75,569,46,570,51,464,80"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork_ad5a21f007cb5e6328667ee852b6ad5fa.html#ad5a21f007cb5e6328667ee852b6ad5fa" title=" " alt="" coords="553,70,766,125"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="496,95,539,95,539,100,496,100"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork_a578ed1a9dcdf428b49a853724219e8c9.html#a578ed1a9dcdf428b49a853724219e8c9" title=" " alt="" coords="560,149,759,203"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="458,115,552,142,550,147,456,120"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Reflect_aad91118cbd25bd9e35a3ced9aa4e6dbd.html#aad91118cbd25bd9e35a3ced9aa4e6dbd" title="Universal enum to string converter using magic_enum (original case)" alt="" coords="823,117,969,157"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="766,113,810,120,809,125,766,118"/>
+<area shape="poly" id="edge6_Node000006_Node000005" title=" " alt="" coords="758,157,808,149,809,154,759,162"/>
+</map>

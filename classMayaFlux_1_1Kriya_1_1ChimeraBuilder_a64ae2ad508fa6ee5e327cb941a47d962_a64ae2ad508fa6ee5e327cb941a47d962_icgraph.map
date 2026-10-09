@@ -1,0 +1,35 @@
+<map id="MayaFlux::Kriya::ChimeraBuilder::current" name="MayaFlux::Kriya::ChimeraBuilder::current">
+<area shape="rect" id="Node000001" title=" " alt="" coords="483,389,673,429"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1ChimeraBuilder_aa48117904bd104a6bf5b7ed26bb0c162.html#aa48117904bd104a6bf5b7ed26bb0c162" title="Seconds after start() before the layer begins to be fed." alt="" coords="244,5,435,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="570,376,557,310,532,225,514,180,492,136,465,95,433,59,417,48,420,43,436,55,469,92,497,133,519,178,537,223,562,308,575,375"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kriya_1_1ChimeraBuilder_ad4daf8d2ed13af5ff1dd71d179826a29.html#ad4daf8d2ed13af5ff1dd71d179826a29" title="Refresh a ring or GPU image layer every this many frames." alt="" coords="244,69,435,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="567,377,550,322,524,254,485,184,461,152,433,123,416,112,419,107,436,119,465,148,489,181,529,251,555,320,572,375"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kriya_1_1ChimeraBuilder_a478662f92f6123dc6ade8cd66c0f74d3.html#a478662f92f6123dc6ade8cd66c0f74d3" title="Fit frames of another extent into this layer in this way, instead of the buffer&#39;s." alt="" coords="244,325,435,365"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="489,388,414,368,415,363,490,383"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kriya_1_1ChimeraBuilder_a358bfe7de9a6a21072c422dac096d959.html#a358bfe7de9a6a21072c422dac096d959" title="Fill the layer once with a still image." alt="" coords="244,197,435,237"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="554,380,504,315,470,281,433,252,412,240,414,235,436,247,474,277,508,311,558,376"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kriya_1_1ChimeraBuilder_a01dd6b61ab3b8b8032ecd13f9b73d898.html#a01dd6b61ab3b8b8032ecd13f9b73d898" title="Feed the layer by copying a GPU image every frame." alt="" coords="244,261,435,301"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="539,383,490,349,433,316,406,304,408,299,436,311,493,344,542,379"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Kriya_1_1ChimeraBuilder_ab8f421a3d1d33ded5572fb6a8ee3ac6c.html#ab8f421a3d1d33ded5572fb6a8ee3ac6c" title="Feed the layer from a ring that is being recorded." alt="" coords="244,133,435,173"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="562,377,542,334,514,283,478,232,433,187,414,176,417,171,436,183,482,228,519,280,547,332,567,375"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Kriya_1_1ChimeraBuilder_a49ad4148139c3fc4af88fdef61923ef1.html#a49ad4148139c3fc4af88fdef61923ef1" title="Feed the layer from a texture collection that is being appended to." alt="" coords="244,389,435,429"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="469,412,435,412,435,407,469,407"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Kriya_1_1ChimeraBuilder_ae76d6b169ae92f02134e05d29a173fed.html#ae76d6b169ae92f02134e05d29a173fed" title="Feed the layer from the stream the pipeline records, read when start() runs." alt="" coords="244,453,435,493"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="490,436,415,456,414,451,489,430"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Kriya_1_1ChimeraBuilder_ada5820181e53e3220dc9913c7293875d.html#ada5820181e53e3220dc9913c7293875d" title="Read the ring behind its write head by a lag that varies with time, in seconds since the layer entere..." alt="" coords="244,517,435,557"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="542,440,493,474,436,508,408,520,406,515,433,503,490,470,539,436"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Kriya_1_1ChimeraBuilder_a56d001d689c7aa8c213717c8fa282871.html#a56d001d689c7aa8c213717c8fa282871" title="Weight passed to the shader for the layer." alt="" coords="244,645,435,685"/>
+<area shape="poly" id="edge12_Node000001_Node000013" title=" " alt="" coords="567,444,547,487,519,538,482,590,436,635,417,648,414,643,433,631,478,587,514,535,542,484,562,441"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Kriya_1_1ChimeraBuilder_a218c8e499eaf76b8a12767a45c8b6673.html#a218c8e499eaf76b8a12767a45c8b6673" title="Params for the layer in the buffer&#39;s per&#45;layer data, such as placement." alt="" coords="244,581,435,621"/>
+<area shape="poly" id="edge14_Node000001_Node000014" title=" " alt="" coords="558,442,508,507,474,542,436,572,414,583,412,579,433,567,470,538,504,504,554,439"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Kriya_1_1ChimeraBuilder_ab72955541331a504117a16590202a717.html#ab72955541331a504117a16590202a717" title="Blend the two frames around a ring position, so slow or varying time does not step." alt="" coords="244,709,435,749"/>
+<area shape="poly" id="edge16_Node000001_Node000015" title=" " alt="" coords="572,443,555,499,529,567,489,638,465,670,436,699,419,711,416,707,433,695,461,667,485,635,524,565,550,497,567,442"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Kriya_1_1ChimeraBuilder_a240b705964c90d3326f95a5118c2a5c8.html#a240b705964c90d3326f95a5118c2a5c8" title="Play a layer without a lag at this multiple of the ring&#39;s frame rate." alt="" coords="244,773,435,813"/>
+<area shape="poly" id="edge17_Node000001_Node000016" title=" " alt="" coords="575,444,562,510,537,596,519,641,497,685,469,727,436,763,420,775,417,771,433,759,465,723,492,682,514,639,532,594,557,509,570,443"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kriya_1_1ChimeraBuilder_ad4ee9b1cfea7224a274f3f9596ed5598.html#ad4ee9b1cfea7224a274f3f9596ed5598" title="Start feeding every declared layer on the frame clock." alt="" coords="5,581,196,621"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="253,374,246,379,220,402,197,428,159,485,130,540,112,582,107,580,125,537,154,482,193,425,216,399,242,375,250,370"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Kriya_1_1ChimeraBuilder_a9e3f969cbf6a6a72a91c13d4d2ed1719.html#a9e3f969cbf6a6a72a91c13d4d2ed1719" title="Fill the layer once with an image file, loaded now as RGBA." alt="" coords="5,133,196,173"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="230,156,196,156,196,151,230,151"/>
+<area shape="poly" id="edge13_Node000013_Node000005" title=" " alt="" coords="250,644,175,624,176,619,252,639"/>
+<area shape="poly" id="edge15_Node000014_Node000005" title=" " alt="" coords="230,604,196,604,196,599,230,599"/>
+</map>

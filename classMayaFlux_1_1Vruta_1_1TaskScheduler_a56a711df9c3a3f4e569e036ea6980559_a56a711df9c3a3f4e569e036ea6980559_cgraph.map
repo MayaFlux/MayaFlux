@@ -1,0 +1,5 @@
+<map id="MayaFlux::Vruta::TaskScheduler::auto_generate_name" name="MayaFlux::Vruta::TaskScheduler::auto_generate_name">
+<area shape="rect" id="Node000001" title="Generate automatic name for a routine based on its type." alt="" coords="5,5,236,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a8c97edc92dee77f6fc9b6030a14637e7.html#a8c97edc92dee77f6fc9b6030a14637e7" title="Generates a unique task ID for new tasks." alt="" coords="284,5,515,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="236,23,270,23,270,28,236,28"/>
+</map>

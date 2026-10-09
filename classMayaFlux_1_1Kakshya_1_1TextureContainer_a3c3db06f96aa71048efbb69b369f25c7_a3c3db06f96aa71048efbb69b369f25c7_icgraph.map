@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kakshya::TextureContainer::setup_dimensions" name="MayaFlux::Kakshya::TextureContainer::setup_dimensions">
+<area shape="rect" id="Node000001" title=" " alt="" coords="544,41,721,96"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_a5f81119925a499f1d0a0c06aa3ca9e8c.html#a5f81119925a499f1d0a0c06aa3ca9e8c" title="Append one layer held on the GPU by image." alt="" coords="275,5,465,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="530,57,464,48,465,43,531,52"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_a6a412dc7869c160ce209222245c6ef57.html#a6a412dc7869c160ce209222245c6ef57" title="Construct with exactly layers layers, which may be zero." alt="" coords="244,85,496,125"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="531,85,496,90,496,85,530,80"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1TextureCollection_a860ad3cf3aa0bb9a16c4acfc634941db.html#a860ad3cf3aa0bb9a16c4acfc634941db" title="Copy image into the next layer." alt="" coords="5,13,196,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="261,35,196,35,196,30,261,30"/>
+</map>

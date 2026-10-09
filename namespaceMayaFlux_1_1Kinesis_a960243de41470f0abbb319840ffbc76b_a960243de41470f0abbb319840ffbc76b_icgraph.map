@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::compute_path_curvature" name="MayaFlux::Kinesis::compute_path_curvature">
+<area shape="rect" id="Node000001" title="Compute curvature vectors along a path (2nd derivative approximation)" alt="" coords="253,13,437,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1LineSegmentsNode_adfafd2752d15bba15ad8dfa273d21c3b.html#adfafd2752d15bba15ad8dfa273d21c3b" title="Append curvature segments derived from a vertex path." alt="" coords="5,5,205,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="240,35,206,35,206,30,240,30"/>
+</map>

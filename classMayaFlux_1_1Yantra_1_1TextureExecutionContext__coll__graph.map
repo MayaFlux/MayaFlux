@@ -1,0 +1,18 @@
+<map id="MayaFlux::Yantra::TextureExecutionContext" name="MayaFlux::Yantra::TextureExecutionContext">
+<area shape="rect" id="Node000001" title="GpuExecutionContext specialisation for image compute shaders." alt="" coords="376,1955,585,2744"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1GpuExecutionContext.html" title=" " alt="" coords="255,1623,477,1892"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="397,1905,407,1954,401,1955,392,1906"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore.html" title="Non&#45;template base that owns all type&#45;independent GPU dispatch logic." alt="" coords="112,428,359,1241"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="211,1255,222,1394,233,1463,247,1530,263,1576,283,1621,278,1623,258,1578,242,1531,227,1464,217,1395,206,1255"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1GpuExecutionContext.html" title="Type&#45;parameterised shell over GpuDispatchCore." alt="" coords="257,1291,497,1531"/>
+<area shape="poly" id="edge6_Node000006_Node000003" title=" " alt="" coords="341,1254,350,1290,345,1291,336,1255"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1GpuResourceManager.html" title="Encapsulates all Vulkan resource lifecycle behind Portal facades." alt="" coords="5,5,233,365"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="154,365,162,411,157,412,149,366"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Portal_1_1Graphics_1_1GpuComputeConfig.html" title="Plain&#45;data description of the compute shader to dispatch." alt="" coords="258,115,447,255"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="343,256,314,412,309,411,337,255"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="370,1544,370,1555,368,1622,363,1622,365,1555,365,1544"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Portal_1_1Graphics_1_1ImageCacheEntry.html" title="Image retained by the producing owner." alt="" coords="515,1717,705,1797"/>
+<area shape="poly" id="edge7_Node000001_Node000007" title=" " alt="" coords="604,1798,573,1939,568,1938,599,1797"/>
+<area shape="rect" id="Node000008" href="$structMayaFlux_1_1Portal_1_1Graphics_1_1ImageKey.html" title="Immutable properties that determine whether an image can be reused." alt="" coords="530,1321,719,1501"/>
+<area shape="poly" id="edge8_Node000007_Node000008" title=" " alt="" coords="624,1501,615,1701,610,1701,618,1501"/>
+</map>

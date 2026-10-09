@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::DiffuseProcessor::write_coefficient" name="MayaFlux::Buffers::DiffuseProcessor::write_coefficient">
+<area shape="rect" id="Node000001" title="Write the product of rate and time step into word seven." alt="" coords="5,5,177,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VolumeFieldProcessor_a4095b76d856fe604d407ff85813245d0.html#a4095b76d856fe604d407ff85813245d0" title="Write word seven of the parameter prefix, at byte offset 28." alt="" coords="225,5,391,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="178,30,212,30,212,35,178,35"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a08f86ff68a93950b07208ee936badf8e.html#a08f86ff68a93950b07208ee936badf8e" title="Get current push constant data." alt="" coords="439,5,597,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="391,30,425,30,425,35,391,35"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::CompositeContainer::get_dimensions" name="MayaFlux::Kakshya::CompositeContainer::get_dimensions">
+<area shape="rect" id="Node000001" title="Describe the array&#39;s element axis." alt="" coords="5,5,168,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_a27600792242257eee9b70539967aba2b.html#a27600792242257eee9b70539967aba2b" title="Number of packed elements." alt="" coords="216,13,376,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="168,30,202,30,202,35,168,35"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1CompositeLayout_a04d7cccd3b3bb8e93f3909f55a970198.html#a04d7cccd3b3bb8e93f3909f55a970198" title="Bytes per packed element after finalization." alt="" coords="424,13,648,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="376,30,410,30,410,35,376,35"/>
+</map>

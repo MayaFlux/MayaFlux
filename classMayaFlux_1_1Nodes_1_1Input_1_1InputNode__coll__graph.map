@@ -1,0 +1,17 @@
+<map id="MayaFlux::Nodes::Input::InputNode" name="MayaFlux::Nodes::Input::InputNode">
+<area shape="rect" id="Node000001" title="Abstract base class for nodes that receive external input." alt="" coords="300,1424,468,1944"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Node.html" title="Base interface for all computational processing nodes." alt="" coords="5,617,203,1361"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="210,1342,217,1360,258,1450,302,1536,297,1539,253,1453,212,1362,205,1344"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Nodes_1_1RoutingState.html" title="Represents the state of routing transitions for a node." alt="" coords="11,183,197,363"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="107,363,107,601,101,601,101,363"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Nodes_1_1Input_1_1InputConfig.html" title="Configuration for InputNode behavior." alt="" coords="227,909,395,1069"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="322,1069,358,1408,352,1408,316,1070"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Input_1_1InputContext.html" title="Context for InputNode callbacks &#45; provides input event access." alt="" coords="419,929,587,1049"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="495,1050,434,1408,429,1407,490,1049"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1NodeContext.html" title="Base context class for node callbacks." alt="" coords="383,210,603,335"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="497,349,505,929,499,929,492,349"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Memory_1_1RingBuffer.html" title=" " alt="" coords="629,729,875,1249"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="655,1251,601,1363,542,1463,480,1557,475,1554,538,1460,596,1360,650,1248"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Memory_1_1RingBuffer.html" title="Policy&#45;driven unified circular buffer implementation." alt="" coords="628,5,895,540"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="760,554,758,729,753,729,755,554"/>
+</map>

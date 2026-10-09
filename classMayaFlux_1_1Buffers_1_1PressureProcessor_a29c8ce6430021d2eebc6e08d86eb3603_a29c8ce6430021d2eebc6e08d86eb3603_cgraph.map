@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::PressureProcessor::wants_swap" name="MayaFlux::Buffers::PressureProcessor::wants_swap">
+<area shape="rect" id="Node000001" title="Swap only when the pass count leaves the result in the write slot." alt="" coords="5,13,235,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ComputeProcessor_af24df5371531f09ecb18ec926243ffee.html#af24df5371531f09ecb18ec926243ffee" title="Dispatches recorded per execute cycle." alt="" coords="283,5,456,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="235,30,269,30,269,35,235,35"/>
+</map>

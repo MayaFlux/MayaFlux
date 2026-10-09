@@ -1,0 +1,15 @@
+<map id="MayaFlux::Yantra::infer_from_data_variant" name="MayaFlux::Yantra::infer_from_data_variant">
+<area shape="rect" id="Node000001" title="Infer structure from DataVariant." alt="" coords="5,133,177,173"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_a35d849b2e199a43e29238fdc3827276b.html#a35d849b2e199a43e29238fdc3827276b" title="Detect data dimensions from a DataVariant." alt="" coords="225,101,407,141"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="177,138,212,133,212,139,178,144"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Kakshya_a88dd3a8013f6e990f4593616f261bc76.html#a88dd3a8013f6e990f4593616f261bc76" title="Detects data modality from dimension information." alt="" coords="234,165,398,205"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="178,163,221,169,220,174,177,168"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_a6a1656bc7eafe4add39ec634481345a7.html#a6a1656bc7eafe4add39ec634481345a7" title="Convenience constructor for a frequency dimension." alt="" coords="455,5,651,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="356,99,454,55,473,47,475,52,456,60,358,104"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_a57e1909558a284754db05334249f9d0f.html#a57e1909558a284754db05334249f9d0f" title="Create dimension with component grouping." alt="" coords="461,69,645,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="406,106,447,101,447,106,407,112"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_a54ded63656235da79ab98ef3a576d3d2.html#a54ded63656235da79ab98ef3a576d3d2" title="Convenience constructor for a spatial dimension." alt="" coords="465,133,640,173"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="407,131,452,137,451,142,406,136"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_aab0cac54b47602cb00e2fd99b50839c3.html#aab0cac54b47602cb00e2fd99b50839c3" title="Convenience constructor for a temporal (time) dimension." alt="" coords="472,197,633,237"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="381,139,408,151,432,167,456,183,471,190,469,195,453,188,429,172,405,156,379,144"/>
+</map>

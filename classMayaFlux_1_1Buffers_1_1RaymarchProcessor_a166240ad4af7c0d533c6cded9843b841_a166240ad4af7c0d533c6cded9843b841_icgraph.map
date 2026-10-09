@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::RaymarchProcessor::auto_steps" name="MayaFlux::Buffers::RaymarchProcessor::auto_steps">
+<area shape="rect" id="Node000001" title="Steps needed to cross the lattice diagonal at the current step scale, capped at 512." alt="" coords="272,41,503,81"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RaymarchProcessor_a0e3a8ecae454e6221e52ec9f77deb8c5.html#a0e3a8ecae454e6221e52ec9f77deb8c5" title="Replace every march setting at once." alt="" coords="5,5,224,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="258,47,224,42,224,37,259,42"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1RaymarchProcessor_a22357f9c07d310a099b563c0bf46af07.html#a22357f9c07d310a099b563c0bf46af07" title="Set the step length as a fraction of one cell." alt="" coords="25,70,204,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="259,81,205,88,204,83,258,76"/>
+</map>

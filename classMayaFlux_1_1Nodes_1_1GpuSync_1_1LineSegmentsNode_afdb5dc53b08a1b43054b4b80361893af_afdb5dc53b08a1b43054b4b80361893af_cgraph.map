@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::GpuSync::LineSegmentsNode::add_tangent" name="MayaFlux::Nodes::GpuSync::LineSegmentsNode::add_tangent">
+<area shape="rect" id="Node000001" title="Append tangent segments derived from a vertex path." alt="" coords="5,30,205,85"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1LineSegmentsNode_a6c90c75d10a37f7b04f3a73e95550e2e.html#a6c90c75d10a37f7b04f3a73e95550e2e" title=" " alt="" coords="253,5,504,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="205,43,239,39,240,44,206,48"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_a6ffe34fed672af4f0e8a4f74a1b72651.html#a6ffe34fed672af4f0e8a4f74a1b72651" title="Compute tangent vectors along a piecewise&#45;linear path." alt="" coords="289,69,468,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="206,66,276,75,275,80,205,72"/>
+</map>

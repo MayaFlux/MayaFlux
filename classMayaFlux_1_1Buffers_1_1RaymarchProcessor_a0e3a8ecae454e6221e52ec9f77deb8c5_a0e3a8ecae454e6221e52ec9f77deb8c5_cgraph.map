@@ -1,0 +1,11 @@
+<map id="MayaFlux::Buffers::RaymarchProcessor::configure" name="MayaFlux::Buffers::RaymarchProcessor::configure">
+<area shape="rect" id="Node000001" title="Replace every march setting at once." alt="" coords="5,41,224,81"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RaymarchProcessor_a166240ad4af7c0d533c6cded9843b841.html#a166240ad4af7c0d533c6cded9843b841" title="Steps needed to cross the lattice diagonal at the current step scale, capped at 512." alt="" coords="272,5,503,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="224,44,258,40,259,45,225,50"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1RaymarchProcessor_a1becab8b293aa9ed018f7b84eba43bad.html#a1becab8b293aa9ed018f7b84eba43bad" title="Set the emission colours interpolated by sample value." alt="" coords="298,70,477,125"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="225,73,285,81,284,86,224,78"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kinesis_1_1Lattice3D_a1c680e02cfe8a54011cb7538bf33f3ee.html#a1c680e02cfe8a54011cb7538bf33f3ee" title="Edge length of one cell along each axis." alt="" coords="551,5,700,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="503,23,537,23,537,28,503,28"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kinesis_1_1AABB3D_aeab9cee1b78baf556b0b7e14c99541c2.html#aeab9cee1b78baf556b0b7e14c99541c2" title=" " alt="" coords="748,5,897,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="700,23,734,23,734,28,700,28"/>
+</map>

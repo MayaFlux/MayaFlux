@@ -1,0 +1,13 @@
+<map id="MayaFlux::Buffers::triangle_soup_mesh" name="MayaFlux::Buffers::triangle_soup_mesh">
+<area shape="rect" id="Node000001" title="Wrap non&#45;indexed triangle vertices as MeshData." alt="" coords="5,101,159,141"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1MeshInsertion_a527a0701939e51357fd34340c97c2b85.html#a527a0701939e51357fd34340c97c2b85" title="Produce a MeshAccess over the current variant contents." alt="" coords="223,5,382,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="118,99,206,55,224,48,226,53,208,60,120,103"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kakshya_1_1MeshData_a3cecabe70345deaa8c2da479a1a8193a.html#a3cecabe70345deaa8c2da479a1a8193a" title="Construct an empty MeshData with the canonical 60&#45;byte mesh layout." alt="" coords="223,69,382,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="159,108,209,100,210,105,159,113"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Kakshya_1_1VertexLayout_a7b7a30b2a13cb2676713a352f298f607.html#a7b7a30b2a13cb2676713a352f298f607" title="Factory: layout for MeshVertex (position, color, weight, uv, normal, tangent)" alt="" coords="207,133,399,173"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="159,130,194,135,193,140,159,135"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1MeshInsertion_a618b35166b14858aca7b8f8c8ce693c8.html#a618b35166b14858aca7b8f8c8ce693c8" title="Insert a single flat mesh (no submesh tracking)." alt="" coords="209,197,396,237"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="120,139,208,183,226,190,224,195,206,188,118,144"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kakshya_a14e84697e2ffc829dea40c40cb3f0dbe.html#a14e84697e2ffc829dea40c40cb3f0dbe" title="Construct a MeshAccess from two DataVariant instances." alt="" coords="447,5,605,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="382,23,433,23,433,28,382,28"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Yantra::GpuDispatchCore::flatten_channels_to_staging" name="MayaFlux::Yantra::GpuDispatchCore::flatten_channels_to_staging">
+<area shape="rect" id="Node000001" title="Flatten planar double channels into m_staging_floats." alt="" coords="5,5,231,60"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_aad7719e4acdefe05f4f105ee1b688039.html#aad7719e4acdefe05f4f105ee1b688039" title="Check if a modality represents structured data (vectors, matrices)." alt="" coords="279,13,449,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="231,30,265,30,265,35,231,35"/>
+</map>

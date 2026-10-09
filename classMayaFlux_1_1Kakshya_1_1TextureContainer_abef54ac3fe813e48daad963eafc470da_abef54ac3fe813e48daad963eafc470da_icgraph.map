@@ -1,0 +1,10 @@
+<map id="MayaFlux::Kakshya::TextureContainer::get_width" name="MayaFlux::Kakshya::TextureContainer::get_width">
+<area shape="rect" id="Node000001" title=" " alt="" coords="545,27,751,67"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1TextureCollection_a860ad3cf3aa0bb9a16c4acfc634941db.html#a860ad3cf3aa0bb9a16c4acfc634941db" title="Copy image into the next layer." alt="" coords="5,31,196,71"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="554,27,497,18,371,8,315,10,244,18,167,34,166,29,244,13,315,5,371,3,498,12,555,22"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1TextureExecutionContext_afcfb20ff8c50fd15d2ceade3572e0fc3.html#afcfb20ff8c50fd15d2ceade3572e0fc3" title="The container&#39;s pixels as a GPU image, without allocating one per call." alt="" coords="244,27,497,67"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="532,50,498,50,498,44,532,44"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1TextureCollection_a63f0a54795f840a0ef89eae1315318b9.html#a63f0a54795f840a0ef89eae1315318b9" title=" " alt="" coords="267,91,474,131"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="548,73,458,94,457,89,547,68"/>
+<area shape="poly" id="edge4_Node000004_Node000002" title=" " alt="" coords="266,91,191,74,192,69,267,86"/>
+</map>

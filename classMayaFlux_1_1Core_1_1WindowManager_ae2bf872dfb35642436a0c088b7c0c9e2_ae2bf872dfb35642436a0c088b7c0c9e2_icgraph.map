@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::WindowManager::window_count" name="MayaFlux::Core::WindowManager::window_count">
+<area shape="rect" id="Node000001" title="Gets number of active windows." alt="" coords="295,5,536,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1WindowManager_a40e562572ff2ba72f7e5eeadc21aaa9b.html#a40e562572ff2ba72f7e5eeadc21aaa9b" title="Process windows for one frame." alt="" coords="5,5,247,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="281,28,247,28,247,23,281,23"/>
+</map>

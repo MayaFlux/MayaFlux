@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::BufferManager::process_token" name="MayaFlux::Buffers::BufferManager::process_token">
+<area shape="rect" id="Node000001" title="Processes all buffers for a specific token." alt="" coords="229,13,448,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferManager_afb00caa65de6e04ed6ecaafa985f5e5d.html#afb00caa65de6e04ed6ecaafa985f5e5d" title="Processes all active tokens with their configured processing units." alt="" coords="5,5,181,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="216,35,182,35,182,30,216,30"/>
+</map>

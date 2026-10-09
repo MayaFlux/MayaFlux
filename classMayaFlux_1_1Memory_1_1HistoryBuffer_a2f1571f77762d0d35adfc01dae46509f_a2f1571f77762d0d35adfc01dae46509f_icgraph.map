@@ -1,0 +1,28 @@
+<map id="MayaFlux::Memory::HistoryBuffer::linearized_view" name="MayaFlux::Memory::HistoryBuffer::linearized_view">
+<area shape="rect" id="Node000001" title="Get mutable linearized view of entire history." alt="" coords="525,307,728,347"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kinesis_1_1SymbolicTrajectory_a19327432ef237f2437c4419182a25d2a.html#a19327432ef237f2437c4419182a25d2a" title="Crossings within the most recent window observations." alt="" coords="290,5,449,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="612,295,593,246,564,187,525,126,502,98,476,73,447,56,450,51,479,69,505,95,529,123,569,184,598,244,617,293"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kinesis_1_1SymbolicTrajectory_a727d7b0f4b87c972a5734c26dbc63cc8.html#a727d7b0f4b87c972a5734c26dbc63cc8" title="Cell with the most observations within the most recent window observations." alt="" coords="293,84,446,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="604,297,551,225,516,187,476,154,445,136,447,132,479,149,519,183,555,222,608,294"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Polynomial_a6c5eaaf26f00522a8ee26bf0cd38c1e9.html#a6c5eaaf26f00522a8ee26bf0cd38c1e9" title="Processes a single sample." alt="" coords="261,163,477,203"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="592,300,540,258,476,218,448,206,450,201,479,213,543,254,595,296"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kinesis_1_1SymbolicTrajectory_a68971b4a39fa43acbbea511aa92a0ea5.html#a68971b4a39fa43acbbea511aa92a0ea5" title="Count of distinct cells visited within the most recent window observations." alt="" coords="280,228,459,283"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="541,306,458,283,460,278,542,301"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Polynomial_a49ff94fa54ebf11a338b01956d66fab2.html#a49ff94fa54ebf11a338b01956d66fab2" title="Updates the context object with the current node state." alt="" coords="263,307,475,347"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="512,330,475,330,475,325,512,325"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Estimate_a9a726d3f0bc471aa89b7ea3acbaed463.html#a9a726d3f0bc471aa89b7ea3acbaed463" title=" " alt="" coords="292,372,447,427"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="542,354,448,380,446,375,540,349"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Estimate_a921c15e895285770ab1faf2ef1a9bef4.html#a921c15e895285770ab1faf2ef1a9bef4" title=" " alt="" coords="288,451,451,505"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="594,358,542,400,479,440,452,453,450,448,476,436,538,395,591,354"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Estimate_a24bde794a3ce27e3fa09d870a6532e1b.html#a24bde794a3ce27e3fa09d870a6532e1b" title=" " alt="" coords="276,529,463,584"/>
+<area shape="poly" id="edge11_Node000001_Node000011" title=" " alt="" coords="610,361,558,439,521,482,479,519,458,532,455,527,476,515,517,478,553,436,606,358"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Estimate_a2ba90a2a80f06a7fd8d10494fdbdeff0.html#a2ba90a2a80f06a7fd8d10494fdbdeff0" title=" " alt="" coords="292,608,447,663"/>
+<area shape="poly" id="edge13_Node000001_Node000012" title=" " alt="" coords="618,361,600,413,571,476,531,542,506,572,479,599,448,618,445,613,476,595,502,568,526,539,566,474,595,411,613,359"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Polynomial_afb0f9f325eeff81f429ee11b15cc5aac.html#afb0f9f325eeff81f429ee11b15cc5aac" title="Processes multiple samples at once." alt="" coords="5,163,213,203"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="248,186,214,186,214,181,248,181"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Estimate_a502f5a8057dafa0db29ae244dd666427.html#a502f5a8057dafa0db29ae244dd666427" title="Feed one new sample, updating the running estimate." alt="" coords="32,489,187,544"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="280,433,262,440,160,492,158,487,260,436,278,428"/>
+<area shape="poly" id="edge10_Node000010_Node000009" title=" " alt="" coords="275,495,187,508,186,503,274,489"/>
+<area shape="poly" id="edge12_Node000011_Node000009" title=" " alt="" coords="262,543,187,531,187,526,263,538"/>
+<area shape="poly" id="edge14_Node000012_Node000009" title=" " alt="" coords="278,607,260,599,157,547,160,542,262,594,280,602"/>
+</map>

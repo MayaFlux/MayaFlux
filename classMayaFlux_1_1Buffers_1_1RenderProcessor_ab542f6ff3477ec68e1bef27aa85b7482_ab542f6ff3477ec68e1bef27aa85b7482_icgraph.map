@@ -1,0 +1,13 @@
+<map id="MayaFlux::Buffers::RenderProcessor::is_visible" name="MayaFlux::Buffers::RenderProcessor::is_visible">
+<area shape="rect" id="Node000001" title="Whether this processor contributes to presentation." alt="" coords="539,47,689,101"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_acd3ee18a43b25af2aa06f17efacd6c5f.html#acd3ee18a43b25af2aa06f17efacd6c5f" title="Prepare this buffer&#39;s geometry and record its draw commands." alt="" coords="19,7,210,61"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="552,43,522,30,490,21,418,10,344,8,273,12,211,20,210,14,273,7,344,3,418,5,491,16,524,25,554,38"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a48a13b34e7cf44301f4df7e8b124eb78.html#a48a13b34e7cf44301f4df7e8b124eb78" title="Called before each process callback." alt="" coords="304,119,459,173"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="527,104,460,125,458,120,525,99"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a33765acdbc9cb19f62cc41da0270854f.html#a33765acdbc9cb19f62cc41da0270854f" title="Record the buffer&#39;s prepared geometry into a fresh secondary command buffer." alt="" coords="272,54,491,94"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="525,77,491,77,491,71,525,71"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_af22c5214e6365e97cf23f4ba8023cb75.html#af22c5214e6365e97cf23f4ba8023cb75" title="Record an already validated attachment without repeating its lookup." alt="" coords="5,126,224,166"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="290,149,224,149,224,143,290,143"/>
+<area shape="poly" id="edge5_Node000005_Node000002" title=" " alt="" coords="258,58,210,51,210,46,259,53"/>
+<area shape="poly" id="edge6_Node000005_Node000005" title=" " alt="" coords="421,42,407,35,381,33,359,35,346,40,341,45,343,53,338,55,335,44,342,35,358,30,381,27,408,30,423,38"/>
+</map>

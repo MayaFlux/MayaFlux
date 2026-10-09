@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::FieldOperator::get_vertex_data_for_collection" name="MayaFlux::Nodes::Network::FieldOperator::get_vertex_data_for_collection">
+<area shape="rect" id="Node000001" title="Get vertex data for specific collection (if multiple)" alt="" coords="5,5,204,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1FieldOperator_a805eefd6c3b8a891cae901ae2e9212f9.html#a805eefd6c3b8a891cae901ae2e9212f9" title="Get vertex data for GPU upload." alt="" coords="252,13,484,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="204,30,238,30,238,35,204,35"/>
+</map>

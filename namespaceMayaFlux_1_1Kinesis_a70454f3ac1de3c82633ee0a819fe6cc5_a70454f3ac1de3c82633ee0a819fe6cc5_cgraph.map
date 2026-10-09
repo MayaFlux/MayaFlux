@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kinesis::jerk" name="MayaFlux::Kinesis::jerk">
+<area shape="rect" id="Node000001" title="Convenience overload of jerk over a raw span, samples[0] newest." alt="" coords="5,35,180,60"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_ae26a04cacb1fc49b6ac3ad60cb38826f.html#ae26a04cacb1fc49b6ac3ad60cb38826f" title="Third difference: rate of change of acceleration." alt="" coords="228,5,403,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="180,33,214,29,215,34,181,38"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_aae6dffc5cfe80ea00f71912d98c8c45e.html#aae6dffc5cfe80ea00f71912d98c8c45e" title="Build a HistoryBuffer&lt;T&gt; from a newest&#45;first span." alt="" coords="241,55,390,95"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="181,56,227,62,227,67,180,61"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Memory_1_1HistoryBuffer_a6f256636f3f3fc99269c77a8dc096b09.html#a6f256636f3f3fc99269c77a8dc096b09" title="Push new value to front of history." alt="" coords="451,55,653,95"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="390,73,437,73,437,78,390,78"/>
+</map>

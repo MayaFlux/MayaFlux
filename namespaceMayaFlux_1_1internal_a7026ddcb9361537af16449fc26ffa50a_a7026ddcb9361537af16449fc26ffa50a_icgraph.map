@@ -1,0 +1,5 @@
+<map id="MayaFlux::internal::live_format_key" name="MayaFlux::internal::live_format_key">
+<area shape="rect" id="Node000001" title="Formats a live arena key as &quot;TypeName_N&quot; into buf." alt="" coords="225,5,369,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a906e2136e39b1bcf9e5a10c4f121f6b9.html#a906e2136e39b1bcf9e5a10c4f121f6b9" title="Exposes obj under the first free key of the form &quot;prefix_N&quot;." alt="" coords="5,5,177,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="211,28,177,28,177,23,211,23"/>
+</map>
