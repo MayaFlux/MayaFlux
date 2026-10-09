@@ -9,6 +9,7 @@ class Window;
 
 namespace MayaFlux::Vruta {
 class Event;
+class TaskScheduler;
 }
 
 namespace MayaFlux::Kriya {
@@ -104,6 +105,26 @@ struct WindowFrame {
  */
 [[nodiscard]] MAYAFLUX_API std::shared_ptr<Vruta::BroadcastSource<WindowFrame>> window_frame_tick(
     const std::shared_ptr<Core::Window>& window);
+
+/**
+ * @brief Broadcast of what @p fn returns, taken once per graphics frame.
+ *
+ * Adds a routine to @p scheduler that calls @p fn every graphics frame and
+ * signals each value it returns. The routine ends once nothing holds the
+ * returned source.
+ *
+ * @code
+ * auto results = Kriya::frame_results<Result>(*scheduler, [state]() -> std::optional<Result> {
+ *     return state->try_finish();
+ * });
+ * event_manager->add_event(std::make_shared<Vruta::Event>(
+ *     Kriya::on_signal(results, [](const Result& r) { })));
+ * @endcode
+ */
+template <typename T>
+[[nodiscard]] std::shared_ptr<Vruta::BroadcastSource<T>> frame_results(
+    Vruta::TaskScheduler& scheduler,
+    std::function<std::optional<T>()> fn);
 
 } // namespace MayaFlux::Kriya
 
