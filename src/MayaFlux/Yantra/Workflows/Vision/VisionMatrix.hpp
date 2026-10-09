@@ -54,6 +54,13 @@ public:
     /** @brief The image the last execute() analyzed, null before the first. */
     [[nodiscard]] const std::shared_ptr<Core::VKImage>& frame() const { return m_frame; }
 
+    /**
+     * @brief The VisionResult of every sequence the analyzer's last completed
+     *        analysis ran, with each step's image named by its op. Valid until
+     *        the next analysis.
+     */
+    [[nodiscard]] const std::vector<Kinesis::Vision::VisionResult>& results() const { return m_analyzer->get_results(); }
+
     /** @brief Analyze @p image with the matrix's query. */
     [[nodiscard]] Kinesis::Vision::VisionAnalysis analyze(const std::shared_ptr<Core::VKImage>& image);
 

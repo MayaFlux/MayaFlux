@@ -111,6 +111,16 @@ public:
     [[nodiscard]] const std::shared_ptr<Core::VKImage>& get_frame() const { return m_frame; }
 
     /**
+     * @brief The VisionResult of every sequence of the last completed
+     *        analysis, in the order they ran. Empty before the first.
+     *
+     * The images in each result are named by the op that produced them and
+     * belong to that sequence's executor: they are valid until the next
+     * analysis runs. A sequence that failed leaves an empty result.
+     */
+    [[nodiscard]] const std::vector<Kinesis::Vision::VisionResult>& get_results() const { return m_results; }
+
+    /**
      * @brief Abandon outstanding work and clear retained executor state.
      *
      * Call when the pixel source changes (camera switch, video seek).
@@ -267,6 +277,7 @@ private:
     uint32_t m_upload_h { 0 };
 
     StepRun m_run;
+    std::vector<Kinesis::Vision::VisionResult> m_results;
     Portal::Graphics::ImageCacheEntry m_frame_cache;
     std::shared_ptr<Core::VKImage> m_frame;
 };

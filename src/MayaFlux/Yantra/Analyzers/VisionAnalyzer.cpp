@@ -78,6 +78,7 @@ void VisionAnalyzer::reset()
             executor->reset();
     }
     m_run = {};
+    m_results.clear();
 }
 
 VisionGpuExecutor* VisionAnalyzer::get_executor() const
@@ -474,7 +475,9 @@ std::optional<Kinesis::Vision::VisionAnalysis> VisionAnalyzer::advance(
         return std::nullopt;
 
     m_run.active = false;
-    return assemble(m_run.resolved, m_run.results, m_run.w, m_run.h);
+    auto analysis = assemble(m_run.resolved, m_run.results, m_run.w, m_run.h);
+    m_results = std::move(m_run.results);
+    return analysis;
 }
 
 std::shared_ptr<Core::VKImage> VisionAnalyzer::hold_frame(const std::shared_ptr<Core::VKImage>& image)
@@ -507,7 +510,9 @@ Kinesis::Vision::VisionAnalysis VisionAnalyzer::analyze_resolved(
             results.emplace_back();
     }
 
-    return assemble(resolved, results, image->get_width(), image->get_height());
+    auto analysis = assemble(resolved, results, image->get_width(), image->get_height());
+    m_results = std::move(results);
+    return analysis;
 }
 
 bool VisionAnalyzer::run_lane(
