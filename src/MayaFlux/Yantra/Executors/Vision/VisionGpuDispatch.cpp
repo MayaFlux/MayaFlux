@@ -9,6 +9,8 @@ using namespace Kinesis::Vision;
 
 namespace {
 
+    constexpr size_t k_snapshot_cache_budget_bytes = size_t { 256 } << 20;
+
     /**
      * @brief Release fences of submissions that were not awaited: the ingest
      *        pair and the flow pyramid build. Waits when one is still pending,
@@ -406,6 +408,41 @@ void VisionGpuExecutor::after_step(VisionGpuContexts& contexts, size_t index)
         build_flow_pyramid(contexts, levels, src_channel);
 }
 
+void VisionGpuExecutor::op_snapshot(VisionGpuContexts& contexts)
+{
+    const auto& current = contexts.pass.current;
+    if (!current)
+        return;
+
+    const size_t ordinal = contexts.pass.result.snapshots.size();
+    while (contexts.snapshot_images.size() <= ordinal)
+        contexts.snapshot_images.emplace_back(k_snapshot_cache_budget_bytes);
+
+    const uint32_t w = current->get_width();
+    const uint32_t h = current->get_height();
+    auto& loom = Portal::Graphics::TextureLoom::instance();
+    auto image = contexts.snapshot_images[ordinal].acquire(loom, {
+                                                                     .width = w,
+                                                                     .height = h,
+                                                                     .format = Portal::Graphics::ImageFormat::RGBA32F,
+                                                                     .kind = Portal::Graphics::ImageKey::Kind::STORAGE_2D,
+                                                                 });
+
+    constexpr auto filter = Portal::Graphics::FilterMode::NEAREST;
+    if (!image || !loom.can_blit(current, image, filter) || !loom.blit_layer(current, image, { .filter = filter })) {
+        MF_ERROR(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+            "run_gpu: Snapshot {} could not copy the working image", ordinal);
+        return;
+    }
+
+    contexts.pass.result.snapshots.push_back({
+        .image = std::move(image),
+        .w = w,
+        .h = h,
+        .channels = contexts.pass.channels,
+    });
+}
+
 // ============================================================================
 // run_gpu
 // ============================================================================
@@ -452,6 +489,8 @@ VisionResult VisionGpuExecutor::run(
         reap_fences(contexts);
         contexts.flow_state.curr_ready = false;
         contexts.pass.begin(sequence, w, h);
+        contexts.pass.storage_w = 0;
+        contexts.pass.storage_h = 0;
         contexts.bound_staged.reset();
         const auto seed = op_ingest(contexts, image, w, h);
         contexts.pass.current = seed;
@@ -460,6 +499,11 @@ VisionResult VisionGpuExecutor::run(
 
     for (contexts.pass.index = begin; contexts.pass.index < sequence.steps.size(); ++contexts.pass.index) {
         const auto& step = sequence.steps[contexts.pass.index];
+
+        if (step.op == VisionOp::Snapshot) {
+            op_snapshot(contexts);
+            continue;
+        }
 
         const uint32_t w = contexts.pass.w;
         const uint32_t h = contexts.pass.h;

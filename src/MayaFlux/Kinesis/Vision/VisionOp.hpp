@@ -171,9 +171,9 @@ struct FilterSeparableParams {
 };
 
 struct CannyParams {
-    float sigma;
-    float low_threshold;
-    float high_threshold;
+    float sigma = 1.4F;
+    float low_threshold = 0.1F;
+    float high_threshold = 0.3F;
 };
 
 struct MorphParams {

@@ -229,6 +229,11 @@ void BufferPipeline::end()
     }
 }
 
+bool BufferPipeline::is_running() const
+{
+    return m_routine && m_routine->is_active();
+}
+
 void BufferPipeline::mark_data_consumed(uint32_t operation_index)
 {
     if (operation_index < m_data_states.size()) {

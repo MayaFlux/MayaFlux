@@ -340,6 +340,9 @@ public:
      */
     void end();
 
+    /** @brief True from an execute call until the pipeline ends or runs out of cycles. */
+    [[nodiscard]] bool is_running() const;
+
     /**
      * @brief Execute pipeline with sample-accurate timing between operations.
      * @param max_cycles Maximum number of cycles to execute (0 = infinite)

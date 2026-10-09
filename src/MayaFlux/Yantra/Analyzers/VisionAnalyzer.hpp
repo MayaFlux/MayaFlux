@@ -21,6 +21,10 @@
  * report their own get_width()/get_height().
  */
 
+namespace MayaFlux::Yantra::Vision {
+class VisionMatrix;
+}
+
 namespace MayaFlux::Kakshya {
 class SignalSourceContainer;
 }
@@ -51,6 +55,9 @@ public:
     explicit VisionAnalyzer(
         Kinesis::Vision::VisionQuery query = {},
         Kinesis::Vision::VisionAnalysisContext context = {});
+
+    VisionAnalyzer(const VisionAnalyzer&) = delete;
+    VisionAnalyzer& operator=(const VisionAnalyzer&) = delete;
 
     void set_query(const Kinesis::Vision::VisionQuery& query) { m_query = query; }
     [[nodiscard]] const Kinesis::Vision::VisionQuery& get_query() const { return m_query; }
@@ -90,6 +97,46 @@ public:
         const std::shared_ptr<Core::VKImage>& image);
 
     /**
+     * @brief Advance an analysis of @p image by one sequence per call,
+     *        without waiting on deferred GPU work.
+     *
+     * The first call copies @p image and starts a run on the copy. Later
+     * calls continue that run and ignore @p image until it completes. The
+     * flow steps of TrackObjects and EstimateMotion are submitted deferred
+     * and polled on later calls; other steps still wait inline.
+     *
+     * @return The analysis once every sequence has completed, otherwise
+     *         nullopt.
+     */
+    [[nodiscard]] std::optional<Kinesis::Vision::VisionAnalysis> advance(
+        const std::shared_ptr<Core::VKImage>& image);
+
+    /**
+     * @brief The copy of the frame the current or last advance() run
+     *        analyzes. Replaced when the next run starts.
+     */
+    [[nodiscard]] const std::shared_ptr<Core::VKImage>& get_frame() const { return m_frame; }
+
+    /**
+     * @brief The VisionResult of every sequence of the last completed
+     *        analysis, in the order they ran. Empty before the first.
+     *
+     * The images in each result are named by the op that produced them and
+     * belong to that sequence's executor: they are valid until the next
+     * analysis runs. A sequence that failed leaves an empty result.
+     */
+    [[nodiscard]] const std::vector<Kinesis::Vision::VisionResult>& get_results() const { return *m_results; }
+
+    /**
+     * @brief The same results, owned: they stay valid after later analyses,
+     *        which replace them with new ones.
+     *
+     * The images are the executors' own and are rewritten in place when
+     * their sequence runs again.
+     */
+    [[nodiscard]] std::shared_ptr<const std::vector<Kinesis::Vision::VisionResult>> get_shared_results() const { return m_results; }
+
+    /**
      * @brief Abandon outstanding work and clear retained executor state.
      *
      * Call when the pixel source changes (camera switch, video seek).
@@ -97,21 +144,21 @@ public:
     void reset();
 
     /**
-     * @brief The executor this analyzer's run just used.
+     * @brief The executor that ran the FindElements sequence, or the first
+     *        executor when the query has none.
      *
-     * VisionExtractor::mask() needs both a label id from this analyzer's own
-     * VisionAnalysis::find_elements and the executor whose device label
-     * buffer that id indexes into: the two are inseparable, since the label
-     * buffer only lives on the executor that produced it. Exposing this is
-     * what lets extraction actually depend on analysis having run, rather
-     * than a caller re-deriving the same contours through a second, separate
-     * VisionGpuExecutor::run() call that never touches this analyzer at all.
+     * Each sequence of a query runs on its own executor, so the images one
+     * sequence leaves in its VisionResult are not overwritten by the next.
+     * VisionExtractor::mask() needs the executor holding the label buffer
+     * that VisionAnalysis::find_elements indexes into, which is this one.
      *
      * Valid after at least one analyze_vision() call; null before that.
      */
-    [[nodiscard]] VisionGpuExecutor* get_executor() const { return m_executor.get(); }
+    [[nodiscard]] VisionGpuExecutor* get_executor() const;
 
 private:
+    friend class Vision::VisionMatrix;
+
     /**
      * @brief ComputeOperation adapter: uses input.data as the source
      *        container, pulls index out of Datum metadata (defaulting to
@@ -141,6 +188,43 @@ private:
      */
     [[nodiscard]] Kinesis::Vision::VisionAnalysis analyze_resolved(
         const std::shared_ptr<Core::VKImage>& image);
+
+    /**
+     * @brief Run or poll sequence @p lane of @p resolved on its executor.
+     * @return False while the sequence is suspended on deferred work; true
+     *         once its result is appended to @p results.
+     */
+    bool run_lane(
+        size_t lane,
+        const std::vector<Kinesis::Vision::ResolvedSequence>& resolved,
+        std::vector<Kinesis::Vision::VisionResult>& results,
+        const std::shared_ptr<Core::VKImage>& image);
+
+    /**
+     * @brief Route every completed sequence result into one VisionAnalysis,
+     *        apply context filtering and run the GPU reductions.
+     */
+    [[nodiscard]] Kinesis::Vision::VisionAnalysis assemble(
+        const std::vector<Kinesis::Vision::ResolvedSequence>& resolved,
+        const std::vector<Kinesis::Vision::VisionResult>& results,
+        uint32_t w, uint32_t h);
+
+    /** @brief Copy @p image into this analyzer's own frame image. Null on failure. */
+    [[nodiscard]] std::shared_ptr<Core::VKImage> hold_frame(const std::shared_ptr<Core::VKImage>& image);
+
+    /**
+     * @brief State of the run advance() is stepping through.
+     *
+     * resolved is fixed for the whole run: a suspended executor keeps a
+     * pointer to the sequence it is walking.
+     */
+    struct StepRun {
+        std::vector<Kinesis::Vision::ResolvedSequence> resolved;
+        std::vector<Kinesis::Vision::VisionResult> results;
+        uint32_t w {};
+        uint32_t h {};
+        bool active {};
+    };
 
     /**
      * @brief Dispatch track_reduce.comp over tracks and fill
@@ -197,7 +281,8 @@ private:
     Kinesis::Vision::VisionQuery m_query;
     Kinesis::Vision::VisionAnalysisContext m_context;
 
-    std::unique_ptr<VisionGpuExecutor> m_executor;
+    std::vector<std::unique_ptr<VisionGpuExecutor>> m_executors;
+    size_t m_label_lane { 0 };
     std::shared_ptr<ShaderExecutionContext<>> m_track_reducer;
     std::shared_ptr<ShaderExecutionContext<>> m_brightness_reducer;
     std::shared_ptr<ShaderExecutionContext<>> m_shape_ctx;
@@ -208,6 +293,13 @@ private:
     std::shared_ptr<Core::VKImage> m_upload_image;
     uint32_t m_upload_w { 0 };
     uint32_t m_upload_h { 0 };
+
+    StepRun m_run;
+    std::shared_ptr<const std::vector<Kinesis::Vision::VisionResult>> m_results {
+        std::make_shared<const std::vector<Kinesis::Vision::VisionResult>>()
+    };
+    Portal::Graphics::ImageCacheEntry m_frame_cache;
+    std::shared_ptr<Core::VKImage> m_frame;
 };
 
 } // namespace MayaFlux::Yantra

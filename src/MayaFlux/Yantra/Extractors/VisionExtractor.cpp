@@ -775,7 +775,10 @@ VisionExtractor::output_type VisionExtractor::run_operation(const input_type& in
     output_type output;
     output.metadata = input.metadata;
 
-    if (!input.data) {
+    const auto supplied = Kakshya::get_metadata_value<std::shared_ptr<Core::VKImage>>(input.metadata, "vision_image");
+    const bool has_image = supplied && *supplied;
+
+    if (!has_image && !input.data) {
         output.metadata["error"] = std::string("VisionExtractor: missing container");
         return output;
     }
@@ -788,7 +791,7 @@ VisionExtractor::output_type VisionExtractor::run_operation(const input_type& in
     }
 
     const auto index = Kakshya::get_metadata_value<size_t>(input.metadata, "container_index").value_or(0);
-    const auto image = resolve_image(input.data, index);
+    const auto image = has_image ? *supplied : resolve_image(input.data, index);
     if (!image) {
         output.metadata["error"] = std::string("VisionExtractor: could not resolve image from container");
         return output;

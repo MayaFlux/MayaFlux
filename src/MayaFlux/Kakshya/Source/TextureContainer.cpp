@@ -15,11 +15,29 @@ namespace MayaFlux::Kakshya {
 
 using Portal::Graphics::TextureLoom;
 
+namespace {
+
+    std::vector<std::atomic<bool>> extended(const std::vector<std::atomic<bool>>& flags, bool value)
+    {
+        std::vector<std::atomic<bool>> out(flags.size() + 1);
+        for (size_t i = 0; i < flags.size(); ++i)
+            out[i].store(flags[i].load(std::memory_order_acquire), std::memory_order_relaxed);
+        out.back().store(value, std::memory_order_relaxed);
+        return out;
+    }
+
+} // namespace
+
 //=============================================================================
 // Construction
 //=============================================================================
 
 TextureContainer::TextureContainer(uint32_t width, uint32_t height, ImageFormat format, uint32_t layers)
+    : TextureContainer(width, height, format, LayerCount { std::max(layers, 1U) })
+{
+}
+
+TextureContainer::TextureContainer(uint32_t width, uint32_t height, ImageFormat format, LayerCount layers)
     : m_width(width)
     , m_height(height)
     , m_format(format)
@@ -29,7 +47,7 @@ TextureContainer::TextureContainer(uint32_t width, uint32_t height, ImageFormat 
     m_chain = std::make_shared<DataProcessingChain>();
     const size_t element_count = static_cast<size_t>(m_width) * m_height * m_channels;
 
-    for (uint32_t i = 0; i < std::max(layers, 1U); ++i) {
+    for (uint32_t i = 0; i < layers.value; ++i) {
         m_data.emplace_back(make_empty_storage(m_format, element_count));
     }
 
@@ -40,6 +58,10 @@ TextureContainer::TextureContainer(uint32_t width, uint32_t height, ImageFormat 
     m_normalised_dirty = std::vector<std::atomic<bool>>(m_data.size());
     for (auto& flag : m_normalised_dirty)
         flag.store(true, std::memory_order_relaxed);
+
+    m_cpu_stale = std::vector<std::atomic<bool>>(m_data.size());
+    for (auto& flag : m_cpu_stale)
+        flag.store(false, std::memory_order_relaxed);
 
     m_slot_locks.resize(m_data.size());
     setup_dimensions();
@@ -70,13 +92,112 @@ void TextureContainer::setup_dimensions()
 
     m_structure = ContainerDataStructure::image_interleaved();
 
-    if (n > 1) {
+    if (n != 1) {
         m_structure.dimensions = DataDimension::create_dimensions(
             DataModality::IMAGE_COLOR_ARRAY, { n, h, w, c }, MemoryLayout::ROW_MAJOR);
     } else {
         m_structure.dimensions = DataDimension::create_dimensions(
             DataModality::IMAGE_COLOR, { h, w, c }, MemoryLayout::ROW_MAJOR);
     }
+}
+
+//=============================================================================
+// GPU-held layers
+//=============================================================================
+
+uint32_t TextureContainer::append_image_layer(std::shared_ptr<Core::VKImage> image)
+{
+    const auto layer = static_cast<uint32_t>(m_data.size());
+
+    m_data.emplace_back(make_empty_storage(m_format, 0));
+    m_slot_locks.extend(1);
+    m_normalised_cache.emplace_back();
+    m_normalised_dirty = extended(m_normalised_dirty, true);
+    m_cpu_stale = extended(m_cpu_stale, true);
+
+    {
+        Memory::SerializedSeqlockWriteGuard image_guard(m_image_cache_lock);
+        m_layer_image_cache.push_back({
+            .key = { .width = m_width, .height = m_height, .layers = 1, .format = m_format },
+            .image = std::move(image),
+        });
+    }
+
+    setup_dimensions();
+    update_processing_state(ProcessingState::READY);
+    return layer;
+}
+
+std::shared_ptr<Core::VKImage> TextureContainer::layer_image(uint32_t layer) const
+{
+    if (layer >= m_layer_image_cache.size())
+        return nullptr;
+
+    Memory::SerializedSeqlockWriteGuard image_guard(m_image_cache_lock);
+    return m_layer_image_cache[layer].image;
+}
+
+void TextureContainer::hold_layer(uint32_t layer)
+{
+    if (layer >= m_data.size())
+        return;
+
+    {
+        Memory::SeqlockWriteGuard g(m_slot_locks[layer]);
+        m_data[layer] = make_empty_storage(m_format, 0);
+        m_cpu_stale[layer].store(true, std::memory_order_release);
+        m_normalised_dirty[layer].store(true, std::memory_order_release);
+    }
+
+    update_processing_state(ProcessingState::READY);
+}
+
+void TextureContainer::ensure_cpu(uint32_t layer) const
+{
+    if (layer >= m_cpu_stale.size() || !m_cpu_stale[layer].load(std::memory_order_acquire))
+        return;
+
+    std::shared_ptr<Core::VKImage> image;
+    {
+        Memory::SerializedSeqlockWriteGuard image_guard(m_image_cache_lock);
+        image = m_layer_image_cache[layer].image;
+    }
+
+    const size_t element_count = static_cast<size_t>(m_width) * m_height * m_channels;
+
+    Memory::SerializedSeqlockWriteGuard g(m_slot_locks[layer]);
+    if (!m_cpu_stale[layer].load(std::memory_order_acquire))
+        return;
+
+    m_data[layer] = make_empty_storage(m_format, element_count);
+    auto [ptr, bytes] = variant_bytes_mutable(m_data[layer]);
+    if (image && image->is_initialized() && ptr && bytes == byte_size()) {
+        TextureLoom::instance().download_data(image, ptr, bytes, nullptr);
+    } else {
+        MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "TextureContainer: GPU-held layer {} could not be downloaded", layer);
+    }
+
+    m_cpu_stale[layer].store(false, std::memory_order_release);
+    m_normalised_dirty[layer].store(true, std::memory_order_release);
+}
+
+void TextureContainer::ensure_cpu_all() const
+{
+    for (uint32_t i = 0; i < static_cast<uint32_t>(m_data.size()); ++i)
+        ensure_cpu(i);
+}
+
+void TextureContainer::claim_cpu(uint32_t layer)
+{
+    if (layer >= m_cpu_stale.size() || !m_cpu_stale[layer].load(std::memory_order_acquire))
+        return;
+
+    const size_t element_count = static_cast<size_t>(m_width) * m_height * m_channels;
+
+    Memory::SeqlockWriteGuard g(m_slot_locks[layer]);
+    m_data[layer] = make_empty_storage(m_format, element_count);
+    m_cpu_stale[layer].store(false, std::memory_order_release);
 }
 
 //=============================================================================
@@ -110,6 +231,7 @@ void TextureContainer::from_image(const std::shared_ptr<Core::VKImage>& image, u
             return;
         }
         TextureLoom::instance().download_data(image, ptr, sz, nullptr);
+        m_cpu_stale[layer].store(false, std::memory_order_release);
     }
 
     m_normalised_dirty[layer].store(true, std::memory_order_release);
@@ -146,6 +268,7 @@ void TextureContainer::from_image(
             return;
         }
         TextureLoom::instance().download_data(image, ptr, sz, staging);
+        m_cpu_stale[layer].store(false, std::memory_order_release);
     }
 
     m_normalised_dirty[layer].store(true, std::memory_order_release);
@@ -179,6 +302,7 @@ void TextureContainer::from_image_array(const std::shared_ptr<Core::VKImage>& im
         auto [ptr, bytes] = variant_bytes_mutable(m_data[i]);
         if (ptr && bytes == layer_bytes)
             std::memcpy(ptr, combined.data() + i * layer_bytes, layer_bytes);
+        m_cpu_stale[i].store(false, std::memory_order_release);
 
         m_normalised_dirty[i].store(true, std::memory_order_release);
     }
@@ -215,6 +339,7 @@ void TextureContainer::from_image_array(
         auto [ptr, bytes] = variant_bytes_mutable(m_data[i]);
         if (ptr && bytes == layer_bytes)
             std::memcpy(ptr, combined.data() + i * layer_bytes, layer_bytes);
+        m_cpu_stale[i].store(false, std::memory_order_release);
 
         m_normalised_dirty[i].store(true, std::memory_order_release);
     }
@@ -240,6 +365,11 @@ std::shared_ptr<Core::VKImage> TextureContainer::cached_layer_image(
         MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
             "TextureContainer::to_image layer {} out of range ({})", layer, m_data.size());
         return nullptr;
+    }
+
+    if (m_cpu_stale[layer].load(std::memory_order_acquire)) {
+        Memory::SerializedSeqlockWriteGuard image_guard(m_image_cache_lock);
+        return m_layer_image_cache[layer].image;
     }
 
     const size_t expected = byte_size();
@@ -285,6 +415,8 @@ std::shared_ptr<Core::VKImage> TextureContainer::cached_array_image(
     if (n == 1)
         return cached_layer_image(0, staging);
 
+    ensure_cpu_all();
+
     const size_t layer_bytes = byte_size();
     std::vector<uint8_t> combined(layer_bytes * n);
     for (uint32_t i = 0; i < n; ++i) {
@@ -321,6 +453,8 @@ bool TextureContainer::upload_image(
         return false;
     }
 
+    ensure_cpu(layer);
+
     bool uploaded = false;
     seqlock_read_void(m_slot_locks[layer], 8, [&] {
         auto [ptr, bytes] = variant_bytes(m_data[layer]);
@@ -345,6 +479,8 @@ bool TextureContainer::upload_image_array(
 
     if (n == 1)
         return upload_image(image, 0, staging);
+
+    ensure_cpu_all();
 
     const size_t layer_bytes = byte_size();
     std::vector<uint8_t> combined(layer_bytes * n);
@@ -374,6 +510,7 @@ std::span<const uint8_t> TextureContainer::pixel_bytes(uint32_t layer) const
 {
     if (layer >= m_data.size())
         return {};
+    ensure_cpu(layer);
     auto [ptr, bytes] = variant_bytes(m_data[layer]);
     return ptr ? std::span<const uint8_t>(ptr, bytes) : std::span<const uint8_t> {};
 }
@@ -382,6 +519,7 @@ std::span<uint8_t> TextureContainer::pixel_bytes(uint32_t layer)
 {
     if (layer >= m_data.size())
         return {};
+    ensure_cpu(layer);
     auto [ptr, bytes] = variant_bytes_mutable(m_data[layer]);
     return ptr ? std::span<uint8_t>(ptr, bytes) : std::span<uint8_t> {};
 }
@@ -390,6 +528,7 @@ std::span<const uint8_t> TextureContainer::as_uint8(uint32_t layer) const
 {
     if (layer >= m_data.size())
         return {};
+    ensure_cpu(layer);
     const auto* v = std::get_if<std::vector<uint8_t>>(&m_data[layer]);
     return v ? std::span<const uint8_t>(v->data(), v->size()) : std::span<const uint8_t> {};
 }
@@ -398,6 +537,7 @@ std::span<const uint16_t> TextureContainer::as_uint16(uint32_t layer) const
 {
     if (layer >= m_data.size())
         return {};
+    ensure_cpu(layer);
     const auto* v = std::get_if<std::vector<uint16_t>>(&m_data[layer]);
     return v ? std::span<const uint16_t>(v->data(), v->size()) : std::span<const uint16_t> {};
 }
@@ -406,6 +546,7 @@ std::span<const float> TextureContainer::as_float(uint32_t layer) const
 {
     if (layer >= m_data.size())
         return {};
+    ensure_cpu(layer);
     const auto* v = std::get_if<std::vector<float>>(&m_data[layer]);
     return v ? std::span<const float>(v->data(), v->size()) : std::span<const float> {};
 }
@@ -417,6 +558,7 @@ void TextureContainer::set_pixels(std::span<const uint8_t> data, uint32_t layer)
             "TextureContainer::set_pixels(u8) layer {} out of range", layer);
         return;
     }
+    claim_cpu(layer);
     auto* buf = std::get_if<std::vector<uint8_t>>(&m_data[layer]);
     if (!buf) {
         MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
@@ -443,6 +585,7 @@ void TextureContainer::set_pixels(std::span<const uint16_t> data, uint32_t layer
             "TextureContainer::set_pixels(u16) layer {} out of range", layer);
         return;
     }
+    claim_cpu(layer);
     auto* buf = std::get_if<std::vector<uint16_t>>(&m_data[layer]);
     if (!buf) {
         MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
@@ -469,6 +612,7 @@ void TextureContainer::set_pixels(std::span<const float> data, uint32_t layer)
             "TextureContainer::set_pixels(f32) layer {} out of range", layer);
         return;
     }
+    claim_cpu(layer);
     auto* buf = std::get_if<std::vector<float>>(&m_data[layer]);
     if (!buf) {
         MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
@@ -492,6 +636,8 @@ std::span<const float> TextureContainer::as_normalised_float(uint32_t layer) con
 {
     if (layer >= m_data.size())
         return {};
+
+    ensure_cpu(layer);
 
     if (!m_normalised_dirty[layer].load(std::memory_order_acquire))
         return { m_normalised_cache[layer] };
@@ -553,6 +699,8 @@ std::vector<DataVariant> TextureContainer::get_region_data(const Region& region)
     if (layer >= m_data.size())
         return {};
 
+    ensure_cpu(static_cast<uint32_t>(layer));
+
     std::optional<std::vector<DataVariant>> result;
     seqlock_read_void(m_slot_locks[layer], 8, [&] {
         result = std::visit(
@@ -578,6 +726,8 @@ std::vector<DataVariant> TextureContainer::get_region_data(const Region& region)
 std::vector<DataVariant> TextureContainer::get_segments_data(
     const std::vector<RegionSegment>& /*segments*/) const
 {
+    ensure_cpu_all();
+
     std::vector<DataVariant> out;
     out.reserve(m_data.size());
     for (size_t i = 0; i < m_data.size(); ++i) {
@@ -602,6 +752,8 @@ void TextureContainer::set_region_data(
 
     if (layer >= m_data.size())
         return;
+
+    ensure_cpu(static_cast<uint32_t>(layer));
 
     const size_t coord_offset = (m_data.size() > 1) ? 1 : 0;
     const uint64_t y0 = region.start_coordinates[coord_offset];
@@ -671,6 +823,8 @@ void TextureContainer::clear()
     for (size_t i = 0; i < m_data.size(); ++i) {
         Memory::SeqlockWriteGuard g(m_slot_locks[i]);
         m_data[i] = make_empty_storage(m_format, element_count);
+        m_cpu_stale[i].store(false, std::memory_order_release);
+        m_normalised_dirty[i].store(true, std::memory_order_release);
     }
 
     update_processing_state(ProcessingState::IDLE);
@@ -732,6 +886,7 @@ const std::vector<DataVariant>& TextureContainer::get_processed_data() const
 
 const std::vector<DataVariant>& TextureContainer::get_data()
 {
+    ensure_cpu_all();
     return m_data;
 }
 
@@ -745,6 +900,7 @@ DataAccess TextureContainer::channel_data(size_t channel_index)
         return { empty, empty_dims, DataModality::IMAGE_COLOR };
     }
 
+    ensure_cpu(0);
     return { m_data[0], m_structure.dimensions, DataModality::IMAGE_COLOR };
 }
 
@@ -795,6 +951,7 @@ const void* TextureContainer::get_raw_data() const
         return nullptr;
     }
 
+    ensure_cpu(0);
     auto [ptr, bytes] = variant_bytes(m_data[0]);
     return (ptr && bytes > 0) ? static_cast<const void*>(ptr) : nullptr;
 }
@@ -804,6 +961,9 @@ bool TextureContainer::has_data() const
     if (m_data.empty()) {
         return false;
     }
+
+    if (m_cpu_stale[0].load(std::memory_order_acquire))
+        return true;
 
     auto [ptr, bytes] = variant_bytes(m_data[0]);
     return ptr && bytes > 0;
@@ -832,6 +992,8 @@ auto TextureContainer::get_frame_typed(uint64_t frame_index) const -> DataSpanVa
     if (frame_index >= m_data.size()) {
         return { std::span<const uint8_t> {} };
     }
+
+    ensure_cpu(static_cast<uint32_t>(frame_index));
 
     const size_t layer_elems = static_cast<size_t>(m_width) * m_height * m_channels;
     DataSpanVariant out { std::span<const uint8_t> {} };
@@ -884,6 +1046,8 @@ auto TextureContainer::get_frame_typed_as(uint64_t frame_index) const -> std::sp
     if (frame_index >= m_data.size())
         return {};
 
+    ensure_cpu(static_cast<uint32_t>(frame_index));
+
     std::span<const T> result;
     seqlock_read_void(m_slot_locks[frame_index], 8, [&] {
         const auto* vec = std::get_if<std::vector<T>>(&m_data[frame_index]);
@@ -906,6 +1070,7 @@ void TextureContainer::get_frames_typed_as(std::span<T> output, uint64_t start_f
     for (uint64_t layer = start_frame;
         layer < start_frame + num_frames && layer < m_data.size() && out_idx < output.size();
         ++layer) {
+        ensure_cpu(static_cast<uint32_t>(layer));
         seqlock_read_void(m_slot_locks[layer], 8, [&] {
             const auto* vec = std::get_if<std::vector<T>>(&m_data[layer]);
             if (!vec || vec->empty())
@@ -933,6 +1098,8 @@ void TextureContainer::get_value_impl(
     if (layer >= m_data.size() || coords.size() < (m_data.size() > 1 ? 4U : 3U))
         return;
 
+    ensure_cpu(static_cast<uint32_t>(layer));
+
     const size_t co = (m_data.size() > 1) ? 1 : 0;
     const size_t idx = (coords[co] * m_width + coords[co + 1]) * m_channels + coords[co + 2];
 
@@ -958,6 +1125,8 @@ void TextureContainer::set_value_impl(
     const size_t layer = (m_data.size() > 1) ? static_cast<size_t>(coords[0]) : 0;
     if (layer >= m_data.size() || coords.size() < (m_data.size() > 1 ? 4U : 3U))
         return;
+
+    ensure_cpu(static_cast<uint32_t>(layer));
 
     const size_t co = (m_data.size() > 1) ? 1 : 0;
     const size_t idx = (coords[co] * m_width + coords[co + 1]) * m_channels + coords[co + 2];

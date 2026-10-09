@@ -2,6 +2,10 @@
 
 #include "MayaFlux/Kinesis/Spatial/Bounds.hpp"
 
+namespace MayaFlux::Core {
+class VKImage;
+}
+
 namespace MayaFlux::Kinesis::Vision {
 
 /**
@@ -78,14 +82,18 @@ struct Keypoint {
 };
 
 /**
- * @brief Pixel buffer captured mid-pipeline by a Snapshot step.
+ * @brief Image captured mid-pipeline by a Snapshot step.
  *
- * pixels is a normalised float buffer in the format active at the snapshot
- * point. channels distinguishes single-channel (grayscale, Harris response)
- * from three-channel (HSV) and four-channel (RGBA).
+ * The CPU executor fills pixels, a normalised float buffer in the format
+ * active at the snapshot point. The GPU executor fills image instead: a copy
+ * of the working image that later steps do not overwrite, valid until the
+ * next run on the same executor. channels distinguishes single-channel
+ * (grayscale, Harris response) from three-channel (HSV) and four-channel
+ * (RGBA).
  */
 struct SnapshotEntry {
     std::vector<float> pixels;
+    std::shared_ptr<Core::VKImage> image;
     uint32_t w { 0 };
     uint32_t h { 0 };
     uint32_t channels { 0 };

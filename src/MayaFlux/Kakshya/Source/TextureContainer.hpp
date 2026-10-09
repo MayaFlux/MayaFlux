@@ -142,7 +142,8 @@ public:
      *
      * Reuses a container-owned image for this layer while dimensions and
      * format match. Later calls refresh the same image, so it is live rather
-     * than a snapshot.
+     * than a snapshot. A layer held on the GPU is returned as is, without an
+     * upload.
      */
     [[nodiscard]] std::shared_ptr<Core::VKImage> to_image(uint32_t layer = 0) const;
 
@@ -454,6 +455,44 @@ public:
     [[nodiscard]] bool all_dimensions_consumed() const override { return true; }
 
 protected:
+    /** @brief Exact layer count for subclasses, zero allowed. */
+    struct LayerCount {
+        uint32_t value {};
+    };
+
+    /**
+     * @brief Construct with exactly @p layers layers, which may be zero.
+     */
+    TextureContainer(uint32_t width, uint32_t height, ImageFormat format, LayerCount layers);
+
+    /**
+     * @brief Append one layer held on the GPU by @p image.
+     *
+     * The layer has no CPU pixels until a CPU accessor reads it, which
+     * downloads @p image once. Writing CPU pixels replaces the content.
+     * @p image must be a single layer sampled 2D image with this container's
+     * width, height and format. Not safe while another thread reads or writes
+     * the container.
+     *
+     * @return Index of the new layer.
+     */
+    uint32_t append_image_layer(std::shared_ptr<Core::VKImage> image);
+
+    /**
+     * @brief The GPU image backing @p layer, without uploading CPU pixels.
+     * @return Null when @p layer is out of range or has no image yet.
+     */
+    [[nodiscard]] std::shared_ptr<Core::VKImage> layer_image(uint32_t layer) const;
+
+    /**
+     * @brief Mark @p layer as held on the GPU after its image was rewritten.
+     *
+     * Drops the layer's CPU pixels, which a CPU accessor downloads again on
+     * its next read. Not safe while another thread reads or writes the
+     * container.
+     */
+    void hold_layer(uint32_t layer);
+
     [[nodiscard]] auto get_frame_span_impl(uint64_t frame_index) const -> DataSpanVariant override
     {
         return get_frame_typed(frame_index);
@@ -476,7 +515,7 @@ private:
     uint32_t m_channels {};
     size_t m_bpp {};
 
-    std::vector<DataVariant> m_data;
+    mutable std::vector<DataVariant> m_data;
     std::vector<DataVariant> m_processed_data;
     mutable std::vector<Portal::Graphics::ImageCacheEntry> m_layer_image_cache;
     mutable Portal::Graphics::ImageCacheEntry m_array_image_cache;
@@ -487,13 +526,16 @@ private:
     mutable std::vector<std::vector<float>> m_normalised_cache;
     mutable std::vector<std::atomic<bool>> m_normalised_dirty;
 
+    /** @brief Per layer: the GPU image in m_layer_image_cache holds the content, m_data does not. */
+    mutable std::vector<std::atomic<bool>> m_cpu_stale;
+
     ContainerDataStructure m_structure;
 
     std::atomic<ProcessingState> m_processing_state { ProcessingState::IDLE };
     std::atomic<bool> m_ready_for_processing { false };
     std::atomic<int> m_processing_token { -1 };
 
-    Memory::SeqlockArray m_slot_locks;
+    mutable Memory::SeqlockArray m_slot_locks;
     Memory::Seqlock m_region_lock;
     mutable Memory::Seqlock m_cb_lock;
 
@@ -507,6 +549,13 @@ private:
         uint32_t layer, const std::shared_ptr<Buffers::VKBuffer>& staging) const;
     [[nodiscard]] std::shared_ptr<Core::VKImage> cached_array_image(
         const std::shared_ptr<Buffers::VKBuffer>& staging) const;
+
+    /** @brief Download a GPU-held layer into m_data before a CPU read. */
+    void ensure_cpu(uint32_t layer) const;
+    void ensure_cpu_all() const;
+
+    /** @brief Give a GPU-held layer fresh CPU storage before a full overwrite. */
+    void claim_cpu(uint32_t layer);
 
     [[nodiscard]] auto get_frame_typed(uint64_t frame_index) const -> DataSpanVariant;
     void get_frames_typed(void* output, size_t count, uint64_t start_frame, uint64_t num_frames, const std::type_info& type) const;

@@ -4,6 +4,31 @@
 
 namespace MayaFlux::Yantra {
 
+template <ComputeData InputType, ComputeData OutputType>
+class FunctionalOperation;
+
+namespace detail {
+    template <ComputeData In, ComputeData Out>
+    std::true_type functional_operation_base(const FunctionalOperation<In, Out>*);
+    std::false_type functional_operation_base(...);
+
+    template <typename T>
+    struct datum_data;
+
+    template <ComputeData T>
+    struct datum_data<Datum<T>> {
+        using type = T;
+    };
+}
+
+/**
+ * @concept FunctionalOperationOn
+ * @brief OpClass derives from a FunctionalOperation whose input is DataType.
+ */
+template <typename OpClass, typename DataType>
+concept FunctionalOperationOn = decltype(detail::functional_operation_base(std::declval<OpClass*>()))::value
+    && std::same_as<typename OpClass::input_type, Datum<DataType>>;
+
 /**
  * @class FluentExecutor
  * @brief Fluent interface for chaining operations on any executor
@@ -125,6 +150,7 @@ public:
      * @return New FluentExecutor carrying the result Datum
      */
     template <typename OpClass, ComputeData OutputType = DataType>
+        requires(!FunctionalOperationOn<OpClass, DataType>)
     FluentExecutor<Executor, OutputType> then()
     {
         if (!m_successful) {
@@ -172,6 +198,7 @@ public:
      * @return New FluentExecutor carrying the result Datum
      */
     template <typename OpClass, ComputeData OutputType = DataType>
+        requires(!FunctionalOperationOn<OpClass, DataType>)
     FluentExecutor<Executor, OutputType> then(const std::string& name)
     {
         if (!m_successful) {
@@ -193,6 +220,99 @@ public:
             }
 
             auto next = FluentExecutor<Executor, OutputType>(m_executor, std::move(*result));
+            next.m_operation_history = m_operation_history;
+            next.m_operation_history.push_back(name);
+            return next;
+        } catch (const std::exception& e) {
+            m_successful = false;
+            record_error(e.what());
+            error_rethrow(
+                Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+                std::source_location::current(),
+                "Exception in named operation '{}': {}", name, e.what());
+        }
+    }
+
+    /**
+     * @brief Chain a FunctionalOperation child as an annotation of the
+     *        current Datum.
+     *
+     * The chain keeps its data, container and type. The operation's output
+     * metadata is merged into the chain's, and its output data is stored in
+     * the metadata under the operation's type name.
+     */
+    template <typename OpClass>
+        requires FunctionalOperationOn<OpClass, DataType>
+    FluentExecutor<Executor, DataType> then()
+    {
+        using OutputType = typename detail::datum_data<typename OpClass::output_type>::type;
+
+        if (!m_successful) {
+            error<std::runtime_error>(
+                Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+                std::source_location::current(),
+                "Cannot continue chain after failed operation");
+        }
+
+        const std::string key = typeid(OpClass).name();
+        try {
+            auto result = m_executor->template execute<OpClass, DataType, OutputType>(m_data);
+            if (!result) {
+                m_successful = false;
+                record_error("Operation " + key + " failed");
+                error<std::runtime_error>(
+                    Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+                    std::source_location::current(),
+                    "Operation failed in fluent chain: {}", key);
+            }
+
+            auto next = FluentExecutor<Executor, DataType>(m_executor, absorbed(std::move(*result), key));
+            next.m_operation_history = m_operation_history;
+            next.m_operation_history.push_back(key);
+            return next;
+        } catch (const std::exception& e) {
+            m_successful = false;
+            record_error(e.what());
+            error_rethrow(
+                Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+                std::source_location::current(),
+                "Exception in fluent chain: " + std::string(e.what()));
+        }
+    }
+
+    /**
+     * @brief Chain a named FunctionalOperation child from the executor's
+     *        pool as an annotation of the current Datum.
+     *
+     * The chain keeps its data, container and type. The operation's output
+     * metadata is merged into the chain's, and its output data is stored in
+     * the metadata under @p name.
+     */
+    template <typename OpClass>
+        requires FunctionalOperationOn<OpClass, DataType>
+    FluentExecutor<Executor, DataType> then(const std::string& name)
+    {
+        using OutputType = typename detail::datum_data<typename OpClass::output_type>::type;
+
+        if (!m_successful) {
+            error<std::runtime_error>(
+                Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+                std::source_location::current(),
+                "Cannot continue chain after failed operation: {}", name);
+        }
+
+        try {
+            auto result = m_executor->template execute_named<OpClass, DataType, OutputType>(name, m_data);
+            if (!result) {
+                m_successful = false;
+                record_error("Named operation '" + name + "' failed");
+                error<std::runtime_error>(
+                    Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+                    std::source_location::current(),
+                    "Named operation failed in fluent chain: {}", name);
+            }
+
+            auto next = FluentExecutor<Executor, DataType>(m_executor, absorbed(std::move(*result), name));
             next.m_operation_history = m_operation_history;
             next.m_operation_history.push_back(name);
             return next;
@@ -547,6 +667,20 @@ private:
     friend class FluentExecutor;
 
     void record_error(const std::string& err) { m_errors.push_back(err); }
+
+    /**
+     * @brief The current Datum with @p result's metadata merged in and its
+     *        data stored under @p key.
+     */
+    template <ComputeData OutputType>
+    [[nodiscard]] Datum<DataType> absorbed(Datum<OutputType>&& result, const std::string& key) const
+    {
+        Datum<DataType> next = m_data;
+        for (auto& [k, v] : result.metadata)
+            next.metadata.insert_or_assign(k, std::move(v));
+        next.metadata.insert_or_assign(key, std::move(result.data));
+        return next;
+    }
 };
 
 // ------------------------------------------------------------------

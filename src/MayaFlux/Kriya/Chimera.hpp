@@ -13,6 +13,7 @@ class VKImage;
 
 namespace MayaFlux::Kakshya {
 class DynamicVideoStream;
+class TextureCollection;
 }
 
 namespace MayaFlux::Vruta {
@@ -30,7 +31,8 @@ class BufferOperation;
  *        fragment shader can build one picture out of many.
  *
  * A layer holds a still image, a GPU image copied every frame, or a moment of a ring
- * that is still being recorded. Moments are read at a lag behind the write head, with
+ * or a texture collection that is still being recorded. Moments are read at a lag
+ * behind the write head, with
  * a lag that varies in time, or played freely from where the layer entered, forward,
  * held or backward, optionally smoothed between frames. A layer can be cut to
  * another moment, or given a new source, while running. Layers are numbered in
@@ -81,7 +83,8 @@ public:
     void speed(size_t layer, double ratio);
 
     /**
-     * @brief Jump a ring layer to a moment this many seconds behind the live head.
+     * @brief Jump a ring or collection layer to a moment this many seconds behind
+     *        the live head.
      *
      * A lagged layer keeps following its lag from there, so a lag that varies carries
      * on from the new moment. Layers fed by an image ignore it.
@@ -100,6 +103,14 @@ public:
     /** @brief Replace the layer's content with a ring, read as the layer's lag or speed say. */
     void set(size_t layer, std::shared_ptr<Kakshya::DynamicVideoStream> ring);
 
+    /**
+     * @brief Replace the layer's content with a texture collection, read as the
+     *        layer's lag or speed say.
+     * @param frame_rate Appends per second, which turns seconds into layers; zero
+     *                   takes one append per frame.
+     */
+    void set(size_t layer, std::shared_ptr<Kakshya::TextureCollection> collection, double frame_rate = 0.0);
+
     /** @brief Stop feeding. Every layer keeps its last frame. */
     void stop();
 
@@ -108,6 +119,8 @@ private:
 
     struct Layer {
         std::shared_ptr<Kakshya::DynamicVideoStream> ring;
+        std::shared_ptr<Kakshya::TextureCollection> collection;
+        double collection_rate {};
         std::shared_ptr<Core::VKImage> image;
         std::shared_ptr<const Kakshya::ImageData> picture;
         std::shared_ptr<const Kinesis::TimeMap> lag;
@@ -139,6 +152,8 @@ private:
 
     static void tick(State& state, uint64_t frame);
     static void feed(State& state, Layer& layer, uint32_t index, double elapsed);
+    static void collect(State& state, Layer& layer, uint32_t index, double elapsed);
+    static void place(const State& state, Layer& layer, uint64_t head, double rate, double nearest, double elapsed);
     static void stamp(State& state, uint32_t index, const glm::vec4& timing);
 
     std::shared_ptr<State> m_state;
@@ -184,6 +199,9 @@ public:
 
     /** @brief The pipeline the builder records into. */
     [[nodiscard]] std::shared_ptr<BufferPipeline> get_pipeline() const { return m_pipeline; }
+
+    /** @brief The array buffer whose layers the builder feeds, for its mode, weights or push constants. */
+    [[nodiscard]] std::shared_ptr<Buffers::TextureArrayBuffer> get_buffer() const { return m_buffer; }
 
     /**
      * @brief Replace the builder's pipeline with one made elsewhere.
@@ -235,6 +253,17 @@ public:
     /** @brief Feed the layer from a ring that is being recorded. */
     ChimeraBuilder& from(std::shared_ptr<Kakshya::DynamicVideoStream> ring);
 
+    /**
+     * @brief Feed the layer from a texture collection that is being appended to.
+     *
+     * Read like a ring, by lag or speed, entirely on the GPU, up to its newest
+     * append. smooth() does not apply.
+     *
+     * @param frame_rate Appends per second, which turns seconds into layers; zero
+     *                   takes one append per frame.
+     */
+    ChimeraBuilder& from(std::shared_ptr<Kakshya::TextureCollection> collection, double frame_rate = 0.0);
+
     /** @brief Feed the layer by copying a GPU image every frame. */
     ChimeraBuilder& from(std::shared_ptr<Core::VKImage> image);
 
@@ -256,7 +285,7 @@ public:
     /** @brief Play a layer without a lag at this multiple of the ring's frame rate. Negative plays backward. */
     ChimeraBuilder& speed(double ratio);
 
-    /** @brief Blend the two frames around a ring position, so slow or varying time does not step. */
+    /** @brief Blend the two frames around a ring position, so slow or varying time does not step. Not for collections. */
     ChimeraBuilder& smooth(bool enable = true);
 
     /** @brief Refresh a ring or GPU image layer every this many frames. */

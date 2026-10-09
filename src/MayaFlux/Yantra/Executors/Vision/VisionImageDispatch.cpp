@@ -253,49 +253,31 @@ GpuVisionPass::Completed VisionGpuExecutor::op_canny(
 
     const auto canny_input = contexts.pass.current;
 
-    const auto blur_key = Kinesis::Vision::hash_vision_step(
-        VisionOp::GaussianBlur, GaussianBlurParams { .sigma = p.sigma });
-    std::shared_ptr<Core::VKImage> blurred;
-
-    if (auto it = contexts.pass.completed.find(blur_key);
-        it != contexts.pass.completed.end() && it->second.input == canny_input) {
-        blurred = it->second.output;
-    } else {
-        const auto radius = static_cast<uint32_t>(std::ceil(p.sigma * 3.0F));
-        const auto& weights = gaussian_kernel_2d(radius, p.sigma);
-        const auto blur_cfg = VisionGpuExecutor::config(VisionOp::GaussianBlur, GaussianBlurParams { .sigma = p.sigma });
-        pixel_ctx.swap_shader(blur_cfg);
-        pixel_ctx.stage_image(canny_input);
-        pixel_ctx.set_binding_data(2, std::span<const float>(weights));
-        pixel_ctx.set_push_constants(GaussianPC { .radius = radius, .width = w, .height = h });
-        pixel_ctx.prepare_output_image(w, h);
-        {
-            const auto f = pixel_ctx.dispatch_async({});
-            foundry.wait_for_fence(f);
-            foundry.release_fence(f);
-        }
-        blurred = pixel_ctx.get_output_image(0);
-        contexts.pass.completed[blur_key] = { .output = blurred, .input = canny_input };
+    const auto radius = static_cast<uint32_t>(std::ceil(p.sigma * 3.0F));
+    const auto& weights = gaussian_kernel_2d(radius, p.sigma);
+    const auto blur_cfg = VisionGpuExecutor::config(VisionOp::GaussianBlur, GaussianBlurParams { .sigma = p.sigma });
+    pixel_ctx.swap_shader(blur_cfg);
+    pixel_ctx.stage_image(canny_input);
+    pixel_ctx.set_binding_data(2, std::span<const float>(weights));
+    pixel_ctx.set_push_constants(GaussianPC { .radius = radius, .width = w, .height = h });
+    pixel_ctx.prepare_output_image(w, h);
+    {
+        const auto f = pixel_ctx.dispatch_async({});
+        foundry.wait_for_fence(f);
+        foundry.release_fence(f);
     }
+    const auto blurred = pixel_ctx.get_output_image(0);
 
-    const auto sobel_key = Kinesis::Vision::hash_vision_step(VisionOp::Sobel, std::monostate {});
-    std::shared_ptr<Core::VKImage> grad;
-    if (auto it = contexts.pass.completed.find(sobel_key);
-        it != contexts.pass.completed.end() && it->second.input == blurred) {
-        grad = it->second.output;
-    } else {
-        const auto sobel_cfg = VisionGpuExecutor::config(VisionOp::Sobel, std::monostate {});
-        pixel_ctx.swap_shader(sobel_cfg);
-        pixel_ctx.stage_image(blurred);
-        pixel_ctx.prepare_output_image(w, h);
-        {
-            const auto f = pixel_ctx.dispatch_async({});
-            foundry.wait_for_fence(f);
-            foundry.release_fence(f);
-        }
-        grad = pixel_ctx.get_output_image(0);
-        contexts.pass.completed[sobel_key] = { .output = grad, .input = blurred };
+    const auto sobel_cfg = VisionGpuExecutor::config(VisionOp::Sobel, std::monostate {});
+    pixel_ctx.swap_shader(sobel_cfg);
+    pixel_ctx.stage_image(blurred);
+    pixel_ctx.prepare_output_image(w, h);
+    {
+        const auto f = pixel_ctx.dispatch_async({});
+        foundry.wait_for_fence(f);
+        foundry.release_fence(f);
     }
+    const auto grad = pixel_ctx.get_output_image(0);
 
     const GpuComputeConfig nms_cfg {
         .shader_path = "canny_nms.comp.spv",

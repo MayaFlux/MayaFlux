@@ -185,6 +185,15 @@ struct MAYAFLUX_API VisionGpuContexts {
     std::shared_ptr<Core::VKImage> bound_staged;
 
     /**
+     * @brief One image cache per Snapshot step, indexed by the step's order
+     *        among the snapshots of a run.
+     *
+     * Kept across runs so a sequence that snapshots every frame reuses its
+     * images instead of allocating new ones.
+     */
+    std::vector<Portal::Graphics::ImageCacheSet> snapshot_images;
+
+    /**
      * @brief Outstanding work at a deferred step, and the point to resume.
      *
      * fence is INVALID_FENCE when nothing is outstanding. While live, run
@@ -575,6 +584,12 @@ private:
      * present the pyramid gets the larger level count.
      */
     static void after_step(VisionGpuContexts& contexts, size_t index);
+
+    /**
+     * @brief Copy the working image into this snapshot's own image and append
+     *        it to VisionResult::snapshots. The working image is unchanged.
+     */
+    static void op_snapshot(VisionGpuContexts& contexts);
 };
 
 } // namespace MayaFlux::Yantra

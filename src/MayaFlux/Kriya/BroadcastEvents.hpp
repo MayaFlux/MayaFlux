@@ -9,6 +9,8 @@ class Window;
 
 namespace MayaFlux::Vruta {
 class Event;
+class EventManager;
+class TaskScheduler;
 }
 
 namespace MayaFlux::Kriya {
@@ -104,6 +106,54 @@ struct WindowFrame {
  */
 [[nodiscard]] MAYAFLUX_API std::shared_ptr<Vruta::BroadcastSource<WindowFrame>> window_frame_tick(
     const std::shared_ptr<Core::Window>& window);
+
+/**
+ * @brief Call @p callback with every value @p source signals, registered on
+ *        @p events.
+ *
+ * Registers on_signal(source, callback) under @p name and returns the event.
+ */
+template <typename T, typename Callback>
+std::shared_ptr<Vruta::Event> subscribe(
+    Vruta::EventManager& events,
+    std::shared_ptr<Vruta::BroadcastSource<T>> source,
+    Callback callback,
+    const std::string& name = "");
+
+/**
+ * @brief Broadcast of what @p fn returns, taken once per graphics frame.
+ *
+ * Adds a routine to @p scheduler that calls @p fn every graphics frame and
+ * signals each value it returns, registered under @p name. The routine ends
+ * once nothing holds the returned source, or when the task is cancelled.
+ *
+ * @code
+ * auto results = Kriya::frame_results<Result>(*scheduler, [state]() -> std::optional<Result> {
+ *     return state->try_finish();
+ * });
+ * event_manager->add_event(std::make_shared<Vruta::Event>(
+ *     Kriya::on_signal(results, [](const Result& r) { })));
+ * @endcode
+ */
+template <typename T>
+[[nodiscard]] std::shared_ptr<Vruta::BroadcastSource<T>> frame_results(
+    Vruta::TaskScheduler& scheduler,
+    std::function<std::optional<T>()> fn,
+    const std::string& name = "");
+
+/**
+ * @brief Signal what @p fn returns into @p source once per graphics frame.
+ *
+ * As the overload that creates its source, for a source that already has a
+ * consumer, so @p fn can refer to that consumer. The routine holds
+ * @p source weakly.
+ */
+template <typename T>
+void frame_results(
+    Vruta::TaskScheduler& scheduler,
+    const std::shared_ptr<Vruta::BroadcastSource<T>>& source,
+    std::function<std::optional<T>()> fn,
+    const std::string& name = "");
 
 } // namespace MayaFlux::Kriya
 
