@@ -1,6 +1,9 @@
 #pragma once
 
+#include <future>
+
 #ifdef MAYAFLUX_PLATFORM_MACOS
+#include <CoreFoundation/CoreFoundation.h>
 #include <dispatch/dispatch.h>
 #include <pthread.h>
 #endif
@@ -104,6 +107,28 @@ bool dispatch_main_async_with_timeout(std::chrono::milliseconds timeout_ms, Func
 
     return true;
 }
+
+/**
+ * @brief Wait for a future, keeping the main run loop alive on the main thread
+ * @tparam T Future value type
+ * @param future Future to wait on
+ * @return The value held by the future
+ *
+ * Work queued to the main queue, such as window creation, cannot run while
+ * the main thread is blocked in future.get(). On the main thread this pumps
+ * the default run loop until the future is ready, on any other thread it
+ * simply waits. Other platforms just wait.
+ */
+template <typename T>
+T await_future(std::future<T> future)
+{
+    if (pthread_main_np() != 0) {
+        while (future.wait_for(std::chrono::milliseconds(0)) != std::future_status::ready) {
+            CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0.01, false);
+        }
+    }
+    return future.get();
+}
 #else
 // On linux platforms, these just execute directly
 template <typename Func, typename... Args>
@@ -123,6 +148,12 @@ bool dispatch_main_async_with_timeout(std::chrono::milliseconds /*timeout_ms*/, 
 {
     std::invoke(std::forward<Func>(func), std::forward<Args>(args)...);
     return true;
+}
+
+template <typename T>
+T await_future(std::future<T> future)
+{
+    return future.get();
 }
 #endif
 

@@ -30,6 +30,7 @@ namespace IO {
 }
 
 namespace Kakshya {
+    class CameraContainer;
     class CompositeContainer;
     class CompositeLayout;
     class SoundStreamContainer;
@@ -135,6 +136,25 @@ MAYAFLUX_API std::shared_ptr<Kakshya::DynamicSoundStream> choose_audio_bounded(
  */
 MAYAFLUX_API std::pair<std::shared_ptr<Kakshya::VideoFileContainer>, std::shared_ptr<Kakshya::SoundFileContainer>>
 choose_video(const IO::VideoLoadConfig& config);
+
+/**
+ * @brief Let the user pick a camera, and optionally a capture mode, then open
+ *        it via IOManager::open_camera().
+ *
+ * The pickers are Portal::Forma windows driven by the engine. Blocks until
+ * the user chooses or closes a window. Returns the opened container, ready for
+ * IOManager::hook_camera_to_buffer(), or nullptr on cancellation, when no
+ * camera is found, or if the camera fails to open. Portal::Forma must be
+ * initialized and the engine running.
+ *
+ * Modes come from the camera source's presets. A mode is a request: the
+ * source falls back to the nearest mode the device accepts.
+ *
+ * @param choose_mode If false, skip the mode picker and open with the
+ *                    default CameraConfig size and frame rate.
+ */
+MAYAFLUX_API std::shared_ptr<Kakshya::CameraContainer> choose_camera(
+    bool choose_mode = true);
 
 /**
  * @brief Present a native open-file dialog filtered to image formats and load

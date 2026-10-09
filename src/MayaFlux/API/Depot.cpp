@@ -4,6 +4,7 @@
 #include "MayaFlux/API/Core.hpp"
 #include "MayaFlux/Core/Engine.hpp"
 
+#include "MayaFlux/IO/Camera/FFmpegCameraReader.hpp"
 #include "MayaFlux/IO/IOManager.hpp"
 
 #include "MayaFlux/Buffers/Container/SoundContainerBuffer.hpp"
@@ -14,7 +15,9 @@
 #include "MayaFlux/Buffers/State/VolumeGridBuffer.hpp"
 
 #include "MayaFlux/Nodes/Network/MeshNetwork.hpp"
+#include "MayaFlux/Transitive/Parallel/Dispatch.hpp"
 
+#include "MayaFlux/Portal/Forma/Primitives/Picker.hpp"
 #include "MayaFlux/Portal/System/Dialog/Chooser.hpp"
 #include "MayaFlux/Portal/System/System.hpp"
 
@@ -251,6 +254,47 @@ std::shared_ptr<Buffers::VolumeGridBuffer> choose_volume()
         [](const fs::path& p) { return get_io_manager()->load_volume(p.string()); },
         [](Core::SystemDialogError) { },
         k_volume_filters);
+}
+
+std::shared_ptr<Kakshya::CameraContainer> choose_camera(bool choose_mode)
+{
+    auto promise = std::make_shared<std::promise<std::shared_ptr<Kakshya::CameraContainer>>>();
+    auto future = promise->get_future();
+
+    const IO::FFmpegCameraReader reader;
+    auto configs = reader.enumerate_configs();
+    if (configs.empty()) {
+        MF_ERROR(Journal::Component::API, Journal::Context::Runtime,
+            "choose_camera: no cameras found");
+        return nullptr;
+    }
+
+    Portal::Forma::pick("Choose a camera", std::move(configs),
+        [](const IO::CameraConfig& config) {
+            return config.display_name.empty() ? config.device_name : config.display_name;
+        },
+        [promise, choose_mode, modes = reader.preset_modes()](std::optional<IO::CameraConfig> camera) {
+            if (!camera) {
+                promise->set_value(nullptr);
+                return;
+            }
+            if (!choose_mode) {
+                promise->set_value(get_io_manager()->open_camera(*camera));
+                return;
+            }
+            Portal::Forma::pick("Choose a mode", modes,
+                [](const IO::CameraMode& mode) { return mode.label; },
+                [promise, config = *camera](std::optional<IO::CameraMode> mode) mutable {
+                    if (!mode) {
+                        promise->set_value(nullptr);
+                        return;
+                    }
+                    mode->apply(config);
+                    promise->set_value(get_io_manager()->open_camera(config));
+                });
+        });
+
+    return Parallel::await_future(std::move(future));
 }
 
 // ---------------------------------------------------------------------------
