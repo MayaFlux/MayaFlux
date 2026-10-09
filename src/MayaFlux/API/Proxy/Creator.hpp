@@ -20,10 +20,6 @@ namespace IO {
     struct CameraConfig;
 }
 
-namespace Buffers {
-    class VideoContainerBuffer;
-}
-
 struct CreationContext {
     std::optional<Domain> domain;
     std::optional<uint32_t> channel;
@@ -267,29 +263,26 @@ public:
     // ═══════════════════════════════════════════════════════════════
 
     /**
-     * @brief Open a camera device and register it as a pipeable live source.
+     * @brief Open a camera device as a live source container.
      *
-     * Opens via IOManager::open_camera(), hooks the resulting CameraContainer
-     * to a VideoContainerBuffer via IOManager::hook_camera_to_buffer(), and
-     * returns the buffer — already pipeable through the generic VKBuffer
-     * path (register_buffer), the same way read_image() returns an
-     * already-pipeable TextureBuffer instead of a raw container.
+     * Opens via IOManager::open_camera() and returns the container, like
+     * read_audio() returns its container. Nothing is hooked: show it with
+     * IOManager::hook_camera_to_buffer(), the way a video container is hooked.
      *
      * @param config Device name, resolution hint, fps hint, format override.
-     * @return Hooked VideoContainerBuffer, or nullptr on failure.
+     * @return Opened CameraContainer, or nullptr on failure.
      */
-    std::shared_ptr<Buffers::VideoContainerBuffer> read_camera(const IO::CameraConfig& config);
+    std::shared_ptr<Kakshya::CameraContainer> read_camera(const IO::CameraConfig& config);
 
     /**
      * @brief Let the user pick a camera and capture mode, then read it as above.
      *
-     * Opens the pickers via choose_camera(), then hooks the opened
-     * CameraContainer to a VideoContainerBuffer exactly as the config overload
-     * does. Blocks until the user chooses or closes a window.
+     * Opens the pickers via choose_camera(). Blocks until the user chooses or
+     * closes a window.
      *
-     * @return Hooked VideoContainerBuffer, or nullptr on cancellation or failure.
+     * @return Opened CameraContainer, or nullptr on cancellation or failure.
      */
-    std::shared_ptr<Buffers::VideoContainerBuffer> read_camera();
+    std::shared_ptr<Kakshya::CameraContainer> read_camera();
 
     // ═══════════════════════════════════════════════════════════════
     // Input Node Creation (Special - defined in Creator.cpp)

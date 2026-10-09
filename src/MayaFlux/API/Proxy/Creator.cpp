@@ -163,23 +163,7 @@ Creator::load_mesh_network(const std::string& filepath, IO::TextureResolver reso
     return get_io_manager()->load_mesh_network(filepath, std::move(resolver));
 }
 
-namespace {
-
-    std::shared_ptr<Buffers::VideoContainerBuffer> hook_camera(
-        const std::shared_ptr<Kakshya::CameraContainer>& container)
-    {
-        if (!container)
-            return nullptr;
-
-        auto buffer = get_io_manager()->hook_camera_to_buffer(container);
-        if (buffer)
-            MF_LIVE_EXPOSE_AUTO(buffer);
-        return buffer;
-    }
-
-} // namespace
-
-std::shared_ptr<Buffers::VideoContainerBuffer> Creator::read_camera(const IO::CameraConfig& config)
+std::shared_ptr<Kakshya::CameraContainer> Creator::read_camera(const IO::CameraConfig& config)
 {
     auto container = get_io_manager()->open_camera(config);
     if (!container) {
@@ -188,12 +172,16 @@ std::shared_ptr<Buffers::VideoContainerBuffer> Creator::read_camera(const IO::Ca
         return nullptr;
     }
 
-    return hook_camera(container);
+    MF_LIVE_EXPOSE_AUTO(container);
+    return container;
 }
 
-std::shared_ptr<Buffers::VideoContainerBuffer> Creator::read_camera()
+std::shared_ptr<Kakshya::CameraContainer> Creator::read_camera()
 {
-    return hook_camera(choose_camera());
+    auto container = choose_camera();
+    if (container)
+        MF_LIVE_EXPOSE_AUTO(container);
+    return container;
 }
 
 std::shared_ptr<Nodes::Input::HIDNode> Creator::read_hid(
