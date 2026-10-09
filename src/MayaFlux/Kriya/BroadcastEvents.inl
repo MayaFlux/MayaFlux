@@ -62,7 +62,17 @@ std::shared_ptr<Vruta::BroadcastSource<T>> frame_results(
     const std::string& name)
 {
     auto source = std::make_shared<Vruta::BroadcastSource<T>>();
+    frame_results<T>(scheduler, source, std::move(fn), name);
+    return source;
+}
 
+template <typename T>
+void frame_results(
+    Vruta::TaskScheduler& scheduler,
+    const std::shared_ptr<Vruta::BroadcastSource<T>>& source,
+    std::function<std::optional<T>()> fn,
+    const std::string& name)
+{
     auto routine = [](std::weak_ptr<Vruta::BroadcastSource<T>> weak,
                        std::function<std::optional<T>()> step) -> Vruta::GraphicsRoutine {
         auto& promise = co_await GetGraphicsPromise {};
@@ -79,7 +89,6 @@ std::shared_ptr<Vruta::BroadcastSource<T>> frame_results(
     };
 
     scheduler.add_task(std::make_shared<Vruta::GraphicsRoutine>(routine(source, std::move(fn))), name);
-    return source;
 }
 
 } // namespace MayaFlux::Kriya

@@ -141,6 +141,20 @@ template <typename T>
     std::function<std::optional<T>()> fn,
     const std::string& name = "");
 
+/**
+ * @brief Signal what @p fn returns into @p source once per graphics frame.
+ *
+ * As the overload that creates its source, for a source that already has a
+ * consumer, so @p fn can refer to that consumer. The routine holds
+ * @p source weakly.
+ */
+template <typename T>
+void frame_results(
+    Vruta::TaskScheduler& scheduler,
+    const std::shared_ptr<Vruta::BroadcastSource<T>>& source,
+    std::function<std::optional<T>()> fn,
+    const std::string& name = "");
+
 } // namespace MayaFlux::Kriya
 
 #include "BroadcastEvents.inl"
