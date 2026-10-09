@@ -478,6 +478,21 @@ protected:
      */
     uint32_t append_image_layer(std::shared_ptr<Core::VKImage> image);
 
+    /**
+     * @brief The GPU image backing @p layer, without uploading CPU pixels.
+     * @return Null when @p layer is out of range or has no image yet.
+     */
+    [[nodiscard]] std::shared_ptr<Core::VKImage> layer_image(uint32_t layer) const;
+
+    /**
+     * @brief Mark @p layer as held on the GPU after its image was rewritten.
+     *
+     * Drops the layer's CPU pixels, which a CPU accessor downloads again on
+     * its next read. Not safe while another thread reads or writes the
+     * container.
+     */
+    void hold_layer(uint32_t layer);
+
     [[nodiscard]] auto get_frame_span_impl(uint64_t frame_index) const -> DataSpanVariant override
     {
         return get_frame_typed(frame_index);

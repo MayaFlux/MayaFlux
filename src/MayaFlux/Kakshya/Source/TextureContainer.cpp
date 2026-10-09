@@ -128,6 +128,30 @@ uint32_t TextureContainer::append_image_layer(std::shared_ptr<Core::VKImage> ima
     return layer;
 }
 
+std::shared_ptr<Core::VKImage> TextureContainer::layer_image(uint32_t layer) const
+{
+    if (layer >= m_layer_image_cache.size())
+        return nullptr;
+
+    Memory::SerializedSeqlockWriteGuard image_guard(m_image_cache_lock);
+    return m_layer_image_cache[layer].image;
+}
+
+void TextureContainer::hold_layer(uint32_t layer)
+{
+    if (layer >= m_data.size())
+        return;
+
+    {
+        Memory::SeqlockWriteGuard g(m_slot_locks[layer]);
+        m_data[layer] = make_empty_storage(m_format, 0);
+        m_cpu_stale[layer].store(true, std::memory_order_release);
+        m_normalised_dirty[layer].store(true, std::memory_order_release);
+    }
+
+    update_processing_state(ProcessingState::READY);
+}
+
 void TextureContainer::ensure_cpu(uint32_t layer) const
 {
     if (layer >= m_cpu_stale.size() || !m_cpu_stale[layer].load(std::memory_order_acquire))
