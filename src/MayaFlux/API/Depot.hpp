@@ -38,10 +38,12 @@ namespace Kakshya {
     class DynamicSoundStream;
     class SignalSourceContainer;
     class VideoFileContainer;
+    class VideoStreamContainer;
 }
 
 namespace Buffers {
     class SoundContainerBuffer;
+    class VideoContainerBuffer;
     class TextureBuffer;
     class MeshBuffer;
     class VolumeGridBuffer;
@@ -93,6 +95,32 @@ MAYAFLUX_API bool is_image(const std::filesystem::path& filepath);
  * @return True for an existing regular file with a supported extension.
  */
 MAYAFLUX_API bool is_composite(const std::filesystem::path& filepath);
+
+/**
+ * @brief The buffer a video or camera container was hooked to.
+ *
+ * Hooking happens through `| Graphics` or IOManager::hook_*. Returns nullptr
+ * when the container has not been hooked.
+ */
+MAYAFLUX_API std::shared_ptr<Buffers::VideoContainerBuffer> get_associated_buffer(
+    const std::shared_ptr<Kakshya::VideoStreamContainer>& container);
+
+/**
+ * @brief The per-channel buffers an audio container was hooked to.
+ *
+ * Empty when the container has not been hooked.
+ */
+MAYAFLUX_API std::vector<std::shared_ptr<Buffers::SoundContainerBuffer>> get_associated_buffers(
+    const std::shared_ptr<Kakshya::SoundFileContainer>& container);
+
+/**
+ * @brief The audio buffers of a video file's extracted sound track.
+ *
+ * Empty when the video was loaded without VideoReadOptions::EXTRACT_AUDIO,
+ * has no audio track, or has not been hooked.
+ */
+MAYAFLUX_API std::vector<std::shared_ptr<Buffers::SoundContainerBuffer>> get_associated_buffers(
+    const std::shared_ptr<Kakshya::VideoFileContainer>& container);
 
 // ─────────────────────────────────────────────────────────────────────────
 // Dialog-backed load — open

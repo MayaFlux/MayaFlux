@@ -8,7 +8,9 @@
 #include "MayaFlux/IO/IOManager.hpp"
 
 #include "MayaFlux/Buffers/Container/SoundContainerBuffer.hpp"
+#include "MayaFlux/Kakshya/Source/CameraContainer.hpp"
 #include "MayaFlux/Kakshya/Source/SoundFileContainer.hpp"
+#include "MayaFlux/Kakshya/Source/VideoFileContainer.hpp"
 #include "MayaFlux/Kakshya/Source/SoundStreamContainer.hpp"
 
 #include "MayaFlux/Buffers/Geometry/MeshBuffer.hpp"
@@ -144,6 +146,44 @@ bool is_audio(const fs::path& filepath)
 bool is_composite(const fs::path& filepath)
 {
     return check_extension(filepath, k_composite_filters[0]);
+}
+
+std::shared_ptr<Buffers::VideoContainerBuffer> get_associated_buffer(
+    const std::shared_ptr<Kakshya::VideoStreamContainer>& container)
+{
+    const auto io = get_io_manager();
+    if (!io || !container) {
+        return nullptr;
+    }
+
+    if (const auto camera = std::dynamic_pointer_cast<Kakshya::CameraContainer>(container)) {
+        return io->get_camera_buffer(camera);
+    }
+
+    return io->get_video_buffer(container);
+}
+
+std::vector<std::shared_ptr<Buffers::SoundContainerBuffer>> get_associated_buffers(
+    const std::shared_ptr<Kakshya::SoundFileContainer>& container)
+{
+    const auto io = get_io_manager();
+    if (!io || !container) {
+        return {};
+    }
+
+    return io->get_audio_buffers(container);
+}
+
+std::vector<std::shared_ptr<Buffers::SoundContainerBuffer>> get_associated_buffers(
+    const std::shared_ptr<Kakshya::VideoFileContainer>& container)
+{
+    const auto io = get_io_manager();
+    if (!io || !container) {
+        return {};
+    }
+
+    const auto audio = io->get_extracted_audio(container);
+    return audio ? io->get_audio_buffers(audio) : std::vector<std::shared_ptr<Buffers::SoundContainerBuffer>> {};
 }
 
 // ---------------------------------------------------------------------------
