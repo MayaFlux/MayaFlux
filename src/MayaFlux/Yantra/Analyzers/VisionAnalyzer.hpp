@@ -90,6 +90,27 @@ public:
         const std::shared_ptr<Core::VKImage>& image);
 
     /**
+     * @brief Advance an analysis of @p image by one sequence per call,
+     *        without waiting on deferred GPU work.
+     *
+     * The first call copies @p image and starts a run on the copy. Later
+     * calls continue that run and ignore @p image until it completes. The
+     * flow steps of TrackObjects and EstimateMotion are submitted deferred
+     * and polled on later calls; other steps still wait inline.
+     *
+     * @return The analysis once every sequence has completed, otherwise
+     *         nullopt.
+     */
+    [[nodiscard]] std::optional<Kinesis::Vision::VisionAnalysis> advance(
+        const std::shared_ptr<Core::VKImage>& image);
+
+    /**
+     * @brief The copy of the frame the current or last advance() run
+     *        analyzes. Replaced when the next run starts.
+     */
+    [[nodiscard]] const std::shared_ptr<Core::VKImage>& get_frame() const { return m_frame; }
+
+    /**
      * @brief Abandon outstanding work and clear retained executor state.
      *
      * Call when the pixel source changes (camera switch, video seek).
@@ -139,6 +160,43 @@ private:
      */
     [[nodiscard]] Kinesis::Vision::VisionAnalysis analyze_resolved(
         const std::shared_ptr<Core::VKImage>& image);
+
+    /**
+     * @brief Run or poll sequence @p lane of @p resolved on its executor.
+     * @return False while the sequence is suspended on deferred work; true
+     *         once its result is appended to @p results.
+     */
+    bool run_lane(
+        size_t lane,
+        const std::vector<Kinesis::Vision::ResolvedSequence>& resolved,
+        std::vector<Kinesis::Vision::VisionResult>& results,
+        const std::shared_ptr<Core::VKImage>& image);
+
+    /**
+     * @brief Route every completed sequence result into one VisionAnalysis,
+     *        apply context filtering and run the GPU reductions.
+     */
+    [[nodiscard]] Kinesis::Vision::VisionAnalysis assemble(
+        const std::vector<Kinesis::Vision::ResolvedSequence>& resolved,
+        const std::vector<Kinesis::Vision::VisionResult>& results,
+        uint32_t w, uint32_t h);
+
+    /** @brief Copy @p image into this analyzer's own frame image. Null on failure. */
+    [[nodiscard]] std::shared_ptr<Core::VKImage> hold_frame(const std::shared_ptr<Core::VKImage>& image);
+
+    /**
+     * @brief State of the run advance() is stepping through.
+     *
+     * resolved is fixed for the whole run: a suspended executor keeps a
+     * pointer to the sequence it is walking.
+     */
+    struct StepRun {
+        std::vector<Kinesis::Vision::ResolvedSequence> resolved;
+        std::vector<Kinesis::Vision::VisionResult> results;
+        uint32_t w {};
+        uint32_t h {};
+        bool active {};
+    };
 
     /**
      * @brief Dispatch track_reduce.comp over tracks and fill
@@ -207,6 +265,10 @@ private:
     std::shared_ptr<Core::VKImage> m_upload_image;
     uint32_t m_upload_w { 0 };
     uint32_t m_upload_h { 0 };
+
+    StepRun m_run;
+    Portal::Graphics::ImageCacheEntry m_frame_cache;
+    std::shared_ptr<Core::VKImage> m_frame;
 };
 
 } // namespace MayaFlux::Yantra

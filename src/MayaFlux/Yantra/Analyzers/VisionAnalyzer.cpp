@@ -77,6 +77,7 @@ void VisionAnalyzer::reset()
         if (executor)
             executor->reset();
     }
+    m_run = {};
 }
 
 VisionGpuExecutor* VisionAnalyzer::get_executor() const
@@ -437,41 +438,119 @@ Kinesis::Vision::VisionAnalysis VisionAnalyzer::analyze_vision(
     return analyze_resolved(image);
 }
 
+std::optional<Kinesis::Vision::VisionAnalysis> VisionAnalyzer::advance(
+    const std::shared_ptr<Core::VKImage>& image)
+{
+    if (!m_run.active) {
+        if (!image)
+            return std::nullopt;
+
+        m_frame = hold_frame(image);
+        if (!m_frame)
+            return std::nullopt;
+
+        m_run.resolved = Kinesis::Vision::resolve(m_query);
+        for (auto& entry : m_run.resolved) {
+            for (auto& step : entry.sequence.steps) {
+                if (step.op == Kinesis::Vision::VisionOp::TrackKeypoints
+                    || step.op == Kinesis::Vision::VisionOp::OpticalFlowDense)
+                    step.deferred = true;
+            }
+        }
+
+        m_run.results.clear();
+        m_run.results.reserve(m_run.resolved.size());
+        m_run.w = m_frame->get_width();
+        m_run.h = m_frame->get_height();
+        m_run.active = true;
+        m_label_lane = 0;
+    }
+
+    const size_t lane = m_run.results.size();
+    if (lane < m_run.resolved.size() && !run_lane(lane, m_run.resolved, m_run.results, m_frame))
+        return std::nullopt;
+
+    if (m_run.results.size() < m_run.resolved.size())
+        return std::nullopt;
+
+    m_run.active = false;
+    return assemble(m_run.resolved, m_run.results, m_run.w, m_run.h);
+}
+
+std::shared_ptr<Core::VKImage> VisionAnalyzer::hold_frame(const std::shared_ptr<Core::VKImage>& image)
+{
+    auto& loom = Portal::Graphics::TextureLoom::instance();
+    auto held = loom.acquire_cached_image(m_frame_cache, {
+                                                             .width = image->get_width(),
+                                                             .height = image->get_height(),
+                                                             .format = Portal::Graphics::ImageFormat::RGBA32F,
+                                                             .kind = Portal::Graphics::ImageKey::Kind::STORAGE_2D,
+                                                         });
+
+    constexpr auto filter = Portal::Graphics::FilterMode::NEAREST;
+    if (!held || !loom.can_blit(image, held, filter) || !loom.blit_layer(image, held, { .filter = filter }))
+        return nullptr;
+    return held;
+}
+
 Kinesis::Vision::VisionAnalysis VisionAnalyzer::analyze_resolved(
     const std::shared_ptr<Core::VKImage>& image)
 {
-    const auto w = image->get_width();
-    const auto h = image->get_height();
     const auto resolved = Kinesis::Vision::resolve(m_query);
 
-    if (m_executors.size() < resolved.size())
-        m_executors.resize(resolved.size());
-
-    Kinesis::Vision::VisionAnalysis analysis;
-    std::optional<std::vector<Kinesis::Vision::TrackResult>> raw_tracks;
-    std::optional<std::vector<Kinesis::Vision::Keypoint>> raw_keypoints;
     std::vector<Kinesis::Vision::VisionResult> results;
     results.reserve(resolved.size());
     m_label_lane = 0;
 
     for (size_t lane = 0; lane < resolved.size(); ++lane) {
-        const auto& entry = resolved[lane];
-        auto& executor = m_executors[lane];
-        if (!executor)
-            executor = std::make_unique<VisionGpuExecutor>();
-
-        if (std::ranges::any_of(entry.sequence.steps,
-                [](const auto& step) { return step.op == Kinesis::Vision::VisionOp::ConnectedComponents; }))
-            m_label_lane = lane;
-
-        const auto seeded = entry.seed_field ? entry.seed_field(results[entry.seed_lane]) : nullptr;
-        const auto& source = seeded ? seeded : image;
-        auto result = executor->run(entry.sequence, source, source->get_width(), source->get_height());
-
-        if (result.status != Kinesis::Vision::VisionStatus::COMPLETE) {
+        if (!run_lane(lane, resolved, results, image))
             results.emplace_back();
-            continue;
-        }
+    }
+
+    return assemble(resolved, results, image->get_width(), image->get_height());
+}
+
+bool VisionAnalyzer::run_lane(
+    size_t lane,
+    const std::vector<Kinesis::Vision::ResolvedSequence>& resolved,
+    std::vector<Kinesis::Vision::VisionResult>& results,
+    const std::shared_ptr<Core::VKImage>& image)
+{
+    if (m_executors.size() < resolved.size())
+        m_executors.resize(resolved.size());
+
+    const auto& entry = resolved[lane];
+    auto& executor = m_executors[lane];
+    if (!executor)
+        executor = std::make_unique<VisionGpuExecutor>();
+
+    if (std::ranges::any_of(entry.sequence.steps,
+            [](const auto& step) { return step.op == Kinesis::Vision::VisionOp::ConnectedComponents; }))
+        m_label_lane = lane;
+
+    const auto seeded = entry.seed_field ? entry.seed_field(results[entry.seed_lane]) : nullptr;
+    const auto& source = seeded ? seeded : image;
+    auto result = executor->run(entry.sequence, source, source->get_width(), source->get_height());
+
+    if (result.status != Kinesis::Vision::VisionStatus::COMPLETE)
+        return false;
+
+    results.push_back(std::move(result));
+    return true;
+}
+
+Kinesis::Vision::VisionAnalysis VisionAnalyzer::assemble(
+    const std::vector<Kinesis::Vision::ResolvedSequence>& resolved,
+    const std::vector<Kinesis::Vision::VisionResult>& results,
+    uint32_t w, uint32_t h)
+{
+    Kinesis::Vision::VisionAnalysis analysis;
+    std::optional<std::vector<Kinesis::Vision::TrackResult>> raw_tracks;
+    std::optional<std::vector<Kinesis::Vision::Keypoint>> raw_keypoints;
+
+    for (size_t lane = 0; lane < results.size(); ++lane) {
+        const auto& result = results[lane];
+        const auto& entry = resolved[lane];
 
         collect_into(raw_tracks, raw_keypoints, analysis, result);
 
@@ -479,8 +558,6 @@ Kinesis::Vision::VisionAnalysis VisionAnalyzer::analyze_resolved(
             const auto& gray = result.gray || !entry.seed_field ? result.gray : results[entry.seed_lane].gray;
             analysis.measure_appearance = measure_appearance(result, gray, w, h);
         }
-
-        results.push_back(std::move(result));
     }
 
     if (raw_tracks && m_context.track_objects) {
@@ -515,6 +592,12 @@ VisionAnalyzer::output_type VisionAnalyzer::run_operation(const input_type& inpu
 {
     output_type output;
     output.metadata = input.metadata;
+
+    if (const auto image = Kakshya::get_metadata_value<std::shared_ptr<Core::VKImage>>(input.metadata, "vision_image");
+        image && *image) {
+        output.metadata["vision_analysis"] = analyze_vision(*image);
+        return output;
+    }
 
     if (!input.data) {
         output.metadata["error"] = std::string("VisionAnalyzer: missing container");
