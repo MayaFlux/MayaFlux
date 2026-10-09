@@ -32,20 +32,24 @@ using VisionIO = ContainerIO;
  * @brief How a live workflow run is paced and which frames it delivers.
  *
  * With @c interval_seconds above zero the run takes a frame every interval on
- * the graphics clock; at zero the work sets the pace. With @c extract_from set,
- * each result is taken from that buffer's frame of the same moment instead of
- * the analyzed frame.
+ * the graphics clock; at zero the work sets the pace.
+ *
+ * With @c apply_to set, the source is still what gets analyzed, but each
+ * analysis is applied to @c apply_to's frame of the same moment: crops,
+ * samples, annotation and tone come from that buffer instead of the analyzed
+ * frame. The buffer is read live, frame by frame, not once; when the work
+ * sets the pace its frame is copied in the tick the analyzed frame is taken.
  */
 struct LiveConfig {
     double interval_seconds {};
-    std::shared_ptr<Buffers::TextureBuffer> extract_from;
+    std::shared_ptr<Buffers::TextureBuffer> apply_to;
 };
 
 /**
  * @struct WorkflowBufferConfig
  * @brief What VisionWorkflow::process_to_buffer() runs: the stream to analyze,
  *        the query and extraction, where the result is drawn, and optionally
- *        how the run is paced and which buffer it extracts from.
+ *        how the run is paced and which buffer the analysis is applied to.
  */
 struct WorkflowBufferConfig {
     std::shared_ptr<Kakshya::VideoStreamContainer> source;
@@ -59,8 +63,8 @@ struct WorkflowBufferConfig {
  * @struct WorkflowContainerConfig
  * @brief What VisionWorkflow::process_to_live_container() runs: the stream to
  *        analyze, the query and extraction, the collection it records into,
- *        and optionally how the run is paced and which buffer it extracts
- *        from.
+ *        and optionally how the run is paced and which buffer the analysis is
+ *        applied to.
  */
 struct WorkflowContainerConfig {
     std::shared_ptr<Kakshya::VideoStreamContainer> source;
@@ -115,7 +119,7 @@ public:
      * live config, or with an interval of zero, the work sets the pace: the
      * analysis advances one sequence per graphics tick without waiting on
      * deferred flow steps. A stream that is not looping stops the run at its
-     * end. The output buffer takes the source's size, or the extract_from
+     * end. The output buffer takes the source's size, or the apply_to
      * buffer's when one is set.
      *
      * @return The output buffer, or null with a logged reason when the
@@ -131,7 +135,7 @@ public:
      * Paced and sourced as process_to_buffer(). Each extracted image is
      * copied into the next layer; frames whose extraction gives no image add
      * nothing. A width or height of zero in the collection spec takes the
-     * source's, or the extract_from buffer's. Recording stops for good at the
+     * source's, or the apply_to buffer's. Recording stops for good at the
      * stream's end, once the collection is full under its byte cap, or when
      * the caller releases it. A ring keeps the newest frames instead.
      *

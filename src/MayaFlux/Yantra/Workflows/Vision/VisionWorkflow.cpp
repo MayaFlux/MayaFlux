@@ -127,15 +127,15 @@ namespace {
      *        advanced one sequence per graphics frame, signalled as each
      *        completes.
      *
-     * With @p extract_from, its frame is copied in the tick the analyzed
-     * frame is taken, and that copy is what the result is extracted from.
+     * With @p apply_to, its frame is copied in the tick the analyzed frame
+     * is taken, and the analysis is applied to that copy.
      */
     void fit_results(
         Vruta::TaskScheduler& scheduler,
         const FrameResults& results,
         const std::shared_ptr<VisionAnalyzer>& analyzer,
         const std::shared_ptr<Buffers::TextureBuffer>& frames,
-        const std::shared_ptr<Buffers::TextureBuffer>& extract_from,
+        const std::shared_ptr<Buffers::TextureBuffer>& apply_to,
         const std::shared_ptr<Kakshya::SignalSourceContainer>& source,
         const std::function<bool()>& ended,
         const std::string& name)
@@ -145,7 +145,7 @@ namespace {
         auto mid_run = std::make_shared<bool>(false);
 
         Kriya::frame_results<VisionIO>(scheduler, results,
-            [analyzer, frames, extract_from, source, ended, held, companion, mid_run]() -> std::optional<VisionIO> {
+            [analyzer, frames, apply_to, source, ended, held, companion, mid_run]() -> std::optional<VisionIO> {
                 if (ended())
                     return std::nullopt;
 
@@ -153,8 +153,8 @@ namespace {
                 if (!*mid_run) {
                     if (!image)
                         return std::nullopt;
-                    if (extract_from)
-                        *companion = hold_copy(*held, extract_from->get_gpu_texture());
+                    if (apply_to)
+                        *companion = hold_copy(*held, apply_to->get_gpu_texture());
                     *mid_run = true;
                 }
 
@@ -163,7 +163,7 @@ namespace {
                     return std::nullopt;
                 *mid_run = false;
 
-                const auto target = extract_from ? *companion : analyzer->get_frame();
+                const auto target = apply_to ? *companion : analyzer->get_frame();
                 if (!target)
                     return std::nullopt;
                 return analyzed_frame(source, *analysis, target);
@@ -175,22 +175,22 @@ namespace {
      * @brief Analyses of @p frames into @p results every @p interval_seconds
      *        on the graphics clock, each run to completion when it starts.
      *
-     * With @p extract_from, the result is extracted from its frame in the
-     * same tick.
+     * With @p apply_to, the analysis is applied to its frame of the same
+     * tick.
      */
     void interval_results(
         Vruta::TaskScheduler& scheduler,
         const FrameResults& results,
         const std::shared_ptr<VisionAnalyzer>& analyzer,
         const std::shared_ptr<Buffers::TextureBuffer>& frames,
-        const std::shared_ptr<Buffers::TextureBuffer>& extract_from,
+        const std::shared_ptr<Buffers::TextureBuffer>& apply_to,
         const std::shared_ptr<Kakshya::SignalSourceContainer>& source,
         double interval_seconds,
         const std::function<bool()>& ended,
         const std::string& name)
     {
         scheduler.add_task(Kriya::metro(interval_seconds,
-                               [weak_results = std::weak_ptr(results), analyzer, frames, extract_from, source, ended]() {
+                               [weak_results = std::weak_ptr(results), analyzer, frames, apply_to, source, ended]() {
                                    if (ended())
                                        return;
                                    const auto target = weak_results.lock();
@@ -198,10 +198,10 @@ namespace {
                                    if (!target || !image)
                                        return;
 
-                                   const auto extracted_from = extract_from ? extract_from->get_gpu_texture() : image;
-                                   if (!extracted_from)
+                                   const auto applied = apply_to ? apply_to->get_gpu_texture() : image;
+                                   if (!applied)
                                        return;
-                                   target->signal(analyzed_frame(source, analyzer->analyze_vision(image), extracted_from));
+                                   target->signal(analyzed_frame(source, analyzer->analyze_vision(image), applied));
                                },
                                Vruta::ProcessingToken::FRAME_ACCURATE),
             name);
@@ -210,15 +210,16 @@ namespace {
     /**
      * @brief Producer of analyses of @p source's frames into @p results,
      *        paced by @p interval_seconds or, at zero, by the work, as a task
-     *        named @p name. Results carry the image to extract from: the
-     *        analyzed frame, or @p extract_from's frame of the same moment.
+     *        named @p name. Results carry the image the analysis is applied
+     *        to: the analyzed frame, or @p apply_to's frame of the same
+     *        moment.
      */
     void start_producer(
         Vruta::TaskScheduler& scheduler,
         const FrameResults& results,
         const std::shared_ptr<Kakshya::VideoStreamContainer>& source,
         const std::shared_ptr<Buffers::TextureBuffer>& frames,
-        const std::shared_ptr<Buffers::TextureBuffer>& extract_from,
+        const std::shared_ptr<Buffers::TextureBuffer>& apply_to,
         const std::shared_ptr<VisionMatrix>& matrix,
         double interval_seconds,
         const std::function<bool()>& ended,
@@ -228,9 +229,9 @@ namespace {
         const auto& analyzer = matrix->analyzer();
 
         if (interval_seconds > 0.0) {
-            interval_results(scheduler, results, analyzer, frames, extract_from, container, interval_seconds, ended, name);
+            interval_results(scheduler, results, analyzer, frames, apply_to, container, interval_seconds, ended, name);
         } else {
-            fit_results(scheduler, results, analyzer, frames, extract_from, container, ended, name);
+            fit_results(scheduler, results, analyzer, frames, apply_to, container, ended, name);
         }
     }
 
@@ -408,9 +409,9 @@ std::shared_ptr<Buffers::TextureBuffer> VisionWorkflow::process_to_buffer(
         return nullptr;
 
     const auto live = config.live.value_or(LiveConfig {});
-    const auto& extract_from = live.extract_from;
-    const uint32_t width = extract_from ? extract_from->get_width() : config.source->get_width();
-    const uint32_t height = extract_from ? extract_from->get_height() : config.source->get_height();
+    const auto& apply_to = live.apply_to;
+    const uint32_t width = apply_to ? apply_to->get_width() : config.source->get_width();
+    const uint32_t height = apply_to ? apply_to->get_height() : config.source->get_height();
 
     auto output = buffers->create_graphics_buffer<Buffers::TextureBuffer>(
         Buffers::ProcessingToken::GRAPHICS_BACKEND, width, height, Portal::Graphics::ImageFormat::RGBA8);
@@ -429,12 +430,12 @@ std::shared_ptr<Kakshya::TextureCollection> VisionWorkflow::process_to_live_cont
         return nullptr;
 
     const auto live = config.live.value_or(LiveConfig {});
-    const auto& extract_from = live.extract_from;
+    const auto& apply_to = live.apply_to;
 
     auto spec = config.collection;
     if (spec.width == 0 || spec.height == 0) {
-        spec.width = extract_from ? extract_from->get_width() : config.source->get_width();
-        spec.height = extract_from ? extract_from->get_height() : config.source->get_height();
+        spec.width = apply_to ? apply_to->get_width() : config.source->get_width();
+        spec.height = apply_to ? apply_to->get_height() : config.source->get_height();
     }
 
     auto collection = std::make_shared<Kakshya::TextureCollection>(spec);
@@ -463,7 +464,7 @@ void VisionWorkflow::start(
     auto event = Kriya::subscribe(*m_event_manager.lock(), results, std::move(consumer));
     keep(name, event);
 
-    start_producer(*m_scheduler.lock(), results, source, frames, live.extract_from, matrix, live.interval_seconds,
+    start_producer(*m_scheduler.lock(), results, source, frames, live.apply_to, matrix, live.interval_seconds,
         stop_at_end(source, m_scheduler, m_event_manager, event, name), name);
 }
 
