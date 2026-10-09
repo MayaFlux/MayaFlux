@@ -345,6 +345,22 @@ public:
     }
 
     /**
+     * @brief Add @p n default-constructed Seqlock instances after the
+     *        existing slots.
+     *
+     * Existing slots keep their address and state. Not concurrent-safe, like
+     * resize().
+     *
+     * @param n Number of slots to add.
+     */
+    void extend(size_t n)
+    {
+        m_slots.reserve(m_slots.size() + n);
+        for (size_t i = 0; i < n; ++i)
+            m_slots.emplace_back(std::make_unique<Seqlock>());
+    }
+
+    /**
      * @brief Number of slots.
      */
     [[nodiscard]] size_t size() const noexcept { return m_slots.size(); }
