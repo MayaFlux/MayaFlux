@@ -484,7 +484,7 @@ Kriya::ChimeraBuilder VisionWorkflow::process_to_stream(const WorkflowStreamConf
     auto pipeline = Kriya::BufferPipeline::create(*m_scheduler.lock(), buffers, m_io_manager.lock());
 
     const auto name = run_name("stream");
-    const auto consumer = start(config.source, frames, config.live.value_or(LiveConfig {}), config.matrix, name,
+    start(config.source, frames, config.live.value_or(LiveConfig {}), config.matrix, name,
         [matrix = config.matrix, record = config.record](const VisionIO& frame) {
             const auto analysis = Kakshya::get_metadata_value<Kinesis::Vision::VisionAnalysis>(frame.metadata, "vision_analysis");
             const auto image = Kakshya::get_metadata_value<std::shared_ptr<Core::VKImage>>(frame.metadata, "vision_image");
@@ -499,30 +499,49 @@ Kriya::ChimeraBuilder VisionWorkflow::process_to_stream(const WorkflowStreamConf
                 if (const auto picked = pick(*matrix))
                     collection->append(picked);
             }
+        },
+        [weak_pipeline = std::weak_ptr(pipeline), seen_running = std::make_shared<bool>(false)]() {
+            const auto chimera_pipeline = weak_pipeline.lock();
+            if (!chimera_pipeline)
+                return true;
+            if (chimera_pipeline->is_running()) {
+                *seen_running = true;
+                return false;
+            }
+            return *seen_running;
         });
-
-    pipeline->on_complete([scheduler = m_scheduler, events = m_event_manager, weak_consumer = std::weak_ptr(consumer), name]() {
-        stop_run(scheduler, events, weak_consumer, name);
-    });
 
     return { std::move(array), std::move(pipeline) };
 }
 
-std::shared_ptr<Vruta::Event> VisionWorkflow::start(
+void VisionWorkflow::start(
     const std::shared_ptr<Kakshya::VideoStreamContainer>& source,
     const std::shared_ptr<Buffers::TextureBuffer>& frames,
     const LiveConfig& live,
     const std::shared_ptr<VisionMatrix>& matrix,
     const std::string& name,
-    std::function<void(const VisionIO&)> consumer)
+    std::function<void(const VisionIO&)> consumer,
+    std::function<bool()> stop_when)
 {
     auto results = std::make_shared<Vruta::BroadcastSource<VisionIO>>();
     auto event = Kriya::subscribe(*m_event_manager.lock(), results, std::move(consumer));
     keep(name, event);
 
+    auto ended = stop_at_end(source, m_scheduler, m_event_manager, event, name);
+    if (stop_when) {
+        ended = [at_end = std::move(ended), stop_when = std::move(stop_when),
+                    scheduler = m_scheduler, events = m_event_manager, weak_consumer = std::weak_ptr(event), name]() {
+            if (at_end())
+                return true;
+            if (!stop_when())
+                return false;
+            stop_run(scheduler, events, weak_consumer, name);
+            return true;
+        };
+    }
+
     start_producer(*m_scheduler.lock(), results, source, frames, live.apply_to, matrix, live.interval_seconds,
-        stop_at_end(source, m_scheduler, m_event_manager, event, name), name);
-    return event;
+        ended, name);
 }
 
 std::shared_ptr<Kakshya::TextureCollection> VisionWorkflow::process_to_container(

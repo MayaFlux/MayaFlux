@@ -73,11 +73,42 @@ public:
     [[nodiscard]] const std::shared_ptr<Core::VKImage>& extraction() const { return m_extraction; }
 
     /**
+     * @brief Analyses per second arriving through execute() and extract(),
+     *        smoothed over recent calls. Zero before the second call.
+     *
+     * The rate a collection recorded once per analysis is read at, for
+     * ChimeraBuilder::from(collection, frame_rate) or Chimera::set() when the
+     * work sets the pace. Setting a layer again moves a freely playing layer
+     * to the newest frame; a lagged layer keeps its lag.
+     */
+    [[nodiscard]] double analysis_rate() const { return m_rate; }
+
+    /**
      * @brief The VisionResult of every sequence the analyzer's last completed
      *        analysis ran, with each step's image named by its op. Valid until
      *        the next analysis.
      */
     [[nodiscard]] const std::vector<Kinesis::Vision::VisionResult>& results() { return analyzer()->get_results(); }
+
+    /**
+     * @brief The VisionResult of the sequence that served @p intent in the
+     *        last completed analysis, or null when the query has no such
+     *        sequence or nothing has completed yet.
+     *
+     * TrackObjects and EstimateMotion share one sequence. Images that hold
+     * their own op's output at the end of each sequence:
+     * - FindElements: gray or rgba_to_hsv, the threshold image.
+     * - DetectEdges: canny. Its gray holds the edges too.
+     * - MeasureAppearance: gray, sobel.
+     * - DetectFeatures, TrackObjects: harris_response. Their gray holds
+     *   blurred gradients.
+     * - EstimateMotion: flow, flow_visualization, and gray when TrackObjects
+     *   is not set.
+     *
+     * The result stays valid however long it is held. Its images are rewritten
+     * in place when that sequence runs again.
+     */
+    [[nodiscard]] std::shared_ptr<const Kinesis::Vision::VisionResult> result(Kinesis::Vision::VisionIntent intent);
 
     /** @brief Analyze @p image with the matrix's query. */
     [[nodiscard]] Kinesis::Vision::VisionAnalysis analyze(const std::shared_ptr<Core::VKImage>& image);
@@ -96,6 +127,10 @@ private:
     Kinesis::Vision::VisionAnalysis m_analysis;
     std::shared_ptr<Core::VKImage> m_frame;
     std::shared_ptr<Core::VKImage> m_extraction;
+    std::optional<std::chrono::steady_clock::time_point> m_last_call;
+    double m_rate {};
+
+    void count_call();
 };
 
 } // namespace MayaFlux::Yantra::Vision

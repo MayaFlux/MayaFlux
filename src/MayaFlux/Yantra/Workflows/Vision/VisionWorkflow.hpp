@@ -183,12 +183,13 @@ public:
      * the rendering are declared on the returned builder. Each analysis is
      * handed to the matrix's extract(), so its analysis(), frame() and
      * extraction() follow the run; the images of every sequence are read from
-     * its results(). Then each record entry appends its picked image, all
-     * together once per analysis, at the run's pace: one per interval, or as
-     * often as the work completes. The run stops as the other live runs do,
-     * and also when the Chimera is stopped or dropped. The Chimera outlives the run and
-     * keeps its last images. Replacing the pipeline's on_complete callback
-     * removes the second stop.
+     * its results() or, by intent, result(). Then each record entry appends
+     * its picked image, all together once per analysis, at the run's pace:
+     * one per interval, or as often as the work completes, which the matrix
+     * reports as analysis_rate(). The run stops as the other live runs do,
+     * and also once the Chimera that was started from the builder is stopped
+     * or dropped, or the builder is dropped unstarted. The Chimera outlives
+     * the run and keeps its last images.
      *
      * @return The builder, or one without an array when the engine's managers
      *         are gone, the matrix is null or the stream cannot be hooked.
@@ -249,16 +250,17 @@ private:
 
     /**
      * @brief Subscribe @p consumer and start the producer named @p name,
-     *        which stops the run at @p source's end.
-     * @return The subscribed consumer event.
+     *        which stops the run at @p source's end, or once @p stop_when
+     *        reports true when it is given.
      */
-    std::shared_ptr<Vruta::Event> start(
+    void start(
         const std::shared_ptr<Kakshya::VideoStreamContainer>& source,
         const std::shared_ptr<Buffers::TextureBuffer>& frames,
         const LiveConfig& live,
         const std::shared_ptr<VisionMatrix>& matrix,
         const std::string& name,
-        std::function<void(const VisionIO&)> consumer);
+        std::function<void(const VisionIO&)> consumer,
+        std::function<bool()> stop_when = {});
 };
 
 } // namespace MayaFlux::Yantra::Vision

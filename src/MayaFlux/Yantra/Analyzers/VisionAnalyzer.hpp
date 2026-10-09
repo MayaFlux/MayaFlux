@@ -118,7 +118,16 @@ public:
      * belong to that sequence's executor: they are valid until the next
      * analysis runs. A sequence that failed leaves an empty result.
      */
-    [[nodiscard]] const std::vector<Kinesis::Vision::VisionResult>& get_results() const { return m_results; }
+    [[nodiscard]] const std::vector<Kinesis::Vision::VisionResult>& get_results() const { return *m_results; }
+
+    /**
+     * @brief The same results, owned: they stay valid after later analyses,
+     *        which replace them with new ones.
+     *
+     * The images are the executors' own and are rewritten in place when
+     * their sequence runs again.
+     */
+    [[nodiscard]] std::shared_ptr<const std::vector<Kinesis::Vision::VisionResult>> get_shared_results() const { return m_results; }
 
     /**
      * @brief Abandon outstanding work and clear retained executor state.
@@ -277,7 +286,9 @@ private:
     uint32_t m_upload_h { 0 };
 
     StepRun m_run;
-    std::vector<Kinesis::Vision::VisionResult> m_results;
+    std::shared_ptr<const std::vector<Kinesis::Vision::VisionResult>> m_results {
+        std::make_shared<const std::vector<Kinesis::Vision::VisionResult>>()
+    };
     Portal::Graphics::ImageCacheEntry m_frame_cache;
     std::shared_ptr<Core::VKImage> m_frame;
 };
