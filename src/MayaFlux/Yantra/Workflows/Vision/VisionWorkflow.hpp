@@ -20,7 +20,7 @@ class TextureBuffer;
 }
 
 namespace MayaFlux::Kakshya {
-class CameraContainer;
+class VideoStreamContainer;
 }
 
 namespace MayaFlux::Yantra::Vision {
@@ -29,14 +29,16 @@ using VisionIO = ContainerIO;
 
 /**
  * @class VisionWorkflow
- * @brief Runs vision queries over camera frames, image lists and texture
+ * @brief Runs vision queries over video streams, image lists and texture
  *        containers, delivering what an extraction takes from each frame.
  *
  * The live methods set a run going on the engine: an analysis producer on the
  * scheduler and a delivering consumer on the event manager. They need a
- * constructed workflow, and keep running until stop_all(), until the workflow
- * is destroyed, or until engine shutdown. The managers are held weakly, so a
- * workflow kept past shutdown keeps nothing alive and stops nothing.
+ * constructed workflow, and accept any video stream: a camera, a video file
+ * or a dynamic stream. A run keeps going until its stream reaches its end,
+ * stop_all(), the workflow's destruction, or engine shutdown. The managers
+ * are held weakly, so a workflow kept past shutdown keeps nothing alive and
+ * stops nothing.
  *
  * The finite methods are static: they run to completion on the calling
  * thread and need no engine, so call them where no other vision work is
@@ -63,42 +65,92 @@ public:
     VisionWorkflow& operator=(VisionWorkflow&&) = delete;
 
     /**
-     * @brief Run @p query on @p camera live and show what @p extract takes
+     * @brief Run @p query on @p source live and show what @p extract takes
      *        from each frame in a texture buffer rendered with @p render.
      *
-     * With @p interval_seconds above zero, the camera's current GPU frame is
+     * With @p interval_seconds above zero, the stream's current GPU frame is
      * analyzed and extracted every interval on the graphics clock. At zero
      * the work sets the pace: the analysis advances one sequence per graphics
      * tick without waiting on deferred flow steps, and each completed
-     * analysis is extracted from the frame it was taken on. The camera is
-     * hooked to a buffer unless it already has one.
+     * analysis is extracted from the frame it was taken on. The stream is
+     * hooked to a buffer unless it already has one. A stream that is not
+     * looping stops the run at its end.
      *
      * @return The output buffer, or null with a logged reason when the
-     *         engine's managers are gone or the camera cannot be hooked.
+     *         engine's managers are gone or the stream cannot be hooked.
      */
     [[nodiscard]] std::shared_ptr<Buffers::TextureBuffer> process_to_buffer(
-        const std::shared_ptr<Kakshya::CameraContainer>& camera,
+        const std::shared_ptr<Kakshya::VideoStreamContainer>& source,
         Kinesis::Vision::VisionQuery query,
         VisionExtractMode extract,
         const Portal::Graphics::RenderConfig& render,
         double interval_seconds = 0.0);
 
     /**
-     * @brief Run @p query on @p camera live and record what @p extract takes
+     * @brief Run @p query on @p source live and show what @p extract takes,
+     *        with each analysis, from @p extract_from's frame of the same
+     *        moment.
+     *
+     * Paced as the single-source overload, and the output buffer takes
+     * @p extract_from's size. @p extract_from's frame is taken in the tick
+     * the analyzed frame is taken; when the work sets the pace it is copied
+     * then, so a later rewrite of the buffer does not reach the extraction.
+     * A tick where @p extract_from has no GPU texture delivers nothing. Any
+     * texture buffer serves: another stream, a still image, or a buffer
+     * another run writes. Extractions that read boxes, tracks, keypoints or
+     * appearance statistics carry over at any size; edge and motion masks
+     * read images of the analyzed frame.
+     *
+     * @return The output buffer, or null with a logged reason when
+     *         @p extract_from is null, the engine's managers are gone, or the
+     *         stream cannot be hooked.
+     */
+    [[nodiscard]] std::shared_ptr<Buffers::TextureBuffer> process_to_buffer(
+        const std::shared_ptr<Kakshya::VideoStreamContainer>& source,
+        const std::shared_ptr<Buffers::TextureBuffer>& extract_from,
+        Kinesis::Vision::VisionQuery query,
+        VisionExtractMode extract,
+        const Portal::Graphics::RenderConfig& render,
+        double interval_seconds = 0.0);
+
+    /**
+     * @brief Run @p query on @p source live and record what @p extract takes
      *        from each frame into a growing collection.
      *
      * Paced as process_to_buffer(). Each extracted image is copied into the
      * next layer; frames whose extraction gives no image add nothing. A width
-     * or height of zero in @p spec takes the camera's. Recording stops for
-     * good once the collection is full under @p spec's byte cap, or when the
-     * caller releases it. A ring in @p spec keeps the newest frames instead.
+     * or height of zero in @p spec takes the stream's. Recording stops for
+     * good at the stream's end, once the collection is full under @p spec's
+     * byte cap, or when the caller releases it. A ring in @p spec keeps the
+     * newest frames instead of filling.
      *
      * @return The collection, filling as frames arrive, or null with a logged
-     *         reason when the engine's managers are gone or the camera cannot
+     *         reason when the engine's managers are gone or the stream cannot
      *         be hooked.
      */
     [[nodiscard]] std::shared_ptr<Kakshya::TextureCollection> process_to_live_container(
-        const std::shared_ptr<Kakshya::CameraContainer>& camera,
+        const std::shared_ptr<Kakshya::VideoStreamContainer>& source,
+        Kinesis::Vision::VisionQuery query,
+        VisionExtractMode extract,
+        double interval_seconds = 0.0,
+        Kakshya::TextureCollectionSpec spec = {});
+
+    /**
+     * @brief Run @p query on @p source live and record what @p extract takes,
+     *        with each analysis, from @p extract_from's frame of the same
+     *        moment.
+     *
+     * As the single-source overload, with the frames taken from
+     * @p extract_from as in process_to_buffer(). A width or height of zero in
+     * @p spec takes @p extract_from's.
+     *
+     * @return The collection, or null with a logged reason when
+     *         @p extract_from is null, the engine's managers are gone, or the
+     *         stream cannot be hooked.
+     */
+    [[nodiscard]] std::shared_ptr<Kakshya::TextureCollection> process_to_live_container(
+        const std::shared_ptr<Kakshya::VideoStreamContainer>& source,
+        const std::shared_ptr<Buffers::TextureBuffer>& extract_from,
         Kinesis::Vision::VisionQuery query,
         VisionExtractMode extract,
         double interval_seconds = 0.0,
@@ -150,11 +202,40 @@ private:
     /** @brief Per live run: its producer task's name and its consumer. */
     std::vector<std::pair<std::string, std::weak_ptr<Vruta::Event>>> m_runs;
 
-    [[nodiscard]] std::shared_ptr<Buffers::TextureBuffer> camera_frames(
-        const std::shared_ptr<Kakshya::CameraContainer>& camera,
+    [[nodiscard]] std::shared_ptr<Buffers::TextureBuffer> source_frames(
+        const std::shared_ptr<Kakshya::VideoStreamContainer>& source,
         std::string_view caller) const;
 
     void keep(const std::string& name, const std::shared_ptr<Vruta::Event>& consumer);
+
+    /**
+     * @brief Subscribe @p consumer and start the producer named @p name,
+     *        which stops the run at @p source's end.
+     */
+    void start(
+        const std::shared_ptr<Kakshya::VideoStreamContainer>& source,
+        const std::shared_ptr<Buffers::TextureBuffer>& frames,
+        const std::shared_ptr<Buffers::TextureBuffer>& extract_from,
+        const std::shared_ptr<VisionMatrix>& matrix,
+        double interval_seconds,
+        const std::string& name,
+        std::function<void(const VisionIO&)> consumer);
+
+    std::shared_ptr<Buffers::TextureBuffer> start_buffer(
+        const std::shared_ptr<Kakshya::VideoStreamContainer>& source,
+        const std::shared_ptr<Buffers::TextureBuffer>& extract_from,
+        const Kinesis::Vision::VisionQuery& query,
+        VisionExtractMode extract,
+        const Portal::Graphics::RenderConfig& render,
+        double interval_seconds);
+
+    std::shared_ptr<Kakshya::TextureCollection> start_live_container(
+        const std::shared_ptr<Kakshya::VideoStreamContainer>& source,
+        const std::shared_ptr<Buffers::TextureBuffer>& extract_from,
+        const Kinesis::Vision::VisionQuery& query,
+        VisionExtractMode extract,
+        double interval_seconds,
+        Kakshya::TextureCollectionSpec spec);
 };
 
 } // namespace MayaFlux::Yantra::Vision

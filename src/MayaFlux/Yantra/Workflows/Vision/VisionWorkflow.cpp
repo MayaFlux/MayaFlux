@@ -72,72 +72,171 @@ namespace {
     }
 
     /**
-     * @brief Analyses of @p frames paced by the work: advanced one sequence
-     *        per graphics frame, signalled as each completes.
+     * @brief Check run by the producer each tick: once @p source is at its
+     *        end, cancels the producer named @p name and @p consumer, and
+     *        reports true.
      */
-    FrameResults fit_results(
-        Vruta::TaskScheduler& scheduler,
-        const std::shared_ptr<VisionAnalyzer>& analyzer,
-        const std::shared_ptr<Buffers::TextureBuffer>& frames,
-        const std::shared_ptr<Kakshya::SignalSourceContainer>& source,
+    std::function<bool()> stop_at_end(
+        const std::shared_ptr<Kakshya::VideoStreamContainer>& source,
+        const std::weak_ptr<Vruta::TaskScheduler>& scheduler,
+        const std::weak_ptr<Vruta::EventManager>& events,
+        const std::weak_ptr<Vruta::Event>& consumer,
         const std::string& name)
     {
-        return Kriya::frame_results<VisionIO>(scheduler,
-            [analyzer, frames, source]() -> std::optional<VisionIO> {
-                const auto analysis = analyzer->advance(frames->get_gpu_texture());
+        return [weak_source = std::weak_ptr(source), scheduler, events, consumer, name]() {
+            const auto stream = weak_source.lock();
+            if (stream && !stream->is_at_end())
+                return false;
+
+            stop_producer(scheduler, name);
+            const auto manager = events.lock();
+            if (const auto event = consumer.lock(); event && manager)
+                manager->cancel_event(event);
+            return true;
+        };
+    }
+
+    /**
+     * @brief Copy of @p image in an image @p cache keeps, so it survives the
+     *        source being rewritten. Null when @p image is null or cannot be
+     *        blitted.
+     */
+    std::shared_ptr<Core::VKImage> hold_copy(
+        Portal::Graphics::ImageCacheEntry& cache,
+        const std::shared_ptr<Core::VKImage>& image)
+    {
+        if (!image)
+            return nullptr;
+
+        auto& loom = Portal::Graphics::TextureLoom::instance();
+        auto held = loom.acquire_cached_image(cache, {
+                                                         .width = image->get_width(),
+                                                         .height = image->get_height(),
+                                                         .format = Portal::Graphics::ImageFormat::RGBA32F,
+                                                         .kind = Portal::Graphics::ImageKey::Kind::STORAGE_2D,
+                                                     });
+
+        constexpr auto filter = Portal::Graphics::FilterMode::NEAREST;
+        if (!held || !loom.can_blit(image, held, filter) || !loom.blit_layer(image, held, { .filter = filter }))
+            return nullptr;
+        return held;
+    }
+
+    /**
+     * @brief Analyses of @p frames into @p results, paced by the work:
+     *        advanced one sequence per graphics frame, signalled as each
+     *        completes.
+     *
+     * With @p extract_from, its frame is copied in the tick the analyzed
+     * frame is taken, and that copy is what the result is extracted from.
+     */
+    void fit_results(
+        Vruta::TaskScheduler& scheduler,
+        const FrameResults& results,
+        const std::shared_ptr<VisionAnalyzer>& analyzer,
+        const std::shared_ptr<Buffers::TextureBuffer>& frames,
+        const std::shared_ptr<Buffers::TextureBuffer>& extract_from,
+        const std::shared_ptr<Kakshya::SignalSourceContainer>& source,
+        const std::function<bool()>& ended,
+        const std::string& name)
+    {
+        auto held = std::make_shared<Portal::Graphics::ImageCacheEntry>();
+        auto companion = std::make_shared<std::shared_ptr<Core::VKImage>>();
+        auto mid_run = std::make_shared<bool>(false);
+
+        Kriya::frame_results<VisionIO>(scheduler, results,
+            [analyzer, frames, extract_from, source, ended, held, companion, mid_run]() -> std::optional<VisionIO> {
+                if (ended())
+                    return std::nullopt;
+
+                const auto image = frames->get_gpu_texture();
+                if (!*mid_run) {
+                    if (!image)
+                        return std::nullopt;
+                    if (extract_from)
+                        *companion = hold_copy(*held, extract_from->get_gpu_texture());
+                    *mid_run = true;
+                }
+
+                const auto analysis = analyzer->advance(image);
                 if (!analysis)
                     return std::nullopt;
-                return analyzed_frame(source, *analysis, analyzer->get_frame());
+                *mid_run = false;
+
+                const auto target = extract_from ? *companion : analyzer->get_frame();
+                if (!target)
+                    return std::nullopt;
+                return analyzed_frame(source, *analysis, target);
             },
             name);
     }
 
     /**
-     * @brief Analyses of @p frames every @p interval_seconds on the graphics
-     *        clock, each run to completion when it starts.
+     * @brief Analyses of @p frames into @p results every @p interval_seconds
+     *        on the graphics clock, each run to completion when it starts.
+     *
+     * With @p extract_from, the result is extracted from its frame in the
+     * same tick.
      */
-    FrameResults interval_results(
+    void interval_results(
         Vruta::TaskScheduler& scheduler,
+        const FrameResults& results,
         const std::shared_ptr<VisionAnalyzer>& analyzer,
         const std::shared_ptr<Buffers::TextureBuffer>& frames,
+        const std::shared_ptr<Buffers::TextureBuffer>& extract_from,
         const std::shared_ptr<Kakshya::SignalSourceContainer>& source,
         double interval_seconds,
+        const std::function<bool()>& ended,
         const std::string& name)
     {
-        auto results = std::make_shared<Vruta::BroadcastSource<VisionIO>>();
         scheduler.add_task(Kriya::metro(interval_seconds,
-                               [results, analyzer, frames, source]() {
-                                   if (const auto image = frames->get_gpu_texture())
-                                       results->signal(analyzed_frame(source, analyzer->analyze_vision(image), image));
+                               [weak_results = std::weak_ptr(results), analyzer, frames, extract_from, source, ended]() {
+                                   if (ended())
+                                       return;
+                                   const auto target = weak_results.lock();
+                                   const auto image = frames->get_gpu_texture();
+                                   if (!target || !image)
+                                       return;
+
+                                   const auto extracted_from = extract_from ? extract_from->get_gpu_texture() : image;
+                                   if (!extracted_from)
+                                       return;
+                                   target->signal(analyzed_frame(source, analyzer->analyze_vision(image), extracted_from));
                                },
                                Vruta::ProcessingToken::FRAME_ACCURATE),
             name);
-        return results;
     }
 
     /**
-     * @brief Analyses of @p camera's frames, paced by @p interval_seconds or,
-     *        at zero, by the work, from a producer task named @p name.
+     * @brief Producer of analyses of @p source's frames into @p results,
+     *        paced by @p interval_seconds or, at zero, by the work, as a task
+     *        named @p name. Results carry the image to extract from: the
+     *        analyzed frame, or @p extract_from's frame of the same moment.
      */
-    FrameResults camera_results(
+    void start_producer(
         Vruta::TaskScheduler& scheduler,
-        const std::shared_ptr<Kakshya::CameraContainer>& camera,
+        const FrameResults& results,
+        const std::shared_ptr<Kakshya::VideoStreamContainer>& source,
         const std::shared_ptr<Buffers::TextureBuffer>& frames,
+        const std::shared_ptr<Buffers::TextureBuffer>& extract_from,
         const std::shared_ptr<VisionMatrix>& matrix,
         double interval_seconds,
+        const std::function<bool()>& ended,
         const std::string& name)
     {
-        const std::shared_ptr<Kakshya::SignalSourceContainer> source = camera;
+        const std::shared_ptr<Kakshya::SignalSourceContainer> container = source;
         const auto& analyzer = matrix->analyzer();
 
-        return interval_seconds > 0.0
-            ? interval_results(scheduler, analyzer, frames, source, interval_seconds, name)
-            : fit_results(scheduler, analyzer, frames, source, name);
+        if (interval_seconds > 0.0) {
+            interval_results(scheduler, results, analyzer, frames, extract_from, container, interval_seconds, ended, name);
+        } else {
+            fit_results(scheduler, results, analyzer, frames, extract_from, container, ended, name);
+        }
     }
 
     /**
-     * @brief What @p matrix's "extract" operation takes from the analyzed
-     *        @p frame.
+     * @brief What @p matrix's "extract" operation takes from @p frame, with
+     *        its analysis and the image the producer chose.
      */
     std::shared_ptr<Core::VKImage> extract_frame(
         const std::shared_ptr<VisionMatrix>& matrix,
@@ -257,13 +356,13 @@ void VisionWorkflow::stop_all()
     m_runs.clear();
 }
 
-std::shared_ptr<Buffers::TextureBuffer> VisionWorkflow::camera_frames(
-    const std::shared_ptr<Kakshya::CameraContainer>& camera,
+std::shared_ptr<Buffers::TextureBuffer> VisionWorkflow::source_frames(
+    const std::shared_ptr<Kakshya::VideoStreamContainer>& source,
     std::string_view caller) const
 {
-    if (!camera) {
+    if (!source) {
         MF_WARN(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
-            "VisionWorkflow::{}: no camera", caller);
+            "VisionWorkflow::{}: no video stream", caller);
         return nullptr;
     }
 
@@ -274,12 +373,20 @@ std::shared_ptr<Buffers::TextureBuffer> VisionWorkflow::camera_frames(
         return nullptr;
     }
 
-    auto input = io->get_camera_buffer(camera);
-    if (!input)
-        input = io->hook_camera_to_buffer(camera);
+    std::shared_ptr<Buffers::TextureBuffer> input;
+    if (const auto camera = std::dynamic_pointer_cast<Kakshya::CameraContainer>(source)) {
+        input = io->get_camera_buffer(camera);
+        if (!input)
+            input = io->hook_camera_to_buffer(camera);
+    } else {
+        input = io->get_video_buffer(source);
+        if (!input)
+            input = io->hook_video_container_to_buffer(source);
+    }
+
     if (!input) {
         MF_ERROR(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
-            "VisionWorkflow::{}: the camera could not be hooked to a buffer", caller);
+            "VisionWorkflow::{}: the video stream could not be hooked to a buffer", caller);
         return nullptr;
     }
 
@@ -293,44 +400,114 @@ void VisionWorkflow::keep(const std::string& name, const std::shared_ptr<Vruta::
 }
 
 std::shared_ptr<Buffers::TextureBuffer> VisionWorkflow::process_to_buffer(
-    const std::shared_ptr<Kakshya::CameraContainer>& camera,
+    const std::shared_ptr<Kakshya::VideoStreamContainer>& source,
     Kinesis::Vision::VisionQuery query,
     VisionExtractMode extract,
     const Portal::Graphics::RenderConfig& render,
     double interval_seconds)
 {
-    const auto frames = camera_frames(camera, "process_to_buffer");
-    const auto buffers = m_buffer_manager.lock();
-    if (!frames || !buffers)
+    return start_buffer(source, nullptr, query, extract, render, interval_seconds);
+}
+
+std::shared_ptr<Buffers::TextureBuffer> VisionWorkflow::process_to_buffer(
+    const std::shared_ptr<Kakshya::VideoStreamContainer>& source,
+    const std::shared_ptr<Buffers::TextureBuffer>& extract_from,
+    Kinesis::Vision::VisionQuery query,
+    VisionExtractMode extract,
+    const Portal::Graphics::RenderConfig& render,
+    double interval_seconds)
+{
+    if (!extract_from) {
+        MF_WARN(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+            "VisionWorkflow::process_to_buffer: no buffer to extract from");
         return nullptr;
-
-    auto output = buffers->create_graphics_buffer<Buffers::TextureBuffer>(
-        Buffers::ProcessingToken::GRAPHICS_BACKEND,
-        camera->get_width(), camera->get_height(), Portal::Graphics::ImageFormat::RGBA8);
-    output->setup_rendering(render);
-
-    auto matrix = VisionMatrix::create(query, extract);
-    const auto name = run_name("buffer");
-    auto results = camera_results(*m_scheduler.lock(), camera, frames, matrix, interval_seconds, name);
-
-    keep(name, Kriya::subscribe(*m_event_manager.lock(), results, deliver_to(matrix, output)));
-    return output;
+    }
+    return start_buffer(source, extract_from, query, extract, render, interval_seconds);
 }
 
 std::shared_ptr<Kakshya::TextureCollection> VisionWorkflow::process_to_live_container(
-    const std::shared_ptr<Kakshya::CameraContainer>& camera,
+    const std::shared_ptr<Kakshya::VideoStreamContainer>& source,
     Kinesis::Vision::VisionQuery query,
     VisionExtractMode extract,
     double interval_seconds,
     Kakshya::TextureCollectionSpec spec)
 {
-    const auto frames = camera_frames(camera, "process_to_live_container");
+    return start_live_container(source, nullptr, query, extract, interval_seconds, spec);
+}
+
+std::shared_ptr<Kakshya::TextureCollection> VisionWorkflow::process_to_live_container(
+    const std::shared_ptr<Kakshya::VideoStreamContainer>& source,
+    const std::shared_ptr<Buffers::TextureBuffer>& extract_from,
+    Kinesis::Vision::VisionQuery query,
+    VisionExtractMode extract,
+    double interval_seconds,
+    Kakshya::TextureCollectionSpec spec)
+{
+    if (!extract_from) {
+        MF_WARN(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+            "VisionWorkflow::process_to_live_container: no buffer to extract from");
+        return nullptr;
+    }
+    return start_live_container(source, extract_from, query, extract, interval_seconds, spec);
+}
+
+void VisionWorkflow::start(
+    const std::shared_ptr<Kakshya::VideoStreamContainer>& source,
+    const std::shared_ptr<Buffers::TextureBuffer>& frames,
+    const std::shared_ptr<Buffers::TextureBuffer>& extract_from,
+    const std::shared_ptr<VisionMatrix>& matrix,
+    double interval_seconds,
+    const std::string& name,
+    std::function<void(const VisionIO&)> consumer)
+{
+    auto results = std::make_shared<Vruta::BroadcastSource<VisionIO>>();
+    auto event = Kriya::subscribe(*m_event_manager.lock(), results, std::move(consumer));
+    keep(name, event);
+
+    start_producer(*m_scheduler.lock(), results, source, frames, extract_from, matrix, interval_seconds,
+        stop_at_end(source, m_scheduler, m_event_manager, event, name), name);
+}
+
+std::shared_ptr<Buffers::TextureBuffer> VisionWorkflow::start_buffer(
+    const std::shared_ptr<Kakshya::VideoStreamContainer>& source,
+    const std::shared_ptr<Buffers::TextureBuffer>& extract_from,
+    const Kinesis::Vision::VisionQuery& query,
+    VisionExtractMode extract,
+    const Portal::Graphics::RenderConfig& render,
+    double interval_seconds)
+{
+    const auto frames = source_frames(source, "process_to_buffer");
+    const auto buffers = m_buffer_manager.lock();
+    if (!frames || !buffers)
+        return nullptr;
+
+    const uint32_t width = extract_from ? extract_from->get_width() : source->get_width();
+    const uint32_t height = extract_from ? extract_from->get_height() : source->get_height();
+
+    auto output = buffers->create_graphics_buffer<Buffers::TextureBuffer>(
+        Buffers::ProcessingToken::GRAPHICS_BACKEND, width, height, Portal::Graphics::ImageFormat::RGBA8);
+    output->setup_rendering(render);
+
+    auto matrix = VisionMatrix::create(query, extract);
+    start(source, frames, extract_from, matrix, interval_seconds, run_name("buffer"), deliver_to(matrix, output));
+    return output;
+}
+
+std::shared_ptr<Kakshya::TextureCollection> VisionWorkflow::start_live_container(
+    const std::shared_ptr<Kakshya::VideoStreamContainer>& source,
+    const std::shared_ptr<Buffers::TextureBuffer>& extract_from,
+    const Kinesis::Vision::VisionQuery& query,
+    VisionExtractMode extract,
+    double interval_seconds,
+    Kakshya::TextureCollectionSpec spec)
+{
+    const auto frames = source_frames(source, "process_to_live_container");
     if (!frames)
         return nullptr;
 
     if (spec.width == 0 || spec.height == 0) {
-        spec.width = camera->get_width();
-        spec.height = camera->get_height();
+        spec.width = extract_from ? extract_from->get_width() : source->get_width();
+        spec.height = extract_from ? extract_from->get_height() : source->get_height();
     }
 
     auto collection = std::make_shared<Kakshya::TextureCollection>(spec);
@@ -343,9 +520,7 @@ std::shared_ptr<Kakshya::TextureCollection> VisionWorkflow::process_to_live_cont
 
     auto matrix = VisionMatrix::create(query, extract);
     const auto name = run_name("container");
-    auto results = camera_results(*m_scheduler.lock(), camera, frames, matrix, interval_seconds, name);
-
-    keep(name, Kriya::subscribe(*m_event_manager.lock(), results, record_into(matrix, collection, m_scheduler, name)));
+    start(source, frames, extract_from, matrix, interval_seconds, name, record_into(matrix, collection, m_scheduler, name));
     return collection;
 }
 
