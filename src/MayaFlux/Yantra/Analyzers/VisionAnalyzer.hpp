@@ -21,6 +21,10 @@
  * report their own get_width()/get_height().
  */
 
+namespace MayaFlux::Yantra::Vision {
+class VisionMatrix;
+}
+
 namespace MayaFlux::Kakshya {
 class SignalSourceContainer;
 }
@@ -150,6 +154,8 @@ public:
     [[nodiscard]] VisionGpuExecutor* get_executor() const;
 
 private:
+    friend class Vision::VisionMatrix;
+
     /**
      * @brief ComputeOperation adapter: uses input.data as the source
      *        container, pulls index out of Datum metadata (defaulting to

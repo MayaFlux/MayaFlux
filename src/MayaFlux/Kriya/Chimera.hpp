@@ -200,6 +200,9 @@ public:
     /** @brief The pipeline the builder records into. */
     [[nodiscard]] std::shared_ptr<BufferPipeline> get_pipeline() const { return m_pipeline; }
 
+    /** @brief The array buffer whose layers the builder feeds, for its mode, weights or push constants. */
+    [[nodiscard]] std::shared_ptr<Buffers::TextureArrayBuffer> get_buffer() const { return m_buffer; }
+
     /**
      * @brief Replace the builder's pipeline with one made elsewhere.
      *

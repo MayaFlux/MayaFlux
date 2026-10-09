@@ -176,11 +176,40 @@ public:
         const WorkflowContainerConfig& config);
 
     /**
+     * @brief process_to_buffer() with a matrix the caller made and configured,
+     *        such as its extractor's sizes, focus or limits.
+     *
+     * The matrix must have an extractor whose mode produces an image.
+     *
+     * @return The output buffer, or null when @p matrix is null or as
+     *         process_to_buffer() fails.
+     */
+    [[nodiscard]] std::shared_ptr<Buffers::TextureBuffer> process_to_buffer(
+        const std::shared_ptr<VisionMatrix>& matrix,
+        const std::shared_ptr<Kakshya::VideoStreamContainer>& source,
+        const Portal::Graphics::RenderConfig& render,
+        const std::optional<LiveConfig>& live = {});
+
+    /**
+     * @brief process_to_live_container() with a matrix the caller made and
+     *        configured.
+     *
+     * @return The collection, or null when @p matrix is null or as
+     *         process_to_live_container() fails.
+     */
+    [[nodiscard]] std::shared_ptr<Kakshya::TextureCollection> process_to_live_container(
+        const std::shared_ptr<VisionMatrix>& matrix,
+        const std::shared_ptr<Kakshya::VideoStreamContainer>& source,
+        Kakshya::TextureCollectionSpec spec = {},
+        const std::optional<LiveConfig>& live = {});
+
+    /**
      * @brief Run @p config's matrix on its source live and return a Chimera
      *        builder over a new layer array, for any image the run produces.
      *
      * Paced and sourced as process_to_buffer(). The layers, their sources and
-     * the rendering are declared on the returned builder. Each analysis is
+     * the rendering are declared on the returned builder, and the array itself,
+     * for a shader's mode, is its get_buffer(). Each analysis is
      * handed to the matrix's extract(), so its analysis(), frame() and
      * extraction() follow the run; the images of every sequence are read from
      * its results() or, by intent, result(). Then each record entry appends

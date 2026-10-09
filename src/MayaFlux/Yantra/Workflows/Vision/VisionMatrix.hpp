@@ -49,6 +49,19 @@ public:
     void execute(const std::shared_ptr<Core::VKImage>& image);
 
     /**
+     * @brief execute() on frame @p index of @p source: a texture container's
+     *        layer, or a video stream's or window's current frame.
+     *
+     * frame() is the image the frame was resolved to. For a video stream or
+     * window that image is reused, so it holds the next resolved frame after
+     * the next call. A window ignores @p index and gives the frame its
+     * default processor last read back. A video stream ignores it too and
+     * gives the frame in its first slot, or none when it streams through a
+     * ring, which clears like a null image.
+     */
+    void execute(const std::shared_ptr<Kakshya::SignalSourceContainer>& source, size_t index);
+
+    /**
      * @brief Extract from @p image with @p analysis and keep all three until
      *        the next call.
      *

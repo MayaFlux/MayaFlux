@@ -417,39 +417,67 @@ void VisionWorkflow::keep(const std::string& name, const std::shared_ptr<Vruta::
 std::shared_ptr<Buffers::TextureBuffer> VisionWorkflow::process_to_buffer(
     const WorkflowBufferConfig& config)
 {
-    const auto frames = source_frames(config.source, "process_to_buffer");
+    return process_to_buffer(VisionMatrix::create(config.query, config.extract), config.source, config.render, config.live);
+}
+
+std::shared_ptr<Buffers::TextureBuffer> VisionWorkflow::process_to_buffer(
+    const std::shared_ptr<VisionMatrix>& matrix,
+    const std::shared_ptr<Kakshya::VideoStreamContainer>& source,
+    const Portal::Graphics::RenderConfig& render,
+    const std::optional<LiveConfig>& live_config)
+{
+    if (!matrix) {
+        MF_WARN(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+            "VisionWorkflow::process_to_buffer: no matrix");
+        return nullptr;
+    }
+
+    const auto frames = source_frames(source, "process_to_buffer");
     const auto buffers = m_buffer_manager.lock();
     if (!frames || !buffers)
         return nullptr;
 
-    const auto live = config.live.value_or(LiveConfig {});
+    const auto live = live_config.value_or(LiveConfig {});
     const auto& apply_to = live.apply_to;
-    const uint32_t width = apply_to ? apply_to->get_width() : config.source->get_width();
-    const uint32_t height = apply_to ? apply_to->get_height() : config.source->get_height();
+    const uint32_t width = apply_to ? apply_to->get_width() : source->get_width();
+    const uint32_t height = apply_to ? apply_to->get_height() : source->get_height();
 
     auto output = buffers->create_graphics_buffer<Buffers::TextureBuffer>(
         Buffers::ProcessingToken::GRAPHICS_BACKEND, width, height, Portal::Graphics::ImageFormat::RGBA8);
-    output->setup_rendering(config.render);
+    output->setup_rendering(render);
 
-    auto matrix = VisionMatrix::create(config.query, config.extract);
-    start(config.source, frames, live, matrix, run_name("buffer"), deliver_to(matrix, output));
+    start(source, frames, live, matrix, run_name("buffer"), deliver_to(matrix, output));
     return output;
 }
 
 std::shared_ptr<Kakshya::TextureCollection> VisionWorkflow::process_to_live_container(
     const WorkflowContainerConfig& config)
 {
-    const auto frames = source_frames(config.source, "process_to_live_container");
+    return process_to_live_container(VisionMatrix::create(config.query, config.extract), config.source, config.collection, config.live);
+}
+
+std::shared_ptr<Kakshya::TextureCollection> VisionWorkflow::process_to_live_container(
+    const std::shared_ptr<VisionMatrix>& matrix,
+    const std::shared_ptr<Kakshya::VideoStreamContainer>& source,
+    Kakshya::TextureCollectionSpec spec,
+    const std::optional<LiveConfig>& live_config)
+{
+    if (!matrix) {
+        MF_WARN(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+            "VisionWorkflow::process_to_live_container: no matrix");
+        return nullptr;
+    }
+
+    const auto frames = source_frames(source, "process_to_live_container");
     if (!frames)
         return nullptr;
 
-    const auto live = config.live.value_or(LiveConfig {});
+    const auto live = live_config.value_or(LiveConfig {});
     const auto& apply_to = live.apply_to;
 
-    auto spec = config.collection;
     if (spec.width == 0 || spec.height == 0) {
-        spec.width = apply_to ? apply_to->get_width() : config.source->get_width();
-        spec.height = apply_to ? apply_to->get_height() : config.source->get_height();
+        spec.width = apply_to ? apply_to->get_width() : source->get_width();
+        spec.height = apply_to ? apply_to->get_height() : source->get_height();
     }
 
     auto collection = std::make_shared<Kakshya::TextureCollection>(spec);
@@ -460,9 +488,8 @@ std::shared_ptr<Kakshya::TextureCollection> VisionWorkflow::process_to_live_cont
         return collection;
     }
 
-    auto matrix = VisionMatrix::create(config.query, config.extract);
     const auto name = run_name("container");
-    start(config.source, frames, live, matrix, name, record_into(matrix, collection, m_scheduler, name));
+    start(source, frames, live, matrix, name, record_into(matrix, collection, m_scheduler, name));
     return collection;
 }
 

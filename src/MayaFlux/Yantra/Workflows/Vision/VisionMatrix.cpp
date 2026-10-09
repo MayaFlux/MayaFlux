@@ -71,6 +71,11 @@ void VisionMatrix::execute(const std::shared_ptr<Core::VKImage>& image)
     m_analysis = image ? analyzer()->analyze_vision(image) : Kinesis::Vision::VisionAnalysis {};
 }
 
+void VisionMatrix::execute(const std::shared_ptr<Kakshya::SignalSourceContainer>& source, size_t index)
+{
+    execute(source ? analyzer()->resolve_image(source, index) : nullptr);
+}
+
 void VisionMatrix::extract(const Kinesis::Vision::VisionAnalysis& analysis, const std::shared_ptr<Core::VKImage>& image)
 {
     count_call();
