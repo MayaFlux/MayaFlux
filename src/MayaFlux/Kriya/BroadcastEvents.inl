@@ -4,6 +4,7 @@
 #include "Awaiters/GetPromise.hpp"
 #include "MayaFlux/Vruta/BroadcastSource.hpp"
 #include "MayaFlux/Vruta/Event.hpp"
+#include "MayaFlux/Vruta/EventManager.hpp"
 #include "MayaFlux/Vruta/Scheduler.hpp"
 
 namespace MayaFlux::Kriya {
@@ -40,6 +41,18 @@ Vruta::Event on_signal_matching(
         if (predicate(val))
             callback(val);
     }
+}
+
+template <typename T, typename Callback>
+std::shared_ptr<Vruta::Event> subscribe(
+    Vruta::EventManager& events,
+    std::shared_ptr<Vruta::BroadcastSource<T>> source,
+    Callback callback,
+    const std::string& name)
+{
+    auto event = std::make_shared<Vruta::Event>(on_signal(std::move(source), std::move(callback)));
+    events.add_event(event, name);
+    return event;
 }
 
 template <typename T>
