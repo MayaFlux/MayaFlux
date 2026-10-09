@@ -11,7 +11,9 @@
 #include "MayaFlux/Buffers/VKBuffer.hpp"
 #include "MayaFlux/IO/Camera/FFmpegCameraReader.hpp"
 #include "MayaFlux/IO/IOManager.hpp"
+#include "MayaFlux/Kakshya/Source/CameraContainer.hpp"
 #include "MayaFlux/Kakshya/Source/SoundFileContainer.hpp"
+#include "MayaFlux/Kakshya/Source/VideoFileContainer.hpp"
 #include "MayaFlux/Nodes/Network/NodeNetwork.hpp"
 
 #include "MayaFlux/Nodes/Input/HIDNode.hpp"
@@ -105,8 +107,34 @@ void register_buffer(const std::shared_ptr<Buffers::Buffer>& buffer, const Creat
 void register_container(const std::shared_ptr<Kakshya::SoundFileContainer>& container, const Domain& domain)
 {
     if (auto sound_container = std::dynamic_pointer_cast<Kakshya::SoundFileContainer>(container)) {
-        if (domain == Domain::AUDIO) {
+        if (domain == Domain::AUDIO && get_io_manager()->get_audio_buffers(sound_container).empty()) {
             (void)get_io_manager()->hook_audio_container_to_buffers(sound_container);
+        }
+    }
+}
+
+void register_container(const std::shared_ptr<Kakshya::VideoStreamContainer>& container, const Domain& domain)
+{
+    if (!container || domain != Domain::GRAPHICS) {
+        return;
+    }
+
+    const auto io = get_io_manager();
+
+    if (const auto camera = std::dynamic_pointer_cast<Kakshya::CameraContainer>(container)) {
+        if (!io->get_camera_buffer(camera)) {
+            (void)io->hook_camera_to_buffer(camera);
+        }
+        return;
+    }
+
+    if (!io->get_video_buffer(container)) {
+        (void)io->hook_video_container_to_buffer(container);
+    }
+
+    if (const auto file = std::dynamic_pointer_cast<Kakshya::VideoFileContainer>(container)) {
+        if (const auto audio = io->get_extracted_audio(file); audio && io->get_audio_buffers(audio).empty()) {
+            (void)io->hook_audio_container_to_buffers(audio);
         }
     }
 }

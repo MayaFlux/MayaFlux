@@ -15,6 +15,10 @@ namespace Core {
     class VKImage;
 }
 
+namespace Kakshya {
+    class VideoStreamContainer;
+}
+
 namespace IO {
     using TextureResolver = std::function<std::shared_ptr<Core::VKImage>(const std::string& path)>;
     struct CameraConfig;
@@ -54,6 +58,7 @@ MAYAFLUX_API void register_node(const std::shared_ptr<Nodes::Node>& node, const 
 MAYAFLUX_API void register_network(const std::shared_ptr<Nodes::Network::NodeNetwork>& network, const CreationContext& ctx);
 MAYAFLUX_API void register_buffer(const std::shared_ptr<Buffers::Buffer>& buffer, const CreationContext& ctx);
 MAYAFLUX_API void register_container(const std::shared_ptr<Kakshya::SoundFileContainer>& container, const Domain& domain);
+MAYAFLUX_API void register_container(const std::shared_ptr<Kakshya::VideoStreamContainer>& container, const Domain& domain);
 
 /**
  * @brief Thin domain wrapper that adds subscript channel-binding syntax.
@@ -266,8 +271,8 @@ public:
      * @brief Open a camera device as a live source container.
      *
      * Opens via IOManager::open_camera() and returns the container, like
-     * read_audio() returns its container. Nothing is hooked: show it with
-     * IOManager::hook_camera_to_buffer(), the way a video container is hooked.
+     * read_audio() returns its container. Nothing is hooked until you pipe it
+     * into Graphics, or call IOManager::hook_camera_to_buffer().
      *
      * @param config Device name, resolution hint, fps hint, format override.
      * @return Opened CameraContainer, or nullptr on failure.
@@ -382,6 +387,29 @@ std::shared_ptr<T> operator|(std::shared_ptr<T> obj, const CreationContext& ctx)
 inline std::shared_ptr<Kakshya::SoundFileContainer> operator|(
     std::shared_ptr<Kakshya::SoundFileContainer> obj,
     const CreationContext& ctx)
+{
+    if (ctx.domain)
+        register_container(obj, ctx.domain.value());
+    return obj;
+}
+
+/**
+ * @brief Hook a video or camera container to a buffer in the Graphics domain.
+ *
+ * Returns the same container, with its real type. A video file loaded with
+ * VideoReadOptions::EXTRACT_AUDIO also has its audio hooked, so one pipe
+ * registers both. Reach the buffers with get_associated_buffer and
+ * get_associated_buffers. A container that is already hooked is not hooked
+ * again.
+ *
+ * @code
+ * auto camera = vega.read_camera() | Graphics;
+ * auto picture = get_associated_buffer(camera);
+ * @endcode
+ */
+template <typename T>
+    requires std::is_base_of_v<Kakshya::VideoStreamContainer, T>
+std::shared_ptr<T> operator|(std::shared_ptr<T> obj, const CreationContext& ctx)
 {
     if (ctx.domain)
         register_container(obj, ctx.domain.value());
