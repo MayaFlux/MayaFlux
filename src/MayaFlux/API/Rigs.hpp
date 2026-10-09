@@ -36,6 +36,10 @@ namespace Buffers {
     class TextureArrayBuffer;
 }
 
+namespace Yantra::Vision {
+    class VisionWorkflow;
+}
+
 /**
  * @brief Construct a built SamplingPipeline from an audio file.
  *
@@ -324,5 +328,23 @@ MAYAFLUX_API std::shared_ptr<Kriya::BufferPipeline> record_into(
 MAYAFLUX_API std::vector<std::shared_ptr<Kriya::BufferPipeline>> record_into(
     const std::shared_ptr<Kakshya::DynamicSoundStream>& stream,
     std::vector<Kriya::CaptureBuilder> sources);
+
+/**
+ * @brief A vision workflow running on the engine's managers.
+ *
+ * Its live runs stop when the returned workflow is destroyed. Include
+ * WorkflowIncludes.hpp to call it.
+ *
+ * @code
+ * auto vision = MayaFlux::create_vision_workflow();
+ * auto edges = vision->process_to_buffer({
+ *     .source = camera,
+ *     .query = { .intents = VisionIntent::DetectEdges },
+ *     .extract = VisionExtractMode::Edges,
+ *     .render = { .target_window = window },
+ * });
+ * @endcode
+ */
+MAYAFLUX_API std::shared_ptr<Yantra::Vision::VisionWorkflow> create_vision_workflow();
 
 } // namespace MayaFlux

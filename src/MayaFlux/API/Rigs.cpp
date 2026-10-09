@@ -11,6 +11,7 @@
 #include "MayaFlux/Kriya/Chimera.hpp"
 #include "MayaFlux/Kriya/SamplingPipeline.hpp"
 #include "MayaFlux/Kriya/TapSet.hpp"
+#include "MayaFlux/Yantra/Workflows/Vision/VisionWorkflow.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
@@ -256,6 +257,12 @@ std::vector<std::shared_ptr<Kriya::BufferPipeline>> record_into(
     }
 
     return pipelines;
+}
+
+std::shared_ptr<Yantra::Vision::VisionWorkflow> create_vision_workflow()
+{
+    return std::make_shared<Yantra::Vision::VisionWorkflow>(
+        get_scheduler(), get_event_manager(), get_io_manager(), get_buffer_manager());
 }
 
 } // namespace MayaFlux

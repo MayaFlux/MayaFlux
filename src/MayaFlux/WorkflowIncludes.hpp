@@ -7,6 +7,7 @@
  * Include after MayaFlux.hpp. Every group is included unless you leave it out
  * by defining its macro before this include:
  * - MAYAFLUX_WORKFLOW_NO_GRANULAR: the granular workflow
+ * - MAYAFLUX_WORKFLOW_NO_VISION: the vision workflow
  * - MAYAFLUX_COMPUTE_NO_MATRIX: compute matrix, grammar, pipeline and the CPU
  *   analyzers, extractors, sorters and transformers
  * - MAYAFLUX_COMPUTE_NO_GPU: shader execution and the GPU analyzer,
@@ -20,6 +21,11 @@
 #ifndef MAYAFLUX_WORKFLOW_NO_GRANULAR
 #include "MayaFlux/Kinesis/Discrete/Taper.hpp"
 #include "MayaFlux/Yantra/Workflows/Granular/GranularWorkflow.hpp"
+using namespace MayaFlux::Yantra;
+#endif
+
+#ifndef MAYAFLUX_WORKFLOW_NO_VISION
+#include "MayaFlux/Yantra/Workflows/Vision/VisionWorkflow.hpp"
 using namespace MayaFlux::Yantra;
 #endif
 
