@@ -121,7 +121,7 @@ struct EntryGroup {
  * @param row_h    Row height in NDC units.
  * @param bg       Background fill composited beneath the row's text.
  */
-[[nodiscard]] Entry make_entry(
+[[nodiscard]] MAYAFLUX_API Entry make_entry(
     const EntrySpec& spec,
     EntryBuffer row_buf,
     Surface& surface,
@@ -135,7 +135,7 @@ struct EntryGroup {
  * Equivalent to the explicit-extent overload with x_min and x_max taken
  * from @p cursor.
  */
-[[nodiscard]] Entry make_entry(
+[[nodiscard]] MAYAFLUX_API Entry make_entry(
     const EntrySpec& spec,
     EntryBuffer row_buf,
     Surface& surface,
@@ -164,7 +164,7 @@ struct EntryGroup {
  * @param row_h          Row height in NDC units.
  * @param initially_open Default false so deep trees stay collapsed at construction.
  */
-[[nodiscard]] EntryGroup make_entry_group(
+[[nodiscard]] MAYAFLUX_API EntryGroup make_entry_group(
     std::span<const EntrySpec> entrys,
     std::string_view header_label,
     std::shared_ptr<Buffers::FormaBuffer> header_buf,
@@ -180,7 +180,7 @@ struct EntryGroup {
  * Equivalent to the explicit-extent overload with x_min and x_max taken
  * from @p cursor.
  */
-[[nodiscard]] EntryGroup make_entry_group(
+[[nodiscard]] MAYAFLUX_API EntryGroup make_entry_group(
     std::span<const EntrySpec> entrys,
     std::string_view header_label,
     std::shared_ptr<Buffers::FormaBuffer> header_buf,

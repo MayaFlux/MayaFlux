@@ -154,7 +154,7 @@ struct LegendLayout {
  *
  * Returns {0, 1} for an empty span.
  */
-[[nodiscard]] std::pair<float, float> data_range(std::span<const double> series);
+[[nodiscard]] MAYAFLUX_API std::pair<float, float> data_range(std::span<const double> series);
 
 /**
  * @brief Apply auto-scaling to an AxisRange from a set of series.

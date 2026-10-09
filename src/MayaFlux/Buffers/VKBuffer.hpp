@@ -695,7 +695,7 @@ private:
     void infer_dimensions_from_data(size_t byte_count);
 };
 
-class VKBufferProcessor : public BufferProcessor {
+class MAYAFLUX_API VKBufferProcessor : public BufferProcessor {
 protected:
     Registry::Service::BufferService* m_buffer_service = nullptr;
     Registry::Service::ComputeService* m_compute_service = nullptr;
