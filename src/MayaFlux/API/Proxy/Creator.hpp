@@ -275,14 +275,21 @@ public:
      * path (register_buffer), the same way read_image() returns an
      * already-pipeable TextureBuffer instead of a raw container.
      *
-     * There is no dialog-backed no-argument overload: a camera is a device
-     * to configure, not a file to browse to, the same reasoning behind
-     * read_hid/read_midi/read_osc/read_tablet taking a config directly.
-     *
      * @param config Device name, resolution hint, fps hint, format override.
      * @return Hooked VideoContainerBuffer, or nullptr on failure.
      */
     std::shared_ptr<Buffers::VideoContainerBuffer> read_camera(const IO::CameraConfig& config);
+
+    /**
+     * @brief Let the user pick a camera and capture mode, then read it as above.
+     *
+     * Opens the pickers via choose_camera(), then hooks the opened
+     * CameraContainer to a VideoContainerBuffer exactly as the config overload
+     * does. Blocks until the user chooses or closes a window.
+     *
+     * @return Hooked VideoContainerBuffer, or nullptr on cancellation or failure.
+     */
+    std::shared_ptr<Buffers::VideoContainerBuffer> read_camera();
 
     // ═══════════════════════════════════════════════════════════════
     // Input Node Creation (Special - defined in Creator.cpp)

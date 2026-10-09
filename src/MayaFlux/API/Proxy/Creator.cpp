@@ -163,21 +163,37 @@ Creator::load_mesh_network(const std::string& filepath, IO::TextureResolver reso
     return get_io_manager()->load_mesh_network(filepath, std::move(resolver));
 }
 
+namespace {
+
+    std::shared_ptr<Buffers::VideoContainerBuffer> hook_camera(
+        const std::shared_ptr<Kakshya::CameraContainer>& container)
+    {
+        if (!container)
+            return nullptr;
+
+        auto buffer = get_io_manager()->hook_camera_to_buffer(container);
+        if (buffer)
+            MF_LIVE_EXPOSE_AUTO(buffer);
+        return buffer;
+    }
+
+} // namespace
+
 std::shared_ptr<Buffers::VideoContainerBuffer> Creator::read_camera(const IO::CameraConfig& config)
 {
-    auto iom = get_io_manager();
-
-    auto container = iom->open_camera(config);
+    auto container = get_io_manager()->open_camera(config);
     if (!container) {
         MF_ERROR(Journal::Component::API, Journal::Context::Runtime,
             "read_camera: open_camera failed for device '{}'", config.device_name);
         return nullptr;
     }
 
-    auto buffer = iom->hook_camera_to_buffer(container);
-    if (buffer)
-        MF_LIVE_EXPOSE_AUTO(buffer);
-    return buffer;
+    return hook_camera(container);
+}
+
+std::shared_ptr<Buffers::VideoContainerBuffer> Creator::read_camera()
+{
+    return hook_camera(choose_camera());
 }
 
 std::shared_ptr<Nodes::Input::HIDNode> Creator::read_hid(
