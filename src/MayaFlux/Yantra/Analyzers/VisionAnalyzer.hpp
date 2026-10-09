@@ -56,6 +56,9 @@ public:
         Kinesis::Vision::VisionQuery query = {},
         Kinesis::Vision::VisionAnalysisContext context = {});
 
+    VisionAnalyzer(const VisionAnalyzer&) = delete;
+    VisionAnalyzer& operator=(const VisionAnalyzer&) = delete;
+
     void set_query(const Kinesis::Vision::VisionQuery& query) { m_query = query; }
     [[nodiscard]] const Kinesis::Vision::VisionQuery& get_query() const { return m_query; }
 
