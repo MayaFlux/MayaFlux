@@ -485,11 +485,20 @@ Kriya::ChimeraBuilder VisionWorkflow::process_to_stream(const WorkflowStreamConf
 
     const auto name = run_name("stream");
     const auto consumer = start(config.source, frames, config.live.value_or(LiveConfig {}), config.matrix, name,
-        [matrix = config.matrix](const VisionIO& frame) {
+        [matrix = config.matrix, record = config.record](const VisionIO& frame) {
             const auto analysis = Kakshya::get_metadata_value<Kinesis::Vision::VisionAnalysis>(frame.metadata, "vision_analysis");
             const auto image = Kakshya::get_metadata_value<std::shared_ptr<Core::VKImage>>(frame.metadata, "vision_image");
-            if (analysis && image)
-                matrix->extract(*analysis, *image);
+            if (!analysis || !image)
+                return;
+
+            matrix->extract(*analysis, *image);
+
+            for (const auto& [collection, pick] : record) {
+                if (!collection || !pick)
+                    continue;
+                if (const auto picked = pick(*matrix))
+                    collection->append(picked);
+            }
         });
 
     pipeline->on_complete([scheduler = m_scheduler, events = m_event_manager, weak_consumer = std::weak_ptr(consumer), name]() {

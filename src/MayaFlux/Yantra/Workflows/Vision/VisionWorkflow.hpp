@@ -76,20 +76,30 @@ struct WorkflowContainerConfig {
     std::optional<LiveConfig> live;
 };
 
+/** @brief Picks one image from a matrix once an analysis completes; null skips it. */
+using MatrixImage = std::function<std::shared_ptr<Core::VKImage>(VisionMatrix&)>;
+
 /**
  * @struct WorkflowStreamConfig
  * @brief What VisionWorkflow::process_to_stream() runs: the stream to analyze,
- *        the matrix that analyzes it, the layer array the Chimera feeds, and
- *        optionally how the run is paced.
+ *        the matrix that analyzes it, the layer array the Chimera feeds, the
+ *        images recorded over time, and optionally how the run is paced.
  *
  * @c layers gives the array's width, height, format and, as ring_frames, its
  * layer count. @c fit places images of another extent in a layer.
+ *
+ * Each @c record entry appends what its picker returns to its collection when
+ * an analysis completes, so the collection holds only finished frames. Read
+ * it in a layer with ChimeraBuilder::from(collection, frame_rate) for lag,
+ * speed and cut, or at lag zero for the newest frame of every layer changing
+ * together.
  */
 struct WorkflowStreamConfig {
     std::shared_ptr<Kakshya::VideoStreamContainer> source;
     std::shared_ptr<VisionMatrix> matrix;
     Kakshya::VideoStreamSpec layers;
     std::optional<Portal::Graphics::FitMode> fit;
+    std::vector<std::pair<std::shared_ptr<Kakshya::TextureCollection>, MatrixImage>> record;
     std::optional<LiveConfig> live;
 };
 
@@ -173,8 +183,10 @@ public:
      * the rendering are declared on the returned builder. Each analysis is
      * handed to the matrix's extract(), so its analysis(), frame() and
      * extraction() follow the run; the images of every sequence are read from
-     * its results(). The run stops as the other live runs do, and also when
-     * the Chimera is stopped or dropped. The Chimera outlives the run and
+     * its results(). Then each record entry appends its picked image, all
+     * together once per analysis, at the run's pace: one per interval, or as
+     * often as the work completes. The run stops as the other live runs do,
+     * and also when the Chimera is stopped or dropped. The Chimera outlives the run and
      * keeps its last images. Replacing the pipeline's on_complete callback
      * removes the second stop.
      *
