@@ -5,6 +5,7 @@
 #include "MayaFlux/Buffers/Textures/TextureArrayBuffer.hpp"
 #include "MayaFlux/IO/Image/ImageReader.hpp"
 #include "MayaFlux/Kakshya/Source/DynamicVideoStream.hpp"
+#include "MayaFlux/Kakshya/Source/TextureCollection.hpp"
 #include "MayaFlux/Kakshya/Utils/PixelStorage.hpp"
 #include "MayaFlux/Kinesis/Tendency/TendencyFactories.hpp"
 #include "MayaFlux/Vruta/ChronUtils.hpp"
@@ -53,7 +54,7 @@ void Chimera::cut(size_t layer, double seconds)
     }
 
     auto& target = m_state->layers.at(layer);
-    if (!target.ring) {
+    if (!target.ring && !target.collection) {
         return;
     }
 
@@ -61,9 +62,13 @@ void Chimera::cut(size_t layer, double seconds)
         const double elapsed = std::max(
             static_cast<double>(m_state->ticks) / m_state->frame_rate - target.delay, 0.0);
         target.lag_offset = seconds - (*target.lag)(elapsed);
-    } else {
+    } else if (target.ring) {
         target.position = static_cast<double>(target.ring->get_write_head())
             - seconds * target.ring->get_frame_rate();
+        target.entered = true;
+    } else {
+        const double rate = target.collection_rate > 0.0 ? target.collection_rate : m_state->frame_rate;
+        target.position = static_cast<double>(target.collection->get_write_head()) - seconds * rate;
         target.entered = true;
     }
 }
@@ -76,6 +81,7 @@ void Chimera::set(size_t layer, Kakshya::ImageData image)
 
     auto& target = m_state->layers.at(layer);
     target.ring.reset();
+    target.collection.reset();
     target.image.reset();
     target.picture = std::make_shared<const Kakshya::ImageData>(std::move(image));
     target.dirty = true;
@@ -89,6 +95,7 @@ void Chimera::set(size_t layer, std::shared_ptr<Core::VKImage> image)
 
     auto& target = m_state->layers.at(layer);
     target.ring.reset();
+    target.collection.reset();
     target.picture.reset();
     target.image = std::move(image);
 }
@@ -102,7 +109,23 @@ void Chimera::set(size_t layer, std::shared_ptr<Kakshya::DynamicVideoStream> rin
     auto& target = m_state->layers.at(layer);
     target.image.reset();
     target.picture.reset();
+    target.collection.reset();
     target.ring = std::move(ring);
+    target.entered = false;
+}
+
+void Chimera::set(size_t layer, std::shared_ptr<Kakshya::TextureCollection> collection, double frame_rate)
+{
+    if (!m_state) {
+        return;
+    }
+
+    auto& target = m_state->layers.at(layer);
+    target.image.reset();
+    target.picture.reset();
+    target.ring.reset();
+    target.collection = std::move(collection);
+    target.collection_rate = frame_rate;
     target.entered = false;
 }
 
@@ -153,7 +176,55 @@ void Chimera::tick(State& state, uint64_t frame)
             }
         } else if (layer.ring) {
             feed(state, layer, current, now - layer.delay);
+        } else if (layer.collection) {
+            collect(state, layer, current, now - layer.delay);
         }
+    }
+}
+
+void Chimera::place(const State& state, Layer& layer, uint64_t head, double rate, double nearest, double elapsed)
+{
+    const double latest = static_cast<double>(head) - nearest;
+
+    if (layer.lag) {
+        const double behind = ((*layer.lag)(elapsed) + layer.lag_offset) * rate;
+        layer.position = static_cast<double>(head) - std::max(behind, nearest);
+    } else if (!layer.entered) {
+        layer.position = latest;
+    } else {
+        layer.position = std::min(layer.position + *layer.ratio * rate / state.frame_rate, latest);
+    }
+    layer.entered = true;
+}
+
+void Chimera::collect(State& state, Layer& layer, uint32_t index, double elapsed)
+{
+    const auto& collection = layer.collection;
+    const uint64_t head = collection->get_write_head();
+    if (head == 0) {
+        return;
+    }
+
+    const double rate = layer.collection_rate > 0.0 ? layer.collection_rate : state.frame_rate;
+    place(state, layer, head, rate, 1.0, elapsed);
+
+    const auto frame = static_cast<uint64_t>(std::max(std::floor(layer.position), 0.0));
+    const uint64_t ring = collection->get_spec().ring_layers;
+    if (frame >= head || (ring > 0 && frame + ring < head)) {
+        if (!layer.missed) {
+            MF_WARN(Journal::Component::Kriya, Journal::Context::CoroutineScheduling,
+                "Chimera layer {} is outside the collection, holding its last frame", index);
+            layer.missed = true;
+        }
+        return;
+    }
+    layer.missed = false;
+
+    const auto slot = static_cast<uint32_t>(ring > 0 ? frame % ring : frame);
+    if (state.buffer->submit_layer(index, collection->to_image(slot))) {
+        stamp(state, index,
+            glm::vec4(static_cast<float>(elapsed), static_cast<float>(static_cast<double>(head) - layer.position),
+                static_cast<float>(layer.position), 1.0F));
     }
 }
 
@@ -165,18 +236,7 @@ void Chimera::feed(State& state, Layer& layer, uint32_t index, double elapsed)
         return;
     }
 
-    const double rate = ring->get_frame_rate();
-    const double latest = static_cast<double>(head) - 2.0;
-
-    if (layer.lag) {
-        const double behind = ((*layer.lag)(elapsed) + layer.lag_offset) * rate;
-        layer.position = static_cast<double>(head) - std::max(behind, 2.0);
-    } else if (!layer.entered) {
-        layer.position = latest;
-    } else {
-        layer.position = std::min(layer.position + *layer.ratio * rate / state.frame_rate, latest);
-    }
-    layer.entered = true;
+    place(state, layer, head, ring->get_frame_rate(), 2.0, elapsed);
 
     const double whole = std::max(std::floor(layer.position), 0.0);
     const auto frame = static_cast<uint64_t>(whole);
@@ -276,6 +336,7 @@ ChimeraBuilder& ChimeraBuilder::from_pipeline()
 {
     auto& target = current();
     target.ring.reset();
+    target.collection.reset();
     target.image.reset();
     target.picture.reset();
     target.piped = true;
@@ -301,8 +362,21 @@ ChimeraBuilder& ChimeraBuilder::from(std::shared_ptr<Kakshya::DynamicVideoStream
     auto& target = current();
     target.image.reset();
     target.picture.reset();
+    target.collection.reset();
     target.piped = false;
     target.ring = std::move(ring);
+    return *this;
+}
+
+ChimeraBuilder& ChimeraBuilder::from(std::shared_ptr<Kakshya::TextureCollection> collection, double frame_rate)
+{
+    auto& target = current();
+    target.image.reset();
+    target.picture.reset();
+    target.ring.reset();
+    target.piped = false;
+    target.collection = std::move(collection);
+    target.collection_rate = frame_rate;
     return *this;
 }
 
@@ -310,6 +384,7 @@ ChimeraBuilder& ChimeraBuilder::from(std::shared_ptr<Core::VKImage> image)
 {
     auto& target = current();
     target.ring.reset();
+    target.collection.reset();
     target.picture.reset();
     target.piped = false;
     target.image = std::move(image);
@@ -320,6 +395,7 @@ ChimeraBuilder& ChimeraBuilder::from(Kakshya::ImageData image)
 {
     auto& target = current();
     target.ring.reset();
+    target.collection.reset();
     target.image.reset();
     target.piped = false;
     target.picture = std::make_shared<const Kakshya::ImageData>(std::move(image));
