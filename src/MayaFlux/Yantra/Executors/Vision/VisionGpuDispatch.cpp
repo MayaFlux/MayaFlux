@@ -489,6 +489,8 @@ VisionResult VisionGpuExecutor::run(
         reap_fences(contexts);
         contexts.flow_state.curr_ready = false;
         contexts.pass.begin(sequence, w, h);
+        contexts.pass.storage_w = 0;
+        contexts.pass.storage_h = 0;
         contexts.bound_staged.reset();
         const auto seed = op_ingest(contexts, image, w, h);
         contexts.pass.current = seed;
