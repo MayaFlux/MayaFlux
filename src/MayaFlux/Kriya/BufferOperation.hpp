@@ -323,6 +323,28 @@ namespace Kriya {
             std::optional<Portal::Graphics::RenderConfig> display = std::nullopt);
 
         /**
+         * @brief Capture an opened camera or loaded video into a dynamic video stream it creates.
+         *
+         * The container form of the camera and file forms, which open the source
+         * and call this. A container already hooked, for example by piping it into
+         * Graphics, keeps its buffer; an unhooked one is hooked here. The ring is
+         * sized from that buffer. Audio extracted with the video is not touched:
+         * pipe the container into Graphics first to hear it.
+         *
+         * @param ring_frames Frames the ring keeps; zero keeps three seconds at the
+         *        registered frame rate.
+         * @param live Draws the live source when given.
+         * @param display Draws the stream through the pipeline's IOManager when
+         *        given; the pipeline needs one.
+         */
+        static BufferOperation capture_to_stream(
+            const std::shared_ptr<IO::IOManager>& io_manager,
+            const std::shared_ptr<Kakshya::VideoStreamContainer>& container,
+            uint64_t ring_frames = 0,
+            std::optional<Portal::Graphics::RenderConfig> live = std::nullopt,
+            std::optional<Portal::Graphics::RenderConfig> display = std::nullopt);
+
+        /**
          * @brief Capture a video file straight into a dynamic video stream it creates.
          *
          * The video counterpart of the camera form: it loads the file, hooks it to

@@ -4,6 +4,7 @@
 #include "MayaFlux/Buffers/Container/SoundFileBridge.hpp"
 #include "MayaFlux/Buffers/Container/VideoContainerBuffer.hpp"
 #include "MayaFlux/Buffers/Textures/TextureArrayBuffer.hpp"
+#include "MayaFlux/Kakshya/Source/CameraContainer.hpp"
 #include "MayaFlux/Kakshya/Source/DynamicVideoStream.hpp"
 #include "MayaFlux/Kakshya/Source/VideoFileContainer.hpp"
 #include "MayaFlux/Kriya/PipelineHelpers/PipelineGraphicsData.hpp"
@@ -281,10 +282,37 @@ BufferOperation BufferOperation::capture_to_stream(
             std::source_location::current(), "Failed to open camera");
     }
 
-    auto buffer = io_manager->hook_camera_to_buffer(camera);
+    return capture_to_stream(io_manager, camera, ring_frames, std::move(live), std::move(display));
+}
+
+BufferOperation BufferOperation::capture_to_stream(
+    const std::shared_ptr<IO::IOManager>& io_manager,
+    const std::shared_ptr<Kakshya::VideoStreamContainer>& container,
+    uint64_t ring_frames,
+    std::optional<Portal::Graphics::RenderConfig> live,
+    std::optional<Portal::Graphics::RenderConfig> display)
+{
+    if (!container) {
+        error<std::runtime_error>(Journal::Component::Kriya, Journal::Context::AsyncIO,
+            std::source_location::current(), "capture_to_stream: null video container");
+    }
+
+    std::shared_ptr<Buffers::VideoContainerBuffer> buffer;
+    if (const auto camera = std::dynamic_pointer_cast<Kakshya::CameraContainer>(container)) {
+        buffer = io_manager->get_camera_buffer(camera);
+        if (!buffer) {
+            buffer = io_manager->hook_camera_to_buffer(camera);
+        }
+    } else {
+        buffer = io_manager->get_video_buffer(container);
+        if (!buffer) {
+            buffer = io_manager->hook_video_container_to_buffer(container);
+        }
+    }
+
     if (!buffer) {
         error<std::runtime_error>(Journal::Component::Kriya, Journal::Context::AsyncIO,
-            std::source_location::current(), "Failed to hook camera to graphics buffer");
+            std::source_location::current(), "Failed to hook video container to graphics buffer");
     }
 
     if (live) {
@@ -312,21 +340,7 @@ BufferOperation BufferOperation::capture_to_stream(
             std::source_location::current(), "Failed to load video file: {}", filepath);
     }
 
-    auto buffer = io_manager->hook_video_container_to_buffer(video);
-    if (!buffer) {
-        error<std::runtime_error>(Journal::Component::Kriya, Journal::Context::AsyncIO,
-            std::source_location::current(), "Failed to hook video file to graphics buffer: {}", filepath);
-    }
-
-    if (live) {
-        detail::ensure_rendering(buffer, *live);
-    }
-
-    BufferOperation op(OpType::ROUTE, Buffers::ProcessingToken::GRAPHICS_BACKEND);
-    op.m_source_graphics_buffer = buffer;
-    op.m_target_graphics_stream = make_ring(buffer, ring_frames);
-    op.m_render = std::move(display);
-    return op;
+    return capture_to_stream(io_manager, video, ring_frames, std::move(live), std::move(display));
 }
 
 BufferOperation BufferOperation::transform(TransformationFunction transformer,
