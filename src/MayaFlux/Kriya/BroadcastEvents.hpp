@@ -124,8 +124,8 @@ std::shared_ptr<Vruta::Event> subscribe(
  * @brief Broadcast of what @p fn returns, taken once per graphics frame.
  *
  * Adds a routine to @p scheduler that calls @p fn every graphics frame and
- * signals each value it returns. The routine ends once nothing holds the
- * returned source.
+ * signals each value it returns, registered under @p name. The routine ends
+ * once nothing holds the returned source, or when the task is cancelled.
  *
  * @code
  * auto results = Kriya::frame_results<Result>(*scheduler, [state]() -> std::optional<Result> {
@@ -138,7 +138,8 @@ std::shared_ptr<Vruta::Event> subscribe(
 template <typename T>
 [[nodiscard]] std::shared_ptr<Vruta::BroadcastSource<T>> frame_results(
     Vruta::TaskScheduler& scheduler,
-    std::function<std::optional<T>()> fn);
+    std::function<std::optional<T>()> fn,
+    const std::string& name = "");
 
 } // namespace MayaFlux::Kriya
 

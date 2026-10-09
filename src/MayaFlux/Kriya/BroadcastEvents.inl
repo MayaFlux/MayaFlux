@@ -58,7 +58,8 @@ std::shared_ptr<Vruta::Event> subscribe(
 template <typename T>
 std::shared_ptr<Vruta::BroadcastSource<T>> frame_results(
     Vruta::TaskScheduler& scheduler,
-    std::function<std::optional<T>()> fn)
+    std::function<std::optional<T>()> fn,
+    const std::string& name)
 {
     auto source = std::make_shared<Vruta::BroadcastSource<T>>();
 
@@ -77,7 +78,7 @@ std::shared_ptr<Vruta::BroadcastSource<T>> frame_results(
         }
     };
 
-    scheduler.add_task(std::make_shared<Vruta::GraphicsRoutine>(routine(source, std::move(fn))));
+    scheduler.add_task(std::make_shared<Vruta::GraphicsRoutine>(routine(source, std::move(fn))), name);
     return source;
 }
 
