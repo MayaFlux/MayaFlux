@@ -36,6 +36,24 @@ public:
         std::optional<VisionExtractMode> extract = {},
         Kinesis::Vision::VisionAnalysisContext context = {});
 
+    using GrammarAwareComputeMatrix::execute;
+
+    /**
+     * @brief Analyze @p image and keep it with its analysis until the next
+     *        call.
+     *
+     * analysis() and frame() return what this call produced. Extract from
+     * them through extractor(); mask() reads this call's labels through
+     * analyzer()->get_executor().
+     */
+    void execute(const std::shared_ptr<Core::VKImage>& image);
+
+    /** @brief The analysis of the last execute(), empty before the first. */
+    [[nodiscard]] const Kinesis::Vision::VisionAnalysis& analysis() const { return m_analysis; }
+
+    /** @brief The image the last execute() analyzed, null before the first. */
+    [[nodiscard]] const std::shared_ptr<Core::VKImage>& frame() const { return m_frame; }
+
     /** @brief Analyze @p image with the matrix's query. */
     [[nodiscard]] Kinesis::Vision::VisionAnalysis analyze(const std::shared_ptr<Core::VKImage>& image);
 
@@ -51,6 +69,8 @@ public:
 private:
     std::shared_ptr<VisionAnalyzer> m_analyzer;
     std::shared_ptr<VisionExtractor> m_extractor;
+    Kinesis::Vision::VisionAnalysis m_analysis;
+    std::shared_ptr<Core::VKImage> m_frame;
 };
 
 } // namespace MayaFlux::Yantra::Vision

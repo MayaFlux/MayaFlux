@@ -48,6 +48,12 @@ VisionMatrix::VisionMatrix(
 {
 }
 
+void VisionMatrix::execute(const std::shared_ptr<Core::VKImage>& image)
+{
+    m_frame = image;
+    m_analysis = image ? m_analyzer->analyze_vision(image) : Kinesis::Vision::VisionAnalysis {};
+}
+
 Kinesis::Vision::VisionAnalysis VisionMatrix::analyze(const std::shared_ptr<Core::VKImage>& image)
 {
     return m_analyzer->analyze_vision(image);
