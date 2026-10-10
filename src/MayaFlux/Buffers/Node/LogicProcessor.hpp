@@ -5,6 +5,8 @@
 
 namespace MayaFlux::Buffers {
 
+class AudioBuffer;
+
 /**
  * @class LogicProcessor
  * @brief Digital signal processor that applies boolean logic operations to data streams
@@ -184,6 +186,61 @@ public:
     [[nodiscard]] std::shared_ptr<LogicProcessor> clone() const;
 
     /**
+     * @brief Reads another buffer as an extra input slot of a parallel node
+     * @param buffer The key, for example another channel or a sidechain
+     *
+     * With a parallel Logic node, every sample is evaluated with one slot per
+     * key, in the order added, followed by this buffer's own sample, the same
+     * order input nodes use. The key is read as it stands when this buffer is
+     * processed, so process it first; a key shorter than this buffer or no
+     * longer alive reads as silence. Keys are ignored by a node that is not
+     * parallel.
+     */
+    void add_key(const std::shared_ptr<AudioBuffer>& buffer);
+
+    /**
+     * @brief Removes every key
+     */
+    void clear_keys();
+
+    /**
+     * @brief Processes every sample as a word of bit streams, one node per bit
+     * @param bits Word width, 1 to 24; 0 turns it off
+     *
+     * Each sample becomes an offset binary word (Kinesis::Discrete::to_word) and
+     * every bit position runs through its own clone of the node, so each plane
+     * keeps its own state. Planes are presented to the node as 0.0 or 1.0 and
+     * the output bits are recombined into the sample, so the logic data is a
+     * value in [-1, 1] rather than a bit. With a parallel node and keys, plane j
+     * sees plane j of every key and of this buffer: bitwise word operations
+     * across channels. The clones are taken at the next block and again when
+     * the node is replaced or this is called.
+     */
+    void set_bit_planes(uint32_t bits);
+
+    /**
+     * @brief Treats the samples of a block as cells of an automaton
+     * @param radius Cells on each side that feed a cell
+     * @param generations Steps per block; 0 turns it off
+     * @param wrap Whether the block's ends meet, otherwise cells beyond them are 0
+     * @param memory Whether the block perturbs the previous result instead of replacing it
+     *
+     * Needs a parallel node. A cell is 1 when its sample is above zero, and the
+     * node is evaluated for every cell with 2 * radius + 1 slots, slot 0 the
+     * cell furthest to the right and the last slot the furthest to the left,
+     * so Wolfram's rule numbers work with `input_truth_table_state(3, rule)`.
+     * With memory the block's cells are XORed into the previous block's final
+     * generation, so the pattern evolves across blocks; use one processor per
+     * channel (clone) for that. The logic data is the final generation, 0 or 1.
+     */
+    void set_neighbourhood(size_t radius, size_t generations = 1, bool wrap = true, bool memory = false);
+
+    /**
+     * @brief Turns the automaton off
+     */
+    void clear_neighbourhood();
+
+    /**
      * @brief Set how logic values modulate buffer content
      * @param type Modulation type to use
      *
@@ -324,6 +381,27 @@ private:
     double m_low_value; ///< Low value for THRESHOLD_REMAP
     double m_last_held_value; ///< Last held value for HOLD_ON_FALSE and SAMPLE_AND_HOLD
     double m_last_logic_value; ///< Previous logic value for change detection
+
+    std::vector<std::weak_ptr<AudioBuffer>> m_keys; ///< Buffers read as extra input slots
+    uint32_t m_plane_bits {}; ///< Word width when processing bit planes, 0 when off
+    size_t m_radius {}; ///< Neighbourhood radius of the automaton
+    size_t m_generations {}; ///< Automaton steps per block, 0 when off
+    bool m_wrap { true }; ///< Whether the automaton's block ends meet
+    bool m_memory {}; ///< Whether blocks perturb the previous automaton result
+    std::vector<std::shared_ptr<Nodes::Generator::Logic>> m_plane_nodes; ///< One clone of the node per bit plane
+    std::shared_ptr<Nodes::Generator::Logic> m_plane_template; ///< The node the plane clones were taken from
+    std::vector<std::shared_ptr<AudioBuffer>> m_live_keys; ///< Keys locked for the current block
+    std::vector<uint32_t> m_key_words; ///< Words of the keys at the current sample
+    std::vector<double> m_slots; ///< Input slots handed to the node
+    std::vector<uint8_t> m_cells; ///< Automaton cells
+    std::vector<uint8_t> m_next_cells; ///< Automaton cells of the next generation
+    std::vector<uint8_t> m_previous_cells; ///< Last automaton result, kept when memory is on
+
+    void generate_temporal(size_t num_samples, const std::vector<double>& input_data);
+    void generate_keyed(size_t num_samples, const std::vector<double>& input_data);
+    void generate_planes(size_t num_samples, const std::vector<double>& input_data);
+    void generate_spatial(size_t num_samples, const std::vector<double>& input_data);
+    void lock_keys();
 };
 
 } // namespace MayaFlux::Buffers
