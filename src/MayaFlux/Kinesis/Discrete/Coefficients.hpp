@@ -206,6 +206,16 @@ MAYAFLUX_API void biquad_high_shelf(double frequency, double slope, double gain_
     size_t window, size_t poly_order, size_t derivative = 0);
 
 /**
+ * @brief Lagrange interpolation weights written to an array, without allocating.
+ * @param delay Position between the taps, clamped to [0, taps - 1]
+ * @param weights Output; its size is the number of taps, so order = size - 1
+ *
+ * The same weights as lagrange_delay for order = weights.size() - 1, for use
+ * per sample.
+ */
+MAYAFLUX_API void lagrange_weights(double delay, std::span<double> weights) noexcept;
+
+/**
  * @brief Lagrange fractional-delay FIR coefficients
  *
  * Interpolates between samples at a non-integer offset by fitting a polynomial

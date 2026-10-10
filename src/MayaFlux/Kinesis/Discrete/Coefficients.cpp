@@ -343,19 +343,28 @@ std::vector<double> savitzky_golay(size_t window, size_t poly_order, size_t deri
 
 std::vector<double> lagrange_delay(double delay, size_t order)
 {
-    const size_t taps = order + 1;
-    const double d = std::clamp(delay, 0.0, static_cast<double>(order));
+    std::vector<double> h(order + 1);
+    lagrange_weights(delay, h);
+    return h;
+}
 
-    std::vector<double> h(taps, 1.0);
+void lagrange_weights(double delay, std::span<double> weights) noexcept
+{
+    const size_t taps = weights.size();
+    if (taps == 0)
+        return;
+
+    const double d = std::clamp(delay, 0.0, static_cast<double>(taps - 1));
+
     for (size_t k = 0; k < taps; ++k) {
+        weights[k] = 1.0;
         for (size_t j = 0; j < taps; ++j) {
             if (j == k)
                 continue;
-            h[k] *= (d - static_cast<double>(j))
+            weights[k] *= (d - static_cast<double>(j))
                 / (static_cast<double>(k) - static_cast<double>(j));
         }
     }
-    return h;
 }
 
 void resonator(double pole_radius, double pole_angle,

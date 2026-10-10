@@ -62,7 +62,7 @@ If a node is a moment of transformation, a buffer is a span of time held in one 
 
 A node produces one value per evaluation. A buffer accumulates those values over a cycle, holds them, and makes them available as a block. Buffers are cycle-driven, carry processing tokens, and are registered with a `BufferManager` that knows when to process them.
 
-**Audio buffers** accumulate double-precision samples for the audio subsystem. `AudioBuffer` is the base. `NodeBuffer` is an audio buffer whose data source is a node. `FeedbackBuffer` adds a `HistoryBuffer` backed by a ring buffer for delay-line and recursive signal paths. `InputAudioBuffer` captures from hardware input.
+**Audio buffers** accumulate double-precision samples for the audio subsystem. `AudioBuffer` is the base. `NodeBuffer` is an audio buffer whose data source is a node. `FeedbackBuffer` owns and publishes a `HistoryBuffer` ring of carried values. `FeedbackProcessor` works on any `AudioBuffer` and combines each sample with lagged values of that ring through a lambda or a Kinesis kernel (fixed or time-varying lags, linear or Lagrange reads, optionally another `FeedbackBuffer`'s ring); `BlockFeedbackProcessor` does the same per whole block. `InputAudioBuffer` captures from hardware input.
 
 **Geometry buffers** accumulate vertex data for the graphics pipeline: `GeometryBuffer`, `MeshBuffer`, `CompositeGeometryBuffer`.
 

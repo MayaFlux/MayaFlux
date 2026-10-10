@@ -3,6 +3,7 @@
 #include "MayaFlux/Buffers/AudioBuffer.hpp"
 #include "MayaFlux/Buffers/BufferSpec.hpp"
 #include "MayaFlux/Buffers/Recursive/FeedbackBuffer.hpp"
+#include "MayaFlux/Kinesis/Discrete/Kernels.hpp"
 #include "MayaFlux/Kinesis/Tendency/TendencyFactories.hpp"
 
 namespace MayaFlux::Test {
@@ -224,6 +225,119 @@ TEST(FeedbackBufferRingTest,FeedSamplesChangesTheDefaultLag)
     EXPECT_DOUBLE_EQ(data.at(1), 0.0);
     EXPECT_DOUBLE_EQ(data.at(2), 0.5);
     EXPECT_DOUBLE_EQ(data.at(4), 0.25);
+}
+
+TEST(FeedbackInterpolationTest, CubicFollowsASineCloserThanLinear)
+{
+    constexpr double frequency = 0.05;
+    constexpr double lag = 10.37;
+    constexpr size_t samples = 128;
+
+    const auto worst_error = [&](size_t order) {
+        auto buffer = make_block(samples);
+        for (size_t i = 0; i < samples; ++i) {
+            buffer->get_data().at(i) = std::sin(2.0 * std::numbers::pi * frequency * static_cast<double>(i));
+        }
+        auto processor = std::make_shared<FeedbackProcessor>(delay_line(), std::vector<double> { lag });
+        processor->set_interpolation(order);
+        processor->process(buffer);
+
+        double worst = 0.0;
+        for (size_t i = 20; i < samples; ++i) {
+            const double exact = std::sin(2.0 * std::numbers::pi * frequency * (static_cast<double>(i) - lag));
+            worst = std::max(worst, std::abs(buffer->get_data().at(i) - exact));
+        }
+        return worst;
+    };
+
+    const double linear = worst_error(1);
+    const double cubic = worst_error(3);
+
+    EXPECT_LT(cubic, linear);
+    EXPECT_LT(cubic, 2e-3);
+}
+
+TEST(FeedbackInterpolationTest, WholeLagsReadTheSameUnderEveryOrder)
+{
+    for (const size_t order : { 1UL, 2UL, 3UL, 5UL }) {
+        auto buffer = make_impulse(16);
+        auto processor = std::make_shared<FeedbackProcessor>(delay_line(), std::vector<double> { 3.0 });
+        processor->set_interpolation(order);
+        processor->process(buffer);
+
+        for (size_t n = 0; n < 16; ++n) {
+            EXPECT_NEAR(buffer->get_data().at(n), n == 3 ? 1.0 : 0.0, 1e-12) << "order=" << order << " n=" << n;
+        }
+    }
+}
+
+TEST(FeedbackKernelTest, AnyKernelServesAsTheCombiner)
+{
+    auto buffer = make_impulse(8);
+    auto processor = std::make_shared<FeedbackProcessor>(
+        Kinesis::Discrete::weighted_sum, std::vector<double> { 1.0 }, std::vector<double> { 1.0, 0.5 });
+
+    processor->process(buffer);
+
+    double expected = 1.0;
+    for (size_t n = 0; n < 8; ++n) {
+        EXPECT_DOUBLE_EQ(buffer->get_data().at(n), expected) << "n=" << n;
+        expected *= 0.5;
+    }
+}
+
+class LagSourceTest : public ::testing::TestWithParam<bool> { };
+
+TEST_P(LagSourceTest, ReadsTheSourceOneBlockBehindWhicheverRunsFirst)
+{
+    auto source = std::make_shared<FeedbackBuffer>(0, TestConfig::BUFFER_SIZE, 0.5F, 8);
+    source->resize(8);
+    source->set_default_processor(std::make_shared<FeedbackProcessor>(
+        FeedbackProcessor::Combine { [](double x, std::span<const double>, std::span<double>) { return x; } },
+        std::vector<double> { 1.0 }));
+
+    auto sink = make_block(8);
+    auto reader = std::make_shared<FeedbackProcessor>(
+        FeedbackProcessor::Combine { [](double, std::span<const double> taps, std::span<double>) { return taps[0]; } },
+        std::vector<double> { 8.0 });
+    reader->set_lag_source(source);
+
+    const auto cycle = [&](const std::vector<double>& block) {
+        source->get_data() = block;
+        if (GetParam()) {
+            source->process_default();
+            reader->process(sink);
+        } else {
+            reader->process(sink);
+            source->process_default();
+        }
+        return sink->get_data();
+    };
+
+    const std::vector<double> first { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0 };
+    const std::vector<double> second { 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0 };
+
+    EXPECT_EQ(cycle(first), std::vector<double>(8, 0.0));
+    EXPECT_EQ(cycle(second), first);
+    EXPECT_EQ(source->get_write_count(), 16U);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    ProcessingOrder,
+    LagSourceTest,
+    ::testing::Bool(),
+    [](const ::testing::TestParamInfo<bool>& info) { return info.param ? std::string("SourceFirst") : std::string("ReaderFirst"); });
+
+TEST(FeedbackBufferRingTest, WriteCountStartsAtZeroForAClone)
+{
+    auto original = std::make_shared<FeedbackBuffer>(0, TestConfig::BUFFER_SIZE, 0.5F, 8);
+    original->resize(8);
+    original->process_default();
+    EXPECT_EQ(original->get_write_count(), 8U);
+
+    auto clone = std::dynamic_pointer_cast<FeedbackBuffer>(original->clone_to(1U));
+    ASSERT_NE(clone, nullptr);
+    EXPECT_EQ(clone->get_write_count(), 0U);
 }
 
 }

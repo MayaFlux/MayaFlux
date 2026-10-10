@@ -1,6 +1,7 @@
 #include "FeedbackBuffer.hpp"
 
 #include "MayaFlux/Buffers/BufferSpec.hpp"
+#include "MayaFlux/Kinesis/Discrete/Coefficients.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
@@ -94,6 +95,13 @@ FeedbackProcessor::FeedbackProcessor(CombineStep combine, const std::vector<doub
     set_lags(lags);
 }
 
+FeedbackProcessor::FeedbackProcessor(WindowKernel kernel, const std::vector<double>& lags, std::vector<double> coefficients)
+    : m_kernel(std::move(kernel))
+    , m_coefficients(std::move(coefficients))
+{
+    set_lags(lags);
+}
+
 void FeedbackProcessor::set_feed_samples(uint32_t samples)
 {
     m_feed_samples = std::max<uint32_t>(samples, 1);
@@ -110,6 +118,7 @@ void FeedbackProcessor::set_combine(Combine combine)
 {
     m_combine = std::move(combine);
     m_step = nullptr;
+    m_kernel = nullptr;
     m_default_combine = false;
 }
 
@@ -117,7 +126,32 @@ void FeedbackProcessor::set_combine(CombineStep combine)
 {
     m_step = std::move(combine);
     m_combine = nullptr;
+    m_kernel = nullptr;
     m_default_combine = false;
+}
+
+void FeedbackProcessor::set_combine(WindowKernel kernel)
+{
+    m_kernel = std::move(kernel);
+    m_combine = nullptr;
+    m_step = nullptr;
+    m_default_combine = false;
+}
+
+void FeedbackProcessor::set_interpolation(size_t order)
+{
+    m_order = std::clamp<size_t>(order, 1, 7);
+    recompute_capacity();
+}
+
+void FeedbackProcessor::set_lag_source(const std::shared_ptr<FeedbackBuffer>& source)
+{
+    m_lag_source = source;
+}
+
+void FeedbackProcessor::clear_lag_source()
+{
+    m_lag_source.reset();
 }
 
 void FeedbackProcessor::set_lags(const std::vector<double>& lags)
@@ -172,12 +206,15 @@ std::shared_ptr<FeedbackProcessor> FeedbackProcessor::clone() const
 
     copy->m_taps = m_taps;
     copy->m_coefficients = m_coefficients;
+    copy->m_order = m_order;
+    copy->m_lag_source = m_lag_source;
     copy->m_capacity = m_capacity;
 
     if (!m_default_combine) {
         copy->m_default_combine = false;
         copy->m_combine = m_combine;
         copy->m_step = m_step;
+        copy->m_kernel = m_kernel;
     }
 
     return copy;
@@ -189,7 +226,8 @@ void FeedbackProcessor::recompute_capacity()
     for (const auto& tap : m_taps) {
         needed = std::max(needed, tap.max_samples);
     }
-    m_capacity = static_cast<size_t>(std::ceil(needed));
+    const size_t extra = m_order > 1 ? m_order : 0;
+    m_capacity = static_cast<size_t>(std::ceil(needed)) + extra;
 }
 
 FeedbackProcessor::State& FeedbackProcessor::state_for(const std::shared_ptr<Buffer>& buffer)
@@ -200,6 +238,7 @@ FeedbackProcessor::State& FeedbackProcessor::state_for(const std::shared_ptr<Buf
     if (inserted) {
         state.coefs = m_coefficients;
         state.values.assign(m_taps.size(), 0.0);
+        state.window.assign(m_taps.size() + 1, 0.0);
         state.lag_prev.assign(m_taps.size(), 1.0);
         state.lag_now.assign(m_taps.size(), 1.0);
 
@@ -241,6 +280,37 @@ double FeedbackProcessor::read(const Memory::HistoryBuffer<double>& ring, double
     return nearer + (ring[whole] - nearer) * fraction;
 }
 
+double FeedbackProcessor::read_at(const Memory::HistoryBuffer<double>& ring, double position, size_t order) noexcept
+{
+    const size_t capacity = ring.capacity();
+    const double clamped = std::clamp(position, 0.0, static_cast<double>(capacity - 1));
+
+    if (order <= 1) {
+        const auto whole = static_cast<size_t>(clamped);
+        const double fraction = clamped - static_cast<double>(whole);
+        const double nearer = ring[whole];
+        if (fraction <= 0.0 || whole + 1 >= capacity) {
+            return nearer;
+        }
+        return nearer + (ring[whole + 1] - nearer) * fraction;
+    }
+
+    const size_t taps = std::min(order + 1, capacity);
+    std::array<double, 8> weights {};
+
+    const auto centre = static_cast<size_t>(clamped);
+    const size_t before = (taps - 1) / 2;
+    const size_t first = std::min(centre > before ? centre - before : 0, capacity - taps);
+
+    Kinesis::Discrete::lagrange_weights(clamped - static_cast<double>(first), std::span<double>(weights.data(), taps));
+
+    double sum = 0.0;
+    for (size_t k = 0; k < taps; ++k) {
+        sum += weights[k] * ring[first + k];
+    }
+    return sum;
+}
+
 void FeedbackProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
 {
     auto audio = std::dynamic_pointer_cast<AudioBuffer>(buffer);
@@ -249,7 +319,8 @@ void FeedbackProcessor::processing_function(const std::shared_ptr<Buffer>& buffe
     }
 
     const bool use_step = static_cast<bool>(m_step);
-    if (!use_step && !m_combine) {
+    const bool use_kernel = !use_step && !m_combine && static_cast<bool>(m_kernel);
+    if (!use_step && !use_kernel && !m_combine) {
         return;
     }
 
@@ -269,18 +340,35 @@ void FeedbackProcessor::processing_function(const std::shared_ptr<Buffer>& buffe
 
     if (state.values.size() != taps) {
         state.values.assign(taps, 0.0);
+        state.window.assign(taps + 1, 0.0);
         state.lag_prev.assign(taps, 1.0);
         state.lag_now.assign(taps, 1.0);
         state.primed = false;
     }
 
+    const auto source = m_lag_source.lock();
+    const bool foreign = source && static_cast<const Buffer*>(source.get()) != buffer.get();
+
+    const Memory::HistoryBuffer<double>* read_ring = &ring;
+    double offset = 0.0;
+    if (foreign) {
+        auto& source_ring = source->get_history_buffer();
+        if (source_ring.capacity() < m_capacity + samples) {
+            source_ring.resize(m_capacity + samples);
+        }
+        read_ring = &source_ring;
+        offset = static_cast<double>(source->get_write_count()) - static_cast<double>(state.elapsed);
+    }
+
+    const size_t extra = m_order > 1 ? m_order : 0;
     const auto rate = static_cast<double>(s_registered_sample_rate);
     const auto seconds = static_cast<double>(state.elapsed) / rate;
-    const auto limit = static_cast<double>(ring.capacity());
+    const double lowest = foreign ? std::max(1.0, static_cast<double>(samples)) : 1.0;
+    const double highest = std::max(static_cast<double>((foreign ? m_capacity : ring.capacity()) - extra), lowest);
 
     for (size_t t = 0; t < taps; ++t) {
         const double raw = m_taps[t].map ? (*m_taps[t].map)(seconds) * rate : m_taps[t].samples;
-        state.lag_now[t] = std::clamp(raw, 1.0, std::max(limit, 1.0));
+        state.lag_now[t] = std::clamp(raw, lowest, highest);
     }
     if (!state.primed) {
         state.lag_prev = state.lag_now;
@@ -288,12 +376,15 @@ void FeedbackProcessor::processing_function(const std::shared_ptr<Buffer>& buffe
     }
 
     const double inverse = 1.0 / static_cast<double>(samples);
+    const bool plain_read = !foreign && m_order <= 1;
 
     for (size_t i = 0; i < samples; ++i) {
         const double ramp = static_cast<double>(i + 1) * inverse;
+        const double shift = foreign ? offset - static_cast<double>(i) : 0.0;
+
         for (size_t t = 0; t < taps; ++t) {
             const double lag = state.lag_prev[t] + (state.lag_now[t] - state.lag_prev[t]) * ramp;
-            state.values[t] = read(ring, lag);
+            state.values[t] = plain_read ? read(ring, lag) : read_at(*read_ring, lag - 1.0 + shift, m_order);
         }
 
         const std::span<const double> tap_values(state.values);
@@ -305,6 +396,11 @@ void FeedbackProcessor::processing_function(const std::shared_ptr<Buffer>& buffe
             const auto [step_out, step_carry] = m_step(data[i], tap_values, coefs);
             out = step_out;
             carry = step_carry;
+        } else if (use_kernel) {
+            state.window[0] = data[i];
+            std::copy(state.values.begin(), state.values.end(), state.window.begin() + 1);
+            out = m_kernel(std::span<double>(state.window), coefs);
+            carry = out;
         } else {
             out = m_combine(data[i], tap_values, coefs);
             carry = out;
@@ -316,6 +412,10 @@ void FeedbackProcessor::processing_function(const std::shared_ptr<Buffer>& buffe
 
     state.lag_prev = state.lag_now;
     state.elapsed += samples;
+
+    if (auto owner = std::dynamic_pointer_cast<FeedbackBuffer>(buffer)) {
+        owner->mark_written(samples);
+    }
 }
 
 } // namespace MayaFlux::Buffers
