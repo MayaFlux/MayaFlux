@@ -6,1068 +6,711 @@
 
 namespace MayaFlux::Test {
 
-class PolynomialTest : public ::testing::Test {
-protected:
-    void SetUp() override
-    {
-        // Simple quadratic function: f(x) = 2x² + 3x + 1
-        auto quadratic = [](double x) -> double {
-            return 2.0 * x * x + 3.0 * x + 1.0;
-        };
+using Buffers::AudioBuffer;
+using Buffers::PolynomialProcessor;
+using Nodes::Generator::Polynomial;
+using Nodes::Generator::PolynomialMode;
 
-        polynomial = std::make_shared<Nodes::Generator::Polynomial>(quadratic);
+namespace {
+
+    double quadratic(double x)
+    {
+        return 2.0 * x * x + 3.0 * x + 1.0;
     }
 
-    std::shared_ptr<Nodes::Generator::Polynomial> polynomial;
+    std::shared_ptr<Polynomial> make_quadratic()
+    {
+        return std::make_shared<Polynomial>(quadratic);
+    }
+
+    std::shared_ptr<AudioBuffer> make_block(size_t samples, double fill = 0.0, uint32_t channel = 0)
+    {
+        auto buffer = std::make_shared<AudioBuffer>(channel, TestConfig::BUFFER_SIZE);
+        buffer->resize(static_cast<uint32_t>(samples));
+        std::ranges::fill(buffer->get_data(), fill);
+        return buffer;
+    }
+
+    Polynomial::CoefBufferFunction counter()
+    {
+        return [](std::span<double>, std::span<double> coefs) -> double {
+            coefs[0] += 1.0;
+            return coefs[0];
+        };
+    }
+
+    Polynomial::CoefBufferFunction weights()
+    {
+        return [](std::span<double> window, std::span<double> coefs) -> double {
+            return coefs[0] * window[0] + coefs[1] * window[1];
+        };
+    }
+
+}
+
+struct EvaluationPoint {
+    double x;
+    double expected;
 };
 
-TEST_F(PolynomialTest, BasicProperties)
+class DirectEvaluationTest : public ::testing::TestWithParam<EvaluationPoint> { };
+
+TEST_P(DirectEvaluationTest, FunctionNodeEvaluatesTheFunction)
 {
-    EXPECT_EQ(polynomial->get_mode(), Nodes::Generator::PolynomialMode::DIRECT);
-    EXPECT_EQ(polynomial->get_buffer_size(), 0);
+    const auto [x, expected] = GetParam();
 
-    // Test with input 2.0: 2*2² + 3*2 + 1 = 2*4 + 6 + 1 = 15
-    double result = polynomial->process_sample(2.0);
-    EXPECT_DOUBLE_EQ(result, 15.0);
-
-    // Test with input -1.0: 2*(-1)² + 3*(-1) + 1 = 2*1 - 3 + 1 = 0
-    result = polynomial->process_sample(-1.0);
-    EXPECT_DOUBLE_EQ(result, 0.0);
+    EXPECT_DOUBLE_EQ(make_quadratic()->process_sample(x), expected);
 }
 
-TEST_F(PolynomialTest, RecursiveMode)
+TEST_P(DirectEvaluationTest, CoefficientNodeEvaluatesTheSameCurve)
 {
-    // Create a recursive polynomial: y[n] = 0.5*y[n-1] + 0.2*y[n-2] + x[n]
-    auto recursive_func = [](std::span<double> buffer) -> double {
-        // Get the input value (the newest value in the buffer)
-        double input = buffer.empty() ? 0.0 : buffer.front();
+    const auto [x, expected] = GetParam();
+    Polynomial node(std::vector<double> { 2.0, 3.0, 1.0 });
 
-        // For the first sample, we only have the input
-        if (buffer.size() < 2) {
-            return input; // Just return the input for the first sample
-        }
-
-        // For subsequent samples, apply the recursive formula
-        // Note: buffer[0] is the newest value (input), buffer[1] is y[n-1], buffer[2] is y[n-2]
-        return 0.5 * buffer[1] + 0.2 * (buffer.size() > 2 ? buffer[2] : 0.0) + input;
-    };
-
-    auto recursive_poly = std::make_shared<Nodes::Generator::Polynomial>(
-        recursive_func, Nodes::Generator::PolynomialMode::RECURSIVE, 3); // Use buffer size 3 to store input + 2 previous outputs
-
-    EXPECT_EQ(recursive_poly->get_mode(), Nodes::Generator::PolynomialMode::RECURSIVE);
-    EXPECT_EQ(recursive_poly->get_buffer_size(), 3);
-
-    std::vector<double> initial = { 0.0, 0.0, 0.0 };
-    recursive_poly->set_initial_conditions(initial);
-
-    // First sample: y[0] = input = 1.0
-    double result = recursive_poly->process_sample(1.0);
-    EXPECT_DOUBLE_EQ(result, 1.0);
-
-    // Second sample: y[1] = 0.5*y[0] + 0.2*0 + 1.0 = 0.5*1.0 + 0.0 + 1.0 = 1.5
-    result = recursive_poly->process_sample(1.0);
-    EXPECT_DOUBLE_EQ(result, 1.5);
-
-    // Third sample: y[2] = 0.5*y[1] + 0.2*y[0] + 1.0 = 0.5*1.5 + 0.2*1.0 + 1.0 = 1.95
-    result = recursive_poly->process_sample(1.0);
-    EXPECT_DOUBLE_EQ(result, 1.95);
+    EXPECT_DOUBLE_EQ(node.process_sample(x), expected);
 }
 
-TEST_F(PolynomialTest, FeedforwardMode)
+INSTANTIATE_TEST_SUITE_P(
+    Quadratic,
+    DirectEvaluationTest,
+    ::testing::Values(
+        EvaluationPoint { 2.0, 15.0 },
+        EvaluationPoint { -1.0, 0.0 },
+        EvaluationPoint { 0.0, 1.0 },
+        EvaluationPoint { 0.5, 3.0 },
+        EvaluationPoint { -2.5, 6.0 }));
+
+TEST(PolynomialDirectTest, HasNoHistoryWindow)
 {
-    // Create a feedforward polynomial: y[n] = 0.7*x[n] + 0.3*x[n-1]
-    auto feedforward_func = [](std::span<double> buffer) -> double {
-        if (buffer.size() < 2)
-            return 0.7 * buffer[0];
-        return 0.7 * buffer[0] + 0.3 * buffer[1];
-    };
+    const auto node = make_quadratic();
 
-    auto feedforward_poly = std::make_shared<Nodes::Generator::Polynomial>(
-        feedforward_func, Nodes::Generator::PolynomialMode::FEEDFORWARD, 2);
-
-    EXPECT_EQ(feedforward_poly->get_mode(), Nodes::Generator::PolynomialMode::FEEDFORWARD);
-    EXPECT_EQ(feedforward_poly->get_buffer_size(), 2);
-
-    // First sample: y[0] = 0.7*1.0 = 0.7
-    double result = feedforward_poly->process_sample(1.0);
-    EXPECT_DOUBLE_EQ(result, 0.7);
-
-    // Second sample: y[1] = 0.7*2.0 + 0.3*1.0 = 1.7
-    result = feedforward_poly->process_sample(2.0);
-    EXPECT_DOUBLE_EQ(result, 1.7);
-
-    // Third sample: y[2] = 0.7*3.0 + 0.3*2.0 = 2.7
-    result = feedforward_poly->process_sample(3.0);
-    EXPECT_DOUBLE_EQ(result, 2.7);
+    EXPECT_EQ(node->get_mode(), PolynomialMode::DIRECT);
+    EXPECT_EQ(node->get_buffer_size(), 0U);
 }
 
-TEST_F(PolynomialTest, Reset)
+TEST(PolynomialDirectTest, BatchEvaluatesAtZeroInput)
 {
-    // Create a recursive polynomial with state
-    auto recursive_func = [](std::span<double> buffer) -> double {
-        double input = buffer[0]; // Current input
+    const auto batch = make_quadratic()->process_batch(10);
 
-        if (buffer.size() < 2) {
-            return input;
-        }
-
-        double prev_output = buffer[1]; // Previous output
-        return 0.5 * prev_output + input;
-    };
-
-    auto recursive_poly = std::make_shared<Nodes::Generator::Polynomial>(
-        recursive_func, Nodes::Generator::PolynomialMode::RECURSIVE, 1);
-
-    // Process a few samples to build up state
-    recursive_poly->process_sample(1.0); // Result: 1.0
-    double before_reset = recursive_poly->process_sample(2.0); // Result: 1.5 (0.5*1.0 + 1.0)
-
-    // Reset the polynomial
-    recursive_poly->reset();
-
-    // Process again - should be back to initial state
-    double after_reset = recursive_poly->process_sample(1.0);
-
-    // After reset, all buffers are cleared and filled with zeros
-    // So the first sample should just be the input value (1.0)
-    EXPECT_DOUBLE_EQ(after_reset, 1.0);
-    EXPECT_NE(before_reset, after_reset); // Verify reset had an effect
-}
-
-TEST_F(PolynomialTest, ProcessBatch)
-{
-    unsigned int buffer_size = 10;
-    std::vector<double> buffer = polynomial->process_batch(buffer_size);
-
-    EXPECT_EQ(buffer.size(), buffer_size);
-
-    // For direct mode with no input dependency, all samples should be the same
-    // f(0) = 2*0² + 3*0 + 1 = 1
-    for (const auto& sample : buffer) {
+    ASSERT_EQ(batch.size(), 10U);
+    for (const double sample : batch) {
         EXPECT_DOUBLE_EQ(sample, 1.0);
     }
+}
 
-    // Create a polynomial that depends on the sample index
-    auto index_poly = std::make_shared<Nodes::Generator::Polynomial>(
-        [](double) -> double {
-            static int index = 0;
-            return static_cast<double>(index++);
-        });
+TEST(PolynomialDirectTest, BatchRunsAStatefulFunctionInOrder)
+{
+    auto calls = std::make_shared<int>(0);
+    Polynomial node([calls](double) { return static_cast<double>((*calls)++); });
 
-    buffer = index_poly->process_batch(buffer_size);
+    const auto batch = node.process_batch(10);
 
-    // Should contain values 0 through 9
-    for (size_t i = 0; i < buffer_size; i++) {
-        EXPECT_DOUBLE_EQ(buffer[i], static_cast<double>(i));
+    for (size_t i = 0; i < batch.size(); ++i) {
+        EXPECT_DOUBLE_EQ(batch.at(i), static_cast<double>(i));
     }
 }
 
-TEST_F(PolynomialTest, Callbacks)
+TEST(PolynomialDirectTest, TickCallbackFiresForEverySample)
 {
-    int callback_count = 0;
-    double last_value = 0.0;
+    const auto node = make_quadratic();
+    int calls = 0;
+    double last = 0.0;
 
-    polynomial->on_tick([&callback_count, &last_value](const Nodes::NodeContext& ctx) {
-        callback_count++;
-        last_value = ctx.value;
+    node->on_tick([&calls, &last](const Nodes::NodeContext& ctx) {
+        ++calls;
+        last = ctx.value;
     });
 
-    double result = polynomial->process_sample(2.0);
-    EXPECT_EQ(callback_count, 1);
-    EXPECT_DOUBLE_EQ(last_value, result);
+    const double result = node->process_sample(2.0);
+    EXPECT_EQ(calls, 1);
+    EXPECT_DOUBLE_EQ(last, result);
 
-    polynomial->process_batch(5);
-    EXPECT_EQ(callback_count, 6); // 1 + 5 more callbacks
+    node->process_batch(5);
+    EXPECT_EQ(calls, 6);
 }
 
-TEST_F(PolynomialTest, CoefFeedforwardUsesArrayAsWeights)
+TEST(PolynomialDirectTest, CoefficientNodeFollowsSetCoefficients)
 {
-    auto weighted = std::make_shared<Nodes::Generator::Polynomial>(
-        [](std::span<double> window, std::span<double> coefs) -> double {
-            return coefs[0] * window[0] + coefs[1] * window[1];
+    Polynomial node(std::vector<double> { 2.0, 3.0, 1.0 });
+
+    EXPECT_DOUBLE_EQ(node.process_sample(2.0), 15.0);
+
+    node.set_coefficients({ 1.0, 0.0, 0.0 });
+    EXPECT_DOUBLE_EQ(node.process_sample(2.0), 4.0);
+
+    node.set_coefficients({ 0.0, 0.0, 9.0 });
+    EXPECT_DOUBLE_EQ(node.process_sample(2.0), 9.0);
+}
+
+TEST(PolynomialDirectTest, FunctionNodeIgnoresSetCoefficients)
+{
+    Polynomial node([](double x) { return x * x; });
+
+    node.set_coefficients({ 5.0 });
+
+    EXPECT_DOUBLE_EQ(node.process_sample(3.0), 9.0);
+}
+
+TEST(PolynomialDirectTest, SetDirectFunctionOverridesACoefficientNode)
+{
+    Polynomial node(std::vector<double> { 2.0, 3.0, 1.0 });
+
+    node.set_direct_function([](double) { return 7.0; });
+    EXPECT_DOUBLE_EQ(node.process_sample(2.0), 7.0);
+
+    node.set_coefficients({ 1.0, 0.0, 0.0 });
+    EXPECT_DOUBLE_EQ(node.process_sample(2.0), 7.0);
+}
+
+struct DifferenceCase {
+    const char* name;
+    PolynomialMode mode;
+    size_t window;
+    Polynomial::BufferFunction plain;
+    Polynomial::CoefBufferFunction with_coefs;
+    std::vector<double> coefs;
+    std::vector<double> inputs;
+    std::vector<double> expected;
+};
+
+std::vector<DifferenceCase> difference_cases()
+{
+    return {
+        {
+            .name = "FeedforwardTwoTap",
+            .mode = PolynomialMode::FEEDFORWARD,
+            .window = 2,
+            .plain = [](std::span<double> w) -> double { return 0.7 * w[0] + 0.3 * w[1]; },
+            .with_coefs = [](std::span<double> w, std::span<double> c) -> double { return c[0] * w[0] + c[1] * w[1]; },
+            .coefs = { 0.7, 0.3 },
+            .inputs = { 1.0, 2.0, 3.0 },
+            .expected = { 0.7, 1.7, 2.7 },
         },
-        Nodes::Generator::PolynomialMode::FEEDFORWARD, 2,
-        std::vector<double> { 0.7, 0.3 });
-
-    EXPECT_EQ(weighted->get_mode(), Nodes::Generator::PolynomialMode::FEEDFORWARD);
-    EXPECT_EQ(weighted->get_buffer_size(), 2);
-
-    EXPECT_DOUBLE_EQ(weighted->process_sample(1.0), 0.7);
-    EXPECT_DOUBLE_EQ(weighted->process_sample(2.0), 1.7);
-    EXPECT_DOUBLE_EQ(weighted->process_sample(3.0), 2.7);
-}
-
-TEST_F(PolynomialTest, CoefRecursiveUsesArrayAsFeedback)
-{
-    auto recursive = std::make_shared<Nodes::Generator::Polynomial>(
-        [](std::span<double> window, std::span<double> coefs) -> double {
-            return window[0] + coefs[0] * window[1] + coefs[1] * window[2];
+        {
+            .name = "FeedforwardDifference",
+            .mode = PolynomialMode::FEEDFORWARD,
+            .window = 2,
+            .plain = [](std::span<double> w) -> double { return w[0] - w[1]; },
+            .with_coefs = [](std::span<double> w, std::span<double> c) -> double { return c[0] * w[0] + c[1] * w[1]; },
+            .coefs = { 1.0, -1.0 },
+            .inputs = { 3.0, 5.0, 4.0 },
+            .expected = { 3.0, 2.0, -1.0 },
         },
-        Nodes::Generator::PolynomialMode::RECURSIVE, 3,
-        std::vector<double> { 0.5, 0.2 });
-
-    EXPECT_DOUBLE_EQ(recursive->process_sample(1.0), 1.0);
-    EXPECT_DOUBLE_EQ(recursive->process_sample(1.0), 1.5);
-    EXPECT_DOUBLE_EQ(recursive->process_sample(1.0), 1.95);
-}
-
-TEST_F(PolynomialTest, CoefArrayDefaultsToEmpty)
-{
-    auto sized = std::make_shared<Nodes::Generator::Polynomial>(
-        [](std::span<double>, std::span<double> coefs) -> double {
-            return static_cast<double>(coefs.size());
+        {
+            .name = "RecursiveTwoPole",
+            .mode = PolynomialMode::RECURSIVE,
+            .window = 3,
+            .plain = [](std::span<double> w) -> double { return w[0] + 0.5 * w[1] + 0.2 * w[2]; },
+            .with_coefs = [](std::span<double> w, std::span<double> c) -> double { return w[0] + c[0] * w[1] + c[1] * w[2]; },
+            .coefs = { 0.5, 0.2 },
+            .inputs = { 1.0, 1.0, 1.0 },
+            .expected = { 1.0, 1.5, 1.95 },
         },
-        Nodes::Generator::PolynomialMode::FEEDFORWARD, 1);
-
-    EXPECT_TRUE(sized->get_coefficients().empty());
-    EXPECT_DOUBLE_EQ(sized->process_sample(1.0), 0.0);
-}
-
-TEST_F(PolynomialTest, CoefArrayReplacedLive)
-{
-    auto gain = std::make_shared<Nodes::Generator::Polynomial>(
-        [](std::span<double> window, std::span<double> coefs) -> double {
-            return coefs[0] * window[0];
+        {
+            .name = "RecursiveOnePoleImpulse",
+            .mode = PolynomialMode::RECURSIVE,
+            .window = 2,
+            .plain = [](std::span<double> w) -> double { return w[0] + 0.5 * w[1]; },
+            .with_coefs = [](std::span<double> w, std::span<double> c) -> double { return w[0] + c[0] * w[1]; },
+            .coefs = { 0.5 },
+            .inputs = { 1.0, 0.0, 0.0, 0.0 },
+            .expected = { 1.0, 0.5, 0.25, 0.125 },
         },
-        Nodes::Generator::PolynomialMode::FEEDFORWARD, 1,
-        std::vector<double> { 2.0 });
-
-    EXPECT_DOUBLE_EQ(gain->process_sample(1.0), 2.0);
-
-    gain->set_coefficients({ 5.0 });
-
-    EXPECT_DOUBLE_EQ(gain->process_sample(1.0), 5.0);
-    EXPECT_EQ(gain->get_coefficients().size(), 1);
+    };
 }
 
-TEST_F(PolynomialTest, CoefArrayWritableFromFunction)
+class DifferenceEquationTest : public ::testing::TestWithParam<DifferenceCase> { };
+
+TEST_P(DifferenceEquationTest, PlainFunctionFollowsTheEquation)
 {
-    auto counter = std::make_shared<Nodes::Generator::Polynomial>(
-        [](std::span<double>, std::span<double> coefs) -> double {
-            coefs[0] += 1.0;
-            return coefs[0];
+    const auto& c = GetParam();
+    auto node = std::make_shared<Polynomial>(c.plain, c.mode, c.window);
+
+    EXPECT_EQ(node->get_mode(), c.mode);
+    EXPECT_EQ(node->get_buffer_size(), c.window);
+    for (size_t n = 0; n < c.inputs.size(); ++n) {
+        EXPECT_NEAR(node->process_sample(c.inputs.at(n)), c.expected.at(n), 1e-12) << "n=" << n;
+    }
+}
+
+TEST_P(DifferenceEquationTest, CoefFunctionGivesTheSameSequence)
+{
+    const auto& c = GetParam();
+    auto node = std::make_shared<Polynomial>(c.with_coefs, c.mode, c.window, c.coefs);
+
+    for (size_t n = 0; n < c.inputs.size(); ++n) {
+        EXPECT_NEAR(node->process_sample(c.inputs.at(n)), c.expected.at(n), 1e-12) << "n=" << n;
+    }
+}
+
+TEST_P(DifferenceEquationTest, ResetReturnsToTheStartingSequence)
+{
+    const auto& c = GetParam();
+    auto node = std::make_shared<Polynomial>(c.with_coefs, c.mode, c.window, c.coefs);
+
+    for (const double input : c.inputs) {
+        node->process_sample(input);
+    }
+    node->reset();
+
+    for (size_t n = 0; n < c.inputs.size(); ++n) {
+        EXPECT_NEAR(node->process_sample(c.inputs.at(n)), c.expected.at(n), 1e-12) << "n=" << n;
+    }
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    Equations,
+    DifferenceEquationTest,
+    ::testing::ValuesIn(difference_cases()),
+    [](const ::testing::TestParamInfo<DifferenceCase>& info) { return std::string(info.param.name); });
+
+TEST(PolynomialBufferTest, InitialConditionsSeedTheHistoryNewestFirst)
+{
+    Polynomial node(
+        [](std::span<double> w) -> double { return w[0] + 0.5 * w[1] + 0.2 * w[2]; },
+        PolynomialMode::RECURSIVE, 3);
+
+    node.set_initial_conditions({ 4.0, 0.0, 0.0 });
+
+    EXPECT_DOUBLE_EQ(node.process_sample(0.0), 2.0);
+}
+
+TEST(PolynomialCoefArrayTest, DefaultsToEmpty)
+{
+    Polynomial node(
+        [](std::span<double>, std::span<double> coefs) -> double { return static_cast<double>(coefs.size()); },
+        PolynomialMode::FEEDFORWARD, 1);
+
+    EXPECT_TRUE(node.get_coefficients().empty());
+    EXPECT_DOUBLE_EQ(node.process_sample(1.0), 0.0);
+}
+
+TEST(PolynomialCoefArrayTest, ReplacedLive)
+{
+    Polynomial node(
+        [](std::span<double> w, std::span<double> c) -> double { return c[0] * w[0]; },
+        PolynomialMode::FEEDFORWARD, 1, std::vector<double> { 2.0 });
+
+    EXPECT_DOUBLE_EQ(node.process_sample(1.0), 2.0);
+
+    node.set_coefficients({ 5.0 });
+
+    EXPECT_DOUBLE_EQ(node.process_sample(1.0), 5.0);
+}
+
+TEST(PolynomialCoefArrayTest, WritableFromTheFunctionAndKeptAcrossReset)
+{
+    Polynomial node(counter(), PolynomialMode::FEEDFORWARD, 1, std::vector<double> { 0.0 });
+
+    EXPECT_DOUBLE_EQ(node.process_sample(0.0), 1.0);
+    EXPECT_DOUBLE_EQ(node.process_sample(0.0), 2.0);
+
+    node.reset();
+
+    EXPECT_DOUBLE_EQ(node.get_coefficients().front(), 2.0);
+    EXPECT_DOUBLE_EQ(node.process_sample(0.0), 3.0);
+}
+
+TEST(PolynomialCoefArrayTest, RestoredWithSavedState)
+{
+    Polynomial node(counter(), PolynomialMode::FEEDFORWARD, 1, std::vector<double> { 0.0 });
+
+    node.process_sample(0.0);
+    node.save_state();
+    node.process_sample(0.0);
+    node.process_sample(0.0);
+    EXPECT_DOUBLE_EQ(node.get_coefficients().front(), 3.0);
+
+    node.restore_state();
+
+    EXPECT_DOUBLE_EQ(node.get_coefficients().front(), 1.0);
+    EXPECT_DOUBLE_EQ(node.process_sample(0.0), 2.0);
+}
+
+TEST(PolynomialCoefArrayTest, NotSavedForANodeWithoutACoefFunction)
+{
+    Polynomial node(std::vector<double> { 2.0, 3.0, 1.0 });
+
+    node.save_state();
+    node.set_coefficients({ 7.0 });
+    node.restore_state();
+
+    EXPECT_EQ(node.get_coefficients().size(), 1U);
+    EXPECT_DOUBLE_EQ(node.get_coefficients().front(), 7.0);
+}
+
+TEST(PolynomialCoefArrayTest, SetBufferFunctionOverloadsReplaceEachOther)
+{
+    Polynomial node(
+        [](std::span<double> w) -> double { return w[0]; },
+        PolynomialMode::FEEDFORWARD, 1);
+
+    EXPECT_DOUBLE_EQ(node.process_sample(2.0), 2.0);
+
+    node.set_coefficients({ 10.0 });
+    node.set_buffer_function(
+        [](std::span<double> w, std::span<double> c) -> double { return c[0] * w[0]; },
+        PolynomialMode::FEEDFORWARD, 1);
+    EXPECT_DOUBLE_EQ(node.process_sample(2.0), 20.0);
+
+    node.set_buffer_function(
+        [](std::span<double> w) -> double { return -w[0]; },
+        PolynomialMode::FEEDFORWARD, 1);
+    EXPECT_DOUBLE_EQ(node.process_sample(2.0), -2.0);
+}
+
+TEST(PolynomialCoefArrayTest, SettingACoefFunctionResizesTheWindow)
+{
+    Polynomial node(
+        [](std::span<double> w) -> double { return w[0]; },
+        PolynomialMode::FEEDFORWARD, 1);
+
+    node.set_buffer_function(
+        [](std::span<double> w, std::span<double>) -> double { return static_cast<double>(w.size()); },
+        PolynomialMode::FEEDFORWARD, 4);
+
+    EXPECT_EQ(node.get_buffer_size(), 4U);
+    EXPECT_DOUBLE_EQ(node.process_sample(1.0), 4.0);
+}
+
+TEST(PolynomialCoefArrayTest, SwitchingAwayStopsSavingTheArray)
+{
+    Polynomial node(
+        [](std::span<double>, std::span<double> c) -> double { return c[0]; },
+        PolynomialMode::FEEDFORWARD, 1, std::vector<double> { 5.0 });
+
+    node.set_buffer_function(
+        [](std::span<double> w) -> double { return w[0]; },
+        PolynomialMode::FEEDFORWARD, 1);
+
+    node.save_state();
+    node.set_coefficients({ 9.0 });
+    node.restore_state();
+
+    EXPECT_DOUBLE_EQ(node.get_coefficients().front(), 9.0);
+    EXPECT_DOUBLE_EQ(node.clone()->process_sample(4.0), 4.0);
+}
+
+TEST(PolynomialCloneTest, CoefFunctionCloneKeepsItsOwnArrayAndHistory)
+{
+    Polynomial node(
+        [](std::span<double> w, std::span<double> c) -> double {
+            c[0] += 1.0;
+            return c[0] + w[1];
         },
-        Nodes::Generator::PolynomialMode::FEEDFORWARD, 1,
-        std::vector<double> { 0.0 });
+        PolynomialMode::FEEDFORWARD, 2, std::vector<double> { 0.0 });
 
-    EXPECT_DOUBLE_EQ(counter->process_sample(0.0), 1.0);
-    EXPECT_DOUBLE_EQ(counter->process_sample(0.0), 2.0);
-    EXPECT_DOUBLE_EQ(counter->process_sample(0.0), 3.0);
-    EXPECT_DOUBLE_EQ(counter->get_coefficients()[0], 3.0);
-}
+    node.process_sample(10.0);
+    node.process_sample(20.0);
 
-TEST_F(PolynomialTest, CoefArraySurvivesReset)
-{
-    auto counter = std::make_shared<Nodes::Generator::Polynomial>(
-        [](std::span<double>, std::span<double> coefs) -> double {
-            coefs[0] += 1.0;
-            return coefs[0];
-        },
-        Nodes::Generator::PolynomialMode::FEEDFORWARD, 1,
-        std::vector<double> { 0.0 });
-
-    counter->process_sample(0.0);
-    counter->process_sample(0.0);
-    counter->reset();
-
-    EXPECT_DOUBLE_EQ(counter->get_coefficients()[0], 2.0);
-    EXPECT_DOUBLE_EQ(counter->process_sample(0.0), 3.0);
-}
-
-TEST_F(PolynomialTest, SetBufferFunctionOverloadsReplaceEachOther)
-{
-    auto node = std::make_shared<Nodes::Generator::Polynomial>(
-        [](std::span<double> window) -> double { return window[0]; },
-        Nodes::Generator::PolynomialMode::FEEDFORWARD, 1);
-
-    EXPECT_DOUBLE_EQ(node->process_sample(2.0), 2.0);
-
-    node->set_coefficients({ 10.0 });
-    node->set_buffer_function(
-        [](std::span<double> window, std::span<double> coefs) -> double {
-            return coefs[0] * window[0];
-        },
-        Nodes::Generator::PolynomialMode::FEEDFORWARD, 1);
-
-    EXPECT_DOUBLE_EQ(node->process_sample(2.0), 20.0);
-
-    node->set_buffer_function(
-        [](std::span<double> window) -> double { return -window[0]; },
-        Nodes::Generator::PolynomialMode::FEEDFORWARD, 1);
-
-    EXPECT_DOUBLE_EQ(node->process_sample(2.0), -2.0);
-}
-
-TEST_F(PolynomialTest, SetBufferFunctionCoefResizesWindow)
-{
-    auto node = std::make_shared<Nodes::Generator::Polynomial>(
-        [](std::span<double> window) -> double { return window[0]; },
-        Nodes::Generator::PolynomialMode::FEEDFORWARD, 1);
-
-    node->set_buffer_function(
-        [](std::span<double> window, std::span<double>) -> double {
-            return static_cast<double>(window.size());
-        },
-        Nodes::Generator::PolynomialMode::FEEDFORWARD, 4);
-
-    EXPECT_EQ(node->get_buffer_size(), 4);
-    EXPECT_DOUBLE_EQ(node->process_sample(1.0), 4.0);
-}
-
-TEST_F(PolynomialTest, CoefArrayRestoredWithState)
-{
-    auto counter = std::make_shared<Nodes::Generator::Polynomial>(
-        [](std::span<double>, std::span<double> coefs) -> double {
-            coefs[0] += 1.0;
-            return coefs[0];
-        },
-        Nodes::Generator::PolynomialMode::FEEDFORWARD, 1,
-        std::vector<double> { 0.0 });
-
-    counter->process_sample(0.0);
-    counter->save_state();
-    counter->process_sample(0.0);
-    counter->process_sample(0.0);
-    EXPECT_DOUBLE_EQ(counter->get_coefficients()[0], 3.0);
-
-    counter->restore_state();
-    EXPECT_DOUBLE_EQ(counter->get_coefficients()[0], 1.0);
-    EXPECT_DOUBLE_EQ(counter->process_sample(0.0), 2.0);
-}
-
-TEST_F(PolynomialTest, UnboundCoefficientsIgnoredBySaveRestore)
-{
-    auto direct = std::make_shared<Nodes::Generator::Polynomial>(
-        std::vector<double> { 2.0, 3.0, 1.0 });
-
-    direct->save_state();
-    direct->set_coefficients({ 7.0 });
-    direct->restore_state();
-
-    EXPECT_EQ(direct->get_coefficients().size(), 1);
-    EXPECT_DOUBLE_EQ(direct->get_coefficients()[0], 7.0);
-}
-
-TEST_F(PolynomialTest, CoefficientNodeDirectOutputFollowsSetCoefficients)
-{
-    auto quadratic = std::make_shared<Nodes::Generator::Polynomial>(
-        std::vector<double> { 2.0, 3.0, 1.0 });
-
-    EXPECT_DOUBLE_EQ(quadratic->process_sample(2.0), 15.0);
-
-    quadratic->set_coefficients({ 1.0, 0.0, 0.0 });
-    EXPECT_DOUBLE_EQ(quadratic->process_sample(2.0), 4.0);
-
-    quadratic->set_coefficients({ 0.0, 0.0, 9.0 });
-    EXPECT_DOUBLE_EQ(quadratic->process_sample(2.0), 9.0);
-}
-
-TEST_F(PolynomialTest, FunctionNodeDirectOutputIgnoresSetCoefficients)
-{
-    auto squared = std::make_shared<Nodes::Generator::Polynomial>(
-        [](double x) { return x * x; });
-
-    squared->set_coefficients({ 5.0 });
-
-    EXPECT_DOUBLE_EQ(squared->process_sample(3.0), 9.0);
-}
-
-TEST_F(PolynomialTest, SetDirectFunctionOverridesACoefficientNode)
-{
-    auto node = std::make_shared<Nodes::Generator::Polynomial>(
-        std::vector<double> { 2.0, 3.0, 1.0 });
-
-    node->set_direct_function([](double) { return 7.0; });
-    EXPECT_DOUBLE_EQ(node->process_sample(2.0), 7.0);
-
-    node->set_coefficients({ 1.0, 0.0, 0.0 });
-    EXPECT_DOUBLE_EQ(node->process_sample(2.0), 7.0);
-}
-
-TEST_F(PolynomialTest, CloneOfACoefficientFunctionNodeKeepsItsOwnArrayAndHistory)
-{
-    auto counter = std::make_shared<Nodes::Generator::Polynomial>(
-        [](std::span<double> window, std::span<double> coefs) -> double {
-            coefs[0] += 1.0;
-            return coefs[0] + window[1];
-        },
-        Nodes::Generator::PolynomialMode::FEEDFORWARD, 2,
-        std::vector<double> { 0.0 });
-
-    counter->process_sample(10.0);
-    counter->process_sample(20.0);
-
-    auto copy = counter->clone();
+    const auto copy = node.clone();
 
     EXPECT_DOUBLE_EQ(copy->get_coefficients().front(), 2.0);
-    EXPECT_DOUBLE_EQ(copy->process_sample(5.0), 3.0 + 0.0);
-    EXPECT_DOUBLE_EQ(counter->process_sample(5.0), 3.0 + 20.0);
+    EXPECT_DOUBLE_EQ(copy->process_sample(5.0), 3.0);
+    EXPECT_DOUBLE_EQ(node.process_sample(5.0), 3.0 + 20.0);
 
     copy->process_sample(5.0);
     EXPECT_DOUBLE_EQ(copy->get_coefficients().front(), 4.0);
-    EXPECT_DOUBLE_EQ(counter->get_coefficients().front(), 3.0);
+    EXPECT_DOUBLE_EQ(node.get_coefficients().front(), 3.0);
 }
 
-TEST_F(PolynomialTest, CloneKeepsEachKindOfNode)
+TEST(PolynomialCloneTest, KeepsEachKindOfNode)
 {
-    auto from_coefficients = std::make_shared<Nodes::Generator::Polynomial>(
-        std::vector<double> { 2.0, 3.0, 1.0 });
-    auto coefficient_copy = from_coefficients->clone();
+    Polynomial from_coefficients(std::vector<double> { 2.0, 3.0, 1.0 });
+    const auto coefficient_copy = from_coefficients.clone();
     coefficient_copy->set_coefficients({ 1.0, 0.0, 0.0 });
 
-    EXPECT_DOUBLE_EQ(from_coefficients->process_sample(2.0), 15.0);
+    EXPECT_DOUBLE_EQ(from_coefficients.process_sample(2.0), 15.0);
     EXPECT_DOUBLE_EQ(coefficient_copy->process_sample(2.0), 4.0);
 
-    auto from_function = std::make_shared<Nodes::Generator::Polynomial>(
-        [](double x) { return x * x; });
-    EXPECT_DOUBLE_EQ(from_function->clone()->process_sample(3.0), 9.0);
+    Polynomial from_function([](double x) { return x * x; });
+    EXPECT_DOUBLE_EQ(from_function.clone()->process_sample(3.0), 9.0);
 
-    auto from_buffer_function = std::make_shared<Nodes::Generator::Polynomial>(
-        [](std::span<double> window) -> double { return -window[0]; },
-        Nodes::Generator::PolynomialMode::FEEDFORWARD, 1);
-    auto buffer_copy = from_buffer_function->clone();
-    EXPECT_EQ(buffer_copy->get_mode(), Nodes::Generator::PolynomialMode::FEEDFORWARD);
+    Polynomial from_buffer(
+        [](std::span<double> w) -> double { return -w[0]; },
+        PolynomialMode::FEEDFORWARD, 1);
+    const auto buffer_copy = from_buffer.clone();
+    EXPECT_EQ(buffer_copy->get_mode(), PolynomialMode::FEEDFORWARD);
     EXPECT_DOUBLE_EQ(buffer_copy->process_sample(2.0), -2.0);
 }
 
-TEST_F(PolynomialTest, SwitchingAwayFromACoefficientFunctionStopsSavingTheArray)
-{
-    auto node = std::make_shared<Nodes::Generator::Polynomial>(
-        [](std::span<double>, std::span<double> coefs) -> double { return coefs[0]; },
-        Nodes::Generator::PolynomialMode::FEEDFORWARD, 1,
-        std::vector<double> { 5.0 });
-
-    node->set_buffer_function(
-        [](std::span<double> window) -> double { return window[0]; },
-        Nodes::Generator::PolynomialMode::FEEDFORWARD, 1);
-
-    node->save_state();
-    node->set_coefficients({ 9.0 });
-    node->restore_state();
-
-    EXPECT_DOUBLE_EQ(node->get_coefficients().front(), 9.0);
-    EXPECT_DOUBLE_EQ(node->clone()->process_sample(4.0), 4.0);
-}
-
-/*
-class PolynomialProcessorTest : public ::testing::Test {
-protected:
-    void SetUp() override
-    {
-        auto quadratic = [](double x) -> double {
-            return 2.0 * x * x + 3.0 * x + 1.0;
-        };
-
-        polynomial = std::make_shared<Nodes::Generator::Polynomial>(quadratic);
-
-        buffer = std::make_shared<Buffers::AudioBuffer>(0, TestConfig::BUFFER_SIZE);
-
-        // Fill buffer with values 0.0 to 1.0
-        for (size_t i = 0; i < buffer->get_num_samples(); i++) {
-            buffer->get_data()[i] = static_cast<double>(i) / buffer->get_num_samples();
-        }
-    }
-
-    std::shared_ptr<Nodes::Generator::Polynomial> polynomial;
-    std::shared_ptr<Buffers::AudioBuffer> buffer;
+enum class ProcessorSource : uint8_t {
+    InternalFunction,
+    InternalCoefficients,
+    External
 };
 
-TEST_F(PolynomialProcessorTest, SampleByMode)
-{
-    auto processor = std::make_shared<Buffers::PolynomialProcessor>(
-        polynomial, Buffers::PolynomialProcessor::ProcessMode::SAMPLE_BY_SAMPLE);
+class ProcessorSourceTest : public ::testing::TestWithParam<ProcessorSource> { };
 
-    std::vector<double> original = buffer->get_data();
+TEST_P(ProcessorSourceTest, AppliesTheQuadraticToEverySample)
+{
+    std::shared_ptr<PolynomialProcessor> processor;
+    switch (GetParam()) {
+    case ProcessorSource::InternalFunction:
+        processor = std::make_shared<PolynomialProcessor>(
+            PolynomialProcessor::ProcessMode::SAMPLE_BY_SAMPLE, 64, quadratic);
+        break;
+    case ProcessorSource::InternalCoefficients:
+        processor = std::make_shared<PolynomialProcessor>(
+            PolynomialProcessor::ProcessMode::SAMPLE_BY_SAMPLE, 64, std::vector<double> { 2.0, 3.0, 1.0 });
+        break;
+    case ProcessorSource::External:
+        processor = std::make_shared<PolynomialProcessor>(
+            make_quadratic(), PolynomialProcessor::ProcessMode::SAMPLE_BY_SAMPLE);
+        break;
+    }
+
+    EXPECT_EQ(processor->is_using_internal(), GetParam() != ProcessorSource::External);
+    ASSERT_NE(processor->get_polynomial(), nullptr);
+
+    auto buffer = make_block(TestConfig::BUFFER_SIZE);
+    for (size_t i = 0; i < buffer->get_data().size(); ++i) {
+        buffer->get_data().at(i) = static_cast<double>(i) / static_cast<double>(buffer->get_data().size());
+    }
+    const std::vector<double> original = buffer->get_data();
 
     processor->process(buffer);
 
-    for (size_t i = 0; i < buffer->get_num_samples(); i++) {
-        double x = original[i];
-        double expected = 2.0 * x * x + 3.0 * x + 1.0;
-        EXPECT_DOUBLE_EQ(buffer->get_data()[i], expected);
+    for (size_t i = 0; i < original.size(); ++i) {
+        EXPECT_NEAR(buffer->get_data().at(i), quadratic(original.at(i)), 1e-12) << "i=" << i;
     }
 }
 
-TEST_F(PolynomialProcessorTest, BatchMode)
+INSTANTIATE_TEST_SUITE_P(
+    Sources,
+    ProcessorSourceTest,
+    ::testing::Values(
+        ProcessorSource::InternalFunction,
+        ProcessorSource::InternalCoefficients,
+        ProcessorSource::External),
+    [](const ::testing::TestParamInfo<ProcessorSource>& info) {
+        switch (info.param) {
+        case ProcessorSource::InternalFunction:
+            return std::string("InternalFunction");
+        case ProcessorSource::InternalCoefficients:
+            return std::string("InternalCoefficients");
+        default:
+            return std::string("External");
+        }
+    });
+
+TEST(PolynomialProcessorTest, ExternalNodeKeepsItsGraphStateFlag)
 {
-    // y[n] = x[n] + 0.5*y[n-1] + 0.2*y[n-2]
-    auto recursive_func = [](std::span<double> buffer) -> double {
-        double input = buffer[0];
+    auto external = make_quadratic();
+    auto processor = std::make_shared<PolynomialProcessor>(
+        external, PolynomialProcessor::ProcessMode::SAMPLE_BY_SAMPLE);
 
-        if (buffer.size() <= 1) {
-            return input;
-        }
+    auto buffer = make_block(1, 0.5);
 
-        if (buffer.size() <= 2) {
-            return input + 0.5 * buffer[1];
-        }
-
-        // For subsequent samples, we have input, y[n-1], and y[n-2]
-        return input + 0.5 * buffer[1] + 0.2 * buffer[2];
-    };
-
-    auto recursive_poly = std::make_shared<Nodes::Generator::Polynomial>(
-        recursive_func, Nodes::Generator::PolynomialMode::RECURSIVE, 3);
-
-    auto processor = std::make_shared<Buffers::PolynomialProcessor>(
-        recursive_poly, Buffers::PolynomialProcessor::ProcessMode::BATCH);
-
-    auto test_buffer = std::make_shared<Buffers::AudioBuffer>(0, 5);
-    for (size_t i = 0; i < test_buffer->get_num_samples(); i++) {
-        test_buffer->get_data()[i] = 1.0;
-    }
-
-    std::vector<double> original = test_buffer->get_data();
-
-    processor->process(test_buffer);
-
-    // First sample: y[0] = x[0] = 1.0
-    EXPECT_DOUBLE_EQ(test_buffer->get_data()[0], 1.0);
-
-    // Second sample: y[1] = x[1] + 0.5*y[0] = 1.0 + 0.5*1.0 = 1.5
-    EXPECT_DOUBLE_EQ(test_buffer->get_data()[1], 1.5);
-
-    // Third sample: y[2] = x[2] + 0.5*y[1] + 0.2*y[0] = 1.0 + 0.5*1.5 + 0.2*1.0 = 1.95
-    EXPECT_DOUBLE_EQ(test_buffer->get_data()[2], 1.95);
-
-    // Fourth sample: y[3] = x[3] + 0.5*y[2] + 0.2*y[1] = 1.0 + 0.5*1.95 + 0.2*1.5 = 2.275
-    EXPECT_DOUBLE_EQ(test_buffer->get_data()[3], 2.275);
-}
-
-TEST_F(PolynomialProcessorTest, WindowedMode)
-{
-    // y[n] = x[n] + 0.5*y[n-1] + 0.2*y[n-2]
-    auto recursive_func = [](std::span<double> buffer) -> double {
-        double input = buffer[0];
-
-        if (buffer.size() <= 1) {
-            return input;
-        }
-
-        // For the second sample, we have input and y[n-1]
-        if (buffer.size() <= 2) {
-            return input + 0.5 * buffer[1];
-        }
-
-        // For subsequent samples, we have input, y[n-1], and y[n-2]
-        return input + 0.5 * buffer[1] + 0.2 * buffer[2];
-    };
-
-    auto recursive_poly = std::make_shared<Nodes::Generator::Polynomial>(
-        recursive_func, Nodes::Generator::PolynomialMode::RECURSIVE, 3);
-
-    auto small_buffer = std::make_shared<Buffers::AudioBuffer>(0, 10);
-    for (size_t i = 0; i < small_buffer->get_num_samples(); i++) {
-        small_buffer->get_data()[i] = 1.0; // All inputs are 1.0
-    }
-
-    auto processor = std::make_shared<Buffers::PolynomialProcessor>(
-        recursive_poly, Buffers::PolynomialProcessor::ProcessMode::WINDOWED, 5);
-
-    processor->process(small_buffer);
-
-    // First sample: y[0] = x[0] = 1.0
-    EXPECT_DOUBLE_EQ(small_buffer->get_data()[0], 1.0);
-
-    // Second sample: y[1] = x[1] + 0.5*y[0] = 1.0 + 0.5*1.0 = 1.5
-    EXPECT_DOUBLE_EQ(small_buffer->get_data()[1], 1.5);
-
-    // Third sample: y[2] = x[2] + 0.5*y[1] + 0.2*y[0] = 1.0 + 0.5*1.5 + 0.2*1.0 = 1.95
-    EXPECT_DOUBLE_EQ(small_buffer->get_data()[2], 1.95);
-
-    // First sample of second window: y[5] = x[5] = 1.0
-    EXPECT_DOUBLE_EQ(small_buffer->get_data()[5], 1.0);
-
-    // Second sample of second window: y[6] = x[6] + 0.5*y[5] = 1.0 + 0.5*1.0 = 1.5
-    EXPECT_DOUBLE_EQ(small_buffer->get_data()[6], 1.5);
-}
-
-TEST_F(PolynomialProcessorTest, NodeIntegration)
-{
-    auto node_manager = std::make_shared<Nodes::NodeGraphManager>();
-
-    auto poly_node = node_manager->create_node<Nodes::Generator::Polynomial>(
-        "test_poly",
-        [](double x) -> double { return x * x; });
-
-    node_manager->get_root_node().register_node(poly_node);
-
-    auto buffer = std::make_shared<Buffers::AudioBuffer>(0, 10);
-    for (size_t i = 0; i < buffer->get_num_samples(); i++) {
-        buffer->get_data()[i] = static_cast<double>(i) / 10.0;
-    }
-
-    auto processor = std::make_shared<Buffers::PolynomialProcessor>(poly_node);
+    const double from_graph = external->process_sample(0.5);
+    Nodes::atomic_add_flag(external->m_state, Nodes::NodeState::PROCESSED);
 
     processor->process(buffer);
 
-    for (size_t i = 0; i < buffer->get_num_samples(); i++) {
-        double expected = (static_cast<double>(i) / 10.0) * (static_cast<double>(i) / 10.0);
-        EXPECT_DOUBLE_EQ(buffer->get_data()[i], expected);
-    }
-} */
+    EXPECT_DOUBLE_EQ(buffer->get_data().front(), from_graph);
+    EXPECT_DOUBLE_EQ(from_graph, quadratic(0.5));
+    EXPECT_TRUE(external->m_state.load() & Nodes::NodeState::PROCESSED);
+}
 
-class PolynomialProcessorTest : public ::testing::Test {
-protected:
-    void SetUp() override
-    {
-        // External polynomial for testing shared usage
-        auto quadratic = [](double x) -> double {
-            return 2.0 * x * x + 3.0 * x + 1.0;
-        };
-        external_polynomial = std::make_shared<Nodes::Generator::Polynomial>(quadratic);
-
-        buffer = std::make_shared<Buffers::AudioBuffer>(0, TestConfig::BUFFER_SIZE);
-
-        // Fill buffer with values 0.0 to 1.0
-        for (size_t i = 0; i < buffer->get_num_samples(); i++) {
-            buffer->get_data()[i] = static_cast<double>(i) / buffer->get_num_samples();
-        }
-    }
-
-    std::shared_ptr<Nodes::Generator::Polynomial> external_polynomial;
-    std::shared_ptr<Buffers::AudioBuffer> buffer;
-};
-
-// Test internal polynomial construction
-TEST_F(PolynomialProcessorTest, InternalPolynomialConstruction)
+TEST(PolynomialProcessorTest, BatchModeResetsHistoryEachBuffer)
 {
-    // Create processor with internal polynomial using DirectFunction
-    auto processor = std::make_shared<Buffers::PolynomialProcessor>(
-        Buffers::PolynomialProcessor::ProcessMode::SAMPLE_BY_SAMPLE,
+    auto processor = std::make_shared<PolynomialProcessor>(
+        PolynomialProcessor::ProcessMode::BATCH,
         64,
-        [](double x) { return x * x; } // DirectFunction
-    );
-
-    EXPECT_TRUE(processor->is_using_internal());
-    EXPECT_NE(processor->get_polynomial(), nullptr);
-}
-
-TEST_F(PolynomialProcessorTest, InternalPolynomialWithCoefficients)
-{
-    std::vector<double> coefficients = { 2.F, 3.F, 1.F };
-    auto processor = std::make_shared<Buffers::PolynomialProcessor>(
-        Buffers::PolynomialProcessor::ProcessMode::SAMPLE_BY_SAMPLE,
-        64,
-        std::ref(coefficients));
-
-    EXPECT_TRUE(processor->is_using_internal());
-
-    // Test the polynomial: f(2) = 1 + 3*2 + 2*4 = 1 + 6 + 8 = 15
-    auto test_buffer = std::make_shared<Buffers::AudioBuffer>(0, 1);
-    test_buffer->get_data()[0] = 2.0;
-
-    processor->process(test_buffer);
-    EXPECT_DOUBLE_EQ(test_buffer->get_data()[0], 15.0);
-}
-
-TEST_F(PolynomialProcessorTest, ExternalPolynomialConstruction)
-{
-    auto processor = std::make_shared<Buffers::PolynomialProcessor>(
-        external_polynomial,
-        Buffers::PolynomialProcessor::ProcessMode::SAMPLE_BY_SAMPLE);
-
-    EXPECT_FALSE(processor->is_using_internal());
-    EXPECT_EQ(processor->get_polynomial(), external_polynomial);
-}
-
-TEST_F(PolynomialProcessorTest, InternalVsExternalProcessing)
-{
-    auto internal_processor = std::make_shared<Buffers::PolynomialProcessor>(
-        Buffers::PolynomialProcessor::ProcessMode::SAMPLE_BY_SAMPLE,
-        64,
-        [](double x) { return 2.0 * x * x + 3.0 * x + 1.0; } // Same as external_polynomial
-    );
-
-    auto external_processor = std::make_shared<Buffers::PolynomialProcessor>(
-        external_polynomial,
-        Buffers::PolynomialProcessor::ProcessMode::SAMPLE_BY_SAMPLE);
-
-    auto buffer1 = std::make_shared<Buffers::AudioBuffer>(0, buffer->get_num_samples());
-    auto buffer2 = std::make_shared<Buffers::AudioBuffer>(0, buffer->get_num_samples());
-
-    buffer1->get_data() = buffer->get_data();
-    buffer2->get_data() = buffer->get_data();
-
-    std::vector<double> original_data = buffer->get_data();
-
-    internal_processor->process(buffer1);
-    external_processor->process(buffer2);
-
-    for (size_t i = 0; i < buffer->get_num_samples(); i++) {
-        EXPECT_DOUBLE_EQ(buffer1->get_data()[i], buffer2->get_data()[i]);
-        double x = original_data[i];
-        double expected = 2.0 * x * x + 3.0 * x + 1.0;
-        EXPECT_DOUBLE_EQ(buffer1->get_data()[i], expected);
-    }
-}
-
-TEST_F(PolynomialProcessorTest, ExternalPolynomialStateManagement)
-{
-    auto processor = std::make_shared<Buffers::PolynomialProcessor>(
-        external_polynomial,
-        Buffers::PolynomialProcessor::ProcessMode::SAMPLE_BY_SAMPLE);
-
-    auto test_buffer = std::make_shared<Buffers::AudioBuffer>(0, 1);
-    test_buffer->get_data()[0] = 0.5;
-
-    double expected_value = 2.0 * 0.5 * 0.5 + 3.0 * 0.5 + 1.0; // 2.25
-
-    double processed_value = external_polynomial->process_sample(0.5);
-    Nodes::atomic_add_flag(external_polynomial->m_state, Nodes::NodeState::PROCESSED);
-
-    processor->process(test_buffer);
-
-    EXPECT_DOUBLE_EQ(test_buffer->get_data()[0], processed_value);
-    EXPECT_DOUBLE_EQ(processed_value, expected_value);
-
-    EXPECT_TRUE(external_polynomial->m_state.load() & Nodes::NodeState::PROCESSED);
-}
-
-TEST_F(PolynomialProcessorTest, SampleByModeInternal)
-{
-    auto processor = std::make_shared<Buffers::PolynomialProcessor>(
-        Buffers::PolynomialProcessor::ProcessMode::SAMPLE_BY_SAMPLE,
-        64,
-        [](double x) { return 2.0 * x * x + 3.0 * x + 1.0; });
-
-    std::vector<double> original = buffer->get_data();
-    processor->process(buffer);
-
-    for (size_t i = 0; i < buffer->get_num_samples(); i++) {
-        double x = original[i];
-        double expected = 2.0 * x * x + 3.0 * x + 1.0;
-        EXPECT_DOUBLE_EQ(buffer->get_data()[i], expected);
-    }
-}
-
-TEST_F(PolynomialProcessorTest, BatchModeInternal)
-{
-    auto processor = std::make_shared<Buffers::PolynomialProcessor>(
-        Buffers::PolynomialProcessor::ProcessMode::BATCH,
-        64,
-        [](std::span<double> buffer) -> double {
-            double input = buffer[0];
-            if (buffer.size() <= 1)
-                return input;
-            if (buffer.size() <= 2)
-                return input + 0.5 * buffer[1];
-            return input + 0.5 * buffer[1] + 0.2 * buffer[2];
+        [](std::span<double> w) -> double {
+            return w[0] + 0.5 * w[1] + 0.2 * w[2];
         },
-        Nodes::Generator::PolynomialMode::RECURSIVE,
+        PolynomialMode::RECURSIVE,
         3);
 
-    auto test_buffer = std::make_shared<Buffers::AudioBuffer>(0, 5);
-    for (size_t i = 0; i < test_buffer->get_num_samples(); i++) {
-        test_buffer->get_data()[i] = 1.0;
-    }
+    auto buffer = make_block(5, 1.0);
 
-    processor->process(test_buffer);
+    processor->process(buffer);
+    EXPECT_NEAR(buffer->get_data().at(0), 1.0, 1e-12);
+    EXPECT_NEAR(buffer->get_data().at(1), 1.5, 1e-12);
+    EXPECT_NEAR(buffer->get_data().at(2), 1.95, 1e-12);
 
-    EXPECT_DOUBLE_EQ(test_buffer->get_data()[0], 1.0); // First: input only
-    EXPECT_DOUBLE_EQ(test_buffer->get_data()[1], 1.5); // Second: 1.0 + 0.5*1.0
-    EXPECT_DOUBLE_EQ(test_buffer->get_data()[2], 1.95); // Third: 1.0 + 0.5*1.5 + 0.2*1.0
+    std::ranges::fill(buffer->get_data(), 1.0);
+    processor->process(buffer);
+    EXPECT_NEAR(buffer->get_data().at(0), 1.0, 1e-12);
 }
 
-TEST_F(PolynomialProcessorTest, WindowedModeInternal)
+TEST(PolynomialProcessorTest, WindowedModeRestartsEveryWindow)
 {
-    auto processor = std::make_shared<Buffers::PolynomialProcessor>(
-        Buffers::PolynomialProcessor::ProcessMode::WINDOWED,
+    auto processor = std::make_shared<PolynomialProcessor>(
+        PolynomialProcessor::ProcessMode::WINDOWED,
         5,
-        [](std::span<double> buffer) -> double {
-            double input = buffer[0];
-            if (buffer.size() <= 1)
-                return input;
-            return input + 0.5 * buffer[1];
-        },
-        Nodes::Generator::PolynomialMode::RECURSIVE,
+        [](std::span<double> w) -> double { return w[0] + 0.5 * w[1]; },
+        PolynomialMode::RECURSIVE,
         2);
 
-    auto test_buffer = std::make_shared<Buffers::AudioBuffer>(0, 10);
-    for (size_t i = 0; i < test_buffer->get_num_samples(); i++) {
-        test_buffer->get_data()[i] = 1.0;
-    }
+    auto buffer = make_block(10, 1.0);
 
-    processor->process(test_buffer);
-
-    // First window (0-4): should reset at start of window
-    EXPECT_DOUBLE_EQ(test_buffer->get_data()[0], 1.0); // First sample
-    EXPECT_DOUBLE_EQ(test_buffer->get_data()[1], 1.5); // 1.0 + 0.5*1.0
-
-    // Second window (5-9): should reset at start of second window
-    EXPECT_DOUBLE_EQ(test_buffer->get_data()[5], 1.0); // First sample of second window
-    EXPECT_DOUBLE_EQ(test_buffer->get_data()[6], 1.5); // 1.0 + 0.5*1.0
-}
-
-TEST_F(PolynomialProcessorTest, SampleByModeExternal)
-{
-    auto processor = std::make_shared<Buffers::PolynomialProcessor>(
-        external_polynomial,
-        Buffers::PolynomialProcessor::ProcessMode::SAMPLE_BY_SAMPLE);
-
-    std::vector<double> original = buffer->get_data();
     processor->process(buffer);
 
-    for (size_t i = 0; i < buffer->get_num_samples(); i++) {
-        double x = original[i];
-        double expected = 2.0 * x * x + 3.0 * x + 1.0;
-        EXPECT_DOUBLE_EQ(buffer->get_data()[i], expected);
-    }
+    EXPECT_DOUBLE_EQ(buffer->get_data().at(0), 1.0);
+    EXPECT_DOUBLE_EQ(buffer->get_data().at(1), 1.5);
+    EXPECT_DOUBLE_EQ(buffer->get_data().at(5), 1.0);
+    EXPECT_DOUBLE_EQ(buffer->get_data().at(6), 1.5);
 }
 
-TEST_F(PolynomialProcessorTest, PerformanceDifference)
+TEST(PolynomialProcessorTest, SampleBySampleKeepsHistoryAcrossBuffers)
 {
-    // This test demonstrates that internal processing should be faster
-    // (no atomic operations) but both should produce same results
-
-    auto internal_proc = std::make_shared<Buffers::PolynomialProcessor>(
-        Buffers::PolynomialProcessor::ProcessMode::SAMPLE_BY_SAMPLE,
+    auto processor = std::make_shared<PolynomialProcessor>(
+        PolynomialProcessor::ProcessMode::SAMPLE_BY_SAMPLE,
         64,
-        [](double x) { return x * x; });
-
-    auto external_proc = std::make_shared<Buffers::PolynomialProcessor>(
-        std::make_shared<Nodes::Generator::Polynomial>([](double x) { return x * x; }),
-        Buffers::PolynomialProcessor::ProcessMode::SAMPLE_BY_SAMPLE);
-
-    auto large_buffer1 = std::make_shared<Buffers::AudioBuffer>(0, 10000);
-    auto large_buffer2 = std::make_shared<Buffers::AudioBuffer>(0, 10000);
-
-    for (size_t i = 0; i < 10000; i++) {
-        large_buffer1->get_data()[i] = static_cast<double>(i) / 10000.0;
-        large_buffer2->get_data()[i] = static_cast<double>(i) / 10000.0;
-    }
-
-    internal_proc->process(large_buffer1);
-    external_proc->process(large_buffer2);
-
-    for (size_t i = 0; i < 10000; i++) {
-        EXPECT_DOUBLE_EQ(large_buffer1->get_data()[i], large_buffer2->get_data()[i]);
-    }
-}
-
-TEST_F(PolynomialProcessorTest, UpdateExternalPolynomial)
-{
-    auto initial_polynomial = std::make_shared<Nodes::Generator::Polynomial>(
-        [](double x) { return x * x; }); // f(x) = x²
-
-    auto processor = std::make_shared<Buffers::PolynomialProcessor>(
-        initial_polynomial,
-        Buffers::PolynomialProcessor::ProcessMode::SAMPLE_BY_SAMPLE);
-
-    auto test_buffer = std::make_shared<Buffers::AudioBuffer>(0, 1);
-    test_buffer->get_data()[0] = 2.0;
-
-    processor->process(test_buffer);
-    EXPECT_DOUBLE_EQ(test_buffer->get_data()[0], 4.0); // 2² = 4
-
-    auto new_polynomial = std::make_shared<Nodes::Generator::Polynomial>(
-        [](double x) { return x * x * x; }); // f(x) = x³
-
-    processor->update_polynomial_node(new_polynomial);
-
-    test_buffer->get_data()[0] = 2.0;
-
-    processor->process(test_buffer);
-    EXPECT_DOUBLE_EQ(test_buffer->get_data()[0], 8.0); // 2³ = 8
-}
-
-TEST_F(PolynomialProcessorTest, ForceUseInternalPolynomial)
-{
-    auto external_poly = std::make_shared<Nodes::Generator::Polynomial>(
-        [](double x) { return x * x; }); // f(x) = x²
-
-    auto processor = std::make_shared<Buffers::PolynomialProcessor>(
-        external_poly,
-        Buffers::PolynomialProcessor::ProcessMode::SAMPLE_BY_SAMPLE);
-
-    EXPECT_FALSE(processor->is_using_internal());
-    EXPECT_EQ(processor->get_polynomial(), external_poly);
-
-    auto test_buffer = std::make_shared<Buffers::AudioBuffer>(0, 1);
-    test_buffer->get_data()[0] = 2.0;
-
-    processor->process(test_buffer);
-    EXPECT_DOUBLE_EQ(test_buffer->get_data()[0], 4.0); // 2² = 4
-
-    processor->force_use_internal([](double x) { return x * x * x; }); // f(x) = x³
-
-    EXPECT_FALSE(processor->is_using_internal());
-
-    test_buffer->get_data()[0] = 2.0;
-
-    processor->process(test_buffer);
-
-    EXPECT_TRUE(processor->is_using_internal());
-    EXPECT_NE(processor->get_polynomial(), external_poly);
-
-    test_buffer->get_data()[0] = 2.0;
-
-    processor->process(test_buffer);
-    EXPECT_DOUBLE_EQ(test_buffer->get_data()[0], 8.0); // 2³ = 8
-}
-
-TEST_F(PolynomialProcessorTest, BufferContextModeFeedforward)
-{
-    auto moving_avg = [](std::span<double> buffer) -> double {
-        double sum = 0.0;
-        for (size_t i = 0; i < std::min<size_t>(buffer.size(), 3UL); ++i) {
-            sum += buffer[i];
-        }
-        return sum / std::min<double>((double)buffer.size(), 3.0);
-    };
-
-    auto processor = std::make_shared<Buffers::PolynomialProcessor>(
-        Buffers::PolynomialProcessor::ProcessMode::BUFFER_CONTEXT,
-        64,
-        moving_avg,
-        Nodes::Generator::PolynomialMode::FEEDFORWARD,
-        3);
-
-    auto test_buffer = std::make_shared<Buffers::AudioBuffer>(0, 5);
-    test_buffer->get_data()[0] = 1.0;
-    test_buffer->get_data()[1] = 2.0;
-    test_buffer->get_data()[2] = 3.0;
-    test_buffer->get_data()[3] = 4.0;
-    test_buffer->get_data()[4] = 5.0;
-
-    processor->process(test_buffer);
-
-    // First sample: only current value = 1.0
-    EXPECT_DOUBLE_EQ(test_buffer->get_data()[0], 1.0);
-
-    // Second sample: (1.0 + 2.0) / 2 = 1.5
-    EXPECT_DOUBLE_EQ(test_buffer->get_data()[1], 1.5);
-
-    // Third sample: (1.0 + 1.5 + 3.0) / 3 = 1.8333... (sees modified buffer!)
-    EXPECT_NEAR(test_buffer->get_data()[2], 1.8333333333333333, 1e-10);
-
-    // Fourth sample: (1.5 + 1.833... + 4.0) / 3 = 2.444...
-    EXPECT_NEAR(test_buffer->get_data()[3], 2.4444444444444442, 1e-10);
-
-    // Fifth sample: (1.833... + 2.444... + 5.0) / 3 = 3.092...
-    EXPECT_NEAR(test_buffer->get_data()[4], 3.0925925925925921, 1e-10);
-}
-
-TEST_F(PolynomialProcessorTest, BufferContextModeRecursive)
-{
-    // Simple recursive filter: y[n] = 0.5 * y[n-1] + x[n]
-    auto recursive_filter = [](std::span<double> buffer) -> double {
-        double input = buffer.empty() ? 0.0 : buffer.front();
-
-        if (buffer.size() < 2) {
-            return input;
-        }
-
-        // buffer[1] is the previous output when in recursive mode
-        return input + 0.5 * buffer[1];
-    };
-
-    auto processor = std::make_shared<Buffers::PolynomialProcessor>(
-        Buffers::PolynomialProcessor::ProcessMode::BUFFER_CONTEXT,
-        64,
-        recursive_filter,
-        Nodes::Generator::PolynomialMode::RECURSIVE,
+        [](std::span<double> w) -> double { return w[0] + 0.5 * w[1]; },
+        PolynomialMode::RECURSIVE,
         2);
 
-    auto test_buffer = std::make_shared<Buffers::AudioBuffer>(0, 4);
-    for (size_t i = 0; i < test_buffer->get_num_samples(); i++) {
-        test_buffer->get_data()[i] = 1.0;
+    auto first = make_block(3, 1.0);
+    processor->process(first);
+    EXPECT_DOUBLE_EQ(first->get_data().at(2), 1.75);
+
+    auto second = make_block(3, 1.0);
+    processor->process(second);
+    EXPECT_DOUBLE_EQ(second->get_data().at(0), 1.0 + 0.5 * 1.75);
+}
+
+TEST(PolynomialProcessorTest, BufferContextFeedforwardSeesTheBufferBehindIt)
+{
+    auto processor = std::make_shared<PolynomialProcessor>(
+        PolynomialProcessor::ProcessMode::BUFFER_CONTEXT,
+        64,
+        [](std::span<double> w) -> double {
+            double sum = 0.0;
+            const size_t taps = std::min<size_t>(w.size(), 3UL);
+            for (size_t i = 0; i < taps; ++i) {
+                sum += w[i];
+            }
+            return sum / static_cast<double>(taps);
+        },
+        PolynomialMode::FEEDFORWARD,
+        3);
+
+    auto buffer = make_block(5);
+    const std::vector<double> input { 1.0, 2.0, 3.0, 4.0, 5.0 };
+    buffer->get_data() = input;
+
+    processor->process(buffer);
+
+    EXPECT_DOUBLE_EQ(buffer->get_data().at(0), 1.0);
+    EXPECT_DOUBLE_EQ(buffer->get_data().at(1), 1.5);
+    EXPECT_NEAR(buffer->get_data().at(2), (1.0 + 1.5 + 3.0) / 3.0, 1e-10);
+    EXPECT_NEAR(buffer->get_data().at(3), (1.5 + (1.0 + 1.5 + 3.0) / 3.0 + 4.0) / 3.0, 1e-10);
+}
+
+TEST(PolynomialProcessorTest, BufferContextRecursiveFiltersInPlace)
+{
+    auto processor = std::make_shared<PolynomialProcessor>(
+        PolynomialProcessor::ProcessMode::BUFFER_CONTEXT,
+        64,
+        [](std::span<double> w) -> double { return w[0] + 0.5 * w[1]; },
+        PolynomialMode::RECURSIVE,
+        2);
+
+    auto buffer = make_block(4, 1.0);
+
+    processor->process(buffer);
+
+    EXPECT_DOUBLE_EQ(buffer->get_data().at(0), 1.0);
+    EXPECT_DOUBLE_EQ(buffer->get_data().at(1), 1.5);
+    EXPECT_DOUBLE_EQ(buffer->get_data().at(2), 1.75);
+    EXPECT_DOUBLE_EQ(buffer->get_data().at(3), 1.875);
+}
+
+TEST(PolynomialProcessorTest, UpdatePolynomialNodeTakesEffectOnTheNextBuffer)
+{
+    auto processor = std::make_shared<PolynomialProcessor>(
+        std::make_shared<Polynomial>([](double x) { return x * x; }),
+        PolynomialProcessor::ProcessMode::SAMPLE_BY_SAMPLE);
+
+    auto buffer = make_block(1, 2.0);
+    processor->process(buffer);
+    EXPECT_DOUBLE_EQ(buffer->get_data().front(), 4.0);
+
+    processor->update_polynomial_node(std::make_shared<Polynomial>([](double x) { return x * x * x; }));
+
+    buffer->get_data().front() = 2.0;
+    processor->process(buffer);
+    EXPECT_DOUBLE_EQ(buffer->get_data().front(), 8.0);
+}
+
+TEST(PolynomialProcessorTest, ForceUseInternalSwapsToAnOwnedNode)
+{
+    auto external = std::make_shared<Polynomial>([](double x) { return x * x; });
+    auto processor = std::make_shared<PolynomialProcessor>(
+        external, PolynomialProcessor::ProcessMode::SAMPLE_BY_SAMPLE);
+
+    EXPECT_FALSE(processor->is_using_internal());
+    EXPECT_EQ(processor->get_polynomial(), external);
+
+    auto buffer = make_block(1, 2.0);
+    processor->process(buffer);
+    EXPECT_DOUBLE_EQ(buffer->get_data().front(), 4.0);
+
+    processor->force_use_internal([](double x) { return x * x * x; });
+    EXPECT_FALSE(processor->is_using_internal());
+
+    buffer->get_data().front() = 2.0;
+    processor->process(buffer);
+
+    EXPECT_TRUE(processor->is_using_internal());
+    EXPECT_NE(processor->get_polynomial(), external);
+    EXPECT_DOUBLE_EQ(buffer->get_data().front(), 8.0);
+}
+
+TEST(PolynomialProcessorTest, CoefNodeAsExternalWeightsOverABuffer)
+{
+    auto node = std::make_shared<Polynomial>(
+        weights(), PolynomialMode::FEEDFORWARD, 2, std::vector<double> { 0.7, 0.3 });
+    auto processor = std::make_shared<PolynomialProcessor>(
+        node, PolynomialProcessor::ProcessMode::SAMPLE_BY_SAMPLE);
+
+    auto buffer = make_block(4);
+    for (size_t i = 0; i < 4; ++i) {
+        buffer->get_data().at(i) = static_cast<double>(i + 1);
     }
 
-    processor->process(test_buffer);
+    processor->process(buffer);
 
-    // First sample: y[0] = 1.0 (no previous output)
-    EXPECT_DOUBLE_EQ(test_buffer->get_data()[0], 1.0);
-
-    // Second sample: y[1] = 1.0 + 0.5*1.0 = 1.5
-    EXPECT_DOUBLE_EQ(test_buffer->get_data()[1], 1.5);
-
-    // Third sample: y[2] = 1.0 + 0.5*1.5 = 1.75
-    EXPECT_DOUBLE_EQ(test_buffer->get_data()[2], 1.75);
-
-    // Fourth sample: y[3] = 1.0 + 0.5*1.75 = 1.875
-    EXPECT_DOUBLE_EQ(test_buffer->get_data()[3], 1.875);
+    EXPECT_DOUBLE_EQ(buffer->get_data().at(0), 0.7);
+    EXPECT_DOUBLE_EQ(buffer->get_data().at(1), 1.7);
+    EXPECT_DOUBLE_EQ(buffer->get_data().at(2), 2.7);
+    EXPECT_DOUBLE_EQ(buffer->get_data().at(3), 3.7);
 }
 
-TEST_F(PolynomialProcessorTest, ExternalCoefPolynomialSampleBySample)
+TEST(PolynomialProcessorTest, CoefNodeRetunedBetweenBuffers)
 {
-    auto weighted = std::make_shared<Nodes::Generator::Polynomial>(
-        [](std::span<double> window, std::span<double> coefs) -> double {
-            return coefs[0] * window[0] + coefs[1] * window[1];
-        },
-        Nodes::Generator::PolynomialMode::FEEDFORWARD, 2,
-        std::vector<double> { 0.7, 0.3 });
+    auto node = std::make_shared<Polynomial>(
+        [](std::span<double> w, std::span<double> c) -> double { return c[0] * w[0]; },
+        PolynomialMode::FEEDFORWARD, 1, std::vector<double> { 2.0 });
+    auto processor = std::make_shared<PolynomialProcessor>(
+        node, PolynomialProcessor::ProcessMode::SAMPLE_BY_SAMPLE);
 
-    auto processor = std::make_shared<Buffers::PolynomialProcessor>(
-        weighted,
-        Buffers::PolynomialProcessor::ProcessMode::SAMPLE_BY_SAMPLE);
+    auto buffer = make_block(2, 1.0);
+    processor->process(buffer);
+    EXPECT_DOUBLE_EQ(buffer->get_data().at(1), 2.0);
 
-    auto test_buffer = std::make_shared<Buffers::AudioBuffer>(0, 4);
-    for (size_t i = 0; i < test_buffer->get_num_samples(); i++) {
-        test_buffer->get_data()[i] = static_cast<double>(i + 1);
-    }
-
-    processor->process(test_buffer);
-
-    EXPECT_DOUBLE_EQ(test_buffer->get_data()[0], 0.7);
-    EXPECT_DOUBLE_EQ(test_buffer->get_data()[1], 1.7);
-    EXPECT_DOUBLE_EQ(test_buffer->get_data()[2], 2.7);
-    EXPECT_DOUBLE_EQ(test_buffer->get_data()[3], 3.7);
+    node->set_coefficients({ 4.0 });
+    std::ranges::fill(buffer->get_data(), 1.0);
+    processor->process(buffer);
+    EXPECT_DOUBLE_EQ(buffer->get_data().at(1), 4.0);
 }
 
-TEST_F(PolynomialProcessorTest, ExternalCoefPolynomialRetunedBetweenBuffers)
+TEST(PolynomialProcessorTest, ClonePerChannelKeepsHistorySeparate)
 {
-    auto gain = std::make_shared<Nodes::Generator::Polynomial>(
-        [](std::span<double> window, std::span<double> coefs) -> double {
-            return coefs[0] * window[0];
-        },
-        Nodes::Generator::PolynomialMode::FEEDFORWARD, 1,
-        std::vector<double> { 2.0 });
-
-    auto processor = std::make_shared<Buffers::PolynomialProcessor>(
-        gain,
-        Buffers::PolynomialProcessor::ProcessMode::SAMPLE_BY_SAMPLE);
-
-    auto test_buffer = std::make_shared<Buffers::AudioBuffer>(0, 2);
-    test_buffer->get_data()[0] = 1.0;
-    test_buffer->get_data()[1] = 1.0;
-    processor->process(test_buffer);
-
-    EXPECT_DOUBLE_EQ(test_buffer->get_data()[0], 2.0);
-    EXPECT_DOUBLE_EQ(test_buffer->get_data()[1], 2.0);
-
-    gain->set_coefficients({ 4.0 });
-    test_buffer->get_data()[0] = 1.0;
-    test_buffer->get_data()[1] = 1.0;
-    processor->process(test_buffer);
-
-    EXPECT_DOUBLE_EQ(test_buffer->get_data()[0], 4.0);
-    EXPECT_DOUBLE_EQ(test_buffer->get_data()[1], 4.0);
-}
-
-TEST_F(PolynomialProcessorTest, ClonePerChannelKeepsHistorySeparate)
-{
-    auto weights = std::make_shared<Nodes::Generator::Polynomial>(
-        [](std::span<double> window, std::span<double> coefs) -> double {
-            return coefs[0] * window[0] + coefs[1] * window[1];
-        },
-        Nodes::Generator::PolynomialMode::FEEDFORWARD, 2,
-        std::vector<double> { 0.5, 0.5 });
-
-    auto first_processor = std::make_shared<Buffers::PolynomialProcessor>(
-        weights, Buffers::PolynomialProcessor::ProcessMode::SAMPLE_BY_SAMPLE);
-    auto second_processor = first_processor->clone();
+    auto node = std::make_shared<Polynomial>(
+        weights(), PolynomialMode::FEEDFORWARD, 2, std::vector<double> { 0.5, 0.5 });
+    auto first_processor = std::make_shared<PolynomialProcessor>(
+        node, PolynomialProcessor::ProcessMode::SAMPLE_BY_SAMPLE);
+    const auto second_processor = first_processor->clone();
 
     EXPECT_NE(second_processor->get_polynomial(), first_processor->get_polynomial());
     EXPECT_TRUE(second_processor->is_using_internal());
 
-    auto first = std::make_shared<Buffers::AudioBuffer>(0, TestConfig::BUFFER_SIZE);
-    auto second = std::make_shared<Buffers::AudioBuffer>(1, TestConfig::BUFFER_SIZE);
-    first->resize(4);
-    second->resize(4);
-    std::ranges::fill(first->get_data(), 2.0);
-    std::ranges::fill(second->get_data(), 4.0);
+    auto first = make_block(4, 2.0, 0);
+    auto second = make_block(4, 4.0, 1);
 
     first_processor->process(first);
     second_processor->process(second);
@@ -1078,4 +721,4 @@ TEST_F(PolynomialProcessorTest, ClonePerChannelKeepsHistorySeparate)
     EXPECT_DOUBLE_EQ(second->get_data().at(3), 4.0);
 }
 
-} // namespace MayaFlux::Test
+}
