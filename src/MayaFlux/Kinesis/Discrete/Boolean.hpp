@@ -10,11 +10,13 @@
  * node, and cloned. A signal is a bit when it exceeds the kernel's threshold,
  * and a kernel driven by an edge counts a signal that starts high as a rise.
  *
- * Three shapes, each the function type of the matching Logic constructor:
+ * Four shapes, each the function type of the matching Logic constructor:
  * - history kernels: `bool(span<const bool> history, span<const double>)`,
  *   history[0] the newest bit
  * - input kernels: `bool(double input, span<double>)`
  * - time kernels: `bool(double input, double time, span<double>)`
+ * - parallel kernels: `bool(const vector<double>& inputs, span<double>)`, one
+ *   value per input slot as documented by each kernel
  *
  * `Logic(Kinesis::Discrete::truth_table, 3, truth_table_state(3, rule))` is a
  * complete node. Every kernel returns false for an array too short to hold
@@ -250,5 +252,112 @@ namespace MayaFlux::Kinesis::Discrete {
  */
 [[nodiscard]] MAYAFLUX_API bool one_shot(
     double input, double time, std::span<double> coefs) noexcept;
+
+// ---------------------------------------------------------------------------
+// Parallel kernels: one value per input slot
+// ---------------------------------------------------------------------------
+
+/**
+ * @brief Builds the array set_reset_latch reads and writes.
+ * @param threshold Level that makes a slot a one
+ *
+ * Layout: [threshold, state].
+ */
+[[nodiscard]] MAYAFLUX_API std::vector<double> set_reset_latch_state(double threshold = 0.5);
+
+/**
+ * @brief Memory cell: slot 0 sets it, slot 1 resets it, reset wins.
+ *
+ * coefs: [threshold, state]. Holds while neither is high.
+ */
+[[nodiscard]] MAYAFLUX_API bool set_reset_latch(
+    const std::vector<double>& inputs, std::span<double> coefs) noexcept;
+
+/**
+ * @brief Builds the array comparator reads and writes.
+ * @param margin Half width of the dead band around equality
+ *
+ * Layout: [margin, state].
+ */
+[[nodiscard]] MAYAFLUX_API std::vector<double> comparator_state(double margin = 0.0);
+
+/**
+ * @brief Signal against signal: true once slot 0 exceeds slot 1 by the margin.
+ *
+ * coefs: [margin, state]. It releases when slot 0 falls below slot 1 by the
+ * margin and holds in between, so two signals that cross slowly do not chatter.
+ */
+[[nodiscard]] MAYAFLUX_API bool comparator(
+    const std::vector<double>& inputs, std::span<double> coefs) noexcept;
+
+/**
+ * @brief True while slot 0 lies strictly between slot 1 and slot 2.
+ *
+ * Needs no array; the bounds are signals and can move.
+ */
+[[nodiscard]] MAYAFLUX_API bool window_comparator(
+    const std::vector<double>& inputs, std::span<const double> coefs) noexcept;
+
+/**
+ * @brief Builds the array signals_at_least reads.
+ * @param k How many slots must be high
+ * @param threshold Level that makes a slot a one
+ *
+ * Layout: [threshold, k].
+ */
+[[nodiscard]] MAYAFLUX_API std::vector<double> signals_at_least_state(size_t k, double threshold = 0.5);
+
+/**
+ * @brief True when at least k of the input slots are high.
+ *
+ * coefs: [threshold, k]. Coincidence at k equal to the slot count, any at 1,
+ * majority in between.
+ */
+[[nodiscard]] MAYAFLUX_API bool signals_at_least(
+    const std::vector<double>& inputs, std::span<const double> coefs) noexcept;
+
+/**
+ * @brief Builds the array input_truth_table reads.
+ * @param arity Number of input slots, at most 6
+ * @param rule Output for each pattern; bit i is the output when the pattern,
+ *             slot 0 as the lowest bit, equals i
+ * @param threshold Level that makes a slot a one
+ *
+ * Layout: [threshold, arity, outputs...].
+ */
+[[nodiscard]] MAYAFLUX_API std::vector<double> input_truth_table_state(
+    size_t arity, uint64_t rule, double threshold = 0.5);
+
+/**
+ * @brief Any boolean function of the input slots, as a table.
+ *
+ * coefs: [threshold, arity, outputs...]. The signal counterpart of
+ * truth_table: AND, XOR, majority or any other gate of the slots, missing
+ * slots read as zero.
+ */
+[[nodiscard]] MAYAFLUX_API bool input_truth_table(
+    const std::vector<double>& inputs, std::span<const double> coefs) noexcept;
+
+/**
+ * @brief Builds the array clocked_register reads and writes.
+ * @param length Number of stages
+ * @param tap Which stage is read out, 0 the newest
+ * @param threshold Level that makes a slot a one
+ *
+ * Layout: [threshold, latched, length, tap, stages...].
+ */
+[[nodiscard]] MAYAFLUX_API std::vector<double> clocked_register_state(
+    size_t length, size_t tap, double threshold = 0.5);
+
+/**
+ * @brief Shift register: slot 1 is sampled into it on every rise of slot 0.
+ *
+ * coefs: [threshold, latched, length, tap, stages...]. The output is the
+ * chosen stage, so the data a while ago comes back out on the clock: a
+ * clocked delay line of bits, and with a random or feedback data signal a
+ * sequence generator.
+ */
+[[nodiscard]] MAYAFLUX_API bool clocked_register(
+    const std::vector<double>& inputs, std::span<double> coefs) noexcept;
 
 } // namespace MayaFlux::Kinesis::Discrete

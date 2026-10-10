@@ -249,4 +249,119 @@ bool one_shot(double input, double time, std::span<double> coefs) noexcept
     return time < coefs[2];
 }
 
+std::vector<double> set_reset_latch_state(double threshold)
+{
+    return { threshold, 0.0 };
+}
+
+bool set_reset_latch(const std::vector<double>& inputs, std::span<double> coefs) noexcept
+{
+    if (inputs.size() < 2 || coefs.size() < 2)
+        return false;
+
+    if (inputs[1] > coefs[0])
+        coefs[1] = 0.0;
+    else if (inputs[0] > coefs[0])
+        coefs[1] = 1.0;
+    return coefs[1] > 0.5;
+}
+
+std::vector<double> comparator_state(double margin)
+{
+    return { margin, 0.0 };
+}
+
+bool comparator(const std::vector<double>& inputs, std::span<double> coefs) noexcept
+{
+    if (inputs.size() < 2 || coefs.size() < 2)
+        return false;
+
+    const double difference = inputs[0] - inputs[1];
+    if (difference > coefs[0])
+        coefs[1] = 1.0;
+    else if (difference < -coefs[0])
+        coefs[1] = 0.0;
+    return coefs[1] > 0.5;
+}
+
+bool window_comparator(const std::vector<double>& inputs, std::span<const double>) noexcept
+{
+    if (inputs.size() < 3)
+        return false;
+    return inputs[0] > inputs[1] && inputs[0] < inputs[2];
+}
+
+std::vector<double> signals_at_least_state(size_t k, double threshold)
+{
+    return { threshold, static_cast<double>(k) };
+}
+
+bool signals_at_least(const std::vector<double>& inputs, std::span<const double> coefs) noexcept
+{
+    if (coefs.size() < 2)
+        return false;
+
+    const double threshold = coefs[0];
+    const auto high = static_cast<size_t>(std::count_if(inputs.begin(), inputs.end(),
+        [threshold](double v) { return v > threshold; }));
+    return high >= index_of(coefs[1]);
+}
+
+std::vector<double> input_truth_table_state(size_t arity, uint64_t rule, double threshold)
+{
+    arity = std::min(arity, MAX_STATE_ARITY);
+
+    std::vector<double> state(2 + (size_t { 1 } << arity), 0.0);
+    state[0] = threshold;
+    state[1] = static_cast<double>(arity);
+
+    for (size_t i = 2; i < state.size(); ++i)
+        state[i] = static_cast<double>((rule >> (i - 2)) & 1U);
+    return state;
+}
+
+bool input_truth_table(const std::vector<double>& inputs, std::span<const double> coefs) noexcept
+{
+    if (coefs.size() < 2)
+        return false;
+
+    const size_t arity = index_of(coefs[1]);
+    if (arity > MAX_TABLE_ARITY || coefs.size() < 2 + (size_t { 1 } << arity))
+        return false;
+
+    size_t pattern = 0;
+    for (size_t i = 0; i < arity && i < inputs.size(); ++i) {
+        if (inputs[i] > coefs[0])
+            pattern |= size_t { 1 } << i;
+    }
+    return coefs[2 + pattern] > 0.5;
+}
+
+std::vector<double> clocked_register_state(size_t length, size_t tap, double threshold)
+{
+    std::vector<double> state(4 + length, 0.0);
+    state[0] = threshold;
+    state[2] = static_cast<double>(length);
+    state[3] = static_cast<double>(tap);
+    return state;
+}
+
+bool clocked_register(const std::vector<double>& inputs, std::span<double> coefs) noexcept
+{
+    if (inputs.size() < 2 || coefs.size() < 4)
+        return false;
+
+    const size_t length = index_of(coefs[2]);
+    if (length == 0 || coefs.size() < 4 + length)
+        return false;
+
+    const auto stages = coefs.subspan(4, length);
+    if (rises(inputs[0] > coefs[0], coefs[1])) {
+        for (size_t i = length - 1; i > 0; --i)
+            stages[i] = stages[i - 1];
+        stages[0] = inputs[1] > coefs[0] ? 1.0 : 0.0;
+    }
+    return stages[std::min(index_of(coefs[3]), length - 1)] > 0.5;
+}
+
 } // namespace MayaFlux::Kinesis::Discrete

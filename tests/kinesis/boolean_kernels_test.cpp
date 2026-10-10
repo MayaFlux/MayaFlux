@@ -3,6 +3,7 @@
 #include "MayaFlux/Kinesis/Discrete/Boolean.hpp"
 #include "MayaFlux/Kinesis/Discrete/Kernels.hpp"
 #include "MayaFlux/Nodes/Generators/Logic.hpp"
+#include "MayaFlux/Nodes/Generators/Polynomial.hpp"
 
 namespace MayaFlux::Test {
 
@@ -926,5 +927,462 @@ INSTANTIATE_TEST_SUITE_P(
     [](const ::testing::TestParamInfo<ShortCase>& info) {
         return std::string(info.param.name);
     });
+
+// ============================================================================
+// Parallel kernels over input nodes
+// ============================================================================
+
+namespace {
+
+    struct Signal {
+        std::shared_ptr<double> value = std::make_shared<double>(0.0);
+        std::shared_ptr<Nodes::Generator::Polynomial> node;
+    };
+
+    Signal make_signal()
+    {
+        Signal signal;
+        const auto value = signal.value;
+        signal.node = std::make_shared<Nodes::Generator::Polynomial>([value](double) { return *value; });
+        return signal;
+    }
+
+    std::vector<Signal> make_signals(size_t count)
+    {
+        std::vector<Signal> signals;
+        signals.reserve(count);
+        for (size_t i = 0; i < count; ++i) {
+            signals.push_back(make_signal());
+        }
+        return signals;
+    }
+
+    void wire(Logic& gate, const std::vector<Signal>& signals)
+    {
+        for (const auto& signal : signals) {
+            gate.add_input_node(signal.node);
+        }
+    }
+
+    double level(char bit)
+    {
+        return bit == '1' ? HIGH : LOW;
+    }
+
+}
+
+class InputSlotTest : public ::testing::TestWithParam<std::tuple<size_t, bool>> { };
+
+TEST_P(InputSlotTest, NodesFillSlotsInOrderAndTheDriverFollows)
+{
+    const auto [count, with_driver] = GetParam();
+    std::vector<double> seen;
+    Logic gate(
+        [&seen](const std::vector<double>& in) {
+            seen = in;
+            return true;
+        },
+        count + (with_driver ? 1U : 0U));
+
+    const auto signals = make_signals(count);
+    wire(gate, signals);
+    for (size_t i = 0; i < count; ++i) {
+        *signals[i].value = 0.1 * static_cast<double>(i + 1);
+    }
+
+    gate.process_sample(0.77);
+
+    ASSERT_EQ(seen.size(), count + (with_driver ? 1U : 0U));
+    for (size_t i = 0; i < count; ++i) {
+        EXPECT_DOUBLE_EQ(seen[i], 0.1 * static_cast<double>(i + 1)) << "slot=" << i;
+    }
+    if (with_driver) {
+        EXPECT_DOUBLE_EQ(seen[count], 0.77);
+    }
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    Slots,
+    InputSlotTest,
+    ::testing::Combine(::testing::Range(size_t { 1 }, size_t { 6 }), ::testing::Bool()),
+    [](const ::testing::TestParamInfo<std::tuple<size_t, bool>>& info) {
+        return "Nodes" + std::to_string(std::get<0>(info.param)) + (std::get<1>(info.param) ? "_WithDriver" : "_NodesOnly");
+    });
+
+TEST(InputNodeTest, DeclaredSlotCountGrowsToHoldTheNodes)
+{
+    std::vector<double> seen;
+    Logic gate(
+        [&seen](const std::vector<double>& in) {
+            seen = in;
+            return false;
+        },
+        1);
+
+    const auto signals = make_signals(3);
+    wire(gate, signals);
+    gate.process_sample(0.0);
+
+    EXPECT_EQ(gate.get_input_count(), 3U);
+    EXPECT_EQ(seen.size(), 3U);
+}
+
+TEST(InputNodeTest, WithoutNodesTheDriverStillGoesToSlotZero)
+{
+    std::vector<double> seen;
+    Logic gate(
+        [&seen](const std::vector<double>& in) {
+            seen = in;
+            return false;
+        },
+        2);
+
+    gate.process_sample(0.6);
+
+    EXPECT_EQ(seen, (std::vector<double> { 0.6, 0.0 }));
+}
+
+TEST(InputNodeTest, AreIgnoredOutsideParallelMode)
+{
+    Logic gate(0.5);
+    const auto signal = make_signal();
+    *signal.value = HIGH;
+    gate.add_input_node(signal.node);
+
+    EXPECT_DOUBLE_EQ(gate.process_sample(LOW), 0.0);
+    EXPECT_DOUBLE_EQ(gate.process_sample(HIGH), 1.0);
+}
+
+TEST(InputNodeTest, ModulatorsListEveryInputNode)
+{
+    Logic gate(
+        [](const std::vector<double>&) { return false; }, 2);
+    const auto legacy = make_signal();
+    const auto signals = make_signals(2);
+    gate.set_input_node(legacy.node);
+    wire(gate, signals);
+
+    const auto modulators = gate.get_modulators();
+
+    ASSERT_EQ(modulators.size(), 3U);
+    EXPECT_EQ(modulators[0].second, legacy.node);
+    EXPECT_EQ(modulators[1].second, signals[0].node);
+    EXPECT_EQ(modulators[2].second, signals[1].node);
+}
+
+TEST(InputNodeTest, SetInputNodesReplacesAndDropsNulls)
+{
+    Logic gate(
+        [](const std::vector<double>&) { return false; }, 1);
+    const auto signals = make_signals(2);
+    wire(gate, signals);
+
+    gate.set_input_nodes({ signals[1].node, nullptr });
+
+    ASSERT_EQ(gate.get_modulators().size(), 1U);
+    EXPECT_EQ(gate.get_modulators().front().second, signals[1].node);
+
+    gate.set_input_nodes({});
+    EXPECT_TRUE(gate.get_modulators().empty());
+}
+
+TEST(InputNodeTest, ASourceAlreadyProcessedThisCycleIsReadNotRunAgain)
+{
+    auto runs = std::make_shared<int>(0);
+    auto source = std::make_shared<Nodes::Generator::Polynomial>([runs](double) {
+        ++*runs;
+        return 0.8;
+    });
+    std::vector<double> seen;
+    Logic gate(
+        [&seen](const std::vector<double>& in) {
+            seen = in;
+            return true;
+        },
+        1);
+    gate.add_input_node(source);
+
+    gate.process_sample(0.0);
+    EXPECT_EQ(*runs, 1);
+    EXPECT_DOUBLE_EQ(seen.front(), 0.8);
+
+    gate.process_sample(0.0);
+    EXPECT_EQ(*runs, 2);
+
+    source->process_sample(0.0);
+    Nodes::atomic_add_flag(source->m_state, Nodes::NodeState::PROCESSED);
+    gate.process_sample(0.0);
+
+    EXPECT_EQ(*runs, 3);
+    EXPECT_DOUBLE_EQ(seen.front(), 0.8);
+}
+
+class SignalTableTest : public ::testing::TestWithParam<std::tuple<unsigned, unsigned>> { };
+
+TEST_P(SignalTableTest, AnyTwoSignalGateIsATable)
+{
+    const auto [rule, pattern] = GetParam();
+    Logic gate(Discrete::input_truth_table, 2, Discrete::input_truth_table_state(2, rule));
+    const auto signals = make_signals(2);
+    wire(gate, signals);
+
+    *signals[0].value = (pattern & 1U) != 0U ? HIGH : LOW;
+    *signals[1].value = (pattern & 2U) != 0U ? HIGH : LOW;
+
+    EXPECT_DOUBLE_EQ(gate.process_sample(0.0), static_cast<double>((rule >> pattern) & 1U));
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    AllSixteenTables,
+    SignalTableTest,
+    ::testing::Combine(::testing::Range(0U, 16U), ::testing::Range(0U, 4U)),
+    [](const ::testing::TestParamInfo<std::tuple<unsigned, unsigned>>& info) {
+        return "Table" + std::to_string(std::get<0>(info.param)) + "_Pattern" + std::to_string(std::get<1>(info.param));
+    });
+
+TEST(SignalTableTest, ThreeSignalMajority)
+{
+    Logic gate(Discrete::input_truth_table, 3, Discrete::input_truth_table_state(3, 0xE8));
+    const auto signals = make_signals(3);
+    wire(gate, signals);
+
+    for (unsigned pattern = 0; pattern < 8; ++pattern) {
+        for (size_t i = 0; i < 3; ++i) {
+            *signals[i].value = ((pattern >> i) & 1U) != 0U ? HIGH : LOW;
+        }
+        const int high = static_cast<int>(pattern & 1U) + static_cast<int>((pattern >> 1U) & 1U) + static_cast<int>((pattern >> 2U) & 1U);
+
+        EXPECT_DOUBLE_EQ(gate.process_sample(0.0), high >= 2 ? 1.0 : 0.0) << "pattern=" << pattern;
+    }
+}
+
+class SignalCountTest : public ::testing::TestWithParam<std::tuple<size_t, unsigned>> { };
+
+TEST_P(SignalCountTest, AtLeastKOfThreeSignals)
+{
+    const auto [k, pattern] = GetParam();
+    Logic gate(Discrete::signals_at_least, 3, Discrete::signals_at_least_state(k));
+    const auto signals = make_signals(3);
+    wire(gate, signals);
+
+    size_t high = 0;
+    for (size_t i = 0; i < 3; ++i) {
+        const bool on = ((pattern >> i) & 1U) != 0U;
+        *signals[i].value = on ? HIGH : LOW;
+        high += on ? 1U : 0U;
+    }
+
+    EXPECT_DOUBLE_EQ(gate.process_sample(0.0), high >= k ? 1.0 : 0.0);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    Coincidence,
+    SignalCountTest,
+    ::testing::Combine(::testing::Range(size_t { 0 }, size_t { 5 }), ::testing::Range(0U, 8U)),
+    [](const ::testing::TestParamInfo<std::tuple<size_t, unsigned>>& info) {
+        return "K" + std::to_string(std::get<0>(info.param)) + "_Pattern" + std::to_string(std::get<1>(info.param));
+    });
+
+struct LatchCase {
+    const char* name;
+    std::string set;
+    std::string reset;
+};
+
+class LatchTest : public ::testing::TestWithParam<LatchCase> { };
+
+TEST_P(LatchTest, ResetWinsAndMemoryHolds)
+{
+    const auto& param = GetParam();
+    Logic latch(Discrete::set_reset_latch, 2, Discrete::set_reset_latch_state());
+    const auto signals = make_signals(2);
+    wire(latch, signals);
+
+    int rises = 0;
+    latch.on_change_to(true, [&rises](const Nodes::NodeContext&) { ++rises; });
+
+    bool state = false;
+    int expected_rises = 0;
+    for (size_t t = 0; t < param.set.size(); ++t) {
+        *signals[0].value = level(param.set[t]);
+        *signals[1].value = level(param.reset[t]);
+
+        const bool before = state;
+        if (param.reset[t] == '1') {
+            state = false;
+        } else if (param.set[t] == '1') {
+            state = true;
+        }
+        expected_rises += (state && !before) ? 1 : 0;
+
+        EXPECT_DOUBLE_EQ(latch.process_sample(0.0), state ? 1.0 : 0.0) << "t=" << t;
+    }
+    EXPECT_EQ(rises, expected_rises);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    Scripts,
+    LatchTest,
+    ::testing::Values(
+        LatchCase { "SetThenReset", "0100100", "0000010" },
+        LatchCase { "SimultaneousResetWins", "0110110", "0010010" },
+        LatchCase { "NeverSet", "0000000", "0101010" },
+        LatchCase { "SetOnly", "0010000", "0000000" },
+        LatchCase { "Chatter", "1010101010", "0101010101" }),
+    [](const ::testing::TestParamInfo<LatchCase>& info) {
+        return std::string(info.param.name);
+    });
+
+class ComparatorTest : public ::testing::TestWithParam<double> { };
+
+TEST_P(ComparatorTest, SignalAgainstSignalWithADeadBand)
+{
+    const double margin = GetParam();
+    Logic gate(Discrete::comparator, 2, Discrete::comparator_state(margin));
+    const auto signals = make_signals(2);
+    wire(gate, signals);
+
+    const std::vector<double> a { 0.2, 0.5, 0.8, 0.55, 0.45, 0.2, 0.6, 0.9, 0.3, 0.52 };
+    const std::vector<double> b { 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.4, 0.4, 0.4, 0.5 };
+
+    bool state = false;
+    for (size_t t = 0; t < a.size(); ++t) {
+        *signals[0].value = a[t];
+        *signals[1].value = b[t];
+
+        const double difference = a[t] - b[t];
+        if (difference > margin) {
+            state = true;
+        } else if (difference < -margin) {
+            state = false;
+        }
+
+        EXPECT_DOUBLE_EQ(gate.process_sample(0.0), state ? 1.0 : 0.0) << "t=" << t;
+    }
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    Margins,
+    ComparatorTest,
+    ::testing::Values(0.0, 0.1, 0.25, 0.5));
+
+TEST(ComparatorTest, MarginIsRetunedLive)
+{
+    Logic gate(Discrete::comparator, 2, Discrete::comparator_state(0.0));
+    const auto signals = make_signals(2);
+    wire(gate, signals);
+    *signals[0].value = 0.6;
+    *signals[1].value = 0.5;
+
+    EXPECT_DOUBLE_EQ(gate.process_sample(0.0), 1.0);
+
+    gate.set_coefficients({ 0.5, 0.0 });
+
+    EXPECT_DOUBLE_EQ(gate.process_sample(0.0), 0.0);
+}
+
+TEST(WindowTest, SignalBetweenTwoMovingSignals)
+{
+    Logic gate(Discrete::window_comparator, 3, std::vector<double> {});
+    const auto signals = make_signals(3);
+    wire(gate, signals);
+
+    const std::vector<std::array<double, 3>> cases {
+        { 0.5, 0.2, 0.8 }, { 0.2, 0.2, 0.8 }, { 0.8, 0.2, 0.8 }, { 0.1, 0.2, 0.8 },
+        { 0.9, 0.2, 0.8 }, { 0.5, 0.6, 0.8 }, { 0.5, 0.4, 0.45 }, { 0.5, 0.8, 0.2 }
+    };
+
+    for (const auto& c : cases) {
+        for (size_t i = 0; i < 3; ++i) {
+            *signals[i].value = c[i];
+        }
+        EXPECT_DOUBLE_EQ(gate.process_sample(0.0), (c[0] > c[1] && c[0] < c[2]) ? 1.0 : 0.0);
+    }
+}
+
+class RegisterTest : public ::testing::TestWithParam<std::tuple<size_t, size_t>> { };
+
+TEST_P(RegisterTest, DataComesBackOutAfterTheTapNumberOfClocks)
+{
+    const auto [length, tap] = GetParam();
+    Logic reg(Discrete::clocked_register, 2, Discrete::clocked_register_state(length, tap));
+    const auto signals = make_signals(2);
+    wire(reg, signals);
+
+    const std::string clock = "0101010101010101010101";
+    const std::string data = "1101001011010011101001";
+
+    std::vector<int> stages(length, 0);
+    bool previous = false;
+    for (size_t t = 0; t < clock.size(); ++t) {
+        const bool high = clock[t] == '1';
+        if (high && !previous) {
+            for (size_t i = length - 1; i > 0; --i) {
+                stages[i] = stages[i - 1];
+            }
+            stages[0] = data[t] == '1' ? 1 : 0;
+        }
+        previous = high;
+
+        *signals[0].value = level(clock[t]);
+        *signals[1].value = level(data[t]);
+
+        EXPECT_DOUBLE_EQ(reg.process_sample(0.0), static_cast<double>(stages[std::min(tap, length - 1)])) << "t=" << t;
+    }
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    Taps,
+    RegisterTest,
+    ::testing::Combine(
+        ::testing::Values(size_t { 1 }, size_t { 3 }, size_t { 8 }),
+        ::testing::Values(size_t { 0 }, size_t { 2 }, size_t { 7 })),
+    [](const ::testing::TestParamInfo<std::tuple<size_t, size_t>>& info) {
+        return "Length" + std::to_string(std::get<0>(info.param)) + "_Tap" + std::to_string(std::get<1>(info.param));
+    });
+
+TEST(ParallelKernelTest, CloneOfAWiredGateReadsTheSameNodesWithItsOwnState)
+{
+    Logic latch(Discrete::set_reset_latch, 2, Discrete::set_reset_latch_state());
+    const auto signals = make_signals(2);
+    wire(latch, signals);
+
+    *signals[0].value = HIGH;
+    *signals[1].value = LOW;
+    EXPECT_DOUBLE_EQ(latch.process_sample(0.0), 1.0);
+
+    const auto copy = latch.clone();
+    ASSERT_EQ(copy->get_modulators().size(), 2U);
+    EXPECT_DOUBLE_EQ(copy->get_coefficients()[1], 1.0);
+
+    *signals[0].value = LOW;
+    EXPECT_DOUBLE_EQ(copy->process_sample(0.0), 1.0);
+
+    *signals[1].value = HIGH;
+    EXPECT_DOUBLE_EQ(copy->process_sample(0.0), 0.0);
+    EXPECT_DOUBLE_EQ(latch.get_coefficients()[1], 1.0);
+}
+
+class ParallelShortArrayTest : public ::testing::TestWithParam<size_t> { };
+
+TEST_P(ParallelShortArrayTest, TooFewSlotsOrTooShortAnArrayGivesFalse)
+{
+    std::vector<double> coefs(GetParam(), 0.0);
+    const std::vector<double> none;
+    const std::vector<double> one { HIGH };
+
+    EXPECT_FALSE(Discrete::set_reset_latch(none, coefs));
+    EXPECT_FALSE(Discrete::set_reset_latch(one, coefs));
+    EXPECT_FALSE(Discrete::comparator(one, coefs));
+    EXPECT_FALSE(Discrete::window_comparator(one, coefs));
+    EXPECT_FALSE(Discrete::clocked_register(one, coefs));
+    EXPECT_FALSE(Discrete::input_truth_table(one, std::span<const double>(coefs)));
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    Sizes,
+    ParallelShortArrayTest,
+    ::testing::Values(size_t { 0 }, size_t { 1 }, size_t { 3 }));
+
 
 } // namespace MayaFlux::Test
