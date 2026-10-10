@@ -1,5 +1,7 @@
 #include "Dynamics.hpp"
 
+#include "Kernels.hpp"
+
 namespace MayaFlux::Kinesis::Discrete {
 
 double pulse_response(
@@ -55,9 +57,7 @@ void lotka_volterra_step(
     next.assign(n, 0.0);
 
     for (size_t i = 0; i < n; ++i) {
-        double pressure = 0.0;
-        for (size_t j = 0; j < n; ++j)
-            pressure += interaction[i * n + j] * levels[j];
+        const double pressure = weighted_sum(levels.first(n), interaction.subspan(i * n, n));
         next[i] = std::max(levels[i] + dt * levels[i] * (growth[i] - pressure), 0.0);
     }
 

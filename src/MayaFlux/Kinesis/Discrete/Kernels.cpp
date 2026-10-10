@@ -24,6 +24,67 @@ namespace {
         }
     }
 
+    [[nodiscard]] double sum_of(std::span<const double> values) noexcept
+    {
+        const double* data = values.data();
+        const size_t count = values.size();
+
+        double s0 = 0.0;
+        double s1 = 0.0;
+        double s2 = 0.0;
+        double s3 = 0.0;
+        size_t k = 0;
+        for (; k + 4 <= count; k += 4) {
+            s0 += data[k];
+            s1 += data[k + 1];
+            s2 += data[k + 2];
+            s3 += data[k + 3];
+        }
+
+        double tail = 0.0;
+        for (; k < count; ++k)
+            tail += data[k];
+        return ((s0 + s1) + (s2 + s3)) + tail;
+    }
+
+    void rotate_rotors(
+        const double* __restrict cos_step, const double* __restrict sin_step,
+        double* __restrict re, double* __restrict im, size_t n) noexcept
+    {
+        for (size_t i = 0; i < n; ++i) {
+            const double next_re = re[i] * cos_step[i] - im[i] * sin_step[i];
+            const double next_im = re[i] * sin_step[i] + im[i] * cos_step[i];
+            const double correction = 1.5 - 0.5 * (next_re * next_re + next_im * next_im);
+
+            re[i] = next_re * correction;
+            im[i] = next_im * correction;
+        }
+    }
+
+    void logistic_map(
+        const double* __restrict cells, double* __restrict mapped, double r, size_t n) noexcept
+    {
+        for (size_t i = 0; i < n; ++i)
+            mapped[i] = r * cells[i] * (1.0 - cells[i]);
+    }
+
+    void blend_neighbours(
+        double* __restrict cells, const double* __restrict mapped, double epsilon, size_t n) noexcept
+    {
+        const double keep = 1.0 - epsilon;
+        const double share = 0.5 * epsilon;
+
+        if (n == 1) {
+            cells[0] = keep * mapped[0] + share * (mapped[0] + mapped[0]);
+            return;
+        }
+
+        cells[0] = keep * mapped[0] + share * (mapped[n - 1] + mapped[1]);
+        for (size_t i = 1; i + 1 < n; ++i)
+            cells[i] = keep * mapped[i] + share * (mapped[i - 1] + mapped[i + 1]);
+        cells[n - 1] = keep * mapped[n - 1] + share * (mapped[n - 2] + mapped[0]);
+    }
+
 }
 
 double horner(std::span<const double> coefficients, double x) noexcept
@@ -37,10 +98,25 @@ double horner(std::span<const double> coefficients, double x) noexcept
 double weighted_sum(std::span<const double> window, std::span<const double> coefs) noexcept
 {
     const size_t count = std::min(window.size(), coefs.size());
-    double sum = 0.0;
-    for (size_t k = 0; k < count; ++k)
-        sum += window[k] * coefs[k];
-    return sum;
+    const double* a = window.data();
+    const double* b = coefs.data();
+
+    double s0 = 0.0;
+    double s1 = 0.0;
+    double s2 = 0.0;
+    double s3 = 0.0;
+    size_t k = 0;
+    for (; k + 4 <= count; k += 4) {
+        s0 += a[k] * b[k];
+        s1 += a[k + 1] * b[k + 1];
+        s2 += a[k + 2] * b[k + 2];
+        s3 += a[k + 3] * b[k + 3];
+    }
+
+    double tail = 0.0;
+    for (; k < count; ++k)
+        tail += a[k] * b[k];
+    return ((s0 + s1) + (s2 + s3)) + tail;
 }
 
 double tapped_sum(std::span<const double> window, std::span<const double> coefs) noexcept
@@ -155,17 +231,8 @@ double rotor_bank(std::span<const double>, std::span<double> coefs) noexcept
     const auto re = coefs.subspan(1 + 3 * n, n);
     const auto im = coefs.subspan(1 + 4 * n, n);
 
-    double sum = 0.0;
-    for (size_t i = 0; i < n; ++i) {
-        const double next_re = re[i] * cos_step[i] - im[i] * sin_step[i];
-        const double next_im = re[i] * sin_step[i] + im[i] * cos_step[i];
-        const double correction = 1.5 - 0.5 * (next_re * next_re + next_im * next_im);
-
-        re[i] = next_re * correction;
-        im[i] = next_im * correction;
-        sum += scales[i] * im[i];
-    }
-    return sum;
+    rotate_rotors(cos_step.data(), sin_step.data(), re.data(), im.data(), n);
+    return weighted_sum(scales, im);
 }
 
 double phasor_bank(std::span<const double>, std::span<double> coefs) noexcept
@@ -305,10 +372,20 @@ double dilate(std::span<const double> window, std::span<const double> coefs) noe
     if (count == 0)
         return 0.0;
 
-    double best = window[0] + coefs[0];
-    for (size_t k = 1; k < count; ++k)
-        best = std::max(best, window[k] + coefs[k]);
-    return best;
+    double b0 = window[0] + coefs[0];
+    double b1 = b0;
+    double b2 = b0;
+    double b3 = b0;
+    size_t k = 1;
+    for (; k + 4 <= count; k += 4) {
+        b0 = std::max(b0, window[k] + coefs[k]);
+        b1 = std::max(b1, window[k + 1] + coefs[k + 1]);
+        b2 = std::max(b2, window[k + 2] + coefs[k + 2]);
+        b3 = std::max(b3, window[k + 3] + coefs[k + 3]);
+    }
+    for (; k < count; ++k)
+        b0 = std::max(b0, window[k] + coefs[k]);
+    return std::max(std::max(b0, b1), std::max(b2, b3));
 }
 
 double erode(std::span<const double> window, std::span<const double> coefs) noexcept
@@ -317,10 +394,20 @@ double erode(std::span<const double> window, std::span<const double> coefs) noex
     if (count == 0)
         return 0.0;
 
-    double best = window[0] - coefs[0];
-    for (size_t k = 1; k < count; ++k)
-        best = std::min(best, window[k] - coefs[k]);
-    return best;
+    double b0 = window[0] - coefs[0];
+    double b1 = b0;
+    double b2 = b0;
+    double b3 = b0;
+    size_t k = 1;
+    for (; k + 4 <= count; k += 4) {
+        b0 = std::min(b0, window[k] - coefs[k]);
+        b1 = std::min(b1, window[k + 1] - coefs[k + 1]);
+        b2 = std::min(b2, window[k + 2] - coefs[k + 2]);
+        b3 = std::min(b3, window[k + 3] - coefs[k + 3]);
+    }
+    for (; k < count; ++k)
+        b0 = std::min(b0, window[k] - coefs[k]);
+    return std::min(std::min(b0, b1), std::min(b2, b3));
 }
 
 double quantile(std::span<const double> window, std::span<const double> coefs)
@@ -354,10 +441,7 @@ double zscore(std::span<const double> window, std::span<const double> coefs) noe
         return 0.0;
 
     const auto past = window.subspan(1);
-    double mean = 0.0;
-    for (const double v : past)
-        mean += v;
-    mean /= static_cast<double>(past.size());
+    const double mean = sum_of(past) / static_cast<double>(past.size());
 
     const double floor = coefs.empty() ? 1e-12 : std::max(coefs.front(), 1e-12);
     const double deviation = std::max(Stochastic::Estimate::stddev(past), floor);
@@ -428,18 +512,31 @@ double kuramoto(std::span<const double>, std::span<double> coefs) noexcept
     const auto phases = coefs.subspan(2 + n, n);
     const double inverse = 1.0 / static_cast<double>(n);
 
+    constexpr size_t cached = 256;
+    std::array<double, cached> cosines;
+    std::array<double, cached> sines;
+    const bool reuse = n <= cached;
+
     double field_cos = 0.0;
     double field_sin = 0.0;
-    for (const double phase : phases) {
-        field_cos += std::cos(phase);
-        field_sin += std::sin(phase);
+    for (size_t i = 0; i < n; ++i) {
+        const double c = std::cos(phases[i]);
+        const double s = std::sin(phases[i]);
+        if (reuse) {
+            cosines[i] = c;
+            sines[i] = s;
+        }
+        field_cos += c;
+        field_sin += s;
     }
     field_cos *= inverse;
     field_sin *= inverse;
 
     double mix = 0.0;
     for (size_t i = 0; i < n; ++i) {
-        const double pull = coupling * (field_sin * std::cos(phases[i]) - field_cos * std::sin(phases[i]));
+        const double c = reuse ? cosines[i] : std::cos(phases[i]);
+        const double s = reuse ? sines[i] : std::sin(phases[i]);
+        const double pull = coupling * (field_sin * c - field_cos * s);
         phases[i] += omegas[i] + pull;
         wrap_revolution(phases[i]);
         mix += std::sin(phases[i]);
@@ -475,17 +572,9 @@ double coupled_map_lattice(std::span<const double>, std::span<double> coefs) noe
     const auto cells = coefs.subspan(3, n);
     const auto mapped = coefs.subspan(3 + n, n);
 
-    for (size_t i = 0; i < n; ++i)
-        mapped[i] = r * cells[i] * (1.0 - cells[i]);
-
-    double sum = 0.0;
-    for (size_t i = 0; i < n; ++i) {
-        const double left = mapped[(i + n - 1) % n];
-        const double right = mapped[(i + 1) % n];
-        cells[i] = (1.0 - epsilon) * mapped[i] + 0.5 * epsilon * (left + right);
-        sum += cells[i];
-    }
-    return sum / static_cast<double>(n) - 0.5;
+    logistic_map(cells.data(), mapped.data(), r, n);
+    blend_neighbours(cells.data(), mapped.data(), epsilon, n);
+    return sum_of(cells) / static_cast<double>(n) - 0.5;
 }
 
 std::vector<double> lorenz_state(

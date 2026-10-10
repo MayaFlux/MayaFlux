@@ -8,6 +8,22 @@ namespace MayaFlux::Kinesis::Discrete {
 
 namespace {
 
+    constexpr size_t reciprocal_factorial_count = 24;
+
+    constexpr std::array<double, reciprocal_factorial_count> reciprocal_factorials()
+    {
+        std::array<double, reciprocal_factorial_count> table {};
+        double factorial = 1.0;
+        table[0] = 1.0;
+        for (size_t n = 1; n < table.size(); ++n) {
+            factorial *= static_cast<double>(n);
+            table[n] = 1.0 / factorial;
+        }
+        return table;
+    }
+
+    constexpr auto reciprocal_factorial = reciprocal_factorials();
+
     struct BiquadTerms {
         double w0;
         double cosw0;
@@ -356,14 +372,31 @@ void lagrange_weights(double delay, std::span<double> weights) noexcept
 
     const double d = std::clamp(delay, 0.0, static_cast<double>(taps - 1));
 
-    for (size_t k = 0; k < taps; ++k) {
-        weights[k] = 1.0;
-        for (size_t j = 0; j < taps; ++j) {
-            if (j == k)
-                continue;
-            weights[k] *= (d - static_cast<double>(j))
-                / (static_cast<double>(k) - static_cast<double>(j));
+    if (taps > reciprocal_factorial.size()) {
+        for (size_t k = 0; k < taps; ++k) {
+            weights[k] = 1.0;
+            for (size_t j = 0; j < taps; ++j) {
+                if (j == k)
+                    continue;
+                weights[k] *= (d - static_cast<double>(j))
+                    / (static_cast<double>(k) - static_cast<double>(j));
+            }
         }
+        return;
+    }
+
+    double before = 1.0;
+    for (size_t k = 0; k < taps; ++k) {
+        weights[k] = before;
+        before *= d - static_cast<double>(k);
+    }
+
+    double after = 1.0;
+    for (size_t k = taps; k-- > 0;) {
+        const size_t rest = taps - 1 - k;
+        const double scale = reciprocal_factorial[k] * reciprocal_factorial[rest];
+        weights[k] *= after * (rest % 2 == 0 ? scale : -scale);
+        after *= d - static_cast<double>(k);
     }
 }
 
