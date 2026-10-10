@@ -166,7 +166,10 @@ namespace Kriya {
      * @param logic_node Logic node to monitor (creates default threshold node if null)
      * @param open Whether to subscribe to gate open (true) or close (false)
      * @return SoundRoutine coroutine handle
+     * @deprecated Register Logic::while_true (or while_false) on the node instead.
+     * Scheduled for removal in the next release.
      */
+    [[deprecated("Use Logic::while_true or Logic::while_false on the node; removal planned for the next release")]]
     MAYAFLUX_API Vruta::SoundRoutine Gate(
         std::function<void()> callback,
         std::shared_ptr<Nodes::Generator::Logic> logic_node, bool open = true);
@@ -177,7 +180,10 @@ namespace Kriya {
      * @param target_state State to trigger on (true/false)
      * @param callback Function to execute on state change
      * @return SoundRoutine coroutine handle
+     * @deprecated Register Logic::on_change_to on the node instead.
+     * Scheduled for removal in the next release.
      */
+    [[deprecated("Use Logic::on_change_to on the node; removal planned for the next release")]]
     MAYAFLUX_API Vruta::SoundRoutine Trigger(
         bool target_state,
         std::function<void()> callback,
@@ -188,7 +194,10 @@ namespace Kriya {
      * @param logic_node Logic node to monitor (creates default threshold node if null)
      * @param callback Function to execute on any state flip
      * @return SoundRoutine coroutine handle
+     * @deprecated Register Logic::on_change on the node instead.
+     * Scheduled for removal in the next release.
      */
+    [[deprecated("Use Logic::on_change on the node; removal planned for the next release")]]
     MAYAFLUX_API Vruta::SoundRoutine Toggle(
         std::function<void()> callback,
         std::shared_ptr<Nodes::Generator::Logic> logic_node);
