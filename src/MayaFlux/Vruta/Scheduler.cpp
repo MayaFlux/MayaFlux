@@ -598,7 +598,9 @@ void TaskScheduler::drain_pending_tasks()
             }
             m_tasks.push_back(std::move(op.entry));
         } else {
-            auto it = find_task_by_name(op.entry.name);
+            auto it = (op.entry.name.empty() && op.entry.routine)
+                ? find_task_by_routine(op.entry.routine)
+                : find_task_by_name(op.entry.name);
             if (it != m_tasks.end()) {
                 if (it->routine && it->routine->is_active())
                     it->routine->set_should_terminate(true);
