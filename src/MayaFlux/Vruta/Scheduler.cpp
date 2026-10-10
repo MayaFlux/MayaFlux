@@ -70,14 +70,19 @@ void TaskScheduler::add_task(const std::shared_ptr<Routine>& routine, const std:
 
 bool TaskScheduler::cancel_task(const std::string& name)
 {
-    for (auto& op : m_conditional_pending_ops) {
-        bool expected = false;
-        if (op.active.compare_exchange_strong(expected, true,
-                std::memory_order_acquire, std::memory_order_relaxed)) {
-            op.entry = { nullptr, name };
-            op.is_addition = false;
-            m_conditional_pending_count.fetch_add(1, std::memory_order_relaxed);
-            return true;
+    bool queued = false;
+
+    if (m_conditional_thread.joinable()) {
+        for (auto& op : m_conditional_pending_ops) {
+            bool expected = false;
+            if (op.active.compare_exchange_strong(expected, true,
+                    std::memory_order_acquire, std::memory_order_relaxed)) {
+                op.entry = { nullptr, name };
+                op.is_addition = false;
+                m_conditional_pending_count.fetch_add(1, std::memory_order_relaxed);
+                queued = true;
+                break;
+            }
         }
     }
 
@@ -88,14 +93,17 @@ bool TaskScheduler::cancel_task(const std::string& name)
             op.entry = { nullptr, name };
             op.is_addition = false;
             m_pending_count.fetch_add(1, std::memory_order_relaxed);
-            return true;
+            queued = true;
+            break;
         }
     }
 
-    MF_ERROR(Journal::Component::Vruta, Journal::Context::CoroutineScheduling,
-        "Pending task queue full, could not cancel task '{}'", name);
+    if (!queued) {
+        MF_ERROR(Journal::Component::Vruta, Journal::Context::CoroutineScheduling,
+            "Pending task queue full, could not cancel task '{}'", name);
+    }
 
-    return false;
+    return queued;
 }
 
 bool TaskScheduler::cancel_task(const std::shared_ptr<Routine>& routine)
