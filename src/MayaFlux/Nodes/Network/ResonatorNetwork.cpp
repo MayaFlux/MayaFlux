@@ -446,6 +446,52 @@ void ResonatorNetwork::set_resonator_gain(size_t index, double gain)
     m_resonators[index].gain = gain;
 }
 
+void ResonatorNetwork::retune(size_t index, double frequency)
+{
+    if (index >= m_resonators.size()) {
+        error<std::out_of_range>(Journal::Component::Nodes, Journal::Context::NodeProcessing, std::source_location::current(),
+            "ResonatorNetwork::retune: index out of range (index={}, resonator_count={})", index, m_resonators.size());
+    }
+    auto& r = m_resonators[index];
+    r.frequency = std::clamp(frequency, 1.0, m_sample_rate * 0.5 - 1.0);
+    write_biquad_in_place(r);
+}
+
+void ResonatorNetwork::set_decay(size_t index, double seconds)
+{
+    if (index >= m_resonators.size()) {
+        error<std::out_of_range>(Journal::Component::Nodes, Journal::Context::NodeProcessing, std::source_location::current(),
+            "ResonatorNetwork::set_decay: index out of range (index={}, resonator_count={})", index, m_resonators.size());
+    }
+    auto& r = m_resonators[index];
+
+    const double tau = std::max(seconds, 1.0 / m_sample_rate);
+    const double radius = std::min(std::exp(-1.0 / (tau * m_sample_rate)), 1.0 - 1e-12);
+    const double radius_sq = radius * radius;
+    const double alpha = (1.0 - radius_sq) / (1.0 + radius_sq);
+
+    const double w0 = 2.0 * std::numbers::pi * r.frequency / m_sample_rate;
+    r.q = std::sin(w0) / (2.0 * alpha);
+    write_biquad_in_place(r);
+}
+
+void ResonatorNetwork::write_biquad_in_place(ResonatorNode& r)
+{
+    const double w0 = 2.0 * std::numbers::pi * r.frequency / m_sample_rate;
+    const double cosw0 = std::cos(w0);
+    const double alpha = std::sin(w0) / (2.0 * r.q);
+    const double a0 = 1.0 + alpha;
+
+    auto a = r.filter->edit_feedback_coefs();
+    auto b = r.filter->edit_feedforward_coefs();
+
+    a[0] = (-2.0 * cosw0) / a0;
+    a[1] = (1.0 - alpha) / a0;
+    b[0] = alpha / a0;
+    b[1] = 0.0;
+    b[2] = -alpha / a0;
+}
+
 //-----------------------------------------------------------------------------
 // Network-wide control
 //-----------------------------------------------------------------------------

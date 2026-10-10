@@ -278,6 +278,30 @@ public:
      */
     void set_resonator_gain(size_t index, double gain);
 
+    /**
+     * @brief Move a resonator's centre frequency without clearing its state
+     * @param index Resonator index (0-based)
+     * @param frequency New centre frequency in Hz, clamped below Nyquist
+     * @throws std::out_of_range if index >= get_node_count()
+     *
+     * The stored damping number is kept, so the ring time scales with the
+     * new frequency. Follow with set_decay to hold it. Written in place and
+     * not atomic with respect to a sample in flight.
+     */
+    void retune(size_t index, double frequency);
+
+    /**
+     * @brief Set how long a resonator rings, without clearing its state
+     * @param index Resonator index (0-based)
+     * @param seconds Time for the ring envelope to fall by 1/e, no upper limit
+     * @throws std::out_of_range if index >= get_node_count()
+     *
+     * Sets the pole radius directly and derives the stored q from it, so q
+     * follows rather than leads and is not limited to the range set_q accepts.
+     * Written in place and not atomic with respect to a sample in flight.
+     */
+    void set_decay(size_t index, double seconds);
+
     //-------------------------------------------------------------------------
     // network-wide control
     //-------------------------------------------------------------------------
@@ -341,6 +365,14 @@ private:
      * @param r Resonator to update (reads r.frequency, r.q, m_sample_rate)
      */
     void compute_biquad(ResonatorNode& r);
+
+    /**
+     * @brief Write the same biquad as compute_biquad through the filter's edit spans
+     * @param r Resonator to update (reads r.frequency, r.q, m_sample_rate)
+     *
+     * Leaves the filter history untouched.
+     */
+    void write_biquad_in_place(ResonatorNode& r);
 
     /**
      * @brief Initialise all resonators from a frequency/Q pair list
