@@ -33,25 +33,21 @@ bool LogicProcessor::generate(size_t num_samples, const std::vector<double>& inp
 
     m_logic_data.resize(num_samples, 0);
 
-    std::vector<double> data = input_data;
-    if (data.size() < num_samples) {
-        data.resize(num_samples, 0.0);
-    }
-
     if (m_reset_between_buffers) {
         m_logic->reset();
     }
 
+    const size_t available = input_data.size();
     const auto& state = m_logic->m_state.load();
 
     if (state == Nodes::NodeState::INACTIVE) {
-        for (size_t i = 0; i < data.size(); ++i) {
-            m_logic_data[i] = m_logic->process_sample(data[i]);
+        for (size_t i = 0; i < num_samples; ++i) {
+            m_logic_data[i] = m_logic->process_sample(i < available ? input_data[i] : 0.0);
         }
     } else {
         m_logic->save_state();
-        for (size_t i = 0; i < data.size(); ++i) {
-            m_logic_data[i] = m_logic->process_sample(data[i]);
+        for (size_t i = 0; i < num_samples; ++i) {
+            m_logic_data[i] = m_logic->process_sample(i < available ? input_data[i] : 0.0);
         }
         m_logic->restore_state();
     }
@@ -190,6 +186,21 @@ void LogicProcessor::on_attach(const std::shared_ptr<Buffer>& /*buffer*/)
 
     m_last_held_value = 0.0;
     m_last_logic_value = 0.0;
+}
+
+std::shared_ptr<LogicProcessor> LogicProcessor::clone() const
+{
+    if (!m_logic) {
+        return std::make_shared<LogicProcessor>(std::shared_ptr<Nodes::Generator::Logic> {}, m_reset_between_buffers);
+    }
+
+    auto copy = std::make_shared<LogicProcessor>(m_logic->clone(), m_reset_between_buffers);
+    copy->m_use_internal = true;
+    copy->m_modulation_type = m_modulation_type;
+    copy->m_modulation_function = m_modulation_function;
+    copy->m_high_value = m_high_value;
+    copy->m_low_value = m_low_value;
+    return copy;
 }
 
 void LogicProcessor::set_modulation_function(ModulationFunction func)

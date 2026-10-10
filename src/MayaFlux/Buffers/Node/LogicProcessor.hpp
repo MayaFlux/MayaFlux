@@ -174,6 +174,16 @@ public:
     [[nodiscard]] inline bool has_generated_data() const { return m_has_generated_data; }
 
     /**
+     * @brief An independent processor over a clone of the node
+     *
+     * Same reset policy, modulation type, custom modulation function and
+     * remap values; the node is cloned, so its history and coefficient array
+     * are not shared. Attach one clone per channel instead of one processor to
+     * several.
+     */
+    [[nodiscard]] std::shared_ptr<LogicProcessor> clone() const;
+
+    /**
      * @brief Set how logic values modulate buffer content
      * @param type Modulation type to use
      *

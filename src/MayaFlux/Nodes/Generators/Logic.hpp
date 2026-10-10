@@ -187,6 +187,29 @@ public:
     using TemporalFunction = std::function<bool(double, double)>; // input, time
 
     /**
+     * @brief Function type for stateless evaluation with access to the coefficient array
+     *
+     * Takes the input and the node's own coefficient array, which the function
+     * may read and write. State kept in the array survives clone() and is
+     * saved and restored with the node.
+     */
+    using CoefDirectFunction = std::function<bool(double, std::span<double>)>;
+
+    /**
+     * @brief Function type for state-based evaluation with access to the coefficient array
+     *
+     * Takes the bit history, newest first, and the node's own coefficient array.
+     */
+    using CoefSequentialFunction = std::function<bool(std::span<bool>, std::span<double>)>;
+
+    /**
+     * @brief Function type for time-dependent evaluation with access to the coefficient array
+     *
+     * Takes the input, the time in seconds and the node's own coefficient array.
+     */
+    using CoefTemporalFunction = std::function<bool(double, double, std::span<double>)>;
+
+    /**
      * @brief Constructs a Logic node with threshold quantization
      * @param threshold Decision boundary for binary quantization
      *
@@ -250,7 +273,56 @@ public:
      */
     explicit Logic(TemporalFunction function);
 
+    /**
+     * @brief Constructs a Logic node with a stateless function and a coefficient array
+     * @param function Function receiving the input and the coefficient array
+     * @param coefficients Initial contents of the coefficient array
+     */
+    Logic(CoefDirectFunction function, std::vector<double> coefficients);
+
+    /**
+     * @brief Constructs a Logic node with a state-based function and a coefficient array
+     * @param function Function receiving the bit history and the coefficient array
+     * @param history_size Size of the state history buffer
+     * @param coefficients Initial contents of the coefficient array
+     */
+    Logic(CoefSequentialFunction function, size_t history_size, std::vector<double> coefficients = {});
+
+    /**
+     * @brief Constructs a Logic node with a time-dependent function and a coefficient array
+     * @param function Function receiving the input, the time and the coefficient array
+     * @param coefficients Initial contents of the coefficient array
+     */
+    Logic(CoefTemporalFunction function, std::vector<double> coefficients);
+
     virtual ~Logic() = default;
+
+    /**
+     * @brief An independent node with the same behaviour and fresh state
+     *
+     * Same mode, operator, thresholds, function and coefficient array as the
+     * array stands now, so a state-bearing kernel's clone continues from the
+     * current state. History, saved state and hooks are not copied. The input
+     * node, if any, is shared, and so is closure state captured by a function;
+     * the coefficient array is the state that is not.
+     *
+     * Attach one clone per channel instead of one node to several.
+     */
+    [[nodiscard]] std::shared_ptr<Logic> clone() const;
+
+    /**
+     * @brief Replaces the coefficient array
+     * @param coefficients New contents
+     *
+     * Reaches the functions that take the coefficient array. Changing the size
+     * should happen on the scheduler tick, not concurrently with processing.
+     */
+    void set_coefficients(const std::vector<double>& coefficients);
+
+    /**
+     * @brief The coefficient array as it stands now, including state written by a function
+     */
+    [[nodiscard]] const std::vector<double>& get_coefficients() const { return m_coefficients; }
 
     /**
      * @brief Processes a single input sample through the logic function
@@ -378,6 +450,25 @@ public:
      * timing-sensitive operations like pulse width detection and rate analysis.
      */
     void set_temporal_function(TemporalFunction function);
+
+    /**
+     * @brief Sets a stateless function that receives the coefficient array
+     * @param function Function receiving the input and the coefficient array
+     */
+    void set_direct_function(CoefDirectFunction function);
+
+    /**
+     * @brief Sets a state-based function that receives the coefficient array
+     * @param function Function receiving the bit history and the coefficient array
+     * @param history_size Size of the state history buffer
+     */
+    void set_sequential_function(CoefSequentialFunction function, size_t history_size);
+
+    /**
+     * @brief Sets a time-dependent function that receives the coefficient array
+     * @param function Function receiving the input, the time and the coefficient array
+     */
+    void set_temporal_function(CoefTemporalFunction function);
 
     /**
      * @brief Preloads the state history buffer
@@ -611,6 +702,12 @@ private:
     std::shared_ptr<Node> m_input_node; ///< Input node for processing
     std::vector<uint8_t> m_history_ring; ///< Ring buffer for history storage
     std::vector<uint8_t> m_history_linear; ///< Linear view of history for easy access
+    std::vector<double> m_coefficients; ///< Coefficient array handed to coefficient-aware functions
+    std::vector<double> m_saved_coefficients; ///< Saved coefficient array, used when a coefficient function is bound
+    CoefDirectFunction m_coef_direct_function; ///< The function behind m_direct_function while bound
+    CoefSequentialFunction m_coef_sequential_function; ///< The function behind m_sequential_function while bound
+    CoefTemporalFunction m_coef_temporal_function; ///< The function behind m_temporal_function while bound
+    bool m_coef_bound {}; ///< True while the active mode runs a coefficient function
 
     // Helper method for multi-input mode
     void add_input(double input, size_t index);
