@@ -120,6 +120,54 @@ std::vector<double> phasor_bank_state(
     return state;
 }
 
+std::vector<double> rotor_bank_state(
+    std::span<const double> increments,
+    std::span<const double> scales,
+    std::span<const double> phases)
+{
+    const size_t n = increments.size();
+    std::vector<double> state(1 + 5 * n, 0.0);
+    state.front() = static_cast<double>(n);
+
+    for (size_t i = 0; i < n; ++i) {
+        const double phase = i < phases.size() ? phases[i] : 0.0;
+        state.at(1 + i) = std::cos(increments[i]);
+        state.at(1 + n + i) = std::sin(increments[i]);
+        state.at(1 + 2 * n + i) = i < scales.size() ? scales[i] : 1.0;
+        state.at(1 + 3 * n + i) = std::cos(phase);
+        state.at(1 + 4 * n + i) = std::sin(phase);
+    }
+    return state;
+}
+
+double rotor_bank(std::span<const double>, std::span<double> coefs) noexcept
+{
+    if (coefs.empty())
+        return 0.0;
+
+    const auto n = static_cast<size_t>(std::max(coefs.front(), 0.0));
+    if (n == 0 || coefs.size() < 1 + 5 * n)
+        return 0.0;
+
+    const auto cos_step = coefs.subspan(1, n);
+    const auto sin_step = coefs.subspan(1 + n, n);
+    const auto scales = coefs.subspan(1 + 2 * n, n);
+    const auto re = coefs.subspan(1 + 3 * n, n);
+    const auto im = coefs.subspan(1 + 4 * n, n);
+
+    double sum = 0.0;
+    for (size_t i = 0; i < n; ++i) {
+        const double next_re = re[i] * cos_step[i] - im[i] * sin_step[i];
+        const double next_im = re[i] * sin_step[i] + im[i] * cos_step[i];
+        const double correction = 1.5 - 0.5 * (next_re * next_re + next_im * next_im);
+
+        re[i] = next_re * correction;
+        im[i] = next_im * correction;
+        sum += scales[i] * im[i];
+    }
+    return sum;
+}
+
 double phasor_bank(std::span<const double>, std::span<double> coefs) noexcept
 {
     if (coefs.empty())

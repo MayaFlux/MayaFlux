@@ -371,4 +371,49 @@ TEST(KernelTest, StepSequenceStartsLatchedSoAHighInputDoesNotAdvanceImmediately)
     EXPECT_DOUBLE_EQ(Discrete::step_sequence(view({ 1.0 }), state), 1.0);
 }
 
+TEST(KernelTest, RotorBankFollowsTheSineOfTheAccumulatedPhase)
+{
+    const std::vector<double> increments { 0.1, 0.37 };
+    const std::vector<double> scales { 1.0, 0.5 };
+    auto state = Discrete::rotor_bank_state(view(increments), view(scales));
+    const std::vector<double> none;
+
+    for (int n = 1; n <= 20000; ++n) {
+        const double out = Discrete::rotor_bank(view(none), state);
+        const double expected = std::sin(0.1 * n) + 0.5 * std::sin(0.37 * n);
+        ASSERT_NEAR(out, expected, 1e-9) << "n=" << n;
+    }
+}
+
+TEST(KernelTest, RotorBankStartsFromItsPhasesAndKeepsItsAmplitude)
+{
+    auto state = Discrete::rotor_bank_state(view({ 0.2 }), {}, view({ std::numbers::pi / 2.0 }));
+    const std::vector<double> none;
+
+    EXPECT_NEAR(Discrete::rotor_bank(view(none), state), std::sin(std::numbers::pi / 2.0 + 0.2), 1e-12);
+
+    for (int n = 0; n < 200000; ++n) {
+        Discrete::rotor_bank(view(none), state);
+    }
+    EXPECT_NEAR(state.at(4) * state.at(4) + state.at(5) * state.at(5), 1.0, 1e-9);
+}
+
+TEST(KernelTest, RotorBankEntriesWithEqualNumbersAdd)
+{
+    auto single = Discrete::rotor_bank_state(view({ 0.3 }));
+    auto doubled = Discrete::rotor_bank_state(view({ 0.3, 0.3 }));
+    const std::vector<double> none;
+
+    for (int n = 0; n < 50; ++n) {
+        EXPECT_NEAR(Discrete::rotor_bank(view(none), doubled), 2.0 * Discrete::rotor_bank(view(none), single), 1e-12);
+    }
+}
+
+TEST(KernelTest, RotorBankIgnoresAnArrayShorterThanItsCount)
+{
+    std::vector<double> state { 4.0, 1.0, 0.0 };
+
+    EXPECT_DOUBLE_EQ(Discrete::rotor_bank(view({}), state), 0.0);
+}
+
 }

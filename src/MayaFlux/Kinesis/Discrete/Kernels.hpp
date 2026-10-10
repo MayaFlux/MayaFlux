@@ -247,6 +247,32 @@ namespace MayaFlux::Kinesis::Discrete {
 // ---------------------------------------------------------------------------
 
 /**
+ * @brief Builds the array rotor_bank reads and writes.
+ * @param increments Radians per sample of each sinusoid; sets the count
+ * @param scales Amplitude of each; missing entries are 1
+ * @param phases Starting phase of each; missing entries are 0
+ *
+ * Layout: [N, cos(increment), sin(increment), scales, re, im], each column
+ * N long. The rotation is precomputed here, so a call needs no sine.
+ */
+[[nodiscard]] MAYAFLUX_API std::vector<double> rotor_bank_state(
+    std::span<const double> increments,
+    std::span<const double> scales = {},
+    std::span<const double> phases = {});
+
+/**
+ * @brief Sum of N sinusoids advanced by complex rotation instead of a sine call.
+ *
+ * Each call rotates every unit phasor by its increment and returns the sum
+ * of scale * imaginary part, which is sin(phase) after the advance. A first
+ * order correction keeps the phasors on the unit circle, so the amplitude
+ * does not drift over long runs. Cheaper than phasor_bank per sinusoid, with
+ * no slow amplitude swell: scale the array's scales column for that.
+ */
+[[nodiscard]] MAYAFLUX_API double rotor_bank(
+    std::span<const double> window, std::span<double> coefs) noexcept;
+
+/**
  * @brief Builds the array kuramoto reads and writes.
  * @param omegas Natural increment of each oscillator in radians per sample;
  *        sets the count
