@@ -98,6 +98,18 @@ public:
     [[nodiscard]] bool is_edge_detected() const { return m_edge_detected; }
     [[nodiscard]] EdgeType get_edge_type() const { return m_edge_type; }
     [[nodiscard]] const std::vector<double>& get_inputs() const { return m_inputs; }
+
+    /**
+     * @brief The node's coefficient array as it stands at this tick
+     *
+     * Empty for a node without one. For a node with state in the array this
+     * is that state, after the function has run for the sample.
+     */
+    [[nodiscard]] const std::vector<double>& get_coefficients() const
+    {
+        static const std::vector<double> none;
+        return m_coefficients ? *m_coefficients : none;
+    }
     [[nodiscard]] const double& get_value() const { return m_input; }
 
     // Boolean conversion of the current value
@@ -112,6 +124,7 @@ private:
     EdgeType m_edge_type; ///< Type of transition being monitored
     const std::vector<double>& m_inputs; ///< Current input values (for multi-input mode)
     double m_input; ///< Current input value for multi-input mode
+    const std::vector<double>* m_coefficients {}; ///< The node's coefficient array, set by the node each tick
 
     friend class Logic;
 };
@@ -751,12 +764,15 @@ private:
     CoefSequentialFunction m_coef_sequential_function; ///< The function behind m_sequential_function while bound
     CoefTemporalFunction m_coef_temporal_function; ///< The function behind m_temporal_function while bound
     bool m_coef_bound {}; ///< True while the active mode runs a coefficient function
+    bool m_default_multi_input {}; ///< True while the parallel function is the built in all-above-threshold one
 
     // Helper method for multi-input mode
     void add_input(double input, size_t index);
 
     void pull_input_nodes();
     void release_input_nodes();
+
+    MultiInputFunction default_multi_input_function();
 
     /**
      * @brief Adds a callback to the list of all callbacks

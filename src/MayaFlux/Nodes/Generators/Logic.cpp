@@ -165,6 +165,10 @@ std::shared_ptr<Logic> Logic::clone() const
             break;
         case LogicMode::MULTI_INPUT:
             copy = std::make_shared<Logic>(m_multi_input_function, m_input_count);
+            if (m_default_multi_input) {
+                copy->m_multi_input_function = copy->default_multi_input_function();
+                copy->m_default_multi_input = true;
+            }
             break;
         }
     }
@@ -352,13 +356,8 @@ double Logic::process_multi_input(const std::vector<double>& inputs)
         }
 
         if (!m_multi_input_function) {
-            m_multi_input_function = [this](const std::vector<double>& inputs) {
-                bool result = true;
-                for (const auto& input : inputs) {
-                    result = result && (input > m_threshold);
-                }
-                return result;
-            };
+            m_multi_input_function = default_multi_input_function();
+            m_default_multi_input = true;
         }
     }
 
@@ -367,12 +366,19 @@ double Logic::process_multi_input(const std::vector<double>& inputs)
         m_input_buffer[i] = inputs[i];
     }
 
-    bool result = m_multi_input_function(m_input_buffer);
-    m_last_output = result ? 1.0 : 0.0;
+    const double current = m_multi_input_function(m_input_buffer) ? 1.0 : 0.0;
 
-    notify_tick(m_last_output);
+    notify_tick(current);
 
+    m_last_output = current;
     return m_last_output;
+}
+
+Logic::MultiInputFunction Logic::default_multi_input_function()
+{
+    return [this](const std::vector<double>& inputs) {
+        return std::ranges::all_of(inputs, [this](double input) { return input > m_threshold; });
+    };
 }
 
 void Logic::pull_input_nodes()
@@ -564,6 +570,7 @@ void Logic::set_direct_function(CoefDirectFunction function)
 void Logic::set_multi_input_function(MultiInputFunction function, size_t input_count)
 {
     m_coef_bound = false;
+    m_default_multi_input = false;
     m_multi_input_function = std::move(function);
     m_mode = LogicMode::MULTI_INPUT;
     m_operator = LogicOperator::CUSTOM;
@@ -679,6 +686,7 @@ void Logic::update_context(double value)
         m_context_gpu.m_threshold = m_threshold;
         m_context_gpu.m_edge_detected = m_edge_detected;
         m_context_gpu.m_edge_type = m_edge_type;
+        m_context_gpu.m_coefficients = &m_coefficients;
 
         m_context_gpu.gpu_float_buffer.resize(m_history_count);
         for (size_t i = 0; i < m_history_count; ++i)
@@ -693,6 +701,7 @@ void Logic::update_context(double value)
         m_context.m_threshold = m_threshold;
         m_context.m_edge_detected = m_edge_detected;
         m_context.m_edge_type = m_edge_type;
+        m_context.m_coefficients = &m_coefficients;
     }
 }
 
