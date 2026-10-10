@@ -609,11 +609,37 @@ template <typename T>
     return out;
 }
 
-/** @brief Convenience overload of backward_difference<N> over a raw span. */
+/**
+ * @brief Convenience overload of backward_difference<N> over a raw span.
+ *
+ * Evaluated directly on the span, newest sample first, without building a
+ * HistoryBuffer, so it does not allocate and is safe per sample on the audio
+ * thread. Samples beyond the end of a span shorter than N + 1 read as zero,
+ * the same initial condition a HistoryBuffer starts from.
+ */
 template <size_t N, typename T>
 [[nodiscard]] inline T backward_difference(std::span<const T> samples, double dt) noexcept
 {
-    return backward_difference<N>(to_history(samples), dt);
+    static_assert(N >= 1, "backward_difference<N> requires N >= 1; N = 0 is the sample itself");
+
+    using S = scalar_t<T>;
+
+    const auto at = [samples](size_t k) -> T { return k < samples.size() ? samples[k] : T {}; };
+
+    T acc = at(0);
+    double binomial = 1.0;
+
+    for (size_t k = 1; k <= N; ++k) {
+        binomial = binomial * static_cast<double>(N - k + 1) / static_cast<double>(k);
+        const double sign = (k % 2 == 0) ? 1.0 : -1.0;
+        acc = acc + static_cast<S>(sign * binomial) * at(k);
+    }
+
+    double denom = 1.0;
+    for (size_t i = 0; i < N; ++i)
+        denom *= dt;
+
+    return acc / static_cast<S>(denom);
 }
 
 /** @brief Convenience overload of forward_difference<N> over a raw span. */
@@ -641,42 +667,42 @@ template <typename T>
 template <typename T>
 [[nodiscard]] inline T velocity(std::span<const T> samples, double dt) noexcept
 {
-    return velocity(to_history(samples), dt);
+    return backward_difference<1>(samples, dt);
 }
 
 /** @brief Convenience overload of acceleration over a raw span, samples[0] newest. */
 template <typename T>
 [[nodiscard]] inline T acceleration(std::span<const T> samples, double dt) noexcept
 {
-    return acceleration(to_history(samples), dt);
+    return backward_difference<2>(samples, dt);
 }
 
 /** @brief Convenience overload of jerk over a raw span, samples[0] newest. */
 template <typename T>
 [[nodiscard]] inline T jerk(std::span<const T> samples, double dt) noexcept
 {
-    return jerk(to_history(samples), dt);
+    return backward_difference<3>(samples, dt);
 }
 
 /** @brief Convenience overload of jounce over a raw span, samples[0] newest. */
 template <typename T>
 [[nodiscard]] inline T jounce(std::span<const T> samples, double dt) noexcept
 {
-    return jounce(to_history(samples), dt);
+    return backward_difference<4>(samples, dt);
 }
 
 /** @brief Convenience overload of crackle over a raw span, samples[0] newest. */
 template <typename T>
 [[nodiscard]] inline T crackle(std::span<const T> samples, double dt) noexcept
 {
-    return crackle(to_history(samples), dt);
+    return backward_difference<5>(samples, dt);
 }
 
 /** @brief Convenience overload of pop over a raw span, samples[0] newest. */
 template <typename T>
 [[nodiscard]] inline T pop(std::span<const T> samples, double dt) noexcept
 {
-    return pop(to_history(samples), dt);
+    return backward_difference<6>(samples, dt);
 }
 
 /** @brief Convenience overload of smoothed_velocity over a raw span, samples[0] newest. */
@@ -690,7 +716,12 @@ template <typename T>
 template <typename T>
 [[nodiscard]] inline T moving_average(std::span<const T> samples, size_t window) noexcept
 {
-    return moving_average(to_history(samples), window);
+    window = window < 1 ? 1 : window;
+    const size_t count = window < samples.size() ? window : samples.size();
+    T acc {};
+    for (size_t i = 0; i < count; ++i)
+        acc = acc + samples[i];
+    return acc / static_cast<scalar_t<T>>(window);
 }
 
 /** @brief Convenience overload of speed(double) over a raw span, samples[0] newest. */
@@ -775,6 +806,109 @@ template <typename T>
 [[nodiscard]] inline float spread_radius(std::span<const glm::vec2> samples, size_t window) noexcept
 {
     return spread_radius(to_history(samples), window);
+}
+
+// =============================================================================
+// Scalar window measures
+//
+// One dimensional counterparts of the glm::vec2 path measures above, over a
+// newest-first span of doubles. They read the span directly, build no
+// HistoryBuffer and no vector type, and a window longer than the span is
+// clamped to it.
+// =============================================================================
+
+/**
+ * @brief Total variation: the summed absolute step across the newest window
+ * @param samples Newest-first span
+ * @param window Number of samples, minimum 2
+ * @return Sum of |samples[i] - samples[i + 1]|
+ */
+[[nodiscard]] inline double path_length(std::span<const double> samples, size_t window) noexcept
+{
+    window = std::min(window < 2 ? size_t { 2 } : window, samples.size());
+    double len = 0.0;
+    for (size_t i = 0; i + 1 < window; ++i)
+        len += std::abs(samples[i] - samples[i + 1]);
+    return len;
+}
+
+/**
+ * @brief Net change across the newest window, direction discarded
+ * @param samples Newest-first span
+ * @param window Number of samples, minimum 2
+ * @return |samples[0] - samples[window - 1]|
+ */
+[[nodiscard]] inline double net_displacement(std::span<const double> samples, size_t window) noexcept
+{
+    window = std::min(window < 2 ? size_t { 2 } : window, samples.size());
+    if (window < 2)
+        return 0.0;
+    return std::abs(samples[0] - samples[window - 1]);
+}
+
+/**
+ * @brief Monotonicity of a window, 1.0 for a straight run in one direction
+ * @param samples Newest-first span
+ * @param window Number of samples, minimum 2
+ * @return net_displacement / path_length, or 0 when the window is flat
+ *
+ * A value that climbs or falls steadily scores near 1.0 regardless of how
+ * fast; one that wanders back and forth scores near 0.0.
+ */
+[[nodiscard]] inline double straightness(std::span<const double> samples, size_t window) noexcept
+{
+    const double len = path_length(samples, window);
+    if (len < 1e-12)
+        return 0.0;
+    return net_displacement(samples, window) / len;
+}
+
+/**
+ * @brief Number of direction reversals across a window
+ * @param samples Newest-first span
+ * @param window Number of samples, minimum 3
+ * @return Count of sign changes between consecutive non-zero steps
+ *
+ * The scalar reading of total_turning: how often the value turned around,
+ * not by how much.
+ */
+[[nodiscard]] inline size_t reversal_count(std::span<const double> samples, size_t window) noexcept
+{
+    window = std::min(window < 3 ? size_t { 3 } : window, samples.size());
+    size_t reversals = 0;
+    double previous = 0.0;
+    for (size_t i = 0; i + 1 < window; ++i) {
+        const double step = samples[i] - samples[i + 1];
+        if (step == 0.0)
+            continue;
+        if (previous != 0.0 && (step > 0.0) != (previous > 0.0))
+            ++reversals;
+        previous = step;
+    }
+    return reversals;
+}
+
+/**
+ * @brief Largest distance of any sample in a window from the window mean
+ * @param samples Newest-first span
+ * @param window Number of samples, minimum 1
+ * @return max |samples[i] - mean|, or 0 for an empty span
+ */
+[[nodiscard]] inline double spread_radius(std::span<const double> samples, size_t window) noexcept
+{
+    window = std::min(window < 1 ? size_t { 1 } : window, samples.size());
+    if (window == 0)
+        return 0.0;
+
+    double mean = 0.0;
+    for (size_t i = 0; i < window; ++i)
+        mean += samples[i];
+    mean /= static_cast<double>(window);
+
+    double widest = 0.0;
+    for (size_t i = 0; i < window; ++i)
+        widest = std::max(widest, std::abs(samples[i] - mean));
+    return widest;
 }
 
 } // namespace MayaFlux::Kinesis

@@ -5,6 +5,48 @@
 namespace MayaFlux::Kinesis {
 
 // =============================================================================
+// AABB1D
+// =============================================================================
+
+/**
+ * @struct AABB1D
+ * @brief Closed interval on a scalar axis.
+ *
+ * The one dimensional sibling of AABB2D and AABB3D, in double precision
+ * because scalar streams (audio, control, analysis) are double throughout.
+ * No vector type is involved, so a window of samples can be tested against
+ * it without building one.
+ */
+struct AABB1D {
+    double min { -1.0 };
+    double max { 1.0 };
+
+    [[nodiscard]] bool contains(double p) const noexcept
+    {
+        return p >= min && p <= max;
+    }
+
+    [[nodiscard]] bool overlaps(const AABB1D& other) const noexcept
+    {
+        return min <= other.max && max >= other.min;
+    }
+
+    [[nodiscard]] double width() const noexcept { return max - min; }
+
+    [[nodiscard]] double center() const noexcept { return (min + max) * 0.5; }
+
+    [[nodiscard]] AABB1D translated(double offset) const noexcept
+    {
+        return { .min = min + offset, .max = max + offset };
+    }
+
+    [[nodiscard]] AABB1D expanded(double margin) const noexcept
+    {
+        return { .min = min - margin, .max = max + margin };
+    }
+};
+
+// =============================================================================
 // AABB2D
 // =============================================================================
 
