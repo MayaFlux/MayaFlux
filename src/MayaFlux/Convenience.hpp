@@ -102,6 +102,7 @@
 #include "Kriya/Chimera.hpp"
 #include "Kriya/InputEvents.hpp"
 #include "Kriya/NetworkEvents.hpp"
+#include "Kriya/Pattern.hpp"
 #include "Kriya/SamplingPipeline.hpp"
 #include "Kriya/TapSet.hpp"
 #include "Kriya/Tasks.hpp"
@@ -116,7 +117,11 @@
 #include "Kakshya/Source/VideoFileContainer.hpp"
 #include "Kakshya/Source/WindowContainer.hpp"
 
+#include "Kinesis/Discrete/Boolean.hpp"
+#include "Kinesis/Discrete/Kernels.hpp"
 #include "Kinesis/GeometryPrimitives.hpp"
+#include "MayaFlux/Kinesis/Discrete/Series.hpp"
+#include "MayaFlux/Kinesis/Scalar.hpp"
 
 #include "Journal/Archivist.hpp"
 
