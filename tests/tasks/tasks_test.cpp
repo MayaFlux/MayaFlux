@@ -114,7 +114,7 @@ namespace {
 } // namespace
 
 template <typename Base>
-class SchedulerFixture : public Base {
+class TasksFixture : public Base {
 protected:
     void SetUp() override
     {
@@ -165,10 +165,10 @@ private:
     uint64_t m_frame_position { 0 };
 };
 
-using TasksTest = SchedulerFixture<::testing::Test>;
+using TasksTest = TasksFixture<::testing::Test>;
 
 template <typename Param>
-using TasksParamTest = SchedulerFixture<::testing::TestWithParam<Param>>;
+using TasksParamTest = TasksFixture<::testing::TestWithParam<Param>>;
 
 //-----------------------------------------------------------------------------
 // Timer
