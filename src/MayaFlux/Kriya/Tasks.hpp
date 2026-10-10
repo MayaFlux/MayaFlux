@@ -2,6 +2,8 @@
 
 #include "MayaFlux/Core/ProcessingTokens.hpp"
 
+#include "Pattern.hpp"
+
 namespace MayaFlux {
 namespace Vruta {
     class TaskScheduler;
@@ -117,48 +119,6 @@ namespace Kriya {
      * end value and can be restarted by calling restart() on the SoundRoutine.
      */
     MAYAFLUX_API Vruta::SoundRoutine line(float start_value, float end_value, float duration_seconds, uint32_t step_duration = 5, bool restartable = false);
-
-    /**
-     * @brief Creates a generative algorithm that produces values based on a pattern function
-     * @param pattern_func Function that generates values based on a step index
-     * @param callback Function to execute with each generated value
-     * @param interval_seconds Time between pattern steps in seconds
-     * @return A Routine shared_ptr of type determined by the processing token of the scheduler (SoundRoutine, GraphicsRoutine, etc.)
-     *
-     * The pattern task provides a powerful framework for algorithmic generation
-     * of values according to any computational pattern or rule system. At regular
-     * intervals, it calls the pattern_func with the current step index, then passes
-     * the returned value to the callback function.
-     *
-     * This mechanism enables the creation of generative algorithms, procedural
-     * sequences, emergent behaviors, and rule-based systems that can influence
-     * any aspect of a computational environment - from audio parameters to
-     * visual elements, data transformations, or cross-domain mappings.
-     *
-     * Example usage:
-     * ```cpp
-     * // Create a generative algorithm based on a mathematical sequence
-     * std::vector<int> fibonacci = {0, 1, 1, 2, 3, 5, 8, 13, 21};
-     * auto generator = Kriya::pattern(
-     *     // Pattern function - apply algorithmic rules
-     *     [&fibonacci](uint64_t step) -> std::any {
-     *         return fibonacci[step % fibonacci.size()];
-     *     },
-     *     // Callback - apply the generated value
-     *     [](std::any value) {
-     *         int result = std::any_cast<int>(value);
-     *         // Can be applied to any domain - audio, visual, data, etc.
-     *         apply_generated_value(result);
-     *     },
-     *     0.125 // Generate 8 values per second
-     * );
-     * scheduler->add_task(generator);
-     * ```
-     *
-     * The pattern task continues indefinitely until explicitly cancelled, creating
-     * an ongoing generative process within the computational system.
-     */
-    MAYAFLUX_API std::shared_ptr<Vruta::Routine> pattern(std::function<std::any(uint64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds, Vruta::ProcessingToken token = Vruta::ProcessingToken::SAMPLE_ACCURATE);
 
     /**
      * @brief Coroutine that executes callback continuously while logic node outputs true
