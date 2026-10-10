@@ -194,11 +194,14 @@ void ResonatorNetwork::process_batch(unsigned int num_samples)
 
     const double norm = m_norm_factor.load(std::memory_order_acquire);
 
-    m_node_buffers.assign(m_resonators.size(), {});
-    for (auto& nb : m_node_buffers)
+    m_node_buffers.resize(m_resonators.size());
+    for (auto& nb : m_node_buffers) {
+        nb.clear();
         nb.reserve(num_samples);
+    }
 
-    std::vector<std::optional<std::span<const double>>> net_exc_bufs;
+    thread_local std::vector<std::optional<std::span<const double>>> net_exc_bufs;
+    net_exc_bufs.clear();
     if (m_network_exciter) {
         net_exc_bufs.reserve(m_resonators.size());
         for (size_t ri = 0; ri < m_resonators.size(); ++ri)
@@ -316,6 +319,14 @@ void ResonatorNetwork::apply_broadcast_parameter(const std::string& param, doubl
         }
     } else if (param == "scale") {
         m_output_scale = std::max(0.0, value);
+    } else if (param == "retune") {
+        for (size_t i = 0; i < m_resonators.size(); ++i) {
+            retune(i, value);
+        }
+    } else if (param == "decay") {
+        for (size_t i = 0; i < m_resonators.size(); ++i) {
+            set_decay(i, value);
+        }
     }
 }
 
@@ -335,6 +346,10 @@ void ResonatorNetwork::apply_one_to_one_parameter(const std::string& param,
             set_q(i, *val);
         } else if (param == "gain") {
             m_resonators[i].gain = *val;
+        } else if (param == "retune") {
+            retune(i, *val);
+        } else if (param == "decay") {
+            set_decay(i, *val);
         }
     }
 }
@@ -437,6 +452,30 @@ void ResonatorNetwork::set_decay(size_t index, double seconds)
 
     r.q = Kinesis::Discrete::q_from_decay(r.frequency, seconds, m_sample_rate);
     write_biquad_in_place(r);
+}
+
+void ResonatorNetwork::retune(std::span<const double> frequencies)
+{
+    const size_t count = std::min(frequencies.size(), m_resonators.size());
+    for (size_t i = 0; i < count; ++i) {
+        retune(i, frequencies[i]);
+    }
+}
+
+void ResonatorNetwork::set_decay(std::span<const double> seconds)
+{
+    const size_t count = std::min(seconds.size(), m_resonators.size());
+    for (size_t i = 0; i < count; ++i) {
+        set_decay(i, seconds[i]);
+    }
+}
+
+void ResonatorNetwork::set_resonator_gain(std::span<const double> gains)
+{
+    const size_t count = std::min(gains.size(), m_resonators.size());
+    for (size_t i = 0; i < count; ++i) {
+        m_resonators[i].gain = gains[i];
+    }
 }
 
 void ResonatorNetwork::write_biquad_in_place(ResonatorNode& r)

@@ -1,5 +1,6 @@
 #include "../test_config.h"
 
+#include "MayaFlux/Kinesis/Discrete/Coefficients.hpp"
 #include "MayaFlux/Nodes/Generators/Polynomial.hpp"
 #include "MayaFlux/Nodes/Network/ResonatorNetwork.hpp"
 
@@ -276,6 +277,95 @@ TEST(ResonatorRangeTest, RetuneAndSetDecayRejectBadIndex)
 
     EXPECT_THROW(net.retune(2, 500.0), std::out_of_range);
     EXPECT_THROW(net.set_decay(2, 0.5), std::out_of_range);
+}
+
+TEST(ResonatorMappingTest, MappedRetuneKeepsTheRingWhereMappedFrequencyClearsIt)
+{
+    auto target = std::make_shared<Polynomial>([](double) { return 1250.0; });
+    target->process_sample(0.0);
+
+    auto cleared = make_single(1200.0, 30.0);
+    auto kept = make_single(1200.0, 30.0);
+    render(cleared, 256);
+    render(kept, 256);
+
+    cleared->map_parameter("frequency", target);
+    kept->map_parameter("retune", target);
+
+    const auto after_clear = render(cleared, 1);
+    const auto after_retune = render(kept, 1);
+
+    EXPECT_EQ(after_clear.at(0), 0.0);
+    EXPECT_GT(std::abs(after_retune.at(0)), 1e-9);
+    EXPECT_DOUBLE_EQ(kept->get_resonators().at(0).frequency, 1250.0);
+}
+
+TEST(ResonatorMappingTest, MappedDecaySetsTheRingTime)
+{
+    auto ring_time = std::make_shared<Polynomial>([](double) { return 0.25; });
+    ring_time->process_sample(0.0);
+
+    auto net = make_single(1000.0, 30.0);
+    net->map_parameter("decay", ring_time);
+    net->process_batch(1);
+
+    EXPECT_NEAR(
+        net->get_resonators().at(0).q,
+        Kinesis::Discrete::q_from_decay(1000.0, 0.25, net->get_sample_rate()),
+        1e-6);
+}
+
+TEST(ResonatorBulkTest, ArraysWriteEveryResonatorAndKeepTheirRings)
+{
+    ResonatorNetwork net(
+        std::vector<double> { 800.0, 1200.0, 1600.0 }, std::vector<double> { 30.0, 30.0, 30.0 });
+    net.set_exciter(make_pulse());
+    net.process_batch(256);
+
+    net.retune(std::vector<double> { 810.0, 1210.0, 1610.0 });
+    net.set_decay(std::vector<double> { 0.1, 0.2, 0.3 });
+    net.set_resonator_gain(std::vector<double> { 1.0, 0.5, 0.0 });
+
+    const double sample_rate = net.get_sample_rate();
+    const std::vector<double> frequencies { 810.0, 1210.0, 1610.0 };
+    const std::vector<double> decays { 0.1, 0.2, 0.3 };
+    const std::vector<double> gains { 1.0, 0.5, 0.0 };
+    for (size_t i = 0; i < 3; ++i) {
+        const auto& r = net.get_resonators().at(i);
+        EXPECT_DOUBLE_EQ(r.frequency, frequencies.at(i)) << "i=" << i;
+        EXPECT_NEAR(r.q, Kinesis::Discrete::q_from_decay(frequencies.at(i), decays.at(i), sample_rate), 1e-6) << "i=" << i;
+        EXPECT_DOUBLE_EQ(r.gain, gains.at(i)) << "i=" << i;
+    }
+
+    net.process_batch(1);
+    EXPECT_GT(std::abs(net.get_node_audio_buffer(0)->front()), 1e-9);
+    EXPECT_EQ(net.get_node_audio_buffer(2)->front(), 0.0);
+}
+
+TEST(ResonatorBulkTest, AShorterArrayLeavesTheRestAlone)
+{
+    ResonatorNetwork net(
+        std::vector<double> { 800.0, 1200.0 }, std::vector<double> { 30.0, 30.0 });
+
+    net.retune(std::vector<double> { 900.0 });
+    net.set_resonator_gain(std::vector<double> { 0.25 });
+
+    EXPECT_DOUBLE_EQ(net.get_resonators().at(0).frequency, 900.0);
+    EXPECT_DOUBLE_EQ(net.get_resonators().at(1).frequency, 1200.0);
+    EXPECT_DOUBLE_EQ(net.get_resonators().at(0).gain, 0.25);
+    EXPECT_DOUBLE_EQ(net.get_resonators().at(1).gain, 1.0);
+}
+
+TEST(ResonatorBatchTest, PerResonatorBuffersAreReusedNotAccumulated)
+{
+    auto net = make_single(1000.0, 30.0);
+
+    net->process_batch(64);
+    ASSERT_TRUE(net->get_node_audio_buffer(0).has_value());
+    EXPECT_EQ(net->get_node_audio_buffer(0)->size(), 64U);
+
+    net->process_batch(64);
+    EXPECT_EQ(net->get_node_audio_buffer(0)->size(), 64U);
 }
 
 }
