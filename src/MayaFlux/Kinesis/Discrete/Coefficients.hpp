@@ -313,4 +313,104 @@ MAYAFLUX_API void dc_block(double pole,
  */
 [[nodiscard]] MAYAFLUX_API double max_pole_magnitude(std::span<const double> a);
 
+// ---------------------------------------------------------------------------
+// Biquad by value and ring time
+// ---------------------------------------------------------------------------
+
+/**
+ * @struct Biquad
+ * @brief Second order section with a[0] normalised to 1, returned by value.
+ *
+ * Five numbers and no allocation, so a section can be rewritten every block
+ * through a live filter's coefficient spans.
+ */
+struct Biquad {
+    double a1 { 0.0 };
+    double a2 { 0.0 };
+    double b0 { 1.0 };
+    double b1 { 0.0 };
+    double b2 { 0.0 };
+};
+
+/**
+ * @brief Constant peak gain bandpass section, returned by value.
+ * @param frequency Centre frequency in Hz, clamped below Nyquist
+ * @param q Quality factor
+ * @param sample_rate Sample rate in Hz
+ *
+ * The same numbers as the vector form of biquad_bandpass.
+ */
+[[nodiscard]] MAYAFLUX_API Biquad biquad_bandpass(
+    double frequency, double q, double sample_rate) noexcept;
+
+/**
+ * @brief Pole radius whose impulse response falls by 1/e in a given time.
+ * @param seconds Ring time, floored at one sample
+ * @param sample_rate Sample rate in Hz
+ * @return exp(-1 / (seconds * sample_rate)), held just below the unit circle
+ *
+ * There is no upper limit on the ring time other than the radius staying
+ * strictly inside the unit circle.
+ */
+[[nodiscard]] MAYAFLUX_API double pole_radius_from_decay(
+    double seconds, double sample_rate) noexcept;
+
+/**
+ * @brief Time for an impulse response of a given pole radius to fall by 1/e.
+ * @param radius Pole radius
+ * @param sample_rate Sample rate in Hz
+ * @return Seconds, zero for a radius at or below zero
+ */
+[[nodiscard]] MAYAFLUX_API double decay_from_pole_radius(
+    double radius, double sample_rate) noexcept;
+
+/**
+ * @brief Q that gives the bandpass section a stated ring time.
+ * @param frequency Centre frequency in Hz
+ * @param seconds Time for the ring to fall by 1/e
+ * @param sample_rate Sample rate in Hz
+ *
+ * Exact for the biquad_bandpass family, whose pole radius squared is
+ * (1 - alpha) / (1 + alpha). The result is not limited to any range.
+ */
+[[nodiscard]] MAYAFLUX_API double q_from_decay(
+    double frequency, double seconds, double sample_rate) noexcept;
+
+/**
+ * @brief Ring time of a bandpass section of a given Q.
+ * @param frequency Centre frequency in Hz
+ * @param q Quality factor
+ * @param sample_rate Sample rate in Hz
+ * @return Seconds for the ring to fall by 1/e, zero when the section does not ring
+ */
+[[nodiscard]] MAYAFLUX_API double decay_from_q(
+    double frequency, double q, double sample_rate) noexcept;
+
+// ---------------------------------------------------------------------------
+// Weights over a newest-first window
+// ---------------------------------------------------------------------------
+
+/**
+ * @brief Weights of the backward difference of a given order.
+ * @param order Difference order, 1 is velocity, 2 acceleration
+ * @return order + 1 weights, (-1)^k * C(order, k), applied to a newest-first
+ *         window. Divide the weighted sum by dt^order for a derivative.
+ */
+[[nodiscard]] MAYAFLUX_API std::vector<double> backward_difference_weights(size_t order);
+
+/**
+ * @brief Weights that fall by a constant ratio with age.
+ * @param count Number of weights
+ * @param ratio Factor between one weight and the next older one
+ * @param unit_sum Scale so the weights sum to 1
+ * @return ratio^k for k = 0 .. count - 1, newest first
+ */
+[[nodiscard]] MAYAFLUX_API std::vector<double> geometric_weights(
+    size_t count, double ratio, bool unit_sum = false);
+
+/**
+ * @brief Equal weights summing to 1.
+ */
+[[nodiscard]] MAYAFLUX_API std::vector<double> moving_average_weights(size_t count);
+
 } // namespace MayaFlux::Kinesis::Discrete

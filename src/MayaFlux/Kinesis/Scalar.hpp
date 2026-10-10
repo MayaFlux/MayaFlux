@@ -119,6 +119,61 @@ template <typename T>
     return current + (target - current) * (T { 1 } - std::exp(-dt / smoothing));
 }
 
+/**
+ * @brief damp with separate time constants for rising and falling.
+ *
+ * Moves @p current toward @p target using @p rise when the target is above
+ * it and @p fall when below, both on the same scale as the single value of
+ * damp. A level that swells slowly and fades quickly, or the reverse, is one
+ * pair of numbers.
+ */
+template <typename T>
+[[nodiscard]] inline T damp_asymmetric(T current, T target, T rise, T fall, T dt) noexcept
+{
+    return damp(current, target, target > current ? rise : fall, dt);
+}
+
+/**
+ * @brief damp_asymmetric over arrays, in place.
+ * @param current Levels, updated
+ * @param target Where each level is heading
+ * @param rise Rise time constant per level
+ * @param fall Fall time constant per level
+ * @param dt Time step
+ *
+ * Runs over the shortest of the four spans. Each level has its own pair of
+ * numbers, so levels given different values move independently.
+ */
+inline void damp_asymmetric(
+    std::span<double> current,
+    std::span<const double> target,
+    std::span<const double> rise,
+    std::span<const double> fall,
+    double dt) noexcept
+{
+    const size_t count = std::min({ current.size(), target.size(), rise.size(), fall.size() });
+    for (size_t i = 0; i < count; ++i)
+        current[i] = damp_asymmetric(current[i], target[i], rise[i], fall[i], dt);
+}
+
+// =============================================================================
+// Bounding
+// =============================================================================
+
+/**
+ * @brief Smooth bound to (-limit, limit): limit * tanh(x / limit).
+ *
+ * Close to the identity for small |x|, approaches +-limit for large |x|.
+ * A non-positive limit gives zero.
+ */
+template <typename T>
+[[nodiscard]] inline T soft_clip(T x, T limit = T { 1 }) noexcept
+{
+    if (limit <= T { 0 })
+        return T { 0 };
+    return limit * std::tanh(x / limit);
+}
+
 // =============================================================================
 // Wrapping and folding
 // =============================================================================

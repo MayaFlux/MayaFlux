@@ -1,5 +1,6 @@
 #include "ResonatorNetwork.hpp"
 
+#include "MayaFlux/Kinesis/Discrete/Coefficients.hpp"
 #include "MayaFlux/Nodes/Filters/IIR.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -164,41 +165,10 @@ void ResonatorNetwork::build_resonators(const std::vector<double>& frequencies,
 
 void ResonatorNetwork::compute_biquad(ResonatorNode& r)
 {
-    /*
-     * RBJ Audio EQ Cookbook — BPF (constant 0 dB peak gain):
-     *
-     *   w0    = 2π f0 / Fs
-     *   alpha = sin(w0) / (2 Q)
-     *   b0    =  alpha
-     *   b1    =  0
-     *   b2    = -alpha
-     *   a0    =  1 + alpha
-     *   a1    = -2 cos(w0)
-     *   a2    =  1 - alpha
-     *
-     * Normalised (divide through by a0):
-     *   b_coefs = { b0/a0, 0, b2/a0 }
-     *   a_coefs = { 1,  a1/a0, a2/a0 }
-     */
-    const double w0 = 2.0 * std::numbers::pi * r.frequency / m_sample_rate;
-    const double sinw0 = std::sin(w0);
-    const double cosw0 = std::cos(w0);
-    const double alpha = sinw0 / (2.0 * r.q);
-    const double a0 = 1.0 + alpha;
+    const auto biquad = Kinesis::Discrete::biquad_bandpass(r.frequency, r.q, m_sample_rate);
 
-    const std::vector<double> a = {
-        1.0,
-        (-2.0 * cosw0) / a0,
-        (1.0 - alpha) / a0,
-    };
-    const std::vector<double> b = {
-        alpha / a0,
-        0.0,
-        -alpha / a0,
-    };
-
-    r.filter->setACoefficients(a);
-    r.filter->setBCoefficients(b);
+    r.filter->setACoefficients({ 1.0, biquad.a1, biquad.a2 });
+    r.filter->setBCoefficients({ biquad.b0, biquad.b1, biquad.b2 });
     r.filter->reset();
 }
 
@@ -465,31 +435,22 @@ void ResonatorNetwork::set_decay(size_t index, double seconds)
     }
     auto& r = m_resonators[index];
 
-    const double tau = std::max(seconds, 1.0 / m_sample_rate);
-    const double radius = std::min(std::exp(-1.0 / (tau * m_sample_rate)), 1.0 - 1e-12);
-    const double radius_sq = radius * radius;
-    const double alpha = (1.0 - radius_sq) / (1.0 + radius_sq);
-
-    const double w0 = 2.0 * std::numbers::pi * r.frequency / m_sample_rate;
-    r.q = std::sin(w0) / (2.0 * alpha);
+    r.q = Kinesis::Discrete::q_from_decay(r.frequency, seconds, m_sample_rate);
     write_biquad_in_place(r);
 }
 
 void ResonatorNetwork::write_biquad_in_place(ResonatorNode& r)
 {
-    const double w0 = 2.0 * std::numbers::pi * r.frequency / m_sample_rate;
-    const double cosw0 = std::cos(w0);
-    const double alpha = std::sin(w0) / (2.0 * r.q);
-    const double a0 = 1.0 + alpha;
+    const auto biquad = Kinesis::Discrete::biquad_bandpass(r.frequency, r.q, m_sample_rate);
 
     auto a = r.filter->edit_feedback_coefs();
     auto b = r.filter->edit_feedforward_coefs();
 
-    a[0] = (-2.0 * cosw0) / a0;
-    a[1] = (1.0 - alpha) / a0;
-    b[0] = alpha / a0;
-    b[1] = 0.0;
-    b[2] = -alpha / a0;
+    a[0] = biquad.a1;
+    a[1] = biquad.a2;
+    b[0] = biquad.b0;
+    b[1] = biquad.b1;
+    b[2] = biquad.b2;
 }
 
 //-----------------------------------------------------------------------------
