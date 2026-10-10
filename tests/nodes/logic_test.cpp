@@ -690,14 +690,24 @@ struct HookCase {
 
 class HookTest : public ::testing::TestWithParam<HookCase> { };
 
-TEST_P(HookTest, FiresForItsEventOnly)
+const std::vector<HookCase>& hook_cases()
 {
-    const auto& param = GetParam();
-    Logic node(0.5);
-    int count = 0;
+    static const std::vector<HookCase> all = {
+        { "Tick", Hook::Tick, 5 },
+        { "Change", Hook::Change, 3 },
+        { "ToTrue", Hook::ToTrue, 2 },
+        { "ToFalse", Hook::ToFalse, 1 },
+        { "WhileTrue", Hook::WhileTrue, 3 },
+        { "WhileFalse", Hook::WhileFalse, 2 }
+    };
+    return all;
+}
+
+void attach_hook(Logic& node, Hook hook, int& count)
+{
     const auto counter = [&count](const Nodes::NodeContext&) { ++count; };
 
-    switch (param.hook) {
+    switch (hook) {
     case Hook::Tick:
         node.on_tick(counter);
         break;
@@ -717,6 +727,14 @@ TEST_P(HookTest, FiresForItsEventOnly)
         node.while_false(counter);
         break;
     }
+}
+
+TEST_P(HookTest, FiresForItsEventOnly)
+{
+    const auto& param = GetParam();
+    Logic node(0.5);
+    int count = 0;
+    attach_hook(node, param.hook, count);
 
     run(node, levels("11001"));
 
@@ -726,16 +744,107 @@ TEST_P(HookTest, FiresForItsEventOnly)
 INSTANTIATE_TEST_SUITE_P(
     Events,
     HookTest,
-    ::testing::Values(
-        HookCase { "Tick", Hook::Tick, 5 },
-        HookCase { "Change", Hook::Change, 3 },
-        HookCase { "ToTrue", Hook::ToTrue, 2 },
-        HookCase { "ToFalse", Hook::ToFalse, 1 },
-        HookCase { "WhileTrue", Hook::WhileTrue, 3 },
-        HookCase { "WhileFalse", Hook::WhileFalse, 2 }),
+    ::testing::ValuesIn(hook_cases()),
     [](const ::testing::TestParamInfo<HookCase>& info) {
         return std::string(info.param.name);
     });
+
+class MultiInputHookTest : public ::testing::TestWithParam<HookCase> { };
+
+TEST_P(MultiInputHookTest, ProcessMultiInputFiresTheSameEvents)
+{
+    const auto& param = GetParam();
+    Logic node(
+        [](const std::vector<double>& in) {
+            return std::ranges::all_of(in, [](double v) { return v > 0.5; });
+        },
+        2);
+    int count = 0;
+    attach_hook(node, param.hook, count);
+
+    for (const auto& inputs : std::vector<std::vector<double>> {
+             { HIGH, HIGH }, { HIGH, HIGH }, { LOW, HIGH }, { LOW, LOW }, { HIGH, HIGH } }) {
+        node.process_multi_input(inputs);
+    }
+
+    EXPECT_EQ(count, param.expected);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    Events,
+    MultiInputHookTest,
+    ::testing::ValuesIn(hook_cases()),
+    [](const ::testing::TestParamInfo<HookCase>& info) {
+        return std::string(info.param.name);
+    });
+
+TEST(LogicHookTest, ContextExposesTheCoefficientArray)
+{
+    Logic node(divider(), std::vector<double> { 0.0, 100.0 });
+    std::vector<double> seen;
+
+    node.on_tick([&seen](const Nodes::NodeContext& ctx) {
+        seen.push_back(static_cast<const Nodes::Generator::LogicContext&>(ctx).get_coefficients().front());
+    });
+
+    run(node, std::vector<double>(4, 0.0));
+
+    EXPECT_EQ(seen, (std::vector<double> { 1.0, 2.0, 3.0, 4.0 }));
+}
+
+TEST(LogicHookTest, ContextCoefficientsAreEmptyForAPlainNode)
+{
+    Logic node(0.5);
+    bool empty = false;
+
+    node.on_tick([&empty](const Nodes::NodeContext& ctx) {
+        empty = static_cast<const Nodes::Generator::LogicContext&>(ctx).get_coefficients().empty();
+    });
+
+    node.process_sample(HIGH);
+
+    EXPECT_TRUE(empty);
+}
+
+TEST(LogicHookTest, ContextCarriesTheInputSlots)
+{
+    Logic node(
+        [](const std::vector<double>&) { return true; },
+        2);
+    std::vector<double> seen;
+
+    node.on_tick([&seen](const Nodes::NodeContext& ctx) {
+        seen = static_cast<const Nodes::Generator::LogicContext&>(ctx).get_inputs();
+    });
+
+    node.process_multi_input({ 0.8, 0.2 });
+
+    EXPECT_EQ(seen, (std::vector<double> { 0.8, 0.2 }));
+}
+
+TEST(LogicCloneTest, DefaultParallelFunctionSurvivesTheOriginal)
+{
+    auto original = std::make_shared<Logic>(0.65);
+    EXPECT_DOUBLE_EQ(original->process_multi_input({ 0.7, 0.8 }), 1.0);
+
+    const auto copy = original->clone();
+    original.reset();
+
+    EXPECT_DOUBLE_EQ(copy->process_multi_input({ 0.7, 0.8 }), 1.0);
+    EXPECT_DOUBLE_EQ(copy->process_multi_input({ 0.6, 0.8 }), 0.0);
+}
+
+TEST(LogicCloneTest, DefaultParallelFunctionFollowsTheCopysThreshold)
+{
+    Logic original(0.5);
+    original.process_multi_input({ 0.6, 0.7 });
+
+    const auto copy = original.clone();
+    copy->set_threshold(0.9);
+
+    EXPECT_DOUBLE_EQ(copy->process_multi_input({ 0.6, 0.7 }), 0.0);
+    EXPECT_DOUBLE_EQ(original.process_multi_input({ 0.6, 0.7 }), 1.0);
+}
 
 TEST(LogicHookTest, ContextCarriesTheValueAndTheHistory)
 {
