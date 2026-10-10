@@ -53,8 +53,7 @@ std::vector<double> ModalNetwork::generate_spectrum_ratios(Spectrum spectrum,
         break;
 
     case Spectrum::INHARMONIC:
-        // Bell-like spectrum (approximate mode ratios for circular plates)
-        // Based on Bessel function zeros
+        // Free-free bar mode ratios, tabulated for the first eight, then constant spacing
         ratios = { 1.0, 2.756, 5.404, 8.933, 13.344, 18.64, 24.81, 31.86 };
         while (ratios.size() < count) {
             double last = ratios.back();

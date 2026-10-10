@@ -128,9 +128,10 @@ template <typename T>
  * @brief Exponential smoothing: move @p current toward @p target at rate
  *        @p smoothing over time step @p dt.
  *
- * @p smoothing is a half-life in seconds: the distance to target halves
- * every @p smoothing seconds. At smoothing = 0.1 the value tracks quickly;
- * at smoothing = 2.0 it lags heavily.
+ * @p smoothing is a time constant in seconds: the distance to target falls
+ * by a factor of e (to about 37 percent) every @p smoothing seconds, and
+ * halves every 0.69 * @p smoothing seconds. At smoothing = 0.1 the value
+ * tracks quickly; at smoothing = 2.0 it lags heavily.
  *
  * Framerate-independent. Equivalent to the "lerp every frame" pattern
  * done correctly:
