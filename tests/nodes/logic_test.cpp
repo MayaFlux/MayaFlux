@@ -982,6 +982,63 @@ TEST(LogicCoefArrayTest, SetSequentialFunctionResizesTheHistory)
     EXPECT_DOUBLE_EQ(out.back(), 1.0);
 }
 
+TEST(LogicCoefArrayTest, MultiInputFunctionReceivesTheArray)
+{
+    Logic node(
+        [](const std::vector<double>& in, std::span<double> c) { return in[0] * c[0] > 0.5; },
+        2, std::vector<double> { 1.0 });
+
+    EXPECT_EQ(node.get_mode(), LogicMode::MULTI_INPUT);
+    EXPECT_EQ(node.get_input_count(), 2U);
+    EXPECT_DOUBLE_EQ(node.process_sample(0.6), 1.0);
+
+    node.set_coefficients({ 0.5 });
+
+    EXPECT_DOUBLE_EQ(node.process_sample(0.6), 0.0);
+}
+
+TEST(LogicCoefArrayTest, MultiInputArrayIsRestoredWithSavedState)
+{
+    Logic node(
+        [](const std::vector<double>&, std::span<double> c) {
+            c[0] += 1.0;
+            return true;
+        },
+        1, std::vector<double> { 0.0 });
+
+    node.process_sample(0.0);
+    node.save_state();
+    node.process_sample(0.0);
+    node.process_sample(0.0);
+    EXPECT_DOUBLE_EQ(node.get_coefficients().front(), 3.0);
+
+    node.restore_state();
+
+    EXPECT_DOUBLE_EQ(node.get_coefficients().front(), 1.0);
+}
+
+TEST(LogicCoefArrayTest, SetMultiInputFunctionOverloadsReplaceEachOther)
+{
+    Logic node(
+        [](const std::vector<double>& in) { return in[0] > 0.2; }, 1);
+
+    EXPECT_DOUBLE_EQ(node.process_sample(0.3), 1.0);
+
+    node.set_coefficients({ 0.8 });
+    node.set_multi_input_function(
+        [](const std::vector<double>& in, std::span<double> c) { return in[0] > c[0]; }, 1);
+    EXPECT_DOUBLE_EQ(node.process_sample(0.3), 0.0);
+
+    node.set_multi_input_function(
+        [](const std::vector<double>& in) { return in[0] > 0.2; }, 1);
+    EXPECT_DOUBLE_EQ(node.process_sample(0.3), 1.0);
+
+    node.save_state();
+    node.set_coefficients({ 9.0 });
+    node.restore_state();
+    EXPECT_DOUBLE_EQ(node.get_coefficients().front(), 9.0);
+}
+
 TEST(LogicCoefArrayTest, SetTemporalFunctionBindsTheArray)
 {
     Logic node(0.5);
@@ -1073,7 +1130,14 @@ INSTANTIATE_TEST_SUITE_P(
                            [](const std::vector<double>& in) { return in[0] > 0.5 || in[1] > 0.5; }, 2); } },
         CloneCase { "CoefDirect", [] { return std::make_shared<Logic>(divider(), std::vector<double> { 0.0, 3.0 }); } },
         CloneCase { "CoefSequential", [] { return std::make_shared<Logic>(truth_table(), 2, table_coefs(6)); } },
-        CloneCase { "CoefTemporal", [] { return std::make_shared<Logic>(refractory(), refractory_coefs(2.5)); } }),
+        CloneCase { "CoefTemporal", [] { return std::make_shared<Logic>(refractory(), refractory_coefs(2.5)); } },
+        CloneCase { "CoefMultiInput", [] {
+                       return std::make_shared<Logic>(
+                           [](const std::vector<double>& in, std::span<double> c) {
+                               c[0] += in[0];
+                               return c[0] > 1.0;
+                           },
+                           2, std::vector<double> { 0.0 }); } }),
     [](const ::testing::TestParamInfo<CloneCase>& info) {
         return std::string(info.param.name);
     });

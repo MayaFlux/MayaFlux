@@ -91,17 +91,17 @@ public:
     }
 
     // Getters for context properties
-    LogicMode get_mode() const { return m_mode; }
-    LogicOperator get_operator() const { return m_operator; }
-    std::span<bool> get_history() const { return m_history; }
-    double get_threshold() const { return m_threshold; }
-    bool is_edge_detected() const { return m_edge_detected; }
-    EdgeType get_edge_type() const { return m_edge_type; }
-    const std::vector<double>& get_inputs() const { return m_inputs; }
-    const double& get_value() const { return m_input; }
+    [[nodiscard]] LogicMode get_mode() const { return m_mode; }
+    [[nodiscard]] LogicOperator get_operator() const { return m_operator; }
+    [[nodiscard]] std::span<bool> get_history() const { return m_history; }
+    [[nodiscard]] double get_threshold() const { return m_threshold; }
+    [[nodiscard]] bool is_edge_detected() const { return m_edge_detected; }
+    [[nodiscard]] EdgeType get_edge_type() const { return m_edge_type; }
+    [[nodiscard]] const std::vector<double>& get_inputs() const { return m_inputs; }
+    [[nodiscard]] const double& get_value() const { return m_input; }
 
     // Boolean conversion of the current value
-    bool as_bool() const { return get_value() > 0.5; }
+    [[nodiscard]] bool as_bool() const { return get_value() > 0.5; }
 
 private:
     LogicMode m_mode; ///< Current computational model
@@ -210,6 +210,13 @@ public:
     using CoefTemporalFunction = std::function<bool(double, double, std::span<double>)>;
 
     /**
+     * @brief Function type for parallel input evaluation with access to the coefficient array
+     *
+     * Takes one value per input slot and the node's own coefficient array.
+     */
+    using CoefMultiInputFunction = std::function<bool(const std::vector<double>&, std::span<double>)>;
+
+    /**
      * @brief Constructs a Logic node with threshold quantization
      * @param threshold Decision boundary for binary quantization
      *
@@ -294,6 +301,14 @@ public:
      * @param coefficients Initial contents of the coefficient array
      */
     Logic(CoefTemporalFunction function, std::vector<double> coefficients);
+
+    /**
+     * @brief Constructs a Logic node for parallel inputs with a coefficient array
+     * @param function Function receiving one value per slot and the coefficient array
+     * @param input_count Number of input slots
+     * @param coefficients Initial contents of the coefficient array
+     */
+    Logic(CoefMultiInputFunction function, size_t input_count, std::vector<double> coefficients = {});
 
     virtual ~Logic() = default;
 
@@ -430,6 +445,32 @@ public:
     void set_multi_input_function(MultiInputFunction function, size_t input_count);
 
     /**
+     * @brief Sets a parallel input function that receives the coefficient array
+     * @param function Function receiving one value per slot and the coefficient array
+     * @param input_count Number of input slots
+     */
+    void set_multi_input_function(CoefMultiInputFunction function, size_t input_count);
+
+    /**
+     * @brief Appends a node whose output feeds the next input slot
+     * @param node Node to read each sample
+     *
+     * Applies in parallel input mode. Nodes fill slots 0 to n-1 in the order
+     * they were added, growing the slot count if needed. When more slots are
+     * declared than nodes, slot n receives the sample the node is driven with,
+     * for example a buffer sample from a LogicProcessor; with no nodes that
+     * sample goes to slot 0 as before. A node already processed this cycle is
+     * read, not run again.
+     */
+    void add_input_node(const std::shared_ptr<Node>& node);
+
+    /**
+     * @brief Replaces all input nodes
+     * @param nodes Nodes for slots 0 to n-1; empty removes them
+     */
+    void set_input_nodes(std::vector<std::shared_ptr<Node>> nodes);
+
+    /**
      * @brief Sets a custom state-based evaluation function
      * @param function Function implementing sequential boolean logic
      * @param history_size Size of the state history buffer
@@ -492,25 +533,25 @@ public:
      * @brief Gets the current computational model
      * @return Current logic mode
      */
-    LogicMode get_mode() const { return m_mode; }
+    [[nodiscard]] LogicMode get_mode() const { return m_mode; }
 
     /**
      * @brief Gets the current boolean operator
      * @return Current logic operator
      */
-    LogicOperator get_operator() const { return m_operator; }
+    [[nodiscard]] LogicOperator get_operator() const { return m_operator; }
 
     /**
      * @brief Gets the decision boundary for binary quantization
      * @return Current threshold value
      */
-    double get_threshold() const { return m_threshold; }
+    [[nodiscard]] double get_threshold() const { return m_threshold; }
 
     /**
      * @brief Gets the state history buffer capacity
      * @return Current history buffer size
      */
-    size_t get_history_size() const { return m_history_size; }
+    [[nodiscard]] size_t get_history_size() const { return m_history_size; }
 
     /**
      * @brief Gets the current state history
@@ -522,19 +563,19 @@ public:
      * @brief Gets the number of parallel inputs expected
      * @return Number of expected inputs
      */
-    size_t get_input_count() const { return m_input_count; }
+    [[nodiscard]] size_t get_input_count() const { return m_input_count; }
 
     /**
      * @brief Checks if a state transition was detected
      * @return True if a transition matching the configured edge type was detected
      */
-    bool was_edge_detected() const { return m_edge_detected; }
+    [[nodiscard]] bool was_edge_detected() const { return m_edge_detected; }
 
     /**
      * @brief Gets the type of transitions being monitored
      * @return Current edge detection type
      */
-    EdgeType get_edge_type() const { return m_edge_type; }
+    [[nodiscard]] EdgeType get_edge_type() const { return m_edge_type; }
 
     /**
      * @brief Registers a callback for every generated sample
@@ -700,6 +741,8 @@ private:
     double m_input {}; ///< Current input value for multi-input mode
     std::vector<double> m_input_buffer; // Buffer for multi-input mode
     std::shared_ptr<Node> m_input_node; ///< Input node for processing
+    std::vector<std::shared_ptr<Node>> m_input_nodes; ///< Nodes feeding the input slots in parallel input mode
+    CoefMultiInputFunction m_coef_multi_function; ///< The function behind m_multi_input_function while bound
     std::vector<uint8_t> m_history_ring; ///< Ring buffer for history storage
     std::vector<uint8_t> m_history_linear; ///< Linear view of history for easy access
     std::vector<double> m_coefficients; ///< Coefficient array handed to coefficient-aware functions
@@ -711,6 +754,9 @@ private:
 
     // Helper method for multi-input mode
     void add_input(double input, size_t index);
+
+    void pull_input_nodes();
+    void release_input_nodes();
 
     /**
      * @brief Adds a callback to the list of all callbacks

@@ -122,6 +122,13 @@ Logic::Logic(CoefTemporalFunction function, std::vector<double> coefficients)
     set_temporal_function(std::move(function));
 }
 
+Logic::Logic(CoefMultiInputFunction function, size_t input_count, std::vector<double> coefficients)
+    : Logic(MultiInputFunction {}, input_count)
+{
+    m_coefficients = std::move(coefficients);
+    set_multi_input_function(std::move(function), input_count);
+}
+
 std::shared_ptr<Logic> Logic::clone() const
 {
     std::shared_ptr<Logic> copy;
@@ -138,6 +145,7 @@ std::shared_ptr<Logic> Logic::clone() const
             copy = std::make_shared<Logic>(m_coef_temporal_function, m_coefficients);
             break;
         case LogicMode::MULTI_INPUT:
+            copy = std::make_shared<Logic>(m_coef_multi_function, m_input_count, m_coefficients);
             break;
         }
     }
@@ -167,6 +175,7 @@ std::shared_ptr<Logic> Logic::clone() const
     copy->m_high_threshold = m_high_threshold;
     copy->m_edge_type = m_edge_type;
     copy->m_input_node = m_input_node;
+    copy->m_input_nodes = m_input_nodes;
     return copy;
 }
 
@@ -193,6 +202,11 @@ double Logic::process_sample(double input)
             input = m_input_node->process_sample(input);
             atomic_add_flag(m_input_node->m_state, NodeState::PROCESSED);
         }
+    }
+
+    const bool pulled = m_mode == LogicMode::MULTI_INPUT && !m_input_nodes.empty();
+    if (pulled) {
+        pull_input_nodes();
     }
 
     bool current_bool = input > m_threshold;
@@ -281,7 +295,11 @@ double Logic::process_sample(double input)
     }
 
     case LogicMode::MULTI_INPUT: {
-        add_input(input, 0);
+        if (!pulled) {
+            add_input(input, 0);
+        } else if (m_input_count > m_input_nodes.size()) {
+            add_input(input, m_input_nodes.size());
+        }
         result = m_multi_input_function(m_input_buffer);
         break;
     }
@@ -293,6 +311,10 @@ double Logic::process_sample(double input)
     if ((!m_state_saved || (m_state_saved && m_fire_events_during_snapshot))
         && !m_networked_node) {
         notify_tick(current);
+    }
+
+    if (pulled) {
+        release_input_nodes();
     }
 
     if (m_input_node) {
@@ -351,6 +373,34 @@ double Logic::process_multi_input(const std::vector<double>& inputs)
     notify_tick(m_last_output);
 
     return m_last_output;
+}
+
+void Logic::pull_input_nodes()
+{
+    if (m_input_buffer.size() < m_input_nodes.size()) {
+        m_input_buffer.resize(m_input_nodes.size(), 0.0);
+    }
+
+    for (size_t i = 0; i < m_input_nodes.size(); ++i) {
+        const auto& node = m_input_nodes[i];
+        atomic_inc_modulator_count(node->m_modulator_count, 1);
+
+        uint32_t state = node->m_state.load();
+        if (state & NodeState::PROCESSED) {
+            m_input_buffer[i] = node->get_last_output();
+        } else {
+            m_input_buffer[i] = node->process_sample(0.0);
+            atomic_add_flag(node->m_state, NodeState::PROCESSED);
+        }
+    }
+}
+
+void Logic::release_input_nodes()
+{
+    for (const auto& node : m_input_nodes) {
+        atomic_dec_modulator_count(node->m_modulator_count, 1);
+        try_reset_processed_state(node);
+    }
 }
 
 void Logic::add_input(double input, size_t index)
@@ -525,6 +575,43 @@ void Logic::set_multi_input_function(MultiInputFunction function, size_t input_c
     }
 }
 
+void Logic::set_multi_input_function(CoefMultiInputFunction function, size_t input_count)
+{
+    MultiInputFunction bound = [this](const std::vector<double>& inputs) {
+        return m_coef_multi_function(inputs, std::span<double>(m_coefficients));
+    };
+    set_multi_input_function(std::move(bound), input_count);
+    m_coef_multi_function = std::move(function);
+    m_coef_bound = true;
+}
+
+void Logic::add_input_node(const std::shared_ptr<Node>& node)
+{
+    if (!node) {
+        return;
+    }
+
+    m_input_nodes.push_back(node);
+    if (m_input_count < m_input_nodes.size()) {
+        m_input_count = m_input_nodes.size();
+    }
+    if (m_input_buffer.size() < m_input_count) {
+        m_input_buffer.resize(m_input_count, 0.0);
+    }
+}
+
+void Logic::set_input_nodes(std::vector<std::shared_ptr<Node>> nodes)
+{
+    std::erase(nodes, nullptr);
+    m_input_nodes = std::move(nodes);
+    if (m_input_count < m_input_nodes.size()) {
+        m_input_count = m_input_nodes.size();
+    }
+    if (m_input_buffer.size() < m_input_count) {
+        m_input_buffer.resize(m_input_count, 0.0);
+    }
+}
+
 void Logic::set_sequential_function(SequentialFunction function, size_t history_size)
 {
     m_sequential_function = std::move(function);
@@ -626,7 +713,7 @@ void Logic::notify_tick(double value)
             break;
 
         case LogicEventType::WHILE_TRUE:
-            should_call = (bool)value;
+            should_call = static_cast<bool>(value);
             break;
 
         case LogicEventType::WHILE_FALSE:
@@ -638,7 +725,7 @@ void Logic::notify_tick(double value)
             break;
 
         case LogicEventType::TRUE:
-            should_call = state_changed && (bool)value;
+            should_call = state_changed && static_cast<bool>(value);
             break;
 
         case LogicEventType::FALSE:
@@ -760,6 +847,9 @@ void Logic::save_state()
     if (m_input_node)
         m_input_node->save_state();
 
+    for (const auto& node : m_input_nodes)
+        node->save_state();
+
     m_state_saved = true;
 }
 
@@ -779,15 +869,23 @@ void Logic::restore_state()
     if (m_input_node)
         m_input_node->restore_state();
 
+    for (const auto& node : m_input_nodes)
+        node->restore_state();
+
     m_state_saved = false;
 }
 
 std::vector<std::pair<ModulatorRole, std::shared_ptr<Node>>>
 Logic::get_modulators() const
 {
+    std::vector<std::pair<ModulatorRole, std::shared_ptr<Node>>> modulators;
+    modulators.reserve(m_input_nodes.size() + 1);
+
     if (m_input_node)
-        return { { ModulatorRole::SignalMod, m_input_node } };
-    return {};
+        modulators.emplace_back(ModulatorRole::SignalMod, m_input_node);
+    for (const auto& node : m_input_nodes)
+        modulators.emplace_back(ModulatorRole::SignalMod, node);
+    return modulators;
 }
 
 }
