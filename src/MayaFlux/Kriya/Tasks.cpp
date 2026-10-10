@@ -76,7 +76,7 @@ Vruta::SoundRoutine line(float start_value, float end_value, float duration_seco
         step_duration = 1;
     }
 
-    uint64_t total_samples = (uint64_t)duration_seconds * sample_rate;
+    uint64_t total_samples = static_cast<uint64_t>(static_cast<double>(duration_seconds) * sample_rate);
     float per_sample_step = (end_value - start_value) / (float)total_samples;
     float sample_step = per_sample_step * (float)step_duration;
 
