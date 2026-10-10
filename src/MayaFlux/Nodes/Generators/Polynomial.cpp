@@ -35,6 +35,19 @@ Polynomial::Polynomial(BufferFunction function, PolynomialMode mode, size_t buff
 {
 }
 
+Polynomial::Polynomial(CoefBufferFunction function, PolynomialMode mode, size_t buffer_size, std::vector<double> coefficients)
+    : m_mode(mode)
+    , m_coefficients(std::move(coefficients))
+    , m_history(buffer_size)
+    , m_linear_view(buffer_size, 0.0)
+    , m_buffer_size(buffer_size)
+    , m_scale_factor(1.F)
+    , m_context(0.0, m_mode, m_buffer_size, {}, {}, m_coefficients)
+    , m_context_gpu(0.0, m_mode, m_buffer_size, {}, {}, m_coefficients, get_gpu_data_buffer())
+{
+    m_buffer_function = bind_coefficients(std::move(function));
+}
+
 double Polynomial::process_sample(double input)
 {
     double result = 0.0;
@@ -147,6 +160,19 @@ void Polynomial::set_buffer_function(BufferFunction function, PolynomialMode mod
     }
 }
 
+void Polynomial::set_buffer_function(CoefBufferFunction function, PolynomialMode mode, size_t buffer_size)
+{
+    set_buffer_function(bind_coefficients(std::move(function)), mode, buffer_size);
+}
+
+Polynomial::BufferFunction Polynomial::bind_coefficients(CoefBufferFunction function)
+{
+    m_coef_bound = true;
+    return [this, function = std::move(function)](std::span<double> window) {
+        return function(window, std::span<double>(m_coefficients));
+    };
+}
+
 void Polynomial::set_initial_conditions(const std::vector<double>& initial_values)
 {
     m_history.set_initial_conditions(initial_values);
@@ -220,6 +246,9 @@ void Polynomial::save_state()
     m_saved_history_state = m_history.save_state();
     m_saved_last_output = m_last_output;
 
+    if (m_coef_bound)
+        m_saved_coefficients = m_coefficients;
+
     if (m_input_node)
         m_input_node->save_state();
 
@@ -230,6 +259,9 @@ void Polynomial::restore_state()
 {
     m_history.restore_state(m_saved_history_state);
     m_last_output = m_saved_last_output;
+
+    if (m_coef_bound && !m_saved_coefficients.empty())
+        m_coefficients = m_saved_coefficients;
 
     if (m_input_node)
         m_input_node->restore_state();

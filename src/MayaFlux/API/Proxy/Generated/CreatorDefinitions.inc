@@ -145,6 +145,13 @@ std::shared_ptr<MayaFlux::Nodes::Generator::Polynomial> Creator::Polynomial(Maya
     return obj;
 }
 
+std::shared_ptr<MayaFlux::Nodes::Generator::Polynomial> Creator::Polynomial(MayaFlux::Nodes::Generator::Polynomial::CoefBufferFunction function, MayaFlux::Nodes::Generator::PolynomialMode mode, size_t buffer_size, std::vector<double> coefficients)
+{
+    auto obj = std::make_shared<MayaFlux::Nodes::Generator::Polynomial>(std::forward<decltype(function)>(function), std::forward<decltype(mode)>(mode), std::forward<decltype(buffer_size)>(buffer_size), std::forward<decltype(coefficients)>(coefficients));
+    MF_LIVE_EXPOSE_NAMED("Polynomial", obj);
+    return obj;
+}
+
 std::shared_ptr<MayaFlux::Nodes::Generator::Random> Creator::Random(Kinesis::Stochastic::Algorithm type)
 {
     auto obj = std::make_shared<MayaFlux::Nodes::Generator::Random>(std::forward<decltype(type)>(type));
