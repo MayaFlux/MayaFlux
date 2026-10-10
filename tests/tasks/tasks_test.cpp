@@ -600,7 +600,7 @@ INSTANTIATE_TEST_SUITE_P(
     [](const ::testing::TestParamInfo<SequenceCase>& info) { return std::string(info.param.name); });
 
 //-----------------------------------------------------------------------------
-// pattern: interval form
+// pattern: duration forms
 //-----------------------------------------------------------------------------
 
 class IntervalPatternTest : public TasksParamTest<double> { };
@@ -613,7 +613,7 @@ TEST_P(IntervalPatternTest, ProducesTheGeneratedValuesInOrder)
     auto routine = Kriya::pattern(
         [](uint64_t index) -> std::any { return static_cast<int>(index * 10); },
         [&](std::any value) { received.push_back(std::any_cast<int>(value)); },
-        interval);
+        std::vector<double> { interval });
 
     scheduler->add_task(routine);
 
@@ -634,6 +634,209 @@ INSTANTIATE_TEST_SUITE_P(
     IntervalPatternTest,
     ::testing::Values(0.004, 0.01, 0.02),
     [](const ::testing::TestParamInfo<double>& info) { return milliseconds(info.param); });
+
+struct DurationCase {
+    const char* name;
+    std::vector<double> durations;
+    std::vector<std::pair<double, int>> checkpoints;
+};
+
+class DurationListTest : public TasksParamTest<DurationCase> { };
+
+TEST_P(DurationListTest, StepsFollowTheListAndCycle)
+{
+    const auto& param = GetParam();
+    auto seen = std::make_shared<Log<uint64_t>>();
+
+    auto routine = Kriya::pattern(
+        [](uint64_t index) { return index; },
+        [seen](uint64_t index) { seen->add(index); },
+        param.durations);
+
+    ASSERT_NE(routine, nullptr);
+    scheduler->add_task(routine);
+
+    for (const auto& [seconds, expected] : param.checkpoints) {
+        run_seconds(seconds);
+        EXPECT_EQ(static_cast<int>(seen->items().size()), expected);
+    }
+
+    EXPECT_EQ(seen->items(), first_n(seen->items().size()));
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    Lists,
+    DurationListTest,
+    ::testing::Values(
+        DurationCase { "Single", { 0.25 }, { { 0.125, 1 }, { 0.25, 2 }, { 0.25, 3 } } },
+        DurationCase { "TwoCycling", { 0.25, 0.5 }, { { 0.125, 1 }, { 0.25, 2 }, { 0.5, 3 }, { 0.25, 4 } } },
+        DurationCase { "Descending", { 0.5, 0.25, 0.125 }, { { 0.25, 1 }, { 0.375, 2 }, { 0.1875, 3 }, { 0.125, 4 }, { 0.3125, 4 }, { 0.25, 5 } } }),
+    [](const ::testing::TestParamInfo<DurationCase>& info) { return std::string(info.param.name); });
+
+struct DomainCase {
+    const char* name;
+    SchedToken token;
+    uint64_t units;
+};
+
+class DurationDomainTest : public TasksParamTest<DomainCase> { };
+
+TEST_P(DurationDomainTest, StepsFollowTheDomainUnits)
+{
+    const auto& param = GetParam();
+    auto seen = std::make_shared<Log<uint64_t>>();
+
+    auto routine = Kriya::pattern(
+        [](uint64_t index) { return index; },
+        [seen](uint64_t index) { seen->add(index); },
+        std::vector<double> { 0.25, 0.5 },
+        param.token);
+
+    ASSERT_NE(routine, nullptr);
+    advance(routine, param.token, param.units);
+
+    EXPECT_EQ(seen->items(), first_n(3));
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    Domains,
+    DurationDomainTest,
+    ::testing::Values(
+        DomainCase { "Sample", SchedToken::SAMPLE_ACCURATE, 40000 },
+        DomainCase { "Frame", SchedToken::FRAME_ACCURATE, 50 }),
+    [](const ::testing::TestParamInfo<DomainCase>& info) { return std::string(info.param.name); });
+
+struct ClampCase {
+    const char* name;
+    double value;
+};
+
+class DurationClampTest : public TasksParamTest<ClampCase> { };
+
+TEST_P(DurationClampTest, DurationsAreAtLeastOneUnit)
+{
+    auto seen = std::make_shared<Log<uint64_t>>();
+
+    auto routine = Kriya::pattern(
+        [](uint64_t index) { return index; },
+        [seen](uint64_t index) { seen->add(index); },
+        std::vector<double> { GetParam().value });
+
+    ASSERT_NE(routine, nullptr);
+    scheduler->add_task(routine);
+    run_samples(10);
+
+    EXPECT_EQ(seen->items(), first_n(10));
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    Values,
+    DurationClampTest,
+    ::testing::Values(
+        ClampCase { "Zero", 0.0 },
+        ClampCase { "Negative", -1.0 },
+        ClampCase { "NaN", std::numeric_limits<double>::quiet_NaN() }),
+    [](const ::testing::TestParamInfo<ClampCase>& info) { return std::string(info.param.name); });
+
+TEST_F(TasksTest, BracedDurationsBindDirectly)
+{
+    auto one = std::make_shared<Log<uint64_t>>();
+    auto two = std::make_shared<Log<uint64_t>>();
+
+    auto single = Kriya::pattern(
+        [](uint64_t index) { return index; },
+        [one](uint64_t index) { one->add(index); },
+        { 0.25 });
+    auto pair = Kriya::pattern(
+        [](uint64_t index) { return index; },
+        [two](uint64_t index) { two->add(index); },
+        { 0.25, 0.5 });
+
+    ASSERT_NE(single, nullptr);
+    ASSERT_NE(pair, nullptr);
+    scheduler->add_task(single);
+    scheduler->add_task(pair);
+    run_seconds(0.375);
+
+    EXPECT_EQ(one->items(), first_n(2));
+    EXPECT_EQ(two->items(), first_n(2));
+}
+
+TEST_F(TasksTest, EmptyDurationListReturnsNull)
+{
+    auto routine = Kriya::pattern(
+        [](uint64_t index) { return index; },
+        [](uint64_t) { },
+        std::vector<double> {});
+
+    EXPECT_EQ(routine, nullptr);
+}
+
+TEST_F(TasksTest, DurationFunctionIsAskedOncePerPassAndEndsOnAnEmptyArray)
+{
+    auto seen = std::make_shared<Log<uint64_t>>();
+    auto passes = std::make_shared<Log<uint64_t>>();
+
+    auto routine = Kriya::pattern(
+        [](uint64_t index) { return index; },
+        [seen](uint64_t index) { seen->add(index); },
+        [passes](uint64_t pass) -> std::vector<double> {
+            passes->add(pass);
+            if (pass == 0) {
+                return { 0.25, 0.25 };
+            }
+            if (pass == 1) {
+                return { 0.5 };
+            }
+            return {};
+        });
+
+    ASSERT_NE(routine, nullptr);
+    scheduler->add_task(routine);
+    run_seconds(1.25);
+
+    EXPECT_EQ(seen->items(), first_n(4));
+    EXPECT_EQ(passes->items(), (std::vector<uint64_t> { 0, 1, 2 }));
+    EXPECT_FALSE(routine->is_active());
+}
+
+TEST_F(TasksTest, DurationFunctionThatThrowsEndsThePattern)
+{
+    auto seen = std::make_shared<Log<uint64_t>>();
+
+    auto routine = Kriya::pattern(
+        [](uint64_t index) { return index; },
+        [seen](uint64_t index) { seen->add(index); },
+        [](uint64_t pass) -> std::vector<double> {
+            if (pass == 1) {
+                throw std::runtime_error("durations");
+            }
+            return { 0.25 };
+        });
+
+    ASSERT_NE(routine, nullptr);
+    scheduler->add_task(routine);
+    run_seconds(1.0);
+
+    EXPECT_EQ(seen->items(), first_n(2));
+    EXPECT_FALSE(routine->is_active());
+}
+
+TEST_F(TasksTest, DurationFunctionAcceptsAnyRangeOfNumbers)
+{
+    auto seen = std::make_shared<Log<uint64_t>>();
+
+    auto routine = Kriya::pattern(
+        [](uint64_t index) { return index; },
+        [seen](uint64_t index) { seen->add(index); },
+        [](uint64_t) { return std::array<float, 2> { 0.25F, 0.5F }; });
+
+    ASSERT_NE(routine, nullptr);
+    scheduler->add_task(routine);
+    run_seconds(0.875);
+
+    EXPECT_EQ(seen->items(), first_n(3));
+}
 
 //-----------------------------------------------------------------------------
 // pattern: condition form

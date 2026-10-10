@@ -54,7 +54,7 @@ void schedule_pattern(PatternFunc&& pattern_func, Callback&& callback,
     std::function<void(std::any)> callback_fn = callback_wrapper;
 
     schedule_pattern(std::move(pattern_fn), std::move(callback_fn),
-        interval_seconds, std::move(name));
+        std::vector<double> { interval_seconds }, std::move(name));
 }
 
 template <typename FuncType>

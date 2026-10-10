@@ -90,17 +90,31 @@ MAYAFLUX_API void schedule_sequence(std::vector<std::pair<double, std::function<
 MAYAFLUX_API std::shared_ptr<Vruta::SoundRoutine> schedule_line(float start_value, float end_value, float duration_seconds, uint32_t step_duration = 5, bool retain = true, std::string name = "");
 
 /**
- * @brief Schedules a pattern generator that produces values based on a pattern function
- * and addes it to the default scheduler list for evaluation
+ * @brief Schedules a pattern generator whose steps are spaced by a list of durations
  * @param pattern_func Function that generates pattern values based on step index
  * @param callback Function to call with each pattern value
- * @param interval_seconds Time between pattern steps
- * @param name Name of the metronome task (optional but recommended).
+ * @param durations Seconds to wait after each step, stepped through in order and repeated
+ * @param name Name of the pattern task (optional but recommended).
      If not provided, a default name will be generated.
  * @param token Processing token to determine which scheduler rate to use (default: SAMPLE_ACCURATE)
  *
- * Uses the task scheduler from the default engine.
+ * A single interval is a list of one. Uses the task scheduler from the default engine.
  */
+MAYAFLUX_API void schedule_pattern(std::function<std::any(uint64_t)> pattern_func, std::function<void(std::any)> callback, std::vector<double> durations, std::string name = "", Vruta::ProcessingToken token = Vruta::ProcessingToken::SAMPLE_ACCURATE);
+
+/**
+ * @brief Schedules a pattern generator with one interval between steps
+ * @param pattern_func Function that generates pattern values based on step index
+ * @param callback Function to call with each pattern value
+ * @param interval_seconds Time between pattern steps
+ * @param name Name of the pattern task (optional but recommended).
+     If not provided, a default name will be generated.
+ * @param token Processing token to determine which scheduler rate to use (default: SAMPLE_ACCURATE)
+ * @deprecated Pass a list of durations instead, with the interval as a list of one.
+ *
+ * Forwards to the durations overload. Uses the task scheduler from the default engine.
+ */
+[[deprecated("Pass a std::vector<double> of durations; a single interval is a list of one")]]
 MAYAFLUX_API void schedule_pattern(std::function<std::any(uint64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds, std::string name = "", Vruta::ProcessingToken token = Vruta::ProcessingToken::SAMPLE_ACCURATE);
 
 /**
