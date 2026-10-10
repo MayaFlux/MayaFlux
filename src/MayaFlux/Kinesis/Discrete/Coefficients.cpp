@@ -101,10 +101,9 @@ void biquad_highpass(double frequency, double q, double sample_rate,
 void biquad_bandpass(double frequency, double q, double sample_rate,
     std::vector<double>& a, std::vector<double>& b)
 {
-    const auto t = terms(frequency, q, sample_rate);
-    emit(a, b,
-        1.0 + t.alpha, -2.0 * t.cosw0, 1.0 - t.alpha,
-        t.alpha, 0.0, -t.alpha);
+    const auto biquad = biquad_bandpass(frequency, q, sample_rate);
+    a.assign({ 1.0, biquad.a1, biquad.a2 });
+    b.assign({ biquad.b0, biquad.b1, biquad.b2 });
 }
 
 Biquad biquad_bandpass(double frequency, double q, double sample_rate) noexcept
@@ -120,10 +119,15 @@ Biquad biquad_bandpass(double frequency, double q, double sample_rate) noexcept
     };
 }
 
+double decay_per_sample(double seconds, double sample_rate) noexcept
+{
+    return std::exp(-1.0 / (seconds * sample_rate));
+}
+
 double pole_radius_from_decay(double seconds, double sample_rate) noexcept
 {
     const double tau = std::max(seconds, 1.0 / sample_rate);
-    return std::min(std::exp(-1.0 / (tau * sample_rate)), 1.0 - 1e-12);
+    return std::min(decay_per_sample(tau, sample_rate), 1.0 - 1e-12);
 }
 
 double decay_from_pole_radius(double radius, double sample_rate) noexcept
@@ -186,7 +190,12 @@ std::vector<double> moving_average_weights(size_t count)
 {
     if (count == 0)
         return {};
-    return std::vector<double>(count, 1.0 / static_cast<double>(count));
+
+    auto weights = rectangular(count);
+    const double each = 1.0 / static_cast<double>(count);
+    for (double& w : weights)
+        w *= each;
+    return weights;
 }
 
 void biquad_notch(double frequency, double q, double sample_rate,

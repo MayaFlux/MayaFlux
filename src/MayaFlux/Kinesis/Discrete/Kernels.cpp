@@ -1,5 +1,9 @@
 #include "Kernels.hpp"
 
+#include "MayaFlux/Kinesis/Scalar.hpp"
+#include "MayaFlux/Kinesis/Spatial/Lattice.hpp"
+#include "MayaFlux/Kinesis/Stochastic/Estimate.hpp"
+
 namespace MayaFlux::Kinesis::Discrete {
 
 namespace {
@@ -8,17 +12,7 @@ namespace {
 
     [[nodiscard]] double interpolate_table(std::span<const double> table, double x) noexcept
     {
-        const size_t n = table.size();
-        if (n == 0)
-            return 0.0;
-        if (n == 1)
-            return table.front();
-
-        const double clamped = std::clamp(x, -1.0, 1.0);
-        const double position = (clamped + 1.0) * 0.5 * static_cast<double>(n - 1);
-        const auto index = std::min(static_cast<size_t>(position), n - 2);
-        const double fraction = position - static_cast<double>(index);
-        return table[index] + (table[index + 1] - table[index]) * fraction;
+        return sample_table(table, (std::clamp(x, -1.0, 1.0) + 1.0) * 0.5);
     }
 
     inline void wrap_revolution(double& phase) noexcept
@@ -154,6 +148,366 @@ double phasor_bank(std::span<const double>, std::span<double> coefs) noexcept
         sum += scales[i] * swell * std::sin(phases[i]);
     }
     return sum;
+}
+
+double polynomial_lags(std::span<const double> window, std::span<const double> coefs) noexcept
+{
+    if (coefs.size() < 2)
+        return 0.0;
+
+    const auto lags = static_cast<size_t>(std::max(coefs[0], 0.0));
+    const auto powers = static_cast<size_t>(std::max(coefs[1], 0.0)) + 1;
+    if (coefs.size() < 2 + lags * powers)
+        return 0.0;
+
+    double sum = 0.0;
+    const size_t reach = std::min(lags, window.size());
+    for (size_t k = 0; k < reach; ++k) {
+        const double w = window[k];
+        double power = 1.0;
+        for (size_t j = 0; j < powers; ++j) {
+            sum += coefs[2 + k * powers + j] * power;
+            power *= w;
+        }
+    }
+    return sum;
+}
+
+double fourier_series(std::span<const double> window, std::span<const double> coefs) noexcept
+{
+    if (coefs.empty())
+        return 0.0;
+
+    const double phase = window.empty() ? 0.0 : window.front();
+    const double c1 = std::cos(phase);
+    const double s1 = std::sin(phase);
+
+    double ck = c1;
+    double sk = s1;
+    double sum = coefs.front();
+
+    for (size_t i = 1; i < coefs.size(); i += 2) {
+        sum += coefs[i] * ck;
+        if (i + 1 < coefs.size())
+            sum += coefs[i + 1] * sk;
+
+        const double next_c = ck * c1 - sk * s1;
+        sk = sk * c1 + ck * s1;
+        ck = next_c;
+    }
+    return sum;
+}
+
+double breakpoint_curve(std::span<const double> window, std::span<const double> coefs) noexcept
+{
+    const size_t points = coefs.size() / 2;
+    if (points == 0)
+        return 0.0;
+
+    const double x = window.empty() ? 0.0 : window.front();
+    if (x <= coefs[0])
+        return coefs[1];
+    if (x >= coefs[2 * (points - 1)])
+        return coefs[2 * (points - 1) + 1];
+
+    size_t i = 0;
+    while (i + 2 < points && x > coefs[2 * (i + 1)])
+        ++i;
+
+    const double x0 = coefs[2 * i];
+    const double x1 = coefs[2 * (i + 1)];
+    const double y0 = coefs[2 * i + 1];
+    const double y1 = coefs[2 * (i + 1) + 1];
+    if (x1 <= x0)
+        return y0;
+    return y0 + (y1 - y0) * (x - x0) / (x1 - x0);
+}
+
+double pattern_lookup(std::span<const double> window, std::span<const double> coefs) noexcept
+{
+    if (coefs.size() < 5 || !(coefs[3] > coefs[2]))
+        return 0.0;
+
+    const auto levels = static_cast<uint32_t>(std::max(coefs[0], 1.0));
+    const auto count = static_cast<size_t>(std::max(coefs[1], 1.0));
+    const auto table = coefs.subspan(4);
+
+    size_t total = 1;
+    for (size_t i = 0; i < count; ++i) {
+        if (total > table.size() / levels)
+            return 0.0;
+        total *= levels;
+    }
+
+    const Lattice1D lattice { .resolution = levels, .bounds = { .min = coefs[2], .max = coefs[3] } };
+
+    size_t index = 0;
+    size_t stride = 1;
+    for (size_t i = 0; i < count; ++i) {
+        const double value = i < window.size() ? window[i] : 0.0;
+        index += static_cast<size_t>(lattice.cell_at(value)) * stride;
+        stride *= levels;
+    }
+    return table[index];
+}
+
+double dilate(std::span<const double> window, std::span<const double> coefs) noexcept
+{
+    const size_t count = std::min(window.size(), coefs.size());
+    if (count == 0)
+        return 0.0;
+
+    double best = window[0] + coefs[0];
+    for (size_t k = 1; k < count; ++k)
+        best = std::max(best, window[k] + coefs[k]);
+    return best;
+}
+
+double erode(std::span<const double> window, std::span<const double> coefs) noexcept
+{
+    const size_t count = std::min(window.size(), coefs.size());
+    if (count == 0)
+        return 0.0;
+
+    double best = window[0] - coefs[0];
+    for (size_t k = 1; k < count; ++k)
+        best = std::min(best, window[k] - coefs[k]);
+    return best;
+}
+
+double quantile(std::span<const double> window, std::span<const double> coefs)
+{
+    const size_t n = window.size();
+    if (n == 0)
+        return 0.0;
+
+    thread_local std::vector<double> scratch;
+    scratch.assign(window.begin(), window.end());
+
+    const double q = std::clamp(coefs.empty() ? 0.5 : coefs.front(), 0.0, 1.0);
+    const double position = q * static_cast<double>(n - 1);
+    const auto lower = static_cast<size_t>(position);
+    const double fraction = position - static_cast<double>(lower);
+
+    const auto nth = scratch.begin() + static_cast<std::ptrdiff_t>(lower);
+    std::nth_element(scratch.begin(), nth, scratch.end());
+    const double low = *nth;
+
+    if (fraction <= 0.0 || lower + 1 >= n)
+        return low;
+
+    const double high = *std::min_element(nth + 1, scratch.end());
+    return low + (high - low) * fraction;
+}
+
+double zscore(std::span<const double> window, std::span<const double> coefs) noexcept
+{
+    if (window.size() < 3)
+        return 0.0;
+
+    const auto past = window.subspan(1);
+    double mean = 0.0;
+    for (const double v : past)
+        mean += v;
+    mean /= static_cast<double>(past.size());
+
+    const double floor = coefs.empty() ? 1e-12 : std::max(coefs.front(), 1e-12);
+    const double deviation = std::max(Stochastic::Estimate::stddev(past), floor);
+    return (window.front() - mean) / deviation;
+}
+
+double goertzel(std::span<const double> window, std::span<const double> coefs) noexcept
+{
+    const size_t n = window.size();
+    if (n == 0)
+        return 0.0;
+
+    const double scale = 4.0 / (static_cast<double>(n) * static_cast<double>(n));
+    double total = 0.0;
+
+    for (size_t j = 0; j + 1 < coefs.size(); j += 2) {
+        const double coeff = 2.0 * std::cos(two_pi * coefs[j]);
+        double s1 = 0.0;
+        double s2 = 0.0;
+        for (const double x : window) {
+            const double s = x + coeff * s1 - s2;
+            s2 = s1;
+            s1 = s;
+        }
+        total += coefs[j + 1] * scale * (s1 * s1 + s2 * s2 - coeff * s1 * s2);
+    }
+    return total;
+}
+
+double modular_recurrence(std::span<const double> window, std::span<const double> coefs) noexcept
+{
+    if (coefs.empty())
+        return 0.0;
+
+    const double sum = weighted_sum(window, coefs.subspan(1));
+    const double modulus = coefs.front();
+    if (modulus <= 0.0)
+        return sum;
+    return wrap(sum, 0.0, modulus);
+}
+
+std::vector<double> kuramoto_state(
+    std::span<const double> omegas, double coupling, std::span<const double> phases)
+{
+    const size_t n = omegas.size();
+    std::vector<double> state(2 + 2 * n, 0.0);
+    state.front() = static_cast<double>(n);
+    state.at(1) = coupling;
+
+    for (size_t i = 0; i < n; ++i) {
+        state.at(2 + i) = omegas[i];
+        state.at(2 + n + i) = i < phases.size() ? phases[i] : 0.0;
+    }
+    return state;
+}
+
+double kuramoto(std::span<const double>, std::span<double> coefs) noexcept
+{
+    if (coefs.size() < 2)
+        return 0.0;
+
+    const auto n = static_cast<size_t>(std::max(coefs.front(), 0.0));
+    if (n == 0 || coefs.size() < 2 + 2 * n)
+        return 0.0;
+
+    const double coupling = coefs[1];
+    const auto omegas = coefs.subspan(2, n);
+    const auto phases = coefs.subspan(2 + n, n);
+    const double inverse = 1.0 / static_cast<double>(n);
+
+    double field_cos = 0.0;
+    double field_sin = 0.0;
+    for (const double phase : phases) {
+        field_cos += std::cos(phase);
+        field_sin += std::sin(phase);
+    }
+    field_cos *= inverse;
+    field_sin *= inverse;
+
+    double mix = 0.0;
+    for (size_t i = 0; i < n; ++i) {
+        const double pull = coupling * (field_sin * std::cos(phases[i]) - field_cos * std::sin(phases[i]));
+        phases[i] += omegas[i] + pull;
+        wrap_revolution(phases[i]);
+        mix += std::sin(phases[i]);
+    }
+    return mix * inverse;
+}
+
+std::vector<double> coupled_map_lattice_state(
+    std::span<const double> cells, double r, double epsilon)
+{
+    const size_t n = cells.size();
+    std::vector<double> state(3 + 2 * n, 0.0);
+    state.front() = static_cast<double>(n);
+    state.at(1) = r;
+    state.at(2) = epsilon;
+
+    for (size_t i = 0; i < n; ++i)
+        state.at(3 + i) = cells[i];
+    return state;
+}
+
+double coupled_map_lattice(std::span<const double>, std::span<double> coefs) noexcept
+{
+    if (coefs.size() < 3)
+        return 0.0;
+
+    const auto n = static_cast<size_t>(std::max(coefs.front(), 0.0));
+    if (n == 0 || coefs.size() < 3 + 2 * n)
+        return 0.0;
+
+    const double r = coefs[1];
+    const double epsilon = coefs[2];
+    const auto cells = coefs.subspan(3, n);
+    const auto mapped = coefs.subspan(3 + n, n);
+
+    for (size_t i = 0; i < n; ++i)
+        mapped[i] = r * cells[i] * (1.0 - cells[i]);
+
+    double sum = 0.0;
+    for (size_t i = 0; i < n; ++i) {
+        const double left = mapped[(i + n - 1) % n];
+        const double right = mapped[(i + 1) % n];
+        cells[i] = (1.0 - epsilon) * mapped[i] + 0.5 * epsilon * (left + right);
+        sum += cells[i];
+    }
+    return sum / static_cast<double>(n) - 0.5;
+}
+
+std::vector<double> lorenz_state(
+    double dt, double sigma, double rho, double beta, double x, double y, double z)
+{
+    return { sigma, rho, beta, dt, x, y, z };
+}
+
+double lorenz_attractor(std::span<const double>, std::span<double> coefs) noexcept
+{
+    if (coefs.size() < 7)
+        return 0.0;
+
+    const double sigma = coefs[0];
+    const double rho = coefs[1];
+    const double beta = coefs[2];
+    const double dt = coefs[3];
+
+    using Vec = std::array<double, 3>;
+    const auto derivative = [sigma, rho, beta](const Vec& p) -> Vec {
+        return { sigma * (p[1] - p[0]), p[0] * (rho - p[2]) - p[1], p[0] * p[1] - beta * p[2] };
+    };
+    const auto advanced = [](const Vec& p, const Vec& d, double h) -> Vec {
+        return { p[0] + h * d[0], p[1] + h * d[1], p[2] + h * d[2] };
+    };
+
+    const Vec start { coefs[4], coefs[5], coefs[6] };
+    const Vec k1 = derivative(start);
+    const Vec k2 = derivative(advanced(start, k1, 0.5 * dt));
+    const Vec k3 = derivative(advanced(start, k2, 0.5 * dt));
+    const Vec k4 = derivative(advanced(start, k3, dt));
+
+    for (size_t i = 0; i < 3; ++i)
+        coefs[4 + i] = start[i] + dt / 6.0 * (k1[i] + 2.0 * k2[i] + 2.0 * k3[i] + k4[i]);
+
+    return coefs[4];
+}
+
+std::vector<double> step_sequence_state(std::span<const double> values, double threshold)
+{
+    std::vector<double> state(4 + values.size(), 0.0);
+    state.at(0) = threshold;
+    state.at(1) = 0.0;
+    state.at(2) = 1.0;
+    state.at(3) = static_cast<double>(values.size());
+
+    for (size_t i = 0; i < values.size(); ++i)
+        state.at(4 + i) = values[i];
+    return state;
+}
+
+double step_sequence(std::span<const double> window, std::span<double> coefs) noexcept
+{
+    if (coefs.size() < 5)
+        return 0.0;
+
+    const auto n = static_cast<size_t>(std::max(coefs[3], 0.0));
+    if (n == 0 || coefs.size() < 4 + n)
+        return 0.0;
+
+    const bool high = !window.empty() && window.front() > coefs[0];
+    const bool latched = coefs[2] > 0.5;
+    auto cursor = static_cast<size_t>(std::max(coefs[1], 0.0)) % n;
+
+    if (high && !latched)
+        cursor = (cursor + 1) % n;
+
+    coefs[1] = static_cast<double>(cursor);
+    coefs[2] = high ? 1.0 : 0.0;
+    return coefs[4 + cursor];
 }
 
 } // namespace MayaFlux::Kinesis::Discrete

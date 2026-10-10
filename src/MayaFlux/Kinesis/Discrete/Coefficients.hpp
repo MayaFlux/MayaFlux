@@ -344,10 +344,23 @@ struct Biquad {
     double frequency, double q, double sample_rate) noexcept;
 
 /**
+ * @brief Per-sample factor that falls by 1/e in a given time.
+ * @param seconds Time for the factor's powers to fall by 1/e
+ * @param sample_rate Sample rate in Hz
+ * @return exp(-1 / (seconds * sample_rate)), with no floor or cap
+ *
+ * The bare exponential behind pole_radius_from_decay and any amplitude that
+ * decays by one factor per sample. A time of zero gives zero.
+ */
+[[nodiscard]] MAYAFLUX_API double decay_per_sample(
+    double seconds, double sample_rate) noexcept;
+
+/**
  * @brief Pole radius whose impulse response falls by 1/e in a given time.
  * @param seconds Ring time, floored at one sample
  * @param sample_rate Sample rate in Hz
- * @return exp(-1 / (seconds * sample_rate)), held just below the unit circle
+ * @return decay_per_sample, floored at one sample and held just below the
+ *         unit circle
  *
  * There is no upper limit on the ring time other than the radius staying
  * strictly inside the unit circle.
@@ -400,6 +413,9 @@ struct Biquad {
 
 /**
  * @brief Weights that fall by a constant ratio with age.
+ *
+ * Takes the ratio and allows any sign. ramp_exponential in Transform is the
+ * same progression fixed by its two endpoints, positive only.
  * @param count Number of weights
  * @param ratio Factor between one weight and the next older one
  * @param unit_sum Scale so the weights sum to 1
@@ -409,7 +425,7 @@ struct Biquad {
     size_t count, double ratio, bool unit_sum = false);
 
 /**
- * @brief Equal weights summing to 1.
+ * @brief Equal weights summing to 1: Taper::rectangular scaled by 1 / count.
  */
 [[nodiscard]] MAYAFLUX_API std::vector<double> moving_average_weights(size_t count);
 

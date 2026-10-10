@@ -221,11 +221,27 @@ public:
     void reset();
 
     /**
+     * @brief An independent node with the same behaviour and fresh history
+     *
+     * Same mode, buffer size, function, scale and coefficient array as the
+     * array stands now, so a state-bearing kernel's clone continues from the
+     * current state. History, saved state and hooks are not copied. The input
+     * node, if any, is shared. Closure state captured by a function is shared
+     * too; the coefficient array is the state that is not.
+     *
+     * Attach one clone per channel instead of one node to several.
+     */
+    [[nodiscard]] std::shared_ptr<Polynomial> clone() const;
+
+    /**
      * @brief Sets the polynomial coefficients (for direct mode)
      * @param coefficients Vector of polynomial coefficients (highest power first)
      *
      * Updates the polynomial function to use the specified coefficients.
      * This allows dynamically changing the polynomial during operation.
+     * A node built from a coefficient list evaluates this array directly, so the
+     * change applies on the next sample. A node built from a function keeps its
+     * function; the array then only reaches coefficient-aware buffer functions.
      * Updates of unchanged size are written in place; changing the size should
      * happen on the scheduler tick, not concurrently with processing.
      */
@@ -411,9 +427,21 @@ private:
      */
     BufferFunction bind_coefficients(CoefBufferFunction function);
 
+    /**
+     * @brief Evaluates the coefficient list at x, highest power first
+     * @param coefficients Coefficient vector
+     * @param x Evaluation point
+     * @return Sum of coefficient * x^k, accumulated from the last coefficient
+     *
+     * The one loop behind create_polynomial_function and the live DIRECT
+     * evaluation of a node built from coefficients.
+     */
+    static double power_sum(const std::vector<double>& coefficients, double x) noexcept;
+
     PolynomialMode m_mode; ///< Current processing mode
     DirectFunction m_direct_function; ///< Function for direct mode
     BufferFunction m_buffer_function; ///< Function for recursive/feedforward mode
+    CoefBufferFunction m_coef_function; ///< The function behind m_buffer_function while a CoefBufferFunction is bound
     std::vector<double> m_coefficients; ///< Polynomial coefficients (if using coefficient-based definition)
     std::span<double> m_external_buffer_context; ///< View into external buffer
 
@@ -423,6 +451,7 @@ private:
     std::vector<double> m_saved_history_state; ///< Saved state of the history buffer
     std::vector<double> m_saved_coefficients; ///< Saved coefficient array, used when a CoefBufferFunction is bound
     bool m_coef_bound {}; ///< True once a CoefBufferFunction has been bound
+    bool m_coef_direct {}; ///< True while DIRECT output is evaluated from m_coefficients
 
     size_t m_buffer_size {}; ///< Maximum size of the buffers
     double m_scale_factor; ///< Scaling factor for output

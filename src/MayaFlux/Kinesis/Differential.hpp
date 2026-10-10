@@ -822,6 +822,9 @@ template <typename T>
  * @param samples Newest-first span
  * @param window Number of samples, minimum 2
  * @return Sum of |samples[i] - samples[i + 1]|
+ *
+ * TemporalMeasures::roughness is the same sum as a mean per second over a
+ * chronological span.
  */
 [[nodiscard]] inline double path_length(std::span<const double> samples, size_t window) noexcept
 {

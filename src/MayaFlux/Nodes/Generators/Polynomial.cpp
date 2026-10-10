@@ -11,6 +11,7 @@ Polynomial::Polynomial(const std::vector<double>& coefficients)
     , m_context_gpu(0.0, m_mode, m_buffer_size, {}, {}, m_coefficients, get_gpu_data_buffer())
 {
     m_direct_function = create_polynomial_function(coefficients);
+    m_coef_direct = true;
 }
 
 Polynomial::Polynomial(DirectFunction function)
@@ -45,7 +46,9 @@ Polynomial::Polynomial(CoefBufferFunction function, PolynomialMode mode, size_t 
     , m_context(0.0, m_mode, m_buffer_size, {}, {}, m_coefficients)
     , m_context_gpu(0.0, m_mode, m_buffer_size, {}, {}, m_coefficients, get_gpu_data_buffer())
 {
+    m_coef_function = function;
     m_buffer_function = bind_coefficients(std::move(function));
+    m_coef_bound = true;
 }
 
 double Polynomial::process_sample(double input)
@@ -65,7 +68,7 @@ double Polynomial::process_sample(double input)
 
     switch (m_mode) {
     case PolynomialMode::DIRECT:
-        result = m_direct_function(input);
+        result = m_coef_direct ? power_sum(m_coefficients, input) : m_direct_function(input);
         break;
 
     case PolynomialMode::RECURSIVE:
@@ -146,10 +149,13 @@ void Polynomial::set_direct_function(DirectFunction function)
 {
     m_direct_function = std::move(function);
     m_mode = PolynomialMode::DIRECT;
+    m_coef_direct = false;
 }
 
 void Polynomial::set_buffer_function(BufferFunction function, PolynomialMode mode, size_t buffer_size)
 {
+    m_coef_bound = false;
+    m_coef_function = nullptr;
     m_buffer_function = std::move(function);
     m_mode = mode;
 
@@ -162,15 +168,36 @@ void Polynomial::set_buffer_function(BufferFunction function, PolynomialMode mod
 
 void Polynomial::set_buffer_function(CoefBufferFunction function, PolynomialMode mode, size_t buffer_size)
 {
-    set_buffer_function(bind_coefficients(std::move(function)), mode, buffer_size);
+    set_buffer_function(bind_coefficients(function), mode, buffer_size);
+    m_coef_function = std::move(function);
+    m_coef_bound = true;
 }
 
 Polynomial::BufferFunction Polynomial::bind_coefficients(CoefBufferFunction function)
 {
-    m_coef_bound = true;
     return [this, function = std::move(function)](std::span<double> window) {
         return function(window, std::span<double>(m_coefficients));
     };
+}
+
+std::shared_ptr<Polynomial> Polynomial::clone() const
+{
+    std::shared_ptr<Polynomial> copy;
+
+    if (m_coef_bound) {
+        copy = std::make_shared<Polynomial>(m_coef_function, m_mode, m_buffer_size, m_coefficients);
+    } else if (m_mode == PolynomialMode::DIRECT) {
+        copy = m_coef_direct
+            ? std::make_shared<Polynomial>(m_coefficients)
+            : std::make_shared<Polynomial>(m_direct_function);
+    } else {
+        copy = std::make_shared<Polynomial>(m_buffer_function, m_mode, m_buffer_size);
+    }
+
+    copy->m_coefficients = m_coefficients;
+    copy->m_scale_factor = m_scale_factor;
+    copy->m_input_node = m_input_node;
+    return copy;
 }
 
 void Polynomial::set_initial_conditions(const std::vector<double>& initial_values)
@@ -196,16 +223,21 @@ std::span<double> Polynomial::external_context_view(double input)
 Polynomial::DirectFunction Polynomial::create_polynomial_function(const std::vector<double>& coefficients)
 {
     return [coefficients](double x) {
-        double result = 0.0;
-        double x_power = 1.0;
-
-        for (double coefficient : std::ranges::reverse_view(coefficients)) {
-            result += coefficient * x_power;
-            x_power *= x;
-        }
-
-        return result;
+        return power_sum(coefficients, x);
     };
+}
+
+double Polynomial::power_sum(const std::vector<double>& coefficients, double x) noexcept
+{
+    double result = 0.0;
+    double x_power = 1.0;
+
+    for (double coefficient : std::ranges::reverse_view(coefficients)) {
+        result += coefficient * x_power;
+        x_power *= x;
+    }
+
+    return result;
 }
 
 void Polynomial::update_context(double value)

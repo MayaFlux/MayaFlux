@@ -143,6 +143,15 @@ public:
         m_pending_polynomial = polynomial;
     }
 
+    /**
+     * @brief Same configuration over an independent copy of the node
+     *
+     * For attaching one processor per channel: the clone has its own history
+     * and coefficient array (see Polynomial::clone), so channels do not share
+     * state. The clone owns its node.
+     */
+    [[nodiscard]] std::shared_ptr<PolynomialProcessor> clone() const;
+
 private:
     std::shared_ptr<Nodes::Generator::Polynomial> m_polynomial; ///< Polynomial node for processing
     ProcessMode m_process_mode {}; ///< Current processing mode

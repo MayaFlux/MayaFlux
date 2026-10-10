@@ -1,6 +1,7 @@
 #include "ModalNetwork.hpp"
 
 #include "MayaFlux/Kinesis/Discrete/Analysis.hpp"
+#include "MayaFlux/Kinesis/Discrete/Coefficients.hpp"
 #include "MayaFlux/Nodes/Filters/Filter.hpp"
 #include "MayaFlux/Nodes/Generators/Sine.hpp"
 
@@ -110,7 +111,7 @@ void ModalNetwork::initialize_modes(const std::vector<double>& ratios,
         mode.oscillator = std::make_shared<Generator::Sine>(static_cast<float>(mode.current_frequency));
         mode.oscillator->set_in_network(true);
 
-        mode.decay_coefficient = std::exp(-1.0 / (base_decay * m_sample_rate));
+        mode.decay_coefficient = Kinesis::Discrete::decay_per_sample(base_decay, m_sample_rate);
 
         m_modes.push_back(std::move(mode));
     }

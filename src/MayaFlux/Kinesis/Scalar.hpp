@@ -64,6 +64,33 @@ template <typename T>
 }
 
 // =============================================================================
+// Tables
+// =============================================================================
+
+/**
+ * @brief Read an evenly spaced table at a position in [0, 1], interpolating linearly.
+ * @param table Samples spread evenly from position 0 (first) to 1 (last)
+ * @param t Position, clamped to [0, 1]
+ * @return Interpolated value; zero for an empty table, the entry for a single one
+ *
+ * The lookup under TimeMaps::piecewise_linear and the table kernels in
+ * Discrete/Kernels.
+ */
+[[nodiscard]] inline double sample_table(std::span<const double> table, double t) noexcept
+{
+    const size_t n = table.size();
+    if (n == 0)
+        return 0.0;
+    if (n == 1)
+        return table.front();
+
+    const double x = std::clamp(t, 0.0, 1.0) * static_cast<double>(n - 1);
+    const auto i = std::min(static_cast<size_t>(x), n - 2);
+    const double f = x - static_cast<double>(i);
+    return table[i] + (table[i + 1] - table[i]) * f;
+}
+
+// =============================================================================
 // Smoothing
 // =============================================================================
 

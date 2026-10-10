@@ -147,10 +147,7 @@ inline TimeMap piecewise_linear(std::vector<double> points, double duration)
             return points.back();
         }
 
-        const double x = std::clamp(t / duration, 0.0, 1.0) * static_cast<double>(points.size() - 1);
-        const auto i = std::min(static_cast<size_t>(x), points.size() - 2);
-        const double f = x - static_cast<double>(i);
-        return points[i] + (points[i + 1] - points[i]) * f;
+        return sample_table(points, t / duration);
     } };
 }
 

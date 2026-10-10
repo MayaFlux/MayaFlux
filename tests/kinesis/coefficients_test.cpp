@@ -28,6 +28,14 @@ TEST(BiquadByValueTest, MatchesTheVectorForm)
     }
 }
 
+TEST(DecayTest, DecayPerSampleIsTheBareExponentialWithNoFloorOrCap)
+{
+    EXPECT_DOUBLE_EQ(Discrete::decay_per_sample(0.5, sample_rate), std::exp(-1.0 / (0.5 * sample_rate)));
+    EXPECT_DOUBLE_EQ(Discrete::decay_per_sample(0.0, sample_rate), 0.0);
+    EXPECT_DOUBLE_EQ(Discrete::decay_per_sample(1e12, sample_rate), 1.0);
+    EXPECT_DOUBLE_EQ(Discrete::pole_radius_from_decay(0.5, sample_rate), Discrete::decay_per_sample(0.5, sample_rate));
+}
+
 TEST(DecayTest, PoleRadiusAndDecayAreInverse)
 {
     for (const double seconds : { 0.001, 0.05, 1.0, 30.0 }) {
