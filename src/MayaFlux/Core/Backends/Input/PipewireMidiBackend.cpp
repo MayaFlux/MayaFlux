@@ -184,8 +184,10 @@ void PipewireMidiBackend::stop()
     std::vector<uint32_t> to_close;
     {
         std::lock_guard lock(m_devices_mutex);
-        for (const auto& [id, state] : m_open_devices)
-            to_close.push_back(id);
+        for (const auto& [id, state] : m_open_devices) {
+            if (id != m_virtual_device_id)
+                to_close.push_back(id);
+        }
     }
 
     for (uint32_t id : to_close)
@@ -212,6 +214,11 @@ void PipewireMidiBackend::shutdown()
 
     if (m_thread_loop)
         pw_thread_loop_stop(m_thread_loop);
+
+    if (m_virtual_device_id != 0) {
+        close_device(m_virtual_device_id);
+        m_virtual_device_id = 0;
+    }
 
     {
         std::lock_guard lock(m_devices_mutex);
@@ -258,6 +265,62 @@ size_t PipewireMidiBackend::refresh_devices()
 {
     std::lock_guard lock(m_devices_mutex);
     return m_enumerated_devices.size();
+}
+
+void PipewireMidiBackend::run_seq_poll(const std::shared_ptr<MIDIPortState>& state)
+{
+    int npfds = snd_seq_poll_descriptors_count(state->seq_handle, POLLIN);
+    std::vector<struct pollfd> pfds(npfds);
+    snd_seq_poll_descriptors(state->seq_handle, pfds.data(), npfds, POLLIN);
+
+    while (state->active.load()) {
+        int ret = poll(pfds.data(), npfds, 100);
+        if (ret <= 0)
+            continue;
+
+        snd_seq_event_t* ev = nullptr;
+        while (state->active.load()
+            && snd_seq_event_input(state->seq_handle, &ev) >= 0 && ev) {
+            uint8_t status = 0, d1 = 0, d2 = 0;
+            switch (ev->type) {
+            case SND_SEQ_EVENT_NOTEON:
+                status = 0x90 | (ev->data.note.channel & 0x0F);
+                d1 = ev->data.note.note;
+                d2 = ev->data.note.velocity;
+                break;
+            case SND_SEQ_EVENT_NOTEOFF:
+                status = 0x80 | (ev->data.note.channel & 0x0F);
+                d1 = ev->data.note.note;
+                d2 = ev->data.note.velocity;
+                break;
+            case SND_SEQ_EVENT_CONTROLLER:
+                status = 0xB0 | (ev->data.control.channel & 0x0F);
+                d1 = static_cast<uint8_t>(ev->data.control.param);
+                d2 = static_cast<uint8_t>(ev->data.control.value);
+                break;
+            case SND_SEQ_EVENT_PITCHBEND:
+                status = 0xE0 | (ev->data.control.channel & 0x0F);
+                d1 = static_cast<uint8_t>((ev->data.control.value + 8192) & 0x7F);
+                d2 = static_cast<uint8_t>(((ev->data.control.value + 8192) >> 7) & 0x7F);
+                break;
+            case SND_SEQ_EVENT_PGMCHANGE:
+                status = 0xC0 | (ev->data.control.channel & 0x0F);
+                d1 = static_cast<uint8_t>(ev->data.control.value);
+                break;
+            case SND_SEQ_EVENT_CHANPRESS:
+                status = 0xD0 | (ev->data.control.channel & 0x0F);
+                d1 = static_cast<uint8_t>(ev->data.control.value);
+                break;
+            default:
+                continue;
+            }
+
+            if (state->input_callback) {
+                state->input_callback(
+                    InputValue::make_midi(status, d1, d2, state->device_id));
+            }
+        }
+    }
 }
 
 bool PipewireMidiBackend::open_device(uint32_t device_id)
@@ -333,60 +396,7 @@ bool PipewireMidiBackend::open_device(uint32_t device_id)
 
     state->active.store(true);
 
-    state->poll_thread = std::thread([state]() {
-        int npfds = snd_seq_poll_descriptors_count(state->seq_handle, POLLIN);
-        std::vector<struct pollfd> pfds(npfds);
-        snd_seq_poll_descriptors(state->seq_handle, pfds.data(), npfds, POLLIN);
-
-        while (state->active.load()) {
-            int ret = poll(pfds.data(), npfds, 100);
-            if (ret <= 0)
-                continue;
-
-            snd_seq_event_t* ev = nullptr;
-            while (state->active.load()
-                && snd_seq_event_input(state->seq_handle, &ev) >= 0 && ev) {
-                uint8_t status = 0, d1 = 0, d2 = 0;
-                switch (ev->type) {
-                case SND_SEQ_EVENT_NOTEON:
-                    status = 0x90 | (ev->data.note.channel & 0x0F);
-                    d1 = ev->data.note.note;
-                    d2 = ev->data.note.velocity;
-                    break;
-                case SND_SEQ_EVENT_NOTEOFF:
-                    status = 0x80 | (ev->data.note.channel & 0x0F);
-                    d1 = ev->data.note.note;
-                    d2 = ev->data.note.velocity;
-                    break;
-                case SND_SEQ_EVENT_CONTROLLER:
-                    status = 0xB0 | (ev->data.control.channel & 0x0F);
-                    d1 = static_cast<uint8_t>(ev->data.control.param);
-                    d2 = static_cast<uint8_t>(ev->data.control.value);
-                    break;
-                case SND_SEQ_EVENT_PITCHBEND:
-                    status = 0xE0 | (ev->data.control.channel & 0x0F);
-                    d1 = static_cast<uint8_t>((ev->data.control.value + 8192) & 0x7F);
-                    d2 = static_cast<uint8_t>(((ev->data.control.value + 8192) >> 7) & 0x7F);
-                    break;
-                case SND_SEQ_EVENT_PGMCHANGE:
-                    status = 0xC0 | (ev->data.control.channel & 0x0F);
-                    d1 = static_cast<uint8_t>(ev->data.control.value);
-                    break;
-                case SND_SEQ_EVENT_CHANPRESS:
-                    status = 0xD0 | (ev->data.control.channel & 0x0F);
-                    d1 = static_cast<uint8_t>(ev->data.control.value);
-                    break;
-                default:
-                    continue;
-                }
-
-                if (state->input_callback) {
-                    state->input_callback(
-                        InputValue::make_midi(status, d1, d2, state->device_id));
-                }
-            }
-        }
-    });
+    state->poll_thread = std::thread([state]() { run_seq_poll(state); });
 
     {
         std::lock_guard lock(m_devices_mutex);
@@ -519,33 +529,56 @@ void PipewireMidiBackend::create_virtual_port_if_enabled()
         return;
     }
 
-    pw_thread_loop_lock(m_thread_loop);
-
-    pw_properties* props = pw_properties_new(
-        PW_KEY_MEDIA_TYPE, "Midi",
-        PW_KEY_MEDIA_CATEGORY, "Playback",
-        PW_KEY_MEDIA_CLASS, "Stream/Output/Midi",
-        PW_KEY_APP_NAME, "MayaFlux",
-        PW_KEY_NODE_NAME, m_config.virtual_port_name.c_str(),
-        nullptr);
-
-    pw_stream* virt = pw_stream_new_simple(
-        pw_thread_loop_get_loop(m_thread_loop),
-        m_config.virtual_port_name.c_str(),
-        props,
-        nullptr,
-        nullptr);
-
-    if (virt) {
-        pw_stream_connect(virt, PW_DIRECTION_OUTPUT, PW_ID_ANY,
-            PW_STREAM_FLAG_AUTOCONNECT, nullptr, 0);
-        MF_INFO(C, X, "Created virtual MIDI port: {}", m_config.virtual_port_name);
-    } else {
-        MF_ERROR(C, X, "Failed to create virtual MIDI port: {}",
-            m_config.virtual_port_name);
+    auto state = std::make_shared<MIDIPortState>();
+    {
+        std::lock_guard cb_lock(m_callback_mutex);
+        state->input_callback = m_input_callback;
     }
 
-    pw_thread_loop_unlock(m_thread_loop);
+    if (snd_seq_open(&state->seq_handle, "default", SND_SEQ_OPEN_INPUT, SND_SEQ_NONBLOCK) < 0) {
+        MF_ERROR(C, X, "snd_seq_open failed for virtual MIDI port '{}'", m_config.virtual_port_name);
+        return;
+    }
+
+    snd_seq_set_client_name(state->seq_handle, m_config.virtual_port_name.c_str());
+
+    state->seq_port = snd_seq_create_simple_port(
+        state->seq_handle, m_config.virtual_port_name.c_str(),
+        SND_SEQ_PORT_CAP_WRITE | SND_SEQ_PORT_CAP_SUBS_WRITE,
+        SND_SEQ_PORT_TYPE_MIDI_GENERIC | SND_SEQ_PORT_TYPE_APPLICATION);
+
+    if (state->seq_port < 0) {
+        snd_seq_close(state->seq_handle);
+        state->seq_handle = nullptr;
+        MF_ERROR(C, X, "Failed to create virtual MIDI port: {}", m_config.virtual_port_name);
+        return;
+    }
+
+    {
+        std::lock_guard lock(m_devices_mutex);
+        const uint32_t dev_id = m_next_device_id++;
+
+        state->device_id = dev_id;
+        state->info.id = dev_id;
+        state->info.name = m_config.virtual_port_name;
+        state->info.pw_global_id = UINT32_MAX;
+        state->info.alsa_client = snd_seq_client_id(state->seq_handle);
+        state->info.alsa_port = state->seq_port;
+        state->info.backend_type = InputType::MIDI;
+        state->info.is_connected = true;
+        state->info.is_input = true;
+        state->info.is_output = false;
+        state->info.port_number = static_cast<uint8_t>(dev_id & 0xFF);
+
+        state->active.store(true);
+        state->poll_thread = std::thread([state]() { run_seq_poll(state); });
+
+        m_enumerated_devices[dev_id] = state->info;
+        m_open_devices.insert_or_assign(dev_id, state);
+        m_virtual_device_id = dev_id;
+    }
+
+    MF_INFO(C, X, "Created virtual MIDI port: {}", m_config.virtual_port_name);
 }
 
 void PipewireMidiBackend::notify_device_change(const InputDeviceInfo& info, bool connected)
