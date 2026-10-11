@@ -995,6 +995,271 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::Bool()),
     terminate_label);
 
+//-----------------------------------------------------------------------------
+// Termination barrier
+//-----------------------------------------------------------------------------
+
+class TerminationBarrierTest : public SchedulerParamTest<SchedToken> {
+protected:
+    void seat(const std::shared_ptr<Vruta::Routine>& routine, const std::string& name)
+    {
+        const SchedToken token = GetParam();
+        if (token == SchedToken::FRAME_ACCURATE) {
+            use_frame_driver();
+        }
+        scheduler->add_task(routine, name);
+        if (token == SchedToken::CONDITIONAL) {
+            ASSERT_TRUE(wait_until([this, &name] { return scheduler->get_task(name) != nullptr; }));
+        } else {
+            step(token, 1);
+        }
+    }
+};
+
+TEST_P(TerminationBarrierTest, SubmissionsFromCompletionCallbacksAreRejected)
+{
+    const SchedToken token = GetParam();
+    auto victim = make_counting(token, make_count());
+    auto trigger = make_counting(token, make_count());
+    auto intruder_steps = make_count();
+    auto intruder = make_counting(token, intruder_steps);
+    auto fired = make_count();
+    auto cancel_accepted = make_count();
+    auto cancel_routine_accepted = make_count();
+    auto restart_accepted = make_count();
+    auto saw_terminating = make_count();
+
+    trigger->on_complete([&, this] {
+        scheduler->add_task(intruder, "intruder", true);
+        cancel_accepted->store(scheduler->cancel_task("victim") ? 1 : 0);
+        cancel_routine_accepted->store(scheduler->cancel_task(victim) ? 1 : 0);
+        restart_accepted->store(scheduler->restart_task("victim") ? 1 : 0);
+        saw_terminating->store(scheduler->is_terminating() ? 1 : 0);
+        fired->fetch_add(1);
+    });
+
+    seat(victim, "victim");
+    seat(trigger, "trigger");
+
+    scheduler->terminate_all_tasks();
+
+    EXPECT_EQ(fired->load(), 1);
+    EXPECT_EQ(saw_terminating->load(), 1);
+    EXPECT_EQ(cancel_accepted->load(), 0);
+    EXPECT_EQ(cancel_routine_accepted->load(), 0);
+    EXPECT_EQ(restart_accepted->load(), 0);
+    EXPECT_EQ(intruder_steps->load(), 0);
+    EXPECT_FALSE(scheduler->is_terminating());
+    EXPECT_EQ(scheduler->get_task("intruder"), nullptr);
+
+    scheduler->process_token(SchedToken::SAMPLE_ACCURATE, 2);
+    step(token, 2);
+    EXPECT_EQ(scheduler->get_task("intruder"), nullptr);
+    EXPECT_TRUE(scheduler->get_task_names(token).empty());
+    EXPECT_EQ(intruder_steps->load(), 0);
+}
+
+TEST_P(TerminationBarrierTest, RecursiveTerminationFromCallbackReturnsWithoutRepeating)
+{
+    const SchedToken token = GetParam();
+    auto routine = make_counting(token, make_count());
+    auto other = make_counting(token, make_count());
+    auto completions = make_count();
+    auto other_completions = make_count();
+    routine->on_complete([this, completions] {
+        scheduler->terminate_all_tasks();
+        completions->fetch_add(1);
+    });
+    other->on_complete([other_completions] { other_completions->fetch_add(1); });
+
+    seat(routine, "routine");
+    seat(other, "other");
+
+    scheduler->terminate_all_tasks();
+
+    EXPECT_EQ(completions->load(), 1);
+    EXPECT_EQ(other_completions->load(), 1);
+    EXPECT_FALSE(scheduler->is_terminating());
+    EXPECT_TRUE(scheduler->get_task_names(token).empty());
+}
+
+TEST_P(TerminationBarrierTest, RepeatedTerminationIsHarmlessAndSchedulerIsReusable)
+{
+    const SchedToken token = GetParam();
+    auto first = make_counting(token, make_count());
+    auto completions = make_count();
+    first->on_complete([completions] { completions->fetch_add(1); });
+    seat(first, "first");
+
+    scheduler->terminate_all_tasks();
+    scheduler->terminate_all_tasks();
+
+    EXPECT_EQ(completions->load(), 1);
+    EXPECT_FALSE(scheduler->is_terminating());
+
+    auto later_steps = make_count();
+    auto later = make_counting(token, later_steps);
+    seat(later, "later");
+
+    if (token == SchedToken::CONDITIONAL) {
+        EXPECT_TRUE(wait_until([&later_steps] { return later_steps->load() > 0; }));
+    } else {
+        step(token, 3);
+        EXPECT_GT(later_steps->load(), 0);
+    }
+    EXPECT_EQ(scheduler->get_task("later"), later);
+
+    scheduler->terminate_all_tasks();
+    EXPECT_TRUE(scheduler->get_task_names(token).empty());
+    EXPECT_TRUE(later->get_should_terminate());
+}
+
+TEST_P(TerminationBarrierTest, TerminationFromCallbackDuringOrdinaryDrainIsIgnored)
+{
+    const SchedToken token = GetParam();
+    auto cancelled = make_counting(token, make_count());
+    auto bystander = make_counting(token, make_count());
+    auto fired = make_count();
+    cancelled->on_complete([this, fired] {
+        scheduler->terminate_all_tasks();
+        fired->fetch_add(1);
+    });
+
+    seat(cancelled, "cancelled");
+    seat(bystander, "bystander");
+
+    ASSERT_TRUE(scheduler->cancel_task("cancelled"));
+    if (token == SchedToken::CONDITIONAL) {
+        ASSERT_TRUE(wait_until([&fired] { return fired->load() == 1; }));
+    } else {
+        step(token, 1);
+    }
+
+    EXPECT_EQ(fired->load(), 1);
+    EXPECT_FALSE(scheduler->is_terminating());
+    EXPECT_EQ(scheduler->get_task("bystander"), bystander);
+    EXPECT_FALSE(bystander->get_should_terminate());
+    EXPECT_EQ(scheduler->get_task("cancelled"), nullptr);
+}
+
+TEST_P(TerminationBarrierTest, QueuedCancelAndReplacementAreResolvedBeforeClearing)
+{
+    const SchedToken token = GetParam();
+    if (token == SchedToken::CONDITIONAL) {
+        GTEST_SKIP() << "Conditional queue is drained concurrently by its worker";
+    }
+
+    auto original = make_counting(token, make_count());
+    auto replacement = make_counting(token, make_count());
+    auto cancelled = make_counting(token, make_count());
+    auto completions = make_count();
+    original->on_complete([completions] { completions->fetch_add(1); });
+    replacement->on_complete([completions] { completions->fetch_add(1); });
+    cancelled->on_complete([completions] { completions->fetch_add(1); });
+
+    seat(original, "same");
+    seat(cancelled, "cancelled");
+    scheduler->add_task(replacement, "same");
+    ASSERT_TRUE(scheduler->cancel_task("cancelled"));
+
+    scheduler->terminate_all_tasks();
+
+    EXPECT_EQ(completions->load(), 3);
+    EXPECT_TRUE(original->get_should_terminate());
+    EXPECT_TRUE(replacement->get_should_terminate());
+    EXPECT_FALSE(replacement->is_active());
+    EXPECT_TRUE(scheduler->get_task_names(token).empty());
+    scheduler->process_token(SchedToken::SAMPLE_ACCURATE, 1);
+    EXPECT_TRUE(scheduler->get_task_names(token).empty());
+}
+
+TEST(SchedulerConditionalTermination, WorkerIsQuiescentOnceTerminationReturns)
+{
+    auto scheduler = std::make_shared<Vruta::TaskScheduler>(TestConfig::SAMPLE_RATE);
+    auto steps = make_count();
+    auto completions = make_count();
+    auto routine = make_counting(SchedToken::CONDITIONAL, steps);
+    routine->on_complete([completions] { completions->fetch_add(1); });
+
+    scheduler->add_task(routine, "free");
+    ASSERT_TRUE(wait_until([&steps] { return steps->load() > 0; }));
+
+    scheduler->terminate_all_tasks();
+
+    const int after = steps->load();
+    std::this_thread::sleep_for(std::chrono::milliseconds(30));
+    EXPECT_EQ(steps->load(), after);
+    EXPECT_EQ(completions->load(), 1);
+    EXPECT_TRUE(scheduler->get_task_names(SchedToken::CONDITIONAL).empty());
+}
+
+TEST(SchedulerConditionalTermination, CallbackOnWorkerThreadCannotDeadlockTermination)
+{
+    auto scheduler = std::make_shared<Vruta::TaskScheduler>(TestConfig::SAMPLE_RATE);
+    auto routine = make_counting(SchedToken::CONDITIONAL, make_count());
+    auto reentered = make_count();
+    routine->on_complete([&scheduler, reentered] {
+        scheduler->terminate_all_tasks();
+        reentered->fetch_add(1);
+    });
+
+    scheduler->add_task(routine, "free");
+    ASSERT_TRUE(wait_until([&] { return scheduler->get_task("free") != nullptr; }));
+    ASSERT_TRUE(scheduler->cancel_task("free"));
+
+    EXPECT_TRUE(wait_until([&reentered] { return reentered->load() == 1; }));
+    scheduler->terminate_all_tasks();
+    EXPECT_TRUE(scheduler->get_task_names(SchedToken::CONDITIONAL).empty());
+}
+
+TEST(SchedulerTerminationRace, AcceptedSubmissionsAreTerminatedAndRejectedOnesNeverStart)
+{
+    constexpr int ROUTINES = 200;
+    auto scheduler = std::make_shared<Vruta::TaskScheduler>(TestConfig::SAMPLE_RATE);
+
+    std::vector<std::shared_ptr<Vruta::Routine>> routines;
+    std::vector<Count> completions;
+    for (int i = 0; i < ROUTINES; ++i) {
+        auto done = make_count();
+        auto routine = make_counting(SchedToken::SAMPLE_ACCURATE, make_count());
+        routine->on_complete([done] { done->fetch_add(1); });
+        routines.push_back(routine);
+        completions.push_back(done);
+    }
+
+    std::atomic<bool> go { false };
+    std::thread adder([&] {
+        while (!go.load()) {
+            std::this_thread::yield();
+        }
+        for (int i = 0; i < ROUTINES; ++i) {
+            scheduler->add_task(routines[i], "r" + std::to_string(i));
+        }
+    });
+
+    go.store(true);
+    scheduler->terminate_all_tasks();
+    adder.join();
+    scheduler->terminate_all_tasks();
+
+    for (int i = 0; i < ROUTINES; ++i) {
+        EXPECT_LE(completions[i]->load(), 1) << "routine " << i;
+        EXPECT_EQ(scheduler->get_task("r" + std::to_string(i)), nullptr) << "routine " << i;
+    }
+    EXPECT_TRUE(scheduler->get_task_names().empty());
+    EXPECT_FALSE(scheduler->is_terminating());
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    Tokens,
+    TerminationBarrierTest,
+    ::testing::Values(
+        SchedToken::SAMPLE_ACCURATE,
+        SchedToken::FRAME_ACCURATE,
+        SchedToken::MULTI_RATE,
+        SchedToken::CONDITIONAL),
+    [](const ::testing::TestParamInfo<SchedToken>& info) { return token_label(info.param); });
+
 TEST_F(SchedulerTest, RestartTaskReturnsALineToItsStart)
 {
     auto line = std::make_shared<Vruta::SoundRoutine>(Kriya::line(0.0F, 1.0F, 0.1F, 10, true));

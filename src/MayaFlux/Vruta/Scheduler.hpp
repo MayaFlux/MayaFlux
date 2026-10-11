@@ -327,6 +327,11 @@ public:
 
     /**
      * @brief Terminate and clear all tasks
+     *
+     * Submissions made while this runs, including from completion callbacks,
+     * are rejected. Must not be called from the conditional worker thread or
+     * from a callback fired during a queue drain; such calls are ignored. New
+     * tasks are accepted again once this returns, or if any step throws.
      */
     void terminate_all_tasks();
 
@@ -365,6 +370,11 @@ public:
     }
 
     void process_buffer_cycle_tasks();
+
+    /**
+     * @brief True while terminate_all_tasks is running; submissions are rejected during that time
+     */
+    [[nodiscard]] bool is_terminating() const { return m_terminating.load(std::memory_order_acquire); }
 
 private:
     /**
@@ -549,6 +559,8 @@ private:
     PendingTaskOp m_conditional_pending_ops[MAX_PENDING_CONDITIONAL];
 
     std::jthread m_conditional_thread;
+    std::atomic<bool> m_terminating { false };
+    std::atomic<uint32_t> m_inflight_submissions { 0 };
 };
 
 }
