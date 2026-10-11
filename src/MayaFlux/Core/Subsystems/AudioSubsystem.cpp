@@ -436,6 +436,13 @@ void AudioSubsystem::shutdown()
 {
     stop();
 
+    m_notify_running.store(false, std::memory_order_release);
+    m_snapshot_generation.fetch_add(1, std::memory_order_release);
+    m_snapshot_generation.notify_all();
+
+    if (m_notify_thread.joinable())
+        m_notify_thread.join();
+
     if (m_audio_stream) {
         m_audio_stream->close();
     }
