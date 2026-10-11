@@ -1487,6 +1487,46 @@ TEST_F(TasksTest, EventChainCancelBeforeTheFirstSampleStopsIt)
     EXPECT_FALSE(event2);
 }
 
+TEST_F(TasksTest, EventChainCompletionFiresOnceAcrossCancelAndDrain)
+{
+    int completions = 0;
+
+    Kriya::EventChain chain(*scheduler);
+    chain.then([]() { })
+        .then([]() { }, 0.01)
+        .on_complete([&completions]() { ++completions; })
+        .start();
+
+    chain.cancel();
+    EXPECT_EQ(completions, 1);
+
+    chain.cancel();
+    run_seconds(0.03);
+    EXPECT_EQ(completions, 1);
+}
+
+TEST_F(TasksTest, EventChainReplacedByNameNotifiesTheOldChainOnce)
+{
+    int old_completions = 0;
+    int new_completions = 0;
+
+    Kriya::EventChain old_chain(*scheduler, "slot");
+    old_chain.then([]() { })
+        .then([]() { }, 0.05)
+        .on_complete([&old_completions]() { ++old_completions; })
+        .start();
+    run_samples(1);
+
+    Kriya::EventChain new_chain(*scheduler, "slot");
+    new_chain.then([]() { })
+        .on_complete([&new_completions]() { ++new_completions; })
+        .start();
+    run_seconds(0.06);
+
+    EXPECT_EQ(old_completions, 1);
+    EXPECT_EQ(new_completions, 1);
+}
+
 //-----------------------------------------------------------------------------
 // Time operator and scheduler edges
 //-----------------------------------------------------------------------------

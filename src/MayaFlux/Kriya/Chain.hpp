@@ -128,10 +128,11 @@ public:
      * @brief Sets a callback to execute when the chain stops executing
      * @param callback Function to call after chain completes or is cancelled
      *
-     * The callback fires regardless of how the chain stops:
+     * The callback fires once, on the thread that stops the chain, regardless of how it stops:
      * - After final event completes normally
      * - After cancel() is called
-     * - After an exception in an action (action exceptions are caught)
+     * - When a later start() under the same name replaces the chain
+     * - When the scheduler terminates all tasks
      *
      * Use this for cleanup that must happen regardless of completion reason.
      * For actions that should only run on successful completion, use .then()
@@ -220,13 +221,6 @@ private:
      * multiple chains are active. If no name is provided, it will be an empty string.
      */
     std::string m_name;
-
-    bool m_on_complete_fired {}; ///< Flag to ensure on_complete is only fired once
-
-    /**
-     * @brief Internal method to safely fire the on_complete callback
-     */
-    void fire_on_complete();
 
     size_t m_repeat_count { 1 }; ///< Number of times to repeat the entire chain
 

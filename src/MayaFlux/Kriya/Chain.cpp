@@ -57,11 +57,8 @@ void EventChain::start()
     if (m_events.empty())
         return;
 
-    m_on_complete_fired = false;
-
     auto s_coro_func = [](std::vector<TimedEvent> events,
                            uint64_t rate,
-                           std::function<void()> on_complete_callback,
                            size_t repeat_count) -> MayaFlux::Vruta::SoundRoutine {
         auto& promise = co_await Kriya::GetAudioPromise {};
 
@@ -93,27 +90,10 @@ void EventChain::start()
                 break;
             }
         }
-
-        if (on_complete_callback) {
-            try {
-                on_complete_callback();
-            } catch (const std::exception& e) {
-                MF_RT_ERROR(
-                    Journal::Component::Kriya,
-                    Journal::Context::CoroutineScheduling,
-                    "Exception in EventChain on_complete: {}", e.what());
-            } catch (...) {
-                MF_RT_ERROR(
-                    Journal::Component::Kriya,
-                    Journal::Context::CoroutineScheduling,
-                    "Unknown exception in EventChain on_complete");
-            }
-        }
     };
 
     auto g_coro_func = [](std::vector<TimedEvent> events,
                            uint64_t rate,
-                           std::function<void()> on_complete_callback,
                            size_t repeat_count) -> MayaFlux::Vruta::GraphicsRoutine {
         auto& promise = co_await Kriya::GetGraphicsPromise {};
 
@@ -145,32 +125,20 @@ void EventChain::start()
                 break;
             }
         }
-
-        if (on_complete_callback) {
-            try {
-                on_complete_callback();
-            } catch (const std::exception& e) {
-                MF_RT_ERROR(
-                    Journal::Component::Kriya,
-                    Journal::Context::CoroutineScheduling,
-                    "Exception in EventChain on_complete: {}", e.what());
-            } catch (...) {
-                MF_RT_ERROR(
-                    Journal::Component::Kriya,
-                    Journal::Context::CoroutineScheduling,
-                    "Unknown exception in EventChain on_complete");
-            }
-        }
     };
 
     std::string task_name = m_name.empty() ? "EventChain_" + std::to_string(m_Scheduler.get_next_task_id()) : m_name;
 
     if (m_token == Vruta::ProcessingToken::SAMPLE_ACCURATE) {
         m_routine = std::make_shared<Vruta::SoundRoutine>(
-            s_coro_func(m_events, m_default_rate, m_on_complete, m_repeat_count));
+            s_coro_func(m_events, m_default_rate, m_repeat_count));
     } else {
         m_routine = std::make_shared<Vruta::GraphicsRoutine>(
-            g_coro_func(m_events, m_default_rate, m_on_complete, m_repeat_count));
+            g_coro_func(m_events, m_default_rate, m_repeat_count));
+    }
+
+    if (m_on_complete) {
+        m_routine->on_complete(m_on_complete);
     }
 
     m_Scheduler.add_task(m_routine, task_name, true);
@@ -178,12 +146,13 @@ void EventChain::start()
 
 void EventChain::cancel()
 {
-    if (is_active()) {
-        m_Scheduler.cancel_task(m_routine);
-        m_routine = nullptr;
-
-        fire_on_complete();
+    if (!is_active()) {
+        return;
     }
+
+    auto routine = std::exchange(m_routine, nullptr);
+    routine->set_should_terminate(true);
+    m_Scheduler.cancel_task(routine);
 }
 
 bool EventChain::is_active() const
@@ -195,26 +164,6 @@ EventChain& EventChain::on_complete(std::function<void()> callback)
 {
     m_on_complete = std::move(callback);
     return *this;
-}
-
-void EventChain::fire_on_complete()
-{
-    if (m_on_complete && !m_on_complete_fired) {
-        m_on_complete_fired = true;
-        try {
-            m_on_complete();
-        } catch (const std::exception& e) {
-            MF_RT_ERROR(
-                Journal::Component::Kriya,
-                Journal::Context::CoroutineScheduling,
-                "Exception in EventChain on_complete: {}", e.what());
-        } catch (...) {
-            MF_RT_ERROR(
-                Journal::Component::Kriya,
-                Journal::Context::CoroutineScheduling,
-                "Unknown exception in EventChain on_complete");
-        }
-    }
 }
 
 }
