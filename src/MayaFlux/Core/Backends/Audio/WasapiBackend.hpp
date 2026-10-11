@@ -27,7 +27,7 @@ namespace MayaFlux::Core {
  * those already present in every Windows installation. Owns the
  * IMMDeviceEnumerator lifetime for the process. Shared mode only.
  */
-class WasapiBackend : public IAudioBackend {
+class MAYAFLUX_API WasapiBackend : public IAudioBackend {
 public:
     WasapiBackend();
     ~WasapiBackend() override;
@@ -59,7 +59,7 @@ private:
  * that 0 maps to the system default endpoint. This matches the convention
  * used by RtAudioDevice and is consumed by WasapiStream::open().
  */
-class WasapiDevice : public AudioDevice {
+class MAYAFLUX_API WasapiDevice : public AudioDevice {
 public:
     explicit WasapiDevice(IMMDeviceEnumerator* enumerator);
     ~WasapiDevice() override;
@@ -113,7 +113,7 @@ private:
  * Input capture is implemented when stream_info.input.enabled is true and
  * input_device_id resolves to a valid capture endpoint.
  */
-class WasapiStream : public AudioStream {
+class MAYAFLUX_API WasapiStream : public AudioStream {
 public:
     WasapiStream(
         IMMDevice* output_device,
