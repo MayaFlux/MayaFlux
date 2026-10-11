@@ -30,5 +30,13 @@ if(UNIX AND NOT APPLE AND MAYAFLUX_AUDIO_BACKEND STREQUAL "PIPEWIRE_BACKEND")
     target_link_libraries(MayaFluxTests PRIVATE PkgConfig::PIPEWIRE)
 endif()
 
+if(APPLE AND MAYAFLUX_AUDIO_BACKEND STREQUAL "COREAUDIO_BACKEND")
+    target_link_libraries(MayaFluxTests PRIVATE
+        "-framework CoreAudio"
+        "-framework AudioUnit"
+        "-framework AudioToolbox"
+    )
+endif()
+
 include(GoogleTest)
 gtest_discover_tests(MayaFluxTests)
