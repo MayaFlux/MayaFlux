@@ -7,8 +7,8 @@
 #include <mach/mach_time.h>
 
 #include <chrono>
-#include <cstddef>
 #include <condition_variable>
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <mutex>
@@ -406,7 +406,46 @@ namespace {
         backend.shutdown();
     }
 
+    TEST(CoreMidiBackendTest, VirtualDestinationIsAbsentByDefault)
+    {
+        const auto destination_name = unique_name("MayaFluxCoreMidiDisabled");
+        Core::CoreMidiBackend::Config config;
+        config.auto_open_inputs = false;
+        config.virtual_port_name = destination_name;
+
+        Core::CoreMidiBackend backend(config);
+        ASSERT_TRUE(backend.initialize());
+
+        EXPECT_EQ(find_destination(destination_name), 0U);
+
+        backend.shutdown();
+    }
+
+    TEST(CoreMidiBackendTest, VirtualDestinationFollowsInitializeAndShutdown)
+    {
+        const auto destination_name = unique_name("MayaFluxCoreMidiLifecycle");
+        Core::CoreMidiBackend::Config config;
+        config.auto_open_inputs = false;
+        config.enable_virtual_port = true;
+        config.virtual_port_name = destination_name;
+
+        Core::CoreMidiBackend backend(config);
+        ASSERT_TRUE(backend.initialize());
+        EXPECT_NE(find_destination(destination_name), 0U);
+
+        backend.start();
+        backend.stop();
+        EXPECT_NE(find_destination(destination_name), 0U);
+
+        backend.shutdown();
+        EXPECT_EQ(find_destination(destination_name), 0U);
+
+        ASSERT_TRUE(backend.initialize());
+        EXPECT_NE(find_destination(destination_name), 0U);
+        backend.shutdown();
+    }
+
 }
 }
 
-#endif
+#endif // defined(MAYAFLUX_PLATFORM_MACOS)
