@@ -61,6 +61,7 @@ if(APPLE AND MAYAFLUX_WINDOWING_BACKEND STREQUAL "COCOA_BACKEND")
         "-framework QuartzCore"
         "-framework CoreFoundation"
         "-framework CoreGraphics"
+        "-framework UniformTypeIdentifiers"
     )
 endif()
 
