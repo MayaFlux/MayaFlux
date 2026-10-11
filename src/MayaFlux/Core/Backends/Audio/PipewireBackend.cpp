@@ -20,23 +20,25 @@ namespace {
 // ---------------------------------------------------------------------------
 
 PipewireBackend::PipewireBackend()
-    : m_loop(pw_main_loop_new(nullptr))
 {
     pw_init(nullptr, nullptr);
+    m_pipewire_initialized = true;
+    m_loop = pw_main_loop_new(nullptr);
 
-    if (!m_loop)
+    if (!m_loop) {
+        cleanup();
         error(C, X, std::source_location::current(), "pw_main_loop_new failed");
+    }
 
     m_context = pw_context_new(pw_main_loop_get_loop(m_loop), nullptr, 0);
     if (!m_context) {
-        pw_main_loop_destroy(m_loop);
+        cleanup();
         error(C, X, std::source_location::current(), "pw_context_new failed");
     }
 
     m_core = pw_context_connect(m_context, nullptr, 0);
     if (!m_core) {
-        pw_context_destroy(m_context);
-        pw_main_loop_destroy(m_loop);
+        cleanup();
         error(C, X, std::source_location::current(),
             "pw_context_connect failed - is PipeWire running?");
     }
@@ -98,7 +100,10 @@ void PipewireBackend::cleanup()
         pw_main_loop_destroy(m_loop);
         m_loop = nullptr;
     }
-    pw_deinit();
+    if (m_pipewire_initialized) {
+        pw_deinit();
+        m_pipewire_initialized = false;
+    }
 }
 
 // ---------------------------------------------------------------------------
