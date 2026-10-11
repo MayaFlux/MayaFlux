@@ -12,19 +12,18 @@ set_target_properties(MayaFluxTests PROPERTIES
 find_package(GTest REQUIRED)
 
 target_precompile_headers(MayaFluxTests PUBLIC ${CMAKE_SOURCE_DIR}/cmake/pch.h)
-if(WIN32)
-    target_link_libraries(MayaFluxTests PRIVATE
-        MayaFluxLib
-        gtest
-        gtest_main
-    )
-else()
-    target_link_libraries(MayaFluxTests PRIVATE
-        MayaFluxLib
-        GTest::GTest
-        GTest::Main
+
+if(MSVC)
+    set_property(TARGET MayaFluxTests PROPERTY
+        MSVC_RUNTIME_LIBRARY MultiThreadedDLL
     )
 endif()
+
+target_link_libraries(MayaFluxTests PRIVATE
+    MayaFluxLib
+    GTest::gtest
+    GTest::gtest_main
+)
 
 if(UNIX AND NOT APPLE AND MAYAFLUX_AUDIO_BACKEND STREQUAL "PIPEWIRE_BACKEND")
     target_link_libraries(MayaFluxTests PRIVATE PkgConfig::PIPEWIRE)

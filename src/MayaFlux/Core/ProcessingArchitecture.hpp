@@ -258,7 +258,7 @@ private:
  *
  * Single interface that coordinates buffer and node operations for a subsystem.
  */
-class SubsystemProcessingHandle {
+class MAYAFLUX_API SubsystemProcessingHandle {
 public:
     SubsystemProcessingHandle(
         std::shared_ptr<Buffers::BufferManager> buffer_manager,
