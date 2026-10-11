@@ -38,5 +38,12 @@ if(APPLE AND MAYAFLUX_AUDIO_BACKEND STREQUAL "COREAUDIO_BACKEND")
     )
 endif()
 
+if(APPLE AND MAYAFLUX_MIDI_BACKEND STREQUAL "COREMIDI_BACKEND")
+    target_link_libraries(MayaFluxTests PRIVATE
+        "-framework CoreMIDI"
+        "-framework CoreFoundation"
+    )
+endif()
+
 include(GoogleTest)
 gtest_discover_tests(MayaFluxTests)
