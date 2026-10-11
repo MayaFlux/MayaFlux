@@ -17,6 +17,9 @@ public:
 
     /**
      * @brief Remove an event by name
+     *
+     * Detaches the event, then requests its termination, so its completion
+     * callback fires. Replacement by name in add_event goes through this.
      */
     bool remove_event(const std::string& name);
 
@@ -39,7 +42,8 @@ public:
      *
      * This method removes a event from the manager, preventing it from
      * executing further. It's used to stop events that are no longer needed
-     * or to clean up before shutting down the engine.
+     * or to clean up before shutting down the engine. The event is detached
+     * from the manager before termination is requested.
      */
     bool cancel_event(const std::shared_ptr<Event>& event);
 
@@ -121,6 +125,9 @@ public:
 
     /**
      * @brief Terminate and clear all events
+     *
+     * Empties both the event list and the name map, then requests termination
+     * of each event. Named lookups return null afterwards.
      */
     void terminate_all_events();
 
