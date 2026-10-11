@@ -78,6 +78,35 @@ namespace {
         co_return;
     }
 
+    Vruta::FreeRoutine finished_free()
+    {
+        co_return;
+    }
+
+    Vruta::SoundRoutine single_step_sound(Count steps)
+    {
+        co_await Kriya::SampleDelay { 1 };
+        steps->fetch_add(1);
+    }
+
+    Vruta::GraphicsRoutine single_step_graphics(Count steps)
+    {
+        co_await Kriya::FrameDelay { .frames_to_wait = 1 };
+        steps->fetch_add(1);
+    }
+
+    Vruta::CrossRoutine single_step_cross(Count steps)
+    {
+        co_await Kriya::MultiRateDelay { .samples_to_wait = 1, .frames_to_wait = 0 };
+        steps->fetch_add(1);
+    }
+
+    Vruta::FreeRoutine single_step_free(Count steps)
+    {
+        co_await Kriya::ConditionAwaiter { after_one_pass() };
+        steps->fetch_add(1);
+    }
+
     std::shared_ptr<Vruta::Routine> make_counting(SchedToken token, const Count& count)
     {
         switch (token) {
@@ -99,8 +128,24 @@ namespace {
             return std::make_shared<Vruta::GraphicsRoutine>(finished_graphics());
         case SchedToken::MULTI_RATE:
             return std::make_shared<Vruta::CrossRoutine>(finished_cross());
+        case SchedToken::CONDITIONAL:
+            return std::make_shared<Vruta::FreeRoutine>(finished_free());
         default:
             return std::make_shared<Vruta::SoundRoutine>(finished_sound());
+        }
+    }
+
+    std::shared_ptr<Vruta::Routine> make_single_step(SchedToken token, const Count& steps)
+    {
+        switch (token) {
+        case SchedToken::FRAME_ACCURATE:
+            return std::make_shared<Vruta::GraphicsRoutine>(single_step_graphics(steps));
+        case SchedToken::MULTI_RATE:
+            return std::make_shared<Vruta::CrossRoutine>(single_step_cross(steps));
+        case SchedToken::CONDITIONAL:
+            return std::make_shared<Vruta::FreeRoutine>(single_step_free(steps));
+        default:
+            return std::make_shared<Vruta::SoundRoutine>(single_step_sound(steps));
         }
     }
 
@@ -561,6 +606,252 @@ TEST_F(SchedulerTest, CancelAcceptedForAnyName)
     EXPECT_TRUE(scheduler->get_task_names().empty());
 }
 
+class RoutineCompletionTest : public SchedulerParamTest<SchedToken> { };
+
+TEST_P(RoutineCompletionTest, CompletionFiresAtFinalSuspendOnlyOnce)
+{
+    const SchedToken token = GetParam();
+    auto steps = make_count();
+    auto completions = make_count();
+    auto routine = make_single_step(token, steps);
+    routine->on_complete([completions] { completions->fetch_add(1); });
+
+    if (token == SchedToken::FRAME_ACCURATE)
+        use_frame_driver();
+
+    EXPECT_EQ(completions->load(), 0);
+    scheduler->add_task(routine, "single_step");
+
+    if (token == SchedToken::CONDITIONAL)
+        ASSERT_TRUE(wait_until([&completions] { return completions->load() == 1; }));
+    else
+        step(token, 2);
+
+    EXPECT_EQ(completions->load(), 1);
+    scheduler.reset();
+    EXPECT_EQ(steps->load(), 1);
+    EXPECT_EQ(completions->load(), 1);
+    EXPECT_FALSE(routine->is_active());
+
+    routine.reset();
+    EXPECT_EQ(completions->load(), 1);
+}
+
+TEST_P(RoutineCompletionTest, CompletionFiresWhenCancellationIsApplied)
+{
+    const SchedToken token = GetParam();
+    auto steps = make_count();
+    auto completions = make_count();
+    auto routine = make_counting(token, steps);
+    routine->on_complete([completions] { completions->fetch_add(1); });
+
+    if (token == SchedToken::FRAME_ACCURATE)
+        use_frame_driver();
+
+    scheduler->add_task(routine, "cooperative");
+    routine.reset();
+    if (token == SchedToken::CONDITIONAL)
+        ASSERT_TRUE(wait_until([&steps] { return steps->load() > 0; }));
+    else
+        step(token, 2);
+
+    scheduler->cancel_task("cooperative");
+    if (token == SchedToken::CONDITIONAL)
+        ASSERT_TRUE(wait_until([&completions] { return completions->load() == 1; }));
+    else {
+        EXPECT_EQ(completions->load(), 0);
+        step(token, 1);
+        EXPECT_EQ(scheduler->get_task("cooperative"), nullptr);
+    }
+
+    EXPECT_EQ(completions->load(), 1);
+    scheduler.reset();
+    EXPECT_EQ(completions->load(), 1);
+}
+
+TEST_P(RoutineCompletionTest, CompletionDoesNotWaitForRetainedCancelledRoutine)
+{
+    const SchedToken token = GetParam();
+    auto steps = make_count();
+    auto completions = make_count();
+    auto routine = make_counting(token, steps);
+    routine->on_complete([completions] { completions->fetch_add(1); });
+
+    if (token == SchedToken::FRAME_ACCURATE)
+        use_frame_driver();
+
+    scheduler->add_task(routine, "retained");
+    if (token == SchedToken::CONDITIONAL)
+        ASSERT_TRUE(wait_until([&steps] { return steps->load() > 0; }));
+
+    scheduler->cancel_task("retained");
+    if (token == SchedToken::CONDITIONAL)
+        ASSERT_TRUE(wait_until([&completions] { return completions->load() == 1; }));
+    else {
+        EXPECT_EQ(completions->load(), 0);
+        step(token, 1);
+        EXPECT_EQ(steps->load(), 0);
+    }
+
+    EXPECT_EQ(completions->load(), 1);
+    scheduler.reset();
+    EXPECT_EQ(completions->load(), 1);
+    EXPECT_TRUE(routine->is_active());
+    EXPECT_TRUE(routine->get_should_terminate());
+
+    routine->set_should_terminate(true);
+    EXPECT_EQ(completions->load(), 1);
+
+    routine.reset();
+    EXPECT_EQ(completions->load(), 1);
+}
+
+TEST_P(RoutineCompletionTest, CallbackAttachedAfterFinalSuspendRunsOnce)
+{
+    auto completions = make_count();
+    auto routine = make_finished(GetParam());
+
+    ASSERT_FALSE(routine->is_active());
+    routine->on_complete([completions] { completions->fetch_add(1); });
+    EXPECT_EQ(completions->load(), 1);
+
+    routine.reset();
+    EXPECT_EQ(completions->load(), 1);
+}
+
+TEST_P(RoutineCompletionTest, CallbackAttachedAfterTerminationRunsOnce)
+{
+    auto completions = make_count();
+    auto routine = make_counting(GetParam(), make_count());
+
+    routine->set_should_terminate(true);
+    routine->on_complete([completions] { completions->fetch_add(1); });
+    EXPECT_EQ(completions->load(), 1);
+
+    routine->set_should_terminate(true);
+    routine.reset();
+    EXPECT_EQ(completions->load(), 1);
+}
+
+TEST_P(RoutineCompletionTest, ThrowingCallbackIsInvokedOnce)
+{
+    auto completions = make_count();
+    auto routine = make_counting(GetParam(), make_count());
+    routine->on_complete([completions] {
+        completions->fetch_add(1);
+        throw std::runtime_error("completion callback");
+    });
+
+    routine->set_should_terminate(true);
+    routine->set_should_terminate(true);
+    EXPECT_EQ(completions->load(), 1);
+}
+
+TEST_P(RoutineCompletionTest, DiscardingUnterminatedRoutineDoesNotComplete)
+{
+    auto completions = make_count();
+    auto routine = make_counting(GetParam(), make_count());
+    routine->on_complete([completions] { completions->fetch_add(1); });
+
+    routine.reset();
+    EXPECT_EQ(completions->load(), 0);
+}
+
+TEST_P(RoutineCompletionTest, ConcurrentRegistrationAndTerminationNotifyOnce)
+{
+    for (int attempt = 0; attempt < 100; ++attempt) {
+        auto completions = make_count();
+        auto routine = make_counting(GetParam(), make_count());
+        std::atomic<bool> start { false };
+
+        std::thread register_callback([&] {
+            while (!start.load(std::memory_order_acquire))
+                std::this_thread::yield();
+            routine->on_complete([completions] { completions->fetch_add(1); });
+        });
+        std::thread terminate([&] {
+            while (!start.load(std::memory_order_acquire))
+                std::this_thread::yield();
+            routine->set_should_terminate(true);
+        });
+
+        start.store(true, std::memory_order_release);
+        register_callback.join();
+        terminate.join();
+        EXPECT_EQ(completions->load(), 1) << "attempt " << attempt;
+    }
+}
+
+TEST_P(RoutineCompletionTest, CallbackMayReleaseItsLastRoutineReference)
+{
+    auto completions = make_count();
+    auto routine = make_counting(GetParam(), make_count());
+    std::weak_ptr<Vruta::Routine> weak = routine;
+    routine->on_complete([&routine, completions] {
+        completions->fetch_add(1);
+        routine.reset();
+    });
+
+    routine.get()->set_should_terminate(true);
+
+    EXPECT_TRUE(weak.expired());
+    EXPECT_EQ(completions->load(), 1);
+}
+
+TEST_P(RoutineCompletionTest, FinalSuspendCallbackMayReleaseItsLastRoutineReference)
+{
+    auto steps = make_count();
+    auto completions = make_count();
+    auto routine = make_single_step(GetParam(), steps);
+    std::weak_ptr<Vruta::Routine> weak = routine;
+    routine->on_complete([&routine, completions] {
+        completions->fetch_add(1);
+        routine.reset();
+    });
+
+    routine.get()->force_resume();
+
+    EXPECT_TRUE(weak.expired());
+    EXPECT_EQ(steps->load(), 1);
+    EXPECT_EQ(completions->load(), 1);
+}
+
+TEST_P(RoutineCompletionTest, CallbackMayAddTaskDuringCancellationDrain)
+{
+    const SchedToken token = GetParam();
+    auto original = make_counting(token, make_count());
+    auto replacement = make_counting(SchedToken::SAMPLE_ACCURATE, make_count());
+    auto completions = make_count();
+    original->on_complete([this, replacement, completions] {
+        scheduler->add_task(replacement, "replacement");
+        completions->fetch_add(1);
+    });
+
+    scheduler->add_task(original, "original");
+    if (token != SchedToken::CONDITIONAL)
+        step(token, 1);
+
+    ASSERT_TRUE(scheduler->cancel_task("original"));
+    if (token == SchedToken::CONDITIONAL)
+        ASSERT_TRUE(wait_until([&completions] { return completions->load() == 1; }));
+    else
+        step(token, 1);
+
+    scheduler->process_token(SchedToken::SAMPLE_ACCURATE, 1);
+    EXPECT_EQ(completions->load(), 1);
+    EXPECT_EQ(scheduler->get_task("replacement"), replacement);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    Tokens,
+    RoutineCompletionTest,
+    ::testing::Values(
+        SchedToken::SAMPLE_ACCURATE,
+        SchedToken::FRAME_ACCURATE,
+        SchedToken::MULTI_RATE,
+        SchedToken::CONDITIONAL),
+    [](const ::testing::TestParamInfo<SchedToken>& info) { return token_label(info.param); });
+
 TEST_F(SchedulerTest, FreeRoutineRunsOnItsOwnThreadUntilCancelled)
 {
     auto count = make_count();
@@ -673,6 +964,26 @@ TEST_P(TerminateAllTest, EndsEveryRoutineAndClearsTheList)
     EXPECT_TRUE(second->get_should_terminate());
     EXPECT_FALSE(first->is_active());
     EXPECT_FALSE(second->is_active());
+    EXPECT_TRUE(scheduler->get_task_names().empty());
+}
+
+TEST_P(TerminateAllTest, ShutdownNotifiesEachCompletionOnce)
+{
+    const auto& [token, registered] = GetParam();
+    auto first = make_counting(token, make_count());
+    auto second = make_counting(token, make_count());
+    auto completions = make_count();
+    first->on_complete([completions] { completions->fetch_add(1); });
+    second->on_complete([completions] { completions->fetch_add(1); });
+
+    scheduler->add_task(first, "first");
+    scheduler->add_task(second, "second");
+    if (registered)
+        step(token, 1);
+
+    scheduler->terminate_all_tasks();
+
+    EXPECT_EQ(completions->load(), 2);
     EXPECT_TRUE(scheduler->get_task_names().empty());
 }
 

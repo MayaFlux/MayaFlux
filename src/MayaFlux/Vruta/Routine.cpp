@@ -3,6 +3,19 @@
 
 namespace MayaFlux::Vruta {
 
+void invoke_routine_completion(std::function<void()> callback) noexcept
+{
+    try {
+        callback();
+    } catch (const std::exception& e) {
+        MF_RT_ERROR(Journal::Component::Vruta, Journal::Context::CoroutineScheduling,
+            "Exception in Routine on_complete: {}", e.what());
+    } catch (...) {
+        MF_RT_ERROR(Journal::Component::Vruta, Journal::Context::CoroutineScheduling,
+            "Unknown exception in Routine on_complete");
+    }
+}
+
 SoundRoutine audio_promise::get_return_object()
 {
     return { std::coroutine_handle<audio_promise>::from_promise(*this) };
