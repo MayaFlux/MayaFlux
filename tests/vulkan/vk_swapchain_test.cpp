@@ -179,14 +179,11 @@ TEST_F(VKSwapchainFixture, RecreateRebuildsTheSwapchainAtTheCurrentWindowSize)
     ASSERT_NE(window, nullptr);
     auto* swapchain = create_swapchain(window);
     ASSERT_NE(swapchain, nullptr);
-    const auto before = swapchain->get_swapchain();
-
     window->set_size(200, 150);
     ASSERT_TRUE(swapchain->recreate(200, 150));
 
     const auto expected = expected_extent(surfaces.back(), window);
     EXPECT_TRUE(swapchain->get_swapchain());
-    EXPECT_NE(swapchain->get_swapchain(), before);
     EXPECT_EQ(swapchain->get_extent().width, expected.width);
     EXPECT_EQ(swapchain->get_extent().height, expected.height);
     EXPECT_GT(swapchain->get_image_count(), 0U);

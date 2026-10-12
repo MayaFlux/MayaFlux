@@ -1085,7 +1085,7 @@ void BackendWindowHandler::start_readback_thread(CaptureState& state, vk::Device
                 // Store new frame into last_frame (same pattern as InputManager)
                 // ---------------------------------------------------------------
 #ifdef MAYAFLUX_PLATFORM_MACOS
-                auto* raw_frame = new std::vector<uint8_t>(std::move(*buf));
+                auto* raw_frame = new std::vector<uint8_t>(*buf);
                 auto* old = state.last_frame.exchange(raw_frame, std::memory_order_acq_rel);
                 if (old)
                     state.retire_last_frame(old);
