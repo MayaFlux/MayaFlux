@@ -116,6 +116,11 @@ public:
     void stop();
     void shutdown();
 
+    /**
+     * @brief Check if ComputePress is initialized
+     */
+    [[nodiscard]] bool is_initialized() const { return m_shader_foundry != nullptr; }
+
     //==========================================================================
     // Pipeline Creation (COMPUTE-SPECIFIC)
     //==========================================================================
@@ -162,6 +167,20 @@ public:
         ComputePipelineID pipeline_id,
         const void* data,
         size_t size);
+
+    /**
+     * @brief Push part of the push constant block, starting at a byte offset
+     * @param offset Byte offset into the block
+     *
+     * The range [offset, offset + size) must lie inside the push constant size
+     * the pipeline was created with; otherwise nothing is recorded.
+     */
+    void push_constants(
+        CommandBufferID cmd_id,
+        ComputePipelineID pipeline_id,
+        const void* data,
+        size_t size,
+        uint32_t offset);
 
     //==========================================================================
     // Dispatch (COMPUTE-SPECIFIC)
@@ -234,6 +253,7 @@ private:
         std::shared_ptr<Core::VKComputePipeline> pipeline;
         std::vector<vk::DescriptorSetLayout> layouts;
         vk::PipelineLayout layout;
+        size_t push_constant_size {};
     };
 
     std::shared_ptr<Core::VKDescriptorManager> m_descriptor_manager;

@@ -16,13 +16,14 @@ bool ComputePress::initialize()
         return true;
     }
 
-    m_shader_foundry = &get_shader_foundry();
-    if (!m_shader_foundry->is_initialized()) {
+    auto* foundry = &get_shader_foundry();
+    if (!foundry->is_initialized()) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::GPUCompute,
             "Cannot initialize ComputePress: ShaderFoundry not initialized");
         return false;
     }
 
+    m_shader_foundry = foundry;
     m_descriptor_manager = std::make_shared<Core::VKDescriptorManager>();
     m_descriptor_manager->initialize(m_shader_foundry->get_device(), 1024);
 
@@ -91,6 +92,12 @@ ComputePipelineID ComputePress::create_pipeline(
     const std::vector<std::vector<DescriptorBindingInfo>>& descriptor_sets,
     size_t push_constant_size)
 {
+    if (!is_initialized()) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::GPUCompute,
+            "ComputePress not initialized");
+        return INVALID_COMPUTE_PIPELINE;
+    }
+
     auto shader_module = m_shader_foundry->get_vk_shader_module(shader_id);
     if (!shader_module) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::GPUCompute,
@@ -149,6 +156,7 @@ ComputePipelineID ComputePress::create_pipeline(
     }
 
     state.layout = state.pipeline->get_layout();
+    state.push_constant_size = push_constant_size;
 
     MF_INFO(Journal::Component::Portal, Journal::Context::GPUCompute,
         "Created compute pipeline (ID: {}, {} descriptor sets, {} bytes push constants)",
@@ -161,6 +169,12 @@ ComputePipelineID ComputePress::create_pipeline_auto(
     ShaderID shader_id,
     size_t push_constant_size)
 {
+    if (!is_initialized()) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::GPUCompute,
+            "ComputePress not initialized");
+        return INVALID_COMPUTE_PIPELINE;
+    }
+
     auto reflection = m_shader_foundry->get_shader_reflection(shader_id);
 
     std::map<uint32_t, std::vector<DescriptorBindingInfo>> bindings_by_set;
@@ -301,12 +315,53 @@ void ComputePress::push_constants(
         data);
 }
 
+void ComputePress::push_constants(
+    CommandBufferID cmd_id,
+    ComputePipelineID pipeline_id,
+    const void* data,
+    size_t size,
+    uint32_t offset)
+{
+    auto pipeline_it = m_pipelines.find(pipeline_id);
+    if (pipeline_it == m_pipelines.end()) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::GPUCompute,
+            "Invalid pipeline ID: {}", pipeline_id);
+        return;
+    }
+
+    if (static_cast<size_t>(offset) + size > pipeline_it->second.push_constant_size) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::GPUCompute,
+            "Push constant range [{}, {}) exceeds the {} bytes declared for pipeline {}",
+            offset, static_cast<size_t>(offset) + size,
+            pipeline_it->second.push_constant_size, pipeline_id);
+        return;
+    }
+
+    auto cmd = m_shader_foundry->get_command_buffer(cmd_id);
+    if (!cmd) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::GPUCompute,
+            "Invalid command buffer ID: {}", cmd_id);
+        return;
+    }
+
+    pipeline_it->second.pipeline->push_constants(
+        cmd,
+        vk::ShaderStageFlagBits::eCompute,
+        offset,
+        static_cast<uint32_t>(size),
+        data);
+}
+
 //==============================================================================
 // Dispatch
 //==============================================================================
 
 void ComputePress::dispatch(CommandBufferID cmd_id, uint32_t x, uint32_t y, uint32_t z)
 {
+    if (!is_initialized()) {
+        return;
+    }
+
     auto cmd = m_shader_foundry->get_command_buffer(cmd_id);
     if (!cmd) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::GPUCompute,
@@ -325,6 +380,10 @@ void ComputePress::dispatch_indirect(
     vk::Buffer indirect_buffer,
     vk::DeviceSize offset)
 {
+    if (!is_initialized()) {
+        return;
+    }
+
     auto cmd = m_shader_foundry->get_command_buffer(cmd_id);
     if (!cmd) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::GPUCompute,
@@ -388,6 +447,10 @@ void ComputePress::record_sequence(
     CommandBufferID cmd_id,
     const std::vector<ComputeStage>& stages)
 {
+    if (!is_initialized()) {
+        return;
+    }
+
     auto& foundry = *m_shader_foundry;
 
     for (size_t i = 0; i < stages.size(); ++i) {
