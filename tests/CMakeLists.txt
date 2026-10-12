@@ -46,6 +46,11 @@ if(UNIX AND NOT APPLE AND MAYAFLUX_WINDOWING_BACKEND STREQUAL "WAYLAND_BACKEND")
     )
 endif()
 
+if(UNIX AND NOT APPLE)
+    target_include_directories(MayaFluxTests PRIVATE ${DBUS_INCLUDE_DIRS})
+    target_link_libraries(MayaFluxTests PRIVATE ${DBUS_LIBRARIES})
+endif()
+
 if(APPLE AND MAYAFLUX_AUDIO_BACKEND STREQUAL "COREAUDIO_BACKEND")
     target_link_libraries(MayaFluxTests PRIVATE
         "-framework CoreAudio"
