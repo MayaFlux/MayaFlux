@@ -94,12 +94,10 @@ void VulkanBackend::cleanup()
 
     if (m_resource_manager) {
         m_resource_manager->cleanup();
-        m_resource_manager.reset();
     }
 
     if (m_pipeline_manager) {
         m_pipeline_manager->cleanup();
-        m_pipeline_manager.reset();
     }
 
     m_window_handler->cleanup();

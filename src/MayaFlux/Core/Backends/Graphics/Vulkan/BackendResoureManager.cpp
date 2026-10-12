@@ -580,6 +580,8 @@ void BackendResourceManager::cleanup_image(const std::shared_ptr<VKImage>& image
         m_context.get_device().freeMemory(resources.memory);
     }
 
+    image->set_image_resources(VKImageResources {});
+
     MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
         "VKImage cleaned up");
 }

@@ -262,4 +262,34 @@ TEST(VulkanBackendLifecycleTest, SequentialBackendsInSameProcess)
     EXPECT_FALSE(buffer_service_registered());
 }
 
+TEST(VulkanBackendRestartDeathTest, ServicesAllocateAfterRestart)
+{
+    REQUIRE_VULKAN();
+    GTEST_FLAG_SET(death_test_style, "threadsafe");
+
+    EXPECT_EXIT(
+        {
+            VulkanBackend backend;
+            if (!backend.initialize(headless_graphics_config())) {
+                std::exit(2);
+            }
+            backend.cleanup();
+            if (!backend.initialize(headless_graphics_config())) {
+                std::exit(3);
+            }
+
+            auto* service = Registry::BackendRegistry::instance().get_service<Registry::Service::BufferService>();
+            if (!service) {
+                std::exit(4);
+            }
+
+            void* buffer = nullptr;
+            void* memory = nullptr;
+            void* mapped = nullptr;
+            service->allocate_raw_buffer(64, 0x3U, 0x6U, true, buffer, memory, mapped);
+            std::exit(mapped ? 0 : 5);
+        },
+        ::testing::ExitedWithCode(0), "");
+}
+
 }
