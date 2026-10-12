@@ -4,6 +4,8 @@
 
 #include "ShaderSpec.hpp"
 
+#include "MayaFlux/Transitive/Memory/RingBuffer.hpp"
+
 #include <span>
 
 namespace MayaFlux::Core {
@@ -738,6 +740,15 @@ private:
     std::unordered_map<DescriptorSetID, DescriptorSetState> m_descriptor_sets;
 
     std::unordered_map<CommandBufferID, CommandBufferState> m_command_buffers;
+
+    struct FinishedTimestamp {
+        CommandBufferID cmd_id { INVALID_COMMAND_BUFFER };
+        TimestampResult result {};
+    };
+
+    static constexpr size_t k_finished_timestamp_capacity = 1024;
+    Memory::HistoryBuffer<FinishedTimestamp> m_finished_timestamps { k_finished_timestamp_capacity };
+
     std::unordered_map<FenceID, FenceState> m_fences;
     std::unordered_map<SemaphoreID, SemaphoreState> m_semaphores;
 
@@ -756,6 +767,8 @@ private:
     std::string generate_source_cache_key(const std::string& source, ShaderStage stage) const;
 
     std::shared_ptr<Core::VKShaderModule> create_shader_module();
+
+    TimestampResult resolve_timestamp(const CommandBufferState& state, const std::string& label, bool wait);
 
     void cleanup_sync_objects();
     void cleanup_descriptor_resources();

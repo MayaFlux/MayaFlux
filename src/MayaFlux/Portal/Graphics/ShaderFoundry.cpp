@@ -12,6 +12,25 @@ namespace MayaFlux::Portal::Graphics {
 
 bool ShaderFoundry::s_initialized = false;
 
+namespace {
+
+    void append_default_include_directories(ShaderCompilerConfig& config)
+    {
+        const std::string defaults[] = {
+            Config::SHADER_SOURCE_DIR,
+            std::string(Config::SHADER_SOURCE_DIR) + "/include",
+            Config::SHADER_BUILD_OUTPUT_DIR
+        };
+
+        for (const auto& directory : defaults) {
+            if (std::ranges::find(config.include_directories, directory) == config.include_directories.end()) {
+                config.include_directories.push_back(directory);
+            }
+        }
+    }
+
+}
+
 bool ShaderFoundry::initialize(
     const std::shared_ptr<Core::VulkanBackend>& backend,
     const ShaderCompilerConfig& config)
@@ -37,9 +56,7 @@ bool ShaderFoundry::initialize(
     m_backend = backend;
     m_config = config;
 
-    m_config.include_directories.emplace_back(Config::SHADER_SOURCE_DIR);
-    m_config.include_directories.emplace_back(std::string(Config::SHADER_SOURCE_DIR) + "/include");
-    m_config.include_directories.emplace_back(Config::SHADER_BUILD_OUTPUT_DIR);
+    append_default_include_directories(m_config);
 
     m_global_descriptor_manager = std::make_shared<Core::VKDescriptorManager>();
     m_global_descriptor_manager->initialize(get_device(), 1024);
@@ -99,6 +116,8 @@ void ShaderFoundry::shutdown()
     cleanup_descriptor_resources();
 
     cleanup_shader_modules();
+
+    m_finished_timestamps.reset();
 
     m_backend = nullptr;
     s_initialized = false;
@@ -386,6 +405,14 @@ ShaderID ShaderFoundry::load_shader(const ShaderSpec& spec)
     if (spec.kernel.has_value()) {
         const std::string glsl = detail::emit_glsl_kernel(spec);
         const std::string key = generate_source_cache_key(glsl, ShaderStage::COMPUTE);
+
+        auto kernel_id_it = m_shader_filepath_cache.find(key);
+        if (kernel_id_it != m_shader_filepath_cache.end()) {
+            MF_DEBUG(Journal::Component::Portal, Journal::Context::ShaderCompilation,
+                "Using cached kernel shader: {}", key);
+            return kernel_id_it->second;
+        }
+
         auto module = compile_from_source_cached(glsl, ShaderStage::COMPUTE, key);
         if (!module) {
             MF_ERROR(Journal::Component::Portal, Journal::Context::ShaderCompilation,
@@ -441,8 +468,9 @@ std::optional<std::filesystem::path> ShaderFoundry::resolve_shader_path(const st
     namespace fs = std::filesystem;
 
     fs::path path(filepath);
+    std::error_code ec;
 
-    if (path.is_absolute() || fs::exists(filepath)) {
+    if (path.is_absolute() || fs::exists(path, ec)) {
         return path;
     }
 
@@ -467,7 +495,7 @@ std::optional<std::filesystem::path> ShaderFoundry::resolve_shader_path(const st
 
     for (const auto& search_path : search_paths) {
         fs::path full_path = fs::path(search_path) / filepath;
-        if (fs::exists(full_path)) {
+        if (fs::exists(full_path, ec)) {
             return full_path;
         }
     }
@@ -511,7 +539,7 @@ ShaderID ShaderFoundry::reload_shader(const std::string& filepath)
     auto cache_it = m_shader_filepath_cache.find(filepath);
     if (cache_it != m_shader_filepath_cache.end()) {
         destroy_shader(cache_it->second);
-        m_shader_filepath_cache.erase(cache_it);
+        m_shader_filepath_cache.erase(filepath);
     }
 
     return load_shader(filepath);
@@ -652,6 +680,7 @@ std::shared_ptr<Core::VKShaderModule> ShaderFoundry::hot_reload(const std::strin
 void ShaderFoundry::set_config(const ShaderCompilerConfig& config)
 {
     m_config = config;
+    append_default_include_directories(m_config);
     MF_DEBUG(Journal::Component::Portal, Journal::Context::ShaderCompilation,
         "Updated shader compiler configuration");
 }
@@ -1006,6 +1035,15 @@ void ShaderFoundry::submit_and_wait(CommandBufferID cmd_id)
     }
     queue.waitIdle();
 
+    if (it->second.timestamp_pool) {
+        for (const auto& query : it->second.timestamp_queries) {
+            m_finished_timestamps.push({ cmd_id, resolve_timestamp(it->second, query.first, false) });
+        }
+
+        get_device().destroyQueryPool(it->second.timestamp_pool);
+        it->second.timestamp_pool = nullptr;
+    }
+
     cmd_manager.free_command_buffer(it->second.cmd);
 
     it->second.is_active = false;
@@ -1354,30 +1392,43 @@ void ShaderFoundry::end_timestamp(CommandBufferID cmd_id, const std::string& lab
 ShaderFoundry::TimestampResult ShaderFoundry::get_timestamp_result(CommandBufferID cmd_id, const std::string& label)
 {
     auto it = m_command_buffers.find(cmd_id);
-    if (it == m_command_buffers.end()) {
-        return { .label = label, .duration_ns = 0, .valid = false };
+    if (it != m_command_buffers.end()) {
+        return resolve_timestamp(it->second, label, true);
     }
 
-    auto query_it = it->second.timestamp_queries.find(label);
-    if (query_it == it->second.timestamp_queries.end()) {
-        return { .label = label, .duration_ns = 0, .valid = false };
+    for (size_t i = 0; i < m_finished_timestamps.capacity(); ++i) {
+        const auto& entry = m_finished_timestamps[i];
+        if (entry.cmd_id == cmd_id && entry.result.label == label) {
+            return entry.result;
+        }
     }
 
-    if (!it->second.timestamp_pool) {
+    return { .label = label, .duration_ns = 0, .valid = false };
+}
+
+ShaderFoundry::TimestampResult ShaderFoundry::resolve_timestamp(const CommandBufferState& state, const std::string& label, bool wait)
+{
+    auto query_it = state.timestamp_queries.find(label);
+    if (query_it == state.timestamp_queries.end() || !state.timestamp_pool) {
         return { .label = label, .duration_ns = 0, .valid = false };
     }
 
     uint32_t query_index = query_it->second;
     uint64_t timestamps[2];
 
+    vk::QueryResultFlags flags = vk::QueryResultFlagBits::e64;
+    if (wait) {
+        flags |= vk::QueryResultFlagBits::eWait;
+    }
+
     auto result = get_device().getQueryPoolResults(
-        it->second.timestamp_pool,
+        state.timestamp_pool,
         query_index,
         2,
         sizeof(timestamps),
         timestamps,
         sizeof(uint64_t),
-        vk::QueryResultFlagBits::e64 | vk::QueryResultFlagBits::eWait);
+        flags);
 
     if (result != vk::Result::eSuccess) {
         return { .label = label, .duration_ns = 0, .valid = false };
