@@ -2,9 +2,19 @@
 
 #include "NetworkBackend.hpp"
 
+#if defined(_WIN32) || defined(_WIN64)
+#include <windows.h>
+#endif
+
 #include <asio/io_context.hpp>
 #include <asio/ip/tcp.hpp>
 #include <asio/steady_timer.hpp>
+
+#if defined(_WIN32) || defined(_WIN64)
+#ifdef ERROR
+#undef ERROR
+#endif
+#endif
 
 namespace MayaFlux::Core {
 

@@ -7,6 +7,24 @@
 
 #include "MayaFlux/Transitive/Parallel/Dispatch.hpp"
 
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+#ifdef STRICT
+#undef STRICT
+#endif
+#ifdef IGNORE
+#undef IGNORE
+#endif
+#ifdef PASSTHROUGH
+#undef PASSTHROUGH
+#endif
+#ifdef near
+#undef near
+#endif
+#ifdef far
+#undef far
+#endif
+#endif // MAYAFLUX_PLATFORM_WINDOWS
+
 namespace MayaFlux::Test {
 
 inline void service_main_queue(std::chrono::milliseconds slice = std::chrono::milliseconds(2))

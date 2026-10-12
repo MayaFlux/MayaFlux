@@ -110,9 +110,6 @@ std::optional<std::string> find_font(std::string_view family, std::string_view s
 #elif defined(MAYAFLUX_PLATFORM_WINDOWS)
 
 #include <windows.h>
-#ifdef ERROR
-#undef ERROR
-#endif // ERROR
 
 namespace fs = std::filesystem;
 

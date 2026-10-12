@@ -1,5 +1,9 @@
 #include "TCPBackend.hpp"
 
+#if defined(_WIN32) || defined(_WIN64)
+#include <windows.h>
+#endif
+
 #include <asio/read.hpp>
 #include <asio/write.hpp>
 

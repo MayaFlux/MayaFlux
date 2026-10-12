@@ -4,18 +4,12 @@
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
+#include <windows.h>
 #include <shobjidl_core.h>
-
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
 
 #ifdef ERROR
 #undef ERROR
-#endif // ERROR
+#endif
 
 namespace MayaFlux::Core {
 

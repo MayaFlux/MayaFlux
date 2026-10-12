@@ -9,13 +9,8 @@
 #include <fstream>
 
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 #endif
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
-#endif // MAYAFLUX_PLATFORM_WINDOWS
 
 #include <Alembic/Abc/All.h>
 #include <Alembic/AbcCoreFactory/All.h>
@@ -25,7 +20,7 @@
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
 #ifdef ERROR
 #undef ERROR
-#endif // ERROR
+#endif
 #endif // MAYAFLUX_PLATFORM_WINDOWS
 
 namespace MayaFlux::IO {
