@@ -6,7 +6,7 @@
 
 This is not a slogan. It is the architectural load-bearing wall.
 
-An audio sample at 48 kHz is a double. A vertex position is three doubles. A pixel color is four doubles packed into an integer. A control signal, a physics force, a texture coordinate, a MIDI velocity: all of them, when the hardware and the OS and the driver have finished their ceremony, are numbers in memory. The boundaries you learned in other tools were never properties of the data. They were properties of the tools, built at a time when the alternative was infeasible.
+An audio sample is a number. A vertex position is three coordinates. A pixel color is a set of numeric channels. A control signal, a physics force, a texture coordinate, a MIDI velocity: all of them, when the hardware and the OS and the driver have finished their ceremony, are numbers in memory. The boundaries you learned in other tools were never properties of the data. They were properties of the tools, built at a time when the alternative was infeasible.
 
 MayaFlux removes those boundaries at the architectural level, not by providing conversion utilities but by never drawing the lines in the first place.
 
@@ -34,7 +34,7 @@ The node taxonomy reflects what kinds of transformation exist, not what domain t
 
 **Input** nodes bridge hardware events into the graph: `HIDNode`, `MIDINode`, `OSCNode`. A MIDI note becomes a frequency value; a HID axis becomes a double. From that point it is just a number.
 
-**GpuSync** nodes coordinate CPU-side node graph evaluation with asynchronous GPU compute dispatches. `GpuComputeNode` owns a `ShaderExecutionContext`, dispatches it asynchronously via `dispatch_async`, polls the returned `FenceID` on each subsequent `compute_frame()` call, and fires `on_complete` callbacks with a `GpuComputeContext` once the fence signals. The node carries no prescriptions about what consumers do with the result. `GeometryWriterNode` is the base for nodes that produce vertex geometry for the GPU pipeline.
+**GpuSync** nodes connect node evaluation to asynchronous GPU work. `GpuComputeNode` dispatches compute and reports completion to consumers. `GeometryWriterNode` is the base for nodes that produce GPU vertex geometry.
 
 **Graphics** nodes write computed values into GPU resources: geometry writers, mesh writers, topology generators, path generators, texture nodes, procedural texture nodes, point collection nodes. These are where numeric streams cross into the visual domain by routing them to a buffer that a render pipeline consumes.
 
@@ -52,9 +52,11 @@ The node taxonomy reflects what kinds of transformation exist, not what domain t
 
 `MeshNetwork` operates on mesh topology as a first-class computational structure.
 
-`InstanceNetwork` is a flat peer collection of `GeometrySlot` entries for GPU instanced rendering. All slots may hold the same node (shared template geometry) or distinct nodes. `process_batch()` runs the operator chain then drives `compute_frame()` on each slot's node. The buffer layer reads the slot list each cycle and packs per-instance transforms into an SSBO for a single instanced draw call. `InstanceFieldOperator` binds per-slot transform or position fields and supports an optional GPU path via `ShaderExecutionContext` that computes all instance transforms on the GPU and writes them back via an `on_complete` callback.
+`InstanceNetwork` groups geometry slots for a single instanced draw. Slots can share a geometry source or use distinct nodes. `InstanceFieldOperator` derives their transforms or positions, optionally on the GPU.
 
 All networks accept `NetworkOperator` instances that define behavioral layers. Operators compose: `FieldOperator`, `MeshFieldOperator`, `PhysicsOperator`, `MeshTransformOperator`, `GraphicsOperator`, `InstanceFieldOperator`, `OperatorChain`.
+
+`GpuFieldOperator` evaluates spatial fields against network geometry on the GPU. The associated buffer processors manage spatial hashing, clusters, claims, population, and vertex field writes.
 
 ### Buffers
 
@@ -62,13 +64,15 @@ If a node is a moment of transformation, a buffer is a span of time held in one 
 
 A node produces one value per evaluation. A buffer accumulates those values over a cycle, holds them, and makes them available as a block. Buffers are cycle-driven, carry processing tokens, and are registered with a `BufferManager` that knows when to process them.
 
-**Audio buffers** accumulate double-precision samples for the audio subsystem. `AudioBuffer` is the base. `NodeBuffer` is an audio buffer whose data source is a node. `FeedbackBuffer` owns and publishes a `HistoryBuffer` ring of carried values. `FeedbackProcessor` works on any `AudioBuffer` and combines each sample with lagged values of that ring through a lambda or a Kinesis kernel (fixed or time-varying lags, linear or Lagrange reads, optionally another `FeedbackBuffer`'s ring); `BlockFeedbackProcessor` does the same per whole block. `InputAudioBuffer` captures from hardware input.
+**Audio buffers** accumulate samples for the audio subsystem. `NodeBuffer` draws from a node, `InputAudioBuffer` captures hardware input, and `FeedbackBuffer` retains history. `FeedbackProcessor` and `BlockFeedbackProcessor` use that history for sample or block feedback.
 
 **Geometry buffers** accumulate vertex data for the graphics pipeline: `GeometryBuffer`, `MeshBuffer`, `CompositeGeometryBuffer`.
 
-**Network buffers** bridge NodeNetworks to subsystem outputs: `NetworkGeometryBuffer`, `MeshNetworkBuffer`, `NetworkTextureBuffer`, `NetworkAudioBuffer`. `InstanceNetworkBuffer` renders an `InstanceNetwork` as a single instanced draw call; template geometry from slot 0 is uploaded once and per-slot transforms are packed into an SSBO each cycle by `InstanceSSBOProcessor`.
+**Network buffers** carry NodeNetwork output to audio, texture, and geometry consumers. `InstanceNetworkBuffer` supplies geometry and per-instance transforms for an instanced draw.
 
 **Texture buffers** hold image data flowing to GPU image resources: `TextureBuffer`, `NodeTextureBuffer`.
+
+**GPU state buffers** retain evolving data between cycles. `RelaxationGridBuffer` runs double-buffered stencil rules; `VolumeGridBuffer` holds named 3D fields for flow, diffusion, and surface extraction. `RaymarchBuffer` renders a volume field directly.
 
 **Container buffers** bridge Kakshya containers into the real-time cycle: `SoundContainerBuffer`, `VideoContainerBuffer`.
 
@@ -80,25 +84,15 @@ A node produces one value per evaluation. A buffer accumulates those values over
 
 Processing happens to buffers, not inside them. Every buffer carries a processing chain; processors attach to that chain and execute in order when the buffer's cycle fires.
 
-`NodeFeedProcessor` evaluates a node unit by unit until the buffer is full. `FilterProcessor` applies IIR or FIR coefficients. `LogicProcessor` applies boolean operations. `PolynomialProcessor` applies a user-supplied polynomial function with optional recursive mode. `NodeBindingsProcessor` binds node outputs to GPU descriptor slots. `AggregateBindingsProcessor` combines multiple node outputs into a single descriptor update.
+Node processors turn evaluations into blocks and then transform them. `NodeFeedProcessor` fills a buffer from a node; `FilterProcessor`, `LogicProcessor`, and `PolynomialProcessor` reshape its values. `NodeBindingsProcessor` and `AggregateBindingsProcessor` instead route node outputs into GPU bindings.
 
-`DataWriteProcessor` is a modality-aware write processor for `VKBuffer` targets. It accepts `NDData`-typed payloads from `Bridge` outbound paths and stages them into the buffer's pipeline context each cycle, serving as the connective tissue between Forma element values and arbitrary GPU-side consumers.
+Audio processors bring streams into the cycle and combine them for output. `StreamSliceProcessor` reads and mixes selected slices of a Kakshya sound stream, `AudioWriteProcessor` accepts typed values from elsewhere in the graph, and `MixProcessor` combines child audio buffers at the root.
 
-`FormaBindingsProcessor` handles descriptor binding updates for Forma elements. It is constructed by `Bridge::write()` when an element value needs to drive a descriptor slot; it writes into the buffer's pipeline context staging rather than targeting an external `ShaderProcessor`.
+Graphics processors prepare resources before drawing or compute. `GeometryBindingsProcessor` uploads changed node geometry, `MeshProcessor` updates mesh vertices and indices, and `InstanceSSBOProcessor` supplies per-instance transforms. `DescriptorBindingsProcessor` stages shader resources; `UVFieldProcessor` projects texture coordinates on the GPU. `RenderProcessor` records draws and `ComputeProcessor` dispatches compute. At the root, `GraphicsBatchProcessor` gathers child work and `PresentProcessor` submits it to the target windows.
 
-On the graphics side: `GeometryBindingsProcessor`, `MeshProcessor`, `RenderProcessor`, `ComputeProcessor`, `DescriptorBindingsProcessor`, `UVFieldProcessor`. `InstanceSSBOProcessor` packs per-slot `mat4` transforms from an `InstanceNetwork` into an SSBO binding each cycle.
+Transfer processors connect these paths. `DataWriteProcessor` writes typed values into GPU buffers, while `FormaBindingsProcessor` routes Forma state into shader bindings. `BufferUploadProcessor` and `BufferDownloadProcessor` move buffer data across CPU and GPU memory; `TransferProcessor` specifically bridges audio and GPU buffers.
 
-`MixProcessor`, `GraphicsBatchProcessor`, `PresentProcessor` handle aggregation and submission.
-
-For data movement between CPU and GPU: `BufferUploadProcessor`, `BufferDownloadProcessor`, `TransferProcessor`.
-
-For Kakshya container access: `AccessProcessor` variants, `StreamSliceProcessor`.
-
-For NDData to audio: `AudioWriteProcessor`. For NDData to graphics: `GeometryWriteProcessor`, `TextureWriteProcessor`.
-
-`SDFMeshProcessor` evaluates signed-distance fields on the GPU and runs marching cubes to produce mesh geometry; it operates on a `ComputeMeshBuffer` that carries both SDF input and the resulting triangle data.
-
-`ComputeMeshBuffer` is a `VKBuffer` specialization for GPU-side SDF and mesh compute workflows. It owns the SSBO holding SDF samples and the vertex output from marching cubes, driven by `SDFMeshProcessor` via async compute dispatch.
+`SDFMeshProcessor` runs GPU signed-distance evaluation and marching cubes into a `ComputeMeshBuffer`, whose generated geometry can be rendered or exported.
 
 ### Vruta
 
@@ -110,9 +104,9 @@ Four coroutine types cover the space of real-time work:
 
 `GraphicsRoutine` ticks at frame rate and is resumed by the frame-clock pump on the graphics thread. Suspend with `FrameDelay`.
 
-`CrossRoutine` lives in the `MULTI_RATE` task list, which both pumps scan. It suspends on `MultiRateDelay`, which arms both clocks simultaneously. A zero count on one clock disarms that clock for the current suspension. When both pumps reach the gate concurrently, a compare-exchange on `active_delay_context` in the promise ensures exactly one thread resumes the handle. `CrossRoutine` is added with `initialize=false`; the `Fabric::use(CrossFactory)` path handles initialization automatically.
+`CrossRoutine` spans audio and frame clocks. `MultiRateDelay` lets either clock resume the work while ensuring it runs only once at each suspension point.
 
-`FreeRoutine` (backed by `conditional_promise`) is resumed by a dedicated `CONDITIONAL` scheduler thread that evaluates a stored predicate on each iteration. It carries no clock; it simply waits for an arbitrary condition to become true.
+`FreeRoutine` waits for a condition rather than a clock tick.
 
 `DelayContext` distinguishes buffer-based and sample-based timing regimes. `Event` and `EventManager` hold named coroutines that respond to conditions. `EventSource` and `NetworkSource` are the sources events wait on. `Clock` tracks elapsed time in samples and converts between sample counts and seconds.
 
@@ -122,9 +116,11 @@ Kriya is the vocabulary for writing time-structured processing work against Vrut
 
 The awaiters `SampleDelay`, `BufferDelay`, `FrameDelay`, and `MultiRateDelay` express time in terms the system understands. `ProcessingGate` suspends until a condition becomes true. `EventAwaiter` and `NetworkAwaiter` suspend until an event or message fires.
 
-`Tasks` provides common scheduling primitives: `metro` fires a callback at a regular interval with sample-accurate timing; `sequence` fires a list of callbacks at specified time offsets relative to start; `line` interpolates a float between two values over a duration; `pattern` calls a generator function with an incrementing step index at a regular interval, the natural primitive for algorithmic generation.
+`Tasks` provides common scheduling primitives: `metro` fires a callback at a regular interval with sample-accurate timing; `sequence` fires callbacks at specified offsets; `line` interpolates a value over a duration. `Kriya::pattern` passes an incrementing index to a typed generator and delivers each result to a callback. Its steps can follow a condition, a repeating duration list, or durations generated for each pass.
 
-`BufferPipeline` is the primary composition surface for sequences of buffer operations as coroutine-driven chains. `SamplingPipeline` specializes this for polyphonic stream playback.
+`BufferPipeline` composes buffer operations as coroutine-driven chains at audio or frame rate. `SamplingPipeline` connects a `DynamicSoundStream` to audio buffers and plays `StreamSlice` values through independently controlled slots.
+
+Frame-rate pipelines can capture camera or video frames into a `DynamicVideoStream`. `TapSet` places multiple taps on one sound stream, each with its own lag, repeat, speed, direction, gain, and output channels. `Chimera` feeds a `TextureArrayBuffer` from still images, GPU images, live video rings, or recorded `TextureCollection` frames; each layer has independent timing and controls.
 
 `Chain` (the `EventChain`) sequences discrete actions with sample-accurate delays via `then()`, `wait()`, `every()`, `repeat()`, `times()`.
 
@@ -138,15 +134,17 @@ Input events enter the scheduling system through `InputEvents`: `any_key`, `mous
 
 Kakshya is not real-time. This is intentional and important.
 
-Kakshya is the repository and classification layer for data at rest. It holds data, describes data, provides zero-cost views into data, and processes data on demand. It has no scheduler dependency. Its processors are pull-based, not tick-driven.
+Kakshya holds and classifies stored and live data. It describes data, provides zero-cost views, and processes data on demand. It has no scheduler dependency. Its processors are pull-based, not tick-driven.
 
 At the center is `SignalSourceContainer`, the base for all typed containers. Concrete types cover the full range of digital media:
 
-`SoundFileContainer` holds decoded audio from a file. `DynamicSoundStream` holds a bounded stream that can grow. `SoundStreamContainer` wraps a live audio stream. `VideoFileContainer` holds decoded video frames. `VideoStreamContainer` wraps a live video feed. `CameraContainer` wraps camera capture. `TextureContainer` holds image data with pixel format and dimensions. `WindowContainer` wraps a windowing surface and exposes each completed rendered frame as addressable NDData via `WindowAccessProcessor`. `AudioOutputContainer` is a `DynamicSoundStream` subclass wrapping the live engine audio output; each completed output cycle is written by `AudioOutputAccessProcessor` into `m_processed_data` and accumulated in `m_data`, making the engine's output tap-able as a first-class container for metering, recording, and visualization. `PlotContainer` holds time-series data for the Portal::Forma plot subsystem; its write head advances atomically and readers hold independent cursors.
+Audio containers hold files, live streams, and the engine's own output: `SoundFileContainer`, `SoundStreamContainer`, `DynamicSoundStream`, and `AudioOutputContainer`. The output container makes playback available for metering, recording, or visualization. Video and image containers include `VideoFileContainer`, `VideoStreamContainer`, `DynamicVideoStream`, `CameraContainer`, `TextureContainer`, and `TextureCollection`. `WindowContainer` exposes rendered frames; `PlotContainer` holds time-series data for Forma plots.
 
-`NDData` and `DataVariant` are the carriers. `DataVariant` is the type-erased container for numeric data in motion. `NDData` provides structured N-dimensional access with typed interpretations: scalar, vec2, vec3, vec4, complex, mesh. `EigenAccess` and `EigenInsertion` bridge NDData to Eigen matrices. `MeshAccess`, `VertexAccess`, and `TextureAccess` bridge to their respective formats.
+`NDData` and `DataVariant` carry typed, multidimensional values across containers and operations. Access and insertion adapters bridge them to Eigen matrices, meshes, vertices, and textures.
 
-`Region` and `RegionGroup` are zero-cost markers over containers. A `Region` names a span: start frame, length, channel mask. It does not copy the data. `RegionGroup` organizes multiple regions with metadata. `RegionSegment` subdivides regions further. `OrganizedRegion` carries attribution.
+`CompositeLayout` describes named numeric, text, binary, or dynamic fields. `CompositeArray` packs records that share that layout while keeping variable-length text and binary data in separate stores. `Composite` provides a borrowed record view; `CompositeContainer` exposes insertion, slices, and traversal through the Kakshya container interface.
+
+`Region` and `RegionGroup` describe spans of container data without copying them. Segments and organized regions add subdivisions and attribution.
 
 `DataProcessingChain` applies `DataProcessor` instances on demand. The Processors subdirectory provides: `ContiguousAccessProcessor`, `CursorAccessProcessor`, `FrameAccessProcessor`, `WindowAccessProcessor`, `SpatialRegionProcessor`, `AudioOutputAccessProcessor`.
 
@@ -154,9 +152,9 @@ The relationship between Kakshya and Buffers is a one-way bridge. Buffers consum
 
 ---
 
-## Yantra: The Offline Computation Universe
+## Yantra: Computation and Analysis
 
-Yantra is what MayaFlux looks like when real-time constraints are removed: a complete offline computation environment with its own type system, operation taxonomy, composition mechanisms, and GPU execution layer.
+Yantra provides typed computation, analysis, composition, and GPU execution. Its operations can run on stored data or process live streams through scheduled workflows.
 
 The type system begins with `Datum<T>`. Where the real-time side works with raw doubles flowing through buffers, Yantra wraps everything in `Datum`. A `Datum` carries the data, optional container context, and metadata. `ComputeData` is the concept constraining what `T` can be. `StructureIntrospection` infers the shape of any `ComputeData` value.
 
@@ -168,89 +166,85 @@ The type system begins with `Datum<T>`. Where the real-time side works with raw 
 
 **Extractors** pull features: `FeatureExtractor`, `UniversalExtractor`, `GpuExtractor`.
 
-**Executors** are the GPU execution layer. `GpuExecutionContext` manages the full lifecycle of a Vulkan compute dispatch: descriptor allocation, buffer staging, shader execution, result readback. `ShaderExecutionContext<>` is the templated dispatch type used by `GpuComputeNode` and `InstanceFieldOperator`'s GPU path; it carries input bindings, output bindings, and push constants, and exposes `dispatch_async` returning a `FenceID`. `TextureExecutionContext` specializes this for image shaders. `GpuDispatchCore` handles low-level dispatch mechanics. `GpuResourceManager` manages GPU-side buffer and image lifetimes across dispatches.
+**Executors** bridge typed operations to Vulkan compute. `ShaderExecutionContext<>` handles buffer shaders, `TextureExecutionContext` handles images, and `GpuDispatchCore` with `GpuResourceManager` coordinates dispatch and resource reuse. GPU work can also be dispatched asynchronously.
 
 **Composition** is where the system becomes expressive beyond individual operations.
 
-`ComputeMatrix` is a self-contained execution environment holding named operation instances, executed with configurable strategies: synchronous, asynchronous, parallel, or chained.
+`ComputeMatrix` holds named operations and runs them synchronously, asynchronously, in parallel, or as chains.
 
-`ComputationGrammar` is a rule-based production system for operation selection. Rules carry matching logic, execution logic, priority, and metadata. When data arrives at a grammar-driven pipeline, matching rules are evaluated in priority order and the winning rule's executor runs.
+`ComputationGrammar` selects operations by matching incoming data against prioritized rules.
 
 `ComputationPipeline` composes operations in sequence with optional grammar-driven selection at each stage.
 
 `GranularWorkflow` is a complete opinionated granular analysis and reconstruction implementation built on the grammar and matrix systems.
 
-`OperationRegistry` maps operation types to factories for runtime discovery.
+### Vision
+
+`VisionSequence` describes image operations and selects a CPU or GPU backend. `VisionQuery` resolves higher-level intents into sequences for segmentation, contours, features, and optical flow. Yantra's `VisionAnalyzer` executes those sequences; `VisionMatrix` keeps the frame, analysis, and optional extraction together. `VisionWorkflow` runs that matrix on video streams and can publish results, record GPU images in a `TextureCollection`, or feed a `Chimera` display.
 
 ---
 
-## The Visual Pipeline
-
-The visual pipeline in MayaFlux is an independent, full-capability visual processing system sharing the same real-time infrastructure as audio: the same scheduler, the same buffer machinery, the same Kriya composition layer.
-
-### Portal
+## Portal: Cross-Domain Coordination
 
 Portal is the glue layer between MayaFlux's internal systems and external-facing capabilities requiring coordination across backends, resource lifetimes, and platform abstractions. It currently covers Graphics, Text, Forma, System, and Network.
 
-**Portal::Graphics** is the Vulkan coordination layer.
+### Graphics
 
-`ShaderFoundry` manages shader compilation from SPIR-V, command buffer allocation and recording, descriptor set construction, and fence lifetime tracking. `is_fence_signaled` is polled by `GpuComputeNode` to detect async dispatch completion.
+`Portal::Graphics` is the Vulkan coordination layer. MayaFlux's visual pipeline is independent of audio and shares its scheduler, buffer machinery, and Kriya composition layer.
+
+`ShaderFoundry` manages shader compilation and GPU command and fence lifetimes.
 
 `RenderFlow` orchestrates graphics pipeline creation and draw command recording using Vulkan 1.3 dynamic rendering with no render pass objects.
 
-`ComputePress` manages compute pipeline dispatch: pipeline creation, descriptor binding, push constant upload, and `vkCmdDispatch`.
+`ComputePress` records compute pipeline dispatches.
 
 `TextureLoom` creates and manages GPU textures: 2D, 3D, cubemaps, render targets.
 
 `SamplerForge` manages sampler object lifecycle.
 
-The descriptor layout contract with Portal is firm: `set=0, binding=0` is reserved for the `ViewTransform` UBO. User descriptors begin at `set=1`. Push constants are fully available.
+`ShaderSpec` describes generated compute kernels; `ShaderFoundry` compiles or assembles them into SPIR-V and loads them alongside file-backed shaders.
 
-**Portal::Text** is a complete text rendering pipeline: `FontFace` holds a loaded typeface; `GlyphAtlas` rasterizes and packs glyphs into a texture atlas; `TypeSetter` lays out text into a vertex stream; `InkPress` coordinates the full pipeline from string to rendered geometry; `TypeFaceFoundry` manages loaded faces.
+The render descriptor layout reserves `set=0, binding=0` for a `RenderTransform` UBO containing the view, projection, and geometry transforms. User descriptors begin at `set=1`.
 
-**Portal::Forma** is the UI and surface orchestration system. It is not a widget hierarchy; it is a signal-driven geometry system where every interactive element is a typed state mapped through a geometry function to a vertex stream.
+### Text
 
-`FormaBuffer` is the GPU-side vertex buffer for a single element; its contents are rewritten each cycle by the element's geometry function applied to the current `MappedState<T>`.
+`Portal::Text` lays out UTF-8 text and renders it into GPU-resident textures. Its font, atlas, and press components manage glyphs and text buffers. `EditableText` supplies the editing operations used by Forma's `TextField`.
 
-`MappedState<T>` is the state atom for a Forma element. It holds the current typed value and an optional `bulk_reader` for vector-valued state. It is the currency passed through `Bridge` bindings.
+### Forma
 
-`Mapped<T>` is the complete element descriptor: a `MappedState<T>` plus an `Element` containing id, buffer reference, bounds hint, contains predicate, and optional text overlay. Returned by `create_element`.
+`Portal::Forma` is the UI and surface orchestration system. It maps typed state to geometry and connects spatial input to the data graph, without imposing a widget hierarchy.
 
-`Element` is the render-side record. It carries the `FormaBuffer`, spatial bounds, a hit-test predicate, an optional text label, and visibility state. `Layer` owns a collection of `Element` instances and handles relation (parent-child visibility), cascade, and bounds queries.
+`Surface` brings together a window, a `Layer` of elements, and a `Context` for input. An `Element` can be rendered, used for hit testing, or both. `FormaBuffer` carries its vertices to the GPU.
 
-`Context` is the input-event dispatcher for a surface. It maps element ids to press, release, and drag callbacks, spawning `GraphicsRoutine` coroutines for each listener.
+`Form<T>` packages a geometry function with its topology, buffer capacity, and interaction. `create(surface, form, initial)` realizes it as a `Mapped<T>` element whose geometry follows a versioned `MappedState<T>`. Any function can produce a Form, so controls are compositions rather than a fixed widget catalog.
 
-`Surface` is the top-level composition unit: a `Layer`, a `Context`, and a window reference. `Portal::Forma::create_surface` is the primary entry point.
+`Bridge` connects that state to the wider graph: nodes and callables can drive it, while its value can drive nodes, audio, buffers, and shaders. `Tend<T>` joins Form placement and Bridge binding in one chain.
 
-`Bridge` is the two-way binding orchestrator for Forma elements. One Bridge instance serves the full application. Inbound paths drive element `MappedState` values each frame: `bind(id, Node)` reads a node's last output via a `GraphicsRoutine`; `bind(id, lambda)` calls a `std::function<float()>`. Outbound paths route element values each frame: `write(id, ShaderProcessor, offset)` stages into push constants; `write(id, target_buffer, shader_path, descriptor_name, ...)` attaches or reuses a `FormaBindingsProcessor` on the target buffer; `write(id, AudioWriteProcessor)` routes to audio; `write(id, DataWriteProcessor)` routes to a vertex buffer; `write(id, Constant)` updates a node graph constant; `write(id, sink)` routes to a caller-supplied span sink for coefficient arrays.
+`Inspector` exposes live views of the node graph and buffer manager as Forma surfaces.
 
-`Inspector` provides live views into the NodeGraphManager and BufferManager as Forma surfaces. `Portal::Forma::inspect_node_graph()` and `inspect_buffer_manager()` create or show dedicated inspection windows on first call.
+`Plot` maps a `PlotContainer` and series descriptions into live data views.
 
-`Plot` is the live data plotting subsystem inside Forma. `Plot::source()` constructs a `PlotContainer`; `Plot::series()` builds a `SeriesSpec` describing axis mapping and styling; `Forma::plot(title, width, height, container, spec)` constructs a full plot window and returns a `Mapped<shared_ptr<PlotContainer>>`. `Plot::place_label` and `Plot::place_rect` are lower-level placement helpers for custom layouts.
+`Collapsible`, `Scrollable`, `TextField`, and `pick` provide common interaction patterns. `LayoutCursor` and spatial placement helpers position them without imposing a layout engine.
 
-`Collapsible` is a foldable header strip primitive built on `FormaBuffer` and `Layer`. `make_collapsible` constructs one; `attach` relates body elements to it.
+### System
 
-`LayoutCursor` is a simple NDC-space layout accumulator threading through element placement calls to advance vertical position.
+`Portal::System` provides native OS integration.
 
-`Portal::Forma::initialize` stores engine-level references (`BufferManager`, `TaskScheduler`, `EventManager`, `WindowManager`, `NodeGraphManager`) for all subsequent factory calls. The `create_element`, `create_buffer`, and `create_surface` free functions are the primary user-facing API.
+`Portal::System::Dialog` presents native open and save dialogs across Linux, Windows, and macOS. The `Depot` API builds typed media selection and saving on top of them.
 
-**Portal::System** provides native OS integration.
+### Network
 
-`Portal::System::initialize()` initializes the system backend. `Portal::System::Dialog` exposes file chooser operations: `open_file(callback, filters, start_dir)` presents a native open-file dialog (XDG Portal on Linux, `COM IFileOpenDialog` on Windows, `NSOpenPanel` on macOS); `save_file` does the same for save. Templated `open_file<T>(on_success, on_error, ...)` overloads block until completion and return the result of applying `on_success` to the chosen path. The `Depot` API layer builds on these with typed convenience functions: `choose_audio`, `choose_video`, `choose_image`, `choose_mesh`, `choose_mesh_network`, `save_audio`, `save_image`.
+`Portal::Network` provides the facade for network endpoint management. `MessageUtils` and `NetworkSink` handle message serialization and dispatch. `StreamForge` and `PacketFlow` manage TCP and UDP endpoint lifecycles.
 
-**Portal::Network** provides the facade for network endpoint management. `MessageUtils` and `NetworkSink` handle message serialization and dispatch. `StreamForge` and `PacketFlow` manage TCP and UDP endpoint lifecycles.
+---
 
-### Registry
+## Registry
 
-Registry and Portal are often confused because both relate to backend access. They are not the same thing at all.
+`BackendRegistry` lets backends publish service interfaces without coupling consumers to a particular implementation. Portal builds higher-level systems on those services, and Yantra can reach the active GPU backend through the same seam.
 
-`BackendRegistry` is a type-indexed map of factory functions. A backend registers a pointer to its service implementation under an interface type. A consumer queries by interface type and receives a pointer. Neither knows about the other. There is no abstraction over the service itself: the registry returns exactly what the backend registered. Its job is decoupling, not capability.
+---
 
-Portal builds complete, opinionated systems on top of whatever the registry returns. Portal knows what to do with a `DisplayService` or a `BufferService`; it constructs stateful facades with lifecycle, configuration, and rich API. A consumer using Portal never touches the registry. A consumer building new Portal-level systems queries the registry directly to get the backend handle they need.
-
-Registry is the seam. Portal is the surface. The distinction matters because both are entry points but to completely different levels of the system.
-
-### Core and Subsystems
+## Core and Subsystems
 
 `Engine` owns the component graph and manages the initialization sequence. `SubsystemManager` coordinates `ISubsystem` instances.
 
@@ -262,9 +256,7 @@ Registry is the seam. Portal is the surface. The distinction matters because bot
 
 `NetworkSubsystem` owns TCP and UDP backends and registers a `NetworkService`.
 
-Each subsystem receives a `SubsystemProcessingHandle` at initialization: a token-scoped handle that provides controlled access to Buffers, Nodes, and the task scheduler without exposing manager internals. Subsystems operate through their handle; they do not hold direct references to managers.
-
-`BackendRegistry` sits across all of this as the service discovery mechanism. Backends write into it on startup; Portal and other consumers read from it. The registry is the reason Yantra can dispatch GPU compute without knowing which backend is running.
+Each subsystem receives a `SubsystemProcessingHandle` for controlled access to Buffers, Nodes, and the scheduler.
 
 ---
 
@@ -276,9 +268,9 @@ Nexus is the spatial simulation and orchestration layer. It connects to the real
 
 `Locus` is an `Agent` subclass that also carries a `NavigationState` for camera-like movement through the world. `Presence` is an `Agent` subclass with a `falloff_curve` and `falloff_radius` controlling how its influence attenuates over distance.
 
-`Expanse` is a named spatial region carrying a `ContainsFn` predicate and optional `on_enter` and `on_exit` crossing callbacks. Expanses are registered on a `Fabric` and evaluated as part of each commit cycle. `Tapestry` manages a collection of Fabrics and owns named Expanses that can be active across multiple Fabrics.
+`Expanse` is a named spatial region carrying a `ContainsFn` predicate and optional `on_enter` and `on_exit` crossing callbacks. `Hull` derives its region from a buffer's geometry; `Mantle` places a buffer within its region. Expanses are registered on a `Fabric` and evaluated as part of each commit cycle. `Tapestry` manages a collection of Fabrics and owns named Expanses that can be active across multiple Fabrics.
 
-`StateEncoder` serializes Fabric and Tapestry state to a paired EXR (numeric data) and JSON (schema) file set. `StateDecoder` patches or reconstructs entity state from that pair. The current schema is version 5, with an EXR layout of five RGBA32F rows per entity: position/intensity, color/size, radius/query_radius/type, trigger/timing/sink bits, and Locus navigation parameters. `StateDecoder::reconstruct` can construct missing entities from schema records rather than only patching existing ones.
+`StateEncoder` saves Fabric and Tapestry state as numeric EXR data with a JSON schema. `StateDecoder` can patch existing entities or reconstruct missing ones from that pair.
 
 `Wiring` is the builder interface for connecting entities to MayaFlux systems. The `on(window, key, bool held, on_release)` API attaches keyboard triggers; mouse drag support is available. `wire_player` is a free function that wires a Locus to standard movement controls. `Regime` is a user struct pattern for holding atomic state shared across routines.
 
@@ -292,7 +284,7 @@ The function registry on `Fabric` maps string names to `InfluenceFn`, `ContainsF
 
 ## Kinesis: The Mathematical Substrate
 
-Kinesis is MayaFlux's mathematical library. No processing concepts, no schedulers, no buffers. Algorithms over data, expressed as free functions and lightweight types, available to every other layer.
+Kinesis is MayaFlux's mathematical library. It supplies algorithms and lightweight descriptions of computation without owning schedulers or buffers.
 
 `Kinesis::Discrete` covers algorithms over `std::span`: convolution, spectral transforms, sorting, onset detection, zero-crossing analysis, taper application (Hann, trapezoid, Blackman), extraction of peaks and troughs, quantization.
 
@@ -302,27 +294,31 @@ Kinesis is MayaFlux's mathematical library. No processing concepts, no scheduler
 
 `Kinesis::Spatial` covers geometric queries: `SpatialIndex3D` with radius and k-nearest search, `ProximityGraphs` for KNN, Delaunay, and minimum spanning tree construction, `HitTest` for intersection.
 
-Top-level Kinesis provides: `GeometryPrimitives` (platonic solids, subdivided surfaces, parametric shapes; `filled_rect` and related NDC helpers used by Forma); `MatrixTransforms`; `MotionCurves`; `NavigationState`; `VertexSampler`; `ViewTransform` (the camera matrix type consumed by the engine-reserved UBO at `set=0, binding=0`); `BasisMatrices`; `ndc_size_to_pixels` and related coordinate conversion helpers used by Portal::Forma layout.
+`Kinesis::Vision` supplies image operations, sequence descriptions, and result types used by both CPU and GPU vision executors. `Kinesis::Discrete` also provides reusable boolean, polynomial, and feedback kernels for Logic, Polynomial, and Feedback processors.
+
+Top-level Kinesis provides: `GeometryPrimitives` (platonic solids, subdivided surfaces, parametric shapes; `filled_rect` and related NDC helpers used by Forma); `MatrixTransforms`; `MotionCurves`; `NavigationState` and other viewport controllers; `VertexSampler`; `ViewTransform` (view and projection matrices carried within the render UBO); `BasisMatrices`; `ndc_size_to_pixels` and related coordinate conversion helpers used by Portal::Forma layout.
 
 ---
 
 ## IO: Reading and Writing the World
 
-IO loads external data into Kakshya containers and writes data back out. It is bidirectional.
+IO brings external media into Kakshya containers and GPU buffers, and writes MayaFlux data back to files.
 
-**Reading:** `SoundFileReader` decodes audio via the FFmpeg/libav stack into `SoundFileContainer`. `VideoFileReader` and `VideoStreamContext` decode video frames into `VideoFileContainer` and `VideoStreamContainer`. `ImageReader` loads still images via STB into `TextureBuffer`. `ModelReader` loads mesh data via assimp. `CameraReader` captures from camera hardware. `AudioStreamContext` wraps live audio input. `IOManager` coordinates all readers and provides the unified loading interface.
+**Reading:** `SoundFileReader` decodes audio via the FFmpeg/libav stack into `SoundFileContainer`. `VideoFileReader` and `VideoStreamContext` decode video frames into `VideoFileContainer` and `VideoStreamContainer`. `ImageReader` loads still images via STB into `TextureBuffer`. `ModelReader` loads mesh data via assimp; `SpatialReader` reads time-sampled Alembic points and curves. `VolumeReader` loads OpenVDB grids into `VolumeData`, which `IOManager::load_volume` uploads to a `VolumeGridBuffer`. `CameraReader` captures from camera hardware. `AudioStreamContext` wraps live audio input. `IOManager` coordinates these readers.
 
-**Writing:** `SoundFileWriter` encodes audio to any FFmpeg-supported container format via a worker thread and lock-free queue. It accepts interleaved `std::span<double>`, planar `vector<DataVariant>`, `AudioBuffer`, or `SoundStreamContainer`. Internally it owns a `FFmpegMuxContext` and `AudioEncodeContext`. `VideoFileWriter` encodes video frames via `VideoEncodeContext` and `FFmpegMuxContext` on a worker thread; it accepts raw pixel data or `VKBuffer` download commands, and supports continuous window capture via `IOManager::capture_window`. `FFmpegMuxContext` owns the `AVFormatContext` on the write path; `AudioEncodeContext` and `VideoEncodeContext` each add one stream to it. `IOManager::capture_output` hooks into the `AudioBackendService` output observer to continuously feed an `AudioOutputContainer` into a `SoundFileWriter`. `IOManager::write` encodes a `SoundStreamContainer` to disk synchronously with async worker drain.
+**Writing:** `SoundFileWriter` and `VideoFileWriter` encode through FFmpeg worker threads. `FFmpegMuxContext` owns the output container; `AudioEncodeContext` and `VideoEncodeContext` add streams. `IOManager::write` queues a `SoundStreamContainer` for encoding. `ModelWriter` exports mesh buffers through Assimp. `SpatialCache` writes time-sampled points and curves to Alembic. `VDBWriter` saves volume fields as OpenVDB grids; `IOManager::save_volume` accepts either `VolumeData` or a GPU-resident `VolumeGridBuffer`.
+
+**Capture:** `IOManager::capture_output` observes live audio output and writes it through `SoundFileWriter`; `capture_window` records rendered frames through `VideoFileWriter`. Both return capture handles with explicit stop calls. `capture_volume` records numbered VDB frames, and `capture_spatial` records live buffer geometry into Alembic.
 
 `FileReader`, `FileWriter`, `TextFileWriter`: generic file IO interfaces. `JSONSerializer` handles structured JSON read/write for engine config, Nexus schemas, and other serialization tasks. `Keys` maps platform key codes to `IO::Keys`.
 
-IO has no real-time dependency for loading: load, construct a container, return. Writing is asynchronous via worker threads; the caller submits frames and the worker encodes at its own pace.
+IO has no real-time dependency for loading: load, construct a container, return. Encoded file writing is dispatched to workers; capture obtains data from the relevant live subsystem before handing it to the writer.
 
 ---
 
 ## Journal: Structured Logging
 
-`Journal::Archivist` is the singleton logging system. `scribe` logs at arbitrary severity with source location; `scribe_rt` is the real-time safe path backed by a lock-free ring buffer and a worker thread that drains to registered `Sink` instances. `ConsoleSink` and `FileSink` are the standard sinks. The logging system filters by `Component` (Audio, Buffers, Core, Graphics, IO, Kakshya, Kinesis, Kriya, Nexus, Nodes, Portal, Registry, Transitive, Vruta, Yantra, API, Lila) and `Context` (AudioProcessing, NodeProcessing, ContainerProcessing, FileIO, ShaderCompilation, Networking, Init, Shutdown, Configuration, UI, UserCode, Runtime, API, and others). `MF_INFO`, `MF_WARN`, `MF_ERROR`, `MF_DEBUG`, `MF_TRACE` are the standard macros; `MF_RT_*` variants route through the lock-free path. `MF_ASSERT` logs and aborts on failure.
+`Journal::Archivist` collects structured logs by component and context. Ordinary logging includes severity and source location; the real-time path writes to a lock-free ring drained by a worker into console or file sinks. `MF_*` macros expose both paths.
 
 ---
 
@@ -332,7 +328,7 @@ Transitive contains code with no MayaFlux dependency. It exists because these ut
 
 `Transitive::Memory` provides `RingBuffer` (the history buffer underlying `FeedbackBuffer` and used throughout DSP code where temporal indexing is needed) and `Persist` (a simple persistence helper).
 
-`Transitive::Parallel` provides `Dispatch` (thread pool dispatch) and `Execution` (parallel STL policy wrappers used by Yantra for parallelized operations).
+`Transitive::Parallel` provides `Dispatch` for thread pool work.
 
 `Transitive::Reflect` provides `EnumReflect`, a wrapper over `magic_enum` used throughout for enum-to-string conversion in logging and serialization.
 
@@ -345,13 +341,13 @@ Transitive contains code with no MayaFlux dependency. It exists because these ut
 
 ## Lila: The Live Layer
 
-Lila is the JIT environment. It uses Clang's `IncrementalCompilerBuilder` and LLVM ORC JIT to compile and install C++23 source fragments at runtime with latency bounded to one buffer cycle.
+Lila is the live coding environment. It compiles C++23 fragments with Clang and LLVM ORC JIT and installs them into the running process.
 
-A Lila server listens on a TCP socket managed by ASIO. Incoming source arrives via `async_read_some` with accumulation until a complete fragment is received. That fragment is compiled, linked against the running binary's symbols, and installed. The installed code executes in the same process and address space. There is no isolation layer, no IPC, no data conversion.
+Source arrives over a TCP connection. Installed code shares the process and address space with the engine, so it can work with MayaFlux objects directly.
 
-`Vega` is the factory API used from Lila sessions. `vega.Sine()`, `vega.NodeBuffer()`, `vega.ParticleNetwork()`: factory calls create and register MayaFlux objects from within live-coded fragments. A code generation tool produces explicit `shared_ptr<T>` return declarations for each factory so that clangd can resolve signature help against concrete declarations rather than variadic templates.
+`Vega` is the factory surface for creating and registering MayaFlux objects from live-coded fragments.
 
-`LiveArena` is a bump allocator for JIT object sharing across compilation cycles. It provides stable storage for objects created in one live-coded fragment and referenced in subsequent ones, avoiding the dangling-pointer hazard that arises when the compiler reclaims frame storage between compilations.
+`LiveArena` keeps shared JIT objects alive across compilation cycles.
 
 ---
 
@@ -359,13 +355,9 @@ A Lila server listens on a TCP socket managed by ASIO. Incoming source arrives v
 
 Every real-time object carries a processing token describing how and when it runs.
 
-`Vruta::ProcessingToken`: `SAMPLE_ACCURATE`, `FRAME_ACCURATE`, `EVENT_DRIVEN`, `MULTI_RATE`, `ON_DEMAND`, `CONDITIONAL`.
+Vruta tokens choose when a routine resumes; Nodes tokens choose evaluation rate; Buffers tokens combine rate, device, and concurrency. These describe execution without changing the data being processed.
 
-`Nodes::ProcessingToken`: `AUDIO_RATE`, `VISUAL_RATE`, `EVENT_RATE`, `CUSTOM_RATE`.
-
-`Buffers::ProcessingToken` is a bitfield combining rate, device, and concurrency. Rate flags: `SAMPLE_RATE`, `FRAME_RATE`, `EVENT_RATE`. Device flags: `CPU_PROCESS`, `GPU_PROCESS`. Concurrency flags: `SEQUENTIAL`, `PARALLEL`. Predefined combinations: `AUDIO_BACKEND`, `GRAPHICS_BACKEND`, `AUDIO_PARALLEL`, `INPUT_BACKEND`.
-
-`Domain` unifies all three levels into a single 64-bit value. Predefined domains: `AUDIO`, `GRAPHICS`, `AUDIO_PARALLEL`, `AUDIO_GPU`, `AUDIO_VISUAL_SYNC`, `GRAPHICS_ADAPTIVE`, `INPUT_EVENTS`. Custom domains are composed with `compose_domain()` and validated with `create_custom_domain()`.
+`Domain` unifies the token levels into a single routing value. Built-in domains cover audio, graphics, input, and mixed execution; custom domains combine the same timing, device, and concurrency choices.
 
 Domain is not a property attached to data when it is created. It is a token applied to the object that processes the data, resolved at the point where a stream enters a consuming context. The same numbers flow through all domains. The token decides the timing, the device, and the concurrency model that handles them.
 
@@ -387,7 +379,7 @@ A Yantra `GranularWorkflow` analyzes a `SoundFileContainer` using `Kinesis::Disc
 
 A Nexus `Emitter` fires its influence function each commit, pushes data to its `AudioSink`, which writes to an `AudioBuffer` registered with the `BufferManager`, mixed by `RootAudioBuffer` into the audio output. `StateEncoder` snapshots the Fabric's entity state to EXR+JSON; `StateDecoder` reconstructs it on the next session without re-running setup code.
 
-A Forma `Mapped<float>` element exposes a fader. `Bridge::bind(id, envelope_node)` drives its value each frame from a node output. `Bridge::write(id, shader_processor, offsetof(PC, cutoff))` stages the value into push constants for a compute shader. `Bridge::write(id, audio_write_proc)` simultaneously routes the same value to an audio buffer. One element, one state, two outbound paths.
+A Forma fader built from a `Form<float>` has one mapped state. `Bridge` can drive it from a node and route that value to both a shader parameter and an audio buffer. One control participates in both domains.
 
 The common thread in all of these paths is data moving as numbers through typed containers, transformed by operations, driven by a scheduler, consumed by subsystems. Domain is resolved at the consumption point. Nothing before that moment needs to know whether the numbers will become sound, light, geometry, or control.
 
