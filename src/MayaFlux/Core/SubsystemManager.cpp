@@ -282,7 +282,12 @@ std::optional<std::span<const double>> SubsystemManager::read_cross_subsystem_bu
         return std::nullopt;
     }
 
-    auto target_token = m_subsystems[target_type]->get_tokens();
+    auto target = m_subsystems.find(target_type);
+    if (target == m_subsystems.end() || !target->second) {
+        return std::nullopt;
+    }
+
+    auto target_token = target->second->get_tokens();
 
     try {
         return m_buffer_manager->get_buffer_data(target_token.Buffer, channel);

@@ -1,470 +1,644 @@
-#include "../test_config.h"
+#include "gtest/gtest.h"
+
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include "MayaFlux/Buffers/BufferManager.hpp"
-#include "MayaFlux/Core/Engine.hpp"
+#include "MayaFlux/Core/GlobalGraphicsInfo.hpp"
+#include "MayaFlux/Core/GlobalInputConfig.hpp"
+#include "MayaFlux/Core/GlobalNetworkConfig.hpp"
 #include "MayaFlux/Core/SubsystemManager.hpp"
-#include "MayaFlux/Core/Subsystems/AudioSubsystem.hpp"
-#include "MayaFlux/Nodes/Generators/Sine.hpp"
+#include "MayaFlux/Core/Subsystems/NetworkSubsystem.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
 #include "MayaFlux/Vruta/Scheduler.hpp"
 
-#define INTEGRATION_TEST
-
 namespace MayaFlux::Test {
+namespace {
 
-#ifdef INTEGRATION_TEST
+    using Core::HookPosition;
+    using Core::SubsystemManager;
+    using Core::SubsystemTokens;
+    using Core::SubsystemType;
 
-//-------------------------------------------------------------------------
-// SubsystemManager Construction and Initialization Tests
-//-------------------------------------------------------------------------
-
-class SubsystemManagerTest : public ::testing::Test {
-protected:
-    void SetUp() override
+    SubsystemTokens audio_tokens()
     {
-        node_graph_manager = std::make_shared<Nodes::NodeGraphManager>();
-        buffer_manager = std::make_shared<Buffers::BufferManager>(
-            TestConfig::NUM_CHANNELS,
-            0,
-            TestConfig::SAMPLE_RATE,
-            TestConfig::BUFFER_SIZE,
-            Buffers::ProcessingToken::AUDIO_BACKEND);
-        task_scheduler = std::make_shared<Vruta::TaskScheduler>(TestConfig::SAMPLE_RATE);
-
-        stream_info.sample_rate = TestConfig::SAMPLE_RATE;
-        stream_info.buffer_size = TestConfig::BUFFER_SIZE;
-        stream_info.output.channels = TestConfig::NUM_CHANNELS;
-        stream_info.input.enabled = false;
+        return {
+            .Buffer = Buffers::ProcessingToken::AUDIO_BACKEND,
+            .Node = Nodes::ProcessingToken::AUDIO_RATE,
+            .Task = Vruta::ProcessingToken::SAMPLE_ACCURATE
+        };
     }
 
-    void TearDown() override
+    SubsystemTokens visual_tokens()
     {
-        if (subsystem_manager) {
-            subsystem_manager->shutdown();
+        return {
+            .Buffer = Buffers::ProcessingToken::GRAPHICS_BACKEND,
+            .Node = Nodes::ProcessingToken::VISUAL_RATE,
+            .Task = Vruta::ProcessingToken::FRAME_ACCURATE
+        };
+    }
+
+    struct SubsystemCounters {
+        int initialize { 0 };
+        int register_callbacks { 0 };
+        int start { 0 };
+        int stop { 0 };
+        int pause { 0 };
+        int resume { 0 };
+        int wait_until_running { 0 };
+        int shutdown { 0 };
+        Core::SubsystemProcessingHandle* handle { nullptr };
+    };
+
+    class FakeSubsystem : public Core::ISubsystem {
+    public:
+        FakeSubsystem(SubsystemType type, SubsystemTokens tokens,
+            std::shared_ptr<SubsystemCounters> counters, bool becomes_ready = true)
+            : m_type(type)
+            , m_tokens(tokens)
+            , m_counters(std::move(counters))
+            , m_becomes_ready(becomes_ready)
+        {
         }
-        subsystem_manager.reset();
 
-        task_scheduler.reset();
-        buffer_manager.reset();
-        node_graph_manager.reset();
+        void register_callbacks() override { ++m_counters->register_callbacks; }
+
+        void initialize(Core::SubsystemProcessingHandle& handle) override
+        {
+            ++m_counters->initialize;
+            m_counters->handle = &handle;
+            m_ready = m_becomes_ready;
+        }
+
+        void start() override
+        {
+            ++m_counters->start;
+            m_running = true;
+        }
+
+        void stop() override
+        {
+            ++m_counters->stop;
+            m_running = false;
+        }
+
+        void pause() override
+        {
+            ++m_counters->pause;
+            m_running = false;
+        }
+
+        void resume() override
+        {
+            ++m_counters->resume;
+            m_running = true;
+        }
+
+        void wait_until_running() override { ++m_counters->wait_until_running; }
+
+        void shutdown() override
+        {
+            ++m_counters->shutdown;
+            m_ready = false;
+            m_running = false;
+        }
+
+        [[nodiscard]] SubsystemTokens get_tokens() const override { return m_tokens; }
+        [[nodiscard]] bool is_ready() const override { return m_ready; }
+        [[nodiscard]] bool is_running() const override { return m_running; }
+        [[nodiscard]] SubsystemType get_type() const override { return m_type; }
+        Core::SubsystemProcessingHandle* get_processing_context_handle() override { return m_counters->handle; }
+
+    private:
+        SubsystemType m_type;
+        SubsystemTokens m_tokens;
+        std::shared_ptr<SubsystemCounters> m_counters;
+        bool m_becomes_ready;
+        bool m_ready { false };
+        bool m_running { false };
+    };
+
+    /**
+     * @brief Owns a SubsystemManager together with the managers it distributes.
+     */
+    class ManagerRig {
+    public:
+        ManagerRig()
+            : nodes(std::make_shared<Nodes::NodeGraphManager>())
+            , buffers(std::make_shared<Buffers::BufferManager>())
+            , scheduler(std::make_shared<Vruta::TaskScheduler>(48000))
+            , manager(nodes, buffers, scheduler)
+        {
+        }
+
+        ManagerRig(const ManagerRig&) = delete;
+        ManagerRig& operator=(const ManagerRig&) = delete;
+        ManagerRig(ManagerRig&&) = delete;
+        ManagerRig& operator=(ManagerRig&&) = delete;
+
+        ~ManagerRig() { manager.shutdown(); }
+
+        std::shared_ptr<SubsystemCounters> add(SubsystemType type, SubsystemTokens tokens, bool becomes_ready = true)
+        {
+            auto counters = std::make_shared<SubsystemCounters>();
+            manager.add_subsystem(type,
+                std::make_shared<FakeSubsystem>(type, tokens, counters, becomes_ready));
+            return counters;
+        }
+
+        std::shared_ptr<Nodes::NodeGraphManager> nodes;
+        std::shared_ptr<Buffers::BufferManager> buffers;
+        std::shared_ptr<Vruta::TaskScheduler> scheduler;
+        SubsystemManager manager;
+    };
+
+    // ------------------------------------------------------------------
+    // Registration
+    // ------------------------------------------------------------------
+
+    TEST(SubsystemManagerTest, NewManagerHoldsNoSubsystems)
+    {
+        ManagerRig rig;
+
+        EXPECT_FALSE(rig.manager.has_subsystem(SubsystemType::AUDIO));
+        EXPECT_FALSE(rig.manager.has_subsystem(SubsystemType::GRAPHICS));
+        EXPECT_EQ(rig.manager.get_subsystem(SubsystemType::AUDIO), nullptr);
+        EXPECT_EQ(rig.manager.get_audio_subsystem(), nullptr);
+        EXPECT_EQ(rig.manager.get_graphics_subsystem(), nullptr);
+        EXPECT_EQ(rig.manager.get_input_subsystem(), nullptr);
+        EXPECT_EQ(rig.manager.get_network_subsystem(), nullptr);
+        EXPECT_TRUE(rig.manager.query_subsystem_status().empty());
     }
 
-    std::unique_ptr<Core::SubsystemManager> subsystem_manager;
-    std::shared_ptr<Nodes::NodeGraphManager> node_graph_manager;
-    std::shared_ptr<Buffers::BufferManager> buffer_manager;
-    std::shared_ptr<Vruta::TaskScheduler> task_scheduler;
-
-    Core::GlobalStreamInfo stream_info;
-};
-
-TEST_F(SubsystemManagerTest, ValidConstruction)
-{
-    EXPECT_NO_THROW({
-        subsystem_manager = std::make_unique<Core::SubsystemManager>(
-            node_graph_manager, buffer_manager, task_scheduler);
-    });
-
-    ASSERT_NE(subsystem_manager, nullptr);
-
-    EXPECT_FALSE(subsystem_manager->has_subsystem(Core::SubsystemType::AUDIO));
-    EXPECT_FALSE(subsystem_manager->has_subsystem(Core::SubsystemType::GRAPHICS));
-}
-
-/* TEST_F(SubsystemManagerTest, ConstructionWithNullManagers)
-{
-    EXPECT_THROW({ auto bad_manager = std::make_unique<Core::SubsystemManager>(
-                       nullptr, buffer_manager, task_scheduler); }, std::runtime_error);
-
-    EXPECT_THROW({ auto bad_manager = std::make_unique<Core::SubsystemManager>(
-                       node_graph_manager, nullptr, task_scheduler); }, std::runtime_error);
-
-    EXPECT_THROW({ auto bad_manager = std::make_unique<Core::SubsystemManager>(
-                       node_graph_manager, buffer_manager, nullptr); }, std::runtime_error);
-} */
-
-TEST_F(SubsystemManagerTest, ManagerStateValidation)
-{
-    subsystem_manager = std::make_unique<Core::SubsystemManager>(
-        node_graph_manager, buffer_manager, task_scheduler);
-
-    auto status = subsystem_manager->query_subsystem_status();
-    EXPECT_TRUE(status.empty());
-
-    EXPECT_NO_THROW(subsystem_manager->start_all_subsystems());
-
-    EXPECT_NO_THROW(subsystem_manager->shutdown());
-}
-
-//-------------------------------------------------------------------------
-// AudioSubsystem Creation and Management Tests
-//-------------------------------------------------------------------------
-
-TEST_F(SubsystemManagerTest, AudioSubsystemCreation)
-{
-    subsystem_manager = std::make_unique<Core::SubsystemManager>(
-        node_graph_manager, buffer_manager, task_scheduler);
-
-    EXPECT_FALSE(subsystem_manager->has_subsystem(Core::SubsystemType::AUDIO));
-
-    EXPECT_NO_THROW({
-        subsystem_manager->create_audio_subsystem(stream_info);
-    });
-
-    EXPECT_TRUE(subsystem_manager->has_subsystem(Core::SubsystemType::AUDIO));
-
-    auto audio_subsystem = subsystem_manager->get_audio_subsystem();
-    ASSERT_NE(audio_subsystem, nullptr);
-
-    EXPECT_EQ(audio_subsystem->get_type(), Core::SubsystemType::AUDIO);
-    EXPECT_TRUE(audio_subsystem->is_ready()) << "AudioSubsystem should be ready after creation";
-    EXPECT_FALSE(audio_subsystem->is_running()) << "AudioSubsystem should not be running yet";
-
-    const auto& subsystem_stream_info = audio_subsystem->get_stream_info();
-    EXPECT_EQ(subsystem_stream_info.sample_rate, TestConfig::SAMPLE_RATE);
-    EXPECT_EQ(subsystem_stream_info.buffer_size, TestConfig::BUFFER_SIZE);
-    EXPECT_EQ(subsystem_stream_info.output.channels, TestConfig::NUM_CHANNELS);
-}
-
-TEST_F(SubsystemManagerTest, AudioSubsystemWithCustomConfiguration)
-{
-    subsystem_manager = std::make_unique<Core::SubsystemManager>(
-        node_graph_manager, buffer_manager, task_scheduler);
-
-    Core::GlobalStreamInfo custom_stream;
-    custom_stream.sample_rate = 44100;
-    custom_stream.buffer_size = 256;
-    custom_stream.output.channels = 1;
-    custom_stream.input.enabled = true;
-    custom_stream.input.channels = 2;
-    custom_stream.non_interleaved = true;
-    custom_stream.priority = Core::GlobalStreamInfo::StreamPriority::REALTIME;
-
-    EXPECT_NO_THROW({
-        subsystem_manager->create_audio_subsystem(custom_stream);
-    });
-
-    auto audio_subsystem = subsystem_manager->get_audio_subsystem();
-    ASSERT_NE(audio_subsystem, nullptr);
-
-    const auto& applied_config = audio_subsystem->get_stream_info();
-    EXPECT_EQ(applied_config.sample_rate, 44100);
-    EXPECT_EQ(applied_config.buffer_size, 256);
-    EXPECT_EQ(applied_config.output.channels, 1);
-    EXPECT_TRUE(applied_config.input.enabled);
-    EXPECT_EQ(applied_config.input.channels, 2);
-    EXPECT_TRUE(applied_config.non_interleaved);
-    EXPECT_EQ(applied_config.priority, Core::GlobalStreamInfo::StreamPriority::REALTIME);
-}
-
-TEST_F(SubsystemManagerTest, SubsystemLifecycleManagement)
-{
-    subsystem_manager = std::make_unique<Core::SubsystemManager>(
-        node_graph_manager, buffer_manager, task_scheduler);
-
-    subsystem_manager->create_audio_subsystem(stream_info);
-
-    auto audio_subsystem = subsystem_manager->get_audio_subsystem();
-    ASSERT_NE(audio_subsystem, nullptr);
-
-    EXPECT_TRUE(audio_subsystem->is_ready());
-    EXPECT_FALSE(audio_subsystem->is_running());
-
-    EXPECT_NO_THROW(subsystem_manager->start_all_subsystems());
-
-    auto status = subsystem_manager->query_subsystem_status();
-    EXPECT_EQ(status.size(), 1);
-    EXPECT_TRUE(status.count(Core::SubsystemType::AUDIO) > 0);
-
-    auto [is_ready, is_running] = status[Core::SubsystemType::AUDIO];
-    EXPECT_TRUE(is_ready);
-}
-
-//-------------------------------------------------------------------------
-// Process Hook System Tests
-//-------------------------------------------------------------------------
-
-TEST_F(SubsystemManagerTest, ProcessHookRegistration)
-{
-    subsystem_manager = std::make_unique<Core::SubsystemManager>(
-        node_graph_manager, buffer_manager, task_scheduler);
-
-    subsystem_manager->create_audio_subsystem(stream_info);
-
-    int pre_hook_count = 0;
-    int post_hook_count = 0;
-
-    EXPECT_NO_THROW({
-        subsystem_manager->register_process_hook(
-            Core::SubsystemType::AUDIO,
-            "test_pre_hook",
-            [&pre_hook_count](unsigned int) { pre_hook_count++; },
-            Core::HookPosition::PRE_PROCESS);
-    });
-
-    EXPECT_NO_THROW({
-        subsystem_manager->register_process_hook(
-            Core::SubsystemType::AUDIO,
-            "test_post_hook",
-            [&post_hook_count](unsigned int) { post_hook_count++; });
-    });
-
-    EXPECT_TRUE(subsystem_manager->has_process_hook(Core::SubsystemType::AUDIO, "test_pre_hook"));
-    EXPECT_TRUE(subsystem_manager->has_process_hook(Core::SubsystemType::AUDIO, "test_post_hook"));
-    EXPECT_FALSE(subsystem_manager->has_process_hook(Core::SubsystemType::AUDIO, "nonexistent_hook"));
-
-    auto audio_subsystem = subsystem_manager->get_audio_subsystem();
-    std::vector<double> output_buffer(TestConfig::BUFFER_SIZE * TestConfig::NUM_CHANNELS, 0.0);
-
-    EXPECT_NO_THROW({
-        audio_subsystem->process_audio(nullptr, output_buffer.data(), TestConfig::BUFFER_SIZE);
-    });
-
-    EXPECT_GT(pre_hook_count, 0);
-    EXPECT_GT(post_hook_count, 0);
-}
-
-TEST_F(SubsystemManagerTest, ProcessHookUnregistration)
-{
-    subsystem_manager = std::make_unique<Core::SubsystemManager>(
-        node_graph_manager, buffer_manager, task_scheduler);
-
-    subsystem_manager->create_audio_subsystem(stream_info);
-
-    int hook_count = 0;
-
-    subsystem_manager->register_process_hook(
-        Core::SubsystemType::AUDIO,
-        "removable_hook",
-        [&hook_count](unsigned int) { hook_count++; });
-
-    EXPECT_TRUE(subsystem_manager->has_process_hook(Core::SubsystemType::AUDIO, "removable_hook"));
-
-    auto audio_subsystem = subsystem_manager->get_audio_subsystem();
-    std::vector<double> output_buffer(TestConfig::BUFFER_SIZE * TestConfig::NUM_CHANNELS, 0.0);
-
-    audio_subsystem->process_audio(nullptr, output_buffer.data(), TestConfig::BUFFER_SIZE);
-
-    int count_after_first = hook_count;
-    EXPECT_GT(count_after_first, 0);
-
-    EXPECT_NO_THROW({
-        subsystem_manager->unregister_process_hook(Core::SubsystemType::AUDIO, "removable_hook");
-    });
-
-    EXPECT_FALSE(subsystem_manager->has_process_hook(Core::SubsystemType::AUDIO, "removable_hook"));
-
-    audio_subsystem->process_output(output_buffer.data(), TestConfig::BUFFER_SIZE);
-    EXPECT_EQ(hook_count, count_after_first) << "Hook should not execute after unregistration";
-}
-
-//-------------------------------------------------------------------------
-// Cross-Subsystem Operations Tests
-//-------------------------------------------------------------------------
-
-TEST_F(SubsystemManagerTest, CrossAccessPermissions)
-{
-    subsystem_manager = std::make_unique<Core::SubsystemManager>(
-        node_graph_manager, buffer_manager, task_scheduler);
-
-    subsystem_manager->create_audio_subsystem(stream_info);
-
-    EXPECT_NO_THROW({
-        subsystem_manager->allow_cross_access(
-            Core::SubsystemType::GRAPHICS,
-            Core::SubsystemType::AUDIO);
-    });
-
-    // Test cross-subsystem buffer reading
-    // Note: This would typically fail since VISUAL subsystem doesn't exist
-    auto buffer_data = subsystem_manager->read_cross_subsystem_buffer(
-        Core::SubsystemType::GRAPHICS,
-        Core::SubsystemType::AUDIO,
-        0);
-
-    EXPECT_FALSE(buffer_data.has_value());
-}
-
-TEST_F(SubsystemManagerTest, CombinedTokenOperations)
-{
-    subsystem_manager = std::make_unique<Core::SubsystemManager>(
-        node_graph_manager, buffer_manager, task_scheduler);
-
-    subsystem_manager->create_audio_subsystem(stream_info);
-
-    Core::SubsystemTokens audio_tokens = {
-        Buffers::ProcessingToken::AUDIO_BACKEND,
-        Nodes::ProcessingToken::AUDIO_RATE,
-        Vruta::ProcessingToken::SAMPLE_ACCURATE
-    };
-
-    Core::SubsystemTokens visual_tokens = {
-        Buffers::ProcessingToken::GRAPHICS_BACKEND,
-        Nodes::ProcessingToken::VISUAL_RATE,
-        Vruta::ProcessingToken::FRAME_ACCURATE
-    };
-
-    bool operation_executed = false;
-
-    EXPECT_NO_THROW({
-        subsystem_manager->execute_with_combined_tokens(
-            audio_tokens,
-            visual_tokens,
-            [&operation_executed](Core::SubsystemProcessingHandle& handle) {
-                operation_executed = true;
-                auto tokens = handle.get_tokens();
-                EXPECT_EQ(tokens.Buffer, Buffers::ProcessingToken::AUDIO_BACKEND);
-                EXPECT_EQ(tokens.Node, Nodes::ProcessingToken::AUDIO_RATE);
+    TEST(SubsystemManagerTest, AddSubsystemInitializesAndRegistersCallbacksOnce)
+    {
+        ManagerRig rig;
+
+        auto counters = rig.add(SubsystemType::CUSTOM, audio_tokens());
+
+        EXPECT_EQ(counters->initialize, 1);
+        EXPECT_EQ(counters->register_callbacks, 1);
+        EXPECT_EQ(counters->start, 0);
+        EXPECT_TRUE(rig.manager.has_subsystem(SubsystemType::CUSTOM));
+        EXPECT_NE(rig.manager.get_subsystem(SubsystemType::CUSTOM), nullptr);
+    }
+
+    TEST(SubsystemManagerTest, AddSubsystemHandsItAHandleCarryingItsOwnTokens)
+    {
+        ManagerRig rig;
+
+        auto audio = rig.add(SubsystemType::AUDIO, audio_tokens());
+        auto visual = rig.add(SubsystemType::GRAPHICS, visual_tokens());
+
+        ASSERT_NE(audio->handle, nullptr);
+        ASSERT_NE(visual->handle, nullptr);
+        EXPECT_NE(audio->handle, visual->handle);
+        EXPECT_EQ(audio->handle->get_tokens().Buffer, Buffers::ProcessingToken::AUDIO_BACKEND);
+        EXPECT_EQ(audio->handle->get_tokens().Node, Nodes::ProcessingToken::AUDIO_RATE);
+        EXPECT_EQ(audio->handle->get_tokens().Task, Vruta::ProcessingToken::SAMPLE_ACCURATE);
+        EXPECT_EQ(visual->handle->get_tokens().Buffer, Buffers::ProcessingToken::GRAPHICS_BACKEND);
+        EXPECT_EQ(rig.manager.get_validated_handle(SubsystemType::AUDIO), audio->handle);
+        EXPECT_EQ(rig.manager.get_validated_handle(SubsystemType::GRAPHICS), visual->handle);
+    }
+
+    TEST(SubsystemManagerTest, AddingTheSameTypeAgainReplacesTheRegisteredSubsystem)
+    {
+        ManagerRig rig;
+
+        rig.add(SubsystemType::CUSTOM, audio_tokens());
+        auto first = rig.manager.get_subsystem(SubsystemType::CUSTOM);
+        auto second_counters = rig.add(SubsystemType::CUSTOM, visual_tokens());
+
+        auto current = rig.manager.get_subsystem(SubsystemType::CUSTOM);
+        EXPECT_NE(current, first);
+        EXPECT_EQ(current->get_tokens().Buffer, Buffers::ProcessingToken::GRAPHICS_BACKEND);
+        EXPECT_EQ(rig.manager.get_validated_handle(SubsystemType::CUSTOM), second_counters->handle);
+        EXPECT_EQ(rig.manager.query_subsystem_status().size(), 1U);
+    }
+
+    TEST(SubsystemManagerTest, GetValidatedHandleIsNullForAnUnregisteredType)
+    {
+        ManagerRig rig;
+
+        EXPECT_EQ(rig.manager.get_validated_handle(SubsystemType::GRAPHICS), nullptr);
+    }
+
+    TEST(SubsystemManagerTest, CreatingGraphicsWithoutAWindowManagerIsRefused)
+    {
+        ManagerRig rig;
+        Core::GlobalGraphicsConfig config;
+
+        EXPECT_THROW(rig.manager.create_graphics_subsystem(config), std::runtime_error);
+        EXPECT_FALSE(rig.manager.has_subsystem(SubsystemType::GRAPHICS));
+    }
+
+    TEST(SubsystemManagerTest, CreatingInputWithoutAnInputManagerIsRefused)
+    {
+        ManagerRig rig;
+        Core::GlobalInputConfig config;
+
+        EXPECT_THROW(rig.manager.create_input_subsystem(config), std::runtime_error);
+        EXPECT_FALSE(rig.manager.has_subsystem(SubsystemType::INPUT));
+    }
+
+    TEST(SubsystemManagerTest, CreateNetworkSubsystemRegistersItUnderTheNetworkType)
+    {
+        ManagerRig rig;
+
+        Core::GlobalNetworkConfig config;
+
+        rig.manager.create_network_subsystem(config);
+
+        EXPECT_TRUE(rig.manager.has_subsystem(SubsystemType::NETWORK));
+        auto network = rig.manager.get_network_subsystem();
+        ASSERT_NE(network, nullptr);
+        EXPECT_TRUE(network->is_ready());
+        EXPECT_FALSE(network->is_running());
+        EXPECT_EQ(rig.manager.get_audio_subsystem(), nullptr);
+    }
+
+    // ------------------------------------------------------------------
+    // Lifecycle
+    // ------------------------------------------------------------------
+
+    TEST(SubsystemManagerTest, StartAllStartsReadySubsystemsAndWaitsForThem)
+    {
+        ManagerRig rig;
+        auto audio = rig.add(SubsystemType::AUDIO, audio_tokens());
+        auto visual = rig.add(SubsystemType::GRAPHICS, visual_tokens());
+
+        rig.manager.start_all_subsystems();
+
+        EXPECT_EQ(audio->start, 1);
+        EXPECT_EQ(visual->start, 1);
+        EXPECT_EQ(audio->wait_until_running, 1);
+        EXPECT_EQ(visual->wait_until_running, 1);
+    }
+
+    TEST(SubsystemManagerTest, StartAllSkipsSubsystemsThatNeverBecameReady)
+    {
+        ManagerRig rig;
+        auto ready = rig.add(SubsystemType::AUDIO, audio_tokens());
+        auto unready = rig.add(SubsystemType::GRAPHICS, visual_tokens(), false);
+
+        rig.manager.start_all_subsystems();
+
+        EXPECT_EQ(ready->start, 1);
+        EXPECT_EQ(unready->start, 0);
+        EXPECT_EQ(unready->wait_until_running, 0);
+    }
+
+    TEST(SubsystemManagerTest, StartAllWithNothingRegisteredIsHarmless)
+    {
+        ManagerRig rig;
+
+        EXPECT_NO_THROW(rig.manager.start_all_subsystems());
+        EXPECT_NO_THROW(rig.manager.pause_all_subsystems());
+        EXPECT_NO_THROW(rig.manager.resume_all_subsystems());
+        EXPECT_NO_THROW(rig.manager.stop());
+        EXPECT_NO_THROW(rig.manager.shutdown());
+        EXPECT_TRUE(rig.manager.query_subsystem_status().empty());
+    }
+
+    TEST(SubsystemManagerTest, PauseAllPausesOnlyRunningSubsystems)
+    {
+        ManagerRig rig;
+        auto running = rig.add(SubsystemType::AUDIO, audio_tokens());
+        auto idle = rig.add(SubsystemType::GRAPHICS, visual_tokens());
+        rig.manager.get_subsystem(SubsystemType::AUDIO)->start();
+
+        rig.manager.pause_all_subsystems();
+
+        EXPECT_EQ(running->pause, 1);
+        EXPECT_EQ(idle->pause, 0);
+    }
+
+    TEST(SubsystemManagerTest, ResumeAllResumesEveryReadySubsystem)
+    {
+        ManagerRig rig;
+        auto ready = rig.add(SubsystemType::AUDIO, audio_tokens());
+        auto unready = rig.add(SubsystemType::GRAPHICS, visual_tokens(), false);
+
+        rig.manager.resume_all_subsystems();
+
+        EXPECT_EQ(ready->resume, 1);
+        EXPECT_EQ(unready->resume, 0);
+    }
+
+    TEST(SubsystemManagerTest, StopStopsOnlyRunningSubsystems)
+    {
+        ManagerRig rig;
+        auto running = rig.add(SubsystemType::AUDIO, audio_tokens());
+        auto idle = rig.add(SubsystemType::GRAPHICS, visual_tokens());
+        rig.manager.start_all_subsystems();
+        rig.manager.get_subsystem(SubsystemType::GRAPHICS)->stop();
+
+        rig.manager.stop();
+
+        EXPECT_EQ(running->stop, 1);
+        EXPECT_EQ(idle->stop, 1);
+        EXPECT_FALSE(rig.manager.get_subsystem(SubsystemType::AUDIO)->is_running());
+    }
+
+    TEST(SubsystemManagerTest, StopOfAnIdleManagerCallsNothing)
+    {
+        ManagerRig rig;
+        auto idle = rig.add(SubsystemType::AUDIO, audio_tokens());
+
+        rig.manager.stop();
+
+        EXPECT_EQ(idle->stop, 0);
+    }
+
+    TEST(SubsystemManagerTest, StatusReportsReadyAndRunningPerType)
+    {
+        ManagerRig rig;
+        rig.add(SubsystemType::AUDIO, audio_tokens());
+        rig.add(SubsystemType::GRAPHICS, visual_tokens(), false);
+        rig.manager.get_subsystem(SubsystemType::AUDIO)->start();
+
+        auto status = rig.manager.query_subsystem_status();
+
+        ASSERT_EQ(status.size(), 2U);
+        EXPECT_EQ(status.at(SubsystemType::AUDIO), std::make_pair(true, true));
+        EXPECT_EQ(status.at(SubsystemType::GRAPHICS), std::make_pair(false, false));
+    }
+
+    TEST(SubsystemManagerTest, RemoveSubsystemShutsItDownAndForgetsIt)
+    {
+        ManagerRig rig;
+        auto counters = rig.add(SubsystemType::AUDIO, audio_tokens());
+        rig.add(SubsystemType::GRAPHICS, visual_tokens());
+
+        rig.manager.remove_subsystem(SubsystemType::AUDIO);
+
+        EXPECT_EQ(counters->shutdown, 1);
+        EXPECT_FALSE(rig.manager.has_subsystem(SubsystemType::AUDIO));
+        EXPECT_EQ(rig.manager.get_validated_handle(SubsystemType::AUDIO), nullptr);
+        EXPECT_TRUE(rig.manager.has_subsystem(SubsystemType::GRAPHICS));
+    }
+
+    TEST(SubsystemManagerTest, RemovingAnAbsentSubsystemChangesNothing)
+    {
+        ManagerRig rig;
+        auto counters = rig.add(SubsystemType::AUDIO, audio_tokens());
+
+        EXPECT_NO_THROW(rig.manager.remove_subsystem(SubsystemType::GRAPHICS));
+
+        EXPECT_TRUE(rig.manager.has_subsystem(SubsystemType::AUDIO));
+        EXPECT_EQ(counters->shutdown, 0);
+    }
+
+    TEST(SubsystemManagerTest, RemoveSubsystemDropsItsCrossAccessPermissions)
+    {
+        ManagerRig rig;
+        rig.add(SubsystemType::AUDIO, audio_tokens());
+        rig.add(SubsystemType::GRAPHICS, visual_tokens());
+        rig.manager.allow_cross_access(SubsystemType::GRAPHICS, SubsystemType::AUDIO);
+        ASSERT_TRUE(rig.manager.read_cross_subsystem_buffer(SubsystemType::GRAPHICS, SubsystemType::AUDIO, 0).has_value());
+
+        rig.manager.remove_subsystem(SubsystemType::GRAPHICS);
+        rig.add(SubsystemType::GRAPHICS, visual_tokens());
+
+        EXPECT_FALSE(rig.manager.read_cross_subsystem_buffer(SubsystemType::GRAPHICS, SubsystemType::AUDIO, 0).has_value());
+    }
+
+    TEST(SubsystemManagerTest, ShutdownShutsDownReadySubsystemsAndEmptiesTheManager)
+    {
+        ManagerRig rig;
+        auto ready = rig.add(SubsystemType::AUDIO, audio_tokens());
+        auto unready = rig.add(SubsystemType::GRAPHICS, visual_tokens(), false);
+        rig.manager.start_all_subsystems();
+
+        rig.manager.shutdown();
+
+        EXPECT_EQ(ready->shutdown, 1);
+        EXPECT_EQ(unready->shutdown, 0);
+        EXPECT_FALSE(rig.manager.has_subsystem(SubsystemType::AUDIO));
+        EXPECT_FALSE(rig.manager.has_subsystem(SubsystemType::GRAPHICS));
+        EXPECT_TRUE(rig.manager.query_subsystem_status().empty());
+    }
+
+    TEST(SubsystemManagerTest, ShutdownTwiceShutsEachSubsystemDownOnce)
+    {
+        ManagerRig rig;
+        auto counters = rig.add(SubsystemType::AUDIO, audio_tokens());
+
+        rig.manager.shutdown();
+        EXPECT_NO_THROW(rig.manager.shutdown());
+
+        EXPECT_EQ(counters->shutdown, 1);
+    }
+
+    // ------------------------------------------------------------------
+    // Process hooks
+    // ------------------------------------------------------------------
+
+    TEST(SubsystemManagerTest, PostProcessIsTheDefaultHookPosition)
+    {
+        ManagerRig rig;
+        auto counters = rig.add(SubsystemType::AUDIO, audio_tokens());
+
+        rig.manager.register_process_hook(SubsystemType::AUDIO, "tap", [](unsigned int) { });
+
+        EXPECT_TRUE(counters->handle->post_process_hooks.contains("tap"));
+        EXPECT_FALSE(counters->handle->pre_process_hooks.contains("tap"));
+        EXPECT_TRUE(rig.manager.has_process_hook(SubsystemType::AUDIO, "tap"));
+    }
+
+    TEST(SubsystemManagerTest, PreProcessHooksLandInThePreCollection)
+    {
+        ManagerRig rig;
+        auto counters = rig.add(SubsystemType::AUDIO, audio_tokens());
+
+        rig.manager.register_process_hook(SubsystemType::AUDIO, "gate", [](unsigned int) { }, HookPosition::PRE_PROCESS);
+
+        EXPECT_TRUE(counters->handle->pre_process_hooks.contains("gate"));
+        EXPECT_FALSE(counters->handle->post_process_hooks.contains("gate"));
+        EXPECT_TRUE(rig.manager.has_process_hook(SubsystemType::AUDIO, "gate"));
+    }
+
+    TEST(SubsystemManagerTest, RegisteredHooksReceiveTheFrameCountTheHandleInvokesThemWith)
+    {
+        ManagerRig rig;
+        auto counters = rig.add(SubsystemType::AUDIO, audio_tokens());
+        std::vector<unsigned int> seen;
+
+        rig.manager.register_process_hook(SubsystemType::AUDIO, "log",
+            [&seen](unsigned int frames) { seen.push_back(frames); });
+        counters->handle->post_process_hooks.at("log")(256);
+
+        EXPECT_EQ(seen, std::vector<unsigned int> { 256 });
+    }
+
+    TEST(SubsystemManagerTest, RegisteringTheSameNameReplacesTheHook)
+    {
+        ManagerRig rig;
+        auto counters = rig.add(SubsystemType::AUDIO, audio_tokens());
+        int first = 0;
+        int second = 0;
+
+        rig.manager.register_process_hook(SubsystemType::AUDIO, "tap", [&first](unsigned int) { ++first; });
+        rig.manager.register_process_hook(SubsystemType::AUDIO, "tap", [&second](unsigned int) { ++second; });
+        counters->handle->post_process_hooks.at("tap")(1);
+
+        EXPECT_EQ(counters->handle->post_process_hooks.size(), 1U);
+        EXPECT_EQ(first, 0);
+        EXPECT_EQ(second, 1);
+    }
+
+    TEST(SubsystemManagerTest, UnregisterRemovesFromEitherPosition)
+    {
+        ManagerRig rig;
+        rig.add(SubsystemType::AUDIO, audio_tokens());
+        rig.manager.register_process_hook(SubsystemType::AUDIO, "pre", [](unsigned int) { }, HookPosition::PRE_PROCESS);
+        rig.manager.register_process_hook(SubsystemType::AUDIO, "post", [](unsigned int) { });
+
+        rig.manager.unregister_process_hook(SubsystemType::AUDIO, "pre");
+        rig.manager.unregister_process_hook(SubsystemType::AUDIO, "post");
+
+        EXPECT_FALSE(rig.manager.has_process_hook(SubsystemType::AUDIO, "pre"));
+        EXPECT_FALSE(rig.manager.has_process_hook(SubsystemType::AUDIO, "post"));
+    }
+
+    TEST(SubsystemManagerTest, UnregisteringAnUnknownHookChangesNothing)
+    {
+        ManagerRig rig;
+        rig.add(SubsystemType::AUDIO, audio_tokens());
+        rig.manager.register_process_hook(SubsystemType::AUDIO, "keep", [](unsigned int) { });
+
+        EXPECT_NO_THROW(rig.manager.unregister_process_hook(SubsystemType::AUDIO, "missing"));
+
+        EXPECT_TRUE(rig.manager.has_process_hook(SubsystemType::AUDIO, "keep"));
+    }
+
+    TEST(SubsystemManagerTest, EmptyHookIsRejected)
+    {
+        ManagerRig rig;
+        rig.add(SubsystemType::AUDIO, audio_tokens());
+
+        rig.manager.register_process_hook(SubsystemType::AUDIO, "empty", Core::ProcessHook {});
+
+        EXPECT_FALSE(rig.manager.has_process_hook(SubsystemType::AUDIO, "empty"));
+    }
+
+    TEST(SubsystemManagerTest, HooksForAnUnregisteredSubsystemAreIgnored)
+    {
+        ManagerRig rig;
+
+        EXPECT_NO_THROW(rig.manager.register_process_hook(SubsystemType::GRAPHICS, "tap", [](unsigned int) { }));
+        EXPECT_NO_THROW(rig.manager.unregister_process_hook(SubsystemType::GRAPHICS, "tap"));
+        EXPECT_FALSE(rig.manager.has_process_hook(SubsystemType::GRAPHICS, "tap"));
+    }
+
+    TEST(SubsystemManagerTest, HooksAreScopedToTheirSubsystem)
+    {
+        ManagerRig rig;
+        rig.add(SubsystemType::AUDIO, audio_tokens());
+        rig.add(SubsystemType::GRAPHICS, visual_tokens());
+
+        rig.manager.register_process_hook(SubsystemType::AUDIO, "tap", [](unsigned int) { });
+
+        EXPECT_TRUE(rig.manager.has_process_hook(SubsystemType::AUDIO, "tap"));
+        EXPECT_FALSE(rig.manager.has_process_hook(SubsystemType::GRAPHICS, "tap"));
+    }
+
+    // ------------------------------------------------------------------
+    // Cross subsystem access
+    // ------------------------------------------------------------------
+
+    TEST(SubsystemManagerTest, CrossReadIsDeniedUntilPermissionIsGranted)
+    {
+        ManagerRig rig;
+        rig.add(SubsystemType::AUDIO, audio_tokens());
+        rig.add(SubsystemType::GRAPHICS, visual_tokens());
+
+        EXPECT_FALSE(rig.manager.read_cross_subsystem_buffer(SubsystemType::GRAPHICS, SubsystemType::AUDIO, 0).has_value());
+
+        rig.manager.allow_cross_access(SubsystemType::GRAPHICS, SubsystemType::AUDIO);
+
+        EXPECT_TRUE(rig.manager.read_cross_subsystem_buffer(SubsystemType::GRAPHICS, SubsystemType::AUDIO, 0).has_value());
+    }
+
+    TEST(SubsystemManagerTest, CrossReadReturnsTheTargetsBufferForTheRequestedChannel)
+    {
+        ManagerRig rig;
+        rig.add(SubsystemType::AUDIO, audio_tokens());
+        rig.add(SubsystemType::GRAPHICS, visual_tokens());
+        rig.manager.allow_cross_access(SubsystemType::GRAPHICS, SubsystemType::AUDIO);
+
+        auto data = rig.manager.read_cross_subsystem_buffer(SubsystemType::GRAPHICS, SubsystemType::AUDIO, 0);
+
+        ASSERT_TRUE(data.has_value());
+        EXPECT_EQ(data->size(), rig.buffers->get_buffer_size(Buffers::ProcessingToken::AUDIO_BACKEND));
+        EXPECT_EQ(data->data(), rig.buffers->get_buffer_data(Buffers::ProcessingToken::AUDIO_BACKEND, 0).data());
+    }
+
+    TEST(SubsystemManagerTest, CrossAccessIsDirectional)
+    {
+        ManagerRig rig;
+        rig.add(SubsystemType::AUDIO, audio_tokens());
+        rig.add(SubsystemType::GRAPHICS, visual_tokens());
+        rig.manager.allow_cross_access(SubsystemType::GRAPHICS, SubsystemType::AUDIO);
+
+        EXPECT_FALSE(rig.manager.read_cross_subsystem_buffer(SubsystemType::AUDIO, SubsystemType::GRAPHICS, 0).has_value());
+    }
+
+    TEST(SubsystemManagerTest, CrossReadFromAnUnregisteredRequesterIsDenied)
+    {
+        ManagerRig rig;
+        rig.add(SubsystemType::AUDIO, audio_tokens());
+        rig.manager.allow_cross_access(SubsystemType::GRAPHICS, SubsystemType::AUDIO);
+
+        EXPECT_FALSE(rig.manager.read_cross_subsystem_buffer(SubsystemType::GRAPHICS, SubsystemType::AUDIO, 0).has_value());
+    }
+
+    TEST(SubsystemManagerTest, CrossReadOfAnUnregisteredTargetIsDeniedAndRegistersNothing)
+    {
+        ManagerRig rig;
+        rig.add(SubsystemType::GRAPHICS, visual_tokens());
+        rig.manager.allow_cross_access(SubsystemType::GRAPHICS, SubsystemType::AUDIO);
+
+        EXPECT_FALSE(rig.manager.read_cross_subsystem_buffer(SubsystemType::GRAPHICS, SubsystemType::AUDIO, 0).has_value());
+
+        EXPECT_FALSE(rig.manager.has_subsystem(SubsystemType::AUDIO));
+        EXPECT_EQ(rig.manager.query_subsystem_status().size(), 1U);
+    }
+
+    // ------------------------------------------------------------------
+    // Combined tokens
+    // ------------------------------------------------------------------
+
+    TEST(SubsystemManagerTest, CombinedTokenOperationRunsOnceWithAHandleForThePrimaryTokens)
+    {
+        ManagerRig rig;
+        int runs = 0;
+        SubsystemTokens seen {};
+
+        rig.manager.execute_with_combined_tokens(audio_tokens(), visual_tokens(),
+            [&](Core::SubsystemProcessingHandle& handle) {
+                ++runs;
+                seen = handle.get_tokens();
             });
-    });
 
-    EXPECT_TRUE(operation_executed);
-}
+        EXPECT_EQ(runs, 1);
+        EXPECT_EQ(seen.Buffer, Buffers::ProcessingToken::AUDIO_BACKEND);
+        EXPECT_EQ(seen.Node, Nodes::ProcessingToken::AUDIO_RATE);
+        EXPECT_EQ(seen.Task, Vruta::ProcessingToken::SAMPLE_ACCURATE);
+    }
 
-//-------------------------------------------------------------------------
-// Subsystem Removal and Cleanup Tests
-//-------------------------------------------------------------------------
+    TEST(SubsystemManagerTest, CombinedTokenOperationRegistersNoSubsystem)
+    {
+        ManagerRig rig;
 
-TEST_F(SubsystemManagerTest, SubsystemRemoval)
-{
-    subsystem_manager = std::make_unique<Core::SubsystemManager>(
-        node_graph_manager, buffer_manager, task_scheduler);
+        rig.manager.execute_with_combined_tokens(audio_tokens(), visual_tokens(),
+            [](Core::SubsystemProcessingHandle&) { });
 
-    subsystem_manager->create_audio_subsystem(stream_info);
-    EXPECT_TRUE(subsystem_manager->has_subsystem(Core::SubsystemType::AUDIO));
+        EXPECT_TRUE(rig.manager.query_subsystem_status().empty());
+    }
 
-    auto audio_subsystem = subsystem_manager->get_audio_subsystem();
-    ASSERT_NE(audio_subsystem, nullptr);
-    EXPECT_TRUE(audio_subsystem->is_ready());
-
-    EXPECT_NO_THROW({
-        subsystem_manager->remove_subsystem(Core::SubsystemType::AUDIO);
-    });
-
-    EXPECT_FALSE(subsystem_manager->has_subsystem(Core::SubsystemType::AUDIO));
-
-    auto removed_subsystem = subsystem_manager->get_audio_subsystem();
-    EXPECT_EQ(removed_subsystem, nullptr);
-}
-
-TEST_F(SubsystemManagerTest, ManagerShutdown)
-{
-    subsystem_manager = std::make_unique<Core::SubsystemManager>(
-        node_graph_manager, buffer_manager, task_scheduler);
-
-    subsystem_manager->create_audio_subsystem(stream_info);
-
-    auto audio_subsystem = subsystem_manager->get_audio_subsystem();
-    ASSERT_NE(audio_subsystem, nullptr);
-
-    subsystem_manager->start_all_subsystems();
-
-    EXPECT_NO_THROW(subsystem_manager->shutdown());
-
-    EXPECT_FALSE(audio_subsystem->is_running());
-    EXPECT_FALSE(audio_subsystem->is_ready());
-
-    auto status = subsystem_manager->query_subsystem_status();
-    EXPECT_TRUE(status.empty()) << "All subsystems should be removed after shutdown";
-}
-
-//-------------------------------------------------------------------------
-// Error Handling and Edge Cases Tests
-//-------------------------------------------------------------------------
-
-TEST_F(SubsystemManagerTest, InvalidSubsystemAccess)
-{
-    subsystem_manager = std::make_unique<Core::SubsystemManager>(
-        node_graph_manager, buffer_manager, task_scheduler);
-
-    EXPECT_EQ(subsystem_manager->get_audio_subsystem(), nullptr);
-    EXPECT_EQ(subsystem_manager->get_subsystem(Core::SubsystemType::GRAPHICS), nullptr);
-
-    EXPECT_NO_THROW({
-        subsystem_manager->remove_subsystem(Core::SubsystemType::GRAPHICS);
-    });
-
-    EXPECT_NO_THROW({
-        subsystem_manager->register_process_hook(
-            Core::SubsystemType::AUDIO,
-            "test_hook",
-            [](unsigned int) { });
-    });
-
-    EXPECT_FALSE(subsystem_manager->has_process_hook(Core::SubsystemType::GRAPHICS, "test_hook"));
-}
-
-TEST_F(SubsystemManagerTest, DuplicateSubsystemCreation)
-{
-    subsystem_manager = std::make_unique<Core::SubsystemManager>(
-        node_graph_manager, buffer_manager, task_scheduler);
-
-    subsystem_manager->create_audio_subsystem(stream_info);
-    EXPECT_TRUE(subsystem_manager->has_subsystem(Core::SubsystemType::AUDIO));
-
-    auto first_subsystem = subsystem_manager->get_audio_subsystem();
-    ASSERT_NE(first_subsystem, nullptr);
-
-    Core::GlobalStreamInfo modified_stream = stream_info;
-    modified_stream.sample_rate = 44100;
-
-    EXPECT_NO_THROW({
-        subsystem_manager->create_audio_subsystem(modified_stream);
-    });
-
-    EXPECT_TRUE(subsystem_manager->has_subsystem(Core::SubsystemType::AUDIO));
-
-    auto second_subsystem = subsystem_manager->get_audio_subsystem();
-    ASSERT_NE(second_subsystem, nullptr);
-
-    EXPECT_EQ(second_subsystem->get_stream_info().sample_rate, 44100);
-}
-
-TEST_F(SubsystemManagerTest, EmptyManagerOperations)
-{
-    subsystem_manager = std::make_unique<Core::SubsystemManager>(
-        node_graph_manager, buffer_manager, task_scheduler);
-
-    EXPECT_NO_THROW(subsystem_manager->start_all_subsystems());
-    EXPECT_NO_THROW(subsystem_manager->shutdown());
-
-    auto status = subsystem_manager->query_subsystem_status();
-    EXPECT_TRUE(status.empty());
-}
-
-//-------------------------------------------------------------------------
-// Integration with Engine Tests
-//-------------------------------------------------------------------------
-
-TEST_F(SubsystemManagerTest, EngineIntegration)
-{
-    auto engine = AudioTestHelper::createTestEngine();
-
-    auto engine_subsystem_manager = engine->get_subsystem_manager();
-    ASSERT_NE(engine_subsystem_manager, nullptr);
-
-    EXPECT_TRUE(engine_subsystem_manager->has_subsystem(Core::SubsystemType::AUDIO));
-
-    auto audio_subsystem = engine_subsystem_manager->get_audio_subsystem();
-    ASSERT_NE(audio_subsystem, nullptr);
-    EXPECT_TRUE(audio_subsystem->is_ready());
-
-    EXPECT_NO_THROW(engine->Start());
-
-    auto sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.3f);
-    auto node_graph = engine->get_node_graph_manager();
-
-    EXPECT_NO_THROW({
-        node_graph->add_to_root(sine, Nodes::ProcessingToken::AUDIO_RATE);
-    });
-
-    AudioTestHelper::waitForAudio(50);
-
-    auto& root = node_graph->get_root_node(Nodes::ProcessingToken::AUDIO_RATE, 0);
-    EXPECT_NO_THROW(root.unregister_node(sine));
-
-    engine->End();
-}
-
-#endif // INTEGRATION_TEST
-
+} // namespace
 } // namespace MayaFlux::Test
