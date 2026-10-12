@@ -528,10 +528,6 @@ void RenderFlow::destroy_pipeline(RenderPipelineID pipeline_id)
         it->second.pipeline->cleanup(device);
     }
 
-    if (it->second.layout) {
-        device.destroyPipelineLayout(it->second.layout);
-    }
-
     for (auto layout : it->second.layouts) {
         if (layout) {
             device.destroyDescriptorSetLayout(layout);

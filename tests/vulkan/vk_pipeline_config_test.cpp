@@ -2,15 +2,12 @@
 
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKDescriptorManager.hpp"
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKGraphicsPipeline.hpp"
-#include "MayaFlux/Core/Backends/Graphics/Vulkan/VKRenderPass.hpp"
 
 namespace MayaFlux::Test {
 namespace {
 
     using Core::DescriptorSetLayoutConfig;
     using Core::GraphicsPipelineConfig;
-    using Core::RenderPassCreateInfo;
-    using Core::VKRenderPass;
 
 }
 
@@ -214,97 +211,6 @@ TEST(DescriptorSetLayoutConfigTest, BindingsKeepInsertionOrder)
     EXPECT_EQ(config.bindings[0].binding, 5U);
     EXPECT_EQ(config.bindings[1].binding, 1U);
     EXPECT_EQ(config.bindings[2].binding, 3U);
-}
-
-TEST(RenderPassCreateInfoTest, DefaultColorOnlyPresentsOneColorAttachment)
-{
-    const RenderPassCreateInfo info = VKRenderPass::create_default_color_only(vk::Format::eB8G8R8A8Srgb);
-
-    ASSERT_EQ(info.attachments.size(), 1U);
-    EXPECT_EQ(info.attachments[0].format, vk::Format::eB8G8R8A8Srgb);
-    EXPECT_EQ(info.attachments[0].load_op, vk::AttachmentLoadOp::eClear);
-    EXPECT_EQ(info.attachments[0].store_op, vk::AttachmentStoreOp::eStore);
-    EXPECT_EQ(info.attachments[0].initial_layout, vk::ImageLayout::eUndefined);
-    EXPECT_EQ(info.attachments[0].final_layout, vk::ImageLayout::ePresentSrcKHR);
-
-    ASSERT_EQ(info.subpasses.size(), 1U);
-    ASSERT_EQ(info.subpasses[0].color_attachments.size(), 1U);
-    EXPECT_EQ(info.subpasses[0].color_attachments[0].attachment, 0U);
-    EXPECT_EQ(info.subpasses[0].color_attachments[0].layout, vk::ImageLayout::eColorAttachmentOptimal);
-    EXPECT_FALSE(info.subpasses[0].depth_stencil_attachment.has_value());
-
-    ASSERT_EQ(info.dependencies.size(), 1U);
-    EXPECT_EQ(info.dependencies[0].src_subpass, VK_SUBPASS_EXTERNAL);
-    EXPECT_EQ(info.dependencies[0].dst_subpass, 0U);
-    EXPECT_EQ(info.dependencies[0].dst_access_mask, vk::AccessFlagBits::eColorAttachmentWrite);
-}
-
-TEST(RenderPassCreateInfoTest, DefaultColorDepthAddsDepthAttachmentAtIndexOne)
-{
-    const RenderPassCreateInfo info = VKRenderPass::create_default_color_depth(
-        vk::Format::eB8G8R8A8Srgb, vk::Format::eD32Sfloat);
-
-    ASSERT_EQ(info.attachments.size(), 2U);
-    EXPECT_EQ(info.attachments[0].format, vk::Format::eB8G8R8A8Srgb);
-    EXPECT_EQ(info.attachments[1].format, vk::Format::eD32Sfloat);
-    EXPECT_EQ(info.attachments[1].load_op, vk::AttachmentLoadOp::eClear);
-    EXPECT_EQ(info.attachments[1].store_op, vk::AttachmentStoreOp::eDontCare);
-    EXPECT_EQ(info.attachments[1].final_layout, vk::ImageLayout::eDepthStencilAttachmentOptimal);
-
-    ASSERT_EQ(info.subpasses.size(), 1U);
-    ASSERT_TRUE(info.subpasses[0].depth_stencil_attachment.has_value());
-    EXPECT_EQ(info.subpasses[0].depth_stencil_attachment->attachment, 1U);
-    EXPECT_EQ(info.subpasses[0].depth_stencil_attachment->layout,
-        vk::ImageLayout::eDepthStencilAttachmentOptimal);
-
-    ASSERT_EQ(info.dependencies.size(), 1U);
-    EXPECT_NE(info.dependencies[0].dst_access_mask & vk::AccessFlagBits::eDepthStencilAttachmentWrite,
-        vk::AccessFlags {});
-    EXPECT_NE(info.dependencies[0].dst_stage_mask & vk::PipelineStageFlagBits::eEarlyFragmentTests,
-        vk::PipelineStageFlags {});
-}
-
-TEST(RenderPassCreateInfoTest, OffscreenColorDefaultsToShaderReadOnlyFinalLayout)
-{
-    const RenderPassCreateInfo info = VKRenderPass::create_offscreen_color(vk::Format::eR8G8B8A8Unorm);
-
-    ASSERT_EQ(info.attachments.size(), 1U);
-    EXPECT_EQ(info.attachments[0].final_layout, vk::ImageLayout::eShaderReadOnlyOptimal);
-}
-
-TEST(RenderPassCreateInfoTest, OffscreenColorHonoursRequestedFinalLayout)
-{
-    const RenderPassCreateInfo info = VKRenderPass::create_offscreen_color(
-        vk::Format::eR8G8B8A8Unorm, vk::ImageLayout::eTransferSrcOptimal);
-
-    ASSERT_EQ(info.attachments.size(), 1U);
-    EXPECT_EQ(info.attachments[0].format, vk::Format::eR8G8B8A8Unorm);
-    EXPECT_EQ(info.attachments[0].final_layout, vk::ImageLayout::eTransferSrcOptimal);
-    ASSERT_EQ(info.subpasses.size(), 1U);
-    EXPECT_EQ(info.subpasses[0].color_attachments.size(), 1U);
-}
-
-TEST(RenderPassCreateInfoTest, AttachmentDescriptionDefaults)
-{
-    Core::AttachmentDescription attachment;
-    EXPECT_EQ(attachment.samples, vk::SampleCountFlagBits::e1);
-    EXPECT_EQ(attachment.load_op, vk::AttachmentLoadOp::eClear);
-    EXPECT_EQ(attachment.store_op, vk::AttachmentStoreOp::eStore);
-    EXPECT_EQ(attachment.stencil_load_op, vk::AttachmentLoadOp::eDontCare);
-    EXPECT_EQ(attachment.stencil_store_op, vk::AttachmentStoreOp::eDontCare);
-    EXPECT_EQ(attachment.initial_layout, vk::ImageLayout::eUndefined);
-    EXPECT_EQ(attachment.final_layout, vk::ImageLayout::ePresentSrcKHR);
-}
-
-TEST(VKRenderPassTest, CreateRejectsEmptyAttachmentsAndSubpassesWithoutTouchingTheDevice)
-{
-    VKRenderPass pass;
-
-    EXPECT_FALSE(pass.create(vk::Device {}, RenderPassCreateInfo {}));
-
-    RenderPassCreateInfo attachments_only;
-    attachments_only.attachments.emplace_back();
-    EXPECT_FALSE(pass.create(vk::Device {}, attachments_only));
 }
 
 }
