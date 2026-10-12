@@ -26,7 +26,9 @@ std::optional<ImageData> ImageData::allocate(
     case F::R8:
     case F::RG8:
     case F::RGBA8:
+    case F::RGBA8_SRGB:
     case F::BGRA8:
+    case F::BGRA8_SRGB:
         result.pixels.emplace<std::vector<uint8_t>>(element_count);
         break;
 
@@ -80,7 +82,9 @@ bool ImageData::is_consistent() const
     case F::R8:
     case F::RG8:
     case F::RGBA8:
+    case F::RGBA8_SRGB:
     case F::BGRA8:
+    case F::BGRA8_SRGB:
         return has_u8;
 
     case F::R16:

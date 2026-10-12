@@ -895,11 +895,11 @@ vk::Format TextureLoom::to_vulkan_format(ImageFormat format)
     case ImageFormat::RGBA8:
         return vk::Format::eR8G8B8A8Unorm;
     case ImageFormat::RGBA8_SRGB:
+        return vk::Format::eR8G8B8A8Srgb;
     case ImageFormat::BGRA8:
         return vk::Format::eB8G8R8A8Unorm;
     case ImageFormat::BGRA8_SRGB:
         return vk::Format::eB8G8R8A8Srgb;
-        return vk::Format::eR8G8B8A8Srgb;
     case ImageFormat::R16:
         return vk::Format::eR16Unorm;
     case ImageFormat::RG16:
@@ -988,6 +988,8 @@ std::optional<ImageFormat> TextureLoom::from_vulkan_format(vk::Format vk_format)
         return ImageFormat::RGBA8_SRGB;
     case vk::Format::eB8G8R8A8Unorm:
         return ImageFormat::BGRA8;
+    case vk::Format::eB8G8R8A8Srgb:
+        return ImageFormat::BGRA8_SRGB;
 
     case vk::Format::eR16Unorm:
         return ImageFormat::R16;
@@ -1099,6 +1101,7 @@ uint32_t TextureLoom::get_channel_count(ImageFormat format)
     case ImageFormat::RGBA8:
     case ImageFormat::RGBA8_SRGB:
     case ImageFormat::BGRA8:
+    case ImageFormat::BGRA8_SRGB:
     case ImageFormat::RGBA16:
     case ImageFormat::RGBA16F:
     case ImageFormat::RGBA32F:
