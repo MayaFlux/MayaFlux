@@ -13,7 +13,7 @@ class Window;
  *
  * Manages the complete Vulkan context lifecycle.
  */
-class VKContext {
+class MAYAFLUX_API VKContext {
 public:
     VKContext() = default;
     ~VKContext() = default;

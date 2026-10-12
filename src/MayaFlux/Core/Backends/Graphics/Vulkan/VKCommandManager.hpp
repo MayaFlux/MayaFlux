@@ -11,7 +11,7 @@ namespace MayaFlux::Core {
  * Handles command buffer allocation, recording, and submission.
  * Creates per-thread command pools for thread safety.
  */
-class VKCommandManager {
+class MAYAFLUX_API VKCommandManager {
 public:
     VKCommandManager() = default;
     ~VKCommandManager();

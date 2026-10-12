@@ -78,7 +78,7 @@ struct DescriptorSetLayoutConfig {
  *       .buffer(2, another_buffer)
  *       .submit();
  */
-class DescriptorUpdateBatch {
+class MAYAFLUX_API DescriptorUpdateBatch {
 public:
     DescriptorUpdateBatch(vk::Device device, vk::DescriptorSet set);
 
@@ -128,7 +128,7 @@ private:
  * - Pools grow automatically when exhausted
  * - Layouts are cached by configuration
  */
-class VKDescriptorManager {
+class MAYAFLUX_API VKDescriptorManager {
 public:
     VKDescriptorManager() = default;
     ~VKDescriptorManager();

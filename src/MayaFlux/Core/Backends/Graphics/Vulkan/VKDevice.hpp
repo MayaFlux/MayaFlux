@@ -60,7 +60,7 @@ struct QueueFamilyIndices {
  * Handles GPU selection and creates the logical device interface
  * for executing commands.
  */
-class VKDevice {
+class MAYAFLUX_API VKDevice {
 public:
     VKDevice() = default;
     ~VKDevice();

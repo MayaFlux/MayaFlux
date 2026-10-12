@@ -27,7 +27,10 @@ add_library(MayaFluxLib SHARED ${MAYAFLUX_ALL_SOURCES} ${MAYAFLUX_ALL_HEADERS})
 
 if(WIN32)
     add_compile_definitions(USE_PPL_BACKEND)
-    target_compile_definitions(MayaFluxLib PRIVATE MAYAFLUX_EXPORTS)
+    target_compile_definitions(MayaFluxLib
+        PRIVATE MAYAFLUX_EXPORTS VULKAN_HPP_STORAGE_SHARED_EXPORT
+        PUBLIC VULKAN_HPP_STORAGE_SHARED
+    )
     if(MSVC)
         target_compile_options(MayaFluxLib PRIVATE /MD)
 

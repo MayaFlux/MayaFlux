@@ -300,6 +300,7 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
             NOMINMAX 
             _USE_MATH_DEFINES
             USE_PPL_BACKEND
+            VULKAN_HPP_STORAGE_SHARED
         )
     elseif(APPLE)
         target_compile_definitions(MayaFlux::MayaFluxLib INTERFACE
@@ -318,6 +319,7 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
         @MAYAFLUX_MIDI_BACKEND@
         @MAYAFLUX_WINDOWING_BACKEND@
         ASIO_STANDALONE
+        VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1
     )
 
     # Debug definition

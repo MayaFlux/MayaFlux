@@ -82,7 +82,7 @@ struct ComputePipelineConfig {
  * - NOT thread-safe - caller must synchronize access
  * - Safe to use same pipeline on different command buffers (sequentially)
  */
-class VKComputePipeline {
+class MAYAFLUX_API VKComputePipeline {
 public:
     VKComputePipeline() = default;
     ~VKComputePipeline();

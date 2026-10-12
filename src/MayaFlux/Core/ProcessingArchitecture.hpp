@@ -88,7 +88,7 @@ struct SubsystemTokens {
  *
  * Provides scoped, thread-safe access to buffer operations with automatic token validation.
  */
-class BufferProcessingHandle {
+class MAYAFLUX_API BufferProcessingHandle {
 public:
     /** @brief Constructs handle for specific buffer manager and token */
     BufferProcessingHandle(
