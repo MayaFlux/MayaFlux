@@ -34,6 +34,23 @@ namespace {
     }
 
     /**
+     * @brief Append a NUL terminated byte array option (type ay) to an open options dict iter.
+     */
+    void append_path_variant(DBusMessageIter& arr, const char* key, const std::string& path)
+    {
+        DBusMessageIter entry, variant, bytes;
+        dbus_message_iter_open_container(&arr, DBUS_TYPE_DICT_ENTRY, nullptr, &entry);
+        dbus_message_iter_append_basic(&entry, DBUS_TYPE_STRING, static_cast<const void*>(&key));
+        dbus_message_iter_open_container(&entry, DBUS_TYPE_VARIANT, "ay", &variant);
+        dbus_message_iter_open_container(&variant, DBUS_TYPE_ARRAY, "y", &bytes);
+        const char* data = path.c_str();
+        dbus_message_iter_append_fixed_array(&bytes, DBUS_TYPE_BYTE, &data, static_cast<int>(path.size() + 1));
+        dbus_message_iter_close_container(&variant, &bytes);
+        dbus_message_iter_close_container(&entry, &variant);
+        dbus_message_iter_close_container(&arr, &entry);
+    }
+
+    /**
      * @brief Append the filters option as a(sa(us)) to an open options dict iter.
      *
      * XDG portal filter format: array of (label, array of (type, pattern)).
@@ -121,9 +138,15 @@ namespace {
     void dispatch_loop(DBusConnection* conn, std::string request_path, FileDialogCallback callback)
     {
         while (true) {
-            dbus_connection_read_write(conn, 100);
+            const bool connected = dbus_connection_read_write(conn, 100);
             DBusMessage* msg = dbus_connection_pop_message(conn);
             if (!msg) {
+                if (!connected) {
+                    dbus_connection_close(conn);
+                    dbus_connection_unref(conn);
+                    callback(std::unexpected(SystemDialogError::BackendError));
+                    return;
+                }
                 continue;
             }
 
@@ -301,6 +324,20 @@ void DBusBackend::invoke_portal(
 
     dbus_connection_set_exit_on_disconnect(call_conn, FALSE);
 
+    const std::string response_match = std::string("type='signal',interface='") + k_request_iface
+        + "',member='" + k_signal_response + "'";
+
+    dbus_bus_add_match(call_conn, response_match.c_str(), &err);
+    if (dbus_error_is_set(&err)) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::API,
+            "DBusBackend: add_match failed: {}", err.message);
+        dbus_error_free(&err);
+        dbus_connection_close(call_conn);
+        dbus_connection_unref(call_conn);
+        callback(std::unexpected(SystemDialogError::BackendError));
+        return;
+    }
+
     DBusMessage* call_msg = dbus_message_new_method_call(
         k_portal_service, k_portal_path, k_portal_iface, method);
 
@@ -321,8 +358,7 @@ void DBusBackend::invoke_portal(
     dbus_message_iter_open_container(&args, DBUS_TYPE_ARRAY, "{sv}", &opts);
 
     if (!start_dir.empty()) {
-        std::string uri = "file://" + start_dir.string();
-        append_string_variant(opts, "current_folder", uri.c_str());
+        append_path_variant(opts, "current_folder", start_dir.string());
     }
     if (!suggested.empty()) {
         append_string_variant(opts, "current_name", suggested.c_str());
@@ -354,23 +390,6 @@ void DBusBackend::invoke_portal(
     dbus_message_unref(reply);
 
     if (request_path.empty()) {
-        dbus_connection_close(call_conn);
-        dbus_connection_unref(call_conn);
-        callback(std::unexpected(SystemDialogError::BackendError));
-        return;
-    }
-
-    std::string match = "type='signal',path='" + request_path
-        + "',interface='" + k_request_iface
-        + "',member='" + k_signal_response + "'";
-
-    dbus_bus_add_match(call_conn, match.c_str(), &err);
-    dbus_connection_flush(call_conn);
-
-    if (dbus_error_is_set(&err)) {
-        MF_ERROR(Journal::Component::Core, Journal::Context::API,
-            "DBusBackend: add_match failed: {}", err.message);
-        dbus_error_free(&err);
         dbus_connection_close(call_conn);
         dbus_connection_unref(call_conn);
         callback(std::unexpected(SystemDialogError::BackendError));
