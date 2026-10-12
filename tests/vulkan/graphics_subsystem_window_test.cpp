@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 
+#include "../support/main_thread_support.hpp"
 #include "../support/native_window_test_support.hpp"
 
 #if defined(MAYAFLUX_TEST_NATIVE_WINDOWS)
@@ -30,7 +31,7 @@ namespace {
             if (predicate()) {
                 return true;
             }
-            std::this_thread::sleep_for(2ms);
+            service_main_queue();
         }
         return predicate();
     }
@@ -56,8 +57,18 @@ namespace {
         ~WindowedSubsystemRig()
         {
             if (subsystem->is_ready()) {
-                subsystem->shutdown();
+                shutdown();
             }
+        }
+
+        void stop()
+        {
+            call_servicing_main_queue([this] { subsystem->stop(); });
+        }
+
+        void shutdown()
+        {
+            call_servicing_main_queue([this] { subsystem->shutdown(); });
         }
 
         bool bring_up()
@@ -187,7 +198,7 @@ TEST(GraphicsSubsystemWindowTest, GraphicsThreadRegistersAndPresentsWindows)
     EXPECT_TRUE(wait_until([&] { return window->is_graphics_registered(); }));
     EXPECT_TRUE(wait_until([&] { return rig.subsystem->get_frame_clock().current_position() > 5; }));
 
-    rig.subsystem->stop();
+    rig.stop();
 }
 
 TEST(GraphicsSubsystemWindowTest, StopClearsTheRegistrationFlagOfEveryWindow)
@@ -200,7 +211,7 @@ TEST(GraphicsSubsystemWindowTest, StopClearsTheRegistrationFlagOfEveryWindow)
     rig.subsystem->wait_until_running();
     ASSERT_TRUE(wait_until([&] { return window->is_graphics_registered(); }));
 
-    rig.subsystem->stop();
+    rig.stop();
 
     EXPECT_FALSE(window->is_graphics_registered());
 }
@@ -214,14 +225,14 @@ TEST(GraphicsSubsystemWindowTest, WindowsKeepRenderingAfterTheSubsystemRestarts)
     rig.subsystem->start();
     rig.subsystem->wait_until_running();
     ASSERT_TRUE(wait_until([&] { return window->is_graphics_registered(); }));
-    rig.subsystem->stop();
+    rig.stop();
 
     rig.subsystem->start();
     rig.subsystem->wait_until_running();
 
     EXPECT_TRUE(wait_until([&] { return window->is_graphics_registered(); }));
     EXPECT_TRUE(rig.backend_has(window));
-    rig.subsystem->stop();
+    rig.stop();
 }
 
 TEST(GraphicsSubsystemWindowTest, ShutdownUnregistersEveryWindowFromTheBackend)
@@ -233,7 +244,7 @@ TEST(GraphicsSubsystemWindowTest, ShutdownUnregistersEveryWindowFromTheBackend)
     rig.subsystem->process();
     ASSERT_TRUE(window->is_graphics_registered());
 
-    rig.subsystem->shutdown();
+    rig.shutdown();
 
     EXPECT_FALSE(window->is_graphics_registered());
     EXPECT_FALSE(rig.subsystem->is_ready());
@@ -249,7 +260,7 @@ TEST(GraphicsSubsystemWindowTest, ShutdownWhileRunningWithWindowsIsClean)
     rig.subsystem->wait_until_running();
     ASSERT_TRUE(wait_until([&] { return window->is_graphics_registered(); }));
 
-    EXPECT_NO_THROW(rig.subsystem->shutdown());
+    EXPECT_NO_THROW(rig.shutdown());
 
     EXPECT_FALSE(window->is_graphics_registered());
     EXPECT_FALSE(rig.subsystem->is_running());
