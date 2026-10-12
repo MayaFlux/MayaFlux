@@ -58,11 +58,7 @@ public:
      * Thread-safe initialization via static local variable (C++11 guarantee).
      * Instance is never destroyed - lives for program duration.
      */
-    static BackendRegistry& instance()
-    {
-        static BackendRegistry registry;
-        return registry;
-    }
+    static BackendRegistry& instance();
 
     BackendRegistry(const BackendRegistry&) = delete;
     BackendRegistry& operator=(const BackendRegistry&) = delete;

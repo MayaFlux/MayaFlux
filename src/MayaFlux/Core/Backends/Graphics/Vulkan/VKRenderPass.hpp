@@ -46,7 +46,7 @@ struct RenderPassCreateInfo {
  * This class encapsulates the creation and management of a Vulkan Render Pass,
  * providing an easy-to-use interface for setting up rendering operations.
  */
-class VKRenderPass {
+class MAYAFLUX_API VKRenderPass {
 public:
     VKRenderPass() = default;
 

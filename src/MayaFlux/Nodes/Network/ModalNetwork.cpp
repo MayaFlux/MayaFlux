@@ -1,6 +1,7 @@
 #include "ModalNetwork.hpp"
 
 #include "MayaFlux/Kinesis/Discrete/Analysis.hpp"
+#include "MayaFlux/Kinesis/Discrete/Coefficients.hpp"
 #include "MayaFlux/Nodes/Filters/Filter.hpp"
 #include "MayaFlux/Nodes/Generators/Sine.hpp"
 
@@ -52,8 +53,7 @@ std::vector<double> ModalNetwork::generate_spectrum_ratios(Spectrum spectrum,
         break;
 
     case Spectrum::INHARMONIC:
-        // Bell-like spectrum (approximate mode ratios for circular plates)
-        // Based on Bessel function zeros
+        // Free-free bar mode ratios, tabulated for the first eight, then constant spacing
         ratios = { 1.0, 2.756, 5.404, 8.933, 13.344, 18.64, 24.81, 31.86 };
         while (ratios.size() < count) {
             double last = ratios.back();
@@ -110,7 +110,7 @@ void ModalNetwork::initialize_modes(const std::vector<double>& ratios,
         mode.oscillator = std::make_shared<Generator::Sine>(static_cast<float>(mode.current_frequency));
         mode.oscillator->set_in_network(true);
 
-        mode.decay_coefficient = std::exp(-1.0 / (base_decay * m_sample_rate));
+        mode.decay_coefficient = Kinesis::Discrete::decay_per_sample(base_decay, m_sample_rate);
 
         m_modes.push_back(std::move(mode));
     }

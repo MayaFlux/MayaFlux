@@ -418,7 +418,7 @@ vk::PipelineShaderStageCreateInfo VKShaderModule::get_stage_create_info() const
     stage_info.module = m_module;
     stage_info.pName = m_entry_point.c_str();
 
-    if (!m_specialization_entries.empty()) {
+    if (!m_specialization_map.empty()) {
         const_cast<VKShaderModule*>(this)->update_specialization_info();
         stage_info.pSpecializationInfo = &m_specialization_info;
     }
@@ -539,7 +539,9 @@ bool VKShaderModule::reflect_spirv(const std::vector<uint32_t>& spirv_code)
             sc.name = compiler.get_name(spec.id);
 
             const auto& type = compiler.get_type(compiler.get_constant(spec.id).constant_type);
-            sc.size = static_cast<uint32_t>(compiler.get_declared_struct_size(type));
+            sc.size = type.basetype == spirv_cross::SPIRType::Boolean
+                ? static_cast<uint32_t>(sizeof(vk::Bool32))
+                : type.width / 8;
 
             m_reflection.specialization_constants.push_back(sc);
         }

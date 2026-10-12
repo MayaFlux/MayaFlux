@@ -171,7 +171,7 @@ void atomic_set_flag_strong(std::atomic<NodeState>& flag, const NodeState& desir
  * This is used to mark nodes with specific conditions (like PROCESSED or ACTIVE)
  * while preserving other aspects of the node's current state.
  */
-void atomic_add_flag(std::atomic<NodeState>& state, NodeState flag);
+MAYAFLUX_API void atomic_add_flag(std::atomic<NodeState>& state, NodeState flag);
 
 /**
  * @brief Atomically removes a flag from a node state
@@ -208,7 +208,7 @@ void atomic_set_flag_weak(std::atomic<NodeState>& flag, NodeState& expected, con
  * redundant processing while ensuring all dependent nodes receive the correct
  * modulation values.
  */
-void atomic_inc_modulator_count(std::atomic<uint32_t>& count, int amount);
+MAYAFLUX_API void atomic_inc_modulator_count(std::atomic<uint32_t>& count, int amount);
 
 /**
  * @brief Atomically decrements the modulator count by a specified amount
@@ -220,7 +220,7 @@ void atomic_inc_modulator_count(std::atomic<uint32_t>& count, int amount);
  * becomes eligible for state resets, allowing the audio engine to optimize
  * processing and avoid redundant calculations in the signal chain.
  */
-void atomic_dec_modulator_count(std::atomic<uint32_t>& count, int amount);
+MAYAFLUX_API void atomic_dec_modulator_count(std::atomic<uint32_t>& count, int amount);
 
 /**
  * @brief Attempts to reset the processed state of a node

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "MayaFlux/Core/ProcessingTokens.hpp"
 #include "MayaFlux/IO/Keys.hpp"
+#include "MayaFlux/Kriya/Pattern.hpp"
 
 namespace MayaFlux {
 
@@ -25,7 +25,7 @@ namespace Vruta {
 }
 
 namespace IO {
-class IOManager;
+    class IOManager;
 }
 
 namespace Kriya {
@@ -90,17 +90,31 @@ MAYAFLUX_API void schedule_sequence(std::vector<std::pair<double, std::function<
 MAYAFLUX_API std::shared_ptr<Vruta::SoundRoutine> schedule_line(float start_value, float end_value, float duration_seconds, uint32_t step_duration = 5, bool retain = true, std::string name = "");
 
 /**
- * @brief Schedules a pattern generator that produces values based on a pattern function
- * and addes it to the default scheduler list for evaluation
+ * @brief Schedules a pattern generator whose steps are spaced by a list of durations
  * @param pattern_func Function that generates pattern values based on step index
  * @param callback Function to call with each pattern value
- * @param interval_seconds Time between pattern steps
- * @param name Name of the metronome task (optional but recommended).
+ * @param durations Seconds to wait after each step, stepped through in order and repeated
+ * @param name Name of the pattern task (optional but recommended).
      If not provided, a default name will be generated.
  * @param token Processing token to determine which scheduler rate to use (default: SAMPLE_ACCURATE)
  *
- * Uses the task scheduler from the default engine.
+ * A single interval is a list of one. Uses the task scheduler from the default engine.
  */
+MAYAFLUX_API void schedule_pattern(std::function<std::any(uint64_t)> pattern_func, std::function<void(std::any)> callback, std::vector<double> durations, std::string name = "", Vruta::ProcessingToken token = Vruta::ProcessingToken::SAMPLE_ACCURATE);
+
+/**
+ * @brief Schedules a pattern generator with one interval between steps
+ * @param pattern_func Function that generates pattern values based on step index
+ * @param callback Function to call with each pattern value
+ * @param interval_seconds Time between pattern steps
+ * @param name Name of the pattern task (optional but recommended).
+     If not provided, a default name will be generated.
+ * @param token Processing token to determine which scheduler rate to use (default: SAMPLE_ACCURATE)
+ * @deprecated Pass a list of durations instead, with the interval as a list of one.
+ *
+ * Forwards to the durations overload. Uses the task scheduler from the default engine.
+ */
+[[deprecated("Pass a std::vector<double> of durations; a single interval is a list of one")]]
 MAYAFLUX_API void schedule_pattern(std::function<std::any(uint64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds, std::string name = "", Vruta::ProcessingToken token = Vruta::ProcessingToken::SAMPLE_ACCURATE);
 
 /**
@@ -133,6 +147,57 @@ MAYAFLUX_API void schedule_task(const std::string& name, Vruta::GraphicsRoutine&
  * @param initialize Whether to initialize the task immediately
  */
 MAYAFLUX_API void schedule_task(const std::string& name, Vruta::FreeRoutine&& task, bool initialize = false);
+
+/**
+ * @brief Schedules a routine of any type that is already held by a shared_ptr
+ * @param name Unique name for the task. If empty, the scheduler generates one.
+ * @param task The routine to schedule, for example the result of Kriya::pattern; a null routine is reported and ignored
+ * @param initialize Whether to initialize the task immediately
+ *
+ * Covers every routine type, including cross routines, which have no rvalue overload.
+ */
+MAYAFLUX_API void schedule_task(const std::string& name, const std::shared_ptr<Vruta::Routine>& task, bool initialize = false);
+
+/**
+ * @brief Schedules a typed pattern whose steps are spaced by a list of durations
+ * @tparam Index Step index type, default uint64_t
+ * @param generator Callable from the step index to any value
+ * @param callback Callable that takes the generated value
+ * @param durations Seconds to wait after each step, stepped through in order and repeated
+ * @param name Name of the pattern task (optional but recommended)
+ * @param token Processing token to determine which scheduler rate to use (default: SAMPLE_ACCURATE)
+ *
+ * The value type is whatever the generator returns, so no std::any is involved.
+ * `schedule_pattern(gen, cb, { 0.25, 0.5 })` selects this overload.
+ */
+template <std::incrementable Index = uint64_t, typename Generator, typename Callback>
+    requires Kriya::PatternGenerator<Generator, Index>
+    && Kriya::PatternCallback<Callback, typename Kriya::PatternTraits<Generator, Index>::value_type>
+void schedule_pattern(Generator generator, Callback callback, std::vector<double> durations, std::string name = "", Vruta::ProcessingToken token = Vruta::ProcessingToken::SAMPLE_ACCURATE)
+{
+    schedule_task(name, Kriya::pattern<Index>(std::move(generator), std::move(callback), std::move(durations), token));
+}
+
+/**
+ * @brief Schedules a typed pattern driven by a condition or by a durations function
+ * @tparam Index Step index type, default uint64_t
+ * @param generator Callable from the step index to any value
+ * @param callback Callable that takes the generated value
+ * @param third A condition returning bool for the step index, or a function from a pass number to a range of seconds
+ * @param name Name of the pattern task (optional but recommended)
+ * @param token Processing token to determine which scheduler rate to use (default: SAMPLE_ACCURATE)
+ *
+ * Forwards to Kriya::pattern, which describes both forms. A condition runs a step each time it holds;
+ * a durations function is asked once per pass and ends the pattern on an empty array.
+ */
+template <std::incrementable Index = uint64_t, typename Generator, typename Callback, typename Third>
+    requires Kriya::PatternGenerator<Generator, Index>
+    && Kriya::PatternCallback<Callback, typename Kriya::PatternTraits<Generator, Index>::value_type>
+    && (Kriya::PatternCondition<Third, Index> || Kriya::PatternDurationSource<Third>)
+void schedule_pattern(Generator generator, Callback callback, Third third, std::string name = "", Vruta::ProcessingToken token = Vruta::ProcessingToken::SAMPLE_ACCURATE)
+{
+    schedule_task(name, Kriya::pattern<Index>(std::move(generator), std::move(callback), std::move(third), token));
+}
 
 /**
  * @brief Cancels a scheduled task

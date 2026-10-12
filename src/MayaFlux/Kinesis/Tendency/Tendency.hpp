@@ -207,4 +207,29 @@ Tendency<D, R> select(const Tendency<D, float>& predicate, const Tendency<D, R>&
     } };
 }
 
+/**
+ * @brief Sample a tendency at evenly spaced points into an array
+ * @param f Scalar tendency to sample
+ * @param count Number of points; zero gives an empty array, one gives f(from)
+ * @param from First point of the domain
+ * @param to Last point of the domain
+ * @return f at count points from `from` to `to` inclusive
+ *
+ * The bridge from a curve designed with chain, combine, lerp and the scalar
+ * factories to an array: table_lookup reads such a table over [-1, 1], and
+ * TimeMaps::piecewise_linear over time.
+ */
+[[nodiscard]] inline std::vector<double> tabulate(
+    const Tendency<double, double>& f, size_t count, double from = -1.0, double to = 1.0)
+{
+    std::vector<double> table(count);
+    for (size_t i = 0; i < count; ++i) {
+        const double t = count > 1
+            ? from + (to - from) * static_cast<double>(i) / static_cast<double>(count - 1)
+            : from;
+        table[i] = f(t);
+    }
+    return table;
+}
+
 } // namespace MayaFlux::Kinesis

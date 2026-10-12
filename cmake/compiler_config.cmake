@@ -62,5 +62,5 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     endif()
 
 elseif(MSVC)
-    add_compile_options(/MP)
+    add_compile_options(/MP /bigobj)
 endif()

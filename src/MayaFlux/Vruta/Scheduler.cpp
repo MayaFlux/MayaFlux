@@ -6,6 +6,77 @@
 
 namespace MayaFlux::Vruta {
 
+namespace {
+
+    /**
+     * @brief Counts a submission call as in flight and reports whether it may proceed
+     *
+     * The count is entered before the terminating flag is read, so
+     * terminate_all_tasks can wait for every accepted call to finish.
+     */
+    struct SubmissionGuard {
+        SubmissionGuard(std::atomic<uint32_t>& inflight, const std::atomic<bool>& terminating)
+            : m_inflight(inflight)
+        {
+            m_inflight.fetch_add(1);
+            accepted = !terminating.load();
+        }
+
+        ~SubmissionGuard() { m_inflight.fetch_sub(1); }
+
+        SubmissionGuard(const SubmissionGuard&) = delete;
+        SubmissionGuard& operator=(const SubmissionGuard&) = delete;
+
+        bool accepted;
+
+    private:
+        std::atomic<uint32_t>& m_inflight;
+    };
+
+    /**
+     * @brief Scheduler whose queue drain is running on this thread, if any
+     *
+     * Completion callbacks fire inside the drains while they hold iterators
+     * into the task lists, so terminate_all_tasks must not run from them.
+     */
+    thread_local const TaskScheduler* t_draining = nullptr;
+
+    struct DrainScope {
+        explicit DrainScope(const TaskScheduler* scheduler)
+            : m_previous(t_draining)
+        {
+            t_draining = scheduler;
+        }
+
+        ~DrainScope() { t_draining = m_previous; }
+
+        DrainScope(const DrainScope&) = delete;
+        DrainScope& operator=(const DrainScope&) = delete;
+
+    private:
+        const TaskScheduler* m_previous;
+    };
+
+    /**
+     * @brief Clears the terminating flag on every exit, including exceptions
+     */
+    struct TerminationScope {
+        explicit TerminationScope(std::atomic<bool>& flag)
+            : m_flag(flag)
+        {
+        }
+
+        ~TerminationScope() { m_flag.store(false); }
+
+        TerminationScope(const TerminationScope&) = delete;
+        TerminationScope& operator=(const TerminationScope&) = delete;
+
+    private:
+        std::atomic<bool>& m_flag;
+    };
+
+}
+
 TaskScheduler::TaskScheduler(uint32_t default_sample_rate, uint32_t default_frame_rate)
     : m_clock(default_sample_rate)
     , m_cleanup_threshold(512)
@@ -24,6 +95,13 @@ void TaskScheduler::add_task(const std::shared_ptr<Routine>& routine, const std:
 {
     if (!routine) {
         MF_ERROR(Journal::Component::Vruta, Journal::Context::CoroutineScheduling, "Failed to initiate routine; routine is null. Exiting add_task.");
+        return;
+    }
+
+    SubmissionGuard guard(m_inflight_submissions, m_terminating);
+    if (!guard.accepted) {
+        MF_WARN(Journal::Component::Vruta, Journal::Context::CoroutineScheduling,
+            "Rejected task '{}': scheduler is terminating", name);
         return;
     }
 
@@ -70,14 +148,23 @@ void TaskScheduler::add_task(const std::shared_ptr<Routine>& routine, const std:
 
 bool TaskScheduler::cancel_task(const std::string& name)
 {
-    for (auto& op : m_conditional_pending_ops) {
-        bool expected = false;
-        if (op.active.compare_exchange_strong(expected, true,
-                std::memory_order_acquire, std::memory_order_relaxed)) {
-            op.entry = { nullptr, name };
-            op.is_addition = false;
-            m_conditional_pending_count.fetch_add(1, std::memory_order_relaxed);
-            return true;
+    SubmissionGuard guard(m_inflight_submissions, m_terminating);
+    if (!guard.accepted)
+        return false;
+
+    bool queued = false;
+
+    if (m_conditional_thread.joinable()) {
+        for (auto& op : m_conditional_pending_ops) {
+            bool expected = false;
+            if (op.active.compare_exchange_strong(expected, true,
+                    std::memory_order_acquire, std::memory_order_relaxed)) {
+                op.entry = { nullptr, name };
+                op.is_addition = false;
+                m_conditional_pending_count.fetch_add(1, std::memory_order_relaxed);
+                queued = true;
+                break;
+            }
         }
     }
 
@@ -88,14 +175,17 @@ bool TaskScheduler::cancel_task(const std::string& name)
             op.entry = { nullptr, name };
             op.is_addition = false;
             m_pending_count.fetch_add(1, std::memory_order_relaxed);
-            return true;
+            queued = true;
+            break;
         }
     }
 
-    MF_ERROR(Journal::Component::Vruta, Journal::Context::CoroutineScheduling,
-        "Pending task queue full, could not cancel task '{}'", name);
+    if (!queued) {
+        MF_ERROR(Journal::Component::Vruta, Journal::Context::CoroutineScheduling,
+            "Pending task queue full, could not cancel task '{}'", name);
+    }
 
-    return false;
+    return queued;
 }
 
 bool TaskScheduler::cancel_task(const std::shared_ptr<Routine>& routine)
@@ -103,7 +193,11 @@ bool TaskScheduler::cancel_task(const std::shared_ptr<Routine>& routine)
     if (!routine)
         return false;
 
-    if (routine && routine->get_processing_token() == ProcessingToken::CONDITIONAL) {
+    SubmissionGuard guard(m_inflight_submissions, m_terminating);
+    if (!guard.accepted)
+        return false;
+
+    if (routine->get_processing_token() == ProcessingToken::CONDITIONAL) {
         auto it = std::ranges::find_if(m_conditional_tasks,
             [&routine](const TaskEntry& e) { return e.routine == routine; });
         const std::string name = (it != m_conditional_tasks.end()) ? it->name : "";
@@ -131,6 +225,10 @@ bool TaskScheduler::cancel_task(const std::shared_ptr<Routine>& routine)
 
 bool TaskScheduler::restart_task(const std::string& name)
 {
+    SubmissionGuard guard(m_inflight_submissions, m_terminating);
+    if (!guard.accepted)
+        return false;
+
     auto cit = std::ranges::find_if(m_conditional_tasks,
         [&name](const TaskEntry& e) { return e.name == name; });
     if (cit != m_conditional_tasks.end()) {
@@ -497,7 +595,32 @@ void TaskScheduler::resume_all_tasks()
 
 void TaskScheduler::terminate_all_tasks()
 {
+    if (m_conditional_thread.joinable() && m_conditional_thread.get_id() == std::this_thread::get_id()) {
+        return;
+    }
+
+    if (t_draining == this) {
+        MF_WARN(Journal::Component::Vruta, Journal::Context::CoroutineScheduling,
+            "terminate_all_tasks ignored: called from a callback during a queue drain");
+        return;
+    }
+
+    if (m_terminating.exchange(true)) {
+        return;
+    }
+    TerminationScope terminating(m_terminating);
+
+    while (m_inflight_submissions.load() != 0) {
+        std::this_thread::yield();
+    }
+
+    if (m_conditional_thread.joinable()) {
+        m_conditional_thread.request_stop();
+        m_conditional_thread.join();
+    }
+
     drain_pending_tasks();
+    drain_conditional_pending();
 
     for (auto& entry : m_tasks) {
         if (entry.routine && entry.routine->is_active()) {
@@ -546,7 +669,6 @@ void TaskScheduler::terminate_all_tasks()
             "All coroutines terminated successfully");
     }
 
-    drain_conditional_pending();
     for (auto& entry : m_conditional_tasks) {
         if (entry.routine && entry.routine->is_active())
             entry.routine->set_should_terminate(true);
@@ -585,6 +707,8 @@ void TaskScheduler::drain_pending_tasks()
     if (m_pending_count.load(std::memory_order_relaxed) == 0)
         return;
 
+    DrainScope drain_scope(this);
+
     for (auto& op : m_pending_ops) {
         if (!op.active.load(std::memory_order_acquire))
             continue;
@@ -598,7 +722,9 @@ void TaskScheduler::drain_pending_tasks()
             }
             m_tasks.push_back(std::move(op.entry));
         } else {
-            auto it = find_task_by_name(op.entry.name);
+            auto it = (op.entry.name.empty() && op.entry.routine)
+                ? find_task_by_routine(op.entry.routine)
+                : find_task_by_name(op.entry.name);
             if (it != m_tasks.end()) {
                 if (it->routine && it->routine->is_active())
                     it->routine->set_should_terminate(true);
@@ -616,6 +742,8 @@ void TaskScheduler::drain_conditional_pending()
 {
     if (m_conditional_pending_count.load(std::memory_order_acquire) == 0)
         return;
+
+    DrainScope drain_scope(this);
 
     for (auto& op : m_conditional_pending_ops) {
         if (!op.active.load(std::memory_order_acquire))

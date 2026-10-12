@@ -10,6 +10,8 @@
 #endif
 
 #if defined(WIN32_BACKEND)
+#include <windows.h>
+
 #include <vulkan/vulkan_win32.h>
 #endif
 

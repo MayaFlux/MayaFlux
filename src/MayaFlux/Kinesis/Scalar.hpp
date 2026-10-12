@@ -64,6 +64,33 @@ template <typename T>
 }
 
 // =============================================================================
+// Tables
+// =============================================================================
+
+/**
+ * @brief Read an evenly spaced table at a position in [0, 1], interpolating linearly.
+ * @param table Samples spread evenly from position 0 (first) to 1 (last)
+ * @param t Position, clamped to [0, 1]
+ * @return Interpolated value; zero for an empty table, the entry for a single one
+ *
+ * The lookup under TimeMaps::piecewise_linear and the table kernels in
+ * Discrete/Kernels.
+ */
+[[nodiscard]] inline double sample_table(std::span<const double> table, double t) noexcept
+{
+    const size_t n = table.size();
+    if (n == 0)
+        return 0.0;
+    if (n == 1)
+        return table.front();
+
+    const double x = std::clamp(t, 0.0, 1.0) * static_cast<double>(n - 1);
+    const auto i = std::min(static_cast<size_t>(x), n - 2);
+    const double f = x - static_cast<double>(i);
+    return table[i] + (table[i + 1] - table[i]) * f;
+}
+
+// =============================================================================
 // Smoothing
 // =============================================================================
 
@@ -101,9 +128,10 @@ template <typename T>
  * @brief Exponential smoothing: move @p current toward @p target at rate
  *        @p smoothing over time step @p dt.
  *
- * @p smoothing is a half-life in seconds: the distance to target halves
- * every @p smoothing seconds. At smoothing = 0.1 the value tracks quickly;
- * at smoothing = 2.0 it lags heavily.
+ * @p smoothing is a time constant in seconds: the distance to target falls
+ * by a factor of e (to about 37 percent) every @p smoothing seconds, and
+ * halves every 0.69 * @p smoothing seconds. At smoothing = 0.1 the value
+ * tracks quickly; at smoothing = 2.0 it lags heavily.
  *
  * Framerate-independent. Equivalent to the "lerp every frame" pattern
  * done correctly:
@@ -117,6 +145,61 @@ template <typename T>
     if (smoothing <= T { 0 })
         return target;
     return current + (target - current) * (T { 1 } - std::exp(-dt / smoothing));
+}
+
+/**
+ * @brief damp with separate time constants for rising and falling.
+ *
+ * Moves @p current toward @p target using @p rise when the target is above
+ * it and @p fall when below, both on the same scale as the single value of
+ * damp. A level that swells slowly and fades quickly, or the reverse, is one
+ * pair of numbers.
+ */
+template <typename T>
+[[nodiscard]] inline T damp_asymmetric(T current, T target, T rise, T fall, T dt) noexcept
+{
+    return damp(current, target, target > current ? rise : fall, dt);
+}
+
+/**
+ * @brief damp_asymmetric over arrays, in place.
+ * @param current Levels, updated
+ * @param target Where each level is heading
+ * @param rise Rise time constant per level
+ * @param fall Fall time constant per level
+ * @param dt Time step
+ *
+ * Runs over the shortest of the four spans. Each level has its own pair of
+ * numbers, so levels given different values move independently.
+ */
+inline void damp_asymmetric(
+    std::span<double> current,
+    std::span<const double> target,
+    std::span<const double> rise,
+    std::span<const double> fall,
+    double dt) noexcept
+{
+    const size_t count = std::min({ current.size(), target.size(), rise.size(), fall.size() });
+    for (size_t i = 0; i < count; ++i)
+        current[i] = damp_asymmetric(current[i], target[i], rise[i], fall[i], dt);
+}
+
+// =============================================================================
+// Bounding
+// =============================================================================
+
+/**
+ * @brief Smooth bound to (-limit, limit): limit * tanh(x / limit).
+ *
+ * Close to the identity for small |x|, approaches +-limit for large |x|.
+ * A non-positive limit gives zero.
+ */
+template <typename T>
+[[nodiscard]] inline T soft_clip(T x, T limit = T { 1 }) noexcept
+{
+    if (limit <= T { 0 })
+        return T { 0 };
+    return limit * std::tanh(x / limit);
 }
 
 // =============================================================================

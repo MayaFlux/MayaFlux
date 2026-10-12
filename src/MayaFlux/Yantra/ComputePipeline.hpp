@@ -64,7 +64,7 @@ namespace MayaFlux::Yantra {
  * ```
  */
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = InputType>
-class MAYAFLUX_API ComputationPipeline {
+class ComputationPipeline {
 public:
     using input_type = Datum<InputType>;
     using output_type = Datum<OutputType>;

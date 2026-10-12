@@ -25,7 +25,7 @@ struct SwapchainSupportDetails {
  * @class VKSwapchain
  * @brief Manages Vulkan swapchain using C++ API (vulkan.hpp)
  */
-class VKSwapchain {
+class MAYAFLUX_API VKSwapchain {
 public:
     VKSwapchain() = default;
     ~VKSwapchain();

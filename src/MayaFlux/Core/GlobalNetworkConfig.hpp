@@ -2,6 +2,12 @@
 
 #include "MayaFlux/Transitive/Reflect/Mirror.hpp"
 
+#if defined(_WIN32) || defined(_WIN64)
+#ifdef ERROR
+#undef ERROR
+#endif
+#endif
+
 namespace MayaFlux::Core {
 
 /**

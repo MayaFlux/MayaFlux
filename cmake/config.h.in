@@ -47,11 +47,18 @@
 #endif
 #endif
 
+#ifndef VULKAN_HPP_DISPATCH_LOADER_DYNAMIC
+#define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
+#endif
+
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+#ifndef VULKAN_HPP_STORAGE_SHARED
+#define VULKAN_HPP_STORAGE_SHARED
+#endif
+#endif
+
 // Cross-platform definitions
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
-#ifdef ERROR
-#undef ERROR
-#endif // ERROR
 #define MAYAFLUX_FORCEINLINE __forceinline
 #define MAYAFLUX_NOINLINE    __declspec(noinline)
 #define MAYAFLUX_UNREACHABLE() __assume(false)

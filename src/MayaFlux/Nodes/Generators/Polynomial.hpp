@@ -136,6 +136,14 @@ public:
     using BufferFunction = std::function<double(std::span<double>)>;
 
     /**
+     * @brief Function type for recursive/feedforward evaluation with access to the coefficient array
+     *
+     * Takes the history window, as for BufferFunction, and the node's own
+     * coefficient array, which the function may read and write.
+     */
+    using CoefBufferFunction = std::function<double(std::span<double>, std::span<double>)>;
+
+    /**
      * @class PolynomialContext
      * @brief Context object for polynomial node callbacks
      *
@@ -175,6 +183,15 @@ public:
      */
     Polynomial(BufferFunction function, PolynomialMode mode, size_t buffer_size);
 
+    /**
+     * @brief Constructs a Polynomial generator in recursive or feedforward mode with a coefficient array
+     * @param function Function receiving the history window and the coefficient array
+     * @param mode Processing mode (RECURSIVE or FEEDFORWARD)
+     * @param buffer_size Number of previous values to maintain
+     * @param coefficients Initial contents of the coefficient array
+     */
+    Polynomial(CoefBufferFunction function, PolynomialMode mode, size_t buffer_size, std::vector<double> coefficients = {});
+
     ~Polynomial() override = default;
 
     /**
@@ -204,11 +221,29 @@ public:
     void reset();
 
     /**
+     * @brief An independent node with the same behaviour and fresh history
+     *
+     * Same mode, buffer size, function, scale and coefficient array as the
+     * array stands now, so a state-bearing kernel's clone continues from the
+     * current state. History, saved state and hooks are not copied. The input
+     * node, if any, is shared. Closure state captured by a function is shared
+     * too; the coefficient array is the state that is not.
+     *
+     * Attach one clone per channel instead of one node to several.
+     */
+    [[nodiscard]] std::shared_ptr<Polynomial> clone() const;
+
+    /**
      * @brief Sets the polynomial coefficients (for direct mode)
      * @param coefficients Vector of polynomial coefficients (highest power first)
      *
      * Updates the polynomial function to use the specified coefficients.
      * This allows dynamically changing the polynomial during operation.
+     * A node built from a coefficient list evaluates this array directly, so the
+     * change applies on the next sample. A node built from a function keeps its
+     * function; the array then only reaches coefficient-aware buffer functions.
+     * Updates of unchanged size are written in place; changing the size should
+     * happen on the scheduler tick, not concurrently with processing.
      */
     void set_coefficients(const std::vector<double>& coefficients);
 
@@ -229,6 +264,14 @@ public:
      * Updates the generator to use the specified buffer function and mode.
      */
     void set_buffer_function(BufferFunction function, PolynomialMode mode, size_t buffer_size);
+
+    /**
+     * @brief Sets a buffer function that receives the coefficient array
+     * @param function Function receiving the history window and the coefficient array
+     * @param mode Processing mode (RECURSIVE or FEEDFORWARD)
+     * @param buffer_size Number of previous values to maintain
+     */
+    void set_buffer_function(CoefBufferFunction function, PolynomialMode mode, size_t buffer_size);
 
     /**
      * @brief Sets initial conditions for recursive mode
@@ -377,9 +420,28 @@ private:
      */
     // DirectFunction create_polynomial_function(const std::vector<double>& coefficients);
 
+    /**
+     * @brief Adapts a CoefBufferFunction to the BufferFunction slot
+     * @param function Function receiving the history window and the coefficient array
+     * @return BufferFunction that supplies m_coefficients on every call
+     */
+    BufferFunction bind_coefficients(CoefBufferFunction function);
+
+    /**
+     * @brief Evaluates the coefficient list at x, highest power first
+     * @param coefficients Coefficient vector
+     * @param x Evaluation point
+     * @return Sum of coefficient * x^k, accumulated from the last coefficient
+     *
+     * The one loop behind create_polynomial_function and the live DIRECT
+     * evaluation of a node built from coefficients.
+     */
+    static double power_sum(const std::vector<double>& coefficients, double x) noexcept;
+
     PolynomialMode m_mode; ///< Current processing mode
     DirectFunction m_direct_function; ///< Function for direct mode
     BufferFunction m_buffer_function; ///< Function for recursive/feedforward mode
+    CoefBufferFunction m_coef_function; ///< The function behind m_buffer_function while a CoefBufferFunction is bound
     std::vector<double> m_coefficients; ///< Polynomial coefficients (if using coefficient-based definition)
     std::span<double> m_external_buffer_context; ///< View into external buffer
 
@@ -387,6 +449,9 @@ private:
     std::vector<double> m_linear_view; ///< Linearized view of history for easy access
 
     std::vector<double> m_saved_history_state; ///< Saved state of the history buffer
+    std::vector<double> m_saved_coefficients; ///< Saved coefficient array, used when a CoefBufferFunction is bound
+    bool m_coef_bound {}; ///< True once a CoefBufferFunction has been bound
+    bool m_coef_direct {}; ///< True while DIRECT output is evaluated from m_coefficients
 
     size_t m_buffer_size {}; ///< Maximum size of the buffers
     double m_scale_factor; ///< Scaling factor for output

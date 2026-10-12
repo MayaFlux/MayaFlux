@@ -75,6 +75,17 @@ void PolynomialProcessor::processing_function(const std::shared_ptr<Buffer>& buf
     }
 }
 
+std::shared_ptr<PolynomialProcessor> PolynomialProcessor::clone() const
+{
+    if (!m_polynomial) {
+        return std::make_shared<PolynomialProcessor>();
+    }
+
+    auto copy = std::make_shared<PolynomialProcessor>(m_polynomial->clone(), m_process_mode, m_window_size);
+    copy->m_use_internal = true;
+    return copy;
+}
+
 void PolynomialProcessor::on_attach(const std::shared_ptr<Buffer>& /*buffer*/)
 {
     m_polynomial->reset();

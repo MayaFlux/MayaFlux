@@ -50,7 +50,7 @@ void GraphicsSubsystem::initialize(SubsystemProcessingHandle& handle)
 
     m_handle = &handle;
 
-    if (!m_backend->initialize(m_graphics_config)) {
+    if (!m_backend || !m_backend->initialize(m_graphics_config)) {
         error<std::runtime_error>(
             Journal::Component::Core,
             Journal::Context::GraphicsSubsystem,
@@ -315,6 +315,14 @@ void GraphicsSubsystem::register_windows_for_processing()
             continue;
         }
 
+        if (m_backend->is_window_registered(window)) {
+            window->set_graphics_registered(true);
+            if (std::ranges::find(m_registered_windows, window) == m_registered_windows.end()) {
+                m_registered_windows.push_back(window);
+            }
+            continue;
+        }
+
         if (m_backend->register_window(window)) {
             m_registered_windows.push_back(window);
         } else {
@@ -401,7 +409,9 @@ void GraphicsSubsystem::shutdown()
 
     Portal::Graphics::shutdown();
 
-    m_backend->cleanup();
+    if (m_backend) {
+        m_backend->cleanup();
+    }
 
     m_is_ready = false;
 

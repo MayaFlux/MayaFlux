@@ -71,15 +71,19 @@ std::shared_ptr<Vruta::SoundRoutine> schedule_line(float start_value, float end_
     return line;
 }
 
-void schedule_pattern(std::function<std::any(uint64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds, std::string name, Vruta::ProcessingToken token)
+void schedule_pattern(std::function<std::any(uint64_t)> pattern_func, std::function<void(std::any)> callback, std::vector<double> durations, std::string name, Vruta::ProcessingToken token)
 {
     auto scheduler = get_scheduler();
     if (name.empty()) {
         name = "pattern_" + std::to_string(scheduler->get_next_task_id());
     }
 
-    auto pattern = Kriya::pattern(std::move(pattern_func), std::move(callback), interval_seconds, token);
-    get_scheduler()->add_task(pattern, name, false);
+    scheduler->add_task(Kriya::pattern(std::move(pattern_func), std::move(callback), std::move(durations), token), name, false);
+}
+
+void schedule_pattern(std::function<std::any(uint64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds, std::string name, Vruta::ProcessingToken token)
+{
+    schedule_pattern(std::move(pattern_func), std::move(callback), std::vector<double> { interval_seconds }, std::move(name), token);
 }
 
 float* get_line_value(const std::string& name)
@@ -113,6 +117,11 @@ void schedule_task(const std::string& name, Vruta::FreeRoutine&& task, bool init
 {
     auto task_ptr = std::make_shared<Vruta::FreeRoutine>(std::move(task));
     get_scheduler()->add_task(std::move(task_ptr), name, initialize);
+}
+
+void schedule_task(const std::string& name, const std::shared_ptr<Vruta::Routine>& task, bool initialize)
+{
+    get_scheduler()->add_task(task, name, initialize);
 }
 
 bool cancel_task(const std::string& name)

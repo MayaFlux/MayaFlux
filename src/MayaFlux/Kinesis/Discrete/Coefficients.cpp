@@ -8,6 +8,22 @@ namespace MayaFlux::Kinesis::Discrete {
 
 namespace {
 
+    constexpr size_t reciprocal_factorial_count = 24;
+
+    constexpr std::array<double, reciprocal_factorial_count> reciprocal_factorials()
+    {
+        std::array<double, reciprocal_factorial_count> table {};
+        double factorial = 1.0;
+        table[0] = 1.0;
+        for (size_t n = 1; n < table.size(); ++n) {
+            factorial *= static_cast<double>(n);
+            table[n] = 1.0 / factorial;
+        }
+        return table;
+    }
+
+    constexpr auto reciprocal_factorial = reciprocal_factorials();
+
     struct BiquadTerms {
         double w0;
         double cosw0;
@@ -101,10 +117,101 @@ void biquad_highpass(double frequency, double q, double sample_rate,
 void biquad_bandpass(double frequency, double q, double sample_rate,
     std::vector<double>& a, std::vector<double>& b)
 {
+    const auto biquad = biquad_bandpass(frequency, q, sample_rate);
+    a.assign({ 1.0, biquad.a1, biquad.a2 });
+    b.assign({ biquad.b0, biquad.b1, biquad.b2 });
+}
+
+Biquad biquad_bandpass(double frequency, double q, double sample_rate) noexcept
+{
     const auto t = terms(frequency, q, sample_rate);
-    emit(a, b,
-        1.0 + t.alpha, -2.0 * t.cosw0, 1.0 - t.alpha,
-        t.alpha, 0.0, -t.alpha);
+    const double a0 = 1.0 + t.alpha;
+    return {
+        .a1 = (-2.0 * t.cosw0) / a0,
+        .a2 = (1.0 - t.alpha) / a0,
+        .b0 = t.alpha / a0,
+        .b1 = 0.0,
+        .b2 = (-t.alpha) / a0,
+    };
+}
+
+double decay_per_sample(double seconds, double sample_rate) noexcept
+{
+    return std::exp(-1.0 / (seconds * sample_rate));
+}
+
+double pole_radius_from_decay(double seconds, double sample_rate) noexcept
+{
+    const double tau = std::max(seconds, 1.0 / sample_rate);
+    return std::min(decay_per_sample(tau, sample_rate), 1.0 - 1e-12);
+}
+
+double decay_from_pole_radius(double radius, double sample_rate) noexcept
+{
+    const double r = std::min(radius, 1.0 - 1e-12);
+    if (r <= 0.0)
+        return 0.0;
+    return -1.0 / (sample_rate * std::log(r));
+}
+
+double q_from_decay(double frequency, double seconds, double sample_rate) noexcept
+{
+    const double radius = pole_radius_from_decay(seconds, sample_rate);
+    const double radius_sq = radius * radius;
+    const double alpha = (1.0 - radius_sq) / (1.0 + radius_sq);
+    const auto t = terms(frequency, 1.0, sample_rate);
+    return t.sinw0 / (2.0 * alpha);
+}
+
+double decay_from_q(double frequency, double q, double sample_rate) noexcept
+{
+    const auto t = terms(frequency, q, sample_rate);
+    if (t.alpha >= 1.0)
+        return 0.0;
+    const double radius = std::sqrt((1.0 - t.alpha) / (1.0 + t.alpha));
+    return decay_from_pole_radius(radius, sample_rate);
+}
+
+std::vector<double> backward_difference_weights(size_t order)
+{
+    std::vector<double> weights(order + 1);
+    double binomial = 1.0;
+    for (size_t k = 0; k <= order; ++k) {
+        if (k > 0)
+            binomial = binomial * static_cast<double>(order - k + 1) / static_cast<double>(k);
+        weights.at(k) = (k % 2 == 0) ? binomial : -binomial;
+    }
+    return weights;
+}
+
+std::vector<double> geometric_weights(size_t count, double ratio, bool unit_sum)
+{
+    std::vector<double> weights(count);
+    double weight = 1.0;
+    double total = 0.0;
+    for (size_t k = 0; k < count; ++k) {
+        weights.at(k) = weight;
+        total += weight;
+        weight *= ratio;
+    }
+
+    if (unit_sum && std::abs(total) > 1e-12) {
+        for (double& w : weights)
+            w /= total;
+    }
+    return weights;
+}
+
+std::vector<double> moving_average_weights(size_t count)
+{
+    if (count == 0)
+        return {};
+
+    auto weights = rectangular(count);
+    const double each = 1.0 / static_cast<double>(count);
+    for (double& w : weights)
+        w *= each;
+    return weights;
 }
 
 void biquad_notch(double frequency, double q, double sample_rate,
@@ -252,19 +359,45 @@ std::vector<double> savitzky_golay(size_t window, size_t poly_order, size_t deri
 
 std::vector<double> lagrange_delay(double delay, size_t order)
 {
-    const size_t taps = order + 1;
-    const double d = std::clamp(delay, 0.0, static_cast<double>(order));
-
-    std::vector<double> h(taps, 1.0);
-    for (size_t k = 0; k < taps; ++k) {
-        for (size_t j = 0; j < taps; ++j) {
-            if (j == k)
-                continue;
-            h[k] *= (d - static_cast<double>(j))
-                / (static_cast<double>(k) - static_cast<double>(j));
-        }
-    }
+    std::vector<double> h(order + 1);
+    lagrange_weights(delay, h);
     return h;
+}
+
+void lagrange_weights(double delay, std::span<double> weights) noexcept
+{
+    const size_t taps = weights.size();
+    if (taps == 0)
+        return;
+
+    const double d = std::clamp(delay, 0.0, static_cast<double>(taps - 1));
+
+    if (taps > reciprocal_factorial.size()) {
+        for (size_t k = 0; k < taps; ++k) {
+            weights[k] = 1.0;
+            for (size_t j = 0; j < taps; ++j) {
+                if (j == k)
+                    continue;
+                weights[k] *= (d - static_cast<double>(j))
+                    / (static_cast<double>(k) - static_cast<double>(j));
+            }
+        }
+        return;
+    }
+
+    double before = 1.0;
+    for (size_t k = 0; k < taps; ++k) {
+        weights[k] = before;
+        before *= d - static_cast<double>(k);
+    }
+
+    double after = 1.0;
+    for (size_t k = taps; k-- > 0;) {
+        const size_t rest = taps - 1 - k;
+        const double scale = reciprocal_factorial[k] * reciprocal_factorial[rest];
+        weights[k] *= after * (rest % 2 == 0 ? scale : -scale);
+        after *= d - static_cast<double>(k);
+    }
 }
 
 void resonator(double pole_radius, double pole_angle,

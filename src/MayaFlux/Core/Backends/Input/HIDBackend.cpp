@@ -156,9 +156,9 @@ size_t HIDBackend::refresh_devices()
         }
 
         std::string path(cur->path);
-        current_paths.insert(path);
+        const bool first_in_pass = current_paths.insert(path).second;
 
-        bool is_new = (previous_paths.find(path) == previous_paths.end());
+        bool is_new = first_in_pass && (previous_paths.find(path) == previous_paths.end());
 
         uint32_t dev_id = find_or_assign_device_id(path);
 

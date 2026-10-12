@@ -51,6 +51,7 @@ private:
     pw_context* m_context = nullptr;
     pw_core* m_core = nullptr;
     PipewireDevice* m_device_manager = nullptr;
+    bool m_pipewire_initialized = false;
 #endif
 };
 

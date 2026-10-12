@@ -480,7 +480,7 @@ std::optional<T> get_region_attribute(const Region& region, const std::string& k
  * @param key Attribute key.
  * @param value Value to set.
  */
-void set_region_attribute(Region& region, const std::string& key, std::any value);
+MAYAFLUX_API void set_region_attribute(Region& region, const std::string& key, std::any value);
 
 /**
  * @brief Find all regions in a RegionGroup with a given label.
@@ -488,7 +488,7 @@ void set_region_attribute(Region& region, const std::string& key, std::any value
  * @param label Label to match.
  * @return Vector of matching Regions.
  */
-std::vector<Region> find_regions_with_label(const RegionGroup& group, const std::string& label);
+MAYAFLUX_API std::vector<Region> find_regions_with_label(const RegionGroup& group, const std::string& label);
 
 /**
  * @brief Find all regions in a RegionGroup with a specific attribute value.
@@ -497,7 +497,7 @@ std::vector<Region> find_regions_with_label(const RegionGroup& group, const std:
  * @param value Attribute value to match.
  * @return Vector of matching Regions.
  */
-std::vector<Region> find_regions_with_attribute(const RegionGroup& group, const std::string& key, const std::any& value);
+MAYAFLUX_API std::vector<Region> find_regions_with_attribute(const RegionGroup& group, const std::string& key, const std::any& value);
 
 /**
  * @brief Find all regions in a RegionGroup that contain the given coordinates.
@@ -505,7 +505,7 @@ std::vector<Region> find_regions_with_attribute(const RegionGroup& group, const 
  * @param coordinates N-dimensional coordinates.
  * @return Vector of matching Regions.
  */
-std::vector<Region> find_regions_containing_coordinates(const RegionGroup& group, const std::vector<uint64_t>& coordinates);
+MAYAFLUX_API std::vector<Region> find_regions_containing_coordinates(const RegionGroup& group, const std::vector<uint64_t>& coordinates);
 
 /**
  * @brief Translate a Region by an offset vector.
@@ -513,7 +513,7 @@ std::vector<Region> find_regions_containing_coordinates(const RegionGroup& group
  * @param offset Offset for each dimension (can be negative).
  * @return New translated Region.
  */
-Region translate_region(const Region& region, const std::vector<int64_t>& offset);
+MAYAFLUX_API Region translate_region(const Region& region, const std::vector<int64_t>& offset);
 
 /**
  * @brief Scale a Region about its center by the given factors.
@@ -521,28 +521,28 @@ Region translate_region(const Region& region, const std::vector<int64_t>& offset
  * @param factors Scaling factors for each dimension.
  * @return New scaled Region.
  */
-Region scale_region(const Region& region, const std::vector<double>& factors);
+MAYAFLUX_API Region scale_region(const Region& region, const std::vector<double>& factors);
 
 /**
  * @brief Get the bounding region that contains all regions in a RegionGroup.
  * @param group RegionGroup to query.
  * @return Region representing the bounding box.
  */
-Region get_bounding_region(const RegionGroup& group);
+MAYAFLUX_API Region get_bounding_region(const RegionGroup& group);
 
 /**
  * @brief Sort a vector of Regions by a specific dimension.
  * @param regions Vector of Regions to sort.
  * @param dimension Dimension index to sort by.
  */
-void sort_regions_by_dimension(std::vector<Region>& regions, size_t dimension);
+MAYAFLUX_API void sort_regions_by_dimension(std::vector<Region>& regions, size_t dimension);
 
 /**
  * @brief Sort a vector of Regions by a specific attribute (numeric).
  * @param regions Vector of Regions to sort.
  * @param attr_name Attribute name to sort by.
  */
-void sort_regions_by_attribute(std::vector<Region>& regions, const std::string& attr_name);
+MAYAFLUX_API void sort_regions_by_attribute(std::vector<Region>& regions, const std::string& attr_name);
 
 /**
  * @brief Add a named reference region to a reference list.

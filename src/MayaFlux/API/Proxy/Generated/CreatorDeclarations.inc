@@ -19,6 +19,7 @@
     std::shared_ptr<MayaFlux::Nodes::Generator::Polynomial> Polynomial(const std::vector<double> & coefficients);
     std::shared_ptr<MayaFlux::Nodes::Generator::Polynomial> Polynomial(MayaFlux::Nodes::Generator::Polynomial::DirectFunction function);
     std::shared_ptr<MayaFlux::Nodes::Generator::Polynomial> Polynomial(MayaFlux::Nodes::Generator::Polynomial::BufferFunction function, MayaFlux::Nodes::Generator::PolynomialMode mode, size_t buffer_size);
+    std::shared_ptr<MayaFlux::Nodes::Generator::Polynomial> Polynomial(MayaFlux::Nodes::Generator::Polynomial::CoefBufferFunction function, MayaFlux::Nodes::Generator::PolynomialMode mode, size_t buffer_size, std::vector<double> coefficients = {});
     std::shared_ptr<MayaFlux::Nodes::Generator::Random> Random(Kinesis::Stochastic::Algorithm type = Kinesis::Stochastic::Algorithm::UNIFORM);
     std::shared_ptr<MayaFlux::Nodes::Generator::Counter> Counter(uint32_t modulo = 16, int32_t step = 1);
     std::shared_ptr<MayaFlux::Nodes::Generator::Counter> Counter(const std::shared_ptr<MayaFlux::Nodes::Node> & reset_trigger, uint32_t modulo = 16, int32_t step = 1);

@@ -157,7 +157,7 @@ private:
     bool m_is_ready {};
 
     SubsystemTokens m_subsystem_tokens; ///< Processing token configuration
-    SubsystemProcessingHandle* m_handle; ///< Reference to processing handle
+    SubsystemProcessingHandle* m_handle {}; ///< Reference to processing handle
     GlobalGraphicsConfig m_graphics_config; ///< Graphics/windowing configuration
 
     /**

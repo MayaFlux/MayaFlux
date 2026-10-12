@@ -122,7 +122,26 @@ public:
      */
     virtual void set_should_terminate(bool should_terminate)
     {
-        m_handle.promise().should_terminate = should_terminate;
+        m_handle.promise().set_should_terminate(should_terminate);
+    }
+
+    /**
+     * @brief Register a callback fired once when the handler ends
+     * @param callback Function to invoke on completion
+     *
+     * Fires on the first of: the handler coroutine reaching its end, or a termination
+     * request (cancel, removal, replacement by name, terminate-all). It is once-only per
+     * handler, not per event. It runs on the thread that ends the handler, which for natural
+     * completion is the producer thread that resumed it (possibly the audio thread).
+     * Register before adding the event; a callback registered after completion runs immediately.
+     *
+     * The stock handlers (key, mouse, network and broadcast listeners) loop until cancelled, so for
+     * them this only reports removal. A cancelled handler whose Event is still held by the caller stays
+     * parked on its source and may run its per-event callback once more on the next matching input.
+     */
+    void on_complete(std::function<void()> callback)
+    {
+        m_handle.promise().on_complete(std::move(callback));
     }
 
     /**

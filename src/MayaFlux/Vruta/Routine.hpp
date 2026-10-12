@@ -141,6 +141,17 @@ public:
     virtual void set_should_terminate(bool should_terminate) = 0;
 
     /**
+     * @brief Register a callback invoked once at final suspend or a termination request, whichever occurs first.
+     *
+     * A termination request may invoke it while is_active() still returns true.
+     * It runs on the thread that reaches final suspend or requests termination.
+     * Register before scheduling; replacing a callback while the routine is live is unsupported and racy.
+     * A callback first registered after either event runs immediately on the caller's thread.
+     * @param callback Function to invoke on completion
+     */
+    virtual void on_complete(std::function<void()> callback) = 0;
+
+    /**
      * @brief Get sync_to_clock flag from promise
      * @return True if coroutine should synchronize with clock
      */
@@ -406,7 +417,12 @@ public:
 
     void set_should_terminate(bool should_terminate) override
     {
-        m_handle.promise().should_terminate = should_terminate;
+        m_handle.promise().set_should_terminate(should_terminate);
+    }
+
+    void on_complete(std::function<void()> callback) override
+    {
+        m_handle.promise().on_complete(std::move(callback));
     }
 
     [[nodiscard]] bool get_sync_to_clock() const override
@@ -587,7 +603,12 @@ public:
 
     void set_should_terminate(bool should_terminate) override
     {
-        m_handle.promise().should_terminate = should_terminate;
+        m_handle.promise().set_should_terminate(should_terminate);
+    }
+
+    void on_complete(std::function<void()> callback) override
+    {
+        m_handle.promise().on_complete(std::move(callback));
     }
 
     [[nodiscard]] bool get_sync_to_clock() const override
@@ -690,7 +711,12 @@ public:
 
     void set_should_terminate(bool should_terminate) override
     {
-        m_handle.promise().should_terminate = should_terminate;
+        m_handle.promise().set_should_terminate(should_terminate);
+    }
+
+    void on_complete(std::function<void()> callback) override
+    {
+        m_handle.promise().on_complete(std::move(callback));
     }
 
     [[nodiscard]] bool get_sync_to_clock() const override
@@ -787,13 +813,19 @@ public:
 
     [[nodiscard]] bool get_should_terminate() const override
     {
-        return m_handle ? m_handle.promise().should_terminate : true;
+        return m_handle ? m_handle.promise().should_terminate.load() : true;
     }
 
     void set_should_terminate(bool v) override
     {
         if (m_handle)
-            m_handle.promise().should_terminate = v;
+            m_handle.promise().set_should_terminate(v);
+    }
+
+    void on_complete(std::function<void()> callback) override
+    {
+        if (m_handle)
+            m_handle.promise().on_complete(std::move(callback));
     }
 
     [[nodiscard]] bool get_sync_to_clock() const override { return false; }

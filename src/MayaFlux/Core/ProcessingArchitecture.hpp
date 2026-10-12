@@ -88,7 +88,7 @@ struct SubsystemTokens {
  *
  * Provides scoped, thread-safe access to buffer operations with automatic token validation.
  */
-class BufferProcessingHandle {
+class MAYAFLUX_API BufferProcessingHandle {
 public:
     /** @brief Constructs handle for specific buffer manager and token */
     BufferProcessingHandle(
@@ -258,7 +258,7 @@ private:
  *
  * Single interface that coordinates buffer and node operations for a subsystem.
  */
-class SubsystemProcessingHandle {
+class MAYAFLUX_API SubsystemProcessingHandle {
 public:
     SubsystemProcessingHandle(
         std::shared_ptr<Buffers::BufferManager> buffer_manager,

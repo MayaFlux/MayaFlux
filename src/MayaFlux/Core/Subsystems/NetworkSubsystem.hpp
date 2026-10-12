@@ -4,8 +4,18 @@
 
 #include "MayaFlux/Core/Backends/Network/NetworkBackend.hpp"
 
+#if defined(_WIN32) || defined(_WIN64)
+#include <windows.h>
+#endif
+
 #include <asio/executor_work_guard.hpp>
 #include <asio/io_context.hpp>
+
+#if defined(_WIN32) || defined(_WIN64)
+#ifdef ERROR
+#undef ERROR
+#endif
+#endif
 
 namespace MayaFlux::Registry::Service {
 struct NetworkService;

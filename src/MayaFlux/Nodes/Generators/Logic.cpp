@@ -101,6 +101,93 @@ Logic::Logic(TemporalFunction function)
 {
 }
 
+Logic::Logic(CoefDirectFunction function, std::vector<double> coefficients)
+    : Logic(DirectFunction {})
+{
+    m_coefficients = std::move(coefficients);
+    set_direct_function(std::move(function));
+}
+
+Logic::Logic(CoefSequentialFunction function, size_t history_size, std::vector<double> coefficients)
+    : Logic(SequentialFunction {}, history_size)
+{
+    m_coefficients = std::move(coefficients);
+    set_sequential_function(std::move(function), history_size);
+}
+
+Logic::Logic(CoefTemporalFunction function, std::vector<double> coefficients)
+    : Logic(TemporalFunction {})
+{
+    m_coefficients = std::move(coefficients);
+    set_temporal_function(std::move(function));
+}
+
+Logic::Logic(CoefMultiInputFunction function, size_t input_count, std::vector<double> coefficients)
+    : Logic(MultiInputFunction {}, input_count)
+{
+    m_coefficients = std::move(coefficients);
+    set_multi_input_function(std::move(function), input_count);
+}
+
+std::shared_ptr<Logic> Logic::clone() const
+{
+    std::shared_ptr<Logic> copy;
+
+    if (m_coef_bound && m_operator == LogicOperator::CUSTOM) {
+        switch (m_mode) {
+        case LogicMode::DIRECT:
+            copy = std::make_shared<Logic>(m_coef_direct_function, m_coefficients);
+            break;
+        case LogicMode::SEQUENTIAL:
+            copy = std::make_shared<Logic>(m_coef_sequential_function, m_history_size, m_coefficients);
+            break;
+        case LogicMode::TEMPORAL:
+            copy = std::make_shared<Logic>(m_coef_temporal_function, m_coefficients);
+            break;
+        case LogicMode::MULTI_INPUT:
+            copy = std::make_shared<Logic>(m_coef_multi_function, m_input_count, m_coefficients);
+            break;
+        }
+    }
+
+    if (!copy) {
+        switch (m_mode) {
+        case LogicMode::DIRECT:
+            copy = m_operator == LogicOperator::CUSTOM
+                ? std::make_shared<Logic>(m_direct_function)
+                : std::make_shared<Logic>(m_operator, m_threshold);
+            break;
+        case LogicMode::SEQUENTIAL:
+            copy = std::make_shared<Logic>(m_sequential_function, m_history_size);
+            break;
+        case LogicMode::TEMPORAL:
+            copy = std::make_shared<Logic>(m_temporal_function);
+            break;
+        case LogicMode::MULTI_INPUT:
+            copy = std::make_shared<Logic>(m_multi_input_function, m_input_count);
+            if (m_default_multi_input) {
+                copy->m_multi_input_function = copy->default_multi_input_function();
+                copy->m_default_multi_input = true;
+            }
+            break;
+        }
+    }
+
+    copy->m_coefficients = m_coefficients;
+    copy->m_threshold = m_threshold;
+    copy->m_low_threshold = m_low_threshold;
+    copy->m_high_threshold = m_high_threshold;
+    copy->m_edge_type = m_edge_type;
+    copy->m_input_node = m_input_node;
+    copy->m_input_nodes = m_input_nodes;
+    return copy;
+}
+
+void Logic::set_coefficients(const std::vector<double>& coefficients)
+{
+    m_coefficients = coefficients;
+}
+
 //-------------------------------------------------------------------------
 // Processing Methods
 //-------------------------------------------------------------------------
@@ -119,6 +206,11 @@ double Logic::process_sample(double input)
             input = m_input_node->process_sample(input);
             atomic_add_flag(m_input_node->m_state, NodeState::PROCESSED);
         }
+    }
+
+    const bool pulled = m_mode == LogicMode::MULTI_INPUT && !m_input_nodes.empty();
+    if (pulled) {
+        pull_input_nodes();
     }
 
     bool current_bool = input > m_threshold;
@@ -207,7 +299,11 @@ double Logic::process_sample(double input)
     }
 
     case LogicMode::MULTI_INPUT: {
-        add_input(input, 0);
+        if (!pulled) {
+            add_input(input, 0);
+        } else if (m_input_count > m_input_nodes.size()) {
+            add_input(input, m_input_nodes.size());
+        }
         result = m_multi_input_function(m_input_buffer);
         break;
     }
@@ -219,6 +315,10 @@ double Logic::process_sample(double input)
     if ((!m_state_saved || (m_state_saved && m_fire_events_during_snapshot))
         && !m_networked_node) {
         notify_tick(current);
+    }
+
+    if (pulled) {
+        release_input_nodes();
     }
 
     if (m_input_node) {
@@ -248,6 +348,7 @@ double Logic::process_multi_input(const std::vector<double>& inputs)
     if (m_mode != LogicMode::MULTI_INPUT) {
         m_mode = LogicMode::MULTI_INPUT;
         m_operator = LogicOperator::CUSTOM;
+        m_coef_bound = false;
 
         if (m_input_buffer.size() < inputs.size()) {
             m_input_buffer.resize(inputs.size(), 0.0);
@@ -255,13 +356,8 @@ double Logic::process_multi_input(const std::vector<double>& inputs)
         }
 
         if (!m_multi_input_function) {
-            m_multi_input_function = [this](const std::vector<double>& inputs) {
-                bool result = true;
-                for (const auto& input : inputs) {
-                    result = result && (input > m_threshold);
-                }
-                return result;
-            };
+            m_multi_input_function = default_multi_input_function();
+            m_default_multi_input = true;
         }
     }
 
@@ -270,12 +366,47 @@ double Logic::process_multi_input(const std::vector<double>& inputs)
         m_input_buffer[i] = inputs[i];
     }
 
-    bool result = m_multi_input_function(m_input_buffer);
-    m_last_output = result ? 1.0 : 0.0;
+    const double current = m_multi_input_function(m_input_buffer) ? 1.0 : 0.0;
 
-    notify_tick(m_last_output);
+    notify_tick(current);
 
+    m_last_output = current;
     return m_last_output;
+}
+
+Logic::MultiInputFunction Logic::default_multi_input_function()
+{
+    return [this](const std::vector<double>& inputs) {
+        return std::ranges::all_of(inputs, [this](double input) { return input > m_threshold; });
+    };
+}
+
+void Logic::pull_input_nodes()
+{
+    if (m_input_buffer.size() < m_input_nodes.size()) {
+        m_input_buffer.resize(m_input_nodes.size(), 0.0);
+    }
+
+    for (size_t i = 0; i < m_input_nodes.size(); ++i) {
+        const auto& node = m_input_nodes[i];
+        atomic_inc_modulator_count(node->m_modulator_count, 1);
+
+        uint32_t state = node->m_state.load();
+        if (state & NodeState::PROCESSED) {
+            m_input_buffer[i] = node->get_last_output();
+        } else {
+            m_input_buffer[i] = node->process_sample(0.0);
+            atomic_add_flag(node->m_state, NodeState::PROCESSED);
+        }
+    }
+}
+
+void Logic::release_input_nodes()
+{
+    for (const auto& node : m_input_nodes) {
+        atomic_dec_modulator_count(node->m_modulator_count, 1);
+        try_reset_processed_state(node);
+    }
 }
 
 void Logic::add_input(double input, size_t index)
@@ -294,7 +425,7 @@ void Logic::reset()
 {
     std::ranges::fill(m_history_ring, false);
     m_history_head = 0;
-    m_history_count = m_history_size;
+    m_history_count = std::min(m_history_size, m_history_ring.size());
     m_edge_detected = false;
     m_last_output = 0.0;
     m_hysteresis_state = false;
@@ -423,10 +554,23 @@ void Logic::set_direct_function(DirectFunction function)
     m_direct_function = std::move(function);
     m_mode = LogicMode::DIRECT;
     m_operator = LogicOperator::CUSTOM;
+    m_coef_bound = false;
+}
+
+void Logic::set_direct_function(CoefDirectFunction function)
+{
+    DirectFunction bound = [this](double input) {
+        return m_coef_direct_function(input, std::span<double>(m_coefficients));
+    };
+    set_direct_function(std::move(bound));
+    m_coef_direct_function = std::move(function);
+    m_coef_bound = true;
 }
 
 void Logic::set_multi_input_function(MultiInputFunction function, size_t input_count)
 {
+    m_coef_bound = false;
+    m_default_multi_input = false;
     m_multi_input_function = std::move(function);
     m_mode = LogicMode::MULTI_INPUT;
     m_operator = LogicOperator::CUSTOM;
@@ -438,11 +582,49 @@ void Logic::set_multi_input_function(MultiInputFunction function, size_t input_c
     }
 }
 
+void Logic::set_multi_input_function(CoefMultiInputFunction function, size_t input_count)
+{
+    MultiInputFunction bound = [this](const std::vector<double>& inputs) {
+        return m_coef_multi_function(inputs, std::span<double>(m_coefficients));
+    };
+    set_multi_input_function(std::move(bound), input_count);
+    m_coef_multi_function = std::move(function);
+    m_coef_bound = true;
+}
+
+void Logic::add_input_node(const std::shared_ptr<Node>& node)
+{
+    if (!node) {
+        return;
+    }
+
+    m_input_nodes.push_back(node);
+    if (m_input_count < m_input_nodes.size()) {
+        m_input_count = m_input_nodes.size();
+    }
+    if (m_input_buffer.size() < m_input_count) {
+        m_input_buffer.resize(m_input_count, 0.0);
+    }
+}
+
+void Logic::set_input_nodes(std::vector<std::shared_ptr<Node>> nodes)
+{
+    std::erase(nodes, nullptr);
+    m_input_nodes = std::move(nodes);
+    if (m_input_count < m_input_nodes.size()) {
+        m_input_count = m_input_nodes.size();
+    }
+    if (m_input_buffer.size() < m_input_count) {
+        m_input_buffer.resize(m_input_count, 0.0);
+    }
+}
+
 void Logic::set_sequential_function(SequentialFunction function, size_t history_size)
 {
     m_sequential_function = std::move(function);
     m_mode = LogicMode::SEQUENTIAL;
     m_operator = LogicOperator::CUSTOM;
+    m_coef_bound = false;
 
     if (history_size != m_history_size) {
         m_history_size = history_size;
@@ -453,12 +635,33 @@ void Logic::set_sequential_function(SequentialFunction function, size_t history_
     }
 }
 
+void Logic::set_sequential_function(CoefSequentialFunction function, size_t history_size)
+{
+    SequentialFunction bound = [this](std::span<bool> history) {
+        return m_coef_sequential_function(history, std::span<double>(m_coefficients));
+    };
+    set_sequential_function(std::move(bound), history_size);
+    m_coef_sequential_function = std::move(function);
+    m_coef_bound = true;
+}
+
 void Logic::set_temporal_function(TemporalFunction function)
 {
     m_temporal_function = std::move(function);
     m_mode = LogicMode::TEMPORAL;
     m_operator = LogicOperator::CUSTOM;
     m_temporal_time = 0.0;
+    m_coef_bound = false;
+}
+
+void Logic::set_temporal_function(CoefTemporalFunction function)
+{
+    TemporalFunction bound = [this](double input, double time) {
+        return m_coef_temporal_function(input, time, std::span<double>(m_coefficients));
+    };
+    set_temporal_function(std::move(bound));
+    m_coef_temporal_function = std::move(function);
+    m_coef_bound = true;
 }
 
 void Logic::set_initial_conditions(const std::vector<bool>& initial_values)
@@ -483,6 +686,7 @@ void Logic::update_context(double value)
         m_context_gpu.m_threshold = m_threshold;
         m_context_gpu.m_edge_detected = m_edge_detected;
         m_context_gpu.m_edge_type = m_edge_type;
+        m_context_gpu.m_coefficients = &m_coefficients;
 
         m_context_gpu.gpu_float_buffer.resize(m_history_count);
         for (size_t i = 0; i < m_history_count; ++i)
@@ -497,6 +701,7 @@ void Logic::update_context(double value)
         m_context.m_threshold = m_threshold;
         m_context.m_edge_detected = m_edge_detected;
         m_context.m_edge_type = m_edge_type;
+        m_context.m_coefficients = &m_coefficients;
     }
 }
 
@@ -517,7 +722,7 @@ void Logic::notify_tick(double value)
             break;
 
         case LogicEventType::WHILE_TRUE:
-            should_call = (bool)value;
+            should_call = static_cast<bool>(value);
             break;
 
         case LogicEventType::WHILE_FALSE:
@@ -529,7 +734,7 @@ void Logic::notify_tick(double value)
             break;
 
         case LogicEventType::TRUE:
-            should_call = state_changed && (bool)value;
+            should_call = state_changed && static_cast<bool>(value);
             break;
 
         case LogicEventType::FALSE:
@@ -645,8 +850,14 @@ void Logic::save_state()
     m_saved_temporal_time = m_temporal_time;
     m_saved_last_output = m_last_output;
 
+    if (m_coef_bound)
+        m_saved_coefficients = m_coefficients;
+
     if (m_input_node)
         m_input_node->save_state();
+
+    for (const auto& node : m_input_nodes)
+        node->save_state();
 
     m_state_saved = true;
 }
@@ -661,8 +872,14 @@ void Logic::restore_state()
     m_temporal_time = m_saved_temporal_time;
     m_last_output = m_saved_last_output;
 
+    if (m_coef_bound && !m_saved_coefficients.empty())
+        m_coefficients = m_saved_coefficients;
+
     if (m_input_node)
         m_input_node->restore_state();
+
+    for (const auto& node : m_input_nodes)
+        node->restore_state();
 
     m_state_saved = false;
 }
@@ -670,9 +887,14 @@ void Logic::restore_state()
 std::vector<std::pair<ModulatorRole, std::shared_ptr<Node>>>
 Logic::get_modulators() const
 {
+    std::vector<std::pair<ModulatorRole, std::shared_ptr<Node>>> modulators;
+    modulators.reserve(m_input_nodes.size() + 1);
+
     if (m_input_node)
-        return { { ModulatorRole::SignalMod, m_input_node } };
-    return {};
+        modulators.emplace_back(ModulatorRole::SignalMod, m_input_node);
+    for (const auto& node : m_input_nodes)
+        modulators.emplace_back(ModulatorRole::SignalMod, node);
+    return modulators;
 }
 
 }

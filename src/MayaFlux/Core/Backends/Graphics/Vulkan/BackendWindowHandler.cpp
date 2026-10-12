@@ -428,6 +428,12 @@ void BackendWindowHandler::setup_backend_service(const std::shared_ptr<Registry:
         if (!ctx->capture) {
             ensure_capture_state(*ctx);
         }
+        if (!ctx->capture) {
+            MF_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                "register_frame_observer: capture is not enabled for '{}'",
+                ctx->window->get_create_info().title);
+            return 0;
+        }
 
         auto& state = *ctx->capture;
         uint32_t id = state.next_observer_id.fetch_add(1, std::memory_order_relaxed);
@@ -808,11 +814,11 @@ void BackendWindowHandler::render_empty_window(WindowRenderContext& ctx)
                 window->get_create_info().title);
             return;
         }
-        cmd_buffer.reset({});
 
         if (device.waitForFences(1, &in_flight, VK_TRUE, UINT64_MAX) == vk::Result::eTimeout) {
             return;
         }
+        cmd_buffer.reset({});
 
         auto image_index_opt = ctx.swapchain->acquire_next_image(image_available);
         if (!image_index_opt.has_value()) {
@@ -908,7 +914,7 @@ void BackendWindowHandler::ensure_capture_state(WindowRenderContext& ctx)
         auto slot = std::make_unique<CaptureSlot>();
         slot->cmd = m_command_manager.allocate_command_buffer(
             vk::CommandBufferLevel::ePrimary);
-        slot->fence = dev.createFence({});
+        slot->fence = dev.createFence(vk::FenceCreateInfo { vk::FenceCreateFlagBits::eSignaled });
         ctx.capture->slots.push_back(std::move(slot));
     }
 
@@ -1079,7 +1085,7 @@ void BackendWindowHandler::start_readback_thread(CaptureState& state, vk::Device
                 // Store new frame into last_frame (same pattern as InputManager)
                 // ---------------------------------------------------------------
 #ifdef MAYAFLUX_PLATFORM_MACOS
-                auto* raw_frame = new std::vector<uint8_t>(std::move(*buf));
+                auto* raw_frame = new std::vector<uint8_t>(*buf);
                 auto* old = state.last_frame.exchange(raw_frame, std::memory_order_acq_rel);
                 if (old)
                     state.retire_last_frame(old);

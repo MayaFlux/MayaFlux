@@ -19,6 +19,7 @@ VKComputePipeline::~VKComputePipeline()
 VKComputePipeline::VKComputePipeline(VKComputePipeline&& other) noexcept
     : m_pipeline(other.m_pipeline)
     , m_layout(other.m_layout)
+    , m_shader(std::move(other.m_shader))
     , m_workgroup_size(other.m_workgroup_size)
 {
     other.m_pipeline = nullptr;
@@ -36,6 +37,7 @@ VKComputePipeline& VKComputePipeline::operator=(VKComputePipeline&& other) noexc
         m_pipeline = other.m_pipeline;
         m_layout = other.m_layout;
         m_workgroup_size = other.m_workgroup_size;
+        m_shader = std::move(other.m_shader);
 
         other.m_pipeline = nullptr;
         other.m_layout = nullptr;
@@ -60,6 +62,7 @@ void VKComputePipeline::cleanup(vk::Device device)
     }
 
     m_workgroup_size.reset();
+    m_shader.reset();
 }
 
 // ============================================================================
@@ -121,6 +124,7 @@ bool VKComputePipeline::create(vk::Device device, const ComputePipelineConfig& c
         return false;
     }
 
+    m_shader = config.shader;
     const auto& reflection = config.shader->get_reflection();
     m_workgroup_size = reflection.workgroup_size;
 

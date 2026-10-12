@@ -50,6 +50,8 @@ namespace MayaFlux::Nodes::Network {
  * - "frequency"  — centre frequency of all resonators (BROADCAST) or per-resonator (ONE_TO_ONE)
  * - "q"          — bandwidth/resonance of all resonators (BROADCAST) or per-resonator (ONE_TO_ONE)
  * - "gain"       — amplitude scale per resonator (BROADCAST) or per-resonator (ONE_TO_ONE)
+ * - "retune"     — centre frequency like "frequency", written in place so the ring is kept
+ * - "decay"      — ring time in seconds, written in place so the ring is kept
  *
  * OUTPUT:
  * =======
@@ -186,7 +188,7 @@ public:
 
     /**
      * @brief Map a scalar node output to a named networkparameter (BROADCAST)
-     * @param param_name "frequency", "q", or "gain"
+     * @param param_name "frequency", "q", "gain", "retune" or "decay"
      * @param source Node whose get_last_output() is read each process_batch()
      * @param mode Must be MappingMode::BROADCAST
      */
@@ -196,7 +198,7 @@ public:
 
     /**
      * @brief Map a NodeNetwork's per-node outputs to a named network parameter (ONE_TO_ONE)
-     * @param param_name "frequency", "q", or "gain"
+     * @param param_name "frequency", "q", "gain", "retune" or "decay"
      * @param source_network NodeNetwork with get_node_count() == get_node_count()
      */
     void map_parameter(const std::string& param_name,
@@ -278,6 +280,49 @@ public:
      */
     void set_resonator_gain(size_t index, double gain);
 
+    /**
+     * @brief Set the gain of the first resonators from an array
+     * @param gains One linear amplitude scale per resonator
+     */
+    void set_resonator_gain(std::span<const double> gains);
+
+    /**
+     * @brief Move a resonator's centre frequency without clearing its state
+     * @param index Resonator index (0-based)
+     * @param frequency New centre frequency in Hz, clamped below Nyquist
+     * @throws std::out_of_range if index >= get_node_count()
+     *
+     * The stored damping number is kept, so the ring time scales with the
+     * new frequency. Follow with set_decay to hold it. Written in place and
+     * not atomic with respect to a sample in flight.
+     */
+    void retune(size_t index, double frequency);
+
+    /**
+     * @brief Retune the first resonators from an array, keeping every ring
+     * @param frequencies One centre frequency in Hz per resonator; a shorter
+     *        array leaves the rest as they are, extra entries are ignored
+     */
+    void retune(std::span<const double> frequencies);
+
+    /**
+     * @brief Set how long a resonator rings, without clearing its state
+     * @param index Resonator index (0-based)
+     * @param seconds Time for the ring envelope to fall by 1/e, no upper limit
+     * @throws std::out_of_range if index >= get_node_count()
+     *
+     * Sets the pole radius directly and derives the stored q from it, so q
+     * follows rather than leads and is not limited to the range set_q accepts.
+     * Written in place and not atomic with respect to a sample in flight.
+     */
+    void set_decay(size_t index, double seconds);
+
+    /**
+     * @brief Set the ring time of the first resonators from an array
+     * @param seconds One ring time per resonator, as for the single form
+     */
+    void set_decay(std::span<const double> seconds);
+
     //-------------------------------------------------------------------------
     // network-wide control
     //-------------------------------------------------------------------------
@@ -343,6 +388,14 @@ private:
     void compute_biquad(ResonatorNode& r);
 
     /**
+     * @brief Write the same biquad as compute_biquad through the filter's edit spans
+     * @param r Resonator to update (reads r.frequency, r.q, m_sample_rate)
+     *
+     * Leaves the filter history untouched.
+     */
+    void write_biquad_in_place(ResonatorNode& r);
+
+    /**
      * @brief Initialise all resonators from a frequency/Q pair list
      * @param frequencies Centre frequencies in Hz
      * @param qs Q factors
@@ -369,14 +422,14 @@ private:
 
     /**
      * @brief Apply a BROADCAST value to the named parameter across all resonators
-     * @param param "frequency", "q", or "gain"
+     * @param param "frequency", "q", "gain", "retune" or "decay"
      * @param value Scalar value from source node
      */
     void apply_broadcast_parameter(const std::string& param, double value);
 
     /**
      * @brief Apply ONE_TO_ONE values from a source network to the named parameter
-     * @param param "frequency", "q", or "gain"
+     * @param param "frequency", "q", "gain", "retune" or "decay"
      * @param source NodeNetwork providing one value per resonator
      */
     void apply_one_to_one_parameter(const std::string& param,

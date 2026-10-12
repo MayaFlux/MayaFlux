@@ -13,6 +13,8 @@ class FreeRoutine;
 class Event;
 class NetworkSource;
 
+MAYAFLUX_API void invoke_routine_completion(std::function<void()> callback) noexcept;
+
 /**
  * @struct routine_promise
  * @brief Base coroutine promise type for audio processing tasks
@@ -33,6 +35,41 @@ class NetworkSource;
  */
 template <typename RoutineType>
 struct MAYAFLUX_API routine_promise {
+
+    void on_complete(std::function<void()> callback)
+    {
+        completion_callback = std::move(callback);
+        completion_registered.store(static_cast<bool>(completion_callback));
+        if (completion_signaled.load())
+            notify_complete();
+    }
+
+    void set_should_terminate(bool value) noexcept
+    {
+        should_terminate.store(value, std::memory_order_release);
+        if (value)
+            notify_complete();
+    }
+
+    void notify_complete() noexcept
+    {
+        completion_signaled.store(true);
+        if (!completion_registered.load() || completion_notified.exchange(true))
+            return;
+
+        invoke_routine_completion(std::move(completion_callback));
+    }
+
+    struct CompletionAwaiter {
+        routine_promise* promise;
+
+        bool await_ready() const noexcept { return false; }
+        void await_suspend(std::coroutine_handle<>) const noexcept
+        {
+            promise->notify_complete();
+        }
+        void await_resume() const noexcept { }
+    };
 
     RoutineType get_return_object()
     {
@@ -57,7 +94,7 @@ struct MAYAFLUX_API routine_promise {
      * frame isn't destroyed immediately when the coroutine completes. This gives
      * the scheduler a chance to observe the completion and perform cleanup.
      */
-    std::suspend_always final_suspend() noexcept { return {}; }
+    CompletionAwaiter final_suspend() noexcept { return { this }; }
 
     /**
      * @brief Handles the coroutine's void return
@@ -97,7 +134,12 @@ struct MAYAFLUX_API routine_promise {
      * resuming it, even if it hasn't completed naturally. This allows for
      * early termination of long-running coroutines.
      */
-    bool should_terminate = false;
+    std::atomic<bool> should_terminate { false };
+
+    std::atomic<bool> completion_signaled { false };
+    std::atomic<bool> completion_registered { false };
+    std::atomic<bool> completion_notified { false };
+    std::function<void()> completion_callback;
 
     /**
      * @brief Dictionary for storing arbitrary state data

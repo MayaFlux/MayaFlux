@@ -33,7 +33,7 @@ public:
         bool auto_open_inputs { true };
         bool auto_open_outputs { false };
         bool enable_virtual_port { false };
-        std::string virtual_port_name { "MayaFlux" };
+        std::string virtual_port_name { "MayaFlux Virtual In" };
     };
 
     PipewireMidiBackend();
@@ -112,6 +112,7 @@ private:
     std::unordered_map<uint32_t, MIDIPortInfo> m_enumerated_devices;
     std::unordered_map<uint32_t, std::shared_ptr<MIDIPortState>> m_open_devices;
     uint32_t m_next_device_id { 1 };
+    uint32_t m_virtual_device_id { 0 };
 
     InputCallback m_input_callback;
     DeviceCallback m_device_callback;
@@ -124,6 +125,7 @@ private:
     bool port_matches_filter(const std::string& port_name) const;
     uint32_t find_or_assign_device_id(uint32_t pw_global_id);
     void create_virtual_port_if_enabled();
+    static void run_seq_poll(const std::shared_ptr<MIDIPortState>& state);
     void notify_device_change(const InputDeviceInfo& info, bool connected);
 
     // ===================================================================================

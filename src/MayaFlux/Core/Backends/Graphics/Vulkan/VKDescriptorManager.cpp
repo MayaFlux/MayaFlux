@@ -743,6 +743,16 @@ void DescriptorUpdateBatch::submit()
         return;
     }
 
+    size_t buffer_index = 0;
+    size_t image_index = 0;
+    for (auto& write : m_writes) {
+        if (write.descriptorType == vk::DescriptorType::eStorageBuffer) {
+            write.pBufferInfo = &m_buffer_infos[buffer_index++];
+        } else {
+            write.pImageInfo = &m_image_infos[image_index++];
+        }
+    }
+
     m_device.updateDescriptorSets(
         static_cast<uint32_t>(m_writes.size()),
         m_writes.data(),

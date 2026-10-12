@@ -214,4 +214,94 @@ struct Lattice2D {
     }
 };
 
+/**
+ * @struct Lattice1D
+ * @brief A regular subdivision of an AABB1D into a number of cells.
+ *
+ * One dimensional sibling of Lattice2D and Lattice3D, in double precision.
+ * Turns a scalar into a symbol: cell_at maps a value to the cell that holds
+ * it, so a SymbolicTrajectory<Lattice1D, uint32_t> observes a scalar stream
+ * the way the 2D and 3D forms observe a moving point. Indexing is the cell
+ * coordinate itself.
+ */
+struct Lattice1D {
+    uint32_t resolution { 1U }; ///< Cell count. Zero is invalid.
+    AABB1D bounds { .min = -1.0, .max = 1.0 }; ///< Continuous extent subdivided.
+
+    /** @brief Width of one cell. */
+    [[nodiscard]] double cell_size() const noexcept
+    {
+        return bounds.width() / static_cast<double>(resolution);
+    }
+
+    /** @brief Total cell count. */
+    [[nodiscard]] size_t cell_count() const noexcept
+    {
+        return resolution;
+    }
+
+    /** @brief Corner count, one greater than the cell count. */
+    [[nodiscard]] size_t corner_count() const noexcept
+    {
+        return static_cast<size_t>(resolution) + 1U;
+    }
+
+    /**
+     * @brief Linear index of a cell, which is its coordinate.
+     * @param c Cell coordinate. Not bounds-checked.
+     */
+    [[nodiscard]] size_t index(uint32_t c) const noexcept
+    {
+        return c;
+    }
+
+    /**
+     * @brief Whether a cell coordinate lies inside the lattice.
+     * @param c Cell coordinate.
+     */
+    [[nodiscard]] bool in_bounds(uint32_t c) const noexcept
+    {
+        return c < resolution;
+    }
+
+    /**
+     * @brief Position of a cell's centre.
+     * @param c Cell coordinate.
+     */
+    [[nodiscard]] double cell_center(uint32_t c) const noexcept
+    {
+        return bounds.min + (static_cast<double>(c) + 0.5) * cell_size();
+    }
+
+    /**
+     * @brief Position of a lattice corner.
+     * @param c Corner coordinate, valid up to resolution inclusive.
+     */
+    [[nodiscard]] double corner_position(uint32_t c) const noexcept
+    {
+        return bounds.min + static_cast<double>(c) * cell_size();
+    }
+
+    /**
+     * @brief Cell containing a value, clamped to the lattice.
+     * @param p Value. Values outside bounds clamp to the edge cell.
+     */
+    [[nodiscard]] uint32_t cell_at(double p) const noexcept
+    {
+        const double local = (p - bounds.min) / cell_size();
+        const double clamped = std::clamp(
+            std::floor(local), 0.0, static_cast<double>(resolution) - 1.0);
+        return static_cast<uint32_t>(clamped);
+    }
+
+    /**
+     * @brief A lattice over the same bounds at a different resolution.
+     * @param res New cell count.
+     */
+    [[nodiscard]] Lattice1D resampled(uint32_t res) const noexcept
+    {
+        return { .resolution = res, .bounds = bounds };
+    }
+};
+
 } // namespace MayaFlux::Kinesis

@@ -1,5 +1,10 @@
 #include <algorithm>
-#include <cstddef>
+#include <atomic>
+#include <chrono>
+#include <cmath>
+#include <cstdlib>
+#include <memory>
+#include <thread>
 
 #include "../test_config.h"
 
@@ -7,474 +12,436 @@
 #include "MayaFlux/Core/Engine.hpp"
 #include "MayaFlux/Core/SubsystemManager.hpp"
 #include "MayaFlux/Core/Subsystems/AudioSubsystem.hpp"
-#include "MayaFlux/Kinesis/Stochastic/Stochastic.hpp"
+#include "MayaFlux/Core/Subsystems/GraphicsSubsystem.hpp"
 #include "MayaFlux/Kriya/Tasks.hpp"
 #include "MayaFlux/Nodes/Generators/Sine.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
+#include "MayaFlux/Portal/Forma/Forma.hpp"
+#include "MayaFlux/Portal/System/System.hpp"
+#include "MayaFlux/Registry/BackendRegistry.hpp"
+#include "MayaFlux/Registry/Service/AudioBackendService.hpp"
+#include "MayaFlux/Vruta/Clock.hpp"
 #include "MayaFlux/Vruta/Scheduler.hpp"
 
-#define INTEGRATION_TEST
-
 namespace MayaFlux::Test {
+namespace {
 
-class EngineTest : public ::testing::Test {
-protected:
-    void SetUp() override
+    using namespace std::chrono_literals;
+
+    struct EngineCase {
+        const char* name;
+        uint32_t sample_rate;
+        uint32_t buffer_size;
+        uint32_t channels;
+        uint32_t input_channels {};
+    };
+
+    Core::GlobalStreamInfo stream_for(const EngineCase& test_case)
     {
-        engine = AudioTestHelper::createTestEngine();
+        Core::GlobalStreamInfo stream;
+        stream.sample_rate = test_case.sample_rate;
+        stream.buffer_size = test_case.buffer_size;
+        stream.output.channels = test_case.channels;
+        stream.input.enabled = test_case.input_channels > 0;
+        stream.input.channels = test_case.input_channels;
+        return stream;
     }
 
-    void TearDown() override
+    template <typename Predicate>
+    bool eventually(Predicate predicate, std::chrono::milliseconds timeout = 2s)
     {
-        if (engine) {
-            engine->End();
+        const auto deadline = std::chrono::steady_clock::now() + timeout;
+        while (std::chrono::steady_clock::now() < deadline) {
+            if (predicate()) {
+                return true;
+            }
+            std::this_thread::sleep_for(2ms);
         }
+        return predicate();
+    }
+
+    struct ShutdownRecord {
+        bool initialized {};
+        bool started {};
+        bool stopped {};
+        bool shutdown {};
+        bool forma_available_at_stop {};
+        bool system_available_at_stop {};
+        bool forma_available_at_shutdown {};
+    };
+
+    class ShutdownProbe final : public Core::ISubsystem {
+    public:
+        explicit ShutdownProbe(ShutdownRecord& record)
+            : record(record)
+        {
+        }
+
+        void initialize(Core::SubsystemProcessingHandle& processing_handle) override
+        {
+            handle = &processing_handle;
+            record.initialized = true;
+        }
+
+        void register_callbacks() override { }
+        void start() override { record.started = true; }
+        void stop() override
+        {
+            record.forma_available_at_stop = Portal::Forma::is_initialized();
+            record.system_available_at_stop = Portal::System::is_initialized();
+            record.stopped = true;
+            record.started = false;
+        }
+        void pause() override { record.started = false; }
+        void resume() override { record.started = true; }
+        void shutdown() override
+        {
+            record.forma_available_at_shutdown = Portal::Forma::is_initialized();
+            record.shutdown = true;
+        }
+
+        Core::SubsystemTokens get_tokens() const override
+        {
+            return {
+                .Buffer = Buffers::ProcessingToken::AUDIO_BACKEND,
+                .Node = Nodes::ProcessingToken::AUDIO_RATE,
+                .Task = Vruta::ProcessingToken::SAMPLE_ACCURATE
+            };
+        }
+
+        bool is_ready() const override { return record.initialized; }
+        bool is_running() const override { return record.started; }
+        Core::SubsystemType get_type() const override { return Core::SubsystemType::CUSTOM; }
+        Core::SubsystemProcessingHandle* get_processing_context_handle() override { return handle; }
+
+    private:
+        ShutdownRecord& record;
+        Core::SubsystemProcessingHandle* handle {};
+    };
+
+    class EngineConfigurationTest : public ::testing::TestWithParam<EngineCase> {
+    protected:
+        void SetUp() override { engine.Init(stream_for(GetParam())); }
+        void TearDown() override
+        {
+            engine.Start();
+            engine.End();
+        }
+
+        Core::Engine engine;
+    };
+
+    TEST_P(EngineConfigurationTest, AppliesStreamConfiguration)
+    {
+        const auto& expected = GetParam();
+        const auto& actual = engine.get_stream_info();
+        EXPECT_TRUE(engine.is_configured());
+        EXPECT_FALSE(engine.is_running());
+        EXPECT_EQ(actual.sample_rate, expected.sample_rate);
+        EXPECT_EQ(actual.buffer_size, expected.buffer_size);
+        EXPECT_EQ(actual.output.channels, expected.channels);
+        EXPECT_EQ(actual.input.enabled, expected.input_channels > 0);
+        EXPECT_EQ(actual.input.channels, expected.input_channels);
+    }
+
+    TEST_P(EngineConfigurationTest, WiresCoreManagers)
+    {
+        ASSERT_NE(engine.get_scheduler(), nullptr);
+        ASSERT_NE(engine.get_node_graph_manager(), nullptr);
+        ASSERT_NE(engine.get_buffer_manager(), nullptr);
+        EXPECT_NE(engine.get_event_manager(), nullptr);
+        EXPECT_NE(engine.get_input_manager(), nullptr);
+        EXPECT_NE(engine.get_io_manager(), nullptr);
+        EXPECT_NE(engine.get_window_manager(), nullptr);
+        EXPECT_EQ(engine.get_scheduler()->get_rate(), GetParam().sample_rate);
+        EXPECT_EQ(engine.get_buffer_manager()->get_buffer_size(Buffers::ProcessingToken::AUDIO_BACKEND), GetParam().buffer_size);
+        EXPECT_EQ(engine.get_buffer_manager()->get_num_channels(Buffers::ProcessingToken::AUDIO_BACKEND), GetParam().channels);
+    }
+
+    TEST_P(EngineConfigurationTest, CreatesReadySubsystems)
+    {
+        auto manager = engine.get_subsystem_manager();
+        ASSERT_NE(manager, nullptr);
+        ASSERT_NE(manager->get_audio_subsystem(), nullptr);
+        ASSERT_NE(manager->get_graphics_subsystem(), nullptr);
+        ASSERT_NE(manager->get_input_subsystem(), nullptr);
+        ASSERT_NE(manager->get_network_subsystem(), nullptr);
+        EXPECT_TRUE(manager->get_audio_subsystem()->is_ready());
+        EXPECT_TRUE(manager->get_graphics_subsystem()->is_ready());
+        EXPECT_FALSE(manager->get_audio_subsystem()->is_running());
+        EXPECT_FALSE(manager->get_graphics_subsystem()->is_running());
+        EXPECT_NE(manager->get_audio_subsystem()->get_processing_context_handle(), nullptr);
+        EXPECT_NE(manager->get_graphics_subsystem()->get_processing_context_handle(), nullptr);
+    }
+
+    TEST_P(EngineConfigurationTest, AllocatesEachOutputChannel)
+    {
+        auto buffers = engine.get_buffer_manager();
+        ASSERT_NE(buffers, nullptr);
+        for (uint32_t channel = 0; channel < GetParam().channels; ++channel) {
+            auto buffer = buffers->get_root_audio_buffer(Buffers::ProcessingToken::AUDIO_BACKEND, channel);
+            ASSERT_NE(buffer, nullptr);
+            EXPECT_EQ(buffer->get_channel_id(), channel);
+            EXPECT_EQ(buffer->get_num_samples(), GetParam().buffer_size);
+        }
+    }
+
+    INSTANTIATE_TEST_SUITE_P(StreamLayouts, EngineConfigurationTest,
+        ::testing::Values(
+            EngineCase { "Stereo48k", 48000, 512, 2 },
+            EngineCase { "Mono44k", 44100, 256, 1 },
+            EngineCase { "Duplex48k", 48000, 256, 2, 2 }),
+        [](const auto& info) { return info.param.name; });
+
+    class EngineRunningTest : public ::testing::TestWithParam<EngineCase> {
+    protected:
+        void SetUp() override
+        {
+            engine.Init(stream_for(GetParam()));
+            engine.Start();
+        }
+
+        void TearDown() override { engine.End(); }
+
+        Core::Engine engine;
+    };
+
+    TEST_P(EngineRunningTest, StartsActualAudioAndGraphicsBackends)
+    {
+        auto manager = engine.get_subsystem_manager();
+        ASSERT_NE(manager, nullptr);
+        ASSERT_NE(manager->get_audio_subsystem(), nullptr);
+        ASSERT_NE(manager->get_graphics_subsystem(), nullptr);
+        EXPECT_TRUE(engine.is_running());
+        EXPECT_TRUE(manager->get_audio_subsystem()->is_running());
+        EXPECT_TRUE(manager->get_graphics_subsystem()->is_running());
+        EXPECT_TRUE(Portal::Forma::is_initialized());
+        EXPECT_TRUE(Portal::System::is_initialized());
+    }
+
+    TEST_P(EngineRunningTest, AdvancesGraphicsFrameClock)
+    {
+        auto graphics = engine.get_subsystem_manager()->get_graphics_subsystem();
+        ASSERT_NE(graphics, nullptr);
+        const auto before = graphics->get_frame_clock().current_position();
+        EXPECT_TRUE(eventually([&] { return graphics->get_frame_clock().current_position() > before; }));
+    }
+
+    TEST_P(EngineRunningTest, ProcessesRealAudioCallbacks)
+    {
+        auto* service = Registry::BackendRegistry::instance()
+                            .get_service<Registry::Service::AudioBackendService>();
+        ASSERT_NE(service, nullptr);
+        auto callbacks = std::make_shared<std::atomic<uint32_t>>(0);
+        const auto channels = GetParam().channels;
+        const auto observer = service->register_output_observer(
+            [callbacks, channels](const double*, uint32_t samples) {
+                if (samples >= channels && samples % channels == 0) {
+                    callbacks->fetch_add(1, std::memory_order_release);
+                }
+            });
+        const bool observed = eventually([&] { return callbacks->load(std::memory_order_acquire) >= 2; });
+        service->unregister_output_observer(observer);
+        EXPECT_TRUE(observed);
+    }
+
+    TEST_P(EngineRunningTest, PausesAndResumesSubsystems)
+    {
+        auto manager = engine.get_subsystem_manager();
+        ASSERT_NE(manager, nullptr);
+        engine.Pause();
+        EXPECT_FALSE(engine.is_running());
+        EXPECT_FALSE(manager->get_graphics_subsystem()->is_running());
+        engine.Pause();
+        engine.Resume();
+        EXPECT_TRUE(engine.is_running());
+        EXPECT_TRUE(manager->get_graphics_subsystem()->is_running());
+        engine.Resume();
+    }
+
+    INSTANTIATE_TEST_SUITE_P(RealBackends, EngineRunningTest,
+        ::testing::Values(
+            EngineCase { "Stereo48k", 48000, 512, 2 },
+            EngineCase { "Mono44k", 44100, 256, 1 }),
+        [](const auto& info) { return info.param.name; });
+
+    TEST(EngineLifecycleTest, ConstructorHasNoActiveManagers)
+    {
+        Core::Engine engine;
+        EXPECT_FALSE(engine.is_configured());
+        EXPECT_FALSE(engine.is_running());
+        EXPECT_EQ(engine.get_scheduler(), nullptr);
+        EXPECT_EQ(engine.get_node_graph_manager(), nullptr);
+        EXPECT_EQ(engine.get_buffer_manager(), nullptr);
+        EXPECT_EQ(engine.get_subsystem_manager(), nullptr);
+        EXPECT_NE(engine.get_stochastic_engine(), nullptr);
+    }
+
+    TEST(EngineLifecycleTest, PauseResumeAndEndBeforeInitAreSafe)
+    {
+        Core::Engine engine;
+        engine.Pause();
+        engine.Resume();
+        engine.End();
+        EXPECT_FALSE(engine.is_configured());
+        EXPECT_FALSE(engine.is_running());
+    }
+
+    TEST(EngineLifecycleDeathTest, InitWithoutStartCanShutDown)
+    {
+        GTEST_FLAG_SET(death_test_style, "threadsafe");
+        EXPECT_EXIT(
+            {
+                Core::Engine engine;
+                engine.Init(stream_for({ "Stereo48k", 48000, 512, 2 }));
+                engine.End();
+                if (engine.is_configured() || engine.is_running()) {
+                    std::_Exit(1);
+                }
+                std::_Exit(0);
+            },
+            ::testing::ExitedWithCode(0), "");
+    }
+
+    TEST(EngineLifecycleTest, StartImplicitlyInitializes)
+    {
+        Core::Engine engine;
+        engine.Start();
+        ASSERT_TRUE(engine.is_configured());
+        EXPECT_TRUE(engine.is_running());
+        ASSERT_NE(engine.get_subsystem_manager(), nullptr);
+        EXPECT_TRUE(engine.get_subsystem_manager()->get_audio_subsystem()->is_running());
+        EXPECT_TRUE(engine.get_subsystem_manager()->get_graphics_subsystem()->is_running());
+        engine.End();
+        EXPECT_FALSE(engine.is_running());
+    }
+
+    TEST(EngineLifecycleTest, EndIsIdempotentAndAllowsRestart)
+    {
+        Core::Engine engine;
+        engine.Start();
+        engine.End();
+        engine.End();
+        EXPECT_FALSE(engine.is_configured());
+        engine.Start();
+        EXPECT_TRUE(engine.is_running());
+        engine.End();
+        EXPECT_FALSE(engine.is_running());
+    }
+
+    TEST(EngineLifecycleTest, ShutsDownPortalsBeforeStoppingSubsystems)
+    {
+        Core::Engine engine;
+        engine.Init(stream_for({ "Stereo48k", 48000, 512, 2 }));
+        auto audio = engine.get_subsystem_manager()->get_audio_subsystem();
+        auto graphics = engine.get_subsystem_manager()->get_graphics_subsystem();
+        ShutdownRecord record;
+        auto probe = std::make_shared<ShutdownProbe>(record);
+        engine.get_subsystem_manager()->add_subsystem(Core::SubsystemType::CUSTOM, probe);
+        ASSERT_TRUE(record.initialized);
+        engine.Start();
+        ASSERT_TRUE(record.started);
+        engine.End();
+        EXPECT_TRUE(record.stopped);
+        EXPECT_TRUE(record.shutdown);
+        EXPECT_FALSE(record.forma_available_at_stop);
+        EXPECT_FALSE(record.system_available_at_stop);
+        EXPECT_FALSE(record.forma_available_at_shutdown);
+        EXPECT_FALSE(engine.is_running());
+        EXPECT_FALSE(audio->is_running());
+        EXPECT_FALSE(graphics->is_running());
+        EXPECT_FALSE(audio->is_ready());
+        EXPECT_FALSE(graphics->is_ready());
+        EXPECT_FALSE(Portal::Forma::is_initialized());
+        EXPECT_FALSE(Portal::System::is_initialized());
+        EXPECT_EQ(Registry::BackendRegistry::instance()
+                      .get_service<Registry::Service::AudioBackendService>(),
+            nullptr);
+    }
+
+    TEST(EngineLifecycleTest, ShutdownRequestIsObservable)
+    {
+        Core::Engine engine;
+        EXPECT_FALSE(engine.is_shutdown_requested());
+        engine.request_shutdown();
+        EXPECT_TRUE(engine.is_shutdown_requested());
+    }
+
+    TEST(EngineLifecycleTest, ExternalManagerReferencesOutliveEngine)
+    {
+        auto engine = std::make_unique<Core::Engine>();
+        engine->Init(stream_for({ "Stereo48k", 48000, 512, 2 }));
+        auto scheduler = engine->get_scheduler();
+        auto graph = engine->get_node_graph_manager();
+        auto buffers = engine->get_buffer_manager();
+        engine->Start();
+        engine->End();
         engine.reset();
+        EXPECT_NE(scheduler, nullptr);
+        EXPECT_NE(graph, nullptr);
+        EXPECT_NE(buffers, nullptr);
+        EXPECT_EQ(scheduler->get_rate(), 48000);
     }
 
-    std::unique_ptr<Core::Engine> engine;
-
-    Nodes::ProcessingToken node_token = Nodes::ProcessingToken::AUDIO_RATE;
-    Buffers::ProcessingToken buf_token = Buffers::ProcessingToken::AUDIO_BACKEND;
-
-    Core::GlobalStreamInfo custom_config {
-        .sample_rate = TestConfig::SAMPLE_RATE,
-        .buffer_size = TestConfig::BUFFER_SIZE,
-        .output = { .channels = TestConfig::NUM_CHANNELS },
-        .input = { .enabled = false, .channels = 0 },
-    };
-};
-
-#ifdef INTEGRATION_TEST
-
-//-------------------------------------------------------------------------
-// Engine Initialization State Management Tests
-//-------------------------------------------------------------------------
-
-TEST_F(EngineTest, InitializationFlagHandling)
-{
-    auto test_engine = std::make_unique<Core::Engine>();
-
-    EXPECT_NO_THROW(test_engine->Init(custom_config));
-
-    EXPECT_NE(test_engine->get_subsystem_manager(), nullptr);
-    EXPECT_NE(test_engine->get_scheduler(), nullptr);
-    EXPECT_NE(test_engine->get_node_graph_manager(), nullptr);
-
-    EXPECT_NO_THROW(test_engine->Start());
-
-    test_engine->End();
-}
-
-TEST_F(EngineTest, AudioBackendDependentBehavior)
-{
-    auto test_engine = std::make_unique<Core::Engine>();
-
-    EXPECT_NO_THROW(test_engine->Init(custom_config));
-    EXPECT_NO_THROW(test_engine->Start());
-
-    auto audio_subsystem = test_engine->get_subsystem_manager()->get_audio_subsystem();
-    EXPECT_NE(audio_subsystem, nullptr);
-
-    EXPECT_TRUE(audio_subsystem->is_ready());
-
-    test_engine->End();
-}
-
-//-------------------------------------------------------------------------
-// Lifecycle and Component Orchestration Tests
-//-------------------------------------------------------------------------
-
-TEST_F(EngineTest, ConstructorCreatesCleanState)
-{
-    auto test_engine = std::make_unique<Core::Engine>();
-
-    EXPECT_FALSE(test_engine->is_running()) << "New engine should not be running";
-
-    EXPECT_EQ(test_engine->get_subsystem_manager(), nullptr) << "SubsystemManager should be null before Init";
-    EXPECT_EQ(test_engine->get_node_graph_manager(), nullptr) << "NodeGraphManager should be null before Init";
-    EXPECT_EQ(test_engine->get_buffer_manager(), nullptr) << "BufferManager should be null before Init";
-    EXPECT_EQ(test_engine->get_scheduler(), nullptr) << "TaskScheduler should be null before Init";
-
-    EXPECT_NE(test_engine->get_stochastic_engine(), nullptr) << "Random engine should be available";
-}
-
-TEST_F(EngineTest, InitializationCreatesAndWiresComponents)
-{
-    auto test_engine = std::make_unique<Core::Engine>();
-
-    EXPECT_NO_THROW(test_engine->Init(custom_config));
-
-    EXPECT_NE(test_engine->get_subsystem_manager(), nullptr) << "SubsystemManager not created";
-    EXPECT_NE(test_engine->get_node_graph_manager(), nullptr) << "NodeGraphManager not created";
-    EXPECT_NE(test_engine->get_buffer_manager(), nullptr) << "BufferManager not created";
-    EXPECT_NE(test_engine->get_scheduler(), nullptr) << "TaskScheduler not created";
-
-    EXPECT_EQ(test_engine->get_scheduler()->get_rate(), TestConfig::SAMPLE_RATE);
-    EXPECT_EQ(test_engine->get_buffer_manager()->get_num_channels(buf_token), TestConfig::NUM_CHANNELS);
-    EXPECT_EQ(test_engine->get_buffer_manager()->get_buffer_size(buf_token), TestConfig::BUFFER_SIZE);
-
-    const auto& stream_info = test_engine->get_stream_info();
-    EXPECT_EQ(stream_info.sample_rate, TestConfig::SAMPLE_RATE);
-    EXPECT_EQ(stream_info.buffer_size, TestConfig::BUFFER_SIZE);
-    EXPECT_EQ(stream_info.output.channels, TestConfig::NUM_CHANNELS);
-}
-
-TEST_F(EngineTest, InitializationWithCustomStreamInfo)
-{
-    auto test_engine = std::make_unique<Core::Engine>();
-
-    Core::GlobalStreamInfo custom_config;
-    custom_config.sample_rate = 44100;
-    custom_config.buffer_size = 256;
-    custom_config.output.channels = 1;
-    custom_config.input.enabled = true;
-    custom_config.input.channels = 2;
-    custom_config.non_interleaved = true;
-    custom_config.priority = Core::GlobalStreamInfo::StreamPriority::REALTIME;
-
-    EXPECT_NO_THROW(test_engine->Init(custom_config));
-
-    const auto& applied_config = test_engine->get_stream_info();
-    EXPECT_EQ(applied_config.sample_rate, 44100);
-    EXPECT_EQ(applied_config.buffer_size, 256);
-    EXPECT_EQ(applied_config.output.channels, 1);
-    EXPECT_TRUE(applied_config.input.enabled);
-    EXPECT_EQ(applied_config.input.channels, 2);
-    EXPECT_TRUE(applied_config.non_interleaved);
-    EXPECT_EQ(applied_config.priority, Core::GlobalStreamInfo::StreamPriority::REALTIME);
-
-    EXPECT_EQ(test_engine->get_buffer_manager()->get_num_channels(buf_token), 1);
-    EXPECT_EQ(test_engine->get_buffer_manager()->get_buffer_size(buf_token), 256);
-    EXPECT_EQ(test_engine->get_scheduler()->get_rate(), 44100);
-}
-
-TEST_F(EngineTest, LifecycleStateTransitions)
-{
-    EXPECT_FALSE(engine->is_running()) << "Engine should not be running initially";
-
-    EXPECT_NO_THROW(engine->Start());
-    // Note: is_running() depends on actual audio backend initialization success
-    // In CI/test environments, audio may not be available, so we don't assert on is_running()
-
-    EXPECT_NO_THROW(engine->Pause());
-    EXPECT_NO_THROW(engine->Resume());
-    EXPECT_NO_THROW(engine->End());
-
-    EXPECT_FALSE(engine->is_running()) << "Engine should not be running after End";
-}
-
-TEST_F(EngineTest, SubsystemOrchestration)
-{
-    auto subsystem_manager = engine->get_subsystem_manager();
-    ASSERT_NE(subsystem_manager, nullptr);
-
-    auto audio_subsystem = subsystem_manager->get_audio_subsystem();
-    EXPECT_NE(audio_subsystem, nullptr) << "Audio subsystem should be created during Init";
-
-    EXPECT_NO_THROW(engine->Start());
-
-    EXPECT_TRUE(audio_subsystem->is_ready()) << "Audio subsystem should be ready";
-    // Note: is_running() may be false due to audio backend initialization in CI
-}
-
-TEST_F(EngineTest, ComponentAccessRouting)
-{
-    auto scheduler = engine->get_scheduler();
-    auto node_graph = engine->get_node_graph_manager();
-    auto buffer_manager = engine->get_buffer_manager();
-    auto subsystem_manager = engine->get_subsystem_manager();
-    auto random_engine = engine->get_stochastic_engine();
-
-    EXPECT_NE(scheduler, nullptr);
-    EXPECT_NE(node_graph, nullptr);
-    EXPECT_NE(buffer_manager, nullptr);
-    EXPECT_NE(subsystem_manager, nullptr);
-    EXPECT_NE(random_engine, nullptr);
-
-    EXPECT_EQ(scheduler->get_rate(), TestConfig::SAMPLE_RATE);
-    auto& root = node_graph->get_root_node(node_token, 0);
-    EXPECT_NE(&(root), nullptr);
-    EXPECT_EQ(buffer_manager->get_num_channels(buf_token), TestConfig::NUM_CHANNELS);
-}
-
-//-------------------------------------------------------------------------
-// Component Lifetime Management Tests
-//-------------------------------------------------------------------------
-
-TEST_F(EngineTest, SharedOwnershipOfComponents)
-{
-    auto scheduler_ref = engine->get_scheduler();
-    auto node_graph_ref = engine->get_node_graph_manager();
-    auto buffer_manager_ref = engine->get_buffer_manager();
-
-    engine.reset();
-
-    EXPECT_NE(scheduler_ref, nullptr);
-    EXPECT_NE(node_graph_ref, nullptr);
-    EXPECT_NE(buffer_manager_ref, nullptr);
-
-    EXPECT_EQ(scheduler_ref->get_rate(), TestConfig::SAMPLE_RATE);
-    EXPECT_EQ(buffer_manager_ref->get_num_channels(buf_token), TestConfig::NUM_CHANNELS);
-}
-
-TEST_F(EngineTest, CleanShutdownAndResourceManagement)
-{
-    EXPECT_NO_THROW(engine->Start());
-    // Note: is_running() may return false due to audio backend issues in test environment
-
-    EXPECT_NO_THROW(engine->End());
-    EXPECT_FALSE(engine->is_running());
-
-    EXPECT_NO_THROW(engine->End());
-    EXPECT_FALSE(engine->is_running());
-
-    EXPECT_NO_THROW(engine->Start());
-    EXPECT_NO_THROW(engine->End());
-}
-
-TEST_F(EngineTest, MoveSemantics)
-{
-    auto first_engine = std::make_unique<Core::Engine>();
-    first_engine->Init(custom_config);
-    first_engine->Start();
-
-    auto second_engine = std::make_unique<Core::Engine>(std::move(*first_engine));
-
-    EXPECT_NE(second_engine->get_scheduler(), nullptr);
-    EXPECT_NE(second_engine->get_node_graph_manager(), nullptr);
-    EXPECT_NE(second_engine->get_buffer_manager(), nullptr);
-
-    second_engine->End();
-}
-
-//-------------------------------------------------------------------------
-// Digital-First Processing Integration Tests
-//-------------------------------------------------------------------------
-
-TEST_F(EngineTest, NodeGraphIntegration)
-{
-    EXPECT_NO_THROW(engine->Start());
-
-    auto sine = std::make_shared<Nodes::Generator::Sine>(440.0F, 0.5F);
-
-    auto node_graph = engine->get_node_graph_manager();
-    ASSERT_NE(node_graph, nullptr);
-
-    EXPECT_NO_THROW(node_graph->add_to_root(sine, node_token));
-
-    AudioTestHelper::waitForAudio(50);
-
-    EXPECT_NO_THROW(node_graph->get_root_node(node_token, 0).unregister_node(sine));
-}
-
-TEST_F(EngineTest, SchedulerIntegrationWithCoroutines)
-{
-    EXPECT_NO_THROW(engine->Start());
-
-    int execution_count = 0;
-    auto metro_routine = Kriya::metro(0.005, [&execution_count]() {
-        execution_count++;
-    });
-
-    auto scheduler = engine->get_scheduler();
-    ASSERT_NE(scheduler, nullptr);
-
-    scheduler->add_task(metro_routine, "", false);
-
-    AudioTestHelper::waitForAudio(50);
-
-    // Note: Execution count may be 0 if audio backend failed to start
-    // The important thing is that scheduling doesn't crash
-    EXPECT_GE(execution_count, 0) << "Scheduled metro task should not crash";
-}
-
-TEST_F(EngineTest, BufferSystemIntegration)
-{
-    EXPECT_NO_THROW(engine->Start());
-
-    auto buffer_manager = engine->get_buffer_manager();
-    ASSERT_NE(buffer_manager, nullptr);
-
-    EXPECT_EQ(buffer_manager->get_buffer_size(buf_token), TestConfig::BUFFER_SIZE);
-    EXPECT_EQ(buffer_manager->get_num_channels(buf_token), TestConfig::NUM_CHANNELS);
-
-    for (unsigned int i = 0; i < TestConfig::NUM_CHANNELS; i++) {
-        auto channel = buffer_manager->get_root_audio_buffer(buf_token, i);
-        EXPECT_NE(channel, nullptr);
-        EXPECT_EQ(channel->get_channel_id(), i);
-        EXPECT_EQ(channel->get_num_samples(), TestConfig::BUFFER_SIZE);
-    }
-}
-
-//-------------------------------------------------------------------------
-// Advanced Digital Paradigm Tests
-//-------------------------------------------------------------------------
-
-TEST_F(EngineTest, StochasticEngineIntegration)
-{
-    auto& rng = *engine->get_stochastic_engine();
-
-    double uniform = rng(-1.0, 1.0);
-    EXPECT_GE(uniform, -1.0);
-    EXPECT_LE(uniform, 1.0);
-
-    rng.set_algorithm(Kinesis::Stochastic::Algorithm::NORMAL);
-    std::vector<double> samples = rng.batch(0.0, 1.0, 100);
-    EXPECT_EQ(samples.size(), 100);
-
-    rng.set_algorithm(Kinesis::Stochastic::Algorithm::EXPONENTIAL);
-    double exp_sample = rng(0.0, 1.0);
-    EXPECT_GE(exp_sample, 0.0);
-
-    rng.set_algorithm(Kinesis::Stochastic::Algorithm::POISSON);
-    double pois_sample = rng(0.0, 10.0);
-    EXPECT_GE(pois_sample, 0.0);
-}
-
-TEST_F(EngineTest, DataDrivenProcessingCapabilities)
-{
-    EXPECT_NO_THROW(engine->Start());
-
-    auto scheduler = engine->get_scheduler();
-    auto node_graph = engine->get_node_graph_manager();
-
-    std::vector<std::pair<double, std::function<void()>>> sequence = {
-        { 0.0, []() { /* Digital event 1 */ } },
-        { 0.005, []() { /* Digital event 2 */ } },
-        { 0.010, []() { /* Digital event 3 */ } }
-    };
-
-    auto sequence_routine = Kriya::sequence(sequence);
-    EXPECT_NO_THROW(scheduler->add_task(std::move(sequence_routine), "", false));
-
-    EXPECT_NE(scheduler, nullptr);
-    EXPECT_NE(node_graph, nullptr);
-}
-
-TEST_F(EngineTest, SubsystemExtensibility)
-{
-    auto subsystem_manager = engine->get_subsystem_manager();
-    ASSERT_NE(subsystem_manager, nullptr);
-
-    // Engine architecture should support future subsystems
-    // (Vulkan, Lua scripting, WASM, UE5 plugins, etc.)
-
-    auto audio_subsystem = subsystem_manager->get_audio_subsystem();
-    EXPECT_NE(audio_subsystem, nullptr);
-
-    EXPECT_TRUE(subsystem_manager->has_subsystem(Core::SubsystemType::AUDIO));
-}
-
-//-------------------------------------------------------------------------
-// Error Handling and Edge Cases
-//-------------------------------------------------------------------------
-
-TEST_F(EngineTest, GracefulHandlingOfUninitializedState)
-{
-    auto test_engine = std::make_unique<Core::Engine>();
-
-    EXPECT_NO_THROW(test_engine->Start());
-
-    EXPECT_NE(test_engine->get_scheduler(), nullptr);
-    EXPECT_NE(test_engine->get_node_graph_manager(), nullptr);
-
-    test_engine->End();
-}
-
-//-------------------------------------------------------------------------
-// Input Processing and Full-Duplex Integration Tests
-//-------------------------------------------------------------------------
-
-TEST_F(EngineTest, InputBufferSystemIntegration)
-{
-    Core::GlobalStreamInfo input_config;
-    input_config.sample_rate = TestConfig::SAMPLE_RATE;
-    input_config.buffer_size = TestConfig::BUFFER_SIZE;
-    input_config.output.channels = TestConfig::NUM_CHANNELS;
-    input_config.input.enabled = true;
-    input_config.input.channels = 1;
-
-    auto test_engine = std::make_unique<Core::Engine>();
-    EXPECT_NO_THROW(test_engine->Init(input_config));
-    EXPECT_NO_THROW(test_engine->Start());
-
-    auto buffer_manager = test_engine->get_buffer_manager();
-    ASSERT_NE(buffer_manager, nullptr);
-
-    std::vector<double> synthetic_input(TestConfig::BUFFER_SIZE, 0.5); // Simple test signal
-
-    EXPECT_NO_THROW(buffer_manager->process_input(
-        synthetic_input.data(),
-        input_config.input.channels,
-        TestConfig::BUFFER_SIZE));
-
-    const auto& stream_info = test_engine->get_stream_info();
-    EXPECT_TRUE(stream_info.input.enabled);
-    EXPECT_EQ(stream_info.input.channels, 1);
-
-    auto sine = std::make_shared<Nodes::Generator::Sine>(440.0F, 0.3F);
-    auto node_graph = test_engine->get_node_graph_manager();
-    ASSERT_NE(node_graph, nullptr);
-
-    EXPECT_NO_THROW(node_graph->add_to_root(sine, node_token));
-
-    AudioTestHelper::waitForAudio(30);
-
-    EXPECT_NO_THROW(node_graph->get_root_node(node_token, 0).unregister_node(sine));
-    test_engine->End();
-}
-
-TEST_F(EngineTest, FullDuplexDigitalProcessingChain)
-{
-    Core::GlobalStreamInfo duplex_config;
-    duplex_config.sample_rate = 48000;
-    duplex_config.buffer_size = 256;
-    duplex_config.output.channels = 2;
-    duplex_config.input.enabled = true;
-    duplex_config.input.channels = 2;
-    duplex_config.priority = Core::GlobalStreamInfo::StreamPriority::REALTIME;
-
-    auto test_engine = std::make_unique<Core::Engine>();
-    EXPECT_NO_THROW(test_engine->Init(duplex_config));
-    EXPECT_NO_THROW(test_engine->Start());
-
-    auto subsystem_manager = test_engine->get_subsystem_manager();
-    ASSERT_NE(subsystem_manager, nullptr);
-
-    auto audio_subsystem = subsystem_manager->get_audio_subsystem();
-    ASSERT_NE(audio_subsystem, nullptr);
-
-    std::vector<double> input_data(static_cast<size_t>(256 * 2), 0.0);
-    std::vector<double> output_data(static_cast<size_t>(256 * 2), 0.0);
-
-    for (size_t frame = 0; frame < 256; ++frame) {
-        double t = static_cast<double>(frame) / 48000.0;
-        input_data[frame * 2] = 0.5 * std::sin(2 * M_PI * 440.0 * t);
-        input_data[frame * 2 + 1] = 0.3 * std::sin(2 * M_PI * 880.0 * t);
+    TEST(EngineLifecycleTest, MoveTransfersConfiguredEngine)
+    {
+        Core::Engine source;
+        source.Init(stream_for({ "Mono44k", 44100, 256, 1 }));
+        Core::Engine destination(std::move(source));
+        EXPECT_FALSE(source.is_configured());
+        EXPECT_TRUE(destination.is_configured());
+        ASSERT_NE(destination.get_scheduler(), nullptr);
+        EXPECT_EQ(destination.get_scheduler()->get_rate(), 44100);
+        destination.Start();
+        destination.End();
     }
 
-    EXPECT_NO_THROW(audio_subsystem->process_audio(
-        input_data.data(),
-        output_data.data(),
-        256));
+    TEST(EngineLifecycleTest, RealAudioOutputContainsNodeSignal)
+    {
+        Core::Engine engine;
+        engine.Init(stream_for({ "Stereo48k", 48000, 512, 2 }));
+        auto sine = std::make_shared<Nodes::Generator::Sine>(440.0F, 0.5);
+        engine.get_node_graph_manager()->add_to_root(sine, Nodes::ProcessingToken::AUDIO_RATE);
+        auto* service = Registry::BackendRegistry::instance()
+                            .get_service<Registry::Service::AudioBackendService>();
+        ASSERT_NE(service, nullptr);
+        auto heard_signal = std::make_shared<std::atomic<bool>>(false);
+        const auto observer = service->register_output_observer(
+            [heard_signal](const double* samples, uint32_t count) {
+                if (std::any_of(samples, samples + count,
+                        [](double sample) { return std::abs(sample) > 1e-4; })) {
+                    heard_signal->store(true, std::memory_order_release);
+                }
+            });
+        engine.Start();
+        const bool observed = eventually([&] { return heard_signal->load(std::memory_order_acquire); });
+        service->unregister_output_observer(observer);
+        engine.End();
+        EXPECT_TRUE(observed);
+    }
 
-    std::ranges::any_of(output_data,
-        [](double sample) { return std::abs(sample) > 1e-6; });
+    TEST(EngineLifecycleTest, RealAudioCallbacksAdvanceScheduledTasks)
+    {
+        Core::Engine engine;
+        engine.Init(stream_for({ "Stereo48k", 48000, 512, 2 }));
+        auto executions = std::make_shared<int>(0);
+        auto routine = Kriya::metro(0.005, [executions] { ++*executions; });
+        engine.get_scheduler()->add_task(routine, "", false);
+        auto* service = Registry::BackendRegistry::instance()
+                            .get_service<Registry::Service::AudioBackendService>();
+        ASSERT_NE(service, nullptr);
+        auto callbacks = std::make_shared<std::atomic<uint32_t>>(0);
+        const auto observer = service->register_output_observer(
+            [callbacks](const double*, uint32_t) {
+                callbacks->fetch_add(1, std::memory_order_release);
+            });
+        engine.Start();
+        const bool observed = eventually([&] { return callbacks->load(std::memory_order_acquire) >= 8; });
+        service->unregister_output_observer(observer);
+        engine.End();
+        EXPECT_TRUE(observed);
+        EXPECT_GT(*executions, 0);
+    }
 
-    // Note: In CI/test environments, actual audio processing may not occur due to
-    // missing audio devices, so we focus on API correctness rather than signal content
-    EXPECT_GE(output_data.size(), 512) << "Output buffer should maintain expected size";
-
-    const auto& final_stream_info = test_engine->get_stream_info();
-    EXPECT_EQ(final_stream_info.sample_rate, 48000);
-    EXPECT_TRUE(final_stream_info.input.enabled);
-    EXPECT_EQ(final_stream_info.input.channels, 2);
-    EXPECT_EQ(final_stream_info.output.channels, 2);
-
-    test_engine->End();
 }
-
-#endif
-
-} // namespace MayaFlux::Test
+}

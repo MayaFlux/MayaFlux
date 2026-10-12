@@ -33,13 +33,12 @@ bool EventManager::cancel_event(const std::string& name)
         return false;
 
     auto event = it->second;
+    m_named_events.erase(it);
+    std::erase(m_events, event);
+
     if (event && event->is_active()) {
         event->set_should_terminate(true);
     }
-
-    m_named_events.erase(it);
-
-    std::erase(m_events, event);
 
     return true;
 }
@@ -49,10 +48,15 @@ bool EventManager::cancel_event(const std::shared_ptr<Event>& event)
 
     auto it = std::ranges::find(m_events, event);
     if (it != m_events.end()) {
-        if (event && event->is_active()) {
-            event->set_should_terminate(true);
-        }
+        auto owned = std::move(*it);
         m_events.erase(it);
+        std::erase_if(m_named_events, [&owned](const auto& pair) {
+            return pair.second == owned;
+        });
+
+        if (owned && owned->is_active()) {
+            owned->set_should_terminate(true);
+        }
         return true;
     }
 
@@ -72,8 +76,11 @@ bool EventManager::remove_event(const std::string& name)
 
     auto event = it->second;
     m_named_events.erase(it);
-
     std::erase(m_events, event);
+
+    if (event && event->is_active()) {
+        event->set_should_terminate(true);
+    }
     return true;
 }
 
@@ -135,15 +142,17 @@ void EventManager::cleanup_completed_events()
 
 void EventManager::terminate_all_events()
 {
-    for (auto& event : m_events) {
+    auto doomed = std::move(m_events);
+    m_events.clear();
+    m_named_events.clear();
+
+    for (auto& event : doomed) {
         if (event && event->is_active()) {
             event->set_should_terminate(true);
         }
     }
 
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
-
-    m_events.clear();
 }
 
 }

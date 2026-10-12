@@ -54,7 +54,7 @@ struct ColorBlendAttachment {
  * Comprehensive graphics pipeline state. Vulkan requires ALL fixed-function
  * state to be specified at pipeline creation time.
  */
-struct GraphicsPipelineConfig {
+struct MAYAFLUX_API GraphicsPipelineConfig {
     //==========================================================================
     // SHADER STAGES
     //==========================================================================
@@ -223,7 +223,7 @@ struct GraphicsPipelineConfig {
  * - NOT thread-safe
  * - Create on main thread, use on render thread
  */
-class VKGraphicsPipeline {
+class MAYAFLUX_API VKGraphicsPipeline {
 public:
     VKGraphicsPipeline() = default;
     ~VKGraphicsPipeline();

@@ -11,7 +11,7 @@ namespace MayaFlux::Core {
  * The instance is the connection between your application and Vulkan.
  * It handles global Vulkan state and validation layers for debugging.
  */
-class VKInstance {
+class MAYAFLUX_API VKInstance {
 public:
     VKInstance() = default;
 
