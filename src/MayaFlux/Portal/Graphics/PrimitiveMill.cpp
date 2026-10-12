@@ -977,7 +977,7 @@ Kakshya::VertexLayout mill_on_host(
                 rec.copy_vertex(out, s);
                 rec.write_pos(out, off.position, p + o);
                 if (spec.synthesize_uv) {
-                    rec.write_uv(out, off.uv, uv);
+                    rec.write_uv(out, off.uv, uv + glm::vec2(10.0F));
                 }
                 continue;
             }
