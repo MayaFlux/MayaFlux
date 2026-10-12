@@ -7,7 +7,8 @@
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build",
       "cacheVariables": {
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "MAYAFLUX_ENABLE_LTO": "OFF"
       }
     },
     {
@@ -23,7 +24,8 @@
       "hidden": true,
       "inherits": "base",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release"
+        "CMAKE_BUILD_TYPE": "Release",
+        "MAYAFLUX_ENABLE_LTO": "ON"
       }
     },
     {
@@ -41,7 +43,8 @@
       },
       "cacheVariables": {
         "CMAKE_VS_GLOBALS": "UseMultiToolTask=true;EnforceProcessCountAcrossBuilds=true",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "MAYAFLUX_ENABLE_LTO": "OFF"
       }
     },
     {
@@ -81,7 +84,8 @@
         "rhs": "Linux"
       },
       "cacheVariables": {
-        "CMAKE_INSTALL_PREFIX": "/usr"
+        "CMAKE_INSTALL_PREFIX": "/usr",
+        "MAYAFLUX_ENABLE_LTO": "ON"
       }
     },
     {
@@ -107,7 +111,8 @@
         "rhs": "Linux"
       },
       "cacheVariables": {
-        "CMAKE_INSTALL_LIBDIR": "lib"
+        "CMAKE_INSTALL_LIBDIR": "lib",
+        "MAYAFLUX_ENABLE_LTO": "ON"
       }
     },
     {
@@ -134,7 +139,8 @@
       },
       "cacheVariables": {
         "CMAKE_VERBOSE_MAKEFILE": "ON",
-        "MAYAFLUX_PORTABLE": "ON"
+        "MAYAFLUX_PORTABLE": "ON",
+        "MAYAFLUX_ENABLE_LTO": "ON"
       }
     },
     {
@@ -200,7 +206,8 @@
         "rhs": "Windows"
       },
       "cacheVariables": {
-        "CMAKE_INSTALL_PREFIX": "C:/MayaFlux"
+        "CMAKE_INSTALL_PREFIX": "C:/MayaFlux",
+        "MAYAFLUX_ENABLE_LTO": "ON"
       }
     }
   ],

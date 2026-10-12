@@ -5,6 +5,7 @@ package/
 out/
 CMakeCache.txt
 CMakeFiles/
+CMakeUserPresets.json
 CTestTestfile.cmake
 cmake_install.cmake
 Makefile

@@ -301,7 +301,7 @@ jobs:
             "-DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}",
             "-DCMAKE_CONFIGURATION_TYPES=${{ env.BUILD_TYPE }}",
             "-DCMAKE_CXX_STANDARD=23",
-            "-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON",
+            "-DMAYAFLUX_ENABLE_LTO=ON",
             "-DCMAKE_VS_GLOBALS=UseMultiToolTask=true;EnforceProcessCountAcrossBuilds=true",
             "-DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}\scripts\buildsystems\vcpkg.cmake",
             "-DCMAKE_CXX_FLAGS_RELEASE=/O2 /DNDEBUG /Z7",

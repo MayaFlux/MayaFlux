@@ -1,24 +1,17 @@
+option(MAYAFLUX_ENABLE_LTO "Enable link-time optimization" OFF)
+
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 
-if(CMAKE_BUILD_TYPE STREQUAL "Release" OR
-   CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-
+if(MAYAFLUX_ENABLE_LTO)
     include(CheckIPOSupported)
     check_ipo_supported(RESULT ipo_supported OUTPUT error)
 
     if(ipo_supported)
         set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
-
-        set_property(GLOBAL PROPERTY
-    INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
-
-        set_property(GLOBAL PROPERTY
-    INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
-
-        message(STATUS "LTO enabled for ${CMAKE_BUILD_TYPE}")
+        message(STATUS "LTO enabled")
     else()
         message(WARNING "LTO is not supported: ${error}")
     endif()
