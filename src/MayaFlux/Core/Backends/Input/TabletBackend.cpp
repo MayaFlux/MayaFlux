@@ -869,7 +869,16 @@ std::vector<InputDeviceInfo> TabletBackend::get_devices() const
 bool TabletBackend::open_device(uint32_t device_id)
 {
     std::lock_guard lock(m_devices_mutex);
-    return m_tools.find(device_id) != m_tools.end();
+    if (m_tools.find(device_id) == m_tools.end())
+        return false;
+
+    auto path_it = m_tool_paths.find(device_id);
+    if (path_it != m_tool_paths.end()) {
+        auto dev_it = m_devices.find(path_it->second);
+        if (dev_it != m_devices.end())
+            dev_it->second->active.store(true);
+    }
+    return true;
 }
 
 void TabletBackend::close_device(uint32_t device_id)
