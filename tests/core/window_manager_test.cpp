@@ -8,64 +8,12 @@
 #include <optional>
 #include <string>
 
-#include <wayland-client.h>
+#include "../support/wayland_test_support.hpp"
 
 #include "MayaFlux/Core/Windowing/WindowManager.hpp"
 
 namespace MayaFlux::Test {
 namespace {
-
-    bool compositor_reachable()
-    {
-        static const bool reachable = [] {
-            wl_display* display = wl_display_connect(nullptr);
-            if (!display)
-                return false;
-            wl_display_disconnect(display);
-            return true;
-        }();
-        return reachable;
-    }
-
-#define REQUIRE_WM_COMPOSITOR()                                \
-    do {                                                       \
-        if (!compositor_reachable())                           \
-            GTEST_SKIP() << "No Wayland compositor reachable"; \
-    } while (0)
-
-    class ScopedEnv {
-    public:
-        ScopedEnv(const char* name, const char* value)
-            : m_name(name)
-        {
-            if (const char* previous = std::getenv(name)) {
-                m_previous = previous;
-            }
-            if (value) {
-                setenv(name, value, 1);
-            } else {
-                unsetenv(name);
-            }
-        }
-
-        ~ScopedEnv()
-        {
-            if (m_previous) {
-                setenv(m_name.c_str(), m_previous->c_str(), 1);
-            } else {
-                unsetenv(m_name.c_str());
-            }
-        }
-
-        ScopedEnv(const ScopedEnv&) = delete;
-        ScopedEnv& operator=(const ScopedEnv&) = delete;
-        ScopedEnv(ScopedEnv&&) = delete;
-        ScopedEnv& operator=(ScopedEnv&&) = delete;
-
-    private:
-        std::string m_name;
-        std::optional<std::string> m_previous;
-    };
 
     Core::WindowCreateInfo window_info(const std::string& title, bool processing = true)
     {
@@ -89,7 +37,7 @@ namespace {
 
     TEST(WindowManagerTest, CreateWindowRegistersWindowForLookup)
     {
-        REQUIRE_WM_COMPOSITOR();
+        REQUIRE_COMPOSITOR();
         Core::WindowManager manager { Core::GlobalGraphicsConfig {} };
 
         auto window = manager.create_window(window_info("Alpha"));
@@ -104,7 +52,7 @@ namespace {
 
     TEST(WindowManagerTest, DuplicateTitleReturnsNullAndKeepsFirstWindow)
     {
-        REQUIRE_WM_COMPOSITOR();
+        REQUIRE_COMPOSITOR();
         Core::WindowManager manager { Core::GlobalGraphicsConfig {} };
 
         auto first = manager.create_window(window_info("Alpha"));
@@ -117,7 +65,7 @@ namespace {
 
     TEST(WindowManagerTest, LookupMissesReturnNull)
     {
-        REQUIRE_WM_COMPOSITOR();
+        REQUIRE_COMPOSITOR();
         Core::WindowManager manager { Core::GlobalGraphicsConfig {} };
         auto window = manager.create_window(window_info("Alpha"));
         ASSERT_NE(window, nullptr);
@@ -129,7 +77,7 @@ namespace {
 
     TEST(WindowManagerTest, WindowsAreReturnedInCreationOrder)
     {
-        REQUIRE_WM_COMPOSITOR();
+        REQUIRE_COMPOSITOR();
         Core::WindowManager manager { Core::GlobalGraphicsConfig {} };
 
         auto first = manager.create_window(window_info("First"));
@@ -144,7 +92,7 @@ namespace {
 
     TEST(WindowManagerTest, ProcessingRegistrationFollowsCreateInfo)
     {
-        REQUIRE_WM_COMPOSITOR();
+        REQUIRE_COMPOSITOR();
         Core::WindowManager manager { Core::GlobalGraphicsConfig {} };
 
         auto processed = manager.create_window(window_info("Processed", true));
@@ -183,7 +131,7 @@ namespace {
 
     TEST(WindowManagerTest, FailedCreationDoesNotReserveTitle)
     {
-        REQUIRE_WM_COMPOSITOR();
+        REQUIRE_COMPOSITOR();
         Core::WindowManager manager { Core::GlobalGraphicsConfig {} };
 
         {
@@ -203,7 +151,7 @@ namespace {
 
     TEST(WindowManagerTest, DestroyWindowUnregistersFromEveryView)
     {
-        REQUIRE_WM_COMPOSITOR();
+        REQUIRE_COMPOSITOR();
         Core::WindowManager manager { Core::GlobalGraphicsConfig {} };
         auto window = manager.create_window(window_info("Alpha"));
         ASSERT_NE(window, nullptr);
@@ -218,7 +166,7 @@ namespace {
 
     TEST(WindowManagerTest, DestroyWindowWithoutBackendCleanupKeepsNativeSurface)
     {
-        REQUIRE_WM_COMPOSITOR();
+        REQUIRE_COMPOSITOR();
         Core::WindowManager manager { Core::GlobalGraphicsConfig {} };
         auto window = manager.create_window(window_info("Alpha"));
         ASSERT_NE(window, nullptr);
@@ -230,7 +178,7 @@ namespace {
 
     TEST(WindowManagerTest, DestroyWindowWithBackendCleanupReleasesNativeSurface)
     {
-        REQUIRE_WM_COMPOSITOR();
+        REQUIRE_COMPOSITOR();
         Core::WindowManager manager { Core::GlobalGraphicsConfig {} };
         auto window = manager.create_window(window_info("Alpha"));
         ASSERT_NE(window, nullptr);
@@ -243,7 +191,7 @@ namespace {
 
     TEST(WindowManagerTest, DestroyWindowAfterTerminateStillReleasesNativeSurface)
     {
-        REQUIRE_WM_COMPOSITOR();
+        REQUIRE_COMPOSITOR();
         Core::WindowManager manager { Core::GlobalGraphicsConfig {} };
         auto window = manager.create_window(window_info("Alpha"));
         ASSERT_NE(window, nullptr);
@@ -266,7 +214,7 @@ namespace {
 
     TEST(WindowManagerTest, DestroyByTitleRemovesOnlyThatWindow)
     {
-        REQUIRE_WM_COMPOSITOR();
+        REQUIRE_COMPOSITOR();
         Core::WindowManager manager { Core::GlobalGraphicsConfig {} };
         auto first = manager.create_window(window_info("First"));
         auto second = manager.create_window(window_info("Second"));
@@ -284,7 +232,7 @@ namespace {
 
     TEST(WindowManagerTest, DestroyedTitleCanBeReused)
     {
-        REQUIRE_WM_COMPOSITOR();
+        REQUIRE_COMPOSITOR();
         Core::WindowManager manager { Core::GlobalGraphicsConfig {} };
         auto first = manager.create_window(window_info("Alpha"));
         ASSERT_NE(first, nullptr);
@@ -299,7 +247,7 @@ namespace {
 
     TEST(WindowManagerTest, FreshWindowsAreNotClosedAndCloseSweepDestroysNothing)
     {
-        REQUIRE_WM_COMPOSITOR();
+        REQUIRE_COMPOSITOR();
         Core::WindowManager manager { Core::GlobalGraphicsConfig {} };
         auto window = manager.create_window(window_info("Alpha"));
         ASSERT_NE(window, nullptr);
@@ -311,7 +259,7 @@ namespace {
 
     TEST(WindowManagerTest, DestructionReleasesManagedWindows)
     {
-        REQUIRE_WM_COMPOSITOR();
+        REQUIRE_COMPOSITOR();
         std::weak_ptr<Core::Window> weak;
         {
             Core::WindowManager manager { Core::GlobalGraphicsConfig {} };
@@ -328,7 +276,7 @@ namespace {
 
     TEST(WindowManagerTest, ProcessReportsWhetherWindowsRemain)
     {
-        REQUIRE_WM_COMPOSITOR();
+        REQUIRE_COMPOSITOR();
         Core::WindowManager manager { Core::GlobalGraphicsConfig {} };
 
         EXPECT_FALSE(manager.process());
