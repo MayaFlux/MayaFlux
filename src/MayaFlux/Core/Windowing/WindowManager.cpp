@@ -42,6 +42,12 @@ std::shared_ptr<Window> WindowManager::create_window(const WindowCreateInfo& cre
         return nullptr;
     }
 
+    if (!window->get_native_handle()) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::WindowingSubsystem,
+            "Window '{}' has no native handle after creation, discarding", create_info.title);
+        return nullptr;
+    }
+
     m_windows.push_back(window);
     m_window_lookup[create_info.title] = window;
 
