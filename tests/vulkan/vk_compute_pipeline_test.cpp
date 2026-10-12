@@ -6,6 +6,7 @@
 
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKCommandManager.hpp"
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKComputePipeline.hpp"
+#include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
 
 namespace MayaFlux::Test {
 namespace {
@@ -38,6 +39,27 @@ void main() { out_buf.v[0] = k_value; }
 
     constexpr const char* k_vertex_source = R"(#version 450
 void main() { gl_Position = vec4(0.0, 0.0, 0.0, 1.0); }
+)";
+
+    constexpr const char* k_texel_fetch_source = R"(#version 450
+layout(local_size_x = 1) in;
+layout(set = 0, binding = 0) uniform sampler2D tex;
+layout(set = 0, binding = 1) buffer Out { vec4 v[]; } out_buf;
+void main()
+{
+    out_buf.v[0] = texelFetch(tex, ivec2(1, 0), 0);
+    out_buf.v[1] = texelFetch(tex, ivec2(0, 1), 0);
+}
+)";
+
+    constexpr const char* k_image_store_source = R"(#version 450
+layout(local_size_x = 2, local_size_y = 2) in;
+layout(set = 0, binding = 0, rgba8) uniform writeonly image2D img;
+void main()
+{
+    ivec2 p = ivec2(gl_GlobalInvocationID.xy);
+    imageStore(img, p, vec4(float(p.x), float(p.y), 0.5, 1.0));
+}
 )";
 
     struct ScaleParams {
@@ -135,6 +157,89 @@ void main() { gl_Position = vec4(0.0, 0.0, 0.0, 1.0); }
         {
             return std::make_unique<RawVulkanBuffer>(backend(), bytes,
                 vk::BufferUsageFlagBits::eStorageBuffer, true);
+        }
+
+        std::array<float, 8> texel_fetch_results(bool via_batch)
+        {
+            auto& resources = backend().get_resource_manager();
+            auto shader = compile(k_texel_fetch_source);
+            if (!shader) {
+                return {};
+            }
+            Core::DescriptorSetLayoutConfig config;
+            config.add_sampled_image(0);
+            config.add_storage_buffer(1);
+            const auto layout = descriptors.create_layout(device(), config);
+            auto pipeline = make_pipeline(shader, layout);
+            if (!pipeline) {
+                return {};
+            }
+
+            const std::array<uint8_t, 16> texels {
+                255, 0, 0, 255, 0, 255, 0, 255,
+                0, 0, 255, 255, 255, 255, 255, 255
+            };
+            auto image = std::make_shared<Core::VKImage>(2, 2, 1, vk::Format::eR8G8B8A8Unorm, Core::VKImage::Usage::TEXTURE_2D);
+            resources.initialize_image(image);
+            resources.upload_image_data(image, texels.data(), texels.size());
+            const auto sampler = resources.create_sampler(vk::Filter::eNearest, vk::SamplerAddressMode::eClampToEdge, 0.0F);
+
+            auto out = storage_buffer(8 * sizeof(float));
+            std::memset(out->mapped(), 0, 8 * sizeof(float));
+            const auto set = descriptors.allocate_set(device(), layout);
+            if (via_batch) {
+                Core::DescriptorUpdateBatch batch(device(), set);
+                batch.combined_image_sampler(0, image->get_image_view(), sampler).buffer(1, out->buffer());
+                batch.submit();
+            } else {
+                descriptors.update_combined_image_sampler(device(), set, 0, image->get_image_view(), sampler,
+                    vk::ImageLayout::eShaderReadOnlyOptimal);
+                descriptors.update_buffer(device(), set, 1, out->buffer());
+            }
+
+            run(*pipeline, set, [&](vk::CommandBuffer cmd) { pipeline->dispatch(cmd, 1, 1, 1); });
+
+            std::array<float, 8> values {};
+            std::memcpy(values.data(), out->mapped(), sizeof(values));
+            resources.cleanup_image(image);
+            return values;
+        }
+
+        std::vector<uint8_t> storage_image_results(bool via_batch)
+        {
+            auto& resources = backend().get_resource_manager();
+            auto shader = compile(k_image_store_source);
+            if (!shader) {
+                return {};
+            }
+            Core::DescriptorSetLayoutConfig config;
+            config.add_storage_image(0);
+            const auto layout = descriptors.create_layout(device(), config);
+            auto pipeline = make_pipeline(shader, layout);
+            if (!pipeline) {
+                return {};
+            }
+
+            auto image = std::make_shared<Core::VKImage>(2, 2, 1, vk::Format::eR8G8B8A8Unorm, Core::VKImage::Usage::STORAGE);
+            resources.initialize_image(image);
+            resources.transition_image_layout(image->get_image(), vk::ImageLayout::eUndefined, vk::ImageLayout::eGeneral);
+            image->set_current_layout(vk::ImageLayout::eGeneral);
+
+            const auto set = descriptors.allocate_set(device(), layout);
+            if (via_batch) {
+                Core::DescriptorUpdateBatch batch(device(), set);
+                batch.storage_image(0, image->get_image_view(), vk::ImageLayout::eGeneral);
+                batch.submit();
+            } else {
+                descriptors.update_image(device(), set, 0, image->get_image_view(), vk::Sampler {}, vk::ImageLayout::eGeneral);
+            }
+
+            run(*pipeline, set, [&](vk::CommandBuffer cmd) { pipeline->dispatch(cmd, 1, 1, 1); });
+
+            std::vector<uint8_t> pixels(16, 0);
+            resources.download_image_data(image, pixels.data(), pixels.size());
+            resources.cleanup_image(image);
+            return pixels;
         }
 
         VKDescriptorManager descriptors;
@@ -397,6 +502,48 @@ TEST_F(VKComputePipelineTest, SpecializationConstantsChangeWhatTheShaderComputes
 
     EXPECT_EQ(*static_cast<uint32_t*>(out_default->mapped()), 3U);
     EXPECT_EQ(*static_cast<uint32_t*>(out_specialized->mapped()), 42U);
+}
+
+TEST_F(VKComputePipelineTest, CombinedImageSamplerBindingFeedsTheShaderThroughTheManager)
+{
+    const auto values = texel_fetch_results(false);
+
+    EXPECT_FLOAT_EQ(values[0], 0.0F);
+    EXPECT_FLOAT_EQ(values[1], 1.0F);
+    EXPECT_FLOAT_EQ(values[2], 0.0F);
+    EXPECT_FLOAT_EQ(values[3], 1.0F);
+    EXPECT_FLOAT_EQ(values[4], 0.0F);
+    EXPECT_FLOAT_EQ(values[5], 0.0F);
+    EXPECT_FLOAT_EQ(values[6], 1.0F);
+    EXPECT_FLOAT_EQ(values[7], 1.0F);
+}
+
+TEST_F(VKComputePipelineTest, UpdateBatchBindsAnImageSamplerAndABufferTogether)
+{
+    EXPECT_EQ(texel_fetch_results(true), texel_fetch_results(false));
+    EXPECT_FLOAT_EQ(texel_fetch_results(true)[1], 1.0F);
+}
+
+TEST_F(VKComputePipelineTest, StorageImageBindingReceivesTheShaderWrites)
+{
+    const auto pixels = storage_image_results(false);
+
+    ASSERT_EQ(pixels.size(), 16U);
+    EXPECT_EQ(pixels[0], 0U);
+    EXPECT_EQ(pixels[4], 255U);
+    EXPECT_EQ(pixels[9], 255U);
+    EXPECT_EQ(pixels[12], 255U);
+    EXPECT_EQ(pixels[13], 255U);
+    for (size_t i = 0; i < pixels.size(); i += 4) {
+        EXPECT_NEAR(pixels[i + 2], 128, 1) << "pixel " << i / 4;
+        EXPECT_EQ(pixels[i + 3], 255U) << "pixel " << i / 4;
+    }
+}
+
+TEST_F(VKComputePipelineTest, UpdateBatchBindsAStorageImage)
+{
+    EXPECT_EQ(storage_image_results(true), storage_image_results(false));
+    EXPECT_EQ(storage_image_results(true)[4], 255U);
 }
 
 TEST_F(VKComputePipelineTest, MovedPipelineKeepsHandlesWorkgroupSizeAndReflection)

@@ -10,6 +10,8 @@
 
 #include <wayland-client.h>
 
+#include "scoped_env.hpp"
+
 #include "MayaFlux/Core/Backends/Windowing/Wayland/WaylandWindow.hpp"
 #include "MayaFlux/Core/GlobalGraphicsInfo.hpp"
 
@@ -43,40 +45,6 @@ inline void pump(Core::WaylandWindow& window, int iterations = 3)
         window.poll();
     }
 }
-
-class ScopedEnv {
-public:
-    ScopedEnv(const char* name, const char* value)
-        : m_name(name)
-    {
-        if (const char* previous = std::getenv(name)) {
-            m_previous = previous;
-        }
-        if (value) {
-            setenv(name, value, 1);
-        } else {
-            unsetenv(name);
-        }
-    }
-
-    ~ScopedEnv()
-    {
-        if (m_previous) {
-            setenv(m_name.c_str(), m_previous->c_str(), 1);
-        } else {
-            unsetenv(m_name.c_str());
-        }
-    }
-
-    ScopedEnv(const ScopedEnv&) = delete;
-    ScopedEnv& operator=(const ScopedEnv&) = delete;
-    ScopedEnv(ScopedEnv&&) = delete;
-    ScopedEnv& operator=(ScopedEnv&&) = delete;
-
-private:
-    std::string m_name;
-    std::optional<std::string> m_previous;
-};
 
 }
 

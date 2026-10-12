@@ -24,71 +24,15 @@ namespace {
     using Core::WindowManager;
     using Registry::Service::DisplayService;
 
-    int g_window_counter = 0;
-
-    class BackendWindowHandlerTest : public ::testing::Test {
+    class BackendWindowHandlerTest : public PresentingVulkanTest {
     protected:
-        static void SetUpTestSuite()
-        {
-            if (!native_display_available()) {
-                s_reason = "No display session reachable";
-                return;
-            }
-            const auto config = presenting_graphics_config();
-            try {
-                auto candidate = std::make_unique<VulkanBackend>();
-                if (!candidate->initialize(config)) {
-                    s_reason = "VulkanBackend::initialize returned false";
-                    return;
-                }
-                s_backend = std::move(candidate);
-            } catch (const std::exception& e) {
-                s_reason = e.what();
-                return;
-            }
-            s_manager = std::make_unique<WindowManager>(config);
-        }
-
-        static void TearDownTestSuite()
-        {
-            s_backend.reset();
-            s_manager.reset();
-        }
-
-        void SetUp() override
-        {
-            if (!s_backend) {
-                GTEST_SKIP() << "Presenting Vulkan backend unavailable: " << s_reason;
-            }
-        }
-
         void TearDown() override
         {
-            if (!s_backend) {
-                return;
-            }
-            for (auto& window : windows) {
-                backend().unregister_window(window);
-                manager().destroy_window(window);
-            }
-            windows.clear();
+            PresentingVulkanTest::TearDown();
             rendering_buffers.clear();
         }
 
-        static VulkanBackend& backend() { return *s_backend; }
-        static WindowManager& manager() { return *s_manager; }
         static DisplayService* service() { return Registry::BackendRegistry::instance().get_service<DisplayService>(); }
-
-        std::shared_ptr<Window> make_window(std::array<float, 4> clear = { 0.0F, 0.0F, 0.0F, 1.0F })
-        {
-            auto info = native_window_info("window-handler-" + std::to_string(++g_window_counter));
-            info.clear_color = clear;
-            auto window = manager().create_window(info);
-            if (window) {
-                windows.push_back(window);
-            }
-            return window;
-        }
 
         std::shared_ptr<Window> registered_window(std::array<float, 4> clear = { 0.0F, 0.0F, 0.0F, 1.0F })
         {
@@ -198,13 +142,7 @@ namespace {
             return done();
         }
 
-        std::vector<std::shared_ptr<Window>> windows;
         std::vector<std::shared_ptr<Buffers::VKBuffer>> rendering_buffers;
-
-    private:
-        static inline std::unique_ptr<VulkanBackend> s_backend;
-        static inline std::unique_ptr<WindowManager> s_manager;
-        static inline std::string s_reason;
     };
 
 }

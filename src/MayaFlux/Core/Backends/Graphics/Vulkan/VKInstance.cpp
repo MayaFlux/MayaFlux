@@ -19,6 +19,7 @@ VKInstance::VKInstance(VKInstance&& other) noexcept
     : m_instance(other.m_instance)
     , m_debug_messenger(other.m_debug_messenger)
     , m_validation_enabled(other.m_validation_enabled)
+    , m_dynamic_dispatcher(other.m_dynamic_dispatcher)
 {
     other.m_instance = nullptr;
     other.m_debug_messenger = nullptr;
@@ -31,6 +32,7 @@ VKInstance& VKInstance::operator=(VKInstance&& other) noexcept
         m_instance = other.m_instance;
         m_debug_messenger = other.m_debug_messenger;
         m_validation_enabled = other.m_validation_enabled;
+        m_dynamic_dispatcher = other.m_dynamic_dispatcher;
 
         other.m_instance = nullptr;
         other.m_debug_messenger = nullptr;
