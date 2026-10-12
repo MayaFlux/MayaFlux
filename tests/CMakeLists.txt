@@ -40,6 +40,12 @@ if(UNIX AND NOT APPLE AND MAYAFLUX_AUDIO_BACKEND STREQUAL "PIPEWIRE_BACKEND")
     target_link_libraries(MayaFluxTests PRIVATE PkgConfig::PIPEWIRE)
 endif()
 
+if(UNIX AND NOT APPLE AND MAYAFLUX_WINDOWING_BACKEND STREQUAL "WAYLAND_BACKEND")
+    target_include_directories(MayaFluxTests PRIVATE
+        "${CMAKE_BINARY_DIR}/src/MayaFlux/wayland_generated"
+    )
+endif()
+
 if(APPLE AND MAYAFLUX_AUDIO_BACKEND STREQUAL "COREAUDIO_BACKEND")
     target_link_libraries(MayaFluxTests PRIVATE
         "-framework CoreAudio"
