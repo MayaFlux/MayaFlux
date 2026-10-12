@@ -706,9 +706,9 @@ namespace {
             result = "%res";
             break;
         case KernelOp::Mix:
-            o += "%dlt = OpFSub %f32 " + v1 + " " + v0 + "\n";
-            o += "%scl = OpFMul %f32 %dlt " + p0 + "\n";
-            o += "%res = OpFAdd %f32 " + v0 + " %scl\n";
+            o += "%dlt = OpFSub " + et + " " + v1 + " " + v0 + "\n";
+            o += "%scl = OpFMul " + et + " %dlt " + p0 + "\n";
+            o += "%res = OpFAdd " + et + " " + v0 + " %scl\n";
             result = "%res";
             break;
         case KernelOp::Sub:
@@ -716,111 +716,111 @@ namespace {
             result = "%res";
             break;
         case KernelOp::Fma:
-            o += "%res = OpExtInst %f32 %glsl Fma " + v0 + " " + p0 + " " + p1 + "\n";
+            o += "%res = OpExtInst " + et + " %glsl Fma " + v0 + " " + p0 + " " + p1 + "\n";
             result = "%res";
             break;
         case KernelOp::Floor:
-            o += "%res = OpExtInst %f32 %glsl Floor " + v0 + "\n";
+            o += "%res = OpExtInst " + et + " %glsl Floor " + v0 + "\n";
             result = "%res";
             break;
         case KernelOp::Ceil:
-            o += "%res = OpExtInst %f32 %glsl Ceil " + v0 + "\n";
+            o += "%res = OpExtInst " + et + " %glsl Ceil " + v0 + "\n";
             result = "%res";
             break;
         case KernelOp::Round:
-            o += "%res = OpExtInst %f32 %glsl Round " + v0 + "\n";
+            o += "%res = OpExtInst " + et + " %glsl Round " + v0 + "\n";
             result = "%res";
             break;
         case KernelOp::Trunc:
-            o += "%res = OpExtInst %f32 %glsl Trunc " + v0 + "\n";
+            o += "%res = OpExtInst " + et + " %glsl Trunc " + v0 + "\n";
             result = "%res";
             break;
         case KernelOp::Fract:
-            o += "%res = OpExtInst %f32 %glsl Fract " + v0 + "\n";
+            o += "%res = OpExtInst " + et + " %glsl Fract " + v0 + "\n";
             result = "%res";
             break;
         case KernelOp::Sqrt:
-            o += "%res = OpExtInst %f32 %glsl Sqrt " + v0 + "\n";
+            o += "%res = OpExtInst " + et + " %glsl Sqrt " + v0 + "\n";
             result = "%res";
             break;
         case KernelOp::InverseSqrt:
-            o += "%res = OpExtInst %f32 %glsl InverseSqrt " + v0 + "\n";
+            o += "%res = OpExtInst " + et + " %glsl InverseSqrt " + v0 + "\n";
             result = "%res";
             break;
         case KernelOp::Sin:
-            o += "%res = OpExtInst %f32 %glsl Sin " + v0 + "\n";
+            o += "%res = OpExtInst " + et + " %glsl Sin " + v0 + "\n";
             result = "%res";
             break;
         case KernelOp::Cos:
-            o += "%res = OpExtInst %f32 %glsl Cos " + v0 + "\n";
+            o += "%res = OpExtInst " + et + " %glsl Cos " + v0 + "\n";
             result = "%res";
             break;
         case KernelOp::Tan:
-            o += "%res = OpExtInst %f32 %glsl Tan " + v0 + "\n";
+            o += "%res = OpExtInst " + et + " %glsl Tan " + v0 + "\n";
             result = "%res";
             break;
         case KernelOp::Asin:
-            o += "%res = OpExtInst %f32 %glsl Asin " + v0 + "\n";
+            o += "%res = OpExtInst " + et + " %glsl Asin " + v0 + "\n";
             result = "%res";
             break;
         case KernelOp::Acos:
-            o += "%res = OpExtInst %f32 %glsl Acos " + v0 + "\n";
+            o += "%res = OpExtInst " + et + " %glsl Acos " + v0 + "\n";
             result = "%res";
             break;
         case KernelOp::Atan:
-            o += "%res = OpExtInst %f32 %glsl Atan " + v0 + "\n";
+            o += "%res = OpExtInst " + et + " %glsl Atan " + v0 + "\n";
             result = "%res";
             break;
         case KernelOp::Sinh:
-            o += "%res = OpExtInst %f32 %glsl Sinh " + v0 + "\n";
+            o += "%res = OpExtInst " + et + " %glsl Sinh " + v0 + "\n";
             result = "%res";
             break;
         case KernelOp::Cosh:
-            o += "%res = OpExtInst %f32 %glsl Cosh " + v0 + "\n";
+            o += "%res = OpExtInst " + et + " %glsl Cosh " + v0 + "\n";
             result = "%res";
             break;
         case KernelOp::Tanh:
-            o += "%res = OpExtInst %f32 %glsl Tanh " + v0 + "\n";
+            o += "%res = OpExtInst " + et + " %glsl Tanh " + v0 + "\n";
             result = "%res";
             break;
         case KernelOp::Exp:
-            o += "%res = OpExtInst %f32 %glsl Exp " + v0 + "\n";
+            o += "%res = OpExtInst " + et + " %glsl Exp " + v0 + "\n";
             result = "%res";
             break;
         case KernelOp::Exp2:
-            o += "%res = OpExtInst %f32 %glsl Exp2 " + v0 + "\n";
+            o += "%res = OpExtInst " + et + " %glsl Exp2 " + v0 + "\n";
             result = "%res";
             break;
         case KernelOp::Log:
-            o += "%res = OpExtInst %f32 %glsl Log " + v0 + "\n";
+            o += "%res = OpExtInst " + et + " %glsl Log " + v0 + "\n";
             result = "%res";
             break;
         case KernelOp::Log2:
-            o += "%res = OpExtInst %f32 %glsl Log2 " + v0 + "\n";
+            o += "%res = OpExtInst " + et + " %glsl Log2 " + v0 + "\n";
             result = "%res";
             break;
         case KernelOp::Pow:
-            o += "%res = OpExtInst %f32 %glsl Pow " + v0 + " " + v1 + "\n";
+            o += "%res = OpExtInst " + et + " %glsl Pow " + v0 + " " + v1 + "\n";
             result = "%res";
             break;
         case KernelOp::Atan2:
-            o += "%res = OpExtInst %f32 %glsl Atan2 " + v0 + " " + v1 + "\n";
+            o += "%res = OpExtInst " + et + " %glsl Atan2 " + v0 + " " + v1 + "\n";
             result = "%res";
             break;
         case KernelOp::Min:
-            o += "%res = OpExtInst %f32 %glsl FMin " + v0 + " " + v1 + "\n";
+            o += "%res = OpExtInst " + et + " %glsl FMin " + v0 + " " + v1 + "\n";
             result = "%res";
             break;
         case KernelOp::MaxTwo:
-            o += "%res = OpExtInst %f32 %glsl FMax " + v0 + " " + v1 + "\n";
+            o += "%res = OpExtInst " + et + " %glsl FMax " + v0 + " " + v1 + "\n";
             result = "%res";
             break;
         case KernelOp::Step:
-            o += "%res = OpExtInst %f32 %glsl Step " + v0 + " " + v1 + "\n";
+            o += "%res = OpExtInst " + et + " %glsl Step " + v0 + " " + v1 + "\n";
             result = "%res";
             break;
         case KernelOp::SmoothStep:
-            o += "%res = OpExtInst %f32 %glsl SmoothStep " + v0 + " " + v1 + " " + p0 + "\n";
+            o += "%res = OpExtInst " + et + " %glsl SmoothStep " + v0 + " " + v1 + " " + p0 + "\n";
             result = "%res";
             break;
         case KernelOp::IndexScale: {
