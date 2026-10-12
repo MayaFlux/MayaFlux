@@ -51,7 +51,11 @@ void BackendPipelineManager::setup_backend_service(const std::shared_ptr<Registr
 std::shared_ptr<VKShaderModule> BackendPipelineManager::create_shader_module(const std::string& spirv_path, uint32_t stage)
 {
     auto shader = std::make_shared<VKShaderModule>();
-    shader->create_from_spirv_file(m_context.get_device(), spirv_path, vk::ShaderStageFlagBits(stage));
+    if (!shader->create_from_spirv_file(m_context.get_device(), spirv_path, vk::ShaderStageFlagBits(stage))) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Failed to create shader module from '{}'", spirv_path);
+        return nullptr;
+    }
 
     track_shader(shader);
     return shader;
@@ -91,7 +95,11 @@ std::shared_ptr<VKComputePipeline> BackendPipelineManager::create_compute_pipeli
         config.add_push_constant(vk::ShaderStageFlagBits::eCompute, push_constant_size);
     }
 
-    pipeline->create(m_context.get_device(), config);
+    if (!pipeline->create(m_context.get_device(), config)) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Failed to create compute pipeline");
+        return nullptr;
+    }
 
     track_compute_pipeline(pipeline);
     return pipeline;

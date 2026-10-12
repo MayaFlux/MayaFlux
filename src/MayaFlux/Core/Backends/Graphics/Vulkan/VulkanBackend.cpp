@@ -48,6 +48,8 @@ bool VulkanBackend::initialize(const GlobalGraphicsConfig& config)
 
         MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
             "Failed to initialize command manager!");
+        m_command_manager->cleanup();
+        m_context->cleanup();
         return false;
     }
 
