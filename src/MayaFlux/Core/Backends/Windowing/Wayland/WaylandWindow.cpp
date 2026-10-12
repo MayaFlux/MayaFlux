@@ -230,7 +230,7 @@ void WaylandWindow::poll()
         }
     }
 
-    if (m_pending_configure.exchange(false)) {
+    if (m_pending_configure.exchange(false) && m_xdg_surface && m_surface) {
         xdg_surface_set_window_geometry(m_xdg_surface, 0, 0,
             static_cast<int32_t>(m_state.current_width),
             static_cast<int32_t>(m_state.current_height));
