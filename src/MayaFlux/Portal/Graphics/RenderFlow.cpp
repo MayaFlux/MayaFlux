@@ -58,22 +58,24 @@ bool RenderFlow::initialize()
         return true;
     }
 
-    m_shader_foundry = &ShaderFoundry::instance();
-    if (!m_shader_foundry->is_initialized()) {
+    auto* foundry = &ShaderFoundry::instance();
+    if (!foundry->is_initialized()) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
             "ShaderFoundry must be initialized before RenderFlow");
         return false;
     }
 
-    m_display_service = Registry::BackendRegistry::instance()
-                            .get_service<Registry::Service::DisplayService>();
+    auto* display_service = Registry::BackendRegistry::instance()
+                                .get_service<Registry::Service::DisplayService>();
 
-    if (!m_display_service) {
+    if (!display_service) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
             "DisplayService not found in BackendRegistry");
         return false;
     }
 
+    m_shader_foundry = foundry;
+    m_display_service = display_service;
     s_initialized = true;
 
     MF_INFO(Journal::Component::Portal, Journal::Context::Rendering,
