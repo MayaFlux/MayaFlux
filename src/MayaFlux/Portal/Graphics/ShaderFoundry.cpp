@@ -638,6 +638,12 @@ void ShaderFoundry::cleanup_shader_modules()
         }
     }
 
+    for (auto& [id, state] : m_shaders) {
+        if (state.module) {
+            state.module->cleanup(device);
+        }
+    }
+
     m_shader_cache.clear();
     m_shaders.clear();
     m_shader_filepath_cache.clear();
