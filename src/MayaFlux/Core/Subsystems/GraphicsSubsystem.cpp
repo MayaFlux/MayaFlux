@@ -50,7 +50,7 @@ void GraphicsSubsystem::initialize(SubsystemProcessingHandle& handle)
 
     m_handle = &handle;
 
-    if (!m_backend->initialize(m_graphics_config)) {
+    if (!m_backend || !m_backend->initialize(m_graphics_config)) {
         error<std::runtime_error>(
             Journal::Component::Core,
             Journal::Context::GraphicsSubsystem,
@@ -401,7 +401,9 @@ void GraphicsSubsystem::shutdown()
 
     Portal::Graphics::shutdown();
 
-    m_backend->cleanup();
+    if (m_backend) {
+        m_backend->cleanup();
+    }
 
     m_is_ready = false;
 
