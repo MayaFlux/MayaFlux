@@ -13,7 +13,7 @@ cd MayaFlux
 ./scripts/setup_linux.sh    # or setup_macos.sh / win64/setup_windows.ps1
 
 cmake --preset unix-dev     # or windows-vs2026-dev / windows-vs2022-dev
-cmake --build --preset unix-dev
+cmake --build --preset unix-dev     # or win26-dev / win22-dev
 
 ./build/project_launcher
 ```
@@ -28,18 +28,20 @@ If you configure without a dev preset, `project_launcher` will not exist as a ta
 
 This list is only for building MayaFlux itself from source. If using Weave to create a standalone project, see the [Getting Started](Getting_Started.md) guide for that, where all dependencies are automatically handled via package managers.
 
-Building from source currently tracks 0.5-dev, ahead of Weave's 0.4.1, and the minimum OS floor is correspondingly newer:
+Minimum OS for building from source:
 
-| Platform | Weave (0.4.1) | Building from source (0.5-dev) |
-|---|---|---|
-| Windows | 10, version 1909+ | 10, version 1909+ |
-| Fedora | 43 | 44 |
-| Ubuntu | 25.10 | 26.04 LTS |
-| macOS | 15 | 26 (Tahoe), Apple Silicon |
+| Platform | Minimum |
+|---|---|
+| Windows | 10, version 1909+ |
+| Fedora | 44 |
+| Ubuntu | 26.04 LTS |
+| macOS | 26 (Tahoe), Apple Silicon |
 
 The Windows floor is set by MSVC 2022's own minimum supported OS, not by anything in `scripts/win64/setup_windows.ps1` or `packages.psd1`, neither contains an OS version check. Win32 windowing, WinMM, and WASAPI all predate Windows 10 by a wide margin and impose no additional constraint.
 
-**All platforms:** C++20 compiler (GCC 12+, Clang 16+, MSVC 2022+), CMake 3.28+, Vulkan SDK, FFmpeg (avcodec, avformat, avutil, swresample, swscale, avdevice), GLM, Eigen, HIDAPI, Asio, Assimp, FreeType, utf8proc, nlohmann_json, fmt, TBB, STB, LLVM 21+.
+**All platforms:** C++20 compiler (GCC 12+, Clang 16+, MSVC 2022+), CMake 3.28+, Vulkan SDK, FFmpeg (avcodec, avformat, avutil, swresample, swscale, avdevice), GLM, Eigen, HIDAPI, Asio, Assimp, Alembic, FreeType, utf8proc, nlohmann_json, TBB, STB, shaderc, LLVM 21+.
+
+tinyvdb, tinyexr and magic_enum are vendored under `third_party/` and need no installation.
 
 All dependencies are required; CMake will not configure if any are missing.
 
@@ -70,12 +72,15 @@ macOS note: Homebrew LLVM is not your compiler. MayaFlux compiles with Apple Cla
 
 | Preset | MAYAFLUX_BUILD_PROJECT | MAYAFLUX_DEV | MAYAFLUX_BUILD_TESTS | Purpose |
 |---|---|---|---|---|
-| `unix-dev` | ON | ON | ON | Linux/macOS contributor build |
-| `windows-vs2026-dev` | ON | ON | off | Windows contributor build, VS 2026 |
-| `windows-vs2022-dev` | ON | ON | off | Windows contributor build, VS 2022 |
+| `unix-dev` | ON | ON | off | Linux/macOS contributor build (RelWithDebInfo) |
+| `unix-test` | ON | ON | ON | Linux/macOS test build (Debug), inherits `unix-dev`, pairs with the `unix-test` build and test presets |
+| `windows-vs2026-dev` | ON | ON | off | Windows contributor build, VS 2026 (Debug) |
+| `windows-vs2022-dev` | ON | ON | off | Windows contributor build, VS 2022 (Debug) |
 | `linux-ship-dev`, `macos-ship-dev` | off | off | off | Shipping build with debug info, no `project_launcher` |
 | `linux-ship-rel`, `macos-ship-rel`, `windows-ship-rel` | off | off | off | Release packaging, no `project_launcher` |
 | `launchpad-dev`, `launchpad-rel` | off | off | off | PPA packaging, no `project_launcher` |
+
+LTO is controlled by `MAYAFLUX_ENABLE_LTO`. It is on for every ship and launchpad preset and off for `unix-dev`, `unix-test` and the Windows dev presets.
 
 A bare `cmake -B build` with no preset also leaves `MAYAFLUX_BUILD_PROJECT` OFF. If you want `project_launcher` without a preset:
 
@@ -143,11 +148,12 @@ On Windows, `regenerate_solution` reruns `scripts/win64/setup_visual_studio.ps1`
 
 ## Tests
 
-`MAYAFLUX_BUILD_TESTS` is ON under `unix-dev`, off elsewhere by default. Run with the matching test preset:
+`MAYAFLUX_BUILD_TESTS` is ON under the `unix-test` preset and off elsewhere by default. Configure, build and run with the matching presets:
 
 ```sh
-cmake --build --preset unix-dev
-ctest --preset unix-dev
+cmake --preset unix-test
+cmake --build --preset unix-test
+ctest --preset unix-test
 ```
 
 ---
