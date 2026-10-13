@@ -8,6 +8,7 @@ usr/lib/*.so*
 usr/lib/pkgconfig/*.pc
 usr/lib/cmake/MayaFlux/*
 usr/lib/libminiz.a
+usr/lib/libtinyvdb.a
 
 # Headers (MayaFlux and Lila)
 usr/include/MayaFlux/*

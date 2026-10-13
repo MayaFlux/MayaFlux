@@ -1,9 +1,9 @@
 Name:           mayaflux
-Version:        0.4.0
+Version:        0.5.0
 Release:        1%{?dist}
 Summary:        Modern C++ framework for real-time graphics and audio with JIT compilation
 
-License:        GPLv3
+License:        GPLv3 and Apache-2.0 and BSD-3-Clause and MIT
 URL:            https://github.com/MayaFlux/MayaFlux
 Source0:        https://github.com/MayaFlux/MayaFlux/archive/refs/tags/v%{version}.tar.gz#/%{name}-%{version}.tar.gz
 
@@ -20,12 +20,13 @@ BuildRequires:  llvm-libs >= 21
 BuildRequires:  clang-devel >= 21
 BuildRequires:  cmake >= 3.25
 BuildRequires:  ninja-build
+BuildRequires:  mold
 BuildRequires:  pkgconfig
 BuildRequires:  glm-devel
 BuildRequires:  eigen3-devel
 BuildRequires:  spirv-headers-devel
 BuildRequires:  spirv-cross-devel
-BuildRequires:  spirv-tools
+BuildRequires:  spirv-tools-devel
 BuildRequires:  vulkan-headers
 BuildRequires:  vulkan-loader
 BuildRequires:  vulkan-loader-devel
@@ -33,6 +34,7 @@ BuildRequires:  vulkan-tools
 BuildRequires:  vulkan-validation-layers
 BuildRequires:  ffmpeg-free-devel
 BuildRequires:  assimp-devel
+BuildRequires:  alembic-devel
 BuildRequires:  stb-devel
 BuildRequires:  tbb-devel
 BuildRequires:  gtest-devel
@@ -66,7 +68,7 @@ Requires:       glm-devel
 Requires:       eigen3-devel
 Requires:       spirv-headers-devel
 Requires:       spirv-cross-devel
-Requires:       spirv-tools
+Requires:       spirv-tools-devel
 Requires:       vulkan-headers
 Requires:       vulkan-loader
 Requires:       vulkan-loader-devel
@@ -74,6 +76,7 @@ Requires:       vulkan-tools
 Requires:       vulkan-validation-layers
 Requires:       ffmpeg-free-devel
 Requires:       assimp-devel
+Requires:       alembic-devel
 Requires:       stb-devel
 Requires:       tbb-devel
 Requires:       gtest-devel
@@ -92,6 +95,10 @@ Requires:       alsa-lib-devel
 Requires:       json-devel
 
 Provides:       mayaflux = %{version}-%{release}
+Provides:       bundled(tinyvdb)
+Provides:       bundled(tinyexr)
+Provides:       bundled(miniz)
+Provides:       bundled(magic_enum)
 Conflicts:      mayaflux-dev
 
 %description
@@ -149,6 +156,7 @@ EOF
 %{_libdir}/libMayaFluxHost.so*
 %{_libdir}/libLila.so*
 %{_libdir}/libminiz.a
+%{_libdir}/libtinyvdb.a
 %{_includedir}/MayaFlux/
 %{_includedir}/Lila/
 %{_datadir}/MayaFlux/
@@ -171,7 +179,7 @@ if [ $1 -eq 0 ]; then
 fi
 
 %changelog
-* Sun Jun 21 2026 MayaFlux Collective <mayafluxcollective@proton.me> - 0.4.0-1
-- Initial stable release
+* Sun Jun 21 2026 MayaFlux Collective <mayafluxcollective@proton.me> - 0.5.0-1
+- Stable release 0.5.0
 - Full source build with C++23 support
 - All development dependencies included for JIT/live coding
