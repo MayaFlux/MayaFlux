@@ -59,6 +59,20 @@ install(DIRECTORY ${SHADERS_DIR}/
         PATTERN "*.glsl"
 )
 
+install(FILES
+    ${CMAKE_SOURCE_DIR}/docs/Settings.md
+    ${CMAKE_SOURCE_DIR}/docs/Vision.md
+    ${CMAKE_SOURCE_DIR}/docs/GPGPU-Guide.md
+    ${CMAKE_SOURCE_DIR}/docs/GPU-CPU-IO-Map.md
+    ${CMAKE_SOURCE_DIR}/docs/OpenCL-Migration.md
+    ${CMAKE_SOURCE_DIR}/docs/Portal-Text.md
+    ${CMAKE_SOURCE_DIR}/docs/Portal-Forma.md
+    ${CMAKE_SOURCE_DIR}/docs/Portal-Forma-Plot.md
+    ${CMAKE_SOURCE_DIR}/docs/Portal-Forma-UI-Patterns.md
+    ${CMAKE_SOURCE_DIR}/docs/Viewport.md
+    DESTINATION share/MayaFlux/guides
+)
+
 install(TARGETS Lila
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
