@@ -54,6 +54,9 @@ if(WIN32)
         list(APPEND CMAKE_PREFIX_PATH "@VCPKG_INSTALLED_DIR@/x64-windows")
     endif()
 
+    cmake_path(CONVERT "$ENV{VULKAN_SDK}"
+        TO_CMAKE_PATH_LIST _vulkan_sdk NORMALIZE)
+
     find_dependency(Vulkan)
     find_dependency(eigen3 CONFIG)
     find_dependency(glm CONFIG)
