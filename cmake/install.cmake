@@ -47,8 +47,16 @@ if(UNIX)
 endif()
 
 install(DIRECTORY ${SHADER_OUTPUT_DIR}
-    DESTINATION share/MayaFlux/
+    DESTINATION share/MayaFlux/runtime/
     FILES_MATCHING PATTERN "*.spv"
+)
+
+install(DIRECTORY ${SHADERS_DIR}/
+    DESTINATION share/MayaFlux/src/shaders
+    FILES_MATCHING
+        PATTERN "*.vert" PATTERN "*.frag" PATTERN "*.comp"
+        PATTERN "*.geom" PATTERN "*.tesc" PATTERN "*.tese"
+        PATTERN "*.glsl"
 )
 
 install(TARGETS Lila

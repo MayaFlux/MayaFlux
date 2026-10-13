@@ -434,7 +434,7 @@ jobs:
           Write-Host "  CMake configs:      $vcpkgConfigs"
 
           Write-Host "`nShaders and runtime:" -ForegroundColor Yellow
-          $spvCount = @(Get-ChildItem "dist_staging\share\MayaFlux\shaders" -Filter "*.spv" -ErrorAction SilentlyContinue).Count
+          $spvCount = @(Get-ChildItem "dist_staging\share\MayaFlux\runtime\shaders" -Filter "*.spv" -ErrorAction SilentlyContinue).Count
           Write-Host "  SPIR-V shaders: $spvCount"
           if (Test-Path "dist_staging\share\MayaFlux\runtime\pch.h") { Write-Host "  ✓ pch.h" }
           if (Test-Path "dist_staging\share\MayaFlux\.version")       { Write-Host "  ✓ .version" }

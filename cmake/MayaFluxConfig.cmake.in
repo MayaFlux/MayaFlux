@@ -536,7 +536,7 @@ set(MayaFlux_FOUND TRUE)
 set(MayaFlux_LIBRARIES MayaFlux::MayaFluxLib MayaFlux::Lila MayaFlux::MayaFluxHost)
 set(MayaFlux_INCLUDE_DIRS "${PACKAGE_PREFIX_DIR}/include")
 set(MayaFlux_LIB_DIR "${_MAYAFLUX_LIBDIR}")
-set(MayaFlux_SHADER_DIR "${PACKAGE_PREFIX_DIR}/share/MayaFlux/shaders")
+set(MayaFlux_SHADER_DIR "${PACKAGE_PREFIX_DIR}/share/MayaFlux/runtime/shaders")
 set(MayaFlux_PCH_FILE "${PACKAGE_PREFIX_DIR}/share/MayaFlux/runtime/pch.h")
 
 if(APPLE)

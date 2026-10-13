@@ -37,7 +37,7 @@ echo [3] Checking runtime and shaders...
 if exist "share\MayaFlux\runtime\pch.h"   (echo   OK pch.h)    else (echo   ERROR: Missing pch.h    && set ERROR_LEVEL=1)
 if exist "share\MayaFlux\.version"         (echo   OK .version) else (echo   WARNING: Missing .version)
 set /a spv_count=0
-for %%F in (share\MayaFlux\shaders\*.spv) do set /a spv_count+=1
+for %%F in (share\MayaFlux\runtime\shaders\*.spv) do set /a spv_count+=1
 echo   OK SPIR-V shaders: !spv_count!
 if !spv_count! LSS 5 (echo   WARNING: Low shader count)
 
