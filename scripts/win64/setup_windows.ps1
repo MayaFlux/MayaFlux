@@ -178,12 +178,15 @@ if (Test-Path $vulkanBase) {
 }
 
 # FFmpeg
-$wingetPkgs = Join-Path $env:LOCALAPPDATA "Microsoft\WinGet\Packages"
+$ffmpegBase = (Import-PowerShellDataFile $packagesFile).WingetPackages.FFmpeg.InstallRoot
 $ffmpegRoot = $null
-if (Test-Path $wingetPkgs) {
-    $ffmpegRoot = Get-ChildItem $wingetPkgs -Directory -Filter "Gyan.FFmpeg.Shared*" -ErrorAction SilentlyContinue |
-        ForEach-Object { Get-ChildItem $_.FullName -Directory -Filter "ffmpeg-*-full_build-shared" -ErrorAction SilentlyContinue } |
-        Where-Object { Test-Path (Join-Path $_.FullName "bin\ffmpeg.exe") } |
+if (Test-Path -LiteralPath $ffmpegBase) {
+    $ffmpegRoot = Get-ChildItem -LiteralPath $ffmpegBase -Directory |
+        Where-Object {
+            $version = $null
+            [version]::TryParse($_.Name, [ref]$version) -and (Test-Path -LiteralPath (Join-Path $_.FullName "bin\ffmpeg.exe"))
+        } |
+        Sort-Object { [version]$_.Name } -Descending |
         Select-Object -First 1 -ExpandProperty FullName
 }
 if ($ffmpegRoot) {
@@ -191,7 +194,7 @@ if ($ffmpegRoot) {
     Add-EnvPath -Name "PATH" -Value (Join-Path $ffmpegRoot "bin")
     Write-Host "[FFmpeg] Root: $ffmpegRoot" -ForegroundColor Green
 } else {
-    Write-Warning "[FFmpeg] Not found in WinGet package store"
+    Write-Warning "[FFmpeg] Not found under $ffmpegBase"
 }
 
 # vcpkg (general include/lib for migrated packages)

@@ -21,7 +21,8 @@
     WingetPackages = @{
         FFmpeg = @{
             WingetId = 'Gyan.FFmpeg.Shared'
-            Verify   = 'ffmpeg'
+            InstallRoot = 'C:\Program Files\FFmpeg_Shared'
+            Verify   = 'C:\Program Files\FFmpeg_Shared\*\bin\ffmpeg.exe'
         }
         VulkanSDK = @{
             WingetId = 'KhronosGroup.VulkanSDK'

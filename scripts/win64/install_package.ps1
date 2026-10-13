@@ -358,7 +358,7 @@ function Install-SystemTool($name, $config) {
         Test-Command $config.Verify
     }
 
-    if ($isInstalled) {
+    if ($isInstalled -and $config.WingetId -ne 'Gyan.FFmpeg.Shared') {
         Write-Host "  [OK] Already installed" -ForegroundColor Green
         return
     }
@@ -394,11 +394,31 @@ function Install-SystemTool($name, $config) {
         Write-Host "  Using source: $wingetSourceName" -ForegroundColor Gray
     }
 
+    if ($config.InstallRoot) { $wingetArgs += @("--location", $config.InstallRoot) }
+    if ($config.WingetId -eq 'Gyan.FFmpeg.Shared' -and -not (Test-Path $config.Verify)) {
+        $wingetArgs += '--force'
+    }
+
     $result = & winget @wingetArgs 2>&1
+    $installExitCode = $LASTEXITCODE
     
     if ($result) {
         $result | Where-Object { $_ -notmatch "^\s*[-/\\|]" } | 
                   ForEach-Object { Write-Host "  $_" -ForegroundColor Gray }
+    }
+
+    if ($config.WingetId -eq 'Gyan.FFmpeg.Shared') {
+        if ($installExitCode -ne 0 -and $installExitCode -ne -1978335189) {
+            throw "FFmpeg installation failed with exit code $installExitCode"
+        }
+        Get-ChildItem -LiteralPath $config.InstallRoot -Directory -Filter 'ffmpeg-*-full_build-shared' |
+            ForEach-Object {
+                $versionName = $_.Name.Replace('ffmpeg-', '').Replace('-full_build-shared', '')
+                $version = $null
+                if ([version]::TryParse($versionName, [ref]$version) -and -not (Test-Path -LiteralPath (Join-Path $config.InstallRoot $versionName))) {
+                    Rename-Item -LiteralPath $_.FullName -NewName $versionName
+                }
+            }
     }
 
     $isInstalled = if ($config.Verify -like '*\*' -or $config.Verify -like '*:*') {
