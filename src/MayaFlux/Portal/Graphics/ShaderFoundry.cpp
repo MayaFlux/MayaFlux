@@ -474,26 +474,44 @@ std::optional<std::filesystem::path> ShaderFoundry::resolve_shader_path(const st
         return path;
     }
 
-    std::vector<std::string> search_paths = {
-        Config::SHADER_BUILD_OUTPUT_DIR,
-        Config::SHADER_INSTALL_DIR,
-        Config::SHADER_SOURCE_DIR,
-        "./shaders",
-        "../shaders",
-        "data/shaders",
-        "./data/shaders",
-        "../data/shaders"
-    };
-
-    if (std::string_view(Config::SHADER_EXAMPLE_DIR).length() > 0) {
-        search_paths.emplace_back(Config::SHADER_EXAMPLE_DIR);
-    }
+    std::vector<std::string> user_paths;
 
 #ifdef MAYAFLUX_PROJECT_SHADER_DIR
-    search_paths.emplace_back(MAYAFLUX_PROJECT_SHADER_DIR);
+    user_paths.emplace_back(MAYAFLUX_PROJECT_SHADER_DIR);
 #endif
 
-    for (const auto& search_path : search_paths) {
+    user_paths.insert(user_paths.end(),
+        { "./shaders", "./data/shaders", "../shaders", "../data/shaders", "data/shaders" });
+
+    if (std::string_view(Config::SHADER_EXAMPLE_DIR).length() > 0) {
+        user_paths.emplace_back(Config::SHADER_EXAMPLE_DIR);
+    }
+
+    const std::vector<std::string> library_paths = {
+        Config::SHADER_BUILD_OUTPUT_DIR,
+        Config::SHADER_INSTALL_DIR,
+        Config::SHADER_SOURCE_DIR
+    };
+
+    for (const auto& search_path : user_paths) {
+        fs::path full_path = fs::path(search_path) / filepath;
+        if (!fs::exists(full_path, ec)) {
+            continue;
+        }
+
+        for (const auto& library_path : library_paths) {
+            fs::path shadowed = fs::path(library_path) / filepath;
+            if (fs::exists(shadowed, ec) && !fs::equivalent(full_path, shadowed, ec)) {
+                MF_WARN(Journal::Component::Portal, Journal::Context::ShaderCompilation,
+                    "Shader '{}' at '{}' shadows library shader '{}'",
+                    filepath, full_path.string(), shadowed.string());
+                break;
+            }
+        }
+        return full_path;
+    }
+
+    for (const auto& search_path : library_paths) {
         fs::path full_path = fs::path(search_path) / filepath;
         if (fs::exists(full_path, ec)) {
             return full_path;

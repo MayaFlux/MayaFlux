@@ -12,26 +12,34 @@
 namespace MayaFlux::Core {
 
 namespace {
-    std::vector<std::string> get_shader_search_paths()
-    {
-        std::vector<std::string> paths {
-            Config::SHADER_BUILD_OUTPUT_DIR, // 1. Build directory (development)
-            Config::SHADER_INSTALL_DIR, // 2. Install directory (production)
-            Config::SHADER_SOURCE_DIR, // 3. Source directory (fallback)
-            "./shaders", // 4. Current working directory
-            "../shaders", // 5. Parent directory
-            "data/shaders", // 6. Weave project root convention
-            "./data/shaders", // 6. Weave project root convention
-            "../data/shaders" // 7. if running from build/
-        };
+    /**
+     * @brief Shader search directories, user owned first, then library owned.
+     */
+    struct ShaderSearchPaths {
+        std::vector<std::string> user;
+        std::vector<std::string> library;
+    };
 
-        if (std::string_view(Config::SHADER_EXAMPLE_DIR).length() > 0) {
-            paths.emplace_back(Config::SHADER_EXAMPLE_DIR);
-        }
+    ShaderSearchPaths get_shader_search_paths()
+    {
+        ShaderSearchPaths paths;
 
 #ifdef MAYAFLUX_PROJECT_SHADER_DIR
-        paths.emplace_back(MAYAFLUX_PROJECT_SHADER_DIR);
+        paths.user.emplace_back(MAYAFLUX_PROJECT_SHADER_DIR);
 #endif
+
+        paths.user.insert(paths.user.end(),
+            { "./shaders", "./data/shaders", "../shaders", "../data/shaders", "data/shaders" });
+
+        if (std::string_view(Config::SHADER_EXAMPLE_DIR).length() > 0) {
+            paths.user.emplace_back(Config::SHADER_EXAMPLE_DIR);
+        }
+
+        paths.library = {
+            Config::SHADER_BUILD_OUTPUT_DIR,
+            Config::SHADER_INSTALL_DIR,
+            Config::SHADER_SOURCE_DIR
+        };
 
         return paths;
     }
@@ -44,9 +52,33 @@ namespace {
             return filename;
         }
 
-        for (const auto& search_path : get_shader_search_paths()) {
+        const auto paths = get_shader_search_paths();
+        std::error_code ec;
+
+        for (const auto& search_path : paths.user) {
             fs::path full_path = fs::path(search_path) / filename;
-            if (fs::exists(full_path)) {
+            if (!fs::exists(full_path, ec)) {
+                continue;
+            }
+
+            for (const auto& library_path : paths.library) {
+                fs::path shadowed = fs::path(library_path) / filename;
+                if (fs::exists(shadowed, ec) && !fs::equivalent(full_path, shadowed, ec)) {
+                    MF_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                        "Shader '{}' at '{}' shadows library shader '{}'",
+                        filename, full_path.string(), shadowed.string());
+                    break;
+                }
+            }
+
+            MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                "Resolved shader '{}' -> '{}'", filename, full_path.string());
+            return full_path.string();
+        }
+
+        for (const auto& search_path : paths.library) {
+            fs::path full_path = fs::path(search_path) / filename;
+            if (fs::exists(full_path, ec)) {
                 MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
                     "Resolved shader '{}' -> '{}'", filename, full_path.string());
                 return full_path.string();

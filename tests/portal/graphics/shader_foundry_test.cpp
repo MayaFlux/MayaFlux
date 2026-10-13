@@ -7,6 +7,7 @@
 #include <string_view>
 #include <utility>
 
+#include "../../support/scoped_working_dir.hpp"
 #include "../../support/vulkan_test_support.hpp"
 
 #include "MayaFlux/Portal/Graphics/ShaderFoundry.hpp"
@@ -325,6 +326,56 @@ void main() {
 
         EXPECT_NE(reloaded, nullptr);
         EXPECT_TRUE(foundry().is_cached("dilate.comp"));
+    }
+
+    // ------------------------------------------------------------------
+    // Search order
+    // ------------------------------------------------------------------
+
+    constexpr std::string_view k_user_dilate_source = R"(#version 460
+layout(local_size_x = 4, local_size_y = 2, local_size_z = 1) in;
+void main() { }
+)";
+
+    TEST_F(ShaderFoundryTest, UserShaderDirectoryWinsOverALibraryShaderOfTheSameName)
+    {
+        ASSERT_TRUE(foundry().initialize(backend()));
+        ScopedWorkingDir cwd;
+        cwd.write("shaders/dilate.comp", std::string(k_user_dilate_source));
+
+        const ShaderID id = foundry().load_shader("dilate.comp");
+
+        ASSERT_NE(id, INVALID_SHADER);
+        const auto workgroup = foundry().get_shader_reflection(id).workgroup_size;
+        ASSERT_TRUE(workgroup.has_value());
+        EXPECT_EQ(*workgroup, (std::array<uint32_t, 3> { 4, 2, 1 }));
+    }
+
+    TEST_F(ShaderFoundryTest, DataShadersDirectoryAlsoWinsOverALibraryShaderOfTheSameName)
+    {
+        ASSERT_TRUE(foundry().initialize(backend()));
+        ScopedWorkingDir cwd;
+        cwd.write("data/shaders/dilate.comp", std::string(k_user_dilate_source));
+
+        const ShaderID id = foundry().load_shader("dilate.comp");
+
+        ASSERT_NE(id, INVALID_SHADER);
+        const auto workgroup = foundry().get_shader_reflection(id).workgroup_size;
+        ASSERT_TRUE(workgroup.has_value());
+        EXPECT_EQ(*workgroup, (std::array<uint32_t, 3> { 4, 2, 1 }));
+    }
+
+    TEST_F(ShaderFoundryTest, LibraryShaderIsUsedWhenNoUserCopyExists)
+    {
+        ASSERT_TRUE(foundry().initialize(backend()));
+        ScopedWorkingDir cwd;
+
+        const ShaderID id = foundry().load_shader("dilate.comp");
+
+        ASSERT_NE(id, INVALID_SHADER);
+        const auto workgroup = foundry().get_shader_reflection(id).workgroup_size;
+        ASSERT_TRUE(workgroup.has_value());
+        EXPECT_EQ(*workgroup, (std::array<uint32_t, 3> { 8, 8, 1 }));
     }
 
     // ------------------------------------------------------------------

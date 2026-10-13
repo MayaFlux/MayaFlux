@@ -2,6 +2,7 @@
 
 #include <algorithm>
 
+#include "../support/scoped_working_dir.hpp"
 #include "../support/vulkan_test_support.hpp"
 
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKContext.hpp"
@@ -26,6 +27,11 @@ void main()
         out_buf.values[i] = in_buf.values[i] * params.scale;
     }
 }
+)";
+
+    constexpr const char* k_user_workgroup_source = R"(#version 450
+layout(local_size_x = 4, local_size_y = 2, local_size_z = 1) in;
+void main() { }
 )";
 
     constexpr const char* k_resources_source = R"(#version 450
@@ -212,6 +218,41 @@ TEST_F(VKShaderModuleTest, MissingGlslFileFails)
 {
     EXPECT_FALSE(module.create_from_glsl_file(device(), "no/such/shader.comp"));
     EXPECT_FALSE(module.is_valid());
+}
+
+TEST_F(VKShaderModuleTest, UserShaderDirectoryWinsOverALibraryShaderOfTheSameName)
+{
+    ScopedWorkingDir cwd;
+    cwd.write("shaders/dilate.comp", k_user_workgroup_source);
+
+    ASSERT_TRUE(module.create_from_glsl_file(device(), "dilate.comp"));
+
+    const auto workgroup = module.get_workgroup_size();
+    ASSERT_TRUE(workgroup.has_value());
+    EXPECT_EQ(*workgroup, (std::array<uint32_t, 3> { 4, 2, 1 }));
+}
+
+TEST_F(VKShaderModuleTest, DataShadersDirectoryAlsoWinsOverALibraryShaderOfTheSameName)
+{
+    ScopedWorkingDir cwd;
+    cwd.write("data/shaders/dilate.comp", k_user_workgroup_source);
+
+    ASSERT_TRUE(module.create_from_glsl_file(device(), "dilate.comp"));
+
+    const auto workgroup = module.get_workgroup_size();
+    ASSERT_TRUE(workgroup.has_value());
+    EXPECT_EQ(*workgroup, (std::array<uint32_t, 3> { 4, 2, 1 }));
+}
+
+TEST_F(VKShaderModuleTest, LibraryShaderIsUsedWhenNoUserCopyExists)
+{
+    ScopedWorkingDir cwd;
+
+    ASSERT_TRUE(module.create_from_glsl_file(device(), "element_shape.comp"));
+
+    const auto workgroup = module.get_workgroup_size();
+    ASSERT_TRUE(workgroup.has_value());
+    EXPECT_EQ(*workgroup, (std::array<uint32_t, 3> { 256, 1, 1 }));
 }
 
 TEST_F(VKShaderModuleTest, GlslFileWithUndetectableStageFailsWithoutExplicitStage)
