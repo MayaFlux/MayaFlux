@@ -13,27 +13,32 @@ permissions:
 
 jobs:
   build-docs:
+    uses: ./.github/workflows/build-docs.yml
+
+  deploy-pages:
+    needs: build-docs
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Download documentation
+        uses: actions/download-artifact@v4
         with:
-          fetch-depth: 0
+          path: docs_artifact
+          pattern: MayaFlux-*-docs
 
-      - name: Install Doxygen and Graphviz
+      - name: Extract documentation
         run: |
-          sudo apt-get update
-          sudo apt-get install -y doxygen graphviz
-
-      - name: Generate documentation
-        run: doxygen doxyconf
+          mkdir -p site
+          tar -xzf docs_artifact/*/MayaFlux-*-docs.tar.gz -C site
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs/html
+          publish_dir: ./site
           publish_branch: gh-pages
           force_orphan: true
           user_name: "github-actions[bot]"

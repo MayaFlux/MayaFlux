@@ -1,0 +1,53 @@
+name: "Build Documentation"
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        required: false
+        type: string
+        default: ""
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: "Doxygen"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Determine version
+        run: |
+          VERSION="${{ inputs.version }}"
+          if [ -z "$VERSION" ]; then
+            VERSION=$(grep -Eo 'VERSION [0-9]+\.[0-9]+\.[0-9]+' CMakeLists.txt | awk '{print $2}')
+          fi
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+          echo "PACKAGE_NAME=MayaFlux-${VERSION}-docs" >> $GITHUB_ENV
+
+      - name: Install Doxygen and Graphviz
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y doxygen graphviz
+
+      - name: Generate documentation
+        run: ( cat doxyconf; echo "PROJECT_NUMBER = \"${VERSION}\"" ) | doxygen -
+
+      - name: Create documentation package with checksums
+        run: |
+          tar -czf "${PACKAGE_NAME}.tar.gz" -C docs/html .
+          sha256sum "${PACKAGE_NAME}.tar.gz" > "${PACKAGE_NAME}.tar.gz.sha256"
+          md5sum "${PACKAGE_NAME}.tar.gz" > "${PACKAGE_NAME}.tar.gz.md5"
+          echo "SHA256 Checksums:"
+          cat "${PACKAGE_NAME}.tar.gz.sha256"
+          ls -lh "${PACKAGE_NAME}.tar.gz"
+
+      - name: Upload documentation
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.PACKAGE_NAME }}
+          path: |
+            ${{ env.PACKAGE_NAME }}.tar.gz
+            ${{ env.PACKAGE_NAME }}.tar.gz.sha256
+            ${{ env.PACKAGE_NAME }}.tar.gz.md5
+          retention-days: 30
