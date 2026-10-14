@@ -259,11 +259,16 @@ public:
      * @param offset Byte offset in the push constant block.
      * @param size Byte width written. Four narrows to float, eight keeps
      *        double. Other values are rejected.
+     * @param early True writes at the top of processing_function. False
+     *        writes after the final on_before_execute of a compute dispatch,
+     *        which is the only way a value survives a processor that rewrites
+     *        its whole push constant block there. Other dispatch kinds
+     *        ignore false.
      *
      * The form hand-written shaders need, since their push constant block
      * is described nowhere the processor can read.
      */
-    void feed(const std::string& name, FeedSource source, uint32_t offset, size_t size = sizeof(float));
+    void feed(const std::string& name, FeedSource source, uint32_t offset, size_t size = sizeof(float), bool early = true);
 
     /** @brief Remove a feed. Any buffer it created is released. */
     void remove_feed(const std::string& name);
@@ -513,8 +518,10 @@ protected:
      * Called at the top of processing_function, before descriptors are
      * rebuilt, so a storage feed creating its buffer binds the same cycle.
      * Callables run on whichever thread drives the chain.
+     *
+     * @param early Only feeds registered with this timing are pulled.
      */
-    void pump_feeds();
+    void pump_feeds(bool early = true);
 
     //==========================================================================
     // Overridable Hooks for Specialized Processors
@@ -682,6 +689,7 @@ private:
         std::string descriptor_name;
         std::shared_ptr<VKBuffer> buffer;
         bool mismatch_logged {};
+        bool early { true };
     };
 
     std::unordered_map<std::string, Feed> m_feeds;

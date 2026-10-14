@@ -255,6 +255,7 @@ void ComputeProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
     }
 
     on_before_execute(cmd_id, buffer);
+    pump_feeds(false);
 
     const uint32_t iterations = std::max(1U, m_dispatch_config.iteration_count);
     const auto dispatch_size = calculate_dispatch_size(buffer);

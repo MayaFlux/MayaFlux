@@ -227,6 +227,7 @@ void ShaderProcessor::feed(const std::string& name, FeedSource source)
         entry.descriptor_name = name;
         entry.buffer.reset();
         entry.mismatch_logged = false;
+        entry.early = true;
         return;
     }
 
@@ -242,6 +243,7 @@ void ShaderProcessor::feed(const std::string& name, FeedSource source)
             entry.descriptor_name.clear();
             entry.buffer.reset();
             entry.mismatch_logged = false;
+            entry.early = true;
             return;
         }
         offset += static_cast<uint32_t>(width);
@@ -253,7 +255,7 @@ void ShaderProcessor::feed(const std::string& name, FeedSource source)
         name);
 }
 
-void ShaderProcessor::feed(const std::string& name, FeedSource source, uint32_t offset, size_t size)
+void ShaderProcessor::feed(const std::string& name, FeedSource source, uint32_t offset, size_t size, bool early)
 {
     if (!source) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
@@ -275,6 +277,7 @@ void ShaderProcessor::feed(const std::string& name, FeedSource source, uint32_t 
     entry.descriptor_name.clear();
     entry.buffer.reset();
     entry.mismatch_logged = false;
+    entry.early = early;
 }
 
 void ShaderProcessor::remove_feed(const std::string& name)
@@ -306,9 +309,13 @@ std::vector<std::string> ShaderProcessor::get_feed_names() const
     return names;
 }
 
-void ShaderProcessor::pump_feeds()
+void ShaderProcessor::pump_feeds(bool early)
 {
     for (auto& [name, entry] : m_feeds) {
+        if (entry.early != early) {
+            continue;
+        }
+
         FeedValue value = entry.source();
 
         if (!entry.is_storage) {
