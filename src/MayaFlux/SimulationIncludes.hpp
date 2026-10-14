@@ -8,7 +8,8 @@
  * by defining its macro before this include:
  * - MAYAFLUX_SIMULATION_NO_FIELDS: GPU field operators, vertex and UV field
  *   processors, spatial hash, claim and population processors, force fields,
- *   and the spatial cache, transfer, reader and export
+ *   the Nexus field and influence targets, and the spatial cache, transfer,
+ *   reader and export
  * - MAYAFLUX_SIMULATION_NO_GRID: relaxation grid buffers and processors
  * - MAYAFLUX_SIMULATION_NO_VOLUME: volume buffers, fluid processors,
  *   raymarching and volume file IO
@@ -31,6 +32,7 @@
 #include "Kinesis/Tendency/DualField.hpp"
 #include "Kinesis/Tendency/FieldBinding.hpp"
 #include "Kinesis/Tendency/ForceFields.hpp"
+#include "Nexus/Pheme/FieldTargets.hpp"
 #include "Nodes/Network/Operators/FieldOperator.hpp"
 #include "Nodes/Network/Operators/GpuFieldOperator.hpp"
 #include "Nodes/Network/Operators/InstanceFieldOperator.hpp"

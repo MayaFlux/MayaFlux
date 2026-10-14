@@ -118,6 +118,7 @@
 #include "Kakshya/Source/WindowContainer.hpp"
 
 #include "Kinesis/Discrete/Boolean.hpp"
+#include "Kinesis/Discrete/Coefficients.hpp"
 #include "Kinesis/Discrete/Kernels.hpp"
 #include "Kinesis/GeometryPrimitives.hpp"
 #include "MayaFlux/Kinesis/Discrete/Series.hpp"
