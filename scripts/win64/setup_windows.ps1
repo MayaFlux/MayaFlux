@@ -192,6 +192,8 @@ if (Test-Path -LiteralPath $ffmpegBase) {
 if ($ffmpegRoot) {
     [Environment]::SetEnvironmentVariable("FFMPEG_ROOT", $ffmpegRoot, "Machine")
     Add-EnvPath -Name "PATH" -Value (Join-Path $ffmpegRoot "bin")
+    Add-IncludeDirectory -Path (Join-Path $ffmpegRoot "include")
+    Add-EnvPath -Name "LIB" -Value (Join-Path $ffmpegRoot "lib")
     Write-Host "[FFmpeg] Root: $ffmpegRoot" -ForegroundColor Green
 } else {
     Write-Warning "[FFmpeg] Not found under $ffmpegBase"
