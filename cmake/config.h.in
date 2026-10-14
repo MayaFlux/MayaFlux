@@ -160,6 +160,22 @@ namespace Config {
 #else
     constexpr const char* SHADER_INSTALL_DIR = "@CMAKE_INSTALL_PREFIX@/share/MayaFlux/runtime/shaders";
 #endif
+
+    /**
+     * @brief Directory that relative asset, output and config paths resolve against.
+     *
+     * Empty by default, which means SOURCE_DIR. A project built against an installed
+     * MayaFlux sets it once at startup with set_project_root() in API/Config.hpp.
+     */
+    inline std::string PROJECT_ROOT;
+
+    /**
+     * @brief PROJECT_ROOT if it has been set, otherwise SOURCE_DIR.
+     */
+    [[nodiscard]] inline std::string project_root()
+    {
+        return PROJECT_ROOT.empty() ? std::string(SOURCE_DIR) : PROJECT_ROOT;
+    }
 }
 
 namespace Core {

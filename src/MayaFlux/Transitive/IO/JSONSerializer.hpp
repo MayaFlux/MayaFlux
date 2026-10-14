@@ -147,7 +147,7 @@ private:
         auto from_cwd = fs::current_path() / normalized;
         if (fs::exists(from_cwd))
             return from_cwd.string();
-        auto from_root = fs::path(Config::SOURCE_DIR) / normalized;
+        auto from_root = fs::path(Config::project_root()) / normalized;
         if (fs::exists(from_root))
             return from_root.string();
         return normalized;

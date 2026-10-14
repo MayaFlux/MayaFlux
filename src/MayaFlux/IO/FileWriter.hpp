@@ -26,7 +26,7 @@ inline FileWriteOptions operator&(FileWriteOptions a, FileWriteOptions b)
  * @brief Resolve a writable path against the configured output directory.
  *
  * Absolute paths are returned unchanged. A bare filename uses the default
- * directory. Relative paths with a parent directory use Config::SOURCE_DIR.
+ * directory. Relative paths with a parent directory use the project root.
  *
  * @param filepath Path as supplied by the caller.
  * @param default_directory Destination for a bare filename.
@@ -46,7 +46,7 @@ inline FileWriteOptions operator&(FileWriteOptions a, FileWriteOptions b)
     if (!fs::path(normalized).has_parent_path())
         return (fs::path(default_directory) / normalized).string();
 
-    return (fs::path(Config::SOURCE_DIR) / normalized).string();
+    return (fs::path(Config::project_root()) / normalized).string();
 }
 
 /**

@@ -1,0 +1,88 @@
+name: Bug report (project created with Weave)
+description: A crash, graphics, audio or build problem in a project created with Weave
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Two steps give us what we need to reproduce the problem. Run them from the root folder of your project.
+
+        **1. Run the project check**
+
+        Linux and macOS: `./validate.sh`
+
+        Windows: `powershell -NoProfile -ExecutionPolicy Bypass -File .\validate.ps1`
+
+        **2. Run the project with the report configuration that ships with MayaFlux**
+
+        It turns on the Vulkan validation layers and writes a complete log to a file instead of the console. Replace `MyProject` with your project name.
+
+        Linux and macOS:
+
+        ```sh
+        ./build/MyProject --config "$MAYAFLUX_ROOT/share/MayaFlux/report/mayaflux.report.json" 2>&1 | tee mayaflux_run.txt
+        ```
+
+        Windows PowerShell, using the folder your build produced:
+
+        ```powershell
+        .\build\Debug\MyProject.exe --config "$env:MAYAFLUX_ROOT\share\MayaFlux\report\mayaflux.report.json" 2>&1 | Tee-Object mayaflux_run.txt
+        ```
+
+        If `MAYAFLUX_ROOT` is empty, use your install location instead: `/usr` on Linux, `/opt/homebrew` on macOS, `C:\MayaFlux` on Windows.
+
+        This writes `mayaflux_report.log` to `data/log/` in your project folder, and `mayaflux_run.txt` to the folder you ran it from. If `data/log/mayaflux_report.log` already exists, delete it before running so the log only covers this run. The log always records everything, so it can be large. Zip it if needed, then drag both files into the logs box below.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: MayaFlux version and channel
+      description: For example 0.5.0 stable, or 0.5.0-dev.
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Arch Linux
+        - Fedora
+        - Ubuntu
+        - macOS (Apple Silicon)
+        - Windows
+        - Other Linux
+    validations:
+      required: true
+  - type: input
+    id: gpu
+    attributes:
+      label: GPU and driver
+      description: Optional but useful for graphics problems, for example RTX 3050 Laptop, driver 580.
+  - type: textarea
+    id: validate
+    attributes:
+      label: Output of the project check
+      description: Paste everything `validate` printed.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: config
+    attributes:
+      label: Your project's mayaflux.json
+      description: Only if your project has one. Paste its contents.
+      render: json
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Drag `mayaflux_report.log` and `mayaflux_run.txt` here. If the program crashed, also paste the last lines of `mayaflux_run.txt`.
+    validations:
+      required: true

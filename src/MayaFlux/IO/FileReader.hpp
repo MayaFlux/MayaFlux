@@ -259,7 +259,7 @@ public:
      * @brief Resolve a filepath against the project source root if not found as-is.
      *
      * Absolute paths are returned unchanged. Relative paths are tried as-is
-     * first, then prefixed with SOURCE_DIR. Returns the original path if
+     * first, then prefixed with the project root. Returns the original path if
      * neither resolves, allowing the caller to fail naturally.
      *
      * @param filepath Path as supplied by the caller.
@@ -278,7 +278,7 @@ public:
         auto from_cwd = fs::current_path() / normalized;
         if (fs::exists(from_cwd))
             return from_cwd.string();
-        auto from_root = fs::path(Config::SOURCE_DIR) / normalized;
+        auto from_root = fs::path(Config::project_root()) / normalized;
         if (fs::exists(from_root))
             return from_root.string();
         return normalized;

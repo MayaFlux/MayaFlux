@@ -164,9 +164,20 @@ void set_journal_context_includes(const std::vector<Journal::Context>& contexts)
     Journal::Archivist::instance().set_context_includes(contexts);
 }
 
+namespace {
+    std::string journal_path(const std::string& path)
+    {
+        namespace fs = std::filesystem;
+        if (PROJECT_ROOT.empty() || fs::path(path).is_absolute())
+            return path;
+        const fs::path root(PROJECT_ROOT);
+        return (fs::path(path).has_parent_path() ? root / path : root / "data" / "log" / path).string();
+    }
+}
+
 void store_journal_entries(const std::string& file_name)
 {
-    Journal::Archivist::instance().add_sink(std::make_unique<Journal::FileSink>(file_name));
+    Journal::Archivist::instance().add_sink(std::make_unique<Journal::FileSink>(journal_path(file_name)));
     set_journal_severity(Journal::Severity::TRACE);
 }
 
@@ -249,6 +260,11 @@ bool load_config_from_file(const std::string& path)
     Config::set_journal_context_includes(included_contexts);
 
     return true;
+}
+
+void set_project_root(const std::string& path)
+{
+    PROJECT_ROOT = path;
 }
 
 }

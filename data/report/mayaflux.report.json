@@ -1,0 +1,12 @@
+{
+  "graphics": {
+    "backend_info": {
+      "enable_validation": true
+    }
+  },
+  "journal": {
+    "severity": "TRACE",
+    "sink_to_console": false,
+    "log_file": "mayaflux_report.log"
+  }
+}

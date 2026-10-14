@@ -73,6 +73,11 @@ install(FILES
     DESTINATION share/MayaFlux/guides
 )
 
+install(FILES
+    ${CMAKE_SOURCE_DIR}/data/report/mayaflux.report.json
+    DESTINATION share/MayaFlux/report
+)
+
 install(TARGETS Lila
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
