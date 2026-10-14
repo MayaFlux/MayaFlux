@@ -10,8 +10,6 @@ Build-Depends:
     pkg-config,
     g++-15,
     clang-21,
-    doxygen,
-    graphviz,
     llvm-21,
     llvm-21-dev,
     libclang-21-dev,
@@ -97,19 +95,9 @@ Depends:
     libpipewire-0.3-dev,
     libasound2-dev,
     libfreetype-dev
-Suggests:
-    mayaflux-edge-doc
 Description: Modern C++ framework for real-time graphics and audio with JIT
  MayaFlux is a modern C++23 framework for real-time graphics and audio
  processing with JIT compilation and live coding capabilities.
  .
  This package includes the full development and header stack required
  at runtime for JIT compilation and live C++ coding features.
-
-Package: mayaflux-edge-doc
-Architecture: all
-Section: doc
-Depends: ${misc:Depends}
-Description: Documentation for MayaFlux development framework
- This package contains the Doxygen-generated API reference and 
- documentation for the MayaFlux framework.

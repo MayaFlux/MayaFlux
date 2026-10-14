@@ -13,9 +13,6 @@ override_dh_auto_configure:
 override_dh_auto_build-arch:
 	cmake --build --preset launchpad-dev
 
-override_dh_auto_build-indep:
-	doxygen doxyconf
-
 override_dh_auto_test:
 	:
 
@@ -31,13 +28,4 @@ override_dh_auto_install:
 	printf '@mayaflux\t-\trtprio\t\t95\n@mayaflux\t-\tmemlock\tunlimited\n@mayaflux\t-\tnice\t\t-19\n' \
 	  > debian/mayaflux-edge/etc/security/limits.d/50-mayaflux.conf
 
-	install -d debian/mayaflux-edge-doc/usr/share/doc/mayaflux-edge/html
-	if [ -d docs/html ]; then \
-	  cp -r docs/html/* debian/mayaflux-edge-doc/usr/share/doc/mayaflux-edge/html/; \
-	fi
-
 override_dh_install:
-
-override_dh_auto_clean:
-	dh_auto_clean
-	rm -rf docs/html
