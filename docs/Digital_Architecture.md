@@ -14,6 +14,29 @@ Domain is a routing annotation applied at the last moment, not a property of the
 
 The architecture that follows emerges from that premise.
 
+```mermaid
+flowchart TB
+    subgraph RT["Real-time core"]
+        Nodes -->|"blocks via buffers"| Buffers
+        Vruta["Vruta<br/>coroutines, clocks"] -->|"runtime for"| Kriya["Kriya<br/>time vocabulary"]
+        Kriya -. "schedules work on" .-> Buffers
+    end
+
+    Kakshya["Kakshya<br/>data at rest"] -->|"container buffers"| Buffers
+    IO -->|"loads"| Kakshya
+    Yantra["Yantra<br/>computation and analysis"] -->|"reads, produces"| Kakshya
+    Nexus["Nexus<br/>spatial simulation"] -->|"sinks"| Buffers
+    Buffers --> Subsystems["Core Subsystems<br/>Audio, Graphics, Input, Network"]
+    Subsystems -->|"publish services"| Registry
+    Portal -->|"uses services"| Registry
+    Yantra -->|"GPU compute"| Registry
+    Kinesis["Kinesis<br/>math"] -.-> RT
+    Kinesis -.-> Yantra
+    Kinesis -.-> Nexus
+    Lila["Lila<br/>JIT"] -. "live code" .-> RT
+```
+
+
 ---
 
 ## The Real-Time Core: Nodes, Buffers, Vruta, Kriya
@@ -80,6 +103,29 @@ A node produces one value per evaluation. A buffer accumulates those values over
 
 **Root buffers** aggregate child buffers and present a single output to a subsystem. `RootAudioBuffer` mixes its children into the audio callback output. `RootGraphicsBuffer` aggregates geometry for the frame.
 
+```mermaid
+flowchart LR
+    Node -->|"NodeFeedProcessor"| NB["NodeBuffer<br/>AudioBuffer"]
+    NB --> PC["Processing chain<br/>FilterProcessor, FeedbackProcessor, LogicProcessor"]
+    PC --> Root["RootAudioBuffer<br/>mix"]
+    Root --> Out["Audio callback output"]
+
+    BM["BufferManager"] -. "knows when to process" .-> NB
+```
+
+```mermaid
+classDiagram
+    AudioBuffer <|-- NodeBuffer
+    AudioBuffer <|-- FeedbackBuffer
+    AudioBuffer <|-- InputAudioBuffer
+    AudioBuffer <|-- SoundContainerBuffer
+    BufferProcessor <|-- NodeFeedProcessor
+    BufferProcessor <|-- FeedbackProcessor
+    FeedbackBuffer o-- HistoryBuffer : history, from Transitive::Memory
+    FeedbackProcessor ..> HistoryBuffer : lagged reads
+```
+
+
 ### Processors
 
 Processing happens to buffers, not inside them. Every buffer carries a processing chain; processors attach to that chain and execute in order when the buffer's cycle fires.
@@ -107,6 +153,40 @@ Four coroutine types cover the space of real-time work:
 `CrossRoutine` spans audio and frame clocks. `MultiRateDelay` lets either clock resume the work while ensuring it runs only once at each suspension point.
 
 `FreeRoutine` waits for a condition rather than a clock tick.
+
+```mermaid
+flowchart TB
+    subgraph Clocks
+        SC["Sample clock pump<br/>audio thread"]
+        FC["Frame clock pump<br/>graphics thread"]
+        CT["CONDITIONAL thread<br/>scheduler owned predicate loop"]
+    end
+
+    SC -->|"resumes"| SR["SoundRoutine<br/>SampleDelay, BufferDelay"]
+    FC -->|"resumes"| GR["GraphicsRoutine<br/>FrameDelay"]
+    SC -->|"scans MULTI_RATE tasks"| CR["CrossRoutine<br/>MultiRateDelay"]
+    FC -->|"scans MULTI_RATE tasks"| CR
+    CT -->|"resumes"| FR["FreeRoutine<br/>waits on a condition"]
+```
+
+`CrossRoutine` is armed on both clocks at once. Each pump marks its own clock satisfied, and when every clock the suspension asked for is satisfied, a compare-exchange on the promise's delay context lets exactly one thread resume it.
+
+```mermaid
+sequenceDiagram
+    participant A as Audio pump
+    participant G as Graphics pump
+    participant P as promise
+    participant H as CrossRoutine handle
+    A->>P: sample_satisfied = true
+    G->>P: frame_satisfied = true
+    A->>P: compare_exchange MULTIPLE to NONE
+    G->>P: compare_exchange MULTIPLE to NONE
+    P-->>A: success
+    P-->>G: fail
+    A->>H: resume()
+    Note over G: returns without resuming
+```
+
 
 `DelayContext` distinguishes buffer-based and sample-based timing regimes. `Event` and `EventManager` hold named coroutines that respond to conditions. `EventSource` and `NetworkSource` are the sources events wait on. `Clock` tracks elapsed time in samples and converts between sample counts and seconds.
 
@@ -139,6 +219,29 @@ Kakshya holds and classifies stored and live data. It describes data, provides z
 At the center is `SignalSourceContainer`, the base for all typed containers. Concrete types cover the full range of digital media:
 
 Audio containers hold files, live streams, and the engine's own output: `SoundFileContainer`, `SoundStreamContainer`, `DynamicSoundStream`, and `AudioOutputContainer`. The output container makes playback available for metering, recording, or visualization. Video and image containers include `VideoFileContainer`, `VideoStreamContainer`, `DynamicVideoStream`, `CameraContainer`, `TextureContainer`, and `TextureCollection`. `WindowContainer` exposes rendered frames; `PlotContainer` holds time-series data for Forma plots.
+
+```mermaid
+classDiagram
+    SignalSourceContainer <|-- StreamContainer
+    SignalSourceContainer <|-- TextureContainer
+    SignalSourceContainer <|-- WindowContainer
+    SignalSourceContainer <|-- PlotContainer
+    StreamContainer <|-- FileContainer
+    StreamContainer <|-- SoundStreamContainer
+    StreamContainer <|-- VideoStreamContainer
+    SoundStreamContainer <|-- DynamicSoundStream
+    DynamicSoundStream <|-- AudioOutputContainer
+    SoundStreamContainer <|-- SoundFileContainer
+    FileContainer <|-- SoundFileContainer
+    VideoStreamContainer <|-- VideoFileContainer
+    FileContainer <|-- VideoFileContainer
+    VideoStreamContainer <|-- DynamicVideoStream
+    VideoStreamContainer <|-- CameraContainer
+    TextureContainer <|-- TextureCollection
+    RegionGroup o-- Region
+    Region ..> SignalSourceContainer : marks a span, no copy
+```
+
 
 `NDData` and `DataVariant` carry typed, multidimensional values across containers and operations. Access and insertion adapters bridge them to Eigen matrices, meshes, vertices, and textures.
 
@@ -242,6 +345,20 @@ The render descriptor layout reserves `set=0, binding=0` for a `RenderTransform`
 
 `BackendRegistry` lets backends publish service interfaces without coupling consumers to a particular implementation. Portal builds higher-level systems on those services, and Yantra can reach the active GPU backend through the same seam.
 
+```mermaid
+flowchart LR
+    VK["VulkanBackend"] -->|"BufferService, ComputeService, DisplayService"| Reg["BackendRegistry<br/>type-indexed service map"]
+    AS["AudioSubsystem"] -->|"AudioBackendService"| Reg
+    IS["InputSubsystem"] -->|"InputService"| Reg
+    NS["NetworkSubsystem"] -->|"NetworkService"| Reg
+    IOM["IOManager"] -->|"IOService"| Reg
+
+    Reg -->|"queried by interface type"| Portal
+    Reg -->|"GPU compute"| Yantra
+    Portal --> User["User code"]
+```
+
+
 ---
 
 ## Core and Subsystems
@@ -256,7 +373,28 @@ The render descriptor layout reserves `set=0, binding=0` for a `RenderTransform`
 
 `NetworkSubsystem` owns TCP and UDP backends and registers a `NetworkService`.
 
-Each subsystem receives a `SubsystemProcessingHandle` for controlled access to Buffers, Nodes, and the scheduler.
+Each subsystem receives a `SubsystemProcessingHandle` for controlled access to Buffers, Nodes, the scheduler, windows, and input.
+
+```mermaid
+flowchart TB
+    Engine --> SM["SubsystemManager"]
+    SM --> AS["AudioSubsystem"]
+    SM --> GS["GraphicsSubsystem"]
+    SM --> IS["InputSubsystem"]
+    SM --> NS["NetworkSubsystem"]
+
+    AS --> AB["PipeWire, WASAPI, CoreAudio"]
+    GS --> VB["VulkanBackend"]
+    IS --> IM["InputManager"]
+    NS --> NB["TCP and UDP backends"]
+
+    SPH["SubsystemProcessingHandle<br/>one per subsystem, carries its tokens"] -.-> AS
+    SPH -.-> GS
+    SPH -.-> IS
+    SPH -.-> NS
+    SPH --> Mgr["Buffers, Nodes, TaskScheduler,<br/>Windows, Inputs"]
+```
+
 
 ---
 
@@ -275,6 +413,26 @@ Nexus is the spatial simulation and orchestration layer. It connects to the real
 `Wiring` is the builder interface for connecting entities to MayaFlux systems. The `on(window, key, bool held, on_release)` API attaches keyboard triggers; mouse drag support is available. `wire_player` is a free function that wires a Locus to standard movement controls. `Regime` is a user struct pattern for holding atomic state shared across routines.
 
 `Sinks` connect entity outputs to the real-time cycle. `AudioSink` owns an `AudioBuffer` and `AudioWriteProcessor`. `RenderSink` owns a `VKBuffer`, `GeometryWriteProcessor`, and `RenderProcessor`.
+
+```mermaid
+sequenceDiagram
+    participant F as Fabric
+    participant I as SpatialIndex3D
+    participant X as Expanse
+    participant E as Emitter
+    participant S as Sensor
+    participant A as Agent
+
+    Note over F: commit()
+    F->>I: update or insert every positioned entity
+    F->>I: publish()
+    F->>X: evaluate(snapshot): ContainsFn, on_enter, on_exit
+    F->>E: InfluenceContext, influence function
+    F->>S: PerceptionContext with within_radius results
+    F->>A: perception function, then influence function
+    Note over E,A: sinks are written from inside the user functions
+```
+
 
 `SpatialIndex3D` answers radius and k-nearest queries. `HitTest` handles ray-entity and volume-entity intersection tests.
 
@@ -349,6 +507,23 @@ Source arrives over a TCP connection. Installed code shares the process and addr
 
 `LiveArena` keeps shared JIT objects alive across compilation cycles.
 
+```mermaid
+sequenceDiagram
+    participant U as Editor or live coder
+    participant S as Lila server, ASIO
+    participant J as Clang and ORC JIT
+    participant R as Running process
+
+    U->>S: source fragment over TCP, ending in a newline
+    S->>S: async_read_some, append until the newline arrives
+    S->>J: compile C++23
+    J->>R: link against the binary's symbols, install
+    R->>R: runs in process, no IPC
+    S-->>U: JSON status
+    Note over R: vega.Sine() and the rest register objects<br/>LiveArena keeps them alive across fragments
+```
+
+
 ---
 
 ## Tokens and Domain
@@ -358,6 +533,20 @@ Every real-time object carries a processing token describing how and when it run
 Vruta tokens choose when a routine resumes; Nodes tokens choose evaluation rate; Buffers tokens combine rate, device, and concurrency. These describe execution without changing the data being processed.
 
 `Domain` unifies the token levels into a single routing value. Built-in domains cover audio, graphics, input, and mixed execution; custom domains combine the same timing, device, and concurrency choices.
+
+```mermaid
+flowchart TB
+    VT["Vruta::ProcessingToken<br/>SAMPLE_ACCURATE, FRAME_ACCURATE, EVENT_DRIVEN,<br/>MULTI_RATE, ON_DEMAND, CONDITIONAL, CUSTOM"]
+    NT["Nodes::ProcessingToken<br/>AUDIO_RATE, VISUAL_RATE, EVENT_RATE, CUSTOM_RATE"]
+    BT["Buffers::ProcessingToken, a bitfield<br/>rate, device, concurrency"]
+    NT -->|"bits 32 and up"| D["Domain, 64 bit"]
+    BT -->|"bits 16 to 31"| D
+    VT -->|"low bits"| D
+    D --> P["AUDIO, AUDIO_PARALLEL, AUDIO_GPU, AUDIO_VISUAL_SYNC,<br/>GRAPHICS, GRAPHICS_ADAPTIVE, WINDOWING, INPUT_EVENTS,<br/>CUSTOM_ON_DEMAND, CUSTOM_FLEXIBLE"]
+    C["compose_domain, create_custom_domain"] --> D
+    D -->|"decompose_domain"| ST["SubsystemTokens"]
+```
+
 
 Domain is not a property attached to data when it is created. It is a token applied to the object that processes the data, resolved at the point where a stream enters a consuming context. The same numbers flow through all domains. The token decides the timing, the device, and the concurrency model that handles them.
 
@@ -371,15 +560,77 @@ The namespaces above intersect at defined points and those intersections are whe
 
 A `SoundFileContainer` in Kakshya becomes audio output through a `SoundContainerBuffer` in Buffers, driven by a `BufferPipeline` in Kriya, scheduled by a `TaskScheduler` in Vruta, consumed by `AudioSubsystem` in Core, whose callback writes to hardware through the native audio backend.
 
+```mermaid
+flowchart LR
+    A["SoundFileContainer<br/><i>Kakshya</i>"] --> B["SoundContainerBuffer<br/><i>Buffers</i>"]
+    C["BufferPipeline<br/><i>Kriya</i>"] -->|"drives"| B
+    D["TaskScheduler<br/><i>Vruta</i>"] -->|"schedules"| C
+    B --> E["AudioSubsystem<br/><i>Core</i>"]
+    E --> F["Native audio backend<br/>PipeWire, WASAPI, CoreAudio"]
+```
+
+
 A `ParticleNetwork` in Nodes computes physics at visual rate, writes positions to a `NetworkGeometryBuffer` in Buffers, which a `RenderProcessor` submits as a draw call through `RenderFlow` in Portal, recorded via `ShaderFoundry` and submitted to the GPU by `VulkanBackend`.
+
+```mermaid
+flowchart LR
+    A["ParticleNetwork<br/><i>Nodes</i>"] --> B["NetworkGeometryBuffer<br/><i>Buffers</i>"]
+    B --> C["RenderProcessor<br/><i>Buffers</i>"]
+    C --> D["RenderFlow<br/><i>Portal</i>"]
+    D --> E["ShaderFoundry<br/><i>Portal</i>"]
+    E --> F["VulkanBackend<br/><i>Core</i>"]
+    F --> G[(GPU)]
+```
+
 
 An `InstanceNetwork` drives `InstanceNetworkBuffer` which packs per-instance transforms from an optional `InstanceFieldOperator` GPU path into an SSBO and submits a single instanced draw call each frame.
 
+```mermaid
+flowchart LR
+    A["InstanceNetwork<br/><i>Nodes</i>"] --> B["InstanceNetworkBuffer<br/><i>Buffers</i>"]
+    F["InstanceFieldOperator<br/>optional GPU path"] -->|"per-instance transforms"| B
+    B -->|"SSBO"| C["one instanced draw<br/>each frame"]
+```
+
+
 A Yantra `GranularWorkflow` analyzes a `SoundFileContainer` using `Kinesis::Discrete` for onset detection and `EnergyAnalyzer` for grain attribution, produces a sorted `RegionGroup`, which a `SamplingPipeline` in Kriya plays back through the audio subsystem.
+
+```mermaid
+flowchart LR
+    A["SoundFileContainer<br/><i>Kakshya</i>"] --> B["Kinesis::Discrete<br/>onset detection"]
+    A --> C["EnergyAnalyzer<br/>grain attribution"]
+    B --> D["GranularWorkflow<br/><i>Yantra</i>"]
+    C --> D
+    D --> E["sorted RegionGroup"]
+    E --> F["SamplingPipeline<br/><i>Kriya</i>"]
+    F --> G["AudioSubsystem"]
+```
+
 
 A Nexus `Emitter` fires its influence function each commit, pushes data to its `AudioSink`, which writes to an `AudioBuffer` registered with the `BufferManager`, mixed by `RootAudioBuffer` into the audio output. `StateEncoder` snapshots the Fabric's entity state to EXR+JSON; `StateDecoder` reconstructs it on the next session without re-running setup code.
 
+```mermaid
+flowchart LR
+    A["Emitter<br/><i>Nexus</i>"] -->|"influence function"| B["AudioSink<br/>AudioBuffer + AudioWriteProcessor"]
+    B --> C["BufferManager"]
+    C --> D["RootAudioBuffer<br/>mix"]
+    D --> E["Audio output"]
+    F["Fabric"] -->|"commit"| A
+    F -->|"StateEncoder"| G["EXR + JSON"]
+    G -->|"StateDecoder<br/>next session"| F
+```
+
+
 A Forma fader built from a `Form<float>` has one mapped state. `Bridge` can drive it from a node and route that value to both a shader parameter and an audio buffer. One control participates in both domains.
+
+```mermaid
+flowchart LR
+    N["envelope node"] -->|"Bridge::bind<br/>read each frame"| S(("MappedState&lt;float&gt;"))
+    S -->|"Bridge::write<br/>offsetof(PC, cutoff)"| P["ShaderProcessor<br/>push constants"]
+    S -->|"Bridge::write"| A["AudioWriteProcessor"]
+    S --> G["geometry function"] --> FB["FormaBuffer"]
+```
+
 
 The common thread in all of these paths is data moving as numbers through typed containers, transformed by operations, driven by a scheduler, consumed by subsystems. Domain is resolved at the consumption point. Nothing before that moment needs to know whether the numbers will become sound, light, geometry, or control.
 
