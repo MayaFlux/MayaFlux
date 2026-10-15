@@ -92,6 +92,7 @@ std::vector<double> ModalNetwork::generate_spectrum_ratios(Spectrum spectrum,
 void ModalNetwork::initialize_modes(const std::vector<double>& ratios,
     double base_decay)
 {
+    m_base_decay = base_decay;
     m_modes.clear();
     m_modes.reserve(ratios.size());
 
@@ -104,7 +105,7 @@ void ModalNetwork::initialize_modes(const std::vector<double>& ratios,
 
         mode.decay_time = base_decay / ratios[i];
 
-        mode.initial_amplitude = 1.0 / double(i + 1);
+        mode.initial_amplitude = 1.0 / static_cast<double>(i + 1);
         mode.amplitude = 0.0;
 
         mode.oscillator = std::make_shared<Generator::Sine>(static_cast<float>(mode.current_frequency));
@@ -114,6 +115,27 @@ void ModalNetwork::initialize_modes(const std::vector<double>& ratios,
 
         m_modes.push_back(std::move(mode));
     }
+}
+
+void ModalNetwork::refresh_decay()
+{
+    const double coefficient = Kinesis::Discrete::decay_per_sample(
+        m_base_decay * m_decay_multiplier, m_sample_rate);
+
+    for (auto& mode : m_modes) {
+        mode.decay_coefficient = coefficient;
+    }
+}
+
+void ModalNetwork::set_decay_multiplier(double multiplier)
+{
+    multiplier = std::max(0.01, multiplier);
+    if (multiplier == m_decay_multiplier) {
+        return;
+    }
+
+    m_decay_multiplier = multiplier;
+    refresh_decay();
 }
 
 void ModalNetwork::reset()
@@ -428,7 +450,7 @@ void ModalNetwork::apply_broadcast_parameter(const std::string& param,
     if (param == "frequency") {
         set_fundamental(value);
     } else if (param == "decay") {
-        m_decay_multiplier = std::max(0.01, value);
+        set_decay_multiplier(value);
     } else if (param == "amplitude") {
         for (auto& mode : m_modes) {
             mode.amplitude *= value;
@@ -570,7 +592,7 @@ ModalNetwork::get_metadata() const
     for (const auto& mode : m_modes) {
         avg_amplitude += mode.amplitude;
     }
-    avg_amplitude /= (double)m_modes.size();
+    avg_amplitude /= static_cast<double>(m_modes.size());
     metadata["avg_amplitude"] = std::to_string(avg_amplitude);
 
     metadata["exciter_type"] = [this]() {

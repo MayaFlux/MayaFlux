@@ -211,12 +211,10 @@ public:
     /**
      * @brief Set global decay multiplier
      * @param multiplier Scales all decay times (>1.0 = longer decay, <1.0 =
-     * shorter)
+     * shorter). Floored at 0.01. Applies to the ring in progress and to every
+     * later excitation.
      */
-    void set_decay_multiplier(double multiplier)
-    {
-        m_decay_multiplier = multiplier;
-    }
+    void set_decay_multiplier(double multiplier);
 
     /**
      * @brief Get mode data (read-only access for visualization)
@@ -365,6 +363,7 @@ private:
     Spectrum m_spectrum;
     double m_fundamental;
     double m_decay_multiplier = 1.0;
+    double m_base_decay {};
 
     std::vector<std::vector<double>> m_node_buffers; ///< Per-mode sample buffers populated each process_batch()
 
@@ -442,6 +441,11 @@ private:
      * @brief Initialize modes with given frequency ratios
      */
     void initialize_modes(const std::vector<double>& ratios, double base_decay);
+
+    /**
+     * @brief Recompute every mode's per-sample decay from the base decay and multiplier
+     */
+    void refresh_decay();
 
     /**
      * @brief Update mapped parameters before processing
