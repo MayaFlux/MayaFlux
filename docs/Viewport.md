@@ -1,6 +1,15 @@
 # ViewTransform
 
-MayaFlux has no camera object. `ViewTransform` is two `glm::mat4` fields, 128 bytes, uploaded as a push constant every frame. The vertex shader reads `view` and `projection`. That is the complete contract.
+MayaFlux has no camera object. `ViewTransform` is two `glm::mat4` fields, 128 bytes. The render processor writes it every frame, together with a geometry transform, into the render transform uniform block at `set=0, binding=0`, and the vertex shader reads `view` and `projection` from it. That is the complete contract.
+
+```mermaid
+flowchart LR
+    A["a callable you write<br/>fixed, node outputs, any state"] -->|"set_view_transform_source"| RP["RenderProcessor"]
+    B["bind_viewport_preset<br/>a NavigationState driven by keys and mouse,<br/>aspect read from the window each frame"] -->|"set_view_transform_source"| RP
+    C["Nexus Locus<br/>a NavigationState in the spatial graph"] -->|"set_view_transform,<br/>once per Fabric commit"| RP
+    RP -->|"each frame"| U["render transform block, set 0 binding 0<br/>view, projection, geometry"]
+    U --> V["vertex shader"]
+```
 
 ---
 

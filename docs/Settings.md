@@ -20,7 +20,19 @@ Fields absent from the file retain their defaults.
 
 The launcher binary loads a config file for you, so no call is needed. It uses `mayaflux.json` in the project source folder if that file exists, or the file named by `--config path/to/file.json`. The file is read before `settings()` runs, so values set in `settings()` win.
 
-Pass `--config-override` (a flag, with no path) to reverse the order: `settings()` runs first and the file is loaded after it. The file then replaces every section, so anything it does not mention returns to its default. The same behaviour can be compiled in with the `MAYAFLUX_CONFIG_OVERRIDE` define.
+Pass `--config-override` (a flag, with no path) to reverse the order: `settings()` runs first and the file is loaded after it. The file then replaces the stream, graphics, input and network sections as a whole, so anything it does not mention returns to its default. The journal options are applied as calls on top of whatever is already set. The same behaviour can be compiled in with the `MAYAFLUX_CONFIG_OVERRIDE` define.
+
+```mermaid
+flowchart LR
+    subgraph N["Default: settings() wins"]
+        direction LR
+        n1["struct defaults"] --> n2["config file replaces<br/>stream, graphics, input, network"] --> n3["settings() edits on top"] --> n4["Init()"]
+    end
+    subgraph O["--config-override: the file wins"]
+        direction LR
+        o1["struct defaults"] --> o2["settings() edits"] --> o3["config file replaces<br/>stream, graphics, input, network"] --> o4["Init()"]
+    end
+```
 
 A complete file covering all four sections plus journal:
 

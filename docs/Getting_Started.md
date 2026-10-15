@@ -92,7 +92,14 @@ void compose() {
 }
 ```
 
-`main.cpp` calls `Init()`, `settings()`, `Start()`, `compose()`, `Await()`, and `End()` in order. You do not edit it unless you need custom engine configuration beyond what `settings()` exposes.
+`main.cpp` calls `settings()`, `Init()`, `Start()`, `compose()`, `Await()`, and `End()` in order. If a config file is present it is loaded around `settings()`; see [Engine Configuration](Settings.md) for which one wins. You do not edit `main.cpp` unless you need custom engine configuration beyond what `settings()` exposes.
+
+```mermaid
+flowchart LR
+    A["settings()<br/>configure"] --> B["Init()"] --> C["Start()<br/>engine running"] --> D["compose()<br/>your program"] --> E["Await()<br/>until Ctrl-C"] --> F["End()"]
+```
+
+An exception thrown by `settings()` or by `compose()` is logged, and the engine carries on.
 
 `MayaFlux.hpp` includes the common concrete types and namespace imports by default, so the examples can use names such as `Sine` without extra includes. To keep the global namespace clear and include only the types you use, define `MAYAFLUX_NO_CONVENIENCE` before including `MayaFlux.hpp`.
 
