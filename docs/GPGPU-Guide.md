@@ -378,6 +378,7 @@ sequenceDiagram
         U->>F: is_fence_signaled(fence)
     end
     U->>X: collect_result()
+    U->>F: release_fence(fence)
 ```
 
 

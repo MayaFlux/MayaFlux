@@ -67,6 +67,22 @@ An intent set without parameters runs with its defaults. Set the matching field 
 
 A `VisionMatrix` holds the analyzer for a query and, if you give it a mode, an extractor. It keeps the last frame, its analysis and the last extraction, and every image each stage of the analysis made.
 
+```mermaid
+flowchart LR
+    Q["VisionQuery<br/>intents and their parameters"] -->|"resolve"| SEQ["VisionSequences<br/>shared first steps are paid once"]
+    SEQ --> AN["VisionAnalyzer<br/>persistent GPU executor"]
+    FR["frame: a GPU image, or a container's frame"] --> AN
+    AN --> RES["analysis, in normalised coordinates<br/>result(intent): the images each stage made"]
+    RES --> EX["VisionExtractor<br/>one mode: picture or numbers"]
+    FR --> EX
+    EX --> OUT["extraction"]
+    subgraph M["VisionMatrix, a GrammarAwareComputeMatrix"]
+        AN
+        EX
+    end
+```
+
+
 ```cpp
 auto matrix = Vision::VisionMatrix::create(query, VisionExtractMode::Crop);
 matrix->extractor()->set_output_size(256, 256);
@@ -165,6 +181,19 @@ Without a `LiveConfig`, the work sets the pace: the analysis moves forward a ste
 ```cpp
 .live = Vision::LiveConfig { .interval_seconds = 1.0 / 15.0 },
 ```
+
+```mermaid
+flowchart LR
+    SRC["source<br/>camera, video file or dynamic stream"] --> PR{"LiveConfig interval?"}
+    PR -- "none: the work sets the pace" --> P1["advance one sequence<br/>each graphics frame"]
+    PR -- "an interval" --> P2["metro on the frame clock<br/>whole analysis on each beat"]
+    P1 --> BC["analysis plus the image it applies to<br/>(the source frame, or apply_to's frame)"]
+    P2 --> BC
+    BC --> C1["process_to_buffer<br/>extract, then set the TextureBuffer image"]
+    BC --> C2["process_to_live_container<br/>extract, then append to a TextureCollection"]
+    BC --> C3["process_to_stream<br/>extract, then append each record entry,<br/>feeding a Chimera"]
+```
+
 
 You can also analyze one thing and apply the result to another. Track a hand on the camera and draw the tracks over a video:
 
@@ -344,7 +373,20 @@ static auto chimera = stream.render({ .target_window = window, .fragment_shader 
     .start();
 ```
 
-The frame and its edges at lag zero always change together, because they are appended together. When the work sets the pace instead of an interval, `matrix->analysis_rate()` reports how many analyses arrive per second, and setting a layer again with that rate keeps its lag in real seconds.
+The frame and its edges at lag zero always change together, because they are appended together.
+
+```mermaid
+flowchart LR
+    A["an analysis completes"] --> X["matrix extract"]
+    X --> R1["record: frame"] --> C1["TextureCollection<br/>ring"]
+    X --> R2["record: edges"] --> C2["TextureCollection<br/>ring"]
+    X --> R3["record: flow"] --> C3["TextureCollection<br/>ring"]
+    C1 --> L1["Chimera layer<br/>lag, speed, cut, level"]
+    C2 --> L2["Chimera layer"]
+    C2 --> L3["Chimera layer<br/>wandering lag"]
+    C3 --> L4["Chimera layer"]
+```
+ When the work sets the pace instead of an interval, `matrix->analysis_rate()` reports how many analyses arrive per second, and setting a layer again with that rate keeps its lag in real seconds.
 
 The same Chimera can also record the camera into a ring and cut its echo back whenever something moves:
 
@@ -655,6 +697,16 @@ Each `TrackResult` carries its `position`, its `previous` position, a stable `id
 | You decide when to analyze and what to do between | `VisionMatrix` or `VisionAnalyzer` called from a metro |
 | A fixed pipeline on a buffer, results read each frame | `ImageCVProcessor` |
 | Your own loop, your own images | `VisionGpuExecutor::run()` |
+
+```mermaid
+flowchart TD
+    Q{"What do you need?"}
+    Q -- "a picture of the analysis on screen, recorded, or as layers" --> W["VisionWorkflow"]
+    Q -- "to decide when to analyze, and what happens between" --> M["VisionMatrix or VisionAnalyzer<br/>called from a metro"]
+    Q -- "a fixed pipeline on a buffer, results read each frame" --> P["ImageCVProcessor"]
+    Q -- "your own loop and your own images" --> E["VisionGpuExecutor::run()"]
+```
+
 
 ---
 

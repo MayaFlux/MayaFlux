@@ -44,6 +44,17 @@ The raw dispatch capability is comparable. Everything else is not.
 | Event dependencies between kernels | `ComputeMatrix` async chain | `with_async(input, chain_lambda, on_complete)` |
 | `clReleaseMemObject` / `clReleaseKernel` | RAII, nothing to release by hand | Fences from `dispatch_async` are the exception |
 
+The five steps below, and what each replaces:
+
+```mermaid
+flowchart LR
+    S1["Step 1: the shader<br/>GLSL, or a ShaderSpec<br/><i>replaces the kernel source</i>"] --> S2["Step 2: configure<br/>GpuComputeConfig, ShaderExecutionContext<br/><i>replaces context, program, build</i>"]
+    S2 --> S3["Step 3: bind<br/>input, output, in_out, push<br/><i>replaces clSetKernelArg</i>"]
+    S3 --> S4["Step 4: execute<br/>execute, or dispatch_async<br/><i>replaces enqueue and finish</i>"]
+    S4 --> S5["Step 5: read<br/>result.data, read_output, collect_result<br/><i>replaces clEnqueueReadBuffer</i>"]
+```
+
+
 ---
 
 ## Step 1: Write the shader in GLSL
@@ -154,6 +165,25 @@ The lambda parameter names must match the declared bindings first, then the push
 - A short custom body over a few buffers is `MF_KERNEL`.
 - Anything that needs shared-memory choreography beyond the built-in templates belongs in a `.comp` file.
 
+```mermaid
+flowchart TD
+    D{"What are you writing?"}
+    D -- "a shader to read, edit and keep" --> F[".comp file"]
+    D -- "shared memory beyond the built-in templates" --> F
+    D -- "a GLSL string built in code" --> G["load_shader with a source string"]
+    D -- "a pointwise, reduction or scan that has a KernelOp" --> SP["ShaderSpec with op"]
+    D -- "a short custom body over a few buffers" --> MK["ShaderSpec with MF_KERNEL"]
+
+    F --> SC["shaderc"]
+    G --> SC
+    SP --> ASM["SPIR-V assembly<br/>no GLSL involved"]
+    MK --> GL["generated GLSL"] --> SC
+    SC --> ID["ShaderID<br/>cached by content"]
+    ASM --> ID
+    ID --> CFG["GpuComputeConfig::shader_id"]
+```
+
+
 ---
 
 ## Step 2: Configure the executor
@@ -225,6 +255,16 @@ foundry.release_fence(fence);
 
 `release_fence` is required. Each fence from `dispatch_async` holds a `VkFence` and a command buffer slot until it is released.
 
+```mermaid
+flowchart LR
+    A["dispatch_async(datum)"] --> B["FenceID"]
+    B --> C{"is_fence_signaled?"}
+    C -- "no, do other work" --> C
+    C -- yes --> D["collect_result()"]
+    D --> E["release_fence(fence)<br/><b>required</b>"]
+```
+
+
 ---
 
 ## Step 5: Read results
@@ -283,6 +323,18 @@ auto result = matrix->with(input)
 ```
 
 When the passes are different shaders that should run back to back in one submission, with barriers between them, use `ExecutionMode::DEPENDENCY` instead. It takes a list of `DependencyStage`s, each with its own `GpuComputeConfig`, a `stage_fn` that sets up bindings and data, and a `hazard_fn` that names the resources the next stage depends on.
+
+```mermaid
+flowchart TD
+    Q{"More than one dispatch?"}
+    Q -- "the same shader, new arguments each pass" --> MP["set_multipass(count, updater)<br/>batched through dispatch_batched"]
+    MP -- "pass count held in a GPU buffer" --> CI["CHAINED_INDIRECT"]
+    Q -- "different shaders, one submission,<br/>barriers between them" --> DEP["ExecutionMode::DEPENDENCY<br/>a list of DependencyStage"]
+    Q -- "separate operations, each with its own result" --> OPS{"Shape?"}
+    OPS -- "fixed order" --> CP["ComputationPipeline"]
+    OPS -- "composable, or async with a callback" --> CM["ComputeMatrix fluent chain, with_async"]
+```
+
 
 ### Multi-pass dispatch (such as bitonic sort)
 
@@ -465,6 +517,15 @@ foundry.submit_and_wait(cmd_id);
 | Full command control, indirect dispatch, or barriers between passes | `ComputePress` directly |
 
 The levels are not isolated. A `ComputeProcessor` can share `VKBuffer`s with a Yantra executor that reads them back into a `Datum` for analysis. A `ComputePress` dispatch can write into a buffer that a `GraphicsRoutine` binds as a vertex input in the same frame. The infrastructure is shared and only the abstraction level differs.
+
+```mermaid
+flowchart TD
+    Y["Yantra executor<br/>GpuResourceManager"] --> CP["ComputePress"]
+    P["ComputeProcessor<br/>on a VKBuffer"] --> CP
+    D["direct calls"] --> CP
+    CP --> SF["ShaderFoundry, Vulkan"]
+```
+
 
 For how data moves between the CPU and GPU at each level, see the [CPU-GPU IO map](GPU-CPU-IO-Map.md).
 

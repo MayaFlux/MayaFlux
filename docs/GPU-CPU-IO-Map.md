@@ -36,7 +36,40 @@ Every readback path is one of three tiers. Decide which one you are in before to
 | **1: host-visible, direct read** | The buffer has a coherent `mapped_ptr` (`HOST_STORAGE`, `UNIFORM`, or similar). Read it with a pointer dereference or memcpy. | No staging buffer, no fence, no `StagingUtils` call. |
 | **2: device-local, staged transfer** | The buffer is in device-local memory the CPU cannot see. Copy to staging, wait on a fence, read the staging memory. | A real fence round trip. Gate it behind an explicit request, never every frame. |
 
+```mermaid
+flowchart TD
+    Q{"Does the CPU actually<br/>need the numbers?"}
+    Q -- no --> T0["<b>Tier 0</b>: never leave the GPU<br/>compute writes, render reads the same buffer<br/><i>ComputeMeshBuffer rendering</i>"]
+    Q -- yes --> V{"Is the buffer host-visible and coherent?<br/>HOST_STORAGE, UNIFORM, a mapped_ptr"}
+    V -- yes --> T1["<b>Tier 1</b>: direct read<br/>pointer dereference or memcpy, no staging, no fence<br/><i>vertex counter, back_buffers today</i>"]
+    V -- "no, device-local" --> T2["<b>Tier 2</b>: staged transfer<br/>copy to a staging buffer, fence wait, read<br/>gate it behind an explicit request"]
+```
+
+
 `ComputeMeshBuffer` rendering is tier 0. A counter read through `mapped_ptr` is tier 1. `RelaxationGridBuffer` is request-gated and, because its state is host-visible, tier 1 in practice.
+
+Tier 2 as `download_from_gpu_async` performs it:
+
+```mermaid
+sequenceDiagram
+    participant C as Calling thread
+    participant S as StagingUtils
+    participant B as BufferService
+    participant Q as GPU queue
+
+    C->>S: download_from_gpu_async(source, data, size, staging)
+    S->>B: copy_buffer_fenced(source to staging)
+    B->>Q: submit the copy with a fence
+    S->>B: wait_fenced(handle)
+    Q-->>B: fence signalled
+    S->>B: invalidate_range on the staging memory
+    S->>S: memcpy from the staging mapped_ptr
+    S->>B: release_fenced(handle)
+    S-->>C: bytes in data
+```
+
+The calling thread blocks on its own fence, not on the whole queue, so the graphics queue is not stalled. `download_from_gpu` chooses between this kind of copy and a direct read by checking whether the source is host-visible.
+
 
 ---
 
@@ -88,6 +121,18 @@ This default suits a node graph, where correctness by default matters more than 
 
 `ComputeProcessor`, `RenderProcessor` and their relatives attach directly to a `VKBuffer` through a `BufferProcessingChain`. This layer is separate from Yantra: it does not sit under it, above it, or beside it in a pipeline. It is meant to be safe to call every audio buffer or every frame, so **readback is never automatic**. That is the tradeoff it makes for staying real-time-friendly.
 
+```mermaid
+flowchart LR
+    subgraph Y["Yantra: correct by default"]
+        y1["dispatch_core, chained"] --> y2["readback_primary and readback_aux<br/><b>always</b>"] --> y3["return"]
+    end
+    subgraph P["VKBuffer processors: cheap by default"]
+        p1["execute_shader"] --> p2["buffer_barrier<br/>shader read, transfer read"] --> p3["submit_and_wait<br/><b>no readback</b>"]
+        p3 -. "you ask" .-> p4["DataReadProcessor, StagingUtils,<br/>or BufferDownloadProcessor"]
+    end
+```
+
+
 ### Constants and bindings (CPU to GPU only)
 
 **Push constants** have no readback, since there is nothing to get back.
@@ -124,6 +169,20 @@ Rendered pixels are a different case. `RenderProcessor` draws to an image, so no
 
 Vertex data written by compute and consumed again as geometry goes through `GeometryReadbackNode` (in `Nodes::GpuSync`). It downloads with `download_from_gpu_async` and re-emits the result as a `GeometryWriterNode`. The transfer is synchronous and submits to the queue itself, so its `process_sample` does nothing. Drive `compute_frame()` yourself from a `FRAME_ACCURATE` metro, never from the graphics thread.
 
+```mermaid
+flowchart TD
+    A["ComputeProcessor::execute_shader<br/>ends with a buffer_barrier, no readback"] --> B{"What do you need back?"}
+    B -- "a buffer, field, vertices, mesh or pixels, once" --> R["DataReadProcessor<br/>read_*, then resolve_*"]
+    B -- "a named descriptor" --> C["ShaderProcessor::download_bound(name, ...)<br/>false if unbound"]
+    B -- "any VKBuffer, directly, off the graphics thread" --> D["StagingUtils::download_from_gpu"]
+    B -- "a copy every cycle, in a chain" --> E["BufferDownloadProcessor::configure_target"]
+    B -- "one raw back_buffers slot" --> F["StagingUtils::download_back_buffer"]
+    B -- "a whole back_buffers set, every cycle" --> G["BufferDownloadProcessor::configure_back_buffers"]
+    B -- "rendered pixels" --> H["DisplayService::readback_swapchain_region<br/>or get_last_frame"]
+    B -- "vertices back into the node graph" --> I["GeometryReadbackNode"]
+```
+
+
 ### Getting data in
 
 | Option | What it does |
@@ -139,6 +198,36 @@ Vertex data written by compute and consumed again as geometry goes through `Geom
 Underneath `ComputeProcessor` and `RenderProcessor` is Portal: `ComputePress`, `RenderFlow`, `ShaderFoundry`, `TextureLoom` and `SamplerForge`. These are thin wrappers over Vulkan, with no buffer chain, no `VKBuffer` abstraction, no processing token and no `Datum<T>`.
 
 Every processor in section 3 is an opinionated way of driving them. `ComputeProcessor::execute_shader` calls `ComputePress::bind_all`, `push_constants` and `dispatch`, then closes the command buffer with `ShaderFoundry::buffer_barrier` and `submit_and_wait`. `RenderProcessor` does the same through `RenderFlow` and `ShaderFoundry`'s command recording (`begin_secondary_commands`, `end_commands`). `TextureLoom` is what both `ShaderProcessor`'s texture handling and Yantra's `TextureExecutionContext` call for image upload and sampler binding.
+
+```mermaid
+flowchart TB
+    subgraph L2["Section 2: Yantra, Datum-driven"]
+        GEC["GpuExecutionContext<br/>TextureExecutionContext"]
+        GRM["GpuResourceManager"]
+        GEC --> GRM
+    end
+    subgraph L3["Section 3: VKBuffer processors, real-time chain"]
+        CP["ComputeProcessor"]
+        RP["RenderProcessor"]
+        DR["DataReadProcessor, DataWriteProcessor<br/>BufferDownloadProcessor, BufferUploadProcessor"]
+        NB["NodeBindingsProcessor<br/>DescriptorBindingsProcessor"]
+    end
+    subgraph L4["Section 4: Portal, raw"]
+        CPress["ComputePress"]
+        RF["RenderFlow"]
+        SF["ShaderFoundry"]
+        TL["TextureLoom"]
+    end
+    L2 --> L4
+    CP --> L4
+    RP --> L4
+    DR --> SU["StagingUtils"] --> BS["BackendRegistry<br/>BufferService"]
+    L4 --> VK[("Vulkan")]
+    BS --> VK
+```
+
+There is no arrow between Yantra and the processors on purpose: neither sits under the other. Both drive Portal, and the processors' transfers go through `StagingUtils` and the `BufferService` that the Vulkan backend registers.
+
 
 Almost no CPU-GPU IO decision is made at this level, so Portal is not mapped in detail. You reach it directly only when writing a new processor class or working outside the buffer chain. If you are debugging barriers, descriptor binding or submission behavior in a `ComputeProcessor`, read this layer next, not Yantra.
 
@@ -160,6 +249,24 @@ Every binding is reached through one of three maps. Which one yours lives in tel
 
 **The asymmetry to remember:** the maps only hold what was routed through them. A processor that writes descriptors directly with `foundry.update_descriptor_buffer`, bypassing `bind_buffer`, is invisible to name-based lookup. `RelaxationStepProcessor` does this for its ping-pong state (section 7). If a buffer was never named through `bind_buffer` or a `DescriptorBindingsProcessor::bind_*` call, there is no name to find it by.
 
+```mermaid
+flowchart LR
+    subgraph SP["ShaderProcessor"]
+        BB["m_bound_buffers<br/>descriptor name to VKBuffer"]
+    end
+    subgraph DBP["DescriptorBindingsProcessor"]
+        DB["m_bindings<br/>name to node, AudioBuffer or network<br/>and its target descriptor name"]
+    end
+    subgraph NBP["NodeBindingsProcessor"]
+        NBm["m_bindings<br/>name to node and push constant offset"]
+    end
+
+    DB -- "allocates a VKBuffer,<br/>calls bind_buffer" --> BB
+    BB -- "get_bound_buffer, download_bound" --> OK["found by name"]
+    RSP["RelaxationStepProcessor<br/>foundry.update_descriptor_buffer"] -. "bypasses bind_buffer" .-> X["invisible to name lookup"]
+```
+
+
 ### Choosing an upload path
 
 The right path depends on where the data comes from and whether it must move every cycle, not on which map is nearest.
@@ -173,6 +280,29 @@ The right path depends on where the data comes from and whether it must move eve
 | Data from another thread into a plain `VKBuffer`, only when new | Yes | `DataWriteProcessor::set_data` / `set_vertices` |
 | A full CPU-side buffer onto a specific `VKBuffer` | Yes | `BufferUploadProcessor::configure_source` (section 6 for `back_buffers`) |
 | Data assembled once or rarely, outside the chain, for Yantra | No | Extract the bytes, then Yantra `upload` / `upload_raw` / `upload_shared_raw` |
+
+```mermaid
+flowchart TD
+    A{"Where does the data come from?"}
+    A -- "a node, AudioBuffer or NodeNetwork" --> B{"Destination?"}
+    B -- "push constant" --> N1["NodeBindingsProcessor::bind_node"]
+    B -- "UBO or SSBO" --> N2["DescriptorBindingsProcessor::bind_*"]
+    A -- "raw data in hand" --> C{"Updated every cycle,<br/>in the real-time chain?"}
+    C -- "yes, a push constant" --> R1["ShaderProcessor::set_push_constant_data"]
+    C -- "yes, a named UBO or SSBO" --> R2["ShaderProcessor::bind_buffer<br/>you populate the VKBuffer"]
+    C -- "yes, from another thread, only when new" --> R5["DataWriteProcessor::set_data, set_vertices"]
+    C -- "yes, a full CPU buffer onto a VKBuffer" --> R3["BufferUploadProcessor::configure_source"]
+    C -- "no, once or rarely, for Yantra" --> R4["Yantra upload, upload_raw, upload_shared_raw"]
+```
+
+Inside the chain, the choice between a push constant and a buffer:
+
+```mermaid
+flowchart LR
+    P{"How much data?"} -- "a few scalars per cycle, up to 128 bytes" --> P1["push constant"]
+    P -- "larger, array-shaped, or persistent GPU memory" --> P2["named UBO or SSBO"]
+```
+
 
 The line that matters is real-time chain versus not. Every row but the last lives in a `BufferProcessingChain` and is built to run every buffer or frame. Yantra's upload calls are the opposite world: you already have the bytes and push them in, usually once at setup or from a non-real-time thread. Using `bind_buffer` to seed a Yantra buffer once is the most common wrong turn. Using Yantra's `upload` for something that must update every frame from a live node is the opposite mistake, since nothing re-calls it for you.
 
@@ -302,6 +432,44 @@ The canonical shape for "give me a copy on demand without paying every frame".
 
 The slots are `HostVisible | HostCoherent`, so the transfer is tier 1: a direct `mapped_ptr` memcpy with no fence. The processor still passes a `VKBuffer` (`m_snapshot_staging`) as a fallback that is never touched today, so a device-local `back_buffers` would degrade to the fenced path automatically. Cycles where nobody asked cost nothing, and delivery is event-driven, not polled.
 
+```mermaid
+sequenceDiagram
+    participant U as Any thread
+    participant G as RelaxationGridBuffer
+    participant P as RelaxationStepProcessor
+    participant S as StagingUtils
+    participant B as BroadcastSource
+    participant L as Listener
+
+    U->>G: request_snapshot(), an atomic flag
+    loop each processing cycle
+        P->>P: write_state_descriptors, state_in is front, state_out is back
+        P->>P: dispatch
+        P->>G: swap_generation(), the written slot is now front
+        P->>G: consume_snapshot_request()
+        alt no request
+            G-->>P: false, no cost
+        else request pending
+            G-->>P: true
+            P->>S: download_back_buffer(front slot)
+            S-->>P: bytes, a mapped_ptr memcpy today
+            P->>B: signal(bytes)
+            B-->>L: delivered once per request
+        end
+    end
+```
+
+Under deferred submission the request is consumed from `on_dispatch_complete` instead of right after the dispatch.
+
+```mermaid
+stateDiagram-v2
+    direction LR
+    [*] --> Slot0Front
+    Slot0Front --> Slot1Front: step reads slot 0, writes slot 1
+    Slot1Front --> Slot0Front: step reads slot 1, writes slot 0
+```
+
+
 ### VolumeGridBuffer: named fields, one-shot
 
 Fields are addressed by name, not descriptor. `read_field(name, data, size)` and `read_fields(...)` read the current read slot. `seed_raw(name, data, size)` writes a field. These are blocking transfers that need command queue access, so they suit setup, export and occasional reads. `IOManager::capture_volume` does a full-field read per captured frame on the graphics thread on purpose, and its cost there is the transfer alone because encoding goes to a worker. The `IO` volume functions in section 8 are built on these.
@@ -352,6 +520,24 @@ Notes on specific paths:
 ---
 
 ## 9. Decision table
+
+
+```mermaid
+flowchart TD
+    A{"Working through nodes<br/>and Datum?"}
+    A -- yes --> Y["Yantra"]
+    Y --> Y1{"Image or buffer?"}
+    Y1 -- "image, keep it on the GPU" --> Y2["OutputMode::IMAGE"]
+    Y1 -- "image, download it" --> Y3["OutputMode::CONTAINER"]
+    Y1 -- "buffer" --> Y4["ensure_buffer, upload, download<br/>shared: the _shared_ forms"]
+    A -- "no, driving a VKBuffer directly" --> V["VKBuffer processors"]
+    V --> V1{"Need data on the CPU?"}
+    V1 -- no --> V2["the same VKBuffer in the compute and render chains"]
+    V1 -- "one scalar, host-visible" --> V3["dereference mapped_ptr"]
+    V1 -- "something once" --> V6["DataReadProcessor"]
+    V1 -- "occasional full state" --> V4["a request flag and BroadcastSource"]
+    V1 -- "by name" --> V5["download_bound"]
+```
 
 | I need to... | Use |
 |---|---|
