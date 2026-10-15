@@ -26,6 +26,22 @@ namespace internal {
     {
         return get_buffer_manager()->attach_quick_process(std::move(processor), buffer, Buffers::ProcessingToken::GRAPHICS_BACKEND);
     }
+
+    std::shared_ptr<Buffers::BufferProcessor> attach_quick_process_channels(Buffers::AudioProcessingFunction processor, std::initializer_list<unsigned int> channels)
+    {
+        auto manager = get_buffer_manager();
+        std::shared_ptr<Buffers::BufferProcessor> attached;
+
+        for (const unsigned int channel : channels) {
+            if (attached) {
+                manager->add_processor(attached, Buffers::ProcessingToken::AUDIO_BACKEND, channel);
+            } else {
+                attached = manager->attach_quick_process(std::move(processor), Buffers::ProcessingToken::AUDIO_BACKEND, channel);
+            }
+        }
+
+        return attached;
+    }
 }
 
 //-------------------------------------------------------------------------
@@ -220,11 +236,6 @@ void route_network(
 //-------------------------------------------------------------------------
 // Audio Processing
 //-------------------------------------------------------------------------
-
-std::shared_ptr<Buffers::BufferProcessor> attach_quick_process(Buffers::AudioProcessingFunction processor, unsigned int channel_id)
-{
-    return get_buffer_manager()->attach_quick_process(std::move(processor), Buffers::ProcessingToken::AUDIO_BACKEND, channel_id);
-}
 
 void register_audio_buffer(const std::shared_ptr<Buffers::AudioBuffer>& buffer, uint32_t channel)
 {

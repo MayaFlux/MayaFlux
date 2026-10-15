@@ -27,6 +27,7 @@ namespace Buffers {
 namespace internal {
     MAYAFLUX_API std::shared_ptr<Buffers::BufferProcessor> attach_quick_process_audio(Buffers::AudioProcessingFunction processor, const std::shared_ptr<Buffers::AudioBuffer>& buffer);
     MAYAFLUX_API std::shared_ptr<Buffers::BufferProcessor> attach_quick_process_graphics(Buffers::GraphicsProcessingFunction processor, const std::shared_ptr<Buffers::VKBuffer>& buffer);
+    MAYAFLUX_API std::shared_ptr<Buffers::BufferProcessor> attach_quick_process_channels(Buffers::AudioProcessingFunction processor, std::initializer_list<unsigned int> channels);
 }
 
 //-------------------------------------------------------------------------
@@ -452,14 +453,25 @@ MAYAFLUX_API void connect_node_to_buffer(const std::shared_ptr<Nodes::Node>& nod
 //-------------------------------------------------------------------------
 
 /**
- * @brief Attaches a processing function to a specific channel
+ * @brief Attaches a processing function to one or more channels
  * @param processor Function to process the buffer
- * @param channel_id Channel index to process
+ * @param channels Channel indices to process, as a braced list. Defaults to channel 0.
+ * @return The one processor attached to every listed channel, or null for an empty list
  *
  * The processor will be called during the default engine's audio processing cycle
- * and will operate on the specified output channel buffer.
+ * and will operate on each listed output channel buffer. The same function runs
+ * on every channel, so state it captures is shared between them. Pass a braced
+ * list, as in attach_quick_process(fn, { 0, 1 }); a bare integer is not accepted.
  */
-MAYAFLUX_API std::shared_ptr<Buffers::BufferProcessor> attach_quick_process(Buffers::AudioProcessingFunction processor, unsigned int channel_id = 0);
+template <typename F>
+std::shared_ptr<Buffers::BufferProcessor> attach_quick_process(
+    F&& processor,
+    std::initializer_list<unsigned int> channels = { 0 })
+{
+    return internal::attach_quick_process_channels(
+        Buffers::AudioProcessingFunction { std::forward<F>(processor) },
+        channels);
+}
 
 // Template overloads for auto lambdas
 template <typename F>
