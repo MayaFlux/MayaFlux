@@ -6,6 +6,36 @@ The central premise is that audio samples, vertex positions, image pixels, spect
 
 The layers stack as follows. At the bottom, Kakshya provides the raw data types: `DataVariant` for concrete storage, `DataDimension` for structural metadata, `DataModality` for semantic labelling, and a family of `SignalSourceContainer` subclasses for resident or streaming data. Above that, Yantra's executor layer bridges typed `Datum` values to Vulkan SSBO and image dispatch, handling buffer staging, dispatch sizing, and readback. The operation layer sits on top of executors: operations own computational identity, the parameter system, CPU fallback logic, and GPU backend routing. Finally, the orchestration layer - `ComputeMatrix`, `ComputationPipeline`, and `ComputationGrammar` - composes operations into pipelines that can be linear, branching, async, or grammar-driven.
 
+```mermaid
+flowchart TB
+    subgraph ORCH["Orchestration"]
+        direction LR
+        CP["ComputationPipeline<br/>linear"]
+        CM["ComputeMatrix<br/>branch, parallel, async"]
+        GM["GrammarAwareComputeMatrix<br/>a ComputeMatrix plus a ComputationGrammar"]
+    end
+    subgraph OPS["Operation: computational identity"]
+        direction LR
+        U["Universal*<br/>CPU, optional GPU backend"]
+        G["Gpu*<br/>a Universal* whose CPU path throws"]
+    end
+    subgraph EXEC["Executor: staging, dispatch, readback"]
+        direction LR
+        SEC["ShaderExecutionContext"]
+        TEC["TextureExecutionContext"]
+        CUS["custom GpuExecutionContext"]
+    end
+    subgraph DATA["Data: Kakshya"]
+        direction LR
+        DV["DataVariant"]
+        DM["DataModality, DataDimension"]
+        SSC["SignalSourceContainer"]
+    end
+    ORCH --> OPS --> EXEC --> DATA
+    EXEC --> RM["GpuResourceManager"] --> VK["ComputePress, ShaderFoundry, Vulkan"]
+```
+
+
 An operation is not a thin wrapper around a shader. It is the unit of algorithmic intent: it has a name, a category (`TransformationType`, `SortingType`, etc.), a parameter system, and optionally both a CPU implementation and a GPU backend. The CPU path is the fallback and the development target; the GPU path is attached via `set_gpu_backend()` once the algorithm is correct. Grammar rules describe when and how to instantiate and invoke operations based on what data arrives, decoupling operation selection from call-site logic.
 
 ---
@@ -87,6 +117,34 @@ struct Datum {
 };
 ```
 
+```mermaid
+classDiagram
+    class Datum {
+        +T data
+        +vector~DataDimension~ dimensions
+        +DataModality modality
+        +map metadata
+        +optional container
+    }
+    class DataDimension {
+        +Role role
+        +size
+    }
+    class DataModality {
+        <<enumeration>>
+        AUDIO_1D
+        IMAGE_COLOR
+        TEXTURE_2D
+        VERTEX_POSITIONS_3D
+    }
+    class SignalSourceContainer {
+        <<abstract>>
+    }
+    Datum *-- DataDimension
+    Datum --> DataModality
+    Datum o-- SignalSourceContainer : optional
+```
+
 Common aliases:
 
 | Alias | Underlying type |
@@ -159,6 +217,40 @@ struct GpuBufferBinding {
 ## Executor Layer
 
 Bridges `Datum<T>` to Vulkan SSBO and image dispatch. Executors own buffer staging, dispatch sizing, and readback. Operations delegate to executors; executors do not own computational identity.
+
+```mermaid
+classDiagram
+    class GpuDispatchCore {
+        +execute()
+        +dispatch_core_async() FenceID
+        +dispatch_core_dependency(stages)
+        +dispatch_core_chained(channels, info, ctx)
+        +dispatch_core_chained_indirect(channels, info, ctx)
+        declare_buffer_bindings()
+        prepare_gpu_inputs()
+        on_before_gpu_dispatch()
+        calculate_dispatch_size()
+    }
+    class GpuExecutionContext {
+        <<abstract>>
+        extract_inputs() channels
+        collect_gpu_outputs() Datum
+    }
+    class ShaderExecutionContext {
+        +input() output() in_out() push()
+        +set_multipass(count, updater)
+    }
+    class TextureExecutionContext {
+        +stage_container() stage_image()
+        +OutputMode
+    }
+    GpuDispatchCore <|-- GpuExecutionContext
+    GpuExecutionContext <|-- ShaderExecutionContext
+    GpuExecutionContext <|-- TextureExecutionContext
+    GpuDispatchCore *-- GpuResourceManager
+    GpuDispatchCore ..> GpuBufferBinding : declares
+```
+
 
 ### GpuComputeConfig
 
@@ -251,6 +343,44 @@ while (!Portal::Graphics::ShaderFoundry::is_fence_signaled(fence)) {}
 auto raw = exec->collect_result();
 ```
 
+One synchronous dispatch, inside `GpuExecutionContext::execute`:
+
+```mermaid
+sequenceDiagram
+    participant U as Caller
+    participant X as Executor
+    participant R as GpuResourceManager
+    participant F as ShaderFoundry and ComputePress
+
+    U->>X: execute(datum, ctx)
+    X->>X: ensure_gpu_ready, extract_inputs
+    X->>X: on_before_gpu_dispatch, prepare_gpu_inputs
+    X->>X: bind_all_descriptors, calculate_dispatch_size
+    X->>R: dispatch(key, groups, bindings, push constants)
+    R->>F: begin_commands, bind_all, dispatch, buffer barriers
+    R->>F: submit_and_wait
+    X->>R: readback of each binding unless skip_auto_readback
+    X->>X: collect_gpu_outputs
+    X-->>U: Datum
+```
+
+The asynchronous form returns before the work finishes and the caller polls:
+
+```mermaid
+sequenceDiagram
+    participant U as Caller
+    participant X as Executor
+    participant F as ShaderFoundry
+
+    U->>X: dispatch_async(datum)
+    X-->>U: FenceID
+    loop until signalled
+        U->>F: is_fence_signaled(fence)
+    end
+    U->>X: collect_result()
+```
+
+
 ### TextureExecutionContext
 
 Executor for shaders operating on `VkImage`. Does not use the double-channel extraction path. Binding 0 is always the output storage image (`IMAGE_STORAGE`); the input sampled image lands at `image_binding` (default 1). Additional SSBOs may be declared via `aux_bindings`.
@@ -271,6 +401,15 @@ Output modes:
 | `CONTAINER` | Downloads result into `TextureContainer`. Retrieved via `execute()` or `collect_container_result()`. |
 | `SCALAR` | SSBO readback only; no image download. Retrieved via `collect_result()`. |
 | `IMAGE` | Transitions output image to shader-read layout only; zero readback cost. Retrieved via `get_output_image(0)`. |
+
+```mermaid
+flowchart TD
+    Q{"What do you need<br/>on the CPU?"}
+    Q -- "the image pixels" --> C["CONTAINER<br/>downloads into a TextureContainer"]
+    Q -- "only SSBO scalars" --> S["SCALAR<br/>collect_result()"]
+    Q -- "nothing, a render pass reads it next" --> I["IMAGE<br/>shader-read layout, zero readback<br/>get_output_image(0)"]
+```
+
 
 Staging input:
 ```cpp
@@ -351,6 +490,19 @@ auto bindings = bindings_from_spec(spec);   // std::vector<GpuBufferBinding>
 
 Use `bindings_from_spec` alongside a `GpuComputeConfig` derived from the compiled `ShaderSpec` to configure any concrete executor without depending on a specific executor type or writing GLSL.
 
+```mermaid
+flowchart LR
+    A["ShaderSpec::Assemble<br/>ssbo, pc, op"] --> B["build()"]
+    B --> C["ShaderFoundry::load_shader(spec)<br/>emit_spirv_asm"]
+    C --> D["SPIR-V module"]
+    B --> E["bindings_from_spec(spec)"]
+    E --> F["vector of GpuBufferBinding"]
+    D --> G["GpuComputeConfig"]
+    F --> H["any GpuExecutionContext"]
+    G --> H
+```
+
+
 ## Operation Layer
 
 Operations own computational identity, the parameter system, CPU fallback logic, and GPU backend routing. Executors are infrastructure that operations delegate to.
@@ -376,6 +528,47 @@ public:
 ```
 
 When a GPU backend is attached and the GPU is ready, `apply_operation` delegates to the backend. When the backend is absent or GPU initialisation fails, it falls back to `operation_function`.
+
+```mermaid
+flowchart TD
+    A["apply_operation(input)"] --> B{"GPU backend attached<br/>and ensure_gpu_ready()?"}
+    B -- yes --> GPU["backend.execute(input, context)"]
+    B -- no --> M{"context.mode"}
+    M --> H1["pre_execution_hook"]
+    H1 --> CPU["operation_function(input)"]
+    CPU --> H2["post_execution_hook"]
+    GPU --> R["return output"]
+    H2 --> R
+```
+
+The hooks wrap only the CPU path. The GPU path returns without calling them. On the CPU side, `ASYNC`, `PARALLEL` and `CHAINED` modes each have an overridable implementation that, by default, ends in the same hooked call.
+
+```mermaid
+classDiagram
+    class ComputeOperation {
+        <<abstract>>
+        #operation_function(input) output
+        +set_gpu_backend(backend)
+        +apply_operation(input) output
+    }
+    ComputeOperation <|-- UniversalTransformer
+    ComputeOperation <|-- UniversalSorter
+    ComputeOperation <|-- UniversalExtractor
+    ComputeOperation <|-- UniversalAnalyzer
+    UniversalTransformer <|-- MathematicalTransformer
+    UniversalTransformer <|-- SpectralTransformer
+    UniversalTransformer <|-- TemporalTransformer
+    UniversalTransformer <|-- ConvolutionTransformer
+    UniversalTransformer <|-- GpuTransformer
+    UniversalSorter <|-- StandardSorter
+    UniversalSorter <|-- GpuSorter
+    UniversalExtractor <|-- FeatureExtractor
+    UniversalExtractor <|-- GpuExtractor
+    UniversalAnalyzer <|-- EnergyAnalyzer
+    UniversalAnalyzer <|-- StatisticalAnalyzer
+    UniversalAnalyzer <|-- GpuAnalyzer
+```
+
 
 ### Universal\* types (CPU + optional GPU)
 
@@ -408,6 +601,29 @@ Equivalents exist for other categories: `GpuSorter`, `GpuExtractor`, `GpuAnalyze
 ---
 
 ## Orchestration Layer
+
+
+```mermaid
+flowchart LR
+    subgraph P["ComputationPipeline: fixed sequence"]
+        direction LR
+        p0["input"] --> pg["grammar rules, if any"] --> p1["OpA"] --> p2["OpB"] --> p3["output"]
+    end
+    subgraph M["ComputeMatrix: arbitrary composition"]
+        direction LR
+        m0["input"] --> mA["OpA"]
+        m0 --> mB["OpB"]
+        mA --> mj["execute_parallel"]
+        mB --> mj
+        mj --> mr["r1, r2"]
+        m0 -.->|"with_async"| mt["chain on a worker thread"]
+        mt -.->|"completion callback"| md["Datum result"]
+    end
+    subgraph G["GrammarAwareComputeMatrix"]
+        direction LR
+        g0["input"] --> gr["best matching rule fires"] --> gm["the matrix's operations"]
+    end
+```
 
 ### ComputeMatrix
 
@@ -486,6 +702,21 @@ auto result = pipeline->process(input, ExecutionContext{});
 
 Rules match by type, context, priority, and custom predicate. The highest-priority matching rule fires. Rules are sorted on insertion and indexed by `ComputationContext` for fast lookup.
 
+```mermaid
+flowchart TD
+    A["input as std::any, ExecutionContext"] --> B["rules, sorted by priority on insertion"]
+    B --> C{"next rule: matcher(input, ctx)?"}
+    C -- yes --> D["find_best_match returns that rule"]
+    C -- no --> E{"more rules?"}
+    E -- yes --> C
+    E -- no --> F["no match, std::nullopt"]
+    D --> G["execute_rule(name): matcher checked again, then executor(input, ctx)"]
+    G --> H["result as std::any"]
+```
+
+`find_best_match` only finds the rule. `execute_with_grammar` then runs it by name, casts the result back to a `Datum`, and carries on with the matrix's operations. A `ComputationContext` enters matching only through the rule's matcher, for example `UniversalMatcher::create_context_matcher`.
+
+
 `ComputationContext` values: `TEMPORAL`, `SPECTRAL`, `MATHEMATICAL`, `STRUCTURAL`, and others. Used as a secondary filter alongside the matcher predicate.
 
 **Fluent rule builder:**
@@ -551,6 +782,29 @@ Workflows are complete pipelines built on `ComputeMatrix` + `ComputationGrammar`
 ### GranularWorkflow
 
 Offline granular analysis and reconstruction. The pipeline is: segment grains from a `SignalSourceContainer` into a `RegionGroup`, attribute each grain with a scalar feature, sort by that feature, then optionally reconstruct into a `SoundFileContainer` or `DynamicSoundStream`. Each stage is a grammar rule; the matrix executes them in priority order.
+
+```mermaid
+flowchart LR
+    SRC["SignalSourceContainer"] --> SEG["segment, priority 100<br/>grain_size, hop_size"]
+    SEG --> RG["RegionGroup"]
+    RG --> ATT["attribute, priority 75<br/>feature_key"]
+    ATT --> SORT["sort, priority 50"]
+    SORT --> T{"gpu_sort_threshold above 0<br/>and grains at or above it?"}
+    T -- yes --> GS["GPU bitonic sort<br/>GpuSorter, multipass"]
+    T -- no --> CS["CPU sort"]
+    GS --> OUT{"GranularOutput"}
+    CS --> OUT
+    OUT -- "REGION_GROUP" --> O1["Datum of RegionGroup"]
+    OUT -- "CONTAINER" --> O2["SoundFileContainer<br/>concatenative"]
+    OUT -- "CONTAINER_ADDITIVE" --> O3["SoundFileContainer<br/>overlap-add"]
+    OUT -- "STREAM" --> O4["DynamicSoundStream<br/>concatenative"]
+    OUT -- "STREAM_ADDITIVE" --> O5["DynamicSoundStream<br/>overlap-add"]
+    O4 --> SP["SamplingPipeline"]
+    O5 --> SP
+```
+
+The reconstruct rule, at priority 25, is registered only for the container and stream outputs.
+
 
 **Config:**
 ```cpp
@@ -625,6 +879,20 @@ process_to_stream_async(
 ```
 
 The matrix owns the async future. Keep it alive until `drain_async()` or destruction.
+
+```mermaid
+sequenceDiagram
+    participant U as Caller thread
+    participant M as GranularMatrix
+    participant W as Worker thread
+
+    U->>M: process_to_stream_async(matrix, container, ..., on_complete)
+    M->>W: segment, attribute, sort, then reconstruct
+    Note over U: returns at once, audio is not blocked
+    W-->>U: on_complete(DynamicSoundStream), on the worker thread
+    Note over U,M: keep the matrix alive until drain_async() or destruction
+```
+
 
 **Building a custom matrix for the same pattern:**
 ```cpp
@@ -716,6 +984,28 @@ void main() {
 | Dynamic operation selection on data properties | `GrammarAwareComputeMatrix` + `ComputationGrammar` |
 | Single shader; no operation abstraction needed | `exec->execute(datum, ctx)` directly |
 | Self-contained domain pipeline (the granular pattern) | `GrammarAwareComputeMatrix` with grammar rules per stage; wrap entry points as free functions |
+
+```mermaid
+flowchart TD
+    S{"Single shader,<br/>no operation abstraction?"}
+    S -- yes --> E["exec->execute(datum, ctx)"]
+    S -- no --> O{"CPU fallback<br/>wanted?"}
+    O -- yes --> U["Universal*, then set_gpu_backend()"]
+    O -- "no, GPU only" --> GO["Gpu* type"]
+    U --> ORC{"How are operations composed?"}
+    GO --> ORC
+    ORC -- "linear, fixed" --> CP["ComputationPipeline"]
+    ORC -- "branch, parallel, async" --> CM["ComputeMatrix"]
+    ORC -- "selected by the data" --> GM["GrammarAwareComputeMatrix"]
+```
+
+```mermaid
+flowchart TD
+    D{"What does the shader read and write?"}
+    D -- "float, int or uint SSBOs, vec* through PASSTHROUGH" --> D1["ShaderExecutionContext"]
+    D -- "VkImage" --> D2["TextureExecutionContext"]
+    D -- "custom buffer layout" --> D3["subclass GpuExecutionContext"]
+```
 
 **When to subclass vs. configure:**
 
