@@ -103,20 +103,6 @@ public:
 
     void process_batch(unsigned int num_samples) override;
 
-    /**
-     * @brief Advance a slot's node for a block, through the snapshot sequence
-     * @param node Node to advance, ordinarily from a RelationSlot's node field
-     * @param buffer Filled with num_samples results
-     * @param buffer_pos Reset to 0 by this call
-     * @param num_samples Frames to produce
-     * @note node must not be processed concurrently on another thread.
-     */
-    void advance_source(const std::shared_ptr<Nodes::Node>& node, std::vector<double>& buffer,
-        size_t& buffer_pos, size_t num_samples)
-    {
-        extract_node_samples(node, buffer, buffer_pos, num_samples);
-    }
-
     [[nodiscard]] size_t get_node_count() const override { return m_slots.size(); }
 
     /**

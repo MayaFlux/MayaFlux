@@ -38,7 +38,7 @@ void NodeNetwork::apply_output_scale()
         s *= m_output_scale;
 }
 
-void NodeNetwork::extract_node_samples(
+void extract_node_samples(
     const std::shared_ptr<Nodes::Node>& node,
     std::vector<double>& buffer,
     size_t& buffer_pos,

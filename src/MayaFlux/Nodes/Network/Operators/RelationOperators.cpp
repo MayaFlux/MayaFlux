@@ -1,13 +1,28 @@
 #include "RelationOperators.hpp"
 
+#include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Nodes/Network/RelationNetwork.hpp"
 
 namespace MayaFlux::Nodes::Network {
 
+namespace {
+    std::shared_ptr<Kinesis::Stochastic::Weights> require_table(std::shared_ptr<Kinesis::Stochastic::Weights> table)
+    {
+        if (!table) {
+            error<std::invalid_argument>(
+                Journal::Component::Nodes, Journal::Context::Init,
+                std::source_location::current(),
+                "CombineOperator: null weights table");
+        }
+        return table;
+    }
+}
+
 void StepOperator::process(float frames)
 {
-    if (m_body) {
-        m_body(*this, slots(), static_cast<uint32_t>(frames));
+    const auto self = weak_from_this().lock();
+    if (self && m_body) {
+        m_body(self, slots(), static_cast<uint32_t>(frames));
     }
 }
 
@@ -40,7 +55,7 @@ void AdvanceOperator::process(float frames)
         auto block = slot.prepare_block(num_frames);
 
         if (slot.node) {
-            m_host.advance_source(slot.node, m_scratch, m_scratch_pos, num_frames);
+            extract_node_samples(slot.node, m_scratch, m_scratch_pos, num_frames);
             for (uint32_t i = 0; i < num_frames; ++i) {
                 block[i] = active ? m_scratch[i] : 0.0;
             }
@@ -95,13 +110,32 @@ void DeriveOperator::process(float frames)
 }
 
 CombineOperator::CombineOperator(size_t slot_count, size_t output_count)
-    : m_weights(slot_count, std::max<size_t>(1, output_count))
+    : m_weights(std::make_shared<Kinesis::Stochastic::Weights>(slot_count, std::max<size_t>(1, output_count)))
     , m_outputs(std::max<size_t>(1, output_count))
     , m_values(slot_count, 0.0)
 {
     for (size_t row = 0; row < slot_count; ++row) {
-        m_weights(row, 0) = 1.0;
+        (*m_weights)(row, 0) = 1.0;
     }
+}
+
+CombineOperator::CombineOperator(std::shared_ptr<Kinesis::Stochastic::Weights> table)
+    : m_weights(require_table(std::move(table)))
+    , m_outputs(std::max<size_t>(1, m_weights->cols()))
+    , m_values(m_weights->rows(), 0.0)
+{
+}
+
+Kinesis::Stochastic::Weights::Cell CombineOperator::weight(size_t slot, size_t output)
+{
+    if (slot >= m_weights->rows() || output >= m_weights->cols()) {
+        error<std::out_of_range>(
+            Journal::Component::Nodes, Journal::Context::NodeProcessing,
+            std::source_location::current(),
+            "CombineOperator::weight: ({}, {}) outside the weights table ({} x {})",
+            slot, output, m_weights->rows(), m_weights->cols());
+    }
+    return (*m_weights)(slot, output);
 }
 
 void CombineOperator::process(float frames)
@@ -109,7 +143,7 @@ void CombineOperator::process(float frames)
     const auto num_frames = static_cast<uint32_t>(frames);
     auto all = slots();
 
-    const size_t count = std::min(all.size(), m_weights.rows());
+    const size_t count = std::min(all.size(), m_weights->rows());
     if (m_values.size() < count) {
         m_values.resize(count, 0.0);
     }
@@ -132,7 +166,7 @@ void CombineOperator::process(float frames)
             }
             double sum = 0.0;
             for (size_t m = 0; m < count; ++m) {
-                sum += m_values[m] * m_weights.get(m, o);
+                sum += m_values[m] * m_weights->get(m, o);
             }
             output.m_block[frame] = sum;
         }

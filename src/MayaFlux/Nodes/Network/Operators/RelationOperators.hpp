@@ -48,7 +48,7 @@ public:
      */
     template <std::derived_from<NodeNetwork> NetworkType>
     Source(std::shared_ptr<NetworkType> network, size_t index)
-        : m_value(NetworkIndex { std::shared_ptr<NodeNetwork>(std::move(network)), index })
+        : m_value(NetworkIndex { .network = std::shared_ptr<NodeNetwork>(std::move(network)), .index = index })
     {
     }
 
@@ -146,15 +146,14 @@ public:
      * A parameter has at most one mapping. Mapping it again replaces the
      * source. Must not run concurrently with begin_block().
      */
-    RelationOperator& map(std::string parameter, Source source)
+    void map(std::string parameter, Source source)
     {
         auto it = std::ranges::find(m_bindings, parameter, &Binding::parameter);
         if (it != m_bindings.end()) {
             it->source = std::move(source);
         } else {
-            m_bindings.push_back({ std::move(parameter), std::move(source) });
+            m_bindings.push_back({ .parameter = std::move(parameter), .source = std::move(source) });
         }
-        return *this;
     }
 
     /**
@@ -194,18 +193,18 @@ private:
  * parameter().
  *
  * @code
- * net->add<StepOperator>([](StepOperator& self, std::span<RelationSlot> slots, uint32_t frames) {
+ * net->add<StepOperator>([](const std::shared_ptr<StepOperator>& self, std::span<RelationSlot> slots, uint32_t frames) {
  *     for (auto& slot : slots) {
- *         if (slot.level > self.parameter("limit")) {
+ *         if (slot.level > self->parameter("limit")) {
  *             slot.set_active(false);
  *         }
  *     }
  * });
  * @endcode
  */
-class MAYAFLUX_API StepOperator final : public RelationOperator {
+class MAYAFLUX_API StepOperator final : public RelationOperator, public std::enable_shared_from_this<StepOperator> {
 public:
-    using Body = std::function<void(StepOperator& self, std::span<RelationSlot> slots, uint32_t frames)>;
+    using Body = std::function<void(const std::shared_ptr<StepOperator>& self, std::span<RelationSlot> slots, uint32_t frames)>;
 
     explicit StepOperator(Body body)
         : m_body(std::move(body))
@@ -233,7 +232,7 @@ private:
  * @brief Produces every slot's signal for the block
  *
  * For each slot with a node, advances it for the whole block through
- * RelationNetwork::advance_source(). A slot without a node keeps its stored
+ * extract_node_samples(). A slot without a node keeps its stored
  * level for every frame.
  *
  * @note Muting (slot.active == false) zeroes what gets published to the
@@ -248,21 +247,9 @@ private:
  * Activity is read once per slot per block, at the start of process(). Place
  * AdvanceOperator after operators whose slot writes should apply this block,
  * and before DeriveOperator and CombineOperator, which read rendered blocks.
- *
- * Constructed with the owning network, which it needs to reach the protected
- * NodeNetwork::extract_node_samples().
  */
 class MAYAFLUX_API AdvanceOperator final : public RelationOperator {
 public:
-    /**
-     * @param host Network whose advance_source() advances slot nodes.
-     *             Must outlive this operator.
-     */
-    explicit AdvanceOperator(RelationNetwork& host)
-        : m_host(host)
-    {
-    }
-
     void process(float frames) override;
 
     /** @note AdvanceOperator has no parameters. */
@@ -271,7 +258,6 @@ public:
     [[nodiscard]] std::string_view get_type_name() const override { return "Advance"; }
 
 private:
-    RelationNetwork& m_host;
     std::vector<double> m_scratch;
     size_t m_scratch_pos {};
 };
@@ -314,7 +300,8 @@ private:
  * @class CombineOperator
  * @brief Turns slot blocks into published outputs
  *
- * Owns a slots-by-outputs table of weights and one block per output. Each
+ * Holds a slots-by-outputs table of weights, shareable through weights(), and
+ * one block per output. Each
  * output is the weighted sum of slot values in that frame, or, when a combine
  * function is set on it, the function's result over all slot values of the
  * frame. Place after AdvanceOperator and DeriveOperator.
@@ -324,7 +311,7 @@ private:
  *
  * @note weights() keeps the row count given at construction; it does not
  *       grow when the network's slot count does. A slot beyond that row
- *       count is simply left out of every output until weights().assign()
+ *       count is simply left out of every output until weights()->assign()
  *       is called to match, which re-seeds every cell.
  */
 class MAYAFLUX_API CombineOperator final : public RelationOperator {
@@ -341,17 +328,15 @@ public:
          * @brief Replace the weighted sum with a function of all slot values
          * @param function Called once per frame with the frame's slot values
          */
-        Output& combine(Function function)
+        void combine(Function function)
         {
             m_function = std::move(function);
-            return *this;
         }
 
         /** @brief Return to the weighted sum */
-        Output& clear_combine()
+        void clear_combine()
         {
             m_function = nullptr;
-            return *this;
         }
 
         [[nodiscard]] bool has_combine() const noexcept { return static_cast<bool>(m_function); }
@@ -370,6 +355,14 @@ public:
      */
     explicit CombineOperator(size_t slot_count, size_t output_count = 1);
 
+    /**
+     * @brief Combine through a table shared with other operators
+     * @param table Slot-to-output weights, one row per slot. Not re-seeded.
+     *              One output is published per column.
+     * @throws std::invalid_argument when table is null
+     */
+    explicit CombineOperator(std::shared_ptr<Kinesis::Stochastic::Weights> table);
+
     void process(float frames) override;
 
     /** @note CombineOperator has no parameters. */
@@ -384,14 +377,24 @@ public:
     /**
      * @brief Slot-to-output weights, slot_count rows by output_count columns
      */
-    [[nodiscard]] Kinesis::Stochastic::Weights& weights() noexcept { return m_weights; }
-    [[nodiscard]] const Kinesis::Stochastic::Weights& weights() const noexcept { return m_weights; }
+    [[nodiscard]] const std::shared_ptr<Kinesis::Stochastic::Weights>& weights() const noexcept { return m_weights; }
+
+    /**
+     * @brief One weight cell, readable and assignable from any thread
+     * @param slot Row, the slot index
+     * @param output Column, the output index
+     * @throws std::out_of_range when slot or output lies outside the table.
+     *         The row count is fixed at construction, so a slot added to the
+     *         network afterwards has no row until weights()->assign().
+     * @note The returned cell must not be kept across weights()->assign().
+     */
+    [[nodiscard]] Kinesis::Stochastic::Weights::Cell weight(size_t slot, size_t output);
 
     [[nodiscard]] Output& output(size_t index) { return m_outputs[index]; }
     [[nodiscard]] const Output& output(size_t index) const { return m_outputs[index]; }
 
 private:
-    Kinesis::Stochastic::Weights m_weights;
+    std::shared_ptr<Kinesis::Stochastic::Weights> m_weights;
     std::vector<Output> m_outputs;
     std::vector<double> m_values;
 };
