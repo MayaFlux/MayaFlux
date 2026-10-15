@@ -270,10 +270,29 @@ private:
  * given and writes the result to the target slot's block. An input equal to
  * the target reads that slot's previous frame, or its previous block's last
  * value at frame 0. Place after AdvanceOperator.
+ *
+ * Three forms of rule:
+ * - a plain function of the input values;
+ * - a function of the input values and a coefficient array, which keeps the
+ *   rule's state and can be retuned, saved and shared between rules;
+ * - a boolean function of the input values and a coefficient array, such as
+ *   the parallel kernels of Kinesis::Discrete (Boolean.hpp). The block holds
+ *   0 or 1, and the target's activity follows the result, so its on_enter and
+ *   on_leave callbacks fire on each change.
+ *
+ * Coefficients are parameters "c0", "c1", ...: map("c2", source) retunes
+ * coefficient 2 at the start of every block.
+ *
+ * @code
+ * namespace D = Kinesis::Discrete;
+ * n->add<DeriveOperator>(2, std::vector<size_t> { 0, 1 }, D::comparator, D::comparator_state(0.2));
+ * n->get_slot(2).on_enter.push_back([bell] { bell->excite(0.6); });
+ * @endcode
  */
 class MAYAFLUX_API DeriveOperator final : public RelationOperator {
 public:
     using Function = std::function<double(std::span<const double>)>;
+    using CoefFunction = std::function<double(std::span<const double>, std::span<double>)>;
 
     /**
      * @param target Index of the slot written
@@ -282,18 +301,73 @@ public:
      */
     DeriveOperator(size_t target, std::vector<size_t> inputs, Function function);
 
+    /**
+     * @param target Index of the slot written
+     * @param inputs Indices of the slots read
+     * @param function Receives the input values of one frame and the coefficients
+     * @param coefficients Starting coefficients, owned by this operator
+     */
+    DeriveOperator(size_t target, std::vector<size_t> inputs, CoefFunction function, std::vector<double> coefficients);
+
+    /**
+     * @param target Index of the slot written
+     * @param inputs Indices of the slots read
+     * @param function Callable returning exactly bool, taking the input values
+     *                 of one frame as a const std::vector<double>& and the
+     *                 coefficients as a std::span<double>
+     * @param coefficients Starting coefficients, owned by this operator
+     */
+    template <typename Gate>
+        requires(std::invocable<Gate&, const std::vector<double>&, std::span<double>>
+            && std::same_as<std::invoke_result_t<Gate&, const std::vector<double>&, std::span<double>>, bool>)
+    DeriveOperator(size_t target, std::vector<size_t> inputs, Gate function, std::vector<double> coefficients)
+        : m_target(target)
+        , m_inputs(std::move(inputs))
+        , m_values(m_inputs.size(), 0.0)
+        , m_coefficients(std::move(coefficients))
+        , m_kernel([gate = std::move(function)](const std::vector<double>& values, std::span<double> coefs) {
+            return gate(values, coefs) ? 1.0 : 0.0;
+        })
+        , m_gate(true)
+    {
+    }
+
     void process(float frames) override;
 
-    /** @note DeriveOperator has no parameters. */
-    void set_parameter(std::string_view /*param*/, double /*value*/) override { }
-    [[nodiscard]] std::optional<double> query_state(std::string_view /*query*/) const override { return std::nullopt; }
+    /**
+     * @brief Set one coefficient
+     * @param param "c" followed by the coefficient's index, for example "c2".
+     *              Anything else, or an index past the array, is ignored.
+     */
+    void set_parameter(std::string_view param, double value) override;
+
+    /**
+     * @return The coefficient named as in set_parameter(), or nullopt
+     */
+    [[nodiscard]] std::optional<double> query_state(std::string_view query) const override;
+
     [[nodiscard]] std::string_view get_type_name() const override { return "Derive"; }
 
+    /**
+     * @brief Replace the coefficient array
+     * @note Must not run concurrently with process(); to retune during a
+     *       block use map() or set_parameter() instead.
+     */
+    void set_coefficients(std::vector<double> coefficients) { m_coefficients = std::move(coefficients); }
+
+    [[nodiscard]] const std::vector<double>& get_coefficients() const noexcept { return m_coefficients; }
+
 private:
+    using Kernel = std::function<double(const std::vector<double>&, std::span<double>)>;
+
+    [[nodiscard]] static std::optional<size_t> coefficient_index(std::string_view param);
+
     size_t m_target;
     std::vector<size_t> m_inputs;
     std::vector<double> m_values;
-    Function m_function;
+    std::vector<double> m_coefficients;
+    Kernel m_kernel;
+    bool m_gate {};
 };
 
 /**

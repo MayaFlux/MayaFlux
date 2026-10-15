@@ -75,13 +75,60 @@ DeriveOperator::DeriveOperator(size_t target, std::vector<size_t> inputs, Functi
     : m_target(target)
     , m_inputs(std::move(inputs))
     , m_values(m_inputs.size(), 0.0)
-    , m_function(std::move(function))
+    , m_kernel(function ? Kernel([function = std::move(function)](const std::vector<double>& values, std::span<double>) {
+        return function(values);
+    })
+                        : Kernel {})
 {
+}
+
+DeriveOperator::DeriveOperator(size_t target, std::vector<size_t> inputs, CoefFunction function, std::vector<double> coefficients)
+    : m_target(target)
+    , m_inputs(std::move(inputs))
+    , m_values(m_inputs.size(), 0.0)
+    , m_coefficients(std::move(coefficients))
+    , m_kernel(function ? Kernel([function = std::move(function)](const std::vector<double>& values, std::span<double> coefs) {
+        return function(values, coefs);
+    })
+                        : Kernel {})
+{
+}
+
+std::optional<size_t> DeriveOperator::coefficient_index(std::string_view param)
+{
+    if (param.size() < 2 || param.front() != 'c') {
+        return std::nullopt;
+    }
+
+    size_t index {};
+    const auto digits = param.substr(1);
+    const auto [end, error] = std::from_chars(digits.data(), digits.data() + digits.size(), index);
+    if (error != std::errc {} || end != digits.data() + digits.size()) {
+        return std::nullopt;
+    }
+    return index;
+}
+
+void DeriveOperator::set_parameter(std::string_view param, double value)
+{
+    const auto index = coefficient_index(param);
+    if (index && *index < m_coefficients.size()) {
+        m_coefficients[*index] = value;
+    }
+}
+
+std::optional<double> DeriveOperator::query_state(std::string_view query) const
+{
+    const auto index = coefficient_index(query);
+    if (index && *index < m_coefficients.size()) {
+        return m_coefficients[*index];
+    }
+    return std::nullopt;
 }
 
 void DeriveOperator::process(float frames)
 {
-    if (!m_function) {
+    if (!m_kernel) {
         return;
     }
 
@@ -101,7 +148,10 @@ void DeriveOperator::process(float frames)
                     : all[input_index].level;
             }
         }
-        out[frame] = m_function(m_values);
+        out[frame] = m_kernel(m_values, m_coefficients);
+        if (m_gate) {
+            target.set_active(out[frame] > 0.5);
+        }
     }
 
     if (num_frames > 0) {
