@@ -20,11 +20,21 @@ class SDFMeshProcessor;
  * RenderProcessor draws from the same VKBuffer. No CPU-GPU round-trip occurs
  * after the initial lookup table upload.
  *
+ * Config::source picks where the field is evaluated. A SpatialField is
+ * evaluated on the CPU into the grid whenever the buffer is dirty. A path
+ * names a field compute shader that fills the grid on the GPU, driven through
+ * get_field_processor(). The surface is re-extracted only when dirty.
+ *
  * Usage:
  * @code
- * auto buf = std::make_shared<ComputeMeshBuffer>(
- *     make_field(), glm::vec3(-1.6F), glm::vec3(1.6F), 40, 40, 40)
- *     | Graphics;
+ * auto buf = std::make_shared<ComputeMeshBuffer>(ComputeMeshBuffer::Config {
+ *     .source = make_field(),
+ *     .bounds_min = glm::vec3(-1.6F),
+ *     .bounds_max = glm::vec3(1.6F),
+ *     .resolution_x = 40,
+ *     .resolution_y = 40,
+ *     .resolution_z = 40,
+ * }) | Graphics;
  * buf->setup_rendering({ .target_window = window });
  *
  * schedule_metro(1.0 / 60.0, [buf, make_field]() {
@@ -50,54 +60,6 @@ public:
     };
 
     explicit ComputeMeshBuffer(Config config);
-
-    /**
-     * @param field      SpatialField evaluated on CPU each dirty frame.
-     * @param bounds_min World-space minimum corner.
-     * @param bounds_max World-space maximum corner.
-     * @param res_x      Cell count along X (minimum 1).
-     * @param res_y      Cell count along Y (minimum 1).
-     * @param res_z      Cell count along Z (minimum 1).
-     * @param iso_level  Isosurface threshold (default 0.0).
-     */
-    ComputeMeshBuffer(
-        Kinesis::SpatialField field,
-        const glm::vec3& bounds_min,
-        const glm::vec3& bounds_max,
-        uint32_t res_x,
-        uint32_t res_y,
-        uint32_t res_z,
-        float iso_level = 0.0F);
-
-    /**
-     * @brief Construct in GPU-field mode.
-     *
-     * No SpatialField is evaluated on CPU. sdf_field.comp evaluates the field
-     * entirely on the GPU each dirty frame. Animate by calling
-     * get_field_processor()->set_time(t) from a metro callback.
-     *
-     * Chain order:
-     *   default  — SdfPrepProcessor  (allocates + zeroes grid/counter)
-     *   pre      — SdfFieldProcessor (dispatches sdf_field.comp → grid)
-     *   flat[0]  — SDFMeshProcessor  (mc_emit → vertices)
-     *   final    — RenderProcessor
-     *
-     * @param bounds_min  World-space minimum corner.
-     * @param bounds_max  World-space maximum corner.
-     * @param res_x       Cell count along X (minimum 1).
-     * @param res_y       Cell count along Y (minimum 1).
-     * @param res_z       Cell count along Z (minimum 1).
-     * @param iso_level   Isosurface threshold (default 0.0).
-     * @param field_shader Optional compute shader for field evaluation (default "sdf_field.comp").
-     */
-    ComputeMeshBuffer(
-        const glm::vec3& bounds_min,
-        const glm::vec3& bounds_max,
-        uint32_t res_x,
-        uint32_t res_y,
-        uint32_t res_z,
-        float iso_level = 0.0F,
-        std::string field_shader = "sdf_field_gyroid.comp");
 
     /** @brief Access the field processor to drive time or bounds from a metro. */
     [[nodiscard]] std::shared_ptr<SDFFieldProcessor> get_field_processor() const

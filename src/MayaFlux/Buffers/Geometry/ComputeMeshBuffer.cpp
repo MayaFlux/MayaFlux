@@ -36,53 +36,14 @@ ComputeMeshBuffer::ComputeMeshBuffer(
             m_gpu_field = true;
             m_field_shader = std::move(source).string();
         }
-    }, std::move(config.source));
+    },
+        std::move(config.source));
 
     MF_INFO(Journal::Component::Buffers, Journal::Context::Init,
         "ComputeMeshBuffer{}: {}x{}x{} grid, {:.1f} MB worst-case",
         m_gpu_field ? " (GPU field)" : "",
         m_res_x, m_res_y, m_res_z,
         static_cast<float>(get_size_bytes()) / (1024.F * 1024.F));
-}
-
-ComputeMeshBuffer::ComputeMeshBuffer(
-    Kinesis::SpatialField field,
-    const glm::vec3& bounds_min,
-    const glm::vec3& bounds_max,
-    uint32_t res_x,
-    uint32_t res_y,
-    uint32_t res_z,
-    float iso_level)
-    : ComputeMeshBuffer(Config {
-          .source = std::move(field),
-          .bounds_min = bounds_min,
-          .bounds_max = bounds_max,
-          .resolution_x = res_x,
-          .resolution_y = res_y,
-          .resolution_z = res_z,
-          .iso_level = iso_level,
-      })
-{
-}
-
-ComputeMeshBuffer::ComputeMeshBuffer(
-    const glm::vec3& bounds_min,
-    const glm::vec3& bounds_max,
-    uint32_t res_x,
-    uint32_t res_y,
-    uint32_t res_z,
-    float iso_level,
-    std::string field_shader)
-    : ComputeMeshBuffer(Config {
-          .source = std::filesystem::path { std::move(field_shader) },
-          .bounds_min = bounds_min,
-          .bounds_max = bounds_max,
-          .resolution_x = res_x,
-          .resolution_y = res_y,
-          .resolution_z = res_z,
-          .iso_level = iso_level,
-      })
-{
 }
 
 // ============================================================================

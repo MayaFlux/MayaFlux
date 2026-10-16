@@ -124,6 +124,34 @@ std::shared_ptr<MayaFlux::Nodes::Generator::Logic> Creator::Logic(MayaFlux::Node
     return obj;
 }
 
+std::shared_ptr<MayaFlux::Nodes::Generator::Logic> Creator::Logic(MayaFlux::Nodes::Generator::Logic::CoefDirectFunction function, std::vector<double> coefficients)
+{
+    auto obj = std::make_shared<MayaFlux::Nodes::Generator::Logic>(std::forward<decltype(function)>(function), std::forward<decltype(coefficients)>(coefficients));
+    MF_LIVE_EXPOSE_NAMED("Logic", obj);
+    return obj;
+}
+
+std::shared_ptr<MayaFlux::Nodes::Generator::Logic> Creator::Logic(MayaFlux::Nodes::Generator::Logic::CoefSequentialFunction function, size_t history_size, std::vector<double> coefficients)
+{
+    auto obj = std::make_shared<MayaFlux::Nodes::Generator::Logic>(std::forward<decltype(function)>(function), std::forward<decltype(history_size)>(history_size), std::forward<decltype(coefficients)>(coefficients));
+    MF_LIVE_EXPOSE_NAMED("Logic", obj);
+    return obj;
+}
+
+std::shared_ptr<MayaFlux::Nodes::Generator::Logic> Creator::Logic(MayaFlux::Nodes::Generator::Logic::CoefTemporalFunction function, std::vector<double> coefficients)
+{
+    auto obj = std::make_shared<MayaFlux::Nodes::Generator::Logic>(std::forward<decltype(function)>(function), std::forward<decltype(coefficients)>(coefficients));
+    MF_LIVE_EXPOSE_NAMED("Logic", obj);
+    return obj;
+}
+
+std::shared_ptr<MayaFlux::Nodes::Generator::Logic> Creator::Logic(MayaFlux::Nodes::Generator::Logic::CoefMultiInputFunction function, size_t input_count, std::vector<double> coefficients)
+{
+    auto obj = std::make_shared<MayaFlux::Nodes::Generator::Logic>(std::forward<decltype(function)>(function), std::forward<decltype(input_count)>(input_count), std::forward<decltype(coefficients)>(coefficients));
+    MF_LIVE_EXPOSE_NAMED("Logic", obj);
+    return obj;
+}
+
 std::shared_ptr<MayaFlux::Nodes::Generator::Polynomial> Creator::Polynomial(const std::vector<double> & coefficients)
 {
     auto obj = std::make_shared<MayaFlux::Nodes::Generator::Polynomial>(std::forward<decltype(coefficients)>(coefficients));
@@ -505,20 +533,6 @@ std::shared_ptr<MayaFlux::Buffers::MeshNetworkBuffer> Creator::MeshNetworkBuffer
 std::shared_ptr<MayaFlux::Buffers::ComputeMeshBuffer> Creator::ComputeMeshBuffer(MayaFlux::Buffers::ComputeMeshBuffer::Config config)
 {
     auto obj = std::make_shared<MayaFlux::Buffers::ComputeMeshBuffer>(std::forward<decltype(config)>(config));
-    MF_LIVE_EXPOSE_NAMED("ComputeMeshBuffer", obj);
-    return obj;
-}
-
-std::shared_ptr<MayaFlux::Buffers::ComputeMeshBuffer> Creator::ComputeMeshBuffer(Kinesis::SpatialField field, const glm::vec3 & bounds_min, const glm::vec3 & bounds_max, uint32_t res_x, uint32_t res_y, uint32_t res_z, float iso_level)
-{
-    auto obj = std::make_shared<MayaFlux::Buffers::ComputeMeshBuffer>(std::forward<decltype(field)>(field), std::forward<decltype(bounds_min)>(bounds_min), std::forward<decltype(bounds_max)>(bounds_max), std::forward<decltype(res_x)>(res_x), std::forward<decltype(res_y)>(res_y), std::forward<decltype(res_z)>(res_z), std::forward<decltype(iso_level)>(iso_level));
-    MF_LIVE_EXPOSE_NAMED("ComputeMeshBuffer", obj);
-    return obj;
-}
-
-std::shared_ptr<MayaFlux::Buffers::ComputeMeshBuffer> Creator::ComputeMeshBuffer(const glm::vec3 & bounds_min, const glm::vec3 & bounds_max, uint32_t res_x, uint32_t res_y, uint32_t res_z, float iso_level, std::string field_shader)
-{
-    auto obj = std::make_shared<MayaFlux::Buffers::ComputeMeshBuffer>(std::forward<decltype(bounds_min)>(bounds_min), std::forward<decltype(bounds_max)>(bounds_max), std::forward<decltype(res_x)>(res_x), std::forward<decltype(res_y)>(res_y), std::forward<decltype(res_z)>(res_z), std::forward<decltype(iso_level)>(iso_level), std::forward<decltype(field_shader)>(field_shader));
     MF_LIVE_EXPOSE_NAMED("ComputeMeshBuffer", obj);
     return obj;
 }

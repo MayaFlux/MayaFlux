@@ -16,6 +16,10 @@
     std::shared_ptr<MayaFlux::Nodes::Generator::Logic> Logic(MayaFlux::Nodes::Generator::Logic::MultiInputFunction function, size_t input_count);
     std::shared_ptr<MayaFlux::Nodes::Generator::Logic> Logic(MayaFlux::Nodes::Generator::Logic::SequentialFunction function, size_t history_size);
     std::shared_ptr<MayaFlux::Nodes::Generator::Logic> Logic(MayaFlux::Nodes::Generator::Logic::TemporalFunction function);
+    std::shared_ptr<MayaFlux::Nodes::Generator::Logic> Logic(MayaFlux::Nodes::Generator::Logic::CoefDirectFunction function, std::vector<double> coefficients);
+    std::shared_ptr<MayaFlux::Nodes::Generator::Logic> Logic(MayaFlux::Nodes::Generator::Logic::CoefSequentialFunction function, size_t history_size, std::vector<double> coefficients = {});
+    std::shared_ptr<MayaFlux::Nodes::Generator::Logic> Logic(MayaFlux::Nodes::Generator::Logic::CoefTemporalFunction function, std::vector<double> coefficients);
+    std::shared_ptr<MayaFlux::Nodes::Generator::Logic> Logic(MayaFlux::Nodes::Generator::Logic::CoefMultiInputFunction function, size_t input_count, std::vector<double> coefficients = {});
     std::shared_ptr<MayaFlux::Nodes::Generator::Polynomial> Polynomial(const std::vector<double> & coefficients);
     std::shared_ptr<MayaFlux::Nodes::Generator::Polynomial> Polynomial(MayaFlux::Nodes::Generator::Polynomial::DirectFunction function);
     std::shared_ptr<MayaFlux::Nodes::Generator::Polynomial> Polynomial(MayaFlux::Nodes::Generator::Polynomial::BufferFunction function, MayaFlux::Nodes::Generator::PolynomialMode mode, size_t buffer_size);
@@ -71,8 +75,6 @@
     std::shared_ptr<MayaFlux::Buffers::MeshBuffer> MeshBuffer(std::shared_ptr<Nodes::GpuSync::MeshWriterNode> node);
     std::shared_ptr<MayaFlux::Buffers::MeshNetworkBuffer> MeshNetworkBuffer(std::shared_ptr<Nodes::Network::MeshNetwork> network, float over_allocate_factor = 1.5F);
     std::shared_ptr<MayaFlux::Buffers::ComputeMeshBuffer> ComputeMeshBuffer(MayaFlux::Buffers::ComputeMeshBuffer::Config config);
-    std::shared_ptr<MayaFlux::Buffers::ComputeMeshBuffer> ComputeMeshBuffer(Kinesis::SpatialField field, const glm::vec3 & bounds_min, const glm::vec3 & bounds_max, uint32_t res_x, uint32_t res_y, uint32_t res_z, float iso_level = 0.0F);
-    std::shared_ptr<MayaFlux::Buffers::ComputeMeshBuffer> ComputeMeshBuffer(const glm::vec3 & bounds_min, const glm::vec3 & bounds_max, uint32_t res_x, uint32_t res_y, uint32_t res_z, float iso_level = 0.0F, std::string field_shader = "sdf_field_gyroid.comp");
     std::shared_ptr<MayaFlux::Buffers::NetworkGeometryBuffer> NetworkGeometryBuffer(std::shared_ptr<Nodes::Network::NodeNetwork> network, const std::string & binding_name = "network_geometry", float over_allocate_factor = 2.0F);
     std::shared_ptr<MayaFlux::Buffers::NetworkTextureBuffer> NetworkTextureBuffer(std::shared_ptr<Nodes::Network::NodeNetwork> network, std::shared_ptr<Core::VKImage> texture = nullptr, const std::string & binding_name = "network_texture_geometry", float over_allocate_factor = 2.0F);
     std::shared_ptr<MayaFlux::Buffers::InstanceNetworkBuffer> InstanceNetworkBuffer(std::shared_ptr<Nodes::Network::InstanceNetwork> network, float over_allocate_factor = 1.5F);
