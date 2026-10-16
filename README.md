@@ -29,10 +29,7 @@ MayaFlux is an open-source C++20/23 framework for working within this possibilit
 
 ---
 
-<!-- FEATURED VIDEO
-A substantial performance or audiovisual work.
-Use a thumbnail linked to the hosted video.
--->
+[![▶ Smoke and the Water](https://markdown-videos-api.jorgenkh.no/youtube/q3tGICMhUCg?width=1920&height=1080)](https://youtu.be/q3tGICMhUCg)
 
 ## Matter without categories
 
