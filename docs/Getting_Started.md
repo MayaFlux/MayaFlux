@@ -79,11 +79,15 @@ A MayaFlux program has two entry points defined in `src/user_project.hpp`:
 
 void settings() {
     // Runs before the engine starts.
-    // Configure sample rate, buffer size, channels, logging.
+    // Configure audio, graphics, input, network and logging.
     auto& stream = MayaFlux::Config::get_global_stream_info();
     stream.sample_rate = 48000;
     stream.buffer_size = 256;
     stream.output.channels = 2;
+
+    auto& gfx = MayaFlux::Config::get_global_graphics_config();
+    gfx.target_frame_rate = 60;
+    gfx.surface_info.image_count = 3;
 }
 
 void compose() {
@@ -91,6 +95,8 @@ void compose() {
     // All computation, routing, scheduling, and rendering lives here.
 }
 ```
+
+`settings()` reaches every part of the engine, not only audio. The stream config sets the audio device, rate and buffer; the graphics config sets the frame rate and window surface; input, network and logging have their own. Leave `settings()` empty if the defaults suit you.
 
 `main.cpp` calls `settings()`, `Init()`, `Start()`, `compose()`, `Await()`, and `End()` in order. If a config file is present it is loaded around `settings()`; see [Engine Configuration](Settings.md) for which one wins. You do not edit `main.cpp` unless you need custom engine configuration beyond what `settings()` exposes.
 
@@ -117,19 +123,36 @@ auto mesh   = vega.read_mesh_network("res/scene.glb");
 
 The `| Audio` and `| Graphics` operators are domain annotations. They attach a processing token that decides which subsystem drives the object and at what rate. They do not change what the object is.
 
+Two more calls take a whole configuration and do the entire job in one step, including attaching rendering to a window. `vega.mint` builds a visible structure from a config (an object, a model, instances, an assembly or an isosurface). `vega.evolve` sets a system going: state that persists and a rule that advances it every cycle, such as a cellular grid, a volume of flow, or a network of particles driven by GPU fields. Both return the real object and both need a `target_window`.
+
+```cpp
+auto form = vega.mint(StructureConfig::Object { .mesh = mesh, .render = { .target_window = window } });
+
+auto swarm = vega.ParticleNetwork(50000, glm::vec3(-1.0F), glm::vec3(1.0F), distribution);
+vega.evolve(swarm, { .absorb_radius = 0.05F },
+    [](const auto& field) { field->bind(Nodes::Network::FieldTarget::POSITION, swirl); },
+    { .target_window = window });
+```
+
+The program below uses both: `mint` builds the form from a field, and `evolve` sets the swarm going.
+
 ---
 
 ### A First Program
 
 Before explaining how MayaFlux works, here is something made with it.
 
-Four voices emerge from different kinds of randomness and wander through a room. A form continually reconstructs itself on the GPU, while two hundred thousand points move through a changing field. Their activity is shared: the voices alter the form, the form's changing complexity affects the voices, and the whole system develops its own irregular rhythms.
+Most introductions begin with a hello world, or with a small example that isolates one idea. This one begins with something to play with. It is a complete piece, with sound, a moving form and a swarm, that you can run, disturb and change without understanding any of it. Play is a better way to learn than a single triangle on a screen: you try something, see or hear what moved, and the questions come from you instead of from the page.
 
-Nothing needs to be recorded, downloaded, or connected. No microphone, camera, or external files are required.
+Four voices emerge from different kinds of randomness and orbit through a shared space. Each owns a body of a different shape in a form carved on the GPU, and two hundred thousand particles stream toward the voices along its surface. Their activity is shared: the voices shape the form and the swarm, the form's changing size affects the voices, and the whole system develops its own irregular rhythms.
 
-Copy the program into your Weave-created project, build it, and run it. Listen, watch, click to disturb it, and leave it running for a minute.
+Nothing needs to be recorded, downloaded, or connected. No microphone or camera is required. When it starts it asks you to choose one image, which becomes the form's skin.
+
+Copy the program into your Weave-created project, build it, and run it. Listen, watch, click to strike every voice, hold and drag to play them, and leave it running for a minute.
 
 You do not need to understand the code yet. It is here to show you a direction, not to test your understanding.
+
+This program is complete and runs as written, but it is deliberately not the shortest way to make this picture. It is built as a set of separate units: the voices, the scene they share, the form, the swarm, the camera, the Nexus wiring that gives each voice a place and a pulse, and the fields that tell the GPU what to draw. Each unit has one job and can be changed without touching the others. The fields near the end are the exception to easy reading: they are GLSL written as C++ lambdas, compiled once by the host and turned into a GPU shader function from the same text. Skip them at first and come back when you want to change how the form or the swarm look and move. Written by hand with every effect fused into one loop, it would be fewer lines, and it would also be a dead end: nothing in it could be extended. The extra length is the price of having this many places to change it, and a later tutorial takes each unit in turn and shows how to extend it.
 
 <details>
 <summary>The program (click to expand)</summary>
@@ -139,32 +162,13 @@ You do not need to understand the code yet. It is here to show you a direction, 
 #include "MayaFlux/MayaFlux.hpp"
 #include "MayaFlux/SimulationIncludes.hpp"
 
-namespace MayaFlux::Fields {
-
-using namespace MayaFlux::ShaderCompat;
-
-const auto flock = MF_FIELD_P(flock, [](vec3 p, float t, vec4 a) -> vec3 {
-    vec3 c = vec3(1.6f * sin(a.x * 0.3f), 0.4f * sin(a.x * 0.5f), 1.6f * cos(a.x * 0.3f));
-    vec3 q = p * (0.35f + 0.2f * a.z + 0.15f * a.w);
-    float w = (0.2f + a.y) * t * 0.4f / (0.6f + length(p));
-    vec3 turned = vec3(q.x * cos(w) - q.z * sin(w), q.y, q.x * sin(w) + q.z * cos(w));
-    return c + turned - p;
-});
-
-const auto voiced = MF_FIELD_P(voiced, [](vec3 p, float t, vec4 a) -> vec3 {
-    float lean = clamp(0.5f + 0.5f * (a.y - a.z) + 0.3f * sin(p.x * 1.1f + p.z * 0.7f + t * 0.2f), 0.0f, 1.0f);
-    vec3 colour = mix(vec3(0.25f, 0.6f, 1.0f), vec3(1.0f, 0.5f, 0.15f), lean);
-    float glow = 0.3f + 0.7f * clamp(a.y + a.z, 0.0f, 1.0f);
-    return colour * (glow + 0.3f * a.w * (1.0f - clamp(length(p) / 3.0f, 0.0f, 1.0f)));
-});
-
-}
-
 namespace {
 
 using Kind = Kinesis::Stochastic::Algorithm;
 
 constexpr size_t count = 4;
+constexpr uint32_t width = 1920;
+constexpr uint32_t height = 1080;
 constexpr std::array<Kind, count> kinds { Kind::UNIFORM, Kind::NORMAL, Kind::EXPONENTIAL, Kind::BROWNIAN };
 constexpr std::array<double, count> pitch { 110.0, 1400.0, 3800.0, 240.0 };
 constexpr std::array<double, count> decay { 1.0, 0.05, 0.01, 0.3 };
@@ -175,11 +179,12 @@ struct Scene {
     std::array<double, count> burst {};
     std::array<double, count> pan {};
     std::array<double, count> lean {};
+    glm::vec4 shape {};
+    glm::vec2 hand {};
+    bool gripping {};
     double surface {};
     double peak {};
-    double travel {};
-    float freq { 3.0F };
-    float aim { 3.0F };
+    std::chrono::steady_clock::time_point start {};
     float clock {};
     float angle {};
 };
@@ -189,21 +194,17 @@ struct Voices {
     std::array<std::shared_ptr<Node>, count> follow;
 };
 
+glm::vec3 voice_at(float t, size_t v)
+{
+    const auto f = static_cast<float>(v);
+    return { 1.1F * std::sin(0.5F * t + 1.7F * f), 0.5F * std::sin(0.65F * t + f), 0.8F * std::cos(0.4F * t + 1.3F * f) };
+}
+
 auto shaped(const std::shared_ptr<Node>& input, auto shape)
 {
     auto node = vega.Polynomial(shape);
     node->set_input_node(input);
     return node;
-}
-
-Kinesis::SpatialField gyroid(float s, float thickness, float t)
-{
-    return { .fn = [=](const glm::vec3& p) {
-        const float g = std::sin(p.x * s + t) * std::cos(p.y * s)
-            + std::sin(p.y * s + t * 0.7F) * std::cos(p.z * s)
-            + std::sin(p.z * s + t * 1.3F) * std::cos(p.x * s);
-        return std::max(glm::length(p) - 1.2F, std::abs(g) - thickness);
-    } };
 }
 
 Voices make_voices(const Scene& scene)
@@ -239,17 +240,246 @@ Voices make_voices(const Scene& scene)
     return voices;
 }
 
+void orbit_camera(const std::shared_ptr<Core::Window>& window, const Scene& scene)
+{
+    auto view = [&scene]() -> Kinesis::ViewTransform {
+        return Kinesis::look_at_perspective(
+            glm::vec3(6.5F * std::sin(scene.angle), 2.5F, 6.5F * std::cos(scene.angle)), glm::vec3(0.0F),
+            0.9F, static_cast<float>(width) / static_cast<float>(height), 0.1F, 50.0F);
+    };
+    for (const auto& buffer : window->get_rendering_buffers()) {
+        buffer->get_render_processor()->set_view_transform_source(view);
+    }
+}
+
+void mutate(const Voices& voices, size_t v)
+{
+    voices.noise[v]->set_type(kinds[static_cast<size_t>(get_uniform_random(0.0, 3.999))]);
+}
+
+void evolve_voices(Scene& scene, const Voices& voices)
+{
+    auto& breath = make_persistent(vega.Sine(0.05, 1.0) | Audio[0]);
+    breath->exclude_output_from_graph();
+
+    schedule_pattern(
+        [&](uint64_t) { return static_cast<size_t>(std::ranges::max_element(scene.energy) - scene.energy.begin()); },
+        [&](size_t v) { mutate(voices, v); },
+        [&](uint64_t) { return std::vector<double> { 3.0 + 2.0 * breath->get_last_output() }; },
+        "mutate");
+
+    schedule_pattern(
+        [&](uint64_t) { return static_cast<size_t>(std::ranges::min_element(scene.energy) - scene.energy.begin()); },
+        [&](size_t v) { scene.burst[v] = 1.0; },
+        { 0.8, 1.3, 0.5, 2.1, 0.9 },
+        "bursts");
+}
+
+void inhabit(Scene& scene, const Voices& voices, const std::shared_ptr<Core::Window>& window, const std::shared_ptr<Buffers::ComputeMeshBuffer>& form, const std::shared_ptr<Nodes::Network::ParticleNetwork>& swarm)
+{
+    using namespace Nodes::Network;
+
+    scene.start = std::chrono::steady_clock::now();
+
+    auto& fabric = make_persistent<Nexus::Fabric>(*get_scheduler(), *get_event_manager());
+    auto& agents = make_persistent<std::array<std::shared_ptr<Nexus::Presence>, count>>();
+    constexpr auto token = Vruta::ProcessingToken::FRAME_ACCURATE;
+
+    for (size_t v = 0; v < count; ++v) {
+        agents[v] = std::make_shared<Nexus::Presence>(
+            1.5F,
+            [](const Nexus::PerceptionContext&) { },
+            [&scene, &voices, v](const Nexus::InfluenceContext& ctx) {
+                scene.pan[v] = std::clamp(ctx.position.x / 1.1F + (scene.gripping ? 2.0F * scene.hand.x - 1.0F : 0.0F), -1.0F, 1.0F);
+                scene.energy[v] = std::min(1.0, voices.follow[v]->get_last_output() * 10.0);
+                scene.burst[v] *= 0.9;
+                scene.lean[v] *= 0.6;
+                if (scene.gripping) {
+                    scene.lean[v] = std::max<double>(scene.lean[v], 1.0 - scene.hand.y);
+                }
+                const double lift = scene.burst[v] + scene.lean[v];
+                voices.noise[v]->set_amplitude((1.0 + 2.0 * lift) * (0.6 + 0.8 * scene.surface));
+            },
+            [&scene, &agents, v](uint32_t id, float weight) {
+                for (size_t n = 0; n < count; ++n) {
+                    if (n != v && agents[n]->id() == id) {
+                        scene.lean[n] += weight * scene.energy[v];
+                    }
+                }
+            });
+        agents[v]->set_falloff_radius(1.5F);
+        agents[v]->set_falloff_curve(Nexus::Presence::FalloffCurve::Cosine);
+
+        fabric.wire(agents[v])
+            .every(1.0 / 24.0, token)
+            .position_from([&scene, v] { return voice_at(scene.clock, v); })
+            .finalise();
+    }
+
+    auto field = swarm->get_operator_chain()->find<GpuFieldOperator>();
+
+    auto body = std::make_shared<Nexus::Emitter>(
+        [&scene, form](const Nexus::InfluenceContext&) {
+            const double live = form->get_live_vertex_count().value_or(0);
+            scene.peak = std::max(scene.peak * 0.999, live);
+            scene.surface += ((scene.peak > 0.0 ? live / scene.peak : 0.0) - scene.surface) * 0.1;
+            scene.angle += 0.003F + 0.01F * static_cast<float>(std::accumulate(scene.energy.begin(), scene.energy.end(), 0.0) / count);
+        });
+    body->set_influence<glm::vec4>(
+        [&scene](const Nexus::InfluenceContext&) { return scene.shape; },
+        Nexus::bind_params(field));
+    fabric.wire(body).every(1.0 / 24.0, token).finalise();
+
+    auto striker = std::make_shared<Nexus::Emitter>([&scene](const Nexus::InfluenceContext&) {
+        scene.burst.fill(3.0);
+        scene.shape += glm::vec4(1.0F);
+    });
+    fabric.wire(striker).on(window, IO::MouseButtons::Left).finalise();
+
+    auto hand = std::make_shared<Nexus::Emitter>([&scene](const Nexus::InfluenceContext& ctx) {
+        if (ctx.cursor_pos) {
+            scene.hand = *ctx.cursor_pos / glm::vec2(static_cast<float>(width), static_cast<float>(height));
+        }
+        scene.gripping = true;
+    });
+    fabric.wire(hand).on(window, IO::MouseButtons::Left, true, [&scene](double, double) { scene.gripping = false; }).finalise();
+
+    auto voice_of = [&agents](uint32_t id) {
+        return static_cast<size_t>(std::ranges::find_if(agents, [id](const auto& agent) { return agent->id() == id; }) - agents.begin());
+    };
+    fabric.add_expanse(std::make_shared<Nexus::Expanse>(
+        [](const glm::vec3& p) { return glm::length(p) < 0.85F; },
+        [&, voice_of](uint32_t id) {
+            if (const size_t v = voice_of(id); v < count) {
+                mutate(voices, v);
+            }
+        },
+        [&, voice_of](uint32_t id) {
+            if (const size_t v = voice_of(id); v < count) {
+                scene.burst[v] = 1.0;
+            }
+        }));
+
+    schedule_metro(
+        1.0 / 60.0,
+        [&scene, form]() {
+            const auto field = form->get_field_processor();
+            if (!field) {
+                return;
+            }
+            const auto& e = scene.energy;
+            glm::vec4 heard(e[0], e[1], e[2], e[3]);
+            if (scene.gripping) {
+                heard += glm::vec4(1.2F * (1.0F - scene.hand.y));
+            }
+            scene.shape += (heard - scene.shape) * 0.05F;
+            scene.clock = std::chrono::duration<float>(std::chrono::steady_clock::now() - scene.start).count();
+            field->set_time(scene.clock);
+            field->set_params(scene.shape);
+            form->set_dirty();
+        },
+        "form", token);
+
+    schedule_metro(1.0 / 24.0, [&fabric] { fabric.commit(); }, "commit", token);
+}
+
+}
+
+/**
+ * The fields below are GLSL written as C++ lambdas. Each one is compiled by the host
+ * and its text is also turned into a GPU shader function, so a single definition
+ * serves both. They are the densest part of the program and can be skipped until
+ * you want to change how the form or the swarm look and move.
+ */
+namespace MayaFlux::Fields {
+
+using namespace MayaFlux::ShaderCompat;
+
+const auto flock = MF_FIELD_P(flock, [](vec3 p, float t, vec4 a) -> vec3 {
+    float s = 4.0f * fract(sin(dot(p, vec3(12.9898f, 78.233f, 37.719f))) * 43758.5453f);
+    int v = int(s);
+    float reach = 12.0f * fract(s + t * 0.15f);
+
+    vec3 home = vec3(1.1f, 0.5f, 0.8f)
+        * sin(t * vec3(0.5f, 0.65f, 0.4f) + float(v) * vec3(1.7f, 1.0f, 1.3f) + vec3(0.0f, 0.0f, 1.5708f));
+
+    vec3 x = p;
+    for (int k = 0; k < 12; k++) {
+        vec3 flow = sin(vec3(x.y, x.z, x.x) * vec3(1.7f, 1.5f, 1.9f) + t * vec3(0.4f, -0.3f, 0.25f));
+        vec3 q = (x + (0.2f + 0.4f * (a.x + a.w)) * flow) * 2.4f;
+        vec3 next = vec3(q.y, q.z, q.x);
+
+        float sheet = dot(sin(q), cos(next)) - 0.2f - a.y
+            + 0.3f * a.z * sin(q.x * 3.0f + q.y * 2.0f + t * 1.2f);
+        vec3 slope = cos(q) * cos(next) - sin(vec3(q.z, q.x, q.y)) * sin(q);
+        x -= 0.33f * sheet * slope / (dot(slope, slope) + 0.5f);
+
+        vec3 n = normalize(slope + vec3(0.0001f));
+        vec3 toward = home - x;
+        vec3 along = normalize(toward - n * dot(n, toward) + vec3(0.0001f));
+        x += step(float(k), reach) * (0.08f + 0.3f * a[v]) * along;
+    }
+
+    return x - p;
+});
+
+const auto voiced = MF_FIELD_P(voiced, [](vec3 p, float t, vec4 a) -> vec3 {
+    float s = 4.0f * fract(sin(dot(p, vec3(12.9898f, 78.233f, 37.719f))) * 43758.5453f);
+    int v = int(s);
+    float progress = fract(s + t * 0.15f);
+
+    vec3 tribe = 0.5f + 0.5f * cos(6.2832f * (float(v) * 0.25f + vec3(0.0f, 0.33f, 0.67f)));
+    vec3 colour = mix(tribe, vec3(1.0f), 0.4f * progress * progress);
+
+    float energy = 0.22f + 0.58f * smoothstep(0.0f, 0.5f, a[v]);
+    return colour * (energy * sin(3.1416f * progress));
+});
+
+const auto grain = MF_FIELD_P(grain, [](vec3 p, float t, vec4 a) -> float {
+    float s = 4.0f * fract(sin(dot(p, vec3(12.9898f, 78.233f, 37.719f))) * 43758.5453f);
+    int v = int(s);
+
+    float journey = 0.3f * sin(3.1416f * fract(s + t * 0.15f));
+    float breath = 0.25f * (1.0f + sin(0.4f * t + 1.6f * float(v)));
+    float loud = 0.55f * smoothstep(0.0f, 0.5f, a[v]);
+    return 0.4f + journey + breath + loud;
+});
+
+const auto heard_form = MF_FIELD_P(heard_form, [](vec3 p, float t, vec4 a) -> float {
+    vec3 shake = sin(vec3(p.y, p.z, p.x) * vec3(3.0f, 2.6f, 3.3f) + t * vec3(8.0f, -6.4f, 4.8f));
+    vec3 w = p + (0.1f + 0.2f * (a.x + a.w)) * shake;
+
+    float body = 1000.0f;
+    for (int v = 0; v < 4; v++) {
+        float fv = float(v);
+        float s = 0.35f + 0.4f * a[v];
+        vec3 d = w - vec3(1.1f, 0.5f, 0.8f) * sin(t * vec3(0.5f, 0.65f, 0.4f) + fv * vec3(1.7f, 1.0f, 1.3f) + vec3(0.0f, 0.0f, 1.5708f));
+
+        float ball = length(d) - s;
+        float ring = length(vec2(length(vec2(d.x, d.z)) - 1.1f * s, d.y)) - 0.35f * s;
+        float spike = length(vec3(d.x, d.y - clamp(d.y, -2.0f * s, 2.0f * s), d.z)) - 0.35f * s;
+        float cube = max(abs(d.x), max(abs(d.y), abs(d.z))) - s;
+        float shape = fv < 0.5f ? ball : (fv < 1.5f ? ring : (fv < 2.5f ? spike : cube));
+
+        body = -log(exp(-5.0f * body) + exp(-5.0f * shape)) / 5.0f;
+    }
+
+    return body + 0.04f * a.z * sin(w.x * 14.0f + w.y * 11.0f + t * 24.0f);
+});
+
+}
+
 std::shared_ptr<Buffers::ComputeMeshBuffer> make_form(const std::shared_ptr<Core::Window>& window)
 {
     auto skin = vega.read_image() | Graphics;
     auto form = vega.mint(StructureConfig::Isosurface {
         .config = Buffers::ComputeMeshBuffer::Config {
-            .source = gyroid(3.0F, 0.08F, 0.0F),
-            .bounds_min = glm::vec3(-1.6F),
-            .bounds_max = glm::vec3(1.6F),
-            .resolution_x = 40,
-            .resolution_y = 40,
-            .resolution_z = 40,
+            .source = Fields::heard_form,
+            .bounds_min = glm::vec3(-2.3F),
+            .bounds_max = glm::vec3(2.3F),
+            .resolution_x = 48,
+            .resolution_y = 48,
+            .resolution_z = 48,
         },
         .textures = { skin->get_texture() },
         .render = { .target_window = window },
@@ -267,160 +497,10 @@ std::shared_ptr<Nodes::Network::ParticleNetwork> make_swarm(const std::shared_pt
     vega.evolve(swarm, {}, [](const auto& field) {
         field->bind(FieldTarget::POSITION, Fields::flock);
         field->bind(FieldTarget::COLOR, Fields::voiced);
+        field->bind(FieldTarget::SCALAR, Fields::grain);
     },
         { .target_window = window });
     return swarm;
-}
-
-void orbit_camera(const std::shared_ptr<Core::Window>& window, const Scene& scene)
-{
-    auto view = [&scene]() -> Kinesis::ViewTransform {
-        return Kinesis::look_at_perspective(
-            glm::vec3(11.0F * std::sin(scene.angle), 4.0F, 11.0F * std::cos(scene.angle)), glm::vec3(0.0F, 0.2F, 0.0F),
-            0.9F, 1280.0F / 800.0F, 0.1F, 50.0F);
-    };
-    for (const auto& buffer : window->get_rendering_buffers()) {
-        buffer->get_render_processor()->set_view_transform_source(view);
-    }
-}
-
-void mutate(Scene& scene, const Voices& voices, size_t v)
-{
-    voices.noise[v]->set_type(kinds[static_cast<size_t>(get_uniform_random(0.0, 3.999))]);
-    scene.aim = static_cast<float>(get_uniform_random(2.2, 4.2));
-}
-
-void evolve_voices(Scene& scene, const Voices& voices)
-{
-    auto& breath = make_persistent(vega.Sine(0.05, 1.0) | Audio[0]);
-    breath->exclude_output_from_graph();
-
-    schedule_pattern(
-        [&](uint64_t) { return static_cast<size_t>(std::ranges::max_element(scene.energy) - scene.energy.begin()); },
-        [&](size_t v) { mutate(scene, voices, v); },
-        [&](uint64_t) { return std::vector<double> { 3.0 + 2.0 * breath->get_last_output() }; },
-        "mutate");
-
-    schedule_pattern(
-        [&](uint64_t) { return static_cast<size_t>(std::ranges::min_element(scene.energy) - scene.energy.begin()); },
-        [&](size_t v) { scene.burst[v] = 1.0; },
-        { 0.8, 1.3, 0.5, 2.1, 0.9 },
-        "bursts");
-}
-
-void inhabit(Scene& scene, const Voices& voices, const std::shared_ptr<Core::Window>& window, const std::shared_ptr<Buffers::ComputeMeshBuffer>& form, const std::shared_ptr<Nodes::Network::ParticleNetwork>& swarm)
-{
-    using namespace Nodes::Network;
-
-    auto& fabric = make_persistent<Nexus::Fabric>(*get_scheduler(), *get_event_manager());
-    auto& agents = make_persistent<std::array<std::shared_ptr<Nexus::Presence>, count>>();
-    constexpr auto token = Vruta::ProcessingToken::FRAME_ACCURATE;
-
-    for (size_t v = 0; v < count; ++v) {
-        agents[v] = std::make_shared<Nexus::Presence>(
-            3.0F,
-            [](const Nexus::PerceptionContext&) {},
-            [&scene, &voices, v](const Nexus::InfluenceContext& ctx) {
-                scene.pan[v] = std::clamp(ctx.position.x / 4.0F, -1.0F, 1.0F);
-                scene.energy[v] = std::min(1.0, voices.follow[v]->get_last_output() * 10.0);
-                scene.burst[v] *= 0.9;
-                scene.lean[v] *= 0.6;
-                const double lift = scene.burst[v] + scene.lean[v];
-                voices.noise[v]->set_amplitude((1.0 + 2.0 * lift) * (0.6 + 0.8 * scene.surface));
-            },
-            [&scene, &agents, v](uint32_t id, float weight) {
-                for (size_t n = 0; n < count; ++n) {
-                    if (n != v && agents[n]->id() == id) {
-                        scene.lean[n] += weight * scene.energy[v];
-                    }
-                }
-            });
-        agents[v]->set_falloff_radius(3.0F);
-        agents[v]->set_falloff_curve(Nexus::Presence::FalloffCurve::Cosine);
-
-        fabric.wire(agents[v])
-            .every(1.0 / 24.0, token)
-            .position_from([&scene, v] {
-                const float t = scene.clock * (0.4F + 0.15F * static_cast<float>(v));
-                return glm::vec3(4.0F * std::sin(t + 1.7F * static_cast<float>(v)), 0.5F * std::sin(1.3F * t), 3.0F * std::cos(0.8F * t + static_cast<float>(v)));
-            })
-            .finalise();
-    }
-
-    auto field = swarm->get_operator_chain()->find<GpuFieldOperator>();
-
-    auto body = std::make_shared<Nexus::Emitter>(
-        [&scene, &voices, form](const Nexus::InfluenceContext& ctx) {
-            double loudness = 0.0;
-            for (size_t v = 0; v < count; ++v) {
-                loudness += scene.energy[v];
-            }
-            const double live = form->get_live_vertex_count().value_or(0);
-            scene.peak = std::max(scene.peak * 0.999, live);
-            scene.surface += ((scene.peak > 0.0 ? live / scene.peak : 0.0) - scene.surface) * 0.1;
-
-            scene.travel += 0.04 + 0.3 * loudness / count;
-            scene.angle += 0.003F + 0.01F * static_cast<float>(loudness / count);
-            scene.freq += (scene.aim - scene.freq) * 0.05F;
-            scene.clock += 0.02F;
-
-            form->set_field(gyroid(
-                scene.freq + 0.5F * static_cast<float>(scene.energy[0] + scene.energy[2]),
-                0.06F + 0.07F * static_cast<float>(std::min(1.0, scene.energy[1] + scene.energy[3])),
-                scene.clock));
-            form->set_dirty();
-            form->get_render_processor()->set_geometry_transform(
-                glm::translate(glm::mat4(1.0F), ctx.position) * glm::scale(glm::mat4(1.0F), glm::vec3(1.4F)));
-        });
-    body->set_influence<glm::vec4>(
-        [&scene](const Nexus::InfluenceContext&) {
-            return glm::vec4(static_cast<float>(scene.travel), static_cast<float>(scene.energy[0] + scene.energy[2]), static_cast<float>(scene.energy[1] + scene.energy[3]), static_cast<float>(scene.surface));
-        },
-        Nexus::bind_params(field));
-    fabric.wire(body)
-        .every(1.0 / 24.0, token)
-        .position_from([&scene] {
-            const auto s = static_cast<float>(scene.travel);
-            return glm::vec3(4.5F * std::sin(s * 0.3F), 0.8F * std::sin(s * 0.5F), 4.5F * std::cos(s * 0.3F));
-        })
-        .finalise();
-
-    auto striker = std::make_shared<Nexus::Emitter>([&scene](const Nexus::InfluenceContext&) {
-        scene.burst[static_cast<size_t>(get_uniform_random(0.0, 3.999))] = 1.0;
-    });
-    fabric.wire(striker).on(window, IO::MouseButtons::Left).finalise();
-
-    auto voice_of = [&agents](uint32_t id) {
-        return static_cast<size_t>(std::ranges::find_if(agents, [id](const auto& agent) { return agent->id() == id; }) - agents.begin());
-    };
-    fabric.add_expanse(std::make_shared<Nexus::Expanse>(
-        [&scene](const glm::vec3& p) {
-            const auto s = static_cast<float>(scene.travel);
-            return glm::length(p - glm::vec3(1.6F * std::sin(s * 0.3F), 0.4F * std::sin(s * 0.5F), 1.6F * std::cos(s * 0.3F))) < 1.8F;
-        },
-        [&, voice_of](uint32_t id) {
-            if (const size_t v = voice_of(id); v < count) {
-                mutate(scene, voices, v);
-            }
-        },
-        [&, voice_of](uint32_t id) {
-            if (const size_t v = voice_of(id); v < count) {
-                scene.burst[v] = 1.0;
-            }
-        }));
-
-    schedule_metro(
-        1.0 / 24.0,
-        [&fabric, physics = swarm->as_operator<PhysicsOperator>(), sized = false]() mutable {
-            if (!sized) {
-                physics->set_parameter("point_size", 0.4);
-                sized = true;
-            }
-            fabric.commit();
-        },
-        "commit", token);
-}
-
 }
 
 void settings()
@@ -431,7 +511,7 @@ void compose()
 {
     auto& scene = make_persistent<Scene>();
     auto& voices = make_persistent(make_voices(scene));
-    auto& window = make_persistent(create_window({ "Four Voices, One Form", 1280, 800 }));
+    auto& window = make_persistent(create_window({ "Four Voices, One Form", width, height }));
     window->show();
 
     auto& form = make_persistent(make_form(window));
@@ -448,14 +528,14 @@ void compose()
 What this shows:
 
 - **Sound from nothing but chance.** Each voice is a stochastic generator (`UNIFORM`, `NORMAL`, `EXPONENTIAL`, `BROWNIAN`) through a resonant filter, with a gain worked out from its decay. No oscillator makes a tone.
-- **Voices that live in a room.** Each voice is a `Nexus::Presence` wandering its own path through space. Its stereo position is where it is, not a separate oscillator.
-- **Neighbours lean on each other.** A voice pushes on the voices within three units of it, strongest when close, and swells as the others push on it. Voices that drift together grow louder together, and part again.
-- **One form, carved by the GPU.** `vega.mint(StructureConfig::Isosurface { ... })` turns a signed distance field into a live mesh, a gyroid lattice cut out of a sphere. The form is an `Emitter` that carries the swarm's parameters with it through `bind_params`. The low and high voices set the lattice frequency, the other two set how thick its walls are, and the combined loudness sets how fast it travels the room.
-- **One swarm beside it.** Two hundred thousand particles run through one GPU field. The field keeps the cloud as a whole, turns it, and swells and tightens it with the voices and the form's surface. Colour follows what is sounding: warm when the low voices dominate, cool when the high ones do, brighter as the whole gets louder, with a glow in the core that grows with the form's surface, and a slow drift across the cloud so it never goes flat. It travels the same circle as the form at a third of the radius, so the form stays outside it.
-- **A loop, not a chain.** Each voice's amplitude depends on its neighbours and on how complex the form currently is. The patterns watch the scene: the loudest voice is the one that mutates and the quietest is the one that is struck. A region around the swarm adds events through space: a voice that wanders into it mutates, and one that leaves it is struck. A click is an `Emitter` wired to the mouse button, so it fires the same way a path does.
-- **Slow on purpose.** The form is re-evaluated about twenty-four times a second, and its field is evaluated on the CPU across all cores, which is why the grid is 40 cells a side.
+- **Voices that live in a room.** Each voice is a `Nexus::Presence` moving on its own closed orbit near the origin. Its stereo position is where it is, not a separate oscillator.
+- **Neighbours lean on each other.** A voice pushes on the voices within one and a half units of it, strongest when close, and swells as the others push on it. Voices that drift together grow louder together, and part again.
+- **Four bodies, one form.** `vega.mint(StructureConfig::Isosurface { ... })` turns a field into a live mesh. The field is written once with `MF_FIELD_P` and evaluated on the GPU. Each voice owns a body of its own shape (a sphere, a ring, a spike, a cube) at its position in the room, sized by its energy. Bodies merge when they come close or grow loud, and part when they do not.
+- **A swarm that follows the sound.** The two hundred thousand particles belong to four tribes, one per voice. Each particle lands on a flowing sheet and walks along it toward its voice. A louder voice sends its tribe further and faster, and brightens it. Hue says whose tribe it is, whiteness says how far along its walk it has come, and brightness says how loud its voice is. Size grows through a journey and with the voice's energy, and breathes slowly on its own.
+- **A loop, not a chain.** Each voice's amplitude depends on its neighbours and on how large the form currently is. The patterns watch the scene: the loudest voice is the one that mutates and the quietest is the one that is struck. A region at the centre adds events through space: a voice that wanders into it mutates, and one that leaves it is struck. A click is an `Emitter` wired to the mouse button that strikes every voice and flares the scene. Holding and dragging lifts the voices and pans them toward the cursor.
+- **Fast and slow on purpose.** The form's surface moves about twenty times faster than the swarm's sheet, so the two differ in time as well as in look. Both fields are evaluated on the GPU. The form is re-evaluated every frame at 48 cells a side.
 
-Change `kinds` to give the voices other randomness, the paths in `position_from` to change where they go, `set_falloff_radius` and `set_falloff_curve` for how far and how softly they reach each other, the region's radius `1.8` for how often events fire, a fifth entry in each constant array and a fifth `Presence` for another voice, `read_image()` to choose the skin it wears, and `flock` to change what the swarm does.
+Change `kinds` to give the voices other randomness, `voice_at` (with the matching orbit expression in the fields) to change where they move, `set_falloff_radius` and `set_falloff_curve` for how far and how softly they reach each other, the core radius `0.85` for how often events fire, `read_image()` to choose the skin it wears, `heard_form` to change what the form is made of, `flock` to change what the swarm does, and `voiced` and `grain` for its colour and size. The number four appears in the constant arrays, in the `Presence` loop, and in the fields themselves, where a `vec4` carries the four energies, so a fifth voice means widening all three.
 
 ---
 
@@ -466,6 +546,7 @@ Change `kinds` to give the voices other randomness, the paths in `position_from`
 - **[Processing Expression](https://mayaflux.org/tutorials/sculpting-data/processing_expression/)**: buffers, processors, math as expression
 - **[Visual Materiality I](https://mayaflux.org/tutorials/sculpting-data/visual_materiality_i/)**: graphics pipeline from a user perspective
 - **[API docs](https://mayaflux.github.io/MayaFlux/)**: generated reference; build locally with `doxygen doxyconf`
+- **Extending the units**: a future tutorial will take each part of the program above (voices, scene, form, swarm, camera, Nexus wiring, fields) and show how to extend it
 
 ---
 
