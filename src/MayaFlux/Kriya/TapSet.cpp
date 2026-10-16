@@ -21,6 +21,11 @@ void TapSet::speed(size_t tap, double ratio)
     *target.velocity = ratio * target.rate;
 }
 
+std::shared_ptr<SamplingPipeline> TapSet::sampler(size_t tap, size_t output) const
+{
+    return m_taps.at(tap).seats.at(output).sampler;
+}
+
 Kakshya::StreamSlice& TapSet::slice(size_t tap, size_t output)
 {
     const auto& seat = m_taps.at(tap).seats.at(output);

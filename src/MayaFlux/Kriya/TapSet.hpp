@@ -54,6 +54,17 @@ public:
     [[nodiscard]] Kakshya::StreamSlice& slice(size_t tap, size_t output = 0);
 
     /**
+     * @brief The sampling pipeline that plays one output of a tap.
+     *
+     * Taps on the same output channel share one pipeline. Its buffer can be
+     * routed to another channel while the taps play.
+     *
+     * @param tap    Tap number, in declaration order.
+     * @param output Which of the tap's outputs, in the order its channels were given.
+     */
+    [[nodiscard]] std::shared_ptr<SamplingPipeline> sampler(size_t tap, size_t output = 0) const;
+
+    /**
      * @brief Silence every tap and cancel entries that have not happened yet.
      */
     void stop();
