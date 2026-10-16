@@ -136,7 +136,15 @@ vega.evolve(swarm, { .absorb_radius = 0.05F },
 
 The program below uses both: `mint` builds the form from a field, and `evolve` sets the swarm going.
 
+#### Note on vega's philosophy
+*The interesting power of the computer is precisely that it is programmable. Pretending otherwise is not a kindness; it is a limitation.
+MayaFlux makes common things fluent, not because complexity is undesirable, but because verbosity should not stand between an idea and its expression. 
+Complexity is something else. It is where new possibilities emerge, where you can go beyond what the system's author imagined or provided.
+The aim is not to spare you from programming. It is to give you more freedom through it.*
+
 ---
+
+[![▶ Watch Four Voices, One Form](https://markdown-videos-api.jorgenkh.no/youtube/8gf0ATnL8g8?width=1920&height=1080)](https://www.youtube.com/watch?v=8gf0ATnL8g8)
 
 ### A First Program
 
@@ -511,11 +519,12 @@ void compose()
 {
     auto& scene = make_persistent<Scene>();
     auto& voices = make_persistent(make_voices(scene));
-    auto& window = make_persistent(create_window({ "Four Voices, One Form", width, height }));
+
+    auto window = create_window({ .title = "Four Voices, One Form", .width = width, .height = height });
     window->show();
 
-    auto& form = make_persistent(make_form(window));
-    auto& swarm = make_persistent(make_swarm(window));
+    auto form = make_form(window);
+    auto swarm = make_swarm(window);
 
     orbit_camera(window, scene);
     evolve_voices(scene, voices);
