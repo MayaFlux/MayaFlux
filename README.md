@@ -155,8 +155,7 @@ The project is under active development. Published releases provide a starting p
 - [Report a bug or ask a question](https://github.com/MayaFlux/MayaFlux/issues)
 - [Build and contribute](docs/Dev_Getting_Started.md)
 - [Contribution guidelines](CONTRIBUTING.md)
-- [Code of Conduct](CODE_OF_CONDUCT.md)
-- [Authorship and ethical declarations](ETHICAL_DECLARATIONS.md)
+- [Code of Conduct and ethical declarations](CODE_OF_CONDUCT.md)
 
 ## Looking ahead
 

@@ -129,7 +129,7 @@
   "clang-format.formatOnSave": true,
 
   "doxdocgen.file.copyrightTag": [
-    "This project is licensed under GPLv3 and subject to the terms in ETHICAL_DECLARATIONS.md"
+    "This project is licensed under GPLv3 and subject to the terms in CODE_OF_CONDUCT.md"
   ],
   "doxdocgen.file.versionTag": "@version 0.1.0",
   "doxdocgen.generic.authorTag": "@author MAYAFLUX",

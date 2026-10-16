@@ -53,14 +53,6 @@ Before opening a PR:
 
 ---
 
-## 🔎 Current Help Wanted
-
-The current general contributor task is [issue #172: Refactor `IOManager` by extracting internal helper utilities into `MayaFlux::IO::Detail`](https://github.com/MayaFlux/MayaFlux/issues/172).
-
-The issue defines the helper boundaries, API-stability requirements, implementation plan, and verification steps. Read it before starting work or claiming part of the refactor.
-
----
-
 ## 🚀 Contribution Areas
 
 MayaFlux welcomes contributions across several domains:
@@ -90,7 +82,7 @@ MayaFlux welcomes contributions across several domains:
 ## 🤝 Communication & Etiquette
 
 * Use Issues or Discussions for questions before starting major work.
-* Be respectful and patient — we aim for rigor, not speed.
+* Be respectful and patient. We aim for rigor, not speed.
 * Engage constructively; critical discourse is encouraged, hostility is not.
 * Contributions are welcome regardless of background or experience.
 
@@ -140,9 +132,9 @@ This ensures MayaFlux remains open, sustainable, and publicly beneficial.
 
 If you're new, begin with:
 
-* [`docs/Dev_Getting_Started.md`](docs/Dev_Getting_Started.md) — build from source, targets, presets, the actual run loop
-* Open issues for current contribution opportunities
+* [`docs/Dev_Getting_Started.md`](docs/Dev_Getting_Started.md): build from source, targets, presets, the actual run loop
+* [Open issues](https://github.com/MayaFlux/MayaFlux/issues) for current contribution opportunities
 
 ---
 
-*(For questions or coordination, open an issue with the appropriate label, e.g. `platform-macos`, `build-ops`, `doc`, `feature`, or `discussion`.)*
+*(For questions or coordination, open an issue with the appropriate label, e.g. `platform-macos`, `doc`, `feature`, or `discussion`.)*
