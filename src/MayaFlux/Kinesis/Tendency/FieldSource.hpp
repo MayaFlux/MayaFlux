@@ -98,6 +98,18 @@ struct FieldSource {
     }
 
     /**
+     * @brief Number of parameters the authored function takes.
+     *
+     * One for a spatial field, two with time, three with time and a parameter
+     * block. MF_FIELD, MF_FIELD_T and MF_FIELD_P enforce those shapes, so this
+     * identifies which of them produced the source.
+     */
+    [[nodiscard]] size_t parameter_count() const noexcept
+    {
+        return params.empty() ? 0 : static_cast<size_t>(std::ranges::count(params, ',')) + 1;
+    }
+
+    /**
      * @brief Whether parsing produced a usable function definition.
      */
     [[nodiscard]] bool valid() const noexcept

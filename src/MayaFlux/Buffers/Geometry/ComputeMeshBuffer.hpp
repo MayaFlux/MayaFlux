@@ -2,6 +2,7 @@
 
 #include "MayaFlux/Buffers/VKBuffer.hpp"
 #include "MayaFlux/Kakshya/NDData/VertexFormats.hpp"
+#include "MayaFlux/Kinesis/Tendency/DualField.hpp"
 #include "MayaFlux/Kinesis/Tendency/Tendency.hpp"
 
 namespace MayaFlux::Buffers {
@@ -22,8 +23,13 @@ class SDFMeshProcessor;
  *
  * Config::source picks where the field is evaluated. A SpatialField is
  * evaluated on the CPU into the grid whenever the buffer is dirty. A path
- * names a field compute shader that fills the grid on the GPU, driven through
- * get_field_processor(). The surface is re-extracted only when dirty.
+ * names a field compute shader, and an MF_FIELD, MF_FIELD_T or MF_FIELD_P
+ * field is lowered to one; both fill the grid on the GPU and are driven
+ * through get_field_processor(). The surface is re-extracted only when dirty.
+ *
+ * One MF_FIELD serves both evaluators: pass the field itself for the GPU, or
+ * its cpu member for the CPU. A temporal field reads the processor's time,
+ * and a parametric field also reads its parameter block, set with set_params.
  *
  * Usage:
  * @code
@@ -47,7 +53,10 @@ class MAYAFLUX_API ComputeMeshBuffer : public VKBuffer {
 public:
     using FieldSource = std::variant<
         Kinesis::SpatialField,
-        std::filesystem::path>;
+        std::filesystem::path,
+        Kinesis::DualSpatialField,
+        Kinesis::TemporalSpatialField,
+        Kinesis::ParametricSpatialField>;
 
     struct Config {
         FieldSource source;
@@ -162,6 +171,7 @@ private:
     std::shared_ptr<SDFFieldProcessor> m_field_processor;
 
     std::string m_field_shader;
+    std::optional<Kinesis::FieldSource> m_field_expression;
 
     // Field parameters held until m_sdf_processor is constructed.
     Kinesis::SpatialField m_field;

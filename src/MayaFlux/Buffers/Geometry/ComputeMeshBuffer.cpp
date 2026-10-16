@@ -32,9 +32,12 @@ ComputeMeshBuffer::ComputeMeshBuffer(
         using Source = std::remove_cvref_t<decltype(source)>;
         if constexpr (std::is_same_v<Source, Kinesis::SpatialField>) {
             m_field = std::move(source);
-        } else {
+        } else if constexpr (std::is_same_v<Source, std::filesystem::path>) {
             m_gpu_field = true;
             m_field_shader = std::move(source).string();
+        } else {
+            m_gpu_field = true;
+            m_field_expression = std::move(source.source);
         }
     },
         std::move(config.source));
@@ -71,11 +74,19 @@ void ComputeMeshBuffer::setup_processors(ProcessingToken token)
         m_prep_processor->set_processing_token(token);
         set_default_processor(m_prep_processor);
 
-        m_field_processor = std::make_shared<SDFFieldProcessor>(
-            m_prep_processor->grid_buf(),
-            m_bounds_min, m_bounds_max,
-            m_res_x, m_res_y, m_res_z,
-            m_field_shader);
+        if (m_field_expression) {
+            m_field_processor = std::make_shared<SDFFieldProcessor>(
+                m_prep_processor->grid_buf(),
+                *m_field_expression,
+                m_bounds_min, m_bounds_max,
+                m_res_x, m_res_y, m_res_z);
+        } else {
+            m_field_processor = std::make_shared<SDFFieldProcessor>(
+                m_prep_processor->grid_buf(),
+                m_bounds_min, m_bounds_max,
+                m_res_x, m_res_y, m_res_z,
+                m_field_shader);
+        }
         m_field_processor->set_processing_token(token);
         chain->add_preprocessor(m_field_processor, self);
 
@@ -160,6 +171,9 @@ void ComputeMeshBuffer::set_bounds(const glm::vec3& bounds_min, const glm::vec3&
     } else {
         m_bounds_min = bounds_min;
         m_bounds_max = bounds_max;
+    }
+    if (m_field_processor) {
+        m_field_processor->set_bounds(bounds_min, bounds_max);
     }
 }
 

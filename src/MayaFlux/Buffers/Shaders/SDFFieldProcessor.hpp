@@ -2,6 +2,8 @@
 
 #include "ComputeProcessor.hpp"
 
+#include "MayaFlux/Kinesis/Tendency/FieldSource.hpp"
+
 namespace MayaFlux::Buffers {
 
 /**
@@ -50,18 +52,56 @@ public:
         uint32_t res_z,
         std::string shader = "sdf_field_gyroid.comp");
 
+    /**
+     * @brief Evaluate an authored field function instead of a shader file.
+     *
+     * The shader is generated from @p field: its function is emitted as written
+     * and a kernel body calls it at every grid corner. Time and the parameter
+     * block reach it through set_time() and set_params(), so animating a field
+     * recompiles nothing.
+     *
+     * @param grid_buf   HOST_STORAGE buffer sized to (res_x+1)*(res_y+1)*(res_z+1) floats.
+     * @param field      Parsed field function, from MF_FIELD, MF_FIELD_T or MF_FIELD_P.
+     * @param bounds_min World-space minimum corner.
+     * @param bounds_max World-space maximum corner.
+     * @param res_x      Cell count along X.
+     * @param res_y      Cell count along Y.
+     * @param res_z      Cell count along Z.
+     */
+    SDFFieldProcessor(
+        std::shared_ptr<VKBuffer> grid_buf,
+        const Kinesis::FieldSource& field,
+        const glm::vec3& bounds_min,
+        const glm::vec3& bounds_max,
+        uint32_t res_x,
+        uint32_t res_y,
+        uint32_t res_z);
+
     ~SDFFieldProcessor() override = default;
 
     /** @brief Replace the evaluation volume. */
     void set_bounds(const glm::vec3& bounds_min, const glm::vec3& bounds_max);
 
     /** @brief Advance the time uniform (drives animation in sdf_field.comp). */
-    void set_time(float t) { m_pc.time = t; }
+    void set_time(float t)
+    {
+        m_pc.time = t;
+        m_field_pc.time = t;
+    }
     [[nodiscard]] float get_time() const { return m_pc.time; }
 
     /** @brief Set the extra float parameters **/
     void set_param0(float v) { m_pc._pad[0] = std::bit_cast<uint32_t>(v); }
     void set_param1(float v) { m_pc._pad[1] = std::bit_cast<uint32_t>(v); }
+
+    /** @brief Set the parameter block passed to a parametric field. */
+    void set_params(const glm::vec4& params)
+    {
+        m_field_pc.params[0] = params.x;
+        m_field_pc.params[1] = params.y;
+        m_field_pc.params[2] = params.z;
+        m_field_pc.params[3] = params.w;
+    }
 
 protected:
     void on_attach(const std::shared_ptr<Buffer>& buffer) override;
@@ -81,7 +121,20 @@ private:
     };
     static_assert(sizeof(PC) % 16 == 0);
 
+    struct FieldPC {
+        float bounds_min[3] {};
+        float time { 0.0F };
+        float step[3] {};
+        uint32_t res_x {};
+        uint32_t res_y {};
+        uint32_t res_z {};
+        float params[4] {};
+    };
+    static_assert(sizeof(FieldPC) == 56);
+
     PC m_pc;
+    FieldPC m_field_pc;
+    bool m_from_field { false };
     std::shared_ptr<VKBuffer> m_grid_buf;
     uint32_t m_res_x;
     uint32_t m_res_y;
