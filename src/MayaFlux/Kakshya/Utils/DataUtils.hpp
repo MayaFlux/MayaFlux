@@ -270,14 +270,14 @@ struct DataConverter<
  * @param dimensions Dimension descriptors.
  * @return Product of all dimension sizes.
  */
-uint64_t calculate_total_elements(const std::vector<DataDimension>& dimensions);
+MAYAFLUX_API uint64_t calculate_total_elements(const std::vector<DataDimension>& dimensions);
 
 /**
  * @brief Calculate the frame size (number of elements per frame) for a set of dimensions.
  * @param dimensions Dimension descriptors.
  * @return Frame size (product of all but the first dimension).
  */
-uint64_t calculate_frame_size(const std::vector<DataDimension>& dimensions);
+MAYAFLUX_API uint64_t calculate_frame_size(const std::vector<DataDimension>& dimensions);
 
 /**
  * @brief Return the native element type of a DataVariant as a type_index.
@@ -289,7 +289,7 @@ uint64_t calculate_frame_size(const std::vector<DataDimension>& dimensions);
  * @param data Source variant.
  * @return std::type_index of the element type (e.g. typeid(uint8_t)).
  */
-[[nodiscard]] std::type_index get_variant_element_type(const DataVariant& data);
+[[nodiscard]] MAYAFLUX_API std::type_index get_variant_element_type(const DataVariant& data);
 
 /**
  * @brief Extract a single frame of data from a span.
@@ -542,7 +542,7 @@ std::optional<T> extract_from_variant_at(const DataVariant& variant, uint64_t po
  * @param input Source DataVariant.
  * @param output Destination DataVariant.
  */
-void safe_copy_data_variant(const DataVariant& input, DataVariant& output);
+MAYAFLUX_API void safe_copy_data_variant(const DataVariant& input, DataVariant& output);
 
 /**
  * @brief Safely copy data from a DataVariant to another DataVariant of a specific type.
@@ -638,7 +638,7 @@ MAYAFLUX_API void denormalise_to_uint8(
  * @param key Key to set.
  * @param value Value to set.
  */
-void set_metadata_value(std::unordered_map<std::string, std::any>& metadata, const std::string& key, std::any value);
+MAYAFLUX_API void set_metadata_value(std::unordered_map<std::string, std::any>& metadata, const std::string& key, std::any value);
 
 /**
  * @brief Get a value from a metadata map by key.
@@ -667,7 +667,7 @@ std::optional<T> get_metadata_value(const std::unordered_map<std::string, std::a
  * @param role Semantic role to search for.
  * @return Index of the dimension, or -1 if not found.
  */
-int find_dimension_by_role(const std::vector<DataDimension>& dimensions, DataDimension::Role role);
+MAYAFLUX_API int find_dimension_by_role(const std::vector<DataDimension>& dimensions, DataDimension::Role role);
 
 /**
  * @brief Detects data modality from dimension information
@@ -677,7 +677,7 @@ int find_dimension_by_role(const std::vector<DataDimension>& dimensions, DataDim
  * Consolidates modality detection logic that was duplicated across analyzers.
  * Uses dimension roles and count to determine appropriate processing approach.
  */
-DataModality detect_data_modality(const std::vector<DataDimension>& dimensions);
+MAYAFLUX_API DataModality detect_data_modality(const std::vector<DataDimension>& dimensions);
 
 /**
  * @brief Detect data modality from dimensions and source variant scalar type.
@@ -690,7 +690,7 @@ DataModality detect_data_modality(const std::vector<DataDimension>& dimensions);
  * @param source     Original DataVariant used to produce the dimensions.
  * @return Detected DataModality type.
  */
-DataModality detect_data_modality(
+MAYAFLUX_API DataModality detect_data_modality(
     const std::vector<DataDimension>& dimensions,
     const DataVariant& source);
 
@@ -702,7 +702,7 @@ DataModality detect_data_modality(
  * This function analyzes the structure of the provided DataVariant and extracts
  * dimension information, including size, stride, and semantic roles.
  */
-std::vector<Kakshya::DataDimension> detect_data_dimensions(const DataVariant& data);
+MAYAFLUX_API std::vector<Kakshya::DataDimension> detect_data_dimensions(const DataVariant& data);
 
 /**
  * @brief Detect data dimensions from a vector of DataVariants
@@ -716,5 +716,5 @@ std::vector<Kakshya::DataDimension> detect_data_dimensions(const DataVariant& da
  * It is recommended to use more specific methods when dealing with known containers, regions, or segments.
  * Use this function only when absolutely necessary and be aware of potential computational errors.
  */
-std::vector<Kakshya::DataDimension> detect_data_dimensions(const std::vector<Kakshya::DataVariant>& variants);
+MAYAFLUX_API std::vector<Kakshya::DataDimension> detect_data_dimensions(const std::vector<Kakshya::DataVariant>& variants);
 }

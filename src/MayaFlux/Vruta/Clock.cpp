@@ -6,6 +6,9 @@
 
 namespace MayaFlux::Vruta {
 
+uint32_t s_registered_sample_rate { 48000 };
+uint32_t s_registered_frame_rate { 60 };
+
 SampleClock::SampleClock(uint64_t sample_rate)
     : m_sample_rate(sample_rate)
     , m_current_sample(0)

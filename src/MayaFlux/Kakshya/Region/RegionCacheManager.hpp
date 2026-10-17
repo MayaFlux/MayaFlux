@@ -3,7 +3,7 @@
 
 namespace MayaFlux::Kakshya {
 
-struct RegionHash {
+struct MAYAFLUX_API RegionHash {
     std::size_t operator()(const Region& region) const;
 };
 

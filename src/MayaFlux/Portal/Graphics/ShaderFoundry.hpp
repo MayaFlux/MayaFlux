@@ -62,7 +62,7 @@ namespace detail {
      * @param spec ShaderSpec produced by ShaderSpec::Assemble::build().
      * @return SPIR-V assembly string suitable for spvTextToBinary.
      */
-    std::string emit_spirv_asm(const ShaderSpec& spec);
+    MAYAFLUX_API std::string emit_spirv_asm(const ShaderSpec& spec);
 
     /**
      * Emit a complete GLSL compute shader from spec metadata and a KernelSource body.
@@ -72,7 +72,7 @@ namespace detail {
      * optional ivec2 coord are declared. Push constant fields are accessible as
      * pc.<name>. SSBO arrays are accessible as <name>[i].
      */
-    std::string emit_glsl_kernel(const ShaderSpec& spec);
+    MAYAFLUX_API std::string emit_glsl_kernel(const ShaderSpec& spec);
 }
 
 /**

@@ -27,7 +27,7 @@ namespace MayaFlux::Kakshya {
  *   VEC2_F64 / VEC3_F64 / VEC4_F64 variants do not exist in DataVariant —
  *                            included in GpuDataFormat for buffer use only.
  */
-struct TextureAccess {
+struct MAYAFLUX_API TextureAccess {
     const void* data_ptr = nullptr;
     size_t byte_count = 0;
     GpuDataFormat format = GpuDataFormat::VEC4_F32;
@@ -35,7 +35,10 @@ struct TextureAccess {
     /**
      * @brief Bytes per texel for this format.
      */
-    [[nodiscard]] size_t bytes_per_texel() const noexcept;
+    [[nodiscard]] size_t bytes_per_texel() const noexcept
+    {
+        return gpu_data_format_bytes(format);
+    }
 
     /**
      * @brief Number of channels (components per texel).

@@ -18,7 +18,7 @@ namespace MayaFlux::Buffers {
  * from, plus one addition, the distance under which one particle claims
  * another.
  */
-struct MutationConfig {
+struct MAYAFLUX_API MutationConfig {
     SpatialHashConfig hash;
     float absorb_radius; ///< A claims B when length(pos(B) - pos(A)) < absorb_radius and index(A) < index(B).
 

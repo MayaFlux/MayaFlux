@@ -65,7 +65,7 @@ inline AudioReadOptions operator&(AudioReadOptions a, AudioReadOptions b)
  * All audio data is converted to double precision for internal processing.
  * The reader can output data in either interleaved or deinterleaved (planar) layout.
  */
-class SoundFileReader : public FileReader {
+class MAYAFLUX_API SoundFileReader : public FileReader {
 public:
     /**
      * @brief Construct a new SoundFileReader object.

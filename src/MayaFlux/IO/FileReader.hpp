@@ -84,7 +84,7 @@ inline FileReadOptions operator&(FileReadOptions a, FileReadOptions b)
  * Describes a logical region or segment within a file, such as a cue, marker,
  * chapter, scene, or data block. Used for both audio/video and scientific data.
  */
-struct FileRegion {
+struct MAYAFLUX_API FileRegion {
     std::string type; ///< Region type identifier (e.g., "cue", "scene", "block")
     std::string name; ///< Human-readable name for the region
     std::vector<uint64_t> start_coordinates; ///< N-dimensional start position (e.g., frame, x, y)
@@ -114,7 +114,7 @@ struct FileRegion {
  * The interface is designed for flexibility, supporting region extraction,
  * metadata parsing, streaming, and container creation for any data type.
  */
-class FileReader {
+class MAYAFLUX_API FileReader {
 public:
     virtual ~FileReader() = default;
 

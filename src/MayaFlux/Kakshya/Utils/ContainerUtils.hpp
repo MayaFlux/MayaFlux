@@ -9,14 +9,14 @@ namespace MayaFlux::Kakshya {
  * @param container Container to analyze.
  * @return Map containing processing state metadata.
  */
-std::unordered_map<std::string, std::any> extract_processing_state_info(const std::shared_ptr<SignalSourceContainer>& container);
+MAYAFLUX_API std::unordered_map<std::string, std::any> extract_processing_state_info(const std::shared_ptr<SignalSourceContainer>& container);
 
 /**
  * @brief Extract processor information from container.
  * @param container Container to analyze.
  * @return Map containing processor metadata.
  */
-std::unordered_map<std::string, std::any> extract_processor_info(const std::shared_ptr<SignalSourceContainer>& container);
+MAYAFLUX_API std::unordered_map<std::string, std::any> extract_processor_info(const std::shared_ptr<SignalSourceContainer>& container);
 
 /**
  * @brief Perform a state transition for a ProcessingState, with optional callback.
@@ -25,7 +25,7 @@ std::unordered_map<std::string, std::any> extract_processor_info(const std::shar
  * @param on_transition Optional callback to invoke on transition.
  * @return True if transition was valid and performed.
  */
-bool transition_state(ProcessingState& current_state, ProcessingState new_state, std::function<void()> on_transition = nullptr);
+MAYAFLUX_API bool transition_state(ProcessingState& current_state, ProcessingState new_state, std::function<void()> on_transition = nullptr);
 
 /**
  * @brief Determine optimal memory access pattern for region.
@@ -33,7 +33,7 @@ bool transition_state(ProcessingState& current_state, ProcessingState new_state,
  * @param container Container providing layout information.
  * @return Recommended access pattern information.
  */
-std::unordered_map<std::string, std::any> analyze_access_pattern(const Region& region,
+MAYAFLUX_API std::unordered_map<std::string, std::any> analyze_access_pattern(const Region& region,
     const std::shared_ptr<SignalSourceContainer>& container);
 
 /**
@@ -89,7 +89,7 @@ std::vector<std::vector<T>> deinterleave_channels(std::span<const T> interleaved
  * @param channel_index Index of the channel to extract.
  * @return DataVariant containing channel data.
  */
-DataVariant extract_channel_data(const std::shared_ptr<SignalSourceContainer>& container,
+MAYAFLUX_API DataVariant extract_channel_data(const std::shared_ptr<SignalSourceContainer>& container,
     uint32_t channel_index);
 
 /**
@@ -108,7 +108,7 @@ DataVariant extract_channel_data(const std::shared_ptr<SignalSourceContainer>& c
  * @param ch           Zero-based channel index to extract.
  * @param output       Destination buffer; size determines the copy limit.
  */
-void extract_processed_data(
+MAYAFLUX_API void extract_processed_data(
     const std::vector<DataVariant>& pd,
     OrganizationStrategy organization,
     uint64_t num_channels,
@@ -144,7 +144,7 @@ void extract_processed_data(
  * @throws std::invalid_argument if container is null or has no data
  * @throws std::runtime_error if container has no dimensions
  */
-std::pair<std::shared_ptr<SignalSourceContainer>, std::vector<DataDimension>>
+MAYAFLUX_API std::pair<std::shared_ptr<SignalSourceContainer>, std::vector<DataDimension>>
 validate_container_for_analysis(const std::shared_ptr<SignalSourceContainer>& container);
 
 /**
@@ -153,7 +153,7 @@ validate_container_for_analysis(const std::shared_ptr<SignalSourceContainer>& co
  * @return Vector of double values from container data
  * @throws std::runtime_error if no numeric data can be extracted
  */
-std::vector<std::span<double>> extract_numeric_data(const std::shared_ptr<SignalSourceContainer>& container);
+MAYAFLUX_API std::vector<std::span<double>> extract_numeric_data(const std::shared_ptr<SignalSourceContainer>& container);
 
 /**
  * @brief Validates numeric data for analysis operations
@@ -162,7 +162,7 @@ std::vector<std::span<double>> extract_numeric_data(const std::shared_ptr<Signal
  * @param min_size Minimum required data size (default 1)
  * @throws std::invalid_argument if data is invalid for analysis
  */
-void validate_numeric_data_for_analysis(const std::vector<double>& data,
+MAYAFLUX_API void validate_numeric_data_for_analysis(const std::vector<double>& data,
     const std::string& operation_name,
     size_t min_size = 1);
 

@@ -100,7 +100,7 @@ enum class TokenEnforcementStrategy : uint8_t {
  * This validation is essential for maintaining system stability and ensuring that
  * processing tokens represent achievable execution configurations.
  */
-void validate_token(ProcessingToken token);
+MAYAFLUX_API void validate_token(ProcessingToken token);
 
 /**
  * @brief Determines if two processing tokens are compatible for joint execution
@@ -132,7 +132,7 @@ void validate_token(ProcessingToken token);
  * processors to share execution contexts while preventing configurations that would result
  * in poor performance or execution failures.
  */
-bool are_tokens_compatible(ProcessingToken preferred, ProcessingToken current);
+MAYAFLUX_API bool are_tokens_compatible(ProcessingToken preferred, ProcessingToken current);
 
 /**
  * @brief Gets the optimal processing token for a given buffer type and system configuration
@@ -150,7 +150,7 @@ bool are_tokens_compatible(ProcessingToken preferred, ProcessingToken current);
  * The recommendations help achieve optimal performance by matching processing
  * requirements with available system capabilities.
  */
-ProcessingToken get_optimal_token(const std::string& buffer_type, uint32_t system_capabilities);
+MAYAFLUX_API ProcessingToken get_optimal_token(const std::string& buffer_type, uint32_t system_capabilities);
 
 constexpr int MAX_SPINS = 1000;
 
@@ -158,7 +158,7 @@ constexpr int MAX_SPINS = 1000;
  * @brief Wait for an active snapshot context to complete using exponential backoff
  * @return true if completed, false if timeout
  */
-bool wait_for_snapshot_completion(
+MAYAFLUX_API bool wait_for_snapshot_completion(
     const std::shared_ptr<Nodes::Node>& node,
     uint64_t active_context_id,
     int max_spins = MAX_SPINS);
@@ -167,19 +167,19 @@ bool wait_for_snapshot_completion(
  * @brief Extract a single sample from a node with proper snapshot management
  * @return Extracted sample value
  */
-double extract_single_sample(const std::shared_ptr<Nodes::Node>& node);
+MAYAFLUX_API double extract_single_sample(const std::shared_ptr<Nodes::Node>& node);
 
 /**
  * @brief Extract multiple samples from a node into a vector
  */
-std::vector<double> extract_multiple_samples(
+MAYAFLUX_API std::vector<double> extract_multiple_samples(
     const std::shared_ptr<Nodes::Node>& node,
     size_t num_samples);
 
 /**
  * @brief Apply node output to an existing buffer with mixing
  */
-void update_buffer_with_node_data(
+MAYAFLUX_API void update_buffer_with_node_data(
     const std::shared_ptr<Nodes::Node>& node,
     std::span<double> buffer,
     double mix = 1.0);

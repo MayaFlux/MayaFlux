@@ -2,8 +2,8 @@
 
 namespace MayaFlux::Vruta {
 
-inline uint32_t s_registered_sample_rate { 48000 };
-inline uint32_t s_registered_frame_rate { 60 };
+extern MAYAFLUX_API uint32_t s_registered_sample_rate;
+extern MAYAFLUX_API uint32_t s_registered_frame_rate;
 
 /**
  * @brief Convert frames to seconds at a given frame rate

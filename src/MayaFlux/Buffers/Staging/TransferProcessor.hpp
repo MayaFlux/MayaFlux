@@ -16,7 +16,7 @@ enum class TransferDirection : uint8_t {
     BIDIRECTIONAL = 2 // Both directions (future, complex)
 };
 
-class TransferProcessor : public VKBufferProcessor {
+class MAYAFLUX_API TransferProcessor : public VKBufferProcessor {
 public:
     TransferProcessor();
 

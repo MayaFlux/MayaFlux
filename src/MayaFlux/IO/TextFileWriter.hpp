@@ -12,7 +12,7 @@ namespace MayaFlux::IO {
  * Thread-safe text file writing with optional buffering.
  * Designed for log files, configuration files, etc.
  */
-class TextFileWriter : public FileWriter {
+class MAYAFLUX_API TextFileWriter : public FileWriter {
 public:
     TextFileWriter();
     ~TextFileWriter() override;

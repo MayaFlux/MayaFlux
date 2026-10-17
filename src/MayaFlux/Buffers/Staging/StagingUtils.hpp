@@ -605,7 +605,7 @@ Kakshya::DataAccess download_to_view(
  *
  * @throws std::runtime_error if gpu_buffer doesn't support double precision
  */
-void upload_audio_to_gpu(
+MAYAFLUX_API void upload_audio_to_gpu(
     const std::shared_ptr<AudioBuffer>& audio_buffer,
     const std::shared_ptr<VKBuffer>& gpu_buffer,
     const std::shared_ptr<VKBuffer>& staging = nullptr);
@@ -620,7 +620,7 @@ void upload_audio_to_gpu(
  * float data instead of double, DataAccess will handle the upconversion
  * (though this is not recommended for audio precision).
  */
-void download_audio_from_gpu(
+MAYAFLUX_API void download_audio_from_gpu(
     const std::shared_ptr<VKBuffer>& gpu_buffer,
     const std::shared_ptr<AudioBuffer>& audio_buffer,
     const std::shared_ptr<VKBuffer>& staging = nullptr);

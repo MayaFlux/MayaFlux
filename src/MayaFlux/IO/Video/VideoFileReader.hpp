@@ -59,7 +59,7 @@ inline VideoReadOptions operator&(VideoReadOptions a, VideoReadOptions b)
  *
  * Audio extraction (EXTRACT_AUDIO) is delegated to SoundFileReader as before.
  */
-class VideoFileReader : public FileReader {
+class MAYAFLUX_API VideoFileReader : public FileReader {
 public:
     VideoFileReader();
     ~VideoFileReader() override;

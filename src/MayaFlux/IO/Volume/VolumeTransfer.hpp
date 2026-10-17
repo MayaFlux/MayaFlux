@@ -36,7 +36,7 @@ namespace MayaFlux::IO {
  * @return Populated VolumeData, or std::nullopt if nothing was downloaded
  *         or the result failed is_consistent().
  */
-[[nodiscard]] std::optional<Kakshya::VolumeData> download_volume(
+[[nodiscard]] MAYAFLUX_API std::optional<Kakshya::VolumeData> download_volume(
     const std::shared_ptr<Buffers::VolumeGridBuffer>& volume,
     const std::vector<std::string>& field_names = {});
 
@@ -73,7 +73,7 @@ namespace MayaFlux::IO {
  *               never declares one.
  * @return True if at least one field was uploaded.
  */
-bool upload_volume(
+MAYAFLUX_API bool upload_volume(
     const Kakshya::VolumeData& data,
     const std::shared_ptr<Buffers::VolumeGridBuffer>& volume);
 
@@ -93,7 +93,7 @@ bool upload_volume(
  * @param field_names Fields to save. Empty means every declared field.
  * @return True on success.
  */
-bool save_volume(
+MAYAFLUX_API bool save_volume(
     const std::shared_ptr<Buffers::VolumeGridBuffer>& volume,
     const std::string& filepath,
     const VolumeWriteOptions& options = {},
@@ -110,7 +110,7 @@ bool save_volume(
  * having here: it is what a test exercising a writer calls, and what a
  * shutdown flush calls.
  */
-bool save_volume(
+MAYAFLUX_API bool save_volume(
     const Kakshya::VolumeData& data,
     const std::string& filepath,
     const VolumeWriteOptions& options = {});

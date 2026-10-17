@@ -29,7 +29,7 @@ namespace MayaFlux::Buffers {
  * PhysicsOperator's own bond/mass tracking, however far spawn has grown the
  * live-looking population beyond it.
  */
-struct PopulationConfig {
+struct MAYAFLUX_API PopulationConfig {
     SpatialHashConfig hash;
     uint32_t live_count;
 

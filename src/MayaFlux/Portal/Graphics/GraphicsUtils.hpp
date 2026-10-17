@@ -214,7 +214,7 @@ struct GpuBufferBinding {
  * @param et ElementType to size.
  * @return Byte width, or 0 if unsized.
  */
-[[nodiscard]] size_t element_type_bytes(GpuBufferBinding::ElementType et) noexcept;
+[[nodiscard]] MAYAFLUX_API size_t element_type_bytes(GpuBufferBinding::ElementType et) noexcept;
 
 //============================================================================
 // Shader Types

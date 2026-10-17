@@ -91,7 +91,7 @@ struct VDBGridSummary {
  * into this object's own grid storage on the write side, and open() leaves
  * live pointers into mapped file data on the read side.
  */
-class VDBArchive {
+class MAYAFLUX_API VDBArchive {
 public:
     VDBArchive();
     ~VDBArchive();

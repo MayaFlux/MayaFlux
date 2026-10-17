@@ -38,7 +38,7 @@ using RegionWriteFn = std::function<void(size_t region_idx, uint32_t channel, st
  * This is useful for operations that need to ignore the channel dimension, such as spatial-only processing
  * or planar data handling.
  */
-Region remove_channel_dimension(const Region& region, const std::vector<DataDimension>& dimensions);
+MAYAFLUX_API Region remove_channel_dimension(const Region& region, const std::vector<DataDimension>& dimensions);
 
 /**
 @brief Get all non-channel dimensions from a list of dimensions.
@@ -48,7 +48,7 @@ Region remove_channel_dimension(const Region& region, const std::vector<DataDime
  * This function filters out the dimension marked as 'channel' from the provided list of dimensions.
  * It is useful for operations that need to focus on spatial or temporal dimensions only.
  */
-std::vector<DataDimension> get_non_channel_dimensions(const std::vector<DataDimension>& dimensions);
+MAYAFLUX_API std::vector<DataDimension> get_non_channel_dimensions(const std::vector<DataDimension>& dimensions);
 
 /** @brief Flatten a vector of channel data into a single vector.
  * @tparam T Data type.
@@ -550,14 +550,14 @@ MAYAFLUX_API void sort_regions_by_attribute(std::vector<Region>& regions, const 
  * @param name Name for the reference.
  * @param region Region to add.
  */
-void add_reference_region(std::vector<std::pair<std::string, Region>>& refs, const std::string& name, const Region& region);
+MAYAFLUX_API void add_reference_region(std::vector<std::pair<std::string, Region>>& refs, const std::string& name, const Region& region);
 
 /**
  * @brief Remove a named reference region from a reference list.
  * @param refs Reference list (name, Region) pairs.
  * @param name Name of the reference to remove.
  */
-void remove_reference_region(std::vector<std::pair<std::string, Region>>& refs, const std::string& name);
+MAYAFLUX_API void remove_reference_region(std::vector<std::pair<std::string, Region>>& refs, const std::string& name);
 
 /**
  * @brief Get a named reference region from a reference list.
@@ -565,7 +565,7 @@ void remove_reference_region(std::vector<std::pair<std::string, Region>>& refs, 
  * @param name Name of the reference to retrieve.
  * @return Optional Region if found.
  */
-std::optional<Region> get_reference_region(const std::vector<std::pair<std::string, Region>>& refs, const std::string& name);
+MAYAFLUX_API std::optional<Region> get_reference_region(const std::vector<std::pair<std::string, Region>>& refs, const std::string& name);
 
 /**
  * @brief Find all references in a reference list that overlap a given region.
@@ -573,14 +573,14 @@ std::optional<Region> get_reference_region(const std::vector<std::pair<std::stri
  * @param region Region to check for overlap.
  * @return Vector of (name, Region) pairs that overlap.
  */
-std::vector<std::pair<std::string, Region>> find_references_in_region(const std::vector<std::pair<std::string, Region>>& refs, const Region& region);
+MAYAFLUX_API std::vector<std::pair<std::string, Region>> find_references_in_region(const std::vector<std::pair<std::string, Region>>& refs, const Region& region);
 
 /**
  * @brief Add a RegionGroup to a group map.
  * @param groups Map of group name to RegionGroup.
  * @param group RegionGroup to add.
  */
-void add_region_group(std::unordered_map<std::string, RegionGroup>& groups, const RegionGroup& group);
+MAYAFLUX_API void add_region_group(std::unordered_map<std::string, RegionGroup>& groups, const RegionGroup& group);
 
 /**
  * @brief Get a RegionGroup by name from a group map.
@@ -588,14 +588,14 @@ void add_region_group(std::unordered_map<std::string, RegionGroup>& groups, cons
  * @param name Name of the group to retrieve.
  * @return Optional RegionGroup if found.
  */
-std::optional<RegionGroup> get_region_group(const std::unordered_map<std::string, RegionGroup>& groups, const std::string& name);
+MAYAFLUX_API std::optional<RegionGroup> get_region_group(const std::unordered_map<std::string, RegionGroup>& groups, const std::string& name);
 
 /**
  * @brief Remove a RegionGroup by name from a group map.
  * @param groups Map of group name to RegionGroup.
  * @param name Name of the group to remove.
  */
-void remove_region_group(std::unordered_map<std::string, RegionGroup>& groups, const std::string& name);
+MAYAFLUX_API void remove_region_group(std::unordered_map<std::string, RegionGroup>& groups, const std::string& name);
 
 /**
  * @brief Calculate output region bounds from current position and shape.
@@ -603,7 +603,7 @@ void remove_region_group(std::unordered_map<std::string, RegionGroup>& groups, c
  * @param output_shape Desired output shape.
  * @return Region representing the output bounds.
  */
-Region calculate_output_region(const std::vector<uint64_t>& current_pos,
+MAYAFLUX_API Region calculate_output_region(const std::vector<uint64_t>& current_pos,
     const std::vector<uint64_t>& output_shape);
 
 /**
@@ -613,7 +613,7 @@ Region calculate_output_region(const std::vector<uint64_t>& current_pos,
  * @param container Container providing layout information.
  * @return Region representing the output bounds for the specified frames.
  */
-Region calculate_output_region(uint64_t current_frame,
+MAYAFLUX_API Region calculate_output_region(uint64_t current_frame,
     uint64_t frames_to_process,
     const std::shared_ptr<SignalSourceContainer>& container);
 
@@ -623,7 +623,7 @@ Region calculate_output_region(uint64_t current_frame,
  * @param container Container providing layout information.
  * @return True if access is contiguous, false otherwise.
  */
-bool is_region_access_contiguous(const Region& region,
+MAYAFLUX_API bool is_region_access_contiguous(const Region& region,
     const std::shared_ptr<SignalSourceContainer>& container);
 
 /**
@@ -631,28 +631,28 @@ bool is_region_access_contiguous(const Region& region,
  * @param container Container to extract regions from.
  * @return Vector of structured region information.
  */
-std::vector<std::unordered_map<std::string, std::any>> extract_all_regions_info(const std::shared_ptr<SignalSourceContainer>& container);
+MAYAFLUX_API std::vector<std::unordered_map<std::string, std::any>> extract_all_regions_info(const std::shared_ptr<SignalSourceContainer>& container);
 
 /**
  * @brief Extract bounds information from region group.
  * @param group Region group to analyze.
  * @return Map containing group bounds metadata.
  */
-std::unordered_map<std::string, std::any> extract_group_bounds_info(const RegionGroup& group);
+MAYAFLUX_API std::unordered_map<std::string, std::any> extract_group_bounds_info(const RegionGroup& group);
 
 /**
  * @brief Extract metadata from region segments.
  * @param segments Vector of region segments.
  * @return Vector of metadata maps, one per segment.
  */
-std::vector<std::unordered_map<std::string, std::any>> extract_segments_metadata(const std::vector<RegionSegment>& segments);
+MAYAFLUX_API std::vector<std::unordered_map<std::string, std::any>> extract_segments_metadata(const std::vector<RegionSegment>& segments);
 
 /**
  * @brief Extract structured bounds information from region.
  * @param region The region to analyze.
  * @return Map containing bounds metadata.
  */
-std::unordered_map<std::string, std::any> extract_region_bounds_info(const Region& region);
+MAYAFLUX_API std::unordered_map<std::string, std::any> extract_region_bounds_info(const Region& region);
 
 /**
  * @brief Find optimal region containing given position.
@@ -660,7 +660,7 @@ std::unordered_map<std::string, std::any> extract_region_bounds_info(const Regio
  * @param regions Vector of regions to search within.
  * @return Optional index of containing region.
  */
-std::optional<size_t> find_region_for_position(const std::vector<uint64_t>& position,
+MAYAFLUX_API std::optional<size_t> find_region_for_position(const std::vector<uint64_t>& position,
     const std::vector<Region>& regions);
 
 /**
@@ -669,7 +669,7 @@ std::optional<size_t> find_region_for_position(const std::vector<uint64_t>& posi
  * @param regions vector of OrganizedRegions
  * @return Optional index of the containing region, or std::nullopt if not found.
  */
-std::optional<size_t> find_region_for_position(const std::vector<uint64_t>& position, std::vector<OrganizedRegion> regions);
+MAYAFLUX_API std::optional<size_t> find_region_for_position(const std::vector<uint64_t>& position, std::vector<OrganizedRegion> regions);
 
 /**
  * @brief Test whether two N-dimensional regions overlap on every shared axis.
@@ -682,7 +682,7 @@ std::optional<size_t> find_region_for_position(const std::vector<uint64_t>& posi
  * @param r2 Second region.
  * @return true if all shared axes of r1 and r2 overlap.
  */
-[[nodiscard]] bool regions_intersect(const Region& r1, const Region& r2) noexcept;
+[[nodiscard]] MAYAFLUX_API bool regions_intersect(const Region& r1, const Region& r2) noexcept;
 
 /**
  * @brief Extract the data described by @p region from @p src using the

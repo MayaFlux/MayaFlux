@@ -229,7 +229,7 @@ private:
  * @return False if the cache fails to open or any source's capture_frame()
  *         call fails.
  */
-[[nodiscard]] bool save_spatial_snapshot(
+[[nodiscard]] MAYAFLUX_API bool save_spatial_snapshot(
     const std::string& path_pattern,
     const std::vector<SpatialCaptureSource>& sources);
 

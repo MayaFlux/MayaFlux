@@ -108,14 +108,14 @@ bool safe_remove_callback(std::vector<TypedHook<ContextT>>& callbacks,
 /**
  * @brief Returns true if a condition function is already present in a conditional callback collection.
  */
-bool conditional_callback_exists(
+MAYAFLUX_API bool conditional_callback_exists(
     const std::vector<std::pair<NodeHook, NodeCondition>>& callbacks,
     const NodeCondition& callback);
 
 /**
  * @brief Returns true if the exact callback+condition pair is already present.
  */
-bool callback_pair_exists(
+MAYAFLUX_API bool callback_pair_exists(
     const std::vector<std::pair<NodeHook, NodeCondition>>& callbacks,
     const NodeHook& callback,
     const NodeCondition& condition);
@@ -124,7 +124,7 @@ bool callback_pair_exists(
  * @brief Adds a conditional callback if the exact pair is not already present.
  * @return True if added, false if a duplicate was detected.
  */
-bool safe_add_conditional_callback(
+MAYAFLUX_API bool safe_add_conditional_callback(
     std::vector<std::pair<NodeHook, NodeCondition>>& callbacks,
     const NodeHook& callback,
     const NodeCondition& condition);
@@ -133,7 +133,7 @@ bool safe_add_conditional_callback(
  * @brief Removes all conditional callbacks whose condition target_type() matches.
  * @return True if at least one entry was removed.
  */
-bool safe_remove_conditional_callback(
+MAYAFLUX_API bool safe_remove_conditional_callback(
     std::vector<std::pair<NodeHook, NodeCondition>>& callbacks,
     const NodeCondition& callback);
 
@@ -148,7 +148,7 @@ bool safe_remove_conditional_callback(
  * conditions like whether a node is active, processed, or pending removal,
  * which are critical for coordinating audio signal flow.
  */
-void atomic_set_strong(std::atomic<NodeState>& flag, NodeState& expected, const NodeState& desired);
+MAYAFLUX_API void atomic_set_strong(std::atomic<NodeState>& flag, NodeState& expected, const NodeState& desired);
 
 /**
  * @brief Atomically sets a node state flag to a specific value
@@ -160,7 +160,7 @@ void atomic_set_strong(std::atomic<NodeState>& flag, NodeState& expected, const 
  * current condition, such as when activating or deactivating nodes in the
  * audio processing chain.
  */
-void atomic_set_flag_strong(std::atomic<NodeState>& flag, const NodeState& desired);
+MAYAFLUX_API void atomic_set_flag_strong(std::atomic<NodeState>& flag, const NodeState& desired);
 
 /**
  * @brief Atomically adds a flag to a node state
@@ -182,7 +182,7 @@ MAYAFLUX_API void atomic_add_flag(std::atomic<NodeState>& state, NodeState flag)
  * clear processing markers after a node has been processed, or to remove
  * special states like PENDING_REMOVAL when they're no longer applicable.
  */
-void atomic_remove_flag(std::atomic<NodeState>& state, NodeState flags);
+MAYAFLUX_API void atomic_remove_flag(std::atomic<NodeState>& state, NodeState flags);
 
 /**
  * @brief Atomically sets a node state flag with weak memory ordering
@@ -195,7 +195,7 @@ void atomic_remove_flag(std::atomic<NodeState>& state, NodeState flags);
  * consistency while potentially improving performance in high-throughput
  * audio processing scenarios.
  */
-void atomic_set_flag_weak(std::atomic<NodeState>& flag, NodeState& expected, const NodeState& desired);
+MAYAFLUX_API void atomic_set_flag_weak(std::atomic<NodeState>& flag, NodeState& expected, const NodeState& desired);
 
 /**
  * @brief Atomically increments the modulator count by a specified amount
@@ -232,7 +232,7 @@ MAYAFLUX_API void atomic_dec_modulator_count(std::atomic<uint32_t>& count, int a
  * in the next cycle and which can reuse their previous output values, balancing
  * processing efficiency with signal accuracy.
  */
-void try_reset_processed_state(std::shared_ptr<Node> node);
+MAYAFLUX_API void try_reset_processed_state(std::shared_ptr<Node> node);
 
 /**
  * @brief Extracts active channel list from a node's channel mask
@@ -240,7 +240,7 @@ void try_reset_processed_state(std::shared_ptr<Node> node);
  * @param fallback_channel Channel to use if node has no active channels (default: 0)
  * @return Vector of active channel indices
  */
-std::vector<uint32_t> get_active_channels(const std::shared_ptr<Nodes::Node>& node, uint32_t fallback_channel = 0);
+MAYAFLUX_API std::vector<uint32_t> get_active_channels(const std::shared_ptr<Nodes::Node>& node, uint32_t fallback_channel = 0);
 
 /**
  * @brief Extracts active channel list from a channel mask
@@ -248,7 +248,7 @@ std::vector<uint32_t> get_active_channels(const std::shared_ptr<Nodes::Node>& no
  * @param fallback_channel Channel to use if mask is 0 (default: 0)
  * @return Vector of active channel indices
  */
-std::vector<uint32_t> get_active_channels(uint32_t channel_mask, uint32_t fallback_channel = 0);
+MAYAFLUX_API std::vector<uint32_t> get_active_channels(uint32_t channel_mask, uint32_t fallback_channel = 0);
 
 /**
  * @brief Updates the routing state for a node based on its current channel usage
@@ -259,6 +259,6 @@ std::vector<uint32_t> get_active_channels(uint32_t channel_mask, uint32_t fallba
  * phases (such as fade-in and fade-out(Active)) based on changes in channel counts,
  * ensuring smooth audio output during dynamic reconfigurations of the processing graph.
  */
-void update_routing_state(RoutingState& state);
+MAYAFLUX_API void update_routing_state(RoutingState& state);
 
 }

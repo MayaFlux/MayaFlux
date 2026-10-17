@@ -46,7 +46,7 @@ struct DistributionDecision {
  * 3) INTERNAL_ONLY - Mark internal, no root aggregation
  * 4) REJECTED - Invalid combination
  */
-class BufferTokenDistributor {
+class MAYAFLUX_API BufferTokenDistributor {
 public:
     /**
      * @brief Distribute a buffer based on its type and requested token

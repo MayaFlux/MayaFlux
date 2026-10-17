@@ -11,7 +11,7 @@ using RootGraphicsProcessingFunction = std::function<void(std::shared_ptr<RootGr
 /**
  * @brief Represents a root audio unit containing buffers and processing chains for multiple channels
  */
-struct RootAudioUnit {
+struct MAYAFLUX_API RootAudioUnit {
     std::vector<std::shared_ptr<RootAudioBuffer>> root_buffers;
     std::vector<std::shared_ptr<BufferProcessingChain>> processing_chains;
     RootAudioProcessingFunction custom_processor;
@@ -36,7 +36,7 @@ struct RootAudioUnit {
 /**
  * @brief Represents a root graphics unit containing a buffer and processing chain
  */
-struct RootGraphicsUnit {
+struct MAYAFLUX_API RootGraphicsUnit {
     std::shared_ptr<RootGraphicsBuffer> root_buffer;
     std::shared_ptr<BufferProcessingChain> processing_chain;
     uint32_t frame_count = 0; // For tracking processed frames

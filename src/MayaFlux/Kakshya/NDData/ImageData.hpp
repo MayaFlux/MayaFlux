@@ -52,7 +52,7 @@ enum class ImageFormat : uint8_t {
  * enforce this; direct member access is permitted but callers are
  * responsible for consistency.
  */
-struct ImageData {
+struct MAYAFLUX_API ImageData {
     using PixelStorage = std::variant<
         std::vector<uint8_t>,
         std::vector<uint16_t>,

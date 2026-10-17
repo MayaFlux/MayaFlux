@@ -313,18 +313,18 @@ public:
 // =============================================================================
 
 namespace detail {
-    void composite_initialize(
+    MAYAFLUX_API void composite_initialize(
         const std::vector<std::shared_ptr<Node>>& inputs,
         NodeGraphManager& manager,
         ProcessingToken token,
         const std::shared_ptr<Node>& self);
 
-    void composite_apply_semantics(
+    MAYAFLUX_API void composite_apply_semantics(
         const std::vector<std::shared_ptr<Node>>& inputs,
         NodeGraphManager& manager,
         ProcessingToken token);
 
-    void composite_validate(const std::vector<std::shared_ptr<Node>>& inputs, size_t N);
+    MAYAFLUX_API void composite_validate(const std::vector<std::shared_ptr<Node>>& inputs, size_t N);
 }
 
 /**
@@ -341,7 +341,7 @@ namespace detail {
  * @tparam N Optional compile-time arity. 0 (default) means runtime-determined.
  */
 template <size_t N = 0>
-class MAYAFLUX_API CompositeOpNode : public Node, public std::enable_shared_from_this<CompositeOpNode<N>> {
+class CompositeOpNode : public Node, public std::enable_shared_from_this<CompositeOpNode<N>> {
 public:
     using CombineFunc = std::function<double(std::span<const double>)>;
 

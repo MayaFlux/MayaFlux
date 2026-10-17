@@ -213,6 +213,6 @@ private:
  *
  * @param av_pixel_format AVPixelFormat as int; negative means RGBA.
  */
-[[nodiscard]] std::optional<Portal::Graphics::ImageFormat> to_image_format(int av_pixel_format);
+[[nodiscard]] MAYAFLUX_API std::optional<Portal::Graphics::ImageFormat> to_image_format(int av_pixel_format);
 
 } // namespace MayaFlux::IO

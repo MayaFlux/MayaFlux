@@ -27,7 +27,7 @@ class NetworkGeometryBuffer;
  * Fixed at construction, matching NetworkGeometryBuffer::declare_state's own
  * documented limitation: none of this tracks later growth of the network.
  */
-struct SpatialHashConfig {
+struct MAYAFLUX_API SpatialHashConfig {
     glm::vec3 grid_min;
     glm::uvec3 grid_dims;
     float cell_size;
