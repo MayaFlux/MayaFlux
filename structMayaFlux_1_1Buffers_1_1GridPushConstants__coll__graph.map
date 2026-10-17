@@ -1,0 +1,3 @@
+<map id="MayaFlux::Buffers::GridPushConstants" name="MayaFlux::Buffers::GridPushConstants">
+<area shape="rect" id="Node000001" title="Uniform&#45;grid push&#45;constant block shared by the hash count/scatter and population&#45;spawn kernels." alt="" coords="5,5,145,265"/>
+</map>

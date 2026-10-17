@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::FeedbackProcessor::FeedbackProcessor" name="MayaFlux::Buffers::FeedbackProcessor::FeedbackProcessor">
+<area shape="rect" id="Node000001" title="Single tap, output = input + feedback * tap." alt="" coords="5,5,223,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1FeedbackProcessor_a8924c149c5db26da4cef1222e65eba4e.html#a8924c149c5db26da4cef1222e65eba4e" title=" " alt="" coords="271,5,496,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="223,30,257,30,257,35,223,35"/>
+</map>

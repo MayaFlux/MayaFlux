@@ -1,0 +1,19 @@
+<map id="MayaFlux::Kakshya::ContainerDataStructure::image_interleaved" name="MayaFlux::Kakshya::ContainerDataStructure::image_interleaved">
+<area shape="rect" id="Node000001" title="Create structure for interleaved image data." alt="" coords="781,153,956,208"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_a3c3db06f96aa71048efbb69b369f25c7.html#a3c3db06f96aa71048efbb69b369f25c7" title=" " alt="" coords="554,75,731,129"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="775,151,721,132,723,127,777,146"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_a4f3732dbd3029c2933d6d2f2b3efde3f.html#a4f3732dbd3029c2933d6d2f2b3efde3f" title=" " alt="" coords="552,153,733,208"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="767,183,733,183,733,178,767,178"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_a159d938b0c8e93c31384ca00885bb900.html#a159d938b0c8e93c31384ca00885bb900" title="Construct a VideoStreamContainer with specified parameters." alt="" coords="554,232,731,287"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="777,215,723,234,721,229,775,210"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_a5f81119925a499f1d0a0c06aa3ca9e8c.html#a5f81119925a499f1d0a0c06aa3ca9e8c" title="Append one layer held on the GPU by image." alt="" coords="279,5,469,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="540,78,468,60,469,54,542,73"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_a6a412dc7869c160ce209222245c6ef57.html#a6a412dc7869c160ce209222245c6ef57" title="Construct with exactly layers layers, which may be zero." alt="" coords="248,85,500,125"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="540,106,500,106,500,101,540,100"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1TextureCollection_a860ad3cf3aa0bb9a16c4acfc634941db.html#a860ad3cf3aa0bb9a16c4acfc634941db" title="Copy image into the next layer." alt="" coords="5,13,196,53"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="266,35,196,35,196,30,266,30"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_adc912e0c1f0eca057044a7cfdf00ccf9.html#adc912e0c1f0eca057044a7cfdf00ccf9" title="Reallocate m_data and m_processed_data to match the current window dimensions." alt="" coords="279,152,469,207"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="538,183,469,182,469,177,538,177"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_a34919c923894042f1e21d380db8649d3.html#a34919c923894042f1e21d380db8649d3" title="Construct from an existing managed window." alt="" coords="244,231,504,271"/>
+<area shape="poly" id="edge7_Node000006_Node000008" title=" " alt="" coords="539,213,505,222,458,234,457,229,503,217,538,207"/>
+</map>

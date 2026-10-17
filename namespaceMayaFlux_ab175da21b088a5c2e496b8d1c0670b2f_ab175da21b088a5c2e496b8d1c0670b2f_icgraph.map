@@ -1,0 +1,5 @@
+<map id="MayaFlux::choose_camera" name="MayaFlux::choose_camera">
+<area shape="rect" id="Node000001" title="Let the user pick a camera, and optionally a capture mode, then open it via IOManager::open_camera()." alt="" coords="204,13,400,38"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Creator_a4d6c81dee8675dd5bf9b992245f3a548.html#a4d6c81dee8675dd5bf9b992245f3a548" title="Let the user pick a camera and capture mode, then read it as above." alt="" coords="5,5,156,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="190,28,157,28,157,23,190,23"/>
+</map>

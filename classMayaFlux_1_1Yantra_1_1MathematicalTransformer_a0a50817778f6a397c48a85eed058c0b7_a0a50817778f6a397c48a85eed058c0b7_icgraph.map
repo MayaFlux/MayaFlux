@@ -1,0 +1,8 @@
+<map id="MayaFlux::Yantra::MathematicalTransformer::create_output" name="MayaFlux::Yantra::MathematicalTransformer::create_output">
+<area shape="rect" id="Node000001" title="Creates output with proper type conversion." alt="" coords="616,35,848,75"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1MathematicalTransformer_ad8aaa1b597d2569e29d177d919360120.html#ad8aaa1b597d2569e29d177d919360120" title="Extracts per&#45;channel spans, applies an in&#45;place func to each, and reconstructs." alt="" coords="336,5,568,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="602,44,568,40,568,35,603,38"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1MathematicalTransformer_a6e33d648c252e4cff7c42a3d50779efb.html#a6e33d648c252e4cff7c42a3d50779efb" title="Core transformation implementation." alt="" coords="5,35,288,75"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="602,60,568,60,336,60,288,60,288,54,336,55,568,55,602,54"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="322,40,288,44,288,38,322,35"/>
+</map>

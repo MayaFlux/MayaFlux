@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kriya::BufferPipeline::route_image" name="MayaFlux::Kriya::BufferPipeline::route_image">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,5,232,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1BufferCapture_a32a47d29f53ef9f9f9e143e6992bc531.html#a32a47d29f53ef9f9f9e143e6992bc531" title="Return the configured graphics source." alt="" coords="280,5,507,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="232,23,266,23,266,28,232,28"/>
+</map>

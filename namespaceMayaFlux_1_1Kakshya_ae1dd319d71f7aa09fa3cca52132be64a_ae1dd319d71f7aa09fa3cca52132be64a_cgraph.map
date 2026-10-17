@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::query_surface_format" name="MayaFlux::Kakshya::query_surface_format">
+<area shape="rect" id="Node000001" title="Query the actual vk::Format in use by the window&#39;s live swapchain, translated back to the MayaFlux su..." alt="" coords="5,5,171,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Core_a536f388ac516606e0df343ebf0047db6.html#a536f388ac516606e0df343ebf0047db6" title="Reverse&#45;map a vk::Format to the nearest GraphicsSurfaceInfo::SurfaceFormat." alt="" coords="219,5,381,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="171,23,205,23,205,28,171,28"/>
+</map>

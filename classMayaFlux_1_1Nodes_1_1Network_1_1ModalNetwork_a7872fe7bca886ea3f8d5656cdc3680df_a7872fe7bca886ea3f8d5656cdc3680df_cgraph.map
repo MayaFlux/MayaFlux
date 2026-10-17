@@ -1,0 +1,11 @@
+<map id="MayaFlux::Nodes::Network::ModalNetwork::apply_broadcast_parameter" name="MayaFlux::Nodes::Network::ModalNetwork::apply_broadcast_parameter">
+<area shape="rect" id="Node000001" title="Apply broadcast parameter to all modes." alt="" coords="5,41,245,96"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ModalNetwork_a345c7d05d53c4962737bf14426c4ce51.html#a345c7d05d53c4962737bf14426c4ce51" title="Set global decay multiplier." alt="" coords="315,5,514,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="245,51,302,44,302,49,246,56"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ModalNetwork_a9bdd3fe841d3ba0849ea4cf32cab3f5c.html#a9bdd3fe841d3ba0849ea4cf32cab3f5c" title="Set base frequency (fundamental)" alt="" coords="293,85,536,125"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="246,81,280,85,279,91,245,86"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ModalNetwork_a297d0c0c2f02d881cfd144b9f1027798.html#a297d0c0c2f02d881cfd144b9f1027798" title="Recompute every mode&#39;s per&#45;sample decay from the base decay and multiplier." alt="" coords="584,13,809,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="514,30,570,30,570,35,514,35"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_ae8b39c4e028b87d306f371e497cd1bdc.html#ae8b39c4e028b87d306f371e497cd1bdc" title="Per&#45;sample factor that falls by 1/e in a given time." alt="" coords="857,5,1008,60"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="810,30,844,30,844,35,810,35"/>
+</map>

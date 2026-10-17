@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kinesis::apply_orbit_pan" name="MayaFlux::Kinesis::apply_orbit_pan">
+<area shape="rect" id="Node000001" title="Pan the focal point in the camera&#39;s local right/up plane." alt="" coords="5,37,155,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a4da7d21f0e7424468283bf416b00ccf7.html#a4da7d21f0e7424468283bf416b00ccf7" title="Derive eye position from the current orbit state." alt="" coords="203,5,352,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="154,43,189,37,189,42,155,48"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_ace716df2f40f1b0e620049c240637942.html#ace716df2f40f1b0e620049c240637942" title="Uniform scaling of a scalar&#45;output tendency." alt="" coords="203,69,352,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="155,67,189,72,189,78,154,72"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kriya::BufferPipeline::execute_for_cycles" name="MayaFlux::Kriya::BufferPipeline::execute_for_cycles">
+<area shape="rect" id="Node000001" title="Execute the pipeline for a specified number of cycles." alt="" coords="280,5,507,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1BufferPipeline_a64761728d137b013513fe74c81b03062.html#a64761728d137b013513fe74c81b03062" title="Start continuous execution of the pipeline." alt="" coords="5,5,232,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="266,28,232,28,232,23,266,23"/>
+</map>

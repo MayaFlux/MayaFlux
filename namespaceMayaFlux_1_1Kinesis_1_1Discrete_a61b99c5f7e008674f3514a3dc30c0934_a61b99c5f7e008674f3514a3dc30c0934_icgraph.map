@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kinesis::Discrete::dynamic_range" name="MayaFlux::Kinesis::Discrete::dynamic_range">
+<area shape="rect" id="Node000001" title="Dynamic range in dB per window." alt="" coords="547,13,731,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1EnergyAnalyzer_aae10121eaa04e3e509079717b90890ef.html#aae10121eaa04e3e509079717b90890ef" title="Compute energy values using span (zero&#45;copy processing)" alt="" coords="303,5,499,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="533,35,499,35,499,30,533,30"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1EnergyAnalyzer_a97561d0986bef72b733abe1670d3d6a7.html#a97561d0986bef72b733abe1670d3d6a7" title="Core analysis implementation &#45; creates analysis result AND pipeline output." alt="" coords="5,13,255,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="289,35,255,35,255,30,289,30"/>
+</map>

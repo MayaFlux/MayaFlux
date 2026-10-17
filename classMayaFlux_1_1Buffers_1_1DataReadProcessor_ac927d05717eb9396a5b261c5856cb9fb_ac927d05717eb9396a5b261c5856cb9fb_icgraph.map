@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::DataReadProcessor::read_vertices" name="MayaFlux::Buffers::DataReadProcessor::read_vertices">
+<area shape="rect" id="Node000001" title="Read the attached buffer&#39;s declared vertices; the layout count may represent capacity." alt="" coords="227,5,413,60"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kriya_1_1detail_a4fe0640b29321d9daa3c236e3898e01a.html#a4fe0640b29321d9daa3c236e3898e01a" title="Arm the read that suits what the buffer is." alt="" coords="5,13,179,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="213,35,179,35,179,30,213,30"/>
+</map>

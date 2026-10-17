@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::GpuSync::GpuComputeContext" name="MayaFlux::Nodes::GpuSync::GpuComputeContext">
+<area shape="rect" id="Node000001" title="Context delivered to on_complete callbacks when a dispatch completes." alt="" coords="139,193,331,273"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1NodeContext.html" title="Base context class for node callbacks." alt="" coords="5,5,225,131"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="171,140,209,191,204,195,167,143"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Yantra_1_1GpuChannelResult.html" title="Erased output of a GPU dispatch: reconstructed float data plus any raw auxiliary outputs keyed by bin..." alt="" coords="250,18,463,118"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="322,120,276,181,272,178,318,117"/>
+</map>

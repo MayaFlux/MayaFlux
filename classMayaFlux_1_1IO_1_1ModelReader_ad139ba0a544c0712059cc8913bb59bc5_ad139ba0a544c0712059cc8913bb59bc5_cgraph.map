@@ -1,0 +1,34 @@
+<map id="MayaFlux::IO::ModelReader::load" name="MayaFlux::IO::ModelReader::load">
+<area shape="rect" id="Node000001" title="Load all meshes from a file in one call." alt="" coords="5,312,208,352"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1ModelReader_aa5b264bb06c877e3ac382ef5a1cb982f.html#aa5b264bb06c877e3ac382ef5a1cb982f" title="Close the currently open file." alt="" coords="507,312,709,352"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="208,329,493,329,493,335,208,335"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1ModelReader_a5a5995d155657e1b4f55d047efa2e442.html#a5a5995d155657e1b4f55d047efa2e442" title="Load all meshes after open() has already been called." alt="" coords="256,255,459,295"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="194,309,256,295,257,300,195,315"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1IO_1_1ModelReader_aef5ccec4e2fe310509f07e4467f57dd2.html#aef5ccec4e2fe310509f07e4467f57dd2" title="Open a file for reading." alt="" coords="256,372,459,412"/>
+<area shape="poly" id="edge14_Node000001_Node000014" title=" " alt="" coords="192,349,261,366,259,371,190,355"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1ModelReader_a4caf9e31c81e7ac5b07078c38300a6ca.html#a4caf9e31c81e7ac5b07078c38300a6ca" title=" " alt="" coords="507,197,709,237"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="445,252,506,238,507,243,446,257"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1IO_1_1ModelReader_a54f4f02cf81c58f44ed5cab16af0acf6.html#a54f4f02cf81c58f44ed5cab16af0acf6" title=" " alt="" coords="757,389,960,429"/>
+<area shape="poly" id="edge13_Node000003_Node000011" title=" " alt="" coords="459,256,519,253,584,257,650,271,681,283,711,298,729,316,737,336,744,356,759,375,766,380,763,385,756,379,739,359,732,338,725,319,708,302,679,287,648,276,584,263,519,259,459,261"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Kakshya_1_1RegionGroup_a9f0d61deeed5ad629f5064fc5a772efe.html#a9f0d61deeed5ad629f5064fc5a772efe" title=" " alt="" coords="765,69,952,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="634,195,689,157,756,119,773,112,775,117,759,124,692,161,637,199"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1MeshInsertion_a527a0701939e51357fd34340c97c2b85.html#a527a0701939e51357fd34340c97c2b85" title="Produce a MeshAccess over the current variant contents." alt="" coords="779,133,938,173"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="686,195,766,174,767,179,688,200"/>
+<area shape="rect" id="Node000008" href="$structMayaFlux_1_1Kakshya_1_1MeshData_a3cecabe70345deaa8c2da479a1a8193a.html#a3cecabe70345deaa8c2da479a1a8193a" title="Construct an empty MeshData with the canonical 60&#45;byte mesh layout." alt="" coords="779,197,938,237"/>
+<area shape="poly" id="edge7_Node000004_Node000008" title=" " alt="" coords="709,215,766,215,766,220,709,220"/>
+<area shape="rect" id="Node000009" href="$structMayaFlux_1_1Kakshya_1_1VertexLayout_a7b7a30b2a13cb2676713a352f298f607.html#a7b7a30b2a13cb2676713a352f298f607" title="Factory: layout for MeshVertex (position, color, weight, uv, normal, tangent)" alt="" coords="763,261,955,301"/>
+<area shape="poly" id="edge8_Node000004_Node000009" title=" " alt="" coords="688,235,767,255,766,261,686,240"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Kakshya_1_1MeshInsertion_a618b35166b14858aca7b8f8c8ce693c8.html#a618b35166b14858aca7b8f8c8ce693c8" title="Insert a single flat mesh (no submesh tracking)." alt="" coords="765,325,952,365"/>
+<area shape="poly" id="edge9_Node000004_Node000010" title=" " alt="" coords="677,235,711,254,726,269,735,284,744,298,759,311,769,317,766,322,756,315,740,301,731,286,722,272,708,258,674,240"/>
+<area shape="poly" id="edge10_Node000004_Node000011" title=" " alt="" coords="685,235,711,254,724,270,731,286,736,317,740,347,747,361,759,375,764,380,761,384,755,379,743,364,735,348,730,318,726,287,719,273,708,258,681,240"/>
+<area shape="rect" id="Node000012" href="$structMayaFlux_1_1Kakshya_1_1MeshSubrange_a071a7c376e87b2bff0b57ac03fb9c2c5.html#a071a7c376e87b2bff0b57ac03fb9c2c5" title="Convert this subrange to a Region for use in RegionGroup." alt="" coords="765,5,952,45"/>
+<area shape="poly" id="edge11_Node000004_Node000012" title=" " alt="" coords="621,195,674,127,713,88,756,55,767,49,769,54,759,60,716,92,678,131,625,199"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Kakshya_a14e84697e2ffc829dea40c40cb3f0dbe.html#a14e84697e2ffc829dea40c40cb3f0dbe" title="Construct a MeshAccess from two DataVariant instances." alt="" coords="1008,133,1167,173"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="938,151,994,151,994,156,938,156"/>
+<area shape="rect" id="Node000013" href="$structMayaFlux_1_1Kakshya_1_1Region_a22e5e7b4feb8bc29ddf2201ff3b246fe.html#a22e5e7b4feb8bc29ddf2201ff3b246fe" title="Set an attribute value by key." alt="" coords="1008,5,1167,45"/>
+<area shape="poly" id="edge12_Node000012_Node000013" title=" " alt="" coords="953,23,994,23,994,28,953,28"/>
+<area shape="poly" id="edge15_Node000014_Node000002" title=" " alt="" coords="441,369,510,353,511,358,442,375"/>
+<area shape="poly" id="edge17_Node000014_Node000011" title=" " alt="" coords="427,409,507,425,567,430,629,430,744,423,744,428,629,436,567,435,506,431,426,415"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1IO_1_1FileReader_a24d94d5bc8b4294d61f43ac86f933050.html#a24d94d5bc8b4294d61f43ac86f933050" title="Resolve a filepath against the project source root if not found as&#45;is." alt="" coords="515,376,701,416"/>
+<area shape="poly" id="edge16_Node000014_Node000015" title=" " alt="" coords="459,391,502,392,501,397,459,396"/>
+</map>

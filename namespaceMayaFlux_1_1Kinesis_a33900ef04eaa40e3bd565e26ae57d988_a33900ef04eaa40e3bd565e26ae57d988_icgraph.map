@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::sample_table" name="MayaFlux::Kinesis::sample_table">
+<area shape="rect" id="Node000001" title="Read an evenly spaced table at a position in [0, 1], interpolating linearly." alt="" coords="216,13,365,53"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1TimeMaps_affa02d4b58c7b01288d5087bd93c08e8.html#affa02d4b58c7b01288d5087bd93c08e8" title="Piecewise linear path through evenly spaced positions." alt="" coords="5,5,168,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="202,35,168,35,168,30,202,30"/>
+</map>

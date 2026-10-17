@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::SDFFieldProcessor::SDFFieldProcessor" name="MayaFlux::Buffers::SDFFieldProcessor::SDFFieldProcessor">
+<area shape="rect" id="Node000001" title="Evaluate an authored field function instead of a shader file." alt="" coords="5,84,212,139"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1SDFFieldProcessor_adb7f24066672330eb9a228b01edd69f0.html#adb7f24066672330eb9a228b01edd69f0" title="Replace the evaluation volume." alt="" coords="261,5,431,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="191,81,249,62,251,67,193,86"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1ComputeProcessor_ad0a4f166e8f9ed24f91e590f737a717f.html#ad0a4f166e8f9ed24f91e590f737a717f" title="Set dispatch mode." alt="" coords="260,84,432,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="212,109,246,109,246,114,212,114"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1ComputeProcessor_adaaeab4489b75f391e28461fe22613ba.html#adaaeab4489b75f391e28461fe22613ba" title="Set manual dispatch group counts." alt="" coords="260,163,432,217"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="193,136,251,156,249,161,191,141"/>
+</map>

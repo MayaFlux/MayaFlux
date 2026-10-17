@@ -1,0 +1,11 @@
+<map id="MayaFlux::Portal::Graphics::ShaderSpec::Assemble::op" name="MayaFlux::Portal::Graphics::ShaderSpec::Assemble::op">
+<area shape="rect" id="Node000001" title="Set the named operation the emitter will lower to SPIR&#45;V." alt="" coords="467,77,669,117"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1VisionGpuExecutor_a37b115d59dbe1593c58ef631942b363e.html#a37b115d59dbe1593c58ef631942b363e" title="GpuComputeConfig for a given VisionOp and its parameters." alt="" coords="236,41,419,81"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="453,83,419,78,419,72,453,78"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Buffers_1_1RelaxationSpecs_afe4907c6e3660650e5e21427e6c1f9a7.html#afe4907c6e3660650e5e21427e6c1f9a7" title="Jacobi&#45;style diffusion rule: each cell blends toward the average of its 8 Moore neighbors." alt="" coords="239,106,416,161"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="453,117,417,123,416,117,453,112"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1VisionGpuExecutor_a08ab089f0a700b0a70d6902294c38fb1.html#a08ab089f0a700b0a70d6902294c38fb1" title="Detect edges in the current image with the Canny pipeline." alt="" coords="5,5,188,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="222,48,188,42,189,37,223,42"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1VisionGpuExecutor_a48bca474121218135f8e80630f3eac82.html#a48bca474121218135f8e80630f3eac82" title="Compute the Harris response of the current image." alt="" coords="5,70,188,125"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="223,80,189,86,188,80,222,75"/>
+</map>

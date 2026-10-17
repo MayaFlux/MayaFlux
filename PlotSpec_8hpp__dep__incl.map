@@ -1,0 +1,39 @@
+<map id="PlotSpec.hpp" name="PlotSpec.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="187,5,293,31"/>
+<area shape="rect" id="Node000002" href="$Plot_8hpp.html" title=" " alt="" coords="201,152,276,177"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="210,41,191,58,177,80,175,100,185,119,202,136,221,150,218,154,199,140,181,122,170,101,172,78,187,55,207,37"/>
+<area shape="rect" id="Node000016" href="$PlotSpec_8cpp.html" title=" " alt="" coords="187,79,293,104"/>
+<area shape="poly" id="edge15_Node000001_Node000016" title=" " alt="" coords="243,44,243,79,237,79,237,44"/>
+<area shape="rect" id="Node000017" href="$SeriesBuilder_8hpp.html" title=" " alt="" coords="317,79,451,104"/>
+<area shape="poly" id="edge16_Node000001_Node000017" title=" " alt="" coords="276,34,362,76,359,81,274,39"/>
+<area shape="rect" id="Node000003" href="$Atelier_8hpp.html" title=" " alt="" coords="177,225,269,251"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="236,191,228,226,223,225,230,190"/>
+<area shape="rect" id="Node000015" href="$Plot_8cpp.html" title=" " alt="" coords="293,225,368,251"/>
+<area shape="poly" id="edge14_Node000002_Node000015" title=" " alt="" coords="266,183,317,223,314,227,262,188"/>
+<area shape="rect" id="Node000004" href="$Atelier_8cpp.html" title=" " alt="" coords="5,299,96,324"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="184,258,80,301,78,296,182,253"/>
+<area shape="rect" id="Node000005" href="$Picker_8cpp.html" title=" " alt="" coords="121,299,207,324"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="206,263,176,300,171,297,202,260"/>
+<area shape="rect" id="Node000006" href="$Surface_8cpp.html" title=" " alt="" coords="232,299,331,324"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="243,260,274,297,270,300,239,263"/>
+<area shape="rect" id="Node000007" href="$Tend_8hpp.html" title=" " alt="" coords="355,299,435,324"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="264,253,368,296,366,301,262,258"/>
+<area shape="rect" id="Node000008" href="$Forma_8hpp.html" title="Factory free functions for the Forma surface system." alt="" coords="295,372,385,397"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="379,337,351,374,347,370,375,333"/>
+<area shape="rect" id="Node000014" href="$Tend_8cpp.html" title=" " alt="" coords="410,372,489,397"/>
+<area shape="poly" id="edge13_Node000007_Node000014" title=" " alt="" coords="414,333,443,370,438,374,410,337"/>
+<area shape="rect" id="Node000009" href="$Convenience_8hpp.html" title="Everyday headers and namespace imports for user code." alt="" coords="134,445,269,471"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="307,406,225,447,223,443,304,401"/>
+<area shape="rect" id="Node000012" href="$Engine_8cpp.html" title=" " alt="" coords="293,445,387,471"/>
+<area shape="poly" id="edge11_Node000008_Node000012" title=" " alt="" coords="343,411,343,445,337,445,337,411"/>
+<area shape="rect" id="Node000013" href="$Forma_8cpp.html" title=" " alt="" coords="411,445,501,471"/>
+<area shape="poly" id="edge12_Node000008_Node000013" title=" " alt="" coords="372,402,438,443,436,447,369,407"/>
+<area shape="rect" id="Node000010" href="$MayaFlux_8hpp.html" title="Single include for the user facing API." alt="" coords="144,519,259,544"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="204,484,204,519,199,519,199,484"/>
+<area shape="rect" id="Node000011" href="$LiveAid_8hpp.html" title=" " alt="" coords="152,592,251,617"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="204,558,204,592,199,592,199,558"/>
+<area shape="poly" id="edge18_Node000017_Node000002" title=" " alt="" coords="350,112,264,154,261,149,347,108"/>
+<area shape="poly" id="edge17_Node000017_Node000015" title=" " alt="" coords="375,118,360,153,336,226,331,224,355,151,370,115"/>
+<area shape="rect" id="Node000018" href="$SeriesBuilder_8cpp.html" title=" " alt="" coords="369,152,503,177"/>
+<area shape="poly" id="edge19_Node000017_Node000018" title=" " alt="" coords="403,114,430,150,425,153,398,117"/>
+</map>

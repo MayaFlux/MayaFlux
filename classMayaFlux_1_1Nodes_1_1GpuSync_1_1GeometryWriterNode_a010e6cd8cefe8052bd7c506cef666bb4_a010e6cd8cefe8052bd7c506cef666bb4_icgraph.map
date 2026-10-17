@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::GpuSync::GeometryWriterNode::get_vertex_count" name="MayaFlux::Nodes::GpuSync::GeometryWriterNode::get_vertex_count">
+<area shape="rect" id="Node000001" title="Get number of vertices." alt="" coords="321,34,521,89"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GeometryLeafNode_a39677ab6d7db29452f4f01c74732a44b.html#a39677ab6d7db29452f4f01c74732a44b" title="No&#45;op unless a mutator has run since the last call, so AssemblyOperator::process() calling this on ev..." alt="" coords="5,5,273,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="307,49,273,45,274,40,308,44"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PointCollectionNode_a89f1ca486920e33188f6cc4367186a2d.html#a89f1ca486920e33188f6cc4367186a2d" title="Compute frame &#45; uploads positions to vertex buffer." alt="" coords="39,70,239,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="308,79,240,87,239,82,307,73"/>
+</map>

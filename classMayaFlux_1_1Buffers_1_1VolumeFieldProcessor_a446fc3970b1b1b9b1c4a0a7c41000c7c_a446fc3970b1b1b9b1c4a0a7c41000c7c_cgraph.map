@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::VolumeFieldProcessor::VolumeFieldProcessor" name="MayaFlux::Buffers::VolumeFieldProcessor::VolumeFieldProcessor">
+<area shape="rect" id="Node000001" title="Construct from a shader path." alt="" coords="5,5,179,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VolumeFieldProcessor_a840bea096f22b9649600f67cfc106b8a.html#a840bea096f22b9649600f67cfc106b8a" title="Register the binding table into m_config.bindings." alt="" coords="227,5,392,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="179,30,213,30,213,35,179,35"/>
+</map>

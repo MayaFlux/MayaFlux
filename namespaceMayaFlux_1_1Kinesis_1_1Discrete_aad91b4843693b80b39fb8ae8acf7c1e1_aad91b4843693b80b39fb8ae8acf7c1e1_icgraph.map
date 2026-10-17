@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::Discrete::step_sequence" name="MayaFlux::Kinesis::Discrete::step_sequence">
+<area shape="rect" id="Node000001" title="Table of values advanced by a trigger." alt="" coords="220,5,401,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a7bb93a0abc15e350d3a96d9f1d84bc4b.html#a7bb93a0abc15e350d3a96d9f1d84bc4b" title="A table of bits advanced by the rises of the input." alt="" coords="5,5,172,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="206,28,172,28,172,23,206,23"/>
+</map>

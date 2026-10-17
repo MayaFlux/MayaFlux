@@ -1,0 +1,7 @@
+<map id="MayaFlux::Yantra::Vision::WorkflowBufferConfig" name="MayaFlux::Yantra::Vision::WorkflowBufferConfig">
+<area shape="rect" id="Node000001" title="What VisionWorkflow::process_to_buffer() runs: the stream to analyze, the query and extraction,..." alt="" coords="104,388,279,508"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1VisionQuery.html" title="Composed query: which VisionIntents are active, and each active one&#39;s parameters." alt="" coords="5,65,175,265"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="128,264,167,372,162,374,123,266"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Portal_1_1Graphics_1_1RenderConfig.html" title="Unified rendering configuration for graphics buffers." alt="" coords="199,5,389,325"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="238,326,221,373,216,372,233,325"/>
+</map>

@@ -1,0 +1,16 @@
+<map id="MayaFlux::Kinesis::Stochastic::Weights::uniform_excluding_self" name="MayaFlux::Kinesis::Stochastic::Weights::uniform_excluding_self">
+<area shape="rect" id="Node000001" title="Every cell uniform except the diagonal, each row normalized to sum to one." alt="" coords="5,34,188,89"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Weights_a397c8374f169d416f76eb8c0ce5455ca.html#a397c8374f169d416f76eb8c0ce5455ca" title=" " alt="" coords="236,5,409,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="188,44,222,39,223,44,189,49"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Weights_afcaa4d43734fecbffbaf69454b2e9da6.html#afcaa4d43734fecbffbaf69454b2e9da6" title="Scale a row so its cells sum to one." alt="" coords="248,70,397,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="189,73,235,81,234,86,188,79"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Weights_ae887f9f18e9559b77ab7692fd5c469d0.html#ae887f9f18e9559b77ab7692fd5c469d0" title="Atomic read of one cell." alt="" coords="457,20,636,60"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="397,76,454,61,455,66,398,81"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Weights_a09e43b5a845040464dbed8b83a754c92.html#a09e43b5a845040464dbed8b83a754c92" title="Non&#45;atomic view of one row." alt="" coords="684,77,865,117"/>
+<area shape="poly" id="edge6_Node000003_Node000005" title=" " alt="" coords="398,95,670,95,670,100,398,100"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Weights_ac59a1767c7313db6d977559b39664deb.html#ac59a1767c7313db6d977559b39664deb" title=" " alt="" coords="472,135,621,190"/>
+<area shape="poly" id="edge7_Node000003_Node000006" title=" " alt="" coords="398,117,460,135,458,140,397,122"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="627,57,682,71,681,77,626,63"/>
+<area shape="poly" id="edge5_Node000005_Node000005" title=" " alt="" coords="732,78,730,68,737,58,752,53,775,51,801,54,816,61,813,66,800,59,775,56,753,58,740,63,735,69,737,76"/>
+<area shape="poly" id="edge8_Node000006_Node000005" title=" " alt="" coords="621,139,690,119,692,124,623,144"/>
+</map>

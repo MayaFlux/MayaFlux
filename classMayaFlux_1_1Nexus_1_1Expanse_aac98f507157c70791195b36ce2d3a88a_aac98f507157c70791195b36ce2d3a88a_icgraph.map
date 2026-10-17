@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nexus::Expanse::reach" name="MayaFlux::Nexus::Expanse::reach">
+<area shape="rect" id="Node000001" title="Where the region is centred and how far it reaches, for perceptions." alt="" coords="252,37,451,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1Expanse_adda82628b25cbdb59e957050e2252c12.html#adda82628b25cbdb59e957050e2252c12" title="Evaluate a spatial snapshot from one Fabric against this Expanse." alt="" coords="5,5,204,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="238,45,204,41,205,36,239,40"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nexus_1_1Hull_a3d9184ed0531efe7c872f41e617f399b.html#a3d9184ed0531efe7c872f41e617f399b" title="The centre of the bounds as drawn, and the distance to their farthest corner." alt="" coords="20,69,189,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="238,75,190,81,189,76,238,69"/>
+</map>

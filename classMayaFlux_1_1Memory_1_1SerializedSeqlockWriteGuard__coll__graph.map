@@ -1,0 +1,5 @@
+<map id="MayaFlux::Memory::SerializedSeqlockWriteGuard" name="MayaFlux::Memory::SerializedSeqlockWriteGuard">
+<area shape="rect" id="Node000001" title="Scope guard for a serialized Seqlock write." alt="" coords="5,353,244,493"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Memory_1_1Seqlock.html" title="Sequence lock for fixed&#45;size data regions." alt="" coords="25,5,224,291"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="127,291,127,337,122,337,122,291"/>
+</map>

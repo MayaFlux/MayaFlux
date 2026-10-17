@@ -1,0 +1,11 @@
+<map id="MayaFlux::Portal::Graphics::PrimitiveMill::ensure_buffers" name="MayaFlux::Portal::Graphics::PrimitiveMill::ensure_buffers">
+<area shape="rect" id="Node000001" title="Grows the destination ring, run and prefix buffers to fit." alt="" coords="973,5,1171,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1PrimitiveMill_ae149e0bc3f6ca0cce9034bc0f2e2b645.html#ae149e0bc3f6ca0cce9034bc0f2e2b645" title="Mill runs out of source into the owned buffer." alt="" coords="728,13,925,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="959,35,925,35,925,30,959,30"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a6d6af6f212ace15b1100d0fc65634e9d.html#a6d6af6f212ace15b1100d0fc65634e9d" title="Mill m_runs into this attachment&#39;s output." alt="" coords="481,13,680,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="714,35,680,35,680,30,714,30"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a802c0733635cc376acc7c05ee33c5377.html#a802c0733635cc376acc7c05ee33c5377" title="Prepare and retain the source and draw range for one attached buffer." alt="" coords="244,5,433,60"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="468,35,434,35,434,30,468,30"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_acd3ee18a43b25af2aa06f17efacd6c5f.html#acd3ee18a43b25af2aa06f17efacd6c5f" title="Prepare this buffer&#39;s geometry and record its draw commands." alt="" coords="5,5,196,60"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="231,35,196,35,196,30,231,30"/>
+</map>

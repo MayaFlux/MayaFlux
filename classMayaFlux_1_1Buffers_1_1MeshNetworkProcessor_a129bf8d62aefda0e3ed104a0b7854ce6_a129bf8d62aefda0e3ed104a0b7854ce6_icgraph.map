@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::MeshNetworkProcessor::total_vertex_bytes" name="MayaFlux::Buffers::MeshNetworkProcessor::total_vertex_bytes">
+<area shape="rect" id="Node000001" title=" " alt="" coords="451,5,625,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1MeshNetworkProcessor_a983c764100949732f44e7846e51632aa.html#a983c764100949732f44e7846e51632aa" title=" " alt="" coords="228,5,403,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="437,35,403,35,403,30,437,30"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1MeshNetworkProcessor_af6babecf587db751ec53f379311d898f.html#af6babecf587db751ec53f379311d898f" title="Called when this processor is attached to a buffer." alt="" coords="5,5,180,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="214,35,180,35,180,30,214,30"/>
+</map>

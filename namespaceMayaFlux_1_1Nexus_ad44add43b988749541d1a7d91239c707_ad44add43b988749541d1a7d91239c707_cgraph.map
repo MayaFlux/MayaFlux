@@ -1,0 +1,6 @@
+<map id="MayaFlux::Nexus::make_attachment" name="MayaFlux::Nexus::make_attachment">
+<area shape="rect" id="Node000001" title="Build an attachment to buf." alt="" coords="5,29,184,69"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Nexus_a38a4ffb36a511a9879f5dee9e2f64099.html#a38a4ffb36a511a9879f5dee9e2f64099" title="Anchor of a buffer&#39;s geometry in its own stored coordinates." alt="" coords="232,29,404,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="184,47,218,47,218,52,184,52"/>
+<area shape="poly" id="edge2_Node000002_Node000002" title=" " alt="" coords="277,30,274,20,281,10,296,5,318,3,344,6,358,13,356,18,342,11,318,8,297,10,284,15,279,21,282,28"/>
+</map>

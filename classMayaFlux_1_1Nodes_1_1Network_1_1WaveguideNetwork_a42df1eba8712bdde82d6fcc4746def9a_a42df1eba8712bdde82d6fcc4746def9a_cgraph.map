@@ -1,0 +1,15 @@
+<map id="MayaFlux::Nodes::Network::WaveguideNetwork::update_mapped_parameters" name="MayaFlux::Nodes::Network::WaveguideNetwork::update_mapped_parameters">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,124,216,179"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1WaveguideNetwork_acee3acc704e71412521612a979c05b64.html#acee3acc704e71412521612a979c05b64" title=" " alt="" coords="264,84,465,139"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="216,132,250,127,251,132,216,137"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1Network_1_1WaveguideNetwork_aec2ac529d2df3975a7cf1bcd1d696a15.html#aec2ac529d2df3975a7cf1bcd1d696a15" title=" " alt="" coords="264,163,465,217"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="216,165,251,170,250,175,216,170"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1WaveguideNetwork_a89cd696dd3cd64ca8cf8d0ff9910bccc.html#a89cd696dd3cd64ca8cf8d0ff9910bccc" title="Set fundamental frequency." alt="" coords="513,5,712,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="451,81,512,62,513,67,452,86"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Network_1_1WaveguideNetwork_a866e7a2b7849c94223df1ad51982ab27.html#a866e7a2b7849c94223df1ad51982ab27" title="Set per&#45;sample energy loss factor." alt="" coords="513,84,712,139"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="465,109,499,109,499,114,465,114"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Network_1_1WaveguideNetwork_ad6daa6cec6d47d3c29b09767b519306c.html#ad6daa6cec6d47d3c29b09767b519306c" title="Set pickup position along the string." alt="" coords="513,163,712,217"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="452,136,513,156,512,161,451,141"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Network_1_1WaveguideNetwork_ab8ef8061cb1ccafcc44f54a67bad0c04.html#ab8ef8061cb1ccafcc44f54a67bad0c04" title=" " alt="" coords="760,5,983,60"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="712,30,746,30,746,35,712,35"/>
+</map>

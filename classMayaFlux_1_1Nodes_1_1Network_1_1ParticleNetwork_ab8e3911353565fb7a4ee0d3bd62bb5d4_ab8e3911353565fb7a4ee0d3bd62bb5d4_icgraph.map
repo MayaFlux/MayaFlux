@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::ParticleNetwork::update_mapped_parameters" name="MayaFlux::Nodes::Network::ParticleNetwork::update_mapped_parameters">
+<area shape="rect" id="Node000001" title="Update mapped parameters before physics step." alt="" coords="288,5,487,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ParticleNetwork_a3f43ec4fb1893a9042bcd6891cbb3648.html#a3f43ec4fb1893a9042bcd6891cbb3648" title="Process the network for the given number of samples." alt="" coords="5,13,240,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="274,35,240,35,240,30,274,30"/>
+</map>

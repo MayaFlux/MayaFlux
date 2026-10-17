@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::WindowContainer::get_frame_size" name="MayaFlux::Kakshya::WindowContainer::get_frame_size">
+<area shape="rect" id="Node000001" title="Get the number of elements that constitute one &quot;frame&quot;." alt="" coords="5,5,172,60"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure_a3b75e366535f258e9eeea41e897693d2.html#a3b75e366535f258e9eeea41e897693d2" title="Extract the size of non time dimensions (channel, spatial, frequency)" alt="" coords="220,5,395,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="172,30,206,30,206,35,172,35"/>
+</map>

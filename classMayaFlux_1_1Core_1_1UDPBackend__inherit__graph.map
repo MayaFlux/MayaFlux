@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::UDPBackend" name="MayaFlux::Core::UDPBackend">
+<area shape="rect" id="Node000001" title="Connectionless datagram transport over UDP via standalone Asio." alt="" coords="5,333,212,913"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1INetworkBackend.html" title="Abstract interface for network transport backends." alt="" coords="17,5,200,285"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="111,299,111,333,106,333,106,299"/>
+</map>

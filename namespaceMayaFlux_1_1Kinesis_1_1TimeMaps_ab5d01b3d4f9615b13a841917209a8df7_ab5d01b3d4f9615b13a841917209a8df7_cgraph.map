@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kinesis::TimeMaps::quadratic" name="MayaFlux::Kinesis::TimeMaps::quadratic">
+<area shape="rect" id="Node000001" title="Constant acceleration from an initial velocity." alt="" coords="5,37,164,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a02b98761eeacfbfd375ebe19f79fe74e.html#a02b98761eeacfbfd375ebe19f79fe74e" title="Second difference: rate of change of velocity." alt="" coords="212,5,361,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="164,42,198,37,199,42,165,47"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_a26c65f0ec04f0fddefa1e3846124bcd4.html#a26c65f0ec04f0fddefa1e3846124bcd4" title="First difference: rate of change of position." alt="" coords="212,69,361,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="165,67,199,73,198,78,164,73"/>
+</map>

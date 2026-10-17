@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Generator::Polynomial::bind_coefficients" name="MayaFlux::Nodes::Generator::Polynomial::bind_coefficients">
+<area shape="rect" id="Node000001" title="Converts coefficient vector to a polynomial function." alt="" coords="261,13,483,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Polynomial_ac8d2fb7ea7620ee7933924b7432dbe42.html#ac8d2fb7ea7620ee7933924b7432dbe42" title="Sets a buffer function that receives the coefficient array." alt="" coords="5,5,213,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="248,35,213,35,213,30,248,30"/>
+</map>

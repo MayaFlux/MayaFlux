@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Network::ResonatorNetwork::apply_broadcast_parameter" name="MayaFlux::Nodes::Network::ResonatorNetwork::apply_broadcast_parameter">
+<area shape="rect" id="Node000001" title="Apply a BROADCAST value to the named parameter across all resonators." alt="" coords="557,5,756,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ResonatorNetwork_aee31c5dd30c5a3f3dd7ad55c8ee2979e.html#aee31c5dd30c5a3f3dd7ad55c8ee2979e" title="Apply all registered parameter mappings for the current cycle." alt="" coords="305,5,509,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="544,35,509,35,509,30,544,30"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ResonatorNetwork_ab3fa42f883efda46b4961b24c3654c2f.html#ab3fa42f883efda46b4961b24c3654c2f" title="Processes num_samples through all resonators and accumulates output." alt="" coords="5,13,257,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="291,35,257,35,257,30,291,30"/>
+</map>

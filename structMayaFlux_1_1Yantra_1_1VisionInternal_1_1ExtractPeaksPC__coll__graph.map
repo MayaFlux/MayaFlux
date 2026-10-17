@@ -1,0 +1,5 @@
+<map id="MayaFlux::Yantra::VisionInternal::ExtractPeaksPC" name="MayaFlux::Yantra::VisionInternal::ExtractPeaksPC">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,208,180,368"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Yantra_1_1VisionInternal_1_1PixelRect.html" title="Half&#45;open pixel rectangle [x0, x1) x [y0, y1)" alt="" coords="5,5,180,145"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="95,145,95,192,90,192,90,145"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="MayaFlux::create_container" name="MayaFlux::create_container">
+<area shape="rect" id="Node000001" title="creates a new container of the specified type" alt="" coords="285,77,488,102"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1CompositeReader_ab5907d944026687b9a6995086a8cb83d.html#ab5907d944026687b9a6995086a8cb83d" title="Inspect the schema established by open() without reading data." alt="" coords="5,5,237,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="319,76,204,48,206,43,320,71"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1FFmpegCameraReader_a55e042adf4dc9a98e9d7afa2005f9d69.html#a55e042adf4dc9a98e9d7afa2005f9d69" title=" " alt="" coords="11,69,231,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="272,92,232,92,232,87,272,87"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1VideoFileReader_a007e648dbbc35e921c46091394e253f5.html#a007e648dbbc35e921c46091394e253f5" title=" " alt="" coords="10,133,233,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="320,108,206,136,204,131,319,103"/>
+</map>

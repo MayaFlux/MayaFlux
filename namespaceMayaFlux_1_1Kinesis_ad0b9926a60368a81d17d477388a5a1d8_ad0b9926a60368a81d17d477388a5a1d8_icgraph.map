@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::wrap" name="MayaFlux::Kinesis::wrap">
+<area shape="rect" id="Node000001" title="Wrap x into [lo, hi) with modulo semantics." alt="" coords="268,13,449,38"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a1b7001dc9f328b502216b5a77841301c.html#a1b7001dc9f328b502216b5a77841301c" title="Weighted sum wrapped into [0, modulus)." alt="" coords="5,5,220,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="254,28,220,28,220,23,254,23"/>
+</map>

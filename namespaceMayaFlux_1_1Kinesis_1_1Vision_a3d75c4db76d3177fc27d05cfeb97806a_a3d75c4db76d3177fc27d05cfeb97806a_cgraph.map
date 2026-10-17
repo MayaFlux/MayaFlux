@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kinesis::Vision::harris_response" name="MayaFlux::Kinesis::Vision::harris_response">
+<area shape="rect" id="Node000001" title="Compute the Harris corner response map into caller&#45;supplied buffers." alt="" coords="5,91,179,131"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_aab6fb53c660d9b136c87551ce1927812.html#aab6fb53c660d9b136c87551ce1927812" title="Fused horizontal separable filter over N planes." alt="" coords="227,5,399,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="148,89,222,62,223,67,150,94"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_af5ab131cb21010087b71d9349ebd0650.html#af5ab131cb21010087b71d9349ebd0650" title="Fused vertical separable filter over N planes." alt="" coords="235,84,391,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="179,109,221,109,221,114,179,114"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a68bd62ba0feea86a92e8dca22a3da0c0.html#a68bd62ba0feea86a92e8dca22a3da0c0" title="Sobel gradient writing dx and dy into caller&#45;supplied buffers." alt="" coords="238,163,387,203"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="155,129,239,157,237,162,153,134"/>
+</map>

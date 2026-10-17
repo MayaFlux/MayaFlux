@@ -1,0 +1,26 @@
+<map id="MayaFlux::Buffers::BufferTokenDistributor::distribute" name="MayaFlux::Buffers::BufferTokenDistributor::distribute">
+<area shape="rect" id="Node000001" title="Distribute a buffer based on its type and requested token." alt="" coords="5,208,172,263"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferTokenDistributor_ae4591636f9d2f46974bff1efe9eaf033.html#ae4591636f9d2f46974bff1efe9eaf033" title=" " alt="" coords="220,168,387,223"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="172,217,206,211,207,216,173,222"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1BufferTokenDistributor_ab405da6eb10db723c3611288b56f7703.html#ab405da6eb10db723c3611288b56f7703" title=" " alt="" coords="220,247,387,301"/>
+<area shape="poly" id="edge9_Node000001_Node000008" title=" " alt="" coords="173,248,207,254,206,259,172,253"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1BufferTokenDistributor_af1dbf5faec4cbc8f4671873f1169dfb3.html#af1dbf5faec4cbc8f4671873f1169dfb3" title=" " alt="" coords="649,37,816,92"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="314,166,331,131,357,91,391,52,433,22,461,11,490,5,550,4,608,14,660,30,658,35,607,20,550,10,491,11,463,17,436,27,395,56,362,94,336,134,318,169"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1BufferTokenDistributor_a8905ac4746f23b6abfc7cf6ebfc4dcff.html#a8905ac4746f23b6abfc7cf6ebfc4dcff" title=" " alt="" coords="649,143,816,197"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="383,165,434,154,486,149,538,148,636,154,636,159,538,153,486,154,435,159,384,171"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1BufferTokenDistributor_affbb06956b358f108ba37af964b651ef.html#affbb06956b358f108ba37af964b651ef" title=" " alt="" coords="435,247,601,301"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="380,220,431,239,429,244,378,225"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1BufferTokenDistributor_a60fe6d82588287e9af8033ffa2c5bf71.html#a60fe6d82588287e9af8033ffa2c5bf71" title=" " alt="" coords="435,168,601,223"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="387,193,421,193,421,198,387,198"/>
+<area shape="poly" id="edge6_Node000006_Node000003" title=" " alt="" coords="562,166,674,97,677,101,565,170"/>
+<area shape="poly" id="edge8_Node000006_Node000004" title=" " alt="" coords="602,183,635,179,636,184,602,188"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1BufferTokenDistributor_a43fef03e0b2432629d213174b1028215.html#a43fef03e0b2432629d213174b1028215" title=" " alt="" coords="649,279,816,333"/>
+<area shape="poly" id="edge7_Node000006_Node000007" title=" " alt="" coords="578,220,603,233,672,270,669,275,600,238,575,225"/>
+<area shape="poly" id="edge11_Node000008_Node000004" title=" " alt="" coords="369,299,421,315,480,326,542,327,572,321,600,312,641,272,698,206,702,210,645,276,603,316,573,327,542,332,480,331,420,320,367,304"/>
+<area shape="poly" id="edge12_Node000008_Node000005" title=" " alt="" coords="387,271,421,271,421,277,387,277"/>
+<area shape="poly" id="edge10_Node000008_Node000007" title=" " alt="" coords="337,299,382,331,408,345,435,355,481,366,517,368,554,364,601,355,663,336,665,341,602,361,555,369,517,374,480,371,434,361,406,350,379,335,334,304"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1BufferTokenDistributor_a4fa0ca33799590fe51a16eef4650ee14.html#a4fa0ca33799590fe51a16eef4650ee14" title=" " alt="" coords="435,37,601,92"/>
+<area shape="poly" id="edge13_Node000008_Node000009" title=" " alt="" coords="370,244,385,233,401,215,411,197,419,178,432,155,478,101,482,104,437,158,424,180,415,199,406,218,388,237,373,249"/>
+<area shape="poly" id="edge14_Node000009_Node000003" title=" " alt="" coords="602,62,635,62,635,67,602,67"/>
+<area shape="poly" id="edge15_Node000009_Node000004" title=" " alt="" coords="576,90,665,134,663,139,573,94"/>
+</map>

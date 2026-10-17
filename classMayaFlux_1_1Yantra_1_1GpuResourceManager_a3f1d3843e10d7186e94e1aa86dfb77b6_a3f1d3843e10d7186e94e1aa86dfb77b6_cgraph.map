@@ -1,0 +1,9 @@
+<map id="MayaFlux::Yantra::GpuResourceManager::bind_descriptors_batch" name="MayaFlux::Yantra::GpuResourceManager::bind_descriptors_batch">
+<area shape="rect" id="Node000001" title="Bind every non&#45;image buffer binding in one Vulkan call." alt="" coords="5,37,243,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a715d57394465ff2924727d7c82d87e7b.html#a715d57394465ff2924727d7c82d87e7b" title="Get the global shader compiler instance." alt="" coords="306,5,503,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="243,41,292,35,293,41,243,46"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1GpuResourceManager_a93b9e87640ff7caf15e93874fb627541.html#a93b9e87640ff7caf15e93874fb627541" title=" " alt="" coords="291,69,519,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="243,68,277,72,277,77,243,74"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="567,5,764,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="504,23,553,23,553,28,504,28"/>
+</map>

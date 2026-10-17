@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kinesis::Lattice1D::cell_at" name="MayaFlux::Kinesis::Lattice1D::cell_at">
+<area shape="rect" id="Node000001" title="Cell containing a value, clamped to the lattice." alt="" coords="5,5,155,45"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1Lattice1D_a3ddf5029e0e0f9c6118105b0d0ff465a.html#a3ddf5029e0e0f9c6118105b0d0ff465a" title="Width of one cell." alt="" coords="203,5,352,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="155,23,189,23,189,28,155,28"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kinesis_1_1AABB1D_a23cf5ce50f1c96df60f2229ef19bed6c.html#a23cf5ce50f1c96df60f2229ef19bed6c" title=" " alt="" coords="400,5,549,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="352,23,386,23,386,28,352,28"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::BufferAccessControl::remove_graphics_buffer" name="MayaFlux::Buffers::BufferAccessControl::remove_graphics_buffer">
+<area shape="rect" id="Node000001" title="Removes a graphics buffer from a token." alt="" coords="247,45,433,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferAccessControl_ab81d45e72e1fc78068248a7b5693d40d.html#ab81d45e72e1fc78068248a7b5693d40d" title="Removes a buffer from a token (dispatches based on token type)" alt="" coords="25,5,179,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="233,57,178,48,179,43,234,52"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1BufferAccessControl_a2e16fe266c665dec676dcb31768408a7.html#a2e16fe266c665dec676dcb31768408a7" title="Terminates all active Audio and VK buffers." alt="" coords="5,84,199,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="233,93,199,98,198,93,233,87"/>
+</map>

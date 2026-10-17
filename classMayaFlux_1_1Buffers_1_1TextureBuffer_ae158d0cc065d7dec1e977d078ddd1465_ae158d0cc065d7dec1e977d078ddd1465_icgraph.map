@@ -1,0 +1,11 @@
+<map id="MayaFlux::Buffers::TextureBuffer::get_pixel_data_mutable" name="MayaFlux::Buffers::TextureBuffer::get_pixel_data_mutable">
+<area shape="rect" id="Node000001" title=" " alt="" coords="405,45,581,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1TextureArrayBuffer_ad89d8d9eb94a9764b8d48ec135e23777.html#ad89d8d9eb94a9764b8d48ec135e23777" title=" " alt="" coords="205,5,357,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="391,56,357,50,358,44,392,51"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1TextureArrayBuffer_abb308b7a1106c79c340bbffe547dfbe6.html#abb308b7a1106c79c340bbffe547dfbe6" title="Replace the frame of one layer with raw pixels." alt="" coords="205,84,357,139"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="392,94,358,100,357,95,391,89"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1TextureArrayBuffer_a1d6d7ae0f2b8d9f619188372d0cdd853.html#a1d6d7ae0f2b8d9f619188372d0cdd853" title="Replace the frame of one layer with a GPU image, with no host read." alt="" coords="5,5,157,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="191,35,158,35,158,30,191,30"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1TextureArrayBuffer_abf5479ab183067327913cf60adbcd4cc.html#abf5479ab183067327913cf60adbcd4cc" title="Replace the frame of one layer with an image." alt="" coords="5,84,157,139"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="191,114,158,114,158,109,191,109"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Vruta::WindowEventSource::pop_event" name="MayaFlux::Vruta::WindowEventSource::pop_event">
+<area shape="rect" id="Node000001" title="Removes and returns the first pending event matching the filter." alt="" coords="279,37,505,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1WindowEventAwaiter_a55d2dd40877aa341761db6dad1bfc096.html#a55d2dd40877aa341761db6dad1bfc096" title="Returns true if a matching event is already queued; stores it if so." alt="" coords="5,5,231,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="265,45,230,41,231,36,265,40"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kriya_1_1WindowEventAwaiter_a603c73ee4167f1d747075e8707735450.html#a603c73ee4167f1d747075e8707735450" title="Casts event to Core::WindowEvent, checks filter, resumes if matched." alt="" coords="5,69,231,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="265,75,231,79,230,74,265,70"/>
+</map>

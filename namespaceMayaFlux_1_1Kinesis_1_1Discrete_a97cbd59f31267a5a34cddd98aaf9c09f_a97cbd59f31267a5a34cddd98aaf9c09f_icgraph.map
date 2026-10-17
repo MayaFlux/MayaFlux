@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kinesis::Discrete::to_word" name="MayaFlux::Kinesis::Discrete::to_word">
+<area shape="rect" id="Node000001" title="The offset binary word of a value, clamped to [&#45;1, 1]." alt="" coords="717,13,867,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1LogicProcessor_aab87f77cc39f13cb95f77e26b13bfa65.html#aab87f77cc39f13cb95f77e26b13bfa65" title=" " alt="" coords="484,5,669,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="703,35,670,35,670,30,703,30"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1LogicProcessor_a8227a4ef446e2529009afe0062f1bf67.html#a8227a4ef446e2529009afe0062f1bf67" title="Generates discrete logic data from input without modifying any buffer." alt="" coords="251,13,436,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="470,35,436,35,436,30,470,30"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1LogicProcessor_af13053c27d50d66c16bbceb83fa44fa0.html#af13053c27d50d66c16bbceb83fa44fa0" title="Processes a buffer through the logic node." alt="" coords="5,5,203,60"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="237,35,203,35,203,30,237,30"/>
+</map>

@@ -1,0 +1,11 @@
+<map id="MayaFlux::Vruta::TaskScheduler::terminate_all_tasks" name="MayaFlux::Vruta::TaskScheduler::terminate_all_tasks">
+<area shape="rect" id="Node000001" title="Terminate and clear all tasks." alt="" coords="5,37,236,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_af8c8a82e6c4d76ffd846dc4bef4d8301.html#af8c8a82e6c4d76ffd846dc4bef4d8301" title="Drain pending conditional task operations before processing." alt="" coords="284,5,515,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="236,41,270,37,271,43,237,47"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_aa493113c59d1aed358efb9450c606947.html#aa493113c59d1aed358efb9450c606947" title="Drain pending task operations (additions/removals) before processing." alt="" coords="284,69,515,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="237,68,271,72,270,77,236,73"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a6cab5fd4999392badaec656a94ab3d16.html#a6cab5fd4999392badaec656a94ab3d16" title="Find task entry by name." alt="" coords="563,37,793,77"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="515,73,549,69,549,75,515,79"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_afb823dfb8ca7ec5182cfaa8e3ee93649.html#afb823dfb8ca7ec5182cfaa8e3ee93649" title="Find task entry by routine pointer." alt="" coords="563,101,793,141"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="515,100,549,104,549,109,515,105"/>
+</map>

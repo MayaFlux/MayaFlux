@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::StreamSliceProcessor::slice" name="MayaFlux::Buffers::StreamSliceProcessor::slice">
+<area shape="rect" id="Node000001" title=" " alt="" coords="252,30,415,85"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1StreamSliceProcessor_a58f23e1ce8e24fc0f6f133fe11166f1e.html#a58f23e1ce8e24fc0f6f133fe11166f1e" title="Activate a slot, resetting its processor cursor to region start." alt="" coords="5,5,204,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="238,47,204,42,205,37,239,41"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1StreamSliceProcessor_ae239eaa6391fc18b82d4e96e6873dde2.html#ae239eaa6391fc18b82d4e96e6873dde2" title="Assign a StreamSlice to a slot." alt="" coords="5,69,204,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="239,73,205,78,204,73,238,68"/>
+</map>

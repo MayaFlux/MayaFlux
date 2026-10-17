@@ -1,0 +1,14 @@
+<map id="MayaFlux::Portal::Forma::Scrollable::background_color" name="MayaFlux::Portal::Forma::Scrollable::background_color">
+<area shape="rect" id="Node000001" title=" " alt="" coords="907,35,1124,75"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Forma_aef42f7d8c0db50373605643eb762a89a.html#aef42f7d8c0db50373605643eb762a89a" title="Construct a scrollable viewport." alt="" coords="677,35,859,75"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="893,57,859,57,859,52,893,52"/>
+<area shape="poly" id="edge2_Node000002_Node000002" title=" " alt="" coords="807,23,793,16,768,13,746,15,733,20,728,26,730,34,725,35,723,25,729,16,745,10,768,8,795,11,809,18"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Forma_abe13f9ac6498e0bb42d1594f9648b33c.html#abe13f9ac6498e0bb42d1594f9648b33c" title="Open a window of clickable rows, one per label, and report the choice." alt="" coords="448,35,629,75"/>
+<area shape="poly" id="edge3_Node000002_Node000003" title=" " alt="" coords="663,57,630,57,630,52,663,52"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_ab175da21b088a5c2e496b8d1c0670b2f.html#ab175da21b088a5c2e496b8d1c0670b2f" title="Let the user pick a camera, and optionally a capture mode, then open it via IOManager::open_camera()." alt="" coords="204,13,400,38"/>
+<area shape="poly" id="edge4_Node000003_Node000004" title=" " alt="" coords="434,44,400,40,400,35,435,39"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Portal_1_1Forma_aa6e1287fb7394d3c8a69bc7f662ad251.html#aa6e1287fb7394d3c8a69bc7f662ad251" title="Typed form of pick: list items by label and receive the chosen item." alt="" coords="211,63,393,103"/>
+<area shape="poly" id="edge6_Node000003_Node000006" title=" " alt="" coords="435,70,393,75,392,69,434,64"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Creator_a4d6c81dee8675dd5bf9b992245f3a548.html#a4d6c81dee8675dd5bf9b992245f3a548" title="Let the user pick a camera and capture mode, then read it as above." alt="" coords="5,5,156,45"/>
+<area shape="poly" id="edge5_Node000004_Node000005" title=" " alt="" coords="190,28,157,28,157,23,190,23"/>
+</map>

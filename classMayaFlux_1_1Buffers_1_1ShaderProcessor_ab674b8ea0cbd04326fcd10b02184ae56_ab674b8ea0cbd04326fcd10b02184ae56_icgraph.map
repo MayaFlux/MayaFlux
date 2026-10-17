@@ -1,0 +1,15 @@
+<map id="MayaFlux::Buffers::ShaderProcessor::on_dispatch_complete" name="MayaFlux::Buffers::ShaderProcessor::on_dispatch_complete">
+<area shape="rect" id="Node000001" title="Called once when an asynchronous submission is observed complete." alt="" coords="801,102,956,157"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_ac38468f8a2f97593dd7b88fd31063bed.html#ac38468f8a2f97593dd7b88fd31063bed" title="Resolve an outstanding asynchronous submission." alt="" coords="567,102,753,157"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="788,132,753,132,753,127,788,127"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a5066b7ac50552a50869a303adcb41d84.html#a5066b7ac50552a50869a303adcb41d84" title=" " alt="" coords="320,37,509,77"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="553,101,483,80,484,75,554,96"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a89618010c366c34c7e4c7968750175ae.html#a89618010c366c34c7e4c7968750175ae" title="The core processing function that must be implemented by derived classes." alt="" coords="311,102,519,157"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="553,132,519,132,519,127,553,127"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_aa8d370ac5fc7f08bfb36b85944abb0a4.html#aa8d370ac5fc7f08bfb36b85944abb0a4" title="Submit asynchronously and resolve at the top of a later cycle." alt="" coords="332,181,497,235"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="562,163,498,184,497,179,560,158"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a3498377e5d02f243e29f4b28e358733c.html#a3498377e5d02f243e29f4b28e358733c" title=" " alt="" coords="39,5,229,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="306,48,229,39,230,34,307,42"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a9682945ee892c3ab788ce216b49b5d61.html#a9682945ee892c3ab788ce216b49b5d61" title=" " alt="" coords="5,69,263,109"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="307,72,263,77,263,72,306,67"/>
+</map>

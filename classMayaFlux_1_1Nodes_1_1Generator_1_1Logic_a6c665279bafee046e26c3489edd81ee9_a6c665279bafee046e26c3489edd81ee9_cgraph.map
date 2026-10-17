@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Generator::Logic::Logic" name="MayaFlux::Nodes::Generator::Logic::Logic">
+<area shape="rect" id="Node000001" title="Constructs a Logic node with a stateless function and a coefficient array." alt="" coords="5,5,213,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Logic_a04c64ccfa496b2e31ce7f500a2b21f97.html#a04c64ccfa496b2e31ce7f500a2b21f97" title="Sets a custom combinational logic function." alt="" coords="261,5,469,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="213,23,248,23,248,28,213,28"/>
+</map>

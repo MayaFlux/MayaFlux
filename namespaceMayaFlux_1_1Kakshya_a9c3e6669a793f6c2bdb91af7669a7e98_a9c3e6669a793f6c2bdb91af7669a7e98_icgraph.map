@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kakshya::blend_frames" name="MayaFlux::Kakshya::blend_frames">
+<area shape="rect" id="Node000001" title="Linearly blend two frames of the same size and format." alt="" coords="483,41,641,81"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1Chimera_a9d162be6360583b59b65a921b8fecf7b.html#a9d162be6360583b59b65a921b8fecf7b" title=" " alt="" coords="244,5,435,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="469,49,434,43,435,38,470,44"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1FrameSeekProcessor_aea497c8ce3b136696853f0c3172f0fab.html#aea497c8ce3b136696853f0c3172f0fab" title="Extract the current frame(s) into the container&#39;s processed_data." alt="" coords="256,70,423,125"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="470,79,423,87,422,81,469,74"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kriya_1_1Chimera_a0ca1ced8e90b76c407bf414c3f503ad7.html#a0ca1ced8e90b76c407bf414c3f503ad7" title=" " alt="" coords="5,5,196,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="230,28,196,28,196,23,230,23"/>
+</map>

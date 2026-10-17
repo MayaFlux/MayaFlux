@@ -1,0 +1,5 @@
+<map id="MayaFlux::Parallel::AsyncGroup::report" name="MayaFlux::Parallel::AsyncGroup::report">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,5,160,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Memory_1_1SweepList_a08033a9c7623c750d27d7796db165f4d.html#a08033a9c7623c750d27d7796db165f4d" title="Publishes value for later sweep() or drain()." alt="" coords="208,5,429,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="160,23,194,23,194,28,160,28"/>
+</map>

@@ -1,0 +1,3 @@
+<map id="MayaFlux::Buffers::BufferTokenDistributor" name="MayaFlux::Buffers::BufferTokenDistributor">
+<area shape="rect" id="Node000001" title="Determines routing for buffers based on type + token combination." alt="" coords="5,5,199,305"/>
+</map>

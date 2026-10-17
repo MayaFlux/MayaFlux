@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nexus::Expanse::begin_evaluate" name="MayaFlux::Nexus::Expanse::begin_evaluate">
+<area shape="rect" id="Node000001" title="Called at the start of every evaluate(), before any position is tested." alt="" coords="252,5,451,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1Expanse_adda82628b25cbdb59e957050e2252c12.html#adda82628b25cbdb59e957050e2252c12" title="Evaluate a spatial snapshot from one Fabric against this Expanse." alt="" coords="5,5,204,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="238,28,204,28,204,23,238,23"/>
+</map>

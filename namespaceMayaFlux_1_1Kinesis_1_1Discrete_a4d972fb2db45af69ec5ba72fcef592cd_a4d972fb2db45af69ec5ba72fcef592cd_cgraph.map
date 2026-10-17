@@ -1,0 +1,10 @@
+<map id="MayaFlux::Kinesis::Discrete::lagrange_delay" name="MayaFlux::Kinesis::Discrete::lagrange_delay">
+<area shape="rect" id="Node000001" title="Lagrange fractional&#45;delay FIR coefficients." alt="" coords="5,35,189,75"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a0cfec1af1622af88f33b6be6dd83303a.html#a0cfec1af1622af88f33b6be6dd83303a" title="Prepend delay_samples zero&#45;valued (or fill_value) samples, returning a new vector." alt="" coords="484,5,633,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="190,46,470,28,470,34,190,51"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a08f670b92276cec3cf585c4ae5ff64c3.html#a08f670b92276cec3cf585c4ae5ff64c3" title="Lagrange interpolation weights written to an array, without allocating." alt="" coords="237,63,436,103"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="190,63,224,67,224,72,189,68"/>
+<area shape="poly" id="edge3_Node000003_Node000002" title=" " alt="" coords="414,60,470,45,471,51,415,65"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_ace716df2f40f1b0e620049c240637942.html#ace716df2f40f1b0e620049c240637942" title="Uniform scaling of a scalar&#45;output tendency." alt="" coords="484,69,633,109"/>
+<area shape="poly" id="edge4_Node000003_Node000004" title=" " alt="" coords="436,83,470,84,470,89,436,88"/>
+</map>

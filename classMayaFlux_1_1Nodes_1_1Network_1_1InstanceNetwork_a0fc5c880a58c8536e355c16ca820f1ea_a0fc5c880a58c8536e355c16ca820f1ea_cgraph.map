@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nodes::Network::InstanceNetwork::add_slot" name="MayaFlux::Nodes::Network::InstanceNetwork::add_slot">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,37,208,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Reflect_af36b8c0b76748f4977c97757ce35f583.html#af36b8c0b76748f4977c97757ce35f583" title="Returns the unqualified dynamic type name of obj." alt="" coords="256,37,455,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="208,55,242,55,242,60,208,60"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Reflect_aad04433875dfe461d8c83856332a04fa.html#aad04433875dfe461d8c83856332a04fa" title="Returns the demangled fully qualified dynamic type name of obj." alt="" coords="516,5,675,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="455,41,502,35,503,40,455,47"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Reflect_1_1detail_aa9b2765992d33a9b7c0322d049491c64.html#aa9b2765992d33a9b7c0322d049491c64" title=" " alt="" coords="503,69,688,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="455,68,489,73,489,78,455,73"/>
+</map>

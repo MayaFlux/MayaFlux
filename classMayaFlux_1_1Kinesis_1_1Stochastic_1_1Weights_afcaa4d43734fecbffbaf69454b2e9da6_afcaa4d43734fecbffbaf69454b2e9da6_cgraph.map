@@ -1,0 +1,12 @@
+<map id="MayaFlux::Kinesis::Stochastic::Weights::normalize_row" name="MayaFlux::Kinesis::Stochastic::Weights::normalize_row">
+<area shape="rect" id="Node000001" title="Scale a row so its cells sum to one." alt="" coords="5,55,155,110"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Weights_ae887f9f18e9559b77ab7692fd5c469d0.html#ae887f9f18e9559b77ab7692fd5c469d0" title="Atomic read of one cell." alt="" coords="203,5,381,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="154,60,204,46,205,51,156,65"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Weights_a09e43b5a845040464dbed8b83a754c92.html#a09e43b5a845040464dbed8b83a754c92" title="Non&#45;atomic view of one row." alt="" coords="429,63,611,103"/>
+<area shape="poly" id="edge4_Node000001_Node000003" title=" " alt="" coords="155,80,416,80,416,85,155,85"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Weights_ac59a1767c7313db6d977559b39664deb.html#ac59a1767c7313db6d977559b39664deb" title=" " alt="" coords="217,121,367,175"/>
+<area shape="poly" id="edge5_Node000001_Node000004" title=" " alt="" coords="156,103,205,118,203,124,154,108"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="373,43,428,57,426,62,371,48"/>
+<area shape="poly" id="edge3_Node000003_Node000003" title=" " alt="" coords="478,63,475,53,482,44,497,38,520,36,546,39,561,46,558,51,545,44,520,41,498,43,485,48,480,54,483,62"/>
+<area shape="poly" id="edge6_Node000004_Node000003" title=" " alt="" coords="366,124,436,104,437,109,368,129"/>
+</map>

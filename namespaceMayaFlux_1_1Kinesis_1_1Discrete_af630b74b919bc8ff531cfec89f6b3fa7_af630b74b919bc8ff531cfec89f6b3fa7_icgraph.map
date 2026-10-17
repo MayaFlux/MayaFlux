@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::Discrete::deconvolve" name="MayaFlux::Kinesis::Discrete::deconvolve">
+<area shape="rect" id="Node000001" title="Frequency&#45;domain deconvolution with Tikhonov regularisation." alt="" coords="336,5,495,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1ConvolutionTransformer_a9d070c72f78555559c94e86b6274fcab.html#a9d070c72f78555559c94e86b6274fcab" title="Applies the configured convolution operation." alt="" coords="5,5,288,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="322,28,288,28,288,23,322,23"/>
+</map>

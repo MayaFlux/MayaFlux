@@ -1,0 +1,9 @@
+<map id="MayaFlux::Portal::Forma::Inspector::destroy" name="MayaFlux::Portal::Forma::Inspector::destroy">
+<area shape="rect" id="Node000001" title="Destroy an InspectResult and release its resources." alt="" coords="235,69,416,109"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a037879cc8c63869664d3b6c8e1e32973.html#a037879cc8c63869664d3b6c8e1e32973" title="Open or show the BufferManager inspection window." alt="" coords="5,5,187,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="239,68,167,48,169,43,241,63"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a9563fe8292595a238e507c2ff54f787e.html#a9563fe8292595a238e507c2ff54f787e" title="Open or show the NodeGraphManager inspection window." alt="" coords="5,69,187,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="221,92,187,92,187,87,221,87"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Forma_abb516f8bf31335193993acea55db7843.html#abb516f8bf31335193993acea55db7843" title="Open or show the TaskScheduler inspection window." alt="" coords="5,133,187,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="241,116,169,136,167,131,239,110"/>
+</map>

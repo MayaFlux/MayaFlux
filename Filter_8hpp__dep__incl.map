@@ -1,0 +1,50 @@
+<map id="Filter.hpp" name="Filter.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="317,5,400,31"/>
+<area shape="rect" id="Node000002" href="$FIR_8hpp.html" title=" " alt="" coords="98,79,169,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="310,37,170,81,168,76,309,32"/>
+<area shape="rect" id="Node000009" href="$WaveguideNetwork_8cpp.html" title=" " alt="" coords="171,152,347,177"/>
+<area shape="poly" id="edge28_Node000001_Node000009" title=" " alt="" coords="306,34,269,52,253,64,240,80,235,98,237,117,253,150,248,153,232,118,229,97,235,77,249,61,266,47,303,29"/>
+<area shape="rect" id="Node000010" href="$Filter_8cpp.html" title=" " alt="" coords="250,79,331,104"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="340,42,304,80,300,77,336,39"/>
+<area shape="rect" id="Node000011" href="$FilterProcessor_8cpp.html" title=" " alt="" coords="356,79,500,104"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="382,39,419,77,415,80,378,43"/>
+<area shape="rect" id="Node000012" href="$IIR_8hpp.html" title=" " alt="" coords="524,79,591,104"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="404,33,526,76,524,81,403,38"/>
+<area shape="rect" id="Node000020" href="$ModalNetwork_8cpp.html" title=" " alt="" coords="615,79,759,104"/>
+<area shape="poly" id="edge27_Node000001_Node000020" title=" " alt="" coords="414,29,634,76,633,81,413,34"/>
+<area shape="rect" id="Node000003" href="$Convenience_8hpp.html" title="Everyday headers and namespace imports for user code." alt="" coords="178,225,313,251"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="86,108,52,121,24,137,15,146,9,155,9,165,14,176,39,193,80,207,178,226,177,231,79,212,37,197,10,179,4,166,4,154,10,142,21,132,50,116,84,103"/>
+<area shape="rect" id="Node000006" href="$CreatorClasses_8hpp.html" title=" " alt="" coords="337,225,485,251"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="137,117,144,148,151,163,160,175,185,186,233,199,349,223,348,228,232,204,183,191,157,179,146,166,139,150,132,119"/>
+<area shape="rect" id="Node000008" href="$FIR_8cpp.html" title=" " alt="" coords="25,152,95,177"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="114,116,74,154,70,150,110,112"/>
+<area shape="poly" id="edge8_Node000002_Node000009" title=" " alt="" coords="167,108,240,149,237,154,164,113"/>
+<area shape="rect" id="Node000004" href="$MayaFlux_8hpp.html" title="Single include for the user facing API." alt="" coords="417,445,532,471"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="258,262,295,327,321,363,353,395,396,424,440,443,438,448,393,428,349,399,317,366,291,330,254,264"/>
+<area shape="rect" id="Node000005" href="$LiveAid_8hpp.html" title=" " alt="" coords="425,519,524,544"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="477,484,477,519,472,519,472,484"/>
+<area shape="rect" id="Node000007" href="$Creator_8cpp.html" title=" " alt="" coords="363,372,459,397"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="413,265,413,372,408,372,408,265"/>
+<area shape="poly" id="edge12_Node000012_Node000003" title=" " alt="" coords="521,112,271,228,269,223,519,107"/>
+<area shape="poly" id="edge13_Node000012_Node000006" title=" " alt="" coords="521,112,490,131,462,154,435,192,418,226,413,224,430,189,458,150,487,126,518,108"/>
+<area shape="rect" id="Node000013" href="$IIR_8cpp.html" title=" " alt="" coords="667,152,733,177"/>
+<area shape="poly" id="edge14_Node000012_Node000013" title=" " alt="" coords="594,108,678,149,676,154,591,112"/>
+<area shape="rect" id="Node000014" href="$ResonatorNetwork_8cpp.html" title=" " alt="" coords="685,225,856,251"/>
+<area shape="poly" id="edge15_Node000012_Node000014" title=" " alt="" coords="605,102,691,127,727,140,747,150,760,168,768,189,773,225,768,226,763,190,755,171,744,154,725,145,690,132,603,107"/>
+<area shape="rect" id="Node000015" href="$ResonatorNetwork_8hpp.html" title=" " alt="" coords="472,152,643,177"/>
+<area shape="poly" id="edge16_Node000012_Node000015" title=" " alt="" coords="560,118,560,152,555,152,555,118"/>
+<area shape="poly" id="edge17_Node000015_Node000003" title=" " alt="" coords="495,183,297,228,295,223,494,178"/>
+<area shape="poly" id="edge18_Node000015_Node000006" title=" " alt="" coords="523,186,436,228,434,223,521,181"/>
+<area shape="poly" id="edge26_Node000015_Node000014" title=" " alt="" coords="605,179,737,223,735,228,604,184"/>
+<area shape="rect" id="Node000016" href="$CreatorIncludes_8hpp.html" title=" " alt="" coords="509,225,661,251"/>
+<area shape="poly" id="edge19_Node000015_Node000016" title=" " alt="" coords="570,189,583,224,578,226,565,191"/>
+<area shape="rect" id="Node000017" href="$Creator_8hpp.html" title=" " alt="" coords="493,299,590,324"/>
+<area shape="poly" id="edge20_Node000016_Node000017" title=" " alt="" coords="573,264,551,300,546,297,569,261"/>
+<area shape="poly" id="edge22_Node000017_Node000004" title=" " alt="" coords="533,338,483,446,478,444,528,336"/>
+<area shape="poly" id="edge21_Node000017_Node000007" title=" " alt="" coords="509,333,433,374,431,369,507,328"/>
+<area shape="rect" id="Node000018" href="$Temporal_8hpp.html" title=" " alt="" coords="534,372,645,397"/>
+<area shape="poly" id="edge23_Node000017_Node000018" title=" " alt="" coords="559,334,584,370,579,373,555,337"/>
+<area shape="poly" id="edge24_Node000018_Node000004" title=" " alt="" coords="561,407,495,447,492,443,558,402"/>
+<area shape="rect" id="Node000019" href="$Temporal_8cpp.html" title=" " alt="" coords="556,445,665,471"/>
+<area shape="poly" id="edge25_Node000018_Node000019" title=" " alt="" coords="599,410,610,444,605,446,594,412"/>
+</map>

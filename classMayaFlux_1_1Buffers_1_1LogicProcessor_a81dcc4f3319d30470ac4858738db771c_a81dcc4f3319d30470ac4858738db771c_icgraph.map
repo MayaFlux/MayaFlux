@@ -1,0 +1,12 @@
+<map id="MayaFlux::Buffers::LogicProcessor::lock_keys" name="MayaFlux::Buffers::LogicProcessor::lock_keys">
+<area shape="rect" id="Node000001" title=" " alt="" coords="763,41,953,81"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1LogicProcessor_aaea30faac3513328650b7d939131d061.html#aaea30faac3513328650b7d939131d061" title=" " alt="" coords="484,5,715,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="749,49,714,44,715,39,750,44"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1LogicProcessor_aab87f77cc39f13cb95f77e26b13bfa65.html#aab87f77cc39f13cb95f77e26b13bfa65" title=" " alt="" coords="507,70,692,125"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="749,79,693,87,692,82,748,74"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1LogicProcessor_a8227a4ef446e2529009afe0062f1bf67.html#a8227a4ef446e2529009afe0062f1bf67" title="Generates discrete logic data from input without modifying any buffer." alt="" coords="251,41,436,81"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="471,46,436,51,436,46,470,41"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1LogicProcessor_af13053c27d50d66c16bbceb83fa44fa0.html#af13053c27d50d66c16bbceb83fa44fa0" title="Processes a buffer through the logic node." alt="" coords="5,34,203,89"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="237,64,203,64,203,59,237,59"/>
+<area shape="poly" id="edge5_Node000005_Node000003" title=" " alt="" coords="493,85,436,77,437,72,493,80"/>
+</map>

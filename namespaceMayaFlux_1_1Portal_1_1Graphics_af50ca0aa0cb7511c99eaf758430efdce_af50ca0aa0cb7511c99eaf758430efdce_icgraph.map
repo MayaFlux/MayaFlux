@@ -1,0 +1,85 @@
+<map id="MayaFlux::Portal::Graphics::get_compute_press" name="MayaFlux::Portal::Graphics::get_compute_press">
+<area shape="rect" id="Node000001" title=" " alt="" coords="1741,483,1939,523"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a5066b7ac50552a50869a303adcb41d84.html#a5066b7ac50552a50869a303adcb41d84" title=" " alt="" coords="1485,55,1674,95"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1834,469,1823,394,1800,297,1781,246,1758,196,1728,149,1692,109,1673,96,1676,91,1695,105,1732,146,1762,193,1786,244,1805,296,1829,393,1839,468"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1ComputeProcessor_a4f3e779de39433f9e357c7c03804df3d.html#a4f3e779de39433f9e357c7c03804df3d" title=" " alt="" coords="1478,119,1681,159"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="1831,470,1817,406,1791,326,1773,284,1750,243,1723,206,1692,173,1675,161,1678,157,1695,169,1727,202,1755,241,1778,282,1796,324,1822,405,1836,468"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1GpuResourceManager_aab4f925d387b0204d95f2a420010cb09.html#aab4f925d387b0204d95f2a420010cb09" title=" " alt="" coords="1465,183,1693,223"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="1827,470,1810,418,1782,355,1743,291,1719,262,1692,237,1673,225,1676,221,1695,233,1723,258,1747,288,1787,353,1815,416,1832,468"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Yantra_1_1GpuResourceManager_ab3a3b5b0464482e32f5b5d7d17459de3.html#ab3a3b5b0464482e32f5b5d7d17459de3" title="Submit a compute dispatch without blocking." alt="" coords="1465,425,1693,465"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="1735,482,1670,468,1671,463,1736,477"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Yantra_1_1GpuResourceManager_acfc72053da4016b2a3783182d7231503.html#acfc72053da4016b2a3783182d7231503" title=" " alt="" coords="1465,247,1693,287"/>
+<area shape="poly" id="edge12_Node000001_Node000013" title=" " alt="" coords="1820,471,1799,433,1770,389,1734,345,1692,308,1658,289,1661,284,1695,303,1738,342,1774,386,1803,430,1825,468"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Yantra_1_1GpuResourceManager_a17cba2417e490ee4d2170be2b453ad8b.html#a17cba2417e490ee4d2170be2b453ad8b" title=" " alt="" coords="1175,266,1403,321"/>
+<area shape="poly" id="edge15_Node000001_Node000015" title=" " alt="" coords="1817,473,1766,409,1731,377,1692,352,1641,335,1567,321,1403,303,1403,298,1568,316,1642,330,1694,347,1734,373,1769,406,1821,470"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1PrimitiveMill_acb7fc785779a35da28156326cdc90fbd.html#acb7fc785779a35da28156326cdc90fbd" title="Compiles the kernel and allocates its descriptor sets, once." alt="" coords="1473,591,1685,631"/>
+<area shape="poly" id="edge18_Node000001_Node000017" title=" " alt="" coords="1789,531,1694,574,1644,593,1642,588,1692,570,1787,526"/>
+<area shape="rect" id="Node000018" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1PrimitiveMill_ae149e0bc3f6ca0cce9034bc0f2e2b645.html#ae149e0bc3f6ca0cce9034bc0f2e2b645" title="Mill runs out of source into the owned buffer." alt="" coords="1190,591,1387,631"/>
+<area shape="poly" id="edge36_Node000001_Node000018" title=" " alt="" coords="1729,527,1388,594,1387,589,1728,522"/>
+<area shape="rect" id="Node000022" href="$classMayaFlux_1_1Buffers_1_1ComputeProcessor_a73dacb014d3d5c7ad1f060fad72f8681.html#a73dacb014d3d5c7ad1f060fad72f8681" title=" " alt="" coords="1478,655,1681,710"/>
+<area shape="poly" id="edge23_Node000001_Node000022" title=" " alt="" coords="1816,535,1763,591,1730,620,1695,645,1671,658,1668,653,1692,640,1727,615,1760,587,1812,532"/>
+<area shape="rect" id="Node000023" href="$classMayaFlux_1_1Yantra_1_1GpuResourceManager_a249701fcf6fc8a0d9aad6918397b8f3f.html#a249701fcf6fc8a0d9aad6918397b8f3f" title="Create (or confirm existing) pipeline for the given key." alt="" coords="1465,361,1693,401"/>
+<area shape="poly" id="edge24_Node000001_Node000023" title=" " alt="" coords="1799,477,1749,445,1692,416,1661,404,1663,399,1694,411,1752,441,1801,473"/>
+<area shape="rect" id="Node000028" href="$classMayaFlux_1_1Buffers_1_1ComputeProcessor_a4112addd2594e7172317b2a7fb28cacf.html#a4112addd2594e7172317b2a7fb28cacf" title=" " alt="" coords="1475,734,1683,789"/>
+<area shape="poly" id="edge34_Node000001_Node000028" title=" " alt="" coords="1827,537,1807,579,1778,629,1740,679,1695,723,1675,736,1672,732,1692,719,1736,676,1773,626,1802,576,1823,534"/>
+<area shape="rect" id="Node000029" href="$classMayaFlux_1_1Buffers_1_1ComputeProcessor_aa224de245c77a9af81450eb15cb546fa.html#aa224de245c77a9af81450eb15cb546fa" title=" " alt="" coords="1475,813,1683,867"/>
+<area shape="poly" id="edge35_Node000001_Node000029" title=" " alt="" coords="1834,537,1817,594,1790,665,1750,738,1724,772,1695,802,1678,815,1674,810,1692,798,1720,768,1745,735,1785,662,1812,592,1829,535"/>
+<area shape="rect" id="Node000030" href="$classMayaFlux_1_1Yantra_1_1GpuResourceManager_a9beec548828a90be5b22a49cb5dfaa25.html#a9beec548828a90be5b22a49cb5dfaa25" title="Record one command buffer holding a dispatch per key, with the barriers each stage&#39;s hazards owe the ..." alt="" coords="1175,501,1403,555"/>
+<area shape="poly" id="edge37_Node000001_Node000030" title=" " alt="" coords="1728,510,1403,525,1403,520,1727,505"/>
+<area shape="rect" id="Node000033" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1PrimitiveMill_a8ef1adbf3b7feb1267941b466b6a414f.html#a8ef1adbf3b7feb1267941b466b6a414f" title="Destroy the kernel, pipeline, descriptor sets and buffers." alt="" coords="1481,892,1678,932"/>
+<area shape="poly" id="edge42_Node000001_Node000033" title=" " alt="" coords="1838,537,1827,608,1802,701,1783,749,1760,797,1731,842,1695,881,1676,894,1673,890,1692,877,1726,838,1755,794,1778,747,1797,699,1821,607,1833,536"/>
+<area shape="rect" id="Node000035" href="$classMayaFlux_1_1Yantra_1_1GpuResourceManager_a5c944faf26b927728ce9b275dffbbbde.html#a5c944faf26b927728ce9b275dffbbbde" title="Destroy the pipeline, shader, descriptor sets, and buffers for a single key, without affecting any ot..." alt="" coords="1465,956,1693,996"/>
+<area shape="poly" id="edge44_Node000001_Node000035" title=" " alt="" coords="1840,537,1833,619,1824,672,1811,729,1792,788,1768,845,1736,899,1695,946,1679,958,1676,954,1692,942,1731,896,1763,843,1787,786,1806,728,1819,671,1827,619,1835,536"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a3498377e5d02f243e29f4b28e358733c.html#a3498377e5d02f243e29f4b28e358733c" title=" " alt="" coords="1193,69,1384,109"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="1471,83,1384,87,1384,82,1471,77"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a9682945ee892c3ab788ce216b49b5d61.html#a9682945ee892c3ab788ce216b49b5d61" title=" " alt="" coords="1160,5,1417,45"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="1471,59,1407,48,1408,43,1471,54"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_a899fb89ec912ff8a784fa8d4efadbe39.html#a899fb89ec912ff8a784fa8d4efadbe39" title="Full single&#45;pass dispatch." alt="" coords="555,143,780,183"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="1451,200,780,170,780,165,1452,194"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Yantra_1_1GpuExecutionContext_a1dbe3b76ec8aefe2f57803a889443155.html#a1dbe3b76ec8aefe2f57803a889443155" title="Dispatch to GPU and reconstruct a typed output Datum." alt="" coords="248,296,479,336"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="550,189,528,198,487,221,448,248,388,298,384,294,445,243,484,217,526,194,548,185"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Yantra_1_1ShaderExecutionContext_a61530137eabb72da29cf4248b7600bde.html#a61530137eabb72da29cf4248b7600bde" title="Injects multipass configuration into the context before dispatch when set_multipass() has been called..." alt="" coords="5,296,200,336"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="234,319,200,319,200,313,234,313"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_a8c55245957e7e7a30f034299648edd46.html#a8c55245957e7e7a30f034299648edd46" title="Non&#45;blocking variant of dispatch_core." alt="" coords="1176,431,1401,471"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="1451,450,1402,451,1402,446,1451,445"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Yantra_1_1ShaderExecutionContext_aa508e728d529df34441c28d62413bb0c.html#aa508e728d529df34441c28d62413bb0c" title="Dispatch asynchronously and return a fence for polling." alt="" coords="862,444,1106,484"/>
+<area shape="poly" id="edge11_Node000011_Node000012" title=" " alt="" coords="1162,459,1106,461,1106,456,1162,454"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_ab2351a76c5db238842099c55a1d08386.html#ab2351a76c5db238842099c55a1d08386" title="Multi&#45;pass (chained) dispatch." alt="" coords="555,208,780,248"/>
+<area shape="poly" id="edge13_Node000013_Node000014" title=" " alt="" coords="1451,258,1417,256,1112,240,780,232,780,227,1112,235,1417,251,1452,253"/>
+<area shape="poly" id="edge14_Node000014_Node000008" title=" " alt="" coords="585,254,434,298,433,293,584,249"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_ae61ec8192d0351c52666afe165975175.html#ae61ec8192d0351c52666afe165975175" title="Multi&#45;pass dispatch where a GPU&#45;resident indirect buffer gates each pass&#39;s workgroup count instead of..." alt="" coords="871,250,1097,305"/>
+<area shape="poly" id="edge16_Node000015_Node000016" title=" " alt="" coords="1161,289,1097,286,1097,281,1161,284"/>
+<area shape="poly" id="edge17_Node000016_Node000008" title=" " alt="" coords="858,288,479,312,479,306,857,283"/>
+<area shape="poly" id="edge19_Node000017_Node000018" title=" " alt="" coords="1460,613,1388,613,1388,608,1460,608"/>
+<area shape="rect" id="Node000019" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a6d6af6f212ace15b1100d0fc65634e9d.html#a6d6af6f212ace15b1100d0fc65634e9d" title="Mill m_runs into this attachment&#39;s output." alt="" coords="885,636,1083,676"/>
+<area shape="poly" id="edge20_Node000018_Node000019" title=" " alt="" coords="1177,630,1084,644,1083,639,1176,625"/>
+<area shape="rect" id="Node000020" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a802c0733635cc376acc7c05ee33c5377.html#a802c0733635cc376acc7c05ee33c5377" title="Prepare and retain the source and draw range for one attached buffer." alt="" coords="573,629,762,683"/>
+<area shape="poly" id="edge21_Node000019_Node000020" title=" " alt="" coords="871,659,762,659,762,653,871,653"/>
+<area shape="rect" id="Node000021" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_acd3ee18a43b25af2aa06f17efacd6c5f.html#acd3ee18a43b25af2aa06f17efacd6c5f" title="Prepare this buffer&#39;s geometry and record its draw commands." alt="" coords="268,629,459,683"/>
+<area shape="poly" id="edge22_Node000020_Node000021" title=" " alt="" coords="559,659,459,659,459,653,559,653"/>
+<area shape="rect" id="Node000024" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_a8f1830a9946ac5ab0568192027de1d1b.html#a8f1830a9946ac5ab0568192027de1d1b" title="Ensure GPU resources are initialised." alt="" coords="1176,361,1401,401"/>
+<area shape="poly" id="edge25_Node000023_Node000024" title=" " alt="" coords="1451,384,1402,384,1402,379,1451,379"/>
+<area shape="poly" id="edge28_Node000024_Node000008" title=" " alt="" coords="1162,374,1112,371,479,326,479,321,1112,365,1162,369"/>
+<area shape="poly" id="edge26_Node000024_Node000012" title=" " alt="" coords="1208,408,1113,435,1067,447,1066,441,1111,429,1206,403"/>
+<area shape="poly" id="edge27_Node000024_Node000016" title=" " alt="" coords="1215,359,1064,307,1066,302,1217,354"/>
+<area shape="rect" id="Node000025" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_a06f96b51d3f8f9f223f04781c8a2c6a9.html#a06f96b51d3f8f9f223f04781c8a2c6a9" title=" " alt="" coords="871,380,1097,420"/>
+<area shape="poly" id="edge29_Node000024_Node000025" title=" " alt="" coords="1163,392,1097,396,1097,390,1162,386"/>
+<area shape="rect" id="Node000026" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_ab0c5cc3dbdbd8199eb213d74ea6a8204.html#ab0c5cc3dbdbd8199eb213d74ea6a8204" title="Multi&#45;pipeline dependency dispatch." alt="" coords="549,444,785,484"/>
+<area shape="poly" id="edge30_Node000025_Node000026" title=" " alt="" coords="871,425,767,447,766,441,870,420"/>
+<area shape="rect" id="Node000027" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_a6ff87bab33a0feafc5498a13b3a51d67.html#a6ff87bab33a0feafc5498a13b3a51d67" title="Non&#45;blocking variant of dispatch_core_dependency." alt="" coords="527,380,808,420"/>
+<area shape="poly" id="edge32_Node000025_Node000027" title=" " alt="" coords="858,403,808,403,808,397,858,397"/>
+<area shape="poly" id="edge31_Node000026_Node000008" title=" " alt="" coords="545,442,526,434,484,412,445,387,385,338,388,334,449,382,487,408,528,430,547,437"/>
+<area shape="poly" id="edge33_Node000027_Node000008" title=" " alt="" coords="580,379,526,364,435,339,437,333,527,359,581,374"/>
+<area shape="rect" id="Node000031" href="$classMayaFlux_1_1Yantra_1_1GpuResourceManager_a83435fa81f14d203c7a855493e4aa34e.html#a83435fa81f14d203c7a855493e4aa34e" title="Record a dispatch for each requested key into one command buffer via ComputePress::record_sequence,..." alt="" coords="870,572,1098,612"/>
+<area shape="poly" id="edge38_Node000030_Node000031" title=" " alt="" coords="1162,557,1080,575,1079,569,1161,552"/>
+<area shape="rect" id="Node000032" href="$classMayaFlux_1_1Yantra_1_1GpuResourceManager_ac3784bf8a1a21ea80b3b52ebf188e42d.html#ac3784bf8a1a21ea80b3b52ebf188e42d" title="Non&#45;blocking counterpart of dispatch_sequence." alt="" coords="856,508,1112,548"/>
+<area shape="poly" id="edge40_Node000030_Node000032" title=" " alt="" coords="1161,531,1112,531,1112,525,1161,525"/>
+<area shape="poly" id="edge39_Node000031_Node000026" title=" " alt="" coords="879,571,855,562,771,524,701,486,703,482,773,520,857,558,881,566"/>
+<area shape="poly" id="edge41_Node000032_Node000027" title=" " alt="" coords="864,504,854,498,838,482,830,465,822,449,806,434,784,422,787,418,810,430,826,446,834,463,842,479,858,494,867,499"/>
+<area shape="rect" id="Node000034" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1PrimitiveMill_a60cdd6ad949d2908d83754a15e76ca6e.html#a60cdd6ad949d2908d83754a15e76ca6e" title=" " alt="" coords="1181,892,1396,932"/>
+<area shape="poly" id="edge43_Node000033_Node000034" title=" " alt="" coords="1467,915,1396,915,1396,909,1467,909"/>
+<area shape="rect" id="Node000036" href="$classMayaFlux_1_1Yantra_1_1GpuResourceManager_a3e7299b17747ff24d43e3ce561e7a241.html#a3e7299b17747ff24d43e3ce561e7a241" title="Destroy every key currently held." alt="" coords="1175,956,1403,996"/>
+<area shape="poly" id="edge45_Node000035_Node000036" title=" " alt="" coords="1451,979,1403,979,1403,973,1451,973"/>
+<area shape="rect" id="Node000037" href="$classMayaFlux_1_1Yantra_1_1GpuResourceManager_a23913a8386ca36c12ca8124001417277.html#a23913a8386ca36c12ca8124001417277" title=" " alt="" coords="863,956,1105,996"/>
+<area shape="poly" id="edge46_Node000036_Node000037" title=" " alt="" coords="1161,979,1105,979,1105,973,1161,973"/>
+</map>

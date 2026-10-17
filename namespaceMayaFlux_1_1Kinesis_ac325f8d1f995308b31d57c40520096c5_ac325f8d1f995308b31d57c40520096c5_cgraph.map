@@ -1,0 +1,11 @@
+<map id="MayaFlux::Kinesis::heading_vector" name="MayaFlux::Kinesis::heading_vector">
+<area shape="rect" id="Node000001" title="Convenience overload of heading_vector(vec3) over a raw span, samples[0] newest." alt="" coords="5,37,155,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_ae96f96768aa0e321db381b827ab729b2.html#ae96f96768aa0e321db381b827ab729b2" title="Unit direction of a vec2 first difference." alt="" coords="203,5,352,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="154,43,189,37,189,42,155,48"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_aae6dffc5cfe80ea00f71912d98c8c45e.html#aae6dffc5cfe80ea00f71912d98c8c45e" title="Build a HistoryBuffer&lt;T&gt; from a newest&#45;first span." alt="" coords="203,69,352,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="155,67,189,72,189,78,154,72"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_a26c65f0ec04f0fddefa1e3846124bcd4.html#a26c65f0ec04f0fddefa1e3846124bcd4" title="First difference: rate of change of position." alt="" coords="427,5,576,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="352,23,413,23,413,28,352,28"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Memory_1_1HistoryBuffer_a6f256636f3f3fc99269c77a8dc096b09.html#a6f256636f3f3fc99269c77a8dc096b09" title="Push new value to front of history." alt="" coords="400,69,603,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="352,87,386,87,386,92,352,92"/>
+</map>

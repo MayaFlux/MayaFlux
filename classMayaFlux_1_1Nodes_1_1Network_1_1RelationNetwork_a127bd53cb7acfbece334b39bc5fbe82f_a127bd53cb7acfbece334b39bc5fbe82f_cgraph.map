@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Network::RelationNetwork::process_batch" name="MayaFlux::Nodes::Network::RelationNetwork::process_batch">
+<area shape="rect" id="Node000001" title="Process the network for the given number of samples." alt="" coords="5,37,245,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork_a32f35c709a82b7729fc066314401db44.html#a32f35c709a82b7729fc066314401db44" title="Apply m_output_scale to m_last_audio_buffer." alt="" coords="293,5,547,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="245,42,279,38,280,43,246,47"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork_aad79b5bd2cdb8f80023f920bc142083f.html#aad79b5bd2cdb8f80023f920bc142083f" title="Access the secondary operator chain." alt="" coords="294,69,546,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="246,68,281,72,280,77,245,73"/>
+</map>

@@ -1,0 +1,25 @@
+var structMayaFlux_1_1Vruta_1_1routine__promise =
+[
+    [ "CompletionAwaiter", "structMayaFlux_1_1Vruta_1_1routine__promise_1_1CompletionAwaiter.html", "structMayaFlux_1_1Vruta_1_1routine__promise_1_1CompletionAwaiter" ],
+    [ "domain_mismatch_error", "structMayaFlux_1_1Vruta_1_1routine__promise_a1863cf785eadf9523b702f55e15c2158.html#a1863cf785eadf9523b702f55e15c2158", null ],
+    [ "final_suspend", "structMayaFlux_1_1Vruta_1_1routine__promise_ae21f465e45269e52de94f6c466e27ff9.html#ae21f465e45269e52de94f6c466e27ff9", null ],
+    [ "get_return_object", "structMayaFlux_1_1Vruta_1_1routine__promise_a57bb486d7d20c846e423fbfd50a7d03b.html#a57bb486d7d20c846e423fbfd50a7d03b", null ],
+    [ "get_state", "structMayaFlux_1_1Vruta_1_1routine__promise_a811563e65833630eb0e91770e5bee60b.html#a811563e65833630eb0e91770e5bee60b", null ],
+    [ "initial_suspend", "structMayaFlux_1_1Vruta_1_1routine__promise_ab597630976c2ca8a6fa930fc4dee58ca.html#ab597630976c2ca8a6fa930fc4dee58ca", null ],
+    [ "notify_complete", "structMayaFlux_1_1Vruta_1_1routine__promise_a232137bbf7c8326972c400d0deecd3d7.html#a232137bbf7c8326972c400d0deecd3d7", null ],
+    [ "on_complete", "structMayaFlux_1_1Vruta_1_1routine__promise_a229ff1ead6ef844d357566f1f3c38280.html#a229ff1ead6ef844d357566f1f3c38280", null ],
+    [ "return_void", "structMayaFlux_1_1Vruta_1_1routine__promise_a9e50a4f35a15e04f1fd3b22e7e9be88c.html#a9e50a4f35a15e04f1fd3b22e7e9be88c", null ],
+    [ "set_should_terminate", "structMayaFlux_1_1Vruta_1_1routine__promise_a9e446c7c431505b69bebcd996a1858dd.html#a9e446c7c431505b69bebcd996a1858dd", null ],
+    [ "set_state", "structMayaFlux_1_1Vruta_1_1routine__promise_a27b829c293e7ede098041506a1668d8e.html#a27b829c293e7ede098041506a1668d8e", null ],
+    [ "unhandled_exception", "structMayaFlux_1_1Vruta_1_1routine__promise_a10cb1dd5552a105ab7eda690aeb82849.html#a10cb1dd5552a105ab7eda690aeb82849", null ],
+    [ "auto_resume", "structMayaFlux_1_1Vruta_1_1routine__promise_ac0b29d04988d6f0bbbd4f67c1757b5d7.html#ac0b29d04988d6f0bbbd4f67c1757b5d7", null ],
+    [ "completion_callback", "structMayaFlux_1_1Vruta_1_1routine__promise_ad978c106464c1e86ca658cb7260cee59.html#ad978c106464c1e86ca658cb7260cee59", null ],
+    [ "completion_notified", "structMayaFlux_1_1Vruta_1_1routine__promise_a79f14e00aa222eba0516c19fc4493a86.html#a79f14e00aa222eba0516c19fc4493a86", null ],
+    [ "completion_registered", "structMayaFlux_1_1Vruta_1_1routine__promise_a2647d499fbace3191d9a6454cdc2d3d3.html#a2647d499fbace3191d9a6454cdc2d3d3", null ],
+    [ "completion_signaled", "structMayaFlux_1_1Vruta_1_1routine__promise_a8acdb5115d66a8ac52c63e3df5ce3c2b.html#a8acdb5115d66a8ac52c63e3df5ce3c2b", null ],
+    [ "delay_amount", "structMayaFlux_1_1Vruta_1_1routine__promise_a00a7e5221c72f42213ec2f98c758f3ab.html#a00a7e5221c72f42213ec2f98c758f3ab", null ],
+    [ "processing_token", "structMayaFlux_1_1Vruta_1_1routine__promise_a466f2bcce7e4ff150f6b88275500a600.html#a466f2bcce7e4ff150f6b88275500a600", null ],
+    [ "should_terminate", "structMayaFlux_1_1Vruta_1_1routine__promise_abe97a05a2bcff2492e937ef89cea4b32.html#abe97a05a2bcff2492e937ef89cea4b32", null ],
+    [ "state", "structMayaFlux_1_1Vruta_1_1routine__promise_aa0d0ede0be988b9fb00071d1d3a9c4d1.html#aa0d0ede0be988b9fb00071d1d3a9c4d1", null ],
+    [ "sync_to_clock", "structMayaFlux_1_1Vruta_1_1routine__promise_adc697eec353a63680e3c6fbe9d2d9f62.html#adc697eec353a63680e3c6fbe9d2d9f62", null ]
+];

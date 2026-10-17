@@ -1,0 +1,7 @@
+<map id="MayaFlux::IO::AudioEncodeContext::drain" name="MayaFlux::IO::AudioEncodeContext::drain">
+<area shape="rect" id="Node000001" title="Flush the FIFO remainder and encoder internal delay to the mux." alt="" coords="539,5,739,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1SoundFileWriter_afe05fe29e71e3b1f3f3c489669dab0eb.html#afe05fe29e71e3b1f3f3c489669dab0eb" title=" " alt="" coords="272,5,491,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="525,28,491,28,491,23,525,23"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1SoundFileWriter_a759a872c21f40482fee6d559b8b2567d.html#a759a872c21f40482fee6d559b8b2567d" title="Open the output file and spawn the worker thread." alt="" coords="5,5,224,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="258,28,224,28,224,23,258,23"/>
+</map>

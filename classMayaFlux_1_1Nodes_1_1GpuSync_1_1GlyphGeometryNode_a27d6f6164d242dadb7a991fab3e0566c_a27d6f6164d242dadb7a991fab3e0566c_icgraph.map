@@ -1,0 +1,13 @@
+<map id="MayaFlux::Nodes::GpuSync::GlyphGeometryNode::write_vertices" name="MayaFlux::Nodes::GpuSync::GlyphGeometryNode::write_vertices">
+<area shape="rect" id="Node000001" title=" " alt="" coords="692,34,900,89"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GlyphGeometryNode_a019687268deed85de64e95138367164c.html#a019687268deed85de64e95138367164c" title="Upload cached vertex data if dirty." alt="" coords="365,5,644,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="678,49,644,45,645,40,679,44"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GlyphGeometryNode_a39969c549307dc7b874fb9e794b4fb16.html#a39969c549307dc7b874fb9e794b4fb16" title="Rebuild outline geometry from the current text and pen settings." alt="" coords="395,70,615,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="678,79,615,86,614,81,678,73"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GlyphGeometryNode_aa2c050b302cf38e5125047fd4f1cd6d7.html#aa2c050b302cf38e5125047fd4f1cd6d7" title="Construct from a UTF&#45;8 string with an explicit FontFace." alt="" coords="5,13,317,53"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="381,77,269,56,270,51,382,72"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GlyphGeometryNode_ae6d0646f782caeb8a210c8344e63130b.html#ae6d0646f782caeb8a210c8344e63130b" title="Construct from a UTF&#45;8 string using the default font." alt="" coords="5,77,317,117"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="381,100,318,100,318,95,381,95"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GlyphGeometryNode_ad5ec71c50169fad44dcd56ed9fc04bcf.html#ad5ec71c50169fad44dcd56ed9fc04bcf" title="Replace the text string and rebuild outlines." alt="" coords="47,141,275,181"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="382,123,270,144,269,139,381,118"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::RootNode::register_node" name="MayaFlux::Nodes::RootNode::register_node">
+<area shape="rect" id="Node000001" title="Adds a node to this root node." alt="" coords="5,37,212,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Nodes_ac5f2d6d11351f4dc3411aa2e4cae4cd9.html#ac5f2d6d11351f4dc3411aa2e4cae4cd9" title="Atomically adds a flag to a node state." alt="" coords="260,5,448,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="212,41,246,37,247,42,213,46"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Nodes_a933208421abbf80e33a48a266ef9c0a9.html#a933208421abbf80e33a48a266ef9c0a9" title="Atomically removes a flag from a node state." alt="" coords="260,69,448,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="213,68,247,73,246,78,212,73"/>
+</map>

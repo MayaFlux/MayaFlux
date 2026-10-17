@@ -1,0 +1,11 @@
+<map id="MayaFlux::Yantra::VisionGpuExecutor::build_flow_pyramid" name="MayaFlux::Yantra::VisionGpuExecutor::build_flow_pyramid">
+<area shape="rect" id="Node000001" title="Build the current frame&#39;s pyramid atlas from the working image." alt="" coords="5,62,188,117"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a715d57394465ff2924727d7c82d87e7b.html#a715d57394465ff2924727d7c82d87e7b" title="Get the global shader compiler instance." alt="" coords="236,5,433,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="188,62,246,46,247,51,189,67"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a6887ad297693c2392be7960daab06002.html#a6887ad297693c2392be7960daab06002" title=" " alt="" coords="236,69,433,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="188,87,222,87,222,92,188,92"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_afc0c983bf8a8fb63f3d74e4ef6bc5ac8.html#afc0c983bf8a8fb63f3d74e4ef6bc5ac8" title="Place up to requested pyramid levels for a w x h base image." alt="" coords="249,133,421,173"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="189,111,247,127,246,132,188,116"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="481,5,679,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="434,23,468,23,468,28,434,28"/>
+</map>

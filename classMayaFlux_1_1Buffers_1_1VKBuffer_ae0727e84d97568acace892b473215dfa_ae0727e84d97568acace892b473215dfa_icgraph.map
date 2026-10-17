@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::VKBuffer::force_internal_usage" name="MayaFlux::Buffers::VKBuffer::force_internal_usage">
+<area shape="rect" id="Node000001" title="Set whether this buffer is for internal engine usage." alt="" coords="275,53,497,93"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_a9d0a103597a9e496337f6e8f689895ce.html#a9d0a103597a9e496337f6e8f689895ce" title="Construct a volume with no fields, to be declared after." alt="" coords="5,5,227,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="261,57,227,52,227,46,261,52"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_a7b7e1f7b68aaab5ffeedac2bd328f611.html#a7b7e1f7b68aaab5ffeedac2bd328f611" title="Construct from a runtime&#45;built field list." alt="" coords="5,84,227,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="261,93,227,98,227,93,261,88"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nodes::StreamReaderNode::process_batch" name="MayaFlux::Nodes::StreamReaderNode::process_batch">
+<area shape="rect" id="Node000001" title="Processes multiple samples at once." alt="" coords="5,5,241,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1StreamReaderNode_a2bb39c4dc326b78e5bd7458453f14c22.html#a2bb39c4dc326b78e5bd7458453f14c22" title="Processes a single data sample." alt="" coords="289,5,525,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="242,23,275,23,275,28,242,28"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1StreamReaderNode_abafa1f96005daf7c347eeb6e903a6f03.html#abafa1f96005daf7c347eeb6e903a6f03" title="Notifies all registered callbacks with the current context." alt="" coords="573,5,809,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="526,23,559,23,559,28,526,28"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1StreamReaderNode_a63213ce20874e262a8b81421aceefbd6.html#a63213ce20874e262a8b81421aceefbd6" title="Updates the context object with the current node state." alt="" coords="857,5,1093,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="810,23,843,23,843,28,810,28"/>
+</map>

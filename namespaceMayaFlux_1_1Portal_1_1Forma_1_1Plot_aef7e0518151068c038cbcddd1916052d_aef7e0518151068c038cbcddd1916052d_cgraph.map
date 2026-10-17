@@ -1,0 +1,20 @@
+<map id="MayaFlux::Portal::Forma::Plot::place_rect" name="MayaFlux::Portal::Forma::Plot::place_rect">
+<area shape="rect" id="Node000001" title="Place a filled rectangle element onto surface using a pre&#45;built buffer." alt="" coords="5,197,187,237"/>
+<area shape="poly" id="edge4_Node000001_Node000001" title=" " alt="" coords="52,198,50,188,57,178,72,173,96,171,123,174,138,181,136,186,122,179,96,176,73,178,60,183,55,189,57,196"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Layer_ad60e0b647ec7b8f3cab248eb7b771af9.html#ad60e0b647ec7b8f3cab248eb7b771af9" title="Add an element to the layer." alt="" coords="241,5,422,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="107,196,157,127,192,89,233,55,243,49,245,54,236,60,196,92,161,131,112,199"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Surface_a75c1be61d11b8a157158eee48c4e5992.html#a75c1be61d11b8a157158eee48c4e5992" title="Access the spatial registry." alt="" coords="241,69,422,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="120,195,171,157,233,119,248,112,251,117,236,124,174,161,123,199"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Element_a3526b7aa88ca690669c661962f6aa23b.html#a3526b7aa88ca690669c661962f6aa23b" title="Exclude from hit testing." alt="" coords="235,133,428,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="170,195,244,174,245,179,171,200"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Layer_a39e757c02d8b82d3ca7f604da765ba15.html#a39e757c02d8b82d3ca7f604da765ba15" title="Record that related_id belongs with primary_id." alt="" coords="241,197,422,237"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="187,215,227,215,227,220,187,220"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Element_a28624dc1404dc17967ea9167ac7b138c.html#a28624dc1404dc17967ea9167ac7b138c" title="Set the fast&#45;reject AABB." alt="" coords="241,261,422,301"/>
+<area shape="poly" id="edge7_Node000001_Node000007" title=" " alt="" coords="171,235,245,255,244,260,170,240"/>
+<area shape="rect" id="Node000008" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Element_a221b3040ba09f717da50b52ee382660b.html#a221b3040ba09f717da50b52ee382660b" title="Attach a FormaBuffer as the rendered output for this region." alt="" coords="241,325,422,365"/>
+<area shape="poly" id="edge8_Node000001_Node000008" title=" " alt="" coords="123,236,174,273,236,311,251,318,248,323,233,316,171,278,120,240"/>
+<area shape="rect" id="Node000009" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Element_ad81b20895220d4e168672dec7a3c1482.html#ad81b20895220d4e168672dec7a3c1482" title="Set the human&#45;readable name used in Lila introspection and debug output." alt="" coords="241,389,422,429"/>
+<area shape="poly" id="edge9_Node000001_Node000009" title=" " alt="" coords="112,236,161,304,196,342,236,375,245,381,243,385,233,380,192,346,157,307,107,239"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Layer_a6a279bbd434c7f805d6d21f4bf1e2155.html#a6a279bbd434c7f805d6d21f4bf1e2155" title=" " alt="" coords="476,197,657,237"/>
+<area shape="poly" id="edge6_Node000005_Node000006" title=" " alt="" coords="423,215,462,215,462,220,423,220"/>
+</map>

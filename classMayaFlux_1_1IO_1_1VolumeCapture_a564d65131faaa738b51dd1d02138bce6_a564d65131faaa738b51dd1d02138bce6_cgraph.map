@@ -1,0 +1,10 @@
+<map id="MayaFlux::IO::VolumeCapture::~VolumeCapture" name="MayaFlux::IO::VolumeCapture::~VolumeCapture">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,29,221,69"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1VolumeCapture_ae4b95e2cd76c86d19265638b2ec52180.html#ae4b95e2cd76c86d19265638b2ec52180" title="Cancel the capture routine." alt="" coords="269,29,485,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="221,47,256,47,256,52,221,52"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_aefd214af5e476f686dc86cc7d7220c96.html#aefd214af5e476f686dc86cc7d7220c96" title="Cancels and removes a task from the scheduler." alt="" coords="533,29,764,69"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="486,47,520,47,520,52,486,52"/>
+<area shape="poly" id="edge3_Node000003_Node000003" title=" " alt="" coords="599,30,596,20,604,10,622,5,649,3,680,5,697,13,695,18,679,11,649,8,623,10,607,15,601,21,604,28"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_afb823dfb8ca7ec5182cfaa8e3ee93649.html#afb823dfb8ca7ec5182cfaa8e3ee93649" title="Find task entry by routine pointer." alt="" coords="812,29,1043,69"/>
+<area shape="poly" id="edge4_Node000003_Node000004" title=" " alt="" coords="764,47,798,47,798,52,764,52"/>
+</map>

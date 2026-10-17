@@ -1,0 +1,13 @@
+<map id="MayaFlux::Portal::Graphics::RenderFlow" name="MayaFlux::Portal::Graphics::RenderFlow">
+<area shape="rect" id="Node000001" title="Graphics pipeline orchestration for dynamic rendering." alt="" coords="155,1875,384,2315"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry.html" title="Portal&#45;level shader compilation and caching." alt="" coords="33,909,265,1812"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="226,1812,232,1850,233,1858,228,1859,227,1851,220,1813"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Portal_1_1Graphics_1_1ShaderCompilerConfig.html" title="Configuration for shader compilation." alt="" coords="5,562,195,742"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="109,742,119,893,114,893,104,742"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Memory_1_1HistoryBuffer.html" title=" " alt="" coords="219,457,413,847"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="273,847,262,894,257,892,268,846"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Memory_1_1HistoryBuffer.html" title="History buffer for difference equations and recursive relations." alt="" coords="219,5,413,365"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="319,379,319,457,313,457,313,379"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Registry_1_1Service_1_1DisplayService.html" title="Backend display and presentation service interface." alt="" coords="290,1199,489,1523"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="394,1523,386,1683,377,1768,363,1851,361,1859,356,1858,357,1850,372,1767,381,1682,389,1523"/>
+</map>

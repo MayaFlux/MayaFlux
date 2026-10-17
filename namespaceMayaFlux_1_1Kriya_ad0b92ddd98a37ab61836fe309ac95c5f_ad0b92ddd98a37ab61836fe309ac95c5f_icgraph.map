@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kriya::on_message_from" name="MayaFlux::Kriya::on_message_from">
+<area shape="rect" id="Node000001" title="Creates an Event coroutine that fires only for messages from a specific sender." alt="" coords="443,5,595,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_ac0b349dedecb6eb592248541c572edb3.html#ac0b349dedecb6eb592248541c572edb3" title="Schedule an on_message_from handler with an existing NetworkSource." alt="" coords="224,5,395,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="429,28,395,28,395,23,429,23"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_a05ba8fc9dd9c5436e2bd90b9774bdf4a.html#a05ba8fc9dd9c5436e2bd90b9774bdf4a" title="Schedule an on_message_from handler, constructing the NetworkSource from config." alt="" coords="5,5,176,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="210,28,176,28,176,23,210,23"/>
+</map>

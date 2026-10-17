@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Input::InputNode::on_threshold_rising" name="MayaFlux::Nodes::Input::InputNode::on_threshold_rising">
+<area shape="rect" id="Node000001" title="Register callback for threshold crossing (rising edge)" alt="" coords="5,5,195,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Input_1_1InputNode_a80a95ef9de204c7e7ff134310798bafe.html#a80a95ef9de204c7e7ff134310798bafe" title=" " alt="" coords="243,5,419,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="195,30,229,30,229,35,195,35"/>
+</map>

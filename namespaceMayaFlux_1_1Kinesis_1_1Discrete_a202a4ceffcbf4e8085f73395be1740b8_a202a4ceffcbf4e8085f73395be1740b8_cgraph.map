@@ -1,0 +1,13 @@
+<map id="MayaFlux::Kinesis::Discrete::coefficient_of_variation" name="MayaFlux::Kinesis::Discrete::coefficient_of_variation">
+<area shape="rect" id="Node000001" title="Coefficient of variation (std_dev / mean) per window." alt="" coords="5,66,157,121"/>
+<area shape="poly" id="edge1_Node000001_Node000001" title=" " alt="" coords="42,66,43,56,50,47,63,41,81,39,104,42,117,50,114,55,102,47,81,45,64,47,53,51,48,58,48,66"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_af50196710c144f7ee6c4ab9201202438.html#af50196710c144f7ee6c4ab9201202438" title="Arithmetic mean per window." alt="" coords="205,29,355,69"/>
+<area shape="poly" id="edge2_Node000001_Node000002" title=" " alt="" coords="157,74,191,66,193,71,158,79"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a39acf9fc192194350dfbe43ed87633b2.html#a39acf9fc192194350dfbe43ed87633b2" title="Standard deviation per window." alt="" coords="205,117,355,157"/>
+<area shape="poly" id="edge4_Node000001_Node000003" title=" " alt="" coords="158,108,193,115,191,120,157,113"/>
+<area shape="poly" id="edge3_Node000002_Node000002" title=" " alt="" coords="243,30,241,20,246,11,260,5,280,3,303,6,316,13,313,18,302,11,280,8,261,10,250,15,246,21,248,28"/>
+<area shape="poly" id="edge5_Node000003_Node000003" title=" " alt="" coords="243,118,241,108,246,99,260,93,280,91,303,94,316,101,313,106,302,99,280,96,261,98,250,103,246,109,248,116"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a8f1992da8fa3cd5bf5fc140998b5137a.html#a8f1992da8fa3cd5bf5fc140998b5137a" title="Variance per window." alt="" coords="403,117,552,157"/>
+<area shape="poly" id="edge6_Node000003_Node000004" title=" " alt="" coords="355,135,389,135,389,140,355,140"/>
+<area shape="poly" id="edge7_Node000004_Node000004" title=" " alt="" coords="440,118,438,108,444,99,457,93,477,91,501,94,513,101,511,106,499,99,477,96,458,98,447,103,443,109,445,116"/>
+</map>

@@ -1,0 +1,11 @@
+<map id="MayaFlux::Kakshya::WindowContainer::get_frames_impl" name="MayaFlux::Kakshya::WindowContainer::get_frames_impl">
+<area shape="rect" id="Node000001" title="Implementation&#45;specific method to retrieve multiple frames." alt="" coords="5,84,172,139"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_a8d542a26bf5973d14f9900ac83494518.html#a8d542a26bf5973d14f9900ac83494518" title=" " alt="" coords="220,84,387,139"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="173,109,206,109,206,114,173,114"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure_a27b9d48a60ea2512b02a8196c6581eec.html#a27b9d48a60ea2512b02a8196c6581eec" title="Extract channel count from dimensions." alt="" coords="435,5,609,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="379,81,432,62,434,67,381,86"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure_a04ba106a40af90463702de9810eb6f6e.html#a04ba106a40af90463702de9810eb6f6e" title="Extract height from image/video dimensions." alt="" coords="435,84,609,139"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="387,109,421,109,421,114,387,114"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure_ad25f58eab842676d1cda72fb4dfe9017.html#ad25f58eab842676d1cda72fb4dfe9017" title="Extract width from image/video dimensions." alt="" coords="435,163,609,217"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="381,136,434,156,432,161,379,141"/>
+</map>

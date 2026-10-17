@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kakshya::ContiguousAccessProcessor::store_metadata" name="MayaFlux::Kakshya::ContiguousAccessProcessor::store_metadata">
+<area shape="rect" id="Node000001" title="Store dimension and layout metadata from the container." alt="" coords="5,92,208,147"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure_a27b9d48a60ea2512b02a8196c6581eec.html#a27b9d48a60ea2512b02a8196c6581eec" title="Extract channel count from dimensions." alt="" coords="261,5,435,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="183,89,258,62,259,67,184,94"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure_a707364e4c5a8e950a981eaf7ff5edff6.html#a707364e4c5a8e950a981eaf7ff5edff6" title="Get samples per channel (time dimension only)." alt="" coords="256,85,440,154"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="208,117,242,117,242,122,208,122"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure_ab431dba6cb69464326e81fe5e4bf83b0.html#ab431dba6cb69464326e81fe5e4bf83b0" title="Get total elements across all dimensions." alt="" coords="261,179,435,233"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="184,144,259,171,258,177,183,149"/>
+</map>

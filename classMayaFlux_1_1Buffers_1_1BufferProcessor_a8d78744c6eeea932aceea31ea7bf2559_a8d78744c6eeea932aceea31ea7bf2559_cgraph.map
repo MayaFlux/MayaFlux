@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::BufferProcessor::process" name="MayaFlux::Buffers::BufferProcessor::process">
+<area shape="rect" id="Node000001" title="Applies a computational transformation to the data in the provided buffer." alt="" coords="5,13,188,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferProcessor_affdb219994d3337c3deafa77e7bc4017.html#affdb219994d3337c3deafa77e7bc4017" title="The core processing function that must be implemented by derived classes." alt="" coords="236,5,439,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="188,30,222,30,222,35,188,35"/>
+</map>

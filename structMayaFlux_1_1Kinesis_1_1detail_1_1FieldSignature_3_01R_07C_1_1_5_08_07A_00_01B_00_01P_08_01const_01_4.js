@@ -1,0 +1,7 @@
+var structMayaFlux_1_1Kinesis_1_1detail_1_1FieldSignature_3_01R_07C_1_1_5_08_07A_00_01B_00_01P_08_01const_01_4 =
+[
+    [ "aux", "structMayaFlux_1_1Kinesis_1_1detail_1_1FieldSignature_3_01R_07C_1_1_5_08_07A_00_01B_00_01P_08_01const_01_4_aea4fae1ef283d4037651b564fd2884c1.html#aea4fae1ef283d4037651b564fd2884c1", null ],
+    [ "domain", "structMayaFlux_1_1Kinesis_1_1detail_1_1FieldSignature_3_01R_07C_1_1_5_08_07A_00_01B_00_01P_08_01const_01_4_ac21b900ac74090709b1d6e99963ef74a.html#ac21b900ac74090709b1d6e99963ef74a", null ],
+    [ "params", "structMayaFlux_1_1Kinesis_1_1detail_1_1FieldSignature_3_01R_07C_1_1_5_08_07A_00_01B_00_01P_08_01const_01_4_ae6ab4f59cb65588963ae1dc874867bca.html#ae6ab4f59cb65588963ae1dc874867bca", null ],
+    [ "range", "structMayaFlux_1_1Kinesis_1_1detail_1_1FieldSignature_3_01R_07C_1_1_5_08_07A_00_01B_00_01P_08_01const_01_4_a5c75bef99cc85e6b52e159debf73a6e1.html#a5c75bef99cc85e6b52e159debf73a6e1", null ]
+];

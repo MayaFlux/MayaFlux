@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kriya::BufferPipeline::execute_scheduled" name="MayaFlux::Kriya::BufferPipeline::execute_scheduled">
+<area shape="rect" id="Node000001" title="Execute pipeline with sample&#45;accurate timing between operations." alt="" coords="280,5,507,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1BufferPipeline_a71b338f3d13496168e51bbcad3b7789f.html#a71b338f3d13496168e51bbcad3b7789f" title="Execute pipeline with real&#45;time rate control." alt="" coords="5,5,232,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="266,28,232,28,232,23,266,23"/>
+</map>

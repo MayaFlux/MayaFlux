@@ -1,0 +1,10 @@
+<map id="MayaFlux::Nodes::Network::ResonatorNetwork::retune" name="MayaFlux::Nodes::Network::ResonatorNetwork::retune">
+<area shape="rect" id="Node000001" title="Retune the first resonators from an array, keeping every ring." alt="" coords="5,29,207,69"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ResonatorNetwork_ad001b414d830199c3c01b5577715afd6.html#ad001b414d830199c3c01b5577715afd6" title="Move a resonator&#39;s centre frequency without clearing its state." alt="" coords="255,29,456,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="207,47,241,47,241,52,207,52"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ResonatorNetwork_a5d9ca4e2edbfb58b2bca95563234c2dc.html#a5d9ca4e2edbfb58b2bca95563234c2dc" title="Write the same biquad as compute_biquad through the filter&#39;s edit spans." alt="" coords="504,22,703,77"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="456,47,490,47,490,52,456,52"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a29a24505c28032f9cc824ba51bc03399.html#a29a24505c28032f9cc824ba51bc03399" title="Second&#45;order bandpass coefficients, constant 0 dB peak gain." alt="" coords="751,29,948,69"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="703,47,737,47,737,52,703,52"/>
+<area shape="poly" id="edge4_Node000004_Node000004" title=" " alt="" coords="804,30,801,20,808,10,825,5,849,3,878,6,893,13,891,18,876,11,849,8,826,10,811,15,806,21,809,28"/>
+</map>

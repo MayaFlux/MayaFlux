@@ -1,0 +1,17 @@
+<map id="System.hpp" name="System.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="285,5,384,31"/>
+<area shape="rect" id="Node000002" href="$Chooser_8cpp.html" title=" " alt="" coords="5,79,107,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="277,37,102,81,100,76,276,31"/>
+<area shape="rect" id="Node000003" href="$Convenience_8hpp.html" title="Everyday headers and namespace imports for user code." alt="" coords="131,79,266,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="302,39,222,81,220,76,300,34"/>
+<area shape="rect" id="Node000006" href="$Depot_8cpp.html" title=" " alt="" coords="291,79,379,104"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="337,44,337,79,332,79,332,44"/>
+<area shape="rect" id="Node000007" href="$Engine_8cpp.html" title=" " alt="" coords="403,79,496,104"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="366,35,432,76,429,81,363,40"/>
+<area shape="rect" id="Node000008" href="$System_8cpp.html" title=" " alt="" coords="520,79,619,104"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="386,32,532,76,531,81,385,37"/>
+<area shape="rect" id="Node000004" href="$MayaFlux_8hpp.html" title="Single include for the user facing API." alt="" coords="141,152,256,177"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="201,118,201,152,196,152,196,118"/>
+<area shape="rect" id="Node000005" href="$LiveAid_8hpp.html" title=" " alt="" coords="149,225,248,251"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="201,191,201,225,196,225,196,191"/>
+</map>

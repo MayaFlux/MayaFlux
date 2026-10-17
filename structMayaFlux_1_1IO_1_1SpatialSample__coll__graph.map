@@ -1,0 +1,5 @@
+<map id="MayaFlux::IO::SpatialSample" name="MayaFlux::IO::SpatialSample">
+<area shape="rect" id="Node000001" title="One sample&#39;s worth of data for one named stream." alt="" coords="5,133,208,279"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="41,5,172,71"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="109,71,109,117,104,117,104,71"/>
+</map>

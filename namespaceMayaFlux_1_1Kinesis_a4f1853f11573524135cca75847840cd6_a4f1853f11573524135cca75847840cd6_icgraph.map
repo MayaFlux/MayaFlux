@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::create_scaling_matrix" name="MayaFlux::Kinesis::create_scaling_matrix">
+<area shape="rect" id="Node000001" title="Create diagonal scaling matrix from per&#45;axis factors." alt="" coords="228,13,395,53"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_acdb9869d78c4a5533dac06a4db4a059a.html#acdb9869d78c4a5533dac06a4db4a059a" title="Compose rotation then scaling: S * R." alt="" coords="5,5,180,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="214,35,180,35,180,30,214,30"/>
+</map>

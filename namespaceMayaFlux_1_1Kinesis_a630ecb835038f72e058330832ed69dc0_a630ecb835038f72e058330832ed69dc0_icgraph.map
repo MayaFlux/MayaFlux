@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::normalize_shape" name="MayaFlux::Kinesis::normalize_shape">
+<area shape="rect" id="Node000001" title="Centre a path at the origin and scale it to unit spread." alt="" coords="203,5,352,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a0302ddc62720c17b914aab2f07b7521f.html#a0302ddc62720c17b914aab2f07b7521f" title="Root mean square point distance between two paths after resampling and normalization." alt="" coords="5,5,155,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="189,28,155,28,155,23,189,23"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kinesis::Discrete::weighted_sum" name="MayaFlux::Kinesis::Discrete::weighted_sum">
+<area shape="rect" id="Node000001" title="Sum of window[k] * coefs[k] over the shorter of the two." alt="" coords="268,69,447,109"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_ac992932bc248e55cae5d33e1366c8165.html#ac992932bc248e55cae5d33e1366c8165" title="One explicit step of generalised Lotka&#45;Volterra competition." alt="" coords="8,5,217,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="266,68,189,48,190,43,268,63"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a1b7001dc9f328b502216b5a77841301c.html#a1b7001dc9f328b502216b5a77841301c" title="Weighted sum wrapped into [0, modulus)." alt="" coords="5,69,220,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="254,92,220,92,220,87,254,87"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a33253208c524f54e0775de4db99ad851.html#a33253208c524f54e0775de4db99ad851" title="Sum of N sinusoids advanced by complex rotation instead of a sine call." alt="" coords="35,133,190,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="268,115,190,136,189,131,266,110"/>
+</map>

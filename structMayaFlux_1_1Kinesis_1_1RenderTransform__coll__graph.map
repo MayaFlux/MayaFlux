@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::RenderTransform" name="MayaFlux::Kinesis::RenderTransform">
+<area shape="rect" id="Node000001" title="Packed view, projection, and geometry matrices for rendering." alt="" coords="5,168,147,248"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1ViewTransform.html" title="View and projection matrices as a named push constant slot." alt="" coords="5,5,147,105"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="79,105,79,151,73,151,73,105"/>
+</map>

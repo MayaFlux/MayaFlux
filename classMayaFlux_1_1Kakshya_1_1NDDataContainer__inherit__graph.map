@@ -1,0 +1,41 @@
+<map id="MayaFlux::Kakshya::NDDataContainer&lt; T &gt;" name="MayaFlux::Kakshya::NDDataContainer&lt; T &gt;">
+<area shape="rect" id="Node000001" title="Abstract interface for N&#45;dimensional data containers." alt="" coords="557,5,739,380"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1NDDataContainer.html" title=" " alt="" coords="417,443,631,832"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="588,394,585,405,575,443,570,441,580,403,583,393"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1NDDataContainer.html" title=" " alt="" coords="655,450,889,825"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="722,393,725,403,737,449,732,451,720,405,717,394"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1CompositeContainer.html" title="Owns composite data and a bounded, independently owned window." alt="" coords="433,881,615,1356"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="527,846,527,881,521,881,521,846"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1SignalSourceContainer.html" title="Data&#45;driven interface for managing arbitrary processable signal sources." alt="" coords="667,979,877,1259"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="775,839,775,979,769,979,769,839"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1PlotContainer.html" title="SignalSourceContainer holding N named scalar series for plotting and signal use." alt="" coords="347,1505,557,2145"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="691,1272,629,1358,613,1373,598,1382,585,1391,572,1407,545,1455,522,1506,517,1504,540,1452,567,1404,581,1387,595,1377,609,1368,625,1354,687,1269"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1StreamContainer.html" title="Data&#45;driven interface for temporal stream containers with navigable read position." alt="" coords="581,1685,771,1965"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="754,1272,698,1685,692,1685,749,1272"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer.html" title="SignalSourceContainer wrapping GPU texture data as addressable pixel bytes." alt="" coords="795,1405,1005,2245"/>
+<area shape="poly" id="edge18_Node000005_Node000017" title=" " alt="" coords="802,1272,826,1405,821,1406,797,1273"/>
+<area shape="rect" id="Node000019" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer.html" title="SignalSourceContainer wrapping a live Vulkan window surface." alt="" coords="1029,1498,1240,2153"/>
+<area shape="poly" id="edge20_Node000005_Node000019" title=" " alt="" coords="889,1229,959,1311,991,1357,1020,1404,1061,1497,1056,1499,1015,1407,987,1360,955,1314,885,1232"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Kakshya_1_1FileContainer.html" title="Marker interface for containers backed by file storage (in&#45;memory only)." alt="" coords="445,2602,606,2782"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="652,1979,543,2602,538,2601,647,1978"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer.html" title="Concrete base implementation for streaming audio containers." alt="" coords="211,2307,421,3077"/>
+<area shape="poly" id="edge10_Node000007_Node000011" title=" " alt="" coords="674,1979,663,2048,644,2119,614,2187,594,2218,571,2247,554,2262,536,2269,501,2273,467,2276,450,2283,434,2297,423,2309,419,2305,430,2293,448,2279,465,2271,501,2268,535,2264,551,2257,567,2243,590,2215,609,2184,639,2117,658,2047,669,1979"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer.html" title="Concrete base implementation for streaming video containers." alt="" coords="631,2295,841,3089"/>
+<area shape="poly" id="edge14_Node000007_Node000014" title=" " alt="" coords="689,1979,711,2294,706,2294,684,1979"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Kakshya_1_1SoundFileContainer.html" title="File&#45;backed audio container with complete streaming functionality." alt="" coords="229,3299,411,3479"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="508,2796,477,2936,436,3090,399,3200,360,3299,355,3297,394,3198,431,3089,472,2935,503,2795"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Kakshya_1_1VideoFileContainer.html" title="File&#45;backed video container — semantic marker over VideoStreamContainer." alt="" coords="435,3319,616,3459"/>
+<area shape="poly" id="edge9_Node000008_Node000010" title=" " alt="" coords="528,2796,528,3319,523,3319,523,2796"/>
+<area shape="poly" id="edge13_Node000011_Node000009" title=" " alt="" coords="321,3090,322,3298,317,3298,316,3090"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Kakshya_1_1DynamicSoundStream.html" title="Dynamic capacity streaming audio container with automatic resizing and circular buffering." alt="" coords="9,3139,205,3639"/>
+<area shape="poly" id="edge11_Node000011_Node000012" title=" " alt="" coords="209,3056,184,3139,179,3138,204,3055"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Kakshya_1_1AudioOutputContainer.html" title="DynamicSoundStream subclass wrapping the live engine audio output." alt="" coords="5,3688,208,3948"/>
+<area shape="poly" id="edge12_Node000012_Node000013" title=" " alt="" coords="109,3653,109,3688,104,3688,104,3653"/>
+<area shape="poly" id="edge17_Node000014_Node000010" title=" " alt="" coords="629,3060,620,3090,549,3319,544,3317,615,3089,624,3058"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Kakshya_1_1CameraContainer.html" title="Single&#45;slot live video container for camera device streams." alt="" coords="867,3279,1069,3499"/>
+<area shape="poly" id="edge15_Node000014_Node000015" title=" " alt="" coords="848,3066,856,3088,926,3277,921,3279,851,3090,843,3067"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Kakshya_1_1DynamicVideoStream.html" title="Video container that frames are appended to at runtime, the counterpart of DynamicSoundStream." alt="" coords="640,3199,843,3579"/>
+<area shape="poly" id="edge16_Node000014_Node000016" title=" " alt="" coords="742,3103,743,3198,737,3198,736,3103"/>
+<area shape="rect" id="Node000018" href="$classMayaFlux_1_1Kakshya_1_1TextureCollection.html" title="TextureContainer that starts empty and gains one layer per appended GPU image." alt="" coords="865,2572,1017,2812"/>
+<area shape="poly" id="edge19_Node000017_Node000018" title=" " alt="" coords="923,2259,938,2571,933,2572,918,2259"/>
+</map>

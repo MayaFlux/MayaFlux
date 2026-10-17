@@ -1,0 +1,5 @@
+<map id="MayaFlux::bind_midi_pitch_bend" name="MayaFlux::bind_midi_pitch_bend">
+<area shape="rect" id="Node000001" title="Create binding for MIDI Pitch Bend messages." alt="" coords="5,5,164,45"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Core_1_1InputBinding_a717e31d0c6b774ff4532eb2a76c098ba.html#a717e31d0c6b774ff4532eb2a76c098ba" title="Bind to MIDI Pitch Bend messages." alt="" coords="212,5,427,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="165,23,198,23,198,28,165,28"/>
+</map>

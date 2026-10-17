@@ -1,0 +1,11 @@
+<map id="MayaFlux::Portal::Forma::Layer::test_element" name="MayaFlux::Portal::Forma::Layer::test_element">
+<area shape="rect" id="Node000001" title=" " alt="" coords="464,37,645,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Layer_af0949b6413073189bba878fd489d35ad.html#af0949b6413073189bba878fd489d35ad" title="Return the topmost interactive, visible element containing ndc." alt="" coords="235,5,416,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="450,45,416,41,417,35,451,40"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Layer_aaed1294fcb3f39abf57d2d66442c5d15.html#aaed1294fcb3f39abf57d2d66442c5d15" title="Return all interactive, visible elements containing ndc, ordered back&#45;to&#45;front." alt="" coords="235,69,416,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="451,74,417,79,416,74,450,69"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Layer_acf00d09c6401f2eee6f384554404af22.html#acf00d09c6401f2eee6f384554404af22" title="hit_test with pixel&#45;space input, converted to NDC internally." alt="" coords="5,5,187,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="221,28,187,28,187,23,221,23"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Layer_ae12780ade5fb61070ffb1a5f33c31b1f.html#ae12780ade5fb61070ffb1a5f33c31b1f" title=" " alt="" coords="5,69,187,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="221,92,187,92,187,87,221,87"/>
+</map>

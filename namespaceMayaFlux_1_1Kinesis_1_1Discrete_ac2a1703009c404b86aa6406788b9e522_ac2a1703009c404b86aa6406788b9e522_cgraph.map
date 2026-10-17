@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kinesis::Discrete::q_from_decay" name="MayaFlux::Kinesis::Discrete::q_from_decay">
+<area shape="rect" id="Node000001" title="Q that gives the bandpass section a stated ring time." alt="" coords="5,13,181,53"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a3a2f998b110a8b8af3d788b958ae4a71.html#a3a2f998b110a8b8af3d788b958ae4a71" title="Pole radius whose impulse response falls by 1/e in a given time." alt="" coords="229,5,388,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="182,30,216,30,216,35,182,35"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_ae8b39c4e028b87d306f371e497cd1bdc.html#ae8b39c4e028b87d306f371e497cd1bdc" title="Per&#45;sample factor that falls by 1/e in a given time." alt="" coords="436,5,587,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="388,30,422,30,422,35,388,35"/>
+</map>

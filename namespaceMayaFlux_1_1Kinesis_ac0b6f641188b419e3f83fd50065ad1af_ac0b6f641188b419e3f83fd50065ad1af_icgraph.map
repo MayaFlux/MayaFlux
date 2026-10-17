@@ -1,0 +1,11 @@
+<map id="MayaFlux::Kinesis::net_displacement" name="MayaFlux::Kinesis::net_displacement">
+<area shape="rect" id="Node000001" title="Net displacement across the newest window positions." alt="" coords="400,69,549,109"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a9d4f2460c8de7c7455f08228fa570ddf.html#a9d4f2460c8de7c7455f08228fa570ddf" title="Convenience overload of net_displacement over a raw span of positions, samples[0] newest." alt="" coords="203,5,352,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="399,68,339,48,340,43,400,63"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_a79d4803064cd455e5c26985bd5cd1e5c.html#a79d4803064cd455e5c26985bd5cd1e5c" title="Straightness of a path over a window, 1.0 is a straight line." alt="" coords="203,69,352,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="386,92,352,92,352,87,386,87"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_a49033ce21c9ca9ef6653849a9f248109.html#a49033ce21c9ca9ef6653849a9f248109" title="Monotonicity of a window, 1.0 for a straight run in one direction." alt="" coords="203,133,352,173"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="400,116,340,136,339,131,399,111"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_aa28d5ac942c140b5e5061efb94da707b.html#aa28d5ac942c140b5e5061efb94da707b" title="Convenience overload of straightness over a raw span of positions, samples[0] newest." alt="" coords="5,69,155,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="189,92,155,92,155,87,189,87"/>
+</map>

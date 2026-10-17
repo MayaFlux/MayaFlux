@@ -1,0 +1,41 @@
+<map id="MayaFlux::Kakshya::DynamicVideoStream::append_frame" name="MayaFlux::Kakshya::DynamicVideoStream::append_frame">
+<area shape="rect" id="Node000001" title="Write one image, for example one read back from a GPU image." alt="" coords="5,144,177,199"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1DynamicVideoStream_af51e41b3705da656c94f859230337326.html#af51e41b3705da656c94f859230337326" title="Write one frame at the write head and advance it." alt="" coords="225,144,397,199"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="178,169,212,169,212,174,178,174"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1DynamicVideoStream_a56f80056f79a786802fd7c704fd9a627.html#a56f80056f79a786802fd7c704fd9a627" title=" " alt="" coords="445,144,617,199"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="398,169,432,169,432,174,398,174"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_acd69a7c5e27cc6fd492c480c481ee9ea.html#acd69a7c5e27cc6fd492c480c481ee9ea" title="Total byte size of one frame: width * height * bytes_per_pixel." alt="" coords="906,92,1075,147"/>
+<area shape="poly" id="edge21_Node000002_Node000005" title=" " alt="" coords="358,142,417,110,492,75,577,42,665,17,713,8,752,3,790,6,838,17,870,29,899,45,951,82,948,86,897,50,867,34,837,22,790,11,752,8,714,13,666,22,579,47,494,80,420,115,360,147"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Kakshya_1_1DynamicVideoStream_afc07027b51f5f0167e6d9d6e911f0b7d.html#afc07027b51f5f0167e6d9d6e911f0b7d" title=" " alt="" coords="445,262,617,316"/>
+<area shape="poly" id="edge10_Node000002_Node000010" title=" " alt="" coords="365,197,469,253,466,258,362,202"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1DynamicVideoStream_a1e1b5cf08c5d1fce36e1a74f20880e2d.html#a1e1b5cf08c5d1fce36e1a74f20880e2d" title=" " alt="" coords="665,32,837,87"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="585,142,683,91,686,96,587,147"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="617,155,665,148,892,125,893,130,666,153,618,160"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_a5d3384d0e8be81255720b8733e49d47e.html#a5d3384d0e8be81255720b8733e49d47e" title="True if the container is operating in ring mode." alt="" coords="667,242,836,296"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="595,197,678,234,675,239,593,202"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_a26041c92754b0feb5214c3b34c1f0765.html#a26041c92754b0feb5214c3b34c1f0765" title="Mutable pointer into m_data[0] for the decode thread to write into." alt="" coords="667,163,836,218"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="618,176,653,179,653,185,618,182"/>
+<area shape="poly" id="edge7_Node000007_Node000005" title=" " alt="" coords="835,163,892,146,894,151,837,168"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_ac5764b3010fc7824fd6b5da810d65f50.html#ac5764b3010fc7824fd6b5da810d65f50" title=" " alt="" coords="906,239,1075,294"/>
+<area shape="poly" id="edge8_Node000007_Node000008" title=" " alt="" coords="837,215,894,233,892,238,835,220"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Kakshya_ad83915232ba3283db5c6ff26fa34dafe.html#ad83915232ba3283db5c6ff26fa34dafe" title="Get a mutable pointer to the raw bytes of a DataVariant and its size." alt="" coords="905,172,1077,212"/>
+<area shape="poly" id="edge9_Node000007_Node000009" title=" " alt="" coords="836,188,891,189,891,194,836,194"/>
+<area shape="poly" id="edge14_Node000010_Node000006" title=" " alt="" coords="618,279,653,275,653,281,618,284"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_aee686a4ac3fd58dac2c142f6388c31e2.html#aee686a4ac3fd58dac2c142f6388c31e2" title="Publish a decoded frame." alt="" coords="667,320,836,375"/>
+<area shape="poly" id="edge11_Node000010_Node000011" title=" " alt="" coords="619,310,654,319,653,324,617,315"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Kakshya_1_1DynamicVideoStream_a768e1da65e2b653f281c2e6a28c5b223.html#a768e1da65e2b653f281c2e6a28c5b223" title=" " alt="" coords="665,399,837,454"/>
+<area shape="poly" id="edge15_Node000010_Node000013" title=" " alt="" coords="568,314,614,349,667,384,678,390,675,395,664,389,611,354,565,319"/>
+<area shape="poly" id="edge13_Node000011_Node000008" title=" " alt="" coords="832,318,896,296,898,301,834,323"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_aa25d1fa23ecc67bed538b4e281f95c7c.html#aa25d1fa23ecc67bed538b4e281f95c7c" title="Advance the container&#39;s view of how many frames have been decoded." alt="" coords="906,320,1075,375"/>
+<area shape="poly" id="edge12_Node000011_Node000012" title=" " alt="" coords="836,345,892,345,892,350,836,350"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_a4274ccc1ef7109eebead1d4b11949696.html#a4274ccc1ef7109eebead1d4b11949696" title="Get the current processing state of the container." alt="" coords="906,399,1075,454"/>
+<area shape="poly" id="edge16_Node000013_Node000014" title=" " alt="" coords="837,424,892,424,892,429,837,429"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_acc9379a359299f4bb6632afa6f6aeabe.html#acc9379a359299f4bb6632afa6f6aeabe" title="Mark the container as ready or not ready for processing." alt="" coords="885,478,1096,532"/>
+<area shape="poly" id="edge17_Node000013_Node000015" title=" " alt="" coords="836,451,895,471,894,476,835,456"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_a81b10d1b0774357ee5f3a2fbc794c0a3.html#a81b10d1b0774357ee5f3a2fbc794c0a3" title="Check if the container currently holds any data." alt="" coords="1155,438,1325,492"/>
+<area shape="poly" id="edge18_Node000015_Node000016" title=" " alt="" coords="1096,486,1141,478,1142,483,1097,491"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_aef2e149bad77bf7dbb1c088b9c7fb1f9.html#aef2e149bad77bf7dbb1c088b9c7fb1f9" title="Update the processing state of the container." alt="" coords="1144,516,1336,571"/>
+<area shape="poly" id="edge19_Node000015_Node000017" title=" " alt="" coords="1097,519,1131,524,1130,529,1096,524"/>
+<area shape="rect" id="Node000018" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_ab34266e533acd546a7042209fa6ce6d0.html#ab34266e533acd546a7042209fa6ce6d0" title=" " alt="" coords="1384,516,1553,571"/>
+<area shape="poly" id="edge20_Node000017_Node000018" title=" " alt="" coords="1337,541,1370,541,1370,546,1337,546"/>
+</map>

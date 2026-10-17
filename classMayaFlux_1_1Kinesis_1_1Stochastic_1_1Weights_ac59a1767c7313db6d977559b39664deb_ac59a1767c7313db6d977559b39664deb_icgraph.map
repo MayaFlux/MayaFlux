@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kinesis::Stochastic::Weights::scale_row" name="MayaFlux::Kinesis::Stochastic::Weights::scale_row">
+<area shape="rect" id="Node000001" title=" " alt="" coords="433,45,583,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Weights_afcaa4d43734fecbffbaf69454b2e9da6.html#afcaa4d43734fecbffbaf69454b2e9da6" title="Scale a row so its cells sum to one." alt="" coords="236,45,385,100"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="419,75,386,75,386,70,419,70"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Weights_a7054599e28586255cf05cfa3617ca1c7.html#a7054599e28586255cf05cfa3617ca1c7" title="Write an adjacency edge list into this table." alt="" coords="22,5,171,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="222,59,171,49,172,44,223,54"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Weights_aa8bc6b414f3dab9fd09c9636b3d067e5.html#aa8bc6b414f3dab9fd09c9636b3d067e5" title="Every cell uniform except the diagonal, each row normalized to sum to one." alt="" coords="5,84,188,139"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="222,91,189,97,188,92,222,86"/>
+</map>

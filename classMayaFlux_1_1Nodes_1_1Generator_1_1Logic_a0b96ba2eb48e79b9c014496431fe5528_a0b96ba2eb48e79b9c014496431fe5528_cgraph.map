@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Generator::Logic::Logic" name="MayaFlux::Nodes::Generator::Logic::Logic">
+<area shape="rect" id="Node000001" title="Constructs a Logic node with a time&#45;dependent function and a coefficient array." alt="" coords="5,5,213,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Logic_a5d75da2d492740cea5c9f9945d9f141b.html#a5d75da2d492740cea5c9f9945d9f141b" title="Sets a custom time&#45;dependent evaluation function." alt="" coords="261,5,480,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="214,23,248,23,248,28,214,28"/>
+</map>

@@ -1,0 +1,19 @@
+<map id="UniversalTransformer.hpp" name="UniversalTransformer.hpp">
+<area shape="rect" id="Node000001" title="Float Processing Guidelines." alt="" coords="427,5,616,31"/>
+<area shape="rect" id="Node000002" href="$ConvolutionTransformer_8hpp.html" title=" " alt="" coords="5,79,211,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="442,36,175,81,174,76,441,30"/>
+<area shape="rect" id="Node000004" href="$GpuTransformer_8hpp.html" title=" " alt="" coords="235,79,389,104"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="475,38,347,81,345,76,474,33"/>
+<area shape="rect" id="Node000005" href="$MathematicalTransformer_8hpp.html" title=" " alt="" coords="413,79,630,104"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="524,44,524,79,519,79,519,44"/>
+<area shape="rect" id="Node000006" href="$SpectralTransformer_8hpp.html" title=" " alt="" coords="654,79,834,104"/>
+<area shape="poly" id="edge7_Node000001_Node000006" title=" " alt="" coords="571,32,709,76,707,81,569,37"/>
+<area shape="rect" id="Node000007" href="$TemporalTransformer_8hpp.html" title=" " alt="" coords="859,79,1045,104"/>
+<area shape="poly" id="edge9_Node000001_Node000007" title=" " alt="" coords="605,30,883,76,882,81,604,36"/>
+<area shape="rect" id="Node000003" href="$WorkflowIncludes_8hpp.html" title="Top level headers for the Yantra compute layer and its workflows." alt="" coords="439,152,603,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="188,104,455,149,454,155,188,109"/>
+<area shape="poly" id="edge4_Node000004_Node000003" title=" " alt="" coords="360,106,488,149,487,154,358,111"/>
+<area shape="poly" id="edge6_Node000005_Node000003" title=" " alt="" coords="524,118,524,152,519,152,519,118"/>
+<area shape="poly" id="edge8_Node000006_Node000003" title=" " alt="" coords="696,111,558,154,557,149,695,106"/>
+<area shape="poly" id="edge10_Node000007_Node000003" title=" " alt="" coords="870,109,591,155,590,149,869,104"/>
+</map>

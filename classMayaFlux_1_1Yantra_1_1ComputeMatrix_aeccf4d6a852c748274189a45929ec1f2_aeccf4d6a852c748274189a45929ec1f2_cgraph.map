@@ -1,0 +1,11 @@
+<map id="MayaFlux::Yantra::ComputeMatrix::drain_async" name="MayaFlux::Yantra::ComputeMatrix::drain_async">
+<area shape="rect" id="Node000001" title="Block until all in&#45;flight async chains complete." alt="" coords="5,5,207,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Parallel_1_1AsyncGroup_acc4f41dfcce08a9ade658720b8ddec40.html#acc4f41dfcce08a9ade658720b8ddec40" title="Blocks until every currently submitted future completes." alt="" coords="255,5,404,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="207,23,241,23,241,28,207,28"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Parallel_1_1AsyncGroup_ac5d3a0e96e4855b93c6fa4d545f5440d.html#ac5d3a0e96e4855b93c6fa4d545f5440d" title=" " alt="" coords="452,5,603,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="405,23,438,23,438,28,405,28"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Parallel_1_1AsyncGroup_a61de2e5f9b1c7bf6c744e2c6c299b5c9.html#a61de2e5f9b1c7bf6c744e2c6c299b5c9" title=" " alt="" coords="651,5,805,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="603,23,637,23,637,28,603,28"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Memory_1_1SweepList_a08033a9c7623c750d27d7796db165f4d.html#a08033a9c7623c750d27d7796db165f4d" title="Publishes value for later sweep() or drain()." alt="" coords="853,5,1075,45"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="806,23,840,23,840,28,806,28"/>
+</map>

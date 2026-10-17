@@ -1,0 +1,15 @@
+<map id="MayaFlux::Buffers::RenderProcessor::bind_texture" name="MayaFlux::Buffers::RenderProcessor::bind_texture">
+<area shape="rect" id="Node000001" title="Bind a texture to a named descriptor." alt="" coords="5,62,172,117"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a065b63736ca93e3162c1395c8daaac25.html#a065b63736ca93e3162c1395c8daaac25" title="Bind a texture to a descriptor binding point." alt="" coords="220,62,387,117"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="173,87,206,87,206,92,173,92"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a715d57394465ff2924727d7c82d87e7b.html#a715d57394465ff2924727d7c82d87e7b" title="Get the global shader compiler instance." alt="" coords="435,5,632,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="386,64,447,46,449,52,387,69"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a335ffb0c43b53ec263ab6559ac29476b.html#a335ffb0c43b53ec263ab6559ac29476b" title="Get the global texture manager instance." alt="" coords="435,69,632,109"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="387,87,421,87,421,92,387,92"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a1fd501788f3b88dcf76ff38d6812e81b.html#a1fd501788f3b88dcf76ff38d6812e81b" title="Resolve logical descriptor set index to actual index." alt="" coords="440,134,627,189"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="388,113,433,127,432,132,386,118"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="680,5,877,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="632,23,666,23,666,28,632,28"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a6887ad297693c2392be7960daab06002.html#a6887ad297693c2392be7960daab06002" title=" " alt="" coords="680,69,877,109"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="632,87,666,87,666,92,632,92"/>
+</map>

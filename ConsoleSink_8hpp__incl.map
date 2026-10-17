@@ -1,0 +1,20 @@
+<map id="ConsoleSink.hpp" name="ConsoleSink.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="294,5,425,31"/>
+<area shape="rect" id="Node000002" href="$Sink_8hpp.html" title=" " alt="" coords="269,79,348,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="353,33,327,69,323,66,349,29"/>
+<area shape="rect" id="Node000009" href="$Ansi_8hpp.html" title=" " alt="" coords="372,79,451,104"/>
+<area shape="poly" id="edge9_Node000001_Node000009" title=" " alt="" coords="370,29,397,66,393,69,366,33"/>
+<area shape="rect" id="Node000003" href="$JournalEntry_8hpp.html" title=" " alt="" coords="245,225,372,251"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="304,106,292,127,283,153,282,168,285,183,296,212,291,214,279,185,277,168,278,151,287,125,299,103"/>
+<area shape="rect" id="Node000008" href="$RealtimeEntry_8hpp.html" title=" " alt="" coords="293,152,434,177"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="320,103,348,140,344,143,316,106"/>
+<area shape="rect" id="Node000004" href="$EnumReflect_8hpp.html" title=" " alt="" coords="5,299,191,339"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="279,253,162,296,160,291,277,248"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="215,306,282,331"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="302,252,268,296,264,293,298,249"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="307,306,431,331"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="320,249,353,293,349,296,315,252"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="455,306,552,331"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="338,248,463,298,461,303,336,253"/>
+<area shape="poly" id="edge8_Node000008_Node000003" title=" " alt="" coords="356,179,328,216,324,213,352,176"/>
+</map>

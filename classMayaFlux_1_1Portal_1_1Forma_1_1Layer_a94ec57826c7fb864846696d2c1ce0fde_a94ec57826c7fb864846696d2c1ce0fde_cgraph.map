@@ -1,0 +1,7 @@
+<map id="MayaFlux::Portal::Forma::Layer::remove" name="MayaFlux::Portal::Forma::Layer::remove">
+<area shape="rect" id="Node000001" title="Remove an element by id, cascading to every related id." alt="" coords="5,37,187,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Layer_a5ef0a8c9d5e0d9c5bc88b344fd4fe86f.html#a5ef0a8c9d5e0d9c5bc88b344fd4fe86f" title="Return id plus every id transitively related to it." alt="" coords="235,5,416,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="187,42,221,37,221,43,187,47"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Layer_a6a279bbd434c7f805d6d21f4bf1e2155.html#a6a279bbd434c7f805d6d21f4bf1e2155" title=" " alt="" coords="235,69,416,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="187,67,221,72,221,77,187,73"/>
+</map>

@@ -1,0 +1,26 @@
+<map id="MayaFlux::Kinesis::Vision::dilate" name="MayaFlux::Kinesis::Vision::dilate">
+<area shape="rect" id="Node000001" title="Dilation writing into dst." alt="" coords="740,127,889,167"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a5e90ae850ffc0b1ae14564b0711333b8.html#a5e90ae850ffc0b1ae14564b0711333b8" title="Morphological closing writing into dst." alt="" coords="531,12,680,52"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="771,121,691,73,653,55,655,50,693,68,774,117"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kinesis_1_1Vision_1_1VisionExecutor_a6ea94c5c8d90c5890b7715a0e4ff2df5.html#a6ea94c5c8d90c5890b7715a0e4ff2df5" title="Execute a VisionSequence on one frame." alt="" coords="276,69,471,109"/>
+<area shape="poly" id="edge13_Node000001_Node000004" title=" " alt="" coords="732,126,692,117,577,103,470,95,471,90,578,97,692,112,733,121"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_adc5a3c1f747e71f44701b94b77a2f9f6.html#adc5a3c1f747e71f44701b94b77a2f9f6" title="Morphological dilation with square structuring element." alt="" coords="531,255,680,295"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="784,178,742,212,693,245,669,257,666,252,691,240,739,208,780,174"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_adee48db13e7533625d68ef76ae8154f0.html#adee48db13e7533625d68ef76ae8154f0" title="Morphological gradient (dilate &#45; erode) writing into dst." alt="" coords="519,127,692,167"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="726,149,692,149,692,144,726,144"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_af131687fd335f5c5c154f7d8e8e503a4.html#af131687fd335f5c5c154f7d8e8e503a4" title="Morphological opening writing into dst." alt="" coords="531,191,680,231"/>
+<area shape="poly" id="edge10_Node000001_Node000010" title=" " alt="" coords="736,173,672,193,670,188,735,168"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a2a056d1c85d2b48a417932a03273d220.html#a2a056d1c85d2b48a417932a03273d220" title="Morphological closing: dilate then erode." alt="" coords="299,5,448,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="516,32,448,30,448,25,516,27"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="518,56,455,72,454,67,516,51"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1VisionProcessor_ab9b6b50546df64540aee0f0bbbb7939a.html#ab9b6b50546df64540aee0f0bbbb7939a" title="Execute the VisionSequence on processed_data[0]." alt="" coords="25,33,208,73"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="262,76,208,69,209,63,263,71"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1ImageCVProcessor_a03dd11926b797b52ccbdfa37c2b5e4e1.html#a03dd11926b797b52ccbdfa37c2b5e4e1" title="Download the current GPU image, run the VisionSequence, store the result." alt="" coords="5,98,228,153"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="263,107,229,112,228,107,262,102"/>
+<area shape="poly" id="edge9_Node000008_Node000004" title=" " alt="" coords="510,126,454,112,455,107,511,121"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a9e1c1afc611478a35ba40e338073ded8.html#a9e1c1afc611478a35ba40e338073ded8" title="Morphological gradient: dilate minus erode." alt="" coords="287,133,460,173"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="505,152,460,154,460,148,505,147"/>
+<area shape="poly" id="edge12_Node000010_Node000004" title=" " alt="" coords="526,186,517,181,502,166,493,151,484,137,469,123,448,112,450,107,472,119,488,134,497,148,506,163,520,177,529,182"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a4d3bdc098da133d9c6dcdeb558162ac8.html#a4d3bdc098da133d9c6dcdeb558162ac8" title="Morphological opening: erode then dilate." alt="" coords="299,197,448,237"/>
+<area shape="poly" id="edge11_Node000010_Node000011" title=" " alt="" coords="516,216,448,218,448,213,516,211"/>
+</map>

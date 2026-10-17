@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::clamp_offset_to_content" name="MayaFlux::Kinesis::clamp_offset_to_content">
+<area shape="rect" id="Node000001" title="Clamp a content&#45;space offset so a viewport of the given extent never scrolls past the edges of a cont..." alt="" coords="203,5,385,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a6bf30ce8a7e59fd5de549da3f17b139a.html#a6bf30ce8a7e59fd5de549da3f17b139a" title="Add a content&#45;space delta to the offset and clamp to content_bounds." alt="" coords="5,5,155,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="189,28,155,28,155,23,189,23"/>
+</map>

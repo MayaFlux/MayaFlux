@@ -1,0 +1,39 @@
+<map id="MayaFlux::Yantra::ConvolutionTransformer::transform_implementation" name="MayaFlux::Yantra::ConvolutionTransformer::transform_implementation">
+<area shape="rect" id="Node000001" title="Applies the configured convolution operation." alt="" coords="5,201,288,241"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1ConvolutionTransformer_a82b55525b3e4df731b5208a17928c7fc.html#a82b55525b3e4df731b5208a17928c7fc" title="Extracts per&#45;channel spans, applies func to each, and reconstructs." alt="" coords="336,79,567,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="197,199,387,121,389,126,199,204"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1ConvolutionTransformer_ac8726be821fa5fa5c659a325cf53f515.html#ac8726be821fa5fa5c659a325cf53f515" title="Creates output with proper type conversion." alt="" coords="615,5,835,45"/>
+<area shape="poly" id="edge15_Node000001_Node000003" title=" " alt="" coords="163,199,193,168,233,130,281,94,335,64,401,42,470,28,538,21,601,18,601,23,538,26,471,34,402,47,337,69,284,98,236,134,196,172,167,203"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a718383f1c65bd89371249e51a6170a28.html#a718383f1c65bd89371249e51a6170a28" title="Auto&#45;correlation via FFT." alt="" coords="635,272,814,312"/>
+<area shape="poly" id="edge7_Node000001_Node000007" title=" " alt="" coords="259,239,336,251,486,268,622,281,621,286,485,274,336,256,258,244"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a02c0248cab3716432c273381813b6a6f.html#a02c0248cab3716432c273381813b6a6f" title="Linear FFT convolution." alt="" coords="377,316,526,356"/>
+<area shape="poly" id="edge13_Node000001_Node000011" title=" " alt="" coords="197,239,337,295,377,309,375,314,335,300,195,244"/>
+<area shape="rect" id="Node000012" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a6999262b0f729dbdf1076f3a63355188.html#a6999262b0f729dbdf1076f3a63355188" title="Cross&#45;correlation via FFT." alt="" coords="633,184,816,224"/>
+<area shape="poly" id="edge16_Node000001_Node000012" title=" " alt="" coords="246,199,336,187,451,182,567,187,620,190,620,196,567,192,451,187,336,192,247,204"/>
+<area shape="rect" id="Node000013" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_af630b74b919bc8ff531cfec89f6b3fa7.html#af630b74b919bc8ff531cfec89f6b3fa7" title="Frequency&#45;domain deconvolution with Tikhonov regularisation." alt="" coords="372,380,531,420"/>
+<area shape="poly" id="edge20_Node000001_Node000013" title=" " alt="" coords="170,239,240,302,287,336,337,366,360,376,358,380,335,370,284,340,237,306,166,243"/>
+<area shape="rect" id="Node000014" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_af87d4b84d6d3f96cb339c7216db65678.html#af87d4b84d6d3f96cb339c7216db65678" title="Matched filter (normalised cross&#45;correlation)" alt="" coords="362,201,541,241"/>
+<area shape="poly" id="edge22_Node000001_Node000014" title=" " alt="" coords="288,219,348,219,348,224,288,224"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="526,76,635,46,637,52,527,81"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1OperationHelper_af45a37d9b80c0e9c0de90e1776647ec0.html#af45a37d9b80c0e9c0de90e1776647ec0" title="Extract structured double data from Datum container or direct ComputeData with automatic container ha..." alt="" coords="883,87,1125,127"/>
+<area shape="poly" id="edge5_Node000002_Node000005" title=" " alt="" coords="567,114,615,119,725,123,835,119,869,117,869,122,835,124,725,128,614,124,567,119"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1UniversalTransformer_a952e85a0a582c7ba24c8fa85e2490294.html#a952e85a0a582c7ba24c8fa85e2490294" title="Indicates whether the transformation modifies the input data directly." alt="" coords="623,69,827,109"/>
+<area shape="poly" id="edge6_Node000002_Node000006" title=" " alt="" coords="567,92,609,91,609,96,567,97"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation_ac364bad27ce3e4d35add89333c9a24b8.html#ac364bad27ce3e4d35add89333c9a24b8" title="Convert processed double data back to OutputType using metadata and optional callback." alt="" coords="903,5,1105,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="835,23,890,23,890,28,835,28"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="795,43,922,80,921,85,793,48"/>
+<area shape="poly" id="edge9_Node000007_Node000007" title=" " alt="" coords="674,272,671,262,679,253,697,247,725,245,756,248,773,255,771,260,755,253,725,251,698,253,682,258,676,263,679,271"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a42e1569c72d22f14f15ee3a52cb70496.html#a42e1569c72d22f14f15ee3a52cb70496" title="Core FFT convolution engine." alt="" coords="903,327,1105,367"/>
+<area shape="poly" id="edge8_Node000007_Node000008" title=" " alt="" coords="815,307,889,322,888,327,814,312"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a5de3d13e1b9ceb59d3acb04361e2a5e5.html#a5de3d13e1b9ceb59d3acb04361e2a5e5" title="Normalize to [target_min, target_max] in&#45;place Single&#45;pass min/max reduction followed by a single tra..." alt="" coords="929,192,1079,232"/>
+<area shape="poly" id="edge10_Node000007_Node000009" title=" " alt="" coords="795,269,882,244,919,233,921,238,883,249,796,274"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a5970ee5660c02fb526cd5ad6f5895e4a.html#a5970ee5660c02fb526cd5ad6f5895e4a" title="Peak amplitude per window." alt="" coords="929,259,1079,299"/>
+<area shape="poly" id="edge12_Node000007_Node000010" title=" " alt="" coords="814,285,915,280,916,286,814,290"/>
+<area shape="poly" id="edge11_Node000009_Node000009" title=" " alt="" coords="953,193,950,182,958,173,976,167,1004,165,1036,168,1054,175,1052,180,1035,173,1004,171,977,173,961,178,955,183,958,191"/>
+<area shape="poly" id="edge14_Node000011_Node000008" title=" " alt="" coords="526,335,889,342,889,347,526,340"/>
+<area shape="poly" id="edge17_Node000012_Node000008" title=" " alt="" coords="816,222,836,234,853,253,861,272,869,291,884,309,900,318,897,323,881,313,864,294,856,274,849,256,833,238,813,226"/>
+<area shape="poly" id="edge18_Node000012_Node000009" title=" " alt="" coords="816,204,916,207,915,212,816,209"/>
+<area shape="poly" id="edge19_Node000012_Node000010" title=" " alt="" coords="801,221,917,253,916,258,799,227"/>
+<area shape="poly" id="edge21_Node000013_Node000008" title=" " alt="" coords="531,390,889,355,889,360,531,395"/>
+<area shape="poly" id="edge23_Node000014_Node000012" title=" " alt="" coords="541,213,619,208,620,213,541,218"/>
+</map>

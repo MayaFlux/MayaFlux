@@ -1,0 +1,5 @@
+<map id="MayaFlux::IO::FFmpegCameraReader" name="MayaFlux::IO::FFmpegCameraReader">
+<area shape="rect" id="Node000001" title="Platform&#45;specific FFmpeg input format string for camera devices." alt="" coords="5,399,217,939"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1CameraSource.html" title="Abstract interface for a live camera backend hosted by IOManager." alt="" coords="10,5,213,351"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="114,364,114,398,109,398,109,364"/>
+</map>

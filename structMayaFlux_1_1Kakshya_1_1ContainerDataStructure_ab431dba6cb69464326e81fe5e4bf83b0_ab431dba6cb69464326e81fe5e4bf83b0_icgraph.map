@@ -1,0 +1,35 @@
+<map id="MayaFlux::Kakshya::ContainerDataStructure::get_total_elements" name="MayaFlux::Kakshya::ContainerDataStructure::get_total_elements">
+<area shape="rect" id="Node000001" title="Get total elements across all dimensions." alt="" coords="1179,163,1353,217"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a2198982176e99651ef683458877dd741.html#a2198982176e99651ef683458877dd741" title="Get the total number of elements in the container." alt="" coords="943,44,1115,99"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1210,158,1129,112,1104,101,1107,96,1132,108,1213,153"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_a9c934022fed6513806ffa13ca2912def.html#a9c934022fed6513806ffa13ca2912def" title="Get the total number of elements in the container." alt="" coords="948,123,1111,177"/>
+<area shape="poly" id="edge14_Node000001_Node000011" title=" " alt="" coords="1164,176,1111,166,1111,161,1165,170"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_a461a4c7e7a3527ceae12c4ad41c5537a.html#a461a4c7e7a3527ceae12c4ad41c5537a" title="Get the total number of elements in the container." alt="" coords="946,201,1113,256"/>
+<area shape="poly" id="edge15_Node000001_Node000012" title=" " alt="" coords="1165,209,1113,218,1112,212,1165,204"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Kakshya_1_1ContiguousAccessProcessor_aca05ee63009dd88d08bdb79c0fa821c0.html#aca05ee63009dd88d08bdb79c0fa821c0" title="Store dimension and layout metadata from the container." alt="" coords="928,280,1131,335"/>
+<area shape="poly" id="edge16_Node000001_Node000013" title=" " alt="" coords="1210,227,1132,270,1104,282,1102,278,1129,265,1208,222"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_aa4e4316022347f61b6ff80925a636ac4.html#aa4e4316022347f61b6ff80925a636ac4" title="Pre&#45;allocate capacity for the specified number of frames." alt="" coords="453,12,627,67"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="930,68,627,48,628,42,930,62"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_a76f02825c588ece2a442fa91655dd672.html#a76f02825c588ece2a442fa91655dd672" title=" " alt="" coords="691,77,866,132"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="930,87,867,96,866,90,929,82"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_a9cfe8b08aab3f3a06d83844e3d0ac864.html#a9cfe8b08aab3f3a06d83844e3d0ac864" title="Enable circular buffer mode with fixed capacity." alt="" coords="228,5,403,60"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="439,39,403,38,403,33,439,34"/>
+<area shape="poly" id="edge5_Node000005_Node000003" title=" " alt="" coords="677,80,627,66,628,61,679,75"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_acf923de17bc21ae89e1db4cdf7af3406.html#acf923de17bc21ae89e1db4cdf7af3406" title=" " alt="" coords="228,84,403,139"/>
+<area shape="poly" id="edge6_Node000005_Node000006" title=" " alt="" coords="678,109,403,113,403,107,678,103"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_a344f9b30afff0cc221faca44b262b9f1.html#a344f9b30afff0cc221faca44b262b9f1" title=" " alt="" coords="451,143,629,197"/>
+<area shape="poly" id="edge8_Node000005_Node000008" title=" " alt="" coords="679,135,630,148,629,143,677,130"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_ade208ea2ca4a19384f898cc1a82d7ba2.html#ade208ea2ca4a19384f898cc1a82d7ba2" title="Write audio frame data to the container with automatic capacity management." alt="" coords="228,187,403,241"/>
+<area shape="poly" id="edge13_Node000005_Node000009" title=" " alt="" coords="741,144,691,181,661,198,630,211,572,225,513,231,455,232,403,229,403,223,455,226,512,226,571,220,629,206,659,193,688,177,737,139"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_adbb6000f53051d841a016bc8f2cafc38.html#adbb6000f53051d841a016bc8f2cafc38" title=" " alt="" coords="5,96,180,151"/>
+<area shape="poly" id="edge7_Node000006_Node000007" title=" " alt="" coords="214,119,180,121,180,116,214,114"/>
+<area shape="poly" id="edge9_Node000008_Node000009" title=" " alt="" coords="438,193,403,200,402,194,436,188"/>
+<area shape="poly" id="edge12_Node000009_Node000007" title=" " alt="" coords="234,184,159,153,161,148,236,179"/>
+<area shape="poly" id="edge11_Node000009_Node000009" title=" " alt="" coords="352,176,339,168,315,165,296,167,283,172,277,178,277,187,272,187,272,176,280,168,294,162,315,160,340,163,355,171"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_ad1b0111818608a5aee61e916f00b9f08.html#ad1b0111818608a5aee61e916f00b9f08" title="Write one channel at its write head and advance the head." alt="" coords="5,187,180,241"/>
+<area shape="poly" id="edge10_Node000009_Node000010" title=" " alt="" coords="214,217,180,217,180,211,214,211"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Kakshya_1_1ContiguousAccessProcessor_a659411b73a8e35064a42df40e5743663.html#a659411b73a8e35064a42df40e5743663" title="Attach the processor to a signal source container." alt="" coords="677,240,880,295"/>
+<area shape="poly" id="edge17_Node000013_Node000014" title=" " alt="" coords="914,292,880,286,881,281,915,286"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Kakshya_1_1ContiguousAccessProcessor_a004edfbf41a31559663ef2c48c84a205.html#a004edfbf41a31559663ef2c48c84a205" title="Set the output buffer size (shape) for each processing call." alt="" coords="677,319,880,373"/>
+<area shape="poly" id="edge18_Node000013_Node000015" title=" " alt="" coords="915,328,881,333,880,328,914,322"/>
+</map>

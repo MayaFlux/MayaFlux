@@ -1,0 +1,7 @@
+<map id="MayaFlux::IO::Detail::create_video_container_buffer" name="MayaFlux::IO::Detail::create_video_container_buffer">
+<area shape="rect" id="Node000001" title=" " alt="" coords="240,34,423,89"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1IOManager_ad8eaeb7cf2b6ae13078c65febd1254e4.html#ad8eaeb7cf2b6ae13078c65febd1254e4" title="Wire a CameraContainer to the graphics buffer system." alt="" coords="5,5,192,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="226,48,192,42,193,37,227,42"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1IOManager_abb9ae82fce475074852b5578fc283340.html#abb9ae82fce475074852b5578fc283340" title="Wire a video container to the graphics buffer system." alt="" coords="5,70,192,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="227,80,193,86,192,80,226,75"/>
+</map>

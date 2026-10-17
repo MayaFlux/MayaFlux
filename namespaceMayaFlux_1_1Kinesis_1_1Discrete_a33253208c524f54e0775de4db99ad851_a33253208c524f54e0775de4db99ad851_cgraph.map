@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::Discrete::rotor_bank" name="MayaFlux::Kinesis::Discrete::rotor_bank">
+<area shape="rect" id="Node000001" title="Sum of N sinusoids advanced by complex rotation instead of a sine call." alt="" coords="5,5,160,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a3eabee7dcdfbdaf01b4e1fe3c409fbb7.html#a3eabee7dcdfbdaf01b4e1fe3c409fbb7" title="Sum of window[k] * coefs[k] over the shorter of the two." alt="" coords="208,5,387,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="161,23,194,23,194,28,161,28"/>
+</map>

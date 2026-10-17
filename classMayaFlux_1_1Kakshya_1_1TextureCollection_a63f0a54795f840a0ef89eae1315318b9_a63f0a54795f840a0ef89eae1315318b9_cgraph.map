@@ -1,0 +1,13 @@
+<map id="MayaFlux::Kakshya::TextureCollection::copy_into" name="MayaFlux::Kakshya::TextureCollection::copy_into">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,156,212,196"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_af03e05d0eb86e4cb54e60976155cf366.html#af03e05d0eb86e4cb54e60976155cf366" title="Total byte count of the pixel buffer." alt="" coords="261,5,464,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="129,154,185,105,221,78,259,55,273,48,276,53,261,60,224,83,188,109,132,158"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_a9d5cd141481e45992808c2f16342ec20.html#a9d5cd141481e45992808c2f16342ec20" title=" " alt="" coords="281,70,444,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="173,153,268,124,269,129,175,158"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_a4d38e20b150032ef015bb2543e36ca03.html#a4d38e20b150032ef015bb2543e36ca03" title=" " alt="" coords="281,149,444,203"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="212,173,268,173,268,179,212,179"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_abef54ac3fe813e48daad963eafc470da.html#abef54ac3fe813e48daad963eafc470da" title=" " alt="" coords="260,228,465,268"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="181,193,279,222,278,227,179,199"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a6887ad297693c2392be7960daab06002.html#a6887ad297693c2392be7960daab06002" title=" " alt="" coords="264,292,461,332"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="136,194,191,236,261,278,277,285,275,289,259,282,188,240,132,198"/>
+</map>

@@ -1,0 +1,3 @@
+<map id="MayaFlux::Portal::Graphics::DescriptorImageWrite" name="MayaFlux::Portal::Graphics::DescriptorImageWrite">
+<area shape="rect" id="Node000001" title="One descriptor set slot to update, for ShaderFoundry::update_descriptor_images." alt="" coords="5,5,195,185"/>
+</map>

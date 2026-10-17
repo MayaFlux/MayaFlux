@@ -1,0 +1,5 @@
+<map id="MayaFlux::Yantra::CompositeFieldDoubleData" name="MayaFlux::Yantra::CompositeFieldDoubleData">
+<area shape="rect" id="Node000001" title="Owning double projection of one Composite field with its presence mask." alt="" coords="28,213,232,373"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Yantra_1_1DataStructureInfo.html" title="Dimensions, modality, source type, and optional Composite field schema." alt="" coords="5,5,255,151"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="133,151,133,197,127,197,127,151"/>
+</map>

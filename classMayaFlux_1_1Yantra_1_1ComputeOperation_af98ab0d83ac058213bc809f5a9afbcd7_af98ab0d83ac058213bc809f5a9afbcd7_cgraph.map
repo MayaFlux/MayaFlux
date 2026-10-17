@@ -1,0 +1,18 @@
+<map id="MayaFlux::Yantra::ComputeOperation::execute" name="MayaFlux::Yantra::ComputeOperation::execute">
+<area shape="rect" id="Node000001" title="OpUnit interface &#45; operations can act as units in dependency graphs." alt="" coords="5,71,207,111"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation_a7891a934373e8be42dfccfa74fae0385.html#a7891a934373e8be42dfccfa74fae0385" title="Internal execution method &#45; ComputeMatrix can access this." alt="" coords="255,63,456,118"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="207,88,241,88,241,93,207,93"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation_a370f2d70984f9e1d7d32a7e8abe8037d.html#a370f2d70984f9e1d7d32a7e8abe8037d" title=" " alt="" coords="796,71,997,111"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="401,61,449,38,503,20,572,7,626,3,680,7,749,20,804,38,852,62,850,67,802,43,747,25,680,12,626,8,572,12,505,25,451,43,404,66"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation_acb7801b59e928153ddb6d233faf92f7d.html#acb7801b59e928153ddb6d233faf92f7d" title="Optional async implementation &#45; default delegates to operation_function." alt="" coords="504,35,748,75"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="456,75,490,70,491,75,456,80"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation_a9d0d62a8419923b6d573028400a1f9a8.html#a9d0d62a8419923b6d573028400a1f9a8" title="Optional chain&#45;aware implementation &#45; default delegates to operation_function." alt="" coords="525,99,727,154"/>
+<area shape="poly" id="edge6_Node000002_Node000006" title=" " alt="" coords="456,101,512,109,511,114,456,107"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation_afd858d2eb93439a899b1c30f0598e9f8.html#afd858d2eb93439a899b1c30f0598e9f8" title="Optional parallel&#45;aware implementation &#45; default delegates to operation_function." alt="" coords="525,178,727,233"/>
+<area shape="poly" id="edge8_Node000002_Node000007" title=" " alt="" coords="407,116,505,163,525,171,523,176,503,168,405,121"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation_a8f21d9df92876fb9a6e594cad9331ec8.html#a8f21d9df92876fb9a6e594cad9331ec8" title="Executes the computational transformation on the input data." alt="" coords="1045,71,1261,111"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="998,88,1032,88,1032,93,998,93"/>
+<area shape="poly" id="edge5_Node000005_Node000003" title=" " alt="" coords="748,68,783,73,782,78,748,74"/>
+<area shape="poly" id="edge7_Node000006_Node000003" title=" " alt="" coords="726,111,782,103,783,109,727,116"/>
+<area shape="poly" id="edge9_Node000007_Node000003" title=" " alt="" coords="715,175,747,163,846,115,848,120,749,168,717,180"/>
+</map>

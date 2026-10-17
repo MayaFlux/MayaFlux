@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::WindowContainer::get_image_format" name="MayaFlux::Kakshya::WindowContainer::get_image_format">
+<area shape="rect" id="Node000001" title="Portal ImageFormat corresponding to the live swapchain surface format." alt="" coords="5,5,172,60"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_ae1dd319d71f7aa09fa3cca52132be64a.html#ae1dd319d71f7aa09fa3cca52132be64a" title="Query the actual vk::Format in use by the window&#39;s live swapchain, translated back to the MayaFlux su..." alt="" coords="220,13,385,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="172,30,206,30,206,35,172,35"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Core_a536f388ac516606e0df343ebf0047db6.html#a536f388ac516606e0df343ebf0047db6" title="Reverse&#45;map a vk::Format to the nearest GraphicsSurfaceInfo::SurfaceFormat." alt="" coords="433,13,596,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="386,30,419,30,419,35,386,35"/>
+</map>

@@ -1,0 +1,13 @@
+<map id="MayaFlux::Yantra::Vision::VisionMatrix::extract" name="MayaFlux::Yantra::Vision::VisionMatrix::extract">
+<area shape="rect" id="Node000001" title="Extract from image with analysis and keep all three until the next call." alt="" coords="5,133,188,173"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1Vision_1_1VisionMatrix_adaed1e8368814d0c951757af47144c1c.html#adaed1e8368814d0c951757af47144c1c" title="The analysis of the last execute() or extract(), empty before the first." alt="" coords="245,5,428,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="120,131,171,93,235,55,251,48,253,53,237,60,174,98,124,135"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1Vision_1_1VisionMatrix_a93254d1d91091821b4aaf40c0f80008f.html#a93254d1d91091821b4aaf40c0f80008f" title=" " alt="" coords="243,69,430,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="172,131,247,110,249,115,173,136"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1Vision_1_1VisionMatrix_a03870ef28ce7eab0fc4ad6a4334f065a.html#a03870ef28ce7eab0fc4ad6a4334f065a" title="The matrix&#39;s &quot;extract&quot; operation, or null when the matrix was built without a mode." alt="" coords="245,133,428,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="188,151,232,151,232,156,188,156"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kakshya_af5ec386238cee0fa856ba134f6bdcd06.html#af5ec386238cee0fa856ba134f6bdcd06" title="Get a value from a metadata map by key." alt="" coords="257,197,416,237"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="173,171,249,191,247,196,172,176"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1ComputeMatrix_a5b064bba44b2960b504026943971f485.html#a5b064bba44b2960b504026943971f485" title="Create a fluent executor for chaining operations." alt="" coords="236,261,437,301"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="124,171,174,209,237,247,253,254,251,259,235,252,171,214,120,176"/>
+</map>

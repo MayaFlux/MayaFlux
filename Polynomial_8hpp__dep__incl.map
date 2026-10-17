@@ -1,0 +1,34 @@
+<map id="Polynomial.hpp" name="Polynomial.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="409,5,531,31"/>
+<area shape="rect" id="Node000002" href="$CreatorClasses_8hpp.html" title=" " alt="" coords="495,152,643,177"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="476,44,484,73,498,103,523,130,550,150,547,154,519,134,493,105,479,75,471,45"/>
+<area shape="rect" id="Node000004" href="$CreatorIncludes_8hpp.html" title=" " alt="" coords="654,79,806,104"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="526,32,689,76,687,81,524,37"/>
+<area shape="rect" id="Node000010" href="$MathematicalTransformer_8hpp.html" title=" " alt="" coords="5,79,223,104"/>
+<area shape="poly" id="edge11_Node000001_Node000010" title=" " alt="" coords="400,36,172,81,171,76,399,31"/>
+<area shape="rect" id="Node000012" href="$Polynomial_8cpp.html" title=" " alt="" coords="507,79,630,104"/>
+<area shape="poly" id="edge13_Node000001_Node000012" title=" " alt="" coords="498,36,554,76,551,81,495,41"/>
+<area shape="rect" id="Node000013" href="$PolynomialProcessor_8hpp.html" title=" " alt="" coords="247,79,432,104"/>
+<area shape="poly" id="edge14_Node000001_Node000013" title=" " alt="" coords="438,40,362,81,359,76,435,35"/>
+<area shape="rect" id="Node000003" href="$Creator_8cpp.html" title=" " alt="" coords="521,225,617,251"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="571,191,571,225,566,225,566,191"/>
+<area shape="rect" id="Node000005" href="$Creator_8hpp.html" title=" " alt="" coords="675,152,772,177"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="730,118,727,152,722,152,725,118"/>
+<area shape="poly" id="edge5_Node000005_Node000003" title=" " alt="" coords="687,185,595,228,593,223,685,181"/>
+<area shape="rect" id="Node000006" href="$MayaFlux_8hpp.html" title="Single include for the user facing API." alt="" coords="575,299,690,324"/>
+<area shape="poly" id="edge6_Node000005_Node000006" title=" " alt="" coords="708,190,682,227,641,300,636,297,677,224,704,187"/>
+<area shape="rect" id="Node000008" href="$Temporal_8hpp.html" title=" " alt="" coords="692,225,803,251"/>
+<area shape="poly" id="edge8_Node000005_Node000008" title=" " alt="" coords="734,189,746,224,741,226,729,191"/>
+<area shape="rect" id="Node000007" href="$LiveAid_8hpp.html" title=" " alt="" coords="583,372,682,397"/>
+<area shape="poly" id="edge7_Node000006_Node000007" title=" " alt="" coords="635,338,635,372,630,372,630,338"/>
+<area shape="poly" id="edge9_Node000008_Node000006" title=" " alt="" coords="719,260,653,301,650,296,716,255"/>
+<area shape="rect" id="Node000009" href="$Temporal_8cpp.html" title=" " alt="" coords="714,299,823,324"/>
+<area shape="poly" id="edge10_Node000008_Node000009" title=" " alt="" coords="757,263,768,298,763,299,752,265"/>
+<area shape="rect" id="Node000011" href="$WorkflowIncludes_8hpp.html" title="Top level headers for the Yantra compute layer and its workflows." alt="" coords="32,152,196,177"/>
+<area shape="poly" id="edge12_Node000010_Node000011" title=" " alt="" coords="117,118,117,152,111,152,111,118"/>
+<area shape="rect" id="Node000014" href="$Convenience_8hpp.html" title="Everyday headers and namespace imports for user code." alt="" coords="272,225,407,251"/>
+<area shape="poly" id="edge15_Node000013_Node000014" title=" " alt="" coords="310,114,291,132,276,153,274,163,275,173,285,192,302,210,321,223,318,227,299,214,281,196,270,175,269,163,272,151,287,128,306,110"/>
+<area shape="rect" id="Node000015" href="$PolynomialProcessor_8cpp.html" title=" " alt="" coords="286,152,470,177"/>
+<area shape="poly" id="edge17_Node000013_Node000015" title=" " alt="" coords="355,115,374,151,369,153,350,118"/>
+<area shape="poly" id="edge16_Node000014_Node000006" title=" " alt="" coords="400,251,586,296,585,301,399,256"/>
+</map>

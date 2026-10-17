@@ -1,0 +1,15 @@
+<map id="MayaFlux::Yantra::Vision::VisionMatrix::create" name="MayaFlux::Yantra::Vision::VisionMatrix::create">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,133,188,173"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1Vision_1_1VisionMatrix_a9396645f14a650024aa7724c52cda201.html#a9396645f14a650024aa7724c52cda201" title="Extract from image with analysis and keep all three until the next call." alt="" coords="236,133,419,173"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="188,151,222,151,222,156,188,156"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1Vision_1_1VisionMatrix_adaed1e8368814d0c951757af47144c1c.html#adaed1e8368814d0c951757af47144c1c" title="The analysis of the last execute() or extract(), empty before the first." alt="" coords="476,5,659,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="351,131,402,93,465,55,481,48,483,53,468,60,405,98,354,135"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1Vision_1_1VisionMatrix_a93254d1d91091821b4aaf40c0f80008f.html#a93254d1d91091821b4aaf40c0f80008f" title=" " alt="" coords="474,69,661,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="402,131,478,110,479,115,404,136"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1Vision_1_1VisionMatrix_a03870ef28ce7eab0fc4ad6a4334f065a.html#a03870ef28ce7eab0fc4ad6a4334f065a" title="The matrix&#39;s &quot;extract&quot; operation, or null when the matrix was built without a mode." alt="" coords="476,133,659,173"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="419,151,462,151,462,156,419,156"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kakshya_af5ec386238cee0fa856ba134f6bdcd06.html#af5ec386238cee0fa856ba134f6bdcd06" title="Get a value from a metadata map by key." alt="" coords="488,197,647,237"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="404,171,479,191,478,196,402,176"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Yantra_1_1ComputeMatrix_a5b064bba44b2960b504026943971f485.html#a5b064bba44b2960b504026943971f485" title="Create a fluent executor for chaining operations." alt="" coords="467,261,668,301"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="354,171,405,209,468,247,483,254,481,259,465,252,402,214,351,176"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::IO::AssimpModelWriter::write" name="MayaFlux::IO::AssimpModelWriter::write">
+<area shape="rect" id="Node000001" title="Write one or more meshes to disk as a single scene." alt="" coords="5,37,209,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1IO_af70273974a6d4e868b4c016d2f944547.html#af70273974a6d4e868b4c016d2f944547" title="Resolve a writable path against the configured output directory." alt="" coords="277,5,441,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="209,42,263,35,264,40,210,47"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1AssimpModelWriter_ae6f4b90714589e9f2069a8376c18e7fb.html#ae6f4b90714589e9f2069a8376c18e7fb" title=" " alt="" coords="257,69,461,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="210,68,244,72,243,77,209,73"/>
+</map>

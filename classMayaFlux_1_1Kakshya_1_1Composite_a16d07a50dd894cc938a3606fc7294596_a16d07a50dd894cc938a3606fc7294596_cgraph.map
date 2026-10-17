@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::Composite::text" name="MayaFlux::Kakshya::Composite::text">
+<area shape="rect" id="Node000001" title="Read a present std::string field as borrowed UTF&#45;8 bytes." alt="" coords="5,5,164,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1CompositeLayout_af4cd325e144ed9d1c95d00bf6bde2b34.html#af4cd325e144ed9d1c95d00bf6bde2b34" title="Find a field index by name, or std::nullopt if absent." alt="" coords="212,5,415,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="164,23,198,23,198,28,164,28"/>
+</map>

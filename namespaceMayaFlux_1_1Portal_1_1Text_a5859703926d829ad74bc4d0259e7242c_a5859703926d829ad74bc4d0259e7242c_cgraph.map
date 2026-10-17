@@ -1,0 +1,7 @@
+<map id="MayaFlux::Portal::Text::insert_codepoint" name="MayaFlux::Portal::Text::insert_codepoint">
+<area shape="rect" id="Node000001" title="Insert one codepoint at the cursor, advancing it past the insert." alt="" coords="5,37,172,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Text_a14c08e1690ba7d8d0206dcc1ba674187.html#a14c08e1690ba7d8d0206dcc1ba674187" title="Encode a Unicode codepoint as a UTF&#45;8 byte sequence." alt="" coords="220,5,387,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="172,42,206,37,207,42,173,48"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Text_a2bf43e50ce4368ec164564e34a396d67.html#a2bf43e50ce4368ec164564e34a396d67" title="True if a codepoint must never be rasterized or treated as printable content." alt="" coords="220,69,387,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="173,67,207,72,206,77,172,72"/>
+</map>

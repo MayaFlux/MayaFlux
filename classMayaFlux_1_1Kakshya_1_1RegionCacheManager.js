@@ -1,0 +1,28 @@
+var classMayaFlux_1_1Kakshya_1_1RegionCacheManager =
+[
+    [ "RegionCacheManager", "classMayaFlux_1_1Kakshya_1_1RegionCacheManager_a16a8bb5fe7677ecb30556ff833f2fe4b.html#a16a8bb5fe7677ecb30556ff833f2fe4b", null ],
+    [ "~RegionCacheManager", "classMayaFlux_1_1Kakshya_1_1RegionCacheManager_a1af6a325f66ecd5fbb14d56ececdbf66.html#a1af6a325f66ecd5fbb14d56ececdbf66", null ],
+    [ "RegionCacheManager", "classMayaFlux_1_1Kakshya_1_1RegionCacheManager_a893fae1ce78edc74d3ac0783bed20880.html#a893fae1ce78edc74d3ac0783bed20880", null ],
+    [ "RegionCacheManager", "classMayaFlux_1_1Kakshya_1_1RegionCacheManager_a6ad7998bdd45da88eeee009dde685829.html#a6ad7998bdd45da88eeee009dde685829", null ],
+    [ "cache_region", "classMayaFlux_1_1Kakshya_1_1RegionCacheManager_ae0af65e29203d45a43aa952d15aa2427.html#ae0af65e29203d45a43aa952d15aa2427", null ],
+    [ "cache_segment", "classMayaFlux_1_1Kakshya_1_1RegionCacheManager_a61a88fbefebf723646a2c84c0840c312.html#a61a88fbefebf723646a2c84c0840c312", null ],
+    [ "clear", "classMayaFlux_1_1Kakshya_1_1RegionCacheManager_a786394182936b571d1012b744ec5f471.html#a786394182936b571d1012b744ec5f471", null ],
+    [ "evict_lru_if_needed", "classMayaFlux_1_1Kakshya_1_1RegionCacheManager_adea1f965aa2abeb1d8e0d4fae9cc7460.html#adea1f965aa2abeb1d8e0d4fae9cc7460", null ],
+    [ "get_cached_region", "classMayaFlux_1_1Kakshya_1_1RegionCacheManager_a8749b4dcc19278b874c5e771d7f3920d.html#a8749b4dcc19278b874c5e771d7f3920d", null ],
+    [ "get_cached_region_internal", "classMayaFlux_1_1Kakshya_1_1RegionCacheManager_aff0ba0f9afe6c039d772674cb01bf0c5.html#aff0ba0f9afe6c039d772674cb01bf0c5", null ],
+    [ "get_cached_segment", "classMayaFlux_1_1Kakshya_1_1RegionCacheManager_a229a804ac0a52df5deb2e1c6906e8b30.html#a229a804ac0a52df5deb2e1c6906e8b30", null ],
+    [ "get_segment_with_cache", "classMayaFlux_1_1Kakshya_1_1RegionCacheManager_a565fe43d2c2c95b3c8c4b536d57c0c52.html#a565fe43d2c2c95b3c8c4b536d57c0c52", null ],
+    [ "initialize", "classMayaFlux_1_1Kakshya_1_1RegionCacheManager_ab7af3a192795094e4812bfba11dca1e5.html#ab7af3a192795094e4812bfba11dca1e5", null ],
+    [ "is_initialized", "classMayaFlux_1_1Kakshya_1_1RegionCacheManager_afb11e9a6056932486549511e79de9793.html#afb11e9a6056932486549511e79de9793", null ],
+    [ "max_size", "classMayaFlux_1_1Kakshya_1_1RegionCacheManager_ac94c3bcdb73e49d69c33374252f6bda3.html#ac94c3bcdb73e49d69c33374252f6bda3", null ],
+    [ "operator=", "classMayaFlux_1_1Kakshya_1_1RegionCacheManager_ab05cabd804ae17ac08aaab7be9bc89c2.html#ab05cabd804ae17ac08aaab7be9bc89c2", null ],
+    [ "operator=", "classMayaFlux_1_1Kakshya_1_1RegionCacheManager_a737d09c551db733d5d84f6494be3ef34.html#a737d09c551db733d5d84f6494be3ef34", null ],
+    [ "size", "classMayaFlux_1_1Kakshya_1_1RegionCacheManager_a91a04ad6b4037f4ac120f608de068c3f.html#a91a04ad6b4037f4ac120f608de068c3f", null ],
+    [ "update_lru", "classMayaFlux_1_1Kakshya_1_1RegionCacheManager_ab594ec937c5a131022760849748c0c63.html#ab594ec937c5a131022760849748c0c63", null ],
+    [ "m_cache", "classMayaFlux_1_1Kakshya_1_1RegionCacheManager_af042a7fa9960ca997076f14b6622d681.html#af042a7fa9960ca997076f14b6622d681", null ],
+    [ "m_current_size", "classMayaFlux_1_1Kakshya_1_1RegionCacheManager_a3ae2e17f25ecaaf70b200de3b43826a9.html#a3ae2e17f25ecaaf70b200de3b43826a9", null ],
+    [ "m_initialized", "classMayaFlux_1_1Kakshya_1_1RegionCacheManager_ad2b7e7a8438e2c501b81955ddf01d7e0.html#ad2b7e7a8438e2c501b81955ddf01d7e0", null ],
+    [ "m_lru_list", "classMayaFlux_1_1Kakshya_1_1RegionCacheManager_ac30068e926b77cb881cafcf1e92bf70d.html#ac30068e926b77cb881cafcf1e92bf70d", null ],
+    [ "m_max_cache_size", "classMayaFlux_1_1Kakshya_1_1RegionCacheManager_a3b414d15e4cc72a152e3c67b34d89b61.html#a3b414d15e4cc72a152e3c67b34d89b61", null ],
+    [ "m_mutex", "classMayaFlux_1_1Kakshya_1_1RegionCacheManager_ab4d80023b81fdaada4a67b4322618d6c.html#ab4d80023b81fdaada4a67b4322618d6c", null ]
+];

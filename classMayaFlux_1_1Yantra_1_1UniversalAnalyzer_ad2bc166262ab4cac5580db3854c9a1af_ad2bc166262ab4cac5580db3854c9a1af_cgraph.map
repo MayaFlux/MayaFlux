@@ -1,0 +1,9 @@
+<map id="MayaFlux::Yantra::UniversalAnalyzer::create_summary_statistics" name="MayaFlux::Yantra::UniversalAnalyzer::create_summary_statistics">
+<area shape="rect" id="Node000001" title="Create summary statistics from results (override for custom summaries)" alt="" coords="5,30,209,85"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1UniversalAnalyzer_a1b40c841dc4fd2a704a855ca99454c13.html#a1b40c841dc4fd2a704a855ca99454c13" title="Add attribution metadata to results (override for custom attribution)" alt="" coords="257,30,461,85"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="209,55,244,55,244,60,209,60"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1UniversalAnalyzer_a1c728257fcc6b2ffe3e7b01aaa41cf98.html#a1c728257fcc6b2ffe3e7b01aaa41cf98" title="Gets the analysis type category for this analyzer." alt="" coords="514,5,719,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="461,42,500,37,501,42,462,47"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1UniversalAnalyzer_accb8a50b514dc4d55f12ea261444f33e.html#accb8a50b514dc4d55f12ea261444f33e" title="Get analyzer&#45;specific name (derived classes override this)" alt="" coords="509,69,724,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="462,67,496,72,495,77,461,73"/>
+</map>

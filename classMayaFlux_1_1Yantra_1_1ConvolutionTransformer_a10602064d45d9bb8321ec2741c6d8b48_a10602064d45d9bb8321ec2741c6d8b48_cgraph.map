@@ -1,0 +1,9 @@
+<map id="MayaFlux::Yantra::ConvolutionTransformer::ConvolutionTransformer" name="MayaFlux::Yantra::ConvolutionTransformer::ConvolutionTransformer">
+<area shape="rect" id="Node000001" title="Constructs a ConvolutionTransformer with specified operation." alt="" coords="5,13,269,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1ConvolutionTransformer_a85c0304af273a7392b541dc0ad831502.html#a85c0304af273a7392b541dc0ad831502" title="Sets default parameter values for all convolution operations." alt="" coords="317,5,537,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="270,30,304,30,304,35,270,35"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1UniversalTransformer_aa787bdc8f1e1eb6da36f4ae9d000f623.html#aa787bdc8f1e1eb6da36f4ae9d000f623" title="Type&#45;safe parameter management with transformation&#45;specific defaults." alt="" coords="585,13,789,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="537,30,571,30,571,35,537,35"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1UniversalTransformer_ae86a6743c591b4585419dbbd8698c4b4.html#ae86a6743c591b4585419dbbd8698c4b4" title="Transformation&#45;specific parameter handling (override for custom parameters)" alt="" coords="837,5,1069,60"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="789,30,824,30,824,35,789,35"/>
+</map>

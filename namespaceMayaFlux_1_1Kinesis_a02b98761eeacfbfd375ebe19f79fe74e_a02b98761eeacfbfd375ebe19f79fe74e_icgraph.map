@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kinesis::acceleration" name="MayaFlux::Kinesis::acceleration">
+<area shape="rect" id="Node000001" title="Second difference: rate of change of velocity." alt="" coords="451,37,600,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a3ae7bcc83a9bda52088000796547ea70.html#a3ae7bcc83a9bda52088000796547ea70" title="Signed curvature computed directly from a position HistoryBuffer." alt="" coords="228,5,403,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="436,47,402,41,403,36,437,41"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_1_1TimeMaps_ab5d01b3d4f9615b13a841917209a8df7.html#ab5d01b3d4f9615b13a841917209a8df7" title="Constant acceleration from an initial velocity." alt="" coords="236,69,395,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="437,73,395,80,394,75,437,68"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_a2fe94c0accd17b0621aef7262a7dfe5b.html#a2fe94c0accd17b0621aef7262a7dfe5b" title="Convenience overload of curvature_from_history over a raw span of positions, samples[0] newest." alt="" coords="5,5,180,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="214,28,180,28,180,23,214,23"/>
+</map>

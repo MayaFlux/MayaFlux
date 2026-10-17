@@ -1,0 +1,4 @@
+var ProceduralTextureNode_8hpp =
+[
+    [ "MayaFlux::Nodes::GpuSync::ProceduralTextureNode", "classMayaFlux_1_1Nodes_1_1GpuSync_1_1ProceduralTextureNode.html", "classMayaFlux_1_1Nodes_1_1GpuSync_1_1ProceduralTextureNode" ]
+];

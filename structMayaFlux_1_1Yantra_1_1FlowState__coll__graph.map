@@ -1,0 +1,5 @@
+<map id="MayaFlux::Yantra::FlowState" name="MayaFlux::Yantra::FlowState">
+<area shape="rect" id="Node000001" title="Cross&#45;run state of the flow context." alt="" coords="5,243,204,508"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1PyramidLayout.html" title="Placement of every pyramid level in a single atlas." alt="" coords="25,5,185,165"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="107,166,107,226,102,226,102,166"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kinesis::Discrete::lagrange_weights" name="MayaFlux::Kinesis::Discrete::lagrange_weights">
+<area shape="rect" id="Node000001" title="Lagrange interpolation weights written to an array, without allocating." alt="" coords="531,37,729,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a4d972fb2db45af69ec5ba72fcef592cd.html#a4d972fb2db45af69ec5ba72fcef592cd" title="Lagrange fractional&#45;delay FIR coefficients." alt="" coords="289,5,473,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="517,45,473,40,473,35,517,40"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1FeedbackProcessor_a365ed1df0d377a8b3e0a2593376aed4c.html#a365ed1df0d377a8b3e0a2593376aed4c" title=" " alt="" coords="279,69,483,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="517,74,483,79,482,74,517,69"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1FeedbackProcessor_a833681ef35569b129b9e9d57aa941f2e.html#a833681ef35569b129b9e9d57aa941f2e" title="The core processing function that must be implemented by derived classes." alt="" coords="5,62,231,117"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="265,92,231,92,231,87,265,87"/>
+</map>

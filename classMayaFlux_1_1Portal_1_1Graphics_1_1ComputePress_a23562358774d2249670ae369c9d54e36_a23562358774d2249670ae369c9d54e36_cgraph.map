@@ -1,0 +1,9 @@
+<map id="MayaFlux::Portal::Graphics::ComputePress::initialize" name="MayaFlux::Portal::Graphics::ComputePress::initialize">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,37,203,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a148fdbfbb76b1df59986ea791e772885.html#a148fdbfbb76b1df59986ea791e772885" title="Get logical device handle." alt="" coords="251,5,456,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="202,42,237,38,237,43,203,47"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a715d57394465ff2924727d7c82d87e7b.html#a715d57394465ff2924727d7c82d87e7b" title="Get the global shader compiler instance." alt="" coords="255,69,452,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="203,67,242,72,241,78,202,73"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="504,69,701,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="452,87,490,87,490,92,452,92"/>
+</map>

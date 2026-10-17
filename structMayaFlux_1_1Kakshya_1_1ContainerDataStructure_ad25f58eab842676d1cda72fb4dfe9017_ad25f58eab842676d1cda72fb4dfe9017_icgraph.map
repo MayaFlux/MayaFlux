@@ -1,0 +1,23 @@
+<map id="MayaFlux::Kakshya::ContainerDataStructure::get_width" name="MayaFlux::Kakshya::ContainerDataStructure::get_width">
+<area shape="rect" id="Node000001" title="Extract width from image/video dimensions." alt="" coords="568,139,743,193"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_a3a57718381f6a63f0517b7edd30ed372.html#a3a57718381f6a63f0517b7edd30ed372" title="Clear all data in the container." alt="" coords="301,34,479,74"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="602,133,562,110,519,88,478,75,480,70,521,84,565,105,605,129"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_a8d542a26bf5973d14f9900ac83494518.html#a8d542a26bf5973d14f9900ac83494518" title=" " alt="" coords="307,99,473,153"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="554,154,473,141,474,136,555,148"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_a06861301ec9b068e824f94105de93f3b.html#a06861301ec9b068e824f94105de93f3b" title=" " alt="" coords="288,177,492,232"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="555,183,493,192,492,187,554,178"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_a34919c923894042f1e21d380db8649d3.html#a34919c923894042f1e21d380db8649d3" title="Construct from an existing managed window." alt="" coords="260,257,520,297"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="603,203,564,225,521,246,483,259,481,254,519,241,561,221,601,198"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_a7876fc90acc587f1b6bb882de78387b0.html#a7876fc90acc587f1b6bb882de78387b0" title="Implementation&#45;specific method to retrieve multiple frames." alt="" coords="25,5,192,60"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="293,99,259,89,184,63,186,58,261,83,295,94"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_a36dc887f4398346c40f92bd77b67025a.html#a36dc887f4398346c40f92bd77b67025a" title="Refresh the cached VKImage for m_data[frame_index]." alt="" coords="5,85,212,125"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="278,175,259,167,235,153,211,139,180,127,182,122,213,134,237,148,261,162,280,170"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_ac0a13fcbc68d4d5414efe31c5647f73b.html#ac0a13fcbc68d4d5414efe31c5647f73b" title="Upload m_data[frame_index] reusing a caller&#45;supplied staging buffer." alt="" coords="5,149,212,189"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="274,193,212,184,212,179,275,187"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_a54e6f5327b1e6000a2c148781a8f6717.html#a54e6f5327b1e6000a2c148781a8f6717" title="Crop a region from the last readback and refresh its cached VKImage." alt="" coords="15,213,202,268"/>
+<area shape="poly" id="edge7_Node000005_Node000008" title=" " alt="" coords="274,222,203,231,202,226,274,217"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_a31ff69a65227eb7c14504ae2c8ae5fe9.html#a31ff69a65227eb7c14504ae2c8ae5fe9" title="Upload the full surface readback to a container&#45;owned VKImage." alt="" coords="5,293,212,333"/>
+<area shape="poly" id="edge8_Node000005_Node000009" title=" " alt="" coords="278,240,261,247,238,264,213,282,182,295,180,290,211,277,234,260,259,242,275,235"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_aa1f5046146a152b8287080c8c462bd43.html#aa1f5046146a152b8287080c8c462bd43" title="Refresh the full surface VKImage, reusing a caller&#45;supplied persistent staging buffer." alt="" coords="5,357,212,397"/>
+<area shape="poly" id="edge9_Node000005_Node000010" title=" " alt="" coords="277,236,262,247,251,258,244,270,239,295,232,321,225,334,214,347,196,359,193,354,210,343,221,331,227,319,233,294,240,268,247,255,258,243,274,231"/>
+</map>

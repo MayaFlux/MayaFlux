@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::Discrete::apply_blackman" name="MayaFlux::Kinesis::Discrete::apply_blackman">
+<area shape="rect" id="Node000001" title="Apply a Blackman taper in&#45;place without materialising coefficients." alt="" coords="5,5,196,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_ace716df2f40f1b0e620049c240637942.html#ace716df2f40f1b0e620049c240637942" title="Uniform scaling of a scalar&#45;output tendency." alt="" coords="244,5,393,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="196,23,230,23,230,28,196,28"/>
+</map>

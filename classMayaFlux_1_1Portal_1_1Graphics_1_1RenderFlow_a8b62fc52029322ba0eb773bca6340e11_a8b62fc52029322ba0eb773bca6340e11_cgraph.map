@@ -1,0 +1,9 @@
+<map id="MayaFlux::Portal::Graphics::RenderFlow::initialize" name="MayaFlux::Portal::Graphics::RenderFlow::initialize">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,85,203,125"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="268,5,435,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="173,82,254,58,255,63,174,87"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="253,85,450,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="203,102,239,102,239,107,203,107"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aee686db265b63cedacadaf1aea2e3e3b.html#aee686db265b63cedacadaf1aea2e3e3b" title="Get the global registry instance." alt="" coords="251,149,452,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="183,122,261,143,260,148,181,127"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::Vision::ConfineParams" name="MayaFlux::Kinesis::Vision::ConfineParams">
+<area shape="rect" id="Node000001" title="Parameters for Confine." alt="" coords="5,248,164,328"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1BoundingBox.html" title="Axis&#45;aligned bounding box in normalised image coordinates." alt="" coords="11,5,159,185"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="87,186,87,232,82,232,82,186"/>
+</map>

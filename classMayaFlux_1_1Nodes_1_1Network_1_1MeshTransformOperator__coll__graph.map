@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Network::MeshTransformOperator" name="MayaFlux::Nodes::Network::MeshTransformOperator">
+<area shape="rect" id="Node000001" title="Primary operator that drives slot local transforms via Tendency fields and propagates world transform..." alt="" coords="5,516,212,796"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1MeshOperator.html" title="Abstract base for operators that process MeshNetwork slots." alt="" coords="13,268,204,468"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="111,482,111,516,106,516,106,482"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NetworkOperator.html" title="Domain&#45;agnostic interpretive lens for network processing." alt="" coords="13,5,204,220"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="111,233,111,268,106,268,106,233"/>
+</map>

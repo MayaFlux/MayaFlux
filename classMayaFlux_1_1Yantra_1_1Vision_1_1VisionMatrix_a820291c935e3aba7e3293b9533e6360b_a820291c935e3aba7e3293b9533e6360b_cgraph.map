@@ -1,0 +1,9 @@
+<map id="MayaFlux::Yantra::Vision::VisionMatrix::result" name="MayaFlux::Yantra::Vision::VisionMatrix::result">
+<area shape="rect" id="Node000001" title="The VisionResult of the sequence that served intent in the last completed analysis,..." alt="" coords="5,69,188,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1Vision_1_1VisionMatrix_aac119f2c2148660efe48860483c24c7e.html#aac119f2c2148660efe48860483c24c7e" title="The matrix&#39;s &quot;analyze&quot; operation." alt="" coords="236,5,419,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="169,67,241,46,242,52,170,72"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_ab826a6dbabf0cf391807b64305ce9929.html#ab826a6dbabf0cf391807b64305ce9929" title="Resolve a VisionQuery into the ResolvedSequences needed to satisfy every active intent." alt="" coords="253,69,402,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="188,87,239,87,239,92,188,92"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1Vision_1_1VisionMatrix_a1fa643396f51bce7e536a313e3ae0934.html#a1fa643396f51bce7e536a313e3ae0934" title="The VisionResult of every sequence the analyzer&#39;s last completed analysis ran, with each step&#39;s image..." alt="" coords="236,133,419,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="170,107,242,127,241,132,169,112"/>
+</map>

@@ -1,0 +1,13 @@
+<map id="MayaFlux::Portal::Forma::internal::Atelier::create_surface" name="MayaFlux::Portal::Forma::internal::Atelier::create_surface">
+<area shape="rect" id="Node000001" title="Build a window through create_window, then a Surface on it." alt="" coords="5,45,187,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Forma_1_1internal_1_1Atelier_a18530bd8200cf89d10e03b80eab9c811.html#a18530bd8200cf89d10e03b80eab9c811" title="Build a Surface from a SurfaceConfig, creating Layer and Context when config.layer/config...." alt="" coords="235,5,416,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="186,54,221,48,222,53,187,59"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Forma_1_1internal_1_1Atelier_a806d0c28fa7673aab9b61e9a134221a1.html#a806d0c28fa7673aab9b61e9a134221a1" title="Create a window through the stored WindowManager and show it." alt="" coords="235,84,416,139"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="187,85,221,91,221,96,186,91"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Forma_1_1internal_1_1Atelier_af684f6f03bb9a9bcb744e2134e6f9769.html#af684f6f03bb9a9bcb744e2134e6f9769" title="Construct a Layer and a Context wired to window." alt="" coords="464,13,684,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="416,30,450,30,450,35,416,35"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_a04fb0b546bfa364a04dfe6f609f8b769.html#a04fb0b546bfa364a04dfe6f609f8b769" title="Transfer ownership of an existing object to the persistent store for process lifetime." alt="" coords="732,20,859,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="684,30,718,30,718,35,684,35"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1internal_ac26a7a92aa4af34c366aad03b68ea71e.html#ac26a7a92aa4af34c366aad03b68ea71e" title=" " alt="" coords="907,13,1051,53"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="859,30,893,30,893,35,859,35"/>
+</map>

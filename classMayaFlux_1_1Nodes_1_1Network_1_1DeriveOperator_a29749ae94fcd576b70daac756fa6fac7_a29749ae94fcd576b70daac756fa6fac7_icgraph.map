@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Network::DeriveOperator::coefficient_index" name="MayaFlux::Nodes::Network::DeriveOperator::coefficient_index">
+<area shape="rect" id="Node000001" title=" " alt="" coords="287,37,536,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1DeriveOperator_a2b346436dd2b9ebc1b3d296d980f9b60.html#a2b346436dd2b9ebc1b3d296d980f9b60" title=" " alt="" coords="15,5,229,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="273,45,229,40,230,35,273,39"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1DeriveOperator_a92d28a5604d9692399bf227cc5e328f6.html#a92d28a5604d9692399bf227cc5e328f6" title="Set one coefficient." alt="" coords="5,69,239,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="273,75,239,79,239,74,273,70"/>
+</map>

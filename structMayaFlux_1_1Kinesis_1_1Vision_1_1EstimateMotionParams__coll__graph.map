@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::Vision::EstimateMotionParams" name="MayaFlux::Kinesis::Vision::EstimateMotionParams">
+<area shape="rect" id="Node000001" title="Parameters for VisionIntent::EstimateMotion." alt="" coords="13,288,226,368"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1OpticalFlowDenseParams.html" title="Parameters for OpticalFlowDense." alt="" coords="5,5,233,225"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="122,225,122,272,117,272,117,225"/>
+</map>

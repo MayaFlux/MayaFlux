@@ -1,0 +1,41 @@
+<map id="MayaFlux::Kinesis::AABB2D::translated" name="MayaFlux::Kinesis::AABB2D::translated">
+<area shape="rect" id="Node000001" title=" " alt="" coords="1873,197,2024,237"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_a39544a88f3b356ab707c2856df2379a1.html#a39544a88f3b356ab707c2856df2379a1" title="Geometry function for a drawable curve canvas in NDC space." alt="" coords="1611,5,1825,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1929,186,1886,122,1857,88,1824,60,1803,48,1805,43,1827,55,1861,84,1891,118,1933,184"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_acaa5ff3c6a6e38495d474104c17ecc84.html#acaa5ff3c6a6e38495d474104c17ecc84" title="Geometry function for a horizontal fader in NDC space." alt="" coords="1614,69,1822,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="1915,190,1873,155,1824,124,1797,112,1799,107,1827,119,1877,151,1918,186"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_a10798f3f4a41b96f58f524438909e8a0.html#a10798f3f4a41b96f58f524438909e8a0" title="Geometry function for a level meter in NDC space." alt="" coords="1627,133,1809,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="1862,196,1790,176,1791,171,1864,191"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_ac8f8eb20d142ea566f2c0dd725831058.html#ac8f8eb20d142ea566f2c0dd725831058" title="Geometry function for a 2D position picker in NDC space." alt="" coords="1618,197,1818,237"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="1860,220,1818,220,1818,215,1860,215"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_aaada84da513a159d6c79a3474d783180.html#aaada84da513a159d6c79a3474d783180" title="Geometry function for a boolean toggle in NDC space." alt="" coords="1627,261,1809,301"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="1864,244,1791,264,1790,259,1862,238"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Scrollable_ae6e4bb4eb7b365b8e6d1f596a3117d89.html#ae6e4bb4eb7b365b8e6d1f596a3117d89" title="Register an element for scroll reflow." alt="" coords="1627,325,1809,365"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="1918,249,1877,284,1827,316,1799,328,1797,323,1824,311,1873,279,1915,245"/>
+<area shape="rect" id="Node000018" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_a206d0f38a20e294215a75b9c3921ba77.html#a206d0f38a20e294215a75b9c3921ba77" title="Geometry function for a vertical fader in NDC space." alt="" coords="1622,389,1814,429"/>
+<area shape="poly" id="edge21_Node000001_Node000018" title=" " alt="" coords="1933,251,1891,316,1861,350,1827,380,1805,392,1803,387,1824,375,1857,347,1886,313,1929,248"/>
+<area shape="rect" id="Node000008" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Scrollable_a78c4cc52dcb09498fa60a905b57bcf8d.html#a78c4cc52dcb09498fa60a905b57bcf8d" title="Attach a caller&#45;built element as a live, draggable scroll indicator." alt="" coords="1381,296,1563,336"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="1613,336,1562,329,1563,324,1614,330"/>
+<area shape="rect" id="Node000017" href="$structMayaFlux_1_1Portal_1_1Forma_1_1TextField_ab37d173483ea4e704f5c55865e384d72.html#ab37d173483ea4e704f5c55865e384d72" title="Fluent creator: place this field inside an already&#45;placed Scrollable, growing itself taller than its ..." alt="" coords="907,353,1088,393"/>
+<area shape="poly" id="edge20_Node000007_Node000017" title=" " alt="" coords="1614,352,1088,373,1088,367,1613,347"/>
+<area shape="rect" id="Node000009" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Scrollable_a197b5073f36918705a3ccfa42f25cc53.html#a197b5073f36918705a3ccfa42f25cc53" title="A self&#45;contained wheel&#45;scroll handler bound to this Scrollable&#39;s own state." alt="" coords="1136,296,1333,336"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="1368,319,1333,319,1333,313,1368,313"/>
+<area shape="rect" id="Node000010" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Scrollable_a35235f112f4f9f9eead110668fca88f7.html#a35235f112f4f9f9eead110668fca88f7" title="Register the viewport element, wire wheel scrolling, and populate scroll, offset, buf,..." alt="" coords="907,289,1088,329"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="1122,316,1088,315,1088,309,1123,310"/>
+<area shape="poly" id="edge18_Node000009_Node000017" title=" " alt="" coords="1139,342,1081,356,1080,351,1138,337"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a4d8d6a3f54c57284141331e37153b682.html#a4d8d6a3f54c57284141331e37153b682" title="Build a text&#45;capable FormaBuffer, register a TextField, and wire text editing onto it in one call." alt="" coords="677,353,859,393"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="913,336,841,356,839,351,911,330"/>
+<area shape="rect" id="Node000012" href="$namespaceMayaFlux_1_1Portal_1_1Forma_aef42f7d8c0db50373605643eb762a89a.html#aef42f7d8c0db50373605643eb762a89a" title="Construct a scrollable viewport." alt="" coords="677,265,859,305"/>
+<area shape="poly" id="edge12_Node000010_Node000012" title=" " alt="" coords="893,301,859,297,859,292,893,296"/>
+<area shape="poly" id="edge11_Node000011_Node000011" title=" " alt="" coords="807,342,793,335,768,332,746,334,733,339,728,345,730,352,725,354,723,344,729,334,745,329,768,327,795,330,809,337"/>
+<area shape="poly" id="edge13_Node000012_Node000012" title=" " alt="" coords="807,254,793,247,768,244,746,246,733,251,728,257,730,264,725,266,723,256,729,246,745,241,768,239,795,242,809,249"/>
+<area shape="rect" id="Node000013" href="$namespaceMayaFlux_1_1Portal_1_1Forma_abe13f9ac6498e0bb42d1594f9648b33c.html#abe13f9ac6498e0bb42d1594f9648b33c" title="Open a window of clickable rows, one per label, and report the choice." alt="" coords="448,265,629,305"/>
+<area shape="poly" id="edge14_Node000012_Node000013" title=" " alt="" coords="663,288,630,288,630,283,663,283"/>
+<area shape="rect" id="Node000014" href="$namespaceMayaFlux_ab175da21b088a5c2e496b8d1c0670b2f.html#ab175da21b088a5c2e496b8d1c0670b2f" title="Let the user pick a camera, and optionally a capture mode, then open it via IOManager::open_camera()." alt="" coords="204,243,400,269"/>
+<area shape="poly" id="edge15_Node000013_Node000014" title=" " alt="" coords="434,275,400,271,400,265,435,270"/>
+<area shape="rect" id="Node000016" href="$namespaceMayaFlux_1_1Portal_1_1Forma_aa6e1287fb7394d3c8a69bc7f662ad251.html#aa6e1287fb7394d3c8a69bc7f662ad251" title="Typed form of pick: list items by label and receive the chosen item." alt="" coords="211,293,393,333"/>
+<area shape="poly" id="edge17_Node000013_Node000016" title=" " alt="" coords="435,300,393,305,392,300,434,295"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Creator_a4d6c81dee8675dd5bf9b992245f3a548.html#a4d6c81dee8675dd5bf9b992245f3a548" title="Let the user pick a camera and capture mode, then read it as above." alt="" coords="5,236,156,276"/>
+<area shape="poly" id="edge16_Node000014_Node000015" title=" " alt="" coords="190,259,157,259,157,253,190,253"/>
+<area shape="poly" id="edge19_Node000017_Node000011" title=" " alt="" coords="893,376,859,376,859,371,893,371"/>
+</map>

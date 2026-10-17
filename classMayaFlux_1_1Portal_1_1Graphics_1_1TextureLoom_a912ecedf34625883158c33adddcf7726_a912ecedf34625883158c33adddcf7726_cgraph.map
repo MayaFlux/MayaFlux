@@ -1,0 +1,7 @@
+<map id="MayaFlux::Portal::Graphics::TextureLoom::shutdown" name="MayaFlux::Portal::Graphics::TextureLoom::shutdown">
+<area shape="rect" id="Node000001" title="Shutdown and cleanup all textures." alt="" coords="5,5,203,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1BackendResourceManager_a0d36804c3058228b8958634d74a89902.html#a0d36804c3058228b8958634d74a89902" title="Cleanup a VKImage (destroy view, image, and free memory)" alt="" coords="251,5,497,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="203,23,237,23,237,28,203,28"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1VKContext_a41228db586851246809c40f704b64292.html#a41228db586851246809c40f704b64292" title="Get logical device." alt="" coords="545,5,745,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="497,23,532,23,532,28,497,28"/>
+</map>

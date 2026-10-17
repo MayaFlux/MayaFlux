@@ -1,0 +1,5 @@
+<map id="MayaFlux::bind_tablet" name="MayaFlux::bind_tablet">
+<area shape="rect" id="Node000001" title="Create binding for a tablet tool." alt="" coords="5,13,172,38"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Core_1_1InputBinding_abd9b267f9911269b7a10c4444bd959d0.html#abd9b267f9911269b7a10c4444bd959d0" title="Bind to a tablet tool." alt="" coords="220,5,435,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="173,23,206,23,206,28,173,28"/>
+</map>

@@ -1,0 +1,6 @@
+<map id="MayaFlux::Nodes::Network::ResonatorNetwork::compute_biquad" name="MayaFlux::Nodes::Network::ResonatorNetwork::compute_biquad">
+<area shape="rect" id="Node000001" title="Compute RBJ biquad bandpass coefficients and push them into a resonator&#39;s IIR." alt="" coords="5,29,272,69"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a29a24505c28032f9cc824ba51bc03399.html#a29a24505c28032f9cc824ba51bc03399" title="Second&#45;order bandpass coefficients, constant 0 dB peak gain." alt="" coords="320,29,517,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="272,47,306,47,306,52,272,52"/>
+<area shape="poly" id="edge2_Node000002_Node000002" title=" " alt="" coords="367,30,364,20,372,10,390,5,419,3,451,5,469,13,467,18,450,11,419,8,391,10,375,15,369,21,372,28"/>
+</map>

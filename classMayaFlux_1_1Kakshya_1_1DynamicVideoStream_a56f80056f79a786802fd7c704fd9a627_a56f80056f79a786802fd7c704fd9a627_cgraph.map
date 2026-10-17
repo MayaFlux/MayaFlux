@@ -1,0 +1,16 @@
+<map id="MayaFlux::Kakshya::DynamicVideoStream::claim_frame_slot" name="MayaFlux::Kakshya::DynamicVideoStream::claim_frame_slot">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,104,177,159"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1DynamicVideoStream_a1e1b5cf08c5d1fce36e1a74f20880e2d.html#a1e1b5cf08c5d1fce36e1a74f20880e2d" title=" " alt="" coords="225,5,397,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="152,101,236,63,239,68,154,106"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_acd69a7c5e27cc6fd492c480c481ee9ea.html#acd69a7c5e27cc6fd492c480c481ee9ea" title="Total byte size of one frame: width * height * bytes_per_pixel." alt="" coords="447,87,616,141"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="177,123,225,121,433,114,433,119,225,126,178,129"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_a5d3384d0e8be81255720b8733e49d47e.html#a5d3384d0e8be81255720b8733e49d47e" title="True if the container is operating in ring mode." alt="" coords="227,136,396,191"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="178,141,213,146,212,152,178,147"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_a26041c92754b0feb5214c3b34c1f0765.html#a26041c92754b0feb5214c3b34c1f0765" title="Mutable pointer into m_data[0] for the decode thread to write into." alt="" coords="227,215,396,269"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="143,156,227,201,238,206,235,211,224,206,140,161"/>
+<area shape="poly" id="edge5_Node000005_Node000003" title=" " alt="" coords="374,212,396,201,480,147,483,152,399,206,377,217"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_ac5764b3010fc7824fd6b5da810d65f50.html#ac5764b3010fc7824fd6b5da810d65f50" title=" " alt="" coords="447,197,616,252"/>
+<area shape="poly" id="edge6_Node000005_Node000006" title=" " alt="" coords="396,233,433,230,433,235,396,238"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Kakshya_ad83915232ba3283db5c6ff26fa34dafe.html#ad83915232ba3283db5c6ff26fa34dafe" title="Get a mutable pointer to the raw bytes of a DataVariant and its size." alt="" coords="445,277,617,317"/>
+<area shape="poly" id="edge7_Node000005_Node000007" title=" " alt="" coords="397,260,438,271,437,276,395,266"/>
+</map>

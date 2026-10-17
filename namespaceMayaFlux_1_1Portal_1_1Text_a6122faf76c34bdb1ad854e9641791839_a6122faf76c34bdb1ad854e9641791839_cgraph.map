@@ -1,0 +1,6 @@
+<map id="MayaFlux::Portal::Text::set_default_font" name="MayaFlux::Portal::Text::set_default_font">
+<area shape="rect" id="Node000001" title="Locate a system font by family and style, then load it as the default." alt="" coords="5,29,172,69"/>
+<area shape="poly" id="edge2_Node000001_Node000001" title=" " alt="" coords="49,30,46,20,53,10,67,5,89,3,114,6,127,13,125,18,112,11,89,8,68,10,56,15,51,21,54,28"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Text_a193d53550bb0c2046258f3e4df7f480a.html#a193d53550bb0c2046258f3e4df7f480a" title="Locate a system font file by family name and optional style." alt="" coords="220,29,387,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="173,47,206,47,206,52,173,52"/>
+</map>

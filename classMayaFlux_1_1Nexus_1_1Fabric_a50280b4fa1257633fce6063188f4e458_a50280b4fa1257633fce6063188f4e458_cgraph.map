@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nexus::Fabric::resolve_influence_fn" name="MayaFlux::Nexus::Fabric::resolve_influence_fn">
+<area shape="rect" id="Node000001" title="Look up a registered influence function by name." alt="" coords="5,5,187,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1Fabric_abe4bf318d5e96e6abd7e0d8a06368407.html#abe4bf318d5e96e6abd7e0d8a06368407" title="Assigned name, empty if the Fabric was constructed outside a Tapestry." alt="" coords="235,5,416,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="187,23,221,23,221,28,187,28"/>
+</map>

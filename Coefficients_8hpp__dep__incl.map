@@ -1,0 +1,19 @@
+<map id="Coefficients.hpp" name="Coefficients.hpp">
+<area shape="rect" id="Node000001" title="Digital filter coefficient design for MayaFlux::Kinesis." alt="" coords="396,5,523,31"/>
+<area shape="rect" id="Node000002" href="$Coefficients_8cpp.html" title=" " alt="" coords="5,79,132,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="384,36,132,81,131,76,383,30"/>
+<area shape="rect" id="Node000003" href="$Convenience_8hpp.html" title="Everyday headers and namespace imports for user code." alt="" coords="156,79,291,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="409,37,262,81,261,76,408,32"/>
+<area shape="rect" id="Node000006" href="$FeedbackBuffer_8cpp.html" title=" " alt="" coords="315,79,465,104"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="440,43,403,80,399,77,437,39"/>
+<area shape="rect" id="Node000007" href="$Filter_8cpp.html" title=" " alt="" coords="489,79,571,104"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="483,39,520,77,517,80,479,43"/>
+<area shape="rect" id="Node000008" href="$ModalNetwork_8cpp.html" title=" " alt="" coords="595,79,739,104"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="507,33,635,76,633,81,505,38"/>
+<area shape="rect" id="Node000009" href="$ResonatorNetwork_8cpp.html" title=" " alt="" coords="763,79,934,104"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="536,30,786,76,785,81,535,36"/>
+<area shape="rect" id="Node000004" href="$MayaFlux_8hpp.html" title="Single include for the user facing API." alt="" coords="166,152,281,177"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="226,118,226,152,221,152,221,118"/>
+<area shape="rect" id="Node000005" href="$LiveAid_8hpp.html" title=" " alt="" coords="174,225,273,251"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="226,191,226,225,221,225,221,191"/>
+</map>

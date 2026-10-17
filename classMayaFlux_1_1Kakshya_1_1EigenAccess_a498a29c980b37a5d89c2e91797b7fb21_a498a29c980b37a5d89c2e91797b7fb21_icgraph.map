@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::EigenAccess::element_count" name="MayaFlux::Kakshya::EigenAccess::element_count">
+<area shape="rect" id="Node000001" title="Get number of elements (columns in matrix representation)" alt="" coords="212,13,420,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1EigenAccess_a6562c3dc351c1570e5836020bd16c170.html#a6562c3dc351c1570e5836020bd16c170" title="Get matrix dimensions as (rows, cols)" alt="" coords="5,5,164,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="198,35,164,35,164,30,198,30"/>
+</map>

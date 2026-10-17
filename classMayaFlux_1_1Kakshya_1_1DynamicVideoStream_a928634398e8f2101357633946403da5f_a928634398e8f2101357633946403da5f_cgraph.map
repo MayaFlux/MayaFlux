@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::DynamicVideoStream::create_default_processor" name="MayaFlux::Kakshya::DynamicVideoStream::create_default_processor">
+<area shape="rect" id="Node000001" title="Install a FrameSeekProcessor as the default processor." alt="" coords="5,45,192,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_a3cee1ef9a5f8c06d8e5a920dfc4588ab.html#a3cee1ef9a5f8c06d8e5a920dfc4588ab" title=" " alt="" coords="242,5,411,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="192,54,228,47,229,52,193,59"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_ac6f8254846dc58f51dc606f7e43ed280.html#ac6f8254846dc58f51dc606f7e43ed280" title="Set the default data processor for this container." alt="" coords="240,84,413,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="193,86,227,92,226,97,192,91"/>
+</map>

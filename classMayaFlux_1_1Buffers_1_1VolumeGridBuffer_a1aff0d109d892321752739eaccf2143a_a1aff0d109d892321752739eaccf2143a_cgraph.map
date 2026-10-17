@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::VolumeGridBuffer::write_handle" name="MayaFlux::Buffers::VolumeGridBuffer::write_handle">
+<area shape="rect" id="Node000001" title="Handle a stage should write the named field to." alt="" coords="5,34,184,89"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VolumeGridBuffer_a1901b1e0e73a902962b3259695feef3b.html#a1901b1e0e73a902962b3259695feef3b" title="Resolve a field by name." alt="" coords="232,5,436,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="184,45,218,40,219,45,185,51"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_ade826fd1619beabe131e5bb65ecf2bcd.html#ade826fd1619beabe131e5bb65ecf2bcd" title="Get all buffer resources at once (read&#45;only)" alt="" coords="257,70,411,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="185,72,244,81,244,86,184,77"/>
+</map>

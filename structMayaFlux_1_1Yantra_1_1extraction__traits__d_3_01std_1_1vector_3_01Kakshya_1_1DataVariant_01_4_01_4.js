@@ -1,0 +1,8 @@
+var structMayaFlux_1_1Yantra_1_1extraction__traits__d_3_01std_1_1vector_3_01Kakshya_1_1DataVariant_01_4_01_4 =
+[
+    [ "result_type", "structMayaFlux_1_1Yantra_1_1extraction__traits__d_3_01std_1_1vector_3_01Kakshya_1_1DataVariant_01_4_01_4_a56493b027ed79de2d79e0c2fb34f69f0.html#a56493b027ed79de2d79e0c2fb34f69f0", null ],
+    [ "variant_result_type", "structMayaFlux_1_1Yantra_1_1extraction__traits__d_3_01std_1_1vector_3_01Kakshya_1_1DataVariant_01_4_01_4_a39379cb3c7a6b9b28e8ab8caa076f805.html#a39379cb3c7a6b9b28e8ab8caa076f805", null ],
+    [ "is_multi_variant", "structMayaFlux_1_1Yantra_1_1extraction__traits__d_3_01std_1_1vector_3_01Kakshya_1_1DataVariant_01_4_01_4_aa1a60cdd928d57a3807b72c90f19c943.html#aa1a60cdd928d57a3807b72c90f19c943", null ],
+    [ "is_region_like", "structMayaFlux_1_1Yantra_1_1extraction__traits__d_3_01std_1_1vector_3_01Kakshya_1_1DataVariant_01_4_01_4_a658c627b8c7afdce9b7de48254e6e7b5.html#a658c627b8c7afdce9b7de48254e6e7b5", null ],
+    [ "requires_container", "structMayaFlux_1_1Yantra_1_1extraction__traits__d_3_01std_1_1vector_3_01Kakshya_1_1DataVariant_01_4_01_4_ae56d05f316089b715f8383b0c364a5ae.html#ae56d05f316089b715f8383b0c364a5ae", null ]
+];

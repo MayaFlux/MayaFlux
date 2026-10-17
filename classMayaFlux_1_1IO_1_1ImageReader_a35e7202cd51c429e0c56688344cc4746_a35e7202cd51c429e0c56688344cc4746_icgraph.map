@@ -1,0 +1,16 @@
+<map id="MayaFlux::IO::ImageReader::load" name="MayaFlux::IO::ImageReader::load">
+<area shape="rect" id="Node000001" title="Load image from file (static utility)" alt="" coords="717,69,920,109"/>
+<area shape="poly" id="edge2_Node000001_Node000001" title=" " alt="" coords="861,58,846,51,819,48,794,50,780,55,774,61,777,68,772,70,769,60,777,50,793,45,819,43,848,46,864,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1ChimeraBuilder_a9e3f969cbf6a6a72a91c13d4d2ed1719.html#a9e3f969cbf6a6a72a91c13d4d2ed1719" title="Fill the layer once with an image file, loaded now as RGBA." alt="" coords="473,5,663,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="726,68,646,48,648,43,727,63"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1ImageReader_ae660058c52405b4605ecce4c631a4b44.html#ae660058c52405b4605ecce4c631a4b44" title="Load image directly into GPU texture (static utility)" alt="" coords="467,69,669,109"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="704,92,669,92,669,87,704,87"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1IO_1_1ImageReader_a6f7eb96fe2b0cf72967ed2263dcaa23a.html#a6f7eb96fe2b0cf72967ed2263dcaa23a" title="Open a file for reading." alt="" coords="467,133,669,173"/>
+<area shape="poly" id="edge7_Node000001_Node000007" title=" " alt="" coords="727,115,648,136,646,131,726,110"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1IO_1_1Detail_a9ef31f3f43df1b36124c95021c5246b7.html#a9ef31f3f43df1b36124c95021c5246b7" title=" " alt="" coords="240,69,419,109"/>
+<area shape="poly" id="edge4_Node000003_Node000004" title=" " alt="" coords="453,92,419,92,419,87,453,87"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1IO_1_1IOManager_a8ed0b44fe355cbf90e6e0953078817f1.html#a8ed0b44fe355cbf90e6e0953078817f1" title="Load all meshes from a 3D model file into MeshBuffer instances." alt="" coords="5,37,192,77"/>
+<area shape="poly" id="edge5_Node000004_Node000005" title=" " alt="" coords="226,78,192,73,192,68,227,72"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1IO_1_1IOManager_a407774e778c9c6c402d04f8f0e9985e4.html#a407774e778c9c6c402d04f8f0e9985e4" title="Load a 3D model file as a MeshNetwork." alt="" coords="5,101,192,141"/>
+<area shape="poly" id="edge6_Node000004_Node000006" title=" " alt="" coords="227,106,192,111,192,106,226,101"/>
+</map>

@@ -1,0 +1,15 @@
+<map id="MayaFlux::Kinesis::interpolate" name="MayaFlux::Kinesis::interpolate">
+<area shape="rect" id="Node000001" title="Generic interpolation dispatcher." alt="" coords="5,133,155,173"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a25b75ee52ddce36397971ae7f76e7c54.html#a25b75ee52ddce36397971ae7f76e7c54" title="Uniform B&#45;spline interpolation using Eigen matrices." alt="" coords="203,5,353,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="102,131,146,94,201,55,212,49,214,54,204,60,149,98,105,135"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_a4d6367745ff0d6694a79e4d82418e82d.html#a4d6367745ff0d6694a79e4d82418e82d" title="Catmull&#45;Rom spline interpolation using Eigen matrices." alt="" coords="203,69,353,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="142,131,202,111,204,116,143,136"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_a3296fcb61dada467934061751ef6e53b.html#a3296fcb61dada467934061751ef6e53b" title="Cubic Bezier interpolation using Eigen matrices." alt="" coords="203,133,353,173"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="155,151,189,151,189,156,155,156"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kinesis_ae76848d93a015e698a3e6dabbd687136.html#ae76848d93a015e698a3e6dabbd687136" title="Cubic Hermite interpolation using Eigen matrices." alt="" coords="203,197,353,237"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="143,171,204,191,202,196,142,176"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Kinesis_a357036bb9c8faab7d33e0bf93fd78eab.html#a357036bb9c8faab7d33e0bf93fd78eab" title="Quadratic Bezier interpolation using Eigen matrices." alt="" coords="203,261,353,301"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="105,172,149,209,204,247,214,253,212,257,201,252,146,213,102,176"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kinesis_1_1BasisMatrices_a818351b64ca1e3653ad9c97cca70e765.html#a818351b64ca1e3653ad9c97cca70e765" title=" " alt="" coords="401,62,572,117"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="354,87,388,87,388,92,354,92"/>
+</map>

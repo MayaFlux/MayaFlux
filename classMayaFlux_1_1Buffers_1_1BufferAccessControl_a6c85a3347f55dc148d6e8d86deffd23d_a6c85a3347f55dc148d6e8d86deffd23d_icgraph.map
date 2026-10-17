@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::BufferAccessControl::remove_audio_buffer" name="MayaFlux::Buffers::BufferAccessControl::remove_audio_buffer">
+<area shape="rect" id="Node000001" title="Removes an audio buffer from a token and channel." alt="" coords="207,5,375,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferAccessControl_ab81d45e72e1fc78068248a7b5693d40d.html#ab81d45e72e1fc78068248a7b5693d40d" title="Removes a buffer from a token (dispatches based on token type)" alt="" coords="5,5,159,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="192,35,159,35,159,30,192,30"/>
+</map>

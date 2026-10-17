@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::spread_radius" name="MayaFlux::Kinesis::spread_radius">
+<area shape="rect" id="Node000001" title="Bounding radius of a window around its centroid." alt="" coords="203,5,352,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a621cb2f284e450173d116808db50e2c1.html#a621cb2f284e450173d116808db50e2c1" title="Convenience overload of spread_radius over a raw span of positions, samples[0] newest." alt="" coords="5,5,155,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="189,28,155,28,155,23,189,23"/>
+</map>

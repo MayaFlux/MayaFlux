@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::BufferProcessingHandle::acquire_write_lock" name="MayaFlux::Core::BufferProcessingHandle::acquire_write_lock">
+<area shape="rect" id="Node000001" title=" " alt="" coords="295,5,536,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1BufferProcessingHandle_a021db6750d0e47da4e092250781de7c2.html#a021db6750d0e47da4e092250781de7c2" title="Get write access to channel data with automatic locking." alt="" coords="5,5,247,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="281,28,247,28,247,23,281,23"/>
+</map>

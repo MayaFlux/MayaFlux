@@ -1,0 +1,35 @@
+<map id="VKSwapchain.cpp" name="VKSwapchain.cpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="333,5,471,31"/>
+<area shape="rect" id="Node000002" href="$VKSwapchain_8hpp.html" title=" " alt="" coords="205,79,343,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="383,33,308,74,306,69,380,28"/>
+<area shape="rect" id="Node000009" href="$Archivist_8hpp.html" title=" " alt="" coords="542,79,766,104"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="443,28,601,72,599,77,442,33"/>
+<area shape="rect" id="Node000016" href="$VKEnumUtils_8hpp.html" title=" " alt="" coords="335,152,469,177"/>
+<area shape="poly" id="edge15_Node000001_Node000016" title=" " alt="" coords="405,31,405,138,399,138,399,31"/>
+<area shape="rect" id="Node000003" href="$VKContext_8hpp.html" title=" " alt="" coords="192,152,311,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="273,105,262,140,257,138,268,104"/>
+<area shape="rect" id="Node000004" href="$GlobalGraphicsInfo_8hpp.html" title=" " alt="" coords="143,225,365,265"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="254,177,256,212,250,212,249,178"/>
+<area shape="rect" id="Node000006" href="$VKDevice_8hpp.html" title=" " alt="" coords="5,233,119,258"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="225,180,103,230,101,225,223,175"/>
+<area shape="rect" id="Node000005" href="$Mirror_8hpp.html" title=" " alt="" coords="177,313,331,353"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="257,266,257,299,251,299,251,266"/>
+<area shape="rect" id="Node000007" href="$VKInstance_8hpp.html" title=" " alt="" coords="15,321,138,346"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="67,258,75,306,70,307,61,259"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="161,401,301,427"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="101,344,197,393,195,397,98,349"/>
+<area shape="rect" id="Node000010" href="$JournalEntry_8hpp.html" title=" " alt="" coords="591,152,717,177"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="657,104,657,138,651,138,651,104"/>
+<area shape="rect" id="Node000015" title=" " alt="" coords="742,152,809,177"/>
+<area shape="poly" id="edge14_Node000009_Node000015" title=" " alt="" coords="675,102,745,143,743,147,672,106"/>
+<area shape="rect" id="Node000011" href="$EnumReflect_8hpp.html" title=" " alt="" coords="561,225,747,265"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="657,178,657,212,651,212,651,178"/>
+<area shape="rect" id="Node000012" title=" " alt="" coords="771,233,838,258"/>
+<area shape="poly" id="edge11_Node000010_Node000012" title=" " alt="" coords="677,175,772,224,769,229,675,180"/>
+<area shape="rect" id="Node000013" title=" " alt="" coords="863,233,987,258"/>
+<area shape="poly" id="edge12_Node000010_Node000013" title=" " alt="" coords="694,175,873,226,871,231,693,180"/>
+<area shape="rect" id="Node000014" title=" " alt="" coords="440,233,537,258"/>
+<area shape="poly" id="edge13_Node000010_Node000014" title=" " alt="" coords="631,180,526,229,524,224,629,175"/>
+<area shape="poly" id="edge17_Node000016_Node000004" title=" " alt="" coords="381,180,303,221,301,216,379,175"/>
+<area shape="poly" id="edge16_Node000016_Node000008" title=" " alt="" coords="404,178,401,212,391,258,373,309,360,333,344,355,314,380,280,398,278,394,311,376,340,351,356,330,368,307,386,257,395,211,399,177"/>
+</map>

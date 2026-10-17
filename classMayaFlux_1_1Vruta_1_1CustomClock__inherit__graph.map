@@ -1,0 +1,5 @@
+<map id="MayaFlux::Vruta::CustomClock" name="MayaFlux::Vruta::CustomClock">
+<area shape="rect" id="Node000001" title="Configurable timing system for custom processing domains." alt="" coords="5,219,220,444"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1IClock.html" title="Abstract base interface for all clock types in the multimodal scheduling system." alt="" coords="28,5,197,171"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="115,184,115,218,110,218,110,184"/>
+</map>

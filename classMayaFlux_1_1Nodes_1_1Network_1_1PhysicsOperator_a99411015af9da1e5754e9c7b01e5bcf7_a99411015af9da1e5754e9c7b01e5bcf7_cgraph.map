@@ -1,0 +1,11 @@
+<map id="MayaFlux::Nodes::Network::PhysicsOperator::seed_from_upstream" name="MayaFlux::Nodes::Network::PhysicsOperator::seed_from_upstream">
+<area shape="rect" id="Node000001" title="Seed physics state from upstream operator&#39;s vertex data." alt="" coords="5,124,204,179"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NetworkOperator_ae4e127405c4de3658a7857fae8e14daa.html#ae4e127405c4de3658a7857fae8e14daa" title="Type name for introspection." alt="" coords="252,5,451,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="151,122,251,69,264,63,266,68,253,74,154,126"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PhysicsOperator_a0be8343b6fe6864f1142a8b53c5c9648.html#a0be8343b6fe6864f1142a8b53c5c9648" title="Get number of vertices (may differ from point count for topology/path)" alt="" coords="252,84,451,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="204,133,238,127,239,132,205,138"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GraphicsOperator_ab8b0c8d444f282cc605c205def7210fd.html#ab8b0c8d444f282cc605c205def7210fd" title="Get vertex data for GPU upload." alt="" coords="252,163,451,217"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="205,164,239,170,238,175,204,170"/>
+<area shape="rect" id="Node000005" href="$main_8cpp_a25a40b6614565f755233080a384c35f1.html#a25a40b6614565f755233080a384c35f1" title=" " alt="" coords="312,241,391,267"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="153,177,200,202,253,226,299,241,298,246,251,231,198,207,150,181"/>
+</map>

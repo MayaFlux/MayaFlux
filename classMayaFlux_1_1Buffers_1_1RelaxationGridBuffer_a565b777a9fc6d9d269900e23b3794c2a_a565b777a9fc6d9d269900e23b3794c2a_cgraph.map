@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::RelaxationGridBuffer::seed_state" name="MayaFlux::Buffers::RelaxationGridBuffer::seed_state">
+<area shape="rect" id="Node000001" title="Write initial state directly into the current front generation." alt="" coords="5,84,164,139"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RelaxationGridBuffer_ac2ec6806ae5bc2856bab78a5769a50e9.html#ac2ec6806ae5bc2856bab78a5769a50e9" title="Index into m_resources.back_buffers currently holding the most recently completed generation&#39;s state." alt="" coords="212,5,371,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="156,81,205,62,207,67,158,86"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_ade826fd1619beabe131e5bb65ecf2bcd.html#ade826fd1619beabe131e5bb65ecf2bcd" title="Get all buffer resources at once (read&#45;only)" alt="" coords="215,84,368,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="164,109,201,109,201,114,164,114"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1RelaxationGridBuffer_a7875dd88fc12314097054eb8516107be.html#a7875dd88fc12314097054eb8516107be" title="Total byte size of one generation&#39;s state buffer." alt="" coords="212,163,371,217"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="158,136,207,155,205,160,156,141"/>
+</map>

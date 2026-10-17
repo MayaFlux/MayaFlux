@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Network::MeshTransformOperator::parent_world" name="MayaFlux::Nodes::Network::MeshTransformOperator::parent_world">
+<area shape="rect" id="Node000001" title="Resolve the world transform of a slot&#39;s parent, or identity if root." alt="" coords="499,5,697,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1MeshTransformOperator_a8349c960c8fe4315548e5d40c54b6850.html#a8349c960c8fe4315548e5d40c54b6850" title="Evaluate the bound field (if any), update local_transform, then propagate the world_transform from th..." alt="" coords="252,5,451,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="485,35,451,35,451,30,485,30"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1MeshTransformOperator_a483bd1f1ad0b5ec21e797cff4cf7d3f8.html#a483bd1f1ad0b5ec21e797cff4cf7d3f8" title="Iterate slots in topological order and call process_slot() on each." alt="" coords="5,5,204,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="238,35,204,35,204,30,238,30"/>
+</map>

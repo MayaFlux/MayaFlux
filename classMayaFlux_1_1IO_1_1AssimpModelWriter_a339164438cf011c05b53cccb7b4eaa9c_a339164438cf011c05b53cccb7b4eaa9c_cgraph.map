@@ -1,0 +1,5 @@
+<map id="MayaFlux::IO::AssimpModelWriter::can_write" name="MayaFlux::IO::AssimpModelWriter::can_write">
+<area shape="rect" id="Node000001" title="Check whether this writer handles the given filepath." alt="" coords="5,5,209,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1AssimpModelWriter_aae9715d6beb17678fcaf8d2b709a99a4.html#aae9715d6beb17678fcaf8d2b709a99a4" title="File extensions handled by this writer (without dot)." alt="" coords="257,5,499,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="210,23,244,23,244,28,210,28"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::GpuSync::TopologyGeneratorNode::refresh_attributes" name="MayaFlux::Nodes::GpuSync::TopologyGeneratorNode::refresh_attributes">
+<area shape="rect" id="Node000001" title="Rewrite colour and thickness over existing positions." alt="" coords="5,45,205,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1TopologyGeneratorNode_a35b24cd7b9b04bb0e0470dd7cca887d4.html#a35b24cd7b9b04bb0e0470dd7cca887d4" title=" " alt="" coords="253,5,453,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="205,54,239,48,240,54,206,59"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1TopologyGeneratorNode_aa694760005971dde5acd0ece946b30e1.html#aa694760005971dde5acd0ece946b30e1" title="Write colour and thickness for the interpolated path." alt="" coords="253,84,453,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="206,86,240,91,239,96,205,91"/>
+</map>

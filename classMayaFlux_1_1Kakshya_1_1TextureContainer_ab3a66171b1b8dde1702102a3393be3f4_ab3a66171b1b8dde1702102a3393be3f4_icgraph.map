@@ -1,0 +1,13 @@
+<map id="MayaFlux::Kakshya::TextureContainer::cached_layer_image" name="MayaFlux::Kakshya::TextureContainer::cached_layer_image">
+<area shape="rect" id="Node000001" title=" " alt="" coords="463,116,649,171"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_a3eb8d23abb91c8ad23e11296beb75130.html#a3eb8d23abb91c8ad23e11296beb75130" title=" " alt="" coords="220,44,407,99"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="450,115,405,101,407,96,451,109"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_a7fded276beb5da05c6a81e87ecb401a7.html#a7fded276beb5da05c6a81e87ecb401a7" title="Refresh one layer&#39;s cached VKImage with caller&#45;supplied staging." alt="" coords="212,123,415,163"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="449,146,415,146,415,141,449,141"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_a1d48543b4ebdd95a507f375537567ee6.html#a1d48543b4ebdd95a507f375537567ee6" title="Refresh the container&#45;owned VKImage for one layer." alt="" coords="212,187,415,227"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="450,174,390,190,389,185,449,169"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_a6b1b2257bbb6d75e9d8494f0d0c51489.html#a6b1b2257bbb6d75e9d8494f0d0c51489" title="Upload all layers as a Vulkan 2D array texture." alt="" coords="5,5,164,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="205,56,164,49,164,43,206,51"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_a94b1ce9c37446c09e245dac1f3e67db9.html#a94b1ce9c37446c09e245dac1f3e67db9" title="Upload all layers as a Vulkan 2D array texture, reusing a staging buffer." alt="" coords="5,84,164,139"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="206,93,164,100,164,95,205,87"/>
+</map>

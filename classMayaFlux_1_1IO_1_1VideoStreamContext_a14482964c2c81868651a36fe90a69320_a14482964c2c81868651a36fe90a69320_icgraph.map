@@ -1,0 +1,9 @@
+<map id="MayaFlux::IO::VideoStreamContext::close" name="MayaFlux::IO::VideoStreamContext::close">
+<area shape="rect" id="Node000001" title="Release codec and scaler resources." alt="" coords="280,69,480,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1VideoStreamContext_afc3578ec70340ca93f0e5871e58f9356.html#afc3578ec70340ca93f0e5871e58f9356" title="Open the video stream from an already&#45;probed demux context." alt="" coords="19,5,219,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="284,69,200,48,201,43,285,63"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1VideoStreamContext_a05609c7f47345d8bc63c9f95c6906e99.html#a05609c7f47345d8bc63c9f95c6906e99" title="Open codec only, without initialising the SwsContext scaler." alt="" coords="19,69,219,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="266,92,219,92,219,87,266,87"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1VideoStreamContext_a54791e6d40323a14ae2da74a1db4c74c.html#a54791e6d40323a14ae2da74a1db4c74c" title=" " alt="" coords="5,133,232,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="285,115,201,136,200,131,284,110"/>
+</map>

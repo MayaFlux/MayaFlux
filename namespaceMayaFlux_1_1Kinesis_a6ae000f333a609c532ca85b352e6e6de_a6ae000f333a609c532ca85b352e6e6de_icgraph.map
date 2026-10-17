@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::central_first_derivative" name="MayaFlux::Kinesis::central_first_derivative">
+<area shape="rect" id="Node000001" title="Central difference approximation of the first derivative." alt="" coords="225,5,397,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a09d0e07c7e72eb82826ad5c88f6ebc02.html#a09d0e07c7e72eb82826ad5c88f6ebc02" title="Convenience overload of central_first_derivative over a raw span." alt="" coords="5,5,177,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="211,28,177,28,177,23,211,23"/>
+</map>

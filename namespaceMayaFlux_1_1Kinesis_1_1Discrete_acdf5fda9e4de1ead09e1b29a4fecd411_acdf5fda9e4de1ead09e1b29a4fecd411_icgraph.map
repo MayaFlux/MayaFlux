@@ -1,0 +1,8 @@
+<map id="MayaFlux::Kinesis::Discrete::zero_crossing_rate" name="MayaFlux::Kinesis::Discrete::zero_crossing_rate">
+<area shape="rect" id="Node000001" title="Zero&#45;crossing rate per window." alt="" coords="547,29,753,69"/>
+<area shape="poly" id="edge3_Node000001_Node000001" title=" " alt="" coords="692,18,677,11,650,8,626,10,612,15,606,21,609,28,604,30,601,20,609,10,625,5,650,3,679,6,695,13"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1EnergyAnalyzer_aae10121eaa04e3e509079717b90890ef.html#aae10121eaa04e3e509079717b90890ef" title="Compute energy values using span (zero&#45;copy processing)" alt="" coords="303,22,499,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="533,52,499,52,499,47,533,47"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1EnergyAnalyzer_a97561d0986bef72b733abe1670d3d6a7.html#a97561d0986bef72b733abe1670d3d6a7" title="Core analysis implementation &#45; creates analysis result AND pipeline output." alt="" coords="5,29,255,69"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="289,52,255,52,255,47,289,47"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::RelaxationGridBuffer::front_index" name="MayaFlux::Buffers::RelaxationGridBuffer::front_index">
+<area shape="rect" id="Node000001" title="Index into m_resources.back_buffers currently holding the most recently completed generation&#39;s state." alt="" coords="212,5,371,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RelaxationGridBuffer_a565b777a9fc6d9d269900e23b3794c2a.html#a565b777a9fc6d9d269900e23b3794c2a" title="Write initial state directly into the current front generation." alt="" coords="5,5,164,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="198,35,164,35,164,30,198,30"/>
+</map>

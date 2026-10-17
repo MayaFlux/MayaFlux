@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::RelaxationEmitProcessor::write_state_descriptors" name="MayaFlux::Buffers::RelaxationEmitProcessor::write_state_descriptors">
+<area shape="rect" id="Node000001" title="Point cell_state at the grid&#39;s front generation and vertices at the grid&#39;s own vertex storage." alt="" coords="239,45,424,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RelaxationEmitProcessor_a4025db5e4b2a19d2a0f642014cb06633.html#a4025db5e4b2a19d2a0f642014cb06633" title="Write the cell_state and vertices descriptors when the descriptor set is created or rebuilt." alt="" coords="5,5,191,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="224,57,190,51,191,46,225,52"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1RelaxationEmitProcessor_a22fb2108bb2043a57f158684a5882391.html#a22fb2108bb2043a57f158684a5882391" title="Write the cell_state and vertices descriptors for the grid&#39;s current front generation,..." alt="" coords="5,84,191,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="225,93,191,99,190,93,224,88"/>
+</map>

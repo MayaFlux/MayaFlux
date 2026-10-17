@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kinesis::detail::get_dimensions" name="MayaFlux::Kinesis::detail::get_dimensions">
+<area shape="rect" id="Node000001" title=" " alt="" coords="212,37,383,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kinesis_1_1SpatialIndex_a1a9b9b68b49f210fb9f42157e11896e7.html#a1a9b9b68b49f210fb9f42157e11896e7" title="Insert a new entity at the given position." alt="" coords="10,5,159,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="198,45,159,39,160,34,199,40"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kinesis_1_1SpatialIndex_a33784d42673c113df1465175d8c698b0.html#a33784d42673c113df1465175d8c698b0" title="Atomically publish the current write&#45;side state as a new read snapshot." alt="" coords="5,69,164,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="199,75,165,80,164,75,198,70"/>
+</map>

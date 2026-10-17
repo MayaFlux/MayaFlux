@@ -1,0 +1,10 @@
+<map id="MayaFlux::Kriya::Chimera::place" name="MayaFlux::Kriya::Chimera::place">
+<area shape="rect" id="Node000001" title=" " alt="" coords="483,37,673,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1Chimera_a85b2cebabfb414fea85d8fbed4c35c49.html#a85b2cebabfb414fea85d8fbed4c35c49" title=" " alt="" coords="244,5,435,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="469,45,434,41,435,35,469,40"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kriya_1_1Chimera_a9d162be6360583b59b65a921b8fecf7b.html#a9d162be6360583b59b65a921b8fecf7b" title=" " alt="" coords="244,69,435,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="469,75,435,79,434,74,469,69"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kriya_1_1Chimera_a0ca1ced8e90b76c407bf414c3f503ad7.html#a0ca1ced8e90b76c407bf414c3f503ad7" title=" " alt="" coords="5,37,196,77"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="231,43,196,47,196,42,230,37"/>
+<area shape="poly" id="edge4_Node000004_Node000003" title=" " alt="" coords="230,77,196,73,196,67,231,72"/>
+</map>

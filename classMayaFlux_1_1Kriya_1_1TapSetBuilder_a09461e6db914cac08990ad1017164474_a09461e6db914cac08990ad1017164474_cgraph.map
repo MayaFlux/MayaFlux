@@ -1,0 +1,12 @@
+<map id="MayaFlux::Kriya::TapSetBuilder::start" name="MayaFlux::Kriya::TapSetBuilder::start">
+<area shape="rect" id="Node000001" title="Build the taps and start them." alt="" coords="5,87,231,127"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1TimeMaps_afba12644eb161dc5a6a7873630847653.html#afba12644eb161dc5a6a7873630847653" title="Position that integrates a velocity you can change while it plays." alt="" coords="323,5,488,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="181,84,278,55,309,46,310,51,279,60,182,89"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kriya_1_1TapSetBuilder_aa0af196b6b3ad0f9144375742d8596e1.html#aa0af196b6b3ad0f9144375742d8596e1" title="Make the current tap trail the write head of a live ring by seconds." alt="" coords="279,94,532,119"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="231,104,265,104,265,109,231,109"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_1_1TimeMaps_a8a9ed604f2f9debc647911ac53bcd7a8.html#a8a9ed604f2f9debc647911ac53bcd7a8" title="Position of a moving reference minus a lag that can itself change." alt="" coords="331,144,480,184"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="219,124,318,144,317,149,218,129"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_a26c65f0ec04f0fddefa1e3846124bcd4.html#a26c65f0ec04f0fddefa1e3846124bcd4" title="First difference: rate of change of position." alt="" coords="580,5,729,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="488,23,566,23,566,28,488,28"/>
+<area shape="poly" id="edge4_Node000004_Node000004" title=" " alt="" coords="365,96,356,86,361,76,378,70,405,67,440,71,450,76,454,82,450,85,447,80,439,76,405,73,379,75,365,80,362,85,369,92"/>
+</map>

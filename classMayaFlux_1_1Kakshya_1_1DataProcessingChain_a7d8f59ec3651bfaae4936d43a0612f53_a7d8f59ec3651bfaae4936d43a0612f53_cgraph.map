@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::DataProcessingChain::process_filtered" name="MayaFlux::Kakshya::DataProcessingChain::process_filtered">
+<area shape="rect" id="Node000001" title="Processes a container with only the processors matching a filter predicate." alt="" coords="5,5,165,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1DataProcessingChain_a654f640a40d387cf100f89842b4523e1.html#a654f640a40d387cf100f89842b4523e1" title="Flushes all removals deferred during the most recent process iteration." alt="" coords="213,5,404,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="166,30,200,30,200,35,166,35"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1DataProcessingChain_a76249557d2a80bab157b285d00cf6955.html#a76249557d2a80bab157b285d00cf6955" title="Performs immediate removal of a processor from the chain." alt="" coords="452,5,647,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="404,30,438,30,438,35,404,35"/>
+</map>

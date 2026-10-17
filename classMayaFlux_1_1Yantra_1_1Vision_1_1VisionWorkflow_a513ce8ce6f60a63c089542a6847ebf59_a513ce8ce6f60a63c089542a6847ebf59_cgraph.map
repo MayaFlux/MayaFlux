@@ -1,0 +1,6 @@
+<map id="MayaFlux::Yantra::Vision::VisionWorkflow::process_to_buffer" name="MayaFlux::Yantra::Vision::VisionWorkflow::process_to_buffer">
+<area shape="rect" id="Node000001" title="Run config&#39;s query on its source live and show what its extraction takes from each frame in a texture..." alt="" coords="5,29,192,84"/>
+<area shape="poly" id="edge2_Node000001_Node000001" title=" " alt="" coords="52,29,52,19,61,10,76,5,99,3,126,6,141,14,139,18,124,11,99,8,77,10,63,15,57,21,57,29"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1ComputeMatrix_af9410b837322d3387160a7b1f8f4b58c.html#af9410b837322d3387160a7b1f8f4b58c" title="Create a new ComputeMatrix instance." alt="" coords="240,37,441,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="192,54,226,54,226,59,192,59"/>
+</map>

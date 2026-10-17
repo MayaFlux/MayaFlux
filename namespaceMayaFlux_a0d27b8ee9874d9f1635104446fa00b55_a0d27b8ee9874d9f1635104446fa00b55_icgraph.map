@@ -1,0 +1,5 @@
+<map id="MayaFlux::set_mix_normalization_for_channel" name="MayaFlux::set_mix_normalization_for_channel">
+<area shape="rect" id="Node000001" title="Sets whether a channel&#39;s mix is averaged over its sources." alt="" coords="296,5,539,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a14fb7d795328fa565a7e12f0d9b3218b.html#a14fb7d795328fa565a7e12f0d9b3218b" title="Sets whether the mix of several channels is averaged over their sources." alt="" coords="5,5,248,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="283,28,248,28,248,23,283,23"/>
+</map>

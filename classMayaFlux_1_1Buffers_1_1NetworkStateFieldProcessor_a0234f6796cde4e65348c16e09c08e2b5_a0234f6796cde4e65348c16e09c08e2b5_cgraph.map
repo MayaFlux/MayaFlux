@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::NetworkStateFieldProcessor::write_field_descriptors" name="MayaFlux::Buffers::NetworkStateFieldProcessor::write_field_descriptors">
+<area shape="rect" id="Node000001" title="Issue descriptor writes for every entry in the binding table." alt="" coords="5,5,211,60"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a715d57394465ff2924727d7c82d87e7b.html#a715d57394465ff2924727d7c82d87e7b" title="Get the global shader compiler instance." alt="" coords="259,13,456,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="211,30,245,30,245,35,211,35"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="504,13,701,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="456,30,490,30,490,35,456,35"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::get_root_audio_buffer" name="MayaFlux::get_root_audio_buffer">
+<area shape="rect" id="Node000001" title="Gets the audio buffer for a specific channel." alt="" coords="225,13,373,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferAccessControl_ada43e0f0caef32aeecc0abbdb33ed4a4.html#ada43e0f0caef32aeecc0abbdb33ed4a4" title=" " alt="" coords="5,5,177,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="212,35,178,35,178,30,212,30"/>
+</map>

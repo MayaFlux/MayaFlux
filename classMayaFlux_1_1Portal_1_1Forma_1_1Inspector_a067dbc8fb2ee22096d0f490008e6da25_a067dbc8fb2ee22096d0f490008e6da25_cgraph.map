@@ -1,0 +1,7 @@
+<map id="MayaFlux::Portal::Forma::Inspector::make_header_buffer" name="MayaFlux::Portal::Forma::Inspector::make_header_buffer">
+<area shape="rect" id="Node000001" title="A &quot;text&quot;&#45;slotted buffer for make_entry_group&#39;s header, no pre&#45;pressed image." alt="" coords="5,30,192,85"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferManager_af51cd72c5f1d259a03a3e82371e55bab.html#af51cd72c5f1d259a03a3e82371e55bab" title="Adds a buffer to a token and channel." alt="" coords="240,5,435,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="192,42,226,38,227,43,193,47"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kakshya_1_1VertexLayout_a7b7a30b2a13cb2676713a352f298f607.html#a7b7a30b2a13cb2676713a352f298f607" title="Factory: layout for MeshVertex (position, color, weight, uv, normal, tangent)" alt="" coords="241,69,433,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="193,67,228,72,227,77,192,72"/>
+</map>

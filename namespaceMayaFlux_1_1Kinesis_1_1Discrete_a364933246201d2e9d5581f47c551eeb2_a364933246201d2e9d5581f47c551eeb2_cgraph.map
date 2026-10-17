@@ -1,0 +1,8 @@
+<map id="MayaFlux::Kinesis::Discrete::polynomial_lags" name="MayaFlux::Kinesis::Discrete::polynomial_lags">
+<area shape="rect" id="Node000001" title="Polynomial in several lags at once." alt="" coords="5,49,196,89"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a2fe753ad61d3b9669d7fcf5369bcb700.html#a2fe753ad61d3b9669d7fcf5369bcb700" title="Power (sum of squares) per window." alt="" coords="244,5,393,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="196,47,230,41,231,46,197,53"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a0f0fc0b4cd893ccbb45ac82fcc93a549.html#a0f0fc0b4cd893ccbb45ac82fcc93a549" title="Sum per window." alt="" coords="244,93,393,133"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="197,86,231,93,230,98,196,91"/>
+<area shape="poly" id="edge3_Node000003_Node000003" title=" " alt="" coords="278,94,276,84,282,74,297,69,319,67,344,70,358,77,355,82,342,75,319,72,298,74,285,79,281,85,283,92"/>
+</map>

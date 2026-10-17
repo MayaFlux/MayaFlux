@@ -1,0 +1,23 @@
+<map id="MayaFlux::Kriya::BufferPipeline::create" name="MayaFlux::Kriya::BufferPipeline::create">
+<area shape="rect" id="Node000001" title=" " alt="" coords="736,158,963,198"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_aa1955a73119c9e977f59ab989e74597e.html#aa1955a73119c9e977f59ab989e74597e" title="Creates a new buffer pipeline instance." alt="" coords="499,58,679,98"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="790,155,687,112,653,101,655,96,689,108,792,150"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_a2145fe87abea954d4aef97fe4ad80b0b.html#a2145fe87abea954d4aef97fe4ad80b0b" title="Creates a buffer pipeline that can reach an IOManager." alt="" coords="499,122,679,162"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="722,163,679,157,680,152,723,158"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Yantra_1_1Vision_1_1VisionWorkflow_acbdbb0e51aaedb8f13609d7ec76fd5d9.html#acbdbb0e51aaedb8f13609d7ec76fd5d9" title="Run config&#39;s matrix on its source live and return a Chimera builder over a new layer array,..." alt="" coords="496,187,683,241"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="723,198,683,204,682,198,722,193"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Kriya_1_1SamplingPipeline_af21f1bc6546de22e5eb3ba15838e6015.html#af21f1bc6546de22e5eb3ba15838e6015" title="Begin construction with a loaded stream and output channel." alt="" coords="491,266,688,306"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="798,207,689,256,656,268,655,263,687,252,796,202"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_a1ad7d7c0070a0af0185305571603c4f9.html#a1ad7d7c0070a0af0185305571603c4f9" title="Begin assembling the layers of a TextureArrayBuffer from what feeds each." alt="" coords="248,29,443,55"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="485,65,431,57,432,52,486,60"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_a661fe2e26577560e051b8112e531723c.html#a661fe2e26577560e051b8112e531723c" title="Record a signal into one channel of a stream, a block at a time." alt="" coords="262,101,429,127"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="486,96,429,104,429,99,485,91"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_a8d60a7b311a41c4659a45069865c380d.html#a8d60a7b311a41c4659a45069865c380d" title="Begin a Chimera over an array buffer made and drawn here." alt="" coords="5,5,200,31"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="234,34,200,30,201,25,235,28"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1Vision_1_1VisionWorkflow_a65f5e261b0f415a8d3b8c59fe7394d7d.html#a65f5e261b0f415a8d3b8c59fe7394d7d" title="process_to_live_container() with a matrix the caller made and configured." alt="" coords="9,55,196,109"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="248,104,196,97,196,92,248,99"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_aa0240cd769a2218007f03b506581915f.html#aa0240cd769a2218007f03b506581915f" title="Record a live buffer into one channel of a stream." alt="" coords="19,133,186,159"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="249,129,187,138,186,132,248,124"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_a13bbc86d2cf34f3e6d6afe434ed8191f.html#a13bbc86d2cf34f3e6d6afe434ed8191f" title="Record several sources into consecutive channels of a stream." alt="" coords="19,183,186,208"/>
+<area shape="poly" id="edge7_Node000005_Node000008" title=" " alt="" coords="304,135,201,174,161,185,159,180,199,169,302,130"/>
+</map>

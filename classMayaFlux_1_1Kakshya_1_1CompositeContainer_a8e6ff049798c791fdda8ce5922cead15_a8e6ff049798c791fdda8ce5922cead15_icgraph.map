@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::CompositeContainer::get_region_data" name="MayaFlux::Kakshya::CompositeContainer::get_region_data">
+<area shape="rect" id="Node000001" title="Copy a one&#45;dimensional Region into an owning CompositeArray." alt="" coords="224,45,387,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1CompositeContainer_a254798419c997b7802b7f8c624a007fe.html#a254798419c997b7802b7f8c624a007fe" title="Copy the valid regions of a group into separate arrays." alt="" coords="5,5,176,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="210,58,176,51,177,46,211,52"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1CompositeContainer_af96618fafa0184ba579e61d359bb91dd.html#af96618fafa0184ba579e61d359bb91dd" title="Copy valid one&#45;dimensional segments into separate arrays." alt="" coords="9,84,172,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="211,92,173,99,172,94,210,87"/>
+</map>

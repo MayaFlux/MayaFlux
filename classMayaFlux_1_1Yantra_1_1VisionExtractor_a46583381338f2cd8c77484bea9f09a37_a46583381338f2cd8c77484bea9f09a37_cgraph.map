@@ -1,0 +1,12 @@
+<map id="MayaFlux::Yantra::VisionExtractor::sample" name="MayaFlux::Yantra::VisionExtractor::sample">
+<area shape="rect" id="Node000001" title="Mean, min and max over the focused element or track/keypoint bounds." alt="" coords="5,9,188,49"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_a5af57c70b0db8f5729768e839b672a3b.html#a5af57c70b0db8f5729768e839b672a3b" title=" " alt="" coords="951,5,1140,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="188,22,236,20,569,15,903,19,937,19,937,25,903,24,569,20,236,25,188,27"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_a72e375adc68bac374e21a7334db328ea.html#a72e375adc68bac374e21a7334db328ea" title=" " alt="" coords="236,34,419,89"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="188,39,223,44,222,49,188,45"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_ac6c9930abd4e2a5e2ab149a681a014d8.html#ac6c9930abd4e2a5e2ab149a681a014d8" title="Box index of the element the single&#45;element methods act on." alt="" coords="467,37,665,77"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="419,57,453,57,453,62,419,62"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_ad833822534b8ab909bb3099fe45aff61.html#ad833822534b8ab909bb3099fe45aff61" title="Index into find_elements boxes of the element ranked first by focus, chosen on the GPU from the analy..." alt="" coords="713,33,903,73"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="665,53,699,52,699,58,665,58"/>
+<area shape="poly" id="edge5_Node000005_Node000002" title=" " alt="" coords="902,40,937,35,937,41,903,45"/>
+</map>

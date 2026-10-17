@@ -1,0 +1,11 @@
+<map id="MayaFlux::Kinesis::Discrete::auto_correlate" name="MayaFlux::Kinesis::Discrete::auto_correlate">
+<area shape="rect" id="Node000001" title="Auto&#45;correlation via FFT." alt="" coords="5,93,184,133"/>
+<area shape="poly" id="edge2_Node000001_Node000001" title=" " alt="" coords="50,94,48,84,55,74,71,69,95,67,122,70,137,77,135,82,121,75,95,72,72,74,58,79,53,85,56,92"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a42e1569c72d22f14f15ee3a52cb70496.html#a42e1569c72d22f14f15ee3a52cb70496" title="Core FFT convolution engine." alt="" coords="232,5,435,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="141,91,231,55,253,47,254,52,233,60,143,96"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a5de3d13e1b9ceb59d3acb04361e2a5e5.html#a5de3d13e1b9ceb59d3acb04361e2a5e5" title="Normalize to [target_min, target_max] in&#45;place Single&#45;pass min/max reduction followed by a single tra..." alt="" coords="259,93,408,133"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="184,111,245,111,245,116,184,116"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a5970ee5660c02fb526cd5ad6f5895e4a.html#a5970ee5660c02fb526cd5ad6f5895e4a" title="Peak amplitude per window." alt="" coords="259,157,408,197"/>
+<area shape="poly" id="edge5_Node000001_Node000004" title=" " alt="" coords="171,131,246,151,245,156,169,136"/>
+<area shape="poly" id="edge4_Node000003_Node000003" title=" " alt="" coords="289,94,286,84,294,74,309,69,333,67,361,70,376,77,374,82,360,75,333,72,310,74,297,79,292,85,294,92"/>
+</map>

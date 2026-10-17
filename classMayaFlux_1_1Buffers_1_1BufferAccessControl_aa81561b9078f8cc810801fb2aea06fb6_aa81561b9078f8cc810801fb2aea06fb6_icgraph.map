@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::BufferAccessControl::initialize_buffer_service" name="MayaFlux::Buffers::BufferAccessControl::initialize_buffer_service">
+<area shape="rect" id="Node000001" title="Initializes the buffer service for Vulkan operations." alt="" coords="416,5,601,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferAccessControl_ae92fa8262d95697a1198c36d705b765d.html#ae92fa8262d95697a1198c36d705b765d" title="Adds a graphics buffer to a token." alt="" coords="207,5,368,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="402,35,368,35,368,30,402,30"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1BufferAccessControl_ae10b17df86560e065378c3dc8ac90c0d.html#ae10b17df86560e065378c3dc8ac90c0d" title="Adds a buffer to a token (dispatches based on token type)" alt="" coords="5,5,159,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="193,35,159,35,159,30,193,30"/>
+</map>

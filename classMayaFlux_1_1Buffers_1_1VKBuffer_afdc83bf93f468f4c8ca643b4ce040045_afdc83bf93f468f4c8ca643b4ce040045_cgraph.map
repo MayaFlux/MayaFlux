@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::VKBuffer::mark_invalid_range" name="MayaFlux::Buffers::VKBuffer::mark_invalid_range">
+<area shape="rect" id="Node000001" title="Mark a range as invalid (needs download)" alt="" coords="5,5,221,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_aeed198b7008219af3eea770413f392ba.html#aeed198b7008219af3eea770413f392ba" title="Whether this VKBuffer should be host&#45;visible." alt="" coords="269,5,452,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="222,23,255,23,255,28,222,28"/>
+</map>

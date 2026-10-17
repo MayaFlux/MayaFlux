@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::FeedbackProcessor::set_feed_samples" name="MayaFlux::Buffers::FeedbackProcessor::set_feed_samples">
+<area shape="rect" id="Node000001" title="Lag of the first tap, in samples." alt="" coords="5,5,180,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1FeedbackProcessor_a8924c149c5db26da4cef1222e65eba4e.html#a8924c149c5db26da4cef1222e65eba4e" title=" " alt="" coords="228,5,453,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="180,30,214,30,214,35,180,35"/>
+</map>

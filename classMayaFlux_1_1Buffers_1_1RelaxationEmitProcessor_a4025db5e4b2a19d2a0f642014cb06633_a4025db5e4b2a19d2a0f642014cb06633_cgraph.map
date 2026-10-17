@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::RelaxationEmitProcessor::on_descriptors_created" name="MayaFlux::Buffers::RelaxationEmitProcessor::on_descriptors_created">
+<area shape="rect" id="Node000001" title="Write the cell_state and vertices descriptors when the descriptor set is created or rebuilt." alt="" coords="5,5,191,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RelaxationEmitProcessor_a9237d26b30ae7ff0643a5489d4558344.html#a9237d26b30ae7ff0643a5489d4558344" title="Point cell_state at the grid&#39;s front generation and vertices at the grid&#39;s own vertex storage." alt="" coords="239,5,424,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="191,30,225,30,225,35,191,35"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a715d57394465ff2924727d7c82d87e7b.html#a715d57394465ff2924727d7c82d87e7b" title="Get the global shader compiler instance." alt="" coords="472,13,669,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="424,30,458,30,458,35,424,35"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="717,13,915,53"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="670,30,704,30,704,35,670,35"/>
+</map>

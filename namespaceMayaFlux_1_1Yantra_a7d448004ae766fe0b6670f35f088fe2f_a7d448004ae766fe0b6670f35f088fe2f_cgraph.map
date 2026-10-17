@@ -1,0 +1,7 @@
+<map id="MayaFlux::Yantra::infer_from_composite_array" name="MayaFlux::Yantra::infer_from_composite_array">
+<area shape="rect" id="Node000001" title="Infer the element axis and modality of a CompositeArray." alt="" coords="5,5,181,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_a27600792242257eee9b70539967aba2b.html#a27600792242257eee9b70539967aba2b" title="Number of packed elements." alt="" coords="229,5,389,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="181,23,216,23,216,28,181,28"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1CompositeLayout_a04d7cccd3b3bb8e93f3909f55a970198.html#a04d7cccd3b3bb8e93f3909f55a970198" title="Bytes per packed element after finalization." alt="" coords="437,5,661,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="390,23,424,23,424,28,390,28"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Generator::Polynomial::create_polynomial_function" name="MayaFlux::Nodes::Generator::Polynomial::create_polynomial_function">
+<area shape="rect" id="Node000001" title="Creates a polynomial function from coefficients." alt="" coords="5,5,237,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Polynomial_a1d967ca5c86d2c5a68542f85e3750617.html#a1d967ca5c86d2c5a68542f85e3750617" title="Evaluates the coefficient list at x, highest power first." alt="" coords="285,13,493,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="238,30,271,30,271,35,238,35"/>
+</map>

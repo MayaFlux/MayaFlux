@@ -1,0 +1,19 @@
+<map id="MayaFlux::Buffers::FeedbackProcessor::recompute_capacity" name="MayaFlux::Buffers::FeedbackProcessor::recompute_capacity">
+<area shape="rect" id="Node000001" title=" " alt="" coords="536,163,761,217"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1FeedbackProcessor_a1117e1da6765aa42e9b6051d5cc6167a.html#a1117e1da6765aa42e9b6051d5cc6167a" title="Single tap, output = input + feedback * tap." alt="" coords="271,5,488,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="604,156,550,114,487,74,463,62,465,58,489,69,553,109,608,152"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1FeedbackProcessor_a925a826f7e03958ddca373aa73ef6b70.html#a925a826f7e03958ddca373aa73ef6b70" title="Lag of the first tap, in samples." alt="" coords="292,84,467,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="541,161,466,139,468,134,542,156"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1FeedbackProcessor_a6fca309174a5fc1556fc21e4cadc5058.html#a6fca309174a5fc1556fc21e4cadc5058" title="Interpolation used for fractional lags." alt="" coords="292,163,467,217"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="522,193,467,193,467,187,522,187"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1FeedbackProcessor_a6af7e21e634c6baf913332e3a3dee4ed.html#a6af7e21e634c6baf913332e3a3dee4ed" title="Drive one tap&#39;s lag from a TimeMap." alt="" coords="278,242,481,282"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="533,224,456,245,454,239,532,218"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1FeedbackProcessor_aae0040f4ba44cf4b1b238878418b368e.html#aae0040f4ba44cf4b1b238878418b368e" title="Replace all taps with fixed lags in samples." alt="" coords="275,306,484,346"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="602,228,549,263,489,296,459,308,457,303,487,292,547,259,599,223"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1FeedbackProcessor_add0bd101c60c17bf5a8db685140b09be.html#add0bd101c60c17bf5a8db685140b09be" title=" " alt="" coords="5,220,223,275"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="297,305,270,297,206,277,207,272,271,291,298,299"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1FeedbackProcessor_a906f54174cdc640ea667ea51129a451a.html#a906f54174cdc640ea667ea51129a451a" title=" " alt="" coords="5,299,223,353"/>
+<area shape="poly" id="edge7_Node000006_Node000008" title=" " alt="" coords="261,329,223,329,223,323,261,323"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1FeedbackProcessor_adb16788da823da5b87f2cca50fbea52e.html#adb16788da823da5b87f2cca50fbea52e" title=" " alt="" coords="5,377,223,432"/>
+<area shape="poly" id="edge8_Node000006_Node000009" title=" " alt="" coords="299,352,208,380,206,375,297,347"/>
+</map>

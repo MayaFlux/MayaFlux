@@ -1,0 +1,8 @@
+<map id="MayaFlux::Vruta::TaskScheduler::cleanup_completed_tasks" name="MayaFlux::Vruta::TaskScheduler::cleanup_completed_tasks">
+<area shape="rect" id="Node000001" title="Clean up completed tasks in a domain." alt="" coords="563,5,793,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_ab4f0590e96fb38d2e245b164007ad1fd.html#ab4f0590e96fb38d2e245b164007ad1fd" title="Process all active domains." alt="" coords="5,5,236,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="549,25,515,24,284,24,236,25,236,19,284,19,515,19,549,19"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a6b76571ac0c940a558211257a9d3da34.html#a6b76571ac0c940a558211257a9d3da34" title="Process all tasks for a specific processing domain." alt="" coords="284,33,515,73"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="549,41,515,44,515,39,549,36"/>
+<area shape="poly" id="edge3_Node000003_Node000002" title=" " alt="" coords="270,43,236,40,236,34,271,38"/>
+</map>

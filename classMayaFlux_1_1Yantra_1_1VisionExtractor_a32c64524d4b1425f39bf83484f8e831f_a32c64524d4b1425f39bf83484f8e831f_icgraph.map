@@ -1,0 +1,12 @@
+<map id="MayaFlux::Yantra::VisionExtractor::points_for_analysis" name="MayaFlux::Yantra::VisionExtractor::points_for_analysis">
+<area shape="rect" id="Node000001" title=" " alt="" coords="704,30,887,85"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_a713026d04f6052a5c3ed38dac78aff7e.html#a713026d04f6052a5c3ed38dac78aff7e" title="One fixed&#45;size crop per keypoint, else per track, side by side in one atlas." alt="" coords="473,5,655,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="690,45,655,41,656,35,690,40"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_a251f192f458dc5b54ed05d998a0b4e8c.html#a251f192f458dc5b54ed05d998a0b4e8c" title="Mean over a (2 * radius + 1) squared window at every keypoint, else every track, in one dispatch,..." alt="" coords="472,69,656,109"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="691,74,657,79,656,74,690,69"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_a405349780e7eb0c7c7c7165acc0c6696.html#a405349780e7eb0c7c7c7165acc0c6696" title=" " alt="" coords="241,37,424,77"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="459,43,424,47,424,42,458,37"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_af4331c5582233c8d45975aaded7c2d96.html#af4331c5582233c8d45975aaded7c2d96" title=" " alt="" coords="5,37,193,77"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="227,60,194,60,194,55,227,55"/>
+<area shape="poly" id="edge5_Node000005_Node000003" title=" " alt="" coords="458,77,424,73,425,67,459,72"/>
+</map>

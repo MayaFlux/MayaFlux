@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::TextureArrayBuffer::fit_for" name="MayaFlux::Buffers::TextureArrayBuffer::fit_for">
+<area shape="rect" id="Node000001" title=" " alt="" coords="205,45,357,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1TextureArrayBuffer_abf5479ab183067327913cf60adbcd4cc.html#abf5479ab183067327913cf60adbcd4cc" title="Replace the frame of one layer with an image." alt="" coords="5,5,157,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="191,57,157,50,158,45,192,52"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1TextureArrayBuffer_a1d6d7ae0f2b8d9f619188372d0cdd853.html#a1d6d7ae0f2b8d9f619188372d0cdd853" title="Replace the frame of one layer with a GPU image, with no host read." alt="" coords="5,84,157,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="192,93,158,99,157,94,191,87"/>
+</map>

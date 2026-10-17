@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kakshya::ContainerDataStructure::get_expected_variant_count" name="MayaFlux::Kakshya::ContainerDataStructure::get_expected_variant_count">
+<area shape="rect" id="Node000001" title="Calculate expected number of data variants for given dimensions." alt="" coords="5,81,220,136"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure_a2527c8aa70b6230e3bef36ecf2ab9dd8.html#a2527c8aa70b6230e3bef36ecf2ab9dd8" title=" " alt="" coords="268,29,443,84"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="220,83,254,76,255,81,221,88"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure_a4ab75a72c0d78644119b6d52ba81335f.html#a4ab75a72c0d78644119b6d52ba81335f" title=" " alt="" coords="268,132,443,187"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="221,129,255,136,254,141,220,134"/>
+<area shape="poly" id="edge2_Node000002_Node000002" title=" " alt="" coords="308,29,308,19,317,10,333,5,355,3,383,6,398,14,396,18,381,11,355,8,334,10,320,15,313,21,313,29"/>
+<area shape="poly" id="edge4_Node000003_Node000003" title=" " alt="" coords="308,132,308,122,317,113,333,107,355,105,383,108,398,116,396,121,381,114,355,111,334,113,320,117,313,124,313,132"/>
+</map>

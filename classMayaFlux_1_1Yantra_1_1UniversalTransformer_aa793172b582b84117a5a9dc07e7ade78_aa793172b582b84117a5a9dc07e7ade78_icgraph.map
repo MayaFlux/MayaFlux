@@ -1,0 +1,7 @@
+<map id="MayaFlux::Yantra::UniversalTransformer::validate_multi_channel_data" name="MayaFlux::Yantra::UniversalTransformer::validate_multi_channel_data">
+<area shape="rect" id="Node000001" title="Validates multi&#45;channel numeric data for NaN/Infinity values." alt="" coords="536,5,740,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1UniversalTransformer_a25ab09c32a83ebb814cd7c70966e940b.html#a25ab09c32a83ebb814cd7c70966e940b" title="Basic input validation that derived classes can override." alt="" coords="284,13,488,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="522,35,488,35,488,30,522,30"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1UniversalTransformer_a3f55117454a7393002addd226c5ae734.html#a3f55117454a7393002addd226c5ae734" title="Core operation implementation &#45; called by ComputeOperation interface." alt="" coords="5,13,236,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="270,35,236,35,236,30,270,30"/>
+</map>

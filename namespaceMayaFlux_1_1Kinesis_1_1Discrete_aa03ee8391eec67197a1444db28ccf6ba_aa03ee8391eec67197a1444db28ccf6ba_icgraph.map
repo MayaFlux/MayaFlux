@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::Discrete::rectangular" name="MayaFlux::Kinesis::Discrete::rectangular">
+<area shape="rect" id="Node000001" title="Rectangular (boxcar) taper coefficients." alt="" coords="247,13,405,53"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a2568dda8f62abce762ae65746a62f357.html#a2568dda8f62abce762ae65746a62f357" title="Equal weights summing to 1: Taper::rectangular scaled by 1 / count." alt="" coords="5,5,199,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="233,35,199,35,199,30,233,30"/>
+</map>

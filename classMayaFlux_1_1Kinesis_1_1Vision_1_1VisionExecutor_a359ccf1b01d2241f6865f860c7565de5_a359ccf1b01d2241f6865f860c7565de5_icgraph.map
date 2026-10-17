@@ -1,0 +1,23 @@
+<map id="MayaFlux::Kinesis::Vision::VisionExecutor::reset" name="MayaFlux::Kinesis::Vision::VisionExecutor::reset">
+<area shape="rect" id="Node000001" title="Clear stored inter&#45;frame state." alt="" coords="739,270,905,325"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kinesis_1_1Vision_1_1VisionExecutor_aae4315344b871170f69b84afefd64e10.html#aae4315344b871170f69b84afefd64e10" title="Ensure all slots are sized to n_pixels floats." alt="" coords="521,34,688,89"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="801,259,756,181,725,139,689,102,673,91,677,87,692,98,729,135,760,178,805,257"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1ImageCVProcessor_af69d9fc01aefb701c7ac26b3d952b254.html#af69d9fc01aefb701c7ac26b3d952b254" title="Validate the buffer type and reset executor state." alt="" coords="521,113,689,167"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="784,262,741,221,689,181,670,170,673,165,692,176,744,217,788,258"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1VisionProcessor_a5cebcf32c74ebe3f096ffc93b97b7be7.html#a5cebcf32c74ebe3f096ffc93b97b7be7" title="Cache frame geometry from get_structure()." alt="" coords="525,191,684,246"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="732,268,680,249,682,244,733,263"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1ImageCVProcessor_a7bd52ed990ee575e7594d186c87c9f5e.html#a7bd52ed990ee575e7594d186c87c9f5e" title="Clear state and reset executor." alt="" coords="521,270,689,325"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="725,300,689,300,689,295,725,295"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Kakshya_1_1VisionProcessor_aac378033868c8fca3fec1e8cbc3aaa72.html#aac378033868c8fca3fec1e8cbc3aaa72" title="Clear cached geometry and reset executor state." alt="" coords="525,349,684,403"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="733,332,682,351,680,346,732,327"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Buffers_1_1ImageCVProcessor_adba1f74cc4f5136f01ffc354a155e7be.html#adba1f74cc4f5136f01ffc354a155e7be" title="Replace the pipeline and reset inter&#45;frame executor state." alt="" coords="519,427,691,482"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="787,337,743,378,692,417,671,429,668,425,689,412,740,373,783,333"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Kakshya_1_1VisionProcessor_ab4d9aa3e2b1a6d2cb8691ea10974f73c.html#ab4d9aa3e2b1a6d2cb8691ea10974f73c" title="Replace the pipeline and reset inter&#45;frame executor state." alt="" coords="525,506,684,561"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="805,339,760,417,729,458,692,495,675,508,672,504,689,491,725,455,755,414,800,336"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kinesis_1_1Vision_1_1VisionExecutor_a6ea94c5c8d90c5890b7715a0e4ff2df5.html#a6ea94c5c8d90c5890b7715a0e4ff2df5" title="Execute a VisionSequence on one frame." alt="" coords="276,41,471,81"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="507,64,471,64,471,59,507,59"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1VisionProcessor_ab9b6b50546df64540aee0f0bbbb7939a.html#ab9b6b50546df64540aee0f0bbbb7939a" title="Execute the VisionSequence on processed_data[0]." alt="" coords="25,5,208,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="262,48,208,41,209,35,263,43"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1ImageCVProcessor_a03dd11926b797b52ccbdfa37c2b5e4e1.html#a03dd11926b797b52ccbdfa37c2b5e4e1" title="Download the current GPU image, run the VisionSequence, store the result." alt="" coords="5,70,228,125"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="263,79,229,84,228,79,262,74"/>
+</map>

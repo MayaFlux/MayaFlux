@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nexus::Expanse::evaluate" name="MayaFlux::Nexus::Expanse::evaluate">
+<area shape="rect" id="Node000001" title="Evaluate a spatial snapshot from one Fabric against this Expanse." alt="" coords="5,69,204,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1Expanse_aee033fa0a919623d614b6793ec66260d.html#aee033fa0a919623d614b6793ec66260d" title="Called at the start of every evaluate(), before any position is tested." alt="" coords="252,5,451,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="182,67,260,46,261,51,183,72"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nexus_1_1Expanse_a28d32a4b7901a43cb3712371db9286c9.html#a28d32a4b7901a43cb3712371db9286c9" title="Entity ids inside this Expanse for fabric_id, or nullptr if that fabric has no occupants." alt="" coords="252,69,451,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="204,87,238,87,238,92,204,92"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nexus_1_1Expanse_aac98f507157c70791195b36ce2d3a88a.html#aac98f507157c70791195b36ce2d3a88a" title="Where the region is centred and how far it reaches, for perceptions." alt="" coords="252,133,451,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="183,107,261,127,260,132,182,112"/>
+</map>

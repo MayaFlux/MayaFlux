@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nexus::make_attachment" name="MayaFlux::Nexus::make_attachment">
+<area shape="rect" id="Node000001" title="Build an attachment to buf." alt="" coords="244,37,423,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1Agent_a7f420f62150e3babe04fda42dd44c50b.html#a7f420f62150e3babe04fda42dd44c50b" title="Make an existing, already rendered buffer the look of this object." alt="" coords="10,5,191,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="230,46,191,40,192,35,231,41"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nexus_1_1Emitter_a70d813d4d303befb1af9ee9d25007057.html#a70d813d4d303befb1af9ee9d25007057" title="Make an existing, already rendered buffer the look of this object." alt="" coords="5,69,196,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="231,74,197,79,196,74,230,69"/>
+</map>

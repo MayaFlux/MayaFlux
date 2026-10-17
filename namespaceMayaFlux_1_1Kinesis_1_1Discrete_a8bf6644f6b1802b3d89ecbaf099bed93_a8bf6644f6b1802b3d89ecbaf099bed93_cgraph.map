@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::Discrete::pulse_response" name="MayaFlux::Kinesis::Discrete::pulse_response">
+<area shape="rect" id="Node000001" title="pulse_response over arrays, written to out." alt="" coords="5,5,191,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a088a8b8711299414bd163341de0d2b23.html#a088a8b8711299414bd163341de0d2b23" title="Level at a time of a leaky response to a rectangular pulse." alt="" coords="239,5,424,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="191,23,225,23,225,28,191,28"/>
+</map>

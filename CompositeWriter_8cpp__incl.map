@@ -1,0 +1,18 @@
+<map id="CompositeWriter.cpp" name="CompositeWriter.cpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="77,5,235,31"/>
+<area shape="rect" id="Node000002" href="$CompositeWriter_8hpp.html" title=" " alt="" coords="77,79,235,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="159,31,159,65,153,65,153,31"/>
+<area shape="rect" id="Node000003" href="$CompositeAccess_8hpp.html" title=" " alt="" coords="55,152,257,192"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="159,104,159,138,153,138,153,104"/>
+<area shape="rect" id="Node000004" href="$Composite_8hpp.html" title=" " alt="" coords="5,247,125,273"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="138,194,90,240,86,236,134,190"/>
+<area shape="rect" id="Node000008" href="$Region_8hpp.html" title=" " alt="" coords="149,240,344,280"/>
+<area shape="poly" id="edge7_Node000003_Node000008" title=" " alt="" coords="178,190,219,229,215,233,174,194"/>
+<area shape="rect" id="Node000005" href="$NDData_8hpp.html" title=" " alt="" coords="105,328,207,353"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="80,271,134,317,131,321,77,275"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="44,401,148,427"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="148,355,117,393,112,389,144,352"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="173,401,259,427"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="168,352,200,389,195,393,164,355"/>
+<area shape="poly" id="edge8_Node000008_Node000005" title=" " alt="" coords="226,282,182,321,178,317,223,278"/>
+</map>

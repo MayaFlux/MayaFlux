@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::VKShaderModule::update_specialization_info" name="MayaFlux::Core::VKShaderModule::update_specialization_info">
+<area shape="rect" id="Node000001" title="Update specialization info from current map Called before get_stage_create_info() to ensure fresh dat..." alt="" coords="276,5,528,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VKShaderModule_a57a7241ae4dfcbaa52cf3098ca587954.html#a57a7241ae4dfcbaa52cf3098ca587954" title="Get pipeline shader stage create info." alt="" coords="5,5,228,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="262,28,228,28,228,23,262,23"/>
+</map>

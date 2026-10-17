@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::RelaxationStepProcessor::serve_snapshot" name="MayaFlux::Buffers::RelaxationStepProcessor::serve_snapshot">
+<area shape="rect" id="Node000001" title="Copy the front state buffer to the host and signal RelaxationGridBuffer::snapshot_source(),..." alt="" coords="237,45,421,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RelaxationStepProcessor_a2e60a00198ba2d66fcb3ac3e70dc5b8c.html#a2e60a00198ba2d66fcb3ac3e70dc5b8c" title="Serve a pending snapshot when a deferred dispatch completes." alt="" coords="5,5,189,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="223,57,189,51,190,46,224,52"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1RelaxationStepProcessor_acd95f1f30127b73b53fcdf5461ce6f7d.html#acd95f1f30127b73b53fcdf5461ce6f7d" title="Run one cycle: evaluate the predicate, write the state descriptors, run the parent,..." alt="" coords="5,84,189,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="224,93,190,99,189,93,223,88"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kakshya::SpatialRegionProcessor" name="MayaFlux::Kakshya::SpatialRegionProcessor">
+<area shape="rect" id="Node000001" title="Parallel spatial extraction processor for image&#45;modality containers." alt="" coords="77,1371,279,1585"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1RegionProcessorBase.html" title="Base class for N&#45;dimensional region processors." alt="" coords="65,867,291,1321"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="181,1335,181,1370,175,1370,175,1335"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1DataProcessor.html" title="Interface for processing data within SignalSourceContainer objects." alt="" coords="5,325,156,485"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="96,498,149,866,143,867,91,499"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure.html" title="Container structure for consistent dimension ordering." alt="" coords="181,5,373,804"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="222,805,215,851,210,850,217,804"/>
+</map>

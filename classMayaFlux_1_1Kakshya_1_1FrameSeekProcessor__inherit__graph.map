@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::FrameSeekProcessor" name="MayaFlux::Kakshya::FrameSeekProcessor">
+<area shape="rect" id="Node000001" title="FrameAccessProcessor whose read position follows a function of time." alt="" coords="29,861,180,1201"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1FrameAccessProcessor.html" title=" " alt="" coords="5,213,204,813"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="107,827,107,861,102,861,102,827"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1DataProcessor.html" title="Interface for processing data within SignalSourceContainer objects." alt="" coords="29,5,180,165"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="107,179,107,213,102,213,102,179"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kinesis::reparameterize_by_arc_length" name="MayaFlux::Kinesis::reparameterize_by_arc_length">
+<area shape="rect" id="Node000001" title="Reparameterize curve by arc length." alt="" coords="5,34,177,89"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kinesis_1_1CurveEvaluator_a7556056a0390d54e8c506cb5f11ec8f8.html#a7556056a0390d54e8c506cb5f11ec8f8" title="Resample a polyline to uniform arc length into a caller&#45;owned matrix." alt="" coords="225,5,456,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="177,46,211,41,212,47,178,52"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_ae682691b61d16260df77a88ffd42e9c2.html#ae682691b61d16260df77a88ffd42e9c2" title="Resample path vertices for arc&#45;length parameterization." alt="" coords="255,70,427,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="178,71,241,80,240,86,177,76"/>
+</map>

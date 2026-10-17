@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::MotionChannel::last_dt" name="MayaFlux::Kinesis::MotionChannel::last_dt">
+<area shape="rect" id="Node000001" title="dt passed to the most recent update() call" alt="" coords="203,5,375,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a22c3c18bba7d6e741fea4cd7b0b5c64c.html#a22c3c18bba7d6e741fea4cd7b0b5c64c" title="Curvature helper for MotionChannel&lt;glm::vec2&gt;, self&#45;calibrating its min_speed guard from the channel&#39;..." alt="" coords="5,5,155,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="189,28,155,28,155,23,189,23"/>
+</map>

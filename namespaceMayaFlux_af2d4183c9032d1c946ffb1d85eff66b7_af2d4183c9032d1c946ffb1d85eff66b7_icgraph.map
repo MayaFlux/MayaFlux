@@ -1,0 +1,7 @@
+<map id="MayaFlux::create_tap_set_from_stream" name="MayaFlux::create_tap_set_from_stream">
+<area shape="rect" id="Node000001" title="Begin describing several taps that read an existing DynamicSoundStream." alt="" coords="244,23,407,63"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a21ed01fad567a52087afd33137abe4ea.html#a21ed01fad567a52087afd33137abe4ea" title="Begin describing several taps that read one audio file." alt="" coords="5,5,196,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="230,35,196,31,196,26,231,30"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_a56f3a691551ac448a2708a1d0d39723d.html#a56f3a691551ac448a2708a1d0d39723d" title="Begin describing several taps that read a file picked in a dialog." alt="" coords="5,55,196,80"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="231,56,196,60,196,55,230,51"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::IO::SpatialCache::open" name="MayaFlux::IO::SpatialCache::open">
+<area shape="rect" id="Node000001" title="Open an Alembic archive for writing, Ogawa backend." alt="" coords="5,5,207,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1IO_af70273974a6d4e868b4c016d2f944547.html#af70273974a6d4e868b4c016d2f944547" title="Resolve a writable path against the configured output directory." alt="" coords="255,5,419,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="207,23,241,23,241,28,207,28"/>
+</map>

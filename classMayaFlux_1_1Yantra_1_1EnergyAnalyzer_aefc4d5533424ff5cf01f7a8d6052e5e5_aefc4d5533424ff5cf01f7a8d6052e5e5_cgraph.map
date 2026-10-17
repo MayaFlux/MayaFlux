@@ -1,0 +1,9 @@
+<map id="MayaFlux::Yantra::EnergyAnalyzer::set_analysis_parameter" name="MayaFlux::Yantra::EnergyAnalyzer::set_analysis_parameter">
+<area shape="rect" id="Node000001" title="Handle analysis&#45;specific parameters." alt="" coords="5,77,192,132"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1UniversalAnalyzer_a0229c69da37c5ae9e28edb2d8f502a25.html#a0229c69da37c5ae9e28edb2d8f502a25" title="Analysis&#45;specific parameter handling (override for custom parameters)" alt="" coords="240,5,479,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="191,76,246,61,247,66,193,82"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1EnergyAnalyzer_a1564c3ed36c94b128e873a3a4e4797e5.html#a1564c3ed36c94b128e873a3a4e4797e5" title="Convert string to energy method enum." alt="" coords="259,85,460,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="192,102,245,102,245,107,192,107"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1EnergyAnalyzer_a7702358102c592236e9c99233fda401d.html#a7702358102c592236e9c99233fda401d" title=" " alt="" coords="261,149,458,204"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="193,128,248,143,246,148,191,133"/>
+</map>

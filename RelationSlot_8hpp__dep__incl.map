@@ -1,0 +1,26 @@
+<map id="RelationSlot.hpp" name="RelationSlot.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="265,5,395,31"/>
+<area shape="rect" id="Node000002" href="$RelationNetwork_8hpp.html" title=" " alt="" coords="159,152,317,177"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="317,44,248,153,243,150,313,41"/>
+<area shape="rect" id="Node000009" href="$RelationOperators_8hpp.html" title=" " alt="" coords="323,79,491,104"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="354,38,396,76,393,80,351,42"/>
+<area shape="rect" id="Node000003" href="$Convenience_8hpp.html" title="Everyday headers and namespace imports for user code." alt="" coords="5,225,140,251"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="200,185,101,228,99,223,198,180"/>
+<area shape="rect" id="Node000006" href="$CreatorClasses_8hpp.html" title=" " alt="" coords="164,225,312,251"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="241,191,241,225,235,225,235,191"/>
+<area shape="rect" id="Node000008" href="$RelationNetwork_8cpp.html" title=" " alt="" coords="336,225,495,251"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="280,180,387,223,385,228,278,185"/>
+<area shape="rect" id="Node000004" href="$MayaFlux_8hpp.html" title="Single include for the user facing API." alt="" coords="15,299,130,324"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="75,264,75,299,70,299,70,264"/>
+<area shape="rect" id="Node000005" href="$LiveAid_8hpp.html" title=" " alt="" coords="23,372,122,397"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="75,338,75,372,70,372,70,338"/>
+<area shape="rect" id="Node000007" href="$Creator_8cpp.html" title=" " alt="" coords="190,299,286,324"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="241,264,241,299,235,299,235,264"/>
+<area shape="poly" id="edge9_Node000009_Node000002" title=" " alt="" coords="369,112,267,154,265,149,366,107"/>
+<area shape="rect" id="Node000010" href="$RelationOperators_8cpp.html" title=" " alt="" coords="341,152,508,177"/>
+<area shape="poly" id="edge10_Node000009_Node000010" title=" " alt="" coords="416,117,424,151,419,153,411,118"/>
+<area shape="rect" id="Node000011" href="$WalkOperator_8hpp.html" title=" " alt="" coords="533,152,671,177"/>
+<area shape="poly" id="edge11_Node000009_Node000011" title=" " alt="" coords="452,106,571,149,569,154,450,111"/>
+<area shape="rect" id="Node000012" href="$WalkOperator_8cpp.html" title=" " alt="" coords="533,225,671,251"/>
+<area shape="poly" id="edge12_Node000011_Node000012" title=" " alt="" coords="605,191,605,225,599,225,599,191"/>
+</map>

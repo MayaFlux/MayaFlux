@@ -1,0 +1,5 @@
+<map id="MayaFlux::IO::DelimitedTextWriter::can_write" name="MayaFlux::IO::DelimitedTextWriter::can_write">
+<area shape="rect" id="Node000001" title="Check for a .csv or .tsv output path." alt="" coords="260,5,467,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1DelimitedTextWriter_ae5b38ad4299bda6b4859c7da1242f06e.html#ae5b38ad4299bda6b4859c7da1242f06e" title="Create or truncate a CSV or TSV file." alt="" coords="5,5,212,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="247,28,212,28,212,23,247,23"/>
+</map>

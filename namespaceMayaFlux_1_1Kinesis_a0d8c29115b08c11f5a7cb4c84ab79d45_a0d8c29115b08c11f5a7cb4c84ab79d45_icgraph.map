@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kinesis::position_at" name="MayaFlux::Kinesis::position_at">
+<area shape="rect" id="Node000001" title="Position of one record in interleaved vertex bytes." alt="" coords="203,37,352,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a48bc0731c2aec9bafaa25f9debec0546.html#a48bc0731c2aec9bafaa25f9debec0546" title="Arithmetic centroid of the positions in interleaved vertex bytes." alt="" coords="5,5,155,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="189,46,155,40,155,35,190,40"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_ab577a8cd26f627e22b3fdde7c4d3dd9c.html#ab577a8cd26f627e22b3fdde7c4d3dd9c" title="Area&#45;weighted centroid of the triangles of an indexed mesh." alt="" coords="5,69,155,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="190,74,155,80,155,75,189,69"/>
+</map>

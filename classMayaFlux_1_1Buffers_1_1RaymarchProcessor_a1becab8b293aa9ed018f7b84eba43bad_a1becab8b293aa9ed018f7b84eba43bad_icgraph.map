@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::RaymarchProcessor::set_emission_ramp" name="MayaFlux::Buffers::RaymarchProcessor::set_emission_ramp">
+<area shape="rect" id="Node000001" title="Set the emission colours interpolated by sample value." alt="" coords="272,5,451,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RaymarchProcessor_a0e3a8ecae454e6221e52ec9f77deb8c5.html#a0e3a8ecae454e6221e52ec9f77deb8c5" title="Replace every march setting at once." alt="" coords="5,13,224,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="258,35,224,35,224,30,258,30"/>
+</map>

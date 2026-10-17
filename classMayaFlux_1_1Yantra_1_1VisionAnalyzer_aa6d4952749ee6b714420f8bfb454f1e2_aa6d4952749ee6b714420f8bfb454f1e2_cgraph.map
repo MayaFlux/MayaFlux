@@ -1,0 +1,32 @@
+<map id="MayaFlux::Yantra::VisionAnalyzer::advance" name="MayaFlux::Yantra::VisionAnalyzer::advance">
+<area shape="rect" id="Node000001" title="Advance an analysis of image by one sequence per call, without waiting on deferred GPU work." alt="" coords="5,269,188,309"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1VisionAnalyzer_ac1ef9611a307d0c1b620545ef18b5a75.html#ac1ef9611a307d0c1b620545ef18b5a75" title="Route every completed sequence result into one VisionAnalysis, apply context filtering and run the GP..." alt="" coords="236,141,419,181"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="132,267,277,186,279,191,135,272"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Yantra_1_1VisionAnalyzer_a2fcef078604e4f360976bf1b527f8d24.html#a2fcef078604e4f360976bf1b527f8d24" title="Copy image into this analyzer&#39;s own frame image." alt="" coords="236,237,419,277"/>
+<area shape="poly" id="edge12_Node000001_Node000012" title=" " alt="" coords="188,274,222,269,223,275,188,279"/>
+<area shape="rect" id="Node000014" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_ab826a6dbabf0cf391807b64305ce9929.html#ab826a6dbabf0cf391807b64305ce9929" title="Resolve a VisionQuery into the ResolvedSequences needed to satisfy every active intent." alt="" coords="253,301,402,341"/>
+<area shape="poly" id="edge14_Node000001_Node000014" title=" " alt="" coords="188,299,240,307,239,312,188,305"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Yantra_1_1VisionAnalyzer_a2e316acaa31811cd1ce181be3aa24727.html#a2e316acaa31811cd1ce181be3aa24727" title="Run or poll sequence lane of resolved on its executor." alt="" coords="236,365,419,405"/>
+<area shape="poly" id="edge15_Node000001_Node000015" title=" " alt="" coords="140,307,237,351,255,358,253,363,235,356,138,312"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1VisionAnalyzer_a2190756712a1ad2ab4d09da9c5611c04.html#a2190756712a1ad2ab4d09da9c5611c04" title="Shape descriptors (element_shape.comp) and nearest&#45;neighbour distances (nearest_neighbor...." alt="" coords="481,13,679,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="351,139,402,101,465,63,482,56,484,61,468,68,405,105,354,143"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1VisionAnalyzer_a0020c9fb4b3e5da6e217fdc889a48539.html#a0020c9fb4b3e5da6e217fdc889a48539" title="MeasureAppearance&#39;s whole&#45;frame gradient sample (region_sample.comp over result.images...." alt="" coords="467,77,693,117"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="406,139,487,118,488,123,408,144"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Yantra_1_1VisionAnalyzer_a356893d1f484f7564738b97b17970add.html#a356893d1f484f7564738b97b17970add" title="Dispatch track_reduce.comp over keypoint positions (fed as their own previous, so velocity reduces to..." alt="" coords="479,141,681,181"/>
+<area shape="poly" id="edge10_Node000002_Node000010" title=" " alt="" coords="419,159,466,159,466,164,419,164"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Yantra_1_1VisionAnalyzer_ac76fb0d0fb21b2cddf499748ba2bc6de.html#ac76fb0d0fb21b2cddf499748ba2bc6de" title="Dispatch track_reduce.comp over tracks and fill centroid/velocity/bounds/mean_speed_px/age stats on t..." alt="" coords="489,205,671,245"/>
+<area shape="poly" id="edge11_Node000002_Node000011" title=" " alt="" coords="408,179,488,199,487,205,406,184"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1VisionAnalyzer_ae94a2bd66de236a7114075bb500800aa.html#ae94a2bd66de236a7114075bb500800aa" title="Dispatch otsu_histogram.comp over image, zeroing the buffer first." alt="" coords="741,5,959,45"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="655,75,760,46,762,52,656,80"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Yantra_1_1VisionAnalyzer_a01ed0dc00377e54be5fe2e76ae6653cf.html#a01ed0dc00377e54be5fe2e76ae6653cf" title="Dispatch histogram_reduce.comp over an already&#45;computed histogram." alt="" coords="756,70,944,125"/>
+<area shape="poly" id="edge7_Node000004_Node000008" title=" " alt="" coords="694,95,742,95,742,100,694,100"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Yantra_1_1VisionAnalyzer_a1ec2592e040ccdd20f1e7a185af9fcdb.html#a1ec2592e040ccdd20f1e7a185af9fcdb" title="Dispatch region_sample.comp over the whole image (no region concept for MeasureAppearance)." alt="" coords="745,149,955,189"/>
+<area shape="poly" id="edge8_Node000004_Node000009" title=" " alt="" coords="656,115,762,143,760,148,655,120"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a715d57394465ff2924727d7c82d87e7b.html#a715d57394465ff2924727d7c82d87e7b" title="Get the global shader compiler instance." alt="" coords="1007,77,1204,117"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="922,43,1021,71,1020,76,921,48"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="1252,77,1449,117"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="1204,95,1238,95,1238,100,1204,100"/>
+<area shape="poly" id="edge9_Node000009_Node000006" title=" " alt="" coords="921,147,1020,119,1021,124,922,152"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a6887ad297693c2392be7960daab06002.html#a6887ad297693c2392be7960daab06002" title=" " alt="" coords="481,269,679,309"/>
+<area shape="poly" id="edge13_Node000012_Node000013" title=" " alt="" coords="419,266,468,272,467,278,419,272"/>
+</map>

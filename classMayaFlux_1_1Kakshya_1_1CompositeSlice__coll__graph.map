@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::CompositeSlice" name="MayaFlux::Kakshya::CompositeSlice">
+<area shape="rect" id="Node000001" title="Borrowed consecutive elements, optionally selected by a Region." alt="" coords="11,731,161,1031"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1CompositeAccess.html" title="Validated, non&#45;owning access to packed Composite NDData storage." alt="" coords="9,348,163,668"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="89,668,89,714,83,714,83,668"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1CompositeLayout.html" title="Shared field description and byte layout for a CompositeArray." alt="" coords="5,5,167,285"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="89,285,89,332,83,332,83,285"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::ModalNetwork::excite" name="MayaFlux::Nodes::Network::ModalNetwork::excite">
+<area shape="rect" id="Node000001" title="Excite all modes (strike/pluck)" alt="" coords="5,13,204,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ModalNetwork_aaf21cb8d2b41aa1979dfbe87f9172e5b.html#aaf21cb8d2b41aa1979dfbe87f9172e5b" title="Initialize exciter for new excitation event." alt="" coords="252,5,451,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="204,30,238,30,238,35,204,35"/>
+</map>

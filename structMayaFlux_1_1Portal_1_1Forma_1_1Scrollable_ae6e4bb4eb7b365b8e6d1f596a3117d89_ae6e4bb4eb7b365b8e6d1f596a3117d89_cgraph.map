@@ -1,0 +1,11 @@
+<map id="MayaFlux::Portal::Forma::Scrollable::track" name="MayaFlux::Portal::Forma::Scrollable::track">
+<area shape="rect" id="Node000001" title="Register an element for scroll reflow." alt="" coords="5,69,187,109"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1Scissor_abc396cd41162b53f300807dec76659f2.html#abc396cd41162b53f300807dec76659f2" title="Construct directly from an NDC AABB2D." alt="" coords="251,5,400,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="168,67,240,46,241,52,169,72"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Layer_a39e757c02d8b82d3ca7f604da765ba15.html#a39e757c02d8b82d3ca7f604da765ba15" title="Record that related_id belongs with primary_id." alt="" coords="235,69,416,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="187,87,221,87,221,92,187,92"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Kinesis_1_1AABB2D_a6efb9685283006fd5a3aeb8e74d61f04.html#a6efb9685283006fd5a3aeb8e74d61f04" title=" " alt="" coords="250,133,401,173"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="169,107,241,127,240,132,168,112"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Layer_a6a279bbd434c7f805d6d21f4bf1e2155.html#a6a279bbd434c7f805d6d21f4bf1e2155" title=" " alt="" coords="464,69,645,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="416,87,450,87,450,92,416,92"/>
+</map>

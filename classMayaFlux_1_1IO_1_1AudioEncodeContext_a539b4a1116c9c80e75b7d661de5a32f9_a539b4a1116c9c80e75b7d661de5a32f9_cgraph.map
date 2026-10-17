@@ -1,0 +1,9 @@
+<map id="MayaFlux::IO::AudioEncodeContext::send_fifo_frame" name="MayaFlux::IO::AudioEncodeContext::send_fifo_frame">
+<area shape="rect" id="Node000001" title="Pull one frame from the FIFO and send it to the encoder." alt="" coords="5,37,205,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1AudioEncodeContext_a24098aea7a6494cdd0776dcdc9443dd8.html#a24098aea7a6494cdd0776dcdc9443dd8" title="Drain all packets currently available from the encoder into mux." alt="" coords="253,37,453,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="205,55,240,55,240,60,205,60"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1FFmpegMuxContext_a7313991de8a5200ecafad7b4e69f1ed0.html#a7313991de8a5200ecafad7b4e69f1ed0" title=" " alt="" coords="501,5,749,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="453,43,487,39,488,44,454,48"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1FFmpegMuxContext_ac5b4514b670ada5e611f4c5732c65433.html#ac5b4514b670ada5e611f4c5732c65433" title="Submit one encoded packet for interleaved writing." alt="" coords="501,69,749,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="454,66,488,70,487,76,453,72"/>
+</map>

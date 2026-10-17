@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Network::ModalNetwork::set_decay_multiplier" name="MayaFlux::Nodes::Network::ModalNetwork::set_decay_multiplier">
+<area shape="rect" id="Node000001" title="Set global decay multiplier." alt="" coords="5,5,204,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ModalNetwork_a297d0c0c2f02d881cfd144b9f1027798.html#a297d0c0c2f02d881cfd144b9f1027798" title="Recompute every mode&#39;s per&#45;sample decay from the base decay and multiplier." alt="" coords="252,13,477,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="204,30,238,30,238,35,204,35"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_ae8b39c4e028b87d306f371e497cd1bdc.html#ae8b39c4e028b87d306f371e497cd1bdc" title="Per&#45;sample factor that falls by 1/e in a given time." alt="" coords="525,5,676,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="478,30,512,30,512,35,478,35"/>
+</map>

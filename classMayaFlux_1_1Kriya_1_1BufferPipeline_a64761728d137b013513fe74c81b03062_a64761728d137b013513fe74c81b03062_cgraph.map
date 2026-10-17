@@ -1,0 +1,162 @@
+<map id="MayaFlux::Kriya::BufferPipeline::execute_continuous" name="MayaFlux::Kriya::BufferPipeline::execute_continuous">
+<area shape="rect" id="Node000001" title="Start continuous execution of the pipeline." alt="" coords="5,130,232,170"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1BufferPipeline_a465607590b51389606515eaaa9fc24dd.html#a465607590b51389606515eaaa9fc24dd" title="Execute the pipeline for a specified number of cycles." alt="" coords="280,130,507,170"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="232,147,266,147,266,153,232,153"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a01f29b8e9975b80306f4bc0b534a09d8.html#a01f29b8e9975b80306f4bc0b534a09d8" title="Add a routine to the scheduler based on its processing token." alt="" coords="1944,119,2175,159"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="443,127,534,94,656,58,797,28,869,19,941,15,1493,15,1607,12,1696,9,1783,15,1834,25,1893,41,1929,54,1964,72,2023,109,2020,114,1961,77,1927,59,1891,46,1833,30,1783,20,1695,14,1607,17,1493,21,941,21,870,24,798,33,658,63,535,99,444,132"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Kriya_1_1BufferPipeline_a546065a291fdaa6273cc9dbcfcb61d02.html#a546065a291fdaa6273cc9dbcfcb61d02" title=" " alt="" coords="555,286,781,326"/>
+<area shape="poly" id="edge12_Node000002_Node000013" title=" " alt="" coords="431,168,621,277,618,281,428,172"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a56a711df9c3a3f4e569e036ea6980559.html#a56a711df9c3a3f4e569e036ea6980559" title="Generate automatic name for a routine based on its type." alt="" coords="2227,183,2457,223"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="2149,157,2241,178,2239,183,2148,162"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a81c68c47d8ac2ce8f736f8d35f4fe20c.html#a81c68c47d8ac2ce8f736f8d35f4fe20c" title="Initialize a processing domain if it doesn&#39;t exist." alt="" coords="2227,247,2457,287"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="2091,157,2153,195,2228,233,2247,240,2245,245,2226,238,2150,200,2089,162"/>
+<area shape="rect" id="Node000008" href="$main_8cpp_a25a40b6614565f755233080a384c35f1.html#a25a40b6614565f755233080a384c35f1" title=" " alt="" coords="2303,5,2381,31"/>
+<area shape="poly" id="edge7_Node000003_Node000008" title=" " alt="" coords="2088,117,2149,78,2226,41,2288,23,2290,29,2228,46,2152,83,2091,121"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a09eae60c02e878e614b69c8ead276f14.html#a09eae60c02e878e614b69c8ead276f14" title="Initialize a routine&#39;s state for a specific domain." alt="" coords="2227,55,2457,95"/>
+<area shape="poly" id="edge8_Node000003_Node000009" title=" " alt="" coords="2148,117,2239,96,2241,101,2149,122"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a4346f248dffefc61f410100f2812553a.html#a4346f248dffefc61f410100f2812553a" title="Start the conditional task processing thread if not already running." alt="" coords="2227,119,2457,159"/>
+<area shape="poly" id="edge9_Node000003_Node000010" title=" " alt="" coords="2175,137,2213,137,2213,142,2175,142"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a8c97edc92dee77f6fc9b6030a14637e7.html#a8c97edc92dee77f6fc9b6030a14637e7" title="Generates a unique task ID for new tasks." alt="" coords="2505,183,2736,223"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="2458,201,2492,201,2492,206,2458,206"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a219ff6ebd74ddb638ccf403556a0168c.html#a219ff6ebd74ddb638ccf403556a0168c" title="Get the default rate for a processing token." alt="" coords="2505,247,2736,287"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="2458,265,2492,265,2492,270,2458,270"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a5a9f9fef1e94f2fe4bbd01b9773dbf87.html#a5a9f9fef1e94f2fe4bbd01b9773dbf87" title="Pump the conditional task list in a separate thread." alt="" coords="2505,119,2736,159"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="2458,137,2492,137,2492,142,2458,142"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_af8c8a82e6c4d76ffd846dc4bef4d8301.html#af8c8a82e6c4d76ffd846dc4bef4d8301" title="Drain pending conditional task operations before processing." alt="" coords="2784,119,3015,159"/>
+<area shape="poly" id="edge11_Node000011_Node000012" title=" " alt="" coords="2736,137,2770,137,2770,142,2736,142"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Kriya_1_1BufferPipeline_aafb1e42dfb3010743c85aec0ee7715be.html#aafb1e42dfb3010743c85aec0ee7715be" title=" " alt="" coords="829,257,1056,297"/>
+<area shape="poly" id="edge13_Node000013_Node000014" title=" " alt="" coords="781,291,815,288,816,293,782,297"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Kriya_1_1BufferPipeline_aedc72ee53b8fdda6a03e0cbb9076affb.html#aedc72ee53b8fdda6a03e0cbb9076affb" title=" " alt="" coords="1104,314,1331,354"/>
+<area shape="poly" id="edge81_Node000013_Node000015" title=" " alt="" coords="782,309,1090,325,1090,330,782,314"/>
+<area shape="rect" id="Node000061" href="$classMayaFlux_1_1Kriya_1_1BufferPipeline_a1d31280361c0a444800a91d501486a96.html#a1d31280361c0a444800a91d501486a96" title=" " alt="" coords="829,371,1056,411"/>
+<area shape="poly" id="edge82_Node000013_Node000061" title=" " alt="" coords="734,323,865,365,864,370,732,329"/>
+<area shape="rect" id="Node000062" href="$classMayaFlux_1_1Kriya_1_1BufferPipeline_aa334e626e514139b805eb33486c3413d.html#aa334e626e514139b805eb33486c3413d" title=" " alt="" coords="829,455,1056,495"/>
+<area shape="poly" id="edge84_Node000013_Node000062" title=" " alt="" coords="695,324,756,371,831,421,881,447,879,452,828,426,752,375,692,328"/>
+<area shape="rect" id="Node000064" href="$classMayaFlux_1_1Kriya_1_1BufferPipeline_ab0dd1ebd1e03f5085b1be0d42f99aca1.html#ab0dd1ebd1e03f5085b1be0d42f99aca1" title=" " alt="" coords="829,193,1056,233"/>
+<area shape="poly" id="edge94_Node000013_Node000064" title=" " alt="" coords="717,283,828,242,853,234,855,239,830,247,719,288"/>
+<area shape="poly" id="edge14_Node000014_Node000015" title=" " alt="" coords="1040,294,1108,309,1107,314,1039,299"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Kriya_1_1BufferPipeline_acd6d7727d17a05c459180c05c7f463f2.html#acd6d7727d17a05c459180c05c7f463f2" title=" " alt="" coords="1379,69,1605,109"/>
+<area shape="poly" id="edge15_Node000015_Node000016" title=" " alt="" coords="1251,312,1291,282,1329,243,1339,226,1344,210,1349,179,1355,149,1363,134,1377,119,1382,115,1385,119,1381,123,1368,137,1360,151,1354,180,1349,211,1343,228,1333,246,1295,286,1254,316"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1Kriya_1_1BufferPipeline_afd72d9e0fcd9fcd18640beb55a5b00f0.html#afd72d9e0fcd9fcd18640beb55a5b00f0" title=" " alt="" coords="1379,197,1605,237"/>
+<area shape="poly" id="edge16_Node000015_Node000017" title=" " alt="" coords="1279,312,1329,289,1353,271,1377,253,1408,239,1410,244,1380,258,1356,275,1332,294,1282,316"/>
+<area shape="rect" id="Node000020" href="$classMayaFlux_1_1Kriya_1_1BufferPipeline_a550edf428fd092039202fb81fa5cd525.html#a550edf428fd092039202fb81fa5cd525" title=" " alt="" coords="1379,311,1605,351"/>
+<area shape="poly" id="edge21_Node000015_Node000020" title=" " alt="" coords="1331,330,1365,330,1365,335,1331,336"/>
+<area shape="rect" id="Node000023" href="$classMayaFlux_1_1Kriya_1_1BufferOperation_a3cc6384f041b186be12d43560d796809.html#a3cc6384f041b186be12d43560d796809" title=" " alt="" coords="1653,247,1892,287"/>
+<area shape="poly" id="edge24_Node000015_Node000023" title=" " alt="" coords="1301,311,1378,297,1513,281,1639,271,1640,276,1513,286,1379,302,1302,317"/>
+<area shape="rect" id="Node000027" href="$classMayaFlux_1_1Kriya_1_1BufferOperation_aea5ecc571faab3bbd2fcb49f09a37505.html#aea5ecc571faab3bbd2fcb49f09a37505" title=" " alt="" coords="1653,439,1892,479"/>
+<area shape="poly" id="edge28_Node000015_Node000027" title=" " alt="" coords="1326,351,1606,411,1654,425,1685,433,1683,438,1653,430,1605,417,1324,357"/>
+<area shape="rect" id="Node000028" href="$classMayaFlux_1_1Kriya_1_1BufferPipeline_af89eb6c8952372874256deaece4eb3be.html#af89eb6c8952372874256deaece4eb3be" title=" " alt="" coords="1379,605,1605,645"/>
+<area shape="poly" id="edge32_Node000015_Node000028" title=" " alt="" coords="1233,353,1316,491,1381,591,1388,596,1385,600,1377,595,1312,494,1228,356"/>
+<area shape="rect" id="Node000029" href="$classMayaFlux_1_1Kriya_1_1BufferPipeline_a3c2e6f9b85aca254b253cd236c4853b9.html#a3c2e6f9b85aca254b253cd236c4853b9" title=" " alt="" coords="1379,541,1605,581"/>
+<area shape="poly" id="edge34_Node000015_Node000029" title=" " alt="" coords="1242,352,1303,409,1380,476,1452,530,1449,534,1377,480,1299,413,1238,356"/>
+<area shape="rect" id="Node000031" href="$classMayaFlux_1_1Kriya_1_1BufferPipeline_a52a54a0936240887ddb886a6e1e3bc77.html#a52a54a0936240887ddb886a6e1e3bc77" title=" " alt="" coords="1379,815,1605,855"/>
+<area shape="poly" id="edge37_Node000015_Node000031" title=" " alt="" coords="1235,353,1281,425,1333,521,1348,558,1357,589,1366,619,1381,656,1426,736,1470,803,1466,805,1422,739,1376,658,1361,620,1352,590,1343,560,1328,523,1276,428,1230,356"/>
+<area shape="rect" id="Node000058" href="$classMayaFlux_1_1Kriya_1_1BufferPipeline_aed7232e1919df49dd49d76253d40ff42.html#aed7232e1919df49dd49d76253d40ff42" title=" " alt="" coords="1379,133,1605,173"/>
+<area shape="poly" id="edge78_Node000015_Node000058" title=" " alt="" coords="1246,312,1286,281,1329,243,1342,226,1351,211,1361,197,1377,183,1387,176,1390,181,1380,187,1365,200,1355,214,1347,229,1333,247,1290,285,1249,316"/>
+<area shape="rect" id="Node000060" href="$classMayaFlux_1_1Kriya_1_1BufferPipeline_ae49d271934282a7d0f4fb32e5d039483.html#ae49d271934282a7d0f4fb32e5d039483" title=" " alt="" coords="1379,426,1605,466"/>
+<area shape="poly" id="edge80_Node000015_Node000060" title=" " alt="" coords="1261,352,1380,405,1418,419,1416,424,1378,410,1259,357"/>
+<area shape="rect" id="Node000018" href="$classMayaFlux_1_1Kriya_1_1BufferPipeline_afc2b45a00fceee0b42ba5d88d54012f5.html#afc2b45a00fceee0b42ba5d88d54012f5" title=" " alt="" coords="1659,119,1886,159"/>
+<area shape="poly" id="edge17_Node000017_Node000018" title=" " alt="" coords="1563,194,1653,169,1683,160,1685,165,1654,174,1564,199"/>
+<area shape="rect" id="Node000019" href="$classMayaFlux_1_1Kriya_1_1BufferPipeline_ad8c7cef7564eae6c24370463b300d0ba.html#ad8c7cef7564eae6c24370463b300d0ba" title=" " alt="" coords="1659,183,1886,223"/>
+<area shape="poly" id="edge19_Node000017_Node000019" title=" " alt="" coords="1605,209,1645,207,1645,212,1606,214"/>
+<area shape="poly" id="edge18_Node000018_Node000003" title=" " alt="" coords="1886,137,1930,137,1930,142,1886,142"/>
+<area shape="poly" id="edge20_Node000019_Node000003" title=" " alt="" coords="1862,181,1955,160,1957,165,1864,186"/>
+<area shape="rect" id="Node000021" href="$classMayaFlux_1_1Kriya_1_1BufferPipeline_a42520e7229967a1232d7ed99534912db.html#a42520e7229967a1232d7ed99534912db" title=" " alt="" coords="1659,311,1886,351"/>
+<area shape="poly" id="edge22_Node000020_Node000021" title=" " alt="" coords="1606,329,1645,329,1645,334,1606,334"/>
+<area shape="rect" id="Node000022" href="$classMayaFlux_1_1Kriya_1_1BufferPipeline_a92987e9b686bb7e5f84317f0bb7e8c8d.html#a92987e9b686bb7e5f84317f0bb7e8c8d" title=" " alt="" coords="1659,375,1886,415"/>
+<area shape="poly" id="edge23_Node000020_Node000022" title=" " alt="" coords="1581,349,1672,370,1671,375,1580,354"/>
+<area shape="rect" id="Node000024" href="$classMayaFlux_1_1Kriya_1_1BufferOperation_afe17bdae6a1510c49f2dc2105317377b.html#afe17bdae6a1510c49f2dc2105317377b" title="Get the execution phase hint for this operation." alt="" coords="1940,279,2179,319"/>
+<area shape="poly" id="edge25_Node000023_Node000024" title=" " alt="" coords="1893,278,1927,282,1926,287,1892,283"/>
+<area shape="rect" id="Node000025" href="$classMayaFlux_1_1Kriya_1_1BufferOperation_a9dd46473d7b974476837e9b200df0bd7.html#a9dd46473d7b974476837e9b200df0bd7" title="Getters for internal state (read&#45;only)" alt="" coords="1940,451,2179,491"/>
+<area shape="poly" id="edge26_Node000023_Node000025" title=" " alt="" coords="1878,285,1894,297,1908,315,1916,333,1919,369,1922,404,1928,421,1942,437,1946,441,1943,445,1938,441,1924,424,1916,405,1913,370,1910,334,1904,318,1890,301,1875,290"/>
+<area shape="rect" id="Node000026" href="$classMayaFlux_1_1Kriya_1_1BufferOperation_a792e3313503636c56cf26ec60dfc04fb.html#a792e3313503636c56cf26ec60dfc04fb" title="Check if this operation is a streaming operation." alt="" coords="1940,387,2179,427"/>
+<area shape="poly" id="edge27_Node000023_Node000026" title=" " alt="" coords="1862,285,1893,297,1918,312,1942,329,2016,377,2013,382,1938,334,1915,316,1891,302,1860,290"/>
+<area shape="poly" id="edge29_Node000027_Node000024" title=" " alt="" coords="1866,437,1891,425,1906,413,1915,401,1924,388,1938,373,2008,324,2011,329,1942,377,1928,391,1919,404,1909,417,1893,430,1869,442"/>
+<area shape="poly" id="edge30_Node000027_Node000025" title=" " alt="" coords="1892,462,1926,463,1926,468,1892,467"/>
+<area shape="poly" id="edge31_Node000027_Node000026" title=" " alt="" coords="1883,437,1935,427,1936,432,1884,442"/>
+<area shape="poly" id="edge33_Node000028_Node000025" title=" " alt="" coords="1581,642,1653,651,1734,651,1775,647,1816,638,1855,624,1890,604,1902,593,1909,582,1915,556,1920,528,1926,514,1938,501,1944,497,1947,501,1942,505,1931,517,1925,530,1920,557,1914,584,1907,597,1894,608,1857,628,1817,643,1776,652,1734,657,1652,656,1580,647"/>
+<area shape="poly" id="edge36_Node000029_Node000025" title=" " alt="" coords="1605,540,1926,490,1927,495,1606,546"/>
+<area shape="rect" id="Node000030" href="$classMayaFlux_1_1Kriya_1_1BufferCapture_a826da8a14d2df88090b5c2dd94ce423e.html#a826da8a14d2df88090b5c2dd94ce423e" title=" " alt="" coords="1659,554,1886,594"/>
+<area shape="poly" id="edge35_Node000029_Node000030" title=" " alt="" coords="1606,563,1645,565,1645,571,1605,569"/>
+<area shape="poly" id="edge47_Node000031_Node000025" title=" " alt="" coords="1536,813,1591,790,1653,769,1690,761,1724,758,1783,760,1810,759,1836,754,1862,741,1890,719,1909,693,1917,667,1917,640,1914,613,1911,585,1911,557,1919,529,1938,502,1942,498,1946,502,1942,505,1924,532,1916,558,1916,585,1919,612,1923,640,1922,668,1914,695,1894,723,1865,746,1838,759,1810,765,1783,765,1724,764,1691,766,1654,774,1593,795,1538,818"/>
+<area shape="rect" id="Node000032" href="$classMayaFlux_1_1Kriya_1_1BufferPipeline_a799269182652064c956c8cb2ca41b788.html#a799269182652064c956c8cb2ca41b788" title=" " alt="" coords="1659,783,1886,823"/>
+<area shape="poly" id="edge38_Node000031_Node000032" title=" " alt="" coords="1605,820,1645,815,1646,820,1606,825"/>
+<area shape="rect" id="Node000040" href="$namespaceMayaFlux_1_1Reflect_aad91118cbd25bd9e35a3ced9aa4e6dbd.html#aad91118cbd25bd9e35a3ced9aa4e6dbd" title="Universal enum to string converter using magic_enum (original case)" alt="" coords="1699,847,1846,887"/>
+<area shape="poly" id="edge46_Node000031_Node000040" title=" " alt="" coords="1606,846,1686,855,1685,860,1605,851"/>
+<area shape="rect" id="Node000041" href="$classMayaFlux_1_1Kriya_1_1BufferPipeline_acf2c52f2efabae760dcb0c43dea74b2d.html#acf2c52f2efabae760dcb0c43dea74b2d" title=" " alt="" coords="1659,911,1886,951"/>
+<area shape="poly" id="edge48_Node000031_Node000041" title=" " alt="" coords="1540,853,1654,897,1680,905,1679,910,1652,902,1538,858"/>
+<area shape="rect" id="Node000042" href="$classMayaFlux_1_1Kriya_1_1BufferPipeline_afcb814e642946da6adf6c762106e0597.html#afcb814e642946da6adf6c762106e0597" title=" " alt="" coords="1659,1174,1886,1214"/>
+<area shape="poly" id="edge49_Node000031_Node000042" title=" " alt="" coords="1502,854,1522,907,1554,979,1598,1057,1625,1094,1655,1128,1680,1149,1709,1165,1706,1170,1677,1153,1651,1132,1621,1098,1594,1060,1549,981,1517,909,1497,856"/>
+<area shape="rect" id="Node000053" href="$classMayaFlux_1_1Kriya_1_1BufferPipeline_ad0d8fda50adc2f0f25caadad34aa97f5.html#ad0d8fda50adc2f0f25caadad34aa97f5" title=" " alt="" coords="1659,1270,1886,1310"/>
+<area shape="poly" id="edge61_Node000031_Node000053" title=" " alt="" coords="1499,855,1514,923,1543,1020,1564,1073,1589,1127,1619,1178,1655,1224,1679,1245,1706,1262,1703,1266,1676,1249,1651,1228,1615,1181,1584,1129,1559,1076,1538,1022,1509,924,1494,856"/>
+<area shape="rect" id="Node000054" href="$classMayaFlux_1_1Kriya_1_1BufferPipeline_a600ef10932bbd9233b44cc7acd0c6939.html#a600ef10932bbd9233b44cc7acd0c6939" title=" " alt="" coords="1659,669,1886,709"/>
+<area shape="poly" id="edge65_Node000031_Node000054" title=" " alt="" coords="1517,813,1577,769,1652,725,1685,711,1687,716,1655,730,1580,774,1520,817"/>
+<area shape="rect" id="Node000056" href="$classMayaFlux_1_1Kriya_1_1BufferPipeline_a6a40157fdae6091ce7f8132403ade2f5.html#a6a40157fdae6091ce7f8132403ade2f5" title=" " alt="" coords="1659,1078,1886,1118"/>
+<area shape="poly" id="edge68_Node000031_Node000056" title=" " alt="" coords="1517,854,1742,1066,1738,1070,1513,857"/>
+<area shape="rect" id="Node000057" href="$classMayaFlux_1_1Kriya_1_1BufferPipeline_a192c003830b46fad99a8508f482c0e98.html#a192c003830b46fad99a8508f482c0e98" title=" " alt="" coords="1659,1334,1886,1374"/>
+<area shape="poly" id="edge73_Node000031_Node000057" title=" " alt="" coords="1496,855,1502,941,1511,1000,1524,1066,1544,1134,1572,1202,1608,1265,1655,1320,1660,1324,1656,1328,1651,1324,1604,1268,1567,1204,1539,1136,1519,1067,1505,1001,1497,941,1491,856"/>
+<area shape="rect" id="Node000033" href="$classMayaFlux_1_1Kriya_1_1BufferCapture_a12d2dacb7b5694dc20a61da30e33f8ef.html#a12d2dacb7b5694dc20a61da30e33f8ef" title="Return the configured audio source." alt="" coords="1946,643,2173,683"/>
+<area shape="poly" id="edge39_Node000032_Node000033" title=" " alt="" coords="1857,781,1890,763,1906,746,1913,729,1922,711,1938,693,1947,687,1950,692,1942,697,1926,714,1918,731,1910,749,1894,767,1860,785"/>
+<area shape="rect" id="Node000034" href="$classMayaFlux_1_1Kriya_1_1BufferCapture_aed9c4caec55f8256103cda3dcc2fa70a.html#aed9c4caec55f8256103cda3dcc2fa70a" title=" " alt="" coords="1946,707,2173,747"/>
+<area shape="poly" id="edge40_Node000032_Node000034" title=" " alt="" coords="1848,781,1969,748,1971,753,1850,786"/>
+<area shape="rect" id="Node000035" href="$classMayaFlux_1_1Kriya_1_1BufferCapture_a32a47d29f53ef9f9f9e143e6992bc531.html#a32a47d29f53ef9f9f9e143e6992bc531" title="Return the configured graphics source." alt="" coords="1946,771,2173,811"/>
+<area shape="poly" id="edge41_Node000032_Node000035" title=" " alt="" coords="1886,796,1932,794,1932,799,1886,801"/>
+<area shape="rect" id="Node000036" href="$classMayaFlux_1_1Kriya_1_1BufferCapture_a6893d5b73ac0625d9595ec120aa422b9.html#a6893d5b73ac0625d9595ec120aa422b9" title=" " alt="" coords="1946,835,2173,875"/>
+<area shape="poly" id="edge42_Node000032_Node000036" title=" " alt="" coords="1884,821,1936,830,1935,836,1883,826"/>
+<area shape="rect" id="Node000037" href="$classMayaFlux_1_1Kriya_1_1BufferCapture_a121e85715aee85d9bac7e6c8c9922b1d.html#a121e85715aee85d9bac7e6c8c9922b1d" title=" " alt="" coords="1946,899,2173,939"/>
+<area shape="poly" id="edge43_Node000032_Node000037" title=" " alt="" coords="1869,821,1893,833,1909,846,1918,860,1927,873,1942,885,1953,891,1951,896,1938,890,1923,876,1914,863,1905,850,1891,838,1866,826"/>
+<area shape="rect" id="Node000038" href="$classMayaFlux_1_1Kriya_1_1BufferCapture_a2904c1132bb2a0b535150edbf2decbe4.html#a2904c1132bb2a0b535150edbf2decbe4" title=" " alt="" coords="1946,1014,2173,1054"/>
+<area shape="poly" id="edge44_Node000032_Node000038" title=" " alt="" coords="1876,821,1894,833,1907,848,1915,862,1921,890,1926,919,1932,934,1942,950,1973,980,2008,1005,2005,1009,1970,984,1938,953,1927,937,1921,921,1916,891,1910,864,1902,851,1890,837,1873,826"/>
+<area shape="rect" id="Node000039" href="$classMayaFlux_1_1Kriya_1_1BufferCapture_a6d1bbc9b23723e197df1d8a35ae02d58.html#a6d1bbc9b23723e197df1d8a35ae02d58" title=" " alt="" coords="1946,579,2173,619"/>
+<area shape="poly" id="edge45_Node000032_Node000039" title=" " alt="" coords="1864,781,1890,763,1903,747,1909,731,1913,697,1917,663,1924,646,1938,629,1944,625,1947,629,1942,633,1929,649,1922,665,1918,698,1915,732,1907,749,1894,767,1867,785"/>
+<area shape="poly" id="edge51_Node000042_Node000038" title=" " alt="" coords="1820,1172,1856,1152,1890,1128,1905,1112,1913,1096,1922,1080,1938,1064,1948,1058,1951,1063,1942,1068,1926,1083,1917,1098,1909,1114,1894,1132,1859,1157,1823,1176"/>
+<area shape="rect" id="Node000043" href="$namespaceMayaFlux_1_1Kriya_1_1detail_a9edc6b35f0ae29cc1d36271a727bb756.html#a9edc6b35f0ae29cc1d36271a727bb756" title=" " alt="" coords="1973,1206,2146,1246"/>
+<area shape="poly" id="edge50_Node000042_Node000043" title=" " alt="" coords="1887,1204,1959,1212,1959,1217,1886,1209"/>
+<area shape="rect" id="Node000044" href="$classMayaFlux_1_1Kriya_1_1BufferPipeline_a1291668126ca8f7c2fef564df801bcfd.html#a1291668126ca8f7c2fef564df801bcfd" title=" " alt="" coords="1946,1334,2173,1374"/>
+<area shape="poly" id="edge52_Node000042_Node000044" title=" " alt="" coords="1823,1212,1859,1231,1894,1256,1909,1274,1917,1290,1926,1305,1942,1320,1951,1325,1948,1330,1938,1324,1922,1308,1913,1292,1905,1276,1890,1260,1856,1236,1820,1216"/>
+<area shape="rect" id="Node000049" href="$namespaceMayaFlux_1_1Kriya_1_1detail_a518529bf475796bb975ddbfaee130156.html#a518529bf475796bb975ddbfaee130156" title=" " alt="" coords="1973,1270,2146,1310"/>
+<area shape="poly" id="edge57_Node000042_Node000049" title=" " alt="" coords="1823,1212,1941,1255,1967,1264,1966,1269,1939,1261,1821,1217"/>
+<area shape="rect" id="Node000050" href="$classMayaFlux_1_1Kriya_1_1BufferPipeline_a7266314199760c9f465aaf89557b1cff.html#a7266314199760c9f465aaf89557b1cff" title=" " alt="" coords="1946,1078,2173,1118"/>
+<area shape="poly" id="edge58_Node000042_Node000050" title=" " alt="" coords="1821,1171,1939,1127,1966,1119,1967,1124,1941,1133,1823,1176"/>
+<area shape="rect" id="Node000051" href="$namespaceMayaFlux_1_1Kriya_1_1detail_a54dc36c8b415ae2018d7898301d7b1b6.html#a54dc36c8b415ae2018d7898301d7b1b6" title=" " alt="" coords="1973,1398,2146,1438"/>
+<area shape="poly" id="edge59_Node000042_Node000051" title=" " alt="" coords="1831,1212,1864,1231,1894,1256,1906,1274,1913,1291,1917,1323,1922,1354,1929,1369,1942,1384,1961,1397,1958,1402,1938,1388,1924,1372,1917,1356,1911,1324,1907,1292,1901,1276,1890,1260,1861,1235,1828,1216"/>
+<area shape="rect" id="Node000052" href="$namespaceMayaFlux_1_1Kriya_1_1detail_ade327957e5e75c3500dc73ea4826ec3f.html#ade327957e5e75c3500dc73ea4826ec3f" title=" " alt="" coords="1973,1142,2146,1182"/>
+<area shape="poly" id="edge60_Node000042_Node000052" title=" " alt="" coords="1886,1179,1959,1171,1959,1176,1887,1184"/>
+<area shape="rect" id="Node000045" href="$namespaceMayaFlux_1_1Kriya_1_1detail_a4c3f6e760338c532bd4bb057135bc520.html#a4c3f6e760338c532bd4bb057135bc520" title="Whether the buffer holds its frames as layers that can be written one at a time." alt="" coords="2255,1334,2429,1374"/>
+<area shape="poly" id="edge53_Node000044_Node000045" title=" " alt="" coords="2173,1351,2241,1351,2241,1357,2173,1357"/>
+<area shape="rect" id="Node000046" href="$namespaceMayaFlux_1_1Kriya_1_1detail_af86670866b10b0afadbeba85f1fb3de7.html#af86670866b10b0afadbeba85f1fb3de7" title="Whether a DataVariant can be written to the buffer&#39;s primary storage." alt="" coords="2255,1426,2429,1466"/>
+<area shape="poly" id="edge54_Node000044_Node000046" title=" " alt="" coords="2139,1371,2179,1383,2278,1418,2276,1424,2178,1389,2138,1377"/>
+<area shape="rect" id="Node000047" href="$namespaceMayaFlux_1_1Kriya_1_1detail_a31ae829503ec085adf440e7dff5b1749.html#a31ae829503ec085adf440e7dff5b1749" title="Write a DataVariant into one layer of a layered buffer." alt="" coords="2255,1113,2429,1153"/>
+<area shape="poly" id="edge55_Node000044_Node000047" title=" " alt="" coords="2154,1331,2177,1320,2223,1284,2263,1242,2296,1199,2320,1163,2324,1166,2300,1203,2267,1245,2226,1288,2180,1324,2157,1336"/>
+<area shape="rect" id="Node000048" href="$namespaceMayaFlux_1_1Kakshya_afa023b19b2c5da8c14e9de60820601b1.html#afa023b19b2c5da8c14e9de60820601b1" title="Extract a TextureAccess from a DataVariant." alt="" coords="2541,1113,2700,1153"/>
+<area shape="poly" id="edge56_Node000047_Node000048" title=" " alt="" coords="2429,1130,2527,1130,2527,1135,2429,1135"/>
+<area shape="poly" id="edge62_Node000053_Node000044" title=" " alt="" coords="1864,1307,1957,1328,1955,1334,1862,1313"/>
+<area shape="poly" id="edge63_Node000053_Node000049" title=" " alt="" coords="1886,1287,1959,1287,1959,1293,1886,1293"/>
+<area shape="poly" id="edge64_Node000053_Node000051" title=" " alt="" coords="1872,1308,1894,1320,1910,1336,1918,1353,1926,1369,1942,1384,1961,1395,1958,1399,1938,1388,1922,1372,1914,1355,1906,1339,1890,1324,1869,1313"/>
+<area shape="poly" id="edge67_Node000054_Node000026" title=" " alt="" coords="1815,666,1855,640,1890,604,1902,582,1908,561,1910,519,1913,479,1922,458,1938,438,1943,433,1946,437,1942,441,1926,461,1918,480,1915,520,1913,562,1907,584,1894,608,1858,644,1818,671"/>
+<area shape="rect" id="Node000055" href="$classMayaFlux_1_1Kriya_1_1BufferOperation_a4e61e95438b80ad8394552d3968d6490.html#a4e61e95438b80ad8394552d3968d6490" title="Return the operation&#39;s processing token." alt="" coords="1940,515,2179,555"/>
+<area shape="poly" id="edge66_Node000054_Node000055" title=" " alt="" coords="1859,666,1890,648,1906,628,1913,607,1921,586,1938,565,1946,560,1949,564,1942,569,1925,589,1918,609,1911,631,1894,652,1862,671"/>
+<area shape="poly" id="edge69_Node000056_Node000044" title=" " alt="" coords="1833,1116,1865,1134,1894,1160,1908,1182,1914,1204,1916,1244,1919,1283,1927,1301,1942,1320,1946,1324,1943,1328,1938,1324,1922,1304,1914,1284,1911,1244,1909,1204,1903,1184,1890,1164,1862,1139,1830,1120"/>
+<area shape="poly" id="edge71_Node000056_Node000047" title=" " alt="" coords="1798,1076,1859,1034,1898,1014,1939,999,2006,983,2060,976,2114,981,2180,1000,2221,1019,2258,1045,2317,1100,2313,1104,2255,1050,2218,1024,2178,1004,2113,986,2060,981,2007,988,1941,1005,1900,1019,1862,1039,1801,1080"/>
+<area shape="poly" id="edge70_Node000056_Node000050" title=" " alt="" coords="1886,1095,1932,1095,1932,1101,1886,1101"/>
+<area shape="poly" id="edge72_Node000056_Node000052" title=" " alt="" coords="1864,1115,1960,1137,1959,1142,1862,1121"/>
+<area shape="poly" id="edge75_Node000057_Node000025" title=" " alt="" coords="1878,1332,1890,1320,1908,1290,1920,1251,1927,1206,1929,1154,1925,1038,1913,913,1902,787,1898,671,1900,619,1907,573,1919,533,1938,502,1940,499,1944,503,1942,505,1924,535,1912,574,1905,620,1903,671,1907,787,1919,912,1930,1038,1934,1154,1932,1206,1925,1253,1913,1292,1894,1324,1881,1336"/>
+<area shape="poly" id="edge76_Node000057_Node000044" title=" " alt="" coords="1886,1351,1932,1351,1932,1357,1886,1357"/>
+<area shape="poly" id="edge74_Node000057_Node000046" title=" " alt="" coords="1801,1372,1862,1413,1900,1433,1941,1447,2018,1462,2098,1467,2174,1465,2241,1459,2242,1464,2174,1470,2097,1472,2017,1467,1939,1453,1898,1438,1859,1418,1798,1376"/>
+<area shape="poly" id="edge77_Node000057_Node000051" title=" " alt="" coords="1864,1371,1960,1393,1959,1398,1862,1377"/>
+<area shape="rect" id="Node000059" href="$classMayaFlux_1_1Kriya_1_1BufferPipeline_a669dc8f23041fb2a3d6d28c3649430ae.html#a669dc8f23041fb2a3d6d28c3649430ae" title=" " alt="" coords="1659,55,1886,95"/>
+<area shape="poly" id="edge79_Node000058_Node000059" title=" " alt="" coords="1563,130,1653,105,1683,96,1685,101,1654,110,1564,135"/>
+<area shape="poly" id="edge83_Node000061_Node000015" title=" " alt="" coords="1039,369,1107,354,1108,359,1040,374"/>
+<area shape="poly" id="edge85_Node000062_Node000017" title=" " alt="" coords="1007,453,1032,439,1054,421,1065,406,1072,391,1076,361,1081,330,1089,315,1102,300,1138,285,1202,268,1365,236,1366,241,1203,273,1139,290,1106,304,1093,318,1086,332,1081,361,1077,393,1070,409,1058,425,1035,444,1010,458"/>
+<area shape="poly" id="edge86_Node000062_Node000020" title=" " alt="" coords="1019,453,1401,352,1402,357,1021,458"/>
+<area shape="poly" id="edge90_Node000062_Node000028" title=" " alt="" coords="967,493,1026,541,1064,565,1105,584,1170,603,1237,615,1303,622,1365,625,1365,631,1303,628,1236,620,1168,608,1103,588,1062,569,1023,545,964,498"/>
+<area shape="poly" id="edge91_Node000062_Node000029" title=" " alt="" coords="1056,483,1188,498,1331,519,1403,535,1402,540,1330,525,1188,503,1056,488"/>
+<area shape="poly" id="edge92_Node000062_Node000031" title=" " alt="" coords="963,494,1023,558,1063,595,1106,629,1190,685,1278,734,1431,807,1429,812,1276,739,1187,689,1102,633,1059,599,1019,561,959,497"/>
+<area shape="poly" id="edge93_Node000062_Node000060" title=" " alt="" coords="1056,467,1365,450,1365,455,1057,472"/>
+<area shape="rect" id="Node000063" href="$classMayaFlux_1_1Kriya_1_1BufferPipeline_a6dcf630c6d44d578e3a2c70b8d42494e.html#a6dcf630c6d44d578e3a2c70b8d42494e" title=" " alt="" coords="1104,534,1331,574"/>
+<area shape="poly" id="edge87_Node000062_Node000063" title=" " alt="" coords="1014,493,1134,528,1133,533,1013,498"/>
+<area shape="poly" id="edge88_Node000063_Node000027" title=" " alt="" coords="1330,532,1640,479,1641,484,1331,537"/>
+<area shape="poly" id="edge89_Node000063_Node000031" title=" " alt="" coords="1240,572,1464,803,1460,807,1236,576"/>
+<area shape="rect" id="Node000065" href="$namespaceMayaFlux_1_1Kriya_1_1detail_a616ce47bf9431663da5ff7a534205bed.html#a616ce47bf9431663da5ff7a534205bed" title="Make a buffer draw to the window in a render config, unless it already does." alt="" coords="1131,193,1304,233"/>
+<area shape="poly" id="edge95_Node000064_Node000065" title=" " alt="" coords="1056,210,1117,210,1117,215,1056,215"/>
+</map>

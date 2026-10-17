@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::Lattice1D" name="MayaFlux::Kinesis::Lattice1D">
+<area shape="rect" id="Node000001" title="A regular subdivision of an AABB1D into a number of cells." alt="" coords="5,268,147,508"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1AABB1D.html" title="Closed interval on a scalar axis." alt="" coords="5,5,147,205"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="79,205,79,252,73,252,73,205"/>
+</map>

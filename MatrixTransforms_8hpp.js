@@ -1,0 +1,8 @@
+var MatrixTransforms_8hpp =
+[
+    [ "create_rotation_matrix", "MatrixTransforms_8hpp.html#aeea4175753e57ad333ec47c70cb84c8f", null ],
+    [ "create_rotation_scaling_matrix", "MatrixTransforms_8hpp.html#acdb9869d78c4a5533dac06a4db4a059a", null ],
+    [ "create_scaling_matrix", "MatrixTransforms_8hpp.html#a4f1853f11573524135cca75847840cd6", null ],
+    [ "create_translation_vector", "MatrixTransforms_8hpp.html#a19b051b6a9ab9d9cd7ba2de073123d49", null ],
+    [ "create_uniform_scaling_matrix", "MatrixTransforms_8hpp.html#a0c3c44af7f27b7b21c2eaabc809904f6", null ]
+];

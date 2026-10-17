@@ -1,0 +1,17 @@
+<map id="MayaFlux::Kakshya::TextureContainer::ensure_cpu_all" name="MayaFlux::Kakshya::TextureContainer::ensure_cpu_all">
+<area shape="rect" id="Node000001" title=" " alt="" coords="553,152,739,207"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_a3eb8d23abb91c8ad23e11296beb75130.html#a3eb8d23abb91c8ad23e11296beb75130" title=" " alt="" coords="313,44,499,99"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="577,148,504,114,475,101,477,96,506,109,579,143"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_ad04514daaec394f22774f04f49e86413.html#ad04514daaec394f22774f04f49e86413" title="Get a reference to the raw data stored in the container." alt="" coords="307,123,505,163"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="539,166,505,161,506,156,540,161"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_a71f2ddf2372e210ee5fc13cdd44844d7.html#a71f2ddf2372e210ee5fc13cdd44844d7" title="Get data for multiple region segments efficiently." alt="" coords="325,188,487,243"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="540,198,488,206,487,201,540,193"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_ae6da83952a5d8cd008ed1230b5d0c86e.html#ae6da83952a5d8cd008ed1230b5d0c86e" title="Upload all layers into an existing VKImage instead of creating one." alt="" coords="313,267,499,321"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="587,216,506,258,481,269,479,264,504,253,585,211"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_a6b1b2257bbb6d75e9d8494f0d0c51489.html#a6b1b2257bbb6d75e9d8494f0d0c51489" title="Upload all layers as a Vulkan 2D array texture." alt="" coords="53,5,211,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="299,59,211,46,212,41,300,54"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_a94b1ce9c37446c09e245dac1f3e67db9.html#a94b1ce9c37446c09e245dac1f3e67db9" title="Upload all layers as a Vulkan 2D array texture, reusing a staging buffer." alt="" coords="53,84,211,139"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="300,90,212,102,211,97,299,84"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Yantra_1_1TextureExecutionContext_afcfb20ff8c50fd15d2ceade3572e0fc3.html#afcfb20ff8c50fd15d2ceade3572e0fc3" title="The container&#39;s pixels as a GPU image, without allocating one per call." alt="" coords="5,274,259,314"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="300,297,259,297,259,291,300,291"/>
+</map>

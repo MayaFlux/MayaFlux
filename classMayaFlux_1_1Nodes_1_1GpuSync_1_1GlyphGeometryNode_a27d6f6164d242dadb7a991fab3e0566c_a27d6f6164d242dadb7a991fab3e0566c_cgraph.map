@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::GpuSync::GlyphGeometryNode::write_vertices" name="MayaFlux::Nodes::GpuSync::GlyphGeometryNode::write_vertices">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,45,213,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GeometryWriterNode_a63a86ccaf0960a88deb0b99785b6eb30.html#a63a86ccaf0960a88deb0b99785b6eb30" title="Get cached vertex layout." alt="" coords="261,5,461,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="213,54,247,48,248,53,214,59"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GeometryWriterNode_a79b8530548d0f4b4c464071439faaac5.html#a79b8530548d0f4b4c464071439faaac5" title="Set cached vertex layout." alt="" coords="261,84,461,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="214,86,248,91,247,97,213,91"/>
+</map>

@@ -1,0 +1,11 @@
+<map id="MayaFlux::Portal::Forma::Collapsible::attach" name="MayaFlux::Portal::Forma::Collapsible::attach">
+<area shape="rect" id="Node000001" title="Relate a body element to this collapsible and sync its visibility to the current open state." alt="" coords="5,49,187,89"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Layer_a39e757c02d8b82d3ca7f604da765ba15.html#a39e757c02d8b82d3ca7f604da765ba15" title="Record that related_id belongs with primary_id." alt="" coords="235,5,416,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="186,49,221,43,222,48,187,55"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Layer_a216ba1e08aa5782474bc89594fa5ccad.html#a216ba1e08aa5782474bc89594fa5ccad" title=" " alt="" coords="235,93,416,133"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="187,84,222,91,221,96,186,89"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Layer_a6a279bbd434c7f805d6d21f4bf1e2155.html#a6a279bbd434c7f805d6d21f4bf1e2155" title=" " alt="" coords="464,49,645,89"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="417,40,451,47,450,52,416,45"/>
+<area shape="poly" id="edge4_Node000004_Node000003" title=" " alt="" coords="416,93,450,87,451,92,417,99"/>
+<area shape="poly" id="edge5_Node000004_Node000004" title=" " alt="" coords="282,94,280,84,287,74,302,69,325,67,352,70,367,77,364,82,351,75,325,72,303,74,290,79,285,85,288,92"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Forma::Geometry::follow_move" name="MayaFlux::Portal::Forma::Geometry::follow_move">
+<area shape="rect" id="Node000001" title="Produce a Form::wire that writes the cursor position on hover." alt="" coords="5,5,192,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_ab183360a354b5e38a68412593090461f.html#ab183360a354b5e38a68412593090461f" title="Called each move event while the cursor is over an element." alt="" coords="240,5,421,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="193,23,226,23,226,28,193,28"/>
+</map>

@@ -1,0 +1,11 @@
+<map id="MayaFlux::Buffers::ShaderProcessor::resolve_push_constant_size" name="MayaFlux::Buffers::ShaderProcessor::resolve_push_constant_size">
+<area shape="rect" id="Node000001" title="Byte width of this processor&#39;s push constant block, extended to cover any fragment staged on the buff..." alt="" coords="528,84,715,139"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ComputeProcessor_aa224de245c77a9af81450eb15cb546fa.html#aa224de245c77a9af81450eb15cb546fa" title=" " alt="" coords="272,5,480,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="522,82,461,63,463,58,523,77"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a8dffa1bdec232f8a9c7b39ce9a9f78bb.html#a8dffa1bdec232f8a9c7b39ce9a9f78bb" title=" " alt="" coords="279,84,473,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="514,114,473,114,473,109,514,109"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_afc29bda3c0abfd76a1c160ccfcc62d8b.html#afc29bda3c0abfd76a1c160ccfcc62d8b" title="This processor&#39;s push constant data with buffer&#45;staged fragments overlaid at their declared offsets." alt="" coords="283,163,469,217"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="523,145,463,165,461,160,522,140"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_af22c5214e6365e97cf23f4ba8023cb75.html#af22c5214e6365e97cf23f4ba8023cb75" title="Record an already validated attachment without repeating its lookup." alt="" coords="5,170,224,210"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="269,193,224,193,224,187,269,187"/>
+</map>

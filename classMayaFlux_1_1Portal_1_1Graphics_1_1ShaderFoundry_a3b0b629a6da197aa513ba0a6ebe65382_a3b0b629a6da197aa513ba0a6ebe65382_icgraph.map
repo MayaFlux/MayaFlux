@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Graphics::ShaderFoundry::begin_commands" name="MayaFlux::Portal::Graphics::ShaderFoundry::begin_commands">
+<area shape="rect" id="Node000001" title="Begin recording command buffer." alt="" coords="303,13,552,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a7a85429e82d910860d606ee64d803c8e.html#a7a85429e82d910860d606ee64d803c8e" title="Begin command buffer that waits on a semaphore." alt="" coords="5,5,255,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="289,35,255,35,255,30,289,30"/>
+</map>

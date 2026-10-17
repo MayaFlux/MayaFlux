@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kinesis::Stochastic::Estimate::stddev" name="MayaFlux::Kinesis::Stochastic::Estimate::stddev">
+<area shape="rect" id="Node000001" title="Standard deviation of a span." alt="" coords="419,41,573,96"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Estimate_a921c15e895285770ab1faf2ef1a9bef4.html#a921c15e895285770ab1faf2ef1a9bef4" title=" " alt="" coords="208,5,371,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="404,55,370,49,371,44,405,50"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_aff1bd3ee0a324bc82ba19b95aedb2dfa.html#aff1bd3ee0a324bc82ba19b95aedb2dfa" title="How far the newest value sits from the rest of the window, in standard deviations." alt="" coords="215,85,364,125"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="405,87,365,94,364,89,404,82"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Estimate_a502f5a8057dafa0db29ae244dd666427.html#a502f5a8057dafa0db29ae244dd666427" title="Feed one new sample, updating the running estimate." alt="" coords="5,5,160,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="194,35,160,35,160,30,194,30"/>
+</map>

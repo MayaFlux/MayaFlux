@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nexus::Agent::position" name="MayaFlux::Nexus::Agent::position">
+<area shape="rect" id="Node000001" title="Return the current position, if set." alt="" coords="233,5,415,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1Locus_a8e9e5ff3ba69a3d52b5b4354b6b13c82.html#a8e9e5ff3ba69a3d52b5b4354b6b13c82" title="Perceive: run the user perception callable, then integrate the view." alt="" coords="5,5,185,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="219,28,186,28,186,23,219,23"/>
+</map>

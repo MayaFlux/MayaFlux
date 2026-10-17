@@ -1,0 +1,8 @@
+<map id="MayaFlux::Nexus::Hull::refit" name="MayaFlux::Nexus::Hull::refit">
+<area shape="rect" id="Node000001" title="Read the buffer&#39;s geometry again and take its bounds." alt="" coords="5,49,175,89"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1Expanse_a63f198036259d05c7f2d679884b4ff35.html#a63f198036259d05c7f2d679884b4ff35" title="The box, if set." alt="" coords="223,5,421,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="174,51,209,44,210,49,175,56"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Nexus_ac83eaaa11160a38fddb2d351db78e2c6.html#ac83eaaa11160a38fddb2d351db78e2c6" title="Bounds of a buffer&#39;s geometry in its own stored coordinates." alt="" coords="236,93,408,133"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="175,83,223,92,222,97,174,88"/>
+<area shape="poly" id="edge3_Node000003_Node000003" title=" " alt="" coords="279,94,276,84,283,74,298,69,322,67,349,70,364,77,361,82,348,75,322,72,300,74,286,79,281,85,284,92"/>
+</map>

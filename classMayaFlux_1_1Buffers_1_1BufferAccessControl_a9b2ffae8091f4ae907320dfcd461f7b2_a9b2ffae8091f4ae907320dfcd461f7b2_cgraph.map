@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::BufferAccessControl::resize_audio_buffers" name="MayaFlux::Buffers::BufferAccessControl::resize_audio_buffers">
+<area shape="rect" id="Node000001" title="Resizes all audio buffers for a token to the specified size." alt="" coords="5,5,169,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_a015dbdf905331183c1737a227efd6a99.html#a015dbdf905331183c1737a227efd6a99" title="Resizes all buffers in an audio unit to the specified size." alt="" coords="217,5,408,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="170,30,204,30,204,35,170,35"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_ac9fd8c50e96db19443030c7582b9cc20.html#ac9fd8c50e96db19443030c7582b9cc20" title="Gets or creates a root audio unit for the specified token." alt="" coords="456,5,628,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="408,30,442,30,442,35,408,35"/>
+</map>

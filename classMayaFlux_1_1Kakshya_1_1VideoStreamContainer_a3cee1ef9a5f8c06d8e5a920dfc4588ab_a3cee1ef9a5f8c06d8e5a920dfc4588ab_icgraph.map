@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kakshya::VideoStreamContainer::get_frame_rate" name="MayaFlux::Kakshya::VideoStreamContainer::get_frame_rate">
+<area shape="rect" id="Node000001" title=" " alt="" coords="680,5,849,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1DynamicVideoStream_a928634398e8f2101357633946403da5f.html#a928634398e8f2101357633946403da5f" title="Install a FrameSeekProcessor as the default processor." alt="" coords="445,5,632,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="666,35,632,35,632,30,666,30"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1DynamicVideoStream_af63ff062008e5f10f0e7d2095124e5eb.html#af63ff062008e5f10f0e7d2095124e5eb" title="The FrameSeekProcessor that reads this stream, installed on first use." alt="" coords="225,5,397,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="432,35,398,35,398,30,432,30"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1DynamicVideoStream_a9e645d84e7eb133de77b4df6b45f02c0.html#a9e645d84e7eb133de77b4df6b45f02c0" title="Play back a fixed number of frames behind the write head." alt="" coords="5,5,177,60"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="211,35,177,35,177,30,211,30"/>
+</map>

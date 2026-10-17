@@ -1,0 +1,5 @@
+<map id="MayaFlux::IO::DelimitedTextWriter::close" name="MayaFlux::IO::DelimitedTextWriter::close">
+<area shape="rect" id="Node000001" title="Finalize and close the current file." alt="" coords="5,5,212,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1DelimitedTextWriter_aa50057c5dc2a3a11ace630b583487b82.html#aa50057c5dc2a3a11ace630b583487b82" title="Whether an output file is open." alt="" coords="260,5,467,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="212,23,246,23,246,28,212,28"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Core::GraphicsSubsystem::cleanup_closed_windows" name="MayaFlux::Core::GraphicsSubsystem::cleanup_closed_windows">
+<area shape="rect" id="Node000001" title="Cleanup resources for windows that have been closed." alt="" coords="5,5,208,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1BufferProcessingHandle_af3564b5e849ddc0b71aff4ec4f2fd055.html#af3564b5e849ddc0b71aff4ec4f2fd055" title="Detach graphics presentation for a window in this token domain." alt="" coords="256,13,497,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="208,30,243,30,243,35,208,35"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1BufferProcessingHandle_afc0b5cf904eecf62523920f49fecff3d.html#afc0b5cf904eecf62523920f49fecff3d" title=" " alt="" coords="545,13,787,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="497,30,531,30,531,35,497,35"/>
+</map>

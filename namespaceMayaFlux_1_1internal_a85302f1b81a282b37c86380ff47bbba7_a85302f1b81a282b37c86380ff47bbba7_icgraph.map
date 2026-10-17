@@ -1,0 +1,11 @@
+<map id="MayaFlux::internal::live_arena_object_region" name="MayaFlux::internal::live_arena_object_region">
+<area shape="rect" id="Node000001" title="Returns a pointer to the object region (immediately after the header)." alt="" coords="451,27,596,82"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1internal_ac198c636ae0efb46000323e05c20824c.html#ac198c636ae0efb46000323e05c20824c" title="Allocates size bytes from the arena with alignment." alt="" coords="237,5,381,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="437,46,381,38,381,33,437,40"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_a08d29324268998e88e89de586487e418.html#a08d29324268998e88e89de586487e418" title="Internal implementation for live_cast." alt="" coords="215,70,403,95"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="437,69,403,73,402,68,436,63"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_a85dab72a57cc4840e446959f4ead11b1.html#a85dab72a57cc4840e446959f4ead11b1" title="Constructs a T in&#45;place inside the live arena and registers it under key." alt="" coords="5,13,167,38"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="223,28,167,28,167,23,223,23"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_a8096eed31bb3e0b19e7a7b65e84f11a2.html#a8096eed31bb3e0b19e7a7b65e84f11a2" title="Retrieves a live&#45;arena object by key as a shared_ptr&lt;T&gt;." alt="" coords="10,70,162,95"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="201,85,162,85,162,80,201,80"/>
+</map>

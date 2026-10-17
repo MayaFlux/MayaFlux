@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::GpuSync::GpuComputeNode::notify_tick" name="MayaFlux::Nodes::GpuSync::GpuComputeNode::notify_tick">
+<area shape="rect" id="Node000001" title="Notifies all registered callbacks with the current context." alt="" coords="5,13,231,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GpuComputeNode_adf52c667a12a86d027fbc2da6525200b.html#adf52c667a12a86d027fbc2da6525200b" title="Updates the context object with the current node state." alt="" coords="279,5,481,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="231,30,265,30,265,35,231,35"/>
+</map>
