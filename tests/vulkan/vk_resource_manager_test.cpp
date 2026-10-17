@@ -515,6 +515,38 @@ TEST_F(BackendResourceManagerTest, CleaningUpAVertexBufferLeavesItsLinkedIndexBu
     EXPECT_FALSE(index->is_initialized());
 }
 
+TEST_F(BackendResourceManagerTest, ManagerCleanupReleasesRawSlotsButBufferCleanupKeepsThem)
+{
+    BackendResourceManager manager(backend().get_context(), backend().get_command_manager());
+    auto owner = std::make_shared<VKBuffer>(64, VKBuffer::Usage::STAGING, Kakshya::DataModality::IMAGE_COLOR);
+    manager.initialize_buffer(owner);
+
+    for (int i = 0; i < 2; ++i) {
+        Buffers::VKBufferResources::GenerationSlot slot;
+        vk::Buffer raw_buffer;
+        vk::DeviceMemory raw_memory;
+        void* mapped = nullptr;
+        manager.allocate_raw_buffer(
+            128, vk::BufferUsageFlagBits::eStorageBuffer,
+            vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
+            true, raw_buffer, raw_memory, mapped);
+        slot.buffer = raw_buffer;
+        slot.memory = raw_memory;
+        slot.mapped_ptr = mapped;
+        owner->get_buffer_resources().back_buffers.push_back(slot);
+    }
+
+    manager.cleanup_buffer(owner);
+    EXPECT_EQ(owner->get_buffer_resources().back_buffers.size(), 2U);
+    for (const auto& slot : owner->get_buffer_resources().back_buffers) {
+        EXPECT_NE(slot.buffer, vk::Buffer {});
+    }
+
+    manager.initialize_buffer(owner);
+    manager.cleanup();
+    EXPECT_TRUE(owner->get_buffer_resources().back_buffers.empty());
+}
+
 TEST_F(BackendResourceManagerTest, StandaloneManagerCleanupReleasesEveryManagedBuffer)
 {
     BackendResourceManager manager(backend().get_context(), backend().get_command_manager());

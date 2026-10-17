@@ -1376,9 +1376,30 @@ void BackendResourceManager::cleanup()
         m_deferred_semaphore = nullptr;
     }
 
+    const auto device = m_context.get_device();
+    auto release_slots = [&device](Buffers::VKBuffer& owner) {
+        auto& slots = owner.get_buffer_resources().back_buffers;
+        for (auto& slot : slots) {
+            if (slot.mapped_ptr && slot.memory) {
+                device.unmapMemory(slot.memory);
+            }
+            if (slot.buffer) {
+                device.destroyBuffer(slot.buffer);
+            }
+            if (slot.memory) {
+                device.freeMemory(slot.memory);
+            }
+        }
+        slots.clear();
+    };
+
     auto buffers = m_managed_buffers;
     for (const auto& buffer : buffers) {
-        if (buffer && buffer->is_initialized()) {
+        if (!buffer) {
+            continue;
+        }
+        release_slots(*buffer);
+        if (buffer->is_initialized()) {
             cleanup_buffer(buffer);
         }
     }
