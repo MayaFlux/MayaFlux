@@ -312,14 +312,6 @@ void BackendResourceManager::cleanup_buffer(const std::shared_ptr<Buffers::VKBuf
         m_context.get_device().unmapMemory(res.memory);
     }
 
-    if (res.index_buffer) {
-        m_context.get_device().destroyBuffer(res.index_buffer);
-    }
-
-    if (res.index_memory) {
-        m_context.get_device().freeMemory(res.index_memory);
-    }
-
     if (res.buffer) {
         m_context.get_device().destroyBuffer(res.buffer);
     }
@@ -330,6 +322,10 @@ void BackendResourceManager::cleanup_buffer(const std::shared_ptr<Buffers::VKBuf
 
     MF_INFO(Journal::Component::Core, Journal::Context::GraphicsBackend,
         "VKBuffer cleaned up: {:p}", static_cast<void*>(res.buffer));
+
+    res.mapped_ptr = nullptr;
+    res.buffer = vk::Buffer {};
+    res.memory = vk::DeviceMemory {};
 
     m_managed_buffers.erase(it);
 }
@@ -1380,7 +1376,8 @@ void BackendResourceManager::cleanup()
         m_deferred_semaphore = nullptr;
     }
 
-    for (auto& buffer : m_managed_buffers) {
+    auto buffers = m_managed_buffers;
+    for (const auto& buffer : buffers) {
         if (buffer && buffer->is_initialized()) {
             cleanup_buffer(buffer);
         }

@@ -500,4 +500,39 @@ TEST_F(BackendResourceManagerTest, StandaloneManagerCleanupReleasesItsBuffersAnd
     EXPECT_NO_THROW(manager.cleanup());
 }
 
+TEST_F(BackendResourceManagerTest, CleaningUpAVertexBufferLeavesItsLinkedIndexBufferToItsOwner)
+{
+    auto vertex = staging_buffer(256);
+    auto index = std::make_shared<VKBuffer>(144, VKBuffer::Usage::INDEX, Kakshya::DataModality::UNKNOWN);
+    resources().initialize_buffer(index);
+    vertex->set_index_resources(index->get_buffer(), index->get_buffer_resources().memory, index->get_size_bytes());
+
+    resources().cleanup_buffer(vertex);
+
+    EXPECT_TRUE(index->is_initialized());
+    EXPECT_NE(index->get_buffer_resources().buffer, vk::Buffer {});
+    resources().cleanup_buffer(index);
+    EXPECT_FALSE(index->is_initialized());
+}
+
+TEST_F(BackendResourceManagerTest, StandaloneManagerCleanupReleasesEveryManagedBuffer)
+{
+    BackendResourceManager manager(backend().get_context(), backend().get_command_manager());
+    std::vector<std::shared_ptr<VKBuffer>> buffers;
+    for (int i = 0; i < 5; ++i) {
+        auto buffer = std::make_shared<VKBuffer>(64, VKBuffer::Usage::STAGING, Kakshya::DataModality::IMAGE_COLOR);
+        manager.initialize_buffer(buffer);
+        ASSERT_TRUE(buffer->is_initialized());
+        buffers.push_back(buffer);
+    }
+
+    manager.cleanup();
+
+    for (const auto& buffer : buffers) {
+        EXPECT_FALSE(buffer->is_initialized());
+        EXPECT_EQ(buffer->get_mapped_ptr(), nullptr);
+    }
+    EXPECT_NO_THROW(manager.cleanup());
+}
+
 }
