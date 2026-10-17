@@ -797,6 +797,15 @@ void RenderProcessor::record_draw(const std::shared_ptr<VKBuffer>& buffer, const
         if (state.draw_source->has_index_buffer()) {
             flow.bind_index_buffer(cmd_id, state.draw_source);
             flow.draw_indexed(cmd_id, state.index_count, m_instance_count, 0, 0, 0);
+        } else if (!m_triangulate && m_runs.size() > 1
+            && std::ranges::all_of(m_runs, [this](const Portal::Graphics::DrawRun& run) {
+                   return run.topology == m_primitive_topology;
+               })) {
+            for (const auto& run : m_runs) {
+                if (run.vertex_count > 0) {
+                    flow.draw(cmd_id, run.vertex_count, m_instance_count, run.vertex_offset, 0);
+                }
+            }
         } else {
             flow.draw(cmd_id, state.vertex_count, m_instance_count, state.first_vertex, 0);
         }

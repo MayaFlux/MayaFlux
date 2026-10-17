@@ -264,8 +264,14 @@ public:
     [[nodiscard]] const std::optional<Kinesis::Scissor>& get_scissor() const { return m_scissor; }
 
     /**
-     * @brief Spans to draw on subsequent frames. Only used when triangulating.
+     * @brief Spans to draw on subsequent frames.
      * @param runs Spans in recording order.
+     *
+     * Used when triangulating. Without triangulation they are used only when more
+     * than one span is supplied and every span has the topology given to
+     * set_primitive_topology(): each span is then drawn on its own, so strip and fan
+     * geometry from several sources is not joined into one primitive. Any other
+     * combination draws the whole range as a single primitive, as before.
      *
      * Left empty, triangulation covers the whole buffer as one span at the
      * topology given to set_primitive_topology(), honouring any range set by
