@@ -43,10 +43,7 @@ A recording can be cut into regions, attributed, sorted, scattered, or reconstru
 
 The material is not defined by its eventual output.
 
-<!-- MEDIA: SOUND / STRUCTURE
-Physical modelling, sampling, or reconstruction.
-Ideally something that makes the underlying morphology perceptible.
--->
+[![▶ Fugal Culture](https://markdown-videos-api.jorgenkh.no/youtube/FWHjHqsGtU8?width=1920&height=1080)](https://youtu.be/FWHjHqsGtU8)
 
 <!-- MEDIA: GEOMETRY / SIMULATION
 A spatial or volumetric process evolving through computation.
@@ -83,10 +80,7 @@ Nor must a work remain fixed in one of these identities. The rules by which it i
 
 Composing the material and composing the process that produces it are not separate activities.
 
-<!-- MEDIA: PERFORMANCE / INTERACTION
-A performance involving a computational system whose behavior
-is negotiated through live interaction.
--->
+[![▶ Tingling Time](https://markdown-videos-api.jorgenkh.no/youtube/8GmkjOVUtTA?width=1920&height=1600)](https://youtu.be/8GmkjOVUtTA)
 
 ---
 
