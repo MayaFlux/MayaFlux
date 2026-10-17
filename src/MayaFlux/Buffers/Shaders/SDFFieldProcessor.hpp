@@ -50,7 +50,7 @@ public:
         uint32_t res_x,
         uint32_t res_y,
         uint32_t res_z,
-        std::string shader = "sdf_field_gyroid.comp");
+        std::string shader = "sdf_field_gyroid.comp.spv");
 
     /**
      * @brief Evaluate an authored field function instead of a shader file.

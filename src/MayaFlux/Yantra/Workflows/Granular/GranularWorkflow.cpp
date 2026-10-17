@@ -663,7 +663,7 @@ Datum<Kakshya::RegionGroup> SortOp::sort_implementation(
 
         auto executor = std::make_shared<ShaderExecutionContext<>>(
             GpuComputeConfig {
-                .shader_path = "sort_by_attribute.comp",
+                .shader_path = "sort_by_attribute.comp.spv",
                 .workgroup_size = { 256, 1, 1 },
                 .push_constant_size = sizeof(SortPC) });
 

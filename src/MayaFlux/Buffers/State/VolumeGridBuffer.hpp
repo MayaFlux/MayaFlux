@@ -343,7 +343,7 @@ public:
     std::shared_ptr<InfluxProcessor> influx(
         const std::string& field,
         const InfluxProcessor::Spot& spot,
-        const std::string& shader = "volume_influx_blob.comp");
+        const std::string& shader = "volume_influx_blob.comp.spv");
 
     /** @brief The surface extraction stage, valid after setup_rendering. */
     [[nodiscard]] std::shared_ptr<VolumeSurfaceProcessor> surface_processor() const { return m_surface_processor; }

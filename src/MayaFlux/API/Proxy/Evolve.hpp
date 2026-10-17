@@ -64,8 +64,8 @@ concept GridCellData = (ArithmeticData<State> || GlmVec2Type<State> || GlmVec4Ty
  *     Buffers::RelaxationGridBuffer::GridConfig {
  *         .width = 256,
  *         .height = 256,
- *         .rule = { .state = Kakshya::GpuDataFormat::UINT32, .shader = "relax_conway_rule.comp" },
- *         .emit = { .state = Kakshya::GpuDataFormat::UINT32, .shader = "relax_vertex_emit.comp" },
+ *         .rule = { .state = Kakshya::GpuDataFormat::UINT32, .shader = "relax_conway_rule.comp.spv" },
+ *         .emit = { .state = Kakshya::GpuDataFormat::UINT32, .shader = "relax_vertex_emit.comp.spv" },
  *     },
  *     [](uint32_t x, uint32_t y) { return (x ^ y) % 7U == 0U ? 1U : 0U; },
  *     { .target_window = window });
