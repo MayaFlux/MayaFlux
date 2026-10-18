@@ -31,6 +31,8 @@ MayaFlux is an open-source C++20/23 framework for working within this possibilit
 
 [![▶ Smoke and the Water](https://markdown-videos-api.jorgenkh.no/youtube/q3tGICMhUCg?width=1920&height=1080)](https://youtu.be/q3tGICMhUCg)
 
+Files can be found in the [MayaFlux community-projects repository](https://github.com/MayaFlux/community-projects/tree/main/ranjith/smoke_and_the_water).
+
 ## Matter without categories
 
 What makes something a form?
@@ -44,6 +46,8 @@ A recording can be cut into regions, attributed, sorted, scattered, or reconstru
 The material is not defined by its eventual output.
 
 [![▶ Fugal Culture](https://markdown-videos-api.jorgenkh.no/youtube/FWHjHqsGtU8?width=1920&height=1080)](https://youtu.be/FWHjHqsGtU8)
+
+Files can be found in the [MayaFlux community-projects repository](https://github.com/MayaFlux/community-projects/tree/main/ranjith/fugul_culture).
 
 <!-- MEDIA: GEOMETRY / SIMULATION
 A spatial or volumetric process evolving through computation.
