@@ -25,6 +25,11 @@ TextureBuffer::TextureBuffer(
     RenderConfig default_config;
     default_config.vertex_shader = "texture.vert.spv";
     default_config.fragment_shader = "texture.frag.spv";
+    if (format == Portal::Graphics::ImageFormat::R8) {
+        default_config.fragment_shader = "texture_gray.frag.spv";
+    } else if (format == Portal::Graphics::ImageFormat::RG8) {
+        default_config.fragment_shader = "texture_gray_alpha.frag.spv";
+    }
     default_config.default_texture_binding = "texSampler";
     default_config.topology = Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP;
     set_default_render_config(default_config);
