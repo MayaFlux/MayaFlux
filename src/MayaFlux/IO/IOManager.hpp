@@ -5,6 +5,7 @@
 #include "Model/ModelWriter.hpp"
 
 #include "MayaFlux/Kakshya/NDData/Composite.hpp"
+#include "MayaFlux/Kakshya/Region/Region.hpp"
 
 #include "Spatial/SpatialTransfer.hpp"
 
@@ -568,15 +569,18 @@ public:
     /**
      * @brief Load an image file into a TextureBuffer.
      *
-     * Opens the file via ImageReader, decodes to RGBA8, and creates a
-     * TextureBuffer containing the pixel data. The reader is retained
+     * Opens the file via ImageReader, decodes to the requested channel layout,
+     * and creates a TextureBuffer containing the pixel data. The reader is retained
      * for the lifetime of IOManager.
      *
      * @param filepath Path to the image file (PNG, JPG, BMP, TGA, etc.).
+     * @param desired_channels Channel count passed to ImageReader (0 keeps the source layout).
+     * @param region Optional source-pixel rectangle with inclusive end coordinates.
      * @return TextureBuffer with pixel data, or nullptr on failure.
      */
     [[nodiscard]] std::shared_ptr<Buffers::TextureBuffer>
-    load_image(const std::string& filepath);
+    load_image(const std::string& filepath, int desired_channels = 4,
+        std::optional<Kakshya::Region> region = std::nullopt);
 
     /**
      * @brief Open a schema-bearing reader selected by file format.

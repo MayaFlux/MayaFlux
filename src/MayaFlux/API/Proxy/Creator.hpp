@@ -172,16 +172,21 @@ public:
         return container;
     }
 
-    auto read_image(const std::string& filepath) -> std::shared_ptr<Buffers::TextureBuffer>
+    auto read_image(const std::string& filepath,
+        int desired_channels = 4,
+        std::optional<Kakshya::Region> region = std::nullopt)
+        -> std::shared_ptr<Buffers::TextureBuffer>
     {
-        auto buffer = load_image_buffer(filepath);
+        auto buffer = load_image_buffer(filepath, desired_channels, std::move(region));
         MF_LIVE_EXPOSE_AUTO(buffer);
         return buffer;
     }
 
-    auto read_image() -> std::shared_ptr<Buffers::TextureBuffer>
+    auto read_image(int desired_channels = 4,
+        std::optional<Kakshya::Region> region = std::nullopt)
+        -> std::shared_ptr<Buffers::TextureBuffer>
     {
-        auto buffer = choose_image();
+        auto buffer = choose_image(desired_channels, std::move(region));
         if (buffer)
             MF_LIVE_EXPOSE_AUTO(buffer);
         return buffer;
@@ -348,7 +353,9 @@ private:
     std::shared_ptr<Kakshya::CompositeContainer> load_composite_container(
         const std::string& filepath,
         std::optional<Kakshya::CompositeLayout> layout);
-    std::shared_ptr<Buffers::TextureBuffer> load_image_buffer(const std::string& filepath);
+    std::shared_ptr<Buffers::TextureBuffer> load_image_buffer(
+        const std::string& filepath, int desired_channels,
+        std::optional<Kakshya::Region> region);
     std::shared_ptr<Buffers::VolumeGridBuffer> load_volume_buffer(const std::string& filepath);
     std::vector<std::shared_ptr<Buffers::MeshBuffer>> load_mesh_buffers(const std::string& filepath);
     std::shared_ptr<Nodes::Network::MeshNetwork> load_mesh_network(const std::string& filepath, IO::TextureResolver resolver);

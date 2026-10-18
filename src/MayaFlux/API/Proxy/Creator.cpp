@@ -170,9 +170,11 @@ MeshGroupHandle& MeshGroupHandle::operator|(Domain d)
     return *this;
 }
 
-std::shared_ptr<Buffers::TextureBuffer> Creator::load_image_buffer(const std::string& filepath)
+std::shared_ptr<Buffers::TextureBuffer> Creator::load_image_buffer(
+    const std::string& filepath, int desired_channels,
+    std::optional<Kakshya::Region> region)
 {
-    return get_io_manager()->load_image(filepath);
+    return get_io_manager()->load_image(filepath, desired_channels, std::move(region));
 }
 
 std::shared_ptr<Buffers::VolumeGridBuffer> Creator::load_volume_buffer(const std::string& filepath)

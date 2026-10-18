@@ -1,5 +1,7 @@
 #pragma once
 
+#include "MayaFlux/Kakshya/Region/Region.hpp"
+
 /**
  * @file API/Depot.hpp
  * @brief Dialog-backed loading and file-type helpers
@@ -190,8 +192,12 @@ MAYAFLUX_API std::shared_ptr<Kakshya::CameraContainer> choose_camera(
  *
  * Blocks until the user confirms or cancels. Returns nullptr on cancellation,
  * backend error, or if Portal::System is not initialized.
+ * @param desired_channels Channel count passed to ImageReader (0 keeps the source layout).
+ * @param region Optional source-pixel rectangle with inclusive end coordinates.
  */
-MAYAFLUX_API std::shared_ptr<Buffers::TextureBuffer> choose_image();
+MAYAFLUX_API std::shared_ptr<Buffers::TextureBuffer> choose_image(
+    int desired_channels = 4,
+    std::optional<Kakshya::Region> region = std::nullopt);
 
 /**
  * @brief Choose a CSV or TSV file and load it as a CompositeContainer.

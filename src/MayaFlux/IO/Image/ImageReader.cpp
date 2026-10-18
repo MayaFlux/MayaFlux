@@ -50,6 +50,43 @@ namespace {
         return ext;
     }
 
+    std::optional<ImageData> crop_image(
+        const ImageData& image,
+        const Kakshya::Region& region)
+    {
+        const auto& start = region.start_coordinates;
+        const auto& end = region.end_coordinates;
+        if (start.size() != 2 || end.size() != 2
+            || start[0] > end[0] || start[1] > end[1]
+            || end[0] >= image.width || end[1] >= image.height) {
+            MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+                "Image crop region is outside the decoded image");
+            return std::nullopt;
+        }
+
+        const auto width = static_cast<uint32_t>(end[0] - start[0] + 1);
+        const auto height = static_cast<uint32_t>(end[1] - start[1] + 1);
+        auto cropped = ImageData::allocate(width, height, image.channels, image.format);
+        if (!cropped) {
+            return std::nullopt;
+        }
+
+        std::visit([&](const auto& source) {
+            using Storage = std::decay_t<decltype(source)>;
+            using Element = typename Storage::value_type;
+            auto& target = std::get<Storage>(cropped->pixels);
+            const size_t row_elements = static_cast<size_t>(width) * image.channels;
+            for (uint32_t y = 0; y < height; ++y) {
+                const size_t source_offset =
+                    (static_cast<size_t>(start[1] + y) * image.width + start[0]) * image.channels;
+                std::memcpy(target.data() + static_cast<size_t>(y) * row_elements,
+                    source.data() + source_offset, row_elements * sizeof(Element));
+            }
+        }, image.pixels);
+
+        return cropped;
+    }
+
     /**
      * @brief Decode an OpenEXR file from an in-memory byte buffer.
      *
@@ -203,8 +240,11 @@ namespace {
     return true;
 }();
 
-ImageReader::ImageReader()
-    : m_is_open(false)
+ImageReader::ImageReader(int desired_channels,
+    std::optional<Kakshya::Region> region)
+    : m_desired_channels(desired_channels)
+    , m_region(std::move(region))
+    , m_is_open(false)
 {
 }
 
@@ -242,7 +282,7 @@ bool ImageReader::open(const std::string& filepath, FileReadOptions /*options*/)
 
     auto resolved = resolve_path(filepath);
 
-    m_image_data = load(resolved, 4); // Force RGBA
+    m_image_data = load(resolved, m_desired_channels, m_region);
 
     if (!m_image_data) {
         m_last_error = "Failed to load image data";
@@ -426,7 +466,9 @@ std::vector<uint64_t> ImageReader::get_dimension_sizes() const
 // Static Utility Methods
 //==============================================================================
 
-std::optional<ImageData> ImageReader::load(const std::filesystem::path& path, int desired_channels)
+std::optional<ImageData> ImageReader::load(
+    const std::filesystem::path& path, int desired_channels,
+    std::optional<Kakshya::Region> region)
 {
     auto resolved = std::filesystem::path(resolve_path(path.string()));
     if (!std::filesystem::exists(resolved)) {
@@ -455,8 +497,11 @@ std::optional<ImageData> ImageReader::load(const std::filesystem::path& path, in
 
     if (extension_of(resolved) == "exr") {
         (void)desired_channels;
-        return load_exr_from_memory(file_buffer.data(),
-            static_cast<size_t>(file_size));
+        auto image = load_exr_from_memory(file_buffer.data(), static_cast<size_t>(file_size));
+        if (image && region) {
+            return crop_image(*image, *region);
+        }
+        return image;
     }
 
     int width {}, height {}, channels {};
@@ -517,12 +562,17 @@ std::optional<ImageData> ImageReader::load(const std::filesystem::path& path, in
     }
 
     stbi_image_free(pixels);
+    if (region) {
+        return crop_image(result, *region);
+    }
     return result;
 }
 
-std::optional<ImageData> ImageReader::load(const std::string& path, int desired_channels)
+std::optional<ImageData> ImageReader::load(
+    const std::string& path, int desired_channels,
+    std::optional<Kakshya::Region> region)
 {
-    return load(std::filesystem::path(path), desired_channels);
+    return load(std::filesystem::path(path), desired_channels, std::move(region));
 }
 
 std::optional<ImageData> ImageReader::load_from_memory(const void* data, size_t size)
@@ -599,9 +649,11 @@ std::optional<ImageData> ImageReader::load_from_memory(const void* data, size_t 
     return result;
 }
 
-std::shared_ptr<Core::VKImage> ImageReader::load_texture(const std::string& path)
+std::shared_ptr<Core::VKImage> ImageReader::load_texture(
+    const std::string& path, int desired_channels,
+    std::optional<Kakshya::Region> region)
 {
-    auto image_data = load(resolve_path(path), 4);
+    auto image_data = load(path, desired_channels, std::move(region));
     if (!image_data) {
         return nullptr;
     }
@@ -634,10 +686,8 @@ std::shared_ptr<Buffers::TextureBuffer> ImageReader::create_texture_buffer()
     }
 
     auto tex_buffer = std::make_shared<Buffers::TextureBuffer>(
-        m_image_data->width,
-        m_image_data->height,
-        m_image_data->format,
-        m_image_data->data());
+        m_image_data->width, m_image_data->height,
+        m_image_data->format, m_image_data->data());
 
     MF_INFO(Journal::Component::IO, Journal::Context::FileIO,
         "Created TextureBuffer from image: {}x{} ({} bytes)",

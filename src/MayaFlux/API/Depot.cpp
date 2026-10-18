@@ -225,13 +225,16 @@ IO::VideoLoadResult choose_video(const IO::VideoLoadConfig& config)
         k_video_filters);
 }
 
-std::shared_ptr<Buffers::TextureBuffer> choose_image()
+std::shared_ptr<Buffers::TextureBuffer> choose_image(
+    int desired_channels, std::optional<Kakshya::Region> region)
 {
     if (!require_portal("choose_image"))
         return nullptr;
 
     return Portal::System::Dialog::open_file<std::shared_ptr<Buffers::TextureBuffer>>(
-        [](const fs::path& p) { return get_io_manager()->load_image(p.string()); },
+        [desired_channels, region = std::move(region)](const fs::path& p) {
+            return get_io_manager()->load_image(p.string(), desired_channels, region);
+        },
         [](Core::SystemDialogError) { },
         k_image_filters);
 }

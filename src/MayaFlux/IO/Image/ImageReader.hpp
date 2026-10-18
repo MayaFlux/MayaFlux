@@ -27,7 +27,9 @@ using ImageData = Kakshya::ImageData;
  */
 class MAYAFLUX_API ImageReader : public FileReader {
 public:
-    ImageReader();
+    /** @brief Configure channel conversion and an optional source-pixel crop for open(). */
+    ImageReader(int desired_channels = 4,
+        std::optional<Kakshya::Region> region = std::nullopt);
     ~ImageReader() override;
 
     // FileReader interface implementation
@@ -64,27 +66,34 @@ public:
      * @brief Load image from file (static utility)
      * @param path Image file path
      * @param desired_channels Force channel count (0 = keep original, 4 = RGBA)
+     * @param region Optional source-pixel rectangle with inclusive end coordinates
      * @return Image data or nullopt on failure
      */
     static std::optional<ImageData> load(
-        const std::string& path, int desired_channels = 4);
+        const std::string& path, int desired_channels = 4,
+        std::optional<Kakshya::Region> region = std::nullopt);
 
     /**
      * @brief Load image from file (static utility)
      * @param path Image file path
      * @param desired_channels Force channel count (0 = keep original, 4 = RGBA)
+     * @param region Optional source-pixel rectangle with inclusive end coordinates
      * @return Image data or nullopt on failure
      */
     static std::optional<ImageData> load(
-        const std::filesystem::path& path, int desired_channels = 4);
+        const std::filesystem::path& path, int desired_channels = 4,
+        std::optional<Kakshya::Region> region = std::nullopt);
 
     /**
      * @brief Load image directly into GPU texture (static utility)
      * @param path Image file path
+     * @param desired_channels Force channel count (0 = keep original, 4 = RGBA)
+     * @param region Optional source-pixel rectangle with inclusive end coordinates
      * @return Initialized VKImage or nullptr on failure
      */
     static std::shared_ptr<Core::VKImage> load_texture(
-        const std::string& path);
+        const std::string& path, int desired_channels = 4,
+        std::optional<Kakshya::Region> region = std::nullopt);
 
     /**
      * @brief Get the loaded image data
@@ -111,6 +120,8 @@ public:
     bool load_into_buffer(const std::shared_ptr<Buffers::VKBuffer>& buffer);
 
 private:
+    int m_desired_channels;
+    std::optional<Kakshya::Region> m_region;
     std::string m_filepath;
     std::optional<ImageData> m_image_data;
     std::string m_last_error;

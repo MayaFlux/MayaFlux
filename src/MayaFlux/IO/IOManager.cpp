@@ -702,9 +702,10 @@ IOManager::open_camera(const CameraConfig& config)
 }
 
 std::shared_ptr<Buffers::TextureBuffer>
-IOManager::load_image(const std::string& filepath)
+IOManager::load_image(const std::string& filepath, int desired_channels,
+    std::optional<Kakshya::Region> region)
 {
-    auto reader = std::make_shared<IO::ImageReader>();
+    auto reader = std::make_shared<IO::ImageReader>(desired_channels, std::move(region));
 
     if (!reader->open(filepath)) {
         MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
