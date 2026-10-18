@@ -61,10 +61,9 @@ Computation can happen on a CPU or GPU, synchronously or asynchronously, continu
 
 Time is not only a timeline upon which things are placed. It is part of what can be composed.
 
-<!-- MEDIA: EVOLVING PROCESS
-A piece in which temporal behavior, accumulation, feedback,
-or changing computational structure is central.
--->
+[![▶ A Hostile Topsoil](https://markdown-videos-api.jorgenkh.no/youtube/LdvbbOaLIfA?width=1920&height=1080)](https://youtu.be/LdvbbOaLIfA)
+
+Files can be found in the [MayaFlux community-projects repository](https://github.com/MayaFlux/community-projects/tree/main/ranjith/hostile_topsoil).
 
 ## An instrument is something you make
 
