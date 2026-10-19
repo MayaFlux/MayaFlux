@@ -85,6 +85,8 @@ Composing the material and composing the process that produces it are not separa
 
 [![▶ Tingling Time](https://markdown-videos-api.jorgenkh.no/youtube/8GmkjOVUtTA?width=1920&height=1600)](https://youtu.be/8GmkjOVUtTA)
 
+Files can be found in the [MayaFlux community-projects repository](https://github.com/MayaFlux/community-projects/tree/main/ranjith/tingling_time).
+
 ---
 
 ## Begin somewhere
