@@ -205,16 +205,16 @@ namespace {
         slots[TabletFrame::BUTTONS] = static_cast<double>(mask);
     }
 
-    std::string widen_to_narrow(const wchar_t* ws)
+    /**
+     * @brief Last HIDAPI error for @p device as UTF-8, or the global error when null.
+     *
+     * The underlying buffer is only valid until the next call on the device,
+     * so the text is copied immediately.
+     */
+    std::string hid_failure_reason(hid_device* device)
     {
-        if (!ws)
-            return {};
-        std::wstring source(ws);
-        std::string result;
-        result.resize(source.size());
-        std::ranges::transform(source, result.begin(),
-            [](wchar_t c) { return static_cast<char>(c); });
-        return result;
+        auto text = wide_to_utf8(hid_error(device));
+        return text.empty() ? std::string("no detail from HIDAPI") : text;
     }
 
     /**
@@ -476,7 +476,8 @@ bool TabletBackend::initialize()
 
     if (hid_init() != 0) {
         MF_ERROR(Journal::Component::Core, Journal::Context::InputBackend,
-            "Failed to initialize HIDAPI for tablet backend");
+            "Failed to initialize HIDAPI for tablet backend: {}",
+            hid_failure_reason(nullptr));
         return false;
     }
 
@@ -579,7 +580,7 @@ size_t TabletBackend::refresh_devices()
                 continue;
         }
 
-        std::string name = widen_to_narrow(cur->product_string);
+        std::string name = wide_to_utf8(cur->product_string);
         if (name.empty())
             name = "Tablet";
 
@@ -597,6 +598,9 @@ bool TabletBackend::adopt_device(const std::string& path, uint16_t vid,
 {
     hid_device* handle = hid_open_path(path.c_str());
     if (!handle) {
+        MF_DEBUG(Journal::Component::Core, Journal::Context::InputBackend,
+            "Could not open HID device {} ({}): {}",
+            name, path, hid_failure_reason(nullptr));
         return false;
     }
 
@@ -605,6 +609,9 @@ bool TabletBackend::adopt_device(const std::string& path, uint16_t vid,
         descriptor.data(), descriptor.size());
 
     if (written <= 0) {
+        MF_DEBUG(Journal::Component::Core, Journal::Context::InputBackend,
+            "Could not read report descriptor of {} ({}): {}",
+            name, path, hid_failure_reason(handle));
         hid_close(handle);
         return false;
     }
@@ -722,7 +729,8 @@ void TabletBackend::poll_device(TabletDevice& device)
 
     if (bytes < 0) {
         MF_WARN(Journal::Component::Core, Journal::Context::InputBackend,
-            "Tablet read error on {}", device.name);
+            "Tablet read error on {}: {}", device.name,
+            hid_failure_reason(device.handle));
         device.active.store(false);
     }
 }

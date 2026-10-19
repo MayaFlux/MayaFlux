@@ -15,6 +15,16 @@ using InputCallback = std::function<void(const InputValue&)>;
 using DeviceCallback = std::function<void(const InputDeviceInfo&, bool connected)>;
 
 /**
+ * @brief Encode a null-terminated wide string as UTF-8.
+ * @param ws Wide string such as a HIDAPI product string or error message, or null.
+ * @return UTF-8 text; empty for null. Unpaired surrogates and invalid code
+ *         points become '?'.
+ *
+ * Handles both 16-bit (Windows) and 32-bit wchar_t.
+ */
+std::string wide_to_utf8(const wchar_t* ws);
+
+/**
  * @class IInputBackend
  * @brief Abstract interface for input device backends
  *

@@ -174,23 +174,13 @@ size_t HIDBackend::refresh_devices()
         info.path = path;
         info.is_connected = true;
 
-        if (cur->manufacturer_string) {
-            std::wstring ws(cur->manufacturer_string);
-            info.manufacturer.resize(ws.length());
-            std::ranges::transform(ws, info.manufacturer.begin(), [](wchar_t c) { return static_cast<char>(c); });
-        }
+        info.manufacturer = wide_to_utf8(cur->manufacturer_string);
         if (cur->product_string) {
-            std::wstring ws(cur->product_string);
-            info.name.resize(ws.length());
-            std::ranges::transform(ws, info.name.begin(), [](wchar_t c) { return static_cast<char>(c); });
+            info.name = wide_to_utf8(cur->product_string);
         } else {
             info.name = "HID Device " + std::to_string(cur->vendor_id) + ":" + std::to_string(cur->product_id);
         }
-        if (cur->serial_number) {
-            std::wstring ws(cur->serial_number);
-            info.serial_number.resize(ws.length());
-            std::ranges::transform(ws, info.serial_number.begin(), [](wchar_t c) { return static_cast<char>(c); });
-        }
+        info.serial_number = wide_to_utf8(cur->serial_number);
 
         m_enumerated_devices[dev_id] = info;
 
