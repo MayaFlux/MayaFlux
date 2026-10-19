@@ -358,10 +358,14 @@ void Engine::End()
     }
 
     if (m_io_manager) {
-        m_io_manager->shutdown();
+        m_io_manager->stop();
     }
 
     stop_subsystems();
+
+    if (m_io_manager) {
+        m_io_manager->shutdown();
+    }
 
     if (m_scheduler) {
         m_scheduler->terminate_all_tasks();

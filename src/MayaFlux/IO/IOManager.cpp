@@ -103,9 +103,9 @@ IOManager::~IOManager()
     shutdown();
 }
 
-void IOManager::shutdown()
+void IOManager::stop()
 {
-    if (m_shutdown_done.exchange(true)) {
+    if (m_stop_done.exchange(true)) {
         return;
     }
 
@@ -166,25 +166,75 @@ void IOManager::shutdown()
 
     wait_for_pending_saves();
 
+    MF_TRACE(Journal::Component::IO, Journal::Context::Init, "IOManager stopped");
+}
+
+void IOManager::shutdown()
+{
+    if (m_shutdown_done.exchange(true)) {
+        return;
+    }
+
+    stop();
+
+    wait_for_pending_saves();
+
     Registry::BackendRegistry::instance()
         .unregister_service<Registry::Service::IOService>();
 
     m_io_service.reset();
 
     {
-        std::unique_lock lock(m_readers_mutex);
-        m_video_readers.clear();
-    }
+        decltype(m_video_readers) video_readers;
+        {
+            std::unique_lock lock(m_readers_mutex);
+            video_readers = std::exchange(m_video_readers, {});
+        }
 
-    {
-        std::unique_lock lock(m_camera_mutex);
-        m_camera_readers.clear();
-    }
+        decltype(m_camera_readers) camera_readers;
+        decltype(m_camera_buffers) camera_buffers;
+        {
+            std::unique_lock lock(m_camera_mutex);
+            camera_readers = std::exchange(m_camera_readers, {});
+            camera_buffers = std::exchange(m_camera_buffers, {});
+        }
 
-    {
-        std::unique_lock lock(m_buffers_mutex);
-        m_video_buffers.clear();
-        m_audio_buffers.clear();
+        decltype(m_video_buffers) video_buffers;
+        decltype(m_audio_buffers) audio_buffers;
+        decltype(m_extracted_audio) extracted_audio;
+        {
+            std::unique_lock lock(m_buffers_mutex);
+            video_buffers = std::exchange(m_video_buffers, {});
+            audio_buffers = std::exchange(m_audio_buffers, {});
+            extracted_audio = std::exchange(m_extracted_audio, {});
+        }
+
+        decltype(m_writers) writers;
+        {
+            std::lock_guard lock(m_writers_mutex);
+            writers = std::exchange(m_writers, {});
+        }
+
+        decltype(m_video_writers) video_writers;
+        {
+            std::lock_guard lock(m_video_captures_mutex);
+            video_writers = std::exchange(m_video_writers, {});
+        }
+
+        decltype(m_spatial_caches) spatial_caches;
+        {
+            std::lock_guard lock(m_spatial_captures_mutex);
+            spatial_caches = std::exchange(m_spatial_caches, {});
+            m_spatial_cache_refcounts.clear();
+        }
+
+        auto loaded_volumes = std::exchange(m_loaded_volumes, {});
+        auto audio_readers = std::exchange(m_audio_readers, {});
+        auto image_readers = std::exchange(m_image_readers, {});
+        auto model_readers = std::exchange(m_model_readers, {});
+
+        video_readers.clear();
+        camera_readers.clear();
     }
 
     MF_INFO(Journal::Component::IO, Journal::Context::Init, "IOManager shutdown complete");

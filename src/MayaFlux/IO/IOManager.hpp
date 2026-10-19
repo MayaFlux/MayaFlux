@@ -128,8 +128,8 @@ public:
     /**
      * @brief Calls shutdown() if it has not already run.
      *
-     * shutdown() is safe to call earlier and explicitly; the destructor
-     * exists only to catch a caller that never did.
+     * Both stop() and shutdown() are safe to call earlier and explicitly;
+     * the destructor exists only to catch a caller that never did.
      */
     ~IOManager();
 
@@ -139,25 +139,27 @@ public:
     IOManager& operator=(IOManager&&) = delete;
 
     /**
-     * @brief Unregisters IOService, releases all owned readers, clears stored buffers.
+     * @brief Finalizes all in-flight output while consumers are still running.
      *
-     * Also drains any still-running audio, video, volume, and spatial
-     * captures through their respective stop_*_capture() calls, rather
-     * than leaving them to plain member destruction. This matters for two
-     * reasons: a capture the caller never explicitly stopped must still be
-     * finalized (an Ogawa archive or video container left open is not a
-     * valid file, only a growing one), and volume/spatial captures hold a
-     * reference to m_scheduler, which may be torn down independently of
-     * this object's own lifetime; stopping them here avoids their stop()
-     * reaching into an already-destroyed scheduler.
+     * Stops every audio, video, volume and spatial capture through its
+     * stop_*_capture() call, closes the sound writers and waits for pending
+     * saves. A capture the caller never stopped is still finalized (an Ogawa
+     * archive or video container left open is not a valid file), and
+     * volume/spatial captures release their scheduler reference here instead
+     * of reaching into an already-destroyed scheduler.
      *
-     * Idempotent: a second call is a no-op. Safe, and expected, to call
-     * this explicitly before destruction, from whatever orchestrates this
-     * object's owner's shutdown sequence (see Engine::End()), so that
-     * capture teardown and any resulting save-failure logging still runs
-     * while the backend services and logging sinks it depends on are
-     * still alive. The destructor calls this too, only to guarantee it
-     * eventually runs even if no caller did.
+     * The IOService stays registered and readers stay alive, so threads that
+     * consume them keep working. Idempotent. Call before the subsystems stop
+     * (see Engine::End()), while backend services and logging sinks are alive.
+     */
+    void stop();
+
+    /**
+     * @brief Unregisters IOService and releases readers, writers, buffers and caches.
+     *
+     * Calls stop() first. Call after the consuming threads have been joined and
+     * before the graphics backend is cleaned up, so objects whose destructors
+     * touch the backend are released while it is still alive. Idempotent.
      */
     void shutdown();
 
@@ -1079,6 +1081,7 @@ private:
     Core::GlobalStreamInfo& m_stream_info;
     uint32_t m_frame_rate;
 
+    std::atomic<bool> m_stop_done { false };
     std::atomic<bool> m_shutdown_done { false };
 
     /**
