@@ -54,23 +54,6 @@ bool is_configured();
 MAYAFLUX_API Core::Engine& get_context();
 
 /**
- * @brief Replaces the default engine with a new instance
- * @param instance New engine instance to use as default
- *
- * Transfers state from the old engine to the new one if possible.
- *
- * @warning This function uses move semantics. After calling this function,
- * the engine instance passed as parameter will be left in a moved-from state
- * and should not be used further. This is intentional to avoid resource duplication
- * and ensure proper transfer of ownership. Users should be careful to not access
- * the moved-from instance after calling this function.
- *
- * This function is intended for advanced use cases where custom engine configuration
- * is required beyond what the standard initialization functions provide.
- */
-MAYAFLUX_API void set_and_transfer_context(Core::Engine instance);
-
-/**
  * @brief Initializes the default engine with specified parameters
  * @param sample_rate Audio sample rate in Hz
  * @param buffer_size Size of audio processing buffer in frames

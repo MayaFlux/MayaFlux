@@ -12,35 +12,68 @@ namespace MayaFlux {
 
 namespace internal {
 
-    std::unique_ptr<Core::Engine> engine_ref;
-    bool initialized = false;
-    bool terminating = false;
-    std::recursive_mutex engine_mutex;
+    /**
+     * The engine is published through a raw atomic pointer and is freed only
+     * after End() has joined every thread that can call a global getter, so a
+     * getter is a single acquire load and never waits on a lifecycle change.
+     */
+    std::atomic<Core::Engine*> engine_ptr { nullptr };
+    std::atomic<bool> initialized { false };
+    std::atomic<bool> terminating { false };
+    std::atomic<bool> ending { false };
+    std::atomic<bool> atexit_registered { false };
+    thread_local bool cleaning_up = false;
 
     void cleanup_engine()
     {
-        std::lock_guard<std::recursive_mutex> lock(engine_mutex);
-        if (engine_ref) {
-            if (initialized) {
-                engine_ref->End();
+        if (cleaning_up) {
+            return;
+        }
+
+        if (ending.exchange(true, std::memory_order_acq_rel)) {
+            while (ending.load(std::memory_order_acquire)) {
+                std::this_thread::yield();
+            }
+            return;
+        }
+
+        cleaning_up = true;
+
+        if (std::unique_ptr<Core::Engine> engine { engine_ptr.load(std::memory_order_acquire) }) {
+            if (initialized.load(std::memory_order_acquire)) {
+                engine->End();
                 Journal::Archivist::shutdown();
             }
             cleanup_persistent_store();
-            engine_ref.reset();
-            initialized = false;
+            initialized.store(false, std::memory_order_release);
+            engine_ptr.store(nullptr, std::memory_order_release);
         }
+
+        cleaning_up = false;
+        ending.store(false, std::memory_order_release);
     }
 
     Core::Engine& get_or_create_engine()
     {
-        std::lock_guard<std::recursive_mutex> lock(engine_mutex);
-        if (!engine_ref) {
-            engine_ref = std::make_unique<Core::Engine>();
-            std::atexit(cleanup_engine);
+        Core::Engine* engine = engine_ptr.load(std::memory_order_acquire);
+        if (engine) {
+            return *engine;
         }
-        terminating = false;
-        initialized = true;
-        return *engine_ref;
+
+        auto candidate = std::make_unique<Core::Engine>();
+        Core::Engine* expected = nullptr;
+        if (engine_ptr.compare_exchange_strong(expected, candidate.get(),
+                std::memory_order_acq_rel, std::memory_order_acquire)) {
+            engine = candidate.release();
+            if (!atexit_registered.exchange(true, std::memory_order_acq_rel)) {
+                std::atexit(cleanup_engine);
+            }
+            terminating.store(false, std::memory_order_release);
+            initialized.store(true, std::memory_order_release);
+        } else {
+            engine = expected;
+        }
+        return *engine;
     }
 
 }
@@ -51,10 +84,10 @@ namespace internal {
 
 bool is_initialized()
 {
-    if (internal::terminating) {
+    if (internal::terminating.load(std::memory_order_acquire)) {
         return false;
     }
-    return internal::initialized;
+    return internal::initialized.load(std::memory_order_acquire);
 }
 
 bool is_configured()
@@ -68,29 +101,6 @@ bool is_configured()
 Core::Engine& get_context()
 {
     return internal::get_or_create_engine();
-}
-
-void set_and_transfer_context(Core::Engine instance)
-{
-    bool is_same_instance = false;
-
-    {
-        std::lock_guard<std::recursive_mutex> lock(internal::engine_mutex);
-        is_same_instance = (&instance == internal::engine_ref.get());
-        if (internal::engine_ref && !is_same_instance && internal::engine_ref->is_running()) {
-            internal::engine_ref->Pause();
-        }
-    }
-
-    if (internal::engine_ref && !is_same_instance) {
-        internal::engine_ref->End();
-    }
-
-    if (!is_same_instance) {
-        std::lock_guard<std::recursive_mutex> lock(internal::engine_mutex);
-        internal::engine_ref = std::make_unique<Core::Engine>(std::move(instance));
-        internal::initialized = true;
-    }
 }
 
 void Init()
@@ -124,29 +134,29 @@ void Start()
 
 void Pause()
 {
-    if (internal::initialized) {
+    if (internal::initialized.load(std::memory_order_acquire)) {
         get_context().Pause();
     }
 }
 
 void Resume()
 {
-    if (internal::initialized) {
+    if (internal::initialized.load(std::memory_order_acquire)) {
         get_context().Resume();
     }
 }
 
 void Await()
 {
-    if (internal::initialized) {
+    if (internal::initialized.load(std::memory_order_acquire)) {
         get_context().await_shutdown();
     }
 }
 
 void End()
 {
-    internal::terminating = true;
-    if (internal::initialized) {
+    internal::terminating.store(true, std::memory_order_release);
+    if (internal::initialized.load(std::memory_order_acquire)) {
         internal::cleanup_engine();
     }
 }
