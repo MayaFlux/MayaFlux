@@ -219,6 +219,19 @@ MAYAFLUX_API void upload_to_gpu(
     size_t dst_offset = 0);
 
 /**
+ * @brief Zero a registered GPU buffer in place (auto-detects host-visible vs device-local)
+ * @param target Buffer to clear
+ * @return True if the buffer was cleared
+ *
+ * Mapped buffers are cleared on the host. Unmapped buffers are filled on the
+ * GPU with no staging allocation, and the call blocks until the fill is done.
+ * Handles and device addresses are unchanged. Logs an error and returns false
+ * if the buffer is null or unregistered, lacks transfer destination usage, or
+ * the BufferService is unavailable. Never throws.
+ */
+MAYAFLUX_API bool clear_gpu_buffer(const std::shared_ptr<VKBuffer>& target);
+
+/**
  * @brief Upload typed data to GPU buffer
  * @tparam T Data type (float, double, int, etc.)
  * @param data Source data span

@@ -148,9 +148,11 @@ public:
     /**
      * @brief Clear buffer contents
      *
-     * If the buffer is host-visible and mapped the memory is zeroed. For
-     * device-local buffers the backend must provide a ClearBufferProcessor
-     * that performs the appropriate GPU-side clear.
+     * Zeroes the contents in place. Mapped buffers are cleared on the host;
+     * unmapped (device-local) buffers are cleared on the GPU and the call
+     * blocks until the fill completes. Handles and addresses are unchanged.
+     * Requires the buffer to be registered and, when unmapped, to have been
+     * created with transfer destination usage.
      */
     void clear() override;
 

@@ -588,6 +588,43 @@ void upload_to_gpu(
     }
 }
 
+bool clear_gpu_buffer(const std::shared_ptr<VKBuffer>& target)
+{
+    if (!target || !target->is_initialized()) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "clear_gpu_buffer: buffer is null or not registered");
+        return false;
+    }
+
+    if (target->is_host_visible() && target->get_mapped_ptr()) {
+        std::memset(target->get_mapped_ptr(), 0, target->get_size_bytes());
+        return true;
+    }
+
+    if (!(target->get_usage_flags() & vk::BufferUsageFlagBits::eTransferDst)) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "clear_gpu_buffer: unmapped buffer usage lacks transfer destination");
+        return false;
+    }
+
+    auto* buffer_service = Registry::BackendRegistry::instance()
+                               .get_service<Registry::Service::BufferService>();
+
+    if (!buffer_service || !buffer_service->execute_immediate) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "clear_gpu_buffer: BufferService unavailable");
+        return false;
+    }
+
+    const vk::Buffer buffer = target->get_buffer_resources().buffer;
+    buffer_service->execute_immediate([buffer](void* command_buffer) {
+        vk::CommandBuffer cmd(static_cast<VkCommandBuffer>(command_buffer));
+        cmd.fillBuffer(buffer, 0, VK_WHOLE_SIZE, 0);
+    });
+
+    return true;
+}
+
 void upload_resizing(
     const void* data,
     size_t size,

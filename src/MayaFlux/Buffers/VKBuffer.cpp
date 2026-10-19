@@ -38,17 +38,12 @@ VKBuffer::~VKBuffer() = default;
 void VKBuffer::clear()
 {
     if (!is_initialized()) {
-        MF_WARN(Journal::Component::Buffers, Journal::Context::BufferManagement,
-            "Cannot clear uninitialized VKBuffer");
+        MF_TRACE(Journal::Component::Buffers, Journal::Context::BufferManagement,
+            "clear() on VKBuffer with no GPU resources: nothing to clear");
         return;
     }
 
-    if (is_host_visible() && m_resources.mapped_ptr) {
-        std::memset(m_resources.mapped_ptr, 0, m_size_bytes);
-    } else {
-        MF_WARN(Journal::Component::Buffers, Journal::Context::BufferManagement,
-            "clear() on device-local buffer requires ClearBufferProcessor");
-    }
+    clear_gpu_buffer(std::static_pointer_cast<VKBuffer>(shared_from_this()));
 }
 
 uint64_t VKBuffer::get_device_address() const
