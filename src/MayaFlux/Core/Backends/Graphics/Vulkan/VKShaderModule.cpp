@@ -188,6 +188,7 @@ VKShaderModule::VKShaderModule(VKShaderModule&& other) noexcept
     , m_stage(other.m_stage)
     , m_entry_point(std::move(other.m_entry_point))
     , m_reflection(std::move(other.m_reflection))
+    , m_active_bindings(std::move(other.m_active_bindings))
     , m_spirv_code(std::move(other.m_spirv_code))
     , m_preserve_spirv(other.m_preserve_spirv)
     , m_specialization_map(std::move(other.m_specialization_map))
@@ -210,6 +211,7 @@ VKShaderModule& VKShaderModule::operator=(VKShaderModule&& other) noexcept
         m_stage = other.m_stage;
         m_entry_point = std::move(other.m_entry_point);
         m_reflection = std::move(other.m_reflection);
+        m_active_bindings = std::move(other.m_active_bindings);
         m_spirv_code = std::move(other.m_spirv_code);
         m_preserve_spirv = other.m_preserve_spirv;
         m_specialization_map = std::move(other.m_specialization_map);
@@ -234,6 +236,7 @@ void VKShaderModule::cleanup(vk::Device device)
 
     m_spirv_code.clear();
     m_reflection = ShaderReflection {};
+    m_active_bindings.clear();
     m_specialization_map.clear();
     m_specialization_entries.clear();
     m_specialization_data.clear();
@@ -542,6 +545,40 @@ bool VKShaderModule::reflect_spirv(const std::vector<uint32_t>& spirv_code)
 
         reflect_resources(resources.separate_images, false);
         reflect_resources(resources.separate_samplers, false);
+
+        try {
+            const spirv_cross::ShaderResources used = compiler.get_shader_resources(
+                compiler.get_active_interface_variables());
+
+            auto collect_active = [&](const spirv_cross::SmallVector<spirv_cross::Resource>& res_vec,
+                                      bool is_storage) {
+                for (const auto& resource : res_vec) {
+                    ShaderReflection::DescriptorBinding desc;
+                    desc.set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
+                    desc.binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
+                    desc.stage = m_stage;
+                    const std::string block_name = compiler.get_name(resource.base_type_id);
+                    desc.name = block_name.empty() ? resource.name : block_name;
+
+                    const auto& type = compiler.get_type(resource.type_id);
+                    desc.count = type.array.empty() ? 1 : type.array[0];
+                    desc.type = spirv_to_vk_descriptor_type(type.basetype, type, is_storage);
+
+                    m_active_bindings.push_back(desc);
+                }
+            };
+
+            collect_active(used.uniform_buffers, false);
+            collect_active(used.storage_buffers, true);
+            collect_active(used.sampled_images, false);
+            collect_active(used.storage_images, true);
+            collect_active(used.separate_images, false);
+            collect_active(used.separate_samplers, false);
+        } catch (const std::exception& e) {
+            m_active_bindings.clear();
+            MF_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                "Active descriptor binding analysis failed: {}", e.what());
+        }
 
         if (!m_reflection.bindings.empty()) {
             MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,

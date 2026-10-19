@@ -308,6 +308,15 @@ public:
     [[nodiscard]] const ShaderReflection& get_reflection() const { return m_reflection; }
 
     /**
+     * @brief Get the descriptor bindings the entry point statically uses
+     * @return Bindings reached by the entry point, excluding declared but unused resources
+     *
+     * Unlike get_reflection(), which lists every declared resource, this lists only
+     * the resources a pipeline layout must contain for the stage to be valid.
+     */
+    [[nodiscard]] const std::vector<ShaderReflection::DescriptorBinding>& get_active_bindings() const { return m_active_bindings; }
+
+    /**
      * @brief Get SPIR-V bytecode
      * @return Vector of SPIR-V words (empty if not preserved)
      *
@@ -403,6 +412,7 @@ private:
     std::string m_entry_point = "main";
 
     ShaderReflection m_reflection;
+    std::vector<ShaderReflection::DescriptorBinding> m_active_bindings;
     std::vector<uint32_t> m_spirv_code; ///< Preserved SPIR-V (if enabled)
 
     bool m_preserve_spirv {};

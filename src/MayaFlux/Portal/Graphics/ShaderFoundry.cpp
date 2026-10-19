@@ -613,6 +613,25 @@ ShaderReflectionInfo ShaderFoundry::get_shader_reflection(ShaderID shader_id)
     return info;
 }
 
+std::vector<DescriptorBindingInfo> ShaderFoundry::get_active_descriptor_bindings(ShaderID shader_id)
+{
+    std::vector<DescriptorBindingInfo> bindings;
+
+    auto it = m_shaders.find(shader_id);
+    if (it == m_shaders.end()) {
+        return bindings;
+    }
+
+    for (const auto& binding : it->second.module->get_active_bindings()) {
+        bindings.push_back({ .set = binding.set,
+            .binding = binding.binding,
+            .type = binding.type,
+            .name = binding.name });
+    }
+
+    return bindings;
+}
+
 ShaderStage ShaderFoundry::get_shader_stage(ShaderID shader_id)
 {
     auto it = m_shaders.find(shader_id);

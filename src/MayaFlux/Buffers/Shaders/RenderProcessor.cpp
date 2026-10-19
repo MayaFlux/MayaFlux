@@ -323,6 +323,22 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
         }
     }
 
+    for (const Portal::Graphics::ShaderID shader_id : { m_shader_id, m_fragment_shader_id, m_geometry_shader_id, m_tess_control_shader_id, m_tess_eval_shader_id }) {
+        if (shader_id == Portal::Graphics::INVALID_SHADER) {
+            continue;
+        }
+        for (const auto& used : Portal::Graphics::get_shader_foundry().get_active_descriptor_bindings(shader_id)) {
+            if (used.set == 0 || unified_bindings.contains({ used.set, used.binding })) {
+                continue;
+            }
+            MF_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "Pipeline created without set {} binding {} ({}), which the shader uses. "
+                "Attach the processor that supplies it before setup_rendering",
+                used.set, used.binding, vk::to_string(used.type));
+            Journal::Archivist::instance().flush();
+        }
+    }
+
     std::map<uint32_t, std::vector<Portal::Graphics::DescriptorBindingInfo>> bindings_by_set;
     for (const auto& [key, binding] : unified_bindings) {
         bindings_by_set[binding.set].push_back(binding);

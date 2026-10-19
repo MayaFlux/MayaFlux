@@ -297,6 +297,13 @@ public:
     ShaderReflectionInfo get_shader_reflection(ShaderID shader_id);
 
     /**
+     * @brief Get the descriptor bindings a shader's entry point statically uses
+     * @param shader_id ID of compiled shader
+     * @return Used bindings only, excluding declared but unused resources
+     */
+    std::vector<DescriptorBindingInfo> get_active_descriptor_bindings(ShaderID shader_id);
+
+    /**
      * @brief Get shader stage for compiled shader
      * @param shader_id ID of compiled shader
      * @return Shader stage (COMPUTE, VERTEX, FRAGMENT, etc.)
