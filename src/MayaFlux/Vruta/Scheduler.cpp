@@ -665,7 +665,7 @@ void TaskScheduler::terminate_all_tasks()
         MF_WARN(Journal::Component::Vruta, Journal::Context::CoroutineScheduling,
             "Some coroutines did not complete - forcing destruction");
     } else {
-        MF_LOG(Journal::Component::Vruta, Journal::Context::CoroutineScheduling,
+        MF_INFO(Journal::Component::Vruta, Journal::Context::CoroutineScheduling,
             "All coroutines terminated successfully");
     }
 
