@@ -4,6 +4,10 @@
 
 #include <hidapi.h>
 
+#ifdef MAYAFLUX_PLATFORM_MACOS
+#include <hidapi_darwin.h>
+#endif
+
 namespace MayaFlux::Core {
 
 namespace {
@@ -480,6 +484,10 @@ bool TabletBackend::initialize()
             hid_failure_reason(nullptr));
         return false;
     }
+
+#ifdef MAYAFLUX_PLATFORM_MACOS
+    hid_darwin_set_open_exclusive(0);
+#endif
 
     m_initialized.store(true);
 
