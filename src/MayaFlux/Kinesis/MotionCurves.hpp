@@ -17,6 +17,7 @@ enum class InterpolationMode : uint8_t {
     QUADRATIC_BEZIER,
     BSPLINE,
     COSINE,
+    RADIAL_FAN_CUBIC,
     CUSTOM
 };
 
@@ -28,6 +29,18 @@ enum class InterpolationMode : uint8_t {
  * @return Interpolated point as Nx1 vector
  */
 MAYAFLUX_API Eigen::VectorXd catmull_rom_spline(
+    const Eigen::MatrixXd& control_points,
+    double t,
+    double tension = 0.5);
+
+/**
+ * @brief Origin-oriented cubic sweep from tension * (p0 - p1) to p3.
+ * @param control_points Matrix with four control-point columns.
+ * @param t Parameter in [0,1].
+ * @param tension Start displacement scale (default 0.5).
+ * @return Sampled point. Adjacent four-point windows need not meet.
+ */
+MAYAFLUX_API Eigen::VectorXd radial_fan_cubic(
     const Eigen::MatrixXd& control_points,
     double t,
     double tension = 0.5);
