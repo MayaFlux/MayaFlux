@@ -73,6 +73,7 @@ public:
 private:
     std::vector<MeshVertex> m_vertices;
     std::vector<uint32_t> m_indices;
+    bool m_mesh_dirty { true };
 };
 
 } // namespace MayaFlux::Nodes::GpuSync
