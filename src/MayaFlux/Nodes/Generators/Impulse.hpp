@@ -180,7 +180,7 @@ public:
      * receives a GeneratorContext containing the generated value and
      * generator parameters like frequency, amplitude, and phase.
      */
-    void on_impulse(const TypedHook<GeneratorContext>& callback);
+    HookId on_impulse(const TypedHook<GeneratorContext>& callback);
 
     /**
      * @brief Removes a previously registered callback

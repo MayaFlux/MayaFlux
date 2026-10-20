@@ -87,20 +87,20 @@ public:
      * @brief Registers a callback fired on every increment
      * @param callback Receives GeneratorContext directly; phase field carries the raw count
      */
-    void on_increment(const TypedHook<GeneratorContext>& callback);
+    HookId on_increment(const TypedHook<GeneratorContext>& callback);
 
     /**
      * @brief Registers a callback fired when the counter wraps to zero
      * @param callback Receives GeneratorContext at the wrap boundary
      */
-    void on_wrap(const TypedHook<GeneratorContext>& callback);
+    HookId on_wrap(const TypedHook<GeneratorContext>& callback);
 
     /**
      * @brief Registers a callback fired when the counter reaches a specific raw value
      * @param target Raw counter value to match
      * @param callback Receives GeneratorContext when count == target
      */
-    void on_count(uint32_t target, const TypedHook<GeneratorContext>& callback);
+    HookId on_count(uint32_t target, const TypedHook<GeneratorContext>& callback);
 
     bool remove_hook(const NodeHook& callback) override;
 

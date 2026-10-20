@@ -80,30 +80,72 @@ struct HookEntry {
  * @class HookList
  * @brief Stores, fires and clears the hooks of one node channel.
  *
- * A HookList registers itself with the Node that owns it, so Node::remove_all_hooks
- * reaches every list without any node class overriding it. Lists are not copyable.
+ * A HookList registers itself with the Node that owns it, so Node::remove_all_hooks and
+ * Node::unhook reach every list without any node class overriding them. Ids are unique
+ * within the owning node.
+ *
+ * Reading and writing are safe across threads without locks. The entries are an immutable
+ * snapshot that writers replace with a compare-exchange, so fire() and snapshot() never
+ * block and a hook may add or remove hooks, including itself, while it runs. A fire in
+ * progress finishes over the entries it started with. Replaced snapshots are freed once no
+ * reader holds one.
  */
 class MAYAFLUX_API HookList {
 public:
-    explicit HookList(Node& owner);
+    /**
+     * @class Snapshot
+     * @brief The entries of a list at one instant, kept alive while this object exists.
+     */
+    class Snapshot {
+    public:
+        Snapshot() = default;
+        ~Snapshot();
 
-    ~HookList() = default;
+        Snapshot(const Snapshot&) = delete;
+        Snapshot& operator=(const Snapshot&) = delete;
+        Snapshot(Snapshot&& other) noexcept
+            : m_list(std::exchange(other.m_list, nullptr))
+            , m_entries(std::exchange(other.m_entries, nullptr))
+        {
+        }
+        Snapshot& operator=(Snapshot&&) = delete;
+
+        [[nodiscard]] const HookEntry* begin() const { return m_entries ? m_entries->data() : nullptr; }
+        [[nodiscard]] const HookEntry* end() const { return m_entries ? m_entries->data() + m_entries->size() : nullptr; }
+        [[nodiscard]] size_t size() const { return m_entries ? m_entries->size() : 0; }
+        [[nodiscard]] bool empty() const { return size() == 0; }
+
+    private:
+        friend class HookList;
+
+        Snapshot(const HookList* list, const std::vector<HookEntry>* entries)
+            : m_list(list)
+            , m_entries(entries)
+        {
+        }
+
+        const HookList* m_list { nullptr };
+        const std::vector<HookEntry>* m_entries { nullptr };
+    };
+
+    explicit HookList(Node& owner);
+    ~HookList();
 
     HookList(const HookList&) = delete;
     HookList& operator=(const HookList&) = delete;
     HookList(HookList&&) = delete;
     HookList& operator=(HookList&&) = delete;
 
-    /** @brief Appends a hook with no duplicate check. */
+    /** @brief Appends a hook with no duplicate check and returns its id. */
     HookId add(NodeHook hook, const std::type_info& key, uint8_t tag = 0, std::array<double, 2> params = {});
 
-    /** @brief Appends unless an entry with the same key and params exists. Returns 0 when dropped. */
+    /** @brief Appends unless an entry with the same key and params exists, in which case that entry's id is returned. */
     HookId add_unique(NodeHook hook, const std::type_info& key, uint8_t tag = 0, std::array<double, 2> params = {});
 
     /** @brief Appends a hook that fires only while condition holds. */
     HookId add_conditional(NodeHook hook, NodeCondition condition, const std::type_info& key, uint8_t tag = 0);
 
-    /** @brief As add_conditional, dropped when the same hook and condition types exist. Returns 0 when dropped. */
+    /** @brief As add_conditional, returning the existing id when the same hook and condition types exist. */
     HookId add_conditional_unique(NodeHook hook, NodeCondition condition, const std::type_info& key, uint8_t tag = 0);
 
     /** @brief Removes the registration with this id. */
@@ -123,16 +165,27 @@ public:
 
     void clear();
 
-    [[nodiscard]] bool empty() const { return m_entries.empty(); }
+    [[nodiscard]] bool empty() const;
+    [[nodiscard]] size_t size() const;
+
+    /** @brief The current entries, held stable for the lifetime of the returned object. */
+    [[nodiscard]] Snapshot snapshot() const;
 
     /** @brief Calls every entry whose condition, if any, holds. */
     void fire(NodeContext& ctx) const;
 
-    [[nodiscard]] const std::vector<HookEntry>& entries() const { return m_entries; }
-
 private:
-    std::vector<HookEntry> m_entries;
-    HookId m_next_id { 1 };
+    struct Retired;
+
+    bool mutate(const std::function<bool(std::vector<HookEntry>&)>& edit);
+    HookId next_id() const;
+    void retire(const std::vector<HookEntry>* old);
+    void reclaim();
+
+    Node* m_owner;
+    std::atomic<const std::vector<HookEntry>*> m_head { nullptr };
+    std::atomic<Retired*> m_retired { nullptr };
+    mutable std::atomic<uint32_t> m_readers { 0 };
 };
 
 /**

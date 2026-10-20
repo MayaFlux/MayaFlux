@@ -226,41 +226,41 @@ public:
     /**
      * @brief Callback on every frame, with the full slot set.
      */
-    void on_frame(FrameCallback callback)
+    HookId on_frame(FrameCallback callback)
     {
-        m_frame_callbacks.add(adapt_hook(callback), callback.target_type());
+        return m_frame_callbacks.add(adapt_hook(callback), callback.target_type());
     }
 
     /**
      * @brief Callback when the tool enters sensing range.
      */
-    void on_proximity_enter(FrameCallback callback)
+    HookId on_proximity_enter(FrameCallback callback)
     {
-        m_proximity_enter_callbacks.add(adapt_hook(callback), callback.target_type());
+        return m_proximity_enter_callbacks.add(adapt_hook(callback), callback.target_type());
     }
 
     /**
      * @brief Callback when the tool leaves sensing range.
      */
-    void on_proximity_exit(FrameCallback callback)
+    HookId on_proximity_exit(FrameCallback callback)
     {
-        m_proximity_exit_callbacks.add(adapt_hook(callback), callback.target_type());
+        return m_proximity_exit_callbacks.add(adapt_hook(callback), callback.target_type());
     }
 
     /**
      * @brief Callback when the tip touches the surface.
      */
-    void on_contact_begin(FrameCallback callback)
+    HookId on_contact_begin(FrameCallback callback)
     {
-        m_contact_begin_callbacks.add(adapt_hook(callback), callback.target_type());
+        return m_contact_begin_callbacks.add(adapt_hook(callback), callback.target_type());
     }
 
     /**
      * @brief Callback when the tip leaves the surface.
      */
-    void on_contact_end(FrameCallback callback)
+    HookId on_contact_end(FrameCallback callback)
     {
-        m_contact_end_callbacks.add(adapt_hook(callback), callback.target_type());
+        return m_contact_end_callbacks.add(adapt_hook(callback), callback.target_type());
     }
 
     /**

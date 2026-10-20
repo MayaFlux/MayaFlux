@@ -134,61 +134,61 @@ double InputNode::apply_smoothing(double target, double current) const
     }
 }
 
-void InputNode::on_tick(const TypedHook<InputContext>& callback)
+HookId InputNode::on_tick(const TypedHook<InputContext>& callback)
 {
-    m_callbacks.add(adapt_hook(callback), callback.target_type());
+    return m_callbacks.add(adapt_hook(callback), callback.target_type());
 }
 
-void InputNode::on_tick_if(const NodeCondition& condition, const TypedHook<InputContext>& callback)
+HookId InputNode::on_tick_if(const NodeCondition& condition, const TypedHook<InputContext>& callback)
 {
-    m_conditional_callbacks.add_conditional(adapt_hook(callback), condition, callback.target_type());
+    return m_conditional_callbacks.add_conditional(adapt_hook(callback), condition, callback.target_type());
 }
 
-void InputNode::on_value_change(const TypedHook<InputContext>& callback, double epsilon)
+HookId InputNode::on_value_change(const TypedHook<InputContext>& callback, double epsilon)
 {
-    add_input_callback(callback, InputEventType::VALUE_CHANGE, epsilon);
+    return add_input_callback(callback, InputEventType::VALUE_CHANGE, epsilon);
 }
 
-void InputNode::on_threshold_rising(double threshold, const TypedHook<InputContext>& callback)
+HookId InputNode::on_threshold_rising(double threshold, const TypedHook<InputContext>& callback)
 {
-    add_input_callback(callback, InputEventType::THRESHOLD_RISING, threshold);
+    return add_input_callback(callback, InputEventType::THRESHOLD_RISING, threshold);
 }
 
-void InputNode::on_threshold_falling(double threshold, const TypedHook<InputContext>& callback)
+HookId InputNode::on_threshold_falling(double threshold, const TypedHook<InputContext>& callback)
 {
-    add_input_callback(callback, InputEventType::THRESHOLD_FALLING, threshold);
+    return add_input_callback(callback, InputEventType::THRESHOLD_FALLING, threshold);
 }
 
-void InputNode::on_range_enter(double min, double max, const TypedHook<InputContext>& callback)
+HookId InputNode::on_range_enter(double min, double max, const TypedHook<InputContext>& callback)
 {
-    add_input_callback(callback, InputEventType::RANGE_ENTER, {}, { { min, max } });
+    return add_input_callback(callback, InputEventType::RANGE_ENTER, {}, { { min, max } });
 }
 
-void InputNode::on_range_exit(double min, double max, const TypedHook<InputContext>& callback)
+HookId InputNode::on_range_exit(double min, double max, const TypedHook<InputContext>& callback)
 {
-    add_input_callback(callback, InputEventType::RANGE_EXIT, {}, { { min, max } });
+    return add_input_callback(callback, InputEventType::RANGE_EXIT, {}, { { min, max } });
 }
 
-void InputNode::on_button_press(const TypedHook<InputContext>& callback)
+HookId InputNode::on_button_press(const TypedHook<InputContext>& callback)
 {
-    add_input_callback(callback, InputEventType::BUTTON_PRESS);
+    return add_input_callback(callback, InputEventType::BUTTON_PRESS);
 }
 
-void InputNode::on_button_release(const TypedHook<InputContext>& callback)
+HookId InputNode::on_button_release(const TypedHook<InputContext>& callback)
 {
-    add_input_callback(callback, InputEventType::BUTTON_RELEASE);
+    return add_input_callback(callback, InputEventType::BUTTON_RELEASE);
 }
 
-void InputNode::while_in_range(double min, double max, const TypedHook<InputContext>& callback)
+HookId InputNode::while_in_range(double min, double max, const TypedHook<InputContext>& callback)
 {
-    on_tick_if(
+    return on_tick_if(
         [min, max](const NodeContext& ctx) {
             return ctx.value >= min && ctx.value <= max;
         },
         callback);
 }
 
-void InputNode::add_input_callback(
+HookId InputNode::add_input_callback(
     const TypedHook<InputContext>& callback,
     InputEventType event_type,
     std::optional<double> threshold,
@@ -198,8 +198,7 @@ void InputNode::add_input_callback(
     const auto tag = static_cast<uint8_t>(event_type);
 
     if (condition) {
-        m_input_callbacks.add_conditional(adapt_hook(callback), std::move(*condition), callback.target_type(), tag);
-        return;
+        return m_input_callbacks.add_conditional(adapt_hook(callback), std::move(*condition), callback.target_type(), tag);
     }
 
     std::array<double, 2> params {};
@@ -208,7 +207,7 @@ void InputNode::add_input_callback(
     } else if (threshold) {
         params[0] = *threshold;
     }
-    m_input_callbacks.add(adapt_hook(callback), callback.target_type(), tag, params);
+    return m_input_callbacks.add(adapt_hook(callback), callback.target_type(), tag, params);
 }
 
 void InputNode::notify_tick(double value)
@@ -220,7 +219,7 @@ void InputNode::notify_tick(double value)
     m_callbacks.fire(ctx);
     m_conditional_callbacks.fire(ctx);
 
-    for (const auto& entry : m_input_callbacks.entries()) {
+    for (const auto& entry : m_input_callbacks.snapshot()) {
         bool should_fire = false;
 
         switch (static_cast<InputEventType>(entry.tag)) {

@@ -594,39 +594,39 @@ public:
      * @brief Registers a callback for every generated sample
      * @param callback Function to call when a new sample is generated
      */
-    void on_tick(const TypedHook<LogicContext>& callback);
+    HookId on_tick(const TypedHook<LogicContext>& callback);
 
     /**
      * @brief Registers a conditional callback for generated samples
      * @param callback Function to call when condition is met
      * @param condition Predicate that determines when callback is triggered
      */
-    void on_tick_if(const NodeCondition& condition, const TypedHook<LogicContext>& callback);
+    HookId on_tick_if(const NodeCondition& condition, const TypedHook<LogicContext>& callback);
 
     /**
      * @brief Registers a callback that executes continuously while output is true
      * @param callback Function to call on each tick when output is true (1.0)
      */
-    void while_true(const TypedHook<LogicContext>& callback);
+    HookId while_true(const TypedHook<LogicContext>& callback);
 
     /**
      * @brief Registers a callback that executes continuously while output is false
      * @param callback Function to call on each tick when output is false (0.0)
      */
-    void while_false(const TypedHook<LogicContext>& callback);
+    HookId while_false(const TypedHook<LogicContext>& callback);
 
     /**
      * @brief Registers a callback for when output changes to a specific state
      * @param target_state The state to detect (true for 1.0, false for 0.0)
      * @param callback Function to call when state changes to target_state
      */
-    void on_change_to(bool target_state, const TypedHook<LogicContext>& callback);
+    HookId on_change_to(bool target_state, const TypedHook<LogicContext>& callback);
 
     /**
      * @brief Registers a callback for any state change (true↔false)
      * @param callback Function to call when output changes state
      */
-    void on_change(const TypedHook<LogicContext>& callback);
+    HookId on_change(const TypedHook<LogicContext>& callback);
 
     /**
      * @brief Removes a previously registered callback
@@ -737,15 +737,15 @@ private:
      * @param type The type of event to trigger the callback
      * @param condition Optional condition for conditional callbacks
      */
-    void add_callback(const TypedHook<LogicContext>& callback, LogicEventType type, const std::optional<NodeCondition>& condition = std::nullopt)
+    HookId add_callback(const TypedHook<LogicContext>& callback, LogicEventType type, const std::optional<NodeCondition>& condition = std::nullopt)
     {
         if (type == LogicEventType::TICK) {
-            m_callbacks.add(adapt_hook(callback), callback.target_type());
-        } else if (type == LogicEventType::CONDITIONAL && condition) {
-            m_conditional_callbacks.add_conditional(adapt_hook(callback), *condition, callback.target_type());
-        } else {
-            m_all_callbacks.add(adapt_hook(callback), callback.target_type(), static_cast<uint8_t>(type));
+            return m_callbacks.add(adapt_hook(callback), callback.target_type());
         }
+        if (type == LogicEventType::CONDITIONAL && condition) {
+            return m_conditional_callbacks.add_conditional(adapt_hook(callback), *condition, callback.target_type());
+        }
+        return m_all_callbacks.add(adapt_hook(callback), callback.target_type(), static_cast<uint8_t>(type));
     }
 
     void history_push(bool val);

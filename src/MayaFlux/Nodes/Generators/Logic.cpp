@@ -716,7 +716,7 @@ void Logic::notify_tick(double value)
     m_callbacks.fire(ctx);
     m_conditional_callbacks.fire(ctx);
 
-    for (const auto& entry : m_all_callbacks.entries()) {
+    for (const auto& entry : m_all_callbacks.snapshot()) {
         bool should_call = false;
 
         switch (static_cast<LogicEventType>(entry.tag)) {
@@ -764,34 +764,34 @@ std::span<bool> Logic::get_history()
     return { reinterpret_cast<bool*>(m_history_linear.data()), m_history_count };
 }
 
-void Logic::on_tick(const TypedHook<LogicContext>& callback)
+HookId Logic::on_tick(const TypedHook<LogicContext>& callback)
 {
-    add_callback(callback, LogicEventType::TICK);
+    return add_callback(callback, LogicEventType::TICK);
 }
 
-void Logic::on_tick_if(const NodeCondition& condition, const TypedHook<LogicContext>& callback)
+HookId Logic::on_tick_if(const NodeCondition& condition, const TypedHook<LogicContext>& callback)
 {
-    add_callback(callback, LogicEventType::CONDITIONAL, condition);
+    return add_callback(callback, LogicEventType::CONDITIONAL, condition);
 }
 
-void Logic::while_true(const TypedHook<LogicContext>& callback)
+HookId Logic::while_true(const TypedHook<LogicContext>& callback)
 {
-    add_callback(callback, LogicEventType::WHILE_TRUE);
+    return add_callback(callback, LogicEventType::WHILE_TRUE);
 }
 
-void Logic::while_false(const TypedHook<LogicContext>& callback)
+HookId Logic::while_false(const TypedHook<LogicContext>& callback)
 {
-    add_callback(callback, LogicEventType::WHILE_FALSE);
+    return add_callback(callback, LogicEventType::WHILE_FALSE);
 }
 
-void Logic::on_change(const TypedHook<LogicContext>& callback)
+HookId Logic::on_change(const TypedHook<LogicContext>& callback)
 {
-    add_callback(callback, LogicEventType::CHANGE);
+    return add_callback(callback, LogicEventType::CHANGE);
 }
 
-void Logic::on_change_to(bool target_state, const TypedHook<LogicContext>& callback)
+HookId Logic::on_change_to(bool target_state, const TypedHook<LogicContext>& callback)
 {
-    add_callback(callback, target_state ? LogicEventType::TRUE : LogicEventType::FALSE);
+    return add_callback(callback, target_state ? LogicEventType::TRUE : LogicEventType::FALSE);
 }
 
 bool Logic::remove_hook(const TypedHook<LogicContext>& callback)

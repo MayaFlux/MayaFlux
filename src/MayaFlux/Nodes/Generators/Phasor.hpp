@@ -203,7 +203,7 @@ public:
      * The callback receives a GeneratorContext containing the generated
      * value and generator parameters like frequency, amplitude, and phase.
      */
-    void on_phase_wrap(const TypedHook<GeneratorContext>& callback);
+    HookId on_phase_wrap(const TypedHook<GeneratorContext>& callback);
 
     /**
      * @brief Registers a callback for every time the phasor crosses a threshold
@@ -216,7 +216,7 @@ public:
      * receives a GeneratorContext containing the generated value and
      * generator parameters like frequency, amplitude, and phase.
      */
-    void on_threshold(const TypedHook<GeneratorContext>& callback, double threshold, bool rising = true);
+    HookId on_threshold(const TypedHook<GeneratorContext>& callback, double threshold, bool rising = true);
 
     /**
      * @brief Removes a previously registered callback
