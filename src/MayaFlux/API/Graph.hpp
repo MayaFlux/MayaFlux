@@ -280,7 +280,7 @@ MAYAFLUX_API void add_processor(const std::shared_ptr<Buffers::BufferProcessor>&
  * Removes the processor from the specified buffer's processing chain.
  * Uses the default engine's buffer manager.
  */
-void remove_processor(const std::shared_ptr<Buffers::BufferProcessor>& processor, const std::shared_ptr<Buffers::Buffer>& buffer);
+MAYAFLUX_API void remove_processor(const std::shared_ptr<Buffers::BufferProcessor>& processor, const std::shared_ptr<Buffers::Buffer>& buffer);
 
 /**
  * @brief Removes a processor from all buffers in a specific channel
@@ -292,7 +292,7 @@ void remove_processor(const std::shared_ptr<Buffers::BufferProcessor>& processor
  * in the given processing domain.
  * Uses the default engine's buffer manager.
  */
-void remove_processor(const std::shared_ptr<Buffers::BufferProcessor>& processor, uint32_t channel, Buffers::ProcessingToken token = Buffers::ProcessingToken::AUDIO_BACKEND);
+MAYAFLUX_API void remove_processor(const std::shared_ptr<Buffers::BufferProcessor>& processor, uint32_t channel, Buffers::ProcessingToken token = Buffers::ProcessingToken::AUDIO_BACKEND);
 
 /**
  * @brief Removes a processor from all buffers in a processing domain
@@ -302,7 +302,7 @@ void remove_processor(const std::shared_ptr<Buffers::BufferProcessor>& processor
  * Removes the processor from all buffers associated with the given processing domain.
  * Uses the default engine's buffer manager.
  */
-void remove_processor(const std::shared_ptr<Buffers::BufferProcessor>& processor, Buffers::ProcessingToken token = Buffers::ProcessingToken::AUDIO_BACKEND);
+MAYAFLUX_API void remove_processor(const std::shared_ptr<Buffers::BufferProcessor>& processor, Buffers::ProcessingToken token = Buffers::ProcessingToken::AUDIO_BACKEND);
 
 /**
  * @brief Registers an AudioBuffer with the default engine's buffer manager

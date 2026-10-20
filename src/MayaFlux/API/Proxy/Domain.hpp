@@ -137,7 +137,7 @@ enum Domain : uint64_t {
  * @param domain The unified domain to decompose
  * @return SubsystemTokens struct containing the individual tokens
  */
-Core::SubsystemTokens decompose_domain(Domain domain);
+MAYAFLUX_API Core::SubsystemTokens decompose_domain(Domain domain);
 
 /**
  * @brief Composes individual ProcessingTokens into a unified Domain
@@ -162,7 +162,7 @@ inline Domain compose_domain(Nodes::ProcessingToken node_token,
  * @return Validated unified Domain enum value
  * @throws std::invalid_argument if tokens are incompatible
  */
-Domain create_custom_domain(Nodes::ProcessingToken node_token,
+MAYAFLUX_API Domain create_custom_domain(Nodes::ProcessingToken node_token,
     Buffers::ProcessingToken buffer_token,
     Vruta::ProcessingToken task_token);
 

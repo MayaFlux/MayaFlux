@@ -22,7 +22,7 @@ using DeviceCallback = std::function<void(const InputDeviceInfo&, bool connected
  *
  * Handles both 16-bit (Windows) and 32-bit wchar_t.
  */
-std::string wide_to_utf8(const wchar_t* ws);
+MAYAFLUX_API std::string wide_to_utf8(const wchar_t* ws);
 
 /**
  * @class IInputBackend

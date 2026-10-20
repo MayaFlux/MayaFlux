@@ -36,13 +36,13 @@ namespace Core {
  * @brief Checks if the default engine has been initialized
  * @return true if the engine is initialized, false otherwise
  */
-bool is_initialized();
+MAYAFLUX_API bool is_initialized();
 
 /**
  * @brief Checks if the default engine has currently accepted all configurations and initialized all managers
  * @return true if the engine is fully configured and ready for processing, false otherwise
  */
-bool is_configured();
+MAYAFLUX_API bool is_configured();
 
 /**
  * @brief Gets the default engine instance
