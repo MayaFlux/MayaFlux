@@ -6,11 +6,25 @@ namespace MayaFlux::Nodes {
 
 RootNode::RootNode(ProcessingToken token, uint32_t channel)
     : m_is_processing(false)
-    , m_pending_count(0)
     , m_channel(channel)
     , m_skip_state_management(false)
     , m_token(token)
 {
+}
+
+void RootNode::enqueue_operation(PendingOp&& op)
+{
+    while (!m_pending_ops.push(std::move(op))) {
+        bool expected = false;
+        if (m_is_processing.compare_exchange_strong(expected, true,
+                std::memory_order_acquire, std::memory_order_relaxed)) {
+            process_pending_operations();
+            m_is_processing.store(false, std::memory_order_release);
+            m_is_processing.notify_all();
+        } else {
+            std::this_thread::yield();
+        }
+    }
 }
 
 void RootNode::register_node(const std::shared_ptr<Node>& node)
@@ -18,29 +32,10 @@ void RootNode::register_node(const std::shared_ptr<Node>& node)
     if (!node)
         return;
 
-    for (auto& pending_op : m_pending_ops) {
-        bool expected = false;
-        if (pending_op.active.compare_exchange_strong(
-                expected, true,
-                std::memory_order_acquire,
-                std::memory_order_relaxed)) {
-            pending_op.node = node;
-            pending_op.is_addition = true;
-            atomic_remove_flag(node->m_state, NodeState::ACTIVE);
-            atomic_add_flag(node->m_state, NodeState::INACTIVE);
-            m_pending_count.fetch_add(1, std::memory_order_relaxed);
-            return;
-        }
-    }
+    atomic_remove_flag(node->m_state, NodeState::ACTIVE);
+    atomic_add_flag(node->m_state, NodeState::INACTIVE);
 
-    while (m_is_processing.load(std::memory_order_acquire))
-        m_is_processing.wait(true, std::memory_order_acquire);
-
-    if (m_Nodes.end() == std::ranges::find(m_Nodes, node)) {
-        m_Nodes.push_back(node);
-        atomic_remove_flag(node->m_state, NodeState::INACTIVE);
-        atomic_add_flag(node->m_state, NodeState::ACTIVE);
-    }
+    enqueue_operation({ node, true });
 }
 
 void RootNode::unregister_node(const std::shared_ptr<Node>& node)
@@ -50,38 +45,7 @@ void RootNode::unregister_node(const std::shared_ptr<Node>& node)
 
     atomic_add_flag(node->m_state, NodeState::PENDING_REMOVAL);
 
-    for (auto& pending_op : m_pending_ops) {
-        bool expected = false;
-        if (pending_op.active.compare_exchange_strong(
-                expected, true,
-                std::memory_order_acquire,
-                std::memory_order_relaxed)) {
-            pending_op.node = node;
-            pending_op.is_addition = false;
-            m_pending_count.fetch_add(1, std::memory_order_relaxed);
-            return;
-        }
-    }
-
-    while (m_is_processing.load(std::memory_order_acquire))
-        m_is_processing.wait(true, std::memory_order_acquire);
-
-    auto it = m_Nodes.begin();
-    while (it != m_Nodes.end()) {
-        if ((*it).get() == node.get()) {
-            it = m_Nodes.erase(it);
-            break;
-        }
-        ++it;
-    }
-
-    node->reset_processed_state();
-
-    uint32_t flag = node->m_state.load();
-    flag &= ~static_cast<uint32_t>(NodeState::PENDING_REMOVAL);
-    flag &= ~static_cast<uint32_t>(NodeState::ACTIVE);
-    flag |= static_cast<uint32_t>(NodeState::INACTIVE);
-    atomic_set_flag_strong(node->m_state, static_cast<NodeState>(flag));
+    enqueue_operation({ node, false });
 }
 
 bool RootNode::preprocess()
@@ -99,7 +63,7 @@ bool RootNode::preprocess()
         return false;
     }
 
-    if (m_pending_count.load(std::memory_order_relaxed) > 0) {
+    if (m_pending_ops.has_pending()) {
         process_pending_operations();
     }
 
@@ -168,7 +132,7 @@ void RootNode::postprocess()
         node->request_reset_from_channel(m_channel);
     }
 
-    if (m_pending_count.load(std::memory_order_relaxed) > 0) {
+    if (m_pending_ops.has_pending()) {
         process_pending_operations();
     }
 
@@ -199,12 +163,7 @@ void RootNode::process_batch_frame(uint32_t num_frames)
 
 void RootNode::process_pending_operations()
 {
-    for (auto& pending_op : m_pending_ops) {
-        if (!pending_op.active.load(std::memory_order_acquire))
-            continue;
-
-        auto& op = pending_op;
-
+    m_pending_ops.drain([this](PendingOp&& op) {
         if (op.is_addition) {
             if (m_Nodes.end() == std::ranges::find(m_Nodes, op.node)) {
                 m_Nodes.push_back(op.node);
@@ -214,13 +173,9 @@ void RootNode::process_pending_operations()
                 atomic_set_flag_strong(op.node->m_state, static_cast<NodeState>(state));
             }
         } else {
-            auto it = m_Nodes.begin();
-            while (it != m_Nodes.end()) {
-                if ((*it).get() == op.node.get()) {
-                    it = m_Nodes.erase(it);
-                    break;
-                }
-                ++it;
+            auto it = std::ranges::find(m_Nodes, op.node);
+            if (it != m_Nodes.end()) {
+                m_Nodes.erase(it);
             }
             op.node->reset_processed_state();
             uint32_t state = op.node->m_state.load();
@@ -229,11 +184,7 @@ void RootNode::process_pending_operations()
             state |= static_cast<uint32_t>(NodeState::INACTIVE);
             atomic_set_flag_strong(op.node->m_state, static_cast<NodeState>(state));
         }
-
-        op.node.reset();
-        op.active.store(false, std::memory_order_release);
-        m_pending_count.fetch_sub(1, std::memory_order_relaxed);
-    }
+    });
 }
 
 void RootNode::terminate_all_nodes()
@@ -242,7 +193,8 @@ void RootNode::terminate_all_nodes()
 
     m_is_processing.store(false, std::memory_order_release);
 
-    for (auto& node : m_Nodes) {
+    const auto nodes = m_Nodes;
+    for (const auto& node : nodes) {
         unregister_node(node);
     }
 
