@@ -10,7 +10,7 @@ LineSegmentsNode::LineSegmentsNode(size_t initial_capacity)
     : PathGeneratorNode(Kinesis::InterpolationMode::CATMULL_ROM, 0, 0, 0.5)
 {
     auto layout = Kakshya::VertexLayout::for_lines(sizeof(LineVertex));
-    layout.vertex_count = initial_capacity;
+    layout.vertex_count = 0;
     set_vertex_layout(layout);
 
     m_segments.reserve(initial_capacity);
@@ -27,7 +27,7 @@ void LineSegmentsNode::add_line(const LineVertex& a, const LineVertex& b)
 {
     m_segments.push_back(a);
     m_segments.push_back(b);
-    m_vertex_data_dirty = true;
+    m_segments_dirty = true;
 }
 
 void LineSegmentsNode::add_axis(const LineVertex& origin, const glm::vec3& direction, float length)
@@ -36,13 +36,13 @@ void LineSegmentsNode::add_axis(const LineVertex& origin, const glm::vec3& direc
     tip.position = origin.position + direction * length;
     m_segments.push_back(origin);
     m_segments.push_back(tip);
-    m_vertex_data_dirty = true;
+    m_segments_dirty = true;
 }
 
 void LineSegmentsNode::clear_segments()
 {
     m_segments.clear();
-    m_vertex_data_dirty = true;
+    m_segments_dirty = true;
 }
 
 //-----------------------------------------------------------------------------
@@ -79,22 +79,22 @@ void LineSegmentsNode::add_curvature(
 
 void LineSegmentsNode::compute_frame()
 {
+    if (!m_segments_dirty) {
+        return;
+    }
+
     if (m_segments.empty()) {
         resize_vertex_buffer(0);
-        return;
+    } else {
+        set_vertices<LineVertex>(std::span { m_segments.data(), m_segments.size() });
     }
 
-    if (!m_vertex_data_dirty) {
-        return;
+    if (auto layout = get_vertex_layout()) {
+        layout->vertex_count = static_cast<uint32_t>(m_segments.size());
+        set_vertex_layout(*layout);
     }
 
-    set_vertices<LineVertex>(std::span { m_segments.data(), m_segments.size() });
-
-    auto layout = get_vertex_layout();
-    layout->vertex_count = static_cast<uint32_t>(m_segments.size());
-    set_vertex_layout(*layout);
-
-    m_vertex_data_dirty = false;
+    m_segments_dirty = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -104,7 +104,7 @@ void LineSegmentsNode::compute_frame()
 void LineSegmentsNode::append_pairs(const std::vector<LineVertex>& pairs)
 {
     m_segments.insert(m_segments.end(), pairs.begin(), pairs.end());
-    m_vertex_data_dirty = true;
+    m_segments_dirty = true;
 }
 
 } // namespace MayaFlux::Nodes::GpuSync
