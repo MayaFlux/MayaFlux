@@ -155,7 +155,7 @@ private:
 
     Portal::Graphics::FenceID m_pending_fence { Portal::Graphics::INVALID_FENCE };
 
-    std::vector<TypedHook<GpuComputeContext>> m_complete_callbacks;
+    HookList m_complete_callbacks { *this };
 
     Yantra::GpuChannelResult m_last_result;
     mutable std::unique_ptr<GpuComputeContext> m_context_storage;

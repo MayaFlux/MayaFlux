@@ -44,14 +44,7 @@ void OSCNode::notify_tick(double value)
 {
     InputNode::notify_tick(value);
     if (m_last_osc_message) {
-        fire_osc_callbacks(*m_last_osc_message);
-    }
-}
-
-void OSCNode::fire_osc_callbacks(const Core::InputValue::OSCMessage& osc)
-{
-    for (const auto& cb : m_message_callbacks) {
-        cb(osc.address, osc.arguments);
+        m_message_callbacks.fire(get_last_context());
     }
 }
 

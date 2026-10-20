@@ -72,18 +72,6 @@ struct InputConfig {
     size_t history_size { 8 }; ///< Input history buffer size
 };
 
-/**
- * @struct InputCallback
- * @brief Callback registration with event type and optional parameters
- */
-struct InputCallback {
-    TypedHook<InputContext> callback;
-    InputEventType event_type;
-    std::optional<NodeCondition> condition;
-    std::optional<double> threshold;
-    std::optional<std::pair<double, double>> range;
-};
-
 // ─────────────────────────────────────────────────────────────────────────────
 // InputNode - Base class for input-driven nodes
 // ─────────────────────────────────────────────────────────────────────────────
@@ -327,7 +315,7 @@ private:
 
     std::atomic<uint32_t> m_last_device_id { 0 };
     Core::InputType m_last_source_type { Core::InputType::HID };
-    std::vector<InputCallback> m_input_callbacks;
+    HookList m_input_callbacks { *this };
 
     Memory::LockFreeQueue<Core::InputValue, 64> m_input_history;
 

@@ -95,14 +95,8 @@ void StreamReaderNode::notify_tick(double value)
 {
     update_context(value);
 
-    for (auto& cb : m_callbacks) {
-        cb(m_context);
-    }
-    for (auto& [cb, cond] : m_conditional_callbacks) {
-        if (cond(m_context)) {
-            cb(m_context);
-        }
-    }
+    m_callbacks.fire(m_context);
+    m_conditional_callbacks.fire(m_context);
 }
 
 } // namespace MayaFlux::Nodes

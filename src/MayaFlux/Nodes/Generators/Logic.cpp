@@ -713,12 +713,15 @@ void Logic::notify_tick(double value)
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
     auto& ctx = static_cast<LogicContext&>(get_last_context());
 
-    for (const auto& cb : m_all_callbacks) {
+    m_callbacks.fire(ctx);
+    m_conditional_callbacks.fire(ctx);
+
+    for (const auto& entry : m_all_callbacks.entries()) {
         bool should_call = false;
 
-        switch (cb.event_type) {
+        switch (static_cast<LogicEventType>(entry.tag)) {
         case LogicEventType::TICK:
-            should_call = true;
+        case LogicEventType::CONDITIONAL:
             break;
 
         case LogicEventType::WHILE_TRUE:
@@ -740,14 +743,10 @@ void Logic::notify_tick(double value)
         case LogicEventType::FALSE:
             should_call = state_changed && !value;
             break;
-
-        case LogicEventType::CONDITIONAL:
-            should_call = cb.condition && cb.condition.value()(ctx);
-            break;
         }
 
         if (should_call) {
-            cb.callback(ctx);
+            entry.hook(ctx);
         }
     }
 }
@@ -797,29 +796,26 @@ void Logic::on_change_to(bool target_state, const TypedHook<LogicContext>& callb
 
 bool Logic::remove_hook(const TypedHook<LogicContext>& callback)
 {
-    auto old_size = m_all_callbacks.size();
-
-    std::erase_if(m_all_callbacks, [&callback](const LogicCallback& cb) {
-        return cb.typed_callback.target_type() == callback.target_type();
-    });
-
-    return m_all_callbacks.size() < old_size;
+    const auto& key = callback.target_type();
+    bool removed = m_callbacks.remove_by_key(key);
+    removed |= m_all_callbacks.remove_by_key(key);
+    return removed;
 }
 
 bool Logic::remove_conditional_hook(const NodeCondition& callback)
 {
-    auto old_size = m_all_callbacks.size();
-    std::erase_if(m_all_callbacks, [&callback](const LogicCallback& cb) {
-        return cb.event_type == LogicEventType::CONDITIONAL && cb.condition && cb.condition->target_type() == callback.target_type();
-    });
-    return m_all_callbacks.size() < old_size;
+    return m_conditional_callbacks.remove_by_condition_key(callback.target_type());
 }
 
 void Logic::remove_hooks_of_type(LogicEventType type)
 {
-    std::erase_if(m_all_callbacks, [type](const LogicCallback& cb) {
-        return cb.event_type == type;
-    });
+    if (type == LogicEventType::TICK) {
+        m_callbacks.clear();
+    } else if (type == LogicEventType::CONDITIONAL) {
+        m_conditional_callbacks.clear();
+    } else {
+        m_all_callbacks.remove_by_tag(static_cast<uint8_t>(type));
+    }
 }
 
 void Logic::history_push(bool val)

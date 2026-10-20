@@ -103,29 +103,16 @@ void MIDINode::fire_midi_callbacks(const Core::InputValue::MIDIMessage& midi)
 
     switch (msg_type) {
     case 0x90:
-        for (const auto& cb : m_note_callbacks) {
-            bool is_on = midi.data2 > 0; // velocity 0 = note off
-            cb(midi.data1, midi.data2, is_on);
-        }
-        break;
-
     case 0x80:
-        for (const auto& cb : m_note_callbacks) {
-            cb(midi.data1, 0, false);
-        }
+        m_note_callbacks.fire(get_last_context());
         break;
 
     case 0xB0:
-        for (const auto& cb : m_cc_callbacks) {
-            cb(midi.data1, midi.data2);
-        }
+        m_cc_callbacks.fire(get_last_context());
         break;
 
     case 0xE0:
-        for (const auto& cb : m_pitch_bend_callbacks) {
-            int16_t bend = ((midi.data2 << 7) | midi.data1) - 8192;
-            cb(bend);
-        }
+        m_pitch_bend_callbacks.fire(get_last_context());
         break;
 
     default:

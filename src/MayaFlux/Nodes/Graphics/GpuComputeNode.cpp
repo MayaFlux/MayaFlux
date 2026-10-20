@@ -63,20 +63,21 @@ void GpuComputeNode::compute_frame()
 
 void GpuComputeNode::on_complete(const TypedHook<GpuComputeContext>& callback)
 {
-    safe_add_callback(m_complete_callbacks, callback);
+    m_complete_callbacks.add_unique(adapt_hook(callback), callback.target_type());
 }
 
 bool GpuComputeNode::remove_complete_hook(const TypedHook<GpuComputeContext>& callback)
 {
-    return safe_remove_callback(m_complete_callbacks, callback);
+    return m_complete_callbacks.remove_by_key(callback.target_type());
 }
 
 void GpuComputeNode::notify_tick(double /*value*/)
 {
     update_context(0.0);
 
-    for (auto& cb : m_complete_callbacks)
-        cb(*m_context_storage);
+    m_callbacks.fire(*m_context_storage);
+    m_conditional_callbacks.fire(*m_context_storage);
+    m_complete_callbacks.fire(*m_context_storage);
 
     MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
         "GpuComputeNode: dispatch complete, {} primary floats, {} aux bindings",
