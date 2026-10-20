@@ -165,29 +165,17 @@ void Phasor::reset(float frequency, float amplitude, float offset, double phase)
 
 void Phasor::on_phase_wrap(const TypedHook<GeneratorContext>& callback)
 {
-    safe_add_callback(m_phase_wrap_callbacks, callback);
+    m_phase_wrap_callbacks.add_unique(adapt_hook(callback), callback.target_type());
 }
 
 void Phasor::on_threshold(const TypedHook<GeneratorContext>& callback, double threshold, bool /*rising*/)
 {
-    std::pair<TypedHook<GeneratorContext>, double> entry = std::make_pair(callback, threshold);
-    for (auto& pair : m_threshold_callbacks) {
-        if (pair.first.target_type() == callback.target_type() && pair.second == threshold) {
-            return;
-        }
-    }
-    m_threshold_callbacks.push_back(entry);
+    m_threshold_callbacks.add_unique(adapt_hook(callback), callback.target_type(), 0, { threshold, 0.0 });
 }
 
 bool Phasor::remove_threshold_callback(const TypedHook<GeneratorContext>& callback)
 {
-    for (auto it = m_threshold_callbacks.begin(); it != m_threshold_callbacks.end(); ++it) {
-        if (it->first.target_type() == callback.target_type()) {
-            m_threshold_callbacks.erase(it);
-            return true;
-        }
-    }
-    return false;
+    return m_threshold_callbacks.remove_first_by_key(callback.target_type());
 }
 
 bool Phasor::remove_hook(const TypedHook<GeneratorContext>& callback)
@@ -199,28 +187,20 @@ void Phasor::notify_tick(double value)
 {
     update_context(value);
 
-    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-    auto& ctx = static_cast<GeneratorContext&>(get_last_context());
+    auto& ctx = get_last_context();
 
-    for (auto& callback : m_callbacks) {
-        callback(ctx);
-    }
+    m_callbacks.fire(ctx);
 
     if (m_phase_wrapped) {
-        for (auto& callback : m_phase_wrap_callbacks) {
-            callback(ctx);
-        }
+        m_phase_wrap_callbacks.fire(ctx);
     }
 
-    for (auto& [callback, condition] : m_conditional_callbacks) {
-        if (condition(ctx)) {
-            callback(ctx);
-        }
-    }
+    m_conditional_callbacks.fire(ctx);
 
-    for (auto& [callback, threshold] : m_threshold_callbacks) {
+    for (const auto& entry : m_threshold_callbacks.entries()) {
+        const double threshold = entry.params[0];
         if (value >= threshold && !m_threshold_crossed) {
-            callback(ctx);
+            entry.hook(ctx);
             m_threshold_crossed = true;
         } else if (value < threshold) {
             m_threshold_crossed = false;

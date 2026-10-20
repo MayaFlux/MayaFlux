@@ -449,25 +449,27 @@ protected:
      */
     std::vector<float> m_gpu_data_buffer;
 
+private:
+    friend class HookList;
+
+    void register_hook_list(HookList& list) { m_hook_lists.push_back(&list); }
+
+    std::vector<HookList*> m_hook_lists;
+
+protected:
     /**
-     * @brief Collection of standard callback functions
+     * @brief Hooks fired on every tick
      *
-     * Stores the registered callback functions that will be notified
-     * whenever the binary operation produces a new output value. These callbacks
-     * enable external components to monitor and react to the combined output
-     * without interrupting the processing flow.
+     * Registered with this node, so remove_all_hooks clears it.
      */
-    std::vector<NodeHook> m_callbacks;
+    HookList m_callbacks { *this };
 
     /**
-     * @brief Collection of conditional callback functions with their predicates
+     * @brief Hooks fired on a tick only while their condition holds
      *
-     * Stores pairs of callback functions and their associated condition predicates.
-     * These callbacks are only invoked when their condition evaluates to true
-     * for a combined output value, enabling selective monitoring of specific
-     * conditions or patterns in the combined signal.
+     * Registered with this node, so remove_all_hooks clears it.
      */
-    std::vector<std::pair<NodeHook, NodeCondition>> m_conditional_callbacks;
+    HookList m_conditional_callbacks { *this };
 
     /**
      * @brief Flag indicating if the node is part of a NodeNetwork

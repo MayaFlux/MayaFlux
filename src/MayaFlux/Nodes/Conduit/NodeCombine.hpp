@@ -528,15 +528,8 @@ protected:
         update_context(value);
         auto& ctx = get_last_context();
 
-        for (const auto& callback : m_callbacks) {
-            callback(ctx);
-        }
-
-        for (const auto& [callback, condition] : m_conditional_callbacks) {
-            if (condition(ctx)) {
-                callback(ctx);
-            }
-        }
+        m_callbacks.fire(ctx);
+        m_conditional_callbacks.fire(ctx);
     }
 
     void update_context(double) override

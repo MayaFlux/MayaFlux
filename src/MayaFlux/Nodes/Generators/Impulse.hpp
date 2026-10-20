@@ -192,21 +192,6 @@ public:
      */
     bool remove_hook(const TypedHook<GeneratorContext>& callback);
 
-    /**
-     * @brief Removes all registered callbacks
-     *
-     * Clears all standard and conditional callbacks, effectively
-     * disconnecting all external components from this generator's
-     * notification system. Useful when reconfiguring the processing
-     * graph or shutting down components.
-     */
-    inline void remove_all_hooks() override
-    {
-        m_callbacks.clear();
-        m_conditional_callbacks.clear();
-        m_impulse_callbacks.clear();
-    }
-
     void save_state() override;
     void restore_state() override;
 
@@ -263,7 +248,7 @@ private:
     /**
      * @brief Collection of impulse-specific callback functions
      */
-    std::vector<TypedHook<GeneratorContext>> m_impulse_callbacks;
+    HookList m_impulse_callbacks { *this };
 
     bool m_impulse_occurred;
 

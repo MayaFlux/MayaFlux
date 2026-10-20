@@ -112,6 +112,16 @@ public:
             m_nodes.back()->on_tick_if(condition, callback);
     }
 
+    inline bool remove_hook(const NodeHook& callback) override
+    {
+        return !m_nodes.empty() && m_nodes.back()->remove_hook(callback);
+    }
+
+    inline bool remove_conditional_hook(const NodeCondition& callback) override
+    {
+        return !m_nodes.empty() && m_nodes.back()->remove_conditional_hook(callback);
+    }
+
     inline void remove_all_hooks() override
     {
         if (!m_nodes.empty())

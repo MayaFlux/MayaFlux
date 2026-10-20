@@ -4,46 +4,92 @@
 
 namespace MayaFlux::Nodes {
 
-bool conditional_callback_exists(const std::vector<std::pair<NodeHook, NodeCondition>>& callbacks, const NodeCondition& callback)
+HookList::HookList(Node& owner)
 {
-    return std::ranges::any_of(callbacks,
-        [&callback](const std::pair<NodeHook, NodeCondition>& pair) {
-            return pair.second.target_type() == callback.target_type();
-        });
+    owner.register_hook_list(*this);
 }
 
-bool callback_pair_exists(const std::vector<std::pair<NodeHook, NodeCondition>>& callbacks, const NodeHook& callback, const NodeCondition& condition)
+HookId HookList::add(NodeHook hook, const std::type_info& key, uint8_t tag, std::array<double, 2> params)
 {
-    return std::ranges::any_of(callbacks,
-        [&callback, &condition](const std::pair<NodeHook, NodeCondition>& pair) {
-            return pair.first.target_type() == callback.target_type() && pair.second.target_type() == condition.target_type();
-        });
+    const HookId id = m_next_id++;
+    m_entries.push_back(HookEntry { id, &key, tag, params, std::move(hook), std::nullopt });
+    return id;
 }
 
-bool safe_add_conditional_callback(std::vector<std::pair<NodeHook, NodeCondition>>& callbacks, const NodeHook& callback, const NodeCondition& condition)
+HookId HookList::add_unique(NodeHook hook, const std::type_info& key, uint8_t tag, std::array<double, 2> params)
 {
-    if (!callback_pair_exists(callbacks, callback, condition)) {
-        callbacks.emplace_back(callback, condition);
-        return true;
+    const bool exists = std::ranges::any_of(m_entries, [&](const HookEntry& entry) {
+        return *entry.key == key && entry.params == params;
+    });
+    if (exists) {
+        return 0;
     }
-    return false;
+    return add(std::move(hook), key, tag, params);
 }
 
-bool safe_remove_conditional_callback(std::vector<std::pair<NodeHook, NodeCondition>>& callbacks, const NodeCondition& callback)
+HookId HookList::add_conditional(NodeHook hook, NodeCondition condition, const std::type_info& key, uint8_t tag)
 {
-    bool removed = false;
-    auto it = callbacks.begin();
+    const HookId id = m_next_id++;
+    m_entries.push_back(HookEntry { id, &key, tag, {}, std::move(hook), std::move(condition) });
+    return id;
+}
 
-    while (it != callbacks.end()) {
-        if (it->second.target_type() == callback.target_type()) {
-            it = callbacks.erase(it);
-            removed = true;
-        } else {
-            ++it;
+HookId HookList::add_conditional_unique(NodeHook hook, NodeCondition condition, const std::type_info& key, uint8_t tag)
+{
+    const bool exists = std::ranges::any_of(m_entries, [&](const HookEntry& entry) {
+        return *entry.key == key && entry.condition && entry.condition->target_type() == condition.target_type();
+    });
+    if (exists) {
+        return 0;
+    }
+    return add_conditional(std::move(hook), std::move(condition), key, tag);
+}
+
+bool HookList::remove(HookId id)
+{
+    return std::erase_if(m_entries, [id](const HookEntry& entry) { return entry.id == id; }) > 0;
+}
+
+bool HookList::remove_by_key(const std::type_info& key)
+{
+    return std::erase_if(m_entries, [&](const HookEntry& entry) { return *entry.key == key; }) > 0;
+}
+
+bool HookList::remove_first_by_key(const std::type_info& key)
+{
+    const auto it = std::ranges::find_if(m_entries, [&](const HookEntry& entry) { return *entry.key == key; });
+    if (it == m_entries.end()) {
+        return false;
+    }
+    m_entries.erase(it);
+    return true;
+}
+
+bool HookList::remove_by_condition_key(const std::type_info& key)
+{
+    return std::erase_if(m_entries, [&](const HookEntry& entry) {
+        return entry.condition && entry.condition->target_type() == key;
+    }) > 0;
+}
+
+bool HookList::remove_by_tag(uint8_t tag)
+{
+    return std::erase_if(m_entries, [tag](const HookEntry& entry) { return entry.tag == tag; }) > 0;
+}
+
+void HookList::clear()
+{
+    m_entries.clear();
+}
+
+void HookList::fire(NodeContext& ctx) const
+{
+    for (const auto& entry : m_entries) {
+        if (entry.condition && !(*entry.condition)(ctx)) {
+            continue;
         }
+        entry.hook(ctx);
     }
-
-    return removed;
 }
 
 void atomic_set_strong(std::atomic<NodeState>& flag, NodeState& expected, const NodeState& desired)

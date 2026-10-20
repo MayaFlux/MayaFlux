@@ -90,11 +90,9 @@ void TabletNode::fire_edges()
     }
 }
 
-void TabletNode::fire(const std::vector<FrameCallback>& callbacks)
+void TabletNode::fire(const HookList& callbacks)
 {
-    for (const auto& callback : callbacks) {
-        callback(m_tablet_context);
-    }
+    callbacks.fire(m_tablet_context);
 }
 
 } // namespace MayaFlux::Nodes::Input
