@@ -121,7 +121,7 @@ classDiagram
     AudioBuffer <|-- SoundContainerBuffer
     BufferProcessor <|-- NodeFeedProcessor
     BufferProcessor <|-- FeedbackProcessor
-    FeedbackBuffer o-- HistoryBuffer : history, from Transitive::Memory
+    FeedbackBuffer o-- HistoryBuffer : history, from Transitive Memory
     FeedbackProcessor ..> HistoryBuffer : lagged reads
 ```
 

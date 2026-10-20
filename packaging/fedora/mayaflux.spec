@@ -179,7 +179,7 @@ if [ $1 -eq 0 ]; then
 fi
 
 %changelog
-* Sun Jun 21 2026 MayaFlux Collective <mayafluxcollective@proton.me> - 0.5.0-1
+* Tue Oct 20 2026 MayaFlux Collective <mayafluxcollective@proton.me> - 0.5.0-1
 - Stable release 0.5.0
 - Full source build with C++23 support
 - All development dependencies included for JIT/live coding
