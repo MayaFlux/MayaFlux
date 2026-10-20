@@ -390,10 +390,22 @@ public:
      */
     void set_primitive_topology(Portal::Graphics::PrimitiveTopology topology)
     {
+        if (m_primitive_topology == topology) {
+            return;
+        }
         m_primitive_topology = topology;
+        handle_topology_change();
     }
 
 protected:
+    /**
+     * @brief Called after set_primitive_topology() stores a different value.
+     *
+     * Lets a subclass whose layout depends on the topology schedule a rebuild.
+     * The default does nothing.
+     */
+    virtual void handle_topology_change() { }
+
     Portal::Graphics::PrimitiveTopology m_primitive_topology { Portal::Graphics::PrimitiveTopology::POINT_LIST };
 
     GeometryContext m_context { 0.0, {}, 0, 0 };
