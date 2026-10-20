@@ -40,6 +40,11 @@ configure_file(
 add_subdirectory(src)
 
 if(MAYAFLUX_BUILD_TESTS)
+    if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/CMakeLists.txt")
+        message(FATAL_ERROR
+            "MAYAFLUX_BUILD_TESTS=ON but the tests submodule is not checked out. "
+            "Run: git submodule update --init tests")
+    endif()
     message(STATUS "Building tests (MAYAFLUX_BUILD_TESTS=ON)")
     enable_testing()
     add_subdirectory(tests)

@@ -3,3 +3,7 @@
     url = git@github.com:mayaflux/mayaflux-examples.git
     branch = main
     update = none
+[submodule "tests"]
+	path = tests
+	url = https://github.com/MayaFlux/mayaflux-tests.git
+	branch = main
