@@ -15,6 +15,7 @@ PointCollectionNode::PointCollectionNode(size_t initial_capacity)
     set_vertex_layout(layout);
 
     resize_vertex_buffer(static_cast<uint32_t>(initial_capacity), false);
+    m_vertex_count = 0;
 
     MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
         "Created PointCollectionNode with capacity for {} points", initial_capacity);
@@ -90,14 +91,13 @@ void PointCollectionNode::compute_frame()
 {
     if (m_points.empty()) {
         resize_vertex_buffer(0, false);
-        return;
-    }
+    } else {
+        if (get_vertex_count() != m_points.size()) {
+            resize_vertex_buffer(static_cast<uint32_t>(m_points.size()), false);
+        }
 
-    if (get_vertex_count() != m_points.size()) {
-        resize_vertex_buffer(static_cast<uint32_t>(m_points.size()), false);
+        set_vertices<PointVertex>(std::span { m_points.data(), m_points.size() });
     }
-
-    set_vertices<PointVertex>(std::span { m_points.data(), m_points.size() });
 
     if (auto layout = get_vertex_layout()) {
         layout->vertex_count = static_cast<uint32_t>(m_points.size());
