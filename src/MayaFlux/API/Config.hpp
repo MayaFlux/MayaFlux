@@ -125,13 +125,6 @@ namespace Config {
      * @note Must be called before Init(). Fields absent from the file retain defaults.
      */
     MAYAFLUX_API bool load_config_from_file(const std::string& path);
-
-    /**
-     * @brief Set the directory a project's relative asset, output, config and log file names resolve against.
-     * @param path Project directory. An empty path restores the default, the directory MayaFlux was built from.
-     * @note Call before Init() and before loading a config file.
-     */
-    MAYAFLUX_API void set_project_root(const std::string& path);
 }
 
 }

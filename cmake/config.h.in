@@ -162,20 +162,17 @@ namespace Config {
 #endif
 
     /**
-     * @brief Directory that relative asset, output and config paths resolve against.
-     *
-     * Empty by default, which means SOURCE_DIR. A project built against an installed
-     * MayaFlux sets it once at startup with set_project_root() in API/Config.hpp.
+     * @brief Directory that relative asset, output, config and log paths resolve against.
+     * @return The path given to set_project_root(), otherwise SOURCE_DIR.
      */
-    inline std::string PROJECT_ROOT;
+    [[nodiscard]] MAYAFLUX_API std::string project_root();
 
     /**
-     * @brief PROJECT_ROOT if it has been set, otherwise SOURCE_DIR.
+     * @brief Set the directory a project's relative asset, output, config and log file names resolve against.
+     * @param path Project directory. An empty path restores the default, the directory MayaFlux was built from.
+     * @note Call before Init() and before loading a config file.
      */
-    [[nodiscard]] inline std::string project_root()
-    {
-        return PROJECT_ROOT.empty() ? std::string(SOURCE_DIR) : PROJECT_ROOT;
-    }
+    MAYAFLUX_API void set_project_root(std::string path);
 }
 
 namespace Core {
