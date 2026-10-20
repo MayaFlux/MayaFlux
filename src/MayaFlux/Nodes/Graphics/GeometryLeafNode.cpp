@@ -35,6 +35,7 @@ GeometryLeafNode::GeometryLeafNode(size_t initial_capacity)
     set_vertex_layout(layout);
 
     resize_vertex_buffer(static_cast<uint32_t>(initial_capacity), false);
+    m_vertex_count = 0;
 }
 
 GeometryLeafNode::GeometryLeafNode(std::vector<Vertex> vertices)
@@ -100,14 +101,13 @@ void GeometryLeafNode::compute_frame()
 
     if (m_items.empty()) {
         resize_vertex_buffer(0, false);
-        return;
-    }
+    } else {
+        if (get_vertex_count() != m_items.size()) {
+            resize_vertex_buffer(static_cast<uint32_t>(m_items.size()), false);
+        }
 
-    if (get_vertex_count() != m_items.size()) {
-        resize_vertex_buffer(static_cast<uint32_t>(m_items.size()), false);
+        set_vertices<Vertex>(std::span { m_items.data(), m_items.size() });
     }
-
-    set_vertices<Vertex>(std::span { m_items.data(), m_items.size() });
 
     auto layout = layout_for_topology(get_primitive_topology());
     layout.vertex_count = static_cast<uint32_t>(m_items.size());

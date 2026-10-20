@@ -43,7 +43,6 @@ public:
      *        node dirty -- call set_geometry() (even with the same vector)
      *        or update_vertex() afterward so compute_frame() re-uploads.
      */
-    [[nodiscard]] std::vector<Vertex>& get_geometry() { return m_items; }
 
     void clear_geometry();
 
@@ -55,6 +54,9 @@ public:
      *        frame stays cheap regardless of how many items exist.
      */
     void compute_frame() override;
+
+protected:
+    void handle_topology_change() override { m_geometry_dirty = true; }
 
 private:
     std::vector<Vertex> m_items;
