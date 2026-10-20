@@ -13,7 +13,7 @@ GeometryWriterNode::GeometryWriterNode(uint32_t initial_capacity)
     }
 
     if (initial_capacity > 0) {
-        m_vertex_buffer.resize(initial_capacity * m_vertex_stride / sizeof(float));
+        m_vertex_buffer.resize(static_cast<size_t>(initial_capacity) * m_vertex_stride);
     }
 }
 
@@ -29,9 +29,9 @@ void GeometryWriterNode::resize_vertex_buffer(uint32_t vertex_count, bool preser
 
     if (!preserve_data) {
         m_vertex_buffer.clear();
-        m_vertex_buffer.resize(new_size_bytes, 0.0F);
+        m_vertex_buffer.resize(new_size_bytes, 0);
     } else if (m_vertex_buffer.size() < new_size_bytes) {
-        m_vertex_buffer.resize(new_size_bytes, 0.0F);
+        m_vertex_buffer.resize(new_size_bytes, 0);
     } else if (m_vertex_buffer.size() > new_size_bytes) {
         m_vertex_buffer.resize(new_size_bytes);
     }
@@ -42,7 +42,7 @@ void GeometryWriterNode::resize_vertex_buffer(uint32_t vertex_count, bool preser
 
     MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
         "GeometryWriterNode: Resized vertex buffer to {} vertices ({} bytes total)",
-        vertex_count, new_size_bytes * sizeof(float));
+        vertex_count, new_size_bytes);
 }
 
 void GeometryWriterNode::set_vertex_data(const void* data, size_t size_bytes)
@@ -67,9 +67,8 @@ void GeometryWriterNode::set_vertex_data(const void* data, size_t size_bytes)
             size_bytes, m_vertex_stride);
     }
 
-    size_t required_floats = size_bytes / sizeof(float);
-    if (m_vertex_buffer.size() < required_floats) {
-        m_vertex_buffer.resize(required_floats);
+    if (m_vertex_buffer.size() < size_bytes) {
+        m_vertex_buffer.resize(size_bytes);
     }
 
     std::memcpy(m_vertex_buffer.data(), data, size_bytes);
@@ -110,12 +109,16 @@ void GeometryWriterNode::set_vertex(uint32_t vertex_index, const void* data, siz
         size_bytes = m_vertex_stride;
     }
 
-    size_t offset_floats = (static_cast<size_t>(vertex_index) * m_vertex_stride) / sizeof(float);
+    const size_t offset = static_cast<size_t>(vertex_index) * m_vertex_stride;
 
-    std::memcpy(
-        reinterpret_cast<uint8_t*>(m_vertex_buffer.data()) + (offset_floats * sizeof(float)),
-        data,
-        size_bytes);
+    if (offset + size_bytes > m_vertex_buffer.size()) {
+        MF_ERROR(Journal::Component::Nodes, Journal::Context::NodeProcessing,
+            "Vertex {} lies beyond the vertex buffer ({} bytes)",
+            vertex_index, m_vertex_buffer.size());
+        return;
+    }
+
+    std::memcpy(m_vertex_buffer.data() + offset, data, size_bytes);
 
     MF_TRACE(Journal::Component::Nodes, Journal::Context::NodeProcessing,
         "GeometryWriterNode: Set vertex {} ({} bytes)", vertex_index, size_bytes);
@@ -157,14 +160,13 @@ std::span<const uint8_t> GeometryWriterNode::get_vertex(uint32_t vertex_index) c
         return {};
     }
 
-    size_t offset_floats = (static_cast<size_t>(vertex_index) * m_vertex_stride) / sizeof(float);
-    size_t stride_floats = m_vertex_stride / sizeof(float);
+    const size_t offset = static_cast<size_t>(vertex_index) * m_vertex_stride;
 
-    if (offset_floats + stride_floats > m_vertex_buffer.size()) {
+    if (offset + m_vertex_stride > m_vertex_buffer.size()) {
         return {};
     }
 
-    return { m_vertex_buffer.data() + offset_floats, stride_floats };
+    return { m_vertex_buffer.data() + offset, m_vertex_stride };
 }
 
 std::span<const uint32_t> GeometryWriterNode::get_index_data() const
