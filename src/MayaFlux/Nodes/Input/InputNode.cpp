@@ -24,7 +24,6 @@ double InputNode::process_sample(double /*input*/)
     m_current_value.store(output);
     m_last_output = output;
 
-    notify_tick(output);
     return output;
 }
 
@@ -46,7 +45,6 @@ void InputNode::process_input(const Core::InputValue& value)
 
     m_target_value.store(extracted);
     m_current_value.store(smoothed);
-    m_last_output = smoothed;
     m_has_new_input.store(true);
 
     m_last_device_id.store(value.device_id);
