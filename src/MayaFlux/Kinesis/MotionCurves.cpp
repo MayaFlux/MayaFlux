@@ -39,17 +39,19 @@ namespace {
     }
 
     /**
-     * @brief Copy a column-major Eigen basis into a row-major flat buffer.
-     * @param source pps x pps matrix, weight of control q at row q.
+     * @brief Copy a column-major Eigen basis into a control-major flat buffer.
+     * @param source pps x pps matrix with one row per power of t, highest first,
+     *        and one column per control, as BasisMatrices stores them.
      * @param pps Points per segment.
-     * @param dst Resized to pps * pps, indexed [q * pps + p].
+     * @param dst Resized to pps * pps, indexed [q * pps + p], the coefficient of
+     *        power p contributed by control q.
      */
     void flatten_basis(const double* source, Eigen::Index pps, std::vector<double>& dst)
     {
         dst.resize(static_cast<size_t>(pps * pps));
         for (Eigen::Index q = 0; q < pps; ++q) {
             for (Eigen::Index p = 0; p < pps; ++p) {
-                dst[static_cast<size_t>(q * pps + p)] = source[q + p * pps];
+                dst[static_cast<size_t>(q * pps + p)] = source[p + q * pps];
             }
         }
     }
@@ -374,7 +376,7 @@ Eigen::VectorXd catmull_rom_spline(
 
     Eigen::Matrix4d basis_matrix = BasisMatrices::catmull_rom_with_tension(tension);
     Eigen::Vector4d t_vector(t * t * t, t * t, t, 1.0);
-    Eigen::Vector4d coeffs = basis_matrix * t_vector;
+    Eigen::Vector4d coeffs = basis_matrix.transpose() * t_vector;
 
     return control_points * coeffs;
 }
@@ -456,7 +458,7 @@ Eigen::VectorXd bspline_cubic(
     }
 
     Eigen::Vector4d t_vector(t * t * t, t * t, t, 1.0);
-    Eigen::Vector4d coeffs = BasisMatrices::BSPLINE_CUBIC * t_vector;
+    Eigen::Vector4d coeffs = BasisMatrices::BSPLINE_CUBIC.transpose() * t_vector;
 
     return control_points * coeffs;
 }
