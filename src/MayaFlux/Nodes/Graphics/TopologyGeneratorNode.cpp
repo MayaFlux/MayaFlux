@@ -4,6 +4,27 @@
 
 namespace MayaFlux::Nodes::GpuSync {
 
+namespace {
+    bool path_interpolation_viable(Kinesis::InterpolationMode mode, size_t num_points)
+    {
+        switch (mode) {
+        case Kinesis::InterpolationMode::COSINE:
+            return num_points >= 2;
+        case Kinesis::InterpolationMode::QUADRATIC_BEZIER:
+            return num_points >= 3;
+        case Kinesis::InterpolationMode::CUBIC_BEZIER:
+            return num_points >= 4;
+        case Kinesis::InterpolationMode::CATMULL_ROM:
+        case Kinesis::InterpolationMode::BSPLINE:
+            return num_points >= 5;
+        case Kinesis::InterpolationMode::CUBIC_HERMITE:
+            return num_points == 4;
+        default:
+            return false;
+        }
+    }
+}
+
 TopologyGeneratorNode::TopologyGeneratorNode(
     Kinesis::ProximityMode mode,
     bool auto_connect,
@@ -148,8 +169,7 @@ void TopologyGeneratorNode::refresh_attributes()
     const size_t num_points = m_points.size();
 
     if (m_mode == Kinesis::ProximityMode::SEQUENTIAL
-        && num_points >= 2
-        && m_path_interpolation_mode != Kinesis::InterpolationMode::LINEAR) {
+        && path_interpolation_viable(m_path_interpolation_mode, num_points)) {
         write_path_attributes(m_points, num_points);
         return;
     }
@@ -349,8 +369,7 @@ void TopologyGeneratorNode::build_vertex_buffer()
     const size_t num_points = m_points.size();
 
     if (m_mode == Kinesis::ProximityMode::SEQUENTIAL
-        && num_points >= 2
-        && m_path_interpolation_mode != Kinesis::InterpolationMode::LINEAR) {
+        && path_interpolation_viable(m_path_interpolation_mode, num_points)) {
         build_interpolated_path(m_points, num_points);
     } else {
         build_direct_connections(m_points, num_points);
@@ -366,20 +385,20 @@ void TopologyGeneratorNode::compute_frame()
     } else if (m_attributes_dirty) {
         refresh_attributes();
         m_attributes_dirty = false;
-        m_vertex_data_dirty = true;
-    }
-
-    if (!m_vertex_data_dirty) {
+    } else {
         return;
     }
 
-    set_vertices<LineVertex>(std::span { m_vertices.data(), m_vertices.size() });
+    if (m_vertices.empty()) {
+        resize_vertex_buffer(0);
+    } else {
+        set_vertices<LineVertex>(std::span { m_vertices.data(), m_vertices.size() });
+    }
 
-    auto layout = get_vertex_layout();
-    layout->vertex_count = static_cast<uint32_t>(m_vertices.size());
-    set_vertex_layout(*layout);
-
-    m_vertex_data_dirty = false;
+    if (auto layout = get_vertex_layout()) {
+        layout->vertex_count = static_cast<uint32_t>(m_vertices.size());
+        set_vertex_layout(*layout);
+    }
 }
 
 void TopologyGeneratorNode::build_interpolated_path(
