@@ -4,54 +4,6 @@
 
 namespace MayaFlux::Nodes::GpuSync {
 
-namespace {
-    struct SegmentRange {
-        size_t start_control_idx;
-        size_t end_control_idx;
-
-        size_t start_vertex_idx;
-        size_t end_vertex_idx;
-    };
-
-    SegmentRange calculate_affected_segment_range(
-        size_t control_idx,
-        size_t total_controls,
-        Kinesis::InterpolationMode mode,
-        Eigen::Index samples_per_segment)
-    {
-        SegmentRange range {};
-
-        switch (mode) {
-        case Kinesis::InterpolationMode::CATMULL_ROM:
-        case Kinesis::InterpolationMode::BSPLINE:
-            range.start_control_idx = (control_idx > 0) ? control_idx - 1 : 0;
-            range.end_control_idx = std::min(control_idx + 2, total_controls - 1);
-            break;
-
-        case Kinesis::InterpolationMode::CUBIC_BEZIER:
-        case Kinesis::InterpolationMode::CUBIC_HERMITE:
-            range.start_control_idx = (control_idx / 4) * 4;
-            range.end_control_idx = std::min(range.start_control_idx + 3, total_controls - 1);
-            break;
-
-        case Kinesis::InterpolationMode::QUADRATIC_BEZIER:
-            range.start_control_idx = (control_idx / 3) * 3;
-            range.end_control_idx = std::min(range.start_control_idx + 2, total_controls - 1);
-            break;
-
-        default:
-            range.start_control_idx = control_idx;
-            range.end_control_idx = control_idx;
-            break;
-        }
-
-        range.start_vertex_idx = range.start_control_idx * samples_per_segment;
-        range.end_vertex_idx = (range.end_control_idx + 1) * samples_per_segment;
-
-        return range;
-    }
-}
-
 PathGeneratorNode::PathGeneratorNode(
     Kinesis::InterpolationMode mode,
     Eigen::Index samples_per_segment,
@@ -113,8 +65,10 @@ void PathGeneratorNode::add_control_point(const LineVertex& vertex)
     if (m_control_points.size() > m_max_control_points) {
         m_control_points.pop_back();
     }
+    m_dirty_segment_start = INVALID_SEGMENT;
+    m_dirty_segment_end = INVALID_SEGMENT;
     m_geometry_dirty = true;
-    m_vertex_data_dirty = true;
+    m_path_dirty = true;
 }
 
 size_t PathGeneratorNode::vertices_per_window() const
@@ -277,7 +231,14 @@ void PathGeneratorNode::draw_to(const LineVertex& vertex)
     m_draw_window.push_back(vertex);
 
     if (m_draw_window.size() == 1) {
-        m_draw_vertices.push_back({ vertex });
+        LineVertex first = vertex;
+        if (m_force_uniform_color) {
+            first.color = m_current_color;
+        }
+        if (m_force_uniform_thickness) {
+            first.thickness = m_current_thickness;
+        }
+        m_draw_vertices.push_back(first);
     } else {
         append_line_segment(
             m_draw_window[m_draw_window.size() - 2],
@@ -285,7 +246,7 @@ void PathGeneratorNode::draw_to(const LineVertex& vertex)
             m_draw_vertices);
     }
 
-    m_vertex_data_dirty = true;
+    m_path_dirty = true;
 }
 
 void PathGeneratorNode::set_control_points(const std::vector<LineVertex>& vertices)
@@ -297,7 +258,9 @@ void PathGeneratorNode::set_control_points(const std::vector<LineVertex>& vertic
             m_control_points.end());
     }
 
-    m_vertex_data_dirty = true;
+    m_dirty_segment_start = INVALID_SEGMENT;
+    m_dirty_segment_end = INVALID_SEGMENT;
+    m_path_dirty = true;
     m_geometry_dirty = true;
 }
 
@@ -312,22 +275,29 @@ void PathGeneratorNode::update_control_point(size_t index, const LineVertex& ver
 
     m_control_points[index] = vertex;
 
-    auto range = calculate_affected_segment_range(
-        index,
-        m_control_points.size(),
-        m_mode,
-        m_samples_per_segment);
+    const bool windowed = m_mode != Kinesis::InterpolationMode::LINEAR
+        && m_mode != Kinesis::InterpolationMode::CUSTOM
+        && m_control_points.size() >= 4;
 
-    if (m_dirty_segment_start == INVALID_SEGMENT) {
-        m_dirty_segment_start = range.start_control_idx;
-        m_dirty_segment_end = range.end_control_idx;
+    if (windowed) {
+        const size_t windows = m_control_points.size() - 3;
+        const size_t first = index >= 3 ? index - 3 : 0;
+        const size_t last = std::min(index, windows - 1);
+
+        if (m_dirty_segment_start == INVALID_SEGMENT) {
+            m_dirty_segment_start = first;
+            m_dirty_segment_end = last;
+        } else {
+            m_dirty_segment_start = std::min(m_dirty_segment_start, first);
+            m_dirty_segment_end = std::max(m_dirty_segment_end, last);
+        }
     } else {
-        m_dirty_segment_start = std::min(m_dirty_segment_start, range.start_control_idx);
-        m_dirty_segment_end = std::max(m_dirty_segment_end, range.end_control_idx);
+        m_dirty_segment_start = INVALID_SEGMENT;
+        m_dirty_segment_end = INVALID_SEGMENT;
     }
 
     m_geometry_dirty = true;
-    m_vertex_data_dirty = true;
+    m_path_dirty = true;
 }
 
 LineVertex PathGeneratorNode::get_control_point(size_t index) const
@@ -354,7 +324,7 @@ void PathGeneratorNode::clear_path()
     m_draw_window.clear();
     m_draw_vertices.clear();
     m_completed_draws.clear();
-    m_vertex_data_dirty = true;
+    m_path_dirty = true;
     m_needs_layout_update = true;
     m_geometry_dirty = true;
     m_dirty_segment_start = INVALID_SEGMENT;
@@ -366,7 +336,7 @@ void PathGeneratorNode::set_path_color(const glm::vec3& color, bool force_unifor
     m_current_color = color;
     m_force_uniform_color = force_uniform;
     m_attributes_dirty = true;
-    m_vertex_data_dirty = true;
+    m_path_dirty = true;
 
     if (m_force_uniform_color) {
         for (auto& v : m_completed_draws)
@@ -387,7 +357,7 @@ void PathGeneratorNode::set_path_thickness(float thickness, bool force_uniform)
     m_current_thickness = thickness;
     m_force_uniform_thickness = force_uniform;
     m_attributes_dirty = true;
-    m_vertex_data_dirty = true;
+    m_path_dirty = true;
 
     if (m_force_uniform_thickness) {
         for (auto& v : m_completed_draws)
@@ -408,7 +378,7 @@ void PathGeneratorNode::set_interpolation_mode(Kinesis::InterpolationMode mode)
     m_mode = mode;
     m_dirty_segment_start = INVALID_SEGMENT;
     m_dirty_segment_end = INVALID_SEGMENT;
-    m_vertex_data_dirty = true;
+    m_path_dirty = true;
     m_geometry_dirty = true;
 }
 
@@ -418,7 +388,7 @@ void PathGeneratorNode::set_samples_per_segment(Eigen::Index samples)
     m_dirty_segment_start = INVALID_SEGMENT;
     m_dirty_segment_end = INVALID_SEGMENT;
     m_geometry_dirty = true;
-    m_vertex_data_dirty = true;
+    m_path_dirty = true;
 }
 
 void PathGeneratorNode::set_tension(double tension)
@@ -427,7 +397,7 @@ void PathGeneratorNode::set_tension(double tension)
     m_dirty_segment_start = INVALID_SEGMENT;
     m_dirty_segment_end = INVALID_SEGMENT;
     m_geometry_dirty = true;
-    m_vertex_data_dirty = true;
+    m_path_dirty = true;
 }
 
 void PathGeneratorNode::parameterize_arc_length(bool enable)
@@ -436,7 +406,7 @@ void PathGeneratorNode::parameterize_arc_length(bool enable)
     m_dirty_segment_start = INVALID_SEGMENT;
     m_dirty_segment_end = INVALID_SEGMENT;
     m_geometry_dirty = true;
-    m_vertex_data_dirty = true;
+    m_path_dirty = true;
 }
 
 void PathGeneratorNode::generate_path_vertices()
@@ -456,7 +426,7 @@ void PathGeneratorNode::generate_path_vertices()
         generate_interpolated_path();
     }
 
-    m_vertex_data_dirty = true;
+    m_path_dirty = true;
 }
 
 void PathGeneratorNode::generate_direct_path()
@@ -528,61 +498,39 @@ void PathGeneratorNode::regenerate_geometry()
     }
 
     m_geometry_dirty = false;
-    m_vertex_data_dirty = true;
+    m_path_dirty = true;
 }
 
-void PathGeneratorNode::regenerate_segment_range(size_t start_ctrl_idx, size_t end_ctrl_idx)
+void PathGeneratorNode::regenerate_segment_range(size_t first_window, size_t last_window)
 {
     const size_t num_points = m_control_points.size();
-
-    if (start_ctrl_idx >= num_points || end_ctrl_idx >= num_points) {
-        MF_ERROR(Journal::Component::Nodes, Journal::Context::NodeProcessing,
-            "Invalid segment range [{}, {}] for {} control points",
-            start_ctrl_idx, end_ctrl_idx, num_points);
-        return;
-    }
-
-    m_range_cache.clear();
-    m_range_cache.reserve(end_ctrl_idx - start_ctrl_idx + 1);
-    for (size_t i = start_ctrl_idx; i <= end_ctrl_idx; ++i) {
-        m_range_cache.push_back(m_control_points[i]);
-    }
-
-    if (m_range_cache.size() < 4) {
-        return;
-    }
-
     const size_t per_window = vertices_per_window();
-    const size_t windows = m_range_cache.size() - 3;
-    const size_t start_vertex_idx = start_ctrl_idx * per_window;
 
-    if (start_vertex_idx + windows * per_window > m_vertices.size()) {
-        m_vertices.resize(start_vertex_idx + windows * per_window);
+    if (num_points < 4 || m_vertices.size() != (num_points - 3) * per_window) {
+        generate_path_vertices();
+        return;
     }
 
-    for (size_t w = 0; w < windows; ++w) {
-        write_curve_segment(m_range_cache, w,
-            m_vertices.data() + start_vertex_idx + w * per_window);
+    const size_t windows = num_points - 3;
+    last_window = std::min(last_window, windows - 1);
+
+    for (size_t w = first_window; w <= last_window; ++w) {
+        write_curve_segment(m_control_points, w, m_vertices.data() + w * per_window);
     }
 }
 
 void PathGeneratorNode::compute_frame()
 {
-    if (m_control_points.empty() && m_draw_vertices.empty() && m_completed_draws.empty()) {
-        resize_vertex_buffer(0);
-        return;
-    }
-
     if (m_geometry_dirty) {
         regenerate_geometry();
         m_attributes_dirty = false;
     } else if (m_attributes_dirty) {
         refresh_attributes();
         m_attributes_dirty = false;
-        m_vertex_data_dirty = true;
+        m_path_dirty = true;
     }
 
-    if (!m_vertex_data_dirty) {
+    if (!m_path_dirty) {
         return;
     }
 
@@ -594,16 +542,16 @@ void PathGeneratorNode::compute_frame()
 
     if (m_combined_cache.empty()) {
         resize_vertex_buffer(0);
-        return;
+    } else {
+        set_vertices<LineVertex>(std::span { m_combined_cache.data(), m_combined_cache.size() });
     }
 
-    set_vertices<LineVertex>(std::span { m_combined_cache.data(), m_combined_cache.size() });
+    if (auto layout = get_vertex_layout()) {
+        layout->vertex_count = static_cast<uint32_t>(m_combined_cache.size());
+        set_vertex_layout(*layout);
+    }
 
-    auto layout = get_vertex_layout();
-    layout->vertex_count = static_cast<uint32_t>(m_combined_cache.size());
-    set_vertex_layout(*layout);
-
-    m_vertex_data_dirty = false;
+    m_path_dirty = false;
 }
 
 void PathGeneratorNode::complete()
@@ -618,7 +566,7 @@ void PathGeneratorNode::complete()
             m_draw_vertices.end());
         m_draw_vertices.clear();
         m_draw_window.clear();
-        m_vertex_data_dirty = true;
+        m_path_dirty = true;
         return;
     }
 
@@ -638,7 +586,7 @@ void PathGeneratorNode::complete()
 
     m_draw_vertices.clear();
     m_draw_window.clear();
-    m_vertex_data_dirty = true;
+    m_path_dirty = true;
 }
 
 } // namespace MayaFlux::Nodes::GpuSync

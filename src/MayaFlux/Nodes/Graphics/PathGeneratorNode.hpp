@@ -301,7 +301,6 @@ private:
     Eigen::Index m_samples_per_segment;
     double m_tension;
 
-    std::vector<LineVertex> m_range_cache;
 
     glm::vec3 m_current_color { 1.0F, 1.0F, 1.0F };
     float m_current_thickness { 2.0F };
@@ -309,6 +308,7 @@ private:
     bool m_force_uniform_color {};
     bool m_force_uniform_thickness {};
     bool m_geometry_dirty { true };
+    bool m_path_dirty { true };
     bool m_arc_length_parameterization {};
     bool m_attributes_dirty {};
 
@@ -349,7 +349,7 @@ private:
     void generate_custom_path();
     void generate_interpolated_path();
     void regenerate_geometry();
-    void regenerate_segment_range(size_t start_ctrl_idx, size_t end_ctrl_idx);
+    void regenerate_segment_range(size_t first_window, size_t last_window);
 
     void append_line_segment(
         const LineVertex& v0,
