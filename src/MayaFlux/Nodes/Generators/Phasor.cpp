@@ -34,6 +34,7 @@ Phasor::Phasor(float frequency, const std::shared_ptr<Node>& amplitude_modulator
     , m_threshold_crossed(false)
 {
     m_amplitude = amplitude;
+    m_frequency = frequency;
     update_phase_increment(frequency);
 }
 
@@ -80,6 +81,7 @@ void Phasor::clear_modulators()
 double Phasor::process_sample(double input)
 {
     double output = 0.0;
+    m_phase_wrapped = false;
 
     double effective_freq = m_frequency;
 

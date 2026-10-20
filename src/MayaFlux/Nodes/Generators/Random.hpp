@@ -183,6 +183,8 @@ public:
     void save_state() override { }
     void restore_state() override { }
 
+    NodeContext& get_last_context() override;
+
 protected:
     /**
      * @brief Updates the context object with the current node state
@@ -194,8 +196,6 @@ protected:
      * the context reflects the current state of the node for use in callbacks.
      */
     void update_context(double value) override;
-
-    NodeContext& get_last_context() override;
 
 private:
     /**

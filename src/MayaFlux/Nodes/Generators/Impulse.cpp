@@ -97,7 +97,7 @@ double Impulse::process_sample(double input)
     }
 
     if (m_phase < m_phase_inc) {
-        output = m_amplitude;
+        output = 1.0;
         m_impulse_occurred = true;
     } else {
         output = 0.0;
@@ -117,7 +117,6 @@ double Impulse::process_sample(double input)
     }
 
     output *= current_amplitude;
-    m_amplitude = current_amplitude;
     output += m_offset;
 
     m_phase += m_phase_inc;
