@@ -13,12 +13,12 @@ TabletNode::TabletNode(TabletConfig config)
 double TabletNode::extract_value(const Core::InputValue& value)
 {
     if (value.type != Core::InputValue::Type::VECTOR) {
-        return m_last_output;
+        return held_value();
     }
 
     const auto& vec = value.as_vector();
     if (vec.size() < Core::TabletFrame::SLOT_COUNT) {
-        return m_last_output;
+        return held_value();
     }
 
     std::copy_n(vec.begin(), Core::TabletFrame::SLOT_COUNT, m_frame.begin());

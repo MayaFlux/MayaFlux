@@ -257,17 +257,26 @@ void InputManager::unregister_node(const std::shared_ptr<Nodes::Input::InputNode
 
 void InputManager::unregister_all_nodes()
 {
-    std::lock_guard lock(m_registry_mutex);
+    std::vector<std::shared_ptr<Nodes::Input::InputNode>> released;
+
+    {
+        std::lock_guard lock(m_registry_mutex);
 
 #ifdef MAYAFLUX_PLATFORM_MACOS
-    auto* old_list = m_registrations.load();
-    m_registrations.store(new RegistrationList());
-    retire_list(old_list);
+        auto* old_list = m_registrations.load();
+        m_registrations.store(new RegistrationList());
+        retire_list(old_list);
 #else
-    m_registrations.store(std::make_shared<const RegistrationList>());
+        m_registrations.store(std::make_shared<const RegistrationList>());
 #endif
 
-    m_tracked_nodes.clear();
+        released = std::move(m_tracked_nodes);
+        m_tracked_nodes.clear();
+    }
+
+    for (const auto& node : released) {
+        node->remove_all_hooks();
+    }
 
     MF_DEBUG(Journal::Component::Core, Journal::Context::InputManagement,
         "Unregistered all InputNodes (Registry swapped to empty)");

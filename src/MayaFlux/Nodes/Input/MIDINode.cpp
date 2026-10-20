@@ -10,14 +10,14 @@ MIDINode::MIDINode(MIDIConfig config)
 double MIDINode::extract_value(const Core::InputValue& value)
 {
     if (value.type != Core::InputValue::Type::MIDI) {
-        return m_last_output;
+        return held_value();
     }
 
     const auto& midi = value.as_midi();
     m_last_midi_message = midi;
 
     if (!matches_filters(value)) {
-        return m_last_output;
+        return held_value();
     }
 
     uint8_t msg_type = midi.type();
@@ -25,11 +25,11 @@ double MIDINode::extract_value(const Core::InputValue& value)
     switch (msg_type) {
     case 0x90:
         if (m_config.note_off_only) {
-            return m_last_output;
+            return held_value();
         }
         // Velocity 0 is actually Note Off
         if (midi.data2 == 0 && m_config.note_on_only) {
-            return m_last_output;
+            return held_value();
         }
 
         return m_config.velocity_curve
@@ -38,7 +38,7 @@ double MIDINode::extract_value(const Core::InputValue& value)
 
     case 0x80: // Note Off
         if (m_config.note_on_only) {
-            return m_last_output;
+            return held_value();
         }
         return 0.0;
 

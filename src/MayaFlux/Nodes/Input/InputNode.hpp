@@ -296,12 +296,21 @@ protected:
     void update_context(double value) override;
 
     /**
-     * @brief Notify callbacks (minimal for InputNode)
+     * @brief Fires the hooks for one delivered input
      *
-     * InputNodes fire callbacks sparingly - the input event IS the notification.
-     * Override if you need per-sample callbacks (rare for input).
+     * Called only from process_input(), so every hook runs on the thread that delivers
+     * input and never on the graph thread. process_sample() only advances smoothing and
+     * does not notify. The context, previous-value and range state are therefore owned by
+     * the input thread, and Node::m_last_output by the graph thread.
      */
     void notify_tick(double value) override;
+
+    /**
+     * @brief The smoothed value the node currently holds
+     *
+     * What extract_value() returns when an input carries nothing for this node.
+     */
+    [[nodiscard]] double held_value() const { return m_current_value.load(); }
 
     InputConfig m_config;
     InputContext m_context;
