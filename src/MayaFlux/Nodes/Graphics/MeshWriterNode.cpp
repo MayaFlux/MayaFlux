@@ -66,6 +66,7 @@ void MeshWriterNode::set_mesh(
 {
     m_vertices.assign(vertices.begin(), vertices.end());
     m_indices.assign(indices.begin(), indices.end());
+    m_mesh_dirty = true;
     m_vertex_data_dirty = true;
     m_needs_layout_update = true;
 }
@@ -73,6 +74,7 @@ void MeshWriterNode::set_mesh(
 void MeshWriterNode::set_mesh_vertices(std::span<const MeshVertex> vertices)
 {
     m_vertices.assign(vertices.begin(), vertices.end());
+    m_mesh_dirty = true;
     m_vertex_data_dirty = true;
     m_needs_layout_update = true;
 }
@@ -80,6 +82,7 @@ void MeshWriterNode::set_mesh_vertices(std::span<const MeshVertex> vertices)
 void MeshWriterNode::set_mesh_indices(std::span<const uint32_t> indices)
 {
     m_indices.assign(indices.begin(), indices.end());
+    m_mesh_dirty = true;
     m_vertex_data_dirty = true;
 }
 
@@ -87,6 +90,7 @@ void MeshWriterNode::clear_mesh()
 {
     m_vertices.clear();
     m_indices.clear();
+    m_mesh_dirty = true;
     m_vertex_data_dirty = true;
     m_needs_layout_update = true;
 }
@@ -98,17 +102,23 @@ Portal::Graphics::PrimitiveTopology MeshWriterNode::get_primitive_topology() con
 
 void MeshWriterNode::compute_frame()
 {
-    if (m_vertices.empty()) {
-        resize_vertex_buffer(0, false);
+    if (!m_mesh_dirty) {
         return;
     }
 
-    set_vertices<MeshVertex>(std::span { m_vertices.data(), m_vertices.size() });
-    set_indices(std::span { m_indices.data(), m_indices.size() });
+    if (m_vertices.empty()) {
+        resize_vertex_buffer(0, false);
+        set_indices(std::span<const uint32_t> {});
+    } else {
+        set_vertices<MeshVertex>(std::span { m_vertices.data(), m_vertices.size() });
+        set_indices(std::span { m_indices.data(), m_indices.size() });
+    }
 
     auto layout = Kakshya::VertexLayout::for_meshes(sizeof(MeshVertex));
     layout.vertex_count = static_cast<uint32_t>(m_vertices.size());
     set_vertex_layout(layout);
+
+    m_mesh_dirty = false;
 
     MF_TRACE(Journal::Component::Nodes, Journal::Context::NodeProcessing,
         "MeshWriterNode: uploaded {} vertices, {} indices ({} faces)",
