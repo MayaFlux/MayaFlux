@@ -18,7 +18,7 @@ foreach(file ${CRITICAL_CMAKE_FILES})
     endif()
 endforeach()
 
-project(MayaFlux VERSION 0.5.0)
+project(MayaFlux VERSION 1.0.0)
 
 include(compiler_config)
 include(defines)
