@@ -381,6 +381,25 @@ Eigen::VectorXd catmull_rom_spline(
     return control_points * coeffs;
 }
 
+Eigen::VectorXd radial_fan_cubic(
+    const Eigen::MatrixXd& control_points,
+    double t,
+    double tension)
+{
+    if (control_points.cols() != 4) {
+        error<std::invalid_argument>(
+            Journal::Component::Kinesis,
+            Journal::Context::Runtime,
+            std::source_location::current(),
+            "Radial fan cubic requires 4 control points, but got {}",
+            control_points.cols());
+    }
+
+    const Eigen::Matrix4d basis_matrix = BasisMatrices::catmull_rom_with_tension(tension);
+    const Eigen::Vector4d powers(t * t * t, t * t, t, 1.0);
+    return control_points * (basis_matrix * powers);
+}
+
 Eigen::VectorXd cubic_bezier(
     const Eigen::MatrixXd& control_points,
     double t)
@@ -484,6 +503,9 @@ Eigen::VectorXd interpolate(
     case InterpolationMode::CATMULL_ROM:
         return catmull_rom_spline(control_points, t, tension);
 
+    case InterpolationMode::RADIAL_FAN_CUBIC:
+        return radial_fan_cubic(control_points, t, tension);
+
     case InterpolationMode::CUBIC_HERMITE: {
         Eigen::MatrixXd endpoints = control_points.leftCols(2);
         Eigen::MatrixXd tangents = control_points.rightCols(2);
@@ -571,6 +593,20 @@ void CurveEvaluator::rebuild_kernel()
         m_supports_multi = true;
         const Eigen::Matrix4d m = BasisMatrices::catmull_rom_with_tension(m_tension);
         flatten_basis(m.data(), 4, m_basis);
+        break;
+    }
+
+    case InterpolationMode::RADIAL_FAN_CUBIC: {
+        m_points_per_segment = 4;
+        m_overlap = 3;
+        m_supports_multi = true;
+        const Eigen::Matrix4d m = BasisMatrices::catmull_rom_with_tension(m_tension);
+        m_basis.resize(16);
+        for (Eigen::Index q = 0; q < 4; ++q) {
+            for (Eigen::Index p = 0; p < 4; ++p) {
+                m_basis[static_cast<size_t>(q * 4 + p)] = m(q, p);
+            }
+        }
         break;
     }
 
