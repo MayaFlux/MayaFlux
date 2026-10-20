@@ -61,9 +61,9 @@ void GpuComputeNode::compute_frame()
     }
 }
 
-void GpuComputeNode::on_complete(const TypedHook<GpuComputeContext>& callback)
+HookId GpuComputeNode::on_complete(const TypedHook<GpuComputeContext>& callback)
 {
-    m_complete_callbacks.add_unique(adapt_hook(callback), callback.target_type());
+    return m_complete_callbacks.add_unique(adapt_hook(callback), callback.target_type());
 }
 
 bool GpuComputeNode::remove_complete_hook(const TypedHook<GpuComputeContext>& callback)

@@ -164,9 +164,9 @@ void Impulse::reset(float frequency, float amplitude, float offset)
     m_last_output = 0.0;
 }
 
-void Impulse::on_impulse(const TypedHook<GeneratorContext>& callback)
+HookId Impulse::on_impulse(const TypedHook<GeneratorContext>& callback)
 {
-    m_impulse_callbacks.add_unique(adapt_hook(callback), callback.target_type());
+    return m_impulse_callbacks.add_unique(adapt_hook(callback), callback.target_type());
 }
 
 bool Impulse::remove_hook(const TypedHook<GeneratorContext>& callback)

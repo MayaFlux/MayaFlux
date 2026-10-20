@@ -4,92 +4,257 @@
 
 namespace MayaFlux::Nodes {
 
+struct HookList::Retired {
+    const std::vector<HookEntry>* entries;
+    Retired* next;
+};
+
 HookList::HookList(Node& owner)
+    : m_owner(&owner)
 {
     owner.register_hook_list(*this);
 }
 
-HookId HookList::add(NodeHook hook, const std::type_info& key, uint8_t tag, std::array<double, 2> params)
+HookList::~HookList()
 {
-    const HookId id = m_next_id++;
-    m_entries.push_back(HookEntry { id, &key, tag, params, std::move(hook), std::nullopt });
-    return id;
-}
+    delete m_head.load();
 
-HookId HookList::add_unique(NodeHook hook, const std::type_info& key, uint8_t tag, std::array<double, 2> params)
-{
-    const bool exists = std::ranges::any_of(m_entries, [&](const HookEntry& entry) {
-        return *entry.key == key && entry.params == params;
-    });
-    if (exists) {
-        return 0;
+    Retired* list = m_retired.load();
+    while (list) {
+        Retired* next = list->next;
+        delete list->entries;
+        delete list;
+        list = next;
     }
-    return add(std::move(hook), key, tag, params);
 }
 
-HookId HookList::add_conditional(NodeHook hook, NodeCondition condition, const std::type_info& key, uint8_t tag)
+HookList::Snapshot::~Snapshot()
 {
-    const HookId id = m_next_id++;
-    m_entries.push_back(HookEntry { id, &key, tag, {}, std::move(hook), std::move(condition) });
-    return id;
-}
-
-HookId HookList::add_conditional_unique(NodeHook hook, NodeCondition condition, const std::type_info& key, uint8_t tag)
-{
-    const bool exists = std::ranges::any_of(m_entries, [&](const HookEntry& entry) {
-        return *entry.key == key && entry.condition && entry.condition->target_type() == condition.target_type();
-    });
-    if (exists) {
-        return 0;
+    if (m_list) {
+        m_list->m_readers.fetch_sub(1);
     }
-    return add_conditional(std::move(hook), std::move(condition), key, tag);
 }
 
-bool HookList::remove(HookId id)
+HookId HookList::next_id() const
 {
-    return std::erase_if(m_entries, [id](const HookEntry& entry) { return entry.id == id; }) > 0;
+    return m_owner->next_hook_id();
 }
 
-bool HookList::remove_by_key(const std::type_info& key)
+HookList::Snapshot HookList::snapshot() const
 {
-    return std::erase_if(m_entries, [&](const HookEntry& entry) { return *entry.key == key; }) > 0;
-}
-
-bool HookList::remove_first_by_key(const std::type_info& key)
-{
-    const auto it = std::ranges::find_if(m_entries, [&](const HookEntry& entry) { return *entry.key == key; });
-    if (it == m_entries.end()) {
-        return false;
+    if (m_head.load(std::memory_order_relaxed) == nullptr) {
+        return {};
     }
-    m_entries.erase(it);
-    return true;
+
+    m_readers.fetch_add(1);
+    const auto* entries = m_head.load();
+    if (!entries) {
+        m_readers.fetch_sub(1);
+        return {};
+    }
+    return { this, entries };
 }
 
-bool HookList::remove_by_condition_key(const std::type_info& key)
+bool HookList::empty() const
 {
-    return std::erase_if(m_entries, [&](const HookEntry& entry) {
-        return entry.condition && entry.condition->target_type() == key;
-    }) > 0;
+    return m_head.load() == nullptr;
 }
 
-bool HookList::remove_by_tag(uint8_t tag)
+size_t HookList::size() const
 {
-    return std::erase_if(m_entries, [tag](const HookEntry& entry) { return entry.tag == tag; }) > 0;
-}
-
-void HookList::clear()
-{
-    m_entries.clear();
+    return snapshot().size();
 }
 
 void HookList::fire(NodeContext& ctx) const
 {
-    for (const auto& entry : m_entries) {
+    for (const auto& entry : snapshot()) {
         if (entry.condition && !(*entry.condition)(ctx)) {
             continue;
         }
         entry.hook(ctx);
     }
+}
+
+void HookList::retire(const std::vector<HookEntry>* old)
+{
+    auto* node = new Retired { old, m_retired.load() };
+    while (!m_retired.compare_exchange_weak(node->next, node)) {
+    }
+}
+
+void HookList::reclaim()
+{
+    Retired* list = m_retired.exchange(nullptr);
+    if (!list) {
+        return;
+    }
+
+    if (m_readers.load() != 0) {
+        Retired* tail = list;
+        while (tail->next) {
+            tail = tail->next;
+        }
+        tail->next = m_retired.load();
+        while (!m_retired.compare_exchange_weak(tail->next, list)) {
+        }
+        return;
+    }
+
+    while (list) {
+        Retired* next = list->next;
+        delete list->entries;
+        delete list;
+        list = next;
+    }
+}
+
+bool HookList::mutate(const std::function<bool(std::vector<HookEntry>&)>& edit)
+{
+    for (;;) {
+        m_readers.fetch_add(1);
+
+        const std::vector<HookEntry>* current = m_head.load();
+
+        auto next = std::make_unique<std::vector<HookEntry>>();
+        if (current) {
+            *next = *current;
+        }
+
+        const bool changed = edit(*next);
+        bool swapped = false;
+        if (changed) {
+            const std::vector<HookEntry>* replacement = next->empty() ? nullptr : next.get();
+            const std::vector<HookEntry>* expected = current;
+            swapped = m_head.compare_exchange_strong(expected, replacement);
+            if (swapped && replacement) {
+                next.release();
+            }
+        }
+
+        m_readers.fetch_sub(1);
+
+        if (!changed) {
+            return false;
+        }
+        if (swapped) {
+            if (current) {
+                retire(current);
+            }
+            reclaim();
+            return true;
+        }
+    }
+}
+
+HookId HookList::add(NodeHook hook, const std::type_info& key, uint8_t tag, std::array<double, 2> params)
+{
+    const HookId id = next_id();
+    mutate([&](std::vector<HookEntry>& entries) {
+        entries.push_back(HookEntry { id, &key, tag, params, hook, std::nullopt });
+        return true;
+    });
+    return id;
+}
+
+HookId HookList::add_unique(NodeHook hook, const std::type_info& key, uint8_t tag, std::array<double, 2> params)
+{
+    const HookId fresh = next_id();
+    HookId result = fresh;
+    mutate([&](std::vector<HookEntry>& entries) {
+        const auto it = std::ranges::find_if(entries, [&](const HookEntry& entry) {
+            return *entry.key == key && entry.params == params;
+        });
+        if (it != entries.end()) {
+            result = it->id;
+            return false;
+        }
+        result = fresh;
+        entries.push_back(HookEntry { fresh, &key, tag, params, hook, std::nullopt });
+        return true;
+    });
+    return result;
+}
+
+HookId HookList::add_conditional(NodeHook hook, NodeCondition condition, const std::type_info& key, uint8_t tag)
+{
+    const HookId id = next_id();
+    mutate([&](std::vector<HookEntry>& entries) {
+        entries.push_back(HookEntry { id, &key, tag, {}, hook, condition });
+        return true;
+    });
+    return id;
+}
+
+HookId HookList::add_conditional_unique(NodeHook hook, NodeCondition condition, const std::type_info& key, uint8_t tag)
+{
+    const HookId fresh = next_id();
+    HookId result = fresh;
+    mutate([&](std::vector<HookEntry>& entries) {
+        const auto it = std::ranges::find_if(entries, [&](const HookEntry& entry) {
+            return *entry.key == key && entry.condition && entry.condition->target_type() == condition.target_type();
+        });
+        if (it != entries.end()) {
+            result = it->id;
+            return false;
+        }
+        result = fresh;
+        entries.push_back(HookEntry { fresh, &key, tag, {}, hook, condition });
+        return true;
+    });
+    return result;
+}
+
+bool HookList::remove(HookId id)
+{
+    return mutate([id](std::vector<HookEntry>& entries) {
+        return std::erase_if(entries, [id](const HookEntry& entry) { return entry.id == id; }) > 0;
+    });
+}
+
+bool HookList::remove_by_key(const std::type_info& key)
+{
+    return mutate([&](std::vector<HookEntry>& entries) {
+        return std::erase_if(entries, [&](const HookEntry& entry) { return *entry.key == key; }) > 0;
+    });
+}
+
+bool HookList::remove_first_by_key(const std::type_info& key)
+{
+    return mutate([&](std::vector<HookEntry>& entries) {
+        const auto it = std::ranges::find_if(entries, [&](const HookEntry& entry) { return *entry.key == key; });
+        if (it == entries.end()) {
+            return false;
+        }
+        entries.erase(it);
+        return true;
+    });
+}
+
+bool HookList::remove_by_condition_key(const std::type_info& key)
+{
+    return mutate([&](std::vector<HookEntry>& entries) {
+        return std::erase_if(entries, [&](const HookEntry& entry) {
+            return entry.condition && entry.condition->target_type() == key;
+        }) > 0;
+    });
+}
+
+bool HookList::remove_by_tag(uint8_t tag)
+{
+    return mutate([tag](std::vector<HookEntry>& entries) {
+        return std::erase_if(entries, [tag](const HookEntry& entry) { return entry.tag == tag; }) > 0;
+    });
+}
+
+void HookList::clear()
+{
+    mutate([](std::vector<HookEntry>& entries) {
+        if (entries.empty()) {
+            return false;
+        }
+        entries.clear();
+        return true;
+    });
 }
 
 void atomic_set_strong(std::atomic<NodeState>& flag, NodeState& expected, const NodeState& desired)

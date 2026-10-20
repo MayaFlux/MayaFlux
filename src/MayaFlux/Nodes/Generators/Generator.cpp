@@ -61,14 +61,14 @@ void Generator::notify_tick(double value)
     m_conditional_callbacks.fire(ctx);
 }
 
-void Generator::on_tick(const TypedHook<GeneratorContext>& callback)
+HookId Generator::on_tick(const TypedHook<GeneratorContext>& callback)
 {
-    m_callbacks.add(adapt_hook(callback), callback.target_type());
+    return m_callbacks.add(adapt_hook(callback), callback.target_type());
 }
 
-void Generator::on_tick_if(const NodeCondition& condition, const TypedHook<GeneratorContext>& callback)
+HookId Generator::on_tick_if(const NodeCondition& condition, const TypedHook<GeneratorContext>& callback)
 {
-    m_conditional_callbacks.add_conditional(adapt_hook(callback), condition, callback.target_type());
+    return m_conditional_callbacks.add_conditional(adapt_hook(callback), condition, callback.target_type());
 }
 
 } // namespace MayaFlux::Nodes::Generator

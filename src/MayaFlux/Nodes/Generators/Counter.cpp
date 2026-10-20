@@ -27,19 +27,19 @@ void Counter::set_reset_trigger(const std::shared_ptr<Node>& trigger) { m_reset_
 void Counter::clear_reset_trigger() { m_reset_trigger = nullptr; }
 void Counter::reset() { m_count = 0; }
 
-void Counter::on_increment(const TypedHook<GeneratorContext>& callback)
+HookId Counter::on_increment(const TypedHook<GeneratorContext>& callback)
 {
-    m_increment_callbacks.add(adapt_hook(callback), callback.target_type());
+    return m_increment_callbacks.add(adapt_hook(callback), callback.target_type());
 }
 
-void Counter::on_wrap(const TypedHook<GeneratorContext>& callback)
+HookId Counter::on_wrap(const TypedHook<GeneratorContext>& callback)
 {
-    m_wrap_callbacks.add(adapt_hook(callback), callback.target_type());
+    return m_wrap_callbacks.add(adapt_hook(callback), callback.target_type());
 }
 
-void Counter::on_count(uint32_t target, const TypedHook<GeneratorContext>& callback)
+HookId Counter::on_count(uint32_t target, const TypedHook<GeneratorContext>& callback)
 {
-    m_count_callbacks.add(adapt_hook(callback), callback.target_type(), 0, { static_cast<double>(target), 0.0 });
+    return m_count_callbacks.add(adapt_hook(callback), callback.target_type(), 0, { static_cast<double>(target), 0.0 });
 }
 
 bool Counter::remove_hook(const NodeHook& callback)
@@ -123,7 +123,7 @@ void Counter::notify_tick(double value)
     if (m_wrapped) {
         m_wrap_callbacks.fire(ctx);
     }
-    for (const auto& entry : m_count_callbacks.entries()) {
+    for (const auto& entry : m_count_callbacks.snapshot()) {
         if (m_count == static_cast<uint32_t>(entry.params[0])) {
             entry.hook(ctx);
         }

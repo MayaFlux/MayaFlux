@@ -105,7 +105,7 @@ public:
      * @brief Register a callback fired once per completed dispatch.
      * @param callback Receives a GpuComputeContext carrying the GpuChannelResult.
      */
-    void on_complete(const TypedHook<GpuComputeContext>& callback);
+    HookId on_complete(const TypedHook<GpuComputeContext>& callback);
 
     /**
      * @brief Remove a previously registered on_complete callback.

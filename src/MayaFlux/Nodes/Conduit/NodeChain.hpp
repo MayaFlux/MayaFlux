@@ -100,16 +100,19 @@ public:
     double process_sample(double input = 0.) override;
     std::vector<double> process_batch(unsigned int num_samples) override;
 
-    inline void on_tick(const NodeHook& callback) override
+    inline HookId on_tick(const NodeHook& callback) override
     {
-        if (!m_nodes.empty())
-            m_nodes.back()->on_tick(callback);
+        return m_nodes.empty() ? 0 : m_nodes.back()->on_tick(callback);
     }
 
-    inline void on_tick_if(const NodeCondition& condition, const NodeHook& callback) override
+    inline HookId on_tick_if(const NodeCondition& condition, const NodeHook& callback) override
     {
-        if (!m_nodes.empty())
-            m_nodes.back()->on_tick_if(condition, callback);
+        return m_nodes.empty() ? 0 : m_nodes.back()->on_tick_if(condition, callback);
+    }
+
+    inline bool unhook(HookId id) override
+    {
+        return !m_nodes.empty() && m_nodes.back()->unhook(id);
     }
 
     inline bool remove_hook(const NodeHook& callback) override

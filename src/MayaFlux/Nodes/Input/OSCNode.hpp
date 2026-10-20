@@ -128,9 +128,9 @@ public:
      * Fires on every matching message, independent of scalar extraction.
      * Use for multi-argument messages or when you need the address.
      */
-    void on_message(MessageCallback callback)
+    HookId on_message(MessageCallback callback)
     {
-        m_message_callbacks.add(
+        return m_message_callbacks.add(
             [this, callback](NodeContext&) {
                 if (m_last_osc_message) {
                     callback(m_last_osc_message->address, m_last_osc_message->arguments);

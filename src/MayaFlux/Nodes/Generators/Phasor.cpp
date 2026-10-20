@@ -163,14 +163,14 @@ void Phasor::reset(float frequency, float amplitude, float offset, double phase)
     m_last_output = 0.0;
 }
 
-void Phasor::on_phase_wrap(const TypedHook<GeneratorContext>& callback)
+HookId Phasor::on_phase_wrap(const TypedHook<GeneratorContext>& callback)
 {
-    m_phase_wrap_callbacks.add_unique(adapt_hook(callback), callback.target_type());
+    return m_phase_wrap_callbacks.add_unique(adapt_hook(callback), callback.target_type());
 }
 
-void Phasor::on_threshold(const TypedHook<GeneratorContext>& callback, double threshold, bool /*rising*/)
+HookId Phasor::on_threshold(const TypedHook<GeneratorContext>& callback, double threshold, bool /*rising*/)
 {
-    m_threshold_callbacks.add_unique(adapt_hook(callback), callback.target_type(), 0, { threshold, 0.0 });
+    return m_threshold_callbacks.add_unique(adapt_hook(callback), callback.target_type(), 0, { threshold, 0.0 });
 }
 
 bool Phasor::remove_threshold_callback(const TypedHook<GeneratorContext>& callback)
@@ -197,7 +197,7 @@ void Phasor::notify_tick(double value)
 
     m_conditional_callbacks.fire(ctx);
 
-    for (const auto& entry : m_threshold_callbacks.entries()) {
+    for (const auto& entry : m_threshold_callbacks.snapshot()) {
         const double threshold = entry.params[0];
         if (value >= threshold && !m_threshold_crossed) {
             entry.hook(ctx);

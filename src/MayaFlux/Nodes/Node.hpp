@@ -176,8 +176,11 @@ public:
      *     std::cout << "Node produced value: " << ctx.value << std::endl;
      * });
      * ```
+     *
+     * @return Id of the registration, usable with unhook(). A callback equivalent to one
+     * already registered is not added again and the existing id is returned.
      */
-    virtual void on_tick(const NodeHook& callback);
+    virtual HookId on_tick(const NodeHook& callback);
 
     /**
      * @brief Registers a conditional callback
@@ -200,7 +203,7 @@ public:
      * );
      * ```
      */
-    virtual void on_tick_if(const NodeCondition& condition, const NodeHook& callback);
+    virtual HookId on_tick_if(const NodeCondition& condition, const NodeHook& callback);
 
     /**
      * @brief Removes a previously registered callback
@@ -241,6 +244,13 @@ public:
      * such as when repurposing a node or preparing for cleanup.
      */
     virtual void remove_all_hooks();
+
+    /**
+     * @brief Removes the one registration with this id, whichever hook list holds it
+     * @param id Id returned by an on_* registration of this node
+     * @return True if the registration existed and was removed
+     */
+    virtual bool unhook(HookId id);
 
     /**
      * @brief Resets the processed state of the node and any attached input nodes
@@ -454,7 +464,10 @@ private:
 
     void register_hook_list(HookList& list) { m_hook_lists.push_back(&list); }
 
+    HookId next_hook_id() { return m_next_hook_id.fetch_add(1); }
+
     std::vector<HookList*> m_hook_lists;
+    std::atomic<HookId> m_next_hook_id { 1 };
 
 protected:
     /**

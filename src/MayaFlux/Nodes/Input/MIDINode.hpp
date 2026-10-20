@@ -153,9 +153,9 @@ public:
      * @brief Callback for note events with note number and velocity
      * @param callback Function receiving (note_number, velocity, is_note_on)
      */
-    void on_note(std::function<void(uint8_t note, uint8_t velocity, bool is_on)> callback)
+    HookId on_note(std::function<void(uint8_t note, uint8_t velocity, bool is_on)> callback)
     {
-        m_note_callbacks.add(
+        return m_note_callbacks.add(
             [this, callback](NodeContext&) {
                 if (!m_last_midi_message) {
                     return;
@@ -173,9 +173,9 @@ public:
     /**
      * @brief Callback for CC events with controller number and value
      */
-    void on_cc(std::function<void(uint8_t cc_num, uint8_t value)> callback)
+    HookId on_cc(std::function<void(uint8_t cc_num, uint8_t value)> callback)
     {
-        m_cc_callbacks.add(
+        return m_cc_callbacks.add(
             [this, callback](NodeContext&) {
                 if (m_last_midi_message) {
                     callback(m_last_midi_message->data1, m_last_midi_message->data2);
@@ -187,9 +187,9 @@ public:
     /**
      * @brief Callback for pitch bend with 14-bit value
      */
-    void on_pitch_bend(std::function<void(int16_t bend)> callback)
+    HookId on_pitch_bend(std::function<void(int16_t bend)> callback)
     {
-        m_pitch_bend_callbacks.add(
+        return m_pitch_bend_callbacks.add(
             [this, callback](NodeContext&) {
                 if (m_last_midi_message) {
                     callback(static_cast<int16_t>(((m_last_midi_message->data2 << 7) | m_last_midi_message->data1) - 8192));
