@@ -11,6 +11,14 @@ namespace MayaFlux::Kakshya {
 namespace {
     constexpr auto C = Journal::Component::Kakshya;
     constexpr auto X = Journal::Context::ContainerProcessing;
+
+    bool series_in_range(size_t count, uint32_t index, const char* operation)
+    {
+        if (index < count)
+            return true;
+        MF_ERROR(C, X, "PlotContainer::{}: series index {} out of range", operation, index);
+        return false;
+    }
 }
 
 PlotContainer::PlotContainer()
@@ -146,6 +154,8 @@ DataDimension::Role PlotContainer::series_role(uint32_t index) const
 
 void PlotContainer::bind(uint32_t series_index, std::shared_ptr<Nodes::Node> node)
 {
+    if (!series_in_range(m_structure.dimensions.size(), series_index, "bind"))
+        return;
     auto& p = ensure_processor();
     p.bind_node(series_index, std::move(node));
     p.set_series_semantics(series_index, m_structure.dimensions[series_index].role,
@@ -156,6 +166,8 @@ void PlotContainer::bind(uint32_t series_index, std::shared_ptr<Nodes::Node> nod
 void PlotContainer::bind(uint32_t series_index,
     std::shared_ptr<Buffers::AudioBuffer> buffer)
 {
+    if (!series_in_range(m_structure.dimensions.size(), series_index, "bind"))
+        return;
     auto& p = ensure_processor();
     p.bind_audio_buffer(series_index, std::move(buffer));
     p.set_series_semantics(series_index, m_structure.dimensions[series_index].role,
@@ -166,6 +178,8 @@ void PlotContainer::bind(uint32_t series_index,
 void PlotContainer::bind(uint32_t series_index,
     std::shared_ptr<Nodes::Network::NodeNetwork> network)
 {
+    if (!series_in_range(m_structure.dimensions.size(), series_index, "bind"))
+        return;
     auto& p = ensure_processor();
     p.bind_network(series_index, std::move(network));
     p.set_series_semantics(series_index, m_structure.dimensions[series_index].role,
@@ -176,6 +190,8 @@ void PlotContainer::bind(uint32_t series_index,
 void PlotContainer::bind(uint32_t series_index,
     std::function<void(std::vector<double>&)> fn)
 {
+    if (!series_in_range(m_structure.dimensions.size(), series_index, "bind"))
+        return;
     auto& p = ensure_processor();
     p.bind_callable(series_index, std::move(fn));
     p.set_series_semantics(series_index, m_structure.dimensions[series_index].role,
@@ -185,6 +201,8 @@ void PlotContainer::bind(uint32_t series_index,
 
 void PlotContainer::set_raw(uint32_t series_index, std::vector<double> data)
 {
+    if (!series_in_range(m_structure.dimensions.size(), series_index, "set_raw"))
+        return;
     auto& p = ensure_processor();
     p.set_raw(series_index, std::move(data));
     p.set_series_semantics(series_index, m_structure.dimensions[series_index].role,
@@ -266,7 +284,7 @@ void PlotContainer::set_region_data(const Region& region, const std::vector<Data
 
     Memory::SeqlockWriteGuard g(m_series_locks[series_idx]);
     auto* dst = std::get_if<std::vector<double>>(&m_data[series_idx]);
-    if (!dst)
+    if (!dst || dst->empty())
         return;
 
     const uint64_t s = (region.start_coordinates.size() > 1) ? region.start_coordinates[1] : 0;
