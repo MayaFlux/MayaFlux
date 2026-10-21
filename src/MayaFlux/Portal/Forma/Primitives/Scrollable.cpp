@@ -105,8 +105,10 @@ Scrollable& Scrollable::track(
     scroll->content_bounds.min = glm::min(scroll->content_bounds.min, base_bounds.min);
     scroll->content_bounds.max = glm::max(scroll->content_bounds.max, base_bounds.max);
 
-    if (clip_buf)
-        clip_buf->get_render_processor()->set_scissor(Kinesis::Scissor::from(viewport_bounds));
+    if (clip_buf) {
+        if (auto render = clip_buf->get_render_processor())
+            render->set_scissor(Kinesis::Scissor::from(viewport_bounds));
+    }
 
     layer.relate(viewport_id, id);
 
