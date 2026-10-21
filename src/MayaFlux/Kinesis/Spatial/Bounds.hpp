@@ -163,7 +163,10 @@ struct BoundingSphere {
         glm::vec3 oc = ray.origin - center;
         float b = glm::dot(oc, ray.direction);
         float c = glm::dot(oc, oc) - radius * radius;
-        return b * b - c >= 0.0F;
+        const float discriminant = b * b - c;
+        if (discriminant < 0.0F)
+            return false;
+        return -b + std::sqrt(discriminant) >= 0.0F;
     }
 };
 
