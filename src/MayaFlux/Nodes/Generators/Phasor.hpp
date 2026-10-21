@@ -203,7 +203,7 @@ public:
      * The callback receives a GeneratorContext containing the generated
      * value and generator parameters like frequency, amplitude, and phase.
      */
-    void on_phase_wrap(const TypedHook<GeneratorContext>& callback);
+    HookId on_phase_wrap(const TypedHook<GeneratorContext>& callback);
 
     /**
      * @brief Registers a callback for every time the phasor crosses a threshold
@@ -216,7 +216,7 @@ public:
      * receives a GeneratorContext containing the generated value and
      * generator parameters like frequency, amplitude, and phase.
      */
-    void on_threshold(const TypedHook<GeneratorContext>& callback, double threshold, bool rising = true);
+    HookId on_threshold(const TypedHook<GeneratorContext>& callback, double threshold, bool rising = true);
 
     /**
      * @brief Removes a previously registered callback
@@ -228,21 +228,6 @@ public:
      */
     bool remove_hook(const TypedHook<GeneratorContext>& callback);
 
-    /**
-     * @brief Removes all registered callbacks
-     *
-     * Clears all standard and conditional callbacks, effectively
-     * disconnecting all external components from this generator's
-     * notification system. Useful when reconfiguring the processing
-     * graph or shutting down components.
-     */
-    inline void remove_all_hooks() override
-    {
-        m_callbacks.clear();
-        m_conditional_callbacks.clear();
-        m_phase_wrap_callbacks.clear();
-        m_threshold_callbacks.clear();
-    }
 
     void save_state() override;
     void restore_state() override;
@@ -310,12 +295,12 @@ private:
     /**
      * @brief Collection of phase wrap-specific callback functions
      */
-    std::vector<TypedHook<GeneratorContext>> m_phase_wrap_callbacks;
+    HookList m_phase_wrap_callbacks { *this };
 
     /**
      * @brief Collection of threshold-specific callback functions with their thresholds
      */
-    std::vector<std::pair<TypedHook<GeneratorContext>, double>> m_threshold_callbacks;
+    HookList m_threshold_callbacks { *this };
 
     /**
      * @brief Flag indicating whether the phase has wrapped in the current sample

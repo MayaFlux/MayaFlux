@@ -24,6 +24,10 @@ void NodeGraphManager::add_to_root(const std::shared_ptr<Node>& node,
     ProcessingToken token,
     unsigned int channel)
 {
+    if (!node) {
+        return;
+    }
+
     set_channel_mask(node, channel);
     node->set_sample_rate(m_registered_sample_rate);
     node->set_frame_rate(m_registered_frame_rate);
@@ -40,6 +44,10 @@ void NodeGraphManager::remove_from_root(const std::shared_ptr<Node>& node,
     ProcessingToken token,
     unsigned int channel)
 {
+    if (!node) {
+        return;
+    }
+
     unset_channel_mask(node, channel);
 
     auto& root = get_root_node(token, channel);
@@ -77,18 +85,13 @@ void NodeGraphManager::register_token_processor(ProcessingToken token,
     m_token_processors[token] = std::move(processor);
 }
 
-const std::unordered_map<unsigned int, std::shared_ptr<RootNode>>& NodeGraphManager::get_all_channel_root_nodes(ProcessingToken token) const
+std::unordered_map<unsigned int, std::shared_ptr<RootNode>> NodeGraphManager::get_all_channel_root_nodes(ProcessingToken token) const
 {
-    static std::unordered_map<unsigned int, std::shared_ptr<RootNode>> audio_roots;
-    audio_roots.clear();
-
     auto it = m_token_roots.find(token);
-    if (it != m_token_roots.end()) {
-        for (const auto& [channel, root] : it->second) {
-            audio_roots[channel] = root;
-        }
+    if (it == m_token_roots.end()) {
+        return {};
     }
-    return audio_roots;
+    return it->second;
 }
 
 bool NodeGraphManager::preprocess_networks(ProcessingToken token)
@@ -384,8 +387,10 @@ void NodeGraphManager::unregister_global(const std::shared_ptr<Node>& node)
 
 void NodeGraphManager::unset_channel_mask(const std::shared_ptr<Node>& node, uint32_t channel_id)
 {
-    unregister_global(node);
     node->unregister_channel_usage(channel_id);
+    if (node->get_channel_mask().load() == 0) {
+        unregister_global(node);
+    }
 }
 
 std::vector<ProcessingToken> NodeGraphManager::get_active_tokens() const
@@ -453,7 +458,10 @@ void NodeGraphManager::add_network(const std::shared_ptr<Network::NodeNetwork>& 
         }
 
         auto channels = network->get_registered_channels();
-        m_audio_networks[token].push_back(network);
+        auto& audio = m_audio_networks[token];
+        if (std::ranges::find(audio, network) == audio.end()) {
+            audio.push_back(network);
+        }
 
         for (auto ch : channels) {
             ensure_root_exists(token, ch);
@@ -464,7 +472,10 @@ void NodeGraphManager::add_network(const std::shared_ptr<Network::NodeNetwork>& 
         }
 
     } else {
-        m_token_networks[token].push_back(network);
+        auto& others = m_token_networks[token];
+        if (std::ranges::find(others, network) == others.end()) {
+            others.push_back(network);
+        }
 
         MF_INFO(Journal::Component::Nodes,
             Journal::Context::NodeProcessing,
@@ -482,19 +493,12 @@ void NodeGraphManager::remove_network(const std::shared_ptr<Network::NodeNetwork
         return;
     }
 
-    if (network->get_output_mode() == Network::OutputMode::AUDIO_SINK
-        || network->get_output_mode() == Network::OutputMode::AUDIO_COMPUTE) {
-        auto token_it = m_audio_networks.find(token);
-        if (token_it != m_audio_networks.end()) {
-            auto& networks = token_it->second;
-            std::erase_if(networks, [&](const auto& n) { return n == network; });
-        }
-    } else {
-        auto it = m_token_networks.find(token);
-        if (it != m_token_networks.end()) {
-            auto& networks = it->second;
-            std::erase_if(networks, [&](const auto& n) { return n == network; });
-        }
+    if (auto it = m_audio_networks.find(token); it != m_audio_networks.end()) {
+        std::erase_if(it->second, [&](const auto& n) { return n == network; });
+    }
+
+    if (auto it = m_token_networks.find(token); it != m_token_networks.end()) {
+        std::erase_if(it->second, [&](const auto& n) { return n == network; });
     }
 
     unregister_network_global(network);
@@ -587,6 +591,7 @@ void NodeGraphManager::register_network_global(const std::shared_ptr<Network::No
     if (m_network_registry.insert(network).second) {
         network->set_sample_rate(m_registered_sample_rate);
         network->set_block_size(m_registered_block_size);
+        network->set_frame_rate(m_registered_frame_rate);
     }
 }
 

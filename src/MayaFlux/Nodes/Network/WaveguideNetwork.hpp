@@ -42,8 +42,8 @@ namespace MayaFlux::Nodes::Network {
  * BIDIRECTIONAL (TUBE):
  *   Two rails. p_plus travels toward the open end, p_minus returns toward the
  *   closed end. Reflection sign at each termination determines harmonic series:
- *   - Closed end (mouthpiece): pressure node, sign preserved → odd harmonics
- *   - Open end (bell): pressure antinode, sign inverted → adds even harmonics
+ *   - Closed end (mouthpiece): pressure antinode, sign preserved
+ *   - Open end (bell): pressure node, sign inverted
  *   Output is the physical pressure sum p_plus[pickup] + p_minus[pickup].
  *
  *     exciter ──► p_plus  ──► [delay N] ──► loop_filter ──► loss ──► open-end  (−)
@@ -128,8 +128,8 @@ public:
      * BIDIRECTIONAL (TUBE):
      *   Both rails active. p_plus travels toward the open end (bell),
      *   p_minus travels back toward the mouthpiece.
-     *   At the closed end:  p_minus[0] = -p_plus[end]  (pressure inversion)
-     *   At the open end:    p_plus[0]  = -p_minus[end]  (approximate open reflection)
+     *   At the open end:    p_minus[0] = -p_plus[end]
+     *   At the closed end:  p_plus[0] = p_minus[end]
      *   Output is p_plus[pickup] + p_minus[pickup] (physical pressure sum).
      *
      * Both rails share the same integer/fractional delay length and loop filter.
@@ -152,8 +152,8 @@ public:
         std::shared_ptr<Filters::Filter> loop_filter_open; ///< BIDIRECTIONAL: open-end filter (bell/bridge)
         PropagationMode mode { PropagationMode::UNIDIRECTIONAL };
         double loss_factor { 0.996 };
-        double reflection_closed { -1.0 }; ///< Reflection coefficient at closed end (pressure node)
-        double reflection_open { 1.0 }; ///< Reflection coefficient at open end (pressure antinode)
+        double reflection_closed { 1.0 }; ///< Closed-end reflection; a lumped string loop keeps +1 because its two inversions cancel
+        double reflection_open { 1.0 }; ///< Open-end reflection; a tube configures this to -1
 
         /**
          * @brief Construct segment with both rails at the specified length
@@ -180,7 +180,8 @@ public:
     /**
      * @brief Create waveguide network with specified type and frequency
      * @param type Physical structure to model
-     * @param fundamental_freq Fundamental frequency in Hz
+     * @param fundamental_freq Sounding fundamental in Hz. A TUBE is a closed-open
+     *        bore, so each rail is a quarter of the period long
      * @param sample_rate Sample rate in Hz
      */
     WaveguideNetwork(
@@ -225,8 +226,9 @@ public:
      * @param position Normalized position along string (0.0 to 1.0)
      * @param strength Excitation amplitude (0.0 to 1.0+)
      *
-     * Fills the delay line with a shaped noise burst. Position affects
-     * spectral content: 0.5 = center (warm), near 0/1 = bridge (bright).
+     * Seeds the delay line with a triangle. A string seed has its average
+     * removed, because the lumped loop would otherwise hold it as a DC offset.
+     * Position affects spectral content: 0.5 = center (warm), near 0/1 = bridge (bright).
      */
     void pluck(double position = 0.5, double strength = 1.0);
 
@@ -270,8 +272,17 @@ public:
     /**
      * @brief Set continuous exciter node (for bowing/blowing)
      * @param node Source node providing continuous excitation
+     *
+     * If the exciter type is already CONTINUOUS the drive starts immediately,
+     * so the order of set_exciter_type and set_exciter_node does not matter.
      */
-    void set_exciter_node(const std::shared_ptr<Node>& node) { m_exciter_node = node; }
+    void set_exciter_node(const std::shared_ptr<Node>& node)
+    {
+        m_exciter_node = node;
+        if (node && m_exciter_type == ExciterType::CONTINUOUS) {
+            initialize_exciter();
+        }
+    }
 
     //-------------------------------------------------------------------------
     // Waveguide Control
@@ -378,6 +389,7 @@ private:
     size_t m_delay_length_integer { 0 };
     double m_delay_length_fraction { 0.0 };
     size_t m_pickup_sample { 0 };
+    double m_pickup_position { 0.5 };
 
     //-------------------------------------------------------------------------
     // Exciter State

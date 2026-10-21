@@ -114,10 +114,8 @@ std::vector<LineVertex> TopologyOperator::extract_vertices() const
     std::vector<LineVertex> positions;
 
     for (const auto& topology : m_topologies) {
-        auto points = topology->get_points();
-        for (const auto& pt : points) {
-            positions.push_back(pt);
-        }
+        const auto points = topology->get_points();
+        positions.insert(positions.end(), points.rbegin(), points.rend());
     }
 
     return positions;
@@ -186,7 +184,7 @@ bool TopologyOperator::is_vertex_data_dirty() const
 void TopologyOperator::mark_vertex_data_clean()
 {
     for (auto& topology : m_topologies) {
-        topology->mark_vertex_data_dirty(false);
+        topology->clear_gpu_update_flag();
     }
 }
 
@@ -278,9 +276,8 @@ void TopologyOperator::set_parameter(std::string_view param, double value)
             topology->set_k_neighbors(static_cast<size_t>(value));
         }
     } else if (param == "line_thickness") {
-        m_default_thickness = static_cast<float>(value);
         for (auto& topology : m_topologies) {
-            topology->set_line_thickness(m_default_thickness);
+            topology->set_line_thickness(static_cast<float>(value));
         }
     }
 }
@@ -318,7 +315,6 @@ void TopologyOperator::set_connection_radius(float radius)
 
 void TopologyOperator::set_global_line_thickness(float thickness)
 {
-    m_default_thickness = thickness;
     for (auto& topology : m_topologies) {
         topology->set_line_thickness(thickness);
     }
@@ -338,16 +334,34 @@ void TopologyOperator::set_samples_per_segment(size_t samples)
     }
 }
 
-void* TopologyOperator::get_data_at(size_t global_index)
+void TopologyOperator::set_vertices(const std::vector<LineVertex>& vertices)
 {
-    size_t offset = 0;
-    for (auto& group : m_topologies) {
-        if (global_index < offset + group->get_point_count()) {
-            size_t local_index = global_index - offset;
-            return &group->get_points()[local_index];
-        }
-        offset += group->get_point_count();
+    if (m_topologies.empty() || vertices.size() != get_point_count()) {
+        initialize(vertices);
+        return;
     }
+
+    uint32_t expected = 0;
+    while (!m_access_token.compare_exchange_weak(expected, 1,
+        std::memory_order_acquire, std::memory_order_relaxed)) {
+        if (m_shutdown.load(std::memory_order_relaxed))
+            return;
+        expected = 0;
+    }
+
+    auto first = vertices.begin();
+    for (auto& topology : m_topologies) {
+        const auto count = static_cast<std::ptrdiff_t>(topology->get_point_count());
+        topology->set_points(std::vector<LineVertex>(first, first + count));
+        topology->compute_frame();
+        first += count;
+    }
+
+    m_access_token.store(0, std::memory_order_release);
+}
+
+void* TopologyOperator::get_data_at(size_t /*global_index*/)
+{
     return nullptr;
 }
 

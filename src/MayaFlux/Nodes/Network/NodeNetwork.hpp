@@ -439,6 +439,35 @@ public:
     void set_block_size(uint32_t block_size) { m_block_size = block_size; }
     [[nodiscard]] uint32_t get_block_size() const { return m_block_size; }
 
+    /**
+     * @brief Frame rate the owning manager runs visual processing at.
+     */
+    void set_frame_rate(uint32_t frame_rate) { m_frame_rate = frame_rate; }
+    [[nodiscard]] uint32_t get_frame_rate() const { return m_frame_rate; }
+
+    /**
+     * @brief Seconds one visual frame advances this network.
+     * @return The override if one was set, otherwise the frame period.
+     */
+    [[nodiscard]] float get_timestep() const
+    {
+        if (m_timestep) {
+            return *m_timestep;
+        }
+        return m_frame_rate > 0 ? 1.0F / static_cast<float>(m_frame_rate) : 0.0F;
+    }
+
+    /**
+     * @brief Advance this network by a fixed number of seconds per frame
+     *        instead of the frame period.
+     */
+    void set_timestep(float dt) { m_timestep = dt; }
+
+    /**
+     * @brief Return to the frame period.
+     */
+    void clear_timestep() { m_timestep.reset(); }
+
 protected:
     //-------------------------------------------------------------------------
     // Protected State (Accessible to subclasses)
@@ -450,6 +479,8 @@ protected:
     bool m_initialized = false;
     uint32_t m_sample_rate { 48000 };
     uint32_t m_block_size { 512 };
+    uint32_t m_frame_rate { 60 };
+    std::optional<float> m_timestep;
 
     std::shared_ptr<OperatorChain> m_operator_chain;
 

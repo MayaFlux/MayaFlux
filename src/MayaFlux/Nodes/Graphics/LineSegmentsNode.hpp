@@ -171,6 +171,7 @@ public:
 
 private:
     std::vector<LineVertex> m_segments;
+    bool m_segments_dirty { true };
 
     void append_pairs(const std::vector<LineVertex>& pairs);
 };

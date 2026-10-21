@@ -54,88 +54,153 @@ using NodeHook = TypedHook<>;
 using NodeCondition = std::function<bool(NodeContext&)>;
 
 /**
- * @brief Returns true if an equivalent callback is already present in the collection.
+ * @typedef HookId
+ * @brief Identifies one registration inside a HookList. Zero is never issued.
+ */
+using HookId = uint64_t;
+
+/**
+ * @struct HookEntry
+ * @brief One registration held by a HookList.
  *
- * Equivalence is determined by target_type() -- the same limitation as std::function
- * comparison everywhere in the codebase.
+ * key is the type of the callable the caller handed in, so removal by callable keeps
+ * working when the stored hook is an adapter. tag and params are interpreted by the
+ * list's owner (event kind, threshold, range, target).
  */
-template <typename ContextT>
-bool callback_exists(const std::vector<TypedHook<ContextT>>& callbacks,
-    const TypedHook<ContextT>& callback)
-{
-    return std::ranges::any_of(callbacks,
-        [&callback](const TypedHook<ContextT>& hook) {
-            return hook.target_type() == callback.target_type();
-        });
-}
+struct HookEntry {
+    HookId id {};
+    const std::type_info* key { &typeid(void) };
+    uint8_t tag {};
+    std::array<double, 2> params {};
+    NodeHook hook;
+    std::optional<NodeCondition> condition;
+};
 
 /**
- * @brief Adds a callback to the collection if an equivalent one is not already present.
- * @return True if added, false if a duplicate was detected.
+ * @class HookList
+ * @brief Stores, fires and clears the hooks of one node channel.
+ *
+ * A HookList registers itself with the Node that owns it, so Node::remove_all_hooks and
+ * Node::unhook reach every list without any node class overriding them. Ids are unique
+ * within the owning node.
+ *
+ * Reading and writing are safe across threads without locks. The entries are an immutable
+ * snapshot that writers replace with a compare-exchange, so fire() and snapshot() never
+ * block and a hook may add or remove hooks, including itself, while it runs. A fire in
+ * progress finishes over the entries it started with. Replaced snapshots are freed once no
+ * reader holds one.
  */
-template <typename ContextT>
-bool safe_add_callback(std::vector<TypedHook<ContextT>>& callbacks,
-    const TypedHook<ContextT>& callback)
-{
-    if (!callback_exists(callbacks, callback)) {
-        callbacks.push_back(callback);
-        return true;
-    }
-    return false;
-}
+class MAYAFLUX_API HookList {
+public:
+    /**
+     * @class Snapshot
+     * @brief The entries of a list at one instant, kept alive while this object exists.
+     */
+    class Snapshot {
+    public:
+        Snapshot() = default;
+        ~Snapshot();
 
-/**
- * @brief Removes all callbacks whose target_type() matches that of the supplied callback.
- * @return True if at least one entry was removed.
- */
-template <typename ContextT>
-bool safe_remove_callback(std::vector<TypedHook<ContextT>>& callbacks,
-    const TypedHook<ContextT>& callback)
-{
-    bool removed = false;
-    auto it = callbacks.begin();
-    while (it != callbacks.end()) {
-        if (it->target_type() == callback.target_type()) {
-            it = callbacks.erase(it);
-            removed = true;
-        } else {
-            ++it;
+        Snapshot(const Snapshot&) = delete;
+        Snapshot& operator=(const Snapshot&) = delete;
+        Snapshot(Snapshot&& other) noexcept
+            : m_list(std::exchange(other.m_list, nullptr))
+            , m_entries(std::exchange(other.m_entries, nullptr))
+        {
         }
-    }
-    return removed;
+        Snapshot& operator=(Snapshot&&) = delete;
+
+        [[nodiscard]] const HookEntry* begin() const { return m_entries ? m_entries->data() : nullptr; }
+        [[nodiscard]] const HookEntry* end() const { return m_entries ? m_entries->data() + m_entries->size() : nullptr; }
+        [[nodiscard]] size_t size() const { return m_entries ? m_entries->size() : 0; }
+        [[nodiscard]] bool empty() const { return size() == 0; }
+
+    private:
+        friend class HookList;
+
+        Snapshot(const HookList* list, const std::vector<HookEntry>* entries)
+            : m_list(list)
+            , m_entries(entries)
+        {
+        }
+
+        const HookList* m_list { nullptr };
+        const std::vector<HookEntry>* m_entries { nullptr };
+    };
+
+    explicit HookList(Node& owner);
+    ~HookList();
+
+    HookList(const HookList&) = delete;
+    HookList& operator=(const HookList&) = delete;
+    HookList(HookList&&) = delete;
+    HookList& operator=(HookList&&) = delete;
+
+    /** @brief Appends a hook with no duplicate check and returns its id. */
+    HookId add(NodeHook hook, const std::type_info& key, uint8_t tag = 0, std::array<double, 2> params = {});
+
+    /** @brief Appends unless an entry with the same key and params exists, in which case that entry's id is returned. */
+    HookId add_unique(NodeHook hook, const std::type_info& key, uint8_t tag = 0, std::array<double, 2> params = {});
+
+    /** @brief Appends a hook that fires only while condition holds. */
+    HookId add_conditional(NodeHook hook, NodeCondition condition, const std::type_info& key, uint8_t tag = 0);
+
+    /** @brief As add_conditional, returning the existing id when the same hook and condition types exist. */
+    HookId add_conditional_unique(NodeHook hook, NodeCondition condition, const std::type_info& key, uint8_t tag = 0);
+
+    /** @brief Removes the registration with this id. */
+    bool remove(HookId id);
+
+    /** @brief Removes every entry registered with this callable type. */
+    bool remove_by_key(const std::type_info& key);
+
+    /** @brief Removes the first entry registered with this callable type. */
+    bool remove_first_by_key(const std::type_info& key);
+
+    /** @brief Removes every entry whose condition has this callable type. */
+    bool remove_by_condition_key(const std::type_info& key);
+
+    /** @brief Removes every entry carrying this tag. */
+    bool remove_by_tag(uint8_t tag);
+
+    void clear();
+
+    [[nodiscard]] bool empty() const;
+    [[nodiscard]] size_t size() const;
+
+    /** @brief The current entries, held stable for the lifetime of the returned object. */
+    [[nodiscard]] Snapshot snapshot() const;
+
+    /** @brief Calls every entry whose condition, if any, holds. */
+    void fire(NodeContext& ctx) const;
+
+private:
+    struct Retired;
+
+    bool mutate(const std::function<bool(std::vector<HookEntry>&)>& edit);
+    HookId next_id() const;
+    void retire(const std::vector<HookEntry>* old);
+    void reclaim();
+
+    Node* m_owner;
+    std::atomic<const std::vector<HookEntry>*> m_head { nullptr };
+    std::atomic<Retired*> m_retired { nullptr };
+    mutable std::atomic<uint32_t> m_readers { 0 };
+};
+
+/**
+ * @brief Wraps a context-typed hook into a NodeHook.
+ *
+ * The wrapper downcasts the context once, so callers receive their concrete context type.
+ */
+template <typename ContextT>
+NodeHook adapt_hook(const TypedHook<ContextT>& hook)
+{
+    return [hook](NodeContext& ctx) {
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+        hook(static_cast<ContextT&>(ctx));
+    };
 }
-
-/**
- * @brief Returns true if a condition function is already present in a conditional callback collection.
- */
-MAYAFLUX_API bool conditional_callback_exists(
-    const std::vector<std::pair<NodeHook, NodeCondition>>& callbacks,
-    const NodeCondition& callback);
-
-/**
- * @brief Returns true if the exact callback+condition pair is already present.
- */
-MAYAFLUX_API bool callback_pair_exists(
-    const std::vector<std::pair<NodeHook, NodeCondition>>& callbacks,
-    const NodeHook& callback,
-    const NodeCondition& condition);
-
-/**
- * @brief Adds a conditional callback if the exact pair is not already present.
- * @return True if added, false if a duplicate was detected.
- */
-MAYAFLUX_API bool safe_add_conditional_callback(
-    std::vector<std::pair<NodeHook, NodeCondition>>& callbacks,
-    const NodeHook& callback,
-    const NodeCondition& condition);
-
-/**
- * @brief Removes all conditional callbacks whose condition target_type() matches.
- * @return True if at least one entry was removed.
- */
-MAYAFLUX_API bool safe_remove_conditional_callback(
-    std::vector<std::pair<NodeHook, NodeCondition>>& callbacks,
-    const NodeCondition& callback);
 
 /**
  * @brief Atomically sets a node state flag with strong memory ordering

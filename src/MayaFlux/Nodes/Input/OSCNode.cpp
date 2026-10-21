@@ -10,7 +10,7 @@ OSCNode::OSCNode(OSCConfig config)
 double OSCNode::extract_value(const Core::InputValue& value)
 {
     if (value.type != Core::InputValue::Type::OSC) {
-        return m_last_output;
+        return held_value();
     }
 
     const auto& osc = value.as_osc();
@@ -22,11 +22,11 @@ double OSCNode::extract_value(const Core::InputValue& value)
     }
 
     if (osc.arguments.empty()) {
-        return m_last_output;
+        return held_value();
     }
 
     if (m_config.argument_index >= osc.arguments.size()) {
-        return m_last_output;
+        return held_value();
     }
 
     double raw = static_cast<double>(
@@ -44,14 +44,7 @@ void OSCNode::notify_tick(double value)
 {
     InputNode::notify_tick(value);
     if (m_last_osc_message) {
-        fire_osc_callbacks(*m_last_osc_message);
-    }
-}
-
-void OSCNode::fire_osc_callbacks(const Core::InputValue::OSCMessage& osc)
-{
-    for (const auto& cb : m_message_callbacks) {
-        cb(osc.address, osc.arguments);
+        m_message_callbacks.fire(get_last_context());
     }
 }
 

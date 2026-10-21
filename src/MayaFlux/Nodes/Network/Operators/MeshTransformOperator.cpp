@@ -47,19 +47,6 @@ void MeshTransformOperator::process_slot(MeshSlot& slot, float dt)
     slot.dirty = true;
 }
 
-void MeshTransformOperator::process(float /*dt*/)
-{
-    const auto now = std::chrono::steady_clock::now();
-    const float real_dt = std::chrono::duration<float>(now - m_last_tick).count();
-    m_last_tick = now;
-
-    if (!m_slots || !m_order)
-        return;
-
-    for (uint32_t idx : *m_order)
-        process_slot((*m_slots)[idx], real_dt);
-}
-
 // =============================================================================
 // Private helpers
 // =============================================================================

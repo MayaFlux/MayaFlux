@@ -128,9 +128,15 @@ public:
      * Fires on every matching message, independent of scalar extraction.
      * Use for multi-argument messages or when you need the address.
      */
-    void on_message(MessageCallback callback)
+    HookId on_message(MessageCallback callback)
     {
-        m_message_callbacks.push_back(std::move(callback));
+        return m_message_callbacks.add(
+            [this, callback](NodeContext&) {
+                if (m_last_osc_message) {
+                    callback(m_last_osc_message->address, m_last_osc_message->arguments);
+                }
+            },
+            callback.target_type());
     }
 
 protected:
@@ -142,9 +148,7 @@ private:
     OSCConfig m_config;
     std::optional<Core::InputValue::OSCMessage> m_last_osc_message;
 
-    std::vector<MessageCallback> m_message_callbacks;
-
-    void fire_osc_callbacks(const Core::InputValue::OSCMessage& osc);
+    HookList m_message_callbacks { *this };
 };
 
 } // namespace MayaFlux::Nodes::Input

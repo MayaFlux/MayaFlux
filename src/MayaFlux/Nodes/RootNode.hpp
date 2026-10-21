@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Core/ProcessingTokens.hpp"
+#include "MayaFlux/Transitive/Memory/PendingQueue.hpp"
 
 #define MAX_PENDING_NODES 2048
 
@@ -193,26 +194,26 @@ private:
      */
     struct PendingOp {
         /**
-         * @brief Flag indicating if this pending operation slot is in use
-         */
-        std::atomic<bool> active;
-
-        /**
          * @brief The node to be registered or unregistered
          */
         std::shared_ptr<Node> node;
 
-        bool is_addition { true };
-    } m_pending_ops[MAX_PENDING_NODES];
+        bool is_addition;
+    };
 
     /**
-     * @brief Counter tracking the number of pending operations
-     *
-     * This counter helps efficiently manage the pending operations array,
-     * allowing the system to quickly determine if there are operations
-     * waiting to be processed without scanning the entire array.
+     * @brief Operations queued by any thread and applied in arrival order by the processing thread
      */
-    std::atomic<uint32_t> m_pending_count;
+    Memory::PendingQueue<PendingOp, MAX_PENDING_NODES> m_pending_ops;
+
+    /**
+     * @brief Queues an operation, draining on the caller's behalf when the queue is full
+     * @param op The operation to queue
+     *
+     * A full queue is drained here if no processing cycle is in flight, otherwise
+     * the caller yields until the processing thread drains it.
+     */
+    void enqueue_operation(PendingOp&& op);
 
     /**
      * @brief Processes any pending node registration/unregistration operations

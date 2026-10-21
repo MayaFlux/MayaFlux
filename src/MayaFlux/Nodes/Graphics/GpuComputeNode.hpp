@@ -105,7 +105,7 @@ public:
      * @brief Register a callback fired once per completed dispatch.
      * @param callback Receives a GpuComputeContext carrying the GpuChannelResult.
      */
-    void on_complete(const TypedHook<GpuComputeContext>& callback);
+    HookId on_complete(const TypedHook<GpuComputeContext>& callback);
 
     /**
      * @brief Remove a previously registered on_complete callback.
@@ -155,7 +155,7 @@ private:
 
     Portal::Graphics::FenceID m_pending_fence { Portal::Graphics::INVALID_FENCE };
 
-    std::vector<TypedHook<GpuComputeContext>> m_complete_callbacks;
+    HookList m_complete_callbacks { *this };
 
     Yantra::GpuChannelResult m_last_result;
     mutable std::unique_ptr<GpuComputeContext> m_context_storage;

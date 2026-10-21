@@ -6,6 +6,13 @@
 
 namespace MayaFlux::Nodes::Network {
 
+namespace {
+    [[nodiscard]] bool topology_interacts(Topology topology) noexcept
+    {
+        return topology == Topology::SPATIAL || topology == Topology::GRID_2D || topology == Topology::GRID_3D;
+    }
+}
+
 //-----------------------------------------------------------------------------
 // Construction
 //-----------------------------------------------------------------------------
@@ -77,6 +84,7 @@ void ParticleNetwork::reset()
     if (m_operator) {
         if (auto* physics = dynamic_cast<PhysicsOperator*>(m_operator.get())) {
             physics->initialize(vertices);
+            physics->set_bounds(m_bounds.min, m_bounds.max);
         } else if (auto* field = dynamic_cast<FieldOperator*>(m_operator.get())) {
             field->initialize(vertices);
         }
@@ -103,19 +111,19 @@ void ParticleNetwork::process_batch(unsigned int num_samples)
 
     if (m_operator) {
         for (unsigned int frame = 0; frame < num_samples; ++frame) {
-            m_operator->process(m_timestep);
+            m_operator->process(get_timestep());
         }
     }
 
     if (m_operator_chain && !m_operator_chain->empty()) {
         for (unsigned int frame = 0; frame < num_samples; ++frame) {
-            m_operator_chain->process(m_timestep, m_operator.get());
+            m_operator_chain->process(get_timestep(), m_operator.get());
         }
     }
 
     MF_RT_TRACE(Journal::Component::Nodes, Journal::Context::NodeProcessing,
         "ParticleNetwork processed {} frames with {} operator",
-        num_samples, m_operator->get_type_name());
+        num_samples, m_operator ? m_operator->get_type_name() : "none");
 }
 
 void ParticleNetwork::set_topology(Topology topology)
@@ -123,7 +131,7 @@ void ParticleNetwork::set_topology(Topology topology)
     NodeNetwork::set_topology(topology);
 
     if (auto* physics = dynamic_cast<PhysicsOperator*>(m_operator.get())) {
-        bool should_interact = (topology == Topology::SPATIAL || topology == Topology::GRID_2D || topology == Topology::GRID_3D);
+        bool should_interact = topology_interacts(topology);
         physics->enable_spatial_interactions(should_interact);
     }
 }
@@ -160,7 +168,7 @@ std::unordered_map<std::string, std::string> ParticleNetwork::get_metadata() con
 
     metadata["point_count"] = std::to_string(get_node_count());
     metadata["operator"] = std::string(m_operator ? m_operator->get_type_name() : "none");
-    metadata["timestep"] = std::to_string(m_timestep);
+    metadata["timestep"] = std::to_string(get_timestep());
     metadata["bounds_min"] = std::format("({:.2f}, {:.2f}, {:.2f})",
         m_bounds.min.x, m_bounds.min.y, m_bounds.min.z);
     metadata["bounds_max"] = std::format("({:.2f}, {:.2f}, {:.2f})",
@@ -252,7 +260,7 @@ void ParticleNetwork::set_operator(std::unique_ptr<NetworkOperator> op)
     m_operator = std::move(op);
 
     if (auto* physics = dynamic_cast<PhysicsOperator*>(m_operator.get())) {
-        bool should_interact = (get_topology() == Topology::SPATIAL);
+        bool should_interact = topology_interacts(get_topology());
         physics->enable_spatial_interactions(should_interact);
     }
 

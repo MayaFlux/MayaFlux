@@ -247,14 +247,8 @@ void Filter::notify_tick(double value)
     update_context(value);
     auto& ctx = get_last_context();
 
-    for (auto& callback : m_callbacks) {
-        callback(ctx);
-    }
-    for (auto& [callback, condition] : m_conditional_callbacks) {
-        if (condition(ctx)) {
-            callback(ctx);
-        }
-    }
+    m_callbacks.fire(ctx);
+    m_conditional_callbacks.fire(ctx);
 }
 
 NodeContext& Filter::get_last_context()
@@ -265,21 +259,14 @@ NodeContext& Filter::get_last_context()
     return m_context;
 }
 
-void Filter::on_tick(const TypedHook<FilterContext>& callback)
+HookId Filter::on_tick(const TypedHook<FilterContext>& callback)
 {
-    m_callbacks.emplace_back([callback](NodeContext& ctx) {
-        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-        callback(static_cast<FilterContext&>(ctx));
-    });
+    return m_callbacks.add(adapt_hook(callback), callback.target_type());
 }
 
-void Filter::on_tick_if(const NodeCondition& condition, const TypedHook<FilterContext>& callback)
+HookId Filter::on_tick_if(const NodeCondition& condition, const TypedHook<FilterContext>& callback)
 {
-    m_conditional_callbacks.emplace_back([callback](NodeContext& ctx) {
-        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-        callback(static_cast<FilterContext&>(ctx));
-    },
-        condition);
+    return m_conditional_callbacks.add_conditional(adapt_hook(callback), condition, callback.target_type());
 }
 
 std::vector<std::pair<ModulatorRole, std::shared_ptr<Node>>>

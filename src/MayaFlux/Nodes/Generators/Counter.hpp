@@ -87,23 +87,22 @@ public:
      * @brief Registers a callback fired on every increment
      * @param callback Receives GeneratorContext directly; phase field carries the raw count
      */
-    void on_increment(const TypedHook<GeneratorContext>& callback);
+    HookId on_increment(const TypedHook<GeneratorContext>& callback);
 
     /**
      * @brief Registers a callback fired when the counter wraps to zero
      * @param callback Receives GeneratorContext at the wrap boundary
      */
-    void on_wrap(const TypedHook<GeneratorContext>& callback);
+    HookId on_wrap(const TypedHook<GeneratorContext>& callback);
 
     /**
      * @brief Registers a callback fired when the counter reaches a specific raw value
      * @param target Raw counter value to match
      * @param callback Receives GeneratorContext when count == target
      */
-    void on_count(uint32_t target, const TypedHook<GeneratorContext>& callback);
+    HookId on_count(uint32_t target, const TypedHook<GeneratorContext>& callback);
 
     bool remove_hook(const NodeHook& callback) override;
-    void remove_all_hooks() override;
 
     void set_frequency(float) override { }
     [[nodiscard]] float get_frequency() const { return 0.F; }
@@ -135,9 +134,9 @@ private:
 
     bool m_wrapped { false };
 
-    std::vector<TypedHook<GeneratorContext>> m_increment_callbacks;
-    std::vector<TypedHook<GeneratorContext>> m_wrap_callbacks;
-    std::vector<std::pair<uint32_t, TypedHook<GeneratorContext>>> m_count_callbacks;
+    HookList m_increment_callbacks { *this };
+    HookList m_wrap_callbacks { *this };
+    HookList m_count_callbacks { *this };
 };
 
 } // namespace MayaFlux::Nodes::Generator

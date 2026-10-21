@@ -16,30 +16,36 @@ bool Node::is_output_excluded_from_graph() const
     return m_state.load() & NodeState::OUTPUT_EXCLUDED;
 }
 
-void Node::on_tick(const NodeHook& callback)
+HookId Node::on_tick(const NodeHook& callback)
 {
-    safe_add_callback(m_callbacks, callback);
+    return m_callbacks.add_unique(callback, callback.target_type());
 }
 
-void Node::on_tick_if(const NodeCondition& condition, const NodeHook& callback)
+HookId Node::on_tick_if(const NodeCondition& condition, const NodeHook& callback)
 {
-    safe_add_conditional_callback(m_conditional_callbacks, callback, condition);
+    return m_conditional_callbacks.add_conditional_unique(callback, condition, callback.target_type());
 }
 
 bool Node::remove_hook(const NodeHook& callback)
 {
-    return safe_remove_callback(m_callbacks, callback);
+    return m_callbacks.remove_by_key(callback.target_type());
 }
 
 bool Node::remove_conditional_hook(const NodeCondition& callback)
 {
-    return safe_remove_conditional_callback(m_conditional_callbacks, callback);
+    return m_conditional_callbacks.remove_by_condition_key(callback.target_type());
 }
 
 void Node::remove_all_hooks()
 {
-    m_callbacks.clear();
-    m_conditional_callbacks.clear();
+    for (auto* list : m_hook_lists) {
+        list->clear();
+    }
+}
+
+bool Node::unhook(HookId id)
+{
+    return std::ranges::any_of(m_hook_lists, [id](HookList* list) { return list->remove(id); });
 }
 
 void Node::register_channel_usage(uint32_t channel_id)

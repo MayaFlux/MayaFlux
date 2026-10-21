@@ -163,7 +163,7 @@ public:
      * @brief Registers a typed callback receiving GeneratorContext directly
      * @param callback Receives frequency, amplitude, and phase without casting
      */
-    void on_tick(const TypedHook<GeneratorContext>& callback);
+    HookId on_tick(const TypedHook<GeneratorContext>& callback);
 
     /**
      * @brief Registers a conditional typed callback receiving GeneratorContext directly
@@ -171,7 +171,7 @@ public:
      * @param callback Receives frequency, amplitude, and phase without casting when condition is met
 
      */
-    void on_tick_if(const NodeCondition& condition, const TypedHook<GeneratorContext>& callback);
+    HookId on_tick_if(const NodeCondition& condition, const TypedHook<GeneratorContext>& callback);
 
 protected:
     /**

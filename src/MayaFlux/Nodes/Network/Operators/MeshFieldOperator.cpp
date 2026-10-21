@@ -184,12 +184,19 @@ void MeshFieldOperator::process_slot(MeshSlot& slot, float dt)
 
     auto& field_op = it->second;
 
-    if (field_op->get_vertex_count() == 0 && slot.node
-        && slot.node->get_mesh_vertex_count() > 0) {
-        field_op->initialize(slot.node->get_mesh_vertices());
-        MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
-            "MeshFieldOperator: lazy-initialised slot {} ({} vertices)",
-            slot.index, slot.node->get_mesh_vertex_count());
+    if (slot.node) {
+        const auto& current = slot.node->get_mesh_vertices();
+        if (current.empty())
+            return;
+
+        const auto held = field_op->get_vertex_data();
+        const size_t bytes = current.size() * sizeof(MeshVertex);
+        if (held.size() != bytes || std::memcmp(held.data(), current.data(), bytes) != 0) {
+            field_op->initialize(current);
+            MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
+                "MeshFieldOperator: initialised slot {} from its node ({} vertices)",
+                slot.index, current.size());
+        }
     }
 
     field_op->process(dt);

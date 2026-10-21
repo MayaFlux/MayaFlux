@@ -72,18 +72,6 @@ struct InputConfig {
     size_t history_size { 8 }; ///< Input history buffer size
 };
 
-/**
- * @struct InputCallback
- * @brief Callback registration with event type and optional parameters
- */
-struct InputCallback {
-    TypedHook<InputContext> callback;
-    InputEventType event_type;
-    std::optional<NodeCondition> condition;
-    std::optional<double> threshold;
-    std::optional<std::pair<double, double>> range;
-};
-
 // ─────────────────────────────────────────────────────────────────────────────
 // InputNode - Base class for input-driven nodes
 // ─────────────────────────────────────────────────────────────────────────────
@@ -207,7 +195,7 @@ public:
      * The callback receives an InputContext with the current value and input details.
      * Fires on every process_input() call, after smoothing is applied.
      */
-    void on_tick(const TypedHook<InputContext>& callback);
+    HookId on_tick(const TypedHook<InputContext>& callback);
 
     /**
      * @brief Register conditional callback for input received
@@ -217,7 +205,7 @@ public:
      * The callback receives an InputContext with the current value and input details.
      * Fires on every process_input() call where the condition returns true.
      */
-    void on_tick_if(const NodeCondition& condition, const TypedHook<InputContext>& callback);
+    HookId on_tick_if(const NodeCondition& condition, const TypedHook<InputContext>& callback);
 
     /**
      * @brief Register callback for any input received
@@ -225,9 +213,9 @@ public:
      *
      * Alias for on_tick() - fires on every process_input() call
      */
-    void on_input(const TypedHook<InputContext>& callback)
+    HookId on_input(const TypedHook<InputContext>& callback)
     {
-        on_tick(callback);
+        return on_tick(callback);
     }
 
     /**
@@ -235,21 +223,21 @@ public:
      * @param callback Function to call when value differs from previous
      * @param epsilon Minimum change to trigger (default: 0.0001)
      */
-    void on_value_change(const TypedHook<InputContext>& callback, double epsilon = 0.0001);
+    HookId on_value_change(const TypedHook<InputContext>& callback, double epsilon = 0.0001);
 
     /**
      * @brief Register callback for threshold crossing (rising edge)
      * @param threshold Value threshold
      * @param callback Function to call when value crosses threshold upward
      */
-    void on_threshold_rising(double threshold, const TypedHook<InputContext>& callback);
+    HookId on_threshold_rising(double threshold, const TypedHook<InputContext>& callback);
 
     /**
      * @brief Register callback for threshold crossing (falling edge)
      * @param threshold Value threshold
      * @param callback Function to call when value crosses threshold downward
      */
-    void on_threshold_falling(double threshold, const TypedHook<InputContext>& callback);
+    HookId on_threshold_falling(double threshold, const TypedHook<InputContext>& callback);
 
     /**
      * @brief Register callback for entering a value range
@@ -257,7 +245,7 @@ public:
      * @param max Range maximum
      * @param callback Function to call when value enters range
      */
-    void on_range_enter(double min, double max, const TypedHook<InputContext>& callback);
+    HookId on_range_enter(double min, double max, const TypedHook<InputContext>& callback);
 
     /**
      * @brief Register callback for exiting a value range
@@ -265,7 +253,7 @@ public:
      * @param max Range maximum
      * @param callback Function to call when value exits range
      */
-    void on_range_exit(double min, double max, const TypedHook<InputContext>& callback);
+    HookId on_range_exit(double min, double max, const TypedHook<InputContext>& callback);
 
     /**
      * @brief Register callback for button press (0.0 → 1.0 transition)
@@ -273,7 +261,7 @@ public:
      *
      * Specialized for button inputs - fires once on press
      */
-    void on_button_press(const TypedHook<InputContext>& callback);
+    HookId on_button_press(const TypedHook<InputContext>& callback);
 
     /**
      * @brief Register callback for button release (1.0 → 0.0 transition)
@@ -281,7 +269,7 @@ public:
      *
      * Specialized for button inputs - fires once on release
      */
-    void on_button_release(const TypedHook<InputContext>& callback);
+    HookId on_button_release(const TypedHook<InputContext>& callback);
 
     /**
      * @brief Register callback while value is in range
@@ -289,7 +277,7 @@ public:
      * @param max Range maximum
      * @param callback Function to call continuously while in range
      */
-    void while_in_range(double min, double max, const TypedHook<InputContext>& callback);
+    HookId while_in_range(double min, double max, const TypedHook<InputContext>& callback);
 
 protected:
     /**
@@ -308,12 +296,21 @@ protected:
     void update_context(double value) override;
 
     /**
-     * @brief Notify callbacks (minimal for InputNode)
+     * @brief Fires the hooks for one delivered input
      *
-     * InputNodes fire callbacks sparingly - the input event IS the notification.
-     * Override if you need per-sample callbacks (rare for input).
+     * Called only from process_input(), so every hook runs on the thread that delivers
+     * input and never on the graph thread. process_sample() only advances smoothing and
+     * does not notify. The context, previous-value and range state are therefore owned by
+     * the input thread, and Node::m_last_output by the graph thread.
      */
     void notify_tick(double value) override;
+
+    /**
+     * @brief The smoothed value the node currently holds
+     *
+     * What extract_value() returns when an input carries nothing for this node.
+     */
+    [[nodiscard]] double held_value() const { return m_current_value.load(); }
 
     InputConfig m_config;
     InputContext m_context;
@@ -327,13 +324,13 @@ private:
 
     std::atomic<uint32_t> m_last_device_id { 0 };
     Core::InputType m_last_source_type { Core::InputType::HID };
-    std::vector<InputCallback> m_input_callbacks;
+    HookList m_input_callbacks { *this };
 
     Memory::LockFreeQueue<Core::InputValue, 64> m_input_history;
 
     [[nodiscard]] double apply_smoothing(double target, double current) const;
 
-    void add_input_callback(
+    HookId add_input_callback(
         const TypedHook<InputContext>& callback,
         InputEventType event_type,
         std::optional<double> threshold = {},

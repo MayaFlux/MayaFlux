@@ -144,6 +144,14 @@ public:
     void set_global_line_color(const glm::vec3& color);
 
     /**
+     * @brief Replace every point, in extract_vertices() order, keeping the topologies.
+     * @param vertices One vertex per point across all topologies.
+     *
+     * When the count differs from the current total this falls back to initialize().
+     */
+    void set_vertices(const std::vector<LineVertex>& vertices);
+
+    /**
      * @brief Set number of samples per segment for interpolation for all topologies.
      * @param samples Number of samples to generate per connection segment
      *
@@ -168,7 +176,6 @@ private:
     mutable std::vector<uint8_t> m_vertex_data_aggregate;
 
     Kinesis::ProximityMode m_default_mode;
-    float m_default_thickness { 2.0F };
 
     mutable std::atomic<uint32_t> m_access_token { 0 };
     std::atomic<bool> m_shutdown { false };

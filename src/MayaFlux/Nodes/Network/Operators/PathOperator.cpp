@@ -149,10 +149,8 @@ std::vector<LineVertex> PathOperator::extract_vertices() const
     std::vector<LineVertex> positions;
 
     for (const auto& path : m_paths) {
-        auto points = path->get_all_vertices();
-        for (const auto& pt : points) {
-            positions.push_back(pt);
-        }
+        const auto points = path->get_control_points();
+        positions.insert(positions.end(), points.rbegin(), points.rend());
     }
 
     return positions;
@@ -324,7 +322,11 @@ void PathOperator::set_parameter(std::string_view param, double value)
 std::optional<double> PathOperator::query_state(std::string_view query) const
 {
     if (query == "control_point_count") {
-        return static_cast<double>(get_point_count());
+        size_t total = 0;
+        for (const auto& path : m_paths) {
+            total += path->get_control_point_count();
+        }
+        return static_cast<double>(total);
     }
     if (query == "vertex_count") {
         return static_cast<double>(get_vertex_count());
@@ -369,17 +371,39 @@ void PathOperator::set_global_color(const glm::vec3& color)
     }
 }
 
-void* PathOperator::get_data_at(size_t global_index)
+void PathOperator::set_vertices(const std::vector<LineVertex>& vertices)
 {
-    size_t offset = 0;
-    for (auto& group : m_paths) {
-        const auto& vertices = group->get_all_vertices();
-        if (global_index < offset + vertices.size()) {
-            size_t local_index = global_index - offset;
-            return const_cast<LineVertex*>(&vertices[local_index]);
-        }
-        offset += vertices.size();
+    size_t total = 0;
+    for (const auto& path : m_paths) {
+        total += path->get_control_point_count();
     }
+
+    if (m_paths.empty() || vertices.size() != total) {
+        initialize(vertices);
+        return;
+    }
+
+    uint32_t expected = 0;
+    while (!m_access_token.compare_exchange_weak(expected, 1,
+        std::memory_order_acquire, std::memory_order_relaxed)) {
+        if (m_shutdown.load(std::memory_order_relaxed))
+            return;
+        expected = 0;
+    }
+
+    auto first = vertices.begin();
+    for (auto& path : m_paths) {
+        const auto count = static_cast<std::ptrdiff_t>(path->get_control_point_count());
+        path->set_control_points(std::vector<LineVertex>(first, first + count));
+        path->compute_frame();
+        first += count;
+    }
+
+    m_access_token.store(0, std::memory_order_release);
+}
+
+void* PathOperator::get_data_at(size_t /*global_index*/)
+{
     return nullptr;
 }
 

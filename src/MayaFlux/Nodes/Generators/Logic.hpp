@@ -594,39 +594,39 @@ public:
      * @brief Registers a callback for every generated sample
      * @param callback Function to call when a new sample is generated
      */
-    void on_tick(const TypedHook<LogicContext>& callback);
+    HookId on_tick(const TypedHook<LogicContext>& callback);
 
     /**
      * @brief Registers a conditional callback for generated samples
      * @param callback Function to call when condition is met
      * @param condition Predicate that determines when callback is triggered
      */
-    void on_tick_if(const NodeCondition& condition, const TypedHook<LogicContext>& callback);
+    HookId on_tick_if(const NodeCondition& condition, const TypedHook<LogicContext>& callback);
 
     /**
      * @brief Registers a callback that executes continuously while output is true
      * @param callback Function to call on each tick when output is true (1.0)
      */
-    void while_true(const TypedHook<LogicContext>& callback);
+    HookId while_true(const TypedHook<LogicContext>& callback);
 
     /**
      * @brief Registers a callback that executes continuously while output is false
      * @param callback Function to call on each tick when output is false (0.0)
      */
-    void while_false(const TypedHook<LogicContext>& callback);
+    HookId while_false(const TypedHook<LogicContext>& callback);
 
     /**
      * @brief Registers a callback for when output changes to a specific state
      * @param target_state The state to detect (true for 1.0, false for 0.0)
      * @param callback Function to call when state changes to target_state
      */
-    void on_change_to(bool target_state, const TypedHook<LogicContext>& callback);
+    HookId on_change_to(bool target_state, const TypedHook<LogicContext>& callback);
 
     /**
      * @brief Registers a callback for any state change (true↔false)
      * @param callback Function to call when output changes state
      */
-    void on_change(const TypedHook<LogicContext>& callback);
+    HookId on_change(const TypedHook<LogicContext>& callback);
 
     /**
      * @brief Removes a previously registered callback
@@ -642,50 +642,7 @@ public:
      */
     bool remove_conditional_hook(const NodeCondition& callback) override;
 
-    /**
-     * @brief Removes all registered callbacks
-     *
-     * Clears all standard and conditional callbacks, effectively
-     * disconnecting all external components from this oscillator's
-     * notification system. Useful when reconfiguring the processing
-     * graph or shutting down components.
-     */
-    inline void remove_all_hooks() override
-    {
-        m_all_callbacks.clear();
-    }
-
     void remove_hooks_of_type(LogicEventType type);
-
-    struct LogicCallback {
-        NodeHook callback;
-        TypedHook<LogicContext> typed_callback;
-        LogicEventType event_type;
-        std::optional<NodeCondition> condition;
-
-        LogicCallback(const LogicCallback&) = default;
-        LogicCallback& operator=(const LogicCallback&) = default;
-        LogicCallback(LogicCallback&&) = default;
-        LogicCallback& operator=(LogicCallback&&) = default;
-
-        LogicCallback(NodeHook cb, LogicEventType type, std::optional<NodeCondition> cond = std::nullopt)
-            : callback(std::move(cb))
-            , event_type(type)
-            , condition(std::move(cond))
-        {
-        }
-
-        LogicCallback(const TypedHook<LogicContext>& cb, LogicEventType type, std::optional<NodeCondition> cond = std::nullopt)
-            : callback([cb](NodeContext& ctx) {
-                // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-                cb(static_cast<LogicContext&>(ctx));
-            })
-            , typed_callback(cb)
-            , event_type(type)
-            , condition(std::move(cond))
-        {
-        }
-    };
 
     void save_state() override;
     void restore_state() override;
@@ -780,9 +737,15 @@ private:
      * @param type The type of event to trigger the callback
      * @param condition Optional condition for conditional callbacks
      */
-    void add_callback(const TypedHook<LogicContext>& callback, LogicEventType type, const std::optional<NodeCondition>& condition = std::nullopt)
+    HookId add_callback(const TypedHook<LogicContext>& callback, LogicEventType type, const std::optional<NodeCondition>& condition = std::nullopt)
     {
-        m_all_callbacks.emplace_back(callback, type, condition);
+        if (type == LogicEventType::TICK) {
+            return m_callbacks.add(adapt_hook(callback), callback.target_type());
+        }
+        if (type == LogicEventType::CONDITIONAL && condition) {
+            return m_conditional_callbacks.add_conditional(adapt_hook(callback), *condition, callback.target_type());
+        }
+        return m_all_callbacks.add(adapt_hook(callback), callback.target_type(), static_cast<uint8_t>(type));
     }
 
     void history_push(bool val);
@@ -792,14 +755,11 @@ private:
     std::span<double> external_context_view(double input);
 
     /**
-     * @brief Collection of all callback functions
+     * @brief Event-specific callbacks, tagged with their LogicEventType
      *
-     * Stores the registered callback functions that will be notified
-     * whenever the oscillator produces a new sample. These callbacks
-     * enable external components to monitor and react to the oscillator's
-     * output without interrupting the generation process.
+     * Tick and conditional hooks live in the base lists, so they are shared with Node::on_tick.
      */
-    std::vector<LogicCallback> m_all_callbacks;
+    HookList m_all_callbacks { *this };
 
     std::vector<uint8_t> m_saved_history_ring;
     size_t m_saved_history_head {};

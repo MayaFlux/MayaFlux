@@ -6,6 +6,59 @@
 
 namespace MayaFlux::Nodes::Network {
 
+namespace {
+
+    constexpr double k_continuous_ceiling = 4.0;
+
+    /**
+     * @brief Largest magnitude currently held on either rail
+     */
+    double rail_peak(const WaveguideNetwork::WaveguideSegment& seg)
+    {
+        double level = 0.0;
+        for (size_t i = 0; i < seg.p_plus.capacity(); ++i) {
+            level = std::max({ level, std::abs(seg.p_plus[i]), std::abs(seg.p_minus[i]) });
+        }
+        return level;
+    }
+
+    /**
+     * @brief Uniform scale for a continuous source that backs off as the loop fills
+     *
+     * The gain is re-evaluated once per interval, from the level of the whole
+     * loop rather than the sample at hand, and applied to the drive only. It is
+     * 1.0 while the loop sits below half the ceiling and falls linearly to 0.0 at
+     * the ceiling. Because every sample of an interval is scaled alike and the
+     * circulating wave is never clipped, the waveform keeps its shape and a
+     * source feeding a resonance settles instead of growing without bound.
+     */
+    class DriveLimiter {
+    public:
+        explicit DriveLimiter(size_t interval)
+            : m_interval(std::max<size_t>(interval, 1))
+        {
+        }
+
+        double gain(const WaveguideNetwork::WaveguideSegment& seg)
+        {
+            if (m_until == 0) {
+                const double knee = 0.5 * k_continuous_ceiling;
+                const double over = rail_peak(seg) - knee;
+                m_gain = over <= 0.0 ? 1.0 : std::max(0.0, 1.0 - over / knee);
+                m_until = m_interval;
+            }
+            --m_until;
+            return m_gain;
+        }
+
+    private:
+        size_t m_interval;
+        size_t m_until { 0 };
+        double m_gain { 1.0 };
+    };
+
+}
+
 //-----------------------------------------------------------------------------
 // Construction
 //-----------------------------------------------------------------------------
@@ -28,6 +81,9 @@ WaveguideNetwork::WaveguideNetwork(
         : WaveguideSegment::PropagationMode::UNIDIRECTIONAL;
 
     m_segments.emplace_back(m_delay_length_integer + 2, prop_mode);
+    if (m_type == WaveguideType::TUBE) {
+        m_segments[0].reflection_open = -1.0;
+    }
 
     create_default_loop_filter();
 }
@@ -47,11 +103,20 @@ void WaveguideNetwork::reset()
         const auto len = seg.p_plus.capacity();
         seg.p_plus = Memory::HistoryBuffer<double>(len);
         seg.p_minus = Memory::HistoryBuffer<double>(len);
+        if (seg.loop_filter)
+            seg.loop_filter->reset();
+        if (seg.loop_filter_open)
+            seg.loop_filter_open->reset();
+        if (seg.loop_filter_closed)
+            seg.loop_filter_closed->reset();
     }
 
+    if (m_exciter_filter)
+        m_exciter_filter->reset();
     m_exciter_active = false;
     m_exciter_samples_remaining = 0;
     m_exciter_sample_position = 0;
+    m_exciter_node_buffer_pos = 0;
     m_last_output = 0.0;
     m_last_audio_buffer.clear();
 }
@@ -62,14 +127,15 @@ void WaveguideNetwork::reset()
 
 void WaveguideNetwork::compute_delay_length()
 {
-    double total_delay = static_cast<double>(m_sample_rate) / m_fundamental;
+    const double passes = (m_type == WaveguideType::TUBE) ? 4.0 : 1.0;
+    double total_delay = static_cast<double>(m_sample_rate) / (passes * m_fundamental);
 
     total_delay -= 0.5;
 
     m_delay_length_integer = static_cast<size_t>(total_delay);
     m_delay_length_fraction = total_delay - static_cast<double>(m_delay_length_integer);
 
-    m_pickup_sample = m_delay_length_integer / 2;
+    m_pickup_sample = static_cast<size_t>(m_pickup_position * static_cast<double>(m_delay_length_integer));
 }
 
 //-----------------------------------------------------------------------------
@@ -140,7 +206,7 @@ void WaveguideNetwork::process_batch(unsigned int num_samples)
 
     auto& seg = m_segments[0];
 
-    if (m_exciter_node && m_exciter_type == ExciterType::CONTINUOUS) {
+    if (m_exciter_active && m_exciter_node && m_exciter_type == ExciterType::CONTINUOUS) {
         extract_node_samples(m_exciter_node, m_exciter_node_buffer,
             m_exciter_node_buffer_pos, num_samples);
     }
@@ -163,9 +229,12 @@ void WaveguideNetwork::process_batch(unsigned int num_samples)
 void WaveguideNetwork::process_unidirectional(WaveguideSegment& seg,
     unsigned int num_samples, std::vector<double>& out)
 {
-    const double continuous_gain = (m_exciter_type == ExciterType::CONTINUOUS && m_exciter_node)
+    const bool continuous = m_exciter_active
+        && m_exciter_type == ExciterType::CONTINUOUS && m_exciter_node;
+    const double continuous_gain = continuous
         ? 1.0 / seg.loss_factor
         : 1.0;
+    DriveLimiter limiter(m_delay_length_integer);
 
     for (unsigned int i = 0; i < num_samples; ++i) {
         const double exciter = generate_exciter_sample();
@@ -173,12 +242,14 @@ void WaveguideNetwork::process_unidirectional(WaveguideSegment& seg,
         const double delayed = read_with_interpolation(
             seg.p_plus, m_delay_length_integer, m_delay_length_fraction);
 
-        const double filtered = (m_exciter_type != ExciterType::CONTINUOUS && seg.loop_filter)
+        const double filtered = (!continuous && seg.loop_filter)
             ? seg.loop_filter->process_sample(delayed)
             : delayed;
 
-        seg.p_plus.push(
-            exciter + filtered * seg.loss_factor * seg.reflection_closed * continuous_gain);
+        const double returning = filtered * seg.loss_factor * seg.reflection_closed * continuous_gain;
+        const double drive = continuous ? exciter * limiter.gain(seg) : exciter;
+
+        seg.p_plus.push(drive + returning);
 
         out[i] = observe_sample(seg);
     }
@@ -187,9 +258,12 @@ void WaveguideNetwork::process_unidirectional(WaveguideSegment& seg,
 void WaveguideNetwork::process_bidirectional(WaveguideSegment& seg,
     unsigned int num_samples, std::vector<double>& out)
 {
-    const double continuous_gain = (m_exciter_type == ExciterType::CONTINUOUS && m_exciter_node)
+    const bool continuous = m_exciter_active
+        && m_exciter_type == ExciterType::CONTINUOUS && m_exciter_node;
+    const double continuous_gain = continuous
         ? 1.0 / seg.loss_factor
         : 1.0;
+    DriveLimiter limiter(m_delay_length_integer);
 
     for (unsigned int i = 0; i < num_samples; ++i) {
         const double exciter = generate_exciter_sample();
@@ -205,15 +279,18 @@ void WaveguideNetwork::process_bidirectional(WaveguideSegment& seg,
         auto* filt_closed = seg.loop_filter_closed ? seg.loop_filter_closed.get()
                                                    : seg.loop_filter.get();
 
-        const double filtered_plus = (m_exciter_type != ExciterType::CONTINUOUS && filt_open)
+        const double filtered_plus = (!continuous && filt_open)
             ? filt_open->process_sample(plus_end)
             : plus_end;
-        const double filtered_minus = (m_exciter_type != ExciterType::CONTINUOUS && filt_closed)
+        const double filtered_minus = (!continuous && filt_closed)
             ? filt_closed->process_sample(minus_end)
             : minus_end;
 
+        const double returning = filtered_minus * seg.loss_factor * seg.reflection_closed * continuous_gain;
+        const double drive = continuous ? exciter * limiter.gain(seg) : exciter;
+
         seg.p_minus.push(filtered_plus * seg.loss_factor * seg.reflection_open * continuous_gain);
-        seg.p_plus.push(exciter + filtered_minus * seg.loss_factor * seg.reflection_closed * continuous_gain);
+        seg.p_plus.push(drive + returning);
 
         out[i] = observe_sample(seg);
     }
@@ -232,7 +309,11 @@ void WaveguideNetwork::pluck(double position, double strength)
 
     auto& seg = m_segments[0];
     const size_t len = m_delay_length_integer;
-    const auto pluck_sample = static_cast<size_t>(position * static_cast<double>(len));
+    if (len < 2)
+        return;
+
+    const auto pluck_sample = std::clamp(
+        static_cast<size_t>(position * static_cast<double>(len)), size_t { 1 }, len - 1);
     const double effective_strength = (m_exciter_type == ExciterType::CONTINUOUS)
         ? std::max(strength, 1.0)
         : strength;
@@ -240,16 +321,24 @@ void WaveguideNetwork::pluck(double position, double strength)
     seg.p_plus = Memory::HistoryBuffer<double>(seg.p_plus.capacity());
     seg.p_minus = Memory::HistoryBuffer<double>(seg.p_minus.capacity());
 
+    std::vector<double> shape(len);
     for (size_t s = 0; s < len; ++s) {
-        double value = 0.0;
         if (s <= pluck_sample) {
-            value = effective_strength * static_cast<double>(s)
+            shape[s] = effective_strength * static_cast<double>(s)
                 / static_cast<double>(pluck_sample);
         } else {
-            value = effective_strength * static_cast<double>(len - s)
+            shape[s] = effective_strength * static_cast<double>(len - s)
                 / static_cast<double>(len - pluck_sample);
         }
-        seg.p_plus.push(value);
+    }
+
+    double offset = 0.0;
+    if (seg.mode == WaveguideSegment::PropagationMode::UNIDIRECTIONAL) {
+        offset = std::accumulate(shape.begin(), shape.end(), 0.0) / static_cast<double>(len);
+    }
+
+    for (const double value : shape) {
+        seg.p_plus.push(value - offset);
     }
 
     if (m_exciter_type != ExciterType::CONTINUOUS) {
@@ -379,6 +468,9 @@ double WaveguideNetwork::generate_exciter_sample()
         break;
 
     case ExciterType::CONTINUOUS:
+        if (m_exciter_node_buffer_pos < m_exciter_node_buffer.size()) {
+            sample = m_exciter_node_buffer[m_exciter_node_buffer_pos++];
+        }
         break;
     }
 
@@ -426,8 +518,8 @@ void WaveguideNetwork::set_loop_filter(const std::shared_ptr<Filters::Filter>& f
 
 void WaveguideNetwork::set_pickup_position(double position)
 {
-    position = std::clamp(position, 0.0, 1.0);
-    m_pickup_sample = static_cast<size_t>(position * static_cast<double>(m_delay_length_integer));
+    m_pickup_position = std::clamp(position, 0.0, 1.0);
+    m_pickup_sample = static_cast<size_t>(m_pickup_position * static_cast<double>(m_delay_length_integer));
     m_pickup_sample = std::clamp(m_pickup_sample, size_t { 0 }, m_delay_length_integer);
 }
 

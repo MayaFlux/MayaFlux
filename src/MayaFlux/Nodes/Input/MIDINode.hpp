@@ -153,25 +153,49 @@ public:
      * @brief Callback for note events with note number and velocity
      * @param callback Function receiving (note_number, velocity, is_note_on)
      */
-    void on_note(std::function<void(uint8_t note, uint8_t velocity, bool is_on)> callback)
+    HookId on_note(std::function<void(uint8_t note, uint8_t velocity, bool is_on)> callback)
     {
-        m_note_callbacks.push_back(std::move(callback));
+        return m_note_callbacks.add(
+            [this, callback](NodeContext&) {
+                if (!m_last_midi_message) {
+                    return;
+                }
+                const auto& midi = *m_last_midi_message;
+                if (midi.type() == 0x90) {
+                    callback(midi.data1, midi.data2, midi.data2 > 0);
+                } else {
+                    callback(midi.data1, 0, false);
+                }
+            },
+            callback.target_type());
     }
 
     /**
      * @brief Callback for CC events with controller number and value
      */
-    void on_cc(std::function<void(uint8_t cc_num, uint8_t value)> callback)
+    HookId on_cc(std::function<void(uint8_t cc_num, uint8_t value)> callback)
     {
-        m_cc_callbacks.push_back(std::move(callback));
+        return m_cc_callbacks.add(
+            [this, callback](NodeContext&) {
+                if (m_last_midi_message) {
+                    callback(m_last_midi_message->data1, m_last_midi_message->data2);
+                }
+            },
+            callback.target_type());
     }
 
     /**
      * @brief Callback for pitch bend with 14-bit value
      */
-    void on_pitch_bend(std::function<void(int16_t bend)> callback)
+    HookId on_pitch_bend(std::function<void(int16_t bend)> callback)
     {
-        m_pitch_bend_callbacks.push_back(std::move(callback));
+        return m_pitch_bend_callbacks.add(
+            [this, callback](NodeContext&) {
+                if (m_last_midi_message) {
+                    callback(static_cast<int16_t>(((m_last_midi_message->data2 << 7) | m_last_midi_message->data1) - 8192));
+                }
+            },
+            callback.target_type());
     }
 
 protected:
@@ -183,9 +207,9 @@ private:
     MIDIConfig m_config;
     std::optional<Core::InputValue::MIDIMessage> m_last_midi_message;
 
-    std::vector<NoteCallback> m_note_callbacks;
-    std::vector<CC_Callback> m_cc_callbacks;
-    std::vector<PitchBendCallback> m_pitch_bend_callbacks;
+    HookList m_note_callbacks { *this };
+    HookList m_cc_callbacks { *this };
+    HookList m_pitch_bend_callbacks { *this };
 
     void fire_midi_callbacks(const Core::InputValue::MIDIMessage& midi);
     [[nodiscard]] bool matches_filters(const Core::InputValue& value) const;

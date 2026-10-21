@@ -27,35 +27,29 @@ void Counter::set_reset_trigger(const std::shared_ptr<Node>& trigger) { m_reset_
 void Counter::clear_reset_trigger() { m_reset_trigger = nullptr; }
 void Counter::reset() { m_count = 0; }
 
-void Counter::on_increment(const TypedHook<GeneratorContext>& callback) { m_increment_callbacks.push_back(callback); }
-void Counter::on_wrap(const TypedHook<GeneratorContext>& callback) { m_wrap_callbacks.push_back(callback); }
-void Counter::on_count(uint32_t target, const TypedHook<GeneratorContext>& callback) { m_count_callbacks.emplace_back(target, callback); }
+HookId Counter::on_increment(const TypedHook<GeneratorContext>& callback)
+{
+    return m_increment_callbacks.add(adapt_hook(callback), callback.target_type());
+}
+
+HookId Counter::on_wrap(const TypedHook<GeneratorContext>& callback)
+{
+    return m_wrap_callbacks.add(adapt_hook(callback), callback.target_type());
+}
+
+HookId Counter::on_count(uint32_t target, const TypedHook<GeneratorContext>& callback)
+{
+    return m_count_callbacks.add(adapt_hook(callback), callback.target_type(), 0, { static_cast<double>(target), 0.0 });
+}
 
 bool Counter::remove_hook(const NodeHook& callback)
 {
-    bool r = safe_remove_callback(m_callbacks, callback);
-    auto erase_typed = [&](auto& vec) {
-        auto before = vec.size();
-        std::erase_if(vec, [&](const auto& cb) {
-            return cb.target_type() == callback.target_type();
-        });
-        return vec.size() < before;
-    };
-    r |= erase_typed(m_increment_callbacks);
-    r |= erase_typed(m_wrap_callbacks);
-    std::erase_if(m_count_callbacks, [&](const auto& p) {
-        return p.second.target_type() == callback.target_type();
-    });
-    return r;
-}
-
-void Counter::remove_all_hooks()
-{
-    m_callbacks.clear();
-    m_conditional_callbacks.clear();
-    m_increment_callbacks.clear();
-    m_wrap_callbacks.clear();
-    m_count_callbacks.clear();
+    const auto& key = callback.target_type();
+    bool removed = m_callbacks.remove_by_key(key);
+    removed |= m_increment_callbacks.remove_by_key(key);
+    removed |= m_wrap_callbacks.remove_by_key(key);
+    removed |= m_count_callbacks.remove_by_key(key);
+    return removed;
 }
 
 double Counter::process_sample(double /*input*/)
@@ -122,27 +116,16 @@ void Counter::notify_tick(double value)
 {
     update_context(value);
     auto& ctx = get_last_context();
-    auto& gc = dynamic_cast<GeneratorContext&>(ctx);
 
-    for (auto& cb : m_callbacks) {
-        cb(ctx);
-    }
-    for (auto& [cb, cond] : m_conditional_callbacks) {
-        if (cond(ctx)) {
-            cb(ctx);
-        }
-    }
-    for (auto& cb : m_increment_callbacks) {
-        cb(gc);
-    }
+    m_callbacks.fire(ctx);
+    m_conditional_callbacks.fire(ctx);
+    m_increment_callbacks.fire(ctx);
     if (m_wrapped) {
-        for (auto& cb : m_wrap_callbacks) {
-            cb(gc);
-        }
+        m_wrap_callbacks.fire(ctx);
     }
-    for (auto& [target, cb] : m_count_callbacks) {
-        if (m_count == target) {
-            cb(gc);
+    for (const auto& entry : m_count_callbacks.snapshot()) {
+        if (m_count == static_cast<uint32_t>(entry.params[0])) {
+            entry.hook(ctx);
         }
     }
 }

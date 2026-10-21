@@ -226,41 +226,41 @@ public:
     /**
      * @brief Callback on every frame, with the full slot set.
      */
-    void on_frame(FrameCallback callback)
+    HookId on_frame(FrameCallback callback)
     {
-        m_frame_callbacks.push_back(std::move(callback));
+        return m_frame_callbacks.add(adapt_hook(callback), callback.target_type());
     }
 
     /**
      * @brief Callback when the tool enters sensing range.
      */
-    void on_proximity_enter(FrameCallback callback)
+    HookId on_proximity_enter(FrameCallback callback)
     {
-        m_proximity_enter_callbacks.push_back(std::move(callback));
+        return m_proximity_enter_callbacks.add(adapt_hook(callback), callback.target_type());
     }
 
     /**
      * @brief Callback when the tool leaves sensing range.
      */
-    void on_proximity_exit(FrameCallback callback)
+    HookId on_proximity_exit(FrameCallback callback)
     {
-        m_proximity_exit_callbacks.push_back(std::move(callback));
+        return m_proximity_exit_callbacks.add(adapt_hook(callback), callback.target_type());
     }
 
     /**
      * @brief Callback when the tip touches the surface.
      */
-    void on_contact_begin(FrameCallback callback)
+    HookId on_contact_begin(FrameCallback callback)
     {
-        m_contact_begin_callbacks.push_back(std::move(callback));
+        return m_contact_begin_callbacks.add(adapt_hook(callback), callback.target_type());
     }
 
     /**
      * @brief Callback when the tip leaves the surface.
      */
-    void on_contact_end(FrameCallback callback)
+    HookId on_contact_end(FrameCallback callback)
     {
-        m_contact_end_callbacks.push_back(std::move(callback));
+        return m_contact_end_callbacks.add(adapt_hook(callback), callback.target_type());
     }
 
     /**
@@ -286,14 +286,14 @@ private:
     uint32_t m_previous_state {};
     std::atomic<bool> m_frame_pending { false };
 
-    std::vector<FrameCallback> m_frame_callbacks;
-    std::vector<FrameCallback> m_proximity_enter_callbacks;
-    std::vector<FrameCallback> m_proximity_exit_callbacks;
-    std::vector<FrameCallback> m_contact_begin_callbacks;
-    std::vector<FrameCallback> m_contact_end_callbacks;
+    HookList m_frame_callbacks { *this };
+    HookList m_proximity_enter_callbacks { *this };
+    HookList m_proximity_exit_callbacks { *this };
+    HookList m_contact_begin_callbacks { *this };
+    HookList m_contact_end_callbacks { *this };
 
     void fire_edges();
-    void fire(const std::vector<FrameCallback>& callbacks);
+    void fire(const HookList& callbacks);
 };
 
 } // namespace MayaFlux::Nodes::Input

@@ -97,7 +97,7 @@ double Impulse::process_sample(double input)
     }
 
     if (m_phase < m_phase_inc) {
-        output = m_amplitude;
+        output = 1.0;
         m_impulse_occurred = true;
     } else {
         output = 0.0;
@@ -117,7 +117,6 @@ double Impulse::process_sample(double input)
     }
 
     output *= current_amplitude;
-    m_amplitude = current_amplitude;
     output += m_offset;
 
     m_phase += m_phase_inc;
@@ -164,35 +163,26 @@ void Impulse::reset(float frequency, float amplitude, float offset)
     m_last_output = 0.0;
 }
 
-void Impulse::on_impulse(const TypedHook<GeneratorContext>& callback)
+HookId Impulse::on_impulse(const TypedHook<GeneratorContext>& callback)
 {
-    safe_add_callback(m_impulse_callbacks, callback);
+    return m_impulse_callbacks.add_unique(adapt_hook(callback), callback.target_type());
 }
 
 bool Impulse::remove_hook(const TypedHook<GeneratorContext>& callback)
 {
-    return safe_remove_callback(m_impulse_callbacks, callback);
+    return m_impulse_callbacks.remove_by_key(callback.target_type());
 }
 
 void Impulse::notify_tick(double value)
 {
     update_context(value);
 
-    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-    auto& ctx = static_cast<GeneratorContext&>(get_last_context());
+    auto& ctx = get_last_context();
 
-    for (auto& callback : m_callbacks) {
-        callback(ctx);
-    }
-    for (auto& [callback, condition] : m_conditional_callbacks) {
-        if (condition(ctx)) {
-            callback(ctx);
-        }
-    }
+    m_callbacks.fire(ctx);
+    m_conditional_callbacks.fire(ctx);
     if (m_impulse_occurred) {
-        for (auto& callback : m_impulse_callbacks) {
-            callback(ctx);
-        }
+        m_impulse_callbacks.fire(ctx);
     }
 }
 
