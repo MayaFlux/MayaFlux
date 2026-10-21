@@ -186,7 +186,7 @@ bool TopologyOperator::is_vertex_data_dirty() const
 void TopologyOperator::mark_vertex_data_clean()
 {
     for (auto& topology : m_topologies) {
-        topology->mark_vertex_data_dirty(false);
+        topology->clear_gpu_update_flag();
     }
 }
 
