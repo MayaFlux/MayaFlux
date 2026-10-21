@@ -374,7 +374,8 @@ Form<std::vector<float>> drawable_canvas(
     Kinesis::AABB2D bounds,
     glm::vec3 color,
     float thickness,
-    const std::function<glm::vec2()>& live_offset)
+    const std::function<glm::vec2()>& live_offset,
+    size_t samples)
 {
     GeometryFn<std::vector<float>> fn = [bounds, color, thickness, live_offset](
                                             const std::vector<float>& v, std::vector<uint8_t>& out, Element& el) {
@@ -422,6 +423,8 @@ Form<std::vector<float>> drawable_canvas(
 
     Form<std::vector<float>> form { std::move(fn) };
     form.topology = Graphics::PrimitiveTopology::LINE_LIST;
+    if (samples > 1)
+        form.capacity = (samples - 1) * 2 * sizeof(Kakshya::LineVertex);
     form.wire = paint_over(bounds);
     return form;
 }
