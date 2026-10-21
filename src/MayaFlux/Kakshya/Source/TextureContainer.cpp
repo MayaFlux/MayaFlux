@@ -639,7 +639,7 @@ std::span<const float> TextureContainer::as_normalised_float(uint32_t layer) con
 
     ensure_cpu(layer);
 
-    if (!m_normalised_dirty[layer].load(std::memory_order_acquire))
+    if (!m_normalised_dirty[layer].load(std::memory_order_acquire) && !m_normalised_cache[layer].empty())
         return { m_normalised_cache[layer] };
 
     std::span<const float> result;
