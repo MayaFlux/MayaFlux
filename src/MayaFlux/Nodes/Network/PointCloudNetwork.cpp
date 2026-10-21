@@ -219,9 +219,9 @@ void PointCloudNetwork::set_vertices(const std::vector<LineVertex>& vertices)
     m_num_points = vertices.size();
 
     if (auto* topo = dynamic_cast<TopologyOperator*>(m_operator.get())) {
-        topo->initialize(vertices);
+        topo->set_vertices(vertices);
     } else if (auto* path = dynamic_cast<PathOperator*>(m_operator.get())) {
-        path->initialize(vertices);
+        path->set_vertices(vertices);
     } else if (auto* field = dynamic_cast<FieldOperator*>(m_operator.get())) {
         field->initialize(vertices);
     } else {
