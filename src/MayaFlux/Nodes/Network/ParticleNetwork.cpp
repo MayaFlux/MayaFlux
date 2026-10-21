@@ -111,13 +111,13 @@ void ParticleNetwork::process_batch(unsigned int num_samples)
 
     if (m_operator) {
         for (unsigned int frame = 0; frame < num_samples; ++frame) {
-            m_operator->process(m_timestep);
+            m_operator->process(get_timestep());
         }
     }
 
     if (m_operator_chain && !m_operator_chain->empty()) {
         for (unsigned int frame = 0; frame < num_samples; ++frame) {
-            m_operator_chain->process(m_timestep, m_operator.get());
+            m_operator_chain->process(get_timestep(), m_operator.get());
         }
     }
 
@@ -168,7 +168,7 @@ std::unordered_map<std::string, std::string> ParticleNetwork::get_metadata() con
 
     metadata["point_count"] = std::to_string(get_node_count());
     metadata["operator"] = std::string(m_operator ? m_operator->get_type_name() : "none");
-    metadata["timestep"] = std::to_string(m_timestep);
+    metadata["timestep"] = std::to_string(get_timestep());
     metadata["bounds_min"] = std::format("({:.2f}, {:.2f}, {:.2f})",
         m_bounds.min.x, m_bounds.min.y, m_bounds.min.z);
     metadata["bounds_max"] = std::format("({:.2f}, {:.2f}, {:.2f})",
