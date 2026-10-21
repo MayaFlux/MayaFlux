@@ -358,7 +358,7 @@ void ModalNetwork::process_batch(unsigned int num_samples)
         extract_node_samples(m_exciter_node, m_exciter_node_buffer,
             m_exciter_node_buffer_pos, num_samples);
 
-        if (m_exciter_type == ExciterType::CONTINUOUS) {
+        if (m_exciter_active && m_exciter_type == ExciterType::CONTINUOUS) {
             const auto peaks = Kinesis::Discrete::peak_positions(m_exciter_node_buffer, 0.1);
             if (!peaks.empty()) {
                 const double peak_scale = 1.0 / static_cast<double>(peaks.size());
