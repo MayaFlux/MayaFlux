@@ -253,6 +253,9 @@ void PathGeneratorNode::set_control_points(const std::vector<LineVertex>& vertic
 {
     m_control_points.assign(vertices.rbegin(), vertices.rend());
     if (m_control_points.size() > m_max_control_points) {
+        MF_WARN(Journal::Component::Nodes, Journal::Context::NodeProcessing,
+            "PathGeneratorNode: {} control points exceed the capacity of {}, keeping the newest {}",
+            m_control_points.size(), m_max_control_points, m_max_control_points);
         m_control_points.erase(
             m_control_points.begin() + static_cast<std::ptrdiff_t>(m_max_control_points),
             m_control_points.end());

@@ -28,6 +28,8 @@ void PhysicsOperator::initialize(const std::vector<PointVertex>& vertices)
     }
 
     m_collections.clear();
+    m_bond_root.clear();
+    m_accreted_mass.clear();
     add_collection(vertices);
 
     MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
@@ -464,7 +466,7 @@ void PhysicsOperator::apply_forces()
 {
     for (auto& group : m_collections) {
         for (auto& state : group.physics_state) {
-            state.force = m_gravity * state.mass;
+            state.force += m_gravity * state.mass;
         }
     }
 
@@ -518,7 +520,7 @@ void PhysicsOperator::apply_spatial_interactions()
             const auto& pos_i = points1[i].position;
             auto& state_i = group1.physics_state[i];
 
-            for (size_t g2 = 0; g2 < m_collections.size(); ++g2) {
+            for (size_t g2 = g1; g2 < m_collections.size(); ++g2) {
                 auto& group2 = m_collections[g2];
                 auto& points2 = group2.collection->get_points();
 
