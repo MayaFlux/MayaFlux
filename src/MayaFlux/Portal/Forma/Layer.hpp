@@ -233,7 +233,7 @@ public:
 
     /**
      * @brief Return all interactive, visible elements containing @p ndc,
-     *        ordered back-to-front.
+     *        ordered front-to-back (topmost first, matching hit_test).
      */
     [[nodiscard]] std::vector<uint32_t> hit_test_all(glm::vec2 ndc) const;
 
@@ -263,7 +263,8 @@ public:
      *
      * Cascaded lifecycle operations (remove, set_visible, bring_to_front,
      * send_to_back) on @p primary_id propagate to @p related_id.
-     * Returns false if either id is not found.
+     * Returns false if either id is not found, the ids are equal, or the
+     * relation would make @p primary_id reachable from itself.
      */
     bool relate(uint32_t primary_id, uint32_t related_id);
 

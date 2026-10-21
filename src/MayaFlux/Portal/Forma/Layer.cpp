@@ -105,31 +105,28 @@ void Layer::set_all_visible(bool visible)
 
 bool Layer::bring_to_front(uint32_t id)
 {
-    if (auto rit = m_relations.find(id); rit != m_relations.end()) {
-        for (uint32_t rel_id : rit->second) {
-            auto it = std::ranges::find_if(m_elements,
-                [rel_id](const Element& e) { return e.id == rel_id; });
-            if (it != m_elements.end())
-                std::rotate(it, it + 1, m_elements.end());
-
-            if (auto* rel_el = get(rel_id); rel_el && rel_el->buffer) {
-                auto config = rel_el->buffer->get_render_config();
-                config.draw_priority = ++m_next_front_priority;
-                rel_el->buffer->set_render_config(config);
-            }
-        }
-    }
-    auto it = std::ranges::find_if(m_elements,
-        [id](const Element& e) { return e.id == id; });
-    if (it == m_elements.end())
+    if (!get(id))
         return false;
-    std::rotate(it, it + 1, m_elements.end());
 
-    if (auto* el = get(id); el && el->buffer) {
-        auto config = el->buffer->get_render_config();
-        config.draw_priority = ++m_next_front_priority;
-        el->buffer->set_render_config(config);
-    }
+    const std::vector<uint32_t> ids = closure(id);
+
+    auto raise = [this](uint32_t target) {
+        auto it = std::ranges::find_if(m_elements,
+            [target](const Element& e) { return e.id == target; });
+        if (it == m_elements.end())
+            return;
+        std::rotate(it, it + 1, m_elements.end());
+
+        if (it = m_elements.end() - 1; it->buffer) {
+            auto config = it->buffer->get_render_config();
+            config.draw_priority = ++m_next_front_priority;
+            it->buffer->set_render_config(config);
+        }
+    };
+
+    for (size_t i = 1; i < ids.size(); ++i)
+        raise(ids[i]);
+    raise(ids.front());
 
     return true;
 }
@@ -200,6 +197,10 @@ bool Layer::relate(uint32_t primary_id, uint32_t related_id)
     auto* p = get(primary_id);
     auto* r = get(related_id);
     if (!p || !r || primary_id == related_id)
+        return false;
+
+    const std::vector<uint32_t> reachable = closure(related_id);
+    if (std::ranges::find(reachable, primary_id) != reachable.end())
         return false;
 
     auto& rel = m_relations[primary_id];
