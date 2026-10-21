@@ -2,6 +2,7 @@
 
 #include "MayaFlux/Kinesis/Geometry2D.hpp"
 #include "MayaFlux/Kinesis/GeometryPrimitives.hpp"
+#include "MayaFlux/Kinesis/Spatial/Stroke.hpp"
 
 namespace MayaFlux::Portal::Forma::Geometry {
 
@@ -444,27 +445,8 @@ void wire_canvas_drag(
 
             const float t = (ndc.x - bounds.min.x) / bounds.width();
             const float a = (ndc.y - bounds.min.y) / bounds.height();
-            const size_t n = v.size();
-            const size_t idx = static_cast<size_t>(
-                std::clamp(t, 0.F, 1.F) * static_cast<float>(n - 1));
-            const float amp = std::clamp(a, 0.F, 1.F);
 
-            if (ds->prev_index && *ds->prev_index != idx) {
-                const size_t lo = std::min(*ds->prev_index, idx);
-                const size_t hi = std::max(*ds->prev_index, idx);
-                const float v0 = v[*ds->prev_index];
-                const auto span = static_cast<float>(hi - lo);
-                for (size_t i = lo; i <= hi; ++i) {
-                    const float f = span > 0.F
-                        ? static_cast<float>(i - lo) / span
-                        : 1.F;
-                    v[i] = glm::mix(v0, amp, f);
-                }
-            } else {
-                v[idx] = amp;
-            }
-
-            ds->prev_index = idx;
+            Kinesis::stroke_samples(v, ds->prev_index, t, a);
             ++state->version;
         });
 
