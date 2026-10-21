@@ -52,8 +52,12 @@ void GlyphGeometryNode::set_text(std::string text)
 
 void GlyphGeometryNode::set_pen(float pen_x, float pen_y)
 {
+    const glm::vec2 delta { pen_x - m_pen_x, pen_y - m_pen_y };
     m_pen_x = pen_x;
     m_pen_y = pen_y;
+    for (auto& offset : m_pen_offsets) {
+        offset += delta;
+    }
     m_center.reset();
     m_dirty = true;
 }
