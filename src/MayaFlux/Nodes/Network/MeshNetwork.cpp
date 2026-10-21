@@ -110,20 +110,22 @@ void MeshNetwork::process_batch(unsigned int num_samples)
     if (m_sort_dirty)
         rebuild_sort();
 
+    const float dt = get_timestep();
+
     for (unsigned int frame = 0; frame < num_samples; ++frame) {
+        propagate_world_transforms();
+
         if (m_operator) {
             if (auto* mesh_op = dynamic_cast<MeshOperator*>(m_operator.get()))
                 mesh_op->set_slots(m_slots, m_sorted_indices);
-            m_operator->process(static_cast<float>(frame));
-        } else {
-            propagate_world_transforms();
+            m_operator->process(dt);
         }
 
         if (m_operator_chain) {
             for (const auto& op : m_operator_chain->operators()) {
                 if (auto* mesh_op = dynamic_cast<MeshOperator*>(op.get()))
                     mesh_op->set_slots(m_slots, m_sorted_indices);
-                op->process(static_cast<float>(frame));
+                op->process(dt);
             }
         }
     }
@@ -187,13 +189,6 @@ void MeshNetwork::ensure_sorted()
 
 void MeshNetwork::rebuild_sort()
 {
-    // Kahn's algorithm: process roots first, then children.
-    std::vector<uint32_t> in_degree(m_slots.size(), 0);
-    for (const auto& slot : m_slots) {
-        if (slot.parent_index.has_value())
-            ++in_degree[slot.parent_index.value()];
-    }
-
     // Roots: slots with no parent.
     std::vector<uint32_t> queue;
     for (uint32_t i = 0; i < static_cast<uint32_t>(m_slots.size()); ++i) {

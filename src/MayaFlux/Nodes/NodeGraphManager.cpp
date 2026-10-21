@@ -587,6 +587,7 @@ void NodeGraphManager::register_network_global(const std::shared_ptr<Network::No
     if (m_network_registry.insert(network).second) {
         network->set_sample_rate(m_registered_sample_rate);
         network->set_block_size(m_registered_block_size);
+        network->set_frame_rate(m_registered_frame_rate);
     }
 }
 

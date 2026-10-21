@@ -87,8 +87,6 @@ public:
      */
     void process_slot(MeshSlot& slot, float dt) override;
 
-    void process(float dt) override;
-
     [[nodiscard]] std::string_view get_type_name() const override
     {
         return "MeshTransform";
@@ -101,14 +99,6 @@ private:
      * @brief Per-slot accumulated time in seconds, keyed by slot index.
      */
     std::unordered_map<uint32_t, float> m_accumulated_time;
-
-    /**
-     * @brief Wall-clock timestamp of the last process() call.
-     *
-     * Used to compute a real dt independent of the num_samples argument,
-     * which is always 1 for visual-rate networks and carries no time information.
-     */
-    std::chrono::steady_clock::time_point m_last_tick { std::chrono::steady_clock::now() };
 
     /**
      * @brief Resolve the world transform of a slot's parent, or identity if root.

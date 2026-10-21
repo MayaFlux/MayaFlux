@@ -164,8 +164,6 @@ public:
     // Configuration
     //-------------------------------------------------------------------------
 
-    void set_timestep(float dt) { m_timestep = dt; }
-    float get_timestep() const { return m_timestep; }
 
     void set_bounds(const glm::vec3& min, const glm::vec3& max)
     {
@@ -207,7 +205,6 @@ private:
     // glm::vec3 m_bounds_max;
     Kinesis::SamplerBounds m_bounds;
     Kinesis::SpatialDistribution m_init_mode;
-    float m_timestep { 0.016F };
 
     void ensure_initialized();
     std::vector<PointVertex> generate_initial_vertices();
