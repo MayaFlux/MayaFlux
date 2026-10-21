@@ -106,7 +106,8 @@ public:
      * This matches standard UI expectations for sliders, scrollbars, resize handles,
      * and other controls that must respond continuously during a drag gesture.
      *
-     * Backed by Kriya::mouse_dragged, which gates on button state natively.
+     * Driven by the same motion event as on_move, for every button the
+     * window's event source reports as held.
      *
      * @param id  Element id to bind to.
      * @param btn Mouse button that must be held.
@@ -358,6 +359,7 @@ private:
     void handle_release(double px, double py, IO::MouseButtons btn);
     void handle_scroll(double dx, double dy);
     void handle_drag(double px, double py, IO::MouseButtons btn);
+    void handle_drags(double px, double py);
     void handle_key_press(IO::Keys key);
     void handle_key_release(IO::Keys key);
     void handle_key_held(IO::Keys key);

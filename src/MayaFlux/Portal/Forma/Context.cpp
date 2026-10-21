@@ -235,7 +235,10 @@ void Context::register_handlers()
     m_event_manager.add_event(
         std::make_shared<Vruta::Event>(
             Kriya::mouse_moved(m_window,
-                [this](double px, double py) { handle_move(px, py); })),
+                [this](double px, double py) {
+                    handle_move(px, py);
+                    handle_drags(px, py);
+                })),
         m_name + "_move");
 
     m_event_manager.add_event(
@@ -264,15 +267,15 @@ void Context::register_handlers()
 
     m_event_manager.add_event(
         std::make_shared<Vruta::Event>(
-            Kriya::mouse_dragged(m_window, IO::MouseButtons::Left,
-                [this](double px, double py) { handle_drag(px, py, IO::MouseButtons::Left); })),
-        m_name + "_drag_left");
+            Kriya::mouse_pressed(m_window, IO::MouseButtons::Middle,
+                [this](double px, double py) { handle_press(px, py, IO::MouseButtons::Middle); })),
+        m_name + "_press_middle");
 
     m_event_manager.add_event(
         std::make_shared<Vruta::Event>(
-            Kriya::mouse_dragged(m_window, IO::MouseButtons::Right,
-                [this](double px, double py) { handle_drag(px, py, IO::MouseButtons::Right); })),
-        m_name + "_drag_right");
+            Kriya::mouse_released(m_window, IO::MouseButtons::Middle,
+                [this](double px, double py) { handle_release(px, py, IO::MouseButtons::Middle); })),
+        m_name + "_release_middle");
 
     m_event_manager.add_event(
         std::make_shared<Vruta::Event>(
@@ -305,8 +308,8 @@ void Context::cancel_handlers(bool cancel_close)
              "_move",
              "_press_left", "_release_left",
              "_press_right", "_release_right",
-             "_scroll", "_text", "_resize",
-             "_drag_left", "_drag_right" }) {
+             "_press_middle", "_release_middle",
+             "_scroll", "_text", "_resize" }) {
         m_event_manager.cancel_event(m_name + suffix);
     }
 
@@ -419,6 +422,15 @@ void Context::handle_release(double px, double py, IO::MouseButtons btn)
     auto btn_it = it->second.release.find(static_cast<int>(btn));
     if (btn_it != it->second.release.end() && btn_it->second)
         btn_it->second(*hit, ndc);
+}
+
+void Context::handle_drags(double px, double py)
+{
+    const auto& source = m_window->get_event_source();
+    for (const IO::MouseButtons btn : { IO::MouseButtons::Left, IO::MouseButtons::Right, IO::MouseButtons::Middle }) {
+        if (source.is_mouse_pressed(static_cast<int>(btn)))
+            handle_drag(px, py, btn);
+    }
 }
 
 void Context::handle_drag(double px, double py, IO::MouseButtons btn)
