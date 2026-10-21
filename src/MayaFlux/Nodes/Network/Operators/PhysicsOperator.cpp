@@ -364,7 +364,7 @@ bool PhysicsOperator::is_vertex_data_dirty() const
 void PhysicsOperator::mark_vertex_data_clean()
 {
     for (auto& group : m_collections) {
-        group.collection->mark_vertex_data_dirty(false);
+        group.collection->clear_gpu_update_flag();
     }
 }
 
