@@ -88,19 +88,19 @@ bool Layer::set_interactive(uint32_t id, bool interactive)
 
 bool Layer::set_visible(uint32_t id, bool visible)
 {
-    auto* root = get(id);
-    if (!root)
+    if (!get(id))
         return false;
 
-    root->visible = visible;
-    if (root->buffer) {
-        if (auto render = root->buffer->get_render_processor())
-            render->set_visible(visible, root->buffer);
-    }
+    for (uint32_t member : closure(id)) {
+        auto* el = get(member);
+        if (!el)
+            continue;
 
-    if (auto it = m_relations.find(id); it != m_relations.end()) {
-        for (uint32_t rel_id : it->second)
-            set_visible(rel_id, visible);
+        el->visible = visible;
+        if (el->buffer) {
+            if (auto render = el->buffer->get_render_processor())
+                render->set_visible(visible, el->buffer);
+        }
     }
     return true;
 }
@@ -142,22 +142,28 @@ bool Layer::bring_to_front(uint32_t id)
 
 bool Layer::send_to_back(uint32_t id)
 {
-    if (auto rit = m_relations.find(id); rit != m_relations.end()) {
-        for (uint32_t rel_id : rit->second)
-            send_to_back(rel_id);
-    }
-
-    auto it = std::ranges::find_if(m_elements,
-        [id](const Element& e) { return e.id == id; });
-    if (it == m_elements.end())
+    if (!get(id))
         return false;
-    std::rotate(m_elements.begin(), it, it + 1);
 
-    if (auto* el = get(id); el && el->buffer) {
-        auto config = el->buffer->get_render_config();
-        config.draw_priority = --m_next_back_priority;
-        el->buffer->set_render_config(config);
-    }
+    const std::vector<uint32_t> ids = closure(id);
+
+    auto lower = [this](uint32_t target) {
+        auto it = std::ranges::find_if(m_elements,
+            [target](const Element& e) { return e.id == target; });
+        if (it == m_elements.end())
+            return;
+        std::rotate(m_elements.begin(), it, it + 1);
+
+        if (auto& el = m_elements.front(); el.buffer) {
+            auto config = el.buffer->get_render_config();
+            config.draw_priority = --m_next_back_priority;
+            el.buffer->set_render_config(config);
+        }
+    };
+
+    for (size_t i = 1; i < ids.size(); ++i)
+        lower(ids[i]);
+    lower(ids.front());
 
     return true;
 }
@@ -206,10 +212,6 @@ bool Layer::relate(uint32_t primary_id, uint32_t related_id)
     auto* p = get(primary_id);
     auto* r = get(related_id);
     if (!p || !r || primary_id == related_id)
-        return false;
-
-    const std::vector<uint32_t> reachable = closure(related_id);
-    if (std::ranges::find(reachable, primary_id) != reachable.end())
         return false;
 
     auto& rel = m_relations[primary_id];

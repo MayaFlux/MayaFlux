@@ -273,8 +273,9 @@ public:
      *
      * Cascaded lifecycle operations (remove, set_visible, bring_to_front,
      * send_to_back) on @p primary_id propagate to @p related_id.
-     * Returns false if either id is not found, the ids are equal, or the
-     * relation would make @p primary_id reachable from itself.
+     * Returns false if either id is not found or the ids are equal. Two
+     * elements may be related to each other to form one group; every
+     * cascade follows closure() and so terminates on such cycles.
      */
     bool relate(uint32_t primary_id, uint32_t related_id);
 
