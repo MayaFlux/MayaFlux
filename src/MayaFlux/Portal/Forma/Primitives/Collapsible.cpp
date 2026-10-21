@@ -195,6 +195,9 @@ Collapsible& Collapsible::place(
 
 void Collapsible::attach(Layer& layer, uint32_t body_id) const
 {
+    if (!open)
+        return;
+
     layer.relate(header_id, body_id);
     layer.set_visible(body_id, open->value);
 }
