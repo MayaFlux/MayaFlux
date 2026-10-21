@@ -529,10 +529,8 @@ void Context::handle_close()
     for (auto& [id, callbacks] : m_callbacks) {
         if (callbacks.close)
             callbacks.close();
-        if (callbacks.focus_lost)
-            callbacks.focus_lost(id);
     }
-    m_focused = std::nullopt;
+    clear_focus();
     detach_window(false);
     event_source->defer([event_manager = &m_event_manager,
                             name = std::move(close_event_name)]() {
