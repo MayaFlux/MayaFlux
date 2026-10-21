@@ -120,7 +120,7 @@ public:
      * Useful for processing all channels or inspecting the node graph structure.
      * For multi-modal access, use get_token_roots().
      */
-    const std::unordered_map<unsigned int, std::shared_ptr<RootNode>>& get_all_channel_root_nodes(ProcessingToken token = ProcessingToken::AUDIO_RATE) const;
+    std::unordered_map<unsigned int, std::shared_ptr<RootNode>> get_all_channel_root_nodes(ProcessingToken token = ProcessingToken::AUDIO_RATE) const;
 
     /**
      * @brief Checks if a node is registered with this manager
