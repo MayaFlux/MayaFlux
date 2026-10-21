@@ -427,6 +427,8 @@ void Bridge::spawn_sync(Layer& layer, uint32_t id, std::function<void()> sync_fn
 {
     auto name = make_task_name(id, "sync");
     m_layer_tasks[&layer].push_back(name);
+    if (auto it = m_records.find(id); it != m_records.end())
+        it->second.outbound_tasks.push_back(name);
 
     auto routine = [](Vruta::TaskScheduler&,
                        std::function<void()> fn) -> Vruta::GraphicsRoutine {

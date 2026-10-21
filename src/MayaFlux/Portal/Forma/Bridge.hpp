@@ -413,8 +413,10 @@ public:
     /**
      * @brief Register a Mapped element and scope its presentation sync to a Layer.
      *
-     * The Layer scope is used only for stopping presentation sync when its
-     * Surface closes. Existing id-based bindings remain independent.
+     * Each frame's sync pushes the geometry function's bounds_hint and
+     * contains back into @p layer, so hit testing follows the drawn shape.
+     * The Layer scope also stops presentation sync when its Surface closes.
+     * unbind(id) cancels the sync task as well.
      *
      * @param layer   Layer owning the element.
      * @param mapped  Fully constructed Mapped element.
@@ -428,7 +430,7 @@ public:
     {
         register_element(mapped.state, mapped.element.id, mapped.element.buffer, std::move(project));
         spawn_sync(layer, mapped.element.id,
-            [m = std::move(mapped)]() mutable { m.sync(); });
+            [m = std::move(mapped), target = &layer]() mutable { m.sync(target); });
     }
 
     // =========================================================================

@@ -166,7 +166,7 @@ namespace internal {
             auto buf = create_buffer(std::move(window), capacity, topology);
             auto mapped = make_mapped<T>(std::move(initial), std::move(geom), std::move(buf));
             mapped.element.id = layer.add(mapped.element);
-            bridge().register_element(mapped, std::move(project));
+            bridge().register_element(layer, mapped, std::move(project));
             return mapped;
         }
 
