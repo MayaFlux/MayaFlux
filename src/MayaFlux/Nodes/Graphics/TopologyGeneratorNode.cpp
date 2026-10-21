@@ -217,6 +217,9 @@ void TopologyGeneratorNode::set_points(const std::vector<LineVertex>& points)
 {
     m_points.assign(points.rbegin(), points.rend());
     if (m_points.size() > m_max_points) {
+        MF_WARN(Journal::Component::Nodes, Journal::Context::NodeProcessing,
+            "TopologyGeneratorNode: {} points exceed the capacity of {}, keeping the newest {}",
+            m_points.size(), m_max_points, m_max_points);
         m_points.erase(
             m_points.begin() + static_cast<std::ptrdiff_t>(m_max_points),
             m_points.end());

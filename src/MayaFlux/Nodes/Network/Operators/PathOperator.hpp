@@ -162,6 +162,14 @@ public:
     void set_global_color(const glm::vec3& color);
 
     /**
+     * @brief Replace every control point, in extract_vertices() order, keeping the paths.
+     * @param vertices One vertex per control point across all paths.
+     *
+     * When the count differs from the current total this falls back to initialize().
+     */
+    void set_vertices(const std::vector<LineVertex>& vertices);
+
+    /**
      * @brief Get the number of paths currently managed by this operator.
      * @return Number of path collections.
      */
