@@ -111,6 +111,7 @@ Scrollable& Scrollable::track(
     layer.relate(viewport_id, id);
 
     m_tracked->push_back({ .id = id, .base_bounds = base_bounds, .reposition = std::move(reposition) });
+    layer.set_clip(id, viewport_bounds);
 
     if (m_indicator && m_indicator->state) {
         m_indicator->state->write(scroll_extent(*scroll));

@@ -189,6 +189,16 @@ public:
      */
     bool set_contains(uint32_t id, std::function<bool(glm::vec2)> fn);
 
+    /**
+     * @brief Confine hit testing of an element to a region, or lift the
+     *        confinement with std::nullopt.
+     *
+     * The clip survives set_bounds, set_contains and Mapped::sync, which
+     * rewrite the element's own shape but not where it may be hit.
+     * @return True if found.
+     */
+    bool set_clip(uint32_t id, std::optional<Kinesis::AABB2D> clip);
+
     bool set_interactive(uint32_t id, bool interactive);
     bool set_visible(uint32_t id, bool visible);
 

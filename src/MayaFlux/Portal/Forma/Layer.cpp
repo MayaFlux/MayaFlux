@@ -68,6 +68,15 @@ bool Layer::set_contains(uint32_t id, std::function<bool(glm::vec2)> fn)
     return false;
 }
 
+bool Layer::set_clip(uint32_t id, std::optional<Kinesis::AABB2D> clip)
+{
+    if (auto* el = get(id)) {
+        el->clip = clip;
+        return true;
+    }
+    return false;
+}
+
 bool Layer::set_interactive(uint32_t id, bool interactive)
 {
     if (auto* el = get(id)) {
@@ -285,6 +294,8 @@ glm::vec2 Layer::to_ndc(double px, double py, uint32_t w, uint32_t h) noexcept
 bool Layer::test_element(const Element& el, glm::vec2 ndc) noexcept
 {
     if (!el.interactive || !el.visible)
+        return false;
+    if (el.clip && !el.clip->contains(ndc))
         return false;
     if (el.bounds_hint && !el.bounds_hint->contains(ndc))
         return false;
