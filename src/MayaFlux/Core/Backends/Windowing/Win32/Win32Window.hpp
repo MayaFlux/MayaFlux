@@ -42,6 +42,7 @@ public:
     void poll() override;
 
     [[nodiscard]] bool should_close() const override;
+    void request_close() override;
 
     [[nodiscard]] const WindowState& get_state() const override { return m_state; }
     [[nodiscard]] const WindowCreateInfo& get_create_info() const override { return m_create_info; }

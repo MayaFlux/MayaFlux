@@ -952,6 +952,15 @@ bool CocoaWindow::should_close() const
     return m_should_close.load();
 }
 
+void CocoaWindow::request_close()
+{
+    if (!m_should_close.exchange(true)) {
+        WindowEvent ev;
+        ev.type = WindowEventType::WINDOW_CLOSED;
+        push_event(ev);
+    }
+}
+
 void CocoaWindow::show()
 {
     m_state.is_visible = true;

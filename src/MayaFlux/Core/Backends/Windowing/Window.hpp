@@ -44,6 +44,16 @@ public:
     [[nodiscard]] virtual bool should_close() const = 0;
 
     /**
+     * @brief Close the window as if the user had closed it
+     *
+     * Marks it for the usual teardown and signals WINDOW_CLOSED once. Safe to
+     * call from an event handler: the signal is delivered after the dispatch
+     * in progress has finished. Call from the thread that polls the window's
+     * events.
+     */
+    virtual void request_close() = 0;
+
+    /**
      * @brief Get the current window state
      */
     [[nodiscard]] virtual const WindowState& get_state() const = 0;
