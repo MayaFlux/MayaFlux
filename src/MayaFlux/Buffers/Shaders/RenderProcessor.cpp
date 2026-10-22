@@ -340,6 +340,7 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
         }
     }
 
+    std::vector<Portal::Graphics::DescriptorBindingInfo> unregistered;
     for (const Portal::Graphics::ShaderID shader_id : { m_shader_id, m_fragment_shader_id, m_geometry_shader_id, m_tess_control_shader_id, m_tess_eval_shader_id }) {
         if (shader_id == Portal::Graphics::INVALID_SHADER) {
             continue;
@@ -348,13 +349,60 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
             if (used.set == 0 || unified_bindings.contains({ used.set, used.binding })) {
                 continue;
             }
-            MF_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                "Pipeline created without set {} binding {} ({}), which the shader uses. "
-                "Attach the processor that supplies it before setup_rendering",
-                used.set, used.binding, vk::to_string(used.type));
-            Journal::Archivist::instance().flush();
+            unregistered.push_back(used);
         }
     }
+
+    for (auto it = m_awaited_bindings.begin(); it != m_awaited_bindings.end();) {
+        const auto slot = *it;
+        const bool pending = std::ranges::any_of(unregistered, [&slot](const auto& used) {
+            return used.set == slot.first && used.binding == slot.second;
+        });
+        if (pending) {
+            ++it;
+            continue;
+        }
+        MF_INFO(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "Set {} binding {} is now registered, the shader's binding is supplied",
+            slot.first, slot.second);
+        it = m_awaited_bindings.erase(it);
+    }
+
+    if (!unregistered.empty()) {
+        constexpr uint32_t k_binding_grace_ticks = 30;
+        const bool waiting = m_pipeline_id == Portal::Graphics::INVALID_RENDER_PIPELINE
+            && m_binding_wait_ticks < k_binding_grace_ticks;
+
+        for (const auto& used : unregistered) {
+            const bool first_seen = m_awaited_bindings.emplace(used.set, used.binding).second;
+            if (waiting && first_seen) {
+                MF_INFO(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                    "Waiting for set {} binding {} ({}), which the shader uses, to be registered before creating the pipeline",
+                    used.set, used.binding, vk::to_string(used.type));
+            }
+        }
+
+        if (waiting) {
+            ++m_binding_wait_ticks;
+            m_needs_pipeline_rebuild = true;
+            return;
+        }
+
+        for (const auto& used : unregistered) {
+            MF_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "Set {} binding {} ({}), which the shader uses, is not registered. "
+                "Creating the pipeline with an empty slot that is filled once a processor registers it",
+                used.set, used.binding, vk::to_string(used.type));
+            unified_bindings.emplace(std::make_pair(used.set, used.binding),
+                Portal::Graphics::DescriptorBindingInfo {
+                    .set = used.set,
+                    .binding = used.binding,
+                    .type = used.type,
+                    .buffer_info = {},
+                    .name = used.name });
+        }
+    }
+    m_binding_wait_ticks = 0;
 
     std::map<uint32_t, std::vector<Portal::Graphics::DescriptorBindingInfo>> bindings_by_set;
     for (const auto& [key, binding] : unified_bindings) {

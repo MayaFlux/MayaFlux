@@ -399,6 +399,8 @@ private:
         uint64_t after_frame;
     };
     std::vector<RetiredPipeline> m_retired;
+    uint32_t m_binding_wait_ticks {};
+    std::set<std::pair<uint32_t, uint32_t>> m_awaited_bindings;
 
     /**
      * @brief Move the current pipeline to the retired list and drop its buffer associations
