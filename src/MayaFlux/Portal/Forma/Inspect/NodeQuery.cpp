@@ -191,10 +191,33 @@ InspectResult Inspector::root_node(
     auto channels = m_ngm.get_all_channels(token);
     std::ranges::sort(channels);
 
+    const float ind = x_min + static_cast<float>(depth) * k_inspect_indent;
+    const std::string header_label = "root [" + std::to_string(channels.size()) + " ch]";
+
+    auto& ngm = m_ngm;
+    std::vector<EntrySpec> entrys {
+        EntrySpec {
+            .label = "channels",
+            .reader = [&ngm, token] { return std::to_string(ngm.get_all_channels(token).size()); },
+        },
+    };
+
+    const auto dims = row_pixel_dims(surface.window(), ind, x_max, row_h);
+    auto hbuf = make_header_buffer(surface.window());
+    std::vector<EntryBuffer> rbufs;
+    rbufs.reserve(entrys.size());
+    for (const auto& spec : entrys)
+        rbufs.push_back(make_row_buffer(surface.window(), spec.label, dims));
+    auto group = make_entry_group(entrys, header_label, std::move(hbuf), rbufs,
+        surface, cursor, ind, x_max, row_h, false);
+
     InspectResult result;
+    result.group = std::move(group);
+
     for (const auto ch : channels) {
-        result.children.push_back(
-            root_node(token, ch, surface, cursor, x_min, x_max, row_h, depth));
+        auto ch_result = root_node(token, ch, surface, cursor, x_min, x_max, row_h, depth + 1);
+        surface.layer().relate(result.group.header.header_id, ch_result.group.header.header_id);
+        result.children.push_back(std::move(ch_result));
     }
     return result;
 }

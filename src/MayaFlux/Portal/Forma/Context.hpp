@@ -298,6 +298,9 @@ public:
 
     [[nodiscard]] const Vruta::WindowEventSource& event_source() const;
 
+    /// @brief The Layer this Context hit-tests against.
+    [[nodiscard]] const std::shared_ptr<Layer>& layer() const noexcept { return m_layer; }
+
     /**
      * @brief Rect of pixel size (@p w, @p h) at pixel position (@p x, @p y),
      *        top-left origin, converted to NDC from the window's current

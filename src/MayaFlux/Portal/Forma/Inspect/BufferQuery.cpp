@@ -23,6 +23,9 @@ InspectResult Inspector::buffer(
     LayoutCursor& cursor,
     float x_min, float x_max, float row_h, int depth)
 {
+    if (!buf)
+        return {};
+
     const float ind = x_min + static_cast<float>(depth) * k_inspect_indent;
     const std::string header_label = Reflect::short_dynamic_type_name(*buf);
 
@@ -100,6 +103,9 @@ InspectResult Inspector::root_audio_buffer(
     float x_min, float x_max, float row_h, int depth)
 {
     auto root = m_bm.get_root_audio_buffer(token, channel);
+    if (!root)
+        return {};
+
     const auto children = root->get_child_buffers();
 
     const float ind = x_min + static_cast<float>(depth) * k_inspect_indent;

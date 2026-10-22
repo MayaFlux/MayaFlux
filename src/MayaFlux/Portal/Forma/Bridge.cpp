@@ -106,8 +106,11 @@ void Bridge::write(
     size_t size)
 {
     auto it = m_records.find(id);
-    if (it == m_records.end())
+    if (it == m_records.end()) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::Init,
+            "Bridge::write: unknown element id {}", id);
         return;
+    }
 
     auto& rec = it->second;
     if (!rec.bindings) {
