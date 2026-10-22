@@ -255,11 +255,6 @@ private:
     std::shared_ptr<BufferProcessor> m_final_processor;
 
     /**
-     * @brief Buffers pending removal (cleaned up in next process cycle)
-     */
-    std::vector<std::shared_ptr<VKBuffer>> m_pending_removal;
-
-    /**
      * @brief Flag indicating if this buffer is active for token processing
      */
     bool m_token_active {};

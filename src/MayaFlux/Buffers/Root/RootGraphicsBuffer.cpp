@@ -378,7 +378,6 @@ RootGraphicsBuffer::~RootGraphicsBuffer()
 {
     cleanup_marked_buffers();
     m_child_buffers.clear();
-    m_pending_removal.clear();
 }
 
 void RootGraphicsBuffer::initialize()
@@ -400,10 +399,6 @@ void RootGraphicsBuffer::process_default()
 
 void RootGraphicsBuffer::cleanup_marked_buffers()
 {
-    if (m_pending_removal.empty()) {
-        return;
-    }
-
     auto it = std::remove_if(
         m_child_buffers.begin(),
         m_child_buffers.end(),
@@ -426,8 +421,6 @@ void RootGraphicsBuffer::cleanup_marked_buffers()
             "Cleaned up {} graphics buffers (remaining: {})",
             removed_count, m_child_buffers.size());
     }
-
-    m_pending_removal.clear();
 }
 
 void RootGraphicsBuffer::set_final_processor(std::shared_ptr<BufferProcessor> processor)
