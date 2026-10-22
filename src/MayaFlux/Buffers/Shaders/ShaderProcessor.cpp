@@ -135,14 +135,16 @@ void ShaderProcessor::bind_buffer(const std::string& descriptor_name, const std:
     ensure_initialized(buffer);
 
     if (m_config.bindings.find(descriptor_name) == m_config.bindings.end()) {
-        auto user_binding_count = static_cast<uint32_t>(
-            std::ranges::count_if(m_config.bindings, [](const auto& pair) {
-                return pair.second.set == 1;
-            }));
+        uint32_t binding_index = 0;
+        while (std::ranges::any_of(m_config.bindings, [binding_index](const auto& pair) {
+            return pair.second.set == 1 && pair.second.binding == binding_index;
+        })) {
+            ++binding_index;
+        }
 
         ShaderBinding default_binding;
         default_binding.set = 1;
-        default_binding.binding = user_binding_count;
+        default_binding.binding = binding_index;
         default_binding.type = vk::DescriptorType::eStorageBuffer;
         m_config.bindings[descriptor_name] = default_binding;
 
