@@ -49,6 +49,10 @@ InspectResult& Inspector::event_manager(
     LayoutCursor& cursor,
     float x_min, float x_max, float row_h)
 {
+    if (s_event_result) {
+        return *s_event_result;
+    }
+
     const std::vector<EntrySpec> root_entrys {
         EntrySpec {
             .label = "events",

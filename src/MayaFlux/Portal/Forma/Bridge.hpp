@@ -385,6 +385,7 @@ public:
             .writer = std::move(writer),
             .inbound_task = {},
             .outbound_tasks = {},
+            .binding_names = {},
         };
     }
 
@@ -616,6 +617,7 @@ private:
         std::function<void(float)> writer; ///< writes new value into MappedState (inbound)
         std::string inbound_task;
         std::vector<std::string> outbound_tasks;
+        std::vector<std::string> binding_names;
     };
 
     Vruta::TaskScheduler& m_scheduler;

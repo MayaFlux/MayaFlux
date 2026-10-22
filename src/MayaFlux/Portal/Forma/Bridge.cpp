@@ -116,10 +116,9 @@ void Bridge::write(
             Buffers::ProcessingToken::GRAPHICS_BACKEND);
     }
 
-    rec.bindings->bind_push_constant(
-        std::to_string(id) + "_pc_" + std::to_string(offset),
-        rec.reader,
-        offset, size);
+    auto binding_name = std::to_string(id) + "_pc_" + std::to_string(offset);
+    rec.bindings->bind_push_constant(binding_name, rec.reader, offset, size);
+    rec.binding_names.push_back(std::move(binding_name));
 }
 
 void Bridge::write(
@@ -145,11 +144,9 @@ void Bridge::write(
             Buffers::ProcessingToken::GRAPHICS_BACKEND);
     }
 
-    rec.bindings->bind_descriptor(
-        descriptor_name + "_" + std::to_string(id),
-        rec.reader,
-        descriptor_name,
-        binding_index, set, role);
+    auto binding_name = descriptor_name + "_" + std::to_string(id);
+    rec.bindings->bind_descriptor(binding_name, rec.reader, descriptor_name, binding_index, set, role);
+    rec.binding_names.push_back(std::move(binding_name));
 }
 
 void Bridge::write(uint32_t id, std::shared_ptr<Buffers::AudioWriteProcessor> target)
@@ -401,6 +398,12 @@ void Bridge::cancel_outbound(ElementRecord& rec)
         m_scheduler.cancel_task(name);
     }
     rec.outbound_tasks.clear();
+
+    if (rec.bindings) {
+        for (const auto& name : rec.binding_names)
+            rec.bindings->unbind(name);
+    }
+    rec.binding_names.clear();
 }
 
 void Bridge::spawn_sync(uint32_t id, std::function<void()> sync_fn)
