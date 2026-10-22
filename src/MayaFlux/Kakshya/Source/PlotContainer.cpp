@@ -111,7 +111,10 @@ void PlotContainer::resize_series(uint32_t index, uint64_t count)
     if (!vec)
         return;
 
-    vec->resize(count, 0.0);
+    {
+        Memory::SeqlockWriteGuard g(m_series_locks[index]);
+        vec->resize(count, 0.0);
+    }
 
     auto* pv = std::get_if<std::vector<double>>(&m_processed_data[index]);
     if (pv)
