@@ -63,10 +63,16 @@ void ComputeProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buff
         descriptor_sets.push_back(set_bindings);
     }
 
+    const auto previous_pipeline = m_pipeline_id;
+
     m_pipeline_id = compute_press.create_pipeline(
         m_shader_id,
         descriptor_sets,
         resolve_push_constant_size(buffer));
+
+    if (previous_pipeline != Portal::Graphics::INVALID_COMPUTE_PIPELINE) {
+        compute_press.destroy_pipeline(previous_pipeline);
+    }
 
     if (m_pipeline_id == Portal::Graphics::INVALID_COMPUTE_PIPELINE) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
@@ -265,29 +271,13 @@ void ComputeProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
             continue;
         }
 
-        const auto& pc_bindings = buffer->get_pipeline_context().push_constant_bindings;
+        resolve_push_constants_into(m_push_constant_scratch, buffer);
 
-        if (!pc_bindings.empty()) {
-            size_t required = 0;
-            for (const auto& pc : pc_bindings) {
-                required = std::max(required, static_cast<size_t>(pc.offset) + pc.data.size());
-            }
-
-            m_push_constant_scratch.assign(required, 0);
-
-            for (const auto& pc : pc_bindings) {
-                std::memcpy(m_push_constant_scratch.data() + pc.offset, pc.data.data(), pc.data.size());
-            }
-
+        if (!m_push_constant_scratch.empty()) {
             compute_press.push_constants(
                 cmd_id, m_pipeline_id,
                 m_push_constant_scratch.data(),
                 m_push_constant_scratch.size());
-        } else if (!m_push_constant_data.empty()) {
-            compute_press.push_constants(
-                cmd_id, m_pipeline_id,
-                m_push_constant_data.data(),
-                m_push_constant_data.size());
         }
 
         compute_press.dispatch(cmd_id, dispatch_size[0], dispatch_size[1], dispatch_size[2]);
@@ -312,22 +302,14 @@ void ComputeProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
 
 void ComputeProcessor::cleanup()
 {
-    auto& foundry = Portal::Graphics::get_shader_foundry();
-    auto& compute_press = Portal::Graphics::get_compute_press();
+    resolve_pending_dispatch(true);
 
     if (m_pipeline_id != Portal::Graphics::INVALID_COMPUTE_PIPELINE) {
-        compute_press.destroy_pipeline(m_pipeline_id);
+        Portal::Graphics::get_compute_press().destroy_pipeline(m_pipeline_id);
         m_pipeline_id = Portal::Graphics::INVALID_COMPUTE_PIPELINE;
     }
 
-    if (m_shader_id != Portal::Graphics::INVALID_SHADER) {
-        foundry.destroy_shader(m_shader_id);
-        m_shader_id = Portal::Graphics::INVALID_SHADER;
-    }
-
-    m_descriptor_set_ids.clear();
-    m_bound_buffers.clear();
-    m_initialized = false;
+    ShaderProcessor::cleanup();
 }
 
 } // namespace MayaFlux::Buffers
