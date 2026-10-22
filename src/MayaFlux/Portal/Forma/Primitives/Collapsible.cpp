@@ -147,33 +147,35 @@ Collapsible& Collapsible::place(
         const glm::vec3 color_closed = m_color_closed;
         const glm::vec3 color_open = m_color_open;
 
+        auto repress = [buf = buf, surface, staging, open = open_state,
+                           label_text, label_color, color_closed, color_open,
+                           x_min, x_max, row_h]() {
+            const glm::uvec2 new_dims = row_pixel_dims(surface.window(), x_min, x_max, row_h);
+            const size_t required_bytes = static_cast<size_t>(new_dims.x) * new_dims.y * 4;
+
+            if (required_bytes > staging->get_size_bytes()) {
+                staging->resize(required_bytes * k_staging_margin, false);
+            }
+
+            auto image = Portal::Text::press(
+                label_text, new_dims,
+                { .color = label_color,
+                    .background = { open->value ? color_open : color_closed, 1.F } },
+                staging);
+            buf->bind_texture(0, image);
+        };
+
         surface.ctx().on_press(hid, IO::MouseButtons::Left,
-            [buf = buf, open = open_state, surface, hid, staging,
-                label_text, label_color, color_closed, color_open](uint32_t, glm::vec2) mutable {
+            [open = open_state, surface, hid, repress](uint32_t, glm::vec2) mutable {
                 const bool next = !open->value;
                 open->write(next);
                 for (auto rel_id : surface.layer().related_ids(hid))
                     surface.layer().set_visible(rel_id, next);
+                repress();
             });
 
         surface.ctx().on_resize(hid,
-            [buf = buf, surface, staging, open = open_state,
-                label_text, label_color, color_closed, color_open,
-                x_min, x_max, row_h](uint32_t, uint32_t) {
-                const glm::uvec2 new_dims = row_pixel_dims(surface.window(), x_min, x_max, row_h);
-                const size_t required_bytes = static_cast<size_t>(new_dims.x) * new_dims.y * 4;
-
-                if (required_bytes > staging->get_size_bytes()) {
-                    staging->resize(required_bytes * k_staging_margin, false);
-                }
-
-                auto image = Portal::Text::press(
-                    label_text, new_dims,
-                    { .color = label_color,
-                        .background = { open->value ? color_open : color_closed, 1.F } },
-                    staging);
-                buf->bind_texture(0, image);
-            });
+            [repress](uint32_t, uint32_t) { repress(); });
     }
 
     header_bounds = row_rect;
