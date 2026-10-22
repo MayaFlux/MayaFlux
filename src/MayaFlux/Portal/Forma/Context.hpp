@@ -27,9 +27,10 @@ struct MappedState;
  * the same pattern as Nexus::Fabric. The EventManager and Window are
  * injected; Context holds no engine-level singletons.
  *
- * Callbacks fire on the scheduler tick. They must not touch GPU resources
- * directly. State intended for the graphics tick should be written through
- * shared_ptr captures and read on the next graphics cycle.
+ * Callbacks fire on the graphics thread, from window polling at the end of
+ * each frame, after that frame's Bridge tasks and buffer processing have run.
+ * They may write a MappedState directly, since it is the same thread, and the
+ * value is read by the next frame. They must not touch GPU resources directly.
  *
  * All registered events are cancelled on destruction via
  * EventManager::cancel_event, keyed by names scoped to this Context.

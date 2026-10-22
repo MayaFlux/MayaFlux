@@ -465,8 +465,10 @@ Portal::Forma::Geometry::Form<float> form {
 auto el = Portal::Forma::create(surface, std::move(form), 0.F);
 ```
 
-`el.state` is the `shared_ptr<MappedState<T>>`. Write a new value from any
-thread via `el.state->write(v)`. The geometry function reruns on the next
+`el.state` is the `shared_ptr<MappedState<T>>`. Write a new value from the
+graphics thread via `el.state->write(v)`; every Context callback and Bridge
+task already runs there. From any other thread, hand the value over through
+`Bridge::bind` with a callable. The geometry function reruns on the next
 `sync()` call.
 
 ---

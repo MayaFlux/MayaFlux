@@ -2,6 +2,8 @@
 
 #include "Primitives/Mapped.hpp"
 
+#include "MayaFlux/Journal/Archivist.hpp"
+
 namespace MayaFlux::Core {
 class Window;
 }
@@ -351,7 +353,15 @@ public:
                 return static_cast<float>(s->value);
             };
         } else {
-            reader = [] { return 0.F; };
+            reader = [id, reported = std::make_shared<bool>(false)] {
+                if (!*reported) {
+                    *reported = true;
+                    MF_RT_WARN(Journal::Component::Portal, Journal::Context::Init,
+                        "Bridge: element {} has state type '{}' with no float conversion and no projection; its outbound reader yields 0",
+                        id, typeid(T).name());
+                }
+                return 0.F;
+            };
         }
 
         std::function<std::vector<float>()> bulk_reader;
@@ -373,7 +383,14 @@ public:
                 s->write(static_cast<T>(v));
             };
         } else {
-            writer = [](float) { };
+            writer = [id, reported = std::make_shared<bool>(false)](float) {
+                if (!*reported) {
+                    *reported = true;
+                    MF_RT_WARN(Journal::Component::Portal, Journal::Context::Init,
+                        "Bridge: element {} has state type '{}' with no float conversion and no projection; its inbound writer does nothing",
+                        id, typeid(T).name());
+                }
+            };
         }
 
         state->id = id;

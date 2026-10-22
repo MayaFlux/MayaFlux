@@ -308,12 +308,16 @@ public:
 
 private:
     std::vector<Element> m_elements;
+    mutable std::unordered_map<uint32_t, size_t> m_index;
+    mutable bool m_index_stale {};
     uint32_t m_next_id { 1 };
 
     int64_t m_next_front_priority {};
     int64_t m_next_back_priority {};
 
     std::unordered_map<uint32_t, std::vector<uint32_t>> m_relations;
+
+    void reindex() const;
 
     [[nodiscard]] static glm::vec2 to_ndc(
         double px, double py,

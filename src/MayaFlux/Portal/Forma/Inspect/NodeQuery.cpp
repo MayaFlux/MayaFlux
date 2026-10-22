@@ -264,8 +264,8 @@ InspectResult& Inspector::node_graph_manager(
     LayoutCursor& cursor,
     float x_min, float x_max, float row_h)
 {
-    if (s_node_graph_result) {
-        return *s_node_graph_result;
+    if (m_node_graph_result) {
+        return *m_node_graph_result;
     }
 
     const auto tokens = m_ngm.get_active_tokens();
@@ -292,7 +292,7 @@ InspectResult& Inspector::node_graph_manager(
     auto root_group = make_entry_group(root_entrys, root_label, std::move(hbuf), rbufs,
         surface, cursor, x_min, x_max, row_h, false);
 
-    InspectResult& result = s_node_graph_result.emplace();
+    InspectResult& result = m_node_graph_result.emplace();
     result.group = std::move(root_group);
 
     for (const auto tok : tokens) {

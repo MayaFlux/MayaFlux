@@ -11,6 +11,7 @@ namespace MayaFlux::Portal::Forma {
 Layer::Slot Layer::add(Element element)
 {
     element.id = m_next_id++;
+    m_index[element.id] = m_elements.size();
     m_elements.push_back(std::move(element));
     return Slot(*this, m_elements.back().id);
 }
@@ -26,6 +27,7 @@ bool Layer::remove(uint32_t id)
         if (auto* el = get(cid); el && el->buffer)
             el->buffer->mark_for_removal();
         std::erase_if(m_elements, [cid](const Element& e) { return e.id == cid; });
+        m_index_stale = true;
     }
 
     for (uint32_t cid : ids)
@@ -43,6 +45,8 @@ bool Layer::remove(uint32_t id)
 void Layer::clear()
 {
     m_elements.clear();
+    m_index.clear();
+    m_index_stale = false;
     m_relations.clear();
 }
 
@@ -125,6 +129,7 @@ bool Layer::bring_to_front(uint32_t id)
         if (it == m_elements.end())
             return;
         std::rotate(it, it + 1, m_elements.end());
+        m_index_stale = true;
 
         if (it = m_elements.end() - 1; it->buffer) {
             auto config = it->buffer->get_render_config();
@@ -153,6 +158,7 @@ bool Layer::send_to_back(uint32_t id)
         if (it == m_elements.end())
             return;
         std::rotate(m_elements.begin(), it, it + 1);
+        m_index_stale = true;
 
         if (auto& el = m_elements.front(); el.buffer) {
             auto config = el.buffer->get_render_config();
@@ -269,18 +275,25 @@ std::vector<uint32_t> Layer::closure(uint32_t id) const
 // Introspection
 // =============================================================================
 
+void Layer::reindex() const
+{
+    m_index.clear();
+    for (size_t i = 0; i < m_elements.size(); ++i)
+        m_index[m_elements[i].id] = i;
+    m_index_stale = false;
+}
+
 const Element* Layer::get(uint32_t id) const
 {
-    auto it = std::ranges::find_if(m_elements,
-        [id](const Element& e) { return e.id == id; });
-    return it != m_elements.end() ? &*it : nullptr;
+    if (m_index_stale)
+        reindex();
+    const auto it = m_index.find(id);
+    return it != m_index.end() ? &m_elements[it->second] : nullptr;
 }
 
 Element* Layer::get(uint32_t id)
 {
-    auto it = std::ranges::find_if(m_elements,
-        [id](const Element& e) { return e.id == id; });
-    return it != m_elements.end() ? &*it : nullptr;
+    return const_cast<Element*>(std::as_const(*this).get(id));
 }
 
 // =============================================================================

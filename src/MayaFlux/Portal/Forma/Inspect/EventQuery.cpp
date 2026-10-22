@@ -49,8 +49,8 @@ InspectResult& Inspector::event_manager(
     LayoutCursor& cursor,
     float x_min, float x_max, float row_h)
 {
-    if (s_event_result) {
-        return *s_event_result;
+    if (m_event_result) {
+        return *m_event_result;
     }
 
     const std::vector<EntrySpec> root_entrys {
@@ -72,7 +72,7 @@ InspectResult& Inspector::event_manager(
     auto root_group = make_entry_group(root_entrys, "EventManager", std::move(hbuf), rbufs,
         surface, cursor, x_min, x_max, row_h, true);
 
-    InspectResult& result = s_event_result.emplace();
+    InspectResult& result = m_event_result.emplace();
     result.group = std::move(root_group);
 
     const auto names = m_event_mgr.get_event_names();

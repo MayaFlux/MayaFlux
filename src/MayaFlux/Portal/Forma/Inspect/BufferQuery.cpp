@@ -255,8 +255,8 @@ InspectResult& Inspector::buffer_manager(
     LayoutCursor& cursor,
     float x_min, float x_max, float row_h)
 {
-    if (s_buffer_result) {
-        return *s_buffer_result;
+    if (m_buffer_result) {
+        return *m_buffer_result;
     }
 
     const auto tokens = m_bm.get_active_tokens();
@@ -284,7 +284,7 @@ InspectResult& Inspector::buffer_manager(
     auto group = make_entry_group(entrys, header_label, std::move(hbuf), rbufs,
         surface, cursor, x_min, x_max, row_h, false);
 
-    InspectResult& result = s_buffer_result.emplace();
+    InspectResult& result = m_buffer_result.emplace();
     result.group = std::move(group);
 
     for (const auto tok : tokens) {

@@ -28,9 +28,8 @@ public:
     /**
      * @brief Supply new vertex bytes for the next graphics tick.
      *
-     * Thread-safe via atomic_flag. Called from Mapped::sync() on the
-     * scheduler tick. The bytes are swapped into the active slot on the
-     * next processing_function call.
+     * Call from the graphics thread, as Mapped::sync() does. The bytes
+     * are swapped into the active slot on the next processing_function call.
      *
      * @param bytes Raw interleaved vertex bytes matching the topology's
      *              vertex type (PointVertex, LineVertex, or MeshVertex).
