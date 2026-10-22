@@ -283,6 +283,14 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
         return;
     }
 
+    const auto* state = get_or_cache_buffer_state(buffer);
+    if (!state) {
+        MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "initialize_pipeline: layout not yet available, deferring");
+        m_needs_pipeline_rebuild = true;
+        return;
+    }
+
     auto& flow = Portal::Graphics::get_render_flow();
 
     Portal::Graphics::get_render_flow().register_window_for_rendering(m_target_window);
@@ -305,13 +313,6 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
     }
 
     pipeline_config.depth_stencil = m_depth_stencil;
-
-    const auto* state = get_or_cache_buffer_state(buffer);
-    if (!state) {
-        MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "initialize_pipeline: layout not yet available, deferring");
-        return;
-    }
 
     pipeline_config.semantic_vertex_layout = state->semantic_layout;
     pipeline_config.use_vertex_shader_reflection = state->use_reflection;
@@ -371,6 +372,8 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
         ? vk::Format::eD32Sfloat
         : vk::Format::eUndefined;
 
+    retire_current_pipeline();
+
     m_pipeline_id = flow.create_pipeline(pipeline_config, { swapchain_format }, depth_format);
 
     if (m_pipeline_id == Portal::Graphics::INVALID_RENDER_PIPELINE) {
@@ -392,8 +395,10 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
 void RenderProcessor::initialize_descriptors(const std::shared_ptr<VKBuffer>& buffer)
 {
     if (m_pipeline_id == Portal::Graphics::INVALID_RENDER_PIPELINE) {
-        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "Cannot allocate descriptor sets without pipeline");
+        if (!m_needs_pipeline_rebuild) {
+            MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "Cannot allocate descriptor sets without pipeline");
+        }
         return;
     }
 
@@ -696,6 +701,8 @@ bool RenderProcessor::on_before_execute(Portal::Graphics::CommandBufferID /*cmd_
 
 void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
 {
+    collect_retired_pipelines();
+
     if (!is_visible(buffer) || !m_target_window
         || !m_target_window->is_graphics_registered()) {
         return;
@@ -715,6 +722,46 @@ void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
     publish_render_transform();
     prepare_geometry(buffer, *state);
     record_draw(buffer, *state);
+}
+
+void RenderProcessor::retire_current_pipeline()
+{
+    if (m_pipeline_id == Portal::Graphics::INVALID_RENDER_PIPELINE) {
+        return;
+    }
+
+    for (const auto& entry : m_buffer_info) {
+        entry.first->remove_pipeline_window(m_pipeline_id);
+    }
+
+    uint64_t after_frame = std::numeric_limits<uint64_t>::max();
+    if (m_display_service && m_display_service->get_submitted_frame_count && m_target_window) {
+        after_frame = m_display_service->get_submitted_frame_count(m_target_window);
+    }
+
+    m_retired.push_back({ .pipeline = m_pipeline_id,
+        .window = m_target_window,
+        .transform_ubo = std::move(m_render_transform_ubo),
+        .after_frame = after_frame });
+
+    m_pipeline_id = Portal::Graphics::INVALID_RENDER_PIPELINE;
+}
+
+void RenderProcessor::collect_retired_pipelines()
+{
+    if (m_retired.empty() || !m_display_service || !m_display_service->get_completed_frame_count) {
+        return;
+    }
+
+    auto& flow = Portal::Graphics::get_render_flow();
+
+    std::erase_if(m_retired, [&](const RetiredPipeline& retired) {
+        if (retired.after_frame > m_display_service->get_completed_frame_count(retired.window)) {
+            return false;
+        }
+        flow.destroy_pipeline(retired.pipeline);
+        return true;
+    });
 }
 
 void RenderProcessor::record_draw(const std::shared_ptr<VKBuffer>& buffer)
@@ -953,6 +1000,11 @@ void RenderProcessor::cleanup()
         flow.destroy_pipeline(m_pipeline_id);
         m_pipeline_id = Portal::Graphics::INVALID_RENDER_PIPELINE;
     }
+
+    for (const auto& retired : m_retired) {
+        flow.destroy_pipeline(retired.pipeline);
+    }
+    m_retired.clear();
 
     if (m_geometry_shader_id != Portal::Graphics::INVALID_SHADER) {
         foundry.destroy_shader(m_geometry_shader_id);

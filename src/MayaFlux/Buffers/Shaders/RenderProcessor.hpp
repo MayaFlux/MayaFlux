@@ -321,6 +321,8 @@ protected:
 
     bool on_before_execute(Portal::Graphics::CommandBufferID cmd_id, const std::shared_ptr<VKBuffer>& buffer) override;
 
+    [[nodiscard]] bool tracks_pipeline_layout() const override { return true; }
+
     void cleanup() override;
 
     /**
@@ -386,6 +388,29 @@ private:
 
     bool m_depth_enabled {};
     std::shared_ptr<VKBuffer> m_render_transform_ubo;
+
+    /**
+     * @brief A replaced pipeline kept alive until the frames that may still use it finish
+     */
+    struct RetiredPipeline {
+        Portal::Graphics::RenderPipelineID pipeline;
+        std::shared_ptr<Core::Window> window;
+        std::shared_ptr<VKBuffer> transform_ubo;
+        uint64_t after_frame;
+    };
+    std::vector<RetiredPipeline> m_retired;
+
+    /**
+     * @brief Move the current pipeline to the retired list and drop its buffer associations
+     */
+    void retire_current_pipeline();
+
+    /**
+     * @brief Destroy retired pipelines whose window has completed every frame submitted before retirement
+     *
+     * Never blocks. Without a completion signal, retired pipelines live until cleanup().
+     */
+    void collect_retired_pipelines();
     bool m_view_transform_active {};
     uint32_t m_first_vertex { 0 };
     uint32_t m_vertex_count { 0 };

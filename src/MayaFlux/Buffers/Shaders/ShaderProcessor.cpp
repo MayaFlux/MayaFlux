@@ -65,16 +65,14 @@ void ShaderProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
 
     if (!m_initialized) {
         initialize_shader();
+        m_needs_pipeline_rebuild = false;
         initialize_pipeline(vk_buffer);
         note_created_layout(vk_buffer);
-        m_needs_pipeline_rebuild = false;
         m_initialized = true;
-    }
-
-    if (m_needs_pipeline_rebuild) {
+    } else if (m_needs_pipeline_rebuild) {
+        m_needs_pipeline_rebuild = false;
         initialize_pipeline(vk_buffer);
         note_created_layout(vk_buffer);
-        m_needs_pipeline_rebuild = false;
         m_needs_descriptor_rebuild = true;
     }
 
