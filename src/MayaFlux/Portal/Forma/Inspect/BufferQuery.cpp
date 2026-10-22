@@ -210,6 +210,9 @@ InspectResult Inspector::root_graphics_buffer(
     float x_min, float x_max, float row_h, int depth)
 {
     auto root = m_bm.get_root_graphics_buffer(token);
+    if (!root)
+        return {};
+
     const auto children = root->get_child_buffers();
 
     const float ind = x_min + static_cast<float>(depth) * k_inspect_indent;
