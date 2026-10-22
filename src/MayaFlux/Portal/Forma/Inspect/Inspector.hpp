@@ -48,6 +48,12 @@ public:
     }
 
     /**
+     * @brief Releases the four persistent manager results, so a later
+     *        Inspector builds them afresh against its own managers.
+     */
+    ~Inspector();
+
+    /**
      * @brief Inspect a single Node and its full modulator tree.
      *
      * Builds a EntryGroup whose header is the node's short type name and

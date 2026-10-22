@@ -10,6 +10,14 @@ std::optional<InspectResult> Inspector::s_buffer_result;
 std::optional<InspectResult> Inspector::s_scheduler_result;
 std::optional<InspectResult> Inspector::s_event_result;
 
+Inspector::~Inspector()
+{
+    s_node_graph_result.reset();
+    s_buffer_result.reset();
+    s_scheduler_result.reset();
+    s_event_result.reset();
+}
+
 EntryBuffer Inspector::make_row_buffer(
     const std::shared_ptr<Core::Window>& window,
     std::string_view text,
