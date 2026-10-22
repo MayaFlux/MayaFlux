@@ -28,6 +28,13 @@ void FormaBindingsProcessor::bind_push_constant(
     uint32_t offset,
     size_t size)
 {
+    if (!reader) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "FormaBindingsProcessor::bind_push_constant: null reader for '{}'", name);
+        return;
+    }
+
+    release(name);
     auto& b = m_bindings[name];
     b.kind = TargetKind::PUSH_CONSTANT;
     b.reader = std::move(reader);
@@ -49,6 +56,7 @@ void FormaBindingsProcessor::bind_descriptor(
         return;
     }
 
+    release(name);
     auto& b = m_bindings[name];
     b.kind = TargetKind::DESCRIPTOR;
     b.reader = std::move(reader);
@@ -90,7 +98,54 @@ std::vector<std::string> FormaBindingsProcessor::get_binding_names() const
 
 bool FormaBindingsProcessor::unbind(const std::string& name)
 {
-    return m_bindings.erase(name) > 0;
+    if (!m_bindings.contains(name))
+        return false;
+
+    release(name);
+    m_bindings.erase(name);
+    return true;
+}
+
+void FormaBindingsProcessor::release(const std::string& name)
+{
+    const auto found = m_bindings.find(name);
+    if (found == m_bindings.end())
+        return;
+
+    const auto& binding = found->second;
+    std::erase_if(m_targets, [](const auto& target) { return target.expired(); });
+
+    for (const auto& weak : m_targets) {
+        const auto target = weak.lock();
+        auto& context = target->get_pipeline_context();
+
+        if (binding.pc) {
+            std::erase_if(context.push_constant_bindings, [&](const auto& entry) {
+                return entry.offset == binding.pc->offset && entry.name == name;
+            });
+        }
+
+        if (binding.desc) {
+            const auto handle = binding.desc->gpu_buffer->get_buffer();
+            std::erase_if(context.descriptor_buffer_bindings, [&](const auto& entry) {
+                return entry.set == binding.desc->set_index
+                    && entry.binding == binding.desc->binding_index
+                    && entry.buffer_info.buffer == handle;
+            });
+        }
+    }
+
+    if (binding.desc)
+        unbind_buffer(binding.desc->descriptor_name);
+}
+
+void FormaBindingsProcessor::remember_target(const std::shared_ptr<VKBuffer>& buffer)
+{
+    const bool known = std::ranges::any_of(m_targets, [&](const auto& weak) {
+        return weak.lock() == buffer;
+    });
+    if (!known)
+        m_targets.push_back(buffer);
 }
 
 // =============================================================================
@@ -99,6 +154,8 @@ bool FormaBindingsProcessor::unbind(const std::string& name)
 
 void FormaBindingsProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
 {
+    remember_target(buffer);
+
     for (const auto& [name, b] : m_bindings) {
         if (!b.reader) {
             MF_RT_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
@@ -110,7 +167,7 @@ void FormaBindingsProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buf
         switch (b.kind) {
         case TargetKind::PUSH_CONSTANT:
             if (b.pc)
-                flush_push_constant(value, *b.pc, buffer);
+                flush_push_constant(name, value, *b.pc, buffer);
             break;
         case TargetKind::DESCRIPTOR:
             if (b.desc)
@@ -125,6 +182,7 @@ void FormaBindingsProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buf
 // =============================================================================
 
 void FormaBindingsProcessor::flush_push_constant(
+    const std::string& name,
     float value,
     const PushConstantTarget& pc,
     const std::shared_ptr<VKBuffer>& buffer)
@@ -138,7 +196,8 @@ void FormaBindingsProcessor::flush_push_constant(
     if (it == entries.end()) {
         entries.push_back(Portal::Graphics::PushConstantBindingInfo {
             .offset = pc.offset,
-            .data = std::vector<uint8_t>(pc.size) });
+            .data = std::vector<uint8_t>(pc.size),
+            .name = name });
         it = std::prev(entries.end());
     }
 
