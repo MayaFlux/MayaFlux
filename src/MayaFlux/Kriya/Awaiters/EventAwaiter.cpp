@@ -35,12 +35,11 @@ void WindowEventAwaiter::try_resume(const void* event)
     if (!filter_matches(event))
         return;
 
-    if (auto ev = m_source.pop_event(m_filter)) {
-        m_result = *ev;
-        m_source.unregister_waiter(this);
-        m_is_suspended = false;
-        m_handle.resume();
-    }
+    m_result = *static_cast<const Core::WindowEvent*>(event);
+    ++m_source.m_resumed;
+    m_source.unregister_waiter(this);
+    m_is_suspended = false;
+    m_handle.resume();
 }
 
 bool WindowEventAwaiter::filter_matches(const void* event) const

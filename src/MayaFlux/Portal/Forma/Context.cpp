@@ -207,7 +207,6 @@ Context& Context::key_step(
 
 Context& Context::press_and_hold(uint32_t id, IO::Keys key, KeyFn fn)
 {
-    on_press(id, key, fn);
     on_held(id, key, std::move(fn));
     return *this;
 }

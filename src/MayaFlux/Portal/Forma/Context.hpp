@@ -260,16 +260,10 @@ public:
      * @brief Register a key handler that fires on the initial press and on
      *        every repeat, with a deterministic first event.
      *
-     * WindowEventSource pops events from one shared pending-event queue,
-     * and dispatch() lets every registered waiter for a key race to pop
-     * the same KEY_PRESSED. on_held's filter alone would still catch that
-     * first press if it were the only waiter on the key, but once another
-     * waiter for the same key exists on this Context, whichever registered
-     * first wins the race and the other sees nothing for that tick.
-     * Registering on_press before on_held, as this does, makes the outcome
-     * deterministic: on_press claims the initial KEY_PRESSED and on_held is
-     * then only ever resumed by the KEY_REPEAT events that follow. One fire
-     * per physical press, a clean repeat cadence after, no double count.
+     * on_held already fires on the initial KEY_PRESSED and on each repeat, so
+     * this registers it alone; also registering on_press would count the
+     * initial press twice, since every listener on a key sees every event.
+     * One fire per physical press, a clean repeat cadence after.
      *
      * @param id  Element id to bind to.
      * @param key The key to listen for.

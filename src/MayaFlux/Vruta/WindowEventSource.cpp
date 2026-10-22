@@ -27,10 +27,13 @@ void WindowEventSource::signal(Core::WindowEvent event)
         m_mouse_y = pd->y;
     }
 
-    m_pending_events.push(event);
+    const size_t resumed_before = m_resumed;
     ++m_signal_depth;
     dispatch(&event);
     --m_signal_depth;
+    if (m_resumed == resumed_before)
+        m_pending_events.push(event);
+
     if (m_signal_depth != 0 || m_deferred_actions.empty())
         return;
 
