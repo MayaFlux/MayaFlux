@@ -443,9 +443,12 @@ void ShaderProcessor::set_shader(const std::string& shader_path)
 
 void ShaderProcessor::set_push_constant_size(size_t size)
 {
+    const bool changed = m_config.push_constant_size != size;
     m_config.push_constant_size = size;
     m_push_constant_data.resize(size);
-    m_needs_pipeline_rebuild = true;
+    if (changed) {
+        m_needs_pipeline_rebuild = true;
+    }
 }
 
 void ShaderProcessor::set_push_constant_data_raw(const void* data, size_t size)

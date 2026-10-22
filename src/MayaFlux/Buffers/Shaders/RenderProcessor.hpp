@@ -66,6 +66,9 @@ public:
     /// Set primitive topology (e.g., triangle list, line list, point list)
     inline void set_primitive_topology(Portal::Graphics::PrimitiveTopology topology)
     {
+        if (m_primitive_topology == topology) {
+            return;
+        }
         m_primitive_topology = topology;
         m_needs_pipeline_rebuild = true;
     }
@@ -73,6 +76,9 @@ public:
     /// Set polygon mode (e.g., fill, line, point)
     inline void set_polygon_mode(Portal::Graphics::PolygonMode mode)
     {
+        if (m_polygon_mode == mode) {
+            return;
+        }
         m_polygon_mode = mode;
         m_needs_pipeline_rebuild = true;
     }
@@ -80,6 +86,9 @@ public:
     /// Set cull mode (e.g., none, front, back)
     inline void set_cull_mode(Portal::Graphics::CullMode mode)
     {
+        if (m_cull_mode == mode) {
+            return;
+        }
         m_cull_mode = mode;
         m_needs_pipeline_rebuild = true;
     }
@@ -143,6 +152,9 @@ public:
      */
     inline void set_blend_attachment(const Portal::Graphics::BlendAttachmentConfig& config)
     {
+        if (m_blend_attachment.has_value() && *m_blend_attachment == config) {
+            return;
+        }
         m_blend_attachment = config;
         m_needs_pipeline_rebuild = true;
     }

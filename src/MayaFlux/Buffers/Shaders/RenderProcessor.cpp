@@ -112,17 +112,33 @@ void RenderProcessor::set_alpha_blending(bool enabled)
 
 void RenderProcessor::disable_depth_test()
 {
-    m_depth_stencil.depth_test_enable = false;
-    m_depth_stencil.depth_write_enable = false;
+    auto next = m_depth_stencil;
+    next.depth_test_enable = false;
+    next.depth_write_enable = false;
+
+    if (next == m_depth_stencil) {
+        return;
+    }
+
+    m_depth_stencil = next;
     m_needs_pipeline_rebuild = true;
 }
 
 void RenderProcessor::enable_depth_test(Portal::Graphics::CompareOp compare_op)
 {
-    m_depth_stencil.depth_test_enable = true;
-    m_depth_stencil.depth_write_enable = true;
-    m_depth_stencil.depth_compare_op = compare_op;
+    auto next = m_depth_stencil;
+    next.depth_test_enable = true;
+    next.depth_write_enable = true;
+    next.depth_compare_op = compare_op;
+
+    const bool was_enabled = m_depth_enabled;
     m_depth_enabled = true;
+
+    if (next == m_depth_stencil && was_enabled) {
+        return;
+    }
+
+    m_depth_stencil = next;
     m_needs_pipeline_rebuild = true;
 }
 
@@ -485,10 +501,23 @@ void RenderProcessor::set_buffer_vertex_layout(
     const std::shared_ptr<VKBuffer>& buffer,
     const Kakshya::VertexLayout& layout)
 {
+    const bool known = m_buffer_info.contains(buffer);
     auto& state = m_buffer_info[buffer];
+
+    const bool same_input = state.semantic_layout.stride_bytes == layout.stride_bytes
+        && std::ranges::equal(state.semantic_layout.attributes, layout.attributes,
+            [](const auto& a, const auto& b) {
+                return a.component_modality == b.component_modality
+                    && a.offset_in_vertex == b.offset_in_vertex;
+            });
+    const bool changed = !known || state.use_reflection || !same_input;
+
     state.semantic_layout = layout;
     state.use_reflection = false;
-    m_needs_pipeline_rebuild = true;
+
+    if (changed) {
+        m_needs_pipeline_rebuild = true;
+    }
 }
 
 const Kinesis::RenderTransform& RenderProcessor::publish_render_transform()
