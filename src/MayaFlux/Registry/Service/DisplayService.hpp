@@ -52,6 +52,27 @@ struct MAYAFLUX_API DisplayService {
     std::function<uint32_t(const std::shared_ptr<void>&)> get_swapchain_image_count;
 
     /**
+     * @brief Frames submitted for a window since it was registered
+     * @param window_handle Window handle
+     * @return Submission count, or 0 for an unregistered window
+     *
+     * Call from the graphics thread, which is where frames are submitted.
+     */
+    std::function<uint64_t(const std::shared_ptr<void>&)> get_submitted_frame_count;
+
+    /**
+     * @brief Submitted frames of a window whose GPU work has finished
+     * @param window_handle Window handle
+     * @return Completed count, never above the submitted count, or 0 for an
+     *         unregistered window
+     *
+     * Never blocks. A resource last used by frames up to the submitted count
+     * read when it was retired is safe to destroy once this reaches that value.
+     * Call from the graphics thread.
+     */
+    std::function<uint64_t(const std::shared_ptr<void>&)> get_completed_frame_count;
+
+    /**
      * @brief Acquire the next swapchain image for a window
      * @param window_handle Window handle
      * @return Index of the acquired swapchain image

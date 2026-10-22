@@ -100,6 +100,7 @@ void WindowRenderContext::cleanup(VKContext& context)
         }
     }
     in_flight.clear();
+    slot_submission.clear();
 
     if (depth_image && depth_image->is_initialized()) {
         const auto& res = depth_image->get_image_resources();
@@ -168,6 +169,16 @@ void BackendWindowHandler::setup_backend_service(const std::shared_ptr<Registry:
             }
         }
         return 0;
+    };
+
+    display_service->get_submitted_frame_count = [this](const std::shared_ptr<void>& window_ptr) -> uint64_t {
+        const auto* ctx = find_window_context(std::static_pointer_cast<Window>(window_ptr));
+        return ctx ? ctx->submitted_frames : 0;
+    };
+
+    display_service->get_completed_frame_count = [this](const std::shared_ptr<void>& window_ptr) -> uint64_t {
+        const auto* ctx = find_window_context(std::static_pointer_cast<Window>(window_ptr));
+        return ctx ? completed_frame_count(*ctx) : 0;
     };
 
     display_service->get_swapchain_format = [this](const std::shared_ptr<void>& window_ptr) -> uint32_t {
@@ -636,6 +647,8 @@ bool BackendWindowHandler::create_sync_objects(WindowRenderContext& config)
         config.image_available.resize(image_count);
         config.render_finished.resize(image_count);
         config.in_flight.resize(image_count);
+        config.slot_submission.assign(image_count, 0);
+        config.submitted_frames = 0;
         config.clear_command_buffers.resize(image_count);
 
         vk::SemaphoreCreateInfo semaphore_info {};
@@ -1186,6 +1199,7 @@ void BackendWindowHandler::submit_and_present(
 
     try {
         auto result = graphics_queue.submit(1, &submit_info, in_flight);
+        ctx->slot_submission[frame_index] = ++ctx->submitted_frames;
     } catch (const vk::SystemError& e) {
         MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
             "Failed to submit primary command buffer: {}", e.what());
@@ -1207,6 +1221,24 @@ void BackendWindowHandler::submit_and_present(
     MF_RT_TRACE(Journal::Component::Core, Journal::Context::GraphicsCallback,
         "Window '{}': frame submitted and presented",
         window->get_create_info().title);
+}
+
+uint64_t BackendWindowHandler::completed_frame_count(const WindowRenderContext& ctx) const
+{
+    const auto device = m_context.get_device();
+
+    uint64_t oldest_pending = ctx.submitted_frames + 1;
+    for (size_t slot = 0; slot < ctx.in_flight.size(); ++slot) {
+        const uint64_t submission = ctx.slot_submission[slot];
+        if (submission == 0) {
+            continue;
+        }
+        if (device.getFenceStatus(ctx.in_flight[slot]) == vk::Result::eNotReady) {
+            oldest_pending = std::min(oldest_pending, submission);
+        }
+    }
+
+    return oldest_pending - 1;
 }
 
 bool BackendWindowHandler::is_window_registered(const std::shared_ptr<Window>& window) const
