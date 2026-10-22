@@ -36,9 +36,12 @@ void FormaBuffer::setup_processors(ProcessingToken token)
     set_default_processor(proc);
     m_processor = proc;
 
-    auto chain = std::make_shared<Buffers::BufferProcessingChain>();
+    auto chain = get_processing_chain();
+    if (!chain) {
+        chain = std::make_shared<Buffers::BufferProcessingChain>();
+        set_processing_chain(chain);
+    }
     chain->set_preferred_token(token);
-    set_processing_chain(chain);
 
     if (!m_pending_geometry.empty()) {
         m_processor->set_bytes(std::move(m_pending_geometry));
