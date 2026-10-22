@@ -60,7 +60,8 @@ struct MAYAFLUX_API WindowEventFilter : public EventFilter {
  * Signals are produced by the window backend's poll(), on the polling thread. Coroutines
  * suspend via WindowEventAwaiter and are resumed synchronously from signal().
  * Every suspended awaiter whose filter matches receives the event, in registration
- * order. An event no awaiter took is queued until one arrives.
+ * order. An event no awaiter took is queued until one arrives, up to
+ * k_max_pending_events; beyond that the oldest queued event is dropped.
  * Tracks input state for immediate polling via is_key_pressed(),
  * is_mouse_pressed(), and get_mouse_position().
  *
@@ -70,6 +71,9 @@ struct MAYAFLUX_API WindowEventFilter : public EventFilter {
  */
 class MAYAFLUX_API WindowEventSource : public EventSource {
 public:
+    /// @brief Most events held for a later awaiter before the oldest is dropped.
+    static constexpr size_t k_max_pending_events = 1024;
+
     WindowEventSource() = default;
     ~WindowEventSource() override = default;
 

@@ -31,8 +31,11 @@ void WindowEventSource::signal(Core::WindowEvent event)
     ++m_signal_depth;
     dispatch(&event);
     --m_signal_depth;
-    if (m_resumed == resumed_before)
+    if (m_resumed == resumed_before) {
         m_pending_events.push(event);
+        if (m_pending_events.size() > k_max_pending_events)
+            m_pending_events.pop();
+    }
 
     if (m_signal_depth != 0 || m_deferred_actions.empty())
         return;
