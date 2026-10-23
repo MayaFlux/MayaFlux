@@ -706,6 +706,7 @@ private:
         bool is_storage {};
         uint32_t offset {};
         size_t size {};
+        std::optional<Kakshya::GpuDataFormat> format;
         std::string descriptor_name;
         std::shared_ptr<VKBuffer> buffer;
         bool mismatch_logged {};
