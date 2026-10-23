@@ -325,6 +325,20 @@ void ShaderProcessor::pump_feeds(bool early)
         FeedValue value = entry.source();
 
         if (!entry.is_storage) {
+            if (const auto* typed = std::get_if<Kakshya::GpuValue>(&value)) {
+                std::array<std::byte, 64> bytes {};
+                const size_t written = Kakshya::gpu_value_write(*typed, bytes);
+
+                auto& data = get_push_constant_data();
+                const size_t required = entry.offset + written;
+                if (data.size() < required) {
+                    data.resize(required);
+                }
+
+                std::memcpy(data.data() + entry.offset, bytes.data(), written);
+                continue;
+            }
+
             const auto* scalar = std::get_if<double>(&value);
             if (!scalar) {
                 if (!entry.mismatch_logged) {
@@ -354,7 +368,7 @@ void ShaderProcessor::pump_feeds(bool early)
         if (!variant) {
             if (!entry.mismatch_logged) {
                 MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                    "feed '{}' writes a storage descriptor but returned a double", name);
+                    "feed '{}' writes a storage descriptor but returned a push constant value", name);
                 entry.mismatch_logged = true;
             }
             continue;

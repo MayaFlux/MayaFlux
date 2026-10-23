@@ -227,11 +227,15 @@ public:
     /**
      * @brief What a feed callable returns.
      *
-     * A double lands in the push constant block. A DataVariant lands in a
-     * storage descriptor. Which one an entry expects is fixed when it is
-     * registered by the name it resolves to.
+     * A push constant entry takes a double, written at the entry's width, or
+     * a GpuValue, written as its own format's bytes at the offset. A storage
+     * descriptor entry takes a DataVariant. Which one an entry expects is
+     * fixed when it is registered by the name it resolves to.
+     *
+     * A float or int literal converts to the double alternative; wrap a
+     * value in Kakshya::GpuValue to feed it as its own format.
      */
-    using FeedValue = std::variant<double, Kakshya::DataVariant>;
+    using FeedValue = std::variant<double, Kakshya::GpuValue, Kakshya::DataVariant>;
 
     /** @brief A callable pulled once per processing cycle. */
     using FeedSource = std::function<FeedValue()>;
@@ -255,10 +259,11 @@ public:
      * @brief Supply a push constant from a callable at an explicit offset.
      * @param name Logical name, used for removal and error reporting. Need
      *        not match anything on the shader.
-     * @param source Callable returning a double.
+     * @param source Callable returning a double or a GpuValue.
      * @param offset Byte offset in the push constant block.
-     * @param size Byte width written. Four narrows to float, eight keeps
-     *        double. Other values are rejected.
+     * @param size Byte width written for a double. Four narrows to float,
+     *        eight keeps double. Other values are rejected. A GpuValue
+     *        writes its own width and ignores this.
      * @param early True writes at the top of processing_function. False
      *        writes after the final on_before_execute of a compute dispatch,
      *        which is the only way a value survives a processor that rewrites
