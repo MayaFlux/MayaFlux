@@ -207,9 +207,9 @@ public:
     /**
      * @brief Route element bulk value to a caller-supplied sink each frame.
      *
-     * When the element's MappedState<T> has a bulk_reader (T is vector<float>
-     * or vector<double>), the full vector is forwarded as a span. For scalar
-     * T the sink receives a single-element span of the scalar value.
+     * When the element's MappedState<T> has a bulk_reader (T is vector<float>,
+     * vector<double> or a glm vector), the full value is forwarded as a span.
+     * For scalar T the sink receives a single-element span of the scalar value.
      *
      * Intended for consumers that operate on coefficient arrays or other
      * N-element state: FIR/IIR coefficient vectors, Random node bounds,
@@ -392,6 +392,10 @@ public:
                 for (double v : s->value)
                     out.push_back(static_cast<float>(v));
                 return out;
+            };
+        } else if constexpr (std::is_same_v<T, glm::vec2> || std::is_same_v<T, glm::vec3> || std::is_same_v<T, glm::vec4>) {
+            bulk_reader = [s = state] {
+                return std::vector<float>(&s->value[0], &s->value[0] + T::length());
             };
         }
 

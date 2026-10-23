@@ -1,6 +1,8 @@
 // NOLINTBEGIN
 #include "PixelOps.hpp"
 
+#include "MayaFlux/Kinesis/ColorSpace.hpp"
+
 #include <execution>
 #include <Eigen/Core>
 
@@ -98,31 +100,11 @@ void rgba_to_hsv(
         std::views::iota(size_t { 0 }, n).begin(),
         std::views::iota(size_t { 0 }, n).end(),
         [&](size_t i) {
-            const float r = rgba[i * 4];
-            const float g = rgba[i * 4 + 1];
-            const float b = rgba[i * 4 + 2];
+            const glm::vec3 hsv = rgb_to_hsv({ rgba[i * 4], rgba[i * 4 + 1], rgba[i * 4 + 2] });
 
-            const float cmax = std::max({ r, g, b });
-            const float cmin = std::min({ r, g, b });
-            const float delta = cmax - cmin;
-
-            float h_val = 0.0F;
-            if (delta > 0.0F) {
-                if (cmax == r) {
-                    h_val = std::fmod((g - b) / delta, 6.0F);
-                } else if (cmax == g) {
-                    h_val = (b - r) / delta + 2.0F;
-                } else {
-                    h_val = (r - g) / delta + 4.0F;
-                }
-                h_val /= 6.0F;
-                if (h_val < 0.0F)
-                    h_val += 1.0F;
-            }
-
-            dst[i * 3] = h_val;
-            dst[i * 3 + 1] = cmax > 0.0F ? delta / cmax : 0.0F;
-            dst[i * 3 + 2] = cmax;
+            dst[i * 3] = hsv.x;
+            dst[i * 3 + 1] = hsv.y;
+            dst[i * 3 + 2] = hsv.z;
         });
 }
 
