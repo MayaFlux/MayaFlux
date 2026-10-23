@@ -85,6 +85,18 @@ size_t gpu_data_format_components(GpuDataFormat fmt) noexcept
     }
 }
 
+size_t gpu_value_write(const GpuValue& value, std::span<std::byte> out) noexcept
+{
+    return std::visit([&](const auto& held) -> size_t {
+        if (out.size() < sizeof(held)) {
+            return 0;
+        }
+        std::memcpy(out.data(), &held, sizeof(held));
+        return sizeof(held);
+    },
+        value);
+}
+
 namespace {
 
     template <typename Component>

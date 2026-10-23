@@ -153,6 +153,48 @@ template <GpuFormatElement T>
 inline constexpr GpuDataFormat gpu_data_format_v = gpu_data_format_of<std::remove_cvref_t<T>>::value;
 
 /**
+ * @brief One value of any GpuDataFormat.
+ *
+ * Alternatives follow GpuDataFormat order, so the active index is the
+ * format. Construct with the exact type; an untyped literal is ambiguous.
+ */
+using GpuValue = std::variant<
+    float, glm::vec2, glm::vec3, glm::vec4,
+    double, glm::dvec2, glm::dvec3, glm::dvec4,
+    int32_t, uint32_t,
+    uint8_t, uint16_t,
+    glm::mat4>;
+
+namespace detail {
+
+    template <size_t... I>
+    constexpr bool gpu_value_follows_format_order(std::index_sequence<I...>)
+    {
+        return ((gpu_data_format_of<std::variant_alternative_t<I, GpuValue>>::value == static_cast<GpuDataFormat>(I)) && ...);
+    }
+
+} // namespace detail
+
+static_assert(detail::gpu_value_follows_format_order(std::make_index_sequence<std::variant_size_v<GpuValue>> {}));
+
+/**
+ * @brief The GpuDataFormat of the value held.
+ */
+[[nodiscard]] inline GpuDataFormat gpu_value_format(const GpuValue& value) noexcept
+{
+    return static_cast<GpuDataFormat>(value.index());
+}
+
+/**
+ * @brief Copies the held value's bytes into out, unconverted.
+ *
+ * @param value Source value.
+ * @param out Destination, at least gpu_data_format_bytes(gpu_value_format(value)).
+ * @return Bytes written, or 0 if out is too small.
+ */
+MAYAFLUX_API size_t gpu_value_write(const GpuValue& value, std::span<std::byte> out) noexcept;
+
+/**
  * @brief Writes scalar components into out as one element of dst.
  *
  * Each component is converted to the component type of dst. Integer
