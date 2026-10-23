@@ -145,7 +145,11 @@ void Bridge::write(
     }
 
     auto binding_name = std::to_string(ref.second) + "_pc_" + std::to_string(offset);
-    rec->bindings->bind_push_constant(binding_name, rec->reader, offset, format);
+    if (rec->typed_reader && rec->typed_format == format) {
+        rec->bindings->bind_typed_push_constant(binding_name, rec->typed_reader, offset);
+    } else {
+        rec->bindings->bind_push_constant(binding_name, rec->reader, offset, format);
+    }
     rec->binding_names.push_back(std::move(binding_name));
 }
 

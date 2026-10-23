@@ -104,6 +104,22 @@ public:
         uint32_t offset,
         Kakshya::GpuDataFormat format);
 
+    /**
+     * @brief Bind a typed reader to a push constant slot.
+     *
+     * The value is written as its own format's bytes at the offset, with no
+     * conversion, so vectors and matrices keep every component. The slot is
+     * as wide as the value each tick.
+     *
+     * @param name     Logical binding name.
+     * @param reader   Callable returning the current value each tick.
+     * @param offset   Byte offset in the push constant struct.
+     */
+    void bind_typed_push_constant(
+        const std::string& name,
+        std::function<Kakshya::GpuValue()> reader,
+        uint32_t offset);
+
     // =========================================================================
     // Descriptor bindings — raw reader overload
     // =========================================================================
@@ -312,6 +328,7 @@ private:
     struct Binding {
         TargetKind kind;
         std::function<float()> reader;
+        std::function<Kakshya::GpuValue()> typed_reader;
         std::optional<PushConstantTarget> pc;
         std::optional<DescriptorTarget> desc;
     };
@@ -324,6 +341,8 @@ private:
     void remember_target(const std::shared_ptr<VKBuffer>& buffer);
 
     void flush_push_constant(const std::string& name, float value, const PushConstantTarget& pc, const std::shared_ptr<VKBuffer>& buffer);
+
+    void flush_typed_push_constant(const std::string& name, const Kakshya::GpuValue& value, const PushConstantTarget& pc, const std::shared_ptr<VKBuffer>& buffer);
 
     void flush_descriptor(float value, const DescriptorTarget& desc,
         const std::shared_ptr<VKBuffer>& attached);
