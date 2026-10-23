@@ -327,7 +327,7 @@ The render descriptor layout reserves `set=0, binding=0` for a `RenderTransform`
 
 `Plot` maps a `PlotContainer` and series descriptions into live data views.
 
-`Collapsible`, `Scrollable`, `TextField`, and `pick` provide common interaction patterns. `LayoutCursor` and spatial placement helpers position them without imposing a layout engine.
+`Collapsible`, `Scrollable`, `TextField`, `Dropdown`, `ColorPicker`, and `pick` provide common interaction patterns. `LayoutCursor` and spatial placement helpers position them without imposing a layout engine.
 
 ### System
 

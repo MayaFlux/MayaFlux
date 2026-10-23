@@ -34,8 +34,8 @@ geometry function if the version has advanced.
 directions.
 
 **Tend\<T\>** chains a `Form<T>`'s construction into a `Bridge` binding in one
-fluent statement, the same `place()` pattern `Collapsible`, `Scrollable`, and
-`TextField` already follow with their own construction.
+fluent statement, the same `place()` pattern `Collapsible`, `Scrollable`,
+`TextField`, `Dropdown`, and `ColorPicker` already follow with their own construction.
 
 ---
 
@@ -566,7 +566,7 @@ Portal::Forma::bridge().at(el.state).write(
     });
 ```
 
-The `write(span sink)` overload is the general bulk outbound path. For `MappedState<vector<float>>` or `MappedState<vector<double>>` the full vector is forwarded each frame. For scalar state a single-element span is constructed. The conversion from `float` to whatever the consumer needs is the caller's responsibility.
+The `write(span sink)` overload is the general bulk outbound path. For `MappedState<vector<float>>`, `MappedState<vector<double>>`, or a `MappedState` of `glm::vec2`, `glm::vec3` or `glm::vec4`, the full value is forwarded each frame. For scalar state a single-element span is constructed. The conversion from `float` to whatever the consumer needs is the caller's responsibility.
 
 ### Chaining both directions
 
