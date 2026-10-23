@@ -116,9 +116,13 @@ public:
      *
      * @param bytes Whole interleaved vertices matching the topology; a trailing
      *              partial vertex is dropped.
+     * @param topology Topology of this block; the buffer's when omitted. A
+     *              different topology needs setup_rendering with triangulate,
+     *              which draws mixed blocks as one batch.
      * @return Id of the block, or 0 when the buffer has no processor yet.
      */
-    SliceId add_slice(const std::vector<uint8_t>& bytes);
+    SliceId add_slice(const std::vector<uint8_t>& bytes,
+        std::optional<Portal::Graphics::PrimitiveTopology> topology = std::nullopt);
 
     /** @brief Replace a block's vertices; later blocks shift if the size changes. */
     void update_slice(SliceId id, const std::vector<uint8_t>& bytes);

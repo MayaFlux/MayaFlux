@@ -175,14 +175,16 @@ void FormaBuffer::submit(const std::vector<uint8_t>& bytes)
     m_processor->set_bytes(bytes);
 }
 
-FormaBuffer::SliceId FormaBuffer::add_slice(const std::vector<uint8_t>& bytes)
+FormaBuffer::SliceId FormaBuffer::add_slice(
+    const std::vector<uint8_t>& bytes,
+    std::optional<Portal::Graphics::PrimitiveTopology> topology)
 {
     if (!m_processor) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             "FormaBuffer::add_slice called before setup_processors");
         return 0;
     }
-    return m_processor->add_slice(bytes);
+    return m_processor->add_slice(bytes, topology);
 }
 
 void FormaBuffer::update_slice(SliceId id, const std::vector<uint8_t>& bytes)

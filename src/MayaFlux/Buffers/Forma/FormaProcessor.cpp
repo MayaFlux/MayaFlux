@@ -47,10 +47,12 @@ void FormaProcessor::set_bytes(const std::vector<uint8_t>& bytes)
     m_changed = true;
 }
 
-FormaProcessor::SliceId FormaProcessor::add_slice(const std::vector<uint8_t>& bytes)
+FormaProcessor::SliceId FormaProcessor::add_slice(
+    const std::vector<uint8_t>& bytes,
+    std::optional<Portal::Graphics::PrimitiveTopology> topology)
 {
     m_changed = true;
-    return m_slices.add(whole_vertices(bytes));
+    return m_slices.add(whole_vertices(bytes), topology);
 }
 
 void FormaProcessor::update_slice(SliceId id, const std::vector<uint8_t>& bytes)

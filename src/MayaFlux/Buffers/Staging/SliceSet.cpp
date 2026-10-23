@@ -19,7 +19,9 @@ SliceSet::SliceSet(uint32_t stride_bytes, Portal::Graphics::PrimitiveTopology to
     }
 }
 
-SliceSet::SliceId SliceSet::add(std::span<const uint8_t> bytes)
+SliceSet::SliceId SliceSet::add(
+    std::span<const uint8_t> bytes,
+    std::optional<Portal::Graphics::PrimitiveTopology> topology)
 {
     if (bytes.size() % m_stride != 0) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferManagement,
@@ -32,7 +34,7 @@ SliceSet::SliceId SliceSet::add(std::span<const uint8_t> bytes)
     const size_t offset = m_mirror.size();
 
     m_mirror.insert(m_mirror.end(), bytes.begin(), bytes.end());
-    m_slices.emplace(id, Slice { .byte_offset = offset, .byte_size = bytes.size() });
+    m_slices.emplace(id, Slice { .byte_offset = offset, .byte_size = bytes.size(), .topology = topology.value_or(m_topology) });
     m_memory_order.push_back(id);
     m_draw_order.push_back(id);
 
@@ -150,13 +152,14 @@ std::optional<std::vector<Portal::Graphics::DrawRun>> SliceSet::take_runs()
         const auto offset = static_cast<uint32_t>(slice.byte_offset / m_stride);
         const auto count = static_cast<uint32_t>(slice.byte_size / m_stride);
 
-        if (is_concatenable_topology(m_topology) && !runs.empty()
+        if (is_concatenable_topology(slice.topology) && !runs.empty()
+            && runs.back().topology == slice.topology
             && runs.back().vertex_offset + runs.back().vertex_count == offset) {
             runs.back().vertex_count += count;
             continue;
         }
 
-        runs.push_back({ .topology = m_topology, .vertex_offset = offset, .vertex_count = count });
+        runs.push_back({ .topology = slice.topology, .vertex_offset = offset, .vertex_count = count });
     }
 
     return runs;

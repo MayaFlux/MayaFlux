@@ -11,12 +11,15 @@ namespace MayaFlux::Buffers {
  *
  * Holds a CPU mirror of the whole batch that shares offsets with the GPU
  * buffer. Blocks are identified by id, placed contiguously in the order they
- * were added, and share one stride and one topology. Draw order is independent
+ * were added, and share one stride. Each carries a topology, defaulting to the
+ * set's, so a render processor that triangulates can draw mixed spans as one
+ * batch; one that does not needs every slice to match its own topology. Draw
+ * order is independent
  * of memory order: bring_to_front, send_to_back and set_visible only change
  * the run list, never move vertex data. Runs adjacent in both memory and draw
- * order are coalesced, so an in-order visible batch is a single run. Strip
- * and fan topologies are never coalesced, since joining their runs would
- * fabricate a primitive across the seam.
+ * order and of the same topology are coalesced, so an in-order visible batch
+ * is a single run. Strip and fan topologies are never coalesced, since joining
+ * their runs would fabricate a primitive across the seam.
  *
  * Same-size updates write into the mirror and mark one dirty range. Adding
  * appends. Resizing or removing a block shifts the blocks after it, which are
@@ -34,15 +37,18 @@ public:
 
     /**
      * @param stride_bytes Bytes per vertex; every block must be a whole multiple.
-     * @param topology Topology of every run produced.
+     * @param topology Topology of a block added without one.
      */
     SliceSet(uint32_t stride_bytes, Portal::Graphics::PrimitiveTopology topology);
 
     /**
      * @brief Append a block at the end of memory and draw order.
+     * @param bytes Whole vertices.
+     * @param topology Topology of this block; the set's default when omitted.
      * @return Id of the block, or 0 if @p bytes is not a whole number of vertices.
      */
-    SliceId add(std::span<const uint8_t> bytes);
+    SliceId add(std::span<const uint8_t> bytes,
+        std::optional<Portal::Graphics::PrimitiveTopology> topology = std::nullopt);
 
     /**
      * @brief Replace a block's vertices.
@@ -91,6 +97,7 @@ private:
     struct Slice {
         size_t byte_offset {};
         size_t byte_size {};
+        Portal::Graphics::PrimitiveTopology topology {};
         bool visible { true };
     };
 

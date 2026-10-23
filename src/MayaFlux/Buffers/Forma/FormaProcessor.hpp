@@ -40,8 +40,14 @@ public:
      */
     void set_bytes(const std::vector<uint8_t>& bytes);
 
-    /** @brief Append a slice, drawn after the existing ones. Returns 0 on failure. */
-    SliceId add_slice(const std::vector<uint8_t>& bytes);
+    /**
+     * @brief Append a slice, drawn after the existing ones. Returns 0 on failure.
+     * @param topology Topology of this slice; the processor's when omitted. A
+     *        slice of a different topology needs a render processor that
+     *        triangulates, otherwise only matching topologies draw correctly.
+     */
+    SliceId add_slice(const std::vector<uint8_t>& bytes,
+        std::optional<Portal::Graphics::PrimitiveTopology> topology = std::nullopt);
 
     /** @brief Replace a slice's vertices; later slices shift if the size changes. */
     void update_slice(SliceId id, const std::vector<uint8_t>& bytes);
