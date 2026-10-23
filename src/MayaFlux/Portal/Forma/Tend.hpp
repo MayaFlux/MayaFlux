@@ -8,6 +8,41 @@
 namespace MayaFlux::Portal::Forma {
 
 /**
+ * @brief Realize a Form on @p surface as a slice of @p batch.
+ *
+ * Like create(), but the element draws into a slice of the shared buffer
+ * instead of a buffer of its own, with the Form's topology. Make the buffer
+ * with create_batch() and pass it to every Form that should draw together;
+ * the Form's capacity is not used, the batch grows. A Form that needs its own
+ * buffer, such as one scissored by a Scrollable, uses create() instead.
+ *
+ * @tparam T       MappedState value type.
+ * @param surface  Canvas to register on.
+ * @param batch    Shared buffer from create_batch().
+ * @param form     Geometry, topology and interaction.
+ * @param initial  Starting value written into MappedState.
+ * @param project  Optional T to float projection for outbound readers.
+ * @return Fully constructed Mapped<T>, wired.
+ */
+template <typename T>
+[[nodiscard]] Mapped<T> create(
+    Surface& surface,
+    const std::shared_ptr<Buffers::FormaBuffer>& batch,
+    Geometry::Form<T> form,
+    T initial,
+    std::function<float(T)> project = {})
+{
+    auto mapped = internal::atelier().create_element<T>(
+        surface, FormaTarget::slice_of(batch, form.topology),
+        std::move(form.geometry), std::move(initial), std::move(project));
+
+    if (form.wire)
+        form.wire(surface.ctx(), mapped.element.id, mapped.state);
+
+    return mapped;
+}
+
+/**
  * @brief Build a FormaBuffer, register it, construct a Mapped<T>, and add
  *        the element to @p layer.
  *
@@ -225,6 +260,10 @@ struct Tend {
     /// @brief Starting value written into MappedState. Consumed by place().
     T initial {};
 
+    /// @brief Optional shared buffer from create_batch(). When set, place()
+    ///        draws the element as a slice of it instead of a buffer of its own.
+    std::shared_ptr<Buffers::FormaBuffer> batch;
+
     /// @brief Populated by place(). The real, fully wired element.
     std::optional<Mapped<T>> result;
 
@@ -240,7 +279,9 @@ struct Tend {
     Tend& place(Surface& target)
     {
         surface = target;
-        result = Portal::Forma::create<T>(target, std::move(form), std::move(initial));
+        result = batch
+            ? Portal::Forma::create<T>(target, batch, std::move(form), std::move(initial))
+            : Portal::Forma::create<T>(target, std::move(form), std::move(initial));
         return *this;
     }
 
