@@ -18,7 +18,7 @@ namespace MayaFlux::Portal::Forma {
  * @brief A pre-created buffer and its bound text image, passed to make_entry.
  */
 struct EntryBuffer {
-    std::shared_ptr<Buffers::FormaBuffer> buf;
+    FormaTarget buf;
     std::shared_ptr<Core::VKImage> text_image;
 };
 
@@ -41,7 +41,7 @@ struct EntrySpec {
  */
 struct Entry {
     uint32_t element_id {};
-    std::shared_ptr<Buffers::FormaBuffer> buf;
+    FormaTarget buf;
     std::shared_ptr<Core::VKImage> text;
     Link link;
 
@@ -167,7 +167,7 @@ struct EntryGroup {
 [[nodiscard]] MAYAFLUX_API EntryGroup make_entry_group(
     std::span<const EntrySpec> entrys,
     std::string_view header_label,
-    std::shared_ptr<Buffers::FormaBuffer> header_buf,
+    FormaTarget header_buf,
     std::span<const EntryBuffer> row_bufs,
     Surface& surface,
     LayoutCursor& cursor,
@@ -183,7 +183,7 @@ struct EntryGroup {
 [[nodiscard]] MAYAFLUX_API EntryGroup make_entry_group(
     std::span<const EntrySpec> entrys,
     std::string_view header_label,
-    std::shared_ptr<Buffers::FormaBuffer> header_buf,
+    FormaTarget header_buf,
     std::span<const EntryBuffer> row_bufs,
     Surface& surface,
     LayoutCursor& cursor,

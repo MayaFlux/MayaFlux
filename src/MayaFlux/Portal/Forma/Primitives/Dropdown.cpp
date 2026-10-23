@@ -134,7 +134,7 @@ Dropdown& Dropdown::place(
     set_open(false);
 
     internal::atelier().bridge().register_element<size_t>(
-        ElementRef { layer_ptr, hid }, selected_state, header_row->buffer);
+        ElementRef { layer_ptr, hid }, selected_state, header_row->buffer.buffer());
 
     header_id = hid;
     selected = std::move(selected_state);

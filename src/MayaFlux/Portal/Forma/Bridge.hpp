@@ -495,7 +495,7 @@ public:
         }
 
         register_element(ElementRef { std::move(owner), mapped.element.id },
-            mapped.state, mapped.element.buffer, std::move(project));
+            mapped.state, mapped.element.buffer.buffer(), std::move(project));
         spawn_sync(layer, mapped.element.id,
             [m = std::move(mapped), target = &layer]() mutable { m.sync(target); });
     }

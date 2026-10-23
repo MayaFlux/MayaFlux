@@ -24,8 +24,8 @@ Element& Element::with_texture(
         return *this;
 
     texture = image;
-    buffer->submit(Kinesis::textured_mesh_rect(region, k_single_texture_weight));
-    buffer->bind_texture(0, image);
+    buffer.submit(Kinesis::textured_mesh_rect(region, k_single_texture_weight));
+    buffer.bind_texture(0, image);
     return *this;
 }
 
@@ -48,8 +48,8 @@ Element& Element::with_text(
         params = Portal::Text::PressParams {};
 
     texture = Portal::Text::press(text, params->render_bounds, *params);
-    buffer->submit(Kinesis::textured_mesh_rect(region, k_single_texture_weight));
-    buffer->bind_texture(0, texture);
+    buffer.submit(Kinesis::textured_mesh_rect(region, k_single_texture_weight));
+    buffer.bind_texture(0, texture);
     return *this;
 }
 
@@ -63,7 +63,7 @@ void Element::set_text(std::string_view text, std::optional<Portal::Text::PressP
 
     Portal::Text::repress(texture, text, *params);
     if (buffer)
-        buffer->bind_texture(0, texture);
+        buffer.bind_texture(0, texture);
 }
 
 Element& Element::retarget(Kinesis::AABB2D region)
@@ -71,7 +71,7 @@ Element& Element::retarget(Kinesis::AABB2D region)
     if (!buffer)
         return *this;
 
-    buffer->submit(Kinesis::textured_mesh_rect(region, k_single_texture_weight));
+    buffer.submit(Kinesis::textured_mesh_rect(region, k_single_texture_weight));
     return *this;
 }
 

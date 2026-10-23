@@ -1,6 +1,7 @@
 #pragma once
 
 #include "LayoutCursor.hpp"
+#include "MayaFlux/Portal/Forma/Target.hpp"
 
 #include "MayaFlux/Kinesis/Viewport/ScrollState.hpp"
 
@@ -85,7 +86,7 @@ struct Scrollable {
     std::shared_ptr<MappedState<glm::vec2>> offset;
 
     /// @brief FormaBuffer backing the viewport background. Valid after place().
-    std::shared_ptr<Buffers::FormaBuffer> buf;
+    FormaTarget buf;
 
     /// @brief Cursor scoped to the viewport, bound to offset. Valid after place().
     LayoutCursor cursor_out;
@@ -138,7 +139,7 @@ struct Scrollable {
      * @return *this, with results populated.
      */
     MAYAFLUX_API Scrollable& place(
-        std::shared_ptr<Buffers::FormaBuffer> in_buf,
+        FormaTarget in_buf,
         Surface& surface,
         Kinesis::AABB2D viewport);
 
@@ -188,7 +189,7 @@ struct Scrollable {
         uint32_t id,
         Kinesis::AABB2D base_bounds,
         std::function<void(Kinesis::AABB2D)> reposition,
-        const std::shared_ptr<Buffers::FormaBuffer>& clip_buf = nullptr);
+        const FormaTarget& clip_buf = {});
 
     /**
      * @brief Apply a scroll delta and reflow every tracked element.
@@ -285,7 +286,7 @@ private:
  * hatch, matching make_collapsible.
  */
 [[nodiscard]] MAYAFLUX_API Scrollable make_scrollable(
-    std::shared_ptr<Buffers::FormaBuffer> buf,
+    FormaTarget buf,
     Surface& surface,
     Kinesis::AABB2D viewport,
     glm::vec3 background_color = glm::vec3(0.08F, 0.08F, 0.1F),

@@ -63,7 +63,7 @@ namespace {
      * text tint) rather than adding a new config field.
      */
     void render_geometry(
-        Buffers::FormaBuffer& buf,
+        const FormaTarget& buf,
         const Portal::Text::EditableText& edit,
         const Portal::Text::PressParams& params,
         Kinesis::AABB2D field_bounds)
@@ -169,7 +169,7 @@ namespace {
 } // namespace
 
 TextField& TextField::place(
-    std::shared_ptr<Buffers::FormaBuffer> in_buf,
+    FormaTarget in_buf,
     Surface& surface,
     Kinesis::AABB2D bounds,
     std::shared_ptr<Portal::Text::PressParams> in_params,
@@ -196,7 +196,7 @@ TextField& TextField::place(
     state->value.cursor = initial_text.size();
     state->value.text = std::move(initial_text);
 
-    render_geometry(*buf, state->value, *params, bounds);
+    render_geometry(buf, state->value, *params, bounds);
 
     wire(surface.ctx());
 
@@ -210,7 +210,7 @@ void TextField::wire(Context& ctx)
         Portal::Text::insert_codepoint(edit, codepoint);
         s->write(edit);
         render_text(el, edit, *p);
-        render_geometry(*b, edit, *p, *fb);
+        render_geometry(b, edit, *p, *fb);
     });
 
     ctx.press_and_hold(element_id, IO::Keys::Backspace, [el = m_element, s = state, p = params, b = buf, fb = m_live_bounds](uint32_t) mutable {
@@ -218,7 +218,7 @@ void TextField::wire(Context& ctx)
         Portal::Text::erase(edit, -1);
         s->write(edit);
         render_text(el, edit, *p);
-        render_geometry(*b, edit, *p, *fb);
+        render_geometry(b, edit, *p, *fb);
     });
 
     ctx.press_and_hold(element_id, IO::Keys::Delete, [el = m_element, s = state, p = params, b = buf, fb = m_live_bounds](uint32_t) mutable {
@@ -226,7 +226,7 @@ void TextField::wire(Context& ctx)
         Portal::Text::erase(edit, 1);
         s->write(edit);
         render_text(el, edit, *p);
-        render_geometry(*b, edit, *p, *fb);
+        render_geometry(b, edit, *p, *fb);
     });
 
     ctx.press_and_hold(element_id, IO::Keys::Tab, [el = m_element, s = state, p = params, b = buf, fb = m_live_bounds](uint32_t) mutable {
@@ -234,7 +234,7 @@ void TextField::wire(Context& ctx)
         Portal::Text::insert_literal(edit, '\t');
         s->write(edit);
         render_text(el, edit, *p);
-        render_geometry(*b, edit, *p, *fb);
+        render_geometry(b, edit, *p, *fb);
     });
 
     ctx.press_and_hold(element_id, IO::Keys::Enter, [el = m_element, s = state, p = params, b = buf, fb = m_live_bounds](uint32_t) mutable {
@@ -242,35 +242,35 @@ void TextField::wire(Context& ctx)
         Portal::Text::insert_literal(edit, '\n');
         s->write(edit);
         render_text(el, edit, *p);
-        render_geometry(*b, edit, *p, *fb);
+        render_geometry(b, edit, *p, *fb);
     });
 
     ctx.press_and_hold(element_id, IO::Keys::Left, [s = state, p = params, b = buf, fb = m_live_bounds](uint32_t) mutable {
         Portal::Text::EditableText edit = s->value;
         Portal::Text::move(edit, -1);
         s->write(edit);
-        render_geometry(*b, edit, *p, *fb);
+        render_geometry(b, edit, *p, *fb);
     });
 
     ctx.press_and_hold(element_id, IO::Keys::Right, [s = state, p = params, b = buf, fb = m_live_bounds](uint32_t) mutable {
         Portal::Text::EditableText edit = s->value;
         Portal::Text::move(edit, 1);
         s->write(edit);
-        render_geometry(*b, edit, *p, *fb);
+        render_geometry(b, edit, *p, *fb);
     });
 
     ctx.press_and_hold(element_id, IO::Keys::Up, [s = state, p = params, b = buf, fb = m_live_bounds](uint32_t) mutable {
         Portal::Text::EditableText edit = s->value;
         move_vertical(edit, *p, -1);
         s->write(edit);
-        render_geometry(*b, edit, *p, *fb);
+        render_geometry(b, edit, *p, *fb);
     });
 
     ctx.press_and_hold(element_id, IO::Keys::Down, [s = state, p = params, b = buf, fb = m_live_bounds](uint32_t) mutable {
         Portal::Text::EditableText edit = s->value;
         move_vertical(edit, *p, 1);
         s->write(edit);
-        render_geometry(*b, edit, *p, *fb);
+        render_geometry(b, edit, *p, *fb);
     });
 
     ctx.on_press(element_id, IO::MouseButtons::Left,
@@ -278,12 +278,12 @@ void TextField::wire(Context& ctx)
             Portal::Text::EditableText edit = s->value;
             move_to_click(edit, *p, *fb, ndc);
             s->write(edit);
-            render_geometry(*b, edit, *p, *fb);
+            render_geometry(b, edit, *p, *fb);
         });
 }
 
 TextField& TextField::scrollable(
-    std::shared_ptr<Buffers::FormaBuffer> in_buf,
+    FormaTarget in_buf,
     Surface& surface,
     Scrollable& scroller,
     std::shared_ptr<Portal::Text::PressParams> in_params,
@@ -317,7 +317,7 @@ void TextField::reposition(Kinesis::AABB2D new_bounds)
         *m_live_bounds = new_bounds;
 
     if (buf && state && params)
-        render_geometry(*buf, state->value, *params, new_bounds);
+        render_geometry(buf, state->value, *params, new_bounds);
 }
 
 } // namespace MayaFlux::Portal::Forma

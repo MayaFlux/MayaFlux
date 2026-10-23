@@ -1,6 +1,7 @@
 #pragma once
 
 #include "LayoutCursor.hpp"
+#include "MayaFlux/Portal/Forma/Target.hpp"
 
 namespace MayaFlux::Core {
 class Window;
@@ -47,7 +48,7 @@ struct Collapsible {
     std::shared_ptr<MappedState<bool>> open;
 
     /// @brief FormaBuffer backing the header geometry. Valid after place().
-    std::shared_ptr<Buffers::FormaBuffer> buf;
+    FormaTarget buf;
 
     /// @brief Cursor positioned below the header, ready for body elements. Valid after place().
     LayoutCursor cursor_out;
@@ -145,7 +146,7 @@ struct Collapsible {
      * @return *this, with results populated.
      */
     MAYAFLUX_API Collapsible& place(
-        std::shared_ptr<Buffers::FormaBuffer> buf,
+        FormaTarget buf,
         Surface& surface,
         LayoutCursor& cursor,
         float x_min, float x_max, float row_h);
@@ -165,7 +166,7 @@ struct Collapsible {
      * @return *this, with results populated.
      */
     MAYAFLUX_API Collapsible& place(
-        std::shared_ptr<Buffers::FormaBuffer> buf,
+        FormaTarget buf,
         Surface& surface,
         LayoutCursor& cursor,
         float row_h);
@@ -201,7 +202,7 @@ struct Collapsible {
  * accepted but ignored - Forma::bridge() is called internally.
  */
 [[nodiscard]] MAYAFLUX_API Collapsible make_collapsible(
-    std::shared_ptr<Buffers::FormaBuffer> buf,
+    FormaTarget buf,
     Surface& surface,
     LayoutCursor& cursor,
     float x_min,

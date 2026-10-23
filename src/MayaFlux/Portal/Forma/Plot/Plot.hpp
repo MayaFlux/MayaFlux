@@ -41,7 +41,7 @@ namespace MayaFlux::Portal::Forma::Plot {
     Mapped<std::shared_ptr<Kakshya::PlotContainer>>
     place(
         Surface& surface,
-        std::shared_ptr<Buffers::FormaBuffer> buf,
+        FormaTarget buf,
         SeriesSpec spec,
         std::shared_ptr<Kakshya::PlotContainer> container);
 
@@ -60,7 +60,7 @@ namespace MayaFlux::Portal::Forma::Plot {
  */
 [[nodiscard]] MAYAFLUX_API uint32_t place_label(
     Surface& surface,
-    std::shared_ptr<Buffers::FormaBuffer> buf,
+    FormaTarget buf,
     const LabelSpec& spec,
     uint32_t relate_to = 0);
 
@@ -78,7 +78,7 @@ namespace MayaFlux::Portal::Forma::Plot {
  */
 [[nodiscard]] MAYAFLUX_API uint32_t place_rect(
     Surface& surface,
-    std::shared_ptr<Buffers::FormaBuffer> buf,
+    FormaTarget buf,
     const RectSpec& spec,
     uint32_t relate_to = 0);
 

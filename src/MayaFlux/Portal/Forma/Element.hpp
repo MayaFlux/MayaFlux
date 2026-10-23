@@ -1,7 +1,7 @@
 #pragma once
 
-#include "MayaFlux/Buffers/Forma/FormaBuffer.hpp"
 #include "MayaFlux/Kinesis/Spatial/Bounds.hpp"
+#include "MayaFlux/Portal/Forma/Target.hpp"
 
 namespace MayaFlux::Core {
 class VKImage;
@@ -73,9 +73,10 @@ struct MAYAFLUX_API Element {
     ///        When absent, @c bounds_hint is used as the sole test.
     std::function<bool(glm::vec2)> contains;
 
-    /// @brief Buffer whose rendered output occupies this region.
-    ///        nullptr for non-rendering elements (pure hit-test regions).
-    std::shared_ptr<Buffers::FormaBuffer> buffer;
+    /// @brief Where this region's rendered output is written: a buffer of its
+    ///        own, or a slice of one it shares. Empty for non-rendering
+    ///        elements (pure hit-test regions).
+    FormaTarget buffer;
 
     /// @brief Optional GPU texture to bind to the attached buffer. Used for
     std::shared_ptr<Core::VKImage> texture;
@@ -180,12 +181,13 @@ struct MAYAFLUX_API Element {
     // =========================================================================
 
     /**
-     * @brief Attach a FormaBuffer as the rendered output for this region.
-     *        nullptr is valid for pure hit-test or pure-spatial elements.
+     * @brief Attach a FormaBuffer, or a slice of one, as the rendered output
+     *        for this region. nullptr is valid for pure hit-test or
+     *        pure-spatial elements.
      */
-    Element& with_buffer(std::shared_ptr<Buffers::FormaBuffer> buf)
+    Element& with_buffer(FormaTarget target)
     {
-        buffer = std::move(buf);
+        buffer = std::move(target);
         return *this;
     }
 

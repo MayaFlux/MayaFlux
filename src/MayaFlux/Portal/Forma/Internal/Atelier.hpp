@@ -244,7 +244,7 @@ namespace internal {
                     Element el;
                     el.id = id;
                     geometry_fn(state->value, bytes, el);
-                    buffer->submit(bytes);
+                    buffer.submit(bytes);
 
                     if (el.bounds_hint)
                         layer_ptr->set_bounds(id, *el.bounds_hint);

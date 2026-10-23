@@ -86,7 +86,7 @@ namespace {
 // =============================================================================
 
 Collapsible& Collapsible::place(
-    std::shared_ptr<Buffers::FormaBuffer> in_buf,
+    FormaTarget in_buf,
     Surface& surface,
     LayoutCursor& cursor,
     float x_min, float x_max, float row_h)
@@ -123,7 +123,7 @@ Collapsible& Collapsible::place(
                 m.sync();
             });
     } else {
-        buf->submit(textured_quad(row_rect));
+        buf.submit(textured_quad(row_rect));
 
         const glm::uvec2 dims = row_pixel_dims(surface.window(), x_min, x_max, row_h);
         auto staging = Buffers::create_image_staging_buffer(
@@ -133,7 +133,7 @@ Collapsible& Collapsible::place(
             { .color = m_label_color,
                 .background = { m_initially_open ? m_color_open : m_color_closed, 1.F } },
             staging);
-        buf->bind_texture(0, image_slot);
+        buf.bind_texture(0, image_slot);
 
         Element el;
         el.buffer = buf;
@@ -162,7 +162,7 @@ Collapsible& Collapsible::place(
                 { .color = label_color,
                     .background = { open->value ? color_open : color_closed, 1.F } },
                 staging);
-            buf->bind_texture(0, image);
+            buf.bind_texture(0, image);
         };
 
         surface.ctx().on_press(hid, IO::MouseButtons::Left,
@@ -186,7 +186,7 @@ Collapsible& Collapsible::place(
 }
 
 Collapsible& Collapsible::place(
-    std::shared_ptr<Buffers::FormaBuffer> in_buf,
+    FormaTarget in_buf,
     Surface& surface,
     LayoutCursor& cursor,
     float row_h)
@@ -209,7 +209,7 @@ void Collapsible::attach(Layer& layer, uint32_t body_id) const
 // =============================================================================
 
 Collapsible make_collapsible(
-    std::shared_ptr<Buffers::FormaBuffer> buf,
+    FormaTarget buf,
     Surface& surface,
     LayoutCursor& cursor,
     float x_min,

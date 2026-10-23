@@ -45,14 +45,14 @@ namespace {
 } // namespace
 
 Scrollable& Scrollable::place(
-    std::shared_ptr<Buffers::FormaBuffer> in_buf,
+    FormaTarget in_buf,
     Surface& surface,
     Kinesis::AABB2D viewport)
 {
     buf = std::move(in_buf);
     viewport_bounds = viewport;
 
-    buf->submit(Kinesis::filled_rect(viewport, m_background));
+    buf.submit(Kinesis::filled_rect(viewport, m_background));
 
     Element el = Element {}
                      .with_name("scrollable_viewport")
@@ -95,7 +95,7 @@ Scrollable& Scrollable::track(
     uint32_t id,
     Kinesis::AABB2D base_bounds,
     std::function<void(Kinesis::AABB2D)> reposition,
-    const std::shared_ptr<Buffers::FormaBuffer>& clip_buf)
+    const FormaTarget& clip_buf)
 {
     if (!scroll || !m_tracked)
         return *this;
@@ -164,7 +164,7 @@ Scrollable& Scrollable::indicator(Surface& surface, Mapped<glm::vec2> el, Kinesi
 }
 
 Scrollable make_scrollable(
-    std::shared_ptr<Buffers::FormaBuffer> buf,
+    FormaTarget buf,
     Surface& surface,
     Kinesis::AABB2D viewport,
     glm::vec3 background_color,

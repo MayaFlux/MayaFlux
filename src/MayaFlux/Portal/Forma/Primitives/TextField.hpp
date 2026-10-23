@@ -116,7 +116,7 @@ struct TextField {
     /// @brief FormaBuffer backing the text quad. Valid after place(). Pass
     ///        directly as Scrollable::track()'s clip_buf for scissor
     ///        clipping - no separate scissor call needed.
-    std::shared_ptr<Buffers::FormaBuffer> buf;
+    FormaTarget buf;
 
     /// @brief NDC region occupied by the field. Valid after place().
     Kinesis::AABB2D field_bounds {};
@@ -142,7 +142,7 @@ struct TextField {
      * @return *this, with results populated.
      */
     MAYAFLUX_API TextField& place(
-        std::shared_ptr<Buffers::FormaBuffer> in_buf,
+        FormaTarget in_buf,
         Surface& surface,
         Kinesis::AABB2D bounds,
         std::shared_ptr<Portal::Text::PressParams> in_params,
@@ -193,7 +193,7 @@ struct TextField {
      * @return *this, with results populated.
      */
     MAYAFLUX_API TextField& scrollable(
-        std::shared_ptr<Buffers::FormaBuffer> in_buf,
+        FormaTarget in_buf,
         Surface& surface,
         Scrollable& scroller,
         std::shared_ptr<Portal::Text::PressParams> in_params,

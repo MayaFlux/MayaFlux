@@ -24,7 +24,7 @@ namespace {
 
 uint32_t place_label(
     Surface& surface,
-    std::shared_ptr<Buffers::FormaBuffer> buf,
+    FormaTarget buf,
     const LabelSpec& spec,
     uint32_t relate_to)
 {
@@ -77,7 +77,7 @@ uint32_t place_label(
                     text, dims, { .color = color }, staging);
                 if (auto* element = surface.layer().get(id))
                     element->texture = image;
-                buf->bind_texture(0, image);
+                buf.bind_texture(0, image);
             });
     }
 
@@ -90,12 +90,12 @@ uint32_t place_label(
 
 uint32_t place_rect(
     Surface& surface,
-    std::shared_ptr<Buffers::FormaBuffer> buf,
+    FormaTarget buf,
     const RectSpec& spec,
     uint32_t relate_to)
 {
     const auto verts = Kinesis::filled_rect(spec.bounds, spec.color);
-    buf->submit(verts);
+    buf.submit(verts);
 
     Element el;
     el.with_buffer(std::move(buf))
@@ -118,7 +118,7 @@ uint32_t place_rect(
 
 Mapped<std::shared_ptr<Kakshya::PlotContainer>> place(
     Surface& surface,
-    std::shared_ptr<Buffers::FormaBuffer> buf,
+    FormaTarget buf,
     SeriesSpec spec,
     std::shared_ptr<Kakshya::PlotContainer> container)
 {

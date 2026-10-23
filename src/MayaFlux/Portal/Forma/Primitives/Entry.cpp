@@ -72,7 +72,7 @@ Entry make_entry(
     const Kinesis::AABB2D advanced = cursor.advance(row_h);
     const Kinesis::AABB2D row_rect { .min = { x_min, advanced.min.y }, .max = { x_max, advanced.max.y } };
 
-    row_buf.buf->submit(textured_quad(row_rect));
+    row_buf.buf.submit(textured_quad(row_rect));
 
     auto staging = Buffers::create_image_staging_buffer(
         row_buf.text_image->get_size_bytes() * k_staging_margin);
@@ -108,7 +108,7 @@ Entry make_entry(
 
         const bool fits = (*image_slot)->get_size_bytes() <= staging->get_size_bytes();
         Portal::Text::repress(*image_slot, text, params, fits ? staging : nullptr);
-        buf->bind_texture(0, *image_slot);
+        buf.bind_texture(0, *image_slot);
     };
 
     surface.ctx().on_resize(id,
@@ -120,7 +120,7 @@ Entry make_entry(
             const std::string text = reader ? (label + ": " + reader()) : label;
             const bool fits = static_cast<size_t>(new_dims.x) * new_dims.y * 4 <= staging->get_size_bytes();
             *image_slot = Portal::Text::press(text, new_dims, resize_params, fits ? staging : nullptr);
-            buf->bind_texture(0, *image_slot);
+            buf.bind_texture(0, *image_slot);
         });
 
     Link link(compose, compose);
@@ -149,7 +149,7 @@ Entry make_entry(
 EntryGroup make_entry_group(
     std::span<const EntrySpec> entrys,
     std::string_view header_label,
-    std::shared_ptr<Buffers::FormaBuffer> header_buf,
+    FormaTarget header_buf,
     std::span<const EntryBuffer> row_bufs,
     Surface& surface,
     LayoutCursor& cursor,
@@ -182,7 +182,7 @@ EntryGroup make_entry_group(
 EntryGroup make_entry_group(
     std::span<const EntrySpec> entrys,
     std::string_view header_label,
-    std::shared_ptr<Buffers::FormaBuffer> header_buf,
+    FormaTarget header_buf,
     std::span<const EntryBuffer> row_bufs,
     Surface& surface,
     LayoutCursor& cursor,

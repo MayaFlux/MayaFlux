@@ -1,7 +1,5 @@
 #include "Layer.hpp"
 
-#include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
-
 namespace MayaFlux::Portal::Forma {
 
 // =============================================================================
@@ -25,7 +23,7 @@ bool Layer::remove(uint32_t id)
 
     for (uint32_t cid : ids) {
         if (auto* el = get(cid); el && el->buffer)
-            el->buffer->mark_for_removal();
+            el->buffer.retire();
         std::erase_if(m_elements, [cid](const Element& e) { return e.id == cid; });
         m_index_stale = true;
     }
@@ -101,10 +99,7 @@ bool Layer::set_visible(uint32_t id, bool visible)
             continue;
 
         el->visible = visible;
-        if (el->buffer) {
-            if (auto render = el->buffer->get_render_processor())
-                render->set_visible(visible, el->buffer);
-        }
+        el->buffer.set_visible(visible);
     }
     return true;
 }
@@ -131,11 +126,8 @@ bool Layer::bring_to_front(uint32_t id)
         std::rotate(it, it + 1, m_elements.end());
         m_index_stale = true;
 
-        if (it = m_elements.end() - 1; it->buffer) {
-            auto config = it->buffer->get_render_config();
-            config.draw_priority = ++m_next_front_priority;
-            it->buffer->set_render_config(config);
-        }
+        if (it = m_elements.end() - 1; it->buffer)
+            it->buffer.bring_to_front(++m_next_front_priority);
     };
 
     for (size_t i = 1; i < ids.size(); ++i)
@@ -160,11 +152,8 @@ bool Layer::send_to_back(uint32_t id)
         std::rotate(m_elements.begin(), it, it + 1);
         m_index_stale = true;
 
-        if (auto& el = m_elements.front(); el.buffer) {
-            auto config = el.buffer->get_render_config();
-            config.draw_priority = --m_next_back_priority;
-            el.buffer->set_render_config(config);
-        }
+        if (auto& el = m_elements.front(); el.buffer)
+            el.buffer.send_to_back(--m_next_back_priority);
     };
 
     for (size_t i = 1; i < ids.size(); ++i)
@@ -225,10 +214,7 @@ bool Layer::relate(uint32_t primary_id, uint32_t related_id)
         rel.push_back(related_id);
 
     r->visible = p->visible;
-    if (r->buffer) {
-        if (auto render = r->buffer->get_render_processor())
-            render->set_visible(p->visible, r->buffer);
-    }
+    r->buffer.set_visible(p->visible);
 
     return true;
 }
