@@ -1,6 +1,7 @@
 #include "Picker.hpp"
 
 #include "MayaFlux/Portal/Forma/Internal/Atelier.hpp"
+#include "MayaFlux/Portal/Forma/Internal/TextRow.hpp"
 
 #include "MayaFlux/Core/Backends/Windowing/Window.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -16,9 +17,6 @@ namespace {
     constexpr uint32_t k_width_px = 520;
     constexpr uint32_t k_min_row_px = 48;
     constexpr uint32_t k_row_padding_px = 16;
-    constexpr size_t k_row_buffer_capacity = static_cast<size_t>(6) * sizeof(Kakshya::MeshVertex);
-    glm::vec4 idle_color() { return { 0.18F, 0.18F, 0.20F, 1.F }; }
-    glm::vec4 hover_color() { return { 0.32F, 0.32F, 0.36F, 1.F }; }
 
     struct PickerState {
         PickCallback callback;
@@ -95,9 +93,11 @@ void pick(
             window,
             internal::k_capacity_bytes,
             Graphics::PrimitiveTopology::TRIANGLE_STRIP);
-        panel = make_scrollable(std::move(panel_buf), surface, surface.full(), glm::vec3(idle_color()));
+        panel = make_scrollable(std::move(panel_buf), surface, surface.full(), glm::vec3(internal::row_idle_color()));
         wheel = panel->wheel_handler(surface);
     }
+
+    const auto row_dims = std::make_shared<glm::uvec2>(k_width_px, row_px);
 
     const float row_h = 2.F * static_cast<float>(row_px) / static_cast<float>(window_h);
     const float gap = 2.F / static_cast<float>(window_h);
@@ -109,38 +109,11 @@ void pick(
             .max = { 1.F, top - gap },
         };
 
-        auto buf = atelier.create_buffer(
-            window,
-            k_row_buffer_capacity,
-            Graphics::PrimitiveTopology::TRIANGLE_LIST,
-            {},
-            { { "text", nullptr } });
+        auto made = internal::add_text_row(surface, labels.at(i), bounds, *row_dims);
+        const uint32_t id = made.first;
+        const auto& row = made.second;
 
-        const Text::PressParams idle_params {
-            .color = { 1.F, 1.F, 1.F, 1.F },
-            .background = idle_color(),
-            .render_bounds = { k_width_px, row_px },
-            .budget_h = row_px,
-        };
-        Text::PressParams hover_params = idle_params;
-        hover_params.background = hover_color();
-
-        const std::string text = "  " + labels.at(i);
-
-        auto row = std::make_shared<Element>();
-        row->with_name(labels.at(i))
-            .with_bounds(bounds)
-            .with_buffer(buf)
-            .with_text(text, idle_params, bounds);
-
-        const uint32_t id = surface.add(*row);
-
-        surface.ctx().on_enter(id, [row, text, hover_params](uint32_t) {
-            row->set_text(text, hover_params);
-        });
-        surface.ctx().on_leave(id, [row, text, idle_params](uint32_t) {
-            row->set_text(text, idle_params);
-        });
+        internal::hover_text_row(surface, id, row, labels.at(i), row_dims);
         surface.ctx().on_press(id, IO::MouseButtons::Left, [state, i](uint32_t, glm::vec2) {
             state->finish(i);
         });
@@ -150,7 +123,7 @@ void pick(
             panel->track(
                 surface.layer(), id, bounds,
                 [row](Kinesis::AABB2D shifted) { row->retarget(shifted); },
-                buf);
+                row->buffer);
         }
     }
 }
