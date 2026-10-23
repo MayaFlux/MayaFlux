@@ -6,36 +6,6 @@
 
 namespace MayaFlux::Kakshya {
 
-size_t gpu_data_format_bytes(GpuDataFormat fmt) noexcept
-{
-    switch (fmt) {
-    case GpuDataFormat::UINT8:
-        return 1;
-    case GpuDataFormat::UINT16:
-        return 2;
-    case GpuDataFormat::FLOAT32:
-    case GpuDataFormat::INT32:
-    case GpuDataFormat::UINT32:
-        return 4;
-    case GpuDataFormat::FLOAT64:
-    case GpuDataFormat::VEC2_F32:
-        return 8;
-    case GpuDataFormat::VEC3_F32:
-        return 12;
-    case GpuDataFormat::VEC4_F32:
-    case GpuDataFormat::VEC2_F64:
-        return 16;
-    case GpuDataFormat::VEC3_F64:
-        return 24;
-    case GpuDataFormat::VEC4_F64:
-        return 32;
-    case GpuDataFormat::MAT4_F32:
-        return 64;
-    default:
-        return 0;
-    }
-}
-
 DataDimension::DataDimension(std::string n, uint64_t s, uint64_t st, Role r)
     : name(std::move(n))
     , size(s)
@@ -91,12 +61,12 @@ DataDimension DataDimension::spatial_1d(uint64_t width)
 
 DataDimension DataDimension::spatial_2d(uint64_t width, uint64_t height)
 {
-    return spatial(height, 'y', width * sizeof(float));
+    return spatial(height, 'y', width);
 }
 
 DataDimension DataDimension::spatial_3d(uint64_t width, uint64_t height, uint64_t depth)
 {
-    return spatial(depth, 'z', width * height * sizeof(float));
+    return spatial(depth, 'z', width * height);
 }
 
 DataDimension DataDimension::mipmap_levels(uint64_t levels)

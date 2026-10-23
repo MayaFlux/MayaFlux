@@ -2,6 +2,8 @@
 
 #include <glm/glm.hpp>
 
+#include "GpuDataFormat.hpp"
+
 #include "typeindex"
 
 namespace MayaFlux::Kakshya {
@@ -17,42 +19,6 @@ namespace detail {
     };
 
 } // namespace detail
-
-/**
- * @enum GpuDataFormat
- * @brief GPU data formats with explicit precision levels
- */
-enum class GpuDataFormat : uint8_t {
-    FLOAT32, // 32-bit float (standard GPU)
-    VEC2_F32, // glm::vec2 (32-bit components)
-    VEC3_F32, // glm::vec3 (32-bit components) — not a sampled image format
-    VEC4_F32, // glm::vec4 (32-bit components)
-
-    FLOAT64, // 64-bit double (audio precision)
-    VEC2_F64, // glm::dvec2 (64-bit components)
-    VEC3_F64, // glm::dvec3 (64-bit components)
-    VEC4_F64, // glm::dvec4 (64-bit components)
-
-    INT32,
-    UINT32,
-
-    UINT8, // uint8_t  — R8 / RGBA8 texel data
-    UINT16, // uint16_t — R16F raw half-float storage, packed formats
-
-    MAT4_F32, // glm::mat4 (column-major) — not a sampled image format
-};
-
-/**
- * @brief Byte size of one element of a GpuDataFormat.
- *
- * Single authoritative source for format sizing. Used by TextureAccess,
- * ShaderSpec, and any other system that needs to derive byte counts from
- * GpuDataFormat without duplicating the switch.
- *
- * @param fmt GpuDataFormat value.
- * @return Byte size of one element, or 0 for unrecognised formats.
- */
-MAYAFLUX_API size_t gpu_data_format_bytes(GpuDataFormat fmt) noexcept;
 
 /**
  * @brief Memory layout for multi-dimensional data.
