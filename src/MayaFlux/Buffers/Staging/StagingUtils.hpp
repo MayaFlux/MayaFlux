@@ -524,6 +524,26 @@ MAYAFLUX_API void ensure_gpu_capacity(
     float growth_factor = k_buffer_growth_factor);
 
 /**
+ * @brief Upload several byte ranges of one source to the same offsets in @p target.
+ * @param base      Start of the source; range [s, e) is read from base + s.
+ * @param intervals Half-open byte ranges. Overlapping and adjacent ranges are merged first.
+ * @param target    Destination buffer, already large enough for the highest end.
+ * @param staging   Staging buffer for device-local targets, grown when too small.
+ *                  May be null for host-visible targets.
+ *
+ * Host-visible targets are written straight from @p base with one flush per
+ * merged range. Device-local targets pack the ranges into @p staging and
+ * record every copy in one blocking submit, so N ranges cost one submit, not N.
+ * Source and destination share offsets, which is what lets a CPU mirror of the
+ * target be the source.
+ */
+MAYAFLUX_API void upload_intervals(
+    const void* base,
+    std::span<const std::pair<size_t, size_t>> intervals,
+    const std::shared_ptr<VKBuffer>& target,
+    std::shared_ptr<VKBuffer>& staging);
+
+/**
  * @brief Upload data from DataAccess view to GPU buffer (precision-preserving)
  * @tparam T View type (double, glm::dvec2, glm::dvec3, glm::vec3, float, etc.)
  * @param accessor DataAccess instance providing the view
