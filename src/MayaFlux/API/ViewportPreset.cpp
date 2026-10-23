@@ -49,6 +49,7 @@ void bind_viewport_preset(
         return;
     case ViewportPresetMode::Screenspace:
         bind_screenspace_preset(window, processor, {}, {}, name);
+        return;
     default:
         MF_RT_ERROR(Journal::Component::API, Journal::Context::EventDispatch,
             "ViewportPresetMode {} is not yet implemented",

@@ -170,6 +170,17 @@ bool WaylandWindow::should_close() const
     return m_should_close.load();
 }
 
+void WaylandWindow::request_close()
+{
+    m_event_source.defer([this]() {
+        if (!m_should_close.exchange(true)) {
+            WindowEvent ev;
+            ev.type = WindowEventType::WINDOW_CLOSED;
+            emit(ev);
+        }
+    });
+}
+
 void WaylandWindow::poll()
 {
     if (!m_display)

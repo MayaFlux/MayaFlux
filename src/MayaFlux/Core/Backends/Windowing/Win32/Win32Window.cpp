@@ -380,6 +380,16 @@ bool Win32Window::should_close() const
     return m_should_close.load();
 }
 
+void Win32Window::request_close()
+{
+    if (!m_should_close.exchange(true)) {
+        WindowEvent ev;
+        ev.type = WindowEventType::WINDOW_CLOSED;
+        ev.timestamp = 0.0;
+        push_event(ev);
+    }
+}
+
 void Win32Window::set_event_callback(WindowEventCallback callback)
 {
     m_event_callback = std::move(callback);

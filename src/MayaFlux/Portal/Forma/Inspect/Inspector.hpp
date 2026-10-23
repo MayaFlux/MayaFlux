@@ -112,10 +112,10 @@ public:
      * node count, enabled state, and registered channels.
      *
      * Persistent: the first call builds the result against @p surface and
-     * @p cursor and stores it statically. Subsequent calls return the same
-     * result regardless of the supplied surface and cursor; the original
-     * window remains the render target. To display on a different surface,
-     * the process must be restarted.
+     * @p cursor and keeps it on this Inspector. Subsequent calls return the
+     * same result regardless of the supplied surface and cursor; the original
+     * window remains the render target. destroy() releases it, and the next
+     * call builds afresh.
      */
     [[nodiscard]] InspectResult& node_graph_manager(
         Surface& surface,
@@ -182,10 +182,10 @@ public:
      * child count. All children are related via layer.relate() for cascade.
      *
      * Persistent: the first call builds the result against @p surface and
-     * @p cursor and stores it statically. Subsequent calls return the same
-     * result regardless of the supplied surface and cursor; the original
-     * window remains the render target. To display on a different surface,
-     * the process must be restarted.
+     * @p cursor and keeps it on this Inspector. Subsequent calls return the
+     * same result regardless of the supplied surface and cursor; the original
+     * window remains the render target. destroy() releases it, and the next
+     * call builds afresh.
      */
     [[nodiscard]] InspectResult& buffer_manager(
         Surface& surface,
@@ -200,10 +200,10 @@ public:
      * context as sub-fields.
      *
      * Persistent: the first call builds the result against @p surface and
-     * @p cursor and stores it statically. Subsequent calls return the same
-     * result regardless of the supplied surface and cursor; the original
-     * window remains the render target. To display on a different surface,
-     * the process must be restarted.
+     * @p cursor and keeps it on this Inspector. Subsequent calls return the
+     * same result regardless of the supplied surface and cursor; the original
+     * window remains the render target. destroy() releases it, and the next
+     * call builds afresh.
      */
     [[nodiscard]] InspectResult& scheduler(
         Surface& surface,
@@ -228,10 +228,10 @@ public:
      * added without a name. Body rows expose active state.
      *
      * Persistent: the first call builds the result against @p surface and
-     * @p cursor and stores it statically. Subsequent calls return the same
-     * result regardless of the supplied surface and cursor; the original
-     * window remains the render target. To display on a different surface,
-     * the process must be restarted.
+     * @p cursor and keeps it on this Inspector. Subsequent calls return the
+     * same result regardless of the supplied surface and cursor; the original
+     * window remains the render target. destroy() releases it, and the next
+     * call builds afresh.
      */
     [[nodiscard]] InspectResult& event_manager(
         Surface& surface,
@@ -255,7 +255,7 @@ public:
      * @brief Destroy an InspectResult and release its resources.
      *
      * If @p result is one of the four persistent manager results, the
-     * corresponding static optional is nulled; the next manager call will
+     * corresponding optional is reset; the next manager call will
      * rebuild from scratch. If @p result is a per-element result owned by
      * the caller, it is reset to a default-constructed state.
      */
@@ -293,10 +293,10 @@ private:
         LayoutCursor& cursor,
         float x_min, float x_max, float row_h);
 
-    static std::optional<InspectResult> s_node_graph_result;
-    static std::optional<InspectResult> s_buffer_result;
-    static std::optional<InspectResult> s_scheduler_result;
-    static std::optional<InspectResult> s_event_result;
+    std::optional<InspectResult> m_node_graph_result;
+    std::optional<InspectResult> m_buffer_result;
+    std::optional<InspectResult> m_scheduler_result;
+    std::optional<InspectResult> m_event_result;
 };
 
 } // namespace MayaFlux::Portal::Forma

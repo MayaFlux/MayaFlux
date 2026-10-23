@@ -2,6 +2,8 @@
 
 #include "Primitives/Mapped.hpp"
 
+#include "MayaFlux/Journal/Archivist.hpp"
+
 namespace MayaFlux::Core {
 class Window;
 }
@@ -351,7 +353,15 @@ public:
                 return static_cast<float>(s->value);
             };
         } else {
-            reader = [] { return 0.F; };
+            reader = [id, reported = std::make_shared<bool>(false)] {
+                if (!*reported) {
+                    *reported = true;
+                    MF_RT_WARN(Journal::Component::Portal, Journal::Context::Init,
+                        "Bridge: element {} has state type '{}' with no float conversion and no projection; its outbound reader yields 0",
+                        id, typeid(T).name());
+                }
+                return 0.F;
+            };
         }
 
         std::function<std::vector<float>()> bulk_reader;
@@ -373,7 +383,14 @@ public:
                 s->write(static_cast<T>(v));
             };
         } else {
-            writer = [](float) { };
+            writer = [id, reported = std::make_shared<bool>(false)](float) {
+                if (!*reported) {
+                    *reported = true;
+                    MF_RT_WARN(Journal::Component::Portal, Journal::Context::Init,
+                        "Bridge: element {} has state type '{}' with no float conversion and no projection; its inbound writer does nothing",
+                        id, typeid(T).name());
+                }
+            };
         }
 
         state->id = id;
@@ -385,6 +402,7 @@ public:
             .writer = std::move(writer),
             .inbound_task = {},
             .outbound_tasks = {},
+            .binding_names = {},
         };
     }
 
@@ -413,8 +431,10 @@ public:
     /**
      * @brief Register a Mapped element and scope its presentation sync to a Layer.
      *
-     * The Layer scope is used only for stopping presentation sync when its
-     * Surface closes. Existing id-based bindings remain independent.
+     * Each frame's sync pushes the geometry function's bounds_hint and
+     * contains back into @p layer, so hit testing follows the drawn shape.
+     * The Layer scope also stops presentation sync when its Surface closes.
+     * unbind(id) cancels the sync task as well.
      *
      * @param layer   Layer owning the element.
      * @param mapped  Fully constructed Mapped element.
@@ -428,7 +448,7 @@ public:
     {
         register_element(mapped.state, mapped.element.id, mapped.element.buffer, std::move(project));
         spawn_sync(layer, mapped.element.id,
-            [m = std::move(mapped)]() mutable { m.sync(); });
+            [m = std::move(mapped), target = &layer]() mutable { m.sync(target); });
     }
 
     // =========================================================================
@@ -614,6 +634,7 @@ private:
         std::function<void(float)> writer; ///< writes new value into MappedState (inbound)
         std::string inbound_task;
         std::vector<std::string> outbound_tasks;
+        std::vector<std::string> binding_names;
     };
 
     Vruta::TaskScheduler& m_scheduler;

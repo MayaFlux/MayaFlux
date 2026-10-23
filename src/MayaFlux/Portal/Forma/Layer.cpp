@@ -11,6 +11,7 @@ namespace MayaFlux::Portal::Forma {
 Layer::Slot Layer::add(Element element)
 {
     element.id = m_next_id++;
+    m_index[element.id] = m_elements.size();
     m_elements.push_back(std::move(element));
     return Slot(*this, m_elements.back().id);
 }
@@ -26,6 +27,7 @@ bool Layer::remove(uint32_t id)
         if (auto* el = get(cid); el && el->buffer)
             el->buffer->mark_for_removal();
         std::erase_if(m_elements, [cid](const Element& e) { return e.id == cid; });
+        m_index_stale = true;
     }
 
     for (uint32_t cid : ids)
@@ -43,6 +45,8 @@ bool Layer::remove(uint32_t id)
 void Layer::clear()
 {
     m_elements.clear();
+    m_index.clear();
+    m_index_stale = false;
     m_relations.clear();
 }
 
@@ -68,6 +72,15 @@ bool Layer::set_contains(uint32_t id, std::function<bool(glm::vec2)> fn)
     return false;
 }
 
+bool Layer::set_clip(uint32_t id, std::optional<Kinesis::AABB2D> clip)
+{
+    if (auto* el = get(id)) {
+        el->clip = clip;
+        return true;
+    }
+    return false;
+}
+
 bool Layer::set_interactive(uint32_t id, bool interactive)
 {
     if (auto* el = get(id)) {
@@ -79,19 +92,19 @@ bool Layer::set_interactive(uint32_t id, bool interactive)
 
 bool Layer::set_visible(uint32_t id, bool visible)
 {
-    auto* root = get(id);
-    if (!root)
+    if (!get(id))
         return false;
 
-    root->visible = visible;
-    if (root->buffer) {
-        if (auto render = root->buffer->get_render_processor())
-            render->set_visible(visible, root->buffer);
-    }
+    for (uint32_t member : closure(id)) {
+        auto* el = get(member);
+        if (!el)
+            continue;
 
-    if (auto it = m_relations.find(id); it != m_relations.end()) {
-        for (uint32_t rel_id : it->second)
-            set_visible(rel_id, visible);
+        el->visible = visible;
+        if (el->buffer) {
+            if (auto render = el->buffer->get_render_processor())
+                render->set_visible(visible, el->buffer);
+        }
     }
     return true;
 }
@@ -105,53 +118,58 @@ void Layer::set_all_visible(bool visible)
 
 bool Layer::bring_to_front(uint32_t id)
 {
-    if (auto rit = m_relations.find(id); rit != m_relations.end()) {
-        for (uint32_t rel_id : rit->second) {
-            auto it = std::ranges::find_if(m_elements,
-                [rel_id](const Element& e) { return e.id == rel_id; });
-            if (it != m_elements.end())
-                std::rotate(it, it + 1, m_elements.end());
-
-            if (auto* rel_el = get(rel_id); rel_el && rel_el->buffer) {
-                auto config = rel_el->buffer->get_render_config();
-                config.draw_priority = ++m_next_front_priority;
-                rel_el->buffer->set_render_config(config);
-            }
-        }
-    }
-    auto it = std::ranges::find_if(m_elements,
-        [id](const Element& e) { return e.id == id; });
-    if (it == m_elements.end())
+    if (!get(id))
         return false;
-    std::rotate(it, it + 1, m_elements.end());
 
-    if (auto* el = get(id); el && el->buffer) {
-        auto config = el->buffer->get_render_config();
-        config.draw_priority = ++m_next_front_priority;
-        el->buffer->set_render_config(config);
-    }
+    const std::vector<uint32_t> ids = closure(id);
+
+    auto raise = [this](uint32_t target) {
+        auto it = std::ranges::find_if(m_elements,
+            [target](const Element& e) { return e.id == target; });
+        if (it == m_elements.end())
+            return;
+        std::rotate(it, it + 1, m_elements.end());
+        m_index_stale = true;
+
+        if (it = m_elements.end() - 1; it->buffer) {
+            auto config = it->buffer->get_render_config();
+            config.draw_priority = ++m_next_front_priority;
+            it->buffer->set_render_config(config);
+        }
+    };
+
+    for (size_t i = 1; i < ids.size(); ++i)
+        raise(ids[i]);
+    raise(ids.front());
 
     return true;
 }
 
 bool Layer::send_to_back(uint32_t id)
 {
-    if (auto rit = m_relations.find(id); rit != m_relations.end()) {
-        for (uint32_t rel_id : rit->second)
-            send_to_back(rel_id);
-    }
-
-    auto it = std::ranges::find_if(m_elements,
-        [id](const Element& e) { return e.id == id; });
-    if (it == m_elements.end())
+    if (!get(id))
         return false;
-    std::rotate(m_elements.begin(), it, it + 1);
 
-    if (auto* el = get(id); el && el->buffer) {
-        auto config = el->buffer->get_render_config();
-        config.draw_priority = --m_next_back_priority;
-        el->buffer->set_render_config(config);
-    }
+    const std::vector<uint32_t> ids = closure(id);
+
+    auto lower = [this](uint32_t target) {
+        auto it = std::ranges::find_if(m_elements,
+            [target](const Element& e) { return e.id == target; });
+        if (it == m_elements.end())
+            return;
+        std::rotate(m_elements.begin(), it, it + 1);
+        m_index_stale = true;
+
+        if (auto& el = m_elements.front(); el.buffer) {
+            auto config = el.buffer->get_render_config();
+            config.draw_priority = --m_next_back_priority;
+            el.buffer->set_render_config(config);
+        }
+    };
+
+    for (size_t i = 1; i < ids.size(); ++i)
+        lower(ids[i]);
+    lower(ids.front());
 
     return true;
 }
@@ -257,18 +275,25 @@ std::vector<uint32_t> Layer::closure(uint32_t id) const
 // Introspection
 // =============================================================================
 
+void Layer::reindex() const
+{
+    m_index.clear();
+    for (size_t i = 0; i < m_elements.size(); ++i)
+        m_index[m_elements[i].id] = i;
+    m_index_stale = false;
+}
+
 const Element* Layer::get(uint32_t id) const
 {
-    auto it = std::ranges::find_if(m_elements,
-        [id](const Element& e) { return e.id == id; });
-    return it != m_elements.end() ? &*it : nullptr;
+    if (m_index_stale)
+        reindex();
+    const auto it = m_index.find(id);
+    return it != m_index.end() ? &m_elements[it->second] : nullptr;
 }
 
 Element* Layer::get(uint32_t id)
 {
-    auto it = std::ranges::find_if(m_elements,
-        [id](const Element& e) { return e.id == id; });
-    return it != m_elements.end() ? &*it : nullptr;
+    return const_cast<Element*>(std::as_const(*this).get(id));
 }
 
 // =============================================================================
@@ -284,6 +309,8 @@ glm::vec2 Layer::to_ndc(double px, double py, uint32_t w, uint32_t h) noexcept
 bool Layer::test_element(const Element& el, glm::vec2 ndc) noexcept
 {
     if (!el.interactive || !el.visible)
+        return false;
+    if (el.clip && !el.clip->contains(ndc))
         return false;
     if (el.bounds_hint && !el.bounds_hint->contains(ndc))
         return false;

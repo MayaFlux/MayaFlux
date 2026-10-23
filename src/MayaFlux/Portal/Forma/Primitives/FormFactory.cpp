@@ -2,6 +2,7 @@
 
 #include "MayaFlux/Kinesis/Geometry2D.hpp"
 #include "MayaFlux/Kinesis/GeometryPrimitives.hpp"
+#include "MayaFlux/Kinesis/Spatial/Stroke.hpp"
 
 namespace MayaFlux::Portal::Forma::Geometry {
 
@@ -373,7 +374,8 @@ Form<std::vector<float>> drawable_canvas(
     Kinesis::AABB2D bounds,
     glm::vec3 color,
     float thickness,
-    const std::function<glm::vec2()>& live_offset)
+    const std::function<glm::vec2()>& live_offset,
+    size_t samples)
 {
     GeometryFn<std::vector<float>> fn = [bounds, color, thickness, live_offset](
                                             const std::vector<float>& v, std::vector<uint8_t>& out, Element& el) {
@@ -421,6 +423,8 @@ Form<std::vector<float>> drawable_canvas(
 
     Form<std::vector<float>> form { std::move(fn) };
     form.topology = Graphics::PrimitiveTopology::LINE_LIST;
+    if (samples > 1)
+        form.capacity = (samples - 1) * 2 * sizeof(Kakshya::LineVertex);
     form.wire = paint_over(bounds);
     return form;
 }
@@ -444,27 +448,8 @@ void wire_canvas_drag(
 
             const float t = (ndc.x - bounds.min.x) / bounds.width();
             const float a = (ndc.y - bounds.min.y) / bounds.height();
-            const size_t n = v.size();
-            const size_t idx = static_cast<size_t>(
-                std::clamp(t, 0.F, 1.F) * static_cast<float>(n - 1));
-            const float amp = std::clamp(a, 0.F, 1.F);
 
-            if (ds->prev_index && *ds->prev_index != idx) {
-                const size_t lo = std::min(*ds->prev_index, idx);
-                const size_t hi = std::max(*ds->prev_index, idx);
-                const float v0 = v[*ds->prev_index];
-                const auto span = static_cast<float>(hi - lo);
-                for (size_t i = lo; i <= hi; ++i) {
-                    const float f = span > 0.F
-                        ? static_cast<float>(i - lo) / span
-                        : 1.F;
-                    v[i] = glm::mix(v0, amp, f);
-                }
-            } else {
-                v[idx] = amp;
-            }
-
-            ds->prev_index = idx;
+            Kinesis::stroke_samples(v, ds->prev_index, t, a);
             ++state->version;
         });
 

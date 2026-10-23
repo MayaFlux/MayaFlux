@@ -5,7 +5,7 @@
 #include "MayaFlux/Core/GlobalGraphicsInfo.hpp"
 #include "MayaFlux/IO/Keys.hpp"
 
-#include <queue>
+#include <deque>
 
 namespace MayaFlux::Kriya {
 class WindowEventAwaiter;
@@ -59,6 +59,10 @@ struct MAYAFLUX_API WindowEventFilter : public EventFilter {
  *
  * Signals are produced by the window backend's poll(), on the polling thread. Coroutines
  * suspend via WindowEventAwaiter and are resumed synchronously from signal().
+ * Every suspended awaiter whose filter matches receives the event, in registration
+ * order. An event no awaiter took is queued until one arrives, up to
+ * k_max_pending_events per event type; beyond that the oldest queued event of
+ * the same type is dropped, so a flood of one type never evicts another.
  * Tracks input state for immediate polling via is_key_pressed(),
  * is_mouse_pressed(), and get_mouse_position().
  *
@@ -68,6 +72,9 @@ struct MAYAFLUX_API WindowEventFilter : public EventFilter {
  */
 class MAYAFLUX_API WindowEventSource : public EventSource {
 public:
+    /// @brief Most events of one type held for a later awaiter before the oldest of that type is dropped.
+    static constexpr size_t k_max_pending_events = 1024;
+
     WindowEventSource() = default;
     ~WindowEventSource() override = default;
 
@@ -104,7 +111,11 @@ public:
 
     [[nodiscard]] bool has_pending() const override { return !m_pending_events.empty(); }
     [[nodiscard]] size_t pending_count() const { return m_pending_events.size(); }
-    void clear() override { m_pending_events = {}; }
+    void clear() override
+    {
+        m_pending_events.clear();
+        m_pending_counts.fill(0);
+    }
 
     /**
      * @brief Returns true if the given key is currently held.
@@ -124,13 +135,15 @@ public:
     [[nodiscard]] std::pair<double, double> get_mouse_position() const;
 
 private:
-    std::queue<Core::WindowEvent> m_pending_events;
+    std::deque<Core::WindowEvent> m_pending_events;
+    std::array<size_t, 256> m_pending_counts {};
     std::unordered_map<int16_t, bool> m_key_states;
     std::unordered_map<int, bool> m_button_states;
     double m_mouse_x {};
     double m_mouse_y {};
     std::vector<std::function<void()>> m_deferred_actions;
     size_t m_signal_depth {};
+    size_t m_resumed {};
 
     /**
      * @brief Removes and returns the first pending event matching the filter.

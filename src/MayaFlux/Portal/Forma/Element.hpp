@@ -63,6 +63,12 @@ struct MAYAFLUX_API Element {
     ///        When set, Layer evaluates this before @c contains.
     std::optional<Kinesis::AABB2D> bounds_hint;
 
+    /// @brief Optional region outside which hit testing rejects the element.
+    ///        Independent of @c bounds_hint and @c contains, so geometry
+    ///        functions that rewrite those never lift it. Set by containers
+    ///        such as Scrollable to confine a child to its viewport.
+    std::optional<Kinesis::AABB2D> clip;
+
     /// @brief Authoritative containment test in NDC space.
     ///        When absent, @c bounds_hint is used as the sole test.
     std::function<bool(glm::vec2)> contains;

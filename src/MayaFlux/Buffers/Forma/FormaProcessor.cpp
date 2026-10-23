@@ -84,8 +84,6 @@ void FormaProcessor::set_texture(std::shared_ptr<Core::VKImage> image, std::stri
 void FormaProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
 {
     if (m_texture_dirty.test(std::memory_order_acquire)) {
-        m_texture_dirty.clear(std::memory_order_release);
-
         auto vk = std::dynamic_pointer_cast<VKBuffer>(buffer);
         if (vk) {
             if (auto rp = vk->get_render_processor()) {
@@ -93,9 +91,10 @@ void FormaProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
                     rp->bind_texture(m_pending_texture->binding,
                         m_pending_texture->image);
                 }
+                m_pending_texture.reset();
+                m_texture_dirty.clear(std::memory_order_release);
             }
         }
-        m_pending_texture.reset();
     }
 
     if (!m_geometry_dirty.test(std::memory_order_acquire))
@@ -104,8 +103,15 @@ void FormaProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
     m_geometry_dirty.clear(std::memory_order_release);
     std::swap(m_active, m_pending_geometry);
 
-    if (m_active.empty())
+    if (m_active.empty()) {
+        if (auto vk = std::dynamic_pointer_cast<VKBuffer>(buffer)) {
+            if (auto layout = vk->get_vertex_layout()) {
+                layout->vertex_count = 0;
+                vk->set_vertex_layout(*layout);
+            }
+        }
         return;
+    }
 
     auto vk = std::dynamic_pointer_cast<VKBuffer>(buffer);
     if (!vk)

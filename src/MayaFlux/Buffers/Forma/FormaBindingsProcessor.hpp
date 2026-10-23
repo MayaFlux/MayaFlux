@@ -138,6 +138,7 @@ public:
             return;
         }
 
+        release(name);
         auto& b = m_bindings[name];
         b.kind = TargetKind::PUSH_CONSTANT;
         b.reader = [s = std::move(state), p = std::move(project)]() {
@@ -184,6 +185,7 @@ public:
             return;
         }
 
+        release(name);
         auto gpu_buf = make_descriptor_buffer(role);
 
         auto& b = m_bindings[name];
@@ -258,8 +260,13 @@ private:
     };
 
     std::unordered_map<std::string, Binding> m_bindings;
+    std::vector<std::weak_ptr<VKBuffer>> m_targets;
 
-    void flush_push_constant(float value, const PushConstantTarget& pc, const std::shared_ptr<VKBuffer>& buffer);
+    void release(const std::string& name);
+
+    void remember_target(const std::shared_ptr<VKBuffer>& buffer);
+
+    void flush_push_constant(const std::string& name, float value, const PushConstantTarget& pc, const std::shared_ptr<VKBuffer>& buffer);
 
     void flush_descriptor(float value, const DescriptorTarget& desc,
         const std::shared_ptr<VKBuffer>& attached);

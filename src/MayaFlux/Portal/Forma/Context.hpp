@@ -27,9 +27,10 @@ struct MappedState;
  * the same pattern as Nexus::Fabric. The EventManager and Window are
  * injected; Context holds no engine-level singletons.
  *
- * Callbacks fire on the scheduler tick. They must not touch GPU resources
- * directly. State intended for the graphics tick should be written through
- * shared_ptr captures and read on the next graphics cycle.
+ * Callbacks fire on the graphics thread, from window polling at the end of
+ * each frame, after that frame's Bridge tasks and buffer processing have run.
+ * They may write a MappedState directly, since it is the same thread, and the
+ * value is read by the next frame. They must not touch GPU resources directly.
  *
  * All registered events are cancelled on destruction via
  * EventManager::cancel_event, keyed by names scoped to this Context.
@@ -106,7 +107,8 @@ public:
      * This matches standard UI expectations for sliders, scrollbars, resize handles,
      * and other controls that must respond continuously during a drag gesture.
      *
-     * Backed by Kriya::mouse_dragged, which gates on button state natively.
+     * Driven by the same motion event as on_move, for every button the
+     * window's event source reports as held.
      *
      * @param id  Element id to bind to.
      * @param btn Mouse button that must be held.
@@ -258,16 +260,10 @@ public:
      * @brief Register a key handler that fires on the initial press and on
      *        every repeat, with a deterministic first event.
      *
-     * WindowEventSource pops events from one shared pending-event queue,
-     * and dispatch() lets every registered waiter for a key race to pop
-     * the same KEY_PRESSED. on_held's filter alone would still catch that
-     * first press if it were the only waiter on the key, but once another
-     * waiter for the same key exists on this Context, whichever registered
-     * first wins the race and the other sees nothing for that tick.
-     * Registering on_press before on_held, as this does, makes the outcome
-     * deterministic: on_press claims the initial KEY_PRESSED and on_held is
-     * then only ever resumed by the KEY_REPEAT events that follow. One fire
-     * per physical press, a clean repeat cadence after, no double count.
+     * on_held already fires on the initial KEY_PRESSED and on each repeat, so
+     * this registers it alone; also registering on_press would count the
+     * initial press twice, since every listener on a key sees every event.
+     * One fire per physical press, a clean repeat cadence after.
      *
      * @param id  Element id to bind to.
      * @param key The key to listen for.
@@ -301,6 +297,9 @@ public:
     [[nodiscard]] std::optional<uint32_t> hovered() const { return m_hovered; }
 
     [[nodiscard]] const Vruta::WindowEventSource& event_source() const;
+
+    /// @brief The Layer this Context hit-tests against.
+    [[nodiscard]] const std::shared_ptr<Layer>& layer() const noexcept { return m_layer; }
 
     /**
      * @brief Rect of pixel size (@p w, @p h) at pixel position (@p x, @p y),
@@ -358,6 +357,7 @@ private:
     void handle_release(double px, double py, IO::MouseButtons btn);
     void handle_scroll(double dx, double dy);
     void handle_drag(double px, double py, IO::MouseButtons btn);
+    void handle_drags(double px, double py);
     void handle_key_press(IO::Keys key);
     void handle_key_release(IO::Keys key);
     void handle_key_held(IO::Keys key);

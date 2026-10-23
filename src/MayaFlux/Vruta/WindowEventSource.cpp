@@ -27,10 +27,20 @@ void WindowEventSource::signal(Core::WindowEvent event)
         m_mouse_y = pd->y;
     }
 
-    m_pending_events.push(event);
+    const size_t resumed_before = m_resumed;
     ++m_signal_depth;
     dispatch(&event);
     --m_signal_depth;
+    if (m_resumed == resumed_before) {
+        m_pending_events.push_back(event);
+        auto& held = m_pending_counts[static_cast<uint8_t>(event.type)];
+        if (++held > k_max_pending_events) {
+            auto oldest = std::ranges::find(m_pending_events, event.type, &Core::WindowEvent::type);
+            m_pending_events.erase(oldest);
+            --held;
+        }
+    }
+
     if (m_signal_depth != 0 || m_deferred_actions.empty())
         return;
 
@@ -70,16 +80,17 @@ std::optional<Core::WindowEvent> WindowEventSource::pop_event(const WindowEventF
 
     if (!filter.event_type && !filter.key_code && !filter.button) {
         auto ev = m_pending_events.front();
-        m_pending_events.pop();
+        m_pending_events.pop_front();
+        --m_pending_counts[static_cast<uint8_t>(ev.type)];
         return ev;
     }
 
-    std::queue<Core::WindowEvent> tmp;
+    std::deque<Core::WindowEvent> tmp;
     std::optional<Core::WindowEvent> result;
 
     while (!m_pending_events.empty()) {
         auto ev = m_pending_events.front();
-        m_pending_events.pop();
+        m_pending_events.pop_front();
 
         bool matches = true;
 
@@ -105,11 +116,13 @@ std::optional<Core::WindowEvent> WindowEventSource::pop_event(const WindowEventF
         if (matches && !result) {
             result = ev;
         } else {
-            tmp.push(ev);
+            tmp.push_back(ev);
         }
     }
 
     m_pending_events = std::move(tmp);
+    if (result)
+        --m_pending_counts[static_cast<uint8_t>(result->type)];
     return result;
 }
 

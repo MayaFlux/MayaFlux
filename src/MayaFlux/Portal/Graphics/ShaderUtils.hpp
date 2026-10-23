@@ -264,6 +264,8 @@ struct DepthStencilConfig {
     bool stencil_test_enable = false;
 
     DepthStencilConfig() = default;
+
+    bool operator==(const DepthStencilConfig&) const = default;
 };
 
 /**
@@ -280,6 +282,8 @@ struct BlendAttachmentConfig {
     BlendOp alpha_blend_op = BlendOp::ADD;
 
     BlendAttachmentConfig() = default;
+
+    bool operator==(const BlendAttachmentConfig&) const = default;
 
     /// @brief Create standard alpha blending configuration
     static BlendAttachmentConfig alpha_blend()

@@ -105,12 +105,15 @@ Scrollable& Scrollable::track(
     scroll->content_bounds.min = glm::min(scroll->content_bounds.min, base_bounds.min);
     scroll->content_bounds.max = glm::max(scroll->content_bounds.max, base_bounds.max);
 
-    if (clip_buf)
-        clip_buf->get_render_processor()->set_scissor(Kinesis::Scissor::from(viewport_bounds));
+    if (clip_buf) {
+        if (auto render = clip_buf->get_render_processor())
+            render->set_scissor(Kinesis::Scissor::from(viewport_bounds));
+    }
 
     layer.relate(viewport_id, id);
 
     m_tracked->push_back({ .id = id, .base_bounds = base_bounds, .reposition = std::move(reposition) });
+    layer.set_clip(id, viewport_bounds);
 
     if (m_indicator && m_indicator->state) {
         m_indicator->state->write(scroll_extent(*scroll));

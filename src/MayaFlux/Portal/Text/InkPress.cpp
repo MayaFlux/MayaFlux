@@ -606,12 +606,6 @@ ImpressResult impress(
 
     const LayoutResult layout = lay_out(text, *atlas, pen_x, pen_y, buf_w);
 
-    if (layout.quads.empty()) {
-        MF_WARN(Journal::Component::Portal, Journal::Context::API,
-            "impress: no glyphs produced for '{}'", std::string(text));
-        return ImpressResult::Ok;
-    }
-
     const auto pen_y_ceil = static_cast<uint32_t>(std::ceil(layout.final_pen_y));
     const uint32_t new_cursor_y = pen_y_ceil;
     const uint32_t content_h = pen_y_ceil + atlas->line_height();
@@ -625,7 +619,8 @@ ImpressResult impress(
         const std::string accumulated = target->get_accumulated_text();
         const glm::vec4 background = target->get_background();
 
-        const auto full = composite(accumulated, *atlas, color, buf_w, new_h, 0.F, spans, background);
+        const auto full = composite(accumulated, *atlas, color, buf_w, new_h,
+            static_cast<float>(atlas->line_height()), spans, background);
         if (!full) {
             return ImpressResult::Overflow;
         }
@@ -645,7 +640,7 @@ ImpressResult impress(
 
         target->set_pixel_data(pixels.data(), buf_bytes);
         target->get_cursor_x() = full->cursor_x;
-        target->get_cursor_y() = full->h;
+        target->get_cursor_y() = full->cursor_y;
         target->set_accumulated_text(accumulated);
 
         MF_DEBUG(Journal::Component::Portal, Journal::Context::API,

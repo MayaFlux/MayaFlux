@@ -14,6 +14,14 @@ namespace MayaFlux::Kakshya {
 namespace {
     constexpr auto C = Journal::Component::Kakshya;
     constexpr auto X = Journal::Context::ContainerProcessing;
+
+    void release_node(PlotProcessor::SeriesBinding& binding)
+    {
+        if (!binding.node)
+            return;
+        binding.node->remove_buffer_reference();
+        binding.node.reset();
+    }
 }
 
 // =========================================================================
@@ -28,6 +36,7 @@ void PlotProcessor::bind_node(uint32_t series_index,
         return;
     }
     auto& b = m_bindings[series_index];
+    release_node(b);
     b.source_type = SourceType::NODE;
     b.node = std::move(node);
     b.node->add_buffer_reference();
@@ -46,7 +55,7 @@ void PlotProcessor::bind_audio_buffer(uint32_t series_index,
     auto& b = m_bindings[series_index];
     b.source_type = SourceType::AUDIO_BUFFER;
     b.audio_buffer = std::move(buffer);
-    b.node.reset();
+    release_node(b);
     b.network.reset();
     b.callable = {};
 }
@@ -70,7 +79,7 @@ void PlotProcessor::bind_network(uint32_t series_index,
     auto& b = m_bindings[series_index];
     b.source_type = SourceType::NETWORK;
     b.network = std::move(network);
-    b.node.reset();
+    release_node(b);
     b.audio_buffer.reset();
     b.callable = {};
 }
@@ -85,7 +94,7 @@ void PlotProcessor::bind_callable(uint32_t series_index,
     auto& b = m_bindings[series_index];
     b.source_type = SourceType::CALLABLE;
     b.callable = std::move(fn);
-    b.node.reset();
+    release_node(b);
     b.audio_buffer.reset();
     b.network.reset();
 }
@@ -93,6 +102,7 @@ void PlotProcessor::bind_callable(uint32_t series_index,
 void PlotProcessor::set_raw(uint32_t series_index, std::vector<double> data)
 {
     auto& b = m_bindings[series_index];
+    release_node(b);
     b.source_type = SourceType::RAW;
     b.pending_raw = std::move(data);
     b.raw_dirty.test_and_set(std::memory_order_release);

@@ -166,7 +166,7 @@ namespace internal {
             auto buf = create_buffer(std::move(window), capacity, topology);
             auto mapped = make_mapped<T>(std::move(initial), std::move(geom), std::move(buf));
             mapped.element.id = layer.add(mapped.element);
-            bridge().register_element(mapped, std::move(project));
+            bridge().register_element(layer, mapped, std::move(project));
             return mapped;
         }
 
@@ -215,6 +215,8 @@ namespace internal {
          *                    registered on.
          * @param mapped      Element to track. Only buffer/geometry_fn/
          *                    state/element.id are read, nothing is stored.
+         *                    Its buffer is scissored to the panel's viewport,
+         *                    so it is not drawn outside it.
          * @param base_bounds mapped's current on-screen NDC bounds.
          * @param reposition  Called with the scrolled bounds on every
          *                    scroll. Built as described above when empty.
@@ -251,7 +253,7 @@ namespace internal {
                 };
             }
 
-            panel.track(layer, mapped.element.id, base_bounds, std::move(reposition));
+            panel.track(layer, mapped.element.id, base_bounds, std::move(reposition), mapped.element.buffer);
         }
 
         /**

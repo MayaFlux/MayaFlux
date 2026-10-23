@@ -423,12 +423,16 @@ template <typename T>
  *                     geometry only. paint_over()/wire_canvas_drag() do
  *                     their own inline cursor math, not routed through
  *                     Kinesis::Projection, and are not offset-aware here.
+ * @param samples     Sample count the canvas will hold. Sizes the buffer so
+ *                     the first draw does not reallocate. Zero keeps the
+ *                     default capacity.
  */
 [[nodiscard]] MAYAFLUX_API Form<std::vector<float>> drawable_canvas(
     Kinesis::AABB2D bounds,
     glm::vec3 color = glm::vec3(0.8F),
     float thickness = 1.5F,
-    const std::function<glm::vec2()>& live_offset = {});
+    const std::function<glm::vec2()>& live_offset = {},
+    size_t samples = 0);
 
 // =============================================================================
 // Scroll indicator

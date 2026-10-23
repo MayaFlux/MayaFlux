@@ -189,6 +189,16 @@ public:
      */
     bool set_contains(uint32_t id, std::function<bool(glm::vec2)> fn);
 
+    /**
+     * @brief Confine hit testing of an element to a region, or lift the
+     *        confinement with std::nullopt.
+     *
+     * The clip survives set_bounds, set_contains and Mapped::sync, which
+     * rewrite the element's own shape but not where it may be hit.
+     * @return True if found.
+     */
+    bool set_clip(uint32_t id, std::optional<Kinesis::AABB2D> clip);
+
     bool set_interactive(uint32_t id, bool interactive);
     bool set_visible(uint32_t id, bool visible);
 
@@ -233,7 +243,7 @@ public:
 
     /**
      * @brief Return all interactive, visible elements containing @p ndc,
-     *        ordered back-to-front.
+     *        ordered front-to-back (topmost first, matching hit_test).
      */
     [[nodiscard]] std::vector<uint32_t> hit_test_all(glm::vec2 ndc) const;
 
@@ -263,7 +273,9 @@ public:
      *
      * Cascaded lifecycle operations (remove, set_visible, bring_to_front,
      * send_to_back) on @p primary_id propagate to @p related_id.
-     * Returns false if either id is not found.
+     * Returns false if either id is not found or the ids are equal. Two
+     * elements may be related to each other to form one group; every
+     * cascade follows closure() and so terminates on such cycles.
      */
     bool relate(uint32_t primary_id, uint32_t related_id);
 
@@ -296,12 +308,16 @@ public:
 
 private:
     std::vector<Element> m_elements;
+    mutable std::unordered_map<uint32_t, size_t> m_index;
+    mutable bool m_index_stale {};
     uint32_t m_next_id { 1 };
 
     int64_t m_next_front_priority {};
     int64_t m_next_back_priority {};
 
     std::unordered_map<uint32_t, std::vector<uint32_t>> m_relations;
+
+    void reindex() const;
 
     [[nodiscard]] static glm::vec2 to_ndc(
         double px, double py,

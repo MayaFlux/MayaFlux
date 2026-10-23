@@ -23,6 +23,9 @@ InspectResult Inspector::buffer(
     LayoutCursor& cursor,
     float x_min, float x_max, float row_h, int depth)
 {
+    if (!buf)
+        return {};
+
     const float ind = x_min + static_cast<float>(depth) * k_inspect_indent;
     const std::string header_label = Reflect::short_dynamic_type_name(*buf);
 
@@ -100,6 +103,9 @@ InspectResult Inspector::root_audio_buffer(
     float x_min, float x_max, float row_h, int depth)
 {
     auto root = m_bm.get_root_audio_buffer(token, channel);
+    if (!root)
+        return {};
+
     const auto children = root->get_child_buffers();
 
     const float ind = x_min + static_cast<float>(depth) * k_inspect_indent;
@@ -204,6 +210,9 @@ InspectResult Inspector::root_graphics_buffer(
     float x_min, float x_max, float row_h, int depth)
 {
     auto root = m_bm.get_root_graphics_buffer(token);
+    if (!root)
+        return {};
+
     const auto children = root->get_child_buffers();
 
     const float ind = x_min + static_cast<float>(depth) * k_inspect_indent;
@@ -255,8 +264,8 @@ InspectResult& Inspector::buffer_manager(
     LayoutCursor& cursor,
     float x_min, float x_max, float row_h)
 {
-    if (s_buffer_result) {
-        return *s_buffer_result;
+    if (m_buffer_result) {
+        return *m_buffer_result;
     }
 
     const auto tokens = m_bm.get_active_tokens();
@@ -284,7 +293,7 @@ InspectResult& Inspector::buffer_manager(
     auto group = make_entry_group(entrys, header_label, std::move(hbuf), rbufs,
         surface, cursor, x_min, x_max, row_h, false);
 
-    InspectResult& result = s_buffer_result.emplace();
+    InspectResult& result = m_buffer_result.emplace();
     result.group = std::move(group);
 
     for (const auto tok : tokens) {

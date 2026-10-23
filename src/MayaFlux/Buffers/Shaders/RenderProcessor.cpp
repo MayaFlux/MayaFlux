@@ -112,17 +112,33 @@ void RenderProcessor::set_alpha_blending(bool enabled)
 
 void RenderProcessor::disable_depth_test()
 {
-    m_depth_stencil.depth_test_enable = false;
-    m_depth_stencil.depth_write_enable = false;
+    auto next = m_depth_stencil;
+    next.depth_test_enable = false;
+    next.depth_write_enable = false;
+
+    if (next == m_depth_stencil) {
+        return;
+    }
+
+    m_depth_stencil = next;
     m_needs_pipeline_rebuild = true;
 }
 
 void RenderProcessor::enable_depth_test(Portal::Graphics::CompareOp compare_op)
 {
-    m_depth_stencil.depth_test_enable = true;
-    m_depth_stencil.depth_write_enable = true;
-    m_depth_stencil.depth_compare_op = compare_op;
+    auto next = m_depth_stencil;
+    next.depth_test_enable = true;
+    next.depth_write_enable = true;
+    next.depth_compare_op = compare_op;
+
+    const bool was_enabled = m_depth_enabled;
     m_depth_enabled = true;
+
+    if (next == m_depth_stencil && was_enabled) {
+        return;
+    }
+
+    m_depth_stencil = next;
     m_needs_pipeline_rebuild = true;
 }
 
@@ -267,6 +283,14 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
         return;
     }
 
+    const auto* state = get_or_cache_buffer_state(buffer);
+    if (!state) {
+        MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "initialize_pipeline: layout not yet available, deferring");
+        m_needs_pipeline_rebuild = true;
+        return;
+    }
+
     auto& flow = Portal::Graphics::get_render_flow();
 
     Portal::Graphics::get_render_flow().register_window_for_rendering(m_target_window);
@@ -289,13 +313,6 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
     }
 
     pipeline_config.depth_stencil = m_depth_stencil;
-
-    const auto* state = get_or_cache_buffer_state(buffer);
-    if (!state) {
-        MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "initialize_pipeline: layout not yet available, deferring");
-        return;
-    }
 
     pipeline_config.semantic_vertex_layout = state->semantic_layout;
     pipeline_config.use_vertex_shader_reflection = state->use_reflection;
@@ -323,6 +340,7 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
         }
     }
 
+    std::vector<Portal::Graphics::DescriptorBindingInfo> unregistered;
     for (const Portal::Graphics::ShaderID shader_id : { m_shader_id, m_fragment_shader_id, m_geometry_shader_id, m_tess_control_shader_id, m_tess_eval_shader_id }) {
         if (shader_id == Portal::Graphics::INVALID_SHADER) {
             continue;
@@ -331,13 +349,60 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
             if (used.set == 0 || unified_bindings.contains({ used.set, used.binding })) {
                 continue;
             }
-            MF_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                "Pipeline created without set {} binding {} ({}), which the shader uses. "
-                "Attach the processor that supplies it before setup_rendering",
-                used.set, used.binding, vk::to_string(used.type));
-            Journal::Archivist::instance().flush();
+            unregistered.push_back(used);
         }
     }
+
+    for (auto it = m_awaited_bindings.begin(); it != m_awaited_bindings.end();) {
+        const auto slot = *it;
+        const bool pending = std::ranges::any_of(unregistered, [&slot](const auto& used) {
+            return used.set == slot.first && used.binding == slot.second;
+        });
+        if (pending) {
+            ++it;
+            continue;
+        }
+        MF_INFO(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "Set {} binding {} is now registered, the shader's binding is supplied",
+            slot.first, slot.second);
+        it = m_awaited_bindings.erase(it);
+    }
+
+    if (!unregistered.empty()) {
+        constexpr uint32_t k_binding_grace_ticks = 30;
+        const bool waiting = m_pipeline_id == Portal::Graphics::INVALID_RENDER_PIPELINE
+            && m_binding_wait_ticks < k_binding_grace_ticks;
+
+        for (const auto& used : unregistered) {
+            const bool first_seen = m_awaited_bindings.emplace(used.set, used.binding).second;
+            if (waiting && first_seen) {
+                MF_INFO(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                    "Waiting for set {} binding {} ({}), which the shader uses, to be registered before creating the pipeline",
+                    used.set, used.binding, vk::to_string(used.type));
+            }
+        }
+
+        if (waiting) {
+            ++m_binding_wait_ticks;
+            m_needs_pipeline_rebuild = true;
+            return;
+        }
+
+        for (const auto& used : unregistered) {
+            MF_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "Set {} binding {} ({}), which the shader uses, is not registered. "
+                "Creating the pipeline with an empty slot that is filled once a processor registers it",
+                used.set, used.binding, vk::to_string(used.type));
+            unified_bindings.emplace(std::make_pair(used.set, used.binding),
+                Portal::Graphics::DescriptorBindingInfo {
+                    .set = used.set,
+                    .binding = used.binding,
+                    .type = used.type,
+                    .buffer_info = {},
+                    .name = used.name });
+        }
+    }
+    m_binding_wait_ticks = 0;
 
     std::map<uint32_t, std::vector<Portal::Graphics::DescriptorBindingInfo>> bindings_by_set;
     for (const auto& [key, binding] : unified_bindings) {
@@ -354,6 +419,8 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
     vk::Format depth_format = m_depth_enabled
         ? vk::Format::eD32Sfloat
         : vk::Format::eUndefined;
+
+    retire_current_pipeline();
 
     m_pipeline_id = flow.create_pipeline(pipeline_config, { swapchain_format }, depth_format);
 
@@ -376,8 +443,10 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
 void RenderProcessor::initialize_descriptors(const std::shared_ptr<VKBuffer>& buffer)
 {
     if (m_pipeline_id == Portal::Graphics::INVALID_RENDER_PIPELINE) {
-        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "Cannot allocate descriptor sets without pipeline");
+        if (!m_needs_pipeline_rebuild) {
+            MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "Cannot allocate descriptor sets without pipeline");
+        }
         return;
     }
 
@@ -485,10 +554,23 @@ void RenderProcessor::set_buffer_vertex_layout(
     const std::shared_ptr<VKBuffer>& buffer,
     const Kakshya::VertexLayout& layout)
 {
+    const bool known = m_buffer_info.contains(buffer);
     auto& state = m_buffer_info[buffer];
+
+    const bool same_input = state.semantic_layout.stride_bytes == layout.stride_bytes
+        && std::ranges::equal(state.semantic_layout.attributes, layout.attributes,
+            [](const auto& a, const auto& b) {
+                return a.component_modality == b.component_modality
+                    && a.offset_in_vertex == b.offset_in_vertex;
+            });
+    const bool changed = !known || state.use_reflection || !same_input;
+
     state.semantic_layout = layout;
     state.use_reflection = false;
-    m_needs_pipeline_rebuild = true;
+
+    if (changed) {
+        m_needs_pipeline_rebuild = true;
+    }
 }
 
 const Kinesis::RenderTransform& RenderProcessor::publish_render_transform()
@@ -667,6 +749,8 @@ bool RenderProcessor::on_before_execute(Portal::Graphics::CommandBufferID /*cmd_
 
 void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
 {
+    collect_retired_pipelines();
+
     if (!is_visible(buffer) || !m_target_window
         || !m_target_window->is_graphics_registered()) {
         return;
@@ -686,6 +770,46 @@ void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
     publish_render_transform();
     prepare_geometry(buffer, *state);
     record_draw(buffer, *state);
+}
+
+void RenderProcessor::retire_current_pipeline()
+{
+    if (m_pipeline_id == Portal::Graphics::INVALID_RENDER_PIPELINE) {
+        return;
+    }
+
+    for (const auto& entry : m_buffer_info) {
+        entry.first->remove_pipeline_window(m_pipeline_id);
+    }
+
+    uint64_t after_frame = std::numeric_limits<uint64_t>::max();
+    if (m_display_service && m_display_service->get_submitted_frame_count && m_target_window) {
+        after_frame = m_display_service->get_submitted_frame_count(m_target_window);
+    }
+
+    m_retired.push_back({ .pipeline = m_pipeline_id,
+        .window = m_target_window,
+        .transform_ubo = std::move(m_render_transform_ubo),
+        .after_frame = after_frame });
+
+    m_pipeline_id = Portal::Graphics::INVALID_RENDER_PIPELINE;
+}
+
+void RenderProcessor::collect_retired_pipelines()
+{
+    if (m_retired.empty() || !m_display_service || !m_display_service->get_completed_frame_count) {
+        return;
+    }
+
+    auto& flow = Portal::Graphics::get_render_flow();
+
+    std::erase_if(m_retired, [&](const RetiredPipeline& retired) {
+        if (retired.after_frame > m_display_service->get_completed_frame_count(retired.window)) {
+            return false;
+        }
+        flow.destroy_pipeline(retired.pipeline);
+        return true;
+    });
 }
 
 void RenderProcessor::record_draw(const std::shared_ptr<VKBuffer>& buffer)
@@ -924,6 +1048,11 @@ void RenderProcessor::cleanup()
         flow.destroy_pipeline(m_pipeline_id);
         m_pipeline_id = Portal::Graphics::INVALID_RENDER_PIPELINE;
     }
+
+    for (const auto& retired : m_retired) {
+        flow.destroy_pipeline(retired.pipeline);
+    }
+    m_retired.clear();
 
     if (m_geometry_shader_id != Portal::Graphics::INVALID_SHADER) {
         foundry.destroy_shader(m_geometry_shader_id);

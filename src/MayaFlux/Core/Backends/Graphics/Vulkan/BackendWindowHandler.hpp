@@ -91,6 +91,8 @@ struct WindowRenderContext {
     std::vector<vk::Semaphore> image_available;
     std::vector<vk::Semaphore> render_finished;
     std::vector<vk::Fence> in_flight;
+    std::vector<uint64_t> slot_submission;
+    uint64_t submitted_frames {};
 
     std::vector<vk::CommandBuffer> clear_command_buffers;
     std::shared_ptr<VKImage> depth_image;
@@ -168,6 +170,16 @@ private:
      * @return True if creation succeeded
      */
     bool create_sync_objects(WindowRenderContext& config);
+
+    /**
+     * @brief Submitted frames of a window whose GPU work has finished
+     * @param ctx Window render context
+     *
+     * Never blocks. A slot reset for acquisition but not yet resubmitted holds
+     * the id of its previous, finished submission, so the result can only
+     * understate completion.
+     */
+    [[nodiscard]] uint64_t completed_frame_count(const WindowRenderContext& ctx) const;
 
     /**
      * @brief Recreate the swapchain and related resources for a window

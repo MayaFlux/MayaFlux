@@ -66,6 +66,9 @@ public:
     /// Set primitive topology (e.g., triangle list, line list, point list)
     inline void set_primitive_topology(Portal::Graphics::PrimitiveTopology topology)
     {
+        if (m_primitive_topology == topology) {
+            return;
+        }
         m_primitive_topology = topology;
         m_needs_pipeline_rebuild = true;
     }
@@ -73,6 +76,9 @@ public:
     /// Set polygon mode (e.g., fill, line, point)
     inline void set_polygon_mode(Portal::Graphics::PolygonMode mode)
     {
+        if (m_polygon_mode == mode) {
+            return;
+        }
         m_polygon_mode = mode;
         m_needs_pipeline_rebuild = true;
     }
@@ -80,6 +86,9 @@ public:
     /// Set cull mode (e.g., none, front, back)
     inline void set_cull_mode(Portal::Graphics::CullMode mode)
     {
+        if (m_cull_mode == mode) {
+            return;
+        }
         m_cull_mode = mode;
         m_needs_pipeline_rebuild = true;
     }
@@ -143,6 +152,9 @@ public:
      */
     inline void set_blend_attachment(const Portal::Graphics::BlendAttachmentConfig& config)
     {
+        if (m_blend_attachment.has_value() && *m_blend_attachment == config) {
+            return;
+        }
         m_blend_attachment = config;
         m_needs_pipeline_rebuild = true;
     }
@@ -309,6 +321,8 @@ protected:
 
     bool on_before_execute(Portal::Graphics::CommandBufferID cmd_id, const std::shared_ptr<VKBuffer>& buffer) override;
 
+    [[nodiscard]] bool tracks_pipeline_layout() const override { return true; }
+
     void cleanup() override;
 
     /**
@@ -374,6 +388,31 @@ private:
 
     bool m_depth_enabled {};
     std::shared_ptr<VKBuffer> m_render_transform_ubo;
+
+    /**
+     * @brief A replaced pipeline kept alive until the frames that may still use it finish
+     */
+    struct RetiredPipeline {
+        Portal::Graphics::RenderPipelineID pipeline;
+        std::shared_ptr<Core::Window> window;
+        std::shared_ptr<VKBuffer> transform_ubo;
+        uint64_t after_frame;
+    };
+    std::vector<RetiredPipeline> m_retired;
+    uint32_t m_binding_wait_ticks {};
+    std::set<std::pair<uint32_t, uint32_t>> m_awaited_bindings;
+
+    /**
+     * @brief Move the current pipeline to the retired list and drop its buffer associations
+     */
+    void retire_current_pipeline();
+
+    /**
+     * @brief Destroy retired pipelines whose window has completed every frame submitted before retirement
+     *
+     * Never blocks. Without a completion signal, retired pipelines live until cleanup().
+     */
+    void collect_retired_pipelines();
     bool m_view_transform_active {};
     uint32_t m_first_vertex { 0 };
     uint32_t m_vertex_count { 0 };

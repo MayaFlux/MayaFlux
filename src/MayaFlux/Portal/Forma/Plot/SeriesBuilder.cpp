@@ -511,8 +511,8 @@ SeriesSpec FilledWaveformBuilder::done() const
                 }
 
                 if (ei + 1 < y_entries.size() && out.size() > pre_size) {
-                    const size_t last = out.size() - k_stride;
-                    out.insert(out.end(), out.begin() + static_cast<ptrdiff_t>(last), out.end());
+                    const std::vector<uint8_t> tail(out.end() - static_cast<ptrdiff_t>(k_stride), out.end());
+                    out.insert(out.end(), tail.begin(), tail.end());
                 }
             } },
         .topology = Graphics::PrimitiveTopology::TRIANGLE_STRIP,

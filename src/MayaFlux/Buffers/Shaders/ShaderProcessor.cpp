@@ -59,16 +59,20 @@ void ShaderProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
         return;
     }
 
-    if (!m_initialized) {
-        initialize_shader();
-        initialize_pipeline(vk_buffer);
-        m_needs_pipeline_rebuild = false;
-        m_initialized = true;
+    if (m_initialized && m_created_layout && *m_created_layout != layout_fingerprint(vk_buffer)) {
+        m_needs_pipeline_rebuild = true;
     }
 
-    if (m_needs_pipeline_rebuild) {
-        initialize_pipeline(vk_buffer);
+    if (!m_initialized) {
+        initialize_shader();
         m_needs_pipeline_rebuild = false;
+        initialize_pipeline(vk_buffer);
+        note_created_layout(vk_buffer);
+        m_initialized = true;
+    } else if (m_needs_pipeline_rebuild) {
+        m_needs_pipeline_rebuild = false;
+        initialize_pipeline(vk_buffer);
+        note_created_layout(vk_buffer);
         m_needs_descriptor_rebuild = true;
     }
 
@@ -135,14 +139,16 @@ void ShaderProcessor::bind_buffer(const std::string& descriptor_name, const std:
     ensure_initialized(buffer);
 
     if (m_config.bindings.find(descriptor_name) == m_config.bindings.end()) {
-        auto user_binding_count = static_cast<uint32_t>(
-            std::ranges::count_if(m_config.bindings, [](const auto& pair) {
-                return pair.second.set == 1;
-            }));
+        uint32_t binding_index = 0;
+        while (std::ranges::any_of(m_config.bindings, [binding_index](const auto& pair) {
+            return pair.second.set == 1 && pair.second.binding == binding_index;
+        })) {
+            ++binding_index;
+        }
 
         ShaderBinding default_binding;
         default_binding.set = 1;
-        default_binding.binding = user_binding_count;
+        default_binding.binding = binding_index;
         default_binding.type = vk::DescriptorType::eStorageBuffer;
         m_config.bindings[descriptor_name] = default_binding;
 
@@ -435,9 +441,12 @@ void ShaderProcessor::set_shader(const std::string& shader_path)
 
 void ShaderProcessor::set_push_constant_size(size_t size)
 {
+    const bool changed = m_config.push_constant_size != size;
     m_config.push_constant_size = size;
     m_push_constant_data.resize(size);
-    m_needs_pipeline_rebuild = true;
+    if (changed) {
+        m_needs_pipeline_rebuild = true;
+    }
 }
 
 void ShaderProcessor::set_push_constant_data_raw(const void* data, size_t size)
@@ -461,18 +470,29 @@ size_t ShaderProcessor::resolve_push_constant_size(const std::shared_ptr<VKBuffe
         size = std::max(size, static_cast<size_t>(entry.offset) + entry.data.size());
     }
 
+    for (const auto& [name, entry] : m_feeds) {
+        if (!entry.is_storage) {
+            size = std::max(size, static_cast<size_t>(entry.offset) + entry.size);
+        }
+    }
+
     return size;
+}
+
+void ShaderProcessor::resolve_push_constants_into(std::vector<uint8_t>& out, const std::shared_ptr<VKBuffer>& buffer) const
+{
+    out.assign(m_push_constant_data.begin(), m_push_constant_data.end());
+    out.resize(resolve_push_constant_size(buffer));
+
+    for (const auto& entry : buffer->get_pipeline_context().push_constant_bindings) {
+        std::memcpy(out.data() + entry.offset, entry.data.data(), entry.data.size());
+    }
 }
 
 std::vector<uint8_t> ShaderProcessor::resolve_push_constants(const std::shared_ptr<VKBuffer>& buffer) const
 {
-    std::vector<uint8_t> merged = m_push_constant_data;
-    merged.resize(resolve_push_constant_size(buffer));
-
-    for (const auto& entry : buffer->get_pipeline_context().push_constant_bindings) {
-        std::memcpy(merged.data() + entry.offset, entry.data.data(), entry.data.size());
-    }
-
+    std::vector<uint8_t> merged;
+    resolve_push_constants_into(merged, buffer);
     return merged;
 }
 
@@ -656,6 +676,53 @@ void ShaderProcessor::initialize_shader()
         m_config.shader_path.empty() ? "<from spec>" : m_config.shader_path, m_shader_id);
 }
 
+uint64_t ShaderProcessor::layout_fingerprint(const std::shared_ptr<VKBuffer>& buffer) const
+{
+    const auto mix = [](uint64_t seed, uint64_t value) {
+        return seed ^ (value + 0x9e3779b97f4a7c15ULL + (seed << 6) + (seed >> 2));
+    };
+    const auto slot = [&mix](uint32_t set, uint32_t binding, vk::DescriptorType type, uint32_t count) {
+        uint64_t hash = mix(0, set);
+        hash = mix(hash, binding);
+        hash = mix(hash, static_cast<uint64_t>(type));
+        return mix(hash, count);
+    };
+
+    const auto& staged = buffer->get_pipeline_context().descriptor_buffer_bindings;
+    const auto find_staged = [&staged](uint32_t set, uint32_t binding) {
+        return std::ranges::find_if(staged, [set, binding](const auto& entry) {
+            return entry.set == set && entry.binding == binding;
+        });
+    };
+
+    uint64_t sum = 0;
+    for (const auto& [name, binding] : m_config.bindings) {
+        const auto override_it = find_staged(binding.set, binding.binding);
+        sum += override_it != staged.end()
+            ? slot(binding.set, binding.binding, override_it->type, override_it->count)
+            : slot(binding.set, binding.binding, binding.type, binding.count);
+    }
+
+    for (auto it = staged.begin(); it != staged.end(); ++it) {
+        const bool configured = std::ranges::any_of(m_config.bindings, [it](const auto& pair) {
+            return pair.second.set == it->set && pair.second.binding == it->binding;
+        });
+        const bool repeated = find_staged(it->set, it->binding) != it;
+        if (!configured && !repeated) {
+            sum += slot(it->set, it->binding, it->type, it->count);
+        }
+    }
+
+    return mix(sum, resolve_push_constant_size(buffer));
+}
+
+void ShaderProcessor::note_created_layout(const std::shared_ptr<VKBuffer>& buffer)
+{
+    if (tracks_pipeline_layout()) {
+        m_created_layout = layout_fingerprint(buffer);
+    }
+}
+
 std::optional<uint32_t> ShaderProcessor::resolve_ds_index(uint32_t set) const
 {
     if (m_engine_owns_set_zero) {
@@ -746,6 +813,7 @@ void ShaderProcessor::cleanup()
     m_descriptor_set_ids.clear();
     m_bound_buffers.clear();
     m_feeds.clear();
+    m_created_layout.reset();
     m_initialized = false;
 }
 

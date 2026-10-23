@@ -20,7 +20,7 @@ GraphicsBatchProcessor::GraphicsBatchProcessor(std::shared_ptr<Buffer> root_buff
 void GraphicsBatchProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
 {
     auto root_buf = std::dynamic_pointer_cast<RootGraphicsBuffer>(buffer);
-    if (!root_buf || root_buf != m_root_buffer) {
+    if (!root_buf || root_buf != m_root_buffer.lock()) {
         MF_RT_ERROR(Journal::Component::Core, Journal::Context::BufferProcessing,
             "GraphicsBatchProcessor can only process its associated RootGraphicsBuffer");
         return;
@@ -145,14 +145,12 @@ bool GraphicsBatchProcessor::is_compatible_with(const std::shared_ptr<Buffer>& b
 
 PresentProcessor::PresentProcessor(RenderCallback callback)
     : m_callback(std::move(callback))
-    , m_root_buffer(nullptr)
 {
     m_processing_token = ProcessingToken::GRAPHICS_BACKEND;
 }
 
 PresentProcessor::PresentProcessor()
     : m_callback(nullptr)
-    , m_root_buffer(nullptr)
 {
     m_processing_token = ProcessingToken::GRAPHICS_BACKEND;
 }
@@ -166,7 +164,7 @@ void PresentProcessor::processing_function(const std::shared_ptr<Buffer>& buffer
         return;
     }
 
-    if (m_root_buffer && root_graphics_buffer != m_root_buffer) {
+    if (m_attached && root_graphics_buffer != m_root_buffer.lock()) {
         MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             "RenderProcessor processing buffer that doesn't match attached root");
         return;
@@ -208,6 +206,7 @@ void PresentProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
     }
 
     m_root_buffer = root_graphics_buffer;
+    m_attached = true;
 
     MF_INFO(Journal::Component::Buffers, Journal::Context::BufferProcessing,
         "RenderProcessor attached to RootGraphicsBuffer (has_callback: {})",
@@ -217,8 +216,9 @@ void PresentProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
 void PresentProcessor::on_detach(const std::shared_ptr<Buffer>& buffer)
 {
     if (auto root = std::dynamic_pointer_cast<RootGraphicsBuffer>(buffer)) {
-        if (root == m_root_buffer) {
-            m_root_buffer = nullptr;
+        if (root == m_root_buffer.lock()) {
+            m_root_buffer.reset();
+            m_attached = false;
         }
     }
 
@@ -238,7 +238,7 @@ void PresentProcessor::set_callback(RenderCallback callback)
     MF_INFO(Journal::Component::Buffers, Journal::Context::BufferProcessing,
         "RenderProcessor callback {} (attached: {})",
         m_callback ? "configured" : "cleared",
-        m_root_buffer != nullptr);
+        m_attached);
 }
 
 void PresentProcessor::fallback_renderer(const std::shared_ptr<RootGraphicsBuffer>& root)
@@ -378,7 +378,6 @@ RootGraphicsBuffer::~RootGraphicsBuffer()
 {
     cleanup_marked_buffers();
     m_child_buffers.clear();
-    m_pending_removal.clear();
 }
 
 void RootGraphicsBuffer::initialize()
@@ -400,10 +399,6 @@ void RootGraphicsBuffer::process_default()
 
 void RootGraphicsBuffer::cleanup_marked_buffers()
 {
-    if (m_pending_removal.empty()) {
-        return;
-    }
-
     auto it = std::remove_if(
         m_child_buffers.begin(),
         m_child_buffers.end(),
@@ -426,8 +421,6 @@ void RootGraphicsBuffer::cleanup_marked_buffers()
             "Cleaned up {} graphics buffers (remaining: {})",
             removed_count, m_child_buffers.size());
     }
-
-    m_pending_removal.clear();
 }
 
 void RootGraphicsBuffer::set_final_processor(std::shared_ptr<BufferProcessor> processor)

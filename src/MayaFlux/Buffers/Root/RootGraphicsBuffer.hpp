@@ -255,11 +255,6 @@ private:
     std::shared_ptr<BufferProcessor> m_final_processor;
 
     /**
-     * @brief Buffers pending removal (cleaned up in next process cycle)
-     */
-    std::vector<std::shared_ptr<VKBuffer>> m_pending_removal;
-
-    /**
      * @brief Flag indicating if this buffer is active for token processing
      */
     bool m_token_active {};
@@ -319,10 +314,8 @@ public:
     [[nodiscard]] bool is_compatible_with(const std::shared_ptr<Buffer>& buffer) const override;
 
 private:
-    /**
-     * @brief Shared pointer to the root buffer this processor manages
-     */
-    std::shared_ptr<RootGraphicsBuffer> m_root_buffer;
+    /** @brief Root buffer this processor manages. */
+    std::weak_ptr<RootGraphicsBuffer> m_root_buffer;
 };
 
 /**
@@ -460,13 +453,11 @@ private:
      */
     RenderCallback m_callback;
 
-    /**
-     * @brief Reference to root buffer (for validation and callbacks)
-     *
-     * We store a raw pointer to avoid circular references, as the root
-     * buffer owns the shared_ptr to this processor.
-     */
-    std::shared_ptr<RootGraphicsBuffer> m_root_buffer;
+    /** @brief Root buffer this presenter is attached to. */
+    std::weak_ptr<RootGraphicsBuffer> m_root_buffer;
+
+    /** @brief Distinguishes an expired attachment from an unattached presenter. */
+    bool m_attached {};
 
     void fallback_renderer(const std::shared_ptr<RootGraphicsBuffer>& root);
 };

@@ -105,6 +105,11 @@ public:
      */
     explicit ComputeProcessor(const Portal::Graphics::ShaderSpec& spec);
 
+    ~ComputeProcessor() override
+    {
+        cleanup();
+    }
+
     //==========================================================================
     // Dispatch Configuration
     //==========================================================================
@@ -207,12 +212,14 @@ protected:
 
     void initialize_descriptors(const std::shared_ptr<VKBuffer>& buffer) override;
 
+    [[nodiscard]] bool tracks_pipeline_layout() const override { return true; }
+
     void cleanup() override;
 
 private:
     ShaderDispatchConfig m_dispatch_config;
 
-    std::vector<uint8_t> m_push_constant_scratch; ///< Coalesced push constant bindings, reused across iterations.
+    std::vector<uint8_t> m_push_constant_scratch; ///< Merged push constant block, reused across iterations.
 
     void execute_shader(const std::shared_ptr<VKBuffer>& buffer) override;
 

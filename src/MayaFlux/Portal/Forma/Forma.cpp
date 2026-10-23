@@ -282,7 +282,12 @@ void inspect_events()
         return;
     }
 
-    discard_inspect_surface(g_inspect_events_surface);
+    if (g_inspect_events_surface) {
+        LayoutCursor cursor;
+        atelier.inspector().destroy(
+            atelier.inspector().event_manager(*g_inspect_events_surface, cursor));
+        discard_inspect_surface(g_inspect_events_surface);
+    }
 
     auto window = atelier.create_window(
         Core::WindowCreateInfo { .title = "EventManager", .width = k_inspect_w, .height = k_inspect_h });

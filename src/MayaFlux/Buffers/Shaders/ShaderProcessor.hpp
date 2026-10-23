@@ -513,6 +513,21 @@ protected:
     [[nodiscard]] std::vector<uint8_t> resolve_push_constants(const std::shared_ptr<VKBuffer>& buffer) const;
 
     /**
+     * @brief resolve_push_constants() written into @p out, reusing its storage.
+     */
+    void resolve_push_constants_into(std::vector<uint8_t>& out, const std::shared_ptr<VKBuffer>& buffer) const;
+
+    /**
+     * @brief Whether the owner builds its pipeline layout from this processor's
+     *        bindings, staged descriptors and push range.
+     *
+     * When true, processing_function requests a new pipeline as soon as that
+     * effective layout differs from the one the previous initialize_pipeline
+     * call saw. Defaults to false for processors that create no pipeline.
+     */
+    [[nodiscard]] virtual bool tracks_pipeline_layout() const { return false; }
+
+    /**
      * @brief Pull every feed and write its result.
      *
      * Called at the top of processing_function, before descriptors are
@@ -694,7 +709,11 @@ private:
 
     std::unordered_map<std::string, Feed> m_feeds;
 
+    std::optional<uint64_t> m_created_layout;
+
     void initialize_shader();
+    [[nodiscard]] uint64_t layout_fingerprint(const std::shared_ptr<VKBuffer>& buffer) const;
+    void note_created_layout(const std::shared_ptr<VKBuffer>& buffer);
 };
 
 template <typename T>

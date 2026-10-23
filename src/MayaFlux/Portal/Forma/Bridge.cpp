@@ -106,8 +106,11 @@ void Bridge::write(
     size_t size)
 {
     auto it = m_records.find(id);
-    if (it == m_records.end())
+    if (it == m_records.end()) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::Init,
+            "Bridge::write: unknown element id {}", id);
         return;
+    }
 
     auto& rec = it->second;
     if (!rec.bindings) {
@@ -116,10 +119,9 @@ void Bridge::write(
             Buffers::ProcessingToken::GRAPHICS_BACKEND);
     }
 
-    rec.bindings->bind_push_constant(
-        std::to_string(id) + "_pc_" + std::to_string(offset),
-        rec.reader,
-        offset, size);
+    auto binding_name = std::to_string(id) + "_pc_" + std::to_string(offset);
+    rec.bindings->bind_push_constant(binding_name, rec.reader, offset, size);
+    rec.binding_names.push_back(std::move(binding_name));
 }
 
 void Bridge::write(
@@ -145,11 +147,9 @@ void Bridge::write(
             Buffers::ProcessingToken::GRAPHICS_BACKEND);
     }
 
-    rec.bindings->bind_descriptor(
-        descriptor_name + "_" + std::to_string(id),
-        rec.reader,
-        descriptor_name,
-        binding_index, set, role);
+    auto binding_name = descriptor_name + "_" + std::to_string(id);
+    rec.bindings->bind_descriptor(binding_name, rec.reader, descriptor_name, binding_index, set, role);
+    rec.binding_names.push_back(std::move(binding_name));
 }
 
 void Bridge::write(uint32_t id, std::shared_ptr<Buffers::AudioWriteProcessor> target)
@@ -401,6 +401,12 @@ void Bridge::cancel_outbound(ElementRecord& rec)
         m_scheduler.cancel_task(name);
     }
     rec.outbound_tasks.clear();
+
+    if (rec.bindings) {
+        for (const auto& name : rec.binding_names)
+            rec.bindings->unbind(name);
+    }
+    rec.binding_names.clear();
 }
 
 void Bridge::spawn_sync(uint32_t id, std::function<void()> sync_fn)
@@ -427,6 +433,8 @@ void Bridge::spawn_sync(Layer& layer, uint32_t id, std::function<void()> sync_fn
 {
     auto name = make_task_name(id, "sync");
     m_layer_tasks[&layer].push_back(name);
+    if (auto it = m_records.find(id); it != m_records.end())
+        it->second.outbound_tasks.push_back(name);
 
     auto routine = [](Vruta::TaskScheduler&,
                        std::function<void()> fn) -> Vruta::GraphicsRoutine {

@@ -5,11 +5,6 @@
 
 namespace MayaFlux::Portal::Forma {
 
-std::optional<InspectResult> Inspector::s_node_graph_result;
-std::optional<InspectResult> Inspector::s_buffer_result;
-std::optional<InspectResult> Inspector::s_scheduler_result;
-std::optional<InspectResult> Inspector::s_event_result;
-
 EntryBuffer Inspector::make_row_buffer(
     const std::shared_ptr<Core::Window>& window,
     std::string_view text,
@@ -49,20 +44,20 @@ std::shared_ptr<Buffers::FormaBuffer> Inspector::make_header_buffer(
 
 void Inspector::destroy(InspectResult& result)
 {
-    if (s_node_graph_result && &result == &*s_node_graph_result) {
-        s_node_graph_result.reset();
+    if (m_node_graph_result && &result == &*m_node_graph_result) {
+        m_node_graph_result.reset();
         return;
     }
-    if (s_buffer_result && &result == &*s_buffer_result) {
-        s_buffer_result.reset();
+    if (m_buffer_result && &result == &*m_buffer_result) {
+        m_buffer_result.reset();
         return;
     }
-    if (s_scheduler_result && &result == &*s_scheduler_result) {
-        s_scheduler_result.reset();
+    if (m_scheduler_result && &result == &*m_scheduler_result) {
+        m_scheduler_result.reset();
         return;
     }
-    if (s_event_result && &result == &*s_event_result) {
-        s_event_result.reset();
+    if (m_event_result && &result == &*m_event_result) {
+        m_event_result.reset();
         return;
     }
     result = InspectResult {};

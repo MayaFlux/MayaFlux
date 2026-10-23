@@ -61,8 +61,8 @@ InspectResult& Inspector::scheduler(
     LayoutCursor& cursor,
     float x_min, float x_max, float row_h)
 {
-    if (s_scheduler_result) {
-        return *s_scheduler_result;
+    if (m_scheduler_result) {
+        return *m_scheduler_result;
     }
 
     const std::vector<EntrySpec> root_entrys {
@@ -83,7 +83,7 @@ InspectResult& Inspector::scheduler(
     auto root_group = make_entry_group(root_entrys, "TaskScheduler", std::move(hbuf), rbufs,
         surface, cursor, x_min, x_max, row_h, true);
 
-    InspectResult& result = s_scheduler_result.emplace();
+    InspectResult& result = m_scheduler_result.emplace();
     result.group = std::move(root_group);
 
     const auto tasks = m_sched.get_all_tasks();

@@ -95,6 +95,10 @@ unit_square(AABB2D bounds, const std::function<glm::vec2()>& live_offset = {}) n
  * distance from the centre is ignored, so the control remains responsive
  * outside the drawn radius, which is what a knob gesture expects.
  *
+ * Angles outside the sweep fall in a dead zone and snap to whichever end
+ * is nearer, so a knob dragged past its minimum stays at 0 instead of
+ * jumping to 1.
+ *
  * Points at the exact centre return zero rather than an undefined angle.
  *
  * @param center      Sweep centre in NDC.
@@ -127,7 +131,13 @@ angle_fraction(glm::vec2 center, float angle_start, float angle_end,
             rel -= k_two_pi;
         }
 
-        return std::clamp(rel / delta, 0.F, 1.F);
+        const float travelled = std::abs(rel);
+        const float sweep = std::abs(delta);
+        const float gap = k_two_pi - sweep;
+        if (travelled <= sweep || gap <= 0.F)
+            return std::clamp(travelled / sweep, 0.F, 1.F);
+
+        return (travelled - sweep) < gap * 0.5F ? 1.F : 0.F;
     };
 }
 

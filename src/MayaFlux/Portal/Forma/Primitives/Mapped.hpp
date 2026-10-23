@@ -13,7 +13,11 @@ namespace MayaFlux::Portal::Forma {
  *
  * Plain uint64_t behind a shared_ptr. The graphics tick compares against
  * its last-seen version to detect changes without polling the value itself.
- * Not atomic — same scheduler tick, no concurrent access.
+ * Not atomic. Everything that touches a MappedState runs on the graphics
+ * thread, in order within one frame: Bridge tasks, buffer processing, then
+ * window polling, which fires Context callbacks. Write it from that thread
+ * only. From any other thread, hand the value over through a Bridge inbound
+ * callable instead.
  */
 using Version = uint64_t;
 

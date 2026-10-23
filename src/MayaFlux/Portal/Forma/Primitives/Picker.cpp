@@ -34,7 +34,7 @@ namespace {
 
             if (index) {
                 if (auto w = window.lock()) {
-                    w->hide();
+                    w->request_close();
                 }
             }
             if (callback) {
