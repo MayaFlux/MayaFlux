@@ -14,7 +14,9 @@ namespace MayaFlux::Buffers {
  * were added, and share one stride and one topology. Draw order is independent
  * of memory order: bring_to_front, send_to_back and set_visible only change
  * the run list, never move vertex data. Runs adjacent in both memory and draw
- * order are coalesced, so an in-order visible batch is a single run.
+ * order are coalesced, so an in-order visible batch is a single run. Strip
+ * and fan topologies are never coalesced, since joining their runs would
+ * fabricate a primitive across the seam.
  *
  * Same-size updates write into the mirror and mark one dirty range. Adding
  * appends. Resizing or removing a block shifts the blocks after it, which are

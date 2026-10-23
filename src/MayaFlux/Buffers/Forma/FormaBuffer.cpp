@@ -44,7 +44,7 @@ void FormaBuffer::setup_processors(ProcessingToken token)
     chain->set_preferred_token(token);
 
     if (!m_pending_geometry.empty()) {
-        m_processor->set_bytes(std::move(m_pending_geometry));
+        m_processor->set_bytes(m_pending_geometry);
         m_pending_geometry.clear();
     }
 
@@ -173,6 +173,46 @@ void FormaBuffer::submit(const std::vector<uint8_t>& bytes)
         return;
     }
     m_processor->set_bytes(bytes);
+}
+
+FormaBuffer::SliceId FormaBuffer::add_slice(const std::vector<uint8_t>& bytes)
+{
+    if (!m_processor) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "FormaBuffer::add_slice called before setup_processors");
+        return 0;
+    }
+    return m_processor->add_slice(bytes);
+}
+
+void FormaBuffer::update_slice(SliceId id, const std::vector<uint8_t>& bytes)
+{
+    if (m_processor)
+        m_processor->update_slice(id, bytes);
+}
+
+void FormaBuffer::remove_slice(SliceId id)
+{
+    if (m_processor)
+        m_processor->remove_slice(id);
+}
+
+void FormaBuffer::set_slice_visible(SliceId id, bool visible)
+{
+    if (m_processor)
+        m_processor->set_slice_visible(id, visible);
+}
+
+void FormaBuffer::bring_slice_to_front(SliceId id)
+{
+    if (m_processor)
+        m_processor->bring_slice_to_front(id);
+}
+
+void FormaBuffer::send_slice_to_back(SliceId id)
+{
+    if (m_processor)
+        m_processor->send_slice_to_back(id);
 }
 
 void FormaBuffer::set_texture(std::shared_ptr<Core::VKImage> image, std::string binding)

@@ -150,7 +150,8 @@ std::optional<std::vector<Portal::Graphics::DrawRun>> SliceSet::take_runs()
         const auto offset = static_cast<uint32_t>(slice.byte_offset / m_stride);
         const auto count = static_cast<uint32_t>(slice.byte_size / m_stride);
 
-        if (!runs.empty() && runs.back().vertex_offset + runs.back().vertex_count == offset) {
+        if (is_concatenable_topology(m_topology) && !runs.empty()
+            && runs.back().vertex_offset + runs.back().vertex_count == offset) {
             runs.back().vertex_count += count;
             continue;
         }
