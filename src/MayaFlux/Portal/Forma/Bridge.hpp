@@ -28,6 +28,12 @@ class Constant;
 namespace MayaFlux::Portal::Forma {
 
 /**
+ * @brief Layer-scoped element identity. Element ids are unique only within
+ *        their Layer, so the owning Layer is half of the key.
+ */
+using ElementRef = std::pair<std::weak_ptr<Layer>, uint32_t>;
+
+/**
  * @class Bridge
  * @brief Two-way binding orchestrator for Forma elements.
  *
@@ -37,19 +43,20 @@ namespace MayaFlux::Portal::Forma {
  * — Bridge does not own or create them.
  *
  * Inbound (what drives an element's MappedState each frame):
- *   - bind(id, Node)     — reads Node::get_last_output() via GraphicsRoutine
- *   - bind(id, lambda)   — calls std::function<float()> via GraphicsRoutine
+ *   - bind(ref, Node)     — reads Node::get_last_output() via GraphicsRoutine
+ *   - bind(ref, lambda)   — calls std::function<float()> via GraphicsRoutine
  *
  * Outbound (where the element's value goes each frame):
- *   - write(id, ShaderProcessor, offset) — push constant staging
- *   - write(id, descriptor_name, ...)    — descriptor binding
- *   - write(id, AudioWriteProcessor)     — audio buffer
- *   - write(id, DataWriteProcessor)      — vertex buffer
- *   - write(id, Constant)                — node graph value carrier
+ *   - write(ref, ShaderProcessor, offset) — push constant staging
+ *   - write(ref, descriptor_name, ...)    — descriptor binding
+ *   - write(ref, AudioWriteProcessor)     — audio buffer
+ *   - write(ref, DataWriteProcessor)      — vertex buffer
+ *   - write(ref, Constant)                — node graph value carrier
  *
- * All overloads also accept shared_ptr<MappedState<T>> in place of the
- * element id. These resolve to the state->id.
- * duplicated logic.
+ * Element ids are unique only within their Layer, so every element is
+ * addressed by an ElementRef. All overloads also accept
+ * shared_ptr<MappedState<T>> in place of the ElementRef; the state carries
+ * both halves once registered.
  *
  * Usage:
  * @code
@@ -78,7 +85,7 @@ public:
     Bridge& operator=(Bridge&&) = delete;
 
     // =========================================================================
-    // Inbound — id overloads (primary implementation)
+    // Inbound — ElementRef overloads (primary implementation)
     // =========================================================================
 
     /**
@@ -89,11 +96,11 @@ public:
      * Node must be processed externally (EXTERNAL mode read).
      * Replaces any existing inbound binding on this element.
      *
-     * @param id      Element id (from Layer::add / Mapped::element.id).
+     * @param ref     Owning Layer and element id (from Layer::add / Mapped::element.id).
      * @param node    Node to read from.
      * @param project Optional double -> float projection. Identity if empty.
      */
-    void bind(uint32_t id,
+    void bind(const ElementRef& ref,
         std::shared_ptr<Nodes::Node> node,
         std::function<float(double)> project = {});
 
@@ -104,10 +111,10 @@ public:
      * the result into the element's MappedState.
      * Replaces any existing inbound binding on this element.
      *
-     * @param id     Element id.
+     * @param ref    Owning Layer and element id.
      * @param source Callable returning current float value.
      */
-    void bind(uint32_t id, std::function<float()> source);
+    void bind(const ElementRef& ref, std::function<float()> source);
 
     // =========================================================================
     // Inbound — MappedState overloads
@@ -118,35 +125,35 @@ public:
         std::shared_ptr<Nodes::Node> node,
         std::function<float(double)> project = {})
     {
-        bind(state->id, std::move(node), std::move(project));
+        bind(ref_of(state), std::move(node), std::move(project));
     }
 
     template <typename T>
     void bind(std::shared_ptr<MappedState<T>> state, std::function<float()> source)
     {
-        bind(state->id, std::move(source));
+        bind(ref_of(state), std::move(source));
     }
 
     template <typename T>
     void write(std::shared_ptr<MappedState<T>> state,
         std::function<void(std::span<const float>)> sink)
     {
-        write(state->id, std::move(sink));
+        write(ref_of(state), std::move(sink));
     }
 
     // =========================================================================
-    // Outbound — id overloads (primary implementation)
+    // Outbound — ElementRef overloads (primary implementation)
     // =========================================================================
 
     /**
      * @brief Route element value to a push constant slot on a ShaderProcessor.
-     * @param id     Element id.
+     * @param ref    Owning Layer and element id.
      * @param target VKBuffer whose push_constant staging receives the value.
      * @param offset Byte offset in the push constant struct.
      * @param size   Byte width. Defaults to sizeof(float).
      */
     void write(
-        uint32_t id,
+        const ElementRef& ref,
         const std::shared_ptr<Buffers::VKBuffer>& target_buffer,
         const std::string& shader_path,
         uint32_t offset,
@@ -160,7 +167,7 @@ public:
      * prior write() call, @p target_buffer must be the same buffer — a second
      * attachment is not made.
      *
-     * @param id              Element id.
+     * @param ref             Owning Layer and element id.
      * @param target_buffer   Buffer whose pipeline context receives the descriptor update.
      * @param shader_path     Shader path used to construct FormaBindingsProcessor if needed.
      * @param descriptor_name Descriptor name in the shader config.
@@ -168,7 +175,7 @@ public:
      * @param set             Descriptor set index.
      * @param role            UNIFORM or STORAGE.
      */
-    void write(uint32_t id,
+    void write(const ElementRef& ref,
         const std::shared_ptr<Buffers::VKBuffer>& target_buffer,
         const std::string& shader_path,
         const std::string& descriptor_name,
@@ -178,40 +185,40 @@ public:
 
     /**
      * @brief Route element value to an AudioWriteProcessor each frame.
-     * @param id     Element id.
+     * @param ref    Owning Layer and element id.
      * @param target AudioWriteProcessor to call set_data() on.
      */
-    void write(uint32_t id, std::shared_ptr<Buffers::AudioWriteProcessor> target);
+    void write(const ElementRef& ref, std::shared_ptr<Buffers::AudioWriteProcessor> target);
 
     /**
      * @brief Route element value to a DataWriteProcessor each frame.
-     * @param id     Element id.
+     * @param ref    Owning Layer and element id.
      * @param target DataWriteProcessor to call set_data() on.
      */
-    void write(uint32_t id, std::shared_ptr<Buffers::DataWriteProcessor> target);
+    void write(const ElementRef& ref, std::shared_ptr<Buffers::DataWriteProcessor> target);
 
     /**
      * @brief Route element value into a Constant node via set_constant().
-     * @param id   Element id.
+     * @param ref  Owning Layer and element id.
      * @param node Constant node updated each frame.
      */
-    void write(uint32_t id, std::shared_ptr<Nodes::Constant> node);
+    void write(const ElementRef& ref, std::shared_ptr<Nodes::Constant> node);
 
     /**
      * @brief Route element bulk value to a caller-supplied sink each frame.
      *
-     * When the element's MappedState<T> has a bulk_reader (T is vector<float>
-     * or vector<double>), the full vector is forwarded as a span. For scalar
-     * T the sink receives a single-element span of the scalar value.
+     * When the element's MappedState<T> has a bulk_reader (T is vector<float>,
+     * vector<double> or a glm vector), the full value is forwarded as a span.
+     * For scalar T the sink receives a single-element span of the scalar value.
      *
      * Intended for consumers that operate on coefficient arrays or other
      * N-element state: FIR/IIR coefficient vectors, Random node bounds,
      * any function accepting a contiguous float range.
      *
-     * @param id   Element id.
+     * @param ref  Owning Layer and element id.
      * @param sink Callable invoked each frame with the current value span.
      */
-    void write(uint32_t id, std::function<void(std::span<const float>)> sink);
+    void write(const ElementRef& ref, std::function<void(std::span<const float>)> sink);
 
     /**
      * @brief Route an ordered set of scalar states as one float range each frame.
@@ -282,7 +289,7 @@ public:
         uint32_t offset,
         size_t size = sizeof(float))
     {
-        write(state->id, std::move(target_buffer), shader_path, offset, size);
+        write(ref_of(state), std::move(target_buffer), shader_path, offset, size);
     }
 
     template <typename T>
@@ -294,7 +301,7 @@ public:
         uint32_t set,
         Portal::Graphics::DescriptorRole role = Portal::Graphics::DescriptorRole::UNIFORM)
     {
-        write(state->id, std::move(target_buffer), shader_path,
+        write(ref_of(state), std::move(target_buffer), shader_path,
             descriptor_name, binding_index, set, role);
     }
 
@@ -302,21 +309,21 @@ public:
     void write(std::shared_ptr<MappedState<T>> state,
         std::shared_ptr<Buffers::AudioWriteProcessor> target)
     {
-        write(state->id, std::move(target));
+        write(ref_of(state), std::move(target));
     }
 
     template <typename T>
     void write(std::shared_ptr<MappedState<T>> state,
         std::shared_ptr<Buffers::DataWriteProcessor> target)
     {
-        write(state->id, std::move(target));
+        write(ref_of(state), std::move(target));
     }
 
     template <typename T>
     void write(std::shared_ptr<MappedState<T>> state,
         std::shared_ptr<Nodes::Constant> node)
     {
-        write(state->id, std::move(node));
+        write(ref_of(state), std::move(node));
     }
 
     // =========================================================================
@@ -325,24 +332,35 @@ public:
 
     /**
      * @brief Register a MappedState<T> so that MappedState overloads and
-     *        outbound bindings can resolve to the correct element id and reader.
+     *        outbound bindings can resolve to the correct element and reader.
      *
      * Called by Forma::create_element. The reader closes over the MappedState
-     * and is stored type-erased as std::function<float()>.
+     * and is stored type-erased as std::function<float()>. The state records
+     * @p ref so later calls made through it address the same element.
+     * Rejected, with an error logged, when the Layer in @p ref has no
+     * shared_ptr owner.
      *
      * @tparam T        MappedState value type.
+     * @param ref       Owning Layer and the element id from Layer::add.
      * @param state     MappedState to register.
-     * @param id        Element id from Layer::add.
      * @param buffer    FormaBuffer the element renders into.
      * @param project   Optional T -> float projection. Identity cast if empty.
      */
     template <typename T>
     void register_element(
+        const ElementRef& ref,
         std::shared_ptr<MappedState<T>> state,
-        uint32_t id,
         std::shared_ptr<Buffers::FormaBuffer> buffer,
         std::function<float(T)> project = {})
     {
+        if (ref.first.expired()) {
+            MF_ERROR(Journal::Component::Portal, Journal::Context::Init,
+                "Bridge::register_element: element {} belongs to a Layer with no shared owner", ref.second);
+            return;
+        }
+
+        const uint32_t id = ref.second;
+
         std::function<float()> reader;
         if (project) {
             reader = [s = state, p = std::move(project)] {
@@ -375,6 +393,10 @@ public:
                     out.push_back(static_cast<float>(v));
                 return out;
             };
+        } else if constexpr (std::is_same_v<T, glm::vec2> || std::is_same_v<T, glm::vec3> || std::is_same_v<T, glm::vec4>) {
+            bulk_reader = [s = state] {
+                return std::vector<float>(&s->value[0], &s->value[0] + T::length());
+            };
         }
 
         std::function<void(float)> writer;
@@ -394,7 +416,8 @@ public:
         }
 
         state->id = id;
-        m_records[id] = ElementRecord {
+        state->layer = ref.first;
+        m_records[ref.first][id] = ElementRecord {
             .buffer = std::move(buffer),
             .bindings = nullptr,
             .reader = std::move(reader),
@@ -407,34 +430,15 @@ public:
     }
 
     /**
-     * @brief Register a fully constructed Mapped<T> and own its sync loop.
-     *
-     * Delegates record and reader/writer setup to the existing
-     * register_element overload, then spawns a per-frame GraphicsRoutine
-     * that calls mapped.sync(). The routine is stored in outbound_tasks
-     * and cancelled by unbind().
-     *
-     * @p mapped must outlive the Bridge registration.
-     *
-     * @tparam T      MappedState value type.
-     * @param mapped  Fully constructed Mapped<T>, typically from create_element.
-     * @param project Optional T -> float projection for outbound readers.
-     *                Identity cast used if empty.
-     */
-    template <typename T>
-    void register_element(Mapped<T> mapped, std::function<float(T)> project = {})
-    {
-        register_element(mapped.state, mapped.element.id, mapped.element.buffer, std::move(project));
-        spawn_sync(mapped.element.id, [m = std::move(mapped)]() mutable { m.sync(); });
-    }
-
-    /**
      * @brief Register a Mapped element and scope its presentation sync to a Layer.
      *
      * Each frame's sync pushes the geometry function's bounds_hint and
      * contains back into @p layer, so hit testing follows the drawn shape.
      * The Layer scope also stops presentation sync when its Surface closes.
-     * unbind(id) cancels the sync task as well.
+     * unbind(ref) cancels the sync task as well.
+     *
+     * @p layer must be owned by a shared_ptr, as Surface and
+     * Forma::create_layer do; otherwise the call logs an error and does nothing.
      *
      * @param layer   Layer owning the element.
      * @param mapped  Fully constructed Mapped element.
@@ -446,7 +450,15 @@ public:
         Mapped<T> mapped,
         std::function<float(T)> project = {})
     {
-        register_element(mapped.state, mapped.element.id, mapped.element.buffer, std::move(project));
+        auto owner = layer.weak_from_this();
+        if (owner.expired()) {
+            MF_ERROR(Journal::Component::Portal, Journal::Context::Init,
+                "Bridge::register_element: element {} belongs to a Layer with no shared owner", mapped.element.id);
+            return;
+        }
+
+        register_element(ElementRef { std::move(owner), mapped.element.id },
+            mapped.state, mapped.element.buffer, std::move(project));
         spawn_sync(layer, mapped.element.id,
             [m = std::move(mapped), target = &layer]() mutable { m.sync(target); });
     }
@@ -459,7 +471,7 @@ public:
      * @brief Cancel all inbound and outbound bindings for an element.
      *        The element remains in its layer.
      */
-    void unbind(uint32_t id);
+    void unbind(const ElementRef& ref);
 
     /**
      * @brief Stop Bridge tasks owned by a Layer.
@@ -474,7 +486,7 @@ public:
     template <typename T>
     void unbind(std::shared_ptr<MappedState<T>> state)
     {
-        unbind(state->id);
+        unbind(ref_of(state));
     }
 
     // =========================================================================
@@ -485,15 +497,15 @@ public:
      * @class Binding
      * @brief Non-owning handle for all bind/write/unbind operations on one element.
      *
-     * Obtained via Bridge::at(id) or Bridge::at(state). Closes over the
-     * Bridge reference and the element id so the caller never repeats either.
+     * Obtained via Bridge::at(ref) or Bridge::at(state). Closes over the
+     * Bridge reference and the ElementRef so the caller never repeats either.
      * Every method forwards directly to the corresponding Bridge overload:
      * there is no deferred execution, no new mechanism.
      *
      * Binding holds a reference to its Bridge and must not outlive it.
      *
      * @code
-     * bridge.at(el.element.id)
+     * bridge.at(el.state)
      *     .bind(envelope_node)
      *     .write(compute_buf, shader_path, offsetof(PC, cutoff))
      *     .write(audio_proc);
@@ -501,24 +513,24 @@ public:
      */
     class Binding {
     public:
-        Binding(Bridge& bridge, uint32_t id) noexcept
+        Binding(Bridge& bridge, ElementRef ref) noexcept
             : m_bridge(bridge)
-            , m_id(id)
+            , m_ref(std::move(ref))
         {
         }
 
-        [[nodiscard]] uint32_t id() const noexcept { return m_id; }
+        [[nodiscard]] uint32_t id() const noexcept { return m_ref.second; }
 
         Binding& bind(std::shared_ptr<Nodes::Node> node,
             std::function<float(double)> project = {})
         {
-            m_bridge.bind(m_id, std::move(node), std::move(project));
+            m_bridge.bind(m_ref, std::move(node), std::move(project));
             return *this;
         }
 
         Binding& bind(std::function<float()> source)
         {
-            m_bridge.bind(m_id, std::move(source));
+            m_bridge.bind(m_ref, std::move(source));
             return *this;
         }
 
@@ -528,7 +540,7 @@ public:
             uint32_t offset,
             size_t size = sizeof(float))
         {
-            m_bridge.write(m_id, target, shader_path, offset, size);
+            m_bridge.write(m_ref, target, shader_path, offset, size);
             return *this;
         }
 
@@ -540,43 +552,43 @@ public:
             uint32_t set,
             Portal::Graphics::DescriptorRole role = Portal::Graphics::DescriptorRole::UNIFORM)
         {
-            m_bridge.write(m_id, target, shader_path,
+            m_bridge.write(m_ref, target, shader_path,
                 descriptor_name, binding_index, set, role);
             return *this;
         }
 
         Binding& write(std::shared_ptr<Buffers::AudioWriteProcessor> target)
         {
-            m_bridge.write(m_id, std::move(target));
+            m_bridge.write(m_ref, std::move(target));
             return *this;
         }
 
         Binding& write(std::shared_ptr<Buffers::DataWriteProcessor> target)
         {
-            m_bridge.write(m_id, std::move(target));
+            m_bridge.write(m_ref, std::move(target));
             return *this;
         }
 
         Binding& write(std::shared_ptr<Nodes::Constant> node)
         {
-            m_bridge.write(m_id, std::move(node));
+            m_bridge.write(m_ref, std::move(node));
             return *this;
         }
 
         Binding& write(std::function<void(std::span<const float>)> sink)
         {
-            m_bridge.write(m_id, std::move(sink));
+            m_bridge.write(m_ref, std::move(sink));
             return *this;
         }
 
         void unbind()
         {
-            m_bridge.unbind(m_id);
+            m_bridge.unbind(m_ref);
         }
 
     private:
         Bridge& m_bridge;
-        uint32_t m_id;
+        ElementRef m_ref;
     };
 
     // =========================================================================
@@ -584,15 +596,15 @@ public:
     // =========================================================================
 
     /**
-     * @brief Return a Binding handle for the element registered under @p id.
+     * @brief Return a Binding handle for the element registered under @p ref.
      *
      * The handle is lightweight and non-owning. Prefer this over repeated
-     * bind(id, ...) / write(id, ...) calls when wiring one element to
+     * bind(ref, ...) / write(ref, ...) calls when wiring one element to
      * multiple sources or destinations.
      */
-    [[nodiscard]] Binding at(uint32_t id)
+    [[nodiscard]] Binding at(ElementRef ref)
     {
-        return Binding { *this, id };
+        return Binding { *this, std::move(ref) };
     }
 
     /**
@@ -601,24 +613,16 @@ public:
     template <typename T>
     [[nodiscard]] Binding at(const std::shared_ptr<MappedState<T>>& state)
     {
-        return Binding(*this, state->id);
+        return Binding(*this, ref_of(state));
     }
 
     /**
-     * @brief Spawn a per-frame GraphicsRoutine that calls @p sync_fn each tick.
-     *
-     * Stores the task name in the outbound_tasks of the record for @p id so
-     * that unbind() cancels it correctly. The coroutine body is type-free --
-     * all type-specific work is captured inside @p sync_fn by the caller.
-     *
-     * @param id       Element id whose outbound_tasks receives the task name.
-     * @param sync_fn  Callable invoked once per frame. Typically a lambda
-     *                 capturing Mapped<T> by reference and calling sync().
-     */
-    void spawn_sync(uint32_t id, std::function<void()> sync_fn);
-
-    /**
      * @brief Spawn a presentation sync task scoped to a Layer.
+     *
+     * The task name is also stored in the outbound_tasks of the record for
+     * @p id, when one exists, so that unbind() cancels it. @p layer must be
+     * owned by a shared_ptr.
+     *
      * @param layer Layer that owns the task.
      * @param id Element id used for task naming and diagnostics.
      * @param sync_fn Function invoked once per graphics frame.
@@ -642,14 +646,21 @@ private:
 
     mutable uint32_t m_next_id { 0 };
 
-    std::unordered_map<uint32_t, ElementRecord> m_records;
-    std::unordered_map<const Layer*, std::vector<std::string>> m_layer_tasks;
+    std::map<std::weak_ptr<Layer>, std::unordered_map<uint32_t, ElementRecord>, std::owner_less<>> m_records;
+    std::map<std::weak_ptr<Layer>, std::vector<std::string>, std::owner_less<>> m_layer_tasks;
 
+    template <typename T>
+    [[nodiscard]] static ElementRef ref_of(const std::shared_ptr<MappedState<T>>& state)
+    {
+        return { state->layer, state->id };
+    }
+
+    [[nodiscard]] ElementRecord* find_record(const ElementRef& ref);
     std::string make_task_name(uint32_t id, const char* suffix) const;
     std::string make_layer_task_name(const char* suffix) const;
     void cancel_inbound(ElementRecord& rec);
     void cancel_outbound(ElementRecord& rec);
-    void spawn_inbound(uint32_t id, std::function<float()> source);
+    void spawn_inbound(const ElementRef& ref, std::function<float()> source);
     void write_aggregate(
         Layer& layer,
         std::vector<std::function<float()>> readers,

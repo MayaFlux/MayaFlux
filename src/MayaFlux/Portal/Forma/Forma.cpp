@@ -91,7 +91,7 @@ void destroy(Surface& surface, uint32_t id)
 {
     for (uint32_t cid : surface.layer().closure(id)) {
         surface.ctx().unbind(cid);
-        bridge().unbind(cid);
+        bridge().unbind({ surface.layer_ptr(), cid });
     }
     surface.layer().remove(id);
 }

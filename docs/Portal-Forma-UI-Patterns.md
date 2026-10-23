@@ -304,6 +304,86 @@ to the header's open state. Any number of body elements can be attached.
 
 ---
 
+## ImGui::Combo / dropdown
+
+ImGui:
+
+```cpp
+const char* waves[] = { "sine", "saw", "square" };
+ImGui::Combo("Wave", &current, waves, 3);
+```
+
+Forma: `Dropdown`. It follows the same `place()` pattern as `Collapsible`: a
+header shows the current choice, pressing it opens a list of options over
+whatever lies below, and choosing a row closes the list.
+
+```cpp
+LayoutCursor cursor { 1.F, -0.9F, -0.4F };
+
+auto wave = Dropdown {}
+    .options({ "sine", "saw", "square" })
+    .initial(0)
+    .on_select([](size_t index) { /* react to the choice */ })
+    .place(surface, cursor, 0.1F);
+```
+
+`wave.selected` is a `MappedState<size_t>` holding the chosen index, and it is
+registered with the `Bridge`, so it reads like any other state:
+
+```cpp
+Portal::Forma::bridge().at(wave.selected).write(
+    [](std::span<const float> index) { /* index[0] is the chosen row */ });
+```
+
+The header reads `v` before the current choice while the list is closed and `^`
+while it is open. The list overlays the controls below it and does not
+advance the cursor. Lists longer than `max_visible()` (default 8) scroll with
+the mouse wheel. A `Bridge` inbound write changes `selected` but not the header
+caption, and `Portal::Forma::destroy(surface, wave.header_id)` removes the
+whole control.
+
+`Portal::Forma::pick` is the stand-alone version: it opens its own window of
+rows, reports the choice once through a callback, and closes.
+
+---
+
+## ImGui::ColorEdit / color picker
+
+ImGui:
+
+```cpp
+ImGui::ColorEdit3("Tint", colour);
+```
+
+Forma: `ColorPicker`. A saturation and value square, a hue strip and a swatch,
+drawn into one buffer. Press or drag the square for saturation and value, the
+strip for hue.
+
+```cpp
+LayoutCursor cursor { 1.F, -0.9F, -0.1F };
+
+auto tint = ColorPicker {}
+    .initial({ 0.9F, 0.4F, 0.1F })
+    .on_change([](glm::vec3 rgb) { /* every pick */ })
+    .place(surface, cursor, 0.6F);
+```
+
+`tint.color` holds red, green and blue in [0, 1]. `tint.hsv` holds hue,
+saturation and value and keeps the hue when you pick a grey or black. Both are
+`MappedState<glm::vec3>` registered with the `Bridge`, and a sink receives their
+three components as a span:
+
+```cpp
+Portal::Forma::bridge().at(tint.color).write(
+    [](std::span<const float> rgb) { /* rgb[0], rgb[1], rgb[2] */ });
+```
+
+`Portal::Forma::destroy(surface, tint.picker_id)` removes the picker and its
+hit regions. Colour conversion lives in `Kinesis/ColorSpace.hpp`
+(`hsv_to_rgb`, `rgb_to_hsv`) if you need it elsewhere.
+
+---
+
 ## ImGui grouped value readout panel
 
 A scrollable inspector-style panel with live-updating labeled rows grouped

@@ -17,8 +17,11 @@ namespace MayaFlux::Portal::Forma {
  * Pixel-space query overloads accept window dimensions and convert to NDC
  * internally using the same convention as Kinesis::to_ndc: top-left origin,
  * +Y down in pixel space, +Y up in NDC.
+ *
+ * Element ids are unique only within one Layer. A Layer used with Bridge
+ * must be owned by a shared_ptr, which Bridge uses to tell layers apart.
  */
-class MAYAFLUX_API Layer {
+class MAYAFLUX_API Layer : public std::enable_shared_from_this<Layer> {
 public:
     // =========================================================================
     // Slot

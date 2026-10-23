@@ -42,6 +42,9 @@ struct MappedState {
     Version version { 0 };
     uint32_t id { 0 };
 
+    /// @brief Layer that issued @c id. Set by Bridge::register_element.
+    std::weak_ptr<Layer> layer;
+
     void write(T v)
     {
         value = v;

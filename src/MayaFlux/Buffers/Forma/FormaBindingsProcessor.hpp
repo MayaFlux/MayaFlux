@@ -232,6 +232,14 @@ protected:
     void initialize_pipeline(const std::shared_ptr<VKBuffer>&) override { }
     void initialize_descriptors(const std::shared_ptr<VKBuffer>&) override { }
 
+    /**
+     * @brief Drop the loaded shader id without destroying it.
+     *
+     * The shader belongs to the target buffer's pipeline and is shared by
+     * path, so cleanup must not destroy it.
+     */
+    void on_shader_loaded(Portal::Graphics::ShaderID) override { m_shader_id = Portal::Graphics::INVALID_SHADER; }
+
 private:
     enum class TargetKind : uint8_t {
         PUSH_CONSTANT,
