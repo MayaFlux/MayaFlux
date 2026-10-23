@@ -85,6 +85,30 @@ size_t gpu_data_format_components(GpuDataFormat fmt) noexcept
     }
 }
 
+GpuBlockLayout gpu_block_layout(std::span<const GpuDataFormat> fields)
+{
+    GpuBlockLayout layout;
+    layout.offsets.reserve(fields.size());
+
+    size_t end = 0;
+    size_t widest = 4;
+    for (const GpuDataFormat field : fields) {
+        const size_t align = gpu_data_format_align(field);
+        if (align == 0) {
+            layout.offsets.push_back(static_cast<uint32_t>(end));
+            continue;
+        }
+
+        end = (end + align - 1) / align * align;
+        layout.offsets.push_back(static_cast<uint32_t>(end));
+        end += gpu_data_format_bytes(field);
+        widest = std::max(widest, align);
+    }
+
+    layout.size = static_cast<uint32_t>((end + widest - 1) / widest * widest);
+    return layout;
+}
+
 size_t gpu_value_write(const GpuValue& value, std::span<std::byte> out) noexcept
 {
     return std::visit([&](const auto& held) -> size_t {

@@ -213,12 +213,10 @@ namespace {
 
         if (!spec.pc_fields.empty()) {
             o += "OpDecorate %pc_blk Block\n";
-            uint32_t off = 0;
+            const auto layout = push_constant_layout(spec.pc_fields);
             for (size_t i = 0; i < spec.pc_fields.size(); ++i) {
                 o += "OpMemberDecorate %pc_blk " + std::to_string(i)
-                    + " Offset " + std::to_string(off) + "\n";
-                off += static_cast<uint32_t>(
-                    Kakshya::gpu_data_format_bytes(spec.pc_fields[i].format));
+                    + " Offset " + std::to_string(layout.offsets[i]) + "\n";
             }
         }
         o += "\n";

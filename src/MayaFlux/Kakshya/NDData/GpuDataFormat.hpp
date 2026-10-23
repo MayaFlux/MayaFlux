@@ -60,6 +60,29 @@ MAYAFLUX_API size_t gpu_data_format_align(GpuDataFormat fmt) noexcept;
 MAYAFLUX_API size_t gpu_data_format_components(GpuDataFormat fmt) noexcept;
 
 /**
+ * @struct GpuBlockLayout
+ * @brief Member offsets and total size of a block of GpuDataFormat fields.
+ */
+struct GpuBlockLayout {
+    std::vector<uint32_t> offsets;
+    uint32_t size {};
+};
+
+/**
+ * @brief Lay out fields in declaration order under std430 rules.
+ *
+ * Each offset is the running end rounded up to the field's alignment, and the
+ * size is the end rounded up to the widest alignment, never less than four.
+ * This is the layout Vulkan applies to push constant blocks, which the GLSL
+ * path leaves to the compiler and the SPIR-V path must state itself.
+ *
+ * @param fields Field formats in declaration order.
+ * @return One offset per field. Unrecognised formats take no space and
+ *         report the current end as their offset.
+ */
+MAYAFLUX_API GpuBlockLayout gpu_block_layout(std::span<const GpuDataFormat> fields);
+
+/**
  * @brief Maps a C++ type to its GpuDataFormat.
  *
  * Specialised for float, double, int32_t, uint32_t, uint8_t, uint16_t,
