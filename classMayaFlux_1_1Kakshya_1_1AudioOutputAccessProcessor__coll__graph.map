@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::AudioOutputAccessProcessor" name="MayaFlux::Kakshya::AudioOutputAccessProcessor">
+<area shape="rect" id="Node000001" title="Default DataProcessor for AudioOutputContainer." alt="" coords="65,228,304,468"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1DataProcessor.html" title="Interface for processing data within SignalSourceContainer objects." alt="" coords="5,5,156,165"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="120,177,140,227,135,229,115,179"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Registry_1_1Service_1_1AudioBackendService.html" title="Backend audio subsystem service interface." alt="" coords="181,25,399,145"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="269,147,241,214,236,212,264,145"/>
+</map>

@@ -1,0 +1,13 @@
+<map id="MayaFlux::Memory::HistoryBuffer::capacity" name="MayaFlux::Memory::HistoryBuffer::capacity">
+<area shape="rect" id="Node000001" title="Get buffer capacity." alt="" coords="531,127,733,167"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kinesis_1_1SymbolicTrajectory_a19327432ef237f2437c4419182a25d2a.html#a19327432ef237f2437c4419182a25d2a" title="Crossings within the most recent window observations." alt="" coords="301,5,460,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="581,123,482,74,455,63,457,58,484,69,583,118"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kinesis_1_1SymbolicTrajectory_a727d7b0f4b87c972a5734c26dbc63cc8.html#a727d7b0f4b87c972a5734c26dbc63cc8" title="Cell with the most observations within the most recent window observations." alt="" coords="304,84,457,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="517,134,457,125,458,120,518,128"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1FeedbackProcessor_a365ed1df0d377a8b3e0a2593376aed4c.html#a365ed1df0d377a8b3e0a2593376aed4c" title=" " alt="" coords="279,163,483,203"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="518,166,483,171,482,166,517,161"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kinesis_1_1SymbolicTrajectory_a68971b4a39fa43acbbea511aa92a0ea5.html#a68971b4a39fa43acbbea511aa92a0ea5" title="Count of distinct cells visited within the most recent window observations." alt="" coords="291,228,470,283"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="577,176,484,218,454,230,452,225,482,213,575,171"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1FeedbackProcessor_a833681ef35569b129b9e9d57aa941f2e.html#a833681ef35569b129b9e9d57aa941f2e" title="The core processing function that must be implemented by derived classes." alt="" coords="5,156,231,211"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="265,186,231,186,231,181,265,181"/>
+</map>

@@ -1,0 +1,11 @@
+<map id="Boolean.hpp" name="Boolean.hpp">
+<area shape="rect" id="Node000001" title="Pure decision functions of bits and an array of numbers." alt="" coords="76,5,179,31"/>
+<area shape="rect" id="Node000002" href="$Boolean_8cpp.html" title=" " alt="" coords="5,79,108,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="108,43,70,80,66,77,104,39"/>
+<area shape="rect" id="Node000003" href="$Convenience_8hpp.html" title="Everyday headers and namespace imports for user code." alt="" coords="132,79,267,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="151,39,190,77,186,80,147,43"/>
+<area shape="rect" id="Node000004" href="$MayaFlux_8hpp.html" title="Single include for the user facing API." alt="" coords="142,152,257,177"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="202,118,202,152,197,152,197,118"/>
+<area shape="rect" id="Node000005" href="$LiveAid_8hpp.html" title=" " alt="" coords="150,225,249,251"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="202,191,202,225,197,225,197,191"/>
+</map>

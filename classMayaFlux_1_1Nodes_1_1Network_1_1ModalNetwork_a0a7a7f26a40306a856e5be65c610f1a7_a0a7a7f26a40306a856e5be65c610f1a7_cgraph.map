@@ -1,0 +1,36 @@
+<map id="MayaFlux::Nodes::Network::ModalNetwork::process_batch" name="MayaFlux::Nodes::Network::ModalNetwork::process_batch">
+<area shape="rect" id="Node000001" title="Process the network for the given number of samples." alt="" coords="5,249,232,289"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork_a32f35c709a82b7729fc066314401db44.html#a32f35c709a82b7729fc066314401db44" title="Apply m_output_scale to m_last_audio_buffer." alt="" coords="280,5,533,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="127,248,149,207,182,154,226,101,251,76,279,55,289,49,291,54,281,60,254,80,229,104,186,157,154,209,132,250"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ModalNetwork_a7d9a6e807ca45bf4308355b8840695d9.html#a7d9a6e807ca45bf4308355b8840695d9" title="Apply modal coupling energy transfer." alt="" coords="307,70,506,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="138,247,197,192,237,162,279,135,294,127,296,132,281,140,240,166,201,196,141,251"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork_abeaa7af1c52486d16ee4a761a1960706.html#abeaa7af1c52486d16ee4a761a1960706" title="Ensure initialize() is called exactly once." alt="" coords="285,149,528,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="161,247,279,199,306,191,307,196,281,204,163,252"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Nodes_1_1Network_afb689657be6edb61f131ad756c4a1ac1.html#afb689657be6edb61f131ad756c4a1ac1" title="Extract num_samples from node into buffer using snapshot guard." alt="" coords="307,213,506,253"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="232,253,293,245,294,250,233,258"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ModalNetwork_a7f91709c2b6508dcdf0504cbad15f267.html#a7f91709c2b6508dcdf0504cbad15f267" title="Generate exciter signal for current sample." alt="" coords="307,278,506,333"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="233,281,294,289,293,294,232,286"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork_a47fc83e277fdcdb355b43d6d3065e9ec.html#a47fc83e277fdcdb355b43d6d3065e9ec" title="Check if network is enabled." alt="" coords="307,357,506,397"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="159,287,216,315,281,342,309,351,308,356,279,346,214,319,157,292"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a9c90017817936dc5ac65ff5e13eddba3.html#a9c90017817936dc5ac65ff5e13eddba3" title="Sample indices of local peak maxima in the full span." alt="" coords="315,445,498,485"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="141,288,201,345,240,378,281,407,340,438,337,442,279,412,237,382,198,349,137,291"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ModalNetwork_ab9885453720654773f64c5011ddea493.html#ab9885453720654773f64c5011ddea493" title="Update mapped parameters before processing." alt="" coords="307,510,506,565"/>
+<area shape="poly" id="edge11_Node000001_Node000011" title=" " alt="" coords="131,288,152,331,185,387,228,445,254,472,282,495,297,505,294,509,278,499,250,476,224,449,180,390,147,334,126,291"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork_a46eab2ced115fa80605195fa154e3973.html#a46eab2ced115fa80605195fa154e3973" title="Called once before first process_batch()" alt="" coords="602,149,801,189"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="528,167,588,167,588,172,528,172"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Buffers_a49877ba6fa83442f01baf4ec283a0f72.html#a49877ba6fa83442f01baf4ec283a0f72" title="Wait for an active snapshot context to complete using exponential backoff." alt="" coords="591,213,812,253"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="506,231,577,231,577,236,506,236"/>
+<area shape="poly" id="edge10_Node000010_Node000010" title=" " alt="" coords="354,446,350,436,359,426,378,421,407,419,440,421,458,429,456,434,439,427,407,424,379,426,362,431,355,437,359,444"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ModalNetwork_a7872fe7bca886ea3f8d5656cdc3680df.html#a7872fe7bca886ea3f8d5656cdc3680df" title="Apply broadcast parameter to all modes." alt="" coords="581,470,821,525"/>
+<area shape="poly" id="edge12_Node000011_Node000012" title=" " alt="" coords="506,521,567,513,568,518,506,527"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ModalNetwork_a3114da2133cf2be8051b4146a57803f5.html#a3114da2133cf2be8051b4146a57803f5" title="Apply one&#45;to&#45;one parameter from another network." alt="" coords="601,549,801,603"/>
+<area shape="poly" id="edge17_Node000011_Node000017" title=" " alt="" coords="506,548,588,558,587,564,506,553"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ModalNetwork_a345c7d05d53c4962737bf14426c4ce51.html#a345c7d05d53c4962737bf14426c4ce51" title="Set global decay multiplier." alt="" coords="891,434,1090,489"/>
+<area shape="poly" id="edge13_Node000012_Node000013" title=" " alt="" coords="821,480,878,473,878,478,822,485"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ModalNetwork_a9bdd3fe841d3ba0849ea4cf32cab3f5c.html#a9bdd3fe841d3ba0849ea4cf32cab3f5c" title="Set base frequency (fundamental)" alt="" coords="869,513,1112,553"/>
+<area shape="poly" id="edge16_Node000012_Node000016" title=" " alt="" coords="822,510,856,514,855,519,821,515"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ModalNetwork_a297d0c0c2f02d881cfd144b9f1027798.html#a297d0c0c2f02d881cfd144b9f1027798" title="Recompute every mode&#39;s per&#45;sample decay from the base decay and multiplier." alt="" coords="1160,441,1385,481"/>
+<area shape="poly" id="edge14_Node000013_Node000014" title=" " alt="" coords="1090,459,1146,459,1146,464,1090,464"/>
+<area shape="rect" id="Node000015" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_ae8b39c4e028b87d306f371e497cd1bdc.html#ae8b39c4e028b87d306f371e497cd1bdc" title="Per&#45;sample factor that falls by 1/e in a given time." alt="" coords="1433,434,1584,489"/>
+<area shape="poly" id="edge15_Node000014_Node000015" title=" " alt="" coords="1386,459,1420,459,1420,464,1386,464"/>
+</map>

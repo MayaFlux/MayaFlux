@@ -1,0 +1,13 @@
+<map id="MayaFlux::Kakshya::VideoStreamContainer::set_default_processor" name="MayaFlux::Kakshya::VideoStreamContainer::set_default_processor">
+<area shape="rect" id="Node000001" title="Set the default data processor for this container." alt="" coords="688,84,861,139"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1CameraContainer_a3610a872353dfbe6e8fea1d57c3214d5.html#a3610a872353dfbe6e8fea1d57c3214d5" title="Create FrameAccessProcessor with auto_advance disabled." alt="" coords="450,5,635,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="679,82,623,63,625,58,681,77"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1DynamicVideoStream_a928634398e8f2101357633946403da5f.html#a928634398e8f2101357633946403da5f" title="Install a FrameSeekProcessor as the default processor." alt="" coords="449,84,636,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="674,114,636,114,636,109,674,109"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer_a4ba738e468a4a296f33a968a93da8338.html#a4ba738e468a4a296f33a968a93da8338" title="Create and configure a default processor for this container." alt="" coords="445,163,640,217"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="681,146,625,165,623,160,679,141"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1DynamicVideoStream_af63ff062008e5f10f0e7d2095124e5eb.html#af63ff062008e5f10f0e7d2095124e5eb" title="The FrameSeekProcessor that reads this stream, installed on first use." alt="" coords="225,84,397,139"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="435,114,398,114,398,109,435,109"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1DynamicVideoStream_a9e645d84e7eb133de77b4df6b45f02c0.html#a9e645d84e7eb133de77b4df6b45f02c0" title="Play back a fixed number of frames behind the write head." alt="" coords="5,84,177,139"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="211,114,177,114,177,109,211,109"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::damp_asymmetric" name="MayaFlux::Kinesis::damp_asymmetric">
+<area shape="rect" id="Node000001" title="damp with separate time constants for rising and falling." alt="" coords="5,5,155,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a14a4919a6e1ad749d51c26d0fa0d547c.html#a14a4919a6e1ad749d51c26d0fa0d547c" title="Exponential smoothing: move current toward target at rate smoothing over time step dt." alt="" coords="203,13,389,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="155,23,189,23,189,28,155,28"/>
+</map>

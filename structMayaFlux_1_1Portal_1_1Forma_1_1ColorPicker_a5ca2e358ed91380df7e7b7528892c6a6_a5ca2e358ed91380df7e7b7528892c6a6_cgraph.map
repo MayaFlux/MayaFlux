@@ -1,0 +1,35 @@
+<map id="MayaFlux::Portal::Forma::ColorPicker::place" name="MayaFlux::Portal::Forma::ColorPicker::place">
+<area shape="rect" id="Node000001" title="Register the picker and wire its input." alt="" coords="5,469,187,509"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Surface_a794fed58183dd8569be2ebf4c746ee89.html#a794fed58183dd8569be2ebf4c746ee89" title="Forward an Element to layer().add() and return the Slot." alt="" coords="239,5,421,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="95,469,101,393,120,282,137,222,161,162,193,105,233,56,237,52,240,56,237,59,197,108,166,164,142,224,125,283,106,393,100,469"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Forma_1_1LayoutCursor_aceb0d4953387c267513e1ecaba767f36.html#aceb0d4953387c267513e1ecaba767f36" title="Advance the cursor downward by height and return the NDC AABB occupied by the primitive just placed,..." alt="" coords="239,69,421,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="96,469,106,402,128,309,145,258,168,208,197,161,233,119,237,115,241,119,237,123,202,164,173,211,150,260,133,311,111,403,102,469"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1internal_abdc2f8c3b42bcb7e0e99aae7e15a4615.html#abdc2f8c3b42bcb7e0e99aae7e15a4615" title="Accessor for the process&#45;wide Atelier." alt="" coords="239,133,421,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="98,468,111,413,136,336,154,295,175,255,202,217,233,183,238,179,242,183,236,187,206,220,180,257,158,297,141,338,116,414,103,470"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Forma_1_1internal_1_1Atelier_ae6a68b62f4ba807365f83dc74b9671dd.html#ae6a68b62f4ba807365f83dc74b9671dd" title="Bridge instance constructed during initialize." alt="" coords="239,197,421,237"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="101,468,117,423,144,364,183,301,206,273,233,247,240,242,243,247,236,251,210,276,187,305,149,366,122,425,106,470"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Portal_1_1Forma_1_1internal_1_1Atelier_a8995b53bc75ed95d2da1d116478b8fb5.html#a8995b53bc75ed95d2da1d116478b8fb5" title="Build a FormaBuffer, construct a Mapped&lt;T&gt;, register the element on layer, and register it with the B..." alt="" coords="239,262,421,317"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="108,467,158,400,193,362,233,327,242,321,245,326,236,331,197,365,162,403,112,471"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Surface_a59632cf950ca32272134390bb45ee7ab.html#a59632cf950ca32272134390bb45ee7ab" title="Access the event router." alt="" coords="239,341,421,381"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="120,467,171,429,233,391,248,384,250,389,236,396,174,433,123,471"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Kinesis_a19e9f60ee17462eeede33d4a78391751.html#a19e9f60ee17462eeede33d4a78391751" title="Convert hue, saturation and value to red, green and blue." alt="" coords="255,405,405,445"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="169,467,242,446,244,452,171,472"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Surface_a0f71c85e39af09d09e4c22d4de443906.html#a0f71c85e39af09d09e4c22d4de443906" title="Shared handles for callers that need to keep components alive independently of the Surface (backgroun..." alt="" coords="239,469,421,509"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="187,487,226,487,226,492,187,492"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Bridge_a582c772ca7214c01c4d72ecafca3ec14.html#a582c772ca7214c01c4d72ecafca3ec14" title="Register a MappedState&lt;T&gt; so that MappedState overloads and outbound bindings can resolve to the corr..." alt="" coords="235,533,425,573"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="171,507,244,527,242,532,169,512"/>
+<area shape="rect" id="Node000012" href="$namespaceMayaFlux_1_1Kinesis_a12574881c3edfa6ee95b1983312ff685.html#a12574881c3edfa6ee95b1983312ff685" title="Convert red, green and blue to hue, saturation and value." alt="" coords="255,597,405,637"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="123,508,174,545,236,583,250,590,248,595,233,588,171,550,120,512"/>
+<area shape="rect" id="Node000013" href="$namespaceMayaFlux_1_1Kinesis_a6c0e1646b1da9d60e679edf11158b9ee.html#a6c0e1646b1da9d60e679edf11158b9ee" title="Unit&#45;square coordinates of a point within bounds." alt="" coords="255,661,405,701"/>
+<area shape="poly" id="edge12_Node000001_Node000013" title=" " alt="" coords="112,508,161,576,196,614,236,647,246,653,243,657,233,652,192,618,157,579,107,511"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Surface_a4e6ecdf8a69c8a139b4bba050ab6803d.html#a4e6ecdf8a69c8a139b4bba050ab6803d" title="Access the rendering target window." alt="" coords="239,725,421,765"/>
+<area shape="poly" id="edge13_Node000001_Node000014" title=" " alt="" coords="107,509,124,551,151,606,189,662,211,688,236,711,243,716,240,720,233,715,208,692,185,666,147,608,119,553,102,511"/>
+<area shape="rect" id="Node000015" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Element_a28624dc1404dc17967ea9167ac7b138c.html#a28624dc1404dc17967ea9167ac7b138c" title="Set the fast&#45;reject AABB." alt="" coords="239,789,421,829"/>
+<area shape="poly" id="edge14_Node000001_Node000015" title=" " alt="" coords="104,509,118,562,143,634,182,710,207,745,236,775,242,780,239,784,233,779,203,748,177,712,138,636,112,564,99,510"/>
+<area shape="rect" id="Node000016" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Element_ad81b20895220d4e168672dec7a3c1482.html#ad81b20895220d4e168672dec7a3c1482" title="Set the human&#45;readable name used in Lila introspection and debug output." alt="" coords="239,853,421,893"/>
+<area shape="poly" id="edge15_Node000001_Node000016" title=" " alt="" coords="102,509,112,573,135,661,152,709,175,756,203,801,237,839,241,843,238,847,233,843,198,804,170,759,147,711,130,663,107,574,97,510"/>
+<area shape="rect" id="Node000017" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_af668d56bbf7441d552c3ee5c38c3ae62.html#af668d56bbf7441d552c3ee5c38c3ae62" title="Write a vertex array into a GeometryFn output buffer." alt="" coords="239,917,421,957"/>
+<area shape="poly" id="edge16_Node000001_Node000017" title=" " alt="" coords="101,509,107,583,127,688,144,746,168,803,198,856,237,904,240,907,237,911,233,907,194,859,163,805,139,748,122,689,102,583,95,510"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Forma_1_1internal_1_1Atelier_a08a096e054a0c2a721c1a399c95af469.html#a08a096e054a0c2a721c1a399c95af469" title=" " alt="" coords="473,133,668,173"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="421,151,460,151,460,156,421,156"/>
+</map>

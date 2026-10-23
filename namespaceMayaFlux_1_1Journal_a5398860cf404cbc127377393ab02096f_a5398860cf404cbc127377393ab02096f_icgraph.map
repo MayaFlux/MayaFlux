@@ -1,0 +1,7 @@
+<map id="MayaFlux::Journal::error_rethrow" name="MayaFlux::Journal::error_rethrow">
+<area shape="rect" id="Node000001" title="Catch and log an exception, then rethrow it." alt="" coords="240,37,387,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Journal_a476f6cea5798ab5bc457b722cbc99d72.html#a476f6cea5798ab5bc457b722cbc99d72" title="fmt&#45;style overload of error_rethrow()." alt="" coords="25,5,172,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="226,47,172,39,172,34,227,42"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1IOManager_af982f9c79ae012eccf9dc9c726bc754c.html#af982f9c79ae012eccf9dc9c726bc754c" title="Construct IOManager and register the IOService into BackendRegistry." alt="" coords="5,69,192,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="227,73,193,78,192,73,226,68"/>
+</map>

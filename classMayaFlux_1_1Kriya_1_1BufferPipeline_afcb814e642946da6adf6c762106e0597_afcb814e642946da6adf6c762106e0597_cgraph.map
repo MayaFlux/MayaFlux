@@ -1,0 +1,25 @@
+<map id="MayaFlux::Kriya::BufferPipeline::process_fuse" name="MayaFlux::Kriya::BufferPipeline::process_fuse">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,197,232,237"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kriya_1_1detail_a9edc6b35f0ae29cc1d36271a727bb756.html#a9edc6b35f0ae29cc1d36271a727bb756" title=" " alt="" coords="307,5,480,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="133,195,191,126,233,88,279,55,292,48,295,53,281,60,236,92,195,130,137,199"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kriya_1_1BufferCapture_a2904c1132bb2a0b535150edbf2decbe4.html#a2904c1132bb2a0b535150edbf2decbe4" title=" " alt="" coords="280,69,507,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="147,195,206,157,279,119,298,111,300,116,281,124,209,162,150,199"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kriya_1_1BufferPipeline_a1291668126ca8f7c2fef564df801bcfd.html#a1291668126ca8f7c2fef564df801bcfd" title=" " alt="" coords="280,133,507,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="205,195,293,174,294,179,206,200"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Kriya_1_1detail_a518529bf475796bb975ddbfaee130156.html#a518529bf475796bb975ddbfaee130156" title=" " alt="" coords="307,197,480,237"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="232,215,293,215,293,220,232,220"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Kriya_1_1BufferPipeline_a7266314199760c9f465aaf89557b1cff.html#a7266314199760c9f465aaf89557b1cff" title=" " alt="" coords="280,261,507,301"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="206,235,294,256,293,261,205,240"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_1_1Kriya_1_1detail_a54dc36c8b415ae2018d7898301d7b1b6.html#a54dc36c8b415ae2018d7898301d7b1b6" title=" " alt="" coords="307,325,480,365"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="150,235,209,273,281,311,300,318,298,323,279,316,206,278,147,240"/>
+<area shape="rect" id="Node000012" href="$namespaceMayaFlux_1_1Kriya_1_1detail_ade327957e5e75c3500dc73ea4826ec3f.html#ade327957e5e75c3500dc73ea4826ec3f" title=" " alt="" coords="307,389,480,429"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="137,236,195,305,236,343,281,375,295,382,292,387,279,380,233,347,191,308,133,240"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kriya_1_1detail_a4c3f6e760338c532bd4bb057135bc520.html#a4c3f6e760338c532bd4bb057135bc520" title="Whether the buffer holds its frames as layers that can be written one at a time." alt="" coords="555,69,728,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="471,131,549,110,551,115,472,136"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kriya_1_1detail_af86670866b10b0afadbeba85f1fb3de7.html#af86670866b10b0afadbeba85f1fb3de7" title="Whether a DataVariant can be written to the buffer&#39;s primary storage." alt="" coords="555,133,728,173"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="507,151,541,151,541,156,507,156"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Kriya_1_1detail_a31ae829503ec085adf440e7dff5b1749.html#a31ae829503ec085adf440e7dff5b1749" title="Write a DataVariant into one layer of a layered buffer." alt="" coords="555,197,728,237"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="472,171,551,191,549,196,471,176"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Kakshya_afa023b19b2c5da8c14e9de60820601b1.html#afa023b19b2c5da8c14e9de60820601b1" title="Extract a TextureAccess from a DataVariant." alt="" coords="776,197,935,237"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="728,215,762,215,762,220,728,220"/>
+</map>

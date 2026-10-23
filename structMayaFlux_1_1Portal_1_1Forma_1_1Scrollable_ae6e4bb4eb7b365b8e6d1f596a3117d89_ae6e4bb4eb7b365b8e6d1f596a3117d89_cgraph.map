@@ -1,0 +1,16 @@
+<map id="MayaFlux::Portal::Forma::Scrollable::track" name="MayaFlux::Portal::Forma::Scrollable::track">
+<area shape="rect" id="Node000001" title="Register an element for scroll reflow." alt="" coords="5,101,187,141"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1Scissor_abc396cd41162b53f300807dec76659f2.html#abc396cd41162b53f300807dec76659f2" title="Construct directly from an NDC AABB2D." alt="" coords="251,5,400,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="137,99,234,55,252,48,254,53,236,60,139,104"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Layer_a39e757c02d8b82d3ca7f604da765ba15.html#a39e757c02d8b82d3ca7f604da765ba15" title="Record that related_id belongs with primary_id." alt="" coords="235,69,416,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="187,106,221,101,221,107,187,111"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Layer_ad93730564d9b4d5d69d3e54b0fcaa73e.html#ad93730564d9b4d5d69d3e54b0fcaa73e" title="Confine hit testing of an element to a region, or lift the confinement with std::nullopt." alt="" coords="235,133,416,173"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="187,131,221,136,221,141,187,137"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Kinesis_1_1AABB2D_a6efb9685283006fd5a3aeb8e74d61f04.html#a6efb9685283006fd5a3aeb8e74d61f04" title=" " alt="" coords="250,197,401,237"/>
+<area shape="poly" id="edge7_Node000001_Node000007" title=" " alt="" coords="139,139,236,183,254,190,252,195,234,188,137,144"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Layer_a6a279bbd434c7f805d6d21f4bf1e2155.html#a6a279bbd434c7f805d6d21f4bf1e2155" title=" " alt="" coords="464,101,645,141"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="417,99,451,104,450,109,416,105"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Layer_abc4872e7120f81938c9721b312e2e0e7.html#abc4872e7120f81938c9721b312e2e0e7" title=" " alt="" coords="693,101,875,141"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="646,119,679,119,679,124,646,124"/>
+<area shape="poly" id="edge6_Node000006_Node000004" title=" " alt="" coords="416,138,450,133,451,139,417,143"/>
+</map>

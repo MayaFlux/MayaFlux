@@ -1,0 +1,11 @@
+<map id="MayaFlux::Portal::Graphics::TextureLoom::writable_format" name="MayaFlux::Portal::Graphics::TextureLoom::writable_format">
+<area shape="rect" id="Node000001" title="ImageFormat of an image that can be written as one flat block." alt="" coords="5,49,232,89"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_abaaaecaf278bce91efdc5d594837207f.html#abaaaecaf278bce91efdc5d594837207f" title=" " alt="" coords="280,49,504,89"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="232,66,266,66,266,71,232,71"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a26861705b8952f21e0b0c8363d6d43e2.html#a26861705b8952f21e0b0c8363d6d43e2" title="Calculate image data size." alt="" coords="581,5,778,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="504,52,567,44,567,49,505,57"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_aa0f056b6e351a1ef300e21cb51077dbe.html#aa0f056b6e351a1ef300e21cb51077dbe" title="Convert Vulkan format to Portal ImageFormat." alt="" coords="552,85,807,125"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="505,80,539,84,538,90,504,85"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a1a8ce2b9ced17d9ff6137c563c58a0e0.html#a1a8ce2b9ced17d9ff6137c563c58a0e0" title="Get bytes per pixel for a format." alt="" coords="855,5,1052,60"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="778,30,841,30,841,35,778,35"/>
+</map>

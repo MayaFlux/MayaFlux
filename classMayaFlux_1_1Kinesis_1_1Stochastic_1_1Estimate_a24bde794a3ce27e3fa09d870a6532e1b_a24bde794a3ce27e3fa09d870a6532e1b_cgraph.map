@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kinesis::Stochastic::Estimate::update_rolling_variance" name="MayaFlux::Kinesis::Stochastic::Estimate::update_rolling_variance">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,62,192,117"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Memory_1_1HistoryBuffer_a2f1571f77762d0d35adfc01dae46509f.html#a2f1571f77762d0d35adfc01dae46509f" title="Get mutable linearized view of entire history." alt="" coords="240,5,443,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="191,62,251,46,252,51,193,67"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Memory_1_1HistoryBuffer_a6f256636f3f3fc99269c77a8dc096b09.html#a6f256636f3f3fc99269c77a8dc096b09" title="Push new value to front of history." alt="" coords="240,69,443,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="192,87,226,87,226,92,192,92"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Estimate_a60372cd858f0f63d5bc45028e354406d.html#a60372cd858f0f63d5bc45028e354406d" title="Sample variance of a span." alt="" coords="264,134,419,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="192,114,251,132,250,137,191,119"/>
+</map>

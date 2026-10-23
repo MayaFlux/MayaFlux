@@ -1,0 +1,36 @@
+<map id="MayaFlux::Buffers::RenderProcessor::mill_runs" name="MayaFlux::Buffers::RenderProcessor::mill_runs">
+<area shape="rect" id="Node000001" title="Mill m_runs into this attachment&#39;s output." alt="" coords="5,275,204,315"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1PrimitiveMill_ae149e0bc3f6ca0cce9034bc0f2e2b645.html#ae149e0bc3f6ca0cce9034bc0f2e2b645" title="Mill runs out of source into the owned buffer." alt="" coords="252,275,449,315"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="204,292,239,292,239,297,204,297"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1PrimitiveMill_a7bc7b34cc2fe3769cbf000d379fcdcf2.html#a7bc7b34cc2fe3769cbf000d379fcdcf2" title="Grows the destination ring, run and prefix buffers to fit." alt="" coords="515,73,713,127"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="364,273,417,207,454,170,496,138,507,131,509,136,499,142,458,174,421,211,368,276"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a715d57394465ff2924727d7c82d87e7b.html#a715d57394465ff2924727d7c82d87e7b" title="Get the global shader compiler instance." alt="" coords="812,213,1009,253"/>
+<area shape="poly" id="edge14_Node000002_Node000006" title=" " alt="" coords="415,272,497,253,654,237,798,231,798,236,655,242,498,259,416,277"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1PrimitiveMill_acb7fc785779a35da28156326cdc90fbd.html#acb7fc785779a35da28156326cdc90fbd" title="Compiles the kernel and allocates its descriptor sets, once." alt="" coords="508,347,720,387"/>
+<area shape="poly" id="edge8_Node000002_Node000009" title=" " alt="" coords="425,312,528,340,526,346,424,317"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_af50ca0aa0cb7511c99eaf758430efdce.html#af50ca0aa0cb7511c99eaf758430efdce" title=" " alt="" coords="812,432,1009,472"/>
+<area shape="poly" id="edge13_Node000002_Node000010" title=" " alt="" coords="366,314,387,346,416,383,454,419,498,447,535,460,573,470,652,479,730,478,800,471,800,477,730,484,652,485,572,475,534,465,496,452,451,424,412,387,382,349,361,317"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1PrimitiveMill_aeb933bef78c66b4f9ff29ec75cd0e380.html#aeb933bef78c66b4f9ff29ec75cd0e380" title="Wait on and reclaim the previous dispatch, if one is outstanding." alt="" coords="515,267,713,322"/>
+<area shape="poly" id="edge15_Node000002_Node000013" title=" " alt="" coords="449,292,501,292,501,297,449,297"/>
+<area shape="rect" id="Node000014" href="$main_8cpp_a13a43e6d814de94978c515cb084873b1.html#a13a43e6d814de94978c515cb084873b1" title=" " alt="" coords="593,411,635,437"/>
+<area shape="poly" id="edge17_Node000002_Node000014" title=" " alt="" coords="376,313,429,355,463,378,498,396,540,410,579,418,578,423,538,415,496,401,460,382,426,360,372,317"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1PrimitiveMill_afa8b78b52c6a962b81fe73ef99150456.html#afa8b78b52c6a962b81fe73ef99150456" title="Points the descriptor set at the current buffer set, on any change of source or ring slot." alt="" coords="497,152,731,192"/>
+<area shape="poly" id="edge18_Node000002_Node000015" title=" " alt="" coords="381,272,434,240,496,208,531,194,533,199,498,213,437,245,384,277"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a06d5e0088b84aa0558459af3ef85b534.html#a06d5e0088b84aa0558459af3ef85b534" title="Get Vulkan graphics queue." alt="" coords="779,5,1043,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="712,72,778,55,813,46,814,51,779,60,714,77"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="827,70,994,125"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="713,96,814,96,814,101,713,102"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="711,125,732,138,748,154,757,170,765,185,780,199,800,210,798,214,777,204,761,188,752,172,744,157,729,142,708,130"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aee686db265b63cedacadaf1aea2e3e3b.html#aee686db265b63cedacadaf1aea2e3e3b" title="Get the global registry instance." alt="" coords="810,149,1011,189"/>
+<area shape="poly" id="edge7_Node000003_Node000008" title=" " alt="" coords="713,120,812,144,810,149,712,126"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="1091,213,1288,253"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="1010,231,1077,231,1077,236,1010,236"/>
+<area shape="poly" id="edge11_Node000009_Node000006" title=" " alt="" coords="697,344,730,332,803,296,866,259,869,263,806,301,732,337,698,349"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="686,384,731,397,828,426,827,431,730,403,684,389"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1PrimitiveMill_aab3462c7f6275b3a7b373996c84bf56e.html#aab3462c7f6275b3a7b373996c84bf56e" title=" " alt="" coords="812,347,1009,387"/>
+<area shape="poly" id="edge12_Node000009_Node000012" title=" " alt="" coords="720,364,798,364,798,369,720,369"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ComputePress_a89b259adf28ef041294928959e03fa9c.html#a89b259adf28ef041294928959e03fa9c" title=" " alt="" coords="1091,432,1288,472"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="1010,449,1077,449,1077,455,1010,455"/>
+<area shape="poly" id="edge16_Node000013_Node000006" title=" " alt="" coords="712,272,799,254,800,259,713,277"/>
+<area shape="poly" id="edge19_Node000015_Node000006" title=" " alt="" coords="712,189,801,208,800,213,711,195"/>
+</map>

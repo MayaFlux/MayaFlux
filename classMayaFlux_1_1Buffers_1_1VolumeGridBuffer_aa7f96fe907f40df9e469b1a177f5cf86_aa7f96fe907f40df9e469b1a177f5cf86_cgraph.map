@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::VolumeGridBuffer::influx" name="MayaFlux::Buffers::VolumeGridBuffer::influx">
+<area shape="rect" id="Node000001" title="Add an influx stage to this volume&#39;s chain and return it." alt="" coords="5,5,187,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a6cf409969c192851ab2cf7f0315d2a49.html#a6cf409969c192851ab2cf7f0315d2a49" title="Access the buffer&#39;s processing chain." alt="" coords="235,5,461,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="187,23,221,23,221,28,187,28"/>
+</map>

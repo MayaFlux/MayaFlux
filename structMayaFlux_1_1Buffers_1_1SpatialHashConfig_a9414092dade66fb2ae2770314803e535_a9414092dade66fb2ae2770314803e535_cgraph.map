@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::SpatialHashConfig::declare_fields" name="MayaFlux::Buffers::SpatialHashConfig::declare_fields">
+<area shape="rect" id="Node000001" title="Declare the four state fields the hash build stages read and write, sized from this config." alt="" coords="5,5,203,60"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Buffers_1_1SpatialHashConfig_adde61cae82e252636bed627788eb5cd4.html#adde61cae82e252636bed627788eb5cd4" title="Total cell count, grid_dims.x * grid_dims.y * grid_dims.z." alt="" coords="251,13,465,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="203,30,237,30,237,35,203,35"/>
+</map>

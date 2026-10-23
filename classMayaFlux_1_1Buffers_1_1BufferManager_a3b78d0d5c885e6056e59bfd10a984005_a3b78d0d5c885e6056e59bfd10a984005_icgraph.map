@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::BufferManager::add_processor" name="MayaFlux::Buffers::BufferManager::add_processor">
+<area shape="rect" id="Node000001" title="Adds a processor to a buffer." alt="" coords="235,37,455,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Bridge_aeb3b6020c9e22f59e5482ec2a478c8b3.html#aeb3b6020c9e22f59e5482ec2a478c8b3" title="Route element value to a descriptor binding on target_buffer." alt="" coords="5,5,187,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="221,44,186,40,187,34,221,39"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Bridge_a133521f4e30ed6ad294a33fe2ae95d66.html#a133521f4e30ed6ad294a33fe2ae95d66" title="Route element value to a push constant slot on a ShaderProcessor." alt="" coords="5,69,187,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="221,76,187,80,186,75,221,71"/>
+</map>

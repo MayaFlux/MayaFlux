@@ -1,0 +1,47 @@
+<map id="Capture.hpp" name="Capture.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="1227,5,1329,31"/>
+<area shape="rect" id="Node000002" href="$BufferOperation_8hpp.html" title=" " alt="" coords="1144,79,1297,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1262,43,1232,80,1228,77,1258,40"/>
+<area shape="rect" id="Node000021" href="$Capture_8cpp.html" title=" " alt="" coords="1304,152,1404,177"/>
+<area shape="poly" id="edge24_Node000001_Node000021" title=" " alt="" coords="1293,42,1350,151,1346,153,1288,44"/>
+<area shape="rect" id="Node000003" href="$BufferOperation_8cpp.html" title=" " alt="" coords="1127,152,1279,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="1217,118,1209,153,1204,151,1212,117"/>
+<area shape="rect" id="Node000004" href="$BufferPipeline_8hpp.html" title=" " alt="" coords="962,152,1103,177"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="1179,111,1064,154,1062,149,1177,106"/>
+<area shape="poly" id="edge23_Node000002_Node000021" title=" " alt="" coords="1255,108,1333,149,1331,154,1253,113"/>
+<area shape="rect" id="Node000005" href="$BufferPipeline_8cpp.html" title=" " alt="" coords="5,225,145,251"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="948,172,603,192,382,208,158,228,146,229,145,224,158,223,381,203,603,187,948,167"/>
+<area shape="rect" id="Node000006" href="$BufferPipelineBranches_8cpp.html" title=" " alt="" coords="170,225,370,251"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="949,176,382,228,370,229,370,224,382,223,948,171"/>
+<area shape="rect" id="Node000007" href="$BufferPipelineCapture_8cpp.html" title=" " alt="" coords="395,225,585,251"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="948,180,577,228,577,223,948,174"/>
+<area shape="rect" id="Node000008" href="$BufferPipelineExecution_8cpp.html" title=" " alt="" coords="610,225,813,251"/>
+<area shape="poly" id="edge7_Node000004_Node000008" title=" " alt="" coords="968,183,764,228,763,223,967,178"/>
+<area shape="rect" id="Node000009" href="$BufferPipelineOperations_8cpp.html" title=" " alt="" coords="837,225,1047,251"/>
+<area shape="poly" id="edge8_Node000004_Node000009" title=" " alt="" coords="1009,188,958,227,955,223,1006,184"/>
+<area shape="rect" id="Node000010" href="$Chimera_8cpp.html" title=" " alt="" coords="1071,225,1175,251"/>
+<area shape="poly" id="edge9_Node000004_Node000010" title=" " alt="" coords="1060,184,1110,223,1107,227,1057,188"/>
+<area shape="rect" id="Node000011" href="$Chronie_8cpp.html" title=" " alt="" coords="1199,225,1298,251"/>
+<area shape="poly" id="edge10_Node000004_Node000011" title=" " alt="" coords="1081,179,1215,223,1213,228,1080,184"/>
+<area shape="rect" id="Node000012" href="$Convenience_8hpp.html" title="Everyday headers and namespace imports for user code." alt="" coords="1429,372,1564,397"/>
+<area shape="poly" id="edge11_Node000004_Node000012" title=" " alt="" coords="1117,175,1213,177,1326,179,1381,183,1430,191,1470,204,1499,223,1510,241,1517,261,1519,304,1513,343,1504,372,1499,371,1508,342,1514,303,1512,262,1506,244,1495,227,1468,208,1429,196,1380,188,1326,184,1213,183,1117,180"/>
+<area shape="rect" id="Node000015" href="$SamplingPipeline_8hpp.html" title=" " alt="" coords="1322,225,1485,251"/>
+<area shape="poly" id="edge14_Node000004_Node000015" title=" " alt="" coords="1106,177,1344,223,1343,228,1105,183"/>
+<area shape="rect" id="Node000020" href="$VisionWorkflow_8cpp.html" title=" " alt="" coords="1585,225,1733,251"/>
+<area shape="poly" id="edge22_Node000004_Node000020" title=" " alt="" coords="1117,175,1344,199,1566,223,1585,225,1585,230,1566,228,1343,205,1117,180"/>
+<area shape="rect" id="Node000013" href="$MayaFlux_8hpp.html" title="Single include for the user facing API." alt="" coords="1439,445,1554,471"/>
+<area shape="poly" id="edge12_Node000012_Node000013" title=" " alt="" coords="1499,411,1499,445,1494,445,1494,411"/>
+<area shape="rect" id="Node000014" href="$LiveAid_8hpp.html" title=" " alt="" coords="1447,519,1546,544"/>
+<area shape="poly" id="edge13_Node000013_Node000014" title=" " alt="" coords="1499,484,1499,519,1494,519,1494,484"/>
+<area shape="poly" id="edge15_Node000015_Node000012" title=" " alt="" coords="1434,257,1455,275,1474,297,1490,337,1498,371,1493,372,1485,338,1469,300,1451,279,1431,261"/>
+<area shape="rect" id="Node000016" href="$Rigs_8cpp.html" title=" " alt="" coords="1103,372,1181,397"/>
+<area shape="poly" id="edge16_Node000015_Node000016" title=" " alt="" coords="1311,256,1226,275,1192,287,1169,301,1157,317,1150,336,1145,372,1139,371,1145,335,1153,314,1166,297,1189,282,1225,270,1310,250"/>
+<area shape="rect" id="Node000017" href="$SamplingPipeline_8cpp.html" title=" " alt="" coords="1297,299,1459,324"/>
+<area shape="poly" id="edge17_Node000015_Node000017" title=" " alt="" coords="1397,265,1385,299,1380,298,1392,263"/>
+<area shape="rect" id="Node000018" href="$TapSet_8hpp.html" title=" " alt="" coords="1179,299,1273,324"/>
+<area shape="poly" id="edge18_Node000015_Node000018" title=" " alt="" coords="1363,258,1256,301,1254,296,1361,253"/>
+<area shape="poly" id="edge19_Node000018_Node000012" title=" " alt="" coords="1283,325,1454,369,1452,374,1282,330"/>
+<area shape="poly" id="edge20_Node000018_Node000016" title=" " alt="" coords="1204,335,1157,374,1154,370,1200,331"/>
+<area shape="rect" id="Node000019" href="$TapSet_8cpp.html" title=" " alt="" coords="1205,372,1297,397"/>
+<area shape="poly" id="edge21_Node000018_Node000019" title=" " alt="" coords="1237,336,1250,371,1245,373,1232,338"/>
+</map>

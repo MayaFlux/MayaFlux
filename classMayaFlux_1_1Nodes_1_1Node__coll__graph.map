@@ -1,0 +1,8 @@
+<map id="MayaFlux::Nodes::Node" name="MayaFlux::Nodes::Node">
+<area shape="rect" id="Node000001" title="Base interface for all computational processing nodes." alt="" coords="5,248,203,1032"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1HookList.html" title="Stores, fires and clears the hooks of one node channel." alt="" coords="7,1109,201,1495"/>
+<area shape="poly" id="edge2_Node000002_Node000001" title=" " alt="" coords="49,1032,53,1085,54,1093,49,1093,48,1086,44,1033"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="121,1109,123,1085,124,1049,129,1049,128,1085,127,1109"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Nodes_1_1RoutingState.html" title="Represents the state of routing transitions for a node." alt="" coords="11,5,197,185"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="107,186,107,231,101,231,101,186"/>
+</map>

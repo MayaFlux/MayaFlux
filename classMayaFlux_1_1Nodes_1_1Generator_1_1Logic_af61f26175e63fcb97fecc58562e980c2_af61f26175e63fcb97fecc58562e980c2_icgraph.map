@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Generator::Logic::add_input" name="MayaFlux::Nodes::Generator::Logic::add_input">
+<area shape="rect" id="Node000001" title=" " alt="" coords="517,5,725,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Logic_a4cd7a43ebf1ff5518bf9b006bad898fe.html#a4cd7a43ebf1ff5518bf9b006bad898fe" title="Processes a single input sample through the logic function." alt="" coords="261,5,469,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="504,28,469,28,469,23,504,23"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Logic_a99bea86cf7a74676b8a309df546d8007.html#a99bea86cf7a74676b8a309df546d8007" title="Processes multiple samples in batch mode." alt="" coords="5,5,213,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="248,28,213,28,213,23,248,23"/>
+</map>

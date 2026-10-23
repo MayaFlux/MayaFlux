@@ -1,0 +1,26 @@
+<map id="MayaFlux::on_mouse_move" name="MayaFlux::on_mouse_move">
+<area shape="rect" id="Node000001" title="Schedule a mouse movement handler." alt="" coords="757,141,963,166"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_afbca6a63a999ca7602156fffa2c7dcd3.html#afbca6a63a999ca7602156fffa2c7dcd3" title="Bind the fly navigation controller to a window and render processor." alt="" coords="531,37,677,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="818,137,708,92,674,80,675,75,710,87,820,133"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_ae1c3585aeff050b127d356422bf64f2a.html#ae1c3585aeff050b127d356422bf64f2a" title="Bind the orbit navigation controller to a window and render processor." alt="" coords="525,101,683,141"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="744,142,683,134,684,129,745,136"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_ac830fe2d111c7598a5c75d700dc364a4.html#ac830fe2d111c7598a5c75d700dc364a4" title="Bind the 2D pan/zoom controller to a window and render processor." alt="" coords="527,165,681,205"/>
+<area shape="poly" id="edge8_Node000001_Node000008" title=" " alt="" coords="745,170,681,178,680,173,744,165"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_a0c14a83b32a093a88b5e133b0a562502.html#a0c14a83b32a093a88b5e133b0a562502" title="Bind the screenspace navigation controller to a window and render processor." alt="" coords="499,229,709,269"/>
+<area shape="poly" id="edge11_Node000001_Node000010" title=" " alt="" coords="820,174,710,220,675,232,674,227,708,215,818,169"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_a32225e71700958f2fd21448719ab1ba1.html#a32225e71700958f2fd21448719ab1ba1" title="Bind the fly navigation controller to all RenderProcessors currently registered against a window." alt="" coords="273,5,418,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="517,49,418,37,419,32,518,44"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_a9be701daac0c0484aed1f9ad9f8d130e.html#a9be701daac0c0484aed1f9ad9f8d130e" title="Bind a navigation preset to a window and render processor using default settings." alt="" coords="252,133,439,173"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="519,83,500,92,476,108,452,124,423,136,421,131,449,119,473,103,497,87,517,79"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_af2205e6997a812a91f5c4b88a8beb585.html#af2205e6997a812a91f5c4b88a8beb585" title="Bind a navigation preset to all RenderProcessors currently registered against a window using default ..." alt="" coords="5,133,192,173"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="238,156,192,156,192,151,238,151"/>
+<area shape="poly" id="edge7_Node000006_Node000004" title=" " alt="" coords="511,135,439,144,438,139,511,130"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_a48c5b40b6bfbe03a5edbe73ca9e305c8.html#a48c5b40b6bfbe03a5edbe73ca9e305c8" title="Bind the orbit navigation controller to all RenderProcessors currently registered against a window." alt="" coords="266,69,425,109"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="511,113,424,102,425,96,511,107"/>
+<area shape="poly" id="edge10_Node000008_Node000004" title=" " alt="" coords="514,177,438,167,439,162,514,172"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_aa1b5ed52d7fa0292fe10837a1cde8477.html#aa1b5ed52d7fa0292fe10837a1cde8477" title="Bind the 2D pan/zoom controller to all RenderProcessors currently registered against a window." alt="" coords="269,197,422,237"/>
+<area shape="poly" id="edge9_Node000008_Node000009" title=" " alt="" coords="514,199,423,211,422,205,513,194"/>
+<area shape="poly" id="edge13_Node000010_Node000004" title=" " alt="" coords="514,227,497,220,473,204,449,188,421,176,423,171,452,183,476,199,500,215,516,222"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_ab8f207a0abf830f659f2c24b8aedf172.html#ab8f207a0abf830f659f2c24b8aedf172" title="Bind the screenspace navigation controller to all RenderProcessors currently registered against a win..." alt="" coords="240,261,451,301"/>
+<area shape="poly" id="edge12_Node000010_Node000011" title=" " alt="" coords="485,267,451,271,450,266,485,261"/>
+</map>

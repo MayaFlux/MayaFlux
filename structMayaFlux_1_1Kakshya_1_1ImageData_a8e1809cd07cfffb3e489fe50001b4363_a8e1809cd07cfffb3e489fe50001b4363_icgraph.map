@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::ImageData::is_consistent" name="MayaFlux::Kakshya::ImageData::is_consistent">
+<area shape="rect" id="Node000001" title="Check that the active variant matches the declared format." alt="" coords="276,37,463,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1EXRWriter_abb15175d3720dc452a5ba299923c2a35.html#abb15175d3720dc452a5ba299923c2a35" title="Write image data to disk." alt="" coords="25,5,208,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="262,46,208,40,209,34,263,41"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1STBImageWriter_a9cb5d049517c18ad1e45b8fefda0bda5.html#a9cb5d049517c18ad1e45b8fefda0bda5" title="Write image data to disk." alt="" coords="5,69,228,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="263,73,228,78,228,73,262,68"/>
+</map>

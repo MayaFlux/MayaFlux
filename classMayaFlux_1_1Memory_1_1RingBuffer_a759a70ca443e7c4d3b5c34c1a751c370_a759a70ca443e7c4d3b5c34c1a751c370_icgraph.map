@@ -1,0 +1,13 @@
+<map id="MayaFlux::Memory::RingBuffer::size" name="MayaFlux::Memory::RingBuffer::size">
+<area shape="rect" id="Node000001" title="Get approximate element count." alt="" coords="817,69,1040,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Memory_1_1RingBuffer_a5116b9581045549c2172886ca7b796aa.html#a5116b9581045549c2172886ca7b796aa" title="Get linearized view of buffer contents." alt="" coords="547,5,769,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="829,69,742,48,744,43,831,63"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Memory_1_1RingBuffer_a9784f7aae5cafcf2d4a09336e9a27bf5.html#a9784f7aae5cafcf2d4a09336e9a27bf5" title="Get mutable linearized view for modification." alt="" coords="547,69,769,109"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="804,92,770,92,770,87,804,87"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Memory_1_1RingBuffer_a0c1dd0059ec98d99da570d2324497da1.html#a0c1dd0059ec98d99da570d2324497da1" title="Peek at oldest element without removing." alt="" coords="547,133,769,173"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="831,115,744,136,742,131,829,110"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Memory_1_1RingBuffer_aec6b85fd4854f810df2eef97ceea351f.html#aec6b85fd4854f810df2eef97ceea351f" title="Thread&#45;safe snapshot of buffer contents." alt="" coords="276,5,499,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="533,28,499,28,499,23,533,23"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Memory_1_1RingBuffer_adadd9f52e3c94d6ef786b77606d5d18d.html#adadd9f52e3c94d6ef786b77606d5d18d" title="Resize buffer capacity (DynamicStorage only)" alt="" coords="5,5,228,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="262,28,228,28,228,23,262,23"/>
+</map>

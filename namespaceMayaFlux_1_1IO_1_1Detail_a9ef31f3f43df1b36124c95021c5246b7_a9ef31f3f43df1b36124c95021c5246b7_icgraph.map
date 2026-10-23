@@ -1,0 +1,7 @@
+<map id="MayaFlux::IO::Detail::make_default_resolver" name="MayaFlux::IO::Detail::make_default_resolver">
+<area shape="rect" id="Node000001" title=" " alt="" coords="240,37,419,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1IOManager_a8ed0b44fe355cbf90e6e0953078817f1.html#a8ed0b44fe355cbf90e6e0953078817f1" title="Load all meshes from a 3D model file into MeshBuffer instances." alt="" coords="5,5,192,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="226,46,192,41,192,36,227,40"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1IOManager_a407774e778c9c6c402d04f8f0e9985e4.html#a407774e778c9c6c402d04f8f0e9985e4" title="Load a 3D model file as a MeshNetwork." alt="" coords="5,69,192,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="227,74,192,79,192,74,226,69"/>
+</map>

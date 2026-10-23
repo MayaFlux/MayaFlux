@@ -1,0 +1,3 @@
+<map id="MayaFlux::Nodes::Network::GraphicsOperator::DirtyVertexRange" name="MayaFlux::Nodes::Network::GraphicsOperator::DirtyVertexRange">
+<area shape="rect" id="Node000001" title="A contiguous span of vertex records that changed since the last mark_vertex_data_clean()." alt="" coords="5,5,264,125"/>
+</map>

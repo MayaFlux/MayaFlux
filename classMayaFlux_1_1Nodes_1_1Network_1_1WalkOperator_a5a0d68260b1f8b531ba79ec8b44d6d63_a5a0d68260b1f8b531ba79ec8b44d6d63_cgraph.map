@@ -1,0 +1,8 @@
+<map id="MayaFlux::Nodes::Network::WalkOperator::jump" name="MayaFlux::Nodes::Network::WalkOperator::jump">
+<area shape="rect" id="Node000001" title="Make a slot the active one." alt="" coords="5,46,204,86"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1WalkOperator_a36d8492af170c96878295232e0876d32.html#a36d8492af170c96878295232e0876d32" title="Activate slot m_current and deactivate every other slot that currently exists." alt="" coords="252,5,451,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="204,50,238,45,239,51,205,55"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1RelationOperator_adb5be7a8ca5ff2e5d02a29087d726272.html#adb5be7a8ca5ff2e5d02a29087d726272" title=" " alt="" coords="499,46,697,86"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="204,67,252,69,451,69,485,68,485,73,451,74,252,74,204,73"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="451,43,485,48,485,53,450,49"/>
+</map>

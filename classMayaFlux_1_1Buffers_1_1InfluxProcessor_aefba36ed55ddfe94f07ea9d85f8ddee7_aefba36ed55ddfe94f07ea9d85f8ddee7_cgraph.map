@@ -1,0 +1,23 @@
+<map id="MayaFlux::Buffers::InfluxProcessor::processing_function" name="MayaFlux::Buffers::InfluxProcessor::processing_function">
+<area shape="rect" id="Node000001" title="The core processing function that must be implemented by derived classes." alt="" coords="5,163,204,217"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VolumeFieldProcessor_acb1465f409e99804ba603f309a635818.html#acb1465f409e99804ba603f309a635818" title="The attached volume, or null if attachment failed validation." alt="" coords="252,84,417,139"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="185,160,241,141,242,146,186,165"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VolumeFieldProcessor_a4b6c2bb138644003a801428ee64ed3d1.html#a4b6c2bb138644003a801428ee64ed3d1" title="Rewrite field descriptors, run the shader, then swap." alt="" coords="252,163,417,217"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="204,187,238,187,238,193,204,193"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Buffers_1_1VolumeFieldProcessor_a4095b76d856fe604d407ff85813245d0.html#a4095b76d856fe604d407ff85813245d0" title="Write word seven of the parameter prefix, at byte offset 28." alt="" coords="252,280,417,335"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="161,215,270,271,267,276,158,220"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a9ae0c6aae9589585fd6f2e3fd3cea7bb.html#a9ae0c6aae9589585fd6f2e3fd3cea7bb" title="Check if descriptors are initialized." alt="" coords="487,5,646,60"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="399,160,415,148,431,128,438,109,447,89,464,69,474,62,477,66,467,73,451,92,443,111,435,131,419,152,402,165"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1BufferProcessor_affdb219994d3337c3deafa77e7bc4017.html#affdb219994d3337c3deafa77e7bc4017" title="The core processing function that must be implemented by derived classes." alt="" coords="465,84,668,139"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="415,160,472,141,474,146,417,165"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1VolumeFieldProcessor_ae0174d32388bac1c9584a68724aaca85.html#ae0174d32388bac1c9584a68724aaca85" title="Whether this cycle&#39;s dispatch should be followed by a swap." alt="" coords="484,163,649,217"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="418,187,470,187,470,193,418,193"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1VolumeFieldProcessor_a9458aa2101ee0edf2bf69ec89d9484db.html#a9458aa2101ee0edf2bf69ec89d9484db" title="Issue descriptor writes for every entry in the binding table." alt="" coords="478,241,655,296"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="417,215,474,234,472,239,415,220"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a715d57394465ff2924727d7c82d87e7b.html#a715d57394465ff2924727d7c82d87e7b" title="Get the global shader compiler instance." alt="" coords="716,249,913,289"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="656,266,702,266,702,271,656,271"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="961,249,1159,289"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="914,266,948,266,948,271,914,271"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a08f86ff68a93950b07208ee936badf8e.html#a08f86ff68a93950b07208ee936badf8e" title="Get current push constant data." alt="" coords="487,320,646,375"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="418,319,474,329,473,334,417,324"/>
+</map>

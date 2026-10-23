@@ -1,0 +1,38 @@
+<map id="MayaFlux::Kakshya::CompositeInsertion::append" name="MayaFlux::Kakshya::CompositeInsertion::append">
+<area shape="rect" id="Node000001" title="Copy one Composite with a matching layout into this array." alt="" coords="5,213,164,268"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_adb8b2ae5b04a8627a3b262e6b42fca1e.html#adb8b2ae5b04a8627a3b262e6b42fca1e" title="Append one zero&#45;initialized element with no fields present." alt="" coords="471,26,654,66"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="145,211,283,150,448,82,487,68,489,73,450,87,285,155,148,215"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_a66d5d905fbd8548158d3a1edbd667e5e.html#a66d5d905fbd8548158d3a1edbd667e5e" title="Write binary bytes to a fixed or dynamic BLOB field." alt="" coords="212,221,401,261"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="165,238,199,238,199,243,165,243"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_af179779c8b4123355fd50fdbe5b2a9bc.html#af179779c8b4123355fd50fdbe5b2a9bc" title="Write UTF&#45;8 bytes to a std::string field." alt="" coords="213,378,400,418"/>
+<area shape="poly" id="edge17_Node000001_Node000013" title=" " alt="" coords="126,266,268,368,265,372,123,270"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_a27600792242257eee9b70539967aba2b.html#a27600792242257eee9b70539967aba2b" title="Number of packed elements." alt="" coords="745,26,905,66"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="654,43,732,43,732,49,654,49"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1CompositeLayout_a04d7cccd3b3bb8e93f3909f55a970198.html#a04d7cccd3b3bb8e93f3909f55a970198" title="Bytes per packed element after finalization." alt="" coords="975,55,1199,95"/>
+<area shape="poly" id="edge4_Node000002_Node000004" title=" " alt="" coords="647,23,708,13,779,5,853,4,927,11,983,27,1034,47,1032,52,981,32,926,17,853,9,779,10,709,18,648,28"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="906,52,961,58,961,64,905,58"/>
+<area shape="poly" id="edge12_Node000005_Node000004" title=" " alt="" coords="344,218,400,186,423,169,448,154,490,142,545,130,680,110,961,82,961,87,681,115,546,135,492,147,450,159,426,173,403,191,347,223"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1CompositeLayout_a72de478dc395559ec2bad49cfc499e62.html#a72de478dc395559ec2bad49cfc499e62" title="Declared fields in element order, with finalized byte offsets." alt="" coords="736,189,915,229"/>
+<area shape="poly" id="edge6_Node000005_Node000006" title=" " alt="" coords="342,218,392,195,449,177,521,168,594,167,664,174,726,183,726,189,663,179,594,173,521,173,450,182,393,200,344,223"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1CompositeLayout_af4cd325e144ed9d1c95d00bf6bde2b34.html#af4cd325e144ed9d1c95d00bf6bde2b34" title="Find a field index by name, or std::nullopt if absent." alt="" coords="724,253,927,293"/>
+<area shape="poly" id="edge7_Node000005_Node000007" title=" " alt="" coords="402,244,711,263,710,268,401,249"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_a924a02b7cad77d335986f58d85581381.html#a924a02b7cad77d335986f58d85581381" title=" " alt="" coords="483,371,642,425"/>
+<area shape="poly" id="edge8_Node000005_Node000008" title=" " alt="" coords="330,259,382,307,415,333,451,356,472,366,470,371,448,360,412,337,379,311,326,263"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_ac4663132a467ebeca9c9c864c1606cc4.html#ac4663132a467ebeca9c9c864c1606cc4" title="Borrow consecutive elements without copying." alt="" coords="481,306,645,346"/>
+<area shape="poly" id="edge9_Node000005_Node000009" title=" " alt="" coords="368,258,490,299,488,304,367,263"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_ac900d8eee86d5774bad27259d0f39efa.html#ac900d8eee86d5774bad27259d0f39efa" title=" " alt="" coords="449,191,676,231"/>
+<area shape="poly" id="edge13_Node000005_Node000012" title=" " alt="" coords="401,227,435,223,436,228,402,232"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Kakshya_1_1CompositeArray_a92c33f8d97b049766838299ca27390d1.html#a92c33f8d97b049766838299ca27390d1" title="Validate and borrow the packed NDData stores and layout." alt="" coords="736,602,915,642"/>
+<area shape="poly" id="edge10_Node000009_Node000010" title=" " alt="" coords="646,338,678,356,705,381,730,410,770,474,799,537,817,588,812,590,794,539,765,477,726,414,702,385,674,360,644,343"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_1_1Kakshya_abd102129d9eb24f95ee7447594e7af03.html#abd102129d9eb24f95ee7447594e7af03" title="Validate and borrow packed Composite&#45;compatible NDData." alt="" coords="1005,602,1168,642"/>
+<area shape="poly" id="edge11_Node000010_Node000011" title=" " alt="" coords="915,619,992,619,992,625,915,625"/>
+<area shape="poly" id="edge16_Node000012_Node000003" title=" " alt="" coords="594,189,779,71,782,76,597,193"/>
+<area shape="poly" id="edge14_Node000012_Node000006" title=" " alt="" coords="676,207,722,207,722,212,676,213"/>
+<area shape="poly" id="edge15_Node000012_Node000007" title=" " alt="" coords="650,229,727,247,725,252,649,234"/>
+<area shape="poly" id="edge22_Node000013_Node000004" title=" " alt="" coords="326,416,378,467,412,493,450,511,512,530,563,537,613,531,675,511,748,477,815,430,876,374,930,314,976,254,1015,197,1067,106,1072,109,1019,199,980,257,934,318,880,378,819,434,751,481,677,516,615,536,563,542,511,536,448,516,409,497,374,471,323,420"/>
+<area shape="poly" id="edge18_Node000013_Node000006" title=" " alt="" coords="348,415,416,444,458,457,503,466,548,471,593,468,636,457,674,434,694,414,702,391,703,368,701,343,698,317,698,291,705,264,722,239,726,235,730,239,726,242,710,267,703,291,703,317,706,342,709,367,707,392,698,416,678,439,638,462,594,473,548,476,502,471,457,462,414,449,346,420"/>
+<area shape="poly" id="edge19_Node000013_Node000007" title=" " alt="" coords="334,416,386,451,417,467,450,479,514,497,566,507,590,507,616,503,675,480,700,463,723,444,762,396,790,347,810,304,815,306,795,350,766,399,727,447,703,468,677,484,617,508,591,512,565,512,513,502,449,484,415,472,383,455,331,420"/>
+<area shape="poly" id="edge20_Node000013_Node000008" title=" " alt="" coords="400,395,469,395,469,401,400,401"/>
+<area shape="poly" id="edge21_Node000013_Node000009" title=" " alt="" coords="378,375,477,347,478,352,379,380"/>
+<area shape="poly" id="edge23_Node000013_Node000012" title=" " alt="" coords="334,375,522,237,525,241,337,380"/>
+</map>

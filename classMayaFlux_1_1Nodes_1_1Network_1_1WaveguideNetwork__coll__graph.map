@@ -1,0 +1,11 @@
+<map id="MayaFlux::Nodes::Network::WaveguideNetwork" name="MayaFlux::Nodes::Network::WaveguideNetwork">
+<area shape="rect" id="Node000001" title="Digital waveguide synthesis via uni&#45; and bidirectional delay&#45;line architectures." alt="" coords="99,1000,331,1715"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork.html" title="Abstract base class for structured collections of nodes with defined relationships." alt="" coords="5,283,203,923"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="156,936,165,999,160,1000,150,937"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Nodes_1_1RoutingState.html" title="Represents the state of routing transitions for a node." alt="" coords="11,15,197,195"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="107,196,107,266,101,266,101,196"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Stochastic.html" title="Unified generative infrastructure for stochastic and procedural algorithms." alt="" coords="227,268,427,937"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="280,938,273,984,267,983,274,937"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Kinesis_1_1Stochastic_1_1GeneratorState.html" title="Encapsulates internal state for stateful generators." alt="" coords="233,5,421,205"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="329,206,329,252,324,252,324,206"/>
+</map>

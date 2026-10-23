@@ -1,0 +1,18 @@
+<map id="MayaFlux::Nodes::Generator::Logic::process_multi_input" name="MayaFlux::Nodes::Generator::Logic::process_multi_input">
+<area shape="rect" id="Node000001" title="Processes multiple parallel inputs." alt="" coords="5,56,213,96"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Logic_ab62f76981d9f6990a5432babcb2af429.html#ab62f76981d9f6990a5432babcb2af429" title=" " alt="" coords="261,13,469,67"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="213,59,247,54,248,59,214,64"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Logic_af10ea4c6662404570141818fe29693ea.html#af10ea4c6662404570141818fe29693ea" title="Notifies all registered callbacks about a new sample." alt="" coords="261,92,469,132"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="214,88,248,93,247,98,213,93"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1HookList_a9688ae71a354c2f8a8989eea13979b7d.html#a9688ae71a354c2f8a8989eea13979b7d" title="Calls every entry whose condition, if any, holds." alt="" coords="521,5,721,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="428,89,468,76,551,47,552,52,470,81,430,95"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1HookList_a0e44de57f732ba8bbedc5d493f694d01.html#a0e44de57f732ba8bbedc5d493f694d01" title="The current entries, held stable for the lifetime of the returned object." alt="" coords="787,35,987,75"/>
+<area shape="poly" id="edge6_Node000003_Node000005" title=" " alt="" coords="469,98,773,64,773,70,470,103"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Logic_a5d9eb9e8a257bccb93937782b284884e.html#a5d9eb9e8a257bccb93937782b284884e" title="Retrieves the last created context object." alt="" coords="517,120,725,160"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="470,121,504,125,503,130,469,126"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Logic_a24fe3adaafc789f42b92eb0294f9575e.html#a24fe3adaafc789f42b92eb0294f9575e" title="Updates the context with the latest sample value." alt="" coords="517,184,725,224"/>
+<area shape="poly" id="edge7_Node000003_Node000007" title=" " alt="" coords="415,130,518,169,541,177,539,182,516,175,414,135"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="722,34,773,39,773,45,721,39"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Logic_ad95a9cc80e842eb783fc2e9063c9990d.html#ad95a9cc80e842eb783fc2e9063c9990d" title=" " alt="" coords="773,184,1000,224"/>
+<area shape="poly" id="edge8_Node000007_Node000008" title=" " alt="" coords="725,201,760,201,760,207,725,207"/>
+</map>

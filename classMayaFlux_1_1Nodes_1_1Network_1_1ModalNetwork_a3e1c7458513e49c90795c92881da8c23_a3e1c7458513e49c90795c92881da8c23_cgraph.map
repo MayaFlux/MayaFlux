@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::ModalNetwork::initialize_modes" name="MayaFlux::Nodes::Network::ModalNetwork::initialize_modes">
+<area shape="rect" id="Node000001" title="Initialize modes with given frequency ratios." alt="" coords="5,13,245,53"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_ae8b39c4e028b87d306f371e497cd1bdc.html#ae8b39c4e028b87d306f371e497cd1bdc" title="Per&#45;sample factor that falls by 1/e in a given time." alt="" coords="293,5,444,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="246,30,279,30,279,35,246,35"/>
+</map>

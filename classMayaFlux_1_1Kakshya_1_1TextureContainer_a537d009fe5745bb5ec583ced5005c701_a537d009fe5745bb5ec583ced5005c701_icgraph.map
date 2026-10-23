@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kakshya::TextureContainer::claim_cpu" name="MayaFlux::Kakshya::TextureContainer::claim_cpu">
+<area shape="rect" id="Node000001" title="Give a GPU&#45;held layer fresh CPU storage before a full overwrite." alt="" coords="215,91,421,131"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_aeecc587618b5d1f7c154aaaf2627e174.html#aeecc587618b5d1f7c154aaaf2627e174" title="Replace the layer&#39;s pixel buffer with a float source." alt="" coords="5,5,167,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="245,89,166,62,168,57,246,84"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_ad0930a5d1b02397fa8d7e054346f2859.html#ad0930a5d1b02397fa8d7e054346f2859" title="Replace the layer&#39;s pixel buffer with a uint16 source." alt="" coords="5,84,167,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="201,114,167,114,167,109,201,109"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_a20388af9b8564e2498032f93df88c251.html#a20388af9b8564e2498032f93df88c251" title="Replace the layer&#39;s pixel buffer with a byte source." alt="" coords="5,163,167,217"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="246,138,168,165,166,160,245,133"/>
+</map>

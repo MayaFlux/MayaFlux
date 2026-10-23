@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nexus::Fabric::assign_id" name="MayaFlux::Nexus::Fabric::assign_id">
+<area shape="rect" id="Node000001" title=" " alt="" coords="235,69,416,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1Fabric_ab83de43badb20cfb3f12b863777e71a9.html#ab83de43badb20cfb3f12b863777e71a9" title="Begin wiring an Agent into the Fabric." alt="" coords="5,5,187,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="239,68,167,48,169,43,241,63"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nexus_1_1Fabric_ae2ed78ffdc65b33f6a871aecc34162ab.html#ae2ed78ffdc65b33f6a871aecc34162ab" title="Begin wiring an Emitter into the Fabric." alt="" coords="5,69,187,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="221,92,187,92,187,87,221,87"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nexus_1_1Fabric_a360955dfcf545c868510660e4a13ca89.html#a360955dfcf545c868510660e4a13ca89" title="Begin wiring a Sensor into the Fabric." alt="" coords="5,133,187,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="241,116,169,136,167,131,239,110"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::RootGraphicsBuffer::create_default_processor" name="MayaFlux::Buffers::RootGraphicsBuffer::create_default_processor">
+<area shape="rect" id="Node000001" title="Creates the default graphics batch processor." alt="" coords="209,5,396,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RootGraphicsBuffer_ad8b2a9f9180353ed3d46beacd093d276.html#ad8b2a9f9180353ed3d46beacd093d276" title="Initializes the root buffer with default processor." alt="" coords="5,5,161,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="195,35,162,35,162,30,195,30"/>
+</map>

@@ -1,0 +1,11 @@
+<map id="MayaFlux::IO::IOManager::track_save_task" name="MayaFlux::IO::IOManager::track_save_task">
+<area shape="rect" id="Node000001" title="Retain a save task in m_save_tasks and opportunistically reclaim finished ones." alt="" coords="5,5,192,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Parallel_1_1AsyncGroup_ae891e0a0f3434000ff27e12d616a808a.html#ae891e0a0f3434000ff27e12d616a808a" title="Retains fut and opportunistically reclaims completed work." alt="" coords="240,5,401,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="192,23,226,23,226,28,192,28"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Parallel_1_1AsyncGroup_ac5d3a0e96e4855b93c6fa4d545f5440d.html#ac5d3a0e96e4855b93c6fa4d545f5440d" title=" " alt="" coords="449,5,600,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="402,23,435,23,435,28,402,28"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Parallel_1_1AsyncGroup_a61de2e5f9b1c7bf6c744e2c6c299b5c9.html#a61de2e5f9b1c7bf6c744e2c6c299b5c9" title=" " alt="" coords="648,5,803,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="600,23,635,23,635,28,600,28"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Memory_1_1SweepList_a08033a9c7623c750d27d7796db165f4d.html#a08033a9c7623c750d27d7796db165f4d" title="Publishes value for later sweep() or drain()." alt="" coords="851,5,1072,45"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="803,23,837,23,837,28,803,28"/>
+</map>

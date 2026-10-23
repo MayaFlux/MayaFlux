@@ -1,0 +1,7 @@
+<map id="MayaFlux::Portal::Forma::Plot::plot_tick_labels" name="MayaFlux::Portal::Forma::Plot::plot_tick_labels">
+<area shape="rect" id="Node000001" title="Generate construction&#45;free tick label specs." alt="" coords="5,37,187,77"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1AABB2D_a32bac0d1a4f876c992486eed5dc9fd6f.html#a32bac0d1a4f876c992486eed5dc9fd6f" title=" " alt="" coords="235,5,384,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="186,41,221,36,222,41,187,46"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kinesis_1_1AABB2D_ab8e372add789f6bd44fa66a92618456a.html#ab8e372add789f6bd44fa66a92618456a" title=" " alt="" coords="235,69,384,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="187,68,222,74,221,79,186,74"/>
+</map>

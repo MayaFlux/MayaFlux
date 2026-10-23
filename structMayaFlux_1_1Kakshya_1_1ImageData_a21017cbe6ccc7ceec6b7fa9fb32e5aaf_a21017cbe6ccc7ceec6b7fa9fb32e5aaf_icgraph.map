@@ -1,0 +1,33 @@
+<map id="MayaFlux::Kakshya::ImageData::element_count" name="MayaFlux::Kakshya::ImageData::element_count">
+<area shape="rect" id="Node000001" title="Number of pixel elements (not bytes), dispatched on variant." alt="" coords="1400,161,1599,201"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1ImageData_a2d6731e0d90bf2d2332d20554a1cd02b.html#a2d6731e0d90bf2d2332d20554a1cd02b" title="Allocate zeroed pixel storage of the variant format calls for." alt="" coords="1193,161,1352,201"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1386,184,1352,184,1352,179,1386,179"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a2317139fa224a0c5d63c20eee9c94cd7.html#a2317139fa224a0c5d63c20eee9c94cd7" title="Download the base level of an image as typed pixels." alt="" coords="912,116,1145,156"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="1179,167,1136,159,1137,153,1180,161"/>
+<area shape="rect" id="Node000012" href="$structMayaFlux_1_1Kakshya_1_1ImageData_a7e26b6c00079d084e313532ca3e9fbe5.html#a7e26b6c00079d084e313532ca3e9fbe5" title="Build an ImageData from raw pixel bytes in format&#39;s layout." alt="" coords="941,193,1117,233"/>
+<area shape="poly" id="edge11_Node000002_Node000012" title=" " alt="" coords="1180,196,1117,204,1116,199,1179,191"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1IO_a1b464b0c6b876988de8cff6f9d226c2e.html#a1b464b0c6b876988de8cff6f9d226c2e" title="Download pixel data from a GPU&#45;resident VKImage into host ImageData." alt="" coords="679,88,858,128"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="898,125,858,120,858,115,899,119"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1IO_a0a494f98c95f9ca6feb6c430c609577b.html#a0a494f98c95f9ca6feb6c430c609577b" title="Download a TextureBuffer&#39;s GPU texture into host ImageData." alt="" coords="441,5,619,45"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="698,86,624,60,590,48,591,43,626,55,700,81"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1IO_a2f65b88d4ffb8bf939770b99119bd29a.html#a2f65b88d4ffb8bf939770b99119bd29a" title="Save a VKImage directly to disk via the ImageWriter registry." alt="" coords="457,69,603,109"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="665,103,603,98,604,92,666,97"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1IO_1_1IOManager_a20c6d4610f26db8604c8d2252a02c3a2.html#a20c6d4610f26db8604c8d2252a02c3a2" title="Save image data to disk asynchronously." alt="" coords="437,133,623,173"/>
+<area shape="poly" id="edge8_Node000004_Node000009" title=" " alt="" coords="666,130,624,138,623,133,665,125"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1IO_afc82d61cd6bd6df3f76fa840af9b0ad0.html#afc82d61cd6bd6df3f76fa840af9b0ad0" title="Save a TextureBuffer&#39;s current GPU state to disk." alt="" coords="220,69,367,109"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="443,92,367,92,367,87,443,87"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1IO_a17b1bd154b16c49a44e647207740873d.html#a17b1bd154b16c49a44e647207740873d" title="Save a TextBuffer&#39;s rendered glyph texture to disk." alt="" coords="5,69,152,109"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="206,92,152,92,152,87,206,87"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1IO_1_1IOManager_ac91dd7d537b2c0090b05d8bd5b74847e.html#ac91dd7d537b2c0090b05d8bd5b74847e" title=" " alt="" coords="200,133,387,173"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="423,156,387,156,387,151,423,151"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1IO_1_1IOManager_abc5b4f20992fe093fcf290e073a12895.html#abc5b4f20992fe093fcf290e073a12895" title=" " alt="" coords="200,197,387,237"/>
+<area shape="poly" id="edge10_Node000009_Node000011" title=" " alt="" coords="443,180,369,200,367,195,442,174"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Kriya_1_1Chimera_a9d162be6360583b59b65a921b8fecf7b.html#a9d162be6360583b59b65a921b8fecf7b" title=" " alt="" coords="673,193,864,233"/>
+<area shape="poly" id="edge12_Node000012_Node000013" title=" " alt="" coords="927,216,864,216,864,211,927,211"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Buffers_1_1DataReadProcessor_abbb570695875c4632888b2f926f2925f.html#abbb570695875c4632888b2f926f2925f" title="Read the host pixel data a TextureBuffer retains." alt="" coords="675,258,862,313"/>
+<area shape="poly" id="edge14_Node000012_Node000015" title=" " alt="" coords="944,240,863,262,861,257,942,234"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Kriya_1_1Chimera_a0ca1ced8e90b76c407bf414c3f503ad7.html#a0ca1ced8e90b76c407bf414c3f503ad7" title=" " alt="" coords="435,197,625,237"/>
+<area shape="poly" id="edge13_Node000013_Node000014" title=" " alt="" coords="659,218,626,218,625,213,659,212"/>
+<area shape="rect" id="Node000016" href="$namespaceMayaFlux_1_1Kriya_1_1detail_a4fe0640b29321d9daa3c236e3898e01a.html#a4fe0640b29321d9daa3c236e3898e01a" title="Arm the read that suits what the buffer is." alt="" coords="443,265,617,305"/>
+<area shape="poly" id="edge15_Node000015_Node000016" title=" " alt="" coords="661,288,617,288,617,283,661,283"/>
+</map>

@@ -1,0 +1,13 @@
+<map id="MayaFlux::Nodes::RootNode::register_node" name="MayaFlux::Nodes::RootNode::register_node">
+<area shape="rect" id="Node000001" title="Adds a node to this root node." alt="" coords="5,69,212,109"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Nodes_ac5f2d6d11351f4dc3411aa2e4cae4cd9.html#ac5f2d6d11351f4dc3411aa2e4cae4cd9" title="Atomically adds a flag to a node state." alt="" coords="269,5,457,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="188,67,269,46,271,51,190,72"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Nodes_a933208421abbf80e33a48a266ef9c0a9.html#a933208421abbf80e33a48a266ef9c0a9" title="Atomically removes a flag from a node state." alt="" coords="269,69,457,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="212,87,255,87,255,92,212,92"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1RootNode_a27e0e00cce6e4be4a1bfc2fe79545c53.html#a27e0e00cce6e4be4a1bfc2fe79545c53" title="Queues an operation, draining on the caller&#39;s behalf when the queue is full." alt="" coords="260,133,467,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="190,107,271,127,269,133,188,112"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1RootNode_a1a20847a779ea2b4d3f22f3b50e8dbc5.html#a1a20847a779ea2b4d3f22f3b50e8dbc5" title="Processes any pending node registration/unregistration operations." alt="" coords="515,133,729,173"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="467,151,501,151,501,156,467,156"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Nodes_aab9fcab4a6b6e37d7cae7a9e72be2a49.html#aab9fcab4a6b6e37d7cae7a9e72be2a49" title="Atomically sets a node state flag to a specific value." alt="" coords="777,133,965,173"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="729,151,764,151,764,156,729,156"/>
+</map>

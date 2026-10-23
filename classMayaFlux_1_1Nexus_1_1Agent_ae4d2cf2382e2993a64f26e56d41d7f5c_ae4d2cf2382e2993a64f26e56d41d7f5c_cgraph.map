@@ -1,0 +1,8 @@
+<map id="MayaFlux::Nexus::Agent::recenter" name="MayaFlux::Nexus::Agent::recenter">
+<area shape="rect" id="Node000001" title="Read the attached buffer&#39;s geometry again and move the anchor to match." alt="" coords="5,29,187,69"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Nexus_a60bdbcdb6a637bc81248165ecd2f64ea.html#a60bdbcdb6a637bc81248165ecd2f64ea" title="Read the buffer&#39;s geometry again and move the anchor to match." alt="" coords="235,29,432,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="187,47,221,47,221,52,187,52"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Nexus_a38a4ffb36a511a9879f5dee9e2f64099.html#a38a4ffb36a511a9879f5dee9e2f64099" title="Anchor of a buffer&#39;s geometry in its own stored coordinates." alt="" coords="480,29,652,69"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="432,47,466,47,466,52,432,52"/>
+<area shape="poly" id="edge3_Node000003_Node000003" title=" " alt="" coords="523,30,520,20,527,10,542,5,566,3,593,6,608,13,605,18,592,11,566,8,544,10,530,15,525,21,528,28"/>
+</map>

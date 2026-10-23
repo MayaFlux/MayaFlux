@@ -1,0 +1,10 @@
+<map id="MayaFlux::Nodes::HookList::Snapshot" name="MayaFlux::Nodes::HookList::Snapshot">
+<area shape="rect" id="Node000001" title="The entries of a list at one instant, kept alive while this object exists." alt="" coords="5,720,197,1000"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1HookList.html" title="Stores, fires and clears the hooks of one node channel." alt="" coords="85,5,278,391"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="110,391,105,415,95,488,91,562,91,703,86,703,85,562,90,487,100,414,105,390"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Node.html" title="Base interface for all computational processing nodes." alt="" coords="285,468,483,1252"/>
+<area shape="poly" id="edge3_Node000003_Node000002" title=" " alt="" coords="163,390,170,417,180,443,186,450,193,454,202,458,211,466,248,518,280,573,275,576,243,521,207,470,199,463,191,459,182,455,175,445,164,419,158,392"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="369,468,352,416,324,360,287,308,291,305,328,357,357,414,374,467"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Nodes_1_1RoutingState.html" title="Represents the state of routing transitions for a node." alt="" coords="391,108,577,288"/>
+<area shape="poly" id="edge4_Node000003_Node000004" title=" " alt="" coords="477,289,457,444,456,452,451,451,452,444,472,288"/>
+</map>

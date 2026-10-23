@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::NodeGraphManager::get_root_node" name="MayaFlux::Nodes::NodeGraphManager::get_root_node">
+<area shape="rect" id="Node000001" title="Gets or creates the root node for a specific token and channel." alt="" coords="5,5,221,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_a9c43d6dbcd53013e4d61fa43f038384a.html#a9c43d6dbcd53013e4d61fa43f038384a" title="Ensures a root node exists for the given token and channel." alt="" coords="269,5,485,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="221,23,256,23,256,28,221,28"/>
+</map>

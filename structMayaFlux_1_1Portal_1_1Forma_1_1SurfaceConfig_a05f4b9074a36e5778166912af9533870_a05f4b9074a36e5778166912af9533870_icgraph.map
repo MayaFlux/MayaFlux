@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Forma::SurfaceConfig::should_detach_on_close" name="MayaFlux::Portal::Forma::SurfaceConfig::should_detach_on_close">
+<area shape="rect" id="Node000001" title="Whether the built&#45;in detach behavior actually runs." alt="" coords="235,5,416,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Surface_acc48bb2739d7a8f3d9df73662cfb8917.html#acc48bb2739d7a8f3d9df73662cfb8917" title="Construct a Surface from a SurfaceConfig." alt="" coords="5,13,187,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="221,35,187,35,187,30,221,30"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::PlotProcessor" name="MayaFlux::Kakshya::PlotProcessor">
+<area shape="rect" id="Node000001" title="DataProcessor that acquires per&#45;series data from heterogeneous sources and writes into PlotContainer:..." alt="" coords="5,213,191,688"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1DataProcessor.html" title="Interface for processing data within SignalSourceContainer objects." alt="" coords="23,5,173,165"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="101,179,101,213,95,213,95,179"/>
+</map>

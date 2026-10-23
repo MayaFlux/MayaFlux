@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nodes::CompositeOpNode::get_last_context" name="MayaFlux::Nodes::CompositeOpNode::get_last_context">
+<area shape="rect" id="Node000001" title="Retrieves the last created context object." alt="" coords="789,5,1003,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1CompositeOpNode_a39dee35cb2d358e26b1a0a462e008361.html#a39dee35cb2d358e26b1a0a462e008361" title="Notifies all registered callbacks with the current context." alt="" coords="528,5,741,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="775,28,742,28,742,23,775,23"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1CompositeOpNode_a6e5c7168192f7ac506f120edaae73185.html#a6e5c7168192f7ac506f120edaae73185" title="Processes a single data sample." alt="" coords="267,5,480,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="514,28,480,28,480,23,514,23"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1CompositeOpNode_a7d611787a0c8d858f159f9f5acf61373.html#a7d611787a0c8d858f159f9f5acf61373" title="Processes multiple samples at once." alt="" coords="5,5,219,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="253,28,219,28,219,23,253,23"/>
+</map>

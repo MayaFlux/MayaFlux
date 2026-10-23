@@ -1,0 +1,11 @@
+<map id="MayaFlux::Nodes::BinaryOpNode::notify_tick" name="MayaFlux::Nodes::BinaryOpNode::notify_tick">
+<area shape="rect" id="Node000001" title="Notifies all registered callbacks about a new output value." alt="" coords="5,69,208,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1HookList_a9688ae71a354c2f8a8989eea13979b7d.html#a9688ae71a354c2f8a8989eea13979b7d" title="Calls every entry whose condition, if any, holds." alt="" coords="257,5,457,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="185,67,265,46,266,51,186,72"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1BinaryOpNode_a5d303a09086c07dad83ccad1580b95d5.html#a5d303a09086c07dad83ccad1580b95d5" title="Retrieves the last created context object." alt="" coords="256,69,459,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="208,87,242,87,242,92,208,92"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1BinaryOpNode_a317868165be2d04b058937355768e805.html#a317868165be2d04b058937355768e805" title="updates context object for callbacks" alt="" coords="256,133,459,173"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="186,107,266,127,265,133,185,112"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1HookList_a0e44de57f732ba8bbedc5d493f694d01.html#a0e44de57f732ba8bbedc5d493f694d01" title="The current entries, held stable for the lifetime of the returned object." alt="" coords="507,5,707,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="458,23,493,23,493,28,458,28"/>
+</map>

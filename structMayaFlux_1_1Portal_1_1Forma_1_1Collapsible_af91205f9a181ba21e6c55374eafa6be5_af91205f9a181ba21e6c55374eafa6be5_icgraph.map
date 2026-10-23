@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Forma::Collapsible::bounds" name="MayaFlux::Portal::Forma::Collapsible::bounds">
+<area shape="rect" id="Node000001" title="Header strip region, satisfying Kinesis::HasBounds." alt="" coords="235,5,416,45"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Portal_1_1Forma_1_1EntryGroup_a5e94368de0b7f63504101b7b0c1de990.html#a5e94368de0b7f63504101b7b0c1de990" title="Union of the header strip and every row region." alt="" coords="5,5,187,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="221,28,187,28,187,23,221,23"/>
+</map>

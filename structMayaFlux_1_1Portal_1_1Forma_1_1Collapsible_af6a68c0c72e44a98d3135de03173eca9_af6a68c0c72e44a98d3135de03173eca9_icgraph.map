@@ -1,0 +1,11 @@
+<map id="MayaFlux::Portal::Forma::Collapsible::attach" name="MayaFlux::Portal::Forma::Collapsible::attach">
+<area shape="rect" id="Node000001" title="Relate a body element to this collapsible and sync its visibility to the current open state." alt="" coords="483,37,664,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Inspector_a885422dd7d11c55d1cdd923f6ce6b5ce.html#a885422dd7d11c55d1cdd923f6ce6b5ce" title="Inspect the full EventManager state." alt="" coords="235,5,435,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="469,46,435,41,435,36,470,41"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Inspector_aca4b73c0629b03f894065c7a777a240c.html#aca4b73c0629b03f894065c7a777a240c" title="Inspect the full TaskScheduler state." alt="" coords="244,69,425,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="470,74,426,80,425,75,469,69"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Forma_af41897be30156c06741f924722e654f5.html#af41897be30156c06741f924722e654f5" title="Open or show the EventManager inspection window." alt="" coords="5,5,187,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="221,28,187,28,187,23,221,23"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Portal_1_1Forma_abb516f8bf31335193993acea55db7843.html#abb516f8bf31335193993acea55db7843" title="Open or show the TaskScheduler inspection window." alt="" coords="5,69,187,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="230,92,187,92,187,87,230,87"/>
+</map>

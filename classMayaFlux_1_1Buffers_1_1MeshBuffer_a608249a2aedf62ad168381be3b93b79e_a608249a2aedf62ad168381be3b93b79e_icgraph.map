@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::MeshBuffer::setup_processors" name="MayaFlux::Buffers::MeshBuffer::setup_processors">
+<area shape="rect" id="Node000001" title="Create and attach MeshProcessor as the default processor." alt="" coords="224,13,441,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RaymarchBuffer_aafcbc039461f3f16db04ba1f07b7e670.html#aafcbc039461f3f16db04ba1f07b7e670" title="Attach MeshProcessor for upload and RaymarchProcessor for staging." alt="" coords="5,5,176,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="210,35,176,35,176,30,210,30"/>
+</map>

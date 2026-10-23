@@ -1,0 +1,26 @@
+<map id="MayaFlux::Kinesis::textured_mesh_rect" name="MayaFlux::Kinesis::textured_mesh_rect">
+<area shape="rect" id="Node000001" title="Generate a UV&#45;mapped TRIANGLE_LIST quad (6 vertices, 2 triangles) from an AABB2D, as Kakshya::MeshVer..." alt="" coords="923,125,1075,165"/>
+<area shape="poly" id="edge2_Node000001_Node000001" title=" " alt="" coords="1035,114,1022,107,999,104,978,106,966,111,961,117,964,124,959,126,956,116,963,106,977,101,999,99,1024,102,1037,109"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Element_aed33094976b6d57a762f406e1411cb6a.html#aed33094976b6d57a762f406e1411cb6a" title="Resubmit the textured quad at a new NDC region, keeping the bound texture unchanged." alt="" coords="693,61,875,101"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="917,124,851,104,852,99,918,119"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Element_a47d88dbabc79825487cca0012ccd49ec.html#a47d88dbabc79825487cca0012ccd49ec" title="Press text into a new GPU texture and bind it to the attached FormaBuffer." alt="" coords="693,125,875,165"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="909,148,875,148,875,143,909,143"/>
+<area shape="rect" id="Node000010" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Element_aeb40555e59a58849cccfd1db32c0314a.html#aeb40555e59a58849cccfd1db32c0314a" title="Submit a UV quad covering region and bind image as &quot;texSampler&quot; on the attached FormaBuffer." alt="" coords="693,189,875,229"/>
+<area shape="poly" id="edge12_Node000001_Node000010" title=" " alt="" coords="918,172,852,192,851,187,917,167"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Portal_1_1Forma_1_1TextField_a20b101aef26d8710a14abb0b3c705f4c.html#a20b101aef26d8710a14abb0b3c705f4c" title="Register the text field element and wire text editing onto it." alt="" coords="464,57,645,97"/>
+<area shape="poly" id="edge4_Node000003_Node000004" title=" " alt="" coords="702,124,622,100,623,95,704,119"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Plot_ac76725b0c967171fcbaa2ccb619fb6d7.html#ac76725b0c967171fcbaa2ccb619fb6d7" title="Place a text label element onto surface using a pre&#45;built buffer." alt="" coords="464,125,645,165"/>
+<area shape="poly" id="edge9_Node000003_Node000007" title=" " alt="" coords="679,148,646,148,646,143,679,143"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a4d8d6a3f54c57284141331e37153b682.html#a4d8d6a3f54c57284141331e37153b682" title="Build a text&#45;capable FormaBuffer, register a TextField, and wire text editing onto it in one call." alt="" coords="5,29,187,69"/>
+<area shape="poly" id="edge5_Node000004_Node000005" title=" " alt="" coords="467,57,416,48,297,42,187,45,187,39,297,36,416,43,468,52"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Portal_1_1Forma_1_1TextField_ab37d173483ea4e704f5c55865e384d72.html#ab37d173483ea4e704f5c55865e384d72" title="Fluent creator: place this field inside an already&#45;placed Scrollable, growing itself taller than its ..." alt="" coords="235,57,416,97"/>
+<area shape="poly" id="edge7_Node000004_Node000006" title=" " alt="" coords="450,80,416,80,416,75,450,75"/>
+<area shape="poly" id="edge6_Node000005_Node000005" title=" " alt="" coords="135,18,121,11,96,8,74,10,61,15,56,21,58,28,53,30,51,20,57,10,73,5,96,3,123,6,137,13"/>
+<area shape="poly" id="edge8_Node000006_Node000005" title=" " alt="" coords="221,67,187,63,187,58,221,62"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Portal_1_1Forma_1_1internal_1_1Atelier_a88e3c1e6a8d3d5b535378537eb934326.html#a88e3c1e6a8d3d5b535378537eb934326" title="Create and place every adornment declared on spec." alt="" coords="235,122,416,177"/>
+<area shape="poly" id="edge10_Node000007_Node000008" title=" " alt="" coords="450,150,416,150,416,145,450,144"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a0134941e72f794b2ad2318f03eacb98b.html#a0134941e72f794b2ad2318f03eacb98b" title="Create a live plot in a new window." alt="" coords="5,129,187,169"/>
+<area shape="poly" id="edge11_Node000008_Node000009" title=" " alt="" coords="221,152,187,152,187,147,221,147"/>
+<area shape="rect" id="Node000011" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Element_a334fd05fe13e932fea1f77b1ddd047df.html#a334fd05fe13e932fea1f77b1ddd047df" title="Convenience overload extracting the GPU texture from a TextureBuffer (or TextBuffer,..." alt="" coords="464,189,645,229"/>
+<area shape="poly" id="edge13_Node000010_Node000011" title=" " alt="" coords="679,212,646,212,646,207,679,207"/>
+</map>

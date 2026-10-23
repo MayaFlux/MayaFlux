@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::Vision::pyramid_layout" name="MayaFlux::Kinesis::Vision::pyramid_layout">
+<area shape="rect" id="Node000001" title="Place up to requested pyramid levels for a w x h base image." alt="" coords="236,13,408,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1VisionGpuExecutor_a08553db85b13e02d863b0b0154a01d43.html#a08553db85b13e02d863b0b0154a01d43" title="Build the current frame&#39;s pyramid atlas from the working image." alt="" coords="5,5,188,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="222,35,188,35,188,30,222,30"/>
+</map>

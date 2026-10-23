@@ -1,0 +1,5 @@
+<map id="MayaFlux::IO::CompositeReader::read_composite" name="MayaFlux::IO::CompositeReader::read_composite">
+<area shape="rect" id="Node000001" title="Read all remaining elements into one owning array." alt="" coords="285,5,517,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1CompositeReader_a29e5c6ede363325fa26ee2936f73e4b7.html#a29e5c6ede363325fa26ee2936f73e4b7" title="Read remaining elements into a new CompositeContainer." alt="" coords="5,5,237,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="272,28,237,28,237,23,272,23"/>
+</map>

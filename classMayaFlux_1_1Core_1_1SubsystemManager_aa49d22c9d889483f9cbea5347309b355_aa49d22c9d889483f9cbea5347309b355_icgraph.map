@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::SubsystemManager::get_input_subsystem" name="MayaFlux::Core::SubsystemManager::get_input_subsystem">
+<area shape="rect" id="Node000001" title="Get typed access to the input subsystem." alt="" coords="287,5,513,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1SubsystemManager_a182799a6f8c506fd12e4e77381cb779d.html#a182799a6f8c506fd12e4e77381cb779d" title="Stop the input subsystem." alt="" coords="5,5,239,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="273,28,239,28,239,23,273,23"/>
+</map>

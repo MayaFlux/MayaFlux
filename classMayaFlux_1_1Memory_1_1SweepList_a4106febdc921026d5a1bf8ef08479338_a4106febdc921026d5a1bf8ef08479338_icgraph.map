@@ -1,0 +1,7 @@
+<map id="MayaFlux::Memory::SweepList::drain" name="MayaFlux::Memory::SweepList::drain">
+<area shape="rect" id="Node000001" title="Blocking pass that finalizes every item currently held." alt="" coords="275,37,496,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Parallel_1_1AsyncGroup_a476342f50099abb4bfcec3a30c5011fa.html#a476342f50099abb4bfcec3a30c5011fa" title="Returns and clears exceptions accumulated with no handler set." alt="" coords="21,5,211,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="261,45,210,39,211,34,261,40"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Memory_1_1SweepList_a1e3b98c306d52fa5d24cd8f51819f9c1.html#a1e3b98c306d52fa5d24cd8f51819f9c1" title="Drains and discards any remaining items without inspecting them." alt="" coords="5,69,227,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="261,75,227,79,227,74,261,69"/>
+</map>

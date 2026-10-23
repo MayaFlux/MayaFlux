@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::RenderProcessor::collect_retired_pipelines" name="MayaFlux::Buffers::RenderProcessor::collect_retired_pipelines">
+<area shape="rect" id="Node000001" title="Destroy retired pipelines whose window has completed every frame submitted before retirement." alt="" coords="5,5,188,60"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a54c4e0f2eb44a261d8463e8423e3746d.html#a54c4e0f2eb44a261d8463e8423e3746d" title="Get the global render flow instance." alt="" coords="236,13,433,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="188,30,222,30,222,35,188,35"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1RenderFlow_a427f34bcec94e920d4dbbb76ae7f175f.html#a427f34bcec94e920d4dbbb76ae7f175f" title=" " alt="" coords="481,13,679,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="434,30,468,30,468,35,434,35"/>
+</map>

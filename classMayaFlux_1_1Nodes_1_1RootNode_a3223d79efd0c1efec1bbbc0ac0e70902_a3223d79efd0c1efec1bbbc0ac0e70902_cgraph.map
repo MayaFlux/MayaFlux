@@ -1,0 +1,11 @@
+<map id="MayaFlux::Nodes::RootNode::unregister_node" name="MayaFlux::Nodes::RootNode::unregister_node">
+<area shape="rect" id="Node000001" title="Removes a node from this root node." alt="" coords="5,37,212,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Nodes_ac5f2d6d11351f4dc3411aa2e4cae4cd9.html#ac5f2d6d11351f4dc3411aa2e4cae4cd9" title="Atomically adds a flag to a node state." alt="" coords="269,5,457,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="212,42,255,36,256,42,212,47"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1RootNode_a27e0e00cce6e4be4a1bfc2fe79545c53.html#a27e0e00cce6e4be4a1bfc2fe79545c53" title="Queues an operation, draining on the caller&#39;s behalf when the queue is full." alt="" coords="260,69,467,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="212,68,247,72,246,77,212,73"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1RootNode_a1a20847a779ea2b4d3f22f3b50e8dbc5.html#a1a20847a779ea2b4d3f22f3b50e8dbc5" title="Processes any pending node registration/unregistration operations." alt="" coords="515,69,729,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="467,87,501,87,501,92,467,92"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Nodes_aab9fcab4a6b6e37d7cae7a9e72be2a49.html#aab9fcab4a6b6e37d7cae7a9e72be2a49" title="Atomically sets a node state flag to a specific value." alt="" coords="777,69,965,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="729,87,764,87,764,92,729,92"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Input::TabletNode::on_proximity_exit" name="MayaFlux::Nodes::Input::TabletNode::on_proximity_exit">
+<area shape="rect" id="Node000001" title="Callback when the tool leaves sensing range." alt="" coords="5,5,235,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Nodes_ac234727efe20bcec6d269ace94b3e312.html#ac234727efe20bcec6d269ace94b3e312" title="Wraps a context&#45;typed hook into a NodeHook." alt="" coords="283,13,501,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="235,23,269,23,269,28,235,28"/>
+</map>

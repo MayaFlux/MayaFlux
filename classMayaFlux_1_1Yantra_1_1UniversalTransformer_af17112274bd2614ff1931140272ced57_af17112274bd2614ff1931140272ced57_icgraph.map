@@ -1,0 +1,5 @@
+<map id="MayaFlux::Yantra::UniversalTransformer::transform_implementation" name="MayaFlux::Yantra::UniversalTransformer::transform_implementation">
+<area shape="rect" id="Node000001" title="Pure virtual transformation implementation &#45; derived classes implement this." alt="" coords="284,5,567,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1UniversalTransformer_a3f55117454a7393002addd226c5ae734.html#a3f55117454a7393002addd226c5ae734" title="Core operation implementation &#45; called by ComputeOperation interface." alt="" coords="5,5,236,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="270,28,236,28,236,23,270,23"/>
+</map>

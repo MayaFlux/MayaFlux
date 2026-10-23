@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::FeedbackBuffer::clone_to" name="MayaFlux::Buffers::FeedbackBuffer::clone_to">
+<area shape="rect" id="Node000001" title="Clone for another channel with its own ring and its own processor state." alt="" coords="5,77,192,117"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1AudioBuffer_a643c575b6348c28d1ec2e6ccc52baa61.html#a643c575b6348c28d1ec2e6ccc52baa61" title="Gets mutable access to the buffer&#39;s underlying audio data." alt="" coords="282,5,445,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="168,75,239,55,271,46,272,51,241,60,170,80"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1AudioBuffer_a6b8cf9f83ad9ed24866896e7d4f40566.html#a6b8cf9f83ad9ed24866896e7d4f40566" title="Gets the current capacity of the audio buffer." alt="" coords="282,70,445,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="192,95,268,95,268,100,192,100"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1AudioBuffer_ae2313cba314da70499b2c9c84e3215f0.html#ae2313cba314da70499b2c9c84e3215f0" title="Gets the audio transformation chain attached to this buffer." alt="" coords="240,149,487,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="173,115,241,133,276,143,275,148,239,139,172,120"/>
+</map>

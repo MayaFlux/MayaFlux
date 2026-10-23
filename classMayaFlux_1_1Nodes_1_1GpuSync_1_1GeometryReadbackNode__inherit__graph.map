@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nodes::GpuSync::GeometryReadbackNode" name="MayaFlux::Nodes::GpuSync::GeometryReadbackNode">
+<area shape="rect" id="Node000001" title="GeometryWriterNode that downloads vertex data from a GPU buffer each frame." alt="" coords="5,1688,207,1908"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GeometryWriterNode.html" title="Base class for nodes that generate 3D geometry data." alt="" coords="5,1145,207,1640"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="109,1654,109,1688,103,1688,103,1654"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GpuSync.html" title=" " alt="" coords="10,897,202,1097"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="109,1111,109,1145,103,1145,103,1111"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Node.html" title="Base interface for all computational processing nodes." alt="" coords="7,5,205,849"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="109,863,109,897,103,897,103,863"/>
+</map>

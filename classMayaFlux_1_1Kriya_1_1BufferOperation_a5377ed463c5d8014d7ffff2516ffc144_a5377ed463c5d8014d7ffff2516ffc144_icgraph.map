@@ -1,0 +1,6 @@
+<map id="MayaFlux::Kriya::BufferOperation::capture_to_stream" name="MayaFlux::Kriya::BufferOperation::capture_to_stream">
+<area shape="rect" id="Node000001" title="Capture a camera straight into a dynamic video stream it creates." alt="" coords="292,29,531,69"/>
+<area shape="poly" id="edge1_Node000001_Node000001" title=" " alt="" coords="460,18,443,11,411,8,384,10,367,15,361,21,364,28,359,30,355,20,364,10,383,5,411,3,444,5,462,13"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1BufferOperation_a34d1ee45da31987a919ff31a2c08919a.html#a34d1ee45da31987a919ff31a2c08919a" title="Capture a video file straight into a dynamic video stream it creates." alt="" coords="5,29,244,69"/>
+<area shape="poly" id="edge2_Node000001_Node000002" title=" " alt="" coords="278,52,244,52,244,47,278,47"/>
+</map>

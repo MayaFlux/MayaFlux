@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::UVFieldProcessor::on_attach" name="MayaFlux::Buffers::UVFieldProcessor::on_attach">
+<area shape="rect" id="Node000001" title="Called when this processor is attached to a buffer." alt="" coords="5,45,164,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_ae72d99984f65f41164441d313ae0af88.html#ae72d99984f65f41164441d313ae0af88" title="Bind a VKBuffer to a named shader descriptor." alt="" coords="212,5,379,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="164,55,198,48,199,54,165,60"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1BufferProcessor_aabc0443cf162db0fdca77c2f555a1920.html#aabc0443cf162db0fdca77c2f555a1920" title="Called when this processor is attached to a buffer." alt="" coords="221,84,369,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="165,85,208,93,207,98,164,90"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Portal::Forma::ColorPicker" name="MayaFlux::Portal::Forma::ColorPicker">
+<area shape="rect" id="Node000001" title="A saturation and value square, a hue strip and a swatch, drawn into one buffer." alt="" coords="107,428,280,668"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Forma_1_1LayoutCursor.html" title="Reactive Y&#45;position accumulator for vertical primitive stacking." alt="" coords="5,5,179,365"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="145,365,158,411,153,413,140,366"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kinesis_1_1AABB2D.html" title="Axis&#45;aligned bounding rectangle in a 2D coordinate space." alt="" coords="203,45,389,325"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="265,326,244,405,241,413,236,412,239,403,260,325"/>
+</map>

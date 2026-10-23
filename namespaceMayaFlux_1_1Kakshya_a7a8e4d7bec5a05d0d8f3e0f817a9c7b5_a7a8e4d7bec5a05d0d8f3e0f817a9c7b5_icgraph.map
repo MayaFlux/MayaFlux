@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::normalised_rect_to_region" name="MayaFlux::Kakshya::normalised_rect_to_region">
+<area shape="rect" id="Node000001" title="Convert a normalised image rectangle to a pixel&#45;space Region." alt="" coords="232,13,427,53"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_a11897ab8f477cfcc9da8a9e5f070794d.html#a11897ab8f477cfcc9da8a9e5f070794d" title="Compute the tight pixel&#45;space Region enclosing a set of normalised points." alt="" coords="5,5,184,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="219,35,184,35,184,30,219,30"/>
+</map>

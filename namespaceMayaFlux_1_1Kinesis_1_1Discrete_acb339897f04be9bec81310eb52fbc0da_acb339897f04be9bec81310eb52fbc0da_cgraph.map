@@ -1,0 +1,6 @@
+<map id="MayaFlux::Kinesis::Discrete::tapped_sum" name="MayaFlux::Kinesis::Discrete::tapped_sum">
+<area shape="rect" id="Node000001" title="Sum of gain * window[lag] over (lag, gain) pairs." alt="" coords="5,29,169,69"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a0f0fc0b4cd893ccbb45ac82fcc93a549.html#a0f0fc0b4cd893ccbb45ac82fcc93a549" title="Sum per window." alt="" coords="217,29,367,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="170,47,203,47,203,52,170,52"/>
+<area shape="poly" id="edge2_Node000002_Node000002" title=" " alt="" coords="254,30,252,20,258,11,271,5,292,3,316,6,329,13,326,18,314,11,292,8,273,10,261,15,257,21,259,28"/>
+</map>

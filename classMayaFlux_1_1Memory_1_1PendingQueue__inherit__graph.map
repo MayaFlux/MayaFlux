@@ -1,0 +1,5 @@
+<map id="MayaFlux::Memory::PendingQueue&lt; T, Capacity &gt;" name="MayaFlux::Memory::PendingQueue&lt; T, Capacity &gt;">
+<area shape="rect" id="Node000001" title="Bounded multi&#45;producer, single&#45;consumer queue of deferred operations." alt="" coords="15,5,214,305"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Memory_1_1PendingQueue.html" title=" " alt="" coords="5,397,224,712"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="117,319,117,397,112,397,112,319"/>
+</map>

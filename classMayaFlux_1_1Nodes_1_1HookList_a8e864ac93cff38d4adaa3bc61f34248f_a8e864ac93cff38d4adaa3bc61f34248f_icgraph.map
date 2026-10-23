@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::HookList::add_conditional_unique" name="MayaFlux::Nodes::HookList::add_conditional_unique">
+<area shape="rect" id="Node000001" title="As add_conditional, returning the existing id when the same hook and condition types exist." alt="" coords="231,5,431,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Node_ab4181ff405bc6fd231aa6f5d524f6f62.html#ab4181ff405bc6fd231aa6f5d524f6f62" title="Registers a conditional callback." alt="" coords="5,5,183,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="217,28,183,28,183,23,217,23"/>
+</map>

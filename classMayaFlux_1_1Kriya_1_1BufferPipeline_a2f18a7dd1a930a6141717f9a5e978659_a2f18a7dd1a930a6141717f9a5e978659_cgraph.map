@@ -1,0 +1,8 @@
+<map id="MayaFlux::Kriya::BufferPipeline::end" name="MayaFlux::Kriya::BufferPipeline::end">
+<area shape="rect" id="Node000001" title="End a running pipeline now." alt="" coords="5,37,264,62"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_aefd214af5e476f686dc86cc7d7220c96.html#aefd214af5e476f686dc86cc7d7220c96" title="Cancels and removes a task from the scheduler." alt="" coords="312,29,543,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="264,47,299,47,299,52,264,52"/>
+<area shape="poly" id="edge2_Node000002_Node000002" title=" " alt="" coords="376,30,373,20,381,10,399,5,427,3,459,5,477,13,475,18,458,11,427,8,400,10,384,15,378,21,381,28"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_afb823dfb8ca7ec5182cfaa8e3ee93649.html#afb823dfb8ca7ec5182cfaa8e3ee93649" title="Find task entry by routine pointer." alt="" coords="591,29,821,69"/>
+<area shape="poly" id="edge3_Node000002_Node000003" title=" " alt="" coords="543,47,577,47,577,52,543,52"/>
+</map>

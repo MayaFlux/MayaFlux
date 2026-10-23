@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Graphics::PrimitiveMill::mill" name="MayaFlux::Portal::Graphics::PrimitiveMill::mill">
+<area shape="rect" id="Node000001" title="Mill runs out of source into the owned buffer." alt="" coords="252,5,449,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a6d6af6f212ace15b1100d0fc65634e9d.html#a6d6af6f212ace15b1100d0fc65634e9d" title="Mill m_runs into this attachment&#39;s output." alt="" coords="5,5,204,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="238,28,204,28,204,23,238,23"/>
+</map>

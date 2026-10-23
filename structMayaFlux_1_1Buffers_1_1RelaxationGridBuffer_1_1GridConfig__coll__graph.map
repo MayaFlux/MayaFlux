@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::RelaxationGridBuffer::GridConfig" name="MayaFlux::Buffers::RelaxationGridBuffer::GridConfig">
+<area shape="rect" id="Node000001" title="Arrangement of a relaxation grid: extent, the update rule, the emit stage that draws it,..." alt="" coords="5,217,156,372"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Buffers_1_1RelaxationGridBuffer_1_1GridConfig_1_1Stage.html" title="One compute stage of the grid, rule or emit." alt="" coords="5,5,156,140"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="83,140,83,201,78,201,78,140"/>
+</map>

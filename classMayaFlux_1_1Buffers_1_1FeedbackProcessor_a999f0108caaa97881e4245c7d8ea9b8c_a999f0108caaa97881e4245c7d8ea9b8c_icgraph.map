@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::FeedbackProcessor::state_for" name="MayaFlux::Buffers::FeedbackProcessor::state_for">
+<area shape="rect" id="Node000001" title=" " alt="" coords="279,53,492,93"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1FeedbackProcessor_ada1713016f7d6dd00db723b17f0391f4.html#ada1713016f7d6dd00db723b17f0391f4" title="Called when this processor is attached to a buffer." alt="" coords="33,5,203,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="265,57,203,48,204,43,265,52"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1FeedbackProcessor_a833681ef35569b129b9e9d57aa941f2e.html#a833681ef35569b129b9e9d57aa941f2e" title="The core processing function that must be implemented by derived classes." alt="" coords="5,84,231,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="266,93,231,98,230,92,265,87"/>
+</map>

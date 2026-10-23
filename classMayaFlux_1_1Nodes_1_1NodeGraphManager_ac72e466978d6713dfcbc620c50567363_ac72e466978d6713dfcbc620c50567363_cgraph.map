@@ -1,0 +1,11 @@
+<map id="MayaFlux::Nodes::NodeGraphManager::~NodeGraphManager" name="MayaFlux::Nodes::NodeGraphManager::~NodeGraphManager">
+<area shape="rect" id="Node000001" title="Destroys the NodeGraphManager." alt="" coords="5,69,233,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_a0c180caaaa076b2a2609bc1d1f9258ea.html#a0c180caaaa076b2a2609bc1d1f9258ea" title="Terminates all active processing across all tokens and channels." alt="" coords="281,62,497,117"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="234,87,267,87,267,92,234,92"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_ae0ea609da65a55001ff6196166cf2af0.html#ae0ea609da65a55001ff6196166cf2af0" title="Gets all currently active processing tokens (domains)" alt="" coords="567,5,783,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="497,63,572,46,573,51,498,68"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_af4dfc2c32607b1a94260b9bfdeb424d0.html#af4dfc2c32607b1a94260b9bfdeb424d0" title="Get spans of root nodes for a token (for custom processing)" alt="" coords="567,69,783,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="497,87,553,87,553,92,497,92"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_adc75a7be1c84a5d43f4c4b71da4de404.html#adc75a7be1c84a5d43f4c4b71da4de404" title="Unregister network globally." alt="" coords="545,133,805,173"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="498,111,573,128,572,133,497,116"/>
+</map>

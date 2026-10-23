@@ -1,0 +1,15 @@
+<map id="MayaFlux::Portal::Forma::Context::handle_close" name="MayaFlux::Portal::Forma::Context::handle_close">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,101,187,141"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_ae81fe06eb8f1c153cbdbaf933c360ab2.html#ae81fe06eb8f1c153cbdbaf933c360ab2" title="Clear keyboard focus (no element focused)." alt="" coords="257,5,439,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="135,99,234,55,256,47,258,52,236,60,137,104"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1WindowEventSource_a69dcd486f2d42b80270f7701033a2bfe.html#a69dcd486f2d42b80270f7701033a2bfe" title="Run an action after the active outermost window&#45;event dispatch." alt="" coords="235,69,461,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="187,107,221,103,221,108,187,112"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_aeaa680440ab8606a4f40760f0960dd41.html#aeaa680440ab8606a4f40760f0960dd41" title=" " alt="" coords="253,133,443,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="187,130,239,137,238,142,187,135"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_a992390bf2d036977f743369b10f07b65.html#a992390bf2d036977f743369b10f07b65" title=" " alt="" coords="257,197,439,237"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="137,139,236,183,258,191,256,196,234,188,135,144"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_aa13e7ea257f9fd23e7c17542bd72bdd9.html#aa13e7ea257f9fd23e7c17542bd72bdd9" title=" " alt="" coords="509,133,704,173"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="444,151,495,151,495,156,444,156"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Vruta_1_1EventManager_af5dec990ab647fdd7a99ca272211b08e.html#af5dec990ab647fdd7a99ca272211b08e" title="Cancels and removes a event from the manager." alt="" coords="752,133,983,173"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="704,151,738,151,738,156,704,156"/>
+</map>

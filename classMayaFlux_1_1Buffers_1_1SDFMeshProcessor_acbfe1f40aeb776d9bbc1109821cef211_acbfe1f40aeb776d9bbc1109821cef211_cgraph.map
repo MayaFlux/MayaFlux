@@ -1,0 +1,15 @@
+<map id="MayaFlux::Buffers::SDFMeshProcessor::on_attach" name="MayaFlux::Buffers::SDFMeshProcessor::on_attach">
+<area shape="rect" id="Node000001" title="Called when this processor is attached to a buffer." alt="" coords="5,84,176,139"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_ae72d99984f65f41164441d313ae0af88.html#ae72d99984f65f41164441d313ae0af88" title="Bind a VKBuffer to a named shader descriptor." alt="" coords="240,5,407,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="172,81,228,62,230,67,173,86"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1BufferProcessor_aabc0443cf162db0fdca77c2f555a1920.html#aabc0443cf162db0fdca77c2f555a1920" title="Called when this processor is attached to a buffer." alt="" coords="249,84,397,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="176,109,235,109,235,114,176,114"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1SDFMeshProcessor_a224e5afcd9812c2767437b3b79b7c034.html#a224e5afcd9812c2767437b3b79b7c034" title=" " alt="" coords="224,163,423,217"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="173,136,230,156,228,161,172,141"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1SDFMeshProcessor_a7141a3bf580a8b2df47958b5edbe51e8.html#a7141a3bf580a8b2df47958b5edbe51e8" title=" " alt="" coords="471,98,709,138"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="422,160,470,147,501,139,502,144,471,153,424,166"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="507,163,673,217"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="423,187,492,187,492,193,423,193"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aee686db265b63cedacadaf1aea2e3e3b.html#aee686db265b63cedacadaf1aea2e3e3b" title="Get the global registry instance." alt="" coords="489,242,691,282"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="424,214,503,236,501,241,422,219"/>
+</map>

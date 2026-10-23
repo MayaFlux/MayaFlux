@@ -1,0 +1,11 @@
+<map id="MayaFlux::Kakshya::set_or_update_region_data" name="MayaFlux::Kakshya::set_or_update_region_data">
+<area shape="rect" id="Node000001" title="Write or update a region of data in planar storage." alt="" coords="5,69,204,109"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_a07867f31cc04b486ec17a873894f790e.html#a07867f31cc04b486ec17a873894f790e" title="Get all non&#45;channel dimensions from a list of dimensions." alt="" coords="252,5,467,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="184,67,265,46,267,51,186,72"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kakshya_a7e76c0a673d0a6cc335fd8180ea20088.html#a7e76c0a673d0a6cc335fd8180ea20088" title="Remove the channel dimension from a Region." alt="" coords="257,69,462,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="204,87,243,87,243,92,204,92"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kakshya_af3d621c76a9ee24e200cf8e2ecabaa61.html#af3d621c76a9ee24e200cf8e2ecabaa61" title="Write or update a region of data in a flat data span (interleaved)." alt="" coords="260,133,459,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="186,107,267,127,265,133,184,112"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kakshya_a4c313b183e8b392127d915d22c646ba5.html#a4c313b183e8b392127d915d22c646ba5" title="Convert N&#45;dimensional coordinates to a linear index for interleaved data." alt="" coords="515,133,677,173"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="459,151,501,151,501,156,459,156"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::SoundStreamContainer::set_default_processor" name="MayaFlux::Kakshya::SoundStreamContainer::set_default_processor">
+<area shape="rect" id="Node000001" title="Set the default data processor for this container." alt="" coords="248,45,421,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1AudioOutputContainer_ac1d19ab8b8091ac5fb0cda8549834eb6.html#ac1d19ab8b8091ac5fb0cda8549834eb6" title="Instantiate and attach an AudioOutputAccessProcessor as the default processor." alt="" coords="5,5,200,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="234,58,200,52,201,47,235,53"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a92d6b2c8d3001148066c63f528e9b01d.html#a92d6b2c8d3001148066c63f528e9b01d" title="Create and configure a default processor for this container." alt="" coords="5,84,200,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="235,92,201,98,200,92,234,87"/>
+</map>

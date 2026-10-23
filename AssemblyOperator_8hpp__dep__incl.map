@@ -1,0 +1,35 @@
+<map id="AssemblyOperator.hpp" name="AssemblyOperator.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="279,5,450,31"/>
+<area shape="rect" id="Node000002" href="$AssemblyNetwork_8hpp.html" title=" " alt="" coords="184,79,353,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="340,41,286,81,283,76,337,37"/>
+<area shape="rect" id="Node000015" href="$AssemblyOperator_8cpp.html" title=" " alt="" coords="377,79,547,104"/>
+<area shape="poly" id="edge18_Node000001_Node000015" title=" " alt="" coords="393,37,448,76,445,81,390,41"/>
+<area shape="rect" id="Node000003" href="$AssemblyNetwork_8cpp.html" title=" " alt="" coords="13,152,181,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="230,112,126,154,124,149,228,107"/>
+<area shape="rect" id="Node000004" href="$Convenience_8hpp.html" title="Everyday headers and namespace imports for user code." alt="" coords="5,225,140,251"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="254,117,228,148,194,179,149,208,105,228,102,223,146,203,191,175,224,145,250,114"/>
+<area shape="rect" id="Node000007" href="$CreatorClasses_8hpp.html" title=" " alt="" coords="164,225,312,251"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="266,118,243,226,238,225,261,117"/>
+<area shape="rect" id="Node000009" href="$Mint_8cpp.html" title=" " alt="" coords="293,299,372,324"/>
+<area shape="poly" id="edge8_Node000002_Node000009" title=" " alt="" coords="283,115,306,165,326,225,333,265,335,298,330,298,327,266,321,226,301,167,278,117"/>
+<area shape="rect" id="Node000010" href="$StructureConfig_8hpp.html" title=" " alt="" coords="388,152,539,177"/>
+<area shape="poly" id="edge9_Node000002_Node000010" title=" " alt="" coords="313,106,432,149,431,154,312,111"/>
+<area shape="rect" id="Node000005" href="$MayaFlux_8hpp.html" title="Single include for the user facing API." alt="" coords="269,445,383,471"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="87,262,126,327,155,363,188,395,235,424,284,443,282,448,233,429,184,399,151,367,122,330,82,265"/>
+<area shape="rect" id="Node000006" href="$LiveAid_8hpp.html" title=" " alt="" coords="277,519,375,544"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="329,484,329,519,323,519,323,484"/>
+<area shape="rect" id="Node000008" href="$Creator_8cpp.html" title=" " alt="" coords="198,372,294,397"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="242,265,248,372,243,372,237,265"/>
+<area shape="rect" id="Node000011" href="$Mint_8hpp.html" title=" " alt="" coords="405,225,484,251"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="459,191,450,226,445,225,454,190"/>
+<area shape="poly" id="edge17_Node000011_Node000009" title=" " alt="" coords="416,260,352,301,350,296,413,256"/>
+<area shape="rect" id="Node000012" href="$Creator_8hpp.html" title=" " alt="" coords="396,299,493,324"/>
+<area shape="poly" id="edge11_Node000011_Node000012" title=" " alt="" coords="447,264,447,299,442,299,442,264"/>
+<area shape="poly" id="edge13_Node000012_Node000005" title=" " alt="" coords="420,335,380,374,353,412,334,446,329,444,348,410,376,370,417,331"/>
+<area shape="poly" id="edge12_Node000012_Node000008" title=" " alt="" coords="401,331,279,374,278,369,399,326"/>
+<area shape="rect" id="Node000013" href="$Temporal_8hpp.html" title=" " alt="" coords="389,372,500,397"/>
+<area shape="poly" id="edge14_Node000012_Node000013" title=" " alt="" coords="447,338,447,372,442,372,442,338"/>
+<area shape="poly" id="edge15_Node000013_Node000005" title=" " alt="" coords="415,407,347,447,344,443,412,402"/>
+<area shape="rect" id="Node000014" href="$Temporal_8cpp.html" title=" " alt="" coords="407,445,517,471"/>
+<area shape="poly" id="edge16_Node000013_Node000014" title=" " alt="" coords="453,410,462,445,457,446,448,411"/>
+</map>

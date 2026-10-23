@@ -1,0 +1,10 @@
+<map id="MayaFlux::Nodes::GpuSync::GpuSync" name="MayaFlux::Nodes::GpuSync::GpuSync">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,1202,197,1402"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Node.html" title="Base interface for all computational processing nodes." alt="" coords="120,248,317,1032"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="149,1046,122,1202,116,1201,144,1045"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1HookList.html" title="Stores, fires and clears the hooks of one node channel." alt="" coords="222,1109,415,1495"/>
+<area shape="poly" id="edge3_Node000003_Node000002" title=" " alt="" coords="208,1032,217,1085,220,1096,215,1097,212,1086,202,1033"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="294,1109,287,1056,286,1049,291,1048,292,1056,299,1109"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Nodes_1_1RoutingState.html" title="Represents the state of routing transitions for a node." alt="" coords="126,5,311,185"/>
+<area shape="poly" id="edge4_Node000002_Node000004" title=" " alt="" coords="221,186,221,231,216,231,216,186"/>
+</map>

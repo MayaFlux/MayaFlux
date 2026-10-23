@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kinesis::Lattice1D::cell_size" name="MayaFlux::Kinesis::Lattice1D::cell_size">
+<area shape="rect" id="Node000001" title="Width of one cell." alt="" coords="245,69,395,109"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1Lattice1D_ab2ee513a0700086bd08172a85f7cbaf0.html#ab2ee513a0700086bd08172a85f7cbaf0" title="Cell containing a value, clamped to the lattice." alt="" coords="27,5,176,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="237,68,169,48,171,43,239,63"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kinesis_1_1Lattice1D_ac9c7d85c77625a5b4acd451c5878905b.html#ac9c7d85c77625a5b4acd451c5878905b" title="Position of a cell&#39;s centre." alt="" coords="20,69,183,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="232,92,183,92,183,87,232,87"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kinesis_1_1Lattice1D_a0faca73ab581f5a72b91ec2ba2afd4f5.html#a0faca73ab581f5a72b91ec2ba2afd4f5" title="Position of a lattice corner." alt="" coords="5,133,197,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="239,116,171,136,169,131,237,111"/>
+</map>

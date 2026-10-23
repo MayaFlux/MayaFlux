@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::detail::composite_validate" name="MayaFlux::Nodes::detail::composite_validate">
+<area shape="rect" id="Node000001" title=" " alt="" coords="267,37,447,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1CompositeOpNode_a0bfe16a8cecbae2f07f84a7ed6e5c168.html#a0bfe16a8cecbae2f07f84a7ed6e5c168" title="Creates a composite operation node (unmanaged)" alt="" coords="5,5,219,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="253,46,219,42,219,37,254,41"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1CompositeOpNode_a5c2a8f9629b944138e996e90d5fb5f10.html#a5c2a8f9629b944138e996e90d5fb5f10" title="Creates a composite operation node (managed)" alt="" coords="5,69,219,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="254,73,219,78,219,73,253,68"/>
+</map>

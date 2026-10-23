@@ -1,0 +1,8 @@
+<map id="MayaFlux::Yantra::ConvolutionTransformer::create_output" name="MayaFlux::Yantra::ConvolutionTransformer::create_output">
+<area shape="rect" id="Node000001" title="Creates output with proper type conversion." alt="" coords="615,35,835,75"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1ConvolutionTransformer_a82b55525b3e4df731b5208a17928c7fc.html#a82b55525b3e4df731b5208a17928c7fc" title="Extracts per&#45;channel spans, applies func to each, and reconstructs." alt="" coords="336,5,567,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="601,44,566,40,567,35,601,39"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1ConvolutionTransformer_a9d070c72f78555559c94e86b6274fcab.html#a9d070c72f78555559c94e86b6274fcab" title="Applies the configured convolution operation." alt="" coords="5,35,288,75"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="601,60,567,60,336,60,288,60,288,54,336,55,567,55,601,54"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="322,40,289,44,288,38,322,35"/>
+</map>

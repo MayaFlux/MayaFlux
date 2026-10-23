@@ -1,0 +1,20 @@
+<map id="MayaFlux::Buffers::ShaderProcessor::resolve_push_constant_size" name="MayaFlux::Buffers::ShaderProcessor::resolve_push_constant_size">
+<area shape="rect" id="Node000001" title="Byte width of this processor&#39;s push constant block, extended to cover any fragment staged on the buff..." alt="" coords="768,124,955,179"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ComputeProcessor_aa224de245c77a9af81450eb15cb546fa.html#aa224de245c77a9af81450eb15cb546fa" title=" " alt="" coords="512,5,720,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="803,119,719,74,693,63,695,58,721,69,806,115"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a8dffa1bdec232f8a9c7b39ce9a9f78bb.html#a8dffa1bdec232f8a9c7b39ce9a9f78bb" title=" " alt="" coords="519,84,713,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="754,137,713,130,714,125,755,131"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a24640bb748522703f5bb707ca1acb050.html#a24640bb748522703f5bb707ca1acb050" title=" " alt="" coords="527,163,705,217"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="755,171,706,179,705,173,754,166"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a4fa40e179dfef7192c7dd9630dfc5634.html#a4fa40e179dfef7192c7dd9630dfc5634" title="resolve_push_constants() written into out, reusing its storage." alt="" coords="523,241,709,296"/>
+<area shape="poly" id="edge7_Node000001_Node000007" title=" " alt="" coords="805,188,721,232,695,244,693,239,719,228,802,183"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_aa57fabf9874bdddd3c10c3c6d6fc9e93.html#aa57fabf9874bdddd3c10c3c6d6fc9e93" title=" " alt="" coords="279,100,446,155"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="513,167,446,151,447,145,514,162"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a89618010c366c34c7e4c7968750175ae.html#a89618010c366c34c7e4c7968750175ae" title="The core processing function that must be implemented by derived classes." alt="" coords="5,133,213,188"/>
+<area shape="poly" id="edge6_Node000004_Node000006" title=" " alt="" coords="513,187,214,169,214,164,513,181"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="266,143,214,150,213,144,265,137"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1ComputeProcessor_a73dacb014d3d5c7ad1f060fad72f8681.html#a73dacb014d3d5c7ad1f060fad72f8681" title=" " alt="" coords="261,237,464,292"/>
+<area shape="poly" id="edge8_Node000007_Node000008" title=" " alt="" coords="509,270,464,269,464,264,509,264"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_afc29bda3c0abfd76a1c160ccfcc62d8b.html#afc29bda3c0abfd76a1c160ccfcc62d8b" title="This processor&#39;s push constant data with buffer&#45;staged fragments overlaid at their declared offsets." alt="" coords="269,316,456,371"/>
+<area shape="poly" id="edge9_Node000007_Node000009" title=" " alt="" coords="511,302,457,319,455,313,509,297"/>
+</map>

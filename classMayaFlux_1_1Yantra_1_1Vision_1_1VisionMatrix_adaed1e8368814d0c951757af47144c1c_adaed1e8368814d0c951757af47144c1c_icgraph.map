@@ -1,0 +1,9 @@
+<map id="MayaFlux::Yantra::Vision::VisionMatrix::analysis" name="MayaFlux::Yantra::Vision::VisionMatrix::analysis">
+<area shape="rect" id="Node000001" title="The analysis of the last execute() or extract(), empty before the first." alt="" coords="487,37,669,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1Vision_1_1VisionMatrix_a9396645f14a650024aa7724c52cda201.html#a9396645f14a650024aa7724c52cda201" title="Extract from image with analysis and keep all three until the next call." alt="" coords="256,37,439,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="473,60,439,60,439,55,473,55"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1Vision_1_1VisionMatrix_a25ca13f0e093395e60035bf472b2be3f.html#a25ca13f0e093395e60035bf472b2be3f" title=" " alt="" coords="15,5,198,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="242,46,198,40,199,35,243,41"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1Vision_1_1VisionMatrix_a5d254e3dd07a0a6fd7295839dca4d2b3.html#a5d254e3dd07a0a6fd7295839dca4d2b3" title=" " alt="" coords="5,69,208,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="243,74,209,79,208,73,242,69"/>
+</map>

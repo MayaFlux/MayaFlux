@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Text::x_at" name="MayaFlux::Portal::Text::x_at">
+<area shape="rect" id="Node000001" title="Pen position immediately before byte_offset, in lay_out()&#39;s space." alt="" coords="220,5,387,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Text_ad8d4f282a04b651d4497bd3b62413f8c.html#ad8d4f282a04b651d4497bd3b62413f8c" title="Byte offset of the codepoint boundary nearest a screen&#45;space point." alt="" coords="5,5,172,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="206,28,172,28,172,23,206,23"/>
+</map>

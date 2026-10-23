@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::QueueFamilyIndices::preferred_present_family" name="MayaFlux::Core::QueueFamilyIndices::preferred_present_family">
+<area shape="rect" id="Node000001" title="Family the engine presents on by default." alt="" coords="275,5,516,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VKDevice_a702feebbf49ee57e90670e87a00caef2.html#a702feebbf49ee57e90670e87a00caef2" title="Queue for the preferred presentation family." alt="" coords="5,5,227,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="261,28,227,28,227,23,261,23"/>
+</map>

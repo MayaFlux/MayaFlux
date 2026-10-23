@@ -1,0 +1,7 @@
+<map id="MayaFlux::Portal::Forma::Dropdown::initial" name="MayaFlux::Portal::Forma::Dropdown::initial">
+<area shape="rect" id="Node000001" title=" " alt="" coords="464,5,645,45"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Dropdown_a5d0ad75f94066d129af4cc4be483e6f1.html#a5d0ad75f94066d129af4cc4be483e6f1" title="Register the header and its option rows and wire their input." alt="" coords="235,5,416,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="450,28,416,28,416,23,450,23"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Dropdown_aceca500d4f9d3690a9ed41100d110a60.html#aceca500d4f9d3690a9ed41100d110a60" title="Register using the cursor&#39;s column extents." alt="" coords="5,5,187,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="221,28,187,28,187,23,221,23"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Yantra::VisionGpuExecutor::read_exported_keypoints" name="MayaFlux::Yantra::VisionGpuExecutor::read_exported_keypoints">
+<area shape="rect" id="Node000001" title="Host keypoints decoded from result.buffers.keypoints, or empty." alt="" coords="5,5,212,60"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Yantra_1_1VisionInternal_a9dbd7a7ea61cf3a9670e63906e5201a7.html#a9dbd7a7ea61cf3a9670e63906e5201a7" title="Clamped record count from an exported buffer&#39;s vec4 header, or nullopt when the buffer isn&#39;t readable..." alt="" coords="260,13,489,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="212,30,246,30,246,35,212,35"/>
+</map>

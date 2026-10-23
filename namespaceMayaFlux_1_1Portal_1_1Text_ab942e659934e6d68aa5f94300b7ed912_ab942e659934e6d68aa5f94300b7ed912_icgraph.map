@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Text::initialize" name="MayaFlux::Portal::Text::initialize">
+<area shape="rect" id="Node000001" title="Initialize Portal::Text." alt="" coords="243,5,409,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1GraphicsSubsystem_a1278000eee96b8f7c3cefbe13f7f91a9.html#a1278000eee96b8f7c3cefbe13f7f91a9" title="Initialize with graphics configuration." alt="" coords="5,5,195,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="229,28,195,28,195,23,229,23"/>
+</map>

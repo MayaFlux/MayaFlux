@@ -1,0 +1,5 @@
+<map id="MayaFlux::Yantra::Vision::VisionWorkflow::start" name="MayaFlux::Yantra::Vision::VisionWorkflow::start">
+<area shape="rect" id="Node000001" title="Subscribe consumer and start the producer named name, which stops the run at source&#39;s end,..." alt="" coords="5,5,188,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kriya_a62435bb589511d2066c250f604e24326.html#a62435bb589511d2066c250f604e24326" title="Call callback with every value source signals, registered on events." alt="" coords="236,13,435,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="188,23,223,23,223,28,188,28"/>
+</map>

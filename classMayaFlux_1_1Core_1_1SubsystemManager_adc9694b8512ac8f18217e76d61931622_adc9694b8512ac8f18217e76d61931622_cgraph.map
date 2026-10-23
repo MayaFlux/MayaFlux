@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::SubsystemManager::read_cross_subsystem_buffer" name="MayaFlux::Core::SubsystemManager::read_cross_subsystem_buffer">
+<area shape="rect" id="Node000001" title="Read data from another subsystem&#39;s buffers." alt="" coords="5,13,285,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1SubsystemManager_ab41d65e43f706834c396f41e9dab8d44.html#ab41d65e43f706834c396f41e9dab8d44" title=" " alt="" coords="333,5,537,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="286,30,320,30,320,35,286,35"/>
+</map>

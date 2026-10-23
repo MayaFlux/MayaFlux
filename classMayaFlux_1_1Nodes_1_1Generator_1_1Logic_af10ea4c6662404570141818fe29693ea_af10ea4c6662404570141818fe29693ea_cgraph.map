@@ -1,0 +1,14 @@
+<map id="MayaFlux::Nodes::Generator::Logic::notify_tick" name="MayaFlux::Nodes::Generator::Logic::notify_tick">
+<area shape="rect" id="Node000001" title="Notifies all registered callbacks about a new sample." alt="" coords="5,92,213,132"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1HookList_a9688ae71a354c2f8a8989eea13979b7d.html#a9688ae71a354c2f8a8989eea13979b7d" title="Calls every entry whose condition, if any, holds." alt="" coords="265,5,465,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="169,89,291,47,293,52,170,94"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1HookList_a0e44de57f732ba8bbedc5d493f694d01.html#a0e44de57f732ba8bbedc5d493f694d01" title="The current entries, held stable for the lifetime of the returned object." alt="" coords="531,35,731,75"/>
+<area shape="poly" id="edge4_Node000001_Node000003" title=" " alt="" coords="213,98,517,64,517,70,214,103"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Logic_a5d9eb9e8a257bccb93937782b284884e.html#a5d9eb9e8a257bccb93937782b284884e" title="Retrieves the last created context object." alt="" coords="261,120,469,160"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="214,121,248,125,247,130,213,126"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Logic_a24fe3adaafc789f42b92eb0294f9575e.html#a24fe3adaafc789f42b92eb0294f9575e" title="Updates the context with the latest sample value." alt="" coords="261,184,469,224"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="159,130,262,169,285,177,283,182,260,175,158,135"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="466,34,517,39,517,45,465,39"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Logic_ad95a9cc80e842eb783fc2e9063c9990d.html#ad95a9cc80e842eb783fc2e9063c9990d" title=" " alt="" coords="517,184,744,224"/>
+<area shape="poly" id="edge6_Node000005_Node000006" title=" " alt="" coords="469,201,504,201,504,207,469,207"/>
+</map>

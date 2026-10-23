@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kriya::pattern" name="MayaFlux::Kriya::pattern">
+<area shape="rect" id="Node000001" title="The std::any, uint64_t form of the condition driven pattern." alt="" coords="405,13,588,38"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a9110fefbe5a88c6de0d66ad92eea2769.html#a9110fefbe5a88c6de0d66ad92eea2769" title="Schedules a pattern generator whose steps are spaced by a list of durations." alt="" coords="205,5,357,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="392,28,358,28,358,23,392,23"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_a719dcdd03f65d9d8b7ac3e6802dc648d.html#a719dcdd03f65d9d8b7ac3e6802dc648d" title="Schedules a pattern generator with one interval between steps." alt="" coords="5,5,157,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="191,28,158,28,158,23,191,23"/>
+</map>

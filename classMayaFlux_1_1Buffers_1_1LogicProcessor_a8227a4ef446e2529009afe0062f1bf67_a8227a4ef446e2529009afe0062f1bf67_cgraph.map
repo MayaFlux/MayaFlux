@@ -1,0 +1,18 @@
+<map id="MayaFlux::Buffers::LogicProcessor::generate" name="MayaFlux::Buffers::LogicProcessor::generate">
+<area shape="rect" id="Node000001" title="Generates discrete logic data from input without modifying any buffer." alt="" coords="5,117,191,157"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1LogicProcessor_aaea30faac3513328650b7d939131d061.html#aaea30faac3513328650b7d939131d061" title=" " alt="" coords="239,5,469,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="128,115,178,85,238,55,257,47,259,52,240,60,181,89,131,120"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1LogicProcessor_aab87f77cc39f13cb95f77e26b13bfa65.html#aab87f77cc39f13cb95f77e26b13bfa65" title=" " alt="" coords="261,70,447,125"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="190,120,247,111,248,117,191,126"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1LogicProcessor_afd97792a09624138e21eb5b26f7f538a.html#afd97792a09624138e21eb5b26f7f538a" title=" " alt="" coords="261,149,447,203"/>
+<area shape="poly" id="edge7_Node000001_Node000007" title=" " alt="" coords="191,149,248,157,247,163,190,154"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1LogicProcessor_a5f3a58ae67537a93a69221c769ad567b.html#a5f3a58ae67537a93a69221c769ad567b" title=" " alt="" coords="261,227,447,282"/>
+<area shape="poly" id="edge8_Node000001_Node000008" title=" " alt="" coords="132,155,182,184,240,214,255,220,252,225,238,218,180,189,130,160"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1LogicProcessor_a81dcc4f3319d30470ac4858738db771c.html#a81dcc4f3319d30470ac4858738db771c" title=" " alt="" coords="517,8,708,48"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="470,24,503,24,503,30,469,29"/>
+<area shape="poly" id="edge5_Node000004_Node000003" title=" " alt="" coords="446,70,523,49,525,54,447,75"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a4e4f15aae64fff883d535729d7636106.html#a4e4f15aae64fff883d535729d7636106" title="The value of an offset binary word; bits above the width are ignored." alt="" coords="535,76,690,116"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="447,94,522,94,522,99,447,100"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a97cbd59f31267a5a34cddd98aaf9c09f.html#a97cbd59f31267a5a34cddd98aaf9c09f" title="The offset binary word of a value, clamped to [&#45;1, 1]." alt="" coords="538,140,687,180"/>
+<area shape="poly" id="edge6_Node000004_Node000006" title=" " alt="" coords="447,117,525,136,524,141,446,122"/>
+</map>

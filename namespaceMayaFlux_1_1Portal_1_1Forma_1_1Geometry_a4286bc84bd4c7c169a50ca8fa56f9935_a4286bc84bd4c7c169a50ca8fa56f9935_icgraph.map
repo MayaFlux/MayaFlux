@@ -1,0 +1,7 @@
+<map id="MayaFlux::Portal::Forma::Geometry::follow_move" name="MayaFlux::Portal::Forma::Geometry::follow_move">
+<area shape="rect" id="Node000001" title="Produce a Form::wire that writes the cursor position on hover." alt="" coords="235,37,421,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_aff8c6115503b8e4a30ed11689c447fae.html#aff8c6115503b8e4a30ed11689c447fae" title="Geometry function for a crosshair indicator in NDC space." alt="" coords="5,5,187,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="220,45,187,40,187,35,221,40"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_ada3fd1bf65007f6cb389c9673de971fe.html#ada3fd1bf65007f6cb389c9673de971fe" title="Geometry function for a positioned point in NDC space." alt="" coords="5,69,187,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="221,75,187,79,187,74,220,69"/>
+</map>

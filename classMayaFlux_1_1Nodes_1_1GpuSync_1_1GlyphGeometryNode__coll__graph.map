@@ -1,0 +1,24 @@
+<map id="MayaFlux::Nodes::GpuSync::GlyphGeometryNode" name="MayaFlux::Nodes::GpuSync::GlyphGeometryNode">
+<area shape="rect" id="Node000001" title="GeometryWriterNode that emits glyph vector outlines as LINE_LIST geometry." alt="" coords="511,2075,703,2675"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GeometryWriterNode.html" title="Base class for nodes that generate 3D geometry data." alt="" coords="405,1557,606,2012"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="549,2025,558,2074,552,2075,544,2026"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GpuSync.html" title=" " alt="" coords="5,1202,197,1402"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="159,1412,211,1493,258,1549,308,1602,406,1696,403,1700,304,1606,254,1552,207,1496,154,1415"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Node.html" title="Base interface for all computational processing nodes." alt="" coords="120,248,317,1032"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="149,1046,122,1202,116,1201,144,1045"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1HookList.html" title="Stores, fires and clears the hooks of one node channel." alt="" coords="222,1109,415,1495"/>
+<area shape="poly" id="edge5_Node000005_Node000004" title=" " alt="" coords="208,1032,217,1085,220,1096,215,1097,212,1086,202,1033"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="294,1109,287,1056,286,1049,291,1048,292,1056,299,1109"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Nodes_1_1RoutingState.html" title="Represents the state of routing transitions for a node." alt="" coords="126,5,311,185"/>
+<area shape="poly" id="edge6_Node000004_Node000006" title=" " alt="" coords="221,186,221,231,216,231,216,186"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="440,1269,571,1335"/>
+<area shape="poly" id="edge7_Node000002_Node000007" title=" " alt="" coords="508,1335,508,1541,503,1541,503,1335"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GeometryContext.html" title="Context for GeometryWriterNode &#45; provides vertex buffer access." alt="" coords="599,1252,791,1352"/>
+<area shape="poly" id="edge8_Node000002_Node000008" title=" " alt="" coords="704,1352,705,1394,701,1442,690,1491,667,1535,656,1545,643,1549,631,1552,619,1559,619,1560,615,1556,616,1555,629,1547,642,1544,653,1541,663,1532,685,1489,696,1441,700,1394,698,1352"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nodes_1_1NodeContext.html" title="Base context class for node callbacks." alt="" coords="493,577,713,703"/>
+<area shape="poly" id="edge9_Node000008_Node000009" title=" " alt="" coords="616,716,691,1252,685,1252,610,717"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Nodes_1_1GpuStructuredData.html" title="GPU&#45;uploadable structured data (arrays of POD structs)" alt="" coords="737,537,996,743"/>
+<area shape="poly" id="edge10_Node000008_Node000010" title=" " alt="" coords="839,757,710,1252,705,1251,834,755"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Portal_1_1Text_1_1FontFace.html" title="Owns a single FT_Face loaded from a file path." alt="" coords="630,1635,789,1935"/>
+<area shape="poly" id="edge11_Node000001_Node000011" title=" " alt="" coords="686,1935,664,2059,659,2058,681,1935"/>
+</map>

@@ -1,0 +1,24 @@
+<map id="MayaFlux::Nodes::Generator::Counter" name="MayaFlux::Nodes::Generator::Counter">
+<area shape="rect" id="Node000001" title="Integer step accumulator with modulo wrap and optional trigger reset." alt="" coords="263,1761,463,2256"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Generator.html" title="Base class for all signal and pattern generators in Maya Flux." alt="" coords="263,1327,463,1627"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="366,1640,366,1761,361,1761,361,1640"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Node.html" title="Base interface for all computational processing nodes." alt="" coords="14,423,211,1207"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="221,1150,261,1205,272,1213,284,1216,296,1219,308,1229,335,1275,352,1326,347,1327,330,1277,304,1232,294,1224,282,1221,270,1218,257,1209,216,1153"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1HookList.html" title="Stores, fires and clears the hooks of one node channel." alt="" coords="39,1284,232,1669"/>
+<area shape="poly" id="edge4_Node000004_Node000003" title=" " alt="" coords="50,1206,57,1260,58,1268,53,1269,51,1260,45,1207"/>
+<area shape="poly" id="edge12_Node000001_Node000004" title=" " alt="" coords="177,1669,200,1736,227,1792,257,1847,253,1850,222,1795,196,1738,172,1670"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="126,1284,124,1223,129,1223,131,1284"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Nodes_1_1RoutingState.html" title="Represents the state of routing transitions for a node." alt="" coords="5,180,191,360"/>
+<area shape="poly" id="edge5_Node000003_Node000005" title=" " alt="" coords="103,360,104,406,99,406,98,360"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1GeneratorContext.html" title="Specialized context for generator node callbacks." alt="" coords="473,210,673,330"/>
+<area shape="poly" id="edge6_Node000002_Node000006" title=" " alt="" coords="579,330,583,494,582,604,577,727,567,858,550,994,525,1130,490,1261,462,1314,458,1311,485,1259,519,1129,545,993,562,858,572,726,577,604,578,494,574,330"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1GeneratorContextGpu.html" title=" " alt="" coords="271,775,471,855"/>
+<area shape="poly" id="edge9_Node000008_Node000006" title=" " alt="" coords="537,344,518,385,475,494,438,604,385,775,380,773,432,602,470,492,513,383,532,341"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1NodeContext.html" title="Base context class for node callbacks." alt="" coords="463,5,683,131"/>
+<area shape="poly" id="edge7_Node000006_Node000007" title=" " alt="" coords="575,145,575,210,570,210,570,145"/>
+<area shape="poly" id="edge8_Node000002_Node000008" title=" " alt="" coords="374,855,368,1310,363,1310,368,855"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nodes_1_1GpuVectorData.html" title="GPU&#45;uploadable 1D array data interface." alt="" coords="215,197,448,343"/>
+<area shape="poly" id="edge10_Node000008_Node000009" title=" " alt="" coords="340,356,371,774,366,775,335,356"/>
+<area shape="rect" id="Node000010" title=" " alt="" coords="488,1437,652,1517"/>
+<area shape="poly" id="edge11_Node000001_Node000010" title=" " alt="" coords="552,1531,462,1762,457,1760,547,1529"/>
+</map>

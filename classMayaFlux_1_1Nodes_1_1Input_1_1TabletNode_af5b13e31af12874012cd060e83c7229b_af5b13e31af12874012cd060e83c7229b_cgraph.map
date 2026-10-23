@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Input::TabletNode::on_contact_end" name="MayaFlux::Nodes::Input::TabletNode::on_contact_end">
+<area shape="rect" id="Node000001" title="Callback when the tip leaves the surface." alt="" coords="5,5,219,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Nodes_ac234727efe20bcec6d269ace94b3e312.html#ac234727efe20bcec6d269ace94b3e312" title="Wraps a context&#45;typed hook into a NodeHook." alt="" coords="267,13,485,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="219,23,253,23,253,28,219,28"/>
+</map>

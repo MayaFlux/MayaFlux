@@ -1,0 +1,11 @@
+<map id="MayaFlux::Nexus::follow_attachment" name="MayaFlux::Nexus::follow_attachment">
+<area shape="rect" id="Node000001" title="Set position from the buffer, or fold an outside move into the attachment." alt="" coords="483,37,665,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1Agent_a5d60587da9973d4620c20d41bc559b20.html#a5d60587da9973d4620c20d41bc559b20" title=" " alt="" coords="249,5,430,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="469,46,430,40,430,35,469,40"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nexus_1_1Emitter_a345a964ce8babed2187dc44e9aaaa67c.html#a345a964ce8babed2187dc44e9aaaa67c" title=" " alt="" coords="244,69,435,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="469,74,435,79,435,74,469,69"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nexus_1_1Agent_a7f420f62150e3babe04fda42dd44c50b.html#a7f420f62150e3babe04fda42dd44c50b" title="Make an existing, already rendered buffer the look of this object." alt="" coords="10,5,191,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="235,28,191,28,191,23,235,23"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nexus_1_1Emitter_a70d813d4d303befb1af9ee9d25007057.html#a70d813d4d303befb1af9ee9d25007057" title="Make an existing, already rendered buffer the look of this object." alt="" coords="5,69,196,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="230,92,196,92,196,87,230,87"/>
+</map>

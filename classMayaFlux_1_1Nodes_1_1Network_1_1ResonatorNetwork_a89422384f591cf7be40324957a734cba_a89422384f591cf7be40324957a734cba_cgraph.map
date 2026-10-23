@@ -1,0 +1,10 @@
+<map id="MayaFlux::Nodes::Network::ResonatorNetwork::set_all_frequencies" name="MayaFlux::Nodes::Network::ResonatorNetwork::set_all_frequencies">
+<area shape="rect" id="Node000001" title="Set centre frequency of all resonators uniformly." alt="" coords="5,22,204,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ResonatorNetwork_a66387249a8bc89954017998babd26db9.html#a66387249a8bc89954017998babd26db9" title="Set centre frequency of a single resonator and recompute its coefficients." alt="" coords="252,22,451,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="204,47,238,47,238,52,204,52"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ResonatorNetwork_a47653e6f983490bb1a16698c723e9f93.html#a47653e6f983490bb1a16698c723e9f93" title="Compute RBJ biquad bandpass coefficients and push them into a resonator&#39;s IIR." alt="" coords="499,29,765,69"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="451,47,485,47,485,52,451,52"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a29a24505c28032f9cc824ba51bc03399.html#a29a24505c28032f9cc824ba51bc03399" title="Second&#45;order bandpass coefficients, constant 0 dB peak gain." alt="" coords="813,29,1011,69"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="766,47,800,47,800,52,766,52"/>
+<area shape="poly" id="edge4_Node000004_Node000004" title=" " alt="" coords="860,30,857,20,865,10,884,5,912,3,944,5,962,13,960,18,943,11,912,8,885,10,868,15,862,21,865,28"/>
+</map>

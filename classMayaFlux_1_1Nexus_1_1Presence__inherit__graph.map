@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nexus::Presence" name="MayaFlux::Nexus::Presence">
+<area shape="rect" id="Node000001" title="Agent that affects its surroundings by being there." alt="" coords="5,539,200,944"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1Agent.html" title="Object that both perceives nearby entities and acts on MayaFlux objects." alt="" coords="16,5,189,491"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="105,504,105,538,100,538,100,504"/>
+</map>

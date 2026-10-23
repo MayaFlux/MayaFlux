@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::SpatialIndex::within_radius" name="MayaFlux::Kinesis::SpatialIndex::within_radius">
+<area shape="rect" id="Node000001" title="Find all entities within a radius of a point." alt="" coords="5,5,156,60"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a31247312c35641202ffc7008252f088d.html#a31247312c35641202ffc7008252f088d" title="Round x to the nearest multiple of step." alt="" coords="204,20,384,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="156,30,190,30,190,35,156,35"/>
+</map>

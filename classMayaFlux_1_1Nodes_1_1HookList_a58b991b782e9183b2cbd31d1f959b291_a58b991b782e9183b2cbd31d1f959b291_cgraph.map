@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::HookList::size" name="MayaFlux::Nodes::HookList::size">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,37,205,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1HookList_1_1Snapshot_a5099f8d954dc5f1306fa73abb6520f2b.html#a5099f8d954dc5f1306fa73abb6520f2b" title=" " alt="" coords="253,5,453,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="205,42,239,37,240,43,206,47"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1HookList_a0e44de57f732ba8bbedc5d493f694d01.html#a0e44de57f732ba8bbedc5d493f694d01" title="The current entries, held stable for the lifetime of the returned object." alt="" coords="253,69,453,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="206,68,240,72,239,77,205,73"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::RaymarchProcessor::stage_descriptor" name="MayaFlux::Buffers::RaymarchProcessor::stage_descriptor">
+<area shape="rect" id="Node000001" title="Insert or replace the descriptor entry for the field handle." alt="" coords="283,45,477,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RaymarchProcessor_a71c1920e397310cb9a4b3822aea57463.html#a71c1920e397310cb9a4b3822aea57463" title="Called when this processor is attached to a buffer." alt="" coords="33,5,207,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="269,58,207,49,208,43,270,53"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1RaymarchProcessor_a6505571e01cb463548c487c0c6d95d80.html#a6505571e01cb463548c487c0c6d95d80" title="The core processing function that must be implemented by derived classes." alt="" coords="5,84,235,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="270,92,235,97,234,92,269,86"/>
+</map>

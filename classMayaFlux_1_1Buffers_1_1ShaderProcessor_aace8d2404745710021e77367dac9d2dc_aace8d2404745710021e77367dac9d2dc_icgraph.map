@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::ShaderProcessor::on_before_descriptors_create" name="MayaFlux::Buffers::ShaderProcessor::on_before_descriptors_create">
+<area shape="rect" id="Node000001" title="Called before descriptor sets are created." alt="" coords="261,5,460,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ComputeProcessor_a4112addd2594e7172317b2a7fb28cacf.html#a4112addd2594e7172317b2a7fb28cacf" title=" " alt="" coords="5,5,213,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="247,35,214,35,214,30,247,30"/>
+</map>

@@ -1,0 +1,11 @@
+<map id="MayaFlux::Nodes::Constant::process_sample" name="MayaFlux::Nodes::Constant::process_sample">
+<area shape="rect" id="Node000001" title="Return the constant value, ignoring input." alt="" coords="5,37,207,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Constant_ac45c00a8a67f2bbc456542c15207b045.html#ac45c00a8a67f2bbc456542c15207b045" title="Fire all registered on_tick() and on_tick_if() callbacks." alt="" coords="255,37,456,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="207,55,241,55,241,60,207,60"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1HookList_a9688ae71a354c2f8a8989eea13979b7d.html#a9688ae71a354c2f8a8989eea13979b7d" title="Calls every entry whose condition, if any, holds." alt="" coords="505,5,705,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="456,42,491,37,491,43,457,47"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Constant_a0c3efdc4763b58247d6ff09f244afc77.html#a0c3efdc4763b58247d6ff09f244afc77" title="Update m_context with the latest value." alt="" coords="504,69,705,109"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="457,68,491,72,490,77,456,73"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1HookList_a0e44de57f732ba8bbedc5d493f694d01.html#a0e44de57f732ba8bbedc5d493f694d01" title="The current entries, held stable for the lifetime of the returned object." alt="" coords="753,5,953,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="705,23,740,23,740,28,705,28"/>
+</map>

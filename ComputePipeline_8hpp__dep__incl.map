@@ -1,0 +1,21 @@
+<map id="ComputePipeline.hpp" name="ComputePipeline.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="177,5,339,31"/>
+<area shape="rect" id="Node000002" href="$GranularWorkflow_8hpp.html" title=" " alt="" coords="55,79,221,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="228,40,159,81,156,76,225,35"/>
+<area shape="rect" id="Node000004" href="$WorkflowIncludes_8hpp.html" title="Top level headers for the Yantra compute layer and its workflows." alt="" coords="176,225,340,251"/>
+<area shape="poly" id="edge10_Node000001_Node000004" title=" " alt="" coords="261,45,261,225,255,225,255,45"/>
+<area shape="rect" id="Node000005" href="$VisionMatrix_8hpp.html" title=" " alt="" coords="296,79,428,104"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="288,36,346,76,343,81,285,41"/>
+<area shape="rect" id="Node000003" href="$GranularWorkflow_8cpp.html" title=" " alt="" coords="5,152,169,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="124,117,98,153,93,150,119,114"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="159,113,250,223,246,227,155,117"/>
+<area shape="rect" id="Node000006" href="$VisionMatrix_8cpp.html" title=" " alt="" coords="295,152,426,177"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="364,118,364,152,358,152,359,118"/>
+<area shape="rect" id="Node000007" href="$VisionWorkflow_8hpp.html" title=" " alt="" coords="450,152,599,177"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="402,107,499,149,497,154,400,112"/>
+<area shape="poly" id="edge9_Node000007_Node000004" title=" " alt="" coords="469,183,302,228,300,223,468,178"/>
+<area shape="rect" id="Node000008" href="$Rigs_8cpp.html" title=" " alt="" coords="425,225,502,251"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="508,190,475,227,471,223,504,186"/>
+<area shape="rect" id="Node000009" href="$VisionWorkflow_8cpp.html" title=" " alt="" coords="527,225,675,251"/>
+<area shape="poly" id="edge8_Node000007_Node000009" title=" " alt="" coords="549,185,590,223,586,227,545,189"/>
+</map>

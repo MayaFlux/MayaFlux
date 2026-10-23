@@ -1,0 +1,27 @@
+<map id="MayaFlux::Buffers::VolumeFieldProcessor" name="MayaFlux::Buffers::VolumeFieldProcessor">
+<area shape="rect" id="Node000001" title="ComputeProcessor operating on named fields of a VolumeGridBuffer." alt="" coords="675,2045,864,2525"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1AdvectProcessor.html" title="VolumeFieldProcessor carrying one field along a velocity field by semi&#45;Lagrangian backtrace." alt="" coords="5,2683,160,2983"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="662,2314,548,2349,484,2373,417,2403,351,2437,287,2477,227,2523,174,2575,155,2600,139,2626,114,2684,110,2682,134,2624,151,2597,170,2572,224,2519,284,2473,348,2433,415,2398,482,2368,546,2344,660,2309"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1BuoyancyProcessor.html" title="VolumeFieldProcessor accumulating a Boussinesq body force into a velocity field from a temperature fi..." alt="" coords="185,2583,367,3083"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="664,2345,594,2388,519,2442,445,2504,381,2575,370,2590,365,2587,377,2572,441,2500,515,2437,591,2384,661,2340"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1DiffuseProcessor.html" title="VolumeFieldProcessor spreading a field into its neighbourhood by implicit Jacobi iteration." alt="" coords="391,2653,558,3013"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="669,2422,619,2496,573,2575,537,2654,532,2652,568,2572,614,2493,664,2419"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1DivergenceProcessor.html" title="VolumeFieldProcessor computing the divergence of a vector field into a scalar field by central differ..." alt="" coords="583,2743,759,2923"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="726,2539,689,2744,684,2743,721,2538"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Buffers_1_1InfluxProcessor.html" title="VolumeFieldProcessor adding a shaped contribution into a field every cycle." alt="" coords="783,2573,953,3093"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="818,2538,824,2572,819,2573,812,2539"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Buffers_1_1PressureProcessor.html" title="VolumeFieldProcessor solving the pressure Poisson equation by Jacobi iteration." alt="" coords="977,2713,1151,2953"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="874,2421,923,2495,968,2572,1000,2642,1028,2712,1023,2714,995,2644,963,2575,918,2497,870,2424"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Buffers_1_1SolenoidalProcessor.html" title="VolumeFieldProcessor subtracting a pressure gradient from a velocity field, leaving it divergence&#45;fre..." alt="" coords="1175,2743,1345,2923"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="878,2339,949,2382,1025,2436,1100,2500,1165,2572,1191,2612,1213,2656,1243,2742,1238,2744,1208,2658,1186,2615,1161,2575,1096,2504,1022,2440,946,2387,875,2344"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Buffers_1_1WallProcessor.html" title="VolumeFieldProcessor zeroing the wall&#45;normal component of a vector field on the six lattice faces." alt="" coords="1369,2763,1522,2903"/>
+<area shape="poly" id="edge12_Node000001_Node000013" title=" " alt="" coords="878,2310,991,2345,1054,2370,1120,2399,1185,2434,1248,2474,1307,2520,1359,2572,1390,2616,1413,2666,1429,2716,1439,2763,1434,2764,1424,2718,1408,2668,1386,2619,1355,2575,1303,2524,1245,2478,1182,2438,1117,2404,1052,2375,989,2350,877,2315"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ComputeProcessor.html" title="Specialized ShaderProcessor for Compute Pipelines." alt="" coords="671,1503,868,1997"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="772,2011,772,2045,767,2045,767,2011"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor.html" title="Abstract base class for shader&#45;based buffer processing." alt="" coords="670,516,869,1455"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="772,1469,772,1502,767,1502,767,1469"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1VKBufferProcessor.html" title=" " alt="" coords="673,313,866,468"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="772,482,772,516,767,516,767,482"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1BufferProcessor.html" title="Central computational transformation interface for continuous buffer processing." alt="" coords="679,5,859,265"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="772,279,772,313,767,313,767,279"/>
+</map>

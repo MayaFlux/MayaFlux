@@ -1,0 +1,13 @@
+<map id="MayaFlux::IO::AudioEncodeContext::encode_frames" name="MayaFlux::IO::AudioEncodeContext::encode_frames">
+<area shape="rect" id="Node000001" title="Encode a block of interleaved double&#45;precision PCM frames." alt="" coords="5,37,205,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1AudioEncodeContext_a00ed86204993c3fa5d7829dd740a6c76.html#a00ed86204993c3fa5d7829dd740a6c76" title="True if codec, resampler, and FIFO are all ready." alt="" coords="253,5,453,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="205,42,239,37,240,43,206,47"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1AudioEncodeContext_a539b4a1116c9c80e75b7d661de5a32f9.html#a539b4a1116c9c80e75b7d661de5a32f9" title="Pull one frame from the FIFO and send it to the encoder." alt="" coords="253,69,453,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="206,68,240,72,239,77,205,73"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1AudioEncodeContext_a24098aea7a6494cdd0776dcdc9443dd8.html#a24098aea7a6494cdd0776dcdc9443dd8" title="Drain all packets currently available from the encoder into mux." alt="" coords="501,69,701,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="453,87,488,87,488,92,453,92"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1IO_1_1FFmpegMuxContext_a7313991de8a5200ecafad7b4e69f1ed0.html#a7313991de8a5200ecafad7b4e69f1ed0" title=" " alt="" coords="749,37,997,77"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="701,75,735,71,736,76,702,80"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1IO_1_1FFmpegMuxContext_ac5b4514b670ada5e611f4c5732c65433.html#ac5b4514b670ada5e611f4c5732c65433" title="Submit one encoded packet for interleaved writing." alt="" coords="749,101,997,141"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="702,98,736,102,735,108,701,104"/>
+</map>

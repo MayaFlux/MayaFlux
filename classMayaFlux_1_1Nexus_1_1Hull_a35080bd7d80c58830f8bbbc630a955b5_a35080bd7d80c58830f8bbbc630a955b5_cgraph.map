@@ -1,0 +1,6 @@
+<map id="MayaFlux::Nexus::Hull::contains" name="MayaFlux::Nexus::Hull::contains">
+<area shape="rect" id="Node000001" title="Test whether a world position lies within the buffer&#39;s bounds as drawn." alt="" coords="5,29,175,69"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Nexus_a0340f519d219f0d318698cd650dfcf75.html#a0340f519d219f0d318698cd650dfcf75" title="Where a buffer is drawn: the geometry transform of its primary render processor." alt="" coords="223,29,395,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="175,47,209,47,209,52,175,52"/>
+<area shape="poly" id="edge2_Node000002_Node000002" title=" " alt="" coords="268,30,265,20,272,10,286,5,309,3,334,6,348,13,346,18,333,11,309,8,288,10,275,15,270,21,273,28"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::TextureCollection::is_full" name="MayaFlux::Kakshya::TextureCollection::is_full">
+<area shape="rect" id="Node000001" title="True when a linear collection cannot take another layer." alt="" coords="5,41,188,81"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_af03e05d0eb86e4cb54e60976155cf366.html#af03e05d0eb86e4cb54e60976155cf366" title="Total byte count of the pixel buffer." alt="" coords="236,5,439,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="188,45,222,40,223,45,189,50"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_ac43de621e728a4718bcbe66d2193164c.html#ac43de621e728a4718bcbe66d2193164c" title=" " alt="" coords="256,70,419,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="189,72,243,81,242,86,188,78"/>
+</map>

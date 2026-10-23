@@ -1,0 +1,12 @@
+<map id="MayaFlux::Kinesis::Vision::filter_separable" name="MayaFlux::Kinesis::Vision::filter_separable">
+<area shape="rect" id="Node000001" title="Apply a separable 2D filter via two 1D passes." alt="" coords="519,37,689,77"/>
+<area shape="poly" id="edge1_Node000001_Node000001" title=" " alt="" coords="643,26,629,19,604,16,582,18,569,23,564,29,566,36,561,38,559,28,565,18,581,13,604,11,631,14,645,21"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a900c648b4eb1fd05ccf2462c4ed5be30.html#a900c648b4eb1fd05ccf2462c4ed5be30" title="Gaussian blur writing into caller&#45;supplied buffers." alt="" coords="293,5,453,45"/>
+<area shape="poly" id="edge2_Node000001_Node000002" title=" " alt="" coords="504,46,453,39,454,34,505,41"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kinesis_1_1Vision_1_1VisionExecutor_a6ea94c5c8d90c5890b7715a0e4ff2df5.html#a6ea94c5c8d90c5890b7715a0e4ff2df5" title="Execute a VisionSequence on one frame." alt="" coords="276,69,471,109"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="506,74,471,78,471,73,505,68"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1VisionProcessor_ab9b6b50546df64540aee0f0bbbb7939a.html#ab9b6b50546df64540aee0f0bbbb7939a" title="Execute the VisionSequence on processed_data[0]." alt="" coords="25,33,208,73"/>
+<area shape="poly" id="edge4_Node000003_Node000004" title=" " alt="" coords="262,76,208,69,209,63,263,71"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1ImageCVProcessor_a03dd11926b797b52ccbdfa37c2b5e4e1.html#a03dd11926b797b52ccbdfa37c2b5e4e1" title="Download the current GPU image, run the VisionSequence, store the result." alt="" coords="5,98,228,153"/>
+<area shape="poly" id="edge5_Node000003_Node000005" title=" " alt="" coords="263,107,229,112,228,107,262,102"/>
+</map>

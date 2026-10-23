@@ -1,0 +1,28 @@
+<map id="Geometry.hpp" name="Geometry.hpp">
+<area shape="rect" id="Node000001" title="Illustrative geometry functions for common Mapped use cases." alt="" coords="229,5,343,31"/>
+<area shape="rect" id="Node000002" href="$ColorPicker_8cpp.html" title=" " alt="" coords="5,79,127,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="238,37,102,81,101,76,237,32"/>
+<area shape="rect" id="Node000003" href="$FormFactory_8hpp.html" title=" " alt="" coords="151,79,279,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="267,43,229,80,225,77,263,39"/>
+<area shape="rect" id="Node000008" href="$PlotSpec_8cpp.html" title=" " alt="" coords="304,79,409,104"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="309,39,347,77,343,80,305,43"/>
+<area shape="rect" id="Node000009" href="$Tend_8hpp.html" title=" " alt="" coords="433,79,513,104"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="329,33,443,76,441,81,328,38"/>
+<area shape="rect" id="Node000004" href="$Convenience_8hpp.html" title="Everyday headers and namespace imports for user code." alt="" coords="152,225,287,251"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="207,117,200,146,199,177,207,203,216,224,211,226,202,204,194,178,194,145,202,116"/>
+<area shape="rect" id="Node000007" href="$FormFactory_8cpp.html" title=" " alt="" coords="209,152,336,177"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="235,113,265,150,261,154,231,116"/>
+<area shape="rect" id="Node000005" href="$MayaFlux_8hpp.html" title="Single include for the user facing API." alt="" coords="162,299,277,324"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="222,264,222,299,217,299,217,264"/>
+<area shape="rect" id="Node000006" href="$LiveAid_8hpp.html" title=" " alt="" coords="170,372,269,397"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="222,338,222,372,217,372,217,338"/>
+<area shape="rect" id="Node000010" href="$Forma_8hpp.html" title="Factory free functions for the Forma surface system." alt="" coords="361,152,451,177"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="454,116,419,154,415,150,450,113"/>
+<area shape="rect" id="Node000013" href="$Tend_8cpp.html" title=" " alt="" coords="476,152,555,177"/>
+<area shape="poly" id="edge13_Node000009_Node000013" title=" " alt="" coords="489,114,511,151,506,153,484,117"/>
+<area shape="poly" id="edge10_Node000010_Node000004" title=" " alt="" coords="364,185,251,228,249,223,363,180"/>
+<area shape="rect" id="Node000011" href="$Engine_8cpp.html" title=" " alt="" coords="335,225,429,251"/>
+<area shape="poly" id="edge11_Node000010_Node000011" title=" " alt="" coords="400,191,388,226,383,224,395,189"/>
+<area shape="rect" id="Node000012" href="$Forma_8cpp.html" title=" " alt="" coords="453,225,543,251"/>
+<area shape="poly" id="edge12_Node000010_Node000012" title=" " alt="" coords="433,183,485,223,481,227,430,188"/>
+</map>

@@ -1,0 +1,32 @@
+<map id="MayaFlux::Portal::Forma::internal::Atelier::create_buffer" name="MayaFlux::Portal::Forma::internal::Atelier::create_buffer">
+<area shape="rect" id="Node000001" title="Capacity&#45;explicit FormaBuffer construction." alt="" coords="907,273,1088,327"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1internal_aa60eb9daf6dbe927680a0114828deaf9.html#aa60eb9daf6dbe927680a0114828deaf9" title="Register a clickable text row on surface." alt="" coords="677,101,859,141"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="964,264,916,212,857,162,824,144,826,139,860,158,920,208,968,260"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Forma_abe13f9ac6498e0bb42d1594f9648b33c.html#abe13f9ac6498e0bb42d1594f9648b33c" title="Open a window of clickable rows, one per label, and report the choice." alt="" coords="448,51,629,91"/>
+<area shape="poly" id="edge12_Node000001_Node000003" title=" " alt="" coords="980,260,962,218,936,171,901,127,880,108,857,92,802,69,743,57,684,55,630,58,629,53,684,49,744,52,804,64,860,87,884,103,905,123,940,168,967,216,985,258"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Dropdown_a5d0ad75f94066d129af4cc4be483e6f1.html#a5d0ad75f94066d129af4cc4be483e6f1" title="Register the header and its option rows and wire their input." alt="" coords="448,152,629,192"/>
+<area shape="poly" id="edge13_Node000001_Node000007" title=" " alt="" coords="954,266,910,233,858,206,800,190,741,179,629,172,630,166,741,174,802,184,860,202,913,229,958,262"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Portal_1_1Forma_aef5f942277f0299e61d080bd886aa1c5.html#aef5f942277f0299e61d080bd886aa1c5" title=" " alt="" coords="677,216,859,256"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="893,274,840,259,841,254,894,268"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a890de0c6a43b943d7028238f7c5354b2.html#a890de0c6a43b943d7028238f7c5354b2" title="Construct, register, and immediately submit a FormaBuffer from vertices." alt="" coords="677,280,859,320"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="893,303,859,303,859,297,893,297"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a57e0ff0ed9869d6dc9df7630cb83c983.html#a57e0ff0ed9869d6dc9df7630cb83c983" title="Construct and register a FormaBuffer without creating a Mapped&lt;T&gt;." alt="" coords="677,344,859,384"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="894,332,841,346,840,341,893,326"/>
+<area shape="rect" id="Node000012" href="$namespaceMayaFlux_1_1Portal_1_1Forma_ab7c80734b3a1d72b2c6bd738f2c4e708.html#ab7c80734b3a1d72b2c6bd738f2c4e708" title="Construct and register a FormaBuffer with additional texture bindings." alt="" coords="677,408,859,448"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="953,338,909,369,860,398,833,410,831,405,857,394,906,365,950,334"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Portal_1_1Forma_1_1internal_1_1Atelier_a88e3c1e6a8d3d5b535378537eb934326.html#a88e3c1e6a8d3d5b535378537eb934326" title="Create and place every adornment declared on spec." alt="" coords="677,473,859,527"/>
+<area shape="poly" id="edge14_Node000001_Node000013" title=" " alt="" coords="972,341,924,402,894,434,860,462,840,475,837,470,857,458,890,430,920,398,968,337"/>
+<area shape="rect" id="Node000014" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a0134941e72f794b2ad2318f03eacb98b.html#a0134941e72f794b2ad2318f03eacb98b" title="Create a live plot in a new window." alt="" coords="448,512,629,552"/>
+<area shape="poly" id="edge16_Node000001_Node000014" title=" " alt="" coords="989,341,973,390,947,447,910,500,887,523,860,542,829,557,796,566,728,572,661,567,604,555,605,550,662,561,728,567,795,561,827,552,857,538,883,519,906,497,942,444,968,389,984,340"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="663,101,629,93,630,88,664,96"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="664,147,630,155,629,149,663,142"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_ab175da21b088a5c2e496b8d1c0670b2f.html#ab175da21b088a5c2e496b8d1c0670b2f" title="Let the user pick a camera, and optionally a capture mode, then open it via IOManager::open_camera()." alt="" coords="204,13,400,38"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="434,53,368,41,369,35,435,48"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Portal_1_1Forma_aa6e1287fb7394d3c8a69bc7f662ad251.html#aa6e1287fb7394d3c8a69bc7f662ad251" title="Typed form of pick: list items by label and receive the chosen item." alt="" coords="211,63,393,103"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="434,79,393,81,393,75,434,73"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Creator_a4d6c81dee8675dd5bf9b992245f3a548.html#a4d6c81dee8675dd5bf9b992245f3a548" title="Let the user pick a camera and capture mode, then read it as above." alt="" coords="5,5,156,45"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="190,28,157,28,157,23,190,23"/>
+<area shape="rect" id="Node000008" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Dropdown_aceca500d4f9d3690a9ed41100d110a60.html#aceca500d4f9d3690a9ed41100d110a60" title="Register using the cursor&#39;s column extents." alt="" coords="211,152,393,192"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="434,175,393,175,393,169,434,169"/>
+<area shape="poly" id="edge15_Node000013_Node000014" title=" " alt="" coords="664,517,630,522,629,517,663,512"/>
+</map>

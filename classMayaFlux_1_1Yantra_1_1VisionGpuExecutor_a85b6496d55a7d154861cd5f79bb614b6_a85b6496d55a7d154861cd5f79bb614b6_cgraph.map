@@ -1,0 +1,15 @@
+<map id="MayaFlux::Yantra::VisionGpuExecutor::op_connected_components" name="MayaFlux::Yantra::VisionGpuExecutor::op_connected_components">
+<area shape="rect" id="Node000001" title="Label components in the current image on the GPU." alt="" coords="5,126,208,181"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1VisionPass_a86d3d2823f19e00ae51b81f20badfb5e.html#a86d3d2823f19e00ae51b81f20badfb5e" title="Op at offset steps ahead, or nullptr past the end." alt="" coords="275,5,462,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="142,123,194,88,255,55,273,47,275,52,257,60,197,93,145,128"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a715d57394465ff2924727d7c82d87e7b.html#a715d57394465ff2924727d7c82d87e7b" title="Get the global shader compiler instance." alt="" coords="270,69,467,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="208,126,273,110,274,115,209,131"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_afe6182e230ece71620775c0aa54c6330.html#afe6182e230ece71620775c0aa54c6330" title="Set push constant data from a raw byte pointer." alt="" coords="256,133,481,173"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="208,151,242,151,242,156,208,156"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_a673e632185101bfd147e36a68f0717d1.html#a673e632185101bfd147e36a68f0717d1" title=" " alt="" coords="256,197,481,237"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="209,175,274,192,273,197,208,181"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Yantra_1_1GpuDispatchCore_a130e1e50144364c5da4b47cb8cd4e20d.html#a130e1e50144364c5da4b47cb8cd4e20d" title="Register a VKImage at an explicit binding index." alt="" coords="256,261,481,301"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="145,179,197,214,257,247,275,254,273,259,255,252,194,218,142,183"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="529,69,727,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="467,87,516,87,516,92,467,92"/>
+</map>

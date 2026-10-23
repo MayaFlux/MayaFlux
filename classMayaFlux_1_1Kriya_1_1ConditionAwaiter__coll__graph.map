@@ -1,0 +1,3 @@
+<map id="MayaFlux::Kriya::ConditionAwaiter" name="MayaFlux::Kriya::ConditionAwaiter">
+<area shape="rect" id="Node000001" title="Suspends a FreeRoutine until a caller&#45;supplied predicate returns true." alt="" coords="5,5,196,145"/>
+</map>

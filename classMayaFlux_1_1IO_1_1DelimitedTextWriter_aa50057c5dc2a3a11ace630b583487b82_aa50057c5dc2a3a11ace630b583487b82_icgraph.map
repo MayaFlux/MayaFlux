@@ -1,0 +1,14 @@
+<map id="MayaFlux::IO::DelimitedTextWriter::is_open" name="MayaFlux::IO::DelimitedTextWriter::is_open">
+<area shape="rect" id="Node000001" title="Whether an output file is open." alt="" coords="520,95,727,135"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1DelimitedTextWriter_aa22ab0bfa911313eb2404a75662201f6.html#aa22ab0bfa911313eb2404a75662201f6" title="Finalize and close the current file." alt="" coords="265,63,472,103"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="506,103,472,98,473,93,507,97"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1DelimitedTextWriter_ae5b38ad4299bda6b4859c7da1242f06e.html#ae5b38ad4299bda6b4859c7da1242f06e" title="Create or truncate a CSV or TSV file." alt="" coords="8,5,215,45"/>
+<area shape="poly" id="edge5_Node000001_Node000003" title=" " alt="" coords="571,91,524,70,471,53,406,41,338,32,215,26,215,21,339,27,407,35,473,48,525,65,573,86"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1IO_1_1DelimitedTextWriter_a8a3179ed358ea47fc4e78ac15abef67a.html#a8a3179ed358ea47fc4e78ac15abef67a" title="Flush the current file without closing it." alt="" coords="265,127,472,167"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="507,132,473,136,472,131,506,127"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1IO_1_1DelimitedTextWriter_a828aa791115c552bb7534d73d680ac61.html#a828aa791115c552bb7534d73d680ac61" title="Encode a bounded slice using the open file&#39;s layout." alt="" coords="265,191,472,231"/>
+<area shape="poly" id="edge6_Node000001_Node000006" title=" " alt="" coords="567,143,473,181,438,193,436,188,471,176,564,138"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="264,62,201,48,202,43,265,57"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1DelimitedTextWriter_adaa61aa18599a94f982805681af6400a.html#adaa61aa18599a94f982805681af6400a" title=" " alt="" coords="5,69,217,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="252,88,218,89,218,84,251,83"/>
+</map>

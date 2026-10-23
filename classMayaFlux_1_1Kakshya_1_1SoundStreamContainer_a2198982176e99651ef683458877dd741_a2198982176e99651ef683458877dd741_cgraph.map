@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::SoundStreamContainer::get_total_elements" name="MayaFlux::Kakshya::SoundStreamContainer::get_total_elements">
+<area shape="rect" id="Node000001" title="Get the total number of elements in the container." alt="" coords="5,5,177,60"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure_ab431dba6cb69464326e81fe5e4bf83b0.html#ab431dba6cb69464326e81fe5e4bf83b0" title="Get total elements across all dimensions." alt="" coords="225,5,400,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="178,30,212,30,212,35,178,35"/>
+</map>

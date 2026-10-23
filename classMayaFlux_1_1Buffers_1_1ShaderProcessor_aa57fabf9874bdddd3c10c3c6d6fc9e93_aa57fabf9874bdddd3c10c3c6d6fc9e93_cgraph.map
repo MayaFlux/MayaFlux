@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::ShaderProcessor::note_created_layout" name="MayaFlux::Buffers::ShaderProcessor::note_created_layout">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,45,172,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a24640bb748522703f5bb707ca1acb050.html#a24640bb748522703f5bb707ca1acb050" title=" " alt="" coords="220,5,399,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="172,55,206,49,207,54,173,60"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a2207952d9994b7faaf72c726c66156b5.html#a2207952d9994b7faaf72c726c66156b5" title="Whether the owner builds its pipeline layout from this processor&#39;s bindings, staged descriptors and p..." alt="" coords="220,84,399,139"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="173,85,207,91,206,96,172,90"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a497f347216f8aef622a7974cc4760eb9.html#a497f347216f8aef622a7974cc4760eb9" title="Byte width of this processor&#39;s push constant block, extended to cover any fragment staged on the buff..." alt="" coords="447,5,633,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="399,30,433,30,433,35,399,35"/>
+</map>

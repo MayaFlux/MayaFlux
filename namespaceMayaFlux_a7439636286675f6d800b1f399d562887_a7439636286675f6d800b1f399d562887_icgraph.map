@@ -1,0 +1,11 @@
+<map id="MayaFlux::register_node_network" name="MayaFlux::register_node_network">
+<area shape="rect" id="Node000001" title="Registers a node network with the default engine&#39;s node graph manager." alt="" coords="429,69,573,109"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Evolve_1_1Impl_a81fd42e531b26f272f82ee738beadc46.html#a81fd42e531b26f272f82ee738beadc46" title=" " alt="" coords="207,5,381,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="422,68,359,48,360,43,424,63"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_a6d8da20235060cfaa489fbdf81d1d579.html#a6d8da20235060cfaa489fbdf81d1d579" title="Creates a new node network." alt="" coords="207,69,381,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="415,92,381,92,381,87,415,87"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_af024baacfc552f91ec9932942460bcb4.html#af024baacfc552f91ec9932942460bcb4" title=" " alt="" coords="222,133,366,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="424,116,360,136,359,131,422,111"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_a67f8f7fbd0a11f5dd16c68fa3c4c0744.html#a67f8f7fbd0a11f5dd16c68fa3c4c0744" title=" " alt="" coords="5,141,159,166"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="208,156,159,156,159,151,208,151"/>
+</map>

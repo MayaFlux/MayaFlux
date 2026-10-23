@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::Discrete::bernoulli_gate" name="MayaFlux::Kinesis::Discrete::bernoulli_gate">
+<area shape="rect" id="Node000001" title="Probabilistic gate: each pulse passes with the given probability." alt="" coords="5,5,183,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a3de6c98cfa921e1c497301ac329c283e.html#a3de6c98cfa921e1c497301ac329c283e" title="One step of the 32&#45;bit xorshift generator." alt="" coords="231,5,380,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="183,23,217,23,217,28,183,28"/>
+</map>

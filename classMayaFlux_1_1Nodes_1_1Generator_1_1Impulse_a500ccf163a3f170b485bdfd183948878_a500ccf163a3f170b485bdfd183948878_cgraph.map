@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Generator::Impulse::Impulse" name="MayaFlux::Nodes::Generator::Impulse::Impulse">
+<area shape="rect" id="Node000001" title="Basic constructor with fixed parameters." alt="" coords="5,13,213,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Impulse_ab4a54debde1a536e6f7e3d80ed394ed0.html#ab4a54debde1a536e6f7e3d80ed394ed0" title="Updates the phase increment based on a new frequency." alt="" coords="261,5,469,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="213,30,248,30,248,35,213,35"/>
+</map>

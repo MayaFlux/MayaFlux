@@ -1,0 +1,30 @@
+<map id="MayaFlux::Kriya::EventChain::start" name="MayaFlux::Kriya::EventChain::start">
+<area shape="rect" id="Node000001" title="Starts executing the event chain." alt="" coords="5,363,216,403"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a01f29b8e9975b80306f4bc0b534a09d8.html#a01f29b8e9975b80306f4bc0b534a09d8" title="Add a routine to the scheduler based on its processing token." alt="" coords="264,163,495,203"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="137,360,339,209,342,213,141,365"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a8c97edc92dee77f6fc9b6030a14637e7.html#a8c97edc92dee77f6fc9b6030a14637e7" title="Generates a unique task ID for new tasks." alt="" coords="821,219,1052,259"/>
+<area shape="poly" id="edge11_Node000001_Node000004" title=" " alt="" coords="199,360,264,348,341,338,407,333,520,329,632,322,697,313,773,297,827,281,878,262,880,267,829,286,774,303,698,318,632,328,520,334,407,338,342,343,264,353,200,365"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Kriya_1_1EventChain_abdfc03558146e0d95019b88e287e81cf.html#abdfc03558146e0d95019b88e287e81cf" title="Gets the repeat count for the entire chain." alt="" coords="274,363,485,403"/>
+<area shape="poly" id="edge12_Node000001_Node000012" title=" " alt="" coords="216,380,261,380,261,385,216,385"/>
+<area shape="rect" id="Node000013" href="$namespaceMayaFlux_1_1Vruta_aa9ec6c0df02f7be3eff1aa2d2a0020d4.html#aa9ec6c0df02f7be3eff1aa2d2a0020d4" title="Convert seconds to frames at a given frame rate." alt="" coords="284,427,475,467"/>
+<area shape="poly" id="edge13_Node000001_Node000013" title=" " alt="" coords="196,400,282,421,281,426,195,405"/>
+<area shape="rect" id="Node000014" href="$namespaceMayaFlux_1_1Vruta_a09f1b4929d6c87d96e68969b5c102ce9.html#a09f1b4929d6c87d96e68969b5c102ce9" title="Convert seconds to samples at a given sample rate." alt="" coords="284,491,475,531"/>
+<area shape="poly" id="edge14_Node000001_Node000014" title=" " alt="" coords="140,401,196,439,265,476,283,484,281,489,263,481,193,443,137,405"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a56a711df9c3a3f4e569e036ea6980559.html#a56a711df9c3a3f4e569e036ea6980559" title="Generate automatic name for a routine based on its type." alt="" coords="543,133,773,173"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="495,168,529,164,529,170,495,173"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a81c68c47d8ac2ce8f736f8d35f4fe20c.html#a81c68c47d8ac2ce8f736f8d35f4fe20c" title="Initialize a processing domain if it doesn&#39;t exist." alt="" coords="543,69,773,109"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="429,160,542,119,568,111,569,116,544,124,431,165"/>
+<area shape="rect" id="Node000007" href="$main_8cpp_a25a40b6614565f755233080a384c35f1.html#a25a40b6614565f755233080a384c35f1" title=" " alt="" coords="619,198,697,223"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="495,192,605,203,604,208,495,197"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a09eae60c02e878e614b69c8ead276f14.html#a09eae60c02e878e614b69c8ead276f14" title="Initialize a routine&#39;s state for a specific domain." alt="" coords="543,248,773,288"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="440,200,543,233,571,242,570,247,542,239,439,205"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a4346f248dffefc61f410100f2812553a.html#a4346f248dffefc61f410100f2812553a" title="Start the conditional task processing thread if not already running." alt="" coords="543,5,773,45"/>
+<area shape="poly" id="edge8_Node000002_Node000009" title=" " alt="" coords="400,160,460,108,500,80,541,55,557,48,560,53,544,60,502,84,464,112,403,164"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="730,171,774,184,862,212,861,217,773,189,729,176"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a219ff6ebd74ddb638ccf403556a0168c.html#a219ff6ebd74ddb638ccf403556a0168c" title="Get the default rate for a processing token." alt="" coords="821,69,1052,109"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="774,87,808,87,808,92,774,92"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a5a9f9fef1e94f2fe4bbd01b9773dbf87.html#a5a9f9fef1e94f2fe4bbd01b9773dbf87" title="Pump the conditional task list in a separate thread." alt="" coords="821,5,1052,45"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="774,23,808,23,808,28,774,28"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_af8c8a82e6c4d76ffd846dc4bef4d8301.html#af8c8a82e6c4d76ffd846dc4bef4d8301" title="Drain pending conditional task operations before processing." alt="" coords="1100,5,1331,45"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="1052,23,1086,23,1086,28,1052,28"/>
+</map>

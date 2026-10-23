@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Generator::Logic::on_tick_if" name="MayaFlux::Nodes::Generator::Logic::on_tick_if">
+<area shape="rect" id="Node000001" title="Registers a conditional callback for generated samples." alt="" coords="5,5,213,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Logic_aeab682f27b4dd63fc326f85ba60c5e9b.html#aeab682f27b4dd63fc326f85ba60c5e9b" title="Adds a callback to the list of all callbacks." alt="" coords="261,5,469,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="213,23,248,23,248,28,213,28"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Nodes_ac234727efe20bcec6d269ace94b3e312.html#ac234727efe20bcec6d269ace94b3e312" title="Wraps a context&#45;typed hook into a NodeHook." alt="" coords="517,13,736,38"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="470,23,504,23,504,28,470,28"/>
+</map>

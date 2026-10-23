@@ -1,0 +1,13 @@
+<map id="MayaFlux::Kakshya::FrameSeekProcessor::process" name="MayaFlux::Kakshya::FrameSeekProcessor::process">
+<area shape="rect" id="Node000001" title="Extract the current frame(s) into the container&#39;s processed_data." alt="" coords="5,70,172,125"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_a9c3e6669a793f6c2bdb91af7669a7e98.html#a9c3e6669a793f6c2bdb91af7669a7e98" title="Linearly blend two frames of the same size and format." alt="" coords="226,5,385,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="171,67,230,47,232,52,172,72"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1FrameSeekProcessor_a6279acb1221e52850e0450cc4466f678.html#a6279acb1221e52850e0450cc4466f678" title=" " alt="" coords="222,70,389,125"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="172,95,208,95,208,100,172,100"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1FrameAccessProcessor_a0656785d7195904d0b1b24d6b2fa33bb.html#a0656785d7195904d0b1b24d6b2fa33bb" title="Extract the current frame(s) into the container&#39;s processed_data." alt="" coords="220,149,391,203"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="166,122,218,141,216,146,164,127"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kakshya_a7c5d5d6f0be24fe12ef6c67401c2c001.html#a7c5d5d6f0be24fe12ef6c67401c2c001" title="Byte width of the DataVariant element backing a given ImageFormat." alt="" coords="441,5,607,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="385,23,428,23,428,28,385,28"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1FrameAccessProcessor_a3d43789c49df31bab67b9523c12555cc.html#a3d43789c49df31bab67b9523c12555cc" title="Advance the frame cursor, respecting loop boundaries." alt="" coords="439,149,609,203"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="391,173,425,173,425,179,391,179"/>
+</map>

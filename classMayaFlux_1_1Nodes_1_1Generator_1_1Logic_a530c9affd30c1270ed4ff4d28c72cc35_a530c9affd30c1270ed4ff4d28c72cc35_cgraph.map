@@ -1,0 +1,14 @@
+<map id="MayaFlux::Nodes::Generator::Logic::remove_hooks_of_type" name="MayaFlux::Nodes::Generator::Logic::remove_hooks_of_type">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,37,229,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1HookList_a71adb468d65d41feedf02978738a8a4f.html#a71adb468d65d41feedf02978738a8a4f" title=" " alt="" coords="277,5,477,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="229,41,263,37,264,42,230,46"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1HookList_a12264573db4b390388000e6d1c477b05.html#a12264573db4b390388000e6d1c477b05" title="Removes every entry carrying this tag." alt="" coords="277,69,477,109"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="230,68,264,73,263,78,229,74"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1HookList_a47b073736819351e0bd884d86d0d5a51.html#a47b073736819351e0bd884d86d0d5a51" title=" " alt="" coords="525,37,725,77"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="478,36,512,40,511,45,477,41"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1HookList_a98f1cd697a8d07ef16e2004aa67376da.html#a98f1cd697a8d07ef16e2004aa67376da" title=" " alt="" coords="773,5,973,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="725,42,759,37,760,43,726,47"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1HookList_a6fdccab758a46d7b33254857f959ec9b.html#a6fdccab758a46d7b33254857f959ec9b" title=" " alt="" coords="773,69,973,109"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="726,68,760,72,759,77,725,73"/>
+<area shape="poly" id="edge6_Node000006_Node000003" title=" " alt="" coords="477,74,511,69,512,75,478,79"/>
+</map>

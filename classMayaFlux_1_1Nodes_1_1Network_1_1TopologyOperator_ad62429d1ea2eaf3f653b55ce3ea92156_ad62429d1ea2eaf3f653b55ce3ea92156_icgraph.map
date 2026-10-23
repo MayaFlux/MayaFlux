@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Network::TopologyOperator::get_point_count" name="MayaFlux::Nodes::Network::TopologyOperator::get_point_count">
+<area shape="rect" id="Node000001" title="Get source point count (before topology expansion)" alt="" coords="284,34,483,89"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1TopologyOperator_ae48f0868cc943022e9a901aa5babfb7d.html#ae48f0868cc943022e9a901aa5babfb7d" title="Query operator internal state." alt="" coords="5,5,236,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="270,49,236,44,237,38,271,43"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1TopologyOperator_a0c37634fb4a8146a838bbb2017a83fb5.html#a0c37634fb4a8146a838bbb2017a83fb5" title="Replace every point, in extract_vertices() order, keeping the topologies." alt="" coords="21,70,220,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="271,79,220,86,220,81,270,74"/>
+</map>

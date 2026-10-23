@@ -1,0 +1,18 @@
+<map id="MayaFlux::Yantra::Vision::VisionWorkflow::process_to_buffer" name="MayaFlux::Yantra::Vision::VisionWorkflow::process_to_buffer">
+<area shape="rect" id="Node000001" title="process_to_buffer() with a matrix the caller made and configured, such as its extractor&#39;s sizes,..." alt="" coords="5,173,192,228"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1TextureBuffer_a8246ebf4f6657f85f2d0c7c0854249d1.html#a8246ebf4f6657f85f2d0c7c0854249d1" title="Setup rendering with RenderProcessor." alt="" coords="280,101,433,156"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="191,172,266,151,267,156,193,177"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1Vision_1_1VisionWorkflow_a0b2372d158f118164eac79d03cef09da.html#a0b2372d158f118164eac79d03cef09da" title=" " alt="" coords="240,181,473,221"/>
+<area shape="poly" id="edge6_Node000001_Node000006" title=" " alt="" coords="192,198,226,198,226,203,192,203"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Yantra_1_1Vision_1_1VisionWorkflow_a7be3e502a880c68b8fbc402b4a853884.html#a7be3e502a880c68b8fbc402b4a853884" title="Subscribe consumer and start the producer named name, which stops the run at source&#39;s end,..." alt="" coords="265,245,448,285"/>
+<area shape="poly" id="edge7_Node000001_Node000007" title=" " alt="" coords="193,221,263,239,262,244,192,226"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_aa9370fdd8ef512d6503c1c7ccdb0afda.html#aa9370fdd8ef512d6503c1c7ccdb0afda" title="Configure the internal m_render_processor from a RenderConfig." alt="" coords="549,29,721,84"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="433,106,534,80,536,85,434,111"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a6cf409969c192851ab2cf7f0315d2a49.html#a6cf409969c192851ab2cf7f0315d2a49" title="Access the buffer&#39;s processing chain." alt="" coords="521,109,748,149"/>
+<area shape="poly" id="edge4_Node000002_Node000004" title=" " alt="" coords="434,126,508,126,508,131,434,131"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1TextureBuffer_aca801508ceb4f2c6936df5f5df65455a.html#aca801508ceb4f2c6936df5f5df65455a" title="Get GPU texture image Suitable for binding to shaders via RenderProcessor::bind_texture()" alt="" coords="539,173,731,213"/>
+<area shape="poly" id="edge5_Node000002_Node000005" title=" " alt="" coords="434,144,535,167,534,172,433,149"/>
+<area shape="poly" id="edge3_Node000003_Node000003" title=" " alt="" coords="581,29,581,19,591,10,609,5,635,3,666,6,683,14,681,18,664,11,635,8,610,10,594,15,586,21,586,29"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Kriya_a62435bb589511d2066c250f604e24326.html#a62435bb589511d2066c250f604e24326" title="Call callback with every value source signals, registered on events." alt="" coords="535,252,734,277"/>
+<area shape="poly" id="edge8_Node000007_Node000008" title=" " alt="" coords="448,262,521,262,521,267,448,267"/>
+</map>

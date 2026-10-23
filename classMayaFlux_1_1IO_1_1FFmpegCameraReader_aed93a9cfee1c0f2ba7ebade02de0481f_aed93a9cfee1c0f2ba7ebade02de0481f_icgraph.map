@@ -1,0 +1,7 @@
+<map id="MayaFlux::IO::FFmpegCameraReader::enumerate_configs" name="MayaFlux::IO::FFmpegCameraReader::enumerate_configs">
+<area shape="rect" id="Node000001" title="Discover ready&#45;to&#45;open camera configurations without starting capture." alt="" coords="448,5,668,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_ab175da21b088a5c2e496b8d1c0670b2f.html#ab175da21b088a5c2e496b8d1c0670b2f" title="Let the user pick a camera, and optionally a capture mode, then open it via IOManager::open_camera()." alt="" coords="204,13,400,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="434,28,400,28,400,23,434,23"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Creator_a4d6c81dee8675dd5bf9b992245f3a548.html#a4d6c81dee8675dd5bf9b992245f3a548" title="Let the user pick a camera and capture mode, then read it as above." alt="" coords="5,5,156,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="190,28,157,28,157,23,190,23"/>
+</map>

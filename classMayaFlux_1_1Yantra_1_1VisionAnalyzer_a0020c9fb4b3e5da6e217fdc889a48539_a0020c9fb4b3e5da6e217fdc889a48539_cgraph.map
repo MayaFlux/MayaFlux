@@ -1,0 +1,14 @@
+<map id="MayaFlux::Yantra::VisionAnalyzer::measure_appearance" name="MayaFlux::Yantra::VisionAnalyzer::measure_appearance">
+<area shape="rect" id="Node000001" title="MeasureAppearance&#39;s whole&#45;frame gradient sample (region_sample.comp over result.images...." alt="" coords="5,77,232,117"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1VisionAnalyzer_ae94a2bd66de236a7114075bb500800aa.html#ae94a2bd66de236a7114075bb500800aa" title="Dispatch otsu_histogram.comp over image, zeroing the buffer first." alt="" coords="280,5,497,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="194,75,299,46,300,52,195,80"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1VisionAnalyzer_a01ed0dc00377e54be5fe2e76ae6653cf.html#a01ed0dc00377e54be5fe2e76ae6653cf" title="Dispatch histogram_reduce.comp over an already&#45;computed histogram." alt="" coords="295,70,483,125"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="232,95,281,95,281,100,232,100"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1VisionAnalyzer_a1ec2592e040ccdd20f1e7a185af9fcdb.html#a1ec2592e040ccdd20f1e7a185af9fcdb" title="Dispatch region_sample.comp over the whole image (no region concept for MeasureAppearance)." alt="" coords="284,149,493,189"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="195,115,300,143,299,148,194,120"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a715d57394465ff2924727d7c82d87e7b.html#a715d57394465ff2924727d7c82d87e7b" title="Get the global shader compiler instance." alt="" coords="545,77,743,117"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="461,43,560,71,559,76,460,48"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="791,77,988,117"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="743,95,777,95,777,100,743,100"/>
+<area shape="poly" id="edge6_Node000006_Node000003" title=" " alt="" coords="460,147,559,119,560,124,461,152"/>
+</map>

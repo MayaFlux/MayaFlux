@@ -1,0 +1,13 @@
+<map id="MayaFlux::Kakshya::DynamicSoundStream::snapshot" name="MayaFlux::Kakshya::DynamicSoundStream::snapshot">
+<area shape="rect" id="Node000001" title="Copy the most recent frames into a new stream, oldest first." alt="" coords="5,124,180,179"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a795f33cdaf077387519ea7e98d323abe.html#a795f33cdaf077387519ea7e98d323abe" title="Copy arbitrary frames into a caller&#45;owned buffer without allocating." alt="" coords="229,5,401,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="136,121,227,69,237,64,240,68,229,74,139,126"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_aa614dad97adb83d9b5e5b10e839e033c.html#aa614dad97adb83d9b5e5b10e839e033c" title=" " alt="" coords="229,84,401,139"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="180,133,215,127,216,132,181,138"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a71080731894a9fdcbc11ff1b132315f0.html#a71080731894a9fdcbc11ff1b132315f0" title=" " alt="" coords="229,163,401,217"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="181,164,216,170,215,175,180,169"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_aac14b276814beaaa4b239ab0e03ca107.html#aac14b276814beaaa4b239ab0e03ca107" title="Index of the next frame append_frames will write for a channel." alt="" coords="228,241,403,296"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="141,177,229,226,242,233,240,238,227,231,138,181"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a2321cbc62aa5f61be7f780c2c8735fcc.html#a2321cbc62aa5f61be7f780c2c8735fcc" title="Get the cached spans for each channel, recomputing if dirty." alt="" coords="451,5,623,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="402,30,437,30,437,35,402,35"/>
+</map>

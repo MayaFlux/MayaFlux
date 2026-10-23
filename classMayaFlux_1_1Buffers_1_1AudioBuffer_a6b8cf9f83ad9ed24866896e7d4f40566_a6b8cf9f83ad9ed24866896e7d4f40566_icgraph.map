@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::AudioBuffer::get_num_samples" name="MayaFlux::Buffers::AudioBuffer::get_num_samples">
+<area shape="rect" id="Node000001" title="Gets the current capacity of the audio buffer." alt="" coords="240,5,403,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1FeedbackBuffer_ae50952bc878f7feb7c6a74fb77a63d1f.html#ae50952bc878f7feb7c6a74fb77a63d1f" title="Clone for another channel with its own ring and its own processor state." alt="" coords="5,13,192,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="226,35,192,35,192,30,226,30"/>
+</map>

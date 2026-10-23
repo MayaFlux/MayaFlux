@@ -1,0 +1,32 @@
+<map id="MayaFlux::Nodes::Generator::Polynomial" name="MayaFlux::Nodes::Generator::Polynomial">
+<area shape="rect" id="Node000001" title="Generator that produces values based on polynomial functions." alt="" coords="855,1812,1075,2372"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Generator.html" title="Base class for all signal and pattern generators in Maya Flux." alt="" coords="373,1407,573,1707"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="584,1675,856,1969,852,1973,580,1678"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Node.html" title="Base interface for all computational processing nodes." alt="" coords="53,503,250,1287"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="258,1119,364,1339,398,1405,393,1407,360,1341,254,1121"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1HookList.html" title="Stores, fires and clears the hooks of one node channel." alt="" coords="5,1364,199,1749"/>
+<area shape="poly" id="edge4_Node000004_Node000003" title=" " alt="" coords="55,1188,47,1264,50,1340,51,1347,46,1348,45,1340,42,1264,50,1188"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="117,1364,119,1340,122,1303,128,1304,125,1340,123,1364"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Nodes_1_1RoutingState.html" title="Represents the state of routing transitions for a node." alt="" coords="59,220,244,400"/>
+<area shape="poly" id="edge5_Node000003_Node000005" title=" " alt="" coords="154,400,154,486,149,486,149,400"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1GeneratorContext.html" title="Specialized context for generator node callbacks." alt="" coords="457,250,657,370"/>
+<area shape="poly" id="edge6_Node000002_Node000006" title=" " alt="" coords="487,372,432,432,409,466,391,504,354,617,332,715,323,803,326,888,336,973,352,1064,391,1286,415,1390,410,1392,386,1287,347,1065,331,974,320,888,318,803,327,714,349,615,386,502,404,464,428,428,483,368"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1GeneratorContextGpu.html" title=" " alt="" coords="486,855,686,935"/>
+<area shape="poly" id="edge9_Node000008_Node000006" title=" " alt="" coords="563,384,587,854,581,855,558,384"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1NodeContext.html" title="Base context class for node callbacks." alt="" coords="687,5,907,131"/>
+<area shape="poly" id="edge7_Node000006_Node000007" title=" " alt="" coords="714,142,671,182,607,251,603,248,667,178,710,138"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1PolynomialContext.html" title=" " alt="" coords="939,180,1139,440"/>
+<area shape="poly" id="edge14_Node000012_Node000007" title=" " alt="" coords="885,138,929,178,941,190,937,193,925,182,882,142"/>
+<area shape="poly" id="edge8_Node000002_Node000008" title=" " alt="" coords="582,935,504,1391,498,1390,577,934"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nodes_1_1GpuVectorData.html" title="GPU&#45;uploadable 1D array data interface." alt="" coords="681,237,915,383"/>
+<area shape="poly" id="edge10_Node000008_Node000009" title=" " alt="" coords="752,396,700,504,666,601,636,699,597,855,592,854,631,698,660,599,696,502,747,394"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1PolynomialContextGpu.html" title=" " alt="" coords="929,855,1129,935"/>
+<area shape="poly" id="edge17_Node000013_Node000009" title=" " alt="" coords="859,393,891,445,919,502,957,599,987,697,1024,854,1019,855,981,699,951,600,914,504,886,448,854,395"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Memory_1_1HistoryBuffer.html" title=" " alt="" coords="726,1377,921,1737"/>
+<area shape="poly" id="edge11_Node000001_Node000010" title=" " alt="" coords="873,1736,889,1795,884,1796,868,1738"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Memory_1_1HistoryBuffer.html" title="History buffer for difference equations and recursive relations." alt="" coords="710,715,905,1075"/>
+<area shape="poly" id="edge12_Node000010_Node000011" title=" " alt="" coords="815,1089,822,1376,816,1376,809,1089"/>
+<area shape="poly" id="edge13_Node000001_Node000012" title=" " alt="" coords="1121,439,1143,502,1186,688,1214,848,1229,991,1230,1126,1219,1260,1196,1403,1163,1564,1119,1750,1103,1806,1083,1861,1078,1860,1098,1804,1114,1749,1158,1563,1191,1402,1214,1260,1225,1126,1223,992,1209,849,1181,689,1138,503,1116,441"/>
+<area shape="poly" id="edge16_Node000013_Node000012" title=" " alt="" coords="1039,454,1032,855,1027,854,1034,454"/>
+<area shape="poly" id="edge15_Node000001_Node000013" title=" " alt="" coords="1029,935,983,1796,978,1795,1024,935"/>
+</map>

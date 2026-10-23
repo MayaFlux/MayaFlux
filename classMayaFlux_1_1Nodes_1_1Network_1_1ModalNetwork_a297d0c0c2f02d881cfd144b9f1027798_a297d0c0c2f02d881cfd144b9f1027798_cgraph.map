@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::ModalNetwork::refresh_decay" name="MayaFlux::Nodes::Network::ModalNetwork::refresh_decay">
+<area shape="rect" id="Node000001" title="Recompute every mode&#39;s per&#45;sample decay from the base decay and multiplier." alt="" coords="5,13,231,53"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_ae8b39c4e028b87d306f371e497cd1bdc.html#ae8b39c4e028b87d306f371e497cd1bdc" title="Per&#45;sample factor that falls by 1/e in a given time." alt="" coords="279,5,429,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="231,30,265,30,265,35,231,35"/>
+</map>

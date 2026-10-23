@@ -1,0 +1,35 @@
+<map id="MayaFlux::Buffers::ClaimAccumulateProcessor" name="MayaFlux::Buffers::ClaimAccumulateProcessor">
+<area shape="rect" id="Node000001" title="Counts how many particles each survivor swallowed this cycle." alt="" coords="744,3296,961,3496"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1NetworkStateFieldProcessor.html" title="ComputeProcessor operating on named state fields of a NetworkGeometryBuffer, plus optionally the buff..." alt="" coords="511,2681,733,3016"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="671,3028,705,3131,747,3232,782,3294,778,3297,742,3235,700,3133,665,3030"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1ComputeProcessor.html" title="Specialized ShaderProcessor for Compute Pipelines." alt="" coords="523,1829,721,2304"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="625,2318,625,2681,619,2681,619,2318"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor.html" title="Abstract base class for shader&#45;based buffer processing." alt="" coords="320,751,519,1669"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="524,1643,569,1829,563,1830,519,1644"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1VKBufferProcessor.html" title=" " alt="" coords="215,491,408,625"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="327,639,346,750,340,751,322,640"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1BufferProcessor.html" title="Central computational transformation interface for continuous buffer processing." alt="" coords="5,55,185,315"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="178,326,200,364,274,489,269,492,196,367,174,329"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Registry_1_1Service_1_1BufferService.html" title="Backend buffer management service interface." alt="" coords="210,5,413,365"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="314,366,314,474,309,474,309,366"/>
+<area shape="rect" id="Node000008" href="$structMayaFlux_1_1Registry_1_1Service_1_1ComputeService.html" title="Backend compute shader and pipeline service interface." alt="" coords="437,95,644,275"/>
+<area shape="poly" id="edge7_Node000005_Node000008" title=" " alt="" coords="512,277,484,342,447,406,435,418,423,430,379,480,375,476,419,426,431,415,443,402,479,339,508,275"/>
+<area shape="rect" id="Node000009" href="$structMayaFlux_1_1Buffers_1_1ShaderConfig.html" title=" " alt="" coords="433,428,622,688"/>
+<area shape="poly" id="edge8_Node000004_Node000009" title=" " alt="" coords="509,688,501,734,496,734,503,688"/>
+<area shape="rect" id="Node000010" href="$structMayaFlux_1_1Buffers_1_1ShaderDispatchConfig.html" title="Configuration for compute shader dispatch." alt="" coords="543,1090,725,1330"/>
+<area shape="poly" id="edge9_Node000003_Node000010" title=" " alt="" coords="635,1330,628,1813,623,1813,630,1330"/>
+<area shape="rect" id="Node000011" href="$structMayaFlux_1_1Buffers_1_1ClaimAccumulateProcessor_1_1Params.html" title=" " alt="" coords="757,2781,949,2916"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="855,2916,855,3280,850,3280,850,2916"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PhysicsOperator.html" title="N&#45;body physics simulation with point rendering." alt="" coords="973,2464,1199,3233"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="976,3206,963,3235,939,3273,932,3284,928,3281,934,3271,958,3232,971,3204"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GraphicsOperator.html" title="Operator that produces GPU&#45;renderable geometry." alt="" coords="749,1897,962,2237"/>
+<area shape="poly" id="edge12_Node000012_Node000013" title=" " alt="" coords="912,2249,976,2466,971,2467,907,2251"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NetworkOperator.html" title="Domain&#45;agnostic interpretive lens for network processing." alt="" coords="760,1103,951,1317"/>
+<area shape="poly" id="edge13_Node000013_Node000014" title=" " alt="" coords="858,1331,858,1897,853,1897,853,1331"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Stochastic.html" title="Unified generative infrastructure for stochastic and procedural algorithms." alt="" coords="986,1732,1186,2401"/>
+<area shape="poly" id="edge14_Node000012_Node000015" title=" " alt="" coords="1089,2401,1089,2448,1083,2448,1083,2401"/>
+<area shape="rect" id="Node000016" href="$structMayaFlux_1_1Kinesis_1_1Stochastic_1_1GeneratorState.html" title="Encapsulates internal state for stateful generators." alt="" coords="992,1110,1180,1310"/>
+<area shape="poly" id="edge15_Node000015_Node000016" title=" " alt="" coords="1089,1310,1089,1716,1083,1716,1083,1310"/>
+<area shape="rect" id="Node000017" href="$structMayaFlux_1_1Kinesis_1_1SamplerBounds.html" title="Spatial domain for vertex generation." alt="" coords="1210,1997,1351,2137"/>
+<area shape="poly" id="edge16_Node000012_Node000017" title=" " alt="" coords="1281,2137,1270,2278,1259,2360,1243,2441,1207,2564,1202,2563,1238,2439,1254,2359,1265,2277,1276,2137"/>
+</map>

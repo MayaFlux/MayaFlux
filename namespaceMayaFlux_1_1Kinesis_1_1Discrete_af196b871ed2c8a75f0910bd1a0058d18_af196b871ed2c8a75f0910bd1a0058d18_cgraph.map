@@ -1,0 +1,6 @@
+<map id="MayaFlux::Kinesis::Discrete::fourier_series" name="MayaFlux::Kinesis::Discrete::fourier_series">
+<area shape="rect" id="Node000001" title="Fourier series of a phase." alt="" coords="5,29,179,69"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a0f0fc0b4cd893ccbb45ac82fcc93a549.html#a0f0fc0b4cd893ccbb45ac82fcc93a549" title="Sum per window." alt="" coords="227,29,376,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="179,47,213,47,213,52,179,52"/>
+<area shape="poly" id="edge2_Node000002_Node000002" title=" " alt="" coords="262,30,260,20,266,10,280,5,301,3,326,6,339,13,336,18,324,11,301,8,281,10,269,15,265,21,267,28"/>
+</map>

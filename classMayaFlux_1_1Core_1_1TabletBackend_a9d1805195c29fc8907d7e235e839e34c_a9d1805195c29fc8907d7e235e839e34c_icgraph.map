@@ -1,0 +1,11 @@
+<map id="MayaFlux::Core::TabletBackend::emit_frame" name="MayaFlux::Core::TabletBackend::emit_frame">
+<area shape="rect" id="Node000001" title=" " alt="" coords="1104,5,1331,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1TabletBackend_ac13a822a6734c389d276faf8054c89d3.html#ac13a822a6734c389d276faf8054c89d3" title=" " alt="" coords="829,5,1056,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1090,28,1056,28,1056,23,1090,23"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1TabletBackend_a708a54a85f820b22c9b47d7d7b072fc9.html#a708a54a85f820b22c9b47d7d7b072fc9" title=" " alt="" coords="555,5,781,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="815,28,782,28,782,23,815,23"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1TabletBackend_ac31fe6c3ea7523ebc4a6124900e6761b.html#ac31fe6c3ea7523ebc4a6124900e6761b" title=" " alt="" coords="280,5,507,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="541,28,507,28,507,23,541,23"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1TabletBackend_aa2f37e238690a7adc7278cfe901ea8c4.html#aa2f37e238690a7adc7278cfe901ea8c4" title="Start listening for input events." alt="" coords="5,5,232,45"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="266,28,232,28,232,23,266,23"/>
+</map>

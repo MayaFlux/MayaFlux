@@ -1,0 +1,43 @@
+<map id="MayaFlux::Portal::Forma::Bridge::find_record" name="MayaFlux::Portal::Forma::Bridge::find_record">
+<area shape="rect" id="Node000001" title=" " alt="" coords="464,549,645,589"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Bridge_a1dd3a565ce52d1ac5511643faf57241a.html#a1dd3a565ce52d1ac5511643faf57241a" title=" " alt="" coords="235,69,416,109"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="536,538,334,111,339,108,540,536"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Bridge_a612b2aabe6393bfe98ebe4f3f439ae24.html#a612b2aabe6393bfe98ebe4f3f439ae24" title="Spawn a presentation sync task scoped to a Layer." alt="" coords="235,357,416,397"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="532,540,483,475,451,441,414,412,394,400,396,395,418,407,454,437,487,472,536,536"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Bridge_a430c30db075b0b83b0270b60a4ff0ec1.html#a430c30db075b0b83b0270b60a4ff0ec1" title="Cancel all inbound and outbound bindings for an element." alt="" coords="235,421,416,461"/>
+<area shape="poly" id="edge13_Node000001_Node000014" title=" " alt="" coords="517,543,469,509,415,476,388,464,391,459,417,471,472,504,520,539"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Bridge_aeb3b6020c9e22f59e5482ec2a478c8b3.html#aeb3b6020c9e22f59e5482ec2a478c8b3" title="Route element value to a descriptor binding on target_buffer." alt="" coords="235,485,416,525"/>
+<area shape="poly" id="edge15_Node000001_Node000016" title=" " alt="" coords="469,548,397,528,398,523,470,543"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Bridge_a133521f4e30ed6ad294a33fe2ae95d66.html#a133521f4e30ed6ad294a33fe2ae95d66" title="Route element value to a push constant slot on a ShaderProcessor." alt="" coords="235,549,416,589"/>
+<area shape="poly" id="edge16_Node000001_Node000017" title=" " alt="" coords="450,572,416,572,416,567,450,567"/>
+<area shape="rect" id="Node000018" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Bridge_a36e1e6226e391b7d655b739cd0714b09.html#a36e1e6226e391b7d655b739cd0714b09" title="Route element bulk value to a caller&#45;supplied sink each frame." alt="" coords="235,613,416,653"/>
+<area shape="poly" id="edge17_Node000001_Node000018" title=" " alt="" coords="470,596,398,616,397,611,469,590"/>
+<area shape="rect" id="Node000019" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Bridge_ace4805f35a80f9bac6e15bf52d676c62.html#ace4805f35a80f9bac6e15bf52d676c62" title="Route element value to an AudioWriteProcessor each frame." alt="" coords="235,677,416,717"/>
+<area shape="poly" id="edge18_Node000001_Node000019" title=" " alt="" coords="520,600,472,634,417,668,391,680,388,675,415,663,469,630,517,596"/>
+<area shape="rect" id="Node000020" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Bridge_aeb619e342f554b3e28a5e9d850dfcafe.html#aeb619e342f554b3e28a5e9d850dfcafe" title="Route element value to a DataWriteProcessor each frame." alt="" coords="235,741,416,781"/>
+<area shape="poly" id="edge19_Node000001_Node000020" title=" " alt="" coords="536,602,487,667,454,702,418,732,396,743,394,739,414,727,451,698,483,664,532,599"/>
+<area shape="rect" id="Node000021" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Bridge_a38a97607160b4862fbd3ec77901624fb.html#a38a97607160b4862fbd3ec77901624fb" title="Route element value into a Constant node via set_constant()." alt="" coords="235,805,416,845"/>
+<area shape="poly" id="edge20_Node000001_Node000021" title=" " alt="" coords="544,603,525,646,498,698,462,750,418,795,399,807,396,803,414,791,458,747,493,695,520,644,539,601"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Bridge_a5fdc046f0f2c29f8c9c592fb66ea4094.html#a5fdc046f0f2c29f8c9c592fb66ea4094" title="Drive element value from an arbitrary per&#45;frame callable." alt="" coords="5,5,187,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="239,68,167,48,169,43,241,63"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Bridge_a5ad34c4e1f2065c2707997d967946ca3.html#a5ad34c4e1f2065c2707997d967946ca3" title="Drive element value from a Node&#39;s output each frame." alt="" coords="5,69,187,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="221,92,187,92,187,87,221,87"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Portal_1_1Forma_ab3e026869fd591493f2f89ca4f152dc1.html#ab3e026869fd591493f2f89ca4f152dc1" title="Open a dedicated window inspecting a single Buffer and its processing chain." alt="" coords="5,133,187,173"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="306,346,286,309,259,267,225,224,185,187,165,176,168,171,188,183,229,221,263,264,291,307,311,343"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a375aa9c35d0d0831a7d4e0ea7107b227.html#a375aa9c35d0d0831a7d4e0ea7107b227" title="Open a dedicated window inspecting a NodeNetwork." alt="" coords="5,197,187,237"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="296,349,247,299,217,274,185,252,162,240,164,235,188,247,221,270,251,296,300,345"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Portal_1_1Forma_adfbdd6c42f9561d725521af7689c221b.html#adfbdd6c42f9561d725521af7689c221b" title="Open a dedicated window inspecting a single Node and its modulator tree." alt="" coords="5,261,187,301"/>
+<area shape="poly" id="edge7_Node000005_Node000008" title=" " alt="" coords="270,354,186,316,155,304,157,299,188,311,272,349"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a9f9e5f02ae1d8a9a827ca06994151d60.html#a9f9e5f02ae1d8a9a827ca06994151d60" title="Open a dedicated window inspecting a single Event." alt="" coords="5,325,187,365"/>
+<area shape="poly" id="edge8_Node000005_Node000009" title=" " alt="" coords="221,365,187,361,187,355,222,360"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a037879cc8c63869664d3b6c8e1e32973.html#a037879cc8c63869664d3b6c8e1e32973" title="Open or show the BufferManager inspection window." alt="" coords="5,389,187,429"/>
+<area shape="poly" id="edge9_Node000005_Node000010" title=" " alt="" coords="222,394,187,399,187,394,221,389"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_1_1Portal_1_1Forma_af41897be30156c06741f924722e654f5.html#af41897be30156c06741f924722e654f5" title="Open or show the EventManager inspection window." alt="" coords="5,453,187,493"/>
+<area shape="poly" id="edge10_Node000005_Node000011" title=" " alt="" coords="250,405,236,412,212,428,188,444,161,456,159,451,185,439,209,423,233,407,248,400"/>
+<area shape="rect" id="Node000012" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a9563fe8292595a238e507c2ff54f787e.html#a9563fe8292595a238e507c2ff54f787e" title="Open or show the NodeGraphManager inspection window." alt="" coords="5,517,187,557"/>
+<area shape="poly" id="edge11_Node000005_Node000012" title=" " alt="" coords="242,407,237,411,220,434,213,458,207,483,189,507,171,519,168,515,185,503,202,480,208,457,215,432,233,407,239,403"/>
+<area shape="rect" id="Node000013" href="$namespaceMayaFlux_1_1Portal_1_1Forma_abb516f8bf31335193993acea55db7843.html#abb516f8bf31335193993acea55db7843" title="Open or show the TaskScheduler inspection window." alt="" coords="5,581,187,621"/>
+<area shape="poly" id="edge12_Node000005_Node000013" title=" " alt="" coords="240,408,237,411,222,431,215,450,213,489,211,530,204,550,189,571,174,583,170,579,185,567,199,548,206,529,208,489,210,449,218,428,233,408,237,404"/>
+<area shape="rect" id="Node000015" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a0379b48a68772212c41ea6981991580a.html#a0379b48a68772212c41ea6981991580a" title="Tear down an element and everything related to it." alt="" coords="5,645,187,685"/>
+<area shape="poly" id="edge14_Node000014_Node000015" title=" " alt="" coords="240,472,237,475,222,495,215,514,213,553,211,594,204,614,189,635,174,647,170,643,185,631,199,612,206,593,208,553,210,513,218,492,233,472,237,468"/>
+</map>

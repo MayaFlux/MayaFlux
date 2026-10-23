@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kinesis::unit_square" name="MayaFlux::Kinesis::unit_square">
+<area shape="rect" id="Node000001" title="Unit&#45;square coordinates of a point within bounds." alt="" coords="483,37,632,77"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Portal_1_1Forma_1_1ColorPicker_a5ca2e358ed91380df7e7b7528892c6a6.html#a5ca2e358ed91380df7e7b7528892c6a6" title="Register the picker and wire its input." alt="" coords="244,5,425,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="468,47,425,41,426,36,469,42"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_ac8f8eb20d142ea566f2c0dd725831058.html#ac8f8eb20d142ea566f2c0dd725831058" title="Geometry function for a 2D position picker in NDC space." alt="" coords="235,69,435,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="469,73,435,78,434,72,468,67"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Portal_1_1Forma_1_1ColorPicker_a269d89b6fed1e1a67ca52d284739a75d.html#a269d89b6fed1e1a67ca52d284739a75d" title="Register using the cursor&#39;s column extents." alt="" coords="5,5,187,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="230,28,187,28,187,23,230,23"/>
+</map>

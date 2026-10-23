@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::DynamicSoundStream::get_write_head" name="MayaFlux::Kakshya::DynamicSoundStream::get_write_head">
+<area shape="rect" id="Node000001" title="Index of the next frame append_frames will write for a channel." alt="" coords="228,5,403,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_abb8dcc80406d0efa71a238aa77aa38aa.html#abb8dcc80406d0efa71a238aa77aa38aa" title="Copy the most recent frames into a new stream, oldest first." alt="" coords="5,5,180,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="214,35,180,35,180,30,214,30"/>
+</map>

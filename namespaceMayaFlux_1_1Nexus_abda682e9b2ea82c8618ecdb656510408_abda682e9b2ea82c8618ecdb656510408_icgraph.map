@@ -1,0 +1,13 @@
+<map id="MayaFlux::Nexus::release_attachment" name="MayaFlux::Nexus::release_attachment">
+<area shape="rect" id="Node000001" title="Give every placed render processor back the geometry transform it had." alt="" coords="483,69,673,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1Agent_a5e4b4ce4e97f82c7ef4cf218f7c311b0.html#a5e4b4ce4e97f82c7ef4cf218f7c311b0" title="Release the attached buffer and reset its placement." alt="" coords="249,5,430,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="489,68,414,48,415,43,490,63"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nexus_1_1Emitter_a37b66812ac0c3b9b33b8b139890fbd34.html#a37b66812ac0c3b9b33b8b139890fbd34" title="Release the attached buffer and reset its placement." alt="" coords="244,69,435,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="469,92,435,92,435,87,469,87"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nexus_1_1Mantle_a03f8d1c961ce978323a662d5d2f7f19a.html#a03f8d1c961ce978323a662d5d2f7f19a" title=" " alt="" coords="245,133,433,173"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="490,116,415,136,414,131,489,110"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nexus_1_1Agent_a7f420f62150e3babe04fda42dd44c50b.html#a7f420f62150e3babe04fda42dd44c50b" title="Make an existing, already rendered buffer the look of this object." alt="" coords="10,5,191,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="235,28,191,28,191,23,235,23"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nexus_1_1Emitter_a70d813d4d303befb1af9ee9d25007057.html#a70d813d4d303befb1af9ee9d25007057" title="Make an existing, already rendered buffer the look of this object." alt="" coords="5,69,196,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="230,92,196,92,196,87,230,87"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kakshya::DataProcessingChain::drain_pending_removals" name="MayaFlux::Kakshya::DataProcessingChain::drain_pending_removals">
+<area shape="rect" id="Node000001" title="Flushes all removals deferred during the most recent process iteration." alt="" coords="213,84,404,139"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1DataProcessingChain_a611d5ebd3e20cb57bc72d0cba93eb362.html#a611d5ebd3e20cb57bc72d0cba93eb362" title="Processes a container with all its associated processors in sequence." alt="" coords="5,5,165,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="216,82,163,63,164,58,218,77"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1DataProcessingChain_a7d8f59ec3651bfaae4936d43a0612f53.html#a7d8f59ec3651bfaae4936d43a0612f53" title="Processes a container with only the processors matching a filter predicate." alt="" coords="5,84,165,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="200,114,166,114,166,109,200,109"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1DataProcessingChain_a5cba1c74b057ecadf98ed62b12e082ee.html#a5cba1c74b057ecadf98ed62b12e082ee" title="Processes a container with only the processors carrying a specific tag." alt="" coords="5,163,165,217"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="218,146,164,165,163,160,216,141"/>
+</map>

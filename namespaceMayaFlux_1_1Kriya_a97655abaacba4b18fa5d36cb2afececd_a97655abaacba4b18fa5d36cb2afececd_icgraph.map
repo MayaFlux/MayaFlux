@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kriya::mouse_dragged" name="MayaFlux::Kriya::mouse_dragged">
+<area shape="rect" id="Node000001" title="Creates an Event coroutine that triggers on mouse drag with specific button." alt="" coords="251,35,431,75"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1Wiring_af32900423bc2e18633ca0f7dd74f051a.html#af32900423bc2e18633ca0f7dd74f051a" title="Apply the configured wiring." alt="" coords="11,5,197,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="237,45,196,39,197,34,238,39"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_a097a61a03c5e44546fd2aeae872ceb81.html#a097a61a03c5e44546fd2aeae872ceb81" title="Schedule a mouse drag handler." alt="" coords="5,70,203,95"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="238,70,203,74,202,68,237,64"/>
+</map>

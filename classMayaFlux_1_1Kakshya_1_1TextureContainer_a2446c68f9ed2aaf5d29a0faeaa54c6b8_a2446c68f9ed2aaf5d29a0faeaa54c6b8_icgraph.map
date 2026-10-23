@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::TextureContainer::hold_layer" name="MayaFlux::Kakshya::TextureContainer::hold_layer">
+<area shape="rect" id="Node000001" title="Mark layer as held on the GPU after its image was rewritten." alt="" coords="244,5,453,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1TextureCollection_a860ad3cf3aa0bb9a16c4acfc634941db.html#a860ad3cf3aa0bb9a16c4acfc634941db" title="Copy image into the next layer." alt="" coords="5,5,196,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="230,28,196,28,196,23,230,23"/>
+</map>

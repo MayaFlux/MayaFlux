@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Forma::ColorPicker::place" name="MayaFlux::Portal::Forma::ColorPicker::place">
+<area shape="rect" id="Node000001" title="Register the picker and wire its input." alt="" coords="235,5,416,45"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Portal_1_1Forma_1_1ColorPicker_a269d89b6fed1e1a67ca52d284739a75d.html#a269d89b6fed1e1a67ca52d284739a75d" title="Register using the cursor&#39;s column extents." alt="" coords="5,5,187,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="221,28,187,28,187,23,221,23"/>
+</map>

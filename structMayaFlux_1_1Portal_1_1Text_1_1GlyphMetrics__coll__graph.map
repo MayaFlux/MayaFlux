@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Text::GlyphMetrics" name="MayaFlux::Portal::Text::GlyphMetrics">
+<area shape="rect" id="Node000001" title="Per&#45;glyph layout and UV data produced by GlyphAtlas." alt="" coords="5,368,164,628"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Text_1_1FontFace.html" title="Owns a single FT_Face loaded from a file path." alt="" coords="5,5,164,305"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="87,306,87,352,82,352,82,306"/>
+</map>

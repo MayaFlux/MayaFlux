@@ -1,0 +1,18 @@
+<map id="MayaFlux::Buffers::ShaderProcessor::is_dispatch_pending" name="MayaFlux::Buffers::ShaderProcessor::is_dispatch_pending">
+<area shape="rect" id="Node000001" title="True while an asynchronous submission is outstanding." alt="" coords="801,113,951,168"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a89618010c366c34c7e4c7968750175ae.html#a89618010c366c34c7e4c7968750175ae" title="The core processing function that must be implemented by derived classes." alt="" coords="311,5,519,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="787,114,753,105,631,76,518,53,519,48,633,71,754,99,789,109"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_ac38468f8a2f97593dd7b88fd31063bed.html#ac38468f8a2f97593dd7b88fd31063bed" title="Resolve an outstanding asynchronous submission." alt="" coords="567,113,753,168"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="788,143,753,143,753,138,788,138"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_aa8d370ac5fc7f08bfb36b85944abb0a4.html#aa8d370ac5fc7f08bfb36b85944abb0a4" title="Submit asynchronously and resolve at the top of a later cycle." alt="" coords="332,200,497,255"/>
+<area shape="poly" id="edge9_Node000001_Node000007" title=" " alt="" coords="789,174,754,183,619,208,498,223,497,218,618,203,753,178,787,169"/>
+<area shape="poly" id="edge7_Node000003_Node000002" title=" " alt="" coords="583,110,477,63,479,58,586,105"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a5066b7ac50552a50869a303adcb41d84.html#a5066b7ac50552a50869a303adcb41d84" title=" " alt="" coords="320,135,509,175"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="553,150,510,152,509,147,553,144"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1ComputeProcessor_a4f3e779de39433f9e357c7c03804df3d.html#a4f3e779de39433f9e357c7c03804df3d" title=" " alt="" coords="33,78,235,118"/>
+<area shape="poly" id="edge6_Node000003_Node000005" title=" " alt="" coords="553,130,518,126,235,106,236,100,519,121,553,124"/>
+<area shape="poly" id="edge8_Node000003_Node000007" title=" " alt="" coords="570,175,494,202,492,197,568,170"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="306,136,232,121,233,115,307,131"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a9682945ee892c3ab788ce216b49b5d61.html#a9682945ee892c3ab788ce216b49b5d61" title=" " alt="" coords="5,142,263,182"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="307,161,263,162,263,156,306,155"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::download_compute_mesh" name="MayaFlux::Buffers::download_compute_mesh">
+<area shape="rect" id="Node000001" title="Download a ComputeMeshBuffer&#39;s current live geometry to CPU." alt="" coords="471,5,663,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1IO_a62c64eef47023c4a0ad4c40a3ba9b626.html#a62c64eef47023c4a0ad4c40a3ba9b626" title="Download a ComputeMeshBuffer&#39;s current live geometry to CPU." alt="" coords="244,5,423,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="457,28,423,28,423,23,457,23"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1IO_a4b67759654d8b24d5c95de086c109536.html#a4b67759654d8b24d5c95de086c109536" title="Save a ComputeMeshBuffer&#39;s current live geometry to disk." alt="" coords="5,13,196,38"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="230,28,196,28,196,23,230,23"/>
+</map>

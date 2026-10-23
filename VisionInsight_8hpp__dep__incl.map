@@ -1,0 +1,26 @@
+<map id="VisionInsight.hpp" name="VisionInsight.hpp">
+<area shape="rect" id="Node000001" title="Caller&#45;supplied context and GPU&#45;derived output for turning a raw VisionResult into something a caller..." alt="" coords="359,5,494,31"/>
+<area shape="rect" id="Node000002" href="$VisionAnalyzer_8hpp.html" title="FunctionalOperation&lt;shared_ptr&lt;SignalSourceContainer&gt;, vector&lt;DataVariant&gt;&gt; whose real API matches En..." alt="" coords="268,79,415,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="404,41,357,80,354,76,401,37"/>
+<area shape="rect" id="Node000010" href="$VisionExtractor_8hpp.html" title="GPU getter for what VisionAnalyzer found." alt="" coords="463,79,611,104"/>
+<area shape="poly" id="edge10_Node000001_Node000010" title=" " alt="" coords="457,36,521,76,518,81,455,40"/>
+<area shape="rect" id="Node000003" href="$VisionAnalyzer_8cpp.html" title=" " alt="" coords="110,152,255,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="305,112,210,154,208,149,303,107"/>
+<area shape="rect" id="Node000004" href="$VisionMatrix_8hpp.html" title=" " alt="" coords="331,152,463,177"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="361,113,390,150,386,154,357,117"/>
+<area shape="rect" id="Node000009" href="$WorkflowIncludes_8hpp.html" title="Top level headers for the Yantra compute layer and its workflows." alt="" coords="279,299,443,324"/>
+<area shape="poly" id="edge9_Node000002_Node000009" title=" " alt="" coords="332,117,321,153,317,199,318,227,323,250,336,276,352,297,348,300,331,279,317,252,313,227,312,199,316,151,327,116"/>
+<area shape="rect" id="Node000005" href="$VisionMatrix_8cpp.html" title=" " alt="" coords="332,225,463,251"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="400,191,400,225,395,225,395,191"/>
+<area shape="rect" id="Node000006" href="$VisionWorkflow_8hpp.html" title=" " alt="" coords="107,225,256,251"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="350,184,217,228,215,223,349,179"/>
+<area shape="rect" id="Node000007" href="$Rigs_8cpp.html" title=" " alt="" coords="5,299,83,324"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="149,259,68,301,65,296,146,254"/>
+<area shape="rect" id="Node000008" href="$VisionWorkflow_8cpp.html" title=" " alt="" coords="107,299,255,324"/>
+<area shape="poly" id="edge7_Node000006_Node000008" title=" " alt="" coords="184,264,184,299,179,299,179,264"/>
+<area shape="poly" id="edge8_Node000006_Node000009" title=" " alt="" coords="224,253,333,296,331,301,222,258"/>
+<area shape="poly" id="edge12_Node000010_Node000004" title=" " alt="" coords="504,113,421,154,419,149,501,108"/>
+<area shape="poly" id="edge13_Node000010_Node000009" title=" " alt="" coords="590,106,617,119,641,135,653,155,654,167,649,179,629,205,605,227,550,262,491,286,435,301,434,296,489,281,547,257,602,223,625,201,644,176,649,166,648,157,637,139,615,124,588,111"/>
+<area shape="rect" id="Node000011" href="$VisionExtractor_8cpp.html" title=" " alt="" coords="488,152,635,177"/>
+<area shape="poly" id="edge11_Node000010_Node000011" title=" " alt="" coords="548,116,560,151,555,153,543,118"/>
+</map>

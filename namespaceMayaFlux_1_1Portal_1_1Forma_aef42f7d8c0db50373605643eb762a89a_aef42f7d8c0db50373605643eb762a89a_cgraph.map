@@ -1,0 +1,56 @@
+<map id="MayaFlux::Portal::Forma::make_scrollable" name="MayaFlux::Portal::Forma::make_scrollable">
+<area shape="rect" id="Node000001" title="Construct a scrollable viewport." alt="" coords="5,324,187,364"/>
+<area shape="poly" id="edge2_Node000001_Node000001" title=" " alt="" coords="50,324,48,314,55,305,71,299,96,297,125,300,140,307,138,312,123,305,96,303,72,305,58,309,53,315,55,323"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Scrollable_aec958122903050790a08f4138826dd44.html#aec958122903050790a08f4138826dd44" title=" " alt="" coords="235,260,452,300"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="173,321,252,301,253,306,175,327"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Scrollable_a35235f112f4f9f9eead110668fca88f7.html#a35235f112f4f9f9eead110668fca88f7" title="Register the viewport element, wire wheel scrolling, and populate scroll, offset, buf,..." alt="" coords="253,324,434,364"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="187,341,239,341,239,347,187,347"/>
+<area shape="rect" id="Node000024" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Scrollable_adb50dba779ca98479ca94c43a0245714.html#adb50dba779ca98479ca94c43a0245714" title=" " alt="" coords="250,388,437,428"/>
+<area shape="poly" id="edge30_Node000001_Node000024" title=" " alt="" coords="175,361,253,382,252,387,173,367"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Layer_ad60e0b647ec7b8f3cab248eb7b771af9.html#ad60e0b647ec7b8f3cab248eb7b771af9" title="Add an element to the layer." alt="" coords="508,25,689,65"/>
+<area shape="poly" id="edge4_Node000003_Node000004" title=" " alt="" coords="433,324,450,310,469,282,477,253,477,224,474,195,470,166,470,136,478,106,498,76,501,72,505,76,502,79,483,108,475,137,475,166,479,195,483,224,483,254,474,284,454,314,436,328"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Forma_1_1LayoutCursor_a02729f92552c95917df76e25fc8eee81.html#a02729f92552c95917df76e25fc8eee81" title="Bind a live scroll offset." alt="" coords="501,89,696,129"/>
+<area shape="poly" id="edge5_Node000003_Node000005" title=" " alt="" coords="433,323,450,310,465,291,472,271,474,231,476,189,483,168,498,146,511,135,515,139,502,150,488,170,481,190,480,231,478,272,470,293,454,314,436,327"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Surface_a59632cf950ca32272134390bb45ee7ab.html#a59632cf950ca32272134390bb45ee7ab" title="Access the event router." alt="" coords="975,133,1156,173"/>
+<area shape="poly" id="edge6_Node000003_Node000006" title=" " alt="" coords="433,322,450,310,462,296,468,281,472,250,476,219,484,204,498,190,533,173,581,160,639,151,703,146,839,142,961,145,961,150,839,148,704,151,640,156,582,165,535,178,502,194,488,207,481,220,477,250,473,282,467,298,454,314,436,327"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Kinesis_ae7264d97a31a6219d1a0c63714eea28e.html#ae7264d97a31a6219d1a0c63714eea28e" title="Generate a filled TRIANGLE_STRIP quad from an AABB2D." alt="" coords="524,228,673,268"/>
+<area shape="poly" id="edge7_Node000003_Node000007" title=" " alt="" coords="422,321,451,310,475,294,499,278,515,271,517,275,501,282,478,298,453,314,423,326"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Surface_a75c1be61d11b8a157158eee48c4e5992.html#a75c1be61d11b8a157158eee48c4e5992" title="Access the spatial registry." alt="" coords="975,376,1156,416"/>
+<area shape="poly" id="edge9_Node000003_Node000008" title=" " alt="" coords="423,362,453,374,477,391,487,399,501,405,560,420,622,429,684,434,745,435,862,428,961,414,961,420,862,433,746,440,684,439,621,435,559,425,499,411,484,404,474,395,451,378,422,367"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_a398302330afd952b8a7d1c5bf4dbd91e.html#a398302330afd952b8a7d1c5bf4dbd91e" title="Called on scroll while the cursor is over an element." alt="" coords="508,356,689,396"/>
+<area shape="poly" id="edge10_Node000003_Node000009" title=" " alt="" coords="434,353,494,360,494,366,434,358"/>
+<area shape="rect" id="Node000010" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Scrollable_a197b5073f36918705a3ccfa42f25cc53.html#a197b5073f36918705a3ccfa42f25cc53" title="A self&#45;contained wheel&#45;scroll handler bound to this Scrollable&#39;s own state." alt="" coords="500,292,697,332"/>
+<area shape="poly" id="edge11_Node000003_Node000010" title=" " alt="" coords="434,330,486,323,487,329,434,335"/>
+<area shape="rect" id="Node000021" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Element_a28624dc1404dc17967ea9167ac7b138c.html#a28624dc1404dc17967ea9167ac7b138c" title="Set the fast&#45;reject AABB." alt="" coords="508,471,689,511"/>
+<area shape="poly" id="edge27_Node000003_Node000021" title=" " alt="" coords="434,362,454,374,471,393,479,412,486,431,502,450,520,462,517,467,498,454,482,434,474,414,466,396,450,378,431,366"/>
+<area shape="rect" id="Node000022" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Element_a221b3040ba09f717da50b52ee382660b.html#a221b3040ba09f717da50b52ee382660b" title="Attach a FormaBuffer as the rendered output for this region." alt="" coords="508,535,689,575"/>
+<area shape="poly" id="edge28_Node000003_Node000022" title=" " alt="" coords="436,361,454,374,468,393,476,412,479,449,482,485,488,503,502,521,506,524,502,528,498,524,484,506,476,487,474,449,471,413,464,395,450,378,433,365"/>
+<area shape="rect" id="Node000023" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Element_ad81b20895220d4e168672dec7a3c1482.html#ad81b20895220d4e168672dec7a3c1482" title="Set the human&#45;readable name used in Lila introspection and debug output." alt="" coords="508,599,689,639"/>
+<area shape="poly" id="edge29_Node000003_Node000023" title=" " alt="" coords="436,360,454,374,473,401,481,428,482,455,479,481,476,507,477,533,484,559,502,585,506,589,502,592,498,588,480,561,472,534,471,507,474,481,476,455,475,429,468,403,450,378,432,364"/>
+<area shape="poly" id="edge8_Node000007_Node000007" title=" " alt="" coords="554,228,552,218,559,209,575,203,599,201,626,204,641,211,639,216,625,209,599,207,576,209,562,213,557,219,560,227"/>
+<area shape="poly" id="edge26_Node000010_Node000008" title=" " alt="" coords="661,329,746,355,857,374,961,386,961,391,856,379,745,360,660,335"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_1_1Kinesis_a758a2dd2ae02348f8abefa9f3703fdaa.html#a758a2dd2ae02348f8abefa9f3703fdaa" title="Dolly eye along the current forward vector." alt="" coords="761,305,911,345"/>
+<area shape="poly" id="edge12_Node000010_Node000011" title=" " alt="" coords="698,315,748,318,747,323,697,320"/>
+<area shape="rect" id="Node000012" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Scrollable_a78c4cc52dcb09498fa60a905b57bcf8d.html#a78c4cc52dcb09498fa60a905b57bcf8d" title="Attach a caller&#45;built element as a live, draggable scroll indicator." alt="" coords="745,241,927,281"/>
+<area shape="poly" id="edge13_Node000010_Node000012" title=" " alt="" coords="692,289,731,281,732,286,693,295"/>
+<area shape="poly" id="edge14_Node000012_Node000006" title=" " alt="" coords="869,239,974,183,990,176,992,181,976,188,872,243"/>
+<area shape="poly" id="edge17_Node000012_Node000008" title=" " alt="" coords="909,279,928,291,945,309,953,328,961,345,976,362,984,367,981,371,973,366,956,348,948,330,940,312,925,295,906,284"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Layer_a6a279bbd434c7f805d6d21f4bf1e2155.html#a6a279bbd434c7f805d6d21f4bf1e2155" title=" " alt="" coords="1433,197,1615,237"/>
+<area shape="poly" id="edge15_Node000012_Node000013" title=" " alt="" coords="927,262,1137,263,1261,258,1385,247,1436,238,1437,243,1386,252,1261,263,1137,269,927,268"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_ad0e5f6b54a528262568438b0354769bd.html#ad0e5f6b54a528262568438b0354769bd" title="Called on each mouse&#45;move event while btn is held, tracking the element where the drag began even whe..." alt="" coords="975,312,1156,352"/>
+<area shape="poly" id="edge18_Node000012_Node000015" title=" " alt="" coords="902,279,987,305,986,310,901,284"/>
+<area shape="rect" id="Node000016" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Scrollable_ae6e4bb4eb7b365b8e6d1f596a3117d89.html#ae6e4bb4eb7b365b8e6d1f596a3117d89" title="Register an element for scroll reflow." alt="" coords="975,197,1156,237"/>
+<area shape="poly" id="edge19_Node000012_Node000016" title=" " alt="" coords="926,241,961,235,962,240,927,247"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Layer_abc4872e7120f81938c9721b312e2e0e7.html#abc4872e7120f81938c9721b312e2e0e7" title=" " alt="" coords="1663,197,1844,237"/>
+<area shape="poly" id="edge16_Node000013_Node000014" title=" " alt="" coords="1615,215,1649,215,1649,220,1615,220"/>
+<area shape="rect" id="Node000017" href="$structMayaFlux_1_1Kinesis_1_1Scissor_abc396cd41162b53f300807dec76659f2.html#abc396cd41162b53f300807dec76659f2" title="Construct directly from an NDC AABB2D." alt="" coords="1220,69,1369,109"/>
+<area shape="poly" id="edge20_Node000016_Node000017" title=" " alt="" coords="1135,195,1154,183,1169,168,1178,152,1186,136,1202,119,1210,114,1213,118,1206,123,1191,139,1182,155,1174,171,1158,187,1137,199"/>
+<area shape="rect" id="Node000018" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Layer_a39e757c02d8b82d3ca7f604da765ba15.html#a39e757c02d8b82d3ca7f604da765ba15" title="Record that related_id belongs with primary_id." alt="" coords="1204,197,1385,237"/>
+<area shape="poly" id="edge21_Node000016_Node000018" title=" " alt="" coords="1156,215,1190,215,1190,220,1156,220"/>
+<area shape="rect" id="Node000019" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Layer_ad93730564d9b4d5d69d3e54b0fcaa73e.html#ad93730564d9b4d5d69d3e54b0fcaa73e" title="Confine hit testing of an element to a region, or lift the confinement with std::nullopt." alt="" coords="1204,133,1385,173"/>
+<area shape="poly" id="edge23_Node000016_Node000019" title=" " alt="" coords="1137,195,1209,174,1210,180,1138,200"/>
+<area shape="rect" id="Node000020" href="$structMayaFlux_1_1Kinesis_1_1AABB2D_a6efb9685283006fd5a3aeb8e74d61f04.html#a6efb9685283006fd5a3aeb8e74d61f04" title=" " alt="" coords="1219,5,1370,45"/>
+<area shape="poly" id="edge25_Node000016_Node000020" title=" " alt="" coords="1139,195,1154,183,1166,168,1173,153,1177,121,1182,89,1189,72,1202,56,1207,51,1210,55,1206,59,1194,75,1187,90,1183,122,1178,154,1171,171,1158,187,1142,199"/>
+<area shape="poly" id="edge22_Node000018_Node000013" title=" " alt="" coords="1386,215,1419,215,1419,220,1386,220"/>
+<area shape="poly" id="edge24_Node000019_Node000013" title=" " alt="" coords="1368,171,1440,191,1438,196,1366,176"/>
+</map>

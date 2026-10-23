@@ -1,0 +1,28 @@
+<map id="MayaFlux::Kakshya::CameraContainer" name="MayaFlux::Kakshya::CameraContainer">
+<area shape="rect" id="Node000001" title="Single&#45;slot live video container for camera device streams." alt="" coords="1019,3213,1221,3433"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1VideoStreamContainer.html" title="Concrete base implementation for streaming video containers." alt="" coords="785,2369,996,3164"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1004,3034,1077,3212,1073,3214,999,3036"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1StreamContainer.html" title="Data&#45;driven interface for temporal stream containers with navigable read position." alt="" coords="163,1738,352,2018"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="280,2031,294,2091,312,2155,336,2217,366,2276,410,2342,461,2405,515,2464,572,2520,686,2618,787,2693,783,2698,682,2622,568,2524,511,2468,457,2408,406,2345,362,2279,331,2219,307,2156,289,2093,275,2032"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1SignalSourceContainer.html" title="Data&#45;driven interface for managing arbitrary processable signal sources." alt="" coords="152,994,363,1274"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="260,1288,260,1738,255,1738,255,1288"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1NDDataContainer.html" title=" " alt="" coords="5,443,240,817"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="179,830,223,993,217,995,174,831"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1NDDataContainer.html" title="Abstract interface for N&#45;dimensional data containers." alt="" coords="32,5,213,380"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="125,394,125,442,120,442,120,394"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="263,590,523,670"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="382,684,298,994,292,993,377,683"/>
+<area shape="rect" id="Node000008" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure.html" title="Container structure for consistent dimension ordering." alt="" coords="376,1479,568,2277"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="570,2248,582,2276,626,2365,675,2453,778,2610,773,2613,671,2455,621,2368,578,2278,566,2250"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Memory_1_1Seqlock.html" title="Sequence lock for fixed&#45;size data regions." alt="" coords="593,1735,791,2021"/>
+<area shape="poly" id="edge8_Node000002_Node000009" title=" " alt="" coords="718,2021,747,2177,781,2345,784,2358,779,2359,776,2346,741,2178,713,2022"/>
+<area shape="rect" id="Node000010" href="$structMayaFlux_1_1Kakshya_1_1Region.html" title="Represents a point or span in N&#45;dimensional space." alt="" coords="815,1658,966,2098"/>
+<area shape="poly" id="edge9_Node000002_Node000010" title=" " alt="" coords="893,2098,893,2353,888,2353,888,2098"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Memory_1_1RingBuffer.html" title=" " alt="" coords="991,1618,1263,2138"/>
+<area shape="poly" id="edge10_Node000002_Node000011" title=" " alt="" coords="1064,2139,1011,2346,1003,2375,998,2374,1005,2345,1059,2138"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Memory_1_1RingBuffer.html" title="Policy&#45;driven unified circular buffer implementation." alt="" coords="993,867,1260,1401"/>
+<area shape="poly" id="edge11_Node000011_Node000012" title=" " alt="" coords="1129,1415,1129,1618,1124,1618,1124,1415"/>
+<area shape="rect" id="Node000013" href="$structMayaFlux_1_1Registry_1_1Service_1_1IOService.html" title="Backend IO streaming service interface." alt="" coords="1287,1828,1427,1928"/>
+<area shape="poly" id="edge13_Node000001_Node000013" title=" " alt="" coords="1360,1928,1355,2112,1347,2229,1335,2346,1296,2584,1248,2819,1199,3031,1156,3198,1151,3197,1194,3029,1243,2818,1291,2583,1329,2345,1342,2228,1349,2112,1355,1928"/>
+<area shape="poly" id="edge12_Node000002_Node000013" title=" " alt="" coords="1362,1928,1361,2002,1350,2094,1339,2142,1324,2190,1303,2237,1277,2279,1266,2289,1255,2293,1244,2296,1232,2303,1169,2365,1109,2433,1055,2503,1007,2573,1003,2569,1051,2500,1105,2430,1165,2361,1229,2299,1242,2291,1253,2288,1263,2284,1273,2276,1299,2234,1319,2189,1334,2141,1344,2093,1355,2002,1357,1928"/>
+</map>

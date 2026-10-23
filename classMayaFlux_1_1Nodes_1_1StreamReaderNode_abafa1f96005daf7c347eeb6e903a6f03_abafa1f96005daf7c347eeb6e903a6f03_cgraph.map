@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nodes::StreamReaderNode::notify_tick" name="MayaFlux::Nodes::StreamReaderNode::notify_tick">
+<area shape="rect" id="Node000001" title="Notifies all registered callbacks with the current context." alt="" coords="5,37,241,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1HookList_a9688ae71a354c2f8a8989eea13979b7d.html#a9688ae71a354c2f8a8989eea13979b7d" title="Calls every entry whose condition, if any, holds." alt="" coords="307,5,507,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="241,41,293,35,294,41,242,47"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1StreamReaderNode_a63213ce20874e262a8b81421aceefbd6.html#a63213ce20874e262a8b81421aceefbd6" title="Updates the context object with the current node state." alt="" coords="289,69,525,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="242,68,276,72,275,77,241,73"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1HookList_a0e44de57f732ba8bbedc5d493f694d01.html#a0e44de57f732ba8bbedc5d493f694d01" title="The current entries, held stable for the lifetime of the returned object." alt="" coords="573,5,773,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="507,23,559,23,559,28,507,28"/>
+</map>

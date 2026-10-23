@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::ShaderProcessor::on_attach" name="MayaFlux::Buffers::ShaderProcessor::on_attach">
+<area shape="rect" id="Node000001" title="Called when this processor is attached to a buffer." alt="" coords="5,5,160,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a6aed67dc05a7476b9cf42a60126c1e3e.html#a6aed67dc05a7476b9cf42a60126c1e3e" title="Auto&#45;bind buffer based on attachment order." alt="" coords="208,5,375,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="160,30,195,30,195,35,160,35"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_ae72d99984f65f41164441d313ae0af88.html#ae72d99984f65f41164441d313ae0af88" title="Bind a VKBuffer to a named shader descriptor." alt="" coords="423,5,589,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="375,30,409,30,409,35,375,35"/>
+</map>

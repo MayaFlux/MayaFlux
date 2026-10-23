@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kinesis::resample_uniform" name="MayaFlux::Kinesis::resample_uniform">
+<area shape="rect" id="Node000001" title="Resample a path to a fixed point count at uniform arc length." alt="" coords="203,37,352,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a0302ddc62720c17b914aab2f07b7521f.html#a0302ddc62720c17b914aab2f07b7521f" title="Root mean square point distance between two paths after resampling and normalization." alt="" coords="5,5,155,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="189,46,155,40,155,35,190,40"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_a430f6caf58aa27b54a540b66ca6bd260.html#a430f6caf58aa27b54a540b66ca6bd260" title="Build a turning profile from a path." alt="" coords="5,69,155,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="190,74,155,80,155,75,189,69"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::Vision::BufferOutputs" name="MayaFlux::Kinesis::Vision::BufferOutputs">
+<area shape="rect" id="Node000001" title="Live device views of the GPU&#45;resident export buffers, one named slot per exporting op,..." alt="" coords="25,228,177,348"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1ContoursBufferView.html" title="Live device view of FindContours&#39; traced contours, when FindContoursParams::export_contours_buffer is..." alt="" coords="5,5,196,165"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="103,166,103,211,98,211,98,166"/>
+</map>

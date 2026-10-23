@@ -1,0 +1,15 @@
+<map id="MayaFlux::Buffers::ShaderProcessor::unbind_buffer" name="MayaFlux::Buffers::ShaderProcessor::unbind_buffer">
+<area shape="rect" id="Node000001" title="Unbind a buffer from a descriptor." alt="" coords="508,156,691,211"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1FormaBindingsProcessor_a137a41e0913e3cb27c7665bad8a39be9.html#a137a41e0913e3cb27c7665bad8a39be9" title=" " alt="" coords="257,84,439,139"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="494,156,439,140,440,135,495,151"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_ad49be4ee042ba3f48b4dfbb797dea946.html#ad49be4ee042ba3f48b4dfbb797dea946" title="Remove a feed." alt="" coords="236,163,460,203"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="494,186,460,186,460,181,494,181"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1DescriptorBindingsProcessor_aef92f87ec4cdbc48752f3087d550017c.html#aef92f87ec4cdbc48752f3087d550017c" title="Remove a binding." alt="" coords="244,228,452,283"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="496,216,444,231,443,225,494,211"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1FormaBindingsProcessor_a3a6c5e705809ffe941758d473020b93b.html#a3a6c5e705809ffe941758d473020b93b" title="Bind a type&#45;erased reader to a descriptor binding." alt="" coords="5,5,188,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="246,82,184,63,186,58,248,77"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1FormaBindingsProcessor_aff378d317bcaad379cac3bd659e702c3.html#aff378d317bcaad379cac3bd659e702c3" title="Bind a type&#45;erased reader to a push constant slot." alt="" coords="5,84,188,139"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="243,114,188,114,188,109,243,109"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1FormaBindingsProcessor_a70791ca7eedf64e4d11706c75c1dc55e.html#a70791ca7eedf64e4d11706c75c1dc55e" title="Remove a binding by name." alt="" coords="5,163,188,217"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="248,145,186,165,184,160,246,140"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Yantra::StatisticalAnalyzer::get_available_methods" name="MayaFlux::Yantra::StatisticalAnalyzer::get_available_methods">
+<area shape="rect" id="Node000001" title="Get available analysis methods." alt="" coords="541,13,780,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1StatisticalAnalyzer_a53e6eea14c334ccf4ff023edac2dbc6a.html#a53e6eea14c334ccf4ff023edac2dbc6a" title="Get supported methods for specific type index." alt="" coords="287,5,493,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="528,35,493,35,493,30,528,30"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1StatisticalAnalyzer_a767a15f0646562ce2bb012906e95bc9e.html#a767a15f0646562ce2bb012906e95bc9e" title="Get supported methods for specific input type." alt="" coords="5,13,239,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="273,35,239,35,239,30,273,30"/>
+</map>

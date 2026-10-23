@@ -1,0 +1,25 @@
+<map id="MayaFlux::Nodes::CompositeOpNode&lt; N &gt;" name="MayaFlux::Nodes::CompositeOpNode&lt; N &gt;">
+<area shape="rect" id="Node000001" title="Combines the outputs of N nodes using a composite operation." alt="" coords="525,1284,730,1784"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Node.html" title="Base interface for all computational processing nodes." alt="" coords="50,423,247,1207"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="258,1200,261,1205,271,1214,280,1218,303,1228,422,1325,526,1423,523,1427,418,1329,301,1233,278,1223,268,1218,257,1208,253,1203"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1HookList.html" title="Stores, fires and clears the hooks of one node channel." alt="" coords="5,1341,199,1727"/>
+<area shape="poly" id="edge3_Node000003_Node000002" title=" " alt="" coords="53,1138,48,1200,50,1260,59,1325,53,1326,45,1260,43,1199,47,1138"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="114,1341,119,1260,122,1223,127,1224,125,1260,119,1341"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Nodes_1_1RoutingState.html" title="Represents the state of routing transitions for a node." alt="" coords="56,180,241,360"/>
+<area shape="poly" id="edge4_Node000002_Node000004" title=" " alt="" coords="151,360,151,406,146,406,146,360"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="272,767,492,862"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="402,875,448,1026,507,1206,535,1283,530,1285,502,1208,443,1027,397,877"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager.html" title="Central manager for the computational processing node graph." alt="" coords="517,430,738,1199"/>
+<area shape="poly" id="edge6_Node000001_Node000006" title=" " alt="" coords="630,1200,630,1268,625,1268,625,1200"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Nodes_1_1NodeConfig.html" title="Configuration settings for individual audio nodes." alt="" coords="489,187,699,353"/>
+<area shape="poly" id="edge7_Node000006_Node000007" title=" " alt="" coords="602,353,605,414,600,414,596,353"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1CompositeOpContext.html" title="Context for N&#45;ary composite operation callbacks." alt="" coords="982,230,1187,310"/>
+<area shape="poly" id="edge8_Node000001_Node000008" title=" " alt="" coords="1092,310,1103,462,1106,569,1102,691,1091,820,1068,953,1033,1084,1009,1147,982,1208,959,1247,933,1284,874,1352,809,1412,745,1461,742,1457,805,1408,870,1348,929,1281,955,1244,977,1205,1004,1145,1028,1082,1063,952,1085,820,1097,690,1100,569,1098,462,1087,310"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Nodes_1_1CompositeOpContextGpu.html" title="GPU&#45;compatible context for composite operation callbacks." alt="" coords="762,775,967,855"/>
+<area shape="poly" id="edge11_Node000010_Node000008" title=" " alt="" coords="1059,324,1028,385,982,495,940,604,880,775,875,773,935,602,977,493,1024,383,1054,321"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nodes_1_1NodeContext.html" title="Base context class for node callbacks." alt="" coords="975,5,1195,131"/>
+<area shape="poly" id="edge9_Node000008_Node000009" title=" " alt="" coords="1087,144,1087,230,1082,230,1082,144"/>
+<area shape="poly" id="edge10_Node000001_Node000010" title=" " alt="" coords="857,856,813,1010,753,1207,731,1269,726,1268,747,1206,808,1009,852,854"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Nodes_1_1GpuVectorData.html" title="GPU&#45;uploadable 1D array data interface." alt="" coords="724,197,957,343"/>
+<area shape="poly" id="edge12_Node000010_Node000011" title=" " alt="" coords="847,356,866,774,860,775,842,356"/>
+</map>

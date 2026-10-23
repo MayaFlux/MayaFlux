@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::BufferProcessingControl::add_audio_processor" name="MayaFlux::Buffers::BufferProcessingControl::add_audio_processor">
+<area shape="rect" id="Node000001" title="Adds a processor to a specific audio buffer." alt="" coords="5,84,184,139"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_a012057e576d30bf8dce1f3870d59a4dd.html#a012057e576d30bf8dce1f3870d59a4dd" title="Gets all active audio processing tokens." alt="" coords="239,5,411,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="175,81,231,62,233,67,177,86"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_a1fec27437763c5bec8ff1f2bcedd1a79.html#a1fec27437763c5bec8ff1f2bcedd1a79" title="Gets an existing audio unit without creating if missing." alt="" coords="239,84,411,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="184,109,225,109,225,114,184,114"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Buffers_1_1RootAudioUnit_adab6da56d6eb5d1fc2606c8c1ab8e01f.html#adab6da56d6eb5d1fc2606c8c1ab8e01f" title=" " alt="" coords="232,163,419,203"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="184,136,248,157,246,162,182,141"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::Vision::DetectEdgesParams" name="MayaFlux::Kinesis::Vision::DetectEdgesParams">
+<area shape="rect" id="Node000001" title="Parameters for VisionIntent::DetectEdges." alt="" coords="5,188,197,268"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1Vision_1_1CannyParams.html" title=" " alt="" coords="26,5,177,125"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="104,125,104,172,99,172,99,125"/>
+</map>

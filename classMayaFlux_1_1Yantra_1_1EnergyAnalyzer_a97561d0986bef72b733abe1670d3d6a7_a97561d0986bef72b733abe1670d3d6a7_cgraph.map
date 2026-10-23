@@ -1,0 +1,48 @@
+<map id="MayaFlux::Yantra::EnergyAnalyzer::analyze_implementation" name="MayaFlux::Yantra::EnergyAnalyzer::analyze_implementation">
+<area shape="rect" id="Node000001" title="Core analysis implementation &#45; creates analysis result AND pipeline output." alt="" coords="5,854,255,894"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1EnergyAnalyzer_aae10121eaa04e3e509079717b90890ef.html#aae10121eaa04e3e509079717b90890ef" title="Compute energy values using span (zero&#45;copy processing)" alt="" coords="326,309,522,364"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="140,852,399,375,403,378,145,855"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Yantra_1_1EnergyAnalyzer_a6481979f5e36c8d244d6c48966fc2ef0.html#a6481979f5e36c8d244d6c48966fc2ef0" title="Create comprehensive analysis result from energy computation." alt="" coords="329,745,519,800"/>
+<area shape="poly" id="edge13_Node000001_Node000011" title=" " alt="" coords="188,851,330,802,332,807,190,856"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Yantra_1_1EnergyAnalyzer_a0a259b21ef9e7d4d2986d72902377ebd.html#a0a259b21ef9e7d4d2986d72902377ebd" title="Create pipeline output from input and energy values." alt="" coords="331,847,517,901"/>
+<area shape="poly" id="edge19_Node000001_Node000015" title=" " alt="" coords="255,871,317,871,317,877,255,877"/>
+<area shape="rect" id="Node000020" href="$classMayaFlux_1_1Yantra_1_1OperationHelper_af45a37d9b80c0e9c0de90e1776647ec0.html#af45a37d9b80c0e9c0de90e1776647ec0" title="Extract structured double data from Datum container or direct ComputeData with automatic container ha..." alt="" coords="303,926,545,966"/>
+<area shape="poly" id="edge24_Node000001_Node000020" title=" " alt="" coords="213,891,329,920,328,925,212,897"/>
+<area shape="rect" id="Node000021" href="$classMayaFlux_1_1Yantra_1_1UniversalAnalyzer_a8305bc7cd4bc78dfedb1c53d50826670.html#a8305bc7cd4bc78dfedb1c53d50826670" title=" " alt="" coords="322,991,526,1045"/>
+<area shape="poly" id="edge25_Node000001_Node000021" title=" " alt="" coords="161,892,225,933,304,976,321,983,319,988,302,980,223,938,158,896"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1EnergyAnalyzer_a0489dcae47a0c85ad99ac2f458a49ae4.html#a0489dcae47a0c85ad99ac2f458a49ae4" title="Calculate number of windows for given data size." alt="" coords="613,5,800,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="433,308,455,258,489,194,535,128,562,98,592,71,599,65,602,69,595,75,566,101,539,132,494,197,460,260,438,310"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a61b99c5f7e008674f3514a3dc30c0934.html#a61b99c5f7e008674f3514a3dc30c0934" title="Dynamic range in dB per window." alt="" coords="615,85,799,125"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="439,308,464,269,498,222,542,175,592,134,603,128,605,133,595,139,545,179,503,225,468,272,443,311"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a03f2f03915592b851e8b24778c4b814b.html#a03f2f03915592b851e8b24778c4b814b" title="Low&#45;frequency spectral energy per window." alt="" coords="617,173,796,228"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="467,307,526,273,592,238,610,231,612,235,594,243,528,277,470,312"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a5970ee5660c02fb526cd5ad6f5895e4a.html#a5970ee5660c02fb526cd5ad6f5895e4a" title="Peak amplitude per window." alt="" coords="632,253,781,293"/>
+<area shape="poly" id="edge6_Node000002_Node000006" title=" " alt="" coords="521,312,618,290,619,295,523,317"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a2fe753ad61d3b9669d7fcf5369bcb700.html#a2fe753ad61d3b9669d7fcf5369bcb700" title="Power (sum of squares) per window." alt="" coords="632,317,781,357"/>
+<area shape="poly" id="edge7_Node000002_Node000007" title=" " alt="" coords="522,334,618,334,618,339,522,339"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_ace9bc7c524eeeff35f5d23bf4b14a6ce.html#ace9bc7c524eeeff35f5d23bf4b14a6ce" title="RMS energy per window." alt="" coords="632,381,781,421"/>
+<area shape="poly" id="edge8_Node000002_Node000008" title=" " alt="" coords="523,356,619,378,618,383,521,361"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a17e49f6396fb23a61d038d0d8f308666.html#a17e49f6396fb23a61d038d0d8f308666" title="Spectral energy per window using Hann&#45;windowed FFT." alt="" coords="613,469,801,509"/>
+<area shape="poly" id="edge9_Node000002_Node000009" title=" " alt="" coords="473,362,595,430,652,460,650,465,592,435,470,366"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_acdf5fda9e4de1ead09e1b29a4fecd411.html#acdf5fda9e4de1ead09e1b29a4fecd411" title="Zero&#45;crossing rate per window." alt="" coords="603,557,810,597"/>
+<area shape="poly" id="edge11_Node000002_Node000010" title=" " alt="" coords="448,363,509,438,550,480,595,519,645,549,642,553,592,523,547,484,505,442,443,366"/>
+<area shape="poly" id="edge5_Node000005_Node000005" title=" " alt="" coords="656,173,657,163,666,154,682,149,707,147,736,150,752,158,750,162,734,155,707,152,683,154,668,159,662,165,662,173"/>
+<area shape="poly" id="edge10_Node000009_Node000009" title=" " alt="" coords="659,469,656,459,664,450,681,444,707,442,737,445,753,452,751,457,735,450,707,447,682,449,666,454,661,460,664,467"/>
+<area shape="poly" id="edge12_Node000010_Node000010" title=" " alt="" coords="659,557,656,547,664,538,681,532,707,530,737,533,753,540,751,545,735,538,707,535,682,537,666,542,661,548,664,555"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Yantra_1_1EnergyAnalyzer_af1aef54234b215a75101eafe2c87f30f.html#af1aef54234b215a75101eafe2c87f30f" title="Classify energy value into qualitative level." alt="" coords="593,621,820,661"/>
+<area shape="poly" id="edge14_Node000011_Node000012" title=" " alt="" coords="464,743,523,706,592,670,612,663,614,668,594,675,526,710,467,747"/>
+<area shape="rect" id="Node000013" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a9c90017817936dc5ac65ff5e13eddba3.html#a9c90017817936dc5ac65ff5e13eddba3" title="Sample indices of local peak maxima in the full span." alt="" coords="615,709,798,749"/>
+<area shape="poly" id="edge15_Node000011_Node000013" title=" " alt="" coords="519,755,601,742,602,748,519,761"/>
+<area shape="rect" id="Node000014" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a3735f1ad5f405ceccbbe66cc73d4d3bd.html#a3735f1ad5f405ceccbbe66cc73d4d3bd" title="Sample indices of zero crossings in the full span." alt="" coords="620,797,793,852"/>
+<area shape="poly" id="edge17_Node000011_Node000014" title=" " alt="" coords="519,787,607,804,606,809,518,793"/>
+<area shape="poly" id="edge16_Node000013_Node000013" title=" " alt="" coords="659,709,656,699,664,690,681,684,707,682,737,685,753,692,751,697,735,690,707,687,682,689,666,694,661,700,664,707"/>
+<area shape="poly" id="edge18_Node000014_Node000014" title=" " alt="" coords="656,797,657,787,666,778,682,773,707,771,736,774,752,782,750,786,734,779,707,776,683,778,668,783,662,789,662,797"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation_ac364bad27ce3e4d35add89333c9a24b8.html#ac364bad27ce3e4d35add89333c9a24b8" title="Convert processed double data back to OutputType using metadata and optional callback." alt="" coords="606,877,807,917"/>
+<area shape="poly" id="edge20_Node000015_Node000016" title=" " alt="" coords="518,879,593,885,592,890,517,884"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1Yantra_1_1EnergyAnalyzer_a94808ad2c7c12f9d645d88bd792d7b5a.html#a94808ad2c7c12f9d645d88bd792d7b5a" title="Convert energy method enum to string." alt="" coords="606,941,807,981"/>
+<area shape="poly" id="edge21_Node000015_Node000017" title=" " alt="" coords="508,899,594,926,621,934,619,939,593,931,507,904"/>
+<area shape="rect" id="Node000018" href="$namespaceMayaFlux_1_1Reflect_a33dff0234606d8a7a9b4b026a3874e0a.html#a33dff0234606d8a7a9b4b026a3874e0a" title="Universal enum to lowercase string converter using magic_enum." alt="" coords="868,941,1064,981"/>
+<area shape="poly" id="edge22_Node000017_Node000018" title=" " alt="" coords="808,958,854,958,854,963,808,963"/>
+<area shape="rect" id="Node000019" href="$namespaceMayaFlux_1_1Reflect_ab5371cce72bc91cd1babe7826f27f39a.html#ab5371cce72bc91cd1babe7826f27f39a" title="Convert string to lowercase." alt="" coords="1112,941,1259,981"/>
+<area shape="poly" id="edge23_Node000018_Node000019" title=" " alt="" coords="1064,958,1098,958,1098,963,1064,963"/>
+</map>

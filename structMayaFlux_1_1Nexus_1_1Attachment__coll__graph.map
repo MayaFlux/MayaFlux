@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nexus::Attachment" name="MayaFlux::Nexus::Attachment">
+<area shape="rect" id="Node000001" title="State of one Agent attached to an existing buffer." alt="" coords="9,173,220,319"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Nexus_1_1AttachConfig.html" title="How an Agent attaches to a buffer that already exists." alt="" coords="5,5,224,111"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="117,111,117,157,112,157,112,111"/>
+</map>

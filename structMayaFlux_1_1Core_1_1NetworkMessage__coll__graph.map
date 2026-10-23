@@ -1,0 +1,3 @@
+<map id="MayaFlux::Core::NetworkMessage" name="MayaFlux::Core::NetworkMessage">
+<area shape="rect" id="Node000001" title="A received datagram or framed message with sender metadata." alt="" coords="5,5,243,111"/>
+</map>

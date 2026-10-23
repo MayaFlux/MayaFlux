@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::FeedbackProcessor::coefficients" name="MayaFlux::Buffers::FeedbackProcessor::coefficients">
+<area shape="rect" id="Node000001" title="The coefficient array of one attached buffer, empty if it is not attached." alt="" coords="228,13,459,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1FeedbackProcessor_ad51dba0e90be9c367a6cc3dc1bb95451.html#ad51dba0e90be9c367a6cc3dc1bb95451" title="Set the initial coefficient array and reset every attached buffer&#39;s copy." alt="" coords="5,5,180,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="214,35,180,35,180,30,214,30"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nexus::Mantle" name="MayaFlux::Nexus::Mantle">
+<area shape="rect" id="Node000001" title="An Expanse that is a box with a buffer that already exists as its visible body." alt="" coords="11,639,191,924"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1Expanse.html" title="A defined region of space with a containment test and crossing actions." alt="" coords="5,5,196,591"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="103,604,103,638,98,638,98,604"/>
+</map>

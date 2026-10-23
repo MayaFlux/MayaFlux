@@ -1,0 +1,15 @@
+<map id="MayaFlux::Portal::Graphics::SamplerForge::get_or_create" name="MayaFlux::Portal::Graphics::SamplerForge::get_or_create">
+<area shape="rect" id="Node000001" title="Get or create a sampler with the given configuration." alt="" coords="5,133,223,173"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_afa86f42384001799058f8318acca8434.html#afa86f42384001799058f8318acca8434" title=" " alt="" coords="271,69,500,109"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="199,131,286,110,287,115,200,136"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_a90db6c9ddb1c049e8481bf49af7bea3e.html#a90db6c9ddb1c049e8481bf49af7bea3e" title=" " alt="" coords="283,133,488,173"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="223,151,269,151,269,156,223,156"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_a15a0922824ec316d8aa5b8f8bb7e3e73.html#a15a0922824ec316d8aa5b8f8bb7e3e73" title="Check if factory is initialized." alt="" coords="280,197,491,237"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="200,171,287,192,286,197,199,176"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_a3601257f00f541625ec136c52dd88ce5.html#a3601257f00f541625ec136c52dd88ce5" title=" " alt="" coords="548,5,815,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="478,67,574,46,576,51,479,72"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_aa9bc6ca865badcf685bd0c5dabced2e7.html#aa9bc6ca865badcf685bd0c5dabced2e7" title=" " alt="" coords="555,69,807,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="500,87,542,87,542,92,500,92"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_a1f850f0d077848db00815e87087c3765.html#a1f850f0d077848db00815e87087c3765" title=" " alt="" coords="581,133,782,173"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="479,107,576,128,574,133,478,112"/>
+</map>

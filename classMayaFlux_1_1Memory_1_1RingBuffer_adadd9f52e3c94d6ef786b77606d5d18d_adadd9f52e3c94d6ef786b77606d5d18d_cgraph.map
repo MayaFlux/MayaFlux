@@ -1,0 +1,9 @@
+<map id="MayaFlux::Memory::RingBuffer::resize" name="MayaFlux::Memory::RingBuffer::resize">
+<area shape="rect" id="Node000001" title="Resize buffer capacity (DynamicStorage only)" alt="" coords="5,5,228,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Memory_1_1RingBuffer_aec6b85fd4854f810df2eef97ceea351f.html#aec6b85fd4854f810df2eef97ceea351f" title="Thread&#45;safe snapshot of buffer contents." alt="" coords="276,5,499,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="228,23,262,23,262,28,228,28"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Memory_1_1RingBuffer_a5116b9581045549c2172886ca7b796aa.html#a5116b9581045549c2172886ca7b796aa" title="Get linearized view of buffer contents." alt="" coords="547,5,769,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="499,23,533,23,533,28,499,28"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Memory_1_1RingBuffer_a759a70ca443e7c4d3b5c34c1a751c370.html#a759a70ca443e7c4d3b5c34c1a751c370" title="Get approximate element count." alt="" coords="817,5,1040,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="769,23,804,23,804,28,769,28"/>
+</map>

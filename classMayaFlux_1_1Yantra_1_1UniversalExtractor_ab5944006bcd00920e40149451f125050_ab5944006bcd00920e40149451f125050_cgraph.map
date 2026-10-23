@@ -1,0 +1,9 @@
+<map id="MayaFlux::Yantra::UniversalExtractor::apply_scope_filtering" name="MayaFlux::Yantra::UniversalExtractor::apply_scope_filtering">
+<area shape="rect" id="Node000001" title="Apply scope filtering to results." alt="" coords="5,85,232,125"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1UniversalExtractor_a9d4741cadeb96283919b0925065cb9fd.html#a9d4741cadeb96283919b0925065cb9fd" title="Apply content&#45;based filtering (override for custom filtering)" alt="" coords="292,5,496,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="195,82,278,60,279,65,197,87"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1UniversalExtractor_a38ff22dd95a260af94e31857aaec4760.html#a38ff22dd95a260af94e31857aaec4760" title="Apply data sampling (override for custom sampling)" alt="" coords="280,85,508,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="232,102,266,102,266,107,232,107"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1UniversalExtractor_a36cb2c3d5f8f7d73960d6f6486f286b7.html#a36cb2c3d5f8f7d73960d6f6486f286b7" title="Filter results to target regions (override for custom filtering)" alt="" coords="292,149,496,204"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="197,122,279,144,278,149,195,127"/>
+</map>

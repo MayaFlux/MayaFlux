@@ -1,0 +1,13 @@
+<map id="MayaFlux::Kakshya::RegionProcessorBase::cache_region_if_needed" name="MayaFlux::Kakshya::RegionProcessorBase::cache_region_if_needed">
+<area shape="rect" id="Node000001" title="Cache a region&#39;s data if beneficial and not already cached." alt="" coords="1051,45,1237,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1RegionOrganizationProcessor_a689f4b3fcc4e996be99404281d52f2be.html#a689f4b3fcc4e996be99404281d52f2be" title="Adds a segment to an existing region." alt="" coords="789,5,1003,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1037,58,1002,52,1003,47,1038,53"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1RegionOrganizationProcessor_a59f650080c96dd023526748dd2973ce2.html#a59f650080c96dd023526748dd2973ce2" title="Organize a group of regions within the container." alt="" coords="789,84,1003,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="1038,92,1003,97,1002,92,1037,87"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1RegionOrganizationProcessor_a859617074cd86ffe2ec6c6dce084338e.html#a859617074cd86ffe2ec6c6dce084338e" title="Organize the container&#39;s data into regions and segments." alt="" coords="528,84,741,139"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="775,114,742,114,742,109,775,109"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1RegionOrganizationProcessor_a53ac8aa1aa08e4214a8f1783ef1e68d6.html#a53ac8aa1aa08e4214a8f1783ef1e68d6" title="Refresh the internal organization of regions." alt="" coords="267,84,480,139"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="514,114,480,114,480,109,514,109"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1RegionOrganizationProcessor_a179ac2634df01daa1487358870042997.html#a179ac2634df01daa1487358870042997" title="Creates a new region group for organizing related regions." alt="" coords="5,84,219,139"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="253,114,219,114,219,109,253,109"/>
+</map>

@@ -1,0 +1,8 @@
+<map id="MayaFlux::Nexus::read_placement" name="MayaFlux::Nexus::read_placement">
+<area shape="rect" id="Node000001" title="Where a buffer is drawn: the geometry transform of its primary render processor." alt="" coords="223,37,395,77"/>
+<area shape="poly" id="edge3_Node000001_Node000001" title=" " alt="" coords="346,26,333,19,309,16,288,18,275,23,270,29,273,36,268,38,265,28,272,18,286,13,309,11,334,14,348,21"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1Hull_a35080bd7d80c58830f8bbbc630a955b5.html#a35080bd7d80c58830f8bbbc630a955b5" title="Test whether a world position lies within the buffer&#39;s bounds as drawn." alt="" coords="5,5,175,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="209,45,174,40,175,35,210,40"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nexus_1_1Hull_a3d9184ed0531efe7c872f41e617f399b.html#a3d9184ed0531efe7c872f41e617f399b" title="The centre of the bounds as drawn, and the distance to their farthest corner." alt="" coords="5,69,175,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="210,75,175,80,174,74,209,69"/>
+</map>

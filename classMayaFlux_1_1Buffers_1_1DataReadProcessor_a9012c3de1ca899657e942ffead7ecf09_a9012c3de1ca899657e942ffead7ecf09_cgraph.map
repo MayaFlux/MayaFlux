@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::DataReadProcessor::arm" name="MayaFlux::Buffers::DataReadProcessor::arm">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,13,188,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1DataReadProcessor_ac97543df2d7d3e06c1a6c7b9d25e596a.html#ac97543df2d7d3e06c1a6c7b9d25e596a" title="Whether a read is armed, or its result has not been resolved yet." alt="" coords="236,5,404,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="188,30,222,30,222,35,188,35"/>
+</map>

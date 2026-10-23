@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::Discrete::horner" name="MayaFlux::Kinesis::Discrete::horner">
+<area shape="rect" id="Node000001" title="Horner evaluation, coefficients highest power first." alt="" coords="268,5,417,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a509b4f3028caa4e42b70ddc899aecbe4.html#a509b4f3028caa4e42b70ddc899aecbe4" title="Polynomial of the previous value, coefs highest power first." alt="" coords="5,5,220,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="254,28,220,28,220,23,254,23"/>
+</map>

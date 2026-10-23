@@ -1,0 +1,12 @@
+<map id="MayaFlux::Yantra::VisionExtractor::region_for_analysis" name="MayaFlux::Yantra::VisionExtractor::region_for_analysis">
+<area shape="rect" id="Node000001" title=" " alt="" coords="703,30,885,85"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_a4319d62aaf88219cea2e5e32dc282858.html#a4319d62aaf88219cea2e5e32dc282858" title="Crop of source at the focused element, or track/keypoint bounds." alt="" coords="472,5,655,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="689,45,654,41,655,35,690,40"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_a46583381338f2cd8c77484bea9f09a37.html#a46583381338f2cd8c77484bea9f09a37" title="Mean, min and max over the focused element or track/keypoint bounds." alt="" coords="472,69,655,109"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="690,74,655,79,654,74,689,69"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_a405349780e7eb0c7c7c7165acc0c6696.html#a405349780e7eb0c7c7c7165acc0c6696" title=" " alt="" coords="241,37,424,77"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="459,42,425,47,424,42,458,37"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_af4331c5582233c8d45975aaded7c2d96.html#af4331c5582233c8d45975aaded7c2d96" title=" " alt="" coords="5,37,193,77"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="227,60,194,60,194,55,227,55"/>
+<area shape="poly" id="edge5_Node000005_Node000003" title=" " alt="" coords="458,77,424,73,425,67,459,72"/>
+</map>

@@ -1,0 +1,6 @@
+<map id="MayaFlux::Kinesis::Vision::find_contours" name="MayaFlux::Kinesis::Vision::find_contours">
+<area shape="rect" id="Node000001" title="Extract outer and hole contours from a binary mask." alt="" coords="5,29,163,69"/>
+<area shape="poly" id="edge2_Node000001_Node000001" title=" " alt="" coords="40,30,37,20,44,10,60,5,84,3,112,6,127,13,124,18,110,11,84,8,61,10,47,15,42,21,45,28"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a440bc780340fe16d4f30e55bfcfbc92a.html#a440bc780340fe16d4f30e55bfcfbc92a" title="Label connected foreground components in a binary mask." alt="" coords="211,29,435,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="163,47,197,47,197,52,163,52"/>
+</map>

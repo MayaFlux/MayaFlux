@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::CursorAccessProcessor::process_mapped" name="MayaFlux::Kakshya::CursorAccessProcessor::process_mapped">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,41,177,96"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure_a27b9d48a60ea2512b02a8196c6581eec.html#a27b9d48a60ea2512b02a8196c6581eec" title="Extract channel count from dimensions." alt="" coords="242,5,417,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="177,53,228,45,229,51,178,58"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1CursorAccessProcessor_a3935f83ad05254dcaf1cfc38929c9bd5.html#a3935f83ad05254dcaf1cfc38929c9bd5" title="Deactivate without resetting the cursor position." alt="" coords="225,85,433,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="178,79,212,84,211,90,177,84"/>
+</map>

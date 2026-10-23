@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Generator::Logic::set_sequential_function" name="MayaFlux::Nodes::Generator::Logic::set_sequential_function">
+<area shape="rect" id="Node000001" title="Sets a state&#45;based function that receives the coefficient array." alt="" coords="5,5,213,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Logic_a0f95950c38cb7ba9ce04457b10d80d91.html#a0f95950c38cb7ba9ce04457b10d80d91" title="Sets a custom state&#45;based evaluation function." alt="" coords="261,5,469,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="213,30,248,30,248,35,213,35"/>
+</map>

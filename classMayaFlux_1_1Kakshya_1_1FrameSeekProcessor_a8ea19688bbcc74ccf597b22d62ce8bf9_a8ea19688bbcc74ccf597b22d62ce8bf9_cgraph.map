@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::FrameSeekProcessor::set_time_map" name="MayaFlux::Kakshya::FrameSeekProcessor::set_time_map">
+<area shape="rect" id="Node000001" title="Drive the read position from a function of time." alt="" coords="5,5,172,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1FrameSeekProcessor_a056e79dbfe8d5b2976cf282cef05f1b7.html#a056e79dbfe8d5b2976cf282cef05f1b7" title="Restart the clock and the repeat." alt="" coords="220,13,419,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="172,30,206,30,206,35,172,35"/>
+</map>

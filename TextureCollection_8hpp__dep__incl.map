@@ -1,0 +1,15 @@
+<map id="TextureCollection.hpp" name="TextureCollection.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="133,5,296,31"/>
+<area shape="rect" id="Node000002" href="$Chimera_8cpp.html" title=" " alt="" coords="5,79,109,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="178,39,84,81,82,76,176,34"/>
+<area shape="rect" id="Node000003" href="$TextureCollection_8cpp.html" title=" " alt="" coords="133,79,296,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="217,44,217,79,212,79,212,44"/>
+<area shape="rect" id="Node000004" href="$VisionWorkflow_8hpp.html" title=" " alt="" coords="320,79,469,104"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="257,33,366,76,364,81,255,38"/>
+<area shape="rect" id="Node000005" href="$Rigs_8cpp.html" title=" " alt="" coords="219,152,296,177"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="362,113,281,154,279,149,359,108"/>
+<area shape="rect" id="Node000006" href="$VisionWorkflow_8cpp.html" title=" " alt="" coords="321,152,469,177"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="397,118,397,152,392,152,392,118"/>
+<area shape="rect" id="Node000007" href="$WorkflowIncludes_8hpp.html" title="Top level headers for the Yantra compute layer and its workflows." alt="" coords="493,152,657,177"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="437,106,546,149,544,154,435,111"/>
+</map>

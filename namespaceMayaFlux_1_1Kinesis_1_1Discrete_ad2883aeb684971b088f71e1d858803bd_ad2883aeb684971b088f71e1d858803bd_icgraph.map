@@ -1,0 +1,25 @@
+<map id="MayaFlux::Kinesis::Discrete::num_windows" name="MayaFlux::Kinesis::Discrete::num_windows">
+<area shape="rect" id="Node000001" title="Compute the number of analysis windows for a given data size." alt="" coords="772,149,949,189"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Yantra_ae6b26caab0b39cadf8fff2f6dcc2adeb.html#ae6b26caab0b39cadf8fff2f6dcc2adeb" title=" " alt="" coords="300,5,488,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="804,146,723,113,601,76,488,48,489,43,602,71,725,108,806,141"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Yantra_a3b56818263c8ed17b37f4c56b712a8dc.html#a3b56818263c8ed17b37f4c56b712a8dc" title=" " alt="" coords="300,69,488,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="758,153,724,147,488,107,489,102,724,141,759,148"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Yantra_a9eda1c7f470dd4ff6add8b031973bb4d.html#a9eda1c7f470dd4ff6add8b031973bb4d" title=" " alt="" coords="300,133,488,173"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="758,169,488,159,488,154,758,163"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Yantra_a609b9c6d873a88adfd234e6750799226.html#a609b9c6d873a88adfd234e6750799226" title=" " alt="" coords="536,177,724,217"/>
+<area shape="poly" id="edge7_Node000001_Node000006" title=" " alt="" coords="759,184,725,189,724,183,758,179"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Yantra_a6a97c14938b926da6ebfc49e9f064ab8.html#a6a97c14938b926da6ebfc49e9f064ab8" title=" " alt="" coords="536,241,724,281"/>
+<area shape="poly" id="edge9_Node000001_Node000007" title=" " alt="" coords="805,198,725,232,693,244,691,239,723,227,803,193"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_ab68557fff1f97b7705136ec0b678abac.html#ab68557fff1f97b7705136ec0b678abac" title="Sample indices of onsets detected via spectral flux." alt="" coords="537,329,723,369"/>
+<area shape="poly" id="edge11_Node000001_Node000008" title=" " alt="" coords="832,201,783,247,726,295,670,331,667,327,722,291,780,243,828,197"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1FeatureExtractor_a6625311b756518d90e3d5ef2e4125e10.html#a6625311b756518d90e3d5ef2e4125e10" title="Core extraction implementation &#45; delegates to ExtractionHelper." alt="" coords="5,163,252,203"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="315,53,301,60,259,85,218,113,154,164,151,160,215,109,256,80,299,55,313,48"/>
+<area shape="poly" id="edge4_Node000004_Node000003" title=" " alt="" coords="322,116,301,124,186,165,184,160,299,119,320,111"/>
+<area shape="poly" id="edge6_Node000005_Node000003" title=" " alt="" coords="287,168,253,172,252,166,286,163"/>
+<area shape="poly" id="edge8_Node000006_Node000003" title=" " alt="" coords="522,197,252,189,253,184,522,192"/>
+<area shape="poly" id="edge10_Node000007_Node000003" title=" " alt="" coords="522,247,252,205,253,199,522,242"/>
+<area shape="poly" id="edge14_Node000008_Node000008" title=" " alt="" coords="669,318,655,311,630,308,608,310,595,315,590,321,592,328,587,330,585,320,591,310,607,305,630,303,657,306,671,313"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Yantra_a6e53603fd2db55504ec3088ead67576b.html#a6e53603fd2db55504ec3088ead67576b" title=" " alt="" coords="300,313,488,353"/>
+<area shape="poly" id="edge12_Node000008_Node000009" title=" " alt="" coords="523,345,488,342,488,337,523,339"/>
+<area shape="poly" id="edge13_Node000009_Node000003" title=" " alt="" coords="345,309,164,205,166,200,347,304"/>
+</map>

@@ -1,0 +1,17 @@
+<map id="MayaFlux::Nodes::GpuSync::PathGeneratorNode::write_curve_segment" name="MayaFlux::Nodes::GpuSync::PathGeneratorNode::write_curve_segment">
+<area shape="rect" id="Node000001" title="Evaluate one window and write its vertices." alt="" coords="1435,70,1635,125"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PathGeneratorNode_a70c224a24aebe4d014717135ece47677.html#a70c224a24aebe4d014717135ece47677" title="Finish incremental drawing stroke." alt="" coords="1160,5,1387,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1421,69,1346,48,1347,43,1422,64"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PathGeneratorNode_af7678f1e765f09eee1c6221816b243f2.html#af7678f1e765f09eee1c6221816b243f2" title=" " alt="" coords="1162,70,1385,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="1421,100,1385,100,1385,95,1421,95"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PathGeneratorNode_aa18b6b1c9371f04f0f6520337754b2b2.html#aa18b6b1c9371f04f0f6520337754b2b2" title=" " alt="" coords="605,135,841,190"/>
+<area shape="poly" id="edge8_Node000001_Node000007" title=" " alt="" coords="1433,131,1387,140,1241,157,1093,166,956,169,841,169,841,164,956,164,1093,161,1240,152,1386,135,1432,125"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PathGeneratorNode_a030dce2706986bc324777b42809fd022.html#a030dce2706986bc324777b42809fd022" title=" " alt="" coords="889,70,1112,125"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="1148,100,1112,100,1112,95,1148,95"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PathGeneratorNode_a3313b74451cb1153fa66e705c0bbffbc.html#a3313b74451cb1153fa66e705c0bbffbc" title=" " alt="" coords="321,103,557,158"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="875,107,558,126,557,121,875,102"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="877,129,840,138,839,133,876,124"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PathGeneratorNode_a0bb983c3a14dd53e111349bc461d1250.html#a0bb983c3a14dd53e111349bc461d1250" title="Compute frame &#45; generates interpolated vertices from control points." alt="" coords="5,111,273,151"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="307,133,273,133,273,128,307,128"/>
+<area shape="poly" id="edge7_Node000007_Node000005" title=" " alt="" coords="592,151,557,147,558,141,592,145"/>
+</map>

@@ -1,0 +1,18 @@
+<map id="MayaFlux::Buffers::BufferTokenDistributor::has_sample_rate" name="MayaFlux::Buffers::BufferTokenDistributor::has_sample_rate">
+<area shape="rect" id="Node000001" title=" " alt="" coords="668,104,835,159"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferTokenDistributor_a4af8668247d772105d941a61cd2f046a.html#a4af8668247d772105d941a61cd2f046a" title=" " alt="" coords="453,5,620,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="677,101,596,62,598,58,680,96"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1BufferTokenDistributor_a6121e2995fd07d3cb0acc20e4a033f68.html#a6121e2995fd07d3cb0acc20e4a033f68" title=" " alt="" coords="239,64,405,119"/>
+<area shape="poly" id="edge7_Node000001_Node000003" title=" " alt="" coords="654,125,405,102,406,96,654,120"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1BufferTokenDistributor_ae4591636f9d2f46974bff1efe9eaf033.html#ae4591636f9d2f46974bff1efe9eaf033" title=" " alt="" coords="453,136,620,191"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="654,148,621,154,620,148,653,143"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1BufferTokenDistributor_ab405da6eb10db723c3611288b56f7703.html#ab405da6eb10db723c3611288b56f7703" title=" " alt="" coords="453,215,620,269"/>
+<area shape="poly" id="edge8_Node000001_Node000007" title=" " alt="" coords="692,168,621,206,599,217,596,212,619,201,689,163"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="440,62,406,71,405,66,439,57"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1BufferTokenDistributor_ad7575e0fb09c136cb890d448bbe486ac.html#ad7575e0fb09c136cb890d448bbe486ac" title="Distribute with optional transfer target (for cross&#45;domain routing)" alt="" coords="5,104,191,159"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="225,111,191,117,190,112,225,106"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1BufferTokenDistributor_a770e555396476661ff11b14431c183f4.html#a770e555396476661ff11b14431c183f4" title="Distribute a buffer based on its type and requested token." alt="" coords="239,143,405,197"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="439,169,406,170,406,165,439,164"/>
+<area shape="poly" id="edge6_Node000006_Node000004" title=" " alt="" coords="225,156,190,150,191,145,225,151"/>
+<area shape="poly" id="edge9_Node000007_Node000006" title=" " alt="" coords="441,213,403,200,405,195,442,208"/>
+</map>

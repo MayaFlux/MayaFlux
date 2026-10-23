@@ -1,0 +1,20 @@
+<map id="MayaFlux::Buffers::FeedbackProcessor::processing_function" name="MayaFlux::Buffers::FeedbackProcessor::processing_function">
+<area shape="rect" id="Node000001" title="The core processing function that must be implemented by derived classes." alt="" coords="5,91,231,146"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1FeedbackProcessor_aeb86d49b2ac6c775a9ad6780182cdfa9.html#aeb86d49b2ac6c775a9ad6780182cdfa9" title=" " alt="" coords="293,5,477,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="186,89,278,55,301,47,303,52,280,60,188,94"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1FeedbackProcessor_a365ed1df0d377a8b3e0a2593376aed4c.html#a365ed1df0d377a8b3e0a2593376aed4c" title=" " alt="" coords="283,69,487,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="231,104,270,99,270,105,231,109"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Memory_1_1HistoryBuffer_a0b1432247ff72f19a4124869c216b323.html#a0b1432247ff72f19a4124869c216b323" title="Resize buffer capacity." alt="" coords="540,159,743,199"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="231,129,526,163,526,168,231,134"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1FeedbackProcessor_a999f0108caaa97881e4245c7d8ea9b8c.html#a999f0108caaa97881e4245c7d8ea9b8c" title=" " alt="" coords="279,184,492,224"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="205,143,310,177,308,182,203,149"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Memory_1_1HistoryBuffer_ad88cb603850a43476f10adbbc9e3f673.html#ad88cb603850a43476f10adbbc9e3f673" title="Get buffer capacity." alt="" coords="540,19,743,59"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="486,67,526,59,527,64,487,72"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a08f670b92276cec3cf585c4ae5ff64c3.html#a08f670b92276cec3cf585c4ae5ff64c3" title="Lagrange interpolation weights written to an array, without allocating." alt="" coords="542,83,741,123"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="488,92,529,94,528,99,487,97"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a0cfec1af1622af88f33b6be6dd83303a.html#a0cfec1af1622af88f33b6be6dd83303a" title="Prepend delay_samples zero&#45;valued (or fill_value) samples, returning a new vector." alt="" coords="791,51,940,91"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="741,86,777,81,778,86,741,91"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Kinesis_ace716df2f40f1b0e620049c240637942.html#ace716df2f40f1b0e620049c240637942" title="Uniform scaling of a scalar&#45;output tendency." alt="" coords="791,115,940,155"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="741,114,778,119,777,125,741,120"/>
+<area shape="poly" id="edge9_Node000009_Node000008" title=" " alt="" coords="492,191,526,187,527,193,493,196"/>
+</map>

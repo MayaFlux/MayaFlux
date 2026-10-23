@@ -1,0 +1,7 @@
+<map id="MayaFlux::Yantra::VisionExtractor::focus_box_index" name="MayaFlux::Yantra::VisionExtractor::focus_box_index">
+<area shape="rect" id="Node000001" title="Box index of the element the single&#45;element methods act on." alt="" coords="5,5,204,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_ad833822534b8ab909bb3099fe45aff61.html#ad833822534b8ab909bb3099fe45aff61" title="Index into find_elements boxes of the element ranked first by focus, chosen on the GPU from the analy..." alt="" coords="252,5,441,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="204,23,238,23,238,28,204,28"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_a5af57c70b0db8f5729768e839b672a3b.html#a5af57c70b0db8f5729768e839b672a3b" title=" " alt="" coords="489,5,679,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="441,23,476,23,476,28,441,28"/>
+</map>

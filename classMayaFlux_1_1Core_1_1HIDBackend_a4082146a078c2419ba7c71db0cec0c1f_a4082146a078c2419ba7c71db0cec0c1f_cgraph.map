@@ -1,0 +1,13 @@
+<map id="MayaFlux::Core::HIDBackend::start" name="MayaFlux::Core::HIDBackend::start">
+<area shape="rect" id="Node000001" title="Start listening for input events." alt="" coords="5,37,216,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1HIDBackend_aedeff5bd92eb67447d734045e944e960.html#aedeff5bd92eb67447d734045e944e960" title="Get list of currently open device IDs." alt="" coords="264,5,475,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="216,42,250,37,251,43,216,47"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1HIDBackend_a7fa1f678f140a64df0eae495b48adde5.html#a7fa1f678f140a64df0eae495b48adde5" title=" " alt="" coords="264,69,475,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="216,68,251,72,250,77,216,73"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1HIDBackend_aa8bf4dd6b1508f3157ac522dcab69dd8.html#aa8bf4dd6b1508f3157ac522dcab69dd8" title=" " alt="" coords="523,69,733,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="475,87,509,87,509,92,475,92"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1HIDBackend_a2d756a62ebe055696acd30b45420b43c.html#a2d756a62ebe055696acd30b45420b43c" title=" " alt="" coords="781,37,992,77"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="733,74,768,69,768,75,734,79"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Core_1_1HIDBackend_a362e3c3d15b3caa3bc1728990f6bafc5.html#a362e3c3d15b3caa3bc1728990f6bafc5" title=" " alt="" coords="781,101,992,141"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="734,100,768,104,768,109,733,105"/>
+</map>

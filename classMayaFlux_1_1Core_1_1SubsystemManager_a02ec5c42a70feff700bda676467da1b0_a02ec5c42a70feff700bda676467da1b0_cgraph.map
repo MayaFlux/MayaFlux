@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::SubsystemManager::has_process_hook" name="MayaFlux::Core::SubsystemManager::has_process_hook">
+<area shape="rect" id="Node000001" title="Check if a processing hook exists." alt="" coords="5,5,212,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1SubsystemManager_ad290bd2d98badcc05c1ca27b115a3dae.html#ad290bd2d98badcc05c1ca27b115a3dae" title="Get processing handle with validation." alt="" coords="260,5,487,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="212,23,246,23,246,28,212,28"/>
+</map>

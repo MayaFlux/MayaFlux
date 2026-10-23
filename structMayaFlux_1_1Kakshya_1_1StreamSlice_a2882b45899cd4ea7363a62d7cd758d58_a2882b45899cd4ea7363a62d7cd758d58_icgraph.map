@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::StreamSlice::start_frame" name="MayaFlux::Kakshya::StreamSlice::start_frame">
+<area shape="rect" id="Node000001" title=" " alt="" coords="283,37,467,77"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1StreamSlice_a793abc8317d039e33107830847eb14fc.html#a793abc8317d039e33107830847eb14fc" title="Construct a slice spanning a frame sub&#45;region across all channels." alt="" coords="5,5,235,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="269,47,235,42,235,37,269,41"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kakshya_1_1StreamSlice_a50a401098128db62668f45ed10e7fe5a.html#a50a401098128db62668f45ed10e7fe5a" title="Construct a slice spanning a frame and channel sub&#45;region." alt="" coords="27,69,213,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="269,73,214,80,213,75,269,68"/>
+</map>

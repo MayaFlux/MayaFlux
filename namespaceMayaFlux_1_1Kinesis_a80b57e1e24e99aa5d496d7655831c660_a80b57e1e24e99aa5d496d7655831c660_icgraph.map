@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kinesis::generate_interpolated_points" name="MayaFlux::Kinesis::generate_interpolated_points">
+<area shape="rect" id="Node000001" title="Generate interpolated points from control points." alt="" coords="203,29,369,84"/>
+<area shape="poly" id="edge1_Node000001_Node000001" title=" " alt="" coords="320,18,308,11,286,8,268,10,256,15,251,21,251,29,246,29,246,19,253,10,267,5,286,3,309,6,323,14"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_ad749165fadbbc95da3bed4335964be7d.html#ad749165fadbbc95da3bed4335964be7d" title="Process DataVariant through interpolation." alt="" coords="5,37,155,77"/>
+<area shape="poly" id="edge2_Node000001_Node000002" title=" " alt="" coords="189,59,155,59,155,54,189,54"/>
+<area shape="poly" id="edge3_Node000002_Node000002" title=" " alt="" coords="115,25,102,18,80,15,60,17,49,22,44,28,46,36,41,37,39,27,45,18,59,12,80,10,104,13,117,20"/>
+</map>

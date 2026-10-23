@@ -1,0 +1,5 @@
+<map id="MayaFlux::IO::IOManager::save_volume" name="MayaFlux::IO::IOManager::save_volume">
+<area shape="rect" id="Node000001" title="Save an already&#45;downloaded VolumeData to disk asynchronously." alt="" coords="240,5,427,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1IOManager_af3d6ec863b643aadf95baeb7c8121e49.html#af3d6ec863b643aadf95baeb7c8121e49" title="Begin recording a numbered .vdb sequence from a volume." alt="" coords="5,5,192,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="227,28,192,28,192,23,227,23"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::FormaBindingsProcessor::release" name="MayaFlux::Buffers::FormaBindingsProcessor::release">
+<area shape="rect" id="Node000001" title=" " alt="" coords="236,84,419,139"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1FormaBindingsProcessor_a3a6c5e705809ffe941758d473020b93b.html#a3a6c5e705809ffe941758d473020b93b" title="Bind a type&#45;erased reader to a descriptor binding." alt="" coords="5,5,188,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="233,82,176,63,178,58,234,77"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1FormaBindingsProcessor_aff378d317bcaad379cac3bd659e702c3.html#aff378d317bcaad379cac3bd659e702c3" title="Bind a type&#45;erased reader to a push constant slot." alt="" coords="5,84,188,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="223,114,188,114,188,109,223,109"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1FormaBindingsProcessor_a70791ca7eedf64e4d11706c75c1dc55e.html#a70791ca7eedf64e4d11706c75c1dc55e" title="Remove a binding by name." alt="" coords="5,163,188,217"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="234,146,178,165,176,160,233,141"/>
+</map>

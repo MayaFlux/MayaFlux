@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nodes::Input::TabletNode::fire_edges" name="MayaFlux::Nodes::Input::TabletNode::fire_edges">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,5,184,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Input_1_1TabletNode_a5ef9e13ec5b191fc6c5a9aa496b0f5c5.html#a5ef9e13ec5b191fc6c5a9aa496b0f5c5" title=" " alt="" coords="232,5,408,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="184,23,218,23,218,28,184,28"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1HookList_a9688ae71a354c2f8a8989eea13979b7d.html#a9688ae71a354c2f8a8989eea13979b7d" title="Calls every entry whose condition, if any, holds." alt="" coords="456,5,656,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="408,23,442,23,442,28,408,28"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1HookList_a0e44de57f732ba8bbedc5d493f694d01.html#a0e44de57f732ba8bbedc5d493f694d01" title="The current entries, held stable for the lifetime of the returned object." alt="" coords="704,5,904,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="656,23,690,23,690,28,656,28"/>
+</map>

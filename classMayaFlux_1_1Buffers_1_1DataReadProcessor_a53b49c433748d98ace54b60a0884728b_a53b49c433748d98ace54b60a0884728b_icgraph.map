@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::DataReadProcessor::resolve_pixels" name="MayaFlux::Buffers::DataReadProcessor::resolve_pixels">
+<area shape="rect" id="Node000001" title="Finish a pixel read as typed ImageData with its format and dimensions." alt="" coords="229,5,435,60"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kriya_1_1detail_ac59af9577ccacc4f598912038d765f5b.html#ac59af9577ccacc4f598912038d765f5b" title="Finish the pending read as one DataVariant." alt="" coords="5,13,181,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="216,35,182,35,182,30,216,30"/>
+</map>

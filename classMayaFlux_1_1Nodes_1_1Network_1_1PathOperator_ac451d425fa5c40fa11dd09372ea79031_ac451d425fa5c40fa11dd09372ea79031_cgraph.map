@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::PathOperator::build_cluster_ids" name="MayaFlux::Nodes::Network::PathOperator::build_cluster_ids">
+<area shape="rect" id="Node000001" title="Overrides GraphicsOperator::build_cluster_ids() for real multi&#45;path scenes." alt="" coords="5,5,237,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PathOperator_a7167ae5a5db082e1be892a9fa1ba5a4b.html#a7167ae5a5db082e1be892a9fa1ba5a4b" title="Get number of vertices (may differ from point count for topology/path)" alt="" coords="285,5,521,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="237,23,271,23,271,28,237,28"/>
+</map>

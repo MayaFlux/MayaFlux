@@ -1,0 +1,21 @@
+<map id="MayaFlux::Buffers::RenderProcessor::initialize_pipeline" name="MayaFlux::Buffers::RenderProcessor::initialize_pipeline">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,220,200,275"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a29620c5fe451a10fbd49526999b77a2f.html#a29620c5fe451a10fbd49526999b77a2f" title="Get the descriptor bindings a shader&#39;s entry point statically uses." alt="" coords="257,5,460,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="118,218,169,144,205,104,246,69,253,65,256,69,250,73,209,108,173,148,122,221"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a7a7b17474e7a50064d36e9c2b19337aa.html#a7a7b17474e7a50064d36e9c2b19337aa" title=" " alt="" coords="273,84,445,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="138,218,189,183,247,149,262,142,265,146,249,154,191,188,141,222"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a54c4e0f2eb44a261d8463e8423e3746d.html#a54c4e0f2eb44a261d8463e8423e3746d" title="Get the global render flow instance." alt="" coords="260,163,457,203"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="199,220,265,204,266,209,201,226"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a715d57394465ff2924727d7c82d87e7b.html#a715d57394465ff2924727d7c82d87e7b" title="Get the global shader compiler instance." alt="" coords="260,227,457,267"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="200,245,246,245,246,250,200,250"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a991d85779b3972131ec686ec3f06e629.html#a991d85779b3972131ec686ec3f06e629" title="Topology the pipeline is built with, as opposed to the topology m_runs are declared in." alt="" coords="263,292,454,347"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="201,272,251,286,249,291,199,277"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1RenderFlow_a12017ca94836ca41f1db05fb08534368.html#a12017ca94836ca41f1db05fb08534368" title="Register a window for dynamic rendering." alt="" coords="248,371,469,425"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="135,273,187,315,249,357,260,363,258,367,247,362,183,320,132,277"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a497f347216f8aef622a7974cc4760eb9.html#a497f347216f8aef622a7974cc4760eb9" title="Byte width of this processor&#39;s push constant block, extended to cover any fragment staged on the buff..." alt="" coords="265,449,452,504"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="120,273,141,310,171,353,207,398,250,436,256,440,253,445,246,440,203,401,166,357,137,313,116,276"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1RenderFlow_a427f34bcec94e920d4dbbb76ae7f175f.html#a427f34bcec94e920d4dbbb76ae7f175f" title=" " alt="" coords="517,163,715,203"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="457,181,504,181,504,186,457,186"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="517,227,715,267"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="457,245,504,245,504,250,457,250"/>
+</map>

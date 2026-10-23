@@ -1,0 +1,16 @@
+<map id="MayaFlux::Kinesis::Discrete::q_from_decay" name="MayaFlux::Kinesis::Discrete::q_from_decay">
+<area shape="rect" id="Node000001" title="Q that gives the bandpass section a stated ring time." alt="" coords="1104,91,1280,131"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ResonatorNetwork_aaa48014ab0864715408982cc3a05f181.html#aaa48014ab0864715408982cc3a05f181" title="Set how long a resonator rings, without clearing its state." alt="" coords="831,91,1056,131"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1090,114,1056,114,1056,109,1090,109"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ResonatorNetwork_a82469548f9169caa240ef3e7c8beabbd.html#a82469548f9169caa240ef3e7c8beabbd" title="Apply a BROADCAST value to the named parameter across all resonators." alt="" coords="571,5,769,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="859,90,765,63,766,58,861,85"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ResonatorNetwork_aed915868aaa9e030e2fe8ead8cfbdbe9.html#aed915868aaa9e030e2fe8ead8cfbdbe9" title="Apply ONE_TO_ONE values from a source network to the named parameter." alt="" coords="571,84,769,139"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="817,114,770,114,770,109,817,109"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ResonatorNetwork_a84c36ab52c4686461652402b2f4183ba.html#a84c36ab52c4686461652402b2f4183ba" title="Set the ring time of the first resonators from an array." alt="" coords="557,163,783,203"/>
+<area shape="poly" id="edge7_Node000002_Node000007" title=" " alt="" coords="854,137,747,166,746,161,853,132"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ResonatorNetwork_aee31c5dd30c5a3f3dd7ad55c8ee2979e.html#aee31c5dd30c5a3f3dd7ad55c8ee2979e" title="Apply all registered parameter mappings for the current cycle." alt="" coords="305,45,509,100"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="557,53,510,60,509,54,556,47"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ResonatorNetwork_ab3fa42f883efda46b4961b24c3654c2f.html#ab3fa42f883efda46b4961b24c3654c2f" title="Processes num_samples through all resonators and accumulates output." alt="" coords="5,53,257,93"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="291,75,257,75,257,70,291,70"/>
+<area shape="poly" id="edge6_Node000006_Node000004" title=" " alt="" coords="556,97,509,90,510,85,557,92"/>
+</map>

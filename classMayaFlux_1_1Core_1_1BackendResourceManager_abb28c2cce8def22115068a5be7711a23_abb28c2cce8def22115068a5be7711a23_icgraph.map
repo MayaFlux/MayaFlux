@@ -1,0 +1,13 @@
+<map id="MayaFlux::Core::BackendResourceManager::upload_image_layer" name="MayaFlux::Core::BackendResourceManager::upload_image_layer">
+<area shape="rect" id="Node000001" title="Upload pixel data into one layer of an array image." alt="" coords="660,53,907,93"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a58ef131b515ebbe866efa8781c88050b.html#a58ef131b515ebbe866efa8781c88050b" title="Upload pixels into one layer of an array image." alt="" coords="405,53,612,93"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="646,75,612,75,612,70,646,70"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1TextureArrayBuffer_af3c90dc33d519bd85659b0cf35bd4216.html#af3c90dc33d519bd85659b0cf35bd4216" title=" " alt="" coords="205,5,357,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="391,55,357,49,358,43,392,49"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1TextureArrayBuffer_abb308b7a1106c79c340bbffe547dfbe6.html#abb308b7a1106c79c340bbffe547dfbe6" title="Replace the frame of one layer with raw pixels." alt="" coords="205,84,357,139"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="392,95,358,101,357,96,391,90"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1TextureArrayBuffer_a1d6d7ae0f2b8d9f619188372d0cdd853.html#a1d6d7ae0f2b8d9f619188372d0cdd853" title="Replace the frame of one layer with a GPU image, with no host read." alt="" coords="5,5,157,60"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="191,35,158,35,158,30,191,30"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1TextureArrayBuffer_abf5479ab183067327913cf60adbcd4cc.html#abf5479ab183067327913cf60adbcd4cc" title="Replace the frame of one layer with an image." alt="" coords="5,84,157,139"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="191,114,158,114,158,109,191,109"/>
+</map>

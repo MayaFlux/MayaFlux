@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::FeedbackProcessor::on_attach" name="MayaFlux::Buffers::FeedbackProcessor::on_attach">
+<area shape="rect" id="Node000001" title="Called when this processor is attached to a buffer." alt="" coords="5,5,176,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1FeedbackProcessor_a999f0108caaa97881e4245c7d8ea9b8c.html#a999f0108caaa97881e4245c7d8ea9b8c" title=" " alt="" coords="224,13,437,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="176,30,210,30,210,35,176,35"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Memory_1_1HistoryBuffer_a0b1432247ff72f19a4124869c216b323.html#a0b1432247ff72f19a4124869c216b323" title="Resize buffer capacity." alt="" coords="485,13,688,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="438,30,472,30,472,35,438,35"/>
+</map>

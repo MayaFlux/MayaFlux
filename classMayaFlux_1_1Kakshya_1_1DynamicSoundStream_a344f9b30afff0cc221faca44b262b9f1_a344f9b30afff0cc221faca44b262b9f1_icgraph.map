@@ -1,0 +1,10 @@
+<map id="MayaFlux::Kakshya::DynamicSoundStream::validate_single_channel" name="MayaFlux::Kakshya::DynamicSoundStream::validate_single_channel">
+<area shape="rect" id="Node000001" title=" " alt="" coords="451,45,629,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_ade208ea2ca4a19384f898cc1a82d7ba2.html#ade208ea2ca4a19384f898cc1a82d7ba2" title="Write audio frame data to the container with automatic capacity management." alt="" coords="228,45,403,100"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="437,75,403,75,403,70,437,70"/>
+<area shape="poly" id="edge3_Node000002_Node000002" title=" " alt="" coords="352,34,339,27,315,24,296,26,283,31,277,37,277,45,272,45,272,35,280,26,294,21,315,19,340,22,355,30"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_ad1b0111818608a5aee61e916f00b9f08.html#ad1b0111818608a5aee61e916f00b9f08" title="Write one channel at its write head and advance the head." alt="" coords="5,5,180,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="214,57,180,51,181,46,215,52"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_adbb6000f53051d841a016bc8f2cafc38.html#adbb6000f53051d841a016bc8f2cafc38" title=" " alt="" coords="5,84,180,139"/>
+<area shape="poly" id="edge4_Node000002_Node000004" title=" " alt="" coords="215,93,181,99,180,94,214,88"/>
+</map>

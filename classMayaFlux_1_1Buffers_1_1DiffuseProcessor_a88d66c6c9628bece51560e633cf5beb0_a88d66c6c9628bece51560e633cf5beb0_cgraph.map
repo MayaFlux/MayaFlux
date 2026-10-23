@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::DiffuseProcessor::DiffuseProcessor" name="MayaFlux::Buffers::DiffuseProcessor::DiffuseProcessor">
+<area shape="rect" id="Node000001" title="Construct a diffusion stage from a generated ShaderSpec." alt="" coords="5,53,253,93"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VolumeFieldProcessor_ae3eb55e4157368419502814690bdcbb4.html#ae3eb55e4157368419502814690bdcbb4" title="Register a field to swap after each dispatch." alt="" coords="305,5,470,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="253,51,290,45,291,50,254,56"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1ComputeProcessor_ab36494f34c94584e792a0016167afabc.html#ab36494f34c94584e792a0016167afabc" title="Set how many dispatches are recorded per execute cycle." alt="" coords="301,84,473,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="254,89,288,94,287,99,253,94"/>
+</map>

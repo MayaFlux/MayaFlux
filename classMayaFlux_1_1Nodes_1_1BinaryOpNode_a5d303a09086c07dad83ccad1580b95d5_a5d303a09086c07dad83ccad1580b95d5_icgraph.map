@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nodes::BinaryOpNode::get_last_context" name="MayaFlux::Nodes::BinaryOpNode::get_last_context">
+<area shape="rect" id="Node000001" title="Retrieves the last created context object." alt="" coords="757,5,960,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1BinaryOpNode_a5e0afbc4f741b02333c4293660bb7a6e.html#a5e0afbc4f741b02333c4293660bb7a6e" title="Notifies all registered callbacks about a new output value." alt="" coords="507,5,709,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="744,28,709,28,709,23,744,23"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1BinaryOpNode_a8fae564fe72bb7d724f53eb5ace2b6ef.html#a8fae564fe72bb7d724f53eb5ace2b6ef" title="Processes a single sample through both nodes and combines the results." alt="" coords="256,5,459,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="493,28,459,28,459,23,493,23"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1BinaryOpNode_aa542907435255abd16572f736ba82e2d.html#aa542907435255abd16572f736ba82e2d" title="Processes multiple samples through both nodes and combines the results." alt="" coords="5,5,208,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="242,28,208,28,208,23,242,23"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Input::HIDNode" name="MayaFlux::Nodes::Input::HIDNode">
+<area shape="rect" id="Node000001" title=" " alt="" coords="20,1545,188,1745"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Input_1_1InputNode.html" title="Abstract base class for nodes that receive external input." alt="" coords="20,897,188,1497"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="107,1511,107,1545,101,1545,101,1511"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Node.html" title="Base interface for all computational processing nodes." alt="" coords="5,5,203,849"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="107,863,107,897,101,897,101,863"/>
+</map>

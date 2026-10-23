@@ -1,0 +1,17 @@
+<map id="MayaFlux::Portal::Forma::Geometry::stroke_slider" name="MayaFlux::Portal::Forma::Geometry::stroke_slider">
+<area shape="rect" id="Node000001" title="Geometry function for a value scrubber along an arbitrary polyline." alt="" coords="5,197,191,237"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1AABB3D_a22d32b442e5e9315fbf8a92e435890d1.html#a22d32b442e5e9315fbf8a92e435890d1" title=" " alt="" coords="255,5,404,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="110,196,160,128,196,89,237,55,247,49,250,54,240,60,200,93,164,131,114,199"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kinesis_1_1AABB3D_ae961e7dccc0de10f7d110fdc34363389.html#ae961e7dccc0de10f7d110fdc34363389" title=" " alt="" coords="255,69,404,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="123,195,174,157,237,119,251,112,254,117,240,124,177,162,126,199"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_a72ce8b41f8c4419417ac2b73edb8e300.html#a72ce8b41f8c4419417ac2b73edb8e300" title="Normalized arc&#45;length position of the closest point on a polyline." alt="" coords="255,133,404,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="170,195,243,174,244,180,172,200"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_a58fbcc2d4a3ef76e13eafa9f31dc86df.html#a58fbcc2d4a3ef76e13eafa9f31dc86df" title="Polyline as a LINE_LIST (open path, 2 * (pts.size() &#45; 1) vertices)." alt="" coords="255,197,404,237"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="191,215,241,215,241,220,191,220"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kinesis_aaad8296728bdd19e73f8c579dfa7117b.html#aaad8296728bdd19e73f8c579dfa7117b" title="Containment test for a polyline with a uniform half&#45;thickness." alt="" coords="255,261,404,301"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="172,235,244,255,243,260,170,240"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Kinesis_1_1AABB3D_ab6e21661b02421733bd7ba1d31004146.html#ab6e21661b02421733bd7ba1d31004146" title=" " alt="" coords="254,325,405,365"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="126,235,177,273,240,311,254,317,251,322,237,316,174,277,123,240"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_af668d56bbf7441d552c3ee5c38c3ae62.html#af668d56bbf7441d552c3ee5c38c3ae62" title="Write a vertex array into a GeometryFn output buffer." alt="" coords="239,389,420,429"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="114,236,164,304,200,342,240,375,250,381,247,385,237,380,196,346,160,307,110,239"/>
+</map>

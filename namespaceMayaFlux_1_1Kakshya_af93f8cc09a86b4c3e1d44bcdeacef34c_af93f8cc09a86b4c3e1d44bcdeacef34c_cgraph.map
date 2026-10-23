@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::as_vertex_access" name="MayaFlux::Kakshya::as_vertex_access">
+<area shape="rect" id="Node000001" title="Extract a VertexAccess from a DataVariant." alt="" coords="5,5,164,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_a562ff192477ad177d1466c4bfd6abf96.html#a562ff192477ad177d1466c4bfd6abf96" title="Assemble point&#45;vertex&#45;compatible bytes from one or more data channels." alt="" coords="212,5,389,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="164,23,198,23,198,28,164,28"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kakshya_1_1VertexLayout_ad0ac6ab6a88dd81d2ac8acda3c5c15bd.html#ad0ac6ab6a88dd81d2ac8acda3c5c15bd" title="Factory: layout for PointVertex (position, color, size, uv, normal, tangent)" alt="" coords="437,5,619,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="390,23,424,23,424,28,390,28"/>
+</map>

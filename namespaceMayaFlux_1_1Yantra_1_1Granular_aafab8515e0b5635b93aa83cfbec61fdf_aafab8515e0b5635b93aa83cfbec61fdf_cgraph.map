@@ -1,0 +1,11 @@
+<map id="MayaFlux::Yantra::Granular::process" name="MayaFlux::Yantra::Granular::process">
+<area shape="rect" id="Node000001" title="Run segment &#45;&gt; attribute &#45;&gt; sort and return the attributed RegionGroup." alt="" coords="5,101,204,141"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Yantra_a2d6d3160f6583bd4c82f3000c0283d4e.html#a2d6d3160f6583bd4c82f3000c0283d4e" title="Applies context parameters to an operation." alt="" coords="262,5,441,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="148,99,251,55,272,47,274,52,253,60,150,104"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Yantra_1_1Granular_a64375d34713024c505f81bd7829b7ff6.html#a64375d34713024c505f81bd7829b7ff6" title="Construct an ExecutionContext for the granular pipeline using a built&#45;in AnalysisType." alt="" coords="252,69,451,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="204,106,238,101,239,107,205,111"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Yantra_1_1Granular_a6aafb78fa15c085dd7d123fcdc430e73.html#a6aafb78fa15c085dd7d123fcdc430e73" title="Construct the initial GranularDatum from a container." alt="" coords="252,133,451,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="205,132,239,136,238,141,204,137"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Yantra_1_1Granular_a715ec52dcabca3e02a56d9e106e7a94d.html#a715ec52dcabca3e02a56d9e106e7a94d" title="Construct a GranularMatrix with grammar rules appropriate for the requested output type." alt="" coords="252,197,451,237"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="150,139,253,183,274,190,272,195,251,188,148,144"/>
+</map>

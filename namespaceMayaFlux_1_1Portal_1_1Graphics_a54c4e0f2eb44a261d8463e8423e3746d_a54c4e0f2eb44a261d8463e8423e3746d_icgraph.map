@@ -1,0 +1,17 @@
+<map id="MayaFlux::Portal::Graphics::get_render_flow" name="MayaFlux::Portal::Graphics::get_render_flow">
+<area shape="rect" id="Node000001" title="Get the global render flow instance." alt="" coords="532,196,729,236"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a3498377e5d02f243e29f4b28e358733c.html#a3498377e5d02f243e29f4b28e358733c" title=" " alt="" coords="279,5,470,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="606,186,555,122,521,88,483,60,459,48,462,43,485,55,524,84,559,118,611,183"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_aeb12384963cbbf393186326440e9082c.html#aeb12384963cbbf393186326440e9082c" title="Destroy retired pipelines whose window has completed every frame submitted before retirement." alt="" coords="283,70,466,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="583,191,483,138,456,127,458,122,485,134,586,187"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1PresentProcessor_a6212541d4b11fad6638fe5117e8361c5.html#a6212541d4b11fad6638fe5117e8361c5" title=" " alt="" coords="277,149,472,203"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="518,201,472,194,473,189,519,196"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a890135d823fb945281a666474fa18c6b.html#a890135d823fb945281a666474fa18c6b" title=" " alt="" coords="277,227,472,282"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="519,236,473,243,472,237,518,230"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a8dffa1bdec232f8a9c7b39ce9a9f78bb.html#a8dffa1bdec232f8a9c7b39ce9a9f78bb" title=" " alt="" coords="277,306,472,361"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="584,245,485,296,455,308,453,303,483,291,582,240"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_af22c5214e6365e97cf23f4ba8023cb75.html#af22c5214e6365e97cf23f4ba8023cb75" title="Record an already validated attachment without repeating its lookup." alt="" coords="265,385,484,425"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="610,249,558,312,524,346,485,374,459,388,456,383,483,370,520,342,554,309,606,246"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1PresentProcessor_a22d8a0b8420935561a87ea6c698483ae.html#a22d8a0b8420935561a87ea6c698483ae" title="Executes the render callback." alt="" coords="5,149,217,203"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="264,179,217,179,217,173,264,173"/>
+</map>

@@ -1,0 +1,6 @@
+<map id="MayaFlux::Kriya::TapSetBuilder::lag" name="MayaFlux::Kriya::TapSetBuilder::lag">
+<area shape="rect" id="Node000001" title="Make the current tap trail the write head of a live ring by seconds." alt="" coords="279,29,532,55"/>
+<area shape="poly" id="edge1_Node000001_Node000001" title=" " alt="" coords="456,21,454,16,445,12,405,8,375,10,358,15,355,20,363,27,360,31,349,21,355,11,374,5,405,3,447,7,458,12,461,18"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1TapSetBuilder_a09461e6db914cac08990ad1017164474.html#a09461e6db914cac08990ad1017164474" title="Build the taps and start them." alt="" coords="5,22,231,62"/>
+<area shape="poly" id="edge2_Node000001_Node000002" title=" " alt="" coords="265,45,231,45,231,39,265,39"/>
+</map>

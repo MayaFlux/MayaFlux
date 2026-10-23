@@ -1,0 +1,17 @@
+<map id="MayaFlux::Portal::Forma::Bridge::Binding" name="MayaFlux::Portal::Forma::Bridge::Binding">
+<area shape="rect" id="Node000001" title="Non&#45;owning handle for all bind/write/unbind operations on one element." alt="" coords="259,2085,433,2365"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Bridge.html" title="Two&#45;way binding orchestrator for Forma elements." alt="" coords="249,1523,443,2023"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="349,2023,349,2069,343,2069,343,2023"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler.html" title="Token&#45;based multimodal task scheduling system for unified coroutine processing." alt="" coords="121,551,345,1460"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="303,1460,309,1506,304,1507,297,1461"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Vruta_1_1SampleClock.html" title="Sample&#45;accurate timing system for audio processing domain." alt="" coords="5,233,220,459"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="136,458,150,534,144,535,130,459"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Vruta_1_1IClock.html" title="Abstract base interface for all clock types in the multimodal scheduling system." alt="" coords="28,5,197,171"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="115,185,115,233,110,233,110,185"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Vruta_1_1TaskScheduler_1_1PendingTaskOp.html" title=" " alt="" coords="244,296,467,396"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="349,397,323,535,318,534,344,396"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Vruta_1_1TaskEntry.html" title=" " alt="" coords="259,45,451,131"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="358,131,358,279,353,279,353,131"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1BufferManager.html" title="Token&#45;based multimodal buffer management system for unified data stream processing." alt="" coords="369,773,553,1237"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="441,1238,406,1499,405,1507,399,1506,401,1498,436,1237"/>
+</map>

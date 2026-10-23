@@ -1,0 +1,13 @@
+<map id="MayaFlux::Memory::SweepList&lt; T &gt;" name="MayaFlux::Memory::SweepList&lt; T &gt;">
+<area shape="rect" id="Node000001" title="Lock&#45;free, unbounded, multi&#45;producer collection of in&#45;flight items." alt="" coords="575,5,825,311"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Memory_1_1SweepList.html" title=" " alt="" coords="5,410,288,745"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="562,192,490,215,414,246,340,287,274,337,242,372,215,411,211,408,238,368,270,333,337,282,412,242,488,210,560,187"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Memory_1_1SweepList.html" title=" " alt="" coords="312,403,525,752"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="564,219,527,242,492,269,461,301,436,336,421,368,412,403,407,401,416,366,431,333,457,297,489,265,524,238,561,215"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Memory_1_1SweepList.html" title=" " alt="" coords="572,417,785,737"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="694,325,689,417,684,417,689,324"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Memory_1_1SweepList.html" title=" " alt="" coords="809,417,1023,737"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="835,298,857,333,875,374,890,416,884,418,870,376,852,336,831,301"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Memory_1_1SweepList.html" title=" " alt="" coords="1047,417,1260,737"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="839,207,889,231,940,260,989,294,1033,333,1065,372,1092,415,1088,418,1061,375,1029,337,985,298,937,265,887,236,837,212"/>
+</map>

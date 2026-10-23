@@ -1,0 +1,33 @@
+<map id="MayaFlux::Kakshya::TextureContainer::append_image_layer" name="MayaFlux::Kakshya::TextureContainer::append_image_layer">
+<area shape="rect" id="Node000001" title="Append one layer held on the GPU by image." alt="" coords="5,169,195,224"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Memory_1_1SeqlockArray_af0ebfcf30d16a7f1625e472a03a512bf.html#af0ebfcf30d16a7f1625e472a03a512bf" title="Add n default&#45;constructed Seqlock instances after the existing slots." alt="" coords="243,77,449,117"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="152,167,242,126,262,119,263,124,244,131,155,172"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kakshya_a2ed230344b64dcf8cbcce94808dee8a3.html#a2ed230344b64dcf8cbcce94808dee8a3" title="Allocate a zeroed DataVariant of the alternative backing a format." alt="" coords="265,141,427,181"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="194,180,251,172,252,177,195,185"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_a3c3db06f96aa71048efbb69b369f25c7.html#a3c3db06f96aa71048efbb69b369f25c7" title=" " alt="" coords="257,205,435,260"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="195,208,244,215,243,220,194,213"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Kakshya_1_1TextureContainer_a607607f67bdc6e4054e3bae673e0547f.html#a607607f67bdc6e4054e3bae673e0547f" title="Update the processing state of the container." alt="" coords="253,284,439,339"/>
+<area shape="poly" id="edge15_Node000001_Node000016" title=" " alt="" coords="152,222,244,269,260,276,258,281,242,274,149,227"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kakshya_a7c5d5d6f0be24fe12ef6c67401c2c001.html#a7c5d5d6f0be24fe12ef6c67401c2c001" title="Byte width of the DataVariant element backing a given ImageFormat." alt="" coords="502,141,667,181"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="428,158,488,158,488,163,428,163"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_ac71c3404aadefac0fe97e641021e1eba.html#ac71c3404aadefac0fe97e641021e1eba" title="Create dimension descriptors for a data modality." alt="" coords="499,205,671,260"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="435,230,485,230,485,235,435,235"/>
+<area shape="rect" id="Node000015" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure_a3ec04f10c18dea5069c95665761cf183.html#a3ec04f10c18dea5069c95665761cf183" title="Create structure for interleaved image data." alt="" coords="497,284,672,339"/>
+<area shape="poly" id="edge14_Node000005_Node000015" title=" " alt="" coords="431,258,489,277,487,282,429,263"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_aafb5f78e7e3682f8785ef62f77e5d77a.html#aafb5f78e7e3682f8785ef62f77e5d77a" title="Calculate memory strides based on shape and layout." alt="" coords="723,5,913,60"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="655,203,670,191,681,176,688,161,693,132,698,102,706,86,718,71,723,67,726,70,722,74,710,89,704,104,698,133,693,163,686,179,674,195,659,207"/>
+<area shape="rect" id="Node000008" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_afae79b6c7314e95d426e396efe81787a.html#afae79b6c7314e95d426e396efe81787a" title="Convenience constructor for a channel dimension." alt="" coords="727,85,909,125"/>
+<area shape="poly" id="edge7_Node000006_Node000008" title=" " alt="" coords="651,203,670,191,685,176,693,163,703,149,718,135,729,128,731,133,722,139,707,152,698,166,689,180,674,195,654,208"/>
+<area shape="rect" id="Node000009" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_ab8dcc89c5d4c2095dcdc5ade1cd84848.html#ab8dcc89c5d4c2095dcdc5ade1cd84848" title="Convenience constructor for a depth dimension." alt="" coords="734,149,902,189"/>
+<area shape="poly" id="edge8_Node000006_Node000009" title=" " alt="" coords="671,206,730,190,732,195,672,212"/>
+<area shape="rect" id="Node000010" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_a6a1656bc7eafe4add39ec634481345a7.html#a6a1656bc7eafe4add39ec634481345a7" title="Convenience constructor for a frequency dimension." alt="" coords="720,213,916,253"/>
+<area shape="poly" id="edge9_Node000006_Node000010" title=" " alt="" coords="671,230,706,230,706,235,671,235"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_1_1Kakshya_aa3a2745fea69caaef2cc6ed92d2f277d.html#aa3a2745fea69caaef2cc6ed92d2f277d" title="Convert DataModality enum to string representation." alt="" coords="739,277,897,317"/>
+<area shape="poly" id="edge10_Node000006_Node000011" title=" " alt="" coords="672,254,732,270,730,275,671,259"/>
+<area shape="rect" id="Node000013" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_a54ded63656235da79ab98ef3a576d3d2.html#a54ded63656235da79ab98ef3a576d3d2" title="Convenience constructor for a spatial dimension." alt="" coords="731,341,905,381"/>
+<area shape="poly" id="edge12_Node000006_Node000013" title=" " alt="" coords="656,258,674,269,689,284,698,299,707,313,722,327,731,332,728,337,718,331,703,316,693,302,685,288,670,273,653,262"/>
+<area shape="rect" id="Node000014" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_aab0cac54b47602cb00e2fd99b50839c3.html#aab0cac54b47602cb00e2fd99b50839c3" title="Convenience constructor for a temporal (time) dimension." alt="" coords="737,405,899,445"/>
+<area shape="poly" id="edge13_Node000006_Node000014" title=" " alt="" coords="660,258,674,270,686,286,693,302,698,332,703,362,710,376,722,391,728,396,724,400,718,395,705,379,698,364,693,333,688,303,682,288,670,273,657,262"/>
+<area shape="rect" id="Node000012" href="$namespaceMayaFlux_1_1Reflect_aad91118cbd25bd9e35a3ced9aa4e6dbd.html#aad91118cbd25bd9e35a3ced9aa4e6dbd" title="Universal enum to string converter using magic_enum (original case)" alt="" coords="964,277,1111,317"/>
+<area shape="poly" id="edge11_Node000011_Node000012" title=" " alt="" coords="898,294,950,294,950,299,898,299"/>
+</map>

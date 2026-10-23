@@ -1,0 +1,27 @@
+<map id="MayaFlux::Nodes::HookList::add_conditional" name="MayaFlux::Nodes::HookList::add_conditional">
+<area shape="rect" id="Node000001" title="Appends a hook that fires only while condition holds." alt="" coords="521,360,721,400"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Input_1_1InputNode_a3a82b25dcee29b87f597d17581949427.html#a3a82b25dcee29b87f597d17581949427" title=" " alt="" coords="281,242,457,297"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="561,357,431,299,433,294,563,352"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Nodes_1_1Filters_1_1Filter_a7a9fd94e459d926328e10c86f7366779.html#a7a9fd94e459d926328e10c86f7366779" title="Registers a conditional callback to be called on each tick if the condition is met." alt="" coords="278,328,461,368"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="507,368,461,362,461,357,508,363"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Generator_a90fb20b86b751dbb11c13bdb5128af52.html#a90fb20b86b751dbb11c13bdb5128af52" title="Registers a conditional typed callback receiving GeneratorContext directly." alt="" coords="265,392,473,432"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="508,397,474,401,473,396,507,392"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Nodes_1_1Input_1_1InputNode_a275ff88c7047715075b4e94ebc94c209.html#a275ff88c7047715075b4e94ebc94c209" title="Register conditional callback for input received." alt="" coords="281,471,457,511"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="563,408,417,473,415,468,561,403"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Input_1_1InputNode_a112ef2a344514abfb6de6f0b5c6df69c.html#a112ef2a344514abfb6de6f0b5c6df69c" title="Register callback for button press (0.0 → 1.0 transition)" alt="" coords="5,5,217,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="347,230,325,190,296,144,259,98,216,59,195,48,198,43,219,55,263,95,300,141,330,187,352,228"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Input_1_1InputNode_aab70dd2c8f218715e2559d82ede9a1b0.html#aab70dd2c8f218715e2559d82ede9a1b0" title="Register callback for button release (1.0 → 0.0 transition)" alt="" coords="23,70,199,125"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="331,234,279,186,216,140,192,127,195,122,219,135,282,182,335,230"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Input_1_1InputNode_af1681df2f598e2d382ce603c23285ec6.html#af1681df2f598e2d382ce603c23285ec6" title="Register callback for entering a value range." alt="" coords="8,149,215,189"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="299,239,216,204,182,192,184,187,218,199,301,234"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Input_1_1InputNode_a16fc0501e731b4512f50f1dd2807632d.html#a16fc0501e731b4512f50f1dd2807632d" title="Register callback for exiting a value range." alt="" coords="13,213,210,253"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="267,258,210,250,211,244,268,253"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1Input_1_1InputNode_aef69276553ef0388894d57b5a8462ac7.html#aef69276553ef0388894d57b5a8462ac7" title="Register callback for threshold crossing (falling edge)" alt="" coords="17,278,206,333"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="268,286,207,295,206,290,268,281"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1Input_1_1InputNode_aa266e0385bcb7d1ac310997b14732dda.html#aa266e0385bcb7d1ac310997b14732dda" title="Register callback for threshold crossing (rising edge)" alt="" coords="17,357,206,411"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="294,305,267,318,219,346,190,359,188,354,216,342,264,314,291,300"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nodes_1_1Input_1_1InputNode_ad403a1a8fec8753bcab24f929a0d0bdb.html#ad403a1a8fec8753bcab24f929a0d0bdb" title="Register callback for value changes." alt="" coords="23,435,199,490"/>
+<area shape="poly" id="edge8_Node000002_Node000009" title=" " alt="" coords="281,306,267,318,257,331,250,344,244,370,238,397,231,411,219,425,201,438,198,434,216,421,227,408,233,395,239,369,245,342,252,328,263,314,278,302"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Nodes_1_1Input_1_1InputNode_abeb147af88cc7ecb06fbf021716f4e87.html#abeb147af88cc7ecb06fbf021716f4e87" title="Register callback while value is in range." alt="" coords="10,515,213,555"/>
+<area shape="poly" id="edge12_Node000012_Node000013" title=" " alt="" coords="268,511,213,520,212,515,267,505"/>
+</map>

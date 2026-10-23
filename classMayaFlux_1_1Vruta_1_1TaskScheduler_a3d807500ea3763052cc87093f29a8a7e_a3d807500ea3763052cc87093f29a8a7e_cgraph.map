@@ -1,0 +1,11 @@
+<map id="MayaFlux::Vruta::TaskScheduler::process_buffer_cycle_tasks" name="MayaFlux::Vruta::TaskScheduler::process_buffer_cycle_tasks">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,69,236,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_aa493113c59d1aed358efb9450c606947.html#aa493113c59d1aed358efb9450c606947" title="Drain pending task operations (additions/removals) before processing." alt="" coords="284,37,515,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="236,73,270,69,271,75,237,79"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_aa1e9585cf32c6b11e54b763c48c1398e.html#aa1e9585cf32c6b11e54b763c48c1398e" title="Get all tasks for a specific processing domain." alt="" coords="284,101,515,141"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="237,100,271,104,270,109,236,105"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a6cab5fd4999392badaec656a94ab3d16.html#a6cab5fd4999392badaec656a94ab3d16" title="Find task entry by name." alt="" coords="563,5,793,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="515,41,549,37,549,43,515,47"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_afb823dfb8ca7ec5182cfaa8e3ee93649.html#afb823dfb8ca7ec5182cfaa8e3ee93649" title="Find task entry by routine pointer." alt="" coords="563,69,793,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="515,68,549,72,549,77,515,73"/>
+</map>

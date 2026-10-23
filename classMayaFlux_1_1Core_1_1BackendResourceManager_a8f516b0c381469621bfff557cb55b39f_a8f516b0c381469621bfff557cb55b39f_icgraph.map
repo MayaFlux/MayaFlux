@@ -1,0 +1,9 @@
+<map id="MayaFlux::Core::BackendResourceManager::supports_blit" name="MayaFlux::Core::BackendResourceManager::supports_blit">
+<area shape="rect" id="Node000001" title="Whether a blit between two formats is supported with a filter." alt="" coords="545,37,792,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1BackendResourceManager_a15b34e45eb7bc14413d32d20be162322.html#a15b34e45eb7bc14413d32d20be162322" title="Blit a region of one image into a region of another." alt="" coords="251,5,497,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="532,45,497,41,498,36,532,40"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_aa6f19e1eefe062789ac68d86524fe6d3.html#aa6f19e1eefe062789ac68d86524fe6d3" title="Whether the device can blit between two images with a filter." alt="" coords="275,69,473,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="532,75,473,81,473,76,531,70"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a3cfeaf10be63faf394281a9f62f158b3.html#a3cfeaf10be63faf394281a9f62f158b3" title="Copy a layer of one image into a layer of another, scaling to fit." alt="" coords="5,5,203,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="237,28,203,28,203,23,237,23"/>
+</map>

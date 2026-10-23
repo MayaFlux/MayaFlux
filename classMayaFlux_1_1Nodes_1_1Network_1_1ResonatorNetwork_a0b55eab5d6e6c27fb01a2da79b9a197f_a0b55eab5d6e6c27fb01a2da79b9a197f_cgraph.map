@@ -1,0 +1,14 @@
+<map id="MayaFlux::Nodes::Network::ResonatorNetwork::ResonatorNetwork" name="MayaFlux::Nodes::Network::ResonatorNetwork::ResonatorNetwork">
+<area shape="rect" id="Node000001" title="Construct a ResonatorNetwork with a formant preset." alt="" coords="5,108,285,148"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ResonatorNetwork_a775dd0f369c0a2565e43ce2e3261e990.html#a775dd0f369c0a2565e43ce2e3261e990" title="Initialise all resonators from a frequency/Q pair list." alt="" coords="354,22,553,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="224,105,339,76,341,81,225,111"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ResonatorNetwork_a74720b15173a892cbf43d8eb8f188991.html#a74720b15173a892cbf43d8eb8f188991" title="Translate a FormantPreset into parallel frequency/Q vectors." alt="" coords="353,101,553,155"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="285,125,340,125,340,131,285,131"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork_afb34b572315180e465878f1de6f5bb1b.html#afb34b572315180e465878f1de6f5bb1b" title="Set the network&#39;s output routing mode." alt="" coords="333,180,573,220"/>
+<area shape="poly" id="edge6_Node000001_Node000006" title=" " alt="" coords="232,145,354,174,353,179,231,151"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ResonatorNetwork_a47653e6f983490bb1a16698c723e9f93.html#a47653e6f983490bb1a16698c723e9f93" title="Compute RBJ biquad bandpass coefficients and push them into a resonator&#39;s IIR." alt="" coords="621,29,888,69"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="553,47,607,47,607,52,553,52"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a29a24505c28032f9cc824ba51bc03399.html#a29a24505c28032f9cc824ba51bc03399" title="Second&#45;order bandpass coefficients, constant 0 dB peak gain." alt="" coords="936,29,1133,69"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="888,47,922,47,922,52,888,52"/>
+<area shape="poly" id="edge4_Node000004_Node000004" title=" " alt="" coords="983,30,980,20,988,10,1006,5,1035,3,1067,5,1085,13,1083,18,1066,11,1035,8,1007,10,991,15,985,21,988,28"/>
+</map>

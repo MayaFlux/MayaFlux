@@ -1,0 +1,18 @@
+<map id="MayaFlux::Portal::Forma::Context::on_leave" name="MayaFlux::Portal::Forma::Context::on_leave">
+<area shape="rect" id="Node000001" title="Called once when the cursor leaves an element&#39;s region." alt="" coords="915,95,1096,135"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1internal_ac480093068e6550132aae8fde2701e74.html#ac480093068e6550132aae8fde2701e74" title="Highlight a row&#39;s background while the cursor is over it." alt="" coords="677,95,867,135"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="901,117,867,117,867,112,901,112"/>
+<area shape="poly" id="edge2_Node000002_Node000002" title=" " alt="" coords="811,83,798,76,772,73,750,75,736,80,731,86,734,94,729,95,726,85,733,76,748,70,772,68,799,71,814,78"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Forma_abe13f9ac6498e0bb42d1594f9648b33c.html#abe13f9ac6498e0bb42d1594f9648b33c" title="Open a window of clickable rows, one per label, and report the choice." alt="" coords="448,63,629,103"/>
+<area shape="poly" id="edge3_Node000002_Node000003" title=" " alt="" coords="663,102,629,98,630,92,664,97"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Dropdown_a5d0ad75f94066d129af4cc4be483e6f1.html#a5d0ad75f94066d129af4cc4be483e6f1" title="Register the header and its option rows and wire their input." alt="" coords="448,127,629,167"/>
+<area shape="poly" id="edge7_Node000002_Node000007" title=" " alt="" coords="664,132,630,137,629,132,663,127"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_ab175da21b088a5c2e496b8d1c0670b2f.html#ab175da21b088a5c2e496b8d1c0670b2f" title="Let the user pick a camera, and optionally a capture mode, then open it via IOManager::open_camera()." alt="" coords="204,13,400,38"/>
+<area shape="poly" id="edge4_Node000003_Node000004" title=" " alt="" coords="442,62,355,41,356,35,443,57"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Portal_1_1Forma_aa6e1287fb7394d3c8a69bc7f662ad251.html#aa6e1287fb7394d3c8a69bc7f662ad251" title="Typed form of pick: list items by label and receive the chosen item." alt="" coords="211,63,393,103"/>
+<area shape="poly" id="edge6_Node000003_Node000006" title=" " alt="" coords="434,85,393,85,393,80,434,80"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Creator_a4d6c81dee8675dd5bf9b992245f3a548.html#a4d6c81dee8675dd5bf9b992245f3a548" title="Let the user pick a camera and capture mode, then read it as above." alt="" coords="5,5,156,45"/>
+<area shape="poly" id="edge5_Node000004_Node000005" title=" " alt="" coords="190,28,157,28,157,23,190,23"/>
+<area shape="rect" id="Node000008" href="$structMayaFlux_1_1Portal_1_1Forma_1_1Dropdown_aceca500d4f9d3690a9ed41100d110a60.html#aceca500d4f9d3690a9ed41100d110a60" title="Register using the cursor&#39;s column extents." alt="" coords="211,127,393,167"/>
+<area shape="poly" id="edge8_Node000007_Node000008" title=" " alt="" coords="434,149,393,149,393,144,434,144"/>
+</map>

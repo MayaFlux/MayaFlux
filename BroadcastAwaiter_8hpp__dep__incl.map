@@ -1,0 +1,19 @@
+<map id="BroadcastAwaiter.hpp" name="BroadcastAwaiter.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="383,5,547,31"/>
+<area shape="rect" id="Node000002" href="$BroadcastEvents_8hpp.html" title=" " alt="" coords="176,79,335,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="419,38,290,81,288,76,417,33"/>
+<area shape="rect" id="Node000008" href="$RelaxationStepProcessor_8cpp.html" title=" " alt="" coords="359,79,570,104"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="467,44,467,79,462,79,462,44"/>
+<area shape="rect" id="Node000009" href="$VisionProcessor_8cpp.html" title=" " alt="" coords="595,79,745,104"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="511,33,638,76,636,81,510,38"/>
+<area shape="rect" id="Node000003" href="$BroadcastEvents_8cpp.html" title=" " alt="" coords="5,152,164,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="216,112,114,154,112,149,214,107"/>
+<area shape="rect" id="Node000004" href="$Convenience_8hpp.html" title="Everyday headers and namespace imports for user code." alt="" coords="188,152,323,177"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="258,118,258,152,253,152,253,118"/>
+<area shape="rect" id="Node000007" href="$VisionWorkflow_8cpp.html" title=" " alt="" coords="347,152,495,177"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="295,107,395,149,393,154,293,112"/>
+<area shape="rect" id="Node000005" href="$MayaFlux_8hpp.html" title="Single include for the user facing API." alt="" coords="198,225,313,251"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="258,191,258,225,253,225,253,191"/>
+<area shape="rect" id="Node000006" href="$LiveAid_8hpp.html" title=" " alt="" coords="206,299,305,324"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="258,264,258,299,253,299,253,264"/>
+</map>

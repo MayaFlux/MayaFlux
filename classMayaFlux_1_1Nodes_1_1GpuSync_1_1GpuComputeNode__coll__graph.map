@@ -1,0 +1,15 @@
+<map id="MayaFlux::Nodes::GpuSync::GpuComputeNode" name="MayaFlux::Nodes::GpuSync::GpuComputeNode">
+<area shape="rect" id="Node000001" title="GpuSync node that owns a ShaderExecutionContext and dispatches it asynchronously, polling for complet..." alt="" coords="221,1557,417,2017"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GpuSync.html" title=" " alt="" coords="5,1202,197,1402"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="154,1414,223,1567,218,1569,149,1416"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Node.html" title="Base interface for all computational processing nodes." alt="" coords="120,248,317,1032"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="149,1046,122,1202,116,1201,144,1045"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1HookList.html" title="Stores, fires and clears the hooks of one node channel." alt="" coords="222,1109,415,1495"/>
+<area shape="poly" id="edge4_Node000004_Node000003" title=" " alt="" coords="208,1032,217,1085,220,1096,215,1097,212,1086,202,1033"/>
+<area shape="poly" id="edge6_Node000001_Node000004" title=" " alt="" coords="321,1495,321,1541,316,1541,316,1495"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="294,1109,287,1056,286,1049,291,1048,292,1056,299,1109"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Nodes_1_1RoutingState.html" title="Represents the state of routing transitions for a node." alt="" coords="126,5,311,185"/>
+<area shape="poly" id="edge5_Node000003_Node000005" title=" " alt="" coords="221,186,221,231,216,231,216,186"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Yantra_1_1GpuChannelResult.html" title="Erased output of a GPU dispatch: reconstructed float data plus any raw auxiliary outputs keyed by bin..." alt="" coords="440,1252,653,1352"/>
+<area shape="poly" id="edge7_Node000001_Node000006" title=" " alt="" coords="540,1353,519,1439,485,1534,458,1588,428,1639,423,1636,454,1585,480,1532,514,1438,535,1352"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="MayaFlux::Portal::Forma::internal::Atelier::create_element" name="MayaFlux::Portal::Forma::internal::Atelier::create_element">
+<area shape="rect" id="Node000001" title="Build a FormaBuffer, construct a Mapped&lt;T&gt;, register the element on layer, and register it with the B..." alt="" coords="464,30,645,85"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Portal_1_1Forma_1_1ColorPicker_a5ca2e358ed91380df7e7b7528892c6a6.html#a5ca2e358ed91380df7e7b7528892c6a6" title="Register the picker and wire its input." alt="" coords="235,5,416,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="450,45,416,41,417,35,451,40"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a0134941e72f794b2ad2318f03eacb98b.html#a0134941e72f794b2ad2318f03eacb98b" title="Create a live plot in a new window." alt="" coords="235,69,416,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="451,74,417,79,416,74,450,69"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Portal_1_1Forma_1_1ColorPicker_a269d89b6fed1e1a67ca52d284739a75d.html#a269d89b6fed1e1a67ca52d284739a75d" title="Register using the cursor&#39;s column extents." alt="" coords="5,5,187,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="221,28,187,28,187,23,221,23"/>
+</map>

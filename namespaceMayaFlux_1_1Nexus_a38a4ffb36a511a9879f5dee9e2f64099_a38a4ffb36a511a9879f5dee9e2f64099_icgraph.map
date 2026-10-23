@@ -1,0 +1,16 @@
+<map id="MayaFlux::Nexus::read_anchor" name="MayaFlux::Nexus::read_anchor">
+<area shape="rect" id="Node000001" title="Anchor of a buffer&#39;s geometry in its own stored coordinates." alt="" coords="489,101,661,141"/>
+<area shape="poly" id="edge4_Node000001_Node000001" title=" " alt="" coords="615,90,601,83,575,80,553,82,540,87,535,93,537,100,532,102,529,92,536,82,552,77,575,75,602,78,617,85"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Nexus_ad44add43b988749541d1a7d91239c707.html#ad44add43b988749541d1a7d91239c707" title="Build an attachment to buf." alt="" coords="253,69,432,109"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="475,110,432,104,432,99,476,105"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Nexus_a60bdbcdb6a637bc81248165ecd2f64ea.html#a60bdbcdb6a637bc81248165ecd2f64ea" title="Read the buffer&#39;s geometry again and move the anchor to match." alt="" coords="244,133,441,173"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="476,138,442,142,441,137,475,132"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nexus_1_1Agent_a7f420f62150e3babe04fda42dd44c50b.html#a7f420f62150e3babe04fda42dd44c50b" title="Make an existing, already rendered buffer the look of this object." alt="" coords="10,5,191,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="253,68,176,48,177,43,254,63"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nexus_1_1Emitter_a70d813d4d303befb1af9ee9d25007057.html#a70d813d4d303befb1af9ee9d25007057" title="Make an existing, already rendered buffer the look of this object." alt="" coords="5,69,196,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="240,92,196,92,196,87,240,87"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nexus_1_1Agent_ae4d2cf2382e2993a64f26e56d41d7f5c.html#ae4d2cf2382e2993a64f26e56d41d7f5c" title="Read the attached buffer&#39;s geometry again and move the anchor to match." alt="" coords="10,133,191,173"/>
+<area shape="poly" id="edge6_Node000005_Node000006" title=" " alt="" coords="230,156,192,156,192,151,230,151"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nexus_1_1Emitter_a879ad09dc34d541933b717d4095cb469.html#a879ad09dc34d541933b717d4095cb469" title="Read the attached buffer&#39;s geometry again and move the anchor to match." alt="" coords="5,197,196,237"/>
+<area shape="poly" id="edge7_Node000005_Node000007" title=" " alt="" coords="254,179,177,200,176,195,253,174"/>
+</map>

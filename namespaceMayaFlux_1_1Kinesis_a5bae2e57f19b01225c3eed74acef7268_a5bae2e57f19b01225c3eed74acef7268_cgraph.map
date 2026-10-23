@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kinesis::membership" name="MayaFlux::Kinesis::membership">
+<area shape="rect" id="Node000001" title="Graded membership of a point in an ellipsoid extent." alt="" coords="5,37,155,77"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1FeatureMetric_acad04a97861f68afc7fdaeec6533ed11.html#acad04a97861f68afc7fdaeec6533ed11" title="Componentwise difference, wrapped on any axis with a period." alt="" coords="203,5,356,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="155,43,189,37,190,42,156,48"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_1_1detail_af548cee01f59ea4efa64af34f6ee3b36.html#af548cee01f59ea4efa64af34f6ee3b36" title="Hermite ramp from 0 at edge0 to 1 at edge1." alt="" coords="205,69,354,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="156,67,191,73,191,78,155,72"/>
+</map>

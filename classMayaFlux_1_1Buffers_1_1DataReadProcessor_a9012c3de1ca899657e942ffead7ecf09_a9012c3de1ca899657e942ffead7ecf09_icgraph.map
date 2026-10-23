@@ -1,0 +1,25 @@
+<map id="MayaFlux::Buffers::DataReadProcessor::arm" name="MayaFlux::Buffers::DataReadProcessor::arm">
+<area shape="rect" id="Node000001" title=" " alt="" coords="504,263,687,303"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1DataReadProcessor_a1310189e6201494f3b723a13a6273247.html#a1310189e6201494f3b723a13a6273247" title="Read a raw back_buffers slot of the attached buffer." alt="" coords="248,5,435,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="579,252,559,211,532,163,497,115,454,73,434,60,437,56,458,69,501,111,537,160,564,209,583,250"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1DataReadProcessor_a08aef863be83cec1f218ba574fc02ac2.html#a08aef863be83cec1f218ba574fc02ac2" title="Read another VKBuffer, such as a descriptor&#45;bound or instance buffer." alt="" coords="248,84,435,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="567,255,518,203,487,177,455,154,431,141,433,136,457,149,491,173,522,200,571,251"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1DataReadProcessor_a8de3f052e9a50814d29282dbe8c8196d.html#a8de3f052e9a50814d29282dbe8c8196d" title="Read the attached buffer&#39;s primary storage." alt="" coords="227,163,456,203"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="545,259,455,218,420,206,422,201,457,213,547,255"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1DataReadProcessor_aef698d9afa418ad2b6891a5fcc34d2d5.html#aef698d9afa418ad2b6891a5fcc34d2d5" title="Read the current read slot of a named field on the attached buffer." alt="" coords="231,227,452,267"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="490,271,452,266,453,260,491,266"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1DataReadProcessor_abbb570695875c4632888b2f926f2925f.html#abbb570695875c4632888b2f926f2925f" title="Read the host pixel data a TextureBuffer retains." alt="" coords="248,292,435,347"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="491,301,435,309,435,303,490,295"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1DataReadProcessor_ae66ad65839089293b07639f7cb3fdd65.html#ae66ad65839089293b07639f7cb3fdd65" title="Read the attached mesh." alt="" coords="227,371,456,411"/>
+<area shape="poly" id="edge8_Node000001_Node000008" title=" " alt="" coords="551,313,506,337,457,360,420,374,418,369,455,356,504,333,549,308"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1DataReadProcessor_a9f6041ba0edb931bc70328f25a0a5cf9.html#a9f6041ba0edb931bc70328f25a0a5cf9" title="Download the base level of a TextureBuffer or NodeTextureBuffer image." alt="" coords="248,436,435,491"/>
+<area shape="poly" id="edge10_Node000001_Node000009" title=" " alt="" coords="572,316,523,372,492,400,457,426,434,438,432,433,455,421,488,396,519,368,568,313"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Buffers_1_1DataReadProcessor_ac927d05717eb9396a5b261c5856cb9fb.html#ac927d05717eb9396a5b261c5856cb9fb" title="Read the attached buffer&#39;s declared vertices; the layout count may represent capacity." alt="" coords="248,515,435,569"/>
+<area shape="poly" id="edge12_Node000001_Node000010" title=" " alt="" coords="584,317,565,359,537,409,502,460,458,504,437,518,434,513,454,500,497,457,533,407,560,357,579,315"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kriya_1_1detail_a4fe0640b29321d9daa3c236e3898e01a.html#a4fe0640b29321d9daa3c236e3898e01a" title="Arm the read that suits what the buffer is." alt="" coords="5,371,179,411"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="238,212,228,217,186,254,151,296,124,338,105,372,101,370,119,336,147,293,183,250,225,213,235,207"/>
+<area shape="poly" id="edge7_Node000007_Node000005" title=" " alt="" coords="236,353,163,374,161,369,234,347"/>
+<area shape="poly" id="edge9_Node000008_Node000005" title=" " alt="" coords="213,394,179,394,179,389,213,389"/>
+<area shape="poly" id="edge11_Node000009_Node000005" title=" " alt="" coords="234,435,161,414,163,409,236,430"/>
+<area shape="poly" id="edge13_Node000010_Node000005" title=" " alt="" coords="239,511,225,504,161,458,111,413,115,409,164,454,228,500,241,507"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::read_from_audio_input" name="MayaFlux::read_from_audio_input">
+<area shape="rect" id="Node000001" title="Reads audio data from the default input source into a buffer." alt="" coords="228,5,389,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a156aa5a54a2a941e0eb8f9618d601be1.html#a156aa5a54a2a941e0eb8f9618d601be1" title="Creates a new AudioBuffer for input listening." alt="" coords="5,5,180,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="214,28,180,28,180,23,214,23"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kriya::NetworkAwaiter::await_ready" name="MayaFlux::Kriya::NetworkAwaiter::await_ready">
+<area shape="rect" id="Node000001" title="Check if a message is already queued." alt="" coords="5,5,196,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1NetworkSource_ac0d494805b4dba0accc564a024e6a3cd.html#ac0d494805b4dba0accc564a024e6a3cd" title=" " alt="" coords="244,5,436,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="196,23,230,23,230,28,196,28"/>
+</map>

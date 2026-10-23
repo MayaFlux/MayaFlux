@@ -1,0 +1,13 @@
+<map id="MayaFlux::Kinesis::heading" name="MayaFlux::Kinesis::heading">
+<area shape="rect" id="Node000001" title="Heading angle of a 2D vector." alt="" coords="400,69,549,109"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a7ef98219fca405a0625d5d86b0691815.html#a7ef98219fca405a0625d5d86b0691815" title="Turning accumulated along a path, with sign retained." alt="" coords="203,5,352,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="399,68,339,48,340,43,400,63"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_ab475385fb6b9471bb9d046b6121ec4ea.html#ab475385fb6b9471bb9d046b6121ec4ea" title="Total absolute turning accumulated across a window." alt="" coords="203,69,352,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="386,92,352,92,352,87,386,87"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kinesis_a430f6caf58aa27b54a540b66ca6bd260.html#a430f6caf58aa27b54a540b66ca6bd260" title="Build a turning profile from a path." alt="" coords="203,133,352,173"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="400,116,340,136,339,131,399,111"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_a1f8e15927a3b49643eb35fe090b7f14b.html#a1f8e15927a3b49643eb35fe090b7f14b" title="Net revolutions a path turned through." alt="" coords="5,5,155,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="189,28,155,28,155,23,189,23"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_ace70118a50a87dbe5cd0d3006c4270fe.html#ace70118a50a87dbe5cd0d3006c4270fe" title="Convenience overload of total_turning over a raw span of positions, samples[0] newest." alt="" coords="5,69,155,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="189,92,155,92,155,87,189,87"/>
+</map>

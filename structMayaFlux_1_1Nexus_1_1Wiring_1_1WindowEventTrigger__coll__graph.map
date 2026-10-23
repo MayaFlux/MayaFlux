@@ -1,0 +1,11 @@
+<map id="MayaFlux::Nexus::Wiring::WindowEventTrigger" name="MayaFlux::Nexus::Wiring::WindowEventTrigger">
+<area shape="rect" id="Node000001" title=" " alt="" coords="146,863,323,943"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1WindowEventSource.html" title="Awaitable stream of window input events." alt="" coords="5,320,224,800"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="202,799,218,846,213,848,196,801"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1EventSource.html" title="Abstract base for all awaitable signal sources." alt="" coords="9,5,220,271"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="117,284,117,320,112,320,112,284"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Vruta_1_1WindowEventFilter.html" title="Filter criteria for window input events." alt="" coords="248,480,467,640"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="343,641,317,737,278,840,273,850,269,847,274,838,312,736,338,639"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Vruta_1_1EventFilter.html" title="Base for event filters used by EventSources to match signals to awaiters." alt="" coords="258,105,457,171"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="360,184,360,480,355,480,355,184"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Generator::Logic::Logic" name="MayaFlux::Nodes::Generator::Logic::Logic">
+<area shape="rect" id="Node000001" title="Constructs a Logic node for parallel inputs with a coefficient array." alt="" coords="5,13,213,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Logic_a988f2460aaa0cf6cd32db3cdb35be12e.html#a988f2460aaa0cf6cd32db3cdb35be12e" title="Sets a custom parallel input evaluation function." alt="" coords="261,5,469,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="213,30,248,30,248,35,213,35"/>
+</map>

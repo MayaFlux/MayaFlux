@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kinesis::Discrete::std_dev" name="MayaFlux::Kinesis::Discrete::std_dev">
+<area shape="rect" id="Node000001" title="Standard deviation per window." alt="" coords="5,29,155,69"/>
+<area shape="poly" id="edge1_Node000001_Node000001" title=" " alt="" coords="43,30,41,20,46,11,60,5,80,3,103,6,116,13,113,18,102,11,80,8,61,10,50,15,46,21,48,28"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a8f1992da8fa3cd5bf5fc140998b5137a.html#a8f1992da8fa3cd5bf5fc140998b5137a" title="Variance per window." alt="" coords="203,29,352,69"/>
+<area shape="poly" id="edge2_Node000001_Node000002" title=" " alt="" coords="155,47,189,47,189,52,155,52"/>
+<area shape="poly" id="edge3_Node000002_Node000002" title=" " alt="" coords="240,30,238,20,244,11,257,5,277,3,301,6,313,13,311,18,299,11,277,8,258,10,247,15,243,21,245,28"/>
+</map>

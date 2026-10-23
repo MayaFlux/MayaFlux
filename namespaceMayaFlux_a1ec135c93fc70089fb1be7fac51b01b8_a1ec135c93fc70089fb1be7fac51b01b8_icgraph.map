@@ -1,0 +1,9 @@
+<map id="MayaFlux::get_task_token" name="MayaFlux::get_task_token">
+<area shape="rect" id="Node000001" title="Extracts task processing token from domain." alt="" coords="207,47,357,87"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_ad57f926de2f4f9c78bb0645290c5b01e.html#ad57f926de2f4f9c78bb0645290c5b01e" title=" " alt="" coords="5,5,159,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="193,48,134,33,135,28,194,43"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_a0ab1d1c7328a14b61bc1271994c85ac0.html#a0ab1d1c7328a14b61bc1271994c85ac0" title=" " alt="" coords="5,55,159,80"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="193,70,159,70,159,65,193,65"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_a9fa2d02581e6282559d541d70802c112.html#a9fa2d02581e6282559d541d70802c112" title=" " alt="" coords="5,104,159,129"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="194,92,135,106,134,101,193,87"/>
+</map>

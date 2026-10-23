@@ -1,0 +1,30 @@
+<map id="Collapsible.hpp" name="Collapsible.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="75,5,198,31"/>
+<area shape="rect" id="Node000002" href="$Collapsible_8cpp.html" title=" " alt="" coords="5,152,127,177"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="127,45,74,153,69,151,122,42"/>
+<area shape="rect" id="Node000003" href="$Entry_8hpp.html" title=" " alt="" coords="167,79,250,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="160,39,199,77,195,80,157,43"/>
+<area shape="poly" id="edge3_Node000003_Node000002" title=" " alt="" coords="175,112,91,154,88,149,172,108"/>
+<area shape="rect" id="Node000004" href="$Dropdown_8cpp.html" title=" " alt="" coords="151,152,266,177"/>
+<area shape="poly" id="edge4_Node000003_Node000004" title=" " alt="" coords="211,118,211,152,206,152,206,118"/>
+<area shape="rect" id="Node000005" href="$Entry_8cpp.html" title=" " alt="" coords="291,152,372,177"/>
+<area shape="poly" id="edge5_Node000003_Node000005" title=" " alt="" coords="241,108,313,149,310,154,239,113"/>
+<area shape="rect" id="Node000006" href="$InspectResult_8hpp.html" title=" " alt="" coords="397,152,535,177"/>
+<area shape="poly" id="edge6_Node000003_Node000006" title=" " alt="" coords="264,105,425,149,424,154,262,110"/>
+<area shape="rect" id="Node000007" href="$Inspector_8hpp.html" title=" " alt="" coords="411,225,521,251"/>
+<area shape="poly" id="edge7_Node000006_Node000007" title=" " alt="" coords="469,191,469,225,463,225,463,191"/>
+<area shape="rect" id="Node000008" href="$Atelier_8cpp.html" title=" " alt="" coords="10,299,101,324"/>
+<area shape="poly" id="edge8_Node000007_Node000008" title=" " alt="" coords="398,253,113,301,101,303,101,298,112,296,397,248"/>
+<area shape="rect" id="Node000009" href="$BufferQuery_8cpp.html" title=" " alt="" coords="125,299,250,324"/>
+<area shape="poly" id="edge9_Node000007_Node000009" title=" " alt="" coords="409,257,233,301,232,296,408,251"/>
+<area shape="rect" id="Node000010" href="$EventQuery_8cpp.html" title=" " alt="" coords="274,299,397,324"/>
+<area shape="poly" id="edge10_Node000007_Node000010" title=" " alt="" coords="434,260,358,301,355,296,431,255"/>
+<area shape="rect" id="Node000011" href="$Forma_8cpp.html" title=" " alt="" coords="421,299,511,324"/>
+<area shape="poly" id="edge11_Node000007_Node000011" title=" " alt="" coords="469,264,469,299,463,299,463,264"/>
+<area shape="rect" id="Node000012" href="$Inspector_8cpp.html" title=" " alt="" coords="536,299,644,324"/>
+<area shape="poly" id="edge12_Node000007_Node000012" title=" " alt="" coords="499,255,571,296,568,301,496,260"/>
+<area shape="rect" id="Node000013" href="$NodeQuery_8cpp.html" title=" " alt="" coords="669,299,789,324"/>
+<area shape="poly" id="edge13_Node000007_Node000013" title=" " alt="" coords="522,252,687,296,685,301,521,257"/>
+<area shape="rect" id="Node000014" href="$SchedulerQuery_8cpp.html" title=" " alt="" coords="813,299,964,324"/>
+<area shape="poly" id="edge14_Node000007_Node000014" title=" " alt="" coords="535,248,821,296,820,301,534,253"/>
+</map>

@@ -1,0 +1,20 @@
+<map id="MayaFlux::Nodes::Input::MIDINode::notify_tick" name="MayaFlux::Nodes::Input::MIDINode::notify_tick">
+<area shape="rect" id="Node000001" title="Fires the hooks for one delivered input." alt="" coords="5,156,181,196"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Input_1_1MIDINode_a04c1fc0722f24423dfcd3398a62b24f5.html#a04c1fc0722f24423dfcd3398a62b24f5" title=" " alt="" coords="229,185,405,239"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="182,187,216,193,215,198,181,193"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1Input_1_1InputNode_aa1e2d3eb1a1c2e7ee3b9b65eea3b7c91.html#aa1e2d3eb1a1c2e7ee3b9b65eea3b7c91" title="Fires the hooks for one delivered input." alt="" coords="229,120,405,160"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="181,159,215,154,216,159,182,165"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1HookList_a9688ae71a354c2f8a8989eea13979b7d.html#a9688ae71a354c2f8a8989eea13979b7d" title="Calls every entry whose condition, if any, holds." alt="" coords="457,120,657,160"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="405,183,475,162,477,167,406,188"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Input_1_1InputNode_a2be2c134aaaf5c6c4696909b3de35baa.html#a2be2c134aaaf5c6c4696909b3de35baa" title="Retrieves the last created context object." alt="" coords="469,185,645,239"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="405,209,455,209,455,215,405,215"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Core_1_1InputValue_1_1MIDIMessage_af9c0c149056f572759af0ee1e6841663.html#af9c0c149056f572759af0ee1e6841663" title=" " alt="" coords="456,264,657,304"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="406,236,477,257,475,262,405,241"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1HookList_a0e44de57f732ba8bbedc5d493f694d01.html#a0e44de57f732ba8bbedc5d493f694d01" title="The current entries, held stable for the lifetime of the returned object." alt="" coords="708,92,908,132"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="657,126,694,122,695,127,657,132"/>
+<area shape="poly" id="edge7_Node000007_Node000003" title=" " alt="" coords="405,137,443,137,443,143,405,143"/>
+<area shape="poly" id="edge9_Node000007_Node000004" title=" " alt="" coords="389,117,453,105,578,98,694,101,694,106,578,104,454,111,390,123"/>
+<area shape="poly" id="edge8_Node000007_Node000005" title=" " alt="" coords="385,158,456,179,455,184,384,163"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1Input_1_1InputNode_a00e489ddf0b8e4f74a220feeb318b36f.html#a00e489ddf0b8e4f74a220feeb318b36f" title="Update context after processing." alt="" coords="453,5,660,45"/>
+<area shape="poly" id="edge10_Node000007_Node000008" title=" " alt="" coords="350,117,452,62,484,48,486,53,455,66,352,122"/>
+</map>

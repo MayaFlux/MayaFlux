@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::clear_gpu_buffer" name="MayaFlux::Buffers::clear_gpu_buffer">
+<area shape="rect" id="Node000001" title="Zero a registered GPU buffer in place (auto&#45;detects host&#45;visible vs device&#45;local)" alt="" coords="397,5,545,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a818e469f4792c407c6ebc6e1112a6121.html#a818e469f4792c407c6ebc6e1112a6121" title="Clear buffer contents." alt="" coords="201,5,349,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="383,28,350,28,350,23,383,23"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_ae22f33ecea5953e1b819bbd36db3114c.html#ae22f33ecea5953e1b819bbd36db3114c" title="Write data into the buffer." alt="" coords="5,5,153,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="187,28,154,28,154,23,187,23"/>
+</map>

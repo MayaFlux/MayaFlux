@@ -1,0 +1,8 @@
+<map id="MayaFlux::Yantra::TemporalTransformer::create_output" name="MayaFlux::Yantra::TemporalTransformer::create_output">
+<area shape="rect" id="Node000001" title="Creates output with proper type conversion." alt="" coords="507,46,709,86"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1TemporalTransformer_ad19829f4971af1d2ed744d06a1c4b7f0.html#ad19829f4971af1d2ed744d06a1c4b7f0" title="Extracts per&#45;channel spans, applies func to each, and reconstructs." alt="" coords="256,5,459,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="493,53,458,49,459,43,493,48"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1TemporalTransformer_ad3890517ed8b6bb33c19146ce905c80e.html#ad3890517ed8b6bb33c19146ce905c80e" title="Core transformation implementation for temporal operations." alt="" coords="5,39,208,93"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="493,73,459,74,256,74,208,73,208,67,256,69,459,69,493,68"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="243,51,208,55,208,50,242,45"/>
+</map>

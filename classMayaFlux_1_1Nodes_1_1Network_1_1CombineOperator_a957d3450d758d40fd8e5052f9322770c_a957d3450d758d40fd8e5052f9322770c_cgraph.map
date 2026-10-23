@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::CombineOperator::weight" name="MayaFlux::Nodes::Network::CombineOperator::weight">
+<area shape="rect" id="Node000001" title="One weight cell, readable and assignable from any thread." alt="" coords="5,5,204,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1CombineOperator_a10addf0f82be266560fbb18848598a58.html#a10addf0f82be266560fbb18848598a58" title=" " alt="" coords="252,5,451,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="204,23,238,23,238,28,204,28"/>
+</map>

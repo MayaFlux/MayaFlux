@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::RootNode" name="MayaFlux::Nodes::RootNode">
+<area shape="rect" id="Node000001" title="Container for top&#45;level nodes in a processing channel with multi&#45;modal support." alt="" coords="5,775,229,1260"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Memory_1_1PendingQueue.html" title=" " alt="" coords="8,397,227,712"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="120,712,120,758,115,758,115,712"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Memory_1_1PendingQueue.html" title="Bounded multi&#45;producer, single&#45;consumer queue of deferred operations." alt="" coords="18,5,217,305"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="120,319,120,397,115,397,115,319"/>
+</map>

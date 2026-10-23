@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nexus::Expanse::set_bounds" name="MayaFlux::Nexus::Expanse::set_bounds">
+<area shape="rect" id="Node000001" title="Set or replace the box." alt="" coords="241,5,440,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1Mantle_aebbc7216b3cd7a8d3cd65f1590e46801.html#aebbc7216b3cd7a8d3cd65f1590e46801" title="Set or replace the box and place the buffer to match." alt="" coords="5,5,193,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="228,28,193,28,193,23,228,23"/>
+</map>

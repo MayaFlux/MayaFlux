@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::CompositeAccess::size" name="MayaFlux::Kakshya::CompositeAccess::size">
+<area shape="rect" id="Node000001" title="Number of packed elements in the current element store." alt="" coords="228,49,399,89"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1CompositeAccess_a7a6497070c8cd7c07ea54a0ee6fda44a.html#a7a6497070c8cd7c07ea54a0ee6fda44a" title="Describe packed bytes as [elements, bytes&#45;per&#45;element]." alt="" coords="5,5,180,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="214,55,180,50,181,44,215,50"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1CompositeAccess_a36c5b83f1f535dc5299a3c89cce719ca.html#a36c5b83f1f535dc5299a3c89cce719ca" title="Borrow the elements selected by a one&#45;dimensional Region." alt="" coords="5,85,180,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="215,87,181,93,180,88,214,82"/>
+</map>

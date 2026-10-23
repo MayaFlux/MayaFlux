@@ -1,0 +1,37 @@
+<map id="MayaFlux::Buffers::NetworkStateFieldProcessor" name="MayaFlux::Buffers::NetworkStateFieldProcessor">
+<area shape="rect" id="Node000001" title="ComputeProcessor operating on named state fields of a NetworkGeometryBuffer, plus optionally the buff..." alt="" coords="1235,2045,1457,2380"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1ClaimAccumulateProcessor.html" title="Counts how many particles each survivor swallowed this cycle." alt="" coords="5,2428,223,2668"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="1222,2217,1023,2229,902,2242,771,2262,634,2289,497,2325,363,2372,235,2430,224,2437,222,2432,233,2426,361,2367,495,2320,633,2284,770,2257,901,2237,1023,2224,1221,2212"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1ClaimFlattenProcessor.html" title="Resolves absorption chains to their root via parallel pointer jumping." alt="" coords="247,2488,432,2608"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="1222,2222,1058,2240,961,2255,858,2275,752,2302,645,2337,542,2379,445,2430,410,2457,381,2489,377,2486,407,2453,442,2426,540,2374,643,2332,750,2297,857,2270,960,2249,1058,2234,1221,2217"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1ClaimInitProcessor.html" title="Resets mutation_claimed_by[i] to i and mutation_swallow_count[i] to 0 for every particle." alt="" coords="456,2498,617,2598"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="1222,2230,1091,2253,938,2291,858,2318,778,2349,702,2387,630,2430,595,2462,566,2500,562,2496,591,2459,627,2426,699,2382,776,2344,856,2313,936,2286,1090,2248,1221,2225"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1ClaimProcessor.html" title="Deterministic pairwise claim over the completed spatial hash." alt="" coords="641,2468,803,2628"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="1223,2246,1128,2275,1023,2315,915,2367,864,2397,816,2430,775,2470,772,2466,812,2426,861,2392,913,2362,1021,2310,1127,2270,1221,2241"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Buffers_1_1ClaimSwallowProcessor.html" title="Visually swallows absorbed particles into their survivor, which grows and heats up with how much it h..." alt="" coords="827,2468,1020,2628"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="1225,2291,1129,2356,1034,2430,993,2469,990,2466,1031,2426,1126,2351,1222,2286"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Buffers_1_1ClaimTransferProcessor.html" title="Relabels every vertex absorbed across a cluster boundary into its claimant&#39;s cluster: the &quot;hop&quot; / tra..." alt="" coords="1045,2498,1237,2598"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="1238,2393,1173,2499,1168,2497,1234,2391"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Buffers_1_1HashClearProcessor.html" title="Zeros the per&#45;cell particle histogram before HashCountProcessor accumulates into it." alt="" coords="1261,2498,1431,2598"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="1349,2394,1349,2498,1343,2498,1343,2394"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Buffers_1_1HashCountProcessor.html" title="Buckets each particle into its grid cell and accumulates a per&#45;cell histogram via atomicAdd." alt="" coords="1455,2498,1629,2598"/>
+<area shape="poly" id="edge12_Node000001_Node000013" title=" " alt="" coords="1453,2391,1516,2497,1511,2499,1449,2393"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Buffers_1_1HashDensityColorProcessor.html" title="Colours each particle by local neighbour count, read from the completed hash: proof that the hash bui..." alt="" coords="1653,2468,1871,2628"/>
+<area shape="poly" id="edge13_Node000001_Node000014" title=" " alt="" coords="1470,2294,1556,2357,1642,2426,1686,2466,1683,2470,1639,2430,1553,2361,1466,2299"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Buffers_1_1HashScanProcessor.html" title="Sequential exclusive prefix sum over the per&#45;cell histogram." alt="" coords="1895,2498,2061,2598"/>
+<area shape="poly" id="edge14_Node000001_Node000015" title=" " alt="" coords="1471,2241,1566,2270,1674,2310,1783,2362,1836,2392,1885,2426,1921,2459,1950,2496,1946,2499,1917,2463,1882,2430,1833,2397,1781,2367,1671,2315,1564,2275,1469,2246"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Buffers_1_1HashScatterProcessor.html" title="Writes each particle&#39;s index into hash_particle_index at the slot its cell&#39;s atomic cursor claims." alt="" coords="2085,2498,2266,2598"/>
+<area shape="poly" id="edge15_Node000001_Node000016" title=" " alt="" coords="1471,2226,1603,2250,1758,2289,1840,2315,1921,2346,2000,2383,2074,2426,2114,2459,2145,2496,2141,2500,2110,2463,2071,2430,1997,2388,1919,2351,1838,2320,1757,2294,1602,2255,1470,2231"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1Buffers_1_1PopulationInitProcessor.html" title="One&#45;shot: splits mutation_alive into live/reserve, zeros the reserve region&#39;s vertex records,..." alt="" coords="2290,2478,2482,2618"/>
+<area shape="poly" id="edge16_Node000001_Node000017" title=" " alt="" coords="1471,2217,1639,2233,1740,2248,1847,2269,1958,2296,2069,2330,2177,2373,2279,2426,2311,2449,2338,2476,2334,2480,2307,2453,2277,2430,2175,2378,2067,2335,1957,2301,1846,2274,1739,2253,1639,2238,1470,2222"/>
+<area shape="rect" id="Node000018" href="$classMayaFlux_1_1Buffers_1_1PopulationSpawnProcessor.html" title="Copies a crowded live particle&#39;s full vertex record into a fresh reserve slot, claimed via a monotoni..." alt="" coords="2506,2468,2719,2628"/>
+<area shape="poly" id="edge17_Node000001_Node000018" title=" " alt="" coords="1471,2211,1676,2221,1802,2234,1938,2253,2080,2280,2223,2317,2363,2365,2430,2394,2495,2426,2524,2444,2549,2466,2546,2470,2520,2448,2493,2430,2428,2399,2361,2370,2221,2322,2078,2285,1937,2258,1801,2239,1675,2226,1470,2216"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ComputeProcessor.html" title="Specialized ShaderProcessor for Compute Pipelines." alt="" coords="1247,1503,1445,1997"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1349,2011,1349,2045,1343,2045,1343,2011"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor.html" title="Abstract base class for shader&#45;based buffer processing." alt="" coords="1247,516,1445,1455"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="1349,1469,1349,1502,1343,1502,1343,1469"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1VKBufferProcessor.html" title=" " alt="" coords="1249,313,1443,468"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="1349,482,1349,516,1343,516,1343,482"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1BufferProcessor.html" title="Central computational transformation interface for continuous buffer processing." alt="" coords="1256,5,1436,265"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="1349,279,1349,313,1343,313,1343,279"/>
+</map>

@@ -1,0 +1,16 @@
+<map id="MayaFlux::Nodes::Input::InputNode::update_context" name="MayaFlux::Nodes::Input::InputNode::update_context">
+<area shape="rect" id="Node000001" title="Update context after processing." alt="" coords="508,165,715,205"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Input_1_1InputNode_aa1e2d3eb1a1c2e7ee3b9b65eea3b7c91.html#aa1e2d3eb1a1c2e7ee3b9b65eea3b7c91" title="Fires the hooks for one delivered input." alt="" coords="266,133,442,173"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="494,173,442,167,443,162,495,168"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1Input_1_1TabletNode_a9586a33e0f00e2d4b32bf21701136cd7.html#a9586a33e0f00e2d4b32bf21701136cd7" title="Update context after processing." alt="" coords="248,197,460,237"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="495,202,461,207,460,201,494,197"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Input_1_1MIDINode_a9f48d654a8efa73c0dd55993eaf3a3de.html#a9f48d654a8efa73c0dd55993eaf3a3de" title="Fires the hooks for one delivered input." alt="" coords="15,5,191,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="312,128,260,93,199,60,170,48,172,43,201,55,262,88,315,123"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Input_1_1OSCNode_af27f4732f083ebb034e096534c09a88a.html#af27f4732f083ebb034e096534c09a88a" title="Fires the hooks for one delivered input." alt="" coords="15,69,191,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="261,132,181,112,182,107,262,127"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Input_1_1TabletNode_a2e450a69e0de89a55176c521ca682220.html#a2e450a69e0de89a55176c521ca682220" title="Fires the hooks for one delivered input." alt="" coords="13,197,192,237"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="262,179,182,200,181,195,261,174"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Input_1_1InputNode_a88c4313675ddc5de1acab2ab1fc91876.html#a88c4313675ddc5de1acab2ab1fc91876" title="Process an input value from a backend." alt="" coords="5,133,200,173"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="252,156,200,156,200,151,252,151"/>
+<area shape="poly" id="edge7_Node000007_Node000005" title=" " alt="" coords="234,220,192,220,192,215,234,215"/>
+</map>

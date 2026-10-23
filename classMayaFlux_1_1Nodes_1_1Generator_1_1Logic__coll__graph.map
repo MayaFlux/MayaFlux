@@ -1,0 +1,29 @@
+<map id="MayaFlux::Nodes::Generator::Logic" name="MayaFlux::Nodes::Generator::Logic">
+<area shape="rect" id="Node000001" title="Digital signal processor implementing boolean logic operations." alt="" coords="589,1992,801,2701"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Generator.html" title="Base class for all signal and pattern generators in Maya Flux." alt="" coords="397,1587,597,1887"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="553,1899,591,2018,586,2020,548,1901"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Node.html" title="Base interface for all computational processing nodes." alt="" coords="99,683,296,1467"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="304,1459,332,1519,363,1572,400,1622,395,1625,359,1575,327,1521,299,1461"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1HookList.html" title="Stores, fires and clears the hooks of one node channel." alt="" coords="125,1544,318,1929"/>
+<area shape="poly" id="edge4_Node000004_Node000003" title=" " alt="" coords="214,1467,217,1527,211,1528,209,1467"/>
+<area shape="poly" id="edge11_Node000001_Node000004" title=" " alt="" coords="321,1861,581,2194,576,2198,316,1864"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="123,1662,63,1598,38,1561,18,1521,6,1481,3,1440,6,1398,15,1357,29,1317,46,1278,87,1207,92,1210,51,1281,34,1319,20,1359,11,1399,8,1439,11,1480,23,1519,42,1558,67,1595,127,1659"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Nodes_1_1RoutingState.html" title="Represents the state of routing transitions for a node." alt="" coords="105,310,290,490"/>
+<area shape="poly" id="edge5_Node000003_Node000005" title=" " alt="" coords="200,490,200,667,195,667,195,490"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1GeneratorContext.html" title="Specialized context for generator node callbacks." alt="" coords="324,340,524,460"/>
+<area shape="poly" id="edge6_Node000002_Node000006" title=" " alt="" coords="408,461,381,564,359,683,344,855,335,1076,335,1190,338,1297,346,1391,359,1466,376,1519,398,1571,393,1573,371,1521,354,1467,341,1392,333,1297,330,1190,330,1076,339,854,354,682,375,563,403,460"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1GeneratorContextGpu.html" title=" " alt="" coords="453,1035,653,1115"/>
+<area shape="poly" id="edge9_Node000008_Node000006" title=" " alt="" coords="441,473,549,1034,543,1035,435,474"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1NodeContext.html" title="Base context class for node callbacks." alt="" coords="554,5,774,131"/>
+<area shape="poly" id="edge7_Node000006_Node000007" title=" " alt="" coords="576,142,540,182,512,221,488,262,450,341,445,339,483,260,508,218,535,178,572,139"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1LogicContext.html" title=" " alt="" coords="807,180,1007,620"/>
+<area shape="poly" id="edge13_Node000010_Node000007" title=" " alt="" coords="759,138,797,178,809,194,804,197,793,182,755,142"/>
+<area shape="poly" id="edge8_Node000002_Node000008" title=" " alt="" coords="553,1115,514,1571,509,1570,548,1115"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nodes_1_1GpuVectorData.html" title="GPU&#45;uploadable 1D array data interface." alt="" coords="549,327,782,473"/>
+<area shape="poly" id="edge10_Node000008_Node000009" title=" " alt="" coords="654,487,563,1035,557,1034,649,486"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1LogicContextGpu.html" title="GPU&#45;accelerated context for logic node callbacks." alt="" coords="677,1035,877,1115"/>
+<area shape="poly" id="edge16_Node000011_Node000009" title=" " alt="" coords="682,486,774,1034,768,1035,677,487"/>
+<area shape="poly" id="edge12_Node000001_Node000010" title=" " alt="" coords="929,620,941,887,944,1046,942,1216,934,1394,919,1575,896,1755,863,1930,839,2016,809,2101,804,2100,834,2015,858,1929,891,1754,914,1574,929,1393,936,1216,938,1046,936,887,923,620"/>
+<area shape="poly" id="edge15_Node000011_Node000010" title=" " alt="" coords="865,634,788,1035,782,1034,859,633"/>
+<area shape="poly" id="edge14_Node000001_Node000011" title=" " alt="" coords="778,1115,722,1976,716,1975,772,1115"/>
+</map>

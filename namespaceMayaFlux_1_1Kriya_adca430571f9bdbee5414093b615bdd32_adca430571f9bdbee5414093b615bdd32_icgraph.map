@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kriya::text_input" name="MayaFlux::Kriya::text_input">
+<area shape="rect" id="Node000001" title="Creates an Event coroutine that triggers on resolved text input." alt="" coords="485,5,648,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_aa42296d51149bf551f43678912150ef0.html#aa42296d51149bf551f43678912150ef0" title=" " alt="" coords="235,5,437,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="471,28,437,28,437,23,471,23"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_a7287e64dcc62fe5f54a34e133c3b0332.html#a7287e64dcc62fe5f54a34e133c3b0332" title="Construct and immediately register event coroutines." alt="" coords="5,5,187,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="221,28,187,28,187,23,221,23"/>
+</map>

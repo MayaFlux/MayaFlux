@@ -1,0 +1,29 @@
+<map id="MayaFlux::Buffers::TextureArrayBuffer::setup_processors" name="MayaFlux::Buffers::TextureArrayBuffer::setup_processors">
+<area shape="rect" id="Node000001" title="Setup processors with a processing token." alt="" coords="5,294,157,349"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1TextureArrayBuffer_af369e1cbda115e1a3de43e5b3d15e0cb.html#af369e1cbda115e1a3de43e5b3d15e0cb" title=" " alt="" coords="225,190,377,245"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="139,291,229,248,232,253,141,296"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Buffers_1_1TextureBuffer_a29e4156e10ad0af811e2e1fa253ced09.html#a29e4156e10ad0af811e2e1fa253ced09" title=" " alt="" coords="205,294,397,349"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="157,319,192,319,192,324,157,324"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Buffers_1_1TextureBuffer_a00b176eef7680a35ca43232088d67600.html#a00b176eef7680a35ca43232088d67600" title="Setup processors with a processing token." alt="" coords="225,434,378,489"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="127,347,247,424,244,429,124,351"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1TextureBuffer_a5a87997228a8048647e422c15dbf2a13.html#a5a87997228a8048647e422c15dbf2a13" title=" " alt="" coords="464,5,653,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="318,188,369,121,404,86,444,55,455,49,458,54,447,60,408,90,373,125,322,191"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1TextureBuffer_a9b95a2ec52e43046fbfb16db23ac9f1e.html#a9b95a2ec52e43046fbfb16db23ac9f1e" title=" " alt="" coords="465,69,652,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="336,187,385,152,444,119,461,112,464,117,447,124,388,157,339,192"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a335ffb0c43b53ec263ab6559ac29476b.html#a335ffb0c43b53ec263ab6559ac29476b" title="Get the global texture manager instance." alt="" coords="460,133,657,173"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="377,196,464,174,465,179,378,201"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1TextureBuffer_a3a81f658a89643551b033fe1e0dd39c5.html#a3a81f658a89643551b033fe1e0dd39c5" title=" " alt="" coords="468,197,649,237"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="377,215,454,215,454,220,377,220"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1TextureBuffer_a6d9e10626ae8150e21923048853f4d07.html#a6d9e10626ae8150e21923048853f4d07" title=" " alt="" coords="461,261,656,301"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="378,234,465,255,464,261,377,239"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1TextureBuffer_a0d6c75d02c13f3d30b400103bed1812a.html#a0d6c75d02c13f3d30b400103bed1812a" title="Inject a pre&#45;existing GPU texture, bypassing TextureProcessor allocation." alt="" coords="475,326,643,381"/>
+<area shape="poly" id="edge8_Node000002_Node000009" title=" " alt="" coords="344,242,447,311,463,319,461,324,444,316,341,247"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a6887ad297693c2392be7960daab06002.html#a6887ad297693c2392be7960daab06002" title=" " alt="" coords="720,133,917,173"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="658,151,706,151,706,156,658,156"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a6cf409969c192851ab2cf7f0315d2a49.html#a6cf409969c192851ab2cf7f0315d2a49" title="Access the buffer&#39;s processing chain." alt="" coords="445,405,672,445"/>
+<area shape="poly" id="edge11_Node000011_Node000012" title=" " alt="" coords="378,448,431,440,432,446,378,453"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a6e843b1ce9e90e2df2501d28e60eab52.html#a6e843b1ce9e90e2df2501d28e60eab52" title="Set the buffer&#39;s default processor." alt="" coords="479,470,639,525"/>
+<area shape="poly" id="edge12_Node000011_Node000013" title=" " alt="" coords="378,469,466,482,465,487,378,475"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a93f1d139e1fc4ab7689f2a205bf76563.html#a93f1d139e1fc4ab7689f2a205bf76563" title="Replace the buffer&#39;s processing chain." alt="" coords="445,549,672,589"/>
+<area shape="poly" id="edge13_Node000011_Node000014" title=" " alt="" coords="350,487,396,512,446,535,467,543,465,548,444,540,393,516,347,491"/>
+</map>

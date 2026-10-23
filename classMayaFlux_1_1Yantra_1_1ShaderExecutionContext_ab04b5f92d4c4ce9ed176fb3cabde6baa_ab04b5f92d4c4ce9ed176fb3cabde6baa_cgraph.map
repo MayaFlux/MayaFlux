@@ -1,0 +1,5 @@
+<map id="MayaFlux::Yantra::ShaderExecutionContext::in_out" name="MayaFlux::Yantra::ShaderExecutionContext::in_out">
+<area shape="rect" id="Node000001" title="Declare an INPUT_OUTPUT binding at an explicit index without pre&#45;staging data." alt="" coords="5,13,192,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1ShaderExecutionContext_a8043be1f8aae7bef373c4d1c20e4d554.html#a8043be1f8aae7bef373c4d1c20e4d554" title="Returns one past the highest binding index currently registered." alt="" coords="240,5,427,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="192,30,226,30,226,35,192,35"/>
+</map>

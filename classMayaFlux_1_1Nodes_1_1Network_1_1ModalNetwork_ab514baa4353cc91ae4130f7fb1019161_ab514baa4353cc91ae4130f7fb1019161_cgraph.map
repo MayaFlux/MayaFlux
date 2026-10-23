@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::ModalNetwork::map_parameter" name="MayaFlux::Nodes::Network::ModalNetwork::map_parameter">
+<area shape="rect" id="Node000001" title="Map external node output to network parameter." alt="" coords="5,5,243,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ModalNetwork_a8cb7accd71c04a514461fbadcd93f3d0.html#a8cb7accd71c04a514461fbadcd93f3d0" title="Remove parameter mapping." alt="" coords="291,5,544,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="243,23,277,23,277,28,243,28"/>
+</map>

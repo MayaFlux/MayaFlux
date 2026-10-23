@@ -1,0 +1,5 @@
+<map id="MayaFlux::IO::ModelWriter" name="MayaFlux::IO::ModelWriter">
+<area shape="rect" id="Node000001" title="Abstract base for 3D model format writers." alt="" coords="5,5,215,151"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1AssimpModelWriter.html" title="ModelWriter implementation backed by Assimp::Exporter." alt="" coords="5,199,215,419"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="113,164,113,198,107,198,107,164"/>
+</map>

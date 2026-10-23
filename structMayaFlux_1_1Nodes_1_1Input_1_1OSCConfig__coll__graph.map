@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Input::OSCConfig" name="MayaFlux::Nodes::Input::OSCConfig">
+<area shape="rect" id="Node000001" title="Configuration for OSC input node argument extraction." alt="" coords="5,213,173,473"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Nodes_1_1Input_1_1InputConfig.html" title="Configuration for InputNode behavior." alt="" coords="5,5,173,165"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="92,179,92,213,87,213,87,179"/>
+</map>

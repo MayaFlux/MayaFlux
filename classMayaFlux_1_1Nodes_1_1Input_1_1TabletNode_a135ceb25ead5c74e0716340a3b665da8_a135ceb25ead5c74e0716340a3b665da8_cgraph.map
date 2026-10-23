@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Input::TabletNode::on_frame" name="MayaFlux::Nodes::Input::TabletNode::on_frame">
+<area shape="rect" id="Node000001" title="Callback on every frame, with the full slot set." alt="" coords="5,5,181,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Nodes_ac234727efe20bcec6d269ace94b3e312.html#ac234727efe20bcec6d269ace94b3e312" title="Wraps a context&#45;typed hook into a NodeHook." alt="" coords="229,13,448,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="182,23,216,23,216,28,182,28"/>
+</map>

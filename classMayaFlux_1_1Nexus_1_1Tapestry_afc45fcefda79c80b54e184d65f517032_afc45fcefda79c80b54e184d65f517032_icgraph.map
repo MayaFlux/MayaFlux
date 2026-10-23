@@ -1,0 +1,11 @@
+<map id="MayaFlux::Nexus::Tapestry::claim" name="MayaFlux::Nexus::Tapestry::claim">
+<area shape="rect" id="Node000001" title=" " alt="" coords="531,37,729,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1Tapestry_aba652501567316cc56ab229ccc24be8d.html#aba652501567316cc56ab229ccc24be8d" title="Create and register a named Expanse that is a box." alt="" coords="284,5,483,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="517,45,483,41,483,36,518,40"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nexus_1_1Tapestry_aae5f16adc0ea5376ea8ab31eb4c0592c.html#aae5f16adc0ea5376ea8ab31eb4c0592c" title="Create and register a named Expanse." alt="" coords="284,69,483,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="518,75,483,79,483,74,517,69"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nexus_1_1Tapestry_a1d054147c52f107c727f97a377450cf8.html#a1d054147c52f107c727f97a377450cf8" title="Create and register a named Expanse from a containment predicate alone." alt="" coords="21,37,220,77"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="270,78,220,72,220,67,271,73"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nexus_1_1StateDecoder_ab8adc484d13d63fc196d40e45179e27d.html#ab8adc484d13d63fc196d40e45179e27d" title="Reconstruct all Fabrics in tapestry from base_dir." alt="" coords="5,101,236,141"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="271,106,236,110,236,105,270,100"/>
+</map>

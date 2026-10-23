@@ -1,0 +1,5 @@
+<map id="MayaFlux::unregister_node" name="MayaFlux::unregister_node">
+<area shape="rect" id="Node000001" title="Removes a node from the root node of specified channels." alt="" coords="260,13,459,38"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1RootNode_af942c3c30039d700972aa5fb309ad822.html#af942c3c30039d700972aa5fb309ad822" title="Terminates all nodes registered with this root node." alt="" coords="5,5,212,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="247,28,212,28,212,23,247,23"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::IO::AudioStreamContext::close" name="MayaFlux::IO::AudioStreamContext::close">
+<area shape="rect" id="Node000001" title="Release codec and resampler resources." alt="" coords="280,37,480,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1AudioStreamContext_a463593071a0c4d4e507166a78a43ff45.html#a463593071a0c4d4e507166a78a43ff45" title="Open the audio stream from an already&#45;probed demux context." alt="" coords="19,5,219,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="266,46,219,40,219,35,266,41"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1AudioStreamContext_afa9a18ee2832cc3d070139973a226fa4.html#afa9a18ee2832cc3d070139973a226fa4" title=" " alt="" coords="5,69,232,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="267,74,233,78,232,73,266,69"/>
+</map>

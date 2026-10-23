@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::MixProcessor::validate_sources" name="MayaFlux::Buffers::MixProcessor::validate_sources">
+<area shape="rect" id="Node000001" title=" " alt="" coords="240,5,411,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1MixProcessor_a7ca2c86c7703e719a40189c3653ce5f4.html#a7ca2c86c7703e719a40189c3653ce5f4" title="the mechanism to mix output from one buffer to another channel" alt="" coords="5,5,192,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="227,35,192,35,192,30,227,30"/>
+</map>

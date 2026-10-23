@@ -1,0 +1,11 @@
+<map id="MayaFlux::Nodes::GpuSync::GpuComputeNode::remove_complete_hook" name="MayaFlux::Nodes::GpuSync::GpuComputeNode::remove_complete_hook">
+<area shape="rect" id="Node000001" title="Remove a previously registered on_complete callback." alt="" coords="5,30,212,85"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1HookList_a464c17838a9447674139fdfc3f89dc69.html#a464c17838a9447674139fdfc3f89dc69" title="Removes every entry registered with this callable type." alt="" coords="260,37,460,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="212,55,246,55,246,60,212,60"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1HookList_a47b073736819351e0bd884d86d0d5a51.html#a47b073736819351e0bd884d86d0d5a51" title=" " alt="" coords="508,37,708,77"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="460,55,494,55,494,60,460,60"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1HookList_a98f1cd697a8d07ef16e2004aa67376da.html#a98f1cd697a8d07ef16e2004aa67376da" title=" " alt="" coords="756,5,956,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="708,42,742,37,743,43,708,47"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1HookList_a6fdccab758a46d7b33254857f959ec9b.html#a6fdccab758a46d7b33254857f959ec9b" title=" " alt="" coords="756,69,956,109"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="708,68,743,72,742,77,708,73"/>
+</map>

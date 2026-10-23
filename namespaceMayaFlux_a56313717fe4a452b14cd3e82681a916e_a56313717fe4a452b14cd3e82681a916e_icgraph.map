@@ -1,0 +1,5 @@
+<map id="MayaFlux::create_sampler_from_stream" name="MayaFlux::create_sampler_from_stream">
+<area shape="rect" id="Node000001" title="Construct a built SamplingPipeline from an existing DynamicSoundStream." alt="" coords="248,5,443,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_aa720d9a11b0f2dd92f3997b8a3065162.html#aa720d9a11b0f2dd92f3997b8a3065162" title="Construct a built SamplingPipeline from a file picked in a dialog." alt="" coords="5,13,200,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="234,28,200,28,200,23,234,23"/>
+</map>

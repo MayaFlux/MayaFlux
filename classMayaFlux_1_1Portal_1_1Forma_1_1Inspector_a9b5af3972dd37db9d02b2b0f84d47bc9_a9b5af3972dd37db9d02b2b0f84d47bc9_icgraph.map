@@ -1,0 +1,9 @@
+<map id="MayaFlux::Portal::Forma::Inspector::node_network" name="MayaFlux::Portal::Forma::Inspector::node_network">
+<area shape="rect" id="Node000001" title="Inspect a NodeNetwork and its per&#45;network metadata." alt="" coords="464,41,655,81"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a375aa9c35d0d0831a7d4e0ea7107b227.html#a375aa9c35d0d0831a7d4e0ea7107b227" title="Open a dedicated window inspecting a NodeNetwork." alt="" coords="235,5,416,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="450,47,416,42,417,37,451,42"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Inspector_a47b36fa77f82dfbb6031c649b54101b0.html#a47b36fa77f82dfbb6031c649b54101b0" title="Inspect the full NodeGraphManager state across all active tokens." alt="" coords="235,70,416,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="451,81,417,86,416,81,450,75"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Forma_a9563fe8292595a238e507c2ff54f787e.html#a9563fe8292595a238e507c2ff54f787e" title="Open or show the NodeGraphManager inspection window." alt="" coords="5,77,187,117"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="221,100,187,100,187,95,221,95"/>
+</map>

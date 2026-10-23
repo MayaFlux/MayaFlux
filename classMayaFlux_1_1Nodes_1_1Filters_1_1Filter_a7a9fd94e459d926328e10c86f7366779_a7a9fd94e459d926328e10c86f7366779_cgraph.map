@@ -1,0 +1,17 @@
+<map id="MayaFlux::Nodes::Filters::Filter::on_tick_if" name="MayaFlux::Nodes::Filters::Filter::on_tick_if">
+<area shape="rect" id="Node000001" title="Registers a conditional callback to be called on each tick if the condition is met." alt="" coords="5,73,188,113"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Nodes_ac234727efe20bcec6d269ace94b3e312.html#ac234727efe20bcec6d269ace94b3e312" title="Wraps a context&#45;typed hook into a NodeHook." alt="" coords="236,51,455,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="188,80,224,76,224,81,189,85"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1HookList_a3f1fdfbea4976c9c8b2fc3ee526b67cd.html#a3f1fdfbea4976c9c8b2fc3ee526b67cd" title="Appends a hook that fires only while condition holds." alt="" coords="245,101,445,141"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="189,101,232,106,231,111,188,106"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1HookList_a47b073736819351e0bd884d86d0d5a51.html#a47b073736819351e0bd884d86d0d5a51" title=" " alt="" coords="503,69,703,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="445,106,489,101,490,106,446,112"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1HookList_a4bc5ea6712da609a8fb1e477d99230de.html#a4bc5ea6712da609a8fb1e477d99230de" title=" " alt="" coords="503,133,703,173"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="446,131,490,137,489,142,445,136"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1HookList_a98f1cd697a8d07ef16e2004aa67376da.html#a98f1cd697a8d07ef16e2004aa67376da" title=" " alt="" coords="751,5,951,45"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="680,67,759,46,760,51,682,72"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1HookList_a6fdccab758a46d7b33254857f959ec9b.html#a6fdccab758a46d7b33254857f959ec9b" title=" " alt="" coords="751,69,951,109"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="703,87,737,87,737,92,703,92"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1Node_abd215619c852dab28db04fc0e19e0e89.html#abd215619c852dab28db04fc0e19e0e89" title=" " alt="" coords="762,133,939,173"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="703,151,748,151,748,156,703,156"/>
+</map>

@@ -1,0 +1,20 @@
+<map id="MayaFlux::Vruta::TaskScheduler::get_rate" name="MayaFlux::Vruta::TaskScheduler::get_rate">
+<area shape="rect" id="Node000001" title="Get processing rate for a domain." alt="" coords="825,69,1056,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a99bd0b1b8f51d07e40aeaf1588342323.html#a99bd0b1b8f51d07e40aeaf1588342323" title="Converts a time in seconds to a number of samples." alt="" coords="547,37,777,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="811,77,777,73,778,68,812,72"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a1799325adcf528acaaff698264a9ac42.html#a1799325adcf528acaaff698264a9ac42" title="Convert seconds to processing units for a specific domain." alt="" coords="547,101,777,141"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="812,107,778,111,777,105,811,101"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kriya_1_1BufferPipeline_a71b338f3d13496168e51bbcad3b7789f.html#a71b338f3d13496168e51bbcad3b7789f" title="Execute pipeline with real&#45;time rate control." alt="" coords="272,37,499,77"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="533,60,499,60,499,55,533,55"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kriya_1_1Timer_acf410f70434e3f2a2e3ae063f2aab581.html#acf410f70434e3f2a2e3ae063f2aab581" title="Schedules a callback to execute after a delay." alt="" coords="298,101,473,141"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="562,83,473,104,472,99,561,78"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kriya_1_1TemporalActivation_ab4f3737fb0465e8727586b7104b95fc2.html#ab4f3737fb0465e8727586b7104b95fc2" title="Activates a buffer for a specified duration." alt="" coords="17,5,213,45"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="288,99,271,92,247,76,223,60,193,48,195,43,225,55,249,71,273,87,290,94"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kriya_1_1TemporalActivation_a5472441ec2fd9cc067e55eb8f48f1a6d.html#a5472441ec2fd9cc067e55eb8f48f1a6d" title="Activates a node network for a specified duration." alt="" coords="10,69,219,109"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="284,112,219,104,220,99,284,107"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kriya_1_1TemporalActivation_ab218a3ead3d97c0a677ad3b3f0fad462.html#ab218a3ead3d97c0a677ad3b3f0fad462" title="Activates a node for a specified duration." alt="" coords="17,133,213,173"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="284,136,213,144,212,139,284,131"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Kriya_1_1TimedAction_ac54f279dd2bd1e1b20e0f25a9d5dea5c.html#ac54f279dd2bd1e1b20e0f25a9d5dea5c" title="Executes a pair of functions with a time interval between them." alt="" coords="5,197,224,237"/>
+<area shape="poly" id="edge7_Node000004_Node000008" title=" " alt="" coords="326,149,225,188,188,200,186,195,223,183,324,144"/>
+<area shape="poly" id="edge9_Node000009_Node000004" title=" " alt="" coords="533,124,473,124,473,119,533,119"/>
+</map>

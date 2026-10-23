@@ -1,0 +1,8 @@
+<map id="MayaFlux::Kinesis::Discrete::zscore" name="MayaFlux::Kinesis::Discrete::zscore">
+<area shape="rect" id="Node000001" title="How far the newest value sits from the rest of the window, in standard deviations." alt="" coords="5,65,155,105"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_af50196710c144f7ee6c4ab9201202438.html#af50196710c144f7ee6c4ab9201202438" title="Arithmetic mean per window." alt="" coords="205,29,355,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="154,69,191,63,192,68,155,75"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Estimate_af7cde71aad7f9397ced13587376c837a.html#af7cde71aad7f9397ced13587376c837a" title="Standard deviation of a span." alt="" coords="203,94,357,149"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="155,96,190,102,189,108,154,101"/>
+<area shape="poly" id="edge2_Node000002_Node000002" title=" " alt="" coords="242,30,240,20,246,11,260,5,280,3,304,6,316,13,314,18,302,11,280,8,261,10,249,15,245,21,247,28"/>
+</map>

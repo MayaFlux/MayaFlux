@@ -1,0 +1,6 @@
+<map id="MayaFlux::Kinesis::Discrete::phasor_bank" name="MayaFlux::Kinesis::Discrete::phasor_bank">
+<area shape="rect" id="Node000001" title="Sum of N sinusoidal partials, each with its own slow amplitude swell." alt="" coords="5,29,172,69"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a0f0fc0b4cd893ccbb45ac82fcc93a549.html#a0f0fc0b4cd893ccbb45ac82fcc93a549" title="Sum per window." alt="" coords="220,29,369,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="172,47,206,47,206,52,172,52"/>
+<area shape="poly" id="edge2_Node000002_Node000002" title=" " alt="" coords="256,30,254,20,260,11,274,5,295,3,319,6,332,13,329,18,317,11,295,8,275,10,263,15,259,21,261,28"/>
+</map>

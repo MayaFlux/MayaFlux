@@ -1,0 +1,14 @@
+<map id="MayaFlux::Portal::Forma::internal::Atelier::create_surface" name="MayaFlux::Portal::Forma::internal::Atelier::create_surface">
+<area shape="rect" id="Node000001" title="Build a window through create_window, then a Surface on it." alt="" coords="5,66,187,121"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Forma_1_1internal_1_1Atelier_a18530bd8200cf89d10e03b80eab9c811.html#a18530bd8200cf89d10e03b80eab9c811" title="Build a Surface from a SurfaceConfig, creating Layer and Context when config.layer/config...." alt="" coords="235,26,416,81"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="186,75,221,69,222,74,187,80"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Forma_1_1internal_1_1Atelier_a806d0c28fa7673aab9b61e9a134221a1.html#a806d0c28fa7673aab9b61e9a134221a1" title="Create a window through the stored WindowManager and show it." alt="" coords="235,105,416,159"/>
+<area shape="poly" id="edge6_Node000001_Node000006" title=" " alt="" coords="187,106,221,112,221,117,186,111"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Forma_1_1internal_1_1Atelier_af684f6f03bb9a9bcb744e2134e6f9769.html#af684f6f03bb9a9bcb744e2134e6f9769" title="Construct a Layer and a Context wired to window." alt="" coords="464,5,684,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="416,40,450,37,451,42,416,46"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_a04fb0b546bfa364a04dfe6f609f8b769.html#a04fb0b546bfa364a04dfe6f609f8b769" title="Transfer ownership of an existing object to the persistent store for process lifetime." alt="" coords="732,42,859,67"/>
+<area shape="poly" id="edge5_Node000002_Node000004" title=" " alt="" coords="416,54,464,55,684,55,718,54,718,59,684,60,464,60,416,59"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="684,37,719,42,718,47,684,43"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1internal_ac26a7a92aa4af34c366aad03b68ea71e.html#ac26a7a92aa4af34c366aad03b68ea71e" title=" " alt="" coords="907,35,1051,75"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="859,52,893,52,893,57,859,57"/>
+</map>

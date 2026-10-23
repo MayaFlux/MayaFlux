@@ -1,0 +1,13 @@
+<map id="MayaFlux::Buffers::MeshBuffer::MeshBuffer" name="MayaFlux::Buffers::MeshBuffer::MeshBuffer">
+<area shape="rect" id="Node000001" title="Construct from a MeshWriterNode." alt="" coords="5,133,184,173"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1MeshData_a3cecabe70345deaa8c2da479a1a8193a.html#a3cecabe70345deaa8c2da479a1a8193a" title="Construct an empty MeshData with the canonical 60&#45;byte mesh layout." alt="" coords="249,5,407,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="119,131,169,93,231,55,246,48,248,53,233,60,172,97,122,135"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kakshya_1_1VertexLayout_a7b7a30b2a13cb2676713a352f298f607.html#a7b7a30b2a13cb2676713a352f298f607" title="Factory: layout for MeshVertex (position, color, weight, uv, normal, tangent)" alt="" coords="232,69,424,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="168,131,241,110,242,116,169,136"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1MeshInsertion_a618b35166b14858aca7b8f8c8ce693c8.html#a618b35166b14858aca7b8f8c8ce693c8" title="Insert a single flat mesh (no submesh tracking)." alt="" coords="235,133,421,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="185,151,221,151,221,156,185,156"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_acb563960a9f338d6e93cf7bae6f64f46.html#acb563960a9f338d6e93cf7bae6f64f46" title="Called by derived classes to set their context&#45;specific defaults." alt="" coords="248,198,408,253"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="161,171,236,194,234,199,159,176"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a9ebe5522ca06eb7510f532f10ab56e88.html#a9ebe5522ca06eb7510f532f10ab56e88" title="Mark this buffer as requiring depth testing when rendered." alt="" coords="251,277,405,331"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="118,171,169,216,233,262,244,268,242,273,231,266,166,220,115,175"/>
+</map>

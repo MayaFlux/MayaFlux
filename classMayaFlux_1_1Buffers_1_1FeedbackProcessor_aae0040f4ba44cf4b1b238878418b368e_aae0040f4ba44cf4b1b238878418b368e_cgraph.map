@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::FeedbackProcessor::set_lags" name="MayaFlux::Buffers::FeedbackProcessor::set_lags">
+<area shape="rect" id="Node000001" title="Replace all taps with fixed lags in samples." alt="" coords="5,13,215,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1FeedbackProcessor_a8924c149c5db26da4cef1222e65eba4e.html#a8924c149c5db26da4cef1222e65eba4e" title=" " alt="" coords="263,5,488,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="215,30,249,30,249,35,215,35"/>
+</map>

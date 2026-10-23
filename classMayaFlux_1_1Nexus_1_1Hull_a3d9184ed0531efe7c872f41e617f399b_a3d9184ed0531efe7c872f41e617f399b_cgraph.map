@@ -1,0 +1,8 @@
+<map id="MayaFlux::Nexus::Hull::reach" name="MayaFlux::Nexus::Hull::reach">
+<area shape="rect" id="Node000001" title="The centre of the bounds as drawn, and the distance to their farthest corner." alt="" coords="5,49,175,89"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nexus_1_1Expanse_aac98f507157c70791195b36ce2d3a88a.html#aac98f507157c70791195b36ce2d3a88a" title="Where the region is centred and how far it reaches, for perceptions." alt="" coords="223,5,421,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="174,51,209,44,210,49,175,56"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Nexus_a0340f519d219f0d318698cd650dfcf75.html#a0340f519d219f0d318698cd650dfcf75" title="Where a buffer is drawn: the geometry transform of its primary render processor." alt="" coords="236,93,408,133"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="175,83,223,92,222,97,174,88"/>
+<area shape="poly" id="edge3_Node000003_Node000003" title=" " alt="" coords="279,94,276,84,283,74,298,69,322,67,349,70,364,77,361,82,348,75,322,72,300,74,286,79,281,85,284,92"/>
+</map>

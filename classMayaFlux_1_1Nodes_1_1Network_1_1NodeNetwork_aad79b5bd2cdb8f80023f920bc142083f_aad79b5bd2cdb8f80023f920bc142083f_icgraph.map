@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Network::NodeNetwork::get_operator_chain" name="MayaFlux::Nodes::Network::NodeNetwork::get_operator_chain">
+<area shape="rect" id="Node000001" title="Access the secondary operator chain." alt="" coords="293,49,545,89"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1RelationNetwork_a402ecbcfcfbe9fce0c9b84be3fe5d0f2.html#a402ecbcfcfbe9fce0c9b84be3fe5d0f2" title="Get network metadata for debugging/visualization." alt="" coords="26,5,225,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="279,54,224,47,225,42,280,49"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1RelationNetwork_a127bd53cb7acfbece334b39bc5fbe82f.html#a127bd53cb7acfbece334b39bc5fbe82f" title="Process the network for the given number of samples." alt="" coords="5,85,245,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="280,88,246,93,245,87,280,83"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::VideoStreamContainer::clear" name="MayaFlux::Kakshya::VideoStreamContainer::clear">
+<area shape="rect" id="Node000001" title="Clear all data in the container." alt="" coords="257,5,427,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1DynamicVideoStream_ad6c9c3b8363c07af06006e1577563e07.html#ad6c9c3b8363c07af06006e1577563e07" title="Drop every frame and restart the write head at zero." alt="" coords="5,13,209,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="243,35,210,35,210,30,243,30"/>
+</map>

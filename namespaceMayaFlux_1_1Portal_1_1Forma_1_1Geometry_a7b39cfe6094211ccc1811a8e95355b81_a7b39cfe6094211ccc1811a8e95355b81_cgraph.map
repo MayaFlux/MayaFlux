@@ -1,0 +1,17 @@
+<map id="MayaFlux::Portal::Forma::Geometry::paint_over" name="MayaFlux::Portal::Forma::Geometry::paint_over">
+<area shape="rect" id="Node000001" title="Produce a Form::wire that registers canvas painting over bounds." alt="" coords="5,133,187,173"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1Geometry_a2208a326fa6ff27c6157436e82af18fa.html#a2208a326fa6ff27c6157436e82af18fa" title="Wire drag interaction for a drawable canvas element." alt="" coords="235,133,453,173"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="187,151,221,151,221,156,187,156"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kinesis_1_1AABB2D_a32bac0d1a4f876c992486eed5dc9fd6f.html#a32bac0d1a4f876c992486eed5dc9fd6f" title=" " alt="" coords="517,5,667,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="373,131,430,93,500,55,516,48,518,53,503,60,433,98,376,135"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_ad0e5f6b54a528262568438b0354769bd.html#ad0e5f6b54a528262568438b0354769bd" title="Called on each mouse&#45;move event while btn is held, tracking the element where the drag began even whe..." alt="" coords="501,69,683,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="422,131,500,110,501,115,423,136"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Context_ace07c841c93ea1a4adfe4aa509335acb.html#ace07c841c93ea1a4adfe4aa509335acb" title="Called when a mouse button is released over an element." alt="" coords="501,133,683,173"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="454,151,488,151,488,156,454,156"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kinesis_a38e2985a0218a795f5a4f3b0bfdfee59.html#a38e2985a0218a795f5a4f3b0bfdfee59" title="Write a level into an evenly spaced sample array at a fractional position, filling linearly from the ..." alt="" coords="517,197,667,237"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="423,171,504,192,503,197,422,176"/>
+<area shape="rect" id="Node000008" href="$structMayaFlux_1_1Kinesis_1_1AABB2D_ab8e372add789f6bd44fa66a92618456a.html#ab8e372add789f6bd44fa66a92618456a" title=" " alt="" coords="517,261,667,301"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="376,171,433,209,503,247,518,254,516,259,500,252,430,213,373,176"/>
+<area shape="rect" id="Node000007" href="$main_8cpp_a13a43e6d814de94978c515cb084873b1.html#a13a43e6d814de94978c515cb084873b1" title=" " alt="" coords="731,205,773,230"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="667,215,717,215,717,220,667,220"/>
+</map>

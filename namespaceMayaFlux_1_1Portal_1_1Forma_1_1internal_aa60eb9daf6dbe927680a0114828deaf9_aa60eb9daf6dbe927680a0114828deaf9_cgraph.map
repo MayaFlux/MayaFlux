@@ -1,0 +1,11 @@
+<map id="MayaFlux::Portal::Forma::internal::add_text_row" name="MayaFlux::Portal::Forma::internal::add_text_row">
+<area shape="rect" id="Node000001" title="Register a clickable text row on surface." alt="" coords="5,77,187,117"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Forma_1_1internal_abdc2f8c3b42bcb7e0e99aae7e15a4615.html#abdc2f8c3b42bcb7e0e99aae7e15a4615" title="Accessor for the process&#45;wide Atelier." alt="" coords="235,5,416,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="160,75,247,47,249,52,161,80"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Forma_1_1internal_1_1Atelier_a1598e74d6908e54150354b29dd891edd.html#a1598e74d6908e54150354b29dd891edd" title="Capacity&#45;explicit FormaBuffer construction." alt="" coords="235,70,416,125"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="187,95,221,95,221,100,187,100"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Surface_a4e6ecdf8a69c8a139b4bba050ab6803d.html#a4e6ecdf8a69c8a139b4bba050ab6803d" title="Access the rendering target window." alt="" coords="235,149,416,189"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="161,115,249,143,247,148,160,120"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Forma_1_1internal_1_1Atelier_a08a096e054a0c2a721c1a399c95af469.html#a08a096e054a0c2a721c1a399c95af469" title=" " alt="" coords="464,5,659,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="416,23,450,23,450,28,416,28"/>
+</map>

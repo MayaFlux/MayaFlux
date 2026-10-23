@@ -1,0 +1,13 @@
+<map id="MayaFlux::Nodes::Generator::Phasor::remove_hook" name="MayaFlux::Nodes::Generator::Phasor::remove_hook">
+<area shape="rect" id="Node000001" title="Removes a previously registered callback." alt="" coords="5,37,213,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Phasor_acef860ff18cadf9f6abd3a5f89018af7.html#acef860ff18cadf9f6abd3a5f89018af7" title="Removes a previously registered phase wrap callback." alt="" coords="261,30,469,85"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="213,55,248,55,248,60,213,60"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1HookList_a9a4425dfb39ceac18b91075c5aa00a0d.html#a9a4425dfb39ceac18b91075c5aa00a0d" title="Removes the first entry registered with this callable type." alt="" coords="517,37,717,77"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="470,55,503,55,503,60,470,60"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1HookList_a47b073736819351e0bd884d86d0d5a51.html#a47b073736819351e0bd884d86d0d5a51" title=" " alt="" coords="765,37,965,77"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="717,55,752,55,752,60,717,60"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1HookList_a98f1cd697a8d07ef16e2004aa67376da.html#a98f1cd697a8d07ef16e2004aa67376da" title=" " alt="" coords="1013,5,1213,45"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="965,42,999,37,1000,43,966,47"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1HookList_a6fdccab758a46d7b33254857f959ec9b.html#a6fdccab758a46d7b33254857f959ec9b" title=" " alt="" coords="1013,69,1213,109"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="966,68,1000,72,999,77,965,73"/>
+</map>

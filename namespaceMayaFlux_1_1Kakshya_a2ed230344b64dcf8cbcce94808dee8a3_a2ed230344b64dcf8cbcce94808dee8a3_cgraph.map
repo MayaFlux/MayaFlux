@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::make_empty_storage" name="MayaFlux::Kakshya::make_empty_storage">
+<area shape="rect" id="Node000001" title="Allocate a zeroed DataVariant of the alternative backing a format." alt="" coords="5,5,168,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_a7c5d5d6f0be24fe12ef6c67401c2c001.html#a7c5d5d6f0be24fe12ef6c67401c2c001" title="Byte width of the DataVariant element backing a given ImageFormat." alt="" coords="216,5,381,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="168,23,202,23,202,28,168,28"/>
+</map>

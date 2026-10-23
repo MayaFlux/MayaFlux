@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nodes::Generator::Polynomial::power_sum" name="MayaFlux::Nodes::Generator::Polynomial::power_sum">
+<area shape="rect" id="Node000001" title="Evaluates the coefficient list at x, highest power first." alt="" coords="541,49,749,89"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Polynomial_a11652e5061097b6c78a4c06f1bda6d59.html#a11652e5061097b6c78a4c06f1bda6d59" title="Creates a polynomial function from coefficients." alt="" coords="261,5,493,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="527,56,493,51,494,46,528,50"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Polynomial_a6c5eaaf26f00522a8ee26bf0cd38c1e9.html#a6c5eaaf26f00522a8ee26bf0cd38c1e9" title="Processes a single sample." alt="" coords="269,85,485,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="528,87,486,93,485,88,527,82"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Polynomial_afb0f9f325eeff81f429ee11b15cc5aac.html#afb0f9f325eeff81f429ee11b15cc5aac" title="Processes multiple samples at once." alt="" coords="5,85,213,125"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="256,107,213,107,213,102,256,102"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Input::MIDINode::extract_value" name="MayaFlux::Nodes::Input::MIDINode::extract_value">
+<area shape="rect" id="Node000001" title="Extract a scalar value from an InputValue." alt="" coords="5,37,196,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Input_1_1InputNode_afb3f65514063b2b4a74b00caad116f54.html#afb3f65514063b2b4a74b00caad116f54" title="The smoothed value the node currently holds." alt="" coords="257,5,433,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="196,42,243,36,244,41,197,48"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Input_1_1MIDINode_acb2d34a95ef7763a02981438c59aaa1c.html#acb2d34a95ef7763a02981438c59aaa1c" title=" " alt="" coords="244,69,447,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="197,67,231,72,230,77,196,72"/>
+</map>

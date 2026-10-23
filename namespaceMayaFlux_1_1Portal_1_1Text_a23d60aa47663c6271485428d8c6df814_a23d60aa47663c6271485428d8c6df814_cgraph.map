@@ -1,0 +1,11 @@
+<map id="MayaFlux::Portal::Text::add_fallback_font" name="MayaFlux::Portal::Text::add_fallback_font">
+<area shape="rect" id="Node000001" title="Locate a system font by family and style, then register it as a fallback." alt="" coords="5,81,172,121"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Text_a44f5c115f35460ef715da269f833c6de.html#a44f5c115f35460ef715da269f833c6de" title="Load a font file and register it as a fallback on the default atlas." alt="" coords="220,49,387,89"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="172,86,206,81,207,86,173,91"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Portal_1_1Text_a193d53550bb0c2046258f3e4df7f480a.html#a193d53550bb0c2046258f3e4df7f480a" title="Locate a system font file by family name and optional style." alt="" coords="220,113,387,153"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="173,110,207,116,206,121,172,116"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Text_1_1TypeFaceFoundry_aeb0010a2458a1ccac238ee3ab10211a7.html#aeb0010a2458a1ccac238ee3ab10211a7" title="Load a font file and register it as a fallback on the default atlas." alt="" coords="450,5,622,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="387,53,436,45,437,51,387,58"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Text_1_1TypeFaceFoundry_a939375a455bfd4510f6a7a8f506b600d.html#a939375a455bfd4510f6a7a8f506b600d" title=" " alt="" coords="435,85,637,125"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="387,79,421,84,421,90,387,84"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Core::TabletBackend::adopt_device" name="MayaFlux::Core::TabletBackend::adopt_device">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,37,232,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1TabletBackend_a59ec14fd67aa52f734bca33aad681e6d.html#a59ec14fd67aa52f734bca33aad681e6d" title=" " alt="" coords="280,5,507,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="232,41,266,37,267,43,233,47"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1TabletBackend_a6f87811d149ef4c22c892bbf87aec748.html#a6f87811d149ef4c22c892bbf87aec748" title="Parse a HID report descriptor into a tablet layout." alt="" coords="280,69,507,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="233,68,267,72,266,77,232,73"/>
+</map>

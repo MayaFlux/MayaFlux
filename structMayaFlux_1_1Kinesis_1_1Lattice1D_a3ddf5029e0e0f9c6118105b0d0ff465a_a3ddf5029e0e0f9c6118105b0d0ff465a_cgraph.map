@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::Lattice1D::cell_size" name="MayaFlux::Kinesis::Lattice1D::cell_size">
+<area shape="rect" id="Node000001" title="Width of one cell." alt="" coords="5,5,155,45"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kinesis_1_1AABB1D_a23cf5ce50f1c96df60f2229ef19bed6c.html#a23cf5ce50f1c96df60f2229ef19bed6c" title=" " alt="" coords="203,5,352,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="155,23,189,23,189,28,155,28"/>
+</map>

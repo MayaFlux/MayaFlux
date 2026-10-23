@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::MeshInsertion::insert_submesh" name="MayaFlux::Kakshya::MeshInsertion::insert_submesh">
+<area shape="rect" id="Node000001" title="Append one submesh batch, accumulating into the shared buffers." alt="" coords="281,5,440,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1MeshNetwork_a6e1bcde40a73d4f6b3324fb646408ff0.html#a6e1bcde40a73d4f6b3324fb646408ff0" title="Every slot&#39;s geometry merged into one MeshData, one submesh per slot." alt="" coords="5,13,233,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="268,35,234,35,234,30,268,30"/>
+</map>

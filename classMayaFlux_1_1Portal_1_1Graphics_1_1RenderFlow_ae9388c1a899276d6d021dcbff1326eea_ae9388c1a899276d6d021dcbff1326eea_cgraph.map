@@ -1,0 +1,13 @@
+<map id="MayaFlux::Portal::Graphics::RenderFlow::create_pipeline" name="MayaFlux::Portal::Graphics::RenderFlow::create_pipeline">
+<area shape="rect" id="Node000001" title="Create graphics pipeline for dynamic rendering (no render pass object)" alt="" coords="5,105,220,145"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a148fdbfbb76b1df59986ea791e772885.html#a148fdbfbb76b1df59986ea791e772885" title="Get logical device handle." alt="" coords="299,5,504,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="153,103,207,78,267,55,294,46,296,52,269,60,209,83,155,108"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ac9cc102cfea043ef48c731056eeffa1d.html#ac9cc102cfea043ef48c731056eeffa1d" title="Get physical device handle." alt="" coords="268,69,535,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="220,109,254,105,255,110,220,115"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a3e37592425a0a5c22f7809f8c19d0af8.html#a3e37592425a0a5c22f7809f8c19d0af8" title=" " alt="" coords="303,134,500,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="220,136,290,145,289,150,220,141"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1RenderFlow_ab96b95e3ddf3c74271d493602eb04258.html#ab96b95e3ddf3c74271d493602eb04258" title=" " alt="" coords="303,213,500,253"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="152,143,206,171,269,198,298,207,296,212,267,202,204,176,149,148"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="583,141,780,181"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="500,159,568,159,568,164,500,164"/>
+</map>

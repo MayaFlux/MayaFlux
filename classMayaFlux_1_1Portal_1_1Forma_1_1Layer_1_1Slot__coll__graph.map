@@ -1,0 +1,7 @@
+<map id="MayaFlux::Portal::Forma::Layer::Slot" name="MayaFlux::Portal::Forma::Layer::Slot">
+<area shape="rect" id="Node000001" title="Handle returned by Layer::add, carrying the assigned element id." alt="" coords="5,657,179,877"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Forma_1_1Layer.html" title="Flat registry of Elements on a surface." alt="" coords="5,135,179,595"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="95,595,95,641,89,641,89,595"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="17,5,167,85"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="95,99,95,135,89,135,89,99"/>
+</map>

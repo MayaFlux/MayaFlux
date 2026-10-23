@@ -1,0 +1,15 @@
+<map id="MayaFlux::Kriya::WindowEventAwaiter" name="MayaFlux::Kriya::WindowEventAwaiter">
+<area shape="rect" id="Node000001" title="Awaiter for suspending on window input events with optional filtering." alt="" coords="367,863,584,1143"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1EventAwaiter.html" title="Abstract base for all event&#45;driven awaiters." alt="" coords="5,447,220,673"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="165,684,197,743,235,798,299,866,368,924,365,929,295,870,231,802,192,746,161,686"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1WindowEventSource.html" title="Awaitable stream of window input events." alt="" coords="245,320,463,800"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="417,799,427,838,430,846,425,848,422,839,411,801"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Vruta_1_1EventSource.html" title="Abstract base for all awaitable signal sources." alt="" coords="249,5,459,271"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="357,284,357,320,351,320,351,284"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Vruta_1_1WindowEventFilter.html" title="Filter criteria for window input events." alt="" coords="487,480,706,640"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="577,641,521,847,515,846,572,640"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Vruta_1_1EventFilter.html" title="Base for event filters used by EventSources to match signals to awaiters." alt="" coords="497,105,696,171"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="599,184,599,480,594,480,594,184"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Core_1_1WindowEvent.html" title="Event data for window and input events." alt="" coords="730,457,943,663"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="800,664,765,734,720,802,662,864,599,919,596,915,659,860,716,798,760,732,795,662"/>
+</map>

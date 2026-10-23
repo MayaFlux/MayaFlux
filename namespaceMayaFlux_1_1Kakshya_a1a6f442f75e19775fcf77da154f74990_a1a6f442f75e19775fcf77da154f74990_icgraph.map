@@ -1,0 +1,23 @@
+<map id="MayaFlux::Kakshya::gpu_data_format_bytes" name="MayaFlux::Kakshya::gpu_data_format_bytes">
+<area shape="rect" id="Node000001" title="Byte size of one element of a GpuDataFormat." alt="" coords="779,177,955,217"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderSpec_1_1Assemble_a44f5c516ff6ccfe853b704dffbdd1749.html#a44f5c516ff6ccfe853b704dffbdd1749" title="Finalise and return the ShaderSpec." alt="" coords="512,69,731,109"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="821,172,778,147,730,124,697,112,699,107,732,119,780,142,824,168"/>
+<area shape="rect" id="Node000008" href="$structMayaFlux_1_1Kakshya_1_1TextureAccess_a6c250cd3bccc0d1c75c183f36f7e98a4.html#a6c250cd3bccc0d1c75c183f36f7e98a4" title="Bytes per texel for this format." alt="" coords="542,134,701,189"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="765,185,701,176,701,170,766,180"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_ab044444018927cbf0de398ea1ac7e53b.html#ab044444018927cbf0de398ea1ac7e53b" title="Byte width of one GpuBufferBinding::ElementType element." alt="" coords="523,213,720,253"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="765,215,720,222,720,216,765,210"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_af79e6f13296386b90973e973ff21bcc4.html#af79e6f13296386b90973e973ff21bcc4" title="Supply a shader input from a callable, resolved by name." alt="" coords="538,277,705,317"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="819,226,732,268,698,280,696,275,730,263,817,222"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GpuFieldOperator_a3ad4b99e462122dbf5f6b1c00d3632ff.html#a3ad4b99e462122dbf5f6b1c00d3632ff" title="Assemble the compute spec for the current bindings." alt="" coords="239,5,461,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="522,69,435,48,436,43,523,63"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1VisionGpuExecutor_a37b115d59dbe1593c58ef631942b363e.html#a37b115d59dbe1593c58ef631942b363e" title="GpuComputeConfig for a given VisionOp and its parameters." alt="" coords="259,69,441,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="498,92,442,92,442,87,498,87"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Buffers_1_1RelaxationSpecs_afe4907c6e3660650e5e21427e6c1f9a7.html#afe4907c6e3660650e5e21427e6c1f9a7" title="Jacobi&#45;style diffusion rule: each cell blends toward the average of its 8 Moore neighbors." alt="" coords="261,134,439,189"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="533,115,440,140,438,135,531,110"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1VisionGpuExecutor_a08ab089f0a700b0a70d6902294c38fb1.html#a08ab089f0a700b0a70d6902294c38fb1" title="Detect edges in the current image with the Canny pipeline." alt="" coords="5,33,188,73"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="245,77,188,69,189,64,245,72"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1VisionGpuExecutor_a48bca474121218135f8e80630f3eac82.html#a48bca474121218135f8e80630f3eac82" title="Compute the Harris response of the current image." alt="" coords="5,98,188,153"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="245,107,189,115,188,110,245,102"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Yantra_1_1GpuResourceManager_ad3b5f42928f36785bf91ab452c421a38.html#ad3b5f42928f36785bf91ab452c421a38" title=" " alt="" coords="236,213,464,253"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="509,236,464,236,464,231,509,231"/>
+</map>

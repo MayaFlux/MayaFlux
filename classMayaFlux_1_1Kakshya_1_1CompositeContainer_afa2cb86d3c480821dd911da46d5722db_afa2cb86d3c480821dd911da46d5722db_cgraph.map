@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::CompositeContainer::materialize_next" name="MayaFlux::Kakshya::CompositeContainer::materialize_next">
+<area shape="rect" id="Node000001" title="Copy the next bounded window into independent storage." alt="" coords="5,45,168,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1CompositeContainer_a9457f8486aa492385a834d06e9049814.html#a9457f8486aa492385a834d06e9049814" title="Whether materialize_next() has no more elements." alt="" coords="216,5,379,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="168,55,202,48,203,53,169,60"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1CompositeContainer_a7300a9ba6f9f91bcd0b7604916b1eda0.html#a7300a9ba6f9f91bcd0b7604916b1eda0" title="Create an independent traversal over elements." alt="" coords="216,84,379,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="169,85,203,91,202,97,168,90"/>
+</map>

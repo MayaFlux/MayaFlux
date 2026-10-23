@@ -1,0 +1,12 @@
+<map id="MayaFlux::Portal::Text::GlyphAtlas::get_or_rasterize" name="MayaFlux::Portal::Text::GlyphAtlas::get_or_rasterize">
+<area shape="rect" id="Node000001" title="Return metrics for a glyph, rasterizing it into the atlas if needed." alt="" coords="5,69,220,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Text_1_1GlyphAtlas_ada866d38baf8651161b30338ead62737.html#ada866d38baf8651161b30338ead62737" title=" " alt="" coords="268,69,520,109"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="220,87,254,87,254,92,220,92"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Text_1_1GlyphAtlas_a55d85ad969fe77c61a941fff10c8b03a.html#a55d85ad969fe77c61a941fff10c8b03a" title=" " alt="" coords="568,69,735,109"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="520,87,554,87,554,92,520,92"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Text_1_1FontFace_accda82c104b9bee41559e89f118f5e5f.html#accda82c104b9bee41559e89f118f5e5f" title="Raw FT_Face handle for use by GlyphAtlas." alt="" coords="783,5,949,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="718,67,784,47,786,52,720,72"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Text_1_1GlyphAtlas_acff341429235a57df8bef38219916457.html#acff341429235a57df8bef38219916457" title="Double the atlas texture and re&#45;rasterize every cached glyph into it." alt="" coords="783,69,949,109"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="735,95,769,96,769,101,735,101"/>
+<area shape="poly" id="edge5_Node000005_Node000003" title=" " alt="" coords="782,83,749,83,749,78,782,78"/>
+</map>

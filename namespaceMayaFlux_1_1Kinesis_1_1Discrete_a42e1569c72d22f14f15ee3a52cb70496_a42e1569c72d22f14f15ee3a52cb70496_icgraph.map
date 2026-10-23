@@ -1,0 +1,20 @@
+<map id="MayaFlux::Kinesis::Discrete::apply_convolution" name="MayaFlux::Kinesis::Discrete::apply_convolution">
+<area shape="rect" id="Node000001" title="Core FFT convolution engine." alt="" coords="793,123,996,163"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a718383f1c65bd89371249e51a6170a28.html#a718383f1c65bd89371249e51a6170a28" title="Auto&#45;correlation via FFT." alt="" coords="336,29,515,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="793,122,745,112,514,68,515,62,746,107,794,117"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a02c0248cab3716432c273381813b6a6f.html#a02c0248cab3716432c273381813b6a6f" title="Linear FFT convolution." alt="" coords="351,93,500,133"/>
+<area shape="poly" id="edge4_Node000001_Node000004" title=" " alt="" coords="779,138,500,121,500,115,780,133"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_a6999262b0f729dbdf1076f3a63355188.html#a6999262b0f729dbdf1076f3a63355188" title="Cross&#45;correlation via FFT." alt="" coords="563,151,745,191"/>
+<area shape="poly" id="edge6_Node000001_Node000005" title=" " alt="" coords="780,159,746,163,745,157,779,153"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_af630b74b919bc8ff531cfec89f6b3fa7.html#af630b74b919bc8ff531cfec89f6b3fa7" title="Frequency&#45;domain deconvolution with Tikhonov regularisation." alt="" coords="575,240,733,280"/>
+<area shape="poly" id="edge10_Node000001_Node000007" title=" " alt="" coords="841,171,697,242,695,238,839,167"/>
+<area shape="poly" id="edge2_Node000002_Node000002" title=" " alt="" coords="464,18,450,11,425,8,404,10,390,15,386,21,388,28,383,30,380,20,387,10,402,5,425,3,452,6,466,13"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1ConvolutionTransformer_a9d070c72f78555559c94e86b6274fcab.html#a9d070c72f78555559c94e86b6274fcab" title="Applies the configured convolution operation." alt="" coords="5,151,288,191"/>
+<area shape="poly" id="edge3_Node000002_Node000003" title=" " alt="" coords="355,77,337,84,189,153,186,148,335,79,353,72"/>
+<area shape="poly" id="edge5_Node000004_Node000003" title=" " alt="" coords="338,134,245,153,244,148,337,129"/>
+<area shape="poly" id="edge9_Node000005_Node000003" title=" " alt="" coords="549,173,288,173,288,168,549,168"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kinesis_1_1Discrete_af87d4b84d6d3f96cb339c7216db65678.html#af87d4b84d6d3f96cb339c7216db65678" title="Matched filter (normalised cross&#45;correlation)" alt="" coords="336,208,515,248"/>
+<area shape="poly" id="edge7_Node000005_Node000006" title=" " alt="" coords="561,197,506,211,505,205,560,191"/>
+<area shape="poly" id="edge8_Node000006_Node000003" title=" " alt="" coords="322,210,244,193,245,188,323,204"/>
+<area shape="poly" id="edge11_Node000007_Node000003" title=" " alt="" coords="561,273,452,276,393,272,335,263,291,249,248,231,178,193,180,188,250,226,293,244,337,257,394,267,452,271,560,268"/>
+</map>

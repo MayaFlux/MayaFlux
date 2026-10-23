@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::VolumeFieldProcessor::processing_function" name="MayaFlux::Buffers::VolumeFieldProcessor::processing_function">
+<area shape="rect" id="Node000001" title="Rewrite field descriptors, run the shader, then swap." alt="" coords="252,5,417,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1InfluxProcessor_aefba36ed55ddfe94f07ea9d85f8ddee7.html#aefba36ed55ddfe94f07ea9d85f8ddee7" title="The core processing function that must be implemented by derived classes." alt="" coords="5,5,204,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="238,35,204,35,204,30,238,30"/>
+</map>

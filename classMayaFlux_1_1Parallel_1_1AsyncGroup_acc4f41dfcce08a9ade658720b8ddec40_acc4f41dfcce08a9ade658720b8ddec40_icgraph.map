@@ -1,0 +1,16 @@
+<map id="MayaFlux::Parallel::AsyncGroup::drain" name="MayaFlux::Parallel::AsyncGroup::drain">
+<area shape="rect" id="Node000001" title="Blocks until every currently submitted future completes." alt="" coords="963,69,1112,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1ComputeMatrix_aeccf4d6a852c748274189a45929ec1f2.html#aeccf4d6a852c748274189a45929ec1f2" title="Block until all in&#45;flight async chains complete." alt="" coords="711,5,913,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="952,68,882,48,884,43,954,63"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1IOManager_ad48a648dd6f4394b7e92a4948f64b303.html#ad48a648dd6f4394b7e92a4948f64b303" title="Wait for all in&#45;flight save operations to complete." alt="" coords="719,69,905,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="949,92,905,92,905,87,949,87"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Parallel_1_1AsyncGroup_a37900fb4a33d9720ea3ac21841c700bc.html#a37900fb4a33d9720ea3ac21841c700bc" title="Drains all in&#45;flight work before destruction." alt="" coords="709,133,915,173"/>
+<area shape="poly" id="edge7_Node000001_Node000007" title=" " alt="" coords="954,116,884,136,882,131,952,111"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1IOManager_ab42d3a6d5feeacaf3012eb79c8c8da6e.html#ab42d3a6d5feeacaf3012eb79c8c8da6e" title="Unregisters IOService and releases readers, writers, buffers and caches." alt="" coords="240,71,427,111"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="705,90,661,89,475,89,427,90,427,85,475,84,661,84,705,85"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1IO_1_1IOManager_adcbf7008cc5367efa4931d8e17c02a14.html#adcbf7008cc5367efa4931d8e17c02a14" title="Finalizes all in&#45;flight output while consumers are still running." alt="" coords="475,99,661,139"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="705,105,662,110,661,105,704,100"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1IO_1_1IOManager_ad92be69cbeb3eaa2a270f7dd3ecd3b16.html#ad92be69cbeb3eaa2a270f7dd3ecd3b16" title="Calls shutdown() if it has not already run." alt="" coords="5,71,192,111"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="227,93,192,93,192,88,227,88"/>
+<area shape="poly" id="edge6_Node000006_Node000004" title=" " alt="" coords="461,109,427,104,427,99,462,103"/>
+</map>

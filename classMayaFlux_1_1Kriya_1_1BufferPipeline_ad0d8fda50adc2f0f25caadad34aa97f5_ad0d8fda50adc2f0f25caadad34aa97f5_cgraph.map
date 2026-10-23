@@ -1,0 +1,17 @@
+<map id="MayaFlux::Kriya::BufferPipeline::process_load" name="MayaFlux::Kriya::BufferPipeline::process_load">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,133,232,173"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1BufferPipeline_a1291668126ca8f7c2fef564df801bcfd.html#a1291668126ca8f7c2fef564df801bcfd" title=" " alt="" coords="280,69,507,109"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="205,131,293,110,294,115,206,136"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Kriya_1_1detail_a518529bf475796bb975ddbfaee130156.html#a518529bf475796bb975ddbfaee130156" title=" " alt="" coords="307,133,480,173"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="232,151,293,151,293,156,232,156"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Kriya_1_1detail_a54dc36c8b415ae2018d7898301d7b1b6.html#a54dc36c8b415ae2018d7898301d7b1b6" title=" " alt="" coords="307,197,480,237"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="206,171,294,192,293,197,205,176"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kriya_1_1detail_a4c3f6e760338c532bd4bb057135bc520.html#a4c3f6e760338c532bd4bb057135bc520" title="Whether the buffer holds its frames as layers that can be written one at a time." alt="" coords="555,5,728,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="471,67,549,46,551,51,472,72"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kriya_1_1detail_af86670866b10b0afadbeba85f1fb3de7.html#af86670866b10b0afadbeba85f1fb3de7" title="Whether a DataVariant can be written to the buffer&#39;s primary storage." alt="" coords="555,69,728,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="507,87,541,87,541,92,507,92"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kriya_1_1detail_a31ae829503ec085adf440e7dff5b1749.html#a31ae829503ec085adf440e7dff5b1749" title="Write a DataVariant into one layer of a layered buffer." alt="" coords="555,133,728,173"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="472,107,551,127,549,132,471,112"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kakshya_afa023b19b2c5da8c14e9de60820601b1.html#afa023b19b2c5da8c14e9de60820601b1" title="Extract a TextureAccess from a DataVariant." alt="" coords="776,133,935,173"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="728,151,762,151,762,156,728,156"/>
+</map>

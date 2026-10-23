@@ -1,0 +1,9 @@
+<map id="MayaFlux::Host::Live::lila_add_header" name="MayaFlux::Host::Live::lila_add_header">
+<area shape="rect" id="Node000001" title="Stage a header for inclusion in the Lila interpreter." alt="" coords="5,69,164,109"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Host_1_1Live_a29d9d6b831e7c947bcb61e2bffd34e94.html#a29d9d6b831e7c947bcb61e2bffd34e94" title="Find the directory containing a header staged for inclusion." alt="" coords="218,5,377,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="151,67,216,47,218,52,153,72"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Host_1_1Live_ae37d4bccbfb44392c0c16fa425128ea0.html#ae37d4bccbfb44392c0c16fa425128ea0" title="Add an include path to the Lila interpreter." alt="" coords="212,69,383,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="164,87,198,87,198,92,164,92"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Host_1_1Live_a67ca1c750a7f5dacb6d7076838bb6065.html#a67ca1c750a7f5dacb6d7076838bb6065" title="Evaluate a code snippet in the Lila interpreter." alt="" coords="218,133,377,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="153,107,218,127,216,132,151,112"/>
+</map>

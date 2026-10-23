@@ -1,0 +1,17 @@
+<map id="MayaFlux::Journal::Archivist::flush" name="MayaFlux::Journal::Archivist::flush">
+<area shape="rect" id="Node000001" title="Synchronously drain all pending ring buffer entries to sinks." alt="" coords="435,133,581,173"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Journal_ac2862b5bb30393a889849c00d10cae9b.html#ac2862b5bb30393a889849c00d10cae9b" title="fmt&#45;style overload of error()." alt="" coords="240,5,387,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="473,126,432,93,385,60,363,48,366,43,388,55,436,88,477,122"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Journal_a7d07a72077601fd2b765ca2bdeff417e.html#a7d07a72077601fd2b765ca2bdeff417e" title="Log an error message and optionally throw an exception." alt="" coords="240,69,387,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="432,131,374,112,376,107,434,126"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Journal_a5398860cf404cbc127377393ab02096f.html#a5398860cf404cbc127377393ab02096f" title="Catch and log an exception, then rethrow it." alt="" coords="240,133,387,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="421,156,387,156,387,151,421,151"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Journal_a6c85d922f7a619e7bdb8fba69781cf6e.html#a6c85d922f7a619e7bdb8fba69781cf6e" title="fmt&#45;style overload of fatal()." alt="" coords="240,197,387,237"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="434,180,376,200,374,195,432,175"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Journal_aaa1e8235364258088bc0cdb575f41674.html#aaa1e8235364258088bc0cdb575f41674" title="Log a fatal message and abort the program." alt="" coords="240,261,387,301"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="477,184,436,218,388,252,366,264,363,259,385,247,432,214,473,180"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Journal_a476f6cea5798ab5bc457b722cbc99d72.html#a476f6cea5798ab5bc457b722cbc99d72" title="fmt&#45;style overload of error_rethrow()." alt="" coords="25,101,172,141"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="226,143,172,135,172,130,227,138"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1IO_1_1IOManager_af982f9c79ae012eccf9dc9c726bc754c.html#af982f9c79ae012eccf9dc9c726bc754c" title="Construct IOManager and register the IOService into BackendRegistry." alt="" coords="5,165,192,205"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="227,169,193,174,192,169,226,164"/>
+</map>

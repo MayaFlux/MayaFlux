@@ -1,0 +1,11 @@
+<map id="MayaFlux::Nodes::Network::WaveguideNetwork::WaveguideNetwork" name="MayaFlux::Nodes::Network::WaveguideNetwork::WaveguideNetwork">
+<area shape="rect" id="Node000001" title="Create waveguide network with specified type and frequency." alt="" coords="5,127,297,167"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1WaveguideNetwork_ab8ef8061cb1ccafcc44f54a67bad0c04.html#ab8ef8061cb1ccafcc44f54a67bad0c04" title=" " alt="" coords="354,5,577,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="200,125,344,69,364,62,366,67,346,74,202,130"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1WaveguideNetwork_a4ad3831a8a9036473a5979086742a573.html#a4ad3831a8a9036473a5979086742a573" title=" " alt="" coords="362,84,569,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="297,128,348,122,348,127,298,133"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork_afb34b572315180e465878f1de6f5bb1b.html#afb34b572315180e465878f1de6f5bb1b" title="Set the network&#39;s output routing mode." alt="" coords="345,163,585,203"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="298,161,332,165,332,171,297,167"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork_a3f5fa1eb97ee35881f885abc96df3a99.html#a3f5fa1eb97ee35881f885abc96df3a99" title="Set the network&#39;s topology." alt="" coords="360,227,571,267"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="207,165,346,213,373,221,372,226,345,218,205,170"/>
+</map>

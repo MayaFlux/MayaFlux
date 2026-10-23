@@ -1,0 +1,7 @@
+<map id="MayaFlux::Yantra::VisionExtractor::equalize" name="MayaFlux::Yantra::VisionExtractor::equalize">
+<area shape="rect" id="Node000001" title="Histogram equalisation of source from the histogram measure_appearance measured." alt="" coords="5,5,188,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_a251853ba745024a6aed58c4abf023cb6.html#a251853ba745024a6aed58c4abf023cb6" title=" " alt="" coords="236,5,419,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="188,23,222,23,222,28,188,28"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1VisionExtractor_aef1440f4cdb4f7e74b9f6a9cbadf0294.html#aef1440f4cdb4f7e74b9f6a9cbadf0294" title="The two contexts every method shares, one shader swapped in per call." alt="" coords="467,5,653,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="419,23,453,23,453,28,419,28"/>
+</map>

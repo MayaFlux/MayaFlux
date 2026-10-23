@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::SDFFieldProcessor::set_bounds" name="MayaFlux::Buffers::SDFFieldProcessor::set_bounds">
+<area shape="rect" id="Node000001" title="Replace the evaluation volume." alt="" coords="260,5,431,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1SDFFieldProcessor_a027fa3bcb0704a55df2941139b3dd2e4.html#a027fa3bcb0704a55df2941139b3dd2e4" title="Evaluate an authored field function instead of a shader file." alt="" coords="5,5,212,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="246,35,212,35,212,30,246,30"/>
+</map>

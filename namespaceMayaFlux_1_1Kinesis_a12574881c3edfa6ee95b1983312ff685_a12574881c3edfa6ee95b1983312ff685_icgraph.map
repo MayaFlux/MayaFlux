@@ -1,0 +1,17 @@
+<map id="MayaFlux::Kinesis::rgb_to_hsv" name="MayaFlux::Kinesis::rgb_to_hsv">
+<area shape="rect" id="Node000001" title="Convert red, green and blue to hue, saturation and value." alt="" coords="748,37,897,77"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Portal_1_1Forma_1_1ColorPicker_a5ca2e358ed91380df7e7b7528892c6a6.html#a5ca2e358ed91380df7e7b7528892c6a6" title="Register the picker and wire its input." alt="" coords="519,5,700,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="734,47,700,42,701,36,735,41"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a57396593f32b8db4bba3e15a75f39cf5.html#a57396593f32b8db4bba3e15a75f39cf5" title="Convert RGBA to HSV writing into caller&#45;supplied buffer." alt="" coords="535,69,684,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="735,73,685,81,684,76,734,68"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Portal_1_1Forma_1_1ColorPicker_a269d89b6fed1e1a67ca52d284739a75d.html#a269d89b6fed1e1a67ca52d284739a75d" title="Register using the cursor&#39;s column extents." alt="" coords="283,5,464,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="505,28,464,28,464,23,505,23"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_1_1Vision_a54f8797cddde280f037d5dbec87a8d4a.html#a54f8797cddde280f037d5dbec87a8d4a" title="Convert RGBA to HSV." alt="" coords="299,69,448,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="521,92,448,92,448,87,521,87"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kinesis_1_1Vision_1_1VisionExecutor_a6ea94c5c8d90c5890b7715a0e4ff2df5.html#a6ea94c5c8d90c5890b7715a0e4ff2df5" title="Execute a VisionSequence on one frame." alt="" coords="276,133,471,173"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="523,116,448,136,447,131,521,110"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1VisionProcessor_ab9b6b50546df64540aee0f0bbbb7939a.html#ab9b6b50546df64540aee0f0bbbb7939a" title="Execute the VisionSequence on processed_data[0]." alt="" coords="25,97,208,137"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="262,140,208,133,209,127,263,135"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1ImageCVProcessor_a03dd11926b797b52ccbdfa37c2b5e4e1.html#a03dd11926b797b52ccbdfa37c2b5e4e1" title="Download the current GPU image, run the VisionSequence, store the result." alt="" coords="5,162,228,217"/>
+<area shape="poly" id="edge7_Node000006_Node000008" title=" " alt="" coords="263,171,229,176,228,171,262,166"/>
+</map>

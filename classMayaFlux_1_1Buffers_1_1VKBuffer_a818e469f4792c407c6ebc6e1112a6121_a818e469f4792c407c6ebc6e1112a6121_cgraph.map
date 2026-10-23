@@ -1,0 +1,11 @@
+<map id="MayaFlux::Buffers::VKBuffer::clear" name="MayaFlux::Buffers::VKBuffer::clear">
+<area shape="rect" id="Node000001" title="Clear buffer contents." alt="" coords="5,81,153,121"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Buffers_aac051fee57a7f8abd9c9e5b4566b0b0d.html#aac051fee57a7f8abd9c9e5b4566b0b0d" title="Zero a registered GPU buffer in place (auto&#45;detects host&#45;visible vs device&#45;local)" alt="" coords="212,49,360,89"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="153,87,198,80,199,85,154,92"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_ab2774aad8e6ca3ee02ff9b31c2f8f6f7.html#ab2774aad8e6ca3ee02ff9b31c2f8f6f7" title="Check whether Vulkan handles are present (buffer registered)" alt="" coords="201,113,371,153"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="154,109,188,115,187,120,153,115"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="436,5,603,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="360,55,422,45,423,50,361,60"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aee686db265b63cedacadaf1aea2e3e3b.html#aee686db265b63cedacadaf1aea2e3e3b" title="Get the global registry instance." alt="" coords="419,85,620,125"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="361,77,406,84,405,90,360,83"/>
+</map>

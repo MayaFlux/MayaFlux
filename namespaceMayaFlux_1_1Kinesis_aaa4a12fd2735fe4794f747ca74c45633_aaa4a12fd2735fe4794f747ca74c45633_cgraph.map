@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kinesis::relation_lag" name="MayaFlux::Kinesis::relation_lag">
+<area shape="rect" id="Node000001" title="Search a bounded lag range for the offset at which two streams correlate most strongly." alt="" coords="5,5,155,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a7c5edc7091879dba2284cbd0abbd1d6b.html#a7c5edc7091879dba2284cbd0abbd1d6b" title="Correlation between two spans at a single fixed lag." alt="" coords="203,5,352,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="155,23,189,23,189,28,155,28"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_aa3dbc696b98e08baef00b9df98bc6d63.html#aa3dbc696b98e08baef00b9df98bc6d63" title="Pearson correlation between two equal&#45;length windows." alt="" coords="400,5,549,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="352,23,386,23,386,28,352,28"/>
+</map>

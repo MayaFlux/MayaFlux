@@ -1,0 +1,5 @@
+<map id="MayaFlux::Memory::SerializedSeqlockWriteGuard::SerializedSeqlockWriteGuard" name="MayaFlux::Memory::SerializedSeqlockWriteGuard::SerializedSeqlockWriteGuard">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,5,276,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Memory_1_1Seqlock_a6be3922aae5cba48b6dd8d42503eb89b.html#a6be3922aae5cba48b6dd8d42503eb89b" title="Claim the writer sequence after any active writer completes." alt="" coords="324,13,531,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="276,30,310,30,310,35,276,35"/>
+</map>

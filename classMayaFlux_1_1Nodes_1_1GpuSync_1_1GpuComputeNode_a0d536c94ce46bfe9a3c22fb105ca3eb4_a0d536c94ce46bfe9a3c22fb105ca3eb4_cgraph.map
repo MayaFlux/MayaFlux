@@ -1,0 +1,17 @@
+<map id="MayaFlux::Nodes::GpuSync::GpuComputeNode::on_complete" name="MayaFlux::Nodes::GpuSync::GpuComputeNode::on_complete">
+<area shape="rect" id="Node000001" title="Register a callback fired once per completed dispatch." alt="" coords="5,73,247,113"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Nodes_ac234727efe20bcec6d269ace94b3e312.html#ac234727efe20bcec6d269ace94b3e312" title="Wraps a context&#45;typed hook into a NodeHook." alt="" coords="295,51,513,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="247,78,281,74,281,80,247,83"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1HookList_ac0239cabc72f8a85f8c7693ab6f8e819.html#ac0239cabc72f8a85f8c7693ab6f8e819" title="Appends unless an entry with the same key and params exists, in which case that entry&#39;s id is returne..." alt="" coords="304,101,504,141"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="247,103,291,107,290,113,247,108"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1HookList_a47b073736819351e0bd884d86d0d5a51.html#a47b073736819351e0bd884d86d0d5a51" title=" " alt="" coords="561,69,761,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="504,106,548,101,548,106,504,112"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1HookList_a4bc5ea6712da609a8fb1e477d99230de.html#a4bc5ea6712da609a8fb1e477d99230de" title=" " alt="" coords="561,133,761,173"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="504,131,548,137,548,142,504,136"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1HookList_a98f1cd697a8d07ef16e2004aa67376da.html#a98f1cd697a8d07ef16e2004aa67376da" title=" " alt="" coords="809,5,1009,45"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="739,67,817,46,819,51,740,72"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1HookList_a6fdccab758a46d7b33254857f959ec9b.html#a6fdccab758a46d7b33254857f959ec9b" title=" " alt="" coords="809,69,1009,109"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="761,87,796,87,796,92,761,92"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1Node_abd215619c852dab28db04fc0e19e0e89.html#abd215619c852dab28db04fc0e19e0e89" title=" " alt="" coords="821,133,998,173"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="761,151,807,151,807,156,761,156"/>
+</map>

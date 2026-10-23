@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Generator::Logic" name="MayaFlux::Nodes::Generator::Logic">
+<area shape="rect" id="Node000001" title="Digital signal processor implementing boolean logic operations." alt="" coords="5,1285,217,1995"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Generator.html" title="Base class for all signal and pattern generators in Maya Flux." alt="" coords="11,897,211,1237"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="114,1251,114,1285,109,1285,109,1251"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Node.html" title="Base interface for all computational processing nodes." alt="" coords="13,5,210,849"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="114,863,114,897,109,897,109,863"/>
+</map>

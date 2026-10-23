@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kinesis::read_components" name="MayaFlux::Kinesis::read_components">
+<area shape="rect" id="Node000001" title="Read T&#39;s components into an array of doubles." alt="" coords="227,5,376,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kinesis_1_1MotionChannel_a1f7f4eaf50ad715bc0d8d898983bce13.html#a1f7f4eaf50ad715bc0d8d898983bce13" title="Feed one raw sample, denoise it, and push the cleaned value." alt="" coords="5,5,179,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="213,28,179,28,179,23,213,23"/>
+</map>

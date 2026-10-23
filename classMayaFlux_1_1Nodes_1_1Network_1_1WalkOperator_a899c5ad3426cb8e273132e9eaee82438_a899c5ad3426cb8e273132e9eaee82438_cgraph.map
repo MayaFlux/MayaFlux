@@ -1,0 +1,10 @@
+<map id="MayaFlux::Nodes::Network::WalkOperator::set_parameter" name="MayaFlux::Nodes::Network::WalkOperator::set_parameter">
+<area shape="rect" id="Node000001" title="Set operator parameter." alt="" coords="5,46,228,86"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1WalkOperator_a5a0d68260b1f8b531ba79ec8b44d6d63.html#a5a0d68260b1f8b531ba79ec8b44d6d63" title="Make a slot the active one." alt="" coords="276,46,475,86"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="228,63,262,63,262,69,228,69"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1WalkOperator_a36d8492af170c96878295232e0876d32.html#a36d8492af170c96878295232e0876d32" title="Activate slot m_current and deactivate every other slot that currently exists." alt="" coords="523,5,721,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="474,50,509,45,509,51,475,55"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Network_1_1RelationOperator_adb5be7a8ca5ff2e5d02a29087d726272.html#adb5be7a8ca5ff2e5d02a29087d726272" title=" " alt="" coords="769,46,968,86"/>
+<area shape="poly" id="edge4_Node000002_Node000004" title=" " alt="" coords="475,67,523,69,721,69,756,68,756,73,721,74,523,74,475,73"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="722,43,756,48,755,53,721,49"/>
+</map>

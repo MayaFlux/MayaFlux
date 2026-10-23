@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::MeshBuffer::setup_processors" name="MayaFlux::Buffers::MeshBuffer::setup_processors">
+<area shape="rect" id="Node000001" title="Create and attach MeshProcessor as the default processor." alt="" coords="5,77,223,117"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a6cf409969c192851ab2cf7f0315d2a49.html#a6cf409969c192851ab2cf7f0315d2a49" title="Access the buffer&#39;s processing chain." alt="" coords="271,5,497,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="189,75,294,46,296,52,190,80"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a6e843b1ce9e90e2df2501d28e60eab52.html#a6e843b1ce9e90e2df2501d28e60eab52" title="Set the buffer&#39;s default processor." alt="" coords="304,70,464,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="223,95,290,95,290,100,223,100"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a93f1d139e1fc4ab7689f2a205bf76563.html#a93f1d139e1fc4ab7689f2a205bf76563" title="Replace the buffer&#39;s processing chain." alt="" coords="271,149,497,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="190,115,296,143,294,148,189,120"/>
+</map>

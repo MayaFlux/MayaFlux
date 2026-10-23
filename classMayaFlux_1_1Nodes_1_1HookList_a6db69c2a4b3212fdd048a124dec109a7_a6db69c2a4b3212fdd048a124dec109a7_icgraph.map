@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::HookList::remove" name="MayaFlux::Nodes::HookList::remove">
+<area shape="rect" id="Node000001" title="Removes the registration with this id." alt="" coords="231,5,431,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Node_a64603db5ddc366755578a9515ac89993.html#a64603db5ddc366755578a9515ac89993" title="Removes the one registration with this id, whichever hook list holds it." alt="" coords="5,5,183,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="217,28,183,28,183,23,217,23"/>
+</map>
