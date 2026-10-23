@@ -11,7 +11,7 @@ layout(location = 0) out vec4 out_color;
 
 void main()
 {
-    int idx = int(in_weight);
+    int idx = int(in_weight + 0.5);
     if (idx <= 0) {
         out_color = vec4(in_color, 1.0);
     } else {

@@ -643,6 +643,7 @@ bool VKDevice::create_logical_device(vk::Instance /*instance*/, const GraphicsBa
     device_features.tessellationShader = backend_info.required_features.tessellation_shaders;
     device_features.multiViewport = backend_info.required_features.multi_viewport;
     device_features.fillModeNonSolid = m_physical_device.getFeatures().fillModeNonSolid;
+    device_features.shaderSampledImageArrayDynamicIndexing = m_physical_device.getFeatures().shaderSampledImageArrayDynamicIndexing;
 
     std::vector<const char*> device_extensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
