@@ -29,11 +29,11 @@ struct SeriesSpec {
     std::optional<GeometryFn<float>> background_fn;
 
     /**
-     * @brief Optional plot/data region in NDC used by plot adornments.
+     * @brief Optional plot/data region in NDC.
      *
-     * The current data geometry still maps through its own GeometryFn. This
-     * bounds value is for labels, ticks, legends, and other construction
-     * performed by Plot::place().
+     * When set, the series geometry is mapped into this region, and labels,
+     * ticks, legends and the background are laid out against it. Unset, the
+     * data fills NDC.
      */
     std::optional<Kinesis::AABB2D> plot_bounds;
 

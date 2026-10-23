@@ -16,6 +16,17 @@ FormaTarget::FormaTarget(std::shared_ptr<Buffers::FormaBuffer> buffer, SliceId s
     }
 }
 
+FormaTarget FormaTarget::slice_of(
+    const std::shared_ptr<Buffers::FormaBuffer>& buffer,
+    std::optional<Graphics::PrimitiveTopology> topology)
+{
+    if (!buffer) {
+        return {};
+    }
+    const auto slice = buffer->add_slice({}, topology);
+    return slice == 0 ? FormaTarget {} : FormaTarget(buffer, slice);
+}
+
 Buffers::FormaBuffer* FormaTarget::operator->() const noexcept
 {
     return m_state ? m_state->buffer.get() : nullptr;
@@ -106,6 +117,8 @@ void FormaTarget::retire() const
 
     if (m_state->slice != 0) {
         m_state->buffer->remove_slice(m_state->slice);
+        if (m_state->buffer->slice_count() == 0)
+            m_state->buffer->mark_for_removal();
         return;
     }
     m_state->buffer->mark_for_removal();

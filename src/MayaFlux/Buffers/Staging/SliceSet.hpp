@@ -75,6 +75,9 @@ public:
     /** @brief Bytes in the mirror. */
     [[nodiscard]] size_t size_bytes() const noexcept { return m_mirror.size(); }
 
+    /** @brief Number of live blocks. */
+    [[nodiscard]] size_t size() const noexcept { return m_slices.size(); }
+
     /** @brief True when @p id names a live block. */
     [[nodiscard]] bool contains(SliceId id) const noexcept { return m_slices.contains(id); }
 

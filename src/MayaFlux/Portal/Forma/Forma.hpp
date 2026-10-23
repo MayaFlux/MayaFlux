@@ -135,6 +135,21 @@ MAYAFLUX_API bool is_initialized();
         const std::string& texture_binding = {});
 
 /**
+ * @brief Construct and register a buffer that many elements share.
+ *
+ * Elements draw into slices of it, made with FormaTarget::slice_of, instead of
+ * a buffer each. Slices may be of any topology; they are drawn together as one
+ * batch. Output that needs a buffer of its own, such as text, images, scissor
+ * or GPU parameter bindings, uses create_buffer.
+ *
+ * @param window Target window.
+ * @return Registered, render-ready FormaBuffer.
+ */
+[[nodiscard]] MAYAFLUX_API
+    std::shared_ptr<Buffers::FormaBuffer>
+    create_batch(std::shared_ptr<Core::Window> window);
+
+/**
  * @brief Construct and register a FormaBuffer with additional texture bindings.
  *
  * BufferManager is taken from the stored initialize() state.

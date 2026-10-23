@@ -109,6 +109,11 @@ std::shared_ptr<Buffers::FormaBuffer> create_buffer(
         std::move(window), internal::k_capacity_bytes, topology, texture_binding);
 }
 
+std::shared_ptr<Buffers::FormaBuffer> create_batch(std::shared_ptr<Core::Window> window)
+{
+    return internal::atelier().create_batch(std::move(window));
+}
+
 std::shared_ptr<Buffers::FormaBuffer> create_buffer(
     std::shared_ptr<Core::Window> window,
     Graphics::PrimitiveTopology topology,
@@ -145,29 +150,41 @@ plot(
         .name = window->get_create_info().title,
     });
 
-    if (spec.background_fn) {
-        auto bg = atelier.create_element<float>(
-            surface.layer(), window,
-            *spec.background_fn,
-            0.F,
-            Graphics::PrimitiveTopology::TRIANGLE_STRIP,
-            static_cast<size_t>(4) * Kakshya::VertexLayout::for_meshes().stride_bytes);
-
-        const auto bg_id = bg.element.id;
-        auto buf = atelier.create_buffer(window, spec.capacity_for(N), spec.topology);
-        auto mapped = Plot::place(surface, std::move(buf), spec, std::move(container));
-        surface.layer().relate(mapped.element.id, bg_id);
-        surface.layer().send_to_back(bg_id);
-
-        internal::atelier().place_adornments(surface, spec, mapped.element.id);
-
-        return { std::move(mapped), std::move(surface) };
+    const bool batched = spec.topology == Graphics::PrimitiveTopology::TRIANGLE_LIST
+        || spec.topology == Graphics::PrimitiveTopology::TRIANGLE_STRIP;
+    const auto batch = batched ? atelier.create_batch(window) : nullptr;
+    if (batch) {
+        FormaTarget(batch).send_to_back(-1);
     }
 
-    auto buf = atelier.create_buffer(window, spec.capacity_for(N), spec.topology);
-    auto mapped = Plot::place(surface, std::move(buf), spec, std::move(container));
+    std::optional<uint32_t> background_id;
+    if (spec.background_fn) {
+        const size_t background_capacity = static_cast<size_t>(4) * Kakshya::VertexLayout::for_meshes().stride_bytes;
+        auto bg = batched
+            ? atelier.create_element<float>(
+                  surface,
+                  FormaTarget::slice_of(batch, Graphics::PrimitiveTopology::TRIANGLE_STRIP),
+                  *spec.background_fn, 0.F)
+            : atelier.create_element<float>(
+                  surface.layer(), window,
+                  *spec.background_fn,
+                  0.F,
+                  Graphics::PrimitiveTopology::TRIANGLE_STRIP,
+                  background_capacity);
+        background_id = bg.element.id;
+    }
 
-    internal::atelier().place_adornments(surface, spec, mapped.element.id);
+    FormaTarget series = batched
+        ? FormaTarget::slice_of(batch, spec.topology)
+        : FormaTarget(atelier.create_buffer(window, spec.capacity_for(N), spec.topology));
+    auto mapped = Plot::place(surface, std::move(series), spec, std::move(container));
+
+    if (background_id) {
+        surface.layer().relate(mapped.element.id, *background_id);
+        surface.layer().send_to_back(*background_id);
+    }
+
+    internal::atelier().place_adornments(surface, spec, mapped.element.id, batch);
 
     return { std::move(mapped), std::move(surface) };
 }

@@ -26,6 +26,18 @@ public:
     FormaTarget() = default;
     FormaTarget(std::nullptr_t) noexcept { }
 
+    /**
+     * @brief A new empty slice of @p buffer, drawn after the others.
+     *
+     * Hands several creators one buffer. Slices of a topology other than the
+     * buffer's need a buffer set up to triangulate.
+     *
+     * @return An empty handle if the buffer is not ready for slices.
+     */
+    [[nodiscard]] static FormaTarget slice_of(
+        const std::shared_ptr<Buffers::FormaBuffer>& buffer,
+        std::optional<Graphics::PrimitiveTopology> topology = std::nullopt);
+
     /** @brief The whole buffer. */
     FormaTarget(std::shared_ptr<Buffers::FormaBuffer> buffer);
 
@@ -83,7 +95,11 @@ public:
     /** @brief Draw this target before the others. See bring_to_front. */
     void send_to_back(int64_t priority) const;
 
-    /** @brief Release this target: retire a whole buffer, or remove a slice. */
+    /**
+     * @brief Release this target: retire a whole buffer, or remove a slice.
+     *
+     * A buffer left with no slice is retired with the last one.
+     */
     void retire() const;
 
     [[nodiscard]] friend bool operator==(const FormaTarget& a, const FormaTarget& b) noexcept

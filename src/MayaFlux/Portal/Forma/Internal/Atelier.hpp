@@ -115,6 +115,17 @@ namespace internal {
                 additional_textures = {});
 
         /**
+         * @brief A buffer that many targets share.
+         *
+         * Triangulates, so slices of any topology draw together as one batch.
+         * Line and point slices are milled into NDC ribbons whose scalar is a
+         * width in pixels of the window's height at creation.
+         * Hand out slices with FormaTarget::slice_of.
+         */
+        [[nodiscard]] std::shared_ptr<Buffers::FormaBuffer> create_batch(
+            std::shared_ptr<Core::Window> window);
+
+        /**
          * @brief Construct a Layer and a Context wired to @p window.
          *
          * The Context is stored so its event coroutines outlive the call.
@@ -183,10 +194,26 @@ namespace internal {
             Graphics::PrimitiveTopology topology = Graphics::PrimitiveTopology::TRIANGLE_STRIP,
             std::function<float(T)> project = {})
         {
-            auto buf = create_buffer(
-                surface.window(), k_capacity_bytes, topology);
+            return create_element<T>(
+                surface,
+                create_buffer(surface.window(), k_capacity_bytes, topology),
+                std::move(geom), std::move(initial), std::move(project));
+        }
+
+        /**
+         * @brief create_element writing into @p target, which may be a slice
+         *        shared with other elements.
+         */
+        template <typename T>
+        [[nodiscard]] Mapped<T> create_element(
+            Surface& surface,
+            FormaTarget target,
+            GeometryFn<T> geom,
+            T initial,
+            std::function<float(T)> project = {})
+        {
             auto mapped = make_mapped<T>(
-                std::move(initial), std::move(geom), std::move(buf));
+                std::move(initial), std::move(geom), std::move(target));
             mapped.element.id = surface.layer().add(mapped.element);
             bridge().register_element(
                 surface.layer(), mapped, std::move(project));
@@ -271,11 +298,15 @@ namespace internal {
          * @param surface   Surface to place on.
          * @param spec      Series spec carrying the adornment declarations.
          * @param relate_to Element id the adornments are related to.
+         * @param batch     Buffer the legend swatches draw into as slices.
+         *                  Each gets a buffer of its own when empty. Labels
+         *                  carry text and always get their own.
          */
         void place_adornments(
             Surface& surface,
             const Plot::SeriesSpec& spec,
-            uint32_t relate_to);
+            uint32_t relate_to,
+            const std::shared_ptr<Buffers::FormaBuffer>& batch = {});
 
     private:
         Atelier();

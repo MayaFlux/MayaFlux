@@ -127,6 +127,9 @@ public:
     /** @brief Replace a block's vertices; later blocks shift if the size changes. */
     void update_slice(SliceId id, const std::vector<uint8_t>& bytes);
 
+    /** @brief Number of blocks, 0 before setup_processors(). */
+    [[nodiscard]] size_t slice_count() const noexcept;
+
     /** @brief Remove a block; later blocks shift down. */
     void remove_slice(SliceId id);
 

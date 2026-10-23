@@ -193,6 +193,11 @@ void FormaBuffer::update_slice(SliceId id, const std::vector<uint8_t>& bytes)
         m_processor->update_slice(id, bytes);
 }
 
+size_t FormaBuffer::slice_count() const noexcept
+{
+    return m_processor ? m_processor->slice_count() : 0;
+}
+
 void FormaBuffer::remove_slice(SliceId id)
 {
     if (m_processor)

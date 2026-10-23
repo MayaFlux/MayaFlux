@@ -197,7 +197,11 @@ void FormaProcessor::apply_runs(const std::shared_ptr<VKBuffer>& buffer)
         render->set_runs(std::move(*m_pending_runs));
         render->set_vertex_range(0, 0);
     } else {
-        render->set_runs({});
+        if (run_count == 1 && first.topology != m_topology) {
+            render->set_runs({ first });
+        } else {
+            render->set_runs({});
+        }
         if (run_count == 1 && !whole) {
             render->set_vertex_range(first.vertex_offset, first.vertex_count);
         } else {

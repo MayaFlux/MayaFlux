@@ -119,6 +119,27 @@ template <typename T>
 }
 
 /**
+ * @brief create_element drawing into @p target instead of a buffer of its own.
+ *
+ * Give several elements slices of one buffer, from FormaTarget::slice_of on a
+ * create_batch buffer, and they draw together. Otherwise matches the
+ * Surface overload above.
+ *
+ * @param target  Where the element's geometry is written.
+ */
+template <typename T>
+[[nodiscard]] Mapped<T> create_element(
+    Surface& surface,
+    FormaTarget target,
+    GeometryFn<T> geom,
+    T initial,
+    std::function<float(T)> project = {})
+{
+    return internal::atelier().create_element<T>(
+        surface, std::move(target), std::move(geom), std::move(initial), std::move(project));
+}
+
+/**
  * @brief Build a text-capable FormaBuffer, register a TextField, and wire
  *        text editing onto it in one call.
  *

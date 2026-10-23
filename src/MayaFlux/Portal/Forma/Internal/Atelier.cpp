@@ -3,6 +3,7 @@
 #include "MayaFlux/Portal/Forma/Inspect/Inspector.hpp"
 
 #include "MayaFlux/Buffers/BufferManager.hpp"
+#include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
 #include "MayaFlux/Core/Windowing/WindowManager.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
@@ -150,6 +151,28 @@ std::shared_ptr<Buffers::FormaBuffer> Atelier::create_buffer(
     return buf;
 }
 
+std::shared_ptr<Buffers::FormaBuffer> Atelier::create_batch(std::shared_ptr<Core::Window> window)
+{
+    if (!m_initialized) {
+        error<std::runtime_error>(Journal::Component::Portal, Journal::Context::API,
+            std::source_location::current(),
+            "Portal::Forma not initialized - cannot create batch");
+    }
+
+    auto buf = std::make_shared<Buffers::FormaBuffer>(k_capacity_bytes, Graphics::PrimitiveTopology::TRIANGLE_LIST);
+    m_buffer_manager->add_buffer(buf, Buffers::ProcessingToken::GRAPHICS_BACKEND);
+    const auto height = std::max(window->get_create_info().height, 1U);
+    buf->setup_rendering({ .target_window = std::move(window), .triangulate = true });
+
+    if (auto render = buf->get_render_processor()) {
+        Graphics::MillSpec spec = render->get_mill_spec();
+        spec.ribbon = Graphics::MillSpec::Ribbon::WorldPlane;
+        spec.width_scale = 2.0F / static_cast<float>(height);
+        render->set_mill_spec(spec);
+    }
+    return buf;
+}
+
 std::pair<std::shared_ptr<Layer>, std::shared_ptr<Context>>
 Atelier::create_layer(const std::shared_ptr<Core::Window>& window, std::string name)
 {
@@ -187,7 +210,8 @@ Surface Atelier::create_surface(const Core::WindowCreateInfo& window_info, std::
 void Atelier::place_adornments(
     Surface& surface,
     const Plot::SeriesSpec& spec,
-    uint32_t relate_to)
+    uint32_t relate_to,
+    const std::shared_ptr<Buffers::FormaBuffer>& batch)
 {
     const auto& win = surface.window();
 
@@ -217,11 +241,13 @@ void Atelier::place_adornments(
         auto layout = Plot::layout_legend(*spec.legend);
 
         for (const auto& swatch : layout.swatches) {
-            auto buf = create_buffer(
-                win,
-                k_rect_capacity,
-                Graphics::PrimitiveTopology::TRIANGLE_STRIP);
-            (void)Plot::place_rect(surface, std::move(buf), swatch, relate_to);
+            FormaTarget target = batch
+                ? FormaTarget::slice_of(batch, Graphics::PrimitiveTopology::TRIANGLE_STRIP)
+                : FormaTarget(create_buffer(
+                      win,
+                      k_rect_capacity,
+                      Graphics::PrimitiveTopology::TRIANGLE_STRIP));
+            (void)Plot::place_rect(surface, std::move(target), swatch, relate_to);
         }
 
         for (const auto& label : layout.labels) {

@@ -64,6 +64,9 @@ public:
     /** @brief Draw a slice before every other. */
     void send_slice_to_back(SliceId id);
 
+    /** @brief Number of live slices. */
+    [[nodiscard]] size_t slice_count() const noexcept { return m_slices.size(); }
+
     /** @brief True when geometry or slice changes await the next tick. */
     [[nodiscard]] bool has_pending() const noexcept;
 

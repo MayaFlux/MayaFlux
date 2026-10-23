@@ -119,6 +119,38 @@ namespace {
         std::memcpy(v + 48, &k_default_tangent, 12);
     }
 
+    /**
+     * @brief Map a spec's geometry from NDC into its plot bounds, when it has any.
+     *
+     * Every encoding emits positions in [-1, 1]; this scales x and y into
+     * @c plot_bounds, the region the ticks, background and legend are laid out
+     * against. Vertex scalars such as line thickness are left as written.
+     */
+    SeriesSpec fitted(SeriesSpec spec)
+    {
+        if (!spec.plot_bounds)
+            return spec;
+
+        const Kinesis::AABB2D bounds = *spec.plot_bounds;
+        spec.fn = [inner = std::move(spec.fn), bounds](
+                      const std::shared_ptr<Kakshya::PlotContainer>& container,
+                      std::vector<uint8_t>& out,
+                      Element& element) mutable {
+            inner(container, out, element);
+
+            const size_t count = out.size() / k_stride;
+            for (size_t i = 0; i < count; ++i) {
+                float position[2];
+                uint8_t* vertex = out.data() + i * k_stride;
+                std::memcpy(position, vertex, sizeof(position));
+                position[0] = bounds.min.x + (position[0] + 1.F) * 0.5F * bounds.width();
+                position[1] = bounds.min.y + (position[1] + 1.F) * 0.5F * bounds.height();
+                std::memcpy(vertex, position, sizeof(position));
+            }
+        };
+        return spec;
+    }
+
 } // namespace
 
 // =============================================================================
@@ -180,7 +212,7 @@ SeriesSpec WaveformBuilder::done() const
     const auto global_palette = m_state.palette();
     const float thickness = m_thickness;
 
-    return {
+    return fitted(SeriesSpec {
         .fn = [x_mappings, y_mappings, z_mappings, global_palette, thickness](
                   const std::shared_ptr<Kakshya::PlotContainer>& container,
                   std::vector<uint8_t>& out,
@@ -277,7 +309,7 @@ SeriesSpec WaveformBuilder::done() const
         .labels = m_state.labels(),
         .tick_labels = m_state.resolved_tick_labels(),
         .legend = m_state.legend_spec(),
-    };
+    });
 }
 
 // =============================================================================
@@ -292,7 +324,7 @@ SeriesSpec ScatterBuilder::done() const
     const auto global_palette = m_state.palette();
     const float point_size = m_point_size;
 
-    return {
+    return fitted(SeriesSpec {
         .fn = [x_mappings, y_mappings, z_mappings, global_palette, point_size](
                   const std::shared_ptr<Kakshya::PlotContainer>& container,
                   std::vector<uint8_t>& out,
@@ -361,7 +393,7 @@ SeriesSpec ScatterBuilder::done() const
         .labels = m_state.labels(),
         .tick_labels = m_state.resolved_tick_labels(),
         .legend = m_state.legend_spec(),
-    };
+    });
 }
 
 // =============================================================================
@@ -374,7 +406,7 @@ SeriesSpec BarsBuilder::done() const
     auto y_mappings = m_state.y_mappings();
     const auto global_palette = m_state.palette();
 
-    return {
+    return fitted(SeriesSpec {
         .fn = [x_mappings, y_mappings, global_palette](
                   const std::shared_ptr<Kakshya::PlotContainer>& container,
                   std::vector<uint8_t>& out,
@@ -428,7 +460,7 @@ SeriesSpec BarsBuilder::done() const
         .labels = m_state.labels(),
         .tick_labels = m_state.resolved_tick_labels(),
         .legend = m_state.legend_spec(),
-    };
+    });
 }
 
 SeriesSpec FilledWaveformBuilder::done() const
@@ -438,7 +470,7 @@ SeriesSpec FilledWaveformBuilder::done() const
     const auto global_palette = m_state.palette();
     const float baseline_data = m_baseline;
 
-    return {
+    return fitted(SeriesSpec {
         .fn = [x_mappings, y_mappings, global_palette, baseline_data](
                   const std::shared_ptr<Kakshya::PlotContainer>& container,
                   std::vector<uint8_t>& out,
@@ -510,6 +542,13 @@ SeriesSpec FilledWaveformBuilder::done() const
                     write_vertex(out, { px, baseline_ndc, 0.F }, color, 0.F);
                 }
 
+                if (ei > 0 && out.size() > pre_size) {
+                    const std::vector<uint8_t> head(
+                        out.begin() + static_cast<ptrdiff_t>(pre_size),
+                        out.begin() + static_cast<ptrdiff_t>(pre_size + k_stride));
+                    out.insert(out.begin() + static_cast<ptrdiff_t>(pre_size), head.begin(), head.end());
+                }
+
                 if (ei + 1 < y_entries.size() && out.size() > pre_size) {
                     const std::vector<uint8_t> tail(out.end() - static_cast<ptrdiff_t>(k_stride), out.end());
                     out.insert(out.end(), tail.begin(), tail.end());
@@ -525,7 +564,7 @@ SeriesSpec FilledWaveformBuilder::done() const
         .labels = m_state.labels(),
         .tick_labels = m_state.resolved_tick_labels(),
         .legend = m_state.legend_spec(),
-    };
+    });
 }
 
 } // namespace MayaFlux::Portal::Forma::Plot
