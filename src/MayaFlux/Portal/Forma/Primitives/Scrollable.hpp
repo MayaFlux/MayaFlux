@@ -131,7 +131,14 @@ struct Scrollable {
      * @brief Register the viewport element, wire wheel scrolling, and
      *        populate scroll, offset, buf, and cursor_out.
      *
-     * @param in_buf   Pre-created buffer for the viewport background.
+     * @param in_buf   Pre-created buffer for the viewport background. Its
+     *                 render processor is scissored to @p viewport, so give a
+     *                 slice of a create_batch() buffer and create the tracked
+     *                 elements as slices of the same buffer: one scissor then
+     *                 clips them all. Elements on buffers of their own are
+     *                 scissored individually by track(), as before. Do not
+     *                 share this buffer with anything that must draw outside
+     *                 the viewport.
      * @param surface  Surface to register the viewport on.
      * @param viewport NDC region: hit-test bounds, wheel-scroll trigger
      *                 region, background quad, and the Scissor clip every

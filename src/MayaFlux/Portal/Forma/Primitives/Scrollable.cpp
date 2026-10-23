@@ -54,6 +54,11 @@ Scrollable& Scrollable::place(
 
     buf.submit(Kinesis::filled_rect(viewport, m_background));
 
+    if (buf) {
+        if (auto render = buf->get_render_processor())
+            render->set_scissor(Kinesis::Scissor::from(viewport));
+    }
+
     Element el = Element {}
                      .with_name("scrollable_viewport")
                      .with_bounds(viewport)
