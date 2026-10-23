@@ -214,6 +214,31 @@ CastResult<To> try_convert(const From& value)
     return result;
 }
 
+/**
+ * @brief Convert a double to an arithmetic type, saturating integer targets.
+ *
+ * Integer targets clamp to their representable range and map NaN to zero.
+ * Decimal targets are a plain cast.
+ */
+template <ArithmeticData To>
+[[nodiscard]] constexpr To saturate_cast(double value) noexcept
+{
+    if constexpr (IntegerData<To>) {
+        constexpr auto lo = static_cast<double>(std::numeric_limits<To>::lowest());
+        constexpr auto hi = static_cast<double>(std::numeric_limits<To>::max());
+        if (value != value) {
+            return To {};
+        }
+        if (value <= lo) {
+            return std::numeric_limits<To>::lowest();
+        }
+        if (value >= hi) {
+            return std::numeric_limits<To>::max();
+        }
+    }
+    return static_cast<To>(value);
+}
+
 template <typename T>
     requires(ArithmeticData<T> || ComplexData<T> || StringData<T>)
 CastResult<T> safe_any_cast(const std::any& any_val)
