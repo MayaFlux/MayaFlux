@@ -25,9 +25,11 @@ Bridge::Bridge(
 
 Bridge::~Bridge()
 {
-    for (auto& [id, rec] : m_records) {
-        cancel_inbound(rec);
-        cancel_outbound(rec);
+    for (auto& [layer, records] : m_records) {
+        for (auto& [id, rec] : records) {
+            cancel_inbound(rec);
+            cancel_outbound(rec);
+        }
     }
 
     for (auto& [layer, tasks] : m_layer_tasks) {
@@ -41,7 +43,7 @@ Bridge::~Bridge()
 // =============================================================================
 
 void Bridge::bind(
-    uint32_t id,
+    const ElementRef& ref,
     std::shared_ptr<Nodes::Node> node,
     std::function<float(double)> project)
 {
@@ -53,30 +55,29 @@ void Bridge::bind(
               return static_cast<float>(n->get_last_output());
           });
 
-    spawn_inbound(id, std::move(reader));
+    spawn_inbound(ref, std::move(reader));
 }
 
-void Bridge::bind(uint32_t id, std::function<float()> source)
+void Bridge::bind(const ElementRef& ref, std::function<float()> source)
 {
-    spawn_inbound(id, std::move(source));
+    spawn_inbound(ref, std::move(source));
 }
 
-void Bridge::spawn_inbound(uint32_t id, std::function<float()> source)
+void Bridge::spawn_inbound(const ElementRef& ref, std::function<float()> source)
 {
-    auto it = m_records.find(id);
-    if (it == m_records.end()) {
+    auto* rec = find_record(ref);
+    if (!rec) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::Init,
-            "Bridge::bind: unknown element id {}", id);
+            "Bridge::bind: unknown element id {}", ref.second);
         return;
     }
 
-    cancel_inbound(it->second);
+    cancel_inbound(*rec);
 
-    auto name = make_task_name(id, "inbound");
-    it->second.inbound_task = name;
+    auto name = make_task_name(ref.second, "inbound");
+    rec->inbound_task = name;
 
-    auto& rec = it->second;
-    auto writer = rec.writer;
+    auto writer = rec->writer;
 
     auto routine = [](Vruta::TaskScheduler&,
                        std::function<float()> src,
@@ -99,33 +100,32 @@ void Bridge::spawn_inbound(uint32_t id, std::function<float()> source)
 // =============================================================================
 
 void Bridge::write(
-    uint32_t id,
+    const ElementRef& ref,
     const std::shared_ptr<Buffers::VKBuffer>& target_buffer,
     const std::string& shader_path,
     uint32_t offset,
     size_t size)
 {
-    auto it = m_records.find(id);
-    if (it == m_records.end()) {
+    auto* rec = find_record(ref);
+    if (!rec) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::Init,
-            "Bridge::write: unknown element id {}", id);
+            "Bridge::write: unknown element id {}", ref.second);
         return;
     }
 
-    auto& rec = it->second;
-    if (!rec.bindings) {
-        rec.bindings = std::make_shared<Buffers::FormaBindingsProcessor>(shader_path);
-        m_buffer_manager.add_processor(rec.bindings, target_buffer,
+    if (!rec->bindings) {
+        rec->bindings = std::make_shared<Buffers::FormaBindingsProcessor>(shader_path);
+        m_buffer_manager.add_processor(rec->bindings, target_buffer,
             Buffers::ProcessingToken::GRAPHICS_BACKEND);
     }
 
-    auto binding_name = std::to_string(id) + "_pc_" + std::to_string(offset);
-    rec.bindings->bind_push_constant(binding_name, rec.reader, offset, size);
-    rec.binding_names.push_back(std::move(binding_name));
+    auto binding_name = std::to_string(ref.second) + "_pc_" + std::to_string(offset);
+    rec->bindings->bind_push_constant(binding_name, rec->reader, offset, size);
+    rec->binding_names.push_back(std::move(binding_name));
 }
 
 void Bridge::write(
-    uint32_t id,
+    const ElementRef& ref,
     const std::shared_ptr<Buffers::VKBuffer>& target_buffer,
     const std::string& shader_path,
     const std::string& descriptor_name,
@@ -133,39 +133,38 @@ void Bridge::write(
     uint32_t set,
     Portal::Graphics::DescriptorRole role)
 {
-    auto it = m_records.find(id);
-    if (it == m_records.end()) {
+    auto* rec = find_record(ref);
+    if (!rec) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::Init,
-            "Bridge::write: unknown element id {}", id);
+            "Bridge::write: unknown element id {}", ref.second);
         return;
     }
 
-    auto& rec = it->second;
-    if (!rec.bindings) {
-        rec.bindings = std::make_shared<Buffers::FormaBindingsProcessor>(shader_path);
-        m_buffer_manager.add_processor(rec.bindings, target_buffer,
+    if (!rec->bindings) {
+        rec->bindings = std::make_shared<Buffers::FormaBindingsProcessor>(shader_path);
+        m_buffer_manager.add_processor(rec->bindings, target_buffer,
             Buffers::ProcessingToken::GRAPHICS_BACKEND);
     }
 
-    auto binding_name = descriptor_name + "_" + std::to_string(id);
-    rec.bindings->bind_descriptor(binding_name, rec.reader, descriptor_name, binding_index, set, role);
-    rec.binding_names.push_back(std::move(binding_name));
+    auto binding_name = descriptor_name + "_" + std::to_string(ref.second);
+    rec->bindings->bind_descriptor(binding_name, rec->reader, descriptor_name, binding_index, set, role);
+    rec->binding_names.push_back(std::move(binding_name));
 }
 
-void Bridge::write(uint32_t id, std::shared_ptr<Buffers::AudioWriteProcessor> target)
+void Bridge::write(const ElementRef& ref, std::shared_ptr<Buffers::AudioWriteProcessor> target)
 {
-    auto it = m_records.find(id);
-    if (it == m_records.end()) {
+    auto* rec = find_record(ref);
+    if (!rec) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::Init,
-            "Bridge::write: unknown element id {}", id);
+            "Bridge::write: unknown element id {}", ref.second);
         return;
     }
 
-    auto name = make_task_name(id, "audio");
-    it->second.outbound_tasks.push_back(name);
+    auto name = make_task_name(ref.second, "audio");
+    rec->outbound_tasks.push_back(name);
 
-    auto bulk = it->second.bulk_reader;
-    auto reader = it->second.reader;
+    auto bulk = rec->bulk_reader;
+    auto reader = rec->reader;
 
     if (bulk) {
         auto routine = [](Vruta::TaskScheduler&,
@@ -200,20 +199,20 @@ void Bridge::write(uint32_t id, std::shared_ptr<Buffers::AudioWriteProcessor> ta
     }
 }
 
-void Bridge::write(uint32_t id, std::shared_ptr<Buffers::DataWriteProcessor> target)
+void Bridge::write(const ElementRef& ref, std::shared_ptr<Buffers::DataWriteProcessor> target)
 {
-    auto it = m_records.find(id);
-    if (it == m_records.end()) {
+    auto* rec = find_record(ref);
+    if (!rec) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::Init,
-            "Bridge::write: unknown element id {}", id);
+            "Bridge::write: unknown element id {}", ref.second);
         return;
     }
 
-    auto name = make_task_name(id, "geometry");
-    it->second.outbound_tasks.push_back(name);
+    auto name = make_task_name(ref.second, "geometry");
+    rec->outbound_tasks.push_back(name);
 
-    auto bulk = it->second.bulk_reader;
-    auto reader = it->second.reader;
+    auto bulk = rec->bulk_reader;
+    auto reader = rec->reader;
 
     if (bulk) {
         auto routine = [](Vruta::TaskScheduler&,
@@ -248,19 +247,19 @@ void Bridge::write(uint32_t id, std::shared_ptr<Buffers::DataWriteProcessor> tar
     }
 }
 
-void Bridge::write(uint32_t id, std::shared_ptr<Nodes::Constant> node)
+void Bridge::write(const ElementRef& ref, std::shared_ptr<Nodes::Constant> node)
 {
-    auto it = m_records.find(id);
-    if (it == m_records.end()) {
+    auto* rec = find_record(ref);
+    if (!rec) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::Init,
-            "Bridge::write: unknown element id {}", id);
+            "Bridge::write: unknown element id {}", ref.second);
         return;
     }
 
-    auto name = make_task_name(id, "constant");
-    it->second.outbound_tasks.push_back(name);
+    auto name = make_task_name(ref.second, "constant");
+    rec->outbound_tasks.push_back(name);
 
-    auto reader = it->second.reader;
+    auto reader = rec->reader;
 
     auto routine = [](Vruta::TaskScheduler&,
                        std::function<float()> r,
@@ -279,20 +278,20 @@ void Bridge::write(uint32_t id, std::shared_ptr<Nodes::Constant> node)
         name, false);
 }
 
-void Bridge::write(uint32_t id, std::function<void(std::span<const float>)> sink)
+void Bridge::write(const ElementRef& ref, std::function<void(std::span<const float>)> sink)
 {
-    auto it = m_records.find(id);
-    if (it == m_records.end()) {
+    auto* rec = find_record(ref);
+    if (!rec) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::Init,
-            "Bridge::write: unknown element id {}", id);
+            "Bridge::write: unknown element id {}", ref.second);
         return;
     }
 
-    auto name = make_task_name(id, "bulk_sink");
-    it->second.outbound_tasks.push_back(name);
+    auto name = make_task_name(ref.second, "bulk_sink");
+    rec->outbound_tasks.push_back(name);
 
-    auto bulk = it->second.bulk_reader;
-    auto reader = it->second.reader;
+    auto bulk = rec->bulk_reader;
+    auto reader = rec->reader;
 
     if (bulk) {
         auto routine = [](Vruta::TaskScheduler&,
@@ -349,19 +348,19 @@ void Bridge::write(
 // Lifecycle
 // =============================================================================
 
-void Bridge::unbind(uint32_t id)
+void Bridge::unbind(const ElementRef& ref)
 {
-    auto it = m_records.find(id);
-    if (it == m_records.end())
+    auto* rec = find_record(ref);
+    if (!rec)
         return;
 
-    cancel_inbound(it->second);
-    cancel_outbound(it->second);
+    cancel_inbound(*rec);
+    cancel_outbound(*rec);
 }
 
 void Bridge::stop_sync(Layer& layer)
 {
-    auto it = m_layer_tasks.find(&layer);
+    auto it = m_layer_tasks.find(layer.weak_from_this());
     if (it == m_layer_tasks.end())
         return;
 
@@ -374,6 +373,16 @@ void Bridge::stop_sync(Layer& layer)
 // =============================================================================
 // Private
 // =============================================================================
+
+Bridge::ElementRecord* Bridge::find_record(const ElementRef& ref)
+{
+    const auto layer_it = m_records.find(ref.first);
+    if (layer_it == m_records.end())
+        return nullptr;
+
+    const auto it = layer_it->second.find(ref.second);
+    return it == layer_it->second.end() ? nullptr : &it->second;
+}
 
 std::string Bridge::make_task_name(uint32_t id, const char* suffix) const
 {
@@ -409,32 +418,13 @@ void Bridge::cancel_outbound(ElementRecord& rec)
     rec.binding_names.clear();
 }
 
-void Bridge::spawn_sync(uint32_t id, std::function<void()> sync_fn)
-{
-    auto name = make_task_name(id, "sync");
-    m_records[id].outbound_tasks.push_back(name);
-
-    auto routine = [](Vruta::TaskScheduler&,
-                       std::function<void()> fn) -> Vruta::GraphicsRoutine {
-        auto& p = co_await Kriya::GetGraphicsPromise {};
-        while (!p.should_terminate) {
-            fn();
-            co_await Kriya::FrameDelay { .frames_to_wait = 1 };
-        }
-    };
-
-    m_scheduler.add_task(
-        std::make_shared<Vruta::GraphicsRoutine>(
-            routine(m_scheduler, std::move(sync_fn))),
-        name, false);
-}
-
 void Bridge::spawn_sync(Layer& layer, uint32_t id, std::function<void()> sync_fn)
 {
     auto name = make_task_name(id, "sync");
-    m_layer_tasks[&layer].push_back(name);
-    if (auto it = m_records.find(id); it != m_records.end())
-        it->second.outbound_tasks.push_back(name);
+    const ElementRef ref { layer.weak_from_this(), id };
+    m_layer_tasks[ref.first].push_back(name);
+    if (auto* rec = find_record(ref))
+        rec->outbound_tasks.push_back(name);
 
     auto routine = [](Vruta::TaskScheduler&,
                        std::function<void()> fn) -> Vruta::GraphicsRoutine {
@@ -457,7 +447,7 @@ void Bridge::write_aggregate(
     std::function<void(std::span<const float>)> sink)
 {
     auto name = make_layer_task_name("bulk_sink");
-    m_layer_tasks[&layer].push_back(name);
+    m_layer_tasks[layer.weak_from_this()].push_back(name);
 
     auto routine = [](Vruta::TaskScheduler&,
                        std::vector<std::function<float()>> sources,
@@ -485,7 +475,7 @@ void Bridge::write_assembled_data(
     std::function<void(Kakshya::DataVariant)> write)
 {
     auto name = make_layer_task_name("assembled_data");
-    m_layer_tasks[&layer].push_back(name);
+    m_layer_tasks[layer.weak_from_this()].push_back(name);
 
     auto routine = [](Vruta::TaskScheduler&,
                        std::function<Kakshya::DataVariant()> make_data,
