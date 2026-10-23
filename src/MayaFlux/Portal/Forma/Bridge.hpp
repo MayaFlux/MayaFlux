@@ -160,6 +160,22 @@ public:
         size_t size = sizeof(float));
 
     /**
+     * @brief Route element value to a push constant slot described by a
+     *        GpuDataFormat.
+     *
+     * The element value is converted to the format; integers saturate. The
+     * format must have a single component.
+     *
+     * @param format Layout written at the offset.
+     */
+    void write(
+        const ElementRef& ref,
+        const std::shared_ptr<Buffers::VKBuffer>& target_buffer,
+        const std::string& shader_path,
+        uint32_t offset,
+        Kakshya::GpuDataFormat format);
+
+    /**
      * @brief Route element value to a descriptor binding on @p target_buffer.
      *
      * Creates a FormaBindingsProcessor if one does not yet exist for this element
@@ -290,6 +306,16 @@ public:
         size_t size = sizeof(float))
     {
         write(ref_of(state), std::move(target_buffer), shader_path, offset, size);
+    }
+
+    template <typename T>
+    void write(std::shared_ptr<MappedState<T>> state,
+        std::shared_ptr<Buffers::VKBuffer> target_buffer,
+        const std::string& shader_path,
+        uint32_t offset,
+        Kakshya::GpuDataFormat format)
+    {
+        write(ref_of(state), std::move(target_buffer), shader_path, offset, format);
     }
 
     template <typename T>
@@ -541,6 +567,16 @@ public:
             size_t size = sizeof(float))
         {
             m_bridge.write(m_ref, target, shader_path, offset, size);
+            return *this;
+        }
+
+        Binding& write(
+            const std::shared_ptr<Buffers::VKBuffer>& target,
+            const std::string& shader_path,
+            uint32_t offset,
+            Kakshya::GpuDataFormat format)
+        {
+            m_bridge.write(m_ref, target, shader_path, offset, format);
             return *this;
         }
 

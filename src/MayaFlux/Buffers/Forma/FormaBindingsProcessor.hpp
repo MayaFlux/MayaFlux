@@ -85,6 +85,25 @@ public:
         uint32_t offset,
         size_t size = sizeof(float));
 
+    /**
+     * @brief Bind a type-erased reader to a push constant slot described by
+     *        a GpuDataFormat.
+     *
+     * The reader's value is converted to the format; integers saturate. The
+     * format must have a single component, since the reader produces one
+     * value.
+     *
+     * @param name     Logical binding name.
+     * @param reader   Callable returning the current value each tick.
+     * @param offset   Byte offset in the push constant struct.
+     * @param format   Layout written at the offset.
+     */
+    void bind_push_constant(
+        const std::string& name,
+        std::function<float()> reader,
+        uint32_t offset,
+        Kakshya::GpuDataFormat format);
+
     // =========================================================================
     // Descriptor bindings — raw reader overload
     // =========================================================================
@@ -146,6 +165,35 @@ public:
         };
         b.pc = PushConstantTarget { .offset = offset, .size = size };
         b.desc.reset();
+    }
+
+    /**
+     * @brief Bind a MappedState<T> to a push constant slot described by a
+     *        GpuDataFormat.
+     *
+     * @param format    Layout written at the offset.
+     * @tparam T        MappedState value type.
+     */
+    template <typename T>
+    void bind_push_constant(
+        const std::string& name,
+        std::shared_ptr<Portal::Forma::MappedState<T>> state,
+        std::function<float(T)> project,
+        uint32_t offset,
+        Kakshya::GpuDataFormat format)
+    {
+        if (!state) {
+            MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "FormaBindingsProcessor::bind_push_constant: null state for '{}'", name);
+            return;
+        }
+
+        bind_push_constant(
+            name,
+            std::function<float()>([s = std::move(state), p = std::move(project)]() {
+                return p(s->value);
+            }),
+            offset, format);
     }
 
     // =========================================================================
@@ -249,6 +297,7 @@ private:
     struct PushConstantTarget {
         uint32_t offset;
         size_t size;
+        std::optional<Kakshya::GpuDataFormat> format {};
     };
 
     struct DescriptorTarget {

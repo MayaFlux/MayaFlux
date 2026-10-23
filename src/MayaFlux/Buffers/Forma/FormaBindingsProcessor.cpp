@@ -42,6 +42,33 @@ void FormaBindingsProcessor::bind_push_constant(
     b.desc.reset();
 }
 
+void FormaBindingsProcessor::bind_push_constant(
+    const std::string& name,
+    std::function<float()> reader,
+    uint32_t offset,
+    Kakshya::GpuDataFormat format)
+{
+    if (!reader) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "FormaBindingsProcessor::bind_push_constant: null reader for '{}'", name);
+        return;
+    }
+
+    if (Kakshya::gpu_data_format_components(format) != 1) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "FormaBindingsProcessor::bind_push_constant: '{}' needs a single component format",
+            name);
+        return;
+    }
+
+    release(name);
+    auto& b = m_bindings[name];
+    b.kind = TargetKind::PUSH_CONSTANT;
+    b.reader = std::move(reader);
+    b.pc = PushConstantTarget { .offset = offset, .size = Kakshya::gpu_data_format_bytes(format), .format = format };
+    b.desc.reset();
+}
+
 void FormaBindingsProcessor::bind_descriptor(
     const std::string& name,
     std::function<float()> reader,
@@ -201,7 +228,14 @@ void FormaBindingsProcessor::flush_push_constant(
         it = std::prev(entries.end());
     }
 
-    if (pc.size == sizeof(float)) {
+    if (pc.format) {
+        const bool packed = Kakshya::pack_gpu_value(*pc.format, value,
+            std::span<std::byte>(reinterpret_cast<std::byte*>(it->data.data()), it->data.size()));
+        if (!packed) {
+            MF_RT_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "FormaBindingsProcessor: binding '{}' does not fit its push constant slot", name);
+        }
+    } else if (pc.size == sizeof(float)) {
         std::memcpy(it->data.data(), &value, sizeof(float));
     } else if (pc.size == sizeof(double)) {
         auto promoted = static_cast<double>(value);
