@@ -6,6 +6,15 @@
 
 namespace MayaFlux::Portal::Forma::Geometry {
 
+namespace {
+    void join_strip(std::vector<Kakshya::MeshVertex>& strip, const std::vector<Kakshya::MeshVertex>& quad)
+    {
+        strip.push_back(strip.back());
+        strip.push_back(quad.front());
+        strip.insert(strip.end(), quad.begin(), quad.end());
+    }
+}
+
 Form<float> horizontal_fader(
     Kinesis::AABB2D bounds,
     float handle_w,
@@ -25,9 +34,11 @@ Form<float> horizontal_fader(
         Kinesis::AABB2D track { .min = glm::vec2(live.min.x, yt), .max = glm::vec2(live.max.x, yb) };
         Kinesis::AABB2D handle { .min = glm::vec2(x, live.min.y), .max = glm::vec2(x + handle_w, live.max.y) };
 
+        const Kinesis::AABB2D fill { .min = track.min, .max = { x + handle_w * 0.5F, track.max.y } };
+
         auto verts = Kakshya::to_mesh_vertices(Kinesis::filled_rect(track, track_color));
-        auto herts = Kakshya::to_mesh_vertices(Kinesis::filled_rect(handle, handle_color));
-        verts.insert(verts.end(), herts.begin(), herts.end());
+        join_strip(verts, Kakshya::to_mesh_vertices(Kinesis::filled_rect(fill, glm::mix(track_color, handle_color, 0.5F))));
+        join_strip(verts, Kakshya::to_mesh_vertices(Kinesis::filled_rect(handle, handle_color)));
 
         write_verts(out, verts);
 
@@ -37,7 +48,7 @@ Form<float> horizontal_fader(
 
     return { std::move(fn),
         Graphics::PrimitiveTopology::TRIANGLE_STRIP,
-        static_cast<size_t>(8) * sizeof(Kakshya::MeshVertex),
+        static_cast<size_t>(16) * sizeof(Kakshya::MeshVertex),
         drag_with<float>(Kinesis::axis_fraction(bounds, handle_w, true, live_offset)) };
 }
 
@@ -60,9 +71,11 @@ Form<float> vertical_fader(
         const Kinesis::AABB2D track { .min = { xl, live.min.y }, .max = { xr, live.max.y } };
         const Kinesis::AABB2D handle { .min = { live.min.x, y }, .max = { live.max.x, y + handle_h } };
 
+        const Kinesis::AABB2D fill { .min = track.min, .max = { track.max.x, y + handle_h * 0.5F } };
+
         auto verts = Kakshya::to_mesh_vertices(Kinesis::filled_rect(track, track_color));
-        auto herts = Kakshya::to_mesh_vertices(Kinesis::filled_rect(handle, handle_color));
-        verts.insert(verts.end(), herts.begin(), herts.end());
+        join_strip(verts, Kakshya::to_mesh_vertices(Kinesis::filled_rect(fill, glm::mix(track_color, handle_color, 0.5F))));
+        join_strip(verts, Kakshya::to_mesh_vertices(Kinesis::filled_rect(handle, handle_color)));
 
         write_verts(out, verts);
 
@@ -72,7 +85,7 @@ Form<float> vertical_fader(
 
     return { std::move(fn),
         Graphics::PrimitiveTopology::TRIANGLE_STRIP,
-        static_cast<size_t>(8) * sizeof(Kakshya::MeshVertex),
+        static_cast<size_t>(16) * sizeof(Kakshya::MeshVertex),
         drag_with<float>(Kinesis::axis_fraction(bounds, handle_h, false, live_offset)) };
 }
 
