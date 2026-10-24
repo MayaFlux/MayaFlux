@@ -71,6 +71,7 @@ public:
         }
         m_primitive_topology = topology;
         m_needs_pipeline_rebuild = true;
+        invalidate_all_mills();
     }
 
     /// Set polygon mode (e.g., fill, line, point)
@@ -81,6 +82,7 @@ public:
         }
         m_polygon_mode = mode;
         m_needs_pipeline_rebuild = true;
+        invalidate_all_mills();
     }
 
     /// Set cull mode (e.g., none, front, back)
@@ -305,6 +307,25 @@ public:
     /** @brief Vertices the last triangulation produced. Diagnostic only. */
     [[nodiscard]] uint32_t milled_vertex_count() const;
 
+    /**
+     * @brief Reuse the last milled output while nothing it depends on changed.
+     *
+     * Off by default, because a buffer whose vertices are written from outside
+     * this processor would go stale. Only the owner of a buffer that calls
+     * invalidate_mill() after every vertex change should enable it. Spans that
+     * follow the viewpoint (Ribbon::WorldFacing) are always milled.
+     */
+    void set_mill_on_change(bool enabled);
+
+    /** @brief Mill @p buffer again on its next draw. */
+    void invalidate_mill(const std::shared_ptr<VKBuffer>& buffer);
+
+    /** @brief Mill every buffer again on its next draw. */
+    void invalidate_all_mills();
+
+    /** @brief Dispatches that produced vertices, for observing the gate. */
+    [[nodiscard]] uint32_t mill_passes() const;
+
 protected:
     void initialize_pipeline(const std::shared_ptr<VKBuffer>& buffer) override;
 
@@ -355,6 +376,8 @@ private:
         uint32_t vertex_count {};
         uint32_t index_count {};
         bool geometry_prepared {};
+        bool mill_current {};
+        uint32_t milled_count {};
     };
 
     Portal::Graphics::RenderPipelineID m_pipeline_id = Portal::Graphics::INVALID_RENDER_PIPELINE;
@@ -431,6 +454,8 @@ private:
     Portal::Graphics::MillSpec m_mill_spec {};
 
     uint32_t m_last_milled_vertex_count {};
+    uint32_t m_mill_passes {};
+    bool m_mill_on_change {};
 
     /**
      * @brief Topology the pipeline is built with, as opposed to the topology

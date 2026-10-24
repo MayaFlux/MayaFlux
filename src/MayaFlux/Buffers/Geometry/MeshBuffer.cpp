@@ -124,6 +124,16 @@ void MeshBuffer::setup_rendering(const RenderConfig& config)
 
     m_render_config.target_window = config.target_window;
     m_render_config.topology = Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST;
+    m_render_config.polygon_mode = config.polygon_mode;
+    m_render_config.triangulate = config.triangulate
+        || Portal::Graphics::needs_triangulation(m_render_config.topology, m_render_config.polygon_mode);
+
+    const bool mill_draws_edges = m_render_config.triangulate
+        && m_render_config.polygon_mode != Portal::Graphics::PolygonMode::FILL;
+    if (mill_draws_edges) {
+        m_render_config.vertex_shader = "milled_shape.vert.spv";
+        m_render_config.fragment_shader = "milled_shape.frag.spv";
+    }
 
     if (!config.additional_textures.empty()) {
         for (const auto& [name, texture] : config.additional_textures) {
@@ -131,8 +141,8 @@ void MeshBuffer::setup_rendering(const RenderConfig& config)
         }
     }
 
-    const bool textured = m_diffuse_texture != nullptr
-        || !m_render_config.default_texture_binding.empty();
+    const bool textured = !mill_draws_edges
+        && (m_diffuse_texture != nullptr || !m_render_config.default_texture_binding.empty());
 
     if (textured && m_render_config.default_texture_binding.empty()) {
         m_render_config.default_texture_binding = m_diffuse_binding;

@@ -24,6 +24,12 @@ class RenderProcessor;
  * Topology is taken from slot 0's node. All slots must carry geometry with the
  * same topology and vertex layout for the single draw call to be correct.
  *
+ * When the render config triangulates, the template is milled once and each
+ * instance transform is applied to the milled vertices afterwards. A ribbon or
+ * point quad is therefore built facing the viewpoint for the geometry
+ * transform only, and a per-instance rotation or scale turns or stretches it.
+ * Use Ribbon::WorldPlane in the mill spec for instanced geometry.
+ *
  * Usage:
  * @code
  * auto net = std::make_shared<InstanceNetwork>();

@@ -137,6 +137,7 @@ void FormaBuffer::setup_rendering(const RenderConfig& config)
     }
 
     apply_render_config(resolved, sc);
+    m_render_processor->set_mill_on_change(true);
     m_render_processor->enable_alpha_blending();
 
     if (multi_tex) {

@@ -546,6 +546,7 @@ void RenderProcessor::set_vertex_range(uint32_t first_vertex, uint32_t vertex_co
 {
     m_first_vertex = first_vertex;
     m_vertex_count = vertex_count;
+    invalidate_all_mills();
 
     MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
         "RenderProcessor: Set vertex range [offset={}, count={}]",
@@ -607,6 +608,7 @@ void RenderProcessor::set_triangulate(bool enabled)
 
     m_triangulate = enabled;
     m_needs_pipeline_rebuild = true;
+    invalidate_all_mills();
 }
 
 vk::Rect2D RenderProcessor::resolve_scissor_rect(uint32_t width, uint32_t height) const noexcept
@@ -635,6 +637,7 @@ vk::Rect2D RenderProcessor::resolve_scissor_rect(uint32_t width, uint32_t height
 void RenderProcessor::set_runs(std::vector<Portal::Graphics::DrawRun> runs)
 {
     m_runs = std::move(runs);
+    invalidate_all_mills();
 }
 
 void RenderProcessor::set_mill_spec(const Portal::Graphics::MillSpec& spec)
@@ -644,6 +647,32 @@ void RenderProcessor::set_mill_spec(const Portal::Graphics::MillSpec& spec)
         if (state.mill)
             state.mill->set_spec(spec);
     }
+    invalidate_all_mills();
+}
+
+void RenderProcessor::set_mill_on_change(bool enabled)
+{
+    m_mill_on_change = enabled;
+    invalidate_all_mills();
+}
+
+void RenderProcessor::invalidate_mill(const std::shared_ptr<VKBuffer>& buffer)
+{
+    if (auto it = m_buffer_info.find(buffer); it != m_buffer_info.end()) {
+        it->second.mill_current = false;
+    }
+}
+
+void RenderProcessor::invalidate_all_mills()
+{
+    for (auto& [buffer, state] : m_buffer_info) {
+        state.mill_current = false;
+    }
+}
+
+uint32_t RenderProcessor::mill_passes() const
+{
+    return m_mill_passes;
 }
 
 uint32_t RenderProcessor::milled_vertex_count() const
@@ -722,14 +751,25 @@ void RenderProcessor::prepare_geometry(const std::shared_ptr<VKBuffer>& buffer, 
     if (m_triangulate) {
         if (!state.mill)
             state.mill = std::make_unique<Portal::Graphics::PrimitiveMill>(m_mill_spec);
-        state.vertex_count = mill_runs(buffer, *state.mill);
+        const bool reuse = m_mill_on_change && state.mill_current && state.milled_count > 0
+            && m_mill_spec.ribbon != Portal::Graphics::MillSpec::Ribbon::WorldFacing
+            && state.mill->output();
+        if (reuse) {
+            state.vertex_count = state.milled_count;
+            state.draw_source = state.mill->output();
+        } else {
+            state.vertex_count = mill_runs(buffer, *state.mill);
+            state.milled_count = state.vertex_count;
+            state.mill_current = state.vertex_count > 0;
+            if (state.vertex_count > 0) {
+                ++m_mill_passes;
+                state.draw_source = state.mill->output();
+            } else if (state.draw_source != buffer) {
+                state.draw_source = buffer;
+            }
+        }
         m_last_milled_vertex_count = state.vertex_count;
         state.first_vertex = 0;
-        if (state.vertex_count > 0) {
-            state.draw_source = state.mill->output();
-        } else if (state.draw_source != buffer) {
-            state.draw_source = buffer;
-        }
     } else {
         if (state.draw_source != buffer)
             state.draw_source = buffer;
@@ -1090,11 +1130,14 @@ void RenderProcessor::cleanup()
         state.geometry_prepared = false;
         state.draw_source.reset();
         state.mill.reset();
+        state.mill_current = false;
+        state.milled_count = 0;
         state.first_vertex = 0;
         state.vertex_count = 0;
         state.index_count = 0;
     }
     m_last_milled_vertex_count = 0;
+    m_mill_passes = 0;
     m_runs.clear();
 
     m_render_transform_ubo.reset();
