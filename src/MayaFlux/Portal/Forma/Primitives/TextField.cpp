@@ -15,11 +15,6 @@ namespace {
     /// @brief Caret width in pixels, same space as PressParams::render_bounds.
     constexpr float k_caret_width_px = 2.F;
 
-    Portal::Text::GlyphAtlas& resolve_atlas(const Portal::Text::PressParams& params)
-    {
-        return params.atlas ? *params.atlas : Portal::Text::get_default_atlas();
-    }
-
     /**
      * @brief Redraw the caret for the current cursor, after the glyphs.
      *
@@ -54,16 +49,30 @@ namespace {
         slice.run().assign(edit.text, params);
     }
 
-    /// @brief lay_out() at the same pen origin x_at() already
-    ///        use, for index_at()'s benefit (Up/Down, click-to-position).
-    Portal::Text::LayoutResult layout_for(
-        const Portal::Text::EditableText& edit,
-        const Portal::Text::PressParams& params,
-        Portal::Text::GlyphAtlas& atlas)
+    /// @brief Resolve a cursor position on a line that may have no glyph quads.
+    size_t index_on_line(Portal::Text::TextRun& run, glm::vec2 px, float target_top)
     {
-        return Portal::Text::lay_out(
-            edit.text, atlas, 0.F, static_cast<float>(atlas.ascender()),
-            params.render_bounds.x, 4);
+        const size_t nearest = run.index_at(px);
+        const auto* atlas = run.atlas();
+        if (!atlas || atlas->line_height() == 0)
+            return nearest;
+
+        const float half_line = static_cast<float>(atlas->line_height()) * 0.5F;
+        if (std::abs(run.caret(nearest, 0.F).min.y - target_top) < half_line)
+            return nearest;
+
+        const auto& text = run.text();
+        size_t line_start = 0;
+        while (true) {
+            if (std::abs(run.caret(line_start, 0.F).min.y - target_top) < half_line)
+                return line_start;
+            const size_t newline = text.find('\n', line_start);
+            if (newline == std::string::npos)
+                break;
+            line_start = newline + 1;
+        }
+
+        return nearest;
     }
 
     /**
@@ -71,37 +80,26 @@ namespace {
      *        above (line_delta = -1) or below (+1) its current line, at
      *        the same x position it currently sits at.
      *
-     * x_at() gives the cursor's current pen position; index_at() resolves
-     * a point back to a byte offset. Asking it for (current x, current y
-     * shifted by one line_height()) is the whole trick - both already
-     * exist in Portal::Text for other reasons (copy()'s round-trip,
-     * TextRun::caret() itself), so nothing new was needed there. A target y
-     * past the first/last line still resolves to the nearest real line,
-     * since that is index_at()'s own behavior for an out-of-range y.
+     * Uses the run's caret positions to reach lines with no glyph quads.
      */
     void move_vertical(
         Portal::Text::EditableText& edit,
-        const Portal::Text::PressParams& params,
+        internal::TextSlice& slice,
         int line_delta)
     {
-        auto& atlas = resolve_atlas(params);
-        const auto pen = Portal::Text::x_at(
-            edit.text, atlas, edit.cursor,
-            0.F, static_cast<float>(atlas.ascender()),
-            params.render_bounds.x, 4);
+        auto& run = slice.run();
+        const auto* atlas = run.atlas();
+        if (!atlas)
+            return;
 
-        const float target_y = pen.y + static_cast<float>(line_delta) * static_cast<float>(atlas.line_height());
-        const auto layout = layout_for(edit, params, atlas);
-
-        edit.cursor = Portal::Text::index_at(
-            edit.text, layout, atlas, pen.x, target_y,
-            0.F, static_cast<float>(atlas.ascender()),
-            params.render_bounds.x, 4);
+        const auto caret = run.caret(edit.cursor, 0.F);
+        const float line_height = static_cast<float>(atlas->line_height());
+        const float target_top = caret.min.y + static_cast<float>(line_delta) * line_height;
+        const float target_y = target_top + static_cast<float>(atlas->ascender());
+        edit.cursor = index_on_line(run, { caret.min.x, target_y }, target_top);
     }
 
-    /// @brief Inverse of the slice map's pixel-to-NDC mapping: an NDC point
-    ///        (a mouse click) back into the same pixel space x_at()/
-    ///        index_at() work in.
+    /// @brief Inverse of the slice map's pixel-to-NDC mapping.
     glm::vec2 pixel_at(glm::vec2 ndc, Kinesis::AABB2D field_bounds, glm::vec2 extent)
     {
         return {
@@ -114,19 +112,21 @@ namespace {
     ///        click position.
     void move_to_click(
         Portal::Text::EditableText& edit,
-        const Portal::Text::PressParams& params,
+        internal::TextSlice& slice,
         Kinesis::AABB2D field_bounds,
-        glm::vec2 extent,
         glm::vec2 ndc)
     {
-        auto& atlas = resolve_atlas(params);
-        const glm::vec2 px = pixel_at(ndc, field_bounds, extent);
-        const auto layout = layout_for(edit, params, atlas);
+        auto& run = slice.run();
+        const glm::vec2 px = pixel_at(ndc, field_bounds, run.extent());
+        const auto* atlas = run.atlas();
+        if (!atlas || atlas->line_height() == 0) {
+            edit.cursor = run.index_at(px);
+            return;
+        }
 
-        edit.cursor = Portal::Text::index_at(
-            edit.text, layout, atlas, px.x, px.y,
-            0.F, static_cast<float>(atlas.ascender()),
-            params.render_bounds.x, 4);
+        const float line_height = static_cast<float>(atlas->line_height());
+        const float target_top = std::floor(px.y / line_height) * line_height;
+        edit.cursor = index_on_line(run, px, target_top);
     }
 
 } // namespace
@@ -225,14 +225,14 @@ void TextField::wire(Context& ctx)
 
     ctx.press_and_hold(element_id, IO::Keys::Up, [sl = slice, s = state, p = params](uint32_t) mutable {
         Portal::Text::EditableText edit = s->value;
-        move_vertical(edit, *p, -1);
+        move_vertical(edit, *sl, -1);
         s->write(edit);
         render_caret(*sl, edit, *p);
     });
 
     ctx.press_and_hold(element_id, IO::Keys::Down, [sl = slice, s = state, p = params](uint32_t) mutable {
         Portal::Text::EditableText edit = s->value;
-        move_vertical(edit, *p, 1);
+        move_vertical(edit, *sl, 1);
         s->write(edit);
         render_caret(*sl, edit, *p);
     });
@@ -240,7 +240,7 @@ void TextField::wire(Context& ctx)
     ctx.on_press(element_id, IO::MouseButtons::Left,
         [sl = slice, s = state, p = params, fb = m_live_bounds](uint32_t, glm::vec2 ndc) mutable {
             Portal::Text::EditableText edit = s->value;
-            move_to_click(edit, *p, *fb, sl->run().extent(), ndc);
+            move_to_click(edit, *sl, *fb, ndc);
             s->write(edit);
             render_caret(*sl, edit, *p);
         });

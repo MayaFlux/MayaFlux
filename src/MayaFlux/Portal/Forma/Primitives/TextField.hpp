@@ -34,13 +34,9 @@ class Surface;
  * It does not manage focus visuals; wire on_focus_gained/on_focus_lost
  * separately, same as any other Forma element.
  *
- * Cursor movement beyond Left/Right/character-count needed no new
- * Portal::Text API: Up/Down resolve via x_at() (current pen position) and
- * index_at() (nearest byte at that x, one line_height() away) - the exact
- * idiom test_text_input() (test_8.hpp) already used to verify x_at()/
- * index_at() round-trip. A mouse click does the same, with the click's NDC
- * position mapped into pixel space first (the inverse of the mapping the
- * text slice itself uses).
+ * Up/Down preserve the caret's horizontal position across lines. Clicking
+ * places the caret at the nearest text boundary. Both use the layout already
+ * drawn by the field's text run.
  *
  * The text is drawn as glyph quads from the glyph atlas, and a caret rides
  * in the same slice rather than owning a buffer, Element, or Layer entry of
