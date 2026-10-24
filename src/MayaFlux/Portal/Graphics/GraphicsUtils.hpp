@@ -307,7 +307,6 @@ enum class FitMode : uint8_t {
     TILE_MIRRORED ///< Source repeated, every other tile mirrored
 };
 
-
 /**
  * @struct RenderConfig
  * @brief Unified rendering configuration for graphics buffers
@@ -402,8 +401,7 @@ struct DrawRun {
      * @brief Fill mode the mill emulates for a triangle span.
      *
      * LINE keeps the triangles and marks their corners so the fragment shader
-     * draws edges; POINT draws every vertex of the span as a point quad. Spans
-     * of other topologies ignore it.
+     * draws edges; POINT draws every vertex of the span as a point quad.
      */
     PolygonMode fill { PolygonMode::FILL };
 };
@@ -424,6 +422,10 @@ struct DrawRun {
     PolygonMode fill = PolygonMode::FILL) noexcept
 {
     if (fill == PolygonMode::POINT) {
+        if (topology == PrimitiveTopology::LINE_LIST
+            || topology == PrimitiveTopology::LINE_STRIP) {
+            return 6U * n;
+        }
         if (topology == PrimitiveTopology::TRIANGLE_LIST) {
             return 6U * 3U * (n / 3U);
         }
@@ -453,9 +455,10 @@ struct DrawRun {
  * @brief Whether this device cannot draw @p topology in @p mode natively, so
  *        the span has to be triangulated by the mill instead.
  *
- * Line topologies need it when the device has no geometry shader, and a
- * triangle topology needs it for LINE or POINT fill when the device has no
- * fillModeNonSolid. Answers false before Portal::Graphics is initialized.
+ * Any non-FILL mode needs it when the device has no fillModeNonSolid, except
+ * POINT_LIST with POINT mode, which is already native. Line topologies also
+ * need it when the device has no geometry shader. Answers false before
+ * Portal::Graphics is initialized.
  */
 [[nodiscard]] MAYAFLUX_API bool needs_triangulation(
     PrimitiveTopology topology,

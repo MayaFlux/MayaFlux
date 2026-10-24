@@ -680,8 +680,7 @@ uint32_t PrimitiveMill::mill(
 
     for (size_t r = 0; r < runs.size(); ++r) {
         const bool emulated = is_triangle_topology(runs[r].topology)
-            && (runs[r].fill == PolygonMode::POINT
-                || (runs[r].fill == PolygonMode::LINE && off.uv != ABSENT));
+            && (runs[r].fill == PolygonMode::POINT || runs[r].fill == PolygonMode::LINE);
         const uint32_t fill_code = !emulated ? 0U : (runs[r].fill == PolygonMode::POINT ? 1U : 2U);
         run_ptr[r * RUN_WORDS + 0] = static_cast<uint32_t>(runs[r].topology) | (fill_code << 8U);
         run_ptr[r * RUN_WORDS + 1] = runs[r].vertex_offset;
@@ -924,7 +923,9 @@ Kakshya::VertexLayout mill_on_host(
 
             const bool is_tri = is_triangle_topology(run.topology);
             const bool as_point = run.topology == PrimitiveTopology::POINT_LIST
-                || (is_tri && run.fill == PolygonMode::POINT);
+                || (run.fill == PolygonMode::POINT
+                    && (is_tri || run.topology == PrimitiveTopology::LINE_LIST
+                        || run.topology == PrimitiveTopology::LINE_STRIP));
             const bool wire = is_tri && run.fill == PolygonMode::LINE;
             const auto wire_uv = [](uint32_t c) {
                 return glm::vec2(c == 0U ? 21.0F : 20.0F, c == 1U ? 1.0F : 0.0F);

@@ -2,6 +2,7 @@
 
 #include "ShaderFoundry.hpp"
 
+#include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Kakshya/NDData/NDData.hpp"
 
 namespace MayaFlux::Portal::Graphics {
@@ -27,22 +28,23 @@ bool needs_triangulation(PrimitiveTopology topology, PolygonMode mode)
 {
     const bool is_line = topology == PrimitiveTopology::LINE_LIST
         || topology == PrimitiveTopology::LINE_STRIP;
-    const bool is_triangle = topology == PrimitiveTopology::TRIANGLE_LIST
-        || topology == PrimitiveTopology::TRIANGLE_STRIP
-        || topology == PrimitiveTopology::TRIANGLE_FAN;
+    const bool all_points = topology == PrimitiveTopology::POINT_LIST
+        && mode == PolygonMode::POINT;
 
     auto& foundry = get_shader_foundry();
     if (!foundry.is_initialized()) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::Init,
+            "needs_triangulation: ShaderFoundry is not initialized");
         return false;
     }
 
     const auto features = foundry.get_physical_device().getFeatures();
+    const bool unsupported_polygon_mode = mode != PolygonMode::FILL
+        && !all_points
+        && !features.fillModeNonSolid;
+    const bool unsupported_line_topology = is_line && !features.geometryShader;
 
-    if (is_line) {
-        return !features.geometryShader;
-    }
-
-    return is_triangle && mode != PolygonMode::FILL && !features.fillModeNonSolid;
+    return unsupported_polygon_mode || unsupported_line_topology;
 }
 
 } // namespace MayaFlux::Portal::Graphics
