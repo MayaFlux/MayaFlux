@@ -99,6 +99,9 @@ namespace {
         assemble.function("uint", "vertex_at", "uint k, uint ix",
             "    return ix == 1u ? indices[k] : k;\n");
 
+        assemble.function("vec2", "wire_uv", "uint c",
+            "    return vec2(c == 0u ? 21.0 : 20.0, c == 1u ? 1.0 : 0.0);\n");
+
         assemble.function("vec3", "read_pos", "uint v, uint sw, uint po",
             "    uint b = v * sw + po;\n"
             "    return vec3(uintBitsToFloat(src[b]), uintBitsToFloat(src[b + 1u]), "
@@ -310,16 +313,18 @@ namespace {
         body += "    vec3 eye = vec3(eye_x, eye_y, eye_z);\n";
         body += "    uint r = find_run(i, run_count);\n";
         body += "    uint rb = r * 3u;\n";
-        body += "    uint topo = runs[rb];\n";
+        body += "    uint topo = runs[rb] & 255u;\n";
+        body += "    uint fill = runs[rb] >> 8u;\n";
         body += "    uint voff = runs[rb + 1u];\n";
         body += "    uint local = i - prefix[r];\n";
 
-        body += "    if (topo == 3u) {\n";
+        body += "    if (topo == 3u && fill != 1u) {\n";
         body += "        copy_vertex(i, vertex_at(voff + local, indexed), sw);\n";
+        body += "        if (fill == 2u) { write_uv(i, sw, uv_offset, wire_uv(local % 3u)); }\n";
         body += "        return;\n";
         body += "    }\n";
 
-        body += "    if (topo == 4u || topo == 5u) {\n";
+        body += "    if ((topo == 4u || topo == 5u) && fill != 1u) {\n";
         body += "        uint tri = local / 3u;\n";
         body += "        uint c = local - tri * 3u;\n";
         body += "        uint a; uint b1; uint b2;\n";
@@ -330,6 +335,7 @@ namespace {
         body += "        }\n";
         body += "        uint pick = c == 0u ? a : (c == 1u ? b1 : b2);\n";
         body += "        copy_vertex(i, vertex_at(voff + pick, indexed), sw);\n";
+        body += "        if (fill == 2u) { write_uv(i, sw, uv_offset, wire_uv(c)); }\n";
         body += "        return;\n";
         body += "    }\n";
 
@@ -337,8 +343,8 @@ namespace {
         body += "    uint quad = local / 6u;\n";
         body += "    vec2 uv;\n";
 
-        body += "    if (topo == 0u) {\n";
-        body += "        uint s = voff + quad;\n";
+        body += "    if (topo == 0u || fill == 1u) {\n";
+        body += "        uint s = topo == 0u ? voff + quad : vertex_at(voff + quad, indexed);\n";
         body += "        vec3 p = read_pos(s, sw, po);\n";
         body += "        float h = read_extent(s, sw, scalar_offset, fallback_extent)\n";
         body += "               * point_scale * 0.5;\n";
@@ -464,7 +470,7 @@ namespace {
         prefix.assign(runs.size() + 1, 0U);
         for (size_t r = 0; r < runs.size(); ++r) {
             prefix[r + 1] = prefix[r]
-                + triangle_vertex_count(runs[r].topology, runs[r].vertex_count);
+                + triangle_vertex_count(runs[r].topology, runs[r].vertex_count, runs[r].fill);
         }
     }
 
@@ -493,7 +499,7 @@ uint32_t PrimitiveMill::milled_vertex_count(std::span<const DrawRun> runs)
 {
     uint32_t total = 0;
     for (const auto& run : runs) {
-        total += triangle_vertex_count(run.topology, run.vertex_count);
+        total += triangle_vertex_count(run.topology, run.vertex_count, run.fill);
     }
     return total;
 }
@@ -673,7 +679,11 @@ uint32_t PrimitiveMill::mill(
     }
 
     for (size_t r = 0; r < runs.size(); ++r) {
-        run_ptr[r * RUN_WORDS + 0] = static_cast<uint32_t>(runs[r].topology);
+        const bool emulated = is_triangle_topology(runs[r].topology)
+            && (runs[r].fill == PolygonMode::POINT
+                || (runs[r].fill == PolygonMode::LINE && off.uv != ABSENT));
+        const uint32_t fill_code = !emulated ? 0U : (runs[r].fill == PolygonMode::POINT ? 1U : 2U);
+        run_ptr[r * RUN_WORDS + 0] = static_cast<uint32_t>(runs[r].topology) | (fill_code << 8U);
         run_ptr[r * RUN_WORDS + 1] = runs[r].vertex_offset;
         run_ptr[r * RUN_WORDS + 2] = runs[r].vertex_count;
     }
@@ -912,13 +922,25 @@ Kakshya::VertexLayout mill_on_host(
         for (uint32_t local = 0; local < emitted; ++local) {
             const uint32_t out = base + local;
 
-            if (run.topology == PrimitiveTopology::TRIANGLE_LIST) {
+            const bool is_tri = is_triangle_topology(run.topology);
+            const bool as_point = run.topology == PrimitiveTopology::POINT_LIST
+                || (is_tri && run.fill == PolygonMode::POINT);
+            const bool wire = is_tri && run.fill == PolygonMode::LINE;
+            const auto wire_uv = [](uint32_t c) {
+                return glm::vec2(c == 0U ? 21.0F : 20.0F, c == 1U ? 1.0F : 0.0F);
+            };
+
+            if (run.topology == PrimitiveTopology::TRIANGLE_LIST && !as_point) {
                 rec.copy_vertex(out, vertex_at(voff + local));
+                if (wire) {
+                    rec.write_uv(out, off.uv, wire_uv(local % 3U));
+                }
                 continue;
             }
 
-            if (run.topology == PrimitiveTopology::TRIANGLE_STRIP
-                || run.topology == PrimitiveTopology::TRIANGLE_FAN) {
+            if ((run.topology == PrimitiveTopology::TRIANGLE_STRIP
+                    || run.topology == PrimitiveTopology::TRIANGLE_FAN)
+                && !as_point) {
                 const uint32_t tri = local / 3U;
                 const uint32_t c = local - tri * 3U;
                 uint32_t a = 0;
@@ -932,14 +954,19 @@ Kakshya::VertexLayout mill_on_host(
                 }
                 const uint32_t pick = c == 0U ? a : (c == 1U ? b1 : b2);
                 rec.copy_vertex(out, vertex_at(voff + pick));
+                if (wire) {
+                    rec.write_uv(out, off.uv, wire_uv(c));
+                }
                 continue;
             }
 
             const uint32_t corner = local % 6U;
             const uint32_t quad = local / 6U;
 
-            if (run.topology == PrimitiveTopology::POINT_LIST) {
-                const uint32_t s = voff + quad;
+            if (as_point) {
+                const uint32_t s = run.topology == PrimitiveTopology::POINT_LIST
+                    ? voff + quad
+                    : vertex_at(voff + quad);
                 const glm::vec3 p = rec.read_pos(s, off.position);
                 const float h = rec.read_extent(s, scalar_offset, spec.fallback_extent)
                     * spec.point_scale * 0.5F;

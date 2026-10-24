@@ -397,6 +397,15 @@ struct DrawRun {
     PrimitiveTopology topology {};
     uint32_t vertex_offset {};
     uint32_t vertex_count {};
+
+    /**
+     * @brief Fill mode the mill emulates for a triangle span.
+     *
+     * LINE keeps the triangles and marks their corners so the fragment shader
+     * draws edges; POINT draws every vertex of the span as a point quad. Spans
+     * of other topologies ignore it.
+     */
+    PolygonMode fill { PolygonMode::FILL };
 };
 
 /**
@@ -411,8 +420,19 @@ struct DrawRun {
  */
 [[nodiscard]] constexpr uint32_t triangle_vertex_count(
     PrimitiveTopology topology,
-    uint32_t n) noexcept
+    uint32_t n,
+    PolygonMode fill = PolygonMode::FILL) noexcept
 {
+    if (fill == PolygonMode::POINT) {
+        if (topology == PrimitiveTopology::TRIANGLE_LIST) {
+            return 6U * 3U * (n / 3U);
+        }
+        if (topology == PrimitiveTopology::TRIANGLE_STRIP
+            || topology == PrimitiveTopology::TRIANGLE_FAN) {
+            return n < 3U ? 0U : 6U * n;
+        }
+    }
+
     switch (topology) {
     case PrimitiveTopology::POINT_LIST:
         return 6U * n;

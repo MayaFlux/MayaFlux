@@ -11,6 +11,15 @@ layout(location = 0) out vec4 out_color;
 
 void main()
 {
+    if (mill_is_wire(in_uv)) {
+        float coverage = mill_wire_coverage(in_uv);
+        if (coverage <= 0.0) {
+            discard;
+        }
+        out_color = vec4(in_color, coverage);
+        return;
+    }
+
     if (mill_is_point(in_uv)) {
         vec2 local = mill_point_local_uv(in_uv);
         if (length(local - vec2(0.5)) > 0.5) {

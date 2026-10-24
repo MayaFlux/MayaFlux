@@ -374,6 +374,7 @@ private:
 
     Portal::Graphics::PrimitiveTopology m_primitive_topology { Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST };
     Portal::Graphics::PolygonMode m_polygon_mode { Portal::Graphics::PolygonMode::FILL };
+    std::vector<Portal::Graphics::DrawRun> m_mill_fill_runs;
     Portal::Graphics::CullMode m_cull_mode { Portal::Graphics::CullMode::NONE };
 
     struct TextureBinding {

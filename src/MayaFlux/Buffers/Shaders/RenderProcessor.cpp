@@ -303,7 +303,9 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
     pipeline_config.tess_eval_shader = m_tess_eval_shader_id;
 
     pipeline_config.topology = pipeline_topology();
-    pipeline_config.rasterization.polygon_mode = m_polygon_mode;
+    pipeline_config.rasterization.polygon_mode = m_triangulate
+        ? Portal::Graphics::PolygonMode::FILL
+        : m_polygon_mode;
     pipeline_config.rasterization.cull_mode = m_cull_mode;
 
     if (m_blend_attachment.has_value()) {
@@ -677,6 +679,14 @@ uint32_t RenderProcessor::mill_runs(const std::shared_ptr<VKBuffer>& buffer, Por
             .vertex_offset = m_first_vertex,
             .vertex_count = count };
         runs = { &whole, 1 };
+    }
+
+    if (m_polygon_mode != Portal::Graphics::PolygonMode::FILL) {
+        m_mill_fill_runs.assign(runs.begin(), runs.end());
+        for (auto& run : m_mill_fill_runs) {
+            run.fill = m_polygon_mode;
+        }
+        runs = m_mill_fill_runs;
     }
 
     glm::vec3 eye = m_view_transform_active
