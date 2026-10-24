@@ -57,7 +57,7 @@ struct GpuBufferHandle {
         flags |= vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer;
         break;
     case BufferUsageHint::INDEX:
-        flags |= vk::BufferUsageFlagBits::eIndexBuffer;
+        flags |= vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eStorageBuffer;
         break;
     case BufferUsageHint::UNIFORM:
         flags |= vk::BufferUsageFlagBits::eUniformBuffer;

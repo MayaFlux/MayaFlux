@@ -79,9 +79,10 @@ namespace {
         float eye_x;
         float eye_y;
         float eye_z;
+        uint32_t indexed;
     };
 
-    static_assert(sizeof(MillPC) == 14 * sizeof(uint32_t),
+    static_assert(sizeof(MillPC) == 15 * sizeof(uint32_t),
         "MillPC must be tightly packed 4-byte fields matching build_mill_spec's pc() list");
 
     void add_helpers(ShaderSpec::Assemble& assemble)
@@ -94,6 +95,9 @@ namespace {
             "        if (prefix[mid] <= g) { lo = mid; } else { hi = mid; }\n"
             "    }\n"
             "    return lo;\n");
+
+        assemble.function("uint", "vertex_at", "uint k, uint ix",
+            "    return ix == 1u ? indices[k] : k;\n");
 
         assemble.function("vec3", "read_pos", "uint v, uint sw, uint po",
             "    uint b = v * sw + po;\n"
@@ -279,6 +283,7 @@ namespace {
             .ssbo("runs", BindingDirection::Input, Kakshya::GpuDataFormat::UINT32)
             .ssbo("prefix", BindingDirection::Input, Kakshya::GpuDataFormat::UINT32)
             .ssbo("dst", BindingDirection::Output, Kakshya::GpuDataFormat::UINT32)
+            .ssbo("indices", BindingDirection::Input, Kakshya::GpuDataFormat::UINT32)
             .pc("total", Kakshya::GpuDataFormat::UINT32)
             .pc("run_count", Kakshya::GpuDataFormat::UINT32)
             .pc("stride_words", Kakshya::GpuDataFormat::UINT32)
@@ -293,6 +298,7 @@ namespace {
             .pc("eye_x", Kakshya::GpuDataFormat::FLOAT32)
             .pc("eye_y", Kakshya::GpuDataFormat::FLOAT32)
             .pc("eye_z", Kakshya::GpuDataFormat::FLOAT32)
+            .pc("indexed", Kakshya::GpuDataFormat::UINT32)
             .workgroup(WORKGROUP);
 
         add_helpers(assemble);
@@ -309,7 +315,7 @@ namespace {
         body += "    uint local = i - prefix[r];\n";
 
         body += "    if (topo == 3u) {\n";
-        body += "        copy_vertex(i, voff + local, sw);\n";
+        body += "        copy_vertex(i, vertex_at(voff + local, indexed), sw);\n";
         body += "        return;\n";
         body += "    }\n";
 
@@ -323,7 +329,7 @@ namespace {
         body += "            if ((tri & 1u) == 1u) { uint t = a; a = b1; b1 = t; }\n";
         body += "        }\n";
         body += "        uint pick = c == 0u ? a : (c == 1u ? b1 : b2);\n";
-        body += "        copy_vertex(i, voff + pick, sw);\n";
+        body += "        copy_vertex(i, vertex_at(voff + pick, indexed), sw);\n";
         body += "        return;\n";
         body += "    }\n";
 
@@ -422,7 +428,8 @@ namespace {
         const MillView& view,
         const MillOffsets& off,
         uint32_t total,
-        size_t run_count)
+        size_t run_count,
+        bool indexed)
     {
         return MillPC {
             .total = total,
@@ -438,8 +445,17 @@ namespace {
             .fallback_extent = spec.fallback_extent,
             .eye_x = view.eye.x,
             .eye_y = view.eye.y,
-            .eye_z = view.eye.z
+            .eye_z = view.eye.z,
+            .indexed = indexed ? 1U : 0U
         };
+    }
+
+    /** @brief Whether a span of this topology is addressed through an index buffer when the source has one. */
+    constexpr bool is_triangle_topology(PrimitiveTopology topology) noexcept
+    {
+        return topology == PrimitiveTopology::TRIANGLE_LIST
+            || topology == PrimitiveTopology::TRIANGLE_STRIP
+            || topology == PrimitiveTopology::TRIANGLE_FAN;
     }
 
     /** @brief Exclusive prefix of milled counts, with the total appended. */
@@ -617,16 +633,21 @@ uint32_t PrimitiveMill::mill(
         return 0;
     }
 
+    const bool indexed = source->has_index_buffer();
+    const auto index_count = static_cast<uint32_t>(source->get_index_buffer_size() / sizeof(uint32_t));
     const uint32_t source_vertices = layout->vertex_count;
     for (const auto& run : runs) {
         if (run.vertex_count == 0) {
             continue;
         }
-        if (run.vertex_offset > source_vertices
-            || run.vertex_count > source_vertices - run.vertex_offset) {
+        const bool by_index = indexed && is_triangle_topology(run.topology);
+        const uint32_t limit = by_index ? index_count : source_vertices;
+        if (run.vertex_offset > limit
+            || run.vertex_count > limit - run.vertex_offset) {
             MF_RT_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
-                "PrimitiveMill: run [{}, {}) exceeds the source's {} vertices",
-                run.vertex_offset, run.vertex_offset + run.vertex_count, source_vertices);
+                "PrimitiveMill: run [{}, {}) exceeds the source's {} {}",
+                run.vertex_offset, run.vertex_offset + run.vertex_count, limit,
+                by_index ? "indices" : "vertices");
             return 0;
         }
     }
@@ -658,7 +679,7 @@ uint32_t PrimitiveMill::mill(
     }
     std::memcpy(prefix_ptr, m_prefix.data(), m_prefix.size() * sizeof(uint32_t));
 
-    const auto pc = make_pc(m_spec, view, off, total, runs.size());
+    const auto pc = make_pc(m_spec, view, off, total, runs.size(), indexed);
 
     auto& foundry = get_shader_foundry();
     auto& press = get_compute_press();
@@ -683,12 +704,20 @@ uint32_t PrimitiveMill::mill(
         return write;
     };
 
+    PushDescriptorWrite index_write = storage_write(4, m_run_buf);
+    if (indexed) {
+        index_write.buffer = vk::DescriptorBufferInfo {
+            source->get_index_buffer(), 0, source->get_index_buffer_size()
+        };
+    }
+
     press.bind_pipeline(cmd_id, m_pipeline);
     press.push_descriptors(cmd_id, m_pipeline, {
                                                    storage_write(0, source),
                                                    storage_write(1, m_run_buf),
                                                    storage_write(2, m_prefix_buf),
                                                    storage_write(3, m_outputs[m_output_slot]),
+                                                   index_write,
                                                });
     press.push_constants(cmd_id, m_pipeline, &pc, sizeof(MillPC));
     press.dispatch(cmd_id, (total + WORKGROUP - 1) / WORKGROUP, 1, 1);
@@ -839,8 +868,13 @@ Kakshya::VertexLayout mill_on_host(
     std::span<const DrawRun> runs,
     const MillSpec& spec,
     const MillView& view,
-    std::vector<uint8_t>& dst)
+    std::vector<uint8_t>& dst,
+    std::span<const uint32_t> indices)
 {
+    const auto vertex_at = [&indices](uint32_t k) {
+        return indices.empty() ? k : indices[k];
+    };
+
     auto result = layout;
     result.vertex_count = 0;
     dst.clear();
@@ -879,7 +913,7 @@ Kakshya::VertexLayout mill_on_host(
             const uint32_t out = base + local;
 
             if (run.topology == PrimitiveTopology::TRIANGLE_LIST) {
-                rec.copy_vertex(out, voff + local);
+                rec.copy_vertex(out, vertex_at(voff + local));
                 continue;
             }
 
@@ -897,7 +931,7 @@ Kakshya::VertexLayout mill_on_host(
                     }
                 }
                 const uint32_t pick = c == 0U ? a : (c == 1U ? b1 : b2);
-                rec.copy_vertex(out, voff + pick);
+                rec.copy_vertex(out, vertex_at(voff + pick));
                 continue;
             }
 

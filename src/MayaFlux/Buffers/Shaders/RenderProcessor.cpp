@@ -663,9 +663,11 @@ uint32_t RenderProcessor::mill_runs(const std::shared_ptr<VKBuffer>& buffer, Por
     Portal::Graphics::DrawRun whole {};
     if (runs.empty()) {
         const auto layout = buffer->get_vertex_layout();
-        const uint32_t count = m_vertex_count > 0
-            ? m_vertex_count
-            : (layout.has_value() ? layout->vertex_count : 0U);
+        const uint32_t count = buffer->has_index_buffer()
+            ? static_cast<uint32_t>(buffer->get_index_buffer_size() / sizeof(uint32_t))
+            : (m_vertex_count > 0
+                      ? m_vertex_count
+                      : (layout.has_value() ? layout->vertex_count : 0U));
 
         if (count == 0) {
             return 0;

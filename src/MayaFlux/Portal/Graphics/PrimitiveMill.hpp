@@ -164,7 +164,9 @@ public:
      * @brief Mill @p runs out of @p source into the owned buffer.
      * @param source Vertex buffer the spans index into. Must carry a vertex
      *        layout whose stride is a multiple of four bytes and which has a
-     *        word aligned position attribute.
+     *        word aligned position attribute. When it carries an index buffer,
+     *        triangle spans count and offset indices; point and line spans stay
+     *        vertex addressed.
      * @param runs Spans to mill, in output order.
      * @param view Viewpoint, consumed only by Ribbon::WorldFacing.
      * @return Vertices written, or 0 when there was nothing to mill or the
@@ -271,6 +273,7 @@ private:
  * @param spec Shaping parameters, as for the device path.
  * @param view Viewpoint, as for the device path.
  * @param dst Resized to hold the result.
+ * @param indices When non-empty, triangle spans address these indices instead of vertices.
  * @return Layout describing @p dst, which is @p layout with a new vertex_count.
  *
  * Exists so the kernel has an oracle: identical spans, spec and view must
@@ -284,6 +287,7 @@ MAYAFLUX_API Kakshya::VertexLayout mill_on_host(
     std::span<const DrawRun> runs,
     const MillSpec& spec,
     const MillView& view,
-    std::vector<uint8_t>& dst);
+    std::vector<uint8_t>& dst,
+    std::span<const uint32_t> indices = {});
 
 } // namespace MayaFlux::Portal::Graphics
