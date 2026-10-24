@@ -517,6 +517,18 @@ public:
      */
     bool has_vertex_layout() const { return m_vertex_layout.has_value(); }
 
+    /** @brief Prefer the semantic vertex layout supplied by attached processors. */
+    void set_prefer_semantic_layout(bool preferred) noexcept
+    {
+        m_prefer_semantic_layout = preferred;
+    }
+
+    /** @brief Whether attached processors' semantic layouts are preferred. */
+    [[nodiscard]] bool prefers_semantic_layout() const noexcept
+    {
+        return m_prefer_semantic_layout;
+    }
+
     /**
      * @brief Clear vertex layout
      */
@@ -675,6 +687,7 @@ private:
     std::vector<Kakshya::DataDimension> m_dimensions;
 
     std::optional<Kakshya::VertexLayout> m_vertex_layout;
+    bool m_prefer_semantic_layout {};
 
     // Buffer interface state
     bool m_has_data { true };

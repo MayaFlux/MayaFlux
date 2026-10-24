@@ -689,11 +689,17 @@ Portal::Graphics::PrimitiveTopology RenderProcessor::pipeline_topology() const
 
 uint32_t RenderProcessor::mill_runs(const std::shared_ptr<VKBuffer>& buffer, Portal::Graphics::PrimitiveMill& mill)
 {
+    std::optional<Kakshya::VertexLayout> mill_layout;
+    if (buffer->prefers_semantic_layout()) {
+        if (auto* state = get_or_cache_buffer_state(buffer))
+            mill_layout = state->semantic_layout;
+    }
+
     std::span<const Portal::Graphics::DrawRun> runs = m_runs;
 
     Portal::Graphics::DrawRun whole {};
     if (runs.empty()) {
-        const auto layout = buffer->get_vertex_layout();
+        const auto layout = mill_layout ? mill_layout : buffer->get_vertex_layout();
         const uint32_t count = buffer->has_index_buffer()
             ? static_cast<uint32_t>(buffer->get_index_buffer_size() / sizeof(uint32_t))
             : (m_vertex_count > 0
@@ -708,6 +714,14 @@ uint32_t RenderProcessor::mill_runs(const std::shared_ptr<VKBuffer>& buffer, Por
             .vertex_offset = m_first_vertex,
             .vertex_count = count };
         runs = { &whole, 1 };
+    }
+
+    if (mill_layout) {
+        for (const auto& run : runs) {
+            const uint32_t vertex_end = run.vertex_offset + run.vertex_count;
+            if (vertex_end >= run.vertex_offset)
+                mill_layout->vertex_count = std::max(mill_layout->vertex_count, vertex_end);
+        }
     }
 
     if (m_polygon_mode != Portal::Graphics::PolygonMode::FILL) {
@@ -738,7 +752,7 @@ uint32_t RenderProcessor::mill_runs(const std::shared_ptr<VKBuffer>& buffer, Por
 
     const Portal::Graphics::MillView view { .eye = eye };
 
-    return mill.mill(buffer, runs, view);
+    return mill.mill(buffer, runs, view, std::move(mill_layout));
 }
 
 void RenderProcessor::prepare_geometry(const std::shared_ptr<VKBuffer>& buffer, BufferState& state)
