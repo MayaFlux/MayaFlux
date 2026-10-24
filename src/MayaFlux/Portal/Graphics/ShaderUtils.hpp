@@ -218,6 +218,19 @@ struct DescriptorBindingInfo {
 };
 
 /**
+ * @struct PushDescriptorWrite
+ * @brief One binding written straight into a command buffer through a push descriptor set
+ *
+ * Buffer types read buffer, image and sampler types read image.
+ */
+struct PushDescriptorWrite {
+    uint32_t binding {};
+    vk::DescriptorType type = vk::DescriptorType::eStorageBuffer;
+    vk::DescriptorBufferInfo buffer;
+    vk::DescriptorImageInfo image;
+};
+
+/**
  * @struct PushConstantRangeInfo
  * @brief Extracted push constant range from shader reflection
  */

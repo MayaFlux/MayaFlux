@@ -175,6 +175,17 @@ public:
         const std::vector<uint32_t>& dynamic_offsets = {}) const;
 
     /**
+     * @brief Record descriptor writes directly into the command buffer
+     * @param cmd Command buffer
+     * @param set Set index; its layout must have been created as a push descriptor layout
+     * @param writes Writes for that set, with dstSet ignored
+     */
+    void push_descriptors(
+        vk::CommandBuffer cmd,
+        uint32_t set,
+        const std::vector<vk::WriteDescriptorSet>& writes) const;
+
+    /**
      * @brief Update push constants
      * @param cmd Command buffer
      * @param stage_flags Shader stages that will access this data

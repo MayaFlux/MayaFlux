@@ -90,11 +90,20 @@ void ComputePress::shutdown()
 ComputePipelineID ComputePress::create_pipeline(
     ShaderID shader_id,
     const std::vector<std::vector<DescriptorBindingInfo>>& descriptor_sets,
-    size_t push_constant_size)
+    size_t push_constant_size,
+    std::optional<size_t> push_set)
 {
     if (!is_initialized()) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::GPUCompute,
             "ComputePress not initialized");
+        return INVALID_COMPUTE_PIPELINE;
+    }
+
+    if (push_set && (*push_set >= descriptor_sets.size()
+            || (*push_set != 0 && *push_set != descriptor_sets.size() - 1))) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::GPUCompute,
+            "Push set {} must be the first or last of {} descriptor sets",
+            *push_set, descriptor_sets.size());
         return INVALID_COMPUTE_PIPELINE;
     }
 
@@ -115,6 +124,7 @@ ComputePipelineID ComputePress::create_pipeline(
     ComputePipelineID id = m_next_pipeline_id++;
     PipelineState& state = m_pipelines[id];
     state.shader_id = shader_id;
+    state.push_set = push_set;
 
     auto device = m_shader_foundry->get_device();
 
@@ -123,8 +133,10 @@ ComputePipelineID ComputePress::create_pipeline(
         m_descriptor_manager->initialize(device, 1024);
     }
 
-    for (const auto& set_bindings : descriptor_sets) {
+    for (size_t set_index = 0; set_index < descriptor_sets.size(); ++set_index) {
+        const auto& set_bindings = descriptor_sets[set_index];
         Core::DescriptorSetLayoutConfig layout_config;
+        layout_config.push_descriptor = push_set && *push_set == set_index;
 
         for (const auto& binding : set_bindings) {
             layout_config.add_binding(
@@ -167,7 +179,8 @@ ComputePipelineID ComputePress::create_pipeline(
 
 ComputePipelineID ComputePress::create_pipeline_auto(
     ShaderID shader_id,
-    size_t push_constant_size)
+    size_t push_constant_size,
+    std::optional<size_t> push_set)
 {
     if (!is_initialized()) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::GPUCompute,
@@ -201,7 +214,7 @@ ComputePipelineID ComputePress::create_pipeline_auto(
         "Auto-creating pipeline: {} descriptor sets, {} bindings total",
         descriptor_sets.size(), reflection.descriptor_bindings.size());
 
-    return create_pipeline(shader_id, descriptor_sets, pc_size);
+    return create_pipeline(shader_id, descriptor_sets, pc_size, push_set);
 }
 
 void ComputePress::destroy_pipeline(ComputePipelineID pipeline_id)
@@ -284,7 +297,65 @@ void ComputePress::bind_descriptor_sets(
         vk_sets.push_back(m_shader_foundry->get_descriptor_set(ds_id));
     }
 
-    pipeline_it->second.pipeline->bind_descriptor_sets(cmd, vk_sets);
+    if (vk_sets.empty() && pipeline_it->second.push_set) {
+        return;
+    }
+
+    const uint32_t first_set = pipeline_it->second.push_set == 0U ? 1U : 0U;
+    pipeline_it->second.pipeline->bind_descriptor_sets(cmd, vk_sets, first_set);
+}
+
+void ComputePress::push_descriptors(
+    CommandBufferID cmd_id,
+    ComputePipelineID pipeline_id,
+    const std::vector<PushDescriptorWrite>& writes)
+{
+    auto pipeline_it = m_pipelines.find(pipeline_id);
+    if (pipeline_it == m_pipelines.end()) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::GPUCompute,
+            "Invalid pipeline ID: {}", pipeline_id);
+        return;
+    }
+
+    if (!pipeline_it->second.push_set) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::GPUCompute,
+            "Pipeline {} has no push descriptor set", pipeline_id);
+        return;
+    }
+
+    auto cmd = m_shader_foundry->get_command_buffer(cmd_id);
+    if (!cmd) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::GPUCompute,
+            "Invalid command buffer ID: {}", cmd_id);
+        return;
+    }
+
+    std::vector<vk::WriteDescriptorSet> vk_writes;
+    vk_writes.reserve(writes.size());
+    for (const auto& write : writes) {
+        vk::WriteDescriptorSet vk_write {};
+        vk_write.dstBinding = write.binding;
+        vk_write.descriptorCount = 1;
+        vk_write.descriptorType = write.type;
+
+        switch (write.type) {
+        case vk::DescriptorType::eSampler:
+        case vk::DescriptorType::eCombinedImageSampler:
+        case vk::DescriptorType::eSampledImage:
+        case vk::DescriptorType::eStorageImage:
+        case vk::DescriptorType::eInputAttachment:
+            vk_write.pImageInfo = &write.image;
+            break;
+        default:
+            vk_write.pBufferInfo = &write.buffer;
+            break;
+        }
+
+        vk_writes.push_back(vk_write);
+    }
+
+    pipeline_it->second.pipeline->push_descriptors(
+        cmd, static_cast<uint32_t>(*pipeline_it->second.push_set), vk_writes);
 }
 
 void ComputePress::push_constants(
@@ -411,8 +482,12 @@ std::vector<DescriptorSetID> ComputePress::allocate_pipeline_descriptors(Compute
     }
 
     std::vector<DescriptorSetID> descriptor_set_ids;
-    for (const auto& layout : pipeline_it->second.layouts) {
-        auto ds_id = m_shader_foundry->allocate_descriptor_set(layout);
+    for (size_t layout_index = 0; layout_index < pipeline_it->second.layouts.size(); ++layout_index) {
+        if (pipeline_it->second.push_set == layout_index) {
+            continue;
+        }
+
+        auto ds_id = m_shader_foundry->allocate_descriptor_set(pipeline_it->second.layouts[layout_index]);
         if (ds_id == INVALID_DESCRIPTOR_SET) {
             MF_ERROR(Journal::Component::Portal, Journal::Context::GPUCompute,
                 "Failed to allocate descriptor set for pipeline {}", pipeline_id);

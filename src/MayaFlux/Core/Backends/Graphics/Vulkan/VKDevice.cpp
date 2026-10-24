@@ -662,6 +662,7 @@ bool VKDevice::create_logical_device(vk::Instance /*instance*/, const GraphicsBa
 
     auto feature_chain = vk::StructureChain {
         vk::PhysicalDeviceFeatures2 {},
+        vk::PhysicalDeviceVulkan14Features {},
         vk::PhysicalDeviceVulkan13Features {},
         vk::PhysicalDeviceVulkan12Features {}
     };
@@ -673,6 +674,7 @@ bool VKDevice::create_logical_device(vk::Instance /*instance*/, const GraphicsBa
 
     auto feature_chain = vk::StructureChain {
         vk::PhysicalDeviceFeatures2 {},
+        vk::PhysicalDeviceVulkan14Features {},
         vk::PhysicalDeviceVulkan13Features {},
         vk::PhysicalDeviceVulkan12Features {},
         vk::PhysicalDeviceMeshShaderFeaturesEXT {}
@@ -690,6 +692,7 @@ bool VKDevice::create_logical_device(vk::Instance /*instance*/, const GraphicsBa
     feature_chain.get<vk::PhysicalDeviceVulkan13Features>().dynamicRendering = VK_TRUE;
     feature_chain.get<vk::PhysicalDeviceVulkan13Features>().synchronization2 = VK_TRUE;
     feature_chain.get<vk::PhysicalDeviceVulkan12Features>().bufferDeviceAddress = VK_TRUE;
+    feature_chain.get<vk::PhysicalDeviceVulkan14Features>().pushDescriptor = VK_TRUE;
 
     std::vector<std::string> missing_required;
 
