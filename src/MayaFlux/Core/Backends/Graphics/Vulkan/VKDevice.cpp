@@ -655,19 +655,6 @@ bool VKDevice::create_logical_device(vk::Instance /*instance*/, const GraphicsBa
         });
     };
 
-#ifdef MAYAFLUX_PLATFORM_MACOS
-    if (is_supported("VK_KHR_portability_subset")) {
-        device_extensions.push_back("VK_KHR_portability_subset");
-    }
-
-    auto feature_chain = vk::StructureChain {
-        vk::PhysicalDeviceFeatures2 {},
-        vk::PhysicalDeviceVulkan14Features {},
-        vk::PhysicalDeviceVulkan13Features {},
-        vk::PhysicalDeviceVulkan12Features {}
-    };
-
-#else
     if (m_supports_mesh_shaders) {
         device_extensions.push_back(VK_EXT_MESH_SHADER_EXTENSION_NAME);
     }
@@ -686,7 +673,6 @@ bool VKDevice::create_logical_device(vk::Instance /*instance*/, const GraphicsBa
         feature_chain.get<vk::PhysicalDeviceMeshShaderFeaturesEXT>().taskShader = VK_TRUE;
         feature_chain.get<vk::PhysicalDeviceMeshShaderFeaturesEXT>().meshShader = VK_TRUE;
     }
-#endif
 
     feature_chain.get<vk::PhysicalDeviceFeatures2>().features = device_features;
     feature_chain.get<vk::PhysicalDeviceVulkan13Features>().dynamicRendering = VK_TRUE;
