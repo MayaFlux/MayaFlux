@@ -267,16 +267,18 @@ private:
     Vruta::TaskScheduler& m_sched;
     Vruta::EventManager& m_event_mgr;
 
-    [[nodiscard]] EntryBuffer make_row_buffer(
+    /**
+     * @brief @p count row targets, slices of one "text"-slotted buffer, for
+     *        make_entry_group's rows. Empty when @p count is zero.
+     */
+    [[nodiscard]] std::vector<EntryBuffer> make_row_buffers(
         const std::shared_ptr<Core::Window>& window,
-        std::string_view text,
-        glm::uvec2 pixel_dims) const;
+        size_t count) const;
 
     /**
-     * @brief A "text"-slotted buffer for make_entry_group's header, no
-     *        pre-pressed image. Collapsible::place() presses the header
-     *        label itself, so unlike make_row_buffer's rows this needs no
-     *        text or pixel_dims argument.
+     * @brief A "text"-slotted buffer, registered with the BufferManager. Used
+     *        as make_entry_group's header, whose label Collapsible::place()
+     *        draws itself, and as the buffer make_row_buffers slices.
      */
     [[nodiscard]] std::shared_ptr<Buffers::FormaBuffer> make_header_buffer(
         const std::shared_ptr<Core::Window>& window) const;

@@ -7,6 +7,8 @@
 
 #include "MayaFlux/Portal/Forma/Plot/Plot.hpp"
 
+#include "MayaFlux/Portal/Text/AtlasImage.hpp"
+
 namespace MayaFlux::Nodes {
 class NodeGraphManager;
 }
@@ -85,6 +87,18 @@ namespace internal {
          * @throws std::runtime_error if called before initialize().
          */
         [[nodiscard]] Inspector& inspector();
+
+        /**
+         * @brief The GPU image of @p atlas, shared by every text slice drawing from it.
+         *
+         * One per atlas, so slices on different atlases never replace each
+         * other's image, and a growth of an atlas is seen by all text on it at
+         * once. Released by shutdown().
+         */
+        [[nodiscard]] Text::AtlasImage& atlas_image(const Text::GlyphAtlas& atlas)
+        {
+            return m_atlas_images[&atlas];
+        }
 
         // =====================================================================
         // Construction
@@ -247,7 +261,7 @@ namespace internal {
         /**
          * @brief Create and place every adornment declared on @p spec.
          *
-         * Builds one buffer per axis label, tick label, legend swatch, and
+         * Makes a target for each axis label, tick label, legend swatch, and
          * legend label, then hands each to the corresponding Plot placement
          * function. Each adornment is related to @p relate_to so removal and
          * visibility cascade from the series element.
@@ -261,7 +275,10 @@ namespace internal {
          * @param relate_to Element id the adornments are related to.
          * @param batch     Buffer the legend swatches draw into as slices.
          *                  Each gets a buffer of its own when empty. Labels
-         *                  carry text and always get their own.
+         *                  are slices of one text buffer made here, never of
+         *                  @p batch: a buffer with a texture slot reads the
+         *                  vertex weight as an image index, which shape
+         *                  geometry uses for its own values.
          */
         void place_adornments(
             Surface& surface,
@@ -281,6 +298,7 @@ namespace internal {
 
         std::unique_ptr<Bridge> m_bridge;
         std::unique_ptr<Inspector> m_inspect;
+        std::unordered_map<const Text::GlyphAtlas*, Text::AtlasImage> m_atlas_images;
 
         bool m_initialized {};
     };

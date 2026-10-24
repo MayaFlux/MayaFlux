@@ -27,11 +27,13 @@ public:
      * @brief Bring the image up to date with @p atlas.
      *
      * Creates the image on first use and again when @p atlas is a different
-     * atlas or has a different size from the one last synced. Otherwise
+     * atlas, has a different size from the one last synced, or the image was
+     * released by the texture manager shutting down. Otherwise
      * uploads the atlas pixels only when it is dirty.
      *
      * @param atlas Atlas to mirror.
-     * @return The current image, or null if it could not be created.
+     * @return The current image, or null if the texture manager is not
+     *         initialized or the image could not be created.
      */
     [[nodiscard]] std::shared_ptr<Core::VKImage> sync(GlyphAtlas& atlas);
 

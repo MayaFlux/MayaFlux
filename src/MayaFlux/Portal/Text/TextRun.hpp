@@ -34,6 +34,15 @@ public:
     /// @brief Replace the parameters and lay the current text out again.
     void set_params(PressParams params);
 
+    /// @brief Replace text and parameters together, laying out once.
+    void assign(std::string_view text, PressParams params);
+
+    /**
+     * @brief The atlas the run draws from: params().atlas, else the default.
+     * @return Null when none is available.
+     */
+    [[nodiscard]] GlyphAtlas* atlas() const;
+
     [[nodiscard]] const std::string& text() const noexcept { return m_text; }
     [[nodiscard]] const PressParams& params() const noexcept { return m_params; }
 
@@ -45,6 +54,15 @@ public:
      *        replaced or has grown, so its UVs no longer match.
      */
     [[nodiscard]] bool stale() const;
+
+    /**
+     * @brief Size in pixels the run is drawn at.
+     *
+     * render_bounds.x wide and at least one line high, so a region shorter
+     * than a line shows its text squeezed to fit rather than spilling past it.
+     * Fit the region onto this, not onto render_bounds.
+     */
+    [[nodiscard]] glm::vec2 extent() const;
 
     /**
      * @brief Height in pixels the text occupies, from the top of the first line
@@ -79,7 +97,6 @@ public:
     [[nodiscard]] size_t index_at(glm::vec2 px);
 
 private:
-    [[nodiscard]] GlyphAtlas* resolve_atlas() const;
     void lay_out_text();
 
     PressParams m_params;

@@ -28,21 +28,28 @@ void TextRun::set_params(PressParams params)
     lay_out_text();
 }
 
-GlyphAtlas* TextRun::resolve_atlas() const
+void TextRun::assign(std::string_view text, PressParams params)
+{
+    m_text = text;
+    m_params = std::move(params);
+    lay_out_text();
+}
+
+GlyphAtlas* TextRun::atlas() const
 {
     return m_params.atlas ? m_params.atlas : TypeFaceFoundry::instance().get_default_glyph_atlas();
 }
 
 bool TextRun::stale() const
 {
-    const GlyphAtlas* atlas = resolve_atlas();
-    return atlas != m_atlas || (atlas && atlas->atlas_size() != m_atlas_size);
+    const GlyphAtlas* current = atlas();
+    return current != m_atlas || (current && current->atlas_size() != m_atlas_size);
 }
 
 void TextRun::lay_out_text()
 {
-    GlyphAtlas* atlas = resolve_atlas();
-    if (!atlas) {
+    GlyphAtlas* current = atlas();
+    if (!current) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::API,
             "TextRun: no atlas available, call set_default_font first");
         m_layout = {};
@@ -52,10 +59,18 @@ void TextRun::lay_out_text()
     }
 
     m_layout = Text::lay_out(
-        m_text, *atlas, 0.F, static_cast<float>(atlas->ascender()),
+        m_text, *current, 0.F, static_cast<float>(current->ascender()),
         m_params.render_bounds.x, k_tab_width);
-    m_atlas = atlas;
-    m_atlas_size = atlas->atlas_size();
+    m_atlas = current;
+    m_atlas_size = current->atlas_size();
+}
+
+glm::vec2 TextRun::extent() const
+{
+    const GlyphAtlas* current = atlas();
+    const float line = current ? static_cast<float>(current->line_height()) : 0.F;
+    return { static_cast<float>(m_params.render_bounds.x),
+        std::max(static_cast<float>(m_params.render_bounds.y), line) };
 }
 
 float TextRun::content_height() const
@@ -78,7 +93,7 @@ std::vector<Kakshya::MeshVertex> TextRun::vertices(const GlyphMap& map, uint32_t
 
     if (m_params.background.a > 0.F) {
         const glm::vec2 a = map({ 0.F, 0.F });
-        const glm::vec2 b = map(glm::vec2(m_params.render_bounds));
+        const glm::vec2 b = map(extent());
         const auto quad = Kinesis::textured_mesh_rect(
             { .min = glm::min(a, b), .max = glm::max(a, b) },
             0.F, glm::vec3(m_params.background));
@@ -100,14 +115,14 @@ Kinesis::AABB2D TextRun::caret(size_t byte_offset, float width_px)
     }
 
     const auto ascender = static_cast<float>(m_atlas->ascender());
-    GlyphAtlas& atlas = *resolve_atlas();
+    GlyphAtlas& current = *atlas();
     const PenPosition pen = x_at(
-        m_text, atlas, byte_offset, 0.F, ascender, m_params.render_bounds.x, k_tab_width);
+        m_text, current, byte_offset, 0.F, ascender, m_params.render_bounds.x, k_tab_width);
 
     const float top = pen.y - ascender;
     return {
         .min = { pen.x, top },
-        .max = { pen.x + width_px, top + static_cast<float>(atlas.line_height()) },
+        .max = { pen.x + width_px, top + static_cast<float>(current.line_height()) },
     };
 }
 
@@ -120,10 +135,10 @@ size_t TextRun::index_at(glm::vec2 px)
         return 0;
     }
 
-    GlyphAtlas& atlas = *resolve_atlas();
+    GlyphAtlas& current = *atlas();
     return Text::index_at(
-        m_text, m_layout, atlas, px.x, px.y,
-        0.F, static_cast<float>(atlas.ascender()), m_params.render_bounds.x, k_tab_width);
+        m_text, m_layout, current, px.x, px.y,
+        0.F, static_cast<float>(current.ascender()), m_params.render_bounds.x, k_tab_width);
 }
 
 } // namespace MayaFlux::Portal::Text

@@ -124,6 +124,11 @@ MAYAFLUX_API bool is_initialized();
  * each carrying its own topology. BufferManager is taken from the stored
  * initialize() state.
  *
+ * A buffer made with a texture slot is for text and images: its shader reads
+ * each vertex's weight as an image index, or as glyph coverage when negative,
+ * so geometry that carries its own values in the weight slot (line thickness,
+ * point size, series data) must go in a buffer without one.
+ *
  * @param render Render settings; build it with Surface::render_config, which
  *               sets the window. Textures, shaders and the rest are the
  *               caller's.

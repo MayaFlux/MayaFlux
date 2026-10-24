@@ -63,6 +63,7 @@ void Atelier::shutdown()
 
     m_bridge.reset();
     m_inspect.reset();
+    m_atlas_images.clear();
 
     m_node_graph_manager = nullptr;
     m_buffer_manager = nullptr;
@@ -185,17 +186,21 @@ void Atelier::place_adornments(
     uint32_t relate_to,
     const std::shared_ptr<Buffers::FormaBuffer>& batch)
 {
-    const auto text_buffer = [&] {
-        return create_buffer(surface.render_config({ .additional_textures = { { "text", nullptr } } }));
+    std::shared_ptr<Buffers::FormaBuffer> text_batch;
+    const auto text_target = [&]() -> FormaTarget {
+        if (!text_batch) {
+            text_batch = create_buffer(surface.render_config({ .additional_textures = { { "text", nullptr } } }));
+        }
+        return FormaTarget::slice_of(text_batch, Graphics::PrimitiveTopology::TRIANGLE_LIST);
     };
 
     for (const auto& label : spec.labels) {
-        (void)Plot::place_label(surface, text_buffer(), label, relate_to);
+        (void)Plot::place_label(surface, text_target(), label, relate_to);
     }
 
     for (const auto& ticks : spec.tick_labels) {
         for (const auto& label : Plot::plot_tick_labels(ticks)) {
-            (void)Plot::place_label(surface, text_buffer(), label, relate_to);
+            (void)Plot::place_label(surface, text_target(), label, relate_to);
         }
     }
 
@@ -210,7 +215,7 @@ void Atelier::place_adornments(
         }
 
         for (const auto& label : layout.labels) {
-            (void)Plot::place_label(surface, text_buffer(), label, relate_to);
+            (void)Plot::place_label(surface, text_target(), label, relate_to);
         }
     }
 }

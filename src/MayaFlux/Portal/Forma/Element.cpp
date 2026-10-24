@@ -1,5 +1,7 @@
 #include "Element.hpp"
 
+#include "Internal/TextSlice.hpp"
+
 #include "MayaFlux/Buffers/Textures/TextureBuffer.hpp"
 #include "MayaFlux/Kinesis/GeometryPrimitives.hpp"
 #include "MayaFlux/Portal/Text/InkPress.hpp"
@@ -44,32 +46,28 @@ Element& Element::with_text(
     if (!buffer)
         return *this;
 
-    if (!params.has_value())
-        params = Portal::Text::PressParams {};
-
-    texture = Portal::Text::press(text, params->render_bounds, *params);
-    buffer.submit(Kinesis::textured_mesh_rect(region, k_single_texture_weight));
-    buffer.bind_texture(0, texture);
+    text_slice = internal::TextSlice::make(
+        buffer, region, params.value_or(Portal::Text::PressParams {}), text);
     return *this;
 }
 
 void Element::set_text(std::string_view text, std::optional<Portal::Text::PressParams> params)
 {
-    if (!texture)
+    if (!text_slice)
         return;
 
-    if (!params.has_value())
-        params = Portal::Text::PressParams {};
-
-    Portal::Text::repress(texture, text, *params);
-    if (buffer)
-        buffer.bind_texture(0, texture);
+    text_slice->assign(text, params.value_or(Portal::Text::PressParams {}));
 }
 
 Element& Element::retarget(Kinesis::AABB2D region)
 {
     if (!buffer)
         return *this;
+
+    if (text_slice) {
+        text_slice->set_bounds(region);
+        return *this;
+    }
 
     buffer.submit(Kinesis::textured_mesh_rect(region, k_single_texture_weight));
     return *this;

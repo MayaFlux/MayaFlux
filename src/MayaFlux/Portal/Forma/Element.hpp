@@ -12,6 +12,9 @@ class TextureBuffer;
 namespace MayaFlux::Portal::Text {
 struct PressParams;
 }
+namespace MayaFlux::Portal::Forma::internal {
+class TextSlice;
+}
 
 namespace MayaFlux::Portal::Forma {
 
@@ -80,6 +83,10 @@ struct MAYAFLUX_API Element {
 
     /// @brief Optional GPU texture to bind to the attached buffer. Used for
     std::shared_ptr<Core::VKImage> texture;
+
+    /// @brief Text drawn into the attached buffer by with_text(). Copies of
+    ///        the element share it.
+    std::shared_ptr<internal::TextSlice> text_slice;
 
     /// @brief When false, hit testing skips this element.
     bool interactive { true };
@@ -221,15 +228,18 @@ struct MAYAFLUX_API Element {
         Kinesis::AABB2D region = { .min = glm::vec2(-1.F), .max = glm::vec2(1.F) });
 
     /**
-     * @brief Press @p text into a new GPU texture and bind it to the
-     *        attached FormaBuffer. The VKImage is retained internally
-     *        for subsequent set_text() calls.
+     * @brief Draw @p text as glyph quads into the attached buffer.
      *
-     * @p buffer must already be set and created with an additional_textures slot at index 0.
+     * The glyphs are sampled from the glyph atlas, which is bound at texture
+     * slot 0, so @p buffer must already be set and created with an
+     * additional_textures slot at index 0. The text is retained for
+     * subsequent set_text() and retarget() calls.
      *
-     * @param text   UTF-8 string to composite.
-     * @param params PressParams (color, render_bounds, atlas, budget_h). Defaults apply when omitted.
-     * @param region NDC quad extent. Defaults to fullscreen.
+     * @param text   UTF-8 string to draw.
+     * @param params PressParams (color, spans, background, render_bounds, atlas).
+     *               render_bounds is the layout size in pixels, fitted onto
+     *               @p region. Defaults apply when omitted.
+     * @param region NDC extent. Defaults to fullscreen.
      */
     Element& with_text(
         std::string_view text,
@@ -237,12 +247,9 @@ struct MAYAFLUX_API Element {
         Kinesis::AABB2D region = { .min = glm::vec2(-1.F), .max = glm::vec2(1.F) });
 
     /**
-     * @brief Re-composite @p text into the retained GPU texture.
+     * @brief Replace the text drawn by with_text().
      *
-     * No-op when texture is null (element was not constructed via with_text()).
-     * Calls Portal::Text::repress(VKImage&, ...) which updates the image
-     * in-place.
-     * Rebinds the texture after repress in case repress reallocated the VKImage.
+     * No-op when the element was not constructed via with_text().
      *
      * @param text   New UTF-8 string.
      * @param params PressParams. Defaults apply when omitted.
@@ -250,15 +257,13 @@ struct MAYAFLUX_API Element {
     void set_text(std::string_view text, std::optional<Portal::Text::PressParams> params);
 
     /**
-     * @brief Resubmit the textured quad at a new NDC region, keeping the
-     *        bound texture unchanged.
+     * @brief Move the element's output to a new NDC region.
      *
-     * The geometry-only half of a scroll reflow: with_texture()/with_text()
-     * both write a UV quad over some region and bind a texture; this
-     * rewrites only the quad, at @p region, without re-pressing or
-     * rebinding anything. No-op when buffer is null.
+     * The geometry-only half of a scroll reflow. Text from with_text() is laid
+     * out again into @p region; a texture from with_texture() has its quad
+     * rewritten there. No-op when buffer is null.
      *
-     * @param region New NDC quad extent.
+     * @param region New NDC extent.
      */
     Element& retarget(Kinesis::AABB2D region);
 

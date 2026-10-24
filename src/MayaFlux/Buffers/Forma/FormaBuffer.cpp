@@ -198,6 +198,11 @@ size_t FormaBuffer::slice_count() const noexcept
     return m_processor ? m_processor->slice_count() : 0;
 }
 
+bool FormaBuffer::has_slice(SliceId id) const noexcept
+{
+    return m_processor && m_processor->has_slice(id);
+}
+
 void FormaBuffer::remove_slice(SliceId id)
 {
     if (m_processor)

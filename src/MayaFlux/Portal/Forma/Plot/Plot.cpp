@@ -1,6 +1,5 @@
 #include "Plot.hpp"
 
-#include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
 #include "MayaFlux/Core/Backends/Windowing/Window.hpp"
 #include "MayaFlux/Kinesis/GeometryPrimitives.hpp"
 #include "MayaFlux/Portal/Forma/Plot/SeriesBuilder.hpp"
@@ -8,15 +7,6 @@
 #include "MayaFlux/Portal/Text/InkPress.hpp"
 
 namespace MayaFlux::Portal::Forma::Plot {
-
-namespace {
-
-    /// @brief Headroom on a label's staging buffer so a later resize within
-    ///        this margin reuses it instead of falling back to an internal
-    ///        one-shot allocation for that call.
-    constexpr size_t k_staging_margin = 2;
-
-} // namespace
 
 // =============================================================================
 // place_label
@@ -56,28 +46,15 @@ uint32_t place_label(
         surface.layer().relate(relate_to, id);
 
     if (auto_render_bounds) {
-        auto staging = Buffers::create_image_staging_buffer(
-            static_cast<size_t>(render_bounds.x) * render_bounds.y * 4 * k_staging_margin);
-
         surface.ctx().on_resize(id,
-            [buf, surface, id, text = spec.text, color = spec.color, bounds = spec.bounds,
-                staging](uint32_t, uint32_t) mutable {
+            [surface, id, text = spec.text, color = spec.color, bounds = spec.bounds](uint32_t, uint32_t) mutable {
                 const auto dims = Kinesis::ndc_size_to_pixels(
                     { bounds.width(), bounds.height() },
                     surface.window()->get_state().current_width,
                     surface.window()->get_state().current_height);
 
-                const size_t required_bytes = static_cast<size_t>(dims.x) * dims.y * 4;
-
-                if (required_bytes > staging->get_size_bytes()) {
-                    staging->resize(required_bytes * 2, false);
-                }
-
-                auto image = Portal::Text::press(
-                    text, dims, { .color = color }, staging);
                 if (auto* element = surface.layer().get(id))
-                    element->texture = image;
-                buf.bind_texture(0, image);
+                    element->set_text(text, Portal::Text::PressParams { .color = color, .render_bounds = dims });
             });
     }
 

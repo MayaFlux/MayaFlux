@@ -18,6 +18,11 @@ Context::Context(std::shared_ptr<Layer> layer,
     , m_event_manager(event_manager)
     , m_name(std::move(name))
 {
+    if (m_window) {
+        const auto& state = m_window->get_state();
+        m_known_width = state.current_width;
+        m_known_height = state.current_height;
+    }
     register_handlers();
 }
 
@@ -346,6 +351,7 @@ Kinesis::AABB2D Context::to_ndc_rect(double x, double y, double w, double h) con
 
 void Context::handle_move(double px, double py)
 {
+    sync_size();
     const glm::vec2 ndc = to_ndc(px, py);
     const auto hit = m_layer->hit_test(ndc);
 
@@ -372,6 +378,7 @@ void Context::handle_move(double px, double py)
 
 void Context::handle_press(double px, double py, IO::MouseButtons btn)
 {
+    sync_size();
     const glm::vec2 ndc = to_ndc(px, py);
     const auto hit = m_layer->hit_test(ndc);
 
@@ -452,6 +459,7 @@ void Context::handle_drag(double px, double py, IO::MouseButtons btn)
 
 void Context::handle_scroll(double dx, double dy)
 {
+    sync_size();
     if (!m_hovered)
         return;
 
@@ -469,6 +477,7 @@ void Context::handle_scroll(double dx, double dy)
 
 void Context::handle_key_press(IO::Keys key)
 {
+    sync_size();
     if (!m_focused)
         return;
 
@@ -514,6 +523,7 @@ void Context::handle_key_held(IO::Keys key)
 
 void Context::handle_text(uint32_t codepoint)
 {
+    sync_size();
     if (!m_focused)
         return;
 
@@ -524,8 +534,22 @@ void Context::handle_text(uint32_t codepoint)
     it->second.text(*m_focused, codepoint);
 }
 
+void Context::sync_size()
+{
+    if (!m_window) {
+        return;
+    }
+
+    const auto& state = m_window->get_state();
+    if (state.current_width != m_known_width || state.current_height != m_known_height) {
+        handle_resize(state.current_width, state.current_height);
+    }
+}
+
 void Context::handle_resize(uint32_t width, uint32_t height)
 {
+    m_known_width = width;
+    m_known_height = height;
     for (auto& [id, callbacks] : m_callbacks) {
         if (callbacks.resize)
             callbacks.resize(width, height);

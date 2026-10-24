@@ -67,6 +67,9 @@ public:
     /** @brief Number of live slices. */
     [[nodiscard]] size_t slice_count() const noexcept { return m_slices.size(); }
 
+    /** @brief True when @p id names a live slice. */
+    [[nodiscard]] bool has_slice(SliceId id) const noexcept { return m_slices.contains(id); }
+
     /** @brief True when geometry or slice changes await the next tick. */
     [[nodiscard]] bool has_pending() const noexcept;
 

@@ -29,10 +29,13 @@ std::pair<uint32_t, std::shared_ptr<Element>> add_text_row(
     Surface& surface,
     std::string_view label,
     Kinesis::AABB2D bounds,
-    glm::uvec2 dims)
+    glm::uvec2 dims,
+    const std::shared_ptr<Buffers::FormaBuffer>& batch)
 {
-    auto buf = atelier().create_buffer(
-        surface.render_config({ .additional_textures = { { "text", nullptr } } }));
+    FormaTarget buf = batch
+        ? FormaTarget::slice_of(batch, Graphics::PrimitiveTopology::TRIANGLE_LIST)
+        : FormaTarget(atelier().create_buffer(
+              surface.render_config({ .additional_textures = { { "text", nullptr } } })));
 
     auto row = std::make_shared<Element>();
     row->with_name(std::string(label))

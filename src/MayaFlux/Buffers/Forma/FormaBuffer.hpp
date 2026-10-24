@@ -130,6 +130,9 @@ public:
     /** @brief Number of blocks, 0 before setup_processors(). */
     [[nodiscard]] size_t slice_count() const noexcept;
 
+    /** @brief True when @p id names a live block. */
+    [[nodiscard]] bool has_slice(SliceId id) const noexcept;
+
     /** @brief Remove a block; later blocks shift down. */
     void remove_slice(SliceId id);
 
