@@ -58,15 +58,16 @@ struct Tracked {
  *     .place(buf, surface, viewport);
  *
  * const Kinesis::AABB2D bounds = panel.cursor_out.advance(row_h);
- * auto row_buf = Portal::Forma::create_buffer(
- *     window, Kinesis::filled_rect(bounds, color),
+ * auto row_buf = FormaTarget::slice_of(
+ *     Portal::Forma::create_buffer(surface.render_config()),
  *     Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP);
+ * row_buf.submit(Kinesis::filled_rect(bounds, color));
  * const uint32_t id = surface.layer().add(
  *     Element {}.with_bounds(bounds).with_buffer(row_buf).non_interactive());
  *
  * panel.track(surface.layer(), id, bounds,
  *     [row_buf, color](Kinesis::AABB2D shifted) {
- *         row_buf->submit(Kinesis::filled_rect(shifted, color));
+ *         row_buf.submit(Kinesis::filled_rect(shifted, color));
  *     },
  *     row_buf);
  * @endcode
@@ -133,7 +134,7 @@ struct Scrollable {
      *
      * @param in_buf   Pre-created buffer for the viewport background. Its
      *                 render processor is scissored to @p viewport, so give a
-     *                 slice of a create_batch() buffer and create the tracked
+     *                 slice of a create_buffer() buffer and create the tracked
      *                 elements as slices of the same buffer: one scissor then
      *                 clips them all. Elements on buffers of their own are
      *                 scissored individually by track(), as before. Do not

@@ -12,13 +12,13 @@ namespace MayaFlux::Portal::Forma {
  *
  * Like create(), but the element draws into a slice of the shared buffer
  * instead of a buffer of its own, with the Form's topology. Make the buffer
- * with create_batch() and pass it to every Form that should draw together;
+ * with create_buffer() and pass it to every Form that should draw together;
  * the Form's capacity is not used, the batch grows. A Form that needs its own
  * buffer, such as one scissored by a Scrollable, uses create() instead.
  *
  * @tparam T       MappedState value type.
  * @param surface  Canvas to register on.
- * @param batch    Shared buffer from create_batch().
+ * @param batch    Shared buffer from create_buffer().
  * @param form     Geometry, topology and interaction.
  * @param initial  Starting value written into MappedState.
  * @param project  Optional T to float projection for outbound readers.
@@ -43,51 +43,19 @@ template <typename T>
 }
 
 /**
- * @brief Build a FormaBuffer, register it, construct a Mapped<T>, and add
- *        the element to @p layer.
- *
- * BufferManager is taken from the stored initialize() state.
- * Returns the fully constructed Mapped<T>. The caller holds it.
- * element.id is stable and can be passed to Context callbacks and Bridge.
- *
- * @tparam T         MappedState value type: float, glm::vec2, etc.
- * @param layer      Layer to register the element on.
- * @param window     Target window for rendering.
- * @param geom       Geometry function producing vertex bytes from T.
- * @param initial    Starting value written into MappedState.
- * @param topology   Primitive topology for the FormaBuffer.
- * @param capacity   Initial FormaBuffer capacity in bytes.
- * @param project    Optional T -> float projection for outbound readers.
- * @return Fully constructed Mapped<T> with element registered in @p layer.
- */
-template <typename T>
-[[nodiscard]] Mapped<T> create_element(
-    Layer& layer,
-    std::shared_ptr<Core::Window> window,
-    GeometryFn<T> geom,
-    T initial,
-    Graphics::PrimitiveTopology topology = Graphics::PrimitiveTopology::TRIANGLE_STRIP,
-    size_t capacity = internal::k_capacity_bytes,
-    std::function<float(T)> project = {})
-{
-    return internal::atelier().create_element<T>(
-        layer, std::move(window), std::move(geom), std::move(initial),
-        topology, capacity, std::move(project));
-}
-
-/**
  * @brief Realize a Form on @p surface.
  *
- * Builds the buffer at the Form's capacity and topology, registers the
- * element, syncs so the geometry function's bounds_hint and contains reach
- * the Layer before the first frame, then runs the Form's interaction wiring.
+ * Builds a buffer of its own and draws the Form as a slice of it with the
+ * Form's topology, registers the element, syncs so the geometry function's
+ * bounds_hint and contains reach the Layer before the first frame, then runs
+ * the Form's interaction wiring.
  *
  * A bare GeometryFn converts to a Form, so this also serves as the simplest
  * element construction path for a caller's own geometry.
  *
  * @tparam T       MappedState value type.
  * @param surface  Canvas to register on.
- * @param form     Geometry, topology, capacity, and interaction.
+ * @param form     Geometry, topology and interaction.
  * @param initial  Starting value written into MappedState.
  * @param project  Optional T to float projection for outbound readers.
  * @return Fully constructed Mapped<T>, wired.
@@ -100,11 +68,8 @@ template <typename T>
     std::function<float(T)> project = {})
 {
     auto mapped = internal::atelier().create_element<T>(
-        surface.layer(), surface.window(),
-        std::move(form.geometry), std::move(initial),
-        form.topology, form.capacity, std::move(project));
-
-    mapped.sync(&surface.layer());
+        surface, std::move(form.geometry), std::move(initial),
+        form.topology, std::move(project));
 
     if (form.wire)
         form.wire(surface.ctx(), mapped.element.id, mapped.state);
@@ -117,9 +82,7 @@ template <typename T>
  *        element to @p surface's layer, and register it with the
  *        application Bridge.
  *
- * Surface-accepting overload of create_element. Reads the layer and
- * window from @p surface; everything else matches the existing
- * (Layer&, Window) overload.
+ * Reads the layer and window from @p surface.
  *
  * After registration, one sync() is run so that bounds_hint and contains
  * populated by the geometry function are visible on the Element before
@@ -157,7 +120,7 @@ template <typename T>
  * @brief create_element drawing into @p target instead of a buffer of its own.
  *
  * Give several elements slices of one buffer, from FormaTarget::slice_of on a
- * create_batch buffer, and they draw together. Otherwise matches the
+ * create_buffer buffer, and they draw together. Otherwise matches the
  * Surface overload above.
  *
  * @param target  Where the element's geometry is written.
@@ -260,7 +223,7 @@ struct Tend {
     /// @brief Starting value written into MappedState. Consumed by place().
     T initial {};
 
-    /// @brief Optional shared buffer from create_batch(). When set, place()
+    /// @brief Optional shared buffer from create_buffer(). When set, place()
     ///        draws the element as a slice of it instead of a buffer of its own.
     std::shared_ptr<Buffers::FormaBuffer> batch;
 

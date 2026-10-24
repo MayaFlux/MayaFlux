@@ -100,30 +100,20 @@ namespace internal {
             const Core::WindowCreateInfo& info);
 
         /**
-         * @brief Capacity-explicit FormaBuffer construction.
+         * @brief The single buffer construction path.
          *
-         * The single buffer construction path. Registers with the stored
-         * BufferManager under GRAPHICS_BACKEND and calls setup_rendering
-         * with whichever texture configuration was requested.
+         * Registers a FormaBuffer with the stored BufferManager under
+         * GRAPHICS_BACKEND and sets up rendering. The buffer always triangulates
+         * with TRIANGLE_LIST: what it draws is expressed by the topology of the
+         * slices made on it with FormaTarget::slice_of. Line and point slices
+         * are milled into NDC ribbons whose scalar is a width in pixels of the
+         * window's height at creation.
+         *
+         * @param render Render settings; build it with Surface::render_config.
+         *               Its topology and triangulate are set here.
          */
         [[nodiscard]] std::shared_ptr<Buffers::FormaBuffer> create_buffer(
-            std::shared_ptr<Core::Window> window,
-            size_t capacity,
-            Graphics::PrimitiveTopology topology,
-            const std::string& texture_binding = {},
-            std::vector<std::pair<std::string, std::shared_ptr<Core::VKImage>>>
-                additional_textures = {});
-
-        /**
-         * @brief A buffer that many targets share.
-         *
-         * Triangulates, so slices of any topology draw together as one batch.
-         * Line and point slices are milled into NDC ribbons whose scalar is a
-         * width in pixels of the window's height at creation.
-         * Hand out slices with FormaTarget::slice_of.
-         */
-        [[nodiscard]] std::shared_ptr<Buffers::FormaBuffer> create_batch(
-            std::shared_ptr<Core::Window> window);
+            Graphics::RenderConfig render);
 
         /**
          * @brief Construct a Layer and a Context wired to @p window.
@@ -152,39 +142,10 @@ namespace internal {
             const Core::WindowCreateInfo& window_info, std::string name);
 
         /**
-         * @brief Build a FormaBuffer, construct a Mapped<T>, register the
-         *        element on @p layer, and register it with the Bridge.
-         *
-         * @tparam T       MappedState value type.
-         * @param layer    Layer to register the element on.
-         * @param window   Target window for rendering.
-         * @param geom     Geometry function producing vertex bytes from T.
-         * @param initial  Starting value written into MappedState.
-         * @param topology Primitive topology for the FormaBuffer.
-         * @param capacity Initial FormaBuffer capacity in bytes.
-         * @param project  Optional T to float projection for outbound readers.
-         */
-        template <typename T>
-        [[nodiscard]] Mapped<T> create_element(
-            Layer& layer,
-            std::shared_ptr<Core::Window> window,
-            GeometryFn<T> geom,
-            T initial,
-            Graphics::PrimitiveTopology topology = Graphics::PrimitiveTopology::TRIANGLE_STRIP,
-            size_t capacity = k_capacity_bytes,
-            std::function<float(T)> project = {})
-        {
-            auto buf = create_buffer(std::move(window), capacity, topology);
-            auto mapped = make_mapped<T>(std::move(initial), std::move(geom), std::move(buf));
-            mapped.element.id = layer.add(mapped.element);
-            bridge().register_element(layer, mapped, std::move(project));
-            return mapped;
-        }
-
-        /**
-         * @brief create_element against a Surface, followed by one sync so
-         *        bounds_hint and contains from the geometry function reach
-         *        the Layer before the first frame.
+         * @brief create_element on a buffer of its own, as a slice of
+         *        @p topology, followed by one sync so bounds_hint and contains
+         *        from the geometry function reach the Layer before the first
+         *        frame.
          */
         template <typename T>
         [[nodiscard]] Mapped<T> create_element(
@@ -196,7 +157,7 @@ namespace internal {
         {
             return create_element<T>(
                 surface,
-                create_buffer(surface.window(), k_capacity_bytes, topology),
+                FormaTarget::slice_of(create_buffer(surface.render_config()), topology),
                 std::move(geom), std::move(initial), std::move(project));
         }
 

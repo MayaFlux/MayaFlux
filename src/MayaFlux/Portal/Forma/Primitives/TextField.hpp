@@ -71,8 +71,7 @@ class Surface;
  *
  * @code
  * auto buf = Portal::Forma::create_buffer(
- *     window, Graphics::PrimitiveTopology::TRIANGLE_LIST,
- *     std::vector{ std::pair{ std::string("text"), std::shared_ptr<Core::VKImage>{} } });
+ *     surface.render_config({ .additional_textures = { { "text", nullptr } } }));
  *
  * auto params = std::make_shared<Portal::Text::PressParams>(
  *     Portal::Text::PressParams { .color = { 0.9F, 0.9F, 0.9F, 1.F }, .render_bounds = { 800, 64 } });

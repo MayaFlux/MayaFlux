@@ -100,28 +100,9 @@ void destroy(Surface& surface, uint32_t id)
 // Standalone buffer
 // =============================================================================
 
-std::shared_ptr<Buffers::FormaBuffer> create_buffer(
-    std::shared_ptr<Core::Window> window,
-    Graphics::PrimitiveTopology topology,
-    const std::string& texture_binding)
+std::shared_ptr<Buffers::FormaBuffer> create_buffer(Graphics::RenderConfig render)
 {
-    return internal::atelier().create_buffer(
-        std::move(window), internal::k_capacity_bytes, topology, texture_binding);
-}
-
-std::shared_ptr<Buffers::FormaBuffer> create_batch(std::shared_ptr<Core::Window> window)
-{
-    return internal::atelier().create_batch(std::move(window));
-}
-
-std::shared_ptr<Buffers::FormaBuffer> create_buffer(
-    std::shared_ptr<Core::Window> window,
-    Graphics::PrimitiveTopology topology,
-    std::vector<std::pair<std::string, std::shared_ptr<Core::VKImage>>> additional_textures)
-{
-    return internal::atelier().create_buffer(
-        std::move(window), internal::k_capacity_bytes, topology, {},
-        std::move(additional_textures));
+    return internal::atelier().create_buffer(std::move(render));
 }
 
 // =============================================================================
@@ -136,10 +117,6 @@ plot(
     std::shared_ptr<Kakshya::PlotContainer> container,
     Plot::SeriesSpec spec)
 {
-    const uint64_t N = container->series_count() > 0
-        ? container->series_size(0)
-        : 0;
-
     auto& atelier = internal::atelier();
 
     auto window = atelier.create_window(
@@ -150,34 +127,20 @@ plot(
         .name = window->get_create_info().title,
     });
 
-    const bool batched = spec.topology == Graphics::PrimitiveTopology::TRIANGLE_LIST
-        || spec.topology == Graphics::PrimitiveTopology::TRIANGLE_STRIP;
-    const auto batch = batched ? atelier.create_batch(window) : nullptr;
-    if (batch) {
-        FormaTarget(batch).send_to_back(-1);
-    }
+    const auto batch = atelier.create_buffer(surface.render_config());
+    FormaTarget(batch).send_to_back(-1);
 
     std::optional<uint32_t> background_id;
     if (spec.background_fn) {
-        const size_t background_capacity = static_cast<size_t>(4) * Kakshya::VertexLayout::for_meshes().stride_bytes;
-        auto bg = batched
-            ? atelier.create_element<float>(
-                  surface,
-                  FormaTarget::slice_of(batch, Graphics::PrimitiveTopology::TRIANGLE_STRIP),
-                  *spec.background_fn, 0.F)
-            : atelier.create_element<float>(
-                  surface.layer(), window,
-                  *spec.background_fn,
-                  0.F,
-                  Graphics::PrimitiveTopology::TRIANGLE_STRIP,
-                  background_capacity);
+        auto bg = atelier.create_element<float>(
+            surface,
+            FormaTarget::slice_of(batch, Graphics::PrimitiveTopology::TRIANGLE_STRIP),
+            *spec.background_fn, 0.F);
         background_id = bg.element.id;
     }
 
-    FormaTarget series = batched
-        ? FormaTarget::slice_of(batch, spec.topology)
-        : FormaTarget(atelier.create_buffer(window, spec.capacity_for(N), spec.topology));
-    auto mapped = Plot::place(surface, std::move(series), spec, std::move(container));
+    auto mapped = Plot::place(
+        surface, FormaTarget::slice_of(batch, spec.topology), spec, std::move(container));
 
     if (background_id) {
         surface.layer().relate(mapped.element.id, *background_id);

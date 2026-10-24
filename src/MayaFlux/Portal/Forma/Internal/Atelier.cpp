@@ -13,11 +13,6 @@
 
 namespace MayaFlux::Portal::Forma::internal {
 
-namespace {
-    constexpr size_t k_text_label_capacity = static_cast<size_t>(6) * sizeof(Kakshya::MeshVertex);
-    constexpr size_t k_rect_capacity = static_cast<size_t>(4) * sizeof(Kakshya::Vertex);
-}
-
 // =============================================================================
 // Lifecycle
 // =============================================================================
@@ -118,12 +113,7 @@ std::shared_ptr<Core::Window> Atelier::create_window(const Core::WindowCreateInf
     return window;
 }
 
-std::shared_ptr<Buffers::FormaBuffer> Atelier::create_buffer(
-    std::shared_ptr<Core::Window> window,
-    size_t capacity,
-    Graphics::PrimitiveTopology topology,
-    const std::string& texture_binding,
-    std::vector<std::pair<std::string, std::shared_ptr<Core::VKImage>>> additional_textures)
+std::shared_ptr<Buffers::FormaBuffer> Atelier::create_buffer(Graphics::RenderConfig render)
 {
     if (!m_initialized) {
         error<std::runtime_error>(Journal::Component::Portal, Journal::Context::API,
@@ -131,44 +121,26 @@ std::shared_ptr<Buffers::FormaBuffer> Atelier::create_buffer(
             "Portal::Forma not initialized - cannot create buffer");
     }
 
-    auto buf = std::make_shared<Buffers::FormaBuffer>(capacity, topology);
-    m_buffer_manager->add_buffer(buf, Buffers::ProcessingToken::GRAPHICS_BACKEND);
-
-    if (!additional_textures.empty()) {
-        buf->setup_rendering({
-            .target_window = std::move(window),
-            .additional_textures = std::move(additional_textures),
-        });
-    } else if (!texture_binding.empty()) {
-        buf->setup_rendering({
-            .target_window = std::move(window),
-            .default_texture_binding = texture_binding,
-        });
-    } else {
-        buf->setup_rendering({ .target_window = std::move(window) });
-    }
-
-    return buf;
-}
-
-std::shared_ptr<Buffers::FormaBuffer> Atelier::create_batch(std::shared_ptr<Core::Window> window)
-{
-    if (!m_initialized) {
-        error<std::runtime_error>(Journal::Component::Portal, Journal::Context::API,
+    if (!render.target_window) {
+        error<std::invalid_argument>(Journal::Component::Portal, Journal::Context::API,
             std::source_location::current(),
-            "Portal::Forma not initialized - cannot create batch");
+            "Portal::Forma create_buffer requires a target window");
     }
 
-    auto buf = std::make_shared<Buffers::FormaBuffer>(k_capacity_bytes, Graphics::PrimitiveTopology::TRIANGLE_LIST);
-    m_buffer_manager->add_buffer(buf, Buffers::ProcessingToken::GRAPHICS_BACKEND);
-    const auto height = std::max(window->get_create_info().height, 1U);
-    buf->setup_rendering({ .target_window = std::move(window), .triangulate = true });
+    render.topology = Graphics::PrimitiveTopology::TRIANGLE_LIST;
+    render.triangulate = true;
 
-    if (auto render = buf->get_render_processor()) {
-        Graphics::MillSpec spec = render->get_mill_spec();
+    auto buf = std::make_shared<Buffers::FormaBuffer>(k_capacity_bytes, render.topology);
+    m_buffer_manager->add_buffer(buf, Buffers::ProcessingToken::GRAPHICS_BACKEND);
+
+    const auto height = std::max(render.target_window->get_create_info().height, 1U);
+    buf->setup_rendering(render);
+
+    if (auto processor = buf->get_render_processor()) {
+        Graphics::MillSpec spec = processor->get_mill_spec();
         spec.ribbon = Graphics::MillSpec::Ribbon::WorldPlane;
         spec.width_scale = 2.0F / static_cast<float>(height);
-        render->set_mill_spec(spec);
+        processor->set_mill_spec(spec);
     }
     return buf;
 }
@@ -213,27 +185,17 @@ void Atelier::place_adornments(
     uint32_t relate_to,
     const std::shared_ptr<Buffers::FormaBuffer>& batch)
 {
-    const auto& win = surface.window();
+    const auto text_buffer = [&] {
+        return create_buffer(surface.render_config({ .additional_textures = { { "text", nullptr } } }));
+    };
 
     for (const auto& label : spec.labels) {
-        auto buf = create_buffer(
-            win,
-            k_text_label_capacity,
-            Graphics::PrimitiveTopology::TRIANGLE_LIST,
-            {},
-            { { "text", nullptr } });
-        (void)Plot::place_label(surface, std::move(buf), label, relate_to);
+        (void)Plot::place_label(surface, text_buffer(), label, relate_to);
     }
 
     for (const auto& ticks : spec.tick_labels) {
         for (const auto& label : Plot::plot_tick_labels(ticks)) {
-            auto buf = create_buffer(
-                win,
-                k_text_label_capacity,
-                Graphics::PrimitiveTopology::TRIANGLE_LIST,
-                {},
-                { { "text", nullptr } });
-            (void)Plot::place_label(surface, std::move(buf), label, relate_to);
+            (void)Plot::place_label(surface, text_buffer(), label, relate_to);
         }
     }
 
@@ -241,23 +203,14 @@ void Atelier::place_adornments(
         auto layout = Plot::layout_legend(*spec.legend);
 
         for (const auto& swatch : layout.swatches) {
-            FormaTarget target = batch
-                ? FormaTarget::slice_of(batch, Graphics::PrimitiveTopology::TRIANGLE_STRIP)
-                : FormaTarget(create_buffer(
-                      win,
-                      k_rect_capacity,
-                      Graphics::PrimitiveTopology::TRIANGLE_STRIP));
+            FormaTarget target = FormaTarget::slice_of(
+                batch ? batch : create_buffer(surface.render_config()),
+                Graphics::PrimitiveTopology::TRIANGLE_STRIP);
             (void)Plot::place_rect(surface, std::move(target), swatch, relate_to);
         }
 
         for (const auto& label : layout.labels) {
-            auto buf = create_buffer(
-                win,
-                k_text_label_capacity,
-                Graphics::PrimitiveTopology::TRIANGLE_LIST,
-                {},
-                { { "text", nullptr } });
-            (void)Plot::place_label(surface, std::move(buf), label, relate_to);
+            (void)Plot::place_label(surface, text_buffer(), label, relate_to);
         }
     }
 }

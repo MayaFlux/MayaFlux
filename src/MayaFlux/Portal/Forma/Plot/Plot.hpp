@@ -20,13 +20,12 @@ namespace MayaFlux::Portal::Forma::Plot {
  * the container pointer is stable across frames but its data changes each frame.
  *
  * Buffer construction and scheduling are the caller's responsibility.
- * Use Portal::Forma::create_buffer(surface.window(), spec.capacity_for(N),
- * spec.topology) to build the buffer, and schedule_metro to drive sync()
+ * Use FormaTarget::slice_of(Portal::Forma::create_buffer(surface.render_config()),
+ * spec.topology) to build the target, and schedule_metro to drive sync()
  * at the desired rate.
  *
  * @param surface    Surface to register the element on.
- * @param buf        Pre-built, registered FormaBuffer sized for this encoding.
- *                   Use spec.capacity_for(N) and spec.topology to construct it.
+ * @param buf        Target the series draws into, a slice of spec.topology.
  * @param spec       Result of a SeriesBuilder terminal. Carries the geometry
  *                   function, topology, and capacity arithmetic for this encoding.
  *                   Raw GeometryFn callers are responsible for calling

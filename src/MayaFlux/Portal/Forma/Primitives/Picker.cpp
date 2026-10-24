@@ -89,9 +89,8 @@ void pick(
     std::optional<Scrollable> panel;
     std::function<void(uint32_t, glm::vec2, double, double)> wheel;
     if (scrolling) {
-        auto panel_buf = atelier.create_buffer(
-            window,
-            internal::k_capacity_bytes,
+        auto panel_buf = FormaTarget::slice_of(
+            atelier.create_buffer(surface.render_config()),
             Graphics::PrimitiveTopology::TRIANGLE_STRIP);
         panel = make_scrollable(std::move(panel_buf), surface, surface.full(), glm::vec3(internal::row_idle_color()));
         wheel = panel->wheel_handler(surface);

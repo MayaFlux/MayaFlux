@@ -82,9 +82,8 @@ Dropdown& Dropdown::place(
     std::optional<Scrollable> panel;
     std::function<void(uint32_t, glm::vec2, double, double)> wheel;
     if (count > visible) {
-        auto panel_buf = internal::atelier().create_buffer(
-            surface.window(),
-            internal::k_capacity_bytes,
+        auto panel_buf = FormaTarget::slice_of(
+            internal::atelier().create_buffer(surface.render_config()),
             Graphics::PrimitiveTopology::TRIANGLE_STRIP);
         panel = make_scrollable(
             std::move(panel_buf), surface,
