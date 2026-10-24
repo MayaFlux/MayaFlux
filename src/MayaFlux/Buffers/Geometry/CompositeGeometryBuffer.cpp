@@ -16,6 +16,8 @@ CompositeGeometryBuffer::CompositeGeometryBuffer(
           Kakshya::DataModality::VERTEX_POSITIONS_3D)
     , m_over_allocate_factor(over_allocate_factor)
 {
+    set_prefer_semantic_layout(true);
+
     MF_INFO(Journal::Component::Buffers, Journal::Context::Init,
         "Created CompositeGeometryBuffer with {} bytes capacity (over-allocate: {:.2f}x)",
         get_size_bytes(), over_allocate_factor);
@@ -79,53 +81,6 @@ void CompositeGeometryBuffer::setup_processors(ProcessingToken token)
 void CompositeGeometryBuffer::add_geometry(
     const std::string& name,
     const std::shared_ptr<Nodes::GpuSync::GeometryWriterNode>& node,
-    Portal::Graphics::PrimitiveTopology topology,
-    const std::shared_ptr<Core::Window>& target_window)
-{
-    RenderConfig config;
-    config.target_window = target_window;
-
-    switch (topology) {
-    case Portal::Graphics::PrimitiveTopology::POINT_LIST:
-        config.vertex_shader = "point.vert.spv";
-        config.fragment_shader = "point.frag.spv";
-        break;
-
-    case Portal::Graphics::PrimitiveTopology::LINE_LIST:
-    case Portal::Graphics::PrimitiveTopology::LINE_STRIP:
-        config.fragment_shader = "line.frag.spv";
-        config.vertex_shader = "line.vert.spv";
-        if (Portal::Graphics::needs_triangulation(topology, config.polygon_mode)) {
-            config.triangulate = true;
-        }
-
-        if (config.triangulate) {
-            config.geometry_shader.clear();
-        } else {
-            config.geometry_shader = "line.geom.spv";
-        }
-        break;
-
-    case Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST:
-    case Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP:
-    case Portal::Graphics::PrimitiveTopology::TRIANGLE_FAN:
-        config.vertex_shader = "triangle.vert.spv";
-        config.fragment_shader = "triangle.frag.spv";
-        break;
-
-    default:
-        config.vertex_shader = "point.vert.spv";
-        config.fragment_shader = "point.frag.spv";
-    }
-
-    config.topology = topology;
-    add_geometry(name, node, topology, config);
-}
-
-void CompositeGeometryBuffer::add_geometry(
-    const std::string& name,
-    const std::shared_ptr<Nodes::GpuSync::GeometryWriterNode>& node,
-    Portal::Graphics::PrimitiveTopology topology,
     const RenderConfig& config)
 {
     if (!node) {
@@ -152,11 +107,44 @@ void CompositeGeometryBuffer::add_geometry(
             "Target window must be specified in RenderConfig");
     }
 
+    auto resolved = config;
+    const auto topology = config.topology;
+    const auto mill = configure_mill_enforcement(resolved);
+    if (resolved.triangulate) {
+        if (config.vertex_shader.empty())
+            resolved.vertex_shader = mill.wireframe
+                ? "milled_wireframe.vert.spv"
+                : "milled_shape.vert.spv";
+        if (config.fragment_shader.empty())
+            resolved.fragment_shader = mill.wireframe
+                ? "milled_wireframe.frag.spv"
+                : "milled_shape.frag.spv";
+        resolved.geometry_shader.clear();
+    } else {
+        switch (topology) {
+        case Portal::Graphics::PrimitiveTopology::POINT_LIST:
+            resolved.vertex_shader = config.vertex_shader.empty() ? "point.vert.spv" : config.vertex_shader;
+            resolved.fragment_shader = config.fragment_shader.empty() ? "point.frag.spv" : config.fragment_shader;
+            break;
+        case Portal::Graphics::PrimitiveTopology::LINE_LIST:
+        case Portal::Graphics::PrimitiveTopology::LINE_STRIP:
+            resolved.vertex_shader = config.vertex_shader.empty() ? "line.vert.spv" : config.vertex_shader;
+            resolved.fragment_shader = config.fragment_shader.empty() ? "line.frag.spv" : config.fragment_shader;
+            if (config.geometry_shader.empty())
+                resolved.geometry_shader = "line.geom.spv";
+            break;
+        default:
+            resolved.vertex_shader = config.vertex_shader.empty() ? "triangle.vert.spv" : config.vertex_shader;
+            resolved.fragment_shader = config.fragment_shader.empty() ? "triangle.frag.spv" : config.fragment_shader;
+            break;
+        }
+    }
+
     m_processor->add_geometry(name, node, topology);
     auto self = std::dynamic_pointer_cast<CompositeGeometryBuffer>(shared_from_this());
 
     std::shared_ptr<RenderProcessor> render;
-    apply_render_config(render, config, ShaderConfig { config.vertex_shader });
+    apply_render_config(render, resolved, ShaderConfig { resolved.vertex_shader });
 
     if (auto layout = node->get_vertex_layout()) {
         render->set_buffer_vertex_layout(self, *layout);
@@ -174,7 +162,7 @@ void CompositeGeometryBuffer::add_geometry(
 
     MF_DEBUG(Journal::Component::Buffers, Journal::Context::Init,
         "Added geometry '{}' to composite buffer (topology: {}, shaders: {}/{})",
-        name, static_cast<int>(topology), config.vertex_shader, config.fragment_shader);
+        name, static_cast<int>(topology), resolved.vertex_shader, resolved.fragment_shader);
 }
 
 void CompositeGeometryBuffer::setup_rendering(const RenderConfig& /*config*/)
