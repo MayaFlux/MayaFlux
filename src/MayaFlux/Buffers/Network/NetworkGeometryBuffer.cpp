@@ -15,77 +15,54 @@
 namespace MayaFlux::Buffers {
 
 namespace {
-    /**
-     * @brief Fill in the shaders a config implies.
-     *
-     * Triangulating is orthogonal to topology, not a line-specific
-     * workaround: any span mills to the same TRIANGLE_LIST pipeline through
-     * milled_shape.vert/frag (see mill_shape.glsl), resolved first and
-     * unconditionally -- config.topology is span ordering under triangulate,
-     * not a pipeline selector.
-     *
-     * It is forced on where Portal::Graphics::needs_triangulation says the
-     * device cannot draw the topology natively, such as lines without a
-     * geometry shader for line.geom's NDC expansion. Everything else
-     * triangulates only when asked.
-     *
-     * Otherwise, point.vert/point.frag and line.vert/line.frag/line.geom
-     * stay the per-topology defaults: their built-ins
-     * (gl_PointSize/gl_PointCoord, `layout(lines) in`) only make sense for
-     * that native topology.
-     */
-    Portal::Graphics::RenderConfig resolve_config(const Portal::Graphics::RenderConfig& config)
+    void configure_shader_defaults(
+        Portal::Graphics::RenderConfig& resolved,
+        const Portal::Graphics::RenderConfig& requested)
     {
-        VKBuffer::RenderConfig resolved_config = config;
-
-        if (Portal::Graphics::needs_triangulation(config.topology, config.polygon_mode)) {
-            resolved_config.triangulate = true;
+        if (resolved.triangulate) {
+            if (requested.vertex_shader.empty())
+                resolved.vertex_shader = resolved.polygon_mode == Portal::Graphics::PolygonMode::LINE
+                    ? "milled_wireframe.vert.spv"
+                    : "milled_shape.vert.spv";
+            if (requested.fragment_shader.empty())
+                resolved.fragment_shader = resolved.polygon_mode == Portal::Graphics::PolygonMode::LINE
+                    ? "milled_wireframe.frag.spv"
+                    : "milled_shape.frag.spv";
+            resolved.geometry_shader.clear();
+            return;
         }
 
-        if (resolved_config.triangulate) {
-            if (config.vertex_shader.empty())
-                resolved_config.vertex_shader = "milled_shape.vert.spv";
-            if (config.fragment_shader.empty())
-                resolved_config.fragment_shader = "milled_shape.frag.spv";
-            resolved_config.geometry_shader.clear();
-            return resolved_config;
-        }
-
-        switch (config.topology) {
+        switch (resolved.topology) {
         case Portal::Graphics::PrimitiveTopology::POINT_LIST:
-            if (config.vertex_shader.empty())
-                resolved_config.vertex_shader = "point.vert.spv";
-            if (config.fragment_shader.empty())
-                resolved_config.fragment_shader = "point.frag.spv";
+            if (requested.vertex_shader.empty())
+                resolved.vertex_shader = "point.vert.spv";
+            if (requested.fragment_shader.empty())
+                resolved.fragment_shader = "point.frag.spv";
             break;
         case Portal::Graphics::PrimitiveTopology::LINE_LIST:
         case Portal::Graphics::PrimitiveTopology::LINE_STRIP:
-            if (config.vertex_shader.empty())
-                resolved_config.vertex_shader = "line.vert.spv";
-
-            if (config.fragment_shader.empty())
-                resolved_config.fragment_shader = "line.frag.spv";
-
-            if (config.geometry_shader.empty())
-                resolved_config.geometry_shader = "line.geom.spv";
+            if (requested.vertex_shader.empty())
+                resolved.vertex_shader = "line.vert.spv";
+            if (requested.fragment_shader.empty())
+                resolved.fragment_shader = "line.frag.spv";
+            if (requested.geometry_shader.empty())
+                resolved.geometry_shader = "line.geom.spv";
             break;
         case Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST:
         case Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP:
-            if (config.vertex_shader.empty())
-                resolved_config.vertex_shader = "triangle.vert.spv";
-            if (config.fragment_shader.empty())
-                resolved_config.fragment_shader = "triangle.frag.spv";
+        case Portal::Graphics::PrimitiveTopology::TRIANGLE_FAN:
+            if (requested.vertex_shader.empty())
+                resolved.vertex_shader = "triangle.vert.spv";
+            if (requested.fragment_shader.empty())
+                resolved.fragment_shader = "triangle.frag.spv";
             break;
         default:
-            if (config.vertex_shader.empty())
-                resolved_config.vertex_shader = "point.vert.spv";
-            if (config.fragment_shader.empty())
-                resolved_config.fragment_shader = "point.frag.spv";
+            if (requested.vertex_shader.empty())
+                resolved.vertex_shader = "point.vert.spv";
+            if (requested.fragment_shader.empty())
+                resolved.fragment_shader = "point.frag.spv";
         }
-
-        return resolved_config;
     }
-
 }
 
 NetworkGeometryBuffer::NetworkGeometryBuffer(
@@ -143,13 +120,39 @@ void NetworkGeometryBuffer::setup_processors(ProcessingToken token)
 
 void NetworkGeometryBuffer::setup_rendering(const RenderConfig& config)
 {
-    auto resolved_config = resolve_config(config);
+    using Portal::Graphics::PrimitiveTopology;
+
+    std::vector<Portal::Graphics::DrawRun> draw_runs;
+    std::vector<PrimitiveTopology> run_topologies;
+    if (auto* graphics_op = dynamic_cast<Nodes::Network::GraphicsOperator*>(
+            m_network->get_operator())) {
+        draw_runs = graphics_op->topology_runs();
+        for (const auto& run : draw_runs)
+            run_topologies.push_back(run.topology);
+    }
+
+    auto resolved_config = config;
+    if (resolved_config.topology == PrimitiveTopology::POINT_LIST) {
+        const auto first_non_point = std::ranges::find_if(
+            run_topologies, [](auto topology) { return topology != PrimitiveTopology::POINT_LIST; });
+        if (first_non_point != run_topologies.end())
+            resolved_config.topology = *first_non_point;
+    }
+    const auto mill = configure_mill_enforcement(resolved_config, run_topologies);
+    configure_shader_defaults(resolved_config, config);
 
     apply_render_config(resolved_config, ShaderConfig { resolved_config.vertex_shader });
+
+    if (mill.points && m_render_processor) {
+        auto mill_spec = m_render_processor->get_mill_spec();
+        mill_spec.use_vertex_extent = false;
+        m_render_processor->set_mill_spec(mill_spec);
+    }
 
     get_processing_chain()->add_processor(m_render_processor, shared_from_this());
 
     set_default_render_config(resolved_config);
+    update_render_runs(std::move(draw_runs));
 }
 
 uint32_t NetworkGeometryBuffer::get_vertex_count() const
@@ -224,7 +227,9 @@ size_t NetworkGeometryBuffer::calculate_buffer_size(
 
 void NetworkGeometryBuffer::add_chain_operator_rendering(const RenderConfig& config)
 {
-    const auto resolved_config = resolve_config(config);
+    auto resolved_config = config;
+    configure_mill_enforcement(resolved_config);
+    configure_shader_defaults(resolved_config, config);
     auto self = std::dynamic_pointer_cast<VKBuffer>(shared_from_this());
 
     std::shared_ptr<RenderProcessor> render;
@@ -258,7 +263,7 @@ void NetworkGeometryBuffer::update_chain_render_range(
     if (index == 0) {
         if (m_render_processor) {
             m_render_processor->set_vertex_range(vertex_offset, vertex_count);
-            m_render_processor->set_runs(std::move(runs));
+            update_render_runs(std::move(runs));
         }
         return;
     }
@@ -282,6 +287,16 @@ void NetworkGeometryBuffer::update_chain_render_range(
 void NetworkGeometryBuffer::update_render_runs(std::vector<Portal::Graphics::DrawRun> runs)
 {
     if (m_render_processor) {
+        const auto config = get_render_config();
+        if (config.triangulate && config.polygon_mode == Portal::Graphics::PolygonMode::POINT) {
+            m_render_processor->set_triangulate(true);
+            for (auto& run : runs) {
+                if (run.topology == Portal::Graphics::PrimitiveTopology::LINE_LIST
+                    || run.topology == Portal::Graphics::PrimitiveTopology::LINE_STRIP) {
+                    run.topology = Portal::Graphics::PrimitiveTopology::POINT_LIST;
+                }
+            }
+        }
         m_render_processor->set_runs(std::move(runs));
     }
 }

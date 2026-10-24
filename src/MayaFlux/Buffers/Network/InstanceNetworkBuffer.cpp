@@ -87,15 +87,15 @@ void InstanceNetworkBuffer::setup_rendering(const RenderConfig& config)
     for (const auto& [name, tex] : config.additional_textures)
         m_render_config.additional_textures.emplace_back(name, tex);
 
-    if (Portal::Graphics::needs_triangulation(m_render_config.topology, m_render_config.polygon_mode)) {
-        m_render_config.triangulate = true;
-    }
+    const auto mill = configure_mill_enforcement(m_render_config);
 
     if (m_render_config.triangulate) {
         if (m_render_config.vertex_shader.empty())
             m_render_config.vertex_shader = "instance_milled.vert.spv";
         if (m_render_config.fragment_shader.empty())
-            m_render_config.fragment_shader = "milled_shape.frag.spv";
+            m_render_config.fragment_shader = mill.wireframe
+                ? "instance_milled_wireframe.frag"
+                : "milled_shape.frag.spv";
         m_render_config.geometry_shader.clear();
     } else {
         switch (m_render_config.topology) {
@@ -135,6 +135,12 @@ void InstanceNetworkBuffer::setup_rendering(const RenderConfig& config)
         sc.bindings[name] = ShaderBinding(0, 2 + binding_idx++, vk::DescriptorType::eCombinedImageSampler);
 
     apply_render_config(m_render_config, sc);
+
+    if (mill.points) {
+        auto mill_spec = m_render_processor->get_mill_spec();
+        mill_spec.use_vertex_extent = false;
+        m_render_processor->set_mill_spec(mill_spec);
+    }
 
     for (const auto& [name, tex] : m_render_config.additional_textures)
         m_render_processor->bind_texture(name, tex);

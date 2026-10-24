@@ -21,6 +21,7 @@ layout(location = 0) out vec3 out_color;
 layout(location = 1) out float out_thickness;
 layout(location = 2) out vec2 out_uv;
 layout(location = 3) out vec3 out_world_pos;
+layout(location = 4) out vec3 out_barycentric;
 
 void main()
 {
@@ -31,4 +32,9 @@ void main()
     out_thickness = in_thickness;
     out_uv = in_uv;
     out_world_pos = world_pos.xyz;
+
+    uint corner = uint(gl_VertexIndex) % 3u;
+    out_barycentric = corner == 0u ? vec3(1.0, 0.0, 0.0)
+        : corner == 1u ? vec3(0.0, 1.0, 0.0)
+                       : vec3(0.0, 0.0, 1.0);
 }
