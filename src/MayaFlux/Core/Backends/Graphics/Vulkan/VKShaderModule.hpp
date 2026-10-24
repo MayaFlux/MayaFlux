@@ -185,7 +185,7 @@ public:
      * @brief Create shader module from SPIR-V assembly text.
      *
      * Assembles human-readable SPIR-V opcodes to binary via spvTextToBinary
-     * targeting Vulkan 1.3, then delegates to create_from_spirv(). Does not
+     * targeting Vulkan 1.4, then delegates to create_from_spirv(). Does not
      * require shaderc or any GLSL toolchain.
      *
      * @param device            Logical device.

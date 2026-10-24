@@ -58,7 +58,7 @@ bool VKInstance::initialize(bool enable_validation,
     app_info.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
     app_info.pEngineName = "MayaFlux Engine";
     app_info.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-    app_info.apiVersion = VK_API_VERSION_1_3;
+    app_info.apiVersion = VK_API_VERSION_1_4;
 
     vk::InstanceCreateInfo create_info {};
     create_info.pApplicationInfo = &app_info;

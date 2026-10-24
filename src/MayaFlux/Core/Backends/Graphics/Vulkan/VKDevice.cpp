@@ -369,8 +369,8 @@ bool VKDevice::pick_physical_device(vk::Instance instance, const GraphicsBackend
 
         if (!cand.families.graphics_family.has_value()) {
             cand.reject_reason = "no graphics queue family";
-        } else if (cand.api_version < VK_API_VERSION_1_3) {
-            cand.reject_reason = "device API version below 1.3";
+        } else if (cand.api_version < VK_API_VERSION_1_4) {
+            cand.reject_reason = "device API version below 1.4";
         } else if (!cand.has_swapchain) {
             cand.reject_reason = "no VK_KHR_swapchain";
         } else if (backend_info.require_presentation && !cand.graphics_presents) {

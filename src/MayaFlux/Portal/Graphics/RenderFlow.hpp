@@ -25,7 +25,7 @@ const std::array<float, 4> default_color { 0.0F, 0.0F, 0.0F, 1.0F };
  * @brief Graphics pipeline orchestration for dynamic rendering
  *
  * RenderFlow is the rendering counterpart to ComputePress.
- * It manages graphics pipelines and draw command recording using Vulkan 1.3 dynamic rendering.
+ * It manages graphics pipelines and draw command recording using Vulkan 1.4 dynamic rendering.
  *
  * Responsibilities:
  * - Create graphics pipelines for dynamic rendering

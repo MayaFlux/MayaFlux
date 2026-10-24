@@ -3,7 +3,7 @@ include(GNUInstallDirs)
 if(WIN32)
     message(STATUS "=== Windows Dependency Detection ===")
 
-    find_package(Vulkan REQUIRED)
+    find_package(Vulkan 1.4 REQUIRED)
 
     find_package(eigen3 CONFIG REQUIRED)
     find_package(glm CONFIG REQUIRED)
@@ -35,10 +35,10 @@ else()
     find_package(PkgConfig REQUIRED)
 
     if(APPLE)
-        find_package(Vulkan REQUIRED)
+        find_package(Vulkan 1.4 REQUIRED)
         pkg_check_modules(HIDAPI REQUIRED IMPORTED_TARGET hidapi)
     else()
-        pkg_check_modules(Vulkan REQUIRED IMPORTED_TARGET vulkan)
+        pkg_check_modules(Vulkan REQUIRED IMPORTED_TARGET vulkan>=1.4)
         pkg_search_module(HIDAPI REQUIRED IMPORTED_TARGET
             hidapi-hidraw hidapi-libusb hidapi)
         pkg_check_modules(Fontconfig REQUIRED IMPORTED_TARGET fontconfig)

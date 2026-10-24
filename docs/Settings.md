@@ -182,7 +182,7 @@ present=gfx:yes mask:0x7 mesh=yes vram=24560MB pci_bus=3 | score=4623
 ```
 
 Devices that cannot be used are listed too, with the reason: no graphics queue
-family, an API version below 1.3, no `VK_KHR_swapchain`, or no presentation
+family, an API version below 1.4, no `VK_KHR_swapchain`, or no presentation
 support on the graphics queue family.
 
 ```cpp
