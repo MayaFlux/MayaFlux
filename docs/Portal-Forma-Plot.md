@@ -2,7 +2,8 @@
 
 A plot is a `Mapped<shared_ptr<PlotContainer>>` on a `Surface`. The container
 holds one or more named scalar series. A geometry function reads those series
-each frame and writes vertex bytes into a `FormaBuffer`. `sync()` drives it.
+each frame and writes vertex bytes into a `FormaTarget` slice of a shared
+`FormaBuffer`. `sync()` drives it.
 
 Everything is `f(x)`: what the data is, where it comes from, how it maps to
 screen space, how it is encoded into geometry, and when it updates. The builder
@@ -59,8 +60,8 @@ anything else. It affects how `process_default()` acquires from node bindings.
 ## Describing the geometry
 
 `Plot::series()` accumulates axis role mappings and an optional global palette,
-then terminals produce a `SeriesSpec` carrying the geometry function, topology,
-and buffer capacity arithmetic.
+then terminals produce a `SeriesSpec` carrying the geometry function and slice
+topology. The batch grows to fit the generated geometry.
 
 ### Waveform (LINE_STRIP)
 
@@ -72,9 +73,9 @@ auto spec = Plot::series()
     .done();
 ```
 
-Y series from the container are drawn as separate LINE_STRIP runs joined by
-degenerate vertices, sharing one buffer. X positions are uniform when no
-`SPATIAL_X` series is present.
+Y series from the container are joined by degenerate vertices in one
+LINE_STRIP plot slice. The batch triangulates that slice for rendering.
+X positions are uniform when no `SPATIAL_X` series is present.
 
 ### Scatter (POINT_LIST)
 
@@ -152,15 +153,17 @@ auto spec = Plot::series()
     .y(Role::SPATIAL_Y, AxisRange{}.range(-1.F, 1.F), { glm::vec3(0.2F, 0.9F, 0.6F) })
     .as_waveform().thickness(1.5F).done();
 
-auto buf = Portal::Forma::create_buffer(surface.window(), spec.capacity_for(N), spec.topology);
+auto batch = Portal::Forma::create_buffer(surface.render_config());
+auto target = Portal::Forma::FormaTarget::slice_of(batch, spec.topology);
 
-auto el = Plot::place(surface, buf, std::move(spec), std::move(container));
+auto el = Plot::place(surface, target, std::move(spec), std::move(container));
 
 schedule_metro(1.0 / 60.0, [el = std::move(el)]() mutable { el.sync(); });
 ```
 
-`spec.capacity_for(N)` and `spec.topology` encode the correct buffer size and
-primitive type for the chosen encoding. You never supply these manually.
+`spec.topology` selects the slice's input primitive type. `create_buffer()`
+creates a triangulating batch that grows as geometry is submitted. Pass the
+same batch to other Forma elements when they should draw together.
 
 `sync()` reruns the geometry function unconditionally for plot elements
 (`force_redraw_on_sync` is set by `Plot::place`). Call it as often as you
@@ -180,8 +183,8 @@ auto [el, surface] = Portal::Forma::plot("Plot Window", 1280, 720,
 schedule_metro(1.0 / 60.0, [el = std::move(el)]() mutable { el.sync(); });
 ```
 
-Creates the window, shows it, builds the surface, constructs and registers the
-buffer, runs the first sync. Returns the `Mapped` and the `Surface`.
+Creates the window, shows it, builds the surface, places the plot in a geometry
+batch, and runs the first sync. Returns the `Mapped` and the `Surface`.
 
 ---
 
@@ -243,8 +246,10 @@ For a live audio source that must stay in sync with actual buffer output, call
 plot shares a window with other Forma elements:
 
 ```cpp
-auto buf = Portal::Forma::create_buffer(surface.window(), spec.capacity_for(N), spec.topology);
-auto el  = Plot::place(surface, std::move(buf), std::move(spec), std::move(container));
+auto batch = Portal::Forma::create_buffer(surface.render_config());
+auto el = Plot::place(surface,
+    Portal::Forma::FormaTarget::slice_of(batch, spec.topology),
+    std::move(spec), std::move(container));
 ```
 
 ## Adornments
@@ -354,9 +359,35 @@ schedule_metro(1.0 / 60.0, [el = std::move(el)]() mutable { el.sync(); });
 ```
 
 Adornments are only materialized automatically when using `Portal::Forma::plot()`.
-On the manual path (`Plot::place()` directly), adornment buffers must be
-constructed and placed explicitly via `Plot::place_label()` and
-`Plot::place_rect()`.
+It places the background, series, legend swatches, and labels in one batch.
+When labels are present, the batch has a `"text"` texture slot for the glyph
+atlas. The plot shader draws nonnegative vertex weights as plain color and
+negative weights as glyph coverage, leaving point size and line thickness
+available to the geometry mill.
+
+On the manual path (`Plot::place()` directly), place adornments explicitly.
+Give each rectangle a `TRIANGLE_STRIP` slice and each label a `TRIANGLE_LIST`
+slice of the same text-capable plot batch:
+
+```cpp
+auto batch = Portal::Forma::create_buffer(surface.render_config({
+    .fragment_shader = "forma_plot.frag.spv",
+    .additional_textures = { { "text", nullptr } },
+}));
+auto el = Plot::place(surface,
+    Portal::Forma::FormaTarget::slice_of(batch, spec.topology),
+    std::move(spec), std::move(container));
+
+(void)Plot::place_rect(surface,
+    Portal::Forma::FormaTarget::slice_of(batch, Graphics::PrimitiveTopology::TRIANGLE_STRIP),
+    swatch, el.element.id);
+(void)Plot::place_label(surface,
+    Portal::Forma::FormaTarget::slice_of(batch, Graphics::PrimitiveTopology::TRIANGLE_LIST),
+    label, el.element.id);
+```
+
+Here `swatch` and `label` are the corresponding `Plot::RectSpec` and
+`Plot::LabelSpec`.
 
 ---
 
@@ -464,7 +495,7 @@ schedule_metro(1.0 / 60.0, [el = std::move(el)]() mutable { el.sync(); });
 Each `.x()` and `.y()` call appends an independent axis mapping with its own
 `AxisRange`. The geometry function pairs them by mapping index: first `.x()`
 against first `.y()`, second `.x()` against second `.y()`, and so on. All
-pairs land in one buffer and one draw call.
+pairs land in the same plot slice of the geometry batch.
 
 **Two Lissajous figures, one scatter, different frequencies**
 
@@ -506,7 +537,7 @@ Two `SPATIAL_X` series and two `SPATIAL_Y` series under one `.x()` and one
 **Two independent X ranges, two Y series**
 
 Two separate `.x()` calls each carry their own `AxisRange`, letting two scatter
-clouds with completely different domains overlay in the same draw call:
+clouds with completely different domains overlay in the same plot slice:
 
 ```cpp
 auto [el, _] = Portal::Forma::plot("Dual Domain", 1280, 720,
@@ -560,7 +591,7 @@ schedule_metro(1.0 / 60.0, [el = std::move(el)]() mutable { el.sync(); });
 ```
 
 One `TIME` series shared as X for both `SPATIAL_Y` series. Both waveforms land
-in the same LINE_STRIP buffer as separate runs separated by degenerate vertices.
+in the same LINE_STRIP plot slice, separated by degenerate vertices.
 
 **Three node phase portraits**
 
@@ -617,10 +648,11 @@ GeometryFn<std::shared_ptr<Kakshya::PlotContainer>> geom =
 SeriesSpec spec {
     .fn           = geom,
     .topology     = Graphics::PrimitiveTopology::POINT_LIST,
-    .capacity_for = [](uint64_t n) { return n * 60; },
 };
 
-auto buf = Portal::Forma::create_buffer(surface.window(), spec.capacity_for(N), spec.topology);
-auto el  = Plot::place(surface, std::move(buf), std::move(spec), std::move(container));
+auto batch = Portal::Forma::create_buffer(surface.render_config());
+auto el = Plot::place(surface,
+    Portal::Forma::FormaTarget::slice_of(batch, spec.topology),
+    std::move(spec), std::move(container));
 schedule_metro(1.0 / 60.0, [el = std::move(el)]() mutable { el.sync(); });
 ```
