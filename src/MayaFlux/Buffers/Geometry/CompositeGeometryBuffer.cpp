@@ -95,9 +95,9 @@ void CompositeGeometryBuffer::add_geometry(
     case Portal::Graphics::PrimitiveTopology::LINE_STRIP:
         config.fragment_shader = "line.frag.spv";
         config.vertex_shader = "line.vert.spv";
-#ifdef MAYAFLUX_PLATFORM_MACOS
-        config.triangulate = true;
-#endif
+        if (Portal::Graphics::needs_triangulation(topology, config.polygon_mode)) {
+            config.triangulate = true;
+        }
 
         if (config.triangulate) {
             config.geometry_shader.clear();

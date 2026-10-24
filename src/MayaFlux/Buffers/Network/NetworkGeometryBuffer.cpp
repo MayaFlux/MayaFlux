@@ -24,8 +24,9 @@ namespace {
      * unconditionally -- config.topology is span ordering under triangulate,
      * not a pipeline selector.
      *
-     * macOS forces it on for LINE_LIST/LINE_STRIP only, since that platform
-     * has no geometry shader for line.geom's NDC expansion. Everything else
+     * It is forced on where Portal::Graphics::needs_triangulation says the
+     * device cannot draw the topology natively, such as lines without a
+     * geometry shader for line.geom's NDC expansion. Everything else
      * triangulates only when asked.
      *
      * Otherwise, point.vert/point.frag and line.vert/line.frag/line.geom
@@ -37,12 +38,9 @@ namespace {
     {
         VKBuffer::RenderConfig resolved_config = config;
 
-#ifdef MAYAFLUX_PLATFORM_MACOS
-        if (config.topology == Portal::Graphics::PrimitiveTopology::LINE_LIST
-            || config.topology == Portal::Graphics::PrimitiveTopology::LINE_STRIP) {
+        if (Portal::Graphics::needs_triangulation(config.topology, config.polygon_mode)) {
             resolved_config.triangulate = true;
         }
-#endif
 
         if (resolved_config.triangulate) {
             if (config.vertex_shader.empty())

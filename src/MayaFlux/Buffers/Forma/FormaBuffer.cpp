@@ -91,9 +91,9 @@ void FormaBuffer::setup_rendering(const RenderConfig& config)
             resolved.vertex_shader = "line.vert.spv";
         if (resolved.fragment_shader.empty())
             resolved.fragment_shader = "line.frag.spv";
-#ifdef MAYAFLUX_PLATFORM_MACOS
-        resolved.triangulate = true;
-#endif
+        if (Portal::Graphics::needs_triangulation(resolved.topology, resolved.polygon_mode)) {
+            resolved.triangulate = true;
+        }
 
         if (resolved.triangulate) {
             resolved.geometry_shader.clear();

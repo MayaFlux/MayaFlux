@@ -429,4 +429,16 @@ struct DrawRun {
     return 0U;
 }
 
+/**
+ * @brief Whether this device cannot draw @p topology in @p mode natively, so
+ *        the span has to be triangulated by the mill instead.
+ *
+ * Line topologies need it when the device has no geometry shader, and a
+ * triangle topology needs it for LINE or POINT fill when the device has no
+ * fillModeNonSolid. Answers false before Portal::Graphics is initialized.
+ */
+[[nodiscard]] MAYAFLUX_API bool needs_triangulation(
+    PrimitiveTopology topology,
+    PolygonMode mode = PolygonMode::FILL);
+
 }

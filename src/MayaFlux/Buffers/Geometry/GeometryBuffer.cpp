@@ -99,9 +99,9 @@ void GeometryBuffer::setup_rendering(const RenderConfig& config)
         if (config.fragment_shader.empty())
             resolved_config.fragment_shader = "line.frag.spv";
 
-#ifdef MAYAFLUX_PLATFORM_MACOS
-        resolved_config.triangulate = true;
-#endif
+        if (Portal::Graphics::needs_triangulation(resolved_config.topology, resolved_config.polygon_mode)) {
+            resolved_config.triangulate = true;
+        }
 
         if (resolved_config.triangulate) {
             resolved_config.geometry_shader.clear();

@@ -121,9 +121,9 @@ void add_render_sink(
                 rc.vertex_shader = "line.vert.spv";
             if (rc.fragment_shader.empty())
                 rc.fragment_shader = "line.frag.spv";
-#ifdef MAYAFLUX_PLATFORM_MACOS
-            rc.triangulate = true;
-#endif
+            if (Portal::Graphics::needs_triangulation(rc.topology, rc.polygon_mode)) {
+                rc.triangulate = true;
+            }
 
             if (rc.triangulate) {
                 rc.geometry_shader.clear();

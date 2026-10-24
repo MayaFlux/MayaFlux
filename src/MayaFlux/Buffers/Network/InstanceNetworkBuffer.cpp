@@ -87,12 +87,9 @@ void InstanceNetworkBuffer::setup_rendering(const RenderConfig& config)
     for (const auto& [name, tex] : config.additional_textures)
         m_render_config.additional_textures.emplace_back(name, tex);
 
-#ifdef MAYAFLUX_PLATFORM_MACOS
-    if (m_render_config.topology == Portal::Graphics::PrimitiveTopology::LINE_LIST
-        || m_render_config.topology == Portal::Graphics::PrimitiveTopology::LINE_STRIP) {
+    if (Portal::Graphics::needs_triangulation(m_render_config.topology, m_render_config.polygon_mode)) {
         m_render_config.triangulate = true;
     }
-#endif
 
     if (m_render_config.triangulate) {
         if (m_render_config.vertex_shader.empty())
