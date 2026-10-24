@@ -507,17 +507,10 @@ bool PrimitiveMill::ensure_kernel()
     }
 
     auto& press = get_compute_press();
-    m_pipeline = press.create_pipeline_auto(m_shader, m_push_constant_size);
+    m_pipeline = press.create_pipeline_auto(m_shader, m_push_constant_size, 0);
     if (m_pipeline == INVALID_COMPUTE_PIPELINE) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
             "PrimitiveMill: pipeline creation failed");
-        return false;
-    }
-
-    m_sets = press.allocate_pipeline_descriptors(m_pipeline);
-    if (m_sets.empty()) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
-            "PrimitiveMill: descriptor allocation failed");
         return false;
     }
 
@@ -560,8 +553,6 @@ bool PrimitiveMill::ensure_buffers(
 
         m_output_capacity = grown;
         m_output_slot = 0;
-        m_descriptors_written = false;
-        m_bound_source.reset();
     } else {
         for (auto& slot : m_outputs) {
             auto milled_layout = *slot->get_vertex_layout();
@@ -575,7 +566,6 @@ bool PrimitiveMill::ensure_buffers(
         m_run_buf = std::make_shared<VKBuffer>(
             run_bytes, VKBuffer::Usage::HOST_STORAGE, Kakshya::DataModality::UNKNOWN);
         svc->initialize_buffer(m_run_buf);
-        m_bound_source.reset();
     }
 
     const auto prefix_bytes = std::max<size_t>(m_prefix.size() * sizeof(uint32_t), sizeof(uint32_t));
@@ -583,36 +573,9 @@ bool PrimitiveMill::ensure_buffers(
         m_prefix_buf = std::make_shared<VKBuffer>(
             prefix_bytes, VKBuffer::Usage::HOST_STORAGE, Kakshya::DataModality::UNKNOWN);
         svc->initialize_buffer(m_prefix_buf);
-        m_bound_source.reset();
     }
 
     return !m_outputs.empty() && m_run_buf && m_prefix_buf;
-}
-
-void PrimitiveMill::write_descriptors(const std::shared_ptr<VKBuffer>& source)
-{
-    if (m_descriptors_written && m_bound_source.lock() == source
-        && m_bound_slot == m_output_slot) {
-        return;
-    }
-
-    auto& foundry = get_shader_foundry();
-    const auto set = m_sets.front();
-
-    const auto bind = [&](uint32_t binding, const std::shared_ptr<VKBuffer>& buf) {
-        foundry.update_descriptor_buffer(
-            set, binding, vk::DescriptorType::eStorageBuffer,
-            buf->get_buffer(), 0, buf->get_size_bytes());
-    };
-
-    bind(0, source);
-    bind(1, m_run_buf);
-    bind(2, m_prefix_buf);
-    bind(3, m_outputs[m_output_slot]);
-
-    m_bound_source = source;
-    m_bound_slot = m_output_slot;
-    m_descriptors_written = true;
 }
 
 void PrimitiveMill::resolve_pending()
@@ -695,8 +658,6 @@ uint32_t PrimitiveMill::mill(
     }
     std::memcpy(prefix_ptr, m_prefix.data(), m_prefix.size() * sizeof(uint32_t));
 
-    write_descriptors(source);
-
     const auto pc = make_pc(m_spec, view, off, total, runs.size());
 
     auto& foundry = get_shader_foundry();
@@ -714,7 +675,22 @@ uint32_t PrimitiveMill::mill(
         vk::PipelineStageFlagBits2::eVertexInput,
         vk::PipelineStageFlagBits2::eComputeShader);
 
-    press.bind_all(cmd_id, m_pipeline, m_sets, &pc, sizeof(MillPC));
+    const auto storage_write = [](uint32_t binding, const std::shared_ptr<VKBuffer>& buf) {
+        PushDescriptorWrite write;
+        write.binding = binding;
+        write.type = vk::DescriptorType::eStorageBuffer;
+        write.buffer = vk::DescriptorBufferInfo { buf->get_buffer(), 0, buf->get_size_bytes() };
+        return write;
+    };
+
+    press.bind_pipeline(cmd_id, m_pipeline);
+    press.push_descriptors(cmd_id, m_pipeline, {
+                                                   storage_write(0, source),
+                                                   storage_write(1, m_run_buf),
+                                                   storage_write(2, m_prefix_buf),
+                                                   storage_write(3, m_outputs[m_output_slot]),
+                                               });
+    press.push_constants(cmd_id, m_pipeline, &pc, sizeof(MillPC));
     press.dispatch(cmd_id, (total + WORKGROUP - 1) / WORKGROUP, 1, 1);
 
     foundry.buffer_barrier(
@@ -757,10 +733,6 @@ void PrimitiveMill::release()
         m_shader = INVALID_SHADER;
     }
 
-    m_sets.clear();
-    m_bound_source.reset();
-    m_bound_slot = 0;
-    m_descriptors_written = false;
     m_outputs.clear();
     m_output_slot = 0;
     m_run_buf.reset();

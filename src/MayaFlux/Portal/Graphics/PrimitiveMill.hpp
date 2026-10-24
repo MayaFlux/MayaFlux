@@ -95,7 +95,7 @@ struct MillView {
  * to, so a vertex shader written against the source layout consumes the result
  * unchanged.
  *
- * Owns its kernel, pipeline, descriptor sets and destination buffers, and
+ * Owns its kernel, pipeline and destination buffers, and
  * dispatches through ComputePress directly. It is a dispatch driver in the
  * manner of Yantra's GPU executor, not a BufferProcessor: no processing token,
  * no attach, no chain membership, no per-cycle driver. Milling is demand driven
@@ -211,11 +211,11 @@ public:
     /** @brief Replace the spec. Takes effect on the next mill(). */
     void set_spec(const MillSpec& spec) { m_spec = spec; }
 
-    /** @brief Destroy the kernel, pipeline, descriptor sets and buffers. */
+    /** @brief Destroy the kernel, pipeline and buffers. */
     void release();
 
 private:
-    /** @brief Compiles the kernel and allocates its descriptor sets, once. */
+    /** @brief Compiles the kernel and creates its pipeline with a push descriptor set, once. */
     bool ensure_kernel();
 
     /**
@@ -233,16 +233,6 @@ private:
         size_t run_count);
 
     /**
-     * @brief Points the descriptor set at the current buffer set, on any change
-     *        of source or ring slot.
-     *
-     * Rewriting a shared set is safe here because resolve_pending() has already
-     * retired the only submission that reads it, and the draw takes the milled
-     * buffer as vertex input rather than through this set.
-     */
-    void write_descriptors(const std::shared_ptr<Buffers::VKBuffer>& source);
-
-    /**
      * @brief Wait on and reclaim the previous dispatch, if one is outstanding.
      *
      * Cheap in steady state: the work was submitted a frame earlier and has
@@ -254,7 +244,6 @@ private:
 
     ShaderID m_shader { INVALID_SHADER };
     ComputePipelineID m_pipeline { INVALID_COMPUTE_PIPELINE };
-    std::vector<DescriptorSetID> m_sets;
     size_t m_push_constant_size { 0 };
 
     /// Milled buffers rotated between dispatches, all at m_output_capacity.
@@ -262,17 +251,10 @@ private:
     std::shared_ptr<Buffers::VKBuffer> m_run_buf;
     std::shared_ptr<Buffers::VKBuffer> m_prefix_buf;
 
-    /// Source the descriptor set currently points at, for invalidation.
-    std::weak_ptr<Buffers::VKBuffer> m_bound_source;
-
     std::vector<uint32_t> m_prefix;
 
     uint32_t m_output_ring { 2 };
     size_t m_output_slot { 0 };
-
-    /// Ring slot the descriptor set currently points at, for invalidation.
-    size_t m_bound_slot { 0 };
-    bool m_descriptors_written { false };
 
     uint32_t m_milled_count { 0 };
     uint32_t m_output_capacity { 0 };
