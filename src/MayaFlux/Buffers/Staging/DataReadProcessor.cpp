@@ -261,9 +261,9 @@ void DataReadProcessor::read_texture_pixels()
             self.m_texture_staging = create_image_staging_buffer(byte_count);
         }
 
-        vk::PipelineStageFlags restore_stage = vk::PipelineStageFlagBits::eFragmentShader;
+        vk::PipelineStageFlags2 restore_stage = vk::PipelineStageFlagBits2::eFragmentShader;
         if (original_layout == vk::ImageLayout::eGeneral) {
-            restore_stage |= vk::PipelineStageFlagBits::eComputeShader;
+            restore_stage |= vk::PipelineStageFlagBits2::eComputeShader;
         }
 
         pending.image = loom.download_image(image, self.m_texture_staging, original_layout, restore_stage);

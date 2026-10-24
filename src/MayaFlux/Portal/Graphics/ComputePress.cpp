@@ -467,10 +467,10 @@ void ComputePress::record_sequence(
             foundry.buffer_barrier(
                 cmd_id,
                 stage.indirect.buffer,
-                vk::AccessFlagBits::eShaderWrite,
-                vk::AccessFlagBits::eIndirectCommandRead,
-                vk::PipelineStageFlagBits::eComputeShader,
-                vk::PipelineStageFlagBits::eDrawIndirect);
+                vk::AccessFlagBits2::eShaderWrite,
+                vk::AccessFlagBits2::eIndirectCommandRead,
+                vk::PipelineStageFlagBits2::eComputeShader,
+                vk::PipelineStageFlagBits2::eDrawIndirect);
             dispatch_indirect(cmd_id, stage.indirect.buffer, stage.indirect.offset);
         } else {
             dispatch(cmd_id, stage.groups[0], stage.groups[1], stage.groups[2]);
@@ -489,18 +489,18 @@ void ComputePress::record_sequence(
                     hazard.image,
                     vk::ImageLayout::eGeneral,
                     vk::ImageLayout::eGeneral,
-                    vk::AccessFlagBits::eShaderWrite | vk::AccessFlagBits::eShaderRead,
-                    vk::AccessFlagBits::eShaderWrite | vk::AccessFlagBits::eShaderRead,
-                    vk::PipelineStageFlagBits::eComputeShader,
-                    vk::PipelineStageFlagBits::eComputeShader);
+                    vk::AccessFlagBits2::eShaderWrite | vk::AccessFlagBits2::eShaderRead,
+                    vk::AccessFlagBits2::eShaderWrite | vk::AccessFlagBits2::eShaderRead,
+                    vk::PipelineStageFlagBits2::eComputeShader,
+                    vk::PipelineStageFlagBits2::eComputeShader);
             } else {
                 foundry.buffer_barrier(
                     cmd_id,
                     hazard.buffer,
-                    vk::AccessFlagBits::eShaderWrite | vk::AccessFlagBits::eShaderRead,
-                    vk::AccessFlagBits::eShaderWrite | vk::AccessFlagBits::eShaderRead,
-                    vk::PipelineStageFlagBits::eComputeShader,
-                    vk::PipelineStageFlagBits::eComputeShader);
+                    vk::AccessFlagBits2::eShaderWrite | vk::AccessFlagBits2::eShaderRead,
+                    vk::AccessFlagBits2::eShaderWrite | vk::AccessFlagBits2::eShaderRead,
+                    vk::PipelineStageFlagBits2::eComputeShader,
+                    vk::PipelineStageFlagBits2::eComputeShader);
             }
         }
 

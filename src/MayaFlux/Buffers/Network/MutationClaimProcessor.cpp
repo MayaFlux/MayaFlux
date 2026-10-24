@@ -301,10 +301,10 @@ void ClaimFlattenProcessor::on_iteration_barrier(
 
     Portal::Graphics::get_shader_foundry().buffer_barrier(
         cmd_id, handle,
-        vk::AccessFlagBits::eShaderWrite,
-        vk::AccessFlagBits::eShaderRead | vk::AccessFlagBits::eShaderWrite,
-        vk::PipelineStageFlagBits::eComputeShader,
-        vk::PipelineStageFlagBits::eComputeShader);
+        vk::AccessFlagBits2::eShaderWrite,
+        vk::AccessFlagBits2::eShaderRead | vk::AccessFlagBits2::eShaderWrite,
+        vk::PipelineStageFlagBits2::eComputeShader,
+        vk::PipelineStageFlagBits2::eComputeShader);
 }
 
 //=============================================================================

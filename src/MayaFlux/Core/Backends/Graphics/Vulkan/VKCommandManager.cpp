@@ -144,11 +144,14 @@ void VKCommandManager::end_single_time_commands(vk::CommandBuffer command_buffer
 {
     command_buffer.end();
 
-    vk::SubmitInfo submit_info {};
-    submit_info.commandBufferCount = 1;
-    submit_info.pCommandBuffers = &command_buffer;
+    vk::CommandBufferSubmitInfo cmd_info {};
+    cmd_info.commandBuffer = command_buffer;
 
-    if (auto result = queue.submit(1, &submit_info, nullptr); result != vk::Result::eSuccess) {
+    vk::SubmitInfo2 submit_info {};
+    submit_info.commandBufferInfoCount = 1;
+    submit_info.pCommandBufferInfos = &cmd_info;
+
+    if (auto result = queue.submit2(1, &submit_info, nullptr); result != vk::Result::eSuccess) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
             "Failed to submit single time command buffer: {}", vk::to_string(result));
     }

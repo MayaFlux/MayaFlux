@@ -183,7 +183,7 @@ public:
         const std::shared_ptr<Buffers::VKBuffer>& staging = nullptr,
         bool deferred = false,
         vk::ImageLayout restore_layout = vk::ImageLayout::eShaderReadOnlyOptimal,
-        vk::PipelineStageFlags restore_stage = vk::PipelineStageFlagBits::eFragmentShader);
+        vk::PipelineStageFlags2 restore_stage = vk::PipelineStageFlagBits2::eFragmentShader);
 
     /**
      * @brief Upload pixel data into one layer of an array image.

@@ -15,6 +15,21 @@ namespace {
         vk::CommandBuffer cmd;
         vk::Fence fence;
     };
+
+    void record_barrier(
+        vk::CommandBuffer cmd,
+        vk::ImageMemoryBarrier2& barrier,
+        vk::PipelineStageFlags2 src_stage,
+        vk::PipelineStageFlags2 dst_stage)
+    {
+        barrier.srcStageMask = src_stage;
+        barrier.dstStageMask = dst_stage;
+
+        vk::DependencyInfo dependency {};
+        dependency.imageMemoryBarrierCount = 1;
+        dependency.pImageMemoryBarriers = &barrier;
+        cmd.pipelineBarrier2(dependency);
+    }
 }
 
 BackendResourceManager::BackendResourceManager(VKContext& context, VKCommandManager& command_manager)
@@ -124,11 +139,14 @@ void BackendResourceManager::setup_backend_service(const std::shared_ptr<Registr
         vk::FenceCreateInfo fence_info {};
         vk::Fence fence = device.createFence(fence_info);
 
-        vk::SubmitInfo submit_info {};
-        submit_info.commandBufferCount = 1;
-        submit_info.pCommandBuffers = &cmd;
+        vk::CommandBufferSubmitInfo cmd_info {};
+        cmd_info.commandBuffer = cmd;
 
-        if (auto result = m_context.get_graphics_queue().submit(1, &submit_info, fence);
+        vk::SubmitInfo2 submit_info {};
+        submit_info.commandBufferInfoCount = 1;
+        submit_info.pCommandBufferInfos = &cmd_info;
+
+        if (auto result = m_context.get_graphics_queue().submit2(1, &submit_info, fence);
             result != vk::Result::eSuccess) {
             MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
                 "execute_fenced: queue submit failed: {}", vk::to_string(result));
@@ -591,7 +609,7 @@ void BackendResourceManager::transition_image_layout(
     vk::ImageAspectFlags aspect_flags)
 {
     execute_immediate_commands([&](vk::CommandBuffer cmd) {
-        vk::ImageMemoryBarrier barrier {};
+        vk::ImageMemoryBarrier2 barrier {};
         barrier.oldLayout = old_layout;
         barrier.newLayout = new_layout;
         barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
@@ -603,66 +621,60 @@ void BackendResourceManager::transition_image_layout(
         barrier.subresourceRange.baseArrayLayer = 0;
         barrier.subresourceRange.layerCount = array_layers;
 
-        vk::PipelineStageFlags src_stage;
-        vk::PipelineStageFlags dst_stage;
+        vk::PipelineStageFlags2 src_stage;
+        vk::PipelineStageFlags2 dst_stage;
 
         if (old_layout == vk::ImageLayout::eUndefined && new_layout == vk::ImageLayout::eTransferDstOptimal) {
-            barrier.srcAccessMask = vk::AccessFlags {};
-            barrier.dstAccessMask = vk::AccessFlagBits::eTransferWrite;
-            src_stage = vk::PipelineStageFlagBits::eTopOfPipe;
-            dst_stage = vk::PipelineStageFlagBits::eTransfer;
+            barrier.srcAccessMask = vk::AccessFlags2 {};
+            barrier.dstAccessMask = vk::AccessFlagBits2::eTransferWrite;
+            src_stage = vk::PipelineStageFlagBits2::eNone;
+            dst_stage = vk::PipelineStageFlagBits2::eTransfer;
         } else if (old_layout == vk::ImageLayout::eTransferDstOptimal && new_layout == vk::ImageLayout::eShaderReadOnlyOptimal) {
-            barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
-            barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
-            src_stage = vk::PipelineStageFlagBits::eTransfer;
-            dst_stage = vk::PipelineStageFlagBits::eFragmentShader;
+            barrier.srcAccessMask = vk::AccessFlagBits2::eTransferWrite;
+            barrier.dstAccessMask = vk::AccessFlagBits2::eShaderRead;
+            src_stage = vk::PipelineStageFlagBits2::eTransfer;
+            dst_stage = vk::PipelineStageFlagBits2::eFragmentShader;
         } else if (old_layout == vk::ImageLayout::eUndefined && new_layout == vk::ImageLayout::eShaderReadOnlyOptimal) {
-            barrier.srcAccessMask = vk::AccessFlags {};
-            barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
-            src_stage = vk::PipelineStageFlagBits::eTopOfPipe;
-            dst_stage = vk::PipelineStageFlagBits::eFragmentShader;
+            barrier.srcAccessMask = vk::AccessFlags2 {};
+            barrier.dstAccessMask = vk::AccessFlagBits2::eShaderRead;
+            src_stage = vk::PipelineStageFlagBits2::eNone;
+            dst_stage = vk::PipelineStageFlagBits2::eFragmentShader;
         } else if (old_layout == vk::ImageLayout::eUndefined && new_layout == vk::ImageLayout::eColorAttachmentOptimal) {
-            barrier.srcAccessMask = vk::AccessFlags {};
-            barrier.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
-            src_stage = vk::PipelineStageFlagBits::eTopOfPipe;
-            dst_stage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+            barrier.srcAccessMask = vk::AccessFlags2 {};
+            barrier.dstAccessMask = vk::AccessFlagBits2::eColorAttachmentWrite;
+            src_stage = vk::PipelineStageFlagBits2::eNone;
+            dst_stage = vk::PipelineStageFlagBits2::eColorAttachmentOutput;
         } else if (old_layout == vk::ImageLayout::eUndefined && new_layout == vk::ImageLayout::eDepthStencilAttachmentOptimal) {
-            barrier.srcAccessMask = vk::AccessFlags {};
-            barrier.dstAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite;
-            src_stage = vk::PipelineStageFlagBits::eTopOfPipe;
-            dst_stage = vk::PipelineStageFlagBits::eEarlyFragmentTests;
+            barrier.srcAccessMask = vk::AccessFlags2 {};
+            barrier.dstAccessMask = vk::AccessFlagBits2::eDepthStencilAttachmentRead | vk::AccessFlagBits2::eDepthStencilAttachmentWrite;
+            src_stage = vk::PipelineStageFlagBits2::eNone;
+            dst_stage = vk::PipelineStageFlagBits2::eEarlyFragmentTests;
         } else if (old_layout == vk::ImageLayout::eUndefined && new_layout == vk::ImageLayout::eGeneral) {
-            barrier.srcAccessMask = vk::AccessFlags {};
-            barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead | vk::AccessFlagBits::eShaderWrite;
-            src_stage = vk::PipelineStageFlagBits::eTopOfPipe;
-            dst_stage = vk::PipelineStageFlagBits::eComputeShader;
+            barrier.srcAccessMask = vk::AccessFlags2 {};
+            barrier.dstAccessMask = vk::AccessFlagBits2::eShaderRead | vk::AccessFlagBits2::eShaderWrite;
+            src_stage = vk::PipelineStageFlagBits2::eNone;
+            dst_stage = vk::PipelineStageFlagBits2::eComputeShader;
         } else if (old_layout == vk::ImageLayout::eGeneral && new_layout == vk::ImageLayout::eShaderReadOnlyOptimal) {
-            barrier.srcAccessMask = vk::AccessFlagBits::eShaderWrite;
-            barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
-            src_stage = vk::PipelineStageFlagBits::eComputeShader;
-            dst_stage = vk::PipelineStageFlagBits::eComputeShader;
+            barrier.srcAccessMask = vk::AccessFlagBits2::eShaderWrite;
+            barrier.dstAccessMask = vk::AccessFlagBits2::eShaderRead;
+            src_stage = vk::PipelineStageFlagBits2::eComputeShader;
+            dst_stage = vk::PipelineStageFlagBits2::eComputeShader;
         } else if (old_layout == vk::ImageLayout::eShaderReadOnlyOptimal && new_layout == vk::ImageLayout::eGeneral) {
-            barrier.srcAccessMask = vk::AccessFlagBits::eShaderRead;
-            barrier.dstAccessMask = vk::AccessFlagBits::eShaderWrite;
-            src_stage = vk::PipelineStageFlagBits::eComputeShader;
-            dst_stage = vk::PipelineStageFlagBits::eComputeShader;
+            barrier.srcAccessMask = vk::AccessFlagBits2::eShaderRead;
+            barrier.dstAccessMask = vk::AccessFlagBits2::eShaderWrite;
+            src_stage = vk::PipelineStageFlagBits2::eComputeShader;
+            dst_stage = vk::PipelineStageFlagBits2::eComputeShader;
         } else {
-            barrier.srcAccessMask = vk::AccessFlagBits::eMemoryRead | vk::AccessFlagBits::eMemoryWrite;
-            barrier.dstAccessMask = vk::AccessFlagBits::eMemoryRead | vk::AccessFlagBits::eMemoryWrite;
-            src_stage = vk::PipelineStageFlagBits::eAllCommands;
-            dst_stage = vk::PipelineStageFlagBits::eAllCommands;
+            barrier.srcAccessMask = vk::AccessFlagBits2::eMemoryRead | vk::AccessFlagBits2::eMemoryWrite;
+            barrier.dstAccessMask = vk::AccessFlagBits2::eMemoryRead | vk::AccessFlagBits2::eMemoryWrite;
+            src_stage = vk::PipelineStageFlagBits2::eAllCommands;
+            dst_stage = vk::PipelineStageFlagBits2::eAllCommands;
 
             MF_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
                 "Using generic image layout transition");
         }
 
-        cmd.pipelineBarrier(
-            src_stage, dst_stage,
-            vk::DependencyFlags {},
-            0, nullptr, // Memory barriers
-            0, nullptr, // Buffer barriers
-            1, &barrier // Image barriers
-        );
+        record_barrier(cmd, barrier, src_stage, dst_stage);
     });
 
     MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
@@ -708,7 +720,7 @@ void BackendResourceManager::upload_image_data(
     }
 
     execute_immediate_commands([&](vk::CommandBuffer cmd) {
-        vk::ImageMemoryBarrier barrier {};
+        vk::ImageMemoryBarrier2 barrier {};
         barrier.oldLayout = image->get_current_layout();
         barrier.newLayout = vk::ImageLayout::eTransferDstOptimal;
         barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
@@ -719,14 +731,10 @@ void BackendResourceManager::upload_image_data(
         barrier.subresourceRange.levelCount = image->get_mip_levels();
         barrier.subresourceRange.baseArrayLayer = 0;
         barrier.subresourceRange.layerCount = image->get_array_layers();
-        barrier.srcAccessMask = vk::AccessFlagBits::eShaderRead;
-        barrier.dstAccessMask = vk::AccessFlagBits::eTransferWrite;
+        barrier.srcAccessMask = vk::AccessFlagBits2::eShaderRead;
+        barrier.dstAccessMask = vk::AccessFlagBits2::eTransferWrite;
 
-        cmd.pipelineBarrier(
-            vk::PipelineStageFlagBits::eFragmentShader,
-            vk::PipelineStageFlagBits::eTransfer,
-            vk::DependencyFlags {},
-            0, nullptr, 0, nullptr, 1, &barrier);
+        record_barrier(cmd, barrier, vk::PipelineStageFlagBits2::eFragmentShader, vk::PipelineStageFlagBits2::eTransfer);
 
         vk::BufferImageCopy region {};
         region.bufferOffset = 0;
@@ -751,14 +759,10 @@ void BackendResourceManager::upload_image_data(
 
         barrier.oldLayout = vk::ImageLayout::eTransferDstOptimal;
         barrier.newLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
-        barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
-        barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+        barrier.srcAccessMask = vk::AccessFlagBits2::eTransferWrite;
+        barrier.dstAccessMask = vk::AccessFlagBits2::eShaderRead;
 
-        cmd.pipelineBarrier(
-            vk::PipelineStageFlagBits::eTransfer,
-            vk::PipelineStageFlagBits::eFragmentShader,
-            vk::DependencyFlags {},
-            0, nullptr, 0, nullptr, 1, &barrier);
+        record_barrier(cmd, barrier, vk::PipelineStageFlagBits2::eTransfer, vk::PipelineStageFlagBits2::eFragmentShader);
     });
 
     image->set_current_layout(vk::ImageLayout::eShaderReadOnlyOptimal);
@@ -800,7 +804,7 @@ void BackendResourceManager::upload_image_data(
     }
 
     auto record_command = [&](vk::CommandBuffer cmd) {
-        vk::ImageMemoryBarrier barrier {};
+        vk::ImageMemoryBarrier2 barrier {};
         barrier.oldLayout = image->get_current_layout();
         barrier.newLayout = vk::ImageLayout::eTransferDstOptimal;
         barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
@@ -811,13 +815,10 @@ void BackendResourceManager::upload_image_data(
             image->get_mip_levels(), 0,
             image->get_array_layers()
         };
-        barrier.srcAccessMask = vk::AccessFlagBits::eShaderRead;
-        barrier.dstAccessMask = vk::AccessFlagBits::eTransferWrite;
+        barrier.srcAccessMask = vk::AccessFlagBits2::eShaderRead;
+        barrier.dstAccessMask = vk::AccessFlagBits2::eTransferWrite;
 
-        cmd.pipelineBarrier(
-            vk::PipelineStageFlagBits::eFragmentShader,
-            vk::PipelineStageFlagBits::eTransfer,
-            {}, 0, nullptr, 0, nullptr, 1, &barrier);
+        record_barrier(cmd, barrier, vk::PipelineStageFlagBits2::eFragmentShader, vk::PipelineStageFlagBits2::eTransfer);
 
         vk::BufferImageCopy region {};
         region.imageSubresource.aspectMask = image->get_aspect_flags();
@@ -837,13 +838,10 @@ void BackendResourceManager::upload_image_data(
 
         barrier.oldLayout = vk::ImageLayout::eTransferDstOptimal;
         barrier.newLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
-        barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
-        barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+        barrier.srcAccessMask = vk::AccessFlagBits2::eTransferWrite;
+        barrier.dstAccessMask = vk::AccessFlagBits2::eShaderRead;
 
-        cmd.pipelineBarrier(
-            vk::PipelineStageFlagBits::eTransfer,
-            vk::PipelineStageFlagBits::eFragmentShader,
-            {}, 0, nullptr, 0, nullptr, 1, &barrier);
+        record_barrier(cmd, barrier, vk::PipelineStageFlagBits2::eTransfer, vk::PipelineStageFlagBits2::eFragmentShader);
     };
 
     if (deferred) {
@@ -866,7 +864,7 @@ void BackendResourceManager::download_image_data(
     const std::shared_ptr<Buffers::VKBuffer>& staging,
     bool deferred,
     vk::ImageLayout restore_layout,
-    vk::PipelineStageFlags restore_stage)
+    vk::PipelineStageFlags2 restore_stage)
 {
     if (!image || !data) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
@@ -888,7 +886,7 @@ void BackendResourceManager::download_image_data(
     }
 
     auto record_command = [&](vk::CommandBuffer cmd) {
-        vk::ImageMemoryBarrier barrier {};
+        vk::ImageMemoryBarrier2 barrier {};
         barrier.oldLayout = image->get_current_layout();
         barrier.newLayout = vk::ImageLayout::eTransferSrcOptimal;
         barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
@@ -899,13 +897,10 @@ void BackendResourceManager::download_image_data(
         barrier.subresourceRange.levelCount = image->get_mip_levels();
         barrier.subresourceRange.baseArrayLayer = 0;
         barrier.subresourceRange.layerCount = image->get_array_layers();
-        barrier.srcAccessMask = vk::AccessFlagBits::eShaderWrite | vk::AccessFlagBits::eShaderRead;
-        barrier.dstAccessMask = vk::AccessFlagBits::eTransferRead;
+        barrier.srcAccessMask = vk::AccessFlagBits2::eShaderWrite | vk::AccessFlagBits2::eShaderRead;
+        barrier.dstAccessMask = vk::AccessFlagBits2::eTransferRead;
 
-        cmd.pipelineBarrier(
-            vk::PipelineStageFlagBits::eFragmentShader | vk::PipelineStageFlagBits::eComputeShader,
-            vk::PipelineStageFlagBits::eTransfer,
-            vk::DependencyFlags {}, {}, {}, barrier);
+        record_barrier(cmd, barrier, vk::PipelineStageFlagBits2::eFragmentShader | vk::PipelineStageFlagBits2::eComputeShader, vk::PipelineStageFlagBits2::eTransfer);
 
         vk::BufferImageCopy region {};
         region.bufferOffset = 0;
@@ -930,13 +925,10 @@ void BackendResourceManager::download_image_data(
 
         barrier.oldLayout = vk::ImageLayout::eTransferSrcOptimal;
         barrier.newLayout = restore_layout;
-        barrier.srcAccessMask = vk::AccessFlagBits::eTransferRead;
-        barrier.dstAccessMask = vk::AccessFlagBits::eMemoryRead;
+        barrier.srcAccessMask = vk::AccessFlagBits2::eTransferRead;
+        barrier.dstAccessMask = vk::AccessFlagBits2::eMemoryRead;
 
-        cmd.pipelineBarrier(
-            vk::PipelineStageFlagBits::eTransfer,
-            restore_stage,
-            vk::DependencyFlags {}, {}, {}, barrier);
+        record_barrier(cmd, barrier, vk::PipelineStageFlagBits2::eTransfer, restore_stage);
     };
 
     if (deferred && staging) {
@@ -954,11 +946,14 @@ void BackendResourceManager::download_image_data(
     vk::FenceCreateInfo fence_info {};
     vk::Fence fence = device.createFence(fence_info);
 
-    vk::SubmitInfo submit_info {};
-    submit_info.commandBufferCount = 1;
-    submit_info.pCommandBuffers = &cmd;
+    vk::CommandBufferSubmitInfo cmd_info {};
+    cmd_info.commandBuffer = cmd;
 
-    if (auto result = m_context.get_graphics_queue().submit(1, &submit_info, fence);
+    vk::SubmitInfo2 submit_info {};
+    submit_info.commandBufferInfoCount = 1;
+    submit_info.pCommandBufferInfos = &cmd_info;
+
+    if (auto result = m_context.get_graphics_queue().submit2(1, &submit_info, fence);
         result != vk::Result::eSuccess) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
             "download_image_data: queue submit failed: {}", vk::to_string(result));
@@ -1061,7 +1056,7 @@ bool BackendResourceManager::upload_image_layer(
     }
 
     auto record_command = [&](vk::CommandBuffer cmd) {
-        vk::ImageMemoryBarrier barrier {};
+        vk::ImageMemoryBarrier2 barrier {};
         barrier.oldLayout = image->get_current_layout();
         barrier.newLayout = vk::ImageLayout::eTransferDstOptimal;
         barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
@@ -1072,13 +1067,10 @@ bool BackendResourceManager::upload_image_layer(
             image->get_mip_levels(), 0,
             image->get_array_layers()
         };
-        barrier.srcAccessMask = vk::AccessFlagBits::eShaderRead;
-        barrier.dstAccessMask = vk::AccessFlagBits::eTransferWrite;
+        barrier.srcAccessMask = vk::AccessFlagBits2::eShaderRead;
+        barrier.dstAccessMask = vk::AccessFlagBits2::eTransferWrite;
 
-        cmd.pipelineBarrier(
-            vk::PipelineStageFlagBits::eFragmentShader,
-            vk::PipelineStageFlagBits::eTransfer,
-            vk::DependencyFlags {}, {}, {}, barrier);
+        record_barrier(cmd, barrier, vk::PipelineStageFlagBits2::eFragmentShader, vk::PipelineStageFlagBits2::eTransfer);
 
         vk::BufferImageCopy region {};
         region.imageSubresource = { image->get_aspect_flags(), 0, layer, 1 };
@@ -1097,13 +1089,10 @@ bool BackendResourceManager::upload_image_layer(
 
         barrier.oldLayout = vk::ImageLayout::eTransferDstOptimal;
         barrier.newLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
-        barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
-        barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+        barrier.srcAccessMask = vk::AccessFlagBits2::eTransferWrite;
+        barrier.dstAccessMask = vk::AccessFlagBits2::eShaderRead;
 
-        cmd.pipelineBarrier(
-            vk::PipelineStageFlagBits::eTransfer,
-            vk::PipelineStageFlagBits::eFragmentShader,
-            vk::DependencyFlags {}, {}, {}, barrier);
+        record_barrier(cmd, barrier, vk::PipelineStageFlagBits2::eTransfer, vk::PipelineStageFlagBits2::eFragmentShader);
     };
 
     if (deferred) {
@@ -1172,11 +1161,11 @@ bool BackendResourceManager::blit_image(
                                     const std::shared_ptr<VKImage>& image,
                                     vk::ImageLayout from,
                                     vk::ImageLayout to,
-                                    vk::AccessFlags src_access,
-                                    vk::AccessFlags dst_access,
-                                    vk::PipelineStageFlags src_stage,
-                                    vk::PipelineStageFlags dst_stage) {
-            vk::ImageMemoryBarrier barrier {};
+                                    vk::AccessFlags2 src_access,
+                                    vk::AccessFlags2 dst_access,
+                                    vk::PipelineStageFlags2 src_stage,
+                                    vk::PipelineStageFlags2 dst_stage) {
+            vk::ImageMemoryBarrier2 barrier {};
             barrier.oldLayout = from;
             barrier.newLayout = to;
             barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
@@ -1189,17 +1178,17 @@ bool BackendResourceManager::blit_image(
             };
             barrier.srcAccessMask = src_access;
             barrier.dstAccessMask = dst_access;
-            cmd.pipelineBarrier(src_stage, dst_stage, vk::DependencyFlags {}, {}, {}, barrier);
+            record_barrier(cmd, barrier, src_stage, dst_stage);
         };
 
-        constexpr auto any_access = vk::AccessFlagBits::eMemoryRead | vk::AccessFlagBits::eMemoryWrite;
+        constexpr auto any_access = vk::AccessFlagBits2::eMemoryRead | vk::AccessFlagBits2::eMemoryWrite;
 
         transition(src, src->get_current_layout(), vk::ImageLayout::eTransferSrcOptimal,
-            any_access, vk::AccessFlagBits::eTransferRead,
-            vk::PipelineStageFlagBits::eAllCommands, vk::PipelineStageFlagBits::eTransfer);
+            any_access, vk::AccessFlagBits2::eTransferRead,
+            vk::PipelineStageFlagBits2::eAllCommands, vk::PipelineStageFlagBits2::eTransfer);
         transition(dst, dst->get_current_layout(), vk::ImageLayout::eTransferDstOptimal,
-            any_access, vk::AccessFlagBits::eTransferWrite,
-            vk::PipelineStageFlagBits::eAllCommands, vk::PipelineStageFlagBits::eTransfer);
+            any_access, vk::AccessFlagBits2::eTransferWrite,
+            vk::PipelineStageFlagBits2::eAllCommands, vk::PipelineStageFlagBits2::eTransfer);
 
         cmd.blitImage(
             src->get_image(), vk::ImageLayout::eTransferSrcOptimal,
@@ -1207,11 +1196,11 @@ bool BackendResourceManager::blit_image(
             1, &region, filter);
 
         transition(src, vk::ImageLayout::eTransferSrcOptimal, src_restore,
-            vk::AccessFlagBits::eTransferRead, any_access,
-            vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eAllCommands);
+            vk::AccessFlagBits2::eTransferRead, any_access,
+            vk::PipelineStageFlagBits2::eTransfer, vk::PipelineStageFlagBits2::eAllCommands);
         transition(dst, vk::ImageLayout::eTransferDstOptimal, dst_restore,
-            vk::AccessFlagBits::eTransferWrite, any_access,
-            vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eAllCommands);
+            vk::AccessFlagBits2::eTransferWrite, any_access,
+            vk::PipelineStageFlagBits2::eTransfer, vk::PipelineStageFlagBits2::eAllCommands);
     };
 
     if (deferred) {
@@ -1346,13 +1335,20 @@ vk::Semaphore BackendResourceManager::flush_deferred_commands()
         m_deferred_semaphore = m_context.get_device().createSemaphore(sem_info);
     }
 
-    vk::SubmitInfo submit {};
-    submit.commandBufferCount = 1;
-    submit.pCommandBuffers = &cmd;
-    submit.signalSemaphoreCount = 1;
-    submit.pSignalSemaphores = &m_deferred_semaphore;
+    vk::CommandBufferSubmitInfo cmd_info {};
+    cmd_info.commandBuffer = cmd;
 
-    if (m_context.get_graphics_queue().submit(1, &submit, nullptr) != vk::Result::eSuccess) {
+    vk::SemaphoreSubmitInfo signal_info {};
+    signal_info.semaphore = m_deferred_semaphore;
+    signal_info.stageMask = vk::PipelineStageFlagBits2::eAllCommands;
+
+    vk::SubmitInfo2 submit {};
+    submit.commandBufferInfoCount = 1;
+    submit.pCommandBufferInfos = &cmd_info;
+    submit.signalSemaphoreInfoCount = 1;
+    submit.pSignalSemaphoreInfos = &signal_info;
+
+    if (m_context.get_graphics_queue().submit2(1, &submit, nullptr) != vk::Result::eSuccess) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
             "Failed to submit deferred command buffer");
     }

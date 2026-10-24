@@ -70,9 +70,9 @@ namespace {
                 Portal::Graphics::ShaderFoundry::CommandBufferType::COMPUTE);
             foundry.image_barrier(bcmd, out->get_image(),
                 vk::ImageLayout::eGeneral, vk::ImageLayout::eGeneral,
-                vk::AccessFlagBits::eShaderWrite, vk::AccessFlagBits::eShaderRead,
-                vk::PipelineStageFlagBits::eComputeShader,
-                vk::PipelineStageFlagBits::eComputeShader);
+                vk::AccessFlagBits2::eShaderWrite, vk::AccessFlagBits2::eShaderRead,
+                vk::PipelineStageFlagBits2::eComputeShader,
+                vk::PipelineStageFlagBits2::eComputeShader);
             contexts.ingest_barrier_fence = foundry.submit_async(bcmd);
         }
 

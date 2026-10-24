@@ -390,7 +390,7 @@ public:
         const std::shared_ptr<Buffers::VKBuffer>& staging,
         bool deferred = false,
         vk::ImageLayout restore_layout = vk::ImageLayout::eShaderReadOnlyOptimal,
-        vk::PipelineStageFlags restore_stage = vk::PipelineStageFlagBits::eFragmentShader);
+        vk::PipelineStageFlags2 restore_stage = vk::PipelineStageFlagBits2::eFragmentShader);
 
     /**
      * @brief Download the base level of an image as typed pixels.
@@ -411,7 +411,7 @@ public:
         const std::shared_ptr<Core::VKImage>& image,
         const std::shared_ptr<Buffers::VKBuffer>& staging = nullptr,
         vk::ImageLayout restore_layout = vk::ImageLayout::eShaderReadOnlyOptimal,
-        vk::PipelineStageFlags restore_stage = vk::PipelineStageFlagBits::eFragmentShader);
+        vk::PipelineStageFlags2 restore_stage = vk::PipelineStageFlagBits2::eFragmentShader);
 
     /**
      * @brief Transition a VKImage to a new Vulkan layout via an immediate submission.

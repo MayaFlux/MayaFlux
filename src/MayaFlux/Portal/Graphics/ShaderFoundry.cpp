@@ -1054,9 +1054,12 @@ void ShaderFoundry::submit_and_wait(CommandBufferID cmd_id)
 
     it->second.cmd.end();
 
-    vk::SubmitInfo submit_info;
-    submit_info.commandBufferCount = 1;
-    submit_info.pCommandBuffers = &it->second.cmd;
+    vk::CommandBufferSubmitInfo cmd_info;
+    cmd_info.commandBuffer = it->second.cmd;
+
+    vk::SubmitInfo2 submit_info;
+    submit_info.commandBufferInfoCount = 1;
+    submit_info.pCommandBufferInfos = &cmd_info;
 
     vk::Queue queue;
     switch (it->second.type) {
@@ -1071,7 +1074,7 @@ void ShaderFoundry::submit_and_wait(CommandBufferID cmd_id)
         break;
     }
 
-    if (queue.submit(1, &submit_info, nullptr) != vk::Result::eSuccess) {
+    if (queue.submit2(1, &submit_info, nullptr) != vk::Result::eSuccess) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ShaderCompilation,
             "Failed to submit command buffer");
         return;
@@ -1110,9 +1113,12 @@ FenceID ShaderFoundry::submit_async(CommandBufferID cmd_id)
     fence_state.signaled = false;
     fence_state.cmd_id = cmd_id;
 
-    vk::SubmitInfo submit_info;
-    submit_info.commandBufferCount = 1;
-    submit_info.pCommandBuffers = &cmd_it->second.cmd;
+    vk::CommandBufferSubmitInfo cmd_info;
+    cmd_info.commandBuffer = cmd_it->second.cmd;
+
+    vk::SubmitInfo2 submit_info;
+    submit_info.commandBufferInfoCount = 1;
+    submit_info.pCommandBufferInfos = &cmd_info;
 
     vk::Queue queue;
     switch (cmd_it->second.type) {
@@ -1127,7 +1133,7 @@ FenceID ShaderFoundry::submit_async(CommandBufferID cmd_id)
         break;
     }
 
-    if (queue.submit(1, &submit_info, fence_state.fence) != vk::Result::eSuccess) {
+    if (queue.submit2(1, &submit_info, fence_state.fence) != vk::Result::eSuccess) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ShaderCompilation,
             "Failed to submit command buffer");
         return INVALID_FENCE;
@@ -1153,11 +1159,18 @@ SemaphoreID ShaderFoundry::submit_with_signal(CommandBufferID cmd_id)
     SemaphoreState& semaphore_state = m_semaphores[semaphore_id];
     semaphore_state.semaphore = get_device().createSemaphore(semaphore_info);
 
-    vk::SubmitInfo submit_info;
-    submit_info.commandBufferCount = 1;
-    submit_info.pCommandBuffers = &cmd_it->second.cmd;
-    submit_info.signalSemaphoreCount = 1;
-    submit_info.pSignalSemaphores = &semaphore_state.semaphore;
+    vk::CommandBufferSubmitInfo cmd_info;
+    cmd_info.commandBuffer = cmd_it->second.cmd;
+
+    vk::SubmitInfo2 submit_info;
+    submit_info.commandBufferInfoCount = 1;
+    submit_info.pCommandBufferInfos = &cmd_info;
+
+    vk::SemaphoreSubmitInfo signal_info;
+    signal_info.semaphore = semaphore_state.semaphore;
+    signal_info.stageMask = vk::PipelineStageFlagBits2::eAllCommands;
+    submit_info.signalSemaphoreInfoCount = 1;
+    submit_info.pSignalSemaphoreInfos = &signal_info;
 
     vk::Queue queue;
     switch (cmd_it->second.type) {
@@ -1172,7 +1185,7 @@ SemaphoreID ShaderFoundry::submit_with_signal(CommandBufferID cmd_id)
         break;
     }
 
-    if (queue.submit(1, &submit_info, nullptr) != vk::Result::eSuccess) {
+    if (queue.submit2(1, &submit_info, nullptr) != vk::Result::eSuccess) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ShaderCompilation,
             "Failed to submit command buffer");
         return INVALID_SEMAPHORE;
@@ -1269,7 +1282,7 @@ bool ShaderFoundry::is_fence_signaled(FenceID fence_id)
 CommandBufferID ShaderFoundry::begin_commands_with_wait(
     CommandBufferType type,
     SemaphoreID wait_semaphore,
-    vk::PipelineStageFlags /*wait_stage*/)
+    vk::PipelineStageFlags2 /*wait_stage*/)
 {
     auto sem_it = m_semaphores.find(wait_semaphore);
     if (sem_it == m_semaphores.end()) {
@@ -1317,18 +1330,20 @@ void ShaderFoundry::cleanup_sync_objects()
 void ShaderFoundry::buffer_barrier(
     CommandBufferID cmd_id,
     vk::Buffer buffer,
-    vk::AccessFlags src_access,
-    vk::AccessFlags dst_access,
-    vk::PipelineStageFlags src_stage,
-    vk::PipelineStageFlags dst_stage)
+    vk::AccessFlags2 src_access,
+    vk::AccessFlags2 dst_access,
+    vk::PipelineStageFlags2 src_stage,
+    vk::PipelineStageFlags2 dst_stage)
 {
     auto it = m_command_buffers.find(cmd_id);
     if (it == m_command_buffers.end()) {
         return;
     }
 
-    vk::BufferMemoryBarrier barrier;
+    vk::BufferMemoryBarrier2 barrier;
+    barrier.srcStageMask = src_stage;
     barrier.srcAccessMask = src_access;
+    barrier.dstStageMask = dst_stage;
     barrier.dstAccessMask = dst_access;
     barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
@@ -1336,13 +1351,11 @@ void ShaderFoundry::buffer_barrier(
     barrier.offset = 0;
     barrier.size = VK_WHOLE_SIZE;
 
-    it->second.cmd.pipelineBarrier(
-        src_stage,
-        dst_stage,
-        vk::DependencyFlags {},
-        0, nullptr,
-        1, &barrier,
-        0, nullptr);
+    vk::DependencyInfo dependency;
+    dependency.bufferMemoryBarrierCount = 1;
+    dependency.pBufferMemoryBarriers = &barrier;
+
+    it->second.cmd.pipelineBarrier2(dependency);
 }
 
 void ShaderFoundry::image_barrier(
@@ -1350,18 +1363,20 @@ void ShaderFoundry::image_barrier(
     vk::Image image,
     vk::ImageLayout old_layout,
     vk::ImageLayout new_layout,
-    vk::AccessFlags src_access,
-    vk::AccessFlags dst_access,
-    vk::PipelineStageFlags src_stage,
-    vk::PipelineStageFlags dst_stage)
+    vk::AccessFlags2 src_access,
+    vk::AccessFlags2 dst_access,
+    vk::PipelineStageFlags2 src_stage,
+    vk::PipelineStageFlags2 dst_stage)
 {
     auto it = m_command_buffers.find(cmd_id);
     if (it == m_command_buffers.end()) {
         return;
     }
 
-    vk::ImageMemoryBarrier barrier;
+    vk::ImageMemoryBarrier2 barrier;
+    barrier.srcStageMask = src_stage;
     barrier.srcAccessMask = src_access;
+    barrier.dstStageMask = dst_stage;
     barrier.dstAccessMask = dst_access;
     barrier.oldLayout = old_layout;
     barrier.newLayout = new_layout;
@@ -1374,13 +1389,11 @@ void ShaderFoundry::image_barrier(
     barrier.subresourceRange.baseArrayLayer = 0;
     barrier.subresourceRange.layerCount = 1;
 
-    it->second.cmd.pipelineBarrier(
-        src_stage,
-        dst_stage,
-        vk::DependencyFlags {},
-        0, nullptr,
-        0, nullptr,
-        1, &barrier);
+    vk::DependencyInfo dependency;
+    dependency.imageMemoryBarrierCount = 1;
+    dependency.pImageMemoryBarriers = &barrier;
+
+    it->second.cmd.pipelineBarrier2(dependency);
 }
 
 //==============================================================================
@@ -1413,7 +1426,7 @@ void ShaderFoundry::begin_timestamp(CommandBufferID cmd_id, const std::string& l
     it->second.timestamp_queries[label] = query_index;
 
     it->second.cmd.resetQueryPool(it->second.timestamp_pool, query_index, 2);
-    it->second.cmd.writeTimestamp(vk::PipelineStageFlagBits::eTopOfPipe, it->second.timestamp_pool, query_index);
+    it->second.cmd.writeTimestamp2(vk::PipelineStageFlagBits2::eNone, it->second.timestamp_pool, query_index);
 }
 
 void ShaderFoundry::end_timestamp(CommandBufferID cmd_id, const std::string& label)
@@ -1429,7 +1442,7 @@ void ShaderFoundry::end_timestamp(CommandBufferID cmd_id, const std::string& lab
     }
 
     uint32_t query_index = query_it->second;
-    it->second.cmd.writeTimestamp(vk::PipelineStageFlagBits::eBottomOfPipe, it->second.timestamp_pool, query_index + 1);
+    it->second.cmd.writeTimestamp2(vk::PipelineStageFlagBits2::eAllCommands, it->second.timestamp_pool, query_index + 1);
 }
 
 ShaderFoundry::TimestampResult ShaderFoundry::get_timestamp_result(CommandBufferID cmd_id, const std::string& label)

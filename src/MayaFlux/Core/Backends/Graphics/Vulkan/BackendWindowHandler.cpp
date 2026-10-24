@@ -12,6 +12,38 @@
 
 namespace MayaFlux::Core {
 
+namespace {
+
+    void transition_color_image(
+        const vk::CommandBuffer& cmd,
+        vk::Image image,
+        vk::ImageLayout old_layout,
+        vk::ImageLayout new_layout,
+        vk::PipelineStageFlags2 src_stage,
+        vk::AccessFlags2 src_access,
+        vk::PipelineStageFlags2 dst_stage,
+        vk::AccessFlags2 dst_access)
+    {
+        vk::ImageMemoryBarrier2 barrier {};
+        barrier.srcStageMask = src_stage;
+        barrier.srcAccessMask = src_access;
+        barrier.dstStageMask = dst_stage;
+        barrier.dstAccessMask = dst_access;
+        barrier.oldLayout = old_layout;
+        barrier.newLayout = new_layout;
+        barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.image = image;
+        barrier.subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 };
+
+        vk::DependencyInfo dependency {};
+        dependency.imageMemoryBarrierCount = 1;
+        dependency.pImageMemoryBarriers = &barrier;
+        cmd.pipelineBarrier2(dependency);
+    }
+
+}
+
 // ---------------------------------------------------------------------------
 // CaptureState retirement implementations (macOS only)
 // ---------------------------------------------------------------------------
@@ -338,7 +370,7 @@ void BackendWindowHandler::setup_backend_service(const std::shared_ptr<Registry:
             nullptr,
             false,
             vk::ImageLayout::ePresentSrcKHR,
-            vk::PipelineStageFlagBits::eBottomOfPipe);
+            vk::PipelineStageFlagBits2::eAllCommands);
 
         return true;
     };
@@ -865,35 +897,20 @@ void BackendWindowHandler::render_empty_window(WindowRenderContext& ctx)
         rendering_info.colorAttachmentCount = 1;
         rendering_info.pColorAttachments = &color_attachment;
 
-        vk::ImageMemoryBarrier barrier {};
-        barrier.oldLayout = vk::ImageLayout::eUndefined;
-        barrier.newLayout = vk::ImageLayout::eColorAttachmentOptimal;
-        barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        barrier.image = ctx.swapchain->get_images()[ctx.current_image_index];
-        barrier.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
-        barrier.subresourceRange.levelCount = 1;
-        barrier.subresourceRange.layerCount = 1;
-        barrier.srcAccessMask = {};
-        barrier.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
+        const vk::Image swapchain_image = ctx.swapchain->get_images()[ctx.current_image_index];
 
-        cmd_buffer.pipelineBarrier(
-            vk::PipelineStageFlagBits::eTopOfPipe,
-            vk::PipelineStageFlagBits::eColorAttachmentOutput,
-            {}, {}, {}, barrier);
+        transition_color_image(cmd_buffer, swapchain_image,
+            vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal,
+            vk::PipelineStageFlagBits2::eNone, vk::AccessFlagBits2::eNone,
+            vk::PipelineStageFlagBits2::eColorAttachmentOutput, vk::AccessFlagBits2::eColorAttachmentWrite);
 
         cmd_buffer.beginRendering(rendering_info);
         cmd_buffer.endRendering();
 
-        barrier.oldLayout = vk::ImageLayout::eColorAttachmentOptimal;
-        barrier.newLayout = vk::ImageLayout::ePresentSrcKHR;
-        barrier.srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
-        barrier.dstAccessMask = {};
-
-        cmd_buffer.pipelineBarrier(
-            vk::PipelineStageFlagBits::eColorAttachmentOutput,
-            vk::PipelineStageFlagBits::eBottomOfPipe,
-            {}, {}, {}, barrier);
+        transition_color_image(cmd_buffer, swapchain_image,
+            vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::ePresentSrcKHR,
+            vk::PipelineStageFlagBits2::eColorAttachmentOutput, vk::AccessFlagBits2::eColorAttachmentWrite,
+            vk::PipelineStageFlagBits2::eNone, vk::AccessFlagBits2::eNone);
 
         cmd_buffer.end();
 
@@ -992,26 +1009,15 @@ void BackendWindowHandler::capture_frame(WindowRenderContext& ctx)
     bi.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
     slot.cmd.begin(bi);
 
-    vk::ImageMemoryBarrier b {};
-    b.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    b.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    b.subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 };
+    transition_color_image(slot.cmd, slot.image,
+        vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal,
+        vk::PipelineStageFlagBits2::eTransfer, vk::AccessFlagBits2::eNone,
+        vk::PipelineStageFlagBits2::eTransfer, vk::AccessFlagBits2::eTransferWrite);
 
-    b.image = slot.image;
-    b.oldLayout = vk::ImageLayout::eUndefined;
-    b.newLayout = vk::ImageLayout::eTransferDstOptimal;
-    b.srcAccessMask = {};
-    b.dstAccessMask = vk::AccessFlagBits::eTransferWrite;
-    slot.cmd.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer,
-        vk::PipelineStageFlagBits::eTransfer, {}, {}, {}, b);
-
-    b.image = src;
-    b.oldLayout = vk::ImageLayout::ePresentSrcKHR;
-    b.newLayout = vk::ImageLayout::eTransferSrcOptimal;
-    b.srcAccessMask = vk::AccessFlagBits::eMemoryRead;
-    b.dstAccessMask = vk::AccessFlagBits::eTransferRead;
-    slot.cmd.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer,
-        vk::PipelineStageFlagBits::eTransfer, {}, {}, {}, b);
+    transition_color_image(slot.cmd, src,
+        vk::ImageLayout::ePresentSrcKHR, vk::ImageLayout::eTransferSrcOptimal,
+        vk::PipelineStageFlagBits2::eTransfer, vk::AccessFlagBits2::eMemoryRead,
+        vk::PipelineStageFlagBits2::eTransfer, vk::AccessFlagBits2::eTransferRead);
 
     vk::ImageCopy copy {};
     copy.srcSubresource = { vk::ImageAspectFlagBits::eColor, 0, 0, 1 };
@@ -1020,33 +1026,30 @@ void BackendWindowHandler::capture_frame(WindowRenderContext& ctx)
     slot.cmd.copyImage(src, vk::ImageLayout::eTransferSrcOptimal,
         slot.image, vk::ImageLayout::eTransferDstOptimal, 1, &copy);
 
-    b.image = slot.image;
-    b.oldLayout = vk::ImageLayout::eTransferDstOptimal;
-    b.newLayout = vk::ImageLayout::eGeneral;
-    b.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
-    b.dstAccessMask = vk::AccessFlagBits::eMemoryRead;
-    slot.cmd.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer,
-        vk::PipelineStageFlagBits::eTransfer, {}, {}, {}, b);
+    transition_color_image(slot.cmd, slot.image,
+        vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eGeneral,
+        vk::PipelineStageFlagBits2::eTransfer, vk::AccessFlagBits2::eTransferWrite,
+        vk::PipelineStageFlagBits2::eTransfer, vk::AccessFlagBits2::eMemoryRead);
 
-    b.image = src;
-    b.oldLayout = vk::ImageLayout::eTransferSrcOptimal;
-    b.newLayout = vk::ImageLayout::ePresentSrcKHR;
-    b.srcAccessMask = vk::AccessFlagBits::eTransferRead;
-    b.dstAccessMask = vk::AccessFlagBits::eMemoryRead;
-    slot.cmd.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer,
-        vk::PipelineStageFlagBits::eTransfer, {}, {}, {}, b);
+    transition_color_image(slot.cmd, src,
+        vk::ImageLayout::eTransferSrcOptimal, vk::ImageLayout::ePresentSrcKHR,
+        vk::PipelineStageFlagBits2::eTransfer, vk::AccessFlagBits2::eTransferRead,
+        vk::PipelineStageFlagBits2::eTransfer, vk::AccessFlagBits2::eMemoryRead);
 
     slot.cmd.end();
 
     (void)dev.resetFences(1, &slot.fence);
 
-    vk::SubmitInfo si {};
-    si.commandBufferCount = 1;
-    si.pCommandBuffers = &slot.cmd;
+    vk::CommandBufferSubmitInfo cmd_info {};
+    cmd_info.commandBuffer = slot.cmd;
+
+    vk::SubmitInfo2 si {};
+    si.commandBufferInfoCount = 1;
+    si.pCommandBufferInfos = &cmd_info;
 
     slot.pending.store(true, std::memory_order_release);
 
-    if (auto result = m_context.get_graphics_queue().submit(1, &si, slot.fence); result != vk::Result::eSuccess) {
+    if (auto result = m_context.get_graphics_queue().submit2(1, &si, slot.fence); result != vk::Result::eSuccess) {
         MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
             "Failed to submit capture command buffer for window '{}': {}",
             ctx.window->get_create_info().title, vk::to_string(result));
@@ -1178,27 +1181,32 @@ void BackendWindowHandler::submit_and_present(
         ? m_resource_manager->flush_deferred_commands()
         : nullptr;
 
-    std::vector<vk::Semaphore> wait_sems { image_available };
-    std::vector<vk::PipelineStageFlags> wait_stages {
-        vk::PipelineStageFlagBits::eColorAttachmentOutput
-    };
+    std::vector<vk::SemaphoreSubmitInfo> wait_infos;
+    wait_infos.push_back(vk::SemaphoreSubmitInfo {
+        image_available, 0, vk::PipelineStageFlagBits2::eColorAttachmentOutput });
 
     if (deferred_sem) {
-        wait_sems.push_back(deferred_sem);
-        wait_stages.emplace_back(vk::PipelineStageFlagBits::eFragmentShader);
+        wait_infos.push_back(vk::SemaphoreSubmitInfo {
+            deferred_sem, 0, vk::PipelineStageFlagBits2::eFragmentShader });
     }
 
-    vk::SubmitInfo submit_info {};
-    submit_info.waitSemaphoreCount = static_cast<uint32_t>(wait_sems.size());
-    submit_info.pWaitSemaphores = wait_sems.data();
-    submit_info.pWaitDstStageMask = wait_stages.data();
-    submit_info.commandBufferCount = 1;
-    submit_info.pCommandBuffers = &command_buffer;
-    submit_info.signalSemaphoreCount = 1;
-    submit_info.pSignalSemaphores = &render_finished;
+    vk::CommandBufferSubmitInfo cmd_info {};
+    cmd_info.commandBuffer = command_buffer;
+
+    vk::SemaphoreSubmitInfo signal_info {};
+    signal_info.semaphore = render_finished;
+    signal_info.stageMask = vk::PipelineStageFlagBits2::eAllCommands;
+
+    vk::SubmitInfo2 submit_info {};
+    submit_info.waitSemaphoreInfoCount = static_cast<uint32_t>(wait_infos.size());
+    submit_info.pWaitSemaphoreInfos = wait_infos.data();
+    submit_info.commandBufferInfoCount = 1;
+    submit_info.pCommandBufferInfos = &cmd_info;
+    submit_info.signalSemaphoreInfoCount = 1;
+    submit_info.pSignalSemaphoreInfos = &signal_info;
 
     try {
-        auto result = graphics_queue.submit(1, &submit_info, in_flight);
+        auto result = graphics_queue.submit2(1, &submit_info, in_flight);
         ctx->slot_submission[frame_index] = ++ctx->submitted_frames;
     } catch (const vk::SystemError& e) {
         MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,

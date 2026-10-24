@@ -632,7 +632,7 @@ void RenderFlow::begin_rendering(
         return;
     }
 
-    vk::ImageMemoryBarrier pre_barrier {};
+    vk::ImageMemoryBarrier2 pre_barrier {};
     pre_barrier.oldLayout = vk::ImageLayout::eUndefined;
     pre_barrier.newLayout = vk::ImageLayout::eColorAttachmentOptimal;
     pre_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
@@ -643,16 +643,15 @@ void RenderFlow::begin_rendering(
     pre_barrier.subresourceRange.levelCount = 1;
     pre_barrier.subresourceRange.baseArrayLayer = 0;
     pre_barrier.subresourceRange.layerCount = 1;
-    pre_barrier.srcAccessMask = vk::AccessFlagBits::eNone;
-    pre_barrier.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
+    pre_barrier.srcStageMask = vk::PipelineStageFlagBits2::eNone;
+    pre_barrier.srcAccessMask = vk::AccessFlagBits2::eNone;
+    pre_barrier.dstStageMask = vk::PipelineStageFlagBits2::eColorAttachmentOutput;
+    pre_barrier.dstAccessMask = vk::AccessFlagBits2::eColorAttachmentWrite;
 
-    cmd.pipelineBarrier(
-        vk::PipelineStageFlagBits::eTopOfPipe,
-        vk::PipelineStageFlagBits::eColorAttachmentOutput,
-        vk::DependencyFlags {},
-        0, nullptr,
-        0, nullptr,
-        1, &pre_barrier);
+    vk::DependencyInfo pre_dependency;
+    pre_dependency.imageMemoryBarrierCount = 1;
+    pre_dependency.pImageMemoryBarriers = &pre_barrier;
+    cmd.pipelineBarrier2(pre_dependency);
 
     vk::RenderingAttachmentInfo color_attachment {};
     color_attachment.sType = vk::StructureType::eRenderingAttachmentInfo;
@@ -726,7 +725,7 @@ void RenderFlow::end_rendering(
         return;
     }
 
-    vk::ImageMemoryBarrier post_barrier {};
+    vk::ImageMemoryBarrier2 post_barrier {};
     post_barrier.oldLayout = vk::ImageLayout::eColorAttachmentOptimal;
     post_barrier.newLayout = vk::ImageLayout::ePresentSrcKHR;
     post_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
@@ -737,16 +736,15 @@ void RenderFlow::end_rendering(
     post_barrier.subresourceRange.levelCount = 1;
     post_barrier.subresourceRange.baseArrayLayer = 0;
     post_barrier.subresourceRange.layerCount = 1;
-    post_barrier.srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
-    post_barrier.dstAccessMask = vk::AccessFlagBits::eNone;
+    post_barrier.srcStageMask = vk::PipelineStageFlagBits2::eColorAttachmentOutput;
+    post_barrier.srcAccessMask = vk::AccessFlagBits2::eColorAttachmentWrite;
+    post_barrier.dstStageMask = vk::PipelineStageFlagBits2::eNone;
+    post_barrier.dstAccessMask = vk::AccessFlagBits2::eNone;
 
-    cmd.pipelineBarrier(
-        vk::PipelineStageFlagBits::eColorAttachmentOutput,
-        vk::PipelineStageFlagBits::eBottomOfPipe,
-        vk::DependencyFlags {},
-        0, nullptr,
-        0, nullptr,
-        1, &post_barrier);
+    vk::DependencyInfo post_dependency;
+    post_dependency.imageMemoryBarrierCount = 1;
+    post_dependency.pImageMemoryBarriers = &post_barrier;
+    cmd.pipelineBarrier2(post_dependency);
 
     it->second.swapchain_image = nullptr;
 

@@ -709,10 +709,10 @@ uint32_t PrimitiveMill::mill(
     foundry.buffer_barrier(
         cmd_id,
         destination,
-        vk::AccessFlagBits::eVertexAttributeRead,
-        vk::AccessFlagBits::eShaderWrite,
-        vk::PipelineStageFlagBits::eVertexInput,
-        vk::PipelineStageFlagBits::eComputeShader);
+        vk::AccessFlagBits2::eVertexAttributeRead,
+        vk::AccessFlagBits2::eShaderWrite,
+        vk::PipelineStageFlagBits2::eVertexInput,
+        vk::PipelineStageFlagBits2::eComputeShader);
 
     press.bind_all(cmd_id, m_pipeline, m_sets, &pc, sizeof(MillPC));
     press.dispatch(cmd_id, (total + WORKGROUP - 1) / WORKGROUP, 1, 1);
@@ -720,10 +720,10 @@ uint32_t PrimitiveMill::mill(
     foundry.buffer_barrier(
         cmd_id,
         destination,
-        vk::AccessFlagBits::eShaderWrite,
-        vk::AccessFlagBits::eVertexAttributeRead,
-        vk::PipelineStageFlagBits::eComputeShader,
-        vk::PipelineStageFlagBits::eVertexInput);
+        vk::AccessFlagBits2::eShaderWrite,
+        vk::AccessFlagBits2::eVertexAttributeRead,
+        vk::PipelineStageFlagBits2::eComputeShader,
+        vk::PipelineStageFlagBits2::eVertexInput);
 
     m_pending_fence = foundry.submit_async(cmd_id);
     if (m_pending_fence == INVALID_FENCE) {

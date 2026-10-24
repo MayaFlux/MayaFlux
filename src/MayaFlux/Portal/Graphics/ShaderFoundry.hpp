@@ -604,7 +604,7 @@ public:
     CommandBufferID begin_commands_with_wait(
         CommandBufferType type,
         SemaphoreID wait_semaphore,
-        vk::PipelineStageFlags wait_stage);
+        vk::PipelineStageFlags2 wait_stage);
 
     /**
      * @brief Get Vulkan fence handle from FenceID
@@ -618,10 +618,10 @@ public:
     void buffer_barrier(
         CommandBufferID cmd_id,
         vk::Buffer buffer,
-        vk::AccessFlags src_access,
-        vk::AccessFlags dst_access,
-        vk::PipelineStageFlags src_stage,
-        vk::PipelineStageFlags dst_stage);
+        vk::AccessFlags2 src_access,
+        vk::AccessFlags2 dst_access,
+        vk::PipelineStageFlags2 src_stage,
+        vk::PipelineStageFlags2 dst_stage);
 
     /**
      * @brief Insert image memory barrier
@@ -631,10 +631,10 @@ public:
         vk::Image image,
         vk::ImageLayout old_layout,
         vk::ImageLayout new_layout,
-        vk::AccessFlags src_access,
-        vk::AccessFlags dst_access,
-        vk::PipelineStageFlags src_stage,
-        vk::PipelineStageFlags dst_stage);
+        vk::AccessFlags2 src_access,
+        vk::AccessFlags2 dst_access,
+        vk::PipelineStageFlags2 src_stage,
+        vk::PipelineStageFlags2 dst_stage);
 
     //==========================================================================
     // Queue Management

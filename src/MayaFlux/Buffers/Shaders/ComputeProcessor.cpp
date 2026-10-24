@@ -207,10 +207,10 @@ void ComputeProcessor::on_iteration_barrier(
     Portal::Graphics::get_shader_foundry().buffer_barrier(
         cmd_id,
         buffer->get_buffer(),
-        vk::AccessFlagBits::eShaderWrite,
-        vk::AccessFlagBits::eShaderRead | vk::AccessFlagBits::eShaderWrite,
-        vk::PipelineStageFlagBits::eComputeShader,
-        vk::PipelineStageFlagBits::eComputeShader);
+        vk::AccessFlagBits2::eShaderWrite,
+        vk::AccessFlagBits2::eShaderRead | vk::AccessFlagBits2::eShaderWrite,
+        vk::PipelineStageFlagBits2::eComputeShader,
+        vk::PipelineStageFlagBits2::eComputeShader);
 }
 
 void ComputeProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
@@ -292,10 +292,10 @@ void ComputeProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
     foundry.buffer_barrier(
         cmd_id,
         buffer->get_buffer(),
-        vk::AccessFlagBits::eShaderWrite,
-        vk::AccessFlagBits::eShaderRead | vk::AccessFlagBits::eTransferRead,
-        vk::PipelineStageFlagBits::eComputeShader,
-        vk::PipelineStageFlagBits::eComputeShader | vk::PipelineStageFlagBits::eTransfer);
+        vk::AccessFlagBits2::eShaderWrite,
+        vk::AccessFlagBits2::eShaderRead | vk::AccessFlagBits2::eTransferRead,
+        vk::PipelineStageFlagBits2::eComputeShader,
+        vk::PipelineStageFlagBits2::eComputeShader | vk::PipelineStageFlagBits2::eTransfer);
 
     submit_recorded(cmd_id, buffer);
 }

@@ -622,7 +622,7 @@ void TextureLoom::download_data(
     const std::shared_ptr<Buffers::VKBuffer>& staging,
     bool deferred,
     vk::ImageLayout restore_layout,
-    vk::PipelineStageFlags restore_stage)
+    vk::PipelineStageFlags2 restore_stage)
 {
     if (!is_initialized() || !image || !data) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
@@ -638,7 +638,7 @@ std::optional<Kakshya::ImageData> TextureLoom::download_image(
     const std::shared_ptr<Core::VKImage>& image,
     const std::shared_ptr<Buffers::VKBuffer>& staging,
     vk::ImageLayout restore_layout,
-    vk::PipelineStageFlags restore_stage)
+    vk::PipelineStageFlags2 restore_stage)
 {
     if (!is_initialized()) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
