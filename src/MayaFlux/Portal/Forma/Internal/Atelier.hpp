@@ -273,12 +273,9 @@ namespace internal {
          * @param surface   Surface to place on.
          * @param spec      Series spec carrying the adornment declarations.
          * @param relate_to Element id the adornments are related to.
-         * @param batch     Buffer the legend swatches draw into as slices.
-         *                  Each gets a buffer of its own when empty. Labels
-         *                  are slices of one text buffer made here, never of
-         *                  @p batch: a buffer with a texture slot reads the
-         *                  vertex weight as an image index, which shape
-         *                  geometry uses for its own values.
+         * @param batch     Shared plot buffer for swatches and labels. With
+         *                  labels, it needs a text slot and forma_plot.frag.
+         *                  When empty, one buffer is created for all adornments.
          */
         void place_adornments(
             Surface& surface,

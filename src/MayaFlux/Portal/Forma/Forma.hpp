@@ -124,10 +124,10 @@ MAYAFLUX_API bool is_initialized();
  * each carrying its own topology. BufferManager is taken from the stored
  * initialize() state.
  *
- * A buffer made with a texture slot is for text and images: its shader reads
- * each vertex's weight as an image index, or as glyph coverage when negative,
- * so geometry that carries its own values in the weight slot (line thickness,
- * point size, series data) must go in a buffer without one.
+ * With the default multi-texture shader, positive vertex weights select an
+ * image and negative weights select glyph coverage. A custom fragment shader
+ * can use different semantics, as the plot shader does for line and point
+ * geometry mixed with glyphs.
  *
  * @param render Render settings; build it with Surface::render_config, which
  *               sets the window. Textures, shaders and the rest are the
@@ -185,8 +185,9 @@ MAYAFLUX_API void destroy(Surface& surface, uint32_t id);
 /**
  * @brief Create a live plot in a new window.
  *
- * Creates the window, shows it, constructs the Surface, builds the
- * FormaBuffer from the spec capacity and topology, and calls Plot::place.
+ * Creates the window, shows it, constructs the Surface, and places the plot
+ * in a slice of one batch. Background, legend swatches and labels use slices
+ * of that batch; a plot with labels selects the glyph-capable plot shader.
  * Returns the Mapped<shared_ptr<PlotContainer>> from Plot::place, plus the
  * Surface owning the window and layer.
  *

@@ -150,9 +150,10 @@ template <typename T>
  *
  * @p scrollable composes a second primitive in, the same way: false (the
  * default) matches every prior call exactly, and @p bounds is the field's
- * own region. True builds a plain Scrollable (Scrollable::place(), @p bounds
- * as its viewport) and calls TextField::scrollable() instead of place(),
- * the same composition test_text_input() (test_8.hpp) once wired by hand,
+ * own region. True builds a plain Scrollable and places its viewport and
+ * the field text in slices of one text-capable buffer, then calls
+ * TextField::scrollable() instead of place(). This is the same composition
+ * test_text_input() (test_8.hpp) once wired by hand,
  * now living at the TextField primitive level; this is only the one-call
  * convenience over it. That Scrollable is local to this call and not
  * returned, so no indicator is added and nothing else can be tracked into

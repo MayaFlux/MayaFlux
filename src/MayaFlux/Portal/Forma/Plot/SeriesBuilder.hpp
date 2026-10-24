@@ -16,11 +16,10 @@ class FilledWaveformBuilder;
 /**
  * @struct SeriesSpec
  * @brief Result of a Series terminal. Bundles a geometry function
- *        with the topology and capacity arithmetic implied by the encoding.
+ *        with the input topology implied by the encoding.
  *
- * Passed to Plot::place() so callers never supply topology or buffer
- * capacity manually. The raw GeometryFn<shared_ptr<PlotContainer>> is
- * still accessible via .fn for callers that need it directly.
+ * Pass topology to FormaTarget::slice_of() before Plot::place(). The batch
+ * grows as geometry is submitted. The raw geometry function remains in .fn.
  */
 struct SeriesSpec {
     Forma::GeometryFn<std::shared_ptr<Kakshya::PlotContainer>> fn;

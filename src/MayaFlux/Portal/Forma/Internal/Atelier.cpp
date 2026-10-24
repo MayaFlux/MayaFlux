@@ -186,36 +186,48 @@ void Atelier::place_adornments(
     uint32_t relate_to,
     const std::shared_ptr<Buffers::FormaBuffer>& batch)
 {
-    std::shared_ptr<Buffers::FormaBuffer> text_batch;
-    const auto text_target = [&]() -> FormaTarget {
-        if (!text_batch) {
-            text_batch = create_buffer(surface.render_config({ .additional_textures = { { "text", nullptr } } }));
+    const bool has_labels = !spec.labels.empty() || !spec.tick_labels.empty()
+        || (spec.legend && !spec.legend->entries.empty());
+    std::shared_ptr<Buffers::FormaBuffer> owned_batch;
+    const auto target_of = [&](Graphics::PrimitiveTopology topology) -> FormaTarget {
+        if (!batch && !owned_batch) {
+            Graphics::RenderConfig render = surface.render_config();
+            if (has_labels) {
+                render.fragment_shader = "forma_plot.frag.spv";
+                render.additional_textures.emplace_back("text", nullptr);
+            }
+            owned_batch = create_buffer(std::move(render));
         }
-        return FormaTarget::slice_of(text_batch, Graphics::PrimitiveTopology::TRIANGLE_LIST);
+        const auto& target_batch = batch ? batch : owned_batch;
+        return FormaTarget::slice_of(target_batch, topology);
     };
 
+    const auto legend = spec.legend
+        ? std::optional<Plot::LegendLayout>(Plot::layout_legend(*spec.legend))
+        : std::nullopt;
+    if (legend) {
+        for (const auto& swatch : legend->swatches) {
+            (void)Plot::place_rect(surface,
+                target_of(Graphics::PrimitiveTopology::TRIANGLE_STRIP), swatch, relate_to);
+        }
+    }
+
     for (const auto& label : spec.labels) {
-        (void)Plot::place_label(surface, text_target(), label, relate_to);
+        (void)Plot::place_label(surface,
+            target_of(Graphics::PrimitiveTopology::TRIANGLE_LIST), label, relate_to);
     }
 
     for (const auto& ticks : spec.tick_labels) {
         for (const auto& label : Plot::plot_tick_labels(ticks)) {
-            (void)Plot::place_label(surface, text_target(), label, relate_to);
+            (void)Plot::place_label(surface,
+                target_of(Graphics::PrimitiveTopology::TRIANGLE_LIST), label, relate_to);
         }
     }
 
-    if (spec.legend) {
-        auto layout = Plot::layout_legend(*spec.legend);
-
-        for (const auto& swatch : layout.swatches) {
-            FormaTarget target = FormaTarget::slice_of(
-                batch ? batch : create_buffer(surface.render_config()),
-                Graphics::PrimitiveTopology::TRIANGLE_STRIP);
-            (void)Plot::place_rect(surface, std::move(target), swatch, relate_to);
-        }
-
-        for (const auto& label : layout.labels) {
-            (void)Plot::place_label(surface, text_target(), label, relate_to);
+    if (legend) {
+        for (const auto& label : legend->labels) {
+            (void)Plot::place_label(surface,
+                target_of(Graphics::PrimitiveTopology::TRIANGLE_LIST), label, relate_to);
         }
     }
 }
