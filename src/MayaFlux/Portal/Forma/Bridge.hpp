@@ -160,6 +160,24 @@ public:
         size_t size = sizeof(float));
 
     /**
+     * @brief Route element value to a push constant slot described by a
+     *        GpuDataFormat.
+     *
+     * When the element's own value type is exactly this format, the value is
+     * written as it is, so a vec3 or mat4 state keeps every component.
+     * Otherwise the element's float value is converted to the format with
+     * integers saturating, which needs a single component format.
+     *
+     * @param format Layout written at the offset.
+     */
+    void write(
+        const ElementRef& ref,
+        const std::shared_ptr<Buffers::VKBuffer>& target_buffer,
+        const std::string& shader_path,
+        uint32_t offset,
+        Kakshya::GpuDataFormat format);
+
+    /**
      * @brief Route element value to a descriptor binding on @p target_buffer.
      *
      * Creates a FormaBindingsProcessor if one does not yet exist for this element
@@ -296,6 +314,16 @@ public:
     void write(std::shared_ptr<MappedState<T>> state,
         std::shared_ptr<Buffers::VKBuffer> target_buffer,
         const std::string& shader_path,
+        uint32_t offset,
+        Kakshya::GpuDataFormat format)
+    {
+        write(ref_of(state), std::move(target_buffer), shader_path, offset, format);
+    }
+
+    template <typename T>
+    void write(std::shared_ptr<MappedState<T>> state,
+        std::shared_ptr<Buffers::VKBuffer> target_buffer,
+        const std::string& shader_path,
         const std::string& descriptor_name,
         uint32_t binding_index,
         uint32_t set,
@@ -399,6 +427,13 @@ public:
             };
         }
 
+        std::function<Kakshya::GpuValue()> typed_reader;
+        std::optional<Kakshya::GpuDataFormat> typed_format;
+        if constexpr (Kakshya::GpuFormatElement<T>) {
+            typed_reader = [s = state] { return Kakshya::GpuValue { s->value }; };
+            typed_format = Kakshya::gpu_data_format_v<T>;
+        }
+
         std::function<void(float)> writer;
         if constexpr (std::is_convertible_v<float, T>) {
             writer = [s = state](float v) {
@@ -426,6 +461,8 @@ public:
             .inbound_task = {},
             .outbound_tasks = {},
             .binding_names = {},
+            .typed_reader = std::move(typed_reader),
+            .typed_format = typed_format,
         };
     }
 
@@ -458,7 +495,7 @@ public:
         }
 
         register_element(ElementRef { std::move(owner), mapped.element.id },
-            mapped.state, mapped.element.buffer, std::move(project));
+            mapped.state, mapped.element.buffer.buffer(), std::move(project));
         spawn_sync(layer, mapped.element.id,
             [m = std::move(mapped), target = &layer]() mutable { m.sync(target); });
     }
@@ -541,6 +578,16 @@ public:
             size_t size = sizeof(float))
         {
             m_bridge.write(m_ref, target, shader_path, offset, size);
+            return *this;
+        }
+
+        Binding& write(
+            const std::shared_ptr<Buffers::VKBuffer>& target,
+            const std::string& shader_path,
+            uint32_t offset,
+            Kakshya::GpuDataFormat format)
+        {
+            m_bridge.write(m_ref, target, shader_path, offset, format);
             return *this;
         }
 
@@ -639,6 +686,8 @@ private:
         std::string inbound_task;
         std::vector<std::string> outbound_tasks;
         std::vector<std::string> binding_names;
+        std::function<Kakshya::GpuValue()> typed_reader; ///< populated when T is a GpuFormatElement
+        std::optional<Kakshya::GpuDataFormat> typed_format; ///< format of T when typed_reader is populated
     };
 
     Vruta::TaskScheduler& m_scheduler;

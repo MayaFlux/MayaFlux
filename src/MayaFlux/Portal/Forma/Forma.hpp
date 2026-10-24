@@ -23,10 +23,9 @@ namespace MayaFlux::Portal::Forma {
  * @code
  * Portal::Forma::initialize(buffer_manager, scheduler, event_manager);
  *
- * auto [layer, ctx] = Forma::create_layer(window, "hud");
+ * auto surface = Forma::create_surface(SurfaceConfig { .window = window, .name = "hud" });
  *
- * auto el = Forma::create_element<float>(
- *     *layer, window, geom_fn, 0.5f);
+ * auto el = Forma::create_element<float>(surface, geom_fn, 0.5f);
  *
  * auto bridge = Forma::create_bridge();
  * bridge.bind(el.state, envelope);
@@ -120,81 +119,24 @@ MAYAFLUX_API bool is_initialized();
 /**
  * @brief Construct and register a FormaBuffer without creating a Mapped<T>.
  *
- * BufferManager is taken from the stored initialize() state.
+ * The buffer triangulates, so slices of any topology draw together as one
+ * batch. Elements draw into slices of it, made with FormaTarget::slice_of,
+ * each carrying its own topology. BufferManager is taken from the stored
+ * initialize() state.
  *
- * @param window    Target window.
- * @param topology  Primitive topology.
- * @param texture_binding Optional descriptor name for a single texture binding
+ * With the default multi-texture shader, positive vertex weights select an
+ * image and negative weights select glyph coverage. A custom fragment shader
+ * can use different semantics, as the plot shader does for line and point
+ * geometry mixed with glyphs.
+ *
+ * @param render Render settings; build it with Surface::render_config, which
+ *               sets the window. Textures, shaders and the rest are the
+ *               caller's.
  * @return Registered, render-ready FormaBuffer.
  */
 [[nodiscard]] MAYAFLUX_API
     std::shared_ptr<Buffers::FormaBuffer>
-    create_buffer(
-        std::shared_ptr<Core::Window> window,
-        Graphics::PrimitiveTopology topology,
-        const std::string& texture_binding = {});
-
-/**
- * @brief Construct and register a FormaBuffer with additional texture bindings.
- *
- * BufferManager is taken from the stored initialize() state.
- *
- * @param window            Target window.
- * @param topology          Primitive topology.
- * @param additional_textures  Vector of { descriptor name, image } pairs for
- *                             additional texture bindings. These are in
- *                             addition to any default_texture_binding set
- *                             in the RenderConfig passed to setup_rendering().
- * @return Registered, render-ready FormaBuffer.
- */
-[[nodiscard]] MAYAFLUX_API
-    std::shared_ptr<Buffers::FormaBuffer>
-    create_buffer(
-        std::shared_ptr<Core::Window> window,
-        Graphics::PrimitiveTopology topology,
-        std::vector<std::pair<std::string, std::shared_ptr<Core::VKImage>>> additional_textures);
-
-/**
- * @brief Construct, register, and immediately submit a FormaBuffer from vertices.
- *
- * Deduces capacity and topology from the vertex type. PointVertex yields
- * POINT_LIST, LineVertex yields LINE_LIST, MeshVertex yields TRIANGLE_STRIP.
- * Topology may be overridden explicitly for cases like LINE_STRIP or
- * TRIANGLE_LIST from MeshVertex data.
- *
- * @tparam V    Vertex type: PointVertex, LineVertex, or MeshVertex.
- * @param window    Target window.
- * @param vertices  Vertices to submit immediately after construction.
- * @param topology  Primitive topology. Defaults to the canonical topology for V.
- * @return Registered, render-ready FormaBuffer with initial geometry submitted.
- */
-template <typename V>
-    requires std::ranges::contiguous_range<V>
-    && std::is_trivially_copyable_v<std::ranges::range_value_t<V>>
-[[nodiscard]] std::shared_ptr<Buffers::FormaBuffer> create_buffer(
-    std::shared_ptr<Core::Window> window,
-    const V& vertices,
-    Graphics::PrimitiveTopology topology = Graphics::PrimitiveTopology::TRIANGLE_STRIP)
-{
-    using Vertex = std::ranges::range_value_t<V>;
-    const size_t cap = std::ranges::size(vertices) * sizeof(Vertex);
-    auto buf = internal::atelier().create_buffer(std::move(window), cap, topology);
-    buf->submit(vertices);
-    return buf;
-}
-
-template <typename V>
-    requires std::is_trivially_copyable_v<V>
-    && (!std::ranges::range<V>)
-[[nodiscard]] std::shared_ptr<Buffers::FormaBuffer> create_buffer(
-    std::shared_ptr<Core::Window> window,
-    const V& vertex,
-    Graphics::PrimitiveTopology topology = Graphics::PrimitiveTopology::TRIANGLE_STRIP)
-{
-    auto buf = internal::atelier().create_buffer(std::move(window), sizeof(V), topology);
-    buf->submit(vertex);
-    return buf;
-}
+    create_buffer(Graphics::RenderConfig render);
 
 // =============================================================================
 // Element
@@ -243,8 +185,9 @@ MAYAFLUX_API void destroy(Surface& surface, uint32_t id);
 /**
  * @brief Create a live plot in a new window.
  *
- * Creates the window, shows it, constructs the Surface, builds the
- * FormaBuffer from the spec capacity and topology, and calls Plot::place.
+ * Creates the window, shows it, constructs the Surface, and places the plot
+ * in a slice of one batch. Background, legend swatches and labels use slices
+ * of that batch; a plot with labels selects the glyph-capable plot shader.
  * Returns the Mapped<shared_ptr<PlotContainer>> from Plot::place, plus the
  * Surface owning the window and layer.
  *

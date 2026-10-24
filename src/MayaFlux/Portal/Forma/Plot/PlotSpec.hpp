@@ -216,9 +216,10 @@ MAYAFLUX_API void apply_auto_scale(AxisRange& range,
 // static FormaBuffer submitted once and related behind the data element.
 //
 // Caller pattern:
-//   auto grid_buf = Portal::Forma::create_buffer(window,
-//       Plot::plot_grid(bounds, 8, 6),
+//   auto grid_buf = FormaTarget::slice_of(
+//       Portal::Forma::create_buffer(surface.render_config()),
 //       Portal::Graphics::PrimitiveTopology::LINE_LIST);
+//   grid_buf.submit(Plot::plot_grid(bounds, 8, 6));
 //   surface.layer().add(
 //       Portal::Forma::Element{}.non_interactive().with_buffer(grid_buf))
 //       .relate_to(data_el.element.id).to_back();

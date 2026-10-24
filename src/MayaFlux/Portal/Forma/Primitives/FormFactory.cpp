@@ -184,7 +184,7 @@ Form<glm::vec2> position_picker(
 
 Form<float> stroke_slider(
     std::span<const glm::vec2> path,
-    std::shared_ptr<Buffers::FormaBuffer> handle_buf,
+    FormaTarget handle_buf,
     float half_thickness,
     glm::vec3 track_color,
     glm::vec3 fill_color,
@@ -285,7 +285,7 @@ Form<float> stroke_slider(
             };
             std::vector<uint8_t> hbytes(sizeof(hv));
             std::memcpy(hbytes.data(), &hv, sizeof(hv));
-            handle_buf->submit(hbytes);
+            handle_buf.submit(hbytes);
         }
     };
 

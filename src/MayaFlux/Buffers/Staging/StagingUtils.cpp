@@ -7,6 +7,7 @@
 #include "MayaFlux/Kakshya/NDData/MeshInsertion.hpp"
 #include "MayaFlux/Kakshya/NDData/VertexFormats.hpp"
 #include "MayaFlux/Kakshya/Utils/DataUtils.hpp"
+#include "MayaFlux/Kinesis/Discrete/Extract.hpp"
 #include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 
 #include "MayaFlux/Registry/BackendRegistry.hpp"
@@ -550,6 +551,121 @@ void ensure_gpu_capacity(
     if (staging) {
         staging->resize(new_size, false);
     }
+}
+
+void upload_intervals(
+    const void* base,
+    std::span<const std::pair<size_t, size_t>> intervals,
+    const std::shared_ptr<VKBuffer>& target,
+    std::shared_ptr<VKBuffer>& staging)
+{
+    if (!target) {
+        error<std::invalid_argument>(
+            Journal::Component::Buffers,
+            Journal::Context::BufferProcessing,
+            std::source_location::current(),
+            "upload_intervals: target buffer is null");
+    }
+
+    std::vector<std::pair<size_t, size_t>> pending;
+    pending.reserve(intervals.size());
+    for (const auto& interval : intervals) {
+        if (interval.first < interval.second) {
+            pending.push_back(interval);
+        }
+    }
+
+    if (!base || pending.empty()) {
+        return;
+    }
+
+    const auto merged = Kinesis::Discrete::merge_intervals(pending);
+
+    if (merged.back().second > target->get_size_bytes()) {
+        error<std::runtime_error>(
+            Journal::Component::Buffers,
+            Journal::Context::BufferProcessing,
+            std::source_location::current(),
+            "upload_intervals: range end {} exceeds buffer capacity {}",
+            merged.back().second, target->get_size_bytes());
+    }
+
+    auto buffer_service = Registry::BackendRegistry::instance()
+                              .get_service<Registry::Service::BufferService>();
+
+    if (!buffer_service || !buffer_service->flush_range) {
+        error<std::runtime_error>(
+            Journal::Component::Buffers,
+            Journal::Context::BufferProcessing,
+            std::source_location::current(),
+            "upload_intervals requires a valid buffer service");
+    }
+
+    const auto* src = static_cast<const uint8_t*>(base);
+
+    if (target->is_host_visible()) {
+        auto* mapped = static_cast<uint8_t*>(target->get_mapped_ptr());
+        if (!mapped) {
+            error<std::runtime_error>(
+                Journal::Component::Buffers,
+                Journal::Context::BufferProcessing,
+                std::source_location::current(),
+                "Host-visible buffer has no mapped pointer");
+        }
+
+        const auto memory = target->get_buffer_resources().memory;
+        for (const auto& [start, end] : merged) {
+            std::memcpy(mapped + start, src + start, end - start);
+            buffer_service->flush_range(memory, start, end - start);
+        }
+        return;
+    }
+
+    if (!buffer_service->execute_immediate) {
+        error<std::runtime_error>(
+            Journal::Component::Buffers,
+            Journal::Context::BufferProcessing,
+            std::source_location::current(),
+            "upload_intervals requires execute_immediate for device-local targets");
+    }
+
+    size_t packed_bytes = 0;
+    for (const auto& [start, end] : merged) {
+        packed_bytes += end - start;
+    }
+
+    if (!staging || staging->get_size_bytes() < packed_bytes) {
+        staging = create_staging_buffer(packed_bytes);
+    }
+
+    auto* staged = static_cast<uint8_t*>(staging->get_mapped_ptr());
+    if (!staged) {
+        error<std::runtime_error>(
+            Journal::Component::Buffers,
+            Journal::Context::BufferProcessing,
+            std::source_location::current(),
+            "Staging buffer has no mapped pointer");
+    }
+
+    std::vector<vk::BufferCopy> regions;
+    regions.reserve(merged.size());
+    size_t packed_offset = 0;
+    for (const auto& [start, end] : merged) {
+        const size_t length = end - start;
+        std::memcpy(staged + packed_offset, src + start, length);
+        regions.emplace_back(packed_offset, start, length);
+        packed_offset += length;
+    }
+
+    auto& staging_resources = staging->get_buffer_resources();
+    buffer_service->flush_range(staging_resources.memory, 0, packed_bytes);
+
+    const vk::Buffer source = staging_resources.buffer;
+    const vk::Buffer destination = target->get_buffer_resources().buffer;
+    buffer_service->execute_immediate([&](void* command_buffer) {
+        vk::CommandBuffer cmd(static_cast<VkCommandBuffer>(command_buffer));
+        cmd.copyBuffer(source, destination, regions);
+    });
 }
 
 void upload_to_gpu(

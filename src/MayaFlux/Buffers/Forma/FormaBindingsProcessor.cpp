@@ -38,7 +38,56 @@ void FormaBindingsProcessor::bind_push_constant(
     auto& b = m_bindings[name];
     b.kind = TargetKind::PUSH_CONSTANT;
     b.reader = std::move(reader);
+    b.typed_reader = nullptr;
     b.pc = PushConstantTarget { .offset = offset, .size = size };
+    b.desc.reset();
+}
+
+void FormaBindingsProcessor::bind_push_constant(
+    const std::string& name,
+    std::function<float()> reader,
+    uint32_t offset,
+    Kakshya::GpuDataFormat format)
+{
+    if (!reader) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "FormaBindingsProcessor::bind_push_constant: null reader for '{}'", name);
+        return;
+    }
+
+    if (Kakshya::gpu_data_format_components(format) != 1) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "FormaBindingsProcessor::bind_push_constant: '{}' needs a single component format",
+            name);
+        return;
+    }
+
+    release(name);
+    auto& b = m_bindings[name];
+    b.kind = TargetKind::PUSH_CONSTANT;
+    b.reader = std::move(reader);
+    b.typed_reader = nullptr;
+    b.pc = PushConstantTarget { .offset = offset, .size = Kakshya::gpu_data_format_bytes(format), .format = format };
+    b.desc.reset();
+}
+
+void FormaBindingsProcessor::bind_typed_push_constant(
+    const std::string& name,
+    std::function<Kakshya::GpuValue()> reader,
+    uint32_t offset)
+{
+    if (!reader) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "FormaBindingsProcessor::bind_typed_push_constant: null reader for '{}'", name);
+        return;
+    }
+
+    release(name);
+    auto& b = m_bindings[name];
+    b.kind = TargetKind::PUSH_CONSTANT;
+    b.reader = nullptr;
+    b.typed_reader = std::move(reader);
+    b.pc = PushConstantTarget { .offset = offset, .size = 0 };
     b.desc.reset();
 }
 
@@ -60,6 +109,7 @@ void FormaBindingsProcessor::bind_descriptor(
     auto& b = m_bindings[name];
     b.kind = TargetKind::DESCRIPTOR;
     b.reader = std::move(reader);
+    b.typed_reader = nullptr;
     b.pc.reset();
 
     auto gpu_buf = make_descriptor_buffer(role);
@@ -157,6 +207,12 @@ void FormaBindingsProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buf
     remember_target(buffer);
 
     for (const auto& [name, b] : m_bindings) {
+        if (b.typed_reader) {
+            if (b.pc)
+                flush_typed_push_constant(name, b.typed_reader(), *b.pc, buffer);
+            continue;
+        }
+
         if (!b.reader) {
             MF_RT_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
                 "FormaBindingsProcessor: binding '{}' has no reader", name);
@@ -201,7 +257,14 @@ void FormaBindingsProcessor::flush_push_constant(
         it = std::prev(entries.end());
     }
 
-    if (pc.size == sizeof(float)) {
+    if (pc.format) {
+        const bool packed = Kakshya::pack_gpu_value(*pc.format, value,
+            std::span<std::byte>(reinterpret_cast<std::byte*>(it->data.data()), it->data.size()));
+        if (!packed) {
+            MF_RT_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "FormaBindingsProcessor: binding '{}' does not fit its push constant slot", name);
+        }
+    } else if (pc.size == sizeof(float)) {
         std::memcpy(it->data.data(), &value, sizeof(float));
     } else if (pc.size == sizeof(double)) {
         auto promoted = static_cast<double>(value);
@@ -210,6 +273,33 @@ void FormaBindingsProcessor::flush_push_constant(
 
     MF_RT_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
         "FormaBindingsProcessor: PC write offset={} value={}", pc.offset, value);
+}
+
+void FormaBindingsProcessor::flush_typed_push_constant(
+    const std::string& name,
+    const Kakshya::GpuValue& value,
+    const PushConstantTarget& pc,
+    const std::shared_ptr<VKBuffer>& buffer)
+{
+    auto& entries = buffer->get_pipeline_context().push_constant_bindings;
+    const size_t width = Kakshya::gpu_data_format_bytes(Kakshya::gpu_value_format(value));
+
+    auto it = std::ranges::find_if(entries, [&](const auto& e) {
+        return e.offset == pc.offset;
+    });
+
+    if (it == entries.end()) {
+        entries.push_back(Portal::Graphics::PushConstantBindingInfo {
+            .offset = pc.offset,
+            .data = std::vector<uint8_t>(width),
+            .name = name });
+        it = std::prev(entries.end());
+    } else if (it->data.size() != width) {
+        it->data.resize(width);
+    }
+
+    Kakshya::gpu_value_write(value,
+        std::span<std::byte>(reinterpret_cast<std::byte*>(it->data.data()), it->data.size()));
 }
 
 void FormaBindingsProcessor::flush_descriptor(

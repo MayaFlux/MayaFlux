@@ -320,6 +320,19 @@ struct PushConstantField {
 };
 
 /**
+ * @brief Offsets and total size of a push constant block, under std430.
+ */
+[[nodiscard]] inline Kakshya::GpuBlockLayout push_constant_layout(
+    const std::vector<PushConstantField>& fields)
+{
+    std::vector<Kakshya::GpuDataFormat> formats;
+    formats.reserve(fields.size());
+    for (const auto& field : fields)
+        formats.push_back(field.format);
+    return Kakshya::gpu_block_layout(formats);
+}
+
+/**
  * @struct FunctionDef
  * @brief A standalone function emitted before main() in the generated GLSL.
  *
@@ -515,9 +528,7 @@ struct ShaderSpec {
         /** @brief Finalise and return the ShaderSpec. */
         [[nodiscard]] ShaderSpec build()
         {
-            uint32_t pc_bytes = 0;
-            for (const auto& f : m_pc_fields)
-                pc_bytes += Kakshya::gpu_data_format_bytes(f.format);
+            const uint32_t pc_bytes = push_constant_layout(m_pc_fields).size;
 
             if (m_kernel.has_value() && m_kernel->param_names.empty()) {
                 auto& names = m_kernel->param_names;

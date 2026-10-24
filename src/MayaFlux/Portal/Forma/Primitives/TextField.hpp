@@ -34,29 +34,18 @@ class Surface;
  * It does not manage focus visuals; wire on_focus_gained/on_focus_lost
  * separately, same as any other Forma element.
  *
- * Cursor movement beyond Left/Right/character-count needed no new
- * Portal::Text API: Up/Down resolve via x_at() (current pen position) and
- * index_at() (nearest byte at that x, one line_height() away) - the exact
- * idiom test_text_input() (test_8.hpp) already used to verify x_at()/
- * index_at() round-trip. A mouse click does the same, with the click's NDC
- * position mapped into pixel space first (the inverse of the mapping
- * caret_ndc() itself uses).
+ * Up/Down preserve the caret's horizontal position across lines. Clicking
+ * places the caret at the nearest text boundary. Both use the layout already
+ * drawn by the field's text run.
  *
- * A caret rides in the same buf as the text quad rather than owning a
- * buffer, Element, or Layer entry of its own: it is a second
- * Kakshya::MeshVertex quad (Kinesis::textured_mesh_rect at weight 0, a
- * flat fill - forma_multi.frag already branches per-vertex on weight, so
- * weight<=0 draws that vertex's own color with no texture read at all)
- * appended after the text quad's 6 vertices in the same buf->submit()
- * call. Every keystroke and every reposition() therefore resubmits both
- * quads together (12 MeshVertex, 720 bytes) rather than only the one that
- * actually moved - FormaBuffer::submit() has no partial-range write, so
- * this is the whole buffer either way, and at this size it costs nothing
- * to send it whole. Caret pixel position comes from Portal::Text::x_at()
- * plus GlyphAtlas::ascender()/line_height(), matching the same pen_x=0,
- * pen_y=ascender(), wrap_w=render_bounds.x origin press()/repress()
- * already rasterize text at internally - Portal::Text needed no new API
- * for this.
+ * The text is drawn as glyph quads from the glyph atlas, and a caret rides
+ * in the same slice rather than owning a buffer, Element, or Layer entry of
+ * its own: it is one flat Kakshya::MeshVertex quad (Kinesis::textured_mesh_rect
+ * at weight 0, so forma_multi.frag draws the vertex colour with no texture
+ * read) appended after the glyphs. Every keystroke and every reposition()
+ * writes glyphs and caret together in one submit, since FormaBuffer::submit()
+ * has no partial-range write. Caret position comes from Portal::Text::TextRun::caret(),
+ * which shares the layout origin of the glyphs.
  *
  * params is a shared, mutable Portal::Text::PressParams: every keystroke's
  * re-render reads *params fresh, so a caller can change it once (e.g. a
@@ -71,8 +60,7 @@ class Surface;
  *
  * @code
  * auto buf = Portal::Forma::create_buffer(
- *     window, Graphics::PrimitiveTopology::TRIANGLE_LIST,
- *     std::vector{ std::pair{ std::string("text"), std::shared_ptr<Core::VKImage>{} } });
+ *     surface.render_config({ .additional_textures = { { "text", nullptr } } }));
  *
  * auto params = std::make_shared<Portal::Text::PressParams>(
  *     Portal::Text::PressParams { .color = { 0.9F, 0.9F, 0.9F, 1.F }, .render_bounds = { 800, 64 } });
@@ -113,10 +101,13 @@ struct TextField {
     ///        subsequent keystroke see it. Valid after place().
     std::shared_ptr<Portal::Text::PressParams> params;
 
-    /// @brief FormaBuffer backing the text quad. Valid after place(). Pass
+    /// @brief The text and caret drawn into buf. Valid after place().
+    std::shared_ptr<internal::TextSlice> slice;
+
+    /// @brief Target the text and caret draw into. Valid after place(). Pass
     ///        directly as Scrollable::track()'s clip_buf for scissor
     ///        clipping - no separate scissor call needed.
-    std::shared_ptr<Buffers::FormaBuffer> buf;
+    FormaTarget buf;
 
     /// @brief NDC region occupied by the field. Valid after place().
     Kinesis::AABB2D field_bounds {};
@@ -131,18 +122,18 @@ struct TextField {
     /**
      * @brief Register the text field element and wire text editing onto it.
      *
-     * @param in_buf       Pre-created buffer for the text quad - must have
+     * @param in_buf       Pre-created target for the text - must have
      *                     an additional_textures slot at index 0
      *                     (Element::with_text's requirement).
      * @param surface      Surface to register the element on.
-     * @param bounds       NDC region: hit-test bounds and the text quad.
+     * @param bounds       NDC region: hit-test bounds and the text.
      * @param in_params    Shared render params. A default-constructed one
      *                     is allocated if null.
      * @param initial_text Starting text. Cursor starts at its end.
      * @return *this, with results populated.
      */
     MAYAFLUX_API TextField& place(
-        std::shared_ptr<Buffers::FormaBuffer> in_buf,
+        FormaTarget in_buf,
         Surface& surface,
         Kinesis::AABB2D bounds,
         std::shared_ptr<Portal::Text::PressParams> in_params,
@@ -178,7 +169,7 @@ struct TextField {
      * scroller's viewport too, even though scroller itself is never owned
      * or stored here - only its Layer-side element needs freeing this way.
      *
-     * @param in_buf              Pre-created buffer for the field's text quad.
+     * @param in_buf              Pre-created target for the field's text.
      * @param surface             Surface to register the field's element on -
      *                            must be the same Surface scroller was placed on.
      * @param scroller            Already-placed Scrollable to grow and track into.
@@ -193,7 +184,7 @@ struct TextField {
      * @return *this, with results populated.
      */
     MAYAFLUX_API TextField& scrollable(
-        std::shared_ptr<Buffers::FormaBuffer> in_buf,
+        FormaTarget in_buf,
         Surface& surface,
         Scrollable& scroller,
         std::shared_ptr<Portal::Text::PressParams> in_params,
@@ -205,11 +196,10 @@ struct TextField {
     // =========================================================================
 
     /**
-     * @brief Move the field to a new NDC region, keeping content and the
-     *        bound texture unchanged.
+     * @brief Move the field to a new NDC region, keeping its content.
      *
-     * The visual half of a scroll reflow - resubmits the text quad and the
-     * caret quad together at the new region (see the class doc's note on
+     * The visual half of a scroll reflow - lays the text out again and
+     * resubmits it with the caret together at the new region (see the class doc's note on
      * why both are always resubmitted together), nothing else. Wire
      * directly as a Scrollable::track() reposition callback (see the class
      * doc example); Scrollable's own reflow() already pushes the matching

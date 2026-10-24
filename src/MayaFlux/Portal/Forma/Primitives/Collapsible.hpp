@@ -1,6 +1,7 @@
 #pragma once
 
 #include "LayoutCursor.hpp"
+#include "MayaFlux/Portal/Forma/Target.hpp"
 
 namespace MayaFlux::Core {
 class Window;
@@ -47,7 +48,7 @@ struct Collapsible {
     std::shared_ptr<MappedState<bool>> open;
 
     /// @brief FormaBuffer backing the header geometry. Valid after place().
-    std::shared_ptr<Buffers::FormaBuffer> buf;
+    FormaTarget buf;
 
     /// @brief Cursor positioned below the header, ready for body elements. Valid after place().
     LayoutCursor cursor_out;
@@ -71,7 +72,7 @@ struct Collapsible {
     /// @brief Background color when open. Default: glm::vec3(0.35F).
     glm::vec3 m_color_open { 0.35F };
 
-    /// @brief Text label composited over the header. Empty = color only.
+    /// @brief Text label drawn over the header. Empty = color only.
     std::string m_label_text;
 
     /// @brief Label text color. Default opaque white.
@@ -100,13 +101,13 @@ struct Collapsible {
     }
 
     /**
-     * @brief Composite a text label over the header, background included.
+     * @brief Draw a text label over the header, background included.
      *
-     * When set, place() presses @p text with the current open/closed color
-     * as Portal::Text::PressParams::background into one texture, and every
-     * toggle re-presses it with the new color - background and label are
-     * one composited image, not a separate vertex layer, so they can never
-     * drift out of sync the way two independent draws could. When empty
+     * When set, place() draws @p text with the current open/closed color
+     * as Portal::Text::PressParams::background, and every toggle draws it
+     * again with the new color - background and label are one slice, so
+     * they can never drift out of sync the way two independent draws could.
+     * When empty
      * (default), the header stays a plain color-only quad with no text
      * machinery at all.
      *
@@ -145,7 +146,7 @@ struct Collapsible {
      * @return *this, with results populated.
      */
     MAYAFLUX_API Collapsible& place(
-        std::shared_ptr<Buffers::FormaBuffer> buf,
+        FormaTarget buf,
         Surface& surface,
         LayoutCursor& cursor,
         float x_min, float x_max, float row_h);
@@ -165,7 +166,7 @@ struct Collapsible {
      * @return *this, with results populated.
      */
     MAYAFLUX_API Collapsible& place(
-        std::shared_ptr<Buffers::FormaBuffer> buf,
+        FormaTarget buf,
         Surface& surface,
         LayoutCursor& cursor,
         float row_h);
@@ -201,7 +202,7 @@ struct Collapsible {
  * accepted but ignored - Forma::bridge() is called internally.
  */
 [[nodiscard]] MAYAFLUX_API Collapsible make_collapsible(
-    std::shared_ptr<Buffers::FormaBuffer> buf,
+    FormaTarget buf,
     Surface& surface,
     LayoutCursor& cursor,
     float x_min,

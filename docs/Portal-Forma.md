@@ -21,14 +21,22 @@ containment predicates for each element and drives hit testing.
 deliberately open: an AABB fast-reject, a precise containment predicate, or
 both. An element with no buffer is a valid pure hit-test region.
 
-**FormaBuffer** is a CPU-writable GPU vertex buffer. You call `submit()` to
-push geometry. The buffer is registered with the graphics backend and rendered
-each frame.
+**FormaBuffer** is a CPU-writable GPU vertex buffer, registered with the
+graphics backend and rendered each frame.
+
+**FormaTarget** directs an element's output to a whole `FormaBuffer` or one
+slice of a buffer shared by several elements. `Element::buffer` is a
+`FormaTarget`; a `shared_ptr<FormaBuffer>` converts to a whole-buffer target.
+Geometry, texture binding, visibility, draw order, and retirement go through
+the target.
+
+**Slice** holds one element's geometry within a shared buffer. Each slice has
+its own input topology. The slices draw together as one batch.
 
 **Mapped\<T\>** is an element with a typed state. It combines a `MappedState<T>`
-(an atomic value with a version counter), a geometry function that converts `T`
-to vertex bytes, and the underlying `FormaBuffer`. Calling `sync()` reruns the
-geometry function if the version has advanced.
+(a graphics-thread value with a version counter), a geometry function that
+converts `T` to vertex bytes, and its `FormaTarget`. Calling `sync()` reruns
+the geometry function if the version has advanced.
 
 **Bridge** wires `Mapped<T>` elements to the rest of the graph, in both
 directions.
@@ -57,41 +65,75 @@ Anything that works against a bare `Layer` or `Context` works against these.
 
 ---
 
-## Static geometry, manual buffer
+## Buffers, slices and batches
 
-Use this when geometry does not change and requires no interaction state.
+`Forma::create_buffer(RenderConfig)` registers a render-ready buffer. Build
+the config with `Surface::render_config`, which sets the window and preserves
+other fields you pass:
 
 ```cpp
-auto buf = Portal::Forma::create_buffer(
-    window,
-    Kakshya::PointVertex {
-        .position = { 0.0F, 0.0F, 0.0F },
-        .color    = { 1.0F, 1.0F, 1.0F },
-        .size     = 16.0F,
-    },
-    Portal::Graphics::PrimitiveTopology::POINT_LIST);
+auto buf = Portal::Forma::create_buffer(surface.render_config());
+```
+
+The buffer triangulates slices into a `TRIANGLE_LIST`. Capacity grows on flush
+from a fixed initial size. Each slice specifies its input topology; line and
+point slices are milled into NDC ribbons using widths measured in pixels
+against the window height at buffer creation.
+
+### Drawing into a slice
+
+```cpp
+auto target = Portal::Forma::FormaTarget::slice_of(
+    buf, Portal::Graphics::PrimitiveTopology::POINT_LIST);
+
+target.submit(Kakshya::PointVertex {
+    .position = { 0.0F, 0.0F, 0.0F },
+    .color = { 1.0F, 1.0F, 1.0F },
+    .size = 16.0F,
+});
 
 const uint32_t id = surface.layer().add(
     Portal::Forma::Element {}
         .with_name("center_point")
         .with_bounds(Kinesis::AABB2D::from_ndc({ 0.0F, 0.0F }, { 0.05F, 0.05F }))
         .with_circle({ 0.0F, 0.0F }, 0.05F)
-        .with_buffer(buf));
+        .with_buffer(target));
 ```
 
-`create_buffer` with a vertex value (or range) registers and submits in one
-call. The overload that takes a byte count and topology creates an empty
-buffer that you fill via `buf->submit(...)` yourself.
+`slice_of` returns an empty handle if the buffer is not ready for slices.
+Several elements can use slices of the same buffer as one batch. Retiring the
+last slice retires that buffer.
+
+### Texture slots
+
+With `forma_multi.frag`, a positive vertex `weight` selects an image slot,
+zero draws flat colour, and a negative weight selects glyph coverage from a
+slot. Custom shaders can use different semantics; the plot shader does.
+Allocate an `additional_textures` slot only when the batch needs one. See
+`Portal-Text.md` for glyph coverage.
+
+### Elements with their own buffer
+
+`create_element` and `create(Surface&, Form, ...)` create one buffer for their
+element, with its geometry in a slice:
+
+```cpp
+auto el = Portal::Forma::create_element<float>(surface, geom_fn, 0.5F);
+```
+
+Pass a `FormaTarget` to the explicit overload to share a buffer with others.
 
 ---
 
 ## Kinesis::Geometry2D : static vertex data
 
-`Kinesis::Geometry2D.hpp` produces raw vertex arrays. Pass the result directly
-to `create_buffer`, `buf->submit()`, or `write_verts` inside a geometry
-function. All coordinates are NDC (z = 0).
+`Kinesis::Geometry2D.hpp` produces raw vertex arrays in NDC (z = 0). Submit
+them to a `FormaTarget::slice_of(buf, topology)`, or return them from a
+geometry function. Match the slice topology to the returned vertices:
+`TRIANGLE_STRIP` for four-vertex filled rectangles, `TRIANGLE_LIST` for other
+filled shapes, and `LINE_LIST` for outlines.
 
-### Filled shapes : `Kakshya::Vertex`, TRIANGLE_LIST
+### Filled shapes : `Kakshya::Vertex`
 
 | Function                                                  | Description                                                     |
 | --------------------------------------------------------- | --------------------------------------------------------------- |
@@ -102,20 +144,6 @@ function. All coordinates are NDC (z = 0).
 | `filled_ring(center, inner_r, outer_r, segments, color)`  | Annulus as quad strip.                                          |
 | `filled_polygon(center, radius, sides, rotation, color)`  | Regular n-gon fan.                                              |
 | `filled_arc(center, radius, start, end, segments, color)` | Pie-slice sector fan.                                           |
-
-```cpp
-// Rounded panel background
-auto buf = Portal::Forma::create_buffer(
-    window,
-    Kinesis::filled_rounded_rect(box, 0.02F, 6, { 0.15F, 0.15F, 0.17F }),
-    Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST);
-
-// Ring indicator (e.g. dial surround)
-auto buf = Portal::Forma::create_buffer(
-    window,
-    Kinesis::filled_ring({ 0.F, 0.F }, 0.25F, 0.3F, 48, { 0.2F, 0.2F, 0.25F }),
-    Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST);
-```
 
 ### Outlines : `Kakshya::LineVertex`, LINE_LIST
 
@@ -128,21 +156,6 @@ auto buf = Portal::Forma::create_buffer(
 | `polyline(pts, color, thickness)`                                     | Open path from a span of `glm::vec2`. |
 | `polyline_colored(pts, colors, thickness)`                            | Same, per-vertex colors.              |
 
-```cpp
-// Border around a panel
-auto buf = Portal::Forma::create_buffer(
-    window,
-    Kinesis::rect_outline(box, { 0.4F, 0.4F, 0.5F }, 1.F),
-    Portal::Graphics::PrimitiveTopology::LINE_LIST);
-
-// Cable route between two points
-const std::array<glm::vec2, 4> pts { { { -0.5F, -0.3F }, { -0.2F, 0.1F }, { 0.2F, -0.1F }, { 0.5F, 0.3F } } };
-auto buf = Portal::Forma::create_buffer(
-    window,
-    Kinesis::polyline(pts, { 0.6F, 0.9F, 0.3F }, 1.5F),
-    Portal::Graphics::PrimitiveTopology::LINE_LIST);
-```
-
 ### Path sampling
 
 `arc_path(center, rx, ry, start, end, segments)` returns `vector<glm::vec2>`,
@@ -153,8 +166,9 @@ useful as input to `polyline` or `stroke_slider`:
 auto path = Kinesis::arc_path({ 0.F, 0.F }, 0.4F, 0.4F,
     glm::radians(200.F), glm::radians(-20.F), 64);
 
-auto handle_buf = Portal::Forma::create_buffer(
-    window, Portal::Graphics::PrimitiveTopology::POINT_LIST);
+auto handle_buf = Portal::Forma::FormaTarget::slice_of(
+    Portal::Forma::create_buffer(surface.render_config()),
+    Portal::Graphics::PrimitiveTopology::POINT_LIST);
 
 auto el = Portal::Forma::create(
     surface, Portal::Forma::Geometry::stroke_slider(path, handle_buf), 0.5F);
@@ -165,10 +179,8 @@ auto el = Portal::Forma::create(
 ## Form : geometry with everything its realization needs
 
 A geometry function alone is not enough to construct an element. Its topology
-is fixed by the vertex kind it writes, its capacity by the vertex count, and
-its interaction by the forward placement it performs. All three are knowledge
-the geometry factory already has, and the call site would otherwise restate
-them.
+is fixed by the vertex kind it writes, and its interaction by the forward
+placement it performs. The geometry factory already knows both.
 
 `Form<T>` carries all four together:
 
@@ -182,10 +194,11 @@ struct Form {
 };
 ```
 
-`Portal::Forma::create` realizes one: builds the buffer at the Form's capacity
-and topology, registers the element, syncs so `bounds_hint` and `contains`
-from the geometry function reach the Layer before the first frame, then runs
-the wiring.
+`Portal::Forma::create` realizes one: builds a growing buffer, adds a slice
+with the Form's topology, registers the element, syncs so `bounds_hint` and
+`contains` from the geometry function reach the Layer before the first frame,
+then runs the wiring. The legacy `Form::capacity` field does not size this
+buffer.
 
 ```cpp
 constexpr Kinesis::AABB2D track { glm::vec2(-0.8F, -0.08F), glm::vec2(0.8F, 0.08F) };
@@ -197,8 +210,8 @@ auto constant = vega.Constant(0.0) | Audio[0];
 Portal::Forma::bridge().at(el.state).write(constant);
 ```
 
-That is the whole fader: geometry, correct topology, correct buffer size, and
-a drag whose inverse matches the handle placement.
+That is the whole fader: geometry, correct topology, and a drag whose inverse
+matches the handle placement.
 
 `Tend<T>`, introduced after Bridge below, chains this same construction
 directly into a binding for the common case where both happen together.
@@ -221,8 +234,8 @@ surface.ctx().on_drag(el.element.id, IO::MouseButtons::Left,
     [state = el.state](uint32_t, glm::vec2 ndc) { /* your mapping */ });
 ```
 
-`capacity` is a hint. `FormaProcessor` grows the buffer when a sync exceeds
-it, at the cost of one reallocation.
+`Form::capacity` remains in the type for compatibility. The current buffer
+starts at a fixed size and grows on flush when its slices need more space.
 
 ---
 
@@ -378,56 +391,56 @@ surface.ctx().on_held(el.element.id, IO::Keys::ArrowLeft,
 
 ---
 
-## Texture and text on an Element
+## Text and textures on an Element
 
-`with_texture` and `with_text` bind a GPU image directly to an element's
-buffer. The buffer must be created with an `additional_textures` slot at
-index 0 so that `forma_multi.frag` is selected.
+`with_text`, `set_text`, and `retarget` draw glyph quads into the element's
+`FormaTarget`. Text slices in one buffer share a glyph atlas image at texture
+slot 0. Set up that slot in `RenderConfig` before creating the buffer:
 
 ```cpp
 constexpr Kinesis::AABB2D box { glm::vec2(-0.3F, -0.1F), glm::vec2(0.3F, 0.1F) };
 
-// Text label
-auto text_buf = Portal::Forma::create_buffer(
-    window,
-    Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST,
-    std::vector{ std::pair{ std::string("text"), std::shared_ptr<Core::VKImage>{} } });
+auto render = surface.render_config();
+render.additional_textures.emplace_back("text", nullptr);
+auto text_buf = Portal::Forma::create_buffer(std::move(render));
+auto target = Portal::Forma::FormaTarget::slice_of(
+    text_buf, Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST);
 
+auto el = Portal::Forma::Element {}
+    .non_interactive()
+    .with_buffer(target)
+    .with_text("Click me",
+        Portal::Text::PressParams { .color = { 1.F, 1.F, 1.F, 1.F },
+                                    .render_bounds = { 256, 48 } },
+        box);
+
+surface.layer().add(el);
+el.set_text("Active", Portal::Text::PressParams { .render_bounds = { 256, 48 } });
+```
+
+Forma keeps one `AtlasImage` per atlas and refreshes stale text slices when
+that atlas grows. A buffer's texture bindings belong to the whole buffer, so
+its text slices must use the same atlas and reserve slot 0 for it. A row
+shorter than one line squeezes its text to fit (`TextRun::extent`).
+
+`with_texture` still draws a loaded or render-target image. Give its buffer
+an `additional_textures` slot and use a separate slice for each image quad.
+Several slices of one buffer can share an image bound at the same slot:
+
+```cpp
+auto image_render = surface.render_config();
+image_render.additional_textures.emplace_back("image", nullptr);
+auto image_buf = Portal::Forma::create_buffer(std::move(image_render));
+auto image_target = Portal::Forma::FormaTarget::slice_of(image_buf);
 surface.layer().add(
     Portal::Forma::Element {}
         .non_interactive()
-        .with_buffer(text_buf)
-        .with_text("Click me",
-            Portal::Text::PressParams { .color = { 1.F, 1.F, 1.F, 1.F }, .render_bounds = { 256, 48 } },
-            box));
-
-// Loaded or render-target image
-auto image_buf = Portal::Forma::create_buffer(
-    window,
-    Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST,
-    std::vector{ std::pair{ std::string("img"), std::shared_ptr<Core::VKImage>{} } });
-
-surface.layer().add(
-    Portal::Forma::Element {}
-        .non_interactive()
-        .with_buffer(image_buf)
+        .with_buffer(image_target)
         .with_texture(some_vkimage, box));
 ```
 
-To update text after construction, call `set_text` on the `Element` stored
-from `layer().add()`, or retain the element before adding it:
-
-```cpp
-auto el = Portal::Forma::Element {}
-    .non_interactive()
-    .with_buffer(text_buf)
-    .with_text("idle", Portal::Text::PressParams { .render_bounds = { 256, 48 } }, box);
-
-surface.layer().add(el);
-
-// later, from any graphics-thread callback:
-el.set_text("active", Portal::Text::PressParams { .render_bounds = { 256, 48 } });
-```
+`Element::text_slice` retains the glyph-quad path. See `Portal-Text.md` for
+`TextRun`, `GlyphMap`, and `AtlasImage`.
 
 ---
 
@@ -519,6 +532,12 @@ alone only clears the `Layer` side.
 `Portal::Forma::bridge()` returns the application-wide `Bridge`. It connects
 `Mapped<T>` elements to the node graph in both directions.
 
+Bindings use an `ElementRef`, a weak pointer to the owning `Layer` and an
+element id. Ids are
+unique within one layer, so identical ids in different layers remain distinct.
+`bridge().at(...)` accepts either an `ElementRef` or a `MappedState` that
+already carries its layer. The layer must have a `shared_ptr` owner.
+
 ### Inbound : node or callable drives the element
 
 ```cpp
@@ -567,6 +586,12 @@ Portal::Forma::bridge().at(el.state).write(
 ```
 
 The `write(span sink)` overload is the general bulk outbound path. For `MappedState<vector<float>>`, `MappedState<vector<double>>`, or a `MappedState` of `glm::vec2`, `glm::vec3` or `glm::vec4`, the full value is forwarded each frame. For scalar state a single-element span is constructed. The conversion from `float` to whatever the consumer needs is the caller's responsibility.
+
+The push-constant `write(target, shader_path, offset)` overload writes a
+`float` by default. Pass a `Kakshya::GpuDataFormat` as the fourth argument when
+the GPU slot has another format. If the `MappedState<T>` value has that exact
+GPU format, Bridge writes the full value, including vector components;
+otherwise it converts the projected scalar to a single-component format.
 
 ### Chaining both directions
 
@@ -656,6 +681,10 @@ Portal::Forma::LayoutCursor cursor { panel.max.y, panel.min.x, panel.max.x };
 `top_left`, `top_right`, `bottom_left`, `bottom_right`, `top_strip`,
 `bottom_strip`, `left_strip`, `right_strip`, `center_rect`, and `full`.
 
+`Scrollable` scissors its buffer to the viewport. Give the viewport and its
+tracked children slices of one buffer to clip them as one batch; keep content
+that must draw outside the viewport on another buffer.
+
 ## Quick examples
 
 ### Mouse follower
@@ -705,11 +734,8 @@ auto el = Portal::Forma::create(
 
 ### Labeled interactive button
 
-`PressParams::background` composites a fill colour beneath the text into one
-texture, so a label and its own state-colored background no longer need two
-elements. This is the same trick `Collapsible::label()` uses internally.
-Re-pressing with a new `background` on state change replaces the old
-separate background-quad-plus-overlay pattern:
+`PressParams::background` draws a flat quad beneath the glyphs in the same
+text slice. Changing the label's parameters updates that slice:
 
 ```cpp
 constexpr Kinesis::AABB2D box { glm::vec2(-0.3F, -0.1F), glm::vec2(0.3F, 0.1F) };
@@ -717,14 +743,15 @@ constexpr glm::vec4 k_rest  { 0.2F, 0.2F, 0.2F, 1.F };
 constexpr glm::vec4 k_hover { 0.4F, 0.4F, 0.4F, 1.F };
 constexpr glm::vec4 k_press { 0.8F, 0.3F, 0.2F, 1.F };
 
-auto text_buf = Portal::Forma::create_buffer(
-    window,
-    Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST,
-    std::vector{ std::pair{ std::string("text"), std::shared_ptr<Core::VKImage>{} } });
+auto render = surface.render_config();
+render.additional_textures.emplace_back("text", nullptr);
+auto text_buf = Portal::Forma::create_buffer(std::move(render));
+auto target = Portal::Forma::FormaTarget::slice_of(
+    text_buf, Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST);
 
 auto el = Portal::Forma::Element {}
     .with_bounds(box)
-    .with_buffer(text_buf)
+    .with_buffer(target)
     .with_text("Click me",
         Portal::Text::PressParams { .color = { 1.F, 1.F, 1.F, 1.F }, .background = k_rest, .render_bounds = { 256, 48 } },
         box);
@@ -732,7 +759,9 @@ auto el = Portal::Forma::Element {}
 const uint32_t id = surface.layer().add(el).id();
 
 auto paint = [el](glm::vec4 bg) mutable {
-    el.set_text("Click me", Portal::Text::PressParams { .background = bg, .render_bounds = { 256, 48 } });
+    el.set_text("Click me", Portal::Text::PressParams {
+        .color = { 1.F, 1.F, 1.F, 1.F }, .background = bg,
+        .render_bounds = { 256, 48 } });
 };
 
 surface.ctx().on_press  (id, IO::MouseButtons::Left, [paint](uint32_t, glm::vec2) mutable { paint(k_press); });

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Buffers/Staging/SliceSet.hpp"
 #include "MayaFlux/Buffers/VKBuffer.hpp"
 
 namespace MayaFlux::Core {
@@ -99,6 +100,50 @@ public:
      *              capacity set at construction.
      */
     void submit(const std::vector<uint8_t>& bytes);
+
+    using SliceId = SliceSet::SliceId;
+
+    /**
+     * @brief Add a block of vertices that shares this buffer with the others.
+     *
+     * submit() writes a default block of its own, so a buffer used only
+     * through submit() holds one. Blocks share the buffer's topology and are
+     * uploaded together; each can be updated, hidden or reordered without
+     * touching the rest. Several blocks cost one draw when they are adjacent,
+     * visible and in order.
+     *
+     * Valid once setup_processors() has run.
+     *
+     * @param bytes Whole interleaved vertices matching the topology; a trailing
+     *              partial vertex is dropped.
+     * @param topology Topology of this block; the buffer's when omitted. A
+     *              different topology needs setup_rendering with triangulate,
+     *              which draws mixed blocks as one batch.
+     * @return Id of the block, or 0 when the buffer has no processor yet.
+     */
+    SliceId add_slice(const std::vector<uint8_t>& bytes,
+        std::optional<Portal::Graphics::PrimitiveTopology> topology = std::nullopt);
+
+    /** @brief Replace a block's vertices; later blocks shift if the size changes. */
+    void update_slice(SliceId id, const std::vector<uint8_t>& bytes);
+
+    /** @brief Number of blocks, 0 before setup_processors(). */
+    [[nodiscard]] size_t slice_count() const noexcept;
+
+    /** @brief True when @p id names a live block. */
+    [[nodiscard]] bool has_slice(SliceId id) const noexcept;
+
+    /** @brief Remove a block; later blocks shift down. */
+    void remove_slice(SliceId id);
+
+    /** @brief Hide or show a block without moving its data. */
+    void set_slice_visible(SliceId id, bool visible);
+
+    /** @brief Draw a block after every other. */
+    void bring_slice_to_front(SliceId id);
+
+    /** @brief Draw a block before every other. */
+    void send_slice_to_back(SliceId id);
 
     /**
      * @brief Supply a texture to be bound on the next graphics tick.

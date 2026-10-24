@@ -7,6 +7,8 @@
 
 #include "MayaFlux/Portal/Forma/Plot/Plot.hpp"
 
+#include "MayaFlux/Portal/Text/AtlasImage.hpp"
+
 namespace MayaFlux::Nodes {
 class NodeGraphManager;
 }
@@ -86,6 +88,18 @@ namespace internal {
          */
         [[nodiscard]] Inspector& inspector();
 
+        /**
+         * @brief The GPU image of @p atlas, shared by every text slice drawing from it.
+         *
+         * One per atlas, so slices on different atlases never replace each
+         * other's image, and a growth of an atlas is seen by all text on it at
+         * once. Released by shutdown().
+         */
+        [[nodiscard]] Text::AtlasImage& atlas_image(const Text::GlyphAtlas& atlas)
+        {
+            return m_atlas_images[&atlas];
+        }
+
         // =====================================================================
         // Construction
         // =====================================================================
@@ -100,19 +114,20 @@ namespace internal {
             const Core::WindowCreateInfo& info);
 
         /**
-         * @brief Capacity-explicit FormaBuffer construction.
+         * @brief The single buffer construction path.
          *
-         * The single buffer construction path. Registers with the stored
-         * BufferManager under GRAPHICS_BACKEND and calls setup_rendering
-         * with whichever texture configuration was requested.
+         * Registers a FormaBuffer with the stored BufferManager under
+         * GRAPHICS_BACKEND and sets up rendering. The buffer always triangulates
+         * with TRIANGLE_LIST: what it draws is expressed by the topology of the
+         * slices made on it with FormaTarget::slice_of. Line and point slices
+         * are milled into NDC ribbons whose scalar is a width in pixels of the
+         * window's height at creation.
+         *
+         * @param render Render settings; build it with Surface::render_config.
+         *               Its topology and triangulate are set here.
          */
         [[nodiscard]] std::shared_ptr<Buffers::FormaBuffer> create_buffer(
-            std::shared_ptr<Core::Window> window,
-            size_t capacity,
-            Graphics::PrimitiveTopology topology,
-            const std::string& texture_binding = {},
-            std::vector<std::pair<std::string, std::shared_ptr<Core::VKImage>>>
-                additional_textures = {});
+            Graphics::RenderConfig render);
 
         /**
          * @brief Construct a Layer and a Context wired to @p window.
@@ -141,39 +156,10 @@ namespace internal {
             const Core::WindowCreateInfo& window_info, std::string name);
 
         /**
-         * @brief Build a FormaBuffer, construct a Mapped<T>, register the
-         *        element on @p layer, and register it with the Bridge.
-         *
-         * @tparam T       MappedState value type.
-         * @param layer    Layer to register the element on.
-         * @param window   Target window for rendering.
-         * @param geom     Geometry function producing vertex bytes from T.
-         * @param initial  Starting value written into MappedState.
-         * @param topology Primitive topology for the FormaBuffer.
-         * @param capacity Initial FormaBuffer capacity in bytes.
-         * @param project  Optional T to float projection for outbound readers.
-         */
-        template <typename T>
-        [[nodiscard]] Mapped<T> create_element(
-            Layer& layer,
-            std::shared_ptr<Core::Window> window,
-            GeometryFn<T> geom,
-            T initial,
-            Graphics::PrimitiveTopology topology = Graphics::PrimitiveTopology::TRIANGLE_STRIP,
-            size_t capacity = k_capacity_bytes,
-            std::function<float(T)> project = {})
-        {
-            auto buf = create_buffer(std::move(window), capacity, topology);
-            auto mapped = make_mapped<T>(std::move(initial), std::move(geom), std::move(buf));
-            mapped.element.id = layer.add(mapped.element);
-            bridge().register_element(layer, mapped, std::move(project));
-            return mapped;
-        }
-
-        /**
-         * @brief create_element against a Surface, followed by one sync so
-         *        bounds_hint and contains from the geometry function reach
-         *        the Layer before the first frame.
+         * @brief create_element on a buffer of its own, as a slice of
+         *        @p topology, followed by one sync so bounds_hint and contains
+         *        from the geometry function reach the Layer before the first
+         *        frame.
          */
         template <typename T>
         [[nodiscard]] Mapped<T> create_element(
@@ -183,10 +169,26 @@ namespace internal {
             Graphics::PrimitiveTopology topology = Graphics::PrimitiveTopology::TRIANGLE_STRIP,
             std::function<float(T)> project = {})
         {
-            auto buf = create_buffer(
-                surface.window(), k_capacity_bytes, topology);
+            return create_element<T>(
+                surface,
+                FormaTarget::slice_of(create_buffer(surface.render_config()), topology),
+                std::move(geom), std::move(initial), std::move(project));
+        }
+
+        /**
+         * @brief create_element writing into @p target, which may be a slice
+         *        shared with other elements.
+         */
+        template <typename T>
+        [[nodiscard]] Mapped<T> create_element(
+            Surface& surface,
+            FormaTarget target,
+            GeometryFn<T> geom,
+            T initial,
+            std::function<float(T)> project = {})
+        {
             auto mapped = make_mapped<T>(
-                std::move(initial), std::move(geom), std::move(buf));
+                std::move(initial), std::move(geom), std::move(target));
             mapped.element.id = surface.layer().add(mapped.element);
             bridge().register_element(
                 surface.layer(), mapped, std::move(project));
@@ -244,7 +246,7 @@ namespace internal {
                     Element el;
                     el.id = id;
                     geometry_fn(state->value, bytes, el);
-                    buffer->submit(bytes);
+                    buffer.submit(bytes);
 
                     if (el.bounds_hint)
                         layer_ptr->set_bounds(id, *el.bounds_hint);
@@ -259,7 +261,7 @@ namespace internal {
         /**
          * @brief Create and place every adornment declared on @p spec.
          *
-         * Builds one buffer per axis label, tick label, legend swatch, and
+         * Makes a target for each axis label, tick label, legend swatch, and
          * legend label, then hands each to the corresponding Plot placement
          * function. Each adornment is related to @p relate_to so removal and
          * visibility cascade from the series element.
@@ -271,11 +273,15 @@ namespace internal {
          * @param surface   Surface to place on.
          * @param spec      Series spec carrying the adornment declarations.
          * @param relate_to Element id the adornments are related to.
+         * @param batch     Shared plot buffer for swatches and labels. With
+         *                  labels, it needs a text slot and forma_plot.frag.
+         *                  When empty, one buffer is created for all adornments.
          */
         void place_adornments(
             Surface& surface,
             const Plot::SeriesSpec& spec,
-            uint32_t relate_to);
+            uint32_t relate_to,
+            const std::shared_ptr<Buffers::FormaBuffer>& batch = {});
 
     private:
         Atelier();
@@ -289,6 +295,7 @@ namespace internal {
 
         std::unique_ptr<Bridge> m_bridge;
         std::unique_ptr<Inspector> m_inspect;
+        std::unordered_map<const Text::GlyphAtlas*, Text::AtlasImage> m_atlas_images;
 
         bool m_initialized {};
     };

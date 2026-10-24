@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Geometry.hpp"
+#include "MayaFlux/Portal/Forma/Target.hpp"
 
 #include "MayaFlux/Portal/Forma/Context.hpp"
 
@@ -286,7 +287,7 @@ template <typename T>
  */
 [[nodiscard]] MAYAFLUX_API Form<float> stroke_slider(
     std::span<const glm::vec2> path,
-    std::shared_ptr<Buffers::FormaBuffer> handle_buf,
+    FormaTarget handle_buf,
     float half_thickness = 0.02F,
     glm::vec3 track_color = glm::vec3(0.3F),
     glm::vec3 fill_color = glm::vec3(0.2F, 0.6F, 1.0F),

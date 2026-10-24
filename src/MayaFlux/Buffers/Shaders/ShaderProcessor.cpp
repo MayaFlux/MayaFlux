@@ -230,6 +230,7 @@ void ShaderProcessor::feed(const std::string& name, FeedSource source)
         entry.is_storage = true;
         entry.offset = 0;
         entry.size = 0;
+        entry.format.reset();
         entry.descriptor_name = name;
         entry.buffer.reset();
         entry.mismatch_logged = false;
@@ -237,22 +238,22 @@ void ShaderProcessor::feed(const std::string& name, FeedSource source)
         return;
     }
 
-    uint32_t offset = 0;
-    for (const auto& field : m_config.pc_fields) {
-        const size_t width = Kakshya::gpu_data_format_bytes(field.format);
+    const auto layout = Portal::Graphics::push_constant_layout(m_config.pc_fields);
+    for (size_t i = 0; i < m_config.pc_fields.size(); ++i) {
+        const auto& field = m_config.pc_fields[i];
         if (field.name == name) {
             auto& entry = m_feeds[name];
             entry.source = std::move(source);
             entry.is_storage = false;
-            entry.offset = offset;
-            entry.size = width;
+            entry.offset = layout.offsets[i];
+            entry.size = Kakshya::gpu_data_format_bytes(field.format);
+            entry.format = field.format;
             entry.descriptor_name.clear();
             entry.buffer.reset();
             entry.mismatch_logged = false;
             entry.early = true;
             return;
         }
-        offset += static_cast<uint32_t>(width);
     }
 
     MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
@@ -280,6 +281,7 @@ void ShaderProcessor::feed(const std::string& name, FeedSource source, uint32_t 
     entry.is_storage = false;
     entry.offset = offset;
     entry.size = size;
+    entry.format.reset();
     entry.descriptor_name.clear();
     entry.buffer.reset();
     entry.mismatch_logged = false;
@@ -325,6 +327,29 @@ void ShaderProcessor::pump_feeds(bool early)
         FeedValue value = entry.source();
 
         if (!entry.is_storage) {
+            if (const auto* typed = std::get_if<Kakshya::GpuValue>(&value)) {
+                if (entry.format && *entry.format != Kakshya::gpu_value_format(*typed)) {
+                    if (!entry.mismatch_logged) {
+                        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                            "feed '{}' returned a value of a different format than its push constant field", name);
+                        entry.mismatch_logged = true;
+                    }
+                    continue;
+                }
+
+                std::array<std::byte, 64> bytes {};
+                const size_t written = Kakshya::gpu_value_write(*typed, bytes);
+
+                auto& data = get_push_constant_data();
+                const size_t required = entry.offset + written;
+                if (data.size() < required) {
+                    data.resize(required);
+                }
+
+                std::memcpy(data.data() + entry.offset, bytes.data(), written);
+                continue;
+            }
+
             const auto* scalar = std::get_if<double>(&value);
             if (!scalar) {
                 if (!entry.mismatch_logged) {
@@ -354,7 +379,7 @@ void ShaderProcessor::pump_feeds(bool early)
         if (!variant) {
             if (!entry.mismatch_logged) {
                 MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                    "feed '{}' writes a storage descriptor but returned a double", name);
+                    "feed '{}' writes a storage descriptor but returned a push constant value", name);
                 entry.mismatch_logged = true;
             }
             continue;

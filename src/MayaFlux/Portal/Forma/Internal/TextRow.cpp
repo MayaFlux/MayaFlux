@@ -2,14 +2,9 @@
 
 #include "Atelier.hpp"
 
-#include "MayaFlux/Kakshya/NDData/VertexFormats.hpp"
 #include "MayaFlux/Portal/Forma/Surface.hpp"
 
 namespace MayaFlux::Portal::Forma::internal {
-
-namespace {
-    constexpr size_t k_row_buffer_capacity = static_cast<size_t>(6) * sizeof(Kakshya::MeshVertex);
-}
 
 glm::vec4 row_idle_color() { return { 0.18F, 0.18F, 0.20F, 1.F }; }
 
@@ -34,14 +29,13 @@ std::pair<uint32_t, std::shared_ptr<Element>> add_text_row(
     Surface& surface,
     std::string_view label,
     Kinesis::AABB2D bounds,
-    glm::uvec2 dims)
+    glm::uvec2 dims,
+    const std::shared_ptr<Buffers::FormaBuffer>& batch)
 {
-    auto buf = atelier().create_buffer(
-        surface.window(),
-        k_row_buffer_capacity,
-        Graphics::PrimitiveTopology::TRIANGLE_LIST,
-        {},
-        { { "text", nullptr } });
+    FormaTarget buf = batch
+        ? FormaTarget::slice_of(batch, Graphics::PrimitiveTopology::TRIANGLE_LIST)
+        : FormaTarget(atelier().create_buffer(
+              surface.render_config({ .additional_textures = { { "text", nullptr } } })));
 
     auto row = std::make_shared<Element>();
     row->with_name(std::string(label))

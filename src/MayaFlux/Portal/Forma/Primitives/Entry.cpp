@@ -1,46 +1,13 @@
 #include "Entry.hpp"
 
-#include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
-
-#include "MayaFlux/Kakshya/NDData/VertexFormats.hpp"
-
+#include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Portal/Forma/Surface.hpp"
 #include "MayaFlux/Portal/Text/InkPress.hpp"
 #include "MayaFlux/Portal/Text/TypeFaceFoundry.hpp"
 
 #include "MayaFlux/Core/Backends/Windowing/Window.hpp"
 
-#include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
-
 namespace MayaFlux::Portal::Forma {
-
-namespace {
-
-    /// @brief Headroom on a row's staging buffer so a later resize within
-    ///        this margin reuses it instead of falling back to an internal
-    ///        one-shot allocation for that call.
-    constexpr size_t k_staging_margin = 2;
-
-    /// @brief A fully-textured TRIANGLE_LIST quad, weight=1 so forma_multi.frag
-    ///        samples textures[0]. The row's background now lives in that
-    ///        texture's own pixels (Portal::Text::PressParams::background),
-    ///        not a separate vertex layer.
-    std::array<Kakshya::MeshVertex, 6> textured_quad(Kinesis::AABB2D region)
-    {
-        using V = Kakshya::MeshVertex;
-        const glm::vec2 mn = region.min;
-        const glm::vec2 mx = region.max;
-        return { {
-            V { .position = { mn.x, mn.y, 0.F }, .weight = 1.F, .uv = { 0.F, 1.F } },
-            V { .position = { mx.x, mn.y, 0.F }, .weight = 1.F, .uv = { 1.F, 1.F } },
-            V { .position = { mn.x, mx.y, 0.F }, .weight = 1.F, .uv = { 0.F, 0.F } },
-            V { .position = { mx.x, mn.y, 0.F }, .weight = 1.F, .uv = { 1.F, 1.F } },
-            V { .position = { mx.x, mx.y, 0.F }, .weight = 1.F, .uv = { 1.F, 0.F } },
-            V { .position = { mn.x, mx.y, 0.F }, .weight = 1.F, .uv = { 0.F, 0.F } },
-        } };
-    }
-
-} // namespace
 
 glm::uvec2 row_pixel_dims(
     const std::shared_ptr<Core::Window>& window,
@@ -58,6 +25,7 @@ glm::uvec2 row_pixel_dims(
             "Failed to get default glyph atlas for row pixel dimension calculation");
     }
     const uint32_t min_h = atlas->pixel_size();
+
     return { std::max(w, 1U), std::max(h, min_h) };
 }
 
@@ -72,33 +40,28 @@ Entry make_entry(
     const Kinesis::AABB2D advanced = cursor.advance(row_h);
     const Kinesis::AABB2D row_rect { .min = { x_min, advanced.min.y }, .max = { x_max, advanced.max.y } };
 
-    row_buf.buf->submit(textured_quad(row_rect));
+    const glm::uvec2 dims = row_pixel_dims(surface.window(), x_min, x_max, row_h);
 
-    auto staging = Buffers::create_image_staging_buffer(
-        row_buf.text_image->get_size_bytes() * k_staging_margin);
-
-    Portal::Text::PressParams params {
+    auto params = std::make_shared<Portal::Text::PressParams>(Portal::Text::PressParams {
         .color = { 1.F, 1.F, 1.F, 1.F },
         .background = { bg, 1.F },
-    };
+        .render_bounds = dims,
+    });
 
     Element el;
     el.buffer = row_buf.buf;
     el.bounds_hint = row_rect;
     el.interactive = false;
     el.name = spec.label;
+    el.with_text(spec.label, *params, row_rect);
     const uint32_t id = surface.layer().add(el);
 
-    auto image_slot = std::make_shared<std::shared_ptr<Core::VKImage>>(row_buf.text_image);
-
     auto compose = [reader = spec.reader,
-                        label = spec.label,
-                        image_slot,
-                        staging,
-                        buf = row_buf.buf,
-                        params,
-                        last = std::optional<std::string> {}]() mutable {
-        if (!buf || !reader)
+                       label = spec.label,
+                       el,
+                       params,
+                       last = std::optional<std::string> {}]() mutable {
+        if (!reader)
             return;
 
         std::string text = label + ": " + reader();
@@ -106,21 +69,14 @@ Entry make_entry(
             return;
         last = text;
 
-        const bool fits = (*image_slot)->get_size_bytes() <= staging->get_size_bytes();
-        Portal::Text::repress(*image_slot, text, params, fits ? staging : nullptr);
-        buf->bind_texture(0, *image_slot);
+        el.set_text(text, *params);
     };
 
     surface.ctx().on_resize(id,
-        [buf = row_buf.buf, surface, image_slot, staging, label = spec.label,
-            reader = spec.reader, params, x_min, x_max, row_h](uint32_t, uint32_t) {
-            const glm::uvec2 new_dims = row_pixel_dims(surface.window(), x_min, x_max, row_h);
-            Portal::Text::PressParams resize_params = params;
-            resize_params.budget_h = new_dims.y;
-            const std::string text = reader ? (label + ": " + reader()) : label;
-            const bool fits = static_cast<size_t>(new_dims.x) * new_dims.y * 4 <= staging->get_size_bytes();
-            *image_slot = Portal::Text::press(text, new_dims, resize_params, fits ? staging : nullptr);
-            buf->bind_texture(0, *image_slot);
+        [el, surface, params, label = spec.label, reader = spec.reader,
+            x_min, x_max, row_h](uint32_t, uint32_t) mutable {
+            params->render_bounds = row_pixel_dims(surface.window(), x_min, x_max, row_h);
+            el.set_text(reader ? (label + ": " + reader()) : label, *params);
         });
 
     Link link(compose, compose);
@@ -128,7 +84,6 @@ Entry make_entry(
     return Entry {
         .element_id = id,
         .buf = std::move(row_buf.buf),
-        .text = std::move(row_buf.text_image),
         .link = std::move(link),
         .row_bounds = row_rect,
     };
@@ -149,7 +104,7 @@ Entry make_entry(
 EntryGroup make_entry_group(
     std::span<const EntrySpec> entrys,
     std::string_view header_label,
-    std::shared_ptr<Buffers::FormaBuffer> header_buf,
+    FormaTarget header_buf,
     std::span<const EntryBuffer> row_bufs,
     Surface& surface,
     LayoutCursor& cursor,
@@ -182,7 +137,7 @@ EntryGroup make_entry_group(
 EntryGroup make_entry_group(
     std::span<const EntrySpec> entrys,
     std::string_view header_label,
-    std::shared_ptr<Buffers::FormaBuffer> header_buf,
+    FormaTarget header_buf,
     std::span<const EntryBuffer> row_bufs,
     Surface& surface,
     LayoutCursor& cursor,

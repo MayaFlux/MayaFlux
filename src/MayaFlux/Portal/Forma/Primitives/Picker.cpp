@@ -86,13 +86,13 @@ void pick(
         .on_close = [state] { state->finish(std::nullopt); },
     });
 
+    const auto text_batch = atelier.create_buffer(
+        surface.render_config({ .additional_textures = { { "text", nullptr } } }));
+
     std::optional<Scrollable> panel;
     std::function<void(uint32_t, glm::vec2, double, double)> wheel;
     if (scrolling) {
-        auto panel_buf = atelier.create_buffer(
-            window,
-            internal::k_capacity_bytes,
-            Graphics::PrimitiveTopology::TRIANGLE_STRIP);
+        auto panel_buf = FormaTarget::slice_of(text_batch, Graphics::PrimitiveTopology::TRIANGLE_STRIP);
         panel = make_scrollable(std::move(panel_buf), surface, surface.full(), glm::vec3(internal::row_idle_color()));
         wheel = panel->wheel_handler(surface);
     }
@@ -109,7 +109,7 @@ void pick(
             .max = { 1.F, top - gap },
         };
 
-        auto made = internal::add_text_row(surface, labels.at(i), bounds, *row_dims);
+        auto made = internal::add_text_row(surface, labels.at(i), bounds, *row_dims, text_batch);
         const uint32_t id = made.first;
         const auto& row = made.second;
 

@@ -41,12 +41,8 @@ InspectResult Inspector::inspect_task(
         },
     };
 
-    const auto dims = row_pixel_dims(surface.window(), x_min, x_max, row_h);
     auto hbuf = make_header_buffer(surface.window());
-    std::vector<EntryBuffer> rbufs;
-    rbufs.reserve(entrys.size());
-    for (const auto& spec : entrys)
-        rbufs.push_back(make_row_buffer(surface.window(), spec.label, dims));
+    auto rbufs = make_row_buffers(surface.window(), entrys.size());
 
     auto group = make_entry_group(entrys, Reflect::short_dynamic_type_name(*entry.routine), std::move(hbuf), rbufs,
         surface, cursor, x_min, x_max, row_h, false);
@@ -74,12 +70,8 @@ InspectResult& Inspector::scheduler(
         },
     };
 
-    const auto dims = row_pixel_dims(surface.window(), x_min, x_max, row_h);
     auto hbuf = make_header_buffer(surface.window());
-    std::vector<EntryBuffer> rbufs;
-    rbufs.reserve(root_entrys.size());
-    for (const auto& spec : root_entrys)
-        rbufs.push_back(make_row_buffer(surface.window(), spec.label, dims));
+    auto rbufs = make_row_buffers(surface.window(), root_entrys.size());
     auto root_group = make_entry_group(root_entrys, "TaskScheduler", std::move(hbuf), rbufs,
         surface, cursor, x_min, x_max, row_h, true);
 

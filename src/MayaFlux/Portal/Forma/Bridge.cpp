@@ -128,6 +128,35 @@ void Bridge::write(
     const ElementRef& ref,
     const std::shared_ptr<Buffers::VKBuffer>& target_buffer,
     const std::string& shader_path,
+    uint32_t offset,
+    Kakshya::GpuDataFormat format)
+{
+    auto* rec = find_record(ref);
+    if (!rec) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::Init,
+            "Bridge::write: unknown element id {}", ref.second);
+        return;
+    }
+
+    if (!rec->bindings) {
+        rec->bindings = std::make_shared<Buffers::FormaBindingsProcessor>(shader_path);
+        m_buffer_manager.add_processor(rec->bindings, target_buffer,
+            Buffers::ProcessingToken::GRAPHICS_BACKEND);
+    }
+
+    auto binding_name = std::to_string(ref.second) + "_pc_" + std::to_string(offset);
+    if (rec->typed_reader && rec->typed_format == format) {
+        rec->bindings->bind_typed_push_constant(binding_name, rec->typed_reader, offset);
+    } else {
+        rec->bindings->bind_push_constant(binding_name, rec->reader, offset, format);
+    }
+    rec->binding_names.push_back(std::move(binding_name));
+}
+
+void Bridge::write(
+    const ElementRef& ref,
+    const std::shared_ptr<Buffers::VKBuffer>& target_buffer,
+    const std::string& shader_path,
     const std::string& descriptor_name,
     uint32_t binding_index,
     uint32_t set,

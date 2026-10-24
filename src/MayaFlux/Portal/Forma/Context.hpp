@@ -221,6 +221,19 @@ public:
     void on_resize(uint32_t id, ResizeFn fn);
 
     /**
+     * @brief Run the resize callbacks if the window's size differs from the
+     *        size they last saw.
+     *
+     * A window can reach its real size after the callbacks were registered,
+     * for instance when the compositor answers the requested size with
+     * another, and the resize event that carried it may predate them. Input
+     * events call this first, so the callbacks catch up on the first pointer
+     * or key event; call it directly to catch up sooner. A no-op when the
+     * size has not changed.
+     */
+    void sync_size();
+
+    /**
      * @brief Get currently focused element, if any.
      */
     [[nodiscard]] std::optional<uint32_t> focused() const { return m_focused; }
@@ -368,6 +381,8 @@ private:
 
     std::optional<uint32_t> m_dragging[3];
     std::optional<uint32_t> m_focused;
+    uint32_t m_known_width {};
+    uint32_t m_known_height {};
 };
 
 } // namespace MayaFlux::Portal::Forma

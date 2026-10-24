@@ -1,5 +1,7 @@
 #version 460
 
+#include "include/glyph_coverage.glsl"
+
 layout(location = 0) in vec3 in_color;
 layout(location = 1) in vec2 in_uv;
 layout(location = 2) in vec3 in_world_pos;
@@ -11,6 +13,12 @@ layout(location = 0) out vec4 out_color;
 
 void main()
 {
+    if (glyph_is_coverage(in_weight)) {
+        float coverage = texture(textures[glyph_slot(in_weight)], in_uv).r;
+        out_color = vec4(in_color, coverage);
+        return;
+    }
+
     int idx = int(in_weight + 0.5);
     if (idx <= 0) {
         out_color = vec4(in_color, 1.0);

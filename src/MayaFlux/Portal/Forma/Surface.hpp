@@ -216,6 +216,22 @@ public:
     void remove(uint32_t id) { m_layer->remove(id); }
 
     // =========================================================================
+    // Rendering
+    // =========================================================================
+
+    /**
+     * @brief @p base targeting this Surface's window.
+     *
+     * Only the window is set; every other field of @p base is kept.
+     */
+    [[nodiscard]] Portal::Graphics::RenderConfig render_config(
+        Portal::Graphics::RenderConfig base = {}) const
+    {
+        base.target_window = window();
+        return base;
+    }
+
+    // =========================================================================
     // Named regions
     // =========================================================================
 

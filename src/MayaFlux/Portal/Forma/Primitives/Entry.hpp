@@ -5,7 +5,6 @@
 
 namespace MayaFlux::Core {
 class Window;
-class VKImage;
 }
 
 namespace MayaFlux::Buffers {
@@ -15,11 +14,10 @@ class FormaBuffer;
 namespace MayaFlux::Portal::Forma {
 
 /**
- * @brief A pre-created buffer and its bound text image, passed to make_entry.
+ * @brief A pre-created text-capable buffer, passed to make_entry.
  */
 struct EntryBuffer {
-    std::shared_ptr<Buffers::FormaBuffer> buf;
-    std::shared_ptr<Core::VKImage> text_image;
+    FormaTarget buf;
 };
 
 /**
@@ -36,13 +34,12 @@ struct EntrySpec {
 /**
  * @brief One entry row in a EntryGroup body.
  *
- * Owns the FormaBuffer for the row background, the VKImage holding the
- * composited text, and the Link that repress's the text each tick.
+ * Owns the target the row draws into and the Link that redraws the text
+ * each tick.
  */
 struct Entry {
     uint32_t element_id {};
-    std::shared_ptr<Buffers::FormaBuffer> buf;
-    std::shared_ptr<Core::VKImage> text;
+    FormaTarget buf;
     Link link;
 
     /// @brief NDC region occupied by this row. Valid after make_entry.
@@ -83,7 +80,7 @@ struct EntryGroup {
  * @brief Convert an NDC row rect into integer pixel dimensions.
  *
  * Clamps width to at least 1 pixel and height to at least the default
- * atlas pixel size to avoid degenerate textures.
+ * atlas pixel size to avoid degenerate layouts.
  *
  * @param window  Target window for pixel dimension calculation.
  * @param x_min   Left edge in NDC.
@@ -97,14 +94,12 @@ struct EntryGroup {
 /**
  * @brief Construct one labeled entry row, advance the cursor, and return it.
  *
- * The row is a single fully-textured quad: @p bg is composited as the fill
- * beneath the text (Portal::Text::PressParams::background), not a separate
- * vertex layer, so one texture carries both. The link's compose function
- * runs immediately (establish) so the row shows correctly from the first
- * frame, and again on every subsequent link.tap(), representing "label:
- * entry" into the text image and binding it to the row's FormaBuffer. The
- * buffer and text image are pre-created by the caller and travel together
- * as @p row_buf.
+ * The row is one slice of glyph quads: @p bg is drawn as the fill beneath
+ * the text (Portal::Text::PressParams::background), so one slice carries
+ * both. The link's compose function runs immediately (establish) so the row
+ * shows correctly from the first frame, and again on every subsequent
+ * link.tap(), drawing "label: entry" into the row's buffer. The buffer is
+ * pre-created by the caller as @p row_buf.
  *
  * Bounds come from cursor.advance()'s return (scroll-offset aware, per
  * LayoutCursor::bind_scroll), with x_min/x_max substituted in afterward for
@@ -113,13 +108,13 @@ struct EntryGroup {
  * immediately.
  *
  * @param spec     Label and reader for the row.
- * @param row_buf  Pre-created buffer and bound text image.
+ * @param row_buf  Pre-created text-capable buffer.
  * @param surface   Surface to register the row on.
  * @param cursor   Layout cursor. Advanced by @p row_h on return.
  * @param x_min    Left edge in NDC.
  * @param x_max    Right edge in NDC.
  * @param row_h    Row height in NDC units.
- * @param bg       Background fill composited beneath the row's text.
+ * @param bg       Background fill drawn beneath the row's text.
  */
 [[nodiscard]] MAYAFLUX_API Entry make_entry(
     const EntrySpec& spec,
@@ -146,17 +141,16 @@ struct EntryGroup {
 /**
  * @brief Construct a collapsible header followed by N entry rows under it.
  *
- * The header composites @p header_label itself (Collapsible::label),
+ * The header draws @p header_label itself (Collapsible::label),
  * background included, so header_buf needs only a "text" additional_textures
- * slot, not a pre-pressed image - unlike row_bufs, whose entries still carry
- * their own pre-pressed text images for make_entry(). Once expanded, all
+ * slot. Once expanded, all
  * rows in @p entrys become visible via the relation cascade. Visibility
  * tracks the header's open state.
  *
  * @param entrys         Specs for each body row. Order is preserved top-to-bottom.
- * @param header_label   Text composited into the header strip.
+ * @param header_label   Text drawn into the header strip.
  * @param header_buf     Pre-created buffer for the header strip, "text" slot empty.
- * @param row_bufs       Pre-created buffers and text images, one per entry in @p entrys.
+ * @param row_bufs       Pre-created text-capable buffers, one per entry in @p entrys.
  * @param surface        Surface to register the header and rows on.
  * @param cursor         Layout cursor. Advanced across header and all rows on return.
  * @param x_min          Left edge in NDC.
@@ -167,7 +161,7 @@ struct EntryGroup {
 [[nodiscard]] MAYAFLUX_API EntryGroup make_entry_group(
     std::span<const EntrySpec> entrys,
     std::string_view header_label,
-    std::shared_ptr<Buffers::FormaBuffer> header_buf,
+    FormaTarget header_buf,
     std::span<const EntryBuffer> row_bufs,
     Surface& surface,
     LayoutCursor& cursor,
@@ -183,7 +177,7 @@ struct EntryGroup {
 [[nodiscard]] MAYAFLUX_API EntryGroup make_entry_group(
     std::span<const EntrySpec> entrys,
     std::string_view header_label,
-    std::shared_ptr<Buffers::FormaBuffer> header_buf,
+    FormaTarget header_buf,
     std::span<const EntryBuffer> row_bufs,
     Surface& surface,
     LayoutCursor& cursor,

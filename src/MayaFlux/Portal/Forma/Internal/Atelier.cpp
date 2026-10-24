@@ -3,6 +3,7 @@
 #include "MayaFlux/Portal/Forma/Inspect/Inspector.hpp"
 
 #include "MayaFlux/Buffers/BufferManager.hpp"
+#include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
 #include "MayaFlux/Core/Windowing/WindowManager.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
@@ -11,11 +12,6 @@
 #include "MayaFlux/Vruta/Scheduler.hpp"
 
 namespace MayaFlux::Portal::Forma::internal {
-
-namespace {
-    constexpr size_t k_text_label_capacity = static_cast<size_t>(6) * sizeof(Kakshya::MeshVertex);
-    constexpr size_t k_rect_capacity = static_cast<size_t>(4) * sizeof(Kakshya::Vertex);
-}
 
 // =============================================================================
 // Lifecycle
@@ -67,6 +63,7 @@ void Atelier::shutdown()
 
     m_bridge.reset();
     m_inspect.reset();
+    m_atlas_images.clear();
 
     m_node_graph_manager = nullptr;
     m_buffer_manager = nullptr;
@@ -117,12 +114,7 @@ std::shared_ptr<Core::Window> Atelier::create_window(const Core::WindowCreateInf
     return window;
 }
 
-std::shared_ptr<Buffers::FormaBuffer> Atelier::create_buffer(
-    std::shared_ptr<Core::Window> window,
-    size_t capacity,
-    Graphics::PrimitiveTopology topology,
-    const std::string& texture_binding,
-    std::vector<std::pair<std::string, std::shared_ptr<Core::VKImage>>> additional_textures)
+std::shared_ptr<Buffers::FormaBuffer> Atelier::create_buffer(Graphics::RenderConfig render)
 {
     if (!m_initialized) {
         error<std::runtime_error>(Journal::Component::Portal, Journal::Context::API,
@@ -130,23 +122,27 @@ std::shared_ptr<Buffers::FormaBuffer> Atelier::create_buffer(
             "Portal::Forma not initialized - cannot create buffer");
     }
 
-    auto buf = std::make_shared<Buffers::FormaBuffer>(capacity, topology);
-    m_buffer_manager->add_buffer(buf, Buffers::ProcessingToken::GRAPHICS_BACKEND);
-
-    if (!additional_textures.empty()) {
-        buf->setup_rendering({
-            .target_window = std::move(window),
-            .additional_textures = std::move(additional_textures),
-        });
-    } else if (!texture_binding.empty()) {
-        buf->setup_rendering({
-            .target_window = std::move(window),
-            .default_texture_binding = texture_binding,
-        });
-    } else {
-        buf->setup_rendering({ .target_window = std::move(window) });
+    if (!render.target_window) {
+        error<std::invalid_argument>(Journal::Component::Portal, Journal::Context::API,
+            std::source_location::current(),
+            "Portal::Forma create_buffer requires a target window");
     }
 
+    render.topology = Graphics::PrimitiveTopology::TRIANGLE_LIST;
+    render.triangulate = true;
+
+    auto buf = std::make_shared<Buffers::FormaBuffer>(k_capacity_bytes, render.topology);
+    m_buffer_manager->add_buffer(buf, Buffers::ProcessingToken::GRAPHICS_BACKEND);
+
+    const auto height = std::max(render.target_window->get_create_info().height, 1U);
+    buf->setup_rendering(render);
+
+    if (auto processor = buf->get_render_processor()) {
+        Graphics::MillSpec spec = processor->get_mill_spec();
+        spec.ribbon = Graphics::MillSpec::Ribbon::WorldPlane;
+        spec.width_scale = 2.0F / static_cast<float>(height);
+        processor->set_mill_spec(spec);
+    }
     return buf;
 }
 
@@ -187,51 +183,51 @@ Surface Atelier::create_surface(const Core::WindowCreateInfo& window_info, std::
 void Atelier::place_adornments(
     Surface& surface,
     const Plot::SeriesSpec& spec,
-    uint32_t relate_to)
+    uint32_t relate_to,
+    const std::shared_ptr<Buffers::FormaBuffer>& batch)
 {
-    const auto& win = surface.window();
+    const bool has_labels = !spec.labels.empty() || !spec.tick_labels.empty()
+        || (spec.legend && !spec.legend->entries.empty());
+    std::shared_ptr<Buffers::FormaBuffer> owned_batch;
+    const auto target_of = [&](Graphics::PrimitiveTopology topology) -> FormaTarget {
+        if (!batch && !owned_batch) {
+            Graphics::RenderConfig render = surface.render_config();
+            if (has_labels) {
+                render.fragment_shader = "forma_plot.frag.spv";
+                render.additional_textures.emplace_back("text", nullptr);
+            }
+            owned_batch = create_buffer(std::move(render));
+        }
+        const auto& target_batch = batch ? batch : owned_batch;
+        return FormaTarget::slice_of(target_batch, topology);
+    };
+
+    const auto legend = spec.legend
+        ? std::optional<Plot::LegendLayout>(Plot::layout_legend(*spec.legend))
+        : std::nullopt;
+    if (legend) {
+        for (const auto& swatch : legend->swatches) {
+            (void)Plot::place_rect(surface,
+                target_of(Graphics::PrimitiveTopology::TRIANGLE_STRIP), swatch, relate_to);
+        }
+    }
 
     for (const auto& label : spec.labels) {
-        auto buf = create_buffer(
-            win,
-            k_text_label_capacity,
-            Graphics::PrimitiveTopology::TRIANGLE_LIST,
-            {},
-            { { "text", nullptr } });
-        (void)Plot::place_label(surface, std::move(buf), label, relate_to);
+        (void)Plot::place_label(surface,
+            target_of(Graphics::PrimitiveTopology::TRIANGLE_LIST), label, relate_to);
     }
 
     for (const auto& ticks : spec.tick_labels) {
         for (const auto& label : Plot::plot_tick_labels(ticks)) {
-            auto buf = create_buffer(
-                win,
-                k_text_label_capacity,
-                Graphics::PrimitiveTopology::TRIANGLE_LIST,
-                {},
-                { { "text", nullptr } });
-            (void)Plot::place_label(surface, std::move(buf), label, relate_to);
+            (void)Plot::place_label(surface,
+                target_of(Graphics::PrimitiveTopology::TRIANGLE_LIST), label, relate_to);
         }
     }
 
-    if (spec.legend) {
-        auto layout = Plot::layout_legend(*spec.legend);
-
-        for (const auto& swatch : layout.swatches) {
-            auto buf = create_buffer(
-                win,
-                k_rect_capacity,
-                Graphics::PrimitiveTopology::TRIANGLE_STRIP);
-            (void)Plot::place_rect(surface, std::move(buf), swatch, relate_to);
-        }
-
-        for (const auto& label : layout.labels) {
-            auto buf = create_buffer(
-                win,
-                k_text_label_capacity,
-                Graphics::PrimitiveTopology::TRIANGLE_LIST,
-                {},
-                { { "text", nullptr } });
-            (void)Plot::place_label(surface, std::move(buf), label, relate_to);
+    if (legend) {
+        for (const auto& label : legend->labels) {
+            (void)Plot::place_label(surface,
+                target_of(Graphics::PrimitiveTopology::TRIANGLE_LIST), label, relate_to);
         }
     }
 }

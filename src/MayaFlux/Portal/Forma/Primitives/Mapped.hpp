@@ -154,7 +154,7 @@ struct Mapped {
             return;
 
         geometry_fn(state->value, m_bytes, element);
-        element.buffer->submit(m_bytes);
+        element.buffer.submit(m_bytes);
         last_version = state->version;
 
         if (layer) {
@@ -180,7 +180,7 @@ template <typename T>
 [[nodiscard]] Mapped<T> make_mapped(
     T initial,
     GeometryFn<T> geometry,
-    std::shared_ptr<Buffers::FormaBuffer> buffer)
+    FormaTarget buffer)
 {
     auto st = std::make_shared<MappedState<T>>();
     st->write(initial);

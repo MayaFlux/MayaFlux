@@ -16,11 +16,10 @@ class FilledWaveformBuilder;
 /**
  * @struct SeriesSpec
  * @brief Result of a Series terminal. Bundles a geometry function
- *        with the topology and capacity arithmetic implied by the encoding.
+ *        with the input topology implied by the encoding.
  *
- * Passed to Plot::place() so callers never supply topology or buffer
- * capacity manually. The raw GeometryFn<shared_ptr<PlotContainer>> is
- * still accessible via .fn for callers that need it directly.
+ * Pass topology to FormaTarget::slice_of() before Plot::place(). The batch
+ * grows as geometry is submitted. The raw geometry function remains in .fn.
  */
 struct SeriesSpec {
     Forma::GeometryFn<std::shared_ptr<Kakshya::PlotContainer>> fn;
@@ -29,11 +28,11 @@ struct SeriesSpec {
     std::optional<GeometryFn<float>> background_fn;
 
     /**
-     * @brief Optional plot/data region in NDC used by plot adornments.
+     * @brief Optional plot/data region in NDC.
      *
-     * The current data geometry still maps through its own GeometryFn. This
-     * bounds value is for labels, ticks, legends, and other construction
-     * performed by Plot::place().
+     * When set, the series geometry is mapped into this region, and labels,
+     * ticks, legends and the background are laid out against it. Unset, the
+     * data fills NDC.
      */
     std::optional<Kinesis::AABB2D> plot_bounds;
 

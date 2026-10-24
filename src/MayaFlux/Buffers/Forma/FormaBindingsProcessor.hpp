@@ -85,6 +85,41 @@ public:
         uint32_t offset,
         size_t size = sizeof(float));
 
+    /**
+     * @brief Bind a type-erased reader to a push constant slot described by
+     *        a GpuDataFormat.
+     *
+     * The reader's value is converted to the format; integers saturate. The
+     * format must have a single component, since the reader produces one
+     * value.
+     *
+     * @param name     Logical binding name.
+     * @param reader   Callable returning the current value each tick.
+     * @param offset   Byte offset in the push constant struct.
+     * @param format   Layout written at the offset.
+     */
+    void bind_push_constant(
+        const std::string& name,
+        std::function<float()> reader,
+        uint32_t offset,
+        Kakshya::GpuDataFormat format);
+
+    /**
+     * @brief Bind a typed reader to a push constant slot.
+     *
+     * The value is written as its own format's bytes at the offset, with no
+     * conversion, so vectors and matrices keep every component. The slot is
+     * as wide as the value each tick.
+     *
+     * @param name     Logical binding name.
+     * @param reader   Callable returning the current value each tick.
+     * @param offset   Byte offset in the push constant struct.
+     */
+    void bind_typed_push_constant(
+        const std::string& name,
+        std::function<Kakshya::GpuValue()> reader,
+        uint32_t offset);
+
     // =========================================================================
     // Descriptor bindings — raw reader overload
     // =========================================================================
@@ -146,6 +181,35 @@ public:
         };
         b.pc = PushConstantTarget { .offset = offset, .size = size };
         b.desc.reset();
+    }
+
+    /**
+     * @brief Bind a MappedState<T> to a push constant slot described by a
+     *        GpuDataFormat.
+     *
+     * @param format    Layout written at the offset.
+     * @tparam T        MappedState value type.
+     */
+    template <typename T>
+    void bind_push_constant(
+        const std::string& name,
+        std::shared_ptr<Portal::Forma::MappedState<T>> state,
+        std::function<float(T)> project,
+        uint32_t offset,
+        Kakshya::GpuDataFormat format)
+    {
+        if (!state) {
+            MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "FormaBindingsProcessor::bind_push_constant: null state for '{}'", name);
+            return;
+        }
+
+        bind_push_constant(
+            name,
+            std::function<float()>([s = std::move(state), p = std::move(project)]() {
+                return p(s->value);
+            }),
+            offset, format);
     }
 
     // =========================================================================
@@ -249,6 +313,7 @@ private:
     struct PushConstantTarget {
         uint32_t offset;
         size_t size;
+        std::optional<Kakshya::GpuDataFormat> format {};
     };
 
     struct DescriptorTarget {
@@ -263,6 +328,7 @@ private:
     struct Binding {
         TargetKind kind;
         std::function<float()> reader;
+        std::function<Kakshya::GpuValue()> typed_reader;
         std::optional<PushConstantTarget> pc;
         std::optional<DescriptorTarget> desc;
     };
@@ -275,6 +341,8 @@ private:
     void remember_target(const std::shared_ptr<VKBuffer>& buffer);
 
     void flush_push_constant(const std::string& name, float value, const PushConstantTarget& pc, const std::shared_ptr<VKBuffer>& buffer);
+
+    void flush_typed_push_constant(const std::string& name, const Kakshya::GpuValue& value, const PushConstantTarget& pc, const std::shared_ptr<VKBuffer>& buffer);
 
     void flush_descriptor(float value, const DescriptorTarget& desc,
         const std::shared_ptr<VKBuffer>& attached);
