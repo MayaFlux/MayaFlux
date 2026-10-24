@@ -615,7 +615,8 @@ void PrimitiveMill::resolve_pending()
 uint32_t PrimitiveMill::mill(
     const std::shared_ptr<VKBuffer>& source,
     std::span<const DrawRun> runs,
-    const MillView& view)
+    const MillView& view,
+    std::optional<Kakshya::VertexLayout> layout)
 {
     resolve_pending();
 
@@ -625,7 +626,8 @@ uint32_t PrimitiveMill::mill(
         return 0;
     }
 
-    const auto layout = source->get_vertex_layout();
+    if (!layout)
+        layout = source->get_vertex_layout();
     if (!layout.has_value()) {
         return 0;
     }

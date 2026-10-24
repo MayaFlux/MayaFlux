@@ -163,12 +163,15 @@ public:
     /**
      * @brief Mill @p runs out of @p source into the owned buffer.
      * @param source Vertex buffer the spans index into. Must carry a vertex
-     *        layout whose stride is a multiple of four bytes and which has a
-     *        word aligned position attribute. When it carries an index buffer,
+     *        layout, unless @p layout is supplied. The layout stride must be a
+     *        multiple of four bytes and its position attribute word aligned.
+     *        When it carries an index buffer,
      *        triangle spans count and offset indices; point and line spans stay
      *        vertex addressed.
      * @param runs Spans to mill, in output order.
      * @param view Viewpoint, consumed only by Ribbon::WorldFacing.
+     * @param layout Optional layout describing the source data. When omitted,
+     *        the layout is read from @p source.
      * @return Vertices written, or 0 when there was nothing to mill or the
      *         source could not be used.
      *
@@ -194,7 +197,8 @@ public:
     uint32_t mill(
         const std::shared_ptr<Buffers::VKBuffer>& source,
         std::span<const DrawRun> runs,
-        const MillView& view);
+        const MillView& view,
+        std::optional<Kakshya::VertexLayout> layout = std::nullopt);
 
     /**
      * @brief The milled triangles: the ring slot the last mill() wrote.
