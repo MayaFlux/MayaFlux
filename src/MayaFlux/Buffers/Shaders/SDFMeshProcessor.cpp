@@ -98,8 +98,23 @@ void SDFMeshProcessor::set_resolution(uint32_t res_x, uint32_t res_y, uint32_t r
     m_res_x = std::max(res_x, 1U);
     m_res_y = std::max(res_y, 1U);
     m_res_z = std::max(res_z, 1U);
-    rebuild_owned_buffers();
-    m_needs_descriptor_rebuild = true;
+    if (m_owns_buffers) {
+        rebuild_owned_buffers();
+        bind_buffer("sdf_grid", m_grid_buf);
+        bind_buffer("edge_table", m_edge_buf);
+        bind_buffer("tri_table", m_tri_buf);
+        bind_buffer("counter", m_counter_buf);
+    }
+    m_dirty = true;
+}
+
+void SDFMeshProcessor::set_external_buffers(std::shared_ptr<VKBuffer> grid_buf,
+    std::shared_ptr<VKBuffer> counter_buf)
+{
+    m_grid_buf = std::move(grid_buf);
+    m_counter_buf = std::move(counter_buf);
+    bind_buffer("sdf_grid", m_grid_buf);
+    bind_buffer("counter", m_counter_buf);
     m_dirty = true;
 }
 
