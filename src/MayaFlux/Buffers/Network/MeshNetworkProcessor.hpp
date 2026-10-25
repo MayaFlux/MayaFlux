@@ -41,6 +41,8 @@ public:
 
     ~MeshNetworkProcessor() override = default;
 
+    void set_milling_slot_attribute(bool enabled);
+
 protected:
     void on_attach(const std::shared_ptr<Buffer>& buffer) override;
     void on_detach(const std::shared_ptr<Buffer>& buffer) override;
@@ -66,6 +68,7 @@ private:
     std::vector<glm::mat4> m_model_aggregate;
     /// @brief CPU-side scratch for per-vertex slot indices, reused each cycle.
     std::vector<uint32_t> m_slot_index_aggregate;
+    bool m_milling_slot_attribute {};
 
     void allocate_gpu_buffers(const std::shared_ptr<VKBuffer>& vertex_buf);
     void upload_combined(const std::shared_ptr<VKBuffer>& vertex_buf);

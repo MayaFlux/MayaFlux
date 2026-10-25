@@ -9,12 +9,50 @@
 
 namespace MayaFlux::Buffers {
 
+namespace {
+
+struct MilledMeshNetworkVertex {
+    Kakshya::MeshVertex mesh;
+    float slot_low;
+    float slot_high;
+};
+
+static_assert(sizeof(MilledMeshNetworkVertex) == sizeof(Kakshya::MeshVertex) + 2 * sizeof(float));
+
+Kakshya::VertexLayout milled_mesh_network_layout()
+{
+    auto layout = Kakshya::VertexLayout::for_meshes(sizeof(MilledMeshNetworkVertex));
+    layout.attributes.push_back({
+        .component_modality = Kakshya::DataModality::SCALAR_F32,
+        .offset_in_vertex = static_cast<uint32_t>(sizeof(Kakshya::MeshVertex)),
+        .name = "slot_index_low"
+    });
+    layout.attributes.push_back({
+        .component_modality = Kakshya::DataModality::SCALAR_F32,
+        .offset_in_vertex = static_cast<uint32_t>(sizeof(Kakshya::MeshVertex) + sizeof(float)),
+        .name = "slot_index_high"
+    });
+    return layout;
+}
+
+} // namespace
+
 MeshNetworkProcessor::MeshNetworkProcessor(
     std::shared_ptr<Nodes::Network::MeshNetwork> network)
     : m_network(std::move(network))
 {
     m_processing_token = ProcessingToken::GRAPHICS_BACKEND;
     initialize_buffer_service();
+}
+
+void MeshNetworkProcessor::set_milling_slot_attribute(bool enabled)
+{
+    if (m_milling_slot_attribute == enabled)
+        return;
+
+    m_milling_slot_attribute = enabled;
+    for (auto& slot : m_network->slots())
+        slot.dirty = true;
 }
 
 // =============================================================================
@@ -43,6 +81,11 @@ void MeshNetworkProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
     allocate_gpu_buffers(vk_buf);
     upload_combined(vk_buf);
     link_index_resources(vk_buf);
+    if (!m_model_aggregate.empty() && !m_slot_index_aggregate.empty()) {
+        allocate_ssbo_buffers();
+        upload_ssbos();
+        push_ssbo_bindings(vk_buf);
+    }
     clear_slot_dirty_flags();
 
     MF_INFO(Journal::Component::Buffers, Journal::Context::BufferProcessing,
@@ -67,7 +110,11 @@ void MeshNetworkProcessor::on_detach(const std::shared_ptr<Buffer>& /*buffer*/)
 
 void MeshNetworkProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
 {
-    if (!m_network || !any_slot_dirty())
+    if (!m_network)
+        return;
+
+    m_network->ensure_sorted();
+    if (!any_slot_dirty())
         return;
 
     auto vk_buf = std::dynamic_pointer_cast<VKBuffer>(buffer);
@@ -139,9 +186,21 @@ void MeshNetworkProcessor::upload_combined(
         const auto& verts = slot.node->get_mesh_vertices();
         const auto& indices = slot.node->get_mesh_indices();
 
-        const size_t v_bytes = verts.size() * sizeof(Kakshya::MeshVertex);
-        const auto* v_src = reinterpret_cast<const uint8_t*>(verts.data());
-        m_vertex_aggregate.insert(m_vertex_aggregate.end(), v_src, v_src + v_bytes);
+        if (m_milling_slot_attribute) {
+            const auto slot_id = static_cast<uint32_t>(m_model_aggregate.size());
+            const float slot_low = static_cast<float>(slot_id & 0xFFFFU);
+            const float slot_high = static_cast<float>(slot_id >> 16U);
+            for (const auto& vertex : verts) {
+                const MilledMeshNetworkVertex packed { vertex, slot_low, slot_high };
+                const auto* bytes = reinterpret_cast<const uint8_t*>(&packed);
+                m_vertex_aggregate.insert(
+                    m_vertex_aggregate.end(), bytes, bytes + sizeof(packed));
+            }
+        } else {
+            const size_t v_bytes = verts.size() * sizeof(Kakshya::MeshVertex);
+            const auto* v_src = reinterpret_cast<const uint8_t*>(verts.data());
+            m_vertex_aggregate.insert(m_vertex_aggregate.end(), v_src, v_src + v_bytes);
+        }
 
         for (uint32_t i : indices)
             m_index_aggregate.push_back(i + running_vertex_count);
@@ -166,6 +225,8 @@ void MeshNetworkProcessor::upload_combined(
         if (m_vertex_staging)
             m_vertex_staging->resize(new_size, false);
     }
+    if (m_vertex_staging && v_required > m_vertex_staging->get_size_bytes())
+        m_vertex_staging->resize(v_required, false);
 
     upload_to_gpu(
         m_vertex_aggregate.data(),
@@ -190,7 +251,11 @@ void MeshNetworkProcessor::upload_combined(
             m_index_staging);
     }
 
-    for (uint32_t idx : order) {
+    if (m_milling_slot_attribute) {
+        auto layout = milled_mesh_network_layout();
+        layout.vertex_count = running_vertex_count;
+        vertex_buf->set_vertex_layout(layout);
+    } else for (uint32_t idx : order) {
         const auto& slot = slots[idx];
         if (slot.node && slot.node->get_mesh_vertex_count() > 0) {
             if (auto layout = slot.node->get_vertex_layout()) {
@@ -234,8 +299,11 @@ size_t MeshNetworkProcessor::total_vertex_bytes() const
 {
     size_t total = 0;
     for (const auto& slot : m_network->slots()) {
-        if (slot.node)
-            total += slot.node->get_mesh_vertex_count() * sizeof(Kakshya::MeshVertex);
+        if (slot.node) {
+            const auto stride = sizeof(Kakshya::MeshVertex)
+                + (m_milling_slot_attribute ? 2 * sizeof(float) : 0);
+            total += slot.node->get_mesh_vertex_count() * stride;
+        }
     }
     return total;
 }
@@ -289,7 +357,7 @@ void MeshNetworkProcessor::upload_ssbos()
 
 void MeshNetworkProcessor::push_ssbo_bindings(const std::shared_ptr<VKBuffer>& buffer)
 {
-    if (!m_model_ssbo || !m_slot_index_ssbo)
+    if (!m_model_ssbo)
         return;
 
     auto& bindings = buffer->get_engine_context().ssbo_bindings;
@@ -314,7 +382,15 @@ void MeshNetworkProcessor::push_ssbo_bindings(const std::shared_ptr<VKBuffer>& b
     };
 
     push(1, m_model_ssbo);
-    push(2, m_slot_index_ssbo);
+    if (m_milling_slot_attribute) {
+        const auto slot_binding = std::ranges::find_if(bindings, [](const auto& binding) {
+            return binding.set == 0 && binding.binding == 2;
+        });
+        if (slot_binding != bindings.end())
+            bindings.erase(slot_binding);
+    } else if (m_slot_index_ssbo) {
+        push(2, m_slot_index_ssbo);
+    }
 }
 
 } // namespace MayaFlux::Buffers

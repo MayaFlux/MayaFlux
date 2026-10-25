@@ -83,6 +83,33 @@ void MeshNetworkBuffer::setup_rendering(const RenderConfig& config)
     m_render_config.topology = Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST;
     m_render_config.polygon_mode = config.polygon_mode;
     m_render_config.cull_mode = config.cull_mode;
+    m_render_config.triangulate = config.triangulate;
+
+    configure_mill_enforcement(m_render_config);
+    const bool milled = m_render_config.triangulate;
+    m_processor->set_milling_slot_attribute(milled);
+    set_prefer_semantic_layout(milled);
+
+    auto vertex_layout = milled
+        ? Kakshya::VertexLayout::for_meshes(sizeof(Kakshya::MeshVertex) + 2 * sizeof(float))
+        : Kakshya::VertexLayout::for_meshes(sizeof(Kakshya::MeshVertex));
+    if (milled) {
+        vertex_layout.attributes.push_back({
+            .component_modality = Kakshya::DataModality::SCALAR_F32,
+            .offset_in_vertex = static_cast<uint32_t>(sizeof(Kakshya::MeshVertex)),
+            .name = "slot_index_low"
+        });
+        vertex_layout.attributes.push_back({
+            .component_modality = Kakshya::DataModality::SCALAR_F32,
+            .offset_in_vertex = static_cast<uint32_t>(sizeof(Kakshya::MeshVertex) + sizeof(float)),
+            .name = "slot_index_high"
+        });
+    }
+    for (const auto& slot : m_network->slots()) {
+        if (slot.node)
+            vertex_layout.vertex_count += static_cast<uint32_t>(slot.node->get_mesh_vertex_count());
+    }
+    set_vertex_layout(vertex_layout);
 
     for (const auto& [name, tex] : config.additional_textures)
         m_render_config.additional_textures.emplace_back(name, tex);
@@ -93,28 +120,31 @@ void MeshNetworkBuffer::setup_rendering(const RenderConfig& config)
         m_network->slots(),
         [](const auto& slot) { return slot.diffuse_texture != nullptr; });
 
-    const bool textured = m_diffuse_texture != nullptr
+    const bool textured = !milled && (m_diffuse_texture != nullptr
         || !m_render_config.default_texture_binding.empty()
-        || has_slot_textures;
+        || has_slot_textures);
 
     if (textured && m_render_config.default_texture_binding.empty())
         m_render_config.default_texture_binding = m_diffuse_binding;
 
     if (m_render_config.vertex_shader.empty())
-        m_render_config.vertex_shader = "mesh_network.vert.spv";
+        m_render_config.vertex_shader = milled
+            ? "mesh_network_milled.vert.spv"
+            : "mesh_network.vert.spv";
 
     if (m_render_config.fragment_shader.empty()) {
-        m_render_config.fragment_shader = textured
-            ? "mesh_network_textured.frag.spv"
-            : "mesh_network.frag.spv";
+        m_render_config.fragment_shader = milled
+            ? "mesh_network_milled.frag.spv"
+            : (textured ? "mesh_network_textured.frag.spv" : "mesh_network.frag.spv");
     }
 
     ShaderConfig sc { m_render_config.vertex_shader };
 
     sc.bindings["modelMatrices"] = ShaderBinding(0, 1, vk::DescriptorType::eStorageBuffer);
-    sc.bindings["slotIndices"] = ShaderBinding(0, 2, vk::DescriptorType::eStorageBuffer);
+    if (!milled)
+        sc.bindings["slotIndices"] = ShaderBinding(0, 2, vk::DescriptorType::eStorageBuffer);
 
-    if (has_slot_textures) {
+    if (!milled && has_slot_textures) {
         sc.bindings["diffuseTex"] = ShaderBinding(
             0, 3, vk::DescriptorType::eCombinedImageSampler, slot_count);
     } else if (textured && !m_render_config.default_texture_binding.empty()) {
@@ -128,7 +158,16 @@ void MeshNetworkBuffer::setup_rendering(const RenderConfig& config)
 
     apply_render_config(m_render_config, sc);
 
-    if (has_slot_textures) {
+    auto self = std::dynamic_pointer_cast<MeshNetworkBuffer>(shared_from_this());
+    m_render_processor->set_buffer_vertex_layout(self, vertex_layout);
+
+    if (milled) {
+        auto mill_spec = m_render_processor->get_mill_spec();
+        mill_spec.use_vertex_extent = false;
+        m_render_processor->set_mill_spec(mill_spec);
+    }
+
+    if (!milled && has_slot_textures) {
         const auto& slots = m_network->slots();
         const auto& order = m_network->sorted_indices();
         for (uint32_t i = 0; i < static_cast<uint32_t>(order.size()); ++i) {
@@ -136,7 +175,7 @@ void MeshNetworkBuffer::setup_rendering(const RenderConfig& config)
             if (slot.diffuse_texture)
                 m_render_processor->bind_texture(3 + i, slot.diffuse_texture);
         }
-    } else if (m_diffuse_texture && !m_render_config.default_texture_binding.empty()) {
+    } else if (!milled && m_diffuse_texture && !m_render_config.default_texture_binding.empty()) {
         m_render_processor->bind_texture(m_render_config.default_texture_binding, m_diffuse_texture);
     }
 
