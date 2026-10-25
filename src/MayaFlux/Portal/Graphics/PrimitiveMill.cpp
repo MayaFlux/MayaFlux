@@ -80,9 +80,10 @@ namespace {
         float eye_y;
         float eye_z;
         uint32_t indexed;
+        uint32_t tangent_offset;
     };
 
-    static_assert(sizeof(MillPC) == 15 * sizeof(uint32_t),
+    static_assert(sizeof(MillPC) == 16 * sizeof(uint32_t),
         "MillPC must be tightly packed 4-byte fields matching build_mill_spec's pc() list");
 
     void add_helpers(ShaderSpec::Assemble& assemble)
@@ -127,6 +128,13 @@ namespace {
             "    uint b = d * sw + uo;\n"
             "    dst[b] = floatBitsToUint(t.x);\n"
             "    dst[b + 1u] = floatBitsToUint(t.y);\n");
+
+        assemble.function("void", "write_tangent", "uint d, uint sw, uint to, vec4 t",
+            "    uint b = d * sw + to;\n"
+            "    dst[b] = floatBitsToUint(t.x);\n"
+            "    dst[b + 1u] = floatBitsToUint(t.y);\n"
+            "    dst[b + 2u] = floatBitsToUint(t.z);\n"
+            "    dst[b + 3u] = floatBitsToUint(t.w);\n");
 
         assemble.function("vec3", "view_normal", "vec3 p, vec3 eye",
             "    vec3 n = eye - p;\n"
@@ -302,6 +310,7 @@ namespace {
             .pc("eye_y", Kakshya::GpuDataFormat::FLOAT32)
             .pc("eye_z", Kakshya::GpuDataFormat::FLOAT32)
             .pc("indexed", Kakshya::GpuDataFormat::UINT32)
+            .pc("tangent_offset", Kakshya::GpuDataFormat::UINT32)
             .workgroup(WORKGROUP);
 
         add_helpers(assemble);
@@ -366,7 +375,13 @@ namespace {
         body += "        else if (corner == 4u) { o = rx + ry; uv = vec2(11.0, 11.0); }\n";
         body += "        else { o = -rx + ry; uv = vec2(10.0, 11.0); }\n";
         body += "        copy_vertex(i, s, sw);\n";
-        body += "        write_pos(i, sw, po, p + o);\n";
+        body += "        if (tangent_offset != 0xffffffffu) {\n";
+        body += "            write_pos(i, sw, po, p);\n";
+        body += "            write_tangent(i, sw, tangent_offset,\n";
+        body += "                vec4(((uv - vec2(10.0)) * 2.0 - 1.0) * h, 0.0, 0.0));\n";
+        body += "        } else {\n";
+        body += "            write_pos(i, sw, po, p + o);\n";
+        body += "        }\n";
         body += "        if (synth_uv == 1u) { write_uv(i, sw, uv_offset, uv); }\n";
         body += "        return;\n";
         body += "    }\n";
@@ -378,6 +393,9 @@ namespace {
         body += "    vec3 d = p1 - p0;\n";
         body += "    if (length(d) < 1e-6) {\n";
         body += "        write_pos(i, sw, po, p0);\n";
+        body += "        if (tangent_offset != 0xffffffffu) {\n";
+        body += "            write_tangent(i, sw, tangent_offset, vec4(0.0));\n";
+        body += "        }\n";
         body += "        return;\n";
         body += "    }\n";
         body += "    float dl = length(d);\n";
@@ -421,7 +439,14 @@ namespace {
         body += "    else if (corner == 4u) { pos = p1 + e1; pick = s1; uv = vec2(1.0, 0.0); }\n";
         body += "    else { pos = p1 - e1; pick = s1; uv = vec2(1.0, 1.0); }\n";
         body += "    copy_vertex(i, pick, sw);\n";
-        body += "    write_pos(i, sw, po, pos);\n";
+        body += "    if (tangent_offset != 0xffffffffu) {\n";
+        body += "        float sg = (corner == 0u || corner == 3u || corner == 5u) ? -1.0 : 1.0;\n";
+        body += "        float hh = (corner == 0u || corner == 1u || corner == 3u) ? h0 : h1;\n";
+        body += "        write_pos(i, sw, po, pick == s0 ? p0 : p1);\n";
+        body += "        write_tangent(i, sw, tangent_offset, vec4(dn, sg * hh));\n";
+        body += "    } else {\n";
+        body += "        write_pos(i, sw, po, pos);\n";
+        body += "    }\n";
         body += "    if (fill == 2u) { write_uv(i, sw, uv_offset, wire_uv(corner % 3u)); }\n";
         body += "    else if (synth_uv == 1u) { write_uv(i, sw, uv_offset, uv); }\n";
 
@@ -436,7 +461,8 @@ namespace {
         const MillOffsets& off,
         uint32_t total,
         size_t run_count,
-        bool indexed)
+        bool indexed,
+        bool billboard)
     {
         return MillPC {
             .total = total,
@@ -453,7 +479,8 @@ namespace {
             .eye_x = view.eye.x,
             .eye_y = view.eye.y,
             .eye_z = view.eye.z,
-            .indexed = indexed ? 1U : 0U
+            .indexed = indexed ? 1U : 0U,
+            .tangent_offset = billboard ? off.tangent : ABSENT
         };
     }
 
@@ -694,7 +721,15 @@ uint32_t PrimitiveMill::mill(
     }
     std::memcpy(prefix_ptr, m_prefix.data(), m_prefix.size() * sizeof(uint32_t));
 
-    const auto pc = make_pc(m_spec, view, off, total, runs.size(), indexed);
+    const bool billboard = m_spec.billboard_instances
+        && m_spec.ribbon == MillSpec::Ribbon::WorldFacing
+        && off.tangent != ABSENT;
+    if (m_spec.billboard_instances && off.tangent == ABSENT) {
+        MF_RT_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "PrimitiveMill: billboard_instances needs a tangent attribute in the vertex layout");
+    }
+
+    const auto pc = make_pc(m_spec, view, off, total, runs.size(), indexed, billboard);
 
     auto& foundry = get_shader_foundry();
     auto& press = get_compute_press();
@@ -844,6 +879,15 @@ namespace {
             std::memcpy(w, &t.x, sizeof(float));
             std::memcpy(w + 1, &t.y, sizeof(float));
         }
+
+        void write_tangent(uint32_t d, uint32_t to, const glm::vec4& t) const
+        {
+            uint32_t* w = dst + static_cast<size_t>(d) * stride_words + to;
+            std::memcpy(w, &t.x, sizeof(float));
+            std::memcpy(w + 1, &t.y, sizeof(float));
+            std::memcpy(w + 2, &t.z, sizeof(float));
+            std::memcpy(w + 3, &t.w, sizeof(float));
+        }
     };
 
     glm::vec3 host_view_normal(const glm::vec3& p, const glm::vec3& eye)
@@ -916,6 +960,7 @@ Kakshya::VertexLayout mill_on_host(
     };
 
     const bool world_plane = spec.ribbon == MillSpec::Ribbon::WorldPlane;
+    const bool billboard = spec.billboard_instances && !world_plane && off.tangent != ABSENT;
     const uint32_t scalar_offset = spec.use_vertex_extent ? off.scalar : ABSENT;
 
     for (size_t r = 0; r < runs.size(); ++r) {
@@ -1015,7 +1060,13 @@ Kakshya::VertexLayout mill_on_host(
                 }
 
                 rec.copy_vertex(out, s);
-                rec.write_pos(out, off.position, p + o);
+                if (billboard) {
+                    rec.write_pos(out, off.position, p);
+                    rec.write_tangent(out, off.tangent,
+                        glm::vec4((uv * 2.0F - glm::vec2(1.0F)) * h, 0.0F, 0.0F));
+                } else {
+                    rec.write_pos(out, off.position, p + o);
+                }
                 if (spec.synthesize_uv) {
                     rec.write_uv(out, off.uv, uv + glm::vec2(10.0F));
                 }
@@ -1033,6 +1084,9 @@ Kakshya::VertexLayout mill_on_host(
 
             if (glm::length(d) < 1e-6F) {
                 rec.write_pos(out, off.position, p0);
+                if (billboard) {
+                    rec.write_tangent(out, off.tangent, glm::vec4(0.0F));
+                }
                 continue;
             }
 
@@ -1072,7 +1126,15 @@ Kakshya::VertexLayout mill_on_host(
             }
 
             rec.copy_vertex(out, pick);
-            rec.write_pos(out, off.position, pos);
+            if (billboard) {
+                const float sign = (corner == 0U || corner == 3U || corner == 5U) ? -1.0F : 1.0F;
+                const float half_w = (corner == 0U || corner == 1U || corner == 3U) ? h0 : h1;
+                rec.write_pos(out, off.position, pick == s0 ? p0 : p1);
+                rec.write_tangent(out, off.tangent,
+                    glm::vec4(d / glm::length(d), sign * half_w));
+            } else {
+                rec.write_pos(out, off.position, pos);
+            }
             if (run.fill == PolygonMode::LINE) {
                 rec.write_uv(out, off.uv, wire_uv(corner % 3U));
             } else if (spec.synthesize_uv) {

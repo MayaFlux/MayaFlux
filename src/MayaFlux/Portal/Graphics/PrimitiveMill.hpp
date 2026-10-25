@@ -71,6 +71,18 @@ struct MillSpec {
      * re-deriving the threshold.
      */
     bool synthesize_uv { true };
+
+    /**
+     * @brief Leave point quads and ribbons unexpanded for an instanced draw.
+     *
+     * The mill places the source position and writes the expansion into the
+     * tangent attribute: a point quad stores its corner offset in xy, a ribbon
+     * stores its unit direction in xyz and its signed half width in w. The
+     * instance vertex shader then faces each instance toward the viewpoint
+     * after its own transform. Only applies to Ribbon::WorldFacing and needs
+     * a tangent attribute in the vertex layout.
+     */
+    bool billboard_instances { false };
 };
 
 /**

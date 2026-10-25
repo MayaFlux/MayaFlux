@@ -24,11 +24,12 @@ class RenderProcessor;
  * Topology is taken from slot 0's node. All slots must carry geometry with the
  * same topology and vertex layout for the single draw call to be correct.
  *
- * When the render config triangulates, the template is milled once and each
- * instance transform is applied to the milled vertices afterwards. A ribbon or
- * point quad is therefore built facing the viewpoint for the geometry
- * transform only, and a per-instance rotation or scale turns or stretches it.
- * Use Ribbon::WorldPlane in the mill spec for instanced geometry.
+ * When the render config triangulates, the template is milled once and the
+ * vertex shader applies each instance transform to the milled position, then
+ * expands point quads and ribbons toward the viewpoint, so every instance
+ * faces the view whatever its rotation. This needs a tangent attribute in the
+ * template layout. Ribbon::WorldPlane in the mill spec instead holds the
+ * expansion in the template plane and the instance transform rotates it.
  *
  * Usage:
  * @code

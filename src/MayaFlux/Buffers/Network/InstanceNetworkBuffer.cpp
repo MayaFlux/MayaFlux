@@ -136,6 +136,12 @@ void InstanceNetworkBuffer::setup_rendering(const RenderConfig& config)
         m_render_processor->set_mill_spec(mill_spec);
     }
 
+    if (m_render_config.triangulate) {
+        auto mill_spec = m_render_processor->get_mill_spec();
+        mill_spec.billboard_instances = true;
+        m_render_processor->set_mill_spec(mill_spec);
+    }
+
     for (const auto& [name, tex] : m_render_config.additional_textures)
         m_render_processor->bind_texture(name, tex);
 

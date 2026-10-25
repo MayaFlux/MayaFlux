@@ -53,10 +53,13 @@ private:
     std::shared_ptr<VKBuffer> m_vertex_staging;
     std::shared_ptr<VKBuffer> m_transform_ssbo;
     std::shared_ptr<VKBuffer> m_transform_staging;
+    std::shared_ptr<VKBuffer> m_index_buffer;
+    std::shared_ptr<VKBuffer> m_index_staging;
 
     std::vector<glm::mat4> m_transform_scratch;
 
     void upload_template(const std::shared_ptr<VKBuffer>& vertex_buf);
+    void upload_indices(const std::shared_ptr<VKBuffer>& vertex_buf);
     void upload_transforms(const std::shared_ptr<VKBuffer>& vertex_buf);
     void push_ssbo_binding(const std::shared_ptr<VKBuffer>& vertex_buf);
 

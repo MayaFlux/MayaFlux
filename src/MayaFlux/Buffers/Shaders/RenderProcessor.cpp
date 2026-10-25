@@ -414,7 +414,11 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
     retire_current_pipeline();
 
     m_pipeline_id = flow.create_pipeline(pipeline_config, { swapchain_format }, depth_format, 0U,
-        { { 0U, m_triangulate ? 1U : 0U } });
+        { { 0U, m_triangulate ? 1U : 0U },
+            { 1U, m_triangulate && m_mill_spec.billboard_instances
+                    && m_mill_spec.ribbon == Portal::Graphics::MillSpec::Ribbon::WorldFacing
+                ? 1U
+                : 0U } });
 
     if (m_pipeline_id == Portal::Graphics::INVALID_RENDER_PIPELINE) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
@@ -610,6 +614,14 @@ void RenderProcessor::set_runs(std::vector<Portal::Graphics::DrawRun> runs)
 
 void RenderProcessor::set_mill_spec(const Portal::Graphics::MillSpec& spec)
 {
+    const auto billboards = [](const Portal::Graphics::MillSpec& value) {
+        return value.billboard_instances
+            && value.ribbon == Portal::Graphics::MillSpec::Ribbon::WorldFacing;
+    };
+    if (billboards(m_mill_spec) != billboards(spec)) {
+        m_needs_pipeline_rebuild = true;
+    }
+
     m_mill_spec = spec;
     for (auto& [buffer, state] : m_buffer_info) {
         if (state.mill)

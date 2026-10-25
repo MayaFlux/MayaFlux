@@ -61,6 +61,8 @@ void InstanceSSBOProcessor::on_detach(const std::shared_ptr<Buffer>&)
     m_vertex_staging.reset();
     m_transform_ssbo.reset();
     m_transform_staging.reset();
+    m_index_buffer.reset();
+    m_index_staging.reset();
 }
 
 void InstanceSSBOProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
@@ -104,6 +106,29 @@ void InstanceSSBOProcessor::upload_template(const std::shared_ptr<VKBuffer>& ver
             vertex_buf->set_vertex_layout(*layout);
         }
     }
+
+    upload_indices(vertex_buf);
+}
+
+void InstanceSSBOProcessor::upload_indices(const std::shared_ptr<VKBuffer>& vertex_buf)
+{
+    const auto indices = m_network->slots()[0].node->get_index_data();
+    if (indices.empty())
+        return;
+
+    if (!m_index_buffer) {
+        m_index_buffer = std::make_shared<VKBuffer>(
+            indices.size_bytes(), VKBuffer::Usage::INDEX, Kakshya::DataModality::UNKNOWN);
+        ensure_initialized(m_index_buffer);
+        m_index_staging = create_staging_buffer(indices.size_bytes());
+    }
+
+    upload_resizing(indices.data(), indices.size_bytes(), m_index_buffer, m_index_staging);
+
+    vertex_buf->set_index_resources(
+        m_index_buffer->get_buffer(),
+        m_index_buffer->get_buffer_resources().memory,
+        indices.size_bytes());
 }
 
 void InstanceSSBOProcessor::upload_transforms(const std::shared_ptr<VKBuffer>& vertex_buf)
