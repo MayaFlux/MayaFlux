@@ -347,6 +347,10 @@ bool NetworkGeometryProcessor::try_incremental_upload(
 
     primary_op->mark_vertex_data_clean();
 
+    if (auto ngb = std::dynamic_pointer_cast<NetworkGeometryBuffer>(vk_buffer)) {
+        ngb->update_render_runs(primary_op->topology_runs());
+    }
+
     MF_RT_TRACE(Journal::Component::Buffers, Journal::Context::BufferProcessing,
         "Network '{}': incremental upload, {} dirty range(s)", name, ranges.size());
 

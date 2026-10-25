@@ -305,6 +305,9 @@ private:
     };
     std::vector<ChainRenderEntry> m_chain_render_processors;
 
+    /** @brief Spans last handed to the primary processor, before any point-mode rewrite. */
+    std::vector<Portal::Graphics::DrawRun> m_applied_runs;
+
     struct StateField {
         size_t element_count;
         size_t stride_bytes;

@@ -151,6 +151,7 @@ void NetworkGeometryBuffer::setup_rendering(const RenderConfig& config)
     get_processing_chain()->add_processor(m_render_processor, shared_from_this());
 
     set_default_render_config(resolved_config);
+    m_applied_runs.clear();
     update_render_runs(std::move(draw_runs));
 }
 
@@ -286,19 +287,36 @@ void NetworkGeometryBuffer::update_chain_render_range(
 
 void NetworkGeometryBuffer::update_render_runs(std::vector<Portal::Graphics::DrawRun> runs)
 {
-    if (m_render_processor) {
-        const auto config = get_render_config();
-        if (config.triangulate && config.polygon_mode == Portal::Graphics::PolygonMode::POINT) {
-            m_render_processor->set_triangulate(true);
-            for (auto& run : runs) {
-                if (run.topology == Portal::Graphics::PrimitiveTopology::LINE_LIST
-                    || run.topology == Portal::Graphics::PrimitiveTopology::LINE_STRIP) {
-                    run.topology = Portal::Graphics::PrimitiveTopology::POINT_LIST;
-                }
+    if (!m_render_processor) {
+        return;
+    }
+
+    const auto config = get_render_config();
+    const bool point_mill = config.triangulate
+        && config.polygon_mode == Portal::Graphics::PolygonMode::POINT;
+    if (point_mill) {
+        m_render_processor->set_triangulate(true);
+    }
+
+    const bool unchanged = std::ranges::equal(runs, m_applied_runs,
+        [](const auto& a, const auto& b) {
+            return a.topology == b.topology && a.vertex_offset == b.vertex_offset
+                && a.vertex_count == b.vertex_count && a.fill == b.fill;
+        });
+    if (unchanged) {
+        return;
+    }
+    m_applied_runs = runs;
+
+    if (point_mill) {
+        for (auto& run : runs) {
+            if (run.topology == Portal::Graphics::PrimitiveTopology::LINE_LIST
+                || run.topology == Portal::Graphics::PrimitiveTopology::LINE_STRIP) {
+                run.topology = Portal::Graphics::PrimitiveTopology::POINT_LIST;
             }
         }
-        m_render_processor->set_runs(std::move(runs));
     }
+    m_render_processor->set_runs(std::move(runs));
 }
 
 //-----------------------------------------------------------------------------
