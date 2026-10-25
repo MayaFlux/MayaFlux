@@ -422,7 +422,8 @@ namespace {
         body += "    else { pos = p1 - e1; pick = s1; uv = vec2(1.0, 1.0); }\n";
         body += "    copy_vertex(i, pick, sw);\n";
         body += "    write_pos(i, sw, po, pos);\n";
-        body += "    if (synth_uv == 1u) { write_uv(i, sw, uv_offset, uv); }\n";
+        body += "    if (fill == 2u) { write_uv(i, sw, uv_offset, wire_uv(corner % 3u)); }\n";
+        body += "    else if (synth_uv == 1u) { write_uv(i, sw, uv_offset, uv); }\n";
 
         assemble.kernel(KernelSource { .body = std::move(body) });
 
@@ -681,8 +682,11 @@ uint32_t PrimitiveMill::mill(
     }
 
     for (size_t r = 0; r < runs.size(); ++r) {
+        const bool is_line = runs[r].topology == PrimitiveTopology::LINE_LIST
+            || runs[r].topology == PrimitiveTopology::LINE_STRIP;
         const bool emulated = is_triangle_topology(runs[r].topology)
-            && (runs[r].fill == PolygonMode::POINT || runs[r].fill == PolygonMode::LINE);
+            ? (runs[r].fill == PolygonMode::POINT || runs[r].fill == PolygonMode::LINE)
+            : (is_line && (runs[r].fill == PolygonMode::POINT || runs[r].fill == PolygonMode::LINE));
         const uint32_t fill_code = !emulated ? 0U : (runs[r].fill == PolygonMode::POINT ? 1U : 2U);
         run_ptr[r * RUN_WORDS + 0] = static_cast<uint32_t>(runs[r].topology) | (fill_code << 8U);
         run_ptr[r * RUN_WORDS + 1] = runs[r].vertex_offset;
@@ -1069,7 +1073,9 @@ Kakshya::VertexLayout mill_on_host(
 
             rec.copy_vertex(out, pick);
             rec.write_pos(out, off.position, pos);
-            if (spec.synthesize_uv) {
+            if (run.fill == PolygonMode::LINE) {
+                rec.write_uv(out, off.uv, wire_uv(corner % 3U));
+            } else if (spec.synthesize_uv) {
                 rec.write_uv(out, off.uv, uv);
             }
         }
