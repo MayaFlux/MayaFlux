@@ -203,12 +203,6 @@ jobs:
           pkg-config --exists glm && echo "✅ glm found" || echo "❌ glm not found"
           pkg-config --exists asio && echo "✅ asio found" || echo "❌ asio not found"
 
-      - name: Capture Vulkan device report
-        shell: bash
-        run: |
-          vulkaninfo --json > vulkaninfo.json
-          brew list --versions mesa > mesa-version.txt
-
       - name: Install STB
         shell: bash
         run: |
@@ -358,13 +352,3 @@ jobs:
             build/CMakeFiles/CMakeError.log
             build/Testing/Temporary/LastTest.log
             build/compile_commands.json
-
-      - name: Upload Vulkan device report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: vulkaninfo-macos-${{ github.run_id }}
-          path: |
-            vulkaninfo.json
-            mesa-version.txt
-          if-no-files-found: ignore
