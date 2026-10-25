@@ -23,34 +23,34 @@ RelaxationStepProcessor::RelaxationStepProcessor(const Portal::Graphics::ShaderS
     m_config.bindings["state_out"] = ShaderBinding(0, 1, vk::DescriptorType::eStorageBuffer);
 }
 
-void RelaxationStepProcessor::write_state_descriptors(const std::shared_ptr<RelaxationGridBuffer>& grid)
+void RelaxationStepProcessor::collect_push_writes(
+    const std::shared_ptr<VKBuffer>& buffer,
+    std::vector<Portal::Graphics::PushDescriptorWrite>& writes)
 {
-    auto& resources = grid->get_buffer_resources();
+    ComputeProcessor::collect_push_writes(buffer, writes);
+
+    if (!m_grid) {
+        return;
+    }
+
+    const auto& resources = m_grid->get_buffer_resources();
     if (resources.back_buffers.size() < 2) {
         return;
     }
 
-    if (m_descriptor_set_ids.empty()) {
-        return;
-    }
+    const size_t bytes = m_grid->get_state_bytes();
+    const auto type = Portal::Graphics::to_vk_descriptor_type(Portal::Graphics::DescriptorRole::STORAGE);
 
-    auto& foundry = Portal::Graphics::get_shader_foundry();
-    const size_t bytes = grid->get_state_bytes();
-    const std::array<Portal::Graphics::DescriptorBufferWrite, 2> writes { {
-        { .descriptor_set_id = m_descriptor_set_ids[0],
-            .binding = 0,
-            .type = Portal::Graphics::to_vk_descriptor_type(Portal::Graphics::DescriptorRole::STORAGE),
-            .buffer = resources.back_buffers[grid->front_index()].buffer,
-            .offset = 0,
-            .size = bytes },
-        { .descriptor_set_id = m_descriptor_set_ids[0],
-            .binding = 1,
-            .type = Portal::Graphics::to_vk_descriptor_type(Portal::Graphics::DescriptorRole::STORAGE),
-            .buffer = resources.back_buffers[grid->back_index()].buffer,
-            .offset = 0,
-            .size = bytes },
-    } };
-    foundry.update_descriptor_buffers(writes);
+    writes.push_back({
+        .binding = 0,
+        .type = type,
+        .buffer = vk::DescriptorBufferInfo(resources.back_buffers[m_grid->front_index()].buffer, 0, bytes),
+    });
+    writes.push_back({
+        .binding = 1,
+        .type = type,
+        .buffer = vk::DescriptorBufferInfo(resources.back_buffers[m_grid->back_index()].buffer, 0, bytes),
+    });
 }
 
 void RelaxationStepProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
@@ -60,10 +60,6 @@ void RelaxationStepProcessor::processing_function(const std::shared_ptr<Buffer>&
     }
 
     m_dispatched = false;
-
-    if (m_grid && are_descriptors_ready()) {
-        write_state_descriptors(m_grid);
-    }
 
     ComputeProcessor::processing_function(buffer);
 
@@ -108,13 +104,6 @@ void RelaxationStepProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
         uint32_t gy = (m_grid->get_grid_height() + 15) / 16;
         set_manual_dispatch(gx, gy, 1);
         write_grid_extent_constants();
-    }
-}
-
-void RelaxationStepProcessor::on_descriptors_created()
-{
-    if (m_grid) {
-        write_state_descriptors(m_grid);
     }
 }
 

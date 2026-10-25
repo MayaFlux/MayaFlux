@@ -121,6 +121,12 @@ public:
      */
     [[nodiscard]] bool is_initialized() const { return m_shader_foundry != nullptr; }
 
+    /**
+     * @brief Check if a pipeline id names a live pipeline
+     * @param pipeline_id Id returned by create_pipeline
+     */
+    [[nodiscard]] bool has_pipeline(ComputePipelineID pipeline_id) const { return m_pipelines.contains(pipeline_id); }
+
     //==========================================================================
     // Pipeline Creation (COMPUTE-SPECIFIC)
     //==========================================================================

@@ -28,7 +28,7 @@ RenderProcessor::BufferState* RenderProcessor::get_or_cache_buffer_state(const s
 RenderProcessor::RenderProcessor(const ShaderConfig& config)
     : ShaderProcessor(config)
 {
-    m_engine_owns_set_zero = true;
+    m_set_zero_is_push = true;
     m_shader_id = Portal::Graphics::get_shader_foundry().load_shader(config.shader_path, Portal::Graphics::ShaderStage::VERTEX, config.entry_point);
 }
 

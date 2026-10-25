@@ -138,9 +138,16 @@ protected:
     void on_attach(const std::shared_ptr<Buffer>& buffer) override;
 
     /**
-     * @brief Write the field descriptor for the current slot assignment.
+     * @brief Push the field's current read slot as binding 0.
+     * @param buffer The attached buffer.
+     * @param writes Receives the parent's writes, then the field.
+     *
+     * The read slot changes whenever an upstream stage swaps it, so it is
+     * resolved again on every dispatch.
      */
-    void on_descriptors_created() override;
+    void collect_push_writes(
+        const std::shared_ptr<VKBuffer>& buffer,
+        std::vector<Portal::Graphics::PushDescriptorWrite>& writes) override;
 
     /**
      * @brief Reject buffers that are not VolumeGridBuffer.
@@ -150,23 +157,7 @@ protected:
      */
     bool on_before_execute(Portal::Graphics::CommandBufferID cmd_id, const std::shared_ptr<VKBuffer>& buffer) override;
 
-    /**
-     * @brief Write the field descriptor for this cycle's slot assignment,
-     *        then run the normal shader processing path.
-     *
-     * The field's read slot changes whenever an upstream stage swaps it, so
-     * the binding is rewritten every cycle rather than once.
-     */
-    void processing_function(const std::shared_ptr<Buffer>& buffer) override;
-
 private:
-    /**
-     * @brief Issue the direct ShaderFoundry descriptor write for the field
-     *        read slot. The grid buffer is a real VKBuffer and binds through
-     *        the normal bind_buffer path.
-     */
-    void write_field_descriptor();
-
     /**
      * @brief Size the push constant block to at least SurfaceParams and
      *        write the lattice dimensions, extraction resolution, and

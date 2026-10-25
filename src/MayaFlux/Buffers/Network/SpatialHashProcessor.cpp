@@ -147,14 +147,15 @@ void NetworkStateFieldProcessor::on_attach(const std::shared_ptr<Buffer>& buffer
     on_buffer_ready();
 }
 
-void NetworkStateFieldProcessor::write_field_descriptors()
+void NetworkStateFieldProcessor::collect_push_writes(
+    const std::shared_ptr<VKBuffer>& buffer,
+    std::vector<Portal::Graphics::PushDescriptorWrite>& writes)
 {
-    if (!m_buffer || m_descriptor_set_ids.empty()) {
+    ComputeProcessor::collect_push_writes(buffer, writes);
+
+    if (!m_buffer) {
         return;
     }
-
-    std::vector<Portal::Graphics::DescriptorBufferWrite> writes;
-    writes.reserve(m_bindings.size());
 
     for (const auto& entry : m_bindings) {
         vk::Buffer handle {};
@@ -169,30 +170,11 @@ void NetworkStateFieldProcessor::write_field_descriptors()
         }
 
         writes.push_back({
-            .descriptor_set_id = m_descriptor_set_ids[0],
             .binding = entry.binding,
             .type = Portal::Graphics::to_vk_descriptor_type(Portal::Graphics::DescriptorRole::STORAGE),
-            .buffer = handle,
-            .offset = 0,
-            .size = bytes,
+            .buffer = vk::DescriptorBufferInfo(handle, 0, bytes),
         });
     }
-
-    Portal::Graphics::get_shader_foundry().update_descriptor_buffers(writes);
-}
-
-void NetworkStateFieldProcessor::on_descriptors_created()
-{
-    write_field_descriptors();
-}
-
-void NetworkStateFieldProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
-{
-    if (m_buffer && are_descriptors_ready()) {
-        write_field_descriptors();
-    }
-
-    ComputeProcessor::processing_function(buffer);
 }
 
 bool NetworkStateFieldProcessor::on_before_execute(

@@ -63,12 +63,21 @@ void ComputeProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buff
         descriptor_sets.push_back(set_bindings);
     }
 
+    constexpr size_t k_max_push_bindings = 32;
+    const auto set_zero = bindings_by_set.find(0);
+    const bool push_set_zero = set_zero != bindings_by_set.end()
+        && set_zero->second.size() <= k_max_push_bindings;
+
+    m_set_zero_is_push = push_set_zero;
+    m_pooled_set_count = descriptor_sets.size() - (push_set_zero ? 1U : 0U);
+
     const auto previous_pipeline = m_pipeline_id;
 
     m_pipeline_id = compute_press.create_pipeline(
         m_shader_id,
         descriptor_sets,
-        resolve_push_constant_size(buffer));
+        resolve_push_constant_size(buffer),
+        push_set_zero ? std::optional<size_t> { 0 } : std::nullopt);
 
     if (previous_pipeline != Portal::Graphics::INVALID_COMPUTE_PIPELINE) {
         compute_press.destroy_pipeline(previous_pipeline);
@@ -101,17 +110,22 @@ void ComputeProcessor::initialize_descriptors(const std::shared_ptr<VKBuffer>& b
 
     m_descriptor_set_ids = compute_press.allocate_pipeline_descriptors(m_pipeline_id);
 
-    if (m_descriptor_set_ids.empty()) {
+    if (m_descriptor_set_ids.size() != m_pooled_set_count) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             "Failed to allocate descriptor sets");
+        m_descriptor_set_ids.clear();
+        m_descriptors_ready = false;
         return;
     }
+
+    m_descriptors_ready = true;
 
     update_descriptors(buffer);
     on_descriptors_created();
 
     MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-        "Descriptor sets initialized: {} sets", m_descriptor_set_ids.size());
+        "Descriptor sets initialized: {} pooled sets, set 0 {}",
+        m_descriptor_set_ids.size(), m_set_zero_is_push ? "pushed" : "pooled");
 }
 
 //==============================================================================
@@ -215,15 +229,9 @@ void ComputeProcessor::on_iteration_barrier(
 
 void ComputeProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
 {
-    if (m_pipeline_id == Portal::Graphics::INVALID_COMPUTE_PIPELINE || m_descriptor_set_ids.empty()) {
+    if (m_pipeline_id == Portal::Graphics::INVALID_COMPUTE_PIPELINE || !are_descriptors_ready()) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             "Cannot dispatch without pipeline and descriptors");
-        return;
-    }
-
-    if (m_descriptor_set_ids.empty()) {
-        MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "Descriptor sets not initialized");
         return;
     }
 
@@ -243,14 +251,19 @@ void ComputeProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
         writes.reserve(descriptor_bindings.size());
 
         for (const auto& binding : descriptor_bindings) {
-            if (binding.set >= m_descriptor_set_ids.size()) {
+            if (m_set_zero_is_push && binding.set == 0) {
+                continue;
+            }
+
+            const auto ds_index = resolve_ds_index(binding.set);
+            if (!ds_index) {
                 MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
                     "Descriptor set index {} out of range", binding.set);
                 continue;
             }
 
             writes.push_back({
-                .descriptor_set_id = m_descriptor_set_ids[binding.set],
+                .descriptor_set_id = m_descriptor_set_ids[*ds_index],
                 .binding = binding.binding,
                 .type = binding.type,
                 .buffer = binding.buffer_info.buffer,
@@ -268,6 +281,12 @@ void ComputeProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
 
     on_before_execute(cmd_id, buffer);
     pump_feeds(false);
+
+    if (m_set_zero_is_push) {
+        std::vector<Portal::Graphics::PushDescriptorWrite> pushes;
+        collect_push_writes(buffer, pushes);
+        compute_press.push_descriptors(cmd_id, m_pipeline_id, pushes);
+    }
 
     const uint32_t iterations = std::max(1U, m_dispatch_config.iteration_count);
     const auto dispatch_size = calculate_dispatch_size(buffer);
@@ -304,6 +323,41 @@ void ComputeProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
         vk::PipelineStageFlagBits2::eComputeShader | vk::PipelineStageFlagBits2::eTransfer);
 
     submit_recorded(cmd_id, buffer);
+}
+
+void ComputeProcessor::collect_push_writes(
+    const std::shared_ptr<VKBuffer>& buffer,
+    std::vector<Portal::Graphics::PushDescriptorWrite>& writes)
+{
+    std::set<uint32_t> staged;
+
+    for (const auto& binding : buffer->get_pipeline_context().descriptor_buffer_bindings) {
+        if (binding.set != 0) {
+            continue;
+        }
+
+        writes.push_back({
+            .binding = binding.binding,
+            .type = binding.type,
+            .buffer = binding.buffer_info,
+        });
+        staged.insert(binding.binding);
+    }
+
+    for (const auto& [name, bound] : m_bound_buffers) {
+        const auto config = m_config.bindings.find(name);
+        if (config == m_config.bindings.end()
+            || config->second.set != 0
+            || staged.contains(config->second.binding)) {
+            continue;
+        }
+
+        writes.push_back({
+            .binding = config->second.binding,
+            .type = config->second.type,
+            .buffer = vk::DescriptorBufferInfo(bound->get_buffer(), 0, bound->get_size_bytes()),
+        });
+    }
 }
 
 void ComputeProcessor::cleanup()

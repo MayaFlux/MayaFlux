@@ -120,7 +120,9 @@ public:
 
 protected:
     void on_attach(const std::shared_ptr<Buffer>& buffer) override;
-    void on_descriptors_created() override;
+    void collect_push_writes(
+        const std::shared_ptr<VKBuffer>& buffer,
+        std::vector<Portal::Graphics::PushDescriptorWrite>& writes) override;
     bool on_before_execute(
         Portal::Graphics::CommandBufferID cmd_id,
         const std::shared_ptr<VKBuffer>& buffer) override;

@@ -80,10 +80,14 @@ protected:
     bool on_before_execute(Portal::Graphics::CommandBufferID cmd_id, const std::shared_ptr<VKBuffer>& buffer) override;
 
     /**
-     * @brief Write the cell_state and vertices descriptors when the
-     *        descriptor set is created or rebuilt.
+     * @brief Push cell_state at the grid's front generation and vertices at
+     *        the grid's own vertex storage.
+     * @param buffer The attached buffer.
+     * @param writes Receives the parent's writes, then the two bindings.
      */
-    void on_descriptors_created() override;
+    void collect_push_writes(
+        const std::shared_ptr<VKBuffer>& buffer,
+        std::vector<Portal::Graphics::PushDescriptorWrite>& writes) override;
 
     /**
      * @brief Cover the grid with a 1D dispatch and write EmitParams.
@@ -94,19 +98,7 @@ protected:
      */
     void on_attach(const std::shared_ptr<Buffer>& buffer) override;
 
-    /**
-     * @brief Write the cell_state and vertices descriptors for the grid's
-     *        current front generation, then run the parent.
-     */
-    void processing_function(const std::shared_ptr<Buffer>& buffer) override;
-
 private:
-    /**
-     * @brief Point cell_state at the grid's front generation and vertices
-     *        at the grid's own vertex storage.
-     * @param grid The attached RelaxationGridBuffer.
-     */
-    void write_state_descriptors(const std::shared_ptr<RelaxationGridBuffer>& grid);
     /**
      * @brief Size the push constant block to EmitParams and upload the
      *        current parameters. Called from on_attach and from the setters.

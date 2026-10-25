@@ -92,16 +92,15 @@ void UVFieldProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
         "UVFieldProcessor attached ({} bytes)", vk_buf->get_size_bytes());
 }
 
-void UVFieldProcessor::on_descriptors_created()
+void UVFieldProcessor::collect_push_writes(
+    const std::shared_ptr<VKBuffer>& buffer,
+    std::vector<Portal::Graphics::PushDescriptorWrite>& writes)
 {
-    if (m_descriptor_set_ids.empty()) {
+    ComputeProcessor::collect_push_writes(buffer, writes);
+
+    if (!m_texture) {
         return;
     }
-
-    auto& foundry = Portal::Graphics::get_shader_foundry();
-
-    if (!m_texture)
-        return;
 
     if (!m_sampler) {
         auto& forge = Portal::Graphics::SamplerForge::instance();
@@ -109,22 +108,17 @@ void UVFieldProcessor::on_descriptors_created()
     }
 
     if (!m_sampler) {
-        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+        MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             "UVFieldProcessor: sampler creation failed, texture will not be sampled");
         return;
     }
 
-    foundry.update_descriptor_image(
-        m_descriptor_set_ids[0],
-        1,
-        m_texture->get_image_view(),
-        m_sampler,
-        vk::ImageLayout::eShaderReadOnlyOptimal);
-
-    MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-        "UVFieldProcessor: texture descriptor written (binding 1, view={:p}, sampler={:p})",
-        static_cast<void*>(static_cast<VkImageView>(m_texture->get_image_view())),
-        static_cast<void*>(static_cast<VkSampler>(m_sampler)));
+    writes.push_back({
+        .binding = 1,
+        .type = vk::DescriptorType::eCombinedImageSampler,
+        .image = vk::DescriptorImageInfo(
+            m_sampler, m_texture->get_image_view(), vk::ImageLayout::eShaderReadOnlyOptimal),
+    });
 }
 
 bool UVFieldProcessor::on_before_execute(

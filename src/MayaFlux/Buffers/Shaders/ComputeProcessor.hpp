@@ -208,6 +208,22 @@ protected:
         const std::shared_ptr<VKBuffer>& buffer,
         uint32_t index);
 
+    /**
+     * @brief Collect the writes for the push descriptor set, set 0.
+     * @param buffer Buffer under processing.
+     * @param writes Receives one entry per binding of set 0.
+     *
+     * Called once per dispatch, after the pipeline is bound, so a binding
+     * that changes between cycles needs no descriptor rewrite. The default
+     * pushes the buffer's staged set 0 bindings and the bound buffers whose
+     * config binding is in set 0. Subclasses that resolve handles per cycle
+     * (field generations, ping-pong state, textures) call the parent, then
+     * append their own writes.
+     */
+    virtual void collect_push_writes(
+        const std::shared_ptr<VKBuffer>& buffer,
+        std::vector<Portal::Graphics::PushDescriptorWrite>& writes);
+
     void initialize_pipeline(const std::shared_ptr<VKBuffer>& buffer) override;
 
     void initialize_descriptors(const std::shared_ptr<VKBuffer>& buffer) override;
@@ -220,6 +236,8 @@ private:
     ShaderDispatchConfig m_dispatch_config;
 
     std::vector<uint8_t> m_push_constant_scratch; ///< Merged push constant block, reused across iterations.
+
+    size_t m_pooled_set_count {}; ///< Sets of the current pipeline that are allocated, every set but a push set 0.
 
     void execute_shader(const std::shared_ptr<VKBuffer>& buffer) override;
 

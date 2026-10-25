@@ -33,37 +33,30 @@ void RelaxationEmitProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
     }
 }
 
-void RelaxationEmitProcessor::write_state_descriptors(const std::shared_ptr<RelaxationGridBuffer>& grid)
+void RelaxationEmitProcessor::collect_push_writes(
+    const std::shared_ptr<VKBuffer>& buffer,
+    std::vector<Portal::Graphics::PushDescriptorWrite>& writes)
 {
-    if (m_descriptor_set_ids.empty()) {
+    ComputeProcessor::collect_push_writes(buffer, writes);
+
+    if (!m_grid) {
         return;
     }
 
-    auto& foundry = Portal::Graphics::get_shader_foundry();
-    auto& resources = grid->get_buffer_resources();
+    const auto type = Portal::Graphics::to_vk_descriptor_type(Portal::Graphics::DescriptorRole::STORAGE);
 
-    const std::array<Portal::Graphics::DescriptorBufferWrite, 2> writes { {
-        { .descriptor_set_id = m_descriptor_set_ids[0],
-            .binding = 0,
-            .type = Portal::Graphics::to_vk_descriptor_type(Portal::Graphics::DescriptorRole::STORAGE),
-            .buffer = resources.back_buffers[grid->front_index()].buffer,
-            .offset = 0,
-            .size = grid->get_state_bytes() },
-        { .descriptor_set_id = m_descriptor_set_ids[0],
-            .binding = 1,
-            .type = Portal::Graphics::to_vk_descriptor_type(Portal::Graphics::DescriptorRole::STORAGE),
-            .buffer = grid->get_buffer(),
-            .offset = 0,
-            .size = grid->get_size_bytes() },
-    } };
-    foundry.update_descriptor_buffers(writes);
-}
-
-void RelaxationEmitProcessor::on_descriptors_created()
-{
-    if (m_grid) {
-        write_state_descriptors(m_grid);
-    }
+    writes.push_back({
+        .binding = 0,
+        .type = type,
+        .buffer = vk::DescriptorBufferInfo(
+            m_grid->get_buffer_resources().back_buffers[m_grid->front_index()].buffer,
+            0, m_grid->get_state_bytes()),
+    });
+    writes.push_back({
+        .binding = 1,
+        .type = type,
+        .buffer = vk::DescriptorBufferInfo(m_grid->get_buffer(), 0, m_grid->get_size_bytes()),
+    });
 }
 
 bool RelaxationEmitProcessor::on_before_execute(
@@ -71,15 +64,6 @@ bool RelaxationEmitProcessor::on_before_execute(
     const std::shared_ptr<VKBuffer>& buffer)
 {
     return std::dynamic_pointer_cast<RelaxationGridBuffer>(buffer) != nullptr;
-}
-
-void RelaxationEmitProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
-{
-    if (m_grid && are_descriptors_ready()) {
-        write_state_descriptors(m_grid);
-    }
-
-    ComputeProcessor::processing_function(buffer);
 }
 
 void RelaxationEmitProcessor::write_emit_constants()

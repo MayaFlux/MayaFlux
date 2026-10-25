@@ -750,7 +750,7 @@ void ShaderProcessor::note_created_layout(const std::shared_ptr<VKBuffer>& buffe
 
 std::optional<uint32_t> ShaderProcessor::resolve_ds_index(uint32_t set) const
 {
-    if (m_engine_owns_set_zero) {
+    if (m_set_zero_is_push) {
         if (set == 0)
             return std::nullopt;
         const uint32_t idx = set - 1;
@@ -777,6 +777,10 @@ void ShaderProcessor::update_descriptors(const std::shared_ptr<VKBuffer>& buffer
     writes.reserve(descriptor_bindings.size() + m_bound_buffers.size());
 
     for (const auto& binding : descriptor_bindings) {
+        if (m_set_zero_is_push && binding.set == 0) {
+            continue;
+        }
+
         auto ds_index = resolve_ds_index(binding.set);
         if (!ds_index) {
             MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
@@ -805,7 +809,7 @@ void ShaderProcessor::update_descriptors(const std::shared_ptr<VKBuffer>& buffer
         const auto& binding = binding_it->second;
         auto key = std::make_pair(binding.set, binding.binding);
 
-        if (updated_pairs.count(key)) {
+        if (updated_pairs.count(key) || (m_set_zero_is_push && binding.set == 0)) {
             continue;
         }
 
@@ -842,6 +846,7 @@ void ShaderProcessor::cleanup()
     }
 
     m_descriptor_set_ids.clear();
+    m_descriptors_ready = false;
     m_bound_buffers.clear();
     m_feeds.clear();
     m_created_layout.reset();
