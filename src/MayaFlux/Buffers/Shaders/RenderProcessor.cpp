@@ -410,7 +410,8 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
 
     retire_current_pipeline();
 
-    m_pipeline_id = flow.create_pipeline(pipeline_config, { swapchain_format }, depth_format, 0U);
+    m_pipeline_id = flow.create_pipeline(pipeline_config, { swapchain_format }, depth_format, 0U,
+        { { 0U, m_triangulate ? 1U : 0U } });
 
     if (m_pipeline_id == Portal::Graphics::INVALID_RENDER_PIPELINE) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,

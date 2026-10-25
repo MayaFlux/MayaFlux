@@ -264,7 +264,8 @@ RenderPipelineID RenderFlow::create_pipeline(
     const RenderPipelineConfig& config,
     const std::vector<vk::Format>& color_formats,
     vk::Format depth_format,
-    std::optional<uint32_t> push_set)
+    std::optional<uint32_t> push_set,
+    const std::unordered_map<uint32_t, uint32_t>& specialization_constants)
 {
     if (!is_initialized()) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
@@ -500,7 +501,7 @@ RenderPipelineID RenderFlow::create_pipeline(
     };
 
     auto pipeline = std::make_shared<Core::VKGraphicsPipeline>();
-    if (!pipeline->create(m_shader_foundry->get_device(), vk_config)) {
+    if (!pipeline->create(m_shader_foundry->get_device(), vk_config, specialization_constants)) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
             "Failed to create VKGraphicsPipeline for dynamic rendering");
 

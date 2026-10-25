@@ -97,13 +97,15 @@ public:
      * @param depth_format Depth attachment format
      * @param push_set Index of the descriptor set to create as a push descriptor set.
      *        It gets no allocated set and is written with push_descriptors().
+     * @param specialization_constants Values supplied to each shader stage
      * @return Pipeline ID or INVALID_RENDER_PIPELINE on error
      */
     RenderPipelineID create_pipeline(
         const RenderPipelineConfig& config,
         const std::vector<vk::Format>& color_formats,
         vk::Format depth_format = vk::Format::eUndefined,
-        std::optional<uint32_t> push_set = std::nullopt);
+        std::optional<uint32_t> push_set = std::nullopt,
+        const std::unordered_map<uint32_t, uint32_t>& specialization_constants = {});
 
     /**
      * @brief Destroy a graphics pipeline

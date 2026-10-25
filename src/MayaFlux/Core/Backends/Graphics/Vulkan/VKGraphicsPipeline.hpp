@@ -241,11 +241,13 @@ public:
      * @brief Create graphics pipeline from configuration
      * @param device Logical device
      * @param config Pipeline configuration
+     * @param specialization_constants Values supplied to each shader stage
      * @return true if creation succeeded
      *
      * Validates shaders, creates pipeline layout, and creates pipeline.
      */
-    bool create(vk::Device device, const GraphicsPipelineConfig& config);
+    bool create(vk::Device device, const GraphicsPipelineConfig& config,
+        const std::unordered_map<uint32_t, uint32_t>& specialization_constants = {});
 
     /**
      * @brief Cleanup pipeline resources
