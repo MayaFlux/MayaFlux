@@ -42,13 +42,21 @@ void RelaxationEmitProcessor::write_state_descriptors(const std::shared_ptr<Rela
     auto& foundry = Portal::Graphics::get_shader_foundry();
     auto& resources = grid->get_buffer_resources();
 
-    foundry.update_descriptor_buffer(
-        m_descriptor_set_ids[0], 0, vk::DescriptorType::eStorageBuffer,
-        resources.back_buffers[grid->front_index()].buffer, 0, grid->get_state_bytes());
-
-    foundry.update_descriptor_buffer(
-        m_descriptor_set_ids[0], 1, vk::DescriptorType::eStorageBuffer,
-        grid->get_buffer(), 0, grid->get_size_bytes());
+    const std::array<Portal::Graphics::DescriptorBufferWrite, 2> writes { {
+        { .descriptor_set_id = m_descriptor_set_ids[0],
+            .binding = 0,
+            .type = Portal::Graphics::to_vk_descriptor_type(Portal::Graphics::DescriptorRole::STORAGE),
+            .buffer = resources.back_buffers[grid->front_index()].buffer,
+            .offset = 0,
+            .size = grid->get_state_bytes() },
+        { .descriptor_set_id = m_descriptor_set_ids[0],
+            .binding = 1,
+            .type = Portal::Graphics::to_vk_descriptor_type(Portal::Graphics::DescriptorRole::STORAGE),
+            .buffer = grid->get_buffer(),
+            .offset = 0,
+            .size = grid->get_size_bytes() },
+    } };
+    foundry.update_descriptor_buffers(writes);
 }
 
 void RelaxationEmitProcessor::on_descriptors_created()

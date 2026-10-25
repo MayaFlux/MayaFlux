@@ -153,7 +153,8 @@ void NetworkStateFieldProcessor::write_field_descriptors()
         return;
     }
 
-    auto& foundry = Portal::Graphics::get_shader_foundry();
+    std::vector<Portal::Graphics::DescriptorBufferWrite> writes;
+    writes.reserve(m_bindings.size());
 
     for (const auto& entry : m_bindings) {
         vk::Buffer handle {};
@@ -167,10 +168,17 @@ void NetworkStateFieldProcessor::write_field_descriptors()
             bytes = m_buffer->get_state_bytes(entry.field);
         }
 
-        foundry.update_descriptor_buffer(
-            m_descriptor_set_ids[0], entry.binding, vk::DescriptorType::eStorageBuffer,
-            handle, 0, bytes);
+        writes.push_back({
+            .descriptor_set_id = m_descriptor_set_ids[0],
+            .binding = entry.binding,
+            .type = Portal::Graphics::to_vk_descriptor_type(Portal::Graphics::DescriptorRole::STORAGE),
+            .buffer = handle,
+            .offset = 0,
+            .size = bytes,
+        });
     }
+
+    Portal::Graphics::get_shader_foundry().update_descriptor_buffers(writes);
 }
 
 void NetworkStateFieldProcessor::on_descriptors_created()

@@ -208,17 +208,23 @@ void VolumeFieldProcessor::write_field_descriptors()
         return;
     }
 
-    auto& foundry = Portal::Graphics::get_shader_foundry();
+    std::vector<Portal::Graphics::DescriptorBufferWrite> writes;
+    writes.reserve(m_bindings.size());
 
     for (const auto& entry : m_bindings) {
-        const vk::Buffer handle = entry.access == FieldAccess::READ
-            ? m_volume->read_handle(entry.field)
-            : m_volume->write_handle(entry.field);
-
-        foundry.update_descriptor_buffer(
-            m_descriptor_set_ids[0], entry.binding, vk::DescriptorType::eStorageBuffer,
-            handle, 0, m_volume->get_field_bytes(entry.field));
+        writes.push_back({
+            .descriptor_set_id = m_descriptor_set_ids[0],
+            .binding = entry.binding,
+            .type = Portal::Graphics::to_vk_descriptor_type(Portal::Graphics::DescriptorRole::STORAGE),
+            .buffer = entry.access == FieldAccess::READ
+                ? m_volume->read_handle(entry.field)
+                : m_volume->write_handle(entry.field),
+            .offset = 0,
+            .size = m_volume->get_field_bytes(entry.field),
+        });
     }
+
+    Portal::Graphics::get_shader_foundry().update_descriptor_buffers(writes);
 }
 
 void VolumeFieldProcessor::on_descriptors_created()

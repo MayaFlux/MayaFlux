@@ -773,6 +773,8 @@ void ShaderProcessor::update_descriptors(const std::shared_ptr<VKBuffer>& buffer
     auto& descriptor_bindings = buffer->get_pipeline_context().descriptor_buffer_bindings;
 
     std::set<std::pair<uint32_t, uint32_t>> updated_pairs;
+    std::vector<Portal::Graphics::DescriptorBufferWrite> writes;
+    writes.reserve(descriptor_bindings.size() + m_bound_buffers.size());
 
     for (const auto& binding : descriptor_bindings) {
         auto ds_index = resolve_ds_index(binding.set);
@@ -782,13 +784,14 @@ void ShaderProcessor::update_descriptors(const std::shared_ptr<VKBuffer>& buffer
             continue;
         }
 
-        foundry.update_descriptor_buffer(
-            m_descriptor_set_ids[*ds_index],
-            binding.binding,
-            binding.type,
-            binding.buffer_info.buffer,
-            binding.buffer_info.offset,
-            binding.buffer_info.range);
+        writes.push_back({
+            .descriptor_set_id = m_descriptor_set_ids[*ds_index],
+            .binding = binding.binding,
+            .type = binding.type,
+            .buffer = binding.buffer_info.buffer,
+            .offset = binding.buffer_info.offset,
+            .size = binding.buffer_info.range,
+        });
 
         updated_pairs.emplace(binding.set, binding.binding);
     }
@@ -814,14 +817,17 @@ void ShaderProcessor::update_descriptors(const std::shared_ptr<VKBuffer>& buffer
             continue;
         }
 
-        foundry.update_descriptor_buffer(
-            m_descriptor_set_ids[*ds_index],
-            binding.binding,
-            binding.type,
-            buf->get_buffer(),
-            0,
-            buf->get_size_bytes());
+        writes.push_back({
+            .descriptor_set_id = m_descriptor_set_ids[*ds_index],
+            .binding = binding.binding,
+            .type = binding.type,
+            .buffer = buf->get_buffer(),
+            .offset = 0,
+            .size = buf->get_size_bytes(),
+        });
     }
+
+    foundry.update_descriptor_buffers(writes);
 }
 
 void ShaderProcessor::cleanup()

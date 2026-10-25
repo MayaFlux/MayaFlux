@@ -239,6 +239,9 @@ void ComputeProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
 
     auto& descriptor_bindings = buffer->get_pipeline_context().descriptor_buffer_bindings;
     if (!descriptor_bindings.empty()) {
+        std::vector<Portal::Graphics::DescriptorBufferWrite> writes;
+        writes.reserve(descriptor_bindings.size());
+
         for (const auto& binding : descriptor_bindings) {
             if (binding.set >= m_descriptor_set_ids.size()) {
                 MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
@@ -246,14 +249,17 @@ void ComputeProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
                 continue;
             }
 
-            foundry.update_descriptor_buffer(
-                m_descriptor_set_ids[binding.set],
-                binding.binding,
-                binding.type,
-                binding.buffer_info.buffer,
-                binding.buffer_info.offset,
-                binding.buffer_info.range);
+            writes.push_back({
+                .descriptor_set_id = m_descriptor_set_ids[binding.set],
+                .binding = binding.binding,
+                .type = binding.type,
+                .buffer = binding.buffer_info.buffer,
+                .offset = binding.buffer_info.offset,
+                .size = binding.buffer_info.range,
+            });
         }
+
+        foundry.update_descriptor_buffers(writes);
     }
 
     if (!m_descriptor_set_ids.empty()) {
