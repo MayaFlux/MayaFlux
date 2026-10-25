@@ -177,12 +177,22 @@ bool VKInstance::setup_debug_messenger()
 }
 
 vk::Bool32 VKInstance::debug_callback(
-    vk::DebugUtilsMessageSeverityFlagBitsEXT /*messageSeverity*/,
+    vk::DebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
     vk::DebugUtilsMessageTypeFlagsEXT /*messageTypes*/,
     const vk::DebugUtilsMessengerCallbackDataEXT* p_callback_data,
     void* /*pUserData*/)
 {
-    MF_INFO(Journal::Component::Core, Journal::Context::Validation, "Validation layer: {}", p_callback_data->pMessage);
+    switch (messageSeverity) {
+    case vk::DebugUtilsMessageSeverityFlagBitsEXT::eError:
+        MF_ERROR(Journal::Component::Core, Journal::Context::Validation, "Validation layer: {}", p_callback_data->pMessage);
+        break;
+    case vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning:
+        MF_WARN(Journal::Component::Core, Journal::Context::Validation, "Validation layer: {}", p_callback_data->pMessage);
+        break;
+    default:
+        MF_INFO(Journal::Component::Core, Journal::Context::Validation, "Validation layer: {}", p_callback_data->pMessage);
+        break;
+    }
     return VK_FALSE;
 }
 
