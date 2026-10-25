@@ -15,8 +15,6 @@ UVFieldProcessor::UVFieldProcessor()
     m_config.push_constant_size = sizeof(PushConstants);
 
     m_config.bindings["vertices"] = ShaderBinding(0, 0, vk::DescriptorType::eStorageBuffer);
-
-    m_config.bindings["tex_sampler"] = ShaderBinding(0, 1, vk::DescriptorType::eCombinedImageSampler);
 }
 
 // =============================================================================
@@ -61,6 +59,13 @@ void UVFieldProcessor::set_texture(
     m_sampler = nullptr;
     m_pc.write_colour = m_texture ? 1U : 0U;
     m_needs_descriptor_rebuild = true;
+    m_config.shader_path = m_texture ? "uv_field_colour.comp.spv" : "uv_field.comp.spv";
+    if (m_texture) {
+        m_config.bindings["tex_sampler"] = ShaderBinding(0, 1, vk::DescriptorType::eCombinedImageSampler);
+    } else {
+        m_config.bindings.erase("tex_sampler");
+    }
+    m_initialized = false;
 }
 
 void UVFieldProcessor::clear_texture()
@@ -69,6 +74,9 @@ void UVFieldProcessor::clear_texture()
     m_sampler = nullptr;
     m_pc.write_colour = 0;
     m_needs_descriptor_rebuild = true;
+    m_config.shader_path = "uv_field.comp.spv";
+    m_config.bindings.erase("tex_sampler");
+    m_initialized = false;
 }
 
 // =============================================================================
