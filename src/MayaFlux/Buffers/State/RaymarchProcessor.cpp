@@ -13,19 +13,17 @@ RaymarchProcessor::RaymarchProcessor(
     FieldSource source,
     size_t field_bytes,
     Kinesis::Lattice3D lattice,
-    uint32_t set,
     uint32_t binding)
     : m_source(std::move(source))
     , m_field_bytes(field_bytes)
     , m_lattice(lattice)
-    , m_set(set)
     , m_binding(binding)
 {
-    if (m_set == 0) {
+    if (m_binding == 0) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
-            "RaymarchProcessor: set 0 is the ViewTransform reservation, "
-            "falling back to set 1");
-        m_set = 1;
+            "RaymarchProcessor: set 0 binding 0 is the RenderTransform block, "
+            "falling back to binding {}", k_field_binding);
+        m_binding = k_field_binding;
     }
 
     m_params.max_steps = 128;
@@ -147,15 +145,19 @@ void RaymarchProcessor::processing_function(const std::shared_ptr<Buffer>& buffe
 void RaymarchProcessor::stage_descriptor(
     const std::shared_ptr<VKBuffer>& buffer, vk::Buffer handle)
 {
-    auto& bindings = buffer->get_pipeline_context().descriptor_buffer_bindings;
+    if (!handle) {
+        return;
+    }
+
+    auto& bindings = buffer->get_engine_context().ssbo_bindings;
 
     auto it = std::ranges::find_if(bindings, [this](const auto& entry) {
-        return entry.set == m_set && entry.binding == m_binding;
+        return entry.set == 0 && entry.binding == m_binding;
     });
 
     if (it == bindings.end()) {
         bindings.push_back(Portal::Graphics::DescriptorBindingInfo {
-            .set = m_set,
+            .set = 0,
             .binding = m_binding,
             .type = vk::DescriptorType::eStorageBuffer,
             .buffer_info = vk::DescriptorBufferInfo(handle, 0, m_field_bytes),

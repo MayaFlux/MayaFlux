@@ -13,11 +13,11 @@ namespace MayaFlux::Buffers {
  *
  * Dispatches nothing and records no commands. Each cycle it resolves a
  * vk::Buffer from its field source, writes a DescriptorBindingInfo for it
- * into the attached buffer's pipeline context, and writes its parameter
- * block as a staged push constant fragment. RenderProcessor unifies both
- * into the pipeline it builds and updates the descriptor before binding
- * the set, which is the designed path for handing resources to the
- * renderer without a processor of its own.
+ * into the attached buffer's engine context, and writes its parameter
+ * block as a staged push constant fragment. RenderProcessor pushes the
+ * field with the rest of set 0 on every draw, so no descriptor set is
+ * allocated or rewritten for it. This is the designed path for handing
+ * resources to the renderer without a processor of its own.
  *
  * The field source is a callable rather than a handle because a
  * double-buffered field's read slot moves whenever an upstream stage
@@ -26,8 +26,8 @@ namespace MayaFlux::Buffers {
  * returning a valid handle to a float array of the lattice's cell count
  * works, whatever owns it.
  *
- * Set 1 binding 0 by default. Set 0 is the engine's ViewTransform
- * reservation and cannot be used.
+ * Set 0 binding 1 by default. Binding 0 of set 0 is the engine's
+ * RenderTransform block and cannot be used.
  */
 class MAYAFLUX_API RaymarchProcessor : public VKBufferProcessor {
 public:
@@ -38,6 +38,9 @@ public:
      * previous cycle's descriptor in place.
      */
     using FieldSource = std::function<vk::Buffer()>;
+
+    /** @brief Binding within set 0 the field is staged at by default. */
+    static constexpr uint32_t k_field_binding = 1;
 
     /**
      * @struct MarchParams
@@ -102,15 +105,15 @@ public:
      * @param field_bytes Byte size of one slot of that field.
      * @param lattice Discretization the field is stored over. Must match
      *        the lattice the field was allocated against.
-     * @param set Descriptor set index. Must not be zero.
-     * @param binding Binding index within that set.
+     * @param binding Binding index within set 0. Must not be zero. The
+     *        renderer's layout must declare the same slot, as RaymarchBuffer
+     *        does for the default.
      */
     RaymarchProcessor(
         FieldSource source,
         size_t field_bytes,
         Kinesis::Lattice3D lattice,
-        uint32_t set = 1,
-        uint32_t binding = 0);
+        uint32_t binding = k_field_binding);
 
     ~RaymarchProcessor() override = default;
 
@@ -185,9 +188,9 @@ private:
     [[nodiscard]] uint32_t auto_steps() const;
 
     /**
-     * @brief Insert or replace the descriptor entry for the field handle.
-     * @param buffer Buffer whose pipeline context is staged onto.
-     * @param handle Handle resolved this cycle.
+     * @brief Insert or replace the engine SSBO entry for the field handle.
+     * @param buffer Buffer whose engine context is staged onto.
+     * @param handle Handle resolved this cycle. A null handle stages nothing.
      */
     void stage_descriptor(const std::shared_ptr<VKBuffer>& buffer, vk::Buffer handle);
 
@@ -200,7 +203,6 @@ private:
     FieldSource m_source;
     size_t m_field_bytes;
     Kinesis::Lattice3D m_lattice;
-    uint32_t m_set;
     uint32_t m_binding;
 
     MarchParams m_params {};
