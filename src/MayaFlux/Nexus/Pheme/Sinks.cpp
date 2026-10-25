@@ -113,6 +113,27 @@ void add_render_sink(
 
     auto rc = config;
 
+    if (Portal::Graphics::needs_triangulation(rc.topology, rc.polygon_mode))
+        rc.triangulate = true;
+    const bool line_topology = rc.topology == Portal::Graphics::PrimitiveTopology::LINE_LIST
+        || rc.topology == Portal::Graphics::PrimitiveTopology::LINE_STRIP;
+    if (line_topology && rc.polygon_mode == Portal::Graphics::PolygonMode::POINT)
+        rc.triangulate = true;
+    if (line_topology && rc.polygon_mode == Portal::Graphics::PolygonMode::POINT)
+        rc.topology = Portal::Graphics::PrimitiveTopology::POINT_LIST;
+    if (rc.triangulate && rc.polygon_mode != Portal::Graphics::PolygonMode::FILL) {
+        const bool wireframe = rc.polygon_mode == Portal::Graphics::PolygonMode::LINE;
+        if (rc.vertex_shader.empty())
+            rc.vertex_shader = wireframe
+                ? "milled_wireframe.vert.spv"
+                : "milled_shape.vert.spv";
+        if (rc.fragment_shader.empty())
+            rc.fragment_shader = wireframe
+                ? "milled_wireframe.frag.spv"
+                : "milled_shape.frag.spv";
+        rc.geometry_shader.clear();
+    }
+
     if (rc.vertex_shader.empty() || rc.fragment_shader.empty()) {
         switch (rc.topology) {
         case Portal::Graphics::PrimitiveTopology::LINE_LIST:
