@@ -11,6 +11,7 @@
 #include "MayaFlux/Registry/Service/BufferService.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
+#include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
 
 namespace MayaFlux::Buffers {
 
@@ -19,18 +20,8 @@ namespace {
         Portal::Graphics::RenderConfig& resolved,
         const Portal::Graphics::RenderConfig& requested)
     {
-        if (resolved.triangulate) {
-            if (requested.vertex_shader.empty())
-                resolved.vertex_shader = resolved.polygon_mode == Portal::Graphics::PolygonMode::LINE
-                    ? "milled_wireframe.vert.spv"
-                    : "milled_shape.vert.spv";
-            if (requested.fragment_shader.empty())
-                resolved.fragment_shader = resolved.polygon_mode == Portal::Graphics::PolygonMode::LINE
-                    ? "milled_wireframe.frag.spv"
-                    : "milled_shape.frag.spv";
+        if (resolved.triangulate)
             resolved.geometry_shader.clear();
-            return;
-        }
 
         switch (resolved.topology) {
         case Portal::Graphics::PrimitiveTopology::POINT_LIST:
@@ -45,7 +36,7 @@ namespace {
                 resolved.vertex_shader = "line.vert.spv";
             if (requested.fragment_shader.empty())
                 resolved.fragment_shader = "line.frag.spv";
-            if (requested.geometry_shader.empty())
+            if (!resolved.triangulate && requested.geometry_shader.empty())
                 resolved.geometry_shader = "line.geom.spv";
             break;
         case Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST:
@@ -138,12 +129,20 @@ void NetworkGeometryBuffer::setup_rendering(const RenderConfig& config)
         if (first_non_point != run_topologies.end())
             resolved_config.topology = *first_non_point;
     }
-    const auto mill = configure_mill_enforcement(resolved_config, run_topologies);
+    resolved_config.triangulate |= Portal::Graphics::needs_triangulation(
+        resolved_config.topology, resolved_config.polygon_mode);
+    resolved_config.triangulate |= std::ranges::any_of(run_topologies,
+        [&](auto topology) {
+            return Portal::Graphics::needs_triangulation(
+                topology, resolved_config.polygon_mode);
+        });
     configure_shader_defaults(resolved_config, config);
 
     apply_render_config(resolved_config, ShaderConfig { resolved_config.vertex_shader });
 
-    if (mill.points && m_render_processor) {
+    if (resolved_config.triangulate
+        && resolved_config.polygon_mode == Portal::Graphics::PolygonMode::POINT
+        && m_render_processor) {
         auto mill_spec = m_render_processor->get_mill_spec();
         mill_spec.use_vertex_extent = false;
         m_render_processor->set_mill_spec(mill_spec);
@@ -228,7 +227,8 @@ size_t NetworkGeometryBuffer::calculate_buffer_size(
 void NetworkGeometryBuffer::add_chain_operator_rendering(const RenderConfig& config)
 {
     auto resolved_config = config;
-    configure_mill_enforcement(resolved_config);
+    resolved_config.triangulate |= Portal::Graphics::needs_triangulation(
+        resolved_config.topology, resolved_config.polygon_mode);
     configure_shader_defaults(resolved_config, config);
     auto self = std::dynamic_pointer_cast<VKBuffer>(shared_from_this());
 

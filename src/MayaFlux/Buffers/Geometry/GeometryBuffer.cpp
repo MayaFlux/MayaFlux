@@ -4,6 +4,7 @@
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
+#include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
 
 namespace MayaFlux::Buffers {
 
@@ -72,42 +73,23 @@ void GeometryBuffer::setup_rendering(const RenderConfig& config)
         resolved_config.topology = m_geometry_node->get_primitive_topology();
     }
 
-    const auto mill = configure_mill_enforcement(resolved_config);
-    const bool mill_wireframe = mill.wireframe;
-    const bool mill_points = mill.points;
+    resolved_config.triangulate |= Portal::Graphics::needs_triangulation(
+        resolved_config.topology, resolved_config.polygon_mode);
 
     switch (resolved_config.topology) {
     case Portal::Graphics::PrimitiveTopology::POINT_LIST:
-        if (resolved_config.triangulate) {
-            if (config.vertex_shader.empty())
-                resolved_config.vertex_shader = mill_wireframe
-                    ? "milled_wireframe.vert.spv"
-                    : "milled_shape.vert.spv";
-            if (config.fragment_shader.empty()) {
-                resolved_config.fragment_shader = mill_wireframe
-                    ? "milled_wireframe.frag.spv"
-                    : (textured
-                            ? "milled_shape_textured.frag.spv"
-                            : "milled_shape.frag.spv");
-            }
-        } else {
-            if (config.vertex_shader.empty())
-                resolved_config.vertex_shader = "point.vert.spv";
-            if (config.fragment_shader.empty())
-                resolved_config.fragment_shader = "point.frag.spv";
-        }
+        if (config.vertex_shader.empty())
+            resolved_config.vertex_shader = "point.vert.spv";
+        if (config.fragment_shader.empty())
+            resolved_config.fragment_shader = textured ? "point_textured.frag.spv" : "point.frag.spv";
         break;
 
     case Portal::Graphics::PrimitiveTopology::LINE_LIST:
     case Portal::Graphics::PrimitiveTopology::LINE_STRIP:
-        if (mill_wireframe && config.vertex_shader.empty())
-            resolved_config.vertex_shader = "milled_wireframe.vert.spv";
-        else if (config.vertex_shader.empty())
+        if (config.vertex_shader.empty())
             resolved_config.vertex_shader = "line.vert.spv";
 
-        if (mill_wireframe && config.fragment_shader.empty())
-            resolved_config.fragment_shader = "milled_wireframe.frag.spv";
-        else if (config.fragment_shader.empty())
+        if (config.fragment_shader.empty())
             resolved_config.fragment_shader = "line.frag.spv";
 
         if (resolved_config.triangulate) {
@@ -122,16 +104,9 @@ void GeometryBuffer::setup_rendering(const RenderConfig& config)
     case Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP:
     case Portal::Graphics::PrimitiveTopology::TRIANGLE_FAN:
         if (config.vertex_shader.empty())
-            resolved_config.vertex_shader = mill_wireframe
-                ? "milled_wireframe.vert.spv"
-                : (mill_points ? "milled_shape.vert.spv" : "triangle.vert.spv");
-        if (config.fragment_shader.empty()) {
-            resolved_config.fragment_shader = mill_wireframe
-                ? "milled_wireframe.frag.spv"
-                : (mill_points
-                        ? (textured ? "milled_shape_textured.frag.spv" : "milled_shape.frag.spv")
-                        : (textured ? "mesh_textured.frag.spv" : "triangle.frag.spv"));
-        }
+            resolved_config.vertex_shader = "triangle.vert.spv";
+        if (config.fragment_shader.empty())
+            resolved_config.fragment_shader = textured ? "mesh_textured.frag.spv" : "triangle.frag.spv";
         break;
 
     default:
@@ -163,7 +138,9 @@ void GeometryBuffer::setup_rendering(const RenderConfig& config)
 
     apply_render_config(resolved_config, sc);
 
-    if (mill_points && m_render_processor) {
+    if (resolved_config.triangulate
+        && resolved_config.polygon_mode == Portal::Graphics::PolygonMode::POINT
+        && m_render_processor) {
         auto mill_spec = m_render_processor->get_mill_spec();
         mill_spec.use_vertex_extent = false;
         m_render_processor->set_mill_spec(mill_spec);

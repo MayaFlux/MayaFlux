@@ -127,12 +127,8 @@ public:
      * @brief Setup rendering with RenderProcessor
      * @param config Rendering configuration
      *
-     * TRIANGLE_LIST/TRIANGLE_STRIP picks mesh_textured.frag or triangle.frag
-     * from texture state, unaffected by @c triangulate (mill's triangle
-     * pass copies UV unchanged). POINT_LIST switches to milled_shape.vert,
-     * plus milled_shape_textured.frag if textured, when triangulating --
-     * point.vert/point.frag's gl_PointSize/gl_PointCoord don't work once
-     * the pipeline is forced TRIANGLE_LIST.
+     * Default shaders follow topology and texture state. Their mill include
+     * handles triangulated output through the pipeline specialization value.
      */
     void setup_rendering(const RenderConfig& config);
 

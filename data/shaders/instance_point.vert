@@ -19,6 +19,7 @@ layout(location = 5) in vec3 in_tangent;
 
 layout(location = 0) out vec3 out_color;
 layout(location = 1) out vec3 out_world_pos;
+layout(location = 2) out vec2 out_uv;
 
 void main()
 {
@@ -28,4 +29,5 @@ void main()
     gl_PointSize = in_size;
     out_color = in_color;
     out_world_pos = world_pos.xyz;
+    out_uv = in_uv;
 }

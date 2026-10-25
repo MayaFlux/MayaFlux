@@ -4,6 +4,7 @@
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Nodes/Graphics/GeometryWriterNode.hpp"
+#include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
 
 namespace MayaFlux::Buffers {
 
@@ -109,19 +110,11 @@ void CompositeGeometryBuffer::add_geometry(
 
     auto resolved = config;
     const auto topology = config.topology;
-    const auto mill = configure_mill_enforcement(resolved);
-    if (resolved.triangulate) {
-        if (config.vertex_shader.empty())
-            resolved.vertex_shader = mill.wireframe
-                ? "milled_wireframe.vert.spv"
-                : "milled_shape.vert.spv";
-        if (config.fragment_shader.empty())
-            resolved.fragment_shader = mill.wireframe
-                ? "milled_wireframe.frag.spv"
-                : "milled_shape.frag.spv";
+    resolved.triangulate |= Portal::Graphics::needs_triangulation(
+        resolved.topology, resolved.polygon_mode);
+    if (resolved.triangulate)
         resolved.geometry_shader.clear();
-    } else {
-        switch (topology) {
+    switch (topology) {
         case Portal::Graphics::PrimitiveTopology::POINT_LIST:
             resolved.vertex_shader = config.vertex_shader.empty() ? "point.vert.spv" : config.vertex_shader;
             resolved.fragment_shader = config.fragment_shader.empty() ? "point.frag.spv" : config.fragment_shader;
@@ -130,14 +123,13 @@ void CompositeGeometryBuffer::add_geometry(
         case Portal::Graphics::PrimitiveTopology::LINE_STRIP:
             resolved.vertex_shader = config.vertex_shader.empty() ? "line.vert.spv" : config.vertex_shader;
             resolved.fragment_shader = config.fragment_shader.empty() ? "line.frag.spv" : config.fragment_shader;
-            if (config.geometry_shader.empty())
+            if (!resolved.triangulate && config.geometry_shader.empty())
                 resolved.geometry_shader = "line.geom.spv";
             break;
         default:
             resolved.vertex_shader = config.vertex_shader.empty() ? "triangle.vert.spv" : config.vertex_shader;
             resolved.fragment_shader = config.fragment_shader.empty() ? "triangle.frag.spv" : config.fragment_shader;
             break;
-        }
     }
 
     m_processor->add_geometry(name, node, topology);

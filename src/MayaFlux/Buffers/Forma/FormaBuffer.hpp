@@ -74,18 +74,10 @@ public:
      * enables alpha blending, disables depth testing. Caller may override
      * shaders via config fields.
      *
-     * TRIANGLE_LIST/TRIANGLE_STRIP picks its fragment shader from texture
-     * state (forma_multi/forma_textured/triangle.frag) regardless of
-     * @c triangulate -- PrimitiveMill's triangle pass copies UV unchanged,
-     * so texturing stays correct either way; it never falls back to
-     * milled_shape.frag, which would blank every textured scene.
-     *
-     * POINT_LIST does switch under triangulate, to milled_shape.vert plus
-     * milled_shape.frag/_textured/_multi depending on texture state
-     * (point.frag's gl_PointCoord is meaningless once forced TRIANGLE_LIST).
-     * The multi variant's array index shares the scalar slot PrimitiveMill
-     * reads as point size -- set_mill_spec(use_vertex_extent = false)
-     * decouples them; left default, size and index are the same number.
+     * Default fragment shaders follow topology and texture state. They use
+     * the mill specialization constant when triangulation is enabled.
+     * Milled points use the configured point diameter instead of the vertex
+     * weight, which can also select a texture.
      */
     void setup_rendering(const RenderConfig& config);
 

@@ -629,15 +629,6 @@ public:
     inline void set_render_processor(std::shared_ptr<RenderProcessor> rp) { m_render_processor = std::move(rp); }
 
 protected:
-    struct MillEnforcement {
-        bool wireframe {};
-        bool points {};
-    };
-
-    MillEnforcement configure_mill_enforcement(
-        RenderConfig& config,
-        std::span<const Portal::Graphics::PrimitiveTopology> run_topologies = {}) const;
-
     /**
      * @brief Called by derived classes to set their context-specific defaults
      * @param config RenderConfig with default values for this buffer type

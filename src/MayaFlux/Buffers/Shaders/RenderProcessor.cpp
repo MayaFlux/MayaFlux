@@ -284,12 +284,15 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
     Portal::Graphics::RenderPipelineConfig pipeline_config;
     pipeline_config.vertex_shader = m_shader_id;
     pipeline_config.fragment_shader = m_fragment_shader_id;
-    pipeline_config.geometry_shader = m_geometry_shader_id;
+    pipeline_config.geometry_shader = m_triangulate
+        ? Portal::Graphics::INVALID_SHADER : m_geometry_shader_id;
     pipeline_config.tess_control_shader = m_tess_control_shader_id;
     pipeline_config.tess_eval_shader = m_tess_eval_shader_id;
 
     pipeline_config.topology = pipeline_topology();
-    pipeline_config.rasterization.polygon_mode = m_triangulate
+    const bool fill_rasterization = m_triangulate
+        || m_primitive_topology == Portal::Graphics::PrimitiveTopology::POINT_LIST;
+    pipeline_config.rasterization.polygon_mode = fill_rasterization
         ? Portal::Graphics::PolygonMode::FILL
         : m_polygon_mode;
     pipeline_config.rasterization.cull_mode = m_cull_mode;

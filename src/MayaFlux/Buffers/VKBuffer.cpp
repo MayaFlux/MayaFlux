@@ -16,16 +16,6 @@
 
 namespace MayaFlux::Buffers {
 
-namespace {
-    bool is_line_topology(Portal::Graphics::PrimitiveTopology topology)
-    {
-        using Portal::Graphics::PrimitiveTopology;
-        return topology == PrimitiveTopology::LINE_LIST
-            || topology == PrimitiveTopology::LINE_STRIP;
-    }
-
-}
-
 VKBuffer::VKBuffer(
     size_t size_bytes,
     Usage usage,
@@ -360,33 +350,6 @@ void VKBuffer::infer_dimensions_from_data(size_t byte_count)
 void VKBuffer::apply_render_config(const RenderConfig& config, const ShaderConfig& shader_config)
 {
     apply_render_config(m_render_processor, config, shader_config);
-}
-
-VKBuffer::MillEnforcement VKBuffer::configure_mill_enforcement(
-    RenderConfig& config,
-    std::span<const Portal::Graphics::PrimitiveTopology> run_topologies) const
-{
-    using Portal::Graphics::PolygonMode;
-    using Portal::Graphics::PrimitiveTopology;
-
-    const bool point_only = config.topology == PrimitiveTopology::POINT_LIST
-        && std::ranges::all_of(run_topologies, [](auto run) { return run == PrimitiveTopology::POINT_LIST; });
-    if (point_only) {
-        config.polygon_mode = PolygonMode::FILL;
-    }
-
-    const auto mode = config.polygon_mode;
-    const bool line_to_points = mode == PolygonMode::POINT
-        && (is_line_topology(config.topology) || std::ranges::any_of(run_topologies, is_line_topology));
-    const bool unsupported = Portal::Graphics::needs_triangulation(config.topology, mode)
-        || std::ranges::any_of(run_topologies, [&](auto run) { return Portal::Graphics::needs_triangulation(run, mode); });
-    config.triangulate |= unsupported || line_to_points;
-
-    if (line_to_points)
-        config.topology = PrimitiveTopology::POINT_LIST;
-
-    return { .wireframe = config.triangulate && mode == PolygonMode::LINE,
-        .points = config.triangulate && mode == PolygonMode::POINT };
 }
 
 std::shared_ptr<RenderProcessor> VKBuffer::get_render_processor(RenderPipelineID id)

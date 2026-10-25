@@ -28,8 +28,9 @@ bool needs_triangulation(PrimitiveTopology topology, PolygonMode mode)
 {
     const bool is_line = topology == PrimitiveTopology::LINE_LIST
         || topology == PrimitiveTopology::LINE_STRIP;
-    const bool all_points = topology == PrimitiveTopology::POINT_LIST
-        && mode == PolygonMode::POINT;
+    const bool is_triangle = topology == PrimitiveTopology::TRIANGLE_LIST
+        || topology == PrimitiveTopology::TRIANGLE_STRIP
+        || topology == PrimitiveTopology::TRIANGLE_FAN;
 
     auto& foundry = get_shader_foundry();
     if (!foundry.is_initialized()) {
@@ -39,12 +40,13 @@ bool needs_triangulation(PrimitiveTopology topology, PolygonMode mode)
     }
 
     const auto features = foundry.get_physical_device().getFeatures();
-    const bool unsupported_polygon_mode = mode != PolygonMode::FILL
-        && !all_points
-        && !features.fillModeNonSolid;
-    const bool unsupported_line_topology = is_line && !features.geometryShader;
+    if (is_line) {
+        return !features.geometryShader
+            || mode == PolygonMode::POINT
+            || (mode != PolygonMode::FILL && !features.fillModeNonSolid);
+    }
 
-    return unsupported_polygon_mode || unsupported_line_topology;
+    return is_triangle && mode != PolygonMode::FILL && !features.fillModeNonSolid;
 }
 
 } // namespace MayaFlux::Portal::Graphics

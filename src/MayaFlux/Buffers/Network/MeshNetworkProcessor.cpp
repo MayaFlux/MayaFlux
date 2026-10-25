@@ -382,13 +382,7 @@ void MeshNetworkProcessor::push_ssbo_bindings(const std::shared_ptr<VKBuffer>& b
     };
 
     push(1, m_model_ssbo);
-    if (m_milling_slot_attribute) {
-        const auto slot_binding = std::ranges::find_if(bindings, [](const auto& binding) {
-            return binding.set == 0 && binding.binding == 2;
-        });
-        if (slot_binding != bindings.end())
-            bindings.erase(slot_binding);
-    } else if (m_slot_index_ssbo) {
+    if (m_slot_index_ssbo) {
         push(2, m_slot_index_ssbo);
     }
 }

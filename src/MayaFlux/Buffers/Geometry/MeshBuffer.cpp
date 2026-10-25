@@ -9,6 +9,7 @@
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
+#include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
 
 namespace MayaFlux::Buffers {
 
@@ -126,16 +127,8 @@ void MeshBuffer::setup_rendering(const RenderConfig& config)
     m_render_config.topology = Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST;
     m_render_config.polygon_mode = config.polygon_mode;
     m_render_config.triangulate = config.triangulate;
-    const auto mill = configure_mill_enforcement(m_render_config);
-
-    if (mill.wireframe && config.vertex_shader.empty())
-        m_render_config.vertex_shader = "milled_wireframe.vert.spv";
-    if (mill.points && config.vertex_shader.empty())
-        m_render_config.vertex_shader = "milled_shape.vert.spv";
-    if (mill.wireframe && config.fragment_shader.empty())
-        m_render_config.fragment_shader = "milled_wireframe.frag.spv";
-    if (mill.points && config.fragment_shader.empty())
-        m_render_config.fragment_shader = "milled_shape.frag.spv";
+    m_render_config.triangulate |= Portal::Graphics::needs_triangulation(
+        m_render_config.topology, m_render_config.polygon_mode);
 
     if (!config.additional_textures.empty()) {
         for (const auto& [name, texture] : config.additional_textures) {
@@ -143,8 +136,8 @@ void MeshBuffer::setup_rendering(const RenderConfig& config)
         }
     }
 
-    const bool textured = !mill.wireframe && !mill.points
-        && (m_diffuse_texture != nullptr || !m_render_config.default_texture_binding.empty());
+    const bool textured = m_diffuse_texture != nullptr
+        || !m_render_config.default_texture_binding.empty();
 
     if (textured && m_render_config.default_texture_binding.empty()) {
         m_render_config.default_texture_binding = m_diffuse_binding;
@@ -172,7 +165,8 @@ void MeshBuffer::setup_rendering(const RenderConfig& config)
 
     apply_render_config(m_render_config, sc);
 
-    if (mill.points) {
+    if (m_render_config.triangulate
+        && m_render_config.polygon_mode == Portal::Graphics::PolygonMode::POINT) {
         auto mill_spec = m_render_processor->get_mill_spec();
         mill_spec.use_vertex_extent = false;
         m_render_processor->set_mill_spec(mill_spec);
