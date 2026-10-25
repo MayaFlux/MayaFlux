@@ -517,6 +517,20 @@ RenderPipelineID RenderFlow::create_pipeline(
     state.layouts = layouts;
     state.view_transform_layout = state_vt_layout;
     state.push_set = push_set;
+    if (push_set) {
+        for (const ShaderID shader_id : { config.vertex_shader, config.fragment_shader, config.geometry_shader,
+                 config.tess_control_shader, config.tess_eval_shader, config.mesh_shader, config.task_shader }) {
+            if (shader_id == INVALID_SHADER) {
+                continue;
+            }
+            for (const auto& used : m_shader_foundry->get_active_descriptor_bindings(shader_id)) {
+                if (used.set == *push_set
+                    && std::ranges::find(state.push_required, used.binding) == state.push_required.end()) {
+                    state.push_required.push_back(used.binding);
+                }
+            }
+        }
+    }
     state.layout = pipeline->get_layout();
     state.push_constant_stages = push_constant_stages;
     m_pipelines[pipeline_id] = std::move(state);
@@ -823,6 +837,27 @@ void RenderFlow::bind_index_buffer(
     }
 
     cmd.bindIndexBuffer(buffer->get_index_buffer(), 0, index_type);
+}
+
+std::optional<uint32_t> RenderFlow::first_unwritten_push_binding(
+    RenderPipelineID pipeline_id,
+    const std::vector<vk::WriteDescriptorSet>& writes) const
+{
+    const auto pipeline_it = m_pipelines.find(pipeline_id);
+    if (pipeline_it == m_pipelines.end() || !pipeline_it->second.push_set) {
+        return std::nullopt;
+    }
+
+    for (const uint32_t required : pipeline_it->second.push_required) {
+        const bool written = std::ranges::any_of(writes, [required](const vk::WriteDescriptorSet& write) {
+            return write.dstBinding == required;
+        });
+        if (!written) {
+            return required;
+        }
+    }
+
+    return std::nullopt;
 }
 
 void RenderFlow::push_descriptors(

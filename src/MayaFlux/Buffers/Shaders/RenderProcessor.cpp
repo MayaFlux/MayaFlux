@@ -216,21 +216,7 @@ void RenderProcessor::bind_texture(
 
         if (cfg_it != m_config.bindings.end() && !m_descriptor_set_ids.empty()) {
             const uint32_t cfg_set = cfg_it->second.set;
-            if (cfg_set == 0) {
-                if (m_render_transform_descriptor_set_id != Portal::Graphics::INVALID_DESCRIPTOR_SET) {
-                    uint32_t array_idx = 0;
-                    if (cfg_it->second.count > 1 && binding >= cfg_it->second.binding) {
-                        array_idx = binding - cfg_it->second.binding;
-                    }
-                    foundry.update_descriptor_image(
-                        m_render_transform_descriptor_set_id,
-                        cfg_it->second.binding,
-                        texture->get_image_view(),
-                        sampler,
-                        vk::ImageLayout::eShaderReadOnlyOptimal,
-                        array_idx);
-                }
-            } else {
+            if (cfg_set != 0) {
                 auto ds_index = resolve_ds_index(cfg_set);
                 if (ds_index && *ds_index < m_descriptor_set_ids.size()) {
                     foundry.update_descriptor_image(
@@ -424,7 +410,7 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
 
     retire_current_pipeline();
 
-    m_pipeline_id = flow.create_pipeline(pipeline_config, { swapchain_format }, depth_format);
+    m_pipeline_id = flow.create_pipeline(pipeline_config, { swapchain_format }, depth_format, 0U);
 
     if (m_pipeline_id == Portal::Graphics::INVALID_RENDER_PIPELINE) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
@@ -459,21 +445,11 @@ void RenderProcessor::initialize_descriptors(const std::shared_ptr<VKBuffer>& bu
 
     auto transform_layout = flow.get_view_transform_layout(m_pipeline_id);
     if (transform_layout) {
-        m_render_transform_descriptor_set_id = foundry.allocate_descriptor_set(transform_layout);
-
         m_render_transform_ubo = std::make_shared<VKBuffer>(
             sizeof(Kinesis::RenderTransform),
             VKBuffer::Usage::UNIFORM,
             Kakshya::DataModality::UNKNOWN);
         ensure_initialized(m_render_transform_ubo);
-
-        foundry.update_descriptor_buffer(
-            m_render_transform_descriptor_set_id,
-            0,
-            vk::DescriptorType::eUniformBuffer,
-            m_render_transform_ubo->get_buffer(),
-            0,
-            sizeof(Kinesis::RenderTransform));
 
         MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             "RenderTransform UBO allocated (pipeline {})", m_pipeline_id);
@@ -503,18 +479,6 @@ void RenderProcessor::initialize_descriptors(const std::shared_ptr<VKBuffer>& bu
         const uint32_t set_index = config_it->second.set;
 
         if (set_index == 0) {
-            if (m_render_transform_descriptor_set_id == Portal::Graphics::INVALID_DESCRIPTOR_SET) {
-                MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                    "Engine descriptor set not allocated for set=0 texture binding {}", binding);
-                continue;
-            }
-            foundry.update_descriptor_image(
-                m_render_transform_descriptor_set_id,
-                config_it->second.binding,
-                tex_binding.texture->get_image_view(),
-                tex_binding.sampler,
-                vk::ImageLayout::eShaderReadOnlyOptimal,
-                binding - config_it->second.binding);
             continue;
         }
 
@@ -891,12 +855,88 @@ void RenderProcessor::record_draw(const std::shared_ptr<VKBuffer>& buffer)
     record_draw(buffer, it->second);
 }
 
+void RenderProcessor::collect_engine_writes(
+    const std::shared_ptr<VKBuffer>& buffer,
+    std::vector<vk::WriteDescriptorSet>& writes,
+    std::vector<vk::DescriptorBufferInfo>& buffer_infos,
+    std::vector<vk::DescriptorImageInfo>& image_infos) const
+{
+    const auto& engine_bindings = buffer->get_engine_context().ssbo_bindings;
+    buffer_infos.reserve(1 + engine_bindings.size());
+    image_infos.reserve(m_texture_bindings.size());
+    writes.reserve(1 + engine_bindings.size() + m_texture_bindings.size());
+
+    if (m_render_transform_ubo) {
+        buffer_infos.emplace_back(m_render_transform_ubo->get_buffer(), 0, sizeof(Kinesis::RenderTransform));
+        vk::WriteDescriptorSet write {};
+        write.dstBinding = 0;
+        write.descriptorCount = 1;
+        write.descriptorType = vk::DescriptorType::eUniformBuffer;
+        write.pBufferInfo = &buffer_infos.back();
+        writes.push_back(write);
+    }
+
+    for (const auto& binding : engine_bindings) {
+        if (binding.set == 0 && binding.binding == 0) {
+            MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "Engine SSBO at binding=0 is reserved for RenderTransform UBO");
+            continue;
+        }
+        buffer_infos.emplace_back(binding.buffer_info.buffer, binding.buffer_info.offset, binding.buffer_info.range);
+        vk::WriteDescriptorSet write {};
+        write.dstBinding = binding.binding;
+        write.descriptorCount = 1;
+        write.descriptorType = binding.type;
+        write.pBufferInfo = &buffer_infos.back();
+        writes.push_back(write);
+    }
+
+    for (const auto& [binding, tex_binding] : m_texture_bindings) {
+        if (!tex_binding.texture
+            || !tex_binding.texture->is_initialized()
+            || !tex_binding.texture->get_image_view()) {
+            continue;
+        }
+
+        const auto config_it = std::ranges::find_if(m_config.bindings,
+            [binding](const auto& pair) {
+                return binding >= pair.second.binding
+                    && binding < pair.second.binding + pair.second.count;
+            });
+        if (config_it == m_config.bindings.end() || config_it->second.set != 0) {
+            continue;
+        }
+
+        image_infos.emplace_back(tex_binding.sampler, tex_binding.texture->get_image_view(),
+            vk::ImageLayout::eShaderReadOnlyOptimal);
+        vk::WriteDescriptorSet write {};
+        write.dstBinding = config_it->second.binding;
+        write.dstArrayElement = binding - config_it->second.binding;
+        write.descriptorCount = 1;
+        write.descriptorType = vk::DescriptorType::eCombinedImageSampler;
+        write.pImageInfo = &image_infos.back();
+        writes.push_back(write);
+    }
+
+}
+
 void RenderProcessor::record_draw(const std::shared_ptr<VKBuffer>& buffer, const BufferState& state)
 {
-    buffer->set_pipeline_window(m_pipeline_id, m_target_window);
+    std::vector<vk::WriteDescriptorSet> engine_writes;
+    std::vector<vk::DescriptorBufferInfo> engine_buffer_infos;
+    std::vector<vk::DescriptorImageInfo> engine_image_infos;
+    collect_engine_writes(buffer, engine_writes, engine_buffer_infos, engine_image_infos);
 
     auto& foundry = Portal::Graphics::get_shader_foundry();
     auto& flow = Portal::Graphics::get_render_flow();
+
+    if (const auto missing = flow.first_unwritten_push_binding(m_pipeline_id, engine_writes)) {
+        MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "Set 0 binding {} is used by the shaders but has nothing to write; draw skipped", *missing);
+        return;
+    }
+
+    buffer->set_pipeline_window(m_pipeline_id, m_target_window);
 
     vk::Format color_format = static_cast<vk::Format>(
         m_display_service->get_swapchain_format(m_target_window));
@@ -930,27 +970,6 @@ void RenderProcessor::record_draw(const std::shared_ptr<VKBuffer>& buffer, const
 
     flow.bind_pipeline(cmd_id, m_pipeline_id);
 
-    auto& engine_bindings = buffer->get_engine_context().ssbo_bindings;
-    for (const auto& binding : engine_bindings) {
-        if (binding.set == 0 && binding.binding == 0) {
-            MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                "Engine SSBO at binding=0 is reserved for RenderTransform UBO");
-            continue;
-        }
-        if (m_render_transform_descriptor_set_id == Portal::Graphics::INVALID_DESCRIPTOR_SET) {
-            MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                "Engine SSBO binding {} skipped: engine descriptor set not allocated", binding.binding);
-            continue;
-        }
-        foundry.update_descriptor_buffer(
-            m_render_transform_descriptor_set_id,
-            binding.binding,
-            binding.type,
-            binding.buffer_info.buffer,
-            binding.buffer_info.offset,
-            binding.buffer_info.range);
-    }
-
     auto& descriptor_bindings = buffer->get_pipeline_context().descriptor_buffer_bindings;
     if (!descriptor_bindings.empty()) {
         for (const auto& binding : descriptor_bindings) {
@@ -971,16 +990,7 @@ void RenderProcessor::record_draw(const std::shared_ptr<VKBuffer>& buffer, const
         }
     }
 
-    if (!m_descriptor_set_ids.empty()) {
-        flow.bind_descriptor_sets(cmd_id, m_pipeline_id, m_descriptor_set_ids);
-    }
-
-    if (m_render_transform_descriptor_set_id != Portal::Graphics::INVALID_DESCRIPTOR_SET) {
-        flow.bind_descriptor_sets(
-            cmd_id, m_pipeline_id,
-            { m_render_transform_descriptor_set_id },
-            0);
-    }
+    flow.push_descriptors(cmd_id, m_pipeline_id, engine_writes);
 
     if (!m_descriptor_set_ids.empty()) {
         flow.bind_descriptor_sets(
@@ -1155,7 +1165,6 @@ void RenderProcessor::cleanup()
     m_runs.clear();
 
     m_render_transform_ubo.reset();
-    m_render_transform_descriptor_set_id = Portal::Graphics::INVALID_DESCRIPTOR_SET;
     m_view_transform_active = false;
 
     if (m_target_window) {

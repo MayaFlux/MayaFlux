@@ -195,6 +195,16 @@ public:
         uint32_t first_set = 0);
 
     /**
+     * @brief First binding of the push descriptor set that the pipeline's shaders use but @p writes does not cover
+     * @param pipeline Pipeline ID, created with a push_set
+     * @param writes The writes about to be passed to push_descriptors()
+     * @return The binding, or nothing if every used binding is written or the pipeline has no push set
+     */
+    [[nodiscard]] std::optional<uint32_t> first_unwritten_push_binding(
+        RenderPipelineID pipeline,
+        const std::vector<vk::WriteDescriptorSet>& writes) const;
+
+    /**
      * @brief Write the pipeline's push descriptor set straight into a command buffer
      * @param cmd_id Command buffer ID
      * @param pipeline Pipeline ID, created with a push_set
@@ -332,6 +342,7 @@ private:
             | vk::ShaderStageFlagBits::eFragment;
         vk::DescriptorSetLayout view_transform_layout {};
         std::optional<uint32_t> push_set;
+        std::vector<uint32_t> push_required;
     };
 
     std::unordered_map<RenderPipelineID, PipelineState> m_pipelines;

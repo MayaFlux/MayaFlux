@@ -385,9 +385,6 @@ private:
     Portal::Graphics::ShaderID m_tess_control_shader_id = Portal::Graphics::INVALID_SHADER;
     Portal::Graphics::ShaderID m_tess_eval_shader_id = Portal::Graphics::INVALID_SHADER;
     Portal::Graphics::ShaderID m_fragment_shader_id = Portal::Graphics::INVALID_SHADER;
-    Portal::Graphics::DescriptorSetID m_render_transform_descriptor_set_id {
-        Portal::Graphics::INVALID_DESCRIPTOR_SET
-    };
     std::shared_ptr<Core::Window> m_target_window;
 
     std::unordered_map<std::shared_ptr<VKBuffer>, BufferState> m_buffer_info;
@@ -474,6 +471,18 @@ private:
 
     /** @brief Record an already validated attachment without repeating its lookup. */
     void record_draw(const std::shared_ptr<VKBuffer>& buffer, const BufferState& state);
+
+    /**
+     * @brief Gather the writes for the push descriptor set 0 of the current pipeline.
+     *
+     * Covers the render transform, the buffer's engine SSBOs and the set 0 textures.
+     * The info vectors back the pointers in @p writes and must outlive its use.
+     */
+    void collect_engine_writes(
+        const std::shared_ptr<VKBuffer>& buffer,
+        std::vector<vk::WriteDescriptorSet>& writes,
+        std::vector<vk::DescriptorBufferInfo>& buffer_infos,
+        std::vector<vk::DescriptorImageInfo>& image_infos) const;
 
     BufferState* get_or_cache_buffer_state(const std::shared_ptr<VKBuffer>& buffer);
 };
