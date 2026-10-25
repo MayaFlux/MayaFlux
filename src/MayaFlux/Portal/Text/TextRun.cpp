@@ -96,7 +96,7 @@ std::vector<Kakshya::MeshVertex> TextRun::vertices(const GlyphMap& map, uint32_t
         const glm::vec2 b = map(extent());
         const auto quad = Kinesis::textured_mesh_rect(
             { .min = glm::min(a, b), .max = glm::max(a, b) },
-            0.F, glm::vec3(m_params.background));
+            0.F, m_params.background);
         out.insert(out.end(), quad.begin(), quad.end());
     }
 

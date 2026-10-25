@@ -184,12 +184,12 @@ public:
      * @param color RGB color
      * @param force_uniform Wether to ingore per vertex color and use this color for all points
      */
-    void set_line_color(const glm::vec3& color, bool force_uniform = true);
+    void set_line_color(const glm::vec4& color, bool force_uniform = true);
 
     /**
      * @brief Get current line color
      */
-    glm::vec3 get_line_color() const { return m_line_color; }
+    glm::vec4 get_line_color() const { return m_line_color; }
 
     /**
      * @brief Force uniform color for all vertices
@@ -307,7 +307,7 @@ private:
     size_t m_k_neighbors { 3 };
     float m_connection_radius { 1.0F };
 
-    glm::vec3 m_line_color { 1.0F, 1.0F, 1.0F };
+    glm::vec4 m_line_color { 1.0F };
     float m_line_thickness { 1.0F };
 
     bool m_force_uniform_color {}; ///< If true, all vertices use m_line_color instead of per-vertex color

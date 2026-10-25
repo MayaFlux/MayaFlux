@@ -112,10 +112,6 @@ GeometryFn<float> background(
             }
         } else {
             const uint32_t stride = Kakshya::VertexLayout::for_meshes().stride_bytes;
-            constexpr glm::vec3 k_normal { 0.F, 0.F, 1.F };
-            constexpr glm::vec3 k_tangent { 1.F, 0.F, 0.F };
-            constexpr glm::vec2 k_uv { 0.F, 0.F };
-            constexpr float k_weight = 0.F;
 
             const std::array<glm::vec3, 4> positions = { {
                 { bounds.min.x, bounds.min.y, 0.F },
@@ -126,13 +122,12 @@ GeometryFn<float> background(
 
             out.resize(static_cast<size_t>(4) * stride, 0);
             for (size_t i = 0; i < 4; ++i) {
-                uint8_t* v = out.data() + i * stride;
-                std::memcpy(v, &positions[i], 12);
-                std::memcpy(v + 12, &color, 12);
-                std::memcpy(v + 24, &k_weight, 4);
-                std::memcpy(v + 28, &k_uv, 8);
-                std::memcpy(v + 36, &k_normal, 12);
-                std::memcpy(v + 48, &k_tangent, 12);
+                const Kakshya::MeshVertex vertex {
+                    .position = positions[i],
+                    .color = glm::vec4(color, 1.F),
+                    .weight = 0.F,
+                };
+                std::memcpy(out.data() + i * stride, &vertex, sizeof(vertex));
             }
         }
 
@@ -153,7 +148,7 @@ std::vector<Kakshya::LineVertex> plot_grid(
     auto lv = [&](glm::vec2 p) {
         return Kakshya::LineVertex {
             .position = { p.x, p.y, 0.F },
-            .color = color,
+            .color = glm::vec4(color, 1.F),
             .thickness = thickness,
         };
     };
@@ -193,8 +188,8 @@ GeometryFn<float> plot_cursor(
         if (vertical) {
             const float x = bounds.min.x + t * bounds.width();
             verts = { {
-                { .position = { x, bounds.min.y, 0.F }, .color = color, .thickness = thickness },
-                { .position = { x, bounds.max.y, 0.F }, .color = color, .thickness = thickness },
+                { .position = { x, bounds.min.y, 0.F }, .color = glm::vec4(color, 1.F), .thickness = thickness },
+                { .position = { x, bounds.max.y, 0.F }, .color = glm::vec4(color, 1.F), .thickness = thickness },
             } };
             el.bounds_hint = Kinesis::AABB2D {
                 .min = { x - 0.01F, bounds.min.y },
@@ -203,8 +198,8 @@ GeometryFn<float> plot_cursor(
         } else {
             const float y = bounds.min.y + t * bounds.height();
             verts = { {
-                { .position = { bounds.min.x, y, 0.F }, .color = color, .thickness = thickness },
-                { .position = { bounds.max.x, y, 0.F }, .color = color, .thickness = thickness },
+                { .position = { bounds.min.x, y, 0.F }, .color = glm::vec4(color, 1.F), .thickness = thickness },
+                { .position = { bounds.max.x, y, 0.F }, .color = glm::vec4(color, 1.F), .thickness = thickness },
             } };
             el.bounds_hint = Kinesis::AABB2D {
                 .min = { bounds.min.x, y - 0.01F },

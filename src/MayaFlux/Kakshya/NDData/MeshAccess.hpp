@@ -48,7 +48,7 @@ struct MAYAFLUX_API MeshSubrange {
  *
  * Zero-copy: both vertex_ptr and index_ptr point directly into the storage
  * of their respective DataVariant. No conversion buffer is needed because
- * MeshInsertion always writes the canonical 60-byte interleaved format before
+ * MeshInsertion always writes the canonical 68-byte interleaved format before
  * producing a MeshAccess.
  *
  * Submesh structure: when the source file contains multiple meshes, submeshes

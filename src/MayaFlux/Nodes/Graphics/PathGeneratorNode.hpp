@@ -166,7 +166,7 @@ public:
      * @param color RGB color
      * @param force_uniform If true, ignores per-vertex color and uses this color for all vertices
      */
-    void set_path_color(const glm::vec3& color, bool force_uniform = true);
+    void set_path_color(const glm::vec4& color, bool force_uniform = true);
 
     /**
      * @brief Set uniform color mode
@@ -197,7 +197,7 @@ public:
      * @brief Get current path color
      * @return RGB color
      */
-    [[nodiscard]] const glm::vec3& get_path_color() const { return m_current_color; }
+    [[nodiscard]] const glm::vec4& get_path_color() const { return m_current_color; }
 
     /**
      * @brief Get current path thickness
@@ -302,7 +302,7 @@ private:
     double m_tension;
 
 
-    glm::vec3 m_current_color { 1.0F, 1.0F, 1.0F };
+    glm::vec4 m_current_color { 1.0F };
     float m_current_thickness { 2.0F };
 
     bool m_force_uniform_color {};

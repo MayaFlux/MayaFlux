@@ -147,6 +147,7 @@ enum class DataModality : uint8_t {
     VERTEX_POSITIONS_3D, // glm::vec3 - vertex positions
     VERTEX_NORMALS_3D, // glm::vec3 - vertex normals
     VERTEX_TANGENTS_3D, // glm::vec3 - tangent vectors
+    VERTEX_TANGENTS_4D, // glm::vec4 - tangent xyz plus bitangent handedness sign in w
     VERTEX_COLORS_RGB, // glm::vec3 - RGB colors
     VERTEX_COLORS_RGBA, // glm::vec4 - RGBA colors
     TEXTURE_COORDS_2D, // glm::vec2 - UV coordinates
@@ -173,6 +174,7 @@ inline bool is_structured_modality(DataModality modality)
     case DataModality::VERTEX_POSITIONS_3D:
     case DataModality::VERTEX_NORMALS_3D:
     case DataModality::VERTEX_TANGENTS_3D:
+    case DataModality::VERTEX_TANGENTS_4D:
     case DataModality::VERTEX_COLORS_RGB:
     case DataModality::VERTEX_COLORS_RGBA:
     case DataModality::TEXTURE_COORDS_2D:

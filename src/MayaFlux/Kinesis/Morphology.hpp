@@ -161,7 +161,7 @@ template <typename T,
 /**
  * @brief Arithmetic centroid of the positions in interleaved vertex bytes.
  *
- * Every Kakshya vertex record is 60 bytes with the position at offset 0, but
+ * Every Kakshya vertex record is 68 bytes with the position at offset 0, but
  * any stride and offset work, so readback bytes, node vertex data and MeshData
  * all go through here without a typed copy.
  *

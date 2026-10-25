@@ -320,7 +320,7 @@ void TopologyOperator::set_global_line_thickness(float thickness)
     }
 }
 
-void TopologyOperator::set_global_line_color(const glm::vec3& color)
+void TopologyOperator::set_global_line_color(const glm::vec4& color)
 {
     for (auto& topology : m_topologies) {
         topology->set_line_color(color);

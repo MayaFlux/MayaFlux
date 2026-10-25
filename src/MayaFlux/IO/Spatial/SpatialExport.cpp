@@ -21,14 +21,14 @@ namespace {
      * Decoded by Kakshya::VertexInsertion against the canonical Vertex layout.
      *
      * A GraphicsOperator's raw vertex buffer is Kakshya::Vertex records:
-     * PointVertex/LineVertex/MeshVertex all share its exact 60-byte layout,
+     * PointVertex/LineVertex/MeshVertex all share its exact 68-byte layout,
      * and Vertex's own doc calls it "pipeline-ready" for exactly this.
      * position becomes SpatialSample::positions; color, scalar, uv, normal,
      * and tangent each become their own named attribute (scalar carries
      * size/thickness/weight depending on the concrete vertex type, per
      * Vertex's own doc).
      *
-     * @return False if @p layout is not this 60-byte record (no known
+     * @return False if @p layout is not this 68-byte record (no known
      *         GraphicsOperator today produces anything else); positions and
      *         attributes are left untouched in that case.
      */

@@ -6,7 +6,7 @@ namespace MayaFlux::Kakshya {
 
 /**
  * @struct Vertex
- * @brief Type-neutral vertex carrying the universal 60-byte attribute layout.
+ * @brief Type-neutral vertex carrying the universal 68-byte attribute layout.
  *
  * The common substrate for geometry construction and spatial sampling before
  * a concrete vertex type is chosen. Shares the exact byte layout of
@@ -17,96 +17,96 @@ namespace MayaFlux::Kakshya {
  * thickness vs weight) matter, but the raw bytes are already pipeline-ready.
  *
  * scalar maps to size (PointVertex), thickness (LineVertex), or weight
- * (MeshVertex) at offset 24. uv defaults to zero and is overridden by UV
+ * (MeshVertex) at offset 28. uv defaults to zero and is overridden by UV
  * generation (UVFieldProcessor, FieldOperator UV fields). normal and tangent
- * default to the canonical Z-up / X-right frame.
+ * default to the canonical Z-up / X-right frame; tangent.w is the bitangent handedness sign (+1 or -1).
  *
- * Layout (60 bytes):
+ * Layout (68 bytes):
  *   offset  0  position  vec3   (12)
- *   offset 12  color     vec3   (12)
- *   offset 24  scalar    float   (4)
- *   offset 28  uv        vec2    (8)
- *   offset 36  normal    vec3   (12)
- *   offset 48  tangent   vec3   (12)
+ *   offset 12  color     vec4   (16)
+ *   offset 28  scalar    float   (4)
+ *   offset 32  uv        vec2    (8)
+ *   offset 40  normal    vec3   (12)
+ *   offset 52  tangent   vec4   (16)
  */
 struct Vertex {
     glm::vec3 position;
-    glm::vec3 color { 1.0F };
-    float scalar { 1.0F }; ///< Normalised scalar; maps to size / thickness / weight at offset 24
+    glm::vec4 color { 1.0F };
+    float scalar { 1.0F }; ///< Normalised scalar; maps to size / thickness / weight at offset 28
     glm::vec2 uv { 0.0F }; ///< Texture coordinates; zero unless set by UV generation
     glm::vec3 normal { 0.0F, 0.0F, 1.0F };
-    glm::vec3 tangent { 1.0F, 0.0F, 0.0F };
+    glm::vec4 tangent { 1.0F, 0.0F, 0.0F, 1.0F };
 };
 
-static_assert(sizeof(Vertex) == 60,
-    "Vertex layout changed — must match VertexLayout::for_raw() stride and the other 60-byte vertex types");
+static_assert(sizeof(Vertex) == 68,
+    "Vertex layout changed — must match VertexLayout::for_raw() stride and the other 68-byte vertex types");
 
 static_assert(offsetof(Vertex, position) == 0, "position must be at offset 0");
 static_assert(offsetof(Vertex, color) == 12, "color must be at offset 12");
-static_assert(offsetof(Vertex, scalar) == 24, "scalar must be at offset 24");
-static_assert(offsetof(Vertex, uv) == 28, "uv must be at offset 28");
-static_assert(offsetof(Vertex, normal) == 36, "normal must be at offset 36");
-static_assert(offsetof(Vertex, tangent) == 48, "tangent must be at offset 48");
+static_assert(offsetof(Vertex, scalar) == 28, "scalar must be at offset 28");
+static_assert(offsetof(Vertex, uv) == 32, "uv must be at offset 32");
+static_assert(offsetof(Vertex, normal) == 40, "normal must be at offset 40");
+static_assert(offsetof(Vertex, tangent) == 52, "tangent must be at offset 52");
 
 /**
  * @struct PointVertex
  * @brief Vertex type for point primitives (POINT_LIST topology)
  *
- * Layout (60 bytes):
+ * Layout (68 bytes):
  *   offset  0 — position  vec3  (12)
- *   offset 12 — color     vec3  (12)
- *   offset 24 — size      float  (4)
- *   offset 28 — uv        vec2   (8)
- *   offset 36 — normal    vec3  (12)
- *   offset 48 — tangent   vec3  (12)
+ *   offset 12 — color     vec4  (16)
+ *   offset 28 — size      float  (4)
+ *   offset 32 — uv        vec2   (8)
+ *   offset 40 — normal    vec3  (12)
+ *   offset 52 — tangent   vec4  (16)
  */
 struct PointVertex {
     glm::vec3 position;
-    glm::vec3 color = glm::vec3(1.0F);
+    glm::vec4 color = glm::vec4(1.0F);
     float size = 10.0F;
     glm::vec2 uv = glm::vec2(0.0F);
     glm::vec3 normal = glm::vec3(0.0F, 0.0F, 1.0F);
-    glm::vec3 tangent = glm::vec3(1.0F, 0.0F, 0.0F);
+    glm::vec4 tangent = glm::vec4(1.0F, 0.0F, 0.0F, 1.0F);
 };
 
 /**
  * @struct LineVertex
  * @brief Vertex type for line primitives (LINE_LIST / LINE_STRIP topology)
  *
- * Layout (60 bytes):
+ * Layout (68 bytes):
  *   offset  0 — position  vec3  (12)
- *   offset 12 — color     vec3  (12)
- *   offset 24 — thickness float  (4)
- *   offset 28 — uv        vec2   (8)
- *   offset 36 — normal    vec3  (12)
- *   offset 48 — tangent   vec3  (12)
+ *   offset 12 — color     vec4  (16)
+ *   offset 28 — thickness float  (4)
+ *   offset 32 — uv        vec2   (8)
+ *   offset 40 — normal    vec3  (12)
+ *   offset 52 — tangent   vec4  (16)
  */
 struct LineVertex {
     glm::vec3 position;
-    glm::vec3 color = glm::vec3(1.0F);
+    glm::vec4 color = glm::vec4(1.0F);
     float thickness = 2.0F;
     glm::vec2 uv = glm::vec2(0.0F);
     glm::vec3 normal = glm::vec3(0.0F, 0.0F, 1.0F);
-    glm::vec3 tangent = glm::vec3(1.0F, 0.0F, 0.0F);
+    glm::vec4 tangent = glm::vec4(1.0F, 0.0F, 0.0F, 1.0F);
 };
 
 /**
  * @struct MeshVertex
  * @brief Vertex type for indexed triangle mesh primitives (TRIANGLE_LIST topology)
  *
- * Shares the universal 60-byte layout with PointVertex and LineVertex.
- * The scalar field at offset 24 is interpreted as a per-vertex weight
+ * Shares the universal 68-byte layout with PointVertex and LineVertex.
+ * The scalar field at offset 28 is interpreted as a per-vertex weight
  * (displacement magnitude, blend factor, or any user-defined scalar).
  * FieldOperator works identically on MeshVertex data: same stride,
  * same offsets, same raw byte buffer approach.
  *
- * Layout (60 bytes):
+ * Layout (68 bytes):
  *   offset  0  position  vec3  (12)
- *   offset 12  color     vec3  (12)
- *   offset 24  weight    float  (4)
- *   offset 28  uv        vec2   (8)
- *   offset 36  normal    vec3  (12)
- *   offset 48  tangent   vec3  (12)
+ *   offset 12  color     vec4  (16)
+ *   offset 28  weight    float  (4)
+ *   offset 32  uv        vec2   (8)
+ *   offset 40  normal    vec3  (12)
+ *   offset 52  tangent   vec4  (16)
  *
  * Intended for use with an external index buffer (uint32_t).
  * GeometryWriterNode::set_vertices<MeshVertex>() populates vertex data.
@@ -114,26 +114,26 @@ struct LineVertex {
  */
 struct MeshVertex {
     glm::vec3 position;
-    glm::vec3 color = glm::vec3(1.0F);
+    glm::vec4 color = glm::vec4(1.0F);
     float weight = 0.0F;
     glm::vec2 uv = glm::vec2(0.0F);
     glm::vec3 normal = glm::vec3(0.0F, 0.0F, 1.0F);
-    glm::vec3 tangent = glm::vec3(1.0F, 0.0F, 0.0F);
+    glm::vec4 tangent = glm::vec4(1.0F, 0.0F, 0.0F, 1.0F);
 };
 
-static_assert(sizeof(PointVertex) == 60,
+static_assert(sizeof(PointVertex) == 68,
     "PointVertex layout changed — update VertexLayout::for_points(), VertexAccess write helpers, and shaders");
-static_assert(sizeof(LineVertex) == 60,
+static_assert(sizeof(LineVertex) == 68,
     "LineVertex layout changed — update VertexLayout::for_lines(), VertexAccess write helpers, and shaders");
-static_assert(sizeof(MeshVertex) == 60,
+static_assert(sizeof(MeshVertex) == 68,
     "MeshVertex layout changed — must match PointVertex/LineVertex stride for FieldOperator compatibility");
 
 static_assert(offsetof(MeshVertex, position) == 0, "position must be at offset 0");
 static_assert(offsetof(MeshVertex, color) == 12, "color must be at offset 12");
-static_assert(offsetof(MeshVertex, weight) == 24, "weight must be at offset 24");
-static_assert(offsetof(MeshVertex, uv) == 28, "uv must be at offset 28");
-static_assert(offsetof(MeshVertex, normal) == 36, "normal must be at offset 36");
-static_assert(offsetof(MeshVertex, tangent) == 48, "tangent must be at offset 48");
+static_assert(offsetof(MeshVertex, weight) == 28, "weight must be at offset 28");
+static_assert(offsetof(MeshVertex, uv) == 32, "uv must be at offset 32");
+static_assert(offsetof(MeshVertex, normal) == 40, "normal must be at offset 40");
+static_assert(offsetof(MeshVertex, tangent) == 52, "tangent must be at offset 52");
 
 /**
  * @struct TextureQuadVertex

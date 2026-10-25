@@ -47,7 +47,7 @@ namespace {
 
         const auto& layout = particle_op->get_layout();
 
-        const auto color_offset = layout.find_word_offset(Kakshya::DataModality::VERTEX_COLORS_RGB);
+        const auto color_offset = layout.find_word_offset(Kakshya::DataModality::VERTEX_COLORS_RGBA).has_value() ? layout.find_word_offset(Kakshya::DataModality::VERTEX_COLORS_RGBA) : layout.find_word_offset(Kakshya::DataModality::VERTEX_COLORS_RGB);
         const auto size_attr = std::ranges::find_if(layout.attributes,
             [](const auto& attr) { return attr.name == "size"; });
         const bool have_size = size_attr != layout.attributes.end() && size_attr->offset_in_vertex % 4 == 0;

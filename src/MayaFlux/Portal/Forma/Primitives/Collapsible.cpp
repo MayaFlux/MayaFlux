@@ -35,7 +35,8 @@ namespace {
             auto write = [&](size_t idx, glm::vec3 pos) {
                 auto* v = out.data() + idx * stride;
                 std::memcpy(v, &pos, 12);
-                std::memcpy(v + 12, &col, 12);
+                const glm::vec4 rgba { col, 1.F };
+                std::memcpy(v + 12, &rgba, 16);
             };
 
             write(0, bl);

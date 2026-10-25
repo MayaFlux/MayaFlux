@@ -33,7 +33,7 @@ void GraphicsOperator::apply_one_to_one(
             auto* point = static_cast<PointVertex*>(get_data_at(i));
             if (point) {
                 float normalized = glm::clamp(static_cast<float>(*val), 0.0F, 1.0F);
-                point->color = glm::vec3(normalized, 0.5F, 1.0F - normalized);
+                point->color = glm::vec4(normalized, 0.5F, 1.0F - normalized, 1.0F);
             }
         }
     } else if (param == "size") {

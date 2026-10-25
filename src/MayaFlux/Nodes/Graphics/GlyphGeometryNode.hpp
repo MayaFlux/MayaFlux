@@ -117,7 +117,7 @@ public:
      * @brief Set uniform color for all glyph contours.
      * @param color RGB color in [0, 1].
      */
-    void set_color(glm::vec3 color);
+    void set_color(glm::vec4 color);
 
     /**
      * @brief Set uniform line thickness for all glyph contours.
@@ -186,7 +186,7 @@ private:
     float m_total_advance {};
     float m_line_height {};
 
-    glm::vec3 m_color { 1.F, 1.F, 1.F };
+    glm::vec4 m_color { 1.F };
     float m_thickness { 1.F };
 
     std::vector<Portal::Text::GlyphOutline> m_outlines;

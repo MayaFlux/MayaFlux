@@ -51,7 +51,7 @@ namespace {
         out.stride_words = layout.stride_bytes / static_cast<uint32_t>(sizeof(uint32_t));
         out.position = *position;
         out.scalar = layout.find_word_offset(Kakshya::DataModality::SCALAR_F32).value_or(ABSENT);
-        out.tangent = layout.find_word_offset(Kakshya::DataModality::VERTEX_TANGENTS_3D).value_or(ABSENT);
+        out.tangent = layout.find_word_offset(Kakshya::DataModality::VERTEX_TANGENTS_4D).value_or(ABSENT);
         out.uv = layout.find_word_offset(Kakshya::DataModality::TEXTURE_COORDS_2D).value_or(ABSENT);
 
         return true;

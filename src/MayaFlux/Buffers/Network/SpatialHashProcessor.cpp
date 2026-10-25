@@ -547,7 +547,10 @@ namespace {
                 "HashDensityColorProcessor: null particle operator");
         }
 
-        auto offset = particle_op->get_layout().find_word_offset(Kakshya::DataModality::VERTEX_COLORS_RGB);
+        const auto& particle_layout = particle_op->get_layout();
+        auto offset = particle_layout.find_word_offset(Kakshya::DataModality::VERTEX_COLORS_RGBA).has_value()
+            ? particle_layout.find_word_offset(Kakshya::DataModality::VERTEX_COLORS_RGBA)
+            : particle_layout.find_word_offset(Kakshya::DataModality::VERTEX_COLORS_RGB);
         if (!offset.has_value()) {
             error<std::invalid_argument>(
                 Journal::Component::Buffers,

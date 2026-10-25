@@ -339,6 +339,12 @@ void VKBuffer::infer_dimensions_from_data(size_t byte_count)
         break;
     }
 
+    case DataModality::VERTEX_TANGENTS_4D: {
+        uint64_t count = byte_count / sizeof(glm::vec4);
+        m_dimensions.push_back(DataDimension::grouped("tangents", count, 4, DataDimension::Role::TANGENT));
+        break;
+    }
+
     case DataModality::AUDIO_1D: {
         uint64_t samples = byte_count / sizeof(double);
         m_dimensions.push_back(DataDimension::time(samples));

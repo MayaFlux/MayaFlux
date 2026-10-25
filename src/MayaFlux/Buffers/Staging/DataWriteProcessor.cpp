@@ -494,6 +494,7 @@ bool DataWriteProcessor::is_vertex_modality(Kakshya::DataModality m) noexcept
     case Kakshya::DataModality::VERTEX_NORMALS_3D:
     case Kakshya::DataModality::VERTEX_TANGENTS_3D:
     case Kakshya::DataModality::VERTEX_COLORS_RGB:
+    case Kakshya::DataModality::VERTEX_TANGENTS_4D:
     case Kakshya::DataModality::VERTEX_COLORS_RGBA:
     case Kakshya::DataModality::TEXTURE_COORDS_2D:
         return true;

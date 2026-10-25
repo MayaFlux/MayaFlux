@@ -36,9 +36,9 @@ Form<float> horizontal_fader(
 
         const Kinesis::AABB2D fill { .min = track.min, .max = { x + handle_w * 0.5F, track.max.y } };
 
-        auto verts = Kakshya::to_mesh_vertices(Kinesis::filled_rect(track, track_color));
-        join_strip(verts, Kakshya::to_mesh_vertices(Kinesis::filled_rect(fill, glm::mix(track_color, handle_color, 0.5F))));
-        join_strip(verts, Kakshya::to_mesh_vertices(Kinesis::filled_rect(handle, handle_color)));
+        auto verts = Kakshya::to_mesh_vertices(Kinesis::filled_rect(track, glm::vec4(track_color, 1.F)));
+        join_strip(verts, Kakshya::to_mesh_vertices(Kinesis::filled_rect(fill, glm::vec4(glm::mix(track_color, handle_color, 0.5F), 1.F))));
+        join_strip(verts, Kakshya::to_mesh_vertices(Kinesis::filled_rect(handle, glm::vec4(handle_color, 1.F))));
 
         write_verts(out, verts);
 
@@ -73,9 +73,9 @@ Form<float> vertical_fader(
 
         const Kinesis::AABB2D fill { .min = track.min, .max = { track.max.x, y + handle_h * 0.5F } };
 
-        auto verts = Kakshya::to_mesh_vertices(Kinesis::filled_rect(track, track_color));
-        join_strip(verts, Kakshya::to_mesh_vertices(Kinesis::filled_rect(fill, glm::mix(track_color, handle_color, 0.5F))));
-        join_strip(verts, Kakshya::to_mesh_vertices(Kinesis::filled_rect(handle, handle_color)));
+        auto verts = Kakshya::to_mesh_vertices(Kinesis::filled_rect(track, glm::vec4(track_color, 1.F)));
+        join_strip(verts, Kakshya::to_mesh_vertices(Kinesis::filled_rect(fill, glm::vec4(glm::mix(track_color, handle_color, 0.5F), 1.F))));
+        join_strip(verts, Kakshya::to_mesh_vertices(Kinesis::filled_rect(handle, glm::vec4(handle_color, 1.F))));
 
         write_verts(out, verts);
 
@@ -109,8 +109,8 @@ Form<float> radial(
 
         using V = Kakshya::LineVertex;
         const std::vector<V> verts = {
-            { .position = { live_center.x, live_center.y, 0 }, .color = color },
-            { .position = { tip.x, tip.y, 0 }, .color = color },
+            { .position = { live_center.x, live_center.y, 0 }, .color = glm::vec4(color, 1.F) },
+            { .position = { tip.x, tip.y, 0 }, .color = glm::vec4(color, 1.F) },
         };
 
         write_verts(out, verts);
@@ -133,7 +133,7 @@ Form<glm::vec2> point(
     GeometryFn<glm::vec2> fn = [color, size, hit_radius](glm::vec2 pos, std::vector<uint8_t>& out, Element& el) {
         write_verts(out, Kakshya::PointVertex {
                              .position = { pos.x, pos.y, 0.0F },
-                             .color = color,
+                             .color = glm::vec4(color, 1.F),
                              .size = size,
                          });
         el.bounds_hint = Kinesis::AABB2D::from_ndc(pos, glm::vec2(hit_radius));
@@ -162,7 +162,7 @@ Form<glm::vec2> position_picker(
 
         using V = Kakshya::PointVertex;
         std::vector<V> verts = {
-            { .position = { x, y, 0 }, .color = color, .size = size },
+            { .position = { x, y, 0 }, .color = glm::vec4(color, 1.F), .size = size },
         };
 
         write_verts(out, verts);
@@ -260,16 +260,16 @@ Form<float> stroke_slider(
         for (const auto& p : pts)
             live_pts.push_back(p + shift);
 
-        auto verts = Kinesis::polyline(live_pts, track_color);
+        auto verts = Kinesis::polyline(live_pts, glm::vec4(track_color, 1.F));
 
         auto fill = Kinesis::polyline(
             std::span<const glm::vec2>(live_pts).subspan(0, split_seg + 1),
-            fill_color);
+            glm::vec4(fill_color, 1.F));
         verts.insert(verts.end(), fill.begin(), fill.end());
 
         if (split_t > 0.0F) {
-            verts.push_back({ .position = { live_pts[split_seg].x, live_pts[split_seg].y, 0.0F }, .color = fill_color });
-            verts.push_back({ .position = { handle_pos.x, handle_pos.y, 0.0F }, .color = fill_color });
+            verts.push_back({ .position = { live_pts[split_seg].x, live_pts[split_seg].y, 0.0F }, .color = glm::vec4(fill_color, 1.F) });
+            verts.push_back({ .position = { handle_pos.x, handle_pos.y, 0.0F }, .color = glm::vec4(fill_color, 1.F) });
         }
 
         write_verts(out, verts);
@@ -280,7 +280,7 @@ Form<float> stroke_slider(
         if (handle_buf) {
             Kakshya::PointVertex hv {
                 .position = { handle_pos.x, handle_pos.y, 0.0F },
-                .color = handle_color,
+                .color = glm::vec4(handle_color, 1.F),
                 .size = handle_size,
             };
             std::vector<uint8_t> hbytes(sizeof(hv));
@@ -306,7 +306,7 @@ Form<bool> toggle(
         const glm::vec2 shift = live_offset ? live_offset() : glm::vec2(0.F);
         const Kinesis::AABB2D live = region.translated(shift);
 
-        write_verts(out, Kakshya::to_mesh_vertices(Kinesis::filled_rect(live, v ? color_on : color_off)));
+        write_verts(out, Kakshya::to_mesh_vertices(Kinesis::filled_rect(live, glm::vec4(v ? color_on : color_off, 1.F))));
         el.bounds_hint = live;
         el.contains = {};
     };
@@ -342,8 +342,8 @@ Form<float> level_meter(
             remainder = { .min = { live.min.x, split }, .max = live.max };
         }
 
-        auto verts = Kakshya::to_mesh_vertices(Kinesis::filled_rect(fill, fill_color));
-        auto rest = Kakshya::to_mesh_vertices(Kinesis::filled_rect(remainder, track_color));
+        auto verts = Kakshya::to_mesh_vertices(Kinesis::filled_rect(fill, glm::vec4(fill_color, 1.F)));
+        auto rest = Kakshya::to_mesh_vertices(Kinesis::filled_rect(remainder, glm::vec4(track_color, 1.F)));
         verts.insert(verts.end(), rest.begin(), rest.end());
 
         write_verts(out, verts);
@@ -367,10 +367,10 @@ Form<glm::vec2> crosshair(
                                    glm::vec2 pos, std::vector<uint8_t>& out, Element& el) {
         using V = Kakshya::LineVertex;
         const std::array<V, 4> verts { {
-            { .position = { pos.x - arm_len, pos.y, 0.F }, .color = color, .thickness = thickness },
-            { .position = { pos.x + arm_len, pos.y, 0.F }, .color = color, .thickness = thickness },
-            { .position = { pos.x, pos.y - arm_len, 0.F }, .color = color, .thickness = thickness },
-            { .position = { pos.x, pos.y + arm_len, 0.F }, .color = color, .thickness = thickness },
+            { .position = { pos.x - arm_len, pos.y, 0.F }, .color = glm::vec4(color, 1.F), .thickness = thickness },
+            { .position = { pos.x + arm_len, pos.y, 0.F }, .color = glm::vec4(color, 1.F), .thickness = thickness },
+            { .position = { pos.x, pos.y - arm_len, 0.F }, .color = glm::vec4(color, 1.F), .thickness = thickness },
+            { .position = { pos.x, pos.y + arm_len, 0.F }, .color = glm::vec4(color, 1.F), .thickness = thickness },
         } };
         write_verts(out, verts);
         el.bounds_hint = Kinesis::AABB2D::from_ndc(pos, glm::vec2(arm_len));
@@ -419,8 +419,8 @@ Form<std::vector<float>> drawable_canvas(
             const float ya = live.min.y + std::clamp(v[i], 0.F, 1.F) * live.height();
             const float yb = live.min.y + std::clamp(v[i + 1], 0.F, 1.F) * live.height();
 
-            verts.push_back({ .position = { xa, ya, 0.F }, .color = color, .thickness = thickness });
-            verts.push_back({ .position = { xb, yb, 0.F }, .color = color, .thickness = thickness });
+            verts.push_back({ .position = { xa, ya, 0.F }, .color = glm::vec4(color, 1.F), .thickness = thickness });
+            verts.push_back({ .position = { xb, yb, 0.F }, .color = glm::vec4(color, 1.F), .thickness = thickness });
         }
 
         write_verts(out, verts);
@@ -481,7 +481,7 @@ Form<glm::vec2> scroll_indicator(
         const float top = track.max.y - std::clamp(extent.x, 0.F, 1.F) * (track.height() - len);
         const Kinesis::AABB2D bar { .min = { track.min.x, top - len }, .max = { track.max.x, top } };
 
-        write_verts(out, Kakshya::to_mesh_vertices(Kinesis::filled_rect(bar, color)));
+        write_verts(out, Kakshya::to_mesh_vertices(Kinesis::filled_rect(bar, glm::vec4(color, 1.F))));
 
         el.bounds_hint = track;
         el.contains = {};

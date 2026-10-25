@@ -35,7 +35,7 @@ namespace {
         const glm::vec2 b = map(caret.max);
 
         const auto quad = Kinesis::textured_mesh_rect(
-            { .min = glm::min(a, b), .max = glm::max(a, b) }, 0.F, glm::vec3(params.color));
+            { .min = glm::min(a, b), .max = glm::max(a, b) }, 0.F, params.color);
         slice.set_tail({ quad.begin(), quad.end() });
     }
 

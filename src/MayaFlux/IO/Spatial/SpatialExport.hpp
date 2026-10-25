@@ -58,7 +58,7 @@ MAYAFLUX_API bool relaxation_grid_positions(
  *        what the operator declares.
  *
  * Reads op->get_vertex_data() as Kakshya::Vertex records: PointVertex,
- * LineVertex, and MeshVertex all share its exact 60-byte layout, so this
+ * LineVertex, and MeshVertex all share its exact 68-byte layout, so this
  * works unchanged for any GraphicsOperator, not only PhysicsOperator. Every
  * field comes along, not only position: color, scalar (size/thickness/
  * weight depending on the concrete type), uv, normal, and tangent each

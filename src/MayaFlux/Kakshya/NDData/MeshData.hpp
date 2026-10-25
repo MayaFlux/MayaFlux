@@ -41,7 +41,7 @@ struct MAYAFLUX_API MeshData {
     // -------------------------------------------------------------------------
 
     /**
-     * @brief Construct an empty MeshData with the canonical 60-byte mesh layout.
+     * @brief Construct an empty MeshData with the canonical 68-byte mesh layout.
      *
      * Both variants are initialised to empty vectors of the correct type so
      * MeshInsertion can append into them without a type-check on first write.
@@ -51,7 +51,7 @@ struct MAYAFLUX_API MeshData {
         MeshData d;
         d.vertex_variant = std::vector<uint8_t> {};
         d.index_variant = std::vector<uint32_t> {};
-        d.layout = VertexLayout::for_meshes(60);
+        d.layout = VertexLayout::for_meshes(68);
         return d;
     }
 

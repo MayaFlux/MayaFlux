@@ -22,6 +22,7 @@ namespace detail {
         case Kakshya::DataModality::TEXTURE_COORDS_2D:
             return Kakshya::MatrixInterpretation::VEC2;
 
+        case Kakshya::DataModality::VERTEX_TANGENTS_4D:
         case Kakshya::DataModality::VERTEX_COLORS_RGBA:
             return Kakshya::MatrixInterpretation::VEC4;
 

@@ -15,17 +15,17 @@ layout(set = 0, binding = 0, scalar) buffer VertexBuffer {
     float data[];
 };
 
-// Byte offsets within one 60-byte vertex (in float units, stride = 15 floats):
+// Offsets within one 68-byte vertex (in float units, stride = 17 floats):
 //   position  offset  0  (3 floats)
-//   color     offset  3  (3 floats)
-//   scalar    offset  6  (1 float)
-//   uv        offset  7  (2 floats)
-//   normal    offset  9  (3 floats)
-//   tangent   offset 12  (3 floats)
-const uint STRIDE = 15u;
+//   color     offset  3  (4 floats)
+//   scalar    offset  7  (1 float)
+//   uv        offset  8  (2 floats)
+//   normal    offset 10  (3 floats)
+//   tangent   offset 13  (4 floats)
+const uint STRIDE = 17u;
 const uint OFF_POS = 0u;
 const uint OFF_COLOR = 3u;
-const uint OFF_UV = 7u;
+const uint OFF_UV = 8u;
 
 layout(set = 0, binding = 1) uniform sampler2D tex_sampler;
 

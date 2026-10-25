@@ -16,7 +16,7 @@ namespace {
             rng(b.min.z, b.max.z)
         };
         const glm::vec3 ext = b.extent();
-        return { .position = pos, .color = (pos - b.min) / ext, .scalar = 0.5F };
+        return { .position = pos, .color = glm::vec4((pos - b.min) / ext, 1.0F), .scalar = 0.5F };
     }
 
     Vertex sample_random_surface(const SamplerBounds& b, Stochastic::Stochastic& rng)
@@ -51,7 +51,7 @@ namespace {
             break;
         }
 
-        return { .position = pos, .color = k_face_colors[face], .scalar = 1.0F };
+        return { .position = pos, .color = glm::vec4(k_face_colors[face], 1.0F), .scalar = 1.0F };
     }
 
     Vertex sample_grid(const SamplerBounds& b, size_t idx, size_t total)
@@ -70,7 +70,7 @@ namespace {
             static_cast<float>(z) / static_cast<float>(gs)
         };
 
-        return { .position = pos, .color = color, .scalar = 0.5F };
+        return { .position = pos, .color = glm::vec4(color, 1.0F), .scalar = 0.5F };
     }
 
     Vertex sample_sphere_volume(const SamplerBounds& b, Stochastic::Stochastic& rng)
@@ -85,7 +85,7 @@ namespace {
         const float norm = radius / mr;
         return {
             .position = pos,
-            .color = glm::mix(glm::vec3(1.0F, 0.8F, 0.2F), glm::vec3(0.2F, 0.4F, 1.0F), norm),
+            .color = glm::vec4(glm::mix(glm::vec3(1.0F, 0.8F, 0.2F), glm::vec3(0.2F, 0.4F, 1.0F), norm), 1.0F),
             .scalar = 1.0F - norm
         };
     }
@@ -101,7 +101,7 @@ namespace {
         const float lat = std::sin(phi);
         return {
             .position = pos,
-            .color = { (std::sin(theta) + 1.0F) * 0.5F, phi / glm::pi<float>(), (std::cos(theta) + 1.0F) * 0.5F },
+            .color = { (std::sin(theta) + 1.0F) * 0.5F, phi / glm::pi<float>(), (std::cos(theta) + 1.0F) * 0.5F, 1.0F },
             .scalar = lat
         };
     }
@@ -123,7 +123,7 @@ namespace {
         };
 
         const float t = glm::length(pos - b.center()) / b.max_radius();
-        return { .position = pos, .color = color, .scalar = t };
+        return { .position = pos, .color = glm::vec4(color, 1.0F), .scalar = t };
     }
 
     Vertex sample_random_sphere(const SamplerBounds& b, Stochastic::Stochastic& rng)
@@ -136,7 +136,7 @@ namespace {
 
         return {
             .position = pos,
-            .color = { radius / b.max_radius(), theta / glm::two_pi<float>(), phi / glm::pi<float>() },
+            .color = { radius / b.max_radius(), theta / glm::two_pi<float>(), phi / glm::pi<float>(), 1.0F },
             .scalar = radius / b.max_radius()
         };
     }
@@ -148,7 +148,7 @@ namespace {
             rng(b.min.y, b.max.y),
             rng(b.min.z, b.max.z)
         };
-        return { .position = pos, .color = (pos - b.min) / b.extent(), .scalar = 0.5F };
+        return { .position = pos, .color = glm::vec4((pos - b.min) / b.extent(), 1.0F), .scalar = 0.5F };
     }
 
     std::vector<Vertex> sample_perlin_field(
@@ -167,7 +167,7 @@ namespace {
                 rng(b.min.z, b.max.z)
             };
             if (perlin.at(p.x, p.y, p.z) > rng(0.0, 1.0)) {
-                out.push_back({ .position = p, .color = (p - b.min) / b.extent(), .scalar = 0.5F });
+                out.push_back({ .position = p, .color = glm::vec4((p - b.min) / b.extent(), 1.0F), .scalar = 0.5F });
             }
         }
 
@@ -190,7 +190,7 @@ namespace {
             pos += glm::vec3(rng(-1.0, 1.0), rng(-1.0, 1.0), rng(-1.0, 1.0)) * 0.1F;
             pos = glm::clamp(pos, b.min, b.max);
             out.push_back({ .position = pos,
-                .color = glm::vec3(static_cast<float>(i) / static_cast<float>(count)),
+                .color = glm::vec4(glm::vec3(static_cast<float>(i) / static_cast<float>(count)), 1.0F),
                 .scalar = static_cast<float>(i) / static_cast<float>(count) });
         }
         rng.set_algorithm(alg_backup);
@@ -213,7 +213,7 @@ namespace {
                 for (size_t z = 0; z < ppa; ++z) {
                     const glm::vec3 jitter { rng(-0.5F, 0.5F), rng(-0.5F, 0.5F), rng(-0.5F, 0.5F) };
                     const glm::vec3 pos = b.min + (glm::vec3(x, y, z) + 0.5F + jitter) * step;
-                    out.push_back({ .position = pos, .color = (pos - b.min) / b.extent(), .scalar = 0.6F });
+                    out.push_back({ .position = pos, .color = glm::vec4((pos - b.min) / b.extent(), 1.0F), .scalar = 0.6F });
                 }
             }
         }
@@ -240,7 +240,7 @@ namespace {
         out.reserve(path.cols());
         for (Eigen::Index i = 0; i < path.cols(); ++i) {
             const glm::vec3 pos(path(0, i), path(1, i), path(2, i));
-            out.push_back({ .position = pos, .color = glm::vec3(0.1F, 0.8F, 0.4F), .scalar = 0.5F });
+            out.push_back({ .position = pos, .color = glm::vec4(glm::vec3(0.1F, 0.8F, 0.4F), 1.0F), .scalar = 0.5F });
         }
 
         return out;
@@ -259,7 +259,7 @@ namespace {
             const float radius = std::sqrt(1.0F - y * y);
             const float theta = phi * static_cast<float>(i);
             const glm::vec3 pos = b.center() + mr * glm::vec3(std::cos(theta) * radius, y, std::sin(theta) * radius);
-            out.push_back({ .position = pos, .color = (pos - b.min) / ext, .scalar = 1.0F });
+            out.push_back({ .position = pos, .color = glm::vec4((pos - b.min) / ext, 1.0F), .scalar = 1.0F });
         }
 
         return out;
@@ -277,7 +277,7 @@ namespace {
             const float theta = static_cast<float>(i) * golden_angle;
             const glm::vec3 pos = b.center() + glm::vec3(r * std::cos(theta), r * std::sin(theta), 0.0F);
             out.push_back({ .position = pos,
-                .color = { r / mr, 0.5F, 1.0F - r / mr },
+                .color = { r / mr, 0.5F, 1.0F - r / mr, 1.0F },
                 .scalar = r / mr });
         }
 
@@ -295,7 +295,7 @@ namespace {
             const float t = (static_cast<float>(i) / static_cast<float>(count)) * glm::two_pi<float>() * 2.0F;
             const glm::vec3 pos = b.center() + mr * glm::vec3(std::sin(a * t), std::sin(bv * t), std::sin(c * t));
             out.push_back({ .position = pos,
-                .color = { 0.5F + pos.x, 0.5F, 0.8F },
+                .color = { 0.5F + pos.x, 0.5F, 0.8F, 1.0F },
                 .scalar = 1.0F });
         }
 
@@ -315,7 +315,7 @@ namespace {
             const float v = (static_cast<float>(i * 7 % count) / static_cast<float>(count)) * glm::two_pi<float>();
             const glm::vec3 pos = b.center() + glm::vec3((main_r + tube_r * std::cos(v)) * std::cos(u), (main_r + tube_r * std::cos(v)) * std::sin(u), tube_r * std::sin(v));
             const glm::vec3 color { (std::cos(u) + 1.0F) * 0.5F, (std::cos(v) + 1.0F) * 0.5F, (std::sin(u) + 1.0F) * 0.5F };
-            out.push_back({ .position = pos, .color = color, .scalar = (std::cos(v) + 1.0F) * 0.5F });
+            out.push_back({ .position = pos, .color = glm::vec4(color, 1.0F), .scalar = (std::cos(v) + 1.0F) * 0.5F });
         }
 
         return out;
@@ -389,7 +389,7 @@ Vertex generate_sample_at(
     case SpatialDistribution::RANDOM_CUBE:
         return sample_random_cube(bounds, rng);
     default:
-        return { .position = glm::vec3(0.0F), .color = glm::vec3(0.5F), .scalar = 0.5F };
+        return { .position = glm::vec3(0.0F), .color = glm::vec4(glm::vec3(0.5F), 1.0F), .scalar = 0.5F };
     }
 }
 

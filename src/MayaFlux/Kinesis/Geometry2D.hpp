@@ -28,7 +28,7 @@ namespace MayaFlux::Kinesis {
     glm::vec2 center,
     float radius,
     uint32_t segments,
-    glm::vec3 color = glm::vec3(1.F));
+    glm::vec4 color = glm::vec4(1.F));
 
 /**
  * @brief Filled annulus (ring) as a TRIANGLE_LIST quad strip.
@@ -47,7 +47,7 @@ namespace MayaFlux::Kinesis {
     float inner_r,
     float outer_r,
     uint32_t segments,
-    glm::vec3 color = glm::vec3(1.F));
+    glm::vec4 color = glm::vec4(1.F));
 
 /**
  * @brief Filled regular n-gon as a TRIANGLE_LIST triangle fan.
@@ -66,7 +66,7 @@ namespace MayaFlux::Kinesis {
     float radius,
     uint32_t sides,
     float rotation_rad = 0.F,
-    glm::vec3 color = glm::vec3(1.F));
+    glm::vec4 color = glm::vec4(1.F));
 
 /**
  * @brief Filled rect with per-corner colors, TRIANGLE_STRIP (4 vertices).
@@ -82,10 +82,10 @@ namespace MayaFlux::Kinesis {
  */
 [[nodiscard]] MAYAFLUX_API std::array<Kakshya::Vertex, 4> filled_rect_gradient(
     AABB2D region,
-    glm::vec3 color_bl,
-    glm::vec3 color_br,
-    glm::vec3 color_tl,
-    glm::vec3 color_tr);
+    glm::vec4 color_bl,
+    glm::vec4 color_br,
+    glm::vec4 color_tl,
+    glm::vec4 color_tr);
 
 /**
  * @brief Filled rounded rectangle as a TRIANGLE_LIST mesh.
@@ -103,7 +103,7 @@ namespace MayaFlux::Kinesis {
     AABB2D region,
     float corner_radius,
     uint32_t corner_segments,
-    glm::vec3 color = glm::vec3(1.F));
+    glm::vec4 color = glm::vec4(1.F));
 
 /**
  * @brief Filled circular arc sector (pie slice) as a TRIANGLE_LIST fan.
@@ -124,7 +124,7 @@ namespace MayaFlux::Kinesis {
     float angle_start,
     float angle_end,
     uint32_t segments,
-    glm::vec3 color = glm::vec3(1.F));
+    glm::vec4 color = glm::vec4(1.F));
 
 /**
  * @brief Sample a circular arc as ordered NDC positions.
@@ -173,7 +173,7 @@ namespace MayaFlux::Kinesis {
     glm::vec2 center,
     float radius,
     uint32_t segments,
-    glm::vec3 color = glm::vec3(1.F),
+    glm::vec4 color = glm::vec4(1.F),
     float thickness = 1.F);
 
 /**
@@ -196,7 +196,7 @@ namespace MayaFlux::Kinesis {
     float angle_start,
     float angle_end,
     uint32_t segments,
-    glm::vec3 color = glm::vec3(1.F),
+    glm::vec4 color = glm::vec4(1.F),
     float thickness = 1.F);
 
 /**
@@ -208,7 +208,7 @@ namespace MayaFlux::Kinesis {
  */
 [[nodiscard]] MAYAFLUX_API std::array<Kakshya::LineVertex, 8> rect_outline(
     AABB2D region,
-    glm::vec3 color = glm::vec3(1.F),
+    glm::vec4 color = glm::vec4(1.F),
     float thickness = 1.F);
 
 /**
@@ -223,7 +223,7 @@ namespace MayaFlux::Kinesis {
  */
 [[nodiscard]] MAYAFLUX_API std::vector<Kakshya::LineVertex> polyline(
     std::span<const glm::vec2> pts,
-    glm::vec3 color = glm::vec3(1.F),
+    glm::vec4 color = glm::vec4(1.F),
     float thickness = 1.F);
 
 /**
@@ -238,7 +238,7 @@ namespace MayaFlux::Kinesis {
  */
 [[nodiscard]] MAYAFLUX_API std::vector<Kakshya::LineVertex> polyline_colored(
     std::span<const glm::vec2> pts,
-    std::span<const glm::vec3> colors,
+    std::span<const glm::vec4> colors,
     float thickness = 1.F);
 
 /**
@@ -256,7 +256,7 @@ namespace MayaFlux::Kinesis {
     float radius,
     uint32_t sides,
     float rotation_rad = 0.F,
-    glm::vec3 color = glm::vec3(1.F),
+    glm::vec4 color = glm::vec4(1.F),
     float thickness = 1.F);
 
 } // namespace MayaFlux::Kinesis

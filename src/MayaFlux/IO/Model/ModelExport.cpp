@@ -126,7 +126,7 @@ namespace {
         for (auto& v : verts) {
             v.position = glm::vec3(world * glm::vec4(v.position, 1.0F));
             v.normal = glm::normalize(normal_matrix * v.normal);
-            v.tangent = glm::normalize(normal_matrix * v.tangent);
+            v.tangent = glm::vec4(glm::normalize(normal_matrix * glm::vec3(v.tangent)), v.tangent.w);
         }
         std::memcpy(vertex_bytes.data(), verts.data(), vertex_bytes.size());
 

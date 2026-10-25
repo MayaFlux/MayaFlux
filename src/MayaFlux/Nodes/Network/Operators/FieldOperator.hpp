@@ -25,7 +25,7 @@ using FieldMode = Kinesis::FieldMode;
  * ACCUMULATE mode: applies on top of current state. Produces drift
  * and evolution, frame-rate dependent.
  *
- * Works with both PointVertex and LineVertex (identical 60-byte layout).
+ * Works with both PointVertex and LineVertex (identical 68-byte layout).
  *
  * Implemented targets:
  *   POSITION   VectorField displacement added to position
@@ -189,13 +189,13 @@ private:
     std::vector<Kinesis::SpatialField> m_scalar_fields;
     std::vector<Kinesis::UVField> m_uv_fields;
 
-    static constexpr size_t k_stride = 60;
+    static constexpr size_t k_stride = 68;
     static constexpr size_t k_position_offset = 0;
     static constexpr size_t k_color_offset = 12;
-    static constexpr size_t k_scalar_offset = 24;
-    static constexpr size_t k_uv_offset = 28;
-    static constexpr size_t k_normal_offset = 36;
-    static constexpr size_t k_tangent_offset = 48;
+    static constexpr size_t k_scalar_offset = 28;
+    static constexpr size_t k_uv_offset = 32;
+    static constexpr size_t k_normal_offset = 40;
+    static constexpr size_t k_tangent_offset = 52;
 
     glm::vec3& vec3_at(size_t i, size_t offset);
     float& float_at(size_t i, size_t offset);

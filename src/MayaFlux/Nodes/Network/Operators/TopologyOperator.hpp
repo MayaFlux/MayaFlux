@@ -141,7 +141,7 @@ public:
      * @brief Set the line color for all topologies.
      * @param color RGB color.
      */
-    void set_global_line_color(const glm::vec3& color);
+    void set_global_line_color(const glm::vec4& color);
 
     /**
      * @brief Replace every point, in extract_vertices() order, keeping the topologies.

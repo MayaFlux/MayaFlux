@@ -295,7 +295,7 @@ void TopologyGeneratorNode::set_connection_radius(float radius)
     }
 }
 
-void TopologyGeneratorNode::set_line_color(const glm::vec3& color, bool force_uniform)
+void TopologyGeneratorNode::set_line_color(const glm::vec4& color, bool force_uniform)
 {
     m_line_color = color;
     m_force_uniform_color = force_uniform;
@@ -458,8 +458,8 @@ void TopologyGeneratorNode::build_interpolated_path(
     };
 
     const auto tangent = [&](size_t s) {
-        return glm::vec3 {
-            static_cast<float>(tx[s]), static_cast<float>(ty[s]), static_cast<float>(tz[s])
+        return glm::vec4 {
+            static_cast<float>(tx[s]), static_cast<float>(ty[s]), static_cast<float>(tz[s]), 1.0F
         };
     };
 
@@ -490,8 +490,8 @@ void TopologyGeneratorNode::build_direct_connections(
             continue;
         }
 
-        glm::vec3 color_a = m_force_uniform_color ? m_line_color : points[a].color;
-        glm::vec3 color_b = m_force_uniform_color ? m_line_color : points[b].color;
+        glm::vec4 color_a = m_force_uniform_color ? m_line_color : points[a].color;
+        glm::vec4 color_b = m_force_uniform_color ? m_line_color : points[b].color;
 
         float thick_a = m_force_uniform_thickness ? m_line_thickness : points[a].thickness;
         float thick_b = m_force_uniform_thickness ? m_line_thickness : points[b].thickness;
@@ -502,13 +502,13 @@ void TopologyGeneratorNode::build_direct_connections(
             .position = points[a].position,
             .color = color_a,
             .thickness = thick_a,
-            .tangent = edge });
+            .tangent = glm::vec4(edge, 1.0F) });
 
         m_vertices.emplace_back(LineVertex {
             .position = points[b].position,
             .color = color_b,
             .thickness = thick_b,
-            .tangent = edge });
+            .tangent = glm::vec4(edge, 1.0F) });
     }
 }
 

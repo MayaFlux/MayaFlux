@@ -62,7 +62,7 @@ public:
     /**
      * @brief The universal Kakshya::Vertex attribute layout, vertex_count 0
      *        when there are no items yet. Every item's record shares one
-     *        60-byte offset table regardless of topology (only the scalar
+     *        68-byte offset table regardless of topology (only the scalar
      *        field's name differs), so the shape is knowable -- and a
      *        render pipeline buildable -- before the first item ever
      *        arrives; only the count is data-dependent.

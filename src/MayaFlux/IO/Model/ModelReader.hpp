@@ -32,7 +32,7 @@ using TextureResolver = std::function<std::shared_ptr<Core::VKImage>(const std::
  *
  * Produces vector<Kakshya::MeshData> — one entry per assimp mesh in the
  * imported scene. Each MeshData owns its vertex bytes (vector<uint8_t> in
- * the canonical 60-byte interleaved MeshVertex format) and index array
+ * the canonical 68-byte interleaved MeshVertex format) and index array
  * (vector<uint32_t>). Submesh identity is preserved in the single-entry case
  * via MeshData::submeshes (a RegionGroup named "submeshes" with one Region).
  * Multi-mesh files produce one MeshData per aiMesh, each with its own

@@ -233,7 +233,7 @@ void PointCloudNetwork::set_vertices(const std::vector<LineVertex>& vertices)
         "PointCloudNetwork reseeded: {} points", vertices.size());
 }
 
-void PointCloudNetwork::apply_color_gradient(const glm::vec3& start_color, const glm::vec3& end_color)
+void PointCloudNetwork::apply_color_gradient(const glm::vec4& start_color, const glm::vec4& end_color)
 {
     auto verts = get_vertices();
     const size_t count = verts.size();
@@ -249,8 +249,8 @@ void PointCloudNetwork::apply_color_gradient(const glm::vec3& start_color, const
 }
 
 void PointCloudNetwork::apply_radial_gradient(
-    const glm::vec3& center_color,
-    const glm::vec3& edge_color,
+    const glm::vec4& center_color,
+    const glm::vec4& edge_color,
     const glm::vec3& center)
 {
     auto verts = get_vertices();
@@ -320,7 +320,7 @@ void PointCloudNetwork::set_line_thickness(float thickness)
     }
 }
 
-void PointCloudNetwork::set_line_color(const glm::vec3& color)
+void PointCloudNetwork::set_line_color(const glm::vec4& color)
 {
     if (auto* topology_op = dynamic_cast<TopologyOperator*>(m_operator.get())) {
         topology_op->set_global_line_color(color);

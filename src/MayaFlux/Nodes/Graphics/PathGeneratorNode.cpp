@@ -155,8 +155,8 @@ void PathGeneratorNode::write_curve_segment(
     };
 
     const auto tangent = [&](size_t s) {
-        return glm::vec3 {
-            static_cast<float>(tx[s]), static_cast<float>(ty[s]), static_cast<float>(tz[s])
+        return glm::vec4 {
+            static_cast<float>(tx[s]), static_cast<float>(ty[s]), static_cast<float>(tz[s]), 1.0F
         };
     };
 
@@ -216,8 +216,8 @@ void PathGeneratorNode::append_line_segment(
     const LineVertex& v1,
     std::vector<LineVertex>& output)
 {
-    glm::vec3 color0 = m_force_uniform_color ? m_current_color : v0.color;
-    glm::vec3 color1 = m_force_uniform_color ? m_current_color : v1.color;
+    glm::vec4 color0 = m_force_uniform_color ? m_current_color : v0.color;
+    glm::vec4 color1 = m_force_uniform_color ? m_current_color : v1.color;
 
     float thick0 = m_force_uniform_thickness ? m_current_thickness : v0.thickness;
     float thick1 = m_force_uniform_thickness ? m_current_thickness : v1.thickness;
@@ -334,7 +334,7 @@ void PathGeneratorNode::clear_path()
     m_dirty_segment_end = INVALID_SEGMENT;
 }
 
-void PathGeneratorNode::set_path_color(const glm::vec3& color, bool force_uniform)
+void PathGeneratorNode::set_path_color(const glm::vec4& color, bool force_uniform)
 {
     m_current_color = color;
     m_force_uniform_color = force_uniform;
@@ -437,7 +437,7 @@ void PathGeneratorNode::generate_direct_path()
     m_vertices.reserve(m_control_points.size());
 
     for (const auto& v : m_control_points) {
-        glm::vec3 color = m_force_uniform_color ? m_current_color : v.color;
+        glm::vec4 color = m_force_uniform_color ? m_current_color : v.color;
         float thickness = m_force_uniform_thickness ? m_current_thickness : v.thickness;
 
         m_vertices.emplace_back(LineVertex {
@@ -458,7 +458,7 @@ void PathGeneratorNode::generate_custom_path()
         double t = static_cast<double>(i) / static_cast<double>(total_samples - 1);
 
         auto ctrl_idx = std::min<size_t>(static_cast<size_t>(t * float(num_points - 1)), num_points - 1);
-        glm::vec3 color = m_force_uniform_color ? m_current_color : m_control_points[ctrl_idx].color;
+        glm::vec4 color = m_force_uniform_color ? m_current_color : m_control_points[ctrl_idx].color;
         float thickness = m_force_uniform_thickness ? m_current_thickness : m_control_points[ctrl_idx].thickness;
 
         m_vertices[i] = LineVertex {

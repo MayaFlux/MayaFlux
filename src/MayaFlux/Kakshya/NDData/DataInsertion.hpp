@@ -147,6 +147,7 @@ public:
                 std::get<std::vector<glm::vec2>>(m_variant).reserve(element_count);
                 break;
 
+            case DataModality::VERTEX_TANGENTS_4D:
             case DataModality::VERTEX_COLORS_RGBA:
                 m_variant = std::vector<glm::vec4>();
                 std::get<std::vector<glm::vec4>>(m_variant).reserve(element_count);
@@ -231,6 +232,7 @@ private:
             valid = (components == 2);
             break;
 
+        case DataModality::VERTEX_TANGENTS_4D:
         case DataModality::VERTEX_COLORS_RGBA:
             valid = (components == 4);
             break;
@@ -367,6 +369,7 @@ private:
         case DataModality::VERTEX_NORMALS_3D:
             return "normals";
         case DataModality::VERTEX_TANGENTS_3D:
+        case DataModality::VERTEX_TANGENTS_4D:
             return "tangents";
         case DataModality::VERTEX_COLORS_RGB:
         case DataModality::VERTEX_COLORS_RGBA:
@@ -397,6 +400,7 @@ private:
         case DataModality::VERTEX_POSITIONS_3D:
         case DataModality::VERTEX_NORMALS_3D:
         case DataModality::VERTEX_TANGENTS_3D:
+        case DataModality::VERTEX_TANGENTS_4D:
         case DataModality::TEXTURE_COORDS_2D:
             return DataDimension::Role::UV;
 
@@ -424,6 +428,7 @@ private:
         case DataModality::TEXTURE_COORDS_2D:
             return "glm::vec2";
 
+        case DataModality::VERTEX_TANGENTS_4D:
         case DataModality::VERTEX_COLORS_RGBA:
             return "glm::vec4";
 
