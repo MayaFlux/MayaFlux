@@ -263,7 +263,8 @@ namespace {
 RenderPipelineID RenderFlow::create_pipeline(
     const RenderPipelineConfig& config,
     const std::vector<vk::Format>& color_formats,
-    vk::Format depth_format)
+    vk::Format depth_format,
+    std::optional<uint32_t> push_set)
 {
     if (!is_initialized()) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
@@ -405,6 +406,9 @@ RenderPipelineID RenderFlow::create_pipeline(
         }
 
         vk::DescriptorSetLayoutCreateInfo layout_info;
+        if (push_set && *push_set == 0U) {
+            layout_info.flags = vk::DescriptorSetLayoutCreateFlagBits::ePushDescriptor;
+        }
         layout_info.bindingCount = static_cast<uint32_t>(set0_bindings.size());
         layout_info.pBindings = set0_bindings.data();
         vk::DescriptorSetLayout vt_layout = m_shader_foundry->get_device().createDescriptorSetLayout(layout_info);
@@ -435,10 +439,23 @@ RenderPipelineID RenderFlow::create_pipeline(
             continue;
 
         vk::DescriptorSetLayoutCreateInfo layout_info;
+        if (push_set && *push_set == layouts.size()) {
+            layout_info.flags = vk::DescriptorSetLayoutCreateFlagBits::ePushDescriptor;
+        }
         layout_info.bindingCount = static_cast<uint32_t>(bindings.size());
         layout_info.pBindings = bindings.data();
         layouts.push_back(
             m_shader_foundry->get_device().createDescriptorSetLayout(layout_info));
+    }
+
+    if (push_set && *push_set >= layouts.size()) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "Push descriptor set {} is out of range for a pipeline with {} descriptor sets",
+            *push_set, layouts.size());
+        for (const auto& layout : layouts) {
+            m_shader_foundry->get_device().destroyDescriptorSetLayout(layout);
+        }
+        return INVALID_RENDER_PIPELINE;
     }
 
     vk_config.descriptor_set_layouts = layouts;
@@ -499,6 +516,7 @@ RenderPipelineID RenderFlow::create_pipeline(
     state.pipeline = pipeline;
     state.layouts = layouts;
     state.view_transform_layout = state_vt_layout;
+    state.push_set = push_set;
     state.layout = pipeline->get_layout();
     state.push_constant_stages = push_constant_stages;
     m_pipelines[pipeline_id] = std::move(state);
@@ -807,6 +825,34 @@ void RenderFlow::bind_index_buffer(
     cmd.bindIndexBuffer(buffer->get_index_buffer(), 0, index_type);
 }
 
+void RenderFlow::push_descriptors(
+    CommandBufferID cmd_id,
+    RenderPipelineID pipeline_id,
+    const std::vector<vk::WriteDescriptorSet>& writes)
+{
+    auto pipeline_it = m_pipelines.find(pipeline_id);
+    if (pipeline_it == m_pipelines.end()) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "Invalid pipeline ID: {}", pipeline_id);
+        return;
+    }
+
+    if (!pipeline_it->second.push_set) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "Pipeline {} has no push descriptor set", pipeline_id);
+        return;
+    }
+
+    auto cmd = m_shader_foundry->get_command_buffer(cmd_id);
+    if (!cmd) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "Invalid command buffer ID: {}", cmd_id);
+        return;
+    }
+
+    pipeline_it->second.pipeline->push_descriptors(cmd, *pipeline_it->second.push_set, writes);
+}
+
 void RenderFlow::bind_descriptor_sets(
     CommandBufferID cmd_id,
     RenderPipelineID pipeline_id,
@@ -1027,6 +1073,9 @@ std::vector<DescriptorSetID> RenderFlow::allocate_pipeline_descriptors(
     std::vector<DescriptorSetID> descriptor_set_ids;
 
     for (uint32_t i = first_layout_index; i < layouts.size(); ++i) {
+        if (pipeline_it->second.push_set && *pipeline_it->second.push_set == i) {
+            continue;
+        }
         auto ds_id = m_shader_foundry->allocate_descriptor_set(layouts[i]);
         if (ds_id == INVALID_DESCRIPTOR_SET) {
             MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,

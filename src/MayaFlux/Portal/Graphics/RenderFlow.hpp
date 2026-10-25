@@ -95,12 +95,15 @@ public:
      * @param config Pipeline configuration
      * @param color_formats Color attachment formats for dynamic rendering
      * @param depth_format Depth attachment format
+     * @param push_set Index of the descriptor set to create as a push descriptor set.
+     *        It gets no allocated set and is written with push_descriptors().
      * @return Pipeline ID or INVALID_RENDER_PIPELINE on error
      */
     RenderPipelineID create_pipeline(
         const RenderPipelineConfig& config,
         const std::vector<vk::Format>& color_formats,
-        vk::Format depth_format = vk::Format::eUndefined);
+        vk::Format depth_format = vk::Format::eUndefined,
+        std::optional<uint32_t> push_set = std::nullopt);
 
     /**
      * @brief Destroy a graphics pipeline
@@ -190,6 +193,17 @@ public:
         RenderPipelineID pipeline,
         const std::vector<DescriptorSetID>& descriptor_sets,
         uint32_t first_set = 0);
+
+    /**
+     * @brief Write the pipeline's push descriptor set straight into a command buffer
+     * @param cmd_id Command buffer ID
+     * @param pipeline Pipeline ID, created with a push_set
+     * @param writes Descriptor writes; dstSet is ignored
+     */
+    void push_descriptors(
+        CommandBufferID cmd_id,
+        RenderPipelineID pipeline,
+        const std::vector<vk::WriteDescriptorSet>& writes);
 
     /**
      * @brief Push constants
@@ -317,6 +331,7 @@ private:
         vk::ShaderStageFlags push_constant_stages = vk::ShaderStageFlagBits::eVertex
             | vk::ShaderStageFlagBits::eFragment;
         vk::DescriptorSetLayout view_transform_layout {};
+        std::optional<uint32_t> push_set;
     };
 
     std::unordered_map<RenderPipelineID, PipelineState> m_pipelines;

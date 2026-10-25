@@ -631,6 +631,20 @@ void VKGraphicsPipeline::bind(vk::CommandBuffer cmd)
     cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, m_pipeline);
 }
 
+void VKGraphicsPipeline::push_descriptors(
+    vk::CommandBuffer cmd,
+    uint32_t set,
+    const std::vector<vk::WriteDescriptorSet>& writes) const
+{
+    if (!m_layout) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Cannot push descriptors without pipeline layout");
+        return;
+    }
+
+    cmd.pushDescriptorSet(vk::PipelineBindPoint::eGraphics, m_layout, set, writes);
+}
+
 void VKGraphicsPipeline::bind_descriptor_sets(
     vk::CommandBuffer cmd,
     std::span<vk::DescriptorSet> sets,

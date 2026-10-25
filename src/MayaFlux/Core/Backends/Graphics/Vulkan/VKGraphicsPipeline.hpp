@@ -273,6 +273,16 @@ public:
         uint32_t first_set = 0);
 
     /**
+     * @brief Push descriptors into a push descriptor set of this pipeline's layout
+     * @param cmd Command buffer
+     * @param set Index of the set whose layout was created as a push descriptor layout
+     * @param writes Descriptor writes; dstSet is ignored
+     */
+    void push_descriptors(vk::CommandBuffer cmd,
+        uint32_t set,
+        const std::vector<vk::WriteDescriptorSet>& writes) const;
+
+    /**
      * @brief Push constants
      * @param cmd Command buffer
      * @param stages Shader stages
