@@ -92,7 +92,7 @@ void BackendResourceManager::setup_backend_service(const std::shared_ptr<Registr
 
     buffer_service->flush_range = [this](void* memory, size_t offset, size_t size) {
         vk::DeviceMemory mem(reinterpret_cast<VkDeviceMemory>(memory));
-        vk::MappedMemoryRange range { mem, offset, size == 0 ? VK_WHOLE_SIZE : size };
+        auto range = mapped_memory_range(mem, offset, size);
         if (auto result = m_context.get_device().flushMappedMemoryRanges(1, &range); result != vk::Result::eSuccess) {
             MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
                 "Failed to flush mapped memory range: {}", vk::to_string(result));
@@ -101,7 +101,7 @@ void BackendResourceManager::setup_backend_service(const std::shared_ptr<Registr
 
     buffer_service->invalidate_range = [this](void* memory, size_t offset, size_t size) {
         vk::DeviceMemory mem(reinterpret_cast<VkDeviceMemory>(memory));
-        vk::MappedMemoryRange range { mem, offset, size == 0 ? VK_WHOLE_SIZE : size };
+        auto range = mapped_memory_range(mem, offset, size);
         if (auto result = m_context.get_device().invalidateMappedMemoryRanges(1, &range); result != vk::Result::eSuccess) {
             MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
                 "Failed to invalidate mapped memory range: {}", vk::to_string(result));
@@ -204,6 +204,40 @@ void BackendResourceManager::setup_backend_service(const std::shared_ptr<Registr
     };
 }
 
+vk::MappedMemoryRange BackendResourceManager::mapped_memory_range(
+    vk::DeviceMemory memory,
+    vk::DeviceSize offset,
+    vk::DeviceSize size) const
+{
+    vk::MappedMemoryRange range {};
+    range.memory = memory;
+
+    const auto allocation = m_buffer_allocation_sizes.find(static_cast<VkDeviceMemory>(memory));
+    if (allocation == m_buffer_allocation_sizes.end()) {
+        range.offset = offset;
+        range.size = size == 0 ? VK_WHOLE_SIZE : size;
+        return range;
+    }
+
+    const vk::DeviceSize allocation_size = allocation->second;
+    const vk::DeviceSize atom_size = std::max<vk::DeviceSize>(
+        1, m_context.get_physical_device().getProperties().limits.nonCoherentAtomSize);
+    const vk::DeviceSize start = std::min(offset, allocation_size);
+    const vk::DeviceSize requested_end = size == 0 || size == VK_WHOLE_SIZE
+        ? allocation_size
+        : start + std::min(size, allocation_size - start);
+    const vk::DeviceSize aligned_offset = (start / atom_size) * atom_size;
+    const vk::DeviceSize rounded_end = requested_end > allocation_size - std::min(atom_size - 1, allocation_size)
+        ? allocation_size
+        : ((requested_end + atom_size - 1) / atom_size) * atom_size;
+
+    range.offset = aligned_offset;
+    range.size = rounded_end == allocation_size
+        ? VK_WHOLE_SIZE
+        : rounded_end - aligned_offset;
+    return range;
+}
+
 void BackendResourceManager::allocate_raw_buffer(
     size_t size_bytes,
     vk::BufferUsageFlags usage,
@@ -233,6 +267,9 @@ void BackendResourceManager::allocate_raw_buffer(
     vk::MemoryAllocateInfo alloc_info;
     alloc_info.allocationSize = mem_requirements.size;
     alloc_info.memoryTypeIndex = find_memory_type(mem_requirements.memoryTypeBits, memory_properties);
+    vk::MemoryAllocateFlagsInfo alloc_flags {};
+    alloc_flags.flags = vk::MemoryAllocateFlagBits::eDeviceAddress;
+    alloc_info.pNext = &alloc_flags;
 
     try {
         out_memory = m_context.get_device().allocateMemory(alloc_info);
@@ -260,7 +297,7 @@ void BackendResourceManager::allocate_raw_buffer(
     out_mapped_ptr = nullptr;
     if (host_visible) {
         try {
-            out_mapped_ptr = m_context.get_device().mapMemory(out_memory, 0, size_bytes);
+            out_mapped_ptr = m_context.get_device().mapMemory(out_memory, 0, VK_WHOLE_SIZE);
         } catch (const vk::SystemError& e) {
             m_context.get_device().freeMemory(out_memory);
             m_context.get_device().destroyBuffer(out_buffer);
@@ -271,6 +308,8 @@ void BackendResourceManager::allocate_raw_buffer(
                 "Failed to map raw buffer memory: " + std::string(e.what()));
         }
     }
+
+    m_buffer_allocation_sizes[static_cast<VkDeviceMemory>(out_memory)] = mem_requirements.size;
 }
 
 void BackendResourceManager::initialize_buffer(const std::shared_ptr<Buffers::VKBuffer>& buffer)
@@ -335,6 +374,7 @@ void BackendResourceManager::cleanup_buffer(const std::shared_ptr<Buffers::VKBuf
     }
 
     if (res.memory) {
+        m_buffer_allocation_sizes.erase(static_cast<VkDeviceMemory>(res.memory));
         m_context.get_device().freeMemory(res.memory);
     }
 
@@ -355,10 +395,7 @@ void BackendResourceManager::flush_pending_buffer_operations()
         auto dirty_ranges = buffer_wrapper->get_and_clear_dirty_ranges();
         if (!dirty_ranges.empty()) {
             for (auto [offset, size] : dirty_ranges) {
-                vk::MappedMemoryRange range;
-                range.memory = resources.memory;
-                range.offset = offset;
-                range.size = size;
+                auto range = mapped_memory_range(resources.memory, offset, size);
                 if (auto result = m_context.get_device().flushMappedMemoryRanges(1, &range); result != vk::Result::eSuccess) {
                     MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
                         "Failed to flush mapped memory range: {}", vk::to_string(result));
@@ -372,10 +409,7 @@ void BackendResourceManager::flush_pending_buffer_operations()
         auto invalid_ranges = buffer_wrapper->get_and_clear_invalid_ranges();
         if (!invalid_ranges.empty()) {
             for (auto [offset, size] : invalid_ranges) {
-                vk::MappedMemoryRange range;
-                range.memory = buffer_wrapper->get_buffer_resources().memory;
-                range.offset = offset;
-                range.size = size;
+                auto range = mapped_memory_range(buffer_wrapper->get_buffer_resources().memory, offset, size);
                 if (auto result = m_context.get_device().invalidateMappedMemoryRanges(1, &range); result != vk::Result::eSuccess) {
                     MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
                         "Failed to invalidate mapped memory range: {}", vk::to_string(result));
@@ -712,7 +746,7 @@ void BackendResourceManager::upload_image_data(
     staging->mark_dirty_range(0, size);
 
     auto& resources = staging->get_buffer_resources();
-    vk::MappedMemoryRange range { resources.memory, 0, VK_WHOLE_SIZE };
+    auto range = mapped_memory_range(resources.memory, 0, VK_WHOLE_SIZE);
 
     if (auto result = m_context.get_device().flushMappedMemoryRanges(1, &range); result != vk::Result::eSuccess) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
@@ -795,7 +829,7 @@ void BackendResourceManager::upload_image_data(
     staging->mark_dirty_range(0, size);
 
     auto& resources = staging->get_buffer_resources();
-    vk::MappedMemoryRange range { resources.memory, 0, VK_WHOLE_SIZE };
+    auto range = mapped_memory_range(resources.memory, 0, VK_WHOLE_SIZE);
 
     if (auto result = m_context.get_device().flushMappedMemoryRanges(1, &range);
         result != vk::Result::eSuccess) {
@@ -972,7 +1006,7 @@ void BackendResourceManager::download_image_data(
             "download_image_data: waitForFences failed: {}", vk::to_string(result));
     }
 
-    vk::MappedMemoryRange range { active_staging->get_buffer_resources().memory, 0, VK_WHOLE_SIZE };
+    auto range = mapped_memory_range(active_staging->get_buffer_resources().memory, 0, VK_WHOLE_SIZE);
     if (auto result = device.invalidateMappedMemoryRanges(1, &range);
         result != vk::Result::eSuccess) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
@@ -1048,7 +1082,7 @@ bool BackendResourceManager::upload_image_layer(
     std::memcpy(mapped, data, size);
     active_staging->mark_dirty_range(0, size);
 
-    vk::MappedMemoryRange range { active_staging->get_buffer_resources().memory, 0, VK_WHOLE_SIZE };
+    auto range = mapped_memory_range(active_staging->get_buffer_resources().memory, 0, VK_WHOLE_SIZE);
     if (auto result = m_context.get_device().flushMappedMemoryRanges(1, &range);
         result != vk::Result::eSuccess) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
@@ -1373,7 +1407,7 @@ void BackendResourceManager::cleanup()
     }
 
     const auto device = m_context.get_device();
-    auto release_slots = [&device](Buffers::VKBuffer& owner) {
+    auto release_slots = [this, &device](Buffers::VKBuffer& owner) {
         auto& slots = owner.get_buffer_resources().back_buffers;
         for (auto& slot : slots) {
             if (slot.mapped_ptr && slot.memory) {
@@ -1383,6 +1417,7 @@ void BackendResourceManager::cleanup()
                 device.destroyBuffer(slot.buffer);
             }
             if (slot.memory) {
+                m_buffer_allocation_sizes.erase(static_cast<VkDeviceMemory>(slot.memory));
                 device.freeMemory(slot.memory);
             }
         }
@@ -1400,6 +1435,7 @@ void BackendResourceManager::cleanup()
         }
     }
     m_managed_buffers.clear();
+    m_buffer_allocation_sizes.clear();
 }
 
 size_t BackendResourceManager::compute_sampler_hash(vk::Filter filter, vk::SamplerAddressMode address_mode, float max_anisotropy) const

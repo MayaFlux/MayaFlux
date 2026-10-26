@@ -302,10 +302,16 @@ public:
     void cleanup();
 
 private:
+    [[nodiscard]] vk::MappedMemoryRange mapped_memory_range(
+        vk::DeviceMemory memory,
+        vk::DeviceSize offset,
+        vk::DeviceSize size) const;
+
     VKContext& m_context;
     VKCommandManager& m_command_manager;
 
     std::vector<std::shared_ptr<Buffers::VKBuffer>> m_managed_buffers;
+    std::unordered_map<VkDeviceMemory, vk::DeviceSize> m_buffer_allocation_sizes;
     std::unordered_map<size_t, vk::Sampler> m_sampler_cache;
 
     vk::Semaphore m_deferred_semaphore {};

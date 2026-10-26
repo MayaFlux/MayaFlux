@@ -111,6 +111,9 @@ namespace {
 
         vk::MemoryAllocateInfo ai;
         ai.allocationSize = req.size;
+        vk::MemoryAllocateFlagsInfo alloc_flags {};
+        alloc_flags.flags = vk::MemoryAllocateFlagBits::eDeviceAddress;
+        ai.pNext = &alloc_flags;
 
         if (prefer_device_local) {
             const auto resident = try_memory_type(phys, req.memoryTypeBits,
