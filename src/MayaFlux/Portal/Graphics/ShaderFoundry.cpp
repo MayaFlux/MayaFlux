@@ -946,6 +946,8 @@ CommandBufferID ShaderFoundry::begin_commands(CommandBufferType type)
 {
     auto& cmd_manager = m_backend->get_command_manager();
 
+    collect_retired_commands();
+
     CommandBufferID id = m_next_command_id++;
 
     CommandBufferState& state = m_command_buffers[id];
@@ -965,6 +967,8 @@ CommandBufferID ShaderFoundry::begin_secondary_commands(
     vk::Format depth_format)
 {
     auto& cmd_manager = m_backend->get_command_manager();
+
+    collect_retired_commands();
 
     CommandBufferID id = m_next_command_id++;
 
@@ -1042,6 +1046,51 @@ void ShaderFoundry::free_all_command_buffers()
 //==============================================================================
 // Synchronization
 //==============================================================================
+
+void ShaderFoundry::retire_after_submit(std::span<const CommandBufferID> cmd_ids)
+{
+    std::optional<uint64_t> value;
+    for (const CommandBufferID cmd_id : cmd_ids) {
+        if (!m_command_buffers.contains(cmd_id)) {
+            continue;
+        }
+        if (!value) {
+            value = m_backend->get_command_manager().submitted_value();
+        }
+        m_retired_commands.push_back({ .cmd_id = cmd_id, .value = *value });
+    }
+}
+
+void ShaderFoundry::collect_retired_commands()
+{
+    if (m_retired_commands.empty()) {
+        return;
+    }
+
+    const uint64_t completed = m_backend->get_command_manager().completed_value();
+    std::erase_if(m_retired_commands, [this, completed](const RetiredCommand& retired) {
+        if (retired.value > completed) {
+            return false;
+        }
+        release_command(retired.cmd_id);
+        return true;
+    });
+}
+
+void ShaderFoundry::release_command(CommandBufferID cmd_id)
+{
+    auto it = m_command_buffers.find(cmd_id);
+    if (it == m_command_buffers.end()) {
+        return;
+    }
+
+    if (it->second.timestamp_pool) {
+        get_device().destroyQueryPool(it->second.timestamp_pool);
+    }
+
+    m_backend->get_command_manager().free_command_buffer(it->second.cmd);
+    m_command_buffers.erase(it);
+}
 
 void ShaderFoundry::submit_and_wait(CommandBufferID cmd_id)
 {

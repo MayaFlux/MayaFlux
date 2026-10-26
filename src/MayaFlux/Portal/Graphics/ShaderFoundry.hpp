@@ -538,6 +538,15 @@ public:
      */
     void free_all_command_buffers();
 
+    /**
+     * @brief Release command buffers once the GPU has finished with the latest submission
+     * @param cmd_ids Command buffers recorded for work already handed to the queue
+     *
+     * The buffers are freed and their IDs invalidated after every submission made
+     * so far has completed. Safe for IDs that were never submitted.
+     */
+    void retire_after_submit(std::span<const CommandBufferID> cmd_ids);
+
     //==========================================================================
     // Memory Barriers and Synchronization
     //==========================================================================
@@ -747,6 +756,16 @@ private:
     std::unordered_map<DescriptorSetID, DescriptorSetState> m_descriptor_sets;
 
     std::unordered_map<CommandBufferID, CommandBufferState> m_command_buffers;
+
+    struct RetiredCommand {
+        CommandBufferID cmd_id { INVALID_COMMAND_BUFFER };
+        uint64_t value {};
+    };
+
+    std::vector<RetiredCommand> m_retired_commands;
+
+    void collect_retired_commands();
+    void release_command(CommandBufferID cmd_id);
 
     struct FinishedTimestamp {
         CommandBufferID cmd_id { INVALID_COMMAND_BUFFER };
