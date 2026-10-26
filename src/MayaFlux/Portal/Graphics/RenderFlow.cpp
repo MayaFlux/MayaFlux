@@ -38,7 +38,106 @@ namespace {
         return { vk_bindings, vk_attributes };
     }
 
+    template <typename T>
+    constexpr size_t hash_bits(const T& value) noexcept
+    {
+        if constexpr (std::is_enum_v<T>) {
+            return static_cast<size_t>(std::to_underlying(value));
+        } else if constexpr (std::is_floating_point_v<T>) {
+            return std::bit_cast<std::conditional_t<sizeof(T) == sizeof(uint32_t), uint32_t, uint64_t>>(value);
+        } else if constexpr (std::is_pointer_v<T>) {
+            return std::bit_cast<size_t>(value);
+        } else if constexpr (requires { typename T::MaskType; }) {
+            return static_cast<size_t>(static_cast<typename T::MaskType>(value));
+        } else {
+            return static_cast<size_t>(value);
+        }
+    }
+
+    template <typename... Ts>
+    constexpr void mix_hash(size_t& seed, const Ts&... values) noexcept
+    {
+        constexpr size_t k_multiplier = 0x517cc1b727220a95ULL;
+        ((seed = (std::rotl(seed, 5) ^ hash_bits(values)) * k_multiplier), ...);
+    }
+
 } // anonymous namespace
+
+struct RenderFlow::PipelineKey {
+    size_t hash {};
+    Core::GraphicsPipelineConfig config;
+    std::vector<std::vector<vk::DescriptorSetLayoutBinding>> set_bindings;
+    std::optional<uint32_t> push_set;
+    std::vector<std::pair<uint32_t, uint32_t>> specialization_constants;
+
+    void finalize() noexcept;
+
+    bool operator==(const PipelineKey&) const = default;
+};
+
+struct RenderFlow::PipelineKeyHash {
+    size_t operator()(const PipelineKey& key) const noexcept { return key.hash; }
+};
+
+struct RenderFlow::SharedPipelines {
+    std::unordered_map<PipelineKey, std::weak_ptr<PipelineState>, PipelineKeyHash> entries;
+};
+
+RenderFlow::RenderFlow()
+    : m_shared_pipelines(std::make_unique<SharedPipelines>())
+{
+}
+
+RenderFlow::~RenderFlow()
+{
+    shutdown();
+}
+
+void RenderFlow::PipelineKey::finalize() noexcept
+{
+    size_t seed = 0;
+
+    mix_hash(seed, config.vertex_shader.get(), config.fragment_shader.get(),
+        config.geometry_shader.get(), config.tess_control_shader.get(),
+        config.tess_evaluation_shader.get(), config.mesh_shader.get(),
+        config.task_shader.get());
+
+    mix_hash(seed, config.topology, config.polygon_mode, config.cull_mode,
+        config.front_face, config.line_width, config.depth_test_enable,
+        config.depth_write_enable, config.depth_compare_op, config.stencil_test_enable,
+        config.depth_clamp_enable, config.depth_bias_enable,
+        config.depth_attachment_format);
+
+    for (const auto& binding : config.vertex_bindings) {
+        mix_hash(seed, binding.binding, binding.stride);
+    }
+    for (const auto& attribute : config.vertex_attributes) {
+        mix_hash(seed, attribute.location, attribute.format, attribute.offset);
+    }
+    for (const auto& blend : config.color_blend_attachments) {
+        mix_hash(seed, blend.blend_enable, blend.src_color_blend_factor,
+            blend.dst_color_blend_factor);
+    }
+    for (const auto format : config.color_attachment_formats) {
+        mix_hash(seed, format);
+    }
+    for (const auto& range : config.push_constant_ranges) {
+        mix_hash(seed, range.stageFlags, range.size);
+    }
+
+    mix_hash(seed, push_set.value_or(UINT32_MAX));
+    for (const auto& set : set_bindings) {
+        mix_hash(seed, set.size());
+        for (const auto& binding : set) {
+            mix_hash(seed, binding.binding, binding.descriptorType, binding.descriptorCount);
+        }
+    }
+    for (const auto& [constant_id, value] : specialization_constants) {
+        mix_hash(seed, constant_id, value);
+    }
+
+    hash = seed;
+}
 
 //==============================================================================
 // Initialization
@@ -390,8 +489,7 @@ RenderPipelineID RenderFlow::create_pipeline(
         vk_config.color_blend_attachments.push_back(vk_blend);
     }
 
-    std::vector<vk::DescriptorSetLayout> layouts;
-    vk::DescriptorSetLayout state_vt_layout {};
+    std::vector<std::vector<vk::DescriptorSetLayoutBinding>> set_bindings;
 
     {
         std::vector<vk::DescriptorSetLayoutBinding> set0_bindings;
@@ -417,15 +515,7 @@ RenderPipelineID RenderFlow::create_pipeline(
             }
         }
 
-        vk::DescriptorSetLayoutCreateInfo layout_info;
-        if (push_set && *push_set == 0U) {
-            layout_info.flags = vk::DescriptorSetLayoutCreateFlagBits::ePushDescriptor;
-        }
-        layout_info.bindingCount = static_cast<uint32_t>(set0_bindings.size());
-        layout_info.pBindings = set0_bindings.data();
-        vk::DescriptorSetLayout vt_layout = m_shader_foundry->get_device().createDescriptorSetLayout(layout_info);
-        layouts.push_back(vt_layout);
-        state_vt_layout = vt_layout;
+        set_bindings.push_back(std::move(set0_bindings));
     }
 
     for (const auto& desc_set : config.descriptor_sets) {
@@ -450,27 +540,15 @@ RenderPipelineID RenderFlow::create_pipeline(
         if (bindings.empty())
             continue;
 
-        vk::DescriptorSetLayoutCreateInfo layout_info;
-        if (push_set && *push_set == layouts.size()) {
-            layout_info.flags = vk::DescriptorSetLayoutCreateFlagBits::ePushDescriptor;
-        }
-        layout_info.bindingCount = static_cast<uint32_t>(bindings.size());
-        layout_info.pBindings = bindings.data();
-        layouts.push_back(
-            m_shader_foundry->get_device().createDescriptorSetLayout(layout_info));
+        set_bindings.push_back(std::move(bindings));
     }
 
-    if (push_set && *push_set >= layouts.size()) {
+    if (push_set && *push_set >= set_bindings.size()) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
             "Push descriptor set {} is out of range for a pipeline with {} descriptor sets",
-            *push_set, layouts.size());
-        for (const auto& layout : layouts) {
-            m_shader_foundry->get_device().destroyDescriptorSetLayout(layout);
-        }
+            *push_set, set_bindings.size());
         return INVALID_RENDER_PIPELINE;
     }
-
-    vk_config.descriptor_set_layouts = layouts;
 
     vk::ShaderStageFlags push_constant_stages;
 
@@ -512,24 +590,68 @@ RenderPipelineID RenderFlow::create_pipeline(
     };
     vk_config.cache = m_pipeline_cache;
 
+    std::vector<std::pair<uint32_t, uint32_t>> sorted_specialization(
+        specialization_constants.begin(), specialization_constants.end());
+    std::ranges::sort(sorted_specialization);
+
+    PipelineKey pipeline_key {
+        .config = std::move(vk_config),
+        .set_bindings = std::move(set_bindings),
+        .push_set = push_set,
+        .specialization_constants = std::move(sorted_specialization)
+    };
+    pipeline_key.finalize();
+
+    auto& shared_entries = m_shared_pipelines->entries;
+    if (auto cached = shared_entries.find(pipeline_key); cached != shared_entries.end()) {
+        if (auto shared = cached->second.lock()) {
+            const auto shared_id = m_next_pipeline_id.fetch_add(1);
+            m_pipelines[shared_id] = std::move(shared);
+            MF_INFO(Journal::Component::Portal, Journal::Context::Rendering,
+                "Graphics pipeline cache HIT (ID: {}, {} IDs share this state, {} unique states)",
+                shared_id, m_pipelines[shared_id].use_count(), shared_entries.size());
+            return shared_id;
+        }
+        shared_entries.erase(cached);
+    }
+
+    auto device = m_shader_foundry->get_device();
+
+    std::vector<vk::DescriptorSetLayout> layouts;
+    for (size_t index = 0; index < pipeline_key.set_bindings.size(); ++index) {
+        const auto& bindings = pipeline_key.set_bindings[index];
+        vk::DescriptorSetLayoutCreateInfo layout_info;
+        if (push_set && *push_set == index) {
+            layout_info.flags = vk::DescriptorSetLayoutCreateFlagBits::ePushDescriptor;
+        }
+        layout_info.bindingCount = static_cast<uint32_t>(bindings.size());
+        layout_info.pBindings = bindings.data();
+        layouts.push_back(device.createDescriptorSetLayout(layout_info));
+    }
+
+    const vk::DescriptorSetLayout state_vt_layout = layouts.front();
+    auto create_config = pipeline_key.config;
+    create_config.descriptor_set_layouts = layouts;
+
     auto pipeline = std::make_shared<Core::VKGraphicsPipeline>();
-    if (!pipeline->create(m_shader_foundry->get_device(), vk_config, specialization_constants)) {
+    if (!pipeline->create(device, create_config, specialization_constants)) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
             "Failed to create VKGraphicsPipeline for dynamic rendering");
 
         for (auto layout : layouts) {
-            m_shader_foundry->get_device().destroyDescriptorSetLayout(layout);
+            device.destroyDescriptorSetLayout(layout);
         }
         return INVALID_RENDER_PIPELINE;
     }
 
     auto pipeline_id = m_next_pipeline_id.fetch_add(1);
-    PipelineState state;
-    state.shader_ids = { config.vertex_shader, config.fragment_shader };
-    state.pipeline = pipeline;
-    state.layouts = layouts;
-    state.view_transform_layout = state_vt_layout;
-    state.push_set = push_set;
+    auto state = std::make_shared<PipelineState>();
+    state->device = device;
+    state->shader_ids = { config.vertex_shader, config.fragment_shader };
+    state->pipeline = pipeline;
+    state->layouts = layouts;
+    state->view_transform_layout = state_vt_layout;
+    state->push_set = push_set;
     if (push_set) {
         for (const ShaderID shader_id : { config.vertex_shader, config.fragment_shader, config.geometry_shader,
                  config.tess_control_shader, config.tess_eval_shader, config.mesh_shader, config.task_shader }) {
@@ -538,19 +660,20 @@ RenderPipelineID RenderFlow::create_pipeline(
             }
             for (const auto& used : m_shader_foundry->get_active_descriptor_bindings(shader_id)) {
                 if (used.set == *push_set
-                    && std::ranges::find(state.push_required, used.binding) == state.push_required.end()) {
-                    state.push_required.push_back(used.binding);
+                    && std::ranges::find(state->push_required, used.binding) == state->push_required.end()) {
+                    state->push_required.push_back(used.binding);
                 }
             }
         }
     }
-    state.layout = pipeline->get_layout();
-    state.push_constant_stages = push_constant_stages;
+    state->layout = pipeline->get_layout();
+    state->push_constant_stages = push_constant_stages;
+    shared_entries.insert_or_assign(std::move(pipeline_key), state);
     m_pipelines[pipeline_id] = std::move(state);
 
     MF_INFO(Journal::Component::Portal, Journal::Context::Rendering,
-        "Dynamic rendering pipeline created (ID: {}, {} color attachments)",
-        pipeline_id, color_formats.size());
+        "Graphics pipeline cache MISS, created (ID: {}, {} color attachments, {} unique states)",
+        pipeline_id, color_formats.size(), shared_entries.size());
 
     return pipeline_id;
 }
@@ -562,39 +685,34 @@ void RenderFlow::destroy_pipeline(RenderPipelineID pipeline_id)
         return;
     }
 
-    auto device = m_shader_foundry->get_device();
-
-    if (it->second.pipeline) {
-        it->second.pipeline->cleanup(device);
-    }
-
-    for (auto layout : it->second.layouts) {
-        if (layout) {
-            device.destroyDescriptorSetLayout(layout);
-        }
-    }
-
     m_pipelines.erase(it);
+    std::erase_if(m_shared_pipelines->entries,
+        [](const auto& entry) { return entry.second.expired(); });
 
     MF_DEBUG(Journal::Component::Portal, Journal::Context::Rendering,
         "Destroyed graphics pipeline (ID: {})", pipeline_id);
 }
 
-void RenderFlow::cleanup_pipelines()
+RenderFlow::PipelineState::~PipelineState()
 {
-    auto device = m_shader_foundry->get_device();
+    if (!device) {
+        return;
+    }
 
-    for (auto& [id, state] : m_pipelines) {
-        if (state.pipeline) {
-            state.pipeline->cleanup(device);
-        }
+    if (pipeline) {
+        pipeline->cleanup(device);
+    }
 
-        for (auto layout : state.layouts) {
-            if (layout) {
-                device.destroyDescriptorSetLayout(layout);
-            }
+    for (auto layout : layouts) {
+        if (layout) {
+            device.destroyDescriptorSetLayout(layout);
         }
     }
+}
+
+void RenderFlow::cleanup_pipelines()
+{
+    m_shared_pipelines->entries.clear();
     m_pipelines.clear();
 
     MF_DEBUG(Journal::Component::Portal, Journal::Context::Rendering,
@@ -608,7 +726,7 @@ vk::DescriptorSetLayout RenderFlow::get_view_transform_layout(
     if (it == m_pipelines.end()) {
         return {};
     }
-    return it->second.view_transform_layout;
+    return it->second->view_transform_layout;
 }
 
 //==============================================================================
@@ -811,7 +929,7 @@ void RenderFlow::bind_pipeline(CommandBufferID cmd_id, RenderPipelineID pipeline
         return;
     }
 
-    pipeline_it->second.pipeline->bind(cmd);
+    pipeline_it->second->pipeline->bind(cmd);
 }
 
 void RenderFlow::bind_vertex_buffers(
@@ -857,11 +975,11 @@ std::optional<uint32_t> RenderFlow::first_unwritten_push_binding(
     const std::vector<vk::WriteDescriptorSet>& writes) const
 {
     const auto pipeline_it = m_pipelines.find(pipeline_id);
-    if (pipeline_it == m_pipelines.end() || !pipeline_it->second.push_set) {
+    if (pipeline_it == m_pipelines.end() || !pipeline_it->second->push_set) {
         return std::nullopt;
     }
 
-    for (const uint32_t required : pipeline_it->second.push_required) {
+    for (const uint32_t required : pipeline_it->second->push_required) {
         const bool written = std::ranges::any_of(writes, [required](const vk::WriteDescriptorSet& write) {
             return write.dstBinding == required;
         });
@@ -885,7 +1003,7 @@ void RenderFlow::push_descriptors(
         return;
     }
 
-    if (!pipeline_it->second.push_set) {
+    if (!pipeline_it->second->push_set) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
             "Pipeline {} has no push descriptor set", pipeline_id);
         return;
@@ -898,7 +1016,7 @@ void RenderFlow::push_descriptors(
         return;
     }
 
-    pipeline_it->second.pipeline->push_descriptors(cmd, *pipeline_it->second.push_set, writes);
+    pipeline_it->second->pipeline->push_descriptors(cmd, *pipeline_it->second->push_set, writes);
 }
 
 void RenderFlow::bind_descriptor_sets(
@@ -929,7 +1047,7 @@ void RenderFlow::bind_descriptor_sets(
 
     cmd.bindDescriptorSets(
         vk::PipelineBindPoint::eGraphics,
-        pipeline_it->second.layout,
+        pipeline_it->second->layout,
         first_set,
         vk_sets,
         nullptr);
@@ -957,8 +1075,8 @@ void RenderFlow::push_constants(
     }
 
     cmd.pushConstants(
-        pipeline_it->second.layout,
-        pipeline_it->second.push_constant_stages,
+        pipeline_it->second->layout,
+        pipeline_it->second->push_constant_stages,
         offset,
         static_cast<uint32_t>(size),
         data);
@@ -1117,11 +1235,11 @@ std::vector<DescriptorSetID> RenderFlow::allocate_pipeline_descriptors(
         return {};
     }
 
-    const auto& layouts = pipeline_it->second.layouts;
+    const auto& layouts = pipeline_it->second->layouts;
     std::vector<DescriptorSetID> descriptor_set_ids;
 
     for (uint32_t i = first_layout_index; i < layouts.size(); ++i) {
-        if (pipeline_it->second.push_set && *pipeline_it->second.push_set == i) {
+        if (pipeline_it->second->push_set && *pipeline_it->second->push_set == i) {
             continue;
         }
         auto ds_id = m_shader_foundry->allocate_descriptor_set(layouts[i]);

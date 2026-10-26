@@ -335,7 +335,19 @@ private:
         vk::Image swapchain_image {};
     };
 
+    struct PipelineKey;
+    struct PipelineKeyHash;
+    struct SharedPipelines;
+
     struct PipelineState {
+        PipelineState() = default;
+        PipelineState(const PipelineState&) = delete;
+        PipelineState& operator=(const PipelineState&) = delete;
+        PipelineState(PipelineState&&) = delete;
+        PipelineState& operator=(PipelineState&&) = delete;
+        ~PipelineState();
+
+        vk::Device device {};
         std::vector<ShaderID> shader_ids;
         std::shared_ptr<Core::VKGraphicsPipeline> pipeline;
         std::vector<vk::DescriptorSetLayout> layouts;
@@ -347,7 +359,8 @@ private:
         std::vector<uint32_t> push_required;
     };
 
-    std::unordered_map<RenderPipelineID, PipelineState> m_pipelines;
+    std::unordered_map<RenderPipelineID, std::shared_ptr<PipelineState>> m_pipelines;
+    std::unique_ptr<SharedPipelines> m_shared_pipelines;
     std::unordered_map<std::shared_ptr<Core::Window>, WindowRenderAssociation> m_window_associations;
 
     std::atomic<uint64_t> m_next_pipeline_id { 1 };
@@ -358,8 +371,8 @@ private:
 
     static bool s_initialized;
 
-    RenderFlow() = default;
-    ~RenderFlow() { shutdown(); }
+    RenderFlow();
+    ~RenderFlow();
     void cleanup_pipelines();
 
     /**

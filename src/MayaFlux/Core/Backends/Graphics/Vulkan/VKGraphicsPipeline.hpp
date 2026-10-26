@@ -18,6 +18,8 @@ struct VertexBinding {
         , input_rate(rate)
     {
     }
+
+    bool operator==(const VertexBinding&) const = default;
 };
 
 struct VertexAttribute {
@@ -34,6 +36,8 @@ struct VertexAttribute {
         , offset(off)
     {
     }
+
+    bool operator==(const VertexAttribute&) const = default;
 };
 
 struct ColorBlendAttachment {
@@ -45,6 +49,8 @@ struct ColorBlendAttachment {
     vk::BlendFactor dst_alpha_blend_factor = vk::BlendFactor::eZero;
     vk::BlendOp alpha_blend_op = vk::BlendOp::eAdd;
     vk::ColorComponentFlags color_write_mask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+
+    bool operator==(const ColorBlendAttachment&) const = default;
 };
 
 /**
@@ -183,6 +189,11 @@ struct MAYAFLUX_API GraphicsPipelineConfig {
     //==========================================================================
 
     vk::PipelineCache cache = nullptr;
+
+    /**
+     * @brief Member-wise equality over every pipeline creation input
+     */
+    bool operator==(const GraphicsPipelineConfig&) const = default;
 
     //==========================================================================
     // HELPER METHODS
