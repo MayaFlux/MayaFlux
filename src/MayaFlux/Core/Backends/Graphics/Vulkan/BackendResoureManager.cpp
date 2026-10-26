@@ -13,7 +13,7 @@ namespace MayaFlux::Core {
 namespace {
     struct FencedSubmission {
         vk::CommandBuffer cmd;
-        vk::Fence fence;
+        uint64_t value {};
     };
 
     void record_barrier(
@@ -135,22 +135,18 @@ void BackendResourceManager::setup_backend_service(const std::shared_ptr<Registr
 
         cmd.end();
 
-        auto device = m_context.get_device();
-        vk::FenceCreateInfo fence_info {};
-        vk::Fence fence = device.createFence(fence_info);
-
         const vk::CommandBuffer commands[] = { cmd };
-        if (m_command_manager.submit(m_context.get_graphics_queue(), commands, {}, {}, fence) == 0) {
+        const uint64_t value = m_command_manager.submit(m_context.get_graphics_queue(), commands);
+        if (value == 0) {
             MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
                 "execute_fenced: queue submit failed");
-            device.destroyFence(fence);
             m_command_manager.free_command_buffer(cmd);
             return nullptr;
         }
 
         auto handle = std::make_shared<FencedSubmission>();
         handle->cmd = cmd;
-        handle->fence = fence;
+        handle->value = value;
         return handle;
     };
 
@@ -158,15 +154,7 @@ void BackendResourceManager::setup_backend_service(const std::shared_ptr<Registr
         if (!handle)
             return;
         auto sub = std::static_pointer_cast<FencedSubmission>(handle);
-        if (!sub->fence)
-            return;
-
-        auto device = m_context.get_device();
-        if (auto result = device.waitForFences(1, &sub->fence, VK_TRUE, UINT64_MAX);
-            result != vk::Result::eSuccess) {
-            MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
-                "wait_fenced: waitForFences failed: {}", vk::to_string(result));
-        }
+        m_command_manager.wait(sub->value);
     };
 
     buffer_service->release_fenced = [this](const std::shared_ptr<void>& handle) {
@@ -174,13 +162,8 @@ void BackendResourceManager::setup_backend_service(const std::shared_ptr<Registr
             return;
         auto sub = std::static_pointer_cast<FencedSubmission>(handle);
 
-        auto device = m_context.get_device();
-        if (sub->fence) {
-            device.destroyFence(sub->fence);
-            sub->fence = nullptr;
-        }
         if (sub->cmd) {
-            m_command_manager.free_command_buffer(sub->cmd);
+            m_command_manager.retire(sub->cmd, sub->value);
             sub->cmd = nullptr;
         }
     };
@@ -970,14 +953,11 @@ void BackendResourceManager::download_image_data(
     record_command(cmd);
     cmd.end();
 
-    vk::FenceCreateInfo fence_info {};
-    vk::Fence fence = device.createFence(fence_info);
-
     const vk::CommandBuffer commands[] = { cmd };
-    if (m_command_manager.submit(m_context.get_graphics_queue(), commands, {}, {}, fence) == 0) {
+    const uint64_t value = m_command_manager.submit(m_context.get_graphics_queue(), commands);
+    if (value == 0) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
             "download_image_data: queue submit failed");
-        device.destroyFence(fence);
         m_command_manager.free_command_buffer(cmd);
         if (local_staging)
             cleanup_buffer(local_staging);
@@ -986,11 +966,7 @@ void BackendResourceManager::download_image_data(
 
     image->set_current_layout(restore_layout);
 
-    if (auto result = device.waitForFences(1, &fence, VK_TRUE, UINT64_MAX);
-        result != vk::Result::eSuccess) {
-        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "download_image_data: waitForFences failed: {}", vk::to_string(result));
-    }
+    m_command_manager.wait(value);
 
     auto range = mapped_memory_range(active_staging->get_buffer_resources().memory, 0, VK_WHOLE_SIZE);
     if (auto result = device.invalidateMappedMemoryRanges(1, &range);
@@ -1007,7 +983,6 @@ void BackendResourceManager::download_image_data(
             "download_image_data: staging buffer has no mapped pointer");
     }
 
-    device.destroyFence(fence);
     m_command_manager.free_command_buffer(cmd);
 
     if (local_staging)

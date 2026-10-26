@@ -138,9 +138,7 @@ private:
     };
 
     struct FenceState {
-        vk::Fence fence;
-        bool signaled;
-
+        uint64_t value {};
         CommandBufferID cmd_id { INVALID_COMMAND_BUFFER };
     };
 
@@ -584,11 +582,11 @@ public:
     void wait_for_fences(const std::vector<FenceID>& fence_ids);
 
     /**
-     * @brief Destroy the fence and free its associated command buffer.
+     * @brief Invalidate the fence and free its associated command buffer.
      *
-     * Must be called once per FenceID returned by submit_async, after
-     * is_fence_signaled returns true. Failure to call this leaks a VkFence
-     * and a command buffer slot every dispatch cycle.
+     * Must be called once per FenceID returned by submit_async. The command
+     * buffer is freed once its submission completes. Failure to call this
+     * leaks a command buffer slot every dispatch cycle.
      *
      * Safe to call with INVALID_FENCE.
      *

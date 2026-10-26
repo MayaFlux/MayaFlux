@@ -1038,6 +1038,7 @@ void ShaderFoundry::free_all_command_buffers()
         }
     }
     m_command_buffers.clear();
+    m_retired_commands.clear();
 
     MF_INFO(Journal::Component::Portal, Journal::Context::ShaderCompilation,
         "Freed all command buffers");
@@ -1151,12 +1152,6 @@ FenceID ShaderFoundry::submit_async(CommandBufferID cmd_id)
 
     FenceID fence_id = m_next_fence_id++;
 
-    vk::FenceCreateInfo fence_info;
-    FenceState& fence_state = m_fences[fence_id];
-    fence_state.fence = get_device().createFence(fence_info);
-    fence_state.signaled = false;
-    fence_state.cmd_id = cmd_id;
-
     vk::Queue queue;
     switch (cmd_it->second.type) {
     case CommandBufferType::GRAPHICS:
@@ -1171,12 +1166,14 @@ FenceID ShaderFoundry::submit_async(CommandBufferID cmd_id)
     }
 
     const vk::CommandBuffer commands[] = { cmd_it->second.cmd };
-    if (m_backend->get_command_manager().submit(queue, commands, {}, {}, fence_state.fence) == 0) {
+    const uint64_t value = m_backend->get_command_manager().submit(queue, commands);
+    if (value == 0) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ShaderCompilation,
             "Failed to submit command buffer");
         return INVALID_FENCE;
     }
 
+    m_fences[fence_id] = { .value = value, .cmd_id = cmd_id };
     cmd_it->second.is_active = false;
 
     return fence_id;
@@ -1233,38 +1230,20 @@ void ShaderFoundry::wait_for_fence(FenceID fence_id)
         return;
     }
 
-    if (get_device().waitForFences(1, &it->second.fence, VK_TRUE, UINT64_MAX) != vk::Result::eSuccess) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::ShaderCompilation,
-            "Failed to wait for fence: {}", fence_id);
-        return;
-    }
-    it->second.signaled = true;
+    m_backend->get_command_manager().wait(it->second.value);
 }
 
 void ShaderFoundry::wait_for_fences(const std::vector<FenceID>& fence_ids)
 {
-    std::vector<vk::Fence> fences;
+    uint64_t latest = 0;
     for (auto fence_id : fence_ids) {
         auto it = m_fences.find(fence_id);
         if (it != m_fences.end()) {
-            fences.push_back(it->second.fence);
+            latest = std::max(latest, it->second.value);
         }
     }
 
-    if (!fences.empty()) {
-        if (get_device().waitForFences(static_cast<uint32_t>(fences.size()), fences.data(), VK_TRUE, UINT64_MAX) != vk::Result::eSuccess) {
-            MF_ERROR(Journal::Component::Portal, Journal::Context::ShaderCompilation,
-                "Failed to wait for fences");
-            return;
-        }
-    }
-
-    for (auto fence_id : fence_ids) {
-        auto it = m_fences.find(fence_id);
-        if (it != m_fences.end()) {
-            it->second.signaled = true;
-        }
-    }
+    m_backend->get_command_manager().wait(latest);
 }
 
 void ShaderFoundry::release_fence(FenceID fence_id)
@@ -1276,18 +1255,13 @@ void ShaderFoundry::release_fence(FenceID fence_id)
     if (it == m_fences.end())
         return;
 
-    if (it->second.fence) {
-        get_device().destroyFence(it->second.fence);
-        it->second.fence = nullptr;
-    }
-
-    const CommandBufferID cmd_id = it->second.cmd_id;
+    const FenceState state = it->second;
     m_fences.erase(it);
 
-    if (cmd_id != INVALID_COMMAND_BUFFER) {
-        auto cmd_it = m_command_buffers.find(cmd_id);
+    if (state.cmd_id != INVALID_COMMAND_BUFFER) {
+        auto cmd_it = m_command_buffers.find(state.cmd_id);
         if (cmd_it != m_command_buffers.end()) {
-            m_backend->get_command_manager().free_command_buffer(cmd_it->second.cmd);
+            m_backend->get_command_manager().retire(cmd_it->second.cmd, state.value);
             m_command_buffers.erase(cmd_it);
         }
     }
@@ -1300,13 +1274,7 @@ bool ShaderFoundry::is_fence_signaled(FenceID fence_id)
         return false;
     }
 
-    if (it->second.signaled) {
-        return true;
-    }
-
-    auto result = get_device().getFenceStatus(it->second.fence);
-    it->second.signaled = (result == vk::Result::eSuccess);
-    return it->second.signaled;
+    return m_backend->get_command_manager().is_complete(it->second.value);
 }
 
 CommandBufferID ShaderFoundry::begin_commands_with_wait(
@@ -1335,11 +1303,6 @@ void ShaderFoundry::cleanup_sync_objects()
 {
     auto device = get_device();
 
-    for (auto& [id, state] : m_fences) {
-        if (state.fence) {
-            device.destroyFence(state.fence);
-        }
-    }
     m_fences.clear();
 
     for (auto& [id, state] : m_semaphores) {
