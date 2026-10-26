@@ -125,7 +125,17 @@ public:
     void retire(vk::CommandBuffer command_buffer, uint64_t value);
 
     /**
-     * @brief Free every retired command buffer whose submission has completed
+     * @brief Run a release action once a submission has completed
+     * @param release Action that frees whatever the submission may still read; runs immediately when value is 0
+     * @param value Completion value returned by submit()
+     *
+     * Actions run from collect(), outside the retire lists, so they may call back
+     * into the manager. They are dropped without running at cleanup().
+     */
+    void retire_resource(std::function<void()> release, uint64_t value);
+
+    /**
+     * @brief Free every retired command buffer and run every release action whose submission has completed
      */
     void collect();
 
@@ -162,6 +172,11 @@ private:
         uint64_t value {};
     };
 
+    struct RetiredResource {
+        std::function<void()> release;
+        uint64_t value {};
+    };
+
     vk::Device m_device;
     vk::CommandPool m_command_pool;
     vk::CommandPool m_compute_command_pool;
@@ -177,6 +192,7 @@ private:
     std::vector<vk::CommandBuffer> m_allocated_buffers;
     std::vector<vk::CommandBuffer> m_compute_allocated_buffers;
     std::vector<RetiredCommand> m_retired;
+    std::vector<RetiredResource> m_retired_resources;
 };
 
 } // namespace MayaFlux::Core

@@ -588,7 +588,11 @@ bool PrimitiveMill::ensure_buffers(
         milled_layout.vertex_count = total;
 
         if (!m_outputs.empty()) {
-            get_shader_foundry().get_graphics_queue().waitIdle();
+            get_shader_foundry().release_after_submit([svc, outgoing = std::move(m_outputs)] {
+                for (const auto& buffer : outgoing) {
+                    svc->destroy_buffer(buffer);
+                }
+            });
         }
 
         m_outputs.assign(m_output_ring, nullptr);

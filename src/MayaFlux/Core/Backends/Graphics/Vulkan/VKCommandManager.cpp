@@ -62,6 +62,7 @@ bool VKCommandManager::initialize(vk::Device device, uint32_t graphics_queue_fam
 void VKCommandManager::cleanup()
 {
     m_retired.clear();
+    m_retired_resources.clear();
     m_deferred_cmd = nullptr;
     m_deferred_pending = false;
 
@@ -264,9 +265,23 @@ void VKCommandManager::retire(vk::CommandBuffer command_buffer, uint64_t value)
     m_retired.push_back({ .command_buffer = command_buffer, .value = value });
 }
 
+void VKCommandManager::retire_resource(std::function<void()> release, uint64_t value)
+{
+    if (!release) {
+        return;
+    }
+
+    if (value == 0) {
+        release();
+        return;
+    }
+
+    m_retired_resources.push_back({ .release = std::move(release), .value = value });
+}
+
 void VKCommandManager::collect()
 {
-    if (m_retired.empty()) {
+    if (m_retired.empty() && m_retired_resources.empty()) {
         return;
     }
 
@@ -278,6 +293,19 @@ void VKCommandManager::collect()
         free_command_buffer(retired.command_buffer);
         return true;
     });
+
+    std::vector<RetiredResource> ready;
+    std::erase_if(m_retired_resources, [&ready, completed](RetiredResource& retired) {
+        if (retired.value > completed) {
+            return false;
+        }
+        ready.push_back(std::move(retired));
+        return true;
+    });
+
+    for (auto& retired : ready) {
+        retired.release();
+    }
 }
 
 uint64_t VKCommandManager::completed_value() const

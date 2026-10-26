@@ -1062,6 +1062,38 @@ void ShaderFoundry::retire_after_submit(std::span<const CommandBufferID> cmd_ids
     }
 }
 
+void ShaderFoundry::release_after_submit(std::function<void()> release)
+{
+    auto& cmd_manager = m_backend->get_command_manager();
+    cmd_manager.retire_resource(std::move(release), cmd_manager.submitted_value());
+}
+
+uint64_t ShaderFoundry::submit_state(
+    const CommandBufferState& state,
+    std::span<const vk::SemaphoreSubmitInfo> signals)
+{
+    vk::Queue queue;
+    switch (state.type) {
+    case CommandBufferType::GRAPHICS:
+        queue = m_graphics_queue;
+        break;
+    case CommandBufferType::COMPUTE:
+        queue = m_compute_queue;
+        break;
+    case CommandBufferType::TRANSFER:
+        queue = m_transfer_queue;
+        break;
+    }
+
+    std::vector<vk::SemaphoreSubmitInfo> waits;
+    if (state.wait_semaphore) {
+        waits.emplace_back(state.wait_semaphore, 0, state.wait_stage);
+    }
+
+    const vk::CommandBuffer commands[] = { state.cmd };
+    return m_backend->get_command_manager().submit(queue, commands, waits, signals);
+}
+
 void ShaderFoundry::collect_retired_commands()
 {
     if (m_retired_commands.empty()) {
@@ -1104,21 +1136,7 @@ void ShaderFoundry::submit_and_wait(CommandBufferID cmd_id)
 
     it->second.cmd.end();
 
-    vk::Queue queue;
-    switch (it->second.type) {
-    case CommandBufferType::GRAPHICS:
-        queue = m_graphics_queue;
-        break;
-    case CommandBufferType::COMPUTE:
-        queue = m_compute_queue;
-        break;
-    case CommandBufferType::TRANSFER:
-        queue = m_transfer_queue;
-        break;
-    }
-
-    const vk::CommandBuffer commands[] = { it->second.cmd };
-    const uint64_t value = cmd_manager.submit(queue, commands);
+    const uint64_t value = submit_state(it->second);
     if (value == 0) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ShaderCompilation,
             "Failed to submit command buffer");
@@ -1152,21 +1170,7 @@ FenceID ShaderFoundry::submit_async(CommandBufferID cmd_id)
 
     FenceID fence_id = m_next_fence_id++;
 
-    vk::Queue queue;
-    switch (cmd_it->second.type) {
-    case CommandBufferType::GRAPHICS:
-        queue = m_graphics_queue;
-        break;
-    case CommandBufferType::COMPUTE:
-        queue = m_compute_queue;
-        break;
-    case CommandBufferType::TRANSFER:
-        queue = m_transfer_queue;
-        break;
-    }
-
-    const vk::CommandBuffer commands[] = { cmd_it->second.cmd };
-    const uint64_t value = m_backend->get_command_manager().submit(queue, commands);
+    const uint64_t value = submit_state(cmd_it->second);
     if (value == 0) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ShaderCompilation,
             "Failed to submit command buffer");
@@ -1198,21 +1202,7 @@ SemaphoreID ShaderFoundry::submit_with_signal(CommandBufferID cmd_id)
         semaphore_state.semaphore, 0, vk::PipelineStageFlagBits2::eAllCommands
     };
 
-    vk::Queue queue;
-    switch (cmd_it->second.type) {
-    case CommandBufferType::GRAPHICS:
-        queue = m_graphics_queue;
-        break;
-    case CommandBufferType::COMPUTE:
-        queue = m_compute_queue;
-        break;
-    case CommandBufferType::TRANSFER:
-        queue = m_transfer_queue;
-        break;
-    }
-
-    const vk::CommandBuffer commands[] = { cmd_it->second.cmd };
-    if (m_backend->get_command_manager().submit(queue, commands, {}, std::span { &signal_info, 1 }) == 0) {
+    if (submit_state(cmd_it->second, std::span { &signal_info, 1 }) == 0) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ShaderCompilation,
             "Failed to submit command buffer");
         return INVALID_SEMAPHORE;
@@ -1280,14 +1270,20 @@ bool ShaderFoundry::is_fence_signaled(FenceID fence_id)
 CommandBufferID ShaderFoundry::begin_commands_with_wait(
     CommandBufferType type,
     SemaphoreID wait_semaphore,
-    vk::PipelineStageFlags2 /*wait_stage*/)
+    vk::PipelineStageFlags2 wait_stage)
 {
     auto sem_it = m_semaphores.find(wait_semaphore);
     if (sem_it == m_semaphores.end()) {
         return INVALID_COMMAND_BUFFER;
     }
 
-    return begin_commands(type);
+    const CommandBufferID id = begin_commands(type);
+
+    auto& state = m_command_buffers[id];
+    state.wait_semaphore = sem_it->second.semaphore;
+    state.wait_stage = wait_stage;
+
+    return id;
 }
 
 vk::Semaphore ShaderFoundry::get_semaphore_handle(SemaphoreID semaphore_id)

@@ -133,6 +133,8 @@ private:
         CommandBufferType type;
         CommandBufferLevel level { CommandBufferLevel::PRIMARY };
         bool is_active;
+        vk::Semaphore wait_semaphore {};
+        vk::PipelineStageFlags2 wait_stage;
         vk::QueryPool timestamp_pool;
         std::unordered_map<std::string, uint32_t> timestamp_queries;
     };
@@ -545,6 +547,15 @@ public:
      */
     void retire_after_submit(std::span<const CommandBufferID> cmd_ids);
 
+    /**
+     * @brief Run a release action once every submission made so far has completed
+     * @param release Action that frees resources the submitted work may still read
+     *
+     * Runs immediately when nothing has been submitted. The action runs from the next
+     * command buffer allocation after completion, on the thread that allocates it.
+     */
+    void release_after_submit(std::function<void()> release);
+
     //==========================================================================
     // Memory Barriers and Synchronization
     //==========================================================================
@@ -604,9 +615,12 @@ public:
     /**
      * @brief Begin command buffer that waits on a semaphore
      * @param type Command buffer type (GRAPHICS, COMPUTE, TRANSFER)
-     * @param wait_semaphore Semaphore ID to wait on
+     * @param wait_semaphore Semaphore ID returned by submit_with_signal
      * @param wait_stage Pipeline stage to wait at
-     * @return Command buffer ID
+     * @return Command buffer ID, or INVALID_COMMAND_BUFFER for an unknown semaphore
+     *
+     * The wait is carried into the submission. A binary semaphore is consumed by
+     * the wait, so it can be waited on once per signal.
      */
     CommandBufferID begin_commands_with_wait(
         CommandBufferType type,
@@ -764,6 +778,7 @@ private:
 
     void collect_retired_commands();
     void release_command(CommandBufferID cmd_id);
+    uint64_t submit_state(const CommandBufferState& state, std::span<const vk::SemaphoreSubmitInfo> signals = {});
 
     struct FinishedTimestamp {
         CommandBufferID cmd_id { INVALID_COMMAND_BUFFER };
