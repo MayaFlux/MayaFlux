@@ -24,7 +24,7 @@ namespace MayaFlux::Portal::Forma::internal {
  *
  * Always held through shared_ptr, made with make().
  */
-class TextSlice {
+class MAYAFLUX_API TextSlice {
 public:
     /**
      * @brief Draw @p text in @p bounds on @p target.

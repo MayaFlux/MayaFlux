@@ -43,7 +43,7 @@ namespace MayaFlux::Portal::Forma::internal {
  * @param batch   Text-capable buffer to draw into as a slice, or empty.
  * @return Element id on the layer, and the row element for later set_text().
  */
-[[nodiscard]] std::pair<uint32_t, std::shared_ptr<Element>> add_text_row(
+[[nodiscard]] MAYAFLUX_API std::pair<uint32_t, std::shared_ptr<Element>> add_text_row(
     Surface& surface,
     std::string_view label,
     Kinesis::AABB2D bounds,

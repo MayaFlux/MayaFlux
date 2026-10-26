@@ -18,7 +18,7 @@ namespace MayaFlux::Portal::Text {
  * Glyphs land on whole output pixels when scale is one pixel of that space
  * and origin lies on a pixel boundary.
  */
-struct GlyphMap {
+struct MAYAFLUX_API GlyphMap {
     glm::vec2 origin { 0.F };
     glm::vec2 scale { 1.F };
 
