@@ -677,6 +677,7 @@ bool VKDevice::create_logical_device(vk::Instance /*instance*/, const GraphicsBa
     feature_chain.get<vk::PhysicalDeviceFeatures2>().features = device_features;
     feature_chain.get<vk::PhysicalDeviceVulkan13Features>().dynamicRendering = VK_TRUE;
     feature_chain.get<vk::PhysicalDeviceVulkan13Features>().synchronization2 = VK_TRUE;
+    feature_chain.get<vk::PhysicalDeviceVulkan13Features>().shaderDemoteToHelperInvocation = VK_TRUE;
     feature_chain.get<vk::PhysicalDeviceVulkan12Features>().bufferDeviceAddress = VK_TRUE;
     feature_chain.get<vk::PhysicalDeviceVulkan14Features>().pushDescriptor = VK_TRUE;
 
