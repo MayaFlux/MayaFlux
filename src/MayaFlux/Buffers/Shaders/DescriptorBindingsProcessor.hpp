@@ -64,6 +64,8 @@ public:
         BindingType binding_type;
         SourceType source_type { SourceType::NODE };
         std::shared_ptr<VKBuffer> gpu_buffer; ///< UBO/SSBO backing storage
+        std::shared_ptr<VKBuffer> staging; ///< Reused upload staging for a device-local gpu_buffer
+        std::vector<float> converted; ///< Reused float32 storage for double audio sources
         size_t buffer_offset {}; ///< Offset within buffer (for packed UBOs)
         size_t buffer_size; ///< Size to write
         std::atomic<ProcessingMode> processing_mode { ProcessingMode::INTERNAL };
@@ -205,6 +207,11 @@ public:
 
     /**
      * @brief Remove a binding
+     *
+     * The staged slot is removed from the target and the descriptor buffer is
+     * destroyed on the next execute, after the device is idle. The shader must
+     * not read the slot afterwards. Binding under an existing name releases the
+     * old binding the same way.
      */
     void unbind(const std::string& name);
 
@@ -253,8 +260,26 @@ protected:
 private:
     std::unordered_map<std::string, DescriptorBinding> m_bindings;
 
-    /** @brief (set, binding) slots released by unbind(), erased from the target's staged list on the next execute */
-    std::vector<std::pair<uint32_t, uint32_t>> m_released_slots;
+    struct ReleasedBinding {
+        uint32_t set {};
+        uint32_t binding {};
+        std::shared_ptr<VKBuffer> gpu_buffer;
+        std::shared_ptr<VKBuffer> staging;
+    };
+
+    /** @brief Bindings released by unbind() or a rebind, erased from the target and destroyed on the next execute */
+    std::vector<ReleasedBinding> m_released_bindings;
+
+    /**
+     * @brief Move a named binding into the released list
+     * @return True if the name was bound
+     */
+    bool release_binding(const std::string& name);
+
+    /**
+     * @brief Size the binding's reusable staging buffer for a device-local upload
+     */
+    void ensure_staging(DescriptorBinding& binding, size_t bytes);
 
     /**
      * @brief Ensure descriptor buffer has sufficient capacity
