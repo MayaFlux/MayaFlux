@@ -396,6 +396,7 @@ void DescriptorBindingsProcessor::unbind(const std::string& name)
     auto it = m_bindings.find(name);
     if (it != m_bindings.end()) {
         unbind_buffer(it->second.descriptor_name);
+        m_released_slots.emplace_back(it->second.set_index, it->second.binding_index);
         m_bindings.erase(it);
 
         m_needs_descriptor_rebuild = true;
@@ -451,6 +452,15 @@ DescriptorBindingsProcessor::ProcessingMode DescriptorBindingsProcessor::get_pro
 void DescriptorBindingsProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
 {
     auto& bindings_list = buffer->get_pipeline_context().descriptor_buffer_bindings;
+
+    if (!m_released_slots.empty()) {
+        std::erase_if(bindings_list, [this](const auto& staged_binding) {
+            return std::ranges::any_of(m_released_slots, [&staged_binding](const auto& slot) {
+                return slot.first == staged_binding.set && slot.second == staged_binding.binding;
+            });
+        });
+        m_released_slots.clear();
+    }
 
     for (auto& [name, binding] : m_bindings) {
         update_descriptor_data(binding);

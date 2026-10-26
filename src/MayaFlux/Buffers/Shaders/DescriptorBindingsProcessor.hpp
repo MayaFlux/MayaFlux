@@ -253,6 +253,9 @@ protected:
 private:
     std::unordered_map<std::string, DescriptorBinding> m_bindings;
 
+    /** @brief (set, binding) slots released by unbind(), erased from the target's staged list on the next execute */
+    std::vector<std::pair<uint32_t, uint32_t>> m_released_slots;
+
     /**
      * @brief Ensure descriptor buffer has sufficient capacity
      * @param binding Descriptor binding to check
