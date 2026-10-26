@@ -354,6 +354,7 @@ private:
 
     ShaderFoundry* m_shader_foundry = nullptr;
     Registry::Service::DisplayService* m_display_service = nullptr;
+    vk::PipelineCache m_pipeline_cache {};
 
     static bool s_initialized;
 

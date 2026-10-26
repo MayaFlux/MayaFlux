@@ -76,6 +76,12 @@ bool RenderFlow::initialize()
 
     m_shader_foundry = foundry;
     m_display_service = display_service;
+    try {
+        m_pipeline_cache = foundry->get_device().createPipelineCache({});
+    } catch (const std::exception& e) {
+        MF_WARN(Journal::Component::Portal, Journal::Context::Rendering,
+            "Vulkan pipeline cache unavailable, continuing without it: {}", e.what());
+    }
     s_initialized = true;
 
     MF_INFO(Journal::Component::Portal, Journal::Context::Rendering,
@@ -117,6 +123,11 @@ void RenderFlow::shutdown()
     }
 
     cleanup_pipelines();
+
+    if (m_pipeline_cache) {
+        device.destroyPipelineCache(m_pipeline_cache);
+        m_pipeline_cache = nullptr;
+    }
 
     m_window_associations.clear();
 
@@ -499,6 +510,7 @@ RenderPipelineID RenderFlow::create_pipeline(
         vk::DynamicState::eViewport,
         vk::DynamicState::eScissor
     };
+    vk_config.cache = m_pipeline_cache;
 
     auto pipeline = std::make_shared<Core::VKGraphicsPipeline>();
     if (!pipeline->create(m_shader_foundry->get_device(), vk_config, specialization_constants)) {
