@@ -130,6 +130,7 @@ namespace {
         QueueFamilyIndices families;
         bool has_swapchain {};
         bool has_mesh_shader {};
+        bool has_host_image_copy {};
         uint32_t present_family_mask {};
         bool graphics_presents {};
         bool has_pci_info {};
@@ -342,6 +343,12 @@ bool VKDevice::pick_physical_device(vk::Instance instance, const GraphicsBackend
 
         cand.families = find_queue_families(device);
 
+        vk::PhysicalDeviceVulkan14Features features14 {};
+        vk::PhysicalDeviceFeatures2 features {};
+        features.pNext = &features14;
+        device.getFeatures2(&features);
+        cand.has_host_image_copy = features14.hostImageCopy == VK_TRUE;
+
         if (cand.has_mesh_shader) {
             vk::PhysicalDeviceMeshShaderFeaturesEXT mesh_features;
             vk::PhysicalDeviceFeatures2 features;
@@ -371,6 +378,8 @@ bool VKDevice::pick_physical_device(vk::Instance instance, const GraphicsBackend
             cand.reject_reason = "no graphics queue family";
         } else if (cand.api_version < VK_API_VERSION_1_4) {
             cand.reject_reason = "device API version below 1.4";
+        } else if (!cand.has_host_image_copy) {
+            cand.reject_reason = "hostImageCopy is required";
         } else if (!cand.has_swapchain) {
             cand.reject_reason = "no VK_KHR_swapchain";
         } else if (backend_info.require_presentation && !cand.graphics_presents) {

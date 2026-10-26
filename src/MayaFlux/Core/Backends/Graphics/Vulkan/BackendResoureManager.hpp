@@ -127,86 +127,39 @@ public:
         vk::ImageAspectFlags aspect_flags = vk::ImageAspectFlagBits::eColor);
 
     /**
-     * @brief Upload data to an image (creates staging buffer internally)
-     * @param image Target VKImage
-     * @param data Pixel data pointer
-     * @param size Data size in bytes
+     * @brief Upload a whole color image from host memory.
+     * Immediate calls wait for prior GPU use. Deferred calls record a GPU copy
+     * and require a caller-owned staging buffer.
      */
     void upload_image_data(
-        std::shared_ptr<VKImage> image,
+        const std::shared_ptr<VKImage>& image,
         const void* data,
-        size_t size);
-
-    /**
-     * @brief Upload image data using a caller-supplied persistent staging buffer.
-     *        Identical to upload_image_data() but skips the per-call VkBuffer
-     *        allocation. The staging buffer must be host-visible and at least
-     *        @p size bytes. Intended for high-frequency streaming uploads.
-     * @param image   Target VKImage.
-     * @param data    Source pixel data pointer.
-     * @param size    Byte count.
-     * @param staging Pre-allocated host-visible staging buffer.
-     * @param deferred If true, command recording will be deferred and must be flushed
-     */
-    void upload_image_data(
-        std::shared_ptr<VKImage> image,
-        const void* data,
-        size_t size,
-        const std::shared_ptr<Buffers::VKBuffer>& staging, bool deferred = false);
-
-    /**
-     * @brief Download image data to a host pointer.
-     *
-     * When @p staging is null, allocates and destroys a per-call staging
-     * buffer internally. When @p staging is supplied, it is used as-is and
-     * not destroyed after — the caller owns its lifetime.
-     *
-     * When @p deferred is false (default), submits under a fence and blocks
-     * the calling thread on vkWaitForFences. This is non-blocking relative
-     * to the graphics queue (waitIdle is never called).
-     * When @p deferred is true and staging is supplied, records commands for
-     * deferred submission; the caller is responsible for flushing.
-     *
-     * @param image          Source image.
-     * @param data           Destination host pointer, at least @p size bytes.
-     * @param size           Byte count to read.
-     * @param staging        Persistent host-visible buffer, or nullptr for
-     *                       per-call allocation.
-     * @param deferred       Record for deferred submission (requires staging).
-     * @param restore_layout Layout to restore after the copy.
-     * @param restore_stage  Pipeline stage that consumes the image after restore.
-     */
-    void download_image_data(
-        std::shared_ptr<VKImage> image,
-        void* data,
         size_t size,
         const std::shared_ptr<Buffers::VKBuffer>& staging = nullptr,
-        bool deferred = false,
+        bool deferred = false);
+
+    /**
+     * @brief Read an image into host memory.
+     * Managed images use host image copy. Swapchain images use GPU readback.
+     * @param restore_layout Layout to restore after the copy.
+     * @param restore_stage Pipeline stage that consumes the restored image.
+     */
+    void download_image_data(
+        const std::shared_ptr<VKImage>& image,
+        void* data,
+        size_t size,
         vk::ImageLayout restore_layout = vk::ImageLayout::eShaderReadOnlyOptimal,
         vk::PipelineStageFlags2 restore_stage = vk::PipelineStageFlagBits2::eFragmentShader);
 
     /**
-     * @brief Upload pixel data into one layer of an array image.
-     *
-     * The other layers keep their contents. @p size must equal one layer's byte
-     * count. With @p staging null a per-call staging buffer is made and released;
-     * a deferred upload needs a caller staging buffer.
-     *
-     * @param image    Target array image.
-     * @param layer    Layer index.
-     * @param data     Source pixels.
-     * @param size     Byte count of one layer.
-     * @param staging  Persistent host-visible staging buffer, or nullptr.
-     * @param deferred Record for deferred submission (requires staging).
-     * @return True if the upload was recorded or executed.
+     * @brief Upload one array layer while preserving the other layers.
+     * @return True if the upload completed.
      */
     bool upload_image_layer(
         const std::shared_ptr<VKImage>& image,
         uint32_t layer,
         const void* data,
-        size_t size,
-        const std::shared_ptr<Buffers::VKBuffer>& staging = nullptr,
-        bool deferred = false);
+        size_t size);
 
     /**
      * @brief Whether a blit between two formats is supported with a filter.
@@ -302,6 +255,28 @@ public:
     void cleanup();
 
 private:
+    void load_host_copy_layouts();
+    [[nodiscard]] bool host_copy_src_layout(vk::ImageLayout layout) const;
+    [[nodiscard]] bool host_copy_dst_layout(vk::ImageLayout layout) const;
+    void transition_host_image(
+        vk::Image image,
+        vk::ImageLayout old_layout,
+        vk::ImageLayout new_layout,
+        vk::ImageSubresourceRange range,
+        vk::PipelineStageFlags2 restore_stage = vk::PipelineStageFlagBits2::eAllCommands);
+    void upload_image_host(
+        const std::shared_ptr<VKImage>& image,
+        uint32_t base_layer,
+        uint32_t layer_count,
+        const void* data,
+        size_t size);
+    void download_image_host(
+        const std::shared_ptr<VKImage>& image,
+        void* data,
+        size_t size,
+        vk::ImageLayout restore_layout,
+        vk::PipelineStageFlags2 restore_stage);
+
     [[nodiscard]] vk::MappedMemoryRange mapped_memory_range(
         vk::DeviceMemory memory,
         vk::DeviceSize offset,
@@ -313,6 +288,9 @@ private:
     std::vector<std::shared_ptr<Buffers::VKBuffer>> m_managed_buffers;
     std::unordered_map<VkDeviceMemory, vk::DeviceSize> m_buffer_allocation_sizes;
     std::unordered_map<size_t, vk::Sampler> m_sampler_cache;
+    bool m_host_copy_layouts_ready {};
+    std::vector<vk::ImageLayout> m_host_copy_src_layouts;
+    std::vector<vk::ImageLayout> m_host_copy_dst_layouts;
 
     size_t compute_sampler_hash(vk::Filter filter, vk::SamplerAddressMode address_mode, float max_anisotropy) const;
 };

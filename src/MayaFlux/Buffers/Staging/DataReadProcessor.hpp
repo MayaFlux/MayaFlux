@@ -164,7 +164,6 @@ private:
     std::atomic<bool> m_result_occupied { false };
     std::atomic<bool> m_result_ready { false };
     std::shared_ptr<VKBuffer> m_staging;
-    std::shared_ptr<VKBuffer> m_texture_staging;
     bool m_skip_while_pending {};
 };
 

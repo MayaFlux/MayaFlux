@@ -57,22 +57,10 @@ vk::ImageUsageFlags VKImage::get_usage_flags() const
 
     case Usage::TRANSFER_SRC:
     case Usage::TRANSFER_DST:
-    case Usage::STAGING:
-        // Staging images are rare in Vulkan (usually use buffers)
-        // Just transfer ops
         break;
     }
 
     return flags;
-}
-
-vk::MemoryPropertyFlags VKImage::get_memory_properties() const
-{
-    if (is_host_visible()) {
-        return vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent;
-    }
-
-    return vk::MemoryPropertyFlagBits::eDeviceLocal;
 }
 
 vk::ImageAspectFlags VKImage::get_aspect_flags() const
@@ -117,6 +105,12 @@ size_t VKImage::get_size_bytes() const
     }
 
     return total * m_array_layers;
+}
+
+size_t VKImage::get_base_level_size_bytes() const
+{
+    return static_cast<size_t>(m_width) * m_height * m_depth
+        * vk_format_bytes_per_pixel(m_format);
 }
 
 void VKImage::infer_dimensions_from_parameters()

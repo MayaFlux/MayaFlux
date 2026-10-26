@@ -525,12 +525,7 @@ protected:
                 w, h, m_output_format);
         }
 
-        if (!m_download_staging) {
-            m_download_staging = Buffers::create_image_staging_buffer(
-                m_output_container->byte_size());
-        }
-
-        m_output_container->from_image(img, m_download_staging, 0);
+        m_output_container->from_image(img, 0);
 
         output_type result;
         result.container = std::static_pointer_cast<Kakshya::SignalSourceContainer>(
@@ -581,7 +576,6 @@ private:
 
     std::shared_ptr<Kakshya::TextureContainer> m_pending_container;
     std::shared_ptr<Kakshya::TextureContainer> m_output_container;
-    std::shared_ptr<Buffers::VKBuffer> m_download_staging;
     std::shared_ptr<Buffers::VKBuffer> m_upload_staging;
     std::vector<GpuBufferBinding> m_aux_bindings;
 

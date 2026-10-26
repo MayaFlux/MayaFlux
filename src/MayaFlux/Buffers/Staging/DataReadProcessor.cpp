@@ -255,18 +255,12 @@ void DataReadProcessor::read_texture_pixels()
             return false;
         }
 
-        const size_t byte_count = TextureLoom::calculate_image_size(
-            image->get_width(), image->get_height(), 1, *format);
-        if (!self.m_texture_staging || self.m_texture_staging->get_size_bytes() < byte_count) {
-            self.m_texture_staging = create_image_staging_buffer(byte_count);
-        }
-
         vk::PipelineStageFlags2 restore_stage = vk::PipelineStageFlagBits2::eFragmentShader;
         if (original_layout == vk::ImageLayout::eGeneral) {
             restore_stage |= vk::PipelineStageFlagBits2::eComputeShader;
         }
 
-        pending.image = loom.download_image(image, self.m_texture_staging, original_layout, restore_stage);
+        pending.image = loom.download_image(image, original_layout, restore_stage);
         return pending.image.has_value();
     });
 }
@@ -410,7 +404,6 @@ void DataReadProcessor::on_detach(const std::shared_ptr<Buffer>&)
     m_result_ready.store(false, std::memory_order_release);
     m_result_occupied.store(false, std::memory_order_release);
     m_staging.reset();
-    m_texture_staging.reset();
 }
 
 bool DataReadProcessor::submit_read(

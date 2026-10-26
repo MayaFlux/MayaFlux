@@ -330,65 +330,25 @@ public:
     //==========================================================================
 
     /**
-     * @brief Upload pixel data to an existing texture
-     * @param image Target image
-     * @param data Pixel data pointer
-     * @param size Data size in bytes
-     *
-     * Handles staging buffer, layout transitions, and cleanup.
-     * Blocks until upload completes.
-     */
-    void upload_data(
-        const std::shared_ptr<Core::VKImage>& image,
-        const void* data,
-        size_t size);
-
-    /**
-     * @brief Upload pixel data reusing a caller-supplied persistent staging buffer.
-     *        Identical to upload_data() but skips the per-call VkBuffer allocation,
-     *        eliminating the Vulkan object churn that causes VK_ERROR_DEVICE_LOST
-     *        under sustained per-frame texture updates (e.g. video playback).
-     * @param image   Target VKImage (must already be initialised).
-     * @param data    Pixel data pointer (at least @p size bytes).
-     * @param size    Byte count — must match the image footprint.
-     * @param staging Host-visible staging VKBuffer from create_streaming_staging().
-     * @param deferred. If true, record_deferred_commands will be used by the backend.
+     * @brief Upload pixels to an image.
+     * Immediate uploads use host image copy. Deferred uploads require staging.
      */
     void upload_data(
         const std::shared_ptr<Core::VKImage>& image,
         const void* data,
         size_t size,
-        const std::shared_ptr<Buffers::VKBuffer>& staging, bool deferred = false);
+        const std::shared_ptr<Buffers::VKBuffer>& staging = nullptr,
+        bool deferred = false);
 
     /**
-     * @brief Download pixel data from a VKImage, reusing a caller-supplied
-     *        persistent staging buffer.
-     *
-     * When @p staging is null, falls through to the per-call blocking path.
-     * When @p staging is supplied, submits under a fence (fenced, not waitIdle)
-     * so other GPU work proceeds concurrently during the wait.
-     * When @p deferred is true, records commands for deferred submission;
-     * the caller is responsible for flushing. Ignored when staging is null.
-     *
-     * The staging buffer must be host-visible and at least @p size bytes.
-     * Allocate once with Buffers::create_image_staging_buffer(size).
-     *
-     * @param image    Source VKImage. Must be initialised.
-     * @param data     Destination host pointer, at least @p size bytes.
-     * @param size     Byte count to read.
-     * @param staging  Persistent staging buffer, or nullptr for per-call path.
-     * @param deferred When true and staging is supplied, records for deferred
-     *                 submission rather than immediate fenced execution.
-     * @param restore_layout Layout the image is left in. The default matches the
-     *                 layout the download previously always restored.
-     * @param restore_stage  Pipeline stage that consumes the image after restore.
+     * @brief Download pixels from an image into host memory.
+     * @param restore_layout Layout to restore after the copy.
+     * @param restore_stage Pipeline stage that consumes the restored image.
      */
     void download_data(
         const std::shared_ptr<Core::VKImage>& image,
         void* data,
         size_t size,
-        const std::shared_ptr<Buffers::VKBuffer>& staging,
-        bool deferred = false,
         vk::ImageLayout restore_layout = vk::ImageLayout::eShaderReadOnlyOptimal,
         vk::PipelineStageFlags2 restore_stage = vk::PipelineStageFlagBits2::eFragmentShader);
 
@@ -399,8 +359,6 @@ public:
      * one byte per channel gives uint8, two gives uint16, four gives float.
      *
      * @param image          Source image. Must satisfy readable_format().
-     * @param staging        Persistent host-visible staging buffer of at least
-     *                       the base level's byte size, or nullptr for a per-call one.
      * @param restore_layout Layout the image is left in.
      * @param restore_stage  Pipeline stage that consumes the image after restore.
      * @return The pixels with width, height, channels and format set, or
@@ -409,7 +367,6 @@ public:
      */
     [[nodiscard]] std::optional<Kakshya::ImageData> download_image(
         const std::shared_ptr<Core::VKImage>& image,
-        const std::shared_ptr<Buffers::VKBuffer>& staging = nullptr,
         vk::ImageLayout restore_layout = vk::ImageLayout::eShaderReadOnlyOptimal,
         vk::PipelineStageFlags2 restore_stage = vk::PipelineStageFlagBits2::eFragmentShader);
 
@@ -443,17 +400,13 @@ public:
      * @param layer    Layer index.
      * @param data     Pixels of one layer.
      * @param size     Byte count of one layer.
-     * @param staging  Persistent staging buffer, or nullptr for a per-call one.
-     * @param deferred Record for deferred submission (requires @p staging).
-     * @return True if the upload was recorded or executed.
+     * @return True if the upload completed.
      */
     bool upload_layer(
         const std::shared_ptr<Core::VKImage>& image,
         uint32_t layer,
         const void* data,
-        size_t size,
-        const std::shared_ptr<Buffers::VKBuffer>& staging = nullptr,
-        bool deferred = false);
+        size_t size);
 
     /**
      * @brief Copy a layer of one image into a layer of another, scaling to fit.

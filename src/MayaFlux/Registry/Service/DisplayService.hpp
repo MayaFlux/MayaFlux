@@ -129,7 +129,7 @@ struct MAYAFLUX_API DisplayService {
      *        a caller-supplied host buffer.
      *
      * Internally calls BackendResourceManager::download_image_data with
-     * restore_layout = ePresentSrcKHR and restore_stage = eBottomOfPipe,
+     * restore_layout = ePresentSrcKHR and restore_stage = eAllCommands,
      * which are the correct values for a swapchain image post-present.
      *
      * The destination buffer must be at least

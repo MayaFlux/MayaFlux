@@ -96,8 +96,7 @@ bool DynamicVideoStream::append_frame(std::span<const uint8_t> pixels)
     return true;
 }
 
-bool DynamicVideoStream::append_frame(const std::shared_ptr<Core::VKImage>& image,
-    const std::shared_ptr<Buffers::VKBuffer>& staging)
+bool DynamicVideoStream::append_frame(const std::shared_ptr<Core::VKImage>& image)
 {
     if (!image || !image->is_initialized()) {
         MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
@@ -110,7 +109,7 @@ bool DynamicVideoStream::append_frame(const std::shared_ptr<Core::VKImage>& imag
         return false;
     }
 
-    Portal::Graphics::TextureLoom::instance().download_data(image, slot, get_frame_byte_size(), staging);
+    Portal::Graphics::TextureLoom::instance().download_data(image, slot, get_frame_byte_size());
     finish_frame();
     return true;
 }

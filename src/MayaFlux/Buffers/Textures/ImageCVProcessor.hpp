@@ -21,11 +21,6 @@ namespace MayaFlux::Buffers {
  * (computer vision on image data) explicit and avoids collision with
  * VisionProcessor (the Kakshya DataProcessor over pixel containers).
  *
- * m_gpu_staging is a persistent host-visible VKBuffer allocated once in
- * on_attach, sized to the image footprint. Passed to download_and_normalise
- * on every call so TextureLoom::download_data uses the fenced path rather
- * than waitIdle, avoiding graphics queue stalls on each frame download.
- *
  * @tparam T A VKBuffer subclass satisfying GpuImageSource.
  */
 template <GpuImageSource T>
@@ -74,11 +69,6 @@ public:
             }
         }
 
-        if (!m_gpu_staging) {
-            constexpr size_t k_max_frame_bytes = 3840 * 2160 * 4;
-            m_gpu_staging = create_image_staging_buffer(k_max_frame_bytes);
-        }
-
         MF_INFO(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             "ImageCVProcessor attached");
     }
@@ -95,7 +85,6 @@ public:
             m_cpu_executor.reset();
         }
 
-        m_gpu_staging.reset();
     }
 
     /**
@@ -124,7 +113,7 @@ public:
         m_is_processing.store(true, std::memory_order_release);
 
         if (m_sequence.backend == Kinesis::Vision::VisionBackend::CPU) {
-            auto frame = download_and_normalise(image, m_raw_staging, m_float_work, m_gpu_staging);
+            auto frame = download_and_normalise(image, m_raw_staging, m_float_work);
             if (!frame.empty()) {
                 m_result = m_cpu_executor.run(
                     m_sequence, frame,
@@ -244,7 +233,6 @@ private:
 
     std::vector<uint8_t> m_raw_staging;
     std::vector<float> m_float_work;
-    std::shared_ptr<VKBuffer> m_gpu_staging;
 
     std::weak_ptr<T> m_buffer;
     std::shared_ptr<Vruta::BroadcastSource<Kinesis::Vision::VisionResult>> m_result_source;
