@@ -635,6 +635,7 @@ void DescriptorBindingsProcessor::update_from_network(DescriptorBinding& binding
         }
         const auto& samples = *data;
         size_t required = samples.size() * sizeof(float);
+        ensure_buffer_capacity(binding, required);
 
         thread_local std::vector<float> conv;
         conv.resize(samples.size());
