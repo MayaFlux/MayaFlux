@@ -680,6 +680,10 @@ bool VKDevice::create_logical_device(vk::Instance /*instance*/, const GraphicsBa
     feature_chain.get<vk::PhysicalDeviceVulkan13Features>().shaderDemoteToHelperInvocation = VK_TRUE;
     feature_chain.get<vk::PhysicalDeviceVulkan12Features>().bufferDeviceAddress = VK_TRUE;
     feature_chain.get<vk::PhysicalDeviceVulkan14Features>().pushDescriptor = VK_TRUE;
+    feature_chain.get<vk::PhysicalDeviceVulkan14Features>().hostImageCopy = VK_TRUE;
+    feature_chain.get<vk::PhysicalDeviceVulkan14Features>().maintenance5 = VK_TRUE;
+    feature_chain.get<vk::PhysicalDeviceVulkan14Features>().maintenance6 = VK_TRUE;
+    feature_chain.get<vk::PhysicalDeviceVulkan12Features>().timelineSemaphore = VK_TRUE;
 
     std::vector<std::string> missing_required;
 

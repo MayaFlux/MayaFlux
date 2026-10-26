@@ -1054,13 +1054,6 @@ void ShaderFoundry::submit_and_wait(CommandBufferID cmd_id)
 
     it->second.cmd.end();
 
-    vk::CommandBufferSubmitInfo cmd_info;
-    cmd_info.commandBuffer = it->second.cmd;
-
-    vk::SubmitInfo2 submit_info;
-    submit_info.commandBufferInfoCount = 1;
-    submit_info.pCommandBufferInfos = &cmd_info;
-
     vk::Queue queue;
     switch (it->second.type) {
     case CommandBufferType::GRAPHICS:
@@ -1074,12 +1067,14 @@ void ShaderFoundry::submit_and_wait(CommandBufferID cmd_id)
         break;
     }
 
-    if (queue.submit2(1, &submit_info, nullptr) != vk::Result::eSuccess) {
+    const vk::CommandBuffer commands[] = { it->second.cmd };
+    const uint64_t value = cmd_manager.submit(queue, commands);
+    if (value == 0) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ShaderCompilation,
             "Failed to submit command buffer");
         return;
     }
-    queue.waitIdle();
+    cmd_manager.wait(value);
 
     if (it->second.timestamp_pool) {
         for (const auto& query : it->second.timestamp_queries) {
@@ -1113,13 +1108,6 @@ FenceID ShaderFoundry::submit_async(CommandBufferID cmd_id)
     fence_state.signaled = false;
     fence_state.cmd_id = cmd_id;
 
-    vk::CommandBufferSubmitInfo cmd_info;
-    cmd_info.commandBuffer = cmd_it->second.cmd;
-
-    vk::SubmitInfo2 submit_info;
-    submit_info.commandBufferInfoCount = 1;
-    submit_info.pCommandBufferInfos = &cmd_info;
-
     vk::Queue queue;
     switch (cmd_it->second.type) {
     case CommandBufferType::GRAPHICS:
@@ -1133,7 +1121,8 @@ FenceID ShaderFoundry::submit_async(CommandBufferID cmd_id)
         break;
     }
 
-    if (queue.submit2(1, &submit_info, fence_state.fence) != vk::Result::eSuccess) {
+    const vk::CommandBuffer commands[] = { cmd_it->second.cmd };
+    if (m_backend->get_command_manager().submit(queue, commands, {}, {}, fence_state.fence) == 0) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ShaderCompilation,
             "Failed to submit command buffer");
         return INVALID_FENCE;
@@ -1159,18 +1148,9 @@ SemaphoreID ShaderFoundry::submit_with_signal(CommandBufferID cmd_id)
     SemaphoreState& semaphore_state = m_semaphores[semaphore_id];
     semaphore_state.semaphore = get_device().createSemaphore(semaphore_info);
 
-    vk::CommandBufferSubmitInfo cmd_info;
-    cmd_info.commandBuffer = cmd_it->second.cmd;
-
-    vk::SubmitInfo2 submit_info;
-    submit_info.commandBufferInfoCount = 1;
-    submit_info.pCommandBufferInfos = &cmd_info;
-
-    vk::SemaphoreSubmitInfo signal_info;
-    signal_info.semaphore = semaphore_state.semaphore;
-    signal_info.stageMask = vk::PipelineStageFlagBits2::eAllCommands;
-    submit_info.signalSemaphoreInfoCount = 1;
-    submit_info.pSignalSemaphoreInfos = &signal_info;
+    const vk::SemaphoreSubmitInfo signal_info {
+        semaphore_state.semaphore, 0, vk::PipelineStageFlagBits2::eAllCommands
+    };
 
     vk::Queue queue;
     switch (cmd_it->second.type) {
@@ -1185,7 +1165,8 @@ SemaphoreID ShaderFoundry::submit_with_signal(CommandBufferID cmd_id)
         break;
     }
 
-    if (queue.submit2(1, &submit_info, nullptr) != vk::Result::eSuccess) {
+    const vk::CommandBuffer commands[] = { cmd_it->second.cmd };
+    if (m_backend->get_command_manager().submit(queue, commands, {}, std::span { &signal_info, 1 }) == 0) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ShaderCompilation,
             "Failed to submit command buffer");
         return INVALID_SEMAPHORE;

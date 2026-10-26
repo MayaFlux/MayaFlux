@@ -139,17 +139,10 @@ void BackendResourceManager::setup_backend_service(const std::shared_ptr<Registr
         vk::FenceCreateInfo fence_info {};
         vk::Fence fence = device.createFence(fence_info);
 
-        vk::CommandBufferSubmitInfo cmd_info {};
-        cmd_info.commandBuffer = cmd;
-
-        vk::SubmitInfo2 submit_info {};
-        submit_info.commandBufferInfoCount = 1;
-        submit_info.pCommandBufferInfos = &cmd_info;
-
-        if (auto result = m_context.get_graphics_queue().submit2(1, &submit_info, fence);
-            result != vk::Result::eSuccess) {
+        const vk::CommandBuffer commands[] = { cmd };
+        if (m_command_manager.submit(m_context.get_graphics_queue(), commands, {}, {}, fence) == 0) {
             MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
-                "execute_fenced: queue submit failed: {}", vk::to_string(result));
+                "execute_fenced: queue submit failed");
             device.destroyFence(fence);
             m_command_manager.free_command_buffer(cmd);
             return nullptr;
@@ -980,17 +973,10 @@ void BackendResourceManager::download_image_data(
     vk::FenceCreateInfo fence_info {};
     vk::Fence fence = device.createFence(fence_info);
 
-    vk::CommandBufferSubmitInfo cmd_info {};
-    cmd_info.commandBuffer = cmd;
-
-    vk::SubmitInfo2 submit_info {};
-    submit_info.commandBufferInfoCount = 1;
-    submit_info.pCommandBufferInfos = &cmd_info;
-
-    if (auto result = m_context.get_graphics_queue().submit2(1, &submit_info, fence);
-        result != vk::Result::eSuccess) {
+    const vk::CommandBuffer commands[] = { cmd };
+    if (m_command_manager.submit(m_context.get_graphics_queue(), commands, {}, {}, fence) == 0) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "download_image_data: queue submit failed: {}", vk::to_string(result));
+            "download_image_data: queue submit failed");
         device.destroyFence(fence);
         m_command_manager.free_command_buffer(cmd);
         if (local_staging)
@@ -1356,40 +1342,9 @@ void BackendResourceManager::record_deferred_commands(const std::function<void(v
     m_command_manager.record_deferred_commands(recorder);
 }
 
-vk::Semaphore BackendResourceManager::flush_deferred_commands()
+uint64_t BackendResourceManager::flush_deferred_commands()
 {
-    if (!m_command_manager.has_deferred_commands())
-        return nullptr;
-
-    vk::CommandBuffer cmd = m_command_manager.get_deferred_cmd();
-    cmd.end();
-
-    if (!m_deferred_semaphore) {
-        vk::SemaphoreCreateInfo sem_info {};
-        m_deferred_semaphore = m_context.get_device().createSemaphore(sem_info);
-    }
-
-    vk::CommandBufferSubmitInfo cmd_info {};
-    cmd_info.commandBuffer = cmd;
-
-    vk::SemaphoreSubmitInfo signal_info {};
-    signal_info.semaphore = m_deferred_semaphore;
-    signal_info.stageMask = vk::PipelineStageFlagBits2::eAllCommands;
-
-    vk::SubmitInfo2 submit {};
-    submit.commandBufferInfoCount = 1;
-    submit.pCommandBufferInfos = &cmd_info;
-    submit.signalSemaphoreInfoCount = 1;
-    submit.pSignalSemaphoreInfos = &signal_info;
-
-    if (m_context.get_graphics_queue().submit2(1, &submit, nullptr) != vk::Result::eSuccess) {
-        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "Failed to submit deferred command buffer");
-    }
-
-    m_command_manager.reset_deferred();
-
-    return m_deferred_semaphore;
+    return m_command_manager.flush_deferred(m_context.get_graphics_queue());
 }
 
 void BackendResourceManager::cleanup()
@@ -1400,11 +1355,6 @@ void BackendResourceManager::cleanup()
         }
     }
     m_sampler_cache.clear();
-
-    if (m_deferred_semaphore) {
-        m_context.get_device().destroySemaphore(m_deferred_semaphore);
-        m_deferred_semaphore = nullptr;
-    }
 
     const auto device = m_context.get_device();
     auto release_slots = [this, &device](Buffers::VKBuffer& owner) {

@@ -1040,19 +1040,13 @@ void BackendWindowHandler::capture_frame(WindowRenderContext& ctx)
 
     (void)dev.resetFences(1, &slot.fence);
 
-    vk::CommandBufferSubmitInfo cmd_info {};
-    cmd_info.commandBuffer = slot.cmd;
-
-    vk::SubmitInfo2 si {};
-    si.commandBufferInfoCount = 1;
-    si.pCommandBufferInfos = &cmd_info;
-
     slot.pending.store(true, std::memory_order_release);
 
-    if (auto result = m_context.get_graphics_queue().submit2(1, &si, slot.fence); result != vk::Result::eSuccess) {
+    const vk::CommandBuffer commands[] = { slot.cmd };
+    if (m_command_manager.submit(m_context.get_graphics_queue(), commands, {}, {}, slot.fence) == 0) {
         MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
-            "Failed to submit capture command buffer for window '{}': {}",
-            ctx.window->get_create_info().title, vk::to_string(result));
+            "Failed to submit capture command buffer for window '{}'",
+            ctx.window->get_create_info().title);
         slot.pending.store(false, std::memory_order_release);
         return;
     }
@@ -1177,42 +1171,28 @@ void BackendWindowHandler::submit_and_present(
     auto& image_available = ctx->image_available[frame_index];
     auto& render_finished = ctx->render_finished[frame_index];
 
-    vk::Semaphore deferred_sem = m_resource_manager
+    const uint64_t deferred_value = m_resource_manager
         ? m_resource_manager->flush_deferred_commands()
-        : nullptr;
+        : 0;
 
     std::vector<vk::SemaphoreSubmitInfo> wait_infos;
-    wait_infos.push_back(vk::SemaphoreSubmitInfo {
-        image_available, 0, vk::PipelineStageFlagBits2::eColorAttachmentOutput });
+    wait_infos.emplace_back(image_available, 0, vk::PipelineStageFlagBits2::eColorAttachmentOutput);
 
-    if (deferred_sem) {
-        wait_infos.push_back(vk::SemaphoreSubmitInfo {
-            deferred_sem, 0, vk::PipelineStageFlagBits2::eFragmentShader });
+    if (deferred_value != 0) {
+        wait_infos.emplace_back(
+            m_command_manager.get_timeline(), deferred_value, vk::PipelineStageFlagBits2::eFragmentShader);
     }
 
-    vk::CommandBufferSubmitInfo cmd_info {};
-    cmd_info.commandBuffer = command_buffer;
+    const vk::SemaphoreSubmitInfo signal_info { render_finished, 0, vk::PipelineStageFlagBits2::eAllCommands };
+    const vk::CommandBuffer commands[] = { command_buffer };
 
-    vk::SemaphoreSubmitInfo signal_info {};
-    signal_info.semaphore = render_finished;
-    signal_info.stageMask = vk::PipelineStageFlagBits2::eAllCommands;
-
-    vk::SubmitInfo2 submit_info {};
-    submit_info.waitSemaphoreInfoCount = static_cast<uint32_t>(wait_infos.size());
-    submit_info.pWaitSemaphoreInfos = wait_infos.data();
-    submit_info.commandBufferInfoCount = 1;
-    submit_info.pCommandBufferInfos = &cmd_info;
-    submit_info.signalSemaphoreInfoCount = 1;
-    submit_info.pSignalSemaphoreInfos = &signal_info;
-
-    try {
-        auto result = graphics_queue.submit2(1, &submit_info, in_flight);
-        ctx->slot_submission[frame_index] = ++ctx->submitted_frames;
-    } catch (const vk::SystemError& e) {
+    if (m_command_manager.submit(graphics_queue, commands, wait_infos, std::span { &signal_info, 1 }, in_flight) == 0) {
         MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
-            "Failed to submit primary command buffer: {}", e.what());
+            "Failed to submit primary command buffer for window '{}'",
+            window->get_create_info().title);
         return;
     }
+    ctx->slot_submission[frame_index] = ++ctx->submitted_frames;
 
     bool present_success = ctx->swapchain->present(
         ctx->current_image_index, render_finished, graphics_queue);

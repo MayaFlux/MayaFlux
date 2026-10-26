@@ -36,6 +36,23 @@ bool VKCommandManager::initialize(vk::Device device, uint32_t graphics_queue_fam
         return false;
     }
 
+    vk::SemaphoreTypeCreateInfo type_info {};
+    type_info.semaphoreType = vk::SemaphoreType::eTimeline;
+    type_info.initialValue = 0;
+
+    vk::SemaphoreCreateInfo semaphore_info {};
+    semaphore_info.pNext = &type_info;
+
+    try {
+        m_timeline = device.createSemaphore(semaphore_info);
+    } catch (const vk::SystemError& e) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Failed to create timeline semaphore: {}", e.what());
+        return false;
+    }
+
+    m_submitted = 0;
+
     MF_INFO(Journal::Component::Core, Journal::Context::GraphicsBackend,
         "Command manager initialized");
 
@@ -44,6 +61,10 @@ bool VKCommandManager::initialize(vk::Device device, uint32_t graphics_queue_fam
 
 void VKCommandManager::cleanup()
 {
+    m_retired.clear();
+    m_deferred_cmd = nullptr;
+    m_deferred_pending = false;
+
     if (m_compute_command_pool) {
         if (!m_compute_allocated_buffers.empty()) {
             m_device.freeCommandBuffers(m_compute_command_pool, m_compute_allocated_buffers);
@@ -62,10 +83,17 @@ void VKCommandManager::cleanup()
         m_device.destroyCommandPool(m_command_pool);
         m_command_pool = nullptr;
     }
+
+    if (m_timeline) {
+        m_device.destroySemaphore(m_timeline);
+        m_timeline = nullptr;
+    }
 }
 
 vk::CommandBuffer VKCommandManager::allocate_command_buffer(vk::CommandBufferLevel level)
 {
+    collect();
+
     vk::CommandBufferAllocateInfo alloc_info {};
     alloc_info.commandPool = m_command_pool;
     alloc_info.level = level;
@@ -126,6 +154,8 @@ vk::CommandBuffer VKCommandManager::begin_single_time_commands()
 
 vk::CommandBuffer VKCommandManager::begin_single_time_commands_compute()
 {
+    collect();
+
     vk::CommandBufferAllocateInfo alloc_info {};
     alloc_info.commandPool = m_compute_command_pool;
     alloc_info.level = vk::CommandBufferLevel::ePrimary;
@@ -144,19 +174,10 @@ void VKCommandManager::end_single_time_commands(vk::CommandBuffer command_buffer
 {
     command_buffer.end();
 
-    vk::CommandBufferSubmitInfo cmd_info {};
-    cmd_info.commandBuffer = command_buffer;
+    const vk::CommandBuffer commands[] = { command_buffer };
+    const uint64_t value = submit(queue, commands);
 
-    vk::SubmitInfo2 submit_info {};
-    submit_info.commandBufferInfoCount = 1;
-    submit_info.pCommandBufferInfos = &cmd_info;
-
-    if (auto result = queue.submit2(1, &submit_info, nullptr); result != vk::Result::eSuccess) {
-        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "Failed to submit single time command buffer: {}", vk::to_string(result));
-    }
-    queue.waitIdle();
-
+    wait(value);
     free_command_buffer(command_buffer);
 }
 
@@ -169,10 +190,116 @@ void VKCommandManager::record_deferred_commands(
     m_deferred_pending = true;
 }
 
-void VKCommandManager::reset_deferred()
+uint64_t VKCommandManager::flush_deferred(vk::Queue queue)
 {
+    if (!m_deferred_pending || !m_deferred_cmd) {
+        return 0;
+    }
+
+    const vk::CommandBuffer command = m_deferred_cmd;
     m_deferred_cmd = nullptr;
     m_deferred_pending = false;
+
+    command.end();
+
+    const vk::CommandBuffer commands[] = { command };
+    const uint64_t value = submit(queue, commands);
+    retire(command, value);
+    return value;
+}
+
+uint64_t VKCommandManager::submit(
+    vk::Queue queue,
+    std::span<const vk::CommandBuffer> commands,
+    std::span<const vk::SemaphoreSubmitInfo> waits,
+    std::span<const vk::SemaphoreSubmitInfo> signals,
+    vk::Fence fence)
+{
+    std::vector<vk::CommandBufferSubmitInfo> command_infos;
+    command_infos.reserve(commands.size());
+    for (const auto& command : commands) {
+        command_infos.emplace_back(command);
+    }
+
+    const uint64_t value = m_submitted + 1;
+
+    std::vector<vk::SemaphoreSubmitInfo> signal_infos(signals.begin(), signals.end());
+    signal_infos.emplace_back(m_timeline, value, vk::PipelineStageFlagBits2::eAllCommands);
+
+    vk::SubmitInfo2 submit_info {};
+    submit_info.waitSemaphoreInfoCount = static_cast<uint32_t>(waits.size());
+    submit_info.pWaitSemaphoreInfos = waits.data();
+    submit_info.commandBufferInfoCount = static_cast<uint32_t>(command_infos.size());
+    submit_info.pCommandBufferInfos = command_infos.data();
+    submit_info.signalSemaphoreInfoCount = static_cast<uint32_t>(signal_infos.size());
+    submit_info.pSignalSemaphoreInfos = signal_infos.data();
+
+    try {
+        if (auto result = queue.submit2(1, &submit_info, fence); result != vk::Result::eSuccess) {
+            MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                "Queue submit failed: {}", vk::to_string(result));
+            return 0;
+        }
+    } catch (const vk::SystemError& e) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Queue submit failed: {}", e.what());
+        return 0;
+    }
+
+    m_submitted = value;
+    return value;
+}
+
+void VKCommandManager::retire(vk::CommandBuffer command_buffer, uint64_t value)
+{
+    if (!command_buffer) {
+        return;
+    }
+
+    if (value == 0) {
+        free_command_buffer(command_buffer);
+        return;
+    }
+
+    m_retired.push_back({ .command_buffer = command_buffer, .value = value });
+}
+
+void VKCommandManager::collect()
+{
+    if (m_retired.empty()) {
+        return;
+    }
+
+    const uint64_t completed = completed_value();
+    std::erase_if(m_retired, [this, completed](const RetiredCommand& retired) {
+        if (retired.value > completed) {
+            return false;
+        }
+        free_command_buffer(retired.command_buffer);
+        return true;
+    });
+}
+
+uint64_t VKCommandManager::completed_value() const
+{
+    return m_device.getSemaphoreCounterValue(m_timeline);
+}
+
+void VKCommandManager::wait(uint64_t value, uint64_t timeout_ns) const
+{
+    if (value == 0) {
+        return;
+    }
+
+    vk::SemaphoreWaitInfo wait_info {};
+    wait_info.semaphoreCount = 1;
+    wait_info.pSemaphores = &m_timeline;
+    wait_info.pValues = &value;
+
+    if (auto result = m_device.waitSemaphores(wait_info, timeout_ns); result != vk::Result::eSuccess) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Timeline wait for value {} returned {}", value, vk::to_string(result));
+    }
 }
 
 void VKCommandManager::reset_pool()
