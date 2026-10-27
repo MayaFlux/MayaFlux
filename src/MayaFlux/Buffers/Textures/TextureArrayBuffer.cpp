@@ -3,7 +3,6 @@
 #include "TextureProcessor.hpp"
 
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
-#include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
 #include "MayaFlux/Portal/Graphics/SamplerForge.hpp"
 #include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
@@ -46,10 +45,6 @@ void TextureArrayBuffer::setup_processors(ProcessingToken token)
 {
     ensure_array();
     TextureBuffer::setup_processors(token);
-
-    if (const auto processor = get_texture_processor()) {
-        processor->set_streaming_mode(true);
-    }
 }
 
 void TextureArrayBuffer::setup_rendering(const RenderConfig& config)
@@ -107,10 +102,6 @@ bool TextureArrayBuffer::submit_layer(uint32_t layer, const Kakshya::ImageData& 
         return false;
     }
 
-    if (!m_source_staging || m_source_staging->get_size() < image.byte_size()) {
-        m_source_staging = create_image_staging_buffer(image.byte_size());
-    }
-
     const Portal::Graphics::ImageKey key {
         .width = image.width,
         .height = image.height,
@@ -119,8 +110,7 @@ bool TextureArrayBuffer::submit_layer(uint32_t layer, const Kakshya::ImageData& 
 
     const auto source = Portal::Graphics::get_texture_manager().refresh_cached_image(
         m_source_cache, key,
-        std::span<const uint8_t>(static_cast<const uint8_t*>(image.data()), image.byte_size()),
-        m_source_staging);
+        std::span<const uint8_t>(static_cast<const uint8_t*>(image.data()), image.byte_size()));
     if (!source) {
         MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             "TextureArrayBuffer::submit_layer failed to upload a {}x{} image", image.width, image.height);
@@ -317,19 +307,12 @@ void TextureArrayBuffer::enter_layer_mode()
 
     auto& storage = get_pixel_data_mutable();
     const size_t total = m_layer_bytes * m_layers;
-    const auto staging = create_image_staging_buffer(total);
-    if (!staging) {
-        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "TextureArrayBuffer: failed to allocate staging for {} bytes", total);
-        return;
-    }
-
     auto& loom = Portal::Graphics::get_texture_manager();
     if (storage.size() == total) {
-        loom.upload_data(get_texture(), storage.data(), total, staging);
+        loom.upload_data(get_texture(), storage.data(), total);
     } else {
         const std::vector<uint8_t> blank(total, 0);
-        loom.upload_data(get_texture(), blank.data(), total, staging);
+        loom.upload_data(get_texture(), blank.data(), total);
     }
 
     std::vector<uint8_t>().swap(storage);

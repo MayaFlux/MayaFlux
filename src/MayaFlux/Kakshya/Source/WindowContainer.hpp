@@ -10,10 +10,6 @@ class Window;
 class VKImage;
 }
 
-namespace MayaFlux::Buffers {
-class VKBuffer;
-}
-
 namespace MayaFlux::Kakshya {
 
 /**
@@ -131,33 +127,10 @@ public:
     [[nodiscard]] std::shared_ptr<Core::VKImage> to_image() const;
 
     /**
-     * @brief Refresh the full surface VKImage, reusing a
-     *        caller-supplied persistent staging buffer.
-     *
-     * The container retains the image. The supplied staging buffer is used
-     * for this upload.
-     *
-     * @param staging Host-visible staging VKBuffer sized to at least
-     *                width * height * bytes_per_pixel.
-     * @return Cached VKImage, or nullptr on failure.
-     */
-    [[nodiscard]] std::shared_ptr<Core::VKImage> to_image(
-        const std::shared_ptr<Buffers::VKBuffer>& staging) const;
-
-    /**
      * @brief Refresh the cached VKImage for m_data[frame_index].
      * @param frame_index Index into m_data in [0, frame_capacity).
      */
     [[nodiscard]] std::shared_ptr<Core::VKImage> image_at(uint32_t frame_index) const;
-
-    /**
-     * @brief Upload m_data[frame_index] reusing a caller-supplied staging buffer.
-     * @param frame_index Index into m_data in [0, frame_capacity).
-     * @param staging     Host-visible VKBuffer sized to at least w * h * bpp.
-     */
-    [[nodiscard]] std::shared_ptr<Core::VKImage> image_at(
-        uint32_t frame_index,
-        const std::shared_ptr<Buffers::VKBuffer>& staging) const;
 
     /**
      * @brief Crop a region from the last readback and refresh its cached VKImage.

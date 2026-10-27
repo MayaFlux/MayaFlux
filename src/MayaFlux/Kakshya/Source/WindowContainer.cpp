@@ -198,20 +198,6 @@ std::shared_ptr<Core::VKImage> WindowContainer::to_image() const
         pixels->pixels);
 }
 
-std::shared_ptr<Core::VKImage> WindowContainer::to_image(
-    const std::shared_ptr<Buffers::VKBuffer>& staging) const
-{
-    auto pixels = snapshot_pixels();
-    if (!pixels)
-        return nullptr;
-
-    const auto format = get_image_format();
-    Memory::SerializedSeqlockWriteGuard image_guard(m_image_cache_lock);
-    return Portal::Graphics::TextureLoom::instance().refresh_cached_image(
-        m_surface_image, sampled_image_key(pixels->width, pixels->height, format),
-        pixels->pixels, staging);
-}
-
 std::shared_ptr<Core::VKImage> WindowContainer::image_at(uint32_t frame_index) const
 {
     if (frame_index >= m_data.size()) {
@@ -241,37 +227,6 @@ std::shared_ptr<Core::VKImage> WindowContainer::image_at(uint32_t frame_index) c
     return Portal::Graphics::TextureLoom::instance().refresh_cached_image(
         m_frame_images[frame_index], sampled_image_key(pixels->width, pixels->height, format),
         pixels->pixels);
-}
-
-std::shared_ptr<Core::VKImage> WindowContainer::image_at(
-    uint32_t frame_index, const std::shared_ptr<Buffers::VKBuffer>& staging) const
-{
-    if (frame_index >= m_data.size()) {
-        MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-            "WindowContainer::image_at(staging, {}) : out of range (capacity={})",
-            frame_index, m_frame_capacity);
-        return nullptr;
-    }
-
-    const uint64_t written = m_frames_written.load(std::memory_order_acquire);
-    const uint32_t head = m_write_head.load(std::memory_order_acquire);
-    const bool ring_full = written >= m_frame_capacity;
-    if (!ring_full && frame_index >= head) {
-        MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-            "WindowContainer::image_at(staging, {}) : frame index is ahead of write head ({}), data may be stale or uninitialized",
-            frame_index, head);
-        return nullptr;
-    }
-
-    auto pixels = snapshot_pixels(frame_index);
-    if (!pixels)
-        return nullptr;
-
-    const auto format = get_image_format();
-    Memory::SerializedSeqlockWriteGuard image_guard(m_image_cache_lock);
-    return Portal::Graphics::TextureLoom::instance().refresh_cached_image(
-        m_frame_images[frame_index], sampled_image_key(pixels->width, pixels->height, format),
-        pixels->pixels, staging);
 }
 
 std::shared_ptr<Core::VKImage> WindowContainer::region_to_image(const Region& region) const

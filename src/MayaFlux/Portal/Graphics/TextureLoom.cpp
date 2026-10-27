@@ -480,8 +480,7 @@ std::shared_ptr<Core::VKImage> TextureLoom::acquire_cached_image(
 std::shared_ptr<Core::VKImage> TextureLoom::refresh_cached_image(
     ImageCacheEntry& entry,
     const ImageKey& key,
-    std::span<const uint8_t> pixels,
-    const std::shared_ptr<Buffers::VKBuffer>& staging)
+    std::span<const uint8_t> pixels)
 {
     if (key.kind == ImageKey::Kind::STORAGE_2D || key.width == 0
         || key.height == 0 || key.layers == 0)
@@ -495,21 +494,11 @@ std::shared_ptr<Core::VKImage> TextureLoom::refresh_cached_image(
         return nullptr;
     }
 
-    if (staging && (staging->get_size() < required || !staging->get_mapped_ptr())) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
-            "Cached image staging buffer is unavailable or too small");
-        return nullptr;
-    }
-
     auto image = acquire_cached_image(entry, key);
     if (!image)
         return nullptr;
 
-    if (staging) {
-        upload_data(image, pixels.data(), pixels.size(), staging);
-    } else {
-        upload_data(image, pixels.data(), pixels.size());
-    }
+    upload_data(image, pixels.data(), pixels.size());
 
     return image;
 }

@@ -269,7 +269,6 @@ private:
     Portal::Graphics::ImageFormat m_tex_format { Portal::Graphics::ImageFormat::RGBA32F };
     std::string m_tex_binding;
     std::shared_ptr<Core::VKImage> m_gpu_texture;
-    std::shared_ptr<VKBuffer> m_image_staging;
 
     Kakshya::DataModality m_modality { Kakshya::DataModality::UNKNOWN };
     Kakshya::GpuDataFormat m_last_texture_format { Kakshya::GpuDataFormat::VEC4_F32 };
@@ -286,7 +285,6 @@ private:
 
     std::unique_ptr<Memory::LockFreeQueue<WriteFn, k_write_queue_capacity>> m_writes;
     std::shared_ptr<VKBuffer> m_write_staging;
-    std::shared_ptr<VKBuffer> m_write_image_staging;
 
     void enqueue_write(WriteFn fn);
 

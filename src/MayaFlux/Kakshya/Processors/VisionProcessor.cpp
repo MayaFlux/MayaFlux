@@ -48,7 +48,6 @@ void VisionProcessor::on_attach(const std::shared_ptr<SignalSourceContainer>& co
 
         auto& loom = Portal::Graphics::TextureLoom::instance();
         m_gpu_frame = loom.create_2d(m_width, m_height, ImageFormat::RGBA8, nullptr);
-        m_upload_staging = Buffers::create_image_staging_buffer(m_gpu_frame->get_size_bytes());
     }
 
     if (m_width == 0 || m_height == 0) {
@@ -102,7 +101,7 @@ void VisionProcessor::process(const std::shared_ptr<SignalSourceContainer>& cont
             m_result = std::move(poll);
         } else if (const void* raw = container->get_raw_data()) {
             auto& loom = Portal::Graphics::TextureLoom::instance();
-            loom.upload_data(m_gpu_frame, raw, m_gpu_frame->get_size_bytes(), m_upload_staging);
+            loom.upload_data(m_gpu_frame, raw, m_gpu_frame->get_size_bytes());
 
             auto pass = m_executor->run(m_sequence, m_gpu_frame, m_width, m_height);
             if (!pass.is_ready()) {
@@ -131,11 +130,9 @@ void VisionProcessor::set_sequence(Kinesis::Vision::VisionSequence sequence)
         if (m_width > 0 && m_height > 0 && !m_gpu_frame) {
             auto& loom = Portal::Graphics::TextureLoom::instance();
             m_gpu_frame = loom.create_2d(m_width, m_height, ImageFormat::RGBA8, nullptr);
-            m_upload_staging = Buffers::create_image_staging_buffer(m_gpu_frame->get_size_bytes());
         }
     } else {
         m_gpu_frame.reset();
-        m_upload_staging.reset();
     }
 }
 

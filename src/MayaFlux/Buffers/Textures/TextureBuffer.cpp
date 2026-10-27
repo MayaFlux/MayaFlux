@@ -162,10 +162,6 @@ void TextureBuffer::resize_texture(uint32_t new_width, uint32_t new_height)
     m_gpu_texture.reset();
     m_texture_dirty = true;
     m_geometry_dirty = true;
-
-    if (auto proc = get_texture_processor()) {
-        proc->invalidate_staging();
-    }
 }
 
 // =========================================================================

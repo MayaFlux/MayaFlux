@@ -296,15 +296,12 @@ public:
      * @param entry Cache entry retained by the image producer.
      * @param key Sampled image allocation properties.
      * @param pixels Complete pixel bytes for every layer.
-     * @param staging Optional caller staging buffer. Without one, upload_data
-     *                uses its existing transient staging path.
      * @return Refreshed image, or nullptr when validation or creation fails.
      */
     [[nodiscard]] std::shared_ptr<Core::VKImage> refresh_cached_image(
         ImageCacheEntry& entry,
         const ImageKey& key,
-        std::span<const uint8_t> pixels,
-        const std::shared_ptr<Buffers::VKBuffer>& staging = {});
+        std::span<const uint8_t> pixels);
 
     /**
      * @brief Create a 2D texture from a DataVariant in one shot.

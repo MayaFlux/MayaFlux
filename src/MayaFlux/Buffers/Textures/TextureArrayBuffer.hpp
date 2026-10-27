@@ -249,7 +249,6 @@ private:
     std::optional<Portal::Graphics::FitMode> m_fit { Portal::Graphics::FitMode::STRETCH };
     Portal::Graphics::FilterMode m_filter { Portal::Graphics::FilterMode::LINEAR };
     std::unordered_map<uint32_t, std::optional<Portal::Graphics::FitMode>> m_layer_fit;
-    std::shared_ptr<VKBuffer> m_source_staging;
     Portal::Graphics::ImageCacheEntry m_source_cache;
     std::vector<uint8_t> m_blank;
     std::shared_ptr<VKBuffer> m_layer_data;
