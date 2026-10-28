@@ -860,6 +860,19 @@ void RenderFlow::begin_rendering(
         depth_image_view ? "yes" : "no");
 }
 
+void RenderFlow::release_draw_inputs(CommandBufferID cmd_id)
+{
+    m_shader_foundry->memory_barrier(
+        cmd_id,
+        vk::AccessFlagBits2::eVertexAttributeRead | vk::AccessFlagBits2::eIndexRead
+            | vk::AccessFlagBits2::eIndirectCommandRead | vk::AccessFlagBits2::eUniformRead
+            | vk::AccessFlagBits2::eShaderRead,
+        vk::AccessFlagBits2::eShaderWrite | vk::AccessFlagBits2::eTransferWrite,
+        vk::PipelineStageFlagBits2::eVertexInput | vk::PipelineStageFlagBits2::eVertexShader
+            | vk::PipelineStageFlagBits2::eFragmentShader | vk::PipelineStageFlagBits2::eDrawIndirect,
+        vk::PipelineStageFlagBits2::eComputeShader | vk::PipelineStageFlagBits2::eTransfer);
+}
+
 void RenderFlow::end_rendering(
     CommandBufferID cmd_id,
     const std::shared_ptr<Core::Window>& window)
@@ -872,6 +885,8 @@ void RenderFlow::end_rendering(
     }
 
     cmd.endRendering();
+
+    release_draw_inputs(cmd_id);
 
     auto it = m_window_associations.find(window);
     if (it == m_window_associations.end() || !it->second.swapchain_image) {

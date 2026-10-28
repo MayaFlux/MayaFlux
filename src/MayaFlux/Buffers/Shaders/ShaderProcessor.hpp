@@ -624,14 +624,25 @@ protected:
     virtual void on_dispatch_complete(const std::shared_ptr<VKBuffer>& buffer);
 
     /**
+     * @brief Whether a dispatch blocks the host until it has completed.
+     *
+     * True by default. The wait also drains earlier queue work, which per-frame
+     * host writes to single-buffered resources currently rely on. Override to
+     * return false only when every consumer of the output is ordered on the GPU
+     * and the host resources the dispatch uses are protected across frames.
+     */
+    [[nodiscard]] virtual bool waits_on_submit() const { return true; }
+
+    /**
      * @brief Submit a recorded command buffer honoring the submission mode.
      * @param cmd_id Command buffer to submit.
      * @param buffer Buffer being processed. Retained until resolution when
      *        deferred, so on_dispatch_complete receives the same instance.
      *
-     * Synchronous submission calls submit_and_wait and returns. Deferred
-     * submission calls submit_async and stores the fence; a failed
-     * submission falls back to leaving nothing pending.
+     * Deferred submission calls submit_async and stores the fence; a failed
+     * submission falls back to leaving nothing pending. Otherwise the
+     * dispatch calls submit_and_wait when waits_on_submit() is true, and
+     * submits without waiting and retires the command buffer when it is false.
      */
     void submit_recorded(Portal::Graphics::CommandBufferID cmd_id, const std::shared_ptr<VKBuffer>& buffer);
 

@@ -566,7 +566,11 @@ void ShaderProcessor::submit_recorded(
     auto& foundry = Portal::Graphics::get_shader_foundry();
 
     if (!m_deferred_submission) {
-        foundry.submit_and_wait(cmd_id);
+        if (waits_on_submit()) {
+            foundry.submit_and_wait(cmd_id);
+        } else {
+            foundry.release_fence(foundry.submit_async(cmd_id));
+        }
         return;
     }
 

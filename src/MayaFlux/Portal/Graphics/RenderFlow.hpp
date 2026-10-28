@@ -330,6 +330,15 @@ public:
         uint32_t first_layout_index = 0);
 
 private:
+    /**
+     * @brief Order this pass's reads before any later compute or transfer write.
+     * @param cmd_id Command buffer that recorded the draws.
+     *
+     * Lets later submissions overwrite buffers the draws read, such as vertex
+     * data a compute dispatch rewrites each frame.
+     */
+    void release_draw_inputs(CommandBufferID cmd_id);
+
     struct WindowRenderAssociation {
         std::weak_ptr<Core::Window> window;
         vk::Image swapchain_image {};
