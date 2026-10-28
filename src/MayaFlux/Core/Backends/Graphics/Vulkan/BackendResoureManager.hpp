@@ -73,6 +73,15 @@ public:
     void cleanup_buffer(const std::shared_ptr<Buffers::VKBuffer>& buffer);
 
     /**
+     * @brief Detach a buffer's resources and release them when submitted work completes
+     * @param buffer Shared pointer to the buffer to retire
+     *
+     * The buffer is cleared and unregistered at once, so it can be initialized
+     * again. Does not wait for the GPU.
+     */
+    void retire_buffer(const std::shared_ptr<Buffers::VKBuffer>& buffer);
+
+    /**
      * @brief Query the Vulkan device address of an initialized BDA-capable buffer
      * @param buffer Buffer with Usage::UNIFORM_BDA or Usage::STORAGE_BDA
      * @return vk::DeviceAddress, or 0 if the buffer was not created with eShaderDeviceAddress
@@ -277,6 +286,8 @@ private:
         size_t size,
         vk::ImageLayout restore_layout,
         vk::PipelineStageFlags2 restore_stage);
+
+    void release_buffer_handles(vk::Buffer buffer, vk::DeviceMemory memory, bool mapped);
 
     [[nodiscard]] vk::MappedMemoryRange mapped_memory_range(
         vk::DeviceMemory memory,

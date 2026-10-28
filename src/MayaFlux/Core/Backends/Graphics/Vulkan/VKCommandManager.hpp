@@ -2,6 +2,8 @@
 
 #include "VKTimeline.hpp"
 
+#include "MayaFlux/Transitive/Memory/SweepList.hpp"
+
 #include <vulkan/vulkan.hpp>
 
 namespace MayaFlux::Core {
@@ -21,7 +23,9 @@ namespace MayaFlux::Core {
  * several queues is expressed as a TimelineSnapshot.
  *
  * Submission is externally synchronized, as vkQueueSubmit is. Two threads must
- * not call submit(), retire() or collect() concurrently.
+ * not call submit() concurrently. retire(), retire_resource() and collect() may
+ * be called from any thread: the retire lists are lock-free Memory::SweepList
+ * instances.
  */
 class MAYAFLUX_API VKCommandManager {
 public:
@@ -147,12 +151,15 @@ public:
      * @param completion Point returned by submit(), or a snapshot of several
      *
      * Actions run from collect(), outside the retire lists, so they may call back
-     * into the manager. They are dropped without running at cleanup().
+     * into the manager. They run on the thread that collects, which is not
+     * necessarily the one that retired them. They are dropped without running at cleanup().
      */
     void retire_resource(std::function<void()> release, const TimelineSnapshot& completion);
 
     /**
      * @brief Free every retired command buffer and run every release action whose submission has completed
+     *
+     * Entries that have not completed stay for the next call.
      */
     void collect();
 
@@ -255,8 +262,8 @@ private:
 
     std::vector<vk::CommandBuffer> m_allocated_buffers;
     std::vector<vk::CommandBuffer> m_compute_allocated_buffers;
-    std::vector<RetiredCommand> m_retired;
-    std::vector<RetiredResource> m_retired_resources;
+    Memory::SweepList<RetiredCommand> m_retired;
+    Memory::SweepList<RetiredResource> m_retired_resources;
 };
 
 } // namespace MayaFlux::Core

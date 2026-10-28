@@ -80,8 +80,8 @@ bool VKCommandManager::create_timeline(vk::Queue queue)
 
 void VKCommandManager::cleanup()
 {
-    m_retired.clear();
-    m_retired_resources.clear();
+    m_retired.drain([](RetiredCommand&) { });
+    m_retired_resources.drain([](RetiredResource&) { });
     m_deferred_cmd = nullptr;
     m_deferred_pending = false;
 
@@ -291,7 +291,7 @@ void VKCommandManager::retire(vk::CommandBuffer command_buffer, const TimelineSn
         return;
     }
 
-    m_retired.push_back({ .command_buffer = command_buffer, .completion = completion });
+    m_retired.push({ .command_buffer = command_buffer, .completion = completion });
 }
 
 void VKCommandManager::retire_resource(std::function<void()> release, const TimelineSnapshot& completion)
@@ -305,7 +305,7 @@ void VKCommandManager::retire_resource(std::function<void()> release, const Time
         return;
     }
 
-    m_retired_resources.push_back({ .release = std::move(release), .completion = completion });
+    m_retired_resources.push({ .release = std::move(release), .completion = completion });
 }
 
 void VKCommandManager::collect()
@@ -314,25 +314,17 @@ void VKCommandManager::collect()
         return;
     }
 
-    std::erase_if(m_retired, [this](const RetiredCommand& retired) {
-        if (!is_complete(retired.completion)) {
-            return false;
-        }
-        free_command_buffer(retired.command_buffer);
-        return true;
-    });
+    m_retired.sweep(
+        [this](RetiredCommand& retired) { return is_complete(retired.completion); },
+        [this](RetiredCommand& retired) { free_command_buffer(retired.command_buffer); });
 
-    std::vector<RetiredResource> ready;
-    std::erase_if(m_retired_resources, [this, &ready](RetiredResource& retired) {
-        if (!is_complete(retired.completion)) {
-            return false;
-        }
-        ready.push_back(std::move(retired));
-        return true;
-    });
+    std::vector<std::function<void()>> ready;
+    m_retired_resources.sweep(
+        [this](RetiredResource& retired) { return is_complete(retired.completion); },
+        [&ready](RetiredResource& retired) { ready.push_back(std::move(retired.release)); });
 
-    for (auto& retired : ready) {
-        retired.release();
+    for (auto& release : ready) {
+        release();
     }
 }
 

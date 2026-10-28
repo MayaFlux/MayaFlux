@@ -11,7 +11,6 @@
 
 #include "MayaFlux/Registry/BackendRegistry.hpp"
 #include "MayaFlux/Registry/Service/BufferService.hpp"
-#include "MayaFlux/Registry/Service/DisplayService.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
@@ -496,15 +495,11 @@ void DescriptorBindingsProcessor::execute_shader(const std::shared_ptr<VKBuffer>
 
         auto& registry = Registry::BackendRegistry::instance();
         auto* buffer_service = registry.get_service<Registry::Service::BufferService>();
-        auto* display_service = registry.get_service<Registry::Service::DisplayService>();
         if (buffer_service) {
-            if (display_service && display_service->wait_idle) {
-                display_service->wait_idle();
-            }
             for (const auto& released : m_released_bindings) {
                 for (const auto& owned : { released.gpu_buffer, released.staging }) {
                     if (owned && owned->is_initialized()) {
-                        buffer_service->destroy_buffer(owned);
+                        buffer_service->retire_buffer(owned);
                     }
                 }
             }

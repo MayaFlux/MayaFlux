@@ -38,6 +38,16 @@ struct MAYAFLUX_API BufferService {
     std::function<void(const std::shared_ptr<void>&)> destroy_buffer;
 
     /**
+     * @brief Destroy a buffer once all submitted GPU work has completed
+     * @param buffer Buffer handle to retire
+     *
+     * Detaches the buffer's resources immediately, so the object can be
+     * initialized again, and releases the old handles when the work
+     * submitted so far finishes. Does not wait.
+     */
+    std::function<void(const std::shared_ptr<void>&)> retire_buffer;
+
+    /**
      * @brief Map buffer memory to host-visible pointer
      * @param memory Memory handle to map
      * @param offset Offset in bytes from memory start

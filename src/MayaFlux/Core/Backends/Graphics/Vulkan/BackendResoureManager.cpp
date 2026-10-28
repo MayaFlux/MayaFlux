@@ -72,6 +72,11 @@ void BackendResourceManager::setup_backend_service(const std::shared_ptr<Registr
         this->cleanup_buffer(buffer);
     };
 
+    buffer_service->retire_buffer = [this](const std::shared_ptr<void>& vk_buf) {
+        auto buffer = std::static_pointer_cast<Buffers::VKBuffer>(vk_buf);
+        this->retire_buffer(buffer);
+    };
+
     buffer_service->get_buffer_device_address = [this](const std::shared_ptr<void>& vk_buf) -> uint64_t {
         auto buffer = std::static_pointer_cast<Buffers::VKBuffer>(vk_buf);
         auto address = this->get_buffer_device_address(buffer);
@@ -349,18 +354,7 @@ void BackendResourceManager::cleanup_buffer(const std::shared_ptr<Buffers::VKBuf
 
     auto& res = it->get()->get_buffer_resources();
 
-    if (res.mapped_ptr) {
-        m_context.get_device().unmapMemory(res.memory);
-    }
-
-    if (res.buffer) {
-        m_context.get_device().destroyBuffer(res.buffer);
-    }
-
-    if (res.memory) {
-        m_buffer_allocation_sizes.erase(static_cast<VkDeviceMemory>(res.memory));
-        m_context.get_device().freeMemory(res.memory);
-    }
+    release_buffer_handles(res.buffer, res.memory, res.mapped_ptr != nullptr);
 
     MF_INFO(Journal::Component::Core, Journal::Context::GraphicsBackend,
         "VKBuffer cleaned up: {:p}", static_cast<void*>(res.buffer));
@@ -370,6 +364,53 @@ void BackendResourceManager::cleanup_buffer(const std::shared_ptr<Buffers::VKBuf
     res.memory = vk::DeviceMemory {};
 
     m_managed_buffers.erase(it);
+}
+
+void BackendResourceManager::retire_buffer(const std::shared_ptr<Buffers::VKBuffer>& buffer)
+{
+    if (!buffer) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Attempted to retire null VKBuffer");
+        return;
+    }
+
+    auto it = std::ranges::find(m_managed_buffers, buffer);
+    if (it == m_managed_buffers.end()) {
+        return;
+    }
+
+    auto& res = it->get()->get_buffer_resources();
+    const vk::Buffer old_buffer = res.buffer;
+    const vk::DeviceMemory old_memory = res.memory;
+    const bool mapped = res.mapped_ptr != nullptr;
+
+    res.mapped_ptr = nullptr;
+    res.buffer = vk::Buffer {};
+    res.memory = vk::DeviceMemory {};
+
+    m_managed_buffers.erase(it);
+
+    m_command_manager.retire_resource(
+        [this, old_buffer, old_memory, mapped]() {
+            release_buffer_handles(old_buffer, old_memory, mapped);
+        },
+        m_command_manager.submitted());
+}
+
+void BackendResourceManager::release_buffer_handles(vk::Buffer buffer, vk::DeviceMemory memory, bool mapped)
+{
+    if (mapped) {
+        m_context.get_device().unmapMemory(memory);
+    }
+
+    if (buffer) {
+        m_context.get_device().destroyBuffer(buffer);
+    }
+
+    if (memory) {
+        m_buffer_allocation_sizes.erase(static_cast<VkDeviceMemory>(memory));
+        m_context.get_device().freeMemory(memory);
+    }
 }
 
 void BackendResourceManager::flush_pending_buffer_operations()
