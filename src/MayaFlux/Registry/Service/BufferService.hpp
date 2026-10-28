@@ -180,6 +180,14 @@ struct MAYAFLUX_API BufferService {
      * @return           Opaque fence handle. Pass to wait_fenced(), then release_fenced().
      */
     std::function<std::shared_ptr<void>(void*, void*, size_t, size_t, size_t)> copy_buffer_fenced;
+
+    /**
+     * @brief Block until every dispatch submitted so far has completed.
+     *
+     * Returns immediately when nothing is outstanding. Call before the host
+     * reads or overwrites memory a dispatch may still be using.
+     */
+    std::function<void()> wait_produced;
 };
 
 } // namespace MayaFlux::Registry::Services

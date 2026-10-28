@@ -1351,6 +1351,31 @@ void ShaderFoundry::buffer_barrier(
     it->second.cmd.pipelineBarrier2(dependency);
 }
 
+void ShaderFoundry::memory_barrier(
+    CommandBufferID cmd_id,
+    vk::AccessFlags2 src_access,
+    vk::AccessFlags2 dst_access,
+    vk::PipelineStageFlags2 src_stage,
+    vk::PipelineStageFlags2 dst_stage)
+{
+    auto it = m_command_buffers.find(cmd_id);
+    if (it == m_command_buffers.end()) {
+        return;
+    }
+
+    vk::MemoryBarrier2 barrier;
+    barrier.srcStageMask = src_stage;
+    barrier.srcAccessMask = src_access;
+    barrier.dstStageMask = dst_stage;
+    barrier.dstAccessMask = dst_access;
+
+    vk::DependencyInfo dependency;
+    dependency.memoryBarrierCount = 1;
+    dependency.pMemoryBarriers = &barrier;
+
+    it->second.cmd.pipelineBarrier2(dependency);
+}
+
 void ShaderFoundry::image_barrier(
     CommandBufferID cmd_id,
     vk::Image image,

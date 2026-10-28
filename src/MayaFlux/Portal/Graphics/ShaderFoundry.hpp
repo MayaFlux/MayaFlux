@@ -644,6 +644,16 @@ public:
         vk::PipelineStageFlags2 dst_stage);
 
     /**
+     * @brief Insert a global memory barrier covering every buffer and image
+     */
+    void memory_barrier(
+        CommandBufferID cmd_id,
+        vk::AccessFlags2 src_access,
+        vk::AccessFlags2 dst_access,
+        vk::PipelineStageFlags2 src_stage,
+        vk::PipelineStageFlags2 dst_stage);
+
+    /**
      * @brief Insert image memory barrier
      */
     void image_barrier(
