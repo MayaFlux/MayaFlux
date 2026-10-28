@@ -563,10 +563,14 @@ const Kinesis::RenderTransform& RenderProcessor::publish_render_transform()
     m_published_render_transform = transform;
 
     if (m_render_transform_ubo && m_render_transform_ubo->get_mapped_ptr()) {
-        std::memcpy(
-            m_render_transform_ubo->get_mapped_ptr(),
-            &m_published_render_transform,
-            sizeof(Kinesis::RenderTransform));
+        void* mapped = m_render_transform_ubo->get_mapped_ptr();
+        const auto* current = static_cast<const Kinesis::RenderTransform*>(mapped);
+        const auto& next = m_published_render_transform;
+        if (current->view_transform.view != next.view_transform.view
+            || current->view_transform.projection != next.view_transform.projection
+            || current->geometry != next.geometry) {
+            std::memcpy(mapped, &next, sizeof(Kinesis::RenderTransform));
+        }
     }
 
     return m_published_render_transform;
