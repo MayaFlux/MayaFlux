@@ -160,8 +160,8 @@ public:
      * @brief Read buffer contents as Kakshya DataVariant
      *
      * For host-visible buffers this returns a single DataVariant containing the
-     * raw bytes. For device-local buffers this warns and returns empty — a
-     * BufferDownloadProcessor should be used to read GPU-only memory.
+     * raw bytes. For device-local buffers this warns and returns empty; use
+     * Buffers::download_from_gpu to read GPU-only memory.
      *
      * @return Vector of DataVariant objects representing buffer contents.
      */
@@ -171,8 +171,8 @@ public:
      * @brief Write data into the buffer
      *
      * If the buffer is host-visible and mapped the provided data is copied into
-     * the mapped memory. For device-local buffers, a BufferUploadProcessor must
-     * be present in the processing chain to perform the staging/upload.
+     * the mapped memory. For device-local buffers this warns and does nothing;
+     * use Buffers::upload_to_gpu.
      *
      * @param data Vector of Kakshya::DataVariant containing the payload to copy.
      */

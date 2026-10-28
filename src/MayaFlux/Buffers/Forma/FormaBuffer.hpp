@@ -63,7 +63,6 @@ public:
 
     /**
      * @brief Register with the graphics subsystem.
-     *        Creates a BufferUploadProcessor as default processor.
      */
     void setup_processors(ProcessingToken token) override;
 

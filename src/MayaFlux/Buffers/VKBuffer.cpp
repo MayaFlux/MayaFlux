@@ -115,7 +115,7 @@ void VKBuffer::set_data(const std::vector<Kakshya::DataVariant>& data)
         infer_dimensions_from_data(bytes);
     } else {
         MF_WARN(Journal::Component::Buffers, Journal::Context::BufferManagement,
-            "set_data() on device-local buffer requires BufferUploadProcessor in chain");
+            "set_data() on a device-local buffer is not supported, use Buffers::upload_to_gpu");
     }
 }
 
@@ -137,7 +137,7 @@ std::vector<Kakshya::DataVariant> VKBuffer::get_data()
     }
 
     MF_WARN(Journal::Component::Buffers, Journal::Context::BufferManagement,
-        "get_data() on device-local buffer requires BufferDownloadProcessor");
+        "get_data() on a device-local buffer is not supported, use Buffers::download_from_gpu");
     return {};
 }
 
