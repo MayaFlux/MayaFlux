@@ -238,7 +238,7 @@ void ComputeProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
     auto& foundry = Portal::Graphics::get_shader_foundry();
     auto& compute_press = Portal::Graphics::get_compute_press();
 
-    auto cmd_id = foundry.begin_commands(Portal::Graphics::ShaderFoundry::CommandBufferType::COMPUTE);
+    auto cmd_id = foundry.begin_commands(Portal::Graphics::ShaderFoundry::CommandBufferType::GRAPHICS);
 
     m_last_command_buffer = cmd_id;
     m_last_processed_buffer = buffer;
@@ -318,9 +318,13 @@ void ComputeProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
         cmd_id,
         buffer->get_buffer(),
         vk::AccessFlagBits2::eShaderWrite,
-        vk::AccessFlagBits2::eShaderRead | vk::AccessFlagBits2::eTransferRead,
+        vk::AccessFlagBits2::eShaderRead | vk::AccessFlagBits2::eTransferRead
+            | vk::AccessFlagBits2::eVertexAttributeRead | vk::AccessFlagBits2::eIndexRead
+            | vk::AccessFlagBits2::eIndirectCommandRead,
         vk::PipelineStageFlagBits2::eComputeShader,
-        vk::PipelineStageFlagBits2::eComputeShader | vk::PipelineStageFlagBits2::eTransfer);
+        vk::PipelineStageFlagBits2::eComputeShader | vk::PipelineStageFlagBits2::eTransfer
+            | vk::PipelineStageFlagBits2::eVertexInput | vk::PipelineStageFlagBits2::eVertexShader
+            | vk::PipelineStageFlagBits2::eFragmentShader | vk::PipelineStageFlagBits2::eDrawIndirect);
 
     submit_recorded(cmd_id, buffer);
 }
