@@ -19,6 +19,14 @@ inline constexpr float k_buffer_growth_factor = 1.5F;
 using TransferHandle = std::shared_ptr<void>;
 
 /**
+ * @brief Block until every dispatch submitted so far has completed.
+ *
+ * Returns immediately when nothing is outstanding. Call before the host
+ * reads or overwrites mapped memory that a dispatch may still be using.
+ */
+MAYAFLUX_API void await_dispatches();
+
+/**
  * @brief Upload data to a host-visible buffer
  * @param target Target VKBuffer to upload data into
  * @param data DataVariant containing the data to upload

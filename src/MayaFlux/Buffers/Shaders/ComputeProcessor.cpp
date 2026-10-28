@@ -314,9 +314,8 @@ void ComputeProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
 
     on_after_execute(cmd_id, buffer);
 
-    foundry.buffer_barrier(
+    foundry.memory_barrier(
         cmd_id,
-        buffer->get_buffer(),
         vk::AccessFlagBits2::eShaderWrite,
         vk::AccessFlagBits2::eShaderRead | vk::AccessFlagBits2::eTransferRead
             | vk::AccessFlagBits2::eVertexAttributeRead | vk::AccessFlagBits2::eIndexRead

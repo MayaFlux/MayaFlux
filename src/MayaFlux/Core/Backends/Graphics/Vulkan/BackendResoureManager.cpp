@@ -180,7 +180,7 @@ void BackendResourceManager::setup_backend_service(const std::shared_ptr<Registr
         });
     };
 
-    buffer_service->wait_produced = [this]() {
+    buffer_service->await_dispatches = [this]() {
         const auto produced = m_command_manager.produced();
         if (!m_command_manager.is_complete(produced)) {
             m_command_manager.wait(produced);

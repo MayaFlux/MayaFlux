@@ -108,6 +108,7 @@ void VKBuffer::set_data(const std::vector<Kakshya::DataVariant>& data)
                 bytes, m_size_bytes);
         }
 
+        await_dispatches();
         std::memcpy(m_resources.mapped_ptr, ptr, bytes);
         mark_dirty_range(0, m_size_bytes);
 
@@ -127,6 +128,7 @@ std::vector<Kakshya::DataVariant> VKBuffer::get_data()
     }
 
     if (is_host_visible() && m_resources.mapped_ptr) {
+        await_dispatches();
         mark_invalid_range(0, m_size_bytes);
 
         std::vector<uint8_t> raw_bytes(m_size_bytes);

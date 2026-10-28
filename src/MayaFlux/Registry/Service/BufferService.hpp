@@ -187,7 +187,7 @@ struct MAYAFLUX_API BufferService {
      * Returns immediately when nothing is outstanding. Call before the host
      * reads or overwrites memory a dispatch may still be using.
      */
-    std::function<void()> wait_produced;
+    std::function<void()> await_dispatches;
 };
 
 } // namespace MayaFlux::Registry::Services

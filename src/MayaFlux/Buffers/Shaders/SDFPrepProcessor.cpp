@@ -1,5 +1,6 @@
 #include "SDFPrepProcessor.hpp"
 
+#include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
 #include "MayaFlux/Registry/BackendRegistry.hpp"
 #include "MayaFlux/Registry/Service/BufferService.hpp"
 
@@ -31,6 +32,8 @@ void SDFPrepProcessor::processing_function(const std::shared_ptr<Buffer>& /*buff
 {
     if (!m_grid_buf || !m_counter_buf)
         return;
+
+    await_dispatches();
 
     std::memset(m_grid_buf->get_mapped_ptr(), 0, corner_count() * sizeof(float));
     std::memset(m_counter_buf->get_mapped_ptr(), 0, sizeof(uint32_t));

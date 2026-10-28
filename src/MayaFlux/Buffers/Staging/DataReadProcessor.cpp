@@ -428,6 +428,7 @@ bool DataReadProcessor::submit_read(
     pending.bytes.resize(byte_count);
 
     if (byte_count != 0 && mapped && pending.handle.mapped_ptr) {
+        await_dispatches();
         std::memcpy(pending.bytes.data(), pending.handle.mapped_ptr, byte_count);
     } else if (byte_count != 0) {
         if (!transferable) {

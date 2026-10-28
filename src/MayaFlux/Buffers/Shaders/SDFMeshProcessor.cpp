@@ -180,6 +180,8 @@ bool SDFMeshProcessor::on_before_execute(
     if (!m_dirty)
         return false;
 
+    await_dispatches();
+
     if (m_owns_buffers)
         evaluate_grid();
 
@@ -322,6 +324,8 @@ std::optional<uint32_t> SDFMeshProcessor::live_vertex_count() const
     if (!counter) {
         return std::nullopt;
     }
+
+    await_dispatches();
 
     return *counter;
 }

@@ -15,6 +15,16 @@
 
 namespace MayaFlux::Buffers {
 
+void await_dispatches()
+{
+    auto* buffer_service = Registry::BackendRegistry::instance()
+                               .get_service<Registry::Service::BufferService>();
+
+    if (buffer_service && buffer_service->await_dispatches) {
+        buffer_service->await_dispatches();
+    }
+}
+
 namespace {
 
     template <typename Fill>
@@ -38,6 +48,8 @@ namespace {
                 std::source_location::current(),
                 "Host-visible buffer has no mapped pointer");
         }
+
+        await_dispatches();
 
         fill(static_cast<uint8_t*>(mapped) + dst_offset);
 
@@ -173,6 +185,7 @@ TransferHandle upload_back_buffer_async(
         return {};
 
     if (slot.mapped_ptr) {
+        await_dispatches();
         std::memcpy(slot.mapped_ptr, data, size);
         return {};
     }
@@ -252,6 +265,8 @@ void download_host_visible(const std::shared_ptr<VKBuffer>& source, const std::s
             std::source_location::current(),
             "Host-visible buffer has no mapped pointer");
     }
+
+    await_dispatches();
 
     source->mark_invalid_range(0, source->get_size_bytes());
 
@@ -370,6 +385,7 @@ void resolve_back_buffer_read(
 
     if (!handle) {
         if (slot.mapped_ptr) {
+            await_dispatches();
             std::memcpy(data, slot.mapped_ptr, size);
         }
         return;
@@ -742,6 +758,7 @@ bool clear_gpu_buffer(const std::shared_ptr<VKBuffer>& target)
     }
 
     if (target->is_host_visible() && target->get_mapped_ptr()) {
+        await_dispatches();
         std::memset(target->get_mapped_ptr(), 0, target->get_size_bytes());
         return true;
     }
