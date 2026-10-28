@@ -1050,25 +1050,25 @@ void ShaderFoundry::free_all_command_buffers()
 
 void ShaderFoundry::retire_after_submit(std::span<const CommandBufferID> cmd_ids)
 {
-    std::optional<uint64_t> value;
+    std::optional<Core::TimelineSnapshot> completion;
     for (const CommandBufferID cmd_id : cmd_ids) {
         if (!m_command_buffers.contains(cmd_id)) {
             continue;
         }
-        if (!value) {
-            value = m_backend->get_command_manager().submitted_value();
+        if (!completion) {
+            completion = m_backend->get_command_manager().submitted();
         }
-        m_retired_commands.push_back({ .cmd_id = cmd_id, .value = *value });
+        m_retired_commands.push_back({ .cmd_id = cmd_id, .completion = *completion });
     }
 }
 
 void ShaderFoundry::release_after_submit(std::function<void()> release)
 {
     auto& cmd_manager = m_backend->get_command_manager();
-    cmd_manager.retire_resource(std::move(release), cmd_manager.submitted_value());
+    cmd_manager.retire_resource(std::move(release), cmd_manager.submitted());
 }
 
-uint64_t ShaderFoundry::submit_state(
+Core::TimelinePoint ShaderFoundry::submit_state(
     const CommandBufferState& state,
     std::span<const vk::SemaphoreSubmitInfo> signals)
 {
@@ -1100,9 +1100,9 @@ void ShaderFoundry::collect_retired_commands()
         return;
     }
 
-    const uint64_t completed = m_backend->get_command_manager().completed_value();
-    std::erase_if(m_retired_commands, [this, completed](const RetiredCommand& retired) {
-        if (retired.value > completed) {
+    const auto& cmd_manager = m_backend->get_command_manager();
+    std::erase_if(m_retired_commands, [this, &cmd_manager](const RetiredCommand& retired) {
+        if (!cmd_manager.is_complete(retired.completion)) {
             return false;
         }
         release_command(retired.cmd_id);
@@ -1136,13 +1136,13 @@ void ShaderFoundry::submit_and_wait(CommandBufferID cmd_id)
 
     it->second.cmd.end();
 
-    const uint64_t value = submit_state(it->second);
-    if (value == 0) {
+    const Core::TimelinePoint point = submit_state(it->second);
+    if (!point) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ShaderCompilation,
             "Failed to submit command buffer");
         return;
     }
-    cmd_manager.wait(value);
+    cmd_manager.wait(point);
 
     if (it->second.timestamp_pool) {
         for (const auto& query : it->second.timestamp_queries) {
@@ -1170,14 +1170,14 @@ FenceID ShaderFoundry::submit_async(CommandBufferID cmd_id)
 
     FenceID fence_id = m_next_fence_id++;
 
-    const uint64_t value = submit_state(cmd_it->second);
-    if (value == 0) {
+    const Core::TimelinePoint point = submit_state(cmd_it->second);
+    if (!point) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ShaderCompilation,
             "Failed to submit command buffer");
         return INVALID_FENCE;
     }
 
-    m_fences[fence_id] = { .value = value, .cmd_id = cmd_id };
+    m_fences[fence_id] = { .point = point, .cmd_id = cmd_id };
     cmd_it->second.is_active = false;
 
     return fence_id;
@@ -1202,7 +1202,7 @@ SemaphoreID ShaderFoundry::submit_with_signal(CommandBufferID cmd_id)
         semaphore_state.semaphore, 0, vk::PipelineStageFlagBits2::eAllCommands
     };
 
-    if (submit_state(cmd_it->second, std::span { &signal_info, 1 }) == 0) {
+    if (!submit_state(cmd_it->second, std::span { &signal_info, 1 })) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ShaderCompilation,
             "Failed to submit command buffer");
         return INVALID_SEMAPHORE;
@@ -1220,16 +1220,17 @@ void ShaderFoundry::wait_for_fence(FenceID fence_id)
         return;
     }
 
-    m_backend->get_command_manager().wait(it->second.value);
+    m_backend->get_command_manager().wait(it->second.point);
 }
 
 void ShaderFoundry::wait_for_fences(const std::vector<FenceID>& fence_ids)
 {
-    uint64_t latest = 0;
+    Core::TimelineSnapshot latest;
     for (auto fence_id : fence_ids) {
         auto it = m_fences.find(fence_id);
-        if (it != m_fences.end()) {
-            latest = std::max(latest, it->second.value);
+        if (it != m_fences.end() && it->second.point.timeline < Core::k_max_timelines) {
+            auto& value = latest.values[it->second.point.timeline];
+            value = std::max(value, it->second.point.value);
         }
     }
 
@@ -1251,7 +1252,7 @@ void ShaderFoundry::release_fence(FenceID fence_id)
     if (state.cmd_id != INVALID_COMMAND_BUFFER) {
         auto cmd_it = m_command_buffers.find(state.cmd_id);
         if (cmd_it != m_command_buffers.end()) {
-            m_backend->get_command_manager().retire(cmd_it->second.cmd, state.value);
+            m_backend->get_command_manager().retire(cmd_it->second.cmd, state.point);
             m_command_buffers.erase(cmd_it);
         }
     }
@@ -1264,7 +1265,7 @@ bool ShaderFoundry::is_fence_signaled(FenceID fence_id)
         return false;
     }
 
-    return m_backend->get_command_manager().is_complete(it->second.value);
+    return m_backend->get_command_manager().is_complete(it->second.point);
 }
 
 CommandBufferID ShaderFoundry::begin_commands_with_wait(

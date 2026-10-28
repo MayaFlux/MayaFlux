@@ -1,5 +1,6 @@
 #pragma once
 
+#include "VKCommandManager.hpp"
 #include "vulkan/vulkan.hpp"
 
 namespace MayaFlux::Registry::Service {
@@ -244,9 +245,9 @@ public:
 
     /**
      * @brief Submit the pending deferred commands
-     * @return Completion value on the command manager timeline, or 0 when nothing was pending
+     * @return Point on the graphics queue timeline, or an empty point when nothing was pending
      */
-    uint64_t flush_deferred_commands();
+    TimelinePoint flush_deferred_commands();
 
     // ========================================================================
     // Cleanup

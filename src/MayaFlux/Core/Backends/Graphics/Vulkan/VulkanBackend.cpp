@@ -44,7 +44,10 @@ bool VulkanBackend::initialize(const GlobalGraphicsConfig& config)
     if (!m_command_manager->initialize(
             m_context->get_device(),
             m_context->get_queue_families().graphics_family.value(),
-            m_context->get_queue_families().compute_family.value())) {
+            m_context->get_queue_families().compute_family.value(),
+            m_context->get_graphics_queue(),
+            m_context->get_compute_queue(),
+            m_context->get_transfer_queue())) {
 
         MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
             "Failed to initialize command manager!");

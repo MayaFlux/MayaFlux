@@ -13,7 +13,7 @@ namespace MayaFlux::Core {
 namespace {
     struct FencedSubmission {
         vk::CommandBuffer cmd;
-        uint64_t value {};
+        TimelinePoint point {};
     };
 
     void record_barrier(
@@ -136,8 +136,8 @@ void BackendResourceManager::setup_backend_service(const std::shared_ptr<Registr
         cmd.end();
 
         const vk::CommandBuffer commands[] = { cmd };
-        const uint64_t value = m_command_manager.submit(m_context.get_graphics_queue(), commands);
-        if (value == 0) {
+        const TimelinePoint point = m_command_manager.submit(m_context.get_graphics_queue(), commands);
+        if (!point) {
             MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
                 "execute_fenced: queue submit failed");
             m_command_manager.free_command_buffer(cmd);
@@ -146,7 +146,7 @@ void BackendResourceManager::setup_backend_service(const std::shared_ptr<Registr
 
         auto handle = std::make_shared<FencedSubmission>();
         handle->cmd = cmd;
-        handle->value = value;
+        handle->point = point;
         return handle;
     };
 
@@ -154,7 +154,7 @@ void BackendResourceManager::setup_backend_service(const std::shared_ptr<Registr
         if (!handle)
             return;
         auto sub = std::static_pointer_cast<FencedSubmission>(handle);
-        m_command_manager.wait(sub->value);
+        m_command_manager.wait(sub->point);
     };
 
     buffer_service->release_fenced = [this](const std::shared_ptr<void>& handle) {
@@ -163,7 +163,7 @@ void BackendResourceManager::setup_backend_service(const std::shared_ptr<Registr
         auto sub = std::static_pointer_cast<FencedSubmission>(handle);
 
         if (sub->cmd) {
-            m_command_manager.retire(sub->cmd, sub->value);
+            m_command_manager.retire(sub->cmd, sub->point);
             sub->cmd = nullptr;
         }
     };
@@ -779,7 +779,7 @@ void BackendResourceManager::upload_image_host(
         flush_deferred_commands();
     }
 
-    m_command_manager.wait(m_command_manager.submitted_value());
+    m_command_manager.wait(m_command_manager.submitted());
 
     const vk::ImageSubresourceRange all {
         image->get_aspect_flags(),
@@ -881,7 +881,7 @@ void BackendResourceManager::download_image_host(
         flush_deferred_commands();
     }
 
-    m_command_manager.wait(m_command_manager.submitted_value());
+    m_command_manager.wait(m_command_manager.submitted());
 
     const auto old_layout = image->get_current_layout();
 
@@ -1212,8 +1212,8 @@ void BackendResourceManager::download_image_data(
     cmd.end();
 
     const vk::CommandBuffer commands[] = { cmd };
-    const uint64_t value = m_command_manager.submit(m_context.get_graphics_queue(), commands);
-    if (value == 0) {
+    const TimelinePoint point = m_command_manager.submit(m_context.get_graphics_queue(), commands);
+    if (!point) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
             "download_image_data: queue submit failed");
         m_command_manager.free_command_buffer(cmd);
@@ -1223,7 +1223,7 @@ void BackendResourceManager::download_image_data(
 
     image->set_current_layout(restore_layout);
 
-    m_command_manager.wait(value);
+    m_command_manager.wait(point);
 
     auto range = mapped_memory_range(staging->get_buffer_resources().memory, 0, VK_WHOLE_SIZE);
     if (auto result = device.invalidateMappedMemoryRanges(1, &range);
@@ -1485,7 +1485,7 @@ void BackendResourceManager::record_deferred_commands(const std::function<void(v
     m_command_manager.record_deferred_commands(recorder);
 }
 
-uint64_t BackendResourceManager::flush_deferred_commands()
+TimelinePoint BackendResourceManager::flush_deferred_commands()
 {
     return m_command_manager.flush_deferred(m_context.get_graphics_queue());
 }

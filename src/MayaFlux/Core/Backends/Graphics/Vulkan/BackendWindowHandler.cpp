@@ -1041,7 +1041,7 @@ void BackendWindowHandler::capture_frame(WindowRenderContext& ctx)
     slot.pending.store(true, std::memory_order_release);
 
     const vk::CommandBuffer commands[] = { slot.cmd };
-    if (m_command_manager.submit(m_context.get_graphics_queue(), commands, {}, {}, slot.fence) == 0) {
+    if (!m_command_manager.submit(m_context.get_graphics_queue(), commands, {}, {}, slot.fence)) {
         MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
             "Failed to submit capture command buffer for window '{}'",
             ctx.window->get_create_info().title);
@@ -1169,22 +1169,22 @@ void BackendWindowHandler::submit_and_present(
     auto& image_available = ctx->image_available[frame_index];
     auto& render_finished = ctx->render_finished[frame_index];
 
-    const uint64_t deferred_value = m_resource_manager
+    const TimelinePoint deferred_point = m_resource_manager
         ? m_resource_manager->flush_deferred_commands()
-        : 0;
+        : TimelinePoint {};
 
     std::vector<vk::SemaphoreSubmitInfo> wait_infos;
     wait_infos.emplace_back(image_available, 0, vk::PipelineStageFlagBits2::eColorAttachmentOutput);
 
-    if (deferred_value != 0) {
+    if (deferred_point) {
         wait_infos.emplace_back(
-            m_command_manager.get_timeline(), deferred_value, vk::PipelineStageFlagBits2::eFragmentShader);
+            m_command_manager.get_timeline(graphics_queue), deferred_point.value, vk::PipelineStageFlagBits2::eFragmentShader);
     }
 
     const vk::SemaphoreSubmitInfo signal_info { render_finished, 0, vk::PipelineStageFlagBits2::eAllCommands };
     const vk::CommandBuffer commands[] = { command_buffer };
 
-    if (m_command_manager.submit(graphics_queue, commands, wait_infos, std::span { &signal_info, 1 }, in_flight) == 0) {
+    if (!m_command_manager.submit(graphics_queue, commands, wait_infos, std::span { &signal_info, 1 }, in_flight)) {
         MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
             "Failed to submit primary command buffer for window '{}'",
             window->get_create_info().title);

@@ -2,16 +2,64 @@
 
 #include <vulkan/vulkan.hpp>
 
+#include <array>
+#include <atomic>
+#include <functional>
+#include <memory>
+#include <span>
+#include <vector>
+
 namespace MayaFlux::Core {
+
+/// Upper bound on distinct queues: graphics, compute and transfer.
+inline constexpr uint32_t k_max_timelines = 3;
+
+/**
+ * @struct TimelinePoint
+ * @brief Completion token of one submission: a value on one queue's timeline
+ *
+ * A value of 0 means no submission (a failed submit or nothing pending).
+ */
+struct TimelinePoint {
+    uint32_t timeline {};
+    uint64_t value {};
+
+    [[nodiscard]] explicit operator bool() const { return value != 0; }
+};
+
+/**
+ * @struct TimelineSnapshot
+ * @brief Values on every timeline that must complete, indexed by timeline
+ *
+ * A zero entry means no dependency on that timeline. A single point converts
+ * implicitly, so APIs that take a snapshot also accept one point.
+ */
+struct TimelineSnapshot {
+    std::array<uint64_t, k_max_timelines> values {};
+
+    TimelineSnapshot() = default;
+
+    TimelineSnapshot(TimelinePoint point)
+    {
+        if (point.timeline < k_max_timelines) {
+            values[point.timeline] = point.value;
+        }
+    }
+};
 
 /**
  * @class VKCommandManager
  * @brief Owns command pools, queue submission and command buffer retirement
  *
- * Every queue submission goes through submit(), which signals one timeline
- * semaphore with a strictly increasing value. That value is the completion
- * token for the submission: command buffers are retired against it and callers
- * wait on it instead of draining a queue.
+ * Each distinct queue has its own timeline semaphore. Queues that alias the
+ * same handle (compute or transfer on the graphics queue) share one timeline,
+ * so a device with a single queue has a single timeline. Every submission
+ * through submit() signals its queue's timeline with a strictly increasing
+ * value, and that point is the completion token: command buffers are retired
+ * against it and callers wait on it instead of draining a queue.
+ *
+ * Values on different timelines are unordered. Completion of work spread over
+ * several queues is expressed as a TimelineSnapshot.
  *
  * Submission is externally synchronized, as vkQueueSubmit is. Two threads must
  * not call submit(), retire() or collect() concurrently.
@@ -26,9 +74,20 @@ public:
      * @param device Logical device with timelineSemaphore enabled
      * @param graphics_queue_family Graphics queue family index
      * @param compute_queue_family Compute queue family index (optional, for compute operations)
+     * @param graphics_queue Graphics queue
+     * @param compute_queue Compute queue, may alias the graphics queue
+     * @param transfer_queue Transfer queue, may alias another queue
      * @return True if initialization succeeded
+     *
+     * One timeline is created per distinct queue handle.
      */
-    bool initialize(vk::Device device, uint32_t graphics_queue_family, uint32_t compute_queue_family);
+    bool initialize(
+        vk::Device device,
+        uint32_t graphics_queue_family,
+        uint32_t compute_queue_family,
+        vk::Queue graphics_queue,
+        vk::Queue compute_queue,
+        vk::Queue transfer_queue);
 
     /**
      * @brief Cleanup all command pools and buffers
@@ -93,24 +152,23 @@ public:
     /**
      * @brief Submit the pending deferred commands and retire their buffer
      * @param queue Queue to submit to
-     * @return Completion value of the submission, or 0 when nothing was pending or the submit failed
+     * @return Point of the submission, or an empty point when nothing was pending or the submit failed
      */
-    uint64_t flush_deferred(vk::Queue queue);
+    TimelinePoint flush_deferred(vk::Queue queue);
 
     /**
-     * @brief Submit command buffers and signal the timeline
-     * @param queue Queue to submit to
+     * @brief Submit command buffers and signal the queue's timeline
+     * @param queue Queue to submit to; must be one passed to initialize()
      * @param commands Command buffers, executed in order
      * @param waits Semaphores to wait on; timeline waits carry their value
      * @param signals Additional semaphores to signal; binary ones carry value 0
      * @param fence Optional fence signaled with the submission
-     * @return Completion value of the submission, or 0 if the submit failed
+     * @return Point signaled when the submission completes, or an empty point if the submit failed
      *
-     * The returned value is signaled on get_timeline() when the submission
-     * completes. It orders strictly with every other submission through this
-     * manager.
+     * The point orders strictly with every other submission to the same queue
+     * and is unordered against submissions to other queues.
      */
-    uint64_t submit(
+    TimelinePoint submit(
         vk::Queue queue,
         std::span<const vk::CommandBuffer> commands,
         std::span<const vk::SemaphoreSubmitInfo> waits = {},
@@ -120,19 +178,19 @@ public:
     /**
      * @brief Free a command buffer once its submission has completed
      * @param command_buffer Command buffer to free
-     * @param value Completion value returned by submit()
+     * @param completion Point returned by submit(), or a snapshot of several
      */
-    void retire(vk::CommandBuffer command_buffer, uint64_t value);
+    void retire(vk::CommandBuffer command_buffer, const TimelineSnapshot& completion);
 
     /**
      * @brief Run a release action once a submission has completed
-     * @param release Action that frees whatever the submission may still read; runs immediately when value is 0
-     * @param value Completion value returned by submit()
+     * @param release Action that frees whatever the submission may still read; runs immediately when nothing is pending
+     * @param completion Point returned by submit(), or a snapshot of several
      *
      * Actions run from collect(), outside the retire lists, so they may call back
      * into the manager. They are dropped without running at cleanup().
      */
-    void retire_resource(std::function<void()> release, uint64_t value);
+    void retire_resource(std::function<void()> release, const TimelineSnapshot& completion);
 
     /**
      * @brief Free every retired command buffer and run every release action whose submission has completed
@@ -140,42 +198,68 @@ public:
     void collect();
 
     /**
-     * @brief Highest completion value reached on the timeline
+     * @brief Number of timelines, one per distinct queue
      */
-    [[nodiscard]] uint64_t completed_value() const;
+    [[nodiscard]] uint32_t timeline_count() const { return static_cast<uint32_t>(m_timelines.size()); }
 
     /**
-     * @brief Highest completion value handed out by submit()
+     * @brief Index of the timeline signaled by a queue
+     * @return Timeline index, or timeline_count() if the queue was not passed to initialize()
      */
-    [[nodiscard]] uint64_t submitted_value() const { return m_submitted; }
+    [[nodiscard]] uint32_t timeline_index(vk::Queue queue) const;
 
     /**
-     * @brief Check whether a submission has completed
+     * @brief Highest completion value reached on a timeline
      */
-    [[nodiscard]] bool is_complete(uint64_t value) const { return value <= completed_value(); }
+    [[nodiscard]] uint64_t completed_value(uint32_t timeline) const;
 
     /**
-     * @brief Block until a submission has completed
-     * @param value Completion value returned by submit(); 0 returns immediately
+     * @brief Highest completion value handed out by submit() on a timeline
+     */
+    [[nodiscard]] uint64_t submitted_value(uint32_t timeline) const;
+
+    /**
+     * @brief Every submission made so far, on every timeline
+     */
+    [[nodiscard]] TimelineSnapshot submitted() const;
+
+    /**
+     * @brief Check whether everything in a snapshot has completed
+     */
+    [[nodiscard]] bool is_complete(const TimelineSnapshot& completion) const;
+
+    /**
+     * @brief Block until everything in a snapshot has completed
+     * @param completion Point returned by submit(), or a snapshot of several; empty returns immediately
      * @param timeout_ns Timeout in nanoseconds
+     *
+     * Waits on all involved timelines in one call.
      */
-    void wait(uint64_t value, uint64_t timeout_ns = UINT64_MAX) const;
+    void wait(const TimelineSnapshot& completion, uint64_t timeout_ns = UINT64_MAX) const;
 
     /**
-     * @brief The timeline semaphore signaled by every submission
+     * @brief The timeline semaphore signaled by a queue's submissions
      */
-    [[nodiscard]] vk::Semaphore get_timeline() const { return m_timeline; }
+    [[nodiscard]] vk::Semaphore get_timeline(vk::Queue queue) const;
 
 private:
+    struct QueueTimeline {
+        vk::Queue queue;
+        vk::Semaphore semaphore;
+        std::atomic<uint64_t> submitted { 0 };
+    };
+
     struct RetiredCommand {
         vk::CommandBuffer command_buffer;
-        uint64_t value {};
+        TimelineSnapshot completion;
     };
 
     struct RetiredResource {
         std::function<void()> release;
-        uint64_t value {};
+        TimelineSnapshot completion;
     };
+
+    bool create_timeline(vk::Queue queue);
 
     vk::Device m_device;
     vk::CommandPool m_command_pool;
@@ -183,8 +267,7 @@ private:
     uint32_t m_graphics_queue_family {};
     uint32_t m_compute_queue_family {};
 
-    vk::Semaphore m_timeline {};
-    uint64_t m_submitted {};
+    std::vector<std::unique_ptr<QueueTimeline>> m_timelines;
 
     vk::CommandBuffer m_deferred_cmd {};
     bool m_deferred_pending {};

@@ -4,6 +4,7 @@
 
 #include "ShaderSpec.hpp"
 
+#include "MayaFlux/Core/Backends/Graphics/Vulkan/VKCommandManager.hpp"
 #include "MayaFlux/Transitive/Memory/RingBuffer.hpp"
 
 #include <span>
@@ -140,7 +141,7 @@ private:
     };
 
     struct FenceState {
-        uint64_t value {};
+        Core::TimelinePoint point {};
         CommandBufferID cmd_id { INVALID_COMMAND_BUFFER };
     };
 
@@ -771,14 +772,14 @@ private:
 
     struct RetiredCommand {
         CommandBufferID cmd_id { INVALID_COMMAND_BUFFER };
-        uint64_t value {};
+        Core::TimelineSnapshot completion;
     };
 
     std::vector<RetiredCommand> m_retired_commands;
 
     void collect_retired_commands();
     void release_command(CommandBufferID cmd_id);
-    uint64_t submit_state(const CommandBufferState& state, std::span<const vk::SemaphoreSubmitInfo> signals = {});
+    Core::TimelinePoint submit_state(const CommandBufferState& state, std::span<const vk::SemaphoreSubmitInfo> signals = {});
 
     struct FinishedTimestamp {
         CommandBufferID cmd_id { INVALID_COMMAND_BUFFER };
