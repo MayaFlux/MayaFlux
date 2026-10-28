@@ -4,10 +4,8 @@
 
 #include "ShaderSpec.hpp"
 
-#include "MayaFlux/Core/Backends/Graphics/Vulkan/VKCommandManager.hpp"
+#include "MayaFlux/Core/Backends/Graphics/Vulkan/VKTimeline.hpp"
 #include "MayaFlux/Transitive/Memory/RingBuffer.hpp"
-
-#include <span>
 
 namespace MayaFlux::Core {
 class VulkanBackend;

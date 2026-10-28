@@ -136,7 +136,8 @@ void BackendResourceManager::setup_backend_service(const std::shared_ptr<Registr
         cmd.end();
 
         const vk::CommandBuffer commands[] = { cmd };
-        const TimelinePoint point = m_command_manager.submit(m_context.get_graphics_queue(), commands);
+        const auto waits = m_command_manager.produced_waits(vk::PipelineStageFlagBits2::eAllCommands);
+        const TimelinePoint point = m_command_manager.submit(m_context.get_graphics_queue(), commands, waits);
         if (!point) {
             MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
                 "execute_fenced: queue submit failed");
@@ -1212,7 +1213,8 @@ void BackendResourceManager::download_image_data(
     cmd.end();
 
     const vk::CommandBuffer commands[] = { cmd };
-    const TimelinePoint point = m_command_manager.submit(m_context.get_graphics_queue(), commands);
+    const auto waits = m_command_manager.produced_waits(vk::PipelineStageFlagBits2::eAllCommands);
+    const TimelinePoint point = m_command_manager.submit(m_context.get_graphics_queue(), commands, waits);
     if (!point) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
             "download_image_data: queue submit failed");

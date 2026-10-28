@@ -1091,7 +1091,10 @@ Core::TimelinePoint ShaderFoundry::submit_state(
     }
 
     const vk::CommandBuffer commands[] = { state.cmd };
-    return m_backend->get_command_manager().submit(queue, commands, waits, signals);
+    auto& cmd_manager = m_backend->get_command_manager();
+    const Core::TimelinePoint point = cmd_manager.submit(queue, commands, waits, signals);
+    cmd_manager.note_produced(point);
+    return point;
 }
 
 void ShaderFoundry::collect_retired_commands()

@@ -195,7 +195,8 @@ void VKCommandManager::end_single_time_commands(vk::CommandBuffer command_buffer
     command_buffer.end();
 
     const vk::CommandBuffer commands[] = { command_buffer };
-    const TimelinePoint point = submit(queue, commands);
+    const auto waits = produced_waits(vk::PipelineStageFlagBits2::eAllCommands);
+    const TimelinePoint point = submit(queue, commands, waits);
 
     wait(point);
     free_command_buffer(command_buffer);
@@ -362,6 +363,39 @@ TimelineSnapshot VKCommandManager::submitted() const
         snapshot.values[i] = submitted_value(i);
     }
     return snapshot;
+}
+
+void VKCommandManager::note_produced(TimelinePoint point)
+{
+    if (!point || point.timeline >= k_max_timelines) {
+        return;
+    }
+
+    auto& slot = m_produced[point.timeline];
+    uint64_t current = slot.load(std::memory_order_relaxed);
+    while (current < point.value
+        && !slot.compare_exchange_weak(current, point.value, std::memory_order_acq_rel, std::memory_order_relaxed)) { }
+}
+
+TimelineSnapshot VKCommandManager::produced() const
+{
+    TimelineSnapshot snapshot;
+    for (uint32_t i = 0; i < k_max_timelines; ++i) {
+        snapshot.values[i] = m_produced[i].load(std::memory_order_acquire);
+    }
+    return snapshot;
+}
+
+std::vector<vk::SemaphoreSubmitInfo> VKCommandManager::produced_waits(vk::PipelineStageFlags2 stage) const
+{
+    std::vector<vk::SemaphoreSubmitInfo> waits;
+    for (uint32_t i = 0; i < m_timelines.size(); ++i) {
+        const uint64_t value = m_produced[i].load(std::memory_order_acquire);
+        if (value != 0 && value > completed_value(i)) {
+            waits.emplace_back(m_timelines[i]->semaphore, value, stage);
+        }
+    }
+    return waits;
 }
 
 bool VKCommandManager::is_complete(const TimelineSnapshot& completion) const

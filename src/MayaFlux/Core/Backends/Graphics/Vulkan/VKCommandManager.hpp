@@ -1,51 +1,10 @@
 #pragma once
 
+#include "VKTimeline.hpp"
+
 #include <vulkan/vulkan.hpp>
 
-#include <array>
-#include <atomic>
-#include <functional>
-#include <memory>
-#include <span>
-#include <vector>
-
 namespace MayaFlux::Core {
-
-/// Upper bound on distinct queues: graphics, compute and transfer.
-inline constexpr uint32_t k_max_timelines = 3;
-
-/**
- * @struct TimelinePoint
- * @brief Completion token of one submission: a value on one queue's timeline
- *
- * A value of 0 means no submission (a failed submit or nothing pending).
- */
-struct TimelinePoint {
-    uint32_t timeline {};
-    uint64_t value {};
-
-    [[nodiscard]] explicit operator bool() const { return value != 0; }
-};
-
-/**
- * @struct TimelineSnapshot
- * @brief Values on every timeline that must complete, indexed by timeline
- *
- * A zero entry means no dependency on that timeline. A single point converts
- * implicitly, so APIs that take a snapshot also accept one point.
- */
-struct TimelineSnapshot {
-    std::array<uint64_t, k_max_timelines> values {};
-
-    TimelineSnapshot() = default;
-
-    TimelineSnapshot(TimelinePoint point)
-    {
-        if (point.timeline < k_max_timelines) {
-            values[point.timeline] = point.value;
-        }
-    }
-};
 
 /**
  * @class VKCommandManager
@@ -224,6 +183,27 @@ public:
     [[nodiscard]] TimelineSnapshot submitted() const;
 
     /**
+     * @brief Record a submission whose output later work may consume
+     * @param point Point returned by submit(); an empty point is ignored
+     *
+     * Keeps the highest value per timeline. Safe from any thread. Never cleared:
+     * consumers skip values that have completed.
+     */
+    void note_produced(TimelinePoint point);
+
+    /**
+     * @brief Everything noted by note_produced() so far
+     */
+    [[nodiscard]] TimelineSnapshot produced() const;
+
+    /**
+     * @brief Waits for produced work that has not completed yet
+     * @param stage Pipeline stages of the consuming submission that read the output
+     * @return One timeline wait per timeline with incomplete produced work; empty when everything is done
+     */
+    [[nodiscard]] std::vector<vk::SemaphoreSubmitInfo> produced_waits(vk::PipelineStageFlags2 stage) const;
+
+    /**
      * @brief Check whether everything in a snapshot has completed
      */
     [[nodiscard]] bool is_complete(const TimelineSnapshot& completion) const;
@@ -268,6 +248,7 @@ private:
     uint32_t m_compute_queue_family {};
 
     std::vector<std::unique_ptr<QueueTimeline>> m_timelines;
+    std::array<std::atomic<uint64_t>, k_max_timelines> m_produced {};
 
     vk::CommandBuffer m_deferred_cmd {};
     bool m_deferred_pending {};

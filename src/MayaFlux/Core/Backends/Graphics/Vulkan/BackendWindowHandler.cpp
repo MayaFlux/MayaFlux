@@ -1181,6 +1181,10 @@ void BackendWindowHandler::submit_and_present(
             m_command_manager.get_timeline(graphics_queue), deferred_point.value, vk::PipelineStageFlagBits2::eFragmentShader);
     }
 
+    const auto produced_waits = m_command_manager.produced_waits(
+        vk::PipelineStageFlagBits2::eVertexInput | vk::PipelineStageFlagBits2::eVertexShader | vk::PipelineStageFlagBits2::eFragmentShader);
+    wait_infos.insert(wait_infos.end(), produced_waits.begin(), produced_waits.end());
+
     const vk::SemaphoreSubmitInfo signal_info { render_finished, 0, vk::PipelineStageFlagBits2::eAllCommands };
     const vk::CommandBuffer commands[] = { command_buffer };
 
