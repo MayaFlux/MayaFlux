@@ -812,6 +812,20 @@ void BackendResourceManager::transition_host_image(
     });
 }
 
+void BackendResourceManager::await_host_image_inputs()
+{
+    TimelineSnapshot pending = m_command_manager.produced();
+
+    if (m_command_manager.has_deferred_commands()) {
+        if (const auto point = flush_deferred_commands()) {
+            auto& value = pending.values[point.timeline];
+            value = std::max(value, point.value);
+        }
+    }
+
+    m_command_manager.wait(pending);
+}
+
 void BackendResourceManager::upload_image_host(
     const std::shared_ptr<VKImage>& image,
     uint32_t base_layer,
@@ -851,11 +865,7 @@ void BackendResourceManager::upload_image_host(
 
     load_host_copy_layouts();
 
-    if (m_command_manager.has_deferred_commands()) {
-        flush_deferred_commands();
-    }
-
-    m_command_manager.wait(m_command_manager.submitted());
+    await_host_image_inputs();
 
     const vk::ImageSubresourceRange all {
         image->get_aspect_flags(),
@@ -953,11 +963,7 @@ void BackendResourceManager::download_image_host(
 
     load_host_copy_layouts();
 
-    if (m_command_manager.has_deferred_commands()) {
-        flush_deferred_commands();
-    }
-
-    m_command_manager.wait(m_command_manager.submitted());
+    await_host_image_inputs();
 
     const auto old_layout = image->get_current_layout();
 

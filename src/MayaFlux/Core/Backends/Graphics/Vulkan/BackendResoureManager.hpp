@@ -292,6 +292,14 @@ private:
 
     void release_buffer_handles(vk::Buffer buffer, vk::DeviceMemory memory, bool mapped);
 
+    /**
+     * @brief Wait for the GPU work a host image copy depends on
+     *
+     * Flushes deferred commands and waits for them and for produced foundry work.
+     * Draws and other submissions are not waited for.
+     */
+    void await_host_image_inputs();
+
     [[nodiscard]] vk::MappedMemoryRange mapped_memory_range(
         vk::DeviceMemory memory,
         vk::DeviceSize offset,
