@@ -15,7 +15,7 @@ namespace MayaFlux::Nodes::GpuSync {
  * just holds and uploads it. Topology comes from the inherited
  * set_primitive_topology()/get_primitive_topology() (default POINT_LIST);
  * the reported vertex layout tracks whichever topology is current, since
- * Vertex/PointVertex/LineVertex/MeshVertex share one 60-byte offset table
+ * Vertex/PointVertex/LineVertex/MeshVertex share one 68-byte offset table
  * and differ only in the scalar field's name.
  *
  * Intended to be held in bulk by AssemblyOperator, alongside other

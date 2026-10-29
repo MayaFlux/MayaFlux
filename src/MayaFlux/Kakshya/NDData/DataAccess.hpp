@@ -107,6 +107,7 @@ public:
         case DataModality::TEXTURE_COORDS_2D:
             return "glm::vec2";
 
+        case DataModality::VERTEX_TANGENTS_4D:
         case DataModality::VERTEX_COLORS_RGBA:
             return "glm::vec4";
 

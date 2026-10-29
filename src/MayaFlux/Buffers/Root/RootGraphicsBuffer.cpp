@@ -249,6 +249,15 @@ void PresentProcessor::fallback_renderer(const std::shared_ptr<RootGraphicsBuffe
         return;
     }
 
+    auto& foundry = Portal::Graphics::get_shader_foundry();
+
+    std::vector<Portal::Graphics::CommandBufferID> retire_ids;
+    for (const auto& renderable : renderable_buffers) {
+        if (renderable.command_buffer_id != Portal::Graphics::INVALID_COMMAND_BUFFER) {
+            retire_ids.push_back(renderable.command_buffer_id);
+        }
+    }
+
     std::unordered_map<std::shared_ptr<Core::Window>, std::vector<const RootGraphicsBuffer::RenderableBufferInfo*>> buffers_by_window;
     for (auto it = pending_refreshes.begin(); it != pending_refreshes.end();) {
         const auto& window = *it++;
@@ -267,6 +276,7 @@ void PresentProcessor::fallback_renderer(const std::shared_ptr<RootGraphicsBuffe
     }
 
     if (buffers_by_window.empty()) {
+        foundry.retire_after_submit(retire_ids);
         root->clear_renderable_buffers();
         return;
     }
@@ -274,7 +284,6 @@ void PresentProcessor::fallback_renderer(const std::shared_ptr<RootGraphicsBuffe
     MF_RT_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
         "PresentProcessor submitting to {} windows", buffers_by_window.size());
 
-    auto& foundry = Portal::Graphics::get_shader_foundry();
     auto& flow = Portal::Graphics::get_render_flow();
     auto display_service = Registry::BackendRegistry::instance()
                                .get_service<Registry::Service::DisplayService>();
@@ -282,6 +291,7 @@ void PresentProcessor::fallback_renderer(const std::shared_ptr<RootGraphicsBuffe
     if (!display_service) {
         MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             "DisplayService not available for dynamic rendering");
+        foundry.retire_after_submit(retire_ids);
         return;
     }
 
@@ -296,6 +306,7 @@ void PresentProcessor::fallback_renderer(const std::shared_ptr<RootGraphicsBuffe
         vk::Image swapchain_image { reinterpret_cast<VkImage>(image_bits) };
 
         auto primary_cmd_id = foundry.begin_commands(Portal::Graphics::ShaderFoundry::CommandBufferType::GRAPHICS);
+        retire_ids.push_back(primary_cmd_id);
         auto primary_cmd = foundry.get_command_buffer(primary_cmd_id);
 
         if (!primary_cmd) {
@@ -364,6 +375,7 @@ void PresentProcessor::fallback_renderer(const std::shared_ptr<RootGraphicsBuffe
         }
     }
 
+    foundry.retire_after_submit(retire_ids);
     root->clear_renderable_buffers();
 }
 

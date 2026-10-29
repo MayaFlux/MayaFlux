@@ -18,6 +18,8 @@ struct VertexBinding {
         , input_rate(rate)
     {
     }
+
+    bool operator==(const VertexBinding&) const = default;
 };
 
 struct VertexAttribute {
@@ -34,6 +36,8 @@ struct VertexAttribute {
         , offset(off)
     {
     }
+
+    bool operator==(const VertexAttribute&) const = default;
 };
 
 struct ColorBlendAttachment {
@@ -45,6 +49,8 @@ struct ColorBlendAttachment {
     vk::BlendFactor dst_alpha_blend_factor = vk::BlendFactor::eZero;
     vk::BlendOp alpha_blend_op = vk::BlendOp::eAdd;
     vk::ColorComponentFlags color_write_mask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+
+    bool operator==(const ColorBlendAttachment&) const = default;
 };
 
 /**
@@ -184,6 +190,11 @@ struct MAYAFLUX_API GraphicsPipelineConfig {
 
     vk::PipelineCache cache = nullptr;
 
+    /**
+     * @brief Member-wise equality over every pipeline creation input
+     */
+    bool operator==(const GraphicsPipelineConfig&) const = default;
+
     //==========================================================================
     // HELPER METHODS
     //==========================================================================
@@ -241,11 +252,13 @@ public:
      * @brief Create graphics pipeline from configuration
      * @param device Logical device
      * @param config Pipeline configuration
+     * @param specialization_constants Values supplied to each shader stage
      * @return true if creation succeeded
      *
      * Validates shaders, creates pipeline layout, and creates pipeline.
      */
-    bool create(vk::Device device, const GraphicsPipelineConfig& config);
+    bool create(vk::Device device, const GraphicsPipelineConfig& config,
+        const std::unordered_map<uint32_t, uint32_t>& specialization_constants = {});
 
     /**
      * @brief Cleanup pipeline resources
@@ -271,6 +284,16 @@ public:
     void bind_descriptor_sets(vk::CommandBuffer cmd,
         std::span<vk::DescriptorSet> sets,
         uint32_t first_set = 0);
+
+    /**
+     * @brief Push descriptors into a push descriptor set of this pipeline's layout
+     * @param cmd Command buffer
+     * @param set Index of the set whose layout was created as a push descriptor layout
+     * @param writes Descriptor writes; dstSet is ignored
+     */
+    void push_descriptors(vk::CommandBuffer cmd,
+        uint32_t set,
+        const std::vector<vk::WriteDescriptorSet>& writes) const;
 
     /**
      * @brief Push constants

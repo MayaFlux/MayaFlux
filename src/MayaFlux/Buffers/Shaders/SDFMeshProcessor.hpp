@@ -86,10 +86,13 @@ public:
     /**
      * @brief Replace the grid resolution and mark dirty.
      *
-     * Triggers recreation of the grid and counter buffers on the next attach
-     * or dirty frame. Descriptor rebuild is forced.
+     * Recreates and rebinds the grid and counter in CPU-field mode.
      */
     void set_resolution(uint32_t res_x, uint32_t res_y, uint32_t res_z);
+
+    /** @brief Replace the shared grid and counter in GPU-field mode. */
+    void set_external_buffers(std::shared_ptr<VKBuffer> grid_buf,
+        std::shared_ptr<VKBuffer> counter_buf);
 
     /** @brief Replace the iso_level threshold and mark dirty. */
     void set_iso_level(float iso_level);

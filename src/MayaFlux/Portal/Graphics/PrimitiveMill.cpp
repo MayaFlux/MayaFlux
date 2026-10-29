@@ -51,7 +51,7 @@ namespace {
         out.stride_words = layout.stride_bytes / static_cast<uint32_t>(sizeof(uint32_t));
         out.position = *position;
         out.scalar = layout.find_word_offset(Kakshya::DataModality::SCALAR_F32).value_or(ABSENT);
-        out.tangent = layout.find_word_offset(Kakshya::DataModality::VERTEX_TANGENTS_3D).value_or(ABSENT);
+        out.tangent = layout.find_word_offset(Kakshya::DataModality::VERTEX_TANGENTS_4D).value_or(ABSENT);
         out.uv = layout.find_word_offset(Kakshya::DataModality::TEXTURE_COORDS_2D).value_or(ABSENT);
 
         return true;
@@ -79,9 +79,11 @@ namespace {
         float eye_x;
         float eye_y;
         float eye_z;
+        uint32_t indexed;
+        uint32_t tangent_offset;
     };
 
-    static_assert(sizeof(MillPC) == 14 * sizeof(uint32_t),
+    static_assert(sizeof(MillPC) == 16 * sizeof(uint32_t),
         "MillPC must be tightly packed 4-byte fields matching build_mill_spec's pc() list");
 
     void add_helpers(ShaderSpec::Assemble& assemble)
@@ -94,6 +96,12 @@ namespace {
             "        if (prefix[mid] <= g) { lo = mid; } else { hi = mid; }\n"
             "    }\n"
             "    return lo;\n");
+
+        assemble.function("uint", "vertex_at", "uint k, uint ix",
+            "    return ix == 1u ? indices[k] : k;\n");
+
+        assemble.function("vec2", "wire_uv", "uint c",
+            "    return vec2(c == 0u ? 21.0 : 20.0, c == 1u ? 1.0 : 0.0);\n");
 
         assemble.function("vec3", "read_pos", "uint v, uint sw, uint po",
             "    uint b = v * sw + po;\n"
@@ -120,6 +128,13 @@ namespace {
             "    uint b = d * sw + uo;\n"
             "    dst[b] = floatBitsToUint(t.x);\n"
             "    dst[b + 1u] = floatBitsToUint(t.y);\n");
+
+        assemble.function("void", "write_tangent", "uint d, uint sw, uint to, vec4 t",
+            "    uint b = d * sw + to;\n"
+            "    dst[b] = floatBitsToUint(t.x);\n"
+            "    dst[b + 1u] = floatBitsToUint(t.y);\n"
+            "    dst[b + 2u] = floatBitsToUint(t.z);\n"
+            "    dst[b + 3u] = floatBitsToUint(t.w);\n");
 
         assemble.function("vec3", "view_normal", "vec3 p, vec3 eye",
             "    vec3 n = eye - p;\n"
@@ -279,6 +294,7 @@ namespace {
             .ssbo("runs", BindingDirection::Input, Kakshya::GpuDataFormat::UINT32)
             .ssbo("prefix", BindingDirection::Input, Kakshya::GpuDataFormat::UINT32)
             .ssbo("dst", BindingDirection::Output, Kakshya::GpuDataFormat::UINT32)
+            .ssbo("indices", BindingDirection::Input, Kakshya::GpuDataFormat::UINT32)
             .pc("total", Kakshya::GpuDataFormat::UINT32)
             .pc("run_count", Kakshya::GpuDataFormat::UINT32)
             .pc("stride_words", Kakshya::GpuDataFormat::UINT32)
@@ -293,6 +309,8 @@ namespace {
             .pc("eye_x", Kakshya::GpuDataFormat::FLOAT32)
             .pc("eye_y", Kakshya::GpuDataFormat::FLOAT32)
             .pc("eye_z", Kakshya::GpuDataFormat::FLOAT32)
+            .pc("indexed", Kakshya::GpuDataFormat::UINT32)
+            .pc("tangent_offset", Kakshya::GpuDataFormat::UINT32)
             .workgroup(WORKGROUP);
 
         add_helpers(assemble);
@@ -304,16 +322,18 @@ namespace {
         body += "    vec3 eye = vec3(eye_x, eye_y, eye_z);\n";
         body += "    uint r = find_run(i, run_count);\n";
         body += "    uint rb = r * 3u;\n";
-        body += "    uint topo = runs[rb];\n";
+        body += "    uint topo = runs[rb] & 255u;\n";
+        body += "    uint fill = runs[rb] >> 8u;\n";
         body += "    uint voff = runs[rb + 1u];\n";
         body += "    uint local = i - prefix[r];\n";
 
-        body += "    if (topo == 3u) {\n";
-        body += "        copy_vertex(i, voff + local, sw);\n";
+        body += "    if (topo == 3u && fill != 1u) {\n";
+        body += "        copy_vertex(i, vertex_at(voff + local, indexed), sw);\n";
+        body += "        if (fill == 2u) { write_uv(i, sw, uv_offset, wire_uv(local % 3u)); }\n";
         body += "        return;\n";
         body += "    }\n";
 
-        body += "    if (topo == 4u || topo == 5u) {\n";
+        body += "    if ((topo == 4u || topo == 5u) && fill != 1u) {\n";
         body += "        uint tri = local / 3u;\n";
         body += "        uint c = local - tri * 3u;\n";
         body += "        uint a; uint b1; uint b2;\n";
@@ -323,7 +343,8 @@ namespace {
         body += "            if ((tri & 1u) == 1u) { uint t = a; a = b1; b1 = t; }\n";
         body += "        }\n";
         body += "        uint pick = c == 0u ? a : (c == 1u ? b1 : b2);\n";
-        body += "        copy_vertex(i, voff + pick, sw);\n";
+        body += "        copy_vertex(i, vertex_at(voff + pick, indexed), sw);\n";
+        body += "        if (fill == 2u) { write_uv(i, sw, uv_offset, wire_uv(c)); }\n";
         body += "        return;\n";
         body += "    }\n";
 
@@ -331,8 +352,8 @@ namespace {
         body += "    uint quad = local / 6u;\n";
         body += "    vec2 uv;\n";
 
-        body += "    if (topo == 0u) {\n";
-        body += "        uint s = voff + quad;\n";
+        body += "    if (topo == 0u || fill == 1u) {\n";
+        body += "        uint s = topo == 0u ? voff + quad : vertex_at(voff + quad, indexed);\n";
         body += "        vec3 p = read_pos(s, sw, po);\n";
         body += "        float h = read_extent(s, sw, scalar_offset, fallback_extent)\n";
         body += "               * point_scale * 0.5;\n";
@@ -354,7 +375,13 @@ namespace {
         body += "        else if (corner == 4u) { o = rx + ry; uv = vec2(11.0, 11.0); }\n";
         body += "        else { o = -rx + ry; uv = vec2(10.0, 11.0); }\n";
         body += "        copy_vertex(i, s, sw);\n";
-        body += "        write_pos(i, sw, po, p + o);\n";
+        body += "        if (tangent_offset != 0xffffffffu) {\n";
+        body += "            write_pos(i, sw, po, p);\n";
+        body += "            write_tangent(i, sw, tangent_offset,\n";
+        body += "                vec4(((uv - vec2(10.0)) * 2.0 - 1.0) * h, 0.0, 0.0));\n";
+        body += "        } else {\n";
+        body += "            write_pos(i, sw, po, p + o);\n";
+        body += "        }\n";
         body += "        if (synth_uv == 1u) { write_uv(i, sw, uv_offset, uv); }\n";
         body += "        return;\n";
         body += "    }\n";
@@ -366,6 +393,9 @@ namespace {
         body += "    vec3 d = p1 - p0;\n";
         body += "    if (length(d) < 1e-6) {\n";
         body += "        write_pos(i, sw, po, p0);\n";
+        body += "        if (tangent_offset != 0xffffffffu) {\n";
+        body += "            write_tangent(i, sw, tangent_offset, vec4(0.0));\n";
+        body += "        }\n";
         body += "        return;\n";
         body += "    }\n";
         body += "    float dl = length(d);\n";
@@ -409,8 +439,16 @@ namespace {
         body += "    else if (corner == 4u) { pos = p1 + e1; pick = s1; uv = vec2(1.0, 0.0); }\n";
         body += "    else { pos = p1 - e1; pick = s1; uv = vec2(1.0, 1.0); }\n";
         body += "    copy_vertex(i, pick, sw);\n";
-        body += "    write_pos(i, sw, po, pos);\n";
-        body += "    if (synth_uv == 1u) { write_uv(i, sw, uv_offset, uv); }\n";
+        body += "    if (tangent_offset != 0xffffffffu) {\n";
+        body += "        float sg = (corner == 0u || corner == 3u || corner == 5u) ? -1.0 : 1.0;\n";
+        body += "        float hh = (corner == 0u || corner == 1u || corner == 3u) ? h0 : h1;\n";
+        body += "        write_pos(i, sw, po, pick == s0 ? p0 : p1);\n";
+        body += "        write_tangent(i, sw, tangent_offset, vec4(dn, sg * hh));\n";
+        body += "    } else {\n";
+        body += "        write_pos(i, sw, po, pos);\n";
+        body += "    }\n";
+        body += "    if (fill == 2u) { write_uv(i, sw, uv_offset, wire_uv(corner % 3u)); }\n";
+        body += "    else if (synth_uv == 1u) { write_uv(i, sw, uv_offset, uv); }\n";
 
         assemble.kernel(KernelSource { .body = std::move(body) });
 
@@ -422,7 +460,9 @@ namespace {
         const MillView& view,
         const MillOffsets& off,
         uint32_t total,
-        size_t run_count)
+        size_t run_count,
+        bool indexed,
+        bool billboard)
     {
         return MillPC {
             .total = total,
@@ -438,8 +478,18 @@ namespace {
             .fallback_extent = spec.fallback_extent,
             .eye_x = view.eye.x,
             .eye_y = view.eye.y,
-            .eye_z = view.eye.z
+            .eye_z = view.eye.z,
+            .indexed = indexed ? 1U : 0U,
+            .tangent_offset = billboard ? off.tangent : ABSENT
         };
+    }
+
+    /** @brief Whether a span of this topology is addressed through an index buffer when the source has one. */
+    constexpr bool is_triangle_topology(PrimitiveTopology topology) noexcept
+    {
+        return topology == PrimitiveTopology::TRIANGLE_LIST
+            || topology == PrimitiveTopology::TRIANGLE_STRIP
+            || topology == PrimitiveTopology::TRIANGLE_FAN;
     }
 
     /** @brief Exclusive prefix of milled counts, with the total appended. */
@@ -448,7 +498,7 @@ namespace {
         prefix.assign(runs.size() + 1, 0U);
         for (size_t r = 0; r < runs.size(); ++r) {
             prefix[r + 1] = prefix[r]
-                + triangle_vertex_count(runs[r].topology, runs[r].vertex_count);
+                + triangle_vertex_count(runs[r].topology, runs[r].vertex_count, runs[r].fill);
         }
     }
 
@@ -477,7 +527,7 @@ uint32_t PrimitiveMill::milled_vertex_count(std::span<const DrawRun> runs)
 {
     uint32_t total = 0;
     for (const auto& run : runs) {
-        total += triangle_vertex_count(run.topology, run.vertex_count);
+        total += triangle_vertex_count(run.topology, run.vertex_count, run.fill);
     }
     return total;
 }
@@ -507,17 +557,10 @@ bool PrimitiveMill::ensure_kernel()
     }
 
     auto& press = get_compute_press();
-    m_pipeline = press.create_pipeline_auto(m_shader, m_push_constant_size);
+    m_pipeline = press.create_pipeline_auto(m_shader, m_push_constant_size, 0);
     if (m_pipeline == INVALID_COMPUTE_PIPELINE) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
             "PrimitiveMill: pipeline creation failed");
-        return false;
-    }
-
-    m_sets = press.allocate_pipeline_descriptors(m_pipeline);
-    if (m_sets.empty()) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
-            "PrimitiveMill: descriptor allocation failed");
         return false;
     }
 
@@ -545,7 +588,11 @@ bool PrimitiveMill::ensure_buffers(
         milled_layout.vertex_count = total;
 
         if (!m_outputs.empty()) {
-            get_shader_foundry().get_graphics_queue().waitIdle();
+            get_shader_foundry().release_after_submit([svc, outgoing = std::move(m_outputs)] {
+                for (const auto& buffer : outgoing) {
+                    svc->destroy_buffer(buffer);
+                }
+            });
         }
 
         m_outputs.assign(m_output_ring, nullptr);
@@ -560,8 +607,6 @@ bool PrimitiveMill::ensure_buffers(
 
         m_output_capacity = grown;
         m_output_slot = 0;
-        m_descriptors_written = false;
-        m_bound_source.reset();
     } else {
         for (auto& slot : m_outputs) {
             auto milled_layout = *slot->get_vertex_layout();
@@ -570,69 +615,57 @@ bool PrimitiveMill::ensure_buffers(
         }
     }
 
-    const auto run_bytes = std::max<size_t>(run_count * RUN_WORDS * sizeof(uint32_t), sizeof(uint32_t));
-    if (!m_run_buf || m_run_buf->get_size_bytes() < run_bytes) {
-        m_run_buf = std::make_shared<VKBuffer>(
-            run_bytes, VKBuffer::Usage::HOST_STORAGE, Kakshya::DataModality::UNKNOWN);
-        svc->initialize_buffer(m_run_buf);
-        m_bound_source.reset();
-    }
-
-    const auto prefix_bytes = std::max<size_t>(m_prefix.size() * sizeof(uint32_t), sizeof(uint32_t));
-    if (!m_prefix_buf || m_prefix_buf->get_size_bytes() < prefix_bytes) {
-        m_prefix_buf = std::make_shared<VKBuffer>(
-            prefix_bytes, VKBuffer::Usage::HOST_STORAGE, Kakshya::DataModality::UNKNOWN);
-        svc->initialize_buffer(m_prefix_buf);
-        m_bound_source.reset();
-    }
-
-    return !m_outputs.empty() && m_run_buf && m_prefix_buf;
-}
-
-void PrimitiveMill::write_descriptors(const std::shared_ptr<VKBuffer>& source)
-{
-    if (m_descriptors_written && m_bound_source.lock() == source
-        && m_bound_slot == m_output_slot) {
-        return;
-    }
-
-    auto& foundry = get_shader_foundry();
-    const auto set = m_sets.front();
-
-    const auto bind = [&](uint32_t binding, const std::shared_ptr<VKBuffer>& buf) {
-        foundry.update_descriptor_buffer(
-            set, binding, vk::DescriptorType::eStorageBuffer,
-            buf->get_buffer(), 0, buf->get_size_bytes());
+    const auto arena_slots = static_cast<size_t>(m_output_ring) + 1;
+    const auto fit_arena = [arena_slots](std::unique_ptr<SlotArena>& arena, size_t bytes) {
+        if (arena && arena->slot_bytes() >= bytes) {
+            return;
+        }
+        if (!arena) {
+            arena = std::make_unique<SlotArena>();
+        }
+        arena->initialize(
+            static_cast<size_t>(static_cast<float>(bytes) * 1.5F),
+            BufferUsageHint::HOST_STORAGE, arena_slots);
     };
 
-    bind(0, source);
-    bind(1, m_run_buf);
-    bind(2, m_prefix_buf);
-    bind(3, m_outputs[m_output_slot]);
+    fit_arena(m_run_arena, std::max<size_t>(run_count * RUN_WORDS * sizeof(uint32_t), sizeof(uint32_t)));
+    fit_arena(m_prefix_arena, std::max<size_t>(m_prefix.size() * sizeof(uint32_t), sizeof(uint32_t)));
 
-    m_bound_source = source;
-    m_bound_slot = m_output_slot;
-    m_descriptors_written = true;
+    return !m_outputs.empty()
+        && m_run_arena && m_run_arena->is_initialized()
+        && m_prefix_arena && m_prefix_arena->is_initialized();
+}
+
+void PrimitiveMill::collect_completed()
+{
+    auto& foundry = get_shader_foundry();
+
+    size_t done = 0;
+    while (done < m_in_flight.size() && foundry.is_fence_signaled(m_in_flight[done])) {
+        foundry.release_fence(m_in_flight[done]);
+        ++done;
+    }
+    m_in_flight.erase(m_in_flight.begin(), m_in_flight.begin() + static_cast<std::ptrdiff_t>(done));
 }
 
 void PrimitiveMill::resolve_pending()
 {
-    if (m_pending_fence == INVALID_FENCE) {
-        return;
-    }
-
     auto& foundry = get_shader_foundry();
-    foundry.wait_for_fence(m_pending_fence);
-    foundry.release_fence(m_pending_fence);
-    m_pending_fence = INVALID_FENCE;
+
+    for (const FenceID fence : m_in_flight) {
+        foundry.wait_for_fence(fence);
+        foundry.release_fence(fence);
+    }
+    m_in_flight.clear();
 }
 
 uint32_t PrimitiveMill::mill(
     const std::shared_ptr<VKBuffer>& source,
     std::span<const DrawRun> runs,
-    const MillView& view)
+    const MillView& view,
+    std::optional<Kakshya::VertexLayout> layout)
 {
-    resolve_pending();
+    collect_completed();
 
     m_milled_count = 0;
 
@@ -640,7 +673,8 @@ uint32_t PrimitiveMill::mill(
         return 0;
     }
 
-    const auto layout = source->get_vertex_layout();
+    if (!layout)
+        layout = source->get_vertex_layout();
     if (!layout.has_value()) {
         return 0;
     }
@@ -654,16 +688,21 @@ uint32_t PrimitiveMill::mill(
         return 0;
     }
 
+    const bool indexed = source->has_index_buffer();
+    const auto index_count = static_cast<uint32_t>(source->get_index_buffer_size() / sizeof(uint32_t));
     const uint32_t source_vertices = layout->vertex_count;
     for (const auto& run : runs) {
         if (run.vertex_count == 0) {
             continue;
         }
-        if (run.vertex_offset > source_vertices
-            || run.vertex_count > source_vertices - run.vertex_offset) {
+        const bool by_index = indexed && is_triangle_topology(run.topology);
+        const uint32_t limit = by_index ? index_count : source_vertices;
+        if (run.vertex_offset > limit
+            || run.vertex_count > limit - run.vertex_offset) {
             MF_RT_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
-                "PrimitiveMill: run [{}, {}) exceeds the source's {} vertices",
-                run.vertex_offset, run.vertex_offset + run.vertex_count, source_vertices);
+                "PrimitiveMill: run [{}, {}) exceeds the source's {} {}",
+                run.vertex_offset, run.vertex_offset + run.vertex_count, limit,
+                by_index ? "indices" : "vertices");
             return 0;
         }
     }
@@ -680,24 +719,35 @@ uint32_t PrimitiveMill::mill(
 
     m_output_slot = (m_output_slot + 1) % m_outputs.size();
 
-    auto* run_ptr = static_cast<uint32_t*>(m_run_buf->get_mapped_ptr());
-    auto* prefix_ptr = static_cast<uint32_t*>(m_prefix_buf->get_mapped_ptr());
-    if (!run_ptr || !prefix_ptr) {
-        MF_RT_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
-            "PrimitiveMill: run or prefix buffer is not host mapped");
-        return 0;
-    }
+    m_run_words.assign(runs.size() * RUN_WORDS, 0U);
+    auto* run_ptr = m_run_words.data();
 
     for (size_t r = 0; r < runs.size(); ++r) {
-        run_ptr[r * RUN_WORDS + 0] = static_cast<uint32_t>(runs[r].topology);
+        const bool is_line = runs[r].topology == PrimitiveTopology::LINE_LIST
+            || runs[r].topology == PrimitiveTopology::LINE_STRIP;
+        const bool emulated = is_triangle_topology(runs[r].topology)
+            ? (runs[r].fill == PolygonMode::POINT || runs[r].fill == PolygonMode::LINE)
+            : (is_line && (runs[r].fill == PolygonMode::POINT || runs[r].fill == PolygonMode::LINE));
+        const uint32_t fill_code = !emulated ? 0U : (runs[r].fill == PolygonMode::POINT ? 1U : 2U);
+        run_ptr[r * RUN_WORDS + 0] = static_cast<uint32_t>(runs[r].topology) | (fill_code << 8U);
         run_ptr[r * RUN_WORDS + 1] = runs[r].vertex_offset;
         run_ptr[r * RUN_WORDS + 2] = runs[r].vertex_count;
     }
-    std::memcpy(prefix_ptr, m_prefix.data(), m_prefix.size() * sizeof(uint32_t));
 
-    write_descriptors(source);
+    m_run_slot = m_run_arena->acquire();
+    m_prefix_slot = m_prefix_arena->acquire();
+    m_run_arena->write(m_run_slot, m_run_words.data(), m_run_words.size() * sizeof(uint32_t));
+    m_prefix_arena->write(m_prefix_slot, m_prefix.data(), m_prefix.size() * sizeof(uint32_t));
 
-    const auto pc = make_pc(m_spec, view, off, total, runs.size());
+    const bool billboard = m_spec.billboard_instances
+        && m_spec.ribbon == MillSpec::Ribbon::WorldFacing
+        && off.tangent != ABSENT;
+    if (m_spec.billboard_instances && off.tangent == ABSENT) {
+        MF_RT_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "PrimitiveMill: billboard_instances needs a tangent attribute in the vertex layout");
+    }
+
+    const auto pc = make_pc(m_spec, view, off, total, runs.size(), indexed, billboard);
 
     auto& foundry = get_shader_foundry();
     auto& press = get_compute_press();
@@ -709,28 +759,67 @@ uint32_t PrimitiveMill::mill(
     foundry.buffer_barrier(
         cmd_id,
         destination,
-        vk::AccessFlagBits::eVertexAttributeRead,
-        vk::AccessFlagBits::eShaderWrite,
-        vk::PipelineStageFlagBits::eVertexInput,
-        vk::PipelineStageFlagBits::eComputeShader);
+        vk::AccessFlagBits2::eVertexAttributeRead,
+        vk::AccessFlagBits2::eShaderWrite,
+        vk::PipelineStageFlagBits2::eVertexInput,
+        vk::PipelineStageFlagBits2::eComputeShader);
 
-    press.bind_all(cmd_id, m_pipeline, m_sets, &pc, sizeof(MillPC));
+    const auto storage_write = [](uint32_t binding, const std::shared_ptr<VKBuffer>& buf) {
+        PushDescriptorWrite write;
+        write.binding = binding;
+        write.type = vk::DescriptorType::eStorageBuffer;
+        write.buffer = vk::DescriptorBufferInfo { buf->get_buffer(), 0, buf->get_size_bytes() };
+        return write;
+    };
+
+    const auto slot_write = [](uint32_t binding, const vk::DescriptorBufferInfo& info) {
+        PushDescriptorWrite write;
+        write.binding = binding;
+        write.type = vk::DescriptorType::eStorageBuffer;
+        write.buffer = info;
+        return write;
+    };
+
+    const auto run_info = m_run_arena->info(m_run_slot);
+    PushDescriptorWrite index_write = slot_write(4, run_info);
+    if (indexed) {
+        index_write.buffer = vk::DescriptorBufferInfo {
+            source->get_index_buffer(), 0, source->get_index_buffer_size()
+        };
+    }
+
+    const std::array<SlotLease, 2> leases {
+        m_run_arena->lease(m_run_slot), m_prefix_arena->lease(m_prefix_slot)
+    };
+
+    press.bind_pipeline(cmd_id, m_pipeline);
+    press.push_descriptors(cmd_id, m_pipeline, {
+                                                   storage_write(0, source),
+                                                   slot_write(1, run_info),
+                                                   slot_write(2, m_prefix_arena->info(m_prefix_slot)),
+                                                   storage_write(3, m_outputs[m_output_slot]),
+                                                   index_write,
+                                               },
+        leases);
+    press.push_constants(cmd_id, m_pipeline, &pc, sizeof(MillPC));
     press.dispatch(cmd_id, (total + WORKGROUP - 1) / WORKGROUP, 1, 1);
 
     foundry.buffer_barrier(
         cmd_id,
         destination,
-        vk::AccessFlagBits::eShaderWrite,
-        vk::AccessFlagBits::eVertexAttributeRead,
-        vk::PipelineStageFlagBits::eComputeShader,
-        vk::PipelineStageFlagBits::eVertexInput);
+        vk::AccessFlagBits2::eShaderWrite,
+        vk::AccessFlagBits2::eVertexAttributeRead,
+        vk::PipelineStageFlagBits2::eComputeShader,
+        vk::PipelineStageFlagBits2::eVertexInput);
 
-    m_pending_fence = foundry.submit_async(cmd_id);
-    if (m_pending_fence == INVALID_FENCE) {
+    const FenceID fence = foundry.submit_async(cmd_id);
+    if (fence == INVALID_FENCE) {
         MF_RT_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
             "PrimitiveMill: dispatch submission failed");
         return 0;
     }
+
+    m_in_flight.push_back(fence);
 
     m_milled_count = total;
 
@@ -757,15 +846,18 @@ void PrimitiveMill::release()
         m_shader = INVALID_SHADER;
     }
 
-    m_sets.clear();
-    m_bound_source.reset();
-    m_bound_slot = 0;
-    m_descriptors_written = false;
     m_outputs.clear();
     m_output_slot = 0;
-    m_run_buf.reset();
-    m_prefix_buf.reset();
+    if (m_run_arena) {
+        m_run_arena->release();
+    }
+    if (m_prefix_arena) {
+        m_prefix_arena->release();
+    }
+    m_run_arena.reset();
+    m_prefix_arena.reset();
     m_prefix.clear();
+    m_run_words.clear();
     m_output_capacity = 0;
     m_milled_count = 0;
     m_push_constant_size = 0;
@@ -828,6 +920,15 @@ namespace {
             std::memcpy(w, &t.x, sizeof(float));
             std::memcpy(w + 1, &t.y, sizeof(float));
         }
+
+        void write_tangent(uint32_t d, uint32_t to, const glm::vec4& t) const
+        {
+            uint32_t* w = dst + static_cast<size_t>(d) * stride_words + to;
+            std::memcpy(w, &t.x, sizeof(float));
+            std::memcpy(w + 1, &t.y, sizeof(float));
+            std::memcpy(w + 2, &t.z, sizeof(float));
+            std::memcpy(w + 3, &t.w, sizeof(float));
+        }
     };
 
     glm::vec3 host_view_normal(const glm::vec3& p, const glm::vec3& eye)
@@ -867,8 +968,13 @@ Kakshya::VertexLayout mill_on_host(
     std::span<const DrawRun> runs,
     const MillSpec& spec,
     const MillView& view,
-    std::vector<uint8_t>& dst)
+    std::vector<uint8_t>& dst,
+    std::span<const uint32_t> indices)
 {
+    const auto vertex_at = [&indices](uint32_t k) {
+        return indices.empty() ? k : indices[k];
+    };
+
     auto result = layout;
     result.vertex_count = 0;
     dst.clear();
@@ -895,6 +1001,7 @@ Kakshya::VertexLayout mill_on_host(
     };
 
     const bool world_plane = spec.ribbon == MillSpec::Ribbon::WorldPlane;
+    const bool billboard = spec.billboard_instances && !world_plane && off.tangent != ABSENT;
     const uint32_t scalar_offset = spec.use_vertex_extent ? off.scalar : ABSENT;
 
     for (size_t r = 0; r < runs.size(); ++r) {
@@ -906,13 +1013,27 @@ Kakshya::VertexLayout mill_on_host(
         for (uint32_t local = 0; local < emitted; ++local) {
             const uint32_t out = base + local;
 
-            if (run.topology == PrimitiveTopology::TRIANGLE_LIST) {
-                rec.copy_vertex(out, voff + local);
+            const bool is_tri = is_triangle_topology(run.topology);
+            const bool as_point = run.topology == PrimitiveTopology::POINT_LIST
+                || (run.fill == PolygonMode::POINT
+                    && (is_tri || run.topology == PrimitiveTopology::LINE_LIST
+                        || run.topology == PrimitiveTopology::LINE_STRIP));
+            const bool wire = is_tri && run.fill == PolygonMode::LINE;
+            const auto wire_uv = [](uint32_t c) {
+                return glm::vec2(c == 0U ? 21.0F : 20.0F, c == 1U ? 1.0F : 0.0F);
+            };
+
+            if (run.topology == PrimitiveTopology::TRIANGLE_LIST && !as_point) {
+                rec.copy_vertex(out, vertex_at(voff + local));
+                if (wire) {
+                    rec.write_uv(out, off.uv, wire_uv(local % 3U));
+                }
                 continue;
             }
 
-            if (run.topology == PrimitiveTopology::TRIANGLE_STRIP
-                || run.topology == PrimitiveTopology::TRIANGLE_FAN) {
+            if ((run.topology == PrimitiveTopology::TRIANGLE_STRIP
+                    || run.topology == PrimitiveTopology::TRIANGLE_FAN)
+                && !as_point) {
                 const uint32_t tri = local / 3U;
                 const uint32_t c = local - tri * 3U;
                 uint32_t a = 0;
@@ -925,15 +1046,20 @@ Kakshya::VertexLayout mill_on_host(
                     }
                 }
                 const uint32_t pick = c == 0U ? a : (c == 1U ? b1 : b2);
-                rec.copy_vertex(out, voff + pick);
+                rec.copy_vertex(out, vertex_at(voff + pick));
+                if (wire) {
+                    rec.write_uv(out, off.uv, wire_uv(c));
+                }
                 continue;
             }
 
             const uint32_t corner = local % 6U;
             const uint32_t quad = local / 6U;
 
-            if (run.topology == PrimitiveTopology::POINT_LIST) {
-                const uint32_t s = voff + quad;
+            if (as_point) {
+                const uint32_t s = run.topology == PrimitiveTopology::POINT_LIST
+                    ? voff + quad
+                    : vertex_at(voff + quad);
                 const glm::vec3 p = rec.read_pos(s, off.position);
                 const float h = rec.read_extent(s, scalar_offset, spec.fallback_extent)
                     * spec.point_scale * 0.5F;
@@ -975,7 +1101,13 @@ Kakshya::VertexLayout mill_on_host(
                 }
 
                 rec.copy_vertex(out, s);
-                rec.write_pos(out, off.position, p + o);
+                if (billboard) {
+                    rec.write_pos(out, off.position, p);
+                    rec.write_tangent(out, off.tangent,
+                        glm::vec4((uv * 2.0F - glm::vec2(1.0F)) * h, 0.0F, 0.0F));
+                } else {
+                    rec.write_pos(out, off.position, p + o);
+                }
                 if (spec.synthesize_uv) {
                     rec.write_uv(out, off.uv, uv + glm::vec2(10.0F));
                 }
@@ -993,6 +1125,9 @@ Kakshya::VertexLayout mill_on_host(
 
             if (glm::length(d) < 1e-6F) {
                 rec.write_pos(out, off.position, p0);
+                if (billboard) {
+                    rec.write_tangent(out, off.tangent, glm::vec4(0.0F));
+                }
                 continue;
             }
 
@@ -1032,8 +1167,18 @@ Kakshya::VertexLayout mill_on_host(
             }
 
             rec.copy_vertex(out, pick);
-            rec.write_pos(out, off.position, pos);
-            if (spec.synthesize_uv) {
+            if (billboard) {
+                const float sign = (corner == 0U || corner == 3U || corner == 5U) ? -1.0F : 1.0F;
+                const float half_w = (corner == 0U || corner == 1U || corner == 3U) ? h0 : h1;
+                rec.write_pos(out, off.position, pick == s0 ? p0 : p1);
+                rec.write_tangent(out, off.tangent,
+                    glm::vec4(d / glm::length(d), sign * half_w));
+            } else {
+                rec.write_pos(out, off.position, pos);
+            }
+            if (run.fill == PolygonMode::LINE) {
+                rec.write_uv(out, off.uv, wire_uv(corner % 3U));
+            } else if (spec.synthesize_uv) {
                 rec.write_uv(out, off.uv, uv);
             }
         }

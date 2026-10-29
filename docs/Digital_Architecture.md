@@ -297,7 +297,7 @@ Portal is the glue layer between MayaFlux's internal systems and external-facing
 
 `ShaderFoundry` manages shader compilation and GPU command and fence lifetimes.
 
-`RenderFlow` orchestrates graphics pipeline creation and draw command recording using Vulkan 1.3 dynamic rendering with no render pass objects.
+`RenderFlow` orchestrates graphics pipeline creation and draw command recording using Vulkan 1.4 dynamic rendering with no render pass objects.
 
 `ComputePress` records compute pipeline dispatches.
 

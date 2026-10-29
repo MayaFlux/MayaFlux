@@ -154,6 +154,9 @@ vk::DescriptorSetLayout VKDescriptorManager::create_layout(
     vk::DescriptorSetLayoutCreateInfo layout_info;
     layout_info.bindingCount = static_cast<uint32_t>(vk_bindings.size());
     layout_info.pBindings = vk_bindings.data();
+    if (config.push_descriptor) {
+        layout_info.flags = vk::DescriptorSetLayoutCreateFlagBits::ePushDescriptor;
+    }
 
     vk::DescriptorSetLayout layout;
     try {
@@ -177,7 +180,7 @@ vk::DescriptorSetLayout VKDescriptorManager::create_layout(
 
 size_t VKDescriptorManager::hash_layout_config(const DescriptorSetLayoutConfig& config) const
 {
-    size_t hash = 0;
+    size_t hash = config.push_descriptor ? 1 : 0;
 
     auto hash_combine = [](size_t& seed, size_t value) {
         seed ^= value + 0x9e3779b9 + (seed << 6) + (seed >> 2);
@@ -207,6 +210,12 @@ vk::DescriptorPool VKDescriptorManager::create_pool(vk::Device device, uint32_t 
         { vk::DescriptorType::eStorageImage, max_sets * 2 },
 
         { vk::DescriptorType::eCombinedImageSampler, max_sets * 2 },
+
+        { vk::DescriptorType::eSampler, max_sets },
+
+        { vk::DescriptorType::eSampledImage, max_sets * 2 },
+
+        { vk::DescriptorType::eInputAttachment, max_sets },
     };
 
     vk::DescriptorPoolCreateInfo pool_info;

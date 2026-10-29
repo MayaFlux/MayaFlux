@@ -166,11 +166,10 @@ void ComputeMeshBuffer::set_field(Kinesis::SpatialField field)
 
 void ComputeMeshBuffer::set_bounds(const glm::vec3& bounds_min, const glm::vec3& bounds_max)
 {
+    m_bounds_min = bounds_min;
+    m_bounds_max = bounds_max;
     if (m_sdf_processor) {
         m_sdf_processor->set_bounds(bounds_min, bounds_max);
-    } else {
-        m_bounds_min = bounds_min;
-        m_bounds_max = bounds_max;
     }
     if (m_field_processor) {
         m_field_processor->set_bounds(bounds_min, bounds_max);
@@ -182,8 +181,29 @@ void ComputeMeshBuffer::set_resolution(uint32_t res_x, uint32_t res_y, uint32_t 
     m_res_x = std::max(res_x, 1U);
     m_res_y = std::max(res_y, 1U);
     m_res_z = std::max(res_z, 1U);
-    if (m_sdf_processor)
+    const auto capacity = worst_case_bytes(m_res_x, m_res_y, m_res_z);
+    if (m_sdf_processor && capacity > get_size_bytes()) {
+        resize(capacity);
+        m_sdf_processor->bind_buffer("vertices",
+            std::dynamic_pointer_cast<VKBuffer>(shared_from_this()));
+    }
+
+    auto layout = Kakshya::VertexLayout::for_meshes(sizeof(Kakshya::MeshVertex));
+    layout.vertex_count = static_cast<uint32_t>(capacity / sizeof(Kakshya::MeshVertex));
+    set_vertex_layout(layout);
+
+    if (m_prep_processor) {
+        m_prep_processor->set_resolution(m_res_x, m_res_y, m_res_z);
+        m_field_processor->set_resolution(m_prep_processor->grid_buf(),
+            m_bounds_min, m_bounds_max, m_res_x, m_res_y, m_res_z);
+    }
+    if (m_sdf_processor) {
         m_sdf_processor->set_resolution(m_res_x, m_res_y, m_res_z);
+        if (m_prep_processor) {
+            m_sdf_processor->set_external_buffers(m_prep_processor->grid_buf(),
+                m_prep_processor->counter_buf());
+        }
+    }
 }
 
 void ComputeMeshBuffer::set_iso_level(float iso_level)

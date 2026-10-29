@@ -24,6 +24,13 @@ class RenderProcessor;
  * Topology is taken from slot 0's node. All slots must carry geometry with the
  * same topology and vertex layout for the single draw call to be correct.
  *
+ * When the render config triangulates, the template is milled once and the
+ * vertex shader applies each instance transform to the milled position, then
+ * expands point quads and ribbons toward the viewpoint, so every instance
+ * faces the view whatever its rotation. This needs a tangent attribute in the
+ * template layout. Ribbon::WorldPlane in the mill spec instead holds the
+ * expansion in the template plane and the instance transform rotates it.
+ *
  * Usage:
  * @code
  * auto net = std::make_shared<InstanceNetwork>();

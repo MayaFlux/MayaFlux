@@ -7,6 +7,7 @@
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
+#include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
 
 namespace MayaFlux::Buffers {
 
@@ -83,6 +84,33 @@ void MeshNetworkBuffer::setup_rendering(const RenderConfig& config)
     m_render_config.topology = Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST;
     m_render_config.polygon_mode = config.polygon_mode;
     m_render_config.cull_mode = config.cull_mode;
+    m_render_config.triangulate = config.triangulate;
+
+    m_render_config.triangulate |= Portal::Graphics::needs_triangulation(
+        m_render_config.topology, m_render_config.polygon_mode);
+    const bool milled = m_render_config.triangulate;
+    m_processor->set_milling_slot_attribute(milled);
+    set_prefer_semantic_layout(milled);
+
+    auto vertex_layout = Kakshya::VertexLayout::for_meshes(
+        sizeof(Kakshya::MeshVertex) + (milled ? 2 * sizeof(float) : 0));
+    if (milled) {
+        vertex_layout.attributes.push_back({
+            .component_modality = Kakshya::DataModality::SCALAR_F32,
+            .offset_in_vertex = static_cast<uint32_t>(sizeof(Kakshya::MeshVertex)),
+            .name = "slot_index_low"
+        });
+        vertex_layout.attributes.push_back({
+            .component_modality = Kakshya::DataModality::SCALAR_F32,
+            .offset_in_vertex = static_cast<uint32_t>(sizeof(Kakshya::MeshVertex) + sizeof(float)),
+            .name = "slot_index_high"
+        });
+    }
+    for (const auto& slot : m_network->slots()) {
+        if (slot.node)
+            vertex_layout.vertex_count += static_cast<uint32_t>(slot.node->get_mesh_vertex_count());
+    }
+    set_vertex_layout(vertex_layout);
 
     for (const auto& [name, tex] : config.additional_textures)
         m_render_config.additional_textures.emplace_back(name, tex);
@@ -105,15 +133,13 @@ void MeshNetworkBuffer::setup_rendering(const RenderConfig& config)
 
     if (m_render_config.fragment_shader.empty()) {
         m_render_config.fragment_shader = textured
-            ? "mesh_network_textured.frag.spv"
-            : "mesh_network.frag.spv";
+            ? "mesh_network_textured.frag.spv" : "mesh_network.frag.spv";
     }
 
     ShaderConfig sc { m_render_config.vertex_shader };
 
     sc.bindings["modelMatrices"] = ShaderBinding(0, 1, vk::DescriptorType::eStorageBuffer);
     sc.bindings["slotIndices"] = ShaderBinding(0, 2, vk::DescriptorType::eStorageBuffer);
-
     if (has_slot_textures) {
         sc.bindings["diffuseTex"] = ShaderBinding(
             0, 3, vk::DescriptorType::eCombinedImageSampler, slot_count);
@@ -127,6 +153,15 @@ void MeshNetworkBuffer::setup_rendering(const RenderConfig& config)
         sc.bindings[name] = ShaderBinding(0, binding_idx++, vk::DescriptorType::eCombinedImageSampler);
 
     apply_render_config(m_render_config, sc);
+
+    auto self = std::dynamic_pointer_cast<MeshNetworkBuffer>(shared_from_this());
+    m_render_processor->set_buffer_vertex_layout(self, vertex_layout);
+
+    if (m_render_config.triangulate) {
+        auto mill_spec = m_render_processor->get_mill_spec();
+        mill_spec.use_vertex_extent = false;
+        m_render_processor->set_mill_spec(mill_spec);
+    }
 
     if (has_slot_textures) {
         const auto& slots = m_network->slots();

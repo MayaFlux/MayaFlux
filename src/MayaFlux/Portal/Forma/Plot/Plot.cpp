@@ -71,7 +71,7 @@ uint32_t place_rect(
     const RectSpec& spec,
     uint32_t relate_to)
 {
-    const auto verts = Kinesis::filled_rect(spec.bounds, spec.color);
+    const auto verts = Kinesis::filled_rect(spec.bounds, glm::vec4(spec.color, 1.F));
     buf.submit(verts);
 
     Element el;

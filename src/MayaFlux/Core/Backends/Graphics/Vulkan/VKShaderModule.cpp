@@ -328,7 +328,7 @@ bool VKShaderModule::create_from_spirv_asm(
     const std::string& entry_point,
     bool enable_reflection)
 {
-    spv_context ctx = spvContextCreate(SPV_ENV_VULKAN_1_3);
+    spv_context ctx = spvContextCreate(SPV_ENV_VULKAN_1_4);
     spv_binary binary = nullptr;
     spv_diagnostic diag = nullptr;
 
@@ -788,7 +788,7 @@ std::vector<uint32_t> VKShaderModule::compile_glsl_to_spirv(
     shaderc::Compiler compiler;
     shaderc::CompileOptions options;
 
-    options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_3);
+    options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_4);
     options.SetTargetSpirv(shaderc_spirv_version_1_6);
     options.SetOptimizationLevel(shaderc_optimization_level_performance);
     options.SetIncluder(std::make_unique<FileIncluder>(include_directories));

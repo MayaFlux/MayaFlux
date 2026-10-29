@@ -3,6 +3,19 @@
 namespace MayaFlux::Registry::Service {
 
 /**
+ * @brief Completion token of one presented frame
+ *
+ * Opaque to callers: hand it back to DisplayService::is_present_complete or
+ * wait_present. A value of 0 means no submission.
+ */
+struct PresentPoint {
+    uint32_t timeline {};
+    uint64_t value {};
+
+    [[nodiscard]] explicit operator bool() const { return value != 0; }
+};
+
+/**
  * @brief Backend display and presentation service interface
  *
  * Manages window surfaces, swapchains, and frame presentation.
@@ -14,11 +27,29 @@ struct MAYAFLUX_API DisplayService {
      * @brief Submit a primary command buffer and present the frame
      * @param window_handle Window handle
      * @param primary_command_buffer The primary command buffer (uint64_t bits of vk::CommandBuffer)
+     * @return Point that completes when the frame's GPU work finishes, or an
+     *         empty point if the window is unregistered or the submit failed
      *
      * Handles semaphore choreography: waits on image_available, signals render_finished,
      * then presents. Must be called after acquire_next_swapchain_image().
      */
-    std::function<void(const std::shared_ptr<void>&, uint64_t)> submit_and_present;
+    std::function<PresentPoint(const std::shared_ptr<void>&, uint64_t)> submit_and_present;
+
+    /**
+     * @brief Whether a presented frame's GPU work has finished
+     * @param point Point returned by submit_and_present
+     *
+     * Never blocks. An empty point is complete.
+     */
+    std::function<bool(const PresentPoint&)> is_present_complete;
+
+    /**
+     * @brief Block until a presented frame's GPU work has finished
+     * @param point Point returned by submit_and_present
+     *
+     * Returns at once for an empty or completed point.
+     */
+    std::function<void(const PresentPoint&)> wait_present;
 
     /**
      * @brief Wait for all GPU operations to complete
@@ -129,7 +160,7 @@ struct MAYAFLUX_API DisplayService {
      *        a caller-supplied host buffer.
      *
      * Internally calls BackendResourceManager::download_image_data with
-     * restore_layout = ePresentSrcKHR and restore_stage = eBottomOfPipe,
+     * restore_layout = ePresentSrcKHR and restore_stage = eAllCommands,
      * which are the correct values for a swapchain image post-present.
      *
      * The destination buffer must be at least

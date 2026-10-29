@@ -14,6 +14,15 @@ bool VKSwapchain::create(VKContext& context,
     vk::SurfaceKHR surface,
     const WindowCreateInfo& window_config, const std::vector<uint32_t>& sharing_families)
 {
+    return build(context, surface, window_config, sharing_families, nullptr);
+}
+
+bool VKSwapchain::build(VKContext& context,
+    vk::SurfaceKHR surface,
+    const WindowCreateInfo& window_config,
+    const std::vector<uint32_t>& sharing_families,
+    vk::SwapchainKHR old_swapchain)
+{
     m_context = &context;
     m_surface = surface;
 
@@ -113,7 +122,7 @@ bool VKSwapchain::create(VKContext& context,
     create_info.compositeAlpha = vk::CompositeAlphaFlagBitsKHR::eOpaque;
     create_info.presentMode = present_mode;
     create_info.clipped = VK_TRUE;
-    create_info.oldSwapchain = nullptr;
+    create_info.oldSwapchain = old_swapchain;
 
     try {
         m_swapchain = device.createSwapchainKHR(create_info);
@@ -151,11 +160,27 @@ bool VKSwapchain::recreate(uint32_t width, uint32_t height)
         return false;
     }
 
-    m_context->get_device().waitIdle();
+    const vk::SwapchainKHR retired_swapchain = std::exchange(m_swapchain, nullptr);
+    const std::vector<vk::ImageView> retired_views = std::exchange(m_image_views, {});
+    m_images.clear();
 
-    cleanup_swapchain();
+    const bool built = build(*m_context, m_surface, *m_window_config, m_sharing_families, retired_swapchain);
 
-    return create(*m_context, m_surface, *m_window_config, m_sharing_families);
+    const vk::Queue graphics_queue = m_context->get_graphics_queue();
+    graphics_queue.waitIdle();
+    if (m_last_present_queue && m_last_present_queue != graphics_queue) {
+        m_last_present_queue.waitIdle();
+    }
+
+    const vk::Device device = m_context->get_device();
+    for (const auto image_view : retired_views) {
+        device.destroyImageView(image_view);
+    }
+    if (retired_swapchain) {
+        device.destroySwapchainKHR(retired_swapchain);
+    }
+
+    return built;
 }
 
 void VKSwapchain::cleanup()
@@ -234,6 +259,7 @@ bool VKSwapchain::present(uint32_t image_index,
     }
 
     vk::Queue queue = present_queue ? present_queue : m_context->get_graphics_queue();
+    m_last_present_queue = queue;
 
     vk::PresentInfoKHR present_info {};
     present_info.waitSemaphoreCount = 1;

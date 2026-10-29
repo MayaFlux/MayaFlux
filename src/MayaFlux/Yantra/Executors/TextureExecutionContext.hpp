@@ -2,7 +2,6 @@
 
 #include "GpuExecutionContext.hpp"
 
-#include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
 #include "MayaFlux/Portal/Graphics/SamplerForge.hpp"
 #include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 
@@ -525,12 +524,7 @@ protected:
                 w, h, m_output_format);
         }
 
-        if (!m_download_staging) {
-            m_download_staging = Buffers::create_image_staging_buffer(
-                m_output_container->byte_size());
-        }
-
-        m_output_container->from_image(img, m_download_staging, 0);
+        m_output_container->from_image(img, 0);
 
         output_type result;
         result.container = std::static_pointer_cast<Kakshya::SignalSourceContainer>(
@@ -581,8 +575,6 @@ private:
 
     std::shared_ptr<Kakshya::TextureContainer> m_pending_container;
     std::shared_ptr<Kakshya::TextureContainer> m_output_container;
-    std::shared_ptr<Buffers::VKBuffer> m_download_staging;
-    std::shared_ptr<Buffers::VKBuffer> m_upload_staging;
     std::vector<GpuBufferBinding> m_aux_bindings;
 
     std::optional<std::pair<uint32_t, uint32_t>> m_output_dim_override;
@@ -620,22 +612,14 @@ private:
             .kind = array ? ImageKey::Kind::SAMPLED_ARRAY : ImageKey::Kind::SAMPLED_2D,
         };
 
-        const size_t staging_bytes = container.byte_size() * (array ? layers : 1U);
-        if (!m_upload_staging) {
-            m_upload_staging = Buffers::create_image_staging_buffer(staging_bytes);
-        } else if (staging_bytes > m_upload_staging->get_size_bytes()) {
-            m_upload_staging->resize(
-                static_cast<size_t>(static_cast<float>(staging_bytes) * Buffers::k_buffer_growth_factor), false);
-        }
-
         auto image = Portal::Graphics::TextureLoom::instance()
                          .acquire_cached_image(m_input_cache, key);
         if (!image)
             return nullptr;
 
         const bool uploaded = array
-            ? container.upload_image_array(image, m_upload_staging)
-            : container.upload_image(image, layer, m_upload_staging);
+            ? container.upload_image_array(image)
+            : container.upload_image(image, layer);
         return uploaded ? image : nullptr;
     }
 

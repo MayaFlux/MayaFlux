@@ -298,8 +298,8 @@ public:
     /**
      * @brief Set pre-packed interleaved vertex bytes to all registered render sinks.
      *
-     * data must point to N contiguous 60-byte Vertex records.
-     * byte_count must be a multiple of 60.
+     * data must point to N contiguous 68-byte Vertex records.
+     * byte_count must be a multiple of 68.
      */
     void set_vertices(const void* data, size_t byte_count);
 
@@ -310,7 +310,7 @@ public:
     template <typename T>
     void set_vertices(std::span<const T> vertices)
     {
-        static_assert(sizeof(T) == 60, "set_vertices: T must be a 60-byte vertex type");
+        static_assert(sizeof(T) == 68, "set_vertices: T must be a 68-byte vertex type");
         set_vertices(vertices.data(), vertices.size_bytes());
     }
 

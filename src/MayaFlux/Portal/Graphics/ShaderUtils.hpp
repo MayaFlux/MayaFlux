@@ -57,7 +57,7 @@ struct GpuBufferHandle {
         flags |= vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer;
         break;
     case BufferUsageHint::INDEX:
-        flags |= vk::BufferUsageFlagBits::eIndexBuffer;
+        flags |= vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eStorageBuffer;
         break;
     case BufferUsageHint::UNIFORM:
         flags |= vk::BufferUsageFlagBits::eUniformBuffer;
@@ -204,9 +204,14 @@ enum class DescriptorRole : uint8_t {
     return vk::DescriptorType::eStorageBuffer;
 }
 
+class SlotArena;
+
 /**
  * @struct DescriptorBindingConfig
  * @brief Portal-level descriptor binding configuration
+ *
+ * A binding whose range is a slot of a SlotArena names the arena and slot, so
+ * whoever pushes it can take a lease on the slot for that command buffer.
  */
 struct DescriptorBindingInfo {
     uint32_t set { 1 };
@@ -215,6 +220,21 @@ struct DescriptorBindingInfo {
     vk::DescriptorBufferInfo buffer_info;
     std::string name;
     uint32_t count { 1 };
+    std::shared_ptr<SlotArena> arena;
+    size_t slot {};
+};
+
+/**
+ * @struct PushDescriptorWrite
+ * @brief One binding written straight into a command buffer through a push descriptor set
+ *
+ * Buffer types read buffer, image and sampler types read image.
+ */
+struct PushDescriptorWrite {
+    uint32_t binding {};
+    vk::DescriptorType type = vk::DescriptorType::eStorageBuffer;
+    vk::DescriptorBufferInfo buffer;
+    vk::DescriptorImageInfo image;
 };
 
 /**

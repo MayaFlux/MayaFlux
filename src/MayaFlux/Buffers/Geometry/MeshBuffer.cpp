@@ -9,6 +9,7 @@
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
+#include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
 
 namespace MayaFlux::Buffers {
 
@@ -124,6 +125,10 @@ void MeshBuffer::setup_rendering(const RenderConfig& config)
 
     m_render_config.target_window = config.target_window;
     m_render_config.topology = Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST;
+    m_render_config.polygon_mode = config.polygon_mode;
+    m_render_config.triangulate = config.triangulate;
+    m_render_config.triangulate |= Portal::Graphics::needs_triangulation(
+        m_render_config.topology, m_render_config.polygon_mode);
 
     if (!config.additional_textures.empty()) {
         for (const auto& [name, texture] : config.additional_textures) {
@@ -159,6 +164,13 @@ void MeshBuffer::setup_rendering(const RenderConfig& config)
     }
 
     apply_render_config(m_render_config, sc);
+
+    if (m_render_config.triangulate
+        && m_render_config.polygon_mode == Portal::Graphics::PolygonMode::POINT) {
+        auto mill_spec = m_render_processor->get_mill_spec();
+        mill_spec.use_vertex_extent = false;
+        m_render_processor->set_mill_spec(mill_spec);
+    }
 
     if (m_diffuse_texture && !m_render_config.default_texture_binding.empty()) {
         m_render_processor->bind_texture(

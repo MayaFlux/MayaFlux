@@ -30,6 +30,7 @@ namespace {
             return sizeof(glm::vec3);
         case DataModality::TEXTURE_COORDS_2D:
             return sizeof(glm::vec2);
+        case DataModality::VERTEX_TANGENTS_4D:
         case DataModality::VERTEX_COLORS_RGBA:
             return sizeof(glm::vec4);
         case DataModality::SCALAR_F32:
@@ -49,6 +50,7 @@ namespace {
         switch (modality) {
         case DataModality::TEXTURE_COORDS_2D:
             return gather<glm::vec2>(bytes, stride, offset, count);
+        case DataModality::VERTEX_TANGENTS_4D:
         case DataModality::VERTEX_COLORS_RGBA:
             return gather<glm::vec4>(bytes, stride, offset, count);
         case DataModality::SCALAR_F32:

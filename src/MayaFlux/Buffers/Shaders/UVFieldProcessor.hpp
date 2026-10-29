@@ -9,7 +9,7 @@ namespace MayaFlux::Buffers {
 
 /**
  * @enum UVProjectionMode
- * @brief Projection mode encoded in push constants for uv_field.comp
+ * @brief Projection mode encoded in the UV field shader push constants
  */
 enum class UVProjectionMode : uint8_t { ///< Backing type matches push constant uint in uv_field.comp
     CARTESIAN = 0,
@@ -32,7 +32,7 @@ enum class UVProjectionMode : uint8_t { ///< Backing type matches push constant 
  * is present, glm::vec3 colour (sampled from the image at the computed UV) at
  * byte offset 12.
  *
- * Push constant layout (uv_field.comp must match exactly, 48 bytes):
+ * Push constant layout (both UV field shaders must match exactly, 48 bytes):
  *   offset  0  uint  vertex_count
  *   offset  4  uint  mode          (UVProjectionMode)
  *   offset  8  uint  write_colour  (0 = UV only, 1 = also write sampled colour)
@@ -120,7 +120,9 @@ public:
 
 protected:
     void on_attach(const std::shared_ptr<Buffer>& buffer) override;
-    void on_descriptors_created() override;
+    void collect_push_writes(
+        const std::shared_ptr<VKBuffer>& buffer,
+        std::vector<Portal::Graphics::PushDescriptorWrite>& writes) override;
     bool on_before_execute(
         Portal::Graphics::CommandBufferID cmd_id,
         const std::shared_ptr<VKBuffer>& buffer) override;

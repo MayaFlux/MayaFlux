@@ -58,17 +58,12 @@ bool VKInstance::initialize(bool enable_validation,
     app_info.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
     app_info.pEngineName = "MayaFlux Engine";
     app_info.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-    app_info.apiVersion = VK_API_VERSION_1_3;
+    app_info.apiVersion = VK_API_VERSION_1_4;
 
     vk::InstanceCreateInfo create_info {};
     create_info.pApplicationInfo = &app_info;
 
     std::vector<const char*> extensions = required_extensions;
-
-#ifdef MAYAFLUX_PLATFORM_MACOS
-    extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
-    create_info.flags = vk::InstanceCreateFlagBits::eEnumeratePortabilityKHR;
-#endif
 
     if (m_validation_enabled) {
         extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
@@ -182,12 +177,22 @@ bool VKInstance::setup_debug_messenger()
 }
 
 vk::Bool32 VKInstance::debug_callback(
-    vk::DebugUtilsMessageSeverityFlagBitsEXT /*messageSeverity*/,
+    vk::DebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
     vk::DebugUtilsMessageTypeFlagsEXT /*messageTypes*/,
     const vk::DebugUtilsMessengerCallbackDataEXT* p_callback_data,
     void* /*pUserData*/)
 {
-    MF_INFO(Journal::Component::Core, Journal::Context::Validation, "Validation layer: {}", p_callback_data->pMessage);
+    switch (messageSeverity) {
+    case vk::DebugUtilsMessageSeverityFlagBitsEXT::eError:
+        MF_ERROR(Journal::Component::Core, Journal::Context::Validation, "Validation layer: {}", p_callback_data->pMessage);
+        break;
+    case vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning:
+        MF_WARN(Journal::Component::Core, Journal::Context::Validation, "Validation layer: {}", p_callback_data->pMessage);
+        break;
+    default:
+        MF_INFO(Journal::Component::Core, Journal::Context::Validation, "Validation layer: {}", p_callback_data->pMessage);
+        break;
+    }
     return VK_FALSE;
 }
 

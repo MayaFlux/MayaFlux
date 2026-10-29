@@ -134,7 +134,7 @@ jobs:
             spirv-cross
             shaderc
             glslang
-            molten-vk
+            mesa
             hidapi
             utf8proc
             freetype
@@ -189,8 +189,9 @@ jobs:
           echo "Clang_DIR=$LLVM_PREFIX/lib/cmake/clang" >> $GITHUB_ENV
 
           # Vulkan SDK specific
-          MOLTENVK_ICD=$(find $(brew --prefix) -name "MoltenVK_icd.json" | head -1)
-          echo "VK_ICD_FILENAMES=$MOLTENVK_ICD" >> $GITHUB_ENV
+          KOSMICKRISP_ICD="$(brew --prefix)/share/vulkan/icd.d/kosmickrisp_mesa_icd.aarch64.json"
+          test -f "$KOSMICKRISP_ICD"
+          echo "VK_ICD_FILENAMES=$KOSMICKRISP_ICD" >> $GITHUB_ENV
 
           # Verify the setup worked
           echo "=== Verifying environment ==="

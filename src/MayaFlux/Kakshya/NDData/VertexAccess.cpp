@@ -6,15 +6,15 @@ namespace MayaFlux::Kakshya {
 
 namespace {
 
-    // Canonical field layout: vec3 pos(12) | vec3 color(12) | float scalar(4) | vec2 uv(8) | vec3 normal(12) | vec3 tangent(12)
+    // Canonical field layout: vec3 pos(12) | vec4 color(16) | float scalar(4) | vec2 uv(8) | vec3 normal(12) | vec3 tangent(12)
     // Channel slot -> (offset, size)
     constexpr std::array<std::pair<size_t, size_t>, 6> k_channel_layout { {
         { 0, 12 }, // vec3  position
-        { 12, 12 }, // vec3  color
-        { 24, 4 }, // float scalar
-        { 28, 8 }, // vec2  uv
-        { 36, 12 }, // vec3  normal
-        { 48, 12 }, // vec3  tangent
+        { 12, 16 }, // vec4  color
+        { 28, 4 }, // float scalar
+        { 32, 8 }, // vec2  uv
+        { 40, 12 }, // vec3  normal
+        { 52, 12 }, // vec3  tangent
     } };
 
     /**
@@ -59,7 +59,7 @@ namespace {
         };
 
         for (size_t i = 0; i < count; ++i) {
-            std::byte* v = dst + i * 60;
+            std::byte* v = dst + i * 64;
             for (size_t s = 0; s < 6; ++s) {
                 auto [dst_off, dst_sz] = k_channel_layout[s];
                 if (s < channels.size()) {
@@ -69,6 +69,10 @@ namespace {
                     std::memcpy(v + dst_off, cv.ptr + i * cv.element_bytes, copy_sz);
                     if (copy_sz < dst_sz) {
                         std::memset(v + dst_off + copy_sz, 0, dst_sz - copy_sz);
+                        if (s == 1 && copy_sz == sizeof(glm::vec3)) {
+                            const float opaque = 1.0F;
+                            std::memcpy(v + dst_off + copy_sz, &opaque, sizeof(float));
+                        }
                     }
                 } else {
                     std::memcpy(v + dst_off, defaults[s], dst_sz);
@@ -96,16 +100,16 @@ std::optional<VertexAccess> as_point_vertex_access(
         return std::nullopt;
     }
 
-    // Zero-copy path: single uint8_t channel of N*60 bytes is already interleaved.
+    // Zero-copy path: single uint8_t channel of N*68 bytes is already interleaved.
     if (channels.size() == 1) {
         if (const auto* b = std::get_if<std::vector<uint8_t>>(&channels[0])) {
-            if (b->size() % 60 != 0) {
+            if (b->size() % 64 != 0) {
                 MF_ERROR(Journal::Component::Kakshya, Journal::Context::Runtime,
-                    "as_point_vertex_access: uint8_t byte count {} not a multiple of 60",
+                    "as_point_vertex_access: uint8_t byte count {} not a multiple of 64",
                     b->size());
                 return std::nullopt;
             }
-            const auto count = static_cast<uint32_t>(b->size() / 60);
+            const auto count = static_cast<uint32_t>(b->size() / 64);
             auto layout = VertexLayout::for_points();
             layout.vertex_count = count;
             return VertexAccess { .data_ptr = b->data(), .byte_count = b->size(), .layout = layout };
@@ -120,7 +124,7 @@ std::optional<VertexAccess> as_point_vertex_access(
     }
 
     VertexAccess va;
-    va.conversion_buffer.resize(count * 60);
+    va.conversion_buffer.resize(count * 64);
     assemble_vertices(channels, count, config, config.default_size,
         va.conversion_buffer.data());
     va.data_ptr = va.conversion_buffer.data();
@@ -142,13 +146,13 @@ std::optional<VertexAccess> as_line_vertex_access(
 
     if (channels.size() == 1) {
         if (const auto* b = std::get_if<std::vector<uint8_t>>(&channels[0])) {
-            if (b->size() % 60 != 0) {
+            if (b->size() % 64 != 0) {
                 MF_ERROR(Journal::Component::Kakshya, Journal::Context::Runtime,
-                    "as_line_vertex_access: uint8_t byte count {} not a multiple of 60",
+                    "as_line_vertex_access: uint8_t byte count {} not a multiple of 64",
                     b->size());
                 return std::nullopt;
             }
-            const auto count = static_cast<uint32_t>(b->size() / 60);
+            const auto count = static_cast<uint32_t>(b->size() / 64);
             auto layout = VertexLayout::for_lines();
             layout.vertex_count = count;
             return VertexAccess { .data_ptr = b->data(), .byte_count = b->size(), .layout = layout };
@@ -163,7 +167,7 @@ std::optional<VertexAccess> as_line_vertex_access(
     }
 
     VertexAccess va;
-    va.conversion_buffer.resize(count * 60);
+    va.conversion_buffer.resize(count * 64);
     assemble_vertices(channels, count, config, config.default_thickness,
         va.conversion_buffer.data());
     va.data_ptr = va.conversion_buffer.data();
@@ -185,13 +189,13 @@ std::optional<VertexAccess> as_mesh_vertex_access(
 
     if (channels.size() == 1) {
         if (const auto* b = std::get_if<std::vector<uint8_t>>(&channels[0])) {
-            if (b->size() % 60 != 0) {
+            if (b->size() % 64 != 0) {
                 MF_ERROR(Journal::Component::Kakshya, Journal::Context::Runtime,
-                    "as_mesh_vertex_access: uint8_t byte count {} not a multiple of 60",
+                    "as_mesh_vertex_access: uint8_t byte count {} not a multiple of 64",
                     b->size());
                 return std::nullopt;
             }
-            const auto count = static_cast<uint32_t>(b->size() / 60);
+            const auto count = static_cast<uint32_t>(b->size() / 64);
             auto layout = VertexLayout::for_meshes();
             layout.vertex_count = count;
             return VertexAccess { .data_ptr = b->data(), .byte_count = b->size(), .layout = layout };
@@ -206,7 +210,7 @@ std::optional<VertexAccess> as_mesh_vertex_access(
     }
 
     VertexAccess va;
-    va.conversion_buffer.resize(count * 60);
+    va.conversion_buffer.resize(count * 64);
     assemble_vertices(channels, count, config, config.default_weight,
         va.conversion_buffer.data());
     va.data_ptr = va.conversion_buffer.data();

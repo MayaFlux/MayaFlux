@@ -19,6 +19,14 @@ inline constexpr float k_buffer_growth_factor = 1.5F;
 using TransferHandle = std::shared_ptr<void>;
 
 /**
+ * @brief Block until every dispatch submitted so far has completed.
+ *
+ * Returns immediately when nothing is outstanding. Call before the host
+ * reads or overwrites mapped memory that a dispatch may still be using.
+ */
+MAYAFLUX_API void await_dispatches();
+
+/**
  * @brief Upload data to a host-visible buffer
  * @param target Target VKBuffer to upload data into
  * @param data DataVariant containing the data to upload
@@ -210,13 +218,19 @@ MAYAFLUX_API void resolve_back_buffer_read(
  * @param dst_offset Byte offset into @p target to write at. The default 0
  *        overwrites from the start; a nonzero value uploads a sub-range,
  *        leaving the rest of @p target as it was.
+ * @param awaited True when the caller has already waited for work using
+ *        @p target, which skips the library-wide wait before a host write.
+ *        A device-local @p target with a caller-supplied @p staging buffer is
+ *        then copied without blocking; the next write to @p staging waits for
+ *        that copy only.
  */
 MAYAFLUX_API void upload_to_gpu(
     const void* data,
     size_t size,
     const std::shared_ptr<VKBuffer>& target,
     const std::shared_ptr<VKBuffer>& staging = nullptr,
-    size_t dst_offset = 0);
+    size_t dst_offset = 0,
+    bool awaited = false);
 
 /**
  * @brief Zero a registered GPU buffer in place (auto-detects host-visible vs device-local)
@@ -397,15 +411,13 @@ template <GpuImageSource T>
  * @param image       GPU-resident source image.
  * @param raw_staging Persistent byte buffer for the GPU download. Reuse across calls.
  * @param work        Persistent float buffer for normalisation output. Reuse across calls.
- * @param gpu_staging Optional persistent staging buffer for device-local images. Reuse across calls.
  * @return Normalised float span pointing into @p work (or directly into the
  *         variant storage for float-format images).
  */
 [[nodiscard]] MAYAFLUX_API std::span<const float> download_and_normalise(
     const std::shared_ptr<Core::VKImage>& image,
     std::vector<uint8_t>& raw_staging,
-    std::vector<float>& work,
-    const std::shared_ptr<VKBuffer>& gpu_staging);
+    std::vector<float>& work);
 
 /**
  * @brief Create staging buffer for transfers

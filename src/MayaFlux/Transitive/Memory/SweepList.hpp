@@ -196,6 +196,26 @@ public:
     }
 
     /**
+     * @brief Removes and returns one item, the most recently pushed of those it sees.
+     *
+     * Takes the chain like sweep() and republishes everything but the returned
+     * item. A concurrent push() is not part of the chain and a concurrent
+     * try_take() sees the list as momentarily empty, so with several takers
+     * one may get nothing although items exist. Callers that need an item
+     * create one when this returns an empty optional.
+     *
+     * @return The item, or an empty optional if none was held.
+     */
+    [[nodiscard]] std::optional<T> try_take()
+    {
+        std::optional<T> taken;
+        sweep(
+            [&taken](T&) { return !taken.has_value(); },
+            [&taken](T& item) { taken.emplace(std::move(item)); });
+        return taken;
+    }
+
+    /**
      * @brief Approximate number of items currently held.
      *
      * May be transiently stale under concurrent push()/sweep()/drain().

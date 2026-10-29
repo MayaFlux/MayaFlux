@@ -160,8 +160,8 @@ public:
      * @brief Read buffer contents as Kakshya DataVariant
      *
      * For host-visible buffers this returns a single DataVariant containing the
-     * raw bytes. For device-local buffers this warns and returns empty — a
-     * BufferDownloadProcessor should be used to read GPU-only memory.
+     * raw bytes. For device-local buffers this warns and returns empty; use
+     * Buffers::download_from_gpu to read GPU-only memory.
      *
      * @return Vector of DataVariant objects representing buffer contents.
      */
@@ -171,8 +171,8 @@ public:
      * @brief Write data into the buffer
      *
      * If the buffer is host-visible and mapped the provided data is copied into
-     * the mapped memory. For device-local buffers, a BufferUploadProcessor must
-     * be present in the processing chain to perform the staging/upload.
+     * the mapped memory. For device-local buffers this warns and does nothing;
+     * use Buffers::upload_to_gpu.
      *
      * @param data Vector of Kakshya::DataVariant containing the payload to copy.
      */
@@ -406,6 +406,12 @@ public:
     /** Retrieve and clear all invalid ranges */
     std::vector<std::pair<size_t, size_t>> get_and_clear_invalid_ranges();
 
+    /** Record the completion point of the latest submission that used this buffer */
+    void note_use(uint32_t timeline, uint64_t value);
+
+    /** Block until the latest recorded submission has completed; returns at once if none */
+    void await_use() const;
+
     /**
      * @brief Associate this buffer with a window for rendering
      * @param window Target window for rendering this buffer's content
@@ -516,6 +522,18 @@ public:
      * @brief Check if this buffer has vertex layout configured
      */
     bool has_vertex_layout() const { return m_vertex_layout.has_value(); }
+
+    /** @brief Prefer the semantic vertex layout supplied by attached processors. */
+    void set_prefer_semantic_layout(bool preferred) noexcept
+    {
+        m_prefer_semantic_layout = preferred;
+    }
+
+    /** @brief Whether attached processors' semantic layouts are preferred. */
+    [[nodiscard]] bool prefers_semantic_layout() const noexcept
+    {
+        return m_prefer_semantic_layout;
+    }
 
     /**
      * @brief Clear vertex layout
@@ -655,6 +673,7 @@ protected:
 
 private:
     VKBufferResources m_resources;
+    std::atomic<uint64_t> m_last_use { 0 };
 
     // Buffer parameters
     size_t m_size_bytes {};
@@ -666,6 +685,7 @@ private:
     std::vector<Kakshya::DataDimension> m_dimensions;
 
     std::optional<Kakshya::VertexLayout> m_vertex_layout;
+    bool m_prefer_semantic_layout {};
 
     // Buffer interface state
     bool m_has_data { true };

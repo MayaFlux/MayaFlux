@@ -159,7 +159,7 @@ public:
      * @brief Set the global color tint for all paths.
      * @param color Color tint to apply to all paths (multiplied with individual tints).
      */
-    void set_global_color(const glm::vec3& color);
+    void set_global_color(const glm::vec4& color);
 
     /**
      * @brief Replace every control point, in extract_vertices() order, keeping the paths.

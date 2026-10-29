@@ -7,7 +7,7 @@
 layout(location = 0) in vec3 frag_position;
 layout(location = 1) flat in vec3 eye;
 
-layout(set = 1, binding = 0, std430) readonly buffer VolumeField {
+layout(set = 0, binding = 1, std430) readonly buffer VolumeField {
     float field[];
 };
 

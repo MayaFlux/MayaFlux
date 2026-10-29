@@ -444,7 +444,7 @@ public:
     /**
      * @brief Check if descriptors are initialized
      */
-    [[nodiscard]] bool are_descriptors_ready() const { return !m_descriptor_set_ids.empty(); }
+    [[nodiscard]] bool are_descriptors_ready() const { return m_descriptors_ready || !m_descriptor_set_ids.empty(); }
 
     /**
      * @brief Get number of bound buffers
@@ -624,14 +624,25 @@ protected:
     virtual void on_dispatch_complete(const std::shared_ptr<VKBuffer>& buffer);
 
     /**
+     * @brief Whether a dispatch blocks the host until it has completed.
+     *
+     * True by default. The wait also drains earlier queue work, which per-frame
+     * host writes to single-buffered resources currently rely on. Override to
+     * return false only when every consumer of the output is ordered on the GPU
+     * and the host resources the dispatch uses are protected across frames.
+     */
+    [[nodiscard]] virtual bool waits_on_submit() const { return true; }
+
+    /**
      * @brief Submit a recorded command buffer honoring the submission mode.
      * @param cmd_id Command buffer to submit.
      * @param buffer Buffer being processed. Retained until resolution when
      *        deferred, so on_dispatch_complete receives the same instance.
      *
-     * Synchronous submission calls submit_and_wait and returns. Deferred
-     * submission calls submit_async and stores the fence; a failed
-     * submission falls back to leaving nothing pending.
+     * Deferred submission calls submit_async and stores the fence; a failed
+     * submission falls back to leaving nothing pending. Otherwise the
+     * dispatch calls submit_and_wait when waits_on_submit() is true, and
+     * submits without waiting and retires the command buffer when it is false.
      */
     void submit_recorded(Portal::Graphics::CommandBufferID cmd_id, const std::shared_ptr<VKBuffer>& buffer);
 
@@ -640,9 +651,9 @@ protected:
      * @param set Logical set index from ShaderBinding
      * @return Resolved set index, or std::nullopt if invalid
      *
-     * Handles cases where the engine reserves set 0 for global resources.
-     * If m_engine_owns_set_zero is true, logical set 0 maps to no descriptor,
-     * and logical sets are offset by +1 in the actual descriptor sets.
+     * Set 0 can be a push descriptor set, which has no allocated set.
+     * If m_set_zero_is_push is true, logical set 0 maps to no descriptor,
+     * and logical sets are offset by -1 in m_descriptor_set_ids.
      */
     [[nodiscard]] std::optional<uint32_t> resolve_ds_index(uint32_t set) const;
 
@@ -672,18 +683,24 @@ protected:
     size_t m_auto_bind_index {};
 
     /**
-     * @brief Whether the engine reserves set=0 for global resources
+     * @brief Whether set 0 is a push descriptor set
      *
-     * Defaults to false. Only RenderProcessor sets this to true in its
-     * constructor. When true, resolve_ds_index() maps logical set=0 to
-     * nullopt (no user descriptor) and offsets all other sets by -1.
-     * Compute subclasses leave this false: their descriptor sets are
-     * numbered from set=0 with no engine reservation.
-     *
-     * A future subclass that needs engine-owned sets must set this
-     * explicitly and be aware of the index offset applied by resolve_ds_index.
+     * Defaults to false. RenderProcessor sets it in its constructor;
+     * ComputeProcessor sets it when it creates a pipeline whose lowest set
+     * is 0. When true, set 0 has no entry in m_descriptor_set_ids:
+     * resolve_ds_index() maps logical set 0 to nullopt and offsets every
+     * other set by -1, and update_descriptors() leaves set 0 to the
+     * subclass that pushes it.
      */
-    bool m_engine_owns_set_zero {};
+    bool m_set_zero_is_push {};
+
+    /**
+     * @brief Set once the descriptors of the current pipeline are usable.
+     *
+     * A pipeline whose only set is a push set allocates no descriptor sets,
+     * so m_descriptor_set_ids alone cannot signal readiness.
+     */
+    bool m_descriptors_ready {};
 
     virtual void initialize_pipeline(const std::shared_ptr<VKBuffer>& buffer) = 0;
     virtual void initialize_descriptors(const std::shared_ptr<VKBuffer>& buffer) = 0;
@@ -726,7 +743,7 @@ template <typename T>
 void ShaderProcessor::set_push_constant_data(const T& data)
 {
     const auto size = sizeof(T);
-    static_assert(size <= 128, "Push constants typically limited to 128 bytes");
+    static_assert(size <= 256, "Push constants limited to 256 bytes");
     if (m_push_constant_data.size() < size) {
         set_push_constant_size(size);
     }

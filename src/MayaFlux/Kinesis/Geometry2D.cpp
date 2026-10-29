@@ -7,7 +7,7 @@ namespace {
     constexpr uint32_t k_min_segments = 3;
     constexpr uint32_t k_min_sides = 3;
 
-    [[nodiscard]] Kakshya::Vertex vert2(glm::vec2 p, glm::vec3 c) noexcept
+    [[nodiscard]] Kakshya::Vertex vert2(glm::vec2 p, glm::vec4 c) noexcept
     {
         return Kakshya::Vertex {
             .position = { p.x, p.y, 0.F },
@@ -15,7 +15,7 @@ namespace {
         };
     }
 
-    [[nodiscard]] Kakshya::LineVertex lvert2(glm::vec2 p, glm::vec3 c, float t) noexcept
+    [[nodiscard]] Kakshya::LineVertex lvert2(glm::vec2 p, glm::vec4 c, float t) noexcept
     {
         return Kakshya::LineVertex {
             .position = { p.x, p.y, 0.F },
@@ -36,7 +36,7 @@ namespace {
 // =============================================================================
 
 std::vector<Kakshya::Vertex> filled_circle(
-    glm::vec2 center, float radius, uint32_t segments, glm::vec3 color)
+    glm::vec2 center, float radius, uint32_t segments, glm::vec4 color)
 {
     segments = std::max<uint32_t>(segments, k_min_segments);
     const float step = glm::two_pi<float>() / static_cast<float>(segments);
@@ -57,7 +57,7 @@ std::vector<Kakshya::Vertex> filled_circle(
 
 std::vector<Kakshya::Vertex> filled_ring(
     glm::vec2 center, float inner_r, float outer_r,
-    uint32_t segments, glm::vec3 color)
+    uint32_t segments, glm::vec4 color)
 {
     segments = std::max<uint32_t>(segments, k_min_segments);
     const float step = glm::two_pi<float>() / static_cast<float>(segments);
@@ -88,7 +88,7 @@ std::vector<Kakshya::Vertex> filled_ring(
 
 std::vector<Kakshya::Vertex> filled_polygon(
     glm::vec2 center, float radius, uint32_t sides,
-    float rotation_rad, glm::vec3 color)
+    float rotation_rad, glm::vec4 color)
 {
     sides = std::max<uint32_t>(sides, k_min_sides);
     const float step = glm::two_pi<float>() / static_cast<float>(sides);
@@ -109,8 +109,8 @@ std::vector<Kakshya::Vertex> filled_polygon(
 
 std::array<Kakshya::Vertex, 4> filled_rect_gradient(
     AABB2D region,
-    glm::vec3 color_bl, glm::vec3 color_br,
-    glm::vec3 color_tl, glm::vec3 color_tr)
+    glm::vec4 color_bl, glm::vec4 color_br,
+    glm::vec4 color_tl, glm::vec4 color_tr)
 {
     return { {
         { .position = { region.min.x, region.min.y, 0.F }, .color = color_bl },
@@ -122,7 +122,7 @@ std::array<Kakshya::Vertex, 4> filled_rect_gradient(
 
 std::vector<Kakshya::Vertex> filled_rounded_rect(
     AABB2D region, float corner_radius,
-    uint32_t corner_segments, glm::vec3 color)
+    uint32_t corner_segments, glm::vec4 color)
 {
     corner_segments = std::max<uint32_t>(corner_segments, 1U);
     const float max_r = std::min(region.width(), region.height()) * 0.5F;
@@ -181,7 +181,7 @@ std::vector<Kakshya::Vertex> filled_rounded_rect(
 std::vector<Kakshya::Vertex> filled_arc(
     glm::vec2 center, float radius,
     float angle_start, float angle_end,
-    uint32_t segments, glm::vec3 color)
+    uint32_t segments, glm::vec4 color)
 {
     segments = std::max<uint32_t>(segments, 1U);
     const float step = (angle_end - angle_start) / static_cast<float>(segments);
@@ -224,7 +224,7 @@ std::vector<glm::vec2> arc_path(
 
 std::vector<Kakshya::LineVertex> circle_outline(
     glm::vec2 center, float radius, uint32_t segments,
-    glm::vec3 color, float thickness)
+    glm::vec4 color, float thickness)
 {
     segments = std::max<uint32_t>(segments, k_min_segments);
     const float step = glm::two_pi<float>() / static_cast<float>(segments);
@@ -245,7 +245,7 @@ std::vector<Kakshya::LineVertex> circle_outline(
 std::vector<Kakshya::LineVertex> arc_outline(
     glm::vec2 center, float radius,
     float angle_start, float angle_end,
-    uint32_t segments, glm::vec3 color, float thickness)
+    uint32_t segments, glm::vec4 color, float thickness)
 {
     segments = std::max<uint32_t>(segments, 1U);
     const float step = (angle_end - angle_start) / static_cast<float>(segments);
@@ -264,7 +264,7 @@ std::vector<Kakshya::LineVertex> arc_outline(
 }
 
 std::array<Kakshya::LineVertex, 8> rect_outline(
-    AABB2D region, glm::vec3 color, float thickness)
+    AABB2D region, glm::vec4 color, float thickness)
 {
     const glm::vec2 bl { region.min.x, region.min.y };
     const glm::vec2 br { region.max.x, region.min.y };
@@ -284,7 +284,7 @@ std::array<Kakshya::LineVertex, 8> rect_outline(
 }
 
 std::vector<Kakshya::LineVertex> polyline(
-    std::span<const glm::vec2> pts, glm::vec3 color, float thickness)
+    std::span<const glm::vec2> pts, glm::vec4 color, float thickness)
 {
     if (pts.size() < 2)
         return {};
@@ -302,7 +302,7 @@ std::vector<Kakshya::LineVertex> polyline(
 
 std::vector<Kakshya::LineVertex> polyline_colored(
     std::span<const glm::vec2> pts,
-    std::span<const glm::vec3> colors,
+    std::span<const glm::vec4> colors,
     float thickness)
 {
     if (pts.size() < 2 || colors.size() != pts.size())
@@ -321,7 +321,7 @@ std::vector<Kakshya::LineVertex> polyline_colored(
 
 std::vector<Kakshya::LineVertex> polygon_outline(
     glm::vec2 center, float radius, uint32_t sides,
-    float rotation_rad, glm::vec3 color, float thickness)
+    float rotation_rad, glm::vec4 color, float thickness)
 {
     sides = std::max<uint32_t>(sides, k_min_sides);
     const float step = glm::two_pi<float>() / static_cast<float>(sides);

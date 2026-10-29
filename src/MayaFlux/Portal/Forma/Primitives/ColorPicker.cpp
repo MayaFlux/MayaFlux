@@ -21,10 +21,10 @@ namespace {
         glm::vec3 bl, glm::vec3 br, glm::vec3 tl, glm::vec3 tr)
     {
         using V = Kakshya::MeshVertex;
-        const V vbl { .position = { region.min.x, region.min.y, 0.F }, .color = bl };
-        const V vbr { .position = { region.max.x, region.min.y, 0.F }, .color = br };
-        const V vtl { .position = { region.min.x, region.max.y, 0.F }, .color = tl };
-        const V vtr { .position = { region.max.x, region.max.y, 0.F }, .color = tr };
+        const V vbl { .position = { region.min.x, region.min.y, 0.F }, .color = glm::vec4(bl, 1.F) };
+        const V vbr { .position = { region.max.x, region.min.y, 0.F }, .color = glm::vec4(br, 1.F) };
+        const V vtl { .position = { region.min.x, region.max.y, 0.F }, .color = glm::vec4(tl, 1.F) };
+        const V vtr { .position = { region.max.x, region.max.y, 0.F }, .color = glm::vec4(tr, 1.F) };
         out.insert(out.end(), { vbl, vbr, vtl, vbr, vtr, vtl });
     }
 

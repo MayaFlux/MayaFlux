@@ -25,7 +25,7 @@ const std::array<float, 4> default_color { 0.0F, 0.0F, 0.0F, 1.0F };
  * @brief Graphics pipeline orchestration for dynamic rendering
  *
  * RenderFlow is the rendering counterpart to ComputePress.
- * It manages graphics pipelines and draw command recording using Vulkan 1.3 dynamic rendering.
+ * It manages graphics pipelines and draw command recording using Vulkan 1.4 dynamic rendering.
  *
  * Responsibilities:
  * - Create graphics pipelines for dynamic rendering
@@ -95,12 +95,17 @@ public:
      * @param config Pipeline configuration
      * @param color_formats Color attachment formats for dynamic rendering
      * @param depth_format Depth attachment format
+     * @param push_set Index of the descriptor set to create as a push descriptor set.
+     *        It gets no allocated set and is written with push_descriptors().
+     * @param specialization_constants Values supplied to each shader stage
      * @return Pipeline ID or INVALID_RENDER_PIPELINE on error
      */
     RenderPipelineID create_pipeline(
         const RenderPipelineConfig& config,
         const std::vector<vk::Format>& color_formats,
-        vk::Format depth_format = vk::Format::eUndefined);
+        vk::Format depth_format = vk::Format::eUndefined,
+        std::optional<uint32_t> push_set = std::nullopt,
+        const std::unordered_map<uint32_t, uint32_t>& specialization_constants = {});
 
     /**
      * @brief Destroy a graphics pipeline
@@ -190,6 +195,30 @@ public:
         RenderPipelineID pipeline,
         const std::vector<DescriptorSetID>& descriptor_sets,
         uint32_t first_set = 0);
+
+    /**
+     * @brief First binding of the push descriptor set that the pipeline's shaders use but @p writes does not cover
+     * @param pipeline Pipeline ID, created with a push_set
+     * @param writes The writes about to be passed to push_descriptors()
+     * @return The binding, or nothing if every used binding is written or the pipeline has no push set
+     */
+    [[nodiscard]] std::optional<uint32_t> first_unwritten_push_binding(
+        RenderPipelineID pipeline,
+        const std::vector<vk::WriteDescriptorSet>& writes) const;
+
+    /**
+     * @brief Write the pipeline's push descriptor set straight into a command buffer
+     * @param cmd_id Command buffer ID
+     * @param pipeline Pipeline ID, created with a push_set
+     * @param writes Descriptor writes; dstSet is ignored
+     * @param leases Slots the writes point into; the command buffer keeps each
+     *        claimed until its submission completes.
+     */
+    void push_descriptors(
+        CommandBufferID cmd_id,
+        RenderPipelineID pipeline,
+        const std::vector<vk::WriteDescriptorSet>& writes,
+        std::span<const SlotLease> leases = {});
 
     /**
      * @brief Push constants
@@ -304,12 +333,33 @@ public:
         uint32_t first_layout_index = 0);
 
 private:
+    /**
+     * @brief Order this pass's reads before any later compute or transfer write.
+     * @param cmd_id Command buffer that recorded the draws.
+     *
+     * Lets later submissions overwrite buffers the draws read, such as vertex
+     * data a compute dispatch rewrites each frame.
+     */
+    void release_draw_inputs(CommandBufferID cmd_id);
+
     struct WindowRenderAssociation {
         std::weak_ptr<Core::Window> window;
         vk::Image swapchain_image {};
     };
 
+    struct PipelineKey;
+    struct PipelineKeyHash;
+    struct SharedPipelines;
+
     struct PipelineState {
+        PipelineState() = default;
+        PipelineState(const PipelineState&) = delete;
+        PipelineState& operator=(const PipelineState&) = delete;
+        PipelineState(PipelineState&&) = delete;
+        PipelineState& operator=(PipelineState&&) = delete;
+        ~PipelineState();
+
+        vk::Device device {};
         std::vector<ShaderID> shader_ids;
         std::shared_ptr<Core::VKGraphicsPipeline> pipeline;
         std::vector<vk::DescriptorSetLayout> layouts;
@@ -317,20 +367,24 @@ private:
         vk::ShaderStageFlags push_constant_stages = vk::ShaderStageFlagBits::eVertex
             | vk::ShaderStageFlagBits::eFragment;
         vk::DescriptorSetLayout view_transform_layout {};
+        std::optional<uint32_t> push_set;
+        std::vector<uint32_t> push_required;
     };
 
-    std::unordered_map<RenderPipelineID, PipelineState> m_pipelines;
+    std::unordered_map<RenderPipelineID, std::shared_ptr<PipelineState>> m_pipelines;
+    std::unique_ptr<SharedPipelines> m_shared_pipelines;
     std::unordered_map<std::shared_ptr<Core::Window>, WindowRenderAssociation> m_window_associations;
 
     std::atomic<uint64_t> m_next_pipeline_id { 1 };
 
     ShaderFoundry* m_shader_foundry = nullptr;
     Registry::Service::DisplayService* m_display_service = nullptr;
+    vk::PipelineCache m_pipeline_cache {};
 
     static bool s_initialized;
 
-    RenderFlow() = default;
-    ~RenderFlow() { shutdown(); }
+    RenderFlow();
+    ~RenderFlow();
     void cleanup_pipelines();
 
     /**

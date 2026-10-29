@@ -6,7 +6,7 @@ Both systems dispatch compute kernels on the GPU. The structural difference is t
 
 The raw dispatch capability is comparable. Everything else is not.
 
-- **Vulkan 1.3 directly.** Yantra sits on MayaFlux's Vulkan backend, not a compatibility layer that reduces to the lowest common denominator across vendors. Compute and rendering use the same command infrastructure, so they share synchronisation primitives, memory and pipeline barriers without translation.
+- **Vulkan 1.4 directly.** Yantra sits on MayaFlux's Vulkan backend, not a compatibility layer that reduces to the lowest common denominator across vendors. Compute and rendering use the same command infrastructure, so they share synchronisation primitives, memory and pipeline barriers without translation.
 
 - **The rest of MayaFlux is already there.** A compute result is a `Datum`. It can go straight to a node graph, into a buffer that drives a `GraphicsRoutine`, to a `SoundRoutine` on the next buffer cycle, or to `IOManager` for file output. There is no serialisation step, no format conversion and no glue code. An OpenCL program lives outside this: it reads and writes memory that you then thread back into whatever runtime embeds it.
 

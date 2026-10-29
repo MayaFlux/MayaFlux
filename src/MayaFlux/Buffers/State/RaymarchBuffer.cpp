@@ -46,6 +46,9 @@ void RaymarchBuffer::setup_rendering(const RenderConfig& config)
 
     MeshBuffer::setup_rendering(resolved);
 
+    m_render_processor->add_binding("volume_field",
+        ShaderBinding(0, RaymarchProcessor::k_field_binding, vk::DescriptorType::eStorageBuffer));
+
     m_render_processor->set_cull_mode(Portal::Graphics::CullMode::FRONT);
     m_render_processor->enable_alpha_blending();
     m_render_processor->disable_depth_test();

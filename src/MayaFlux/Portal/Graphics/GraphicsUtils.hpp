@@ -307,7 +307,6 @@ enum class FitMode : uint8_t {
     TILE_MIRRORED ///< Source repeated, every other tile mirrored
 };
 
-
 /**
  * @struct RenderConfig
  * @brief Unified rendering configuration for graphics buffers
@@ -334,27 +333,17 @@ struct RenderConfig {
     CullMode cull_mode { CullMode::NONE };
 
     /**
-     * @brief Reduce supplied spans to triangles before drawing them.
+     * @brief Mill draw runs into triangles before rendering.
      *
-     * @c topology describes span ordering, not the pipeline: it is always
-     * built TRIANGLE_LIST, no geometry stage on any platform, and each span
-     * is milled into quads/ribbons before one draw. Applies to any span
-     * shape on any platform; macOS additionally forces it on for
-     * LINE_LIST/LINE_STRIP since line.geom (NDC expansion) isn't available
-     * there.
+     * Set this for mixed topologies, diverging draw or slice runs, or an
+     * explicit triangulation request. Buffer setup also enables it when
+     * needs_triangulation() requires the mill for the selected device and
+     * polygon mode. The mill retains each run's source topology and the
+     * rendering pipeline draws its triangle output without a geometry stage.
      *
-     * A custom vertex_shader is unchanged: same attributes, same transform
-     * to clip space. A custom fragment_shader needs one new thing: every
-     * span shares one fragment shader, so @c \#include "include/mill_shape.glsl"
-     * and check @c mill_is_point(in_uv) to tell a point quad from a
-     * ribbon/passthrough-triangle fragment. milled_shape.frag/_textured/_multi
-     * are reference implementations (the multi variant's array index shares
-     * MillSpec's per-vertex size slot -- set use_vertex_extent = false to
-     * decouple them).
-     *
-     * Resolved at configuration time, not inferred from spans arriving,
-     * since shader/topology/geometry-stage selection happen here while
-     * spans arrive per frame.
+     * The pipeline specializes MILL_ACTIVE from this value. Fragment shaders
+     * can include "include/mill_shape.glsl" and use its callables to handle
+     * milled wire and point fragments while retaining native behavior.
      */
     bool triangulate { false };
 
@@ -397,6 +386,14 @@ struct DrawRun {
     PrimitiveTopology topology {};
     uint32_t vertex_offset {};
     uint32_t vertex_count {};
+
+    /**
+     * @brief Fill mode the mill emulates for a triangle span.
+     *
+     * LINE keeps the triangles and marks their corners so the fragment shader
+     * draws edges; POINT draws every vertex of the span as a point quad.
+     */
+    PolygonMode fill { PolygonMode::FILL };
 };
 
 /**
@@ -411,8 +408,23 @@ struct DrawRun {
  */
 [[nodiscard]] constexpr uint32_t triangle_vertex_count(
     PrimitiveTopology topology,
-    uint32_t n) noexcept
+    uint32_t n,
+    PolygonMode fill = PolygonMode::FILL) noexcept
 {
+    if (fill == PolygonMode::POINT) {
+        if (topology == PrimitiveTopology::LINE_LIST
+            || topology == PrimitiveTopology::LINE_STRIP) {
+            return 6U * n;
+        }
+        if (topology == PrimitiveTopology::TRIANGLE_LIST) {
+            return 6U * 3U * (n / 3U);
+        }
+        if (topology == PrimitiveTopology::TRIANGLE_STRIP
+            || topology == PrimitiveTopology::TRIANGLE_FAN) {
+            return n < 3U ? 0U : 6U * n;
+        }
+    }
+
     switch (topology) {
     case PrimitiveTopology::POINT_LIST:
         return 6U * n;
@@ -428,5 +440,19 @@ struct DrawRun {
     }
     return 0U;
 }
+
+/**
+ * @brief Whether this device cannot draw @p topology in @p mode natively, so
+ *        the span has to be triangulated by the mill instead.
+ *
+ * Line topologies need it without geometry shader support, in POINT mode,
+ * or in a non-FILL mode without fillModeNonSolid. Triangle topologies need
+ * it in a non-FILL mode without fillModeNonSolid. POINT_LIST does not need
+ * it. Explicit triangulation for mixed or diverging runs is configured by
+ * the caller. Answers false before Portal::Graphics is initialized.
+ */
+[[nodiscard]] MAYAFLUX_API bool needs_triangulation(
+    PrimitiveTopology topology,
+    PolygonMode mode = PolygonMode::FILL);
 
 }

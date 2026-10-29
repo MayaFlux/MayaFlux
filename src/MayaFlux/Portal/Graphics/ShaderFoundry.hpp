@@ -1,12 +1,12 @@
 #pragma once
 
 #include "ShaderUtils.hpp"
+#include "SlotMachine.hpp"
 
 #include "ShaderSpec.hpp"
 
+#include "MayaFlux/Core/Backends/Graphics/Vulkan/VKTimeline.hpp"
 #include "MayaFlux/Transitive/Memory/RingBuffer.hpp"
-
-#include <span>
 
 namespace MayaFlux::Core {
 class VulkanBackend;
@@ -133,14 +133,15 @@ private:
         CommandBufferType type;
         CommandBufferLevel level { CommandBufferLevel::PRIMARY };
         bool is_active;
+        vk::Semaphore wait_semaphore {};
+        vk::PipelineStageFlags2 wait_stage;
         vk::QueryPool timestamp_pool;
         std::unordered_map<std::string, uint32_t> timestamp_queries;
+        std::vector<SlotLease> holds;
     };
 
     struct FenceState {
-        vk::Fence fence;
-        bool signaled;
-
+        Core::TimelinePoint point {};
         CommandBufferID cmd_id { INVALID_COMMAND_BUFFER };
     };
 
@@ -538,6 +539,34 @@ public:
      */
     void free_all_command_buffers();
 
+    /**
+     * @brief Release command buffers once the GPU has finished with the latest submission
+     * @param cmd_ids Command buffers recorded for work already handed to the queue
+     *
+     * The buffers are freed and their IDs invalidated after every submission made
+     * so far has completed. Safe for IDs that were never submitted.
+     */
+    void retire_after_submit(std::span<const CommandBufferID> cmd_ids);
+
+    /**
+     * @brief Run a release action once every submission made so far has completed
+     * @param release Action that frees resources the submitted work may still read
+     *
+     * Runs immediately when nothing has been submitted. The action runs from the next
+     * command buffer allocation after completion, on the thread that allocates it.
+     */
+    void release_after_submit(std::function<void()> release);
+
+    /**
+     * @brief Keep a slot claimed until the work recorded in a command buffer completes
+     * @param cmd_id Command buffer that reads the slot
+     * @param hold Lease on the slot; ignored if empty or the command buffer is unknown
+     *
+     * The lease is dropped once the command buffer's submission has completed,
+     * or when it is released without having been submitted.
+     */
+    void hold_until_complete(CommandBufferID cmd_id, SlotLease hold);
+
     //==========================================================================
     // Memory Barriers and Synchronization
     //==========================================================================
@@ -575,11 +604,11 @@ public:
     void wait_for_fences(const std::vector<FenceID>& fence_ids);
 
     /**
-     * @brief Destroy the fence and free its associated command buffer.
+     * @brief Invalidate the fence and free its associated command buffer.
      *
-     * Must be called once per FenceID returned by submit_async, after
-     * is_fence_signaled returns true. Failure to call this leaks a VkFence
-     * and a command buffer slot every dispatch cycle.
+     * Must be called once per FenceID returned by submit_async. The command
+     * buffer is freed once its submission completes. Failure to call this
+     * leaks a command buffer slot every dispatch cycle.
      *
      * Safe to call with INVALID_FENCE.
      *
@@ -595,16 +624,26 @@ public:
     bool is_fence_signaled(FenceID fence_id);
 
     /**
+     * @brief Completion point of the submission behind a fence
+     * @param fence_id FenceID returned by submit_async.
+     * @return The point, or an empty point when the fence is unknown.
+     */
+    Core::TimelinePoint fence_point(FenceID fence_id) const;
+
+    /**
      * @brief Begin command buffer that waits on a semaphore
      * @param type Command buffer type (GRAPHICS, COMPUTE, TRANSFER)
-     * @param wait_semaphore Semaphore ID to wait on
+     * @param wait_semaphore Semaphore ID returned by submit_with_signal
      * @param wait_stage Pipeline stage to wait at
-     * @return Command buffer ID
+     * @return Command buffer ID, or INVALID_COMMAND_BUFFER for an unknown semaphore
+     *
+     * The wait is carried into the submission. A binary semaphore is consumed by
+     * the wait, so it can be waited on once per signal.
      */
     CommandBufferID begin_commands_with_wait(
         CommandBufferType type,
         SemaphoreID wait_semaphore,
-        vk::PipelineStageFlags wait_stage);
+        vk::PipelineStageFlags2 wait_stage);
 
     /**
      * @brief Get Vulkan fence handle from FenceID
@@ -618,10 +657,20 @@ public:
     void buffer_barrier(
         CommandBufferID cmd_id,
         vk::Buffer buffer,
-        vk::AccessFlags src_access,
-        vk::AccessFlags dst_access,
-        vk::PipelineStageFlags src_stage,
-        vk::PipelineStageFlags dst_stage);
+        vk::AccessFlags2 src_access,
+        vk::AccessFlags2 dst_access,
+        vk::PipelineStageFlags2 src_stage,
+        vk::PipelineStageFlags2 dst_stage);
+
+    /**
+     * @brief Insert a global memory barrier covering every buffer and image
+     */
+    void memory_barrier(
+        CommandBufferID cmd_id,
+        vk::AccessFlags2 src_access,
+        vk::AccessFlags2 dst_access,
+        vk::PipelineStageFlags2 src_stage,
+        vk::PipelineStageFlags2 dst_stage);
 
     /**
      * @brief Insert image memory barrier
@@ -631,10 +680,10 @@ public:
         vk::Image image,
         vk::ImageLayout old_layout,
         vk::ImageLayout new_layout,
-        vk::AccessFlags src_access,
-        vk::AccessFlags dst_access,
-        vk::PipelineStageFlags src_stage,
-        vk::PipelineStageFlags dst_stage);
+        vk::AccessFlags2 src_access,
+        vk::AccessFlags2 dst_access,
+        vk::PipelineStageFlags2 src_stage,
+        vk::PipelineStageFlags2 dst_stage);
 
     //==========================================================================
     // Queue Management
@@ -747,6 +796,17 @@ private:
     std::unordered_map<DescriptorSetID, DescriptorSetState> m_descriptor_sets;
 
     std::unordered_map<CommandBufferID, CommandBufferState> m_command_buffers;
+
+    struct RetiredCommand {
+        CommandBufferID cmd_id { INVALID_COMMAND_BUFFER };
+        Core::TimelineSnapshot completion;
+    };
+
+    std::vector<RetiredCommand> m_retired_commands;
+
+    void collect_retired_commands();
+    void release_command(CommandBufferID cmd_id);
+    Core::TimelinePoint submit_state(const CommandBufferState& state, std::span<const vk::SemaphoreSubmitInfo> signals = {});
 
     struct FinishedTimestamp {
         CommandBufferID cmd_id { INVALID_COMMAND_BUFFER };

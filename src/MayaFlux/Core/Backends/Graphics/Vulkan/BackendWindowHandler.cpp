@@ -12,6 +12,38 @@
 
 namespace MayaFlux::Core {
 
+namespace {
+
+    void transition_color_image(
+        const vk::CommandBuffer& cmd,
+        vk::Image image,
+        vk::ImageLayout old_layout,
+        vk::ImageLayout new_layout,
+        vk::PipelineStageFlags2 src_stage,
+        vk::AccessFlags2 src_access,
+        vk::PipelineStageFlags2 dst_stage,
+        vk::AccessFlags2 dst_access)
+    {
+        vk::ImageMemoryBarrier2 barrier {};
+        barrier.srcStageMask = src_stage;
+        barrier.srcAccessMask = src_access;
+        barrier.dstStageMask = dst_stage;
+        barrier.dstAccessMask = dst_access;
+        barrier.oldLayout = old_layout;
+        barrier.newLayout = new_layout;
+        barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.image = image;
+        barrier.subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 };
+
+        vk::DependencyInfo dependency {};
+        dependency.imageMemoryBarrierCount = 1;
+        dependency.pImageMemoryBarriers = &barrier;
+        cmd.pipelineBarrier2(dependency);
+    }
+
+}
+
 // ---------------------------------------------------------------------------
 // CaptureState retirement implementations (macOS only)
 // ---------------------------------------------------------------------------
@@ -94,12 +126,7 @@ void WindowRenderContext::cleanup(VKContext& context)
 
     clear_command_buffers.clear();
 
-    for (auto& fence : in_flight) {
-        if (fence) {
-            device.destroyFence(fence);
-        }
-    }
-    in_flight.clear();
+    slot_point.clear();
     slot_submission.clear();
 
     if (depth_image && depth_image->is_initialized()) {
@@ -143,7 +170,16 @@ void BackendWindowHandler::setup_backend_service(const std::shared_ptr<Registry:
         auto window = std::static_pointer_cast<Window>(window_ptr);
         vk::CommandBuffer primary_cmd = *reinterpret_cast<vk::CommandBuffer*>(&primary_cmd_bits);
 
-        this->submit_and_present(window, primary_cmd);
+        const TimelinePoint point = this->submit_and_present(window, primary_cmd);
+        return Registry::Service::PresentPoint { .timeline = point.timeline, .value = point.value };
+    };
+
+    display_service->is_present_complete = [this](const Registry::Service::PresentPoint& point) {
+        return m_command_manager.is_complete(TimelinePoint { .timeline = point.timeline, .value = point.value });
+    };
+
+    display_service->wait_present = [this](const Registry::Service::PresentPoint& point) {
+        m_command_manager.wait(TimelinePoint { .timeline = point.timeline, .value = point.value });
     };
 
     display_service->wait_idle = [this]() {
@@ -218,17 +254,10 @@ void BackendWindowHandler::setup_backend_service(const std::shared_ptr<Registry:
             return 0;
         }
 
-        auto device = m_context.get_device();
         size_t frame_index = ctx->current_frame;
-        auto& in_flight = ctx->in_flight[frame_index];
         auto& image_available = ctx->image_available[frame_index];
 
-        if (device.waitForFences(1, &in_flight, VK_TRUE, UINT64_MAX) == vk::Result::eTimeout) {
-            MF_RT_WARN(Journal::Component::Core, Journal::Context::GraphicsCallback,
-                "Fence timeout during swapchain acquisition for window '{}'",
-                window->get_create_info().title);
-            return 0;
-        }
+        m_command_manager.wait(ctx->slot_point[frame_index]);
 
         auto image_index_opt = ctx->swapchain->acquire_next_image(image_available);
         if (!image_index_opt.has_value()) {
@@ -237,13 +266,6 @@ void BackendWindowHandler::setup_backend_service(const std::shared_ptr<Registry:
         }
 
         ctx->current_image_index = image_index_opt.value();
-
-        if (device.resetFences(1, &in_flight) != vk::Result::eSuccess) {
-            MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
-                "Failed to reset fence for window '{}'",
-                window->get_create_info().title);
-            return 0;
-        }
 
         const auto& images = ctx->swapchain->get_images();
         VkImage raw = images[ctx->current_image_index];
@@ -335,10 +357,8 @@ void BackendWindowHandler::setup_backend_service(const std::shared_ptr<Registry:
             proxy,
             dst,
             byte_count,
-            nullptr,
-            false,
             vk::ImageLayout::ePresentSrcKHR,
-            vk::PipelineStageFlagBits::eBottomOfPipe);
+            vk::PipelineStageFlagBits2::eAllCommands);
 
         return true;
     };
@@ -646,14 +666,12 @@ bool BackendWindowHandler::create_sync_objects(WindowRenderContext& config)
     try {
         config.image_available.resize(image_count);
         config.render_finished.resize(image_count);
-        config.in_flight.resize(image_count);
+        config.slot_point.assign(image_count, TimelinePoint {});
         config.slot_submission.assign(image_count, 0);
         config.submitted_frames = 0;
         config.clear_command_buffers.resize(image_count);
 
         vk::SemaphoreCreateInfo semaphore_info {};
-        vk::FenceCreateInfo fence_info {};
-        fence_info.flags = vk::FenceCreateFlagBits::eSignaled;
 
         for (uint32_t i = 0; i < image_count; ++i) {
             config.image_available[i] = device.createSemaphore(semaphore_info);
@@ -661,10 +679,6 @@ bool BackendWindowHandler::create_sync_objects(WindowRenderContext& config)
 
             config.clear_command_buffers[i] = m_command_manager.allocate_command_buffer(
                 vk::CommandBufferLevel::ePrimary);
-        }
-
-        for (auto& i : config.in_flight) {
-            i = device.createFence(fence_info);
         }
 
         config.current_frame = 0;
@@ -679,8 +693,6 @@ bool BackendWindowHandler::create_sync_objects(WindowRenderContext& config)
 
 void BackendWindowHandler::recreate_swapchain_for_context(WindowRenderContext& context)
 {
-    m_context.wait_idle();
-
     if (recreate_swapchain_internal(context)) {
         context.needs_recreation = false;
         MF_RT_TRACE(Journal::Component::Core, Journal::Context::GraphicsCallback,
@@ -737,7 +749,14 @@ void BackendWindowHandler::ensure_depth_image(WindowRenderContext& ctx)
     auto device = m_context.get_device();
 
     if (ctx.depth_image && ctx.depth_image->is_initialized()) {
-        device.waitIdle();
+        TimelineSnapshot frames;
+        for (const auto& point : ctx.slot_point) {
+            if (point && point.timeline < k_max_timelines) {
+                auto& value = frames.values[point.timeline];
+                value = std::max(value, point.value);
+            }
+        }
+        m_command_manager.wait(frames);
         const auto& res = ctx.depth_image->get_image_resources();
         if (res.image_view) {
             device.destroyImageView(res.image_view);
@@ -813,10 +832,7 @@ void BackendWindowHandler::render_empty_window(WindowRenderContext& ctx)
     }
 
     try {
-        auto device = m_context.get_device();
-
         size_t frame_index = ctx.current_frame;
-        auto& in_flight = ctx.in_flight[frame_index];
         auto& image_available = ctx.image_available[frame_index];
         auto& render_finished = ctx.render_finished[frame_index];
 
@@ -828,9 +844,7 @@ void BackendWindowHandler::render_empty_window(WindowRenderContext& ctx)
             return;
         }
 
-        if (device.waitForFences(1, &in_flight, VK_TRUE, UINT64_MAX) == vk::Result::eTimeout) {
-            return;
-        }
+        m_command_manager.wait(ctx.slot_point[frame_index]);
         cmd_buffer.reset({});
 
         auto image_index_opt = ctx.swapchain->acquire_next_image(image_available);
@@ -839,10 +853,6 @@ void BackendWindowHandler::render_empty_window(WindowRenderContext& ctx)
             return;
         }
         ctx.current_image_index = image_index_opt.value();
-
-        if (device.resetFences(1, &in_flight) != vk::Result::eSuccess) {
-            return;
-        }
 
         vk::CommandBufferBeginInfo begin_info {};
         begin_info.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
@@ -865,41 +875,26 @@ void BackendWindowHandler::render_empty_window(WindowRenderContext& ctx)
         rendering_info.colorAttachmentCount = 1;
         rendering_info.pColorAttachments = &color_attachment;
 
-        vk::ImageMemoryBarrier barrier {};
-        barrier.oldLayout = vk::ImageLayout::eUndefined;
-        barrier.newLayout = vk::ImageLayout::eColorAttachmentOptimal;
-        barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        barrier.image = ctx.swapchain->get_images()[ctx.current_image_index];
-        barrier.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
-        barrier.subresourceRange.levelCount = 1;
-        barrier.subresourceRange.layerCount = 1;
-        barrier.srcAccessMask = {};
-        barrier.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
+        const vk::Image swapchain_image = ctx.swapchain->get_images()[ctx.current_image_index];
 
-        cmd_buffer.pipelineBarrier(
-            vk::PipelineStageFlagBits::eTopOfPipe,
-            vk::PipelineStageFlagBits::eColorAttachmentOutput,
-            {}, {}, {}, barrier);
+        transition_color_image(cmd_buffer, swapchain_image,
+            vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal,
+            vk::PipelineStageFlagBits2::eNone, vk::AccessFlagBits2::eNone,
+            vk::PipelineStageFlagBits2::eColorAttachmentOutput, vk::AccessFlagBits2::eColorAttachmentWrite);
 
         cmd_buffer.beginRendering(rendering_info);
         cmd_buffer.endRendering();
 
-        barrier.oldLayout = vk::ImageLayout::eColorAttachmentOptimal;
-        barrier.newLayout = vk::ImageLayout::ePresentSrcKHR;
-        barrier.srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
-        barrier.dstAccessMask = {};
-
-        cmd_buffer.pipelineBarrier(
-            vk::PipelineStageFlagBits::eColorAttachmentOutput,
-            vk::PipelineStageFlagBits::eBottomOfPipe,
-            {}, {}, {}, barrier);
+        transition_color_image(cmd_buffer, swapchain_image,
+            vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::ePresentSrcKHR,
+            vk::PipelineStageFlagBits2::eColorAttachmentOutput, vk::AccessFlagBits2::eColorAttachmentWrite,
+            vk::PipelineStageFlagBits2::eNone, vk::AccessFlagBits2::eNone);
 
         cmd_buffer.end();
 
         submit_and_present(window, cmd_buffer);
 
-        ctx.current_frame = (ctx.current_frame + 1) % ctx.in_flight.size();
+        ctx.current_frame = (ctx.current_frame + 1) % ctx.slot_point.size();
 
     } catch (const std::exception& e) {
         MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
@@ -992,26 +987,15 @@ void BackendWindowHandler::capture_frame(WindowRenderContext& ctx)
     bi.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
     slot.cmd.begin(bi);
 
-    vk::ImageMemoryBarrier b {};
-    b.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    b.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    b.subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 };
+    transition_color_image(slot.cmd, slot.image,
+        vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal,
+        vk::PipelineStageFlagBits2::eTransfer, vk::AccessFlagBits2::eNone,
+        vk::PipelineStageFlagBits2::eTransfer, vk::AccessFlagBits2::eTransferWrite);
 
-    b.image = slot.image;
-    b.oldLayout = vk::ImageLayout::eUndefined;
-    b.newLayout = vk::ImageLayout::eTransferDstOptimal;
-    b.srcAccessMask = {};
-    b.dstAccessMask = vk::AccessFlagBits::eTransferWrite;
-    slot.cmd.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer,
-        vk::PipelineStageFlagBits::eTransfer, {}, {}, {}, b);
-
-    b.image = src;
-    b.oldLayout = vk::ImageLayout::ePresentSrcKHR;
-    b.newLayout = vk::ImageLayout::eTransferSrcOptimal;
-    b.srcAccessMask = vk::AccessFlagBits::eMemoryRead;
-    b.dstAccessMask = vk::AccessFlagBits::eTransferRead;
-    slot.cmd.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer,
-        vk::PipelineStageFlagBits::eTransfer, {}, {}, {}, b);
+    transition_color_image(slot.cmd, src,
+        vk::ImageLayout::ePresentSrcKHR, vk::ImageLayout::eTransferSrcOptimal,
+        vk::PipelineStageFlagBits2::eTransfer, vk::AccessFlagBits2::eMemoryRead,
+        vk::PipelineStageFlagBits2::eTransfer, vk::AccessFlagBits2::eTransferRead);
 
     vk::ImageCopy copy {};
     copy.srcSubresource = { vk::ImageAspectFlagBits::eColor, 0, 0, 1 };
@@ -1020,36 +1004,27 @@ void BackendWindowHandler::capture_frame(WindowRenderContext& ctx)
     slot.cmd.copyImage(src, vk::ImageLayout::eTransferSrcOptimal,
         slot.image, vk::ImageLayout::eTransferDstOptimal, 1, &copy);
 
-    b.image = slot.image;
-    b.oldLayout = vk::ImageLayout::eTransferDstOptimal;
-    b.newLayout = vk::ImageLayout::eGeneral;
-    b.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
-    b.dstAccessMask = vk::AccessFlagBits::eMemoryRead;
-    slot.cmd.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer,
-        vk::PipelineStageFlagBits::eTransfer, {}, {}, {}, b);
+    transition_color_image(slot.cmd, slot.image,
+        vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eGeneral,
+        vk::PipelineStageFlagBits2::eTransfer, vk::AccessFlagBits2::eTransferWrite,
+        vk::PipelineStageFlagBits2::eTransfer, vk::AccessFlagBits2::eMemoryRead);
 
-    b.image = src;
-    b.oldLayout = vk::ImageLayout::eTransferSrcOptimal;
-    b.newLayout = vk::ImageLayout::ePresentSrcKHR;
-    b.srcAccessMask = vk::AccessFlagBits::eTransferRead;
-    b.dstAccessMask = vk::AccessFlagBits::eMemoryRead;
-    slot.cmd.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer,
-        vk::PipelineStageFlagBits::eTransfer, {}, {}, {}, b);
+    transition_color_image(slot.cmd, src,
+        vk::ImageLayout::eTransferSrcOptimal, vk::ImageLayout::ePresentSrcKHR,
+        vk::PipelineStageFlagBits2::eTransfer, vk::AccessFlagBits2::eTransferRead,
+        vk::PipelineStageFlagBits2::eTransfer, vk::AccessFlagBits2::eMemoryRead);
 
     slot.cmd.end();
 
     (void)dev.resetFences(1, &slot.fence);
 
-    vk::SubmitInfo si {};
-    si.commandBufferCount = 1;
-    si.pCommandBuffers = &slot.cmd;
-
     slot.pending.store(true, std::memory_order_release);
 
-    if (auto result = m_context.get_graphics_queue().submit(1, &si, slot.fence); result != vk::Result::eSuccess) {
+    const vk::CommandBuffer commands[] = { slot.cmd };
+    if (!m_command_manager.submit(m_context.get_graphics_queue(), commands, {}, {}, slot.fence)) {
         MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
-            "Failed to submit capture command buffer for window '{}': {}",
-            ctx.window->get_create_info().title, vk::to_string(result));
+            "Failed to submit capture command buffer for window '{}'",
+            ctx.window->get_create_info().title);
         slot.pending.store(false, std::memory_order_release);
         return;
     }
@@ -1156,7 +1131,7 @@ void BackendWindowHandler::start_readback_thread(CaptureState& state, vk::Device
     });
 }
 
-void BackendWindowHandler::submit_and_present(
+TimelinePoint BackendWindowHandler::submit_and_present(
     const std::shared_ptr<Window>& window,
     const vk::CommandBuffer& command_buffer)
 {
@@ -1164,47 +1139,43 @@ void BackendWindowHandler::submit_and_present(
     if (!ctx) {
         MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
             "Window not registered for submit_and_present");
-        return;
+        return {};
     }
 
     auto graphics_queue = m_context.get_graphics_queue();
 
     size_t frame_index = ctx->current_frame;
-    auto& in_flight = ctx->in_flight[frame_index];
     auto& image_available = ctx->image_available[frame_index];
     auto& render_finished = ctx->render_finished[frame_index];
 
-    vk::Semaphore deferred_sem = m_resource_manager
+    const TimelinePoint deferred_point = m_resource_manager
         ? m_resource_manager->flush_deferred_commands()
-        : nullptr;
+        : TimelinePoint {};
 
-    std::vector<vk::Semaphore> wait_sems { image_available };
-    std::vector<vk::PipelineStageFlags> wait_stages {
-        vk::PipelineStageFlagBits::eColorAttachmentOutput
-    };
+    std::vector<vk::SemaphoreSubmitInfo> wait_infos;
+    wait_infos.emplace_back(image_available, 0, vk::PipelineStageFlagBits2::eColorAttachmentOutput);
 
-    if (deferred_sem) {
-        wait_sems.push_back(deferred_sem);
-        wait_stages.emplace_back(vk::PipelineStageFlagBits::eFragmentShader);
+    if (deferred_point) {
+        wait_infos.emplace_back(
+            m_command_manager.get_timeline(graphics_queue), deferred_point.value, vk::PipelineStageFlagBits2::eFragmentShader);
     }
 
-    vk::SubmitInfo submit_info {};
-    submit_info.waitSemaphoreCount = static_cast<uint32_t>(wait_sems.size());
-    submit_info.pWaitSemaphores = wait_sems.data();
-    submit_info.pWaitDstStageMask = wait_stages.data();
-    submit_info.commandBufferCount = 1;
-    submit_info.pCommandBuffers = &command_buffer;
-    submit_info.signalSemaphoreCount = 1;
-    submit_info.pSignalSemaphores = &render_finished;
+    const auto produced_waits = m_command_manager.produced_waits(
+        vk::PipelineStageFlagBits2::eVertexInput | vk::PipelineStageFlagBits2::eVertexShader | vk::PipelineStageFlagBits2::eFragmentShader);
+    wait_infos.insert(wait_infos.end(), produced_waits.begin(), produced_waits.end());
 
-    try {
-        auto result = graphics_queue.submit(1, &submit_info, in_flight);
-        ctx->slot_submission[frame_index] = ++ctx->submitted_frames;
-    } catch (const vk::SystemError& e) {
+    const vk::SemaphoreSubmitInfo signal_info { render_finished, 0, vk::PipelineStageFlagBits2::eAllCommands };
+    const vk::CommandBuffer commands[] = { command_buffer };
+
+    const TimelinePoint point = m_command_manager.submit(graphics_queue, commands, wait_infos, std::span { &signal_info, 1 });
+    if (!point) {
         MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
-            "Failed to submit primary command buffer: {}", e.what());
-        return;
+            "Failed to submit primary command buffer for window '{}'",
+            window->get_create_info().title);
+        return {};
     }
+    ctx->slot_point[frame_index] = point;
+    ctx->slot_submission[frame_index] = ++ctx->submitted_frames;
 
     bool present_success = ctx->swapchain->present(
         ctx->current_image_index, render_finished, graphics_queue);
@@ -1216,24 +1187,24 @@ void BackendWindowHandler::submit_and_present(
     if (present_success)
         capture_frame(*ctx);
 
-    ctx->current_frame = (frame_index + 1) % ctx->in_flight.size();
+    ctx->current_frame = (frame_index + 1) % ctx->slot_point.size();
 
     MF_RT_TRACE(Journal::Component::Core, Journal::Context::GraphicsCallback,
         "Window '{}': frame submitted and presented",
         window->get_create_info().title);
+
+    return point;
 }
 
 uint64_t BackendWindowHandler::completed_frame_count(const WindowRenderContext& ctx) const
 {
-    const auto device = m_context.get_device();
-
     uint64_t oldest_pending = ctx.submitted_frames + 1;
-    for (size_t slot = 0; slot < ctx.in_flight.size(); ++slot) {
+    for (size_t slot = 0; slot < ctx.slot_point.size(); ++slot) {
         const uint64_t submission = ctx.slot_submission[slot];
         if (submission == 0) {
             continue;
         }
-        if (device.getFenceStatus(ctx.in_flight[slot]) == vk::Result::eNotReady) {
+        if (!m_command_manager.is_complete(ctx.slot_point[slot])) {
             oldest_pending = std::min(oldest_pending, submission);
         }
     }

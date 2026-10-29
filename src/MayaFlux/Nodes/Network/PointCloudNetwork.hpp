@@ -168,7 +168,7 @@ public:
      * @param start_color Color for first point
      * @param end_color Color for last point
      */
-    void apply_color_gradient(const glm::vec3& start_color, const glm::vec3& end_color);
+    void apply_color_gradient(const glm::vec4& start_color, const glm::vec4& end_color);
 
     /**
      * @brief Apply radial color gradient from center
@@ -177,8 +177,8 @@ public:
      * @param center Center point for gradient calculation
      */
     void apply_radial_gradient(
-        const glm::vec3& center_color,
-        const glm::vec3& edge_color,
+        const glm::vec4& center_color,
+        const glm::vec4& edge_color,
         const glm::vec3& center = glm::vec3(0.0F));
 
     /**
@@ -197,7 +197,7 @@ public:
      * @brief Set global line color for topology/path rendering
      * @param color RGB color
      */
-    void set_line_color(const glm::vec3& color);
+    void set_line_color(const glm::vec4& color);
 
     /**
      * @brief Set connection radius for topology generation (TopologyOperator only)

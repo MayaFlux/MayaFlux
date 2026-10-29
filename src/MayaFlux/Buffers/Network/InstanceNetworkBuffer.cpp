@@ -5,6 +5,7 @@
 #include "MayaFlux/Nodes/Network/InstanceNetwork.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
+#include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
 
 namespace MayaFlux::Buffers {
 
@@ -87,21 +88,11 @@ void InstanceNetworkBuffer::setup_rendering(const RenderConfig& config)
     for (const auto& [name, tex] : config.additional_textures)
         m_render_config.additional_textures.emplace_back(name, tex);
 
-#ifdef MAYAFLUX_PLATFORM_MACOS
-    if (m_render_config.topology == Portal::Graphics::PrimitiveTopology::LINE_LIST
-        || m_render_config.topology == Portal::Graphics::PrimitiveTopology::LINE_STRIP) {
-        m_render_config.triangulate = true;
-    }
-#endif
-
-    if (m_render_config.triangulate) {
-        if (m_render_config.vertex_shader.empty())
-            m_render_config.vertex_shader = "instance_milled.vert.spv";
-        if (m_render_config.fragment_shader.empty())
-            m_render_config.fragment_shader = "milled_shape.frag.spv";
+    m_render_config.triangulate |= Portal::Graphics::needs_triangulation(
+        m_render_config.topology, m_render_config.polygon_mode);
+    if (m_render_config.triangulate)
         m_render_config.geometry_shader.clear();
-    } else {
-        switch (m_render_config.topology) {
+    switch (m_render_config.topology) {
         case Portal::Graphics::PrimitiveTopology::POINT_LIST:
             if (m_render_config.vertex_shader.empty())
                 m_render_config.vertex_shader = "instance_point.vert.spv";
@@ -115,7 +106,7 @@ void InstanceNetworkBuffer::setup_rendering(const RenderConfig& config)
                 m_render_config.vertex_shader = "instance_line.vert.spv";
             if (m_render_config.fragment_shader.empty())
                 m_render_config.fragment_shader = "line.frag.spv";
-            if (m_render_config.geometry_shader.empty())
+            if (!m_render_config.triangulate && m_render_config.geometry_shader.empty())
                 m_render_config.geometry_shader = "line.geom.spv";
             break;
 
@@ -125,7 +116,6 @@ void InstanceNetworkBuffer::setup_rendering(const RenderConfig& config)
             if (m_render_config.fragment_shader.empty())
                 m_render_config.fragment_shader = "triangle.frag.spv";
             break;
-        }
     }
 
     ShaderConfig sc { m_render_config.vertex_shader };
@@ -138,6 +128,19 @@ void InstanceNetworkBuffer::setup_rendering(const RenderConfig& config)
         sc.bindings[name] = ShaderBinding(0, 2 + binding_idx++, vk::DescriptorType::eCombinedImageSampler);
 
     apply_render_config(m_render_config, sc);
+
+    if (m_render_config.triangulate
+        && m_render_config.polygon_mode == Portal::Graphics::PolygonMode::POINT) {
+        auto mill_spec = m_render_processor->get_mill_spec();
+        mill_spec.use_vertex_extent = false;
+        m_render_processor->set_mill_spec(mill_spec);
+    }
+
+    if (m_render_config.triangulate) {
+        auto mill_spec = m_render_processor->get_mill_spec();
+        mill_spec.billboard_instances = true;
+        m_render_processor->set_mill_spec(mill_spec);
+    }
 
     for (const auto& [name, tex] : m_render_config.additional_textures)
         m_render_processor->bind_texture(name, tex);

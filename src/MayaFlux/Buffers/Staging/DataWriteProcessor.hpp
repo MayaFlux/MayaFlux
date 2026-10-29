@@ -18,7 +18,7 @@ namespace MayaFlux::Buffers {
  *   - VERTICES_3D and single-attribute vertex modalities (VERTEX_POSITIONS_3D,
  *     VERTEX_NORMALS_3D, VERTEX_TANGENTS_3D, VERTEX_COLORS_RGB,
  *     VERTEX_COLORS_RGBA, TEXTURE_COORDS_2D): all slots are passed as an
- *     ordered channel span to as_*_vertex_access(). Full 60-byte vertices
+ *     ordered channel span to as_*_vertex_access(). Full 68-byte vertices
  *     are always assembled; partial channel sets are completed from
  *     VertexAccessConfig defaults.
  *
@@ -96,8 +96,8 @@ public:
     /**
      * @brief Supply pre-packed interleaved vertex bytes for the next cycle.
      *
-     * data must point to N contiguous 60-byte Vertex records.
-     * byte_count must be a multiple of 60. Routed through the
+     * data must point to N contiguous 68-byte Vertex records.
+     * byte_count must be a multiple of 68. Routed through the
      * VERTICES_3D path: no channel assembly, no conversion.
      *
      * Thread-safe. The bytes are copied into the pending slot and the
@@ -105,7 +105,7 @@ public:
      * on the graphics thread.
      *
      * @param data       Pointer to interleaved vertex data.
-     * @param byte_count Total size in bytes; must be a multiple of 60.
+     * @param byte_count Total size in bytes; must be a multiple of 68.
      */
     void set_vertices(const void* data, size_t byte_count);
 
@@ -113,16 +113,16 @@ public:
      * @brief Supply typed vertex data for the next cycle.
      *
      * Reinterprets the span as raw bytes and delegates to set_vertices(void*, size_t).
-     * T must be exactly 60 bytes: one of Kakshya::Vertex, PointVertex, LineVertex,
+     * T must be exactly 68 bytes: one of Kakshya::Vertex, PointVertex, LineVertex,
      * MeshVertex, or any user struct with the canonical layout.
      *
-     * @tparam T 60-byte vertex type.
+     * @tparam T 68-byte vertex type.
      * @param vertices Source span.
      */
     template <typename T>
     void set_vertices(std::span<const T> vertices)
     {
-        static_assert(sizeof(T) == 60, "set_vertices: T must be a 60-byte vertex type");
+        static_assert(sizeof(T) == 68, "set_vertices: T must be a 68-byte vertex type");
         set_vertices(vertices.data(), vertices.size_bytes());
     }
 
@@ -269,7 +269,6 @@ private:
     Portal::Graphics::ImageFormat m_tex_format { Portal::Graphics::ImageFormat::RGBA32F };
     std::string m_tex_binding;
     std::shared_ptr<Core::VKImage> m_gpu_texture;
-    std::shared_ptr<VKBuffer> m_image_staging;
 
     Kakshya::DataModality m_modality { Kakshya::DataModality::UNKNOWN };
     Kakshya::GpuDataFormat m_last_texture_format { Kakshya::GpuDataFormat::VEC4_F32 };
@@ -286,7 +285,6 @@ private:
 
     std::unique_ptr<Memory::LockFreeQueue<WriteFn, k_write_queue_capacity>> m_writes;
     std::shared_ptr<VKBuffer> m_write_staging;
-    std::shared_ptr<VKBuffer> m_write_image_staging;
 
     void enqueue_write(WriteFn fn);
 

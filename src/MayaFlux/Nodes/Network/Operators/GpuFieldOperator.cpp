@@ -80,11 +80,11 @@ namespace {
         case FieldTarget::POSITION:
             return DataModality::VERTEX_POSITIONS_3D;
         case FieldTarget::COLOR:
-            return DataModality::VERTEX_COLORS_RGB;
+            return DataModality::VERTEX_COLORS_RGBA;
         case FieldTarget::NORMAL:
             return DataModality::VERTEX_NORMALS_3D;
         case FieldTarget::TANGENT:
-            return DataModality::VERTEX_TANGENTS_3D;
+            return DataModality::VERTEX_TANGENTS_4D;
         case FieldTarget::SCALAR:
             return DataModality::SCALAR_F32;
         case FieldTarget::UV:
@@ -103,8 +103,10 @@ namespace {
         switch (m) {
         case DataModality::VERTEX_POSITIONS_3D:
         case DataModality::VERTEX_COLORS_RGB:
+        case DataModality::VERTEX_COLORS_RGBA:
         case DataModality::VERTEX_NORMALS_3D:
         case DataModality::VERTEX_TANGENTS_3D:
+        case DataModality::VERTEX_TANGENTS_4D:
             return 3;
         case DataModality::TEXTURE_COORDS_2D:
             return 2;

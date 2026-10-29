@@ -28,7 +28,7 @@ RenderProcessor::BufferState* RenderProcessor::get_or_cache_buffer_state(const s
 RenderProcessor::RenderProcessor(const ShaderConfig& config)
     : ShaderProcessor(config)
 {
-    m_engine_owns_set_zero = true;
+    m_set_zero_is_push = true;
     m_shader_id = Portal::Graphics::get_shader_foundry().load_shader(config.shader_path, Portal::Graphics::ShaderStage::VERTEX, config.entry_point);
 }
 
@@ -216,21 +216,7 @@ void RenderProcessor::bind_texture(
 
         if (cfg_it != m_config.bindings.end() && !m_descriptor_set_ids.empty()) {
             const uint32_t cfg_set = cfg_it->second.set;
-            if (cfg_set == 0) {
-                if (m_render_transform_descriptor_set_id != Portal::Graphics::INVALID_DESCRIPTOR_SET) {
-                    uint32_t array_idx = 0;
-                    if (cfg_it->second.count > 1 && binding >= cfg_it->second.binding) {
-                        array_idx = binding - cfg_it->second.binding;
-                    }
-                    foundry.update_descriptor_image(
-                        m_render_transform_descriptor_set_id,
-                        cfg_it->second.binding,
-                        texture->get_image_view(),
-                        sampler,
-                        vk::ImageLayout::eShaderReadOnlyOptimal,
-                        array_idx);
-                }
-            } else {
+            if (cfg_set != 0) {
                 auto ds_index = resolve_ds_index(cfg_set);
                 if (ds_index && *ds_index < m_descriptor_set_ids.size()) {
                     foundry.update_descriptor_image(
@@ -298,12 +284,17 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
     Portal::Graphics::RenderPipelineConfig pipeline_config;
     pipeline_config.vertex_shader = m_shader_id;
     pipeline_config.fragment_shader = m_fragment_shader_id;
-    pipeline_config.geometry_shader = m_geometry_shader_id;
+    pipeline_config.geometry_shader = m_triangulate
+        ? Portal::Graphics::INVALID_SHADER : m_geometry_shader_id;
     pipeline_config.tess_control_shader = m_tess_control_shader_id;
     pipeline_config.tess_eval_shader = m_tess_eval_shader_id;
 
     pipeline_config.topology = pipeline_topology();
-    pipeline_config.rasterization.polygon_mode = m_polygon_mode;
+    const bool fill_rasterization = m_triangulate
+        || m_primitive_topology == Portal::Graphics::PrimitiveTopology::POINT_LIST;
+    pipeline_config.rasterization.polygon_mode = fill_rasterization
+        ? Portal::Graphics::PolygonMode::FILL
+        : m_polygon_mode;
     pipeline_config.rasterization.cull_mode = m_cull_mode;
 
     if (m_blend_attachment.has_value()) {
@@ -422,7 +413,12 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
 
     retire_current_pipeline();
 
-    m_pipeline_id = flow.create_pipeline(pipeline_config, { swapchain_format }, depth_format);
+    m_pipeline_id = flow.create_pipeline(pipeline_config, { swapchain_format }, depth_format, 0U,
+        { { 0U, m_triangulate ? 1U : 0U },
+            { 1U, m_triangulate && m_mill_spec.billboard_instances
+                    && m_mill_spec.ribbon == Portal::Graphics::MillSpec::Ribbon::WorldFacing
+                ? 1U
+                : 0U } });
 
     if (m_pipeline_id == Portal::Graphics::INVALID_RENDER_PIPELINE) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
@@ -457,21 +453,9 @@ void RenderProcessor::initialize_descriptors(const std::shared_ptr<VKBuffer>& bu
 
     auto transform_layout = flow.get_view_transform_layout(m_pipeline_id);
     if (transform_layout) {
-        m_render_transform_descriptor_set_id = foundry.allocate_descriptor_set(transform_layout);
-
-        m_render_transform_ubo = std::make_shared<VKBuffer>(
-            sizeof(Kinesis::RenderTransform),
-            VKBuffer::Usage::UNIFORM,
-            Kakshya::DataModality::UNKNOWN);
-        ensure_initialized(m_render_transform_ubo);
-
-        foundry.update_descriptor_buffer(
-            m_render_transform_descriptor_set_id,
-            0,
-            vk::DescriptorType::eUniformBuffer,
-            m_render_transform_ubo->get_buffer(),
-            0,
-            sizeof(Kinesis::RenderTransform));
+        m_render_transform_arena.initialize(sizeof(Kinesis::RenderTransform), Portal::Graphics::BufferUsageHint::UNIFORM);
+        m_render_transform_slot = 0;
+        m_written_render_transform.reset();
 
         MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             "RenderTransform UBO allocated (pipeline {})", m_pipeline_id);
@@ -501,18 +485,6 @@ void RenderProcessor::initialize_descriptors(const std::shared_ptr<VKBuffer>& bu
         const uint32_t set_index = config_it->second.set;
 
         if (set_index == 0) {
-            if (m_render_transform_descriptor_set_id == Portal::Graphics::INVALID_DESCRIPTOR_SET) {
-                MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                    "Engine descriptor set not allocated for set=0 texture binding {}", binding);
-                continue;
-            }
-            foundry.update_descriptor_image(
-                m_render_transform_descriptor_set_id,
-                config_it->second.binding,
-                tex_binding.texture->get_image_view(),
-                tex_binding.sampler,
-                vk::ImageLayout::eShaderReadOnlyOptimal,
-                binding - config_it->second.binding);
             continue;
         }
 
@@ -544,6 +516,7 @@ void RenderProcessor::set_vertex_range(uint32_t first_vertex, uint32_t vertex_co
 {
     m_first_vertex = first_vertex;
     m_vertex_count = vertex_count;
+    invalidate_all_mills();
 
     MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
         "RenderProcessor: Set vertex range [offset={}, count={}]",
@@ -587,11 +560,17 @@ const Kinesis::RenderTransform& RenderProcessor::publish_render_transform()
 
     m_published_render_transform = transform;
 
-    if (m_render_transform_ubo && m_render_transform_ubo->get_mapped_ptr()) {
-        std::memcpy(
-            m_render_transform_ubo->get_mapped_ptr(),
-            &m_published_render_transform,
-            sizeof(Kinesis::RenderTransform));
+    if (m_render_transform_arena.is_initialized()) {
+        const auto& next = m_published_render_transform;
+        const auto& written = m_written_render_transform;
+        if (!written
+            || written->view_transform.view != next.view_transform.view
+            || written->view_transform.projection != next.view_transform.projection
+            || written->geometry != next.geometry) {
+            m_render_transform_slot = m_render_transform_arena.acquire();
+            m_render_transform_arena.write(m_render_transform_slot, &next, sizeof(Kinesis::RenderTransform));
+            m_written_render_transform = next;
+        }
     }
 
     return m_published_render_transform;
@@ -605,6 +584,7 @@ void RenderProcessor::set_triangulate(bool enabled)
 
     m_triangulate = enabled;
     m_needs_pipeline_rebuild = true;
+    invalidate_all_mills();
 }
 
 vk::Rect2D RenderProcessor::resolve_scissor_rect(uint32_t width, uint32_t height) const noexcept
@@ -633,15 +613,50 @@ vk::Rect2D RenderProcessor::resolve_scissor_rect(uint32_t width, uint32_t height
 void RenderProcessor::set_runs(std::vector<Portal::Graphics::DrawRun> runs)
 {
     m_runs = std::move(runs);
+    invalidate_all_mills();
 }
 
 void RenderProcessor::set_mill_spec(const Portal::Graphics::MillSpec& spec)
 {
+    const auto billboards = [](const Portal::Graphics::MillSpec& value) {
+        return value.billboard_instances
+            && value.ribbon == Portal::Graphics::MillSpec::Ribbon::WorldFacing;
+    };
+    if (billboards(m_mill_spec) != billboards(spec)) {
+        m_needs_pipeline_rebuild = true;
+    }
+
     m_mill_spec = spec;
     for (auto& [buffer, state] : m_buffer_info) {
         if (state.mill)
             state.mill->set_spec(spec);
     }
+    invalidate_all_mills();
+}
+
+void RenderProcessor::set_mill_on_change(bool enabled)
+{
+    m_mill_on_change = enabled;
+    invalidate_all_mills();
+}
+
+void RenderProcessor::invalidate_mill(const std::shared_ptr<VKBuffer>& buffer)
+{
+    if (auto it = m_buffer_info.find(buffer); it != m_buffer_info.end()) {
+        it->second.mill_current = false;
+    }
+}
+
+void RenderProcessor::invalidate_all_mills()
+{
+    for (auto& [buffer, state] : m_buffer_info) {
+        state.mill_current = false;
+    }
+}
+
+uint32_t RenderProcessor::mill_passes() const
+{
+    return m_mill_passes;
 }
 
 uint32_t RenderProcessor::milled_vertex_count() const
@@ -658,14 +673,22 @@ Portal::Graphics::PrimitiveTopology RenderProcessor::pipeline_topology() const
 
 uint32_t RenderProcessor::mill_runs(const std::shared_ptr<VKBuffer>& buffer, Portal::Graphics::PrimitiveMill& mill)
 {
+    std::optional<Kakshya::VertexLayout> mill_layout;
+    if (buffer->prefers_semantic_layout()) {
+        if (auto* state = get_or_cache_buffer_state(buffer))
+            mill_layout = state->semantic_layout;
+    }
+
     std::span<const Portal::Graphics::DrawRun> runs = m_runs;
 
     Portal::Graphics::DrawRun whole {};
     if (runs.empty()) {
-        const auto layout = buffer->get_vertex_layout();
-        const uint32_t count = m_vertex_count > 0
-            ? m_vertex_count
-            : (layout.has_value() ? layout->vertex_count : 0U);
+        const auto layout = mill_layout ? mill_layout : buffer->get_vertex_layout();
+        const uint32_t count = buffer->has_index_buffer()
+            ? static_cast<uint32_t>(buffer->get_index_buffer_size() / sizeof(uint32_t))
+            : (m_vertex_count > 0
+                      ? m_vertex_count
+                      : (layout.has_value() ? layout->vertex_count : 0U));
 
         if (count == 0) {
             return 0;
@@ -675,6 +698,22 @@ uint32_t RenderProcessor::mill_runs(const std::shared_ptr<VKBuffer>& buffer, Por
             .vertex_offset = m_first_vertex,
             .vertex_count = count };
         runs = { &whole, 1 };
+    }
+
+    if (mill_layout) {
+        for (const auto& run : runs) {
+            const uint32_t vertex_end = run.vertex_offset + run.vertex_count;
+            if (vertex_end >= run.vertex_offset)
+                mill_layout->vertex_count = std::max(mill_layout->vertex_count, vertex_end);
+        }
+    }
+
+    if (m_polygon_mode != Portal::Graphics::PolygonMode::FILL) {
+        m_mill_fill_runs.assign(runs.begin(), runs.end());
+        for (auto& run : m_mill_fill_runs) {
+            run.fill = m_polygon_mode;
+        }
+        runs = m_mill_fill_runs;
     }
 
     glm::vec3 eye = m_view_transform_active
@@ -697,7 +736,7 @@ uint32_t RenderProcessor::mill_runs(const std::shared_ptr<VKBuffer>& buffer, Por
 
     const Portal::Graphics::MillView view { .eye = eye };
 
-    return mill.mill(buffer, runs, view);
+    return mill.mill(buffer, runs, view, std::move(mill_layout));
 }
 
 void RenderProcessor::prepare_geometry(const std::shared_ptr<VKBuffer>& buffer, BufferState& state)
@@ -710,14 +749,25 @@ void RenderProcessor::prepare_geometry(const std::shared_ptr<VKBuffer>& buffer, 
     if (m_triangulate) {
         if (!state.mill)
             state.mill = std::make_unique<Portal::Graphics::PrimitiveMill>(m_mill_spec);
-        state.vertex_count = mill_runs(buffer, *state.mill);
+        const bool reuse = m_mill_on_change && state.mill_current && state.milled_count > 0
+            && m_mill_spec.ribbon != Portal::Graphics::MillSpec::Ribbon::WorldFacing
+            && state.mill->output();
+        if (reuse) {
+            state.vertex_count = state.milled_count;
+            state.draw_source = state.mill->output();
+        } else {
+            state.vertex_count = mill_runs(buffer, *state.mill);
+            state.milled_count = state.vertex_count;
+            state.mill_current = state.vertex_count > 0;
+            if (state.vertex_count > 0) {
+                ++m_mill_passes;
+                state.draw_source = state.mill->output();
+            } else if (state.draw_source != buffer) {
+                state.draw_source = buffer;
+            }
+        }
         m_last_milled_vertex_count = state.vertex_count;
         state.first_vertex = 0;
-        if (state.vertex_count > 0) {
-            state.draw_source = state.mill->output();
-        } else if (state.draw_source != buffer) {
-            state.draw_source = buffer;
-        }
     } else {
         if (state.draw_source != buffer)
             state.draw_source = buffer;
@@ -789,8 +839,9 @@ void RenderProcessor::retire_current_pipeline()
 
     m_retired.push_back({ .pipeline = m_pipeline_id,
         .window = m_target_window,
-        .transform_ubo = std::move(m_render_transform_ubo),
+        .transform_ubo = m_render_transform_arena.detach(),
         .after_frame = after_frame });
+    m_written_render_transform.reset();
 
     m_pipeline_id = Portal::Graphics::INVALID_RENDER_PIPELINE;
 }
@@ -825,12 +876,94 @@ void RenderProcessor::record_draw(const std::shared_ptr<VKBuffer>& buffer)
     record_draw(buffer, it->second);
 }
 
+void RenderProcessor::collect_engine_writes(
+    const std::shared_ptr<VKBuffer>& buffer,
+    std::vector<vk::WriteDescriptorSet>& writes,
+    std::vector<vk::DescriptorBufferInfo>& buffer_infos,
+    std::vector<vk::DescriptorImageInfo>& image_infos,
+    std::vector<Portal::Graphics::SlotLease>& leases) const
+{
+    const auto& engine_bindings = buffer->get_engine_context().ssbo_bindings;
+    buffer_infos.reserve(1 + engine_bindings.size());
+    image_infos.reserve(m_texture_bindings.size());
+    writes.reserve(1 + engine_bindings.size() + m_texture_bindings.size());
+
+    if (m_render_transform_arena.is_initialized()) {
+        buffer_infos.emplace_back(m_render_transform_arena.info(m_render_transform_slot));
+        leases.push_back(m_render_transform_arena.lease(m_render_transform_slot));
+        vk::WriteDescriptorSet write {};
+        write.dstBinding = 0;
+        write.descriptorCount = 1;
+        write.descriptorType = vk::DescriptorType::eUniformBuffer;
+        write.pBufferInfo = &buffer_infos.back();
+        writes.push_back(write);
+    }
+
+    for (const auto& binding : engine_bindings) {
+        if (binding.set == 0 && binding.binding == 0) {
+            MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "Engine SSBO at binding=0 is reserved for RenderTransform UBO");
+            continue;
+        }
+        buffer_infos.emplace_back(binding.buffer_info.buffer, binding.buffer_info.offset, binding.buffer_info.range);
+        if (binding.arena) {
+            leases.push_back(binding.arena->lease(binding.slot));
+        }
+        vk::WriteDescriptorSet write {};
+        write.dstBinding = binding.binding;
+        write.descriptorCount = 1;
+        write.descriptorType = binding.type;
+        write.pBufferInfo = &buffer_infos.back();
+        writes.push_back(write);
+    }
+
+    for (const auto& [binding, tex_binding] : m_texture_bindings) {
+        if (!tex_binding.texture
+            || !tex_binding.texture->is_initialized()
+            || !tex_binding.texture->get_image_view()) {
+            continue;
+        }
+
+        const auto config_it = std::ranges::find_if(m_config.bindings,
+            [binding](const auto& pair) {
+                return binding >= pair.second.binding
+                    && binding < pair.second.binding + pair.second.count;
+            });
+        if (config_it == m_config.bindings.end() || config_it->second.set != 0) {
+            continue;
+        }
+
+        image_infos.emplace_back(tex_binding.sampler, tex_binding.texture->get_image_view(),
+            vk::ImageLayout::eShaderReadOnlyOptimal);
+        vk::WriteDescriptorSet write {};
+        write.dstBinding = config_it->second.binding;
+        write.dstArrayElement = binding - config_it->second.binding;
+        write.descriptorCount = 1;
+        write.descriptorType = vk::DescriptorType::eCombinedImageSampler;
+        write.pImageInfo = &image_infos.back();
+        writes.push_back(write);
+    }
+
+}
+
 void RenderProcessor::record_draw(const std::shared_ptr<VKBuffer>& buffer, const BufferState& state)
 {
-    buffer->set_pipeline_window(m_pipeline_id, m_target_window);
+    std::vector<vk::WriteDescriptorSet> engine_writes;
+    std::vector<vk::DescriptorBufferInfo> engine_buffer_infos;
+    std::vector<vk::DescriptorImageInfo> engine_image_infos;
+    std::vector<Portal::Graphics::SlotLease> engine_leases;
+    collect_engine_writes(buffer, engine_writes, engine_buffer_infos, engine_image_infos, engine_leases);
 
     auto& foundry = Portal::Graphics::get_shader_foundry();
     auto& flow = Portal::Graphics::get_render_flow();
+
+    if (const auto missing = flow.first_unwritten_push_binding(m_pipeline_id, engine_writes)) {
+        MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "Set 0 binding {} is used by the shaders but has nothing to write; draw skipped", *missing);
+        return;
+    }
+
+    buffer->set_pipeline_window(m_pipeline_id, m_target_window);
 
     vk::Format color_format = static_cast<vk::Format>(
         m_display_service->get_swapchain_format(m_target_window));
@@ -864,27 +997,6 @@ void RenderProcessor::record_draw(const std::shared_ptr<VKBuffer>& buffer, const
 
     flow.bind_pipeline(cmd_id, m_pipeline_id);
 
-    auto& engine_bindings = buffer->get_engine_context().ssbo_bindings;
-    for (const auto& binding : engine_bindings) {
-        if (binding.set == 0 && binding.binding == 0) {
-            MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                "Engine SSBO at binding=0 is reserved for RenderTransform UBO");
-            continue;
-        }
-        if (m_render_transform_descriptor_set_id == Portal::Graphics::INVALID_DESCRIPTOR_SET) {
-            MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                "Engine SSBO binding {} skipped: engine descriptor set not allocated", binding.binding);
-            continue;
-        }
-        foundry.update_descriptor_buffer(
-            m_render_transform_descriptor_set_id,
-            binding.binding,
-            binding.type,
-            binding.buffer_info.buffer,
-            binding.buffer_info.offset,
-            binding.buffer_info.range);
-    }
-
     auto& descriptor_bindings = buffer->get_pipeline_context().descriptor_buffer_bindings;
     if (!descriptor_bindings.empty()) {
         for (const auto& binding : descriptor_bindings) {
@@ -905,16 +1017,7 @@ void RenderProcessor::record_draw(const std::shared_ptr<VKBuffer>& buffer, const
         }
     }
 
-    if (!m_descriptor_set_ids.empty()) {
-        flow.bind_descriptor_sets(cmd_id, m_pipeline_id, m_descriptor_set_ids);
-    }
-
-    if (m_render_transform_descriptor_set_id != Portal::Graphics::INVALID_DESCRIPTOR_SET) {
-        flow.bind_descriptor_sets(
-            cmd_id, m_pipeline_id,
-            { m_render_transform_descriptor_set_id },
-            0);
-    }
+    flow.push_descriptors(cmd_id, m_pipeline_id, engine_writes, engine_leases);
 
     if (!m_descriptor_set_ids.empty()) {
         flow.bind_descriptor_sets(
@@ -1078,15 +1181,18 @@ void RenderProcessor::cleanup()
         state.geometry_prepared = false;
         state.draw_source.reset();
         state.mill.reset();
+        state.mill_current = false;
+        state.milled_count = 0;
         state.first_vertex = 0;
         state.vertex_count = 0;
         state.index_count = 0;
     }
     m_last_milled_vertex_count = 0;
+    m_mill_passes = 0;
     m_runs.clear();
 
-    m_render_transform_ubo.reset();
-    m_render_transform_descriptor_set_id = Portal::Graphics::INVALID_DESCRIPTOR_SET;
+    m_render_transform_arena.release();
+    m_written_render_transform.reset();
     m_view_transform_active = false;
 
     if (m_target_window) {

@@ -480,8 +480,7 @@ std::shared_ptr<Core::VKImage> TextureLoom::acquire_cached_image(
 std::shared_ptr<Core::VKImage> TextureLoom::refresh_cached_image(
     ImageCacheEntry& entry,
     const ImageKey& key,
-    std::span<const uint8_t> pixels,
-    const std::shared_ptr<Buffers::VKBuffer>& staging)
+    std::span<const uint8_t> pixels)
 {
     if (key.kind == ImageKey::Kind::STORAGE_2D || key.width == 0
         || key.height == 0 || key.layers == 0)
@@ -495,21 +494,11 @@ std::shared_ptr<Core::VKImage> TextureLoom::refresh_cached_image(
         return nullptr;
     }
 
-    if (staging && (staging->get_size() < required || !staging->get_mapped_ptr())) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
-            "Cached image staging buffer is unavailable or too small");
-        return nullptr;
-    }
-
     auto image = acquire_cached_image(entry, key);
     if (!image)
         return nullptr;
 
-    if (staging) {
-        upload_data(image, pixels.data(), pixels.size(), staging);
-    } else {
-        upload_data(image, pixels.data(), pixels.size());
-    }
+    upload_data(image, pixels.data(), pixels.size());
 
     return image;
 }
@@ -588,27 +577,15 @@ std::shared_ptr<Core::VKImage> TextureLoom::create_2d(
 //==============================================================================
 
 void TextureLoom::upload_data(
-    const std::shared_ptr<Core::VKImage>& image, const void* data, size_t size)
-{
-    if (!is_initialized() || !image || !data) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
-            "Invalid parameters for upload_data");
-        return;
-    }
-
-    m_resource_manager->upload_image_data(image, data, size);
-}
-
-void TextureLoom::upload_data(
     const std::shared_ptr<Core::VKImage>& image,
     const void* data,
     size_t size,
     const std::shared_ptr<Buffers::VKBuffer>& staging,
     bool deferred)
 {
-    if (!is_initialized() || !image || !data || !staging) {
+    if (!is_initialized() || !image || !data || (deferred && !staging)) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
-            "Invalid parameters for upload_data_streaming");
+            "Invalid parameters for upload_data");
         return;
     }
 
@@ -619,26 +596,23 @@ void TextureLoom::download_data(
     const std::shared_ptr<Core::VKImage>& image,
     void* data,
     size_t size,
-    const std::shared_ptr<Buffers::VKBuffer>& staging,
-    bool deferred,
     vk::ImageLayout restore_layout,
-    vk::PipelineStageFlags restore_stage)
+    vk::PipelineStageFlags2 restore_stage)
 {
     if (!is_initialized() || !image || !data) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
-            "download_data(staging): invalid parameters");
+            "download_data: invalid parameters");
         return;
     }
 
     m_resource_manager->download_image_data(
-        image, data, size, staging, deferred, restore_layout, restore_stage);
+        image, data, size, restore_layout, restore_stage);
 }
 
 std::optional<Kakshya::ImageData> TextureLoom::download_image(
     const std::shared_ptr<Core::VKImage>& image,
-    const std::shared_ptr<Buffers::VKBuffer>& staging,
     vk::ImageLayout restore_layout,
-    vk::PipelineStageFlags restore_stage)
+    vk::PipelineStageFlags2 restore_stage)
 {
     if (!is_initialized()) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
@@ -663,7 +637,7 @@ std::optional<Kakshya::ImageData> TextureLoom::download_image(
         return std::nullopt;
     }
 
-    download_data(image, result->data(), byte_count, staging, false, restore_layout, restore_stage);
+    download_data(image, result->data(), byte_count, restore_layout, restore_stage);
 
     if (!result->is_consistent()) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
@@ -737,9 +711,7 @@ bool TextureLoom::upload_layer(
     const std::shared_ptr<Core::VKImage>& image,
     uint32_t layer,
     const void* data,
-    size_t size,
-    const std::shared_ptr<Buffers::VKBuffer>& staging,
-    bool deferred)
+    size_t size)
 {
     if (!is_initialized() || !image || !data) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
@@ -747,7 +719,7 @@ bool TextureLoom::upload_layer(
         return false;
     }
 
-    return m_resource_manager->upload_image_layer(image, layer, data, size, staging, deferred);
+    return m_resource_manager->upload_image_layer(image, layer, data, size);
 }
 
 bool TextureLoom::can_blit(

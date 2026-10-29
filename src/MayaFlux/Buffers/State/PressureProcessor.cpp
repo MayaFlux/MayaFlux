@@ -65,9 +65,9 @@ void PressureProcessor::on_iteration_barrier(
 
     auto& foundry = Portal::Graphics::get_shader_foundry();
 
-    const auto src = vk::AccessFlagBits::eShaderWrite;
-    const auto dst = vk::AccessFlagBits::eShaderRead | vk::AccessFlagBits::eShaderWrite;
-    const auto stage = vk::PipelineStageFlagBits::eComputeShader;
+    const auto src = vk::AccessFlagBits2::eShaderWrite;
+    const auto dst = vk::AccessFlagBits2::eShaderRead | vk::AccessFlagBits2::eShaderWrite;
+    const auto stage = vk::PipelineStageFlagBits2::eComputeShader;
 
     foundry.buffer_barrier(cmd_id, volume->read_handle(m_pressure_field), src, dst, stage, stage);
     foundry.buffer_barrier(cmd_id, volume->write_handle(m_pressure_field), src, dst, stage, stage);

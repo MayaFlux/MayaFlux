@@ -175,7 +175,7 @@ void DataWriteProcessor::write_pixels(Kakshya::ImageData image)
 void DataWriteProcessor::write_texture_pixels(Kakshya::ImageData image)
 {
     auto payload = std::make_shared<Kakshya::ImageData>(std::move(image));
-    enqueue_write([payload](DataWriteProcessor& self, const std::shared_ptr<VKBuffer>& vk) {
+    enqueue_write([payload](DataWriteProcessor&, const std::shared_ptr<VKBuffer>& vk) {
         using Portal::Graphics::TextureLoom;
 
         const auto texture = std::dynamic_pointer_cast<TextureBuffer>(vk);
@@ -191,15 +191,7 @@ void DataWriteProcessor::write_texture_pixels(Kakshya::ImageData image)
             return;
         }
 
-        const size_t size = payload->byte_size();
-        if (!self.m_write_image_staging || self.m_write_image_staging->get_size_bytes() < size) {
-            self.m_write_image_staging = create_image_staging_buffer(size);
-        }
-        if (self.m_write_image_staging) {
-            loom.upload_data(gpu_image, payload->data(), size, self.m_write_image_staging);
-        } else {
-            loom.upload_data(gpu_image, payload->data(), size);
-        }
+        loom.upload_data(gpu_image, payload->data(), payload->byte_size());
     });
 }
 
@@ -306,7 +298,6 @@ void DataWriteProcessor::on_detach(const std::shared_ptr<Buffer>& /*buffer*/)
     while (m_writes->pop()) {
     }
     m_write_staging.reset();
-    m_write_image_staging.reset();
     m_staging.reset();
     m_pending_texture.reset();
     m_data_pending.clear();
@@ -455,13 +446,12 @@ void DataWriteProcessor::upload_texture(const std::shared_ptr<VKBuffer>& vk, Kak
                 m_tex_width, m_tex_height);
             return;
         }
-        m_image_staging = create_image_staging_buffer(m_gpu_texture->get_size_bytes());
         if (auto rp = vk->get_render_processor()) {
             rp->bind_texture(m_tex_binding, m_gpu_texture);
         }
     }
 
-    loom.upload_data(m_gpu_texture, access->data_ptr, access->byte_count, m_image_staging);
+    loom.upload_data(m_gpu_texture, access->data_ptr, access->byte_count);
 }
 
 void DataWriteProcessor::upload_raw(const std::shared_ptr<VKBuffer>& vk, Kakshya::DataVariant& slot)
@@ -494,6 +484,7 @@ bool DataWriteProcessor::is_vertex_modality(Kakshya::DataModality m) noexcept
     case Kakshya::DataModality::VERTEX_NORMALS_3D:
     case Kakshya::DataModality::VERTEX_TANGENTS_3D:
     case Kakshya::DataModality::VERTEX_COLORS_RGB:
+    case Kakshya::DataModality::VERTEX_TANGENTS_4D:
     case Kakshya::DataModality::VERTEX_COLORS_RGBA:
     case Kakshya::DataModality::TEXTURE_COORDS_2D:
         return true;

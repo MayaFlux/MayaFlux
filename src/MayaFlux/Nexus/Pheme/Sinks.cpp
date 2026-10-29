@@ -113,6 +113,15 @@ void add_render_sink(
 
     auto rc = config;
 
+    if (Portal::Graphics::needs_triangulation(rc.topology, rc.polygon_mode))
+        rc.triangulate = true;
+    const bool line_topology = rc.topology == Portal::Graphics::PrimitiveTopology::LINE_LIST
+        || rc.topology == Portal::Graphics::PrimitiveTopology::LINE_STRIP;
+    if (line_topology && rc.polygon_mode == Portal::Graphics::PolygonMode::POINT)
+        rc.topology = Portal::Graphics::PrimitiveTopology::POINT_LIST;
+    if (rc.triangulate)
+        rc.geometry_shader.clear();
+
     if (rc.vertex_shader.empty() || rc.fragment_shader.empty()) {
         switch (rc.topology) {
         case Portal::Graphics::PrimitiveTopology::LINE_LIST:
@@ -121,10 +130,6 @@ void add_render_sink(
                 rc.vertex_shader = "line.vert.spv";
             if (rc.fragment_shader.empty())
                 rc.fragment_shader = "line.frag.spv";
-#ifdef MAYAFLUX_PLATFORM_MACOS
-            rc.triangulate = true;
-#endif
-
             if (rc.triangulate) {
                 rc.geometry_shader.clear();
             } else if (rc.geometry_shader.empty()) {
@@ -139,17 +144,10 @@ void add_render_sink(
                 rc.fragment_shader = "triangle.frag.spv";
             break;
         default:
-            if (rc.triangulate) {
-                if (rc.vertex_shader.empty())
-                    rc.vertex_shader = "milled_shape.vert.spv";
-                if (rc.fragment_shader.empty())
-                    rc.fragment_shader = "milled_shape.frag.spv";
-            } else {
-                if (rc.vertex_shader.empty())
-                    rc.vertex_shader = "point.vert.spv";
-                if (rc.fragment_shader.empty())
-                    rc.fragment_shader = "point.frag.spv";
-            }
+            if (rc.vertex_shader.empty())
+                rc.vertex_shader = "point.vert.spv";
+            if (rc.fragment_shader.empty())
+                rc.fragment_shader = "point.frag.spv";
             break;
         }
     }

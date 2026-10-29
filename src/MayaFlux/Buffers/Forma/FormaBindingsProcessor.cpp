@@ -206,7 +206,7 @@ void FormaBindingsProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buf
 {
     remember_target(buffer);
 
-    for (const auto& [name, b] : m_bindings) {
+    for (auto& [name, b] : m_bindings) {
         if (b.typed_reader) {
             if (b.pc)
                 flush_typed_push_constant(name, b.typed_reader(), *b.pc, buffer);
@@ -304,10 +304,16 @@ void FormaBindingsProcessor::flush_typed_push_constant(
 
 void FormaBindingsProcessor::flush_descriptor(
     float value,
-    const DescriptorTarget& desc,
+    DescriptorTarget& desc,
     const std::shared_ptr<VKBuffer>& attached)
 {
-    upload_to_gpu(&value, sizeof(float), desc.gpu_buffer, nullptr);
+    attached->await_use();
+
+    if (!desc.gpu_buffer->is_host_visible() && !desc.staging) {
+        desc.staging = create_staging_buffer(sizeof(float));
+    }
+
+    upload_to_gpu(&value, sizeof(float), desc.gpu_buffer, desc.staging, 0, true);
 
     auto& bindings_list = attached->get_pipeline_context().descriptor_buffer_bindings;
 

@@ -189,6 +189,7 @@ bool AssimpModelWriter::write(
         mesh->mVertices = new aiVector3D[vertex_count];
         mesh->mNormals = new aiVector3D[vertex_count];
         mesh->mTangents = new aiVector3D[vertex_count];
+        mesh->mBitangents = new aiVector3D[vertex_count];
         mesh->mTextureCoords[0] = new aiVector3D[vertex_count];
         mesh->mNumUVComponents[0] = 2;
         mesh->mColors[0] = new aiColor4D[vertex_count];
@@ -198,8 +199,10 @@ bool AssimpModelWriter::write(
             mesh->mVertices[v] = aiVector3D(mv.position.x, mv.position.y, mv.position.z);
             mesh->mNormals[v] = aiVector3D(mv.normal.x, mv.normal.y, mv.normal.z);
             mesh->mTangents[v] = aiVector3D(mv.tangent.x, mv.tangent.y, mv.tangent.z);
+            const glm::vec3 bitangent = glm::cross(mv.normal, glm::vec3(mv.tangent)) * mv.tangent.w;
+            mesh->mBitangents[v] = aiVector3D(bitangent.x, bitangent.y, bitangent.z);
             mesh->mTextureCoords[0][v] = aiVector3D(mv.uv.x, mv.uv.y, 0.0F);
-            mesh->mColors[0][v] = aiColor4D(mv.color.x, mv.color.y, mv.color.z, 1.0F);
+            mesh->mColors[0][v] = aiColor4D(mv.color.x, mv.color.y, mv.color.z, mv.color.w);
         }
 
         const size_t face_count = ib->size() / 3;

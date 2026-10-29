@@ -335,7 +335,7 @@ std::vector<Kakshya::LineVertex> compute_path_normals(
 
         glm::vec3 midpoint = (p0 + p1) * 0.5F;
 
-        glm::vec3 color = path_vertices[i].color;
+        glm::vec4 color = path_vertices[i].color;
         float thickness = path_vertices[i].thickness;
 
         normals.push_back({ .position = midpoint - normal * 0.5F,
@@ -375,7 +375,7 @@ std::vector<Kakshya::LineVertex> compute_path_tangents(
 
         tangent = glm::normalize(tangent) * tangent_length;
 
-        glm::vec3 color = path_vertices[i].color;
+        glm::vec4 color = path_vertices[i].color;
         float thickness = path_vertices[i].thickness;
 
         tangents.push_back({ .position = p0 - tangent * 0.5F,
@@ -409,7 +409,7 @@ std::vector<Kakshya::LineVertex> compute_path_curvature(
 
         glm::vec3 curvature = (p_next - 2.0F * p_curr + p_prev) * curvature_scale;
 
-        glm::vec3 color = path_vertices[i].color;
+        glm::vec4 color = path_vertices[i].color;
         float thickness = path_vertices[i].thickness;
 
         curvatures.push_back({ .position = p_curr,
@@ -496,9 +496,9 @@ std::vector<Kakshya::LineVertex> reparameterize_by_arc_length(
             glm::vec3 p1 = path_vertices[idx].position;
             glm::vec3 position = glm::mix(p0, p1, t);
 
-            glm::vec3 c0 = path_vertices[idx - 1].color;
-            glm::vec3 c1 = path_vertices[idx].color;
-            glm::vec3 color = glm::mix(c0, c1, t);
+            glm::vec4 c0 = path_vertices[idx - 1].color;
+            glm::vec4 c1 = path_vertices[idx].color;
+            glm::vec4 color = glm::mix(c0, c1, t);
 
             resampled.push_back({ .position = position,
                 .color = color,
@@ -628,7 +628,7 @@ std::vector<glm::vec3> compute_convex_hull_2d(
 
 std::vector<Kakshya::Vertex> apply_color_gradient(
     const std::vector<glm::vec3>& positions,
-    const std::vector<glm::vec3>& colors,
+    const std::vector<glm::vec4>& colors,
     const std::vector<float>& color_positions,
     float scalar)
 {
@@ -659,7 +659,7 @@ std::vector<Kakshya::Vertex> apply_color_gradient(
     for (size_t i = 0; i < positions.size(); ++i) {
         float t = static_cast<float>(i) / static_cast<float>(positions.size() - 1);
 
-        glm::vec3 color;
+        glm::vec4 color;
         if (t <= stops[0]) {
             color = colors[0];
         } else if (t >= stops.back()) {
@@ -687,7 +687,7 @@ std::vector<Kakshya::Vertex> apply_color_gradient(
 
 std::vector<Kakshya::Vertex> apply_uniform_color(
     const std::vector<glm::vec3>& positions,
-    const glm::vec3& color,
+    const glm::vec4& color,
     float scalar)
 {
     std::vector<Kakshya::Vertex> vertices;
@@ -704,7 +704,7 @@ std::vector<Kakshya::Vertex> apply_uniform_color(
 
 std::vector<Kakshya::Vertex> apply_vertex_colors(
     const std::vector<glm::vec3>& positions,
-    const std::vector<glm::vec3>& colors,
+    const std::vector<glm::vec4>& colors,
     float scalar)
 {
     if (positions.size() != colors.size()) {
@@ -745,7 +745,7 @@ QuadGeometry generate_quad(glm::vec2 position, glm::vec2 scale, float rotation)
     return out;
 }
 
-std::array<Kakshya::Vertex, 4> filled_rect(Kinesis::AABB2D region, glm::vec3 color)
+std::array<Kakshya::Vertex, 4> filled_rect(Kinesis::AABB2D region, glm::vec4 color)
 {
     return { {
         { .position = { region.min.x, region.min.y, 0.F }, .color = color },
@@ -765,7 +765,7 @@ std::array<Kakshya::TextureQuadVertex, 4> textured_rect(Kinesis::AABB2D region)
     } };
 }
 
-std::array<Kakshya::MeshVertex, 6> textured_mesh_rect(Kinesis::AABB2D region, float weight, glm::vec3 color)
+std::array<Kakshya::MeshVertex, 6> textured_mesh_rect(Kinesis::AABB2D region, float weight, glm::vec4 color)
 {
     using V = Kakshya::MeshVertex;
     const glm::vec2 mn = region.min;
@@ -781,7 +781,7 @@ std::array<Kakshya::MeshVertex, 6> textured_mesh_rect(Kinesis::AABB2D region, fl
 }
 
 std::vector<Kakshya::Vertex> cuboid_wireframe(
-    const glm::vec3& center, const glm::vec3& half, const glm::vec3& color)
+    const glm::vec3& center, const glm::vec3& half, const glm::vec4& color)
 {
     const glm::vec3 v[8] = {
         center + glm::vec3(-half.x, -half.y, -half.z),
@@ -1095,7 +1095,7 @@ Kakshya::MeshData generate_explicit_surface(
             vertex.weight = h_row[col];
             vertex.uv = { static_cast<float>(col) * inv_columns, 1.0F - static_cast<float>(row) * inv_rows };
             vertex.normal = { -slope_x * normal_scale, normal_scale, -slope_z * normal_scale };
-            vertex.tangent = { tangent_scale, slope_x * tangent_scale, 0.0F };
+            vertex.tangent = { tangent_scale, slope_x * tangent_scale, 0.0F, 1.0F };
 
             std::memcpy(out + (row * columns + col) * stride, &vertex, stride);
         }

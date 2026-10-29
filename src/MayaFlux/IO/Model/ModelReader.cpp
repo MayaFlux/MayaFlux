@@ -404,13 +404,12 @@ Kakshya::MeshData ModelReader::extract_single_mesh(
         }
 
         if (mesh->HasTangentsAndBitangents()) {
-            vert.tangent = {
-                mesh->mTangents[v].x,
-                mesh->mTangents[v].y,
-                mesh->mTangents[v].z
-            };
+            const glm::vec3 t { mesh->mTangents[v].x, mesh->mTangents[v].y, mesh->mTangents[v].z };
+            const glm::vec3 b { mesh->mBitangents[v].x, mesh->mBitangents[v].y, mesh->mBitangents[v].z };
+            const float handedness = glm::dot(glm::cross(vert.normal, t), b) < 0.0F ? -1.0F : 1.0F;
+            vert.tangent = { t.x, t.y, t.z, handedness };
         } else {
-            vert.tangent = { 1.0F, 0.0F, 0.0F };
+            vert.tangent = { 1.0F, 0.0F, 0.0F, 1.0F };
         }
 
         if (mesh->HasTextureCoords(0)) {
@@ -426,10 +425,11 @@ Kakshya::MeshData ModelReader::extract_single_mesh(
             vert.color = {
                 mesh->mColors[0][v].r,
                 mesh->mColors[0][v].g,
-                mesh->mColors[0][v].b
+                mesh->mColors[0][v].b,
+                mesh->mColors[0][v].a
             };
         } else {
-            vert.color = { 0.8F, 0.8F, 0.8F };
+            vert.color = { 0.8F, 0.8F, 0.8F, 1.0F };
         }
 
         vert.weight = 0.0F;

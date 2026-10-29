@@ -38,7 +38,106 @@ namespace {
         return { vk_bindings, vk_attributes };
     }
 
+    template <typename T>
+    constexpr size_t hash_bits(const T& value) noexcept
+    {
+        if constexpr (std::is_enum_v<T>) {
+            return static_cast<size_t>(std::to_underlying(value));
+        } else if constexpr (std::is_floating_point_v<T>) {
+            return std::bit_cast<std::conditional_t<sizeof(T) == sizeof(uint32_t), uint32_t, uint64_t>>(value);
+        } else if constexpr (std::is_pointer_v<T>) {
+            return std::bit_cast<size_t>(value);
+        } else if constexpr (requires { typename T::MaskType; }) {
+            return static_cast<size_t>(static_cast<typename T::MaskType>(value));
+        } else {
+            return static_cast<size_t>(value);
+        }
+    }
+
+    template <typename... Ts>
+    constexpr void mix_hash(size_t& seed, const Ts&... values) noexcept
+    {
+        constexpr size_t k_multiplier = 0x517cc1b727220a95ULL;
+        ((seed = (std::rotl(seed, 5) ^ hash_bits(values)) * k_multiplier), ...);
+    }
+
 } // anonymous namespace
+
+struct RenderFlow::PipelineKey {
+    size_t hash {};
+    Core::GraphicsPipelineConfig config;
+    std::vector<std::vector<vk::DescriptorSetLayoutBinding>> set_bindings;
+    std::optional<uint32_t> push_set;
+    std::vector<std::pair<uint32_t, uint32_t>> specialization_constants;
+
+    void finalize() noexcept;
+
+    bool operator==(const PipelineKey&) const = default;
+};
+
+struct RenderFlow::PipelineKeyHash {
+    size_t operator()(const PipelineKey& key) const noexcept { return key.hash; }
+};
+
+struct RenderFlow::SharedPipelines {
+    std::unordered_map<PipelineKey, std::weak_ptr<PipelineState>, PipelineKeyHash> entries;
+};
+
+RenderFlow::RenderFlow()
+    : m_shared_pipelines(std::make_unique<SharedPipelines>())
+{
+}
+
+RenderFlow::~RenderFlow()
+{
+    shutdown();
+}
+
+void RenderFlow::PipelineKey::finalize() noexcept
+{
+    size_t seed = 0;
+
+    mix_hash(seed, config.vertex_shader.get(), config.fragment_shader.get(),
+        config.geometry_shader.get(), config.tess_control_shader.get(),
+        config.tess_evaluation_shader.get(), config.mesh_shader.get(),
+        config.task_shader.get());
+
+    mix_hash(seed, config.topology, config.polygon_mode, config.cull_mode,
+        config.front_face, config.line_width, config.depth_test_enable,
+        config.depth_write_enable, config.depth_compare_op, config.stencil_test_enable,
+        config.depth_clamp_enable, config.depth_bias_enable,
+        config.depth_attachment_format);
+
+    for (const auto& binding : config.vertex_bindings) {
+        mix_hash(seed, binding.binding, binding.stride);
+    }
+    for (const auto& attribute : config.vertex_attributes) {
+        mix_hash(seed, attribute.location, attribute.format, attribute.offset);
+    }
+    for (const auto& blend : config.color_blend_attachments) {
+        mix_hash(seed, blend.blend_enable, blend.src_color_blend_factor,
+            blend.dst_color_blend_factor);
+    }
+    for (const auto format : config.color_attachment_formats) {
+        mix_hash(seed, format);
+    }
+    for (const auto& range : config.push_constant_ranges) {
+        mix_hash(seed, range.stageFlags, range.size);
+    }
+
+    mix_hash(seed, push_set.value_or(UINT32_MAX));
+    for (const auto& set : set_bindings) {
+        mix_hash(seed, set.size());
+        for (const auto& binding : set) {
+            mix_hash(seed, binding.binding, binding.descriptorType, binding.descriptorCount);
+        }
+    }
+    for (const auto& [constant_id, value] : specialization_constants) {
+        mix_hash(seed, constant_id, value);
+    }
+
+    hash = seed;
+}
 
 //==============================================================================
 // Initialization
@@ -76,6 +175,12 @@ bool RenderFlow::initialize()
 
     m_shader_foundry = foundry;
     m_display_service = display_service;
+    try {
+        m_pipeline_cache = foundry->get_device().createPipelineCache({});
+    } catch (const std::exception& e) {
+        MF_WARN(Journal::Component::Portal, Journal::Context::Rendering,
+            "Vulkan pipeline cache unavailable, continuing without it: {}", e.what());
+    }
     s_initialized = true;
 
     MF_INFO(Journal::Component::Portal, Journal::Context::Rendering,
@@ -117,6 +222,11 @@ void RenderFlow::shutdown()
     }
 
     cleanup_pipelines();
+
+    if (m_pipeline_cache) {
+        device.destroyPipelineCache(m_pipeline_cache);
+        m_pipeline_cache = nullptr;
+    }
 
     m_window_associations.clear();
 
@@ -263,7 +373,9 @@ namespace {
 RenderPipelineID RenderFlow::create_pipeline(
     const RenderPipelineConfig& config,
     const std::vector<vk::Format>& color_formats,
-    vk::Format depth_format)
+    vk::Format depth_format,
+    std::optional<uint32_t> push_set,
+    const std::unordered_map<uint32_t, uint32_t>& specialization_constants)
 {
     if (!is_initialized()) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
@@ -354,13 +466,6 @@ RenderPipelineID RenderFlow::create_pipeline(
     vk_config.primitive_restart_enable = false;
 
     vk_config.polygon_mode = to_vk_polygon_mode(config.rasterization.polygon_mode);
-    if (vk_config.polygon_mode != vk::PolygonMode::eFill
-        && !m_shader_foundry->get_physical_device().getFeatures().fillModeNonSolid) {
-        MF_WARN(Journal::Component::Portal, Journal::Context::Rendering,
-            "Polygon mode {} needs fillModeNonSolid, which this device lacks; drawing filled",
-            vk::to_string(vk_config.polygon_mode));
-        vk_config.polygon_mode = vk::PolygonMode::eFill;
-    }
     vk_config.cull_mode = to_vk_cull_mode(config.rasterization.cull_mode);
     vk_config.front_face = config.rasterization.front_face_ccw ? vk::FrontFace::eCounterClockwise : vk::FrontFace::eClockwise;
     vk_config.line_width = config.rasterization.line_width;
@@ -384,8 +489,7 @@ RenderPipelineID RenderFlow::create_pipeline(
         vk_config.color_blend_attachments.push_back(vk_blend);
     }
 
-    std::vector<vk::DescriptorSetLayout> layouts;
-    vk::DescriptorSetLayout state_vt_layout {};
+    std::vector<std::vector<vk::DescriptorSetLayoutBinding>> set_bindings;
 
     {
         std::vector<vk::DescriptorSetLayoutBinding> set0_bindings;
@@ -411,12 +515,7 @@ RenderPipelineID RenderFlow::create_pipeline(
             }
         }
 
-        vk::DescriptorSetLayoutCreateInfo layout_info;
-        layout_info.bindingCount = static_cast<uint32_t>(set0_bindings.size());
-        layout_info.pBindings = set0_bindings.data();
-        vk::DescriptorSetLayout vt_layout = m_shader_foundry->get_device().createDescriptorSetLayout(layout_info);
-        layouts.push_back(vt_layout);
-        state_vt_layout = vt_layout;
+        set_bindings.push_back(std::move(set0_bindings));
     }
 
     for (const auto& desc_set : config.descriptor_sets) {
@@ -441,14 +540,15 @@ RenderPipelineID RenderFlow::create_pipeline(
         if (bindings.empty())
             continue;
 
-        vk::DescriptorSetLayoutCreateInfo layout_info;
-        layout_info.bindingCount = static_cast<uint32_t>(bindings.size());
-        layout_info.pBindings = bindings.data();
-        layouts.push_back(
-            m_shader_foundry->get_device().createDescriptorSetLayout(layout_info));
+        set_bindings.push_back(std::move(bindings));
     }
 
-    vk_config.descriptor_set_layouts = layouts;
+    if (push_set && *push_set >= set_bindings.size()) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "Push descriptor set {} is out of range for a pipeline with {} descriptor sets",
+            *push_set, set_bindings.size());
+        return INVALID_RENDER_PIPELINE;
+    }
 
     vk::ShaderStageFlags push_constant_stages;
 
@@ -488,31 +588,92 @@ RenderPipelineID RenderFlow::create_pipeline(
         vk::DynamicState::eViewport,
         vk::DynamicState::eScissor
     };
+    vk_config.cache = m_pipeline_cache;
+
+    std::vector<std::pair<uint32_t, uint32_t>> sorted_specialization(
+        specialization_constants.begin(), specialization_constants.end());
+    std::ranges::sort(sorted_specialization);
+
+    PipelineKey pipeline_key {
+        .config = std::move(vk_config),
+        .set_bindings = std::move(set_bindings),
+        .push_set = push_set,
+        .specialization_constants = std::move(sorted_specialization)
+    };
+    pipeline_key.finalize();
+
+    auto& shared_entries = m_shared_pipelines->entries;
+    if (auto cached = shared_entries.find(pipeline_key); cached != shared_entries.end()) {
+        if (auto shared = cached->second.lock()) {
+            const auto shared_id = m_next_pipeline_id.fetch_add(1);
+            m_pipelines[shared_id] = std::move(shared);
+            MF_INFO(Journal::Component::Portal, Journal::Context::Rendering,
+                "Graphics pipeline cache HIT (ID: {}, {} IDs share this state, {} unique states)",
+                shared_id, m_pipelines[shared_id].use_count(), shared_entries.size());
+            return shared_id;
+        }
+        shared_entries.erase(cached);
+    }
+
+    auto device = m_shader_foundry->get_device();
+
+    std::vector<vk::DescriptorSetLayout> layouts;
+    for (size_t index = 0; index < pipeline_key.set_bindings.size(); ++index) {
+        const auto& bindings = pipeline_key.set_bindings[index];
+        vk::DescriptorSetLayoutCreateInfo layout_info;
+        if (push_set && *push_set == index) {
+            layout_info.flags = vk::DescriptorSetLayoutCreateFlagBits::ePushDescriptor;
+        }
+        layout_info.bindingCount = static_cast<uint32_t>(bindings.size());
+        layout_info.pBindings = bindings.data();
+        layouts.push_back(device.createDescriptorSetLayout(layout_info));
+    }
+
+    const vk::DescriptorSetLayout state_vt_layout = layouts.front();
+    auto create_config = pipeline_key.config;
+    create_config.descriptor_set_layouts = layouts;
 
     auto pipeline = std::make_shared<Core::VKGraphicsPipeline>();
-    if (!pipeline->create(m_shader_foundry->get_device(), vk_config)) {
+    if (!pipeline->create(device, create_config, specialization_constants)) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
             "Failed to create VKGraphicsPipeline for dynamic rendering");
 
         for (auto layout : layouts) {
-            m_shader_foundry->get_device().destroyDescriptorSetLayout(layout);
+            device.destroyDescriptorSetLayout(layout);
         }
         return INVALID_RENDER_PIPELINE;
     }
 
     auto pipeline_id = m_next_pipeline_id.fetch_add(1);
-    PipelineState state;
-    state.shader_ids = { config.vertex_shader, config.fragment_shader };
-    state.pipeline = pipeline;
-    state.layouts = layouts;
-    state.view_transform_layout = state_vt_layout;
-    state.layout = pipeline->get_layout();
-    state.push_constant_stages = push_constant_stages;
+    auto state = std::make_shared<PipelineState>();
+    state->device = device;
+    state->shader_ids = { config.vertex_shader, config.fragment_shader };
+    state->pipeline = pipeline;
+    state->layouts = layouts;
+    state->view_transform_layout = state_vt_layout;
+    state->push_set = push_set;
+    if (push_set) {
+        for (const ShaderID shader_id : { config.vertex_shader, config.fragment_shader, config.geometry_shader,
+                 config.tess_control_shader, config.tess_eval_shader, config.mesh_shader, config.task_shader }) {
+            if (shader_id == INVALID_SHADER) {
+                continue;
+            }
+            for (const auto& used : m_shader_foundry->get_active_descriptor_bindings(shader_id)) {
+                if (used.set == *push_set
+                    && std::ranges::find(state->push_required, used.binding) == state->push_required.end()) {
+                    state->push_required.push_back(used.binding);
+                }
+            }
+        }
+    }
+    state->layout = pipeline->get_layout();
+    state->push_constant_stages = push_constant_stages;
+    shared_entries.insert_or_assign(std::move(pipeline_key), state);
     m_pipelines[pipeline_id] = std::move(state);
 
     MF_INFO(Journal::Component::Portal, Journal::Context::Rendering,
-        "Dynamic rendering pipeline created (ID: {}, {} color attachments)",
-        pipeline_id, color_formats.size());
+        "Graphics pipeline cache MISS, created (ID: {}, {} color attachments, {} unique states)",
+        pipeline_id, color_formats.size(), shared_entries.size());
 
     return pipeline_id;
 }
@@ -524,39 +685,34 @@ void RenderFlow::destroy_pipeline(RenderPipelineID pipeline_id)
         return;
     }
 
-    auto device = m_shader_foundry->get_device();
-
-    if (it->second.pipeline) {
-        it->second.pipeline->cleanup(device);
-    }
-
-    for (auto layout : it->second.layouts) {
-        if (layout) {
-            device.destroyDescriptorSetLayout(layout);
-        }
-    }
-
     m_pipelines.erase(it);
+    std::erase_if(m_shared_pipelines->entries,
+        [](const auto& entry) { return entry.second.expired(); });
 
     MF_DEBUG(Journal::Component::Portal, Journal::Context::Rendering,
         "Destroyed graphics pipeline (ID: {})", pipeline_id);
 }
 
-void RenderFlow::cleanup_pipelines()
+RenderFlow::PipelineState::~PipelineState()
 {
-    auto device = m_shader_foundry->get_device();
+    if (!device) {
+        return;
+    }
 
-    for (auto& [id, state] : m_pipelines) {
-        if (state.pipeline) {
-            state.pipeline->cleanup(device);
-        }
+    if (pipeline) {
+        pipeline->cleanup(device);
+    }
 
-        for (auto layout : state.layouts) {
-            if (layout) {
-                device.destroyDescriptorSetLayout(layout);
-            }
+    for (auto layout : layouts) {
+        if (layout) {
+            device.destroyDescriptorSetLayout(layout);
         }
     }
+}
+
+void RenderFlow::cleanup_pipelines()
+{
+    m_shared_pipelines->entries.clear();
     m_pipelines.clear();
 
     MF_DEBUG(Journal::Component::Portal, Journal::Context::Rendering,
@@ -570,7 +726,7 @@ vk::DescriptorSetLayout RenderFlow::get_view_transform_layout(
     if (it == m_pipelines.end()) {
         return {};
     }
-    return it->second.view_transform_layout;
+    return it->second->view_transform_layout;
 }
 
 //==============================================================================
@@ -632,7 +788,7 @@ void RenderFlow::begin_rendering(
         return;
     }
 
-    vk::ImageMemoryBarrier pre_barrier {};
+    vk::ImageMemoryBarrier2 pre_barrier {};
     pre_barrier.oldLayout = vk::ImageLayout::eUndefined;
     pre_barrier.newLayout = vk::ImageLayout::eColorAttachmentOptimal;
     pre_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
@@ -643,16 +799,15 @@ void RenderFlow::begin_rendering(
     pre_barrier.subresourceRange.levelCount = 1;
     pre_barrier.subresourceRange.baseArrayLayer = 0;
     pre_barrier.subresourceRange.layerCount = 1;
-    pre_barrier.srcAccessMask = vk::AccessFlagBits::eNone;
-    pre_barrier.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
+    pre_barrier.srcStageMask = vk::PipelineStageFlagBits2::eNone;
+    pre_barrier.srcAccessMask = vk::AccessFlagBits2::eNone;
+    pre_barrier.dstStageMask = vk::PipelineStageFlagBits2::eColorAttachmentOutput;
+    pre_barrier.dstAccessMask = vk::AccessFlagBits2::eColorAttachmentWrite;
 
-    cmd.pipelineBarrier(
-        vk::PipelineStageFlagBits::eTopOfPipe,
-        vk::PipelineStageFlagBits::eColorAttachmentOutput,
-        vk::DependencyFlags {},
-        0, nullptr,
-        0, nullptr,
-        1, &pre_barrier);
+    vk::DependencyInfo pre_dependency;
+    pre_dependency.imageMemoryBarrierCount = 1;
+    pre_dependency.pImageMemoryBarriers = &pre_barrier;
+    cmd.pipelineBarrier2(pre_dependency);
 
     vk::RenderingAttachmentInfo color_attachment {};
     color_attachment.sType = vk::StructureType::eRenderingAttachmentInfo;
@@ -705,6 +860,19 @@ void RenderFlow::begin_rendering(
         depth_image_view ? "yes" : "no");
 }
 
+void RenderFlow::release_draw_inputs(CommandBufferID cmd_id)
+{
+    m_shader_foundry->memory_barrier(
+        cmd_id,
+        vk::AccessFlagBits2::eVertexAttributeRead | vk::AccessFlagBits2::eIndexRead
+            | vk::AccessFlagBits2::eIndirectCommandRead | vk::AccessFlagBits2::eUniformRead
+            | vk::AccessFlagBits2::eShaderRead,
+        vk::AccessFlagBits2::eShaderWrite | vk::AccessFlagBits2::eTransferWrite,
+        vk::PipelineStageFlagBits2::eVertexInput | vk::PipelineStageFlagBits2::eVertexShader
+            | vk::PipelineStageFlagBits2::eFragmentShader | vk::PipelineStageFlagBits2::eDrawIndirect,
+        vk::PipelineStageFlagBits2::eComputeShader | vk::PipelineStageFlagBits2::eTransfer);
+}
+
 void RenderFlow::end_rendering(
     CommandBufferID cmd_id,
     const std::shared_ptr<Core::Window>& window)
@@ -718,6 +886,8 @@ void RenderFlow::end_rendering(
 
     cmd.endRendering();
 
+    release_draw_inputs(cmd_id);
+
     auto it = m_window_associations.find(window);
     if (it == m_window_associations.end() || !it->second.swapchain_image) {
         MF_RT_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
@@ -726,7 +896,7 @@ void RenderFlow::end_rendering(
         return;
     }
 
-    vk::ImageMemoryBarrier post_barrier {};
+    vk::ImageMemoryBarrier2 post_barrier {};
     post_barrier.oldLayout = vk::ImageLayout::eColorAttachmentOptimal;
     post_barrier.newLayout = vk::ImageLayout::ePresentSrcKHR;
     post_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
@@ -737,16 +907,15 @@ void RenderFlow::end_rendering(
     post_barrier.subresourceRange.levelCount = 1;
     post_barrier.subresourceRange.baseArrayLayer = 0;
     post_barrier.subresourceRange.layerCount = 1;
-    post_barrier.srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
-    post_barrier.dstAccessMask = vk::AccessFlagBits::eNone;
+    post_barrier.srcStageMask = vk::PipelineStageFlagBits2::eColorAttachmentOutput;
+    post_barrier.srcAccessMask = vk::AccessFlagBits2::eColorAttachmentWrite;
+    post_barrier.dstStageMask = vk::PipelineStageFlagBits2::eNone;
+    post_barrier.dstAccessMask = vk::AccessFlagBits2::eNone;
 
-    cmd.pipelineBarrier(
-        vk::PipelineStageFlagBits::eColorAttachmentOutput,
-        vk::PipelineStageFlagBits::eBottomOfPipe,
-        vk::DependencyFlags {},
-        0, nullptr,
-        0, nullptr,
-        1, &post_barrier);
+    vk::DependencyInfo post_dependency;
+    post_dependency.imageMemoryBarrierCount = 1;
+    post_dependency.pImageMemoryBarriers = &post_barrier;
+    cmd.pipelineBarrier2(post_dependency);
 
     it->second.swapchain_image = nullptr;
 
@@ -775,7 +944,7 @@ void RenderFlow::bind_pipeline(CommandBufferID cmd_id, RenderPipelineID pipeline
         return;
     }
 
-    pipeline_it->second.pipeline->bind(cmd);
+    pipeline_it->second->pipeline->bind(cmd);
 }
 
 void RenderFlow::bind_vertex_buffers(
@@ -816,6 +985,60 @@ void RenderFlow::bind_index_buffer(
     cmd.bindIndexBuffer(buffer->get_index_buffer(), 0, index_type);
 }
 
+std::optional<uint32_t> RenderFlow::first_unwritten_push_binding(
+    RenderPipelineID pipeline_id,
+    const std::vector<vk::WriteDescriptorSet>& writes) const
+{
+    const auto pipeline_it = m_pipelines.find(pipeline_id);
+    if (pipeline_it == m_pipelines.end() || !pipeline_it->second->push_set) {
+        return std::nullopt;
+    }
+
+    for (const uint32_t required : pipeline_it->second->push_required) {
+        const bool written = std::ranges::any_of(writes, [required](const vk::WriteDescriptorSet& write) {
+            return write.dstBinding == required;
+        });
+        if (!written) {
+            return required;
+        }
+    }
+
+    return std::nullopt;
+}
+
+void RenderFlow::push_descriptors(
+    CommandBufferID cmd_id,
+    RenderPipelineID pipeline_id,
+    const std::vector<vk::WriteDescriptorSet>& writes,
+    std::span<const SlotLease> leases)
+{
+    auto pipeline_it = m_pipelines.find(pipeline_id);
+    if (pipeline_it == m_pipelines.end()) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "Invalid pipeline ID: {}", pipeline_id);
+        return;
+    }
+
+    if (!pipeline_it->second->push_set) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "Pipeline {} has no push descriptor set", pipeline_id);
+        return;
+    }
+
+    auto cmd = m_shader_foundry->get_command_buffer(cmd_id);
+    if (!cmd) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "Invalid command buffer ID: {}", cmd_id);
+        return;
+    }
+
+    pipeline_it->second->pipeline->push_descriptors(cmd, *pipeline_it->second->push_set, writes);
+
+    for (const auto& lease : leases) {
+        m_shader_foundry->hold_until_complete(cmd_id, lease);
+    }
+}
+
 void RenderFlow::bind_descriptor_sets(
     CommandBufferID cmd_id,
     RenderPipelineID pipeline_id,
@@ -844,7 +1067,7 @@ void RenderFlow::bind_descriptor_sets(
 
     cmd.bindDescriptorSets(
         vk::PipelineBindPoint::eGraphics,
-        pipeline_it->second.layout,
+        pipeline_it->second->layout,
         first_set,
         vk_sets,
         nullptr);
@@ -872,8 +1095,8 @@ void RenderFlow::push_constants(
     }
 
     cmd.pushConstants(
-        pipeline_it->second.layout,
-        pipeline_it->second.push_constant_stages,
+        pipeline_it->second->layout,
+        pipeline_it->second->push_constant_stages,
         offset,
         static_cast<uint32_t>(size),
         data);
@@ -1032,10 +1255,13 @@ std::vector<DescriptorSetID> RenderFlow::allocate_pipeline_descriptors(
         return {};
     }
 
-    const auto& layouts = pipeline_it->second.layouts;
+    const auto& layouts = pipeline_it->second->layouts;
     std::vector<DescriptorSetID> descriptor_set_ids;
 
     for (uint32_t i = first_layout_index; i < layouts.size(); ++i) {
+        if (pipeline_it->second->push_set && *pipeline_it->second->push_set == i) {
+            continue;
+        }
         auto ds_id = m_shader_foundry->allocate_descriptor_set(layouts[i]);
         if (ds_id == INVALID_DESCRIPTOR_SET) {
             MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,

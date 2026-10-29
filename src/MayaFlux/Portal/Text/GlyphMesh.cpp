@@ -26,12 +26,12 @@ std::vector<Kakshya::MeshVertex> glyph_vertices(
     const float weight = coverage_weight(slot);
 
     for (const auto& q : quads) {
-        glm::vec3 rgb { color };
+        glm::vec4 rgb { color };
         for (auto it = spans.rbegin(); it != spans.rend(); ++it) {
             const size_t lo = std::min(it->start, it->end);
             const size_t hi = std::max(it->start, it->end);
             if (q.byte_offset >= lo && q.byte_offset < hi) {
-                rgb = glm::vec3(it->color);
+                rgb = it->color;
                 break;
             }
         }

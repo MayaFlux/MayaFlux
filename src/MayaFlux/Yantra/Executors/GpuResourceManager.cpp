@@ -111,6 +111,9 @@ namespace {
 
         vk::MemoryAllocateInfo ai;
         ai.allocationSize = req.size;
+        vk::MemoryAllocateFlagsInfo alloc_flags {};
+        alloc_flags.flags = vk::MemoryAllocateFlagBits::eDeviceAddress;
+        ai.pNext = &alloc_flags;
 
         if (prefer_device_local) {
             const auto resident = try_memory_type(phys, req.memoryTypeBits,
@@ -623,10 +626,10 @@ void GpuResourceManager::dispatch(const std::string& key,
             foundry.buffer_barrier(
                 cmd_id,
                 unit.impl->buffers[b.binding].buffer,
-                vk::AccessFlagBits::eShaderWrite,
-                vk::AccessFlagBits::eHostRead,
-                vk::PipelineStageFlagBits::eComputeShader,
-                vk::PipelineStageFlagBits::eHost);
+                vk::AccessFlagBits2::eShaderWrite,
+                vk::AccessFlagBits2::eHostRead,
+                vk::PipelineStageFlagBits2::eComputeShader,
+                vk::PipelineStageFlagBits2::eHost);
         }
     }
 
@@ -679,20 +682,20 @@ void GpuResourceManager::dispatch_batched(const std::string& key,
                             unit.image_slots[b.binding]->get_image(),
                             vk::ImageLayout::eGeneral,
                             vk::ImageLayout::eGeneral,
-                            vk::AccessFlagBits::eShaderWrite | vk::AccessFlagBits::eShaderRead,
-                            vk::AccessFlagBits::eShaderWrite | vk::AccessFlagBits::eShaderRead,
-                            vk::PipelineStageFlagBits::eComputeShader,
-                            vk::PipelineStageFlagBits::eComputeShader);
+                            vk::AccessFlagBits2::eShaderWrite | vk::AccessFlagBits2::eShaderRead,
+                            vk::AccessFlagBits2::eShaderWrite | vk::AccessFlagBits2::eShaderRead,
+                            vk::PipelineStageFlagBits2::eComputeShader,
+                            vk::PipelineStageFlagBits2::eComputeShader);
                     }
                 } else if (!is_shared && static_cast<size_t>(b.binding) < unit.impl->buffers.size()
                     && unit.impl->buffers[b.binding].buffer) {
                     foundry.buffer_barrier(
                         cmd_id,
                         unit.impl->buffers[b.binding].buffer,
-                        vk::AccessFlagBits::eShaderWrite | vk::AccessFlagBits::eShaderRead,
-                        vk::AccessFlagBits::eShaderWrite | vk::AccessFlagBits::eShaderRead,
-                        vk::PipelineStageFlagBits::eComputeShader,
-                        vk::PipelineStageFlagBits::eComputeShader);
+                        vk::AccessFlagBits2::eShaderWrite | vk::AccessFlagBits2::eShaderRead,
+                        vk::AccessFlagBits2::eShaderWrite | vk::AccessFlagBits2::eShaderRead,
+                        vk::PipelineStageFlagBits2::eComputeShader,
+                        vk::PipelineStageFlagBits2::eComputeShader);
                 }
             }
         }
@@ -708,10 +711,10 @@ void GpuResourceManager::dispatch_batched(const std::string& key,
                     foundry.buffer_barrier(
                         cmd_id,
                         unit.impl->buffers[b.binding].buffer,
-                        vk::AccessFlagBits::eShaderWrite,
-                        vk::AccessFlagBits::eHostRead,
-                        vk::PipelineStageFlagBits::eComputeShader,
-                        vk::PipelineStageFlagBits::eHost);
+                        vk::AccessFlagBits2::eShaderWrite,
+                        vk::AccessFlagBits2::eHostRead,
+                        vk::PipelineStageFlagBits2::eComputeShader,
+                        vk::PipelineStageFlagBits2::eHost);
                 }
             }
         }
@@ -765,10 +768,10 @@ void GpuResourceManager::dispatch_batched_indirect(const std::string& key,
                     foundry.buffer_barrier(
                         cmd_id,
                         unit.impl->buffers[b.binding].buffer,
-                        vk::AccessFlagBits::eShaderWrite,
-                        vk::AccessFlagBits::eShaderRead | vk::AccessFlagBits::eShaderWrite,
-                        vk::PipelineStageFlagBits::eComputeShader,
-                        vk::PipelineStageFlagBits::eComputeShader);
+                        vk::AccessFlagBits2::eShaderWrite,
+                        vk::AccessFlagBits2::eShaderRead | vk::AccessFlagBits2::eShaderWrite,
+                        vk::PipelineStageFlagBits2::eComputeShader,
+                        vk::PipelineStageFlagBits2::eComputeShader);
                 }
             }
         }
@@ -809,10 +812,10 @@ Portal::Graphics::FenceID GpuResourceManager::dispatch_async(const std::string& 
             foundry.buffer_barrier(
                 cmd_id,
                 unit.impl->buffers[b.binding].buffer,
-                vk::AccessFlagBits::eShaderWrite,
-                vk::AccessFlagBits::eHostRead,
-                vk::PipelineStageFlagBits::eComputeShader,
-                vk::PipelineStageFlagBits::eHost);
+                vk::AccessFlagBits2::eShaderWrite,
+                vk::AccessFlagBits2::eHostRead,
+                vk::PipelineStageFlagBits2::eComputeShader,
+                vk::PipelineStageFlagBits2::eHost);
         }
     }
 

@@ -40,7 +40,7 @@ void main() {
     float fx = (float(ix) + 0.5) / float(pc.width);
     float fy = (float(iy) + 0.5) / float(pc.height);
     vec3 rgb = ramp(clamp(cell_state[i], 0.0, 1.0));
-    uint b = i * 15u;
+    uint b = i * 17u;
 
     vertices[b + 0u] = (fx * 2.0 - 1.0) * pc.extent;
     vertices[b + 1u] = (fy * 2.0 - 1.0) * pc.extent;
@@ -49,17 +49,19 @@ void main() {
     vertices[b + 3u] = rgb.r;
     vertices[b + 4u] = rgb.g;
     vertices[b + 5u] = rgb.b;
+    vertices[b + 6u] = 1.0;
 
-    vertices[b + 6u] = pc.point_size;
+    vertices[b + 7u] = pc.point_size;
 
-    vertices[b + 7u] = fx;
-    vertices[b + 8u] = fy;
+    vertices[b + 8u] = fx;
+    vertices[b + 9u] = fy;
 
-    vertices[b + 9u] = 0.0;
     vertices[b + 10u] = 0.0;
-    vertices[b + 11u] = 1.0;
-
+    vertices[b + 11u] = 0.0;
     vertices[b + 12u] = 1.0;
-    vertices[b + 13u] = 0.0;
+
+    vertices[b + 13u] = 1.0;
     vertices[b + 14u] = 0.0;
+    vertices[b + 15u] = 0.0;
+    vertices[b + 16u] = 1.0;
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Buffers/VKBuffer.hpp"
+#include "MayaFlux/Portal/Graphics/SlotMachine.hpp"
 
 namespace MayaFlux::Nodes::Network {
 class InstanceNetwork;
@@ -37,9 +38,15 @@ public:
 
     ~InstanceSSBOProcessor() override = default;
 
+    /**
+     * @brief Buffer holding the transform slots, which changes if the arena grows
+     *
+     * The live transforms sit at the offset of the slot last pushed, which can
+     * move whenever transforms are rewritten while a frame is still reading.
+     */
     [[nodiscard]] std::shared_ptr<VKBuffer> get_transform_ssbo() const
     {
-        return m_transform_ssbo;
+        return m_transform_arena ? m_transform_arena->buffer() : nullptr;
     }
 
 protected:
@@ -51,12 +58,15 @@ private:
     std::shared_ptr<Nodes::Network::InstanceNetwork> m_network;
 
     std::shared_ptr<VKBuffer> m_vertex_staging;
-    std::shared_ptr<VKBuffer> m_transform_ssbo;
-    std::shared_ptr<VKBuffer> m_transform_staging;
+    std::shared_ptr<Portal::Graphics::SlotArena> m_transform_arena;
+    size_t m_transform_slot {};
+    std::shared_ptr<VKBuffer> m_index_buffer;
+    std::shared_ptr<VKBuffer> m_index_staging;
 
     std::vector<glm::mat4> m_transform_scratch;
 
     void upload_template(const std::shared_ptr<VKBuffer>& vertex_buf);
+    void upload_indices(const std::shared_ptr<VKBuffer>& vertex_buf);
     void upload_transforms(const std::shared_ptr<VKBuffer>& vertex_buf);
     void push_ssbo_binding(const std::shared_ptr<VKBuffer>& vertex_buf);
 

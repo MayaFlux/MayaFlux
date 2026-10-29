@@ -54,8 +54,7 @@ public:
         DEPTH_STENCIL, ///< Depth/stencil attachment
         STORAGE, ///< Storage image (compute shader read/write)
         TRANSFER_SRC, ///< Transfer source
-        TRANSFER_DST, ///< Transfer destination
-        STAGING ///< Host-visible staging image (rare)
+        TRANSFER_DST ///< Transfer destination
     };
 
     enum class Type : uint8_t {
@@ -167,6 +166,9 @@ public:
     /** Set current layout (called after transitions) */
     void set_current_layout(vk::ImageLayout layout) { m_current_layout = layout; }
 
+    [[nodiscard]] bool supports_host_transfer() const { return m_host_transfer; }
+    void set_host_transfer(bool enabled) { m_host_transfer = enabled; }
+
     //==========================================================================
     // Vulkan Creation Helpers (for backend use)
     //==========================================================================
@@ -178,28 +180,17 @@ public:
     [[nodiscard]] vk::ImageUsageFlags get_usage_flags() const;
 
     /**
-     * @brief Get appropriate VkMemoryPropertyFlags based on Usage
-     * @return VkMemoryPropertyFlags for memory allocation
-     */
-    [[nodiscard]] vk::MemoryPropertyFlags get_memory_properties() const;
-
-    /**
      * @brief Get appropriate VkImageAspectFlags based on format
      * @return VkImageAspectFlags for image view creation
      */
     [[nodiscard]] vk::ImageAspectFlags get_aspect_flags() const;
 
     /**
-     * @brief Whether this image should be host-visible (staging images)
-     * @return True for staging images, false for device-local
-     */
-    [[nodiscard]] bool is_host_visible() const { return m_usage == Usage::STAGING; }
-
-    /**
      * @brief Get total size in bytes (for memory allocation)
      * @return Estimated size in bytes
      */
     [[nodiscard]] size_t get_size_bytes() const;
+    [[nodiscard]] size_t get_base_level_size_bytes() const;
 
 private:
     VKImageResources m_resources;
@@ -214,6 +205,7 @@ private:
     uint32_t m_array_layers { 1 };
 
     vk::ImageLayout m_current_layout { vk::ImageLayout::eUndefined };
+    bool m_host_transfer {};
 
     Kakshya::DataModality m_modality;
     std::vector<Kakshya::DataDimension> m_dimensions;

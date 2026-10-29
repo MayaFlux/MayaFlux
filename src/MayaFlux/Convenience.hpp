@@ -86,8 +86,6 @@
 #include "Buffers/Shaders/RenderProcessor.hpp"
 #include "Buffers/Shaders/SDFFieldProcessor.hpp"
 #include "Buffers/Staging/AudioWriteProcessor.hpp"
-#include "Buffers/Staging/BufferDownloadProcessor.hpp"
-#include "Buffers/Staging/BufferUploadProcessor.hpp"
 #include "Buffers/Staging/DataWriteProcessor.hpp"
 #include "Buffers/Textures/NodeTextureBuffer.hpp"
 #include "Buffers/Textures/TextureArrayBuffer.hpp"

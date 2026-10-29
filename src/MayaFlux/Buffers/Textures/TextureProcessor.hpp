@@ -42,34 +42,6 @@ public:
     TextureProcessor();
     ~TextureProcessor() override;
 
-    /**
-     * @brief Enable or disable streaming mode for pixel uploads
-     *
-     * When enabled, TextureProcessor will reuse a persistent host-visible staging buffer
-     * for all pixel uploads, eliminating the per-frame Vulkan object churn that causes
-     * VK_ERROR_DEVICE_LOST under sustained updates (e.g. video playback).
-     *
-     * The staging buffer is allocated on first dirty update via TextureLoom::create_streaming_staging()
-     * and reused every subsequent frame. This is only used for pixel data uploads, not geometry.
-     *
-     * @param enabled True to enable streaming mode, false to disable (default)
-     */
-    void set_streaming_mode(bool enabled) { m_streaming_mode = enabled; }
-
-    /**
-     * @brief Check if streaming mode is enabled
-     * @return True if streaming mode is enabled, false otherwise
-     */
-    [[nodiscard]] bool is_streaming_mode() const { return m_streaming_mode; }
-
-    /**
-     * @brief Invalidate the persistent streaming staging buffer.
-     *
-     * Forces reallocation on the next dirty upload cycle, sized to the
-     * current GPU texture footprint. Call after resize_texture().
-     */
-    void invalidate_staging() { m_stream_staging.reset(); }
-
 protected:
     void on_attach(const std::shared_ptr<Buffer>& buffer) override;
     void on_detach(const std::shared_ptr<Buffer>& buffer) override;
@@ -81,15 +53,6 @@ protected:
     std::shared_ptr<TextureBuffer> m_texture_buffer;
 
 private:
-    /**
-     * @brief Persistent host-visible staging buffer for streaming pixel uploads.
-     *        Allocated on first dirty update via TextureLoom::create_streaming_staging().
-     *        Reused every subsequent frame — no per-frame Vulkan object allocation.
-     */
-    std::shared_ptr<Buffers::VKBuffer> m_stream_staging;
-
-    bool m_streaming_mode {};
-
     // =========================================================================
     // Initialization (on_attach)
     // =========================================================================

@@ -6,10 +6,6 @@ namespace MayaFlux::Core {
 class VKImage;
 }
 
-namespace MayaFlux::Buffers {
-class VKBuffer;
-}
-
 namespace MayaFlux::Kakshya {
 
 struct ImageData;
@@ -78,16 +74,12 @@ public:
      * @brief Download a GPU image straight into the next frame slot.
      *
      * Blocking, like TextureContainer::from_image. The image must match the
-     * stream's width, height and format. Pass a persistent staging buffer
-     * (Buffers::create_image_staging_buffer(get_frame_byte_size())) to avoid a
-     * per-call Vulkan allocation.
+     * stream's width, height and format.
      *
      * @param image   Initialised source image.
-     * @param staging Optional host-visible staging buffer.
      * @return True if the frame was stored.
      */
-    bool append_frame(const std::shared_ptr<Core::VKImage>& image,
-        const std::shared_ptr<Buffers::VKBuffer>& staging = nullptr);
+    bool append_frame(const std::shared_ptr<Core::VKImage>& image);
 
     /**
      * @brief Index of the next frame append_frame will write.

@@ -130,6 +130,7 @@ namespace {
         QueueFamilyIndices families;
         bool has_swapchain {};
         bool has_mesh_shader {};
+        bool has_host_image_copy {};
         uint32_t present_family_mask {};
         bool graphics_presents {};
         bool has_pci_info {};
@@ -342,6 +343,12 @@ bool VKDevice::pick_physical_device(vk::Instance instance, const GraphicsBackend
 
         cand.families = find_queue_families(device);
 
+        vk::PhysicalDeviceVulkan14Features features14 {};
+        vk::PhysicalDeviceFeatures2 features {};
+        features.pNext = &features14;
+        device.getFeatures2(&features);
+        cand.has_host_image_copy = features14.hostImageCopy == VK_TRUE;
+
         if (cand.has_mesh_shader) {
             vk::PhysicalDeviceMeshShaderFeaturesEXT mesh_features;
             vk::PhysicalDeviceFeatures2 features;
@@ -369,8 +376,10 @@ bool VKDevice::pick_physical_device(vk::Instance instance, const GraphicsBackend
 
         if (!cand.families.graphics_family.has_value()) {
             cand.reject_reason = "no graphics queue family";
-        } else if (cand.api_version < VK_API_VERSION_1_3) {
-            cand.reject_reason = "device API version below 1.3";
+        } else if (cand.api_version < VK_API_VERSION_1_4) {
+            cand.reject_reason = "device API version below 1.4";
+        } else if (!cand.has_host_image_copy) {
+            cand.reject_reason = "hostImageCopy is required";
         } else if (!cand.has_swapchain) {
             cand.reject_reason = "no VK_KHR_swapchain";
         } else if (backend_info.require_presentation && !cand.graphics_presents) {
@@ -655,24 +664,13 @@ bool VKDevice::create_logical_device(vk::Instance /*instance*/, const GraphicsBa
         });
     };
 
-#ifdef MAYAFLUX_PLATFORM_MACOS
-    if (is_supported("VK_KHR_portability_subset")) {
-        device_extensions.push_back("VK_KHR_portability_subset");
-    }
-
-    auto feature_chain = vk::StructureChain {
-        vk::PhysicalDeviceFeatures2 {},
-        vk::PhysicalDeviceVulkan13Features {},
-        vk::PhysicalDeviceVulkan12Features {}
-    };
-
-#else
     if (m_supports_mesh_shaders) {
         device_extensions.push_back(VK_EXT_MESH_SHADER_EXTENSION_NAME);
     }
 
     auto feature_chain = vk::StructureChain {
         vk::PhysicalDeviceFeatures2 {},
+        vk::PhysicalDeviceVulkan14Features {},
         vk::PhysicalDeviceVulkan13Features {},
         vk::PhysicalDeviceVulkan12Features {},
         vk::PhysicalDeviceMeshShaderFeaturesEXT {}
@@ -684,12 +682,17 @@ bool VKDevice::create_logical_device(vk::Instance /*instance*/, const GraphicsBa
         feature_chain.get<vk::PhysicalDeviceMeshShaderFeaturesEXT>().taskShader = VK_TRUE;
         feature_chain.get<vk::PhysicalDeviceMeshShaderFeaturesEXT>().meshShader = VK_TRUE;
     }
-#endif
 
     feature_chain.get<vk::PhysicalDeviceFeatures2>().features = device_features;
     feature_chain.get<vk::PhysicalDeviceVulkan13Features>().dynamicRendering = VK_TRUE;
     feature_chain.get<vk::PhysicalDeviceVulkan13Features>().synchronization2 = VK_TRUE;
+    feature_chain.get<vk::PhysicalDeviceVulkan13Features>().shaderDemoteToHelperInvocation = VK_TRUE;
     feature_chain.get<vk::PhysicalDeviceVulkan12Features>().bufferDeviceAddress = VK_TRUE;
+    feature_chain.get<vk::PhysicalDeviceVulkan14Features>().pushDescriptor = VK_TRUE;
+    feature_chain.get<vk::PhysicalDeviceVulkan14Features>().hostImageCopy = VK_TRUE;
+    feature_chain.get<vk::PhysicalDeviceVulkan14Features>().maintenance5 = VK_TRUE;
+    feature_chain.get<vk::PhysicalDeviceVulkan14Features>().maintenance6 = VK_TRUE;
+    feature_chain.get<vk::PhysicalDeviceVulkan12Features>().timelineSemaphore = VK_TRUE;
 
     std::vector<std::string> missing_required;
 

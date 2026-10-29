@@ -566,7 +566,20 @@ void ShaderProcessor::submit_recorded(
     auto& foundry = Portal::Graphics::get_shader_foundry();
 
     if (!m_deferred_submission) {
-        foundry.submit_and_wait(cmd_id);
+        if (waits_on_submit()) {
+            foundry.submit_and_wait(cmd_id);
+        } else {
+            const auto fence = foundry.submit_async(cmd_id);
+            if (const auto point = foundry.fence_point(fence)) {
+                if (buffer) {
+                    buffer->note_use(point.timeline, point.value);
+                }
+                for (const auto& [name, bound] : m_bound_buffers) {
+                    bound->note_use(point.timeline, point.value);
+                }
+            }
+            foundry.release_fence(fence);
+        }
         return;
     }
 
@@ -750,7 +763,7 @@ void ShaderProcessor::note_created_layout(const std::shared_ptr<VKBuffer>& buffe
 
 std::optional<uint32_t> ShaderProcessor::resolve_ds_index(uint32_t set) const
 {
-    if (m_engine_owns_set_zero) {
+    if (m_set_zero_is_push) {
         if (set == 0)
             return std::nullopt;
         const uint32_t idx = set - 1;
@@ -773,8 +786,14 @@ void ShaderProcessor::update_descriptors(const std::shared_ptr<VKBuffer>& buffer
     auto& descriptor_bindings = buffer->get_pipeline_context().descriptor_buffer_bindings;
 
     std::set<std::pair<uint32_t, uint32_t>> updated_pairs;
+    std::vector<Portal::Graphics::DescriptorBufferWrite> writes;
+    writes.reserve(descriptor_bindings.size() + m_bound_buffers.size());
 
     for (const auto& binding : descriptor_bindings) {
+        if (m_set_zero_is_push && binding.set == 0) {
+            continue;
+        }
+
         auto ds_index = resolve_ds_index(binding.set);
         if (!ds_index) {
             MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
@@ -782,13 +801,14 @@ void ShaderProcessor::update_descriptors(const std::shared_ptr<VKBuffer>& buffer
             continue;
         }
 
-        foundry.update_descriptor_buffer(
-            m_descriptor_set_ids[*ds_index],
-            binding.binding,
-            binding.type,
-            binding.buffer_info.buffer,
-            binding.buffer_info.offset,
-            binding.buffer_info.range);
+        writes.push_back({
+            .descriptor_set_id = m_descriptor_set_ids[*ds_index],
+            .binding = binding.binding,
+            .type = binding.type,
+            .buffer = binding.buffer_info.buffer,
+            .offset = binding.buffer_info.offset,
+            .size = binding.buffer_info.range,
+        });
 
         updated_pairs.emplace(binding.set, binding.binding);
     }
@@ -802,7 +822,7 @@ void ShaderProcessor::update_descriptors(const std::shared_ptr<VKBuffer>& buffer
         const auto& binding = binding_it->second;
         auto key = std::make_pair(binding.set, binding.binding);
 
-        if (updated_pairs.count(key)) {
+        if (updated_pairs.count(key) || (m_set_zero_is_push && binding.set == 0)) {
             continue;
         }
 
@@ -814,14 +834,17 @@ void ShaderProcessor::update_descriptors(const std::shared_ptr<VKBuffer>& buffer
             continue;
         }
 
-        foundry.update_descriptor_buffer(
-            m_descriptor_set_ids[*ds_index],
-            binding.binding,
-            binding.type,
-            buf->get_buffer(),
-            0,
-            buf->get_size_bytes());
+        writes.push_back({
+            .descriptor_set_id = m_descriptor_set_ids[*ds_index],
+            .binding = binding.binding,
+            .type = binding.type,
+            .buffer = buf->get_buffer(),
+            .offset = 0,
+            .size = buf->get_size_bytes(),
+        });
     }
+
+    foundry.update_descriptor_buffers(writes);
 }
 
 void ShaderProcessor::cleanup()
@@ -836,6 +859,7 @@ void ShaderProcessor::cleanup()
     }
 
     m_descriptor_set_ids.clear();
+    m_descriptors_ready = false;
     m_bound_buffers.clear();
     m_feeds.clear();
     m_created_layout.reset();

@@ -39,6 +39,7 @@ struct DescriptorBinding {
  */
 struct DescriptorSetLayoutConfig {
     std::vector<DescriptorBinding> bindings;
+    bool push_descriptor { false };
 
     void add_binding(uint32_t binding, vk::DescriptorType type,
         vk::ShaderStageFlags stages, uint32_t count = 1)

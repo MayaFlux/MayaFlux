@@ -111,13 +111,17 @@ protected:
     void on_dispatch_complete(const std::shared_ptr<VKBuffer>& buffer) override;
 
     /**
-     * @brief Write the state_in / state_out descriptor bindings for the
-     *        current front/back assignment.
+     * @brief Push state_in and state_out for the current front/back
+     *        assignment.
+     * @param buffer The attached buffer.
+     * @param writes Receives the parent's writes, then the two state slots.
      *
-     * Called once after the descriptor set is created, and again after any
-     * rebuild of it.
+     * Recorded into each dispatch's command buffer, so the generation swap
+     * between cycles needs no descriptor rewrite.
      */
-    void on_descriptors_created() override;
+    void collect_push_writes(
+        const std::shared_ptr<VKBuffer>& buffer,
+        std::vector<Portal::Graphics::PushDescriptorWrite>& writes) override;
 
     /**
      * @brief Cover the grid with a 2D dispatch and write GridExtent.
@@ -131,25 +135,12 @@ protected:
     void on_attach(const std::shared_ptr<Buffer>& buffer) override;
 
     /**
-     * @brief Run one cycle: evaluate the predicate, write the state
-     *        descriptors, run the parent, then swap and serve a snapshot if
-     *        a dispatch was recorded.
-     *
-     * The descriptor write must precede the parent's bind_descriptor_sets.
-     * A write from on_before_execute lands on a set already bound into the
-     * open command buffer, which the driver has consumed by then, freezing
-     * the bindings at whatever on_descriptors_created wrote.
+     * @brief Run one cycle: evaluate the predicate, run the parent, then
+     *        swap and serve a snapshot if a dispatch was recorded.
      */
     void processing_function(const std::shared_ptr<Buffer>& buffer) override;
 
 private:
-    /**
-     * @brief Issue direct ShaderFoundry descriptor writes for state_in and
-     *        state_out against the grid's current front/back raw buffers.
-     * @param grid The RelaxationGridBuffer whose state buffers are being bound.
-     */
-    void write_state_descriptors(const std::shared_ptr<RelaxationGridBuffer>& grid);
-
     /**
      * @brief Size the push constant block to at least GridExtent and write
      *        the attached grid's dimensions into its leading 8 bytes.

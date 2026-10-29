@@ -147,13 +147,15 @@ void NetworkStateFieldProcessor::on_attach(const std::shared_ptr<Buffer>& buffer
     on_buffer_ready();
 }
 
-void NetworkStateFieldProcessor::write_field_descriptors()
+void NetworkStateFieldProcessor::collect_push_writes(
+    const std::shared_ptr<VKBuffer>& buffer,
+    std::vector<Portal::Graphics::PushDescriptorWrite>& writes)
 {
-    if (!m_buffer || m_descriptor_set_ids.empty()) {
+    ComputeProcessor::collect_push_writes(buffer, writes);
+
+    if (!m_buffer) {
         return;
     }
-
-    auto& foundry = Portal::Graphics::get_shader_foundry();
 
     for (const auto& entry : m_bindings) {
         vk::Buffer handle {};
@@ -167,24 +169,12 @@ void NetworkStateFieldProcessor::write_field_descriptors()
             bytes = m_buffer->get_state_bytes(entry.field);
         }
 
-        foundry.update_descriptor_buffer(
-            m_descriptor_set_ids[0], entry.binding, vk::DescriptorType::eStorageBuffer,
-            handle, 0, bytes);
+        writes.push_back({
+            .binding = entry.binding,
+            .type = Portal::Graphics::to_vk_descriptor_type(Portal::Graphics::DescriptorRole::STORAGE),
+            .buffer = vk::DescriptorBufferInfo(handle, 0, bytes),
+        });
     }
-}
-
-void NetworkStateFieldProcessor::on_descriptors_created()
-{
-    write_field_descriptors();
-}
-
-void NetworkStateFieldProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
-{
-    if (m_buffer && are_descriptors_ready()) {
-        write_field_descriptors();
-    }
-
-    ComputeProcessor::processing_function(buffer);
 }
 
 bool NetworkStateFieldProcessor::on_before_execute(
@@ -547,7 +537,10 @@ namespace {
                 "HashDensityColorProcessor: null particle operator");
         }
 
-        auto offset = particle_op->get_layout().find_word_offset(Kakshya::DataModality::VERTEX_COLORS_RGB);
+        const auto& particle_layout = particle_op->get_layout();
+        auto offset = particle_layout.find_word_offset(Kakshya::DataModality::VERTEX_COLORS_RGBA).has_value()
+            ? particle_layout.find_word_offset(Kakshya::DataModality::VERTEX_COLORS_RGBA)
+            : particle_layout.find_word_offset(Kakshya::DataModality::VERTEX_COLORS_RGB);
         if (!offset.has_value()) {
             error<std::invalid_argument>(
                 Journal::Component::Buffers,

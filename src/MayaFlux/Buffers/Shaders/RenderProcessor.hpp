@@ -71,6 +71,7 @@ public:
         }
         m_primitive_topology = topology;
         m_needs_pipeline_rebuild = true;
+        invalidate_all_mills();
     }
 
     /// Set polygon mode (e.g., fill, line, point)
@@ -81,6 +82,7 @@ public:
         }
         m_polygon_mode = mode;
         m_needs_pipeline_rebuild = true;
+        invalidate_all_mills();
     }
 
     /// Set cull mode (e.g., none, front, back)
@@ -305,6 +307,25 @@ public:
     /** @brief Vertices the last triangulation produced. Diagnostic only. */
     [[nodiscard]] uint32_t milled_vertex_count() const;
 
+    /**
+     * @brief Reuse the last milled output while nothing it depends on changed.
+     *
+     * Off by default, because a buffer whose vertices are written from outside
+     * this processor would go stale. Only the owner of a buffer that calls
+     * invalidate_mill() after every vertex change should enable it. Spans that
+     * follow the viewpoint (Ribbon::WorldFacing) are always milled.
+     */
+    void set_mill_on_change(bool enabled);
+
+    /** @brief Mill @p buffer again on its next draw. */
+    void invalidate_mill(const std::shared_ptr<VKBuffer>& buffer);
+
+    /** @brief Mill every buffer again on its next draw. */
+    void invalidate_all_mills();
+
+    /** @brief Dispatches that produced vertices, for observing the gate. */
+    [[nodiscard]] uint32_t mill_passes() const;
+
 protected:
     void initialize_pipeline(const std::shared_ptr<VKBuffer>& buffer) override;
 
@@ -355,6 +376,8 @@ private:
         uint32_t vertex_count {};
         uint32_t index_count {};
         bool geometry_prepared {};
+        bool mill_current {};
+        uint32_t milled_count {};
     };
 
     Portal::Graphics::RenderPipelineID m_pipeline_id = Portal::Graphics::INVALID_RENDER_PIPELINE;
@@ -362,9 +385,6 @@ private:
     Portal::Graphics::ShaderID m_tess_control_shader_id = Portal::Graphics::INVALID_SHADER;
     Portal::Graphics::ShaderID m_tess_eval_shader_id = Portal::Graphics::INVALID_SHADER;
     Portal::Graphics::ShaderID m_fragment_shader_id = Portal::Graphics::INVALID_SHADER;
-    Portal::Graphics::DescriptorSetID m_render_transform_descriptor_set_id {
-        Portal::Graphics::INVALID_DESCRIPTOR_SET
-    };
     std::shared_ptr<Core::Window> m_target_window;
 
     std::unordered_map<std::shared_ptr<VKBuffer>, BufferState> m_buffer_info;
@@ -374,6 +394,7 @@ private:
 
     Portal::Graphics::PrimitiveTopology m_primitive_topology { Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST };
     Portal::Graphics::PolygonMode m_polygon_mode { Portal::Graphics::PolygonMode::FILL };
+    std::vector<Portal::Graphics::DrawRun> m_mill_fill_runs;
     Portal::Graphics::CullMode m_cull_mode { Portal::Graphics::CullMode::NONE };
 
     struct TextureBinding {
@@ -387,7 +408,9 @@ private:
     Portal::Graphics::DepthStencilConfig m_depth_stencil;
 
     bool m_depth_enabled {};
-    std::shared_ptr<VKBuffer> m_render_transform_ubo;
+    Portal::Graphics::SlotArena m_render_transform_arena;
+    size_t m_render_transform_slot {};
+    std::optional<Kinesis::RenderTransform> m_written_render_transform;
 
     /**
      * @brief A replaced pipeline kept alive until the frames that may still use it finish
@@ -430,6 +453,8 @@ private:
     Portal::Graphics::MillSpec m_mill_spec {};
 
     uint32_t m_last_milled_vertex_count {};
+    uint32_t m_mill_passes {};
+    bool m_mill_on_change {};
 
     /**
      * @brief Topology the pipeline is built with, as opposed to the topology
@@ -448,6 +473,19 @@ private:
 
     /** @brief Record an already validated attachment without repeating its lookup. */
     void record_draw(const std::shared_ptr<VKBuffer>& buffer, const BufferState& state);
+
+    /**
+     * @brief Gather the writes for the push descriptor set 0 of the current pipeline.
+     *
+     * Covers the render transform, the buffer's engine SSBOs and the set 0 textures.
+     * The info vectors back the pointers in @p writes and must outlive its use.
+     */
+    void collect_engine_writes(
+        const std::shared_ptr<VKBuffer>& buffer,
+        std::vector<vk::WriteDescriptorSet>& writes,
+        std::vector<vk::DescriptorBufferInfo>& buffer_infos,
+        std::vector<vk::DescriptorImageInfo>& image_infos,
+        std::vector<Portal::Graphics::SlotLease>& leases) const;
 
     BufferState* get_or_cache_buffer_state(const std::shared_ptr<VKBuffer>& buffer);
 };

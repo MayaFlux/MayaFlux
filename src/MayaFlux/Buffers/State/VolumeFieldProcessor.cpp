@@ -202,36 +202,31 @@ void VolumeFieldProcessor::write_param_tail(size_t offset, const void* data_in, 
     std::memcpy(data.data() + offset, data_in, size);
 }
 
-void VolumeFieldProcessor::write_field_descriptors()
+void VolumeFieldProcessor::collect_push_writes(
+    const std::shared_ptr<VKBuffer>& buffer,
+    std::vector<Portal::Graphics::PushDescriptorWrite>& writes)
 {
-    if (!m_volume || m_descriptor_set_ids.empty()) {
+    ComputeProcessor::collect_push_writes(buffer, writes);
+
+    if (!m_volume) {
         return;
     }
 
-    auto& foundry = Portal::Graphics::get_shader_foundry();
-
     for (const auto& entry : m_bindings) {
-        const vk::Buffer handle = entry.access == FieldAccess::READ
-            ? m_volume->read_handle(entry.field)
-            : m_volume->write_handle(entry.field);
-
-        foundry.update_descriptor_buffer(
-            m_descriptor_set_ids[0], entry.binding, vk::DescriptorType::eStorageBuffer,
-            handle, 0, m_volume->get_field_bytes(entry.field));
+        writes.push_back({
+            .binding = entry.binding,
+            .type = Portal::Graphics::to_vk_descriptor_type(Portal::Graphics::DescriptorRole::STORAGE),
+            .buffer = vk::DescriptorBufferInfo(
+                entry.access == FieldAccess::READ
+                    ? m_volume->read_handle(entry.field)
+                    : m_volume->write_handle(entry.field),
+                0, m_volume->get_field_bytes(entry.field)),
+        });
     }
-}
-
-void VolumeFieldProcessor::on_descriptors_created()
-{
-    write_field_descriptors();
 }
 
 void VolumeFieldProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
 {
-    if (m_volume && are_descriptors_ready()) {
-        write_field_descriptors();
-    }
-
     ComputeProcessor::processing_function(buffer);
 
     if (!m_volume || !wants_swap()) {

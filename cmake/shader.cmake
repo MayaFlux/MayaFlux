@@ -4,7 +4,7 @@
 
 if(WIN32)
     cmake_path(CONVERT "$ENV{VULKAN_SDK}" TO_CMAKE_PATH_LIST _vulkan_sdk NORMALIZE)
-    find_package(Vulkan REQUIRED)
+    find_package(Vulkan 1.4 REQUIRED)
 
     # SPIRV-Cross
     find_library(SPIRV_CROSS_CORE_LIB NAMES spirv-cross-core
@@ -171,7 +171,7 @@ set(SHADERS_DIR "${DATA_DIR}/shaders")
 set(SHADER_OUTPUT_DIR "${CMAKE_BINARY_DIR}/shaders")
 file(MAKE_DIRECTORY ${SHADER_OUTPUT_DIR})
 
-file(GLOB_RECURSE SHADER_FILES
+file(GLOB_RECURSE SHADER_FILES CONFIGURE_DEPENDS
     "${SHADERS_DIR}/*.vert"
     "${SHADERS_DIR}/*.frag"
     "${SHADERS_DIR}/*.comp"
@@ -190,7 +190,7 @@ if(SHADER_FILES)
         if(NOT OUTPUT_FILE IN_LIST SHADER_OUTPUTS)
             add_custom_command(
                 OUTPUT  ${OUTPUT_FILE}
-                COMMAND glslc --target-env=vulkan1.3 ${SHADER_FILE} -o ${OUTPUT_FILE}
+                COMMAND glslc --target-env=vulkan1.4 ${SHADER_FILE} -o ${OUTPUT_FILE}
                 DEPENDS ${SHADER_FILE}
                 COMMENT "Compiling shader: ${SHADER_NAME}"
                 VERBATIM

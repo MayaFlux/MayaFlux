@@ -266,19 +266,23 @@ bool VertexFieldProcessor::ensure_cluster_binding()
     return true;
 }
 
-void VertexFieldProcessor::on_descriptors_created()
+void VertexFieldProcessor::collect_push_writes(
+    const std::shared_ptr<VKBuffer>& buffer,
+    std::vector<Portal::Graphics::PushDescriptorWrite>& writes)
 {
-    if (!m_needs_cluster_id || !m_network_buffer || m_descriptor_set_ids.empty()) {
+    ComputeProcessor::collect_push_writes(buffer, writes);
+
+    if (!m_needs_cluster_id || !m_network_buffer) {
         return;
     }
 
-    auto& foundry = Portal::Graphics::get_shader_foundry();
-    const auto handle = m_network_buffer->read_state_handle("hash_cluster_id");
-    const auto bytes = m_network_buffer->get_state_bytes("hash_cluster_id");
-
-    foundry.update_descriptor_buffer(
-        m_descriptor_set_ids[0], m_operator->get_vertex_binding() + 1,
-        vk::DescriptorType::eStorageBuffer, handle, 0, bytes);
+    writes.push_back({
+        .binding = m_operator->get_vertex_binding() + 1,
+        .type = Portal::Graphics::to_vk_descriptor_type(Portal::Graphics::DescriptorRole::STORAGE),
+        .buffer = vk::DescriptorBufferInfo(
+            m_network_buffer->read_state_handle("hash_cluster_id"), 0,
+            m_network_buffer->get_state_bytes("hash_cluster_id")),
+    });
 }
 
 } // namespace MayaFlux::Buffers

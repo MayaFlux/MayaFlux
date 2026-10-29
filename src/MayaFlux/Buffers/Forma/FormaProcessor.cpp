@@ -163,6 +163,9 @@ void FormaProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
     if (m_changed) {
         m_changed = false;
         m_slices.flush(vk, m_staging);
+        if (auto render = vk->get_render_processor()) {
+            render->invalidate_mill(vk);
+        }
         if (auto runs = m_slices.take_runs()) {
             m_pending_runs = std::move(runs);
         }

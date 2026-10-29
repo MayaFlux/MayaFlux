@@ -259,7 +259,7 @@ MAYAFLUX_API std::vector<glm::vec3> compute_convex_hull_2d(
  */
 [[nodiscard]] MAYAFLUX_API std::vector<Kakshya::Vertex> apply_color_gradient(
     const std::vector<glm::vec3>& positions,
-    const std::vector<glm::vec3>& colors,
+    const std::vector<glm::vec4>& colors,
     const std::vector<float>& color_positions = {},
     float scalar = 1.0F);
 
@@ -268,7 +268,7 @@ MAYAFLUX_API std::vector<glm::vec3> compute_convex_hull_2d(
  */
 [[nodiscard]] MAYAFLUX_API std::vector<Kakshya::Vertex> apply_uniform_color(
     const std::vector<glm::vec3>& positions,
-    const glm::vec3& color,
+    const glm::vec4& color,
     float scalar = 1.0F);
 
 /**
@@ -276,7 +276,7 @@ MAYAFLUX_API std::vector<glm::vec3> compute_convex_hull_2d(
  */
 [[nodiscard]] MAYAFLUX_API std::vector<Kakshya::Vertex> apply_vertex_colors(
     const std::vector<glm::vec3>& positions,
-    const std::vector<glm::vec3>& colors,
+    const std::vector<glm::vec4>& colors,
     float scalar = 1.0F);
 
 /**
@@ -317,7 +317,7 @@ struct QuadGeometry {
  */
 [[nodiscard]] MAYAFLUX_API std::array<Kakshya::Vertex, 4> filled_rect(
     Kinesis::AABB2D region,
-    glm::vec3 color = glm::vec3(1.F));
+    glm::vec4 color = glm::vec4(1.F));
 
 /**
  * @brief Generate a UV-mapped TRIANGLE_STRIP quad from an AABB2D.
@@ -356,7 +356,7 @@ struct QuadGeometry {
 [[nodiscard]] MAYAFLUX_API std::array<Kakshya::MeshVertex, 6> textured_mesh_rect(
     Kinesis::AABB2D region,
     float weight = 0.F,
-    glm::vec3 color = glm::vec3(1.F));
+    glm::vec4 color = glm::vec4(1.F));
 
 // ------------------------------------------------------------
 // 3D wireframe shapes
@@ -371,7 +371,7 @@ struct QuadGeometry {
 [[nodiscard]] MAYAFLUX_API std::vector<Kakshya::Vertex> cuboid_wireframe(
     const glm::vec3& center,
     const glm::vec3& half,
-    const glm::vec3& color = glm::vec3(1.F));
+    const glm::vec4& color = glm::vec4(1.F));
 
 /**
  * @brief Generate a solid box as an indexed TRIANGLE_LIST mesh.

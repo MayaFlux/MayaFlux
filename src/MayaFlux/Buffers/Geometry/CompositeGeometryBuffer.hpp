@@ -45,9 +45,12 @@ struct RenderData {
  * // ... populate normals
  *
  * auto composite = std::make_shared<CompositeGeometryBuffer>();
- * composite->add_geometry("path", path_node, PrimitiveTopology::LINE_STRIP);
- * composite->add_geometry("normals", normals_node, PrimitiveTopology::LINE_LIST);
- * composite->add_geometry("control_points", points_node, PrimitiveTopology::POINT_LIST);
+ * composite->add_geometry("path", path_node,
+ *     { .target_window = window, .topology = PrimitiveTopology::LINE_STRIP });
+ * composite->add_geometry("normals", normals_node,
+ *     { .target_window = window, .topology = PrimitiveTopology::LINE_LIST });
+ * composite->add_geometry("control_points", points_node,
+ *     { .target_window = window, .topology = PrimitiveTopology::POINT_LIST });
  *
  * composite->setup_processors(ProcessingToken::GRAPHICS_BACKEND);
  * composite->setup_rendering({.target_window = window});
@@ -74,8 +77,7 @@ public:
      * @brief Add a geometry collection
      * @param name Unique identifier for this geometry
      * @param node GeometryWriterNode to render
-     * @param topology Primitive topology for this geometry
-     * @param target_window Window to render to (used for shader config)
+     * @param config Render configuration (shaders, render states, target window)
      *
      * The node's vertex data will be aggregated with other geometries during upload,
      * but rendered independently with the specified topology.
@@ -83,20 +85,6 @@ public:
     void add_geometry(
         const std::string& name,
         const std::shared_ptr<Nodes::GpuSync::GeometryWriterNode>& node,
-        Portal::Graphics::PrimitiveTopology topology,
-        const std::shared_ptr<Core::Window>& target_window);
-
-    /**
-     * @brief Add a geometry collection with explicit render config
-     * @param name Unique identifier for this geometry
-     * @param node GeometryWriterNode to render
-     * @param topology Primitive topology for this geometry
-     * @param config Render configuration (shaders, render states)
-     */
-    void add_geometry(
-        const std::string& name,
-        const std::shared_ptr<Nodes::GpuSync::GeometryWriterNode>& node,
-        Portal::Graphics::PrimitiveTopology topology,
         const RenderConfig& config);
 
     /**

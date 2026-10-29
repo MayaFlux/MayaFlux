@@ -13,8 +13,23 @@ namespace MayaFlux::Core {
 namespace {
     struct FencedSubmission {
         vk::CommandBuffer cmd;
-        vk::Fence fence;
+        TimelinePoint point {};
     };
+
+    void record_barrier(
+        vk::CommandBuffer cmd,
+        vk::ImageMemoryBarrier2& barrier,
+        vk::PipelineStageFlags2 src_stage,
+        vk::PipelineStageFlags2 dst_stage)
+    {
+        barrier.srcStageMask = src_stage;
+        barrier.dstStageMask = dst_stage;
+
+        vk::DependencyInfo dependency {};
+        dependency.imageMemoryBarrierCount = 1;
+        dependency.pImageMemoryBarriers = &barrier;
+        cmd.pipelineBarrier2(dependency);
+    }
 }
 
 BackendResourceManager::BackendResourceManager(VKContext& context, VKCommandManager& command_manager)
@@ -57,6 +72,11 @@ void BackendResourceManager::setup_backend_service(const std::shared_ptr<Registr
         this->cleanup_buffer(buffer);
     };
 
+    buffer_service->retire_buffer = [this](const std::shared_ptr<void>& vk_buf) {
+        auto buffer = std::static_pointer_cast<Buffers::VKBuffer>(vk_buf);
+        this->retire_buffer(buffer);
+    };
+
     buffer_service->get_buffer_device_address = [this](const std::shared_ptr<void>& vk_buf) -> uint64_t {
         auto buffer = std::static_pointer_cast<Buffers::VKBuffer>(vk_buf);
         auto address = this->get_buffer_device_address(buffer);
@@ -77,7 +97,7 @@ void BackendResourceManager::setup_backend_service(const std::shared_ptr<Registr
 
     buffer_service->flush_range = [this](void* memory, size_t offset, size_t size) {
         vk::DeviceMemory mem(reinterpret_cast<VkDeviceMemory>(memory));
-        vk::MappedMemoryRange range { mem, offset, size == 0 ? VK_WHOLE_SIZE : size };
+        auto range = mapped_memory_range(mem, offset, size);
         if (auto result = m_context.get_device().flushMappedMemoryRanges(1, &range); result != vk::Result::eSuccess) {
             MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
                 "Failed to flush mapped memory range: {}", vk::to_string(result));
@@ -86,7 +106,7 @@ void BackendResourceManager::setup_backend_service(const std::shared_ptr<Registr
 
     buffer_service->invalidate_range = [this](void* memory, size_t offset, size_t size) {
         vk::DeviceMemory mem(reinterpret_cast<VkDeviceMemory>(memory));
-        vk::MappedMemoryRange range { mem, offset, size == 0 ? VK_WHOLE_SIZE : size };
+        auto range = mapped_memory_range(mem, offset, size);
         if (auto result = m_context.get_device().invalidateMappedMemoryRanges(1, &range); result != vk::Result::eSuccess) {
             MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
                 "Failed to invalidate mapped memory range: {}", vk::to_string(result));
@@ -120,26 +140,19 @@ void BackendResourceManager::setup_backend_service(const std::shared_ptr<Registr
 
         cmd.end();
 
-        auto device = m_context.get_device();
-        vk::FenceCreateInfo fence_info {};
-        vk::Fence fence = device.createFence(fence_info);
-
-        vk::SubmitInfo submit_info {};
-        submit_info.commandBufferCount = 1;
-        submit_info.pCommandBuffers = &cmd;
-
-        if (auto result = m_context.get_graphics_queue().submit(1, &submit_info, fence);
-            result != vk::Result::eSuccess) {
+        const vk::CommandBuffer commands[] = { cmd };
+        const auto waits = m_command_manager.produced_waits(vk::PipelineStageFlagBits2::eAllCommands);
+        const TimelinePoint point = m_command_manager.submit(m_context.get_graphics_queue(), commands, waits);
+        if (!point) {
             MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
-                "execute_fenced: queue submit failed: {}", vk::to_string(result));
-            device.destroyFence(fence);
+                "execute_fenced: queue submit failed");
             m_command_manager.free_command_buffer(cmd);
             return nullptr;
         }
 
         auto handle = std::make_shared<FencedSubmission>();
         handle->cmd = cmd;
-        handle->fence = fence;
+        handle->point = point;
         return handle;
     };
 
@@ -147,15 +160,7 @@ void BackendResourceManager::setup_backend_service(const std::shared_ptr<Registr
         if (!handle)
             return;
         auto sub = std::static_pointer_cast<FencedSubmission>(handle);
-        if (!sub->fence)
-            return;
-
-        auto device = m_context.get_device();
-        if (auto result = device.waitForFences(1, &sub->fence, VK_TRUE, UINT64_MAX);
-            result != vk::Result::eSuccess) {
-            MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
-                "wait_fenced: waitForFences failed: {}", vk::to_string(result));
-        }
+        m_command_manager.wait(sub->point);
     };
 
     buffer_service->release_fenced = [this](const std::shared_ptr<void>& handle) {
@@ -163,13 +168,8 @@ void BackendResourceManager::setup_backend_service(const std::shared_ptr<Registr
             return;
         auto sub = std::static_pointer_cast<FencedSubmission>(handle);
 
-        auto device = m_context.get_device();
-        if (sub->fence) {
-            device.destroyFence(sub->fence);
-            sub->fence = nullptr;
-        }
         if (sub->cmd) {
-            m_command_manager.free_command_buffer(sub->cmd);
+            m_command_manager.retire(sub->cmd, sub->point);
             sub->cmd = nullptr;
         }
     };
@@ -184,6 +184,70 @@ void BackendResourceManager::setup_backend_service(const std::shared_ptr<Registr
             cmd.copyBuffer(s, d, 1, &region);
         });
     };
+
+    buffer_service->await_dispatches = [this]() {
+        const auto produced = m_command_manager.produced();
+        if (!m_command_manager.is_complete(produced)) {
+            m_command_manager.wait(produced);
+        }
+    };
+
+    buffer_service->await_point = [this](uint32_t timeline, uint64_t value) {
+        const TimelinePoint point { .timeline = timeline, .value = value };
+        if (!m_command_manager.is_complete(point)) {
+            m_command_manager.wait(point);
+        }
+    };
+
+    buffer_service->fenced_point = [](const std::shared_ptr<void>& handle)
+        -> std::pair<uint32_t, uint64_t> {
+        if (!handle) {
+            return { 0, 0 };
+        }
+        const auto submission = std::static_pointer_cast<FencedSubmission>(handle);
+        return { submission->point.timeline, submission->point.value };
+    };
+}
+
+vk::MappedMemoryRange BackendResourceManager::mapped_memory_range(
+    vk::DeviceMemory memory,
+    vk::DeviceSize offset,
+    vk::DeviceSize size) const
+{
+    vk::MappedMemoryRange range {};
+    range.memory = memory;
+
+    std::optional<vk::DeviceSize> known_size;
+    if (const auto sizes = m_buffer_allocation_sizes.read()) {
+        const auto allocation = sizes->find(static_cast<VkDeviceMemory>(memory));
+        if (allocation != sizes->end()) {
+            known_size = allocation->second;
+        }
+    }
+
+    if (!known_size) {
+        range.offset = offset;
+        range.size = size == 0 ? VK_WHOLE_SIZE : size;
+        return range;
+    }
+
+    const vk::DeviceSize allocation_size = *known_size;
+    const vk::DeviceSize atom_size = std::max<vk::DeviceSize>(
+        1, m_context.get_physical_device().getProperties().limits.nonCoherentAtomSize);
+    const vk::DeviceSize start = std::min(offset, allocation_size);
+    const vk::DeviceSize requested_end = size == 0 || size == VK_WHOLE_SIZE
+        ? allocation_size
+        : start + std::min(size, allocation_size - start);
+    const vk::DeviceSize aligned_offset = (start / atom_size) * atom_size;
+    const vk::DeviceSize rounded_end = requested_end > allocation_size - std::min(atom_size - 1, allocation_size)
+        ? allocation_size
+        : ((requested_end + atom_size - 1) / atom_size) * atom_size;
+
+    range.offset = aligned_offset;
+    range.size = rounded_end == allocation_size
+        ? VK_WHOLE_SIZE
+        : rounded_end - aligned_offset;
+    return range;
 }
 
 void BackendResourceManager::allocate_raw_buffer(
@@ -215,6 +279,9 @@ void BackendResourceManager::allocate_raw_buffer(
     vk::MemoryAllocateInfo alloc_info;
     alloc_info.allocationSize = mem_requirements.size;
     alloc_info.memoryTypeIndex = find_memory_type(mem_requirements.memoryTypeBits, memory_properties);
+    vk::MemoryAllocateFlagsInfo alloc_flags {};
+    alloc_flags.flags = vk::MemoryAllocateFlagBits::eDeviceAddress;
+    alloc_info.pNext = &alloc_flags;
 
     try {
         out_memory = m_context.get_device().allocateMemory(alloc_info);
@@ -242,7 +309,7 @@ void BackendResourceManager::allocate_raw_buffer(
     out_mapped_ptr = nullptr;
     if (host_visible) {
         try {
-            out_mapped_ptr = m_context.get_device().mapMemory(out_memory, 0, size_bytes);
+            out_mapped_ptr = m_context.get_device().mapMemory(out_memory, 0, VK_WHOLE_SIZE);
         } catch (const vk::SystemError& e) {
             m_context.get_device().freeMemory(out_memory);
             m_context.get_device().destroyBuffer(out_buffer);
@@ -253,6 +320,10 @@ void BackendResourceManager::allocate_raw_buffer(
                 "Failed to map raw buffer memory: " + std::string(e.what()));
         }
     }
+
+    m_buffer_allocation_sizes.update([key = static_cast<VkDeviceMemory>(out_memory), size = mem_requirements.size](AllocationSizes& sizes) {
+        sizes.insert_or_assign(key, size);
+    });
 }
 
 void BackendResourceManager::initialize_buffer(const std::shared_ptr<Buffers::VKBuffer>& buffer)
@@ -308,17 +379,7 @@ void BackendResourceManager::cleanup_buffer(const std::shared_ptr<Buffers::VKBuf
 
     auto& res = it->get()->get_buffer_resources();
 
-    if (res.mapped_ptr) {
-        m_context.get_device().unmapMemory(res.memory);
-    }
-
-    if (res.buffer) {
-        m_context.get_device().destroyBuffer(res.buffer);
-    }
-
-    if (res.memory) {
-        m_context.get_device().freeMemory(res.memory);
-    }
+    release_buffer_handles(res.buffer, res.memory, res.mapped_ptr != nullptr);
 
     MF_INFO(Journal::Component::Core, Journal::Context::GraphicsBackend,
         "VKBuffer cleaned up: {:p}", static_cast<void*>(res.buffer));
@@ -330,6 +391,55 @@ void BackendResourceManager::cleanup_buffer(const std::shared_ptr<Buffers::VKBuf
     m_managed_buffers.erase(it);
 }
 
+void BackendResourceManager::retire_buffer(const std::shared_ptr<Buffers::VKBuffer>& buffer)
+{
+    if (!buffer) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Attempted to retire null VKBuffer");
+        return;
+    }
+
+    auto it = std::ranges::find(m_managed_buffers, buffer);
+    if (it == m_managed_buffers.end()) {
+        return;
+    }
+
+    auto& res = it->get()->get_buffer_resources();
+    const vk::Buffer old_buffer = res.buffer;
+    const vk::DeviceMemory old_memory = res.memory;
+    const bool mapped = res.mapped_ptr != nullptr;
+
+    res.mapped_ptr = nullptr;
+    res.buffer = vk::Buffer {};
+    res.memory = vk::DeviceMemory {};
+
+    m_managed_buffers.erase(it);
+
+    m_command_manager.retire_resource(
+        [this, old_buffer, old_memory, mapped]() {
+            release_buffer_handles(old_buffer, old_memory, mapped);
+        },
+        m_command_manager.submitted());
+}
+
+void BackendResourceManager::release_buffer_handles(vk::Buffer buffer, vk::DeviceMemory memory, bool mapped)
+{
+    if (mapped) {
+        m_context.get_device().unmapMemory(memory);
+    }
+
+    if (buffer) {
+        m_context.get_device().destroyBuffer(buffer);
+    }
+
+    if (memory) {
+        m_buffer_allocation_sizes.update([key = static_cast<VkDeviceMemory>(memory)](AllocationSizes& sizes) {
+            return sizes.erase(key);
+        });
+        m_context.get_device().freeMemory(memory);
+    }
+}
+
 void BackendResourceManager::flush_pending_buffer_operations()
 {
     for (auto& buffer_wrapper : m_managed_buffers) {
@@ -337,10 +447,7 @@ void BackendResourceManager::flush_pending_buffer_operations()
         auto dirty_ranges = buffer_wrapper->get_and_clear_dirty_ranges();
         if (!dirty_ranges.empty()) {
             for (auto [offset, size] : dirty_ranges) {
-                vk::MappedMemoryRange range;
-                range.memory = resources.memory;
-                range.offset = offset;
-                range.size = size;
+                auto range = mapped_memory_range(resources.memory, offset, size);
                 if (auto result = m_context.get_device().flushMappedMemoryRanges(1, &range); result != vk::Result::eSuccess) {
                     MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
                         "Failed to flush mapped memory range: {}", vk::to_string(result));
@@ -354,10 +461,7 @@ void BackendResourceManager::flush_pending_buffer_operations()
         auto invalid_ranges = buffer_wrapper->get_and_clear_invalid_ranges();
         if (!invalid_ranges.empty()) {
             for (auto [offset, size] : invalid_ranges) {
-                vk::MappedMemoryRange range;
-                range.memory = buffer_wrapper->get_buffer_resources().memory;
-                range.offset = offset;
-                range.size = size;
+                auto range = mapped_memory_range(buffer_wrapper->get_buffer_resources().memory, offset, size);
                 if (auto result = m_context.get_device().invalidateMappedMemoryRanges(1, &range); result != vk::Result::eSuccess) {
                     MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
                         "Failed to invalidate mapped memory range: {}", vk::to_string(result));
@@ -427,6 +531,22 @@ void BackendResourceManager::initialize_image(const std::shared_ptr<VKImage>& im
     image_info.tiling = vk::ImageTiling::eOptimal;
     image_info.initialLayout = vk::ImageLayout::eUndefined;
     image_info.usage = image->get_usage_flags();
+
+    auto format_properties = vk::StructureChain {
+        vk::FormatProperties2 {},
+        vk::FormatProperties3 {}
+    };
+    m_context.get_physical_device().getFormatProperties2(
+        image->get_format(), &format_properties.get<vk::FormatProperties2>());
+
+    const bool host_transfer = static_cast<bool>(
+        format_properties.get<vk::FormatProperties3>().optimalTilingFeatures
+        & vk::FormatFeatureFlagBits2::eHostImageTransfer);
+
+    if (host_transfer) {
+        image_info.usage |= vk::ImageUsageFlagBits::eHostTransfer;
+    }
+
     image_info.sharingMode = vk::SharingMode::eExclusive;
     image_info.samples = vk::SampleCountFlagBits::e1; // No MSAA for now
     image_info.flags = (image->get_type() == VKImage::Type::TYPE_CUBE)
@@ -455,7 +575,7 @@ void BackendResourceManager::initialize_image(const std::shared_ptr<VKImage>& im
     alloc_info.allocationSize = mem_requirements.size;
     alloc_info.memoryTypeIndex = find_memory_type(
         mem_requirements.memoryTypeBits,
-        image->get_memory_properties());
+        vk::MemoryPropertyFlagBits::eDeviceLocal);
 
     vk::DeviceMemory memory;
     try {
@@ -548,6 +668,7 @@ void BackendResourceManager::initialize_image(const std::shared_ptr<VKImage>& im
 
     image->set_image_resources(resources);
     image->set_current_layout(vk::ImageLayout::eUndefined);
+    image->set_host_transfer(host_transfer);
 
     MF_INFO(Journal::Component::Core, Journal::Context::GraphicsBackend,
         "VKImage initialized: {}x{}x{}, format: {}, {} mips, {} layers",
@@ -577,9 +698,333 @@ void BackendResourceManager::cleanup_image(const std::shared_ptr<VKImage>& image
     }
 
     image->set_image_resources(VKImageResources {});
+    image->set_host_transfer(false);
 
     MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
         "VKImage cleaned up");
+}
+
+void BackendResourceManager::load_host_copy_layouts()
+{
+    if (m_host_copy_layouts_ready) {
+        return;
+    }
+
+    vk::PhysicalDeviceHostImageCopyProperties host_properties {};
+    vk::PhysicalDeviceProperties2 properties {};
+    properties.pNext = &host_properties;
+
+    m_context.get_physical_device().getProperties2(&properties);
+
+    m_host_copy_src_layouts.resize(host_properties.copySrcLayoutCount);
+    m_host_copy_dst_layouts.resize(host_properties.copyDstLayoutCount);
+
+    host_properties.pCopySrcLayouts = m_host_copy_src_layouts.data();
+    host_properties.pCopyDstLayouts = m_host_copy_dst_layouts.data();
+
+    m_context.get_physical_device().getProperties2(&properties);
+
+    m_host_copy_src_layouts.resize(host_properties.copySrcLayoutCount);
+    m_host_copy_dst_layouts.resize(host_properties.copyDstLayoutCount);
+
+    m_host_copy_layouts_ready = true;
+}
+
+bool BackendResourceManager::host_copy_src_layout(vk::ImageLayout layout) const
+{
+    return std::ranges::find(m_host_copy_src_layouts, layout)
+        != m_host_copy_src_layouts.end();
+}
+
+bool BackendResourceManager::host_copy_dst_layout(vk::ImageLayout layout) const
+{
+    return std::ranges::find(m_host_copy_dst_layouts, layout)
+        != m_host_copy_dst_layouts.end();
+}
+
+void BackendResourceManager::transition_host_image(
+    vk::Image image,
+    vk::ImageLayout old_layout,
+    vk::ImageLayout new_layout,
+    vk::ImageSubresourceRange range,
+    vk::PipelineStageFlags2 restore_stage)
+{
+    if (old_layout == new_layout) {
+        return;
+    }
+
+    const bool can_transition_on_host = (old_layout == vk::ImageLayout::eUndefined || host_copy_src_layout(old_layout))
+        && host_copy_dst_layout(new_layout);
+
+    if (can_transition_on_host) {
+        vk::HostImageLayoutTransitionInfo transition {};
+        transition.image = image;
+        transition.oldLayout = old_layout;
+        transition.newLayout = new_layout;
+        transition.subresourceRange = range;
+
+        const auto result = m_context.get_device().transitionImageLayout(1, &transition);
+
+        if (result != vk::Result::eSuccess) {
+            error<std::runtime_error>(
+                Journal::Component::Core,
+                Journal::Context::GraphicsBackend,
+                std::source_location::current(),
+                "Host image layout transition failed: {}",
+                vk::to_string(result));
+        }
+
+        return;
+    }
+
+    vk::AccessFlags2 source_access {};
+    vk::PipelineStageFlags2 source_stage = vk::PipelineStageFlagBits2::eNone;
+
+    if (old_layout == vk::ImageLayout::eGeneral) {
+        source_access = vk::AccessFlagBits2::eHostWrite;
+        source_stage = vk::PipelineStageFlagBits2::eHost;
+    } else if (old_layout != vk::ImageLayout::eUndefined) {
+        source_access = vk::AccessFlagBits2::eMemoryRead
+            | vk::AccessFlagBits2::eMemoryWrite;
+        source_stage = vk::PipelineStageFlagBits2::eAllCommands;
+    }
+
+    const bool needs_host_access = new_layout == vk::ImageLayout::eGeneral;
+    const vk::AccessFlags2 destination_access = needs_host_access
+        ? vk::AccessFlagBits2::eHostRead | vk::AccessFlagBits2::eHostWrite
+        : vk::AccessFlags2(vk::AccessFlagBits2::eMemoryRead);
+    const vk::PipelineStageFlags2 destination_stage = needs_host_access
+        ? vk::PipelineStageFlags2(vk::PipelineStageFlagBits2::eHost)
+        : restore_stage;
+
+    execute_immediate_commands([&](vk::CommandBuffer cmd) {
+        vk::ImageMemoryBarrier2 barrier {};
+        barrier.image = image;
+        barrier.oldLayout = old_layout;
+        barrier.newLayout = new_layout;
+        barrier.subresourceRange = range;
+        barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.srcAccessMask = source_access;
+        barrier.dstAccessMask = destination_access;
+
+        record_barrier(cmd, barrier, source_stage, destination_stage);
+    });
+}
+
+void BackendResourceManager::await_host_image_inputs()
+{
+    TimelineSnapshot pending = m_command_manager.produced();
+
+    if (m_command_manager.has_deferred_commands()) {
+        if (const auto point = flush_deferred_commands()) {
+            auto& value = pending.values[point.timeline];
+            value = std::max(value, point.value);
+        }
+    }
+
+    m_command_manager.wait(pending);
+}
+
+void BackendResourceManager::upload_image_host(
+    const std::shared_ptr<VKImage>& image,
+    uint32_t base_layer,
+    uint32_t layer_count,
+    const void* data,
+    size_t size)
+{
+    const bool valid_image = image
+        && image->is_initialized()
+        && image->supports_host_transfer()
+        && image->get_aspect_flags() == vk::ImageAspectFlagBits::eColor;
+
+    const bool valid_layers = valid_image
+        && layer_count > 0
+        && base_layer < image->get_array_layers()
+        && layer_count <= image->get_array_layers() - base_layer;
+
+    if (!valid_layers || !data) {
+        error<std::runtime_error>(
+            Journal::Component::Core,
+            Journal::Context::GraphicsBackend,
+            std::source_location::current(),
+            "Host image upload requires an initialized host-transfer color image and valid layers");
+    }
+
+    const size_t layer_bytes = image->get_base_level_size_bytes();
+
+    if (size != layer_bytes * layer_count) {
+        error<std::invalid_argument>(
+            Journal::Component::Core,
+            Journal::Context::GraphicsBackend,
+            std::source_location::current(),
+            "Host image upload has {} bytes; {} required",
+            size,
+            layer_bytes * layer_count);
+    }
+
+    load_host_copy_layouts();
+
+    await_host_image_inputs();
+
+    const vk::ImageSubresourceRange all {
+        image->get_aspect_flags(),
+        0,
+        image->get_mip_levels(),
+        0,
+        image->get_array_layers()
+    };
+
+    const vk::ImageSubresourceRange target {
+        image->get_aspect_flags(),
+        0,
+        1,
+        base_layer,
+        layer_count
+    };
+
+    const auto old_layout = image->get_current_layout();
+    const bool preserve_untouched = old_layout == vk::ImageLayout::eShaderReadOnlyOptimal;
+    const auto transition_range = preserve_untouched ? target : all;
+
+    transition_host_image(
+        image->get_image(),
+        preserve_untouched ? vk::ImageLayout::eUndefined : old_layout,
+        vk::ImageLayout::eGeneral,
+        transition_range);
+
+    vk::MemoryToImageCopy region {};
+    region.pHostPointer = data;
+    region.imageSubresource = { image->get_aspect_flags(), 0, base_layer, layer_count };
+    region.imageExtent = vk::Extent3D { image->get_width(), image->get_height(), image->get_depth() };
+
+    vk::CopyMemoryToImageInfo copy {};
+    copy.dstImage = image->get_image();
+    copy.dstImageLayout = vk::ImageLayout::eGeneral;
+    copy.regionCount = 1;
+    copy.pRegions = &region;
+
+    const auto result = m_context.get_device().copyMemoryToImage(&copy);
+
+    if (result != vk::Result::eSuccess) {
+        error<std::runtime_error>(
+            Journal::Component::Core,
+            Journal::Context::GraphicsBackend,
+            std::source_location::current(),
+            "Host image upload failed: {}",
+            vk::to_string(result));
+    }
+
+    transition_host_image(
+        image->get_image(),
+        vk::ImageLayout::eGeneral,
+        vk::ImageLayout::eShaderReadOnlyOptimal,
+        transition_range,
+        vk::PipelineStageFlagBits2::eFragmentShader
+            | vk::PipelineStageFlagBits2::eComputeShader);
+
+    image->set_current_layout(vk::ImageLayout::eShaderReadOnlyOptimal);
+}
+
+void BackendResourceManager::download_image_host(
+    const std::shared_ptr<VKImage>& image,
+    void* data,
+    size_t size,
+    vk::ImageLayout restore_layout,
+    vk::PipelineStageFlags2 restore_stage)
+{
+    const bool valid_image = image
+        && image->is_initialized()
+        && image->supports_host_transfer()
+        && image->get_aspect_flags() == vk::ImageAspectFlagBits::eColor
+        && image->get_current_layout() != vk::ImageLayout::eUndefined;
+
+    if (!valid_image || !data) {
+        error<std::runtime_error>(
+            Journal::Component::Core,
+            Journal::Context::GraphicsBackend,
+            std::source_location::current(),
+            "Host image download requires an initialized host-transfer color image with defined layout");
+    }
+
+    const size_t layer_bytes = image->get_base_level_size_bytes();
+    const uint32_t layer_count = size == layer_bytes ? 1U : image->get_array_layers();
+
+    if (size != layer_bytes * layer_count) {
+        error<std::invalid_argument>(
+            Journal::Component::Core,
+            Journal::Context::GraphicsBackend,
+            std::source_location::current(),
+            "Host image download has {} bytes; one layer needs {} and all layers need {}",
+            size,
+            layer_bytes,
+            layer_bytes * image->get_array_layers());
+    }
+
+    load_host_copy_layouts();
+
+    await_host_image_inputs();
+
+    const auto old_layout = image->get_current_layout();
+
+    const vk::ImageSubresourceRange range {
+        image->get_aspect_flags(),
+        0,
+        1,
+        0,
+        layer_count
+    };
+
+    const auto copy_layout = host_copy_src_layout(old_layout)
+        ? old_layout
+        : vk::ImageLayout::eGeneral;
+
+    execute_immediate_commands([&](vk::CommandBuffer cmd) {
+        vk::ImageMemoryBarrier2 barrier {};
+        barrier.image = image->get_image();
+        barrier.oldLayout = old_layout;
+        barrier.newLayout = copy_layout;
+        barrier.subresourceRange = range;
+        barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.srcAccessMask = vk::AccessFlagBits2::eMemoryWrite;
+        barrier.dstAccessMask = vk::AccessFlagBits2::eHostRead;
+
+        record_barrier(cmd, barrier,
+            vk::PipelineStageFlagBits2::eAllCommands,
+            vk::PipelineStageFlagBits2::eHost);
+    });
+
+    vk::ImageToMemoryCopy region {};
+    region.pHostPointer = data;
+    region.imageSubresource = { image->get_aspect_flags(), 0, 0, layer_count };
+    region.imageExtent = vk::Extent3D { image->get_width(), image->get_height(), image->get_depth() };
+
+    vk::CopyImageToMemoryInfo copy {};
+    copy.srcImage = image->get_image();
+    copy.srcImageLayout = copy_layout;
+    copy.regionCount = 1;
+    copy.pRegions = &region;
+
+    const auto result = m_context.get_device().copyImageToMemory(&copy);
+
+    if (result != vk::Result::eSuccess) {
+        error<std::runtime_error>(
+            Journal::Component::Core,
+            Journal::Context::GraphicsBackend,
+            std::source_location::current(),
+            "Host image download failed: {}",
+            vk::to_string(result));
+    }
+
+    transition_host_image(
+        image->get_image(),
+        copy_layout,
+        restore_layout,
+        range,
+        restore_stage);
+
+    image->set_current_layout(restore_layout);
 }
 
 void BackendResourceManager::transition_image_layout(
@@ -591,7 +1036,7 @@ void BackendResourceManager::transition_image_layout(
     vk::ImageAspectFlags aspect_flags)
 {
     execute_immediate_commands([&](vk::CommandBuffer cmd) {
-        vk::ImageMemoryBarrier barrier {};
+        vk::ImageMemoryBarrier2 barrier {};
         barrier.oldLayout = old_layout;
         barrier.newLayout = new_layout;
         barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
@@ -603,66 +1048,60 @@ void BackendResourceManager::transition_image_layout(
         barrier.subresourceRange.baseArrayLayer = 0;
         barrier.subresourceRange.layerCount = array_layers;
 
-        vk::PipelineStageFlags src_stage;
-        vk::PipelineStageFlags dst_stage;
+        vk::PipelineStageFlags2 src_stage;
+        vk::PipelineStageFlags2 dst_stage;
 
         if (old_layout == vk::ImageLayout::eUndefined && new_layout == vk::ImageLayout::eTransferDstOptimal) {
-            barrier.srcAccessMask = vk::AccessFlags {};
-            barrier.dstAccessMask = vk::AccessFlagBits::eTransferWrite;
-            src_stage = vk::PipelineStageFlagBits::eTopOfPipe;
-            dst_stage = vk::PipelineStageFlagBits::eTransfer;
+            barrier.srcAccessMask = vk::AccessFlags2 {};
+            barrier.dstAccessMask = vk::AccessFlagBits2::eTransferWrite;
+            src_stage = vk::PipelineStageFlagBits2::eNone;
+            dst_stage = vk::PipelineStageFlagBits2::eTransfer;
         } else if (old_layout == vk::ImageLayout::eTransferDstOptimal && new_layout == vk::ImageLayout::eShaderReadOnlyOptimal) {
-            barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
-            barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
-            src_stage = vk::PipelineStageFlagBits::eTransfer;
-            dst_stage = vk::PipelineStageFlagBits::eFragmentShader;
+            barrier.srcAccessMask = vk::AccessFlagBits2::eTransferWrite;
+            barrier.dstAccessMask = vk::AccessFlagBits2::eShaderRead;
+            src_stage = vk::PipelineStageFlagBits2::eTransfer;
+            dst_stage = vk::PipelineStageFlagBits2::eFragmentShader;
         } else if (old_layout == vk::ImageLayout::eUndefined && new_layout == vk::ImageLayout::eShaderReadOnlyOptimal) {
-            barrier.srcAccessMask = vk::AccessFlags {};
-            barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
-            src_stage = vk::PipelineStageFlagBits::eTopOfPipe;
-            dst_stage = vk::PipelineStageFlagBits::eFragmentShader;
+            barrier.srcAccessMask = vk::AccessFlags2 {};
+            barrier.dstAccessMask = vk::AccessFlagBits2::eShaderRead;
+            src_stage = vk::PipelineStageFlagBits2::eNone;
+            dst_stage = vk::PipelineStageFlagBits2::eFragmentShader;
         } else if (old_layout == vk::ImageLayout::eUndefined && new_layout == vk::ImageLayout::eColorAttachmentOptimal) {
-            barrier.srcAccessMask = vk::AccessFlags {};
-            barrier.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
-            src_stage = vk::PipelineStageFlagBits::eTopOfPipe;
-            dst_stage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+            barrier.srcAccessMask = vk::AccessFlags2 {};
+            barrier.dstAccessMask = vk::AccessFlagBits2::eColorAttachmentWrite;
+            src_stage = vk::PipelineStageFlagBits2::eNone;
+            dst_stage = vk::PipelineStageFlagBits2::eColorAttachmentOutput;
         } else if (old_layout == vk::ImageLayout::eUndefined && new_layout == vk::ImageLayout::eDepthStencilAttachmentOptimal) {
-            barrier.srcAccessMask = vk::AccessFlags {};
-            barrier.dstAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite;
-            src_stage = vk::PipelineStageFlagBits::eTopOfPipe;
-            dst_stage = vk::PipelineStageFlagBits::eEarlyFragmentTests;
+            barrier.srcAccessMask = vk::AccessFlags2 {};
+            barrier.dstAccessMask = vk::AccessFlagBits2::eDepthStencilAttachmentRead | vk::AccessFlagBits2::eDepthStencilAttachmentWrite;
+            src_stage = vk::PipelineStageFlagBits2::eNone;
+            dst_stage = vk::PipelineStageFlagBits2::eEarlyFragmentTests;
         } else if (old_layout == vk::ImageLayout::eUndefined && new_layout == vk::ImageLayout::eGeneral) {
-            barrier.srcAccessMask = vk::AccessFlags {};
-            barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead | vk::AccessFlagBits::eShaderWrite;
-            src_stage = vk::PipelineStageFlagBits::eTopOfPipe;
-            dst_stage = vk::PipelineStageFlagBits::eComputeShader;
+            barrier.srcAccessMask = vk::AccessFlags2 {};
+            barrier.dstAccessMask = vk::AccessFlagBits2::eShaderRead | vk::AccessFlagBits2::eShaderWrite;
+            src_stage = vk::PipelineStageFlagBits2::eNone;
+            dst_stage = vk::PipelineStageFlagBits2::eComputeShader;
         } else if (old_layout == vk::ImageLayout::eGeneral && new_layout == vk::ImageLayout::eShaderReadOnlyOptimal) {
-            barrier.srcAccessMask = vk::AccessFlagBits::eShaderWrite;
-            barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
-            src_stage = vk::PipelineStageFlagBits::eComputeShader;
-            dst_stage = vk::PipelineStageFlagBits::eComputeShader;
+            barrier.srcAccessMask = vk::AccessFlagBits2::eShaderWrite;
+            barrier.dstAccessMask = vk::AccessFlagBits2::eShaderRead;
+            src_stage = vk::PipelineStageFlagBits2::eComputeShader;
+            dst_stage = vk::PipelineStageFlagBits2::eComputeShader;
         } else if (old_layout == vk::ImageLayout::eShaderReadOnlyOptimal && new_layout == vk::ImageLayout::eGeneral) {
-            barrier.srcAccessMask = vk::AccessFlagBits::eShaderRead;
-            barrier.dstAccessMask = vk::AccessFlagBits::eShaderWrite;
-            src_stage = vk::PipelineStageFlagBits::eComputeShader;
-            dst_stage = vk::PipelineStageFlagBits::eComputeShader;
+            barrier.srcAccessMask = vk::AccessFlagBits2::eShaderRead;
+            barrier.dstAccessMask = vk::AccessFlagBits2::eShaderWrite;
+            src_stage = vk::PipelineStageFlagBits2::eComputeShader;
+            dst_stage = vk::PipelineStageFlagBits2::eComputeShader;
         } else {
-            barrier.srcAccessMask = vk::AccessFlagBits::eMemoryRead | vk::AccessFlagBits::eMemoryWrite;
-            barrier.dstAccessMask = vk::AccessFlagBits::eMemoryRead | vk::AccessFlagBits::eMemoryWrite;
-            src_stage = vk::PipelineStageFlagBits::eAllCommands;
-            dst_stage = vk::PipelineStageFlagBits::eAllCommands;
+            barrier.srcAccessMask = vk::AccessFlagBits2::eMemoryRead | vk::AccessFlagBits2::eMemoryWrite;
+            barrier.dstAccessMask = vk::AccessFlagBits2::eMemoryRead | vk::AccessFlagBits2::eMemoryWrite;
+            src_stage = vk::PipelineStageFlagBits2::eAllCommands;
+            dst_stage = vk::PipelineStageFlagBits2::eAllCommands;
 
             MF_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
                 "Using generic image layout transition");
         }
 
-        cmd.pipelineBarrier(
-            src_stage, dst_stage,
-            vk::DependencyFlags {},
-            0, nullptr, // Memory barriers
-            0, nullptr, // Buffer barriers
-            1, &barrier // Image barriers
-        );
+        record_barrier(cmd, barrier, src_stage, dst_stage);
     });
 
     MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
@@ -671,9 +1110,11 @@ void BackendResourceManager::transition_image_layout(
 }
 
 void BackendResourceManager::upload_image_data(
-    std::shared_ptr<VKImage> image,
+    const std::shared_ptr<VKImage>& image,
     const void* data,
-    size_t size)
+    size_t size,
+    const std::shared_ptr<Buffers::VKBuffer>& staging,
+    bool deferred)
 {
     if (!image || !data) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
@@ -681,18 +1122,36 @@ void BackendResourceManager::upload_image_data(
         return;
     }
 
-    auto staging = std::make_shared<Buffers::VKBuffer>(
-        size,
-        Buffers::VKBuffer::Usage::STAGING,
-        Kakshya::DataModality::IMAGE_COLOR);
+    if (!deferred) {
+        upload_image_host(image, 0, image->get_array_layers(), data, size);
 
-    initialize_buffer(staging);
+        MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Uploaded {} bytes to image {}x{}",
+            size, image->get_width(), image->get_height());
+
+        return;
+    }
+
+    if (!staging) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Deferred image upload requires staging");
+        return;
+    }
+
+    if (!image->is_initialized()
+        || size != image->get_base_level_size_bytes() * image->get_array_layers()
+        || staging->get_size_bytes() < size) {
+        error<std::invalid_argument>(
+            Journal::Component::Core,
+            Journal::Context::GraphicsBackend,
+            std::source_location::current(),
+            "Deferred image upload requires initialized image storage and sufficient staging capacity");
+    }
 
     void* mapped = staging->get_mapped_ptr();
     if (!mapped) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "Failed to map staging buffer for image upload");
-        cleanup_buffer(staging);
+            "Deferred image upload staging buffer has no mapped pointer");
         return;
     }
 
@@ -700,107 +1159,16 @@ void BackendResourceManager::upload_image_data(
     staging->mark_dirty_range(0, size);
 
     auto& resources = staging->get_buffer_resources();
-    vk::MappedMemoryRange range { resources.memory, 0, VK_WHOLE_SIZE };
-
-    if (auto result = m_context.get_device().flushMappedMemoryRanges(1, &range); result != vk::Result::eSuccess) {
-        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "Failed to flush mapped memory range: {}", vk::to_string(result));
-    }
-
-    execute_immediate_commands([&](vk::CommandBuffer cmd) {
-        vk::ImageMemoryBarrier barrier {};
-        barrier.oldLayout = image->get_current_layout();
-        barrier.newLayout = vk::ImageLayout::eTransferDstOptimal;
-        barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        barrier.image = image->get_image();
-        barrier.subresourceRange.aspectMask = image->get_aspect_flags();
-        barrier.subresourceRange.baseMipLevel = 0;
-        barrier.subresourceRange.levelCount = image->get_mip_levels();
-        barrier.subresourceRange.baseArrayLayer = 0;
-        barrier.subresourceRange.layerCount = image->get_array_layers();
-        barrier.srcAccessMask = vk::AccessFlagBits::eShaderRead;
-        barrier.dstAccessMask = vk::AccessFlagBits::eTransferWrite;
-
-        cmd.pipelineBarrier(
-            vk::PipelineStageFlagBits::eFragmentShader,
-            vk::PipelineStageFlagBits::eTransfer,
-            vk::DependencyFlags {},
-            0, nullptr, 0, nullptr, 1, &barrier);
-
-        vk::BufferImageCopy region {};
-        region.bufferOffset = 0;
-        region.bufferRowLength = 0;
-        region.bufferImageHeight = 0;
-        region.imageSubresource.aspectMask = image->get_aspect_flags();
-        region.imageSubresource.mipLevel = 0;
-        region.imageSubresource.baseArrayLayer = 0;
-        region.imageSubresource.layerCount = image->get_array_layers();
-        region.imageOffset = vk::Offset3D { 0, 0, 0 };
-        region.imageExtent = vk::Extent3D {
-            image->get_width(),
-            image->get_height(),
-            image->get_depth()
-        };
-
-        cmd.copyBufferToImage(
-            staging->get_buffer(),
-            image->get_image(),
-            vk::ImageLayout::eTransferDstOptimal,
-            1, &region);
-
-        barrier.oldLayout = vk::ImageLayout::eTransferDstOptimal;
-        barrier.newLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
-        barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
-        barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
-
-        cmd.pipelineBarrier(
-            vk::PipelineStageFlagBits::eTransfer,
-            vk::PipelineStageFlagBits::eFragmentShader,
-            vk::DependencyFlags {},
-            0, nullptr, 0, nullptr, 1, &barrier);
-    });
-
-    image->set_current_layout(vk::ImageLayout::eShaderReadOnlyOptimal);
-
-    MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
-        "Uploaded {} bytes to image {}x{}",
-        size, image->get_width(), image->get_height());
-}
-
-void BackendResourceManager::upload_image_data(
-    std::shared_ptr<VKImage> image,
-    const void* data,
-    size_t size,
-    const std::shared_ptr<Buffers::VKBuffer>& staging, bool deferred)
-{
-    if (!image || !data || !staging) {
-        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "Invalid parameters for upload_image_data_with_staging");
-        return;
-    }
-
-    void* mapped = staging->get_mapped_ptr();
-    if (!mapped) {
-        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "upload_image_data_with_staging: staging buffer has no mapped pointer");
-        return;
-    }
-
-    std::memcpy(mapped, data, size);
-    staging->mark_dirty_range(0, size);
-
-    auto& resources = staging->get_buffer_resources();
-    vk::MappedMemoryRange range { resources.memory, 0, VK_WHOLE_SIZE };
+    auto range = mapped_memory_range(resources.memory, 0, VK_WHOLE_SIZE);
 
     if (auto result = m_context.get_device().flushMappedMemoryRanges(1, &range);
         result != vk::Result::eSuccess) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "upload_image_data_with_staging: flush failed: {}", vk::to_string(result));
+            "Deferred image upload staging flush failed: {}", vk::to_string(result));
     }
 
     auto record_command = [&](vk::CommandBuffer cmd) {
-        vk::ImageMemoryBarrier barrier {};
+        vk::ImageMemoryBarrier2 barrier {};
         barrier.oldLayout = image->get_current_layout();
         barrier.newLayout = vk::ImageLayout::eTransferDstOptimal;
         barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
@@ -811,13 +1179,10 @@ void BackendResourceManager::upload_image_data(
             image->get_mip_levels(), 0,
             image->get_array_layers()
         };
-        barrier.srcAccessMask = vk::AccessFlagBits::eShaderRead;
-        barrier.dstAccessMask = vk::AccessFlagBits::eTransferWrite;
+        barrier.srcAccessMask = vk::AccessFlagBits2::eShaderRead;
+        barrier.dstAccessMask = vk::AccessFlagBits2::eTransferWrite;
 
-        cmd.pipelineBarrier(
-            vk::PipelineStageFlagBits::eFragmentShader,
-            vk::PipelineStageFlagBits::eTransfer,
-            {}, 0, nullptr, 0, nullptr, 1, &barrier);
+        record_barrier(cmd, barrier, vk::PipelineStageFlagBits2::eFragmentShader, vk::PipelineStageFlagBits2::eTransfer);
 
         vk::BufferImageCopy region {};
         region.imageSubresource.aspectMask = image->get_aspect_flags();
@@ -837,36 +1202,27 @@ void BackendResourceManager::upload_image_data(
 
         barrier.oldLayout = vk::ImageLayout::eTransferDstOptimal;
         barrier.newLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
-        barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
-        barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+        barrier.srcAccessMask = vk::AccessFlagBits2::eTransferWrite;
+        barrier.dstAccessMask = vk::AccessFlagBits2::eShaderRead;
 
-        cmd.pipelineBarrier(
-            vk::PipelineStageFlagBits::eTransfer,
-            vk::PipelineStageFlagBits::eFragmentShader,
-            {}, 0, nullptr, 0, nullptr, 1, &barrier);
+        record_barrier(cmd, barrier, vk::PipelineStageFlagBits2::eTransfer, vk::PipelineStageFlagBits2::eFragmentShader);
     };
 
-    if (deferred) {
-        record_deferred_commands(record_command);
-    } else {
-        execute_immediate_commands(record_command);
-    }
+    record_deferred_commands(record_command);
 
     image->set_current_layout(vk::ImageLayout::eShaderReadOnlyOptimal);
 
     MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
-        "upload_image_data_with_staging: {} bytes to image {}x{}",
+        "Deferred image upload: {} bytes to image {}x{}",
         size, image->get_width(), image->get_height());
 }
 
 void BackendResourceManager::download_image_data(
-    std::shared_ptr<VKImage> image,
+    const std::shared_ptr<VKImage>& image,
     void* data,
     size_t size,
-    const std::shared_ptr<Buffers::VKBuffer>& staging,
-    bool deferred,
     vk::ImageLayout restore_layout,
-    vk::PipelineStageFlags restore_stage)
+    vk::PipelineStageFlags2 restore_stage)
 {
     if (!image || !data) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
@@ -874,21 +1230,19 @@ void BackendResourceManager::download_image_data(
         return;
     }
 
-    std::shared_ptr<Buffers::VKBuffer> local_staging;
-    Buffers::VKBuffer* active_staging {};
-    if (!staging) {
-        local_staging = std::make_shared<Buffers::VKBuffer>(
-            size,
-            Buffers::VKBuffer::Usage::STAGING,
-            Kakshya::DataModality::IMAGE_COLOR);
-        initialize_buffer(local_staging);
-        active_staging = local_staging.get();
-    } else {
-        active_staging = staging.get();
+    if (image->get_memory()) {
+        download_image_host(image, data, size, restore_layout, restore_stage);
+        return;
     }
 
+    auto staging = std::make_shared<Buffers::VKBuffer>(
+        size,
+        Buffers::VKBuffer::Usage::STAGING,
+        Kakshya::DataModality::IMAGE_COLOR);
+    initialize_buffer(staging);
+
     auto record_command = [&](vk::CommandBuffer cmd) {
-        vk::ImageMemoryBarrier barrier {};
+        vk::ImageMemoryBarrier2 barrier {};
         barrier.oldLayout = image->get_current_layout();
         barrier.newLayout = vk::ImageLayout::eTransferSrcOptimal;
         barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
@@ -899,13 +1253,10 @@ void BackendResourceManager::download_image_data(
         barrier.subresourceRange.levelCount = image->get_mip_levels();
         barrier.subresourceRange.baseArrayLayer = 0;
         barrier.subresourceRange.layerCount = image->get_array_layers();
-        barrier.srcAccessMask = vk::AccessFlagBits::eShaderWrite | vk::AccessFlagBits::eShaderRead;
-        barrier.dstAccessMask = vk::AccessFlagBits::eTransferRead;
+        barrier.srcAccessMask = vk::AccessFlagBits2::eShaderWrite | vk::AccessFlagBits2::eShaderRead;
+        barrier.dstAccessMask = vk::AccessFlagBits2::eTransferRead;
 
-        cmd.pipelineBarrier(
-            vk::PipelineStageFlagBits::eFragmentShader | vk::PipelineStageFlagBits::eComputeShader,
-            vk::PipelineStageFlagBits::eTransfer,
-            vk::DependencyFlags {}, {}, {}, barrier);
+        record_barrier(cmd, barrier, vk::PipelineStageFlagBits2::eFragmentShader | vk::PipelineStageFlagBits2::eComputeShader, vk::PipelineStageFlagBits2::eTransfer);
 
         vk::BufferImageCopy region {};
         region.bufferOffset = 0;
@@ -925,25 +1276,16 @@ void BackendResourceManager::download_image_data(
         cmd.copyImageToBuffer(
             image->get_image(),
             vk::ImageLayout::eTransferSrcOptimal,
-            active_staging->get_buffer(),
+            staging->get_buffer(),
             1, &region);
 
         barrier.oldLayout = vk::ImageLayout::eTransferSrcOptimal;
         barrier.newLayout = restore_layout;
-        barrier.srcAccessMask = vk::AccessFlagBits::eTransferRead;
-        barrier.dstAccessMask = vk::AccessFlagBits::eMemoryRead;
+        barrier.srcAccessMask = vk::AccessFlagBits2::eTransferRead;
+        barrier.dstAccessMask = vk::AccessFlagBits2::eMemoryRead;
 
-        cmd.pipelineBarrier(
-            vk::PipelineStageFlagBits::eTransfer,
-            restore_stage,
-            vk::DependencyFlags {}, {}, {}, barrier);
+        record_barrier(cmd, barrier, vk::PipelineStageFlagBits2::eTransfer, restore_stage);
     };
-
-    if (deferred && staging) {
-        record_deferred_commands(record_command);
-        image->set_current_layout(restore_layout);
-        return;
-    }
 
     auto device = m_context.get_device();
 
@@ -951,40 +1293,29 @@ void BackendResourceManager::download_image_data(
     record_command(cmd);
     cmd.end();
 
-    vk::FenceCreateInfo fence_info {};
-    vk::Fence fence = device.createFence(fence_info);
-
-    vk::SubmitInfo submit_info {};
-    submit_info.commandBufferCount = 1;
-    submit_info.pCommandBuffers = &cmd;
-
-    if (auto result = m_context.get_graphics_queue().submit(1, &submit_info, fence);
-        result != vk::Result::eSuccess) {
+    const vk::CommandBuffer commands[] = { cmd };
+    const auto waits = m_command_manager.produced_waits(vk::PipelineStageFlagBits2::eAllCommands);
+    const TimelinePoint point = m_command_manager.submit(m_context.get_graphics_queue(), commands, waits);
+    if (!point) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "download_image_data: queue submit failed: {}", vk::to_string(result));
-        device.destroyFence(fence);
+            "download_image_data: queue submit failed");
         m_command_manager.free_command_buffer(cmd);
-        if (local_staging)
-            cleanup_buffer(local_staging);
+        cleanup_buffer(staging);
         return;
     }
 
     image->set_current_layout(restore_layout);
 
-    if (auto result = device.waitForFences(1, &fence, VK_TRUE, UINT64_MAX);
-        result != vk::Result::eSuccess) {
-        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "download_image_data: waitForFences failed: {}", vk::to_string(result));
-    }
+    m_command_manager.wait(point);
 
-    vk::MappedMemoryRange range { active_staging->get_buffer_resources().memory, 0, VK_WHOLE_SIZE };
+    auto range = mapped_memory_range(staging->get_buffer_resources().memory, 0, VK_WHOLE_SIZE);
     if (auto result = device.invalidateMappedMemoryRanges(1, &range);
         result != vk::Result::eSuccess) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
             "download_image_data: invalidate failed: {}", vk::to_string(result));
     }
 
-    void* mapped = active_staging->get_mapped_ptr();
+    void* mapped = staging->get_mapped_ptr();
     if (mapped) {
         std::memcpy(data, mapped, size);
     } else {
@@ -992,11 +1323,9 @@ void BackendResourceManager::download_image_data(
             "download_image_data: staging buffer has no mapped pointer");
     }
 
-    device.destroyFence(fence);
     m_command_manager.free_command_buffer(cmd);
 
-    if (local_staging)
-        cleanup_buffer(local_staging);
+    cleanup_buffer(staging);
 
     MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
         "download_image_data: {} bytes from image {}x{}",
@@ -1007,9 +1336,7 @@ bool BackendResourceManager::upload_image_layer(
     const std::shared_ptr<VKImage>& image,
     uint32_t layer,
     const void* data,
-    size_t size,
-    const std::shared_ptr<Buffers::VKBuffer>& staging,
-    bool deferred)
+    size_t size)
 {
     if (!image || !data || layer >= image->get_array_layers()) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
@@ -1017,106 +1344,14 @@ bool BackendResourceManager::upload_image_layer(
         return false;
     }
 
-    const size_t layer_bytes = image->get_size_bytes() / image->get_array_layers();
+    const size_t layer_bytes = image->get_base_level_size_bytes();
     if (size != layer_bytes) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
             "upload_image_layer: {} bytes given, layer needs {}", size, layer_bytes);
         return false;
     }
 
-    if (deferred && !staging) {
-        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "upload_image_layer: a deferred upload needs a caller staging buffer");
-        return false;
-    }
-
-    std::shared_ptr<Buffers::VKBuffer> local_staging;
-    if (!staging) {
-        local_staging = std::make_shared<Buffers::VKBuffer>(
-            size,
-            Buffers::VKBuffer::Usage::STAGING,
-            Kakshya::DataModality::IMAGE_COLOR);
-        initialize_buffer(local_staging);
-    }
-    const auto& active_staging = staging ? staging : local_staging;
-
-    void* mapped = active_staging->get_mapped_ptr();
-    if (!mapped) {
-        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "upload_image_layer: staging buffer has no mapped pointer");
-        if (local_staging) {
-            cleanup_buffer(local_staging);
-        }
-        return false;
-    }
-
-    std::memcpy(mapped, data, size);
-    active_staging->mark_dirty_range(0, size);
-
-    vk::MappedMemoryRange range { active_staging->get_buffer_resources().memory, 0, VK_WHOLE_SIZE };
-    if (auto result = m_context.get_device().flushMappedMemoryRanges(1, &range);
-        result != vk::Result::eSuccess) {
-        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "upload_image_layer: flush failed: {}", vk::to_string(result));
-    }
-
-    auto record_command = [&](vk::CommandBuffer cmd) {
-        vk::ImageMemoryBarrier barrier {};
-        barrier.oldLayout = image->get_current_layout();
-        barrier.newLayout = vk::ImageLayout::eTransferDstOptimal;
-        barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        barrier.image = image->get_image();
-        barrier.subresourceRange = {
-            image->get_aspect_flags(), 0,
-            image->get_mip_levels(), 0,
-            image->get_array_layers()
-        };
-        barrier.srcAccessMask = vk::AccessFlagBits::eShaderRead;
-        barrier.dstAccessMask = vk::AccessFlagBits::eTransferWrite;
-
-        cmd.pipelineBarrier(
-            vk::PipelineStageFlagBits::eFragmentShader,
-            vk::PipelineStageFlagBits::eTransfer,
-            vk::DependencyFlags {}, {}, {}, barrier);
-
-        vk::BufferImageCopy region {};
-        region.imageSubresource = { image->get_aspect_flags(), 0, layer, 1 };
-        region.imageOffset = vk::Offset3D { 0, 0, 0 };
-        region.imageExtent = vk::Extent3D {
-            image->get_width(),
-            image->get_height(),
-            image->get_depth()
-        };
-
-        cmd.copyBufferToImage(
-            active_staging->get_buffer(),
-            image->get_image(),
-            vk::ImageLayout::eTransferDstOptimal,
-            1, &region);
-
-        barrier.oldLayout = vk::ImageLayout::eTransferDstOptimal;
-        barrier.newLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
-        barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
-        barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
-
-        cmd.pipelineBarrier(
-            vk::PipelineStageFlagBits::eTransfer,
-            vk::PipelineStageFlagBits::eFragmentShader,
-            vk::DependencyFlags {}, {}, {}, barrier);
-    };
-
-    if (deferred) {
-        record_deferred_commands(record_command);
-    } else {
-        execute_immediate_commands(record_command);
-    }
-
-    image->set_current_layout(vk::ImageLayout::eShaderReadOnlyOptimal);
-
-    if (local_staging) {
-        cleanup_buffer(local_staging);
-    }
+    upload_image_host(image, layer, 1, data, size);
 
     return true;
 }
@@ -1172,11 +1407,11 @@ bool BackendResourceManager::blit_image(
                                     const std::shared_ptr<VKImage>& image,
                                     vk::ImageLayout from,
                                     vk::ImageLayout to,
-                                    vk::AccessFlags src_access,
-                                    vk::AccessFlags dst_access,
-                                    vk::PipelineStageFlags src_stage,
-                                    vk::PipelineStageFlags dst_stage) {
-            vk::ImageMemoryBarrier barrier {};
+                                    vk::AccessFlags2 src_access,
+                                    vk::AccessFlags2 dst_access,
+                                    vk::PipelineStageFlags2 src_stage,
+                                    vk::PipelineStageFlags2 dst_stage) {
+            vk::ImageMemoryBarrier2 barrier {};
             barrier.oldLayout = from;
             barrier.newLayout = to;
             barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
@@ -1189,17 +1424,17 @@ bool BackendResourceManager::blit_image(
             };
             barrier.srcAccessMask = src_access;
             barrier.dstAccessMask = dst_access;
-            cmd.pipelineBarrier(src_stage, dst_stage, vk::DependencyFlags {}, {}, {}, barrier);
+            record_barrier(cmd, barrier, src_stage, dst_stage);
         };
 
-        constexpr auto any_access = vk::AccessFlagBits::eMemoryRead | vk::AccessFlagBits::eMemoryWrite;
+        constexpr auto any_access = vk::AccessFlagBits2::eMemoryRead | vk::AccessFlagBits2::eMemoryWrite;
 
         transition(src, src->get_current_layout(), vk::ImageLayout::eTransferSrcOptimal,
-            any_access, vk::AccessFlagBits::eTransferRead,
-            vk::PipelineStageFlagBits::eAllCommands, vk::PipelineStageFlagBits::eTransfer);
+            any_access, vk::AccessFlagBits2::eTransferRead,
+            vk::PipelineStageFlagBits2::eAllCommands, vk::PipelineStageFlagBits2::eTransfer);
         transition(dst, dst->get_current_layout(), vk::ImageLayout::eTransferDstOptimal,
-            any_access, vk::AccessFlagBits::eTransferWrite,
-            vk::PipelineStageFlagBits::eAllCommands, vk::PipelineStageFlagBits::eTransfer);
+            any_access, vk::AccessFlagBits2::eTransferWrite,
+            vk::PipelineStageFlagBits2::eAllCommands, vk::PipelineStageFlagBits2::eTransfer);
 
         cmd.blitImage(
             src->get_image(), vk::ImageLayout::eTransferSrcOptimal,
@@ -1207,11 +1442,11 @@ bool BackendResourceManager::blit_image(
             1, &region, filter);
 
         transition(src, vk::ImageLayout::eTransferSrcOptimal, src_restore,
-            vk::AccessFlagBits::eTransferRead, any_access,
-            vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eAllCommands);
+            vk::AccessFlagBits2::eTransferRead, any_access,
+            vk::PipelineStageFlagBits2::eTransfer, vk::PipelineStageFlagBits2::eAllCommands);
         transition(dst, vk::ImageLayout::eTransferDstOptimal, dst_restore,
-            vk::AccessFlagBits::eTransferWrite, any_access,
-            vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eAllCommands);
+            vk::AccessFlagBits2::eTransferWrite, any_access,
+            vk::PipelineStageFlagBits2::eTransfer, vk::PipelineStageFlagBits2::eAllCommands);
     };
 
     if (deferred) {
@@ -1333,33 +1568,9 @@ void BackendResourceManager::record_deferred_commands(const std::function<void(v
     m_command_manager.record_deferred_commands(recorder);
 }
 
-vk::Semaphore BackendResourceManager::flush_deferred_commands()
+TimelinePoint BackendResourceManager::flush_deferred_commands()
 {
-    if (!m_command_manager.has_deferred_commands())
-        return nullptr;
-
-    vk::CommandBuffer cmd = m_command_manager.get_deferred_cmd();
-    cmd.end();
-
-    if (!m_deferred_semaphore) {
-        vk::SemaphoreCreateInfo sem_info {};
-        m_deferred_semaphore = m_context.get_device().createSemaphore(sem_info);
-    }
-
-    vk::SubmitInfo submit {};
-    submit.commandBufferCount = 1;
-    submit.pCommandBuffers = &cmd;
-    submit.signalSemaphoreCount = 1;
-    submit.pSignalSemaphores = &m_deferred_semaphore;
-
-    if (m_context.get_graphics_queue().submit(1, &submit, nullptr) != vk::Result::eSuccess) {
-        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "Failed to submit deferred command buffer");
-    }
-
-    m_command_manager.reset_deferred();
-
-    return m_deferred_semaphore;
+    return m_command_manager.flush_deferred(m_context.get_graphics_queue());
 }
 
 void BackendResourceManager::cleanup()
@@ -1371,13 +1582,8 @@ void BackendResourceManager::cleanup()
     }
     m_sampler_cache.clear();
 
-    if (m_deferred_semaphore) {
-        m_context.get_device().destroySemaphore(m_deferred_semaphore);
-        m_deferred_semaphore = nullptr;
-    }
-
     const auto device = m_context.get_device();
-    auto release_slots = [&device](Buffers::VKBuffer& owner) {
+    auto release_slots = [this, &device](Buffers::VKBuffer& owner) {
         auto& slots = owner.get_buffer_resources().back_buffers;
         for (auto& slot : slots) {
             if (slot.mapped_ptr && slot.memory) {
@@ -1387,6 +1593,9 @@ void BackendResourceManager::cleanup()
                 device.destroyBuffer(slot.buffer);
             }
             if (slot.memory) {
+                m_buffer_allocation_sizes.update([key = static_cast<VkDeviceMemory>(slot.memory)](AllocationSizes& sizes) {
+                    return sizes.erase(key);
+                });
                 device.freeMemory(slot.memory);
             }
         }
@@ -1404,6 +1613,10 @@ void BackendResourceManager::cleanup()
         }
     }
     m_managed_buffers.clear();
+    m_buffer_allocation_sizes.reset();
+    m_host_copy_layouts_ready = false;
+    m_host_copy_src_layouts.clear();
+    m_host_copy_dst_layouts.clear();
 }
 
 size_t BackendResourceManager::compute_sampler_hash(vk::Filter filter, vk::SamplerAddressMode address_mode, float max_anisotropy) const

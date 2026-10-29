@@ -15,8 +15,6 @@ UVFieldProcessor::UVFieldProcessor()
     m_config.push_constant_size = sizeof(PushConstants);
 
     m_config.bindings["vertices"] = ShaderBinding(0, 0, vk::DescriptorType::eStorageBuffer);
-
-    m_config.bindings["tex_sampler"] = ShaderBinding(0, 1, vk::DescriptorType::eCombinedImageSampler);
 }
 
 // =============================================================================
@@ -61,6 +59,13 @@ void UVFieldProcessor::set_texture(
     m_sampler = nullptr;
     m_pc.write_colour = m_texture ? 1U : 0U;
     m_needs_descriptor_rebuild = true;
+    m_config.shader_path = m_texture ? "uv_field_colour.comp.spv" : "uv_field.comp.spv";
+    if (m_texture) {
+        m_config.bindings["tex_sampler"] = ShaderBinding(0, 1, vk::DescriptorType::eCombinedImageSampler);
+    } else {
+        m_config.bindings.erase("tex_sampler");
+    }
+    m_initialized = false;
 }
 
 void UVFieldProcessor::clear_texture()
@@ -69,6 +74,9 @@ void UVFieldProcessor::clear_texture()
     m_sampler = nullptr;
     m_pc.write_colour = 0;
     m_needs_descriptor_rebuild = true;
+    m_config.shader_path = "uv_field.comp.spv";
+    m_config.bindings.erase("tex_sampler");
+    m_initialized = false;
 }
 
 // =============================================================================
@@ -92,16 +100,15 @@ void UVFieldProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
         "UVFieldProcessor attached ({} bytes)", vk_buf->get_size_bytes());
 }
 
-void UVFieldProcessor::on_descriptors_created()
+void UVFieldProcessor::collect_push_writes(
+    const std::shared_ptr<VKBuffer>& buffer,
+    std::vector<Portal::Graphics::PushDescriptorWrite>& writes)
 {
-    if (m_descriptor_set_ids.empty()) {
+    ComputeProcessor::collect_push_writes(buffer, writes);
+
+    if (!m_texture) {
         return;
     }
-
-    auto& foundry = Portal::Graphics::get_shader_foundry();
-
-    if (!m_texture)
-        return;
 
     if (!m_sampler) {
         auto& forge = Portal::Graphics::SamplerForge::instance();
@@ -109,22 +116,17 @@ void UVFieldProcessor::on_descriptors_created()
     }
 
     if (!m_sampler) {
-        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+        MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             "UVFieldProcessor: sampler creation failed, texture will not be sampled");
         return;
     }
 
-    foundry.update_descriptor_image(
-        m_descriptor_set_ids[0],
-        1,
-        m_texture->get_image_view(),
-        m_sampler,
-        vk::ImageLayout::eShaderReadOnlyOptimal);
-
-    MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-        "UVFieldProcessor: texture descriptor written (binding 1, view={:p}, sampler={:p})",
-        static_cast<void*>(static_cast<VkImageView>(m_texture->get_image_view())),
-        static_cast<void*>(static_cast<VkSampler>(m_sampler)));
+    writes.push_back({
+        .binding = 1,
+        .type = vk::DescriptorType::eCombinedImageSampler,
+        .image = vk::DescriptorImageInfo(
+            m_sampler, m_texture->get_image_view(), vk::ImageLayout::eShaderReadOnlyOptimal),
+    });
 }
 
 bool UVFieldProcessor::on_before_execute(

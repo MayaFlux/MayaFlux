@@ -105,9 +105,16 @@ void ShaderFoundry::shutdown()
         "Shutting down ShaderFoundry...");
 
     if (!m_command_buffers.empty()) {
-        MF_WARN(Journal::Component::Portal, Journal::Context::ShaderCompilation,
-            "{} command buffers still exist during shutdown - freeing now",
-            m_command_buffers.size());
+        const auto unreleased = std::ranges::count_if(m_command_buffers, [this](const auto& entry) {
+            return std::ranges::none_of(m_retired_commands, [&entry](const RetiredCommand& retired) {
+                return retired.cmd_id == entry.first;
+            });
+        });
+        if (unreleased > 0) {
+            MF_WARN(Journal::Component::Portal, Journal::Context::ShaderCompilation,
+                "{} command buffers still exist during shutdown - freeing now",
+                unreleased);
+        }
         free_all_command_buffers();
     }
 
@@ -946,6 +953,8 @@ CommandBufferID ShaderFoundry::begin_commands(CommandBufferType type)
 {
     auto& cmd_manager = m_backend->get_command_manager();
 
+    collect_retired_commands();
+
     CommandBufferID id = m_next_command_id++;
 
     CommandBufferState& state = m_command_buffers[id];
@@ -965,6 +974,8 @@ CommandBufferID ShaderFoundry::begin_secondary_commands(
     vk::Format depth_format)
 {
     auto& cmd_manager = m_backend->get_command_manager();
+
+    collect_retired_commands();
 
     CommandBufferID id = m_next_command_id++;
 
@@ -1034,6 +1045,7 @@ void ShaderFoundry::free_all_command_buffers()
         }
     }
     m_command_buffers.clear();
+    m_retired_commands.clear();
 
     MF_INFO(Journal::Component::Portal, Journal::Context::ShaderCompilation,
         "Freed all command buffers");
@@ -1042,6 +1054,98 @@ void ShaderFoundry::free_all_command_buffers()
 //==============================================================================
 // Synchronization
 //==============================================================================
+
+void ShaderFoundry::retire_after_submit(std::span<const CommandBufferID> cmd_ids)
+{
+    std::optional<Core::TimelineSnapshot> completion;
+    for (const CommandBufferID cmd_id : cmd_ids) {
+        if (!m_command_buffers.contains(cmd_id)) {
+            continue;
+        }
+        if (!completion) {
+            completion = m_backend->get_command_manager().submitted();
+        }
+        m_retired_commands.push_back({ .cmd_id = cmd_id, .completion = *completion });
+    }
+}
+
+void ShaderFoundry::release_after_submit(std::function<void()> release)
+{
+    auto& cmd_manager = m_backend->get_command_manager();
+    cmd_manager.retire_resource(std::move(release), cmd_manager.submitted());
+}
+
+void ShaderFoundry::hold_until_complete(CommandBufferID cmd_id, SlotLease hold)
+{
+    if (!hold) {
+        return;
+    }
+
+    auto it = m_command_buffers.find(cmd_id);
+    if (it != m_command_buffers.end()) {
+        it->second.holds.push_back(std::move(hold));
+    }
+}
+
+Core::TimelinePoint ShaderFoundry::submit_state(
+    const CommandBufferState& state,
+    std::span<const vk::SemaphoreSubmitInfo> signals)
+{
+    vk::Queue queue;
+    switch (state.type) {
+    case CommandBufferType::GRAPHICS:
+        queue = m_graphics_queue;
+        break;
+    case CommandBufferType::COMPUTE:
+        queue = m_compute_queue;
+        break;
+    case CommandBufferType::TRANSFER:
+        queue = m_transfer_queue;
+        break;
+    }
+
+    std::vector<vk::SemaphoreSubmitInfo> waits;
+    if (state.wait_semaphore) {
+        waits.emplace_back(state.wait_semaphore, 0, state.wait_stage);
+    }
+
+    const vk::CommandBuffer commands[] = { state.cmd };
+    auto& cmd_manager = m_backend->get_command_manager();
+    const Core::TimelinePoint point = cmd_manager.submit(queue, commands, waits, signals);
+    cmd_manager.note_produced(point);
+    return point;
+}
+
+void ShaderFoundry::collect_retired_commands()
+{
+    if (m_retired_commands.empty()) {
+        return;
+    }
+
+    const auto& cmd_manager = m_backend->get_command_manager();
+    std::erase_if(m_retired_commands, [this, &cmd_manager](const RetiredCommand& retired) {
+        if (!cmd_manager.is_complete(retired.completion)) {
+            return false;
+        }
+        release_command(retired.cmd_id);
+        return true;
+    });
+}
+
+void ShaderFoundry::release_command(CommandBufferID cmd_id)
+{
+    auto it = m_command_buffers.find(cmd_id);
+    if (it == m_command_buffers.end()) {
+        return;
+    }
+
+    if (it->second.timestamp_pool) {
+        get_device().destroyQueryPool(it->second.timestamp_pool);
+    }
+
+    m_backend->get_command_manager().free_command_buffer(it->second.cmd);
+    m_command_buffers.erase(it);
+}
 
 void ShaderFoundry::submit_and_wait(CommandBufferID cmd_id)
 {
@@ -1054,29 +1158,13 @@ void ShaderFoundry::submit_and_wait(CommandBufferID cmd_id)
 
     it->second.cmd.end();
 
-    vk::SubmitInfo submit_info;
-    submit_info.commandBufferCount = 1;
-    submit_info.pCommandBuffers = &it->second.cmd;
-
-    vk::Queue queue;
-    switch (it->second.type) {
-    case CommandBufferType::GRAPHICS:
-        queue = m_graphics_queue;
-        break;
-    case CommandBufferType::COMPUTE:
-        queue = m_compute_queue;
-        break;
-    case CommandBufferType::TRANSFER:
-        queue = m_transfer_queue;
-        break;
-    }
-
-    if (queue.submit(1, &submit_info, nullptr) != vk::Result::eSuccess) {
+    const Core::TimelinePoint point = submit_state(it->second);
+    if (!point) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ShaderCompilation,
             "Failed to submit command buffer");
         return;
     }
-    queue.waitIdle();
+    cmd_manager.wait(point);
 
     if (it->second.timestamp_pool) {
         for (const auto& query : it->second.timestamp_queries) {
@@ -1104,35 +1192,14 @@ FenceID ShaderFoundry::submit_async(CommandBufferID cmd_id)
 
     FenceID fence_id = m_next_fence_id++;
 
-    vk::FenceCreateInfo fence_info;
-    FenceState& fence_state = m_fences[fence_id];
-    fence_state.fence = get_device().createFence(fence_info);
-    fence_state.signaled = false;
-    fence_state.cmd_id = cmd_id;
-
-    vk::SubmitInfo submit_info;
-    submit_info.commandBufferCount = 1;
-    submit_info.pCommandBuffers = &cmd_it->second.cmd;
-
-    vk::Queue queue;
-    switch (cmd_it->second.type) {
-    case CommandBufferType::GRAPHICS:
-        queue = m_graphics_queue;
-        break;
-    case CommandBufferType::COMPUTE:
-        queue = m_compute_queue;
-        break;
-    case CommandBufferType::TRANSFER:
-        queue = m_transfer_queue;
-        break;
-    }
-
-    if (queue.submit(1, &submit_info, fence_state.fence) != vk::Result::eSuccess) {
+    const Core::TimelinePoint point = submit_state(cmd_it->second);
+    if (!point) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ShaderCompilation,
             "Failed to submit command buffer");
         return INVALID_FENCE;
     }
 
+    m_fences[fence_id] = { .point = point, .cmd_id = cmd_id };
     cmd_it->second.is_active = false;
 
     return fence_id;
@@ -1153,26 +1220,11 @@ SemaphoreID ShaderFoundry::submit_with_signal(CommandBufferID cmd_id)
     SemaphoreState& semaphore_state = m_semaphores[semaphore_id];
     semaphore_state.semaphore = get_device().createSemaphore(semaphore_info);
 
-    vk::SubmitInfo submit_info;
-    submit_info.commandBufferCount = 1;
-    submit_info.pCommandBuffers = &cmd_it->second.cmd;
-    submit_info.signalSemaphoreCount = 1;
-    submit_info.pSignalSemaphores = &semaphore_state.semaphore;
+    const vk::SemaphoreSubmitInfo signal_info {
+        semaphore_state.semaphore, 0, vk::PipelineStageFlagBits2::eAllCommands
+    };
 
-    vk::Queue queue;
-    switch (cmd_it->second.type) {
-    case CommandBufferType::GRAPHICS:
-        queue = m_graphics_queue;
-        break;
-    case CommandBufferType::COMPUTE:
-        queue = m_compute_queue;
-        break;
-    case CommandBufferType::TRANSFER:
-        queue = m_transfer_queue;
-        break;
-    }
-
-    if (queue.submit(1, &submit_info, nullptr) != vk::Result::eSuccess) {
+    if (!submit_state(cmd_it->second, std::span { &signal_info, 1 })) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ShaderCompilation,
             "Failed to submit command buffer");
         return INVALID_SEMAPHORE;
@@ -1190,38 +1242,27 @@ void ShaderFoundry::wait_for_fence(FenceID fence_id)
         return;
     }
 
-    if (get_device().waitForFences(1, &it->second.fence, VK_TRUE, UINT64_MAX) != vk::Result::eSuccess) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::ShaderCompilation,
-            "Failed to wait for fence: {}", fence_id);
-        return;
-    }
-    it->second.signaled = true;
+    m_backend->get_command_manager().wait(it->second.point);
+}
+
+Core::TimelinePoint ShaderFoundry::fence_point(FenceID fence_id) const
+{
+    const auto it = m_fences.find(fence_id);
+    return it != m_fences.end() ? it->second.point : Core::TimelinePoint {};
 }
 
 void ShaderFoundry::wait_for_fences(const std::vector<FenceID>& fence_ids)
 {
-    std::vector<vk::Fence> fences;
+    Core::TimelineSnapshot latest;
     for (auto fence_id : fence_ids) {
         auto it = m_fences.find(fence_id);
-        if (it != m_fences.end()) {
-            fences.push_back(it->second.fence);
+        if (it != m_fences.end() && it->second.point.timeline < Core::k_max_timelines) {
+            auto& value = latest.values[it->second.point.timeline];
+            value = std::max(value, it->second.point.value);
         }
     }
 
-    if (!fences.empty()) {
-        if (get_device().waitForFences(static_cast<uint32_t>(fences.size()), fences.data(), VK_TRUE, UINT64_MAX) != vk::Result::eSuccess) {
-            MF_ERROR(Journal::Component::Portal, Journal::Context::ShaderCompilation,
-                "Failed to wait for fences");
-            return;
-        }
-    }
-
-    for (auto fence_id : fence_ids) {
-        auto it = m_fences.find(fence_id);
-        if (it != m_fences.end()) {
-            it->second.signaled = true;
-        }
-    }
+    m_backend->get_command_manager().wait(latest);
 }
 
 void ShaderFoundry::release_fence(FenceID fence_id)
@@ -1233,18 +1274,24 @@ void ShaderFoundry::release_fence(FenceID fence_id)
     if (it == m_fences.end())
         return;
 
-    if (it->second.fence) {
-        get_device().destroyFence(it->second.fence);
-        it->second.fence = nullptr;
-    }
-
-    const CommandBufferID cmd_id = it->second.cmd_id;
+    const FenceState state = it->second;
     m_fences.erase(it);
 
-    if (cmd_id != INVALID_COMMAND_BUFFER) {
-        auto cmd_it = m_command_buffers.find(cmd_id);
+    if (state.cmd_id != INVALID_COMMAND_BUFFER) {
+        auto cmd_it = m_command_buffers.find(state.cmd_id);
         if (cmd_it != m_command_buffers.end()) {
-            m_backend->get_command_manager().free_command_buffer(cmd_it->second.cmd);
+            auto& cmd_manager = m_backend->get_command_manager();
+            cmd_manager.retire(cmd_it->second.cmd, state.point);
+            if (cmd_it->second.timestamp_pool) {
+                cmd_manager.retire_resource(
+                    [device = get_device(), pool = cmd_it->second.timestamp_pool] { device.destroyQueryPool(pool); },
+                    state.point);
+            }
+            if (!cmd_it->second.holds.empty()) {
+                cmd_manager.retire_resource(
+                    [holds = std::make_shared<std::vector<SlotLease>>(std::move(cmd_it->second.holds))] { },
+                    state.point);
+            }
             m_command_buffers.erase(cmd_it);
         }
     }
@@ -1257,26 +1304,26 @@ bool ShaderFoundry::is_fence_signaled(FenceID fence_id)
         return false;
     }
 
-    if (it->second.signaled) {
-        return true;
-    }
-
-    auto result = get_device().getFenceStatus(it->second.fence);
-    it->second.signaled = (result == vk::Result::eSuccess);
-    return it->second.signaled;
+    return m_backend->get_command_manager().is_complete(it->second.point);
 }
 
 CommandBufferID ShaderFoundry::begin_commands_with_wait(
     CommandBufferType type,
     SemaphoreID wait_semaphore,
-    vk::PipelineStageFlags /*wait_stage*/)
+    vk::PipelineStageFlags2 wait_stage)
 {
     auto sem_it = m_semaphores.find(wait_semaphore);
     if (sem_it == m_semaphores.end()) {
         return INVALID_COMMAND_BUFFER;
     }
 
-    return begin_commands(type);
+    const CommandBufferID id = begin_commands(type);
+
+    auto& state = m_command_buffers[id];
+    state.wait_semaphore = sem_it->second.semaphore;
+    state.wait_stage = wait_stage;
+
+    return id;
 }
 
 vk::Semaphore ShaderFoundry::get_semaphore_handle(SemaphoreID semaphore_id)
@@ -1292,11 +1339,6 @@ void ShaderFoundry::cleanup_sync_objects()
 {
     auto device = get_device();
 
-    for (auto& [id, state] : m_fences) {
-        if (state.fence) {
-            device.destroyFence(state.fence);
-        }
-    }
     m_fences.clear();
 
     for (auto& [id, state] : m_semaphores) {
@@ -1317,18 +1359,20 @@ void ShaderFoundry::cleanup_sync_objects()
 void ShaderFoundry::buffer_barrier(
     CommandBufferID cmd_id,
     vk::Buffer buffer,
-    vk::AccessFlags src_access,
-    vk::AccessFlags dst_access,
-    vk::PipelineStageFlags src_stage,
-    vk::PipelineStageFlags dst_stage)
+    vk::AccessFlags2 src_access,
+    vk::AccessFlags2 dst_access,
+    vk::PipelineStageFlags2 src_stage,
+    vk::PipelineStageFlags2 dst_stage)
 {
     auto it = m_command_buffers.find(cmd_id);
     if (it == m_command_buffers.end()) {
         return;
     }
 
-    vk::BufferMemoryBarrier barrier;
+    vk::BufferMemoryBarrier2 barrier;
+    barrier.srcStageMask = src_stage;
     barrier.srcAccessMask = src_access;
+    barrier.dstStageMask = dst_stage;
     barrier.dstAccessMask = dst_access;
     barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
@@ -1336,13 +1380,36 @@ void ShaderFoundry::buffer_barrier(
     barrier.offset = 0;
     barrier.size = VK_WHOLE_SIZE;
 
-    it->second.cmd.pipelineBarrier(
-        src_stage,
-        dst_stage,
-        vk::DependencyFlags {},
-        0, nullptr,
-        1, &barrier,
-        0, nullptr);
+    vk::DependencyInfo dependency;
+    dependency.bufferMemoryBarrierCount = 1;
+    dependency.pBufferMemoryBarriers = &barrier;
+
+    it->second.cmd.pipelineBarrier2(dependency);
+}
+
+void ShaderFoundry::memory_barrier(
+    CommandBufferID cmd_id,
+    vk::AccessFlags2 src_access,
+    vk::AccessFlags2 dst_access,
+    vk::PipelineStageFlags2 src_stage,
+    vk::PipelineStageFlags2 dst_stage)
+{
+    auto it = m_command_buffers.find(cmd_id);
+    if (it == m_command_buffers.end()) {
+        return;
+    }
+
+    vk::MemoryBarrier2 barrier;
+    barrier.srcStageMask = src_stage;
+    barrier.srcAccessMask = src_access;
+    barrier.dstStageMask = dst_stage;
+    barrier.dstAccessMask = dst_access;
+
+    vk::DependencyInfo dependency;
+    dependency.memoryBarrierCount = 1;
+    dependency.pMemoryBarriers = &barrier;
+
+    it->second.cmd.pipelineBarrier2(dependency);
 }
 
 void ShaderFoundry::image_barrier(
@@ -1350,18 +1417,20 @@ void ShaderFoundry::image_barrier(
     vk::Image image,
     vk::ImageLayout old_layout,
     vk::ImageLayout new_layout,
-    vk::AccessFlags src_access,
-    vk::AccessFlags dst_access,
-    vk::PipelineStageFlags src_stage,
-    vk::PipelineStageFlags dst_stage)
+    vk::AccessFlags2 src_access,
+    vk::AccessFlags2 dst_access,
+    vk::PipelineStageFlags2 src_stage,
+    vk::PipelineStageFlags2 dst_stage)
 {
     auto it = m_command_buffers.find(cmd_id);
     if (it == m_command_buffers.end()) {
         return;
     }
 
-    vk::ImageMemoryBarrier barrier;
+    vk::ImageMemoryBarrier2 barrier;
+    barrier.srcStageMask = src_stage;
     barrier.srcAccessMask = src_access;
+    barrier.dstStageMask = dst_stage;
     barrier.dstAccessMask = dst_access;
     barrier.oldLayout = old_layout;
     barrier.newLayout = new_layout;
@@ -1374,13 +1443,11 @@ void ShaderFoundry::image_barrier(
     barrier.subresourceRange.baseArrayLayer = 0;
     barrier.subresourceRange.layerCount = 1;
 
-    it->second.cmd.pipelineBarrier(
-        src_stage,
-        dst_stage,
-        vk::DependencyFlags {},
-        0, nullptr,
-        0, nullptr,
-        1, &barrier);
+    vk::DependencyInfo dependency;
+    dependency.imageMemoryBarrierCount = 1;
+    dependency.pImageMemoryBarriers = &barrier;
+
+    it->second.cmd.pipelineBarrier2(dependency);
 }
 
 //==============================================================================
@@ -1413,7 +1480,7 @@ void ShaderFoundry::begin_timestamp(CommandBufferID cmd_id, const std::string& l
     it->second.timestamp_queries[label] = query_index;
 
     it->second.cmd.resetQueryPool(it->second.timestamp_pool, query_index, 2);
-    it->second.cmd.writeTimestamp(vk::PipelineStageFlagBits::eTopOfPipe, it->second.timestamp_pool, query_index);
+    it->second.cmd.writeTimestamp2(vk::PipelineStageFlagBits2::eNone, it->second.timestamp_pool, query_index);
 }
 
 void ShaderFoundry::end_timestamp(CommandBufferID cmd_id, const std::string& label)
@@ -1429,7 +1496,7 @@ void ShaderFoundry::end_timestamp(CommandBufferID cmd_id, const std::string& lab
     }
 
     uint32_t query_index = query_it->second;
-    it->second.cmd.writeTimestamp(vk::PipelineStageFlagBits::eBottomOfPipe, it->second.timestamp_pool, query_index + 1);
+    it->second.cmd.writeTimestamp2(vk::PipelineStageFlagBits2::eAllCommands, it->second.timestamp_pool, query_index + 1);
 }
 
 ShaderFoundry::TimestampResult ShaderFoundry::get_timestamp_result(CommandBufferID cmd_id, const std::string& label)

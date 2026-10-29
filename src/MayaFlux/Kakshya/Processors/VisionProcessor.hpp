@@ -108,7 +108,6 @@ private:
     std::unique_ptr<Yantra::VisionGpuExecutor> m_executor;
     Kinesis::Vision::VisionExecutor m_cpu_executor;
 
-    std::shared_ptr<Buffers::VKBuffer> m_upload_staging;
     std::shared_ptr<Core::VKImage> m_gpu_frame;
     Kinesis::Vision::VisionResult m_result;
 

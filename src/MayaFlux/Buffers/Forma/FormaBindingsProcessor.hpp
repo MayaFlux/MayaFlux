@@ -323,6 +323,7 @@ private:
         Portal::Graphics::DescriptorRole role;
         std::shared_ptr<VKBuffer> gpu_buffer;
         size_t buffer_size;
+        std::shared_ptr<VKBuffer> staging;
     };
 
     struct Binding {
@@ -344,7 +345,7 @@ private:
 
     void flush_typed_push_constant(const std::string& name, const Kakshya::GpuValue& value, const PushConstantTarget& pc, const std::shared_ptr<VKBuffer>& buffer);
 
-    void flush_descriptor(float value, const DescriptorTarget& desc,
+    void flush_descriptor(float value, DescriptorTarget& desc,
         const std::shared_ptr<VKBuffer>& attached);
 
     [[nodiscard]] static std::shared_ptr<VKBuffer> make_descriptor_buffer(

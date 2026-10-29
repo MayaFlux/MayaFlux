@@ -84,22 +84,22 @@ namespace {
     }
 
     /** Vertex field offsets — derived from VertexLayout, never hardcoded.
-     * All three vertex types share the 60-byte layout:
+     * All three vertex types share the 68-byte layout:
      *   offset  0 — position  vec3  (12)
-     *   offset 12 — color     vec3  (12)
-     *   offset 24 — scalar    float  (4)  [size / thickness / weight]
-     *   offset 28 — uv        vec2   (8)
-     *   offset 36 — normal    vec3  (12)
-     *   offset 48 — tangent   vec3  (12)
+     *   offset 12 — color     vec4  (16)
+     *   offset 28 — scalar    float  (4)  [size / thickness / weight]
+     *   offset 32 — uv        vec2   (8)
+     *   offset 40 — normal    vec3  (12)
+     *   offset 52 — tangent   vec4  (16)
      **/
 
-    constexpr uint32_t k_stride = 60;
+    constexpr uint32_t k_stride = 68;
     constexpr uint32_t k_off_pos = 0;
     constexpr uint32_t k_off_color = 12;
-    constexpr uint32_t k_off_scalar = 24;
+    constexpr uint32_t k_off_scalar = 28;
 
     constexpr glm::vec3 k_default_normal { 0.F, 0.F, 1.F };
-    constexpr glm::vec3 k_default_tangent { 1.F, 0.F, 0.F };
+    constexpr glm::vec4 k_default_tangent { 1.F, 0.F, 0.F, 1.F };
     constexpr glm::vec2 k_default_uv { 0.F, 0.F };
 
     void write_vertex(
@@ -112,11 +112,12 @@ namespace {
         out.resize(base + k_stride, 0);
         uint8_t* v = out.data() + base;
         std::memcpy(v + k_off_pos, &pos, 12);
-        std::memcpy(v + k_off_color, &color, 12);
+        const glm::vec4 rgba { color, 1.F };
+        std::memcpy(v + k_off_color, &rgba, 16);
         std::memcpy(v + k_off_scalar, &scalar, 4);
-        std::memcpy(v + 28, &k_default_uv, 8);
-        std::memcpy(v + 36, &k_default_normal, 12);
-        std::memcpy(v + 48, &k_default_tangent, 12);
+        std::memcpy(v + 32, &k_default_uv, 8);
+        std::memcpy(v + 40, &k_default_normal, 12);
+        std::memcpy(v + 52, &k_default_tangent, 16);
     }
 
     /**

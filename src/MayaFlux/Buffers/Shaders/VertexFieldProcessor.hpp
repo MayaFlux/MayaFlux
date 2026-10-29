@@ -146,17 +146,15 @@ protected:
         const std::shared_ptr<VKBuffer>& buffer) override;
 
     /**
-     * @brief Write the cluster_id descriptor when the operator needs one.
+     * @brief Push the cluster_id binding when the operator needs one.
+     * @param buffer The attached buffer.
+     * @param writes Receives the parent's writes, then cluster_id.
      *
-     * A no-op call when m_needs_cluster_id is false. hash_cluster_id's
-     * underlying allocation is fixed-size for the buffer's whole lifetime
-     * (NetworkGeometryBuffer::declare_state never resizes a declared state
-     * field the way the primary vertex buffer resizes), so a single write
-     * here each time descriptor sets are (re)created is sufficient; unlike
-     * NetworkStateFieldProcessor's own fields, nothing here needs rewriting
-     * every cycle for resize-safety.
+     * Adds nothing when m_needs_cluster_id is false.
      */
-    void on_descriptors_created() override;
+    void collect_push_writes(
+        const std::shared_ptr<VKBuffer>& buffer,
+        std::vector<Portal::Graphics::PushDescriptorWrite>& writes) override;
 
 private:
     /**

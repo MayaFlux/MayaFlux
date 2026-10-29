@@ -38,6 +38,16 @@ struct MAYAFLUX_API BufferService {
     std::function<void(const std::shared_ptr<void>&)> destroy_buffer;
 
     /**
+     * @brief Destroy a buffer once all submitted GPU work has completed
+     * @param buffer Buffer handle to retire
+     *
+     * Detaches the buffer's resources immediately, so the object can be
+     * initialized again, and releases the old handles when the work
+     * submitted so far finishes. Does not wait.
+     */
+    std::function<void(const std::shared_ptr<void>&)> retire_buffer;
+
+    /**
      * @brief Map buffer memory to host-visible pointer
      * @param memory Memory handle to map
      * @param offset Offset in bytes from memory start
@@ -180,6 +190,32 @@ struct MAYAFLUX_API BufferService {
      * @return           Opaque fence handle. Pass to wait_fenced(), then release_fenced().
      */
     std::function<std::shared_ptr<void>(void*, void*, size_t, size_t, size_t)> copy_buffer_fenced;
+
+    /**
+     * @brief Block until every dispatch submitted so far has completed.
+     *
+     * Returns immediately when nothing is outstanding. Call before the host
+     * reads or overwrites memory a dispatch may still be using.
+     */
+    std::function<void()> await_dispatches;
+
+    /**
+     * @brief Block until the submission at a timeline value has completed.
+     *
+     * Returns immediately when it already has.
+     *
+     * @param timeline Timeline index of the submission.
+     * @param value    Value the submission signals on that timeline.
+     */
+    std::function<void(uint32_t, uint64_t)> await_point;
+
+    /**
+     * @brief Completion point of a fenced submission.
+     *
+     * @param handle Handle returned by execute_fenced or copy_buffer_fenced.
+     * @return Timeline index and value, or {0, 0} for a null handle.
+     */
+    std::function<std::pair<uint32_t, uint64_t>(const std::shared_ptr<void>&)> fenced_point;
 };
 
 } // namespace MayaFlux::Registry::Services

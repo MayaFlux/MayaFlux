@@ -93,9 +93,16 @@ protected:
     void on_attach(const std::shared_ptr<Buffer>& buffer) override;
 
     /**
-     * @brief Write every binding in the table for the current slot assignment.
+     * @brief Push every binding in the table for the current slot assignment.
+     * @param buffer The attached buffer.
+     * @param writes Receives the parent's writes, then one per table entry.
+     *
+     * Read slots change whenever an upstream stage swaps, so the handles are
+     * resolved again on every dispatch.
      */
-    void on_descriptors_created() override;
+    void collect_push_writes(
+        const std::shared_ptr<VKBuffer>& buffer,
+        std::vector<Portal::Graphics::PushDescriptorWrite>& writes) override;
 
     /**
      * @brief Reject buffers that are not the validated volume.
@@ -106,11 +113,8 @@ protected:
     bool on_before_execute(Portal::Graphics::CommandBufferID cmd_id, const std::shared_ptr<VKBuffer>& buffer) override;
 
     /**
-     * @brief Rewrite field descriptors, run the shader, then swap.
+     * @brief Run the shader, then swap the registered fields.
      * @param buffer Buffer under processing.
-     *
-     * Read slots change whenever an upstream stage swaps, so the bindings
-     * are rewritten every cycle rather than once.
      */
     void processing_function(const std::shared_ptr<Buffer>& buffer) override;
 
@@ -191,11 +195,6 @@ private:
      * @brief Size the manual dispatch to cover the lattice.
      */
     void size_dispatch();
-
-    /**
-     * @brief Issue descriptor writes for every entry in the binding table.
-     */
-    void write_field_descriptors();
 
     std::vector<FieldBinding> m_bindings;
     std::vector<std::string> m_swap_fields;

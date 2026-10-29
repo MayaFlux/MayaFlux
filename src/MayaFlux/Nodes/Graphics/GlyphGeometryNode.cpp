@@ -68,7 +68,7 @@ void GlyphGeometryNode::set_center(std::optional<glm::vec2> center)
     m_dirty = true;
 }
 
-void GlyphGeometryNode::set_color(glm::vec3 color)
+void GlyphGeometryNode::set_color(glm::vec4 color)
 {
     m_color = color;
     m_dirty = true;

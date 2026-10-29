@@ -30,7 +30,7 @@ namespace MayaFlux::Kakshya {
  * ins.insert_flat(
  *     std::span<const uint8_t>{ raw_bytes, byte_count },
  *     std::span<const uint32_t>{ indices, index_count },
- *     VertexLayout::for_meshes(60));
+ *     VertexLayout::for_meshes(68));
  * auto access = ins.build();
  * @endcode
  *
@@ -97,7 +97,7 @@ public:
         std::span<const uint32_t> index_data,
         std::string_view name = {},
         std::string_view material_name = {},
-        const VertexLayout& layout = VertexLayout::for_meshes(60));
+        const VertexLayout& layout = VertexLayout::for_meshes(68));
 
     /**
      * @brief Clear both variants and reset all internal state.

@@ -364,7 +364,7 @@ void PathOperator::set_global_thickness(float thickness)
     }
 }
 
-void PathOperator::set_global_color(const glm::vec3& color)
+void PathOperator::set_global_color(const glm::vec4& color)
 {
     for (auto& path : m_paths) {
         path->set_path_color(color);

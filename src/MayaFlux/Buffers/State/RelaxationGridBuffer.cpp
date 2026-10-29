@@ -4,6 +4,7 @@
 
 #include "MayaFlux/Buffers/BufferProcessingChain.hpp"
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
+#include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
@@ -254,6 +255,7 @@ void RelaxationGridBuffer::seed_state(const void* data, size_t size)
         return;
     }
 
+    await_dispatches();
     std::memcpy(front.mapped_ptr, data, size);
 }
 

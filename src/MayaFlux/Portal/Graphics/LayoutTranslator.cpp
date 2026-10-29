@@ -19,6 +19,7 @@ vk::Format VertexLayoutTranslator::modality_to_vk_format(Kakshya::DataModality m
         return vk::Format::eR32G32Sfloat;
 
     case DataModality::VERTEX_COLORS_RGBA:
+    case DataModality::VERTEX_TANGENTS_4D:
         return vk::Format::eR32G32B32A32Sfloat;
 
     case DataModality::AUDIO_1D:
@@ -104,7 +105,7 @@ uint32_t VertexLayoutTranslator::get_modality_size_bytes(Kakshya::DataModality m
 
     switch (modality) {
     case DataModality::VERTICES_3D:
-        return 60;
+        return 68;
     case DataModality::VERTEX_POSITIONS_3D:
     case DataModality::VERTEX_NORMALS_3D:
     case DataModality::VERTEX_TANGENTS_3D:
@@ -115,6 +116,7 @@ uint32_t VertexLayoutTranslator::get_modality_size_bytes(Kakshya::DataModality m
         return 8; // 2 * float32
 
     case DataModality::VERTEX_COLORS_RGBA:
+    case DataModality::VERTEX_TANGENTS_4D:
         return 16; // 4 * float32
 
     case DataModality::AUDIO_1D:
@@ -146,6 +148,8 @@ std::string_view VertexLayoutTranslator::describe_modality(Kakshya::DataModality
         return "vec3 (color RGB)";
     case DataModality::VERTEX_COLORS_RGBA:
         return "vec4 (color RGBA)";
+    case DataModality::VERTEX_TANGENTS_4D:
+        return "vec4 (tangents, w handedness)";
     case DataModality::TEXTURE_COORDS_2D:
         return "vec2 (UV)";
     case DataModality::AUDIO_1D:

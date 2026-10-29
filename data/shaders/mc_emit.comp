@@ -75,22 +75,24 @@ vec3 interp_edge(vec3 p0, vec3 p1, float v0, float v1)
 
 void write_vertex(uint slot, vec3 pos, vec2 uv, vec3 normal, vec3 color)
 {
-    uint base = slot * 15u;
+    uint base = slot * 17u;
     vertices[base + 0] = pos.x;
     vertices[base + 1] = pos.y;
     vertices[base + 2] = pos.z;
     vertices[base + 3] = color.r;
     vertices[base + 4] = color.g;
     vertices[base + 5] = color.b;
-    vertices[base + 6] = 0.0;
-    vertices[base + 7] = uv.x;
-    vertices[base + 8] = uv.y;
-    vertices[base + 9] = normal.x;
-    vertices[base + 10] = normal.y;
-    vertices[base + 11] = normal.z;
-    vertices[base + 12] = 1.0;
-    vertices[base + 13] = 0.0;
+    vertices[base + 6] = 1.0;
+    vertices[base + 7] = 0.0;
+    vertices[base + 8] = uv.x;
+    vertices[base + 9] = uv.y;
+    vertices[base + 10] = normal.x;
+    vertices[base + 11] = normal.y;
+    vertices[base + 12] = normal.z;
+    vertices[base + 13] = 1.0;
     vertices[base + 14] = 0.0;
+    vertices[base + 15] = 0.0;
+    vertices[base + 16] = 1.0;
 }
 
 vec3 vertex_color(vec3 normal)

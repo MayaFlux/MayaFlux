@@ -193,22 +193,23 @@ protected:
      */
     void on_attach(const std::shared_ptr<Buffer>& buffer) override;
 
-    /** @brief Write every binding in the table for the current buffer state. */
-    void on_descriptors_created() override;
+    /**
+     * @brief Push every binding in the table for the current buffer state.
+     * @param buffer The attached buffer.
+     * @param writes Receives the parent's writes, then one per table entry.
+     *
+     * The primary vertex buffer's handle can change on resize and state
+     * fields may have swapped, so the handles are resolved again on every
+     * dispatch, the same reasoning VolumeFieldProcessor applies.
+     */
+    void collect_push_writes(
+        const std::shared_ptr<VKBuffer>& buffer,
+        std::vector<Portal::Graphics::PushDescriptorWrite>& writes) override;
 
     /**
      * @brief Reject buffers that are not the validated NetworkGeometryBuffer.
      */
     bool on_before_execute(Portal::Graphics::CommandBufferID cmd_id, const std::shared_ptr<VKBuffer>& buffer) override;
-
-    /**
-     * @brief Rewrite field descriptors, then run the shader.
-     *
-     * The primary vertex buffer's handle can change on resize, so bindings
-     * are rewritten every cycle rather than once, the same reasoning
-     * VolumeFieldProcessor applies to fields that may have swapped.
-     */
-    void processing_function(const std::shared_ptr<Buffer>& buffer) override;
 
     /**
      * @brief Hook for subclass setup, called at the end of on_attach.
@@ -277,9 +278,6 @@ private:
      * @return True if the cached buffer satisfies the binding table.
      */
     bool validate_fields();
-
-    /** @brief Issue descriptor writes for every entry in the binding table. */
-    void write_field_descriptors();
 
     std::vector<FieldBinding> m_bindings;
     std::shared_ptr<NetworkGeometryBuffer> m_buffer;

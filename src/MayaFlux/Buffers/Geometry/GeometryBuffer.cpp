@@ -4,6 +4,7 @@
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
+#include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
 
 namespace MayaFlux::Buffers {
 
@@ -72,36 +73,24 @@ void GeometryBuffer::setup_rendering(const RenderConfig& config)
         resolved_config.topology = m_geometry_node->get_primitive_topology();
     }
 
+    resolved_config.triangulate |= Portal::Graphics::needs_triangulation(
+        resolved_config.topology, resolved_config.polygon_mode);
+
     switch (resolved_config.topology) {
     case Portal::Graphics::PrimitiveTopology::POINT_LIST:
-        if (resolved_config.triangulate) {
-            if (config.vertex_shader.empty())
-                resolved_config.vertex_shader = "milled_shape.vert.spv";
-            if (config.fragment_shader.empty()) {
-                resolved_config.fragment_shader = textured
-                    ? "milled_shape_textured.frag.spv"
-                    : "milled_shape.frag.spv";
-            }
-        } else {
-            if (config.vertex_shader.empty())
-                resolved_config.vertex_shader = "point.vert.spv";
-            if (config.fragment_shader.empty())
-                resolved_config.fragment_shader = "point.frag.spv";
-        }
+        if (config.vertex_shader.empty())
+            resolved_config.vertex_shader = "point.vert.spv";
+        if (config.fragment_shader.empty())
+            resolved_config.fragment_shader = textured ? "point_textured.frag.spv" : "point.frag.spv";
         break;
 
     case Portal::Graphics::PrimitiveTopology::LINE_LIST:
     case Portal::Graphics::PrimitiveTopology::LINE_STRIP:
-
         if (config.vertex_shader.empty())
             resolved_config.vertex_shader = "line.vert.spv";
 
         if (config.fragment_shader.empty())
             resolved_config.fragment_shader = "line.frag.spv";
-
-#ifdef MAYAFLUX_PLATFORM_MACOS
-        resolved_config.triangulate = true;
-#endif
 
         if (resolved_config.triangulate) {
             resolved_config.geometry_shader.clear();
@@ -113,13 +102,11 @@ void GeometryBuffer::setup_rendering(const RenderConfig& config)
 
     case Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST:
     case Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP:
+    case Portal::Graphics::PrimitiveTopology::TRIANGLE_FAN:
         if (config.vertex_shader.empty())
             resolved_config.vertex_shader = "triangle.vert.spv";
-        if (config.fragment_shader.empty()) {
-            resolved_config.fragment_shader = textured
-                ? "mesh_textured.frag.spv"
-                : "triangle.frag.spv";
-        }
+        if (config.fragment_shader.empty())
+            resolved_config.fragment_shader = textured ? "mesh_textured.frag.spv" : "triangle.frag.spv";
         break;
 
     default:
@@ -150,6 +137,14 @@ void GeometryBuffer::setup_rendering(const RenderConfig& config)
     }
 
     apply_render_config(resolved_config, sc);
+
+    if (resolved_config.triangulate
+        && resolved_config.polygon_mode == Portal::Graphics::PolygonMode::POINT
+        && m_render_processor) {
+        auto mill_spec = m_render_processor->get_mill_spec();
+        mill_spec.use_vertex_extent = false;
+        m_render_processor->set_mill_spec(mill_spec);
+    }
 
     get_processing_chain()->add_final_processor(m_render_processor, shared_from_this());
 

@@ -9,10 +9,6 @@ namespace MayaFlux::Core {
 class VKImage;
 }
 
-namespace MayaFlux::Buffers {
-class VKBuffer;
-}
-
 namespace MayaFlux::Kakshya {
 
 /**
@@ -88,24 +84,6 @@ public:
     void from_image(const std::shared_ptr<Core::VKImage>& image, uint32_t layer = 0);
 
     /**
-     * @brief Download pixel data from a VKImage, reusing a caller-supplied
-     *        persistent staging buffer.
-     *
-     * Identical to from_image() but passes @p staging through to
-     * TextureLoom::download_data, eliminating the per-call Vulkan object
-     * allocation. Use Buffers::create_image_staging_buffer(byte_size())
-     * to allocate the staging buffer once before the render loop.
-     *
-     * @param image   Source GPU texture. Must be initialised and match dimensions.
-     * @param staging Host-visible staging VKBuffer sized to at least byte_size().
-     * @param layer   Array layer index (default 0).
-     */
-    void from_image(
-        const std::shared_ptr<Core::VKImage>& image,
-        const std::shared_ptr<Buffers::VKBuffer>& staging,
-        uint32_t layer = 0);
-
-    /**
      * @brief Download each array layer of a Vulkan 2D array image into
      *        the corresponding layer slot.
      *
@@ -118,24 +96,6 @@ public:
     void from_image_array(const std::shared_ptr<Core::VKImage>& image);
 
     /**
-     * @brief Download all array layers from a VKImage, reusing a caller-supplied
-     *        persistent staging buffer.
-     *
-     * Identical to from_image_array() but passes @p staging through to
-     * TextureLoom::download_data. The staging buffer must be at least
-     * byte_size() * get_layer_count() bytes.
-     * Use Buffers::create_image_staging_buffer(byte_size() * get_layer_count())
-     * to allocate it once before the render loop.
-     *
-     * @param image   Source VKImage with array_layers >= get_layer_count().
-     * @param staging Host-visible staging VKBuffer sized to at least
-     *                byte_size() * get_layer_count().
-     */
-    void from_image_array(
-        const std::shared_ptr<Core::VKImage>& image,
-        const std::shared_ptr<Buffers::VKBuffer>& staging);
-
-    /**
      * @brief Refresh the container-owned VKImage for one layer.
      * @param layer Array layer index for array textures (default 0).
      * @return Cached and uploaded VKImage. Null on failure.
@@ -146,20 +106,6 @@ public:
      * upload.
      */
     [[nodiscard]] std::shared_ptr<Core::VKImage> to_image(uint32_t layer = 0) const;
-
-    /**
-     * @brief Refresh one layer's cached VKImage with caller-supplied staging.
-     *
-     * Reuses the container-owned image and uploads via the supplied staging
-     * buffer.
-     *
-     * @param layer   Array layer index (default 0).
-     * @param staging Host-visible staging VKBuffer sized to at least byte_size().
-     * @return Cached VKImage, or nullptr on failure.
-     */
-    [[nodiscard]] std::shared_ptr<Core::VKImage> to_image(
-        uint32_t layer,
-        const std::shared_ptr<Buffers::VKBuffer>& staging) const;
 
     /**
      * @brief Upload all layers as a Vulkan 2D array texture.
@@ -178,25 +124,6 @@ public:
     [[nodiscard]] std::shared_ptr<Core::VKImage> to_image_array() const;
 
     /**
-     * @brief Upload all layers as a Vulkan 2D array texture, reusing a staging buffer.
-     *
-     * Concatenates pixel data from all layers in order (layer 0 first) and
-     * refreshes a container-owned array image. The returned VKImage has
-     * array_layers == get_layer_count() and an image view of type
-     * VK_IMAGE_VIEW_TYPE_2D_ARRAY, making it bindable as sampler2DArray
-     * in GLSL.
-     *
-     * All layers must have the expected byte count; otherwise this returns null.
-     *
-     * @param staging Host-visible staging VKBuffer sized to at least
-     *                byte_size() * get_layer_count().
-     * @return Cached array image when multiple layers exist, or a cached 2D
-     *         image for one layer. Null on failure.
-     */
-    [[nodiscard]] std::shared_ptr<Core::VKImage> to_image_array(
-        const std::shared_ptr<Buffers::VKBuffer>& staging) const;
-
-    /**
      * @brief Upload one layer into an existing VKImage instead of creating one.
      *
      * Use this for an image retained separately from the container, such as
@@ -205,31 +132,24 @@ public:
      * @param image   Target image. Must match this container's width, height
      *                and format, and be a single layer 2D image.
      * @param layer   Array layer index (default 0).
-     * @param staging Host-visible staging VKBuffer sized to at least byte_size().
      * @return True when the layer was uploaded, false when the layer is out of
      *         range, empty, or the image is null.
      */
     bool upload_image(
         const std::shared_ptr<Core::VKImage>& image,
-        uint32_t layer,
-        const std::shared_ptr<Buffers::VKBuffer>& staging) const;
+        uint32_t layer) const;
 
     /**
      * @brief Upload all layers into an existing VKImage instead of creating one.
      *
-     * The counterpart of to_image_array(staging). A single layer container
-     * targets a plain 2D image, more layers a 2D array image with
+     * A single layer container targets a plain 2D image, more layers a 2D array image with
      * array_layers == get_layer_count().
      *
      * @param image   Target image created by to_image_array.
-     * @param staging Host-visible staging VKBuffer sized to at least
-     *                byte_size() * get_layer_count().
      * @return True when every layer was uploaded, false on a null image, an
      *         empty container, or a layer of unexpected size.
      */
-    bool upload_image_array(
-        const std::shared_ptr<Core::VKImage>& image,
-        const std::shared_ptr<Buffers::VKBuffer>& staging) const;
+    bool upload_image_array(const std::shared_ptr<Core::VKImage>& image) const;
 
     //=========================================================================
     // Pixel access
@@ -545,10 +465,8 @@ private:
     /** @brief Row cache backing the double span returned by get_frame(). */
     mutable std::vector<double> m_frame_cache;
 
-    [[nodiscard]] std::shared_ptr<Core::VKImage> cached_layer_image(
-        uint32_t layer, const std::shared_ptr<Buffers::VKBuffer>& staging) const;
-    [[nodiscard]] std::shared_ptr<Core::VKImage> cached_array_image(
-        const std::shared_ptr<Buffers::VKBuffer>& staging) const;
+    [[nodiscard]] std::shared_ptr<Core::VKImage> cached_layer_image(uint32_t layer) const;
+    [[nodiscard]] std::shared_ptr<Core::VKImage> cached_array_image() const;
 
     /** @brief Download a GPU-held layer into m_data before a CPU read. */
     void ensure_cpu(uint32_t layer) const;

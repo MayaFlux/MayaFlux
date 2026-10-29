@@ -96,7 +96,7 @@ public:
      * @class Snapshot
      * @brief The entries of a list at one instant, kept alive while this object exists.
      */
-    class Snapshot {
+    class MAYAFLUX_API Snapshot {
     public:
         Snapshot() = default;
         ~Snapshot();

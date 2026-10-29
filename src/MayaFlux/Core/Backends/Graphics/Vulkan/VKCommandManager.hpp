@@ -1,15 +1,41 @@
 #pragma once
 
+#include "VKTimeline.hpp"
+
+#include "MayaFlux/Transitive/Memory/FlatMap.hpp"
+#include "MayaFlux/Transitive/Memory/SnapshotCell.hpp"
+#include "MayaFlux/Transitive/Memory/SweepList.hpp"
+
 #include <vulkan/vulkan.hpp>
 
 namespace MayaFlux::Core {
 
 /**
  * @class VKCommandManager
- * @brief Manages Vulkan command pools and command buffers
+ * @brief Owns command pools, queue submission and command buffer retirement
  *
- * Handles command buffer allocation, recording, and submission.
- * Creates per-thread command pools for thread safety.
+ * Each distinct queue has its own timeline semaphore. Queues that alias the
+ * same handle (compute or transfer on the graphics queue) share one timeline,
+ * so a device with a single queue has a single timeline. Every submission
+ * through submit() signals its queue's timeline with a strictly increasing
+ * value, and that point is the completion token: command buffers are retired
+ * against it and callers wait on it instead of draining a queue.
+ *
+ * Values on different timelines are unordered. Completion of work spread over
+ * several queues is expressed as a TimelineSnapshot.
+ *
+ * Every command buffer gets a command pool to itself for its lifetime, leased
+ * from a lock-free stack of idle pools and returned when the buffer is freed.
+ * Vulkan requires external synchronization of a pool for allocation, freeing,
+ * begin, end and reset, so a pool with one user needs none: any thread may
+ * allocate, record, free, retire, collect and record deferred commands, with
+ * no lock and no thread of its own. A command buffer, like any Vulkan object,
+ * must be used by one thread at a time.
+ *
+ * Submission is externally synchronized, as vkQueueSubmit is. Two threads must
+ * not call submit() concurrently, and so must not call flush_deferred() or
+ * end_single_time_commands() concurrently on the same queue. The retire lists
+ * are lock-free Memory::SweepList instances.
  */
 class MAYAFLUX_API VKCommandManager {
 public:
@@ -18,13 +44,23 @@ public:
 
     /**
      * @brief Initialize command manager
-     * @param device Logical device
+     * @param device Logical device with timelineSemaphore enabled
      * @param graphics_queue_family Graphics queue family index
      * @param compute_queue_family Compute queue family index (optional, for compute operations)
+     * @param graphics_queue Graphics queue
+     * @param compute_queue Compute queue, may alias the graphics queue
+     * @param transfer_queue Transfer queue, may alias another queue
      * @return True if initialization succeeded
+     *
+     * One timeline is created per distinct queue handle.
      */
-    // bool initialize(vk::Device device, uint32_t graphics_queue_family);
-    bool initialize(vk::Device device, uint32_t graphics_queue_family, uint32_t compute_queue_family);
+    bool initialize(
+        vk::Device device,
+        uint32_t graphics_queue_family,
+        uint32_t compute_queue_family,
+        vk::Queue graphics_queue,
+        vk::Queue compute_queue,
+        vk::Queue transfer_queue);
 
     /**
      * @brief Cleanup all command pools and buffers
@@ -40,7 +76,10 @@ public:
         vk::CommandBufferLevel level = vk::CommandBufferLevel::ePrimary);
 
     /**
-     * @brief Free a command buffer back to the pool
+     * @brief Free a command buffer and return its pool to the idle stack
+     *
+     * Freeing a null, unknown or already freed buffer does nothing. When several
+     * threads free the same buffer exactly one of them frees it.
      */
     void free_command_buffer(vk::CommandBuffer command_buffer);
 
@@ -51,21 +90,13 @@ public:
     vk::CommandBuffer begin_single_time_commands();
 
     /**
-     * @brief End and submit single-time command
+     * @brief End, submit and wait for a single-time command
      * @param command_buffer Command buffer to submit
      * @param queue Queue to submit to
+     *
+     * Waits for this submission only and frees the command buffer.
      */
     void end_single_time_commands(vk::CommandBuffer command_buffer, vk::Queue queue);
-
-    /**
-     * @brief Reset command pool (invalidates all allocated buffers)
-     */
-    void reset_pool();
-
-    /**
-     * @brief Get the command pool
-     */
-    [[nodiscard]] vk::CommandPool get_pool() const { return m_command_pool; }
 
     /**
      * @brief Begin single-time command for compute operations
@@ -74,41 +105,191 @@ public:
     [[nodiscard]] vk::CommandBuffer begin_single_time_commands_compute();
 
     /**
-     * @brief End and submit single-time command for compute operations
-     * @param command_buffer Command buffer to submit
-     * @param queue Queue to submit to
+     * @brief Check whether deferred commands are waiting for flush_deferred()
      */
-    [[nodiscard]] bool has_deferred_commands() const { return m_deferred_pending; }
+    [[nodiscard]] bool has_deferred_commands() const { return m_open_batch_count.load(std::memory_order_acquire) != 0; }
 
     /**
      * @brief Record deferred commands for later submission
      * @param recorder Command recording function that takes a command buffer
+     *
+     * The recorder gets an open batch to itself. One thread recording at a time
+     * reuses a single batch; threads recording at once each get their own, and
+     * flush_deferred() submits them together.
      */
     void record_deferred_commands(const std::function<void(vk::CommandBuffer)>& recorder);
 
     /**
-     * @brief Get the deferred command buffer (if any)
-     * @return Deferred command buffer, or null if none pending
+     * @brief Submit the pending deferred batches and retire their buffers
+     * @param queue Queue to submit to
+     * @return Point of the submission, or an empty point when nothing was pending or the submit failed
      */
-    [[nodiscard]] vk::CommandBuffer get_deferred_cmd() const { return m_deferred_cmd; }
+    TimelinePoint flush_deferred(vk::Queue queue);
 
     /**
-     * @brief Reset deferred command buffer and clear pending state
+     * @brief Submit command buffers and signal the queue's timeline
+     * @param queue Queue to submit to; must be one passed to initialize()
+     * @param commands Command buffers, executed in order
+     * @param waits Semaphores to wait on; timeline waits carry their value
+     * @param signals Additional semaphores to signal; binary ones carry value 0
+     * @param fence Optional fence signaled with the submission
+     * @return Point signaled when the submission completes, or an empty point if the submit failed
+     *
+     * The point orders strictly with every other submission to the same queue
+     * and is unordered against submissions to other queues.
      */
-    void reset_deferred();
+    TimelinePoint submit(
+        vk::Queue queue,
+        std::span<const vk::CommandBuffer> commands,
+        std::span<const vk::SemaphoreSubmitInfo> waits = {},
+        std::span<const vk::SemaphoreSubmitInfo> signals = {},
+        vk::Fence fence = {});
+
+    /**
+     * @brief Free a command buffer once its submission has completed
+     * @param command_buffer Command buffer to free
+     * @param completion Point returned by submit(), or a snapshot of several
+     */
+    void retire(vk::CommandBuffer command_buffer, const TimelineSnapshot& completion);
+
+    /**
+     * @brief Run a release action once a submission has completed
+     * @param release Action that frees whatever the submission may still read; runs immediately when nothing is pending
+     * @param completion Point returned by submit(), or a snapshot of several
+     *
+     * Actions run from collect(), outside the retire lists, so they may call back
+     * into the manager. They run on the thread that collects, which is not
+     * necessarily the one that retired them. They are dropped without running at cleanup().
+     */
+    void retire_resource(std::function<void()> release, const TimelineSnapshot& completion);
+
+    /**
+     * @brief Free every retired command buffer and run every release action whose submission has completed
+     *
+     * Entries that have not completed stay for the next call.
+     */
+    void collect();
+
+    /**
+     * @brief Number of timelines, one per distinct queue
+     */
+    [[nodiscard]] uint32_t timeline_count() const { return static_cast<uint32_t>(m_timelines.size()); }
+
+    /**
+     * @brief Index of the timeline signaled by a queue
+     * @return Timeline index, or timeline_count() if the queue was not passed to initialize()
+     */
+    [[nodiscard]] uint32_t timeline_index(vk::Queue queue) const;
+
+    /**
+     * @brief Highest completion value reached on a timeline
+     */
+    [[nodiscard]] uint64_t completed_value(uint32_t timeline) const;
+
+    /**
+     * @brief Highest completion value handed out by submit() on a timeline
+     */
+    [[nodiscard]] uint64_t submitted_value(uint32_t timeline) const;
+
+    /**
+     * @brief Every submission made so far, on every timeline
+     */
+    [[nodiscard]] TimelineSnapshot submitted() const;
+
+    /**
+     * @brief Record a submission whose output later work may consume
+     * @param point Point returned by submit(); an empty point is ignored
+     *
+     * Keeps the highest value per timeline. Safe from any thread. Never cleared:
+     * consumers skip values that have completed.
+     */
+    void note_produced(TimelinePoint point);
+
+    /**
+     * @brief Everything noted by note_produced() so far
+     */
+    [[nodiscard]] TimelineSnapshot produced() const;
+
+    /**
+     * @brief Waits for produced work that has not completed yet
+     * @param stage Pipeline stages of the consuming submission that read the output
+     * @return One timeline wait per timeline with incomplete produced work; empty when everything is done
+     */
+    [[nodiscard]] std::vector<vk::SemaphoreSubmitInfo> produced_waits(vk::PipelineStageFlags2 stage) const;
+
+    /**
+     * @brief Check whether everything in a snapshot has completed
+     */
+    [[nodiscard]] bool is_complete(const TimelineSnapshot& completion) const;
+
+    /**
+     * @brief Block until everything in a snapshot has completed
+     * @param completion Point returned by submit(), or a snapshot of several; empty returns immediately
+     * @param timeout_ns Timeout in nanoseconds
+     *
+     * Waits on all involved timelines in one call.
+     */
+    void wait(const TimelineSnapshot& completion, uint64_t timeout_ns = UINT64_MAX) const;
+
+    /**
+     * @brief The timeline semaphore signaled by a queue's submissions
+     */
+    [[nodiscard]] vk::Semaphore get_timeline(vk::Queue queue) const;
 
 private:
+    struct QueueTimeline {
+        vk::Queue queue;
+        vk::Semaphore semaphore;
+        std::atomic<uint64_t> submitted { 0 };
+    };
+
+    struct RetiredCommand {
+        vk::CommandBuffer command_buffer;
+        TimelineSnapshot completion;
+    };
+
+    struct RetiredResource {
+        std::function<void()> release;
+        TimelineSnapshot completion;
+    };
+
+    enum class PoolKind : uint8_t {
+        GRAPHICS,
+        COMPUTE
+    };
+
+    struct PoolRef {
+        vk::CommandPool pool;
+        PoolKind kind {};
+    };
+
+    using Owners = Memory::FlatMap<VkCommandBuffer, PoolRef>;
+
+    bool create_timeline(vk::Queue queue);
+    vk::CommandPool create_pool(PoolKind kind);
+    vk::CommandPool lease_pool(PoolKind kind);
+    vk::CommandBuffer allocate_from(PoolKind kind, vk::CommandBufferLevel level);
+    Memory::SweepList<vk::CommandPool>& idle_pools(PoolKind kind);
+
     vk::Device m_device;
-    vk::CommandPool m_command_pool;
-    vk::CommandPool m_compute_command_pool;
     uint32_t m_graphics_queue_family {};
     uint32_t m_compute_queue_family {};
 
-    vk::CommandBuffer m_deferred_cmd {};
-    bool m_deferred_pending {};
+    std::vector<std::unique_ptr<QueueTimeline>> m_timelines;
+    std::array<std::atomic<uint64_t>, k_max_timelines> m_produced {};
 
-    std::vector<vk::CommandBuffer> m_allocated_buffers;
-    std::vector<vk::CommandBuffer> m_compute_allocated_buffers;
+    std::atomic<bool> m_ready { false };
+
+    Memory::SnapshotCell<Owners> m_owners;
+    Memory::SnapshotCell<std::vector<vk::CommandPool>> m_pools;
+    Memory::SweepList<vk::CommandPool> m_idle_graphics;
+    Memory::SweepList<vk::CommandPool> m_idle_compute;
+
+    Memory::SweepList<vk::CommandBuffer> m_open_batches;
+    std::atomic<uint32_t> m_open_batch_count { 0 };
+
+    Memory::SweepList<RetiredCommand> m_retired;
+    Memory::SweepList<RetiredResource> m_retired_resources;
 };
 
 } // namespace MayaFlux::Core

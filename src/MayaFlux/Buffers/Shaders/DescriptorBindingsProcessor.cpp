@@ -4,6 +4,8 @@
 
 #include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
 
+#include "MayaFlux/Kakshya/Utils/DataUtils.hpp"
+
 #include "MayaFlux/Nodes/Network/NodeNetwork.hpp"
 #include "MayaFlux/Nodes/Network/Operators/GraphicsOperator.hpp"
 
@@ -52,6 +54,7 @@ void DescriptorBindingsProcessor::bind_scalar_node(
 
     auto gpu_buffer = create_descriptor_buffer(sizeof(float), role);
 
+    release_binding(name);
     auto [it, inserted] = m_bindings.try_emplace(name);
     auto& binding = it->second;
 
@@ -100,6 +103,7 @@ void DescriptorBindingsProcessor::bind_vector_node(
     size_t initial_size = 4096 * sizeof(float);
     auto gpu_buffer = create_descriptor_buffer(initial_size, role);
 
+    release_binding(name);
     auto [it, inserted] = m_bindings.try_emplace(name);
     auto& binding = it->second;
 
@@ -148,6 +152,7 @@ void DescriptorBindingsProcessor::bind_matrix_node(
     size_t initial_size = static_cast<long>(1024) * 1024 * sizeof(float);
     auto gpu_buffer = create_descriptor_buffer(initial_size, role);
 
+    release_binding(name);
     auto [it, inserted] = m_bindings.try_emplace(name);
     auto& binding = it->second;
 
@@ -196,6 +201,7 @@ void DescriptorBindingsProcessor::bind_structured_node(
     size_t initial_size = static_cast<long>(1024) * 64;
     auto gpu_buffer = create_descriptor_buffer(initial_size, role);
 
+    release_binding(name);
     auto [it, inserted] = m_bindings.try_emplace(name);
     auto& binding = it->second;
 
@@ -241,6 +247,7 @@ void DescriptorBindingsProcessor::bind_audio_buffer(
     size_t initial_size = buffer->get_num_samples() * sizeof(float);
     auto gpu_buffer = create_descriptor_buffer(initial_size, role);
 
+    release_binding(name);
     auto [it, inserted] = m_bindings.try_emplace(name);
     auto& binding = it->second;
 
@@ -294,6 +301,7 @@ void DescriptorBindingsProcessor::bind_host_vk_buffer(
     const auto& binding_config = m_config.bindings[descriptor_name];
     auto gpu_buffer = create_descriptor_buffer(buffer->get_size_bytes(), role);
 
+    release_binding(name);
     auto [it, inserted] = m_bindings.try_emplace(name);
     auto& binding = it->second;
 
@@ -368,6 +376,7 @@ void DescriptorBindingsProcessor::bind_network(
     const auto& binding_config = m_config.bindings[descriptor_name];
     auto gpu_buffer = create_descriptor_buffer(initial_size, role);
 
+    release_binding(name);
     auto [it, inserted] = m_bindings.try_emplace(name);
     auto& binding = it->second;
 
@@ -393,15 +402,40 @@ void DescriptorBindingsProcessor::bind_network(
 
 void DescriptorBindingsProcessor::unbind(const std::string& name)
 {
-    auto it = m_bindings.find(name);
-    if (it != m_bindings.end()) {
-        unbind_buffer(it->second.descriptor_name);
-        m_bindings.erase(it);
-
-        m_needs_descriptor_rebuild = true;
-
+    if (release_binding(name)) {
         MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             "Unbound '{}'", name);
+    }
+}
+
+bool DescriptorBindingsProcessor::release_binding(const std::string& name)
+{
+    auto it = m_bindings.find(name);
+    if (it == m_bindings.end()) {
+        return false;
+    }
+
+    unbind_buffer(it->second.descriptor_name);
+    m_released_bindings.push_back({ .set = it->second.set_index,
+        .binding = it->second.binding_index,
+        .gpu_buffer = std::move(it->second.gpu_buffer),
+        .staging = std::move(it->second.staging) });
+    m_bindings.erase(it);
+
+    m_needs_descriptor_rebuild = true;
+    return true;
+}
+
+void DescriptorBindingsProcessor::ensure_staging(DescriptorBinding& binding, size_t bytes)
+{
+    if (binding.gpu_buffer->is_host_visible()) {
+        return;
+    }
+
+    if (!binding.staging) {
+        binding.staging = create_staging_buffer(bytes);
+    } else if (binding.staging->get_size_bytes() < bytes) {
+        binding.staging->resize(bytes * 3 / 2, false);
     }
 }
 
@@ -451,6 +485,29 @@ DescriptorBindingsProcessor::ProcessingMode DescriptorBindingsProcessor::get_pro
 void DescriptorBindingsProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
 {
     auto& bindings_list = buffer->get_pipeline_context().descriptor_buffer_bindings;
+
+    if (!m_released_bindings.empty()) {
+        std::erase_if(bindings_list, [this](const auto& staged_binding) {
+            return std::ranges::any_of(m_released_bindings, [&staged_binding](const auto& released) {
+                return released.set == staged_binding.set && released.binding == staged_binding.binding;
+            });
+        });
+
+        auto& registry = Registry::BackendRegistry::instance();
+        auto* buffer_service = registry.get_service<Registry::Service::BufferService>();
+        if (buffer_service) {
+            for (const auto& released : m_released_bindings) {
+                for (const auto& owned : { released.gpu_buffer, released.staging }) {
+                    if (owned && owned->is_initialized()) {
+                        buffer_service->retire_buffer(owned);
+                    }
+                }
+            }
+        }
+        m_released_bindings.clear();
+    }
+
+    buffer->await_use();
 
     for (auto& [name, binding] : m_bindings) {
         update_descriptor_data(binding);
@@ -529,7 +586,8 @@ void DescriptorBindingsProcessor::update_from_node(DescriptorBinding& binding)
 
     case BindingType::SCALAR: {
         ensure_buffer_capacity(binding, sizeof(float));
-        upload_to_gpu(&value, sizeof(float), binding.gpu_buffer, nullptr);
+        ensure_staging(binding, sizeof(float));
+        upload_to_gpu(&value, sizeof(float), binding.gpu_buffer, binding.staging, 0, true);
         break;
     }
 
@@ -544,7 +602,8 @@ void DescriptorBindingsProcessor::update_from_node(DescriptorBinding& binding)
         auto data = gpu_vec->gpu_data();
 
         ensure_buffer_capacity(binding, data.size_bytes());
-        upload_to_gpu(data.data(), data.size_bytes(), binding.gpu_buffer, nullptr);
+        ensure_staging(binding, data.size_bytes());
+        upload_to_gpu(data.data(), data.size_bytes(), binding.gpu_buffer, binding.staging, 0, true);
         break;
     }
 
@@ -558,7 +617,8 @@ void DescriptorBindingsProcessor::update_from_node(DescriptorBinding& binding)
 
         auto data = gpu_mat->gpu_data();
         ensure_buffer_capacity(binding, data.size_bytes());
-        upload_to_gpu(data.data(), data.size_bytes(), binding.gpu_buffer, nullptr);
+        ensure_staging(binding, data.size_bytes());
+        upload_to_gpu(data.data(), data.size_bytes(), binding.gpu_buffer, binding.staging, 0, true);
         break;
     }
 
@@ -572,7 +632,8 @@ void DescriptorBindingsProcessor::update_from_node(DescriptorBinding& binding)
 
         auto data = gpu_struct->gpu_data();
         ensure_buffer_capacity(binding, data.size_bytes());
-        upload_to_gpu(data.data(), data.size_bytes(), binding.gpu_buffer, nullptr);
+        ensure_staging(binding, data.size_bytes());
+        upload_to_gpu(data.data(), data.size_bytes(), binding.gpu_buffer, binding.staging, 0, true);
         break;
     }
     }
@@ -582,16 +643,13 @@ void DescriptorBindingsProcessor::update_from_buffer(DescriptorBinding& binding)
 {
     if (binding.source_type == SourceType::AUDIO_BUFFER) {
         auto audio = std::dynamic_pointer_cast<AudioBuffer>(binding.buffer);
-        const auto& samples = audio->get_data();
+        auto& samples = audio->get_data();
         size_t required = samples.size() * sizeof(float);
         ensure_buffer_capacity(binding, required);
-
-        thread_local std::vector<float> conv;
-        conv.resize(samples.size());
-        std::ranges::transform(samples, conv.begin(),
-            [](double d) { return static_cast<float>(d); });
-
-        upload_to_gpu(conv.data(), required, binding.gpu_buffer, nullptr);
+        ensure_staging(binding, required);
+        auto floats = Kakshya::convert_data<double, float>(
+            std::span<double>(samples.data(), samples.size()), binding.converted);
+        upload_to_gpu(floats.data(), required, binding.gpu_buffer, binding.staging, 0, true);
         return;
     }
 
@@ -604,7 +662,8 @@ void DescriptorBindingsProcessor::update_from_buffer(DescriptorBinding& binding)
     }
     auto& raw = std::get<std::vector<uint8_t>>(data[0]);
     ensure_buffer_capacity(binding, raw.size());
-    upload_to_gpu(raw.data(), raw.size(), binding.gpu_buffer, nullptr);
+    ensure_staging(binding, raw.size());
+    upload_to_gpu(raw.data(), raw.size(), binding.gpu_buffer, binding.staging, 0, true);
 }
 
 void DescriptorBindingsProcessor::update_from_network(DescriptorBinding& binding)
@@ -623,16 +682,13 @@ void DescriptorBindingsProcessor::update_from_network(DescriptorBinding& binding
                 "Network audio binding '{}' has no audio buffer", binding.descriptor_name);
             return;
         }
-        const auto& samples = *data;
+        auto& samples = *data;
         size_t required = samples.size() * sizeof(float);
-
-        thread_local std::vector<float> conv;
-        conv.resize(samples.size());
-
-        std::ranges::transform(samples, conv.begin(),
-            [](double d) { return static_cast<float>(d); });
-
-        upload_to_gpu(conv.data(), required, binding.gpu_buffer, nullptr);
+        ensure_buffer_capacity(binding, required);
+        ensure_staging(binding, required);
+        auto floats = Kakshya::convert_data<double, float>(
+            std::span<double>(samples.data(), samples.size()), binding.converted);
+        upload_to_gpu(floats.data(), required, binding.gpu_buffer, binding.staging, 0, true);
         return;
     }
 
@@ -641,11 +697,14 @@ void DescriptorBindingsProcessor::update_from_network(DescriptorBinding& binding
         return;
     }
     ensure_buffer_capacity(binding, gpu_data.vertex_data.size_bytes());
+    ensure_staging(binding, gpu_data.vertex_data.size_bytes());
     upload_to_gpu(
         gpu_data.vertex_data.data(),
         gpu_data.vertex_data.size_bytes(),
         binding.gpu_buffer,
-        nullptr);
+        binding.staging,
+        0,
+        true);
 }
 
 void DescriptorBindingsProcessor::ensure_buffer_capacity(

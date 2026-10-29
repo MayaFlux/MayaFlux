@@ -1,5 +1,7 @@
 #version 460
 
+#include "include/mill_billboard.glsl"
+
 layout(set = 0, binding = 0) uniform RenderTransformBlock {
     mat4 view;
     mat4 projection;
@@ -15,7 +17,7 @@ layout(location = 1) in vec3 in_color;
 layout(location = 2) in float in_weight;
 layout(location = 3) in vec2 in_uv;
 layout(location = 4) in vec3 in_normal;
-layout(location = 5) in vec3 in_tangent;
+layout(location = 5) in vec4 in_tangent;
 
 layout(location = 0) out vec3 out_color;
 layout(location = 1) out vec2 out_uv;
@@ -29,6 +31,10 @@ void main()
     mat3 normal_mat = transpose(inverse(mat3(world_transform)));
     vec4 world_pos = world_transform * vec4(in_position, 1.0);
     gl_Position = vt.projection * vt.view * world_pos;
+    if (MILL_BILLBOARD) {
+        gl_Position = mill_billboard_clip(vt.view, vt.projection,
+            world_transform, in_position, in_tangent, in_uv, false);
+    }
     out_color = in_color;
     out_uv = in_uv;
     out_normal = normalize(normal_mat * in_normal);

@@ -8,6 +8,7 @@
 #include "MayaFlux/Core/Backends/Windowing/Window.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
+#include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
 
 namespace MayaFlux::Buffers {
 
@@ -58,6 +59,8 @@ void FormaBuffer::setup_rendering(const RenderConfig& config)
 {
     RenderConfig resolved = config;
     resolved.topology = m_topology;
+    resolved.triangulate |= Portal::Graphics::needs_triangulation(
+        resolved.topology, resolved.polygon_mode);
 
     const bool single_tex = !config.default_texture_binding.empty();
     const auto multi_count = static_cast<uint32_t>(config.additional_textures.size());
@@ -65,24 +68,11 @@ void FormaBuffer::setup_rendering(const RenderConfig& config)
 
     switch (resolved.topology) {
     case Portal::Graphics::PrimitiveTopology::POINT_LIST:
-        if (resolved.triangulate) {
-            if (resolved.vertex_shader.empty())
-                resolved.vertex_shader = "milled_shape.vert.spv";
-            if (resolved.fragment_shader.empty()) {
-                if (multi_tex) {
-                    resolved.fragment_shader = "milled_shape_multi.frag.spv";
-                } else if (single_tex) {
-                    resolved.fragment_shader = "milled_shape_textured.frag.spv";
-                } else {
-                    resolved.fragment_shader = "milled_shape.frag.spv";
-                }
-            }
-        } else {
-            if (resolved.vertex_shader.empty())
-                resolved.vertex_shader = "point.vert.spv";
-            if (resolved.fragment_shader.empty())
-                resolved.fragment_shader = "point.frag.spv";
-        }
+        if (resolved.vertex_shader.empty())
+            resolved.vertex_shader = "point.vert.spv";
+        if (resolved.fragment_shader.empty())
+            resolved.fragment_shader = multi_tex ? "point_multi.frag.spv"
+                : (single_tex ? "point_textured.frag.spv" : "point.frag.spv");
         break;
 
     case Portal::Graphics::PrimitiveTopology::LINE_LIST:
@@ -91,10 +81,6 @@ void FormaBuffer::setup_rendering(const RenderConfig& config)
             resolved.vertex_shader = "line.vert.spv";
         if (resolved.fragment_shader.empty())
             resolved.fragment_shader = "line.frag.spv";
-#ifdef MAYAFLUX_PLATFORM_MACOS
-        resolved.triangulate = true;
-#endif
-
         if (resolved.triangulate) {
             resolved.geometry_shader.clear();
         } else if (resolved.geometry_shader.empty()) {
@@ -137,6 +123,13 @@ void FormaBuffer::setup_rendering(const RenderConfig& config)
     }
 
     apply_render_config(resolved, sc);
+    if (resolved.triangulate
+        && resolved.topology == Portal::Graphics::PrimitiveTopology::POINT_LIST) {
+        auto mill_spec = m_render_processor->get_mill_spec();
+        mill_spec.use_vertex_extent = false;
+        m_render_processor->set_mill_spec(mill_spec);
+    }
+    m_render_processor->set_mill_on_change(true);
     m_render_processor->enable_alpha_blending();
 
     if (multi_tex) {

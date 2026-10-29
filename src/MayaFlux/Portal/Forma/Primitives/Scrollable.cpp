@@ -52,7 +52,7 @@ Scrollable& Scrollable::place(
     buf = std::move(in_buf);
     viewport_bounds = viewport;
 
-    buf.submit(Kinesis::filled_rect(viewport, m_background));
+    buf.submit(Kinesis::filled_rect(viewport, glm::vec4(m_background, 1.F)));
 
     if (buf) {
         if (auto render = buf->get_render_processor())

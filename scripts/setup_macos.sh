@@ -35,18 +35,16 @@ brew install \
     ffmpeg glm eigen googletest \
     vulkan-headers vulkan-loader vulkan-tools vulkan-validationlayers \
     vulkan-utility-libraries vulkan-extensionlayer spirv-tools spirv-cross \
-    spirv-headers shaderc glslang molten-vk hidapi asio assimp alembic freetype utf8proc nlohmann-json mayaflux/mayaflux/stb >/dev/null
+    spirv-headers shaderc glslang mesa hidapi asio assimp alembic freetype utf8proc nlohmann-json mayaflux/mayaflux/stb >/dev/null
 
 # --- 3) Gather Paths ----------------------------------------------------------
 LLVM_PREFIX="$(brew --prefix llvm)"
-MOLTENVK_PREFIX="$(brew --prefix molten-vk)"
 VULKAN_LOADER_PREFIX="$(brew --prefix vulkan-loader)"
 VULKAN_LAYERS_PREFIX="$(brew --prefix vulkan-validationlayers)"
 STB_ROOT="$(brew --prefix stb)/include/stb"
 
-# ICD Selection
-MOLTENVK_ICD="$MOLTENVK_PREFIX/share/vulkan/icd.d/MoltenVK_icd.json"
-[[ ! -f "$MOLTENVK_ICD" ]] && MOLTENVK_ICD="$MOLTENVK_PREFIX/etc/vulkan/icd.d/MoltenVK_icd.json"
+ICD_JSON="$(brew --prefix)/share/vulkan/icd.d/kosmickrisp_mesa_icd.aarch64.json"
+[[ -f "$ICD_JSON" ]] || { err "KosmicKrisp ICD manifest not found: $ICD_JSON"; exit 1; }
 
 # --- 4) Generate Single Environment File --------------------------------------
 printf 'Generating environment file: %s\n' "$ENV_FILE" >&3
@@ -61,10 +59,10 @@ export LLVM_DIR="$LLVM_PREFIX/lib/cmake/llvm"
 export Clang_DIR="$LLVM_PREFIX/lib/cmake/clang"
 export CMAKE_PREFIX_PATH="$LLVM_PREFIX/lib/cmake:\$CMAKE_PREFIX_PATH"
 
-# Vulkan & MoltenVK
-export VK_ICD_FILENAMES="$MOLTENVK_ICD"
+# Vulkan (KosmicKrisp)
+export VK_ICD_FILENAMES="$ICD_JSON"
 export VK_LAYER_PATH="$VULKAN_LAYERS_PREFIX/share/vulkan/explicit_layer.d"
-export DYLD_LIBRARY_PATH="$MOLTENVK_PREFIX/lib:$VULKAN_LOADER_PREFIX/lib:\$DYLD_LIBRARY_PATH"
+export DYLD_LIBRARY_PATH="$VULKAN_LOADER_PREFIX/lib:\$DYLD_LIBRARY_PATH"
 
 # STB
 export STB_ROOT="$STB_ROOT"

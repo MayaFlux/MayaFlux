@@ -82,6 +82,11 @@ public:
     /** @brief Replace the evaluation volume. */
     void set_bounds(const glm::vec3& bounds_min, const glm::vec3& bounds_max);
 
+    /** @brief Rebind the grid and update the dispatch size and sampling step. */
+    void set_resolution(std::shared_ptr<VKBuffer> grid_buf,
+        const glm::vec3& bounds_min, const glm::vec3& bounds_max,
+        uint32_t res_x, uint32_t res_y, uint32_t res_z);
+
     /** @brief Advance the time uniform (drives animation in sdf_field.comp). */
     void set_time(float t)
     {

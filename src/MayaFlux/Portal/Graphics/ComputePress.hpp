@@ -121,24 +121,36 @@ public:
      */
     [[nodiscard]] bool is_initialized() const { return m_shader_foundry != nullptr; }
 
+    /**
+     * @brief Check if a pipeline id names a live pipeline
+     * @param pipeline_id Id returned by create_pipeline
+     */
+    [[nodiscard]] bool has_pipeline(ComputePipelineID pipeline_id) const { return m_pipelines.contains(pipeline_id); }
+
     //==========================================================================
     // Pipeline Creation (COMPUTE-SPECIFIC)
     //==========================================================================
 
     /**
      * @brief Create compute pipeline
+     * @param push_set Index into descriptor_sets of the set to create as a push
+     *        descriptor set; it must be the first or the last set. That set is
+     *        written with push_descriptors() and gets no allocated set.
      */
     ComputePipelineID create_pipeline(
         ShaderID shader_id,
         const std::vector<std::vector<DescriptorBindingInfo>>& descriptor_sets = {},
-        size_t push_constant_size = 0);
+        size_t push_constant_size = 0,
+        std::optional<size_t> push_set = std::nullopt);
 
     /**
      * @brief Create pipeline with auto-reflection
+     * @param push_set Index of the reflected set to create as a push descriptor set
      */
     ComputePipelineID create_pipeline_auto(
         ShaderID shader_id,
-        size_t push_constant_size = 0);
+        size_t push_constant_size = 0,
+        std::optional<size_t> push_set = std::nullopt);
 
     void destroy_pipeline(ComputePipelineID pipeline_id);
 
@@ -158,6 +170,19 @@ public:
         CommandBufferID cmd_id,
         ComputePipelineID pipeline_id,
         const std::vector<DescriptorSetID>& descriptor_set_ids);
+
+    /**
+     * @brief Write the pipeline's push descriptor set into the command buffer
+     *
+     * Does nothing and logs an error when the pipeline has no push set.
+     * @param leases Slots the writes point into; the command buffer keeps each
+     *        claimed until its submission completes.
+     */
+    void push_descriptors(
+        CommandBufferID cmd_id,
+        ComputePipelineID pipeline_id,
+        const std::vector<PushDescriptorWrite>& writes,
+        std::span<const SlotLease> leases = {});
 
     /**
      * @brief Push constants to active command buffer
@@ -254,6 +279,7 @@ private:
         std::vector<vk::DescriptorSetLayout> layouts;
         vk::PipelineLayout layout;
         size_t push_constant_size {};
+        std::optional<size_t> push_set;
     };
 
     std::shared_ptr<Core::VKDescriptorManager> m_descriptor_manager;

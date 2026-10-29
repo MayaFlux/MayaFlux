@@ -15,6 +15,167 @@
 
 namespace MayaFlux::Buffers {
 
+void await_dispatches()
+{
+    auto* buffer_service = Registry::BackendRegistry::instance()
+                               .get_service<Registry::Service::BufferService>();
+
+    if (buffer_service && buffer_service->await_dispatches) {
+        buffer_service->await_dispatches();
+    }
+}
+
+namespace {
+
+    void record_transfer_visibility(vk::CommandBuffer cmd)
+    {
+        const vk::MemoryBarrier2 barrier {
+            vk::PipelineStageFlagBits2::eTransfer,
+            vk::AccessFlagBits2::eTransferWrite,
+            vk::PipelineStageFlagBits2::eAllCommands,
+            vk::AccessFlagBits2::eMemoryRead | vk::AccessFlagBits2::eMemoryWrite
+        };
+
+        vk::DependencyInfo dependency {};
+        dependency.memoryBarrierCount = 1;
+        dependency.pMemoryBarriers = &barrier;
+        cmd.pipelineBarrier2(dependency);
+    }
+
+    template <typename Fill>
+    void write_host_visible(const std::shared_ptr<VKBuffer>& target, size_t bytes, size_t dst_offset, const Fill& fill, bool awaited = false)
+    {
+        if (dst_offset + bytes > target->get_size_bytes()) {
+            error<std::runtime_error>(
+                Journal::Component::Buffers,
+                Journal::Context::BufferProcessing,
+                std::source_location::current(),
+                "Upload data size {} at offset {} exceeds buffer capacity {}",
+                bytes, dst_offset, target->get_size_bytes());
+        }
+
+        auto& target_resources = target->get_buffer_resources();
+        void* mapped = target_resources.mapped_ptr;
+        if (!mapped) {
+            error<std::runtime_error>(
+                Journal::Component::Buffers,
+                Journal::Context::BufferProcessing,
+                std::source_location::current(),
+                "Host-visible buffer has no mapped pointer");
+        }
+
+        if (!awaited) {
+            await_dispatches();
+        }
+
+        fill(static_cast<uint8_t*>(mapped) + dst_offset);
+
+        target->mark_dirty_range(dst_offset, bytes);
+
+        auto buffer_service = Registry::BackendRegistry::instance()
+                                  .get_service<Registry::Service::BufferService>();
+
+        if (!buffer_service) {
+            error<std::runtime_error>(
+                Journal::Component::Buffers,
+                Journal::Context::BufferProcessing,
+                std::source_location::current(),
+                "upload_host_visible requires a valid buffer service");
+        }
+
+        auto dirty_ranges = target->get_and_clear_dirty_ranges();
+        for (auto& [offset, size] : dirty_ranges) {
+            buffer_service->flush_range(
+                target_resources.memory,
+                offset,
+                size);
+        }
+    }
+
+    template <typename Fill>
+    void write_device_local(
+        const std::shared_ptr<VKBuffer>& target,
+        const std::shared_ptr<VKBuffer>& staging_buffer,
+        size_t bytes,
+        size_t dst_offset,
+        const Fill& fill,
+        bool asynchronous = false)
+    {
+        if (dst_offset + bytes > target->get_size_bytes()) {
+            error<std::runtime_error>(
+                Journal::Component::Buffers,
+                Journal::Context::BufferProcessing,
+                std::source_location::current(),
+                "Upload data size {} at offset {} exceeds buffer capacity {}",
+                bytes, dst_offset, target->get_size_bytes());
+        }
+
+        auto& staging_resources = staging_buffer->get_buffer_resources();
+
+        void* staging_mapped = staging_resources.mapped_ptr;
+        if (!staging_mapped) {
+            error<std::runtime_error>(
+                Journal::Component::Buffers,
+                Journal::Context::BufferProcessing,
+                std::source_location::current(),
+                "Staging buffer has no mapped pointer");
+        }
+
+        if (asynchronous) {
+            staging_buffer->await_use();
+        }
+
+        fill(staging_mapped);
+        staging_buffer->mark_dirty_range(0, bytes);
+
+        auto buffer_service = Registry::BackendRegistry::instance()
+                                  .get_service<Registry::Service::BufferService>();
+
+        if (!buffer_service) {
+            error<std::runtime_error>(
+                Journal::Component::Buffers,
+                Journal::Context::BufferProcessing,
+                std::source_location::current(),
+                "upload_host_visible requires a valid buffer service");
+        }
+
+        auto dirty_ranges = staging_buffer->get_and_clear_dirty_ranges();
+        for (auto& [offset, size] : dirty_ranges) {
+            buffer_service->flush_range(
+                staging_resources.memory,
+                offset,
+                size);
+        }
+
+        if (asynchronous && buffer_service->execute_fenced && buffer_service->release_fenced
+            && buffer_service->fenced_point) {
+            const vk::Buffer source = staging_resources.buffer;
+            const vk::Buffer destination = target->get_buffer_resources().buffer;
+
+            const auto handle = buffer_service->execute_fenced([&](void* command_buffer) {
+                vk::CommandBuffer cmd(static_cast<VkCommandBuffer>(command_buffer));
+                const vk::BufferCopy region { 0, dst_offset, bytes };
+                cmd.copyBuffer(source, destination, 1, &region);
+                record_transfer_visibility(cmd);
+            });
+
+            if (handle) {
+                const auto [timeline, value] = buffer_service->fenced_point(handle);
+                staging_buffer->note_use(timeline, value);
+                target->note_use(timeline, value);
+                buffer_service->release_fenced(handle);
+                return;
+            }
+        }
+
+        buffer_service->copy_buffer(
+            static_cast<void*>(staging_buffer->get_buffer()),
+            static_cast<void*>(target->get_buffer()),
+            bytes, 0, dst_offset);
+    }
+
+} // namespace
+
 void upload_host_visible(const std::shared_ptr<VKBuffer>& target, const Kakshya::DataVariant& data, size_t dst_offset)
 {
     Kakshya::DataAccess accessor(
@@ -23,48 +184,12 @@ void upload_host_visible(const std::shared_ptr<VKBuffer>& target, const Kakshya:
         target->get_modality());
 
     auto [ptr, bytes, format_hint] = accessor.gpu_buffer();
+    const void* source = ptr;
+    const size_t count = bytes;
 
-    if (dst_offset + bytes > target->get_size_bytes()) {
-        error<std::runtime_error>(
-            Journal::Component::Buffers,
-            Journal::Context::BufferProcessing,
-            std::source_location::current(),
-            "Upload data size {} at offset {} exceeds buffer capacity {}",
-            bytes, dst_offset, target->get_size_bytes());
-    }
-
-    auto& target_resources = target->get_buffer_resources();
-    void* mapped = target_resources.mapped_ptr;
-    if (!mapped) {
-        error<std::runtime_error>(
-            Journal::Component::Buffers,
-            Journal::Context::BufferProcessing,
-            std::source_location::current(),
-            "Host-visible buffer has no mapped pointer");
-    }
-
-    std::memcpy(static_cast<uint8_t*>(mapped) + dst_offset, ptr, bytes);
-
-    target->mark_dirty_range(dst_offset, bytes);
-
-    auto buffer_service = Registry::BackendRegistry::instance()
-                              .get_service<Registry::Service::BufferService>();
-
-    if (!buffer_service) {
-        error<std::runtime_error>(
-            Journal::Component::Buffers,
-            Journal::Context::BufferProcessing,
-            std::source_location::current(),
-            "upload_host_visible requires a valid buffer service");
-    }
-
-    auto dirty_ranges = target->get_and_clear_dirty_ranges();
-    for (auto& [offset, size] : dirty_ranges) {
-        buffer_service->flush_range(
-            target_resources.memory,
-            offset,
-            size);
-    }
+    write_host_visible(target, count, dst_offset, [source, count](void* destination) {
+        std::memcpy(destination, source, count);
+    });
 }
 
 void upload_device_local(const std::shared_ptr<VKBuffer>& target, const std::shared_ptr<VKBuffer>& staging_buffer, const Kakshya::DataVariant& data, size_t dst_offset)
@@ -75,53 +200,12 @@ void upload_device_local(const std::shared_ptr<VKBuffer>& target, const std::sha
         target->get_modality());
 
     auto [ptr, bytes, format_hint] = accessor.gpu_buffer();
+    const void* source = ptr;
+    const size_t count = bytes;
 
-    if (dst_offset + bytes > target->get_size_bytes()) {
-        error<std::runtime_error>(
-            Journal::Component::Buffers,
-            Journal::Context::BufferProcessing,
-            std::source_location::current(),
-            "Upload data size {} at offset {} exceeds buffer capacity {}",
-            bytes, dst_offset, target->get_size_bytes());
-    }
-
-    auto& staging_resources = staging_buffer->get_buffer_resources();
-
-    void* staging_mapped = staging_resources.mapped_ptr;
-    if (!staging_mapped) {
-        error<std::runtime_error>(
-            Journal::Component::Buffers,
-            Journal::Context::BufferProcessing,
-            std::source_location::current(),
-            "Staging buffer has no mapped pointer");
-    }
-
-    std::memcpy(staging_mapped, ptr, bytes);
-    staging_buffer->mark_dirty_range(0, bytes);
-
-    auto buffer_service = Registry::BackendRegistry::instance()
-                              .get_service<Registry::Service::BufferService>();
-
-    if (!buffer_service) {
-        error<std::runtime_error>(
-            Journal::Component::Buffers,
-            Journal::Context::BufferProcessing,
-            std::source_location::current(),
-            "upload_host_visible requires a valid buffer service");
-    }
-
-    auto dirty_ranges = staging_buffer->get_and_clear_dirty_ranges();
-    for (auto& [offset, size] : dirty_ranges) {
-        buffer_service->flush_range(
-            staging_resources.memory,
-            offset,
-            size);
-    }
-
-    buffer_service->copy_buffer(
-        static_cast<void*>(staging_buffer->get_buffer()),
-        static_cast<void*>(target->get_buffer()),
-        bytes, 0, dst_offset);
+    write_device_local(target, staging_buffer, count, dst_offset, [source, count](void* destination) {
+        std::memcpy(destination, source, count);
+    });
 }
 
 void upload_back_buffer(
@@ -144,6 +228,7 @@ TransferHandle upload_back_buffer_async(
         return {};
 
     if (slot.mapped_ptr) {
+        await_dispatches();
         std::memcpy(slot.mapped_ptr, data, size);
         return {};
     }
@@ -223,6 +308,8 @@ void download_host_visible(const std::shared_ptr<VKBuffer>& source, const std::s
             std::source_location::current(),
             "Host-visible buffer has no mapped pointer");
     }
+
+    await_dispatches();
 
     source->mark_invalid_range(0, source->get_size_bytes());
 
@@ -341,6 +428,7 @@ void resolve_back_buffer_read(
 
     if (!handle) {
         if (slot.mapped_ptr) {
+            await_dispatches();
             std::memcpy(data, slot.mapped_ptr, size);
         }
         return;
@@ -673,7 +761,8 @@ void upload_to_gpu(
     size_t size,
     const std::shared_ptr<VKBuffer>& target,
     const std::shared_ptr<VKBuffer>& staging,
-    size_t dst_offset)
+    size_t dst_offset,
+    bool awaited)
 {
     if (!target) {
         error<std::invalid_argument>(
@@ -687,12 +776,12 @@ void upload_to_gpu(
         return;
     }
 
-    std::vector<uint8_t> raw_bytes(size);
-    std::memcpy(raw_bytes.data(), data, size);
-    Kakshya::DataVariant data_variant(raw_bytes);
+    const auto copy = [data, size](void* destination) {
+        std::memcpy(destination, data, size);
+    };
 
     if (target->is_host_visible()) {
-        upload_host_visible(target, data_variant, dst_offset);
+        write_host_visible(target, size, dst_offset, copy, awaited);
     } else {
         std::shared_ptr<VKBuffer> staging_buf = staging;
 
@@ -700,7 +789,7 @@ void upload_to_gpu(
             staging_buf = create_staging_buffer(size);
         }
 
-        upload_device_local(target, staging_buf, data_variant, dst_offset);
+        write_device_local(target, staging_buf, size, dst_offset, copy, awaited && staging != nullptr);
     }
 }
 
@@ -713,6 +802,7 @@ bool clear_gpu_buffer(const std::shared_ptr<VKBuffer>& target)
     }
 
     if (target->is_host_visible() && target->get_mapped_ptr()) {
+        target->await_use();
         std::memset(target->get_mapped_ptr(), 0, target->get_size_bytes());
         return true;
     }
@@ -885,8 +975,7 @@ void download_from_gpu_async(
 std::span<const float> download_and_normalise(
     const std::shared_ptr<Core::VKImage>& image,
     std::vector<uint8_t>& raw_staging,
-    std::vector<float>& work,
-    const std::shared_ptr<VKBuffer>& gpu_staging)
+    std::vector<float>& work)
 {
     if (!image || !image->is_initialized())
         return {};
@@ -905,7 +994,7 @@ std::span<const float> download_and_normalise(
         return {};
 
     raw_staging.resize(byte_size);
-    loom.download_data(image, raw_staging.data(), byte_size, gpu_staging);
+    loom.download_data(image, raw_staging.data(), byte_size);
 
     Kakshya::DataVariant variant { raw_staging };
     return Kakshya::as_normalised_float(variant, work);

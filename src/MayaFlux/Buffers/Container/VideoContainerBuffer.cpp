@@ -253,7 +253,6 @@ void VideoContainerBuffer::setup_processors(ProcessingToken token)
     enforce_default_processing(true);
 
     auto texture_proc = std::make_shared<TextureProcessor>();
-    texture_proc->set_streaming_mode(true);
     texture_proc->set_processing_token(token);
     set_texture_processor(texture_proc);
 

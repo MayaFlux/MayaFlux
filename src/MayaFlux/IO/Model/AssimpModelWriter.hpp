@@ -12,7 +12,7 @@ namespace MayaFlux::IO {
  * MeshData, one aiMaterial per aiMesh sourced from the MeshData's submesh
  * Region: name, material_name, diffuse_path) and calls Assimp::Exporter.
  *
- * Vertex bytes must be in the canonical 60-byte MeshVertex layout
+ * Vertex bytes must be in the canonical 68-byte MeshVertex layout
  * (MeshData::layout.stride_bytes == sizeof(Kakshya::MeshVertex)), the same
  * assumption ModelReader/MeshInsertion make on the way in. A MeshData with
  * any other stride is rejected rather than misinterpreted.

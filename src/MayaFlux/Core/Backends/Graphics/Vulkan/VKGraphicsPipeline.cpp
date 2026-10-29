@@ -192,7 +192,8 @@ void VKGraphicsPipeline::cleanup(vk::Device device)
 // Pipeline Creation
 // ============================================================================
 
-bool VKGraphicsPipeline::create(vk::Device device, const GraphicsPipelineConfig& config)
+bool VKGraphicsPipeline::create(vk::Device device, const GraphicsPipelineConfig& config,
+    const std::unordered_map<uint32_t, uint32_t>& specialization_constants)
 {
     if (!device) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
@@ -216,23 +217,71 @@ bool VKGraphicsPipeline::create(vk::Device device, const GraphicsPipelineConfig&
         return false;
     }
 
+    struct StageSpecialization {
+        std::vector<vk::SpecializationMapEntry> entries;
+        std::vector<uint8_t> data;
+        vk::SpecializationInfo info;
+    };
+
+    std::vector<StageSpecialization> stage_specializations;
+    stage_specializations.reserve(7);
+
     std::vector<vk::PipelineShaderStageCreateInfo> shader_stages;
+    const auto add_shader_stage = [&](const std::shared_ptr<VKShaderModule>& shader) {
+        auto stage = shader->get_stage_create_info();
+        if (!specialization_constants.empty()) {
+            auto& specialization = stage_specializations.emplace_back();
+            if (const auto* existing = stage.pSpecializationInfo) {
+                if (existing->mapEntryCount > 0) {
+                    specialization.entries.assign(existing->pMapEntries,
+                        existing->pMapEntries + existing->mapEntryCount);
+                }
+                if (existing->dataSize > 0) {
+                    const auto* data = static_cast<const uint8_t*>(existing->pData);
+                    specialization.data.assign(data, data + existing->dataSize);
+                }
+            }
+
+            for (const auto& [constant_id, value] : specialization_constants) {
+                std::erase_if(specialization.entries,
+                    [constant_id](const vk::SpecializationMapEntry& entry) {
+                        return entry.constantID == constant_id;
+                    });
+
+                vk::SpecializationMapEntry entry {};
+                entry.constantID = constant_id;
+                entry.offset = static_cast<uint32_t>(specialization.data.size());
+                entry.size = sizeof(value);
+                specialization.entries.push_back(entry);
+
+                const auto* data = reinterpret_cast<const uint8_t*>(&value);
+                specialization.data.insert(specialization.data.end(), data, data + sizeof(value));
+            }
+
+            specialization.info.mapEntryCount = static_cast<uint32_t>(specialization.entries.size());
+            specialization.info.pMapEntries = specialization.entries.data();
+            specialization.info.dataSize = specialization.data.size();
+            specialization.info.pData = specialization.data.data();
+            stage.pSpecializationInfo = &specialization.info;
+        }
+        shader_stages.push_back(stage);
+    };
     if (config.mesh_shader) {
-        shader_stages.push_back(config.mesh_shader->get_stage_create_info());
+        add_shader_stage(config.mesh_shader);
         if (config.task_shader) {
-            shader_stages.push_back(config.task_shader->get_stage_create_info());
+            add_shader_stage(config.task_shader);
         }
     } else {
         if (config.vertex_shader)
-            shader_stages.push_back(config.vertex_shader->get_stage_create_info());
+            add_shader_stage(config.vertex_shader);
         if (config.fragment_shader)
-            shader_stages.push_back(config.fragment_shader->get_stage_create_info());
+            add_shader_stage(config.fragment_shader);
         if (config.geometry_shader)
-            shader_stages.push_back(config.geometry_shader->get_stage_create_info());
+            add_shader_stage(config.geometry_shader);
         if (config.tess_control_shader)
-            shader_stages.push_back(config.tess_control_shader->get_stage_create_info());
+            add_shader_stage(config.tess_control_shader);
         if (config.tess_evaluation_shader)
-            shader_stages.push_back(config.tess_evaluation_shader->get_stage_create_info());
+            add_shader_stage(config.tess_evaluation_shader);
     }
 
     std::vector<vk::VertexInputBindingDescription> vertex_bindings;
@@ -629,6 +678,20 @@ void VKGraphicsPipeline::bind(vk::CommandBuffer cmd)
     }
 
     cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, m_pipeline);
+}
+
+void VKGraphicsPipeline::push_descriptors(
+    vk::CommandBuffer cmd,
+    uint32_t set,
+    const std::vector<vk::WriteDescriptorSet>& writes) const
+{
+    if (!m_layout) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Cannot push descriptors without pipeline layout");
+        return;
+    }
+
+    cmd.pushDescriptorSet(vk::PipelineBindPoint::eGraphics, m_layout, set, writes);
 }
 
 void VKGraphicsPipeline::bind_descriptor_sets(
