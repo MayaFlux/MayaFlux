@@ -7,7 +7,6 @@
 
 namespace MayaFlux::Buffers {
 class VKBuffer;
-class SlotArena;
 }
 
 namespace MayaFlux::Portal::Graphics {
@@ -221,8 +220,8 @@ private:
     /**
      * @brief Reclaim every dispatch that has finished, without waiting.
      *
-     * Releases each finished fence and its command buffer and advances the
-     * completed epoch the run and prefix arenas compare against.
+     * Releases each finished fence and its command buffer. The run and prefix
+     * slots a dispatch read are freed when its command buffer completes.
      */
     void collect_completed();
 
@@ -241,8 +240,8 @@ private:
 
     /// Milled buffers rotated between dispatches, all at m_output_capacity.
     std::vector<std::shared_ptr<Buffers::VKBuffer>> m_outputs;
-    std::unique_ptr<Buffers::SlotArena> m_run_arena;
-    std::unique_ptr<Buffers::SlotArena> m_prefix_arena;
+    std::unique_ptr<SlotArena> m_run_arena;
+    std::unique_ptr<SlotArena> m_prefix_arena;
     size_t m_run_slot { 0 };
     size_t m_prefix_slot { 0 };
 
@@ -255,15 +254,8 @@ private:
     uint32_t m_milled_count { 0 };
     uint32_t m_output_capacity { 0 };
 
-    struct InFlight {
-        uint64_t epoch;
-        FenceID fence;
-    };
-
     /// Dispatches submitted and not yet observed complete, oldest first.
-    std::vector<InFlight> m_in_flight;
-    uint64_t m_dispatch_epoch { 0 };
-    uint64_t m_completed_epoch { 0 };
+    std::vector<FenceID> m_in_flight;
 };
 
 /**

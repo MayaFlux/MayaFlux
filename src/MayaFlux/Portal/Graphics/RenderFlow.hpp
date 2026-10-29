@@ -211,11 +211,14 @@ public:
      * @param cmd_id Command buffer ID
      * @param pipeline Pipeline ID, created with a push_set
      * @param writes Descriptor writes; dstSet is ignored
+     * @param leases Slots the writes point into; the command buffer keeps each
+     *        claimed until its submission completes.
      */
     void push_descriptors(
         CommandBufferID cmd_id,
         RenderPipelineID pipeline,
-        const std::vector<vk::WriteDescriptorSet>& writes);
+        const std::vector<vk::WriteDescriptorSet>& writes,
+        std::span<const SlotLease> leases = {});
 
     /**
      * @brief Push constants

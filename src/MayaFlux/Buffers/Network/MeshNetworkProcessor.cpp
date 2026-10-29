@@ -100,8 +100,14 @@ void MeshNetworkProcessor::on_detach(const std::shared_ptr<Buffer>& /*buffer*/)
     m_gpu_index_buffer.reset();
     m_vertex_staging.reset();
     m_index_staging.reset();
-    m_model_ssbo.reset();
-    m_slot_index_ssbo.reset();
+    if (m_model_arena) {
+        m_model_arena->release();
+    }
+    if (m_slot_index_arena) {
+        m_slot_index_arena->release();
+    }
+    m_model_arena.reset();
+    m_slot_index_arena.reset();
 }
 
 // =============================================================================
@@ -114,18 +120,20 @@ void MeshNetworkProcessor::processing_function(const std::shared_ptr<Buffer>& bu
         return;
 
     m_network->ensure_sorted();
-    if (!any_slot_dirty())
-        return;
 
     auto vk_buf = std::dynamic_pointer_cast<VKBuffer>(buffer);
     if (!vk_buf)
+        return;
+
+    if (!any_slot_dirty())
         return;
 
     upload_combined(vk_buf);
     link_index_resources(vk_buf);
     clear_slot_dirty_flags();
 
-    if (!m_model_ssbo || !m_slot_index_ssbo)
+    if (!m_model_arena || !m_model_arena->is_initialized()
+        || !m_slot_index_arena || !m_slot_index_arena->is_initialized())
         allocate_ssbo_buffers();
 
     upload_ssbos();
@@ -328,48 +336,54 @@ void MeshNetworkProcessor::allocate_ssbo_buffers()
         return;
     }
 
-    m_model_ssbo = std::make_shared<VKBuffer>(
-        model_bytes, VKBuffer::Usage::COMPUTE, Kakshya::DataModality::UNKNOWN);
-    m_buffer_service->initialize_buffer(m_model_ssbo);
+    constexpr auto usage = Portal::Graphics::BufferUsageHint::HOST_STORAGE;
 
-    m_slot_index_ssbo = std::make_shared<VKBuffer>(
-        slot_index_bytes, VKBuffer::Usage::COMPUTE, Kakshya::DataModality::UNKNOWN);
-    m_buffer_service->initialize_buffer(m_slot_index_ssbo);
+    m_model_arena = std::make_shared<Portal::Graphics::SlotArena>();
+    m_model_arena->initialize(model_bytes, usage, 3);
+
+    m_slot_index_arena = std::make_shared<Portal::Graphics::SlotArena>();
+    m_slot_index_arena->initialize(slot_index_bytes, usage, 3);
 }
 
 void MeshNetworkProcessor::upload_ssbos()
 {
-    if (m_model_aggregate.empty() || !m_model_ssbo || !m_slot_index_ssbo)
+    if (m_model_aggregate.empty() || !m_model_arena || !m_model_arena->is_initialized()
+        || !m_slot_index_arena || !m_slot_index_arena->is_initialized())
         return;
 
-    upload_resizing(
-        m_model_aggregate.data(),
-        m_model_aggregate.size() * sizeof(glm::mat4),
-        m_model_ssbo,
-        nullptr);
+    constexpr auto usage = Portal::Graphics::BufferUsageHint::HOST_STORAGE;
+    const size_t model_bytes = m_model_aggregate.size() * sizeof(glm::mat4);
+    const size_t slot_index_bytes = m_slot_index_aggregate.size() * sizeof(uint32_t);
 
-    upload_resizing(
-        m_slot_index_aggregate.data(),
-        m_slot_index_aggregate.size() * sizeof(uint32_t),
-        m_slot_index_ssbo,
-        nullptr);
+    if (model_bytes > m_model_arena->slot_bytes()) {
+        m_model_arena->initialize(model_bytes * 3 / 2, usage, 3);
+    }
+    if (slot_index_bytes > m_slot_index_arena->slot_bytes()) {
+        m_slot_index_arena->initialize(slot_index_bytes * 3 / 2, usage, 3);
+    }
+
+    m_model_slot = m_model_arena->acquire();
+    m_model_arena->write(m_model_slot, m_model_aggregate.data(), model_bytes);
+
+    m_slot_index_slot = m_slot_index_arena->acquire();
+    m_slot_index_arena->write(m_slot_index_slot, m_slot_index_aggregate.data(), slot_index_bytes);
 }
 
 void MeshNetworkProcessor::push_ssbo_bindings(const std::shared_ptr<VKBuffer>& buffer)
 {
-    if (!m_model_ssbo)
+    if (!m_model_arena || !m_model_arena->is_initialized())
         return;
 
     auto& bindings = buffer->get_engine_context().ssbo_bindings;
 
-    auto push = [&](uint32_t binding_idx, const std::shared_ptr<VKBuffer>& ssbo) {
+    auto push = [&](uint32_t binding_idx, const std::shared_ptr<Portal::Graphics::SlotArena>& arena, size_t slot) {
         Portal::Graphics::DescriptorBindingInfo info;
         info.set = 0;
         info.binding = binding_idx;
         info.type = vk::DescriptorType::eStorageBuffer;
-        info.buffer_info.buffer = ssbo->get_buffer();
-        info.buffer_info.offset = 0;
-        info.buffer_info.range = ssbo->get_size_bytes();
+        info.buffer_info = arena->info(slot);
+        info.arena = arena;
+        info.slot = slot;
 
         auto it = std::ranges::find_if(bindings, [&](const auto& b) {
             return b.set == info.set && b.binding == info.binding;
@@ -381,9 +395,9 @@ void MeshNetworkProcessor::push_ssbo_bindings(const std::shared_ptr<VKBuffer>& b
         }
     };
 
-    push(1, m_model_ssbo);
-    if (m_slot_index_ssbo) {
-        push(2, m_slot_index_ssbo);
+    push(1, m_model_arena, m_model_slot);
+    if (m_slot_index_arena && m_slot_index_arena->is_initialized()) {
+        push(2, m_slot_index_arena, m_slot_index_slot);
     }
 }
 

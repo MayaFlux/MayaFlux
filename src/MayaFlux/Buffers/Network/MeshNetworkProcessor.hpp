@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Buffers/VKBuffer.hpp"
+#include "MayaFlux/Portal/Graphics/SlotMachine.hpp"
 
 namespace MayaFlux::Nodes::Network {
 class MeshNetwork;
@@ -60,9 +61,11 @@ private:
     std::vector<uint32_t> m_index_aggregate;
 
     /// @brief Per-slot world matrices in sorted_indices order. One mat4 per slot.
-    std::shared_ptr<VKBuffer> m_model_ssbo;
+    std::shared_ptr<Portal::Graphics::SlotArena> m_model_arena;
+    size_t m_model_slot {};
     /// @brief Per-vertex slot index. One uint32_t per concatenated vertex.
-    std::shared_ptr<VKBuffer> m_slot_index_ssbo;
+    std::shared_ptr<Portal::Graphics::SlotArena> m_slot_index_arena;
+    size_t m_slot_index_slot {};
 
     /// @brief CPU-side scratch for model matrices, reused each cycle.
     std::vector<glm::mat4> m_model_aggregate;

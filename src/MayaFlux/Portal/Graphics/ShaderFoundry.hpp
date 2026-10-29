@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ShaderUtils.hpp"
+#include "SlotMachine.hpp"
 
 #include "ShaderSpec.hpp"
 
@@ -136,6 +137,7 @@ private:
         vk::PipelineStageFlags2 wait_stage;
         vk::QueryPool timestamp_pool;
         std::unordered_map<std::string, uint32_t> timestamp_queries;
+        std::vector<SlotLease> holds;
     };
 
     struct FenceState {
@@ -554,6 +556,16 @@ public:
      * command buffer allocation after completion, on the thread that allocates it.
      */
     void release_after_submit(std::function<void()> release);
+
+    /**
+     * @brief Keep a slot claimed until the work recorded in a command buffer completes
+     * @param cmd_id Command buffer that reads the slot
+     * @param hold Lease on the slot; ignored if empty or the command buffer is unknown
+     *
+     * The lease is dropped once the command buffer's submission has completed,
+     * or when it is released without having been submitted.
+     */
+    void hold_until_complete(CommandBufferID cmd_id, SlotLease hold);
 
     //==========================================================================
     // Memory Barriers and Synchronization

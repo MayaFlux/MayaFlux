@@ -308,7 +308,8 @@ void ComputePress::bind_descriptor_sets(
 void ComputePress::push_descriptors(
     CommandBufferID cmd_id,
     ComputePipelineID pipeline_id,
-    const std::vector<PushDescriptorWrite>& writes)
+    const std::vector<PushDescriptorWrite>& writes,
+    std::span<const SlotLease> leases)
 {
     auto pipeline_it = m_pipelines.find(pipeline_id);
     if (pipeline_it == m_pipelines.end()) {
@@ -356,6 +357,10 @@ void ComputePress::push_descriptors(
 
     pipeline_it->second.pipeline->push_descriptors(
         cmd, static_cast<uint32_t>(*pipeline_it->second.push_set), vk_writes);
+
+    for (const auto& lease : leases) {
+        m_shader_foundry->hold_until_complete(cmd_id, lease);
+    }
 }
 
 void ComputePress::push_constants(

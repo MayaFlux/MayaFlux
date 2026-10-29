@@ -41,11 +41,8 @@ void InstanceSSBOProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
     m_vertex_staging = create_staging_buffer(vk_buf->get_size_bytes());
 
     const size_t ssbo_bytes = slot_count * sizeof(glm::mat4);
-    m_transform_ssbo = std::make_shared<VKBuffer>(
-        ssbo_bytes, VKBuffer::Usage::COMPUTE, Kakshya::DataModality::UNKNOWN);
-    ensure_initialized(m_transform_ssbo);
-
-    m_transform_staging = create_staging_buffer(ssbo_bytes);
+    m_transform_arena = std::make_shared<Portal::Graphics::SlotArena>();
+    m_transform_arena->initialize(ssbo_bytes, Portal::Graphics::BufferUsageHint::HOST_STORAGE, 3);
 
     upload_template(vk_buf);
     upload_transforms(vk_buf);
@@ -59,8 +56,10 @@ void InstanceSSBOProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
 void InstanceSSBOProcessor::on_detach(const std::shared_ptr<Buffer>&)
 {
     m_vertex_staging.reset();
-    m_transform_ssbo.reset();
-    m_transform_staging.reset();
+    if (m_transform_arena) {
+        m_transform_arena->release();
+    }
+    m_transform_arena.reset();
     m_index_buffer.reset();
     m_index_staging.reset();
 }
@@ -139,11 +138,16 @@ void InstanceSSBOProcessor::upload_transforms(const std::shared_ptr<VKBuffer>& v
     for (const auto& slot : slots)
         m_transform_scratch[slot.index] = slot.transform;
 
-    upload_resizing(
-        m_transform_scratch.data(),
-        m_transform_scratch.size() * sizeof(glm::mat4),
-        m_transform_ssbo,
-        m_transform_staging);
+    if (!m_transform_arena)
+        return;
+
+    const size_t bytes = m_transform_scratch.size() * sizeof(glm::mat4);
+    if (bytes > m_transform_arena->slot_bytes()) {
+        m_transform_arena->initialize(bytes * 3 / 2, Portal::Graphics::BufferUsageHint::HOST_STORAGE, 3);
+    }
+
+    m_transform_slot = m_transform_arena->acquire();
+    m_transform_arena->write(m_transform_slot, m_transform_scratch.data(), bytes);
 
     if (auto rp = vertex_buf->get_render_processor())
         rp->set_instance_count(static_cast<uint32_t>(slots.size()));
@@ -151,7 +155,7 @@ void InstanceSSBOProcessor::upload_transforms(const std::shared_ptr<VKBuffer>& v
 
 void InstanceSSBOProcessor::push_ssbo_binding(const std::shared_ptr<VKBuffer>& vertex_buf)
 {
-    if (!m_transform_ssbo)
+    if (!m_transform_arena || !m_transform_arena->is_initialized())
         return;
 
     auto& bindings = vertex_buf->get_engine_context().ssbo_bindings;
@@ -160,9 +164,9 @@ void InstanceSSBOProcessor::push_ssbo_binding(const std::shared_ptr<VKBuffer>& v
     info.set = 0;
     info.binding = k_transform_ssbo_binding;
     info.type = vk::DescriptorType::eStorageBuffer;
-    info.buffer_info.buffer = m_transform_ssbo->get_buffer();
-    info.buffer_info.offset = 0;
-    info.buffer_info.range = m_transform_ssbo->get_size_bytes();
+    info.buffer_info = m_transform_arena->info(m_transform_slot);
+    info.arena = m_transform_arena;
+    info.slot = m_transform_slot;
 
     auto it = std::ranges::find_if(bindings, [](const auto& b) {
         return b.set == 0 && b.binding == k_transform_ssbo_binding;

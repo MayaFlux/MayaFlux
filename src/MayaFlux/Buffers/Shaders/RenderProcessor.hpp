@@ -1,6 +1,5 @@
 #pragma once
 
-#include "MayaFlux/Buffers/Staging/SlotArena.hpp"
 #include "MayaFlux/Kinesis/Viewport/Scissor.hpp"
 #include "MayaFlux/Kinesis/Viewport/ViewTransform.hpp"
 #include "MayaFlux/Portal/Graphics/PrimitiveMill.hpp"
@@ -409,7 +408,7 @@ private:
     Portal::Graphics::DepthStencilConfig m_depth_stencil;
 
     bool m_depth_enabled {};
-    SlotArena m_render_transform_arena;
+    Portal::Graphics::SlotArena m_render_transform_arena;
     size_t m_render_transform_slot {};
     std::optional<Kinesis::RenderTransform> m_written_render_transform;
 
@@ -485,7 +484,8 @@ private:
         const std::shared_ptr<VKBuffer>& buffer,
         std::vector<vk::WriteDescriptorSet>& writes,
         std::vector<vk::DescriptorBufferInfo>& buffer_infos,
-        std::vector<vk::DescriptorImageInfo>& image_infos) const;
+        std::vector<vk::DescriptorImageInfo>& image_infos,
+        std::vector<Portal::Graphics::SlotLease>& leases) const;
 
     BufferState* get_or_cache_buffer_state(const std::shared_ptr<VKBuffer>& buffer);
 };

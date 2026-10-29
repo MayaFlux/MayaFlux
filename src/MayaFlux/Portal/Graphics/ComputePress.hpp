@@ -175,11 +175,14 @@ public:
      * @brief Write the pipeline's push descriptor set into the command buffer
      *
      * Does nothing and logs an error when the pipeline has no push set.
+     * @param leases Slots the writes point into; the command buffer keeps each
+     *        claimed until its submission completes.
      */
     void push_descriptors(
         CommandBufferID cmd_id,
         ComputePipelineID pipeline_id,
-        const std::vector<PushDescriptorWrite>& writes);
+        const std::vector<PushDescriptorWrite>& writes,
+        std::span<const SlotLease> leases = {});
 
     /**
      * @brief Push constants to active command buffer

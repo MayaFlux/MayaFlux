@@ -3,7 +3,6 @@
 #include "ShaderFoundry.hpp"
 #include "ShaderSpec.hpp"
 
-#include "MayaFlux/Buffers/Staging/SlotArena.hpp"
 #include "MayaFlux/Buffers/VKBuffer.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Registry/BackendRegistry.hpp"
@@ -617,16 +616,16 @@ bool PrimitiveMill::ensure_buffers(
     }
 
     const auto arena_slots = static_cast<size_t>(m_output_ring) + 1;
-    const auto fit_arena = [arena_slots](std::unique_ptr<Buffers::SlotArena>& arena, size_t bytes) {
+    const auto fit_arena = [arena_slots](std::unique_ptr<SlotArena>& arena, size_t bytes) {
         if (arena && arena->slot_bytes() >= bytes) {
             return;
         }
         if (!arena) {
-            arena = std::make_unique<Buffers::SlotArena>();
+            arena = std::make_unique<SlotArena>();
         }
         arena->initialize(
             static_cast<size_t>(static_cast<float>(bytes) * 1.5F),
-            VKBuffer::Usage::HOST_STORAGE, arena_slots);
+            BufferUsageHint::HOST_STORAGE, arena_slots);
     };
 
     fit_arena(m_run_arena, std::max<size_t>(run_count * RUN_WORDS * sizeof(uint32_t), sizeof(uint32_t)));
@@ -642,9 +641,8 @@ void PrimitiveMill::collect_completed()
     auto& foundry = get_shader_foundry();
 
     size_t done = 0;
-    while (done < m_in_flight.size() && foundry.is_fence_signaled(m_in_flight[done].fence)) {
-        foundry.release_fence(m_in_flight[done].fence);
-        m_completed_epoch = m_in_flight[done].epoch;
+    while (done < m_in_flight.size() && foundry.is_fence_signaled(m_in_flight[done])) {
+        foundry.release_fence(m_in_flight[done]);
         ++done;
     }
     m_in_flight.erase(m_in_flight.begin(), m_in_flight.begin() + static_cast<std::ptrdiff_t>(done));
@@ -654,10 +652,9 @@ void PrimitiveMill::resolve_pending()
 {
     auto& foundry = get_shader_foundry();
 
-    for (const auto& dispatch : m_in_flight) {
-        foundry.wait_for_fence(dispatch.fence);
-        foundry.release_fence(dispatch.fence);
-        m_completed_epoch = dispatch.epoch;
+    for (const FenceID fence : m_in_flight) {
+        foundry.wait_for_fence(fence);
+        foundry.release_fence(fence);
     }
     m_in_flight.clear();
 }
@@ -737,8 +734,8 @@ uint32_t PrimitiveMill::mill(
         run_ptr[r * RUN_WORDS + 2] = runs[r].vertex_count;
     }
 
-    m_run_slot = m_run_arena->acquire(m_completed_epoch);
-    m_prefix_slot = m_prefix_arena->acquire(m_completed_epoch);
+    m_run_slot = m_run_arena->acquire();
+    m_prefix_slot = m_prefix_arena->acquire();
     m_run_arena->write(m_run_slot, m_run_words.data(), m_run_words.size() * sizeof(uint32_t));
     m_prefix_arena->write(m_prefix_slot, m_prefix.data(), m_prefix.size() * sizeof(uint32_t));
 
@@ -791,6 +788,10 @@ uint32_t PrimitiveMill::mill(
         };
     }
 
+    const std::array<SlotLease, 2> leases {
+        m_run_arena->lease(m_run_slot), m_prefix_arena->lease(m_prefix_slot)
+    };
+
     press.bind_pipeline(cmd_id, m_pipeline);
     press.push_descriptors(cmd_id, m_pipeline, {
                                                    storage_write(0, source),
@@ -798,7 +799,8 @@ uint32_t PrimitiveMill::mill(
                                                    slot_write(2, m_prefix_arena->info(m_prefix_slot)),
                                                    storage_write(3, m_outputs[m_output_slot]),
                                                    index_write,
-                                               });
+                                               },
+        leases);
     press.push_constants(cmd_id, m_pipeline, &pc, sizeof(MillPC));
     press.dispatch(cmd_id, (total + WORKGROUP - 1) / WORKGROUP, 1, 1);
 
@@ -817,9 +819,7 @@ uint32_t PrimitiveMill::mill(
         return 0;
     }
 
-    m_in_flight.push_back({ .epoch = ++m_dispatch_epoch, .fence = fence });
-    m_run_arena->mark_read(m_run_slot, m_dispatch_epoch);
-    m_prefix_arena->mark_read(m_prefix_slot, m_dispatch_epoch);
+    m_in_flight.push_back(fence);
 
     m_milled_count = total;
 

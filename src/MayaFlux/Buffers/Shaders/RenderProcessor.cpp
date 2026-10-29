@@ -453,7 +453,7 @@ void RenderProcessor::initialize_descriptors(const std::shared_ptr<VKBuffer>& bu
 
     auto transform_layout = flow.get_view_transform_layout(m_pipeline_id);
     if (transform_layout) {
-        m_render_transform_arena.initialize(sizeof(Kinesis::RenderTransform), VKBuffer::Usage::UNIFORM);
+        m_render_transform_arena.initialize(sizeof(Kinesis::RenderTransform), Portal::Graphics::BufferUsageHint::UNIFORM);
         m_render_transform_slot = 0;
         m_written_render_transform.reset();
 
@@ -567,11 +567,7 @@ const Kinesis::RenderTransform& RenderProcessor::publish_render_transform()
             || written->view_transform.view != next.view_transform.view
             || written->view_transform.projection != next.view_transform.projection
             || written->geometry != next.geometry) {
-            uint64_t completed = 0;
-            if (m_display_service && m_display_service->get_completed_frame_count && m_target_window) {
-                completed = m_display_service->get_completed_frame_count(m_target_window);
-            }
-            m_render_transform_slot = m_render_transform_arena.acquire(completed);
+            m_render_transform_slot = m_render_transform_arena.acquire();
             m_render_transform_arena.write(m_render_transform_slot, &next, sizeof(Kinesis::RenderTransform));
             m_written_render_transform = next;
         }
@@ -824,13 +820,6 @@ void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
     publish_render_transform();
     prepare_geometry(buffer, *state);
     record_draw(buffer, *state);
-
-    if (m_render_transform_arena.is_initialized() && m_display_service
-        && m_display_service->get_submitted_frame_count && m_target_window) {
-        m_render_transform_arena.mark_read(
-            m_render_transform_slot,
-            m_display_service->get_submitted_frame_count(m_target_window) + 1);
-    }
 }
 
 void RenderProcessor::retire_current_pipeline()
@@ -891,7 +880,8 @@ void RenderProcessor::collect_engine_writes(
     const std::shared_ptr<VKBuffer>& buffer,
     std::vector<vk::WriteDescriptorSet>& writes,
     std::vector<vk::DescriptorBufferInfo>& buffer_infos,
-    std::vector<vk::DescriptorImageInfo>& image_infos) const
+    std::vector<vk::DescriptorImageInfo>& image_infos,
+    std::vector<Portal::Graphics::SlotLease>& leases) const
 {
     const auto& engine_bindings = buffer->get_engine_context().ssbo_bindings;
     buffer_infos.reserve(1 + engine_bindings.size());
@@ -900,6 +890,7 @@ void RenderProcessor::collect_engine_writes(
 
     if (m_render_transform_arena.is_initialized()) {
         buffer_infos.emplace_back(m_render_transform_arena.info(m_render_transform_slot));
+        leases.push_back(m_render_transform_arena.lease(m_render_transform_slot));
         vk::WriteDescriptorSet write {};
         write.dstBinding = 0;
         write.descriptorCount = 1;
@@ -915,6 +906,9 @@ void RenderProcessor::collect_engine_writes(
             continue;
         }
         buffer_infos.emplace_back(binding.buffer_info.buffer, binding.buffer_info.offset, binding.buffer_info.range);
+        if (binding.arena) {
+            leases.push_back(binding.arena->lease(binding.slot));
+        }
         vk::WriteDescriptorSet write {};
         write.dstBinding = binding.binding;
         write.descriptorCount = 1;
@@ -957,7 +951,8 @@ void RenderProcessor::record_draw(const std::shared_ptr<VKBuffer>& buffer, const
     std::vector<vk::WriteDescriptorSet> engine_writes;
     std::vector<vk::DescriptorBufferInfo> engine_buffer_infos;
     std::vector<vk::DescriptorImageInfo> engine_image_infos;
-    collect_engine_writes(buffer, engine_writes, engine_buffer_infos, engine_image_infos);
+    std::vector<Portal::Graphics::SlotLease> engine_leases;
+    collect_engine_writes(buffer, engine_writes, engine_buffer_infos, engine_image_infos, engine_leases);
 
     auto& foundry = Portal::Graphics::get_shader_foundry();
     auto& flow = Portal::Graphics::get_render_flow();
@@ -1022,7 +1017,7 @@ void RenderProcessor::record_draw(const std::shared_ptr<VKBuffer>& buffer, const
         }
     }
 
-    flow.push_descriptors(cmd_id, m_pipeline_id, engine_writes);
+    flow.push_descriptors(cmd_id, m_pipeline_id, engine_writes, engine_leases);
 
     if (!m_descriptor_set_ids.empty()) {
         flow.bind_descriptor_sets(

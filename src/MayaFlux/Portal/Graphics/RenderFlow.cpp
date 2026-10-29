@@ -1009,7 +1009,8 @@ std::optional<uint32_t> RenderFlow::first_unwritten_push_binding(
 void RenderFlow::push_descriptors(
     CommandBufferID cmd_id,
     RenderPipelineID pipeline_id,
-    const std::vector<vk::WriteDescriptorSet>& writes)
+    const std::vector<vk::WriteDescriptorSet>& writes,
+    std::span<const SlotLease> leases)
 {
     auto pipeline_it = m_pipelines.find(pipeline_id);
     if (pipeline_it == m_pipelines.end()) {
@@ -1032,6 +1033,10 @@ void RenderFlow::push_descriptors(
     }
 
     pipeline_it->second->pipeline->push_descriptors(cmd, *pipeline_it->second->push_set, writes);
+
+    for (const auto& lease : leases) {
+        m_shader_foundry->hold_until_complete(cmd_id, lease);
+    }
 }
 
 void RenderFlow::bind_descriptor_sets(

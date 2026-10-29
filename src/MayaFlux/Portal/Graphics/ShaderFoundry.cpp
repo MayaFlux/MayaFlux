@@ -1068,6 +1068,18 @@ void ShaderFoundry::release_after_submit(std::function<void()> release)
     cmd_manager.retire_resource(std::move(release), cmd_manager.submitted());
 }
 
+void ShaderFoundry::hold_until_complete(CommandBufferID cmd_id, SlotLease hold)
+{
+    if (!hold) {
+        return;
+    }
+
+    auto it = m_command_buffers.find(cmd_id);
+    if (it != m_command_buffers.end()) {
+        it->second.holds.push_back(std::move(hold));
+    }
+}
+
 Core::TimelinePoint ShaderFoundry::submit_state(
     const CommandBufferState& state,
     std::span<const vk::SemaphoreSubmitInfo> signals)
@@ -1255,7 +1267,13 @@ void ShaderFoundry::release_fence(FenceID fence_id)
     if (state.cmd_id != INVALID_COMMAND_BUFFER) {
         auto cmd_it = m_command_buffers.find(state.cmd_id);
         if (cmd_it != m_command_buffers.end()) {
-            m_backend->get_command_manager().retire(cmd_it->second.cmd, state.point);
+            auto& cmd_manager = m_backend->get_command_manager();
+            cmd_manager.retire(cmd_it->second.cmd, state.point);
+            if (!cmd_it->second.holds.empty()) {
+                cmd_manager.retire_resource(
+                    [holds = std::make_shared<std::vector<SlotLease>>(std::move(cmd_it->second.holds))] { },
+                    state.point);
+            }
             m_command_buffers.erase(cmd_it);
         }
     }
