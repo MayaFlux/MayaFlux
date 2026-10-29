@@ -198,6 +198,16 @@ struct MAYAFLUX_API BufferService {
      * reads or overwrites memory a dispatch may still be using.
      */
     std::function<void()> await_dispatches;
+
+    /**
+     * @brief Block until the submission at a timeline value has completed.
+     *
+     * Returns immediately when it already has.
+     *
+     * @param timeline Timeline index of the submission.
+     * @param value    Value the submission signals on that timeline.
+     */
+    std::function<void(uint32_t, uint64_t)> await_point;
 };
 
 } // namespace MayaFlux::Registry::Services

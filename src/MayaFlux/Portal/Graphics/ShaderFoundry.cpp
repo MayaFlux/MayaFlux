@@ -1238,6 +1238,12 @@ void ShaderFoundry::wait_for_fence(FenceID fence_id)
     m_backend->get_command_manager().wait(it->second.point);
 }
 
+Core::TimelinePoint ShaderFoundry::fence_point(FenceID fence_id) const
+{
+    const auto it = m_fences.find(fence_id);
+    return it != m_fences.end() ? it->second.point : Core::TimelinePoint {};
+}
+
 void ShaderFoundry::wait_for_fences(const std::vector<FenceID>& fence_ids)
 {
     Core::TimelineSnapshot latest;

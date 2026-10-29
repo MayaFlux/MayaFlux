@@ -624,6 +624,13 @@ public:
     bool is_fence_signaled(FenceID fence_id);
 
     /**
+     * @brief Completion point of the submission behind a fence
+     * @param fence_id FenceID returned by submit_async.
+     * @return The point, or an empty point when the fence is unknown.
+     */
+    Core::TimelinePoint fence_point(FenceID fence_id) const;
+
+    /**
      * @brief Begin command buffer that waits on a semaphore
      * @param type Command buffer type (GRAPHICS, COMPUTE, TRANSFER)
      * @param wait_semaphore Semaphore ID returned by submit_with_signal

@@ -406,6 +406,12 @@ public:
     /** Retrieve and clear all invalid ranges */
     std::vector<std::pair<size_t, size_t>> get_and_clear_invalid_ranges();
 
+    /** Record the completion point of the latest submission that used this buffer */
+    void note_use(uint32_t timeline, uint64_t value);
+
+    /** Block until the latest recorded submission has completed; returns at once if none */
+    void await_use() const;
+
     /**
      * @brief Associate this buffer with a window for rendering
      * @param window Target window for rendering this buffer's content
@@ -667,6 +673,7 @@ protected:
 
 private:
     VKBufferResources m_resources;
+    std::atomic<uint64_t> m_last_use { 0 };
 
     // Buffer parameters
     size_t m_size_bytes {};

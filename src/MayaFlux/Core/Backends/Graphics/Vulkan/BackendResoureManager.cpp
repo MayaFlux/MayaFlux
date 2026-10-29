@@ -191,6 +191,13 @@ void BackendResourceManager::setup_backend_service(const std::shared_ptr<Registr
             m_command_manager.wait(produced);
         }
     };
+
+    buffer_service->await_point = [this](uint32_t timeline, uint64_t value) {
+        const TimelinePoint point { .timeline = timeline, .value = value };
+        if (!m_command_manager.is_complete(point)) {
+            m_command_manager.wait(point);
+        }
+    };
 }
 
 vk::MappedMemoryRange BackendResourceManager::mapped_memory_range(

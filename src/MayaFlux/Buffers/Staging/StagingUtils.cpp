@@ -758,7 +758,7 @@ bool clear_gpu_buffer(const std::shared_ptr<VKBuffer>& target)
     }
 
     if (target->is_host_visible() && target->get_mapped_ptr()) {
-        await_dispatches();
+        target->await_use();
         std::memset(target->get_mapped_ptr(), 0, target->get_size_bytes());
         return true;
     }

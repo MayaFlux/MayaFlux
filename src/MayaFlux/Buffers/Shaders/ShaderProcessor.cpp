@@ -569,7 +569,16 @@ void ShaderProcessor::submit_recorded(
         if (waits_on_submit()) {
             foundry.submit_and_wait(cmd_id);
         } else {
-            foundry.release_fence(foundry.submit_async(cmd_id));
+            const auto fence = foundry.submit_async(cmd_id);
+            if (const auto point = foundry.fence_point(fence)) {
+                if (buffer) {
+                    buffer->note_use(point.timeline, point.value);
+                }
+                for (const auto& [name, bound] : m_bound_buffers) {
+                    bound->note_use(point.timeline, point.value);
+                }
+            }
+            foundry.release_fence(fence);
         }
         return;
     }

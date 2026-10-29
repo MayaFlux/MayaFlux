@@ -107,7 +107,7 @@ void VKBuffer::set_data(const std::vector<Kakshya::DataVariant>& data)
                 bytes, m_size_bytes);
         }
 
-        await_dispatches();
+        await_use();
         std::memcpy(m_resources.mapped_ptr, ptr, bytes);
         mark_dirty_range(0, m_size_bytes);
 
@@ -127,7 +127,7 @@ std::vector<Kakshya::DataVariant> VKBuffer::get_data()
     }
 
     if (is_host_visible() && m_resources.mapped_ptr) {
-        await_dispatches();
+        await_use();
         mark_invalid_range(0, m_size_bytes);
 
         std::vector<uint8_t> raw_bytes(m_size_bytes);
@@ -167,6 +167,7 @@ void VKBuffer::resize(size_t new_size, bool preserve_data)
 
     std::vector<uint8_t> old_data;
     if (preserve_data && is_host_visible() && m_resources.mapped_ptr) {
+        await_use();
         size_t copy_size = std::min(m_size_bytes, new_size);
         old_data.resize(copy_size);
         std::memcpy(old_data.data(), m_resources.mapped_ptr, copy_size);
@@ -206,6 +207,27 @@ void VKBuffer::resize(size_t new_size, bool preserve_data)
 
     MF_INFO(Journal::Component::Buffers, Journal::Context::BufferManagement,
         "VKBuffer resize complete: {} bytes", m_size_bytes);
+}
+
+void VKBuffer::note_use(uint32_t timeline, uint64_t value)
+{
+    m_last_use.store((static_cast<uint64_t>(timeline) << 62) | value, std::memory_order_release);
+}
+
+void VKBuffer::await_use() const
+{
+    const uint64_t packed = m_last_use.load(std::memory_order_acquire);
+    if (packed == 0) {
+        return;
+    }
+
+    auto* buffer_service = Registry::BackendRegistry::instance()
+                               .get_service<Registry::Service::BufferService>();
+
+    if (buffer_service && buffer_service->await_point) {
+        buffer_service->await_point(
+            static_cast<uint32_t>(packed >> 62), packed & ((uint64_t { 1 } << 62) - 1));
+    }
 }
 
 void VKBuffer::set_modality(Kakshya::DataModality modality)
