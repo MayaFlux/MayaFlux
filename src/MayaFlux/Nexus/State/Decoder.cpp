@@ -697,19 +697,18 @@ bool StateDecoder::decode(Fabric& fabric, const std::string& base_path)
         return false;
     }
 
-    if (schema.entities.empty()) {
-        m_last_error = "Schema contains no entities: " + json_path;
-        MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
-        return false;
+    std::optional<PixelView> pv_opt;
+    const std::vector<float>* pixels = nullptr;
+    uint32_t width = 0;
+    if (!schema.entities.empty()) {
+        pv_opt = load_exr(exr_path, static_cast<uint32_t>(schema.entities.size()), State::k_exr_rows, m_last_error);
+        if (!pv_opt) {
+            MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
+            return false;
+        }
+        pixels = pv_opt->image.as_float();
+        width = pv_opt->width;
     }
-
-    auto pv_opt = load_exr(exr_path, static_cast<uint32_t>(schema.entities.size()), State::k_exr_rows, m_last_error);
-    if (!pv_opt) {
-        MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
-        return false;
-    }
-    const auto* pixels = pv_opt->image.as_float();
-    const uint32_t width = pv_opt->width;
 
     std::vector<std::string> warnings;
     note_older_version(schema.version, warnings);
@@ -774,19 +773,18 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(Fabric& fabric, con
         return result;
     }
 
-    if (schema.entities.empty()) {
-        m_last_error = "Schema contains no entities: " + json_path;
-        MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
-        return result;
+    std::optional<PixelView> pv_opt;
+    const std::vector<float>* pixels = nullptr;
+    uint32_t width = 0;
+    if (!schema.entities.empty()) {
+        pv_opt = load_exr(exr_path, static_cast<uint32_t>(schema.entities.size()), State::k_exr_rows, m_last_error);
+        if (!pv_opt) {
+            MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
+            return result;
+        }
+        pixels = pv_opt->image.as_float();
+        width = pv_opt->width;
     }
-
-    auto pv_opt = load_exr(exr_path, static_cast<uint32_t>(schema.entities.size()), State::k_exr_rows, m_last_error);
-    if (!pv_opt) {
-        MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
-        return result;
-    }
-    const auto* pixels = pv_opt->image.as_float();
-    const uint32_t width = pv_opt->width;
 
     note_older_version(schema.version, result.warnings);
 

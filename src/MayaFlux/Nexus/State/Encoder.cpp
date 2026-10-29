@@ -321,12 +321,6 @@ bool StateEncoder::encode_fabric(
         }
     }
 
-    if (records.empty()) {
-        m_last_error = "No entities to encode";
-        MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
-        return false;
-    }
-
     // -------------------------------------------------------------------------
     // Compute per-field ranges.
     // -------------------------------------------------------------------------
@@ -415,19 +409,21 @@ bool StateEncoder::encode_fabric(
     // Write EXR.
     // -------------------------------------------------------------------------
     const std::string exr_path = base_path + ".exr";
-    auto writer = IO::ImageWriterRegistry::instance().create_writer(exr_path);
-    if (!writer) {
-        m_last_error = "No ImageWriter registered for .exr";
-        MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
-        return false;
-    }
+    if (!records.empty()) {
+        auto writer = IO::ImageWriterRegistry::instance().create_writer(exr_path);
+        if (!writer) {
+            m_last_error = "No ImageWriter registered for .exr";
+            MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
+            return false;
+        }
 
-    IO::ImageWriteOptions options;
+        IO::ImageWriteOptions options;
 
-    if (!writer->write(exr_path, image, options)) {
-        m_last_error = "EXR write failed: " + writer->get_last_error();
-        MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
-        return false;
+        if (!writer->write(exr_path, image, options)) {
+            m_last_error = "EXR write failed: " + writer->get_last_error();
+            MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
+            return false;
+        }
     }
 
     // -------------------------------------------------------------------------
