@@ -170,7 +170,16 @@ void BackendWindowHandler::setup_backend_service(const std::shared_ptr<Registry:
         auto window = std::static_pointer_cast<Window>(window_ptr);
         vk::CommandBuffer primary_cmd = *reinterpret_cast<vk::CommandBuffer*>(&primary_cmd_bits);
 
-        this->submit_and_present(window, primary_cmd);
+        const TimelinePoint point = this->submit_and_present(window, primary_cmd);
+        return Registry::Service::PresentPoint { .timeline = point.timeline, .value = point.value };
+    };
+
+    display_service->is_present_complete = [this](const Registry::Service::PresentPoint& point) {
+        return m_command_manager.is_complete(TimelinePoint { .timeline = point.timeline, .value = point.value });
+    };
+
+    display_service->wait_present = [this](const Registry::Service::PresentPoint& point) {
+        m_command_manager.wait(TimelinePoint { .timeline = point.timeline, .value = point.value });
     };
 
     display_service->wait_idle = [this]() {
