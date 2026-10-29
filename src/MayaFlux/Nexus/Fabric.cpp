@@ -20,6 +20,10 @@ Fabric::Fabric(
 
 Fabric::~Fabric()
 {
+    for (auto& [id, expanse] : m_expanses) {
+        expanse->evict(m_fabric_id);
+    }
+
     for (auto& [id, reg] : m_registrations) {
         if (!reg.task_name.empty()) {
             m_scheduler.cancel_task(reg.task_name);
@@ -43,7 +47,7 @@ Wiring Fabric::wire(std::shared_ptr<Emitter> emitter)
     uint32_t id = assign_id(m);
     Registration reg { .member = std::move(m) };
     if (emitter->m_position.has_value()) {
-        reg.spatial_id = m_index->insert(*emitter->m_position);
+        track(id, reg, *emitter->m_position);
     }
     m_registrations.try_emplace(id, std::move(reg));
     return Wiring { *this, id };
@@ -55,7 +59,7 @@ Wiring Fabric::wire(std::shared_ptr<Sensor> sensor)
     uint32_t id = assign_id(m);
     Registration reg { .member = std::move(m) };
     if (sensor->m_position.has_value()) {
-        reg.spatial_id = m_index->insert(*sensor->m_position);
+        track(id, reg, *sensor->m_position);
     }
     m_registrations.try_emplace(id, std::move(reg));
     return Wiring { *this, id };
@@ -67,7 +71,7 @@ Wiring Fabric::wire(std::shared_ptr<Agent> agent)
     uint32_t id = assign_id(m);
     Registration reg { .member = std::move(m) };
     if (agent->m_position.has_value()) {
-        reg.spatial_id = m_index->insert(*agent->m_position);
+        track(id, reg, *agent->m_position);
     }
     m_registrations.try_emplace(id, std::move(reg));
     return Wiring { *this, id };
@@ -91,9 +95,7 @@ void Fabric::remove(uint32_t id)
     if (!reg.event_name.empty()) {
         m_event_manager.cancel_event(reg.event_name);
     }
-    if (reg.spatial_id.has_value()) {
-        m_index->remove(*reg.spatial_id);
-    }
+    untrack(reg);
 
     m_registrations.erase(it);
 }
@@ -184,12 +186,13 @@ void Fabric::commit()
     for (auto& [id, reg] : m_registrations) {
         std::visit([&](const auto& ptr) {
             if (!ptr->m_position.has_value()) {
+                untrack(reg);
                 return;
             }
             if (reg.spatial_id.has_value()) {
                 m_index->update(*reg.spatial_id, *ptr->m_position);
             } else {
-                reg.spatial_id = m_index->insert(*ptr->m_position);
+                track(id, reg, *ptr->m_position);
             }
         },
             reg.member);
@@ -198,17 +201,9 @@ void Fabric::commit()
     m_index->publish();
 
     if (!m_expanses.empty()) {
-        std::unordered_map<uint32_t, uint32_t> entity_of;
-        entity_of.reserve(m_registrations.size());
-        for (const auto& [id, reg] : m_registrations) {
-            if (reg.spatial_id.has_value()) {
-                entity_of.emplace(*reg.spatial_id, id);
-            }
-        }
-
         auto snapshot = m_index->all();
         for (auto& [spatial_id, position] : snapshot) {
-            if (const auto it = entity_of.find(spatial_id); it != entity_of.end()) {
+            if (const auto it = m_entity_of_spatial.find(spatial_id); it != m_entity_of_spatial.end()) {
                 spatial_id = it->second;
             }
         }
@@ -243,13 +238,17 @@ void Fabric::fire(uint32_t id)
 std::vector<Kinesis::QueryResult> Fabric::within_radius(
     const glm::vec3& center, float radius) const
 {
-    return m_index->within_radius(center, radius);
+    auto results = m_index->within_radius(center, radius);
+    translate(results);
+    return results;
 }
 
 std::vector<Kinesis::QueryResult> Fabric::k_nearest(
     const glm::vec3& center, uint32_t k) const
 {
-    return m_index->k_nearest(center, k);
+    auto results = m_index->k_nearest(center, k);
+    translate(results);
+    return results;
 }
 
 const Wiring* Fabric::wiring_for(uint32_t id) const
@@ -264,6 +263,34 @@ const Wiring* Fabric::wiring_for(uint32_t id) const
 // =============================================================================
 // Private
 // =============================================================================
+
+void Fabric::track(uint32_t id, Registration& reg, const glm::vec3& position)
+{
+    reg.spatial_id = m_index->insert(position);
+    m_entity_of_spatial[*reg.spatial_id] = id;
+}
+
+void Fabric::untrack(Registration& reg)
+{
+    if (!reg.spatial_id.has_value()) {
+        return;
+    }
+    m_index->remove(*reg.spatial_id);
+    m_entity_of_spatial.erase(*reg.spatial_id);
+    reg.spatial_id.reset();
+}
+
+void Fabric::translate(std::vector<Kinesis::QueryResult>& results) const
+{
+    std::erase_if(results, [this](Kinesis::QueryResult& hit) {
+        const auto it = m_entity_of_spatial.find(hit.id);
+        if (it == m_entity_of_spatial.end()) {
+            return true;
+        }
+        hit.id = it->second;
+        return false;
+    });
+}
 
 uint32_t Fabric::assign_id(Member& m)
 {
@@ -296,9 +323,11 @@ void Fabric::fire(const Registration& reg) const
         } else if constexpr (std::is_same_v<T, Sensor>) {
             PerceptionContext ctx;
             ctx.radius = ptr->m_query_radius;
+            std::vector<Kinesis::QueryResult> results;
             if (ptr->m_position.has_value()) {
                 ctx.position = *ptr->m_position;
-                auto results = m_index->within_radius(*ptr->m_position, ptr->m_query_radius);
+                results = m_index->within_radius(*ptr->m_position, ptr->m_query_radius);
+                translate(results);
                 ctx.spatial_results = std::span(results);
             }
             ptr->invoke(ctx);
@@ -307,6 +336,7 @@ void Fabric::fire(const Registration& reg) const
             ptr->follow_attachment();
             if (ptr->m_position.has_value()) {
                 auto results = m_index->within_radius(*ptr->m_position, ptr->m_query_radius);
+                translate(results);
                 PerceptionContext pctx;
                 pctx.position = *ptr->m_position;
                 pctx.radius = ptr->m_query_radius;

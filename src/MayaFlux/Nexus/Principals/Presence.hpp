@@ -118,7 +118,11 @@ public:
      * @brief Replace the falloff curve.
      * @param fn Maps normalized distance in [0, 1] to a weight.
      */
-    void set_falloff(FalloffFn fn) { m_falloff = std::move(fn); }
+    void set_falloff(FalloffFn fn)
+    {
+        m_falloff = std::move(fn);
+        m_falloff_curve.reset();
+    }
 
     /**
      * @brief Replace the per-neighbor radiation callable.

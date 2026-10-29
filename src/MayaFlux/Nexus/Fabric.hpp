@@ -285,13 +285,17 @@ private:
 
     uint32_t assign_id(Member& m);
     void fire(const Registration& reg) const;
+    void track(uint32_t id, Registration& reg, const glm::vec3& position);
+    void untrack(Registration& reg);
+    void translate(std::vector<Kinesis::QueryResult>& results) const;
 
     Vruta::TaskScheduler& m_scheduler;
     Vruta::EventManager& m_event_manager;
 
     std::unique_ptr<Kinesis::SpatialIndex3D> m_index;
-    std::unordered_map<uint32_t, Registration> m_registrations;
-    std::unordered_map<uint32_t, std::shared_ptr<Expanse>> m_expanses;
+    std::map<uint32_t, Registration> m_registrations;
+    std::map<uint32_t, std::shared_ptr<Expanse>> m_expanses;
+    std::unordered_map<uint32_t, uint32_t> m_entity_of_spatial;
 
     float m_cell_size;
     uint32_t m_fabric_id { 0 };
