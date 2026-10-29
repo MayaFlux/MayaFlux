@@ -1,5 +1,7 @@
 #pragma once
 
+#include "VKTimeline.hpp"
+
 #include "vulkan/vulkan.hpp"
 
 namespace MayaFlux::Registry::Service {
@@ -90,7 +92,7 @@ struct WindowRenderContext {
 
     std::vector<vk::Semaphore> image_available;
     std::vector<vk::Semaphore> render_finished;
-    std::vector<vk::Fence> in_flight;
+    std::vector<TimelinePoint> slot_point;
     std::vector<uint64_t> slot_submission;
     uint64_t submitted_frames {};
 
@@ -141,7 +143,13 @@ public:
     void render_all_windows();
     void handle_window_resize();
 
-    void submit_and_present(
+    /**
+     * @brief Submit a recorded frame for a window and present it
+     * @return Point on the graphics timeline that completes when the frame's
+     *         GPU work finishes, or an empty point if the window is not
+     *         registered or the submit failed
+     */
+    TimelinePoint submit_and_present(
         const std::shared_ptr<Window>& window,
         const vk::CommandBuffer& command_buffer);
 

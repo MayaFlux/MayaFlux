@@ -126,12 +126,7 @@ void WindowRenderContext::cleanup(VKContext& context)
 
     clear_command_buffers.clear();
 
-    for (auto& fence : in_flight) {
-        if (fence) {
-            device.destroyFence(fence);
-        }
-    }
-    in_flight.clear();
+    slot_point.clear();
     slot_submission.clear();
 
     if (depth_image && depth_image->is_initialized()) {
@@ -250,17 +245,10 @@ void BackendWindowHandler::setup_backend_service(const std::shared_ptr<Registry:
             return 0;
         }
 
-        auto device = m_context.get_device();
         size_t frame_index = ctx->current_frame;
-        auto& in_flight = ctx->in_flight[frame_index];
         auto& image_available = ctx->image_available[frame_index];
 
-        if (device.waitForFences(1, &in_flight, VK_TRUE, UINT64_MAX) == vk::Result::eTimeout) {
-            MF_RT_WARN(Journal::Component::Core, Journal::Context::GraphicsCallback,
-                "Fence timeout during swapchain acquisition for window '{}'",
-                window->get_create_info().title);
-            return 0;
-        }
+        m_command_manager.wait(ctx->slot_point[frame_index]);
 
         auto image_index_opt = ctx->swapchain->acquire_next_image(image_available);
         if (!image_index_opt.has_value()) {
@@ -269,13 +257,6 @@ void BackendWindowHandler::setup_backend_service(const std::shared_ptr<Registry:
         }
 
         ctx->current_image_index = image_index_opt.value();
-
-        if (device.resetFences(1, &in_flight) != vk::Result::eSuccess) {
-            MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
-                "Failed to reset fence for window '{}'",
-                window->get_create_info().title);
-            return 0;
-        }
 
         const auto& images = ctx->swapchain->get_images();
         VkImage raw = images[ctx->current_image_index];
@@ -676,14 +657,12 @@ bool BackendWindowHandler::create_sync_objects(WindowRenderContext& config)
     try {
         config.image_available.resize(image_count);
         config.render_finished.resize(image_count);
-        config.in_flight.resize(image_count);
+        config.slot_point.assign(image_count, TimelinePoint {});
         config.slot_submission.assign(image_count, 0);
         config.submitted_frames = 0;
         config.clear_command_buffers.resize(image_count);
 
         vk::SemaphoreCreateInfo semaphore_info {};
-        vk::FenceCreateInfo fence_info {};
-        fence_info.flags = vk::FenceCreateFlagBits::eSignaled;
 
         for (uint32_t i = 0; i < image_count; ++i) {
             config.image_available[i] = device.createSemaphore(semaphore_info);
@@ -691,10 +670,6 @@ bool BackendWindowHandler::create_sync_objects(WindowRenderContext& config)
 
             config.clear_command_buffers[i] = m_command_manager.allocate_command_buffer(
                 vk::CommandBufferLevel::ePrimary);
-        }
-
-        for (auto& i : config.in_flight) {
-            i = device.createFence(fence_info);
         }
 
         config.current_frame = 0;
@@ -843,10 +818,7 @@ void BackendWindowHandler::render_empty_window(WindowRenderContext& ctx)
     }
 
     try {
-        auto device = m_context.get_device();
-
         size_t frame_index = ctx.current_frame;
-        auto& in_flight = ctx.in_flight[frame_index];
         auto& image_available = ctx.image_available[frame_index];
         auto& render_finished = ctx.render_finished[frame_index];
 
@@ -858,9 +830,7 @@ void BackendWindowHandler::render_empty_window(WindowRenderContext& ctx)
             return;
         }
 
-        if (device.waitForFences(1, &in_flight, VK_TRUE, UINT64_MAX) == vk::Result::eTimeout) {
-            return;
-        }
+        m_command_manager.wait(ctx.slot_point[frame_index]);
         cmd_buffer.reset({});
 
         auto image_index_opt = ctx.swapchain->acquire_next_image(image_available);
@@ -869,10 +839,6 @@ void BackendWindowHandler::render_empty_window(WindowRenderContext& ctx)
             return;
         }
         ctx.current_image_index = image_index_opt.value();
-
-        if (device.resetFences(1, &in_flight) != vk::Result::eSuccess) {
-            return;
-        }
 
         vk::CommandBufferBeginInfo begin_info {};
         begin_info.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
@@ -914,7 +880,7 @@ void BackendWindowHandler::render_empty_window(WindowRenderContext& ctx)
 
         submit_and_present(window, cmd_buffer);
 
-        ctx.current_frame = (ctx.current_frame + 1) % ctx.in_flight.size();
+        ctx.current_frame = (ctx.current_frame + 1) % ctx.slot_point.size();
 
     } catch (const std::exception& e) {
         MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
@@ -1151,7 +1117,7 @@ void BackendWindowHandler::start_readback_thread(CaptureState& state, vk::Device
     });
 }
 
-void BackendWindowHandler::submit_and_present(
+TimelinePoint BackendWindowHandler::submit_and_present(
     const std::shared_ptr<Window>& window,
     const vk::CommandBuffer& command_buffer)
 {
@@ -1159,13 +1125,12 @@ void BackendWindowHandler::submit_and_present(
     if (!ctx) {
         MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
             "Window not registered for submit_and_present");
-        return;
+        return {};
     }
 
     auto graphics_queue = m_context.get_graphics_queue();
 
     size_t frame_index = ctx->current_frame;
-    auto& in_flight = ctx->in_flight[frame_index];
     auto& image_available = ctx->image_available[frame_index];
     auto& render_finished = ctx->render_finished[frame_index];
 
@@ -1188,12 +1153,14 @@ void BackendWindowHandler::submit_and_present(
     const vk::SemaphoreSubmitInfo signal_info { render_finished, 0, vk::PipelineStageFlagBits2::eAllCommands };
     const vk::CommandBuffer commands[] = { command_buffer };
 
-    if (!m_command_manager.submit(graphics_queue, commands, wait_infos, std::span { &signal_info, 1 }, in_flight)) {
+    const TimelinePoint point = m_command_manager.submit(graphics_queue, commands, wait_infos, std::span { &signal_info, 1 });
+    if (!point) {
         MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
             "Failed to submit primary command buffer for window '{}'",
             window->get_create_info().title);
-        return;
+        return {};
     }
+    ctx->slot_point[frame_index] = point;
     ctx->slot_submission[frame_index] = ++ctx->submitted_frames;
 
     bool present_success = ctx->swapchain->present(
@@ -1206,24 +1173,24 @@ void BackendWindowHandler::submit_and_present(
     if (present_success)
         capture_frame(*ctx);
 
-    ctx->current_frame = (frame_index + 1) % ctx->in_flight.size();
+    ctx->current_frame = (frame_index + 1) % ctx->slot_point.size();
 
     MF_RT_TRACE(Journal::Component::Core, Journal::Context::GraphicsCallback,
         "Window '{}': frame submitted and presented",
         window->get_create_info().title);
+
+    return point;
 }
 
 uint64_t BackendWindowHandler::completed_frame_count(const WindowRenderContext& ctx) const
 {
-    const auto device = m_context.get_device();
-
     uint64_t oldest_pending = ctx.submitted_frames + 1;
-    for (size_t slot = 0; slot < ctx.in_flight.size(); ++slot) {
+    for (size_t slot = 0; slot < ctx.slot_point.size(); ++slot) {
         const uint64_t submission = ctx.slot_submission[slot];
         if (submission == 0) {
             continue;
         }
-        if (device.getFenceStatus(ctx.in_flight[slot]) == vk::Result::eNotReady) {
+        if (!m_command_manager.is_complete(ctx.slot_point[slot])) {
             oldest_pending = std::min(oldest_pending, submission);
         }
     }
