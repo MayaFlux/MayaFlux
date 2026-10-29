@@ -105,9 +105,16 @@ void ShaderFoundry::shutdown()
         "Shutting down ShaderFoundry...");
 
     if (!m_command_buffers.empty()) {
-        MF_WARN(Journal::Component::Portal, Journal::Context::ShaderCompilation,
-            "{} command buffers still exist during shutdown - freeing now",
-            m_command_buffers.size());
+        const auto unreleased = std::ranges::count_if(m_command_buffers, [this](const auto& entry) {
+            return std::ranges::none_of(m_retired_commands, [&entry](const RetiredCommand& retired) {
+                return retired.cmd_id == entry.first;
+            });
+        });
+        if (unreleased > 0) {
+            MF_WARN(Journal::Component::Portal, Journal::Context::ShaderCompilation,
+                "{} command buffers still exist during shutdown - freeing now",
+                unreleased);
+        }
         free_all_command_buffers();
     }
 
