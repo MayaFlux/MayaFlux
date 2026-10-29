@@ -208,6 +208,14 @@ struct MAYAFLUX_API BufferService {
      * @param value    Value the submission signals on that timeline.
      */
     std::function<void(uint32_t, uint64_t)> await_point;
+
+    /**
+     * @brief Completion point of a fenced submission.
+     *
+     * @param handle Handle returned by execute_fenced or copy_buffer_fenced.
+     * @return Timeline index and value, or {0, 0} for a null handle.
+     */
+    std::function<std::pair<uint32_t, uint64_t>(const std::shared_ptr<void>&)> fenced_point;
 };
 
 } // namespace MayaFlux::Registry::Services

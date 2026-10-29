@@ -220,6 +220,9 @@ MAYAFLUX_API void resolve_back_buffer_read(
  *        leaving the rest of @p target as it was.
  * @param awaited True when the caller has already waited for work using
  *        @p target, which skips the library-wide wait before a host write.
+ *        A device-local @p target with a caller-supplied @p staging buffer is
+ *        then copied without blocking; the next write to @p staging waits for
+ *        that copy only.
  */
 MAYAFLUX_API void upload_to_gpu(
     const void* data,

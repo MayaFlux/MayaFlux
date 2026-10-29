@@ -27,6 +27,21 @@ void await_dispatches()
 
 namespace {
 
+    void record_transfer_visibility(vk::CommandBuffer cmd)
+    {
+        const vk::MemoryBarrier2 barrier {
+            vk::PipelineStageFlagBits2::eTransfer,
+            vk::AccessFlagBits2::eTransferWrite,
+            vk::PipelineStageFlagBits2::eAllCommands,
+            vk::AccessFlagBits2::eMemoryRead | vk::AccessFlagBits2::eMemoryWrite
+        };
+
+        vk::DependencyInfo dependency {};
+        dependency.memoryBarrierCount = 1;
+        dependency.pMemoryBarriers = &barrier;
+        cmd.pipelineBarrier2(dependency);
+    }
+
     template <typename Fill>
     void write_host_visible(const std::shared_ptr<VKBuffer>& target, size_t bytes, size_t dst_offset, const Fill& fill, bool awaited = false)
     {
@@ -83,7 +98,8 @@ namespace {
         const std::shared_ptr<VKBuffer>& staging_buffer,
         size_t bytes,
         size_t dst_offset,
-        const Fill& fill)
+        const Fill& fill,
+        bool asynchronous = false)
     {
         if (dst_offset + bytes > target->get_size_bytes()) {
             error<std::runtime_error>(
@@ -103,6 +119,10 @@ namespace {
                 Journal::Context::BufferProcessing,
                 std::source_location::current(),
                 "Staging buffer has no mapped pointer");
+        }
+
+        if (asynchronous) {
+            staging_buffer->await_use();
         }
 
         fill(staging_mapped);
@@ -125,6 +145,27 @@ namespace {
                 staging_resources.memory,
                 offset,
                 size);
+        }
+
+        if (asynchronous && buffer_service->execute_fenced && buffer_service->release_fenced
+            && buffer_service->fenced_point) {
+            const vk::Buffer source = staging_resources.buffer;
+            const vk::Buffer destination = target->get_buffer_resources().buffer;
+
+            const auto handle = buffer_service->execute_fenced([&](void* command_buffer) {
+                vk::CommandBuffer cmd(static_cast<VkCommandBuffer>(command_buffer));
+                const vk::BufferCopy region { 0, dst_offset, bytes };
+                cmd.copyBuffer(source, destination, 1, &region);
+                record_transfer_visibility(cmd);
+            });
+
+            if (handle) {
+                const auto [timeline, value] = buffer_service->fenced_point(handle);
+                staging_buffer->note_use(timeline, value);
+                target->note_use(timeline, value);
+                buffer_service->release_fenced(handle);
+                return;
+            }
         }
 
         buffer_service->copy_buffer(
@@ -748,7 +789,7 @@ void upload_to_gpu(
             staging_buf = create_staging_buffer(size);
         }
 
-        write_device_local(target, staging_buf, size, dst_offset, copy);
+        write_device_local(target, staging_buf, size, dst_offset, copy, awaited && staging != nullptr);
     }
 }
 

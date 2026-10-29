@@ -198,6 +198,15 @@ void BackendResourceManager::setup_backend_service(const std::shared_ptr<Registr
             m_command_manager.wait(point);
         }
     };
+
+    buffer_service->fenced_point = [](const std::shared_ptr<void>& handle)
+        -> std::pair<uint32_t, uint64_t> {
+        if (!handle) {
+            return { 0, 0 };
+        }
+        const auto submission = std::static_pointer_cast<FencedSubmission>(handle);
+        return { submission->point.timeline, submission->point.value };
+    };
 }
 
 vk::MappedMemoryRange BackendResourceManager::mapped_memory_range(
