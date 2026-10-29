@@ -70,6 +70,8 @@ public:
 
     [[nodiscard]] size_t slot_count() const noexcept { return m_read_epoch.size(); }
 
+    [[nodiscard]] size_t slot_bytes() const noexcept { return m_slot_bytes; }
+
     /**
      * @brief Hand the buffer to the caller, leaving the arena empty
      *

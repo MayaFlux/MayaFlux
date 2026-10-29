@@ -7,6 +7,7 @@
 
 namespace MayaFlux::Buffers {
 class VKBuffer;
+class SlotArena;
 }
 
 namespace MayaFlux::Portal::Graphics {
@@ -205,11 +206,11 @@ private:
     bool ensure_kernel();
 
     /**
-     * @brief Grows the destination ring, run and prefix buffers to fit.
+     * @brief Grows the destination ring, run and prefix arenas to fit.
      *
-     * Every slot is replaced at once, so the graphics queue is drained first in
-     * case a recorded draw still names the old buffers. The 1.5x headroom keeps
-     * geometry that is being added to from re-growing on nearly every cycle.
+     * Every slot is replaced at once and the outgoing buffers are released once
+     * the work submitted so far completes. The 1.5x headroom keeps geometry that
+     * is being added to from re-growing on nearly every cycle.
      */
     bool ensure_buffers(
         const std::shared_ptr<Buffers::VKBuffer>& source,
@@ -218,10 +219,17 @@ private:
         size_t run_count);
 
     /**
-     * @brief Wait on and reclaim the previous dispatch, if one is outstanding.
+     * @brief Reclaim every dispatch that has finished, without waiting.
      *
-     * Cheap in steady state: the work was submitted a frame earlier and has
-     * normally completed. Releases the fence and its command buffer.
+     * Releases each finished fence and its command buffer and advances the
+     * completed epoch the run and prefix arenas compare against.
+     */
+    void collect_completed();
+
+    /**
+     * @brief Wait on and reclaim every outstanding dispatch.
+     *
+     * For teardown, where the pipeline and shader are about to be destroyed.
      */
     void resolve_pending();
 
@@ -233,10 +241,13 @@ private:
 
     /// Milled buffers rotated between dispatches, all at m_output_capacity.
     std::vector<std::shared_ptr<Buffers::VKBuffer>> m_outputs;
-    std::shared_ptr<Buffers::VKBuffer> m_run_buf;
-    std::shared_ptr<Buffers::VKBuffer> m_prefix_buf;
+    std::unique_ptr<Buffers::SlotArena> m_run_arena;
+    std::unique_ptr<Buffers::SlotArena> m_prefix_arena;
+    size_t m_run_slot { 0 };
+    size_t m_prefix_slot { 0 };
 
     std::vector<uint32_t> m_prefix;
+    std::vector<uint32_t> m_run_words;
 
     uint32_t m_output_ring { 2 };
     size_t m_output_slot { 0 };
@@ -244,8 +255,15 @@ private:
     uint32_t m_milled_count { 0 };
     uint32_t m_output_capacity { 0 };
 
-    /// Outstanding dispatch, resolved at the start of the next mill().
-    FenceID m_pending_fence { INVALID_FENCE };
+    struct InFlight {
+        uint64_t epoch;
+        FenceID fence;
+    };
+
+    /// Dispatches submitted and not yet observed complete, oldest first.
+    std::vector<InFlight> m_in_flight;
+    uint64_t m_dispatch_epoch { 0 };
+    uint64_t m_completed_epoch { 0 };
 };
 
 /**

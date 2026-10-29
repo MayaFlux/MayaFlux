@@ -3,6 +3,7 @@
 #include "ShaderFoundry.hpp"
 #include "ShaderSpec.hpp"
 
+#include "MayaFlux/Buffers/Staging/SlotArena.hpp"
 #include "MayaFlux/Buffers/VKBuffer.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Registry/BackendRegistry.hpp"
@@ -615,33 +616,50 @@ bool PrimitiveMill::ensure_buffers(
         }
     }
 
-    const auto run_bytes = std::max<size_t>(run_count * RUN_WORDS * sizeof(uint32_t), sizeof(uint32_t));
-    if (!m_run_buf || m_run_buf->get_size_bytes() < run_bytes) {
-        m_run_buf = std::make_shared<VKBuffer>(
-            run_bytes, VKBuffer::Usage::HOST_STORAGE, Kakshya::DataModality::UNKNOWN);
-        svc->initialize_buffer(m_run_buf);
-    }
+    const auto arena_slots = static_cast<size_t>(m_output_ring) + 1;
+    const auto fit_arena = [arena_slots](std::unique_ptr<Buffers::SlotArena>& arena, size_t bytes) {
+        if (arena && arena->slot_bytes() >= bytes) {
+            return;
+        }
+        if (!arena) {
+            arena = std::make_unique<Buffers::SlotArena>();
+        }
+        arena->initialize(
+            static_cast<size_t>(static_cast<float>(bytes) * 1.5F),
+            VKBuffer::Usage::HOST_STORAGE, arena_slots);
+    };
 
-    const auto prefix_bytes = std::max<size_t>(m_prefix.size() * sizeof(uint32_t), sizeof(uint32_t));
-    if (!m_prefix_buf || m_prefix_buf->get_size_bytes() < prefix_bytes) {
-        m_prefix_buf = std::make_shared<VKBuffer>(
-            prefix_bytes, VKBuffer::Usage::HOST_STORAGE, Kakshya::DataModality::UNKNOWN);
-        svc->initialize_buffer(m_prefix_buf);
-    }
+    fit_arena(m_run_arena, std::max<size_t>(run_count * RUN_WORDS * sizeof(uint32_t), sizeof(uint32_t)));
+    fit_arena(m_prefix_arena, std::max<size_t>(m_prefix.size() * sizeof(uint32_t), sizeof(uint32_t)));
 
-    return !m_outputs.empty() && m_run_buf && m_prefix_buf;
+    return !m_outputs.empty()
+        && m_run_arena && m_run_arena->is_initialized()
+        && m_prefix_arena && m_prefix_arena->is_initialized();
+}
+
+void PrimitiveMill::collect_completed()
+{
+    auto& foundry = get_shader_foundry();
+
+    size_t done = 0;
+    while (done < m_in_flight.size() && foundry.is_fence_signaled(m_in_flight[done].fence)) {
+        foundry.release_fence(m_in_flight[done].fence);
+        m_completed_epoch = m_in_flight[done].epoch;
+        ++done;
+    }
+    m_in_flight.erase(m_in_flight.begin(), m_in_flight.begin() + static_cast<std::ptrdiff_t>(done));
 }
 
 void PrimitiveMill::resolve_pending()
 {
-    if (m_pending_fence == INVALID_FENCE) {
-        return;
-    }
-
     auto& foundry = get_shader_foundry();
-    foundry.wait_for_fence(m_pending_fence);
-    foundry.release_fence(m_pending_fence);
-    m_pending_fence = INVALID_FENCE;
+
+    for (const auto& dispatch : m_in_flight) {
+        foundry.wait_for_fence(dispatch.fence);
+        foundry.release_fence(dispatch.fence);
+        m_completed_epoch = dispatch.epoch;
+    }
+    m_in_flight.clear();
 }
 
 uint32_t PrimitiveMill::mill(
@@ -650,7 +668,7 @@ uint32_t PrimitiveMill::mill(
     const MillView& view,
     std::optional<Kakshya::VertexLayout> layout)
 {
-    resolve_pending();
+    collect_completed();
 
     m_milled_count = 0;
 
@@ -704,13 +722,8 @@ uint32_t PrimitiveMill::mill(
 
     m_output_slot = (m_output_slot + 1) % m_outputs.size();
 
-    auto* run_ptr = static_cast<uint32_t*>(m_run_buf->get_mapped_ptr());
-    auto* prefix_ptr = static_cast<uint32_t*>(m_prefix_buf->get_mapped_ptr());
-    if (!run_ptr || !prefix_ptr) {
-        MF_RT_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
-            "PrimitiveMill: run or prefix buffer is not host mapped");
-        return 0;
-    }
+    m_run_words.assign(runs.size() * RUN_WORDS, 0U);
+    auto* run_ptr = m_run_words.data();
 
     for (size_t r = 0; r < runs.size(); ++r) {
         const bool is_line = runs[r].topology == PrimitiveTopology::LINE_LIST
@@ -723,7 +736,11 @@ uint32_t PrimitiveMill::mill(
         run_ptr[r * RUN_WORDS + 1] = runs[r].vertex_offset;
         run_ptr[r * RUN_WORDS + 2] = runs[r].vertex_count;
     }
-    std::memcpy(prefix_ptr, m_prefix.data(), m_prefix.size() * sizeof(uint32_t));
+
+    m_run_slot = m_run_arena->acquire(m_completed_epoch);
+    m_prefix_slot = m_prefix_arena->acquire(m_completed_epoch);
+    m_run_arena->write(m_run_slot, m_run_words.data(), m_run_words.size() * sizeof(uint32_t));
+    m_prefix_arena->write(m_prefix_slot, m_prefix.data(), m_prefix.size() * sizeof(uint32_t));
 
     const bool billboard = m_spec.billboard_instances
         && m_spec.ribbon == MillSpec::Ribbon::WorldFacing
@@ -758,7 +775,16 @@ uint32_t PrimitiveMill::mill(
         return write;
     };
 
-    PushDescriptorWrite index_write = storage_write(4, m_run_buf);
+    const auto slot_write = [](uint32_t binding, const vk::DescriptorBufferInfo& info) {
+        PushDescriptorWrite write;
+        write.binding = binding;
+        write.type = vk::DescriptorType::eStorageBuffer;
+        write.buffer = info;
+        return write;
+    };
+
+    const auto run_info = m_run_arena->info(m_run_slot);
+    PushDescriptorWrite index_write = slot_write(4, run_info);
     if (indexed) {
         index_write.buffer = vk::DescriptorBufferInfo {
             source->get_index_buffer(), 0, source->get_index_buffer_size()
@@ -768,8 +794,8 @@ uint32_t PrimitiveMill::mill(
     press.bind_pipeline(cmd_id, m_pipeline);
     press.push_descriptors(cmd_id, m_pipeline, {
                                                    storage_write(0, source),
-                                                   storage_write(1, m_run_buf),
-                                                   storage_write(2, m_prefix_buf),
+                                                   slot_write(1, run_info),
+                                                   slot_write(2, m_prefix_arena->info(m_prefix_slot)),
                                                    storage_write(3, m_outputs[m_output_slot]),
                                                    index_write,
                                                });
@@ -784,12 +810,16 @@ uint32_t PrimitiveMill::mill(
         vk::PipelineStageFlagBits2::eComputeShader,
         vk::PipelineStageFlagBits2::eVertexInput);
 
-    m_pending_fence = foundry.submit_async(cmd_id);
-    if (m_pending_fence == INVALID_FENCE) {
+    const FenceID fence = foundry.submit_async(cmd_id);
+    if (fence == INVALID_FENCE) {
         MF_RT_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
             "PrimitiveMill: dispatch submission failed");
         return 0;
     }
+
+    m_in_flight.push_back({ .epoch = ++m_dispatch_epoch, .fence = fence });
+    m_run_arena->mark_read(m_run_slot, m_dispatch_epoch);
+    m_prefix_arena->mark_read(m_prefix_slot, m_dispatch_epoch);
 
     m_milled_count = total;
 
@@ -818,9 +848,16 @@ void PrimitiveMill::release()
 
     m_outputs.clear();
     m_output_slot = 0;
-    m_run_buf.reset();
-    m_prefix_buf.reset();
+    if (m_run_arena) {
+        m_run_arena->release();
+    }
+    if (m_prefix_arena) {
+        m_prefix_arena->release();
+    }
+    m_run_arena.reset();
+    m_prefix_arena.reset();
     m_prefix.clear();
+    m_run_words.clear();
     m_output_capacity = 0;
     m_milled_count = 0;
     m_push_constant_size = 0;
