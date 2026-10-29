@@ -28,7 +28,7 @@ void await_dispatches()
 namespace {
 
     template <typename Fill>
-    void write_host_visible(const std::shared_ptr<VKBuffer>& target, size_t bytes, size_t dst_offset, const Fill& fill)
+    void write_host_visible(const std::shared_ptr<VKBuffer>& target, size_t bytes, size_t dst_offset, const Fill& fill, bool awaited = false)
     {
         if (dst_offset + bytes > target->get_size_bytes()) {
             error<std::runtime_error>(
@@ -49,7 +49,9 @@ namespace {
                 "Host-visible buffer has no mapped pointer");
         }
 
-        await_dispatches();
+        if (!awaited) {
+            await_dispatches();
+        }
 
         fill(static_cast<uint8_t*>(mapped) + dst_offset);
 
@@ -718,7 +720,8 @@ void upload_to_gpu(
     size_t size,
     const std::shared_ptr<VKBuffer>& target,
     const std::shared_ptr<VKBuffer>& staging,
-    size_t dst_offset)
+    size_t dst_offset,
+    bool awaited)
 {
     if (!target) {
         error<std::invalid_argument>(
@@ -737,7 +740,7 @@ void upload_to_gpu(
     };
 
     if (target->is_host_visible()) {
-        write_host_visible(target, size, dst_offset, copy);
+        write_host_visible(target, size, dst_offset, copy, awaited);
     } else {
         std::shared_ptr<VKBuffer> staging_buf = staging;
 

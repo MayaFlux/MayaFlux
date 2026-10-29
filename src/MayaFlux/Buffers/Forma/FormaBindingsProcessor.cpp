@@ -307,7 +307,8 @@ void FormaBindingsProcessor::flush_descriptor(
     const DescriptorTarget& desc,
     const std::shared_ptr<VKBuffer>& attached)
 {
-    upload_to_gpu(&value, sizeof(float), desc.gpu_buffer, nullptr);
+    attached->await_use();
+    upload_to_gpu(&value, sizeof(float), desc.gpu_buffer, nullptr, 0, true);
 
     auto& bindings_list = attached->get_pipeline_context().descriptor_buffer_bindings;
 

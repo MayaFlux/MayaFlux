@@ -507,6 +507,8 @@ void DescriptorBindingsProcessor::execute_shader(const std::shared_ptr<VKBuffer>
         m_released_bindings.clear();
     }
 
+    buffer->await_use();
+
     for (auto& [name, binding] : m_bindings) {
         update_descriptor_data(binding);
 
@@ -585,7 +587,7 @@ void DescriptorBindingsProcessor::update_from_node(DescriptorBinding& binding)
     case BindingType::SCALAR: {
         ensure_buffer_capacity(binding, sizeof(float));
         ensure_staging(binding, sizeof(float));
-        upload_to_gpu(&value, sizeof(float), binding.gpu_buffer, binding.staging);
+        upload_to_gpu(&value, sizeof(float), binding.gpu_buffer, binding.staging, 0, true);
         break;
     }
 
@@ -601,7 +603,7 @@ void DescriptorBindingsProcessor::update_from_node(DescriptorBinding& binding)
 
         ensure_buffer_capacity(binding, data.size_bytes());
         ensure_staging(binding, data.size_bytes());
-        upload_to_gpu(data.data(), data.size_bytes(), binding.gpu_buffer, binding.staging);
+        upload_to_gpu(data.data(), data.size_bytes(), binding.gpu_buffer, binding.staging, 0, true);
         break;
     }
 
@@ -616,7 +618,7 @@ void DescriptorBindingsProcessor::update_from_node(DescriptorBinding& binding)
         auto data = gpu_mat->gpu_data();
         ensure_buffer_capacity(binding, data.size_bytes());
         ensure_staging(binding, data.size_bytes());
-        upload_to_gpu(data.data(), data.size_bytes(), binding.gpu_buffer, binding.staging);
+        upload_to_gpu(data.data(), data.size_bytes(), binding.gpu_buffer, binding.staging, 0, true);
         break;
     }
 
@@ -631,7 +633,7 @@ void DescriptorBindingsProcessor::update_from_node(DescriptorBinding& binding)
         auto data = gpu_struct->gpu_data();
         ensure_buffer_capacity(binding, data.size_bytes());
         ensure_staging(binding, data.size_bytes());
-        upload_to_gpu(data.data(), data.size_bytes(), binding.gpu_buffer, binding.staging);
+        upload_to_gpu(data.data(), data.size_bytes(), binding.gpu_buffer, binding.staging, 0, true);
         break;
     }
     }
@@ -647,7 +649,7 @@ void DescriptorBindingsProcessor::update_from_buffer(DescriptorBinding& binding)
         ensure_staging(binding, required);
         auto floats = Kakshya::convert_data<double, float>(
             std::span<double>(samples.data(), samples.size()), binding.converted);
-        upload_to_gpu(floats.data(), required, binding.gpu_buffer, binding.staging);
+        upload_to_gpu(floats.data(), required, binding.gpu_buffer, binding.staging, 0, true);
         return;
     }
 
@@ -661,7 +663,7 @@ void DescriptorBindingsProcessor::update_from_buffer(DescriptorBinding& binding)
     auto& raw = std::get<std::vector<uint8_t>>(data[0]);
     ensure_buffer_capacity(binding, raw.size());
     ensure_staging(binding, raw.size());
-    upload_to_gpu(raw.data(), raw.size(), binding.gpu_buffer, binding.staging);
+    upload_to_gpu(raw.data(), raw.size(), binding.gpu_buffer, binding.staging, 0, true);
 }
 
 void DescriptorBindingsProcessor::update_from_network(DescriptorBinding& binding)
@@ -686,7 +688,7 @@ void DescriptorBindingsProcessor::update_from_network(DescriptorBinding& binding
         ensure_staging(binding, required);
         auto floats = Kakshya::convert_data<double, float>(
             std::span<double>(samples.data(), samples.size()), binding.converted);
-        upload_to_gpu(floats.data(), required, binding.gpu_buffer, binding.staging);
+        upload_to_gpu(floats.data(), required, binding.gpu_buffer, binding.staging, 0, true);
         return;
     }
 
@@ -700,7 +702,9 @@ void DescriptorBindingsProcessor::update_from_network(DescriptorBinding& binding
         gpu_data.vertex_data.data(),
         gpu_data.vertex_data.size_bytes(),
         binding.gpu_buffer,
-        binding.staging);
+        binding.staging,
+        0,
+        true);
 }
 
 void DescriptorBindingsProcessor::ensure_buffer_capacity(

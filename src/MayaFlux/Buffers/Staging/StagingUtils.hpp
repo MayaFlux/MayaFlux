@@ -218,13 +218,16 @@ MAYAFLUX_API void resolve_back_buffer_read(
  * @param dst_offset Byte offset into @p target to write at. The default 0
  *        overwrites from the start; a nonzero value uploads a sub-range,
  *        leaving the rest of @p target as it was.
+ * @param awaited True when the caller has already waited for work using
+ *        @p target, which skips the library-wide wait before a host write.
  */
 MAYAFLUX_API void upload_to_gpu(
     const void* data,
     size_t size,
     const std::shared_ptr<VKBuffer>& target,
     const std::shared_ptr<VKBuffer>& staging = nullptr,
-    size_t dst_offset = 0);
+    size_t dst_offset = 0,
+    bool awaited = false);
 
 /**
  * @brief Zero a registered GPU buffer in place (auto-detects host-visible vs device-local)
