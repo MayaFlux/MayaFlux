@@ -1275,6 +1275,11 @@ void ShaderFoundry::release_fence(FenceID fence_id)
         if (cmd_it != m_command_buffers.end()) {
             auto& cmd_manager = m_backend->get_command_manager();
             cmd_manager.retire(cmd_it->second.cmd, state.point);
+            if (cmd_it->second.timestamp_pool) {
+                cmd_manager.retire_resource(
+                    [device = get_device(), pool = cmd_it->second.timestamp_pool] { device.destroyQueryPool(pool); },
+                    state.point);
+            }
             if (!cmd_it->second.holds.empty()) {
                 cmd_manager.retire_resource(
                     [holds = std::make_shared<std::vector<SlotLease>>(std::move(cmd_it->second.holds))] { },
