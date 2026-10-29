@@ -88,9 +88,6 @@ struct MAYAFLUX_API GraphicsBackendInfo {
         PER_QUEUE ///< One pool per queue family
     } command_pooling = CommandPooling::PER_THREAD;
 
-    /** @brief Maximum number of frames in flight (GPU pipelining) */
-    uint32_t max_frames_in_flight = 2;
-
     /** @brief Enable compute queue (separate from graphics) */
     bool enable_compute_queue = true;
 
@@ -125,7 +122,6 @@ struct MAYAFLUX_API GraphicsBackendInfo {
             // Reflect::member("required_features", &GraphicsBackendInfo::required_features),
             Reflect::member("memory_strategy", &GraphicsBackendInfo::memory_strategy),
             Reflect::member("command_pooling", &GraphicsBackendInfo::command_pooling),
-            Reflect::member("max_frames_in_flight", &GraphicsBackendInfo::max_frames_in_flight),
             Reflect::member("enable_compute_queue", &GraphicsBackendInfo::enable_compute_queue),
             Reflect::member("enable_transfer_queue", &GraphicsBackendInfo::enable_transfer_queue),
             Reflect::member("shader_compilation", &GraphicsBackendInfo::shader_compilation),

@@ -210,6 +210,12 @@ vk::DescriptorPool VKDescriptorManager::create_pool(vk::Device device, uint32_t 
         { vk::DescriptorType::eStorageImage, max_sets * 2 },
 
         { vk::DescriptorType::eCombinedImageSampler, max_sets * 2 },
+
+        { vk::DescriptorType::eSampler, max_sets },
+
+        { vk::DescriptorType::eSampledImage, max_sets * 2 },
+
+        { vk::DescriptorType::eInputAttachment, max_sets },
     };
 
     vk::DescriptorPoolCreateInfo pool_info;
