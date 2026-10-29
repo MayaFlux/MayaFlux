@@ -743,7 +743,7 @@ template <typename T>
 void ShaderProcessor::set_push_constant_data(const T& data)
 {
     const auto size = sizeof(T);
-    static_assert(size <= 128, "Push constants typically limited to 128 bytes");
+    static_assert(size <= 256, "Push constants limited to 256 bytes");
     if (m_push_constant_data.size() < size) {
         set_push_constant_size(size);
     }

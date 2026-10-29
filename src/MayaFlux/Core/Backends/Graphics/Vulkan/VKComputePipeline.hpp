@@ -9,7 +9,7 @@ namespace MayaFlux::Core {
  * @struct PushConstantRange
  * @brief Defines a push constant range for pipeline creation
  *
- * Push constants are small amounts of data (<128 bytes typically) that can be
+ * Push constants are small amounts of data (up to 256 bytes) that can be
  * updated very efficiently without descriptor sets. Useful for per-dispatch
  * parameters like iteration counts, scaling factors, etc.
  */
@@ -357,7 +357,7 @@ public:
     template <typename T>
     void push_constants_typed(vk::CommandBuffer cmd, const T& data)
     {
-        static_assert(sizeof(T) <= 128, "Push constants typically limited to 128 bytes");
+        static_assert(sizeof(T) <= 256, "Push constants limited to 256 bytes");
         cmd.pushConstants(m_layout, vk::ShaderStageFlagBits::eCompute,
             0, sizeof(T), &data);
     }
