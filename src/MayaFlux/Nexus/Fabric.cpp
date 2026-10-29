@@ -100,6 +100,14 @@ void Fabric::remove(uint32_t id)
     m_registrations.erase(it);
 }
 
+void Fabric::cancel_wiring(uint32_t id)
+{
+    const auto it = m_registrations.find(id);
+    if (it != m_registrations.end() && it->second.wiring.has_value()) {
+        it->second.wiring->cancel();
+    }
+}
+
 uint32_t Fabric::add_expanse(std::shared_ptr<Expanse> expanse)
 {
     const uint32_t id = expanse->id();

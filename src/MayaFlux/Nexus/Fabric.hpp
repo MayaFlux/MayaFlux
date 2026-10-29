@@ -113,6 +113,17 @@ public:
     void remove(uint32_t id);
 
     /**
+     * @brief Stop a finalised wiring without removing the entity.
+     *
+     * Cancels the wiring's task, event or chain and runs its bind detach function
+     * once. The entity stays registered and can still be fired by id. Does nothing
+     * if @p id is not registered or has no finalised wiring.
+     *
+     * @param id Stable id assigned at registration.
+     */
+    void cancel_wiring(uint32_t id);
+
+    /**
      * @brief Register an Expanse for per-commit crossing detection.
      *
      * On each commit, after the snapshot publishes, the Expanse's predicate is

@@ -490,9 +490,11 @@ void Wiring::finalise()
         auto name = make_name("nexus_metro");
         reg.task_name = name;
         auto& fab = m_fabric;
+        auto self = std::make_shared<std::weak_ptr<Vruta::Routine>>();
 
-        scheduler.add_task(
-            Kriya::metro(*m_interval, [&fab, id, pos_fn]() mutable {
+        auto routine = Kriya::metro(
+            *m_interval,
+            [&fab, id, pos_fn, self, remaining = m_times, limited = m_times > 1]() mutable {
                 if (pos_fn.has_value()) {
                     glm::vec3 p = (*pos_fn)();
                     std::visit([&p](const auto& ptr) {
@@ -500,11 +502,23 @@ void Wiring::finalise()
                     },
                         fab.m_registrations[id].member);
                 }
-                fab.fire(id); }, m_metro_token), name, false);
+                fab.fire(id);
+                if (limited) {
+                    --remaining;
+                    if (remaining == 0) {
+                        if (auto running = self->lock()) {
+                            running->set_should_terminate(true);
+                        }
+                    }
+                }
+            },
+            m_metro_token);
+
+        *self = routine;
+        scheduler.add_task(routine, name, false);
 
         if (m_duration.has_value()) {
-            auto cancel_name = make_name("nexus_metro_cancel");
-            auto timer = std::make_shared<Kriya::Timer>(scheduler);
+            auto timer = std::make_shared<Kriya::Timer>(scheduler, m_duration_token);
             timer->schedule(*m_duration, [name, timer, &scheduler]() {
                 scheduler.cancel_task(name);
             });
@@ -535,8 +549,9 @@ void Wiring::cancel()
         reg.event_name.clear();
     }
 
-    if (m_bind_detach.has_value()) {
-        (*m_bind_detach)();
+    if (m_bind_detach.has_value() && *m_bind_detach) {
+        const auto detach = std::exchange(*m_bind_detach, nullptr);
+        detach();
     }
 }
 
