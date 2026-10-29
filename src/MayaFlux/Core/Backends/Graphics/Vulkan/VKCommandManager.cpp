@@ -21,26 +21,13 @@ bool VKCommandManager::initialize(
     m_graphics_queue_family = graphics_queue_family;
     m_compute_queue_family = compute_queue_family;
 
-    vk::CommandPoolCreateInfo pool_info {};
-    pool_info.queueFamilyIndex = graphics_queue_family;
-    pool_info.flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
-
-    try {
-        m_command_pool = device.createCommandPool(pool_info);
-    } catch (const vk::SystemError& e) {
-        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "Failed to create command pool: {}", e.what());
+    const vk::CommandPool graphics_pool = create_pool(PoolKind::GRAPHICS);
+    const vk::CommandPool compute_pool = create_pool(PoolKind::COMPUTE);
+    if (!graphics_pool || !compute_pool) {
         return false;
     }
-
-    pool_info.queueFamilyIndex = compute_queue_family;
-    try {
-        m_compute_command_pool = device.createCommandPool(pool_info);
-    } catch (const vk::SystemError& e) {
-        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "Failed to create compute command pool: {}", e.what());
-        return false;
-    }
+    m_idle_graphics.push(graphics_pool);
+    m_idle_compute.push(compute_pool);
 
     for (const vk::Queue queue : { graphics_queue, compute_queue, transfer_queue }) {
         if (queue && timeline_index(queue) == timeline_count() && !create_timeline(queue)) {
@@ -51,6 +38,7 @@ bool VKCommandManager::initialize(
     MF_INFO(Journal::Component::Core, Journal::Context::GraphicsBackend,
         "Command manager initialized with {} timeline(s)", timeline_count());
 
+    m_ready.store(true, std::memory_order_release);
     return true;
 }
 
@@ -80,29 +68,25 @@ bool VKCommandManager::create_timeline(vk::Queue queue)
 
 void VKCommandManager::cleanup()
 {
+    m_ready.store(false, std::memory_order_release);
+
     m_retired.drain([](RetiredCommand&) { });
     m_retired_resources.drain([](RetiredResource&) { });
-    m_deferred_cmd = nullptr;
-    m_deferred_pending = false;
+    m_open_batches.drain([](vk::CommandBuffer&) { });
+    m_open_batch_count.store(0, std::memory_order_release);
+    m_idle_graphics.drain([](vk::CommandPool&) { });
+    m_idle_compute.drain([](vk::CommandPool&) { });
+    m_owners.reset();
 
-    if (m_compute_command_pool) {
-        if (!m_compute_allocated_buffers.empty()) {
-            m_device.freeCommandBuffers(m_compute_command_pool, m_compute_allocated_buffers);
-            m_compute_allocated_buffers.clear();
+    {
+        const auto pools = m_pools.read();
+        if (pools) {
+            for (const vk::CommandPool pool : *pools) {
+                m_device.destroyCommandPool(pool);
+            }
         }
-        m_device.destroyCommandPool(m_compute_command_pool);
-        m_compute_command_pool = nullptr;
     }
-
-    if (m_command_pool) {
-        if (!m_allocated_buffers.empty()) {
-            m_device.freeCommandBuffers(m_command_pool, m_allocated_buffers);
-            m_allocated_buffers.clear();
-        }
-
-        m_device.destroyCommandPool(m_command_pool);
-        m_command_pool = nullptr;
-    }
+    m_pools.reset();
 
     for (const auto& timeline : m_timelines) {
         m_device.destroySemaphore(timeline->semaphore);
@@ -110,12 +94,58 @@ void VKCommandManager::cleanup()
     m_timelines.clear();
 }
 
+vk::CommandPool VKCommandManager::create_pool(PoolKind kind)
+{
+    vk::CommandPoolCreateInfo pool_info {};
+    pool_info.queueFamilyIndex = kind == PoolKind::GRAPHICS ? m_graphics_queue_family : m_compute_queue_family;
+    pool_info.flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
+
+    vk::CommandPool pool;
+    try {
+        pool = m_device.createCommandPool(pool_info);
+    } catch (const vk::SystemError& e) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Failed to create {} command pool: {}", kind == PoolKind::GRAPHICS ? "graphics" : "compute", e.what());
+        return {};
+    }
+
+    m_pools.update([pool](std::vector<vk::CommandPool>& pools) { pools.push_back(pool); });
+    return pool;
+}
+
+Memory::SweepList<vk::CommandPool>& VKCommandManager::idle_pools(PoolKind kind)
+{
+    return kind == PoolKind::GRAPHICS ? m_idle_graphics : m_idle_compute;
+}
+
+vk::CommandPool VKCommandManager::lease_pool(PoolKind kind)
+{
+    if (auto idle = idle_pools(kind).try_take()) {
+        return *idle;
+    }
+    return create_pool(kind);
+}
+
 vk::CommandBuffer VKCommandManager::allocate_command_buffer(vk::CommandBufferLevel level)
 {
+    return allocate_from(PoolKind::GRAPHICS, level);
+}
+
+vk::CommandBuffer VKCommandManager::allocate_from(PoolKind kind, vk::CommandBufferLevel level)
+{
+    if (!m_ready.load(std::memory_order_acquire)) {
+        return {};
+    }
+
     collect();
 
+    const vk::CommandPool pool = lease_pool(kind);
+    if (!pool) {
+        return {};
+    }
+
     vk::CommandBufferAllocateInfo alloc_info {};
-    alloc_info.commandPool = m_command_pool;
+    alloc_info.commandPool = pool;
     alloc_info.level = level;
     alloc_info.commandBufferCount = 1;
 
@@ -125,14 +155,19 @@ vk::CommandBuffer VKCommandManager::allocate_command_buffer(vk::CommandBufferLev
         if (result != vk::Result::eSuccess) {
             MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
                 "Failed to allocate command buffer");
-            return nullptr;
+            idle_pools(kind).push(pool);
+            return {};
         }
-        m_allocated_buffers.push_back(cmd_buffer);
     } catch (const vk::SystemError& e) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
             "Failed to allocate command buffer: {}", e.what());
-        return nullptr;
+        idle_pools(kind).push(pool);
+        return {};
     }
+
+    m_owners.update([key = static_cast<VkCommandBuffer>(cmd_buffer), pool, kind](Owners& owners) {
+        owners.insert_or_assign(key, PoolRef { .pool = pool, .kind = kind });
+    });
 
     MF_RT_TRACE(Journal::Component::Core, Journal::Context::GraphicsBackend,
         "Allocated {} command buffer",
@@ -147,22 +182,30 @@ void VKCommandManager::free_command_buffer(vk::CommandBuffer command_buffer)
         return;
     }
 
-    auto it = std::ranges::find(m_allocated_buffers, command_buffer);
-    if (it != m_allocated_buffers.end()) {
-        m_device.freeCommandBuffers(m_command_pool, 1, &command_buffer);
-        m_allocated_buffers.erase(it);
+    PoolRef owner {};
+    const bool owned = m_owners.update([&owner, key = static_cast<VkCommandBuffer>(command_buffer)](Owners& owners) {
+        const auto it = owners.find(key);
+        if (it == owners.end()) {
+            return false;
+        }
+        owner = it->second;
+        return owners.erase(key);
+    });
+
+    if (!owned) {
+        return;
     }
 
-    auto it2 = std::ranges::find(m_compute_allocated_buffers, command_buffer);
-    if (it2 != m_compute_allocated_buffers.end()) {
-        m_device.freeCommandBuffers(m_compute_command_pool, 1, &command_buffer);
-        m_compute_allocated_buffers.erase(it2);
-    }
+    m_device.freeCommandBuffers(owner.pool, 1, &command_buffer);
+    idle_pools(owner.kind).push(owner.pool);
 }
 
 vk::CommandBuffer VKCommandManager::begin_single_time_commands()
 {
     vk::CommandBuffer command_buffer = allocate_command_buffer();
+    if (!command_buffer) {
+        return {};
+    }
 
     vk::CommandBufferBeginInfo begin_info {};
     begin_info.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
@@ -174,15 +217,10 @@ vk::CommandBuffer VKCommandManager::begin_single_time_commands()
 
 vk::CommandBuffer VKCommandManager::begin_single_time_commands_compute()
 {
-    collect();
-
-    vk::CommandBufferAllocateInfo alloc_info {};
-    alloc_info.commandPool = m_compute_command_pool;
-    alloc_info.level = vk::CommandBufferLevel::ePrimary;
-    alloc_info.commandBufferCount = 1;
-
-    vk::CommandBuffer cmd = m_device.allocateCommandBuffers(alloc_info).front();
-    m_compute_allocated_buffers.push_back(cmd);
+    vk::CommandBuffer cmd = allocate_from(PoolKind::COMPUTE, vk::CommandBufferLevel::ePrimary);
+    if (!cmd) {
+        return {};
+    }
 
     vk::CommandBufferBeginInfo begin_info {};
     begin_info.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
@@ -205,27 +243,46 @@ void VKCommandManager::end_single_time_commands(vk::CommandBuffer command_buffer
 void VKCommandManager::record_deferred_commands(
     const std::function<void(vk::CommandBuffer)>& recorder)
 {
-    if (!m_deferred_cmd)
-        m_deferred_cmd = begin_single_time_commands();
-    recorder(m_deferred_cmd);
-    m_deferred_pending = true;
+    vk::CommandBuffer batch;
+    if (auto open = m_open_batches.try_take()) {
+        batch = *open;
+    } else {
+        batch = begin_single_time_commands();
+        if (!batch) {
+            return;
+        }
+        m_open_batch_count.fetch_add(1, std::memory_order_acq_rel);
+    }
+
+    try {
+        recorder(batch);
+    } catch (...) {
+        m_open_batches.push(batch);
+        throw;
+    }
+
+    m_open_batches.push(batch);
 }
 
 TimelinePoint VKCommandManager::flush_deferred(vk::Queue queue)
 {
-    if (!m_deferred_pending || !m_deferred_cmd) {
+    std::vector<vk::CommandBuffer> batches;
+    m_open_batches.drain([&batches](vk::CommandBuffer& batch) { batches.push_back(batch); });
+
+    if (batches.empty()) {
         return {};
     }
 
-    const vk::CommandBuffer command = m_deferred_cmd;
-    m_deferred_cmd = nullptr;
-    m_deferred_pending = false;
+    m_open_batch_count.fetch_sub(static_cast<uint32_t>(batches.size()), std::memory_order_acq_rel);
 
-    command.end();
+    for (const vk::CommandBuffer batch : batches) {
+        batch.end();
+    }
 
-    const vk::CommandBuffer commands[] = { command };
-    const TimelinePoint point = submit(queue, commands);
-    retire(command, point);
+    const TimelinePoint point = submit(queue, batches);
+    for (const vk::CommandBuffer batch : batches) {
+        retire(batch, point);
+    }
     return point;
 }
 
@@ -433,11 +490,6 @@ vk::Semaphore VKCommandManager::get_timeline(vk::Queue queue) const
 {
     const uint32_t index = timeline_index(queue);
     return index == timeline_count() ? vk::Semaphore {} : m_timelines[index]->semaphore;
-}
-
-void VKCommandManager::reset_pool()
-{
-    m_device.resetCommandPool(m_command_pool, vk::CommandPoolResetFlags {});
 }
 
 } // namespace MayaFlux::Core

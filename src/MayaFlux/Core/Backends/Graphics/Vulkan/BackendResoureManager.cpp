@@ -217,14 +217,21 @@ vk::MappedMemoryRange BackendResourceManager::mapped_memory_range(
     vk::MappedMemoryRange range {};
     range.memory = memory;
 
-    const auto allocation = m_buffer_allocation_sizes.find(static_cast<VkDeviceMemory>(memory));
-    if (allocation == m_buffer_allocation_sizes.end()) {
+    std::optional<vk::DeviceSize> known_size;
+    if (const auto sizes = m_buffer_allocation_sizes.read()) {
+        const auto allocation = sizes->find(static_cast<VkDeviceMemory>(memory));
+        if (allocation != sizes->end()) {
+            known_size = allocation->second;
+        }
+    }
+
+    if (!known_size) {
         range.offset = offset;
         range.size = size == 0 ? VK_WHOLE_SIZE : size;
         return range;
     }
 
-    const vk::DeviceSize allocation_size = allocation->second;
+    const vk::DeviceSize allocation_size = *known_size;
     const vk::DeviceSize atom_size = std::max<vk::DeviceSize>(
         1, m_context.get_physical_device().getProperties().limits.nonCoherentAtomSize);
     const vk::DeviceSize start = std::min(offset, allocation_size);
@@ -314,7 +321,9 @@ void BackendResourceManager::allocate_raw_buffer(
         }
     }
 
-    m_buffer_allocation_sizes[static_cast<VkDeviceMemory>(out_memory)] = mem_requirements.size;
+    m_buffer_allocation_sizes.update([key = static_cast<VkDeviceMemory>(out_memory), size = mem_requirements.size](AllocationSizes& sizes) {
+        sizes.insert_or_assign(key, size);
+    });
 }
 
 void BackendResourceManager::initialize_buffer(const std::shared_ptr<Buffers::VKBuffer>& buffer)
@@ -424,7 +433,9 @@ void BackendResourceManager::release_buffer_handles(vk::Buffer buffer, vk::Devic
     }
 
     if (memory) {
-        m_buffer_allocation_sizes.erase(static_cast<VkDeviceMemory>(memory));
+        m_buffer_allocation_sizes.update([key = static_cast<VkDeviceMemory>(memory)](AllocationSizes& sizes) {
+            return sizes.erase(key);
+        });
         m_context.get_device().freeMemory(memory);
     }
 }
@@ -1576,7 +1587,9 @@ void BackendResourceManager::cleanup()
                 device.destroyBuffer(slot.buffer);
             }
             if (slot.memory) {
-                m_buffer_allocation_sizes.erase(static_cast<VkDeviceMemory>(slot.memory));
+                m_buffer_allocation_sizes.update([key = static_cast<VkDeviceMemory>(slot.memory)](AllocationSizes& sizes) {
+                    return sizes.erase(key);
+                });
                 device.freeMemory(slot.memory);
             }
         }
@@ -1594,7 +1607,7 @@ void BackendResourceManager::cleanup()
         }
     }
     m_managed_buffers.clear();
-    m_buffer_allocation_sizes.clear();
+    m_buffer_allocation_sizes.reset();
     m_host_copy_layouts_ready = false;
     m_host_copy_src_layouts.clear();
     m_host_copy_dst_layouts.clear();

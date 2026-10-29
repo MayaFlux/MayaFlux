@@ -2,6 +2,8 @@
 
 #include "VKTimeline.hpp"
 
+#include "MayaFlux/Transitive/Memory/FlatMap.hpp"
+#include "MayaFlux/Transitive/Memory/SnapshotCell.hpp"
 #include "MayaFlux/Transitive/Memory/SweepList.hpp"
 
 #include <vulkan/vulkan.hpp>
@@ -22,10 +24,18 @@ namespace MayaFlux::Core {
  * Values on different timelines are unordered. Completion of work spread over
  * several queues is expressed as a TimelineSnapshot.
  *
+ * Every command buffer gets a command pool to itself for its lifetime, leased
+ * from a lock-free stack of idle pools and returned when the buffer is freed.
+ * Vulkan requires external synchronization of a pool for allocation, freeing,
+ * begin, end and reset, so a pool with one user needs none: any thread may
+ * allocate, record, free, retire, collect and record deferred commands, with
+ * no lock and no thread of its own. A command buffer, like any Vulkan object,
+ * must be used by one thread at a time.
+ *
  * Submission is externally synchronized, as vkQueueSubmit is. Two threads must
- * not call submit() concurrently. retire(), retire_resource() and collect() may
- * be called from any thread: the retire lists are lock-free Memory::SweepList
- * instances.
+ * not call submit() concurrently, and so must not call flush_deferred() or
+ * end_single_time_commands() concurrently on the same queue. The retire lists
+ * are lock-free Memory::SweepList instances.
  */
 class MAYAFLUX_API VKCommandManager {
 public:
@@ -66,7 +76,10 @@ public:
         vk::CommandBufferLevel level = vk::CommandBufferLevel::ePrimary);
 
     /**
-     * @brief Free a command buffer back to the pool
+     * @brief Free a command buffer and return its pool to the idle stack
+     *
+     * Freeing a null, unknown or already freed buffer does nothing. When several
+     * threads free the same buffer exactly one of them frees it.
      */
     void free_command_buffer(vk::CommandBuffer command_buffer);
 
@@ -86,16 +99,6 @@ public:
     void end_single_time_commands(vk::CommandBuffer command_buffer, vk::Queue queue);
 
     /**
-     * @brief Reset command pool (invalidates all allocated buffers)
-     */
-    void reset_pool();
-
-    /**
-     * @brief Get the command pool
-     */
-    [[nodiscard]] vk::CommandPool get_pool() const { return m_command_pool; }
-
-    /**
      * @brief Begin single-time command for compute operations
      * @return Command buffer ready for recording
      */
@@ -104,16 +107,20 @@ public:
     /**
      * @brief Check whether deferred commands are waiting for flush_deferred()
      */
-    [[nodiscard]] bool has_deferred_commands() const { return m_deferred_pending; }
+    [[nodiscard]] bool has_deferred_commands() const { return m_open_batch_count.load(std::memory_order_acquire) != 0; }
 
     /**
      * @brief Record deferred commands for later submission
      * @param recorder Command recording function that takes a command buffer
+     *
+     * The recorder gets an open batch to itself. One thread recording at a time
+     * reuses a single batch; threads recording at once each get their own, and
+     * flush_deferred() submits them together.
      */
     void record_deferred_commands(const std::function<void(vk::CommandBuffer)>& recorder);
 
     /**
-     * @brief Submit the pending deferred commands and retire their buffer
+     * @brief Submit the pending deferred batches and retire their buffers
      * @param queue Queue to submit to
      * @return Point of the submission, or an empty point when nothing was pending or the submit failed
      */
@@ -246,22 +253,41 @@ private:
         TimelineSnapshot completion;
     };
 
+    enum class PoolKind : uint8_t {
+        GRAPHICS,
+        COMPUTE
+    };
+
+    struct PoolRef {
+        vk::CommandPool pool;
+        PoolKind kind {};
+    };
+
+    using Owners = Memory::FlatMap<VkCommandBuffer, PoolRef>;
+
     bool create_timeline(vk::Queue queue);
+    vk::CommandPool create_pool(PoolKind kind);
+    vk::CommandPool lease_pool(PoolKind kind);
+    vk::CommandBuffer allocate_from(PoolKind kind, vk::CommandBufferLevel level);
+    Memory::SweepList<vk::CommandPool>& idle_pools(PoolKind kind);
 
     vk::Device m_device;
-    vk::CommandPool m_command_pool;
-    vk::CommandPool m_compute_command_pool;
     uint32_t m_graphics_queue_family {};
     uint32_t m_compute_queue_family {};
 
     std::vector<std::unique_ptr<QueueTimeline>> m_timelines;
     std::array<std::atomic<uint64_t>, k_max_timelines> m_produced {};
 
-    vk::CommandBuffer m_deferred_cmd {};
-    bool m_deferred_pending {};
+    std::atomic<bool> m_ready { false };
 
-    std::vector<vk::CommandBuffer> m_allocated_buffers;
-    std::vector<vk::CommandBuffer> m_compute_allocated_buffers;
+    Memory::SnapshotCell<Owners> m_owners;
+    Memory::SnapshotCell<std::vector<vk::CommandPool>> m_pools;
+    Memory::SweepList<vk::CommandPool> m_idle_graphics;
+    Memory::SweepList<vk::CommandPool> m_idle_compute;
+
+    Memory::SweepList<vk::CommandBuffer> m_open_batches;
+    std::atomic<uint32_t> m_open_batch_count { 0 };
+
     Memory::SweepList<RetiredCommand> m_retired;
     Memory::SweepList<RetiredResource> m_retired_resources;
 };

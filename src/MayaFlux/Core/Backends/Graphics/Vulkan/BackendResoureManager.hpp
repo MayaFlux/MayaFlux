@@ -1,6 +1,9 @@
 #pragma once
 
 #include "VKCommandManager.hpp"
+
+#include "MayaFlux/Transitive/Memory/FlatMap.hpp"
+#include "MayaFlux/Transitive/Memory/SnapshotCell.hpp"
 #include "vulkan/vulkan.hpp"
 
 namespace MayaFlux::Registry::Service {
@@ -298,7 +301,8 @@ private:
     VKCommandManager& m_command_manager;
 
     std::vector<std::shared_ptr<Buffers::VKBuffer>> m_managed_buffers;
-    std::unordered_map<VkDeviceMemory, vk::DeviceSize> m_buffer_allocation_sizes;
+    using AllocationSizes = Memory::FlatMap<VkDeviceMemory, vk::DeviceSize>;
+    Memory::SnapshotCell<AllocationSizes> m_buffer_allocation_sizes;
     std::unordered_map<size_t, vk::Sampler> m_sampler_cache;
     bool m_host_copy_layouts_ready {};
     std::vector<vk::ImageLayout> m_host_copy_src_layouts;
