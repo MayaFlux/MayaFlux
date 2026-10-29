@@ -453,11 +453,9 @@ void RenderProcessor::initialize_descriptors(const std::shared_ptr<VKBuffer>& bu
 
     auto transform_layout = flow.get_view_transform_layout(m_pipeline_id);
     if (transform_layout) {
-        m_render_transform_ubo = std::make_shared<VKBuffer>(
-            sizeof(Kinesis::RenderTransform),
-            VKBuffer::Usage::UNIFORM,
-            Kakshya::DataModality::UNKNOWN);
-        ensure_initialized(m_render_transform_ubo);
+        m_render_transform_arena.initialize(sizeof(Kinesis::RenderTransform), VKBuffer::Usage::UNIFORM);
+        m_render_transform_slot = 0;
+        m_written_render_transform.reset();
 
         MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             "RenderTransform UBO allocated (pipeline {})", m_pipeline_id);
@@ -562,14 +560,20 @@ const Kinesis::RenderTransform& RenderProcessor::publish_render_transform()
 
     m_published_render_transform = transform;
 
-    if (m_render_transform_ubo && m_render_transform_ubo->get_mapped_ptr()) {
-        void* mapped = m_render_transform_ubo->get_mapped_ptr();
-        const auto* current = static_cast<const Kinesis::RenderTransform*>(mapped);
+    if (m_render_transform_arena.is_initialized()) {
         const auto& next = m_published_render_transform;
-        if (current->view_transform.view != next.view_transform.view
-            || current->view_transform.projection != next.view_transform.projection
-            || current->geometry != next.geometry) {
-            std::memcpy(mapped, &next, sizeof(Kinesis::RenderTransform));
+        const auto& written = m_written_render_transform;
+        if (!written
+            || written->view_transform.view != next.view_transform.view
+            || written->view_transform.projection != next.view_transform.projection
+            || written->geometry != next.geometry) {
+            uint64_t completed = 0;
+            if (m_display_service && m_display_service->get_completed_frame_count && m_target_window) {
+                completed = m_display_service->get_completed_frame_count(m_target_window);
+            }
+            m_render_transform_slot = m_render_transform_arena.acquire(completed);
+            m_render_transform_arena.write(m_render_transform_slot, &next, sizeof(Kinesis::RenderTransform));
+            m_written_render_transform = next;
         }
     }
 
@@ -820,6 +824,13 @@ void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
     publish_render_transform();
     prepare_geometry(buffer, *state);
     record_draw(buffer, *state);
+
+    if (m_render_transform_arena.is_initialized() && m_display_service
+        && m_display_service->get_submitted_frame_count && m_target_window) {
+        m_render_transform_arena.mark_read(
+            m_render_transform_slot,
+            m_display_service->get_submitted_frame_count(m_target_window) + 1);
+    }
 }
 
 void RenderProcessor::retire_current_pipeline()
@@ -839,8 +850,9 @@ void RenderProcessor::retire_current_pipeline()
 
     m_retired.push_back({ .pipeline = m_pipeline_id,
         .window = m_target_window,
-        .transform_ubo = std::move(m_render_transform_ubo),
+        .transform_ubo = m_render_transform_arena.detach(),
         .after_frame = after_frame });
+    m_written_render_transform.reset();
 
     m_pipeline_id = Portal::Graphics::INVALID_RENDER_PIPELINE;
 }
@@ -886,8 +898,8 @@ void RenderProcessor::collect_engine_writes(
     image_infos.reserve(m_texture_bindings.size());
     writes.reserve(1 + engine_bindings.size() + m_texture_bindings.size());
 
-    if (m_render_transform_ubo) {
-        buffer_infos.emplace_back(m_render_transform_ubo->get_buffer(), 0, sizeof(Kinesis::RenderTransform));
+    if (m_render_transform_arena.is_initialized()) {
+        buffer_infos.emplace_back(m_render_transform_arena.info(m_render_transform_slot));
         vk::WriteDescriptorSet write {};
         write.dstBinding = 0;
         write.descriptorCount = 1;
@@ -1184,7 +1196,8 @@ void RenderProcessor::cleanup()
     m_mill_passes = 0;
     m_runs.clear();
 
-    m_render_transform_ubo.reset();
+    m_render_transform_arena.release();
+    m_written_render_transform.reset();
     m_view_transform_active = false;
 
     if (m_target_window) {

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Buffers/Staging/SlotArena.hpp"
 #include "MayaFlux/Kinesis/Viewport/Scissor.hpp"
 #include "MayaFlux/Kinesis/Viewport/ViewTransform.hpp"
 #include "MayaFlux/Portal/Graphics/PrimitiveMill.hpp"
@@ -408,7 +409,9 @@ private:
     Portal::Graphics::DepthStencilConfig m_depth_stencil;
 
     bool m_depth_enabled {};
-    std::shared_ptr<VKBuffer> m_render_transform_ubo;
+    SlotArena m_render_transform_arena;
+    size_t m_render_transform_slot {};
+    std::optional<Kinesis::RenderTransform> m_written_render_transform;
 
     /**
      * @brief A replaced pipeline kept alive until the frames that may still use it finish
