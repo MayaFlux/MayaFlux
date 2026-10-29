@@ -121,6 +121,10 @@ ComputePipelineID ComputePress::create_pipeline(
         return INVALID_COMPUTE_PIPELINE;
     }
 
+    for (const auto& range : m_shader_foundry->get_shader_reflection(shader_id).push_constant_ranges) {
+        push_constant_size = std::max(push_constant_size, static_cast<size_t>(range.offset) + range.size);
+    }
+
     ComputePipelineID id = m_next_pipeline_id++;
     PipelineState& state = m_pipelines[id];
     state.shader_id = shader_id;
