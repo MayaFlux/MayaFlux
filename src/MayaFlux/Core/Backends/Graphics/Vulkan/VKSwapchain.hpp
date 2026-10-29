@@ -53,6 +53,10 @@ public:
      * @param width New width
      * @param height New height
      * @return True if recreation succeeded
+     *
+     * The new swapchain is created with the current one as oldSwapchain, so the
+     * driver can reuse its resources. The old swapchain and its image views are
+     * destroyed once the graphics queue and the last present queue are idle.
      */
     bool recreate(uint32_t width, uint32_t height);
 
@@ -98,10 +102,16 @@ public:
         vk::SurfaceKHR surface);
 
 private:
+    bool build(VKContext& context, vk::SurfaceKHR surface,
+        const WindowCreateInfo& window_config,
+        const std::vector<uint32_t>& sharing_families,
+        vk::SwapchainKHR old_swapchain);
+
     VKContext* m_context = nullptr; // Non-owning pointer to context
     vk::SurfaceKHR m_surface;
     const WindowCreateInfo* m_window_config = nullptr; // Store for recreation
     std::vector<uint32_t> m_sharing_families;
+    vk::Queue m_last_present_queue;
 
     vk::SwapchainKHR m_swapchain;
     std::vector<vk::Image> m_images;

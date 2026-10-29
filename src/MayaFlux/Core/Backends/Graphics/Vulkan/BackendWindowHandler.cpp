@@ -693,8 +693,6 @@ bool BackendWindowHandler::create_sync_objects(WindowRenderContext& config)
 
 void BackendWindowHandler::recreate_swapchain_for_context(WindowRenderContext& context)
 {
-    m_context.wait_idle();
-
     if (recreate_swapchain_internal(context)) {
         context.needs_recreation = false;
         MF_RT_TRACE(Journal::Component::Core, Journal::Context::GraphicsCallback,
@@ -751,7 +749,14 @@ void BackendWindowHandler::ensure_depth_image(WindowRenderContext& ctx)
     auto device = m_context.get_device();
 
     if (ctx.depth_image && ctx.depth_image->is_initialized()) {
-        device.waitIdle();
+        TimelineSnapshot frames;
+        for (const auto& point : ctx.slot_point) {
+            if (point && point.timeline < k_max_timelines) {
+                auto& value = frames.values[point.timeline];
+                value = std::max(value, point.value);
+            }
+        }
+        m_command_manager.wait(frames);
         const auto& res = ctx.depth_image->get_image_resources();
         if (res.image_view) {
             device.destroyImageView(res.image_view);
