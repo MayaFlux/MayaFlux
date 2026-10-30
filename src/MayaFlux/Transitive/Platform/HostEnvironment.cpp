@@ -191,6 +191,36 @@ const std::string& SystemConfig::get_dep_includes(const std::string& library_nam
                 }
             }
         }
+    } else if (library_name == "magic_enum") {
+        const auto try_include = [&result](const fs::path& path) {
+            if (fs::exists(path / "magic_enum.hpp")) {
+                result = path.string();
+            }
+        };
+
+        try_include(fs::path(Config::SOURCE_DIR) / "third_party/magic_enum");
+
+        if (result.empty() && !Config::MAGIC_ENUM_HINT.empty()) {
+            try_include(fs::path(Config::MAGIC_ENUM_HINT));
+        }
+
+        if (result.empty()) {
+            for (const auto& include : get_system_includes()) {
+                const fs::path root(include);
+                for (const auto& candidate : {
+                         root,
+                         root / "MayaFlux/thirdparty/magic_enum",
+                         root / "magic_enum" }) {
+                    try_include(candidate);
+                    if (!result.empty()) {
+                        break;
+                    }
+                }
+                if (!result.empty()) {
+                    break;
+                }
+            }
+        }
     }
 
     return result;

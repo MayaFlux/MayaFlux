@@ -139,7 +139,7 @@ bool ClangInterpreter::initialize(bool skip_host_library_load)
     }
 #endif
 
-    const std::string magic_enum_include = std::string(MayaFlux::Config::MAGIC_ENUM_INCLUDE);
+    const auto& magic_enum_include = MayaFlux::Platform::SystemConfig::get_dep_includes("magic_enum");
     if (!magic_enum_include.empty()) {
         m_impl->compile_flags.push_back("-I" + magic_enum_include);
         LILA_DEBUG(Emitter::INTERPRETER,

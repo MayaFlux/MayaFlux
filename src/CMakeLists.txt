@@ -17,11 +17,6 @@ if(WIN32)
     set_target_properties(lila_server PROPERTIES
         VS_DEBUGGER_ENVIRONMENT "PATH=${CMAKE_BINARY_DIR}/bin;$ENV{PATH}"
     )
-else()
-    set_target_properties(lila_server PROPERTIES
-        INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib"
-        INSTALL_RPATH_USE_LINK_PATH TRUE
-    )
 endif()
 
 if(WIN32 AND MAYAFLUX_DEV)
