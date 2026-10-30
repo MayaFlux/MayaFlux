@@ -112,6 +112,4 @@ endif()
 
 if(WIN32)
     target_link_libraries(Lila PUBLIC magic_enum nlohmann_json::nlohmann_json)
-else()
-    target_link_libraries(Lila PUBLIC Transitive)
 endif()
