@@ -8,7 +8,7 @@ constexpr char PathSeparator = '\\';
 constexpr char PathSeparator = '/';
 #endif
 
-std::string safe_getenv(const char* var);
+MAYAFLUX_API std::string safe_getenv(const char* var);
 
 namespace fs = std::filesystem;
 class MAYAFLUX_API SystemConfig {
