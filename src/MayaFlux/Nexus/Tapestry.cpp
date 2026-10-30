@@ -8,17 +8,30 @@ namespace MayaFlux::Nexus {
 
 Tapestry::Tapestry(
     std::shared_ptr<Vruta::TaskScheduler> scheduler,
-    std::shared_ptr<Vruta::EventManager> event_manager)
+    std::shared_ptr<Vruta::EventManager> event_manager,
+    std::shared_ptr<Buffers::BufferManager> buffers)
     : m_scheduler(std::move(scheduler))
     , m_event_manager(std::move(event_manager))
+    , m_buffers(std::move(buffers))
 {
 }
 
 Tapestry::~Tapestry() = default;
 
+namespace {
+
+    void remove_all(Fabric& fabric)
+    {
+        for (const uint32_t id : fabric.all_ids()) {
+            fabric.remove(id);
+        }
+    }
+
+}
+
 std::shared_ptr<Fabric> Tapestry::create_fabric(float cell_size)
 {
-    auto fabric = std::make_shared<Fabric>(*m_scheduler, *m_event_manager, cell_size);
+    auto fabric = std::make_shared<Fabric>(*m_scheduler, *m_event_manager, *m_buffers, cell_size);
     fabric->set_id(m_next_id++);
     m_fabrics.push_back(fabric);
     return fabric;
@@ -32,7 +45,7 @@ std::shared_ptr<Fabric> Tapestry::create_fabric(std::string name, float cell_siz
         return m_named_fabrics[name].lock();
     }
 
-    auto fabric = std::make_shared<Fabric>(*m_scheduler, *m_event_manager, cell_size);
+    auto fabric = std::make_shared<Fabric>(*m_scheduler, *m_event_manager, *m_buffers, cell_size);
     fabric->set_id(m_next_id++);
     fabric->set_name(name);
     m_fabrics.push_back(fabric);
@@ -46,6 +59,7 @@ void Tapestry::remove_fabric(const std::shared_ptr<Fabric>& fabric)
     if (it == m_fabrics.end()) {
         return;
     }
+    remove_all(**it);
     m_fabrics.erase(it);
 
     for (auto nit = m_named_fabrics.begin(); nit != m_named_fabrics.end();) {
@@ -66,6 +80,7 @@ void Tapestry::remove_fabric(std::string_view name)
     auto fabric = nit->second.lock();
     m_named_fabrics.erase(nit);
     if (fabric) {
+        remove_all(*fabric);
         std::erase(m_fabrics, fabric);
     }
 }

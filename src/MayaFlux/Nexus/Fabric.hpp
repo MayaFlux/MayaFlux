@@ -13,6 +13,10 @@ class TaskScheduler;
 class EventManager;
 }
 
+namespace MayaFlux::Buffers {
+class BufferManager;
+}
+
 namespace MayaFlux::Nexus {
 
 /**
@@ -47,11 +51,14 @@ public:
      * @brief Construct with scheduler and event manager from the engine.
      * @param scheduler     Used to register coroutines created by Wiring.
      * @param event_manager Used to register event-driven coroutines.
+     * @param buffer_manager Manager the entities' sinks are registered with. Removing an
+     *                      entity unregisters them from it.
      * @param cell_size     Grid cell edge length for the spatial index.
      */
     explicit Fabric(
         Vruta::TaskScheduler& scheduler,
         Vruta::EventManager& event_manager,
+        Buffers::BufferManager& buffer_manager,
         float cell_size = 1.0F);
 
     ~Fabric();
@@ -108,6 +115,10 @@ public:
 
     /**
      * @brief Remove a registered object by id, cancelling any associated tasks.
+     *
+     * Also releases what the object holds: an attached buffer gets its placement
+     * back and its audio and render sinks are unregistered.
+     *
      * @param id Stable id assigned at registration.
      */
     void remove(uint32_t id);
@@ -129,6 +140,9 @@ public:
      * On each commit, after the snapshot publishes, the Expanse's predicate is
      * evaluated against every indexed position and membership is diffed against
      * the previous commit. Entry and exit actions fire for the difference.
+     *
+     * The Expanse's named predicate and crossing callables are added to the
+     * function registry, keeping any entry already under the same name.
      *
      * @param expanse Expanse to register.
      * @return The Expanse's own id, the same on every Fabric it is registered on.
@@ -224,6 +238,33 @@ public:
     // =========================================================================
 
     /**
+     * @brief Register an influence function under @p name for state decoding.
+     *
+     * Wiring registers the named functions of the entities it finalises and
+     * add_expanse those of the Expanse, keeping an existing entry. These calls
+     * are for functions no live object carries, such as a Fabric that decodes
+     * a snapshot into fresh objects. A name already in use warns and is replaced.
+     * An empty name is ignored.
+     */
+    void register_influence(std::string name, Emitter::InfluenceFn fn);
+
+    /** @brief Register a perception function under @p name. See register_influence(). */
+    void register_perception(std::string name, Sensor::PerceptionFn fn);
+
+    /** @brief Register an Expanse containment predicate under @p name. See register_influence(). */
+    void register_contains(std::string name, Expanse::ContainsFn fn);
+
+    /**
+     * @brief Register an Expanse crossing callable under @p name.
+     *
+     * Shared by on_enter and on_exit. See register_influence().
+     */
+    void register_crossing(std::string name, Expanse::CrossingFn fn);
+
+    /** @brief Register a Presence radiation function under @p name. See register_influence(). */
+    void register_radiate(std::string name, Presence::RadiateFn fn);
+
+    /**
      * @brief Look up a registered influence function by name.
      * @return Shared pointer to the stored function, or nullptr if not found.
      */
@@ -298,10 +339,12 @@ private:
     void fire(const Registration& reg) const;
     void track(uint32_t id, Registration& reg, const glm::vec3& position);
     void untrack(Registration& reg);
+    void release(Registration& reg);
     void translate(std::vector<Kinesis::QueryResult>& results) const;
 
     Vruta::TaskScheduler& m_scheduler;
     Vruta::EventManager& m_event_manager;
+    Buffers::BufferManager& m_buffers;
 
     std::unique_ptr<Kinesis::SpatialIndex3D> m_index;
     std::map<uint32_t, Registration> m_registrations;

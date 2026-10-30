@@ -101,6 +101,15 @@ MAYAFLUX_API void remove_audio_sink(
     uint32_t channel);
 
 /**
+ * @brief Unregister and destroy every audio sink in @p sinks.
+ * @param sinks Sink vector owned by the calling Emitter or Agent.
+ * @param mgr   BufferManager the buffers were registered with.
+ */
+MAYAFLUX_API void release_audio_sinks(
+    std::vector<AudioSink>& sinks,
+    Buffers::BufferManager& mgr);
+
+/**
  * @brief Push @p samples to every audio sink in @p sinks.
  * @param sinks   Sink vector owned by the calling Emitter or Agent.
  * @param samples Sample data forwarded to AudioWriteProcessor::set_data().
@@ -156,6 +165,15 @@ MAYAFLUX_API void remove_render_sink(
     std::vector<RenderSink>& sinks,
     Buffers::BufferManager& mgr,
     const std::shared_ptr<Core::Window>& window);
+
+/**
+ * @brief Unregister and destroy every render sink in @p sinks.
+ * @param sinks Sink vector owned by the calling Emitter or Agent.
+ * @param mgr   BufferManager the buffers were registered with.
+ */
+MAYAFLUX_API void release_render_sinks(
+    std::vector<RenderSink>& sinks,
+    Buffers::BufferManager& mgr);
 
 /**
  * @brief For each sink that has a producer fn, call it and push the result.

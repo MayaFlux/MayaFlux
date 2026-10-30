@@ -313,6 +313,11 @@ void Wiring::finalise()
                 m_fabric.m_perception_fns.try_emplace(
                     ptr->perception_fn_name(), std::make_shared<Sensor::PerceptionFn>(ptr->perception_fn()));
             }
+            if (const auto presence = std::dynamic_pointer_cast<Presence>(ptr);
+                presence && !presence->radiate_fn_name().empty() && presence->radiate_fn()) {
+                m_fabric.m_radiate_fns.try_emplace(
+                    presence->radiate_fn_name(), std::make_shared<Presence::RadiateFn>(presence->radiate_fn()));
+            }
         }
     },
         reg.member);

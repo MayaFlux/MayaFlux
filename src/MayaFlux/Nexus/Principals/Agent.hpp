@@ -82,7 +82,8 @@ public:
     {
     }
 
-    virtual ~Agent() = default;
+    /** @brief Releases the attached buffer's placement. Sinks are released by the owning Fabric. */
+    virtual ~Agent() { detach(); }
 
     /** @brief Identifier assigned to the perception function, empty if anonymous. */
     [[nodiscard]] const std::string& perception_fn_name() const { return m_perception_fn_name; }
@@ -178,6 +179,13 @@ public:
         std::string fn_name, RenderFn fn)
     {
         add_render_sink(m_render_sinks, mgr, config, std::move(fn), std::move(fn_name), m_position);
+    }
+
+    /** @brief Unregister every audio and render sink. */
+    void release_sinks(Buffers::BufferManager& mgr)
+    {
+        release_audio_sinks(m_audio_sinks, mgr);
+        release_render_sinks(m_render_sinks, mgr);
     }
 
     [[nodiscard]] const std::vector<AudioSink>& audio_sinks() const { return m_audio_sinks; }

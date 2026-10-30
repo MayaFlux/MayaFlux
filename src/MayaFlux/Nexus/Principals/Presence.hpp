@@ -130,6 +130,9 @@ public:
      */
     void set_radiate(RadiateFn fn) { m_radiate = std::move(fn); }
 
+    /** @brief The radiate callable, empty if none. */
+    [[nodiscard]] const RadiateFn& radiate_fn() const { return m_radiate; }
+
     /** @brief Identifier for the radiate callable, empty if anonymous. */
     [[nodiscard]] const std::string& radiate_fn_name() const { return m_radiate_fn_name; }
 

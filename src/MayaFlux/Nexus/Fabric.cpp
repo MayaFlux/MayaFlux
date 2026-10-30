@@ -10,9 +10,11 @@ namespace MayaFlux::Nexus {
 Fabric::Fabric(
     Vruta::TaskScheduler& scheduler,
     Vruta::EventManager& event_manager,
+    Buffers::BufferManager& buffer_manager,
     float cell_size)
     : m_scheduler(scheduler)
     , m_event_manager(event_manager)
+    , m_buffers(buffer_manager)
     , m_index(Kinesis::make_spatial_index_3d(cell_size))
     , m_cell_size(cell_size)
 {
@@ -34,7 +36,20 @@ Fabric::~Fabric()
         if (!reg.event_name.empty()) {
             m_event_manager.cancel_event(reg.event_name);
         }
+        release(reg);
     }
+}
+
+void Fabric::release(Registration& reg)
+{
+    std::visit([this](const auto& ptr) {
+        using T = std::decay_t<decltype(*ptr)>;
+        if constexpr (std::is_same_v<T, Emitter> || std::is_same_v<T, Agent>) {
+            ptr->detach();
+            ptr->release_sinks(m_buffers);
+        }
+    },
+        reg.member);
 }
 
 // =============================================================================
@@ -96,6 +111,7 @@ void Fabric::remove(uint32_t id)
         m_event_manager.cancel_event(reg.event_name);
     }
     untrack(reg);
+    release(reg);
 
     m_registrations.erase(it);
 }
@@ -111,8 +127,64 @@ void Fabric::cancel_wiring(uint32_t id)
 uint32_t Fabric::add_expanse(std::shared_ptr<Expanse> expanse)
 {
     const uint32_t id = expanse->id();
+
+    if (!expanse->fn_name().empty() && expanse->contains_fn()) {
+        m_expanse_fns.try_emplace(
+            expanse->fn_name(), std::make_shared<Expanse::ContainsFn>(expanse->contains_fn()));
+    }
+    if (!expanse->on_enter_fn_name().empty() && expanse->on_enter_fn()) {
+        m_crossing_fns.try_emplace(
+            expanse->on_enter_fn_name(), std::make_shared<Expanse::CrossingFn>(expanse->on_enter_fn()));
+    }
+    if (!expanse->on_exit_fn_name().empty() && expanse->on_exit_fn()) {
+        m_crossing_fns.try_emplace(
+            expanse->on_exit_fn_name(), std::make_shared<Expanse::CrossingFn>(expanse->on_exit_fn()));
+    }
+
     m_expanses.try_emplace(id, std::move(expanse));
     return id;
+}
+
+namespace {
+
+    template <typename Map, typename Fn>
+    void register_named(Map& registry, std::string name, Fn fn, std::string_view kind)
+    {
+        if (name.empty()) {
+            return;
+        }
+        if (registry.contains(name)) {
+            MF_WARN(Journal::Component::Nexus, Journal::Context::Init,
+                "Fabric: {} function '{}' already registered, replacing", kind, name);
+        }
+        registry.insert_or_assign(std::move(name), std::make_shared<Fn>(std::move(fn)));
+    }
+
+}
+
+void Fabric::register_influence(std::string name, Emitter::InfluenceFn fn)
+{
+    register_named(m_influence_fns, std::move(name), std::move(fn), "influence");
+}
+
+void Fabric::register_perception(std::string name, Sensor::PerceptionFn fn)
+{
+    register_named(m_perception_fns, std::move(name), std::move(fn), "perception");
+}
+
+void Fabric::register_contains(std::string name, Expanse::ContainsFn fn)
+{
+    register_named(m_expanse_fns, std::move(name), std::move(fn), "containment");
+}
+
+void Fabric::register_crossing(std::string name, Expanse::CrossingFn fn)
+{
+    register_named(m_crossing_fns, std::move(name), std::move(fn), "crossing");
+}
+
+void Fabric::register_radiate(std::string name, Presence::RadiateFn fn)
+{
+    register_named(m_radiate_fns, std::move(name), std::move(fn), "radiate");
 }
 
 void Fabric::remove_expanse(uint32_t id)
