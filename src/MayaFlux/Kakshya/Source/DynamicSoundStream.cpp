@@ -56,10 +56,6 @@ uint64_t DynamicSoundStream::validate(std::vector<std::span<const double>>& data
             num_frames = available_frames;
         }
 
-        if (required_end_frame > m_num_frames) {
-            m_num_frames = required_end_frame;
-            setup_dimensions();
-        }
     }
     return num_frames;
 }
@@ -93,10 +89,6 @@ uint64_t DynamicSoundStream::validate_single_channel(std::span<const double> dat
             num_frames = available_frames;
         }
 
-        if (required_end_frame > m_num_frames) {
-            m_num_frames = required_end_frame;
-            setup_dimensions();
-        }
     }
 
     return num_frames;
@@ -112,12 +104,13 @@ uint64_t DynamicSoundStream::write_frames(std::vector<std::span<const double>> d
     if (m_is_circular && start_frame + num_frames > m_circular_capacity) {
         uint64_t frames_to_end = m_circular_capacity - start_frame;
         uint64_t frames_from_start = num_frames - frames_to_end;
+        const uint64_t samples_per_frame = m_structure.organization == OrganizationStrategy::INTERLEAVED ? get_num_channels() : 1;
 
         if (frames_to_end > 0) {
             std::vector<std::span<const double>> first_part;
             first_part.reserve(data.size());
             for (const auto& span : data) {
-                first_part.emplace_back(span.subspan(0, frames_to_end));
+                first_part.emplace_back(span.subspan(0, frames_to_end * samples_per_frame));
             }
             write_frames(first_part, start_frame);
         }
@@ -126,7 +119,7 @@ uint64_t DynamicSoundStream::write_frames(std::vector<std::span<const double>> d
             std::vector<std::span<const double>> second_part;
             second_part.reserve(data.size());
             for (const auto& span : data) {
-                second_part.emplace_back(span.subspan(frames_to_end, frames_from_start));
+                second_part.emplace_back(span.subspan(frames_to_end * samples_per_frame, frames_from_start * samples_per_frame));
             }
             write_frames(second_part, 0);
         }

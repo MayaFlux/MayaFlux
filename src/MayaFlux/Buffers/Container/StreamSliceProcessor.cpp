@@ -11,7 +11,7 @@ namespace {
 
     void apply_slice(const Kakshya::StreamSlice& slice, Kakshya::CursorAccessProcessor& proc)
     {
-        proc.set_loop_region(slice.start_frame(), slice.end_frame());
+        proc.set_loop_region(slice.start_frame(), slice.end_frame() + 1);
         proc.set_looping(slice.looping);
         proc.set_speed(slice.speed);
         proc.set_time_map(slice.time_map);

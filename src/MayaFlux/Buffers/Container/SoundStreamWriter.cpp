@@ -32,8 +32,8 @@ void SoundStreamWriter::processing_function(const std::shared_ptr<Buffer>& buffe
     if (frames_written > 0) {
         m_write_position += frames_written;
 
-        if (m_container->is_circular() && m_write_position >= m_container->get_circular_capacity()) {
-            m_write_position = 0;
+        if (m_container->is_circular() && m_container->get_circular_capacity() > 0) {
+            m_write_position %= m_container->get_circular_capacity();
         }
     }
 }

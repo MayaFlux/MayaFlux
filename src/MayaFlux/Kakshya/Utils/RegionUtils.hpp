@@ -356,6 +356,9 @@ void set_or_update_region_data(
     size_t source_index = 0;
     while (source_index < source_data.size()) {
         uint64_t linear_index = coordinates_to_linear(current, dimensions);
+        if (linear_index >= dest_data.size()) {
+            break;
+        }
         dest_data[linear_index] = source_data[source_index++];
         bool done = true;
         /* for (size_t dim = 0; dim < current.size(); ++dim) {
