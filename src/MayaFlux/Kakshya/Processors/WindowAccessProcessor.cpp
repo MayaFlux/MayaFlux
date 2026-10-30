@@ -10,6 +10,19 @@
 
 namespace MayaFlux::Kakshya {
 
+namespace {
+
+    bool surface_differs(const WindowContainer& container, uint32_t width, uint32_t height,
+        WindowContainer::SurfaceFormat format)
+    {
+        const auto& structure = container.get_structure();
+        return structure.get_width() != width
+            || structure.get_height() != height
+            || container.get_surface_format() != format;
+    }
+
+} // namespace
+
 void WindowAccessProcessor::on_attach(
     const std::shared_ptr<SignalSourceContainer>& container)
 {
@@ -22,10 +35,6 @@ void WindowAccessProcessor::on_attach(
             "WindowAccessProcessor requires a WindowContainer");
     }
 
-    const auto& s = wc->get_structure();
-    m_width = static_cast<uint32_t>(s.get_width());
-    m_height = static_cast<uint32_t>(s.get_height());
-
     m_previous_window_capture_supported = wc->get_window()->is_capture_enabled();
 
     if (!m_previous_window_capture_supported) {
@@ -36,6 +45,14 @@ void WindowAccessProcessor::on_attach(
     }
 
     m_surface_format = query_surface_format(wc->get_window());
+
+    const auto [surface_w, surface_h] = query_surface_extent(wc->get_window());
+    if (surface_w > 0 && surface_h > 0 && surface_differs(*wc, surface_w, surface_h, m_surface_format))
+        wc->handle_surface_resize(surface_w, surface_h, m_surface_format);
+
+    const auto& s = std::as_const(*wc).get_structure();
+    m_width = static_cast<uint32_t>(s.get_width());
+    m_height = static_cast<uint32_t>(s.get_height());
 
     const uint32_t bpp = Core::vk_format_bytes_per_pixel(
         Core::to_vk_format(m_surface_format));
@@ -89,7 +106,7 @@ void WindowAccessProcessor::process(
     }
 
     const auto [cur_w, cur_h] = query_surface_extent(window);
-    const bool dims_changed = (cur_w != m_width || cur_h != m_height);
+    const auto cur_format = query_surface_format(window);
 
     m_is_processing.store(true);
 
@@ -109,39 +126,23 @@ void WindowAccessProcessor::process(
 
     container->update_processing_state(ProcessingState::PROCESSING);
 
-    if (dims_changed) {
+    if (surface_differs(*wc, cur_w, cur_h, cur_format)) {
         m_width = cur_w;
         m_height = cur_h;
-        m_surface_format = query_surface_format(window);
-        wc->handle_surface_resize(cur_w, cur_h);
+        wc->handle_surface_resize(cur_w, cur_h, cur_format);
 
         MF_INFO(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
             "WindowAccessProcessor: '{}' resized to {}x{} format={}",
             window->get_create_info().title, m_width, m_height,
-            static_cast<uint32_t>(m_surface_format));
+            static_cast<uint32_t>(cur_format));
     }
 
-    auto& processed = container->get_processed_data();
-    processed.resize(1);
-    processed[0] = std::move(captured);
-    wc->invalidate_float_frame_cache(0);
+    m_surface_format = cur_format;
 
-    const auto* src = std::get_if<std::vector<uint8_t>>(&processed[0]);
-    if (src) {
-        const auto& history = wc->get_data();
-        const uint32_t head = wc->get_write_head();
-        const auto* slot = head < history.size()
-            ? std::get_if<std::vector<uint8_t>>(&history[head])
-            : nullptr;
-
-        if (slot && slot->size() == src->size()) {
-            std::memcpy(wc->mutable_frame_ptr(head), src->data(), src->size());
-            wc->advance_write_head();
-        } else {
-            MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-                "WindowAccessProcessor: capture of {} bytes does not fit history slot of {} bytes for '{}'; frame not kept",
-                src->size(), slot ? slot->size() : 0U, window->get_create_info().title);
-        }
+    if (!wc->publish_capture(std::move(captured))) {
+        MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "WindowAccessProcessor: capture does not match the history slots for '{}'; frame not kept",
+            window->get_create_info().title);
     }
 
     const auto vk_fmt = Core::to_vk_format(m_surface_format);

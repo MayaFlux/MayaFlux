@@ -12,6 +12,36 @@ class Window;
 namespace MayaFlux::Kakshya {
 
 /**
+ * @brief Element type a surface format reads back as.
+ */
+enum class SurfaceElement : uint8_t {
+    U8, ///< 8-bit UNORM and SRGB formats
+    U16, ///< 16-bit SFLOAT, raw half-float bits
+    U32, ///< Packed formats, one word per pixel
+    F32 ///< 32-bit SFLOAT
+};
+
+/**
+ * @struct SurfaceShape
+ * @brief How a swapchain format is laid out as DataVariant elements.
+ *
+ * channels counts elements per pixel, which is 1 for packed formats.
+ */
+struct SurfaceShape {
+    SurfaceElement element { SurfaceElement::U8 };
+    uint32_t channels { 4 };
+    bool packed { false };
+};
+
+/**
+ * @brief Element type and elements per pixel of a surface format.
+ *
+ * The single source of truth for readback_region() and for containers that
+ * store its output, so both always agree on the variant alternative.
+ */
+MAYAFLUX_API SurfaceShape surface_shape(Core::GraphicsSurfaceInfo::SurfaceFormat format);
+
+/**
  * @brief Query the actual vk::Format in use by the window's live swapchain,
  *        translated back to the MayaFlux surface format enum.
  *
@@ -51,7 +81,7 @@ MAYAFLUX_API Core::GraphicsSurfaceInfo::SurfaceFormat query_surface_format(
  * Dimensions on the returned DataAccess (IMAGE_COLOR convention):
  *   [0] SPATIAL_Y  - pixel_height
  *   [1] SPATIAL_X  - pixel_width
- *   [2] CHANNEL    - channel_count derived from format traits
+ *   [2] CHANNEL    - elements per pixel from surface_shape(), 1 for packed
  *
  * @param window       Window whose surface is being read.
  * @param x_offset     Left edge of the pixel rectangle (inclusive).

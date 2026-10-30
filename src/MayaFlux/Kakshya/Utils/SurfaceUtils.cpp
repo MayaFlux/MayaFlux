@@ -70,34 +70,41 @@ namespace {
      *
      * @param raw        Pointer to the mapped staging buffer.
      * @param byte_count Total byte count of the readback region.
-     * @param traits     Format traits for the live swapchain surface.
+     * @param shape      Element layout of the live swapchain surface.
      * @param out        DataVariant to receive the typed data.
      */
     void fill_variant_from_raw(
         const void* raw,
         size_t byte_count,
-        const Core::SurfaceFormatTraits& traits,
+        const SurfaceShape& shape,
         DataVariant& out)
     {
-        if (traits.is_float && traits.bits_per_channel == 32U) {
-            const size_t n = byte_count / sizeof(float);
-            std::vector<float> v(n);
+        switch (shape.element) {
+        case SurfaceElement::F32: {
+            std::vector<float> v(byte_count / sizeof(float));
             std::memcpy(v.data(), raw, byte_count);
             out = std::move(v);
-        } else if (traits.bits_per_channel == 16U) {
-            const size_t n = byte_count / sizeof(uint16_t);
-            std::vector<uint16_t> v(n);
+            break;
+        }
+        case SurfaceElement::U16: {
+            std::vector<uint16_t> v(byte_count / sizeof(uint16_t));
             std::memcpy(v.data(), raw, byte_count);
             out = std::move(v);
-        } else if (traits.is_packed) {
-            const size_t n = byte_count / sizeof(uint32_t);
-            std::vector<uint32_t> v(n);
+            break;
+        }
+        case SurfaceElement::U32: {
+            std::vector<uint32_t> v(byte_count / sizeof(uint32_t));
             std::memcpy(v.data(), raw, byte_count);
             out = std::move(v);
-        } else {
+            break;
+        }
+        case SurfaceElement::U8:
+        default: {
             std::vector<uint8_t> v(byte_count);
             std::memcpy(v.data(), raw, byte_count);
             out = std::move(v);
+            break;
+        }
         }
     }
 
@@ -106,6 +113,19 @@ namespace {
 // =========================================================================
 // Public API
 // =========================================================================
+
+SurfaceShape surface_shape(Core::GraphicsSurfaceInfo::SurfaceFormat format)
+{
+    const auto traits = Core::get_surface_format_traits(format);
+
+    if (traits.is_float && traits.bits_per_channel == 32U)
+        return { .element = SurfaceElement::F32, .channels = traits.channel_count, .packed = false };
+    if (traits.bits_per_channel == 16U)
+        return { .element = SurfaceElement::U16, .channels = traits.channel_count, .packed = false };
+    if (traits.is_packed)
+        return { .element = SurfaceElement::U32, .channels = 1U, .packed = true };
+    return { .element = SurfaceElement::U8, .channels = traits.channel_count, .packed = false };
+}
 
 Core::GraphicsSurfaceInfo::SurfaceFormat query_surface_format(
     const std::shared_ptr<Core::Window>& window)
@@ -139,7 +159,7 @@ DataAccess readback_region(
     const int raw_fmt = display->get_swapchain_format(window_handle);
     const auto vk_fmt = static_cast<vk::Format>(raw_fmt);
     const auto mf_fmt = Core::from_vk_format(vk_fmt);
-    const auto traits = Core::get_surface_format_traits(mf_fmt);
+    const auto shape = surface_shape(mf_fmt);
     const uint32_t bpp = Core::vk_format_bytes_per_pixel(vk_fmt);
 
     uint32_t full_w = 0, full_h = 0;
@@ -186,9 +206,9 @@ DataAccess readback_region(
             region_row);
     }
 
-    fill_variant_from_raw(region.data(), byte_count, traits, out_variant);
+    fill_variant_from_raw(region.data(), byte_count, shape, out_variant);
 
-    auto dims = make_pixel_dimensions(pixel_width, pixel_height, traits.channel_count);
+    auto dims = make_pixel_dimensions(pixel_width, pixel_height, shape.channels);
     return { out_variant, dims, DataModality::IMAGE_COLOR };
 }
 

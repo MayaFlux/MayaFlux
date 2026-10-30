@@ -22,8 +22,13 @@ namespace MayaFlux::Kakshya {
  *   10-bit packed     → std::vector<uint32_t>  (packed word per pixel)
  *   32-bit SFLOAT     → std::vector<float>
  *
- * One readback per frame regardless of region count — region extraction
+ * One readback per frame regardless of region count; region extraction
  * is a CPU-side crop performed by WindowContainer::get_region_data().
+ *
+ * The container is reshaped to the swapchain's extent and format on attach and
+ * whenever either changes, then each capture is published with
+ * WindowContainer::publish_capture(), which also keeps it in the history in
+ * the same element type. A tick with no completed frame changes nothing.
  */
 class MAYAFLUX_API WindowAccessProcessor : public DataProcessor {
 public:
