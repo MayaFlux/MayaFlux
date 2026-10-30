@@ -46,6 +46,19 @@ void CameraContainer::setup_io(uint64_t reader_id)
         "CameraContainer: wired IOService with reader_id={}", reader_id);
 }
 
+void CameraContainer::clear()
+{
+    {
+        Memory::SeqlockWriteGuard g(m_data_lock);
+        m_data.resize(1);
+        m_data[0] = make_empty_storage(m_format, get_frame_element_count());
+        m_num_frames = 1;
+        m_read_position.store(0);
+        setup_dimensions();
+    }
+    update_processing_state(ProcessingState::IDLE);
+}
+
 void CameraContainer::create_default_processor()
 {
     auto processor = std::make_shared<FrameAccessProcessor>();

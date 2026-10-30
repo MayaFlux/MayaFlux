@@ -86,6 +86,11 @@ public:
     [[nodiscard]] bool is_looping() const override { return false; }
 
     /**
+     * @brief Reset the frame to black, keeping the single frame slot.
+     */
+    void clear() override;
+
+    /**
      * @brief Create FrameAccessProcessor with auto_advance disabled.
      */
     void create_default_processor() override;
