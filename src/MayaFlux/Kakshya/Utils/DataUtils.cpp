@@ -239,6 +239,12 @@ DataModality detect_data_modality(const std::vector<DataDimension>& dimensions)
         return DataModality::TENSOR_ND;
     }
 
+    if (depth_dims == 1 && spatial_dims == 2) {
+        return time_dims >= 1
+            ? DataModality::VIDEO_DEPTH
+            : DataModality::DEPTH_MAP;
+    }
+
     if (spatial_dims >= 2 && time_dims == 0) {
         if (spatial_dims == 2) {
             if (channel_dims == 0) {
@@ -253,12 +259,6 @@ DataModality detect_data_modality(const std::vector<DataDimension>& dimensions)
         if (spatial_dims == 3) {
             return DataModality::VOLUMETRIC_3D;
         }
-    }
-
-    if (depth_dims == 1 && spatial_dims == 2) {
-        return time_dims >= 1
-            ? DataModality::VIDEO_DEPTH
-            : DataModality::DEPTH_MAP;
     }
 
     if (time_dims >= 1 && spatial_dims >= 2) {
@@ -308,7 +308,7 @@ DataModality detect_data_modality(
 std::vector<DataDimension> detect_data_dimensions(const DataVariant& data)
 {
     MF_WARN(Journal::Component::Kakshya, Journal::Context::Runtime,
-        "{}\n{}\n{}\n{}",
+        "{}",
         "Inferring structure from single DataVariant is not advisable as the method makes naive assumptions that can lead to massive computational errors. "
         "If the variant is part of a container, region, or segment, please use the appropriate method instead. "
         "If the variant is part of a vector, please use infer_from_data_variant_vector instead. "
@@ -359,7 +359,7 @@ std::vector<DataDimension> detect_data_dimensions(
     const std::vector<DataVariant>& variants)
 {
     MF_WARN(Journal::Component::Kakshya, Journal::Context::Runtime,
-        "{}\n{}\n{}",
+        "{}",
         "Inferring structure from DataVariant vector is not advisable as the method makes naive assumptions that can lead to massive computational errors. "
         "If the variants are part of a container, region, or segment, please use the appropriate method instead. "
         "If you are sure you want to proceed, please ignore this warning.");
