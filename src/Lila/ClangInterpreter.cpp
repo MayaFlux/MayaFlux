@@ -18,7 +18,13 @@
 
 #include <clang/AST/Type.h>
 #include <clang/Frontend/CompilerInstance.h>
+#include <clang/Interpreter/IncrementalExecutor.h>
 #include <clang/Interpreter/Interpreter.h>
+
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+#include <llvm/ExecutionEngine/Orc/AbsoluteSymbols.h>
+#include <typeinfo>
+#endif
 
 #ifdef MAYAFLUX_COMPILER_MSVC
 #pragma warning(pop)
@@ -33,6 +39,41 @@
 #endif
 
 namespace Lila {
+
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+namespace {
+
+    llvm::Error define_runtime_symbols(llvm::orc::LLJIT& jit)
+    {
+        llvm::orc::SymbolMap symbols;
+
+        const auto add = [&jit, &symbols](const char* name, auto* address) {
+            symbols[jit.getExecutionSession().intern(name)] = llvm::orc::ExecutorSymbolDef(
+                llvm::orc::ExecutorAddr::fromPtr(address), llvm::JITSymbolFlags::Exported);
+        };
+
+        void* type_info_vftable = *reinterpret_cast<void* const*>(&typeid(int));
+
+        add("??_7type_info@@6B@", type_info_vftable);
+        add("??2@YAPEAX_K@Z", static_cast<void* (*)(std::size_t)>(&::operator new));
+        add("??3@YAXPEAX@Z", static_cast<void (*)(void*) noexcept>(&::operator delete));
+        add("??3@YAXPEAX_K@Z", static_cast<void (*)(void*, std::size_t) noexcept>(&::operator delete));
+        add("?_Facet_Register@std@@YAXPEAV_Facet_base@1@@Z", &std::_Facet_Register);
+
+        return jit.getMainJITDylib().define(llvm::orc::absoluteSymbols(std::move(symbols)));
+    }
+
+    std::unique_ptr<clang::IncrementalExecutorBuilder> make_executor_builder()
+    {
+        auto jit_builder = std::make_unique<llvm::orc::LLJITBuilder>();
+        jit_builder->setNotifyCreatedCallback(define_runtime_symbols);
+
+        auto builder = std::make_unique<clang::IncrementalExecutorBuilder>();
+        builder->JITBuilder = std::move(jit_builder);
+        return builder;
+    }
+}
+#endif
 
 struct ClangInterpreter::Impl {
     std::unique_ptr<clang::Interpreter> interpreter;
@@ -189,7 +230,11 @@ bool ClangInterpreter::initialize(bool skip_host_library_load)
         return false;
     }
 
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+    auto interp = clang::Interpreter::create(std::move(*CI), make_executor_builder());
+#else
     auto interp = clang::Interpreter::create(std::move(*CI));
+#endif
     if (!interp) {
         m_last_error = "Failed to create interpreter: " + llvm::toString(interp.takeError());
         LILA_ERROR(Emitter::INTERPRETER, m_last_error);
