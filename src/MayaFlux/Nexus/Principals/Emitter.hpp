@@ -39,6 +39,9 @@ public:
      */
     Emitter() = default;
 
+    /** @brief Releases the attached buffer's placement. Sinks are released by the owning Fabric. */
+    ~Emitter() { detach(); }
+
     /**
      * @brief Construct with an influence function.
      * @param fn Called on every commit with the current context.
@@ -93,7 +96,12 @@ public:
     // Output sinks
     // =========================================================================
 
-    /** @brief Register an audio output on @p channel. */
+    /**
+     * @brief Register an audio output on @p channel.
+     *
+     * Released by the owning Fabric when this entity is removed. Outside a
+     * Fabric, call remove_audio_sink().
+     */
     void sink_audio(Buffers::BufferManager& mgr, uint32_t channel)
     {
         add_audio_sink(m_audio_sinks, mgr, channel);
@@ -113,7 +121,12 @@ public:
         Nexus::remove_audio_sink(m_audio_sinks, mgr, channel);
     }
 
-    /** @brief Register a render output targeting @p window. */
+    /**
+     * @brief Register a render output targeting the window in @p config.
+     *
+     * Released by the owning Fabric when this entity is removed. Outside a
+     * Fabric, call remove_render().
+     */
     void render(Buffers::BufferManager& mgr, const Portal::Graphics::RenderConfig& config)
     {
         add_render_sink(m_render_sinks, mgr, config, {}, "", m_position);
@@ -124,6 +137,13 @@ public:
         std::string fn_name, RenderFn fn)
     {
         add_render_sink(m_render_sinks, mgr, config, std::move(fn), std::move(fn_name), m_position);
+    }
+
+    /** @brief Unregister every audio and render sink. */
+    void release_sinks(Buffers::BufferManager& mgr)
+    {
+        release_audio_sinks(m_audio_sinks, mgr);
+        release_render_sinks(m_render_sinks, mgr);
     }
 
     [[nodiscard]] const std::vector<AudioSink>& audio_sinks() const { return m_audio_sinks; }

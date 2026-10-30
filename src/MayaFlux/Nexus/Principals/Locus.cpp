@@ -52,7 +52,11 @@ void Locus::invoke_perception(const PerceptionContext& ctx)
         m_nav.eye = *position();
     }
 
-    Kinesis::advance_navigation(m_nav);
+    if (m_timestep) {
+        Kinesis::advance_navigation(m_nav, *m_timestep);
+    } else {
+        Kinesis::advance_navigation(m_nav);
+    }
     m_view = Kinesis::build_view_transform(m_nav, m_aspect);
     Agent::set_position(m_nav.eye);
     Agent::set_orientation(

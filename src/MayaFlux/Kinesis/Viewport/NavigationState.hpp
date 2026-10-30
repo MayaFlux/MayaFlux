@@ -133,6 +133,18 @@ MAYAFLUX_API void snap_ortho(NavigationState& state, int view);
 MAYAFLUX_API void advance_navigation(NavigationState& state);
 
 /**
+ * @brief Advance eye position by held movement flags over a fixed duration.
+ *
+ * As advance_navigation(state), with @p dt seconds in place of the elapsed
+ * time. last_tick is left alone, so the same inputs at the same dt give the
+ * same eye path.
+ *
+ * @param state Navigation state (eye mutated by this call)
+ * @param dt    Seconds to advance
+ */
+MAYAFLUX_API void advance_navigation(NavigationState& state, float dt);
+
+/**
  * @brief Build a ViewTransform from the current NavigationState without mutating it.
  *
  * Pure read of eye, yaw, pitch, fov_radians, near_plane, far_plane. Does not

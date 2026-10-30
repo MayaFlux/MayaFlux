@@ -400,7 +400,14 @@ void SpatialIndex<PointT>::query_grid(
     float radius_sq,
     std::vector<QueryResult>& out) const
 {
-    auto extent = static_cast<int32_t>(std::ceil(std::sqrt(radius_sq) * m_inv_cell));
+    const double reach = std::ceil(std::sqrt(static_cast<double>(radius_sq)) * static_cast<double>(m_inv_cell));
+    const double probes = std::pow(2.0 * reach + 1.0, static_cast<double>(snap.dimensions));
+    if (probes > static_cast<double>(snap.positions.size())) {
+        query_brute(snap, center, radius_sq, out);
+        return;
+    }
+
+    const auto extent = static_cast<int32_t>(reach);
 
     auto check_cell = [&](uint64_t h) {
         auto it = snap.cells.find(h);

@@ -26,10 +26,13 @@ class MAYAFLUX_API Tapestry {
 public:
     /**
      * @brief Construct with shared scheduler and event manager.
+     * @param buffers BufferManager handed to every Fabric, so removing an
+     *                entity unregisters its audio and render sinks.
      */
     Tapestry(
         std::shared_ptr<Vruta::TaskScheduler> scheduler,
-        std::shared_ptr<Vruta::EventManager> event_manager);
+        std::shared_ptr<Vruta::EventManager> event_manager,
+        std::shared_ptr<Buffers::BufferManager> buffers);
 
     ~Tapestry();
 
@@ -57,11 +60,16 @@ public:
 
     /**
      * @brief Remove a Fabric by pointer. No-op if not owned by this Tapestry.
+     *
+     * Every entity in the Fabric is removed first, so its tasks are cancelled,
+     * its attachment released and its sinks unregistered even if the caller
+     * still holds the Fabric.
      */
     void remove_fabric(const std::shared_ptr<Fabric>& fabric);
 
     /**
      * @brief Remove a Fabric by name. No-op if name is not registered.
+     * @see remove_fabric(const std::shared_ptr<Fabric>&)
      */
     void remove_fabric(std::string_view name);
 
@@ -164,6 +172,7 @@ private:
 
     std::shared_ptr<Vruta::TaskScheduler> m_scheduler;
     std::shared_ptr<Vruta::EventManager> m_event_manager;
+    std::shared_ptr<Buffers::BufferManager> m_buffers;
 
     std::vector<std::shared_ptr<Fabric>> m_fabrics;
     std::unordered_map<std::string, std::weak_ptr<Fabric>> m_named_fabrics;

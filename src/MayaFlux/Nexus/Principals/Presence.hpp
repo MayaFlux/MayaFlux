@@ -118,13 +118,20 @@ public:
      * @brief Replace the falloff curve.
      * @param fn Maps normalized distance in [0, 1] to a weight.
      */
-    void set_falloff(FalloffFn fn) { m_falloff = std::move(fn); }
+    void set_falloff(FalloffFn fn)
+    {
+        m_falloff = std::move(fn);
+        m_falloff_curve.reset();
+    }
 
     /**
      * @brief Replace the per-neighbor radiation callable.
      * @param fn Invoked per neighbor on each influence.
      */
     void set_radiate(RadiateFn fn) { m_radiate = std::move(fn); }
+
+    /** @brief The radiate callable, empty if none. */
+    [[nodiscard]] const RadiateFn& radiate_fn() const { return m_radiate; }
 
     /** @brief Identifier for the radiate callable, empty if anonymous. */
     [[nodiscard]] const std::string& radiate_fn_name() const { return m_radiate_fn_name; }

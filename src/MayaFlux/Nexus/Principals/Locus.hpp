@@ -110,6 +110,20 @@ public:
     /** @brief Current aspect ratio. */
     [[nodiscard]] float aspect() const { return m_aspect; }
 
+    /**
+     * @brief Advance the eye by a fixed number of seconds on every perception.
+     *
+     * Without one the eye advances by the wall time since the last perception.
+     * A fixed timestep makes the same input give the same eye path.
+     */
+    void set_timestep(float dt) { m_timestep = dt; }
+
+    /** @brief Return to advancing by wall time. */
+    void clear_timestep() { m_timestep.reset(); }
+
+    /** @brief The fixed timestep, if one is set. */
+    [[nodiscard]] const std::optional<float>& timestep() const { return m_timestep; }
+
     // =========================================================================
     // View targets — the processors this Locus re-views
     // =========================================================================
@@ -173,6 +187,7 @@ private:
     Kinesis::NavigationState m_nav;
     Kinesis::ViewTransform m_view {};
     float m_aspect { 1.0F };
+    std::optional<float> m_timestep;
     std::vector<std::shared_ptr<Buffers::RenderProcessor>> m_view_targets;
 };
 

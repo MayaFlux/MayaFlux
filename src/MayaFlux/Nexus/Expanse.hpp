@@ -152,6 +152,15 @@ public:
     /** @brief The box, if set. */
     [[nodiscard]] const std::optional<Kinesis::AABB3D>& bounds() const { return m_bounds; }
 
+    /** @brief The containment predicate, empty for a box-only Expanse. */
+    [[nodiscard]] const ContainsFn& contains_fn() const { return m_contains; }
+
+    /** @brief The on_enter callable, empty if none. */
+    [[nodiscard]] const CrossingFn& on_enter_fn() const { return m_on_enter; }
+
+    /** @brief The on_exit callable, empty if none. */
+    [[nodiscard]] const CrossingFn& on_exit_fn() const { return m_on_exit; }
+
     /** @brief Identifier assigned to the containment predicate, empty if anonymous. */
     [[nodiscard]] const std::string& fn_name() const { return m_fn_name; }
 

@@ -61,6 +61,14 @@ void remove_audio_sink(
         "Nexus: audio sink removed from channel {}", channel);
 }
 
+void release_audio_sinks(std::vector<AudioSink>& sinks, Buffers::BufferManager& mgr)
+{
+    for (const auto& s : sinks) {
+        mgr.remove_buffer(s.buf, Buffers::ProcessingToken::AUDIO_BACKEND, s.channel);
+    }
+    sinks.clear();
+}
+
 void push_audio_data(std::vector<AudioSink>& sinks, std::span<const double> samples)
 {
     for (auto& s : sinks) {
@@ -208,6 +216,14 @@ void remove_render_sink(
 
     MF_DEBUG(Journal::Component::Buffers, Journal::Context::Init,
         "Nexus: render sink removed");
+}
+
+void release_render_sinks(std::vector<RenderSink>& sinks, Buffers::BufferManager& mgr)
+{
+    for (const auto& s : sinks) {
+        mgr.remove_buffer(s.buf, Buffers::ProcessingToken::GRAPHICS_BACKEND);
+    }
+    sinks.clear();
 }
 
 void dispatch_render_sinks(std::vector<RenderSink>& sinks, const InfluenceContext& ctx)

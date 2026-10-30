@@ -5,7 +5,7 @@
  * @brief Single include for the user facing API.
  *
  * Includes the API headers (Config, Core, Graph, Chronie, Depot, Input, Random,
- * Windowing, ViewportPreset, Creator, Temporal, Rigs) and the persistence
+ * Windowing, ViewportPreset, Creator, Temporal, Rigs, Stagecraft) and the persistence
  * helpers. Unless MAYAFLUX_NO_CONVENIENCE is defined it also includes
  * Convenience.hpp, which adds the everyday headers and namespace imports.
  *
@@ -37,6 +37,8 @@
 #include "MayaFlux/API/Proxy/Temporal.hpp"
 
 #include "MayaFlux/API/Rigs.hpp"
+
+#include "MayaFlux/API/Stagecraft.hpp"
 
 #include "MayaFlux/Transitive/Memory/Persist.hpp"
 
