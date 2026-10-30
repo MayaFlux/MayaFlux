@@ -6,7 +6,9 @@ namespace MayaFlux::Kakshya {
 
 namespace {
 
-    // Canonical field layout: vec3 pos(12) | vec4 color(16) | float scalar(4) | vec2 uv(8) | vec3 normal(12) | vec3 tangent(12)
+    constexpr size_t k_vertex_bytes = 68;
+
+    // Canonical field layout: vec3 pos(12) | vec4 color(16) | float scalar(4) | vec2 uv(8) | vec3 normal(12) | vec4 tangent(16)
     // Channel slot -> (offset, size)
     constexpr std::array<std::pair<size_t, size_t>, 6> k_channel_layout { {
         { 0, 12 }, // vec3  position
@@ -14,7 +16,7 @@ namespace {
         { 28, 4 }, // float scalar
         { 32, 8 }, // vec2  uv
         { 40, 12 }, // vec3  normal
-        { 52, 12 }, // vec3  tangent
+        { 52, 16 }, // vec4  tangent
     } };
 
     /**
@@ -49,17 +51,18 @@ namespace {
         float slot24_default,
         std::byte* dst)
     {
+        const glm::vec4 default_tangent(cfg.default_tangent, 1.0F);
         const void* defaults[6] = {
             nullptr,
             &cfg.default_color,
             &slot24_default,
             &cfg.default_uv,
             &cfg.default_normal,
-            &cfg.default_tangent,
+            &default_tangent,
         };
 
         for (size_t i = 0; i < count; ++i) {
-            std::byte* v = dst + i * 64;
+            std::byte* v = dst + i * k_vertex_bytes;
             for (size_t s = 0; s < 6; ++s) {
                 auto [dst_off, dst_sz] = k_channel_layout[s];
                 if (s < channels.size()) {
@@ -69,7 +72,7 @@ namespace {
                     std::memcpy(v + dst_off, cv.ptr + i * cv.element_bytes, copy_sz);
                     if (copy_sz < dst_sz) {
                         std::memset(v + dst_off + copy_sz, 0, dst_sz - copy_sz);
-                        if (s == 1 && copy_sz == sizeof(glm::vec3)) {
+                        if ((s == 1 || s == 5) && copy_sz == sizeof(glm::vec3)) {
                             const float opaque = 1.0F;
                             std::memcpy(v + dst_off + copy_sz, &opaque, sizeof(float));
                         }
@@ -103,13 +106,13 @@ std::optional<VertexAccess> as_point_vertex_access(
     // Zero-copy path: single uint8_t channel of N*68 bytes is already interleaved.
     if (channels.size() == 1) {
         if (const auto* b = std::get_if<std::vector<uint8_t>>(&channels[0])) {
-            if (b->size() % 64 != 0) {
+            if (b->size() % k_vertex_bytes != 0) {
                 MF_ERROR(Journal::Component::Kakshya, Journal::Context::Runtime,
-                    "as_point_vertex_access: uint8_t byte count {} not a multiple of 64",
+                    "as_point_vertex_access: uint8_t byte count {} not a multiple of 68",
                     b->size());
                 return std::nullopt;
             }
-            const auto count = static_cast<uint32_t>(b->size() / 64);
+            const auto count = static_cast<uint32_t>(b->size() / k_vertex_bytes);
             auto layout = VertexLayout::for_points();
             layout.vertex_count = count;
             return VertexAccess { .data_ptr = b->data(), .byte_count = b->size(), .layout = layout };
@@ -124,7 +127,7 @@ std::optional<VertexAccess> as_point_vertex_access(
     }
 
     VertexAccess va;
-    va.conversion_buffer.resize(count * 64);
+    va.conversion_buffer.resize(count * k_vertex_bytes);
     assemble_vertices(channels, count, config, config.default_size,
         va.conversion_buffer.data());
     va.data_ptr = va.conversion_buffer.data();
@@ -146,13 +149,13 @@ std::optional<VertexAccess> as_line_vertex_access(
 
     if (channels.size() == 1) {
         if (const auto* b = std::get_if<std::vector<uint8_t>>(&channels[0])) {
-            if (b->size() % 64 != 0) {
+            if (b->size() % k_vertex_bytes != 0) {
                 MF_ERROR(Journal::Component::Kakshya, Journal::Context::Runtime,
-                    "as_line_vertex_access: uint8_t byte count {} not a multiple of 64",
+                    "as_line_vertex_access: uint8_t byte count {} not a multiple of 68",
                     b->size());
                 return std::nullopt;
             }
-            const auto count = static_cast<uint32_t>(b->size() / 64);
+            const auto count = static_cast<uint32_t>(b->size() / k_vertex_bytes);
             auto layout = VertexLayout::for_lines();
             layout.vertex_count = count;
             return VertexAccess { .data_ptr = b->data(), .byte_count = b->size(), .layout = layout };
@@ -167,7 +170,7 @@ std::optional<VertexAccess> as_line_vertex_access(
     }
 
     VertexAccess va;
-    va.conversion_buffer.resize(count * 64);
+    va.conversion_buffer.resize(count * k_vertex_bytes);
     assemble_vertices(channels, count, config, config.default_thickness,
         va.conversion_buffer.data());
     va.data_ptr = va.conversion_buffer.data();
@@ -189,13 +192,13 @@ std::optional<VertexAccess> as_mesh_vertex_access(
 
     if (channels.size() == 1) {
         if (const auto* b = std::get_if<std::vector<uint8_t>>(&channels[0])) {
-            if (b->size() % 64 != 0) {
+            if (b->size() % k_vertex_bytes != 0) {
                 MF_ERROR(Journal::Component::Kakshya, Journal::Context::Runtime,
-                    "as_mesh_vertex_access: uint8_t byte count {} not a multiple of 64",
+                    "as_mesh_vertex_access: uint8_t byte count {} not a multiple of 68",
                     b->size());
                 return std::nullopt;
             }
-            const auto count = static_cast<uint32_t>(b->size() / 64);
+            const auto count = static_cast<uint32_t>(b->size() / k_vertex_bytes);
             auto layout = VertexLayout::for_meshes();
             layout.vertex_count = count;
             return VertexAccess { .data_ptr = b->data(), .byte_count = b->size(), .layout = layout };
@@ -210,7 +213,7 @@ std::optional<VertexAccess> as_mesh_vertex_access(
     }
 
     VertexAccess va;
-    va.conversion_buffer.resize(count * 64);
+    va.conversion_buffer.resize(count * k_vertex_bytes);
     assemble_vertices(channels, count, config, config.default_weight,
         va.conversion_buffer.data());
     va.data_ptr = va.conversion_buffer.data();
