@@ -23,6 +23,7 @@ void FrameAccessProcessor::on_attach(const std::shared_ptr<SignalSourceContainer
         validate();
 
         m_prepared = true;
+        m_has_output = false;
         container->mark_ready_for_processing(true);
 
         m_last_process_time = std::chrono::steady_clock::now();
@@ -46,6 +47,7 @@ void FrameAccessProcessor::on_detach(const std::shared_ptr<SignalSourceContainer
 {
     m_source_container_weak.reset();
     m_prepared = false;
+    m_has_output = false;
     m_total_frames = 0;
     m_frame_byte_size = 0;
     m_current_frame = 0;
@@ -192,31 +194,32 @@ void FrameAccessProcessor::process(const std::shared_ptr<SignalSourceContainer>&
         }
         dest->resize(byte_count);
 
-        uint8_t* write_ptr = dest->data();
         bool all_ok = true;
-
         for (uint64_t i = 0; i < frames_to_extract; ++i) {
-            auto pixels = video_container->get_frame_pixels(m_current_frame + i);
-            if (pixels.empty()) {
-                std::memset(write_ptr, 0, m_frame_byte_size);
+            if (video_container->get_frame_pixels(m_current_frame + i).empty()) {
                 all_ok = false;
-            } else {
-                std::memcpy(write_ptr, pixels.data(), m_frame_byte_size);
+                break;
             }
-            write_ptr += m_frame_byte_size;
         }
 
-        if (!all_ok) {
+        if (all_ok) {
+            uint8_t* write_ptr = dest->data();
+            for (uint64_t i = 0; i < frames_to_extract; ++i) {
+                auto pixels = video_container->get_frame_pixels(m_current_frame + i);
+                std::memcpy(write_ptr, pixels.data(), m_frame_byte_size);
+                write_ptr += m_frame_byte_size;
+            }
+            m_has_output = true;
+        } else {
             MF_RT_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-                "FrameAccessProcessor: one or more frames unavailable at frame {}",
-                m_current_frame);
+                "FrameAccessProcessor: frame {} not decoded in time, {}",
+                m_current_frame,
+                m_has_output ? "repeating the previous output" : "outputting black");
+            if (!m_has_output)
+                std::memset(dest->data(), 0, byte_count);
         }
 
         if (m_auto_advance) {
-            if (!all_ok) {
-                MF_RT_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-                    "FrameAccessProcessor: auto-advance enabled but frame data was incomplete. Waiting for next process call without advancing frame.");
-            }
             if (m_frame_rate > 0.0) {
                 m_frame_accumulator += m_frame_rate / m_global_fps;
                 auto frames_to_advance = static_cast<uint64_t>(m_frame_accumulator);

@@ -130,6 +130,12 @@ protected:
     bool m_prepared {};
     bool m_auto_advance { true };
 
+    /**
+     * @brief True once a complete frame has been delivered since attach.
+     *        A frame that is late afterwards leaves the previous output in place.
+     */
+    bool m_has_output {};
+
     std::weak_ptr<SignalSourceContainer> m_source_container_weak;
 
     ContainerDataStructure m_structure;
