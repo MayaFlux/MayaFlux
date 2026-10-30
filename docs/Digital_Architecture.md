@@ -410,9 +410,9 @@ Nexus is the spatial simulation and orchestration layer. It connects to the real
 
 `StateEncoder` saves Fabric and Tapestry state as numeric EXR data with a JSON schema. `StateDecoder` can patch existing entities or reconstruct missing ones from that pair.
 
-`Wiring` is the builder interface for connecting entities to MayaFlux systems. The `on(window, key, bool held, on_release)` API attaches keyboard triggers; mouse drag support is available. `wire_player` is a free function that wires a Locus to standard movement controls. `Regime` is a user struct pattern for holding atomic state shared across routines.
+`Wiring` is the builder interface for connecting entities to MayaFlux systems. The `on(window, key, bool held, on_release)` API attaches keyboard triggers; mouse drag support is available.
 
-`Sinks` connect entity outputs to the real-time cycle. `AudioSink` owns an `AudioBuffer` and `AudioWriteProcessor`. `RenderSink` owns a `VKBuffer`, `GeometryWriteProcessor`, and `RenderProcessor`.
+`Sinks` connect entity outputs to the real-time cycle. `AudioSink` owns an `AudioBuffer` and `AudioWriteProcessor`. `RenderSink` owns a `VKBuffer`, `DataWriteProcessor`, and `RenderProcessor`. A `Fabric` built over a `BufferManager` unregisters an entity's sinks and gives back its attached buffer's placement when the entity is removed or the `Fabric` is destroyed. An entity that is not wired into a `Fabric` must call `remove_audio_sink` and `remove_render`.
 
 ```mermaid
 sequenceDiagram
@@ -434,9 +434,9 @@ sequenceDiagram
 ```
 
 
-`SpatialIndex3D` answers radius and k-nearest queries. `HitTest` handles ray-entity and volume-entity intersection tests.
+`SpatialIndex3D` answers radius and k-nearest queries. `Kinesis/Spatial/HitTest.hpp` builds a ray from window pixel coordinates and finds the entities in a published snapshot nearest to it within a tolerance.
 
-The function registry on `Fabric` maps string names to `InfluenceFn`, `ContainsFn`, and crossing functions, enabling `StateDecoder` to resolve callable names back to live function objects.
+The function registry on `Fabric` maps string names to influence, perception, containment, crossing, and radiate functions, enabling `StateDecoder` to resolve callable names back to live function objects. `Wiring` and `add_expanse` register the named functions of what they are given; `register_influence`, `register_perception`, `register_contains`, `register_crossing`, and `register_radiate` add the rest, for a `Fabric` that decodes a snapshot into fresh objects.
 
 ---
 

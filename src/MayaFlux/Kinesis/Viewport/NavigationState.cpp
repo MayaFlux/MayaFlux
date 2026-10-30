@@ -81,6 +81,11 @@ void advance_navigation(NavigationState& st)
     const float dt = std::chrono::duration<float>(now - st.last_tick).count();
     st.last_tick = now;
 
+    advance_navigation(st, dt);
+}
+
+void advance_navigation(NavigationState& st, float dt)
+{
     const glm::vec3 forward {
         std::cos(st.pitch) * std::sin(st.yaw),
         std::sin(st.pitch),

@@ -30,8 +30,10 @@ using RenderFn = std::function<void(const InfluenceContext&)>;
  * @brief Holds the plumbing for one audio output registered from a Nexus object.
  *
  * Created by add_audio_sink(). Owns the AudioBuffer and AudioWriteProcessor.
- * The buffer is registered with the supplied BufferManager on construction
- * and unregistered on destruction via remove_audio_sink().
+ * The buffer is registered with the supplied BufferManager by add_audio_sink()
+ * and stays registered until remove_audio_sink() or release_audio_sinks().
+ * A Fabric calls release_audio_sinks() when it removes the entity that owns
+ * the sink; an entity outside a Fabric must remove its sinks itself.
  *
  * If @c fn is set, dispatch_audio_sinks() calls it with the current
  * InfluenceContext and forwards the result to the writer. If @c fn is empty,
@@ -51,7 +53,10 @@ struct AudioSink {
  *
  * Created by add_render_sink(). Owns the VKBuffer, DataWriteProcessor,
  * and RenderProcessor. The buffer is registered with the supplied BufferManager
- * on construction and unregistered on destruction via remove_render_sink().
+ * by add_render_sink() and stays registered until remove_render_sink() or
+ * release_render_sinks(). A Fabric calls release_render_sinks() when it removes
+ * the entity that owns the sink; an entity outside a Fabric must remove its
+ * sinks itself.
  *
  * Default rendering uses POINT_LIST topology with point.vert.spv /
  * point.frag.spv. The object's spatial position is written as a single

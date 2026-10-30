@@ -12,6 +12,8 @@
 #include "MayaFlux/Kriya/Tasks.hpp"
 
 #include "MayaFlux/Kriya/Timers.hpp"
+#include "MayaFlux/Journal/Archivist.hpp"
+#include "MayaFlux/Nexus/Principals/Locus.hpp"
 #include "MayaFlux/Vruta/EventManager.hpp"
 #include "MayaFlux/Vruta/Scheduler.hpp"
 
@@ -538,6 +540,26 @@ void Wiring::finalise()
     // Metro path
     // ------------------------------------------------------------------
     if (m_interval.has_value()) {
+        if (m_metro_token == Vruta::ProcessingToken::SAMPLE_ACCURATE) {
+            const bool drives_graphics = std::visit([](const auto& ptr) {
+                using T = std::decay_t<decltype(*ptr)>;
+                if constexpr (std::is_same_v<T, Emitter>) {
+                    return !ptr->render_sinks().empty();
+                } else if constexpr (std::is_same_v<T, Agent>) {
+                    return !ptr->render_sinks().empty() || std::dynamic_pointer_cast<Locus>(ptr) != nullptr;
+                } else {
+                    return false;
+                }
+            },
+                reg.member);
+            if (drives_graphics) {
+                MF_WARN(Journal::Component::Nexus, Journal::Context::Init,
+                    "Entity {} renders or navigates but every() runs on the audio token; "
+                    "pass Vruta::ProcessingToken::FRAME_ACCURATE to run it on the graphics clock",
+                    m_entity_id);
+            }
+        }
+
         auto pos_fn = m_position_fn;
         auto name = make_name("nexus_metro");
         reg.task_name = name;
