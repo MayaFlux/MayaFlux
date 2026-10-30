@@ -232,12 +232,18 @@ public:
 
     /**
      * @brief Cancel an active wiring and release any owned coroutine.
+     *
+     * Runs the bind detach once, whether it is called again or a duration
+     * timer fires afterwards.
      */
     void cancel();
 
 private:
     friend class Fabric;
     friend class StateEncoder;
+
+    /** @brief Run the bind detach if it has not run yet. Does nothing otherwise. */
+    void detach();
 
     explicit Wiring(Fabric& fabric, uint32_t entity_id)
         : m_fabric(fabric)
@@ -322,7 +328,7 @@ private:
     std::string m_bind_attach_name;
     std::string m_bind_detach_name;
 
-    Vruta::Event window_event_source_loop(Vruta::WindowEventSource& source, Vruta::WindowEventFilter filter, Fabric& fabric, uint32_t id);
+    Vruta::Event window_event_source_loop(Vruta::WindowEventSource& source, Vruta::WindowEventFilter filter, Fabric& fabric, uint32_t id, std::function<void()> fire);
 
 public:
     // =====================================================================

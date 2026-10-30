@@ -236,8 +236,7 @@ namespace {
 
     Vruta::SoundRoutine network_loop(
         Vruta::NetworkSource& source,
-        Fabric& fabric,
-        uint32_t id)
+        std::function<void()> fire)
     {
         auto& promise = co_await Kriya::GetAudioPromise {};
         while (true) {
@@ -245,9 +244,24 @@ namespace {
                 break;
             }
             co_await source.next_message();
-            fabric.fire(id);
+            fire();
         }
     }
+
+    struct FireLimit {
+        size_t remaining;
+        bool limited;
+        std::function<void()> stop;
+
+        [[nodiscard]] bool spent() const { return limited && remaining == 0; }
+
+        void fired()
+        {
+            if (limited && remaining > 0 && --remaining == 0 && stop) {
+                stop();
+            }
+        }
+    };
 
     Vruta::Event scroll_loop(
         std::shared_ptr<Core::Window> window,
@@ -360,6 +374,16 @@ void Wiring::finalise()
     if (m_bind_attach.has_value()) {
         (*m_bind_attach)();
 
+        if (m_bind_detach.has_value()) {
+            const auto once = std::make_shared<std::function<void()>>(std::move(*m_bind_detach));
+            m_bind_detach = [once]() {
+                if (*once) {
+                    const auto detach = std::exchange(*once, nullptr);
+                    detach();
+                }
+            };
+        }
+
         if (m_duration.has_value() && m_bind_detach.has_value()) {
             auto timer = std::make_shared<Kriya::Timer>(scheduler, m_duration_token);
             auto detach = *m_bind_detach;
@@ -403,20 +427,34 @@ void Wiring::finalise()
     // Trigger path
     // ------------------------------------------------------------------
     if (!std::holds_alternative<std::monostate>(m_trigger)) {
+        const auto limit = std::make_shared<FireLimit>(FireLimit { .remaining = m_times, .limited = m_times > 1, .stop = {} });
+        const std::function<void()> fire = [&fab = m_fabric, id, limit]() {
+            if (limit->spent()) {
+                return;
+            }
+            fab.fire(id);
+            limit->fired();
+        };
+        const auto stop_event = [&ev_manager, limit](const std::string& name) {
+            limit->stop = [&ev_manager, name]() {
+                if (const auto event = ev_manager.get_event(name)) {
+                    event->set_should_terminate(true);
+                }
+            };
+        };
+
         std::visit([&](auto& trig) {
             using T = std::decay_t<decltype(trig)>;
 
             if constexpr (std::is_same_v<T, KeyTrigger>) {
                 auto name = make_name("nexus_event");
                 reg.event_name = name;
-                auto& fab = m_fabric;
+                stop_event(name);
                 ev_manager.add_event(
                     std::make_shared<Vruta::Event>(
                         trig.held
-                            ? Kriya::key_held(trig.window, trig.key,
-                                  [&fab, id]() { fab.fire(id); })
-                            : Kriya::key_pressed(trig.window, trig.key,
-                                  [&fab, id]() { fab.fire(id); })),
+                            ? Kriya::key_held(trig.window, trig.key, fire)
+                            : Kriya::key_pressed(trig.window, trig.key, fire)),
                     name);
 
                 if (trig.on_release) {
@@ -431,21 +469,21 @@ void Wiring::finalise()
             } else if constexpr (std::is_same_v<T, MouseTrigger>) {
                 auto name = make_name("nexus_event");
                 reg.event_name = name;
+                stop_event(name);
                 Fabric& fab = m_fabric;
                 uint32_t eid = m_entity_id;
+                const auto aimed_fire = [&fab, eid, limit, fire](double px, double py) {
+                    if (limit->spent()) {
+                        return;
+                    }
+                    fab.m_registrations[eid].pending_cursor = glm::vec2(px, py);
+                    fire();
+                };
                 ev_manager.add_event(
                     std::make_shared<Vruta::Event>(
                         trig.held
-                            ? Kriya::mouse_dragged(trig.window, trig.button,
-                                  [&fab, eid](double px, double py) {
-                                      fab.m_registrations[eid].pending_cursor = glm::vec2(px, py);
-                                      fab.fire(eid);
-                                  })
-                            : Kriya::mouse_pressed(trig.window, trig.button,
-                                  [&fab, eid](double px, double py) {
-                                      fab.m_registrations[eid].pending_cursor = glm::vec2(px, py);
-                                      fab.fire(eid);
-                                  })),
+                            ? Kriya::mouse_dragged(trig.window, trig.button, aimed_fire)
+                            : Kriya::mouse_pressed(trig.window, trig.button, aimed_fire)),
                     name);
                 if (trig.on_release) {
                     auto release_name = make_name("nexus_event_release");
@@ -459,26 +497,35 @@ void Wiring::finalise()
             } else if constexpr (std::is_same_v<T, ScrollTrigger>) {
                 auto name = make_name("nexus_scroll");
                 reg.event_name = name;
+                stop_event(name);
                 ev_manager.add_event(
                     std::make_shared<Vruta::Event>(
-                        scroll_loop(trig.window, trig.fn)),
+                        scroll_loop(trig.window, [limit, fn = trig.fn](double x, double y) {
+                            if (limit->spent()) {
+                                return;
+                            }
+                            fn(x, y);
+                            limit->fired();
+                        })),
                     name);
 
             } else if constexpr (std::is_same_v<T, NetworkTrigger>) {
                 auto name = make_name("nexus_task");
                 reg.task_name = name;
+                limit->stop = [&scheduler, name]() { scheduler.cancel_task(name); };
                 scheduler.add_task(
                     std::make_shared<Vruta::SoundRoutine>(
-                        network_loop(*trig.source, m_fabric, id)),
+                        network_loop(*trig.source, fire)),
                     name, false);
 
             } else if constexpr (std::is_same_v<T, WindowEventTrigger>) {
                 auto name = make_name("nexus_event");
                 reg.event_name = name;
+                stop_event(name);
                 Fabric& fab = m_fabric;
                 ev_manager.add_event(
                     std::make_shared<Vruta::Event>(
-                        window_event_source_loop(*trig.source, trig.filter, fab, id)),
+                        window_event_source_loop(*trig.source, trig.filter, fab, id, fire)),
                     name);
             }
         },
@@ -554,9 +601,14 @@ void Wiring::cancel()
         reg.event_name.clear();
     }
 
+    detach();
+}
+
+void Wiring::detach()
+{
     if (m_bind_detach.has_value() && *m_bind_detach) {
-        const auto detach = std::exchange(*m_bind_detach, nullptr);
-        detach();
+        const auto action = std::exchange(*m_bind_detach, nullptr);
+        action();
     }
 }
 
@@ -568,7 +620,8 @@ Vruta::Event Wiring::window_event_source_loop(
     Vruta::WindowEventSource& source,
     Vruta::WindowEventFilter filter,
     Fabric& fabric,
-    uint32_t id)
+    uint32_t id,
+    std::function<void()> fire)
 {
     auto& promise = co_await Kriya::GetEventPromise {};
     while (true) {
@@ -577,7 +630,7 @@ Vruta::Event Wiring::window_event_source_loop(
         auto event = co_await Kriya::WindowEventAwaiter(source, filter);
         if (auto* pos = std::get_if<Core::WindowEvent::MousePosData>(&event.data))
             fabric.m_registrations[id].pending_cursor = glm::vec2(pos->x, pos->y);
-        fabric.fire(id);
+        fire();
     }
 }
 

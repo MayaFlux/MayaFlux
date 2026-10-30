@@ -42,6 +42,10 @@ Fabric::~Fabric()
 
 void Fabric::release(Registration& reg)
 {
+    if (reg.wiring.has_value()) {
+        reg.wiring->detach();
+    }
+
     std::visit([this](const auto& ptr) {
         using T = std::decay_t<decltype(*ptr)>;
         if constexpr (std::is_same_v<T, Emitter> || std::is_same_v<T, Agent>) {
