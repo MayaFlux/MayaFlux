@@ -121,11 +121,7 @@ endif()
 #                   Target Links
 #==============================================================
 
-if(WIN32)
-    target_link_libraries(MayaFluxLib PUBLIC Transitive_MD)
-else()
-    target_link_libraries(MayaFluxLib PUBLIC Transitive)
-endif()
+target_link_libraries(MayaFluxLib PUBLIC Transitive)
 
 if(WIN32)
     if(TARGET Vulkan::shaderc_combined)

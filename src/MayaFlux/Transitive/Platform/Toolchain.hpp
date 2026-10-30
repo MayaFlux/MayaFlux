@@ -1,58 +1,84 @@
-#include "HostEnvironment.hpp"
+#pragma once
 
-namespace MayaFlux::Config {
-
-namespace {
-    std::string s_project_root;
-}
-
-std::string project_root()
-{
-    return s_project_root.empty() ? std::string(SOURCE_DIR) : s_project_root;
-}
-
-void set_project_root(std::string path)
-{
-    s_project_root = std::move(path);
-}
-
-}
+#include "Process.hpp"
 
 namespace MayaFlux::Platform {
 
+namespace fs = std::filesystem;
+
 namespace {
 
-    const std::vector<std::string> eigen_includes = {
+    inline const std::vector<std::string> eigen_includes = {
         "/usr/include/eigen3",
         "/usr/local/include/eigen3",
         "/opt/homebrew/include/eigen3"
     };
 
-    const std::vector<std::string> freetype_includes = {
+    inline const std::vector<std::string> freetype_includes = {
         "/usr/include/freetype2",
         "/usr/local/include/freetype2",
         "/opt/homebrew/include/freetype2"
     };
 }
 
-std::string safe_getenv(const char* var)
-{
-#ifdef MAYAFLUX_PLATFORM_WINDOWS
-    char* value = nullptr;
-    size_t len = 0;
-    if (_dupenv_s(&value, &len, var) == 0 && value != nullptr) {
-        std::string result(value);
-        free(value);
-        return result;
-    }
-    return "";
-#else
-    const char* value = std::getenv(var);
-    return value ? std::string(value) : "";
-#endif
-}
+class SystemConfig {
+public:
+    enum class LibraryType : uint8_t {
+        Static,
+        Shared
+    };
 
-const std::string& SystemConfig::get_clang_resource_dir()
+    static const std::string& get_clang_resource_dir();
+
+    static const std::vector<std::string>& get_system_includes();
+
+    static const std::vector<std::string>& get_system_libraries();
+
+    static const std::string& find_dep_library(const std::string& library_name, const std::string& prefix = "");
+
+    static const std::string& get_dep_includes(const std::string& library_name);
+
+#ifdef MAYAFLUX_PLATFORM_MACOS
+    static std::string get_macos_sdk_path();
+#endif // MAYAFLUX_PLATFORM_MACOS
+
+private:
+    static std::string format_library_name(const std::string& library_name, LibraryType type = LibraryType::Static);
+
+    static std::vector<std::string> get_clang_includes();
+
+    static std::vector<std::string> parse_clang_search_paths(const std::string& output);
+
+    static std::string find_latest_sdk_version(const fs::path& base);
+
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+
+    static std::string find_latest_vs_installation();
+
+    static std::string find_latest_msvc_version(const fs::path& msvc_base);
+
+    static std::vector<std::string> get_msvc_includes();
+
+    static std::vector<std::string> get_msvc_libraries();
+
+    static std::vector<std::string> get_windows_sdk_includes();
+
+    static std::vector<std::string> get_windows_sdk_libraries();
+
+    static std::vector<std::string> probe_sdk_paths(const std::string& subpath,
+        const std::vector<std::string>& subdirs,
+        const std::string& arch = "");
+
+#else
+    static std::vector<std::string> get_unix_library_paths();
+#ifdef MAYAFLUX_PLATFORM_MACOS
+    static std::string get_xcode_system_includes();
+#endif // MAYAFLUX_PLATFORM_MACOS
+
+#endif // MAYAFLUX_PLATFORM_WINDOWS
+};
+
+inline const std::string& SystemConfig::get_clang_resource_dir()
 {
     static std::string cached_resource_dir;
 
@@ -75,7 +101,7 @@ const std::string& SystemConfig::get_clang_resource_dir()
     return cached_resource_dir;
 }
 
-const std::vector<std::string>& SystemConfig::get_system_includes()
+inline const std::vector<std::string>& SystemConfig::get_system_includes()
 {
     static std::vector<std::string> includes;
 
@@ -107,7 +133,7 @@ const std::vector<std::string>& SystemConfig::get_system_includes()
     return includes;
 }
 
-const std::vector<std::string>& SystemConfig::get_system_libraries()
+inline const std::vector<std::string>& SystemConfig::get_system_libraries()
 {
     static std::vector<std::string> lib_paths;
 
@@ -127,7 +153,7 @@ const std::vector<std::string>& SystemConfig::get_system_libraries()
     return lib_paths;
 }
 
-const std::string& SystemConfig::find_dep_library(const std::string& library_name, const std::string& prefix)
+inline const std::string& SystemConfig::find_dep_library(const std::string& library_name, const std::string& prefix)
 {
     static std::unordered_map<std::string, std::string> cache;
 
@@ -159,7 +185,7 @@ const std::string& SystemConfig::find_dep_library(const std::string& library_nam
     return result;
 }
 
-const std::string& SystemConfig::get_dep_includes(const std::string& library_name)
+inline const std::string& SystemConfig::get_dep_includes(const std::string& library_name)
 {
     static std::unordered_map<std::string, std::string> cache;
 
@@ -226,36 +252,7 @@ const std::string& SystemConfig::get_dep_includes(const std::string& library_nam
     return result;
 }
 
-// NOLINTNEXTLINE(cert-env33-c)
-std::string SystemConfig::exec_command(const char* cmd)
-{
-    std::array<char, 128> buffer {};
-    std::string result;
-
-    using PipeCloser = int (*)(FILE*);
-#ifdef MAYAFLUX_PLATFORM_WINDOWS
-    std::unique_ptr<FILE, PipeCloser> pipe(_popen(cmd, "r"), _pclose);
-#else
-    std::unique_ptr<FILE, PipeCloser> pipe(popen(cmd, "r"), pclose);
-#endif
-
-    if (!pipe)
-        return "";
-
-    while (fgets(buffer.data(), static_cast<int>(buffer.size()), pipe.get())) {
-        result += buffer.data();
-    }
-    return result;
-}
-
-void SystemConfig::trim_output(std::string& str)
-{
-    str.erase(std::remove(str.begin(), str.end(), '\r'), str.end());
-    str.erase(std::remove(str.begin(), str.end(), '\n'), str.end());
-    str.erase(str.find_last_not_of(" \t") + 1);
-}
-
-std::string SystemConfig::format_library_name(const std::string& library_name, LibraryType type)
+inline std::string SystemConfig::format_library_name(const std::string& library_name, LibraryType type)
 {
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
     const std::string ext = (type == LibraryType::Shared) ? ".dll" : ".lib";
@@ -273,7 +270,7 @@ std::string SystemConfig::format_library_name(const std::string& library_name, L
     return library_name;
 }
 
-std::vector<std::string> SystemConfig::get_clang_includes()
+inline std::vector<std::string> SystemConfig::get_clang_includes()
 {
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
     const char* cmd = "echo. | clang -v -E -x c++ - 2>&1";
@@ -285,7 +282,7 @@ std::vector<std::string> SystemConfig::get_clang_includes()
     return parse_clang_search_paths(clang_output);
 }
 
-std::vector<std::string> SystemConfig::parse_clang_search_paths(const std::string& output)
+inline std::vector<std::string> SystemConfig::parse_clang_search_paths(const std::string& output)
 {
     std::vector<std::string> paths;
     bool in_search_paths = false;
@@ -315,7 +312,7 @@ std::vector<std::string> SystemConfig::parse_clang_search_paths(const std::strin
     return paths;
 }
 
-std::string SystemConfig::find_latest_sdk_version(const fs::path& base)
+inline std::string SystemConfig::find_latest_sdk_version(const fs::path& base)
 {
     if (!fs::exists(base)) {
         return "";
@@ -337,7 +334,7 @@ std::string SystemConfig::find_latest_sdk_version(const fs::path& base)
 
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
 
-std::string SystemConfig::find_latest_vs_installation()
+inline std::string SystemConfig::find_latest_vs_installation()
 {
     std::vector<std::string> vswhere_paths = {
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Installer\\vswhere.exe",
@@ -360,7 +357,7 @@ std::string SystemConfig::find_latest_vs_installation()
     return "";
 }
 
-std::string SystemConfig::find_latest_msvc_version(const fs::path& msvc_base)
+inline std::string SystemConfig::find_latest_msvc_version(const fs::path& msvc_base)
 {
     if (!fs::exists(msvc_base)) {
         return "";
@@ -380,7 +377,7 @@ std::string SystemConfig::find_latest_msvc_version(const fs::path& msvc_base)
     return latest_version;
 }
 
-std::vector<std::string> SystemConfig::get_msvc_includes()
+inline std::vector<std::string> SystemConfig::get_msvc_includes()
 {
     std::vector<std::string> includes;
 
@@ -410,7 +407,7 @@ std::vector<std::string> SystemConfig::get_msvc_includes()
     return includes;
 }
 
-std::vector<std::string> SystemConfig::get_msvc_libraries()
+inline std::vector<std::string> SystemConfig::get_msvc_libraries()
 {
     std::vector<std::string> lib_paths;
 
@@ -440,7 +437,7 @@ std::vector<std::string> SystemConfig::get_msvc_libraries()
     return lib_paths;
 }
 
-std::vector<std::string> SystemConfig::get_windows_sdk_includes()
+inline std::vector<std::string> SystemConfig::get_windows_sdk_includes()
 {
     std::vector<std::string> includes;
 
@@ -471,7 +468,7 @@ std::vector<std::string> SystemConfig::get_windows_sdk_includes()
     return includes;
 }
 
-std::vector<std::string> SystemConfig::get_windows_sdk_libraries()
+inline std::vector<std::string> SystemConfig::get_windows_sdk_libraries()
 {
     std::vector<std::string> lib_paths;
 
@@ -502,7 +499,7 @@ std::vector<std::string> SystemConfig::get_windows_sdk_libraries()
     return lib_paths;
 }
 
-std::vector<std::string> SystemConfig::probe_sdk_paths(const std::string& subpath,
+inline std::vector<std::string> SystemConfig::probe_sdk_paths(const std::string& subpath,
     const std::vector<std::string>& subdirs,
     const std::string& arch)
 {
@@ -537,7 +534,7 @@ std::vector<std::string> SystemConfig::probe_sdk_paths(const std::string& subpat
 
 #else
 
-std::vector<std::string> SystemConfig::get_unix_library_paths()
+inline std::vector<std::string> SystemConfig::get_unix_library_paths()
 {
     std::vector<std::string> lib_paths;
 
@@ -575,7 +572,7 @@ std::vector<std::string> SystemConfig::get_unix_library_paths()
 
 #ifdef MAYAFLUX_PLATFORM_MACOS
 
-std::string SystemConfig::get_macos_sdk_path()
+inline std::string SystemConfig::get_macos_sdk_path()
 {
     const char* cmd = "xcrun --show-sdk-path 2>/dev/null";
     std::string sdk_path = exec_command(cmd);
@@ -599,7 +596,7 @@ std::string SystemConfig::get_macos_sdk_path()
     return "";
 }
 
-std::string SystemConfig::get_xcode_system_includes()
+inline std::string SystemConfig::get_xcode_system_includes()
 {
     std::string sdk_path = get_macos_sdk_path();
     if (sdk_path.empty()) {
@@ -617,4 +614,5 @@ std::string SystemConfig::get_xcode_system_includes()
 #endif // MAYAFLUX_PLATFORM_MACOS
 
 #endif // MAYAFLUX_PLATFORM_WINDOWS
-}
+
+} // namespace MayaFlux::Platform

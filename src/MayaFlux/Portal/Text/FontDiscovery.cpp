@@ -61,8 +61,8 @@ std::optional<std::string> find_font(std::string_view family, std::string_view s
     }
 
     const std::string cmd = "fc-match --format='%{file}' '" + query + "' 2>/dev/null";
-    std::string result = Platform::SystemConfig::exec_command(cmd.c_str());
-    Platform::SystemConfig::trim_output(result);
+    std::string result = Platform::exec_command(cmd.c_str());
+    Platform::trim_output(result);
 
     if (!result.empty() && fs::exists(result)) {
         MF_DEBUG(Journal::Component::Portal, Journal::Context::Init, "{} -> {}", query, result);

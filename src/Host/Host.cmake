@@ -23,7 +23,7 @@ target_include_directories(MayaFluxHost PUBLIC
 target_precompile_headers(MayaFluxHost PRIVATE ${CMAKE_SOURCE_DIR}/cmake/pch_minimal.h)
 
 if(WIN32)
-    target_link_libraries(MayaFluxHost PRIVATE Lila Transitive_MD)
+    target_link_libraries(MayaFluxHost PRIVATE Lila Transitive)
     target_link_options(MayaFluxHost PRIVATE /NODEFAULTLIB:libcmt /DEFAULTLIB:msvcrt)
 else()
     target_link_libraries(MayaFluxHost PUBLIC Lila Transitive)
