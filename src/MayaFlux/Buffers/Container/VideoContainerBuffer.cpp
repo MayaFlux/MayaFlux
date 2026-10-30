@@ -29,13 +29,13 @@ void VideoStreamReader::on_attach(const std::shared_ptr<Buffer>& buffer)
         return;
     }
 
-    m_reader_id = m_container->register_dimension_reader(0);
-
     if (!m_container->is_ready_for_processing()) {
         error<std::runtime_error>(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             std::source_location::current(),
             "VideoStreamReader: Container not ready for processing");
     }
+
+    m_reader_id = m_container->register_dimension_reader(0);
 
     try {
         auto texture_buffer = std::dynamic_pointer_cast<TextureBuffer>(buffer);
@@ -113,6 +113,9 @@ void VideoStreamReader::processing_function(const std::shared_ptr<Buffer>& buffe
 
         if (m_container->all_dimensions_consumed()) {
             m_container->update_processing_state(Kakshya::ProcessingState::READY);
+            if (auto video = std::dynamic_pointer_cast<Kakshya::VideoStreamContainer>(m_container)) {
+                video->clear_all_consumption();
+            }
             m_container->reset_processing_token();
         }
 
@@ -219,23 +222,28 @@ namespace {
         return fallback;
     }
 
+    Kakshya::ContainerDataStructure& require_structure(
+        const std::shared_ptr<Kakshya::StreamContainer>& container)
+    {
+        if (!container) {
+            error<std::invalid_argument>(Journal::Component::Buffers, Journal::Context::Init,
+                std::source_location::current(),
+                "VideoContainerBuffer: container must not be null");
+        }
+        return container->get_structure();
+    }
+
 } // namespace
 
 VideoContainerBuffer::VideoContainerBuffer(
     const std::shared_ptr<Kakshya::StreamContainer>& container,
     Portal::Graphics::ImageFormat format)
     : TextureBuffer(
-          static_cast<uint32_t>(container->get_structure().get_width()),
-          static_cast<uint32_t>(container->get_structure().get_height()),
+          static_cast<uint32_t>(require_structure(container).get_width()),
+          static_cast<uint32_t>(require_structure(container).get_height()),
           resolve_container_format(container, format))
     , m_container(container)
 {
-    if (!m_container) {
-        error<std::invalid_argument>(Journal::Component::Buffers, Journal::Context::Init,
-            std::source_location::current(),
-            "VideoContainerBuffer: container must not be null");
-    }
-
     m_video_reader = std::make_shared<VideoStreamReader>(m_container);
 
     MF_INFO(Journal::Component::Buffers, Journal::Context::Init,

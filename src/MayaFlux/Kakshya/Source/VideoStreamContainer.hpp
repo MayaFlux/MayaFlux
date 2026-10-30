@@ -274,6 +274,14 @@ public:
     void mark_dimension_consumed(uint32_t dimension_index, uint32_t reader_id) override;
     [[nodiscard]] bool all_dimensions_consumed() const override;
 
+    /**
+     * @brief Forget which readers have consumed the current frame.
+     *
+     * Called when the container recycles so the next cycle waits for every
+     * registered reader again.
+     */
+    void clear_all_consumption();
+
     // =========================================================================
     // Processing token
     // =========================================================================
