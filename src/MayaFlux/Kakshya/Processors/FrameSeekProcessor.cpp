@@ -150,7 +150,9 @@ void FrameSeekProcessor::process(const std::shared_ptr<SignalSourceContainer>& c
 
         const auto a = video->get_frame_pixels(first);
         if (a.empty()) {
-            std::memset(out, 0, m_frame_byte_size);
+            if (!m_has_output) {
+                std::memset(out, 0, m_frame_byte_size);
+            }
             all_ok = false;
             continue;
         }
@@ -170,9 +172,13 @@ void FrameSeekProcessor::process(const std::shared_ptr<SignalSourceContainer>& c
         std::memcpy(out, a.data(), m_frame_byte_size);
     }
 
-    if (!all_ok) {
+    if (all_ok) {
+        m_has_output = true;
+    } else {
         MF_RT_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-            "FrameSeekProcessor: one or more frames unavailable near frame {}", last_frame);
+            "FrameSeekProcessor: frame near {} not decoded in time, {}",
+            last_frame,
+            m_has_output ? "repeating the previous output" : "outputting black");
     }
 
     m_ticks += m_frames_per_batch;
