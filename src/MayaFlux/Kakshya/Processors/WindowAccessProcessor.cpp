@@ -92,30 +92,28 @@ void WindowAccessProcessor::process(
     const bool dims_changed = (cur_w != m_width || cur_h != m_height);
 
     m_is_processing.store(true);
-    container->update_processing_state(ProcessingState::PROCESSING);
 
-    auto& processed = container->get_processed_data();
-    processed.resize(1);
-
-    readback_region(window, 0U, 0U, cur_w, cur_h, processed[0]);
+    DataVariant captured = std::vector<uint8_t> {};
+    readback_region(window, 0U, 0U, cur_w, cur_h, captured);
 
     const bool has_data = std::visit(
-        [](const auto& v) { return !v.empty(); }, processed[0]);
+        [](const auto& v) { return !v.empty(); }, captured);
 
     if (!has_data) {
         MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
             "WindowAccessProcessor: readback returned no data for '{}'",
             window->get_create_info().title);
         m_is_processing.store(false);
-        container->update_processing_state(ProcessingState::ERROR);
         return;
     }
+
+    container->update_processing_state(ProcessingState::PROCESSING);
 
     if (dims_changed) {
         m_width = cur_w;
         m_height = cur_h;
         m_surface_format = query_surface_format(window);
-        wc->handle_surface_resize();
+        wc->handle_surface_resize(cur_w, cur_h);
 
         MF_INFO(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
             "WindowAccessProcessor: '{}' resized to {}x{} format={}",
@@ -123,11 +121,26 @@ void WindowAccessProcessor::process(
             static_cast<uint32_t>(m_surface_format));
     }
 
+    auto& processed = container->get_processed_data();
+    processed.resize(1);
+    processed[0] = std::move(captured);
+    wc->invalidate_float_frame_cache(0);
+
     const auto* src = std::get_if<std::vector<uint8_t>>(&processed[0]);
     if (src) {
-        if (uint8_t* dst = wc->mutable_frame_ptr(wc->get_write_head())) {
-            std::memcpy(dst, src->data(), src->size());
+        const auto& history = wc->get_data();
+        const uint32_t head = wc->get_write_head();
+        const auto* slot = head < history.size()
+            ? std::get_if<std::vector<uint8_t>>(&history[head])
+            : nullptr;
+
+        if (slot && slot->size() == src->size()) {
+            std::memcpy(wc->mutable_frame_ptr(head), src->data(), src->size());
             wc->advance_write_head();
+        } else {
+            MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+                "WindowAccessProcessor: capture of {} bytes does not fit history slot of {} bytes for '{}'; frame not kept",
+                src->size(), slot ? slot->size() : 0U, window->get_create_info().title);
         }
     }
 

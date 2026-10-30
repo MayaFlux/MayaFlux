@@ -191,11 +191,17 @@ public:
     [[nodiscard]] bool is_region_loaded(const Region& region) const override;
 
     /**
-     * @brief Reallocate m_data and m_processed_data to match the current window
-     *        dimensions. Called by WindowAccessProcessor when a surface resize is
-     *        detected. Holds the data seqlock's serialized write claim.
+     * @brief Reallocate m_data and m_processed_data for a surface of the given size.
+     *
+     * Called by WindowAccessProcessor when the swapchain extent changes, with
+     * the extent the capture was read at, so history slots always match the
+     * frames written into them. Restarts the history. Holds the data seqlock's
+     * serialized write claim.
+     *
+     * @param width  New surface width in pixels.
+     * @param height New surface height in pixels.
      */
-    void handle_surface_resize();
+    void handle_surface_resize(uint32_t width, uint32_t height);
 
     /**
      * @brief processed_data[frame_index] as a normalised float span.
@@ -325,7 +331,7 @@ private:
     uint32_t m_frame_capacity { 1 };
     std::atomic<uint64_t> m_frames_written { 0 };
 
-    void setup_dimensions();
+    void setup_dimensions(uint32_t width, uint32_t height);
 
     [[nodiscard]] std::optional<PixelSnapshot> snapshot_pixels(
         std::optional<uint32_t> frame_index = std::nullopt) const;

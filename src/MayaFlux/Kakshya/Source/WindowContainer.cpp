@@ -66,7 +66,8 @@ WindowContainer::WindowContainer(std::shared_ptr<Core::Window> window,
     }
 
     m_processing_chain = std::make_shared<DataProcessingChain>();
-    setup_dimensions();
+    const auto& state = m_window->get_state();
+    setup_dimensions(state.current_width, state.current_height);
     m_frame_images.resize(m_frame_capacity);
 
     MF_INFO(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
@@ -84,11 +85,8 @@ ImageFormat WindowContainer::get_image_format() const
 // Setup
 // =========================================================================
 
-void WindowContainer::setup_dimensions()
+void WindowContainer::setup_dimensions(uint32_t w, uint32_t h)
 {
-    const auto& state = m_window->get_state();
-    const uint32_t w = state.current_width;
-    const uint32_t h = state.current_height;
     const uint32_t c = m_window->get_create_info().container_format.color_channels;
     const size_t sz = static_cast<size_t>(w) * h * c;
 
@@ -386,12 +384,12 @@ bool WindowContainer::is_region_loaded(const Region& /*region*/) const
     return true;
 }
 
-void WindowContainer::handle_surface_resize()
+void WindowContainer::handle_surface_resize(uint32_t width, uint32_t height)
 {
     Memory::SeqlockWriteGuard g(m_data_lock);
     m_write_head.store(0, std::memory_order_release);
     m_frames_written.store(0, std::memory_order_release);
-    setup_dimensions();
+    setup_dimensions(width, height);
 }
 
 std::span<const float> WindowContainer::processed_frame_as_float(uint32_t frame_index) const
