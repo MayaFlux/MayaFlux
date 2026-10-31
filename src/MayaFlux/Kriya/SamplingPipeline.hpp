@@ -282,8 +282,6 @@ private:
     std::shared_ptr<BufferPipeline> m_pipeline;
     CaptureBuilder m_capture;
     bool m_built { false };
-
-    [[nodiscard]] bool any_active() const;
 };
 
 } // namespace MayaFlux::Kriya

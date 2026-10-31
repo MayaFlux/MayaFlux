@@ -30,16 +30,12 @@ SamplingPipeline::SamplingPipeline(
     m_capture.on_capture_processing().for_cycles(1);
 
     m_pipeline = BufferPipeline::create(m_scheduler);
-    m_processor->set_on_end([this](size_t) {
-        if (!any_active())
-            m_pipeline->stop_continuous();
-    });
 }
 
 SamplingPipeline::~SamplingPipeline()
 {
     if (m_built) {
-        m_pipeline->stop_continuous();
+        m_pipeline->end();
         m_mgr.remove_supplied_buffer(m_buffer,
             Buffers::ProcessingToken::AUDIO_BACKEND, m_channel);
     }
@@ -185,11 +181,6 @@ void SamplingPipeline::stop(size_t index)
 Kakshya::StreamSlice& SamplingPipeline::slice(size_t index)
 {
     return m_processor->slice(index);
-}
-
-bool SamplingPipeline::any_active() const
-{
-    return m_processor->any_active();
 }
 
 } // namespace MayaFlux::Kriya
