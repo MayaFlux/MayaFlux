@@ -37,25 +37,8 @@ public:
      */
     Event(std::coroutine_handle<promise_type> h);
 
-    /**
-     * @brief Copy constructor
-     * @param other Event to copy
-     *
-     * Creates a new Event that shares ownership of the same
-     * underlying coroutine. This allows multiple schedulers or containers
-     * to reference the same task.
-     */
-    Event(const Event& other);
-
-    /**
-     * @brief Copy assignment operator
-     * @param other Event to copy
-     * @return Reference to this Event
-     *
-     * Assigns this Event to share ownership of the same
-     * underlying coroutine as the other Event.
-     */
-    Event& operator=(const Event& other);
+    Event(const Event& other) = delete;
+    Event& operator=(const Event& other) = delete;
 
     /**
      * @brief Move constructor
@@ -113,7 +96,7 @@ public:
      */
     [[nodiscard]] virtual bool get_should_terminate() const
     {
-        return m_handle.promise().should_terminate;
+        return m_handle ? m_handle.promise().should_terminate.load() : true;
     }
 
     /**
@@ -122,7 +105,8 @@ public:
      */
     virtual void set_should_terminate(bool should_terminate)
     {
-        m_handle.promise().set_should_terminate(should_terminate);
+        if (m_handle)
+            m_handle.promise().set_should_terminate(should_terminate);
     }
 
     /**

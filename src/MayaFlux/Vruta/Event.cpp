@@ -18,30 +18,6 @@ Event::Event(std::coroutine_handle<promise_type> h)
     }
 }
 
-Event::Event(const Event& other)
-    : m_handle(nullptr)
-{
-    if (other.m_handle) {
-        m_handle = other.m_handle;
-    }
-}
-
-Event& Event::operator=(const Event& other)
-{
-    if (this != &other) {
-        if (m_handle) {
-            m_handle.destroy();
-        }
-
-        if (other.m_handle) {
-            m_handle = other.m_handle;
-        } else {
-            m_handle = nullptr;
-        }
-    }
-    return *this;
-}
-
 Event::Event(Event&& other) noexcept
     : m_handle(std::exchange(other.m_handle, {}))
 {
