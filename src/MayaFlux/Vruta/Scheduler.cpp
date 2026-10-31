@@ -691,13 +691,7 @@ void TaskScheduler::process_buffer_cycle_tasks()
 
     for (auto& task : tasks) {
         if (task && task->is_active()) {
-            if (task->requires_clock_sync()) {
-                if (m_current_buffer_cycle >= task->next_execution()) {
-                    task->try_resume_with_context(m_current_buffer_cycle, DelayContext::BUFFER_BASED);
-                }
-            } else {
-                task->try_resume_with_context(m_current_buffer_cycle, DelayContext::BUFFER_BASED);
-            }
+            task->try_resume_with_context(m_current_buffer_cycle, DelayContext::BUFFER_BASED);
         }
     }
 }
