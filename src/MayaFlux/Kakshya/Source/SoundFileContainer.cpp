@@ -52,21 +52,26 @@ std::shared_ptr<SoundFileContainer> make_sound_file_container(
     uint32_t sample_rate,
     OrganizationStrategy org)
 {
-    if (channel_data.empty() || channel_data[0].size() == 0 || num_channels != channel_data.size()) {
+    if (channel_data.empty() || num_channels != channel_data.size()
+        || std::ranges::any_of(channel_data, [](const auto& ch) { return ch.empty(); })) {
         error<std::invalid_argument>(
             Journal::Component::Kakshya, Journal::Context::Configuration,
             std::source_location::current(),
             "build_sound_file_container: channel_data must be non-empty and match num_channels");
     }
 
-    auto sc = std::make_shared<SoundFileContainer>();
+    auto sc = std::make_shared<SoundFileContainer>(sample_rate, num_channels, 0);
     sc->setup(channel_data[0].size(), sample_rate, num_channels);
     sc->get_structure().organization = org;
 
     std::vector<DataVariant> variants;
-    variants.reserve(num_channels);
-    for (auto& ch : channel_data)
-        variants.emplace_back(std::move(ch));
+    if (org == OrganizationStrategy::INTERLEAVED) {
+        variants.emplace_back(interleave_channels(channel_data));
+    } else {
+        variants.reserve(num_channels);
+        for (auto& ch : channel_data)
+            variants.emplace_back(std::move(ch));
+    }
 
     sc->set_raw_data(variants);
     sc->create_default_processor();
