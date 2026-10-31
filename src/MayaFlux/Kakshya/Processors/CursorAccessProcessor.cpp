@@ -180,6 +180,7 @@ void CursorAccessProcessor::process_mapped(DynamicSoundStream& stream, std::vect
     bool exited = loop_end <= m_loop_start;
     double last_position = lo;
     uint64_t valid = 0;
+    size_t laps = 0;
     const double start_position = (m_cursor.empty() ? lo : static_cast<double>(m_cursor[0])) + m_speed_remainder;
 
     while (!exited && valid < block) {
@@ -207,6 +208,11 @@ void CursorAccessProcessor::process_mapped(DynamicSoundStream& stream, std::vect
             ? start_position + m_speed * span
             : (*m_time_map)(static_cast<double>(clock + frames - origin) / rate);
         last_position = p_b;
+
+        if (m_looping && m_loop_count > 0 && hi > lo) {
+            const double range = hi - lo;
+            laps += static_cast<size_t>(std::abs(std::floor((p_b - lo) / range) - std::floor((p_a - lo) / range)));
+        }
 
         for (; valid < stop; ++valid) {
             const double u = p_a + (p_b - p_a) * static_cast<double>(valid - begin) / span;
@@ -258,17 +264,12 @@ void CursorAccessProcessor::process_mapped(DynamicSoundStream& stream, std::vect
         }
     }
 
-    if (implicit && !exited) {
-        if (!m_looping && last_position >= hi) {
+    if (!exited) {
+        if (implicit && !m_looping && last_position >= hi) {
             exited = true;
-        } else if (m_looping && m_loop_count > 0 && hi > lo) {
-            const double range = hi - lo;
-            const auto laps = static_cast<size_t>(std::max(0.0,
-                std::floor((last_position - lo) / range) - std::floor((start_position - lo) / range)));
-            if (laps > 0) {
-                m_loops_remaining = laps >= m_loops_remaining ? 0 : m_loops_remaining - laps;
-                exited = m_loops_remaining == 0;
-            }
+        } else if (laps > 0) {
+            m_loops_remaining = laps >= m_loops_remaining ? 0 : m_loops_remaining - laps;
+            exited = m_loops_remaining == 0;
         }
     }
 

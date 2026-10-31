@@ -134,9 +134,11 @@ public:
      *
      * The map takes seconds since the last reset() and returns a source
      * position in frames, read with linear interpolation. Reverse, scrubbing
-     * and a fixed position are all valid. Speed and loop count are ignored
-     * while a map is set. Positions outside the loop region wrap if looping,
-     * otherwise the voice ends. A different map restarts its clock at zero.
+     * and a fixed position are all valid. Speed is ignored while a map is
+     * set. Positions outside the loop region wrap if looping, otherwise the
+     * voice ends. Each crossing of a region edge, in either direction, counts
+     * as one pass toward the loop count. A different map restarts its clock at
+     * zero.
      *
      * @param map Time map, or null to go back to reading at the speed.
      */

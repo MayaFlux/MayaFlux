@@ -33,6 +33,11 @@ namespace MayaFlux::Kakshya {
  * a function of seconds since the voice was bound (see Kinesis::TimeMaps).
  * Like the other fields it can be changed while the voice plays.
  *
+ * loop_count ends a looping voice after that many passes over the region. With
+ * a time_map, each crossing of a region edge counts as a pass, whichever way
+ * the map is moving, so a map that stays inside the region never ends. Zero
+ * loops forever.
+ *
  * source_channel picks which channel of the stream is played. Unset, the voice
  * plays the stream channel with the same number as its output channel.
  *
