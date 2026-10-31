@@ -412,12 +412,13 @@ public:
 
     [[nodiscard]] bool get_should_terminate() const override
     {
-        return m_handle.promise().should_terminate;
+        return m_handle ? m_handle.promise().should_terminate.load() : true;
     }
 
     void set_should_terminate(bool should_terminate) override
     {
-        m_handle.promise().set_should_terminate(should_terminate);
+        if (m_handle)
+            m_handle.promise().set_should_terminate(should_terminate);
     }
 
     void on_complete(std::function<void()> callback) override
@@ -598,12 +599,13 @@ public:
 
     [[nodiscard]] bool get_should_terminate() const override
     {
-        return m_handle.promise().should_terminate;
+        return m_handle ? m_handle.promise().should_terminate.load() : true;
     }
 
     void set_should_terminate(bool should_terminate) override
     {
-        m_handle.promise().set_should_terminate(should_terminate);
+        if (m_handle)
+            m_handle.promise().set_should_terminate(should_terminate);
     }
 
     void on_complete(std::function<void()> callback) override
@@ -668,8 +670,8 @@ public:
 
     CrossRoutine(std::coroutine_handle<promise_type> h);
 
-    CrossRoutine(const CrossRoutine& other);
-    CrossRoutine& operator=(const CrossRoutine& other);
+    CrossRoutine(const CrossRoutine& other) = delete;
+    CrossRoutine& operator=(const CrossRoutine& other) = delete;
     CrossRoutine(CrossRoutine&& other) noexcept;
     CrossRoutine& operator=(CrossRoutine&& other) noexcept;
     ~CrossRoutine() override;
@@ -706,12 +708,13 @@ public:
 
     [[nodiscard]] bool get_should_terminate() const override
     {
-        return m_handle.promise().should_terminate;
+        return m_handle ? m_handle.promise().should_terminate.load() : true;
     }
 
     void set_should_terminate(bool should_terminate) override
     {
-        m_handle.promise().set_should_terminate(should_terminate);
+        if (m_handle)
+            m_handle.promise().set_should_terminate(should_terminate);
     }
 
     void on_complete(std::function<void()> callback) override
