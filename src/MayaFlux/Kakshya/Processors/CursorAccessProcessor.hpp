@@ -117,15 +117,15 @@ public:
     void set_on_end(std::function<void()> cb) { m_on_end = std::move(cb); }
 
     /**
-     * @brief Set the playback speed relative to nominal rate.
+     * @brief Set the playback rate relative to nominal.
      *
-     * Speed is applied as a fractional frame accumulator: each process() call
-     * advances the cursor by m_frames_per_block * m_speed frames, with the
-     * sub-frame remainder carried in m_speed_remainder for the next call.
-     * Speed 1.0 is the default (no accumulator overhead). Values <= 0.0 are
-     * ignored.
+     * Any speed other than 1.0 reads the loop region at that rate with linear
+     * interpolation, so it also changes pitch: 2.0 is twice as fast and an
+     * octave up. The position carries on from wherever the cursor is, so a
+     * change while playing never jumps. Speed 1.0, the default, reads frames
+     * as stored. Values <= 0.0 are ignored; use a time map to reverse.
      *
-     * @param speed Playback speed multiplier (1.0 = normal).
+     * @param speed Playback rate multiplier (1.0 = normal).
      */
     void set_speed(double speed);
 
@@ -138,7 +138,7 @@ public:
      * while a map is set. Positions outside the loop region wrap if looping,
      * otherwise the voice ends. A different map restarts its clock at zero.
      *
-     * @param map Time map, or null to go back to speed based reading.
+     * @param map Time map, or null to go back to reading at the speed.
      */
     void set_time_map(const std::shared_ptr<const Kinesis::TimeMap>& map);
 

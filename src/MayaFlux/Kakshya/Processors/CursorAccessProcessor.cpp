@@ -81,7 +81,7 @@ void CursorAccessProcessor::process(const std::shared_ptr<SignalSourceContainer>
         return;
     }
 
-    if (m_time_map && m_time_map->fn) {
+    if ((m_time_map && m_time_map->fn) || m_speed != 1.0) {
         process_mapped(*stream, pd);
         m_is_processing.store(false, std::memory_order_relaxed);
         return;
@@ -175,10 +175,12 @@ void CursorAccessProcessor::process_mapped(DynamicSoundStream& stream, std::vect
     m_gather_frames.resize(2 * block);
     m_gather_weights.resize(block);
 
-    const bool repeating = m_repeat && m_repeat->fn;
+    const bool implicit = !(m_time_map && m_time_map->fn);
+    const bool repeating = !implicit && m_repeat && m_repeat->fn;
     bool exited = loop_end <= m_loop_start;
     double last_position = lo;
     uint64_t valid = 0;
+    const double start_position = (m_cursor.empty() ? lo : static_cast<double>(m_cursor[0])) + m_speed_remainder;
 
     while (!exited && valid < block) {
         const uint64_t clock = m_clock_frames + valid;
@@ -198,8 +200,12 @@ void CursorAccessProcessor::process_mapped(DynamicSoundStream& stream, std::vect
         const uint64_t begin = valid;
         const uint64_t frames = stop - begin;
         const auto span = static_cast<double>(frames);
-        const double p_a = (*m_time_map)(static_cast<double>(clock - origin) / rate);
-        const double p_b = (*m_time_map)(static_cast<double>(clock + frames - origin) / rate);
+        const double p_a = implicit
+            ? start_position
+            : (*m_time_map)(static_cast<double>(clock - origin) / rate);
+        const double p_b = implicit
+            ? start_position + m_speed * span
+            : (*m_time_map)(static_cast<double>(clock + frames - origin) / rate);
         last_position = p_b;
 
         for (; valid < stop; ++valid) {
@@ -252,10 +258,25 @@ void CursorAccessProcessor::process_mapped(DynamicSoundStream& stream, std::vect
         }
     }
 
+    if (implicit && !exited) {
+        if (!m_looping && last_position >= hi) {
+            exited = true;
+        } else if (m_looping && m_loop_count > 0 && hi > lo) {
+            const double range = hi - lo;
+            const auto laps = static_cast<size_t>(std::max(0.0,
+                std::floor((last_position - lo) / range) - std::floor((start_position - lo) / range)));
+            if (laps > 0) {
+                m_loops_remaining = laps >= m_loops_remaining ? 0 : m_loops_remaining - laps;
+                exited = m_loops_remaining == 0;
+            }
+        }
+    }
+
     m_clock_frames += block;
 
     if (exited) {
         m_active = false;
+        m_speed_remainder = 0.0;
         m_clock_frames = 0;
         m_cursor.assign(m_cursor.size(), m_loop_start);
         if (m_on_end)
@@ -263,8 +284,9 @@ void CursorAccessProcessor::process_mapped(DynamicSoundStream& stream, std::vect
         return;
     }
 
-    const double end = m_looping ? Kinesis::wrap<double>(last_position, lo, hi) : std::clamp(last_position, lo, hi - 1.0);
-    m_cursor.assign(m_cursor.size(), static_cast<uint64_t>(std::max(end, lo)));
+    const double end = std::max(m_looping ? Kinesis::wrap<double>(last_position, lo, hi) : std::clamp(last_position, lo, hi - 1.0), lo);
+    m_cursor.assign(m_cursor.size(), static_cast<uint64_t>(end));
+    m_speed_remainder = end - std::floor(end);
 }
 
 void CursorAccessProcessor::set_time_map(const std::shared_ptr<const Kinesis::TimeMap>& map)
@@ -292,6 +314,7 @@ void CursorAccessProcessor::reset()
 {
     m_cursor.assign(m_cursor.size(), m_loop_start);
     m_loops_remaining = m_loop_count;
+    m_speed_remainder = 0.0;
     m_clock_frames = 0;
     m_repeat_start = 0;
     m_repeat_length = 0;

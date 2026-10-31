@@ -24,8 +24,9 @@ namespace MayaFlux::Kakshya {
  * (non-linear navigation, selection patterns, transitions) or any future
  * region-aware processor against a DynamicSoundStream.
  *
- * speed and scale are playback parameters applied by the driving processor.
- * cursor_remainder accumulates sub-frame advancement for speed != 1.0.
+ * speed is a playback rate: 2.0 plays twice as fast and an octave up, read with
+ * linear interpolation, and it can change while the voice plays. scale is a
+ * static gain. Both are applied by the driving processor.
  * looping and index are playback state and identity carried with the slice.
  *
  * time_map, when set, replaces speed: it gives the read position in frames as
