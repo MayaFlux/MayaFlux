@@ -19,6 +19,8 @@ Vruta::Event on_message(
         }
 
         auto msg = co_await source->next_message();
+        if (promise.should_terminate)
+            break;
         callback(msg);
     }
 }
@@ -36,6 +38,8 @@ Vruta::Event on_message_from(
         }
 
         auto msg = co_await source->next_message();
+        if (promise.should_terminate)
+            break;
 
         if (msg.sender_address == sender_address) {
             callback(msg);
@@ -56,6 +60,8 @@ Vruta::Event on_message_matching(
         }
 
         auto msg = co_await source->next_message();
+        if (promise.should_terminate)
+            break;
 
         if (predicate(msg)) {
             callback(msg);

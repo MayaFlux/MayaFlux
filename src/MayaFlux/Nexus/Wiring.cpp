@@ -279,7 +279,9 @@ namespace {
             if (promise.should_terminate)
                 break;
             auto event = co_await Kriya::WindowEventAwaiter(source, filter);
-            if (auto* sd = std::get_if<Core::WindowEvent::ScrollData>(&event.data))
+            if (promise.should_terminate)
+                break;
+            if (auto* sd =std::get_if<Core::WindowEvent::ScrollData>(&event.data))
                 fn(sd->x_offset, sd->y_offset);
         }
     }
@@ -650,7 +652,9 @@ Vruta::Event Wiring::window_event_source_loop(
         if (promise.should_terminate)
             break;
         auto event = co_await Kriya::WindowEventAwaiter(source, filter);
-        if (auto* pos = std::get_if<Core::WindowEvent::MousePosData>(&event.data))
+        if (promise.should_terminate)
+            break;
+        if (auto* pos =std::get_if<Core::WindowEvent::MousePosData>(&event.data))
             fabric.m_registrations[id].pending_cursor = glm::vec2(pos->x, pos->y);
         fire();
     }
