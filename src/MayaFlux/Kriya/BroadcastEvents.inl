@@ -21,6 +21,8 @@ Vruta::Event on_signal(
             break;
 
         auto val = co_await source->next();
+        if (promise.should_terminate)
+            break;
         callback(val);
     }
 }
@@ -38,6 +40,8 @@ Vruta::Event on_signal_matching(
             break;
 
         auto val = co_await source->next();
+        if (promise.should_terminate)
+            break;
         if (predicate(val))
             callback(val);
     }
