@@ -10,6 +10,7 @@
 #include "MayaFlux/Buffers/Staging/DataWriteProcessor.hpp"
 #include "MayaFlux/IO/IOManager.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
+#include "MayaFlux/Kakshya/Source/DynamicSoundStream.hpp"
 #include "MayaFlux/Kakshya/Source/DynamicVideoStream.hpp"
 
 namespace MayaFlux::Kriya {
@@ -18,15 +19,17 @@ namespace {
 
     std::optional<Kakshya::DataVariant> select_operation_data(
         const std::unordered_map<BufferOperation*, Kakshya::DataVariant>& operation_data,
-        BufferOperation& op,
+        std::vector<BufferOperation>& operations,
+        const BufferOperation& op,
         bool graphics_read_pending)
     {
-        if (const auto own = operation_data.find(&op); own != operation_data.end()) {
-            return own->second;
-        }
+        const auto self = std::ranges::find_if(operations,
+            [&op](const BufferOperation& candidate) { return &candidate == &op; });
 
-        if (!operation_data.empty()) {
-            return operation_data.begin()->second;
+        for (auto upstream = std::make_reverse_iterator(self); upstream != operations.rend(); ++upstream) {
+            if (const auto found = operation_data.find(&*upstream); found != operation_data.end()) {
+                return found->second;
+            }
         }
 
         if (graphics_read_pending) {
@@ -97,7 +100,7 @@ void BufferPipeline::process_operation(BufferOperation& op, uint64_t cycle)
 
 void BufferPipeline::process_transform(BufferOperation& op, uint64_t cycle)
 {
-    auto selected = select_operation_data(m_operation_data, op, !m_readers.empty());
+    auto selected = select_operation_data(m_operation_data, m_operations, op, !m_readers.empty());
     if (!selected) {
         return;
     }
@@ -164,7 +167,31 @@ void BufferPipeline::process_route(BufferOperation& op)
         return;
     }
 
-    const auto selected = select_operation_data(m_operation_data, op, !m_readers.empty());
+    if (op.m_source_audio_stream && op.m_target_audio_stream) {
+        const auto& source = op.m_source_audio_stream;
+        const auto& target = op.m_target_audio_stream;
+        const uint64_t requested = static_cast<uint64_t>(op.m_load_length) * Buffers::s_preferred_buffer_size;
+
+        const auto block = detail::read_from_container(source, op.m_start_frame, static_cast<uint32_t>(requested));
+        const auto& interleaved = std::get<std::vector<double>>(block);
+
+        const uint32_t source_channels = source->get_num_channels();
+        const uint32_t channels = std::min(source_channels, target->get_num_channels());
+        const uint64_t frames = interleaved.size() / source_channels;
+
+        std::vector<double> lane(frames);
+        for (uint32_t c = 0; c < channels; ++c) {
+            for (uint64_t f = 0; f < frames; ++f) {
+                lane[f] = interleaved[f * source_channels + c];
+            }
+            target->append_frames(lane, c);
+        }
+
+        op.m_start_frame += frames;
+        return;
+    }
+
+    const auto selected = select_operation_data(m_operation_data, m_operations, op, !m_readers.empty());
     if (!selected) {
         return;
     }
@@ -265,7 +292,7 @@ void BufferPipeline::process_fuse(BufferOperation& op, uint64_t cycle)
 
 void BufferPipeline::process_dispatch(BufferOperation& op, uint64_t cycle)
 {
-    auto selected = select_operation_data(m_operation_data, op, !m_readers.empty());
+    auto selected = select_operation_data(m_operation_data, m_operations, op, !m_readers.empty());
     if (!selected) {
         return;
     }

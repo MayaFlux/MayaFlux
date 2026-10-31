@@ -70,23 +70,22 @@ void write_to_container(const std::shared_ptr<Kakshya::DynamicSoundStream>& cont
 }
 
 Kakshya::DataVariant read_from_container(const std::shared_ptr<Kakshya::DynamicSoundStream>& container,
-    uint64_t,
+    uint64_t start,
     uint32_t length)
 {
     try {
-        uint32_t read_length = length;
-        if (read_length == 0) {
-            read_length = static_cast<uint32_t>(container->get_total_elements() / container->get_num_channels());
+        const uint64_t total = container->get_num_frames();
+        if (start >= total) {
+            return std::vector<double> {};
         }
 
-        std::vector<double> output_data(static_cast<size_t>(read_length * container->get_num_channels()));
-        std::span<double> output_span(output_data.data(), output_data.size());
+        const uint64_t count = length == 0 ? total - start : std::min<uint64_t>(length, total - start);
 
-        uint64_t frames_read = container->read_frames(output_span, read_length);
+        std::vector<uint64_t> frames(count);
+        std::iota(frames.begin(), frames.end(), start);
 
-        if (frames_read < output_data.size()) {
-            output_data.resize(frames_read);
-        }
+        std::vector<double> output_data(static_cast<size_t>(count * container->get_num_channels()));
+        container->gather_frames(frames, output_data);
 
         return output_data;
 

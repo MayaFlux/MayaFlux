@@ -5,7 +5,9 @@
 #include "MayaFlux/Buffers/Container/VideoContainerBuffer.hpp"
 #include "MayaFlux/Buffers/Textures/TextureArrayBuffer.hpp"
 #include "MayaFlux/Kakshya/Source/CameraContainer.hpp"
+#include "MayaFlux/Kakshya/Source/DynamicSoundStream.hpp"
 #include "MayaFlux/Kakshya/Source/DynamicVideoStream.hpp"
+#include "MayaFlux/Kakshya/Source/SoundFileContainer.hpp"
 #include "MayaFlux/Kakshya/Source/VideoFileContainer.hpp"
 #include "MayaFlux/Kriya/PipelineHelpers/PipelineGraphicsData.hpp"
 #include "MayaFlux/Vruta/ChronUtils.hpp"
@@ -139,7 +141,7 @@ BufferOperation BufferOperation::capture_file(
 
     BufferCapture capture(file_buffer,
         cycle_count > 0 ? BufferCapture::CaptureMode::ACCUMULATE : BufferCapture::CaptureMode::TRANSIENT,
-        cycle_count);
+        std::max(cycle_count, 1U));
 
     capture.set_processing_control(BufferCapture::ProcessingControl::ON_CAPTURE);
 
@@ -229,11 +231,20 @@ BufferOperation BufferOperation::file_to_stream(
             "Failed to load audio file: {}", filepath);
     }
 
-    auto temp_buffer = std::make_shared<Buffers::SoundFileBridge>(0, file_container);
-    temp_buffer->setup_processors(Buffers::ProcessingToken::AUDIO_BACKEND);
+    const uint32_t channels = file_container->get_num_channels();
+    const uint64_t frames = file_container->get_num_frames();
+
+    std::vector<uint64_t> indices(frames);
+    std::iota(indices.begin(), indices.end(), uint64_t { 0 });
+    std::vector<double> interleaved(frames * channels);
+    file_container->gather_frames(indices, interleaved);
+
+    auto source = std::make_shared<Kakshya::DynamicSoundStream>(file_container->get_sample_rate(), channels);
+    source->get_structure().organization = Kakshya::OrganizationStrategy::INTERLEAVED;
+    source->write_frames(std::vector<std::span<const double>> { std::span<const double>(interleaved) }, 0);
 
     BufferOperation op(OpType::ROUTE, Buffers::ProcessingToken::AUDIO_BACKEND);
-    op.m_source_audio_stream = temp_buffer->get_capture_stream();
+    op.m_source_audio_stream = std::move(source);
     op.m_target_audio_stream = std::move(target_stream);
     op.m_load_length = cycle_count;
     return op;
