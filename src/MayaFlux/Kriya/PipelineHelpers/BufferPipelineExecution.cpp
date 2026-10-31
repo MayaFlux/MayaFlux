@@ -200,6 +200,7 @@ Vruta::SoundRoutine BufferPipeline::execute_streaming(uint64_t max_cycles, uint6
         }
 
         start_cycle();
+        std::ranges::fill(m_data_states, DataState::EMPTY);
 
         for (size_t i = 0; i < m_operations.size(); ++i) {
             auto& op = m_operations[i];
@@ -208,7 +209,7 @@ Vruta::SoundRoutine BufferPipeline::execute_streaming(uint64_t max_cycles, uint6
                 continue;
             }
 
-            if (m_data_states[i] == DataState::CONSUMED) {
+            if (m_data_states[i] == DataState::CONSUMED || m_data_states[i] == DataState::READY) {
                 continue;
             }
 
