@@ -17,6 +17,10 @@ namespace MayaFlux::Kakshya {
  * region.start_coordinates[0] / end_coordinates[0] are the frame bounds;
  * region.start_coordinates[1] / end_coordinates[1] are the channel bounds.
  *
+ * The stream length is read when the slice is loaded. Use a ring or a stream
+ * that is fully written; frames appended to a growing stream afterwards are not
+ * played until the slice is loaded again.
+ *
  * The slice does not own a processor. The region is the contract; whatever
  * drives this slice resolves the appropriate processor at activation time.
  * Currently that is CursorAccessProcessor for sequential bounded reads, but

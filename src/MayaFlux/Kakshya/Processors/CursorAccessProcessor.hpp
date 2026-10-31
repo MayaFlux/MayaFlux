@@ -30,7 +30,10 @@ class DynamicSoundStream;
  * For default single-cursor sequential reads driven by the container's own
  * processing state, use ContiguousAccessProcessor instead.
  *
- * The stream is treated as immutable memory after load. Block size is fixed at
+ * The stream is treated as immutable memory after load. Its length is read once
+ * at attach, so frames added to a growing stream afterwards are not played; a
+ * ring, whose capacity is fixed, is fine, and loading the slice again picks up a
+ * new length. Block size is fixed at
  * construction or via set_frames_per_block(). When inactive, process() writes
  * silence without advancing the cursor. Activation and cursor reset are explicit
  * via reset(), keeping trigger logic decoupled from the processor.
