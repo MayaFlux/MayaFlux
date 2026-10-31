@@ -72,6 +72,11 @@ void BufferProcessingControl::remove_processor(
             remove_audio_processor(processor, audio_buffer);
         }
     } else if (token == ProcessingToken::GRAPHICS_BACKEND) {
+        if (buffer) {
+            if (const auto chain = buffer->get_processing_chain()) {
+                chain->remove_processor(processor, buffer);
+            }
+        }
         remove_graphics_processor(processor, token);
     }
 }
