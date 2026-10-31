@@ -97,6 +97,12 @@ private:
     uint32_t m_reader_id {};
 
     uint64_t m_consumption_offset {}; // Track position within current production
+    uint64_t m_last_position {};
+
+    /**
+     * @brief Remember the container's current read position for the source channel.
+     */
+    void sync_position();
 
     // Cache for efficiency
     mutable std::vector<double> m_temp_buffer;
