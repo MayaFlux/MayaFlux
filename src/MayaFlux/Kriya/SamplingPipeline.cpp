@@ -161,6 +161,17 @@ void SamplingPipeline::play_continuous(size_t index, Kakshya::StreamSlice slice)
     m_processor->bind(index);
 }
 
+void SamplingPipeline::trigger(size_t index, uint32_t offset)
+{
+    if (index >= m_processor->slot_count()) {
+        MF_RT_ERROR(Journal::Component::Kriya, Journal::Context::Configuration,
+            "SamplingPipeline::trigger index {} exceeds slot count {}", index, m_processor->slot_count());
+        return;
+    }
+
+    m_processor->bind(index, offset);
+}
+
 void SamplingPipeline::stop(size_t index)
 {
     if (index >= m_processor->slot_count()) {

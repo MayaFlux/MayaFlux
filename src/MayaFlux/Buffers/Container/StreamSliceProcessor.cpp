@@ -93,13 +93,15 @@ void StreamSliceProcessor::load(size_t index, Kakshya::StreamSlice slice)
     m_slots[index].proc = std::move(proc);
 }
 
-void StreamSliceProcessor::bind(size_t index)
+void StreamSliceProcessor::bind(size_t index, uint32_t offset)
 {
     if (index >= m_slots.size() || !m_slots[index].proc)
         return;
 
     apply_slice(m_slots[index].slice, *m_slots[index].proc);
     m_slots[index].proc->reset();
+    m_slots[index].played = 0;
+    m_slots[index].offset = offset;
     m_slots[index].slice.active = true;
 }
 
@@ -133,20 +135,47 @@ void StreamSliceProcessor::processing_function(const std::shared_ptr<Buffer>& bu
         if (!slot.slice.active || !slot.slice.stream || !slot.proc)
             continue;
 
+        if (slot.offset >= dst.size()) {
+            slot.offset -= static_cast<uint32_t>(dst.size());
+            continue;
+        }
+
+        const size_t offset = slot.offset;
+        const size_t frames = dst.size() - offset;
+
+        if (offset > 0)
+            slot.proc->set_frames_per_block(frames);
+
         apply_slice(slot.slice, *slot.proc);
         slot.proc->process(slot.slice.stream);
+
+        if (offset > 0) {
+            slot.proc->set_frames_per_block(m_frames_per_block);
+            slot.offset = 0;
+        }
+
+        const uint64_t first = slot.played;
+        slot.played += frames;
 
         const auto& pd = slot.slice.stream->get_dynamic_data(slot.proc->get_slot_index());
         if (pd.empty())
             continue;
 
         const auto structure = slot.slice.stream->get_structure();
-        std::vector<double> tmp(dst.size(), 0.0);
+        std::vector<double> tmp(frames, 0.0);
         Kakshya::extract_processed_data(pd, structure.organization, structure.get_channel_count(),
             slot.slice.source_channel.value_or(ch), tmp);
 
-        for (size_t s = 0; s < dst.size(); ++s)
-            dst[s] += tmp[s] * slot.slice.scale;
+        const auto& envelope = slot.slice.envelope;
+        if (envelope && envelope->fn) {
+            const auto rate = static_cast<double>(slot.slice.stream->get_sample_rate());
+            for (size_t s = 0; s < frames; ++s)
+                dst[offset + s] += tmp[s] * slot.slice.scale * (*envelope)(static_cast<double>(first + s) / rate);
+            continue;
+        }
+
+        for (size_t s = 0; s < frames; ++s)
+            dst[offset + s] += tmp[s] * slot.slice.scale;
     }
 }
 

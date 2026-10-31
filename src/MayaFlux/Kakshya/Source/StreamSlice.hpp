@@ -38,6 +38,11 @@ namespace MayaFlux::Kakshya {
  * repeat, with a time_map, restarts the map over and over. Its value is how
  * many seconds each repeat lasts, read when the repeat begins, so a length that
  * shrinks over time gives a stutter or bouncing repeat.
+ *
+ * envelope is a gain applied to each output sample, on top of scale. It maps
+ * seconds since the voice was bound to a gain, so a grain shape is a window
+ * function over its duration. It acts on the output, so speed and time_map do
+ * not stretch it. Unset means no envelope.
  */
 struct StreamSlice {
     std::shared_ptr<DynamicSoundStream> stream;
@@ -53,6 +58,7 @@ struct StreamSlice {
     std::shared_ptr<const Kinesis::TimeMap> time_map;
     std::optional<uint32_t> source_channel;
     std::shared_ptr<const Kinesis::TimeMap> repeat;
+    std::shared_ptr<const Kinesis::TimeMap> envelope;
 
     /**
      * @brief Construct a slice spanning the full stream across all channels.
@@ -167,6 +173,12 @@ struct StreamSlice {
     StreamSlice& with_repeat(Kinesis::TimeMap length)
     {
         repeat = std::make_shared<const Kinesis::TimeMap>(std::move(length));
+        return *this;
+    }
+
+    StreamSlice& with_envelope(Kinesis::TimeMap gain)
+    {
+        envelope = std::make_shared<const Kinesis::TimeMap>(std::move(gain));
         return *this;
     }
 };
