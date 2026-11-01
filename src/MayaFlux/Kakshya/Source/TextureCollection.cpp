@@ -1,36 +1,16 @@
 #include "TextureCollection.hpp"
 
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
+#include "MayaFlux/Portal/Graphics/SamplerForge.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Kakshya {
 
 using Portal::Graphics::FilterMode;
+using Portal::Graphics::FitMode;
+using Portal::Graphics::SamplerForge;
 using Portal::Graphics::TextureLoom;
-
-namespace {
-
-    /**
-     * @brief The largest rectangle of the source's aspect ratio that fits
-     *        centred in a @p dst_w x @p dst_h image.
-     */
-    vk::Rect2D fitted(uint32_t src_w, uint32_t src_h, uint32_t dst_w, uint32_t dst_h)
-    {
-        const double scale = std::min(
-            static_cast<double>(dst_w) / static_cast<double>(src_w),
-            static_cast<double>(dst_h) / static_cast<double>(src_h));
-
-        const auto w = std::clamp(static_cast<uint32_t>(std::lround(src_w * scale)), 1U, dst_w);
-        const auto h = std::clamp(static_cast<uint32_t>(std::lround(src_h * scale)), 1U, dst_h);
-
-        return {
-            vk::Offset2D { static_cast<int32_t>((dst_w - w) / 2), static_cast<int32_t>((dst_h - h) / 2) },
-            vk::Extent2D { w, h }
-        };
-    }
-
-} // namespace
 
 TextureCollection::TextureCollection(const TextureCollectionSpec& spec)
     : TextureContainer(spec.width, spec.height, spec.format, LayerCount {})
@@ -114,9 +94,17 @@ bool TextureCollection::copy_into(
     if (same_extent)
         return loom.blit_layer(image, target, { .filter = filter }, mode);
 
-    return loom.blit_layer(m_blank, target, { .filter = FilterMode::NEAREST }, mode)
-        && loom.blit_layer(image, target,
-            { .dst = fitted(image->get_width(), image->get_height(), get_width(), get_height()), .filter = filter }, mode);
+    if (!loom.blit_layer(m_blank, target, { .filter = FilterMode::NEAREST }, mode))
+        return false;
+
+    const auto plan = SamplerForge::plan_fit(
+        image->get_width(), image->get_height(), get_width(), get_height(),
+        FitMode::CONTAIN, filter);
+
+    bool stored = true;
+    for (const auto& blit : plan.blits)
+        stored = loom.blit_layer(image, target, blit, mode) && stored;
+    return stored;
 }
 
 } // namespace MayaFlux::Kakshya
