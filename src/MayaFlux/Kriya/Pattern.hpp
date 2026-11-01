@@ -182,7 +182,8 @@ std::shared_ptr<Vruta::Routine> pattern(
  * The first step runs at once. Every wait is rounded to the routine's own units and is never less
  * than one unit. A range ends the pattern after its last element and that step's wait; a recurring
  * range starts again, so its length and the durations drift apart. A throw from the values, the
- * durations or the callback is logged and ends the pattern.
+ * durations or the callback is logged and ends the pattern. The routine's `on_complete` fires when
+ * a range ends and also when the pattern is cancelled; register it before scheduling.
  *
  * - List: after step `i` the routine waits `durations[i % size]`. A single interval is a list of
  *   one: `pattern(gen, cb, { 0.125 })`.
