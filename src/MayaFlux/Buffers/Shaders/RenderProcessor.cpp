@@ -6,7 +6,7 @@
 #include "MayaFlux/Core/Backends/Windowing/Window.hpp"
 
 #include "MayaFlux/Portal/Graphics/ShaderFoundry.hpp"
-#include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
+#include "MayaFlux/Portal/Graphics/SamplerForge.hpp"
 #include "MayaFlux/Registry/BackendRegistry.hpp"
 #include "MayaFlux/Registry/Service/DisplayService.hpp"
 
@@ -198,8 +198,8 @@ void RenderProcessor::bind_texture(
     }
 
     if (!sampler) {
-        auto& loom = Portal::Graphics::get_texture_manager();
-        sampler = loom.get_default_sampler();
+        sampler = Portal::Graphics::SamplerForge::instance().get_or_create(
+            { .enable_mipmaps = true, .border_color = Portal::Graphics::BorderColor::OPAQUE_BLACK });
     }
 
     m_texture_bindings[binding] = { .texture = texture, .sampler = sampler };

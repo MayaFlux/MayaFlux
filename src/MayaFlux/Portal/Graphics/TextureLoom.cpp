@@ -79,7 +79,6 @@ void TextureLoom::shutdown()
         }
     }
     m_textures.clear();
-    m_sampler_cache.clear();
     m_resource_manager = nullptr;
     m_backend = nullptr;
 
@@ -789,66 +788,6 @@ bool TextureLoom::blit_layer(
     };
 
     return m_resource_manager->blit_image(src, dst, region, to_blit_filter(blit.filter), deferred);
-}
-
-//==============================================================================
-// Sampler Management
-//==============================================================================
-
-vk::Sampler TextureLoom::get_or_create_sampler(const SamplerConfig& config)
-{
-    if (!is_initialized()) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
-            "TextureLoom not initialized");
-        return nullptr;
-    }
-
-    size_t hash = hash_sampler_config(config);
-    auto it = m_sampler_cache.find(hash);
-    if (it != m_sampler_cache.end()) {
-        return it->second;
-    }
-
-    vk::Sampler sampler = create_sampler(config);
-    m_sampler_cache[hash] = sampler;
-    return sampler;
-}
-
-vk::Sampler TextureLoom::get_default_sampler()
-{
-    SamplerConfig config;
-    return get_or_create_sampler(config);
-}
-
-vk::Sampler TextureLoom::get_nearest_sampler()
-{
-    SamplerConfig config;
-    config.mag_filter = FilterMode::NEAREST;
-    config.min_filter = FilterMode::NEAREST;
-    config.address_mode_u = AddressMode::CLAMP_TO_EDGE;
-    config.address_mode_v = AddressMode::CLAMP_TO_EDGE;
-    return get_or_create_sampler(config);
-}
-
-vk::Sampler TextureLoom::create_sampler(const SamplerConfig& config)
-{
-    return m_resource_manager->create_sampler(
-        static_cast<vk::Filter>(config.mag_filter),
-        static_cast<vk::SamplerAddressMode>(config.address_mode_u),
-        config.max_anisotropy);
-}
-
-size_t TextureLoom::hash_sampler_config(const SamplerConfig& config)
-{
-    size_t hash = 0;
-    hash ^= std::hash<int> {}(static_cast<int>(config.mag_filter)) << 0;
-    hash ^= std::hash<int> {}(static_cast<int>(config.min_filter)) << 4;
-    hash ^= std::hash<int> {}(static_cast<int>(config.address_mode_u)) << 8;
-    hash ^= std::hash<int> {}(static_cast<int>(config.address_mode_v)) << 12;
-    hash ^= std::hash<int> {}(static_cast<int>(config.address_mode_w)) << 16;
-    hash ^= std::hash<float> {}(config.max_anisotropy) << 20;
-    hash ^= std::hash<bool> {}(config.enable_mipmaps) << 24;
-    return hash;
 }
 
 //==============================================================================

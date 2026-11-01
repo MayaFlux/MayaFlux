@@ -96,11 +96,6 @@ struct LayerBlit {
  *
  *   // Create render target
  *   auto target = mgr.create_render_target(1920, 1080);
- *
- *   // Get sampler
- *   SamplerConfig config;
- *   config.mag_filter = FilterMode::LINEAR;
- *   auto sampler = mgr.get_or_create_sampler(config);
  */
 class MAYAFLUX_API TextureLoom {
 public:
@@ -433,30 +428,6 @@ public:
         FilterMode filter = FilterMode::LINEAR) const;
 
     //==========================================================================
-    // Sampler Management
-    //==========================================================================
-
-    /**
-     * @brief Get or create a sampler with the given configuration
-     * @param config Sampler configuration
-     * @return Vulkan sampler handle (cached)
-     *
-     * Samplers are cached - identical configs return same sampler.
-     * Managed by TextureLoom, destroyed on shutdown.
-     */
-    vk::Sampler get_or_create_sampler(const SamplerConfig& config);
-
-    /**
-     * @brief Get a default linear sampler (for convenience)
-     */
-    vk::Sampler get_default_sampler();
-
-    /**
-     * @brief Get a default nearest sampler (for pixel-perfect sampling)
-     */
-    vk::Sampler get_nearest_sampler();
-
-    //==========================================================================
     // Utilities
     //==========================================================================
 
@@ -535,15 +506,6 @@ private:
 
     // Managed textures (for cleanup)
     std::vector<std::shared_ptr<Core::VKImage>> m_textures;
-
-    // Sampler cache (config hash -> sampler)
-    std::unordered_map<size_t, vk::Sampler> m_sampler_cache;
-
-    // Helper: create sampler from config
-    vk::Sampler create_sampler(const SamplerConfig& config);
-
-    // Helper: hash sampler config for caching
-    static size_t hash_sampler_config(const SamplerConfig& config);
 
     static bool s_initialized;
 };
