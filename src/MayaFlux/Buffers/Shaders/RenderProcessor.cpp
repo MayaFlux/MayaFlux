@@ -280,8 +280,17 @@ void RenderProcessor::bind_texture(const Portal::Graphics::SampledTexture& textu
 
 void RenderProcessor::set_binding_sampler(uint32_t binding, const Portal::Graphics::SamplerConfig& config)
 {
-    if (const auto sampler = Portal::Graphics::SamplerForge::instance().get_or_create(config)) {
-        m_binding_samplers[binding] = sampler;
+    const auto sampler = Portal::Graphics::SamplerForge::instance().get_or_create(config);
+    if (!sampler) {
+        return;
+    }
+
+    m_binding_samplers[binding] = sampler;
+
+    const auto bound = m_texture_bindings.find(binding);
+    if (bound != m_texture_bindings.end()) {
+        bound->second.sampler = sampler;
+        m_needs_descriptor_rebuild = true;
     }
 }
 

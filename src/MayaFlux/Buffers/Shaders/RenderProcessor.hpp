@@ -139,7 +139,9 @@ public:
     /**
      * @brief Choose the sampler a binding uses when it is bound without one.
      *
-     * Applies to later binds, so it can be set before the texture exists.
+     * Applies to later binds, so it can be set before the texture exists. When
+     * a texture is already bound at the binding, its sampler changes too, and
+     * the descriptors are rebuilt on the next execute.
      */
     void set_binding_sampler(uint32_t binding, const Portal::Graphics::SamplerConfig& config);
 
