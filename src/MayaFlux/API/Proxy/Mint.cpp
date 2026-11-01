@@ -68,8 +68,8 @@ namespace {
     {
         for (size_t index = first; index < textures.size(); ++index) {
             if (textures[index]) {
-                render.additional_textures.emplace_back(
-                    "texture" + std::to_string(index), textures[index]);
+                render.additional_textures.push_back(
+                    { "texture" + std::to_string(index), textures[index] });
             }
         }
     }
@@ -79,7 +79,7 @@ namespace {
         const std::vector<std::shared_ptr<Core::VKImage>>& textures)
     {
         if (!textures.empty() && textures.front()) {
-            render.additional_textures.emplace_back("diffuseTex", textures.front());
+            render.additional_textures.push_back({ "diffuseTex", textures.front() });
         }
         add_extra_textures(render, textures, 1);
     }

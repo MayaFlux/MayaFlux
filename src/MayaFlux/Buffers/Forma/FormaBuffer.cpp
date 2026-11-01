@@ -136,18 +136,23 @@ void FormaBuffer::setup_rendering(const RenderConfig& config)
         uint32_t slot = 1;
         if (single_tex && !config.default_texture_binding.empty()) {
             auto it = std::ranges::find_if(config.additional_textures,
-                [&](const auto& p) { return p.first == config.default_texture_binding; });
+                [&](const auto& p) { return p.name == config.default_texture_binding; });
             if (it != config.additional_textures.end()) {
-                m_render_processor->bind_texture(slot, it->second);
+                if (it->sampler)
+                    m_render_processor->set_binding_sampler(slot, *it->sampler);
+                m_render_processor->bind_texture(slot, it->image);
                 ++slot;
             }
         }
-        for (const auto& [name, img] : config.additional_textures) {
-            if (single_tex && name == config.default_texture_binding)
+        for (const auto& entry : config.additional_textures) {
+            if (single_tex && entry.name == config.default_texture_binding)
                 continue;
 
-            if (img)
-                m_render_processor->bind_texture(slot, img);
+            if (entry.sampler)
+                m_render_processor->set_binding_sampler(slot, *entry.sampler);
+
+            if (entry.image)
+                m_render_processor->bind_texture(slot, entry.image);
 
             ++slot;
         }

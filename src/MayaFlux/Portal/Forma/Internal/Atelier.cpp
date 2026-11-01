@@ -194,7 +194,7 @@ void Atelier::place_adornments(
             Graphics::RenderConfig render = surface.render_config();
             if (has_labels) {
                 render.fragment_shader = "forma_plot.frag.spv";
-                render.additional_textures.emplace_back("text", nullptr);
+                render.additional_textures.push_back({ "text", nullptr });
             }
             owned_batch = create_buffer(std::move(render));
         }
