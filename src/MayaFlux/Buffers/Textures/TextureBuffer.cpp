@@ -120,6 +120,36 @@ void TextureBuffer::setup_rendering(const RenderConfig& user_config)
     get_processing_chain()->add_final_processor(m_render_processor, shared_from_this());
 }
 
+void TextureBuffer::set_sampler(const Portal::Graphics::SamplerConfig& config)
+{
+    set_sampler(m_render_config.default_texture_binding, config);
+}
+
+void TextureBuffer::set_sampler(const std::string& name, const Portal::Graphics::SamplerConfig& config)
+{
+    const auto processor = get_render_processor();
+    if (!processor) {
+        MF_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "TextureBuffer::set_sampler('{}') called before setup_rendering; the sampler is not set", name);
+        return;
+    }
+
+    if (name == m_render_config.default_texture_binding) {
+        m_render_config.default_sampler = config;
+    } else {
+        const auto entry = std::ranges::find_if(m_render_config.additional_textures,
+            [&name](const auto& texture) { return texture.name == name; });
+        if (entry == m_render_config.additional_textures.end()) {
+            MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "TextureBuffer::set_sampler: no texture named '{}' in the render config", name);
+            return;
+        }
+        entry->sampler = config;
+    }
+
+    processor->set_binding_sampler(name, config);
+}
+
 // =========================================================================
 // Pixel Data Management
 // =========================================================================
