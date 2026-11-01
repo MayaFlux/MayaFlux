@@ -176,4 +176,94 @@ inline SamplerForge& get_sampler_factory()
     return SamplerForge::instance();
 }
 
+/**
+ * @brief SamplerConfig values named by what they do at a texture's limits.
+ *
+ * Each returns a plain config to pass to SamplerForge::get_or_create or to a
+ * SampledTexture, and to adjust further. The filter chooses how a texel is read, the
+ * addressing what a coordinate outside the image reads, and the border its colour.
+ * Mipmaps stay off: no mip chain is generated.
+ */
+namespace SamplerPresets {
+
+    /** @brief Exact texels, no blending; outside the image the edge texel continues. For maps, masks and indices. */
+    [[nodiscard]] inline SamplerConfig nearest_clamped()
+    {
+        return { .mag_filter = FilterMode::NEAREST, .min_filter = FilterMode::NEAREST,
+            .address_mode_u = AddressMode::CLAMP_TO_EDGE, .address_mode_v = AddressMode::CLAMP_TO_EDGE,
+            .address_mode_w = AddressMode::CLAMP_TO_EDGE };
+    }
+
+    /** @brief Linear blending; outside the image the edge texel continues. For gradient lookups. */
+    [[nodiscard]] inline SamplerConfig linear_clamped()
+    {
+        return { .address_mode_u = AddressMode::CLAMP_TO_EDGE, .address_mode_v = AddressMode::CLAMP_TO_EDGE,
+            .address_mode_w = AddressMode::CLAMP_TO_EDGE };
+    }
+
+    /** @brief The image repeats in every direction. For tiling and wrapping lookups. */
+    [[nodiscard]] inline SamplerConfig repeating(FilterMode filter = FilterMode::LINEAR)
+    {
+        return { .mag_filter = filter, .min_filter = filter };
+    }
+
+    /** @brief The image repeats, every other copy mirrored. Continuous across the seams. */
+    [[nodiscard]] inline SamplerConfig mirrored(FilterMode filter = FilterMode::LINEAR)
+    {
+        return { .mag_filter = filter, .min_filter = filter,
+            .address_mode_u = AddressMode::MIRRORED_REPEAT, .address_mode_v = AddressMode::MIRRORED_REPEAT,
+            .address_mode_w = AddressMode::MIRRORED_REPEAT };
+    }
+
+    /** @brief Outside the image reads a fixed colour. */
+    [[nodiscard]] inline SamplerConfig bordered(BorderColor color, FilterMode filter = FilterMode::LINEAR)
+    {
+        return { .mag_filter = filter, .min_filter = filter,
+            .address_mode_u = AddressMode::CLAMP_TO_BORDER, .address_mode_v = AddressMode::CLAMP_TO_BORDER,
+            .address_mode_w = AddressMode::CLAMP_TO_BORDER, .border_color = color };
+    }
+
+    /** @brief Each axis addressed on its own, for surfaces that wrap one way and stop the other. */
+    [[nodiscard]] inline SamplerConfig axes(
+        AddressMode u,
+        AddressMode v,
+        FilterMode filter = FilterMode::LINEAR,
+        AddressMode w = AddressMode::CLAMP_TO_EDGE)
+    {
+        return { .mag_filter = filter, .min_filter = filter,
+            .address_mode_u = u, .address_mode_v = v, .address_mode_w = w };
+    }
+
+    /** @brief Magnified texels stay hard, minified ones are blended. */
+    [[nodiscard]] inline SamplerConfig magnify_nearest()
+    {
+        return { .mag_filter = FilterMode::NEAREST, .min_filter = FilterMode::LINEAR,
+            .address_mode_u = AddressMode::CLAMP_TO_EDGE, .address_mode_v = AddressMode::CLAMP_TO_EDGE,
+            .address_mode_w = AddressMode::CLAMP_TO_EDGE };
+    }
+
+    /** @brief Magnified texels are blended, minified ones are not, so shrinking aliases. */
+    [[nodiscard]] inline SamplerConfig minify_nearest()
+    {
+        return { .mag_filter = FilterMode::LINEAR, .min_filter = FilterMode::NEAREST,
+            .address_mode_u = AddressMode::CLAMP_TO_EDGE, .address_mode_v = AddressMode::CLAMP_TO_EDGE,
+            .address_mode_w = AddressMode::CLAMP_TO_EDGE };
+    }
+
+    /** @brief The depth axis of a 3D image repeats; width and height clamp. Ignored by array layers. */
+    [[nodiscard]] inline SamplerConfig repeating_depth(FilterMode filter = FilterMode::LINEAR)
+    {
+        return { .mag_filter = filter, .min_filter = filter,
+            .address_mode_u = AddressMode::CLAMP_TO_EDGE, .address_mode_v = AddressMode::CLAMP_TO_EDGE,
+            .address_mode_w = AddressMode::REPEAT };
+    }
+
+    /** @brief Linear, repeating, with anisotropic filtering clamped to 1 to 16, for surfaces seen at a slant. */
+    [[nodiscard]] inline SamplerConfig oblique(float anisotropy = 16.0F)
+    {
+        return { .max_anisotropy = std::clamp(anisotropy, 1.0F, 16.0F) };
+    }
+
+} // namespace SamplerPresets
+
 } // namespace MayaFlux::Portal::Graphics
