@@ -157,7 +157,7 @@ private:
     vk::Sampler create_sampler(const SamplerConfig& config);
 
     // Helper: Convert FilterMode to Vulkan filter
-    static vk::Filter to_vk_filter(FilterMode mode);
+    [[nodiscard]] vk::Filter to_vk_filter(FilterMode mode) const;
 
     // Helper: Convert AddressMode to Vulkan address mode
     static vk::SamplerAddressMode to_vk_address_mode(AddressMode mode);

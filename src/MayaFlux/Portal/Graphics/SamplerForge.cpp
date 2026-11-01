@@ -235,7 +235,7 @@ bool SamplerForge::ConfigEqual::operator()(const SamplerConfig& a, const Sampler
         && a.border_color == b.border_color;
 }
 
-vk::Filter SamplerForge::to_vk_filter(FilterMode mode)
+vk::Filter SamplerForge::to_vk_filter(FilterMode mode) const
 {
     switch (mode) {
     case FilterMode::NEAREST:
@@ -243,7 +243,9 @@ vk::Filter SamplerForge::to_vk_filter(FilterMode mode)
     case FilterMode::LINEAR:
         return vk::Filter::eLinear;
     case FilterMode::CUBIC:
-        return vk::Filter::eCubicEXT;
+        return m_backend->get_context().has_extension(VK_EXT_FILTER_CUBIC_EXTENSION_NAME)
+            ? vk::Filter::eCubicEXT
+            : vk::Filter::eLinear;
     default:
         return vk::Filter::eLinear;
     }
