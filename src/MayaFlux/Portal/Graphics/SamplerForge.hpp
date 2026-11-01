@@ -144,14 +144,17 @@ private:
 
     std::shared_ptr<Core::VulkanBackend> m_backend;
 
-    // Sampler cache (config hash -> sampler)
-    std::unordered_map<size_t, vk::Sampler> m_sampler_cache;
+    struct ConfigHash {
+        size_t operator()(const SamplerConfig& config) const;
+    };
 
-    // Helper: Create sampler from config
+    struct ConfigEqual {
+        bool operator()(const SamplerConfig& a, const SamplerConfig& b) const;
+    };
+
+    std::unordered_map<SamplerConfig, vk::Sampler, ConfigHash, ConfigEqual> m_sampler_cache;
+
     vk::Sampler create_sampler(const SamplerConfig& config);
-
-    // Helper: Hash sampler config for caching
-    static size_t hash_config(const SamplerConfig& config);
 
     // Helper: Convert FilterMode to Vulkan filter
     static vk::Filter to_vk_filter(FilterMode mode);
