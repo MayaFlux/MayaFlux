@@ -45,11 +45,11 @@ namespace Detail {
         return true;
     }
 
-    template <typename Generator, typename Callback, typename Index>
-    bool evaluate(Generator& generator, Callback& callback, const Index& index)
+    template <typename Step>
+    bool guarded(Step&& step)
     {
         try {
-            callback(generator(index));
+            step();
             return true;
         } catch (const std::exception& e) {
             MF_RT_ERROR(Journal::Component::Kriya, Journal::Context::CoroutineScheduling,
@@ -59,6 +59,12 @@ namespace Detail {
                 "Unknown exception in pattern step");
         }
         return false;
+    }
+
+    template <typename Generator, typename Callback, typename Index>
+    bool evaluate(Generator& generator, Callback& callback, const Index& index)
+    {
+        return guarded([&] { callback(generator(index)); });
     }
 
     inline std::function<bool()> after_one_pass(std::function<bool()> condition)
@@ -246,14 +252,89 @@ namespace Detail {
         Index m_index {};
     };
 
-    template <typename Domain, typename Index, typename Generator, typename Callback, typename Cursor>
-    typename Domain::Routine timed_pattern(Generator generator, Callback callback, Cursor durations)
+    template <typename Range>
+    class RangeValues {
+    public:
+        explicit RangeValues(Range range)
+            : m_range(std::move(range))
+            , m_it(std::ranges::begin(m_range))
+        {
+        }
+
+        RangeValues(RangeValues&&) = delete;
+
+        template <typename Callback>
+        bool deliver(Callback& callback)
+        {
+            if (m_it == std::ranges::end(m_range)) {
+                return false;
+            }
+            return guarded([&] {
+                callback(*m_it);
+                ++m_it;
+            });
+        }
+
+    private:
+        Range m_range;
+        std::ranges::iterator_t<Range> m_it;
+    };
+
+    template <typename Range>
+    class CyclingValues {
+    public:
+        explicit CyclingValues(Recurring<Range> recurring)
+            : m_range(std::move(recurring.range))
+            , m_it(std::ranges::begin(m_range))
+        {
+        }
+
+        CyclingValues(CyclingValues&&) = delete;
+
+        template <typename Callback>
+        bool deliver(Callback& callback)
+        {
+            if (m_it == std::ranges::end(m_range)) {
+                m_it = std::ranges::begin(m_range);
+                if (m_it == std::ranges::end(m_range)) {
+                    return false;
+                }
+            }
+            return guarded([&] {
+                callback(*m_it);
+                ++m_it;
+            });
+        }
+
+    private:
+        Range m_range;
+        std::ranges::iterator_t<Range> m_it;
+    };
+
+    template <typename Values, typename Index>
+    struct CursorFor {
+        using type = RangeValues<Values>;
+    };
+
+    template <typename Values, typename Index>
+        requires PatternGenerator<Values, Index>
+    struct CursorFor<Values, Index> {
+        using type = GeneratorValues<Values, Index>;
+    };
+
+    template <typename Range, typename Index>
+    struct CursorFor<Recurring<Range>, Index> {
+        using type = CyclingValues<Range>;
+    };
+
+    template <typename Domain, typename Index, typename Values, typename Callback, typename Cursor>
+    typename Domain::Routine timed_pattern(Values values, Callback callback, Cursor durations)
     {
         auto& promise = co_await typename Domain::GetPromise {};
-        GeneratorValues<Generator, Index> values(std::move(generator));
+        typename CursorFor<Values, Index>::type steps(std::move(values));
 
         while (!promise.should_terminate) {
-            if (!values.deliver(callback)) {
+            if (!steps.deliver(callback)) {
                 co_return;
             }
 
@@ -266,15 +347,15 @@ namespace Detail {
         }
     }
 
-    template <typename Index, typename Generator, typename Callback, typename Cursor>
-    Vruta::FreeRoutine free_timed_pattern(Generator generator, Callback callback, Cursor durations)
+    template <typename Index, typename Values, typename Callback, typename Cursor>
+    Vruta::FreeRoutine free_timed_pattern(Values values, Callback callback, Cursor durations)
     {
         co_await ConditionAwaiter { after_one_pass() };
 
-        GeneratorValues<Generator, Index> values(std::move(generator));
+        typename CursorFor<Values, Index>::type steps(std::move(values));
 
         for (;;) {
-            if (!values.deliver(callback)) {
+            if (!steps.deliver(callback)) {
                 co_return;
             }
 
@@ -293,8 +374,8 @@ namespace Detail {
         }
     }
 
-    template <typename Index, typename Generator, typename Callback, typename Cursor>
-    std::shared_ptr<Vruta::Routine> launch_timed(Generator generator, Callback callback, Cursor durations, Vruta::ProcessingToken token)
+    template <typename Index, typename Values, typename Callback, typename Cursor>
+    std::shared_ptr<Vruta::Routine> launch_timed(Values values, Callback callback, Cursor durations, Vruta::ProcessingToken token)
     {
         using Vruta::ProcessingToken;
 
@@ -302,18 +383,18 @@ namespace Detail {
         case ProcessingToken::SAMPLE_ACCURATE:
             return std::make_shared<Vruta::SoundRoutine>(
                 timed_pattern<PatternDomain<ProcessingToken::SAMPLE_ACCURATE>, Index>(
-                    std::move(generator), std::move(callback), std::move(durations)));
+                    std::move(values), std::move(callback), std::move(durations)));
         case ProcessingToken::FRAME_ACCURATE:
             return std::make_shared<Vruta::GraphicsRoutine>(
                 timed_pattern<PatternDomain<ProcessingToken::FRAME_ACCURATE>, Index>(
-                    std::move(generator), std::move(callback), std::move(durations)));
+                    std::move(values), std::move(callback), std::move(durations)));
         case ProcessingToken::MULTI_RATE:
             return std::make_shared<Vruta::CrossRoutine>(
                 timed_pattern<PatternDomain<ProcessingToken::MULTI_RATE>, Index>(
-                    std::move(generator), std::move(callback), std::move(durations)));
+                    std::move(values), std::move(callback), std::move(durations)));
         case ProcessingToken::CONDITIONAL:
             return std::make_shared<Vruta::FreeRoutine>(
-                free_timed_pattern<Index>(std::move(generator), std::move(callback), std::move(durations)));
+                free_timed_pattern<Index>(std::move(values), std::move(callback), std::move(durations)));
         default:
             MF_ERROR(Journal::Component::Kriya, Journal::Context::CoroutineScheduling,
                 "pattern supports SAMPLE_ACCURATE, FRAME_ACCURATE, MULTI_RATE and CONDITIONAL tokens");
@@ -360,35 +441,35 @@ std::shared_ptr<Vruta::Routine> pattern(Generator generator, Callback callback, 
     }
 }
 
-template <std::incrementable Index, typename Generator, typename Callback>
-    requires PatternGenerator<Generator, Index>
-    && PatternCallback<Callback, typename PatternTraits<Generator, Index>::value_type>
-std::shared_ptr<Vruta::Routine> pattern(Generator generator, Callback callback, std::vector<double> durations, Vruta::ProcessingToken token)
+template <std::incrementable Index, typename Values, typename Callback>
+    requires PatternValues<Values, Index>
+    && PatternCallback<Callback, pattern_value_t<Values, Index>>
+std::shared_ptr<Vruta::Routine> pattern(Values values, Callback callback, std::vector<double> durations, Vruta::ProcessingToken token)
 {
-    if (Detail::is_unset(generator) || Detail::is_unset(callback) || durations.empty()) {
+    if (Detail::is_unset(values) || Detail::is_unset(callback) || durations.empty()) {
         MF_ERROR(Journal::Component::Kriya, Journal::Context::CoroutineScheduling,
             "pattern requires a generator, a callback and at least one duration");
         return nullptr;
     }
 
     return Detail::launch_timed<Index>(
-        std::move(generator), std::move(callback), Detail::ListDurations(std::move(durations)), token);
+        std::move(values), std::move(callback), Detail::ListDurations(std::move(durations)), token);
 }
 
-template <std::incrementable Index, typename Generator, typename Callback, typename Source>
-    requires PatternGenerator<Generator, Index>
-    && PatternCallback<Callback, typename PatternTraits<Generator, Index>::value_type>
+template <std::incrementable Index, typename Values, typename Callback, typename Source>
+    requires PatternValues<Values, Index>
+    && PatternCallback<Callback, pattern_value_t<Values, Index>>
     && PatternDurationSource<Source>
-std::shared_ptr<Vruta::Routine> pattern(Generator generator, Callback callback, Source durations, Vruta::ProcessingToken token)
+std::shared_ptr<Vruta::Routine> pattern(Values values, Callback callback, Source durations, Vruta::ProcessingToken token)
 {
-    if (Detail::is_unset(generator) || Detail::is_unset(callback) || Detail::is_unset(durations)) {
+    if (Detail::is_unset(values) || Detail::is_unset(callback) || Detail::is_unset(durations)) {
         MF_ERROR(Journal::Component::Kriya, Journal::Context::CoroutineScheduling,
             "pattern requires a generator, a callback and a durations function");
         return nullptr;
     }
 
     return Detail::launch_timed<Index>(
-        std::move(generator), std::move(callback), Detail::FunctionDurations<Source>(std::move(durations)), token);
+        std::move(values), std::move(callback), Detail::FunctionDurations<Source>(std::move(durations)), token);
 }
 
 } // namespace MayaFlux::Kriya
