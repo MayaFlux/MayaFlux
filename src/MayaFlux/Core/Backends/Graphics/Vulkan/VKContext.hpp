@@ -49,6 +49,14 @@ public:
     [[nodiscard]] vk::Device get_device() const { return m_device.get_device(); }
 
     /**
+     * @brief Check if an extension was enabled at device creation
+     */
+    [[nodiscard]] bool has_extension(std::string_view name) const
+    {
+        return m_device.has_extension(name);
+    }
+
+    /**
      * @brief Get graphics queue
      */
     [[nodiscard]] vk::Queue get_graphics_queue() const { return m_device.get_graphics_queue(); }

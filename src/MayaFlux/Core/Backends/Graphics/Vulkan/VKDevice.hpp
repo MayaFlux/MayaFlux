@@ -168,6 +168,28 @@ public:
      */
     [[nodiscard]] bool supports_mesh_shaders() const { return m_supports_mesh_shaders; }
 
+    /**
+     * @brief Ask for an extension at device creation
+     * @param name Extension name, for example VK_EXT_FILTER_CUBIC_EXTENSION_NAME
+     *
+     * Must be called before initialize. The extension is enabled only if the
+     * device supports it; check has_extension afterwards.
+     */
+    void request_extension(std::string_view name)
+    {
+        m_requested_extensions.emplace_back(name);
+    }
+
+    /**
+     * @brief Check if an extension was enabled at device creation
+     * @param name Extension name, for example VK_EXT_FILTER_CUBIC_EXTENSION_NAME
+     * @return true if the extension was requested and is enabled
+     */
+    [[nodiscard]] bool has_extension(std::string_view name) const
+    {
+        return std::ranges::find(m_enabled_extensions, name) != m_enabled_extensions.end();
+    }
+
 private:
     vk::PhysicalDevice m_physical_device; ///< Selected physical device (GPU)
     vk::Device m_logical_device; ///< Logical device handle
@@ -207,5 +229,7 @@ private:
     std::string m_device_name; ///< Selected device name, cached for logging
     std::array<uint8_t, VK_UUID_SIZE> m_device_uuid {}; ///< Selected device UUID
     bool m_supports_mesh_shaders {}; ///< Whether the device supports mesh shaders
+    std::vector<std::string> m_requested_extensions; ///< Library requests, enabled at creation when supported
+    std::vector<std::string> m_enabled_extensions; ///< Requested extensions enabled on the logical device
 };
 }

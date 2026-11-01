@@ -202,6 +202,8 @@ VKDevice::VKDevice(VKDevice&& other) noexcept
     , m_device_name(std::move(other.m_device_name))
     , m_device_uuid(other.m_device_uuid)
     , m_supports_mesh_shaders(other.m_supports_mesh_shaders)
+    , m_requested_extensions(std::move(other.m_requested_extensions))
+    , m_enabled_extensions(std::move(other.m_enabled_extensions))
 {
     other.m_physical_device = VK_NULL_HANDLE;
     other.m_logical_device = VK_NULL_HANDLE;
@@ -225,6 +227,8 @@ VKDevice& VKDevice::operator=(VKDevice&& other) noexcept
         m_device_name = std::move(other.m_device_name);
         m_device_uuid = other.m_device_uuid;
         m_supports_mesh_shaders = other.m_supports_mesh_shaders;
+        m_requested_extensions = std::move(other.m_requested_extensions);
+        m_enabled_extensions = std::move(other.m_enabled_extensions);
 
         other.m_physical_device = VK_NULL_HANDLE;
         other.m_logical_device = VK_NULL_HANDLE;
@@ -261,6 +265,8 @@ void VKDevice::cleanup()
     m_device_uuid = {};
     m_graphics_presents = false;
     m_supports_mesh_shaders = false;
+    m_requested_extensions.clear();
+    m_enabled_extensions.clear();
 }
 
 bool VKDevice::pick_physical_device(vk::Instance instance, const GraphicsBackendInfo& backend_info)
@@ -672,7 +678,7 @@ bool VKDevice::create_logical_device(vk::Instance /*instance*/, const GraphicsBa
     device_features.fillModeNonSolid = m_physical_device.getFeatures().fillModeNonSolid;
     device_features.shaderSampledImageArrayDynamicIndexing = m_physical_device.getFeatures().shaderSampledImageArrayDynamicIndexing;
 
-    std::vector<const char*> device_extensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+    std::vector<const char*> device_extensions;
 
     auto supported_extensions = m_physical_device.enumerateDeviceExtensionProperties();
 
@@ -682,8 +688,17 @@ bool VKDevice::create_logical_device(vk::Instance /*instance*/, const GraphicsBa
         });
     };
 
-    if (m_supports_mesh_shaders) {
-        device_extensions.push_back(VK_EXT_MESH_SHADER_EXTENSION_NAME);
+    if (!is_supported(VK_KHR_SWAPCHAIN_EXTENSION_NAME)) {
+        error<std::runtime_error>(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            std::source_location::current(),
+            "Device '{}' does not support {}",
+            m_device_name, VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+    }
+
+    for (const auto& name : m_requested_extensions) {
+        if (is_supported(name)) {
+            device_extensions.push_back(name.c_str());
+        }
     }
 
     auto feature_chain = vk::StructureChain {
@@ -756,6 +771,10 @@ bool VKDevice::create_logical_device(vk::Instance /*instance*/, const GraphicsBa
     try {
         m_logical_device = m_physical_device.createDevice(create_info);
         VULKAN_HPP_DEFAULT_DISPATCHER.init(m_logical_device);
+        m_enabled_extensions.clear();
+        for (const char* ext : device_extensions) {
+            m_enabled_extensions.emplace_back(ext);
+        }
 
     } catch (const std::exception& e) {
         error_rethrow(Journal::Component::Core, Journal::Context::GraphicsBackend,

@@ -59,6 +59,10 @@ bool VKContext::initialize(const GlobalGraphicsConfig& graphics_config, bool ena
         return false;
     }
 
+    m_device.request_extension(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+    m_device.request_extension(VK_EXT_MESH_SHADER_EXTENSION_NAME);
+    m_device.request_extension(VK_EXT_FILTER_CUBIC_EXTENSION_NAME);
+
     if (!m_device.initialize(m_instance.get_instance(), m_graphics_config.backend_info)) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
             "Failed to initialize Vulkan device!");
