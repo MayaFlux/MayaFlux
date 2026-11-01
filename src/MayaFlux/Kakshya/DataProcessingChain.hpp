@@ -2,6 +2,8 @@
 
 #include "DataProcessor.hpp"
 
+#include "MayaFlux/Transitive/Memory/PendingQueue.hpp"
+
 namespace MayaFlux::Kakshya {
 
 /**
@@ -130,15 +132,20 @@ private:
      */
     std::unordered_map<std::shared_ptr<DataProcessor>, std::string> m_processor_tags;
 
+    static constexpr size_t MAX_PENDING_REMOVALS = 256;
+
+    struct PendingRemoval {
+        std::shared_ptr<DataProcessor> processor;
+        std::shared_ptr<SignalSourceContainer> container;
+    };
+
     /**
      * @brief Removals deferred because they arrived during active iteration.
      *
-     * Each entry is a (processor, container) pair drained by drain_pending_removals()
-     * after the enclosing process variant returns.
+     * Drained by drain_pending_removals() after the enclosing process variant
+     * returns. A removal requested while the queue is full is logged and dropped.
      */
-    std::vector<std::pair<std::shared_ptr<DataProcessor>,
-        std::shared_ptr<SignalSourceContainer>>>
-        m_pending_removal;
+    Memory::PendingQueue<PendingRemoval, MAX_PENDING_REMOVALS> m_pending_removal;
 
     /**
      * @brief Guards all process variants against concurrent or re-entrant iteration.

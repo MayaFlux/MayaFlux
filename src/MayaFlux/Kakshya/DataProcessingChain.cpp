@@ -1,5 +1,7 @@
 #include "DataProcessingChain.hpp"
 
+#include "MayaFlux/Journal/Archivist.hpp"
+
 namespace MayaFlux::Kakshya {
 
 void DataProcessingChain::add_processor(
@@ -35,7 +37,10 @@ void DataProcessingChain::remove_processor(
     const std::shared_ptr<SignalSourceContainer>& container)
 {
     if (m_is_processing.load(std::memory_order_acquire)) {
-        m_pending_removal.emplace_back(processor, container);
+        if (!m_pending_removal.push({ processor, container })) {
+            MF_ERROR(Journal::Component::Kakshya, Journal::Context::Runtime,
+                "Pending removal queue full, could not remove processor");
+        }
         return;
     }
 
@@ -67,10 +72,9 @@ void DataProcessingChain::remove_processor_direct(
 
 void DataProcessingChain::drain_pending_removals()
 {
-    for (auto& [processor, container] : m_pending_removal) {
-        remove_processor_direct(processor, container);
-    }
-    m_pending_removal.clear();
+    m_pending_removal.drain([this](PendingRemoval&& removal) {
+        remove_processor_direct(removal.processor, removal.container);
+    });
 }
 
 void DataProcessingChain::process(const std::shared_ptr<SignalSourceContainer>& container)
