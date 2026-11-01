@@ -354,6 +354,21 @@ BufferOperation BufferOperation::capture_to_stream(
     return capture_to_stream(io_manager, video, ring_frames, std::move(live), std::move(display));
 }
 
+BufferOperation BufferOperation::capture_to_collection(
+    std::shared_ptr<Buffers::VKBuffer> source,
+    std::shared_ptr<Kakshya::TextureCollection> target)
+{
+    if (!source || !target) {
+        error<std::runtime_error>(Journal::Component::Kriya, Journal::Context::Configuration,
+            std::source_location::current(), "capture_to_collection: null source or collection");
+    }
+
+    BufferOperation op(OpType::ROUTE, Buffers::ProcessingToken::GRAPHICS_BACKEND);
+    op.m_source_graphics_buffer = std::move(source);
+    op.m_target_collection = std::move(target);
+    return op;
+}
+
 BufferOperation BufferOperation::transform(TransformationFunction transformer,
     Buffers::ProcessingToken token)
 {

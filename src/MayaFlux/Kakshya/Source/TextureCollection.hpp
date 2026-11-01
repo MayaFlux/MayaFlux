@@ -51,11 +51,13 @@ public:
      * An image of another size is scaled to fit inside the layer, keeping its
      * aspect ratio, centred on a zeroed background. The format is converted.
      *
+     * @param mode How the copy is submitted. ASYNC returns without waiting; a later
+     *             read of the layer is ordered after it.
      * @return True when the image was stored. False for a null image, when
      *         the device cannot blit its format into the collection's, or
      *         when a linear collection is full.
      */
-    bool append(const std::shared_ptr<Core::VKImage>& image);
+    bool append(const std::shared_ptr<Core::VKImage>& image, Portal::Graphics::SubmitMode mode = Portal::Graphics::SubmitMode::IMMEDIATE);
 
     /** @brief Number of images appended so far, including overwritten ones. */
     [[nodiscard]] uint64_t get_write_head() const { return m_write_head; }
@@ -66,7 +68,7 @@ public:
     [[nodiscard]] const TextureCollectionSpec& get_spec() const { return m_spec; }
 
 private:
-    bool copy_into(const std::shared_ptr<Core::VKImage>& image, const std::shared_ptr<Core::VKImage>& target);
+    bool copy_into(const std::shared_ptr<Core::VKImage>& image, const std::shared_ptr<Core::VKImage>& target, Portal::Graphics::SubmitMode mode);
 
     TextureCollectionSpec m_spec;
     uint64_t m_write_head {};

@@ -46,7 +46,7 @@ bool TextureCollection::is_full() const
     return (static_cast<uint64_t>(get_layer_count()) + 1) * byte_size() > m_spec.max_bytes;
 }
 
-bool TextureCollection::append(const std::shared_ptr<Core::VKImage>& image)
+bool TextureCollection::append(const std::shared_ptr<Core::VKImage>& image, Portal::Graphics::SubmitMode mode)
 {
     if (!image || !image->is_initialized()) {
         MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
@@ -72,7 +72,7 @@ bool TextureCollection::append(const std::shared_ptr<Core::VKImage>& image)
         ? layer_image(slot)
         : TextureLoom::instance().create_2d(get_width(), get_height(), get_format());
 
-    if (!target || !copy_into(image, target))
+    if (!target || !copy_into(image, target, mode))
         return false;
 
     if (reuse) {
@@ -87,7 +87,8 @@ bool TextureCollection::append(const std::shared_ptr<Core::VKImage>& image)
 
 bool TextureCollection::copy_into(
     const std::shared_ptr<Core::VKImage>& image,
-    const std::shared_ptr<Core::VKImage>& target)
+    const std::shared_ptr<Core::VKImage>& target,
+    Portal::Graphics::SubmitMode mode)
 {
     auto& loom = TextureLoom::instance();
 
@@ -111,11 +112,11 @@ bool TextureCollection::copy_into(
     }
 
     if (same_extent)
-        return loom.blit_layer(image, target, { .filter = filter });
+        return loom.blit_layer(image, target, { .filter = filter }, mode);
 
-    return loom.blit_layer(m_blank, target, { .filter = FilterMode::NEAREST })
+    return loom.blit_layer(m_blank, target, { .filter = FilterMode::NEAREST }, mode)
         && loom.blit_layer(image, target,
-            { .dst = fitted(image->get_width(), image->get_height(), get_width(), get_height()), .filter = filter });
+            { .dst = fitted(image->get_width(), image->get_height(), get_width(), get_height()), .filter = filter }, mode);
 }
 
 } // namespace MayaFlux::Kakshya

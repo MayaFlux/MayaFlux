@@ -4,6 +4,8 @@
 
 #include "GraphicsUtils.hpp"
 
+#include "MayaFlux/Core/Backends/Graphics/Vulkan/VKTimeline.hpp"
+
 #include "MayaFlux/Kakshya/NDData/NDData.hpp"
 
 namespace MayaFlux::Core {
@@ -16,6 +18,8 @@ class VKBuffer;
 }
 
 namespace MayaFlux::Portal::Graphics {
+
+using SubmitMode = Core::SubmitMode;
 
 /** @brief Immutable properties that determine whether an image can be reused. */
 struct ImageKey {
@@ -410,14 +414,16 @@ public:
      * @param src      Source image, distinct from @p dst.
      * @param dst      Destination image.
      * @param blit     Layers, rectangles, filter and flips.
-     * @param deferred Record for deferred submission.
-     * @return True if the blit was recorded or executed.
+     * @param mode     IMMEDIATE waits for the copy. DEFERRED records it for the next flush
+     *                 or present submit. ASYNC submits it at once without waiting; later
+     *                 graphics work, including a read of the layer, is ordered after it.
+     * @return True if the blit was recorded, executed or submitted.
      */
     bool blit_layer(
         const std::shared_ptr<Core::VKImage>& src,
         const std::shared_ptr<Core::VKImage>& dst,
         const LayerBlit& blit = {},
-        bool deferred = false);
+        SubmitMode mode = SubmitMode::IMMEDIATE);
 
     /**
      * @brief Whether the device can blit between two images with a filter.

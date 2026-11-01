@@ -738,7 +738,7 @@ bool TextureLoom::blit_layer(
     const std::shared_ptr<Core::VKImage>& src,
     const std::shared_ptr<Core::VKImage>& dst,
     const LayerBlit& blit,
-    bool deferred)
+    SubmitMode mode)
 {
     if (!is_initialized() || !src || !dst) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
@@ -787,7 +787,7 @@ bool TextureLoom::blit_layer(
         { dst_offsets->first, dst_offsets->second }
     };
 
-    return m_resource_manager->blit_image(src, dst, region, to_blit_filter(blit.filter), deferred);
+    return m_resource_manager->blit_image(src, dst, region, to_blit_filter(blit.filter), mode);
 }
 
 //==============================================================================

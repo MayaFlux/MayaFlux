@@ -12,6 +12,7 @@
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Kakshya/Source/DynamicSoundStream.hpp"
 #include "MayaFlux/Kakshya/Source/DynamicVideoStream.hpp"
+#include "MayaFlux/Kakshya/Source/TextureCollection.hpp"
 
 namespace MayaFlux::Kriya {
 
@@ -152,6 +153,13 @@ void BufferPipeline::process_route(BufferOperation& op)
         uint32_t layer = 0;
         for (const auto& image : op.m_source_images) {
             detail::write_layer(op.m_target_graphics_buffer, layer++, image);
+        }
+        return;
+    }
+
+    if (op.m_source_graphics_buffer && op.m_target_collection) {
+        if (const auto image = detail::source_image(op.m_source_graphics_buffer)) {
+            static_cast<void>(op.m_target_collection->append(image, Portal::Graphics::SubmitMode::ASYNC));
         }
         return;
     }
