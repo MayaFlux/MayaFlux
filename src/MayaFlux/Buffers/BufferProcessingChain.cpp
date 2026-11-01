@@ -145,7 +145,7 @@ void BufferProcessingChain::remove_processor_anywhere_direct(const std::shared_p
 
 void BufferProcessingChain::process_non_owning(const std::shared_ptr<Buffer>& buffer)
 {
-    if (m_pending_count.load(std::memory_order_relaxed) > 0) {
+    if (m_pending_ops.has_pending()) {
         process_pending_processor_operations();
     }
 
@@ -180,7 +180,7 @@ void BufferProcessingChain::process(const std::shared_ptr<Buffer>& buffer)
         return;
     }
 
-    if (m_pending_count.load(std::memory_order_relaxed) > 0) {
+    if (m_pending_ops.has_pending()) {
         process_pending_processor_operations();
     }
 
@@ -220,24 +220,15 @@ void BufferProcessingChain::process_complete(const std::shared_ptr<Buffer>& buff
 
 void BufferProcessingChain::process_pending_processor_operations()
 {
-    for (auto& m_pending_op : m_pending_ops) {
-        if (m_pending_op.active.load(std::memory_order_acquire)) {
-            auto& op = m_pending_op;
-
-            if (op.is_addition) {
-                add_processor_direct(op.processor, op.buffer);
-            } else if (op.search_all_slots) {
-                remove_processor_anywhere_direct(op.processor, op.buffer);
-            } else {
-                remove_processor_direct(op.processor, op.buffer);
-            }
-
-            op.processor.reset();
-            op.buffer.reset();
-            op.active.store(false, std::memory_order_release);
-            m_pending_count.fetch_sub(1, std::memory_order_relaxed);
+    m_pending_ops.drain([this](PendingProcessorOp&& op) {
+        if (op.is_addition) {
+            add_processor_direct(op.processor, op.buffer);
+        } else if (op.search_all_slots) {
+            remove_processor_anywhere_direct(op.processor, op.buffer);
+        } else {
+            remove_processor_direct(op.processor, op.buffer);
         }
-    }
+    });
 }
 
 void BufferProcessingChain::add_preprocessor(const std::shared_ptr<BufferProcessor>& processor, const std::shared_ptr<Buffer>& buffer)
@@ -452,20 +443,8 @@ bool BufferProcessingChain::queue_pending_processor_op(
     bool search_all_slots,
     std::string* rejection_reason)
 {
-    for (auto& m_pending_op : m_pending_ops) {
-        bool expected = false;
-        if (m_pending_op.active.compare_exchange_strong(
-                expected, true,
-                std::memory_order_acquire,
-                std::memory_order_relaxed)) {
-
-            m_pending_op.processor = processor;
-            m_pending_op.buffer = buffer;
-            m_pending_op.is_addition = is_addition;
-            m_pending_op.search_all_slots = search_all_slots;
-            m_pending_count.fetch_add(1, std::memory_order_relaxed);
-            return true;
-        }
+    if (m_pending_ops.push({ processor, buffer, is_addition, search_all_slots })) {
+        return true;
     }
 
     if (rejection_reason && is_addition) {

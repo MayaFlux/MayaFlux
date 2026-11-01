@@ -2,6 +2,8 @@
 
 #include "BufferProcessor.hpp"
 
+#include "MayaFlux/Transitive/Memory/PendingQueue.hpp"
+
 namespace MayaFlux::Buffers {
 
 /**
@@ -347,7 +349,7 @@ public:
 
     inline bool has_pending_operations() const
     {
-        return m_pending_count.load(std::memory_order_relaxed) > 0;
+        return m_pending_ops.has_pending();
     }
 
     /**
@@ -477,17 +479,14 @@ private:
     static constexpr size_t MAX_PENDING_PROCESSORS = 32;
 
     struct PendingProcessorOp {
-        std::atomic<bool> active { false };
         std::shared_ptr<BufferProcessor> processor;
         std::shared_ptr<Buffer> buffer;
-        bool is_addition { true }; // true = add, false = remove
-        bool search_all_slots { false };
+        bool is_addition;
+        bool search_all_slots;
     };
 
     std::atomic<bool> m_is_processing;
 
-    PendingProcessorOp m_pending_ops[MAX_PENDING_PROCESSORS];
-
-    std::atomic<uint32_t> m_pending_count { 0 };
+    Memory::PendingQueue<PendingProcessorOp, MAX_PENDING_PROCESSORS> m_pending_ops;
 };
 }
