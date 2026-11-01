@@ -369,6 +369,21 @@ BufferOperation BufferOperation::capture_to_collection(
     return op;
 }
 
+BufferOperation BufferOperation::capture_to_ring(
+    std::shared_ptr<Buffers::VKBuffer> source,
+    std::shared_ptr<Buffers::TextureArrayBuffer> target)
+{
+    if (!source || !target) {
+        error<std::runtime_error>(Journal::Component::Kriya, Journal::Context::Configuration,
+            std::source_location::current(), "capture_to_ring: null source or array");
+    }
+
+    BufferOperation op(OpType::ROUTE, Buffers::ProcessingToken::GRAPHICS_BACKEND);
+    op.m_source_graphics_buffer = std::move(source);
+    op.m_target_ring = std::move(target);
+    return op;
+}
+
 BufferOperation BufferOperation::transform(TransformationFunction transformer,
     Buffers::ProcessingToken token)
 {

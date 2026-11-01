@@ -11,6 +11,7 @@
 #include "MayaFlux/IO/IOManager.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Kakshya/Source/DynamicSoundStream.hpp"
+#include "MayaFlux/Buffers/Textures/TextureArrayBuffer.hpp"
 #include "MayaFlux/Kakshya/Source/DynamicVideoStream.hpp"
 #include "MayaFlux/Kakshya/Source/TextureCollection.hpp"
 
@@ -153,6 +154,13 @@ void BufferPipeline::process_route(BufferOperation& op)
         uint32_t layer = 0;
         for (const auto& image : op.m_source_images) {
             detail::write_layer(op.m_target_graphics_buffer, layer++, image);
+        }
+        return;
+    }
+
+    if (op.m_source_graphics_buffer && op.m_target_ring) {
+        if (const auto image = detail::source_image(op.m_source_graphics_buffer)) {
+            static_cast<void>(op.m_target_ring->push_layer_async(image));
         }
         return;
     }

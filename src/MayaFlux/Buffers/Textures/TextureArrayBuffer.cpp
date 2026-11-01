@@ -122,6 +122,25 @@ bool TextureArrayBuffer::submit_layer(uint32_t layer, const Kakshya::ImageData& 
 
 bool TextureArrayBuffer::submit_layer(uint32_t layer, const std::shared_ptr<Core::VKImage>& image)
 {
+    return submit_layer(layer, image, Portal::Graphics::SubmitMode::IMMEDIATE);
+}
+
+bool TextureArrayBuffer::push_layer_async(const std::shared_ptr<Core::VKImage>& image)
+{
+    if (!submit_layer(m_write_head, image, Portal::Graphics::SubmitMode::ASYNC)) {
+        return false;
+    }
+
+    m_write_head = (m_write_head + 1) % m_layers;
+    publish_head();
+    return true;
+}
+
+bool TextureArrayBuffer::submit_layer(
+    uint32_t layer,
+    const std::shared_ptr<Core::VKImage>& image,
+    Portal::Graphics::SubmitMode mode)
+{
     if (layer >= m_layers || !image) {
         MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             "TextureArrayBuffer::submit_layer needs a layer below {} and an image, got layer {}",
@@ -153,13 +172,17 @@ bool TextureArrayBuffer::submit_layer(uint32_t layer, const std::shared_ptr<Core
             && first.offset.x == 0 && first.offset.y == 0
             && first.extent.width == get_width() && first.extent.height == get_height();
         if (!covers) {
-            clear_layer(layer);
+            if (mode == Portal::Graphics::SubmitMode::IMMEDIATE) {
+                clear_layer(layer);
+            } else if (!blank_layer(layer, mode)) {
+                return false;
+            }
         }
     }
 
     for (auto& blit : plan.blits) {
         blit.dst_layer = layer;
-        stored = loom.blit_layer(image, get_texture(), blit) && stored;
+        stored = loom.blit_layer(image, get_texture(), blit, mode) && stored;
     }
 
     return stored;
@@ -222,6 +245,27 @@ void TextureArrayBuffer::bind_layer_data()
     if (const auto processor = get_render_processor(); processor && m_layer_data) {
         processor->bind_buffer("layerData", m_layer_data);
     }
+}
+
+bool TextureArrayBuffer::blank_layer(uint32_t layer, Portal::Graphics::SubmitMode mode)
+{
+    auto& loom = Portal::Graphics::get_texture_manager();
+    if (!m_blank_image) {
+        const std::vector<uint8_t> zeros(m_layer_bytes, 0);
+        m_blank_image = loom.create_2d(get_width(), get_height(), get_format(), zeros.data());
+        if (!m_blank_image) {
+            return false;
+        }
+    }
+
+    return loom.blit_layer(m_blank_image, get_texture(),
+        { .dst_layer = layer, .filter = Portal::Graphics::FilterMode::NEAREST }, mode);
+}
+
+void TextureArrayBuffer::publish_head()
+{
+    m_push.head = m_write_head;
+    flush_push();
 }
 
 void TextureArrayBuffer::clear_layer(uint32_t layer)
