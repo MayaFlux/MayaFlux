@@ -13,6 +13,23 @@
 
 namespace MayaFlux::Buffers {
 
+namespace {
+
+    std::shared_ptr<VKBuffer> create_host_storage_buffer(size_t bytes, VKBuffer::Usage usage)
+    {
+        const auto service = Registry::BackendRegistry::instance()
+                                 .get_service<Registry::Service::BufferService>();
+        if (!service) {
+            return nullptr;
+        }
+
+        auto buffer = std::make_shared<VKBuffer>(bytes, usage, Kakshya::DataModality::UNKNOWN);
+        service->initialize_buffer(buffer);
+        return buffer;
+    }
+
+}
+
 TextureArrayBuffer::TextureArrayBuffer(
     uint32_t width,
     uint32_t height,
@@ -30,7 +47,7 @@ TextureArrayBuffer::TextureArrayBuffer(
     set_default_render_config(config);
 
     m_push.layer_count = m_layers;
-    m_push.weights.fill(1.0F);
+    m_weight_values.assign(std::max(m_layers, 2U), 1.0F);
 }
 
 TextureArrayBuffer::TextureArrayBuffer(
@@ -50,6 +67,7 @@ void TextureArrayBuffer::setup_processors(ProcessingToken token)
 void TextureArrayBuffer::setup_rendering(const RenderConfig& config)
 {
     ensure_array();
+    ensure_weights();
     TextureBuffer::setup_rendering(config);
 
     if (const auto processor = get_render_processor()) {
@@ -131,6 +149,8 @@ bool TextureArrayBuffer::push_layer_async(const std::shared_ptr<Core::VKImage>& 
         return false;
     }
 
+    stamp_ring_timing(m_write_head, m_frames_pushed);
+    ++m_frames_pushed;
     m_write_head = (m_write_head + 1) % m_layers;
     publish_head();
     return true;
@@ -194,20 +214,14 @@ void TextureArrayBuffer::enable_layer_data()
         return;
     }
 
-    const auto service = Registry::BackendRegistry::instance()
-                             .get_service<Registry::Service::BufferService>();
-    if (!service) {
+    m_layer_values.assign(static_cast<size_t>(m_layers) * 2, glm::vec4(0.0F));
+    m_layer_data = create_host_storage_buffer(
+        m_layer_values.size() * sizeof(glm::vec4), VKBuffer::Usage::HOST_STORAGE);
+    if (!m_layer_data) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             "TextureArrayBuffer: layer data needs a buffer service");
         return;
     }
-
-    m_layer_values.assign(static_cast<size_t>(m_layers) * 2, glm::vec4(0.0F));
-    m_layer_data = std::make_shared<VKBuffer>(
-        m_layer_values.size() * sizeof(glm::vec4),
-        VKBuffer::Usage::HOST_STORAGE,
-        Kakshya::DataModality::UNKNOWN);
-    service->initialize_buffer(m_layer_data);
 
     std::memcpy(m_layer_data->get_mapped_ptr(), m_layer_values.data(),
         m_layer_values.size() * sizeof(glm::vec4));
@@ -268,6 +282,26 @@ void TextureArrayBuffer::publish_head()
     flush_push();
 }
 
+void TextureArrayBuffer::stamp_ring_timing(uint32_t slot, uint64_t frame)
+{
+    if (!m_layer_data || slot >= m_layers) {
+        return;
+    }
+
+    const auto stamp = static_cast<float>(frame);
+    m_layer_values.at(static_cast<size_t>(slot) * 2 + 1) = glm::vec4(stamp, 0.0F, 0.0F, 1.0F);
+
+    for (uint32_t layer = 0; layer < m_layers; ++layer) {
+        auto& timing = m_layer_values[static_cast<size_t>(layer) * 2 + 1];
+        if (timing.w >= 0.5F) {
+            timing.y = stamp - timing.x;
+        }
+    }
+
+    std::memcpy(m_layer_data->get_mapped_ptr(), m_layer_values.data(),
+        m_layer_values.size() * sizeof(glm::vec4));
+}
+
 void TextureArrayBuffer::clear_layer(uint32_t layer)
 {
     if (m_blank.size() != m_layer_bytes) {
@@ -285,19 +319,19 @@ std::optional<Portal::Graphics::FitMode> TextureArrayBuffer::fit_for(uint32_t la
 
 void TextureArrayBuffer::set_weight(uint32_t layer, float weight)
 {
-    if (layer >= m_layers || layer >= m_push.weights.size()) {
+    if (layer >= m_layers) {
         return;
     }
 
-    m_push.weights.at(layer) = weight;
-    flush_push();
+    m_weight_values.at(layer) = weight;
+    write_weights();
 }
 
 void TextureArrayBuffer::set_weights(std::span<const float> weights)
 {
-    const auto count = std::min<size_t>({ weights.size(), m_layers, m_push.weights.size() });
-    std::copy_n(weights.begin(), count, m_push.weights.begin());
-    flush_push();
+    const auto count = std::min<size_t>({ weights.size(), m_layers, m_weight_values.size() });
+    std::copy_n(weights.begin(), count, m_weight_values.begin());
+    write_weights();
 }
 
 void TextureArrayBuffer::set_mode(uint32_t mode)
@@ -338,6 +372,32 @@ void TextureArrayBuffer::ensure_array()
     set_gpu_texture(std::move(image));
 }
 
+void TextureArrayBuffer::ensure_weights()
+{
+    if (m_weight_buffer) {
+        return;
+    }
+
+    m_weight_buffer = create_host_storage_buffer(
+        m_weight_values.size() * sizeof(float), VKBuffer::Usage::STORAGE_BDA);
+    if (!m_weight_buffer) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "TextureArrayBuffer: layer weights need a buffer service");
+        return;
+    }
+    write_weights();
+}
+
+void TextureArrayBuffer::write_weights()
+{
+    if (!m_weight_buffer) {
+        return;
+    }
+
+    std::memcpy(m_weight_buffer->get_mapped_ptr(), m_weight_values.data(),
+        m_weight_values.size() * sizeof(float));
+}
+
 void TextureArrayBuffer::enter_layer_mode()
 {
     if (m_layer_mode) {
@@ -370,10 +430,19 @@ void TextureArrayBuffer::flush_push()
         return;
     }
 
-    if (m_custom_push.empty()) {
-        processor->set_push_constant_data(m_push);
-    } else {
+    if (!m_custom_push.empty()) {
         processor->set_push_constant_data_raw(m_custom_push.data(), m_custom_push.size());
+        return;
+    }
+
+    ensure_weights();
+    if (!m_weight_buffer) {
+        return;
+    }
+
+    m_push.weights_address = m_weight_buffer->get_device_address();
+    if (m_push.weights_address != 0) {
+        processor->set_push_constant_data(m_push);
     }
 }
 

@@ -37,14 +37,14 @@ namespace MayaFlux::Buffers {
  * part replacing a larger one leaves nothing of it behind. Each layer may have its
  * own fit through set_layer_fit.
  *
- * The shipped shader, texture_array.frag, takes a push constant block of the layer
- * count, a mode number whose meaning belongs to the shader, and a weight for each
- * of the first WEIGHT_SLOTS layers, then the write head, so a shader can read the
- * array as a ring of past frames (include/history_ring.glsl). Choose a shader with
- * setup_rendering({ .fragment_shader = ... }). Extra textures such as a delay map,
- * or a second array, go in RenderConfig::additional_textures and bind from binding
- * 2 by the sampler's name. A shader with its own push constants replaces the block
- * through set_push_constants().
+ * The shipped shader, texture_array.frag, takes a push constant block holding the
+ * device address of a buffer with a weight for each layer, the layer count, a mode
+ * number whose meaning belongs to the shader, and the write head, so a shader can
+ * read the array as a ring of past frames (include/history_ring.glsl). Choose a
+ * shader with setup_rendering({ .fragment_shader = ... }). Extra textures such as a
+ * delay map, or a second array, go in RenderConfig::additional_textures and bind from
+ * binding 2 by the sampler's name. A shader with its own push constants replaces the
+ * block through set_push_constants().
  *
  * Two vec4 per layer reach the shader beyond the push constants once
  * enable_layer_data is called, or set_layer_params is, before the first frame. A
@@ -62,9 +62,6 @@ namespace MayaFlux::Buffers {
  */
 class MAYAFLUX_API TextureArrayBuffer : public TextureBuffer {
 public:
-    /** @brief Layers the shipped push constant block carries weights for. */
-    static constexpr uint32_t WEIGHT_SLOTS = 30;
-
     /**
      * @param width  Width of every layer in pixels.
      * @param height Height of every layer in pixels.
@@ -134,6 +131,13 @@ public:
     [[nodiscard]] bool has_layer_data() const { return m_layer_data != nullptr; }
 
     /**
+     * @brief The device buffer holding the per layer weights, or null before setup_rendering.
+     *
+     * Its device address is what the shipped shader reads the weights through.
+     */
+    [[nodiscard]] std::shared_ptr<VKBuffer> get_weights_buffer() const { return m_weight_buffer; }
+
+    /**
      * @brief Set the params of one layer, layerData[2 * layer]. Enables layer data.
      * @param layer  Layer index.
      * @param values Four floats whose meaning belongs to the shader.
@@ -191,7 +195,9 @@ public:
      * @brief Write a GPU image at the write head without waiting, and advance the head.
      *
      * The head does not move if the frame was not submitted. The head is sent to the
-     * shader after the weights in the default push block.
+     * shader in the default push block. When layer data is enabled,
+     * the written layer's timing gets its frame number and fed flag, and every fed
+     * layer's frames-behind value is updated.
      */
     bool push_layer_async(const std::shared_ptr<Core::VKImage>& image);
 
@@ -216,7 +222,7 @@ public:
      * @brief Set the weight of one layer.
      *
      * What a weight does is up to the shader. In the shipped shader a weight of
-     * zero or less hides the layer. Layers past WEIGHT_SLOTS have no weight.
+     * zero or less hides the layer.
      *
      * @param layer  Layer index.
      * @param weight Weight passed to the shader.
@@ -225,7 +231,7 @@ public:
 
     /**
      * @brief Set the weights of the first layers in order.
-     * @param weights Weights, at most WEIGHT_SLOTS or get_layer_count() are used.
+     * @param weights Weights, at most get_layer_count() are used.
      */
     void set_weights(std::span<const float> weights);
 
@@ -257,15 +263,16 @@ public:
 
 private:
     struct Push {
+        uint64_t weights_address {};
         uint32_t layer_count {};
         uint32_t mode {};
-        std::array<float, WEIGHT_SLOTS> weights {};
         uint32_t head {};
     };
 
     uint32_t m_layers;
     size_t m_layer_bytes;
     uint32_t m_write_head {};
+    uint64_t m_frames_pushed {};
     bool m_layer_mode {};
     std::optional<Portal::Graphics::FitMode> m_fit { Portal::Graphics::FitMode::STRETCH };
     Portal::Graphics::FilterMode m_filter { Portal::Graphics::FilterMode::LINEAR };
@@ -275,15 +282,20 @@ private:
     std::shared_ptr<Core::VKImage> m_blank_image;
     std::shared_ptr<VKBuffer> m_layer_data;
     std::vector<glm::vec4> m_layer_values;
+    std::shared_ptr<VKBuffer> m_weight_buffer;
+    std::vector<float> m_weight_values;
     Push m_push;
     std::vector<uint8_t> m_custom_push;
 
     void ensure_array();
+    void ensure_weights();
+    void write_weights();
     void enter_layer_mode();
     void flush_push();
     void clear_layer(uint32_t layer);
     bool blank_layer(uint32_t layer, Portal::Graphics::SubmitMode mode);
     void publish_head();
+    void stamp_ring_timing(uint32_t slot, uint64_t frame);
     void bind_layer_data();
     void write_layer_value(size_t index, const glm::vec4& values);
     [[nodiscard]] std::optional<Portal::Graphics::FitMode> fit_for(uint32_t layer) const;

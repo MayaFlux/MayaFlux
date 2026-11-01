@@ -384,7 +384,7 @@ namespace Kriya {
          *
          * Each cycle the image goes to the layer at the target's write head and the head
          * advances, so the array holds the newest frames in order. The write is submitted
-         * without waiting, and the head reaches the shader after the weights in the default
+         * without waiting, and the head reaches the shader in the default
          * push block. A source that is not a TextureBuffer with a texture writes nothing.
          *
          * @param source Buffer whose image is written.

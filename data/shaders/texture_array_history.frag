@@ -7,26 +7,31 @@ layout(location = 0) out vec4 outColor;
 
 layout(set = 0, binding = 1) uniform sampler2DArray textureArray;
 
-const uint WEIGHT_SLOTS = 30u;
+#extension GL_EXT_buffer_reference : require
+
+/// @brief Per layer weights, in a host visible buffer the array owns.
+layout(buffer_reference, std430) readonly buffer LayerWeights {
+    float value[];
+};
 
 /// @brief layer_count: layers in the ring, with no upper limit but the array's.
 /// @brief mode: 0 faded mean, 1 faded maximum, 2 minimum of the frames read.
-/// @brief weights[0]: fade per frame of age; 0 reads every frame at full weight.
-/// @brief weights[1]: share of the ring read, newest first, in (0, 1]; 0 reads all of it.
+/// @brief weights.value[0]: fade per frame of age; 0 reads every frame at full weight.
+/// @brief weights.value[1]: share of the ring read, newest first, in (0, 1]; 0 reads all of it.
 /// @brief head: the layer the next frame is written to.
 layout(push_constant) uniform PC {
+    LayerWeights weights;
     uint layer_count;
     uint mode;
-    float weights[WEIGHT_SLOTS];
     uint head;
 } pc;
 
 void main()
 {
     uint count = max(pc.layer_count, 1u);
-    float share = pc.weights[1] > 0.0 ? min(pc.weights[1], 1.0) : 1.0;
+    float share = pc.weights.value[1] > 0.0 ? min(pc.weights.value[1], 1.0) : 1.0;
     uint depth = clamp(uint(ceil(share * float(count))), 1u, count);
-    float fade = max(pc.weights[0], 0.0);
+    float fade = max(pc.weights.value[0], 0.0);
 
     vec4 accum = vec4(0.0);
     vec4 strongest = vec4(0.0);
