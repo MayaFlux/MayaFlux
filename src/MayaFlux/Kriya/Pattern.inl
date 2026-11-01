@@ -227,14 +227,33 @@ namespace Detail {
         uint64_t m_pass { 0 };
     };
 
+    template <typename Generator, typename Index>
+    class GeneratorValues {
+    public:
+        explicit GeneratorValues(Generator generator)
+            : m_generator(std::move(generator))
+        {
+        }
+
+        template <typename Callback>
+        bool deliver(Callback& callback)
+        {
+            return evaluate(m_generator, callback, m_index++);
+        }
+
+    private:
+        Generator m_generator;
+        Index m_index {};
+    };
+
     template <typename Domain, typename Index, typename Generator, typename Callback, typename Cursor>
     typename Domain::Routine timed_pattern(Generator generator, Callback callback, Cursor durations)
     {
         auto& promise = co_await typename Domain::GetPromise {};
-        Index index {};
+        GeneratorValues<Generator, Index> values(std::move(generator));
 
-        for (; !promise.should_terminate; ++index) {
-            if (!evaluate(generator, callback, index)) {
+        while (!promise.should_terminate) {
+            if (!values.deliver(callback)) {
                 co_return;
             }
 
@@ -252,10 +271,10 @@ namespace Detail {
     {
         co_await ConditionAwaiter { after_one_pass() };
 
-        Index index {};
+        GeneratorValues<Generator, Index> values(std::move(generator));
 
-        for (;; ++index) {
-            if (!evaluate(generator, callback, index)) {
+        for (;;) {
+            if (!values.deliver(callback)) {
                 co_return;
             }
 
