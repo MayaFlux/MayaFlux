@@ -233,6 +233,52 @@ namespace Detail {
         uint64_t m_pass { 0 };
     };
 
+    class TimeMapDurations {
+    public:
+        explicit TimeMapDurations(Kinesis::TimeMap map)
+            : m_map(std::move(map))
+        {
+        }
+
+        std::optional<double> next()
+        {
+            std::optional<double> gap;
+            if (!guarded([&] { gap = m_map(m_elapsed); })) {
+                return std::nullopt;
+            }
+            m_elapsed += *gap > 0.0 ? *gap : 0.0;
+            return gap;
+        }
+
+    private:
+        Kinesis::TimeMap m_map;
+        double m_elapsed { 0.0 };
+    };
+
+    template <typename Durations>
+    bool durations_missing(const Durations& durations)
+    {
+        if constexpr (std::same_as<Durations, std::vector<double>>) {
+            return durations.empty();
+        } else if constexpr (std::same_as<Durations, Kinesis::TimeMap>) {
+            return !durations.fn;
+        } else {
+            return is_unset(durations);
+        }
+    }
+
+    template <typename Durations>
+    auto make_durations(Durations durations)
+    {
+        if constexpr (std::same_as<Durations, std::vector<double>>) {
+            return ListDurations(std::move(durations));
+        } else if constexpr (std::same_as<Durations, Kinesis::TimeMap>) {
+            return TimeMapDurations(std::move(durations));
+        } else {
+            return FunctionDurations<Durations>(std::move(durations));
+        }
+    }
+
     template <typename Generator, typename Index>
     class GeneratorValues {
     public:
@@ -441,35 +487,20 @@ std::shared_ptr<Vruta::Routine> pattern(Generator generator, Callback callback, 
     }
 }
 
-template <std::incrementable Index, typename Values, typename Callback>
+template <std::incrementable Index, typename Values, typename Callback, typename Durations>
     requires PatternValues<Values, Index>
     && PatternCallback<Callback, pattern_value_t<Values, Index>>
-std::shared_ptr<Vruta::Routine> pattern(Values values, Callback callback, std::vector<double> durations, Vruta::ProcessingToken token)
+    && PatternDurations<Durations>
+std::shared_ptr<Vruta::Routine> pattern(Values values, Callback callback, Durations durations, Vruta::ProcessingToken token)
 {
-    if (Detail::is_unset(values) || Detail::is_unset(callback) || durations.empty()) {
+    if (Detail::is_unset(values) || Detail::is_unset(callback) || Detail::durations_missing(durations)) {
         MF_ERROR(Journal::Component::Kriya, Journal::Context::CoroutineScheduling,
-            "pattern requires a generator, a callback and at least one duration");
+            "pattern requires values, a callback and usable durations");
         return nullptr;
     }
 
     return Detail::launch_timed<Index>(
-        std::move(values), std::move(callback), Detail::ListDurations(std::move(durations)), token);
-}
-
-template <std::incrementable Index, typename Values, typename Callback, typename Source>
-    requires PatternValues<Values, Index>
-    && PatternCallback<Callback, pattern_value_t<Values, Index>>
-    && PatternDurationSource<Source>
-std::shared_ptr<Vruta::Routine> pattern(Values values, Callback callback, Source durations, Vruta::ProcessingToken token)
-{
-    if (Detail::is_unset(values) || Detail::is_unset(callback) || Detail::is_unset(durations)) {
-        MF_ERROR(Journal::Component::Kriya, Journal::Context::CoroutineScheduling,
-            "pattern requires a generator, a callback and a durations function");
-        return nullptr;
-    }
-
-    return Detail::launch_timed<Index>(
-        std::move(values), std::move(callback), Detail::FunctionDurations<Source>(std::move(durations)), token);
+        std::move(values), std::move(callback), Detail::make_durations(std::move(durations)), token);
 }
 
 } // namespace MayaFlux::Kriya
