@@ -99,6 +99,17 @@ public:
     void end_single_time_commands(vk::CommandBuffer command_buffer, vk::Queue queue);
 
     /**
+     * @brief End and submit a single-time command without waiting
+     * @param command_buffer Command buffer to submit
+     * @param queue Queue to submit to
+     * @return Point signaled when the submission completes, or an empty point if the submit failed
+     *
+     * Waits on the GPU for produced work, as end_single_time_commands does, then
+     * retires the command buffer against its point. A failed submit frees it.
+     */
+    TimelinePoint end_single_time_commands_async(vk::CommandBuffer command_buffer, vk::Queue queue);
+
+    /**
      * @brief Begin single-time command for compute operations
      * @return Command buffer ready for recording
      */

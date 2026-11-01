@@ -196,15 +196,16 @@ public:
      * @param dst      Destination image, distinct from @p src.
      * @param region   Subresources and offsets.
      * @param filter   Nearest or linear.
-     * @param deferred Record for deferred submission.
-     * @return True if the blit was recorded or executed.
+     * @param mode     IMMEDIATE waits, DEFERRED records into the batch a flush submits,
+     *                 ASYNC submits at once without waiting.
+     * @return True if the blit was recorded, executed or submitted.
      */
     bool blit_image(
         const std::shared_ptr<VKImage>& src,
         const std::shared_ptr<VKImage>& dst,
         const vk::ImageBlit& region,
         vk::Filter filter,
-        bool deferred = false);
+        SubmitMode mode = SubmitMode::IMMEDIATE);
 
     // ========================================================================
     // Sampler management
@@ -248,6 +249,20 @@ public:
      * @param recorder Command recording function
      */
     void execute_immediate_commands(const std::function<void(vk::CommandBuffer)>& recorder);
+
+    /**
+     * @brief Record and submit commands without waiting
+     * @param recorder   Command recording function
+     * @param keep_alive Objects the commands read or write, released once the submission completes
+     * @return Completion point on the graphics queue, or an empty point if the submit failed
+     *
+     * Ordered after earlier graphics queue work, and waits on the GPU for produced
+     * compute work. The point is noted as produced, so a host image copy made later
+     * waits for it. Submission is externally synchronized like every other submit.
+     */
+    TimelinePoint execute_async(
+        const std::function<void(vk::CommandBuffer)>& recorder,
+        std::vector<std::shared_ptr<void>> keep_alive = {});
 
     /**
      * @brief Record deferred command recording for buffer operations

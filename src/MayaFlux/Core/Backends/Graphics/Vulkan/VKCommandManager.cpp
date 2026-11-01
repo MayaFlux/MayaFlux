@@ -240,6 +240,22 @@ void VKCommandManager::end_single_time_commands(vk::CommandBuffer command_buffer
     free_command_buffer(command_buffer);
 }
 
+TimelinePoint VKCommandManager::end_single_time_commands_async(vk::CommandBuffer command_buffer, vk::Queue queue)
+{
+    command_buffer.end();
+
+    const vk::CommandBuffer commands[] = { command_buffer };
+    const auto waits = produced_waits(vk::PipelineStageFlagBits2::eAllCommands);
+    const TimelinePoint point = submit(queue, commands, waits);
+    if (!point) {
+        free_command_buffer(command_buffer);
+        return {};
+    }
+
+    retire(command_buffer, point);
+    return point;
+}
+
 void VKCommandManager::record_deferred_commands(
     const std::function<void(vk::CommandBuffer)>& recorder)
 {
