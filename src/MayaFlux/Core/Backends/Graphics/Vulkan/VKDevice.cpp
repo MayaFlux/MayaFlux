@@ -426,7 +426,7 @@ bool VKDevice::pick_physical_device(vk::Instance instance, const GraphicsBackend
     for (const auto& cand : candidates) {
         MF_INFO(Journal::Component::Core, Journal::Context::GraphicsBackend,
             "GPU [{}] {} | type={} driver={} ({}) api={}.{}.{} | uuid={} | "
-            "gfx={} compute={} transfer={} | present=gfx:{} mask:{:#x} mesh={} vram={}MB pci_bus={} | score={}{}{}",
+            "gfx={} compute={} transfer={} | present=gfx:{} mask:{:#x} hostImageCopy={} mesh={} vram={}MB pci_bus={} | score={}{}{}",
             cand.index, cand.name, vk::to_string(cand.type),
             vk::to_string(cand.driver_id), cand.driver_name,
             VK_API_VERSION_MAJOR(cand.api_version),
@@ -438,6 +438,7 @@ bool VKDevice::pick_physical_device(vk::Instance instance, const GraphicsBackend
             cand.families.transfer_family.has_value() ? std::to_string(cand.families.transfer_family.value()) : "none",
             cand.graphics_presents ? "yes" : "no",
             cand.present_family_mask,
+            cand.has_host_image_copy ? "yes" : "no",
             cand.has_mesh_shader ? "yes" : "no",
             cand.device_local_bytes >> 20U,
             cand.has_pci_info ? std::to_string(cand.pci_bus) : "n/a",
@@ -523,6 +524,23 @@ bool VKDevice::pick_physical_device(vk::Instance instance, const GraphicsBackend
     }
 
     if (!selected) {
+        const bool missing_host_image_copy = std::ranges::any_of(candidates, [&backend_info](const DeviceCandidate& cand) {
+            return cand.families.graphics_family.has_value()
+                && cand.api_version >= VK_API_VERSION_1_4
+                && cand.has_swapchain
+                && (!backend_info.require_presentation || cand.graphics_presents)
+                && !cand.has_host_image_copy;
+        });
+
+        if (missing_host_image_copy) {
+            error<std::runtime_error>(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                std::source_location::current(),
+                "No suitable GPU found among {} enumerated device(s): hostImageCopy is required. "
+                "If your GPU supports hostImageCopy with a newer driver, update the driver and try again; "
+                "see the candidate list above for rejection reasons",
+                candidates.size());
+        }
+
         error<std::runtime_error>(Journal::Component::Core, Journal::Context::GraphicsBackend,
             std::source_location::current(),
             "No suitable GPU found among {} enumerated device(s); "
