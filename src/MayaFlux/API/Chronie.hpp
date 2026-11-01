@@ -103,21 +103,6 @@ MAYAFLUX_API std::shared_ptr<Vruta::SoundRoutine> schedule_line(float start_valu
 MAYAFLUX_API void schedule_pattern(std::function<std::any(uint64_t)> pattern_func, std::function<void(std::any)> callback, std::vector<double> durations, std::string name = "", Vruta::ProcessingToken token = Vruta::ProcessingToken::SAMPLE_ACCURATE);
 
 /**
- * @brief Schedules a pattern generator with one interval between steps
- * @param pattern_func Function that generates pattern values based on step index
- * @param callback Function to call with each pattern value
- * @param interval_seconds Time between pattern steps
- * @param name Name of the pattern task (optional but recommended).
-     If not provided, a default name will be generated.
- * @param token Processing token to determine which scheduler rate to use (default: SAMPLE_ACCURATE)
- * @deprecated Pass a list of durations instead, with the interval as a list of one.
- *
- * Forwards to the durations overload. Uses the task scheduler from the default engine.
- */
-[[deprecated("Pass a std::vector<double> of durations; a single interval is a list of one")]]
-MAYAFLUX_API void schedule_pattern(std::function<std::any(uint64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds, std::string name = "", Vruta::ProcessingToken token = Vruta::ProcessingToken::SAMPLE_ACCURATE);
-
-/**
  * @brief Gets a pointer to a task's current value
  * @param name Name of the task
  * @return Pointer to the float value, or nullptr if not found
