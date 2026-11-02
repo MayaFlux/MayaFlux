@@ -167,7 +167,7 @@ struct MAYAFLUX_API RegionGroup {
     {
         std::vector<Region> result;
         for (const auto& region : regions) {
-            if (region.get_label() == label) {
+            if (region.label == label) {
                 result.push_back(region);
             }
         }
@@ -197,7 +197,6 @@ struct MAYAFLUX_API RegionGroup {
         }
 
         Region bounds(min_coords, max_coords);
-        bounds.set_attribute("type", "bounding_box");
         bounds.set_attribute("source_group", name);
         return bounds;
     }

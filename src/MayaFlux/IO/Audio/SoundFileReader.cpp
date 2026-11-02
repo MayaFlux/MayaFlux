@@ -25,8 +25,7 @@ Kakshya::Region FileRegion::to_region() const
     }
 
     Kakshya::Region region(start_coordinates, end_coordinates);
-    region.set_attribute("label", name);
-    region.set_attribute("type", type);
+    region.label = name;
 
     for (const auto& [key, value] : attributes) {
         region.set_attribute(key, value);

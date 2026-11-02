@@ -24,7 +24,7 @@ std::vector<Region> find_regions_with_label(const RegionGroup& group, const std:
     std::vector<Region> result;
     std::ranges::copy_if(group.regions, std::back_inserter(result),
         [&label](const Region& region) {
-            return region.get_label() == label;
+            return region.label == label;
         });
     return result;
 }
@@ -113,7 +113,6 @@ Region get_bounding_region(const RegionGroup& group)
     }
 
     Region bounds(min_coords, max_coords);
-    set_region_attribute(bounds, "type", std::string("bounding_box"));
     return bounds;
 }
 

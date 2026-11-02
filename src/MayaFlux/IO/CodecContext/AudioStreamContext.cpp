@@ -221,7 +221,6 @@ std::vector<FileRegion> AudioStreamContext::extract_cue_regions(
         r.name = tag->value;
         r.start_coordinates = { static_cast<uint64_t>(idx) };
         r.end_coordinates = { static_cast<uint64_t>(idx) };
-        r.attributes["label"] = std::string(tag->value);
         regions.push_back(std::move(r));
         ++idx;
     }

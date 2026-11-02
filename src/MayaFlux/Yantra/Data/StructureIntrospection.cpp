@@ -95,11 +95,10 @@ infer_from_region(const Kakshya::Region& region, const std::shared_ptr<Kakshya::
         shape.push_back(std::abs(size) + 1);
         shape.push_back(region.end_coordinates[1]);
 
-        if (auto region_modality = region.get_attribute<Kakshya::DataModality>("modality");
-            region_modality.has_value()) {
+        if (region.modality.has_value()) {
 
-            dimensions = Kakshya::DataDimension::create_dimensions(region_modality.value(), shape, structure.memory_layout);
-            modality = region_modality.value();
+            dimensions = Kakshya::DataDimension::create_dimensions(*region.modality, shape, structure.memory_layout);
+            modality = *region.modality;
         } else {
             dimensions = Kakshya::DataDimension::create_dimensions(modality, shape, structure.memory_layout);
         }

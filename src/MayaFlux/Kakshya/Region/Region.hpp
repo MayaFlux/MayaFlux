@@ -77,6 +77,11 @@ struct MAYAFLUX_API Region {
     /** @brief Ending frame index (inclusive) */
     std::vector<uint64_t> end_coordinates;
 
+    /** @brief Data modality of this region, when it is set. */
+    std::optional<DataModality> modality;
+
+    /** @brief Display label, when one was given. */
+    std::optional<std::string> label;
     /** @brief Flexible key-value store for region-specific attributes */
     std::unordered_map<std::string, std::any> attributes;
 
@@ -122,12 +127,9 @@ struct MAYAFLUX_API Region {
         const std::any& extra_data = {})
     {
         std::unordered_map<std::string, std::any> attrs;
-        if (!label.empty())
-            attrs["label"] = label;
         if (extra_data.has_value())
             attrs["data"] = extra_data;
-        attrs["type"] = "time_point";
-        return Region({ frame }, attrs);
+        return with_label(Region({ frame }, attrs), label);
     }
 
     /**
@@ -144,12 +146,9 @@ struct MAYAFLUX_API Region {
         const std::any& extra_data = {})
     {
         std::unordered_map<std::string, std::any> attrs;
-        if (!label.empty())
-            attrs["label"] = label;
         if (extra_data.has_value())
             attrs["data"] = extra_data;
-        attrs["type"] = "time_span";
-        return Region({ start_frame }, { end_frame }, attrs);
+        return with_label(Region({ start_frame }, { end_frame }, attrs), label);
     }
 
     /**
@@ -164,10 +163,9 @@ struct MAYAFLUX_API Region {
         const std::string& label = "")
     {
         std::unordered_map<std::string, std::any> attrs;
-        if (!label.empty())
-            attrs["label"] = label;
-        attrs["type"] = "audio_point";
-        return Region({ frame, channel }, attrs);
+        Region region = with_label(Region({ frame, channel }, attrs), label);
+        region.modality = DataModality::AUDIO_1D;
+        return region;
     }
 
     /**
@@ -186,11 +184,10 @@ struct MAYAFLUX_API Region {
         const std::string& label = "")
     {
         std::unordered_map<std::string, std::any> attrs;
-        if (!label.empty())
-            attrs["label"] = label;
-        attrs["type"] = "audio_region";
-        return Region({ start_frame, start_channel },
-            { end_frame, end_channel }, attrs);
+        Region region = with_label(
+            Region({ start_frame, start_channel }, { end_frame, end_channel }, attrs), label);
+        region.modality = DataModality::AUDIO_MULTICHANNEL;
+        return region;
     }
 
     /**
@@ -207,10 +204,7 @@ struct MAYAFLUX_API Region {
         const std::string& label = "")
     {
         std::unordered_map<std::string, std::any> attrs;
-        if (!label.empty())
-            attrs["label"] = label;
-        attrs["type"] = "image_rect";
-        return Region({ x1, y1 }, { x2, y2 }, attrs);
+        return with_label(Region({ x1, y1 }, { x2, y2 }, attrs), label);
     }
 
     /**
@@ -231,11 +225,7 @@ struct MAYAFLUX_API Region {
         const std::string& label = "")
     {
         std::unordered_map<std::string, std::any> attrs;
-        if (!label.empty())
-            attrs["label"] = label;
-        attrs["type"] = "video_region";
-        return Region({ start_frame, x1, y1 },
-            { end_frame, x2, y2 }, attrs);
+        return with_label(Region({ start_frame, x1, y1 }, { end_frame, x2, y2 }, attrs), label);
     }
 
     /**
@@ -348,22 +338,13 @@ struct MAYAFLUX_API Region {
     }
 
     /**
-     * @brief Get the label attribute (if present).
-     * @return The label string, or empty if not set.
+     * @brief Sets the label when one is given.
      */
-    std::string get_label() const
+    static Region with_label(Region region, const std::string& label)
     {
-        auto label = get_attribute<std::string>("label");
-        return label.value_or("");
-    }
-
-    /**
-     * @brief Set the label attribute.
-     * @param label The label string.
-     */
-    void set_label(const std::string& label)
-    {
-        set_attribute("label", label);
+        if (!label.empty())
+            region.label = label;
+        return region;
     }
 
     /**
