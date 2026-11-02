@@ -51,6 +51,42 @@ private:
     T m_initial;
 };
 
+namespace detail {
+    template <auto Member>
+    struct MemberOf;
+
+    template <typename Owner, typename T, T Owner::*Member>
+    struct MemberOf<Member> {
+        using value_type = T;
+    };
+
+    template <auto Member>
+    const void* member_identity() noexcept
+    {
+        static constexpr char tag = 0;
+        return &tag;
+    }
+}
+
+/**
+ * @class FacetMember
+ * @brief Key for one data member of a struct, identified by its member pointer.
+ *
+ * A struct declares its keys with a static describe_facets() returning a tuple
+ * of FacetMember values. Every instance of the struct produces the same keys.
+ *
+ * @tparam Member Pointer to a non-static data member.
+ */
+template <auto Member>
+struct FacetMember {
+    using value_type = typename detail::MemberOf<Member>::value_type;
+
+    static constexpr auto member = Member;
+
+    /** @brief Identity shared by every instance of the owning struct. */
+    [[nodiscard]] static const void* id() noexcept { return detail::member_identity<Member>(); }
+};
+
 /**
  * @class Facets
  * @brief Arbitrary typed attributes keyed by Facet objects.
@@ -75,11 +111,49 @@ public:
         set(key, key.initial());
     }
 
+    /** @brief Stores @p value under the member key @p key, replacing any previous value. */
+    template <auto Member>
+    void set(FacetMember<Member>, std::type_identity_t<typename FacetMember<Member>::value_type> value)
+    {
+        using T = typename FacetMember<Member>::value_type;
+        m_entries.insert_or_assign(FacetMember<Member>::id(), std::make_shared<Entry<T>>(std::shared_ptr<const void> {}, std::move(value)));
+    }
+
+    /**
+     * @brief Builds a bag holding every data member of @p value.
+     * @tparam S A struct with a static describe_facets() returning a tuple of FacetMember.
+     * @return One entry per member, keyed by the member, with its current value.
+     */
+    template <typename S>
+    requires requires { S::describe_facets(); }
+    [[nodiscard]] static Facets from(const S& value)
+    {
+        Facets bag;
+        std::apply(
+            [&](auto... keys) {
+                (bag.set(keys, value.*(decltype(keys)::member)), ...);
+            },
+            S::describe_facets());
+        return bag;
+    }
+
     /** @brief The value under @p key, or nullptr when absent. */
     template <typename T>
     [[nodiscard]] const T* get(const Facet<T>& key) const
     {
         const auto it = m_entries.find(key.id());
+        if (it == m_entries.end()) {
+            return nullptr;
+        }
+        return &static_cast<const Entry<T>*>(it->second.get())->value;
+    }
+
+    /** @brief The value under the member key @p key, or nullptr when absent. */
+    template <auto Member>
+    [[nodiscard]] const typename FacetMember<Member>::value_type* get(FacetMember<Member>) const
+    {
+        using T = typename FacetMember<Member>::value_type;
+        const auto it = m_entries.find(FacetMember<Member>::id());
         if (it == m_entries.end()) {
             return nullptr;
         }
