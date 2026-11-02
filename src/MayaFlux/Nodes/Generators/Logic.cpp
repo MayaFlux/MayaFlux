@@ -610,7 +610,13 @@ void Logic::add_input_node(const std::shared_ptr<Node>& node)
 void Logic::set_input_nodes(std::vector<std::shared_ptr<Node>> nodes)
 {
     std::erase(nodes, nullptr);
+    for (const auto& node : m_input_nodes) {
+        release_modulator(node);
+    }
     m_input_nodes = std::move(nodes);
+    for (const auto& node : m_input_nodes) {
+        adopt_modulator(node);
+    }
     if (m_input_count < m_input_nodes.size()) {
         m_input_count = m_input_nodes.size();
     }

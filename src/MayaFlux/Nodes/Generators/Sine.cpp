@@ -55,16 +55,22 @@ void Sine::update_phase_increment(double frequency)
 
 void Sine::set_frequency_modulator(const std::shared_ptr<Node>& modulator)
 {
+    release_modulator(m_frequency_modulator);
     m_frequency_modulator = modulator;
+    adopt_modulator(m_frequency_modulator);
 }
 
 void Sine::set_amplitude_modulator(const std::shared_ptr<Node>& modulator)
 {
+    release_modulator(m_amplitude_modulator);
     m_amplitude_modulator = modulator;
+    adopt_modulator(m_amplitude_modulator);
 }
 
 void Sine::clear_modulators()
 {
+    release_modulator(m_frequency_modulator);
+    release_modulator(m_amplitude_modulator);
     m_frequency_modulator = nullptr;
     m_amplitude_modulator = nullptr;
     reset(m_frequency, m_amplitude, m_offset);

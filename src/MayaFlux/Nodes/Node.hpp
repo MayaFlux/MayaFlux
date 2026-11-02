@@ -321,6 +321,40 @@ public:
     void unregister_channel_usage(uint32_t channel_id);
 
     /**
+     * @brief Adds one inherited use of a channel to this node and its modulators
+     * @param channel_id The channel the consuming node is used on
+     *
+     * register_channel_usage is a channel claiming the node directly through
+     * routing. This is the counted form: a consuming node adds one use on each
+     * modulator it holds. The channel stays in this node's mask until every
+     * use added here has been removed, so several consumers can share one
+     * modulator without one of them withdrawing the channel from the others.
+     */
+    void add_channel_usage(uint32_t channel_id);
+
+    /**
+     * @brief Removes one inherited use added by add_channel_usage
+     * @param channel_id The channel the consuming node was used on
+     */
+    void remove_channel_usage(uint32_t channel_id);
+
+    /**
+     * @brief Gives a newly held modulator every channel this node is used on
+     * @param modulator The node being attached, ignored when null
+     *
+     * Call from a setter after assigning the modulator.
+     */
+    void adopt_modulator(const std::shared_ptr<Node>& modulator);
+
+    /**
+     * @brief Withdraws every channel this node gave a modulator through adopt_modulator
+     * @param modulator The node being detached, ignored when null
+     *
+     * Call from a setter before replacing or clearing the modulator.
+     */
+    void release_modulator(const std::shared_ptr<Node>& modulator);
+
+    /**
      * @brief Checks if the node is currently used by a specific channel
      * @param channel_id The ID of the channel to check
      */
@@ -749,8 +783,26 @@ public:
 private:
     /**
      * @brief Bitmask tracking which channels are currently using this node
+     *
+     * A channel is set while it is registered directly or at least one
+     * consumer path on it is held through add_channel_usage.
      */
     std::atomic<uint32_t> m_active_channels_mask { 0 };
+
+    /**
+     * @brief Channels registered directly through register_channel_usage
+     */
+    std::atomic<uint32_t> m_direct_channels_mask { 0 };
+
+    /**
+     * @brief Per channel count of consumer paths held through add_channel_usage
+     */
+    std::array<std::atomic<uint32_t>, 32> m_channel_usage_counts {};
+
+    /**
+     * @brief Recomputes one channel's bit in the active mask from direct and counted usage
+     */
+    void refresh_channel_bit(uint32_t channel_id);
 
     /**
      * @brief Bitmask tracking which channels have requested a reset

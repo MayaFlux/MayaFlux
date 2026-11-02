@@ -60,16 +60,22 @@ void Impulse::update_phase_increment(double frequency)
 
 void Impulse::set_frequency_modulator(const std::shared_ptr<Node>& modulator)
 {
+    release_modulator(m_frequency_modulator);
     m_frequency_modulator = modulator;
+    adopt_modulator(m_frequency_modulator);
 }
 
 void Impulse::set_amplitude_modulator(const std::shared_ptr<Node>& modulator)
 {
+    release_modulator(m_amplitude_modulator);
     m_amplitude_modulator = modulator;
+    adopt_modulator(m_amplitude_modulator);
 }
 
 void Impulse::clear_modulators()
 {
+    release_modulator(m_frequency_modulator);
+    release_modulator(m_amplitude_modulator);
     m_frequency_modulator = nullptr;
     m_amplitude_modulator = nullptr;
 }

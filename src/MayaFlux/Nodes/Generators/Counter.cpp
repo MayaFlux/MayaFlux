@@ -23,8 +23,18 @@ Counter::Counter(const std::shared_ptr<Node>& reset_trigger, uint32_t modulo, in
 
 void Counter::set_modulo(uint32_t modulo) { m_modulo = modulo; }
 void Counter::set_step(int32_t step) { m_step = step; }
-void Counter::set_reset_trigger(const std::shared_ptr<Node>& trigger) { m_reset_trigger = trigger; }
-void Counter::clear_reset_trigger() { m_reset_trigger = nullptr; }
+void Counter::set_reset_trigger(const std::shared_ptr<Node>& trigger)
+{
+    release_modulator(m_reset_trigger);
+    m_reset_trigger = trigger;
+    adopt_modulator(m_reset_trigger);
+}
+
+void Counter::clear_reset_trigger()
+{
+    release_modulator(m_reset_trigger);
+    m_reset_trigger = nullptr;
+}
 void Counter::reset() { m_count = 0; }
 
 HookId Counter::on_increment(const TypedHook<GeneratorContext>& callback)

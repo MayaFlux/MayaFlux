@@ -55,7 +55,14 @@ void Node::register_channel_usage(uint32_t channel_id)
 
     auto channel_bit = static_cast<uint32_t>((0x0ffffffff) & (1ULL << (uint64_t)channel_id));
 
-    m_active_channels_mask.fetch_or(channel_bit, std::memory_order_acq_rel);
+    uint32_t previous = m_direct_channels_mask.fetch_or(channel_bit, std::memory_order_acq_rel);
+    if (previous & channel_bit)
+        return;
+
+    refresh_channel_bit(channel_id);
+    for (const auto& [role, modulator] : get_modulators()) {
+        modulator->add_channel_usage(channel_id);
+    }
 }
 
 void Node::unregister_channel_usage(uint32_t channel_id)
@@ -64,8 +71,89 @@ void Node::unregister_channel_usage(uint32_t channel_id)
         return;
     auto channel_bit = static_cast<uint32_t>((0x0ffffffff) & (1ULL << (uint64_t)channel_id));
 
-    m_active_channels_mask.fetch_and(~channel_bit, std::memory_order_acq_rel);
-    m_pending_reset_mask.fetch_and(~channel_bit, std::memory_order_acq_rel);
+    uint32_t previous = m_direct_channels_mask.fetch_and(~channel_bit, std::memory_order_acq_rel);
+    if (!(previous & channel_bit))
+        return;
+
+    refresh_channel_bit(channel_id);
+    for (const auto& [role, modulator] : get_modulators()) {
+        modulator->remove_channel_usage(channel_id);
+    }
+}
+
+void Node::add_channel_usage(uint32_t channel_id)
+{
+    if (channel_id >= 32)
+        return;
+
+    m_channel_usage_counts[channel_id].fetch_add(1, std::memory_order_acq_rel);
+    refresh_channel_bit(channel_id);
+    for (const auto& [role, modulator] : get_modulators()) {
+        modulator->add_channel_usage(channel_id);
+    }
+}
+
+void Node::remove_channel_usage(uint32_t channel_id)
+{
+    if (channel_id >= 32)
+        return;
+
+    auto& count = m_channel_usage_counts[channel_id];
+    uint32_t current = count.load(std::memory_order_acquire);
+    do {
+        if (current == 0)
+            return;
+    } while (!count.compare_exchange_weak(current, current - 1, std::memory_order_acq_rel));
+
+    refresh_channel_bit(channel_id);
+    for (const auto& [role, modulator] : get_modulators()) {
+        modulator->remove_channel_usage(channel_id);
+    }
+}
+
+void Node::adopt_modulator(const std::shared_ptr<Node>& modulator)
+{
+    if (!modulator)
+        return;
+
+    uint32_t direct = m_direct_channels_mask.load(std::memory_order_acquire);
+    for (uint32_t channel = 0; channel < 32; ++channel) {
+        uint32_t paths = ((direct >> channel) & 1U)
+            + m_channel_usage_counts[channel].load(std::memory_order_acquire);
+        for (uint32_t i = 0; i < paths; ++i) {
+            modulator->add_channel_usage(channel);
+        }
+    }
+}
+
+void Node::release_modulator(const std::shared_ptr<Node>& modulator)
+{
+    if (!modulator)
+        return;
+
+    uint32_t direct = m_direct_channels_mask.load(std::memory_order_acquire);
+    for (uint32_t channel = 0; channel < 32; ++channel) {
+        uint32_t paths = ((direct >> channel) & 1U)
+            + m_channel_usage_counts[channel].load(std::memory_order_acquire);
+        for (uint32_t i = 0; i < paths; ++i) {
+            modulator->remove_channel_usage(channel);
+        }
+    }
+}
+
+void Node::refresh_channel_bit(uint32_t channel_id)
+{
+    auto channel_bit = static_cast<uint32_t>((0x0ffffffff) & (1ULL << (uint64_t)channel_id));
+
+    bool used = (m_direct_channels_mask.load(std::memory_order_acquire) & channel_bit) != 0
+        || m_channel_usage_counts[channel_id].load(std::memory_order_acquire) > 0;
+
+    if (used) {
+        m_active_channels_mask.fetch_or(channel_bit, std::memory_order_acq_rel);
+    } else {
+        m_active_channels_mask.fetch_and(~channel_bit, std::memory_order_acq_rel);
+        m_pending_reset_mask.fetch_and(~channel_bit, std::memory_order_acq_rel);
+    }
 }
 
 bool Node::is_used_by_channel(uint32_t channel_id) const
@@ -82,6 +170,9 @@ void Node::request_reset_from_channel(uint32_t channel_id)
 {
     if (channel_id >= 32)
         return;
+    for (const auto& [role, modulator] : get_modulators()) {
+        modulator->request_reset_from_channel(channel_id);
+    }
     auto channel_bit = static_cast<uint32_t>((0x0ffffffff) & (1ULL << (uint64_t)channel_id));
     uint32_t old_pending = m_pending_reset_mask.fetch_or(channel_bit, std::memory_order_acq_rel);
     uint32_t new_pending = old_pending | channel_bit;

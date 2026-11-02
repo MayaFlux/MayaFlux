@@ -415,7 +415,12 @@ public:
      * Connects the filter to a source of input samples, allowing
      * filters to be chained together or connected to generators.
      */
-    inline void set_input_node(const std::shared_ptr<Node>& input_node) { m_input_node = input_node; }
+    inline void set_input_node(const std::shared_ptr<Node>& input_node)
+    {
+        release_modulator(m_input_node);
+        m_input_node = input_node;
+        adopt_modulator(m_input_node);
+    }
 
     /**
      * @brief Gets the input node for the filter

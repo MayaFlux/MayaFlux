@@ -540,7 +540,12 @@ public:
      *
      * Configures the node to receive input from another node
      */
-    inline void set_input_node(const std::shared_ptr<Node>& input_node) { m_input_node = input_node; }
+    inline void set_input_node(const std::shared_ptr<Node>& input_node)
+    {
+        release_modulator(m_input_node);
+        m_input_node = input_node;
+        adopt_modulator(m_input_node);
+    }
 
     /**
      * @brief Gets the current computational model
