@@ -1,5 +1,6 @@
 #include "WaveguideNetwork.hpp"
 
+#include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Nodes/Filters/FIR.hpp"
 #include "MayaFlux/Nodes/Filters/Filter.hpp"
 #include "MayaFlux/Transitive/Reflect/EnumReflect.hpp"
@@ -9,6 +10,14 @@ namespace MayaFlux::Nodes::Network {
 namespace {
 
     constexpr double k_continuous_ceiling = 4.0;
+
+    /**
+     * @brief Samples each pass spends outside the delay line
+     *
+     * A value is read before the next one is pushed, which adds one sample per
+     * pass, and the default two-tap loop filter adds half a sample of group delay.
+     */
+    constexpr double k_pass_latency = 1.5;
 
     /**
      * @brief Largest magnitude currently held on either rail
@@ -130,7 +139,7 @@ void WaveguideNetwork::compute_delay_length()
     const double passes = (m_type == WaveguideType::TUBE) ? 4.0 : 1.0;
     double total_delay = static_cast<double>(m_sample_rate) / (passes * m_fundamental);
 
-    total_delay -= 0.5;
+    total_delay -= k_pass_latency;
 
     m_delay_length_integer = static_cast<size_t>(total_delay);
     m_delay_length_fraction = total_delay - static_cast<double>(m_delay_length_integer);
@@ -144,11 +153,20 @@ void WaveguideNetwork::compute_delay_length()
 
 void WaveguideNetwork::create_default_loop_filter()
 {
-    auto filter = std::make_shared<Filters::FIR>(
-        std::vector<double> { 0.5, 0.5 });
+    if (m_segments.empty()) {
+        return;
+    }
 
-    if (!m_segments.empty()) {
-        m_segments[0].loop_filter = filter;
+    const auto make_filter = [] {
+        return std::make_shared<Filters::FIR>(std::vector<double> { 0.5, 0.5 });
+    };
+
+    auto& seg = m_segments[0];
+    if (m_type == WaveguideType::TUBE) {
+        seg.loop_filter_open = make_filter();
+        seg.loop_filter_closed = make_filter();
+    } else {
+        seg.loop_filter = make_filter();
     }
 }
 
@@ -264,6 +282,8 @@ void WaveguideNetwork::process_bidirectional(WaveguideSegment& seg,
         ? 1.0 / seg.loss_factor
         : 1.0;
     DriveLimiter limiter(m_delay_length_integer);
+    auto* filt_open = seg.loop_filter_open.get();
+    auto* filt_closed = seg.loop_filter_closed.get();
 
     for (unsigned int i = 0; i < num_samples; ++i) {
         const double exciter = generate_exciter_sample();
@@ -273,11 +293,6 @@ void WaveguideNetwork::process_bidirectional(WaveguideSegment& seg,
 
         const double minus_end = read_with_interpolation(
             seg.p_minus, m_delay_length_integer, m_delay_length_fraction);
-
-        auto* filt_open = seg.loop_filter_open ? seg.loop_filter_open.get()
-                                               : seg.loop_filter.get();
-        auto* filt_closed = seg.loop_filter_closed ? seg.loop_filter_closed.get()
-                                                   : seg.loop_filter.get();
 
         const double filtered_plus = (!continuous && filt_open)
             ? filt_open->process_sample(plus_end)
@@ -509,11 +524,60 @@ double WaveguideNetwork::get_loss_factor() const
     return m_segments.empty() ? 0.996 : m_segments[0].loss_factor;
 }
 
-void WaveguideNetwork::set_loop_filter(const std::shared_ptr<Filters::Filter>& filter)
+void WaveguideNetwork::set_loop_filter(const std::shared_ptr<Filters::Filter>& filter,
+    Termination end)
 {
-    if (!m_segments.empty()) {
-        m_segments[0].loop_filter = filter;
+    if (m_segments.empty()) {
+        return;
     }
+
+    auto& seg = m_segments[0];
+
+    if (m_type == WaveguideType::STRING) {
+        if (end != Termination::OPEN) {
+            MF_WARN(Journal::Component::Nodes, Journal::Context::Init,
+                "WaveguideNetwork::set_loop_filter: a STRING has one termination, installing as its loop filter");
+        }
+        seg.loop_filter = filter;
+        return;
+    }
+
+    auto& target = (end == Termination::OPEN) ? seg.loop_filter_open : seg.loop_filter_closed;
+    const auto& other = (end == Termination::OPEN) ? seg.loop_filter_closed : seg.loop_filter_open;
+
+    if (filter && filter == other) {
+        MF_ERROR(Journal::Component::Nodes, Journal::Context::Init,
+            "WaveguideNetwork::set_loop_filter: the filter is already installed at the other end, each end needs its own filter");
+        return;
+    }
+
+    target = filter;
+}
+
+void WaveguideNetwork::set_loop_filters(const std::shared_ptr<Filters::Filter>& open,
+    const std::shared_ptr<Filters::Filter>& closed)
+{
+    if (m_segments.empty()) {
+        return;
+    }
+
+    auto& seg = m_segments[0];
+
+    if (m_type == WaveguideType::STRING) {
+        MF_WARN(Journal::Component::Nodes, Journal::Context::Init,
+            "WaveguideNetwork::set_loop_filters: a STRING has one termination, installing the open filter as its loop filter");
+        seg.loop_filter = open;
+        return;
+    }
+
+    if (open && open == closed) {
+        MF_ERROR(Journal::Component::Nodes, Journal::Context::Init,
+            "WaveguideNetwork::set_loop_filters: open and closed are the same filter, each end needs its own filter");
+        return;
+    }
+
+    seg.loop_filter_open = open;
+    seg.loop_filter_closed = closed;
 }
 
 void WaveguideNetwork::set_pickup_position(double position)
@@ -529,20 +593,6 @@ double WaveguideNetwork::get_pickup_position() const
         return 0.5;
     }
     return static_cast<double>(m_pickup_sample) / static_cast<double>(m_delay_length_integer);
-}
-
-void WaveguideNetwork::set_loop_filter_open(const std::shared_ptr<Filters::Filter>& filter)
-{
-    if (!m_segments.empty()) {
-        m_segments[0].loop_filter_open = filter;
-    }
-}
-
-void WaveguideNetwork::set_loop_filter_closed(const std::shared_ptr<Filters::Filter>& filter)
-{
-    if (!m_segments.empty()) {
-        m_segments[0].loop_filter_closed = filter;
-    }
 }
 
 //-----------------------------------------------------------------------------

@@ -46,9 +46,9 @@ namespace MayaFlux::Nodes::Network {
  *   - Open end (bell): pressure node, sign inverted
  *   Output is the physical pressure sum p_plus[pickup] + p_minus[pickup].
  *
- *     exciter ──► p_plus  ──► [delay N] ──► loop_filter ──► loss ──► open-end  (−)
+ *     exciter ──► p_plus  ──► [delay N] ──► open filter ──► loss ──► open-end  (−)
  *     output  ◄── tap                                                     │
- *                 p_minus ◄── [delay N] ◄── loop_filter ◄── loss ◄── closed-end (+)
+ *                 p_minus ◄── [delay N] ◄── closed filter ◄── loss ◄── closed-end (+)
  *
  * EXCITATION:
  * ===========
@@ -117,6 +117,18 @@ public:
     };
 
     /**
+     * @enum Termination
+     * @brief Which end of the waveguide a loop filter belongs to
+     *
+     * A TUBE has two terminations, each with its own filter and state. A STRING
+     * has one loop termination, which is addressed as OPEN.
+     */
+    enum class Termination : uint8_t {
+        OPEN, ///< Bell or bridge end (radiation, HF rolloff); the only end of a STRING
+        CLOSED, ///< Mouthpiece or nut end (reed or embouchure losses)
+    };
+
+    /**
      * @struct WaveguideSegment
      * @brief 1D delay-line segment supporting both uni- and bidirectional propagation
      *
@@ -132,7 +144,8 @@ public:
      *   At the closed end:  p_plus[0] = p_minus[end]
      *   Output is p_plus[pickup] + p_minus[pickup] (physical pressure sum).
      *
-     * Both rails share the same integer/fractional delay length and loop filter.
+     * Both rails share the same integer/fractional delay length. Each end of a
+     * TUBE has its own loop filter, so the two rails never share filter state.
      * The propagation mode is set once at construction and never changes.
      */
     struct WaveguideSegment {
@@ -147,9 +160,9 @@ public:
 
         Memory::HistoryBuffer<double> p_plus; ///< Forward-traveling wave rail
         Memory::HistoryBuffer<double> p_minus; ///< Backward-traveling wave rail (BIDIRECTIONAL only)
-        std::shared_ptr<Filters::Filter> loop_filter; ///< UNIDIRECTIONAL: single termination filter
-        std::shared_ptr<Filters::Filter> loop_filter_closed; ///< BIDIRECTIONAL: closed-end filter (mouthpiece/nut)
-        std::shared_ptr<Filters::Filter> loop_filter_open; ///< BIDIRECTIONAL: open-end filter (bell/bridge)
+        std::shared_ptr<Filters::Filter> loop_filter; ///< UNIDIRECTIONAL: single termination filter, unused by BIDIRECTIONAL
+        std::shared_ptr<Filters::Filter> loop_filter_closed; ///< BIDIRECTIONAL: closed-end filter (mouthpiece/nut), applied to p_minus
+        std::shared_ptr<Filters::Filter> loop_filter_open; ///< BIDIRECTIONAL: open-end filter (bell/bridge), applied to p_plus
         PropagationMode mode { PropagationMode::UNIDIRECTIONAL };
         double loss_factor { 0.996 };
         double reflection_closed { 1.0 }; ///< Closed-end reflection; a lumped string loop keeps +1 because its two inversions cancel
@@ -293,6 +306,9 @@ public:
      * @param freq Frequency in Hz
      *
      * Recomputes delay line length. Fractional part handled via interpolation.
+     * The delay allows for the read order and for the default loop filters, so a
+     * ring with the default filters repeats at this frequency. A replacement
+     * filter with its own group delay shifts the pitch by that delay on every pass.
      */
     void set_fundamental(double freq);
 
@@ -315,13 +331,34 @@ public:
     [[nodiscard]] double get_loss_factor() const;
 
     /**
-     * @brief Replace the loop filter
-     * @param filter IIR or FIR filter applied in the feedback loop
+     * @brief Replace the loop filter at one termination
+     * @param filter IIR or FIR filter applied in the feedback loop, or null for none
+     * @param end Termination the filter belongs to
      *
-     * Default is a one-pole averaging filter: y[n] = 0.5*(x[n] + x[n-1])
-     * which simulates frequency-dependent string damping.
+     * Every termination starts with its own averaging filter, y[n] = 0.5*(x[n] + x[n-1]),
+     * which simulates frequency-dependent damping.
+     *
+     * A STRING has one termination: the filter is always installed as its loop filter, and
+     * Termination::CLOSED logs a warning. A TUBE has two: only the named end changes and
+     * the other keeps its filter, so set_loop_filters replaces both in one call.
+     *
+     * A filter holds state, so one object cannot serve both ends of a TUBE. A filter
+     * already installed at the other end is refused and an error is logged.
      */
-    void set_loop_filter(const std::shared_ptr<Filters::Filter>& filter);
+    void set_loop_filter(const std::shared_ptr<Filters::Filter>& filter,
+        Termination end = Termination::OPEN);
+
+    /**
+     * @brief Replace the loop filter at both terminations of a TUBE
+     * @param open Filter for the open end, or null for none
+     * @param closed Filter for the closed end, or null for none
+     *
+     * The two must be distinct objects, since each keeps its own state. Passing the
+     * same object logs an error and changes neither end. A STRING has no closed end:
+     * `open` becomes its loop filter and a warning is logged.
+     */
+    void set_loop_filters(const std::shared_ptr<Filters::Filter>& open,
+        const std::shared_ptr<Filters::Filter>& closed);
 
     /**
      * @brief Set pickup position along the string
@@ -346,24 +383,6 @@ public:
      * @brief Get read-only access to segments
      */
     [[nodiscard]] const std::vector<WaveguideSegment>& get_segments() const { return m_segments; }
-
-    /**
-     * @brief Set filter for the closed-end termination (mouthpiece/nut)
-     * @param filter Filter applied to p_plus as it reflects at the closed end
-     *
-     * Only meaningful for WaveguideType::TUBE. Falls back to loop_filter if unset.
-     * Models reed/embouchure losses and input impedance characteristic.
-     */
-    void set_loop_filter_closed(const std::shared_ptr<Filters::Filter>& filter);
-
-    /**
-     * @brief Set filter for the open-end termination (bell/bridge)
-     * @param filter Filter applied to p_minus as it reflects at the open end
-     *
-     * Only meaningful for WaveguideType::TUBE. Falls back to loop_filter if unset.
-     * Models radiation resistance and bell flare HF rolloff.
-     */
-    void set_loop_filter_open(const std::shared_ptr<Filters::Filter>& filter);
 
     /**
      * @brief Set measurement mode for output
