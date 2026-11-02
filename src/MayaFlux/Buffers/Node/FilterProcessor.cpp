@@ -46,20 +46,16 @@ void FilterProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
     const auto& state = m_filter->m_state.load();
 
     if (state == Nodes::NodeState::INACTIVE) {
-        for (size_t i = 0; i < data.size(); ++i) {
-            m_filter->set_input_context(std::span<double>(data.data(), i));
-            data[i] = m_filter->process_sample(data[i]);
+        for (double& sample : data) {
+            sample = m_filter->process_sample(sample);
         }
     } else {
         m_filter->save_state();
-        for (size_t i = 0; i < data.size(); ++i) {
-            m_filter->set_input_context(std::span<double>(data.data(), i));
-            data[i] = m_filter->process_sample(data[i]);
+        for (double& sample : data) {
+            sample = m_filter->process_sample(sample);
         }
         m_filter->restore_state();
     }
-
-    m_filter->clear_input_context();
 }
 
 void FilterProcessor::on_attach(const std::shared_ptr<Buffer>& /*buffer*/)
