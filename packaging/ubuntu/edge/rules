@@ -22,7 +22,7 @@ override_dh_shlibdeps:
 override_dh_auto_install:
 	cmake --install build --prefix debian/mayaflux-edge/usr
 	install -d debian/mayaflux-edge/etc/profile.d
-	printf '#!/bin/sh\nexport MAYAFLUX_ROOT="/usr"\nexport CMAKE_PREFIX_PATH="/usr:$${CMAKE_PREFIX_PATH}"\nexport PATH="/usr/lib/llvm-21/bin:$${PATH}"\n' > debian/mayaflux-edge/etc/profile.d/mayaflux.sh
+	printf '#!/bin/sh\nexport MAYAFLUX_ROOT="/usr"\nexport CMAKE_PREFIX_PATH="/usr:$${CMAKE_PREFIX_PATH}"\nexport PATH="/usr/lib/llvm-22/bin:$${PATH}"\n' > debian/mayaflux-edge/etc/profile.d/mayaflux.sh
 	chmod 755 debian/mayaflux-edge/etc/profile.d/mayaflux.sh
 	install -d debian/mayaflux-edge/etc/security/limits.d
 	printf '@mayaflux\t-\trtprio\t\t95\n@mayaflux\t-\tmemlock\tunlimited\n@mayaflux\t-\tnice\t\t-19\n' \

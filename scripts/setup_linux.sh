@@ -66,9 +66,9 @@ install_arch() {
         printf "JACK installation detected, would you like to install required package \"pipewire-jack\"? Y/N "
         read answer
         if [ "$answer" != "${answer#[Yy]}" ]; then
-          PACKAGES+=("pipewire-jack")
+            PACKAGES+=("pipewire-jack")
         else
-          echo "WARNING: Not installing \"pipewire-jack\" may cause issues initializing and playing audio in MayaFlux"
+            echo "WARNING: Not installing \"pipewire-jack\" may cause issues initializing and playing audio in MayaFlux"
         fi
     fi
     echo -e "${YELLOW}Installing: ${PACKAGES[*]}${NC}"
@@ -142,10 +142,10 @@ install_ubuntu() {
         "gcc"
         "g++"
         "pkg-config"
-        "llvm-21"
-        "llvm-21-dev"
-        "clang-21"
-        "libclang-21-dev"
+        "llvm-22"
+        "llvm-22-dev"
+        "clang-22"
+        "libclang-22-dev"
         "libtbb-dev"
         "vulkan-validationlayers"
         "vulkan-tools"
