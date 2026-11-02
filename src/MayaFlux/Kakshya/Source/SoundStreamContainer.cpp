@@ -123,13 +123,21 @@ void SoundStreamContainer::set_region_data(const Region& region, const std::vect
 
         set_or_update_region_data<double>(dest_span, src_span, region, m_structure.dimensions);
     } else {
-        size_t channels_to_update = std::min(m_data.size(), data.size());
         Memory::SeqlockWriteGuard g(m_data_lock);
 
-        for (size_t i = 0; i < channels_to_update; ++i) {
-            auto dest_span = convert_variant<double>(m_data[i]);
+        const uint64_t first_frame = region.start_coordinates.empty() ? 0 : region.start_coordinates[0];
+        const size_t first_channel = region.start_coordinates.size() > 1 ? static_cast<size_t>(region.start_coordinates[1]) : 0;
+
+        for (size_t i = 0; i < data.size() && first_channel + i < m_data.size(); ++i) {
+            auto dest_span = convert_variant<double>(m_data[first_channel + i]);
             auto src_span = convert_variant<double>(data[i]);
-            set_or_update_region_data<double>(dest_span, src_span, region, m_structure.dimensions);
+
+            if (first_frame >= dest_span.size()) {
+                continue;
+            }
+
+            const size_t count = std::min<size_t>(src_span.size(), dest_span.size() - first_frame);
+            std::copy_n(src_span.begin(), count, dest_span.begin() + static_cast<std::ptrdiff_t>(first_frame));
         }
     }
 
@@ -418,6 +426,14 @@ void SoundStreamContainer::advance_read_position(const std::vector<uint64_t>& fr
     }
 
     auto new_pos = advance_position(current_pos, frames, m_structure, m_looping_enabled, m_loop_region);
+
+    if (!m_looping_enabled) {
+        for (size_t i = 0; i < new_pos.size() && i < frames.size(); ++i) {
+            if (current_pos[i] + frames[i] >= m_num_frames) {
+                new_pos[i] = m_num_frames;
+            }
+        }
+    }
 
     for (size_t i = 0; i < new_pos.size() && i < m_read_position.size(); ++i) {
         m_read_position[i].store(new_pos[i]);

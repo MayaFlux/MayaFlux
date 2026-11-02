@@ -29,6 +29,9 @@ uint32_t BufferInputControl::get_audio_input_channel_count() const
 
 std::shared_ptr<InputAudioBuffer> BufferInputControl::get_input_buffer(uint32_t channel) const
 {
+    if (channel >= m_audio_input_buffers.size()) {
+        return nullptr;
+    }
     return m_audio_input_buffers[channel];
 }
 
@@ -51,9 +54,12 @@ void BufferInputControl::process_audio_input(double* input_data, uint32_t num_ch
     for (uint32_t i = 0; i < m_audio_input_buffers.size(); ++i) {
         auto& data = m_audio_input_buffers[i]->get_data();
 
-        for (uint32_t frame = 0; frame < data.size(); ++frame) {
-            data[frame] = static_cast<double*>(input_data)[frame * num_channels + i];
+        const size_t frames = i < num_channels ? std::min<size_t>(data.size(), num_frames) : 0;
+        for (size_t frame = 0; frame < frames; ++frame) {
+            data[frame] = input_data[frame * num_channels + i];
         }
+        std::fill(data.begin() + static_cast<std::ptrdiff_t>(frames), data.end(), 0.0);
+
         m_audio_input_buffers[i]->process_default();
     }
 }

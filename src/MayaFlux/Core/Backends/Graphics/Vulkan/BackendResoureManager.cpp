@@ -89,6 +89,14 @@ void BackendResourceManager::setup_backend_service(const std::shared_ptr<Registr
         });
     };
 
+    buffer_service->execute_async = [this](const std::function<void(void*)>& recorder, std::vector<std::shared_ptr<void>> keep_alive)
+        -> std::pair<uint32_t, uint64_t> {
+        const TimelinePoint point = this->execute_async(
+            [&recorder](vk::CommandBuffer cmd) { recorder(static_cast<void*>(cmd)); },
+            std::move(keep_alive));
+        return { point.timeline, point.value };
+    };
+
     buffer_service->record_deferred = [this](const std::function<void(void*)>& recorder) {
         this->record_deferred_commands([recorder](vk::CommandBuffer cmd) {
             recorder(static_cast<void*>(cmd));
@@ -1377,7 +1385,7 @@ bool BackendResourceManager::blit_image(
     const std::shared_ptr<VKImage>& dst,
     const vk::ImageBlit& region,
     vk::Filter filter,
-    bool deferred)
+    SubmitMode mode)
 {
     if (!src || !dst || src == dst) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
@@ -1449,10 +1457,18 @@ bool BackendResourceManager::blit_image(
             vk::PipelineStageFlagBits2::eTransfer, vk::PipelineStageFlagBits2::eAllCommands);
     };
 
-    if (deferred) {
+    switch (mode) {
+    case SubmitMode::DEFERRED:
         record_deferred_commands(record_command);
-    } else {
+        break;
+    case SubmitMode::ASYNC:
+        if (!execute_async(record_command, { src, dst })) {
+            return false;
+        }
+        break;
+    case SubmitMode::IMMEDIATE:
         execute_immediate_commands(record_command);
+        break;
     }
 
     src->set_current_layout(src_restore);
@@ -1561,6 +1577,29 @@ void BackendResourceManager::execute_immediate_commands(const std::function<void
     vk::CommandBuffer cmd = m_command_manager.begin_single_time_commands();
     recorder(cmd);
     m_command_manager.end_single_time_commands(cmd, m_context.get_graphics_queue());
+}
+
+TimelinePoint BackendResourceManager::execute_async(
+    const std::function<void(vk::CommandBuffer)>& recorder,
+    std::vector<std::shared_ptr<void>> keep_alive)
+{
+    const vk::CommandBuffer cmd = m_command_manager.begin_single_time_commands();
+    if (!cmd) {
+        return {};
+    }
+
+    recorder(cmd);
+
+    const TimelinePoint point = m_command_manager.end_single_time_commands_async(cmd, m_context.get_graphics_queue());
+    if (!point) {
+        return {};
+    }
+
+    m_command_manager.note_produced(point);
+    if (!keep_alive.empty()) {
+        m_command_manager.retire_resource([held = std::move(keep_alive)]() mutable { held.clear(); }, point);
+    }
+    return point;
 }
 
 void BackendResourceManager::record_deferred_commands(const std::function<void(vk::CommandBuffer)>& recorder)

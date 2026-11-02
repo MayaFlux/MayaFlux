@@ -11,6 +11,9 @@ public:
     QuickProcess(FuncType function)
         : m_function(std::move(function))
     {
+        m_processing_token = std::is_same_v<FuncType, AudioProcessingFunction>
+            ? ProcessingToken::AUDIO_BACKEND
+            : ProcessingToken::GRAPHICS_BACKEND;
     }
 
     void processing_function(const std::shared_ptr<Buffer>& buffer) override

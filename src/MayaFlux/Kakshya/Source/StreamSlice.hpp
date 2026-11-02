@@ -17,6 +17,10 @@ namespace MayaFlux::Kakshya {
  * region.start_coordinates[0] / end_coordinates[0] are the frame bounds;
  * region.start_coordinates[1] / end_coordinates[1] are the channel bounds.
  *
+ * The stream length is read when the slice is loaded. Use a ring or a stream
+ * that is fully written; frames appended to a growing stream afterwards are not
+ * played until the slice is loaded again.
+ *
  * The slice does not own a processor. The region is the contract; whatever
  * drives this slice resolves the appropriate processor at activation time.
  * Currently that is CursorAccessProcessor for sequential bounded reads, but
@@ -24,13 +28,19 @@ namespace MayaFlux::Kakshya {
  * (non-linear navigation, selection patterns, transitions) or any future
  * region-aware processor against a DynamicSoundStream.
  *
- * speed and scale are playback parameters applied by the driving processor.
- * cursor_remainder accumulates sub-frame advancement for speed != 1.0.
+ * speed is a playback rate: 2.0 plays twice as fast and an octave up, read with
+ * linear interpolation, and it can change while the voice plays. scale is a
+ * static gain. Both are applied by the driving processor.
  * looping and index are playback state and identity carried with the slice.
  *
  * time_map, when set, replaces speed: it gives the read position in frames as
  * a function of seconds since the voice was bound (see Kinesis::TimeMaps).
  * Like the other fields it can be changed while the voice plays.
+ *
+ * loop_count ends a looping voice after that many passes over the region. With
+ * a time_map, each crossing of a region edge counts as a pass, whichever way
+ * the map is moving, so a map that stays inside the region never ends. Zero
+ * loops forever.
  *
  * source_channel picks which channel of the stream is played. Unset, the voice
  * plays the stream channel with the same number as its output channel.
@@ -38,6 +48,11 @@ namespace MayaFlux::Kakshya {
  * repeat, with a time_map, restarts the map over and over. Its value is how
  * many seconds each repeat lasts, read when the repeat begins, so a length that
  * shrinks over time gives a stutter or bouncing repeat.
+ *
+ * envelope is a gain applied to each output sample, on top of scale. It maps
+ * seconds since the voice was bound to a gain, so a grain shape is a window
+ * function over its duration. It acts on the output, so speed and time_map do
+ * not stretch it. Unset means no envelope.
  */
 struct StreamSlice {
     std::shared_ptr<DynamicSoundStream> stream;
@@ -53,6 +68,7 @@ struct StreamSlice {
     std::shared_ptr<const Kinesis::TimeMap> time_map;
     std::optional<uint32_t> source_channel;
     std::shared_ptr<const Kinesis::TimeMap> repeat;
+    std::shared_ptr<const Kinesis::TimeMap> envelope;
 
     /**
      * @brief Construct a slice spanning the full stream across all channels.
@@ -167,6 +183,12 @@ struct StreamSlice {
     StreamSlice& with_repeat(Kinesis::TimeMap length)
     {
         repeat = std::make_shared<const Kinesis::TimeMap>(std::move(length));
+        return *this;
+    }
+
+    StreamSlice& with_envelope(Kinesis::TimeMap gain)
+    {
+        envelope = std::make_shared<const Kinesis::TimeMap>(std::move(gain));
         return *this;
     }
 };

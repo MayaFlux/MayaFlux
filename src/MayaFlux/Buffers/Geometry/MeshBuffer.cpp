@@ -131,8 +131,8 @@ void MeshBuffer::setup_rendering(const RenderConfig& config)
         m_render_config.topology, m_render_config.polygon_mode);
 
     if (!config.additional_textures.empty()) {
-        for (const auto& [name, texture] : config.additional_textures) {
-            m_render_config.additional_textures.emplace_back(name, texture);
+        for (const auto& entry : config.additional_textures) {
+            m_render_config.additional_textures.push_back(entry);
         }
     }
 
@@ -158,8 +158,8 @@ void MeshBuffer::setup_rendering(const RenderConfig& config)
 
     const uint32_t additional_start = textured ? 2 : 1;
     uint32_t binding_index = additional_start;
-    for (const auto& [name, _] : m_render_config.additional_textures) {
-        sc.bindings[name] = ShaderBinding(
+    for (const auto& entry : m_render_config.additional_textures) {
+        sc.bindings[entry.name] = ShaderBinding(
             0, binding_index++, vk::DescriptorType::eCombinedImageSampler);
     }
 
@@ -178,8 +178,8 @@ void MeshBuffer::setup_rendering(const RenderConfig& config)
             m_diffuse_texture);
     }
 
-    for (const auto& [name, texture] : m_render_config.additional_textures) {
-        m_render_processor->bind_texture(name, texture);
+    for (const auto& entry : m_render_config.additional_textures) {
+        m_render_processor->bind_texture(entry);
     }
 
     get_processing_chain()->add_final_processor(

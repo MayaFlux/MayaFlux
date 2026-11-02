@@ -21,22 +21,22 @@ struct MAYAFLUX_API VertexAccessConfig {
 };
 /**
  * @struct VertexAccess
- * @brief Memory-compatible view of channel data assembled into full 64-byte vertices.
+ * @brief Memory-compatible view of channel data assembled into full 68-byte vertices.
  *
  * Mirrors TextureAccess: describes what the data IS in memory terms —
  * pointer, byte count, and a VertexLayout — with no knowledge of Vulkan,
  * Portal, or concrete vertex structs (PointVertex, LineVertex, MeshVertex).
  *
- * A vertex is always the canonical 64-byte record:
- *   position (vec3, 12) | color (vec3, 12) | scalar (float, 4) |
- *   uv (vec2, 8) | normal (vec3, 12) | tangent (vec3, 12)
+ * A vertex is always the canonical 68-byte record:
+ *   position (vec3, 12) | color (vec4, 16) | scalar (float, 4) |
+ *   uv (vec2, 8) | normal (vec3, 12) | tangent (vec4, 16)
  *
- * Zero-copy path: single vector<uint8_t> channel of N*64 bytes. data_ptr
+ * Zero-copy path: single vector<uint8_t> channel of N*68 bytes. data_ptr
  * points directly into variant storage; conversion_buffer is empty.
  *
  * Assembly path: one or more typed channels supplied in canonical field order.
- * Slot 0 = position (vec3), slot 1 = color (vec3), slot 2 = scalar (float),
- * slot 3 = uv (vec2), slot 4 = normal (vec3), slot 5 = tangent (vec3).
+ * Slot 0 = position (vec3), slot 1 = color (vec4), slot 2 = scalar (float),
+ * slot 3 = uv (vec2), slot 4 = normal (vec3), slot 5 = tangent (vec4).
  * Missing trailing slots are filled from VertexAccessConfig defaults.
  * Assembled bytes are held in conversion_buffer; data_ptr points into it.
  *

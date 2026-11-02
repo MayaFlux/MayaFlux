@@ -2,6 +2,8 @@
 
 #include "MayaFlux/Buffers/BufferUtils.hpp"
 
+#include "MayaFlux/Transitive/Memory/PendingQueue.hpp"
+
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Buffers {
@@ -24,16 +26,7 @@ public:
     virtual void add_child_buffer(const std::shared_ptr<BufferType>& buffer)
     {
         if (this->is_processing()) {
-            for (auto& m_pending_op : m_pending_ops) {
-                bool expected = false;
-                if (m_pending_op.active.compare_exchange_strong(expected, true, std::memory_order_acquire, std::memory_order_relaxed)) {
-                    m_pending_op.buffer = buffer;
-                    m_pending_op.is_addition = true;
-                    m_pending_count.fetch_add(1, std::memory_order_relaxed);
-                    return;
-                }
-            }
-
+            static_cast<void>(m_pending_ops.push({ buffer, true }));
             return;
         }
         add_child_buffer_direct(buffer);
@@ -65,16 +58,7 @@ public:
     virtual void remove_child_buffer(const std::shared_ptr<BufferType>& buffer)
     {
         if (this->is_processing()) {
-            for (auto& m_pending_op : m_pending_ops) {
-                bool expected = false;
-                if (m_pending_op.active.compare_exchange_strong(expected, true, std::memory_order_acquire, std::memory_order_relaxed)) {
-                    m_pending_op.buffer = buffer;
-                    m_pending_op.is_addition = false;
-                    m_pending_count.fetch_add(1, std::memory_order_relaxed);
-                    return;
-                }
-            }
-
+            static_cast<void>(m_pending_ops.push({ buffer, false }));
             return;
         }
 
@@ -219,7 +203,7 @@ public:
 
     [[nodiscard]] bool has_pending_operations() const
     {
-        return m_pending_count.load(std::memory_order_relaxed) > 0;
+        return m_pending_ops.has_pending();
     }
 
 protected:
@@ -250,22 +234,13 @@ protected:
      */
     void process_pending_buffer_operations()
     {
-        for (auto& m_pending_op : m_pending_ops) {
-            if (m_pending_op.active.load(std::memory_order_acquire)) {
-                auto& op = m_pending_op;
-
-                if (op.is_addition) {
-                    add_child_buffer_direct(op.buffer);
-                } else {
-                    remove_child_buffer_direct(op.buffer);
-                }
-
-                // Clear operation
-                op.buffer.reset();
-                op.active.store(false, std::memory_order_release);
-                m_pending_count.fetch_sub(1, std::memory_order_relaxed);
+        m_pending_ops.drain([this](PendingBufferOp&& op) {
+            if (op.is_addition) {
+                add_child_buffer_direct(op.buffer);
+            } else {
+                remove_child_buffer_direct(op.buffer);
             }
-        }
+        });
     }
 
     /**
@@ -280,7 +255,7 @@ protected:
      * sample/frame rates, allowing the buffer to adapt its
      * processing strategy accordingly.
      */
-    uint32_t m_processing_rate_hint;
+    uint32_t m_processing_rate_hint {};
 
     /**
      * @brief Whether this buffer allows cross-modal data sharing
@@ -289,7 +264,7 @@ protected:
      * subsystems simultaneously, allowing advanced cross-modal
      * processing techniques.
      */
-    bool m_cross_modal_sharing;
+    bool m_cross_modal_sharing {};
 
     /**
      * @brief Current token enforcement strategy for this root buffer
@@ -309,8 +284,6 @@ protected:
      */
     ProcessingToken m_preferred_processing_token;
 
-    std::atomic<uint32_t> m_pending_count { 0 };
-
     static constexpr size_t MAX_PENDING = 64;
 
     /**
@@ -320,9 +293,10 @@ protected:
      * that need to be deferred when the buffer is currently processing.
      */
     struct PendingBufferOp {
-        std::atomic<bool> active { false };
         std::shared_ptr<BufferType> buffer;
-        bool is_addition { true }; // true = add, false = remove
-    } m_pending_ops[MAX_PENDING];
+        bool is_addition;
+    };
+
+    Memory::PendingQueue<PendingBufferOp, MAX_PENDING> m_pending_ops;
 };
 }

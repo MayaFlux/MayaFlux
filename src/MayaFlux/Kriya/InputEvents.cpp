@@ -25,6 +25,8 @@ Vruta::Event key_pressed(
         }
 
         co_await WindowEventAwaiter(source, filter);
+        if (promise.should_terminate)
+            break;
         callback();
     }
 }
@@ -47,6 +49,8 @@ Vruta::Event key_released(
         }
 
         co_await WindowEventAwaiter(source, filter);
+        if (promise.should_terminate)
+            break;
         callback();
     }
 }
@@ -67,6 +71,8 @@ Vruta::Event key_held(
             break;
 
         auto ev = co_await WindowEventAwaiter(source, filter);
+        if (promise.should_terminate)
+            break;
 
         if (ev.type == Core::WindowEventType::KEY_RELEASED) {
             continue;
@@ -92,6 +98,8 @@ Vruta::Event text_input(
         }
 
         auto event = co_await WindowEventAwaiter(source, filter);
+        if (promise.should_terminate)
+            break;
 
         if (auto* text_data = std::get_if<Core::WindowEvent::TextData>(&event.data)) {
             callback(text_data->codepoint);
@@ -115,6 +123,8 @@ Vruta::Event any_key(
         }
 
         auto event = co_await WindowEventAwaiter(source, filter);
+        if (promise.should_terminate)
+            break;
 
         if (auto* key_data = std::get_if<Core::WindowEvent::KeyData>(&event.data)) {
             callback(static_cast<IO::Keys>(key_data->key));
@@ -140,6 +150,8 @@ Vruta::Event mouse_pressed(
         }
 
         co_await WindowEventAwaiter(source, filter);
+        if (promise.should_terminate)
+            break;
 
         auto [x, y] = source.get_mouse_position();
         callback(x, y);
@@ -164,6 +176,8 @@ Vruta::Event mouse_released(
         }
 
         co_await WindowEventAwaiter(source, filter);
+        if (promise.should_terminate)
+            break;
 
         auto [x, y] = source.get_mouse_position();
         callback(x, y);
@@ -186,6 +200,8 @@ Vruta::Event mouse_moved(
         }
 
         auto event = co_await WindowEventAwaiter(source, filter);
+        if (promise.should_terminate)
+            break;
 
         if (auto* pos_data = std::get_if<Core::WindowEvent::MousePosData>(&event.data)) {
             callback(pos_data->x, pos_data->y);
@@ -209,6 +225,8 @@ Vruta::Event mouse_dragged(
             break;
 
         auto event = co_await WindowEventAwaiter(source, filter);
+        if (promise.should_terminate)
+            break;
 
         if (!source.is_mouse_pressed(static_cast<int>(button)))
             continue;
@@ -234,6 +252,8 @@ Vruta::Event mouse_scrolled(
         }
 
         auto event = co_await WindowEventAwaiter(source, filter);
+        if (promise.should_terminate)
+            break;
 
         if (auto* scroll_data = std::get_if<Core::WindowEvent::ScrollData>(&event.data)) {
             callback(scroll_data->x_offset, scroll_data->y_offset);
@@ -257,6 +277,8 @@ Vruta::Event window_resized(
         }
 
         auto event = co_await WindowEventAwaiter(source, filter);
+        if (promise.should_terminate)
+            break;
 
         if (auto* resize_data = std::get_if<Core::WindowEvent::ResizeData>(&event.data)) {
             callback(resize_data->width, resize_data->height);
@@ -279,6 +301,8 @@ Vruta::Event window_closed(
             break;
 
         co_await WindowEventAwaiter(source, filter);
+        if (promise.should_terminate)
+            break;
         callback();
     }
 }

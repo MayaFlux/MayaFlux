@@ -3,11 +3,15 @@
 #include "Clock.hpp"
 #include "Routine.hpp"
 
+#include "MayaFlux/Transitive/Memory/PendingQueue.hpp"
+
 namespace MayaFlux::Vruta {
 
 struct TaskEntry {
     std::shared_ptr<Routine> routine;
     std::string name;
+
+    TaskEntry() = default;
 
     TaskEntry(const std::shared_ptr<Routine>& r, std::string n)
         : routine(r)
@@ -545,18 +549,15 @@ private:
     static constexpr size_t MAX_PENDING_TASKS = 256;
 
     struct PendingTaskOp {
-        std::atomic<bool> active { false };
-        TaskEntry entry { nullptr, "" };
-        bool is_addition { true };
+        TaskEntry entry;
+        bool is_addition;
     };
 
-    std::atomic<uint32_t> m_pending_count { 0 };
-    PendingTaskOp m_pending_ops[MAX_PENDING_TASKS];
+    Memory::PendingQueue<PendingTaskOp, MAX_PENDING_TASKS> m_pending_ops;
 
     static constexpr size_t MAX_PENDING_CONDITIONAL = 64;
 
-    std::atomic<uint32_t> m_conditional_pending_count { 0 };
-    PendingTaskOp m_conditional_pending_ops[MAX_PENDING_CONDITIONAL];
+    Memory::PendingQueue<PendingTaskOp, MAX_PENDING_CONDITIONAL> m_conditional_pending_ops;
 
     std::jthread m_conditional_thread;
     std::atomic<bool> m_terminating { false };

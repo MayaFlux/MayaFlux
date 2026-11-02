@@ -53,9 +53,9 @@ void SamplerForge::shutdown()
         "Shutting down SamplerForge...");
 
     auto device = m_backend->get_context().get_device();
-    for (auto& [hash, sampler] : m_sampler_cache) {
-        if (sampler) {
-            device.destroySampler(sampler);
+    for (auto& entry : m_sampler_cache) {
+        if (entry.second) {
+            device.destroySampler(entry.second);
         }
     }
     m_sampler_cache.clear();
@@ -76,19 +76,16 @@ vk::Sampler SamplerForge::get_or_create(const SamplerConfig& config)
         return nullptr;
     }
 
-    size_t hash = hash_config(config);
-
-    auto it = m_sampler_cache.find(hash);
+    auto it = m_sampler_cache.find(config);
     if (it != m_sampler_cache.end()) {
         return it->second;
     }
 
     vk::Sampler sampler = create_sampler(config);
     if (sampler) {
-        m_sampler_cache[hash] = sampler;
+        m_sampler_cache.emplace(config, sampler);
         MF_DEBUG(Journal::Component::Portal, Journal::Context::ImageProcessing,
-            "Created and cached sampler (hash: {}, total: {})",
-            hash, m_sampler_cache.size());
+            "Created and cached sampler (total: {})", m_sampler_cache.size());
     }
 
     return sampler;
@@ -208,21 +205,37 @@ vk::Sampler SamplerForge::create_sampler(const SamplerConfig& config)
     }
 }
 
-size_t SamplerForge::hash_config(const SamplerConfig& config)
+size_t SamplerForge::ConfigHash::operator()(const SamplerConfig& config) const
 {
-    size_t hash = 0;
-    hash ^= std::hash<int> {}(static_cast<int>(config.mag_filter)) << 0;
-    hash ^= std::hash<int> {}(static_cast<int>(config.min_filter)) << 4;
-    hash ^= std::hash<int> {}(static_cast<int>(config.address_mode_u)) << 8;
-    hash ^= std::hash<int> {}(static_cast<int>(config.address_mode_v)) << 12;
-    hash ^= std::hash<int> {}(static_cast<int>(config.address_mode_w)) << 16;
-    hash ^= std::hash<float> {}(config.max_anisotropy) << 20;
-    hash ^= std::hash<bool> {}(config.enable_mipmaps) << 24;
-    hash ^= std::hash<int> {}(static_cast<int>(config.border_color)) << 28;
-    return hash;
+    size_t seed = 0;
+    const auto mix = [&seed](size_t value) {
+        seed ^= value + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+    };
+
+    mix(static_cast<size_t>(config.mag_filter));
+    mix(static_cast<size_t>(config.min_filter));
+    mix(static_cast<size_t>(config.address_mode_u));
+    mix(static_cast<size_t>(config.address_mode_v));
+    mix(static_cast<size_t>(config.address_mode_w));
+    mix(std::hash<float> {}(config.max_anisotropy));
+    mix(static_cast<size_t>(config.enable_mipmaps));
+    mix(static_cast<size_t>(config.border_color));
+    return seed;
 }
 
-vk::Filter SamplerForge::to_vk_filter(FilterMode mode)
+bool SamplerForge::ConfigEqual::operator()(const SamplerConfig& a, const SamplerConfig& b) const
+{
+    return a.mag_filter == b.mag_filter
+        && a.min_filter == b.min_filter
+        && a.address_mode_u == b.address_mode_u
+        && a.address_mode_v == b.address_mode_v
+        && a.address_mode_w == b.address_mode_w
+        && a.max_anisotropy == b.max_anisotropy
+        && a.enable_mipmaps == b.enable_mipmaps
+        && a.border_color == b.border_color;
+}
+
+vk::Filter SamplerForge::to_vk_filter(FilterMode mode) const
 {
     switch (mode) {
     case FilterMode::NEAREST:
@@ -230,7 +243,9 @@ vk::Filter SamplerForge::to_vk_filter(FilterMode mode)
     case FilterMode::LINEAR:
         return vk::Filter::eLinear;
     case FilterMode::CUBIC:
-        return vk::Filter::eCubicEXT;
+        return m_backend->get_context().has_extension(VK_EXT_FILTER_CUBIC_EXTENSION_NAME)
+            ? vk::Filter::eCubicEXT
+            : vk::Filter::eLinear;
     default:
         return vk::Filter::eLinear;
     }

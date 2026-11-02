@@ -181,6 +181,21 @@ public:
     void play_continuous(size_t index, Kakshya::StreamSlice slice);
 
     /**
+     * @brief Restart a loaded voice from the start of its slice without reloading it.
+     *
+     * Unlike play(), nothing is allocated, so it suits starting voices often.
+     * Region, speed, scale, looping, loop_count, time_map and source_channel
+     * edited through slice() beforehand are picked up. The slice's stream cannot
+     * change: use play() for that.
+     *
+     * @param index Voice index, already loaded.
+     * @param offset Frames from the start of the next block at which the voice
+     *        begins to sound. The voice, its time map and its envelope all begin
+     *        on that frame. An offset past one block waits whole blocks.
+     */
+    void trigger(size_t index = 0, uint32_t offset = 0);
+
+    /**
      * @brief Deactivate a voice.
      * @param index Voice index.
      */
@@ -267,8 +282,6 @@ private:
     std::shared_ptr<BufferPipeline> m_pipeline;
     CaptureBuilder m_capture;
     bool m_built { false };
-
-    [[nodiscard]] bool any_active() const;
 };
 
 } // namespace MayaFlux::Kriya

@@ -266,6 +266,9 @@ struct VertexLayout {
         layout.attributes.push_back({ .component_modality = DataModality::SCALAR_F32,
             .offset_in_vertex = 28,
             .name = "scalar" });
+        layout.attributes.push_back({ .component_modality = DataModality::TEXTURE_COORDS_2D,
+            .offset_in_vertex = 32,
+            .name = "uv" });
         layout.attributes.push_back({ .component_modality = DataModality::VERTEX_NORMALS_3D,
             .offset_in_vertex = 40,
             .name = "normal" });

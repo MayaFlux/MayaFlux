@@ -112,8 +112,8 @@ void MeshNetworkBuffer::setup_rendering(const RenderConfig& config)
     }
     set_vertex_layout(vertex_layout);
 
-    for (const auto& [name, tex] : config.additional_textures)
-        m_render_config.additional_textures.emplace_back(name, tex);
+    for (const auto& entry : config.additional_textures)
+        m_render_config.additional_textures.push_back(entry);
 
     const auto slot_count = static_cast<uint32_t>(m_network->slot_count());
 
@@ -149,8 +149,8 @@ void MeshNetworkBuffer::setup_rendering(const RenderConfig& config)
     }
 
     uint32_t binding_idx = 4;
-    for (const auto& [name, _] : m_render_config.additional_textures)
-        sc.bindings[name] = ShaderBinding(0, binding_idx++, vk::DescriptorType::eCombinedImageSampler);
+    for (const auto& entry : m_render_config.additional_textures)
+        sc.bindings[entry.name] = ShaderBinding(0, binding_idx++, vk::DescriptorType::eCombinedImageSampler);
 
     apply_render_config(m_render_config, sc);
 
@@ -175,8 +175,8 @@ void MeshNetworkBuffer::setup_rendering(const RenderConfig& config)
         m_render_processor->bind_texture(m_render_config.default_texture_binding, m_diffuse_texture);
     }
 
-    for (const auto& [name, tex] : m_render_config.additional_textures)
-        m_render_processor->bind_texture(name, tex);
+    for (const auto& entry : m_render_config.additional_textures)
+        m_render_processor->bind_texture(entry);
 
     get_processing_chain()->add_final_processor(
         m_render_processor,

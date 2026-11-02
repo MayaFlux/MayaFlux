@@ -154,6 +154,9 @@ void ContiguousAccessProcessor::process(const std::shared_ptr<SignalSourceContai
 
         Region output_region = calculate_output_region(region_coords, m_output_shape);
 
+        const uint64_t total_frames = m_structure.get_samples_count_per_channel();
+        output_region.end_coordinates[0] = std::min(output_region.end_coordinates[0], total_frames - 1);
+
         auto region_data = container->get_region_data(output_region);
         auto& processed_data_vector = container->get_processed_data();
 
@@ -173,6 +176,7 @@ void ContiguousAccessProcessor::process(const std::shared_ptr<SignalSourceContai
 
         if (m_auto_advance) {
             uint64_t frames_to_advance = m_output_shape[0];
+            const bool passed_end = !m_looping_enabled && min_frame + frames_to_advance >= total_frames;
 
             m_current_position = advance_position(
                 m_current_position,
@@ -182,7 +186,9 @@ void ContiguousAccessProcessor::process(const std::shared_ptr<SignalSourceContai
                 m_loop_region);
 
             if (auto stream = std::dynamic_pointer_cast<StreamContainer>(container)) {
-                stream->set_read_position(m_current_position);
+                stream->set_read_position(passed_end
+                        ? std::vector<uint64_t>(m_current_position.size(), total_frames)
+                        : m_current_position);
             }
         }
 

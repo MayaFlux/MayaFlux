@@ -85,8 +85,8 @@ void InstanceNetworkBuffer::setup_rendering(const RenderConfig& config)
     m_render_config.cull_mode = config.cull_mode;
     m_render_config.triangulate = config.triangulate;
 
-    for (const auto& [name, tex] : config.additional_textures)
-        m_render_config.additional_textures.emplace_back(name, tex);
+    for (const auto& entry : config.additional_textures)
+        m_render_config.additional_textures.push_back(entry);
 
     m_render_config.triangulate |= Portal::Graphics::needs_triangulation(
         m_render_config.topology, m_render_config.polygon_mode);
@@ -124,8 +124,8 @@ void InstanceNetworkBuffer::setup_rendering(const RenderConfig& config)
         vk::DescriptorType::eStorageBuffer);
 
     uint32_t binding_idx = 0;
-    for (const auto& [name, _] : m_render_config.additional_textures)
-        sc.bindings[name] = ShaderBinding(0, 2 + binding_idx++, vk::DescriptorType::eCombinedImageSampler);
+    for (const auto& entry : m_render_config.additional_textures)
+        sc.bindings[entry.name] = ShaderBinding(0, 2 + binding_idx++, vk::DescriptorType::eCombinedImageSampler);
 
     apply_render_config(m_render_config, sc);
 
@@ -142,8 +142,8 @@ void InstanceNetworkBuffer::setup_rendering(const RenderConfig& config)
         m_render_processor->set_mill_spec(mill_spec);
     }
 
-    for (const auto& [name, tex] : m_render_config.additional_textures)
-        m_render_processor->bind_texture(name, tex);
+    for (const auto& entry : m_render_config.additional_textures)
+        m_render_processor->bind_texture(entry);
 
     get_processing_chain()->add_final_processor(m_render_processor, shared_from_this());
 

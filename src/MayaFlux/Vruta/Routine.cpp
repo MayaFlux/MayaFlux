@@ -231,6 +231,8 @@ GraphicsRoutine::GraphicsRoutine(GraphicsRoutine&& other) noexcept
 GraphicsRoutine& GraphicsRoutine::operator=(GraphicsRoutine&& other) noexcept
 {
     if (this != &other) {
+        if (m_handle && m_handle.address())
+            m_handle.destroy();
         m_handle = std::exchange(other.m_handle, nullptr);
     }
     return *this;
@@ -383,30 +385,6 @@ CrossRoutine::CrossRoutine(std::coroutine_handle<promise_type> h)
             std::source_location::current(),
             "CrossRoutine constructed with invalid coroutine handle");
     }
-}
-
-CrossRoutine::CrossRoutine(const CrossRoutine& other)
-    : m_handle(other.m_handle)
-{
-    if (other.m_handle) {
-        m_handle = other.m_handle;
-    }
-}
-
-CrossRoutine& CrossRoutine::operator=(const CrossRoutine& other)
-{
-    if (this != &other) {
-        if (m_handle) {
-            m_handle.destroy();
-        }
-
-        if (other.m_handle) {
-            m_handle = other.m_handle;
-        } else {
-            m_handle = nullptr;
-        }
-    }
-    return *this;
 }
 
 CrossRoutine::CrossRoutine(CrossRoutine&& other) noexcept

@@ -4,6 +4,8 @@
 
 #include "GraphicsUtils.hpp"
 
+#include "MayaFlux/Core/Backends/Graphics/Vulkan/VKTimeline.hpp"
+
 #include "MayaFlux/Kakshya/NDData/NDData.hpp"
 
 namespace MayaFlux::Core {
@@ -16,6 +18,8 @@ class VKBuffer;
 }
 
 namespace MayaFlux::Portal::Graphics {
+
+using SubmitMode = Core::SubmitMode;
 
 /** @brief Immutable properties that determine whether an image can be reused. */
 struct ImageKey {
@@ -96,11 +100,6 @@ struct LayerBlit {
  *
  *   // Create render target
  *   auto target = mgr.create_render_target(1920, 1080);
- *
- *   // Get sampler
- *   SamplerConfig config;
- *   config.mag_filter = FilterMode::LINEAR;
- *   auto sampler = mgr.get_or_create_sampler(config);
  */
 class MAYAFLUX_API TextureLoom {
 public:
@@ -415,14 +414,16 @@ public:
      * @param src      Source image, distinct from @p dst.
      * @param dst      Destination image.
      * @param blit     Layers, rectangles, filter and flips.
-     * @param deferred Record for deferred submission.
-     * @return True if the blit was recorded or executed.
+     * @param mode     IMMEDIATE waits for the copy. DEFERRED records it for the next flush
+     *                 or present submit. ASYNC submits it at once without waiting; later
+     *                 graphics work, including a read of the layer, is ordered after it.
+     * @return True if the blit was recorded, executed or submitted.
      */
     bool blit_layer(
         const std::shared_ptr<Core::VKImage>& src,
         const std::shared_ptr<Core::VKImage>& dst,
         const LayerBlit& blit = {},
-        bool deferred = false);
+        SubmitMode mode = SubmitMode::IMMEDIATE);
 
     /**
      * @brief Whether the device can blit between two images with a filter.
@@ -431,30 +432,6 @@ public:
         const std::shared_ptr<Core::VKImage>& src,
         const std::shared_ptr<Core::VKImage>& dst,
         FilterMode filter = FilterMode::LINEAR) const;
-
-    //==========================================================================
-    // Sampler Management
-    //==========================================================================
-
-    /**
-     * @brief Get or create a sampler with the given configuration
-     * @param config Sampler configuration
-     * @return Vulkan sampler handle (cached)
-     *
-     * Samplers are cached - identical configs return same sampler.
-     * Managed by TextureLoom, destroyed on shutdown.
-     */
-    vk::Sampler get_or_create_sampler(const SamplerConfig& config);
-
-    /**
-     * @brief Get a default linear sampler (for convenience)
-     */
-    vk::Sampler get_default_sampler();
-
-    /**
-     * @brief Get a default nearest sampler (for pixel-perfect sampling)
-     */
-    vk::Sampler get_nearest_sampler();
 
     //==========================================================================
     // Utilities
@@ -535,15 +512,6 @@ private:
 
     // Managed textures (for cleanup)
     std::vector<std::shared_ptr<Core::VKImage>> m_textures;
-
-    // Sampler cache (config hash -> sampler)
-    std::unordered_map<size_t, vk::Sampler> m_sampler_cache;
-
-    // Helper: create sampler from config
-    vk::Sampler create_sampler(const SamplerConfig& config);
-
-    // Helper: hash sampler config for caching
-    static size_t hash_sampler_config(const SamplerConfig& config);
 
     static bool s_initialized;
 };

@@ -4,11 +4,11 @@ namespace MayaFlux::Memory {
 
 /**
  * @class PendingQueue
- * @brief Bounded multi-producer, single-consumer queue of deferred operations.
+ * @brief Bounded multi-producer, multi-consumer queue of deferred operations.
  *
- * Producers on any thread push an operation; the one owner of the guarded
- * container drains the queue at a point where mutation is safe and applies each
- * operation in the order it was claimed. Each cell carries its own sequence
+ * Producers on any thread push an operation; any thread may drain the queue at
+ * a point where mutation is safe, and each operation is applied exactly once,
+ * in the order it was claimed. Each cell carries its own sequence
  * number, so a producer only claims a cell that is free and a consumer only
  * reads a cell whose payload has been published. A full queue rejects the push
  * without disturbing any other claim.
@@ -17,7 +17,8 @@ namespace MayaFlux::Memory {
  * assignable; the drained cell is reset so the queue never retains a payload
  * (for example a shared_ptr) past its application.
  *
- * Only one thread may call drain() at a time.
+ * Overlapping drains never hand out the same operation twice, but they do not
+ * serialise the apply step; the caller guards whatever @p apply mutates.
  *
  * @code
  * PendingQueue<Op, 1024> queue;
@@ -81,34 +82,46 @@ public:
     }
 
     /**
-     * @brief Apply and remove every published operation in claim order.
+     * @brief Apply and remove the published operations claimed before the call.
      * @param apply Callable taking T&&.
-     * @return Number of operations applied.
+     * @return Number of operations this call applied.
      *
-     * Stops at the first cell whose producer has claimed but not yet published;
-     * that operation and everything behind it is applied by the next drain.
-     * Single consumer only.
+     * Safe from any thread, including overlapping drains: each operation is
+     * handed to exactly one caller. Operations pushed while the drain runs,
+     * including by @p apply itself, wait for the next drain. Stops at the first
+     * cell whose producer has claimed but not yet published; that operation and
+     * everything behind it is applied by a later drain.
      */
     template <typename Apply>
     size_t drain(Apply&& apply)
     {
-        size_t pos = m_dequeue.load(std::memory_order_relaxed);
+        const size_t limit = m_enqueue.load(std::memory_order_acquire);
         size_t count = 0;
 
         for (;;) {
-            Cell& cell = m_cells[pos & MASK];
-            if (cell.sequence.load(std::memory_order_acquire) != pos + 1) {
+            size_t pos = m_dequeue.load(std::memory_order_relaxed);
+            if (static_cast<std::intptr_t>(limit - pos) <= 0) {
                 break;
             }
 
-            T value = std::move(cell.value);
-            cell.value = T {};
-            cell.sequence.store(pos + Capacity, std::memory_order_release);
-            ++pos;
-            ++count;
-            m_dequeue.store(pos, std::memory_order_relaxed);
+            Cell& cell = m_cells[pos & MASK];
+            const auto diff = static_cast<std::intptr_t>(cell.sequence.load(std::memory_order_acquire))
+                - static_cast<std::intptr_t>(pos + 1);
 
-            std::forward<Apply>(apply)(std::move(value));
+            if (diff == 0) {
+                if (!m_dequeue.compare_exchange_weak(pos, pos + 1, std::memory_order_relaxed)) {
+                    continue;
+                }
+
+                T value = std::move(cell.value);
+                cell.value = T {};
+                cell.sequence.store(pos + Capacity, std::memory_order_release);
+                ++count;
+
+                std::forward<Apply>(apply)(std::move(value));
+            } else if (diff < 0) {
+                break;
+            }
         }
 
         return count;

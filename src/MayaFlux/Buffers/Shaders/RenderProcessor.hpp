@@ -118,6 +118,37 @@ public:
         vk::Sampler sampler = nullptr);
 
     /**
+     * @brief Bind a texture with a sampler described by a config.
+     *
+     * The sampler is kept for the binding, so a later bind without one reuses it.
+     */
+    void bind_texture(
+        uint32_t binding,
+        const std::shared_ptr<Core::VKImage>& texture,
+        const Portal::Graphics::SamplerConfig& sampler);
+
+    /** @brief Named form of the config overload. */
+    void bind_texture(
+        const std::string& descriptor_name,
+        const std::shared_ptr<Core::VKImage>& texture,
+        const Portal::Graphics::SamplerConfig& sampler);
+
+    /** @brief Bind an additional texture by name, with its sampler when it has one. */
+    void bind_texture(const Portal::Graphics::SampledTexture& texture);
+
+    /**
+     * @brief Choose the sampler a binding uses when it is bound without one.
+     *
+     * Applies to later binds, so it can be set before the texture exists. When
+     * a texture is already bound at the binding, its sampler changes too, and
+     * the descriptors are rebuilt on the next execute.
+     */
+    void set_binding_sampler(uint32_t binding, const Portal::Graphics::SamplerConfig& config);
+
+    /** @brief Named form of set_binding_sampler. */
+    void set_binding_sampler(const std::string& descriptor_name, const Portal::Graphics::SamplerConfig& config);
+
+    /**
      * @brief Check if pipeline is created
      */
     bool is_pipeline_ready() const { return m_pipeline_id != Portal::Graphics::INVALID_RENDER_PIPELINE; }
@@ -402,6 +433,7 @@ private:
         vk::Sampler sampler;
     };
     std::unordered_map<uint32_t, TextureBinding> m_texture_bindings;
+    std::unordered_map<uint32_t, vk::Sampler> m_binding_samplers;
 
     std::optional<Portal::Graphics::BlendAttachmentConfig> m_blend_attachment;
 

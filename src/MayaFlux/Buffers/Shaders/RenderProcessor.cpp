@@ -6,7 +6,7 @@
 #include "MayaFlux/Core/Backends/Windowing/Window.hpp"
 
 #include "MayaFlux/Portal/Graphics/ShaderFoundry.hpp"
-#include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
+#include "MayaFlux/Portal/Graphics/SamplerForge.hpp"
 #include "MayaFlux/Registry/BackendRegistry.hpp"
 #include "MayaFlux/Registry/Service/DisplayService.hpp"
 
@@ -198,8 +198,11 @@ void RenderProcessor::bind_texture(
     }
 
     if (!sampler) {
-        auto& loom = Portal::Graphics::get_texture_manager();
-        sampler = loom.get_default_sampler();
+        const auto chosen = m_binding_samplers.find(binding);
+        sampler = chosen != m_binding_samplers.end()
+            ? chosen->second
+            : Portal::Graphics::SamplerForge::instance().get_or_create(
+                  { .enable_mipmaps = true, .border_color = Portal::Graphics::BorderColor::OPAQUE_BLACK });
     }
 
     m_texture_bindings[binding] = { .texture = texture, .sampler = sampler };
@@ -247,6 +250,60 @@ void RenderProcessor::bind_texture(
     }
 
     bind_texture(binding_it->second.binding, texture, sampler);
+}
+
+void RenderProcessor::bind_texture(
+    uint32_t binding,
+    const std::shared_ptr<Core::VKImage>& texture,
+    const Portal::Graphics::SamplerConfig& sampler)
+{
+    set_binding_sampler(binding, sampler);
+    bind_texture(binding, texture, vk::Sampler {});
+}
+
+void RenderProcessor::bind_texture(
+    const std::string& descriptor_name,
+    const std::shared_ptr<Core::VKImage>& texture,
+    const Portal::Graphics::SamplerConfig& sampler)
+{
+    set_binding_sampler(descriptor_name, sampler);
+    bind_texture(descriptor_name, texture, vk::Sampler {});
+}
+
+void RenderProcessor::bind_texture(const Portal::Graphics::SampledTexture& texture)
+{
+    if (texture.sampler) {
+        set_binding_sampler(texture.name, *texture.sampler);
+    }
+    bind_texture(texture.name, texture.image, vk::Sampler {});
+}
+
+void RenderProcessor::set_binding_sampler(uint32_t binding, const Portal::Graphics::SamplerConfig& config)
+{
+    const auto sampler = Portal::Graphics::SamplerForge::instance().get_or_create(config);
+    if (!sampler) {
+        return;
+    }
+
+    m_binding_samplers[binding] = sampler;
+
+    const auto bound = m_texture_bindings.find(binding);
+    if (bound != m_texture_bindings.end()) {
+        bound->second.sampler = sampler;
+        m_needs_descriptor_rebuild = true;
+    }
+}
+
+void RenderProcessor::set_binding_sampler(const std::string& descriptor_name, const Portal::Graphics::SamplerConfig& config)
+{
+    const auto binding_it = m_config.bindings.find(descriptor_name);
+    if (binding_it == m_config.bindings.end()) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "No binding configured for descriptor '{}'", descriptor_name);
+        return;
+    }
+
+    set_binding_sampler(binding_it->second.binding, config);
 }
 
 void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffer)

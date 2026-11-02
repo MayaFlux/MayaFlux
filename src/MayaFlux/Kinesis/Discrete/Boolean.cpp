@@ -212,6 +212,23 @@ std::vector<double> maximally_even_sequence(size_t pulses, size_t steps, size_t 
     return out;
 }
 
+std::vector<double> onset_gaps(std::span<const double> grid, double step)
+{
+    std::vector<size_t> onsets;
+    for (size_t i = 0; i < grid.size(); ++i) {
+        if (grid[i] > 0.5)
+            onsets.push_back(i);
+    }
+
+    std::vector<double> gaps;
+    gaps.reserve(onsets.size());
+    for (size_t k = 0; k < onsets.size(); ++k) {
+        const size_t next = k + 1 < onsets.size() ? onsets[k + 1] : grid.size() + onsets.front();
+        gaps.push_back(static_cast<double>(next - onsets[k]) * step);
+    }
+    return gaps;
+}
+
 bool step_pattern(double input, std::span<double> coefs) noexcept
 {
     return step_sequence(std::span<const double>(&input, 1), coefs) > 0.5;

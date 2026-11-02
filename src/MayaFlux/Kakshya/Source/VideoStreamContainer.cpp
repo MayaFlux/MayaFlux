@@ -734,6 +734,11 @@ bool VideoStreamContainer::all_dimensions_consumed() const
         >= m_registered_readers.load(std::memory_order_acquire);
 }
 
+void VideoStreamContainer::clear_all_consumption()
+{
+    m_consumed_readers.store(0, std::memory_order_release);
+}
+
 // =========================================================================
 // Data access
 // =========================================================================

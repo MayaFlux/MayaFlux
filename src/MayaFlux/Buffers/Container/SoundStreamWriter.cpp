@@ -10,7 +10,7 @@ namespace MayaFlux::Buffers {
 void SoundStreamWriter::processing_function(const std::shared_ptr<Buffer>& buffer)
 {
     auto audio_buffer = std::dynamic_pointer_cast<AudioBuffer>(buffer);
-    if (!audio_buffer || !m_container)
+    if (!audio_buffer || !m_container || audio_buffer->needs_removal())
         return;
 
     std::span<const double> data_span = audio_buffer->get_data();
@@ -32,8 +32,8 @@ void SoundStreamWriter::processing_function(const std::shared_ptr<Buffer>& buffe
     if (frames_written > 0) {
         m_write_position += frames_written;
 
-        if (m_container->is_circular() && m_write_position >= m_container->get_circular_capacity()) {
-            m_write_position = 0;
+        if (m_container->is_circular() && m_container->get_circular_capacity() > 0) {
+            m_write_position %= m_container->get_circular_capacity();
         }
     }
 }

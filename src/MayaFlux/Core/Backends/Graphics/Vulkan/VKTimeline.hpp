@@ -6,6 +6,20 @@ namespace MayaFlux::Core {
 inline constexpr uint32_t k_max_timelines = 3;
 
 /**
+ * @enum SubmitMode
+ * @brief How a helper submits the commands it records.
+ *
+ * IMMEDIATE submits and waits. DEFERRED records into a batch that a flush or a
+ * window's present submit submits. ASYNC submits at once and does not wait; later
+ * work on the queue is ordered after it.
+ */
+enum class SubmitMode : uint8_t {
+    IMMEDIATE,
+    DEFERRED,
+    ASYNC
+};
+
+/**
  * @struct TimelinePoint
  * @brief Completion token of one submission: a value on one queue's timeline
  *

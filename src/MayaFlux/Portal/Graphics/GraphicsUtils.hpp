@@ -292,6 +292,8 @@ struct SamplerConfig {
     float max_anisotropy = 1.0F; // 1.0 = disabled, 16.0 = max quality
     bool enable_mipmaps = false;
     BorderColor border_color = BorderColor::DEFAULT;
+
+    bool operator==(const SamplerConfig& other) const = default;
 };
 
 /**
@@ -305,6 +307,21 @@ enum class FitMode : uint8_t {
     CENTER, ///< No scaling, centered, clipped to the destination
     TILE, ///< Source repeated at its own size
     TILE_MIRRORED ///< Source repeated, every other tile mirrored
+};
+
+/**
+ * @struct SampledTexture
+ * @brief A texture bound besides the default one, with an optional sampler.
+ *
+ * `{ "text", nullptr }` and `{ .name = "map", .image = image, .sampler = SamplerConfig { ... } }`
+ * both work. Without a sampler the render processor's default is used.
+ */
+struct SampledTexture {
+    std::string name;
+    std::shared_ptr<Core::VKImage> image;
+    std::optional<SamplerConfig> sampler;
+
+    bool operator==(const SampledTexture& other) const = default;
 };
 
 /**
@@ -347,7 +364,13 @@ struct RenderConfig {
      */
     bool triangulate { false };
 
-    std::vector<std::pair<std::string, std::shared_ptr<Core::VKImage>>> additional_textures;
+    /**
+     * @brief Textures bound besides the default one, each under its shader binding name.
+     *
+     * An entry may carry its own sampler. A null image reserves the binding for a
+     * texture bound later.
+     */
+    std::vector<SampledTexture> additional_textures;
 
     /**
      * @brief Clip this buffer's draws to an NDC region.
@@ -364,6 +387,13 @@ struct RenderConfig {
 
     /// @brief Draw-order priority. Higher sorts later (drawn on top). Default 0.
     int64_t draw_priority {};
+
+    /**
+     * @brief Sampler for the default texture, used by TextureBuffer and NodeTextureBuffer.
+     *
+     * Unset uses the render processor's default sampler.
+     */
+    std::optional<SamplerConfig> default_sampler;
 
     bool operator==(const RenderConfig& other) const = default;
 };

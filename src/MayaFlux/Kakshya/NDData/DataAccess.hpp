@@ -277,6 +277,20 @@ auto DataAccess::view() const
             using ComponentType = glm_component_type<T>;
             constexpr size_t components = glm_component_count<T>();
 
+            if constexpr (std::is_same_v<StorageType, T>) {
+                if (vec.size() < m_dimensions[0].size) {
+                    error<std::runtime_error>(
+                        Journal::Component::Kakshya,
+                        Journal::Context::Runtime,
+                        std::source_location::current(),
+                        "Insufficient data: need {} elements of type {} but have {}",
+                        m_dimensions[0].size,
+                        typeid(T).name(),
+                        vec.size());
+                }
+                return StructuredView<T>(vec.data(), m_dimensions[0].size);
+            }
+
             size_t required_components = m_dimensions[0].size * components;
             if (vec.size() < required_components) {
                 error<std::runtime_error>(

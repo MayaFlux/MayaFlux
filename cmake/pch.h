@@ -80,10 +80,7 @@ template <typename T>
 concept ArithmeticData = IntegerData<T> || DecimalData<T>;
 
 template <typename T>
-concept ComplexData = requires {
-    typename T::value_type;
-    std::is_same_v<T, std::complex<float>> || std::is_same_v<T, std::complex<double>>;
-};
+concept ComplexData = std::is_same_v<T, std::complex<float>> || std::is_same_v<T, std::complex<double>>;
 
 template <typename T>
 concept StringData = std::is_same_v<T, std::string> || std::is_same_v<T, const char*> || std::is_same_v<T, char*>;
@@ -207,6 +204,16 @@ CastResult<To> try_convert(const From& value)
     } else if constexpr (ComplexData<From> && ArithmeticData<To>) {
         result.value = static_cast<To>(std::abs(value));
         result.precision_loss = (std::imag(value) != 0);
+    } else if constexpr (ArithmeticData<From> && ComplexData<To>) {
+        using Component = typename To::value_type;
+        const auto converted = static_cast<Component>(value);
+        result.value = To(converted, Component { 0 });
+        result.precision_loss = (static_cast<From>(converted) != value);
+    } else if constexpr (ComplexData<From> && ComplexData<To>) {
+        using Component = typename To::value_type;
+        const To converted(static_cast<Component>(value.real()), static_cast<Component>(value.imag()));
+        result.value = converted;
+        result.precision_loss = (static_cast<From>(converted) != value);
     } else {
         result.error = "No conversion available";
     }
@@ -239,6 +246,19 @@ template <ArithmeticData To>
     return static_cast<To>(value);
 }
 
+/**
+ * @brief Convert the value held by an any if its type is one of Sources.
+ * @return The conversion of the first matching source type, or nullopt when
+ *         the any holds none of them.
+ */
+template <typename To, typename... Sources>
+std::optional<CastResult<To>> try_convert_any(const std::any& any_val)
+{
+    std::optional<CastResult<To>> converted;
+    ((any_val.type() == typeid(Sources) && (converted = try_convert<To>(std::any_cast<Sources>(any_val)), true)) || ...);
+    return converted;
+}
+
 template <typename T>
     requires(ArithmeticData<T> || ComplexData<T> || StringData<T>)
 CastResult<T> safe_any_cast(const std::any& any_val)
@@ -265,33 +285,21 @@ CastResult<T> safe_any_cast(const std::any& any_val)
     }
 
     if constexpr (ArithmeticData<T>) {
-        if (any_val.type() == typeid(int)) {
-            return try_convert<T>(std::any_cast<int>(any_val));
-        } else if (any_val.type() == typeid(unsigned)) {
-            return try_convert<T>(std::any_cast<unsigned>(any_val));
-        } else if (any_val.type() == typeid(long)) {
-            return try_convert<T>(std::any_cast<long>(any_val));
-        } else if (any_val.type() == typeid(size_t)) {
-            return try_convert<T>(std::any_cast<size_t>(any_val));
-        } else if (any_val.type() == typeid(uint32_t)) {
-            return try_convert<T>(std::any_cast<uint32_t>(any_val));
-        } else if (any_val.type() == typeid(float)) {
-            return try_convert<T>(std::any_cast<float>(any_val));
-        } else if (any_val.type() == typeid(double)) {
-            return try_convert<T>(std::any_cast<double>(any_val));
+        if (auto converted = try_convert_any<T, bool, char, signed char, unsigned char, short, unsigned short,
+                int, unsigned, long, unsigned long, long long, unsigned long long, float, double,
+                std::complex<float>, std::complex<double>>(any_val)) {
+            return *converted;
         }
     }
 
     if constexpr (StringData<T>) {
-        if (any_val.type() == typeid(std::string)) {
-            if constexpr (std::is_same_v<T, std::string>) {
-                result.value = std::any_cast<std::string>(any_val);
-            }
-        } else if (any_val.type() == typeid(const char*)) {
+        if (any_val.type() == typeid(const char*)) {
             if constexpr (std::is_same_v<T, std::string>) {
                 result.value = std::string(std::any_cast<const char*>(any_val));
+                return result;
             } else if constexpr (std::is_same_v<T, const char*>) {
                 result.value = std::any_cast<const char*>(any_val);
+                return result;
             }
         }
     }
@@ -355,10 +363,11 @@ template <typename T>
     requires(ArithmeticData<T> || ComplexData<T> || StringData<T>)
 bool any_equal(const std::any& a, const std::any& b)
 {
-    auto va = safe_any_cast<T>(a);
-    if (!va)
+    const auto va = safe_any_cast<T>(a);
+    const auto vb = safe_any_cast<T>(b);
+    if (!va || !vb)
         return false;
-    return *va.value == safe_any_cast_or_throw<T>(b);
+    return *va.value == *vb.value;
 }
 
 template <typename T>
@@ -367,10 +376,11 @@ bool any_equal(const std::any& a, const std::any& b)
 {
     if (a.type() != b.type())
         return false;
-    auto va = safe_any_cast<T>(a);
-    if (!va)
+    const auto va = safe_any_cast<T>(a);
+    const auto vb = safe_any_cast<T>(b);
+    if (!va || !vb)
         return false;
-    return *va.value == safe_any_cast_or_throw<T>(b);
+    return *va.value == *vb.value;
 }
 
 /**

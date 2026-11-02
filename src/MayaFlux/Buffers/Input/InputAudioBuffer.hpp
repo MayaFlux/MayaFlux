@@ -56,9 +56,10 @@ public:
 
     /**
      * @brief Gets all registered listeners
-     * @return Vector of listener buffers
+     * @return Copy of the listener list, empty when the buffer has no
+     *         InputAccessProcessor as its default processor
      */
-    const std::vector<const std::shared_ptr<AudioBuffer>&>& get_listeners() const;
+    [[nodiscard]] std::vector<std::shared_ptr<AudioBuffer>> get_listeners() const;
 
     /**
      * @brief Clears all registered listeners
@@ -111,6 +112,12 @@ public:
      * @return Number of listeners
      */
     size_t get_listener_count() const { return m_listeners.size(); }
+
+    /**
+     * @brief Gets the registered listener buffers
+     * @return Listeners in registration order
+     */
+    [[nodiscard]] const std::vector<std::shared_ptr<AudioBuffer>>& get_listeners() const { return m_listeners; }
 
     inline void clear_listeners() { m_listeners.clear(); }
 

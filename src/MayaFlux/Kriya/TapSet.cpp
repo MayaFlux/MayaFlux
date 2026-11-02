@@ -214,7 +214,7 @@ TapSet TapSetBuilder::start()
             const auto& sampler = taps.m_pipelines[pipeline];
             const size_t slot = slot_counts[pipeline]++;
 
-            auto slice = sampler->slice_from_range(m_start_frame, end_frame, static_cast<uint8_t>(slot));
+            auto slice = sampler->slice_from_range(m_start_frame, end_frame - 1, static_cast<uint8_t>(slot));
             slice.looping = m_looping;
             slice.scale = spec.level;
             slice.source_channel = spec.source.value_or(output % source_count);

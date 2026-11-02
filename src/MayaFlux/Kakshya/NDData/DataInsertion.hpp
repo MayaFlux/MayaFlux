@@ -44,13 +44,14 @@ public:
         validate_scalar_insertion(target_modality);
 
         if (replace_existing) {
+            const auto count = static_cast<uint64_t>(data.size());
             m_variant = std::move(data);
             m_modality = target_modality;
 
             m_dimensions.clear();
             m_dimensions.emplace_back(
                 modality_to_dimension_name(target_modality),
-                static_cast<uint64_t>(data.size()),
+                count,
                 1,
                 modality_to_role(target_modality));
         } else {
@@ -73,12 +74,13 @@ public:
         validate_structured_insertion<T>(target_modality);
 
         if (replace_existing) {
+            const auto count = static_cast<uint64_t>(data.size());
             m_variant = std::move(data);
             m_modality = target_modality;
 
             m_dimensions.clear();
             m_dimensions.push_back(create_structured_dimension<T>(
-                static_cast<uint64_t>(data.size()),
+                count,
                 target_modality));
         } else {
             append_structured_to_existing(std::move(data));

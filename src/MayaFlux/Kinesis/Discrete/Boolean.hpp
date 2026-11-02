@@ -206,6 +206,18 @@ namespace MayaFlux::Kinesis::Discrete {
     size_t pulses, size_t steps, size_t rotation = 0);
 
 /**
+ * @brief The distances between successive ones of a table, wrapping around its end.
+ * @param grid A table whose entries above 0.5 are ones
+ * @param step Length of one entry
+ *
+ * Each gap runs from a one to the next, in units of step, and the last one wraps
+ * to the first, so the gaps sum to the table length times step. (3, 8) of
+ * maximally_even_sequence at step 0.125 gives 0.375, 0.375, 0.25. Entries before
+ * the first one are added to the last gap. A table with no ones gives no gaps.
+ */
+[[nodiscard]] MAYAFLUX_API std::vector<double> onset_gaps(std::span<const double> grid, double step);
+
+/**
  * @brief A table of bits advanced by the rises of the input.
  *
  * The array is step_sequence_state's, read as bits: an entry above 0.5 is a

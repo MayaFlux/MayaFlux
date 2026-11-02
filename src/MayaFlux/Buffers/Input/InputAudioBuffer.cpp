@@ -18,13 +18,20 @@ void InputAudioBuffer::write_to(const std::shared_ptr<AudioBuffer>& buffer)
     }
 
     const auto& src_data = get_data();
-    auto& dst_data = buffer->get_data();
 
-    if (dst_data.size() != src_data.size()) {
-        dst_data.resize(src_data.size());
+    if (buffer->get_data().size() != src_data.size()) {
+        buffer->resize(static_cast<uint32_t>(src_data.size()));
     }
 
-    std::ranges::copy(src_data, dst_data.begin());
+    std::ranges::copy(src_data, buffer->get_data().begin());
+}
+
+std::vector<std::shared_ptr<AudioBuffer>> InputAudioBuffer::get_listeners() const
+{
+    if (auto processor = std::dynamic_pointer_cast<InputAccessProcessor>(get_default_processor())) {
+        return processor->get_listeners();
+    }
+    return {};
 }
 
 void InputAudioBuffer::register_listener(const std::shared_ptr<AudioBuffer>& buffer)

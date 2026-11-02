@@ -144,6 +144,19 @@ struct MAYAFLUX_API BufferService {
     std::function<void(std::function<void(void*)>)> record_deferred;
 
     /**
+     * @brief Record and submit commands without waiting. Fire and forget.
+     * @param recorder   Lambda that records commands into the command buffer.
+     * @param keep_alive Objects the commands read or write; held until the submission completes.
+     * @return Timeline index and value of the submission, or {0, 0} if it failed.
+     *
+     * Ordered after earlier graphics queue work, and after produced compute work.
+     * A host image copy made later waits for it. Unlike execute_fenced there is no
+     * handle to wait on or release: the command buffer and keep_alive are retired
+     * on completion. Use await_point to wait. Submission is externally synchronized.
+     */
+    std::function<std::pair<uint32_t, uint64_t>(std::function<void(void*)>, std::vector<std::shared_ptr<void>>)> execute_async;
+
+    /**
      * @brief Submit commands with a fence. Non-blocking.
      * @param recorder Lambda that records commands into command buffer.
      * @return Opaque handle tracking the submission.

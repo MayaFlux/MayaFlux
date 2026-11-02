@@ -7,25 +7,30 @@ layout(location = 0) out vec4 outColor;
 ///        VKImage created via TextureLoom::create_2d_array.
 layout(set = 0, binding = 1) uniform sampler2DArray textureArray;
 
-const uint MAX_LAYERS = 30u;
+#extension GL_EXT_buffer_reference : require
 
-/// @brief layer_count: layers in use, at most MAX_LAYERS.
+/// @brief Per layer weights, in a host visible buffer the array owns.
+layout(buffer_reference, std430) readonly buffer LayerWeights {
+    float value[];
+};
+
+/// @brief weights: device address of the per layer weights. A layer with a weight of zero or less is skipped.
+/// @brief layer_count: layers in use.
 /// @brief mode: 0 weighted mean, 1 weighted sum, 2 weighted max, 3 over in layer order.
-/// @brief weights: per layer weight. A layer with a weight of zero or less is skipped.
 layout(push_constant) uniform PC {
+    LayerWeights weights;
     uint layer_count;
     uint mode;
-    float weights[MAX_LAYERS];
 } pc;
 
 void main()
 {
     vec4 accum = vec4(0.0);
     float total = 0.0;
-    uint count = min(pc.layer_count, MAX_LAYERS);
+    uint count = pc.layer_count;
 
     for (uint i = 0u; i < count; ++i) {
-        float w = pc.weights[i];
+        float w = pc.weights.value[i];
         if (w <= 0.0) {
             continue;
         }

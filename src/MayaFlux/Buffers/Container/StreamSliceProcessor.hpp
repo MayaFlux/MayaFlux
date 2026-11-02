@@ -62,8 +62,10 @@ public:
      * first. The same parameters are re-applied every block, so edits made
      * through slice() take effect on a playing voice at the next block.
      * @param index Slot index
+     * @param offset Frames from the start of the next block at which the voice
+     *        begins to sound. An offset past one block waits whole blocks.
      */
-    void bind(size_t index);
+    void bind(size_t index, uint32_t offset = 0);
 
     /**
      * @brief Deactivate a slot, stopping its processor without resetting the cursor.
@@ -96,6 +98,8 @@ private:
     struct Slot {
         Kakshya::StreamSlice slice {};
         std::shared_ptr<Kakshya::CursorAccessProcessor> proc;
+        uint64_t played {};
+        uint32_t offset {};
     };
 
     std::vector<Slot> m_slots;

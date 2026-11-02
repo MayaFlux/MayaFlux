@@ -30,7 +30,10 @@ class DynamicSoundStream;
  * For default single-cursor sequential reads driven by the container's own
  * processing state, use ContiguousAccessProcessor instead.
  *
- * The stream is treated as immutable memory after load. Block size is fixed at
+ * The stream is treated as immutable memory after load. Its length is read once
+ * at attach, so frames added to a growing stream afterwards are not played; a
+ * ring, whose capacity is fixed, is fine, and loading the slice again picks up a
+ * new length. Block size is fixed at
  * construction or via set_frames_per_block(). When inactive, process() writes
  * silence without advancing the cursor. Activation and cursor reset are explicit
  * via reset(), keeping trigger logic decoupled from the processor.
@@ -117,15 +120,15 @@ public:
     void set_on_end(std::function<void()> cb) { m_on_end = std::move(cb); }
 
     /**
-     * @brief Set the playback speed relative to nominal rate.
+     * @brief Set the playback rate relative to nominal.
      *
-     * Speed is applied as a fractional frame accumulator: each process() call
-     * advances the cursor by m_frames_per_block * m_speed frames, with the
-     * sub-frame remainder carried in m_speed_remainder for the next call.
-     * Speed 1.0 is the default (no accumulator overhead). Values <= 0.0 are
-     * ignored.
+     * Any speed other than 1.0 reads the loop region at that rate with linear
+     * interpolation, so it also changes pitch: 2.0 is twice as fast and an
+     * octave up. The position carries on from wherever the cursor is, so a
+     * change while playing never jumps. Speed 1.0, the default, reads frames
+     * as stored. Values <= 0.0 are ignored; use a time map to reverse.
      *
-     * @param speed Playback speed multiplier (1.0 = normal).
+     * @param speed Playback rate multiplier (1.0 = normal).
      */
     void set_speed(double speed);
 
@@ -134,11 +137,13 @@ public:
      *
      * The map takes seconds since the last reset() and returns a source
      * position in frames, read with linear interpolation. Reverse, scrubbing
-     * and a fixed position are all valid. Speed and loop count are ignored
-     * while a map is set. Positions outside the loop region wrap if looping,
-     * otherwise the voice ends. A different map restarts its clock at zero.
+     * and a fixed position are all valid. Speed is ignored while a map is
+     * set. Positions outside the loop region wrap if looping, otherwise the
+     * voice ends. Each crossing of a region edge, in either direction, counts
+     * as one pass toward the loop count. A different map restarts its clock at
+     * zero.
      *
-     * @param map Time map, or null to go back to speed based reading.
+     * @param map Time map, or null to go back to reading at the speed.
      */
     void set_time_map(const std::shared_ptr<const Kinesis::TimeMap>& map);
 

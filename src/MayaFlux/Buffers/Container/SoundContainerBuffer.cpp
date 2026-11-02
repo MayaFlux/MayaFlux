@@ -65,7 +65,11 @@ void SoundStreamReader::processing_function(const std::shared_ptr<Buffer>& buffe
         extract_channel_data(buffer_data);
 
         if (m_auto_advance) {
-            m_container->update_read_position_for_channel(m_source_channel, current_pos + buffer_size);
+            if (current_pos == m_last_position) {
+                current_pos += buffer_size;
+                m_container->update_read_position_for_channel(m_source_channel, current_pos);
+            }
+            m_last_position = current_pos;
         }
 
         if (m_update_flags) {
@@ -76,7 +80,9 @@ void SoundStreamReader::processing_function(const std::shared_ptr<Buffer>& buffe
 
         if (m_container->all_dimensions_consumed()) {
             m_container->update_processing_state(Kakshya::ProcessingState::READY);
-            std::dynamic_pointer_cast<Kakshya::SoundFileContainer>(m_container)->clear_all_consumption();
+            if (auto stream = std::dynamic_pointer_cast<Kakshya::SoundStreamContainer>(m_container)) {
+                stream->clear_all_consumption();
+            }
             m_container->reset_processing_token();
         }
 
@@ -108,13 +114,14 @@ void SoundStreamReader::on_attach(const std::shared_ptr<Buffer>& buffer)
         return;
     }
 
-    m_reader_id = m_container->register_dimension_reader(m_source_channel);
-
     if (!m_container->is_ready_for_processing()) {
         error<std::runtime_error>(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             std::source_location::current(),
             "SoundStreamReader: Container not ready for processing");
     }
+
+    m_reader_id = m_container->register_dimension_reader(m_source_channel);
+    sync_position();
 
     try {
         auto& buffer_data = std::dynamic_pointer_cast<AudioBuffer>(buffer)->get_data();
@@ -167,7 +174,14 @@ void SoundStreamReader::set_container(const std::shared_ptr<Kakshya::StreamConta
             [this](std::shared_ptr<Kakshya::SignalSourceContainer> c, Kakshya::ProcessingState s) {
                 this->on_container_state_change(c, s);
             });
+        sync_position();
     }
+}
+
+void SoundStreamReader::sync_position()
+{
+    const auto positions = m_container->get_read_position();
+    m_last_position = m_source_channel < positions.size() ? positions[m_source_channel] : 0;
 }
 
 void SoundStreamReader::on_container_state_change(

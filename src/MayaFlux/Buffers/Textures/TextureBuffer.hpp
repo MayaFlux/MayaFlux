@@ -187,6 +187,27 @@ public:
      */
     virtual void setup_rendering(const RenderConfig& config);
 
+    /**
+     * @brief Set the sampler of the default texture binding.
+     *
+     * Needs setup_rendering first; before it, this warns and does nothing. The choice
+     * is kept in the render config, so it is the value a later reset returns to.
+     *
+     * @param config Sampler for the default binding.
+     */
+    void set_sampler(const Portal::Graphics::SamplerConfig& config);
+
+    /**
+     * @brief Set the sampler of a named binding.
+     *
+     * The name is the default binding or the name of an additional texture from the
+     * render config. Needs setup_rendering first; an unknown name logs an error.
+     *
+     * @param name   Binding name.
+     * @param config Sampler for that binding.
+     */
+    void set_sampler(const std::string& name, const Portal::Graphics::SamplerConfig& config);
+
 protected:
     /**
      * @brief Allow inherited classes to set the TextureProcessor directly

@@ -107,7 +107,7 @@ Vruta::SoundRoutine BufferPipeline::execute_phased(uint64_t max_cycles, uint64_t
     m_data_states.resize(m_operations.size(), DataState::EMPTY);
     uint32_t cycles_executed = 0;
 
-    while ((max_cycles == 0 || cycles_executed < max_cycles) && (m_continuous_execution || cycles_executed < max_cycles)) {
+    while ((max_cycles == 0 || cycles_executed < max_cycles) && (m_continuous_execution || (max_cycles != UINT64_MAX && cycles_executed < max_cycles))) {
 
         if (promise.should_terminate) {
             break;
@@ -193,13 +193,14 @@ Vruta::SoundRoutine BufferPipeline::execute_streaming(uint64_t max_cycles, uint6
     m_data_states.resize(m_operations.size(), DataState::EMPTY);
     uint32_t cycles_executed = 0;
 
-    while ((max_cycles == 0 || cycles_executed < max_cycles) && (m_continuous_execution || cycles_executed < max_cycles)) {
+    while ((max_cycles == 0 || cycles_executed < max_cycles) && (m_continuous_execution || (max_cycles != UINT64_MAX && cycles_executed < max_cycles))) {
 
         if (promise.should_terminate) {
             break;
         }
 
         start_cycle();
+        std::ranges::fill(m_data_states, DataState::EMPTY);
 
         for (size_t i = 0; i < m_operations.size(); ++i) {
             auto& op = m_operations[i];
@@ -208,7 +209,7 @@ Vruta::SoundRoutine BufferPipeline::execute_streaming(uint64_t max_cycles, uint6
                 continue;
             }
 
-            if (m_data_states[i] == DataState::CONSUMED) {
+            if (m_data_states[i] == DataState::CONSUMED || m_data_states[i] == DataState::READY) {
                 continue;
             }
 
@@ -266,7 +267,7 @@ Vruta::GraphicsRoutine BufferPipeline::execute_frame_phased(uint64_t max_cycles,
     m_data_states.resize(m_operations.size(), DataState::EMPTY);
     uint32_t cycles_executed = 0;
 
-    while ((max_cycles == 0 || cycles_executed < max_cycles) && (m_continuous_execution || cycles_executed < max_cycles)) {
+    while ((max_cycles == 0 || cycles_executed < max_cycles) && (m_continuous_execution || (max_cycles != UINT64_MAX && cycles_executed < max_cycles))) {
 
         if (promise.should_terminate) {
             break;
@@ -351,7 +352,7 @@ Vruta::GraphicsRoutine BufferPipeline::execute_frame_streaming(uint64_t max_cycl
     m_data_states.resize(m_operations.size(), DataState::EMPTY);
     uint32_t cycles_executed = 0;
 
-    while ((max_cycles == 0 || cycles_executed < max_cycles) && (m_continuous_execution || cycles_executed < max_cycles)) {
+    while ((max_cycles == 0 || cycles_executed < max_cycles) && (m_continuous_execution || (max_cycles != UINT64_MAX && cycles_executed < max_cycles))) {
 
         if (promise.should_terminate) {
             break;

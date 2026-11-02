@@ -21,6 +21,7 @@ namespace Buffers {
 namespace Kakshya {
     class DynamicSoundStream;
     class DynamicVideoStream;
+    class TextureCollection;
     class VideoStreamContainer;
 }
 
@@ -365,6 +366,44 @@ namespace Kriya {
             std::optional<Portal::Graphics::RenderConfig> display = std::nullopt);
 
         /**
+         * @brief Append the image a texture buffer shows to a texture collection every cycle.
+         *
+         * The frame stays on the GPU, with no host read. The copy is submitted without
+         * waiting, so the cycle does not wait for it, and a later read of the collection
+         * is ordered after it. A source that is not a TextureBuffer with a texture appends nothing.
+         *
+         * @param source Buffer whose image is appended.
+         * @param target Collection that receives it; a ring collection keeps the newest layers.
+         */
+        static BufferOperation capture_to_collection(
+            std::shared_ptr<Buffers::VKBuffer> source,
+            std::shared_ptr<Kakshya::TextureCollection> target);
+
+        /**
+         * @brief Write the image a texture buffer shows into a layered buffer's ring every cycle.
+         *
+         * Each cycle the image goes to the layer at the target's write head and the head
+         * advances, so the array holds the newest frames in order. The write is submitted
+         * without waiting, and the head reaches the shader in the default
+         * push block. A source that is not a TextureBuffer with a texture writes nothing.
+         *
+         * @param source Buffer whose image is written.
+         * @param target Array whose layers form the ring.
+         */
+        static BufferOperation capture_to_ring(
+            std::shared_ptr<Buffers::VKBuffer> source,
+            std::shared_ptr<Buffers::TextureArrayBuffer> target);
+
+        /** @brief The array this operation writes a ring into, or null. */
+        [[nodiscard]] std::shared_ptr<Buffers::TextureArrayBuffer> get_ring() const { return m_target_ring; }
+
+        /** @brief The texture collection this operation appends to, or null. */
+        [[nodiscard]] std::shared_ptr<Kakshya::TextureCollection> get_collection() const
+        {
+            return m_target_collection;
+        }
+
+        /**
          * @brief The dynamic video stream this operation writes to.
          *
          * For capture_to_stream it is the stream the operation created; for a
@@ -666,6 +705,8 @@ namespace Kriya {
         std::shared_ptr<Buffers::VKBuffer> m_target_graphics_buffer;
         std::shared_ptr<Kakshya::DynamicSoundStream> m_target_audio_stream;
         std::shared_ptr<Kakshya::DynamicVideoStream> m_target_graphics_stream;
+        std::shared_ptr<Kakshya::TextureCollection> m_target_collection;
+        std::shared_ptr<Buffers::TextureArrayBuffer> m_target_ring;
         std::shared_ptr<Buffers::VKBuffer> m_source_graphics_buffer;
         std::optional<Portal::Graphics::RenderConfig> m_render;
         bool m_display_attached {};

@@ -265,7 +265,10 @@ void BufferManager::remove_processor(
     const std::shared_ptr<BufferProcessor>& processor,
     const std::shared_ptr<Buffer>& buffer)
 {
-    m_processor_control->remove_processor(processor, buffer);
+    const auto token = std::dynamic_pointer_cast<VKBuffer>(buffer)
+        ? ProcessingToken::GRAPHICS_BACKEND
+        : ProcessingToken::AUDIO_BACKEND;
+    m_processor_control->remove_processor(processor, buffer, token);
 }
 
 void BufferManager::remove_processor_from_channel(

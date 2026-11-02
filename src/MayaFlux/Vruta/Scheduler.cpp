@@ -115,31 +115,17 @@ void TaskScheduler::add_task(const std::shared_ptr<Routine>& routine, const std:
 
     if (token == ProcessingToken::CONDITIONAL) {
         routine->set_auto_resume(true);
-        for (auto& op : m_conditional_pending_ops) {
-            bool expected = false;
-            if (op.active.compare_exchange_strong(expected, true,
-                    std::memory_order_relaxed, std::memory_order_relaxed)) {
-                op.is_addition = true;
-                op.entry = { routine, task_name };
-                m_conditional_pending_count.fetch_add(1, std::memory_order_release);
-                start_conditional_thread();
-                return;
-            }
+        if (m_conditional_pending_ops.push({ TaskEntry { routine, task_name }, true })) {
+            start_conditional_thread();
+            return;
         }
         MF_ERROR(Journal::Component::Vruta, Journal::Context::CoroutineScheduling,
             "Conditional pending queue full, could not add task '{}'", task_name);
         return;
     }
 
-    for (auto& op : m_pending_ops) {
-        bool expected = false;
-        if (op.active.compare_exchange_strong(expected, true,
-                std::memory_order_acquire, std::memory_order_relaxed)) {
-            op.entry = { routine, task_name };
-            op.is_addition = true;
-            m_pending_count.fetch_add(1, std::memory_order_relaxed);
-            return;
-        }
+    if (m_pending_ops.push({ TaskEntry { routine, task_name }, true })) {
+        return;
     }
 
     MF_ERROR(Journal::Component::Vruta, Journal::Context::CoroutineScheduling,
@@ -154,30 +140,13 @@ bool TaskScheduler::cancel_task(const std::string& name)
 
     bool queued = false;
 
-    if (m_conditional_thread.joinable()) {
-        for (auto& op : m_conditional_pending_ops) {
-            bool expected = false;
-            if (op.active.compare_exchange_strong(expected, true,
-                    std::memory_order_acquire, std::memory_order_relaxed)) {
-                op.entry = { nullptr, name };
-                op.is_addition = false;
-                m_conditional_pending_count.fetch_add(1, std::memory_order_relaxed);
-                queued = true;
-                break;
-            }
-        }
+    if (m_conditional_thread.joinable()
+        && m_conditional_pending_ops.push({ TaskEntry { nullptr, name }, false })) {
+        queued = true;
     }
 
-    for (auto& op : m_pending_ops) {
-        bool expected = false;
-        if (op.active.compare_exchange_strong(expected, true,
-                std::memory_order_acquire, std::memory_order_relaxed)) {
-            op.entry = { nullptr, name };
-            op.is_addition = false;
-            m_pending_count.fetch_add(1, std::memory_order_relaxed);
-            queued = true;
-            break;
-        }
+    if (m_pending_ops.push({ TaskEntry { nullptr, name }, false })) {
+        queued = true;
     }
 
     if (!queued) {
@@ -207,15 +176,8 @@ bool TaskScheduler::cancel_task(const std::shared_ptr<Routine>& routine)
     auto it = find_task_by_routine(routine);
     const std::string name = (it != m_tasks.end()) ? it->name : "";
 
-    for (auto& op : m_pending_ops) {
-        bool expected = false;
-        if (op.active.compare_exchange_strong(expected, true,
-                std::memory_order_acquire, std::memory_order_relaxed)) {
-            op.entry = { routine, name };
-            op.is_addition = false;
-            m_pending_count.fetch_add(1, std::memory_order_relaxed);
-            return true;
-        }
+    if (m_pending_ops.push({ TaskEntry { routine, name }, false })) {
+        return true;
     }
 
     MF_ERROR(Journal::Component::Vruta, Journal::Context::CoroutineScheduling,
@@ -691,28 +653,19 @@ void TaskScheduler::process_buffer_cycle_tasks()
 
     for (auto& task : tasks) {
         if (task && task->is_active()) {
-            if (task->requires_clock_sync()) {
-                if (m_current_buffer_cycle >= task->next_execution()) {
-                    task->try_resume_with_context(m_current_buffer_cycle, DelayContext::BUFFER_BASED);
-                }
-            } else {
-                task->try_resume_with_context(m_current_buffer_cycle, DelayContext::BUFFER_BASED);
-            }
+            task->try_resume_with_context(m_current_buffer_cycle, DelayContext::BUFFER_BASED);
         }
     }
 }
 
 void TaskScheduler::drain_pending_tasks()
 {
-    if (m_pending_count.load(std::memory_order_relaxed) == 0)
+    if (!m_pending_ops.has_pending())
         return;
 
     DrainScope drain_scope(this);
 
-    for (auto& op : m_pending_ops) {
-        if (!op.active.load(std::memory_order_acquire))
-            continue;
-
+    m_pending_ops.drain([this](PendingTaskOp&& op) {
         if (op.is_addition) {
             auto existing_it = find_task_by_name(op.entry.name);
             if (existing_it != m_tasks.end()) {
@@ -731,24 +684,17 @@ void TaskScheduler::drain_pending_tasks()
                 m_tasks.erase(it);
             }
         }
-
-        op.entry = { nullptr, "" };
-        op.active.store(false, std::memory_order_release);
-        m_pending_count.fetch_sub(1, std::memory_order_relaxed);
-    }
+    });
 }
 
 void TaskScheduler::drain_conditional_pending()
 {
-    if (m_conditional_pending_count.load(std::memory_order_acquire) == 0)
+    if (!m_conditional_pending_ops.has_pending())
         return;
 
     DrainScope drain_scope(this);
 
-    for (auto& op : m_conditional_pending_ops) {
-        if (!op.active.load(std::memory_order_acquire))
-            continue;
-
+    m_conditional_pending_ops.drain([this](PendingTaskOp&& op) {
         if (op.is_addition) {
             auto it = std::ranges::find_if(m_conditional_tasks,
                 [&](const TaskEntry& e) { return e.name == op.entry.name; });
@@ -767,11 +713,7 @@ void TaskScheduler::drain_conditional_pending()
                 m_conditional_tasks.erase(it);
             }
         }
-
-        op.entry = { nullptr, "" };
-        op.active.store(false, std::memory_order_release);
-        m_conditional_pending_count.fetch_sub(1, std::memory_order_relaxed);
-    }
+    });
 }
 
 void TaskScheduler::pump_cross(DelayContext context, ProcessingToken clock_token, uint64_t processing_units)

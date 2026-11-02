@@ -81,11 +81,6 @@ void schedule_pattern(std::function<std::any(uint64_t)> pattern_func, std::funct
     scheduler->add_task(Kriya::pattern(std::move(pattern_func), std::move(callback), std::move(durations), token), name, false);
 }
 
-void schedule_pattern(std::function<std::any(uint64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds, std::string name, Vruta::ProcessingToken token)
-{
-    schedule_pattern(std::move(pattern_func), std::move(callback), std::vector<double> { interval_seconds }, std::move(name), token);
-}
-
 float* get_line_value(const std::string& name)
 {
     if (auto task = get_scheduler()->get_task(name)) {

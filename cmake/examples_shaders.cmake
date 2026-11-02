@@ -30,7 +30,7 @@ foreach(SHADER_FILE ${EXAMPLE_SHADER_FILES})
 
     add_custom_command(
         OUTPUT  "${OUTPUT_FILE}"
-        COMMAND glslc "${SHADER_FILE}" -o "${OUTPUT_FILE}"
+        COMMAND glslc --target-env=vulkan1.4 "${SHADER_FILE}" -o "${OUTPUT_FILE}"
         DEPENDS "${SHADER_FILE}"
         COMMENT "Compiling example shader: ${SHADER_FILE}"
         VERBATIM
