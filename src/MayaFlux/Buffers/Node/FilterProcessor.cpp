@@ -55,6 +55,7 @@ void FilterProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
             sample = m_filter->process_sample(sample);
         }
         m_filter->restore_state();
+        m_filter->clear_modulator_processed_state();
     }
 }
 

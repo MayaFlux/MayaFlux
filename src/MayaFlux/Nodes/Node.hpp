@@ -355,6 +355,15 @@ public:
     void release_modulator(const std::shared_ptr<Node>& modulator);
 
     /**
+     * @brief Clears the processed flag on every node in this node's modulator tree
+     *
+     * A snapshot sample of a node processes its modulators and marks them
+     * processed. restore_state() rewinds their values but not that flag, so
+     * snapshot consumers call this after restoring.
+     */
+    void clear_modulator_processed_state();
+
+    /**
      * @brief Checks if the node is currently used by a specific channel
      * @param channel_id The ID of the channel to check
      */

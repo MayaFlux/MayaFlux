@@ -70,6 +70,7 @@ void extract_node_samples(
             for (size_t i = 0; i < num_samples; ++i)
                 buffer[i] = node->process_sample(0.0);
             node->restore_state();
+            node->clear_modulator_processed_state();
             if (node->is_buffer_processed())
                 node->request_buffer_reset();
             node->release_snapshot_context(my_ctx);
@@ -85,6 +86,7 @@ void extract_node_samples(
         for (size_t i = 0; i < num_samples; ++i)
             buffer[i] = node->process_sample(0.0);
         node->restore_state();
+        node->clear_modulator_processed_state();
         if (node->is_buffer_processed())
             node->request_buffer_reset();
     }

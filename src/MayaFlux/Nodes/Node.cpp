@@ -141,6 +141,14 @@ void Node::release_modulator(const std::shared_ptr<Node>& modulator)
     }
 }
 
+void Node::clear_modulator_processed_state()
+{
+    for (const auto& [role, modulator] : get_modulators()) {
+        modulator->clear_modulator_processed_state();
+        modulator->reset_processed_state_internal();
+    }
+}
+
 void Node::refresh_channel_bit(uint32_t channel_id)
 {
     auto channel_bit = static_cast<uint32_t>((0x0ffffffff) & (1ULL << (uint64_t)channel_id));

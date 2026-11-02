@@ -149,6 +149,7 @@ double extract_single_sample(const std::shared_ptr<Nodes::Node>& node)
             node->save_state();
             double value = node->process_sample(0.F);
             node->restore_state();
+            node->clear_modulator_processed_state();
 
             if (node->is_buffer_processed()) {
                 node->request_buffer_reset();
@@ -173,6 +174,7 @@ double extract_single_sample(const std::shared_ptr<Nodes::Node>& node)
         node->save_state();
         double value = node->process_sample(0.F);
         node->restore_state();
+        node->clear_modulator_processed_state();
 
         if (node->is_buffer_processed()) {
             node->request_buffer_reset();
@@ -219,6 +221,7 @@ std::vector<double> extract_multiple_samples(
             }
 
             node->restore_state();
+            node->clear_modulator_processed_state();
 
             if (node->is_buffer_processed()) {
                 node->request_buffer_reset();
@@ -245,6 +248,7 @@ std::vector<double> extract_multiple_samples(
             output[i] = node->process_sample(0.F);
         }
         node->restore_state();
+        node->clear_modulator_processed_state();
 
         if (node->is_buffer_processed()) {
             node->request_buffer_reset();
@@ -289,6 +293,7 @@ void update_buffer_with_node_data(
             }
 
             node->restore_state();
+            node->clear_modulator_processed_state();
 
             if (node->is_buffer_processed()) {
                 node->request_buffer_reset();
@@ -313,6 +318,7 @@ void update_buffer_with_node_data(
             sample += node->process_sample(0.F) * mix;
         }
         node->restore_state();
+        node->clear_modulator_processed_state();
 
         if (node->is_buffer_processed()) {
             node->request_buffer_reset();

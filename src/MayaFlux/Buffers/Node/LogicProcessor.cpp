@@ -60,6 +60,7 @@ bool LogicProcessor::generate(size_t num_samples, const std::vector<double>& inp
 
     if (guarded) {
         m_logic->restore_state();
+        m_logic->clear_modulator_processed_state();
     }
 
     m_has_generated_data = true;

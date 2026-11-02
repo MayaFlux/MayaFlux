@@ -31,6 +31,7 @@ void PolynomialProcessor::process_span(std::span<double> data)
             i = m_polynomial->process_sample(i);
         }
         m_polynomial->restore_state();
+        m_polynomial->clear_modulator_processed_state();
     }
 }
 
