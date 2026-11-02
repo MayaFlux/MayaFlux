@@ -188,7 +188,11 @@ bool Phasor::remove_threshold_callback(const TypedHook<GeneratorContext>& callba
 
 bool Phasor::remove_hook(const TypedHook<GeneratorContext>& callback)
 {
-    return remove_threshold_callback(callback);
+    const auto& key = callback.target_type();
+    bool removed = m_callbacks.remove_by_key(key);
+    removed |= m_phase_wrap_callbacks.remove_by_key(key);
+    removed |= m_threshold_callbacks.remove_by_key(key);
+    return removed;
 }
 
 void Phasor::notify_tick(double value)
