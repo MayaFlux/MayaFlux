@@ -61,16 +61,12 @@ public:
      * @brief Adds a segment to an existing region.
      * @param group_name Name of the group containing the region.
      * @param region_index Index of the region within the group.
-     * @param start_coords Starting coordinates of the segment.
-     * @param end_coords Ending coordinates of the segment.
-     * @param attributes Arbitrary metadata for the segment.
+     * @param region Source region of the segment, with any typed values it carries.
      */
     void add_segment_to_region(
         const std::string& group_name,
         size_t region_index,
-        const std::vector<uint64_t>& start_coords,
-        const std::vector<uint64_t>& end_coords,
-        const std::unordered_map<std::string, std::any>& attributes);
+        const Region& region);
 
     /**
      * @brief Configures the transition between regions.

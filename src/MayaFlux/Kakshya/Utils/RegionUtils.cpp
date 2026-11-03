@@ -228,7 +228,6 @@ std::vector<std::unordered_map<std::string, std::any>> extract_all_regions_info(
             region_info["region_index"] = i;
             region_info["start_coordinates"] = region.start_coordinates;
             region_info["end_coordinates"] = region.end_coordinates;
-            region_info["attributes"] = region.attributes;
 
             regions_info.push_back(std::move(region_info));
         }

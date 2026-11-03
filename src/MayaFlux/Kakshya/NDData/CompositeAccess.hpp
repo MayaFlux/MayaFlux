@@ -105,7 +105,7 @@ public:
     [[nodiscard]] std::optional<CompositeSlice> slice(size_t start, size_t count) const noexcept;
     /**
      * @brief Borrow the elements selected by a one-dimensional Region.
-     * @param region Inclusive element bounds and optional Region attributes.
+     * @param region Inclusive element bounds and any typed values the Region carries.
      * @return Slice retaining the Region, or std::nullopt for invalid bounds.
      */
     [[nodiscard]] std::optional<CompositeSlice> slice(const Region& region) const;
@@ -133,7 +133,7 @@ private:
  * @class CompositeSlice
  * @brief Borrowed consecutive elements, optionally selected by a Region.
  *
- * A slice retains the original Region and its attributes when created from
+ * A slice retains the original Region and its typed values when created from
  * one. Offset/count slices have no Region. Field access still uses the
  * original CompositeLayout and byte stores, so payload offsets do not need
  * to be rewritten. The slice does not own the stores.

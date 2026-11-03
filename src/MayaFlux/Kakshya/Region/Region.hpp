@@ -56,9 +56,9 @@ enum class RegionState : uint8_t {
  * @brief Represents a point or span in N-dimensional space.
  *
  * Regions represent precise locations or segments within signal data,
- * defined by start and end frame positions. Each region can have additional
- * attributes stored in a flexible key-value map, allowing for rich metadata
- * association with each point.
+ * defined by start and end frame positions. Each region can carry typed
+ * values stored under Facet keys, allowing for rich metadata association
+ * with each point.
  *
  * Common DSP-specific uses include:
  * - Marking transients and onset detection points
@@ -67,7 +67,7 @@ enum class RegionState : uint8_t {
  * - Marking signal transformation points (e.g., filter application boundaries)
  * - Storing analysis results like RMS peaks, harmonic content points, or noise floors
  *
- * The flexible attribute system allows for storing any computed values or metadata
+ * The typed value system allows for storing any computed values or metadata
  * associated with specific signal locations, enabling advanced signal processing
  * workflows and algorithmic decision-making.
  */
@@ -83,8 +83,6 @@ struct MAYAFLUX_API Region {
 
     /** @brief Display label, when one was given. */
     std::optional<std::string> label;
-    /** @brief Flexible key-value store for region-specific attributes */
-    std::unordered_map<std::string, std::any> attributes;
 
     /** @brief Returns a typed attribute, or nullptr when absent. */
     template <typename T>
@@ -127,13 +125,10 @@ struct MAYAFLUX_API Region {
     /**
      * @brief Construct a point-like region (single coordinate).
      * @param coordinates The N-dimensional coordinates.
-     * @param attributes Optional metadata.
      */
-    Region(const std::vector<uint64_t>& coordinates,
-        std::unordered_map<std::string, std::any> attributes = {})
+    Region(const std::vector<uint64_t>& coordinates)
         : start_coordinates(coordinates)
         , end_coordinates(coordinates)
-        , attributes(std::move(attributes))
     {
     }
 
@@ -141,14 +136,11 @@ struct MAYAFLUX_API Region {
      * @brief Construct a span-like region (start and end coordinates).
      * @param start Start coordinates (inclusive).
      * @param end End coordinates (inclusive).
-     * @param attributes Optional metadata.
      */
     Region(std::vector<uint64_t> start,
-        std::vector<uint64_t> end,
-        std::unordered_map<std::string, std::any> attributes = {})
+        std::vector<uint64_t> end)
         : start_coordinates(std::move(start))
         , end_coordinates(std::move(end))
-        , attributes(std::move(attributes))
     {
     }
 
@@ -156,17 +148,12 @@ struct MAYAFLUX_API Region {
      * @brief Create a Region representing a single time point (e.g., a frame or sample).
      * @param frame The frame index (time coordinate).
      * @param label Optional label for this point.
-     * @param extra_data Optional extra metadata (e.g., analysis result).
      * @return Region at the specified frame.
      */
     static Region time_point(uint64_t frame,
-        const std::string& label = "",
-        const std::any& extra_data = {})
+        const std::string& label = "")
     {
-        std::unordered_map<std::string, std::any> attrs;
-        if (extra_data.has_value())
-            attrs["data"] = extra_data;
-        return with_label(Region({ frame }, attrs), label);
+        return with_label(Region(std::vector<uint64_t> { frame }), label);
     }
 
     /**
@@ -174,18 +161,13 @@ struct MAYAFLUX_API Region {
      * @param start_frame Start frame index (inclusive).
      * @param end_frame End frame index (inclusive).
      * @param label Optional label for this span.
-     * @param extra_data Optional extra metadata.
      * @return Region covering the specified time span.
      */
     static Region time_span(uint64_t start_frame,
         uint64_t end_frame,
-        const std::string& label = "",
-        const std::any& extra_data = {})
+        const std::string& label = "")
     {
-        std::unordered_map<std::string, std::any> attrs;
-        if (extra_data.has_value())
-            attrs["data"] = extra_data;
-        return with_label(Region({ start_frame }, { end_frame }, attrs), label);
+        return with_label(Region({ start_frame }, { end_frame }), label);
     }
 
     /**
@@ -199,8 +181,7 @@ struct MAYAFLUX_API Region {
         uint32_t channel,
         const std::string& label = "")
     {
-        std::unordered_map<std::string, std::any> attrs;
-        Region region = with_label(Region({ frame, channel }, attrs), label);
+        Region region = with_label(Region({ frame, channel }, { frame, channel }), label);
         region.modality = DataModality::AUDIO_1D;
         return region;
     }
@@ -220,9 +201,8 @@ struct MAYAFLUX_API Region {
         uint32_t end_channel,
         const std::string& label = "")
     {
-        std::unordered_map<std::string, std::any> attrs;
         Region region = with_label(
-            Region({ start_frame, start_channel }, { end_frame, end_channel }, attrs), label);
+            Region({ start_frame, start_channel }, { end_frame, end_channel }), label);
         region.modality = DataModality::AUDIO_MULTICHANNEL;
         return region;
     }
@@ -240,8 +220,7 @@ struct MAYAFLUX_API Region {
         uint64_t x2, uint64_t y2,
         const std::string& label = "")
     {
-        std::unordered_map<std::string, std::any> attrs;
-        return with_label(Region({ x1, y1 }, { x2, y2 }, attrs), label);
+        return with_label(Region({ x1, y1 }, { x2, y2 }), label);
     }
 
     /**
@@ -261,8 +240,7 @@ struct MAYAFLUX_API Region {
         uint64_t x2, uint64_t y2,
         const std::string& label = "")
     {
-        std::unordered_map<std::string, std::any> attrs;
-        return with_label(Region({ start_frame, x1, y1 }, { end_frame, x2, y2 }, attrs), label);
+        return with_label(Region({ start_frame, x1, y1 }, { end_frame, x2, y2 }), label);
     }
 
     /**
@@ -345,33 +323,6 @@ struct MAYAFLUX_API Region {
             return 0;
         }
         return end_coordinates[dimension_index] - start_coordinates[dimension_index] + 1;
-    }
-
-    /**
-     * @brief Get an attribute value by key, with type conversion support.
-     * @tparam T The expected type.
-     * @param key The attribute key.
-     * @return Optional value if present and convertible.
-     */
-    template <typename T>
-    std::optional<T> get_attribute(const std::string& key) const
-    {
-        auto it = attributes.find(key);
-        if (it == attributes.end()) {
-            return std::nullopt;
-        }
-
-        return safe_any_cast<T>(it->second);
-    }
-
-    /**
-     * @brief Set an attribute value by key.
-     * @param key The attribute key.
-     * @param value The value to set.
-     */
-    void set_attribute(const std::string& key, std::any value)
-    {
-        attributes[key] = std::move(value);
     }
 
     /**
