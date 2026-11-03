@@ -157,18 +157,24 @@ struct MAYAFLUX_API RegionGroup {
     }
 
     /**
-     * @brief Sort regions by a specific attribute (numeric).
-     * @param attr_name The attribute name.
+     * @brief Sort regions by a typed attribute.
+     *
+     * Regions that carry the attribute come first, ordered by its value. Regions
+     * without it keep their relative order after them.
+     * @tparam T Attribute type.
+     * @param key The Facet key of the attribute.
      */
-    void sort_by_attribute(const std::string& attr_name)
+    template <typename T>
+        requires std::totally_ordered<T>
+    void sort(const Facet<T>& key)
     {
-        std::ranges::sort(regions,
-            [&attr_name](const Region& a, const Region& b) {
-                auto a_val = a.get_attribute<double>(attr_name);
-                auto b_val = b.get_attribute<double>(attr_name);
+        std::ranges::stable_sort(regions,
+            [&key](const Region& a, const Region& b) {
+                const T* a_val = a.get(key);
+                const T* b_val = b.get(key);
                 if (a_val && b_val)
                     return *a_val < *b_val;
-                return false;
+                return a_val != nullptr && b_val == nullptr;
             });
     }
 
@@ -216,38 +222,20 @@ struct MAYAFLUX_API RegionGroup {
     }
 
     /**
-     * @brief Find all regions with a specific attribute value.
-     * @param key Attribute key.
-     * @param value Attribute value to match.
+     * @brief Find all regions whose typed attribute equals a value.
+     * @tparam T Attribute type.
+     * @param key The Facet key of the attribute.
+     * @param value Value to match.
      * @return Vector of matching Regions.
      */
-    std::vector<Region> find_regions_with_attribute(const std::string& key, const std::any& value) const
+    template <typename T>
+    std::vector<Region> find_regions(const Facet<T>& key, const T& value) const
     {
         std::vector<Region> result;
         std::ranges::copy_if(regions, std::back_inserter(result),
             [&key, &value](const Region& region) {
-                auto it = region.attributes.find(key);
-
-                if (it == region.attributes.end() || it->second.type() != value.type())
-                    return false;
-
-                if (value.type() == typeid(std::string))
-                    return any_equal<std::string>(it->second, value);
-                if (value.type() == typeid(double))
-                    return any_equal<double>(it->second, value);
-                if (value.type() == typeid(int))
-                    return any_equal<int>(it->second, value);
-                if (value.type() == typeid(bool))
-                    return any_equal<bool>(it->second, value);
-                if (value.type() == typeid(float))
-                    return any_equal<float>(it->second, value);
-                if (value.type() == typeid(uint32_t))
-                    return any_equal<uint32_t>(it->second, value);
-                if (value.type() == typeid(int64_t))
-                    return any_equal<int64_t>(it->second, value);
-                if (value.type() == typeid(uint64_t))
-                    return any_equal<uint64_t>(it->second, value);
-                return false;
+                const T* attr = region.get(key);
+                return attr && *attr == value;
             });
         return result;
     }

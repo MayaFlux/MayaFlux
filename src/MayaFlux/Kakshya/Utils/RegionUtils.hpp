@@ -494,15 +494,6 @@ MAYAFLUX_API void set_region_attribute(Region& region, const std::string& key, s
 MAYAFLUX_API std::vector<Region> find_regions_with_label(const RegionGroup& group, const std::string& label);
 
 /**
- * @brief Find all regions in a RegionGroup with a specific attribute value.
- * @param group RegionGroup to search.
- * @param key Attribute key.
- * @param value Attribute value to match.
- * @return Vector of matching Regions.
- */
-MAYAFLUX_API std::vector<Region> find_regions_with_attribute(const RegionGroup& group, const std::string& key, const std::any& value);
-
-/**
  * @brief Find all regions in a RegionGroup that contain the given coordinates.
  * @param group RegionGroup to search.
  * @param coordinates N-dimensional coordinates.

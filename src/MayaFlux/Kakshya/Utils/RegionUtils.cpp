@@ -8,17 +8,6 @@ void set_region_attribute(Region& region, const std::string& key, std::any value
     region.attributes[key] = std::move(value);
 }
 
-/* std::string get_region_label(const Region& region)
-{
-    auto label = get_region_attribute<std::string>(region, "label");
-    return label.value_or("");
-}
-
-void set_region_label(Region& region, const std::string& label)
-{
-    set_region_attribute(region, "label", label);
-} */
-
 std::vector<Region> find_regions_with_label(const RegionGroup& group, const std::string& label)
 {
     std::vector<Region> result;
@@ -26,40 +15,6 @@ std::vector<Region> find_regions_with_label(const RegionGroup& group, const std:
         [&label](const Region& region) {
             return region.label == label;
         });
-    return result;
-}
-
-std::vector<Region> find_regions_with_attribute(const RegionGroup& group, const std::string& key, const std::any& value)
-{
-    std::vector<Region> result;
-    std::ranges::copy_if(group.regions, std::back_inserter(result),
-        [&key, &value](const Region& region) {
-            if (!region.attributes.contains(key))
-                return false;
-
-            const auto& attr = region.attributes.at(key);
-
-            if (attr.type() != value.type())
-                return false;
-            if (attr.type() == typeid(std::string))
-                return any_equal<std::string>(attr, value);
-            if (attr.type() == typeid(double))
-                return any_equal<double>(attr, value);
-            if (attr.type() == typeid(int))
-                return any_equal<int>(attr, value);
-            if (attr.type() == typeid(float))
-                return any_equal<float>(attr, value);
-            if (attr.type() == typeid(bool))
-                return any_equal<bool>(attr, value);
-            if (attr.type() == typeid(uint32_t))
-                return any_equal<uint32_t>(attr, value);
-            if (attr.type() == typeid(int64_t))
-                return any_equal<int64_t>(attr, value);
-            if (attr.type() == typeid(uint64_t))
-                return any_equal<uint64_t>(attr, value);
-            return false;
-        });
-
     return result;
 }
 
