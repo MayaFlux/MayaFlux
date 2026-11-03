@@ -47,7 +47,7 @@ namespace {
 
     /**
      * @brief Download a bound diffuse texture and write it next to the model
-     *        file, so AssimpModelWriter's "diffuse_path" submesh attribute has
+     *        file, so the submesh's diffuse path has
      *        somewhere to point.
      *
      * Named "<model-stem>_diffuse.png", or "<model-stem>_<suffix>_diffuse.png"
@@ -84,7 +84,7 @@ namespace {
 
     /**
      * @brief Give mesh_data a single full-mesh submesh Region if it has none,
-     *        so a caller-supplied diffuse_path has an attribute to attach to.
+     *        so a caller-supplied diffuse_path has a descriptor to update.
      */
     void ensure_submesh_region(Kakshya::MeshData& mesh_data, const std::string& name)
     {
@@ -169,7 +169,13 @@ bool save_mesh(
         const auto image_path = pack_diffuse_texture(buffer->get_diffuse_texture(), filepath, "");
         if (!image_path.empty()) {
             ensure_submesh_region(mesh_data, "mesh");
-            mesh_data.submeshes->regions.front().set_attribute("diffuse_path", image_path);
+            auto& region = mesh_data.submeshes->regions.front();
+            const auto* existing = region.get<Kakshya::MeshSubrange>();
+            auto sub = existing
+                ? *existing
+                : Kakshya::MeshSubrange {};
+            sub.diffuse_path = image_path;
+            region.set(std::move(sub));
         }
     }
 
@@ -296,7 +302,13 @@ bool save_mesh(
         const auto image_path = pack_diffuse_texture(buffer->get_diffuse_texture(), filepath, "");
         if (!image_path.empty()) {
             ensure_submesh_region(*mesh_data, "mesh");
-            mesh_data->submeshes->regions.front().set_attribute("diffuse_path", image_path);
+            auto& region = mesh_data->submeshes->regions.front();
+            const auto* existing = region.get<Kakshya::MeshSubrange>();
+            auto sub = existing
+                ? *existing
+                : Kakshya::MeshSubrange {};
+            sub.diffuse_path = image_path;
+            region.set(std::move(sub));
         }
     }
 

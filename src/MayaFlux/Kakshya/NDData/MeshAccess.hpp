@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Kakshya/Region/RegionGroup.hpp"
+#include "MayaFlux/Transitive/Facet/Facets.hpp"
 #include "VertexLayout.hpp"
 
 namespace MayaFlux::Kakshya {
@@ -23,11 +24,25 @@ struct MAYAFLUX_API MeshSubrange {
     std::string diffuse_path;
     bool diffuse_embedded {};
 
+    /** @brief Describes the fields of a submesh as typed Facet keys. */
+    static constexpr auto describe_facets()
+    {
+        return std::tuple {
+            FacetMember<&MeshSubrange::index_start> {},
+            FacetMember<&MeshSubrange::index_count> {},
+            FacetMember<&MeshSubrange::vertex_offset> {},
+            FacetMember<&MeshSubrange::name> {},
+            FacetMember<&MeshSubrange::material_name> {},
+            FacetMember<&MeshSubrange::diffuse_path> {},
+            FacetMember<&MeshSubrange::diffuse_embedded> {},
+        };
+    }
+
     /**
      * @brief Convert this subrange to a Region for use in RegionGroup.
      *
      * Coordinates are [index_start, index_start + index_count).
-     * Attributes carry name, material_name, and vertex_offset.
+     * The complete subrange is stored as one typed Facet value.
      */
     [[nodiscard]] Region to_region() const;
 };
@@ -53,7 +68,7 @@ struct MAYAFLUX_API MeshSubrange {
  *
  * Submesh structure: when the source file contains multiple meshes, submeshes
  * holds a RegionGroup named "submeshes". Each Region maps to one MeshSubrange
- * and carries name, material_name, and vertex_offset as attributes. Single-mesh
+ * and carries the complete MeshSubrange as a typed Facet value. Single-mesh
  * files leave submeshes as nullopt; the entire index buffer is one contiguous
  * range.
  */
@@ -139,8 +154,8 @@ struct MAYAFLUX_API MeshAccess {
  *
  * The RegionGroup convention: a single RegionGroup named "submeshes" holds
  * one Region per submesh. Each Region carries coordinates
- * [index_start, index_start + index_count) in the index dimension, with
- * attributes "name", "material_name", and "vertex_offset". This mirrors the
+ * [index_start, index_start + index_count) in the index dimension and
+ * stores a typed MeshSubrange value. This mirrors the
  * audio/video pattern where e.g. "transients" is the group and each onset
  * event is a Region inside it.
  */

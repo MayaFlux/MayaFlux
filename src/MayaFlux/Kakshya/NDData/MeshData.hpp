@@ -22,8 +22,7 @@ namespace MayaFlux::Kakshya {
  *
  * Submesh structure follows the established Region convention:
  * a single RegionGroup named "submeshes" holds one Region per submesh,
- * each carrying index_start, index_count, vertex_offset, name, and
- * material_name as attributes.
+ * each carrying the complete MeshSubrange as one typed value.
  *
  * MeshData is not a container. It has no processing state, no read head,
  * no processor chain. For per-cycle mesh mutation use MeshWriterNode.

@@ -2,6 +2,8 @@
 
 #include "MayaFlux/Transitive/Memory/FlatMap.hpp"
 
+#include <typeindex>
+
 namespace MayaFlux {
 
 namespace detail {
@@ -31,7 +33,8 @@ public:
     {
     }
 
-    Facet() requires std::default_initializable<T>
+    Facet()
+        requires std::default_initializable<T>
         : m_token(std::make_shared<detail::FacetToken>())
         , m_initial()
     {
@@ -55,7 +58,7 @@ namespace detail {
     template <auto Member>
     struct MemberOf;
 
-    template <typename Owner, typename T, T Owner::*Member>
+    template <typename Owner, typename T, T Owner::* Member>
     struct MemberOf<Member> {
         using value_type = T;
     };
@@ -94,9 +97,19 @@ struct FacetMember {
  * Values are held as shared immutable entries, so copying a Facets copies
  * pointers and never the values. Writing replaces an entry; get() returns a
  * const view that stays valid until that entry is replaced or erased.
+ * Described structs may also be stored by type, separately from Facet keys.
  */
 class Facets {
 public:
+    /** @brief Stores a described struct under its type identity. */
+    template <typename T>
+        requires requires { T::describe_facets(); }
+    void set(T value)
+    {
+        m_struct_entries.insert_or_assign(std::type_index(typeid(T)),
+            std::make_shared<Entry<T>>(std::shared_ptr<const void> {}, std::move(value)));
+    }
+
     /** @brief Stores @p value under @p key, replacing any previous value. */
     template <typename T>
     void set(const Facet<T>& key, std::type_identity_t<T> value)
@@ -125,7 +138,7 @@ public:
      * @return One entry per member, keyed by the member, with its current value.
      */
     template <typename S>
-    requires requires { S::describe_facets(); }
+        requires requires { S::describe_facets(); }
     [[nodiscard]] static Facets from(const S& value)
     {
         Facets bag;
@@ -143,6 +156,18 @@ public:
     {
         const auto it = m_entries.find(key.id());
         if (it == m_entries.end()) {
+            return nullptr;
+        }
+        return &static_cast<const Entry<T>*>(it->second.get())->value;
+    }
+
+    /** @brief Returns the described struct stored under its type, or nullptr. */
+    template <typename T>
+        requires requires { T::describe_facets(); }
+    [[nodiscard]] const T* get() const
+    {
+        const auto it = m_struct_entries.find(std::type_index(typeid(T)));
+        if (it == m_struct_entries.end()) {
             return nullptr;
         }
         return &static_cast<const Entry<T>*>(it->second.get())->value;
@@ -174,15 +199,24 @@ public:
         return m_entries.erase(key.id());
     }
 
-    [[nodiscard]] size_t size() const noexcept { return m_entries.size(); }
-    [[nodiscard]] bool empty() const noexcept { return m_entries.empty(); }
-    void clear() noexcept { m_entries.clear(); }
+    [[nodiscard]] size_t size() const noexcept { return m_entries.size() + m_struct_entries.size(); }
+    [[nodiscard]] bool empty() const noexcept { return m_entries.empty() && m_struct_entries.empty(); }
+
+    /** @brief Removes all entries. */
+    void clear() noexcept
+    {
+        m_entries.clear();
+        m_struct_entries.clear();
+    }
 
     /** @brief Adds entries from @p source, replacing values for shared keys. */
     void merge(const Facets& source)
     {
         for (const auto& [id, entry] : source.m_entries) {
             m_entries.insert_or_assign(id, entry);
+        }
+        for (const auto& [type, entry] : source.m_struct_entries) {
+            m_struct_entries.insert_or_assign(type, entry);
         }
     }
 
@@ -210,6 +244,7 @@ private:
     };
 
     Memory::FlatMap<const void*, std::shared_ptr<const EntryBase>> m_entries;
+    std::unordered_map<std::type_index, std::shared_ptr<const EntryBase>> m_struct_entries;
 };
 
 } // namespace MayaFlux

@@ -22,14 +22,10 @@ namespace {
         const auto& regions = mesh_data.submeshes->regions;
         if (regions.empty())
             return {};
-        const auto& attrs = regions.front().attributes;
-        auto it = attrs.find("diffuse_path");
-        if (it == attrs.end())
+        const auto* sub = regions.front().get<Kakshya::MeshSubrange>();
+        if (!sub || sub->diffuse_path.empty() || sub->diffuse_path.front() == '*')
             return {};
-        const auto* s = std::any_cast<std::string>(&it->second);
-        if (!s || s->empty() || (*s)[0] == '*')
-            return {};
-        return *s;
+        return sub->diffuse_path;
     }
 }
 

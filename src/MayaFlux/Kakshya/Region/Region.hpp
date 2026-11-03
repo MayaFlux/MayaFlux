@@ -93,11 +93,27 @@ struct MAYAFLUX_API Region {
         return m_facets.get(key);
     }
 
+    /** @brief Returns the described struct stored under its type, or nullptr. */
+    template <typename T>
+    requires requires { T::describe_facets(); }
+    [[nodiscard]] const T* get() const
+    {
+        return m_facets.get<T>();
+    }
+
     /** @brief Stores a typed attribute under its Facet key. */
     template <typename T>
     void set(const Facet<T>& key, std::type_identity_t<T> value)
     {
         m_facets.set(key, std::move(value));
+    }
+
+    /** @brief Stores a described struct under its type identity. */
+    template <typename T>
+    requires requires { T::describe_facets(); }
+    void set(T value)
+    {
+        m_facets.set(std::move(value));
     }
 
     /** @brief Replaces all typed attributes with @p source. Other Region members are unchanged. */

@@ -46,31 +46,21 @@ namespace {
         return it != table.end() ? it->second : std::string {};
     }
 
-    struct SubmeshInfo {
-        std::string name;
-        std::string material_name;
-        std::string diffuse_path;
-    };
-
     /**
-     * @brief Pull name/material_name/diffuse_path from a MeshData's submesh
-     *        Region, mirroring what ModelReader wrote via MeshSubrange::to_region.
+     * @brief Read the first submesh descriptor from a MeshData.
      *
      * ModelReader produces one MeshData per aiMesh, each with its own
      * single-submesh RegionGroup, so the first (and only expected) Region
      * is the one written here.
      */
-    SubmeshInfo submesh_info_for(const Kakshya::MeshData& mesh_data)
+    Kakshya::MeshSubrange submesh_info_for(const Kakshya::MeshData& mesh_data)
     {
-        SubmeshInfo info;
         if (!mesh_data.submeshes.has_value() || mesh_data.submeshes->regions.empty()) {
-            return info;
+            return {};
         }
         const auto& r = mesh_data.submeshes->regions.front();
-        info.name = r.get_attribute<std::string>("name").value_or("");
-        info.material_name = r.get_attribute<std::string>("material_name").value_or("");
-        info.diffuse_path = r.get_attribute<std::string>("diffuse_path").value_or("");
-        return info;
+        const auto* info = r.get<Kakshya::MeshSubrange>();
+        return info ? *info : Kakshya::MeshSubrange {};
     }
 
 } // namespace
