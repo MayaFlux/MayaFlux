@@ -21,8 +21,18 @@ enum class TemporalOperation : uint8_t {
     INTERPOLATE ///< Temporal interpolation
 };
 
-/** @brief Construction settings for TemporalTransformer. */
-using TemporalTransformerConfig = TransformerConfig<TemporalOperation>;
+/**
+ * @struct TemporalTransformerConfig
+ * @brief Initial settings for Temporal transformation.
+ *
+ * Pass this aggregate with designated initializers to the config constructor.
+ */
+struct TemporalTransformerConfig : TransformerConfig {
+    /** Operation to perform within the family, as a TemporalOperation value. */
+    Reflect::EnumByte<TemporalOperation> operation { TemporalOperation {} };
+    /** Additional named parameters applied last. */
+    std::map<std::string, std::any> parameters;
+};
 
 /**
  * @class TemporalTransformer

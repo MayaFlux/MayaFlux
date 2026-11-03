@@ -65,6 +65,25 @@ enum class ExtractionScope : uint8_t {
 };
 
 /**
+ * @struct ExtractorConfig
+ * @brief Settings every extractor family accepts.
+ *
+ * Each family's config struct inherits these fields and adds its own method field,
+ * typed by its own enum.
+ */
+struct ExtractorConfig : OperationConfig {
+    static constexpr auto describe_facets()
+    {
+        return std::tuple {
+            FacetMember<&ExtractorConfig::scope> {},
+        };
+    }
+
+    /** Portion of the input to extract from. */
+    ExtractionScope scope { ExtractionScope::FULL_DATA };
+};
+
+/**
  * @class UniversalExtractor
  * @brief Template-flexible extractor base with instance-defined I/O types
  *

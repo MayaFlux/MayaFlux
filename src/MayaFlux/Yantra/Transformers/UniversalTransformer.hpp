@@ -160,16 +160,23 @@ struct TransformationKey {
 
 /**
  * @struct TransformerConfig
- * @brief Initial settings shared by concrete transformer families.
- * @tparam Operation Operation enum of the selected transformer family.
+ * @brief Settings every transformer family accepts.
  *
- * Pass this aggregate with designated initializers to a concrete transformer.
- * Named parameters are applied after the typed settings and keys.
+ * Stored whole, keyed by type, in the operation's settings bag. Each family's
+ * config struct inherits these fields and adds its own operation field.
  */
-template <typename Operation>
-struct TransformerConfig {
-    /** Operation to perform within the selected family. */
-    Operation operation {};
+struct TransformerConfig : OperationConfig {
+    static constexpr auto describe_facets()
+    {
+        return std::tuple {
+            FacetMember<&TransformerConfig::strategy> {},
+            FacetMember<&TransformerConfig::quality> {},
+            FacetMember<&TransformerConfig::scope> {},
+            FacetMember<&TransformerConfig::intensity> {},
+            FacetMember<&TransformerConfig::keys> {},
+        };
+    }
+
     /** How transformation work is performed. */
     TransformationStrategy strategy { TransformationStrategy::BUFFERED };
     /** Requested transformation quality. */
@@ -180,8 +187,6 @@ struct TransformerConfig {
     double intensity { 1.0 };
     /** Transformation keys to register before processing. */
     std::vector<TransformationKey> keys;
-    /** Additional named parameters applied last. */
-    std::map<std::string, std::any> parameters;
 };
 
 /**

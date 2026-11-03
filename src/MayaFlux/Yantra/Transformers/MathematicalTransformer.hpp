@@ -23,8 +23,18 @@ enum class MathematicalOperation : uint8_t {
     POLYNOMIAL ///< Polynomial transform
 };
 
-/** @brief Construction settings for MathematicalTransformer. */
-using MathematicalTransformerConfig = TransformerConfig<MathematicalOperation>;
+/**
+ * @struct MathematicalTransformerConfig
+ * @brief Initial settings for Mathematical transformation.
+ *
+ * Pass this aggregate with designated initializers to the config constructor.
+ */
+struct MathematicalTransformerConfig : TransformerConfig {
+    /** Operation to perform within the family, as a MathematicalOperation value. */
+    Reflect::EnumByte<MathematicalOperation> operation { MathematicalOperation {} };
+    /** Additional named parameters applied last. */
+    std::map<std::string, std::any> parameters;
+};
 
 /**
  * @class MathematicalTransformer

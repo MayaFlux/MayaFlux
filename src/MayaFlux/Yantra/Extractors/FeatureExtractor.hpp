@@ -39,7 +39,7 @@ namespace MayaFlux::Yantra {
  * @enum ExtractionMethod
  * @brief Supported extraction methods for FeatureExtractor
  */
-enum class ExtractionMethod : uint8_t {
+enum ExtractionMethod : uint8_t {
     HIGH_ENERGY_DATA, ///< Extract data from high-energy regions
     PEAK_DATA, ///< Extract data around detected peaks
     OUTLIER_DATA, ///< Extract data from statistical outlier regions
@@ -58,15 +58,13 @@ enum class ExtractionMethod : uint8_t {
  * Pass this aggregate with designated initializers to the config constructor.
  * Named parameters are applied after the typed settings.
  */
-struct FeatureExtractorConfig {
+struct FeatureExtractorConfig : ExtractorConfig {
     /** Analysis window length in samples. */
     uint32_t window_size { 512 };
     /** Distance between successive windows in samples. */
     uint32_t hop_size { 256 };
-    /** Feature selection method. */
-    ExtractionMethod method { ExtractionMethod::HIGH_ENERGY_DATA };
-    /** Portion of the input to extract from. */
-    ExtractionScope scope { ExtractionScope::FULL_DATA };
+    /** Feature selection method, as an ExtractionMethod value. */
+    Reflect::EnumByte<ExtractionMethod> method { ExtractionMethod::HIGH_ENERGY_DATA };
     /** Additional named parameters applied last. */
     std::map<std::string, std::any> parameters;
 };

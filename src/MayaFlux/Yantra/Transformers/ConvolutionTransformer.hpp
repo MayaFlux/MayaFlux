@@ -19,8 +19,18 @@ enum class ConvolutionOperation : uint8_t {
     AUTO_CORRELATION ///< Auto-correlation
 };
 
-/** @brief Construction settings for ConvolutionTransformer. */
-using ConvolutionTransformerConfig = TransformerConfig<ConvolutionOperation>;
+/**
+ * @struct ConvolutionTransformerConfig
+ * @brief Initial settings for Convolution transformation.
+ *
+ * Pass this aggregate with designated initializers to the config constructor.
+ */
+struct ConvolutionTransformerConfig : TransformerConfig {
+    /** Operation to perform within the family, as a ConvolutionOperation value. */
+    Reflect::EnumByte<ConvolutionOperation> operation { ConvolutionOperation {} };
+    /** Additional named parameters applied last. */
+    std::map<std::string, std::any> parameters;
+};
 
 /**
  * @class ConvolutionTransformer

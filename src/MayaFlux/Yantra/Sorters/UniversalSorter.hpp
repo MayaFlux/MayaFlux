@@ -89,6 +89,37 @@ enum class SortingGranularity : uint8_t {
 };
 
 /**
+ * @struct SorterConfig
+ * @brief Settings every sorter family accepts.
+ *
+ * Stored whole, keyed by type, in the operation's settings bag. Each family's
+ * config struct inherits these fields and adds its own fields.
+ */
+struct SorterConfig : OperationConfig {
+    static constexpr auto describe_facets()
+    {
+        return std::tuple {
+            FacetMember<&SorterConfig::algorithm> {},
+            FacetMember<&SorterConfig::direction> {},
+            FacetMember<&SorterConfig::strategy> {},
+            FacetMember<&SorterConfig::granularity> {},
+            FacetMember<&SorterConfig::keys> {},
+        };
+    }
+
+    /** Sorting algorithm to use, as a SortingAlgorithm value. */
+    Reflect::EnumByte<SortingAlgorithm> algorithm { SortingAlgorithm::STANDARD };
+    /** Order of the sorted result. */
+    SortingDirection direction { SortingDirection::ASCENDING };
+    /** How the input is handled during sorting. */
+    SortingStrategy strategy { SortingStrategy::COPY_SORT };
+    /** Level at which values are sorted. */
+    SortingGranularity granularity { SortingGranularity::RAW_DATA };
+    /** Sort keys and their relative weights. */
+    std::vector<SortKey> keys;
+};
+
+/**
  * @class UniversalSorter
  * @brief Template-flexible sorter base with instance-defined I/O types
  *

@@ -29,31 +29,6 @@
 namespace MayaFlux::Yantra {
 
 /**
- * @enum StatisticalMethod
- * @brief Supported statistical computation methods
- */
-enum class StatisticalMethod : uint8_t {
-    MEAN, ///< Arithmetic mean
-    VARIANCE, ///< Population or sample variance
-    STD_DEV, ///< Standard deviation
-    SKEWNESS, ///< Third moment - asymmetry measure
-    KURTOSIS, ///< Fourth moment - tail heaviness
-    MIN, ///< Minimum value
-    MAX, ///< Maximum value
-    MEDIAN, ///< 50th percentile
-    RANGE, ///< Max - min
-    PERCENTILE, ///< Arbitrary percentile (requires parameter)
-    MODE, ///< Most frequent value
-    MAD, ///< Median Absolute Deviation
-    CV, ///< Coefficient of Variation (std_dev/mean)
-    SUM, ///< Sum of all values
-    COUNT, ///< Number of values
-    RMS, ///< Root Mean Square
-    ENTROPY, ///< Shannon entropy for discrete data
-    ZSCORE ///< Z-score normalization
-};
-
-/**
  * @enum StatisticalLevel
  * @brief Qualitative classification of statistical values
  */
@@ -92,15 +67,27 @@ struct MAYAFLUX_API ChannelStatistics {
 };
 
 /**
- * @struct StatisticalAnalysis
- * @brief Analysis result structure for statistical analysis
+ * @enum StatisticalMethod
+ * @brief Supported statistical computation methods
  */
-struct MAYAFLUX_API StatisticalAnalysis {
-    StatisticalMethod method_used { StatisticalMethod::MEAN };
-    uint32_t window_size {};
-    uint32_t hop_size {};
-
-    std::vector<ChannelStatistics> channel_statistics;
+enum StatisticalMethod : uint8_t {
+    MEAN, ///< Arithmetic mean
+    VARIANCE, ///< Population or sample variance
+    STD_DEV, ///< Standard deviation
+    SKEWNESS, ///< Third moment - asymmetry measure
+    KURTOSIS, ///< Fourth moment - tail heaviness
+    MIN, ///< Minimum value
+    MAX, ///< Maximum value
+    MEDIAN, ///< 50th percentile
+    RANGE, ///< Max - min
+    PERCENTILE, ///< Arbitrary percentile (requires parameter)
+    MODE, ///< Most frequent value
+    MAD, ///< Median Absolute Deviation
+    CV, ///< Coefficient of Variation (std_dev/mean)
+    SUM, ///< Sum of all values
+    COUNT, ///< Number of values
+    ENTROPY, ///< Shannon entropy for discrete data
+    ZSCORE ///< Z-score normalization
 };
 
 /**
@@ -110,23 +97,27 @@ struct MAYAFLUX_API StatisticalAnalysis {
  * Pass this aggregate with designated initializers to the config constructor.
  * Named parameters are applied after the typed settings.
  */
-struct StatisticalAnalyzerConfig {
-    /** Analysis window length in samples. */
-    uint32_t window_size { 512 };
-    /** Distance between successive windows in samples. */
-    uint32_t hop_size { 256 };
-    /** Statistic to compute. */
-    StatisticalMethod method { StatisticalMethod::MEAN };
-    /** Whether to classify statistical values. */
-    bool classification_enabled { true };
-    /** Level at which the analyzer processes input. */
-    AnalysisGranularity granularity { AnalysisGranularity::RAW_VALUES };
+struct StatisticalAnalyzerConfig : AnalyzerConfig {
+    /** Statistic to compute, as a StatisticalMethod value. */
+    Reflect::EnumByte<StatisticalMethod> method { StatisticalMethod::MEAN };
     /** Percentile to compute when method is PERCENTILE, from 0 to 100. */
     double percentile { 50.0 };
     /** Whether variance calculations use the sample formula. */
     bool sample_variance { true };
     /** Additional named parameters applied last. */
     std::map<std::string, std::any> parameters;
+};
+
+/**
+ * @struct StatisticalAnalysis
+ * @brief Analysis result structure for statistical analysis
+ */
+struct MAYAFLUX_API StatisticalAnalysis {
+    StatisticalMethod method_used { StatisticalMethod::MEAN };
+    uint32_t window_size {};
+    uint32_t hop_size {};
+
+    std::vector<ChannelStatistics> channel_statistics;
 };
 
 /**
@@ -570,8 +561,6 @@ private:
             return D::sum(data, num_windows, m_hop_size, m_window_size);
         case StatisticalMethod::COUNT:
             return D::count(data, num_windows, m_hop_size, m_window_size);
-        case StatisticalMethod::RMS:
-            return D::rms(data, num_windows, m_hop_size, m_window_size);
         case StatisticalMethod::MAD:
             return D::mad(data, num_windows, m_hop_size, m_window_size);
         case StatisticalMethod::CV:

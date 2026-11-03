@@ -52,6 +52,34 @@ enum class AnalysisGranularity : uint8_t {
 };
 
 /**
+ * @struct AnalyzerConfig
+ * @brief Settings every analyzer family accepts.
+ *
+ * Stored whole, keyed by type, in the operation's settings bag. Each family's
+ * config struct inherits these fields and adds its own method field, typed by its own enum.
+ */
+struct AnalyzerConfig : OperationConfig {
+    static constexpr auto describe_facets()
+    {
+        return std::tuple {
+            FacetMember<&AnalyzerConfig::window_size> {},
+            FacetMember<&AnalyzerConfig::hop_size> {},
+            FacetMember<&AnalyzerConfig::granularity> {},
+            FacetMember<&AnalyzerConfig::classification_enabled> {},
+        };
+    }
+
+    /** Analysis window length in samples. */
+    uint32_t window_size { 256 };
+    /** Distance between successive windows in samples. */
+    uint32_t hop_size { 128 };
+    /** Level at which the analyzer processes input. */
+    AnalysisGranularity granularity { AnalysisGranularity::RAW_VALUES };
+    /** Whether to classify energy or value levels. */
+    bool classification_enabled { false };
+};
+
+/**
  * @class UniversalAnalyzer
  * @brief Template-flexible analyzer base with instance-defined I/O types
  *

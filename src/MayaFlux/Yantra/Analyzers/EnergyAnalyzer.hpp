@@ -32,20 +32,6 @@
 namespace MayaFlux::Yantra {
 
 /**
- * @enum EnergyMethod
- * @brief Supported energy computation methods
- */
-enum class EnergyMethod : uint8_t {
-    RMS, ///< Root Mean Square energy
-    PEAK, ///< Peak amplitude
-    SPECTRAL, ///< Spectral energy (FFT-based)
-    ZERO_CROSSING, ///< Zero-crossing rate
-    HARMONIC, ///< Harmonic energy (low-frequency content)
-    POWER, ///< Power (sum of squares)
-    DYNAMIC_RANGE ///< Dynamic range (dB)
-};
-
-/**
  * @enum EnergyLevel
  * @brief Qualitative classification of energy values
  */
@@ -73,15 +59,17 @@ struct MAYAFLUX_API ChannelEnergy {
 };
 
 /**
- * @struct EnergyAnalysis
- * @brief Analysis result structure for energy analysis
+ * @enum EnergyMethod
+ * @brief Supported energy computation methods
  */
-struct MAYAFLUX_API EnergyAnalysis {
-    std::vector<ChannelEnergy> channels;
-
-    EnergyMethod method_used {};
-    uint32_t window_size {};
-    uint32_t hop_size {};
+enum EnergyMethod : uint8_t {
+    RMS, ///< Root Mean Square energy
+    PEAK, ///< Peak amplitude
+    SPECTRAL, ///< Spectral energy (FFT-based)
+    ZERO_CROSSING, ///< Zero-crossing rate
+    HARMONIC, ///< Harmonic energy (low-frequency content)
+    POWER, ///< Power (sum of squares)
+    DYNAMIC_RANGE ///< Dynamic range (dB)
 };
 
 /**
@@ -91,21 +79,25 @@ struct MAYAFLUX_API EnergyAnalysis {
  * Pass this aggregate with designated initializers to the config constructor.
  * Named parameters are applied after the typed settings.
  */
-struct EnergyAnalyzerConfig {
-    /** Analysis window length in samples. */
-    uint32_t window_size { 256 };
-    /** Distance between successive windows in samples. */
-    uint32_t hop_size { 128 };
-    /** Energy calculation to perform. */
-    EnergyMethod method { EnergyMethod::RMS };
-    /** Whether to classify energy levels. */
-    bool classification_enabled { false };
+struct EnergyAnalyzerConfig : AnalyzerConfig {
+    /** Energy calculation to perform, as an EnergyMethod value. */
+    Reflect::EnumByte<EnergyMethod> method { EnergyMethod::RMS };
     /** Silent, quiet, moderate, and loud boundaries, in that order. */
     std::array<double, 4> thresholds { 0.01, 0.1, 0.5, 0.8 };
-    /** Level at which the analyzer processes input. */
-    AnalysisGranularity granularity { AnalysisGranularity::RAW_VALUES };
     /** Additional named parameters applied last. */
     std::map<std::string, std::any> parameters;
+};
+
+/**
+ * @struct EnergyAnalysis
+ * @brief Analysis result structure for energy analysis
+ */
+struct MAYAFLUX_API EnergyAnalysis {
+    std::vector<ChannelEnergy> channels;
+
+    EnergyMethod method_used {};
+    uint32_t window_size {};
+    uint32_t hop_size {};
 };
 
 /**

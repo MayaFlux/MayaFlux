@@ -1,12 +1,41 @@
 #pragma once
 
 #include "Executors/GpuExecutionContext.hpp"
+#include "MayaFlux/Transitive/Facet/Facets.hpp"
 
 #include <future>
 
 namespace MayaFlux::Yantra {
 
 class ComputeMatrix;
+
+/**
+ * @struct OperationConfig
+ * @brief Typed settings store shared by every operation family.
+ *
+ * Each family stores its own described config struct whole, keyed by its type.
+ * Nothing is inherited, and no string keys are used.
+ */
+struct OperationConfig {
+    /** @brief Stores a described settings struct under its type identity. */
+    template <typename Settings>
+        requires requires { Settings::describe_facets(); }
+    void set(Settings value)
+    {
+        m_settings.set(std::move(value));
+    }
+
+    /** @brief The settings struct of this type, or nullptr when absent. */
+    template <typename Settings>
+        requires requires { Settings::describe_facets(); }
+    [[nodiscard]] const Settings* get() const
+    {
+        return m_settings.get<Settings>();
+    }
+
+private:
+    Facets m_settings;
+};
 
 /**
  * @class ComputeOperation

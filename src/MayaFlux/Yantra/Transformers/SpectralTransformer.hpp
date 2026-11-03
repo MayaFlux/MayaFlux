@@ -19,8 +19,18 @@ enum class SpectralOperation : uint8_t {
     SPECTRAL_GATE, ///< Hard magnitude gate
 };
 
-/** @brief Construction settings for SpectralTransformer. */
-using SpectralTransformerConfig = TransformerConfig<SpectralOperation>;
+/**
+ * @struct SpectralTransformerConfig
+ * @brief Initial settings for Spectral transformation.
+ *
+ * Pass this aggregate with designated initializers to the config constructor.
+ */
+struct SpectralTransformerConfig : TransformerConfig {
+    /** Operation to perform within the family, as a SpectralOperation value. */
+    Reflect::EnumByte<SpectralOperation> operation { SpectralOperation {} };
+    /** Additional named parameters applied last. */
+    std::map<std::string, std::any> parameters;
+};
 
 /**
  * @class SpectralTransformer

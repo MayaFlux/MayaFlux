@@ -20,19 +20,9 @@ namespace MayaFlux::Yantra {
  * Pass this aggregate with designated initializers to the config constructor.
  * Named parameters are applied after the typed settings.
  */
-struct StandardSorterConfig {
-    /** Sorting algorithm to use. */
-    SortingAlgorithm algorithm { SortingAlgorithm::STANDARD };
-    /** Order of the sorted result. */
-    SortingDirection direction { SortingDirection::ASCENDING };
-    /** How the input is handled during sorting. */
-    SortingStrategy strategy { SortingStrategy::COPY_SORT };
-    /** Level at which values are sorted. */
-    SortingGranularity granularity { SortingGranularity::RAW_DATA };
+struct StandardSorterConfig : SorterConfig {
     /** Number of elements per chunk for chunked sorting. */
     size_t chunk_size { 1024 };
-    /** Sort keys and their relative weights. */
-    std::vector<SortKey> keys;
     /** Additional named parameters applied last. */
     std::map<std::string, std::any> parameters;
 };
