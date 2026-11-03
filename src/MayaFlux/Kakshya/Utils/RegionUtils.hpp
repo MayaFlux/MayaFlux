@@ -592,13 +592,6 @@ MAYAFLUX_API bool is_region_access_contiguous(const Region& region,
 MAYAFLUX_API std::vector<std::unordered_map<std::string, std::any>> extract_all_regions_info(const std::shared_ptr<SignalSourceContainer>& container);
 
 /**
- * @brief Extract metadata from region segments.
- * @param segments Vector of region segments.
- * @return Vector of metadata maps, one per segment.
- */
-MAYAFLUX_API std::vector<std::unordered_map<std::string, std::any>> extract_segments_metadata(const std::vector<RegionSegment>& segments);
-
-/**
  * @brief Extract structured bounds information from region.
  * @param region The region to analyze.
  * @return Map containing bounds metadata.

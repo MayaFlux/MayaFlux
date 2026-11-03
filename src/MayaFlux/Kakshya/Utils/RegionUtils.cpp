@@ -237,24 +237,6 @@ std::vector<std::unordered_map<std::string, std::any>> extract_all_regions_info(
     return regions_info;
 }
 
-std::vector<std::unordered_map<std::string, std::any>> extract_segments_metadata(const std::vector<RegionSegment>& segments)
-{
-    std::vector<std::unordered_map<std::string, std::any>> metadata_list;
-    metadata_list.reserve(segments.size());
-
-    for (const auto& segment : segments) {
-        std::unordered_map<std::string, std::any> segment_info;
-        segment_info["start_coordinates"] = segment.source_region.start_coordinates;
-        segment_info["end_coordinates"] = segment.source_region.end_coordinates;
-        segment_info["region_attributes"] = segment.source_region.attributes;
-        segment_info["segment_attributes"] = segment.processing_metadata;
-
-        metadata_list.push_back(std::move(segment_info));
-    }
-
-    return metadata_list;
-}
-
 std::unordered_map<std::string, std::any> extract_region_bounds_info(const Region& region)
 {
     std::unordered_map<std::string, std::any> bounds_info;
