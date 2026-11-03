@@ -178,6 +178,14 @@ public:
     [[nodiscard]] bool empty() const noexcept { return m_entries.empty(); }
     void clear() noexcept { m_entries.clear(); }
 
+    /** @brief Adds entries from @p source, replacing values for shared keys. */
+    void merge(const Facets& source)
+    {
+        for (const auto& [id, entry] : source.m_entries) {
+            m_entries.insert_or_assign(id, entry);
+        }
+    }
+
 private:
     struct EntryBase {
         std::shared_ptr<const void> token;

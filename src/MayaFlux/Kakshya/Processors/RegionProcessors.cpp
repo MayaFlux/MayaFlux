@@ -416,6 +416,8 @@ void RegionOrganizationProcessor::organize_group(const std::shared_ptr<SignalSou
             std::inserter(organized_region.attributes, organized_region.attributes.end()));
         std::ranges::copy(region.attributes,
             std::inserter(organized_region.attributes, organized_region.attributes.end()));
+        organized_region.merge(group);
+        organized_region.merge(region);
         organized_region.current_position = region.start_coordinates;
         organized_region.state = RegionState::READY;
         m_organized_regions.push_back(std::move(organized_region));

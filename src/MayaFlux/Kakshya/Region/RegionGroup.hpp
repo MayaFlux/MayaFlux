@@ -298,6 +298,7 @@ struct MAYAFLUX_API RegionGroup {
     }
 
 private:
+    friend struct OrganizedRegion;
     Facets m_facets;
 };
 

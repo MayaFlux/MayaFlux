@@ -30,6 +30,14 @@ struct MAYAFLUX_API OrganizedRegion {
     {
         m_facets.set(key, std::move(value));
     }
+
+    /** @brief Copies typed attributes from a Region or RegionGroup; source values win. */
+    template <typename Source>
+    void merge(const Source& source)
+    {
+        m_facets.merge(source.m_facets);
+    }
+
     RegionTransition transition_type = RegionTransition::IMMEDIATE; ///< Transition to next region
     double transition_duration_ms = 0.0; ///< Duration of transition in milliseconds
     RegionSelectionPattern selection_pattern = RegionSelectionPattern::SEQUENTIAL;

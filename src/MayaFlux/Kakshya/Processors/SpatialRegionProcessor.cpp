@@ -66,6 +66,9 @@ void SpatialRegionProcessor::organize_container_data(
             std::ranges::copy(group.regions[i].attributes,
                 std::inserter(org.attributes, org.attributes.end()));
 
+            org.merge(group);
+            org.merge(group.regions[i]);
+
             org.attributes["group_name"] = group_name;
             org.attributes["region_index"] = i;
 

@@ -100,6 +100,12 @@ struct MAYAFLUX_API Region {
         m_facets.set(key, std::move(value));
     }
 
+    /** @brief Replaces all typed attributes with @p source. Other Region members are unchanged. */
+    void replace(Facets source)
+    {
+        m_facets = std::move(source);
+    }
+
     Region() = default;
 
     /**
@@ -438,6 +444,7 @@ struct MAYAFLUX_API Region {
     }
 
 private:
+    friend struct OrganizedRegion;
     Facets m_facets;
 };
 
