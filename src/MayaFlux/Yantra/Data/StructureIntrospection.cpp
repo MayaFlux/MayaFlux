@@ -3,7 +3,6 @@
 #include "MayaFlux/Kakshya/NDData/Composite.hpp"
 #include "MayaFlux/Kakshya/Source/CompositeContainer.hpp"
 #include "MayaFlux/Kakshya/Utils/DataUtils.hpp"
-#include "MayaFlux/Kakshya/Utils/RegionUtils.hpp"
 
 namespace MayaFlux::Yantra {
 
@@ -138,29 +137,22 @@ infer_from_region_group(const Kakshya::RegionGroup& group, const std::shared_ptr
     }
 
     auto structure = container->get_structure();
-    auto bounds_info = Kakshya::extract_group_bounds_info(group);
+    const auto bounds = group.get_bounding_region();
+    const auto& min_coords = bounds.start_coordinates;
+    const auto& max_coords = bounds.end_coordinates;
 
-    if (bounds_info.contains("bounding_min") && bounds_info.contains("bounding_max")) {
-        auto min_coords = safe_any_cast_or_throw<std::vector<uint64_t>>(bounds_info["bounding_min"]);
-        auto max_coords = safe_any_cast_or_throw<std::vector<uint64_t>>(bounds_info["bounding_max"]);
+    std::vector<uint64_t> shape;
+    int size = static_cast<int>(max_coords[0] - min_coords[0]);
+    shape.push_back(std::abs(size) + 1);
+    shape.push_back(max_coords[1]);
 
-        std::vector<uint64_t> shape;
-        int size = static_cast<int>(max_coords[0] - min_coords[0]);
-        shape.push_back(std::abs(size) + 1);
-        shape.push_back(max_coords[1]);
+    const auto first = group.regions.front().modality;
+    const bool uniform = std::ranges::all_of(group.regions,
+        [&first](const Kakshya::Region& region) { return region.modality == first; });
+    const Kakshya::DataModality modality = (uniform && first) ? *first : structure.modality;
 
-        Kakshya::DataModality modality = structure.modality;
-        if (group.attributes.contains("modality")) {
-            auto modality_result = safe_any_cast<Kakshya::DataModality>(group.attributes.at("modality"));
-            if (modality_result)
-                modality = *modality_result.value;
-        }
-
-        auto dimensions = Kakshya::DataDimension::create_dimensions(modality, shape, structure.memory_layout);
-        return { dimensions, modality };
-    }
-
-    return infer_from_region(group.regions[0], container);
+    auto dimensions = Kakshya::DataDimension::create_dimensions(modality, shape, structure.memory_layout);
+    return { dimensions, modality };
 }
 
 }

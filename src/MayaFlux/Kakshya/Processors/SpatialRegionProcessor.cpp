@@ -61,16 +61,8 @@ void SpatialRegionProcessor::organize_container_data(
         for (size_t i = 0; i < group.regions.size(); ++i) {
             OrganizedRegion org(group_name, static_cast<uint32_t>(i));
 
-            std::ranges::copy(group.attributes,
-                std::inserter(org.attributes, org.attributes.end()));
-            std::ranges::copy(group.regions[i].attributes,
-                std::inserter(org.attributes, org.attributes.end()));
-
             org.merge(group);
             org.merge(group.regions[i]);
-
-            org.attributes["group_name"] = group_name;
-            org.attributes["region_index"] = i;
 
             org.segments.emplace_back(group.regions[i]);
             org.state = RegionState::READY;

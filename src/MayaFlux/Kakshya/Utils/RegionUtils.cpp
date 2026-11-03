@@ -3,11 +3,6 @@
 
 namespace MayaFlux::Kakshya {
 
-void set_region_attribute(Region& region, const std::string& key, std::any value)
-{
-    region.attributes[key] = std::move(value);
-}
-
 std::vector<Region> find_regions_with_label(const RegionGroup& group, const std::string& label)
 {
     std::vector<Region> result;
@@ -78,16 +73,6 @@ void sort_regions_by_dimension(std::vector<Region>& regions, size_t dimension)
             if (dimension < a.start_coordinates.size() && dimension < b.start_coordinates.size())
                 return a.start_coordinates[dimension] < b.start_coordinates[dimension];
             return false;
-        });
-}
-
-void sort_regions_by_attribute(std::vector<Region>& regions, const std::string& attr_name)
-{
-    std::ranges::sort(regions,
-        [&attr_name](const Region& a, const Region& b) {
-            auto aval = get_region_attribute<std::string>(a, attr_name);
-            auto bval = get_region_attribute<std::string>(b, attr_name);
-            return aval.value_or("") < bval.value_or("");
         });
 }
 
@@ -250,39 +235,6 @@ std::vector<std::unordered_map<std::string, std::any>> extract_all_regions_info(
     }
 
     return regions_info;
-}
-
-std::unordered_map<std::string, std::any> extract_group_bounds_info(const RegionGroup& group)
-{
-    std::unordered_map<std::string, std::any> bounds_info;
-
-    if (group.regions.empty()) {
-        return bounds_info;
-    }
-
-    const auto& first_region = group.regions[0];
-    std::vector<uint64_t> min_coords = first_region.start_coordinates;
-    std::vector<uint64_t> max_coords = first_region.end_coordinates;
-
-    for (size_t i = 1; i < group.regions.size(); ++i) {
-        const auto& region = group.regions[i];
-
-        for (size_t j = 0; j < min_coords.size() && j < region.start_coordinates.size(); ++j) {
-            min_coords[j] = std::min(min_coords[j], region.start_coordinates[j]);
-        }
-
-        for (size_t j = 0; j < max_coords.size() && j < region.end_coordinates.size(); ++j) {
-            max_coords[j] = std::max(max_coords[j], region.end_coordinates[j]);
-        }
-    }
-
-    bounds_info["group_name"] = group.name;
-    bounds_info["num_regions"] = group.regions.size();
-    bounds_info["bounding_min"] = min_coords;
-    bounds_info["bounding_max"] = max_coords;
-    bounds_info["group_attributes"] = group.attributes;
-
-    return bounds_info;
 }
 
 std::vector<std::unordered_map<std::string, std::any>> extract_segments_metadata(const std::vector<RegionSegment>& segments)

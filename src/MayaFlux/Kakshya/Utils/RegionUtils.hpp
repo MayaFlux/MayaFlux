@@ -457,35 +457,6 @@ void set_or_update_region_data(
 uint64_t calculate_region_size(const Region& region);
 
 /**
- * @brief Get an attribute value from a Region by key.
- * @tparam T Expected type.
- * @param region Region to query.
- * @param key Attribute key.
- * @return Optional value if present and convertible.
- */
-template <typename T>
-std::optional<T> get_region_attribute(const Region& region, const std::string& key)
-{
-    auto it = region.attributes.find(key);
-    if (it != region.attributes.end()) {
-        try {
-            return safe_any_cast<T>(it->second);
-        } catch (const std::bad_any_cast&) {
-            return std::nullopt;
-        }
-    }
-    return std::nullopt;
-}
-
-/**
- * @brief Set an attribute value on a Region.
- * @param region Region to modify.
- * @param key Attribute key.
- * @param value Value to set.
- */
-MAYAFLUX_API void set_region_attribute(Region& region, const std::string& key, std::any value);
-
-/**
  * @brief Find all regions in a RegionGroup with a given label.
  * @param group RegionGroup to search.
  * @param label Label to match.
@@ -530,13 +501,6 @@ MAYAFLUX_API Region get_bounding_region(const RegionGroup& group);
  * @param dimension Dimension index to sort by.
  */
 MAYAFLUX_API void sort_regions_by_dimension(std::vector<Region>& regions, size_t dimension);
-
-/**
- * @brief Sort a vector of Regions by a specific attribute (numeric).
- * @param regions Vector of Regions to sort.
- * @param attr_name Attribute name to sort by.
- */
-MAYAFLUX_API void sort_regions_by_attribute(std::vector<Region>& regions, const std::string& attr_name);
 
 /**
  * @brief Add a named reference region to a reference list.
@@ -626,13 +590,6 @@ MAYAFLUX_API bool is_region_access_contiguous(const Region& region,
  * @return Vector of structured region information.
  */
 MAYAFLUX_API std::vector<std::unordered_map<std::string, std::any>> extract_all_regions_info(const std::shared_ptr<SignalSourceContainer>& container);
-
-/**
- * @brief Extract bounds information from region group.
- * @param group Region group to analyze.
- * @return Map containing group bounds metadata.
- */
-MAYAFLUX_API std::unordered_map<std::string, std::any> extract_group_bounds_info(const RegionGroup& group);
 
 /**
  * @brief Extract metadata from region segments.

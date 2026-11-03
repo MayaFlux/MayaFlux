@@ -396,12 +396,8 @@ void RegionOrganizationProcessor::organize_group(const std::shared_ptr<SignalSou
         cache_region_if_needed(segment, container);
 
         organized_region.segments.push_back(std::move(segment));
-
-        std::ranges::copy(group.attributes,
-            std::inserter(organized_region.attributes, organized_region.attributes.end()));
-        std::ranges::copy(region.attributes,
-            std::inserter(organized_region.attributes, organized_region.attributes.end()));
-
+        organized_region.merge(group);
+        organized_region.merge(region);
         organized_region.current_position = region.start_coordinates;
         organized_region.state = RegionState::READY;
 
@@ -412,10 +408,6 @@ void RegionOrganizationProcessor::organize_group(const std::shared_ptr<SignalSou
         RegionSegment segment(region);
         cache_region_if_needed(segment, container);
         organized_region.segments.push_back(std::move(segment));
-        std::ranges::copy(group.attributes,
-            std::inserter(organized_region.attributes, organized_region.attributes.end()));
-        std::ranges::copy(region.attributes,
-            std::inserter(organized_region.attributes, organized_region.attributes.end()));
         organized_region.merge(group);
         organized_region.merge(region);
         organized_region.current_position = region.start_coordinates;

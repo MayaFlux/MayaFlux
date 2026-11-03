@@ -10,7 +10,7 @@ namespace MayaFlux::Kakshya {
  *
  * RegionGroups provide a way to categorize and organize related regions within
  * signal data based on algorithmic or analytical criteria. Each group has a name
- * and can contain multiple Regions, as well as group-level attributes that
+ * and can contain multiple Regions, as well as typed group-level values that
  * apply to the entire collection.
  *
  * Common DSP-specific applications include:
@@ -30,9 +30,6 @@ struct MAYAFLUX_API RegionGroup {
 
     /** @brief Collection of regions belonging to this group */
     std::vector<Region> regions;
-
-    /** @brief Flexible key-value store for group-specific attributes */
-    std::unordered_map<std::string, std::any> attributes;
 
     /** @brief Returns a typed group attribute, or nullptr when absent. */
     template <typename T>
@@ -67,36 +64,13 @@ struct MAYAFLUX_API RegionGroup {
      * @brief Construct a region group.
      * @param group_name Name of the group.
      * @param regions Regions to include.
-     * @param attrs Optional group-level attributes.
      */
     RegionGroup(std::string group_name,
-        std::vector<Region> regions = {},
-        std::unordered_map<std::string, std::any> attrs = {})
+        std::vector<Region> regions = {})
         : name(std::move(group_name))
         , regions(std::move(regions))
-        , attributes(std::move(attrs))
     {
     }
-
-    /* static RegionGroup create_sequential_group(std::string group_name,
-        std::vector<Region> regions,
-        std::unordered_map<std::string, std::any> attributes = {})
-    {
-        RegionGroup group(group_name, regions, attributes);
-        group.region_selection_pattern = RegionSelectionPattern::SEQUENTIAL;
-        group.set_attribute("region_selection_pattern", RegionSelectionPattern::SEQUENTIAL);
-        return group;
-    }
-
-    static RegionGroup create_random_pool(std::string group_name,
-        std::vector<Region> regions,
-        std::unordered_map<std::string, std::any> attributes = {})
-    {
-        RegionGroup group(group_name, regions, attributes);
-        group.region_selection_pattern = RegionSelectionPattern::RANDOM;
-        group.set_attribute("region_selection_pattern", RegionSelectionPattern::RANDOM);
-        return group;
-    } */
 
     void add_region(const Region& region)
     {
@@ -217,7 +191,7 @@ struct MAYAFLUX_API RegionGroup {
         }
 
         Region bounds(min_coords, max_coords);
-        bounds.set_attribute("source_group", name);
+        bounds.label = name;
         return bounds;
     }
 
@@ -254,35 +228,6 @@ struct MAYAFLUX_API RegionGroup {
             }
         }
         return result;
-    }
-
-    /**
-     * @brief Set a group-level attribute.
-     * @tparam T Value type.
-     * @param key Attribute key.
-     * @param value Value to set.
-     */
-    template <typename T>
-    void set_attribute(const std::string& key, T value)
-    {
-        attributes[key] = std::move(value);
-    }
-
-    /**
-     * @brief Get a group-level attribute.
-     * @tparam T Value type.
-     * @param key Attribute key.
-     * @return Optional value if present and convertible.
-     */
-    template <typename T>
-    std::optional<T> get_attribute(const std::string& key) const
-    {
-        auto it = attributes.find(key);
-        if (it == attributes.end()) {
-            return std::nullopt;
-        }
-
-        return safe_any_cast<T>(it->second);
     }
 
 private:
