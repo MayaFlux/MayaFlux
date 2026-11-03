@@ -18,6 +18,32 @@ class DynamicSoundStream;
 namespace MayaFlux::Yantra::Granular {
 
 /**
+ * @brief Summary value selector for an analysis.
+ *
+ * Holds an EnergyMethod value for AnalysisType::FEATURE and a StatisticalMethod
+ * value for AnalysisType::STATISTICAL. Zero selects the family's first method
+ * (RMS or MEAN).
+ */
+using Qualifier = uint8_t;
+
+/**
+ * @brief The computed feature value of one grain, stored on the region.
+ *
+ * AttributeOp writes it and SortOp orders regions by it through RegionGroup::sort.
+ */
+inline const Facet<double> grain_feature {};
+
+/** @brief A second per-grain value, for granular pipelines that measure two features. */
+inline const Facet<double> grain_secondary_feature {};
+
+/** @brief Grain length in samples, stored once per group. */
+inline const Facet<uint32_t> grain_size_setting {};
+/** @brief Hop between grain onsets in samples, stored once per group. */
+inline const Facet<uint32_t> hop_size_setting {};
+/** @brief Source channel the grains were cut from, stored once per group. */
+inline const Facet<uint32_t> channel_setting {};
+
+/**
  * @brief Datum specialisation for granular processing pipelines.
  */
 using GranularDatum = Datum<Kakshya::RegionGroup>;
@@ -145,40 +171,28 @@ protected:
  *    or present in ExecutionContext. For fully custom math.
  *
  * 2. Direct analyzer : set via set_parameter("analyzer", shared_ptr<UniversalAnalyzer<...>>)
- *    paired with set_parameter("analyzer_qualifier", std::string).
+ *    paired with set_parameter("analyzer_qualifier", Qualifier).
  *    Any existing concrete analyzer can be supplied pre-configured.
  *
  * 3. Analysis type : set via set_parameter("analysis_type", AnalysisType) with
- *    optional set_parameter("analyzer_qualifier", std::string). AttributeOp
+ *    optional set_parameter("analyzer_qualifier", Qualifier). AttributeOp
  *    constructs a default-configured analyzer internally.
  *
  * Parameters common to all paths:
- * - feature_key  std::string  attribute name written on each grain  (default "feature")
+ * - The per-grain value is stored in the grain_feature facet of each region.
  * - channel      uint32_t     source channel index                  (default 0)
  *
- * Qualifier strings map directly to scalar fields of the analysis result struct.
- * The alias "rms" is accepted for FEATURE and resolves to "mean_energy".
- * The alias "mean" is accepted for STATISTICAL and resolves to "mean_stat".
+ * Qualifier values select one scalar field of the analysis result struct.
  *
- * FEATURE qualifiers (EnergyAnalysis):
- * - "mean_energy"  (default, alias: "rms")
- * - "max_energy"
- * - "min_energy"
- * - "variance"
- * - "dynamic_range"
- * - "event_count"
- * - "window_count"
+ * FEATURE qualifiers (EnergyMethod values, read from EnergyAnalysis):
+ * - RMS (default; mean of channel energy)
+ * - PEAK (max energy)
+ * - ZERO_CROSSING (event count)
+ * - DYNAMIC_RANGE (max minus min energy)
  *
- * STATISTICAL qualifiers (StatisticalAnalysis):
- * - "mean_stat"  (default, alias: "mean")
- * - "max_stat"
- * - "min_stat"
- * - "variance"
- * - "std_dev"
- * - "skewness"
- * - "kurtosis"
- * - "median"
- * - "window_count"
+ * STATISTICAL qualifiers (StatisticalMethod values, read from StatisticalAnalysis):
+ * - MEAN (default)
+ * - MAX, MIN, VARIANCE, STD_DEV, SKEWNESS, KURTOSIS, MEDIAN
  */
 class MAYAFLUX_API AttributeOp final
     : public RegionGroupAnalyzer<Kakshya::RegionGroup> {
@@ -229,7 +243,7 @@ private:
      */
     static double extract_scalar(const std::any& analysis_result,
         AnalysisType type,
-        const std::string& qualifier);
+        Qualifier qualifier);
 
     mutable VariantEnergyAnalyzer<> m_energy_analyzer;
     mutable VariantStatisticalAnalyzer<> m_stat_analyzer;
@@ -237,10 +251,9 @@ private:
 
 /**
  * @class SortOp
- * @brief Sorts grains by a named attribute key, with optional GPU dispatch.
+ * @brief Sorts grains by the grain_feature facet, with optional GPU dispatch.
  *
  * Parameters (via set_parameter or ExecutionContext):
- * - feature_key         std::string  attribute to sort on
  * - ascending           bool         sort direction                    (default true)
  * - gpu_sort_threshold  uint32_t     grain count threshold for GPU path (default 0 = CPU only)
  */
@@ -288,9 +301,20 @@ extern const ComputationGrammar::Rule::Executor sort_grains;
  * parameters since they affect overload resolution and return type respectively.
  */
 struct GranularConfig {
+    static constexpr auto describe_facets()
+    {
+        return std::tuple {
+            FacetMember<&GranularConfig::grain_size> {},
+            FacetMember<&GranularConfig::hop_size> {},
+            FacetMember<&GranularConfig::channel> {},
+            FacetMember<&GranularConfig::ascending> {},
+            FacetMember<&GranularConfig::gpu_sort_threshold> {},
+            FacetMember<&GranularConfig::attribution_context> {},
+        };
+    }
+
     uint32_t grain_size = 1024;
     uint32_t hop_size = 512;
-    std::string feature_key = "feature";
     uint32_t channel = 0;
     bool ascending = true;
     uint32_t gpu_sort_threshold = 0;
@@ -309,13 +333,12 @@ struct GranularConfig {
 [[nodiscard]] inline ExecutionContext make_granular_context(
     const GranularConfig& config,
     AnalysisType analysis_type,
-    const std::string& qualifier = {})
+    Qualifier qualifier = 0)
 {
     ExecutionContext ctx;
     ctx.execution_metadata["grain_size"] = config.grain_size;
     ctx.execution_metadata["hop_size"] = config.hop_size;
     ctx.execution_metadata["channel"] = config.channel;
-    ctx.execution_metadata["feature_key"] = config.feature_key;
     ctx.execution_metadata["ascending"] = config.ascending;
     ctx.execution_metadata["gpu_sort_threshold"] = config.gpu_sort_threshold;
     ctx.execution_metadata["analysis_type"] = analysis_type;
@@ -337,13 +360,12 @@ template <ComputeData InputType, ComputeData OutputType>
 [[nodiscard]] inline ExecutionContext make_granular_context(
     const GranularConfig& config,
     std::shared_ptr<UniversalAnalyzer<InputType, OutputType>> analyzer,
-    const std::string& qualifier = {})
+    Qualifier qualifier = 0)
 {
     ExecutionContext ctx;
     ctx.execution_metadata["grain_size"] = config.grain_size;
     ctx.execution_metadata["hop_size"] = config.hop_size;
     ctx.execution_metadata["channel"] = config.channel;
-    ctx.execution_metadata["feature_key"] = config.feature_key;
     ctx.execution_metadata["ascending"] = config.ascending;
     ctx.execution_metadata["gpu_sort_threshold"] = config.gpu_sort_threshold;
     ctx.execution_metadata["analyzer"] = std::static_pointer_cast<void>(analyzer);
@@ -366,7 +388,6 @@ template <ComputeData InputType, ComputeData OutputType>
     ctx.execution_metadata["grain_size"] = config.grain_size;
     ctx.execution_metadata["hop_size"] = config.hop_size;
     ctx.execution_metadata["channel"] = config.channel;
-    ctx.execution_metadata["feature_key"] = config.feature_key;
     ctx.execution_metadata["ascending"] = config.ascending;
     ctx.execution_metadata["gpu_sort_threshold"] = config.gpu_sort_threshold;
     ctx.execution_metadata["attribute_executor"] = std::move(executor);
@@ -431,7 +452,7 @@ template <ComputeData InputType, ComputeData OutputType>
     const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
     AnalysisType analysis_type,
     const GranularConfig& config = {},
-    const std::string& qualifier = {});
+    Qualifier qualifier = 0);
 
 /**
  * @brief Run segment -> attribute -> sort using a span-level attribution lambda.
@@ -460,7 +481,7 @@ template <ComputeData InputType, ComputeData OutputType>
     const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
     AnalysisType analysis_type,
     const GranularConfig& config = {},
-    const std::string& qualifier = {},
+    Qualifier qualifier = 0,
     GranularOutput output = GranularOutput::CONTAINER);
 
 /**
@@ -496,7 +517,7 @@ template <ComputeData InputType, ComputeData OutputType>
     const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
     AnalysisType analysis_type,
     const GranularConfig& config = {},
-    const std::string& qualifier = {},
+    Qualifier qualifier = 0,
     GranularOutput output = GranularOutput::STREAM);
 
 /**
@@ -536,7 +557,7 @@ void process_to_container_async(
     AnalysisType analysis_type,
     CompleteFn&& on_complete,
     const GranularConfig& config = {},
-    const std::string& qualifier = {},
+    Qualifier qualifier = 0,
     GranularOutput output = GranularOutput::CONTAINER)
 {
     auto ctx = make_granular_context(config, analysis_type, qualifier);
@@ -642,7 +663,7 @@ void process_to_stream_async(
     AnalysisType analysis_type,
     CompleteFn&& on_complete,
     const GranularConfig& config = {},
-    const std::string& qualifier = {},
+    Qualifier qualifier = 0,
     GranularOutput output = GranularOutput::STREAM)
 {
     auto ctx = make_granular_context(config, analysis_type, qualifier);

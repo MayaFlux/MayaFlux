@@ -12,26 +12,47 @@ namespace MayaFlux::Yantra::Granular {
 
 namespace {
 
-    std::string resolve_qualifier(AnalysisType type, const std::string& qualifier)
+    double energy_scalar(const EnergyAnalysis& analysis, EnergyMethod method)
     {
-        if (!qualifier.empty()) {
-            if (type == AnalysisType::FEATURE && qualifier == "rms")
-                return "mean_energy";
-            if (type == AnalysisType::STATISTICAL && qualifier == "mean")
-                return "mean_stat";
-            return qualifier;
-        }
-        switch (type) {
-        case AnalysisType::FEATURE:
-            return "mean_energy";
-        case AnalysisType::STATISTICAL:
-            return "mean_stat";
+        if (analysis.channels.empty())
+            return 0.0;
+
+        const auto& ch = analysis.channels[0];
+        switch (method) {
+        case EnergyMethod::PEAK:
+            return ch.max_energy;
+        case EnergyMethod::ZERO_CROSSING:
+            return static_cast<double>(ch.event_positions.size());
+        case EnergyMethod::DYNAMIC_RANGE:
+            return ch.max_energy - ch.min_energy;
         default:
-            error<std::invalid_argument>(
-                Journal::Component::Yantra, Journal::Context::ComputeMatrix,
-                std::source_location::current(),
-                "resolve_qualifier: no default qualifier for AnalysisType {}",
-                static_cast<int>(type));
+            return ch.mean_energy;
+        }
+    }
+
+    double statistical_scalar(const StatisticalAnalysis& analysis, StatisticalMethod method)
+    {
+        if (analysis.channel_statistics.empty())
+            return 0.0;
+
+        const auto& ch = analysis.channel_statistics[0];
+        switch (method) {
+        case StatisticalMethod::MAX:
+            return ch.max_stat;
+        case StatisticalMethod::MIN:
+            return ch.min_stat;
+        case StatisticalMethod::VARIANCE:
+            return ch.stat_variance;
+        case StatisticalMethod::STD_DEV:
+            return ch.stat_std_dev;
+        case StatisticalMethod::SKEWNESS:
+            return ch.skewness;
+        case StatisticalMethod::KURTOSIS:
+            return ch.kurtosis;
+        case StatisticalMethod::MEDIAN:
+            return ch.median;
+        default:
+            return ch.mean_stat;
         }
     }
 
@@ -134,11 +155,7 @@ const ComputationGrammar::Rule::Executor reconstruct_grains =
         return 48000U;
     }();
 
-    const auto grain_sz = safe_any_cast_or_default<uint32_t>(
-        datum.data.get_attribute<uint32_t>("grain_size").has_value()
-            ? std::any(datum.data.get_attribute<uint32_t>("grain_size").value())
-            : std::any {},
-        1024U);
+    const auto grain_sz = (datum.data.get(grain_size_setting) ? *datum.data.get(grain_size_setting) : 1024U);
 
     std::vector<std::vector<double>> channel_data(num_ch);
     for (uint32_t ch = 0; ch < num_ch; ++ch)
@@ -180,16 +197,8 @@ const ComputationGrammar::Rule::Executor reconstruct_grains_additive =
         return 48000U;
     }();
 
-    const auto grain_sz = safe_any_cast_or_default<uint32_t>(
-        datum.data.get_attribute<uint32_t>("grain_size").has_value()
-            ? std::any(datum.data.get_attribute<uint32_t>("grain_size").value())
-            : std::any {},
-        1024U);
-    const auto hop_sz = safe_any_cast_or_default<uint32_t>(
-        datum.data.get_attribute<uint32_t>("hop_size").has_value()
-            ? std::any(datum.data.get_attribute<uint32_t>("hop_size").value())
-            : std::any {},
-        grain_sz);
+    const auto grain_sz = (datum.data.get(grain_size_setting) ? *datum.data.get(grain_size_setting) : 1024U);
+    const auto hop_sz = (datum.data.get(hop_size_setting) ? *datum.data.get(hop_size_setting) : grain_sz);
 
     const auto taper = safe_any_cast_or_default<GrainTaper>(
         ctx.execution_metadata.contains("grain_taper")
@@ -238,11 +247,7 @@ const ComputationGrammar::Rule::Executor reconstruct_grains_stream =
         return 48000U;
     }();
 
-    const auto grain_sz = safe_any_cast_or_default<uint32_t>(
-        datum.data.get_attribute<uint32_t>("grain_size").has_value()
-            ? std::any(datum.data.get_attribute<uint32_t>("grain_size").value())
-            : std::any {},
-        1024U);
+    const auto grain_sz = (datum.data.get(grain_size_setting) ? *datum.data.get(grain_size_setting) : 1024U);
 
     std::vector<std::vector<double>> channel_data(num_ch);
     for (uint32_t ch = 0; ch < num_ch; ++ch)
@@ -290,16 +295,8 @@ const ComputationGrammar::Rule::Executor reconstruct_grains_additive_stream =
         return 48000U;
     }();
 
-    const auto grain_sz = safe_any_cast_or_default<uint32_t>(
-        datum.data.get_attribute<uint32_t>("grain_size").has_value()
-            ? std::any(datum.data.get_attribute<uint32_t>("grain_size").value())
-            : std::any {},
-        1024U);
-    const auto hop_sz = safe_any_cast_or_default<uint32_t>(
-        datum.data.get_attribute<uint32_t>("hop_size").has_value()
-            ? std::any(datum.data.get_attribute<uint32_t>("hop_size").value())
-            : std::any {},
-        grain_sz);
+    const auto grain_sz = (datum.data.get(grain_size_setting) ? *datum.data.get(grain_size_setting) : 1024U);
+    const auto hop_sz = (datum.data.get(hop_size_setting) ? *datum.data.get(hop_size_setting) : grain_sz);
 
     const auto taper = safe_any_cast_or_default<GrainTaper>(
         ctx.execution_metadata.contains("grain_taper")
@@ -387,13 +384,12 @@ Datum<Kakshya::RegionGroup> SegmentOp::extract_implementation(
             std::vector<uint64_t> { onset, 0 },
             std::vector<uint64_t> { onset + grain_size - 1, num_channels - 1 }
         };
-        grain.set_attribute("onset", static_cast<double>(onset));
         out.data.regions.push_back(std::move(grain));
     }
 
-    out.data.set_attribute<uint32_t>("grain_size", grain_size);
-    out.data.set_attribute<uint32_t>("hop_size", hop_size);
-    out.data.set_attribute<uint32_t>("channel", channel);
+    out.data.set(grain_size_setting, grain_size);
+    out.data.set(hop_size_setting, hop_size);
+    out.data.set(channel_setting, channel);
 
     return out;
 }
@@ -422,56 +418,16 @@ AttributeOp::make_default_analyzer(AnalysisType type)
 double AttributeOp::extract_scalar(
     const std::any& analysis_result,
     AnalysisType type,
-    const std::string& qualifier)
+    Qualifier qualifier)
 {
-    const std::string q = resolve_qualifier(type, qualifier);
-
     if (type == AnalysisType::FEATURE) {
         const auto& ea = safe_any_cast_or_throw<EnergyAnalysis>(analysis_result);
-        if (ea.channels.empty())
-            return 0.0;
-        const auto& ch = ea.channels[0];
-
-        if (q == "rms" || q == "mean")
-            return ch.mean_energy;
-        if (q == "peak" || q == "max")
-            return ch.max_energy;
-        if (q == "min")
-            return ch.min_energy;
-        if (q == "variance")
-            return ch.variance;
-        if (q == "dynamic_range")
-            return ch.max_energy - ch.min_energy;
-        if (q == "zero_crossing")
-            return ch.event_positions.empty() ? 0.0 : static_cast<double>(ch.event_positions.size());
-
-        return ch.mean_energy;
+        return energy_scalar(ea, static_cast<EnergyMethod>(qualifier));
     }
 
     if (type == AnalysisType::STATISTICAL) {
         const auto& sa = safe_any_cast_or_throw<StatisticalAnalysis>(analysis_result);
-        if (sa.channel_statistics.empty())
-            return 0.0;
-        const auto& ch = sa.channel_statistics[0];
-
-        if (q == "mean")
-            return ch.mean_stat;
-        if (q == "std_dev")
-            return ch.stat_std_dev;
-        if (q == "variance")
-            return ch.stat_variance;
-        if (q == "kurtosis")
-            return ch.kurtosis;
-        if (q == "skewness")
-            return ch.skewness;
-        if (q == "median")
-            return ch.median;
-        if (q == "max")
-            return ch.max_stat;
-        if (q == "min")
-            return ch.min_stat;
-
-        return ch.mean_stat;
+        return statistical_scalar(sa, static_cast<StatisticalMethod>(qualifier));
     }
 
     return 0.0;
@@ -502,13 +458,13 @@ double AttributeOp::compute_grain_attribute(
 
     const auto grain_variants = container->get_region_data(grain);
 
-    const std::string qualifier = [&]() -> std::string {
+    const Qualifier qualifier = [&]() -> Qualifier {
         if (ctx.execution_metadata.contains("analyzer_qualifier")) {
-            return safe_any_cast_or_default<std::string>(
-                ctx.execution_metadata.at("analyzer_qualifier"), {});
+            return safe_any_cast_or_default<Qualifier>(
+                ctx.execution_metadata.at("analyzer_qualifier"), Qualifier { 0 });
         }
         auto p = this->get_parameter("analyzer_qualifier");
-        return p.has_value() ? safe_any_cast_or_default<std::string>(p, {}) : std::string {};
+        return p.has_value() ? safe_any_cast_or_default<Qualifier>(p, Qualifier { 0 }) : Qualifier { 0 };
     }();
 
     const AnalysisType type = [&]() {
@@ -536,29 +492,31 @@ double AttributeOp::compute_grain_attribute(
 
     if (raw_analyzer) {
         if (type == AnalysisType::FEATURE) {
-            return extract_scalar_energy(
+            return energy_scalar(
                 std::static_pointer_cast<VariantEnergyAnalyzer<>>(raw_analyzer)
                     ->analyze_energy(grain_variants),
-                qualifier);
+                static_cast<EnergyMethod>(qualifier));
         }
 
         if (type == AnalysisType::STATISTICAL) {
-            return extract_scalar_statistics(
+            return statistical_scalar(
                 std::static_pointer_cast<VariantStatisticalAnalyzer<>>(raw_analyzer)
                     ->analyze_statistics(grain_variants),
-                qualifier);
+                static_cast<StatisticalMethod>(qualifier));
         }
         return 0.0;
     }
 
     if (type == AnalysisType::FEATURE) {
-        return extract_scalar_energy(
-            m_energy_analyzer.analyze_energy(grain_variants), qualifier);
+        return energy_scalar(
+            m_energy_analyzer.analyze_energy(grain_variants),
+            static_cast<EnergyMethod>(qualifier));
     }
 
     if (type == AnalysisType::STATISTICAL) {
-        return extract_scalar_statistics(
-            m_stat_analyzer.analyze_statistics(grain_variants), qualifier);
+        return statistical_scalar(
+            m_stat_analyzer.analyze_statistics(grain_variants),
+            static_cast<StatisticalMethod>(qualifier));
     }
 
     return 0.0;
@@ -594,7 +552,6 @@ Datum<Kakshya::RegionGroup> AttributeOp::analyze_implementation(
     }
 
     const auto channel = this->template get_parameter_or_default<uint32_t>("channel", 0U);
-    const auto feature_key = this->template get_parameter_or_default<std::string>("feature_key", std::string("feature"));
 
     ExecutionContext ctx;
     for (const auto& [k, v] : this->get_all_analysis_parameters())
@@ -602,10 +559,8 @@ Datum<Kakshya::RegionGroup> AttributeOp::analyze_implementation(
 
     Datum<Kakshya::RegionGroup> out { input.data, container };
 
-    for (auto& grain : out.data.regions) {
-        const double value = compute_grain_attribute(grain, container, channel, ctx);
-        grain.set_attribute(feature_key, value);
-    }
+    for (auto& grain : out.data.regions)
+        grain.set(grain_feature, compute_grain_attribute(grain, container, channel, ctx));
 
     return out;
 }
@@ -617,7 +572,6 @@ Datum<Kakshya::RegionGroup> AttributeOp::analyze_implementation(
 Datum<Kakshya::RegionGroup> SortOp::sort_implementation(
     const Datum<Kakshya::RegionGroup>& input)
 {
-    const auto feature_key = this->template get_parameter_or_default<std::string>("feature_key", std::string("feature"));
     const bool ascending = this->template get_parameter_or_default<bool>("ascending", true);
     const auto gpu_thresh = this->template get_parameter_or_default<uint32_t>("gpu_sort_threshold", 0U);
     const auto n = static_cast<uint32_t>(input.data.regions.size());
@@ -626,6 +580,7 @@ Datum<Kakshya::RegionGroup> SortOp::sort_implementation(
 
     if (n == 0)
         return out;
+
 
     if (gpu_thresh > 0 && n >= gpu_thresh) {
         struct SortPC {
@@ -637,8 +592,8 @@ Datum<Kakshya::RegionGroup> SortOp::sort_implementation(
 
         std::vector<float> values(n);
         for (uint32_t i = 0; i < n; ++i) {
-            auto attr = out.data.regions[i].get_attribute<double>(feature_key);
-            values[i] = attr ? static_cast<float>(*attr) : 0.0F;
+            const double* v = out.data.regions[i].get(grain_feature);
+            values[i] = v ? static_cast<float>(*v) : 0.0F;
         }
 
         std::vector<uint32_t> indices(n);
@@ -713,7 +668,7 @@ Datum<Kakshya::RegionGroup> SortOp::sort_implementation(
         return out;
     }
 
-    out.data.sort_by_attribute(feature_key);
+    out.data.sort(grain_feature);
 
     if (!ascending)
         std::ranges::reverse(out.data.regions);
@@ -853,7 +808,7 @@ GranularDatum process(
     const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
     AnalysisType analysis_type,
     const GranularConfig& config,
-    const std::string& qualifier)
+    Qualifier qualifier)
 {
     auto matrix = make_granular_matrix(config.attribution_context);
 
@@ -908,7 +863,7 @@ std::shared_ptr<Kakshya::SoundFileContainer> process_to_container(
     const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
     AnalysisType analysis_type,
     const GranularConfig& config,
-    const std::string& qualifier,
+    Qualifier qualifier,
     GranularOutput output)
 {
     auto ctx = make_granular_context(config, analysis_type, qualifier);
@@ -943,7 +898,7 @@ std::shared_ptr<Kakshya::DynamicSoundStream> process_to_stream(
     const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
     AnalysisType analysis_type,
     const GranularConfig& config,
-    const std::string& qualifier,
+    Qualifier qualifier,
     GranularOutput output)
 {
     auto ctx = make_granular_context(config, analysis_type, qualifier);
