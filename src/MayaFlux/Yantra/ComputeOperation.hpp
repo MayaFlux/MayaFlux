@@ -224,6 +224,39 @@ public:
 
     [[nodiscard]] bool has_gpu_backend() const { return m_gpu_backend != nullptr; }
 
+    /**
+     * @brief Stores a described settings struct, whole, under its own type.
+     * @tparam Config A struct deriving from OperationConfig with describe_facets().
+     */
+    template <typename Config>
+        requires std::derived_from<Config, OperationConfig> && requires { Config::describe_facets(); }
+    void set_config(Config config)
+    {
+        m_config_bag.set(std::move(config));
+    }
+
+    /**
+     * @brief The stored settings struct of type Config, or nullptr when absent.
+     */
+    template <typename Config>
+        requires std::derived_from<Config, OperationConfig> && requires { Config::describe_facets(); }
+    [[nodiscard]] const Config* resolved_config() const
+    {
+        return m_config_bag.get<Config>();
+    }
+
+    /**
+     * @brief The base view of this operation's settings.
+     *
+     * Families and concrete operations override this to return their own
+     * stored struct. The default is an empty OperationConfig.
+     */
+    [[nodiscard]] virtual const OperationConfig& config() const
+    {
+        static const OperationConfig defaults {};
+        return defaults;
+    }
+
 protected:
     /**
      * @brief Executes the computational transformation on the input data
@@ -335,6 +368,7 @@ protected:
 
 private:
     std::vector<std::shared_ptr<ComputeOperation>> m_dependencies;
+    Facets m_config_bag;
 
     /**
      * @brief Validate input/output types and warn about marker types

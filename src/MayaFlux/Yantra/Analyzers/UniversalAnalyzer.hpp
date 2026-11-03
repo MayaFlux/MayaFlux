@@ -133,6 +133,14 @@ public:
         return OperationType::ANALYZER;
     }
 
+    [[nodiscard]] const OperationConfig& config() const override
+    {
+        if (const auto* stored = this->template resolved_config<AnalyzerConfig>()) {
+            return *stored;
+        }
+        return base_type::config();
+    }
+
     /**
      * @brief Type-safe parameter management with analysis-specific defaults
      */

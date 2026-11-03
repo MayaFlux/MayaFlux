@@ -160,6 +160,14 @@ public:
         return OperationType::SORTER;
     }
 
+    [[nodiscard]] const OperationConfig& config() const override
+    {
+        if (const auto* stored = this->template resolved_config<SorterConfig>()) {
+            return *stored;
+        }
+        return base_type::config();
+    }
+
     /**
      * @brief Type-safe parameter management with sorting-specific defaults
      */

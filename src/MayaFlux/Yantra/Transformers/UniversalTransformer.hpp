@@ -262,6 +262,14 @@ public:
         return OperationType::TRANSFORMER;
     }
 
+    [[nodiscard]] const OperationConfig& config() const override
+    {
+        if (const auto* stored = this->template resolved_config<TransformerConfig>()) {
+            return *stored;
+        }
+        return base_type::config();
+    }
+
     /**
      * @brief Type-safe parameter management with transformation-specific defaults
      * @param name Parameter name

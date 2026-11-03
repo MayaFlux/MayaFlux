@@ -128,6 +128,14 @@ public:
         return OperationType::EXTRACTOR;
     }
 
+    [[nodiscard]] const OperationConfig& config() const override
+    {
+        if (const auto* stored = this->template resolved_config<ExtractorConfig>()) {
+            return *stored;
+        }
+        return base_type::config();
+    }
+
     /**
      * @brief Type-safe parameter management with extraction-specific defaults
      */
