@@ -52,6 +52,20 @@ struct MAYAFLUX_API RegionSegment {
 
     std::unordered_map<std::string, std::any> processing_metadata; ///< Arbitrary processing metadata
 
+    /** @brief Returns typed processing metadata, or nullptr when absent. */
+    template <typename T>
+    [[nodiscard]] const T* get(const Facet<T>& key) const
+    {
+        return m_facets.get(key);
+    }
+
+    /** @brief Stores typed processing metadata under its Facet key. */
+    template <typename T>
+    void set(const Facet<T>& key, std::type_identity_t<T> value)
+    {
+        m_facets.set(key, std::move(value));
+    }
+
     RegionSegment() = default;
 
     /**
@@ -257,6 +271,9 @@ struct MAYAFLUX_API RegionSegment {
         }
         return std::nullopt;
     }
+
+private:
+    Facets m_facets;
 };
 
 } // namespace MayaFlux::Kakshya

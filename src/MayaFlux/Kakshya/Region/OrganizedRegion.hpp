@@ -16,6 +16,20 @@ struct MAYAFLUX_API OrganizedRegion {
     size_t region_index {}; ///< Index within the group
     std::vector<RegionSegment> segments; ///< Audio segments in this region
     std::unordered_map<std::string, std::any> attributes; ///< Extensible metadata
+
+    /** @brief Returns a typed attribute, or nullptr when absent. */
+    template <typename T>
+    [[nodiscard]] const T* get(const Facet<T>& key) const
+    {
+        return m_facets.get(key);
+    }
+
+    /** @brief Stores a typed attribute under its Facet key. */
+    template <typename T>
+    void set(const Facet<T>& key, std::type_identity_t<T> value)
+    {
+        m_facets.set(key, std::move(value));
+    }
     RegionTransition transition_type = RegionTransition::IMMEDIATE; ///< Transition to next region
     double transition_duration_ms = 0.0; ///< Duration of transition in milliseconds
     RegionSelectionPattern selection_pattern = RegionSelectionPattern::SEQUENTIAL;
@@ -110,5 +124,8 @@ struct MAYAFLUX_API OrganizedRegion {
         }
         return std::nullopt;
     }
+
+private:
+    Facets m_facets;
 };
 }

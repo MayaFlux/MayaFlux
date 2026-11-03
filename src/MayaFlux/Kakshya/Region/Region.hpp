@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Kakshya/NDData/NDData.hpp"
+#include "MayaFlux/Transitive/Facet/Facets.hpp"
 
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
 #ifdef CALLBACK
@@ -84,6 +85,20 @@ struct MAYAFLUX_API Region {
     std::optional<std::string> label;
     /** @brief Flexible key-value store for region-specific attributes */
     std::unordered_map<std::string, std::any> attributes;
+
+    /** @brief Returns a typed attribute, or nullptr when absent. */
+    template <typename T>
+    [[nodiscard]] const T* get(const Facet<T>& key) const
+    {
+        return m_facets.get(key);
+    }
+
+    /** @brief Stores a typed attribute under its Facet key. */
+    template <typename T>
+    void set(const Facet<T>& key, std::type_identity_t<T> value)
+    {
+        m_facets.set(key, std::move(value));
+    }
 
     Region() = default;
 
@@ -421,6 +436,9 @@ struct MAYAFLUX_API Region {
     {
         return !(*this == other);
     }
+
+private:
+    Facets m_facets;
 };
 
 } // namespace MayaFlux::Kakshya

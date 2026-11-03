@@ -34,6 +34,20 @@ struct MAYAFLUX_API RegionGroup {
     /** @brief Flexible key-value store for group-specific attributes */
     std::unordered_map<std::string, std::any> attributes;
 
+    /** @brief Returns a typed group attribute, or nullptr when absent. */
+    template <typename T>
+    [[nodiscard]] const T* get(const Facet<T>& key) const
+    {
+        return m_facets.get(key);
+    }
+
+    /** @brief Stores a typed group attribute under its Facet key. */
+    template <typename T>
+    void set(const Facet<T>& key, std::type_identity_t<T> value)
+    {
+        m_facets.set(key, std::move(value));
+    }
+
     RegionState state = RegionState::IDLE;
     RegionTransition transition_type = RegionTransition::IMMEDIATE;
     RegionSelectionPattern region_selection_pattern = RegionSelectionPattern::SEQUENTIAL;
@@ -282,6 +296,9 @@ struct MAYAFLUX_API RegionGroup {
 
         return safe_any_cast<T>(it->second);
     }
+
+private:
+    Facets m_facets;
 };
 
 }
