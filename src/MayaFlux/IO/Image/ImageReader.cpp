@@ -322,9 +322,11 @@ std::optional<FileMetadata> ImageReader::get_metadata() const
     FileMetadata meta;
     meta.format = "8-bit";
 
-    meta.attributes["width"] = m_image_data->width;
-    meta.attributes["height"] = m_image_data->height;
-    meta.attributes["modality"] = Kakshya::DataModality::IMAGE_COLOR;
+    meta.set(ImageInfo {
+        .width = m_image_data->width,
+        .height = m_image_data->height,
+        .modality = Kakshya::DataModality::IMAGE_COLOR,
+    });
 
     return meta;
 }

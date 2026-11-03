@@ -401,40 +401,43 @@ void VideoStreamContext::extract_stream_metadata(const FFmpegDemuxContext& demux
     if (!codec_context || stream_index < 0)
         return;
 
-    out.attributes["video_codec"] = std::string(avcodec_get_name(codec_context->codec_id));
+    VideoStreamInfo info;
+    info.codec = std::string(avcodec_get_name(codec_context->codec_id));
     if (codec_context->codec && codec_context->codec->long_name)
-        out.attributes["video_codec_long_name"] = std::string(codec_context->codec->long_name);
-    out.attributes["video_width"] = width;
-    out.attributes["video_height"] = height;
-    out.attributes["video_frame_rate"] = frame_rate;
-    out.attributes["video_total_frames"] = total_frames;
-    out.attributes["video_bit_rate"] = codec_context->bit_rate;
+        info.codec_long_name = std::string(codec_context->codec->long_name);
+    info.width = width;
+    info.height = height;
+    info.frame_rate = frame_rate;
+    info.total_frames = total_frames;
+    info.bit_rate = codec_context->bit_rate;
 
-    const char* pix_fmt_name = av_get_pix_fmt_name(codec_context->pix_fmt);
-    if (pix_fmt_name)
-        out.attributes["video_pixel_format"] = std::string(pix_fmt_name);
+    if (const char* pix_fmt_name = av_get_pix_fmt_name(codec_context->pix_fmt))
+        info.pixel_format = std::string(pix_fmt_name);
 
     if (codec_context->color_range != AVCOL_RANGE_UNSPECIFIED)
-        out.attributes["video_color_range"] = static_cast<int>(codec_context->color_range);
+        info.color_range = static_cast<int>(codec_context->color_range);
     if (codec_context->colorspace != AVCOL_SPC_UNSPECIFIED)
-        out.attributes["video_colorspace"] = static_cast<int>(codec_context->colorspace);
+        info.colorspace = static_cast<int>(codec_context->colorspace);
     if (codec_context->color_trc != AVCOL_TRC_UNSPECIFIED)
-        out.attributes["video_color_trc"] = static_cast<int>(codec_context->color_trc);
+        info.color_trc = static_cast<int>(codec_context->color_trc);
     if (codec_context->color_primaries != AVCOL_PRI_UNSPECIFIED)
-        out.attributes["video_color_primaries"] = static_cast<int>(codec_context->color_primaries);
+        info.color_primaries = static_cast<int>(codec_context->color_primaries);
 
     AVStream* stream = demux.get_stream(stream_index);
+    if (stream && stream->sample_aspect_ratio.num > 0 && stream->sample_aspect_ratio.den > 0) {
+        info.sar_num = stream->sample_aspect_ratio.num;
+        info.sar_den = stream->sample_aspect_ratio.den;
+    }
+    out.set(std::move(info));
+
     if (!stream)
         return;
 
-    if (stream->sample_aspect_ratio.num > 0 && stream->sample_aspect_ratio.den > 0) {
-        out.attributes["video_sar_num"] = stream->sample_aspect_ratio.num;
-        out.attributes["video_sar_den"] = stream->sample_aspect_ratio.den;
-    }
-
+    VideoStreamTags tags;
     AVDictionaryEntry* tag = nullptr;
     while ((tag = av_dict_get(stream->metadata, "", tag, AV_DICT_IGNORE_SUFFIX)))
-        out.attributes[std::string("video_stream_") + tag->key] = std::string(tag->value);
+        tags.entries.emplace_back(tag->key, tag->value);
+    out.set(std::move(tags));
 }
 
 std::vector<FileRegion> VideoStreamContext::extract_keyframe_regions(
@@ -470,9 +473,7 @@ std::vector<FileRegion> VideoStreamContext::extract_keyframe_regions(
 
             r.start_coordinates = { frame_pos };
             r.end_coordinates = { frame_pos };
-            r.attributes["pts"] = pts;
-            r.attributes["timestamp_seconds"] = ts;
-            r.attributes["keyframe_index"] = idx;
+            r.set(KeyframeInfo { .pts = pts, .timestamp_seconds = ts, .keyframe_index = idx });
 
             regions.push_back(std::move(r));
             ++idx;

@@ -302,10 +302,12 @@ std::optional<FileMetadata> ModelReader::get_metadata() const
     meta.mime_type = "model/gltf-binary"; // reasonable default; format-agnostic
 
     const aiScene* s = m_impl->scene;
-    meta.attributes["mesh_count"] = static_cast<uint64_t>(s->mNumMeshes);
-    meta.attributes["material_count"] = static_cast<uint64_t>(s->mNumMaterials);
-    meta.attributes["animation_count"] = static_cast<uint64_t>(s->mNumAnimations);
-    meta.attributes["texture_count"] = static_cast<uint64_t>(s->mNumTextures);
+    meta.set(ModelInfo {
+        .mesh_count = static_cast<uint64_t>(s->mNumMeshes),
+        .material_count = static_cast<uint64_t>(s->mNumMaterials),
+        .animation_count = static_cast<uint64_t>(s->mNumAnimations),
+        .texture_count = static_cast<uint64_t>(s->mNumTextures),
+    });
 
     return meta;
 }

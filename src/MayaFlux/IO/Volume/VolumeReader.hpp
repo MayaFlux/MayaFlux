@@ -10,6 +10,23 @@ class VDBArchive;
 namespace MayaFlux::IO {
 
 /**
+ * @struct VolumeInfo
+ * @brief Grid count of an OpenVDB archive.
+ *
+ * Stored on FileMetadata by VolumeReader.
+ */
+struct VolumeInfo {
+    static constexpr auto describe_facets()
+    {
+        return std::tuple {
+            FacetMember<&VolumeInfo::grid_count> {},
+        };
+    }
+
+    uint64_t grid_count = 0; ///< Number of grids in the archive
+};
+
+/**
  * @struct VolumeReadOptions
  * @brief Configuration for volume reading.
  */

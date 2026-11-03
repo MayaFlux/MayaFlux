@@ -11,6 +11,27 @@ class TextureBuffer;
 
 namespace MayaFlux::IO {
 
+/**
+ * @struct ImageInfo
+ * @brief Pixel dimensions and modality of a decoded image.
+ *
+ * Stored on FileMetadata by ImageReader.
+ */
+struct ImageInfo {
+    static constexpr auto describe_facets()
+    {
+        return std::tuple {
+            FacetMember<&ImageInfo::width> {},
+            FacetMember<&ImageInfo::height> {},
+            FacetMember<&ImageInfo::modality> {},
+        };
+    }
+
+    uint32_t width = 0; ///< Image width in pixels
+    uint32_t height = 0; ///< Image height in pixels
+    Kakshya::DataModality modality = Kakshya::DataModality::IMAGE_COLOR; ///< Data modality of the image
+};
+
 using ImageData = Kakshya::ImageData;
 
 /**

@@ -7,6 +7,23 @@
 namespace MayaFlux::IO {
 
 /**
+ * @struct DelimitedTextInfo
+ * @brief Column names of a delimited text file.
+ *
+ * Stored on FileMetadata by DelimitedTextReader.
+ */
+struct DelimitedTextInfo {
+    static constexpr auto describe_facets()
+    {
+        return std::tuple {
+            FacetMember<&DelimitedTextInfo::fields> {},
+        };
+    }
+
+    std::vector<std::string> fields; ///< Column names in file order
+};
+
+/**
  * @class DelimitedTextReader
  * @brief Incremental CSV and TSV reader producing CompositeArray values.
  *

@@ -182,24 +182,28 @@ void AudioStreamContext::extract_stream_metadata(const FFmpegDemuxContext& demux
     if (!codec_context || stream_index < 0)
         return;
 
-    out.attributes["codec"] = std::string(avcodec_get_name(codec_context->codec_id));
-    out.attributes["codec_long_name"] = std::string(codec_context->codec->long_name);
-    out.attributes["total_frames"] = total_frames;
-    out.attributes["sample_rate"] = sample_rate;
-    out.attributes["channels"] = channels;
-    out.attributes["bit_rate"] = codec_context->bit_rate;
+    AudioStreamInfo info;
+    info.codec = std::string(avcodec_get_name(codec_context->codec_id));
+    info.codec_long_name = std::string(codec_context->codec->long_name);
+    info.total_frames = total_frames;
+    info.sample_rate = sample_rate;
+    info.channels = channels;
+    info.bit_rate = codec_context->bit_rate;
 
     char layout_desc[256] = {};
     av_channel_layout_describe(&codec_context->ch_layout, layout_desc, sizeof(layout_desc));
-    out.attributes["channel_layout"] = std::string(layout_desc);
+    info.channel_layout = std::string(layout_desc);
+    out.set(std::move(info));
 
     AVStream* stream = demux.get_stream(stream_index);
     if (!stream)
         return;
 
+    AudioStreamTags tags;
     AVDictionaryEntry* tag = nullptr;
     while ((tag = av_dict_get(stream->metadata, "", tag, AV_DICT_IGNORE_SUFFIX)))
-        out.attributes[std::string("stream_") + tag->key] = std::string(tag->value);
+        tags.entries.emplace_back(tag->key, tag->value);
+    out.set(std::move(tags));
 }
 
 std::vector<FileRegion> AudioStreamContext::extract_cue_regions(

@@ -18,18 +18,16 @@ namespace MayaFlux::IO {
 Kakshya::Region FileRegion::to_region() const
 {
     if (start_coordinates.size() == 1 && end_coordinates.size() == 1) {
-        if (start_coordinates[0] == end_coordinates[0]) {
-            return Kakshya::Region::time_point(start_coordinates[0], name);
-        }
-        return Kakshya::Region::time_span(start_coordinates[0], end_coordinates[0], name);
+        auto region = start_coordinates[0] == end_coordinates[0]
+            ? Kakshya::Region::time_point(start_coordinates[0], name)
+            : Kakshya::Region::time_span(start_coordinates[0], end_coordinates[0], name);
+        region.replace(m_facets);
+        return region;
     }
 
     Kakshya::Region region(start_coordinates, end_coordinates);
     region.label = name;
-
-    for (const auto& [key, value] : attributes) {
-        region.set_attribute(key, value);
-    }
+    region.replace(m_facets);
     return region;
 }
 

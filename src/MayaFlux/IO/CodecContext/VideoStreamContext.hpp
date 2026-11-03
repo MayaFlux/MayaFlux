@@ -12,6 +12,88 @@ struct AVFrame;
 namespace MayaFlux::IO {
 
 /**
+ * @struct VideoStreamInfo
+ * @brief Codec, size and color facts of one video stream.
+ *
+ * Stored on FileMetadata for video files. Fields the stream does not report
+ * are absent rather than defaulted.
+ */
+struct VideoStreamInfo {
+    static constexpr auto describe_facets()
+    {
+        return std::tuple {
+            FacetMember<&VideoStreamInfo::codec> {},
+            FacetMember<&VideoStreamInfo::codec_long_name> {},
+            FacetMember<&VideoStreamInfo::width> {},
+            FacetMember<&VideoStreamInfo::height> {},
+            FacetMember<&VideoStreamInfo::frame_rate> {},
+            FacetMember<&VideoStreamInfo::total_frames> {},
+            FacetMember<&VideoStreamInfo::bit_rate> {},
+            FacetMember<&VideoStreamInfo::pixel_format> {},
+            FacetMember<&VideoStreamInfo::color_range> {},
+            FacetMember<&VideoStreamInfo::colorspace> {},
+            FacetMember<&VideoStreamInfo::color_trc> {},
+            FacetMember<&VideoStreamInfo::color_primaries> {},
+            FacetMember<&VideoStreamInfo::sar_num> {},
+            FacetMember<&VideoStreamInfo::sar_den> {},
+        };
+    }
+
+    std::string codec; ///< Codec name (e.g., "h264")
+    std::optional<std::string> codec_long_name; ///< Codec long name, when the codec is known
+    uint32_t width = 0; ///< Source width in pixels
+    uint32_t height = 0; ///< Source height in pixels
+    double frame_rate = 0.0; ///< Average frame rate in frames per second
+    uint64_t total_frames = 0; ///< Total frame count
+    int64_t bit_rate = 0; ///< Stream bit rate in bits per second
+    std::optional<std::string> pixel_format; ///< Source pixel format name, when known
+    std::optional<int> color_range; ///< Raw AVColorRange value, when specified
+    std::optional<int> colorspace; ///< Raw AVColorSpace value, when specified
+    std::optional<int> color_trc; ///< Raw AVColorTransferCharacteristic value, when specified
+    std::optional<int> color_primaries; ///< Raw AVColorPrimaries value, when specified
+    std::optional<int> sar_num; ///< Sample aspect ratio numerator, when positive
+    std::optional<int> sar_den; ///< Sample aspect ratio denominator, when positive
+};
+
+/**
+ * @struct VideoStreamTags
+ * @brief Metadata tags of one video stream, in file order.
+ *
+ * Stored on FileMetadata for video files. Keys and values are data read from the file.
+ */
+struct VideoStreamTags {
+    static constexpr auto describe_facets()
+    {
+        return std::tuple {
+            FacetMember<&VideoStreamTags::entries> {},
+        };
+    }
+
+    std::vector<std::pair<std::string, std::string>> entries; ///< Tag key and value pairs
+};
+
+/**
+ * @struct KeyframeInfo
+ * @brief Timing of one keyframe in a video stream.
+ *
+ * Stored on FileRegion for regions of type "keyframe".
+ */
+struct KeyframeInfo {
+    static constexpr auto describe_facets()
+    {
+        return std::tuple {
+            FacetMember<&KeyframeInfo::pts> {},
+            FacetMember<&KeyframeInfo::timestamp_seconds> {},
+            FacetMember<&KeyframeInfo::keyframe_index> {},
+        };
+    }
+
+    int64_t pts = 0; ///< Presentation timestamp in stream time-base units
+    double timestamp_seconds = 0.0; ///< Presentation time in seconds
+    int keyframe_index = 0; ///< Zero-based index among the stream's keyframes
+};
+
+/**
  * @class VideoStreamContext
  * @brief RAII owner of one video stream's codec and pixel-format scaler state.
  *

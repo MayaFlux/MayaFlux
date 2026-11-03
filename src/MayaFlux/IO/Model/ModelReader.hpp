@@ -18,6 +18,29 @@ class MeshNetwork;
 namespace MayaFlux::IO {
 
 /**
+ * @struct ModelInfo
+ * @brief Element counts of a loaded model scene.
+ *
+ * Stored on FileMetadata by ModelReader.
+ */
+struct ModelInfo {
+    static constexpr auto describe_facets()
+    {
+        return std::tuple {
+            FacetMember<&ModelInfo::mesh_count> {},
+            FacetMember<&ModelInfo::material_count> {},
+            FacetMember<&ModelInfo::animation_count> {},
+            FacetMember<&ModelInfo::texture_count> {},
+        };
+    }
+
+    uint64_t mesh_count = 0; ///< Number of meshes in the scene
+    uint64_t material_count = 0; ///< Number of materials in the scene
+    uint64_t animation_count = 0; ///< Number of animations in the scene
+    uint64_t texture_count = 0; ///< Number of embedded textures in the scene
+};
+
+/**
  * @brief Callable that maps a raw material texture path to a GPU image.
  *
  * Receives the path exactly as stored in the model file. The default

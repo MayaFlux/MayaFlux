@@ -330,7 +330,7 @@ std::optional<FileMetadata> DelimitedTextReader::get_metadata() const
     for (const auto& field : m_layout->fields())
         names.push_back(field.name);
 
-    metadata.attributes.emplace("fields", std::move(names));
+    metadata.set(DelimitedTextInfo { .fields = std::move(names) });
     return metadata;
 }
 

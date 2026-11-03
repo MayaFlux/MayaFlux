@@ -12,6 +12,59 @@ struct AVDictionary;
 namespace MayaFlux::IO {
 
 /**
+ * @struct ContainerInfo
+ * @brief Container-level facts reported by the demuxer.
+ *
+ * Stored on FileMetadata. Duration is absent when the container does not report it.
+ */
+struct ContainerInfo {
+    static constexpr auto describe_facets()
+    {
+        return std::tuple {
+            FacetMember<&ContainerInfo::duration_seconds> {},
+            FacetMember<&ContainerInfo::bit_rate> {},
+        };
+    }
+
+    std::optional<double> duration_seconds; ///< Container duration in seconds, when known
+    int64_t bit_rate = 0; ///< Container bit rate in bits per second
+};
+
+/**
+ * @struct ContainerTags
+ * @brief Container-level metadata tags as reported by the demuxer, in file order.
+ *
+ * Stored on FileMetadata. Keys and values are data read from the file.
+ */
+struct ContainerTags {
+    static constexpr auto describe_facets()
+    {
+        return std::tuple {
+            FacetMember<&ContainerTags::entries> {},
+        };
+    }
+
+    std::vector<std::pair<std::string, std::string>> entries; ///< Tag key and value pairs
+};
+
+/**
+ * @struct ChapterInfo
+ * @brief Position of a chapter within its container.
+ *
+ * Stored on FileRegion for regions of type "chapter".
+ */
+struct ChapterInfo {
+    static constexpr auto describe_facets()
+    {
+        return std::tuple {
+            FacetMember<&ChapterInfo::chapter_index> {},
+        };
+    }
+
+    uint32_t chapter_index = 0; ///< Zero-based index into the container's chapter list
+};
+
+/**
  * @class FFmpegDemuxContext
  * @brief RAII owner of a single AVFormatContext and associated demux state.
  *
@@ -125,7 +178,7 @@ public:
     // =========================================================================
 
     /**
-     * @brief Extract container-level metadata tags into a FileMetadata attributes map.
+     * @brief Extract container-level facts and tags into a FileMetadata.
      * @param out_metadata Target metadata struct; attributes field is populated.
      */
     void extract_container_metadata(FileMetadata& out_metadata) const;
