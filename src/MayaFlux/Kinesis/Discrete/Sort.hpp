@@ -31,7 +31,7 @@ enum class SortingDirection : uint8_t {
     ASCENDING,
     DESCENDING,
     CUSTOM, ///< Use custom comparator function
-    BIDIRECTIONAL ///< Sort with both directions (for special algorithms)
+    BIDIRECTIONAL ///< Mountain order: rises from the first element to the centre, then falls to the last
 };
 
 /**
@@ -60,14 +60,51 @@ enum class SortingAlgorithm : uint8_t {
 // Comparator factories
 // ============================================================================
 
+/** @brief Strict weak ordering over doubles, used by CUSTOM sort orders. */
+using DoubleComparator = std::function<bool(double, double)>;
+
+/**
+ * @struct SortOrder
+ * @brief How a span is ordered: a direction, or a comparator for CUSTOM.
+ *
+ * Implicitly constructible from SortingDirection, so direction-only calls
+ * need no change. A comparator yields a CUSTOM order.
+ */
+struct SortOrder {
+    /** Direction of the order. CUSTOM means `custom` decides. */
+    SortingDirection direction { SortingDirection::ASCENDING };
+    /** Comparator used when direction is CUSTOM. */
+    DoubleComparator custom;
+
+    SortOrder(SortingDirection value) noexcept
+        : direction(value)
+    {
+    }
+
+    SortOrder(DoubleComparator comparator)
+        : direction(SortingDirection::CUSTOM)
+        , custom(std::move(comparator))
+    {
+    }
+};
+
 /**
  * @brief Direction-based comparator for doubles
  * @param direction Sort direction
  * @return Binary predicate suitable for std algorithms
  */
-[[nodiscard]] inline auto double_comparator(SortingDirection direction) noexcept
+[[nodiscard]] inline auto double_comparator(const SortOrder& order)
 {
-    return [direction](double a, double b) noexcept -> bool {
+    if (order.direction == SortingDirection::BIDIRECTIONAL) {
+        throw std::invalid_argument("BIDIRECTIONAL is not a comparator order");
+    }
+    if (order.direction == SortingDirection::CUSTOM && !order.custom) {
+        throw std::invalid_argument("CUSTOM sort order requires a comparator");
+    }
+    return [direction = order.direction, custom = order.custom](double a, double b) -> bool {
+        if (direction == SortingDirection::CUSTOM) {
+            return custom(a, b);
+        }
         return direction == SortingDirection::ASCENDING ? a < b : a > b;
     };
 }
@@ -174,7 +211,7 @@ void execute(Iterator begin, Iterator end, Comparator comp, SortingAlgorithm alg
  */
 MAYAFLUX_API void sort_span(
     std::span<double> data,
-    SortingDirection direction,
+    const SortOrder& order,
     SortingAlgorithm algorithm = SortingAlgorithm::STANDARD);
 
 /**
@@ -188,7 +225,7 @@ MAYAFLUX_API void sort_span(
 [[nodiscard]] MAYAFLUX_API std::span<double> sort_span_into(
     std::span<const double> data,
     std::vector<double>& output_storage,
-    SortingDirection direction,
+    const SortOrder& order,
     SortingAlgorithm algorithm = SortingAlgorithm::STANDARD);
 
 /**
@@ -199,7 +236,7 @@ MAYAFLUX_API void sort_span(
  */
 MAYAFLUX_API void sort_channels(
     std::vector<std::span<double>>& channels,
-    SortingDirection direction,
+    const SortOrder& order,
     SortingAlgorithm algorithm = SortingAlgorithm::STANDARD);
 
 /**
@@ -213,7 +250,7 @@ MAYAFLUX_API void sort_channels(
 [[nodiscard]] MAYAFLUX_API std::vector<std::span<double>> sort_channels_into(
     const std::vector<std::span<const double>>& channels,
     std::vector<std::vector<double>>& output_storage,
-    SortingDirection direction,
+    const SortOrder& order,
     SortingAlgorithm algorithm = SortingAlgorithm::STANDARD);
 
 // ============================================================================
@@ -228,7 +265,7 @@ MAYAFLUX_API void sort_channels(
  */
 [[nodiscard]] MAYAFLUX_API std::vector<size_t> span_sort_indices(
     std::span<double> data,
-    SortingDirection direction);
+    const SortOrder& order);
 
 /**
  * @brief Per-channel sort indices
@@ -238,6 +275,6 @@ MAYAFLUX_API void sort_channels(
  */
 [[nodiscard]] MAYAFLUX_API std::vector<std::vector<size_t>> channels_sort_indices(
     const std::vector<std::span<double>>& channels,
-    SortingDirection direction);
+    const SortOrder& order);
 
 } // namespace MayaFlux::Kinesis::Discrete
