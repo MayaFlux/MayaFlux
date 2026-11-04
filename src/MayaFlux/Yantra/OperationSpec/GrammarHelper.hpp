@@ -125,31 +125,12 @@ std::shared_ptr<OperationType> create_configured_operation(
  * @param operation Operation instance to configure
  * @param ctx Execution context carrying the settings
  *
- * The config structs in ctx.facets are merged into every operation. Analyzers,
- * sorters and transformers are configured by those structs alone. Operations of
- * the remaining families still receive each execution_metadata entry through
- * set_parameter until they migrate.
+ * The config structs in ctx.facets are merged into the operation.
  */
 template <typename OperationType>
 void apply_context_parameters(std::shared_ptr<OperationType> operation, const ExecutionContext& ctx)
 {
     operation->merge_config(ctx.facets);
-
-    if constexpr (!requires { operation->get_analysis_type(); } && !requires { operation->get_sorting_type(); } && !requires { operation->get_transformation_type(); }) {
-        for (const auto& [ctx_name, ctx_value] : ctx.execution_metadata) {
-            try {
-                operation->set_parameter(ctx_name, ctx_value);
-            } catch (...) {
-                MF_DEBUG(
-                    Journal::Component::Yantra,
-                    Journal::Context::Runtime,
-                    "Context parameter '{}' with type {} does not apply to operation '{}'",
-                    ctx_name,
-                    ctx_value.type().name(),
-                    operation->get_name());
-            }
-        }
-    }
 }
 
 } // namespace MayaFlux::Yantra

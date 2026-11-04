@@ -653,7 +653,6 @@ std::shared_ptr<Kakshya::SoundFileContainer> process_to_container(
     GranularOutput output)
 {
     auto ctx = make_granular_context(config, analysis_type, qualifier);
-    ctx.execution_metadata["container"] = container;
 
     return run_to_container(container, ctx, config.attribution_context,
         output, config.taper);
@@ -670,7 +669,6 @@ std::shared_ptr<Kakshya::SoundFileContainer> process_to_container(
     GranularOutput output)
 {
     auto ctx = make_granular_context(config, std::move(executor));
-    ctx.execution_metadata["container"] = container;
 
     return run_to_container(container, ctx, config.attribution_context,
         output, config.taper);
@@ -688,7 +686,6 @@ std::shared_ptr<Kakshya::DynamicSoundStream> process_to_stream(
     GranularOutput output)
 {
     auto ctx = make_granular_context(config, analysis_type, qualifier);
-    ctx.execution_metadata["container"] = container;
 
     return run_to_stream(container, ctx, config.attribution_context,
         output, config.taper);
@@ -705,7 +702,6 @@ std::shared_ptr<Kakshya::DynamicSoundStream> process_to_stream(
     GranularOutput output)
 {
     auto ctx = make_granular_context(config, std::move(executor));
-    ctx.execution_metadata["container"] = container;
 
     return run_to_stream(container, ctx, config.attribution_context,
         output, config.taper);

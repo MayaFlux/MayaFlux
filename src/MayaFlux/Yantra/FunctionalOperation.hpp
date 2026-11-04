@@ -9,11 +9,9 @@ namespace MayaFlux::Yantra {
  * @brief Wraps a single callable as a ComputeOperation, for a wild or
  *        one-off idea that does not warrant a hand-written class.
  *
- * Satisfies ComputeOperation's four pure virtuals with the smallest
+ * Satisfies ComputeOperation's pure virtuals with the smallest
  * possible surface: operation_function delegates to the supplied
- * function; set_parameter/get_parameter store into a plain map (no
- * type-specific defaults, since a generic wrapper has none to offer);
- * get_operation_type always returns OperationType::CUSTOM, since a
+ * function; get_operation_type always returns OperationType::CUSTOM, since a
  * callable supplied at construction time carries no inherent verb
  * category. Fully interchangeable with any hand-written
  * ComputeOperation<InputType, OutputType> subclass everywhere
@@ -54,22 +52,6 @@ public:
         this->set_gpu_backend(std::move(gpu_backend));
     }
 
-    void set_parameter(const std::string& name, std::any value) override
-    {
-        m_parameters[name] = std::move(value);
-    }
-
-    [[nodiscard]] std::any get_parameter(const std::string& name) const override
-    {
-        auto it = m_parameters.find(name);
-        return it != m_parameters.end() ? it->second : std::any {};
-    }
-
-    [[nodiscard]] std::map<std::string, std::any> get_all_parameters() const override
-    {
-        return { m_parameters.begin(), m_parameters.end() };
-    }
-
     [[nodiscard]] OperationType get_operation_type() const override
     {
         return OperationType::CUSTOM;
@@ -83,7 +65,6 @@ protected:
 
 private:
     Fn m_fn;
-    std::unordered_map<std::string, std::any> m_parameters;
 };
 
 } // namespace MayaFlux::Yantra

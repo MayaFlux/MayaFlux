@@ -484,9 +484,8 @@ template <ComputeData InputType, ComputeData OutputType>
  *
  * REGION_GROUP: registers segment, attribute, sort (existing behaviour).
  * CONTAINER: registers segment, attribute, sort, then appends reconstruct.
- *            The reconstruct rule reads the source container from
- *            ExecutionContext::execution_metadata["container"] and writes
- *            stitched per-channel audio into a SoundFileContainer.
+ *            The reconstruct rule reads the source container from the Datum
+ *            and writes stitched per-channel audio into a SoundFileContainer.
  * CONTAINER_ADDITIVE: same as CONTAINER but uses an overlap-add reconstruct rule
  *
  * @param attribution_context ComputationContext assigned to the attribution rule.
@@ -625,7 +624,6 @@ void process_to_container_async(
 {
     auto ctx = make_granular_context(config, analysis_type, qualifier);
 
-    ctx.execution_metadata["container"] = container;
     if (config.taper)
         ctx.execution_metadata["grain_taper"] = config.taper;
 
@@ -673,7 +671,6 @@ void process_to_container_async(
 {
     auto ctx = make_granular_context(config, std::move(executor));
 
-    ctx.execution_metadata["container"] = container;
     if (config.taper)
         ctx.execution_metadata["grain_taper"] = config.taper;
 
@@ -730,7 +727,6 @@ void process_to_stream_async(
     GranularOutput output = GranularOutput::STREAM)
 {
     auto ctx = make_granular_context(config, analysis_type, qualifier);
-    ctx.execution_metadata["container"] = container;
     if (config.taper)
         ctx.execution_metadata["grain_taper"] = config.taper;
 
@@ -785,7 +781,6 @@ void process_to_stream_async(
     GranularOutput output = GranularOutput::STREAM)
 {
     auto ctx = make_granular_context(config, std::move(executor));
-    ctx.execution_metadata["container"] = container;
     if (config.taper)
         ctx.execution_metadata["grain_taper"] = config.taper;
 
