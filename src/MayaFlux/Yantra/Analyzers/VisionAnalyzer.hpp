@@ -65,6 +65,10 @@ public:
     void set_context(const Kinesis::Vision::VisionAnalysisContext& context) { m_context = context; }
     [[nodiscard]] const Kinesis::Vision::VisionAnalysisContext& get_context() const { return m_context; }
 
+    /** @brief Layer of a texture container the operation path analyzes. */
+    void set_frame_index(size_t index) { m_frame_index = index; }
+    [[nodiscard]] size_t get_frame_index() const { return m_frame_index; }
+
     /**
      * @brief Real entry point: resolve the configured query against
      *        source, run it, run the GPU analysis. Same shape as
@@ -280,6 +284,7 @@ private:
 
     Kinesis::Vision::VisionQuery m_query;
     Kinesis::Vision::VisionAnalysisContext m_context;
+    size_t m_frame_index { 0 };
 
     std::vector<std::unique_ptr<VisionGpuExecutor>> m_executors;
     size_t m_label_lane { 0 };

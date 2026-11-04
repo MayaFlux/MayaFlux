@@ -430,7 +430,10 @@ Kinesis::Vision::VisionAnalysis VisionAnalyzer::analyze_vision(
     if (!image)
         return {};
 
-    return analyze_resolved(image);
+    auto analysis = analyze_resolved(image);
+    if (std::dynamic_pointer_cast<Kakshya::TextureContainer>(source))
+        analysis.layer = index;
+    return analysis;
 }
 
 Kinesis::Vision::VisionAnalysis VisionAnalyzer::analyze_vision(
@@ -609,9 +612,7 @@ VisionAnalyzer::output_type VisionAnalyzer::run_operation(const input_type& inpu
         return output;
     }
 
-    const auto index = Kakshya::get_metadata_value<size_t>(input.metadata, "container_index").value_or(0);
-
-    output.facets.set(analyze_vision(input.data, index));
+    output.facets.set(analyze_vision(input.data, m_frame_index));
     return output;
 }
 

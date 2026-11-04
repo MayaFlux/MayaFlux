@@ -789,8 +789,7 @@ VisionExtractor::output_type VisionExtractor::run_operation(const input_type& in
         return output;
     }
 
-    const auto index = Kakshya::get_metadata_value<size_t>(input.metadata, "container_index").value_or(0);
-    const auto image = supplied ? supplied : resolve_image(input.data, index);
+    const auto image = supplied ? supplied : resolve_image(input.data, analysis->layer.value_or(0));
     if (!image) {
         MF_ERROR(Journal::Component::Yantra, Journal::Context::ComputeMatrix, "VisionExtractor: could not resolve image from container");
         return output;

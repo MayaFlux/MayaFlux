@@ -186,6 +186,7 @@ struct VisionAnalysis {
             FacetMember<&VisionAnalysis::detect_edges> {},
             FacetMember<&VisionAnalysis::estimate_motion> {},
             FacetMember<&VisionAnalysis::motion_activity> {},
+            FacetMember<&VisionAnalysis::layer> {},
         };
     }
 
@@ -198,6 +199,9 @@ struct VisionAnalysis {
 
     /** @brief VisionResult::motion_energy from an active EstimateMotion sequence. */
     std::optional<float> motion_activity;
+
+    /** @brief Container layer the analysis was taken from; empty when no layer was used. */
+    std::optional<size_t> layer;
 };
 
 /**
