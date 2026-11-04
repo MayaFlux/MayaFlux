@@ -133,24 +133,6 @@ public:
     }
 
     /**
-     * @brief Type-safe parameter management with analysis-specific defaults
-     */
-    void set_parameter(const std::string& name, std::any value) override
-    {
-        set_analysis_parameter(name, std::move(value));
-    }
-
-    [[nodiscard]] std::any get_parameter(const std::string& name) const override
-    {
-        return get_analysis_parameter(name);
-    }
-
-    [[nodiscard]] std::map<std::string, std::any> get_all_parameters() const override
-    {
-        return get_all_analysis_parameters();
-    }
-
-    /**
      * @brief Validates input data meets analyzer requirements
      */
     bool validate_input(const input_type& input) const override
@@ -214,19 +196,6 @@ public:
         return m_current_analysis.has_value();
     }
 
-    /**
-     * @brief Helper to get typed parameter with default value
-     * @tparam T Parameter type
-     * @param name Parameter name
-     * @param default_value Default value if parameter not found
-     * @return Parameter value or default
-     */
-    template <typename T>
-    T get_parameter_or_default(const std::string& name, const T& default_value) const
-    {
-        return safe_any_cast_or_default<T>(get_analysis_parameter(name), default_value);
-    }
-
 protected:
     /**
      * @brief Core analysis implementation - must be overridden by derived classes
@@ -249,25 +218,6 @@ protected:
      * @return Raw analysis output before granularity formatting
      */
     virtual output_type analyze_implementation(const input_type& input) = 0;
-
-    /**
-     * @brief Analysis-specific parameter handling (override for custom parameters)
-     */
-    virtual void set_analysis_parameter(const std::string& name, std::any value)
-    {
-        m_parameters[name] = std::move(value);
-    }
-
-    [[nodiscard]] virtual std::any get_analysis_parameter(const std::string& name) const
-    {
-        auto it = m_parameters.find(name);
-        return (it != m_parameters.end()) ? it->second : std::any {};
-    }
-
-    [[nodiscard]] virtual std::map<std::string, std::any> get_all_analysis_parameters() const
-    {
-        return m_parameters;
-    }
 
     /**
      * @brief Input validation (override for custom validation logic)
@@ -297,9 +247,6 @@ protected:
     }
 
     output_type m_current_output;
-
-private:
-    std::map<std::string, std::any> m_parameters;
 };
 
 /// Analyzer that takes DataVariant and produces DataVariant

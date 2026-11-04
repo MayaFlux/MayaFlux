@@ -136,24 +136,6 @@ public:
     }
 
     /**
-     * @brief Forwards to the extraction-specific parameter hook.
-     */
-    void set_parameter(const std::string& name, std::any value) override
-    {
-        set_extraction_parameter(name, std::move(value));
-    }
-
-    [[nodiscard]] std::any get_parameter(const std::string& name) const override
-    {
-        return get_extraction_parameter(name);
-    }
-
-    [[nodiscard]] std::map<std::string, std::any> get_all_parameters() const override
-    {
-        return get_all_extraction_parameters();
-    }
-
-    /**
      * @brief Type-safe extraction method
      * @param data Input data
      * @return Extracted data directly (no Datum wrapper)
@@ -208,19 +190,6 @@ public:
         return this->extract_batch(as_io_batch(inputs));
     }
 
-    /**
-     * @brief Helper to get typed parameter with default value
-     * @tparam T Parameter type
-     * @param name Parameter name
-     * @param default_value Default value if parameter not found
-     * @return Parameter value or default
-     */
-    template <typename T>
-    T get_parameter_or_default(const std::string& name, const T& default_value) const
-    {
-        return safe_any_cast_or_default<T>(get_extraction_parameter(name), default_value);
-    }
-
 protected:
     /**
      * @brief Core operation implementation - called by ComputeOperation interface
@@ -250,25 +219,6 @@ protected:
      * @brief The scope the stored config selects; FULL_DATA unless a family overrides it.
      */
     [[nodiscard]] virtual ExtractionScope extraction_scope() const { return ExtractionScope::FULL_DATA; }
-
-    /**
-     * @brief Extraction-specific parameter handling (override for custom parameters)
-     */
-    virtual void set_extraction_parameter(const std::string& name, std::any value)
-    {
-        m_parameters[name] = std::move(value);
-    }
-
-    [[nodiscard]] virtual std::any get_extraction_parameter(const std::string& name) const
-    {
-        auto it = m_parameters.find(name);
-        return (it != m_parameters.end()) ? it->second : std::any {};
-    }
-
-    [[nodiscard]] virtual std::map<std::string, std::any> get_all_extraction_parameters() const
-    {
-        return m_parameters;
-    }
 
     /**
      * @brief Input validation (override for custom validation logic)
@@ -334,9 +284,6 @@ protected:
     {
         return raw_output;
     }
-
-private:
-    std::map<std::string, std::any> m_parameters;
 };
 
 /// Extractor that takes DataVariant and produces any ComputeData type

@@ -157,38 +157,6 @@ public:
         return base_type::config();
     }
 
-    /**
-     * @brief Forwards to the sorting-specific parameter hook.
-     */
-    void set_parameter(const std::string& name, std::any value) override
-    {
-        set_sorting_parameter(name, std::move(value));
-    }
-
-    [[nodiscard]] std::any get_parameter(const std::string& name) const override
-    {
-        return get_sorting_parameter(name);
-    }
-
-    [[nodiscard]] std::map<std::string, std::any> get_all_parameters() const override
-    {
-        return get_all_sorting_parameters();
-    }
-
-    /**
-     * @brief Type-safe parameter access with defaults
-     * @tparam T Parameter type
-     * @param name Parameter name
-     * @param default_value Default if not found/wrong type
-     * @return Parameter value or default
-     */
-    template <typename T>
-    T get_parameter_or_default(const std::string& name, const T& default_value) const
-    {
-        auto param = get_sorting_parameter(name);
-        return safe_any_cast_or_default<T>(param, default_value);
-    }
-
 protected:
     /**
      * @brief Core operation implementation - called by ComputeOperation interface
@@ -214,25 +182,6 @@ protected:
     [[nodiscard]] virtual std::string get_sorter_name() const { return "UniversalSorter"; }
 
     /**
-     * @brief Sorting-specific parameter handling (override for custom parameters)
-     */
-    virtual void set_sorting_parameter(const std::string& name, std::any value)
-    {
-        m_parameters[name] = std::move(value);
-    }
-
-    [[nodiscard]] virtual std::any get_sorting_parameter(const std::string& name) const
-    {
-        auto it = m_parameters.find(name);
-        return (it != m_parameters.end()) ? it->second : std::any {};
-    }
-
-    [[nodiscard]] virtual std::map<std::string, std::any> get_all_sorting_parameters() const
-    {
-        return m_parameters;
-    }
-
-    /**
      * @brief Input validation (override for custom validation logic)
      */
     virtual bool validate_sorting_input(const input_type& /*input*/) const
@@ -240,9 +189,6 @@ protected:
         // Default: accept any input that satisfies ComputeData concept
         return true;
     }
-
-private:
-    std::map<std::string, std::any> m_parameters;
 };
 
 /// Sorter that takes DataVariant and produces DataVariant

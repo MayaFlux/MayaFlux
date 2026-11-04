@@ -150,6 +150,11 @@ protected:
     output_type operation_function(const input_type& input) override
     {
         if (!validate_input(input)) {
+            MF_WARN(
+                Journal::Component::Yantra,
+                Journal::Context::BufferProcessing,
+                "{}: input failed validation, passing it through unchanged",
+                get_transformer_name());
             return create_safe_output(input);
         }
         auto raw_result = transform_implementation(const_cast<input_type&>(input));
