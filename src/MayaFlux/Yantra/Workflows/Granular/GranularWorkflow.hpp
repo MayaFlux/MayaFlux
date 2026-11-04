@@ -129,34 +129,57 @@ extern MAYAFLUX_API const ComputationGrammar::Rule::Executor reconstruct_grains_
 // ============================================================================
 
 /**
+ * @struct SegmentConfig
+ * @brief Settings of SegmentOp, stored whole in the operation's facets.
+ */
+struct SegmentConfig : OperationConfig {
+    static constexpr auto describe_facets()
+    {
+        return std::tuple {
+            FacetMember<&SegmentConfig::grain_size> {},
+            FacetMember<&SegmentConfig::hop_size> {},
+            FacetMember<&SegmentConfig::channel> {},
+            FacetMember<&SegmentConfig::container> {},
+        };
+    }
+
+    /** Samples per grain. */
+    uint32_t grain_size { 1024 };
+    /** Samples between successive grain onsets. */
+    uint32_t hop_size { 512 };
+    /** Source channel index. */
+    uint32_t channel { 0 };
+    /** Source used when the Datum carries no container. */
+    std::shared_ptr<Kakshya::SignalSourceContainer> container;
+};
+
+/**
  * @class SegmentOp
  * @brief Segments container audio into fixed hop-size grain windows.
  *
- * Reads parameters from set_parameter or ExecutionContext:
- * - grain_size  uint32_t  samples per grain    (default 1024)
- * - hop_size    uint32_t  hop between grains   (default 512)
- * - channel     uint32_t  source channel index (default 0)
+ * Configured by a SegmentConfig carried in the operation's facets.
  */
 class MAYAFLUX_API SegmentOp final
-    : public FeatureExtractor<Kakshya::RegionGroup, Kakshya::RegionGroup> {
+    : public UniversalExtractor<Kakshya::RegionGroup, Kakshya::RegionGroup> {
 public:
-    SegmentOp()
-        : FeatureExtractor<Kakshya::RegionGroup, Kakshya::RegionGroup>(
-              1024, 512, ExtractionMethod::OVERLAPPING_WINDOWS)
-    {
-    }
-
     [[nodiscard]] ExtractionType get_extraction_type() const override
     {
         return ExtractionType::FEATURE_GUIDED;
     }
 
-protected:
-    [[nodiscard]] std::string get_extractor_name() const override
+    /**
+     * @brief The stored settings, or defaults when none were set.
+     */
+    [[nodiscard]] const SegmentConfig& config() const override
     {
-        return "Granular::SegmentOp";
+        if (const auto* stored = resolved_config<SegmentConfig>()) {
+            return *stored;
+        }
+        static const SegmentConfig defaults {};
+        return defaults;
     }
 
+protected:
     Datum<Kakshya::RegionGroup> extract_implementation(
         const Datum<Kakshya::RegionGroup>& input) override;
 };
@@ -370,9 +393,11 @@ struct GranularConfig {
     Qualifier qualifier = 0)
 {
     ExecutionContext ctx;
-    ctx.execution_metadata["grain_size"] = config.grain_size;
-    ctx.execution_metadata["hop_size"] = config.hop_size;
-    ctx.execution_metadata["channel"] = config.channel;
+    SegmentConfig segment;
+    segment.grain_size = config.grain_size;
+    segment.hop_size = config.hop_size;
+    segment.channel = config.channel;
+    ctx.facets.set(std::move(segment));
     ctx.execution_metadata["ascending"] = config.ascending;
     ctx.execution_metadata["gpu_sort_threshold"] = config.gpu_sort_threshold;
 
@@ -401,9 +426,11 @@ template <ComputeData InputType, ComputeData OutputType>
     Qualifier qualifier = 0)
 {
     ExecutionContext ctx;
-    ctx.execution_metadata["grain_size"] = config.grain_size;
-    ctx.execution_metadata["hop_size"] = config.hop_size;
-    ctx.execution_metadata["channel"] = config.channel;
+    SegmentConfig segment;
+    segment.grain_size = config.grain_size;
+    segment.hop_size = config.hop_size;
+    segment.channel = config.channel;
+    ctx.facets.set(std::move(segment));
     ctx.execution_metadata["ascending"] = config.ascending;
     ctx.execution_metadata["gpu_sort_threshold"] = config.gpu_sort_threshold;
 
@@ -428,9 +455,11 @@ template <ComputeData InputType, ComputeData OutputType>
     AttributeExecutor executor)
 {
     ExecutionContext ctx;
-    ctx.execution_metadata["grain_size"] = config.grain_size;
-    ctx.execution_metadata["hop_size"] = config.hop_size;
-    ctx.execution_metadata["channel"] = config.channel;
+    SegmentConfig segment;
+    segment.grain_size = config.grain_size;
+    segment.hop_size = config.hop_size;
+    segment.channel = config.channel;
+    ctx.facets.set(std::move(segment));
     ctx.execution_metadata["ascending"] = config.ascending;
     ctx.execution_metadata["gpu_sort_threshold"] = config.gpu_sort_threshold;
 

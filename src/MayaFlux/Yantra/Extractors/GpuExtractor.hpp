@@ -38,19 +38,9 @@ public:
     [[nodiscard]] std::shared_ptr<GpuExecutionContext<InputType, OutputType>>
     get_executor() const { return m_executor; }
 
-    [[nodiscard]] std::string get_extractor_name() const override
-    {
-        return "GpuExtractor";
-    }
-
     [[nodiscard]] ExtractionType get_extraction_type() const override
     {
         return ExtractionType::CUSTOM;
-    }
-
-    [[nodiscard]] std::vector<std::string> get_available_methods() const override
-    {
-        return { "gpu_extract" };
     }
 
 protected:

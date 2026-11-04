@@ -96,7 +96,6 @@ struct ExtractorConfig : OperationConfig {
  * - Concept-constrained data types for compile-time safety
  * - Extraction type categorization for discovery
  * - Scope control for targeted extraction
- * - Parameter management with type safety
  * - Integration with ComputeMatrix execution modes
  */
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = InputType>
@@ -137,32 +136,21 @@ public:
     }
 
     /**
-     * @brief Type-safe parameter management with extraction-specific defaults
+     * @brief Forwards to the extraction-specific parameter hook.
      */
     void set_parameter(const std::string& name, std::any value) override
     {
-        if (name == "scope") {
-            if (auto result = safe_any_cast<ExtractionScope>(value)) {
-                m_scope = *result.value;
-                return;
-            }
-        }
         set_extraction_parameter(name, std::move(value));
     }
 
     [[nodiscard]] std::any get_parameter(const std::string& name) const override
     {
-        if (name == "scope") {
-            return m_scope;
-        }
         return get_extraction_parameter(name);
     }
 
     [[nodiscard]] std::map<std::string, std::any> get_all_parameters() const override
     {
-        auto params = get_all_extraction_parameters();
-        params["scope"] = m_scope;
-        return params;
+        return get_all_extraction_parameters();
     }
 
     /**
@@ -182,18 +170,15 @@ public:
     }
 
     /**
-     * @brief Extract with specific scope
+     * @brief Extract with specific scope, without changing the stored settings
      * @param data Input data
      * @param scope Extraction scope to use
      * @return Extracted output data
      */
     OutputType extract_with_scope(const input_type& data, ExtractionScope scope)
     {
-        auto original_scope = m_scope;
-        m_scope = scope;
-        auto result = extract_data(data);
-        m_scope = original_scope;
-        return result;
+        auto raw_result = extract_implementation(data);
+        return apply_scope_filtering(raw_result, scope).data;
     }
 
     OutputType extract_with_scope(const InputType& data, ExtractionScope scope)
@@ -224,12 +209,6 @@ public:
     }
 
     /**
-     * @brief Get available extraction methods for this extractor
-     * @return Vector of method names
-     */
-    [[nodiscard]] virtual std::vector<std::string> get_available_methods() const = 0;
-
-    /**
      * @brief Helper to get typed parameter with default value
      * @tparam T Parameter type
      * @param name Parameter name
@@ -251,7 +230,7 @@ protected:
     output_type operation_function(const input_type& input) override
     {
         auto raw_result = extract_implementation(input);
-        return apply_scope_filtering(raw_result);
+        return apply_scope_filtering(raw_result, extraction_scope());
     }
 
     /**
@@ -266,6 +245,11 @@ protected:
      * @return Extractor name string
      */
     [[nodiscard]] virtual std::string get_extractor_name() const { return "UniversalExtractor"; }
+
+    /**
+     * @brief The scope the stored config selects; FULL_DATA unless a family overrides it.
+     */
+    [[nodiscard]] virtual ExtractionScope extraction_scope() const { return ExtractionScope::FULL_DATA; }
 
     /**
      * @brief Extraction-specific parameter handling (override for custom parameters)
@@ -298,11 +282,12 @@ protected:
     /**
      * @brief Apply scope filtering to results
      * @param raw_output Raw extraction results
-     * @return Filtered output based on scope setting
+     * @param scope Scope to apply
+     * @return Filtered output based on scope
      */
-    virtual output_type apply_scope_filtering(const output_type& raw_output)
+    virtual output_type apply_scope_filtering(const output_type& raw_output, ExtractionScope scope)
     {
-        switch (m_scope) {
+        switch (scope) {
         case ExtractionScope::FULL_DATA:
             return raw_output;
 
@@ -327,10 +312,7 @@ protected:
      */
     virtual output_type filter_to_target_regions(const output_type& raw_output)
     {
-        // Default: return as-is with metadata
-        auto result = raw_output;
-        result.template set_metadata<bool>("region_filtered", true);
-        return result;
+        return raw_output;
     }
 
     /**
@@ -340,10 +322,7 @@ protected:
      */
     virtual output_type apply_content_filtering(const output_type& raw_output)
     {
-        // Default: return as-is with metadata
-        auto result = raw_output;
-        result.template set_metadata<bool>("content_filtered", true);
-        return result;
+        return raw_output;
     }
 
     /**
@@ -353,14 +332,10 @@ protected:
      */
     virtual output_type apply_data_sampling(const output_type& raw_output)
     {
-        // Default: return as-is with metadata
-        auto result = raw_output;
-        result.template set_metadata<bool>("sampled", true);
-        return result;
+        return raw_output;
     }
 
 private:
-    ExtractionScope m_scope = ExtractionScope::FULL_DATA;
     std::map<std::string, std::any> m_parameters;
 };
 

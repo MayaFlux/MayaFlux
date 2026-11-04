@@ -294,28 +294,25 @@ const ComputationGrammar::Rule::Executor reconstruct_grains_additive_stream =
 Datum<Kakshya::RegionGroup> SegmentOp::extract_implementation(
     const Datum<Kakshya::RegionGroup>& input)
 {
-    std::shared_ptr<Kakshya::SignalSourceContainer> container;
+    const auto& cfg = config();
 
+    std::shared_ptr<Kakshya::SignalSourceContainer> container;
     if (input.container && *input.container) {
         container = *input.container;
     } else {
-        auto param = this->get_parameter("container");
-        if (param.has_value()) {
-            container = safe_any_cast_or_default<std::shared_ptr<Kakshya::SignalSourceContainer>>(
-                param, nullptr);
-        }
+        container = cfg.container;
     }
 
     if (!container) {
         error<std::runtime_error>(
             Journal::Component::Yantra, Journal::Context::ComputeMatrix,
             std::source_location::current(),
-            "SegmentOp: no container available via Datum or parameters");
+            "SegmentOp: no container available via Datum or config");
     }
 
-    const auto grain_size = this->template get_parameter_or_default<uint32_t>("grain_size", 1024U);
-    const auto hop_size = this->template get_parameter_or_default<uint32_t>("hop_size", 512U);
-    const auto channel = this->template get_parameter_or_default<uint32_t>("channel", 0U);
+    const auto grain_size = cfg.grain_size;
+    const auto hop_size = cfg.hop_size;
+    const auto channel = cfg.channel;
 
     const auto& structure = container->get_structure();
 
