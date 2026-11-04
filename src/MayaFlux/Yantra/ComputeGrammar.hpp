@@ -102,7 +102,6 @@ public:
         Executor executor; ///< Function that performs the computation
 
         std::vector<std::string> dependencies; ///< Names of rules that must execute before this one
-        std::unordered_map<std::string, std::any> default_parameters; ///< Default parameters for the rule's operation
 
         std::chrono::milliseconds max_execution_time { 0 }; ///< Maximum allowed execution time (0 = unlimited)
         ExecutionMode preferred_execution_mode = ExecutionMode::SYNC; ///< Preferred execution mode for this rule
@@ -228,45 +227,39 @@ public:
     }
 
     /**
-     * @brief Helper to add concrete operation rules with automatic executor generation
+     * @brief Adds a rule that builds a concrete operation from its config struct
      * @tparam ConcreteOpType The concrete operation type to instantiate
-     * @tparam OpArgs Constructor argument types for the operation
+     * @tparam ConfigType The operation's config type, deduced from config
      * @param rule_name Unique name for this rule
      * @param context Computation context for the rule
      * @param matcher Matcher function to determine when rule applies
-     * @param op_parameters Parameters to configure the operation instance
+     * @param config Settings of the operation, stored whole in its facets
      * @param priority Execution priority (default: 50)
-     * @param op_args Constructor arguments for the operation
-     *
-     * Creates a rule that automatically instantiates and configures a concrete operation
-     * type when matched. This is the preferred way to integrate existing operations
-     * into the grammar system, as it handles type safety and parameter application
-     * automatically.
      *
      * The generated executor:
-     * 1. Creates an instance of ConcreteOpType with the provided constructor arguments
-     * 2. Applies the op_parameters using set_parameter()
-     * 3. Applies additional parameters from the execution context
-     * 4. Executes the operation on the input data
+     * 1. Creates an instance of ConcreteOpType from config
+     * 2. Merges the settings carried by the execution context
+     * 3. Executes the operation on the input data
      *
      * Example:
      * ```cpp
-     * grammar.add_operation_rule<SpectralTransformer<>>(
-     *     "pitch_shift_rule",
-     *     ComputationContext::SPECTRAL,
+     * MathematicalTransformerConfig cfg;
+     * cfg.operation = MathematicalOperation::GAIN;
+     * cfg.gain_factor = 1.5;
+     * grammar.add_operation_rule<MathematicalTransformer<>>(
+     *     "gain_rule",
+     *     ComputationContext::MATHEMATICAL,
      *     UniversalMatcher::create_type_matcher<std::vector<Kakshya::DataVariant>>(),
-     *     {{"operation", std::string("pitch_shift")}, {"pitch_ratio", 1.5}},
-     *     80 // priority
-     * );
+     *     cfg,
+     *     80);
      * ```
      */
-    template <typename ConcreteOpType, typename... OpArgs>
+    template <typename ConcreteOpType, typename ConfigType = typename ConcreteOpType::config_type>
     void add_operation_rule(const std::string& rule_name,
         ComputationContext context,
         UniversalMatcher::MatcherFunc matcher,
-        const std::unordered_map<std::string, std::any>& op_parameters = {},
-        int priority = 50,
-        OpArgs&&... op_args)
+        ConfigType config = {},
+        int priority = 50)
     {
         Rule rule;
         rule.name = rule_name;
@@ -275,13 +268,8 @@ public:
         rule.matcher = std::move(matcher);
         rule.target_operation_type = std::type_index(typeid(ConcreteOpType));
 
-        auto captured_args = std::make_tuple(std::forward<OpArgs>(op_args)...);
-
-        rule.executor = [op_parameters, captured_args = std::move(captured_args)](const std::any& input, const ExecutionContext& ctx) -> std::any {
-            auto operation = std::apply([&op_parameters](auto&&... args) {
-                return create_configured_operation<ConcreteOpType>(op_parameters, std::forward<decltype(args)>(args)...);
-            },
-                captured_args);
+        rule.executor = [config = std::move(config)](const std::any& input, const ExecutionContext& ctx) -> std::any {
+            auto operation = create_configured_operation<ConcreteOpType>(config);
 
             apply_context_parameters(operation, ctx);
 

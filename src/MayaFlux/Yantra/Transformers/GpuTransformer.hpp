@@ -56,10 +56,6 @@ public:
         return TransformationType::CUSTOM;
     }
 
-    [[nodiscard]] std::string get_transformer_name() const override
-    {
-        return "GpuTransformer";
-    }
 
 protected:
     output_type transform_implementation(input_type&) override

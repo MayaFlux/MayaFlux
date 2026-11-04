@@ -58,8 +58,10 @@ namespace MayaFlux::Yantra {
  * // Configure specific operations by name
  * pipeline->configure_operation<MathematicalTransformer<>>("gain_stage",
  *     [](auto op) {
- *         op->set_parameter("operation", "gain");
- *         op->set_parameter("gain_factor", 2.0);
+ *         MathematicalTransformerConfig cfg;
+ *         cfg.operation = MathematicalOperation::GAIN;
+ *         cfg.gain_factor = 2.0;
+ *         op->set_config(cfg);
  *     });
  * ```
  */
@@ -118,9 +120,10 @@ public:
      *
      * Example:
      * ```cpp
+     * SpectralTransformerConfig cfg;
+     * cfg.operation = SpectralOperation::PITCH_SHIFT;
      * pipeline->create_operation<MathematicalTransformer<>>("gain")
-     *          ->create_operation<SpectralTransformer<>>("pitch_shift",
-     *              SpectralOperation::PITCH_SHIFT);
+     *          ->create_operation<SpectralTransformer<>>("pitch_shift", cfg);
      * ```
      */
     template <typename ConcreteOpType, typename... Args>
@@ -231,7 +234,9 @@ public:
      * ```cpp
      * auto gain_op = pipeline->get_operation<MathematicalTransformer<>>("gain_stage");
      * if (gain_op) {
-     *     gain_op->set_parameter("gain_factor", 1.5);
+     *     MathematicalTransformerConfig cfg;
+     *     cfg.gain_factor = 1.5;
+     *     gain_op->set_config(cfg);
      * }
      * ```
      */
@@ -261,8 +266,10 @@ public:
      * ```cpp
      * bool configured = pipeline->configure_operation<SpectralTransformer<>>("pitch_shift",
      *     [](auto op) {
-     *         op->set_parameter("pitch_ratio", 1.5);
-     *         op->set_parameter("window_size", 2048);
+     *         SpectralTransformerConfig cfg;
+     *         cfg.pitch_ratio = 1.5;
+     *         cfg.window_size = 2048;
+     *         op->set_config(cfg);
      *     });
      * ```
      */

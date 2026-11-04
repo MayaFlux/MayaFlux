@@ -123,15 +123,30 @@ public:
      * @brief Sets a named parameter that configures the operation's behavior
      * @param name Parameter identifier
      * @param value Parameter value stored as std::any
+     *
+     * Families that take settings through config structs do not override this.
+     * The default rejects the call so a string parameter never vanishes silently.
      */
-    virtual void set_parameter(const std::string& name, std::any value) = 0;
+    virtual void set_parameter(const std::string& name, std::any /*value*/)
+    {
+        error<std::logic_error>(Journal::Component::Yantra, Journal::Context::Runtime,
+            std::source_location::current(),
+            "Operation '{}' takes no string parameters; set its config struct instead", name);
+    }
 
     /**
      * @brief Retrieves a parameter's current value
      * @param name Parameter identifier
      * @return Current parameter value as std::any
+     *
+     * The default rejects the call, as set_parameter does.
      */
-    [[nodiscard]] virtual std::any get_parameter(const std::string& name) const = 0;
+    [[nodiscard]] virtual std::any get_parameter(const std::string& name) const
+    {
+        error<std::logic_error>(Journal::Component::Yantra, Journal::Context::Runtime,
+            std::source_location::current(),
+            "Operation '{}' takes no string parameters; read its config struct instead", name);
+    }
 
     /**
      * @brief Retrieves all parameters and their values

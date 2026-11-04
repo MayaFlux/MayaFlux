@@ -107,35 +107,16 @@ public:
 };
 
 /**
- * @brief Creates an operation instance with parameters using safe_any_cast system
+ * @brief Creates an operation instance from its config struct
  * @tparam OperationType Type of operation to create
- * @tparam Args Constructor argument types
- * @param parameters Map of parameter names to values
- * @param args Constructor arguments
+ * @param config Settings of the operation
  * @return Configured operation instance
  */
-template <typename OperationType, typename... Args>
+template <typename OperationType>
 std::shared_ptr<OperationType> create_configured_operation(
-    const std::unordered_map<std::string, std::any>& parameters,
-    Args&&... args)
+    const typename OperationType::config_type& config)
 {
-    auto operation = std::make_shared<OperationType>(std::forward<Args>(args)...);
-
-    for (const auto& [param_name, param_value] : parameters) {
-        try {
-            operation->set_parameter(param_name, param_value);
-        } catch (...) {
-            MF_DEBUG(
-                Journal::Component::Yantra,
-                Journal::Context::Runtime,
-                "Parameter '{}' with type {} does not apply to operation '{}'",
-                param_name,
-                param_value.type().name(),
-                operation->get_name());
-        }
-    }
-
-    return operation;
+    return std::make_shared<OperationType>(config);
 }
 
 /**
@@ -144,16 +125,17 @@ std::shared_ptr<OperationType> create_configured_operation(
  * @param operation Operation instance to configure
  * @param ctx Execution context carrying the settings
  *
- * The config structs in ctx.facets are merged into every operation. Analyzers
- * and sorters are configured by those structs alone. Operations of the other
- * families still receive each execution_metadata entry through set_parameter.
+ * The config structs in ctx.facets are merged into every operation. Analyzers,
+ * sorters and transformers are configured by those structs alone. Operations of
+ * the remaining families still receive each execution_metadata entry through
+ * set_parameter until they migrate.
  */
 template <typename OperationType>
 void apply_context_parameters(std::shared_ptr<OperationType> operation, const ExecutionContext& ctx)
 {
     operation->merge_config(ctx.facets);
 
-    if constexpr (!requires { operation->get_analysis_type(); } && !requires { operation->get_sorting_type(); }) {
+    if constexpr (!requires { operation->get_analysis_type(); } && !requires { operation->get_sorting_type(); } && !requires { operation->get_transformation_type(); }) {
         for (const auto& [ctx_name, ctx_value] : ctx.execution_metadata) {
             try {
                 operation->set_parameter(ctx_name, ctx_value);
