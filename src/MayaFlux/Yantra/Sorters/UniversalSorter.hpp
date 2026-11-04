@@ -92,7 +92,7 @@ enum class SortingGranularity : uint8_t {
  * @struct SorterConfig
  * @brief Settings every sorter family accepts.
  *
- * Stored whole, keyed by type, in the operation's settings bag. Each family's
+ * Stored whole, keyed by type, in the operation's facets. Each family's
  * config struct inherits these fields and adds its own fields.
  */
 struct SorterConfig : OperationConfig {

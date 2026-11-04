@@ -774,6 +774,7 @@ VisionExtractor::output_type VisionExtractor::run_operation(const input_type& in
 {
     output_type output;
     output.metadata = input.metadata;
+    output.facets = input.facets;
 
     const auto supplied = Kakshya::get_metadata_value<std::shared_ptr<Core::VKImage>>(input.metadata, "vision_image");
     const bool has_image = supplied && *supplied;

@@ -162,7 +162,7 @@ struct TransformationKey {
  * @struct TransformerConfig
  * @brief Settings every transformer family accepts.
  *
- * Stored whole, keyed by type, in the operation's settings bag. Each family's
+ * Stored whole, keyed by type, in the operation's facets. Each family's
  * config struct inherits these fields and adds its own operation field.
  */
 struct TransformerConfig : OperationConfig {
@@ -690,6 +690,7 @@ private:
         result.dimensions = input.dimensions;
         result.modality = input.modality;
         result.metadata = input.metadata;
+        result.facets = input.facets;
         result.metadata["validation_failed"] = true;
         result.metadata["fallback_reason"] = "Input validation failed";
 

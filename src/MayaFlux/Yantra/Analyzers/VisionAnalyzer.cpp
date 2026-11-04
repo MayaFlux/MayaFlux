@@ -597,6 +597,7 @@ VisionAnalyzer::output_type VisionAnalyzer::run_operation(const input_type& inpu
 {
     output_type output;
     output.metadata = input.metadata;
+    output.facets = input.facets;
 
     if (const auto image = Kakshya::get_metadata_value<std::shared_ptr<Core::VKImage>>(input.metadata, "vision_image");
         image && *image) {

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Executors/GpuExecutionContext.hpp"
-#include "MayaFlux/Transitive/Facet/Facets.hpp"
 
 #include <future>
 
@@ -11,30 +10,31 @@ class ComputeMatrix;
 
 /**
  * @struct OperationConfig
- * @brief Typed settings store shared by every operation family.
+ * @brief Base of every operation's config struct.
  *
- * Each family stores its own described config struct whole, keyed by its type.
- * Nothing is inherited, and no string keys are used.
+ * Config structs derive from it, declare describe_facets(), and are stored
+ * whole by ComputeOperation::set_config, keyed by their own type. No string
+ * keys are used.
  */
 struct OperationConfig {
-    /** @brief Stores a described settings struct under its type identity. */
-    template <typename Settings>
-        requires requires { Settings::describe_facets(); }
-    void set(Settings value)
+    /** @brief T tores a described struct under its type identity. */
+    template <typename T>
+        requires requires { T::describe_facets(); }
+    void set(T value)
     {
-        m_settings.set(std::move(value));
+        m_facets.set(std::move(value));
     }
 
-    /** @brief The settings struct of this type, or nullptr when absent. */
-    template <typename Settings>
-        requires requires { Settings::describe_facets(); }
-    [[nodiscard]] const Settings* get() const
+    /** @brief The described struct of this type, or nullptr when absent. */
+    template <typename T>
+        requires requires { T::describe_facets(); }
+    [[nodiscard]] const T* get() const
     {
-        return m_settings.get<Settings>();
+        return m_facets.get<T>();
     }
 
 private:
-    Facets m_settings;
+    Facets m_facets;
 };
 
 /**
@@ -225,28 +225,28 @@ public:
     [[nodiscard]] bool has_gpu_backend() const { return m_gpu_backend != nullptr; }
 
     /**
-     * @brief Stores a described settings struct, whole, under its own type.
+     * @brief Stores a described config struct, whole, under its own type.
      * @tparam Config A struct deriving from OperationConfig with describe_facets().
      */
     template <typename Config>
         requires std::derived_from<Config, OperationConfig> && requires { Config::describe_facets(); }
     void set_config(Config config)
     {
-        m_config_bag.set(std::move(config));
+        m_facets.set(std::move(config));
     }
 
     /**
-     * @brief The stored settings struct of type Config, or nullptr when absent.
+     * @brief The stored config struct of type Config, or nullptr when absent.
      */
     template <typename Config>
         requires std::derived_from<Config, OperationConfig> && requires { Config::describe_facets(); }
     [[nodiscard]] const Config* resolved_config() const
     {
-        return m_config_bag.get<Config>();
+        return m_facets.get<Config>();
     }
 
     /**
-     * @brief The base view of this operation's settings.
+     * @brief The base view of this operation's config.
      *
      * Families and concrete operations override this to return their own
      * stored struct. The default is an empty OperationConfig.
@@ -368,7 +368,7 @@ protected:
 
 private:
     std::vector<std::shared_ptr<ComputeOperation>> m_dependencies;
-    Facets m_config_bag;
+    Facets m_facets;
 
     /**
      * @brief Validate input/output types and warn about marker types

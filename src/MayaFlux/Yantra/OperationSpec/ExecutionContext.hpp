@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Journal/Archivist.hpp"
+#include "MayaFlux/Transitive/Facet/Facets.hpp"
 
 #include <typeindex>
 
@@ -107,6 +108,7 @@ using ExecutionParams = std::variant<
  * to be passed into operations. All reads should be performed using the
  * provided accessors (`get`, `get_or`, `get_or_throw`) which internally
  * use `safe_any_cast` to provide robust type conversion and diagnostics.
+ * The `facets` bag carries typed settings structs for the call instead.
  *
  * Typical usage:
  *
@@ -164,6 +166,14 @@ struct MAYAFLUX_API ExecutionContext {
      * `get()` or `get_or()` to ensure safe casting.
      */
     std::unordered_map<std::string, std::any> execution_metadata;
+
+    /**
+     * @brief Typed settings for this call, stored as described structs and read by type.
+     *
+     * Unlike `execution_metadata`, entries are not looked up by name. They
+     * belong to the call and do not travel with the data.
+     */
+    Facets facets;
 
     /**
      * @brief Optional callback invoked before operation execution.

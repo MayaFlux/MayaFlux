@@ -186,6 +186,7 @@ private:
 
             output_type result = this->convert_result(working_buffer, structure_info);
             result.metadata = input.metadata;
+            result.facets = input.facets;
             result.container = input.container;
             result.metadata["sort_type"] = "copy";
 
@@ -194,6 +195,7 @@ private:
         } catch (const std::exception& e) {
             output_type error_result;
             error_result.metadata = input.metadata;
+            error_result.facets = input.facets;
             error_result.container = input.container;
             error_result.metadata["error"] = std::string("Sorting failed: ") + e.what();
             return error_result;
@@ -223,6 +225,7 @@ private:
             auto result = output_type {};
             result.data = generate_compute_data_indices(input, this->get_direction());
             result.metadata = input.metadata;
+            result.facets = input.facets;
             result.metadata["sort_type"] = "indices_only";
             return result;
         } else {
@@ -332,6 +335,7 @@ private:
     {
         output_type result {};
         result.metadata = original_input.metadata;
+        result.facets = original_input.facets;
         result.metadata["sort_type"] = "chunked_merged";
 
         if constexpr (std::same_as<InputType, OutputType>) {
@@ -357,6 +361,7 @@ private:
 
                 result = this->convert_result(merged_channels, info);
                 result.metadata = original_input.metadata;
+                result.facets = original_input.facets;
                 result.metadata["sort_type"] = "chunked_merged";
 
             } catch (...) {

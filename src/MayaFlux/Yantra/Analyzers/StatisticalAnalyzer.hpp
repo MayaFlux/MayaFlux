@@ -420,6 +420,7 @@ protected:
             MF_ERROR(Journal::Component::Yantra, Journal::Context::ComputeMatrix, "Statistical analysis failed: {}", e.what());
             output_type error_result;
             error_result.metadata = input.metadata;
+            error_result.facets = input.facets;
             error_result.metadata["error"] = std::string("Analysis failed: ") + e.what();
             return error_result;
         }
@@ -671,6 +672,7 @@ private:
         output_type output = this->convert_result(channel_stats, info);
 
         output.metadata = input.metadata;
+        output.facets = input.facets;
 
         output.metadata["source_analyzer"] = "StatisticalAnalyzer";
         output.metadata["statistical_method"] = method_to_string(analysis_result.method_used);

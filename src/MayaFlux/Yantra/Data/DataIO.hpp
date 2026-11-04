@@ -20,6 +20,7 @@ namespace MayaFlux::Yantra {
  * - Automatic structure inference from data type and content
  * - Dimension and modality preservation through pipeline operations
  * - Flexible metadata storage for operation-specific information
+ * - Facets carry described result structs through a chain, read by type
  * - Move semantics for efficiency with large data
  */
 template <ComputeData T = std::vector<Kakshya::DataVariant>>
@@ -28,6 +29,7 @@ struct Datum {
     std::vector<Kakshya::DataDimension> dimensions; ///< Data dimensional structure
     Kakshya::DataModality modality {}; ///< Data modality (audio, image, spectral, etc.)
     std::unordered_map<std::string, std::any> metadata; ///< Associated metadata
+    Facets facets; ///< Typed results that travel with the data, read by type
     bool b_container_processing {};
 
     std::optional<std::shared_ptr<Kakshya::SignalSourceContainer>> container; ///< Optional reference to container, required for regions
