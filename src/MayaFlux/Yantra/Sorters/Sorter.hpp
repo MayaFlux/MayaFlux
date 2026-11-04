@@ -6,10 +6,10 @@
 #include "SortingHelper.hpp"
 
 /**
- * @file UniversalSorter.hpp
- * @brief Modern, digital-first universal sorting framework for Maya Flux
+ * @file Sorter.hpp
+ * @brief Modern, digital-first sorting framework for Maya Flux
  *
- * The UniversalSorter system provides a clean, extensible foundation for data sorting
+ * The Sorter system provides a clean, extensible foundation for data sorting
  * in the Maya Flux ecosystem. Unlike traditional sorting which operates on simple containers,
  * this embraces the digital paradigm: data-driven workflows, composability, and type safety.
  *
@@ -22,7 +22,7 @@
  * 5. **Computational sorting:** Leverage digital capabilities beyond analog metaphors
  *
  * ## Key Features
- * - **Universal input/output:** Template-based I/O types defined at instantiation
+ * - **Flexible input/output:** Template-based I/O types defined at instantiation
  * - **Type-safe sorting:** C++20 concepts and compile-time guarantees
  * - **Sorting strategies:** Algorithmic, pattern-based, predictive
  * - **Composable operations:** Integrates with ComputeMatrix execution modes
@@ -109,10 +109,10 @@ struct SorterConfig : OperationConfig {
 };
 
 /**
- * @class UniversalSorter
+ * @class Sorter
  * @brief Template-flexible sorter base with instance-defined I/O types
  *
- * The UniversalSorter provides a clean, concept-based foundation for all sorting
+ * The Sorter provides a clean, concept-based foundation for all sorting
  * operations. I/O types are defined at instantiation time, providing maximum flexibility
  * while maintaining type safety through C++20 concepts.
  *
@@ -121,13 +121,13 @@ struct SorterConfig : OperationConfig {
  * approaches that go beyond analog metaphors.
  */
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = InputType>
-class UniversalSorter : public ComputeOperation<InputType, OutputType> {
+class Sorter : public ComputeOperation<InputType, OutputType> {
 public:
     using input_type = Datum<InputType>;
     using output_type = Datum<OutputType>;
     using base_type = ComputeOperation<InputType, OutputType>;
 
-    virtual ~UniversalSorter() = default;
+    virtual ~Sorter() = default;
 
     /**
      * @brief Gets the sorting type category for this sorter
@@ -179,7 +179,7 @@ protected:
      * @brief Get sorter-specific name (derived classes override this)
      * @return Sorter name string
      */
-    [[nodiscard]] virtual std::string get_sorter_name() const { return "UniversalSorter"; }
+    [[nodiscard]] virtual std::string get_sorter_name() const { return "Sorter"; }
 
     /**
      * @brief Input validation (override for custom validation logic)
@@ -193,39 +193,39 @@ protected:
 
 /// Sorter that takes DataVariant and produces DataVariant
 template <ComputeData OutputType = std::vector<Kakshya::DataVariant>>
-using DataSorter = UniversalSorter<std::vector<Kakshya::DataVariant>, OutputType>;
+using DataSorter = Sorter<std::vector<Kakshya::DataVariant>, OutputType>;
 
 /// Sorter for signal container processing
 template <ComputeData OutputType = std::shared_ptr<Kakshya::SignalSourceContainer>>
-using ContainerSorter = UniversalSorter<std::shared_ptr<Kakshya::SignalSourceContainer>, OutputType>;
+using ContainerSorter = Sorter<std::shared_ptr<Kakshya::SignalSourceContainer>, OutputType>;
 
 /// Sorter for region-based sorting
 template <ComputeData OutputType = Kakshya::Region>
-using RegionSorter = UniversalSorter<Kakshya::Region, OutputType>;
+using RegionSorter = Sorter<Kakshya::Region, OutputType>;
 
 /// Sorter for region group processing
 template <ComputeData OutputType = Kakshya::RegionGroup>
-using RegionGroupSorter = UniversalSorter<Kakshya::RegionGroup, OutputType>;
+using RegionGroupSorter = Sorter<Kakshya::RegionGroup, OutputType>;
 
 /// Sorter for segment processing
 template <ComputeData OutputType = std::vector<Kakshya::RegionSegment>>
-using SegmentSorter = UniversalSorter<std::vector<Kakshya::RegionSegment>, OutputType>;
+using SegmentSorter = Sorter<std::vector<Kakshya::RegionSegment>, OutputType>;
 
 /// Sorter that produces Eigen matrices
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>>
-using MatrixSorter = UniversalSorter<InputType, Eigen::MatrixXd>;
+using MatrixSorter = Sorter<InputType, Eigen::MatrixXd>;
 
 /// Sorter that produces Eigen vectors
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>>
-using VectorSorter = UniversalSorter<InputType, Eigen::VectorXd>;
+using VectorSorter = Sorter<InputType, Eigen::VectorXd>;
 
 /// Sorter for vector containers
 template <typename T, ComputeData OutputType = std::vector<std::vector<T>>>
-using VectorContainerSorter = UniversalSorter<std::vector<std::vector<T>>, OutputType>;
+using VectorContainerSorter = Sorter<std::vector<std::vector<T>>, OutputType>;
 
 /// Sorter for indices generation
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>>
-using IndexSorter = UniversalSorter<InputType, std::vector<std::vector<size_t>>>;
+using IndexSorter = Sorter<InputType, std::vector<std::vector<size_t>>>;
 
 // ============================================================================
 // UNIVERSAL COMPUTE DATA FUNCTIONS

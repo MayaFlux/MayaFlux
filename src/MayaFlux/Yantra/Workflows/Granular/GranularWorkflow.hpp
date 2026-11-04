@@ -160,7 +160,7 @@ struct SegmentConfig : OperationConfig {
  * Configured by a SegmentConfig carried in the operation's facets.
  */
 class MAYAFLUX_API SegmentOp final
-    : public UniversalExtractor<Kakshya::RegionGroup, Kakshya::RegionGroup> {
+    : public Extractor<Kakshya::RegionGroup, Kakshya::RegionGroup> {
 public:
     [[nodiscard]] ExtractionType get_extraction_type() const override
     {
@@ -405,7 +405,7 @@ struct GranularConfig {
 template <ComputeData InputType, ComputeData OutputType>
 [[nodiscard]] inline ExecutionContext make_granular_context(
     const GranularConfig& config,
-    std::shared_ptr<UniversalAnalyzer<InputType, OutputType>> analyzer,
+    std::shared_ptr<Analyzer<InputType, OutputType>> analyzer,
     Qualifier qualifier = 0)
 {
     ExecutionContext ctx;

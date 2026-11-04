@@ -98,7 +98,7 @@ namespace detail {
  * Numeric operations can use this helper to:
  *
  * 1. Convert compatible numeric data to std::vector<double>
- * 2. Process data in double format (universal algorithms)
+ * 2. Process data in double format
  * 3. Reconstruct results back to target ComputeData types
  *
  * Key Features:

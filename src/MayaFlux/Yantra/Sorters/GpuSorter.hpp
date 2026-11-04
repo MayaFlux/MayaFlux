@@ -1,13 +1,13 @@
 #pragma once
 
 #include "MayaFlux/Yantra/Executors/GpuExecutionContext.hpp"
-#include "UniversalSorter.hpp"
+#include "Sorter.hpp"
 
 namespace MayaFlux::Yantra {
 
 /**
  * @class GpuSorter
- * @brief Concrete UniversalSorter that dispatches entirely via a
+ * @brief Concrete Sorter that dispatches entirely via a
  *        GpuExecutionContext. CPU path is a hard error.
  *
  * @tparam InputType  ComputeData type accepted.
@@ -15,7 +15,7 @@ namespace MayaFlux::Yantra {
  */
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>,
     ComputeData OutputType = InputType>
-class GpuSorter : public UniversalSorter<InputType, OutputType> {
+class GpuSorter : public Sorter<InputType, OutputType> {
 public:
     using input_type = Datum<InputType>;
     using output_type = Datum<OutputType>;

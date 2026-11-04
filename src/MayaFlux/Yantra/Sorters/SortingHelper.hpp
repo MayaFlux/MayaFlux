@@ -30,7 +30,7 @@ struct MAYAFLUX_API SortKey {
 };
 
 /**
- * @brief Universal sort function - handles extraction/conversion internally
+ * @brief Sort function - handles extraction/conversion internally
  * @tparam T ComputeData type
  * @param data Data to sort (modified in-place)
  * @param direction Sort direction
@@ -43,7 +43,7 @@ void sort_compute_data_inplace(Datum<T>& data,
 {
     if constexpr (RequiresContainer<T>) {
         if (!data.has_container()) {
-            error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(), "Region-like types require container - use UniversalSorter instead");
+            error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(), "Region-like types require container - use Sorter instead");
         }
         auto channels = OperationHelper::extract_numeric_data(data.data, data.container.value());
         Kinesis::Discrete::sort_channels(channels, direction, algorithm);
@@ -55,7 +55,7 @@ void sort_compute_data_inplace(Datum<T>& data,
 }
 
 /**
- * @brief Universal sort function - returns sorted copy
+ * @brief Sort function - returns sorted copy
  * @tparam T ComputeData type
  * @param data Data to sort (not modified)
  * @param direction Sort direction
@@ -69,7 +69,7 @@ T sort_compute_data_extract(const T& data,
 {
     if constexpr (RequiresContainer<T>) {
         static_assert(std::is_same_v<T, void>,
-            "Region-like types require container parameter - use UniversalSorter instead");
+            "Region-like types require container parameter - use Sorter instead");
         return T {};
     }
 
@@ -83,7 +83,7 @@ T sort_compute_data_extract(const T& data,
 }
 
 /**
- * @brief Universal sort function - returns sorted copy
+ * @brief Sort function - returns sorted copy
  * @tparam T ComputeData type
  * @param data Data to sort (not modified)
  * @param direction Sort direction

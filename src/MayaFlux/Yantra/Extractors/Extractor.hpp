@@ -3,10 +3,10 @@
 #include "MayaFlux/Yantra/ComputeOperation.hpp"
 
 /**
- * @file UniversalExtractor.hpp
- * @brief Modern, digital-first universal extractor framework for Maya Flux
+ * @file Extractor.hpp
+ * @brief Modern, digital-first extractor framework for Maya Flux
  *
- * The UniversalExtractor system provides a clean, extensible foundation for data extraction
+ * The Extractor system provides a clean, extensible foundation for data extraction
  * in the Maya Flux ecosystem. Unlike traditional feature extractors, this focuses on
  * digital-first paradigms: data-driven workflows, composability, and type safety.
  *
@@ -19,7 +19,7 @@
  * regions/features identified by analysis.
  *
  * ## Key Features
- * - **Universal input/output:** Template-based I/O types defined at instantiation
+ * - **Flexible input/output:** Template-based I/O types defined at instantiation
  * - **Type-safe extraction:** C++20 concepts and compile-time guarantees
  * - **Extraction strategies:** Direct, region-based, feature-guided, recursive
  * - **Composable operations:** Integrates with ComputeMatrix execution modes
@@ -84,10 +84,10 @@ struct ExtractorConfig : OperationConfig {
 };
 
 /**
- * @class UniversalExtractor
+ * @class Extractor
  * @brief Template-flexible extractor base with instance-defined I/O types
  *
- * The UniversalExtractor provides a clean, concept-based foundation for all extraction
+ * The Extractor provides a clean, concept-based foundation for all extraction
  * operations. I/O types are defined at instantiation time, providing maximum flexibility
  * while maintaining type safety through C++20 concepts.
  *
@@ -99,13 +99,13 @@ struct ExtractorConfig : OperationConfig {
  * - Integration with ComputeMatrix execution modes
  */
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = InputType>
-class UniversalExtractor : public ComputeOperation<InputType, OutputType> {
+class Extractor : public ComputeOperation<InputType, OutputType> {
 public:
     using input_type = Datum<InputType>;
     using output_type = Datum<OutputType>;
     using base_type = ComputeOperation<InputType, OutputType>;
 
-    virtual ~UniversalExtractor() = default;
+    virtual ~Extractor() = default;
 
     /**
      * @brief Gets the extraction type category for this extractor
@@ -213,7 +213,7 @@ protected:
      * @brief Get extractor-specific name (derived classes override this)
      * @return Extractor name string
      */
-    [[nodiscard]] virtual std::string get_extractor_name() const { return "UniversalExtractor"; }
+    [[nodiscard]] virtual std::string get_extractor_name() const { return "Extractor"; }
 
     /**
      * @brief The scope the stored config selects; FULL_DATA unless a family overrides it.
@@ -288,34 +288,34 @@ protected:
 
 /// Extractor that takes DataVariant and produces any ComputeData type
 template <ComputeData OutputType = Kakshya::DataVariant>
-using DataExtractor = UniversalExtractor<std::vector<Kakshya::DataVariant>, OutputType>;
+using DataExtractor = Extractor<std::vector<Kakshya::DataVariant>, OutputType>;
 
 /// Extractor for signal container processing
 template <ComputeData OutputType = std::shared_ptr<Kakshya::SignalSourceContainer>>
-using ContainerExtractor = UniversalExtractor<std::shared_ptr<Kakshya::SignalSourceContainer>, OutputType>;
+using ContainerExtractor = Extractor<std::shared_ptr<Kakshya::SignalSourceContainer>, OutputType>;
 
 /// Extractor for region-based extraction
 template <ComputeData OutputType = Kakshya::Region>
-using RegionExtractor = UniversalExtractor<Kakshya::Region, OutputType>;
+using RegionExtractor = Extractor<Kakshya::Region, OutputType>;
 
 /// Extractor for region group processing
 template <ComputeData OutputType = Kakshya::RegionGroup>
-using RegionGroupExtractor = UniversalExtractor<Kakshya::RegionGroup, OutputType>;
+using RegionGroupExtractor = Extractor<Kakshya::RegionGroup, OutputType>;
 
 /// Extractor for segment processing
 template <ComputeData OutputType = std::vector<Kakshya::RegionSegment>>
-using SegmentExtractor = UniversalExtractor<std::vector<Kakshya::RegionSegment>, OutputType>;
+using SegmentExtractor = Extractor<std::vector<Kakshya::RegionSegment>, OutputType>;
 
 /// Extractor that produces Eigen matrices
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>>
-using MatrixExtractor = UniversalExtractor<InputType, Eigen::MatrixXd>;
+using MatrixExtractor = Extractor<InputType, Eigen::MatrixXd>;
 
 /// Extractor that produces Eigen vectors
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>>
-using VectorExtractor = UniversalExtractor<InputType, Eigen::VectorXd>;
+using VectorExtractor = Extractor<InputType, Eigen::VectorXd>;
 
 /// Extractor that produces numeric vectors
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>>
-using NumericExtractor = UniversalExtractor<InputType, std::vector<double>>;
+using NumericExtractor = Extractor<InputType, std::vector<double>>;
 
 } // namespace MayaFlux::Yantra

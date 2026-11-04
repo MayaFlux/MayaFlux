@@ -1,7 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Kinesis/Discrete/Transform.hpp"
-#include "UniversalTransformer.hpp"
+#include "Transformer.hpp"
 
 namespace MayaFlux::Yantra {
 
@@ -70,7 +70,7 @@ struct TemporalTransformerConfig : TransformerConfig {
  * @brief Applies one time-domain operation to every channel, as set by its config.
  */
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = InputType>
-class TemporalTransformer final : public UniversalTransformer<InputType, OutputType> {
+class TemporalTransformer final : public Transformer<InputType, OutputType> {
 public:
     using input_type = Datum<InputType>;
     using output_type = Datum<OutputType>;

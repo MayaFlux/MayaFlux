@@ -1,10 +1,10 @@
 #pragma once
 
-#include "UniversalSorter.hpp"
+#include "Sorter.hpp"
 
 /**
  * @file StandardSorter.hpp
- * @brief Example concrete implementation of UniversalSorter
+ * @brief Example concrete implementation of Sorter
  *
  * Demonstrates how to implement a concrete sorter that works with the modern
  * concept-based architecture. This sorter handles standard comparison-based
@@ -82,9 +82,9 @@ struct SortRecord {
  * The result carries a SortRecord on its facets.
  */
 template <ComputeData InputType = Kakshya::DataVariant, ComputeData OutputType = InputType>
-class StandardSorter : public UniversalSorter<InputType, OutputType> {
+class StandardSorter : public Sorter<InputType, OutputType> {
 public:
-    using base_type = UniversalSorter<InputType, OutputType>;
+    using base_type = Sorter<InputType, OutputType>;
     using input_type = typename base_type::input_type;
     using output_type = typename base_type::output_type;
 

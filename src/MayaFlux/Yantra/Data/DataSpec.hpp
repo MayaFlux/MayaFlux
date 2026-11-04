@@ -54,7 +54,7 @@ concept CompositeData = CompositeArrayData<T> || CompositeContainerData<T>;
 
 /**
  * @concept ComputeData
- * @brief Universal concept for types that can flow through the computation pipeline.
+ * @brief Concept for types that can flow through the computation pipeline.
  *
  * Valid types:
  * - Kakshya::DataVariant

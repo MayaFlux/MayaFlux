@@ -6,7 +6,7 @@
 #include "MayaFlux/Yantra/OperationSpec/OperationHelper.hpp"
 
 /**
- * @file UniversalTransformer.hpp
+ * @file Transformer.hpp
  * @brief Base for transformers. Settings are held in a config struct per family.
  *
  * Each family's config extends TransformerConfig and builds its facet list with
@@ -100,19 +100,19 @@ struct TransformerConfig : OperationConfig {
 };
 
 /**
- * @class UniversalTransformer
+ * @class Transformer
  * @brief Base of every transformer family.
  *
  * Holds no settings of its own. Derived classes read their family config through config().
  */
 template <ComputeData InputType = Kakshya::DataVariant, ComputeData OutputType = InputType>
-class UniversalTransformer : public ComputeOperation<InputType, OutputType> {
+class Transformer : public ComputeOperation<InputType, OutputType> {
 public:
     using input_type = Datum<InputType>;
     using output_type = Datum<OutputType>;
     using base_type = ComputeOperation<InputType, OutputType>;
 
-    virtual ~UniversalTransformer() = default;
+    virtual ~Transformer() = default;
 
     /**
      * @brief Gets the transformation type category for this transformer
@@ -163,7 +163,7 @@ protected:
 
     virtual output_type transform_implementation(input_type& input) = 0;
 
-    [[nodiscard]] virtual std::string get_transformer_name() const { return "UniversalTransformer"; }
+    [[nodiscard]] virtual std::string get_transformer_name() const { return "Transformer"; }
 
     virtual output_type apply_scope_and_quality_processing(const output_type& result)
     {

@@ -1,13 +1,13 @@
 #pragma once
 
 #include "MayaFlux/Yantra/Executors/GpuExecutionContext.hpp"
-#include "UniversalTransformer.hpp"
+#include "Transformer.hpp"
 
 namespace MayaFlux::Yantra {
 
 /**
  * @class GpuTransformer
- * @brief Concrete UniversalTransformer that dispatches entirely via a
+ * @brief Concrete Transformer that dispatches entirely via a
  *        GpuExecutionContext. CPU path is a hard error.
  *
  * Use when no CPU fallback exists or is needed. Attach a configured
@@ -28,7 +28,7 @@ namespace MayaFlux::Yantra {
  */
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>,
     ComputeData OutputType = InputType>
-class GpuTransformer : public UniversalTransformer<InputType, OutputType> {
+class GpuTransformer : public Transformer<InputType, OutputType> {
 public:
     using input_type = Datum<InputType>;
     using output_type = Datum<OutputType>;

@@ -373,7 +373,7 @@ std::vector<Datum<T>> as_io_batch(std::vector<T>&& inputs)
  * @brief Concept to constrain types suitable for operation units
  *
  * Ensures that types used in operation units are either:
- * - MultiVariant (universal data variant)
+ * - MultiVariant (data variant)
  * - CompositeData (schema-bearing records or their owning container)
  * - RegionLike (regions or region groups)
  * - EigenMatrixLike (Eigen matrices/vectors)
@@ -382,7 +382,7 @@ std::vector<Datum<T>> as_io_batch(std::vector<T>&& inputs)
 template <typename T>
 concept OperationReadyData = CompositeData<T> || MultiVariant<T> || RegionLike<T> || EigenMatrixLike<T> || is_IO<T>::value;
 
-using DataIO = Datum<std::vector<Kakshya::DataVariant>>; ///< IO for universal data variant
+using DataIO = Datum<std::vector<Kakshya::DataVariant>>; ///< IO for data variant
 using ContainerIO = Datum<std::shared_ptr<Kakshya::SignalSourceContainer>>; ///< IO for signal containers
 using CompositeIO = Datum<Kakshya::CompositeArray>; ///< IO for owning Composite records
 using CompositeContainerIO = Datum<std::shared_ptr<Kakshya::CompositeContainer>>; ///< IO for Composite containers

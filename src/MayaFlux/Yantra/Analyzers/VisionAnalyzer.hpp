@@ -169,7 +169,7 @@ private:
      *        0), calls analyze_vision(). See analyze_vision() for the real
      *        API; query/context come from this instance's own
      *        configured state, not from the Datum, matching every other
-     *        UniversalAnalyzer-family operation_function.
+     *        Analyzer-family operation_function.
      */
     output_type run_operation(const input_type& input);
 

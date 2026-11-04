@@ -3,7 +3,7 @@
 #include "MayaFlux/Transitive/Reflect/EnumReflect.hpp"
 #include "MayaFlux/Yantra/OperationSpec/OperationHelper.hpp"
 
-#include "UniversalAnalyzer.hpp"
+#include "Analyzer.hpp"
 #include <Eigen/Dense>
 
 #include "MayaFlux/Kinesis/Discrete/Analysis.hpp"
@@ -14,7 +14,7 @@
  * @file EnergyAnalyzer.hpp
  * @brief Span-based energy analysis for digital signals in Maya Flux
  *
- * Defines the EnergyAnalyzer using the new UniversalAnalyzer framework with
+ * Defines the EnergyAnalyzer using the new Analyzer framework with
  * zero-copy span processing and automatic structure handling via OperationHelper.
  * This analyzer extracts energy-related features from digital signals with multiple
  * computation methods and flexible output configurations.
@@ -137,11 +137,11 @@ struct MAYAFLUX_API EnergyAnalysis {
  * ```
  */
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = Eigen::VectorXd>
-class EnergyAnalyzer : public UniversalAnalyzer<InputType, OutputType> {
+class EnergyAnalyzer : public Analyzer<InputType, OutputType> {
 public:
     using input_type = Datum<InputType>;
     using output_type = Datum<OutputType>;
-    using base_type = UniversalAnalyzer<InputType, OutputType>;
+    using base_type = Analyzer<InputType, OutputType>;
 
     /**
      * @brief Construct an energy analyzer from its settings.

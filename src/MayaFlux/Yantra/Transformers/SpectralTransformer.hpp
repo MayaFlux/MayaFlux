@@ -1,7 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Kinesis/Discrete/Spectral.hpp"
-#include "UniversalTransformer.hpp"
+#include "Transformer.hpp"
 
 namespace MayaFlux::Yantra {
 
@@ -69,7 +69,7 @@ struct SpectralTransformerConfig : TransformerConfig {
  * @brief Applies one STFT-based operation to every channel, as set by its config.
  */
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = InputType>
-class SpectralTransformer final : public UniversalTransformer<InputType, OutputType> {
+class SpectralTransformer final : public Transformer<InputType, OutputType> {
 public:
     using input_type = Datum<InputType>;
     using output_type = Datum<OutputType>;

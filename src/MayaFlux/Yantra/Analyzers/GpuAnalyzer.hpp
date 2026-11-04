@@ -1,13 +1,13 @@
 #pragma once
 
 #include "MayaFlux/Yantra/Executors/GpuExecutionContext.hpp"
-#include "UniversalAnalyzer.hpp"
+#include "Analyzer.hpp"
 
 namespace MayaFlux::Yantra {
 
 /**
  * @class GpuAnalyzer
- * @brief Concrete UniversalAnalyzer that dispatches entirely via a
+ * @brief Concrete Analyzer that dispatches entirely via a
  *        GpuExecutionContext. CPU path is a hard error.
  *
  * @tparam InputType  ComputeData type accepted.
@@ -15,7 +15,7 @@ namespace MayaFlux::Yantra {
  */
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>,
     ComputeData OutputType = InputType>
-class GpuAnalyzer : public UniversalAnalyzer<InputType, OutputType> {
+class GpuAnalyzer : public Analyzer<InputType, OutputType> {
 public:
     using input_type = Datum<InputType>;
     using output_type = Datum<OutputType>;

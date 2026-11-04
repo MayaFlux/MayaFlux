@@ -2,7 +2,7 @@
 
 #include "GpuSorter.hpp"
 #include "MayaFlux/Yantra/Executors/ShaderExecutionContext.hpp"
-#include "UniversalSorter.hpp"
+#include "Sorter.hpp"
 
 /**
  * @file RegionKeySorter.hpp
@@ -44,7 +44,7 @@ struct RegionKeySorterConfig : SorterConfig {
  * The GPU path sorts the scores with the bitonic shader, which sorts one float
  * per element and so needs no change for multi-key scores.
  */
-class RegionKeySorter : public UniversalSorter<Kakshya::RegionGroup, Kakshya::RegionGroup> {
+class RegionKeySorter : public Sorter<Kakshya::RegionGroup, Kakshya::RegionGroup> {
 public:
     /**
      * @brief Construct a region key sorter from its settings.

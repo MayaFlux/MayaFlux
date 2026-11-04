@@ -2,7 +2,7 @@
 
 #include "MayaFlux/Transitive/Reflect/EnumReflect.hpp"
 
-#include "UniversalAnalyzer.hpp"
+#include "Analyzer.hpp"
 
 #include "MayaFlux/Kinesis/Discrete/Analysis.hpp"
 #include <Eigen/Dense>
@@ -11,7 +11,7 @@
  * @file StatisticalAnalyzer_new.hpp
  * @brief Span-based statistical analysis for digital signals in Maya Flux
  *
- * Defines the StatisticalAnalyzer using the new UniversalAnalyzer framework with
+ * Defines the StatisticalAnalyzer using the new Analyzer framework with
  * zero-copy span processing and automatic structure handling via OperationHelper.
  * This analyzer extracts statistical features from digital data streams with multiple
  * computation methods and flexible output configurations.
@@ -157,11 +157,11 @@ struct MAYAFLUX_API StatisticalAnalysis {
  * ```
  */
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = Eigen::VectorXd>
-class StatisticalAnalyzer : public UniversalAnalyzer<InputType, OutputType> {
+class StatisticalAnalyzer : public Analyzer<InputType, OutputType> {
 public:
     using input_type = Datum<InputType>;
     using output_type = Datum<OutputType>;
-    using base_type = UniversalAnalyzer<InputType, OutputType>;
+    using base_type = Analyzer<InputType, OutputType>;
 
     /**
      * @brief Construct a statistical analyzer from its settings.

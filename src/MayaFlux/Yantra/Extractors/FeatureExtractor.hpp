@@ -3,7 +3,7 @@
 #include "ExtractionHelper.hpp"
 #include "MayaFlux/Kinesis/Discrete/Extract.hpp"
 #include "MayaFlux/Transitive/Reflect/EnumReflect.hpp"
-#include "UniversalExtractor.hpp"
+#include "Extractor.hpp"
 
 #include "MayaFlux/Yantra/OperationSpec/OperationHelper.hpp"
 
@@ -156,11 +156,11 @@ struct FeatureExtraction {
  * All extraction logic is delegated to ExtractionHelper functions.
  */
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = std::vector<std::vector<double>>>
-class FeatureExtractor : public UniversalExtractor<InputType, OutputType> {
+class FeatureExtractor : public Extractor<InputType, OutputType> {
 public:
     using input_type = Datum<InputType>;
     using output_type = Datum<OutputType>;
-    using base_type = UniversalExtractor<InputType, OutputType>;
+    using base_type = Extractor<InputType, OutputType>;
 
     /**
      * @brief Construct a feature extractor from its settings.

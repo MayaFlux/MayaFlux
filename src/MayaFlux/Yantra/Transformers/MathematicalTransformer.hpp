@@ -2,7 +2,7 @@
 
 #include "MayaFlux/Kinesis/Discrete/Transform.hpp"
 #include "MayaFlux/Nodes/Generators/Polynomial.hpp"
-#include "UniversalTransformer.hpp"
+#include "Transformer.hpp"
 
 namespace MayaFlux::Yantra {
 
@@ -108,7 +108,7 @@ struct MathematicalTransformerConfig : TransformerConfig {
  * @brief Applies one pointwise map to every channel, as set by its config.
  */
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = InputType>
-class MathematicalTransformer final : public UniversalTransformer<InputType, OutputType> {
+class MathematicalTransformer final : public Transformer<InputType, OutputType> {
 public:
     using input_type = Datum<InputType>;
     using output_type = Datum<OutputType>;

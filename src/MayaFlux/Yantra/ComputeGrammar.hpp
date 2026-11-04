@@ -48,10 +48,10 @@ namespace MayaFlux::Yantra {
  *
  * ### Complex Matcher Combinations
  * ```cpp
- * auto complex_matcher = UniversalMatcher::combine_and({
- *     UniversalMatcher::create_type_matcher<std::vector<Kakshya::DataVariant>>(),
- *     UniversalMatcher::create_context_matcher(ComputationContext::SPECTRAL),
- *     UniversalMatcher::create_parameter_matcher("frequency_range", std::string("audio"))
+ * auto complex_matcher = Matcher::combine_and({
+ *     Matcher::create_type_matcher<std::vector<Kakshya::DataVariant>>(),
+ *     Matcher::create_context_matcher(ComputationContext::SPECTRAL),
+ *     Matcher::create_parameter_matcher("frequency_range", std::string("audio"))
  * });
  *
  * grammar.create_rule("spectral_filter")
@@ -69,7 +69,7 @@ namespace MayaFlux::Yantra {
  * grammar.add_operation_rule<MathematicalTransformer<>>(
  *     "auto_normalize",
  *     ComputationContext::MATHEMATICAL,
- *     UniversalMatcher::create_type_matcher<std::vector<Kakshya::DataVariant>>(),
+ *     Matcher::create_type_matcher<std::vector<Kakshya::DataVariant>>(),
  *     {{"operation", std::string("normalize")}, {"target_peak", 1.0}},
  *     75 // priority
  * );
@@ -98,7 +98,7 @@ public:
         int priority = 0; ///< Execution priority (higher values evaluated first)
         std::optional<Portal::Graphics::ShaderSpec> gpu_spec; ///< When set, executor receives a GPU-backed operation
 
-        UniversalMatcher::MatcherFunc matcher; ///< Function that determines if rule applies
+        Matcher::MatcherFunc matcher; ///< Function that determines if rule applies
         Executor executor; ///< Function that performs the computation
 
         std::vector<std::string> dependencies; ///< Names of rules that must execute before this one
@@ -249,7 +249,7 @@ public:
      * grammar.add_operation_rule<MathematicalTransformer<>>(
      *     "gain_rule",
      *     ComputationContext::MATHEMATICAL,
-     *     UniversalMatcher::create_type_matcher<std::vector<Kakshya::DataVariant>>(),
+     *     Matcher::create_type_matcher<std::vector<Kakshya::DataVariant>>(),
      *     cfg,
      *     80);
      * ```
@@ -257,7 +257,7 @@ public:
     template <typename ConcreteOpType, typename ConfigType = typename ConcreteOpType::config_type>
     void add_operation_rule(const std::string& rule_name,
         ComputationContext context,
-        UniversalMatcher::MatcherFunc matcher,
+        Matcher::MatcherFunc matcher,
         ConfigType config = {},
         int priority = 50)
     {
@@ -366,7 +366,7 @@ public:
         template <ComputeData DataType>
         RuleBuilder& matches_type()
         {
-            m_rule.matcher = UniversalMatcher::create_type_matcher<DataType>();
+            m_rule.matcher = Matcher::create_type_matcher<DataType>();
             return *this;
         }
 
@@ -379,7 +379,7 @@ public:
          * parameters, or combinations of multiple criteria. Use this when
          * simple type matching is insufficient.
          */
-        RuleBuilder& matches_custom(UniversalMatcher::MatcherFunc matcher)
+        RuleBuilder& matches_custom(Matcher::MatcherFunc matcher)
         {
             m_rule.matcher = std::move(matcher);
             return *this;

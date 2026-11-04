@@ -1,13 +1,13 @@
 #pragma once
 
 #include "MayaFlux/Yantra/Executors/GpuExecutionContext.hpp"
-#include "UniversalExtractor.hpp"
+#include "Extractor.hpp"
 
 namespace MayaFlux::Yantra {
 
 /**
  * @class GpuExtractor
- * @brief Concrete UniversalExtractor that dispatches entirely via a
+ * @brief Concrete Extractor that dispatches entirely via a
  *        GpuExecutionContext. CPU path is a hard error.
  *
  * @tparam InputType  ComputeData type accepted.
@@ -15,7 +15,7 @@ namespace MayaFlux::Yantra {
  */
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>,
     ComputeData OutputType = InputType>
-class GpuExtractor : public UniversalExtractor<InputType, OutputType> {
+class GpuExtractor : public Extractor<InputType, OutputType> {
 public:
     using input_type = Datum<InputType>;
     using output_type = Datum<OutputType>;

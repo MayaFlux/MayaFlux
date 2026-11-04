@@ -3,8 +3,8 @@
 #include "MayaFlux/Yantra/ComputeOperation.hpp"
 
 /**
- * @file UniversalAnalyzer.hpp
- * @brief Modern, digital-first universal analyzer framework for Maya Flux
+ * @file Analyzer.hpp
+ * @brief Modern, digital-first analyzer framework for Maya Flux
  *
  * This header defines the core analyzer abstractions for the Maya Flux ecosystem,
  * enabling robust, type-safe, and extensible analysis pipelines for multi-dimensional
@@ -80,10 +80,10 @@ struct AnalyzerConfig : OperationConfig {
 };
 
 /**
- * @class UniversalAnalyzer
+ * @class Analyzer
  * @brief Template-flexible analyzer base with instance-defined I/O types
  *
- * The UniversalAnalyzer provides a clean, concept-based foundation for all analysis
+ * The Analyzer provides a clean, concept-based foundation for all analysis
  * operations. Unlike the old approach, the I/O types are defined at instantiation
  * time rather than at the class definition level, providing maximum flexibility.
  *
@@ -105,13 +105,13 @@ struct AnalyzerConfig : OperationConfig {
  * ```
  */
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = InputType>
-class UniversalAnalyzer : public ComputeOperation<InputType, OutputType> {
+class Analyzer : public ComputeOperation<InputType, OutputType> {
 public:
     using input_type = Datum<InputType>;
     using output_type = Datum<OutputType>;
     using base_type = ComputeOperation<InputType, OutputType>;
 
-    virtual ~UniversalAnalyzer() = default;
+    virtual ~Analyzer() = default;
 
     /**
      * @brief Gets the analysis type category for this analyzer
@@ -251,30 +251,30 @@ protected:
 
 /// Analyzer that takes DataVariant and produces DataVariant
 template <ComputeData OutputType = std::vector<Kakshya::DataVariant>>
-using DataAnalyzer = UniversalAnalyzer<std::vector<Kakshya::DataVariant>, OutputType>;
+using DataAnalyzer = Analyzer<std::vector<Kakshya::DataVariant>, OutputType>;
 
 /// Analyzer for signal container processing
 template <ComputeData OutputType = std::shared_ptr<Kakshya::SignalSourceContainer>>
-using ContainerAnalyzer = UniversalAnalyzer<std::shared_ptr<Kakshya::SignalSourceContainer>, OutputType>;
+using ContainerAnalyzer = Analyzer<std::shared_ptr<Kakshya::SignalSourceContainer>, OutputType>;
 
 /// Analyzer for region-based analysis
 template <ComputeData OutputType = Kakshya::Region>
-using RegionAnalyzer = UniversalAnalyzer<Kakshya::Region, OutputType>;
+using RegionAnalyzer = Analyzer<Kakshya::Region, OutputType>;
 
 /// Analyzer for region group processing
 template <ComputeData OutputType = Kakshya::RegionGroup>
-using RegionGroupAnalyzer = UniversalAnalyzer<Kakshya::RegionGroup, OutputType>;
+using RegionGroupAnalyzer = Analyzer<Kakshya::RegionGroup, OutputType>;
 
 /// Analyzer for segment processing
 template <ComputeData OutputType = std::vector<Kakshya::RegionSegment>>
-using SegmentAnalyzer = UniversalAnalyzer<std::vector<Kakshya::RegionSegment>, OutputType>;
+using SegmentAnalyzer = Analyzer<std::vector<Kakshya::RegionSegment>, OutputType>;
 
 /// Analyzer that produces Eigen matrices
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>>
-using MatrixAnalyzer = UniversalAnalyzer<InputType, Eigen::MatrixXd>;
+using MatrixAnalyzer = Analyzer<InputType, Eigen::MatrixXd>;
 
 /// Analyzer that produces Eigen vectors
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>>
-using VectorAnalyzer = UniversalAnalyzer<InputType, Eigen::VectorXd>;
+using VectorAnalyzer = Analyzer<InputType, Eigen::VectorXd>;
 
 } // namespace MayaFlux::Yantra

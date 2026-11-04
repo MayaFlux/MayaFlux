@@ -25,13 +25,13 @@ enum class ComputationContext : uint8_t {
 };
 
 /**
- * @class UniversalMatcher
+ * @class Matcher
  * @brief Type-agnostic pattern matching for computation rules
  *
  * Provides factory methods for creating matcher functions that can be used
  * to determine if operations should be applied in specific contexts.
  */
-class MAYAFLUX_API UniversalMatcher {
+class MAYAFLUX_API Matcher {
 public:
     using MatcherFunc = std::function<bool(const std::any&, const ExecutionContext&)>;
 

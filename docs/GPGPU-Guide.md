@@ -16,8 +16,8 @@ flowchart TB
     end
     subgraph OPS["Operation: computational identity"]
         direction LR
-        U["Universal*<br/>CPU, optional GPU backend"]
-        G["Gpu*<br/>a Universal* whose CPU path throws"]
+        U["Family bases<br/>CPU, optional GPU backend"]
+        G["Gpu*<br/>a family base whose CPU path throws"]
     end
     subgraph EXEC["Executor: staging, dispatch, readback"]
         direction LR
@@ -104,7 +104,7 @@ DataDimension::vertex_positions(n_verts);
 
 ### Datum\<T\>
 
-The universal envelope. Every operation, executor, and grammar boundary crosses via `Datum`.
+The envelope. Every operation, executor, and grammar boundary crosses via `Datum`.
 
 ```cpp
 template <ComputeData T>
@@ -552,35 +552,35 @@ classDiagram
         +set_gpu_backend(backend)
         +apply_operation(input) output
     }
-    ComputeOperation <|-- UniversalTransformer
-    ComputeOperation <|-- UniversalSorter
-    ComputeOperation <|-- UniversalExtractor
-    ComputeOperation <|-- UniversalAnalyzer
-    UniversalTransformer <|-- MathematicalTransformer
-    UniversalTransformer <|-- SpectralTransformer
-    UniversalTransformer <|-- TemporalTransformer
-    UniversalTransformer <|-- ConvolutionTransformer
-    UniversalTransformer <|-- GpuTransformer
-    UniversalSorter <|-- StandardSorter
-    UniversalSorter <|-- GpuSorter
-    UniversalExtractor <|-- FeatureExtractor
-    UniversalExtractor <|-- GpuExtractor
-    UniversalAnalyzer <|-- EnergyAnalyzer
-    UniversalAnalyzer <|-- StatisticalAnalyzer
-    UniversalAnalyzer <|-- GpuAnalyzer
+    ComputeOperation <|-- Transformer
+    ComputeOperation <|-- Sorter
+    ComputeOperation <|-- Extractor
+    ComputeOperation <|-- Analyzer
+    Transformer <|-- MathematicalTransformer
+    Transformer <|-- SpectralTransformer
+    Transformer <|-- TemporalTransformer
+    Transformer <|-- ConvolutionTransformer
+    Transformer <|-- GpuTransformer
+    Sorter <|-- StandardSorter
+    Sorter <|-- GpuSorter
+    Extractor <|-- FeatureExtractor
+    Extractor <|-- GpuExtractor
+    Analyzer <|-- EnergyAnalyzer
+    Analyzer <|-- StatisticalAnalyzer
+    Analyzer <|-- GpuAnalyzer
 ```
 
 
-### Universal\* types (CPU + optional GPU)
+### Family types (CPU + optional GPU)
 
 Concrete CPU path. GPU-accelerated by calling `set_gpu_backend()` on the instance.
 
 | Type | Override |
 |---|---|
-| `UniversalTransformer<In, Out>` | `transform_implementation()` |
-| `UniversalSorter<In, Out>` | `sort_implementation()` |
-| `UniversalExtractor<In, Out>` | `extract_implementation()` |
-| `UniversalAnalyzer<In, Out>` | `analyze_implementation()` |
+| `Transformer<In, Out>` | `transform_implementation()` |
+| `Sorter<In, Out>` | `sort_implementation()` |
+| `Extractor<In, Out>` | `extract_implementation()` |
+| `Analyzer<In, Out>` | `analyze_implementation()` |
 
 Built-in concrete transformers: `MathematicalTransformer`, `SpectralTransformer`, `TemporalTransformer`, `ConvolutionTransformer`. Built-in concrete analyzers: `EnergyAnalyzer`, `StatisticalAnalyzer`, `FeatureExtractor`. Built-in sorter: `StandardSorter`.
 
@@ -715,7 +715,7 @@ flowchart TD
     G --> H["result as std::any"]
 ```
 
-`find_best_match` only finds the rule. `execute_with_grammar` then runs it by name, casts the result back to a `Datum`, and carries on with the matrix's operations. A `ComputationContext` enters matching only through the rule's matcher, for example `UniversalMatcher::create_context_matcher`.
+`find_best_match` only finds the rule. `execute_with_grammar` then runs it by name, casts the result back to a `Datum`, and carries on with the matrix's operations. A `ComputationContext` enters matching only through the rule's matcher, for example `Matcher::create_context_matcher`.
 
 
 `ComputationContext` values: `TEMPORAL`, `SPECTRAL`, `MATHEMATICAL`, `STRUCTURAL`, and others. Used as a secondary filter alongside the matcher predicate.
@@ -760,7 +760,7 @@ Instantiates, configures, and executes a `ComputeOperation` subclass inside the 
 grammar.add_operation_rule<SpectralTransformer<>>(
     "pitch_shift",
     ComputationContext::SPECTRAL,
-    UniversalMatcher::create_type_matcher<DataIO>(),
+    Matcher::create_type_matcher<DataIO>(),
     { { "operation", std::string("pitch_shift") }, { "pitch_ratio", 1.5 } },
     /*priority=*/80);
 ```
@@ -972,7 +972,7 @@ void main() {
 
 | Situation | Type |
 |---|---|
-| CPU fallback exists or is wanted during development | Subclass `UniversalTransformer`; attach executor via `set_gpu_backend()`. |
+| CPU fallback exists or is wanted during development | Subclass `Transformer`; attach executor via `set_gpu_backend()`. |
 | GPU-only; hard error on CPU path | `GpuTransformer` (or `GpuSorter`, `GpuExtractor`, `GpuAnalyzer`). |
 | Multiple passes over the same dispatch (bitonic sort, iterative refinement) | Any operation + `set_multipass(count, updater)` on the executor. |
 
@@ -991,7 +991,7 @@ flowchart TD
     S{"Single shader,<br/>no operation abstraction?"}
     S -- yes --> E["exec->execute(datum, ctx)"]
     S -- no --> O{"CPU fallback<br/>wanted?"}
-    O -- yes --> U["Universal*, then set_gpu_backend()"]
+    O -- yes --> U["Family base, then set_gpu_backend()"]
     O -- "no, GPU only" --> GO["Gpu* type"]
     U --> ORC{"How are operations composed?"}
     GO --> ORC
