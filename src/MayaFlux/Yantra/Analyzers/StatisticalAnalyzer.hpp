@@ -63,7 +63,6 @@ struct MAYAFLUX_API ChannelStatistics {
     std::array<int, 6> level_counts {};
 
     std::vector<std::pair<size_t, size_t>> window_positions;
-    std::map<std::string, std::any> method_specific_data;
 };
 
 /**
@@ -92,20 +91,29 @@ enum StatisticalMethod : uint8_t {
 
 /**
  * @struct StatisticalAnalyzerConfig
- * @brief Initial settings for statistical analysis.
+ * @brief Settings of a StatisticalAnalyzer.
  *
- * Pass this aggregate with designated initializers to the config constructor.
- * Named parameters are applied after the typed settings.
+ * The analyzer stores this struct whole and reads every setting from it.
+ * Pass it to the constructor or to set_config.
  */
 struct StatisticalAnalyzerConfig : AnalyzerConfig {
+    static constexpr auto describe_facets()
+    {
+        return std::tuple_cat(
+            AnalyzerConfig::describe_facets(),
+            std::tuple {
+                FacetMember<&StatisticalAnalyzerConfig::method> {},
+                FacetMember<&StatisticalAnalyzerConfig::percentile> {},
+                FacetMember<&StatisticalAnalyzerConfig::sample_variance> {},
+            });
+    }
+
     /** Statistic to compute, as a StatisticalMethod value. */
     Reflect::EnumByte<StatisticalMethod> method { StatisticalMethod::MEAN };
     /** Percentile to compute when method is PERCENTILE, from 0 to 100. */
     double percentile { 50.0 };
     /** Whether variance calculations use the sample formula. */
     bool sample_variance { true };
-    /** Additional named parameters applied last. */
-    std::map<std::string, std::any> parameters;
 };
 
 /**
@@ -113,10 +121,16 @@ struct StatisticalAnalyzerConfig : AnalyzerConfig {
  * @brief Analysis result structure for statistical analysis
  */
 struct MAYAFLUX_API StatisticalAnalysis {
-    StatisticalMethod method_used { StatisticalMethod::MEAN };
-    uint32_t window_size {};
-    uint32_t hop_size {};
+    static constexpr auto describe_facets()
+    {
+        return std::tuple {
+            FacetMember<&StatisticalAnalysis::config> {},
+            FacetMember<&StatisticalAnalysis::channel_statistics> {},
+        };
+    }
 
+    /** Settings the analysis was produced under. */
+    StatisticalAnalyzerConfig config;
     std::vector<ChannelStatistics> channel_statistics;
 };
 
@@ -137,8 +151,9 @@ struct MAYAFLUX_API StatisticalAnalysis {
  * auto analysis = stat_analyzer->analyze_data(numeric_data);
  * auto stat_result = safe_any_cast<StatisticalAnalysisResult>(analysis);
  *
- * // Pipeline usage
+ * // Pipeline usage: the result also travels in the output's facets
  * auto pipeline_output = stat_analyzer->apply_operation(IO{numeric_data});
+ * const StatisticalAnalysis* carried = pipeline_output.facets.get<StatisticalAnalysis>();
  * ```
  */
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = Eigen::VectorXd>
@@ -149,33 +164,23 @@ public:
     using base_type = UniversalAnalyzer<InputType, OutputType>;
 
     /**
-     * @brief Construct StatisticalAnalyzer with configurable window parameters
-     * @param window_size Size of analysis window in samples (default: 512)
-     * @param hop_size Step size between windows in samples (default: 256)
+     * @brief Construct a statistical analyzer from its settings.
+     * @param config Analysis settings, validated before they are stored. The default is
+     *               window 512, hop 256 and classification enabled.
      */
-    explicit StatisticalAnalyzer(uint32_t window_size = 512, uint32_t hop_size = 256)
-        : m_window_size(window_size)
-        , m_hop_size(hop_size)
+    explicit StatisticalAnalyzer(
+        StatisticalAnalyzerConfig config = StatisticalAnalyzerConfig { { .window_size = 512, .hop_size = 256, .classification_enabled = true } })
     {
-        validate_window_parameters();
+        validate_config(config);
+        this->set_config(std::move(config));
     }
 
     /**
-     * @brief Construct and configure a statistical analyzer in one step.
-     * @param config Initial analysis settings.
+     * @brief The stored settings.
      */
-    explicit StatisticalAnalyzer(const StatisticalAnalyzerConfig& config)
-        : StatisticalAnalyzer(config.window_size, config.hop_size)
+    [[nodiscard]] const StatisticalAnalyzerConfig& config() const override
     {
-        set_method(config.method);
-        set_classification_enabled(config.classification_enabled);
-        this->set_analysis_granularity(config.granularity);
-        this->set_parameter("percentile", config.percentile);
-        this->set_parameter("sample_variance", config.sample_variance);
-
-        for (const auto& [name, value] : config.parameters) {
-            this->set_parameter(name, value);
-        }
+        return *this->template resolved_config<StatisticalAnalyzerConfig>();
     }
 
     /**
@@ -212,112 +217,10 @@ public:
         return AnalysisType::STATISTICAL;
     }
 
-    /**
-     * @brief Get available analysis methods
-     * @return Vector of supported statistical method names
-     */
-    [[nodiscard]] std::vector<std::string> get_available_methods() const override
+    [[nodiscard]] std::string get_name() const override
     {
-        return Reflect::get_enum_names_lowercase<StatisticalMethod>();
+        return "StatisticalAnalyzer";
     }
-
-    /**
-     * @brief Get supported methods for specific input type
-     * @tparam T Input type to check
-     * @return Vector of method names supported for this type
-     */
-    template <typename T>
-    [[nodiscard]] std::vector<std::string> get_methods_for_type() const
-    {
-        return get_methods_for_type_impl(std::type_index(typeid(T)));
-    }
-
-    /**
-     * @brief Check if analyzer supports given input type
-     * @tparam T Input type to check
-     * @return True if supported
-     */
-    template <typename T>
-    [[nodiscard]] bool supports_input_type() const
-    {
-        return !get_methods_for_type<T>().empty();
-    }
-
-    /**
-     * @brief Set statistical analysis method
-     * @param method StatisticalMethod enum value
-     */
-    void set_method(StatisticalMethod method)
-    {
-        m_method = method;
-        this->set_parameter("method", method_to_string(method));
-    }
-
-    /**
-     * @brief Set method by string name
-     * @param method_name String representation of method
-     */
-    void set_method(const std::string& method_name)
-    {
-        m_method = string_to_method(method_name);
-        this->set_parameter("method", method_name);
-    }
-
-    /**
-     * @brief Get current statistical method
-     * @return StatisticalMethod enum value
-     */
-    [[nodiscard]] StatisticalMethod get_method() const
-    {
-        return m_method;
-    }
-
-    /**
-     * @brief Set window size for windowed analysis
-     * @param size Window size in samples
-     */
-    void set_window_size(uint32_t size)
-    {
-        m_window_size = size;
-        validate_window_parameters();
-    }
-
-    /**
-     * @brief Set hop size for windowed analysis
-     * @param size Hop size in samples
-     */
-    void set_hop_size(uint32_t size)
-    {
-        m_hop_size = size;
-        validate_window_parameters();
-    }
-
-    /**
-     * @brief Get window size
-     * @return Current window size
-     */
-    [[nodiscard]] uint32_t get_window_size() const { return m_window_size; }
-
-    /**
-     * @brief Get hop size
-     * @return Current hop size
-     */
-    [[nodiscard]] uint32_t get_hop_size() const { return m_hop_size; }
-
-    /**
-     * @brief Enable/disable outlier classification
-     * @param enabled Whether to classify outliers
-     */
-    void set_classification_enabled(bool enabled)
-    {
-        m_classification_enabled = enabled;
-    }
-
-    /**
-     * @brief Check if classification is enabled
-     * @return True if classification enabled
-     */
-    [[nodiscard]] bool is_classification_enabled() const { return m_classification_enabled; }
 
     /**
      * @brief Classify statistical value qualitatively
@@ -339,48 +242,7 @@ public:
         return StatisticalLevel::EXTREME_HIGH;
     }
 
-    /**
-     * @brief Convert statistical method enum to string
-     * @param method StatisticalMethod value
-     * @return String representation
-     */
-    static std::string method_to_string(StatisticalMethod method)
-    {
-        return Reflect::enum_to_lowercase_string(method);
-    }
-
-    /**
-     * @brief Convert string to statistical method enum
-     * @param str String representation
-     * @return StatisticalMethod value
-     */
-    static StatisticalMethod string_to_method(const std::string& str)
-    {
-        if (str == "default")
-            return StatisticalMethod::MEAN;
-        return Reflect::string_to_enum_or_throw_case_insensitive<StatisticalMethod>(str, "StatisticalMethod");
-    }
-
-    /**
-     * @brief Convert statistical level enum to string
-     * @param level StatisticalLevel value
-     * @return String representation
-     */
-    static std::string statistical_level_to_string(StatisticalLevel level)
-    {
-        return Reflect::enum_to_lowercase_string(level);
-    }
-
 protected:
-    /**
-     * @brief Get analyzer name
-     * @return "StatisticalAnalyzer"
-     */
-    [[nodiscard]] std::string get_analyzer_name() const override
-    {
-        return "StatisticalAnalyzer";
-    }
-
     /**
      * @brief Core analysis implementation - creates analysis result AND pipeline output
      * @param input Input data wrapped in Datum container
@@ -398,6 +260,8 @@ protected:
             }
         }
         try {
+            const auto& cfg = config();
+
             auto [data_span, structure_info] = OperationHelper::extract_structured_double(
                 const_cast<input_type&>(input));
 
@@ -408,7 +272,7 @@ protected:
             std::vector<std::vector<double>> stat_values;
             stat_values.reserve(channel_spans.size());
             for (const auto& ch_span : channel_spans) {
-                stat_values.push_back(compute_statistical_values(ch_span, m_method));
+                stat_values.push_back(compute_statistical_values(ch_span, cfg));
             }
 
             StatisticalAnalysis analysis_result = create_analysis_result(
@@ -421,168 +285,79 @@ protected:
             output_type error_result;
             error_result.metadata = input.metadata;
             error_result.facets = input.facets;
-            error_result.metadata["error"] = std::string("Analysis failed: ") + e.what();
             return error_result;
         }
     }
 
-    /**
-     * @brief Handle analysis-specific parameters
-     */
-    void set_analysis_parameter(const std::string& name, std::any value) override
-    {
-        try {
-            if (name == "method") {
-                try {
-                    auto method_str = safe_any_cast_or_throw<std::string>(value);
-                    m_method = string_to_method(method_str);
-                } catch (const std::runtime_error&) {
-                    auto method_enum = safe_any_cast_or_throw<StatisticalMethod>(value);
-                    m_method = method_enum;
-                }
-            } else if (name == "window_size") {
-                auto size = safe_any_cast_or_throw<uint32_t>(value);
-                m_window_size = size;
-                validate_window_parameters();
-            } else if (name == "hop_size") {
-                auto size = safe_any_cast_or_throw<uint32_t>(value);
-                m_hop_size = size;
-                validate_window_parameters();
-            } else if (name == "classification_enabled") {
-                auto enabled = safe_any_cast_or_throw<bool>(value);
-                m_classification_enabled = enabled;
-            } else if (name == "percentile") {
-                auto percentile = safe_any_cast_or_throw<double>(value);
-                if (percentile < 0.0 || percentile > 100.0) {
-                    error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(), "Percentile must be between 0.0 and 100.0, got: {}", percentile);
-                }
-                m_percentile_value = percentile;
-            } else if (name == "sample_variance") {
-                auto sample = safe_any_cast_or_throw<bool>(value);
-                m_sample_variance = sample;
-            } else {
-                base_type::set_analysis_parameter(name, std::move(value));
-            }
-        } catch (const std::runtime_error& e) {
-            error_rethrow(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(), "Failed to set parameter '{}': {}", name, e.what());
-        }
-    }
-
-    /**
-     * @brief Get analysis-specific parameter
-     */
-    [[nodiscard]] std::any get_analysis_parameter(const std::string& name) const override
-    {
-        if (name == "method")
-            return std::any(method_to_string(m_method));
-        if (name == "window_size")
-            return std::any(m_window_size);
-        if (name == "hop_size")
-            return std::any(m_hop_size);
-        if (name == "classification_enabled")
-            return std::any(m_classification_enabled);
-        if (name == "percentile")
-            return std::any(m_percentile_value);
-        if (name == "sample_variance")
-            return std::any(m_sample_variance);
-
-        return base_type::get_analysis_parameter(name);
-    }
-
-    /**
-     * @brief Get supported methods for specific type index
-     * @param type_info Type index to check
-     * @return Vector of supported method names
-     */
-    [[nodiscard]] std::vector<std::string> get_methods_for_type_impl(std::type_index /*type_info*/) const
-    {
-        return get_available_methods();
-    }
-
 private:
-    StatisticalMethod m_method { StatisticalMethod::MEAN };
-    uint32_t m_window_size;
-    uint32_t m_hop_size;
-    bool m_classification_enabled { true };
-    double m_percentile_value { 50.0 };
-    bool m_sample_variance { true };
-
     double m_outlier_threshold { 3.0 };
     double m_extreme_low_threshold { -2.0 };
     double m_low_threshold { -1.0 };
     double m_high_threshold { 1.0 };
     double m_extreme_high_threshold { 2.0 };
 
-    /**
-     * @brief Validate window parameters
-     */
-    void validate_window_parameters() const
+    static void validate_config(const StatisticalAnalyzerConfig& cfg)
     {
-        if (m_window_size == 0 || m_hop_size == 0) {
+        if (cfg.window_size == 0 || cfg.hop_size == 0) {
             error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(), "Window size and hop size must be greater than 0");
         }
-        if (m_hop_size > m_window_size) {
+        if (cfg.hop_size > cfg.window_size) {
             error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(), "Hop size should not exceed window size");
+        }
+        if (cfg.percentile < 0.0 || cfg.percentile > 100.0) {
+            error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(), "Percentile must be between 0.0 and 100.0, got: {}", cfg.percentile);
         }
     }
 
     /**
      * @brief Compute statistical values using span (zero-copy processing)
      */
-    [[nodiscard]] std::vector<double> compute_statistical_values(std::span<const double> data, StatisticalMethod method) const
+    [[nodiscard]] static std::vector<double> compute_statistical_values(std::span<const double> data, const StatisticalAnalyzerConfig& cfg)
     {
-        const size_t num_windows = calculate_num_windows(data.size());
+        const uint32_t hop = cfg.hop_size;
+        const uint32_t window = cfg.window_size;
+        const size_t num_windows = data.size() < window ? 0 : (data.size() - window) / hop + 1;
 
         namespace D = MayaFlux::Kinesis::Discrete;
 
-        switch (method) {
+        switch (static_cast<StatisticalMethod>(cfg.method)) {
         case StatisticalMethod::MEAN:
-            return D::mean(data, num_windows, m_hop_size, m_window_size);
+            return D::mean(data, num_windows, hop, window);
         case StatisticalMethod::VARIANCE:
-            return D::variance(data, num_windows, m_hop_size, m_window_size, m_sample_variance);
+            return D::variance(data, num_windows, hop, window, cfg.sample_variance);
         case StatisticalMethod::STD_DEV:
-            return D::std_dev(data, num_windows, m_hop_size, m_window_size, m_sample_variance);
+            return D::std_dev(data, num_windows, hop, window, cfg.sample_variance);
         case StatisticalMethod::SKEWNESS:
-            return D::skewness(data, num_windows, m_hop_size, m_window_size);
+            return D::skewness(data, num_windows, hop, window);
         case StatisticalMethod::KURTOSIS:
-            return D::kurtosis(data, num_windows, m_hop_size, m_window_size);
+            return D::kurtosis(data, num_windows, hop, window);
         case StatisticalMethod::MEDIAN:
-            return D::median(data, num_windows, m_hop_size, m_window_size);
+            return D::median(data, num_windows, hop, window);
         case StatisticalMethod::PERCENTILE:
-            return D::percentile(data, num_windows, m_hop_size, m_window_size, m_percentile_value);
+            return D::percentile(data, num_windows, hop, window, cfg.percentile);
         case StatisticalMethod::ENTROPY:
-            return D::entropy(data, num_windows, m_hop_size, m_window_size);
+            return D::entropy(data, num_windows, hop, window);
         case StatisticalMethod::MIN:
-            return D::min(data, num_windows, m_hop_size, m_window_size);
+            return D::min(data, num_windows, hop, window);
         case StatisticalMethod::MAX:
-            return D::max(data, num_windows, m_hop_size, m_window_size);
+            return D::max(data, num_windows, hop, window);
         case StatisticalMethod::RANGE:
-            return D::range(data, num_windows, m_hop_size, m_window_size);
+            return D::range(data, num_windows, hop, window);
         case StatisticalMethod::SUM:
-            return D::sum(data, num_windows, m_hop_size, m_window_size);
+            return D::sum(data, num_windows, hop, window);
         case StatisticalMethod::COUNT:
-            return D::count(data, num_windows, m_hop_size, m_window_size);
+            return D::count(data, num_windows, hop, window);
         case StatisticalMethod::MAD:
-            return D::mad(data, num_windows, m_hop_size, m_window_size);
+            return D::mad(data, num_windows, hop, window);
         case StatisticalMethod::CV:
-            return D::coefficient_of_variation(data, num_windows, m_hop_size, m_window_size, m_sample_variance);
+            return D::coefficient_of_variation(data, num_windows, hop, window, cfg.sample_variance);
         case StatisticalMethod::MODE:
-            return D::mode(data, num_windows, m_hop_size, m_window_size);
+            return D::mode(data, num_windows, hop, window);
         case StatisticalMethod::ZSCORE:
-            return D::mean_zscore(data, num_windows, m_hop_size, m_window_size, m_sample_variance);
+            return D::mean_zscore(data, num_windows, hop, window, cfg.sample_variance);
         default:
-            return D::mean(data, num_windows, m_hop_size, m_window_size);
+            return D::mean(data, num_windows, hop, window);
         }
-    }
-
-    /**
-     * @brief Calculate number of windows for given data size
-     */
-    [[nodiscard]] size_t calculate_num_windows(size_t data_size) const
-    {
-        if (data_size < m_window_size)
-            return 0;
-        return (data_size - m_window_size) / m_hop_size + 1;
     }
 
     /**
@@ -593,10 +368,12 @@ private:
     {
         namespace D = MayaFlux::Kinesis::Discrete;
 
+        const auto& cfg = config();
+        const uint32_t hop = cfg.hop_size;
+        const uint32_t window = cfg.window_size;
+
         StatisticalAnalysis result;
-        result.method_used = m_method;
-        result.window_size = m_window_size;
-        result.hop_size = m_hop_size;
+        result.config = cfg;
 
         if (stat_values.empty()) {
             return result;
@@ -623,7 +400,7 @@ private:
             const auto single = [&](auto fn) { return fn(sp, 1, 0, sz)[0]; };
 
             channel_result.mean_stat = single([](auto&&... a) { return D::mean(a...); });
-            channel_result.stat_variance = single([&](auto&&... a) { return D::variance(a..., m_sample_variance); });
+            channel_result.stat_variance = single([&](auto&&... a) { return D::variance(a..., cfg.sample_variance); });
             channel_result.stat_std_dev = std::sqrt(channel_result.stat_variance);
             channel_result.skewness = single([](auto&&... a) { return D::skewness(a...); });
             channel_result.kurtosis = single([](auto&&... a) { return D::kurtosis(a...); });
@@ -638,12 +415,12 @@ private:
             const size_t data_size = (ch < original_data.size()) ? original_data[ch].size() : 0;
             channel_result.window_positions.reserve(ch_stats.size());
             for (size_t i = 0; i < ch_stats.size(); ++i) {
-                const size_t start = i * m_hop_size;
-                const size_t end = std::min(start + m_window_size, data_size);
+                const size_t start = i * hop;
+                const size_t end = std::min(start + window, data_size);
                 channel_result.window_positions.emplace_back(start, end);
             }
 
-            if (m_classification_enabled) {
+            if (cfg.classification_enabled) {
                 channel_result.stat_classifications.reserve(ch_stats.size());
                 channel_result.level_counts.fill(0);
 
@@ -673,39 +450,7 @@ private:
 
         output.metadata = input.metadata;
         output.facets = input.facets;
-
-        output.metadata["source_analyzer"] = "StatisticalAnalyzer";
-        output.metadata["statistical_method"] = method_to_string(analysis_result.method_used);
-        output.metadata["window_size"] = analysis_result.window_size;
-        output.metadata["hop_size"] = analysis_result.hop_size;
-        output.metadata["num_channels"] = analysis_result.channel_statistics.size();
-
-        if (!analysis_result.channel_statistics.empty()) {
-            std::vector<double> channel_means, channel_maxs, channel_mins, channel_variances, channel_stddevs, channel_skewness, channel_kurtosis, channel_medians;
-            std::vector<size_t> channel_window_counts;
-
-            for (const auto& ch : analysis_result.channel_statistics) {
-                channel_means.push_back(ch.mean_stat);
-                channel_maxs.push_back(ch.max_stat);
-                channel_mins.push_back(ch.min_stat);
-                channel_variances.push_back(ch.stat_variance);
-                channel_stddevs.push_back(ch.stat_std_dev);
-                channel_skewness.push_back(ch.skewness);
-                channel_kurtosis.push_back(ch.kurtosis);
-                channel_medians.push_back(ch.median);
-                channel_window_counts.push_back(ch.statistical_values.size());
-            }
-
-            output.metadata["mean_per_channel"] = channel_means;
-            output.metadata["max_per_channel"] = channel_maxs;
-            output.metadata["min_per_channel"] = channel_mins;
-            output.metadata["variance_per_channel"] = channel_variances;
-            output.metadata["stddev_per_channel"] = channel_stddevs;
-            output.metadata["skewness_per_channel"] = channel_skewness;
-            output.metadata["kurtosis_per_channel"] = channel_kurtosis;
-            output.metadata["median_per_channel"] = channel_medians;
-            output.metadata["window_count_per_channel"] = channel_window_counts;
-        }
+        output.facets.set(analysis_result);
 
         return output;
     }
@@ -729,58 +474,40 @@ template <ComputeData InputType = std::vector<Kakshya::DataVariant>>
 using VariantStatisticalAnalyzer = StatisticalAnalyzer<InputType, Kakshya::DataVariant>;
 
 /**
- * @brief Extract a named scalar from a StatisticalAnalysis result.
+ * @brief Select one scalar summary of the first channel of a StatisticalAnalysis.
  *
- * Maps qualifier strings to scalar fields of the first channel in @p analysis.
- * All scalar-valued fields of ChannelStatistics are addressable.
+ * - MAX, MIN, VARIANCE, STD_DEV, SKEWNESS, KURTOSIS, MEDIAN: the matching field.
+ * - Every other method: the mean of the statistical values.
  *
- * Supported qualifiers:
- * - "mean_stat"    arithmetic mean of the statistical values
- * - "max_stat"     maximum statistical value
- * - "min_stat"     minimum statistical value
- * - "variance"     variance of the statistical values
- * - "std_dev"      standard deviation
- * - "skewness"     third moment
- * - "kurtosis"     fourth moment
- * - "median"       50th percentile
- * - "window_count" number of analysis windows
- *
- * An empty qualifier resolves to "mean_stat".
- * Unknown qualifiers fall back to mean_stat.
- *
- * @param analysis  Result produced by StatisticalAnalyzer.
- * @param qualifier Name of the scalar to extract.
- * @return Extracted double value, or 0.0 if channel_statistics is empty.
+ * @param analysis Result produced by StatisticalAnalyzer.
+ * @param method   Selects the scalar.
+ * @return The scalar, or 0.0 when channel_statistics is empty.
  */
 [[nodiscard]] MAYAFLUX_API inline double extract_scalar_statistics(
-    const StatisticalAnalysis& analysis, const std::string& qualifier)
+    const StatisticalAnalysis& analysis, StatisticalMethod method)
 {
     if (analysis.channel_statistics.empty())
         return 0.0;
 
     const auto& ch = analysis.channel_statistics[0];
-    const std::string q = qualifier.empty() ? "mean_stat" : qualifier;
-
-    if (q == "mean_stat")
-        return ch.mean_stat;
-    if (q == "max_stat")
+    switch (method) {
+    case StatisticalMethod::MAX:
         return ch.max_stat;
-    if (q == "min_stat")
+    case StatisticalMethod::MIN:
         return ch.min_stat;
-    if (q == "variance")
+    case StatisticalMethod::VARIANCE:
         return ch.stat_variance;
-    if (q == "std_dev")
+    case StatisticalMethod::STD_DEV:
         return ch.stat_std_dev;
-    if (q == "skewness")
+    case StatisticalMethod::SKEWNESS:
         return ch.skewness;
-    if (q == "kurtosis")
+    case StatisticalMethod::KURTOSIS:
         return ch.kurtosis;
-    if (q == "median")
+    case StatisticalMethod::MEDIAN:
         return ch.median;
-    if (q == "window_count")
-        return static_cast<double>(ch.statistical_values.size());
-
-    return ch.mean_stat;
+    default:
+        return ch.mean_stat;
+    }
 }
 
 } // namespace MayaFlux::Yantra

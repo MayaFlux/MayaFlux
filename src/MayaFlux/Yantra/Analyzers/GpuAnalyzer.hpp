@@ -42,7 +42,7 @@ public:
         return m_executor;
     }
 
-    [[nodiscard]] std::string get_analyzer_name() const override
+    [[nodiscard]] std::string get_name() const override
     {
         return "GpuAnalyzer";
     }

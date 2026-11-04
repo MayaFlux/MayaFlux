@@ -74,18 +74,26 @@ enum EnergyMethod : uint8_t {
 
 /**
  * @struct EnergyAnalyzerConfig
- * @brief Initial settings for energy analysis.
+ * @brief Settings of an EnergyAnalyzer.
  *
- * Pass this aggregate with designated initializers to the config constructor.
- * Named parameters are applied after the typed settings.
+ * The analyzer stores this struct whole and reads every setting from it.
+ * Pass it to the constructor or to set_config.
  */
 struct EnergyAnalyzerConfig : AnalyzerConfig {
+    static constexpr auto describe_facets()
+    {
+        return std::tuple_cat(
+            AnalyzerConfig::describe_facets(),
+            std::tuple {
+                FacetMember<&EnergyAnalyzerConfig::method> {},
+                FacetMember<&EnergyAnalyzerConfig::thresholds> {},
+            });
+    }
+
     /** Energy calculation to perform, as an EnergyMethod value. */
     Reflect::EnumByte<EnergyMethod> method { EnergyMethod::RMS };
     /** Silent, quiet, moderate, and loud boundaries, in that order. */
     std::array<double, 4> thresholds { 0.01, 0.1, 0.5, 0.8 };
-    /** Additional named parameters applied last. */
-    std::map<std::string, std::any> parameters;
 };
 
 /**
@@ -93,11 +101,17 @@ struct EnergyAnalyzerConfig : AnalyzerConfig {
  * @brief Analysis result structure for energy analysis
  */
 struct MAYAFLUX_API EnergyAnalysis {
-    std::vector<ChannelEnergy> channels;
+    static constexpr auto describe_facets()
+    {
+        return std::tuple {
+            FacetMember<&EnergyAnalysis::config> {},
+            FacetMember<&EnergyAnalysis::channels> {},
+        };
+    }
 
-    EnergyMethod method_used {};
-    uint32_t window_size {};
-    uint32_t hop_size {};
+    /** Settings the analysis was produced under. */
+    EnergyAnalyzerConfig config;
+    std::vector<ChannelEnergy> channels;
 };
 
 /**
@@ -117,8 +131,9 @@ struct MAYAFLUX_API EnergyAnalysis {
  * auto analysis = energy_analyzer->analyze_data(audio_data);
  * auto energy_result = safe_any_cast<EnergyAnalysis>(analysis);
  *
- * // Pipeline usage
+ * // Pipeline usage: the result also travels in the output's facets
  * auto pipeline_output = energy_analyzer->apply_operation(IO{audio_data});
+ * const EnergyAnalysis* carried = pipeline_output.facets.get<EnergyAnalysis>();
  * ```
  */
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = Eigen::VectorXd>
@@ -129,36 +144,21 @@ public:
     using base_type = UniversalAnalyzer<InputType, OutputType>;
 
     /**
-     * @brief Construct EnergyAnalyzer with configurable window parameters
-     * @param window_size Size of analysis window in samples (default: 512)
-     * @param hop_size Step size between windows in samples (default: 256)
+     * @brief Construct an energy analyzer from its settings.
+     * @param config Analysis settings, validated before they are stored.
      */
-    explicit EnergyAnalyzer(uint32_t window_size = 256, uint32_t hop_size = 128)
-        : m_window_size(window_size)
-        , m_hop_size(hop_size)
+    explicit EnergyAnalyzer(EnergyAnalyzerConfig config = {})
     {
-        validate_window_parameters();
+        validate_config(config);
+        this->set_config(std::move(config));
     }
 
     /**
-     * @brief Construct and configure an energy analyzer in one step.
-     * @param config Initial analysis settings.
+     * @brief The stored settings.
      */
-    explicit EnergyAnalyzer(const EnergyAnalyzerConfig& config)
-        : EnergyAnalyzer(config.window_size, config.hop_size)
+    [[nodiscard]] const EnergyAnalyzerConfig& config() const override
     {
-        set_energy_method(config.method);
-        enable_classification(config.classification_enabled);
-        set_energy_thresholds(
-            config.thresholds[0],
-            config.thresholds[1],
-            config.thresholds[2],
-            config.thresholds[3]);
-        this->set_analysis_granularity(config.granularity);
-
-        for (const auto& [name, value] : config.parameters) {
-            this->set_parameter(name, value);
-        }
+        return *this->template resolved_config<EnergyAnalyzerConfig>();
     }
 
     /**
@@ -195,75 +195,10 @@ public:
         return AnalysisType::FEATURE;
     }
 
-    /**
-     * @brief Get available analysis methods
-     * @return Vector of supported energy method names
-     */
-    [[nodiscard]] std::vector<std::string> get_available_methods() const override
+    [[nodiscard]] std::string get_name() const override
     {
-        return Reflect::get_enum_names_lowercase<EnergyMethod>();
+        return "EnergyAnalyzer";
     }
-
-    /**
-     * @brief Check if a specific method is supported
-     * @param method Method name to check
-     * @return True if method is supported
-     */
-    [[nodiscard]] bool supports_method(const std::string& method) const override
-    {
-        return std::find_if(get_available_methods().begin(), get_available_methods().end(),
-                   [&method](const std::string& m) {
-                       return std::equal(method.begin(), method.end(), m.begin(), m.end(),
-                           [](char a, char b) { return std::tolower(a) == std::tolower(b); });
-                   })
-            != get_available_methods().end();
-    }
-
-    /**
-     * @brief Set energy computation method
-     */
-    void set_energy_method(EnergyMethod method) { m_method = method; }
-
-    /**
-     * @brief Get current energy computation method
-     */
-    [[nodiscard]] EnergyMethod get_energy_method() const { return m_method; }
-
-    /**
-     * @brief Set window parameters for analysis
-     * @param window_size Window size in samples
-     * @param hop_size Hop size in samples
-     */
-    void set_window_parameters(uint32_t window_size, uint32_t hop_size)
-    {
-        m_window_size = window_size;
-        m_hop_size = hop_size;
-        validate_window_parameters();
-    }
-
-    /**
-     * @brief Set energy level classification thresholds
-     * @param silent Threshold for silent level
-     * @param quiet Threshold for quiet level
-     * @param moderate Threshold for moderate level
-     * @param loud Threshold for loud level
-     */
-    void set_energy_thresholds(double silent, double quiet, double moderate, double loud)
-    {
-        if (silent >= quiet || quiet >= moderate || moderate >= loud) {
-            error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(), "Energy thresholds must be in ascending order");
-        }
-        m_silent_threshold = silent;
-        m_quiet_threshold = quiet;
-        m_moderate_threshold = moderate;
-        m_loud_threshold = loud;
-    }
-
-    /**
-     * @brief Enable or disable energy level classification
-     * @param enabled True to enable classification
-     */
-    void enable_classification(bool enabled) { m_classification_enabled = enabled; }
 
     /**
      * @brief Classify energy value into qualitative level
@@ -272,13 +207,14 @@ public:
      */
     [[nodiscard]] EnergyLevel classify_energy_level(double energy) const
     {
-        if (energy <= m_silent_threshold)
+        const auto& t = config().thresholds;
+        if (energy <= t[0])
             return EnergyLevel::SILENT;
-        if (energy <= m_quiet_threshold)
+        if (energy <= t[1])
             return EnergyLevel::QUIET;
-        if (energy <= m_moderate_threshold)
+        if (energy <= t[2])
             return EnergyLevel::MODERATE;
-        if (energy <= m_loud_threshold)
+        if (energy <= t[3])
             return EnergyLevel::LOUD;
         return EnergyLevel::PEAK;
     }
@@ -295,48 +231,7 @@ public:
         return channel.level_counts[static_cast<size_t>(level)];
     }
 
-    /**
-     * @brief Convert energy method enum to string
-     * @param method EnergyMethod value
-     * @return String representation
-     */
-    static std::string method_to_string(EnergyMethod method)
-    {
-        return Reflect::enum_to_lowercase_string(method);
-    }
-
-    /**
-     * @brief Convert string to energy method enum
-     * @param str String representation
-     * @return EnergyMethod value
-     */
-    static EnergyMethod string_to_method(const std::string& str)
-    {
-        if (str == "default")
-            return EnergyMethod::RMS;
-        return Reflect::string_to_enum_or_throw_case_insensitive<EnergyMethod>(str, "EnergyMethod");
-    }
-
-    /**
-     * @brief Convert energy level enum to string
-     * @param level EnergyLevel value
-     * @return String representation
-     */
-    static std::string energy_level_to_string(EnergyLevel level)
-    {
-        return Reflect::enum_to_lowercase_string(level);
-    }
-
 protected:
-    /**
-     * @brief Get analyzer name
-     * @return "EnergyAnalyzer"
-     */
-    [[nodiscard]] std::string get_analyzer_name() const override
-    {
-        return "EnergyAnalyzer";
-    }
-
     /**
      * @brief Core analysis implementation - creates analysis result AND pipeline output
      * @param input Input data wrapped in Datum container
@@ -345,6 +240,8 @@ protected:
     output_type analyze_implementation(const input_type& input) override
     {
         try {
+            const auto& cfg = config();
+
             auto [data_span, structure_info] = OperationHelper::extract_structured_double(
                 const_cast<input_type&>(input));
 
@@ -353,15 +250,15 @@ protected:
                 channel_spans.emplace_back(span.data(), span.size());
 
             for (const auto& channel_span : channel_spans) {
-                if (channel_span.size() < m_window_size) {
-                    error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(), "One or more channels in input data are smaller than window size ({} samples)", m_window_size);
+                if (channel_span.size() < cfg.window_size) {
+                    error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(), "One or more channels in input data are smaller than window size ({} samples)", cfg.window_size);
                 }
             }
 
             std::vector<std::vector<double>> energy_values;
             energy_values.reserve(channel_spans.size());
             for (const auto& channel_span : channel_spans) {
-                energy_values.push_back(compute_energy_values(channel_span, m_method));
+                energy_values.push_back(compute_energy_values(channel_span, cfg));
             }
 
             EnergyAnalysis analysis_result = create_analysis_result(
@@ -374,90 +271,26 @@ protected:
             MF_ERROR(Journal::Component::Yantra, Journal::Context::ComputeMatrix, "Energy analysis failed: {}", e.what());
             output_type error_result;
             error_result.metadata = input.metadata;
-            error_result.metadata["error"] = std::string("Analysis failed: ") + e.what();
+            error_result.facets = input.facets;
             return error_result;
         }
     }
 
-    /**
-     * @brief Handle analysis-specific parameters
-     */
-    void set_analysis_parameter(const std::string& name, std::any value) override
-    {
-        if (name == "method") {
-            if (auto str_result = safe_any_cast<std::string>(value)) {
-                m_method = string_to_method(*str_result.value);
-                return;
-            }
-
-            if (auto enum_result = safe_any_cast<EnergyMethod>(value)) {
-                m_method = *enum_result.value;
-                return;
-            }
-
-            error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
-                std::source_location::current(),
-                "Invalid method parameter - expected string or EnergyMethod enum");
-        } else if (name == "window_size") {
-            if (auto result = safe_any_cast<uint32_t>(value)) {
-                m_window_size = *result.value;
-                validate_window_parameters();
-                return;
-            }
-        } else if (name == "hop_size") {
-            if (auto result = safe_any_cast<uint32_t>(value)) {
-                m_hop_size = *result.value;
-                validate_window_parameters();
-                return;
-            }
-        } else if (name == "classification_enabled") {
-            if (auto result = safe_any_cast<bool>(value)) {
-                m_classification_enabled = *result.value;
-                return;
-            }
-        }
-
-        base_type::set_analysis_parameter(name, std::move(value));
-    }
-
-    /**
-     * @brief Get analysis-specific parameter
-     */
-    [[nodiscard]] std::any get_analysis_parameter(const std::string& name) const override
-    {
-        if (name == "method")
-            return std::any(method_to_string(m_method));
-        if (name == "window_size")
-            return std::any(m_window_size);
-        if (name == "hop_size")
-            return std::any(m_hop_size);
-        if (name == "classification_enabled")
-            return std::any(m_classification_enabled);
-
-        return base_type::get_analysis_parameter(name);
-    }
-
 private:
-    uint32_t m_window_size { 512 };
-    uint32_t m_hop_size { 256 };
-    EnergyMethod m_method { EnergyMethod::RMS };
-    bool m_classification_enabled { false };
-
-    double m_silent_threshold { 0.01 };
-    double m_quiet_threshold = { 0.1 };
-    double m_moderate_threshold { 0.5 };
-    double m_loud_threshold { 0.8 };
-
-    void validate_window_parameters() const
+    static void validate_config(const EnergyAnalyzerConfig& cfg)
     {
-        if (m_window_size == 0) {
+        if (cfg.window_size == 0) {
             error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(), "Window size must be greater than 0");
         }
-        if (m_hop_size == 0) {
+        if (cfg.hop_size == 0) {
             error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(), "Hop size must be greater than 0");
         }
-        if (m_hop_size > m_window_size) {
+        if (cfg.hop_size > cfg.window_size) {
             error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(), "Hop size should not exceed window size");
+        }
+        const auto& t = cfg.thresholds;
+        if (t[0] >= t[1] || t[1] >= t[2] || t[2] >= t[3]) {
+            error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(), "Energy thresholds must be in ascending order");
         }
     }
 
@@ -469,10 +302,11 @@ private:
         std::vector<std::span<const double>> original_data,
         const DataStructureInfo& /*structure_info*/) const
     {
+        const auto& cfg = config();
+        const EnergyMethod method = cfg.method;
+
         EnergyAnalysis result;
-        result.method_used = m_method;
-        result.window_size = m_window_size;
-        result.hop_size = m_hop_size;
+        result.config = cfg;
 
         if (energy_values.empty()) {
             return result;
@@ -506,22 +340,22 @@ private:
             channel_result.window_positions.reserve(ch_energy.size());
 
             for (size_t i = 0; i < ch_energy.size(); ++i) {
-                const size_t start = i * m_hop_size;
-                const size_t end = std::min(start + m_window_size, data_size);
+                const size_t start = i * cfg.hop_size;
+                const size_t end = std::min(start + cfg.window_size, data_size);
                 channel_result.window_positions.emplace_back(start, end);
             }
 
             if (ch < original_data.size()) {
-                switch (m_method) {
+                switch (method) {
                 case EnergyMethod::ZERO_CROSSING:
                     channel_result.event_positions = Kinesis::Discrete::zero_crossing_positions(
                         original_data[ch], 0.0);
                     break;
 
                 case EnergyMethod::PEAK: {
-                    double peak_threshold = m_classification_enabled ? m_quiet_threshold : 0.01;
+                    double peak_threshold = cfg.classification_enabled ? cfg.thresholds[1] : 0.01;
                     channel_result.event_positions = Kinesis::Discrete::peak_positions(
-                        original_data[ch], peak_threshold, m_hop_size / 4);
+                        original_data[ch], peak_threshold, cfg.hop_size / 4);
                     break;
                 }
 
@@ -536,7 +370,7 @@ private:
                 }
             }
 
-            if (m_classification_enabled) {
+            if (cfg.classification_enabled) {
                 channel_result.classifications.reserve(ch_energy.size());
                 channel_result.level_counts.fill(0);
 
@@ -566,31 +400,8 @@ private:
         output_type output = this->convert_result(channel_energies, info);
 
         output.metadata = input.metadata;
-
-        output.metadata["source_analyzer"] = "EnergyAnalyzer";
-        output.metadata["energy_method"] = method_to_string(analysis_result.method_used);
-        output.metadata["window_size"] = analysis_result.window_size;
-        output.metadata["hop_size"] = analysis_result.hop_size;
-        output.metadata["num_channels"] = analysis_result.channels.size();
-
-        if (!analysis_result.channels.empty()) {
-            std::vector<double> channel_means, channel_maxs, channel_mins, channel_variances;
-            std::vector<size_t> channel_window_counts;
-
-            for (const auto& ch : analysis_result.channels) {
-                channel_means.push_back(ch.mean_energy);
-                channel_maxs.push_back(ch.max_energy);
-                channel_mins.push_back(ch.min_energy);
-                channel_variances.push_back(ch.variance);
-                channel_window_counts.push_back(ch.energy_values.size());
-            }
-
-            output.metadata["mean_energy_per_channel"] = channel_means;
-            output.metadata["max_energy_per_channel"] = channel_maxs;
-            output.metadata["min_energy_per_channel"] = channel_mins;
-            output.metadata["variance_per_channel"] = channel_variances;
-            output.metadata["window_count_per_channel"] = channel_window_counts;
-        }
+        output.facets = input.facets;
+        output.facets.set(analysis_result);
 
         return output;
     }
@@ -598,38 +409,30 @@ private:
     /**
      * @brief Compute energy values using span (zero-copy processing)
      */
-    [[nodiscard]] std::vector<double> compute_energy_values(std::span<const double> data, EnergyMethod method) const
+    [[nodiscard]] static std::vector<double> compute_energy_values(std::span<const double> data, const EnergyAnalyzerConfig& cfg)
     {
         namespace D = MayaFlux::Kinesis::Discrete;
-        const size_t num_windows = calculate_num_windows(data.size());
+        const uint32_t hop = cfg.hop_size;
+        const uint32_t window = cfg.window_size;
+        const size_t num_windows = data.size() < window ? 0 : (data.size() - window) / hop + 1;
 
-        switch (method) {
+        switch (static_cast<EnergyMethod>(cfg.method)) {
         case EnergyMethod::PEAK:
-            return D::peak(data, num_windows, m_hop_size, m_window_size);
+            return D::peak(data, num_windows, hop, window);
         case EnergyMethod::ZERO_CROSSING:
-            return D::zero_crossing_rate(data, num_windows, m_hop_size, m_window_size);
+            return D::zero_crossing_rate(data, num_windows, hop, window);
         case EnergyMethod::POWER:
-            return D::power(data, num_windows, m_hop_size, m_window_size);
+            return D::power(data, num_windows, hop, window);
         case EnergyMethod::DYNAMIC_RANGE:
-            return D::dynamic_range(data, num_windows, m_hop_size, m_window_size);
+            return D::dynamic_range(data, num_windows, hop, window);
         case EnergyMethod::SPECTRAL:
-            return D::spectral_energy(data, num_windows, m_hop_size, m_window_size);
+            return D::spectral_energy(data, num_windows, hop, window);
         case EnergyMethod::HARMONIC:
-            return D::low_frequency_energy(data, num_windows, m_hop_size, m_window_size);
+            return D::low_frequency_energy(data, num_windows, hop, window);
         case EnergyMethod::RMS:
         default:
-            return D::rms(data, num_windows, m_hop_size, m_window_size);
+            return D::rms(data, num_windows, hop, window);
         }
-    }
-
-    /**
-     * @brief Calculate number of windows for given data size
-     */
-    [[nodiscard]] size_t calculate_num_windows(size_t data_size) const
-    {
-        if (data_size < m_window_size)
-            return 0;
-        return (data_size - m_window_size) / m_hop_size + 1;
     }
 };
 
@@ -651,52 +454,34 @@ template <ComputeData InputType = std::vector<Kakshya::DataVariant>>
 using VariantEnergyAnalyzer = EnergyAnalyzer<InputType, std::vector<Kakshya::DataVariant>>;
 
 /**
- * @brief Extract a named scalar from an EnergyAnalysis result.
+ * @brief Select one scalar summary of the first channel of an EnergyAnalysis.
  *
- * Maps qualifier strings to scalar fields of the first channel in @p analysis.
- * All scalar-valued fields of ChannelEnergy are addressable.
+ * - PEAK: maximum window energy.
+ * - ZERO_CROSSING: number of detected energy events.
+ * - DYNAMIC_RANGE: maximum minus minimum window energy.
+ * - Every other method: mean energy across the analysis windows.
  *
- * Supported qualifiers:
- * - "mean_energy"    mean energy across analysis windows
- * - "max_energy"     maximum window energy
- * - "min_energy"     minimum window energy
- * - "variance"       variance of window energy values
- * - "dynamic_range"  max_energy - min_energy
- * - "event_count"    number of detected energy events (peaks, zero crossings, etc.)
- * - "window_count"   number of analysis windows
- *
- * An empty qualifier resolves to "mean_energy".
- * Unknown qualifiers fall back to mean_energy.
- *
- * @param analysis  Result produced by EnergyAnalyzer.
- * @param qualifier Name of the scalar to extract.
- * @return Extracted double value, or 0.0 if channels is empty.
+ * @param analysis Result produced by EnergyAnalyzer.
+ * @param method   Selects the scalar.
+ * @return The scalar, or 0.0 when channels is empty.
  */
 [[nodiscard]] MAYAFLUX_API inline double extract_scalar_energy(
-    const EnergyAnalysis& analysis, const std::string& qualifier)
+    const EnergyAnalysis& analysis, EnergyMethod method)
 {
     if (analysis.channels.empty())
         return 0.0;
 
     const auto& ch = analysis.channels[0];
-    const std::string q = qualifier.empty() ? "mean_energy" : qualifier;
-
-    if (q == "mean_energy")
-        return ch.mean_energy;
-    if (q == "max_energy")
+    switch (method) {
+    case EnergyMethod::PEAK:
         return ch.max_energy;
-    if (q == "min_energy")
-        return ch.min_energy;
-    if (q == "variance")
-        return ch.variance;
-    if (q == "dynamic_range")
-        return ch.max_energy - ch.min_energy;
-    if (q == "event_count")
+    case EnergyMethod::ZERO_CROSSING:
         return static_cast<double>(ch.event_positions.size());
-    if (q == "window_count")
-        return static_cast<double>(ch.energy_values.size());
-
-    return ch.mean_energy;
+    case EnergyMethod::DYNAMIC_RANGE:
+        return ch.max_energy - ch.min_energy;
+    default:
+        return ch.mean_energy;
+    }
 }
 
 } // namespace MayaFlux::Yantra

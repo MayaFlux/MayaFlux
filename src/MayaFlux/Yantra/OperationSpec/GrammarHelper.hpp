@@ -139,25 +139,33 @@ std::shared_ptr<OperationType> create_configured_operation(
 }
 
 /**
- * @brief Applies context parameters to an operation
+ * @brief Applies context settings to an operation
  * @tparam OperationType Type of operation to configure
  * @param operation Operation instance to configure
- * @param ctx Execution context containing parameters
+ * @param ctx Execution context carrying the settings
+ *
+ * The config structs in ctx.facets are merged into every operation. Analyzers
+ * are configured by those structs alone. Operations of the other families also
+ * receive each execution_metadata entry through set_parameter.
  */
 template <typename OperationType>
 void apply_context_parameters(std::shared_ptr<OperationType> operation, const ExecutionContext& ctx)
 {
-    for (const auto& [ctx_name, ctx_value] : ctx.execution_metadata) {
-        try {
-            operation->set_parameter(ctx_name, ctx_value);
-        } catch (...) {
-            MF_DEBUG(
-                Journal::Component::Yantra,
-                Journal::Context::Runtime,
-                "Context parameter '{}' with type {} does not apply to operation '{}'",
-                ctx_name,
-                ctx_value.type().name(),
-                operation->get_name());
+    operation->merge_config(ctx.facets);
+
+    if constexpr (!requires { operation->get_analysis_type(); }) {
+        for (const auto& [ctx_name, ctx_value] : ctx.execution_metadata) {
+            try {
+                operation->set_parameter(ctx_name, ctx_value);
+            } catch (...) {
+                MF_DEBUG(
+                    Journal::Component::Yantra,
+                    Journal::Context::Runtime,
+                    "Context parameter '{}' with type {} does not apply to operation '{}'",
+                    ctx_name,
+                    ctx_value.type().name(),
+                    operation->get_name());
+            }
         }
     }
 }

@@ -162,25 +162,15 @@ protected:
 };
 
 /**
- * @class AttributeOp
- * @brief Computes a scalar attribute per grain and writes it onto each Region.
+ * @struct AttributeConfig
+ * @brief Settings of AttributeOp, stored whole in the operation's facets.
  *
  * Attribution is resolved in the following priority order:
  *
- * 1. Span lambda : set via set_parameter("attribute_executor", AttributeExecutor)
- *    or present in ExecutionContext. For fully custom math.
- *
- * 2. Direct analyzer : set via set_parameter("analyzer", shared_ptr<UniversalAnalyzer<...>>)
- *    paired with set_parameter("analyzer_qualifier", Qualifier).
- *    Any existing concrete analyzer can be supplied pre-configured.
- *
- * 3. Analysis type : set via set_parameter("analysis_type", AnalysisType) with
- *    optional set_parameter("analyzer_qualifier", Qualifier). AttributeOp
- *    constructs a default-configured analyzer internally.
- *
- * Parameters common to all paths:
- * - The per-grain value is stored in the grain_feature facet of each region.
- * - channel      uint32_t     source channel index                  (default 0)
+ * 1. executor : a span lambda for fully custom math.
+ * 2. analyzer : a pre-configured analyzer, paired with qualifier. analysis_type
+ *    states which family it belongs to.
+ * 3. analysis_type : AttributeOp uses a default-configured analyzer of that family.
  *
  * Qualifier values select one scalar field of the analysis result struct.
  *
@@ -194,6 +184,40 @@ protected:
  * - MEAN (default)
  * - MAX, MIN, VARIANCE, STD_DEV, SKEWNESS, KURTOSIS, MEDIAN
  */
+struct AttributeConfig : OperationConfig {
+    static constexpr auto describe_facets()
+    {
+        return std::tuple {
+            FacetMember<&AttributeConfig::channel> {},
+            FacetMember<&AttributeConfig::analysis_type> {},
+            FacetMember<&AttributeConfig::qualifier> {},
+            FacetMember<&AttributeConfig::analyzer> {},
+            FacetMember<&AttributeConfig::executor> {},
+            FacetMember<&AttributeConfig::container> {},
+        };
+    }
+
+    /** Source channel index. */
+    uint32_t channel { 0 };
+    /** Analyzer family used when no executor is set. */
+    AnalysisType analysis_type { AnalysisType::FEATURE };
+    /** Scalar selected from the analysis result. */
+    Qualifier qualifier { 0 };
+    /** Pre-configured analyzer of the family named by analysis_type. */
+    std::shared_ptr<void> analyzer;
+    /** Custom per-grain math. */
+    AttributeExecutor executor;
+    /** Source used when the Datum carries no container. */
+    std::shared_ptr<Kakshya::SignalSourceContainer> container;
+};
+
+/**
+ * @class AttributeOp
+ * @brief Computes a scalar attribute per grain and writes it onto each Region.
+ *
+ * Configured by an AttributeConfig. The per-grain value is stored in the
+ * grain_feature facet of each region.
+ */
 class MAYAFLUX_API AttributeOp final
     : public RegionGroupAnalyzer<Kakshya::RegionGroup> {
 public:
@@ -202,12 +226,24 @@ public:
         return AnalysisType::FEATURE;
     }
 
-protected:
-    [[nodiscard]] std::string get_analyzer_name() const override
+    /**
+     * @brief The stored settings, or defaults when none were set.
+     */
+    [[nodiscard]] const AttributeConfig& config() const override
+    {
+        if (const auto* stored = resolved_config<AttributeConfig>()) {
+            return *stored;
+        }
+        static const AttributeConfig defaults {};
+        return defaults;
+    }
+
+    [[nodiscard]] std::string get_name() const override
     {
         return "Granular::AttributeOp";
     }
 
+protected:
     Datum<Kakshya::RegionGroup> analyze_implementation(
         const Datum<Kakshya::RegionGroup>& input) override;
 
@@ -216,14 +252,12 @@ private:
      * @brief Resolve and execute attribution for a single grain.
      * @param grain Source region defining the grain boundaries.
      * @param container Signal data source.
-     * @param channel Channel index to extract samples from.
-     * @param ctx Current execution context carrying parameters.
+     * @param ctx Execution context passed to a custom executor.
      * @return Scalar attribute value for this grain.
      */
     double compute_grain_attribute(
         const Kakshya::Region& grain,
         const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
-        uint32_t channel,
         const ExecutionContext& ctx) const;
 
     /**
@@ -341,8 +375,12 @@ struct GranularConfig {
     ctx.execution_metadata["channel"] = config.channel;
     ctx.execution_metadata["ascending"] = config.ascending;
     ctx.execution_metadata["gpu_sort_threshold"] = config.gpu_sort_threshold;
-    ctx.execution_metadata["analysis_type"] = analysis_type;
-    ctx.execution_metadata["analyzer_qualifier"] = qualifier;
+
+    AttributeConfig attribute;
+    attribute.channel = config.channel;
+    attribute.analysis_type = analysis_type;
+    attribute.qualifier = qualifier;
+    ctx.facets.set(std::move(attribute));
     return ctx;
 }
 
@@ -368,8 +406,13 @@ template <ComputeData InputType, ComputeData OutputType>
     ctx.execution_metadata["channel"] = config.channel;
     ctx.execution_metadata["ascending"] = config.ascending;
     ctx.execution_metadata["gpu_sort_threshold"] = config.gpu_sort_threshold;
-    ctx.execution_metadata["analyzer"] = std::static_pointer_cast<void>(analyzer);
-    ctx.execution_metadata["analyzer_qualifier"] = qualifier;
+
+    AttributeConfig attribute;
+    attribute.channel = config.channel;
+    attribute.analysis_type = analyzer->get_analysis_type();
+    attribute.qualifier = qualifier;
+    attribute.analyzer = std::static_pointer_cast<void>(analyzer);
+    ctx.facets.set(std::move(attribute));
     return ctx;
 }
 
@@ -390,7 +433,11 @@ template <ComputeData InputType, ComputeData OutputType>
     ctx.execution_metadata["channel"] = config.channel;
     ctx.execution_metadata["ascending"] = config.ascending;
     ctx.execution_metadata["gpu_sort_threshold"] = config.gpu_sort_threshold;
-    ctx.execution_metadata["attribute_executor"] = std::move(executor);
+
+    AttributeConfig attribute;
+    attribute.channel = config.channel;
+    attribute.executor = std::move(executor);
+    ctx.facets.set(std::move(attribute));
     return ctx;
 }
 

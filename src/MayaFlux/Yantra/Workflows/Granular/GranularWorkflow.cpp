@@ -12,50 +12,6 @@ namespace MayaFlux::Yantra::Granular {
 
 namespace {
 
-    double energy_scalar(const EnergyAnalysis& analysis, EnergyMethod method)
-    {
-        if (analysis.channels.empty())
-            return 0.0;
-
-        const auto& ch = analysis.channels[0];
-        switch (method) {
-        case EnergyMethod::PEAK:
-            return ch.max_energy;
-        case EnergyMethod::ZERO_CROSSING:
-            return static_cast<double>(ch.event_positions.size());
-        case EnergyMethod::DYNAMIC_RANGE:
-            return ch.max_energy - ch.min_energy;
-        default:
-            return ch.mean_energy;
-        }
-    }
-
-    double statistical_scalar(const StatisticalAnalysis& analysis, StatisticalMethod method)
-    {
-        if (analysis.channel_statistics.empty())
-            return 0.0;
-
-        const auto& ch = analysis.channel_statistics[0];
-        switch (method) {
-        case StatisticalMethod::MAX:
-            return ch.max_stat;
-        case StatisticalMethod::MIN:
-            return ch.min_stat;
-        case StatisticalMethod::VARIANCE:
-            return ch.stat_variance;
-        case StatisticalMethod::STD_DEV:
-            return ch.stat_std_dev;
-        case StatisticalMethod::SKEWNESS:
-            return ch.skewness;
-        case StatisticalMethod::KURTOSIS:
-            return ch.kurtosis;
-        case StatisticalMethod::MEDIAN:
-            return ch.median;
-        default:
-            return ch.mean_stat;
-        }
-    }
-
     std::shared_ptr<Kakshya::SoundFileContainer> run_to_container(
         const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
         const ExecutionContext& ctx,
@@ -422,12 +378,12 @@ double AttributeOp::extract_scalar(
 {
     if (type == AnalysisType::FEATURE) {
         const auto& ea = safe_any_cast_or_throw<EnergyAnalysis>(analysis_result);
-        return energy_scalar(ea, static_cast<EnergyMethod>(qualifier));
+        return extract_scalar_energy(ea, static_cast<EnergyMethod>(qualifier));
     }
 
     if (type == AnalysisType::STATISTICAL) {
         const auto& sa = safe_any_cast_or_throw<StatisticalAnalysis>(analysis_result);
-        return statistical_scalar(sa, static_cast<StatisticalMethod>(qualifier));
+        return extract_scalar_statistics(sa, static_cast<StatisticalMethod>(qualifier));
     }
 
     return 0.0;
@@ -436,87 +392,44 @@ double AttributeOp::extract_scalar(
 double AttributeOp::compute_grain_attribute(
     const Kakshya::Region& grain,
     const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
-    uint32_t channel,
     const ExecutionContext& ctx) const
 {
-    AttributeExecutor exec;
+    const auto& cfg = config();
 
-    if (ctx.execution_metadata.contains("attribute_executor")) {
-        exec = safe_any_cast_or_default<AttributeExecutor>(
-            ctx.execution_metadata.at("attribute_executor"), nullptr);
-    }
-
-    if (!exec) {
-        if (auto p = this->get_parameter("attribute_executor"); p.has_value())
-            exec = safe_any_cast_or_default<AttributeExecutor>(p, nullptr);
-    }
-
-    if (exec) {
-        const auto samples = Kakshya::extract_region_channel(grain, container, channel);
-        return exec(std::span<const double>(samples.data(), samples.size()), ctx);
+    if (cfg.executor) {
+        const auto samples = Kakshya::extract_region_channel(grain, container, cfg.channel);
+        return cfg.executor(std::span<const double>(samples.data(), samples.size()), ctx);
     }
 
     const auto grain_variants = container->get_region_data(grain);
 
-    const Qualifier qualifier = [&]() -> Qualifier {
-        if (ctx.execution_metadata.contains("analyzer_qualifier")) {
-            return safe_any_cast_or_default<Qualifier>(
-                ctx.execution_metadata.at("analyzer_qualifier"), Qualifier { 0 });
-        }
-        auto p = this->get_parameter("analyzer_qualifier");
-        return p.has_value() ? safe_any_cast_or_default<Qualifier>(p, Qualifier { 0 }) : Qualifier { 0 };
-    }();
-
-    const AnalysisType type = [&]() {
-        if (ctx.execution_metadata.contains("analysis_type")) {
-            return safe_any_cast_or_default<AnalysisType>(
-                ctx.execution_metadata.at("analysis_type"), AnalysisType::FEATURE);
-        }
-
-        auto p = this->get_parameter("analysis_type");
-        return p.has_value()
-            ? safe_any_cast_or_default<AnalysisType>(p, AnalysisType::FEATURE)
-            : AnalysisType::FEATURE;
-    }();
-
-    std::shared_ptr<void> raw_analyzer;
-    if (ctx.execution_metadata.contains("analyzer")) {
-        raw_analyzer = safe_any_cast_or_default<std::shared_ptr<void>>(
-            ctx.execution_metadata.at("analyzer"), nullptr);
-    }
-
-    if (!raw_analyzer) {
-        if (auto p = this->get_parameter("analyzer"); p.has_value())
-            raw_analyzer = safe_any_cast_or_default<std::shared_ptr<void>>(p, nullptr);
-    }
-
-    if (raw_analyzer) {
-        if (type == AnalysisType::FEATURE) {
-            return energy_scalar(
-                std::static_pointer_cast<VariantEnergyAnalyzer<>>(raw_analyzer)
+    if (cfg.analyzer) {
+        if (cfg.analysis_type == AnalysisType::FEATURE) {
+            return extract_scalar_energy(
+                std::static_pointer_cast<VariantEnergyAnalyzer<>>(cfg.analyzer)
                     ->analyze_energy(grain_variants),
-                static_cast<EnergyMethod>(qualifier));
+                static_cast<EnergyMethod>(cfg.qualifier));
         }
 
-        if (type == AnalysisType::STATISTICAL) {
-            return statistical_scalar(
-                std::static_pointer_cast<VariantStatisticalAnalyzer<>>(raw_analyzer)
+        if (cfg.analysis_type == AnalysisType::STATISTICAL) {
+            return extract_scalar_statistics(
+                std::static_pointer_cast<VariantStatisticalAnalyzer<>>(cfg.analyzer)
                     ->analyze_statistics(grain_variants),
-                static_cast<StatisticalMethod>(qualifier));
+                static_cast<StatisticalMethod>(cfg.qualifier));
         }
         return 0.0;
     }
 
-    if (type == AnalysisType::FEATURE) {
-        return energy_scalar(
+    if (cfg.analysis_type == AnalysisType::FEATURE) {
+        return extract_scalar_energy(
             m_energy_analyzer.analyze_energy(grain_variants),
-            static_cast<EnergyMethod>(qualifier));
+            static_cast<EnergyMethod>(cfg.qualifier));
     }
 
-    if (type == AnalysisType::STATISTICAL) {
-        return statistical_scalar(
+    if (cfg.analysis_type == AnalysisType::STATISTICAL) {
+        return extract_scalar_statistics(
             m_stat_analyzer.analyze_statistics(grain_variants),
-            static_cast<StatisticalMethod>(qualifier));
+            static_cast<StatisticalMethod>(cfg.qualifier));
     }
 
     return 0.0;
@@ -532,35 +445,25 @@ Datum<Kakshya::RegionGroup> AttributeOp::analyze_implementation(
     if (input.data.regions.empty())
         return input;
 
-    std::shared_ptr<Kakshya::SignalSourceContainer> container;
+    const auto& cfg = config();
 
-    if (input.container && *input.container) {
-        container = *input.container;
-    } else {
-        auto param = this->get_parameter("container");
-        if (param.has_value()) {
-            container = safe_any_cast_or_default<std::shared_ptr<Kakshya::SignalSourceContainer>>(
-                param, nullptr);
-        }
-    }
+    const std::shared_ptr<Kakshya::SignalSourceContainer> container
+        = (input.container && *input.container) ? *input.container : cfg.container;
 
     if (!container) {
         error<std::runtime_error>(
             Journal::Component::Yantra, Journal::Context::ComputeMatrix,
             std::source_location::current(),
-            "AttributeOp: no container available via Datum or parameters");
+            "AttributeOp: no container available via Datum or config");
     }
 
-    const auto channel = this->template get_parameter_or_default<uint32_t>("channel", 0U);
-
     ExecutionContext ctx;
-    for (const auto& [k, v] : this->get_all_analysis_parameters())
-        ctx.execution_metadata[k] = v;
+    ctx.facets.set(cfg);
 
     Datum<Kakshya::RegionGroup> out { input.data, container };
 
     for (auto& grain : out.data.regions)
-        grain.set(grain_feature, compute_grain_attribute(grain, container, channel, ctx));
+        grain.set(grain_feature, compute_grain_attribute(grain, container, ctx));
 
     return out;
 }

@@ -246,6 +246,14 @@ public:
     }
 
     /**
+     * @brief Adds the config structs of @p incoming, replacing stored ones of the same type.
+     */
+    void merge_config(const Facets& incoming)
+    {
+        m_facets.merge(incoming);
+    }
+
+    /**
      * @brief The base view of this operation's config.
      *
      * Families and concrete operations override this to return their own

@@ -145,8 +145,7 @@ DataType transform_by_energy(DataType& input,
 {
     auto [target_data, structure_info] = OperationHelper::extract_structured_double(input);
 
-    auto energy_analyzer = std::make_shared<StandardEnergyAnalyzer>(window_size, hop_size);
-    energy_analyzer->set_energy_method(EnergyMethod::RMS);
+    auto energy_analyzer = std::make_shared<StandardEnergyAnalyzer>(EnergyAnalyzerConfig { { .window_size = window_size, .hop_size = hop_size } });
     auto energy_result = energy_analyzer->analyze_energy(input);
 
     for (size_t ch = 0; ch < energy_result.channels.size() && ch < target_data.size(); ++ch) {
@@ -197,8 +196,7 @@ DataType transform_by_energy(DataType& input,
 {
     auto [target_data, structure_info] = OperationHelper::setup_operation_buffer(input, working_buffer);
 
-    auto energy_analyzer = std::make_shared<StandardEnergyAnalyzer>(window_size, hop_size);
-    energy_analyzer->set_energy_method(EnergyMethod::RMS);
+    auto energy_analyzer = std::make_shared<StandardEnergyAnalyzer>(EnergyAnalyzerConfig { { .window_size = window_size, .hop_size = hop_size } });
     auto energy_result = energy_analyzer->analyze_energy(input);
 
     for (size_t ch = 0; ch < energy_result.channels.size() && ch < target_data.size(); ++ch) {
@@ -623,8 +621,7 @@ std::vector<Kakshya::Region> detect_regions_by_energy(const DataType& input,
     uint32_t window_size,
     uint32_t hop_size)
 {
-    auto energy_analyzer = std::make_shared<StandardEnergyAnalyzer>(window_size, hop_size);
-    energy_analyzer->set_energy_method(EnergyMethod::RMS);
+    auto energy_analyzer = std::make_shared<StandardEnergyAnalyzer>(EnergyAnalyzerConfig { { .window_size = window_size, .hop_size = hop_size } });
     auto energy_result = energy_analyzer->analyze_energy(input);
 
     std::vector<Kakshya::Region> regions;
