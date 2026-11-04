@@ -599,20 +599,19 @@ VisionAnalyzer::output_type VisionAnalyzer::run_operation(const input_type& inpu
     output.metadata = input.metadata;
     output.facets = input.facets;
 
-    if (const auto image = Kakshya::get_metadata_value<std::shared_ptr<Core::VKImage>>(input.metadata, "vision_image");
-        image && *image) {
-        output.metadata["vision_analysis"] = analyze_vision(*image);
+    if (const auto image = input.facets.get(Kinesis::Vision::vision_frame())) {
+        output.facets.set(analyze_vision(image));
         return output;
     }
 
     if (!input.data) {
-        output.metadata["error"] = std::string("VisionAnalyzer: missing container");
+        MF_ERROR(Journal::Component::Yantra, Journal::Context::ComputeMatrix, "VisionAnalyzer: missing container");
         return output;
     }
 
     const auto index = Kakshya::get_metadata_value<size_t>(input.metadata, "container_index").value_or(0);
 
-    output.metadata["vision_analysis"] = analyze_vision(input.data, index);
+    output.facets.set(analyze_vision(input.data, index));
     return output;
 }
 

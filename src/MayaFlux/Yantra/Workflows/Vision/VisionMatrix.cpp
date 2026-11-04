@@ -87,12 +87,12 @@ void VisionMatrix::extract(const Kinesis::Vision::VisionAnalysis& analysis, cons
         return;
 
     ContainerIO input;
-    input.metadata["vision_analysis"] = analysis;
-    input.metadata["vision_image"] = image;
+    input.facets.set(analysis);
+    input.facets.set(Kinesis::Vision::vision_frame(), image);
 
     const auto output = with(std::move(input)).then<VisionExtractor>("extract").to_io();
-    if (const auto extracted = Kakshya::get_metadata_value<std::shared_ptr<Core::VKImage>>(output.metadata, "vision_extraction"))
-        m_extraction = *extracted;
+    if (const auto* extracted = output.facets.get<VisionExtraction>())
+        m_extraction = extracted->image;
 }
 
 std::shared_ptr<const Kinesis::Vision::VisionResult> VisionMatrix::result(VisionIntent intent)

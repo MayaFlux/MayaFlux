@@ -776,74 +776,75 @@ VisionExtractor::output_type VisionExtractor::run_operation(const input_type& in
     output.metadata = input.metadata;
     output.facets = input.facets;
 
-    const auto supplied = Kakshya::get_metadata_value<std::shared_ptr<Core::VKImage>>(input.metadata, "vision_image");
-    const bool has_image = supplied && *supplied;
+    const auto supplied = input.facets.get(Kinesis::Vision::vision_frame());
 
-    if (!has_image && !input.data) {
-        output.metadata["error"] = std::string("VisionExtractor: missing container");
+    if (!supplied && !input.data) {
+        MF_ERROR(Journal::Component::Yantra, Journal::Context::ComputeMatrix, "VisionExtractor: missing container");
         return output;
     }
 
-    const auto analysis = Kakshya::get_metadata_value<Kinesis::Vision::VisionAnalysis>(
-        input.metadata, "vision_analysis");
+    const auto* analysis = input.facets.get<Kinesis::Vision::VisionAnalysis>();
     if (!analysis) {
-        output.metadata["error"] = std::string("VisionExtractor: missing vision_analysis metadata");
+        MF_ERROR(Journal::Component::Yantra, Journal::Context::ComputeMatrix, "VisionExtractor: missing VisionAnalysis facet");
         return output;
     }
 
     const auto index = Kakshya::get_metadata_value<size_t>(input.metadata, "container_index").value_or(0);
-    const auto image = has_image ? *supplied : resolve_image(input.data, index);
+    const auto image = supplied ? supplied : resolve_image(input.data, index);
     if (!image) {
-        output.metadata["error"] = std::string("VisionExtractor: could not resolve image from container");
+        MF_ERROR(Journal::Component::Yantra, Journal::Context::ComputeMatrix, "VisionExtractor: could not resolve image from container");
         return output;
     }
 
     const uint32_t w = image->get_width();
     const uint32_t h = image->get_height();
 
+    VisionExtraction extraction;
+    extraction.mode = m_mode;
+
     switch (m_mode) {
     case VisionExtractMode::Crop:
-        output.metadata["vision_extraction"] = crop(image, *analysis, m_out_w, m_out_h);
+        extraction.image = crop(image, *analysis, m_out_w, m_out_h);
         break;
     case VisionExtractMode::Sample:
-        output.metadata["vision_extraction"] = sample(image, *analysis, w, h);
+        extraction.sample = sample(image, *analysis, w, h);
         break;
     case VisionExtractMode::Patches:
-        output.metadata["vision_extraction"] = patches(image, *analysis, m_patch_w, m_patch_h, w, h);
+        extraction.image = patches(image, *analysis, m_patch_w, m_patch_h, w, h);
         break;
     case VisionExtractMode::Crops:
-        output.metadata["vision_extraction"] = crops(image, *analysis, m_tile_w, m_tile_h);
+        extraction.image = crops(image, *analysis, m_tile_w, m_tile_h);
         break;
     case VisionExtractMode::SampleRegions:
-        output.metadata["vision_extraction"] = sample_regions(image, *analysis, w, h);
+        extraction.samples = sample_regions(image, *analysis, w, h);
         break;
     case VisionExtractMode::SamplePoints:
-        output.metadata["vision_extraction"] = sample_points(image, *analysis, m_sample_radius, w, h);
+        extraction.points = sample_points(image, *analysis, m_sample_radius, w, h);
         break;
     case VisionExtractMode::Silhouettes:
-        output.metadata["vision_extraction"] = silhouettes(image, *analysis, m_tile_w, m_tile_h);
+        extraction.image = silhouettes(image, *analysis, m_tile_w, m_tile_h);
         break;
     case VisionExtractMode::Equalize:
-        output.metadata["vision_extraction"] = equalize(image, *analysis, w, h);
+        extraction.image = equalize(image, *analysis, w, h);
         break;
     case VisionExtractMode::Expose:
-        output.metadata["vision_extraction"] = expose(image, *analysis, m_exposure_target, w, h);
+        extraction.image = expose(image, *analysis, m_exposure_target, w, h);
         break;
     case VisionExtractMode::Edges:
-        output.metadata["vision_extraction"] = edges(image, *analysis, w, h);
+        extraction.image = edges(image, *analysis, w, h);
         break;
     case VisionExtractMode::MotionMask:
-        output.metadata["vision_extraction"] = motion_mask(image, *analysis, w, h);
+        extraction.image = motion_mask(image, *analysis, w, h);
         break;
     case VisionExtractMode::Annotate:
-        output.metadata["vision_extraction"] = annotate(image, *analysis, w, h);
+        extraction.image = annotate(image, *analysis, w, h);
         break;
     case VisionExtractMode::SelectElement:
-        if (const auto selected = select_element(*analysis, m_focus.value_or(ElementFocus {})))
-            output.metadata["vision_extraction"] = *selected;
+        extraction.element = select_element(*analysis, m_focus.value_or(ElementFocus {}));
         break;
     }
 
+    output.facets.set(std::move(extraction));
     return output;
 }
 

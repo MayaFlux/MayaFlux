@@ -161,6 +161,17 @@ public:
         return &static_cast<const Entry<T>*>(it->second.get())->value;
     }
 
+    /** @brief The shared pointer under @p key, or an empty one when absent. */
+    template <typename U>
+    [[nodiscard]] std::shared_ptr<U> get(const Facet<std::shared_ptr<U>>& key) const
+    {
+        const auto it = m_entries.find(key.id());
+        if (it == m_entries.end()) {
+            return nullptr;
+        }
+        return static_cast<const Entry<std::shared_ptr<U>>*>(it->second.get())->value;
+    }
+
     /** @brief Returns the described struct stored under its type, or nullptr. */
     template <typename T>
         requires requires { T::describe_facets(); }

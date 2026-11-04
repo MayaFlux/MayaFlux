@@ -76,6 +76,35 @@ struct ElementFocus {
 };
 
 /**
+ * @struct VisionExtraction
+ * @brief What one VisionExtractor run produced, stored on the output's facets.
+ *
+ * mode names the mode the run executed. Only the members that mode produces
+ * are filled; the rest stay empty. A present but empty samples or points
+ * means the run found nothing to sample.
+ */
+struct VisionExtraction {
+    static constexpr auto describe_facets()
+    {
+        return std::tuple {
+            FacetMember<&VisionExtraction::mode> {},
+            FacetMember<&VisionExtraction::image> {},
+            FacetMember<&VisionExtraction::sample> {},
+            FacetMember<&VisionExtraction::samples> {},
+            FacetMember<&VisionExtraction::points> {},
+            FacetMember<&VisionExtraction::element> {},
+        };
+    }
+
+    VisionExtractMode mode {};
+    std::shared_ptr<Core::VKImage> image;
+    std::optional<Kinesis::Vision::FieldSample> sample;
+    std::optional<std::vector<Kinesis::Vision::FieldSample>> samples;
+    std::optional<std::vector<glm::vec4>> points;
+    std::optional<size_t> element;
+};
+
+/**
  * @class VisionExtractor
  * @brief Extraction from each VisionAnalysis field.
  *
