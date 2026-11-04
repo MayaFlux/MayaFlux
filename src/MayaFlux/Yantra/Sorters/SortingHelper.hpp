@@ -135,7 +135,7 @@ std::vector<std::vector<size_t>> generate_compute_data_indices(const Datum<T>& d
 
     if constexpr (SingleVariant<T>) {
         auto channel = OperationHelper::extract_numeric_data(data.data);
-        return { Kinesis::Discrete::span_sort_indices({ channel }, direction) };
+        return { Kinesis::Discrete::span_sort_indices({ channel.front() }, direction) };
     } else {
         auto channels = OperationHelper::extract_numeric_data(data.data, data.needs_processig());
         return Kinesis::Discrete::channels_sort_indices(channels, direction);
