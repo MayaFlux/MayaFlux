@@ -100,10 +100,9 @@ std::vector<double> apply_spectral(
         Eigen::VectorXcd full = to_full_spectrum(onesided, N);
         fft.inv(ifft_out, full);
 
-        const double inv_N = 1.0 / static_cast<double>(N);
         for (uint32_t k = 0; k < N && pos + k < src.size(); ++k) {
             const double w = win[k];
-            output[pos + k] += ifft_out(static_cast<Eigen::Index>(k)) * inv_N * w;
+            output[pos + k] += ifft_out(static_cast<Eigen::Index>(k)) * w;
             norm[pos + k] += w * w;
         }
     }
@@ -244,13 +243,17 @@ std::vector<double> phase_vocoder_stretch(
             const double mag = std::abs(bin);
             const double phase = std::arg(bin);
 
-            const double delta = phase - prev_phase[b]
-                - omega_factor * static_cast<double>(b);
-            const double true_f = omega_factor * static_cast<double>(b)
-                + wrap_phase(delta);
+            if (f == 0) {
+                phase_accum[b] = phase;
+            } else {
+                const double delta = phase - prev_phase[b]
+                    - omega_factor * static_cast<double>(b);
+                const double true_f = omega_factor * static_cast<double>(b)
+                    + wrap_phase(delta);
 
-            phase_accum[b] += static_cast<double>(Hs) * true_f
-                / static_cast<double>(Ha);
+                phase_accum[b] += static_cast<double>(Hs) * true_f
+                    / static_cast<double>(Ha);
+            }
             prev_phase[b] = phase;
 
             synth[b] = std::polar(mag, phase_accum[b]);
@@ -260,10 +263,9 @@ std::vector<double> phase_vocoder_stretch(
         fft.inv(ifft_out, full);
 
         const size_t out_pos = f * Hs;
-        const double inv_N = 1.0 / static_cast<double>(N);
         for (uint32_t k = 0; k < N && out_pos + k < out_len; ++k) {
             const double w = win[k];
-            output[out_pos + k] += ifft_out(static_cast<Eigen::Index>(k)) * inv_N * w;
+            output[out_pos + k] += ifft_out(static_cast<Eigen::Index>(k)) * w;
             norm[out_pos + k] += w * w;
         }
     }
@@ -289,9 +291,7 @@ std::vector<double> pitch_shift(
         return { src.begin(), src.end() };
 
     const double pitch_ratio = std::pow(2.0, semitones / 12.0);
-    const double stretch_ratio = 1.0 / pitch_ratio;
-
-    std::vector<double> stretched = phase_vocoder_stretch(src, stretch_ratio, window_size, analysis_hop);
+    std::vector<double> stretched = phase_vocoder_stretch(src, pitch_ratio, window_size, analysis_hop);
 
     if (stretched.empty())
         return {};
