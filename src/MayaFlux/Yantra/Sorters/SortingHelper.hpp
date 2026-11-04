@@ -6,27 +6,27 @@
 
 #include "MayaFlux/Kinesis/Discrete/Sort.hpp"
 
+#include "MayaFlux/Transitive/Facet/Facets.hpp"
+
 namespace MayaFlux::Yantra {
 
 using SortingDirection = Kinesis::Discrete::SortingDirection;
 using SortingAlgorithm = Kinesis::Discrete::SortingAlgorithm;
+using SortOrder = Kinesis::Discrete::SortOrder;
 
 /**
  * @struct SortKey
- * @brief Multi-dimensional sort key specification for complex sorting
+ * @brief One term of a weighted sort score.
+ *
+ * Reads one feature facet from each element. direction sets the sign of the
+ * term, weight its size (must be positive), and normalize squashes the value
+ * with tanh before weighting.
  */
 struct MAYAFLUX_API SortKey {
-    std::string name;
-    std::function<double(const std::any&)> extractor; ///< Extract sort value from data
-    SortingDirection direction = SortingDirection::ASCENDING;
-    double weight = 1.0; ///< Weight for multi-key sorting
-    bool normalize = false; ///< Normalize values before sorting
-
-    SortKey(std::string n, std::function<double(const std::any&)> e)
-        : name(std::move(n))
-        , extractor(std::move(e))
-    {
-    }
+    Facet<double> feature;
+    SortingDirection direction { SortingDirection::ASCENDING };
+    double weight { 1.0 };
+    bool normalize { false };
 };
 
 /**
@@ -38,7 +38,7 @@ struct MAYAFLUX_API SortKey {
  */
 template <ComputeData T>
 void sort_compute_data_inplace(Datum<T>& data,
-    SortingDirection direction,
+    SortOrder direction,
     SortingAlgorithm algorithm)
 {
     if constexpr (RequiresContainer<T>) {
@@ -64,7 +64,7 @@ void sort_compute_data_inplace(Datum<T>& data,
  */
 template <ComputeData T>
 T sort_compute_data_extract(const T& data,
-    SortingDirection direction,
+    SortOrder direction,
     SortingAlgorithm algorithm)
 {
     if constexpr (RequiresContainer<T>) {
@@ -92,7 +92,7 @@ T sort_compute_data_extract(const T& data,
  */
 template <typename T>
 T sort_compute_data_extract(const Datum<T>& data,
-    SortingDirection direction,
+    SortOrder direction,
     SortingAlgorithm algorithm)
 {
     std::vector<std::vector<double>> working_buffer;
@@ -126,7 +126,7 @@ T sort_compute_data(const T& data, SortingDirection direction = SortingDirection
  */
 template <ComputeData T>
 std::vector<std::vector<size_t>> generate_compute_data_indices(const Datum<T>& data,
-    SortingDirection direction)
+    SortOrder direction)
 {
     if constexpr (RequiresContainer<T>) {
         auto channels = OperationHelper::extract_numeric_data(data.data, data.container.value());
@@ -143,35 +143,39 @@ std::vector<std::vector<size_t>> generate_compute_data_indices(const Datum<T>& d
 }
 
 /**
- * @brief Creates a multi-key comparator for complex sorting
- * @tparam T Data type being sorted
- * @param keys Vector of sort keys with extractors and weights
- * @return Lambda comparator that applies all keys in order
+ * @brief Checks that every sort key has a positive, finite weight.
+ * @throws std::invalid_argument when a weight is not a positive finite number.
  */
-template <typename T>
-auto create_multi_key_comparator(const std::vector<SortKey>& keys)
+inline void validate_sort_keys(const std::vector<SortKey>& keys)
 {
-    return [keys](const T& a, const T& b) -> bool {
-        for (const auto& key : keys) {
-            try {
-                double val_a = key.extractor(std::any(a));
-                double val_b = key.extractor(std::any(b));
-
-                if (key.normalize) {
-                    val_a = std::tanh(val_a);
-                    val_b = std::tanh(val_b);
-                }
-
-                double weighted_diff = key.weight * (val_a - val_b);
-                if (std::abs(weighted_diff) > 1e-9) {
-                    return key.direction == SortingDirection::ASCENDING ? weighted_diff < 0 : weighted_diff > 0;
-                }
-            } catch (...) {
-                continue;
-            }
+    for (const auto& key : keys) {
+        if (!(key.weight > 0.0) || !std::isfinite(key.weight)) {
+            error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(), "Sort key weight must be a positive finite number");
         }
-        return false;
-    };
+    }
+}
+
+/**
+ * @brief Weighted score of one element across the sort keys.
+ *
+ * score = sum over keys of sign(direction) * weight * f(feature), where f is
+ * tanh when normalize is set and the identity otherwise. Returns nullopt when
+ * the element lacks the feature of any key, so the caller decides how to treat it.
+ */
+template <typename Element>
+[[nodiscard]] std::optional<double> weighted_sort_score(const Element& element, std::span<const SortKey> keys)
+{
+    double score = 0.0;
+    for (const auto& key : keys) {
+        const double* value = element.get(key.feature);
+        if (value == nullptr) {
+            return std::nullopt;
+        }
+        const double x = key.normalize ? std::tanh(*value) : *value;
+        const double sign = key.direction == SortingDirection::ASCENDING ? 1.0 : -1.0;
+        score += sign * key.weight * x;
+    }
+    return score;
 }
 
 /**
@@ -191,40 +195,6 @@ double get_temporal_position(const T& item)
         static_assert(std::is_same_v<T, void>, "Type does not have temporal information");
         return 0.0;
     }
-}
-
-/**
- * @brief Create universal sort key extractor for common data types
- * @tparam T Data type to extract sort key from
- * @param name Sort key name
- * @param direction Sort direction (for the key metadata)
- * @return SortKey with appropriate extractor
- */
-template <typename T>
-SortKey create_universal_sort_key(const std::string& name,
-    SortingDirection direction = SortingDirection::ASCENDING)
-{
-    SortKey key(name, [](const std::any& data) -> double {
-        auto cast_result = safe_any_cast<T>(data);
-        if (!cast_result) {
-            return 0.0;
-        }
-
-        const T& value = *cast_result.value;
-
-        if constexpr (ArithmeticData<T>) {
-            return static_cast<double>(value);
-        } else if constexpr (ComplexData<T>) {
-            return std::abs(value);
-        } else if constexpr (requires { get_temporal_position(value); }) {
-            return get_temporal_position(value);
-        } else {
-            return 0.0;
-        }
-    });
-
-    key.direction = direction;
-    return key;
 }
 
 } // namespace MayaFlux::Yantra

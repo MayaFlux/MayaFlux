@@ -145,15 +145,15 @@ std::shared_ptr<OperationType> create_configured_operation(
  * @param ctx Execution context carrying the settings
  *
  * The config structs in ctx.facets are merged into every operation. Analyzers
- * are configured by those structs alone. Operations of the other families also
- * receive each execution_metadata entry through set_parameter.
+ * and sorters are configured by those structs alone. Operations of the other
+ * families still receive each execution_metadata entry through set_parameter.
  */
 template <typename OperationType>
 void apply_context_parameters(std::shared_ptr<OperationType> operation, const ExecutionContext& ctx)
 {
     operation->merge_config(ctx.facets);
 
-    if constexpr (!requires { operation->get_analysis_type(); }) {
+    if constexpr (!requires { operation->get_analysis_type(); } && !requires { operation->get_sorting_type(); }) {
         for (const auto& [ctx_name, ctx_value] : ctx.execution_metadata) {
             try {
                 operation->set_parameter(ctx_name, ctx_value);

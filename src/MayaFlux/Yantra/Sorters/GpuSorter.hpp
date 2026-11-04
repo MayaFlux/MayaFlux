@@ -38,11 +38,6 @@ public:
     [[nodiscard]] std::shared_ptr<GpuExecutionContext<InputType, OutputType>>
     get_executor() const { return m_executor; }
 
-    [[nodiscard]] std::string get_sorter_name() const override
-    {
-        return "GpuSorter";
-    }
-
     [[nodiscard]] SortingType get_sorting_type() const override
     {
         return SortingType::CUSTOM;

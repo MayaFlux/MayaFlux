@@ -6,7 +6,7 @@
 #include "MayaFlux/Yantra/Analyzers/EnergyAnalyzer.hpp"
 #include "MayaFlux/Yantra/Analyzers/StatisticalAnalyzer.hpp"
 #include "MayaFlux/Yantra/Extractors/FeatureExtractor.hpp"
-#include "MayaFlux/Yantra/Sorters/StandardSorter.hpp"
+#include "MayaFlux/Yantra/Sorters/RegionKeySorter.hpp"
 
 #include "MayaFlux/Kakshya/Utils/RegionUtils.hpp"
 
@@ -29,7 +29,7 @@ using Qualifier = uint8_t;
 /**
  * @brief The computed feature value of one grain, stored on the region.
  *
- * AttributeOp writes it and SortOp orders regions by it through RegionGroup::sort.
+ * AttributeOp writes it and SortOp (RegionKeySorter) orders regions by it through a sort key.
  */
 inline const Facet<double> grain_feature {};
 
@@ -307,30 +307,11 @@ private:
 };
 
 /**
- * @class SortOp
- * @brief Sorts grains by the grain_feature facet, with optional GPU dispatch.
+ * @brief Grain ordering. Sorts region groups by the keys in its RegionKeySorterConfig.
  *
- * Parameters (via set_parameter or ExecutionContext):
- * - ascending           bool         sort direction                    (default true)
- * - gpu_sort_threshold  uint32_t     grain count threshold for GPU path (default 0 = CPU only)
+ * make_granular_context writes the key on grain_feature and the GPU threshold.
  */
-class MAYAFLUX_API SortOp final
-    : public StandardSorter<Kakshya::RegionGroup, Kakshya::RegionGroup> {
-public:
-    [[nodiscard]] SortingType get_sorting_type() const override
-    {
-        return SortingType::ALGORITHMIC;
-    }
-
-protected:
-    [[nodiscard]] std::string get_sorter_name() const override
-    {
-        return "Granular::SortOp";
-    }
-
-    Datum<Kakshya::RegionGroup> sort_implementation(
-        const Datum<Kakshya::RegionGroup>& input) override;
-};
+using SortOp = Yantra::RegionKeySorter;
 
 // ============================================================================
 // Grammar rule executors
@@ -398,8 +379,10 @@ struct GranularConfig {
     segment.hop_size = config.hop_size;
     segment.channel = config.channel;
     ctx.facets.set(std::move(segment));
-    ctx.execution_metadata["ascending"] = config.ascending;
-    ctx.execution_metadata["gpu_sort_threshold"] = config.gpu_sort_threshold;
+    RegionKeySorterConfig sort;
+    sort.keys = { SortKey { grain_feature, config.ascending ? SortingDirection::ASCENDING : SortingDirection::DESCENDING, 1.0, false } };
+    sort.gpu_sort_threshold = config.gpu_sort_threshold;
+    ctx.facets.set(std::move(sort));
 
     AttributeConfig attribute;
     attribute.channel = config.channel;
@@ -431,8 +414,10 @@ template <ComputeData InputType, ComputeData OutputType>
     segment.hop_size = config.hop_size;
     segment.channel = config.channel;
     ctx.facets.set(std::move(segment));
-    ctx.execution_metadata["ascending"] = config.ascending;
-    ctx.execution_metadata["gpu_sort_threshold"] = config.gpu_sort_threshold;
+    RegionKeySorterConfig sort;
+    sort.keys = { SortKey { grain_feature, config.ascending ? SortingDirection::ASCENDING : SortingDirection::DESCENDING, 1.0, false } };
+    sort.gpu_sort_threshold = config.gpu_sort_threshold;
+    ctx.facets.set(std::move(sort));
 
     AttributeConfig attribute;
     attribute.channel = config.channel;
@@ -460,8 +445,10 @@ template <ComputeData InputType, ComputeData OutputType>
     segment.hop_size = config.hop_size;
     segment.channel = config.channel;
     ctx.facets.set(std::move(segment));
-    ctx.execution_metadata["ascending"] = config.ascending;
-    ctx.execution_metadata["gpu_sort_threshold"] = config.gpu_sort_threshold;
+    RegionKeySorterConfig sort;
+    sort.keys = { SortKey { grain_feature, config.ascending ? SortingDirection::ASCENDING : SortingDirection::DESCENDING, 1.0, false } };
+    sort.gpu_sort_threshold = config.gpu_sort_threshold;
+    ctx.facets.set(std::move(sort));
 
     AttributeConfig attribute;
     attribute.channel = config.channel;

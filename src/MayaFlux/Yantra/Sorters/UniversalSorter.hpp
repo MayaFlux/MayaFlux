@@ -78,17 +78,6 @@ enum class SortingStrategy : uint8_t {
 };
 
 /**
- * @enum SortingGranularity
- * @brief Output granularity control for sorting results
- */
-enum class SortingGranularity : uint8_t {
-    RAW_DATA, ///< Direct sorted data
-    ATTRIBUTED_INDICES, ///< Sort indices with metadata
-    ORGANIZED_GROUPS, ///< Hierarchically organized sorted data
-    DETAILED_ANALYSIS ///< Sorting analysis with statistics
-};
-
-/**
  * @struct SorterConfig
  * @brief Settings every sorter family accepts.
  *
@@ -102,20 +91,20 @@ struct SorterConfig : OperationConfig {
             FacetMember<&SorterConfig::algorithm> {},
             FacetMember<&SorterConfig::direction> {},
             FacetMember<&SorterConfig::strategy> {},
-            FacetMember<&SorterConfig::granularity> {},
             FacetMember<&SorterConfig::keys> {},
+            FacetMember<&SorterConfig::comparator> {},
         };
     }
 
     /** Sorting algorithm to use, as a SortingAlgorithm value. */
     Reflect::EnumByte<SortingAlgorithm> algorithm { SortingAlgorithm::STANDARD };
-    /** Order of the sorted result. */
+    /** Order of the sorted result. CUSTOM takes its order from comparator. */
     SortingDirection direction { SortingDirection::ASCENDING };
+    /** Comparator used when direction is CUSTOM. Ignored otherwise. */
+    Kinesis::Discrete::DoubleComparator comparator;
     /** How the input is handled during sorting. */
     SortingStrategy strategy { SortingStrategy::COPY_SORT };
-    /** Level at which values are sorted. */
-    SortingGranularity granularity { SortingGranularity::RAW_DATA };
-    /** Sort keys and their relative weights. */
+    /** Terms of the weighted sort score. Applied by RegionKeySorter; StandardSorter rejects them. */
     std::vector<SortKey> keys;
 };
 
@@ -169,79 +158,21 @@ public:
     }
 
     /**
-     * @brief Type-safe parameter management with sorting-specific defaults
+     * @brief Forwards to the sorting-specific parameter hook.
      */
     void set_parameter(const std::string& name, std::any value) override
     {
-        if (name == "strategy") {
-            auto strategy_result = safe_any_cast<SortingStrategy>(value);
-            if (strategy_result) {
-                m_strategy = *strategy_result.value;
-                return;
-            }
-            auto str_result = safe_any_cast<std::string>(value);
-            if (str_result) {
-                auto strategy_enum = Reflect::string_to_enum_case_insensitive<SortingStrategy>(*str_result.value);
-                if (strategy_enum) {
-                    m_strategy = *strategy_enum;
-                    return;
-                }
-            }
-        }
-        if (name == "direction") {
-            auto direction_result = safe_any_cast<SortingDirection>(value);
-            if (direction_result) {
-                m_direction = *direction_result.value;
-                return;
-            }
-            auto str_result = safe_any_cast<std::string>(value);
-            if (str_result) {
-                auto direction_enum = Reflect::string_to_enum_case_insensitive<SortingDirection>(*str_result.value);
-                if (direction_enum) {
-                    m_direction = *direction_enum;
-                    return;
-                }
-            }
-        }
-        if (name == "granularity") {
-            auto granularity_result = safe_any_cast<SortingGranularity>(value);
-            if (granularity_result) {
-                m_granularity = *granularity_result.value;
-                return;
-            }
-            auto str_result = safe_any_cast<std::string>(value);
-            if (str_result) {
-                auto granularity_enum = Reflect::string_to_enum_case_insensitive<SortingGranularity>(*str_result.value);
-                if (granularity_enum) {
-                    m_granularity = *granularity_enum;
-                    return;
-                }
-            }
-        }
         set_sorting_parameter(name, std::move(value));
     }
 
     [[nodiscard]] std::any get_parameter(const std::string& name) const override
     {
-        if (name == "strategy") {
-            return m_strategy;
-        }
-        if (name == "direction") {
-            return m_direction;
-        }
-        if (name == "granularity") {
-            return m_granularity;
-        }
         return get_sorting_parameter(name);
     }
 
     [[nodiscard]] std::map<std::string, std::any> get_all_parameters() const override
     {
-        auto params = get_all_sorting_parameters();
-        params["strategy"] = m_strategy;
-        params["direction"] = m_direction;
-        params["granularity"] = m_granularity;
-        return params;
+        return get_all_sorting_parameters();
     }
 
     /**
@@ -258,48 +189,6 @@ public:
         return safe_any_cast_or_default<T>(param, default_value);
     }
 
-    /**
-     * @brief Configure sorting strategy
-     */
-    void set_strategy(SortingStrategy strategy) { m_strategy = strategy; }
-    SortingStrategy get_strategy() const { return m_strategy; }
-
-    /**
-     * @brief Configure sorting direction
-     */
-    void set_direction(SortingDirection direction) { m_direction = direction; }
-    SortingDirection get_direction() const { return m_direction; }
-
-    /**
-     * @brief Configure output granularity
-     */
-    void set_granularity(SortingGranularity granularity) { m_granularity = granularity; }
-    SortingGranularity get_granularity() const { return m_granularity; }
-
-    /**
-     * @brief Add multi-key sorting capability
-     * @param keys Vector of sort keys for complex sorting
-     */
-    void set_sort_keys(const std::vector<SortKey>& keys) { m_sort_keys = keys; }
-    const std::vector<SortKey>& get_sort_keys() const { return m_sort_keys; }
-
-    /**
-     * @brief Configure custom comparator for CUSTOM direction
-     * @param comparator Custom comparison function
-     */
-    template <typename T>
-    void set_custom_comparator(std::function<bool(const T&, const T&)> comparator)
-    {
-        m_custom_comparator = [comparator](const std::any& a, const std::any& b) -> bool {
-            auto val_a_result = safe_any_cast<T>(a);
-            auto val_b_result = safe_any_cast<T>(b);
-            if (val_a_result && val_b_result) {
-                return comparator(*val_a_result, *val_b_result);
-            }
-            return false;
-        };
-    }
-
 protected:
     /**
      * @brief Core operation implementation - called by ComputeOperation interface
@@ -308,14 +197,13 @@ protected:
      */
     output_type operation_function(const input_type& input) override
     {
-        auto raw_result = sort_implementation(input);
-        return apply_granularity_formatting(raw_result);
+        return sort_implementation(input);
     }
 
     /**
      * @brief Pure virtual sorting implementation - derived classes implement this
      * @param input Input data with metadata
-     * @return Raw sorting output before granularity processing
+     * @return Sorted output
      */
     virtual output_type sort_implementation(const input_type& input) = 0;
 
@@ -353,111 +241,8 @@ protected:
         return true;
     }
 
-    /**
-     * @brief Apply granularity-based output formatting
-     * @param raw_output Raw sorting results
-     * @return Formatted output based on granularity setting
-     */
-    virtual output_type apply_granularity_formatting(const output_type& raw_output)
-    {
-        switch (m_granularity) {
-        case SortingGranularity::RAW_DATA:
-            return raw_output;
-
-        case SortingGranularity::ATTRIBUTED_INDICES:
-            return add_sorting_metadata(raw_output);
-
-        case SortingGranularity::ORGANIZED_GROUPS:
-            return organize_into_groups(raw_output);
-
-        case SortingGranularity::DETAILED_ANALYSIS:
-            return create_sorting_analysis(raw_output);
-
-        default:
-            return raw_output;
-        }
-    }
-
-    /**
-     * @brief Add sorting metadata to results (override for custom attribution)
-     */
-    virtual output_type add_sorting_metadata(const output_type& raw_output)
-    {
-        output_type attributed = raw_output;
-        attributed.metadata["sorting_type"] = static_cast<int>(get_sorting_type());
-        attributed.metadata["sorter_name"] = get_sorter_name();
-        attributed.metadata["strategy"] = static_cast<int>(m_strategy);
-        attributed.metadata["direction"] = static_cast<int>(m_direction);
-        attributed.metadata["granularity"] = static_cast<int>(m_granularity);
-        return attributed;
-    }
-
-    /**
-     * @brief Organize results into hierarchical groups (override for custom grouping)
-     */
-    virtual output_type organize_into_groups(const output_type& raw_output)
-    {
-        // Default implementation: just add grouping metadata
-        return add_sorting_metadata(raw_output);
-    }
-
-    /**
-     * @brief Create detailed sorting analysis (override for custom analysis)
-     */
-    virtual output_type create_sorting_analysis(const output_type& raw_output)
-    {
-        // Default implementation: add analysis metadata
-        auto analysis = add_sorting_metadata(raw_output);
-        analysis.metadata["is_analysis"] = true;
-        analysis.metadata["sort_keys_count"] = m_sort_keys.size();
-        return analysis;
-    }
-
-    /**
-     * @brief Helper to check if custom comparator is available
-     */
-    bool has_custom_comparator() const { return m_custom_comparator != nullptr; }
-
-    /**
-     * @brief Apply custom comparator if available
-     */
-    bool apply_custom_comparator(const std::any& a, const std::any& b) const
-    {
-        if (m_custom_comparator) {
-            return m_custom_comparator(a, b);
-        }
-        return false;
-    }
-
-    /**
-     * @brief Apply multi-key sorting if keys are configured
-     */
-    virtual bool should_use_multi_key_sorting() const
-    {
-        return !m_sort_keys.empty();
-    }
-
-    /**
-     * @brief Current sorting operation storage for complex operations
-     */
-    mutable std::any m_current_sorting;
-
-    template <typename SortingResultType>
-    void store_current_sorting(SortingResultType&& result) const
-    {
-        m_current_sorting = std::forward<SortingResultType>(result);
-    }
-
-    output_type m_current_output;
-
 private:
-    SortingStrategy m_strategy = SortingStrategy::COPY_SORT;
-    SortingDirection m_direction = SortingDirection::ASCENDING;
-    SortingGranularity m_granularity = SortingGranularity::RAW_DATA;
     std::map<std::string, std::any> m_parameters;
-
-    std::vector<SortKey> m_sort_keys;
-    std::function<bool(const std::any&, const std::any&)> m_custom_comparator;
 };
 
 /// Sorter that takes DataVariant and produces DataVariant
