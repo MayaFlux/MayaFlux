@@ -46,6 +46,12 @@ struct ComputeStage {
     std::vector<uint8_t> push_constant_data; ///< Raw push constant bytes for this stage.
 
     /**
+     * @brief Writes for the pipeline's push descriptor set, recorded before
+     *        this stage's dispatch. Empty for a pipeline without a push set.
+     */
+    std::vector<PushDescriptorWrite> push_writes;
+
+    /**
      * @brief When set, the stage dispatches with counts read from this buffer
      *        and groups is ignored.
      *

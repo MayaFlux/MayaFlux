@@ -327,7 +327,7 @@ protected:
 
     /**
      * @brief Full single-pass dispatch.  Drives prepare_gpu_inputs,
-     *        on_before_gpu_dispatch, bind_descriptor, and GpuResourceManager::dispatch.
+     *        on_before_gpu_dispatch, bind_all_descriptors, and GpuResourceManager::dispatch.
      *
      * @param channels       Extracted double channels from the input Datum.
      * @param structure_info Dimension/modality metadata from OperationHelper.
@@ -373,7 +373,7 @@ protected:
      * @brief Non-blocking variant of dispatch_core.
      *
      * Performs the full setup (on_before_gpu_dispatch, prepare_gpu_inputs,
-     * bind_descriptor) then calls GpuResourceManager::dispatch_async.
+     * bind_all_descriptors) then calls GpuResourceManager::dispatch_async.
      * Returns immediately with a FenceID. The caller must poll
      * ShaderFoundry::is_fence_signaled on the returned ID, and once
      * signaled call readback_primary / readback_aux to collect results.
@@ -506,6 +506,7 @@ private:
         std::vector<std::string> keys;
         std::vector<std::array<uint32_t, 3>> groups;
         std::vector<std::vector<uint8_t>> push_constants;
+        std::vector<std::vector<Portal::Graphics::PushDescriptorWrite>> push_writes;
         std::vector<Portal::Graphics::IndirectDispatch> indirect;
     };
 

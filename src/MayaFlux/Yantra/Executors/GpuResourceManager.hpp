@@ -45,20 +45,28 @@ public:
     void upload(const std::string& key, size_t index, const float* data, size_t byte_size);
     void upload_raw(const std::string& key, size_t index, const uint8_t* data, size_t byte_size);
     void download(const std::string& key, size_t index, float* dest, size_t byte_size);
-    void bind_descriptor(const std::string& key, size_t index, const GpuBufferBinding& spec);
 
     /**
-     * @brief Bind every non-image buffer binding in one Vulkan call.
+     * @brief Bind every non-image buffer binding of a unit.
      *
-     * Equivalent to calling bind_descriptor or bind_shared_descriptor once
-     * per non-image entry in bindings (routed the same way, by whether a
-     * shared slot exists at that (set, binding)), except every entry is
-     * submitted through a single vkUpdateDescriptorSets call. Image entries
-     * are skipped, matching bind_all_descriptors' existing split between
-     * buffer descriptors here and image descriptors bound separately per
-     * staged image.
+     * An entry resolves to the shared buffer at its (set, binding) when one
+     * exists, otherwise to the unit's own buffer at that binding. Set 0
+     * bindings become push descriptor writes, recorded into each command
+     * buffer that dispatches the unit. Bindings in other sets are written into
+     * the unit's allocated sets in one vkUpdateDescriptorSets call, and only
+     * when the bound buffer or its size changed since the last write. Image
+     * entries are skipped; they go through bind_images_batch.
      */
     void bind_descriptors_batch(const std::string& key, const std::vector<GpuBufferBinding>& bindings);
+
+    /**
+     * @brief The unit's current set 0 push descriptor writes.
+     *
+     * Copied into each stage of a dependency sequence at staging time, so
+     * stages of the same unit that bind different resources keep their own.
+     * Empty when the unit has no set 0.
+     */
+    [[nodiscard]] const std::vector<Portal::Graphics::PushDescriptorWrite>& push_writes(const std::string& key);
 
     void ensure_shared_buffer(uint32_t set, size_t binding_index, size_t element_count,
         GpuBufferBinding::ElementType element_type,
@@ -72,33 +80,8 @@ public:
      * grows the slot.
      */
     [[nodiscard]] Portal::Graphics::GpuBufferHandle shared_buffer_handle(uint32_t set, size_t binding_index) const;
-    void bind_shared_descriptor(const std::string& key, uint32_t set, size_t binding_index, const GpuBufferBinding& spec);
     void download_shared(uint32_t set, size_t binding_index, void* dest, size_t byte_size);
     void upload_shared_raw(uint32_t set, size_t binding_index, const uint8_t* data, size_t byte_size);
-
-    /**
-     * @brief Bind a storage image descriptor at the given slot index.
-     * @param key     Pipeline unit to bind into.
-     * @param index   Slot index matching the binding declaration.
-     * @param image   VKImage to bind. Must be initialised and in eGeneral layout.
-     * @param spec    Binding declaration. element_type must be IMAGE_STORAGE.
-     */
-    void bind_image_storage(const std::string& key, size_t index,
-        const std::shared_ptr<Core::VKImage>& image,
-        const GpuBufferBinding& spec);
-
-    /**
-     * @brief Bind a combined image+sampler descriptor at the given slot index.
-     * @param key     Pipeline unit to bind into.
-     * @param index   Slot index matching the binding declaration.
-     * @param image   VKImage to bind. Must be in eShaderReadOnlyOptimal layout.
-     * @param sampler Vulkan sampler handle from SamplerForge.
-     * @param spec    Binding declaration. element_type must be IMAGE_SAMPLED.
-     */
-    void bind_image_sampled(const std::string& key, size_t index,
-        const std::shared_ptr<Core::VKImage>& image,
-        vk::Sampler sampler,
-        const GpuBufferBinding& spec);
 
     /**
      * @brief One image slot for bind_images_batch: a storage image entry
@@ -112,13 +95,13 @@ public:
     };
 
     /**
-     * @brief Bind every image in one Vulkan call.
+     * @brief Bind every image of a unit, routed by spec.element_type.
      *
-     * Equivalent to calling bind_image_storage or bind_image_sampled once
-     * per entry (routed by spec.element_type), except every entry is
-     * submitted through a single vkUpdateDescriptorSets call. Also records
-     * each image in the pipeline unit's image_slots, same as the per-call
-     * methods.
+     * Storage images bind in General layout, sampled images in
+     * ShaderReadOnlyOptimal with entry.sampler. Set 0 images become push
+     * descriptor writes; images in other sets are written in one
+     * vkUpdateDescriptorSets call. Each image is also kept in the unit's
+     * image_slots.
      */
     void bind_images_batch(const std::string& key, const std::vector<ImageBind>& images);
 
@@ -190,13 +173,15 @@ public:
      * indexed by position, one entry per key in the same order as keys.
      * indirect_per_key is either empty or parallel too; a stage whose entry
      * has a buffer dispatches with the counts stored there instead of its
-     * fixed groups. Every stage is followed by a barrier, so each stage sees
-     * the writes of all earlier ones.
+     * fixed groups. push_writes_per_key is parallel too and holds each
+     * stage's set 0 push descriptor writes. Every stage is followed by a
+     * barrier, so each stage sees the writes of all earlier ones.
      */
     void dispatch_sequence(
         const std::vector<std::string>& keys,
         const std::vector<std::array<uint32_t, 3>>& groups_per_key,
         const std::vector<std::vector<uint8_t>>& push_constants_per_key,
+        const std::vector<std::vector<Portal::Graphics::PushDescriptorWrite>>& push_writes_per_key,
         const std::vector<Portal::Graphics::IndirectDispatch>& indirect_per_key = {});
 
     /**
@@ -212,6 +197,7 @@ public:
         const std::vector<std::string>& keys,
         const std::vector<std::array<uint32_t, 3>>& groups_per_key,
         const std::vector<std::vector<uint8_t>>& push_constants_per_key,
+        const std::vector<std::vector<Portal::Graphics::PushDescriptorWrite>>& push_writes_per_key,
         const std::vector<Portal::Graphics::IndirectDispatch>& indirect_per_key = {});
 
     /**
@@ -268,7 +254,13 @@ private:
         const std::vector<std::string>& keys,
         const std::vector<std::array<uint32_t, 3>>& groups_per_key,
         const std::vector<std::vector<uint8_t>>& push_constants_per_key,
+        const std::vector<std::vector<Portal::Graphics::PushDescriptorWrite>>& push_writes_per_key,
         const std::vector<Portal::Graphics::IndirectDispatch>& indirect_per_key);
+
+    /**
+     * @brief Record the unit's set 0 push descriptor writes, if it has any.
+     */
+    static void push_unit_descriptors(Portal::Graphics::CommandBufferID cmd_id, const PipelineUnit& unit);
 
     struct SharedBuffers;
     std::unique_ptr<SharedBuffers> m_shared;

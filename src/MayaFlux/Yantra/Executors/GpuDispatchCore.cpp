@@ -361,13 +361,13 @@ Portal::Graphics::FenceID GpuDispatchCore::dispatch_core_async(
 void GpuDispatchCore::dispatch_core_dependency(const std::vector<DependencyStage>& stages)
 {
     const auto plan = prepare_dependency(stages);
-    m_resources.dispatch_sequence(plan.keys, plan.groups, plan.push_constants, plan.indirect);
+    m_resources.dispatch_sequence(plan.keys, plan.groups, plan.push_constants, plan.push_writes, plan.indirect);
 }
 
 Portal::Graphics::FenceID GpuDispatchCore::dispatch_core_dependency_async(const std::vector<DependencyStage>& stages)
 {
     const auto plan = prepare_dependency(stages);
-    return m_resources.dispatch_sequence_async(plan.keys, plan.groups, plan.push_constants, plan.indirect);
+    return m_resources.dispatch_sequence_async(plan.keys, plan.groups, plan.push_constants, plan.push_writes, plan.indirect);
 }
 
 GpuDispatchCore::DependencyPlan GpuDispatchCore::prepare_dependency(const std::vector<DependencyStage>& stages)
@@ -383,11 +383,13 @@ GpuDispatchCore::DependencyPlan GpuDispatchCore::prepare_dependency(const std::v
     auto& keys = plan.keys;
     auto& groups_per_key = plan.groups;
     auto& pc_per_key = plan.push_constants;
+    auto& push_writes_per_key = plan.push_writes;
     auto& indirect_per_key = plan.indirect;
 
     keys.reserve(stages.size());
     groups_per_key.reserve(stages.size());
     pc_per_key.reserve(stages.size());
+    push_writes_per_key.reserve(stages.size());
     indirect_per_key.reserve(stages.size());
 
     for (const auto& stage : stages) {
@@ -416,6 +418,7 @@ GpuDispatchCore::DependencyPlan GpuDispatchCore::prepare_dependency(const std::v
         keys.push_back(dispatch_key());
         groups_per_key.push_back(stage.explicit_groups ? *stage.explicit_groups : calculate_dispatch_size(largest_binding_data_element_count(), {}));
         pc_per_key.push_back(m_push_constants);
+        push_writes_per_key.push_back(m_resources.push_writes(dispatch_key()));
 
         Portal::Graphics::IndirectDispatch indirect;
         if (stage.indirect_groups) {

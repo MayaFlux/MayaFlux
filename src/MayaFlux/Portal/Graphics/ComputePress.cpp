@@ -547,6 +547,10 @@ void ComputePress::record_sequence(
             stage.push_constant_data.empty() ? nullptr : stage.push_constant_data.data(),
             stage.push_constant_data.size());
 
+        if (!stage.push_writes.empty()) {
+            push_descriptors(cmd_id, stage.pipeline_id, stage.push_writes);
+        }
+
         if (stage.indirect.buffer) {
             foundry.buffer_barrier(
                 cmd_id,

@@ -24,7 +24,15 @@ struct VulkanBufferSlot {
 
 struct GpuResourceManagerImpl {
     std::vector<VulkanBufferSlot> buffers;
-    std::unordered_map<std::string, VulkanBufferSlot> shared_buffers;
+
+    /** True when set 0 is a push descriptor set and the allocated sets start at set 1. */
+    bool push_set_zero {};
+
+    /** Set 0 writes, one per binding, recorded into each command buffer that dispatches the unit. */
+    std::vector<Portal::Graphics::PushDescriptorWrite> push_writes;
+
+    /** Buffer last written into each allocated set's binding, so unchanged bindings are not rewritten. */
+    std::map<std::pair<uint32_t, uint32_t>, std::pair<vk::Buffer, size_t>> written;
 };
 
 //==============================================================================
@@ -177,6 +185,21 @@ namespace {
         }
     }
 
+    void set_push_write(GpuResourceManagerImpl& impl, const Portal::Graphics::PushDescriptorWrite& write)
+    {
+        const auto it = std::ranges::find(impl.push_writes, write.binding, &Portal::Graphics::PushDescriptorWrite::binding);
+        if (it != impl.push_writes.end()) {
+            *it = write;
+        } else {
+            impl.push_writes.push_back(write);
+        }
+    }
+
+    [[nodiscard]] size_t allocated_set_index(const GpuResourceManagerImpl& impl, uint32_t set)
+    {
+        return impl.push_set_zero ? set - 1U : set;
+    }
+
 } // anonymous namespace
 
 struct GpuResourceManager::SharedBuffers {
@@ -279,8 +302,11 @@ bool GpuResourceManager::initialise(const std::string& key,
     for (auto& [set_idx, set_bindings] : by_set)
         descriptor_sets.push_back(std::move(set_bindings));
 
+    const bool push_set_zero = !by_set.empty() && by_set.begin()->first == 0;
+
     unit->pipeline_id = compute_press.create_pipeline(
-        unit->shader_id, descriptor_sets, config.push_constant_size);
+        unit->shader_id, descriptor_sets, config.push_constant_size,
+        push_set_zero ? std::optional<size_t> { 0 } : std::nullopt);
 
     if (unit->pipeline_id == Portal::Graphics::INVALID_COMPUTE_PIPELINE) {
         MF_ERROR(Journal::Component::Yantra, Journal::Context::BufferProcessing,
@@ -290,7 +316,8 @@ bool GpuResourceManager::initialise(const std::string& key,
     }
 
     unit->descriptor_set_ids = compute_press.allocate_pipeline_descriptors(unit->pipeline_id);
-    if (unit->descriptor_set_ids.empty()) {
+    const size_t allocated_sets = descriptor_sets.size() - (push_set_zero ? 1U : 0U);
+    if (unit->descriptor_set_ids.size() != allocated_sets) {
         MF_ERROR(Journal::Component::Yantra, Journal::Context::BufferProcessing,
             "GpuResourceManager: failed to allocate descriptor sets for key '{}'", key);
         compute_press.destroy_pipeline(unit->pipeline_id);
@@ -299,6 +326,7 @@ bool GpuResourceManager::initialise(const std::string& key,
     }
 
     unit->impl = std::make_unique<GpuResourceManagerImpl>();
+    unit->impl->push_set_zero = push_set_zero;
     size_t max_binding = 0;
     for (const auto& b : bindings)
         max_binding = std::max(max_binding, static_cast<size_t>(b.binding));
@@ -415,22 +443,10 @@ void GpuResourceManager::download(const std::string& key, size_t index, float* d
     std::memcpy(dest, vk_slot.mapped_ptr, byte_size);
 }
 
-void GpuResourceManager::bind_descriptor(const std::string& key, size_t index, const GpuBufferBinding& spec)
-{
-    auto& unit = unit_for(key);
-    auto& foundry = Portal::Graphics::get_shader_foundry();
-    auto& vk_slot = unit.impl->buffers[index];
-
-    foundry.update_descriptor_buffer(
-        unit.descriptor_set_ids[spec.set],
-        spec.binding,
-        vk::DescriptorType::eStorageBuffer,
-        vk_slot.buffer, 0, vk_slot.allocated_bytes);
-}
-
 void GpuResourceManager::bind_descriptors_batch(const std::string& key, const std::vector<GpuBufferBinding>& bindings)
 {
     auto& unit = unit_for(key);
+    auto& impl = *unit.impl;
     auto& foundry = Portal::Graphics::get_shader_foundry();
 
     std::vector<Portal::Graphics::DescriptorBufferWrite> writes;
@@ -450,10 +466,10 @@ void GpuResourceManager::bind_descriptors_batch(const std::string& key, const st
             buffer = shared_it->second.buffer;
             allocated_bytes = shared_it->second.allocated_bytes;
         } else {
-            if (static_cast<size_t>(b.binding) >= unit.impl->buffers.size()) {
+            if (static_cast<size_t>(b.binding) >= impl.buffers.size()) {
                 continue;
             }
-            const auto& vk_slot = unit.impl->buffers[b.binding];
+            const auto& vk_slot = impl.buffers[b.binding];
             buffer = vk_slot.buffer;
             allocated_bytes = vk_slot.allocated_bytes;
         }
@@ -461,8 +477,22 @@ void GpuResourceManager::bind_descriptors_batch(const std::string& key, const st
         if (!buffer)
             continue;
 
+        if (impl.push_set_zero && b.set == 0) {
+            set_push_write(impl, {
+                                     .binding = b.binding,
+                                     .type = vk::DescriptorType::eStorageBuffer,
+                                     .buffer = vk::DescriptorBufferInfo { buffer, 0, allocated_bytes },
+                                 });
+            continue;
+        }
+
+        auto& last = impl.written[{ b.set, b.binding }];
+        if (last.first == buffer && last.second == allocated_bytes)
+            continue;
+        last = { buffer, allocated_bytes };
+
         writes.push_back({
-            .descriptor_set_id = unit.descriptor_set_ids[b.set],
+            .descriptor_set_id = unit.descriptor_set_ids[allocated_set_index(impl, b.set)],
             .binding = b.binding,
             .type = vk::DescriptorType::eStorageBuffer,
             .buffer = buffer,
@@ -471,7 +501,13 @@ void GpuResourceManager::bind_descriptors_batch(const std::string& key, const st
         });
     }
 
-    foundry.update_descriptor_buffers(writes);
+    if (!writes.empty())
+        foundry.update_descriptor_buffers(writes);
+}
+
+const std::vector<Portal::Graphics::PushDescriptorWrite>& GpuResourceManager::push_writes(const std::string& key)
+{
+    return unit_for(key).impl->push_writes;
 }
 
 size_t GpuResourceManager::buffer_allocated_bytes(const std::string& key, size_t index) const
@@ -512,19 +548,6 @@ Portal::Graphics::GpuBufferHandle GpuResourceManager::shared_buffer_handle(uint3
     return { .buffer = it->second.buffer, .mapped_ptr = it->second.mapped_ptr, .size_bytes = it->second.allocated_bytes };
 }
 
-void GpuResourceManager::bind_shared_descriptor(const std::string& key, uint32_t set, size_t binding_index, const GpuBufferBinding& spec)
-{
-    auto& unit = unit_for(key);
-    auto& foundry = Portal::Graphics::get_shader_foundry();
-    auto& slot = m_shared->slots.at({ set, binding_index });
-
-    foundry.update_descriptor_buffer(
-        unit.descriptor_set_ids[spec.set],
-        spec.binding,
-        vk::DescriptorType::eStorageBuffer,
-        slot.buffer, 0, slot.allocated_bytes);
-}
-
 void GpuResourceManager::download_shared(uint32_t set, size_t binding_index, void* dest, size_t byte_size)
 {
     auto& slot = m_shared->slots.at({ set, binding_index });
@@ -537,49 +560,10 @@ void GpuResourceManager::upload_shared_raw(uint32_t set, size_t binding_index, c
     std::memcpy(slot.mapped_ptr, data, byte_size);
 }
 
-void GpuResourceManager::bind_image_storage(
-    const std::string& key, size_t index,
-    const std::shared_ptr<Core::VKImage>& image,
-    const GpuBufferBinding& spec)
-{
-    auto& unit = unit_for(key);
-    auto& foundry = Portal::Graphics::get_shader_foundry();
-
-    if (index >= unit.image_slots.size())
-        unit.image_slots.resize(index + 1);
-    unit.image_slots[index] = image;
-
-    foundry.update_descriptor_storage_image(
-        unit.descriptor_set_ids[spec.set],
-        spec.binding,
-        image->get_image_view(),
-        vk::ImageLayout::eGeneral);
-}
-
-void GpuResourceManager::bind_image_sampled(
-    const std::string& key, size_t index,
-    const std::shared_ptr<Core::VKImage>& image,
-    vk::Sampler sampler,
-    const GpuBufferBinding& spec)
-{
-    auto& unit = unit_for(key);
-    auto& foundry = Portal::Graphics::get_shader_foundry();
-
-    if (index >= unit.image_slots.size())
-        unit.image_slots.resize(index + 1);
-    unit.image_slots[index] = image;
-
-    foundry.update_descriptor_image(
-        unit.descriptor_set_ids[spec.set],
-        spec.binding,
-        image->get_image_view(),
-        sampler,
-        vk::ImageLayout::eShaderReadOnlyOptimal);
-}
-
 void GpuResourceManager::bind_images_batch(const std::string& key, const std::vector<ImageBind>& images)
 {
     auto& unit = unit_for(key);
+    auto& impl = *unit.impl;
     auto& foundry = Portal::Graphics::get_shader_foundry();
 
     std::vector<Portal::Graphics::DescriptorImageWrite> writes;
@@ -591,17 +575,30 @@ void GpuResourceManager::bind_images_batch(const std::string& key, const std::ve
         unit.image_slots[entry.index] = entry.image;
 
         const bool is_storage = entry.spec.element_type == GpuBufferBinding::ElementType::IMAGE_STORAGE;
+        const auto type = is_storage ? vk::DescriptorType::eStorageImage : vk::DescriptorType::eCombinedImageSampler;
+        const auto layout = is_storage ? vk::ImageLayout::eGeneral : vk::ImageLayout::eShaderReadOnlyOptimal;
+
+        if (impl.push_set_zero && entry.spec.set == 0) {
+            set_push_write(impl, {
+                                     .binding = entry.spec.binding,
+                                     .type = type,
+                                     .image = vk::DescriptorImageInfo { entry.sampler, entry.image->get_image_view(), layout },
+                                 });
+            continue;
+        }
+
         writes.push_back({
-            .descriptor_set_id = unit.descriptor_set_ids[entry.spec.set],
+            .descriptor_set_id = unit.descriptor_set_ids[allocated_set_index(impl, entry.spec.set)],
             .binding = entry.spec.binding,
-            .type = is_storage ? vk::DescriptorType::eStorageImage : vk::DescriptorType::eCombinedImageSampler,
+            .type = type,
             .image_view = entry.image->get_image_view(),
             .sampler = entry.sampler,
-            .layout = is_storage ? vk::ImageLayout::eGeneral : vk::ImageLayout::eShaderReadOnlyOptimal,
+            .layout = layout,
         });
     }
 
-    foundry.update_descriptor_images(writes);
+    if (!writes.empty())
+        foundry.update_descriptor_images(writes);
 }
 
 void GpuResourceManager::transition_image(
@@ -652,6 +649,13 @@ namespace {
 
 } // namespace
 
+void GpuResourceManager::push_unit_descriptors(Portal::Graphics::CommandBufferID cmd_id, const PipelineUnit& unit)
+{
+    if (unit.impl && !unit.impl->push_writes.empty()) {
+        Portal::Graphics::get_compute_press().push_descriptors(cmd_id, unit.pipeline_id, unit.impl->push_writes);
+    }
+}
+
 void GpuResourceManager::dispatch(const std::string& key,
     const std::array<uint32_t, 3>& groups,
     const uint8_t* push_constant_data,
@@ -666,6 +670,7 @@ void GpuResourceManager::dispatch(const std::string& key,
     compute_press.bind_all(
         cmd_id, unit.pipeline_id, unit.descriptor_set_ids,
         push_constant_data, push_constant_size);
+    push_unit_descriptors(cmd_id, unit);
     compute_press.dispatch(cmd_id, groups[0], groups[1], groups[2]);
     record_trailing_barrier(foundry, cmd_id);
 
@@ -698,6 +703,7 @@ void GpuResourceManager::dispatch_batched(const std::string& key,
             compute_press.bind_all(
                 cmd_id, unit.pipeline_id, unit.descriptor_set_ids,
                 pc_data.data(), push_constant_size);
+            push_unit_descriptors(cmd_id, unit);
             compute_press.dispatch(cmd_id, groups[0], groups[1], groups[2]);
             record_pass_barrier(foundry, cmd_id);
         }
@@ -736,6 +742,7 @@ void GpuResourceManager::dispatch_batched_indirect(const std::string& key,
             std::vector<uint8_t> pc_data(push_constant_size);
             params.pc_updater(pass, 1, pc_data.data());
             compute_press.bind_all(cmd_id, unit.pipeline_id, unit.descriptor_set_ids, pc_data.data(), push_constant_size);
+            push_unit_descriptors(cmd_id, unit);
             compute_press.dispatch_indirect(cmd_id, indirect_buffer);
             record_pass_barrier(foundry, cmd_id);
         }
@@ -759,6 +766,7 @@ Portal::Graphics::FenceID GpuResourceManager::dispatch_async(const std::string& 
     compute_press.bind_all(
         cmd_id, unit.pipeline_id, unit.descriptor_set_ids,
         push_constant_data, push_constant_size);
+    push_unit_descriptors(cmd_id, unit);
     compute_press.dispatch(cmd_id, groups[0], groups[1], groups[2]);
     record_trailing_barrier(foundry, cmd_id);
 
@@ -769,6 +777,7 @@ Portal::Graphics::CommandBufferID GpuResourceManager::record_sequence_commands(
     const std::vector<std::string>& keys,
     const std::vector<std::array<uint32_t, 3>>& groups_per_key,
     const std::vector<std::vector<uint8_t>>& push_constants_per_key,
+    const std::vector<std::vector<Portal::Graphics::PushDescriptorWrite>>& push_writes_per_key,
     const std::vector<Portal::Graphics::IndirectDispatch>& indirect_per_key)
 {
     auto& foundry = Portal::Graphics::get_shader_foundry();
@@ -784,6 +793,7 @@ Portal::Graphics::CommandBufferID GpuResourceManager::record_sequence_commands(
             .descriptor_set_ids = unit.descriptor_set_ids,
             .groups = groups_per_key[i],
             .push_constant_data = push_constants_per_key[i],
+            .push_writes = i < push_writes_per_key.size() ? push_writes_per_key[i] : std::vector<Portal::Graphics::PushDescriptorWrite> {},
             .indirect = i < indirect_per_key.size() ? indirect_per_key[i] : Portal::Graphics::IndirectDispatch {},
         });
     }
@@ -798,22 +808,24 @@ void GpuResourceManager::dispatch_sequence(
     const std::vector<std::string>& keys,
     const std::vector<std::array<uint32_t, 3>>& groups_per_key,
     const std::vector<std::vector<uint8_t>>& push_constants_per_key,
+    const std::vector<std::vector<Portal::Graphics::PushDescriptorWrite>>& push_writes_per_key,
     const std::vector<Portal::Graphics::IndirectDispatch>& indirect_per_key)
 {
     auto& foundry = Portal::Graphics::get_shader_foundry();
     foundry.submit_and_wait(
-        record_sequence_commands(keys, groups_per_key, push_constants_per_key, indirect_per_key));
+        record_sequence_commands(keys, groups_per_key, push_constants_per_key, push_writes_per_key, indirect_per_key));
 }
 
 Portal::Graphics::FenceID GpuResourceManager::dispatch_sequence_async(
     const std::vector<std::string>& keys,
     const std::vector<std::array<uint32_t, 3>>& groups_per_key,
     const std::vector<std::vector<uint8_t>>& push_constants_per_key,
+    const std::vector<std::vector<Portal::Graphics::PushDescriptorWrite>>& push_writes_per_key,
     const std::vector<Portal::Graphics::IndirectDispatch>& indirect_per_key)
 {
     auto& foundry = Portal::Graphics::get_shader_foundry();
     return foundry.submit_async(
-        record_sequence_commands(keys, groups_per_key, push_constants_per_key, indirect_per_key));
+        record_sequence_commands(keys, groups_per_key, push_constants_per_key, push_writes_per_key, indirect_per_key));
 }
 
 } // namespace MayaFlux::Yantra
