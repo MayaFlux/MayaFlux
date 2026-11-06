@@ -103,6 +103,11 @@ void BackendResourceManager::setup_backend_service(const std::shared_ptr<Registr
         });
     };
 
+    buffer_service->flush_deferred = [this]() -> std::pair<uint32_t, uint64_t> {
+        const TimelinePoint point = this->flush_deferred_commands();
+        return { point.timeline, point.value };
+    };
+
     buffer_service->flush_range = [this](void* memory, size_t offset, size_t size) {
         vk::DeviceMemory mem(reinterpret_cast<VkDeviceMemory>(memory));
         auto range = mapped_memory_range(mem, offset, size);

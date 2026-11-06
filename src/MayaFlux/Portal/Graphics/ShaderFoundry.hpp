@@ -592,6 +592,14 @@ public:
     SemaphoreID submit_with_signal(CommandBufferID cmd_id);
 
     /**
+     * @brief Submit the commands recorded for deferred submission
+     * @return Point on the graphics queue timeline, or an empty point when nothing was pending
+     *
+     * Any later submission flushes them as well. Externally synchronized like every submit.
+     */
+    Core::TimelinePoint flush_deferred();
+
+    /**
      * @brief Wait for fence to be signaled
      * @param fence_id Fence ID to wait on
      */

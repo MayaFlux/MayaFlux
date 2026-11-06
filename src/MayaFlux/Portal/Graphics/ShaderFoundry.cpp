@@ -1069,6 +1069,11 @@ void ShaderFoundry::retire_after_submit(std::span<const CommandBufferID> cmd_ids
     }
 }
 
+Core::TimelinePoint ShaderFoundry::flush_deferred()
+{
+    return m_backend->get_command_manager().flush_deferred(m_graphics_queue);
+}
+
 void ShaderFoundry::release_after_submit(std::function<void()> release)
 {
     auto& cmd_manager = m_backend->get_command_manager();
