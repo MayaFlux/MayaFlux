@@ -563,7 +563,7 @@ std::optional<Kakshya::MeshData> download_compute_mesh(
 
     std::vector<uint8_t> bytes(static_cast<size_t>(*vertex_count) * sizeof(Kakshya::MeshVertex));
     std::shared_ptr<VKBuffer> staging;
-    download_from_gpu_async(buffer, bytes.data(), bytes.size(), staging);
+    download_back_buffer(generation_slot(gpu_buffer_handle(buffer)), bytes.data(), bytes.size(), staging);
 
     return triangle_soup_mesh(bytes);
 }
@@ -930,65 +930,6 @@ void download_from_gpu(
     auto [ptr, bytes, format_hint] = accessor.gpu_buffer();
 
     std::memcpy(data, ptr, std::min(size, bytes));
-}
-
-void download_from_gpu_async(
-    const std::shared_ptr<VKBuffer>& source,
-    void* data,
-    size_t size,
-    std::shared_ptr<VKBuffer>& staging)
-{
-    if (!source || !data || size == 0)
-        return;
-
-    auto buffer_service = Registry::BackendRegistry::instance()
-                              .get_service<Registry::Service::BufferService>();
-
-    if (!buffer_service
-        || !buffer_service->execute_fenced
-        || !buffer_service->wait_fenced
-        || !buffer_service->release_fenced
-        || !buffer_service->invalidate_range) {
-        error<std::runtime_error>(
-            Journal::Component::Buffers,
-            Journal::Context::BufferProcessing,
-            std::source_location::current(),
-            "download_from_gpu_async: BufferService unavailable");
-    }
-
-    if (!staging || staging->get_size_bytes() < size)
-        staging = create_staging_buffer(size);
-
-    auto handle = buffer_service->copy_buffer_fenced(
-        static_cast<void*>(source->get_buffer()),
-        static_cast<void*>(staging->get_buffer()),
-        size, 0, 0);
-
-    if (!handle) {
-        error<std::runtime_error>(
-            Journal::Component::Buffers,
-            Journal::Context::BufferProcessing,
-            std::source_location::current(),
-            "download_from_gpu_async: execute_fenced returned null");
-    }
-
-    buffer_service->wait_fenced(handle);
-
-    auto& resources = staging->get_buffer_resources();
-    buffer_service->invalidate_range(resources.memory, 0, size);
-
-    void* ptr = staging->get_mapped_ptr();
-    if (!ptr) {
-        buffer_service->release_fenced(handle);
-        error<std::runtime_error>(
-            Journal::Component::Buffers,
-            Journal::Context::BufferProcessing,
-            std::source_location::current(),
-            "download_from_gpu_async: staging buffer has no mapped pointer");
-    }
-
-    std::memcpy(data, ptr, size);
-    buffer_service->release_fenced(handle);
 }
 
 std::span<const float> download_and_normalise(

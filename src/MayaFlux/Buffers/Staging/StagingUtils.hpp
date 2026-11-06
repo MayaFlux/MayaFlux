@@ -143,8 +143,8 @@ MAYAFLUX_API void download_device_local(const std::shared_ptr<VKBuffer>& source,
  *        and may be null, when slot.mapped_ptr is already valid.
  *
  * Reads slot.mapped_ptr directly when present (host-visible slot, no
- * transfer). Otherwise records a fenced copy into @p staging exactly as
- * download_from_gpu_async does, using slot.buffer as the copy source.
+ * transfer). Otherwise records a fenced copy from slot.buffer into
+ * @p staging and waits for it.
  */
 MAYAFLUX_API void download_back_buffer(
     const VKBufferResources::GenerationSlot& slot,
@@ -169,11 +169,8 @@ MAYAFLUX_API void download_back_buffer(
  * Mirrors upload_back_buffer_async with the direction reversed, and with
  * one asymmetry: an upload's memcpy precedes the fence, a download's
  * follows it, so the host copy lives in resolve_back_buffer_read rather
- * than here. download_back_buffer is the two called back to back.
- *
- * Note the naming clash with download_from_gpu_async, which is a
- * different family: that one operates on a whole VKBuffer, waits
- * internally, and means only that it avoids queue.waitIdle.
+ * than here. download_back_buffer is the two called back to back. A whole
+ * VKBuffer is read the same way through generation_slot(gpu_buffer_handle(buffer)).
  */
 MAYAFLUX_API TransferHandle download_back_buffer_async(
     const VKBufferResources::GenerationSlot& slot,
@@ -351,30 +348,6 @@ void download_from_gpu(
 }
 
 /**
- * @brief Download from a device-local GPU buffer without stalling the graphics queue.
- *
- * Records a buffer copy into a fenced command buffer, waits on the fence from
- * the calling thread, then memcpys from the mapped staging buffer into @p data.
- * Unlike download_from_gpu, this does not call queue.waitIdle, making it safe
- * to call from any thread that is not the graphics thread itself.
- *
- * @p staging is allocated and cached by the caller to avoid per-call Vulkan
- * object churn. Pass the same staging buffer each frame; it is resized if
- * @p size exceeds its current capacity.
- *
- * @param source   Device-local source buffer.
- * @param data     Destination host pointer, at least @p size bytes.
- * @param size     Byte count to copy.
- * @param staging  Persistent host-visible staging buffer. Created via
- *                 create_staging_buffer(). Resized in-place if too small.
- */
-MAYAFLUX_API void download_from_gpu_async(
-    const std::shared_ptr<VKBuffer>& source,
-    void* data,
-    size_t size,
-    std::shared_ptr<VKBuffer>& staging);
-
-/**
  * @brief Resolve the GPU-resident image from any GpuImageSource buffer.
  *
  * Selects get_texture() or get_gpu_texture() at compile time based on which
@@ -508,8 +481,7 @@ MAYAFLUX_API bool is_device_local(const std::shared_ptr<VKBuffer>& buffer);
 /**
  * @brief Download a ComputeMeshBuffer's current live geometry to CPU.
  *
- * One-shot and blocking, via download_from_gpu_async: call it off the
- * graphics thread. Downloads exactly ComputeMeshBuffer::get_live_vertex_count() vertices
+ * One-shot and blocking, via download_back_buffer. Downloads exactly ComputeMeshBuffer::get_live_vertex_count() vertices
  * rather than the worst-case allocation.
  *
  * @param buffer Source buffer. setup_processors() must have run.

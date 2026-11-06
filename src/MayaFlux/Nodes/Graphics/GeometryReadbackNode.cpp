@@ -45,20 +45,44 @@ GeometryReadbackNode::GeometryReadbackNode(
     set_vertex_layout(*layout);
 } */
 
+GeometryReadbackNode::~GeometryReadbackNode()
+{
+    Buffers::resolve_transfer(m_transfer);
+}
+
 void GeometryReadbackNode::compute_frame()
 {
-    const size_t buf_bytes = m_gpu_buffer->get_size_bytes();
-    if (!m_gpu_buffer || buf_bytes == 0)
+    if (!m_gpu_buffer)
         return;
 
-    const size_t count = buf_bytes / sizeof(Kakshya::MeshVertex);
+    if (m_transfer) {
+        m_vertices.resize(m_pending_bytes / sizeof(Kakshya::MeshVertex));
+        Buffers::resolve_back_buffer_read(m_transfer, {}, m_vertices.data(), m_pending_bytes, m_staging_buffer);
+        emit_vertices();
+    }
+
+    const size_t count = m_gpu_buffer->get_size_bytes() / sizeof(Kakshya::MeshVertex);
+    if (count == 0)
+        return;
+
+    const size_t bytes = count * sizeof(Kakshya::MeshVertex);
+    const auto slot = Buffers::generation_slot(Buffers::gpu_buffer_handle(m_gpu_buffer));
+    m_transfer = Buffers::download_back_buffer_async(slot, bytes, m_staging_buffer);
+    if (m_transfer) {
+        m_pending_bytes = bytes;
+        return;
+    }
+
     m_vertices.resize(count);
+    Buffers::resolve_back_buffer_read(m_transfer, slot, m_vertices.data(), bytes, m_staging_buffer);
+    emit_vertices();
+}
 
-    Buffers::download_from_gpu_async(m_gpu_buffer, m_vertices.data(), buf_bytes, m_staging_buffer);
-
+void GeometryReadbackNode::emit_vertices()
+{
     set_vertices<Kakshya::MeshVertex>(std::span { m_vertices.data(), m_vertices.size() });
     auto layout = get_vertex_layout();
-    layout->vertex_count = static_cast<uint32_t>(count);
+    layout->vertex_count = static_cast<uint32_t>(m_vertices.size());
     set_vertex_layout(*layout);
 }
 

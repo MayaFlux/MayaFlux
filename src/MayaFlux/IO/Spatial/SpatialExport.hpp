@@ -109,7 +109,7 @@ MAYAFLUX_API bool write_operator_sample(
  * mutated directly on the GPU: the CPU-side GraphicsOperator buffer
  * write_operator_sample() would otherwise read is stale. In that case this
  * downloads the live vertex bytes straight from the buffer itself (it is a
- * VKBuffer, so the same download_from_gpu_async() pattern
+ * VKBuffer, so the same download_back_buffer() pattern
  * download_compute_mesh() uses for ComputeMeshBuffer applies directly),
  * using the still-CPU-tracked get_vertex_count()/get_vertex_layout()/
  * declared_topology() for population size, record schema, and sample shape

@@ -15,10 +15,9 @@ namespace MayaFlux::Nodes::GpuSync {
  * @brief GeometryWriterNode that downloads vertex data from a GPU buffer each frame.
  *
  * Symmetric to ComputeOutNode but for vertex buffers. Each compute_frame()
- * derives the current vertex count from the buffer's resident byte size,
- * issues a synchronous GPU-to-CPU transfer, and re-emits the result into
- * the inherited vertex buffer so the node can be placed directly in a
- * GeometryBuffer for a second render target.
+ * re-emits the vertices of the previous call's download into the inherited
+ * vertex buffer, so the node can be placed directly in a GeometryBuffer for a
+ * second render target, then starts the next download without waiting.
  *
  * Intended for closing visual-to-audio and visual-to-visual feedback loops:
  * positions produced by a GPU geometry pass (SDF mesh, mesh deformation,
@@ -29,9 +28,8 @@ namespace MayaFlux::Nodes::GpuSync {
  * geometry (SDF, marching cubes) that changes triangle count per frame is
  * handled without stale sizing.
  *
- * The download is synchronous (execute_immediate_commands). Use at
- * VISUAL_RATE. For high-frequency readback a double-buffered async path
- * would be required.
+ * A device-local buffer is read one call behind: the vertices emitted come
+ * from the previous call's copy. A host-visible buffer is read in the same call.
  *
  * Usage - second window from SDF mesh:
  * @code
@@ -64,30 +62,28 @@ public:
         std::shared_ptr<Buffers::VKBuffer> buffer,
         size_t vertex_count = 0);
 
+    ~GeometryReadbackNode() override;
+
     /**
      * @brief Suppress automatic compute_frame() invocation by the node graph.
      *
-     * GeometryReadbackNode::compute_frame() issues a synchronous GPU-to-CPU
-     * transfer via download_from_gpu_async. Calling it from the graphics thread
-     * (which is what GpuSync::process_sample does when the node is registered
-     * at VISUAL_RATE) produces undefined behaviour due to re-entrant queue
-     * submission. The node must be driven manually from a FRAME_ACCURATE metro
-     * that runs on the scheduler thread.
+     * compute_frame() submits its own transfers, so the node is driven
+     * manually from a FRAME_ACCURATE metro rather than by the node graph.
      *
      * @return Always 0.0.
      */
     double process_sample(double /*input*/) override { return 0.0; }
 
     /**
-     * @brief Download vertex data from GPU to CPU.
+     * @brief Emit the previous call's downloaded vertices and start the next download.
      *
-     * Issues a synchronous GPU-to-CPU transfer. Safe to call at VISUAL_RATE
-     * from a FRAME_ACCURATE metro callback.
+     * Waits only when the previous copy has not completed yet. Call at
+     * VISUAL_RATE from a FRAME_ACCURATE metro callback.
      */
     void compute_frame() override;
 
     /**
-     * @brief Downloaded vertex array from the last compute_frame() call.
+     * @brief Vertices emitted by the last compute_frame() call.
      */
     [[nodiscard]] const std::vector<Kakshya::MeshVertex>& get_vertices() const
     {
@@ -105,8 +101,12 @@ public:
     }
 
 private:
+    void emit_vertices();
+
     std::shared_ptr<Buffers::VKBuffer> m_gpu_buffer;
     std::shared_ptr<Buffers::VKBuffer> m_staging_buffer;
+    std::shared_ptr<void> m_transfer;
+    size_t m_pending_bytes {};
     std::vector<Kakshya::MeshVertex> m_vertices;
 };
 

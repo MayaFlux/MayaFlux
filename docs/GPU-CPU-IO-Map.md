@@ -48,7 +48,7 @@ flowchart TD
 
 `ComputeMeshBuffer` rendering is tier 0. A counter read through `mapped_ptr` is tier 1. `RelaxationGridBuffer` is request-gated and, because its state is host-visible, tier 1 in practice.
 
-Tier 2 as `download_from_gpu_async` performs it:
+Tier 2 as `download_back_buffer` performs it:
 
 ```mermaid
 sequenceDiagram
@@ -57,7 +57,7 @@ sequenceDiagram
     participant B as BufferService
     participant Q as GPU queue
 
-    C->>S: download_from_gpu_async(source, data, size, staging)
+    C->>S: download_back_buffer(slot, data, size, staging)
     S->>B: copy_buffer_fenced(source to staging)
     B->>Q: submit the copy with a fence
     S->>B: wait_fenced(handle)
@@ -156,7 +156,7 @@ Texture creation, upload and sampler binding belong to `TextureLoom` and are out
 | Option | What it is | Use it for |
 |---|---|---|
 | **`DataReadProcessor`** | Each `read_*` call arms one request for the next graphics cycle. `resolve_*` finishes it on the consuming thread, waiting for a device-local copy if one is in flight. | The general case. Reach for it first. Section 6 lists what it reads. |
-| **`StagingUtils`** | `download_from_gpu` detects host-visible versus device-local. `download_host_visible` and `download_device_local` are the specific forms. `download_from_gpu_async` does not stall the graphics queue. | Direct calls against a `VKBuffer`, off the graphics thread. |
+| **`StagingUtils`** | `download_from_gpu` detects host-visible versus device-local. `download_host_visible` and `download_device_local` are the specific forms. `download_back_buffer_async` records a copy and `resolve_back_buffer_read` finishes it later, so a read can span frames. | Direct calls against a `VKBuffer`, off the graphics thread. |
 | **`BufferDownloadProcessor`** | Copies a source `VKBuffer` into a CPU-side target buffer every cycle. | A continuous per-cycle copy. Section 6 covers its `back_buffers` form. |
 
 Rendered pixels are a different case. `RenderProcessor` draws to an image, so none of the above applies:
@@ -167,7 +167,7 @@ Rendered pixels are a different case. `RenderProcessor` draws to an image, so no
 
 - `IOManager::capture_window` records those frames to a video file (section 8).
 
-Vertex data written by compute and consumed again as geometry goes through `GeometryReadbackNode` (in `Nodes::GpuSync`). It downloads with `download_from_gpu_async` and re-emits the result as a `GeometryWriterNode`. The transfer is synchronous and submits to the queue itself, so its `process_sample` does nothing. Drive `compute_frame()` yourself from a `FRAME_ACCURATE` metro, never from the graphics thread.
+Vertex data written by compute and consumed again as geometry goes through `GeometryReadbackNode` (in `Nodes::GpuSync`). It records a download with `download_back_buffer_async` and re-emits the previous call's result as a `GeometryWriterNode`, so device-local vertices arrive one call behind. It submits its own transfers, so its `process_sample` does nothing. Drive `compute_frame()` yourself from a `FRAME_ACCURATE` metro, never from the graphics thread.
 
 ```mermaid
 flowchart TD

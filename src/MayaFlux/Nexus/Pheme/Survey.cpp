@@ -107,7 +107,8 @@ namespace {
         if (chain && chain->find<Nodes::Network::GpuFieldOperator>() && buffer->is_initialized()) {
             std::vector<uint8_t> bytes(graphics->get_vertex_count() * layout.stride_bytes);
             std::shared_ptr<Buffers::VKBuffer> staging;
-            Buffers::download_from_gpu_async(buffer, bytes.data(), bytes.size(), staging);
+            Buffers::download_back_buffer(
+                Buffers::generation_slot(Buffers::gpu_buffer_handle(buffer)), bytes.data(), bytes.size(), staging);
             positions = decode_positions(bytes, layout);
         } else {
             positions = decode_positions(graphics->get_vertex_data(), layout);
@@ -143,7 +144,8 @@ namespace {
         if (buffer->is_initialized() && field_driven(buffer)) {
             std::vector<uint8_t> bytes(static_cast<size_t>(node->get_vertex_count()) * layout->stride_bytes);
             std::shared_ptr<Buffers::VKBuffer> staging;
-            Buffers::download_from_gpu_async(buffer, bytes.data(), bytes.size(), staging);
+            Buffers::download_back_buffer(
+                Buffers::generation_slot(Buffers::gpu_buffer_handle(buffer)), bytes.data(), bytes.size(), staging);
             positions = decode_positions(bytes, *layout);
         } else {
             positions = decode_positions(node->get_vertex_data(), *layout);
