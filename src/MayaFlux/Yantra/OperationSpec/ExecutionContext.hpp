@@ -1,5 +1,7 @@
 #pragma once
 
+#include "ComputationSignature.hpp"
+
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Transitive/Facet/Facets.hpp"
 
@@ -123,6 +125,9 @@ using ExecutionParams = std::variant<
  * @endcode
  */
 struct MAYAFLUX_API ExecutionContext {
+
+    /** @brief Operation selections being resolved by the grammar. */
+    ComputationSignature signature;
 
     /**
      * @brief Execution mode controlling scheduling behavior.

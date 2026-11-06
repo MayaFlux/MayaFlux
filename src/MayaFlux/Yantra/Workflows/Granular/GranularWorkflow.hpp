@@ -162,6 +162,8 @@ struct SegmentConfig : OperationConfig {
 class MAYAFLUX_API SegmentOp final
     : public Extractor<Kakshya::RegionGroup, Kakshya::RegionGroup> {
 public:
+    using supports = Supports<SegmentConfig>;
+
     [[nodiscard]] ExtractionType get_extraction_type() const override
     {
         return ExtractionType::FEATURE_GUIDED;
@@ -170,13 +172,9 @@ public:
     /**
      * @brief The stored settings, or defaults when none were set.
      */
-    [[nodiscard]] const SegmentConfig& config() const override
+    [[nodiscard]] ConfigRefs configs() const override
     {
-        if (const auto* stored = resolved_config<SegmentConfig>()) {
-            return *stored;
-        }
-        static const SegmentConfig defaults {};
-        return defaults;
+        return stored_configs(supports {});
     }
 
 protected:
@@ -244,6 +242,8 @@ struct AttributeConfig : OperationConfig {
 class MAYAFLUX_API AttributeOp final
     : public RegionGroupAnalyzer<Kakshya::RegionGroup> {
 public:
+    using supports = Supports<AttributeConfig>;
+
     [[nodiscard]] AnalysisType get_analysis_type() const override
     {
         return AnalysisType::FEATURE;
@@ -252,13 +252,9 @@ public:
     /**
      * @brief The stored settings, or defaults when none were set.
      */
-    [[nodiscard]] const AttributeConfig& config() const override
+    [[nodiscard]] ConfigRefs configs() const override
     {
-        if (const auto* stored = resolved_config<AttributeConfig>()) {
-            return *stored;
-        }
-        static const AttributeConfig defaults {};
-        return defaults;
+        return stored_configs(supports {});
     }
 
     [[nodiscard]] std::string get_name() const override
@@ -347,7 +343,6 @@ struct GranularConfig {
             FacetMember<&GranularConfig::channel> {},
             FacetMember<&GranularConfig::ascending> {},
             FacetMember<&GranularConfig::gpu_sort_threshold> {},
-            FacetMember<&GranularConfig::attribution_context> {},
         };
     }
 
@@ -356,7 +351,6 @@ struct GranularConfig {
     uint32_t channel = 0;
     bool ascending = true;
     uint32_t gpu_sort_threshold = 0;
-    ComputationContext attribution_context = ComputationContext::SPECTRAL;
     GrainTaper taper;
 };
 
@@ -488,13 +482,11 @@ template <ComputeData InputType, ComputeData OutputType>
  *            and writes stitched per-channel audio into a SoundFileContainer.
  * CONTAINER_ADDITIVE: same as CONTAINER but uses an overlap-add reconstruct rule
  *
- * @param attribution_context ComputationContext assigned to the attribution rule.
  * @param output              Terminal output type for this pipeline.
  * @param taper               Optional per-grain taper for OLA output.
  * @return Configured GranularMatrix instance.
  */
 [[nodiscard]] MAYAFLUX_API std::shared_ptr<GranularMatrix> make_granular_matrix(
-    ComputationContext attribution_context = ComputationContext::SPECTRAL,
     GranularOutput output = GranularOutput::REGION_GROUP, GrainTaper taper = {});
 
 // ============================================================================

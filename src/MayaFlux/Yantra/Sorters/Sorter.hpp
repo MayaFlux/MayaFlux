@@ -149,12 +149,9 @@ public:
         return OperationType::SORTER;
     }
 
-    [[nodiscard]] const OperationConfig& config() const override
+    [[nodiscard]] ConfigRefs configs() const override
     {
-        if (const auto* stored = this->template resolved_config<SorterConfig>()) {
-            return *stored;
-        }
-        return base_type::config();
+        return this->stored_configs(Supports<SorterConfig> {});
     }
 
 protected:

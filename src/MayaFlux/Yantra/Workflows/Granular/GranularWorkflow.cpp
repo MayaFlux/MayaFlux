@@ -15,11 +15,10 @@ namespace {
     std::shared_ptr<Kakshya::SoundFileContainer> run_to_container(
         const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
         const ExecutionContext& ctx,
-        ComputationContext attribution_context,
         GranularOutput output = GranularOutput::CONTAINER,
         GrainTaper taper = {})
     {
-        auto matrix = make_granular_matrix(attribution_context, output, std::move(taper));
+        auto matrix = make_granular_matrix(output, std::move(taper));
         auto seg_op = matrix->get_operation<SegmentOp>("segment");
         auto attr_op = matrix->get_operation<AttributeOp>("attribute");
         auto sort_op = matrix->get_operation<SortOp>("sort");
@@ -52,11 +51,10 @@ namespace {
     std::shared_ptr<Kakshya::DynamicSoundStream> run_to_stream(
         const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
         const ExecutionContext& ctx,
-        ComputationContext attribution_context,
         GranularOutput output = GranularOutput::STREAM,
         GrainTaper taper = {})
     {
-        auto matrix = make_granular_matrix(attribution_context, output, std::move(taper));
+        auto matrix = make_granular_matrix(output, std::move(taper));
         auto seg_op = matrix->get_operation<SegmentOp>("segment");
         auto attr_op = matrix->get_operation<AttributeOp>("attribute");
         auto sort_op = matrix->get_operation<SortOp>("sort");
@@ -294,7 +292,7 @@ const ComputationGrammar::Rule::Executor reconstruct_grains_additive_stream =
 Datum<Kakshya::RegionGroup> SegmentOp::extract_implementation(
     const Datum<Kakshya::RegionGroup>& input)
 {
-    const auto& cfg = config();
+    const auto& cfg = config<SegmentConfig>();
 
     std::shared_ptr<Kakshya::SignalSourceContainer> container;
     if (input.container && *input.container) {
@@ -391,7 +389,7 @@ double AttributeOp::compute_grain_attribute(
     const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
     const ExecutionContext& ctx) const
 {
-    const auto& cfg = config();
+    const auto& cfg = config<AttributeConfig>();
 
     if (cfg.executor) {
         const auto samples = Kakshya::extract_region_channel(grain, container, cfg.channel);
@@ -442,7 +440,7 @@ Datum<Kakshya::RegionGroup> AttributeOp::analyze_implementation(
     if (input.data.regions.empty())
         return input;
 
-    const auto& cfg = config();
+    const auto& cfg = config<AttributeConfig>();
 
     const std::shared_ptr<Kakshya::SignalSourceContainer> container
         = (input.container && *input.container) ? *input.container : cfg.container;
@@ -498,7 +496,6 @@ const ComputationGrammar::Rule::Executor sort_grains =
 // ============================================================================
 
 std::shared_ptr<GranularMatrix> make_granular_matrix(
-    ComputationContext attribution_context,
     GranularOutput output,
     GrainTaper taper)
 {
@@ -509,7 +506,6 @@ std::shared_ptr<GranularMatrix> make_granular_matrix(
     matrix->create_operation<SortOp>("sort");
 
     matrix->get_grammar()->create_rule("segment") //
-        .with_context(ComputationContext::TEMPORAL)
         .with_priority(100)
         .with_description("Fixed hop-size grain segmentation")
         .matches_type<Kakshya::RegionGroup>()
@@ -517,7 +513,6 @@ std::shared_ptr<GranularMatrix> make_granular_matrix(
         .build();
 
     matrix->get_grammar()->create_rule("attribute") //
-        .with_context(attribution_context)
         .with_priority(75)
         .with_description("Per-grain feature attribution via analyzer or lambda")
         .matches_type<Kakshya::RegionGroup>()
@@ -525,7 +520,6 @@ std::shared_ptr<GranularMatrix> make_granular_matrix(
         .build();
 
     matrix->get_grammar()->create_rule("sort") //
-        .with_context(ComputationContext::STRUCTURAL)
         .with_priority(50)
         .with_description("Attribute-keyed grain sort, CPU or GPU")
         .matches_type<Kakshya::RegionGroup>()
@@ -534,7 +528,6 @@ std::shared_ptr<GranularMatrix> make_granular_matrix(
 
     if (output == GranularOutput::CONTAINER) {
         matrix->get_grammar()->create_rule("reconstruct") //
-            .with_context(ComputationContext::STRUCTURAL)
             .with_priority(25)
             .with_description("Stitch sorted grains into a SoundFileContainer")
             .matches_type<Kakshya::RegionGroup>()
@@ -551,7 +544,6 @@ std::shared_ptr<GranularMatrix> make_granular_matrix(
         };
 
         matrix->get_grammar()->create_rule("reconstruct") //
-            .with_context(ComputationContext::STRUCTURAL)
             .with_priority(25)
             .with_description("Additive grain reconstruction into SoundFileContainer")
             .matches_type<Kakshya::RegionGroup>()
@@ -559,7 +551,6 @@ std::shared_ptr<GranularMatrix> make_granular_matrix(
             .build();
     } else if (output == GranularOutput::STREAM) {
         matrix->get_grammar()->create_rule("reconstruct") //
-            .with_context(ComputationContext::STRUCTURAL)
             .with_priority(25)
             .with_description("Stitch sorted grains into a DynamicSoundStream")
             .matches_type<Kakshya::RegionGroup>()
@@ -575,7 +566,6 @@ std::shared_ptr<GranularMatrix> make_granular_matrix(
         };
 
         matrix->get_grammar()->create_rule("reconstruct") //
-            .with_context(ComputationContext::STRUCTURAL)
             .with_priority(25)
             .with_description("Additive grain reconstruction into DynamicSoundStream")
             .matches_type<Kakshya::RegionGroup>()
@@ -596,7 +586,7 @@ GranularDatum process(
     const GranularConfig& config,
     Qualifier qualifier)
 {
-    auto matrix = make_granular_matrix(config.attribution_context);
+    auto matrix = make_granular_matrix();
 
     auto ctx = make_granular_context(config, analysis_type, qualifier);
 
@@ -623,7 +613,7 @@ GranularDatum process(
     AttributeExecutor executor,
     const GranularConfig& config)
 {
-    auto matrix = make_granular_matrix(config.attribution_context);
+    auto matrix = make_granular_matrix();
 
     auto ctx = make_granular_context(config, std::move(executor));
 
@@ -654,7 +644,7 @@ std::shared_ptr<Kakshya::SoundFileContainer> process_to_container(
 {
     auto ctx = make_granular_context(config, analysis_type, qualifier);
 
-    return run_to_container(container, ctx, config.attribution_context,
+    return run_to_container(container, ctx,
         output, config.taper);
 }
 
@@ -670,7 +660,7 @@ std::shared_ptr<Kakshya::SoundFileContainer> process_to_container(
 {
     auto ctx = make_granular_context(config, std::move(executor));
 
-    return run_to_container(container, ctx, config.attribution_context,
+    return run_to_container(container, ctx,
         output, config.taper);
 }
 
@@ -687,7 +677,7 @@ std::shared_ptr<Kakshya::DynamicSoundStream> process_to_stream(
 {
     auto ctx = make_granular_context(config, analysis_type, qualifier);
 
-    return run_to_stream(container, ctx, config.attribution_context,
+    return run_to_stream(container, ctx,
         output, config.taper);
 }
 
@@ -703,7 +693,7 @@ std::shared_ptr<Kakshya::DynamicSoundStream> process_to_stream(
 {
     auto ctx = make_granular_context(config, std::move(executor));
 
-    return run_to_stream(container, ctx, config.attribution_context,
+    return run_to_stream(container, ctx,
         output, config.taper);
 }
 

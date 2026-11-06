@@ -46,6 +46,8 @@ struct RegionKeySorterConfig : SorterConfig {
  */
 class RegionKeySorter : public Sorter<Kakshya::RegionGroup, Kakshya::RegionGroup> {
 public:
+    using supports = Supports<RegionKeySorterConfig>;
+
     /**
      * @brief Construct a region key sorter from its settings.
      * @param config Keys and GPU threshold. Key weights are validated.
@@ -59,13 +61,9 @@ public:
     /**
      * @brief The stored settings, or defaults when none were set.
      */
-    [[nodiscard]] const RegionKeySorterConfig& config() const override
+    [[nodiscard]] ConfigRefs configs() const override
     {
-        if (const auto* stored = resolved_config<RegionKeySorterConfig>()) {
-            return *stored;
-        }
-        static const RegionKeySorterConfig defaults {};
-        return defaults;
+        return stored_configs(supports {});
     }
 
     [[nodiscard]] SortingType get_sorting_type() const override
@@ -87,7 +85,7 @@ private:
 inline Datum<Kakshya::RegionGroup> RegionKeySorter::sort_implementation(
     const Datum<Kakshya::RegionGroup>& input)
 {
-    const auto& cfg = config();
+    const auto& cfg = config<RegionKeySorterConfig>();
     Datum<Kakshya::RegionGroup> out = input;
     const auto n = out.data.regions.size();
 

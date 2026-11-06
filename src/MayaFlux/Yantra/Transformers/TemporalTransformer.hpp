@@ -74,7 +74,7 @@ class TemporalTransformer final : public Transformer<InputType, OutputType> {
 public:
     using input_type = Datum<InputType>;
     using output_type = Datum<OutputType>;
-    using config_type = TemporalTransformerConfig;
+    using supports = Supports<TemporalTransformerConfig>;
 
     /**
      * @brief Construct a temporal transformer from its settings.
@@ -93,19 +93,15 @@ public:
     /**
      * @brief The stored settings, or defaults when none were set.
      */
-    [[nodiscard]] const TemporalTransformerConfig& config() const override
+    [[nodiscard]] ConfigRefs configs() const override
     {
-        if (const auto* stored = this->template resolved_config<TemporalTransformerConfig>()) {
-            return *stored;
-        }
-        static const TemporalTransformerConfig defaults {};
-        return defaults;
+        return this->stored_configs(supports {});
     }
 
 protected:
     output_type transform_implementation(input_type& input) override
     {
-        const auto& cfg = config();
+        const auto& cfg = this->template config<TemporalTransformerConfig>();
         switch (static_cast<TemporalOperation>(cfg.operation)) {
         case TemporalOperation::TIME_REVERSE:
             return apply_per_channel(input, [](std::span<double> ch) {

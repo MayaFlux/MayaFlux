@@ -73,7 +73,7 @@ class SpectralTransformer final : public Transformer<InputType, OutputType> {
 public:
     using input_type = Datum<InputType>;
     using output_type = Datum<OutputType>;
-    using config_type = SpectralTransformerConfig;
+    using supports = Supports<SpectralTransformerConfig>;
 
     /**
      * @brief Construct a spectral transformer from its settings.
@@ -92,19 +92,15 @@ public:
     /**
      * @brief The stored settings, or defaults when none were set.
      */
-    [[nodiscard]] const SpectralTransformerConfig& config() const override
+    [[nodiscard]] ConfigRefs configs() const override
     {
-        if (const auto* stored = this->template resolved_config<SpectralTransformerConfig>()) {
-            return *stored;
-        }
-        static const SpectralTransformerConfig defaults {};
-        return defaults;
+        return this->stored_configs(supports {});
     }
 
 protected:
     output_type transform_implementation(input_type& input) override
     {
-        const auto& cfg = config();
+        const auto& cfg = this->template config<SpectralTransformerConfig>();
         const auto window = cfg.window_size;
         const auto hop = cfg.hop_size;
         const auto sample_rate = cfg.sample_rate;

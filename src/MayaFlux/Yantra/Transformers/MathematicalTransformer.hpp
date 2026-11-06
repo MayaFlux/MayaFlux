@@ -112,7 +112,7 @@ class MathematicalTransformer final : public Transformer<InputType, OutputType> 
 public:
     using input_type = Datum<InputType>;
     using output_type = Datum<OutputType>;
-    using config_type = MathematicalTransformerConfig;
+    using supports = Supports<MathematicalTransformerConfig>;
 
     /**
      * @brief Construct a mathematical transformer from its settings.
@@ -131,19 +131,15 @@ public:
     /**
      * @brief The stored settings, or defaults when none were set.
      */
-    [[nodiscard]] const MathematicalTransformerConfig& config() const override
+    [[nodiscard]] ConfigRefs configs() const override
     {
-        if (const auto* stored = this->template resolved_config<MathematicalTransformerConfig>()) {
-            return *stored;
-        }
-        static const MathematicalTransformerConfig defaults {};
-        return defaults;
+        return this->stored_configs(supports {});
     }
 
 protected:
     output_type transform_implementation(input_type& input) override
     {
-        const auto& cfg = config();
+        const auto& cfg = this->template config<MathematicalTransformerConfig>();
         switch (static_cast<MathematicalOperation>(cfg.operation)) {
         case MathematicalOperation::GAIN: {
             const auto a = cfg.gain_factor;

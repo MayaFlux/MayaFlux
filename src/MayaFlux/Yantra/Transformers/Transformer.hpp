@@ -131,19 +131,18 @@ public:
     }
 
     /**
-     * @brief The stored transformer settings, or defaults when none were set.
+     * @brief The stored transformer settings, empty when none were set.
      */
-    [[nodiscard]] const OperationConfig& config() const override
+    [[nodiscard]] ConfigRefs configs() const override
     {
-        if (const auto* stored = this->template resolved_config<TransformerConfig>()) {
-            return *stored;
-        }
-        return base_type::config();
+        return this->stored_configs(Supports<TransformerConfig> {});
     }
 
     [[nodiscard]] bool is_in_place() const
     {
-        return static_cast<const TransformerConfig&>(config()).strategy == TransformationStrategy::IN_PLACE;
+        const auto stored = configs();
+        return !stored.empty()
+            && static_cast<const TransformerConfig&>(stored.front().get()).strategy == TransformationStrategy::IN_PLACE;
     }
 
 protected:

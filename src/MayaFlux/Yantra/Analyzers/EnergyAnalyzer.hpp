@@ -142,6 +142,7 @@ public:
     using input_type = Datum<InputType>;
     using output_type = Datum<OutputType>;
     using base_type = Analyzer<InputType, OutputType>;
+    using supports = Supports<EnergyAnalyzerConfig>;
 
     /**
      * @brief Construct an energy analyzer from its settings.
@@ -156,9 +157,9 @@ public:
     /**
      * @brief The stored settings.
      */
-    [[nodiscard]] const EnergyAnalyzerConfig& config() const override
+    [[nodiscard]] ConfigRefs configs() const override
     {
-        return *this->template resolved_config<EnergyAnalyzerConfig>();
+        return this->stored_configs(supports {});
     }
 
     /**
@@ -207,7 +208,7 @@ public:
      */
     [[nodiscard]] EnergyLevel classify_energy_level(double energy) const
     {
-        const auto& t = config().thresholds;
+        const auto& t = this->template config<EnergyAnalyzerConfig>().thresholds;
         if (energy <= t[0])
             return EnergyLevel::SILENT;
         if (energy <= t[1])
@@ -240,7 +241,7 @@ protected:
     output_type analyze_implementation(const input_type& input) override
     {
         try {
-            const auto& cfg = config();
+            const auto& cfg = this->template config<EnergyAnalyzerConfig>();
 
             auto [data_span, structure_info] = OperationHelper::extract_structured_double(
                 const_cast<input_type&>(input));
@@ -302,7 +303,7 @@ private:
         std::vector<std::span<const double>> original_data,
         const DataStructureInfo& /*structure_info*/) const
     {
-        const auto& cfg = config();
+        const auto& cfg = this->template config<EnergyAnalyzerConfig>();
         const EnergyMethod method = cfg.method;
 
         EnergyAnalysis result;

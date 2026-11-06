@@ -162,6 +162,7 @@ public:
     using input_type = Datum<InputType>;
     using output_type = Datum<OutputType>;
     using base_type = Analyzer<InputType, OutputType>;
+    using supports = Supports<StatisticalAnalyzerConfig>;
 
     /**
      * @brief Construct a statistical analyzer from its settings.
@@ -178,9 +179,9 @@ public:
     /**
      * @brief The stored settings.
      */
-    [[nodiscard]] const StatisticalAnalyzerConfig& config() const override
+    [[nodiscard]] ConfigRefs configs() const override
     {
-        return *this->template resolved_config<StatisticalAnalyzerConfig>();
+        return this->stored_configs(supports {});
     }
 
     /**
@@ -260,7 +261,7 @@ protected:
             }
         }
         try {
-            const auto& cfg = config();
+            const auto& cfg = this->template config<StatisticalAnalyzerConfig>();
 
             auto [data_span, structure_info] = OperationHelper::extract_structured_double(
                 const_cast<input_type&>(input));
@@ -368,7 +369,7 @@ private:
     {
         namespace D = MayaFlux::Kinesis::Discrete;
 
-        const auto& cfg = config();
+        const auto& cfg = this->template config<StatisticalAnalyzerConfig>();
         const uint32_t hop = cfg.hop_size;
         const uint32_t window = cfg.window_size;
 

@@ -7,24 +7,6 @@
 namespace MayaFlux::Yantra {
 
 /**
- * @enum ComputationContext
- * @brief Defines the computational contexts in which rules can be applied
- */
-enum class ComputationContext : uint8_t {
-    TEMPORAL, ///< Time-domain operations
-    SPECTRAL, ///< Frequency-domain operations
-    SPATIAL, ///< Spatial operations
-    SEMANTIC, ///< Semantic operations
-    STRUCTURAL, ///< Graph/tree operations
-    LOGICAL, ///< Boolean/conditional operations
-    PARAMETRIC, ///< Parameter transformation
-    REACTIVE, ///< Event-driven operations
-    CONCURRENT, ///< Parallel/async operations
-    RECURSIVE, ///< Self-referential operations
-    CONVOLUTION ///< Convolution-based operations
-};
-
-/**
  * @class Matcher
  * @brief Type-agnostic pattern matching for computation rules
  *
@@ -45,22 +27,6 @@ public:
     {
         return [](const std::any& input, const ExecutionContext& /*ctx*/) -> bool {
             return static_cast<bool>(safe_any_cast<Datum<DataType>>(input));
-        };
-    }
-
-    /**
-     * @brief Creates a matcher that checks for specific computation contexts
-     * @param required_context The context that must be present
-     * @return Matcher function that returns true if context matches
-     */
-    static MatcherFunc create_context_matcher(ComputationContext required_context)
-    {
-        return [required_context](const std::any& /*input*/, const ExecutionContext& ctx) -> bool {
-            auto it = ctx.execution_metadata.find("computation_context");
-            if (it == ctx.execution_metadata.end())
-                return false;
-            auto result = safe_any_cast<ComputationContext>(it->second);
-            return result && *result.value == required_context;
         };
     }
 
@@ -112,11 +78,28 @@ public:
  * @param config Settings of the operation
  * @return Configured operation instance
  */
-template <typename OperationType>
-std::shared_ptr<OperationType> create_configured_operation(
-    const typename OperationType::config_type& config)
+template <typename OperationType, typename ConfigType>
+    requires std::constructible_from<OperationType, const ConfigType&>
+std::shared_ptr<OperationType> create_configured_operation(const ConfigType& config)
 {
     return std::make_shared<OperationType>(config);
+}
+
+/** @brief Set the config's method selector from its corresponding operation enum. */
+template <typename Config, typename E>
+    requires std::is_enum_v<E>
+Config select_operation(E selection, Config config)
+{
+    if constexpr (requires { config.method = selection; }) {
+        config.method = selection;
+    } else if constexpr (requires { config.operation = selection; }) {
+        config.operation = selection;
+    } else if constexpr (requires { config.algorithm = selection; }) {
+        config.algorithm = selection;
+    } else {
+        static_assert(always_false_v<Config>, "The config has no selector accepting this enum");
+    }
+    return config;
 }
 
 /**

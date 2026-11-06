@@ -1,6 +1,8 @@
 #pragma once
 
 #include "OperationSpec/GrammarHelper.hpp"
+#include "OperationSpec/OperationRegistry.hpp"
+#include "ComputeOperation.hpp"
 
 #include "Executors/ShaderExecutionContext.hpp"
 
@@ -22,9 +24,6 @@ namespace MayaFlux::Yantra {
  * - Execution logic that performs the actual computation
  * - Metadata for organization, prioritization, and optimization
  *
- * **Contexts**: Categorize rules by computational domain (temporal, spectral, etc.)
- * for efficient lookup and logical organization.
- *
  * **Priority System**: Higher priority rules are evaluated first, allowing for
  * hierarchical decision making and exception handling.
  *
@@ -36,7 +35,6 @@ namespace MayaFlux::Yantra {
  *
  * // Add a rule for mathematical transformations on double vectors
  * grammar.create_rule("gain_amplification")
- *     .with_context(ComputationContext::TEMPORAL)
  *     .with_priority(100)
  *     .matches_type<std::vector<double>>()
  *     .executes([](const std::any& input, const ExecutionContext& ctx) {
@@ -50,7 +48,6 @@ namespace MayaFlux::Yantra {
  * ```cpp
  * auto complex_matcher = Matcher::combine_and({
  *     Matcher::create_type_matcher<std::vector<Kakshya::DataVariant>>(),
- *     Matcher::create_context_matcher(ComputationContext::SPECTRAL),
  *     Matcher::create_parameter_matcher("frequency_range", std::string("audio"))
  * });
  *
@@ -68,7 +65,6 @@ namespace MayaFlux::Yantra {
  * // Create rule that automatically applies MathematicalTransformer
  * grammar.add_operation_rule<MathematicalTransformer<>>(
  *     "auto_normalize",
- *     ComputationContext::MATHEMATICAL,
  *     Matcher::create_type_matcher<std::vector<Kakshya::DataVariant>>(),
  *     {{"operation", std::string("normalize")}, {"target_peak", 1.0}},
  *     75 // priority
@@ -77,6 +73,20 @@ namespace MayaFlux::Yantra {
  */
 class MAYAFLUX_API ComputationGrammar {
 public:
+    class Builder;
+
+    /** @brief Assemble positional configs into persistent rules for an enum signature. */
+    static std::shared_ptr<ComputationGrammar> assemble(
+        std::shared_ptr<const OperationRegistry> registry,
+        ComputationSignature signature, std::span<const OperationConfig> configs = {});
+
+    static std::shared_ptr<ComputationGrammar> assemble(
+        std::shared_ptr<const OperationRegistry> registry,
+        ComputationSignature signature, std::initializer_list<OperationConfig> configs);
+
+    /** @brief The ordered signature established by the fluent builder or assembly. */
+    [[nodiscard]] const ComputationSignature& signature() const { return m_signature; }
+
     /**
      * @struct Rule
      * @brief Represents a computation rule with matching and execution logic
@@ -94,7 +104,9 @@ public:
 
         std::string name; ///< Unique identifier for this rule
         std::string description; ///< Human-readable description of what the rule does
-        ComputationContext context {}; ///< Computational context this rule operates in
+        ComputationSignature signature;
+        /** @brief Stage position for a rule bound by grammar assembly. */
+        std::optional<size_t> position;
         int priority = 0; ///< Execution priority (higher values evaluated first)
         std::optional<Portal::Graphics::ShaderSpec> gpu_spec; ///< When set, executor receives a GPU-backed operation
 
@@ -109,27 +121,28 @@ public:
         std::type_index target_operation_type = std::type_index(typeid(void)); ///< Type of operation this rule creates (for type-based queries)
 
         std::vector<std::string> tags; ///< Arbitrary tags for categorization and search
+
+        /** @brief Match the declared work and any additional input conditions. */
+        [[nodiscard]] bool accepts(const std::any& input, const ExecutionContext& context) const
+        {
+            return signature == context.signature && (!matcher || matcher(input, context));
+        }
     };
 
     /**
      * @brief Add a rule to the grammar
      * @param rule Rule to add to the grammar system
      *
-     * Rules are automatically sorted by priority (highest first) and indexed by context
-     * for efficient lookup. The rule's name must be unique within the grammar.
+     * Rules are automatically sorted by priority (highest first).
+     * The rule's name must be unique within the grammar.
      *
      * @note Rules with higher priority values are evaluated first during matching
      */
     void add_rule(Rule rule)
     {
-        std::string rule_name = rule.name;
-        ComputationContext rule_context = rule.context;
-
         auto insert_pos = std::ranges::upper_bound(m_rules, rule,
             [](const Rule& a, const Rule& b) { return a.priority > b.priority; });
         m_rules.insert(insert_pos, std::move(rule));
-
-        m_context_index[rule_context].push_back(rule_name);
     }
 
     /**
@@ -148,7 +161,7 @@ public:
     std::optional<Rule> find_best_match(const std::any& input, const ExecutionContext& context) const
     {
         for (const auto& rule : m_rules) {
-            if (rule.matcher(input, context)) {
+            if (rule.accepts(input, context)) {
                 return rule;
             }
         }
@@ -176,25 +189,51 @@ public:
         auto it = std::ranges::find_if(m_rules,
             [&rule_name](const Rule& rule) { return rule.name == rule_name; });
 
-        if (it != m_rules.end() && it->matcher(input, context)) {
+        if (it != m_rules.end() && it->accepts(input, context)) {
             return it->executor(input, context);
         }
         return std::nullopt;
     }
 
-    /**
-     * @brief Get all rule names for a specific computation context
-     * @param context The computation context to query
-     * @return Vector of rule names that belong to the specified context
-     *
-     * Useful for discovering what rules are available for a particular computational
-     * domain (e.g., all temporal processing rules) or for building context-specific
-     * processing pipelines.
-     */
-    std::vector<std::string> get_rules_by_context(ComputationContext context) const
+    /** @brief Resolve an ordered signature through registered rules and return its final output. */
+    template <ComputeData OutputType, ComputeData InputType>
+    Datum<OutputType> process(const Datum<InputType>& input,
+        ComputationSignature signature,
+        const ExecutionContext& context = {}) const
     {
-        auto it = m_context_index.find(context);
-        return it != m_context_index.end() ? it->second : std::vector<std::string> {};
+        std::any current = input;
+        size_t resolved = 0;
+        while (!signature.empty()) {
+            std::optional<Rule> selected;
+            ExecutionContext stage = context;
+            for (const auto& rule : m_rules) {
+                if ((rule.position && *rule.position != resolved)
+                    || rule.signature.empty() || !signature.starts_with(rule.signature)) {
+                    continue;
+                }
+                stage.signature = rule.signature;
+                if (rule.accepts(current, stage)) {
+                    selected = rule;
+                    break;
+                }
+            }
+            if (!selected) {
+                error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::Runtime,
+                    std::source_location::current(),
+                    "No grammar rule accepts operation signature at stage {}", resolved);
+            }
+            current = selected->executor(current, stage);
+            resolved += selected->signature.size();
+            signature = signature.after(selected->signature.size());
+        }
+        return safe_any_cast_or_throw<Datum<OutputType>>(current);
+    }
+
+    /** @brief Execute the grammar's assembled signature. */
+    template <ComputeData DataType>
+    Datum<DataType> process(const Datum<DataType>& input, const ExecutionContext& context = {}) const
+    {
+        return process<DataType>(input, m_signature, context);
     }
 
     /**
@@ -227,19 +266,16 @@ public:
     }
 
     /**
-     * @brief Adds a rule that builds a concrete operation from its config struct
+     * @brief Adds a rule backed by a persistent operation built from its config struct
      * @tparam ConcreteOpType The concrete operation type to instantiate
      * @tparam ConfigType The operation's config type, deduced from config
      * @param rule_name Unique name for this rule
-     * @param context Computation context for the rule
      * @param matcher Matcher function to determine when rule applies
      * @param config Settings of the operation, stored whole in its facets
      * @param priority Execution priority (default: 50)
      *
-     * The generated executor:
-     * 1. Creates an instance of ConcreteOpType from config
-     * 2. Merges the settings carried by the execution context
-     * 3. Executes the operation on the input data
+     * Creates the operation once. Each call merges execution settings and
+     * executes the same instance on compatible input.
      *
      * Example:
      * ```cpp
@@ -248,36 +284,38 @@ public:
      * cfg.gain_factor = 1.5;
      * grammar.add_operation_rule<MathematicalTransformer<>>(
      *     "gain_rule",
-     *     ComputationContext::MATHEMATICAL,
      *     Matcher::create_type_matcher<std::vector<Kakshya::DataVariant>>(),
      *     cfg,
      *     80);
      * ```
      */
-    template <typename ConcreteOpType, typename ConfigType = typename ConcreteOpType::config_type>
+    template <typename ConcreteOpType, typename ConfigType = default_config_t<ConcreteOpType>>
     void add_operation_rule(const std::string& rule_name,
-        ComputationContext context,
         Matcher::MatcherFunc matcher,
         ConfigType config = {},
         int priority = 50)
     {
-        Rule rule;
-        rule.name = rule_name;
-        rule.context = context;
-        rule.priority = priority;
-        rule.matcher = std::move(matcher);
-        rule.target_operation_type = std::type_index(typeid(ConcreteOpType));
+        create_rule(rule_name)
+            .with_priority(priority)
+            .matches_custom(std::move(matcher))
+            .uses(create_configured_operation<ConcreteOpType>(config))
+            .build();
+    }
 
-        rule.executor = [config = std::move(config)](const std::any& input, const ExecutionContext& ctx) -> std::any {
-            auto operation = create_configured_operation<ConcreteOpType>(config);
-
-            apply_context_parameters(operation, ctx);
-
-            auto typed_input = safe_any_cast_or_throw<DataIO>(input);
-            return operation->apply_operation(typed_input);
-        };
-
-        add_rule(std::move(rule));
+    /** @brief Register a selected method with its concrete settings and persistent implementation. */
+    template <typename ConcreteOpType, typename E, typename ConfigType = default_config_t<ConcreteOpType>>
+        requires std::is_enum_v<E>
+    void add_operation_rule(const std::string& rule_name,
+        E selection,
+        ConfigType config = {},
+        int priority = 50)
+    {
+        config = select_operation(selection, std::move(config));
+        create_rule(rule_name)
+            .matches(selection)
+            .with_priority(priority)
+            .uses(create_configured_operation<ConcreteOpType>(config))
+            .build();
     }
 
     /**
@@ -291,7 +329,6 @@ public:
      * Example usage:
      * ```cpp
      * grammar.create_rule("complex_temporal_rule")
-     *     .with_context(ComputationContext::TEMPORAL)
      *     .with_priority(75)
      *     .with_description("Applies gain when signal is quiet")
      *     .matches_type<std::vector<double>>()
@@ -306,7 +343,10 @@ public:
      */
     class MAYAFLUX_API RuleBuilder {
     private:
+        friend class Builder;
+
         Rule m_rule; ///< Rule being constructed
+        Matcher::MatcherFunc m_operation_matcher;
         ComputationGrammar* m_grammar; ///< Reference to parent grammar
 
     public:
@@ -321,14 +361,35 @@ public:
             m_rule.name = std::move(name);
         }
 
-        /**
-         * @brief Sets the computation context for this rule
-         * @param context The computational context (temporal, spectral, etc.)
-         * @return Reference to this builder for method chaining
-         */
-        RuleBuilder& with_context(ComputationContext context)
+        /** @brief Declare one operation selection or an ordered combination this rule fulfills. */
+        RuleBuilder& matches(ComputationSignature signature)
         {
-            m_rule.context = context;
+            m_rule.signature = std::move(signature);
+            return *this;
+        }
+
+        /** @brief Execute a persistent operation instance with the call's typed settings. */
+        template <typename Op>
+        RuleBuilder& uses(std::shared_ptr<Op> operation)
+        {
+            if (!operation) {
+                error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::Runtime,
+                    std::source_location::current(), "Grammar rule requires an operation instance");
+            }
+            m_rule.target_operation_type = std::type_index(typeid(Op));
+            using Input = std::remove_cvref_t<decltype(std::declval<typename Op::input_type>().data)>;
+            using Output = std::remove_cvref_t<decltype(std::declval<typename Op::output_type>().data)>;
+            std::shared_ptr<ComputeOperation<Input, Output>> base = std::move(operation);
+            m_operation_matcher = [base](const std::any& input, const ExecutionContext&) {
+                const auto* typed = std::any_cast<typename Op::input_type>(&input);
+                return typed && base->validate_input(*typed);
+            };
+            m_rule.executor = [operation = std::move(base)](
+                                  const std::any& input, const ExecutionContext& ctx) -> std::any {
+                apply_context_parameters(operation, ctx);
+                operation->set_last_execution_context(ctx);
+                return operation->apply_operation(safe_any_cast_or_throw<typename Op::input_type>(input));
+            };
             return *this;
         }
 
@@ -487,6 +548,17 @@ public:
          */
         void build()
         {
+            if (!m_rule.executor) {
+                error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::Runtime,
+                    std::source_location::current(), "Grammar rule requires an implementation");
+            }
+            if (m_operation_matcher) {
+                if (m_rule.matcher) {
+                    m_rule.matcher = Matcher::combine_and({ std::move(m_rule.matcher), std::move(m_operation_matcher) });
+                } else {
+                    m_rule.matcher = std::move(m_operation_matcher);
+                }
+            }
             m_grammar->add_rule(std::move(m_rule));
         }
     };
@@ -503,8 +575,7 @@ public:
      * Example:
      * ```cpp
      * auto builder = grammar.create_rule("my_rule");
-     * builder.with_context(ComputationContext::MATHEMATICAL)
-     *        .matches_type<std::vector<double>>()
+     * builder.matches_type<std::vector<double>>()
      *        .executes([](const auto& input, const auto& ctx) { return input; })
      *        .build();
      * ```
@@ -549,7 +620,7 @@ public:
      * @param rule_name Name of rule to remove
      * @return True if rule was removed, false if not found
      *
-     * Removes the rule from both the main rule list and the context index.
+     * Removes the rule from the rule list.
      * This is useful for dynamic rule management and grammar updates.
      */
     bool remove_rule(const std::string& rule_name)
@@ -558,14 +629,7 @@ public:
             [&rule_name](const Rule& rule) { return rule.name == rule_name; });
 
         if (it != m_rules.end()) {
-            ComputationContext context = it->context;
             m_rules.erase(it);
-
-            auto& context_rules = m_context_index[context];
-            std::erase_if(context_rules,
-                [&](const std::string& name) {
-                    return name == rule_name;
-                });
 
             return true;
         }
@@ -575,18 +639,161 @@ public:
     /**
      * @brief Clear all rules from the grammar
      *
-     * Removes all rules and clears all indices. Useful for resetting
+     * Removes all rules. Useful for resetting
      * the grammar to a clean state or for testing scenarios.
      */
     void clear_all_rules()
     {
         m_rules.clear();
-        m_context_index.clear();
     }
 
 private:
+    ComputationSignature m_signature;
     std::vector<Rule> m_rules; ///< All rules sorted by priority (highest first)
-    std::unordered_map<ComputationContext, std::vector<std::string>> m_context_index; ///< Index of rule names by context for fast lookup
 };
+
+/** @brief Construct a grammar from registered implementations and optional rule refinements. */
+class ComputationGrammar::Builder {
+public:
+    explicit Builder(std::shared_ptr<const OperationRegistry> registry)
+        : m_registry(std::move(registry))
+    {
+        if (!m_registry) {
+            error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::Runtime,
+                std::source_location::current(), "Grammar construction requires an operation registry");
+        }
+    }
+
+    Builder& rule(ComputationSignature signature)
+    {
+        start(std::move(signature), nullptr);
+        return *this;
+    }
+
+    Builder& rule(ComputationSignature signature, OperationConfig config)
+    {
+        start(std::move(signature), &config);
+        return *this;
+    }
+
+    Builder& when(Matcher::MatcherFunc matcher)
+    {
+        require_rule();
+        for (auto& rule : m_pending) {
+            rule.matches_custom(matcher);
+        }
+        return *this;
+    }
+
+    Builder& priority(int value)
+    {
+        require_rule();
+        for (auto& rule : m_pending) {
+            rule.with_priority(value);
+        }
+        return *this;
+    }
+
+    template <typename Op>
+    Builder& uses(std::shared_ptr<Op> operation)
+    {
+        require_rule();
+        if (!operation) {
+            error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::Runtime,
+                std::source_location::current(), "Grammar rule requires an operation instance");
+        }
+        if (m_config) {
+            m_config->apply_to(*operation);
+        }
+        m_pending.erase(m_pending.begin() + 1, m_pending.end());
+        m_pending.front().uses(std::move(operation));
+        return *this;
+    }
+
+    std::shared_ptr<ComputationGrammar> build()
+    {
+        finish();
+        m_grammar->m_signature = std::move(m_signature);
+        return std::move(m_grammar);
+    }
+
+private:
+    void start(ComputationSignature signature, const OperationConfig* config)
+    {
+        if (signature.empty()) {
+            error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::Runtime,
+                std::source_location::current(), "Grammar rule requires a nonempty signature");
+        }
+        finish();
+        m_config = config ? std::optional<OperationConfig>(*config) : std::nullopt;
+        auto bindings = m_registry->resolve(signature, config);
+        const auto count = std::max(size_t { 1 }, bindings.size());
+        for (size_t i = 0; i < count; ++i) {
+            auto& rule = m_pending.emplace_back(m_grammar.get(),
+                "stage_" + std::to_string(m_position) + "_" + std::to_string(i));
+            rule.matches(signature);
+            rule.m_rule.position = m_position;
+            if (!bindings.empty()) {
+                rule.m_operation_matcher = std::move(bindings[i].matcher);
+                rule.m_rule.executor = std::move(bindings[i].executor);
+                rule.m_rule.target_operation_type = bindings[i].type;
+                rule.with_priority(bindings[i].priority);
+            }
+        }
+        m_position += signature.size();
+        m_signature = m_signature | signature;
+    }
+
+    void finish()
+    {
+        for (auto& rule : m_pending) {
+            rule.build();
+        }
+        m_pending.clear();
+        m_config.reset();
+    }
+
+    void require_rule() const
+    {
+        if (m_pending.empty()) {
+            error<std::logic_error>(Journal::Component::Yantra, Journal::Context::Runtime,
+                std::source_location::current(), "Declare a rule before refining it");
+        }
+    }
+
+    std::shared_ptr<const OperationRegistry> m_registry;
+    std::shared_ptr<ComputationGrammar> m_grammar { std::make_shared<ComputationGrammar>() };
+    std::vector<RuleBuilder> m_pending;
+    std::optional<OperationConfig> m_config;
+    ComputationSignature m_signature;
+    size_t m_position {};
+};
+
+inline std::shared_ptr<ComputationGrammar> ComputationGrammar::assemble(
+    std::shared_ptr<const OperationRegistry> registry,
+    ComputationSignature signature, std::span<const OperationConfig> configs)
+{
+    if (!configs.empty() && configs.size() != signature.size()) {
+        error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::Runtime,
+            std::source_location::current(), "Config count must match the computation signature");
+    }
+    Builder builder(std::move(registry));
+    for (size_t i = 0; i < signature.size(); ++i) {
+        if (configs.empty()) {
+            builder.rule(signature.at(i));
+        } else {
+            builder.rule(signature.at(i), configs[i]);
+        }
+    }
+    return builder.build();
+}
+
+inline std::shared_ptr<ComputationGrammar> ComputationGrammar::assemble(
+    std::shared_ptr<const OperationRegistry> registry,
+    ComputationSignature signature, std::initializer_list<OperationConfig> configs)
+{
+    return assemble(std::move(registry), std::move(signature),
+        std::span<const OperationConfig>(configs.begin(), configs.size()));
+}
 
 } // namespace MayaFlux::Yantra

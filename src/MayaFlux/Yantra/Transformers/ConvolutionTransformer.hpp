@@ -61,7 +61,7 @@ class ConvolutionTransformer final : public Transformer<InputType, OutputType> {
 public:
     using input_type = Datum<InputType>;
     using output_type = Datum<OutputType>;
-    using config_type = ConvolutionTransformerConfig;
+    using supports = Supports<ConvolutionTransformerConfig>;
 
     /**
      * @brief Construct a convolution transformer from its settings.
@@ -80,19 +80,15 @@ public:
     /**
      * @brief The stored settings, or defaults when none were set.
      */
-    [[nodiscard]] const ConvolutionTransformerConfig& config() const override
+    [[nodiscard]] ConfigRefs configs() const override
     {
-        if (const auto* stored = this->template resolved_config<ConvolutionTransformerConfig>()) {
-            return *stored;
-        }
-        static const ConvolutionTransformerConfig defaults {};
-        return defaults;
+        return this->stored_configs(supports {});
     }
 
 protected:
     output_type transform_implementation(input_type& input) override
     {
-        const auto& cfg = config();
+        const auto& cfg = this->template config<ConvolutionTransformerConfig>();
         switch (static_cast<ConvolutionOperation>(cfg.operation)) {
         case ConvolutionOperation::DIRECT_CONVOLUTION: {
             const auto& ir = cfg.impulse_response;

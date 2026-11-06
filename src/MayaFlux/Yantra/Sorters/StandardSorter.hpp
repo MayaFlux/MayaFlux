@@ -87,6 +87,7 @@ public:
     using base_type = Sorter<InputType, OutputType>;
     using input_type = typename base_type::input_type;
     using output_type = typename base_type::output_type;
+    using supports = Supports<StandardSorterConfig>;
 
     static_assert(!std::same_as<InputType, Kakshya::RegionGroup>,
         "StandardSorter does not sort region groups; use RegionKeySorter");
@@ -104,9 +105,9 @@ public:
     /**
      * @brief The stored settings.
      */
-    [[nodiscard]] const StandardSorterConfig& config() const override
+    [[nodiscard]] ConfigRefs configs() const override
     {
-        return *this->template resolved_config<StandardSorterConfig>();
+        return this->stored_configs(supports {});
     }
 
     /**
@@ -123,11 +124,11 @@ protected:
      */
     output_type sort_implementation(const input_type& input) override
     {
-        switch (config().strategy) {
+        switch (this->template config<StandardSorterConfig>().strategy) {
         case SortingStrategy::IN_PLACE:
             return sort_in_place(input);
         case SortingStrategy::COPY_SORT:
-            return sort_copy(input, config().algorithm, SortPath::COPY);
+            return sort_copy(input, this->template config<StandardSorterConfig>().algorithm, SortPath::COPY);
         case SortingStrategy::INDEX_ONLY:
             return sort_indices_only(input);
         case SortingStrategy::PARTIAL_SORT:
@@ -137,7 +138,7 @@ protected:
         case SortingStrategy::PARALLEL_SORT:
             return sort_parallel(input);
         default:
-            return sort_copy(input, config().algorithm, SortPath::COPY);
+            return sort_copy(input, this->template config<StandardSorterConfig>().algorithm, SortPath::COPY);
         }
     }
 
@@ -168,7 +169,7 @@ private:
      */
     [[nodiscard]] Kinesis::Discrete::SortOrder sort_order() const
     {
-        const auto& cfg = config();
+        const auto& cfg = this->template config<StandardSorterConfig>();
         if (cfg.direction == SortingDirection::CUSTOM) {
             return Kinesis::Discrete::SortOrder { cfg.comparator };
         }
@@ -181,7 +182,7 @@ private:
     void record_sort(output_type& out, SortPath path) const
     {
         SortRecord record;
-        record.config = config();
+        record.config = this->template config<StandardSorterConfig>();
         record.path = path;
         out.facets.set(record);
     }
@@ -227,7 +228,7 @@ private:
             record_sort(result, SortPath::IN_PLACE);
             return result;
         } else {
-            return sort_copy(input, config().algorithm, SortPath::COPY);
+            return sort_copy(input, this->template config<StandardSorterConfig>().algorithm, SortPath::COPY);
         }
     }
 
@@ -245,7 +246,7 @@ private:
             return result;
         } else {
             // If output type is not vector<size_t>, fall back to copy sort
-            return sort_copy(input, config().algorithm, SortPath::COPY);
+            return sort_copy(input, this->template config<StandardSorterConfig>().algorithm, SortPath::COPY);
         }
     }
 
@@ -282,7 +283,7 @@ private:
      */
     InputType sort_data_copy(const input_type& data)
     {
-        return sort_compute_data_extract(data, sort_order(), config().algorithm);
+        return sort_compute_data_extract(data, sort_order(), this->template config<StandardSorterConfig>().algorithm);
     }
 
     /**
@@ -290,7 +291,7 @@ private:
      */
     void sort_data_in_place(input_type& data)
     {
-        sort_compute_data_inplace(data, sort_order(), config().algorithm);
+        sort_compute_data_inplace(data, sort_order(), this->template config<StandardSorterConfig>().algorithm);
     }
 
     /**
@@ -304,7 +305,7 @@ private:
     std::vector<InputType> extract_chunked_data(std::vector<std::span<double>> channels, DataStructureInfo info)
     {
         std::vector<InputType> chunks;
-        const size_t chunk_size = config().chunk_size;
+        const size_t chunk_size = this->template config<StandardSorterConfig>().chunk_size;
 
         for (size_t start = 0; start < channels[0].size(); start += chunk_size) {
             std::vector<std::vector<double>> chunk_data;
@@ -315,7 +316,7 @@ private:
                 auto chunk_span = channels[ch].subspan(start, end - start);
 
                 chunk_data[ch].assign(chunk_span.begin(), chunk_span.end());
-                Kinesis::Discrete::sort_span(std::span<double>(chunk_data[ch]), sort_order(), config().algorithm);
+                Kinesis::Discrete::sort_span(std::span<double>(chunk_data[ch]), sort_order(), this->template config<StandardSorterConfig>().algorithm);
             }
 
             chunks.push_back(OperationHelper::reconstruct_from_double<InputType>(chunk_data, info));

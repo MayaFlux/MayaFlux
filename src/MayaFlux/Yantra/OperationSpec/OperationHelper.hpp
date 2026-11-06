@@ -562,8 +562,11 @@ public:
                 }
                 NumericChannels double_data = extract_numeric_data(compute_data.data, compute_data.container.value());
                 return std::make_tuple(std::move(double_data), info);
-            } else {
+            } else if constexpr (requires { extract_numeric_data(compute_data.data, compute_data.needs_processig()); }) {
                 NumericChannels double_data = extract_numeric_data(compute_data.data, compute_data.needs_processig());
+                return std::make_tuple(std::move(double_data), info);
+            } else {
+                NumericChannels double_data = extract_numeric_data(compute_data.data);
                 return std::make_tuple(std::move(double_data), info);
             }
         } else {

@@ -83,6 +83,16 @@ public:
     {
     }
 
+    /** @brief Resolve and execute an enum signature through this pipeline's grammar. */
+    template <typename Signature>
+        requires(std::same_as<Signature, ComputationSignature> || std::is_enum_v<Signature>)
+    output_type process(const input_type& input,
+        Signature signature,
+        const ExecutionContext& context = {})
+    {
+        return m_grammar->template process<OutputType>(input, std::move(signature), context);
+    }
+
     /**
      * @brief Add a concrete operation instance to the pipeline
      * @tparam ConcreteOpType The concrete operation type (must derive from ComputeOperation)
@@ -157,6 +167,9 @@ public:
      */
     output_type process(const input_type& input, const ExecutionContext& context = {})
     {
+        if (!m_grammar->signature().empty()) {
+            return process(input, m_grammar->signature(), context);
+        }
         input_type current_data = input;
         ExecutionContext current_context = context;
 
@@ -598,7 +611,6 @@ public:
      * Example:
      * ```cpp
      * matrix->create_grammar_rule("auto_gain")
-     *        .with_context(ComputationContext::TEMPORAL)
      *        .matches_type<std::vector<double>>()
      *        .executes([](const auto& input, const auto& ctx) { return input; })
      *        .build();

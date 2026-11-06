@@ -161,6 +161,7 @@ public:
     using input_type = Datum<InputType>;
     using output_type = Datum<OutputType>;
     using base_type = Extractor<InputType, OutputType>;
+    using supports = Supports<FeatureExtractorConfig>;
 
     /**
      * @brief Construct a feature extractor from its settings.
@@ -175,9 +176,9 @@ public:
     /**
      * @brief The stored settings.
      */
-    [[nodiscard]] const FeatureExtractorConfig& config() const override
+    [[nodiscard]] ConfigRefs configs() const override
     {
-        return *this->template resolved_config<FeatureExtractorConfig>();
+        return this->stored_configs(supports {});
     }
 
     /**
@@ -204,7 +205,8 @@ public:
                 return false;
             for (const auto& span : numeric_data) {
                 return Kinesis::Discrete::validate_window_parameters(
-                    config().window_size, config().hop_size, span.size());
+                    this->template config<FeatureExtractorConfig>().window_size,
+                    this->template config<FeatureExtractorConfig>().hop_size, span.size());
             }
             return true;
         } catch (const std::exception& e) {
@@ -216,7 +218,7 @@ public:
 protected:
     [[nodiscard]] ExtractionScope extraction_scope() const override
     {
-        return config().scope;
+        return this->template config<FeatureExtractorConfig>().scope;
     }
 
     /**
@@ -227,7 +229,7 @@ protected:
     output_type extract_implementation(const input_type& input) override
     {
         try {
-            const auto& cfg = config();
+            const auto& cfg = this->template config<FeatureExtractorConfig>();
 
             auto [numeric_data, info] = OperationHelper::extract_structured_double(const_cast<input_type&>(input));
             DataStructureInfo structure_info = info;
