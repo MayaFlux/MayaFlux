@@ -83,6 +83,23 @@ namespace {
     }
 
     /**
+     * @brief Detach a slot's buffer and free it once work submitted so far has completed.
+     */
+    void retire_slot(VulkanBufferSlot& slot)
+    {
+        if (!slot.buffer && !slot.memory) {
+            slot = VulkanBufferSlot {};
+            return;
+        }
+
+        auto& foundry = Portal::Graphics::get_shader_foundry();
+        foundry.release_after_submit([device = foundry.get_device(), retired = slot]() mutable {
+            free_slot(device, retired);
+        });
+        slot = VulkanBufferSlot {};
+    }
+
+    /**
      * @brief Allocate and map a host visible buffer slot.
      *
      * By default the memory is host cached system memory, which suits buffers
@@ -93,13 +110,16 @@ namespace {
      * is full, the default memory is used, so the request never fails where
      * the default would succeed. Host reads of device local memory are
      * uncached, so it is meant for small or write only host access.
+     *
+     * A slot that already holds a buffer has it retired, not freed, since
+     * submitted work may still read it.
      */
     void allocate_slot(vk::Device device, vk::PhysicalDevice phys,
         VulkanBufferSlot& slot, size_t byte_size,
         vk::BufferUsageFlags extra_usage = vk::BufferUsageFlagBits::eStorageBuffer,
         bool prefer_device_local = false)
     {
-        free_slot(device, slot);
+        retire_slot(slot);
 
         vk::BufferCreateInfo bi;
         bi.size = byte_size;
@@ -306,18 +326,20 @@ void GpuResourceManager::release(const std::string& key)
 
     auto& foundry = Portal::Graphics::get_shader_foundry();
     auto& compute_press = Portal::Graphics::get_compute_press();
-    auto device = foundry.get_device();
 
     if (unit.impl) {
         for (auto& slot : unit.impl->buffers)
-            free_slot(device, slot);
+            retire_slot(slot);
     }
     unit.impl.reset();
     unit.buffer_slots.clear();
     unit.image_slots.clear();
 
-    if (unit.pipeline_id != Portal::Graphics::INVALID_COMPUTE_PIPELINE)
-        compute_press.destroy_pipeline(unit.pipeline_id);
+    if (unit.pipeline_id != Portal::Graphics::INVALID_COMPUTE_PIPELINE) {
+        foundry.release_after_submit([&compute_press, pipeline_id = unit.pipeline_id] {
+            compute_press.destroy_pipeline(pipeline_id);
+        });
+    }
 
     if (unit.shader_id != Portal::Graphics::INVALID_SHADER)
         foundry.destroy_shader(unit.shader_id);
@@ -327,12 +349,32 @@ void GpuResourceManager::release(const std::string& key)
 
 void GpuResourceManager::cleanup()
 {
-    std::vector<std::string> keys;
-    keys.reserve(m_units.size());
-    for (const auto& [k, v] : m_units)
-        keys.push_back(k);
-    for (const auto& k : keys)
-        release(k);
+    if (m_units.empty() && m_shared->slots.empty())
+        return;
+
+    auto& foundry = Portal::Graphics::get_shader_foundry();
+    auto& compute_press = Portal::Graphics::get_compute_press();
+    const auto device = foundry.get_device();
+
+    foundry.wait_submitted();
+
+    for (auto& [key, unit] : m_units) {
+        if (!unit->ready)
+            continue;
+        if (unit->impl) {
+            for (auto& slot : unit->impl->buffers)
+                free_slot(device, slot);
+        }
+        if (unit->pipeline_id != Portal::Graphics::INVALID_COMPUTE_PIPELINE)
+            compute_press.destroy_pipeline(unit->pipeline_id);
+        if (unit->shader_id != Portal::Graphics::INVALID_SHADER)
+            foundry.destroy_shader(unit->shader_id);
+    }
+    m_units.clear();
+
+    for (auto& [index, slot] : m_shared->slots)
+        free_slot(device, slot);
+    m_shared->slots.clear();
 }
 
 //==============================================================================
@@ -585,6 +627,12 @@ void GpuResourceManager::transition_image(
 // Dispatch
 //==============================================================================
 
+Portal::Graphics::CommandBufferID GpuResourceManager::begin_dispatch_commands()
+{
+    return Portal::Graphics::get_shader_foundry().begin_commands(
+        Portal::Graphics::ShaderFoundry::CommandBufferType::GRAPHICS);
+}
+
 void GpuResourceManager::dispatch(const std::string& key,
     const std::array<uint32_t, 3>& groups,
     const std::vector<GpuBufferBinding>& bindings,
@@ -595,8 +643,7 @@ void GpuResourceManager::dispatch(const std::string& key,
     auto& foundry = Portal::Graphics::get_shader_foundry();
     auto& compute_press = Portal::Graphics::get_compute_press();
 
-    auto cmd_id = foundry.begin_commands(
-        Portal::Graphics::ShaderFoundry::CommandBufferType::COMPUTE);
+    auto cmd_id = begin_dispatch_commands();
 
     compute_press.bind_all(
         cmd_id, unit.pipeline_id, unit.descriptor_set_ids,
@@ -648,8 +695,7 @@ void GpuResourceManager::dispatch_batched(const std::string& key,
     const uint32_t effective_passes_per_batch = params.passes_per_batch.value_or(default_passes);
     for (uint32_t base = 0; base < params.pass_count; base += effective_passes_per_batch) {
         const uint32_t batch_end = std::min(base + effective_passes_per_batch, params.pass_count);
-        auto cmd_id = foundry.begin_commands(
-            Portal::Graphics::ShaderFoundry::CommandBufferType::COMPUTE);
+        auto cmd_id = begin_dispatch_commands();
 
         for (uint32_t pass = base; pass < batch_end; ++pass) {
             std::vector<uint8_t> pc_data(push_constant_size);
@@ -739,7 +785,7 @@ void GpuResourceManager::dispatch_batched_indirect(const std::string& key,
 
     for (uint32_t base = 0; base < params.pass_count; base += effective_passes_per_batch) {
         const uint32_t batch_end = std::min(base + effective_passes_per_batch, params.pass_count);
-        auto cmd_id = foundry.begin_commands(Portal::Graphics::ShaderFoundry::CommandBufferType::COMPUTE);
+        auto cmd_id = begin_dispatch_commands();
 
         for (uint32_t pass = base; pass < batch_end; ++pass) {
             std::vector<uint8_t> pc_data(push_constant_size);
@@ -781,8 +827,7 @@ Portal::Graphics::FenceID GpuResourceManager::dispatch_async(const std::string& 
     auto& foundry = Portal::Graphics::get_shader_foundry();
     auto& compute_press = Portal::Graphics::get_compute_press();
 
-    auto cmd_id = foundry.begin_commands(
-        Portal::Graphics::ShaderFoundry::CommandBufferType::COMPUTE);
+    auto cmd_id = begin_dispatch_commands();
 
     compute_press.bind_all(
         cmd_id, unit.pipeline_id, unit.descriptor_set_ids,
@@ -839,8 +884,7 @@ Portal::Graphics::CommandBufferID GpuResourceManager::record_sequence_commands(
         });
     }
 
-    auto cmd_id = foundry.begin_commands(
-        Portal::Graphics::ShaderFoundry::CommandBufferType::COMPUTE);
+    auto cmd_id = begin_dispatch_commands();
     compute_press.record_sequence(cmd_id, stages);
     return cmd_id;
 }

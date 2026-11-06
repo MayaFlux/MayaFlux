@@ -66,8 +66,7 @@ namespace {
         auto out = ingest.get_output_image(0);
 
         if (out) {
-            const auto bcmd = foundry.begin_commands(
-                Portal::Graphics::ShaderFoundry::CommandBufferType::COMPUTE);
+            const auto bcmd = GpuResourceManager::begin_dispatch_commands();
             foundry.image_barrier(bcmd, out->get_image(),
                 vk::ImageLayout::eGeneral, vk::ImageLayout::eGeneral,
                 vk::AccessFlagBits2::eShaderWrite, vk::AccessFlagBits2::eShaderRead,

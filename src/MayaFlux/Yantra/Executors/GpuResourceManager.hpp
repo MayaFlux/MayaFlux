@@ -220,15 +220,27 @@ public:
     /**
      * @brief Destroy the pipeline, shader, descriptor sets, and buffers
      *        for a single key, without affecting any other key.
+     *
+     * The pipeline and buffers are released once work submitted so far has
+     * completed.
      */
     void release(const std::string& key);
 
     /**
-     * @brief Destroy every key currently held. Called from the destructor.
+     * @brief Wait for submitted work, then destroy every key and shared buffer.
+     *        Called from the destructor.
      */
     void cleanup();
 
     [[nodiscard]] bool is_ready(const std::string& key) const;
+
+    /**
+     * @brief Begin a command buffer for Yantra dispatch work.
+     *
+     * Dispatches record on the graphics queue, where the images and buffers
+     * they write are consumed, so no queue family ownership transfer is needed.
+     */
+    [[nodiscard]] static Portal::Graphics::CommandBufferID begin_dispatch_commands();
     [[nodiscard]] size_t buffer_allocated_bytes(const std::string& key, size_t index) const;
 
 private:

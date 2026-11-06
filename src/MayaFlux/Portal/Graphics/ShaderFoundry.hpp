@@ -558,6 +558,11 @@ public:
     void release_after_submit(std::function<void()> release);
 
     /**
+     * @brief Block until every submission made so far has completed
+     */
+    void wait_submitted();
+
+    /**
      * @brief Keep a slot claimed until the work recorded in a command buffer completes
      * @param cmd_id Command buffer that reads the slot
      * @param hold Lease on the slot; ignored if empty or the command buffer is unknown

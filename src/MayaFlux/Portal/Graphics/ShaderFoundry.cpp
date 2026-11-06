@@ -1080,6 +1080,12 @@ void ShaderFoundry::release_after_submit(std::function<void()> release)
     cmd_manager.retire_resource(std::move(release), cmd_manager.submitted());
 }
 
+void ShaderFoundry::wait_submitted()
+{
+    auto& cmd_manager = m_backend->get_command_manager();
+    cmd_manager.wait(cmd_manager.submitted());
+}
+
 void ShaderFoundry::hold_until_complete(CommandBufferID cmd_id, SlotLease hold)
 {
     if (!hold) {
