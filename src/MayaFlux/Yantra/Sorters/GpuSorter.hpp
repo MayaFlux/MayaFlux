@@ -1,13 +1,13 @@
 #pragma once
 
 #include "MayaFlux/Yantra/Executors/GpuExecutionContext.hpp"
-#include "UniversalSorter.hpp"
+#include "Sorter.hpp"
 
 namespace MayaFlux::Yantra {
 
 /**
  * @class GpuSorter
- * @brief Concrete UniversalSorter that dispatches entirely via a
+ * @brief Concrete Sorter that dispatches entirely via a
  *        GpuExecutionContext. CPU path is a hard error.
  *
  * @tparam InputType  ComputeData type accepted.
@@ -15,7 +15,7 @@ namespace MayaFlux::Yantra {
  */
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>,
     ComputeData OutputType = InputType>
-class GpuSorter : public UniversalSorter<InputType, OutputType> {
+class GpuSorter : public Sorter<InputType, OutputType> {
 public:
     using input_type = Datum<InputType>;
     using output_type = Datum<OutputType>;
@@ -28,8 +28,7 @@ public:
         std::shared_ptr<GpuExecutionContext<InputType, OutputType>> executor)
     {
         assert(executor && "GpuSorter: executor must not be null");
-        m_executor = executor;
-        this->set_gpu_backend(std::move(executor));
+        m_executor = std::move(executor);
     }
 
     /**
@@ -38,17 +37,24 @@ public:
     [[nodiscard]] std::shared_ptr<GpuExecutionContext<InputType, OutputType>>
     get_executor() const { return m_executor; }
 
-    [[nodiscard]] std::string get_sorter_name() const override
-    {
-        return "GpuSorter";
-    }
-
     [[nodiscard]] SortingType get_sorting_type() const override
     {
         return SortingType::CUSTOM;
     }
 
 protected:
+    /**
+     * @brief Dispatches through the executor when the GPU is ready. Otherwise the
+     *        base path runs and reaches the hard error below: there is no CPU fallback.
+     */
+    output_type apply_operation_internal(const input_type& input, const ExecutionContext& context) override
+    {
+        if (m_executor->ensure_gpu_ready()) {
+            return m_executor->execute(input, context);
+        }
+        return Sorter<InputType, OutputType>::apply_operation_internal(input, context);
+    }
+
     output_type sort_implementation(const input_type&) override
     {
         error<std::runtime_error>(

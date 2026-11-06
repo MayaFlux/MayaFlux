@@ -44,9 +44,15 @@ VisionMatrix::VisionMatrix(
     std::optional<VisionExtractMode> extract,
     Kinesis::Vision::VisionAnalysisContext context)
 {
-    create_operation<VisionAnalyzer>("analyze", completed(query), context);
+    auto parameters = completed(query);
+    create_operation<VisionAnalyzer>("analyze",
+        VisionAnalyzerConfig {
+            .method = parameters.intents,
+            .query = std::move(parameters),
+            .context = std::move(context),
+        });
     if (extract)
-        create_operation<VisionExtractor>("extract", *extract);
+        create_operation<VisionExtractor>("extract", VisionExtractorConfig { .method = *extract });
 }
 
 void VisionMatrix::count_call()
@@ -87,12 +93,12 @@ void VisionMatrix::extract(const Kinesis::Vision::VisionAnalysis& analysis, cons
         return;
 
     ContainerIO input;
-    input.metadata["vision_analysis"] = analysis;
-    input.metadata["vision_image"] = image;
+    input.facets.set(analysis);
+    input.facets.set(Kinesis::Vision::vision_frame(), image);
 
     const auto output = with(std::move(input)).then<VisionExtractor>("extract").to_io();
-    if (const auto extracted = Kakshya::get_metadata_value<std::shared_ptr<Core::VKImage>>(output.metadata, "vision_extraction"))
-        m_extraction = *extracted;
+    if (const auto* extracted = output.facets.get<VisionExtraction>())
+        m_extraction = extracted->image;
 }
 
 std::shared_ptr<const Kinesis::Vision::VisionResult> VisionMatrix::result(VisionIntent intent)
@@ -101,7 +107,7 @@ std::shared_ptr<const Kinesis::Vision::VisionResult> VisionMatrix::result(Vision
 
     const auto analyzer_op = analyzer();
     const auto results = analyzer_op->get_shared_results();
-    const auto resolved = Kinesis::Vision::resolve(analyzer_op->get_query());
+    const auto resolved = Kinesis::Vision::resolve(analyzer_op->config<VisionAnalyzerConfig>().effective_query());
     const size_t lanes = std::min(results->size(), resolved.size());
 
     for (size_t lane = 0; lane < lanes; ++lane) {

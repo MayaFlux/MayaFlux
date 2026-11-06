@@ -93,16 +93,13 @@ void RegionOrganizationProcessor::add_region_group(const std::string& group_name
 
 void RegionOrganizationProcessor::add_segment_to_region(const std::string& group_name,
     size_t region_index,
-    const std::vector<uint64_t>& start_coords,
-    const std::vector<uint64_t>& end_coords,
-    const std::unordered_map<std::string, std::any>& attributes)
+    const Region& region)
 {
-    auto region_it = std::ranges::find_if(m_organized_regions, [&](const OrganizedRegion& region) {
-        return region.group_name == group_name && region.region_index == region_index;
+    auto region_it = std::ranges::find_if(m_organized_regions, [&](const OrganizedRegion& organized) {
+        return organized.group_name == group_name && organized.region_index == region_index;
     });
 
     if (region_it != m_organized_regions.end()) {
-        Region region(start_coords, end_coords, attributes);
         RegionSegment segment(region);
 
         region_it->segments.push_back(std::move(segment));
@@ -396,12 +393,8 @@ void RegionOrganizationProcessor::organize_group(const std::shared_ptr<SignalSou
         cache_region_if_needed(segment, container);
 
         organized_region.segments.push_back(std::move(segment));
-
-        std::ranges::copy(group.attributes,
-            std::inserter(organized_region.attributes, organized_region.attributes.end()));
-        std::ranges::copy(region.attributes,
-            std::inserter(organized_region.attributes, organized_region.attributes.end()));
-
+        organized_region.merge(group);
+        organized_region.merge(region);
         organized_region.current_position = region.start_coordinates;
         organized_region.state = RegionState::READY;
 
@@ -412,10 +405,8 @@ void RegionOrganizationProcessor::organize_group(const std::shared_ptr<SignalSou
         RegionSegment segment(region);
         cache_region_if_needed(segment, container);
         organized_region.segments.push_back(std::move(segment));
-        std::ranges::copy(group.attributes,
-            std::inserter(organized_region.attributes, organized_region.attributes.end()));
-        std::ranges::copy(region.attributes,
-            std::inserter(organized_region.attributes, organized_region.attributes.end()));
+        organized_region.merge(group);
+        organized_region.merge(region);
         organized_region.current_position = region.start_coordinates;
         organized_region.state = RegionState::READY;
         m_organized_regions.push_back(std::move(organized_region));

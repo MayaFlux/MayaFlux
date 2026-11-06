@@ -10,7 +10,7 @@ namespace MayaFlux::Kakshya {
  *
  * RegionGroups provide a way to categorize and organize related regions within
  * signal data based on algorithmic or analytical criteria. Each group has a name
- * and can contain multiple Regions, as well as group-level attributes that
+ * and can contain multiple Regions, as well as typed group-level values that
  * apply to the entire collection.
  *
  * Common DSP-specific applications include:
@@ -31,8 +31,19 @@ struct MAYAFLUX_API RegionGroup {
     /** @brief Collection of regions belonging to this group */
     std::vector<Region> regions;
 
-    /** @brief Flexible key-value store for group-specific attributes */
-    std::unordered_map<std::string, std::any> attributes;
+    /** @brief Returns a typed group attribute, or nullptr when absent. */
+    template <typename T>
+    [[nodiscard]] const T* get(const Facet<T>& key) const
+    {
+        return m_facets.get(key);
+    }
+
+    /** @brief Stores a typed group attribute under its Facet key. */
+    template <typename T>
+    void set(const Facet<T>& key, std::type_identity_t<T> value)
+    {
+        m_facets.set(key, std::move(value));
+    }
 
     RegionState state = RegionState::IDLE;
     RegionTransition transition_type = RegionTransition::IMMEDIATE;
@@ -53,36 +64,13 @@ struct MAYAFLUX_API RegionGroup {
      * @brief Construct a region group.
      * @param group_name Name of the group.
      * @param regions Regions to include.
-     * @param attrs Optional group-level attributes.
      */
     RegionGroup(std::string group_name,
-        std::vector<Region> regions = {},
-        std::unordered_map<std::string, std::any> attrs = {})
+        std::vector<Region> regions = {})
         : name(std::move(group_name))
         , regions(std::move(regions))
-        , attributes(std::move(attrs))
     {
     }
-
-    /* static RegionGroup create_sequential_group(std::string group_name,
-        std::vector<Region> regions,
-        std::unordered_map<std::string, std::any> attributes = {})
-    {
-        RegionGroup group(group_name, regions, attributes);
-        group.region_selection_pattern = RegionSelectionPattern::SEQUENTIAL;
-        group.set_attribute("region_selection_pattern", RegionSelectionPattern::SEQUENTIAL);
-        return group;
-    }
-
-    static RegionGroup create_random_pool(std::string group_name,
-        std::vector<Region> regions,
-        std::unordered_map<std::string, std::any> attributes = {})
-    {
-        RegionGroup group(group_name, regions, attributes);
-        group.region_selection_pattern = RegionSelectionPattern::RANDOM;
-        group.set_attribute("region_selection_pattern", RegionSelectionPattern::RANDOM);
-        return group;
-    } */
 
     void add_region(const Region& region)
     {
@@ -143,18 +131,24 @@ struct MAYAFLUX_API RegionGroup {
     }
 
     /**
-     * @brief Sort regions by a specific attribute (numeric).
-     * @param attr_name The attribute name.
+     * @brief Sort regions by a typed attribute.
+     *
+     * Regions that carry the attribute come first, ordered by its value. Regions
+     * without it keep their relative order after them.
+     * @tparam T Attribute type.
+     * @param key The Facet key of the attribute.
      */
-    void sort_by_attribute(const std::string& attr_name)
+    template <typename T>
+        requires std::totally_ordered<T>
+    void sort(const Facet<T>& key)
     {
-        std::ranges::sort(regions,
-            [&attr_name](const Region& a, const Region& b) {
-                auto a_val = a.get_attribute<double>(attr_name);
-                auto b_val = b.get_attribute<double>(attr_name);
+        std::ranges::stable_sort(regions,
+            [&key](const Region& a, const Region& b) {
+                const T* a_val = a.get(key);
+                const T* b_val = b.get(key);
                 if (a_val && b_val)
                     return *a_val < *b_val;
-                return false;
+                return a_val != nullptr && b_val == nullptr;
             });
     }
 
@@ -167,7 +161,7 @@ struct MAYAFLUX_API RegionGroup {
     {
         std::vector<Region> result;
         for (const auto& region : regions) {
-            if (region.get_label() == label) {
+            if (region.label == label) {
                 result.push_back(region);
             }
         }
@@ -197,44 +191,25 @@ struct MAYAFLUX_API RegionGroup {
         }
 
         Region bounds(min_coords, max_coords);
-        bounds.set_attribute("type", "bounding_box");
-        bounds.set_attribute("source_group", name);
+        bounds.label = name;
         return bounds;
     }
 
     /**
-     * @brief Find all regions with a specific attribute value.
-     * @param key Attribute key.
-     * @param value Attribute value to match.
+     * @brief Find all regions whose typed attribute equals a value.
+     * @tparam T Attribute type.
+     * @param key The Facet key of the attribute.
+     * @param value Value to match.
      * @return Vector of matching Regions.
      */
-    std::vector<Region> find_regions_with_attribute(const std::string& key, const std::any& value) const
+    template <typename T>
+    std::vector<Region> find_regions(const Facet<T>& key, const T& value) const
     {
         std::vector<Region> result;
         std::ranges::copy_if(regions, std::back_inserter(result),
             [&key, &value](const Region& region) {
-                auto it = region.attributes.find(key);
-
-                if (it == region.attributes.end() || it->second.type() != value.type())
-                    return false;
-
-                if (value.type() == typeid(std::string))
-                    return any_equal<std::string>(it->second, value);
-                if (value.type() == typeid(double))
-                    return any_equal<double>(it->second, value);
-                if (value.type() == typeid(int))
-                    return any_equal<int>(it->second, value);
-                if (value.type() == typeid(bool))
-                    return any_equal<bool>(it->second, value);
-                if (value.type() == typeid(float))
-                    return any_equal<float>(it->second, value);
-                if (value.type() == typeid(uint32_t))
-                    return any_equal<uint32_t>(it->second, value);
-                if (value.type() == typeid(int64_t))
-                    return any_equal<int64_t>(it->second, value);
-                if (value.type() == typeid(uint64_t))
-                    return any_equal<uint64_t>(it->second, value);
-                return false;
+                const T* attr = region.get(key);
+                return attr && *attr == value;
             });
         return result;
     }
@@ -255,34 +230,9 @@ struct MAYAFLUX_API RegionGroup {
         return result;
     }
 
-    /**
-     * @brief Set a group-level attribute.
-     * @tparam T Value type.
-     * @param key Attribute key.
-     * @param value Value to set.
-     */
-    template <typename T>
-    void set_attribute(const std::string& key, T value)
-    {
-        attributes[key] = std::move(value);
-    }
-
-    /**
-     * @brief Get a group-level attribute.
-     * @tparam T Value type.
-     * @param key Attribute key.
-     * @return Optional value if present and convertible.
-     */
-    template <typename T>
-    std::optional<T> get_attribute(const std::string& key) const
-    {
-        auto it = attributes.find(key);
-        if (it == attributes.end()) {
-            return std::nullopt;
-        }
-
-        return safe_any_cast<T>(it->second);
-    }
+private:
+    friend struct OrganizedRegion;
+    Facets m_facets;
 };
 
 }

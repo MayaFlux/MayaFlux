@@ -6,32 +6,46 @@
 
 namespace MayaFlux::Yantra {
 
-/**
- * @enum ComputationContext
- * @brief Defines the computational contexts in which rules can be applied
- */
-enum class ComputationContext : uint8_t {
-    TEMPORAL, ///< Time-domain operations
-    SPECTRAL, ///< Frequency-domain operations
-    SPATIAL, ///< Spatial operations
-    SEMANTIC, ///< Semantic operations
-    STRUCTURAL, ///< Graph/tree operations
-    LOGICAL, ///< Boolean/conditional operations
-    PARAMETRIC, ///< Parameter transformation
-    REACTIVE, ///< Event-driven operations
-    CONCURRENT, ///< Parallel/async operations
-    RECURSIVE, ///< Self-referential operations
-    CONVOLUTION ///< Convolution-based operations
-};
+/** @brief How well a candidate suits an input. Larger wins; zero or less declines. */
+using Fitness = std::function<float(const std::any&)>;
 
 /**
- * @class UniversalMatcher
+ * @brief The candidate's fitness for an erased input.
+ *
+ * Calls `static float Op::fitness(const input_type&)` when the class has one.
+ * Returns an empty function otherwise, which the grammar counts as neutral (1).
+ */
+template <typename Op>
+Fitness fitness_of()
+{
+    if constexpr (requires(const typename Op::input_type& in) { { Op::fitness(in) } -> std::convertible_to<float>; }) {
+        return [](const std::any& input) -> float {
+            const auto* typed = std::any_cast<typename Op::input_type>(&input);
+            return typed ? static_cast<float>(Op::fitness(*typed)) : 0.0F;
+        };
+    } else {
+        return {};
+    }
+}
+
+/**
+ * @brief Whether the class keeps state between calls and must stay on its candidate.
+ *
+ * A class says so with `static constexpr bool stateful = true`. The grammar then keeps
+ * running it, instead of switching to a better-scoring candidate, until it stops
+ * accepting its input or the grammar's choices are reset.
+ */
+template <typename Op>
+inline constexpr bool stateful_v = requires { requires Op::stateful; };
+
+/**
+ * @class Matcher
  * @brief Type-agnostic pattern matching for computation rules
  *
  * Provides factory methods for creating matcher functions that can be used
  * to determine if operations should be applied in specific contexts.
  */
-class MAYAFLUX_API UniversalMatcher {
+class MAYAFLUX_API Matcher {
 public:
     using MatcherFunc = std::function<bool(const std::any&, const ExecutionContext&)>;
 
@@ -45,35 +59,6 @@ public:
     {
         return [](const std::any& input, const ExecutionContext& /*ctx*/) -> bool {
             return static_cast<bool>(safe_any_cast<Datum<DataType>>(input));
-        };
-    }
-
-    /**
-     * @brief Creates a matcher that checks for specific computation contexts
-     * @param required_context The context that must be present
-     * @return Matcher function that returns true if context matches
-     */
-    static MatcherFunc create_context_matcher(ComputationContext required_context)
-    {
-        return [required_context](const std::any& /*input*/, const ExecutionContext& ctx) -> bool {
-            auto it = ctx.execution_metadata.find("computation_context");
-            if (it == ctx.execution_metadata.end())
-                return false;
-            auto result = safe_any_cast<ComputationContext>(it->second);
-            return result && *result.value == required_context;
-        };
-    }
-
-    /**
-     * @brief Creates a matcher that checks for specific parameter values
-     * @param param_name Name of the parameter to check
-     * @param expected_value Expected value (type-checked)
-     * @return Matcher function that returns true if parameter matches
-     */
-    static MatcherFunc create_parameter_matcher(const std::string& param_name, const std::any& expected_value)
-    {
-        return [param_name, expected_value](const std::any& /*input*/, const ExecutionContext& ctx) -> bool {
-            return ctx.execution_metadata.contains(param_name) && ctx.execution_metadata.at(param_name).type() == expected_value.type();
         };
     }
 
@@ -107,59 +92,47 @@ public:
 };
 
 /**
- * @brief Creates an operation instance with parameters using safe_any_cast system
+ * @brief Creates an operation instance from its config struct
  * @tparam OperationType Type of operation to create
- * @tparam Args Constructor argument types
- * @param parameters Map of parameter names to values
- * @param args Constructor arguments
+ * @param config Settings of the operation
  * @return Configured operation instance
  */
-template <typename OperationType, typename... Args>
-std::shared_ptr<OperationType> create_configured_operation(
-    const std::unordered_map<std::string, std::any>& parameters,
-    Args&&... args)
+template <typename OperationType, typename ConfigType>
+    requires std::constructible_from<OperationType, const ConfigType&>
+std::shared_ptr<OperationType> create_configured_operation(const ConfigType& config)
 {
-    auto operation = std::make_shared<OperationType>(std::forward<Args>(args)...);
+    return std::make_shared<OperationType>(config);
+}
 
-    for (const auto& [param_name, param_value] : parameters) {
-        try {
-            operation->set_parameter(param_name, param_value);
-        } catch (...) {
-            MF_DEBUG(
-                Journal::Component::Yantra,
-                Journal::Context::Runtime,
-                "Parameter '{}' with type {} does not apply to operation '{}'",
-                param_name,
-                param_value.type().name(),
-                operation->get_name());
-        }
+/** @brief Set the config's method selector from its corresponding operation enum. */
+template <typename Config, typename E>
+    requires std::is_enum_v<E>
+Config select_operation(E selection, Config config)
+{
+    if constexpr (requires { config.method = selection; }) {
+        config.method = selection;
+    } else if constexpr (requires { config.operation = selection; }) {
+        config.operation = selection;
+    } else if constexpr (requires { config.algorithm = selection; }) {
+        config.algorithm = selection;
+    } else {
+        static_assert(always_false_v<Config>, "The config has no selector accepting this enum");
     }
-
-    return operation;
+    return config;
 }
 
 /**
- * @brief Applies context parameters to an operation
+ * @brief Applies context settings to an operation
  * @tparam OperationType Type of operation to configure
  * @param operation Operation instance to configure
- * @param ctx Execution context containing parameters
+ * @param ctx Execution context carrying the settings
+ *
+ * The config structs in ctx.facets are merged into the operation.
  */
 template <typename OperationType>
 void apply_context_parameters(std::shared_ptr<OperationType> operation, const ExecutionContext& ctx)
 {
-    for (const auto& [ctx_name, ctx_value] : ctx.execution_metadata) {
-        try {
-            operation->set_parameter(ctx_name, ctx_value);
-        } catch (...) {
-            MF_DEBUG(
-                Journal::Component::Yantra,
-                Journal::Context::Runtime,
-                "Context parameter '{}' with type {} does not apply to operation '{}'",
-                ctx_name,
-                ctx_value.type().name(),
-                operation->get_name());
-        }
-    }
+    operation->merge_config(ctx.facets);
 }
 
 } // namespace MayaFlux::Yantra

@@ -3,10 +3,10 @@
 #include "MayaFlux/Yantra/ComputeOperation.hpp"
 
 /**
- * @file UniversalExtractor.hpp
- * @brief Modern, digital-first universal extractor framework for Maya Flux
+ * @file Extractor.hpp
+ * @brief Modern, digital-first extractor framework for Maya Flux
  *
- * The UniversalExtractor system provides a clean, extensible foundation for data extraction
+ * The Extractor system provides a clean, extensible foundation for data extraction
  * in the Maya Flux ecosystem. Unlike traditional feature extractors, this focuses on
  * digital-first paradigms: data-driven workflows, composability, and type safety.
  *
@@ -19,7 +19,7 @@
  * regions/features identified by analysis.
  *
  * ## Key Features
- * - **Universal input/output:** Template-based I/O types defined at instantiation
+ * - **Flexible input/output:** Template-based I/O types defined at instantiation
  * - **Type-safe extraction:** C++20 concepts and compile-time guarantees
  * - **Extraction strategies:** Direct, region-based, feature-guided, recursive
  * - **Composable operations:** Integrates with ComputeMatrix execution modes
@@ -65,10 +65,29 @@ enum class ExtractionScope : uint8_t {
 };
 
 /**
- * @class UniversalExtractor
+ * @struct ExtractorConfig
+ * @brief Settings every extractor family accepts.
+ *
+ * Each family's config struct inherits these fields and adds its own method field,
+ * typed by its own enum.
+ */
+struct ExtractorConfig : OperationConfig {
+    static constexpr auto describe_facets()
+    {
+        return std::tuple {
+            FacetMember<&ExtractorConfig::scope> {},
+        };
+    }
+
+    /** Portion of the input to extract from. */
+    ExtractionScope scope { ExtractionScope::FULL_DATA };
+};
+
+/**
+ * @class Extractor
  * @brief Template-flexible extractor base with instance-defined I/O types
  *
- * The UniversalExtractor provides a clean, concept-based foundation for all extraction
+ * The Extractor provides a clean, concept-based foundation for all extraction
  * operations. I/O types are defined at instantiation time, providing maximum flexibility
  * while maintaining type safety through C++20 concepts.
  *
@@ -77,17 +96,16 @@ enum class ExtractionScope : uint8_t {
  * - Concept-constrained data types for compile-time safety
  * - Extraction type categorization for discovery
  * - Scope control for targeted extraction
- * - Parameter management with type safety
  * - Integration with ComputeMatrix execution modes
  */
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = InputType>
-class UniversalExtractor : public ComputeOperation<InputType, OutputType> {
+class Extractor : public ComputeOperation<InputType, OutputType> {
 public:
     using input_type = Datum<InputType>;
     using output_type = Datum<OutputType>;
     using base_type = ComputeOperation<InputType, OutputType>;
 
-    virtual ~UniversalExtractor() = default;
+    virtual ~Extractor() = default;
 
     /**
      * @brief Gets the extraction type category for this extractor
@@ -109,33 +127,9 @@ public:
         return OperationType::EXTRACTOR;
     }
 
-    /**
-     * @brief Type-safe parameter management with extraction-specific defaults
-     */
-    void set_parameter(const std::string& name, std::any value) override
+    [[nodiscard]] ConfigRefs configs() const override
     {
-        if (name == "scope") {
-            if (auto result = safe_any_cast<ExtractionScope>(value)) {
-                m_scope = *result.value;
-                return;
-            }
-        }
-        set_extraction_parameter(name, std::move(value));
-    }
-
-    [[nodiscard]] std::any get_parameter(const std::string& name) const override
-    {
-        if (name == "scope") {
-            return m_scope;
-        }
-        return get_extraction_parameter(name);
-    }
-
-    [[nodiscard]] std::map<std::string, std::any> get_all_parameters() const override
-    {
-        auto params = get_all_extraction_parameters();
-        params["scope"] = m_scope;
-        return params;
+        return this->stored_configs(Supports<ExtractorConfig> {});
     }
 
     /**
@@ -155,18 +149,15 @@ public:
     }
 
     /**
-     * @brief Extract with specific scope
+     * @brief Extract with specific scope, without changing the stored settings
      * @param data Input data
      * @param scope Extraction scope to use
      * @return Extracted output data
      */
     OutputType extract_with_scope(const input_type& data, ExtractionScope scope)
     {
-        auto original_scope = m_scope;
-        m_scope = scope;
-        auto result = extract_data(data);
-        m_scope = original_scope;
-        return result;
+        auto raw_result = extract_implementation(data);
+        return apply_scope_filtering(raw_result, scope).data;
     }
 
     OutputType extract_with_scope(const InputType& data, ExtractionScope scope)
@@ -196,25 +187,6 @@ public:
         return this->extract_batch(as_io_batch(inputs));
     }
 
-    /**
-     * @brief Get available extraction methods for this extractor
-     * @return Vector of method names
-     */
-    [[nodiscard]] virtual std::vector<std::string> get_available_methods() const = 0;
-
-    /**
-     * @brief Helper to get typed parameter with default value
-     * @tparam T Parameter type
-     * @param name Parameter name
-     * @param default_value Default value if parameter not found
-     * @return Parameter value or default
-     */
-    template <typename T>
-    T get_parameter_or_default(const std::string& name, const T& default_value) const
-    {
-        return safe_any_cast_or_default<T>(get_extraction_parameter(name), default_value);
-    }
-
 protected:
     /**
      * @brief Core operation implementation - called by ComputeOperation interface
@@ -224,7 +196,7 @@ protected:
     output_type operation_function(const input_type& input) override
     {
         auto raw_result = extract_implementation(input);
-        return apply_scope_filtering(raw_result);
+        return apply_scope_filtering(raw_result, extraction_scope());
     }
 
     /**
@@ -238,26 +210,12 @@ protected:
      * @brief Get extractor-specific name (derived classes override this)
      * @return Extractor name string
      */
-    [[nodiscard]] virtual std::string get_extractor_name() const { return "UniversalExtractor"; }
+    [[nodiscard]] virtual std::string get_extractor_name() const { return "Extractor"; }
 
     /**
-     * @brief Extraction-specific parameter handling (override for custom parameters)
+     * @brief The scope the stored config selects; FULL_DATA unless a family overrides it.
      */
-    virtual void set_extraction_parameter(const std::string& name, std::any value)
-    {
-        m_parameters[name] = std::move(value);
-    }
-
-    [[nodiscard]] virtual std::any get_extraction_parameter(const std::string& name) const
-    {
-        auto it = m_parameters.find(name);
-        return (it != m_parameters.end()) ? it->second : std::any {};
-    }
-
-    [[nodiscard]] virtual std::map<std::string, std::any> get_all_extraction_parameters() const
-    {
-        return m_parameters;
-    }
+    [[nodiscard]] virtual ExtractionScope extraction_scope() const { return ExtractionScope::FULL_DATA; }
 
     /**
      * @brief Input validation (override for custom validation logic)
@@ -271,11 +229,12 @@ protected:
     /**
      * @brief Apply scope filtering to results
      * @param raw_output Raw extraction results
-     * @return Filtered output based on scope setting
+     * @param scope Scope to apply
+     * @return Filtered output based on scope
      */
-    virtual output_type apply_scope_filtering(const output_type& raw_output)
+    virtual output_type apply_scope_filtering(const output_type& raw_output, ExtractionScope scope)
     {
-        switch (m_scope) {
+        switch (scope) {
         case ExtractionScope::FULL_DATA:
             return raw_output;
 
@@ -300,10 +259,7 @@ protected:
      */
     virtual output_type filter_to_target_regions(const output_type& raw_output)
     {
-        // Default: return as-is with metadata
-        auto result = raw_output;
-        result.template set_metadata<bool>("region_filtered", true);
-        return result;
+        return raw_output;
     }
 
     /**
@@ -313,10 +269,7 @@ protected:
      */
     virtual output_type apply_content_filtering(const output_type& raw_output)
     {
-        // Default: return as-is with metadata
-        auto result = raw_output;
-        result.template set_metadata<bool>("content_filtered", true);
-        return result;
+        return raw_output;
     }
 
     /**
@@ -326,47 +279,40 @@ protected:
      */
     virtual output_type apply_data_sampling(const output_type& raw_output)
     {
-        // Default: return as-is with metadata
-        auto result = raw_output;
-        result.template set_metadata<bool>("sampled", true);
-        return result;
+        return raw_output;
     }
-
-private:
-    ExtractionScope m_scope = ExtractionScope::FULL_DATA;
-    std::map<std::string, std::any> m_parameters;
 };
 
 /// Extractor that takes DataVariant and produces any ComputeData type
 template <ComputeData OutputType = Kakshya::DataVariant>
-using DataExtractor = UniversalExtractor<std::vector<Kakshya::DataVariant>, OutputType>;
+using DataExtractor = Extractor<std::vector<Kakshya::DataVariant>, OutputType>;
 
 /// Extractor for signal container processing
 template <ComputeData OutputType = std::shared_ptr<Kakshya::SignalSourceContainer>>
-using ContainerExtractor = UniversalExtractor<std::shared_ptr<Kakshya::SignalSourceContainer>, OutputType>;
+using ContainerExtractor = Extractor<std::shared_ptr<Kakshya::SignalSourceContainer>, OutputType>;
 
 /// Extractor for region-based extraction
 template <ComputeData OutputType = Kakshya::Region>
-using RegionExtractor = UniversalExtractor<Kakshya::Region, OutputType>;
+using RegionExtractor = Extractor<Kakshya::Region, OutputType>;
 
 /// Extractor for region group processing
 template <ComputeData OutputType = Kakshya::RegionGroup>
-using RegionGroupExtractor = UniversalExtractor<Kakshya::RegionGroup, OutputType>;
+using RegionGroupExtractor = Extractor<Kakshya::RegionGroup, OutputType>;
 
 /// Extractor for segment processing
 template <ComputeData OutputType = std::vector<Kakshya::RegionSegment>>
-using SegmentExtractor = UniversalExtractor<std::vector<Kakshya::RegionSegment>, OutputType>;
+using SegmentExtractor = Extractor<std::vector<Kakshya::RegionSegment>, OutputType>;
 
 /// Extractor that produces Eigen matrices
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>>
-using MatrixExtractor = UniversalExtractor<InputType, Eigen::MatrixXd>;
+using MatrixExtractor = Extractor<InputType, Eigen::MatrixXd>;
 
 /// Extractor that produces Eigen vectors
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>>
-using VectorExtractor = UniversalExtractor<InputType, Eigen::VectorXd>;
+using VectorExtractor = Extractor<InputType, Eigen::VectorXd>;
 
 /// Extractor that produces numeric vectors
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>>
-using NumericExtractor = UniversalExtractor<InputType, std::vector<double>>;
+using NumericExtractor = Extractor<InputType, std::vector<double>>;
 
 } // namespace MayaFlux::Yantra

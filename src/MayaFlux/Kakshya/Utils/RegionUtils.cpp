@@ -3,63 +3,13 @@
 
 namespace MayaFlux::Kakshya {
 
-void set_region_attribute(Region& region, const std::string& key, std::any value)
-{
-    region.attributes[key] = std::move(value);
-}
-
-/* std::string get_region_label(const Region& region)
-{
-    auto label = get_region_attribute<std::string>(region, "label");
-    return label.value_or("");
-}
-
-void set_region_label(Region& region, const std::string& label)
-{
-    set_region_attribute(region, "label", label);
-} */
-
 std::vector<Region> find_regions_with_label(const RegionGroup& group, const std::string& label)
 {
     std::vector<Region> result;
     std::ranges::copy_if(group.regions, std::back_inserter(result),
         [&label](const Region& region) {
-            return region.get_label() == label;
+            return region.label == label;
         });
-    return result;
-}
-
-std::vector<Region> find_regions_with_attribute(const RegionGroup& group, const std::string& key, const std::any& value)
-{
-    std::vector<Region> result;
-    std::ranges::copy_if(group.regions, std::back_inserter(result),
-        [&key, &value](const Region& region) {
-            if (!region.attributes.contains(key))
-                return false;
-
-            const auto& attr = region.attributes.at(key);
-
-            if (attr.type() != value.type())
-                return false;
-            if (attr.type() == typeid(std::string))
-                return any_equal<std::string>(attr, value);
-            if (attr.type() == typeid(double))
-                return any_equal<double>(attr, value);
-            if (attr.type() == typeid(int))
-                return any_equal<int>(attr, value);
-            if (attr.type() == typeid(float))
-                return any_equal<float>(attr, value);
-            if (attr.type() == typeid(bool))
-                return any_equal<bool>(attr, value);
-            if (attr.type() == typeid(uint32_t))
-                return any_equal<uint32_t>(attr, value);
-            if (attr.type() == typeid(int64_t))
-                return any_equal<int64_t>(attr, value);
-            if (attr.type() == typeid(uint64_t))
-                return any_equal<uint64_t>(attr, value);
-            return false;
-        });
-
     return result;
 }
 
@@ -113,7 +63,6 @@ Region get_bounding_region(const RegionGroup& group)
     }
 
     Region bounds(min_coords, max_coords);
-    set_region_attribute(bounds, "type", std::string("bounding_box"));
     return bounds;
 }
 
@@ -124,16 +73,6 @@ void sort_regions_by_dimension(std::vector<Region>& regions, size_t dimension)
             if (dimension < a.start_coordinates.size() && dimension < b.start_coordinates.size())
                 return a.start_coordinates[dimension] < b.start_coordinates[dimension];
             return false;
-        });
-}
-
-void sort_regions_by_attribute(std::vector<Region>& regions, const std::string& attr_name)
-{
-    std::ranges::sort(regions,
-        [&attr_name](const Region& a, const Region& b) {
-            auto aval = get_region_attribute<std::string>(a, attr_name);
-            auto bval = get_region_attribute<std::string>(b, attr_name);
-            return aval.value_or("") < bval.value_or("");
         });
 }
 
@@ -289,64 +228,12 @@ std::vector<std::unordered_map<std::string, std::any>> extract_all_regions_info(
             region_info["region_index"] = i;
             region_info["start_coordinates"] = region.start_coordinates;
             region_info["end_coordinates"] = region.end_coordinates;
-            region_info["attributes"] = region.attributes;
 
             regions_info.push_back(std::move(region_info));
         }
     }
 
     return regions_info;
-}
-
-std::unordered_map<std::string, std::any> extract_group_bounds_info(const RegionGroup& group)
-{
-    std::unordered_map<std::string, std::any> bounds_info;
-
-    if (group.regions.empty()) {
-        return bounds_info;
-    }
-
-    const auto& first_region = group.regions[0];
-    std::vector<uint64_t> min_coords = first_region.start_coordinates;
-    std::vector<uint64_t> max_coords = first_region.end_coordinates;
-
-    for (size_t i = 1; i < group.regions.size(); ++i) {
-        const auto& region = group.regions[i];
-
-        for (size_t j = 0; j < min_coords.size() && j < region.start_coordinates.size(); ++j) {
-            min_coords[j] = std::min(min_coords[j], region.start_coordinates[j]);
-        }
-
-        for (size_t j = 0; j < max_coords.size() && j < region.end_coordinates.size(); ++j) {
-            max_coords[j] = std::max(max_coords[j], region.end_coordinates[j]);
-        }
-    }
-
-    bounds_info["group_name"] = group.name;
-    bounds_info["num_regions"] = group.regions.size();
-    bounds_info["bounding_min"] = min_coords;
-    bounds_info["bounding_max"] = max_coords;
-    bounds_info["group_attributes"] = group.attributes;
-
-    return bounds_info;
-}
-
-std::vector<std::unordered_map<std::string, std::any>> extract_segments_metadata(const std::vector<RegionSegment>& segments)
-{
-    std::vector<std::unordered_map<std::string, std::any>> metadata_list;
-    metadata_list.reserve(segments.size());
-
-    for (const auto& segment : segments) {
-        std::unordered_map<std::string, std::any> segment_info;
-        segment_info["start_coordinates"] = segment.source_region.start_coordinates;
-        segment_info["end_coordinates"] = segment.source_region.end_coordinates;
-        segment_info["region_attributes"] = segment.source_region.attributes;
-        segment_info["segment_attributes"] = segment.processing_metadata;
-
-        metadata_list.push_back(std::move(segment_info));
-    }
-
-    return metadata_list;
 }
 
 std::unordered_map<std::string, std::any> extract_region_bounds_info(const Region& region)

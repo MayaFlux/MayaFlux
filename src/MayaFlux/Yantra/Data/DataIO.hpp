@@ -20,6 +20,7 @@ namespace MayaFlux::Yantra {
  * - Automatic structure inference from data type and content
  * - Dimension and modality preservation through pipeline operations
  * - Flexible metadata storage for operation-specific information
+ * - Facets carry described result structs through a chain, read by type
  * - Move semantics for efficiency with large data
  */
 template <ComputeData T = std::vector<Kakshya::DataVariant>>
@@ -28,6 +29,7 @@ struct Datum {
     std::vector<Kakshya::DataDimension> dimensions; ///< Data dimensional structure
     Kakshya::DataModality modality {}; ///< Data modality (audio, image, spectral, etc.)
     std::unordered_map<std::string, std::any> metadata; ///< Associated metadata
+    Facets facets; ///< Typed results that travel with the data, read by type
     bool b_container_processing {};
 
     std::optional<std::shared_ptr<Kakshya::SignalSourceContainer>> container; ///< Optional reference to container, required for regions
@@ -63,7 +65,7 @@ struct Datum {
         : data(d)
         , container(cont)
     {
-        auto [dims, mod] = infer_structure(d);
+        auto [dims, mod] = infer_structure(data, cont);
         dimensions = std::move(dims);
         modality = mod;
     }
@@ -97,7 +99,7 @@ struct Datum {
         : data(std::move(d))
         , container(cont)
     {
-        auto [dims, mod] = infer_structure(data);
+        auto [dims, mod] = infer_structure(data, cont);
         dimensions = std::move(dims);
         modality = mod;
     }
@@ -228,7 +230,7 @@ struct Datum {
         size_t min_dimensions = 1) const
     {
         if constexpr (RequiresContainer<T>) {
-            if (!container.has_value()) {
+            if (!container.has_value() || !*container) {
                 return false;
             }
         }
@@ -371,7 +373,7 @@ std::vector<Datum<T>> as_io_batch(std::vector<T>&& inputs)
  * @brief Concept to constrain types suitable for operation units
  *
  * Ensures that types used in operation units are either:
- * - MultiVariant (universal data variant)
+ * - MultiVariant (data variant)
  * - CompositeData (schema-bearing records or their owning container)
  * - RegionLike (regions or region groups)
  * - EigenMatrixLike (Eigen matrices/vectors)
@@ -380,7 +382,7 @@ std::vector<Datum<T>> as_io_batch(std::vector<T>&& inputs)
 template <typename T>
 concept OperationReadyData = CompositeData<T> || MultiVariant<T> || RegionLike<T> || EigenMatrixLike<T> || is_IO<T>::value;
 
-using DataIO = Datum<std::vector<Kakshya::DataVariant>>; ///< IO for universal data variant
+using DataIO = Datum<std::vector<Kakshya::DataVariant>>; ///< IO for data variant
 using ContainerIO = Datum<std::shared_ptr<Kakshya::SignalSourceContainer>>; ///< IO for signal containers
 using CompositeIO = Datum<Kakshya::CompositeArray>; ///< IO for owning Composite records
 using CompositeContainerIO = Datum<std::shared_ptr<Kakshya::CompositeContainer>>; ///< IO for Composite containers

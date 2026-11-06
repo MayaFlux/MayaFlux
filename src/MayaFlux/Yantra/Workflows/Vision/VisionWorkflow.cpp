@@ -52,9 +52,8 @@ namespace {
 
     std::shared_ptr<Core::VKImage> extracted_image(const VisionIO& result)
     {
-        const auto image = Kakshya::get_metadata_value<std::shared_ptr<Core::VKImage>>(
-            result.metadata, "vision_extraction");
-        return image ? *image : nullptr;
+        const auto* extraction = result.facets.get<VisionExtraction>();
+        return extraction ? extraction->image : nullptr;
     }
 
     /**
@@ -68,8 +67,8 @@ namespace {
     {
         VisionIO frame { source };
         frame.container = source;
-        frame.metadata["vision_analysis"] = analysis;
-        frame.metadata["vision_image"] = image;
+        frame.facets.set(analysis);
+        frame.facets.set(Kinesis::Vision::vision_frame(), image);
         return frame;
     }
 
@@ -327,7 +326,7 @@ namespace {
                 continue;
 
             VisionIO frame = source ? VisionIO { source, source } : VisionIO {};
-            frame.metadata["vision_image"] = image;
+            frame.facets.set(Kinesis::Vision::vision_frame(), image);
             if (const auto extracted = extracted_image(run_chain(matrix, std::move(frame))))
                 collection->append(extracted);
         }
@@ -513,12 +512,12 @@ Kriya::ChimeraBuilder VisionWorkflow::process_to_stream(const WorkflowStreamConf
     const auto name = run_name("stream");
     start(config.source, frames, config.live.value_or(LiveConfig {}), config.matrix, name,
         [matrix = config.matrix, record = config.record](const VisionIO& frame) {
-            const auto analysis = Kakshya::get_metadata_value<Kinesis::Vision::VisionAnalysis>(frame.metadata, "vision_analysis");
-            const auto image = Kakshya::get_metadata_value<std::shared_ptr<Core::VKImage>>(frame.metadata, "vision_image");
+            const auto* analysis = frame.facets.get<Kinesis::Vision::VisionAnalysis>();
+            const auto image = frame.facets.get(Kinesis::Vision::vision_frame());
             if (!analysis || !image)
                 return;
 
-            matrix->extract(*analysis, *image);
+            matrix->extract(*analysis, image);
 
             for (const auto& [collection, pick] : record) {
                 if (!collection || !pick)

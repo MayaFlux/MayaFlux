@@ -54,7 +54,7 @@ concept CompositeData = CompositeArrayData<T> || CompositeContainerData<T>;
 
 /**
  * @concept ComputeData
- * @brief Universal concept for types that can flow through the computation pipeline.
+ * @brief Concept for types that can flow through the computation pipeline.
  *
  * Valid types:
  * - Kakshya::DataVariant
@@ -258,6 +258,12 @@ namespace detail {
     template <typename T>
     struct native_element {
         using type = double;
+    };
+
+    template <typename T>
+        requires std::constructible_from<Kakshya::DataVariant, std::vector<T>>
+    struct native_element<std::vector<T>> {
+        using type = T;
     };
 
     template <>

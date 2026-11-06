@@ -22,14 +22,10 @@ namespace {
         const auto& regions = mesh_data.submeshes->regions;
         if (regions.empty())
             return {};
-        const auto& attrs = regions.front().attributes;
-        auto it = attrs.find("diffuse_path");
-        if (it == attrs.end())
+        const auto* sub = regions.front().get<Kakshya::MeshSubrange>();
+        if (!sub || sub->diffuse_path.empty() || sub->diffuse_path.front() == '*')
             return {};
-        const auto* s = std::any_cast<std::string>(&it->second);
-        if (!s || s->empty() || (*s)[0] == '*')
-            return {};
-        return *s;
+        return sub->diffuse_path;
     }
 }
 
@@ -306,10 +302,12 @@ std::optional<FileMetadata> ModelReader::get_metadata() const
     meta.mime_type = "model/gltf-binary"; // reasonable default; format-agnostic
 
     const aiScene* s = m_impl->scene;
-    meta.attributes["mesh_count"] = static_cast<uint64_t>(s->mNumMeshes);
-    meta.attributes["material_count"] = static_cast<uint64_t>(s->mNumMaterials);
-    meta.attributes["animation_count"] = static_cast<uint64_t>(s->mNumAnimations);
-    meta.attributes["texture_count"] = static_cast<uint64_t>(s->mNumTextures);
+    meta.set(ModelInfo {
+        .mesh_count = static_cast<uint64_t>(s->mNumMeshes),
+        .material_count = static_cast<uint64_t>(s->mNumMaterials),
+        .animation_count = static_cast<uint64_t>(s->mNumAnimations),
+        .texture_count = static_cast<uint64_t>(s->mNumTextures),
+    });
 
     return meta;
 }

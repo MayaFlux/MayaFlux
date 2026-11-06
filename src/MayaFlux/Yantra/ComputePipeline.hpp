@@ -47,7 +47,7 @@ namespace MayaFlux::Yantra {
  * ```cpp
  * // Pipeline automatically applies grammar rules before operation chain
  * ExecutionContext context;
- * context.execution_metadata["processing_mode"] = std::string("high_quality");
+ * context.facets.set(QualitySettings { .mode = "high_quality" });
  *
  * auto result = pipeline->process(input_data, context);
  * // Grammar rules are evaluated first, then operation chain executes
@@ -58,8 +58,10 @@ namespace MayaFlux::Yantra {
  * // Configure specific operations by name
  * pipeline->configure_operation<MathematicalTransformer<>>("gain_stage",
  *     [](auto op) {
- *         op->set_parameter("operation", "gain");
- *         op->set_parameter("gain_factor", 2.0);
+ *         MathematicalTransformerConfig cfg;
+ *         cfg.operation = MathematicalOperation::GAIN;
+ *         cfg.gain_factor = 2.0;
+ *         op->set_config(cfg);
  *     });
  * ```
  */
@@ -79,6 +81,16 @@ public:
     explicit ComputationPipeline(std::shared_ptr<ComputationGrammar> grammar = nullptr)
         : m_grammar(grammar ? std::move(grammar) : std::make_shared<ComputationGrammar>())
     {
+    }
+
+    /** @brief Resolve and execute an enum signature through this pipeline's grammar. */
+    template <typename Signature>
+        requires(std::same_as<Signature, ComputationSignature> || std::is_enum_v<Signature>)
+    output_type process(const input_type& input,
+        Signature signature,
+        const ExecutionContext& context = {})
+    {
+        return m_grammar->template process<OutputType>(input, std::move(signature), context);
     }
 
     /**
@@ -118,9 +130,10 @@ public:
      *
      * Example:
      * ```cpp
+     * SpectralTransformerConfig cfg;
+     * cfg.operation = SpectralOperation::PITCH_SHIFT;
      * pipeline->create_operation<MathematicalTransformer<>>("gain")
-     *          ->create_operation<SpectralTransformer<>>("pitch_shift",
-     *              SpectralOperation::PITCH_SHIFT);
+     *          ->create_operation<SpectralTransformer<>>("pitch_shift", cfg);
      * ```
      */
     template <typename ConcreteOpType, typename... Args>
@@ -154,6 +167,9 @@ public:
      */
     output_type process(const input_type& input, const ExecutionContext& context = {})
     {
+        if (!m_grammar->signature().empty()) {
+            return process(input, m_grammar->signature(), context);
+        }
         input_type current_data = input;
         ExecutionContext current_context = context;
 
@@ -231,7 +247,9 @@ public:
      * ```cpp
      * auto gain_op = pipeline->get_operation<MathematicalTransformer<>>("gain_stage");
      * if (gain_op) {
-     *     gain_op->set_parameter("gain_factor", 1.5);
+     *     MathematicalTransformerConfig cfg;
+     *     cfg.gain_factor = 1.5;
+     *     gain_op->set_config(cfg);
      * }
      * ```
      */
@@ -261,8 +279,10 @@ public:
      * ```cpp
      * bool configured = pipeline->configure_operation<SpectralTransformer<>>("pitch_shift",
      *     [](auto op) {
-     *         op->set_parameter("pitch_ratio", 1.5);
-     *         op->set_parameter("window_size", 2048);
+     *         SpectralTransformerConfig cfg;
+     *         cfg.pitch_ratio = 1.5;
+     *         cfg.window_size = 2048;
+     *         op->set_config(cfg);
      *     });
      * ```
      */
@@ -435,11 +455,10 @@ namespace PipelineFactory {
  * ```cpp
  * // Grammar rules can dynamically select operations based on data properties
  * ExecutionContext context;
- * context.execution_metadata["processing_quality"] = std::string("high");
- * context.execution_metadata["data_size"] = input_data.size();
+ * context.facets.set(QualitySettings { .mode = "high" });
  *
  * auto processed_data = matrix->execute_with_grammar(input_data, context);
- * // Appropriate operations selected based on quality requirements and data size
+ * // Appropriate operations selected based on quality settings and the data itself
  * ```
  */
 class MAYAFLUX_API GrammarAwareComputeMatrix : public ComputeMatrix {
@@ -591,7 +610,6 @@ public:
      * Example:
      * ```cpp
      * matrix->create_grammar_rule("auto_gain")
-     *        .with_context(ComputationContext::TEMPORAL)
      *        .matches_type<std::vector<double>>()
      *        .executes([](const auto& input, const auto& ctx) { return input; })
      *        .build();

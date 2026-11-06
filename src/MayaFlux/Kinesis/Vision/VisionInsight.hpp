@@ -2,6 +2,8 @@
 
 #include "VisionContext.hpp"
 
+#include "MayaFlux/Transitive/Facet/Facets.hpp"
+
 /**
  * @file VisionInsight.hpp
  * @brief Caller-supplied context and GPU-derived output for turning a raw
@@ -174,6 +176,20 @@ struct MeasureAppearanceAnalysis {
  * for a region a caller supplies, on demand.
  */
 struct VisionAnalysis {
+    static constexpr auto describe_facets()
+    {
+        return std::tuple {
+            FacetMember<&VisionAnalysis::find_elements> {},
+            FacetMember<&VisionAnalysis::track_objects> {},
+            FacetMember<&VisionAnalysis::detect_features> {},
+            FacetMember<&VisionAnalysis::measure_appearance> {},
+            FacetMember<&VisionAnalysis::detect_edges> {},
+            FacetMember<&VisionAnalysis::estimate_motion> {},
+            FacetMember<&VisionAnalysis::motion_activity> {},
+            FacetMember<&VisionAnalysis::layer> {},
+        };
+    }
+
     std::optional<FindElementsAnalysis> find_elements;
     std::optional<TrackObjectsAnalysis> track_objects;
     std::optional<DetectFeaturesAnalysis> detect_features;
@@ -183,6 +199,19 @@ struct VisionAnalysis {
 
     /** @brief VisionResult::motion_energy from an active EstimateMotion sequence. */
     std::optional<float> motion_activity;
+
+    /** @brief Container layer the analysis was taken from; empty when no layer was used. */
+    std::optional<size_t> layer;
 };
+
+/**
+ * @brief Facet key for the frame a VisionAnalysis applies to, carried in a
+ *        Datum's facets beside the analysis.
+ */
+inline const Facet<std::shared_ptr<Core::VKImage>>& vision_frame()
+{
+    static const Facet<std::shared_ptr<Core::VKImage>> key;
+    return key;
+}
 
 } // namespace MayaFlux::Kinesis::Vision

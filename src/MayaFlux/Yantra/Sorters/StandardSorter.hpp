@@ -1,10 +1,10 @@
 #pragma once
 
-#include "UniversalSorter.hpp"
+#include "Sorter.hpp"
 
 /**
  * @file StandardSorter.hpp
- * @brief Example concrete implementation of UniversalSorter
+ * @brief Example concrete implementation of Sorter
  *
  * Demonstrates how to implement a concrete sorter that works with the modern
  * concept-based architecture. This sorter handles standard comparison-based
@@ -14,27 +14,68 @@
 namespace MayaFlux::Yantra {
 
 /**
- * @struct StandardSorterConfig
- * @brief Initial settings for standard sorting.
- *
- * Pass this aggregate with designated initializers to the config constructor.
- * Named parameters are applied after the typed settings.
+ * @enum SortPath
+ * @brief Which sorting path produced a result.
  */
-struct StandardSorterConfig {
-    /** Sorting algorithm to use. */
-    SortingAlgorithm algorithm { SortingAlgorithm::STANDARD };
-    /** Order of the sorted result. */
+enum class SortPath : uint8_t {
+    COPY, ///< Sorted copy of the input
+    IN_PLACE, ///< Sorted the input's own data
+    INDICES_ONLY, ///< Sort indices only
+    PARTIAL, ///< Top-K partial sort
+    PARALLEL, ///< Parallel sort
+    CHUNKED_MERGED ///< Sorted per chunk, then merged
+};
+
+/**
+ * @struct StandardSorterConfig
+ * @brief Settings for standard sorting.
+ *
+ * Stored whole on the operation. Adds the chunk size used by chunked sorting
+ * to the settings every sorter family accepts.
+ */
+struct StandardSorterConfig : SorterConfig {
+    static constexpr auto describe_facets()
+    {
+        return std::tuple_cat(
+            SorterConfig::describe_facets(),
+            std::tuple {
+                FacetMember<&StandardSorterConfig::algorithm> {},
+                FacetMember<&StandardSorterConfig::direction> {},
+                FacetMember<&StandardSorterConfig::strategy> {},
+                FacetMember<&StandardSorterConfig::comparator> {},
+                FacetMember<&StandardSorterConfig::chunk_size> {},
+            });
+    }
+
+    /** Sorting algorithm to use, as a SortingAlgorithm value. */
+    Reflect::EnumByte<SortingAlgorithm> algorithm { SortingAlgorithm::STANDARD };
+    /** Order of the sorted result. CUSTOM takes its order from comparator. */
     SortingDirection direction { SortingDirection::ASCENDING };
+    /** Comparator used when direction is CUSTOM. Ignored otherwise. */
+    Kinesis::Discrete::DoubleComparator comparator;
     /** How the input is handled during sorting. */
     SortingStrategy strategy { SortingStrategy::COPY_SORT };
-    /** Level at which values are sorted. */
-    SortingGranularity granularity { SortingGranularity::RAW_DATA };
-    /** Number of elements per chunk for chunked sorting. */
+    /** Number of elements per chunk for chunked sorting. Must be greater than 0. */
     size_t chunk_size { 1024 };
-    /** Sort keys and their relative weights. */
-    std::vector<SortKey> keys;
-    /** Additional named parameters applied last. */
-    std::map<std::string, std::any> parameters;
+};
+
+/**
+ * @struct SortRecord
+ * @brief Record of one StandardSorter run, stored on the output's facets.
+ */
+struct SortRecord {
+    static constexpr auto describe_facets()
+    {
+        return std::tuple {
+            FacetMember<&SortRecord::config> {},
+            FacetMember<&SortRecord::path> {},
+        };
+    }
+
+    /** Settings the sort was produced under. */
+    StandardSorterConfig config;
+    /** The sorting path that produced the result. */
+    Reflect::EnumByte<SortPath> path { SortPath::COPY };
 };
 
 /**
@@ -49,41 +90,36 @@ struct StandardSorterConfig {
  * - Eigen matrix/vector sorting
  * - Complex number sorting by magnitude
  * - Multi-key sorting with configurable weights
+ *
+ * The result carries a SortRecord on its facets.
  */
 template <ComputeData InputType = Kakshya::DataVariant, ComputeData OutputType = InputType>
-class StandardSorter : public UniversalSorter<InputType, OutputType> {
+class StandardSorter : public Sorter<InputType, OutputType> {
 public:
-    using base_type = UniversalSorter<InputType, OutputType>;
+    using base_type = Sorter<InputType, OutputType>;
     using input_type = typename base_type::input_type;
     using output_type = typename base_type::output_type;
+    using supports = Supports<StandardSorterConfig>;
+
+    static_assert(!std::same_as<InputType, Kakshya::RegionGroup>,
+        "StandardSorter does not sort region groups; use RegionKeySorter");
 
     /**
-     * @brief Constructor with default configuration
+     * @brief Construct a standard sorter from its settings.
+     * @param config Sorting settings, validated before they are stored.
      */
-    StandardSorter()
+    explicit StandardSorter(StandardSorterConfig config = {})
     {
-        this->set_direction(SortingDirection::ASCENDING);
-        this->set_strategy(SortingStrategy::COPY_SORT);
-        this->set_granularity(SortingGranularity::RAW_DATA);
+        validate_config(config);
+        this->set_config(std::move(config));
     }
 
     /**
-     * @brief Construct and configure a standard sorter in one step.
-     * @param config Initial sorting settings.
+     * @brief The stored settings.
      */
-    explicit StandardSorter(const StandardSorterConfig& config)
-        : StandardSorter()
+    [[nodiscard]] ConfigRefs configs() const override
     {
-        set_algorithm(config.algorithm);
-        this->set_direction(config.direction);
-        this->set_strategy(config.strategy);
-        this->set_granularity(config.granularity);
-        this->set_sort_keys(config.keys);
-        this->set_parameter("chunk_size", config.chunk_size);
-
-        for (const auto& [name, value] : config.parameters) {
-            this->set_parameter(name, value);
-        }
+        return this->stored_configs(supports {});
     }
 
     /**
@@ -94,31 +130,17 @@ public:
         return SortingType::STANDARD;
     }
 
-    /**
-     * @brief Configure sorting algorithm
-     */
-    void set_algorithm(SortingAlgorithm algorithm) { m_algorithm = algorithm; }
-    [[nodiscard]] SortingAlgorithm get_algorithm() const { return m_algorithm; }
-
 protected:
-    /**
-     * @brief Get sorter name
-     */
-    [[nodiscard]] std::string get_sorter_name() const override
-    {
-        return "StandardSorter";
-    }
-
     /**
      * @brief Main sorting implementation with type dispatch
      */
     output_type sort_implementation(const input_type& input) override
     {
-        switch (this->get_strategy()) {
+        switch (this->template config<StandardSorterConfig>().strategy) {
         case SortingStrategy::IN_PLACE:
             return sort_in_place(input);
         case SortingStrategy::COPY_SORT:
-            return sort_copy(input);
+            return sort_copy(input, this->template config<StandardSorterConfig>().algorithm, SortPath::COPY);
         case SortingStrategy::INDEX_ONLY:
             return sort_indices_only(input);
         case SortingStrategy::PARTIAL_SORT:
@@ -128,7 +150,7 @@ protected:
         case SortingStrategy::PARALLEL_SORT:
             return sort_parallel(input);
         default:
-            return sort_copy(input);
+            return sort_copy(input, this->template config<StandardSorterConfig>().algorithm, SortPath::COPY);
         }
     }
 
@@ -140,73 +162,67 @@ protected:
         return validate_input_type(input.data);
     }
 
-    /**
-     * @brief Custom parameter handling
-     */
-    void set_sorting_parameter(const std::string& name, std::any value) override
-    {
-        if (name == "algorithm") {
-            if (auto alg_result = safe_any_cast<SortingAlgorithm>(value)) {
-                m_algorithm = *alg_result.value;
-                return;
-            }
-            if (auto str_result = safe_any_cast<std::string>(value)) {
-                auto algorithm_enum = Reflect::string_to_enum_case_insensitive<SortingAlgorithm>(*str_result.value);
-                if (algorithm_enum) {
-                    m_algorithm = *algorithm_enum;
-                    return;
-                }
-            }
-        }
-        if (name == "chunk_size") {
-            if (auto size_result = safe_any_cast<size_t>(value)) {
-                m_chunk_size = *size_result.value;
-                return;
-            }
-        }
-        base_type::set_sorting_parameter(name, std::move(value));
-    }
-
-    [[nodiscard]] std::any get_sorting_parameter(const std::string& name) const override
-    {
-        if (name == "algorithm") {
-            return m_algorithm;
-        }
-        if (name == "chunk_size") {
-            return m_chunk_size;
-        }
-        return base_type::get_sorting_parameter(name);
-    }
-
 private:
-    SortingAlgorithm m_algorithm = SortingAlgorithm::STANDARD;
-    size_t m_chunk_size = 1024;
+    /**
+     * @brief Rejects settings that would make sorting undefined.
+     */
+    static void validate_config(const StandardSorterConfig& cfg)
+    {
+        if (cfg.chunk_size == 0) {
+            error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(), "Chunk size must be greater than 0");
+        }
+    }
+
+    /**
+     * @brief The Kinesis sort order: the direction, or the stored comparator for CUSTOM.
+     */
+    [[nodiscard]] Kinesis::Discrete::SortOrder sort_order() const
+    {
+        const auto& cfg = this->template config<StandardSorterConfig>();
+        if (cfg.direction == SortingDirection::CUSTOM) {
+            return Kinesis::Discrete::SortOrder { cfg.comparator };
+        }
+        return Kinesis::Discrete::SortOrder { cfg.direction };
+    }
+
+    /**
+     * @brief Stamps the output with the settings and the path that produced it.
+     */
+    void record_sort(output_type& out, SortPath path) const
+    {
+        SortRecord record;
+        record.config = this->template config<StandardSorterConfig>();
+        record.path = path;
+        out.facets.set(record);
+    }
 
     /**
      * @brief Copy-based sorting (preserves input)
      */
-    output_type sort_copy(const input_type& input)
+    output_type sort_copy(const input_type& input, SortingAlgorithm algorithm, SortPath path)
     {
         try {
             std::vector<std::vector<double>> working_buffer;
             auto [working_spans, structure_info] = OperationHelper::setup_operation_buffer(
                 const_cast<input_type&>(input), working_buffer);
 
-            Kinesis::Discrete::sort_channels(working_spans, this->get_direction(), m_algorithm);
+            Kinesis::Discrete::sort_channels(working_spans, sort_order(), algorithm);
 
             output_type result = this->convert_result(working_buffer, structure_info);
             result.metadata = input.metadata;
+            result.facets = input.facets;
             result.container = input.container;
-            result.metadata["sort_type"] = "copy";
+            record_sort(result, path);
 
             return result;
 
         } catch (const std::exception& e) {
-            output_type error_result;
-            error_result.metadata = input.metadata;
-            error_result.container = input.container;
-            error_result.metadata["error"] = std::string("Sorting failed: ") + e.what();
-            return error_result;
+            MF_ERROR(Journal::Component::Yantra, Journal::Context::ComputeMatrix, "Sorting failed: {}", e.what());
+            output_type passthrough;
+            passthrough.metadata = input.metadata;
+            passthrough.facets = input.facets;
+            passthrough.container = input.container;
+            return passthrough;
         }
     }
 
@@ -218,9 +234,10 @@ private:
         if constexpr (std::same_as<InputType, OutputType>) {
             auto result = input;
             sort_data_in_place(result);
+            record_sort(result, SortPath::IN_PLACE);
             return result;
         } else {
-            return sort_copy(input);
+            return sort_copy(input, this->template config<StandardSorterConfig>().algorithm, SortPath::COPY);
         }
     }
 
@@ -229,15 +246,16 @@ private:
      */
     output_type sort_indices_only(const input_type& input)
     {
-        if constexpr (std::same_as<OutputType, std::vector<size_t>>) {
+        if constexpr (std::same_as<OutputType, std::vector<std::vector<size_t>>>) {
             auto result = output_type {};
-            result.data = generate_compute_data_indices(input, this->get_direction());
+            result.data = generate_compute_data_indices(input, sort_order());
             result.metadata = input.metadata;
-            result.metadata["sort_type"] = "indices_only";
+            result.facets = input.facets;
+            record_sort(result, SortPath::INDICES_ONLY);
             return result;
         } else {
             // If output type is not vector<size_t>, fall back to copy sort
-            return sort_copy(input);
+            return sort_copy(input, this->template config<StandardSorterConfig>().algorithm, SortPath::COPY);
         }
     }
 
@@ -249,9 +267,13 @@ private:
         auto result = input;
         if constexpr (std::same_as<InputType, OutputType>) {
             result.data = sort_data_partial(input);
+            record_sort(result, SortPath::PARTIAL);
             return result;
         } else {
-            return convert_and_sort(input);
+            auto converted = convert_and_sort(input);
+            converted.facets = input.facets;
+            record_sort(converted, SortPath::PARTIAL);
+            return converted;
         }
     }
 
@@ -260,12 +282,7 @@ private:
      */
     output_type sort_parallel(const input_type& input)
     {
-        auto old_algorithm = m_algorithm;
-        m_algorithm = SortingAlgorithm::PARALLEL;
-        auto result = sort_copy(input);
-        m_algorithm = old_algorithm;
-        result.metadata["sort_type"] = "parallel";
-        return result;
+        return sort_copy(input, SortingAlgorithm::PARALLEL, SortPath::PARALLEL);
     }
 
     // ===== Type-specific sorting implementations =====
@@ -275,7 +292,7 @@ private:
      */
     InputType sort_data_copy(const input_type& data)
     {
-        return sort_compute_data_extract(data, this->get_direction(), m_algorithm);
+        return sort_compute_data_extract(data, sort_order(), this->template config<StandardSorterConfig>().algorithm);
     }
 
     /**
@@ -283,7 +300,7 @@ private:
      */
     void sort_data_in_place(input_type& data)
     {
-        sort_compute_data_inplace(data, this->get_direction(), m_algorithm);
+        sort_compute_data_inplace(data, sort_order(), this->template config<StandardSorterConfig>().algorithm);
     }
 
     /**
@@ -291,27 +308,24 @@ private:
      */
     InputType sort_data_partial(const input_type& data)
     {
-        auto old_algorithm = m_algorithm;
-        m_algorithm = SortingAlgorithm::PARTIAL;
-        auto result = sort_compute_data_extract(data, this->get_direction(), m_algorithm);
-        m_algorithm = old_algorithm;
-        return result;
+        return sort_compute_data_extract(data, sort_order(), SortingAlgorithm::PARTIAL);
     }
 
     std::vector<InputType> extract_chunked_data(std::vector<std::span<double>> channels, DataStructureInfo info)
     {
         std::vector<InputType> chunks;
+        const size_t chunk_size = this->template config<StandardSorterConfig>().chunk_size;
 
-        for (size_t start = 0; start < channels[0].size(); start += m_chunk_size) {
+        for (size_t start = 0; start < channels[0].size(); start += chunk_size) {
             std::vector<std::vector<double>> chunk_data;
             chunk_data.resize(channels.size());
 
             for (size_t ch = 0; ch < channels.size(); ++ch) {
-                size_t end = std::min(start + m_chunk_size, channels[ch].size());
+                size_t end = std::min(start + chunk_size, channels[ch].size());
                 auto chunk_span = channels[ch].subspan(start, end - start);
 
                 chunk_data[ch].assign(chunk_span.begin(), chunk_span.end());
-                Kinesis::Discrete::sort_span(std::span<double>(chunk_data[ch]), this->get_direction(), m_algorithm);
+                Kinesis::Discrete::sort_span(std::span<double>(chunk_data[ch]), sort_order(), this->template config<StandardSorterConfig>().algorithm);
             }
 
             chunks.push_back(OperationHelper::reconstruct_from_double<InputType>(chunk_data, info));
@@ -342,10 +356,11 @@ private:
     {
         output_type result {};
         result.metadata = original_input.metadata;
-        result.metadata["sort_type"] = "chunked_merged";
+        result.facets = original_input.facets;
 
         if constexpr (std::same_as<InputType, OutputType>) {
             if (chunks.empty()) {
+                record_sort(result, SortPath::CHUNKED_MERGED);
                 return result;
             }
 
@@ -367,13 +382,14 @@ private:
 
                 result = this->convert_result(merged_channels, info);
                 result.metadata = original_input.metadata;
-                result.metadata["sort_type"] = "chunked_merged";
+                result.facets = original_input.facets;
 
             } catch (...) {
                 result.data = chunks[0];
             }
         }
 
+        record_sort(result, SortPath::CHUNKED_MERGED);
         return result;
     }
 
@@ -386,7 +402,7 @@ private:
         auto [working_spans, structure_info] = OperationHelper::setup_operation_buffer(
             const_cast<input_type&>(input), working_buffer);
 
-        Kinesis::Discrete::sort_channels(working_spans, this->get_direction(), SortingAlgorithm::PARTIAL);
+        Kinesis::Discrete::sort_channels(working_spans, sort_order(), SortingAlgorithm::PARTIAL);
         return this->convert_result(working_buffer, structure_info);
     }
 
@@ -410,9 +426,6 @@ using StandardDataSorter = StandardSorter<std::vector<Kakshya::DataVariant>>;
 /// Standard sorter for numeric vectors (DataVariant contains these)
 template <typename T>
 using StandardVectorSorter = StandardSorter<std::vector<std::vector<T>>>;
-
-/// Standard sorter for region groups (proper way to handle multiple regions)
-using StandardRegionGroupSorter = StandardSorter<Kakshya::RegionGroup>;
 
 /// Standard sorter for region segments
 using StandardSegmentSorter = StandardSorter<std::vector<Kakshya::RegionSegment>>;

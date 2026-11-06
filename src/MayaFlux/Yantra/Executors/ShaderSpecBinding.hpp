@@ -94,7 +94,7 @@ namespace MayaFlux::Yantra {
  * auto bindings = bindings_from_spec(spec);
  *
  * auto exec = std::make_shared<ShaderExecutionContext<>>(cfg, bindings);
- * my_op->set_gpu_backend(exec);
+ * auto op = std::make_shared<GpuTransformer<>>(exec);
  * @endcode
  */
 [[nodiscard]] inline GpuComputeConfig config_from_spec(

@@ -165,14 +165,17 @@ void FFmpegDemuxContext::extract_container_metadata(FileMetadata& out) const
         ? format_context->iformat->mime_type
         : "application/" + std::string(format_context->iformat->name);
 
+    ContainerInfo info;
     if (format_context->duration != AV_NOPTS_VALUE)
-        out.attributes["duration_seconds"] = (double)format_context->duration / static_cast<double>(AV_TIME_BASE);
+        info.duration_seconds = static_cast<double>(format_context->duration) / static_cast<double>(AV_TIME_BASE);
+    info.bit_rate = static_cast<int64_t>(format_context->bit_rate);
+    out.set(info);
 
-    out.attributes["bit_rate"] = static_cast<int64_t>(format_context->bit_rate);
-
+    ContainerTags tags;
     AVDictionaryEntry* tag = nullptr;
     while ((tag = av_dict_get(format_context->metadata, "", tag, AV_DICT_IGNORE_SUFFIX)))
-        out.attributes[std::string("tag_") + tag->key] = std::string(tag->value);
+        tags.entries.emplace_back(tag->key, tag->value);
+    out.set(std::move(tags));
 }
 
 std::vector<FileRegion> FFmpegDemuxContext::extract_chapter_regions() const
@@ -194,7 +197,7 @@ std::vector<FileRegion> FFmpegDemuxContext::extract_chapter_regions() const
         double tb = av_q2d(ch->time_base);
         r.start_coordinates = { static_cast<uint64_t>(ch->start * tb * 1000) };
         r.end_coordinates = { static_cast<uint64_t>(ch->end * tb * 1000) };
-        r.attributes["chapter_index"] = static_cast<int>(i);
+        r.set(ChapterInfo { .chapter_index = i });
 
         regions.push_back(std::move(r));
     }

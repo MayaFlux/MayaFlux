@@ -2,14 +2,15 @@
 
 #include "MayaFlux/Kinesis/Discrete/Transform.hpp"
 #include "MayaFlux/Nodes/Generators/Polynomial.hpp"
-#include "UniversalTransformer.hpp"
+#include "Transformer.hpp"
 
 namespace MayaFlux::Yantra {
 
 namespace D = MayaFlux::Kinesis::Discrete;
+
 /**
  * @enum MathematicalOperation
- * @brief Specific mathematical operations supported
+ * @brief Pointwise maps applied by MathematicalTransformer
  */
 enum class MathematicalOperation : uint8_t {
     GAIN, ///< Linear gain/attenuation
@@ -23,212 +24,205 @@ enum class MathematicalOperation : uint8_t {
     POLYNOMIAL ///< Polynomial transform
 };
 
-/** @brief Construction settings for MathematicalTransformer. */
-using MathematicalTransformerConfig = TransformerConfig<MathematicalOperation>;
+/**
+ * @enum TrigFunction
+ * @brief Trigonometric function used by the TRIGONOMETRIC operation
+ */
+enum class TrigFunction : uint8_t {
+    SIN,
+    COS,
+    TAN
+};
+
+/**
+ * @struct MathematicalTransformerConfig
+ * @brief Settings of MathematicalTransformer, stored whole in the operation's facets.
+ */
+struct MathematicalTransformerConfig : TransformerConfig {
+    static constexpr auto describe_facets()
+    {
+        return std::tuple_cat(
+            TransformerConfig::describe_facets(),
+            std::tuple {
+                FacetMember<&MathematicalTransformerConfig::operation> {},
+                FacetMember<&MathematicalTransformerConfig::gain_factor> {},
+                FacetMember<&MathematicalTransformerConfig::offset_value> {},
+                FacetMember<&MathematicalTransformerConfig::exponent> {},
+                FacetMember<&MathematicalTransformerConfig::log_scale> {},
+                FacetMember<&MathematicalTransformerConfig::log_input_scale> {},
+                FacetMember<&MathematicalTransformerConfig::log_offset> {},
+                FacetMember<&MathematicalTransformerConfig::log_base> {},
+                FacetMember<&MathematicalTransformerConfig::exp_scale> {},
+                FacetMember<&MathematicalTransformerConfig::exp_rate> {},
+                FacetMember<&MathematicalTransformerConfig::exp_base> {},
+                FacetMember<&MathematicalTransformerConfig::trig_function> {},
+                FacetMember<&MathematicalTransformerConfig::frequency> {},
+                FacetMember<&MathematicalTransformerConfig::amplitude> {},
+                FacetMember<&MathematicalTransformerConfig::phase> {},
+                FacetMember<&MathematicalTransformerConfig::bits> {},
+                FacetMember<&MathematicalTransformerConfig::target_peak> {},
+                FacetMember<&MathematicalTransformerConfig::coefficients> {},
+            });
+    }
+
+    /** Pointwise map to apply. */
+    Reflect::EnumByte<MathematicalOperation> operation { MathematicalOperation::GAIN };
+    /** GAIN: multiplier. */
+    double gain_factor { 1.0 };
+    /** OFFSET: added constant. */
+    double offset_value { 0.0 };
+    /** POWER: exponent. */
+    double exponent { 2.0 };
+    /** LOGARITHMIC: output scale. */
+    double log_scale { 1.0 };
+    /** LOGARITHMIC: input scale applied before the offset. */
+    double log_input_scale { 1.0 };
+    /** LOGARITHMIC: offset added to the scaled input. */
+    double log_offset { 1.0 };
+    /** LOGARITHMIC: logarithm base. */
+    double log_base { std::numbers::e };
+    /** EXPONENTIAL: output scale. */
+    double exp_scale { 1.0 };
+    /** EXPONENTIAL: rate applied to the input. */
+    double exp_rate { 1.0 };
+    /** EXPONENTIAL: base of the exponential. */
+    double exp_base { std::numbers::e };
+    /** TRIGONOMETRIC: function applied. */
+    Reflect::EnumByte<TrigFunction> trig_function { TrigFunction::SIN };
+    /** TRIGONOMETRIC: frequency scaling of the input. */
+    double frequency { 1.0 };
+    /** TRIGONOMETRIC: amplitude of the output. */
+    double amplitude { 1.0 };
+    /** TRIGONOMETRIC: phase offset of the input. */
+    double phase { 0.0 };
+    /** QUANTIZE: bit depth. */
+    uint8_t bits { 16 };
+    /** NORMALIZE: peak of the output range, which is [-target_peak, target_peak]. */
+    double target_peak { 1.0 };
+    /** POLYNOMIAL: coefficients, highest order first, as Polynomial::power_sum evaluates them. */
+    std::vector<double> coefficients { 0.0, 1.0 };
+};
 
 /**
  * @class MathematicalTransformer
- * @brief Concrete transformer for mathematical operations
- *
- * Handles pure mathematical transformations:
- * - Arithmetic operations (gain, offset, scaling)
- * - Trigonometric functions
- * - Logarithmic and exponential transforms
- * - Polynomial and power functions
- * - Quantization and bit reduction
+ * @brief Applies one pointwise map to every channel, as set by its config.
  */
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = InputType>
-class MathematicalTransformer final : public UniversalTransformer<InputType, OutputType> {
+class MathematicalTransformer final : public Transformer<InputType, OutputType> {
 public:
     using input_type = Datum<InputType>;
     using output_type = Datum<OutputType>;
+    using supports = Supports<MathematicalTransformerConfig>;
 
     /**
-     * @brief Constructs a MathematicalTransformer with specified operation
-     * @param op The mathematical operation to perform (default: GAIN)
+     * @brief Construct a mathematical transformer from its settings.
+     * @param config Operation and its parameters.
      */
-    explicit MathematicalTransformer(MathematicalOperation op = MathematicalOperation::GAIN)
-        : m_operation(op)
+    explicit MathematicalTransformer(MathematicalTransformerConfig config = {})
     {
-        set_default_parameters();
+        this->set_config(std::move(config));
     }
 
-    /**
-     * @brief Construct and configure a mathematical transformer in one step.
-     * @param config Initial transformation settings.
-     */
-    explicit MathematicalTransformer(const MathematicalTransformerConfig& config)
-        : MathematicalTransformer(config.operation)
-    {
-        this->set_strategy(config.strategy);
-        this->set_quality(config.quality);
-        this->set_scope(config.scope);
-        this->set_intensity(config.intensity);
-
-        for (const auto& key : config.keys) {
-            this->add_transformation_key(key);
-        }
-
-        for (const auto& [name, value] : config.parameters) {
-            this->set_parameter(name, value);
-        }
-    }
-
-    /**
-     * @brief Gets the transformation type
-     * @return TransformationType::MATHEMATICAL
-     */
     [[nodiscard]] TransformationType get_transformation_type() const override
     {
         return TransformationType::MATHEMATICAL;
     }
 
     /**
-     * @brief Gets the transformer name including the operation type
-     * @return String representation of the transformer name
+     * @brief The stored settings, or defaults when none were set.
      */
-    [[nodiscard]] std::string get_transformer_name() const override
+    [[nodiscard]] ConfigRefs configs() const override
     {
-        return std::string("MathematicalTransformer_").append(Reflect::enum_to_string(m_operation));
+        return this->stored_configs(supports {});
     }
 
 protected:
-    /**
-     * @brief Core transformation implementation
-     * @param input Input data to transform
-     * @return Transformed output data
-     *
-     * Performs the mathematical operation specified by m_operation on the input data.
-     * Supports both in-place and out-of-place transformations based on transformer settings.
-     */
     output_type transform_implementation(input_type& input) override
     {
-        switch (m_operation) {
-
+        const auto& cfg = this->template config<MathematicalTransformerConfig>();
+        switch (static_cast<MathematicalOperation>(cfg.operation)) {
         case MathematicalOperation::GAIN: {
-            const auto a = get_parameter_or<double>("gain_factor", 1.0);
+            const auto a = cfg.gain_factor;
             return apply_per_channel(input, [a](std::span<double> ch) {
                 D::linear(ch, a, 0.0);
             });
         }
-
         case MathematicalOperation::OFFSET: {
-            const auto b = get_parameter_or<double>("offset_value", 0.0);
+            const auto b = cfg.offset_value;
             return apply_per_channel(input, [b](std::span<double> ch) {
                 D::linear(ch, 1.0, b);
             });
         }
-
         case MathematicalOperation::POWER: {
-            const auto exp = get_parameter_or<double>("exponent", 2.0);
+            const auto exp = cfg.exponent;
             return apply_per_channel(input, [exp](std::span<double> ch) {
                 D::power(ch, exp);
             });
         }
-
         case MathematicalOperation::LOGARITHMIC: {
-            const auto a = get_parameter_or<double>("scale", 1.0);
-            const auto b = get_parameter_or<double>("input_scale", 1.0);
-            const auto c = get_parameter_or<double>("offset", 1.0);
-            const auto base = get_parameter_or<double>("base", std::numbers::e);
+            const auto a = cfg.log_scale;
+            const auto b = cfg.log_input_scale;
+            const auto c = cfg.log_offset;
+            const auto base = cfg.log_base;
             return apply_per_channel(input, [a, b, c, base](std::span<double> ch) {
                 D::logarithmic(ch, a, b, c, base);
             });
         }
-
         case MathematicalOperation::EXPONENTIAL: {
-            const auto a = get_parameter_or<double>("scale", 1.0);
-            const auto b = get_parameter_or<double>("rate", 1.0);
-            const auto base = get_parameter_or<double>("base", std::numbers::e);
+            const auto a = cfg.exp_scale;
+            const auto b = cfg.exp_rate;
+            const auto base = cfg.exp_base;
             return apply_per_channel(input, [a, b, base](std::span<double> ch) {
                 D::exponential(ch, a, b, base);
             });
         }
-
         case MathematicalOperation::TRIGONOMETRIC: {
-            const auto fn = get_parameter_or<std::string>("trig_function", "sin");
-            const auto freq = get_parameter_or<double>("frequency", 1.0);
-            const auto amp = get_parameter_or<double>("amplitude", 1.0);
-            const auto ph = get_parameter_or<double>("phase", 0.0);
-            if (fn == "cos")
+            const auto freq = cfg.frequency;
+            const auto amp = cfg.amplitude;
+            const auto ph = cfg.phase;
+            switch (static_cast<TrigFunction>(cfg.trig_function)) {
+            case TrigFunction::COS:
                 return apply_per_channel(input, [freq, amp, ph](std::span<double> ch) {
                     D::apply_trig(ch, [](double x) { return std::cos(x); }, freq, amp, ph);
                 });
-            if (fn == "tan")
+            case TrigFunction::TAN:
                 return apply_per_channel(input, [freq, amp, ph](std::span<double> ch) {
                     D::apply_trig(ch, [](double x) { return std::tan(x); }, freq, amp, ph);
                 });
+            case TrigFunction::SIN:
+                break;
+            }
             return apply_per_channel(input, [freq, amp, ph](std::span<double> ch) {
                 D::apply_trig(ch, [](double x) { return std::sin(x); }, freq, amp, ph);
             });
         }
-
         case MathematicalOperation::QUANTIZE: {
-            const auto bits = get_parameter_or<uint8_t>("bits", 16);
+            const auto bits = cfg.bits;
             return apply_per_channel(input, [bits](std::span<double> ch) {
                 D::quantize(ch, bits);
             });
         }
-
         case MathematicalOperation::NORMALIZE: {
-            const auto peak = get_parameter_or<double>("target_peak", 1.0);
+            const auto peak = cfg.target_peak;
             return apply_per_channel(input, [peak](std::span<double> ch) {
                 D::normalize(ch, -peak, peak);
             });
         }
-
         case MathematicalOperation::POLYNOMIAL: {
-            const auto coeffs = get_parameter_or<std::vector<double>>(
-                "coefficients", std::vector<double> { 0.0, 1.0 });
-            auto poly = std::make_shared<Nodes::Generator::Polynomial>(coeffs);
+            auto poly = std::make_shared<Nodes::Generator::Polynomial>(cfg.coefficients);
             return apply_per_channel(input, [&poly](std::span<double> ch) {
                 std::ranges::transform(ch, ch.begin(),
                     [&poly](double x) { return poly->process_sample(x); });
             });
         }
-
         default:
             return create_output(input);
         }
     }
 
-    /**
-     * @brief Sets transformation parameters
-     * @param name Parameter name
-     * @param value Parameter value
-     *
-     * Handles setting of operation type and delegates other parameters to base class.
-     * Supports both enum and string values for the "operation" parameter.
-     */
-    void set_transformation_parameter(const std::string& name, std::any value) override
-    {
-        if (name == "operation") {
-            if (auto r = safe_any_cast<MathematicalOperation>(value)) {
-                m_operation = *r.value;
-                return;
-            }
-            if (auto r = safe_any_cast<std::string>(value)) {
-                if (auto e = Reflect::string_to_enum_case_insensitive<MathematicalOperation>(*r.value)) {
-                    m_operation = *e;
-                    return;
-                }
-            }
-        }
-
-        UniversalTransformer<InputType, OutputType>::set_transformation_parameter(name, std::move(value));
-    }
-
 private:
-    MathematicalOperation m_operation; ///< Current mathematical operation
-    mutable std::vector<std::vector<double>> m_working_buffer; ///< Buffer for out-of-place operations
+    mutable std::vector<std::vector<double>> m_working_buffer;
 
-    /**
-     * @brief Extracts per-channel spans, applies an in-place func to each, and reconstructs.
-     * @tparam Func Callable matching void(std::span<double>)
-     *
-     * In-place: results are copied back into the original channel spans of @p input before
-     * reconstruction. Out-of-place: input is not mutated.
-     */
     template <typename Func>
     output_type apply_per_channel(input_type& input, Func&& func)
     {
@@ -242,60 +236,9 @@ private:
             for (size_t i = 0; i < channels.size(); ++i)
                 std::ranges::copy(m_working_buffer[i], channels[i].begin());
         return create_output(
-            OperationHelper::reconstruct_from_double<InputType>(m_working_buffer, structure_info));
+            OperationHelper::reconstruct_from_double<input_type>(m_working_buffer, structure_info));
     }
 
-    /**
-     * @brief Sets default parameter values for all mathematical operations
-     *
-     * Initializes all possible parameters with sensible defaults to ensure
-     * the transformer works correctly regardless of the selected operation.
-     */
-    void set_default_parameters()
-    {
-        this->set_parameter("gain_factor", 1.0);
-        this->set_parameter("offset_value", 0.0);
-        this->set_parameter("exponent", 2.0);
-        this->set_parameter("base", std::numbers::e);
-        this->set_parameter("scale", 1.0);
-        this->set_parameter("trig_function", std::string { "sin" });
-        this->set_parameter("frequency", 1.0);
-        this->set_parameter("amplitude", 1.0);
-        this->set_parameter("phase", 0.0);
-        this->set_parameter("bits", uint8_t { 16 });
-        this->set_parameter("target_peak", 1.0);
-        this->set_parameter("coefficients", std::vector<double> { 0.0, 1.0 });
-        this->set_parameter("input_scale", 1.0);
-        this->set_parameter("offset", 1.0);
-        this->set_parameter("rate", 1.0);
-    }
-
-    /**
-     * @brief Gets a parameter value with fallback to default
-     * @tparam T Parameter type
-     * @param name Parameter name
-     * @param default_value Default value if parameter not found or wrong type
-     * @return Parameter value or default
-     */
-    template <typename T>
-    T get_parameter_or(const std::string& name, const T& default_value) const
-    {
-        auto param = this->get_transformation_parameter(name);
-        if (!param.has_value())
-            return default_value;
-
-        auto result = safe_any_cast<T>(param);
-        return result.value_or(default_value);
-    }
-
-    /**
-     * @brief Creates output with proper type conversion
-     * @param data Input data to convert
-     * @return Output with converted data type
-     *
-     * Handles type conversion between InputType and OutputType when necessary,
-     * or direct assignment when types match.
-     */
     output_type create_output(const input_type& input)
     {
         if constexpr (std::is_same_v<InputType, OutputType>) {
@@ -306,4 +249,5 @@ private:
         }
     }
 };
+
 }

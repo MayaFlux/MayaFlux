@@ -373,7 +373,7 @@ std::optional<FileMetadata> VolumeReader::get_metadata() const
 
     FileMetadata meta;
     meta.format = "vdb";
-    meta.attributes["grid_count"] = static_cast<uint64_t>(m_archive->read_grid_count());
+    meta.set(VolumeInfo { .grid_count = static_cast<uint64_t>(m_archive->read_grid_count()) });
 
     return meta;
 }

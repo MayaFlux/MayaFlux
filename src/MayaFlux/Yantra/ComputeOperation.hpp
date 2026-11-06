@@ -9,6 +9,96 @@ namespace MayaFlux::Yantra {
 class ComputeMatrix;
 
 /**
+ * @struct OperationConfig
+ * @brief Base of every operation's config struct.
+ *
+ * Config structs derive from it, declare describe_facets(), and are stored
+ * whole by ComputeOperation::set_config, keyed by their own type. No string
+ * keys are used.
+ */
+struct OperationConfig {
+    OperationConfig() = default;
+    OperationConfig(const OperationConfig&) = default;
+    OperationConfig(OperationConfig&&) noexcept = default;
+    OperationConfig& operator=(const OperationConfig&) = default;
+    OperationConfig& operator=(OperationConfig&&) noexcept = default;
+
+    /** @brief Retain a concrete config whole when placed in a parent-config collection. */
+    template <typename Config>
+        requires(!std::same_as<std::remove_cvref_t<Config>, OperationConfig>
+            && std::derived_from<std::remove_cvref_t<Config>, OperationConfig>
+            && requires { std::remove_cvref_t<Config>::describe_facets(); })
+    OperationConfig(Config&& config)
+    {
+        m_facets.set(std::forward<Config>(config));
+    }
+
+    /** @brief Stores a described struct under its type identity. */
+    template <typename T>
+        requires requires { T::describe_facets(); }
+    void set(T value)
+    {
+        m_facets.set(std::move(value));
+    }
+
+    /** @brief The described struct of this type, or nullptr when absent. */
+    template <typename T>
+        requires requires { T::describe_facets(); }
+    [[nodiscard]] const T* get() const
+    {
+        return m_facets.get<T>();
+    }
+
+    /** @brief Apply retained concrete settings to an operation through its parent contract. */
+    template <typename Op>
+    void apply_to(Op& operation) const
+    {
+        operation.merge_config(m_facets);
+    }
+
+private:
+    Facets m_facets;
+};
+
+/** @brief Borrowed views of the configs an operation holds. Valid while the operation lives and its configs are not replaced. */
+using ConfigRefs = std::vector<std::reference_wrapper<const OperationConfig>>;
+
+/**
+ * @struct Supports
+ * @brief The config structs an operation class accepts, declared as `using supports`.
+ *
+ * Single-config is the convention for CPU classes. A class may list several.
+ */
+template <typename... Configs>
+struct Supports {
+    static constexpr size_t count = sizeof...(Configs);
+
+    template <typename C>
+    static constexpr bool has = (std::same_as<C, Configs> || ...);
+
+    /** @brief Calls f.template operator()<Config>() for each listed config. */
+    template <typename F>
+    static void each(F f)
+    {
+        (f.template operator()<Configs>(), ...);
+    }
+};
+
+namespace detail {
+    template <typename S>
+    struct SoleConfig;
+
+    template <typename C>
+    struct SoleConfig<Supports<C>> {
+        using type = C;
+    };
+}
+
+/** @brief The only config of a single-config class. Does not compile for a class listing several. */
+template <typename Op>
+using default_config_t = typename detail::SoleConfig<typename Op::supports>::type;
+
+/**
  * @class ComputeOperation
  * @brief Base interface for all computational operations in the processing pipeline
  *
@@ -91,26 +181,6 @@ public:
     }
 
     /**
-     * @brief Sets a named parameter that configures the operation's behavior
-     * @param name Parameter identifier
-     * @param value Parameter value stored as std::any
-     */
-    virtual void set_parameter(const std::string& name, std::any value) = 0;
-
-    /**
-     * @brief Retrieves a parameter's current value
-     * @param name Parameter identifier
-     * @return Current parameter value as std::any
-     */
-    [[nodiscard]] virtual std::any get_parameter(const std::string& name) const = 0;
-
-    /**
-     * @brief Retrieves all parameters and their values
-     * @return Map of parameter names to their values
-     */
-    [[nodiscard]] virtual std::map<std::string, std::any> get_all_parameters() const { return {}; }
-
-    /**
      * @brief Validates if the input data meets the operation's requirements
      * @param input Data to validate
      * @return True if input is valid, false otherwise
@@ -179,21 +249,75 @@ public:
     }
 
     /**
-     * @brief Attach a GPU execution backend.
-     *
-     * When set and ready, apply_operation_internal delegates to the backend
-     * instead of operation_function. The CPU implementation in operation_function
-     * remains the automatic fallback when no backend is attached or GPU
-     * initialisation has not yet succeeded.
-     *
-     * @param backend Configured GpuExecutionContext instance.
+     * @brief Stores a described config struct, whole, under its own type.
+     * @tparam Config A struct deriving from OperationConfig with describe_facets().
      */
-    void set_gpu_backend(std::shared_ptr<GpuExecutionContext<InputType, OutputType>> backend)
+    template <typename Config>
+        requires std::derived_from<Config, OperationConfig> && requires { Config::describe_facets(); }
+    void set_config(Config config)
     {
-        m_gpu_backend = std::move(backend);
+        m_facets.set(std::move(config));
     }
 
-    [[nodiscard]] bool has_gpu_backend() const { return m_gpu_backend != nullptr; }
+    /**
+     * @brief The stored config struct of type Config, or nullptr when absent.
+     */
+    template <typename Config>
+        requires std::derived_from<Config, OperationConfig> && requires { Config::describe_facets(); }
+    [[nodiscard]] const Config* resolved_config() const
+    {
+        return m_facets.get<Config>();
+    }
+
+    /**
+     * @brief The stored config struct of type Config, or its defaults when none was set.
+     */
+    template <typename Config>
+        requires std::derived_from<Config, OperationConfig> && requires { Config::describe_facets(); }
+    [[nodiscard]] const Config& config() const
+    {
+        if (const auto* stored = m_facets.get<Config>()) {
+            return *stored;
+        }
+        static const Config defaults {};
+        return defaults;
+    }
+
+    /**
+     * @brief Adds the config structs of @p incoming, replacing stored ones of the same type.
+     */
+    void merge_config(const Facets& incoming)
+    {
+        m_facets.merge(incoming);
+    }
+
+    /**
+     * @brief The base view of the config structs this operation holds.
+     *
+     * Families and concrete operations override this with stored_configs().
+     * The default is empty.
+     */
+    [[nodiscard]] virtual ConfigRefs configs() const
+    {
+        return {};
+    }
+
+    /**
+     * @brief The stored configs among those listed, in listed order.
+     */
+    template <typename... Configs>
+    [[nodiscard]] ConfigRefs stored_configs(Supports<Configs...>) const
+    {
+        ConfigRefs stored;
+        (
+            [&] {
+                if (const auto* found = resolved_config<Configs>()) {
+                    stored.emplace_back(*found);
+                }
+            }(),
+            ...);
+        return stored;
+    }
 
 protected:
     /**
@@ -211,10 +335,6 @@ protected:
      */
     virtual output_type apply_operation_internal(const input_type& input, const ExecutionContext& context)
     {
-        if (m_gpu_backend && m_gpu_backend->ensure_gpu_ready()) {
-            return m_gpu_backend->execute(input, context);
-        }
-
         switch (context.mode) {
         case ExecutionMode::ASYNC:
             // Return the result of the future (this might need different handling)
@@ -302,10 +422,10 @@ protected:
 
     std::shared_ptr<Kakshya::SignalSourceContainer> m_container;
     ExecutionContext m_last_execution_context;
-    std::shared_ptr<GpuExecutionContext<InputType, OutputType>> m_gpu_backend;
 
 private:
     std::vector<std::shared_ptr<ComputeOperation>> m_dependencies;
+    Facets m_facets;
 
     /**
      * @brief Validate input/output types and warn about marker types

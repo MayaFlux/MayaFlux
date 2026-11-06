@@ -153,6 +153,8 @@ infer_structure(const T& data, const std::shared_ptr<Kakshya::SignalSourceContai
         return infer_from_composite_container(data);
     } else if constexpr (std::is_same_v<T, Kakshya::DataVariant>) {
         return infer_from_data_variant(data);
+    } else if constexpr (std::is_same_v<T, std::vector<Kakshya::DataVariant>>) {
+        return infer_from_data_variant_vector(data);
     } else if constexpr (std::is_same_v<T, std::shared_ptr<Kakshya::SignalSourceContainer>>) {
         return infer_from_container(data);
     } else if constexpr (std::is_same_v<T, Kakshya::Region>) {

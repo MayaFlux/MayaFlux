@@ -22,12 +22,18 @@ namespace detail {
 }
 
 /**
- * @concept FunctionalOperationOn
- * @brief OpClass derives from a FunctionalOperation whose input is DataType.
+ * @concept AnnotatingOn
+ * @brief OpClass annotates a Datum of DataType instead of replacing it.
+ *
+ * True for a FunctionalOperation child, and for any operation whose input is
+ * Datum<DataType> and that declares `static constexpr bool annotates = true`.
+ * A chain keeps its data and type across such a step and merges the step's
+ * facets and metadata.
  */
 template <typename OpClass, typename DataType>
-concept FunctionalOperationOn = decltype(detail::functional_operation_base(std::declval<OpClass*>()))::value
-    && std::same_as<typename OpClass::input_type, Datum<DataType>>;
+concept AnnotatingOn = std::same_as<typename OpClass::input_type, Datum<DataType>>
+    && (decltype(detail::functional_operation_base(std::declval<OpClass*>()))::value
+        || requires { requires OpClass::annotates; });
 
 /**
  * @class FluentExecutor
@@ -46,7 +52,7 @@ concept FunctionalOperationOn = decltype(detail::functional_operation_base(std::
  * Key Features:
  * - Type-safe operation chaining with compile-time verification
  * - Support for both type-based and named operations
- * - Container and metadata preservation through the full chain
+ * - Container, metadata and facets preservation through the full chain
  * - Custom function application within the chain
  * - Multiple terminal operations for different use cases
  * - Error accumulation and reporting
@@ -143,14 +149,14 @@ public:
      * @brief Chain an anonymous operation instance by type
      *
      * Constructs a new instance of OpClass and executes it on the current
-     * Datum. The full Datum (data + container + metadata) is passed through.
+     * Datum. The full Datum (data + container + metadata + facets) is passed through.
      *
      * @tparam OpClass Operation class to instantiate and execute
      * @tparam OutputType Expected output type (defaults to current DataType)
      * @return New FluentExecutor carrying the result Datum
      */
     template <typename OpClass, ComputeData OutputType = DataType>
-        requires(!FunctionalOperationOn<OpClass, DataType>)
+        requires(!AnnotatingOn<OpClass, DataType>)
     FluentExecutor<Executor, OutputType> then()
     {
         if (!m_successful) {
@@ -190,7 +196,7 @@ public:
      *
      * Retrieves the pre-configured operation instance registered under @p name
      * and executes it on the current Datum. The full Datum is passed through,
-     * preserving container and metadata.
+     * preserving container, metadata and facets.
      *
      * @tparam OpClass Operation class type
      * @tparam OutputType Expected output type (defaults to current DataType)
@@ -198,7 +204,7 @@ public:
      * @return New FluentExecutor carrying the result Datum
      */
     template <typename OpClass, ComputeData OutputType = DataType>
-        requires(!FunctionalOperationOn<OpClass, DataType>)
+        requires(!AnnotatingOn<OpClass, DataType>)
     FluentExecutor<Executor, OutputType> then(const std::string& name)
     {
         if (!m_successful) {
@@ -238,11 +244,11 @@ public:
      *        current Datum.
      *
      * The chain keeps its data, container and type. The operation's output
-     * metadata is merged into the chain's, and its output data is stored in
-     * the metadata under the operation's type name.
+     * metadata and facets are merged into the chain's, and its output data
+     * is stored in the metadata under the operation's type name.
      */
     template <typename OpClass>
-        requires FunctionalOperationOn<OpClass, DataType>
+        requires AnnotatingOn<OpClass, DataType>
     FluentExecutor<Executor, DataType> then()
     {
         using OutputType = typename detail::datum_data<typename OpClass::output_type>::type;
@@ -285,11 +291,11 @@ public:
      *        pool as an annotation of the current Datum.
      *
      * The chain keeps its data, container and type. The operation's output
-     * metadata is merged into the chain's, and its output data is stored in
-     * the metadata under @p name.
+     * metadata and facets are merged into the chain's, and its output data
+     * is stored in the metadata under @p name.
      */
     template <typename OpClass>
-        requires FunctionalOperationOn<OpClass, DataType>
+        requires AnnotatingOn<OpClass, DataType>
     FluentExecutor<Executor, DataType> then(const std::string& name)
     {
         using OutputType = typename detail::datum_data<typename OpClass::output_type>::type;
@@ -669,8 +675,8 @@ private:
     void record_error(const std::string& err) { m_errors.push_back(err); }
 
     /**
-     * @brief The current Datum with @p result's metadata merged in and its
-     *        data stored under @p key.
+     * @brief The current Datum with @p result's metadata and facets merged in
+     *        and its data stored under @p key.
      */
     template <ComputeData OutputType>
     [[nodiscard]] Datum<DataType> absorbed(Datum<OutputType>&& result, const std::string& key) const
@@ -678,6 +684,7 @@ private:
         Datum<DataType> next = m_data;
         for (auto& [k, v] : result.metadata)
             next.metadata.insert_or_assign(k, std::move(v));
+        next.facets.merge(result.facets);
         next.metadata.insert_or_assign(key, std::move(result.data));
         return next;
     }

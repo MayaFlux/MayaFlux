@@ -51,8 +51,6 @@ std::vector<double> apply_convolution(
                 : std::conj(res[fft_size - b]);
         });
 
-    const double inv = 1.0 / static_cast<double>(fft_size);
-    full_fft *= inv;
 
     Eigen::VectorXd time_result;
     fft.inv(time_result, full_fft);
@@ -90,9 +88,7 @@ std::vector<double> cross_correlate(
     std::span<const double> tmpl,
     bool normalize)
 {
-    std::vector<double> reversed(tmpl.rbegin(), tmpl.rend());
-
-    auto out = apply_convolution(src, reversed,
+    auto out = apply_convolution(src, tmpl,
         [](const auto& s, const auto& k, auto& r) {
             std::transform(std::execution::par_unseq, s.begin(), s.end(), k.begin(), r.begin(),
                 [](const std::complex<double>& a, const std::complex<double>& b) {

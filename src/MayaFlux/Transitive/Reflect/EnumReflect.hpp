@@ -178,4 +178,35 @@ EnumType string_to_enum_or_throw_case_insensitive(std::string_view str,
     }
     return *result;
 }
+
+/**
+ * @struct EnumByte
+ * @brief Stores a scoped enum in its underlying integer type.
+ *
+ * Use as a struct field to keep one byte per enum value while the field
+ * still accepts the scoped enum directly, so callers write
+ * `.method = EnergyMethod::RMS` with no cast. Reads convert back to the
+ * scoped enum implicitly. Integers do not convert to the wrapper, so an
+ * out-of-range or wrong-family value cannot be stored by accident.
+ *
+ * @tparam E A scoped enumeration type.
+ */
+template <typename E>
+    requires std::is_enum_v<E>
+struct EnumByte {
+    using underlying_type = std::underlying_type_t<E>;
+
+    /** @brief Stores @p value in its underlying integer type. */
+    constexpr EnumByte(E value) noexcept
+        : raw(static_cast<underlying_type>(value))
+    {
+    }
+
+    /** @brief Converts back to the scoped enum. */
+    constexpr operator E() const noexcept { return static_cast<E>(raw); }
+
+    /** Underlying integer storage. */
+    underlying_type raw {};
+};
+
 }

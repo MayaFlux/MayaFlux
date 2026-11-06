@@ -15,7 +15,28 @@ struct MAYAFLUX_API OrganizedRegion {
     std::string group_name; ///< Name of the region group
     size_t region_index {}; ///< Index within the group
     std::vector<RegionSegment> segments; ///< Audio segments in this region
-    std::unordered_map<std::string, std::any> attributes; ///< Extensible metadata
+
+    /** @brief Returns a typed value, or nullptr when absent. */
+    template <typename T>
+    [[nodiscard]] const T* get(const Facet<T>& key) const
+    {
+        return m_facets.get(key);
+    }
+
+    /** @brief Stores a typed value under its Facet key. */
+    template <typename T>
+    void set(const Facet<T>& key, std::type_identity_t<T> value)
+    {
+        m_facets.set(key, std::move(value));
+    }
+
+    /** @brief Copies typed attributes from a Region or RegionGroup; source values win. */
+    template <typename Source>
+    void merge(const Source& source)
+    {
+        m_facets.merge(source.m_facets);
+    }
+
     RegionTransition transition_type = RegionTransition::IMMEDIATE; ///< Transition to next region
     double transition_duration_ms = 0.0; ///< Duration of transition in milliseconds
     RegionSelectionPattern selection_pattern = RegionSelectionPattern::SEQUENTIAL;
@@ -85,30 +106,7 @@ struct MAYAFLUX_API OrganizedRegion {
         return std::nullopt;
     }
 
-    /**
-     * @brief Set processing metadata for this region
-     */
-    template <typename T>
-    void set_attribute(const std::string& key, T&& value)
-    {
-        attributes[key] = std::forward<T>(value);
-    }
-
-    /**
-     * @brief Get processing metadata from this region
-     */
-    template <typename T>
-    std::optional<T> get_attribute(const std::string& key) const
-    {
-        auto it = attributes.find(key);
-        if (it != attributes.end()) {
-            try {
-                return safe_any_cast<T>(it->second);
-            } catch (const std::bad_any_cast&) {
-                return std::nullopt;
-            }
-        }
-        return std::nullopt;
-    }
+private:
+    Facets m_facets;
 };
 }

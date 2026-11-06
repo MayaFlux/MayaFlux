@@ -50,7 +50,19 @@ struct MAYAFLUX_API RegionSegment {
     bool is_active = false;
     RegionState state = RegionState::IDLE;
 
-    std::unordered_map<std::string, std::any> processing_metadata; ///< Arbitrary processing metadata
+    /** @brief Returns a typed segment value, or nullptr when absent. */
+    template <typename T>
+    [[nodiscard]] const T* get(const Facet<T>& key) const
+    {
+        return m_facets.get(key);
+    }
+
+    /** @brief Stores a typed segment value under its Facet key. */
+    template <typename T>
+    void set(const Facet<T>& key, std::type_identity_t<T> value)
+    {
+        m_facets.set(key, std::move(value));
+    }
 
     RegionSegment() = default;
 
@@ -232,31 +244,8 @@ struct MAYAFLUX_API RegionSegment {
         return current_position.back() >= segment_size.back();
     }
 
-    /**
-     * @brief Set processing metadata for this segment.
-     * @param key Metadata key.
-     * @param value Metadata value.
-     */
-    void set_processing_metadata(const std::string& key, std::any value)
-    {
-        processing_metadata[key] = std::move(value);
-    }
-
-    /**
-     * @brief Get processing metadata for this segment.
-     * @tparam T Expected type.
-     * @param key Metadata key.
-     * @return Optional value if present and convertible.
-     */
-    template <typename T>
-    std::optional<T> get_processing_metadata(const std::string& key) const
-    {
-        auto it = processing_metadata.find(key);
-        if (it != processing_metadata.end()) {
-            return safe_any_cast<T>(it->second);
-        }
-        return std::nullopt;
-    }
+private:
+    Facets m_facets;
 };
 
 } // namespace MayaFlux::Kakshya

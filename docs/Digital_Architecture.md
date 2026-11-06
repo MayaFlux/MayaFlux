@@ -261,13 +261,13 @@ Yantra provides typed computation, analysis, composition, and GPU execution. Its
 
 The type system begins with `Datum<T>`. Where the real-time side works with raw doubles flowing through buffers, Yantra wraps everything in `Datum`. A `Datum` carries the data, optional container context, and metadata. `ComputeData` is the concept constraining what `T` can be. `StructureIntrospection` infers the shape of any `ComputeData` value.
 
-**Analyzers** extract information: `EnergyAnalyzer`, `StatisticalAnalyzer`, `UniversalAnalyzer`, `GpuAnalyzer`.
+**Analyzers** extract information: `EnergyAnalyzer`, `StatisticalAnalyzer`, `Analyzer`, `GpuAnalyzer`.
 
-**Transformers** modify data: `MathematicalTransformer`, `SpectralTransformer`, `TemporalTransformer`, `ConvolutionTransformer`, `UniversalTransformer`, `GpuTransformer`.
+**Transformers** modify data: `MathematicalTransformer`, `SpectralTransformer`, `TemporalTransformer`, `ConvolutionTransformer`, `Transformer`, `GpuTransformer`.
 
-**Sorters** reorder data: `StandardSorter`, `UniversalSorter`, `GpuSorter`.
+**Sorters** reorder data: `StandardSorter`, `Sorter`, `GpuSorter`.
 
-**Extractors** pull features: `FeatureExtractor`, `UniversalExtractor`, `GpuExtractor`.
+**Extractors** pull features: `FeatureExtractor`, `Extractor`, `GpuExtractor`.
 
 **Executors** bridge typed operations to Vulkan compute. `ShaderExecutionContext<>` handles buffer shaders, `TextureExecutionContext` handles images, and `GpuDispatchCore` with `GpuResourceManager` coordinates dispatch and resource reuse. GPU work can also be dispatched asynchronously.
 

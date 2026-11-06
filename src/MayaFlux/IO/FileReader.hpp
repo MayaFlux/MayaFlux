@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Kakshya/Region/Region.hpp"
+#include "MayaFlux/Transitive/Facet/Facets.hpp"
 
 namespace MayaFlux::Kakshya {
 
@@ -14,8 +15,8 @@ namespace MayaFlux::IO {
  * @struct FileMetadata
  * @brief Generic metadata structure for any file type.
  *
- * Stores both standard and type-specific metadata for files, including format,
- * MIME type, size, timestamps, and arbitrary key-value attributes.
+ * Stores standard fields directly and format-specific facts as typed info structs
+ * in its bag, one per type.
  */
 struct FileMetadata {
     std::string format; ///< File format identifier (e.g., "wav", "mp3", "hdf5")
@@ -24,28 +25,22 @@ struct FileMetadata {
     std::chrono::system_clock::time_point creation_time; ///< File creation time
     std::chrono::system_clock::time_point modification_time; ///< Last modification time
 
-    /// Type-specific metadata stored as key-value pairs (e.g., sample rate, channels)
-    std::unordered_map<std::string, std::any> attributes;
-
-    /**
-     * @brief Get a typed attribute value by key.
-     * @tparam T Expected type.
-     * @param key Attribute key.
-     * @return Optional value if present and convertible.
-     */
-    template <typename T>
-    std::optional<T> get_attribute(const std::string& key) const
+    /** @brief Stores a format info struct, replacing any previous value of its type. */
+    template <typename Info>
+    void set(Info info)
     {
-        auto it = attributes.find(key);
-        if (it != attributes.end()) {
-            try {
-                return safe_any_cast<T>(it->second);
-            } catch (const std::bad_any_cast&) {
-                return std::nullopt;
-            }
-        }
-        return std::nullopt;
+        m_facets.set(std::move(info));
     }
+
+    /** @brief Returns the format info struct of type Info, or nullptr when absent. */
+    template <typename Info>
+    [[nodiscard]] const Info* get() const
+    {
+        return m_facets.get<Info>();
+    }
+
+private:
+    Facets m_facets;
 };
 
 /**
@@ -89,13 +84,29 @@ struct MAYAFLUX_API FileRegion {
     std::string name; ///< Human-readable name for the region
     std::vector<uint64_t> start_coordinates; ///< N-dimensional start position (e.g., frame, x, y)
     std::vector<uint64_t> end_coordinates; ///< N-dimensional end position (inclusive)
-    std::unordered_map<std::string, std::any> attributes; ///< Region-specific metadata
+
+    /** @brief Stores a format info struct, replacing any previous value of its type. */
+    template <typename Info>
+    void set(Info info)
+    {
+        m_facets.set(std::move(info));
+    }
+
+    /** @brief Returns the format info struct of type Info, or nullptr when absent. */
+    template <typename Info>
+    [[nodiscard]] const Info* get() const
+    {
+        return m_facets.get<Info>();
+    }
 
     /**
      * @brief Convert this FileRegion to a Region for use in processing.
-     * @return Region with equivalent coordinates and attributes.
+     * @return Region with equivalent coordinates, label and typed info structs.
      */
     Kakshya::Region to_region() const;
+
+private:
+    Facets m_facets;
 };
 
 /**

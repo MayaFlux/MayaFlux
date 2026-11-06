@@ -3,8 +3,8 @@
 #include "MayaFlux/Yantra/ComputeOperation.hpp"
 
 /**
- * @file UniversalAnalyzer.hpp
- * @brief Modern, digital-first universal analyzer framework for Maya Flux
+ * @file Analyzer.hpp
+ * @brief Modern, digital-first analyzer framework for Maya Flux
  *
  * This header defines the core analyzer abstractions for the Maya Flux ecosystem,
  * enabling robust, type-safe, and extensible analysis pipelines for multi-dimensional
@@ -46,16 +46,44 @@ enum class AnalysisType : uint8_t {
  */
 enum class AnalysisGranularity : uint8_t {
     RAW_VALUES, ///< Direct analysis results
-    ATTRIBUTED_SEGMENTS, ///< Results with metadata/attribution
+    ATTRIBUTED_SEGMENTS, ///< Results with attribution
     ORGANIZED_GROUPS, ///< Hierarchically organized results
     SUMMARY_STATISTICS ///< Condensed statistical summaries
 };
 
 /**
- * @class UniversalAnalyzer
+ * @struct AnalyzerConfig
+ * @brief Settings every analyzer family accepts.
+ *
+ * Stored whole, keyed by type, in the operation's facets. Each family's
+ * config struct inherits these fields and adds its own method field, typed by its own enum.
+ */
+struct AnalyzerConfig : OperationConfig {
+    static constexpr auto describe_facets()
+    {
+        return std::tuple {
+            FacetMember<&AnalyzerConfig::window_size> {},
+            FacetMember<&AnalyzerConfig::hop_size> {},
+            FacetMember<&AnalyzerConfig::granularity> {},
+            FacetMember<&AnalyzerConfig::classification_enabled> {},
+        };
+    }
+
+    /** Analysis window length in samples. */
+    uint32_t window_size { 256 };
+    /** Distance between successive windows in samples. */
+    uint32_t hop_size { 128 };
+    /** Level at which the analyzer processes input. */
+    AnalysisGranularity granularity { AnalysisGranularity::RAW_VALUES };
+    /** Whether to classify energy or value levels. */
+    bool classification_enabled { false };
+};
+
+/**
+ * @class Analyzer
  * @brief Template-flexible analyzer base with instance-defined I/O types
  *
- * The UniversalAnalyzer provides a clean, concept-based foundation for all analysis
+ * The Analyzer provides a clean, concept-based foundation for all analysis
  * operations. Unlike the old approach, the I/O types are defined at instantiation
  * time rather than at the class definition level, providing maximum flexibility.
  *
@@ -77,13 +105,13 @@ enum class AnalysisGranularity : uint8_t {
  * ```
  */
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = InputType>
-class UniversalAnalyzer : public ComputeOperation<InputType, OutputType> {
+class Analyzer : public ComputeOperation<InputType, OutputType> {
 public:
     using input_type = Datum<InputType>;
     using output_type = Datum<OutputType>;
     using base_type = ComputeOperation<InputType, OutputType>;
 
-    virtual ~UniversalAnalyzer() = default;
+    virtual ~Analyzer() = default;
 
     /**
      * @brief Gets the analysis type category for this analyzer
@@ -91,58 +119,14 @@ public:
      */
     [[nodiscard]] virtual AnalysisType get_analysis_type() const = 0;
 
-    /**
-     * @brief Gets human-readable name for this analyzer
-     * @return String identifier for the analyzer
-     */
-    [[nodiscard]] std::string get_name() const override
-    {
-        return get_analyzer_name();
-    }
-
     [[nodiscard]] OperationType get_operation_type() const override
     {
         return OperationType::ANALYZER;
     }
 
-    /**
-     * @brief Type-safe parameter management with analysis-specific defaults
-     */
-    void set_parameter(const std::string& name, std::any value) override
+    [[nodiscard]] ConfigRefs configs() const override
     {
-        if (name == "granularity") {
-            if (auto result = safe_any_cast<AnalysisGranularity>(value)) {
-                m_granularity = *result.value;
-                return;
-            }
-        }
-        set_analysis_parameter(name, std::move(value));
-    }
-
-    [[nodiscard]] std::any get_parameter(const std::string& name) const override
-    {
-        if (name == "granularity") {
-            return std::any(m_granularity);
-        }
-
-        return get_analysis_parameter(name);
-    }
-
-    [[nodiscard]] std::map<std::string, std::any> get_all_parameters() const override
-    {
-        auto params = get_all_analysis_parameters();
-        params["granularity"] = std::any(m_granularity);
-        return params;
-    }
-
-    void set_analysis_granularity(AnalysisGranularity granularity)
-    {
-        m_granularity = granularity;
-    }
-
-    [[nodiscard]] AnalysisGranularity get_analysis_granularity() const
-    {
-        return m_granularity;
+        return this->stored_configs(Supports<AnalyzerConfig> {});
     }
 
     /**
@@ -151,26 +135,6 @@ public:
     bool validate_input(const input_type& input) const override
     {
         return validate_analysis_input(input);
-    }
-
-    /**
-     * @brief Get available analysis methods for this analyzer
-     * @return Vector of method names supported by this analyzer
-     */
-    [[nodiscard]] virtual std::vector<std::string> get_available_methods() const
-    {
-        return { "default" };
-    }
-
-    /**
-     * @brief Check if a specific analysis method is supported
-     * @param method Method name to check
-     * @return True if method is supported
-     */
-    [[nodiscard]] virtual bool supports_method(const std::string& method) const
-    {
-        auto methods = get_available_methods();
-        return std::find(methods.begin(), methods.end(), method) != methods.end();
     }
 
     /**
@@ -229,19 +193,6 @@ public:
         return m_current_analysis.has_value();
     }
 
-    /**
-     * @brief Helper to get typed parameter with default value
-     * @tparam T Parameter type
-     * @param name Parameter name
-     * @param default_value Default value if parameter not found
-     * @return Parameter value or default
-     */
-    template <typename T>
-    T get_parameter_or_default(const std::string& name, const T& default_value) const
-    {
-        return safe_any_cast_or_default<T>(get_analysis_parameter(name), default_value);
-    }
-
 protected:
     /**
      * @brief Core analysis implementation - must be overridden by derived classes
@@ -266,31 +217,6 @@ protected:
     virtual output_type analyze_implementation(const input_type& input) = 0;
 
     /**
-     * @brief Get analyzer-specific name (derived classes override this)
-     * @return Analyzer name string
-     */
-    [[nodiscard]] virtual std::string get_analyzer_name() const { return "UniversalAnalyzer"; }
-
-    /**
-     * @brief Analysis-specific parameter handling (override for custom parameters)
-     */
-    virtual void set_analysis_parameter(const std::string& name, std::any value)
-    {
-        m_parameters[name] = std::move(value);
-    }
-
-    [[nodiscard]] virtual std::any get_analysis_parameter(const std::string& name) const
-    {
-        auto it = m_parameters.find(name);
-        return (it != m_parameters.end()) ? it->second : std::any {};
-    }
-
-    [[nodiscard]] virtual std::map<std::string, std::any> get_all_analysis_parameters() const
-    {
-        return m_parameters;
-    }
-
-    /**
      * @brief Input validation (override for custom validation logic)
      */
     virtual bool validate_analysis_input(const input_type& /*input*/) const
@@ -300,60 +226,13 @@ protected:
     }
 
     /**
-     * @brief Apply granularity-based output formatting
+     * @brief Output formatting by granularity (override for custom formatting)
      * @param raw_output Raw analysis results
-     * @return Formatted output based on granularity setting
+     * @return The output unchanged by default
      */
     virtual output_type apply_granularity_formatting(const output_type& raw_output)
     {
-        switch (m_granularity) {
-        case AnalysisGranularity::RAW_VALUES:
-            return raw_output;
-
-        case AnalysisGranularity::ATTRIBUTED_SEGMENTS:
-            return add_attribution_metadata(raw_output);
-
-        case AnalysisGranularity::ORGANIZED_GROUPS:
-            return organize_into_groups(raw_output);
-
-        case AnalysisGranularity::SUMMARY_STATISTICS:
-            return create_summary_statistics(raw_output);
-
-        default:
-            return raw_output;
-        }
-    }
-
-    /**
-     * @brief Add attribution metadata to results (override for custom attribution)
-     */
-    virtual output_type add_attribution_metadata(const output_type& raw_output)
-    {
-        output_type attributed = raw_output;
-        attributed.metadata["analysis_type"] = static_cast<int>(get_analysis_type());
-        attributed.metadata["analyzer_name"] = get_analyzer_name();
-        attributed.metadata["granularity"] = static_cast<int>(m_granularity);
-        return attributed;
-    }
-
-    /**
-     * @brief Organize results into hierarchical groups (override for custom grouping)
-     */
-    virtual output_type organize_into_groups(const output_type& raw_output)
-    {
-        // Default implementation: just add grouping metadata
-        return add_attribution_metadata(raw_output);
-    }
-
-    /**
-     * @brief Create summary statistics from results (override for custom summaries)
-     */
-    virtual output_type create_summary_statistics(const output_type& raw_output)
-    {
-        // Default implementation: add summary metadata
-        auto summary = add_attribution_metadata(raw_output);
-        summary.metadata["is_summary"] = true;
-        return summary;
+        return raw_output;
     }
 
     mutable std::any m_current_analysis;
@@ -365,38 +244,34 @@ protected:
     }
 
     output_type m_current_output;
-
-private:
-    AnalysisGranularity m_granularity = AnalysisGranularity::RAW_VALUES;
-    std::map<std::string, std::any> m_parameters;
 };
 
 /// Analyzer that takes DataVariant and produces DataVariant
 template <ComputeData OutputType = std::vector<Kakshya::DataVariant>>
-using DataAnalyzer = UniversalAnalyzer<std::vector<Kakshya::DataVariant>, OutputType>;
+using DataAnalyzer = Analyzer<std::vector<Kakshya::DataVariant>, OutputType>;
 
 /// Analyzer for signal container processing
 template <ComputeData OutputType = std::shared_ptr<Kakshya::SignalSourceContainer>>
-using ContainerAnalyzer = UniversalAnalyzer<std::shared_ptr<Kakshya::SignalSourceContainer>, OutputType>;
+using ContainerAnalyzer = Analyzer<std::shared_ptr<Kakshya::SignalSourceContainer>, OutputType>;
 
 /// Analyzer for region-based analysis
 template <ComputeData OutputType = Kakshya::Region>
-using RegionAnalyzer = UniversalAnalyzer<Kakshya::Region, OutputType>;
+using RegionAnalyzer = Analyzer<Kakshya::Region, OutputType>;
 
 /// Analyzer for region group processing
 template <ComputeData OutputType = Kakshya::RegionGroup>
-using RegionGroupAnalyzer = UniversalAnalyzer<Kakshya::RegionGroup, OutputType>;
+using RegionGroupAnalyzer = Analyzer<Kakshya::RegionGroup, OutputType>;
 
 /// Analyzer for segment processing
 template <ComputeData OutputType = std::vector<Kakshya::RegionSegment>>
-using SegmentAnalyzer = UniversalAnalyzer<std::vector<Kakshya::RegionSegment>, OutputType>;
+using SegmentAnalyzer = Analyzer<std::vector<Kakshya::RegionSegment>, OutputType>;
 
 /// Analyzer that produces Eigen matrices
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>>
-using MatrixAnalyzer = UniversalAnalyzer<InputType, Eigen::MatrixXd>;
+using MatrixAnalyzer = Analyzer<InputType, Eigen::MatrixXd>;
 
 /// Analyzer that produces Eigen vectors
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>>
-using VectorAnalyzer = UniversalAnalyzer<InputType, Eigen::VectorXd>;
+using VectorAnalyzer = Analyzer<InputType, Eigen::VectorXd>;
 
 } // namespace MayaFlux::Yantra

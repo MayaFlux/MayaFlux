@@ -3,7 +3,6 @@
 #include "MayaFlux/Kakshya/NDData/Composite.hpp"
 #include "MayaFlux/Kakshya/Source/CompositeContainer.hpp"
 #include "MayaFlux/Kakshya/Utils/DataUtils.hpp"
-#include "MayaFlux/Kakshya/Utils/RegionUtils.hpp"
 
 namespace MayaFlux::Yantra {
 
@@ -85,24 +84,27 @@ infer_from_region(const Kakshya::Region& region, const std::shared_ptr<Kakshya::
         return std::make_pair(std::move(dimensions), Kakshya::DataModality::UNKNOWN);
     }
 
-    auto structure = container->get_structure();
-
     auto [dimensions, modality] = infer_from_container(container);
 
-    if (!region.start_coordinates.empty() && !region.end_coordinates.empty() && region.end_coordinates[1] != container->get_frame_size()) {
-        std::vector<uint64_t> shape;
-        int size = static_cast<int>(region.end_coordinates[0] - region.start_coordinates[0]);
-        shape.push_back(std::abs(size) + 1);
-        shape.push_back(region.end_coordinates[1]);
-
-        if (auto region_modality = region.get_attribute<Kakshya::DataModality>("modality");
-            region_modality.has_value()) {
-
-            dimensions = Kakshya::DataDimension::create_dimensions(region_modality.value(), shape, structure.memory_layout);
-            modality = region_modality.value();
-        } else {
-            dimensions = Kakshya::DataDimension::create_dimensions(modality, shape, structure.memory_layout);
+    if (!region.start_coordinates.empty() && !region.end_coordinates.empty()) {
+        if (region.start_coordinates.size() != region.end_coordinates.size()) {
+            error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::Runtime,
+                std::source_location::current(), "Region start and end coordinates must have equal dimensionality");
         }
+
+        std::vector<uint64_t> shape;
+        shape.reserve(region.start_coordinates.size());
+        for (size_t axis = 0; axis < region.start_coordinates.size(); ++axis) {
+            const auto start = region.start_coordinates[axis];
+            const auto end = region.end_coordinates[axis];
+            shape.push_back(std::max(start, end) - std::min(start, end) + 1);
+        }
+
+        modality = region.modality.value_or(modality);
+        if (modality == Kakshya::DataModality::AUDIO_1D && shape.size() == 2 && shape[1] == 1)
+            shape.pop_back();
+
+        dimensions = Kakshya::DataDimension::create_dimensions(modality, shape, container->get_structure().memory_layout);
     }
 
     return { dimensions, modality };
@@ -138,30 +140,13 @@ infer_from_region_group(const Kakshya::RegionGroup& group, const std::shared_ptr
         return { { { Kakshya::DataDimension::time(0) } }, Kakshya::DataModality::UNKNOWN };
     }
 
-    auto structure = container->get_structure();
-    auto bounds_info = Kakshya::extract_group_bounds_info(group);
+    auto bounds = group.get_bounding_region();
+    const auto first = group.regions.front().modality;
+    const bool uniform = std::ranges::all_of(group.regions,
+        [&first](const Kakshya::Region& region) { return region.modality == first; });
+    bounds.modality = (uniform && first) ? *first : container->get_structure().modality;
 
-    if (bounds_info.contains("bounding_min") && bounds_info.contains("bounding_max")) {
-        auto min_coords = safe_any_cast_or_throw<std::vector<uint64_t>>(bounds_info["bounding_min"]);
-        auto max_coords = safe_any_cast_or_throw<std::vector<uint64_t>>(bounds_info["bounding_max"]);
-
-        std::vector<uint64_t> shape;
-        int size = static_cast<int>(max_coords[0] - min_coords[0]);
-        shape.push_back(std::abs(size) + 1);
-        shape.push_back(max_coords[1]);
-
-        Kakshya::DataModality modality = structure.modality;
-        if (group.attributes.contains("modality")) {
-            auto modality_result = safe_any_cast<Kakshya::DataModality>(group.attributes.at("modality"));
-            if (modality_result)
-                modality = *modality_result.value;
-        }
-
-        auto dimensions = Kakshya::DataDimension::create_dimensions(modality, shape, structure.memory_layout);
-        return { dimensions, modality };
-    }
-
-    return infer_from_region(group.regions[0], container);
+    return infer_from_region(bounds, container);
 }
 
 }
