@@ -22,12 +22,18 @@ namespace detail {
 }
 
 /**
- * @concept FunctionalOperationOn
- * @brief OpClass derives from a FunctionalOperation whose input is DataType.
+ * @concept AnnotatingOn
+ * @brief OpClass annotates a Datum of DataType instead of replacing it.
+ *
+ * True for a FunctionalOperation child, and for any operation whose input is
+ * Datum<DataType> and that declares `static constexpr bool annotates = true`.
+ * A chain keeps its data and type across such a step and merges the step's
+ * facets and metadata.
  */
 template <typename OpClass, typename DataType>
-concept FunctionalOperationOn = decltype(detail::functional_operation_base(std::declval<OpClass*>()))::value
-    && std::same_as<typename OpClass::input_type, Datum<DataType>>;
+concept AnnotatingOn = std::same_as<typename OpClass::input_type, Datum<DataType>>
+    && (decltype(detail::functional_operation_base(std::declval<OpClass*>()))::value
+        || requires { requires OpClass::annotates; });
 
 /**
  * @class FluentExecutor
@@ -150,7 +156,7 @@ public:
      * @return New FluentExecutor carrying the result Datum
      */
     template <typename OpClass, ComputeData OutputType = DataType>
-        requires(!FunctionalOperationOn<OpClass, DataType>)
+        requires(!AnnotatingOn<OpClass, DataType>)
     FluentExecutor<Executor, OutputType> then()
     {
         if (!m_successful) {
@@ -198,7 +204,7 @@ public:
      * @return New FluentExecutor carrying the result Datum
      */
     template <typename OpClass, ComputeData OutputType = DataType>
-        requires(!FunctionalOperationOn<OpClass, DataType>)
+        requires(!AnnotatingOn<OpClass, DataType>)
     FluentExecutor<Executor, OutputType> then(const std::string& name)
     {
         if (!m_successful) {
@@ -242,7 +248,7 @@ public:
      * is stored in the metadata under the operation's type name.
      */
     template <typename OpClass>
-        requires FunctionalOperationOn<OpClass, DataType>
+        requires AnnotatingOn<OpClass, DataType>
     FluentExecutor<Executor, DataType> then()
     {
         using OutputType = typename detail::datum_data<typename OpClass::output_type>::type;
@@ -289,7 +295,7 @@ public:
      * is stored in the metadata under @p name.
      */
     template <typename OpClass>
-        requires FunctionalOperationOn<OpClass, DataType>
+        requires AnnotatingOn<OpClass, DataType>
     FluentExecutor<Executor, DataType> then(const std::string& name)
     {
         using OutputType = typename detail::datum_data<typename OpClass::output_type>::type;

@@ -62,13 +62,9 @@ namespace {
 
 } // namespace
 
-VisionAnalyzer::VisionAnalyzer(
-    Kinesis::Vision::VisionQuery query,
-    Kinesis::Vision::VisionAnalysisContext context)
-    : Base([this](const input_type& input) { return run_operation(input); })
-    , m_query(query)
-    , m_context(context)
+VisionAnalyzer::VisionAnalyzer(VisionAnalyzerConfig config)
 {
+    set_config(std::move(config));
 }
 
 void VisionAnalyzer::reset()
@@ -453,7 +449,7 @@ std::optional<Kinesis::Vision::VisionAnalysis> VisionAnalyzer::advance(
         if (!m_frame)
             return std::nullopt;
 
-        m_run.resolved = Kinesis::Vision::resolve(m_query);
+        m_run.resolved = Kinesis::Vision::resolve(config<VisionAnalyzerConfig>().effective_query());
         for (auto& entry : m_run.resolved) {
             for (auto& step : entry.sequence.steps) {
                 if (step.op == Kinesis::Vision::VisionOp::TrackKeypoints
@@ -502,7 +498,7 @@ std::shared_ptr<Core::VKImage> VisionAnalyzer::hold_frame(const std::shared_ptr<
 Kinesis::Vision::VisionAnalysis VisionAnalyzer::analyze_resolved(
     const std::shared_ptr<Core::VKImage>& image)
 {
-    const auto resolved = Kinesis::Vision::resolve(m_query);
+    const auto resolved = Kinesis::Vision::resolve(config<VisionAnalyzerConfig>().effective_query());
 
     std::vector<Kinesis::Vision::VisionResult> results;
     results.reserve(resolved.size());
@@ -568,8 +564,10 @@ Kinesis::Vision::VisionAnalysis VisionAnalyzer::assemble(
         }
     }
 
-    if (raw_tracks && m_context.track_objects) {
-        const auto& ctx = *m_context.track_objects;
+    const auto& filtering = config<VisionAnalyzerConfig>().context;
+
+    if (raw_tracks && filtering.track_objects) {
+        const auto& ctx = *filtering.track_objects;
         if (ctx.subject_track_id) {
             const auto id = *ctx.subject_track_id;
             std::erase_if(*raw_tracks, [&](const auto& t) { return t.id != id; });
@@ -582,8 +580,8 @@ Kinesis::Vision::VisionAnalysis VisionAnalyzer::assemble(
     if (raw_tracks)
         analysis.track_objects = reduce_tracks(*raw_tracks, w, h);
 
-    if (raw_keypoints && m_context.detect_features_bounds) {
-        const auto& bounds = *m_context.detect_features_bounds;
+    if (raw_keypoints && filtering.detect_features_bounds) {
+        const auto& bounds = *filtering.detect_features_bounds;
         std::erase_if(*raw_keypoints, [&](const auto& k) { return !inside(bounds, k.position); });
     }
 
@@ -596,7 +594,7 @@ Kinesis::Vision::VisionAnalysis VisionAnalyzer::assemble(
     return analysis;
 }
 
-VisionAnalyzer::output_type VisionAnalyzer::run_operation(const input_type& input)
+VisionAnalyzer::output_type VisionAnalyzer::analyze_implementation(const input_type& input)
 {
     output_type output;
     output.metadata = input.metadata;
@@ -612,7 +610,7 @@ VisionAnalyzer::output_type VisionAnalyzer::run_operation(const input_type& inpu
         return output;
     }
 
-    output.facets.set(analyze_vision(input.data, m_frame_index));
+    output.facets.set(analyze_vision(input.data, config<VisionAnalyzerConfig>().frame_index));
     return output;
 }
 

@@ -2,7 +2,9 @@
 
 #include "MayaFlux/Yantra/Analyzers/EnergyAnalyzer.hpp"
 #include "MayaFlux/Yantra/Analyzers/StatisticalAnalyzer.hpp"
+#include "MayaFlux/Yantra/Analyzers/VisionAnalyzer.hpp"
 #include "MayaFlux/Yantra/Extractors/FeatureExtractor.hpp"
+#include "MayaFlux/Yantra/Extractors/VisionExtractor.hpp"
 #include "MayaFlux/Yantra/Sorters/StandardSorter.hpp"
 #include "MayaFlux/Yantra/Transformers/ConvolutionTransformer.hpp"
 #include "MayaFlux/Yantra/Transformers/MathematicalTransformer.hpp"
@@ -21,6 +23,8 @@ OperationRegistry make_default_registry()
         .add<ContainerEnergyAnalyzer>()
         .add<StandardFeatureExtractor>()
         .add<ContainerFeatureExtractor>()
+        .add<VisionAnalyzer>()
+        .add<VisionExtractor>()
         .add<StandardDataSorter>()
         .add<StandardMatrixSorter>()
         .add<StandardVectorSorterEigen>()

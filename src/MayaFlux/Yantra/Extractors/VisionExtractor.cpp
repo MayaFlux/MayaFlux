@@ -201,10 +201,9 @@ namespace {
 
 } // namespace
 
-VisionExtractor::VisionExtractor(VisionExtractMode mode)
-    : Base([this](const input_type& input) { return run_operation(input); })
-    , m_mode(mode)
+VisionExtractor::VisionExtractor(VisionExtractorConfig config)
 {
+    set_config(std::move(config));
 }
 
 TextureExecutionContext& VisionExtractor::image_context()
@@ -228,17 +227,17 @@ std::optional<size_t> VisionExtractor::focus_box_index(const Kinesis::Vision::Vi
 
     const auto& elements = *analysis.find_elements;
 
-    if (m_focus)
-        return select_element(analysis, *m_focus);
+    if (settings().focus)
+        return select_element(analysis, *settings().focus);
 
-    if (m_element_index < elements.contours.size()) {
-        const auto label = elements.contours[m_element_index].label_id;
+    if (settings().element_index < elements.contours.size()) {
+        const auto label = elements.contours[settings().element_index].label_id;
         if (label != 0 && label <= elements.boxes.size())
             return static_cast<size_t>(label - 1U);
     }
 
-    if (m_element_index < elements.boxes.size())
-        return m_element_index;
+    if (settings().element_index < elements.boxes.size())
+        return settings().element_index;
 
     return std::nullopt;
 }
@@ -263,18 +262,18 @@ std::optional<uint32_t> VisionExtractor::label_for_analysis(
 
     const auto& elements = *analysis.find_elements;
 
-    if (m_focus) {
-        const auto index = select_element(analysis, *m_focus);
+    if (settings().focus) {
+        const auto index = select_element(analysis, *settings().focus);
         if (!index)
             return std::nullopt;
         const auto label = elements.boxes[*index].label_id;
         return label != 0 ? label : static_cast<uint32_t>(*index + 1U);
     }
 
-    if (m_element_index >= elements.contours.size())
+    if (settings().element_index >= elements.contours.size())
         return std::nullopt;
 
-    const auto label = elements.contours[m_element_index].label_id;
+    const auto label = elements.contours[settings().element_index].label_id;
     if (label == 0)
         return std::nullopt;
     return label;
@@ -640,7 +639,7 @@ std::shared_ptr<Core::VKImage> VisionExtractor::edges(
     use_shader(ctx, "edge_select.comp.spv", k_wg_image, sizeof(EdgePC));
     ctx.stage_image(source);
     ctx.stage_image_at(2, analysis.detect_edges, ElementType::IMAGE_SAMPLED, default_sampler());
-    ctx.set_push_constants(EdgePC { .threshold = m_edge_threshold, .out_w = source_w, .out_h = source_h });
+    ctx.set_push_constants(EdgePC { .threshold = settings().edge_threshold, .out_w = source_w, .out_h = source_h });
     return dispatch_image(ctx, source_w, source_h);
 }
 
@@ -651,7 +650,7 @@ std::shared_ptr<Core::VKImage> VisionExtractor::motion_mask(
 {
     if (!analysis.estimate_motion)
         return nullptr;
-    if (analysis.motion_activity && *analysis.motion_activity < m_min_activity)
+    if (analysis.motion_activity && *analysis.motion_activity < settings().min_activity)
         return nullptr;
 
     auto& ctx = image_context();
@@ -659,7 +658,7 @@ std::shared_ptr<Core::VKImage> VisionExtractor::motion_mask(
     ctx.stage_image(source);
     ctx.stage_image_at(2, analysis.estimate_motion, ElementType::IMAGE_SAMPLED, default_sampler());
     ctx.set_push_constants(MotionPC {
-        .min_speed = m_min_speed, .min_confidence = m_min_confidence,
+        .min_speed = settings().min_speed, .min_confidence = settings().min_confidence,
         .out_w = source_w, .out_h = source_h });
     return dispatch_image(ctx, source_w, source_h);
 }
@@ -770,7 +769,7 @@ std::shared_ptr<Core::VKImage> VisionExtractor::resolve_image(
     return m_upload_image;
 }
 
-VisionExtractor::output_type VisionExtractor::run_operation(const input_type& input)
+VisionExtractor::output_type VisionExtractor::extract_implementation(const input_type& input)
 {
     output_type output;
     output.metadata = input.metadata;
@@ -799,35 +798,36 @@ VisionExtractor::output_type VisionExtractor::run_operation(const input_type& in
     const uint32_t h = image->get_height();
 
     VisionExtraction extraction;
-    extraction.mode = m_mode;
+    const VisionExtractMode mode = settings().method;
+    extraction.mode = mode;
 
-    switch (m_mode) {
+    switch (mode) {
     case VisionExtractMode::Crop:
-        extraction.image = crop(image, *analysis, m_out_w, m_out_h);
+        extraction.image = crop(image, *analysis, settings().output_width, settings().output_height);
         break;
     case VisionExtractMode::Sample:
         extraction.sample = sample(image, *analysis, w, h);
         break;
     case VisionExtractMode::Patches:
-        extraction.image = patches(image, *analysis, m_patch_w, m_patch_h, w, h);
+        extraction.image = patches(image, *analysis, settings().patch_width, settings().patch_height, w, h);
         break;
     case VisionExtractMode::Crops:
-        extraction.image = crops(image, *analysis, m_tile_w, m_tile_h);
+        extraction.image = crops(image, *analysis, settings().tile_width, settings().tile_height);
         break;
     case VisionExtractMode::SampleRegions:
         extraction.samples = sample_regions(image, *analysis, w, h);
         break;
     case VisionExtractMode::SamplePoints:
-        extraction.points = sample_points(image, *analysis, m_sample_radius, w, h);
+        extraction.points = sample_points(image, *analysis, settings().sample_radius, w, h);
         break;
     case VisionExtractMode::Silhouettes:
-        extraction.image = silhouettes(image, *analysis, m_tile_w, m_tile_h);
+        extraction.image = silhouettes(image, *analysis, settings().tile_width, settings().tile_height);
         break;
     case VisionExtractMode::Equalize:
         extraction.image = equalize(image, *analysis, w, h);
         break;
     case VisionExtractMode::Expose:
-        extraction.image = expose(image, *analysis, m_exposure_target, w, h);
+        extraction.image = expose(image, *analysis, settings().exposure_target, w, h);
         break;
     case VisionExtractMode::Edges:
         extraction.image = edges(image, *analysis, w, h);
@@ -839,7 +839,7 @@ VisionExtractor::output_type VisionExtractor::run_operation(const input_type& in
         extraction.image = annotate(image, *analysis, w, h);
         break;
     case VisionExtractMode::SelectElement:
-        extraction.element = select_element(*analysis, m_focus.value_or(ElementFocus {}));
+        extraction.element = select_element(*analysis, settings().focus.value_or(ElementFocus {}));
         break;
     }
 

@@ -5,15 +5,13 @@
 #include "MayaFlux/Yantra/Executors/ShaderExecutionContext.hpp"
 #include "MayaFlux/Yantra/Executors/TextureExecutionContext.hpp"
 #include "MayaFlux/Yantra/Executors/VisionGpuDispatch.hpp"
-#include "MayaFlux/Yantra/FunctionalOperation.hpp"
+#include "Analyzer.hpp"
 
 /**
  * @file VisionAnalyzer.hpp
- * @brief FunctionalOperation<shared_ptr<SignalSourceContainer>,
- *        vector<DataVariant>> whose real API matches EnergyAnalyzer/
- *        StatisticalAnalyzer's own convention: query/context are
- *        constructor arguments and setters, not call arguments, and
- *        analyze_vision(source) takes only the data, the same shape as
+ * @brief Analyzer<shared_ptr<SignalSourceContainer>, vector<DataVariant>>
+ *        whose query and context are its config, not call arguments, and
+ *        whose analyze_vision(source) takes only the data, the same shape as
  *        analyze_energy(data)/analyze_statistics(data).
  *
  * width/height are never passed in: VKImage and every container Vision
@@ -32,6 +30,46 @@ class SignalSourceContainer;
 namespace MayaFlux::Yantra {
 
 /**
+ * @struct VisionAnalyzerConfig
+ * @brief Settings of VisionAnalyzer, stored whole in the operation's facets.
+ *
+ * method is the set of VisionIntents to satisfy and is what a grammar selects
+ * by. It overrides query.intents; the rest of query holds each intent's
+ * parameters. Intents without a backing VisionOp (Classify, EstimateDepth,
+ * DetectAnomaly, Register) resolve to nothing and add nothing to the analysis.
+ */
+struct VisionAnalyzerConfig : AnalyzerConfig {
+    static constexpr auto describe_facets()
+    {
+        return std::tuple_cat(
+            AnalyzerConfig::describe_facets(),
+            std::tuple {
+                FacetMember<&VisionAnalyzerConfig::method> {},
+                FacetMember<&VisionAnalyzerConfig::query> {},
+                FacetMember<&VisionAnalyzerConfig::context> {},
+                FacetMember<&VisionAnalyzerConfig::frame_index> {},
+            });
+    }
+
+    /** Intents to satisfy. */
+    Kinesis::Vision::VisionIntent method { Kinesis::Vision::VisionIntent::NONE };
+    /** Per-intent parameters. Its own intents field is ignored in favour of method. */
+    Kinesis::Vision::VisionQuery query;
+    /** Filtering applied to the subject tracks and keypoints. */
+    Kinesis::Vision::VisionAnalysisContext context;
+    /** Layer of a texture container the operation path analyzes. */
+    size_t frame_index { 0 };
+
+    /** @brief query with its intents taken from method. */
+    [[nodiscard]] Kinesis::Vision::VisionQuery effective_query() const
+    {
+        auto resolved = query;
+        resolved.intents = method;
+        return resolved;
+    }
+};
+
+/**
  * @class VisionAnalyzer
  * @brief Resolves its configured VisionQuery, runs every resolved
  *        VisionSequence against a persistent VisionGpuExecutor, then runs
@@ -43,31 +81,35 @@ namespace MayaFlux::Yantra {
  * on the executor's contexts and must survive between calls.
  */
 class MAYAFLUX_API VisionAnalyzer
-    : public FunctionalOperation<std::shared_ptr<Kakshya::SignalSourceContainer>, std::vector<Kakshya::DataVariant>> {
+    : public Analyzer<std::shared_ptr<Kakshya::SignalSourceContainer>, std::vector<Kakshya::DataVariant>> {
 public:
-    using Base = FunctionalOperation<std::shared_ptr<Kakshya::SignalSourceContainer>, std::vector<Kakshya::DataVariant>>;
+    using supports = Supports<VisionAnalyzerConfig>;
+
+    /** @brief Runs on the GPU through Vulkan compute. */
+    static constexpr Target target = targets::vulkan;
+
+    /** @brief A chain keeps its container and merges this step's facets, as for a FunctionalOperation. */
+    static constexpr bool annotates = true;
 
     /**
-     * @brief Construct with the intents to satisfy and the caller-supplied
-     *        filtering context, matching EnergyAnalyzer's
-     *        constructor-configures-the-run convention.
+     * @brief Construct from the settings, as EnergyAnalyzer does.
+     * @param config Intents, their parameters and the filtering context.
      */
-    explicit VisionAnalyzer(
-        Kinesis::Vision::VisionQuery query = {},
-        Kinesis::Vision::VisionAnalysisContext context = {});
+    explicit VisionAnalyzer(VisionAnalyzerConfig config = {});
 
     VisionAnalyzer(const VisionAnalyzer&) = delete;
     VisionAnalyzer& operator=(const VisionAnalyzer&) = delete;
 
-    void set_query(const Kinesis::Vision::VisionQuery& query) { m_query = query; }
-    [[nodiscard]] const Kinesis::Vision::VisionQuery& get_query() const { return m_query; }
+    /** @brief The stored settings, or defaults when none were set. */
+    [[nodiscard]] ConfigRefs configs() const override
+    {
+        return stored_configs(supports {});
+    }
 
-    void set_context(const Kinesis::Vision::VisionAnalysisContext& context) { m_context = context; }
-    [[nodiscard]] const Kinesis::Vision::VisionAnalysisContext& get_context() const { return m_context; }
-
-    /** @brief Layer of a texture container the operation path analyzes. */
-    void set_frame_index(size_t index) { m_frame_index = index; }
-    [[nodiscard]] size_t get_frame_index() const { return m_frame_index; }
+    [[nodiscard]] AnalysisType get_analysis_type() const override
+    {
+        return AnalysisType::SPATIAL;
+    }
 
     /**
      * @brief Real entry point: resolve the configured query against
@@ -164,14 +206,12 @@ private:
     friend class Vision::VisionMatrix;
 
     /**
-     * @brief ComputeOperation adapter: uses input.data as the source
-     *        container, pulls index out of Datum metadata (defaulting to
-     *        0), calls analyze_vision(). See analyze_vision() for the real
-     *        API; query/context come from this instance's own
-     *        configured state, not from the Datum, matching every other
-     *        Analyzer-family operation_function.
+     * @brief Uses input.data as the source container, or a supplied frame
+     *        facet, and calls analyze_vision(). The query and context come
+     *        from this instance's config, not from the Datum, matching every
+     *        other Analyzer-family operation.
      */
-    output_type run_operation(const input_type& input);
+    output_type analyze_implementation(const input_type& input) override;
 
     /**
      * @brief Resolve source/index to a GPU image, the same way
@@ -281,10 +321,6 @@ private:
 
     /** @brief Dispatch histogram_reduce.comp over an already-computed histogram. */
     [[nodiscard]] float compute_mean_brightness(const std::array<uint32_t, 256>& histogram);
-
-    Kinesis::Vision::VisionQuery m_query;
-    Kinesis::Vision::VisionAnalysisContext m_context;
-    size_t m_frame_index { 0 };
 
     std::vector<std::unique_ptr<VisionGpuExecutor>> m_executors;
     size_t m_label_lane { 0 };

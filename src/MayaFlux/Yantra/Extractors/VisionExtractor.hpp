@@ -4,7 +4,7 @@
 #include "MayaFlux/Kinesis/Vision/VisionInsight.hpp"
 #include "MayaFlux/Yantra/Executors/TextureExecutionContext.hpp"
 #include "MayaFlux/Yantra/Executors/VisionGpuDispatch.hpp"
-#include "MayaFlux/Yantra/FunctionalOperation.hpp"
+#include "Extractor.hpp"
 
 /**
  * @file VisionExtractor.hpp
@@ -14,11 +14,11 @@
  *        extracts nothing. All pixel work runs on the GPU, the host only
  *        packs the analysis into buffers and dispatches.
  *
- * FunctionalOperation<shared_ptr<SignalSourceContainer>, vector<DataVariant>>,
- * like VisionAnalyzer. run_operation reads the analysis from Datum metadata
- * key "vision_analysis" (the key VisionAnalyzer::run_operation writes) and
- * runs the method selected by VisionExtractMode, so a VisionAnalyzer ->
- * VisionExtractor chain needs no adapter. mask() alone stays outside that
+ * Extractor<shared_ptr<SignalSourceContainer>, vector<DataVariant>>,
+ * like VisionAnalyzer is an Analyzer. extract_implementation reads the
+ * VisionAnalysis facet VisionAnalyzer writes and runs the method selected by
+ * VisionExtractMode, so a VisionAnalyzer -> VisionExtractor chain needs no
+ * adapter. mask() alone stays outside that
  * path: it needs the VisionGpuExecutor that owns the label buffer.
  */
 
@@ -30,7 +30,7 @@ namespace MayaFlux::Yantra {
 
 /**
  * @enum VisionExtractMode
- * @brief Which method run_operation dispatches to.
+ * @brief Which method the operation path dispatches to.
  */
 enum class VisionExtractMode : uint8_t {
     Crop,
@@ -105,6 +105,64 @@ struct VisionExtraction {
 };
 
 /**
+ * @struct VisionExtractorConfig
+ * @brief Settings of VisionExtractor, stored whole in the operation's facets.
+ *
+ * method selects what the operation extracts and is what a grammar selects by.
+ * The rest are the thresholds and sizes the operation path uses; the direct
+ * methods take only the data and the dimensions of what they read or write.
+ */
+struct VisionExtractorConfig : ExtractorConfig {
+    static constexpr auto describe_facets()
+    {
+        return std::tuple_cat(
+            ExtractorConfig::describe_facets(),
+            std::tuple {
+                FacetMember<&VisionExtractorConfig::method> {},
+                FacetMember<&VisionExtractorConfig::element_index> {},
+                FacetMember<&VisionExtractorConfig::focus> {},
+                FacetMember<&VisionExtractorConfig::output_width> {},
+                FacetMember<&VisionExtractorConfig::output_height> {},
+                FacetMember<&VisionExtractorConfig::patch_width> {},
+                FacetMember<&VisionExtractorConfig::patch_height> {},
+                FacetMember<&VisionExtractorConfig::tile_width> {},
+                FacetMember<&VisionExtractorConfig::tile_height> {},
+                FacetMember<&VisionExtractorConfig::sample_radius> {},
+                FacetMember<&VisionExtractorConfig::edge_threshold> {},
+                FacetMember<&VisionExtractorConfig::min_speed> {},
+                FacetMember<&VisionExtractorConfig::min_confidence> {},
+                FacetMember<&VisionExtractorConfig::min_activity> {},
+                FacetMember<&VisionExtractorConfig::exposure_target> {},
+            });
+    }
+
+    /** Which method the operation path dispatches to. */
+    Reflect::EnumByte<VisionExtractMode> method { VisionExtractMode::Crop };
+    /** Element the single-element methods use when no focus is set: index into contours, else boxes. */
+    size_t element_index { 0 };
+    /** Rank elements by shape instead of using a fixed index; empty keeps the index. */
+    std::optional<ElementFocus> focus;
+    uint32_t output_width { 0 };
+    uint32_t output_height { 0 };
+    uint32_t patch_width { 0 };
+    uint32_t patch_height { 0 };
+    uint32_t tile_width { 0 };
+    uint32_t tile_height { 0 };
+    /** Window radius sample_points() averages over. */
+    uint32_t sample_radius { 1 };
+    /** Edge value edges() keeps a pixel at. */
+    float edge_threshold { 0.5F };
+    /** motion_mask() limits: minimum flow speed in pixels of the flow image. */
+    float min_speed { 0.5F };
+    /** motion_mask() limit: minimum solver confidence. */
+    float min_confidence { 0.1F };
+    /** motion_mask() limit: minimum motion_activity below which nothing is dispatched. */
+    float min_activity { 0.0F };
+    /** Mean brightness expose() scales the frame to. */
+    float exposure_target { 0.5F };
+};
+
+/**
  * @class VisionExtractor
  * @brief Extraction from each VisionAnalysis field.
  *
@@ -116,60 +174,40 @@ struct VisionExtraction {
  * everything found onto the frame.
  *
  * Which find_elements entry the single-element methods use comes from
- * set_element_focus() when set (GPU-ranked by shape), otherwise from
- * set_element_index() into contours (sorted by area when max_contours was
+ * the config focus when set (GPU-ranked by shape), otherwise from
+ * element_index into contours (sorted by area when max_contours was
  * set) or, with no contours, into boxes.
  *
- * Thresholds and sizes used by run_operation are set through setters, the
- * same convention as the other operations; the direct methods take only
- * the data and the dimensions of what they read or write.
+ * Thresholds and sizes used by the operation path are in VisionExtractorConfig;
+ * the direct methods take only the data and the dimensions of what they read or write.
  *
  * Image-producing methods share one output slot, so a returned image stays
  * valid only until the next call that produces an image of the same size.
  * Hold on to a result by using it (display, copy) before extracting again.
  */
 class MAYAFLUX_API VisionExtractor
-    : public FunctionalOperation<std::shared_ptr<Kakshya::SignalSourceContainer>, std::vector<Kakshya::DataVariant>> {
+    : public Extractor<std::shared_ptr<Kakshya::SignalSourceContainer>, std::vector<Kakshya::DataVariant>> {
 public:
-    using Base = FunctionalOperation<std::shared_ptr<Kakshya::SignalSourceContainer>, std::vector<Kakshya::DataVariant>>;
+    using supports = Supports<VisionExtractorConfig>;
 
-    explicit VisionExtractor(VisionExtractMode mode = VisionExtractMode::Crop);
+    /** @brief Runs on the GPU through Vulkan compute. */
+    static constexpr Target target = targets::vulkan;
 
-    void set_mode(VisionExtractMode mode) { m_mode = mode; }
-    [[nodiscard]] VisionExtractMode get_mode() const { return m_mode; }
+    /** @brief A chain keeps its container and merges this step's facets, as for a FunctionalOperation. */
+    static constexpr bool annotates = true;
 
-    void set_element_index(size_t index) { m_element_index = index; }
-    [[nodiscard]] size_t get_element_index() const { return m_element_index; }
+    explicit VisionExtractor(VisionExtractorConfig config = {});
 
-    /** @brief Rank elements by shape instead of using a fixed index; empty restores the index. */
-    void set_element_focus(std::optional<ElementFocus> focus) { m_focus = focus; }
-    [[nodiscard]] const std::optional<ElementFocus>& get_element_focus() const { return m_focus; }
-
-    void set_output_size(uint32_t w, uint32_t h) { m_out_w = w; m_out_h = h; }
-    void set_patch_size(uint32_t w, uint32_t h) { m_patch_w = w; m_patch_h = h; }
-    void set_tile_size(uint32_t w, uint32_t h) { m_tile_w = w; m_tile_h = h; }
-
-    /** @brief Window radius sample_points() averages over. */
-    void set_sample_radius(uint32_t radius) { m_sample_radius = radius; }
-
-    /** @brief Edge value edges() keeps a pixel at. */
-    void set_edge_threshold(float threshold) { m_edge_threshold = threshold; }
-
-    /**
-     * @brief motion_mask() limits: minimum flow speed in pixels of the flow
-     *        image, minimum solver confidence, and a minimum
-     *        VisionAnalysis::motion_activity below which nothing is
-     *        dispatched.
-     */
-    void set_motion_limits(float min_speed, float min_confidence, float min_activity)
+    /** @brief The stored settings, or defaults when none were set. */
+    [[nodiscard]] ConfigRefs configs() const override
     {
-        m_min_speed = min_speed;
-        m_min_confidence = min_confidence;
-        m_min_activity = min_activity;
+        return stored_configs(supports {});
     }
 
-    /** @brief Mean brightness expose() scales the frame to. */
-    void set_exposure_target(float target) { m_exposure_target = target; }
+    [[nodiscard]] ExtractionType get_extraction_type() const override
+    {
+        return ExtractionType::FEATURE_GUIDED;
+    }
 
     /** @brief Crop of source at the focused element, or track/keypoint bounds. Null with nothing to crop. */
     [[nodiscard]] std::shared_ptr<Core::VKImage> crop(
@@ -302,7 +340,9 @@ public:
         uint32_t source_w, uint32_t source_h);
 
 private:
-    output_type run_operation(const input_type& input);
+    output_type extract_implementation(const input_type& input) override;
+
+    [[nodiscard]] const VisionExtractorConfig& settings() const { return config<VisionExtractorConfig>(); }
 
     [[nodiscard]] std::shared_ptr<Core::VKImage> resolve_image(
         const std::shared_ptr<Kakshya::SignalSourceContainer>& source,
@@ -331,22 +371,6 @@ private:
         const Kinesis::Vision::MeasureAppearanceAnalysis& appearance,
         uint32_t mode, float gain,
         uint32_t source_w, uint32_t source_h);
-
-    VisionExtractMode m_mode;
-    size_t m_element_index { 0 };
-    std::optional<ElementFocus> m_focus;
-    uint32_t m_out_w { 0 };
-    uint32_t m_out_h { 0 };
-    uint32_t m_patch_w { 0 };
-    uint32_t m_patch_h { 0 };
-    uint32_t m_tile_w { 0 };
-    uint32_t m_tile_h { 0 };
-    uint32_t m_sample_radius { 1 };
-    float m_edge_threshold { 0.5F };
-    float m_min_speed { 0.5F };
-    float m_min_confidence { 0.1F };
-    float m_min_activity { 0.0F };
-    float m_exposure_target { 0.5F };
 
     std::shared_ptr<Core::VKImage> m_upload_image;
     uint32_t m_upload_w { 0 };
