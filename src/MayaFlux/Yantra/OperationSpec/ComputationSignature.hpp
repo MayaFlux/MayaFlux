@@ -2,6 +2,29 @@
 
 namespace MayaFlux::Yantra {
 
+template <typename E>
+    requires std::is_enum_v<E>
+void computation_enum(E);
+
+namespace detail {
+
+    void computation_enum();
+
+    template <typename E>
+    concept LocalComputationEnum = std::is_enum_v<E>
+        && requires(E value) {
+               computation_enum(value);
+           };
+
+    template <typename Left, typename Right>
+    concept ComposableEnums = std::is_enum_v<Left>
+        && std::is_enum_v<Right>
+        && (std::is_scoped_enum_v<Left>
+            || std::is_scoped_enum_v<Right>
+            || (LocalComputationEnum<Left> && LocalComputationEnum<Right>));
+
+}
+
 /** @brief Ordered operation selections, preserving each enum's type and value. */
 class ComputationSignature {
 public:
@@ -81,7 +104,7 @@ private:
 
 /** @brief Compose enum selections in execution order without combining their bits. */
 template <typename Left, typename Right>
-    requires(std::is_enum_v<Left> && std::is_enum_v<Right>)
+    requires detail::ComposableEnums<Left, Right>
 ComputationSignature operator|(Left left, Right right)
 {
     return ComputationSignature(left) | ComputationSignature(right);
