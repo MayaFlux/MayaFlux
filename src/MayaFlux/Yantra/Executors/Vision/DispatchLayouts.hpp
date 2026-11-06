@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Yantra/Executors/DispatchRecording.hpp"
 #include "MayaFlux/Yantra/Executors/VisionGpuDispatch.hpp"
 
 namespace MayaFlux::Yantra::VisionInternal {
@@ -298,6 +299,7 @@ enum class FlowDensePhase : uint8_t {
     BOX_H = 4,
     SOLVE = 5,
     VISUALIZE = 6,
+    HOLD = 7,
 };
 
 struct FlowDensePC {
@@ -320,6 +322,7 @@ struct FlowDensePC {
     float visual_range;
     float visual_min_motion;
     uint32_t last_iteration;
+    uint32_t hold_previous;
 };
 
 struct ConfinePC {

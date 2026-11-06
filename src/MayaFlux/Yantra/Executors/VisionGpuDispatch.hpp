@@ -59,15 +59,28 @@ struct FlowState {
     Kinesis::Vision::PyramidLayout dense_layout;
 
     /**
-     * @brief Most recent flow image and track list produced from a frame that
-     *        differed from the one before it.
+     * @brief Most recent published flow image, and the track list of the most
+     *        recent frame that differed from the one before it.
      *
-     * A repeated camera frame carries no motion, so a run on one republishes
-     * these instead of a field of zeros. Before any result exists, the fresh
-     * result is published as is.
+     * A repeated camera frame carries no motion. For tracks the host
+     * republishes last_tracks. For dense flow the repeat is handled on the
+     * GPU: the HOLD phase of flow_dense copies the other output's flow into
+     * this frame's output, so the published image is always the current
+     * flow_out and already carries the last distinct motion.
      */
     std::shared_ptr<Core::VKImage> last_flow;
     std::vector<Kinesis::Vision::TrackResult> last_tracks;
+
+    /**
+     * @brief Whether this frame's dense step wrote flow_out[curr], and whether
+     *        the other output holds the previous frame's flow.
+     *
+     * prev_flow_valid takes flow_written when the frame ends, and gates the
+     * HOLD phase: without a previous flow there is nothing to carry over.
+     * Both clear on a layout change and in reset().
+     */
+    bool flow_written { false };
+    bool prev_flow_valid { false };
 
     /**
      * @brief Track count of the last distinct frame, independent of whether a
@@ -93,11 +106,26 @@ struct FlowState {
     uint32_t export_slot { 0 };
     bool export_pending { false };
 
+    /**
+     * @brief Motion energy of a non-deferred dense flow step, read by the next
+     *        fresh run instead of waiting for it.
+     *
+     * The next fresh run reads the meta block at its start, once the
+     * submission holding the step has completed, which by then it normally
+     * has; its dense step reports the energy. w and h are the frame size the
+     * energy is normalised by. Dropped when the pyramid layout changes.
+     */
+    struct DensePending {
+        uint32_t w {};
+        uint32_t h {};
+        std::optional<std::array<uint32_t, 4>> meta;
+    };
+    std::optional<DensePending> dense_pending;
+
     uint32_t curr { 0 };
     bool have_prev { false };
     bool curr_ready { false };
     bool buffers_ready { false };
-    Portal::Graphics::FenceID build_fence { Portal::Graphics::INVALID_FENCE };
 };
 
 /**
@@ -113,6 +141,15 @@ struct FlowState {
  * carries no configuration surface.
  */
 struct MAYAFLUX_API VisionGpuContexts {
+    /**
+     * @brief The command buffer every member context records into.
+     *
+     * A run records its ops here and submits once: at a readback the host
+     * needs, at a deferred step, before a Snapshot copy, and at the end of
+     * the run. Declared first so it outlives the contexts that hold it.
+     */
+    std::shared_ptr<DispatchRecording> recording;
+
     TextureExecutionContext pixel; ///< Image pipeline. IMAGE mode. Drives
                                    ///< every op that reads/writes the
                                    ///< working image (Threshold, Sobel,
@@ -196,8 +233,10 @@ struct MAYAFLUX_API VisionGpuContexts {
     /**
      * @brief Outstanding work at a deferred step, and the point to resume.
      *
-     * fence is INVALID_FENCE when nothing is outstanding. While live, run
-     * polls it and does nothing else. The working image, geometry, and
+     * fence is INVALID_FENCE when nothing is outstanding. It is the
+     * recording's own fence for the submission made at the deferred step, so
+     * it is polled and never released here. While live, run polls it and
+     * does nothing else. The working image, geometry, and
      * partial result the resumed sequence needs are already in pass, which
      * is not reset while a suspension is active.
      */
@@ -220,11 +259,6 @@ struct MAYAFLUX_API VisionGpuContexts {
     };
 
     Suspension suspended;
-
-    /// op_ingest's dispatch + trailing-barrier fences. Not awaited by run();
-    /// reaped by reap_ingest_fences on the next fresh run and in reset().
-    Portal::Graphics::FenceID ingest_fence { Portal::Graphics::INVALID_FENCE };
-    Portal::Graphics::FenceID ingest_barrier_fence { Portal::Graphics::INVALID_FENCE };
 
     /**
      * @brief Construct all three contexts in place with the one correct
@@ -282,9 +316,9 @@ public:
     /**
      * @brief Host tracks decoded from result.buffers.tracks, or empty.
      *
-     * For occasional host access, not per-frame use: reads a device-local
-     * buffer through its host mapping. Valid for one more run after the
-     * result was delivered.
+     * For occasional host access, not per-frame use: waits for submitted
+     * work, then reads a device-local buffer through its host mapping. Valid
+     * for one more run after the result was delivered.
      */
     [[nodiscard]] static std::vector<Kinesis::Vision::TrackResult> read_exported_tracks(
         const Kinesis::Vision::VisionResult& result);
@@ -293,8 +327,8 @@ public:
      * @brief Host keypoints decoded from result.buffers.keypoints, or empty.
      *
      * Independent of VisionResult::structured. For occasional host access,
-     * not per-frame use. Valid for one more run after the result was
-     * delivered.
+     * not per-frame use; waits for submitted work first. Valid for one more
+     * run after the result was delivered.
      */
     [[nodiscard]] static std::vector<Kinesis::Vision::Keypoint> read_exported_keypoints(
         const Kinesis::Vision::VisionResult& result);
@@ -304,7 +338,8 @@ public:
      *
      * Always in compacted (unsorted) order; sort the returned list yourself
      * if you need top-K-by-area order. For occasional host access, not
-     * per-frame use. Valid for one more run after the result was delivered.
+     * per-frame use; waits for submitted work first. Valid for one more run
+     * after the result was delivered.
      */
     [[nodiscard]] static std::vector<Kinesis::Vision::Contour> read_exported_contours(
         const Kinesis::Vision::VisionResult& result);
@@ -369,7 +404,10 @@ public:
      * @param w            Frame width in pixels.
      * @param h            Frame height in pixels.
      * @return             New image, transparent everywhere outside the
-     *                     selected label's silhouette.
+     *                     selected label's silhouette. Recorded into
+     *                     contexts.recording and written once it is
+     *                     submitted, by the next run or by
+     *                     contexts.recording->submit().
      */
     [[nodiscard]] std::shared_ptr<Core::VKImage> select_label(
         VisionGpuContexts& contexts,
@@ -381,6 +419,8 @@ public:
      * @brief select_label() using this instance's own lazily-constructed
      *        context set. See the explicit-contexts overload for the
      *        ConnectedComponents-must-have-already-run requirement.
+     *
+     * Submits the work without waiting.
      */
     [[nodiscard]] std::shared_ptr<Core::VKImage> select_label(
         const std::shared_ptr<Core::VKImage>& source,
@@ -390,8 +430,9 @@ public:
     /**
      * @brief Abandon outstanding work and clear the resume point.
      *
-     * Waits on the fence before releasing it, then discards the retained
-     * working image and partial result. Call when the pixel source changes
+     * Waits for everything the contexts' recording submitted, then discards
+     * the retained working image, partial result and any pending dense flow
+     * result. Call when the pixel source changes
      * so the next run starts a fresh sequence. Safe with nothing outstanding.
      */
     void reset();
@@ -556,17 +597,33 @@ private:
      * The first frame after a reset has no previous frame, so it only ends
      * the frame and produces no flow.
      *
+     * After the finest level, the HOLD phase carries the previous flow into
+     * this frame's output when the pyramid build marked the frame as a
+     * repeat, so the flow image is always this run's own output. A deferred
+     * step reads its motion energy when it completes. A non-deferred step
+     * never waits: its energy is reported by the next fresh run
+     * (FlowState::dense_pending), so motion_energy of a run is the energy of
+     * the run before it.
+     *
      * @return True when the step was deferred and the run must suspend.
      */
     bool op_dense_flow(VisionGpuContexts& contexts, const Kinesis::Vision::VisionStep& step);
 
     /**
+     * @brief Read the meta block of the dense flow step left pending by the
+     *        previous run, once its submission has completed.
+     *
+     * Called at the start of a fresh run, before this run records anything
+     * that overwrites the meta. The energy is reported by the run's dense
+     * step.
+     */
+    static void capture_pending_dense(VisionGpuContexts& contexts);
+
+    /**
      * @brief Build the current frame's pyramid atlas from the working image.
      *
-     * Submitted as one un-awaited dependency sequence, one fused dispatch per
-     * level. Its trailing barrier orders any later dispatch that overwrites
-     * the working image after this read. The fence is reaped on the next
-     * fresh run and in reset().
+     * Recorded into the run's command buffer, one fused dispatch per level,
+     * after a recorded reset of the flow meta block.
      *
      * @param src_channel Channel of the working image read as intensity: 0
      *                    for a gray frame, 2 for the value channel of an HSV

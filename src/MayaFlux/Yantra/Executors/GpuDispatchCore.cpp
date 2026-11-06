@@ -288,6 +288,9 @@ GpuChannelResult GpuDispatchCore::dispatch_core_chained(
         dispatch_key(), groups,
         m_gpu_config.push_constant_size, ctx);
 
+    if (m_resources.has_recording())
+        return {};
+
     GpuChannelResult result;
     result.primary = readback_primary(effective);
     readback_aux(result);
@@ -330,6 +333,9 @@ GpuChannelResult GpuDispatchCore::dispatch_core_chained_indirect(
         dispatch_key(), indirect_it->set, indirect_it->binding, groups,
         m_gpu_config.push_constant_size, ctx);
 
+    if (m_resources.has_recording())
+        return {};
+
     GpuChannelResult result;
     result.primary = readback_primary(effective);
     readback_aux(result);
@@ -370,7 +376,8 @@ Portal::Graphics::FenceID GpuDispatchCore::dispatch_core_dependency_async(const 
     return m_resources.dispatch_sequence_async(plan.keys, plan.groups, plan.push_constants, plan.push_writes, plan.indirect);
 }
 
-GpuDispatchCore::DependencyPlan GpuDispatchCore::prepare_dependency(const std::vector<DependencyStage>& stages)
+void GpuDispatchCore::for_each_stage(const std::vector<DependencyStage>& stages,
+    const std::function<void(const std::array<uint32_t, 3>&, const Portal::Graphics::IndirectDispatch&)>& on_stage)
 {
     const GpuComputeConfig original_config = m_gpu_config;
     const auto original_bindings = m_bindings;
@@ -378,19 +385,6 @@ GpuDispatchCore::DependencyPlan GpuDispatchCore::prepare_dependency(const std::v
     const auto original_binding_data = m_binding_data;
     const auto original_passthrough_bytes = m_passthrough_bytes;
     const auto original_push_constants = m_push_constants;
-
-    DependencyPlan plan;
-    auto& keys = plan.keys;
-    auto& groups_per_key = plan.groups;
-    auto& pc_per_key = plan.push_constants;
-    auto& push_writes_per_key = plan.push_writes;
-    auto& indirect_per_key = plan.indirect;
-
-    keys.reserve(stages.size());
-    groups_per_key.reserve(stages.size());
-    pc_per_key.reserve(stages.size());
-    push_writes_per_key.reserve(stages.size());
-    indirect_per_key.reserve(stages.size());
 
     for (const auto& stage : stages) {
         m_gpu_config = stage.config;
@@ -407,7 +401,7 @@ GpuDispatchCore::DependencyPlan GpuDispatchCore::prepare_dependency(const std::v
             error<std::runtime_error>(Journal::Component::Yantra,
                 Journal::Context::BufferProcessing,
                 std::source_location::current(),
-                "GpuDispatchCore: dispatch_core_dependency failed to initialise key '{}'",
+                "GpuDispatchCore: failed to initialise key '{}' for a dependency stage",
                 stage.config.shader_path);
         }
 
@@ -415,17 +409,13 @@ GpuDispatchCore::DependencyPlan GpuDispatchCore::prepare_dependency(const std::v
 
         bind_all_descriptors();
 
-        keys.push_back(dispatch_key());
-        groups_per_key.push_back(stage.explicit_groups ? *stage.explicit_groups : calculate_dispatch_size(largest_binding_data_element_count(), {}));
-        pc_per_key.push_back(m_push_constants);
-        push_writes_per_key.push_back(m_resources.push_writes(dispatch_key()));
-
         Portal::Graphics::IndirectDispatch indirect;
         if (stage.indirect_groups) {
             indirect.buffer = m_resources.shared_buffer_handle(stage.indirect_groups->set, stage.indirect_groups->binding).buffer;
             indirect.offset = stage.indirect_groups->offset_bytes;
         }
-        indirect_per_key.push_back(indirect);
+
+        on_stage(stage.explicit_groups ? *stage.explicit_groups : calculate_dispatch_size(largest_binding_data_element_count(), {}), indirect);
     }
 
     m_gpu_config = original_config;
@@ -435,8 +425,33 @@ GpuDispatchCore::DependencyPlan GpuDispatchCore::prepare_dependency(const std::v
     m_binding_data = original_binding_data;
     m_passthrough_bytes = original_passthrough_bytes;
     m_push_constants = original_push_constants;
+}
+
+GpuDispatchCore::DependencyPlan GpuDispatchCore::prepare_dependency(const std::vector<DependencyStage>& stages)
+{
+    DependencyPlan plan;
+    plan.keys.reserve(stages.size());
+    plan.groups.reserve(stages.size());
+    plan.push_constants.reserve(stages.size());
+    plan.push_writes.reserve(stages.size());
+    plan.indirect.reserve(stages.size());
+
+    for_each_stage(stages, [this, &plan](const std::array<uint32_t, 3>& groups, const Portal::Graphics::IndirectDispatch& indirect) {
+        plan.keys.push_back(dispatch_key());
+        plan.groups.push_back(groups);
+        plan.push_constants.push_back(m_push_constants);
+        plan.push_writes.push_back(m_resources.push_writes(dispatch_key()));
+        plan.indirect.push_back(indirect);
+    });
 
     return plan;
+}
+
+void GpuDispatchCore::record_stages(const std::vector<DependencyStage>& stages)
+{
+    for_each_stage(stages, [this](const std::array<uint32_t, 3>& groups, const Portal::Graphics::IndirectDispatch& indirect) {
+        m_resources.record_stage(dispatch_key(), groups, m_push_constants, indirect);
+    });
 }
 
 //==============================================================================

@@ -9,6 +9,7 @@ using GpuComputeConfig = Portal::Graphics::GpuComputeConfig;
 using GpuBufferBinding = Portal::Graphics::GpuBufferBinding;
 
 struct GpuResourceManagerImpl;
+class DispatchRecording;
 
 /**
  * @class GpuResourceManager
@@ -84,6 +85,48 @@ public:
     void upload_shared_raw(uint32_t set, size_t binding_index, const uint8_t* data, size_t byte_size);
 
     /**
+     * @brief Fill the whole shared buffer at (set, binding_index) with one
+     *        32-bit value.
+     *
+     * Recorded as vkCmdFillBuffer when a recording is attached, so a reset
+     * runs in order with the dispatches around it; written from the host
+     * otherwise.
+     */
+    void fill_shared(uint32_t set, size_t binding_index, uint32_t value);
+
+    /**
+     * @brief Append this manager's work to a recording shared with other
+     *        managers instead of submitting it, or pass null to submit again.
+     *
+     * Given once, by whoever owns the recording, before the first dispatch.
+     * While attached:
+     * - dispatch_async, dispatch_sequence_async, record_stage and the batched
+     *   dispatches append to the recording and return INVALID_FENCE where a
+     *   fence is returned;
+     * - dispatch and dispatch_sequence append, then submit and wait;
+     * - uploads and fills are recorded in order with the dispatches;
+     * - downloads submit and wait for the recording before reading;
+     * - image transitions are recorded into it;
+     * - retired buffers and pipelines are freed only after the recording's
+     *   next submission completes.
+     */
+    void set_recording(std::shared_ptr<DispatchRecording> recording);
+
+    [[nodiscard]] bool has_recording() const { return m_recording != nullptr; }
+
+    /**
+     * @brief Record one dispatch of a unit with its current bindings, push
+     *        constants and optional indirect counts.
+     *
+     * Appended to the attached recording; without one, submitted and awaited
+     * on its own.
+     */
+    void record_stage(const std::string& key,
+        const std::array<uint32_t, 3>& groups,
+        const std::vector<uint8_t>& push_constants,
+        const Portal::Graphics::IndirectDispatch& indirect = {});
+
+    /**
      * @brief One image slot for bind_images_batch: a storage image entry
      *        leaves sampler null.
      */
@@ -107,6 +150,10 @@ public:
 
     /**
      * @brief Transition a VKImage to a new layout, ordered before the next dispatch.
+     *
+     * Recorded into the attached recording, covering every mip level and
+     * layer, so it runs after the recorded work that wrote the image; queued
+     * as deferred work through TextureLoom otherwise.
      *
      * Not tied to any pipeline unit; operates on the image directly.
      * @param image      Image to transition.
@@ -258,9 +305,28 @@ private:
         const std::vector<Portal::Graphics::IndirectDispatch>& indirect_per_key);
 
     /**
-     * @brief Record the unit's set 0 push descriptor writes, if it has any.
+     * @brief The attached recording's command buffer, or a new one when none
+     *        is attached.
      */
-    static void push_unit_descriptors(Portal::Graphics::CommandBufferID cmd_id, const PipelineUnit& unit);
+    [[nodiscard]] Portal::Graphics::CommandBufferID open_commands();
+
+    /**
+     * @brief Record one dispatch of unit with its push descriptor writes and
+     *        the barrier that follows every dispatch.
+     */
+    static void record_unit(Portal::Graphics::CommandBufferID cmd_id, const PipelineUnit& unit,
+        const std::array<uint32_t, 3>& groups,
+        const uint8_t* push_constant_data,
+        size_t push_constant_size,
+        const Portal::Graphics::IndirectDispatch& indirect = {});
+
+    /**
+     * @brief Submit cmd_id and wait: the attached recording, or the command
+     *        buffer itself ended with the closing barrier.
+     */
+    void finish_commands(Portal::Graphics::CommandBufferID cmd_id);
+
+    std::shared_ptr<DispatchRecording> m_recording;
 
     struct SharedBuffers;
     std::unique_ptr<SharedBuffers> m_shared;

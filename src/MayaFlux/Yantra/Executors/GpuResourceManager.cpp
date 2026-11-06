@@ -1,5 +1,7 @@
 #include "GpuResourceManager.hpp"
 
+#include "DispatchRecording.hpp"
+
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
 #include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 
@@ -91,17 +93,30 @@ namespace {
     }
 
     /**
-     * @brief Detach a slot's buffer and free it once work submitted so far has completed.
+     * @brief Run release once work recorded or submitted so far has completed.
+     *
+     * With a recording, work it holds but has not submitted counts too.
      */
-    void retire_slot(VulkanBufferSlot& slot)
+    void release_after_use(DispatchRecording* recording, std::function<void()> release)
+    {
+        if (recording) {
+            recording->release_after(std::move(release));
+        } else {
+            Portal::Graphics::get_shader_foundry().release_after_submit(std::move(release));
+        }
+    }
+
+    /**
+     * @brief Detach a slot's buffer and free it once work using it has completed.
+     */
+    void retire_slot(VulkanBufferSlot& slot, DispatchRecording* recording)
     {
         if (!slot.buffer && !slot.memory) {
             slot = VulkanBufferSlot {};
             return;
         }
 
-        auto& foundry = Portal::Graphics::get_shader_foundry();
-        foundry.release_after_submit([device = foundry.get_device(), retired = slot]() mutable {
+        release_after_use(recording, [device = Portal::Graphics::get_shader_foundry().get_device(), retired = slot]() mutable {
             free_slot(device, retired);
         });
         slot = VulkanBufferSlot {};
@@ -120,18 +135,22 @@ namespace {
      * uncached, so it is meant for small or write only host access.
      *
      * A slot that already holds a buffer has it retired, not freed, since
-     * submitted work may still read it.
+     * recorded or submitted work may still read it. The size is rounded up to
+     * a multiple of four bytes and the buffer always accepts transfer writes,
+     * so recorded writes and fills can cover any slot.
      */
     void allocate_slot(vk::Device device, vk::PhysicalDevice phys,
-        VulkanBufferSlot& slot, size_t byte_size,
+        VulkanBufferSlot& slot, size_t byte_size, DispatchRecording* recording,
         vk::BufferUsageFlags extra_usage = vk::BufferUsageFlagBits::eStorageBuffer,
         bool prefer_device_local = false)
     {
-        retire_slot(slot);
+        retire_slot(slot, recording);
+
+        byte_size = (byte_size + 3U) & ~size_t { 3U };
 
         vk::BufferCreateInfo bi;
         bi.size = byte_size;
-        bi.usage = extra_usage;
+        bi.usage = extra_usage | vk::BufferUsageFlagBits::eTransferDst;
         bi.sharingMode = vk::SharingMode::eExclusive;
         slot.buffer = device.createBuffer(bi);
 
@@ -198,6 +217,97 @@ namespace {
     [[nodiscard]] size_t allocated_set_index(const GpuResourceManagerImpl& impl, uint32_t set)
     {
         return impl.push_set_zero ? set - 1U : set;
+    }
+
+    constexpr size_t k_update_chunk_bytes = 65536;
+
+    /**
+     * @brief Order a transfer write to buffer after earlier shader access, and
+     *        later shader access after it.
+     */
+    void record_transfer_barriers(Portal::Graphics::CommandBufferID cmd_id, vk::Buffer buffer, bool before)
+    {
+        auto& foundry = Portal::Graphics::get_shader_foundry();
+        if (before) {
+            foundry.buffer_barrier(cmd_id, buffer,
+                vk::AccessFlagBits2::eShaderRead | vk::AccessFlagBits2::eShaderWrite | vk::AccessFlagBits2::eTransferWrite,
+                vk::AccessFlagBits2::eTransferWrite,
+                vk::PipelineStageFlagBits2::eComputeShader | vk::PipelineStageFlagBits2::eDrawIndirect | vk::PipelineStageFlagBits2::eTransfer,
+                vk::PipelineStageFlagBits2::eTransfer);
+        } else {
+            foundry.buffer_barrier(cmd_id, buffer,
+                vk::AccessFlagBits2::eTransferWrite,
+                vk::AccessFlagBits2::eShaderRead | vk::AccessFlagBits2::eShaderWrite | vk::AccessFlagBits2::eIndirectCommandRead,
+                vk::PipelineStageFlagBits2::eTransfer,
+                vk::PipelineStageFlagBits2::eComputeShader | vk::PipelineStageFlagBits2::eDrawIndirect);
+        }
+    }
+
+    /**
+     * @brief Write bytes into a slot from the host, or record the write when a
+     *        recording is attached.
+     *
+     * A recorded write runs in order with the recorded dispatches, so it never
+     * lands in memory a recorded or earlier submitted dispatch still reads. The
+     * byte count is rounded up to four, which allocate_slot leaves room for.
+     */
+    void write_slot(DispatchRecording* recording, VulkanBufferSlot& slot, const void* data, size_t byte_size)
+    {
+        if (byte_size == 0)
+            return;
+
+        if (!recording) {
+            std::memcpy(slot.mapped_ptr, data, byte_size);
+            return;
+        }
+
+        const size_t padded = std::min((byte_size + 3U) & ~size_t { 3U }, slot.allocated_bytes);
+        std::vector<uint8_t> staged(padded, 0);
+        std::memcpy(staged.data(), data, std::min(byte_size, padded));
+
+        auto& foundry = Portal::Graphics::get_shader_foundry();
+        const auto cmd_id = recording->command();
+        auto cmd = foundry.get_command_buffer(cmd_id);
+
+        record_transfer_barriers(cmd_id, slot.buffer, true);
+        for (size_t offset = 0; offset < padded; offset += k_update_chunk_bytes) {
+            const size_t chunk = std::min(k_update_chunk_bytes, padded - offset);
+            cmd.updateBuffer(slot.buffer, offset, chunk, staged.data() + offset);
+        }
+        record_transfer_barriers(cmd_id, slot.buffer, false);
+    }
+
+    /**
+     * @brief Fill a whole slot with one 32-bit value, from the host or recorded.
+     */
+    void fill_slot(DispatchRecording* recording, VulkanBufferSlot& slot, uint32_t value)
+    {
+        if (!slot.buffer)
+            return;
+
+        if (!recording) {
+            auto* words = static_cast<uint32_t*>(slot.mapped_ptr);
+            std::fill_n(words, slot.allocated_bytes / sizeof(uint32_t), value);
+            return;
+        }
+
+        const auto cmd_id = recording->command();
+        auto cmd = Portal::Graphics::get_shader_foundry().get_command_buffer(cmd_id);
+        record_transfer_barriers(cmd_id, slot.buffer, true);
+        cmd.fillBuffer(slot.buffer, 0, VK_WHOLE_SIZE, value);
+        record_transfer_barriers(cmd_id, slot.buffer, false);
+    }
+
+    /**
+     * @brief Read bytes from a slot once every recorded write to it has run.
+     *
+     * With a recording, it is submitted and waited for first.
+     */
+    void read_slot(DispatchRecording* recording, const VulkanBufferSlot& slot, void* dest, size_t byte_size)
+    {
+        if (recording)
+            recording->wait();
+        std::memcpy(dest, slot.mapped_ptr, byte_size);
     }
 
 } // anonymous namespace
@@ -357,14 +467,14 @@ void GpuResourceManager::release(const std::string& key)
 
     if (unit.impl) {
         for (auto& slot : unit.impl->buffers)
-            retire_slot(slot);
+            retire_slot(slot, m_recording.get());
     }
     unit.impl.reset();
     unit.buffer_slots.clear();
     unit.image_slots.clear();
 
     if (unit.pipeline_id != Portal::Graphics::INVALID_COMPUTE_PIPELINE) {
-        foundry.release_after_submit([&compute_press, pipeline_id = unit.pipeline_id] {
+        release_after_use(m_recording.get(), [&compute_press, pipeline_id = unit.pipeline_id] {
             compute_press.destroy_pipeline(pipeline_id);
         });
     }
@@ -384,6 +494,8 @@ void GpuResourceManager::cleanup()
     auto& compute_press = Portal::Graphics::get_compute_press();
     const auto device = foundry.get_device();
 
+    if (m_recording)
+        m_recording->wait();
     foundry.wait_submitted();
 
     for (auto& [key, unit] : m_units) {
@@ -420,27 +532,24 @@ void GpuResourceManager::ensure_buffer(const std::string& key, size_t index,
 
     auto& foundry = Portal::Graphics::get_shader_foundry();
     allocate_slot(foundry.get_device(), foundry.get_physical_device(),
-        vk_slot, required_bytes, Portal::Graphics::to_buffer_usage_flags(usage_hint));
+        vk_slot, required_bytes, m_recording.get(), Portal::Graphics::to_buffer_usage_flags(usage_hint));
 
     unit.buffer_slots[index].allocated_bytes = required_bytes;
 }
 
 void GpuResourceManager::upload(const std::string& key, size_t index, const float* data, size_t byte_size)
 {
-    auto& vk_slot = unit_for(key).impl->buffers[index];
-    std::memcpy(vk_slot.mapped_ptr, data, byte_size);
+    write_slot(m_recording.get(), unit_for(key).impl->buffers[index], data, byte_size);
 }
 
 void GpuResourceManager::upload_raw(const std::string& key, size_t index, const uint8_t* data, size_t byte_size)
 {
-    auto& vk_slot = unit_for(key).impl->buffers[index];
-    std::memcpy(vk_slot.mapped_ptr, data, byte_size);
+    write_slot(m_recording.get(), unit_for(key).impl->buffers[index], data, byte_size);
 }
 
 void GpuResourceManager::download(const std::string& key, size_t index, float* dest, size_t byte_size)
 {
-    auto& vk_slot = unit_for(key).impl->buffers[index];
-    std::memcpy(dest, vk_slot.mapped_ptr, byte_size);
+    read_slot(m_recording.get(), unit_for(key).impl->buffers[index], dest, byte_size);
 }
 
 void GpuResourceManager::bind_descriptors_batch(const std::string& key, const std::vector<GpuBufferBinding>& bindings)
@@ -451,6 +560,7 @@ void GpuResourceManager::bind_descriptors_batch(const std::string& key, const st
 
     std::vector<Portal::Graphics::DescriptorBufferWrite> writes;
     writes.reserve(bindings.size());
+    bool rewrites_bound_set = false;
 
     for (const auto& b : bindings) {
         const auto et = b.element_type;
@@ -489,6 +599,7 @@ void GpuResourceManager::bind_descriptors_batch(const std::string& key, const st
         auto& last = impl.written[{ b.set, b.binding }];
         if (last.first == buffer && last.second == allocated_bytes)
             continue;
+        rewrites_bound_set = rewrites_bound_set || last.first;
         last = { buffer, allocated_bytes };
 
         writes.push_back({
@@ -501,8 +612,15 @@ void GpuResourceManager::bind_descriptors_batch(const std::string& key, const st
         });
     }
 
-    if (!writes.empty())
-        foundry.update_descriptor_buffers(writes);
+    if (writes.empty())
+        return;
+
+    if (rewrites_bound_set) {
+        if (m_recording)
+            m_recording->wait();
+        foundry.wait_submitted();
+    }
+    foundry.update_descriptor_buffers(writes);
 }
 
 const std::vector<Portal::Graphics::PushDescriptorWrite>& GpuResourceManager::push_writes(const std::string& key)
@@ -537,7 +655,7 @@ void GpuResourceManager::ensure_shared_buffer(uint32_t set, size_t binding_index
     const bool gpu_resident = usage_hint == Portal::Graphics::BufferUsageHint::DEVICE
         || usage_hint == Portal::Graphics::BufferUsageHint::COMPUTE;
     allocate_slot(foundry.get_device(), foundry.get_physical_device(),
-        slot, required_bytes, Portal::Graphics::to_buffer_usage_flags(usage_hint), gpu_resident);
+        slot, required_bytes, m_recording.get(), Portal::Graphics::to_buffer_usage_flags(usage_hint), gpu_resident);
 }
 
 Portal::Graphics::GpuBufferHandle GpuResourceManager::shared_buffer_handle(uint32_t set, size_t binding_index) const
@@ -550,14 +668,22 @@ Portal::Graphics::GpuBufferHandle GpuResourceManager::shared_buffer_handle(uint3
 
 void GpuResourceManager::download_shared(uint32_t set, size_t binding_index, void* dest, size_t byte_size)
 {
-    auto& slot = m_shared->slots.at({ set, binding_index });
-    std::memcpy(dest, slot.mapped_ptr, byte_size);
+    read_slot(m_recording.get(), m_shared->slots.at({ set, binding_index }), dest, byte_size);
 }
 
 void GpuResourceManager::upload_shared_raw(uint32_t set, size_t binding_index, const uint8_t* data, size_t byte_size)
 {
-    auto& slot = m_shared->slots.at({ set, binding_index });
-    std::memcpy(slot.mapped_ptr, data, byte_size);
+    write_slot(m_recording.get(), m_shared->slots.at({ set, binding_index }), data, byte_size);
+}
+
+void GpuResourceManager::fill_shared(uint32_t set, size_t binding_index, uint32_t value)
+{
+    fill_slot(m_recording.get(), m_shared->slots.at({ set, binding_index }), value);
+}
+
+void GpuResourceManager::set_recording(std::shared_ptr<DispatchRecording> recording)
+{
+    m_recording = std::move(recording);
 }
 
 void GpuResourceManager::bind_images_batch(const std::string& key, const std::vector<ImageBind>& images)
@@ -605,7 +731,38 @@ void GpuResourceManager::transition_image(
     const std::shared_ptr<Core::VKImage>& image,
     vk::ImageLayout new_layout)
 {
-    Portal::Graphics::get_texture_manager().transition_layout(image, new_layout);
+    if (!m_recording) {
+        Portal::Graphics::get_texture_manager().transition_layout(image, new_layout);
+        return;
+    }
+
+    const auto old_layout = image->get_current_layout();
+    if (old_layout == new_layout)
+        return;
+
+    auto& foundry = Portal::Graphics::get_shader_foundry();
+    auto cmd = foundry.get_command_buffer(m_recording->command());
+
+    vk::ImageMemoryBarrier2 barrier {};
+    barrier.srcStageMask = vk::PipelineStageFlagBits2::eAllCommands;
+    barrier.srcAccessMask = vk::AccessFlagBits2::eMemoryWrite;
+    barrier.dstStageMask = vk::PipelineStageFlagBits2::eComputeShader;
+    barrier.dstAccessMask = vk::AccessFlagBits2::eShaderRead | vk::AccessFlagBits2::eShaderWrite;
+    barrier.oldLayout = old_layout;
+    barrier.newLayout = new_layout;
+    barrier.srcQueueFamilyIndex = vk::QueueFamilyIgnored;
+    barrier.dstQueueFamilyIndex = vk::QueueFamilyIgnored;
+    barrier.image = image->get_image();
+    barrier.subresourceRange = vk::ImageSubresourceRange {
+        image->get_aspect_flags(), 0, image->get_mip_levels(), 0, image->get_array_layers()
+    };
+
+    vk::DependencyInfo dependency {};
+    dependency.imageMemoryBarrierCount = 1;
+    dependency.pImageMemoryBarriers = &barrier;
+    cmd.pipelineBarrier2(dependency);
+
+    image->set_current_layout(new_layout);
 }
 
 //==============================================================================
@@ -618,42 +775,39 @@ Portal::Graphics::CommandBufferID GpuResourceManager::begin_dispatch_commands()
         Portal::Graphics::ShaderFoundry::CommandBufferType::GRAPHICS);
 }
 
-namespace {
-
-    /**
-     * @brief Order every later command, and host reads after completion, behind
-     *        the compute writes recorded so far.
-     */
-    void record_trailing_barrier(Portal::Graphics::ShaderFoundry& foundry, Portal::Graphics::CommandBufferID cmd_id)
-    {
-        foundry.memory_barrier(
-            cmd_id,
-            vk::AccessFlagBits2::eShaderWrite,
-            vk::AccessFlagBits2::eMemoryRead | vk::AccessFlagBits2::eMemoryWrite | vk::AccessFlagBits2::eHostRead,
-            vk::PipelineStageFlagBits2::eComputeShader,
-            vk::PipelineStageFlagBits2::eAllCommands | vk::PipelineStageFlagBits2::eHost);
-    }
-
-    /**
-     * @brief Order the next pass of a batched dispatch behind this pass's writes.
-     */
-    void record_pass_barrier(Portal::Graphics::ShaderFoundry& foundry, Portal::Graphics::CommandBufferID cmd_id)
-    {
-        foundry.memory_barrier(
-            cmd_id,
-            vk::AccessFlagBits2::eShaderWrite,
-            vk::AccessFlagBits2::eShaderRead | vk::AccessFlagBits2::eShaderWrite | vk::AccessFlagBits2::eIndirectCommandRead,
-            vk::PipelineStageFlagBits2::eComputeShader,
-            vk::PipelineStageFlagBits2::eComputeShader | vk::PipelineStageFlagBits2::eDrawIndirect);
-    }
-
-} // namespace
-
-void GpuResourceManager::push_unit_descriptors(Portal::Graphics::CommandBufferID cmd_id, const PipelineUnit& unit)
+Portal::Graphics::CommandBufferID GpuResourceManager::open_commands()
 {
-    if (unit.impl && !unit.impl->push_writes.empty()) {
-        Portal::Graphics::get_compute_press().push_descriptors(cmd_id, unit.pipeline_id, unit.impl->push_writes);
+    return m_recording ? m_recording->command() : begin_dispatch_commands();
+}
+
+void GpuResourceManager::record_unit(Portal::Graphics::CommandBufferID cmd_id, const PipelineUnit& unit,
+    const std::array<uint32_t, 3>& groups,
+    const uint8_t* push_constant_data,
+    size_t push_constant_size,
+    const Portal::Graphics::IndirectDispatch& indirect)
+{
+    Portal::Graphics::ComputeStage stage {
+        .pipeline_id = unit.pipeline_id,
+        .descriptor_set_ids = unit.descriptor_set_ids,
+        .groups = groups,
+        .push_constant_data = push_constant_data
+            ? std::vector<uint8_t>(push_constant_data, push_constant_data + push_constant_size)
+            : std::vector<uint8_t> {},
+        .push_writes = unit.impl ? unit.impl->push_writes : std::vector<Portal::Graphics::PushDescriptorWrite> {},
+        .indirect = indirect,
+    };
+    Portal::Graphics::get_compute_press().record_sequence(cmd_id, { stage });
+}
+
+void GpuResourceManager::finish_commands(Portal::Graphics::CommandBufferID cmd_id)
+{
+    if (m_recording) {
+        m_recording->wait();
+        return;
     }
+
+    DispatchRecording::record_closing_barrier(cmd_id);
+    Portal::Graphics::get_shader_foundry().submit_and_wait(cmd_id);
 }
 
 void GpuResourceManager::dispatch(const std::string& key,
@@ -662,19 +816,23 @@ void GpuResourceManager::dispatch(const std::string& key,
     size_t push_constant_size)
 {
     auto& unit = unit_for(key);
-    auto& foundry = Portal::Graphics::get_shader_foundry();
-    auto& compute_press = Portal::Graphics::get_compute_press();
+    const auto cmd_id = open_commands();
+    record_unit(cmd_id, unit, groups, push_constant_data, push_constant_size);
+    finish_commands(cmd_id);
+}
 
-    auto cmd_id = begin_dispatch_commands();
+void GpuResourceManager::record_stage(const std::string& key,
+    const std::array<uint32_t, 3>& groups,
+    const std::vector<uint8_t>& push_constants,
+    const Portal::Graphics::IndirectDispatch& indirect)
+{
+    auto& unit = unit_for(key);
+    const auto cmd_id = open_commands();
+    record_unit(cmd_id, unit, groups,
+        push_constants.empty() ? nullptr : push_constants.data(), push_constants.size(), indirect);
 
-    compute_press.bind_all(
-        cmd_id, unit.pipeline_id, unit.descriptor_set_ids,
-        push_constant_data, push_constant_size);
-    push_unit_descriptors(cmd_id, unit);
-    compute_press.dispatch(cmd_id, groups[0], groups[1], groups[2]);
-    record_trailing_barrier(foundry, cmd_id);
-
-    foundry.submit_and_wait(cmd_id);
+    if (!m_recording)
+        finish_commands(cmd_id);
 }
 
 void GpuResourceManager::dispatch_batched(const std::string& key,
@@ -686,30 +844,23 @@ void GpuResourceManager::dispatch_batched(const std::string& key,
         "GpuResourceManager: dispatch_batched requires ChainedParams");
 
     auto& unit = unit_for(key);
-    auto& foundry = Portal::Graphics::get_shader_foundry();
-    auto& compute_press = Portal::Graphics::get_compute_press();
 
     const uint32_t workgroups_per_pass = groups[0] * groups[1] * groups[2];
     const uint32_t default_passes = std::max(1U, 65536U / std::max(1U, workgroups_per_pass));
     const uint32_t effective_passes_per_batch = params.passes_per_batch.value_or(default_passes);
 
+    std::vector<uint8_t> pc_data(push_constant_size);
     for (uint32_t base = 0; base < params.pass_count; base += effective_passes_per_batch) {
         const uint32_t batch_end = std::min(base + effective_passes_per_batch, params.pass_count);
-        auto cmd_id = begin_dispatch_commands();
+        const auto cmd_id = open_commands();
 
         for (uint32_t pass = base; pass < batch_end; ++pass) {
-            std::vector<uint8_t> pc_data(push_constant_size);
             params.pc_updater(pass, pc_data.data());
-            compute_press.bind_all(
-                cmd_id, unit.pipeline_id, unit.descriptor_set_ids,
-                pc_data.data(), push_constant_size);
-            push_unit_descriptors(cmd_id, unit);
-            compute_press.dispatch(cmd_id, groups[0], groups[1], groups[2]);
-            record_pass_barrier(foundry, cmd_id);
+            record_unit(cmd_id, unit, groups, pc_data.data(), push_constant_size);
         }
 
-        record_trailing_barrier(foundry, cmd_id);
-        foundry.submit_and_wait(cmd_id);
+        if (!m_recording)
+            finish_commands(cmd_id);
     }
 }
 
@@ -723,32 +874,27 @@ void GpuResourceManager::dispatch_batched_indirect(const std::string& key,
         "GpuResourceManager: dispatch_batched_indirect requires ChainedIndirectParams");
 
     auto& unit = unit_for(key);
-    auto& foundry = Portal::Graphics::get_shader_foundry();
-    auto& compute_press = Portal::Graphics::get_compute_press();
 
     auto& indirect_slot = m_shared->slots.at({ indirect_set, indirect_binding });
-    const vk::Buffer indirect_buffer = indirect_slot.buffer;
+    const Portal::Graphics::IndirectDispatch indirect { .buffer = indirect_slot.buffer };
     const uint32_t init_cmd[3] = { groups[0], groups[1], groups[2] };
-    std::memcpy(indirect_slot.mapped_ptr, init_cmd, sizeof(init_cmd));
+    write_slot(m_recording.get(), indirect_slot, init_cmd, sizeof(init_cmd));
 
     const uint32_t default_passes = std::max(1U, 65536U / std::max(1U, groups[0] * groups[1] * groups[2]));
     const uint32_t effective_passes_per_batch = params.passes_per_batch.value_or(default_passes);
 
+    std::vector<uint8_t> pc_data(push_constant_size);
     for (uint32_t base = 0; base < params.pass_count; base += effective_passes_per_batch) {
         const uint32_t batch_end = std::min(base + effective_passes_per_batch, params.pass_count);
-        auto cmd_id = begin_dispatch_commands();
+        const auto cmd_id = open_commands();
 
         for (uint32_t pass = base; pass < batch_end; ++pass) {
-            std::vector<uint8_t> pc_data(push_constant_size);
             params.pc_updater(pass, 1, pc_data.data());
-            compute_press.bind_all(cmd_id, unit.pipeline_id, unit.descriptor_set_ids, pc_data.data(), push_constant_size);
-            push_unit_descriptors(cmd_id, unit);
-            compute_press.dispatch_indirect(cmd_id, indirect_buffer);
-            record_pass_barrier(foundry, cmd_id);
+            record_unit(cmd_id, unit, groups, pc_data.data(), push_constant_size, indirect);
         }
 
-        record_trailing_barrier(foundry, cmd_id);
-        foundry.submit_and_wait(cmd_id);
+        if (!m_recording)
+            finish_commands(cmd_id);
     }
 }
 
@@ -758,19 +904,14 @@ Portal::Graphics::FenceID GpuResourceManager::dispatch_async(const std::string& 
     size_t push_constant_size)
 {
     auto& unit = unit_for(key);
-    auto& foundry = Portal::Graphics::get_shader_foundry();
-    auto& compute_press = Portal::Graphics::get_compute_press();
+    const auto cmd_id = open_commands();
+    record_unit(cmd_id, unit, groups, push_constant_data, push_constant_size);
 
-    auto cmd_id = begin_dispatch_commands();
+    if (m_recording)
+        return Portal::Graphics::INVALID_FENCE;
 
-    compute_press.bind_all(
-        cmd_id, unit.pipeline_id, unit.descriptor_set_ids,
-        push_constant_data, push_constant_size);
-    push_unit_descriptors(cmd_id, unit);
-    compute_press.dispatch(cmd_id, groups[0], groups[1], groups[2]);
-    record_trailing_barrier(foundry, cmd_id);
-
-    return foundry.submit_async(cmd_id);
+    DispatchRecording::record_closing_barrier(cmd_id);
+    return Portal::Graphics::get_shader_foundry().submit_async(cmd_id);
 }
 
 Portal::Graphics::CommandBufferID GpuResourceManager::record_sequence_commands(
@@ -780,9 +921,6 @@ Portal::Graphics::CommandBufferID GpuResourceManager::record_sequence_commands(
     const std::vector<std::vector<Portal::Graphics::PushDescriptorWrite>>& push_writes_per_key,
     const std::vector<Portal::Graphics::IndirectDispatch>& indirect_per_key)
 {
-    auto& foundry = Portal::Graphics::get_shader_foundry();
-    auto& compute_press = Portal::Graphics::get_compute_press();
-
     std::vector<Portal::Graphics::ComputeStage> stages;
     stages.reserve(keys.size());
 
@@ -798,9 +936,8 @@ Portal::Graphics::CommandBufferID GpuResourceManager::record_sequence_commands(
         });
     }
 
-    auto cmd_id = begin_dispatch_commands();
-    compute_press.record_sequence(cmd_id, stages);
-    record_trailing_barrier(foundry, cmd_id);
+    const auto cmd_id = open_commands();
+    Portal::Graphics::get_compute_press().record_sequence(cmd_id, stages);
     return cmd_id;
 }
 
@@ -811,8 +948,7 @@ void GpuResourceManager::dispatch_sequence(
     const std::vector<std::vector<Portal::Graphics::PushDescriptorWrite>>& push_writes_per_key,
     const std::vector<Portal::Graphics::IndirectDispatch>& indirect_per_key)
 {
-    auto& foundry = Portal::Graphics::get_shader_foundry();
-    foundry.submit_and_wait(
+    finish_commands(
         record_sequence_commands(keys, groups_per_key, push_constants_per_key, push_writes_per_key, indirect_per_key));
 }
 
@@ -823,9 +959,13 @@ Portal::Graphics::FenceID GpuResourceManager::dispatch_sequence_async(
     const std::vector<std::vector<Portal::Graphics::PushDescriptorWrite>>& push_writes_per_key,
     const std::vector<Portal::Graphics::IndirectDispatch>& indirect_per_key)
 {
-    auto& foundry = Portal::Graphics::get_shader_foundry();
-    return foundry.submit_async(
-        record_sequence_commands(keys, groups_per_key, push_constants_per_key, push_writes_per_key, indirect_per_key));
+    const auto cmd_id = record_sequence_commands(keys, groups_per_key, push_constants_per_key, push_writes_per_key, indirect_per_key);
+
+    if (m_recording)
+        return Portal::Graphics::INVALID_FENCE;
+
+    DispatchRecording::record_closing_barrier(cmd_id);
+    return Portal::Graphics::get_shader_foundry().submit_async(cmd_id);
 }
 
 } // namespace MayaFlux::Yantra

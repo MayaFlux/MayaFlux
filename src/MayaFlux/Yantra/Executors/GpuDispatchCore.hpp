@@ -155,6 +155,38 @@ public:
     }
 
     /**
+     * @brief Fill the whole shared buffer at (set, binding_index) with one
+     *        32-bit value, in order with the recorded dispatches.
+     */
+    void fill_shared(uint32_t set, size_t binding_index, uint32_t value)
+    {
+        m_resources.fill_shared(set, binding_index, value);
+    }
+
+    /**
+     * @brief Append this context's work to a recording shared with other
+     *        contexts. See GpuResourceManager::set_recording.
+     */
+    void set_recording(std::shared_ptr<DispatchRecording> recording)
+    {
+        m_resources.set_recording(std::move(recording));
+    }
+
+    /**
+     * @brief Stage and record each stage in order, one dispatch per stage.
+     *
+     * Each stage is prepared as in dispatch_core_dependency and recorded at
+     * once, so its uploads and fills land between the dispatches before and
+     * after it. With a recording attached nothing is submitted; without one,
+     * each stage is submitted and awaited on its own. The context's own
+     * shader config, bindings and staged data are restored before this
+     * returns.
+     *
+     * @param stages Ordered stage descriptions.
+     */
+    void record_stages(const std::vector<DependencyStage>& stages);
+
+    /**
      * @brief Declare the byte capacity of an output binding independently
      *        of input data.  Required for edge lists, histograms, count
      *        buffers, and any output whose size cannot be derived from input.
@@ -344,7 +376,8 @@ protected:
      * @param channels       Extracted double channels.
      * @param structure_info Dimension/modality metadata.
      * @param ctx            ExecutionContext carrying pass_count and pc_updater.
-     * @return GpuChannelResult containing primary float readback and aux buffers.
+     * @return GpuChannelResult containing primary float readback and aux
+     *         buffers; empty with a recording attached, which reads nothing back.
      */
     GpuChannelResult dispatch_core_chained(
         const std::vector<std::vector<double>>& channels,
@@ -362,7 +395,8 @@ protected:
      * @param structure_info Dimension/modality metadata.
      * @param ctx            ExecutionContext carrying pass_count, pc_updater,
      *                        and indirect_dispatch_binding.
-     * @return GpuChannelResult containing primary float readback and aux buffers.
+     * @return GpuChannelResult containing primary float readback and aux
+     *         buffers; empty with a recording attached, which reads nothing back.
      */
     GpuChannelResult dispatch_core_chained_indirect(
         const std::vector<std::vector<double>>& channels,
@@ -380,7 +414,9 @@ protected:
      *
      * @param channels       Extracted double channels from the input Datum.
      * @param structure_info Dimension/modality metadata from OperationHelper.
-     * @return FenceID to poll. INVALID_FENCE if dispatch fails.
+     * @return FenceID to poll. INVALID_FENCE if dispatch fails, and always
+     *         with a recording attached, which holds the dispatch until it
+     *         is submitted.
      */
     [[nodiscard]] Portal::Graphics::FenceID dispatch_core_async(
         const std::vector<std::vector<double>>& channels,
@@ -411,9 +447,8 @@ protected:
      * whole sequence is recorded into one command buffer and submitted
      * without waiting. The context's own shader config, bindings and staged
      * data are restored before this returns, so the caller may reconfigure
-     * the context immediately. Descriptor sets already written for the
-     * stages' shader keys must not be rebound until the returned fence has
-     * signaled.
+     * the context immediately. With a recording attached the sequence is
+     * appended to it instead and INVALID_FENCE is returned.
      *
      * The sequence ends with a barrier that orders anything submitted
      * afterwards, and host reads once the fence has signaled, behind its writes.
@@ -511,6 +546,14 @@ private:
     };
 
     [[nodiscard]] DependencyPlan prepare_dependency(const std::vector<DependencyStage>& stages);
+
+    /**
+     * @brief Stage each of stages in turn and hand its dispatch key, groups,
+     *        push constants and indirect source to on_stage, then restore the
+     *        context's own config, bindings and staged data.
+     */
+    void for_each_stage(const std::vector<DependencyStage>& stages,
+        const std::function<void(const std::array<uint32_t, 3>&, const Portal::Graphics::IndirectDispatch&)>& on_stage);
 
     GpuComputeConfig m_gpu_config;
     std::string m_cached_dispatch_key;
