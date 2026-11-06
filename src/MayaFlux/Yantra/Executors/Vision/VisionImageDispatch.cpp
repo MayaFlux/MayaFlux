@@ -55,13 +55,6 @@ GpuVisionPass::Completed VisionGpuExecutor::op_threshold_otsu(VisionGpuContexts&
     const OtsuHistPC hist_pc { .width = w, .height = h, .channels = channels };
     const OtsuApplyPC apply_pc { .channels = channels };
     const uint32_t select_groups = channels == 0U ? 1U : 3U;
-    const auto otsu_hazard = [](uint32_t binding) {
-        return [binding](GpuDispatchCore& ctx) {
-            return std::vector<HazardResource> {
-                ctx.shared_buffer_hazard({ .set = 0, .binding = binding, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 }),
-            };
-        };
-    };
     const std::array<uint32_t, 3> image_groups { (w + k_wg2d[0] - 1U) / k_wg2d[0], (h + k_wg2d[1] - 1U) / k_wg2d[1], 1U };
 
     std::shared_ptr<Core::VKImage> thresholded;
@@ -72,13 +65,11 @@ GpuVisionPass::Completed VisionGpuExecutor::op_threshold_otsu(VisionGpuContexts&
         .stage_fn = [&pixel_ctx, otsu_input, hist_pc](GpuDispatchCore& ctx) {
                 pixel_ctx.stage_image(otsu_input);
                 ctx.set_push_constants(hist_pc); },
-        .hazard_fn = otsu_hazard(3),
         .explicit_groups = image_groups,
     });
     otsu_stages.push_back({
         .config = { .shader_path = "otsu_select.comp.spv", .workgroup_size = { 256, 1, 1 } },
         .stage_fn = [&pixel_ctx, otsu_input](GpuDispatchCore&) { pixel_ctx.stage_image(otsu_input); },
-        .hazard_fn = otsu_hazard(4),
         .explicit_groups = std::array<uint32_t, 3> { select_groups, 1U, 1U },
     });
     otsu_stages.push_back({
@@ -200,10 +191,6 @@ GpuVisionPass::Completed VisionGpuExecutor::op_open_close(
                 pixel_ctx.prepare_output_image(w, h);
                 intermediate = pixel_ctx.get_output_image(0);
                 ctx.set_push_constants(morph_pc); },
-        .hazard_fn = [&intermediate](GpuDispatchCore&) { return std::vector<HazardResource> {
-                                                             { .binding = { .set = 0, .binding = 1, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::IMAGE_STORAGE },
-                                                                 .image = intermediate->get_image() },
-                                                         }; },
         .explicit_groups = image_groups,
     });
     morph_stages.push_back({

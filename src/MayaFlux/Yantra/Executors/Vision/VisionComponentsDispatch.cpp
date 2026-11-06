@@ -54,15 +54,6 @@ void VisionGpuExecutor::op_connected_components(
     };
 
     const uint32_t reset_elements = std::max(block_width * block_height, k_max_components);
-    const auto buffer_hazards = [](GpuDispatchCore& ctx, std::initializer_list<size_t> bindings) {
-        std::vector<HazardResource> hazards;
-        hazards.reserve(bindings.size());
-        for (const size_t binding : bindings) {
-            hazards.push_back(ctx.shared_buffer_hazard(
-                { .set = 0, .binding = static_cast<uint32_t>(binding), .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 }));
-        }
-        return hazards;
-    };
 
     std::shared_ptr<Core::VKImage> cc_image;
     std::vector<DependencyStage> cc_stages;
@@ -71,7 +62,6 @@ void VisionGpuExecutor::op_connected_components(
     cc_stages.push_back({
         .config = { .shader_path = "cc_reset.comp.spv", .workgroup_size = { 256, 1, 1 }, .push_constant_size = sizeof(CCResetPC) },
         .stage_fn = [=](GpuDispatchCore& ctx) { ctx.set_push_constants(CCResetPC { .lut_size = block_width * block_height, .max_components = k_max_components }); },
-        .hazard_fn = [=](GpuDispatchCore& ctx) { return buffer_hazards(ctx, { 4, 5, 7, 8, 9 }); },
         .explicit_groups = std::array<uint32_t, 3> { (reset_elements + 255U) / 256U, 1U, 1U },
     });
 
@@ -80,7 +70,6 @@ void VisionGpuExecutor::op_connected_components(
         .stage_fn = [seed_input, init_pc](GpuDispatchCore& ctx) {
                 ctx.stage_image_at(1, seed_input, GpuBufferBinding::ElementType::IMAGE_STORAGE);
                 ctx.set_push_constants(init_pc); },
-        .hazard_fn = [=](GpuDispatchCore& ctx) { return buffer_hazards(ctx, { 2 }); },
         .explicit_groups = block_groups,
     });
 
@@ -89,14 +78,12 @@ void VisionGpuExecutor::op_connected_components(
         .stage_fn = [seed_input, merge_pc](GpuDispatchCore& ctx) {
                 ctx.stage_image_at(1, seed_input, GpuBufferBinding::ElementType::IMAGE_STORAGE);
                 ctx.set_push_constants(merge_pc); },
-        .hazard_fn = [=](GpuDispatchCore& ctx) { return buffer_hazards(ctx, { 2 }); },
         .explicit_groups = block_groups,
     });
 
     cc_stages.push_back({
         .config = { .shader_path = "cc_compress.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(CCCompressPC) },
         .stage_fn = [=](GpuDispatchCore& ctx) { ctx.set_push_constants(CCCompressPC { .block_width = block_width, .block_height = block_height }); },
-        .hazard_fn = [=](GpuDispatchCore& ctx) { return buffer_hazards(ctx, { 2, 4 }); },
         .explicit_groups = block_groups,
     });
 
@@ -252,12 +239,6 @@ bool VisionGpuExecutor::op_find_contours(
     component_contours.clear_output_dimensions();
 
     const uint32_t total_owner_slots = k_max_components * (1U + k_max_holes_per_label);
-    const auto owner_hazards = [](GpuDispatchCore& ctx) {
-        return std::vector<HazardResource> {
-            ctx.shared_buffer_hazard({ .set = 1, .binding = 6, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 }),
-            ctx.shared_buffer_hazard({ .set = 1, .binding = 7, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 }),
-        };
-    };
     const auto trace_pc = [&](uint32_t phase) {
         return ContourMarchPC {
             .width = w,
@@ -278,7 +259,6 @@ bool VisionGpuExecutor::op_find_contours(
         .stage_fn = [](GpuDispatchCore& ctx) {
             ctx.set_push_constants(ContourCompactPC { .max_components = k_max_components, .max_holes_per_label = k_max_holes_per_label });
         },
-        .hazard_fn = owner_hazards,
         .explicit_groups = std::array<uint32_t, 3> { (total_owner_slots + 255U) / 256U, 1U, 1U },
     });
     trace_stages.push_back({
@@ -287,15 +267,6 @@ bool VisionGpuExecutor::op_find_contours(
         .explicit_groups = std::array<uint32_t, 3> { 1U, 1U, 1U },
     });
     const bool sort_requested = p.max_contours > 0U;
-    const auto contour_hazard = [](GpuDispatchCore& ctx, uint32_t set, uint32_t binding, GpuBufferBinding::ElementType type) {
-        return ctx.shared_buffer_hazard({ .set = set, .binding = binding, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = type });
-    };
-    const auto sort_hazards = [contour_hazard](GpuDispatchCore& ctx) {
-        return std::vector<HazardResource> {
-            contour_hazard(ctx, 2, 0, GpuBufferBinding::ElementType::FLOAT32),
-            contour_hazard(ctx, 2, 1, GpuBufferBinding::ElementType::FLOAT32),
-        };
-    };
 
     DependencyStage trace_stage {
         .config = march_config,
@@ -303,16 +274,6 @@ bool VisionGpuExecutor::op_find_contours(
         .explicit_groups = std::array<uint32_t, 3> { 1U, 1U, 1U },
         .indirect_groups = IndirectGroupsSource { .set = 0, .binding = 10, .offset_bytes = 3U * sizeof(uint32_t) },
     };
-    if (sort_requested || p.as_image) {
-        trace_stage.hazard_fn = [contour_hazard](GpuDispatchCore& ctx) {
-            return std::vector<HazardResource> {
-                contour_hazard(ctx, 1, 8, GpuBufferBinding::ElementType::FLOAT32),
-                contour_hazard(ctx, 1, 10, GpuBufferBinding::ElementType::UINT32),
-                contour_hazard(ctx, 2, 0, GpuBufferBinding::ElementType::FLOAT32),
-                contour_hazard(ctx, 2, 1, GpuBufferBinding::ElementType::FLOAT32),
-            };
-        };
-    }
     trace_stages.push_back(std::move(trace_stage));
 
     if (sort_requested) {
@@ -328,7 +289,6 @@ bool VisionGpuExecutor::op_find_contours(
             trace_stages.push_back({
                 .config = topk_config,
                 .stage_fn = [topk_pc](GpuDispatchCore& ctx) { ctx.set_push_constants(topk_pc); },
-                .hazard_fn = sort_hazards,
                 .explicit_groups = std::array<uint32_t, 3> { 1U, 1U, 1U },
             });
         }
@@ -352,10 +312,6 @@ bool VisionGpuExecutor::op_find_contours(
                     component_contours.prepare_output_image(w, h);
                     contour_image = component_contours.get_output_image(0);
                     ctx.set_push_constants(clear_pc); },
-            .hazard_fn = [&contour_image](GpuDispatchCore&) { return std::vector<HazardResource> {
-                                                                  { .binding = { .set = 0, .binding = 0, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::IMAGE_STORAGE },
-                                                                      .image = contour_image->get_image() },
-                                                              }; },
             .explicit_groups = std::array<uint32_t, 3> { (w + k_wg2d[0] - 1U) / k_wg2d[0], (h + k_wg2d[1] - 1U) / k_wg2d[1], 1U },
         });
         trace_stages.push_back({

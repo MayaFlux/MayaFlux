@@ -76,9 +76,6 @@ public:
     void download_shared(uint32_t set, size_t binding_index, void* dest, size_t byte_size);
     void upload_shared_raw(uint32_t set, size_t binding_index, const uint8_t* data, size_t byte_size);
 
-    [[nodiscard]] Portal::Graphics::HazardResource make_shared_buffer_hazard(
-        const GpuBufferBinding& spec) const;
-
     /**
      * @brief Bind a storage image descriptor at the given slot index.
      * @param key     Pipeline unit to bind into.
@@ -135,22 +132,33 @@ public:
     void transition_image(const std::shared_ptr<Core::VKImage>& image,
         vk::ImageLayout new_layout);
 
+    /**
+     * @brief Record one dispatch, submit it and wait.
+     *
+     * Every submission from this class ends with a barrier that orders later
+     * commands and host reads after completion behind its compute writes.
+     */
     void dispatch(const std::string& key,
         const std::array<uint32_t, 3>& groups,
-        const std::vector<GpuBufferBinding>& bindings,
         const uint8_t* push_constant_data,
         size_t push_constant_size);
 
+    /**
+     * @brief Record ChainedParams::pass_count dispatches in batches, with a
+     *        barrier after every pass, waiting for each batch.
+     */
     void dispatch_batched(const std::string& key,
         const std::array<uint32_t, 3>& groups,
-        const std::vector<GpuBufferBinding>& bindings,
         size_t push_constant_size,
         const ExecutionContext& ctx);
 
+    /**
+     * @brief dispatch_batched with counts read from the shared buffer at
+     *        (indirect_set, indirect_binding), seeded with groups.
+     */
     void dispatch_batched_indirect(const std::string& key,
         uint32_t indirect_set, size_t indirect_binding,
         const std::array<uint32_t, 3>& groups,
-        const std::vector<GpuBufferBinding>& bindings,
         size_t push_constant_size,
         const ExecutionContext& ctx);
 
@@ -164,7 +172,6 @@ public:
      *
      * @param key                Pipeline unit to dispatch.
      * @param groups             Workgroup counts {x, y, z}.
-     * @param bindings           Binding declarations; output barriers inserted.
      * @param push_constant_data Pointer to push constant bytes, or nullptr.
      * @param push_constant_size Byte count of push constant data.
      * @return FenceID to poll with ShaderFoundry::is_fence_signaled.
@@ -172,7 +179,6 @@ public:
      */
     [[nodiscard]] Portal::Graphics::FenceID dispatch_async(const std::string& key,
         const std::array<uint32_t, 3>& groups,
-        const std::vector<GpuBufferBinding>& bindings,
         const uint8_t* push_constant_data,
         size_t push_constant_size);
 
@@ -184,28 +190,20 @@ public:
      * indexed by position, one entry per key in the same order as keys.
      * indirect_per_key is either empty or parallel too; a stage whose entry
      * has a buffer dispatches with the counts stored there instead of its
-     * fixed groups.
+     * fixed groups. Every stage is followed by a barrier, so each stage sees
+     * the writes of all earlier ones.
      */
     void dispatch_sequence(
         const std::vector<std::string>& keys,
         const std::vector<std::array<uint32_t, 3>>& groups_per_key,
         const std::vector<std::vector<uint8_t>>& push_constants_per_key,
-        const std::vector<std::vector<Portal::Graphics::HazardResource>>& hazards_per_key,
         const std::vector<Portal::Graphics::IndirectDispatch>& indirect_per_key = {});
 
     /**
      * @brief Non-blocking counterpart of dispatch_sequence.
      *
      * Records the identical command buffer and submits it via
-     * ShaderFoundry::submit_async instead of submit_and_wait. Barriers owed to
-     * each stage's hazards are recorded as in dispatch_sequence, including the
-     * one after the final stage, so a caller that does not await the fence
-     * still gets the trailing dependency for anything submitted later.
-     *
-     * Like dispatch_sequence, and unlike dispatch_async, no shader-write to
-     * host-read barrier is recorded. Host reads after the fence has signaled
-     * rely on the fence's own visibility guarantee and on the buffers being
-     * host coherent.
+     * ShaderFoundry::submit_async instead of submit_and_wait.
      *
      * @return FenceID to poll with ShaderFoundry::is_fence_signaled and to
      *         release once signaled.
@@ -214,7 +212,6 @@ public:
         const std::vector<std::string>& keys,
         const std::vector<std::array<uint32_t, 3>>& groups_per_key,
         const std::vector<std::vector<uint8_t>>& push_constants_per_key,
-        const std::vector<std::vector<Portal::Graphics::HazardResource>>& hazards_per_key,
         const std::vector<Portal::Graphics::IndirectDispatch>& indirect_per_key = {});
 
     /**
@@ -261,8 +258,8 @@ private:
     };
 
     /**
-     * @brief Record one command buffer holding a dispatch per key, with the
-     *        barriers each stage's hazards owe the next.
+     * @brief Record one command buffer holding a dispatch per key, a barrier
+     *        after each, and the trailing barrier.
      *
      * Shared by dispatch_sequence and dispatch_sequence_async, which differ
      * only in how they submit the returned buffer.
@@ -271,7 +268,6 @@ private:
         const std::vector<std::string>& keys,
         const std::vector<std::array<uint32_t, 3>>& groups_per_key,
         const std::vector<std::vector<uint8_t>>& push_constants_per_key,
-        const std::vector<std::vector<Portal::Graphics::HazardResource>>& hazards_per_key,
         const std::vector<Portal::Graphics::IndirectDispatch>& indirect_per_key);
 
     struct SharedBuffers;

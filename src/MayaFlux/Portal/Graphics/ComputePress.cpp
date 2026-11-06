@@ -560,37 +560,15 @@ void ComputePress::record_sequence(
             dispatch(cmd_id, stage.groups[0], stage.groups[1], stage.groups[2]);
         }
 
-        for (const auto& hazard : stage.hazard_resources) {
-            if (hazard.binding.direction != GpuBufferBinding::Direction::INPUT_OUTPUT)
-                continue;
-
-            const bool is_image = hazard.binding.element_type == GpuBufferBinding::ElementType::IMAGE_STORAGE
-                || hazard.binding.element_type == GpuBufferBinding::ElementType::IMAGE_SAMPLED;
-
-            if (is_image) {
-                foundry.image_barrier(
-                    cmd_id,
-                    hazard.image,
-                    vk::ImageLayout::eGeneral,
-                    vk::ImageLayout::eGeneral,
-                    vk::AccessFlagBits2::eShaderWrite | vk::AccessFlagBits2::eShaderRead,
-                    vk::AccessFlagBits2::eShaderWrite | vk::AccessFlagBits2::eShaderRead,
-                    vk::PipelineStageFlagBits2::eComputeShader,
-                    vk::PipelineStageFlagBits2::eComputeShader);
-            } else {
-                foundry.buffer_barrier(
-                    cmd_id,
-                    hazard.buffer,
-                    vk::AccessFlagBits2::eShaderWrite | vk::AccessFlagBits2::eShaderRead,
-                    vk::AccessFlagBits2::eShaderWrite | vk::AccessFlagBits2::eShaderRead,
-                    vk::PipelineStageFlagBits2::eComputeShader,
-                    vk::PipelineStageFlagBits2::eComputeShader);
-            }
-        }
+        foundry.memory_barrier(
+            cmd_id,
+            vk::AccessFlagBits2::eShaderWrite,
+            vk::AccessFlagBits2::eShaderRead | vk::AccessFlagBits2::eShaderWrite | vk::AccessFlagBits2::eIndirectCommandRead,
+            vk::PipelineStageFlagBits2::eComputeShader,
+            vk::PipelineStageFlagBits2::eComputeShader | vk::PipelineStageFlagBits2::eDrawIndirect);
 
         MF_DEBUG(Journal::Component::Portal, Journal::Context::GPUCompute,
-            "record_sequence: stage {} of {} recorded ({} hazard barriers)",
-            i + 1, stages.size(), stage.hazard_resources.size());
+            "record_sequence: stage {} of {} recorded", i + 1, stages.size());
     }
 }
 

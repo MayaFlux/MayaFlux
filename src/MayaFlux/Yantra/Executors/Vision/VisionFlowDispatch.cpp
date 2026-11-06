@@ -9,16 +9,6 @@ using namespace Kinesis::Vision;
 
 namespace {
 
-    constexpr FlowBufferSpec k_flow_det_count { .set = 0, .binding = 1, .type = GpuBufferBinding::ElementType::UINT32 };
-    constexpr FlowBufferSpec k_flow_det_points { .set = 0, .binding = 2, .type = GpuBufferBinding::ElementType::FLOAT32 };
-    constexpr FlowBufferSpec k_flow_prev_count { .set = 1, .binding = 0, .type = GpuBufferBinding::ElementType::UINT32 };
-    constexpr FlowBufferSpec k_flow_prev_points { .set = 1, .binding = 1, .type = GpuBufferBinding::ElementType::FLOAT32 };
-    constexpr FlowBufferSpec k_flow_tracks { .set = 1, .binding = 2, .type = GpuBufferBinding::ElementType::FLOAT32 };
-    constexpr FlowBufferSpec k_flow_meta { .set = 1, .binding = 3, .type = GpuBufferBinding::ElementType::UINT32 };
-    constexpr FlowBufferSpec k_flow_next_points { .set = 1, .binding = 4, .type = GpuBufferBinding::ElementType::FLOAT32 };
-    constexpr FlowBufferSpec k_flow_counters { .set = 1, .binding = 5, .type = GpuBufferBinding::ElementType::UINT32 };
-    constexpr FlowBufferSpec k_flow_histogram { .set = 1, .binding = 6, .type = GpuBufferBinding::ElementType::UINT32 };
-    constexpr FlowBufferSpec k_flow_grid { .set = 1, .binding = 7, .type = GpuBufferBinding::ElementType::UINT32 };
     constexpr std::array<FlowBufferSpec, 2> k_flow_export {
         FlowBufferSpec { .set = 1, .binding = 8, .type = GpuBufferBinding::ElementType::FLOAT32 },
         FlowBufferSpec { .set = 1, .binding = 9, .type = GpuBufferBinding::ElementType::FLOAT32 },
@@ -67,25 +57,6 @@ namespace {
     IndirectGroupsSource flow_args_source(FlowArgs slot)
     {
         return { .set = k_flow_args.set, .binding = k_flow_args.binding, .offset_bytes = static_cast<uint64_t>(slot) * k_flow_args_stride };
-    }
-
-    /**
-     * @brief Hazard list covering the named shared buffers of the flow
-     *        context, for the barrier a stage owes the stages after it.
-     */
-    std::vector<Portal::Graphics::HazardResource> flow_hazards(GpuDispatchCore& ctx, const std::vector<FlowBufferSpec>& specs)
-    {
-        std::vector<Portal::Graphics::HazardResource> hazards;
-        hazards.reserve(specs.size());
-        for (const auto& s : specs) {
-            hazards.push_back(ctx.shared_buffer_hazard({
-                .set = s.set,
-                .binding = s.binding,
-                .direction = GpuBufferBinding::Direction::INPUT_OUTPUT,
-                .element_type = s.type,
-            }));
-        }
-        return hazards;
     }
 
     /**
@@ -371,7 +342,6 @@ bool VisionGpuExecutor::op_track_keypoints(VisionGpuContexts& contexts, const Vi
         .stage_fn = [response, peaks_pc](GpuDispatchCore& ctx) {
                 ctx.stage_image_at(0, response, GpuBufferBinding::ElementType::IMAGE_STORAGE);
                 ctx.set_push_constants(peaks_pc); },
-        .hazard_fn = [](GpuDispatchCore& ctx) { return flow_hazards(ctx, { k_flow_det_count, k_flow_det_points }); },
         .explicit_groups = std::array<uint32_t, 3> { (w + k_wg2d[0] - 1U) / k_wg2d[0], (h + k_wg2d[1] - 1U) / k_wg2d[1], 1U },
     });
 
@@ -390,7 +360,7 @@ bool VisionGpuExecutor::op_track_keypoints(VisionGpuContexts& contexts, const Vi
     const uint32_t candidate_groups = (k_flow_max_points + k_flow_select_local - 1U) / k_flow_select_local;
     const uint32_t have_prev = state.have_prev ? 1U : 0U;
 
-    const auto add_select = [&](FlowSelectPhase phase, uint32_t groups, std::vector<FlowBufferSpec> touched, std::optional<FlowArgs> args = std::nullopt) {
+    const auto add_select = [&](FlowSelectPhase phase, uint32_t groups, std::optional<FlowArgs> args = std::nullopt) {
         const FlowSelectPC pc {
             .phase = static_cast<uint32_t>(phase),
             .max_points = max_points,
@@ -407,18 +377,16 @@ bool VisionGpuExecutor::op_track_keypoints(VisionGpuContexts& contexts, const Vi
         stages.push_back({
             .config = { .shader_path = "flow_select.comp.spv", .workgroup_size = { k_flow_select_local, 1, 1 }, .push_constant_size = sizeof(FlowSelectPC) },
             .stage_fn = [pc](GpuDispatchCore& ctx) { ctx.set_push_constants(pc); },
-            .hazard_fn = [touched = std::move(touched)](GpuDispatchCore& ctx) { return flow_hazards(ctx, touched); },
             .explicit_groups = std::array<uint32_t, 3> { groups, 1U, 1U },
             .indirect_groups = args ? std::optional<IndirectGroupsSource> { flow_args_source(*args) } : std::nullopt,
         });
     };
 
-    add_select(FlowSelectPhase::ARGS, 1U, {});
+    add_select(FlowSelectPhase::ARGS, 1U);
 
     const auto add_lk = [&](bool backward) {
         for (uint32_t level = layout.levels; level-- > 0;) {
             const PyramidLevel lv = layout.level[level];
-            const bool finest = level == 0;
 
             const FlowLkPC pc {
                 .curr_atlas = state.curr,
@@ -447,10 +415,6 @@ bool VisionGpuExecutor::op_track_keypoints(VisionGpuContexts& contexts, const Vi
                         ctx.stage_image_at(3, atlas_a, GpuBufferBinding::ElementType::IMAGE_STORAGE);
                         ctx.stage_image_at(4, atlas_b, GpuBufferBinding::ElementType::IMAGE_STORAGE);
                         ctx.set_push_constants(pc); },
-                .hazard_fn = [finest, backward](GpuDispatchCore& ctx) {
-                        if (finest || backward)
-                            return flow_hazards(ctx, { k_flow_tracks, k_flow_meta, k_flow_prev_count, k_flow_prev_points });
-                        return flow_hazards(ctx, { k_flow_tracks, k_flow_meta }); },
                 .explicit_groups = std::array<uint32_t, 3> { k_flow_max_points, 1U, 1U },
                 .indirect_groups = flow_args_source(FlowArgs::LK),
             });
@@ -462,15 +426,15 @@ bool VisionGpuExecutor::op_track_keypoints(VisionGpuContexts& contexts, const Vi
             add_lk(true);
     }
 
-    add_select(FlowSelectPhase::CLEAR, clear_groups, { k_flow_grid, k_flow_histogram, k_flow_counters });
-    add_select(FlowSelectPhase::SURVIVORS, candidate_groups, { k_flow_next_points, k_flow_counters, k_flow_grid }, FlowArgs::RETAINED);
-    add_select(FlowSelectPhase::HISTOGRAM, candidate_groups, { k_flow_histogram }, FlowArgs::DETECTED);
-    add_select(FlowSelectPhase::THRESHOLD, 1U, { k_flow_counters });
-    add_select(FlowSelectPhase::ADD_STRONG, candidate_groups, { k_flow_next_points, k_flow_counters, k_flow_grid }, FlowArgs::DETECTED);
-    add_select(FlowSelectPhase::ADD_MARGINAL, candidate_groups, { k_flow_next_points, k_flow_counters, k_flow_grid }, FlowArgs::DETECTED);
-    add_select(FlowSelectPhase::COMMIT, 1U, {});
+    add_select(FlowSelectPhase::CLEAR, clear_groups);
+    add_select(FlowSelectPhase::SURVIVORS, candidate_groups, FlowArgs::RETAINED);
+    add_select(FlowSelectPhase::HISTOGRAM, candidate_groups, FlowArgs::DETECTED);
+    add_select(FlowSelectPhase::THRESHOLD, 1U);
+    add_select(FlowSelectPhase::ADD_STRONG, candidate_groups, FlowArgs::DETECTED);
+    add_select(FlowSelectPhase::ADD_MARGINAL, candidate_groups, FlowArgs::DETECTED);
+    add_select(FlowSelectPhase::COMMIT, 1U);
     if (export_tracks)
-        add_select(FlowSelectPhase::PUBLISH, candidate_groups, { k_flow_export[0], k_flow_export[1] }, FlowArgs::PUBLISH);
+        add_select(FlowSelectPhase::PUBLISH, candidate_groups, FlowArgs::PUBLISH);
 
     ExecutionContext track_ctx;
     track_ctx.mode = ExecutionMode::DEPENDENCY;
@@ -563,23 +527,10 @@ bool VisionGpuExecutor::op_dense_flow(VisionGpuContexts& contexts, const VisionS
     const uint32_t radius = std::clamp(p.window_radius, 1U, k_flow_dense_max_radius);
     const uint32_t iterations = std::max(p.iterations, 1U);
 
-    const auto image_hazard = [](const std::shared_ptr<Core::VKImage>& image, uint32_t binding) {
-        return HazardResource {
-            .binding = { .set = 0, .binding = binding, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::IMAGE_STORAGE },
-            .image = image->get_image(),
-        };
-    };
-
-    const auto scratch_a_hazard = image_hazard(images->scratch_a, 8U);
-    const auto scratch_b_hazard = image_hazard(images->scratch_b, 9U);
-    const auto tensor_hazard = image_hazard(images->tensor, 10U);
-    const auto coarse_hazard = image_hazard(images->flow_lvl, 7U);
-    const auto out_hazard = image_hazard(out_parity == 0 ? images->flow_out_a : images->flow_out_b, 5U + out_parity);
-
     std::vector<DependencyStage> stages;
     stages.reserve(static_cast<size_t>(layout.levels) * (2U + 3U * iterations) + 1U);
 
-    const auto push_stage = [&](const FlowDensePC& stage_pc, const PyramidLevel& region, std::vector<HazardResource> hazards) {
+    const auto push_stage = [&](const FlowDensePC& stage_pc, const PyramidLevel& region) {
         stages.push_back({
             .config = { .shader_path = "flow_dense.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(FlowDensePC) },
             .stage_fn = [images, stage_pc](GpuDispatchCore& ctx) {
@@ -594,7 +545,6 @@ bool VisionGpuExecutor::op_dense_flow(VisionGpuContexts& contexts, const VisionS
                     ctx.stage_image_at(10, images->tensor, Kind::IMAGE_STORAGE);
                     ctx.stage_image_at(11, images->vis, Kind::IMAGE_STORAGE);
                     ctx.set_push_constants(stage_pc); },
-            .hazard_fn = [hazards = std::move(hazards)](GpuDispatchCore&) { return hazards; },
             .explicit_groups = std::array<uint32_t, 3> { (region.w + k_wg2d[0] - 1U) / k_wg2d[0], (region.h + k_wg2d[1] - 1U) / k_wg2d[1], 1U },
         });
     };
@@ -603,7 +553,6 @@ bool VisionGpuExecutor::op_dense_flow(VisionGpuContexts& contexts, const VisionS
         const PyramidLevel lv = layout.level[level];
         const bool coarsest = level + 1U == layout.levels;
         const PyramidLevel coarse = coarsest ? PyramidLevel {} : layout.level[level + 1];
-        const auto& flow_hazard = level == 0 ? out_hazard : coarse_hazard;
 
         FlowDensePC pc {
             .phase = 0,
@@ -627,18 +576,18 @@ bool VisionGpuExecutor::op_dense_flow(VisionGpuContexts& contexts, const VisionS
             .last_iteration = 0,
         };
 
-        const auto add = [&](FlowDensePhase phase, std::vector<HazardResource> hazards) {
+        const auto add = [&](FlowDensePhase phase) {
             pc.phase = static_cast<uint32_t>(phase);
-            push_stage(pc, lv, std::move(hazards));
+            push_stage(pc, lv);
         };
 
-        add(FlowDensePhase::TENSOR_H, { scratch_a_hazard });
-        add(FlowDensePhase::TENSOR_V, { tensor_hazard, scratch_a_hazard });
+        add(FlowDensePhase::TENSOR_H);
+        add(FlowDensePhase::TENSOR_V);
         for (uint32_t iteration = 0; iteration < iterations; ++iteration) {
-            add(iteration == 0 ? FlowDensePhase::WARP_INIT : FlowDensePhase::WARP, { scratch_a_hazard, flow_hazard });
-            add(FlowDensePhase::BOX_H, { scratch_b_hazard, scratch_a_hazard });
+            add(iteration == 0 ? FlowDensePhase::WARP_INIT : FlowDensePhase::WARP);
+            add(FlowDensePhase::BOX_H);
             pc.last_iteration = iteration + 1U == iterations ? 1U : 0U;
-            add(FlowDensePhase::SOLVE, { flow_hazard, scratch_b_hazard });
+            add(FlowDensePhase::SOLVE);
         }
     }
 
@@ -665,7 +614,7 @@ bool VisionGpuExecutor::op_dense_flow(VisionGpuContexts& contexts, const VisionS
             .visual_min_motion = p.visual_min_motion,
             .last_iteration = 0,
         };
-        push_stage(vis_pc, finest, { out_hazard, image_hazard(images->vis, 11U) });
+        push_stage(vis_pc, finest);
     }
 
     ExecutionContext dense_ctx;
@@ -732,7 +681,6 @@ void VisionGpuExecutor::build_flow_pyramid(VisionGpuContexts& contexts, uint32_t
 
     const auto atlas_a = state.atlas[0];
     const auto atlas_b = state.atlas[1];
-    const auto target = state.atlas[state.curr];
 
     std::vector<DependencyStage> stages;
     stages.reserve(layout.levels);
@@ -762,19 +710,6 @@ void VisionGpuExecutor::build_flow_pyramid(VisionGpuContexts& contexts, uint32_t
                     ctx.stage_image_at(3, atlas_a, GpuBufferBinding::ElementType::IMAGE_STORAGE);
                     ctx.stage_image_at(4, atlas_b, GpuBufferBinding::ElementType::IMAGE_STORAGE);
                     ctx.set_push_constants(pc); },
-            .hazard_fn = [target, gray, level](GpuDispatchCore&) {
-                    std::vector<HazardResource> hazards;
-                    hazards.push_back({
-                        .binding = { .set = 0, .binding = 3, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::IMAGE_STORAGE },
-                        .image = target->get_image(),
-                    });
-                    if (level == 0) {
-                        hazards.push_back({
-                            .binding = { .set = 0, .binding = 0, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::IMAGE_STORAGE },
-                            .image = gray->get_image(),
-                        });
-                    }
-                    return hazards; },
             .explicit_groups = std::array<uint32_t, 3> { (dst.w + k_wg2d[0] - 1U) / k_wg2d[0], (dst.h + k_wg2d[1] - 1U) / k_wg2d[1], 1U },
         });
     }

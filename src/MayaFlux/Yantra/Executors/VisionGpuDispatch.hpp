@@ -564,9 +564,9 @@ private:
      * @brief Build the current frame's pyramid atlas from the working image.
      *
      * Submitted as one un-awaited dependency sequence, one fused dispatch per
-     * level. The level 0 stage carries a hazard on the working image, which
-     * orders any later dispatch that overwrites it after this read. The
-     * fence is reaped on the next fresh run and in reset().
+     * level. Its trailing barrier orders any later dispatch that overwrites
+     * the working image after this read. The fence is reaped on the next
+     * fresh run and in reset().
      *
      * @param src_channel Channel of the working image read as intensity: 0
      *                    for a gray frame, 2 for the value channel of an HSV

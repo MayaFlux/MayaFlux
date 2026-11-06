@@ -537,18 +537,6 @@ void GpuResourceManager::upload_shared_raw(uint32_t set, size_t binding_index, c
     std::memcpy(slot.mapped_ptr, data, byte_size);
 }
 
-Portal::Graphics::HazardResource GpuResourceManager::make_shared_buffer_hazard(
-    const GpuBufferBinding& spec) const
-{
-    const auto it = m_shared->slots.find({ spec.set, static_cast<size_t>(spec.binding) });
-    vk::Buffer handle = it != m_shared->slots.end() ? it->second.buffer : vk::Buffer {};
-    return Portal::Graphics::HazardResource {
-        .binding = spec,
-        .image = nullptr,
-        .buffer = handle,
-    };
-}
-
 void GpuResourceManager::bind_image_storage(
     const std::string& key, size_t index,
     const std::shared_ptr<Core::VKImage>& image,
@@ -633,9 +621,39 @@ Portal::Graphics::CommandBufferID GpuResourceManager::begin_dispatch_commands()
         Portal::Graphics::ShaderFoundry::CommandBufferType::GRAPHICS);
 }
 
+namespace {
+
+    /**
+     * @brief Order every later command, and host reads after completion, behind
+     *        the compute writes recorded so far.
+     */
+    void record_trailing_barrier(Portal::Graphics::ShaderFoundry& foundry, Portal::Graphics::CommandBufferID cmd_id)
+    {
+        foundry.memory_barrier(
+            cmd_id,
+            vk::AccessFlagBits2::eShaderWrite,
+            vk::AccessFlagBits2::eMemoryRead | vk::AccessFlagBits2::eMemoryWrite | vk::AccessFlagBits2::eHostRead,
+            vk::PipelineStageFlagBits2::eComputeShader,
+            vk::PipelineStageFlagBits2::eAllCommands | vk::PipelineStageFlagBits2::eHost);
+    }
+
+    /**
+     * @brief Order the next pass of a batched dispatch behind this pass's writes.
+     */
+    void record_pass_barrier(Portal::Graphics::ShaderFoundry& foundry, Portal::Graphics::CommandBufferID cmd_id)
+    {
+        foundry.memory_barrier(
+            cmd_id,
+            vk::AccessFlagBits2::eShaderWrite,
+            vk::AccessFlagBits2::eShaderRead | vk::AccessFlagBits2::eShaderWrite | vk::AccessFlagBits2::eIndirectCommandRead,
+            vk::PipelineStageFlagBits2::eComputeShader,
+            vk::PipelineStageFlagBits2::eComputeShader | vk::PipelineStageFlagBits2::eDrawIndirect);
+    }
+
+} // namespace
+
 void GpuResourceManager::dispatch(const std::string& key,
     const std::array<uint32_t, 3>& groups,
-    const std::vector<GpuBufferBinding>& bindings,
     const uint8_t* push_constant_data,
     size_t push_constant_size)
 {
@@ -648,36 +666,14 @@ void GpuResourceManager::dispatch(const std::string& key,
     compute_press.bind_all(
         cmd_id, unit.pipeline_id, unit.descriptor_set_ids,
         push_constant_data, push_constant_size);
-
     compute_press.dispatch(cmd_id, groups[0], groups[1], groups[2]);
-
-    for (const auto& b : bindings) {
-        const auto et = b.element_type;
-        const bool is_image = et == GpuBufferBinding::ElementType::IMAGE_STORAGE
-            || et == GpuBufferBinding::ElementType::IMAGE_SAMPLED;
-        const bool is_output = b.direction == GpuBufferBinding::Direction::OUTPUT
-            || b.direction == GpuBufferBinding::Direction::INPUT_OUTPUT;
-
-        const bool is_shared = m_shared->slots.contains({ b.set, static_cast<size_t>(b.binding) });
-        if (is_output && !is_image && !is_shared
-            && static_cast<size_t>(b.binding) < unit.impl->buffers.size()
-            && unit.impl->buffers[b.binding].buffer) {
-            foundry.buffer_barrier(
-                cmd_id,
-                unit.impl->buffers[b.binding].buffer,
-                vk::AccessFlagBits2::eShaderWrite,
-                vk::AccessFlagBits2::eHostRead,
-                vk::PipelineStageFlagBits2::eComputeShader,
-                vk::PipelineStageFlagBits2::eHost);
-        }
-    }
+    record_trailing_barrier(foundry, cmd_id);
 
     foundry.submit_and_wait(cmd_id);
 }
 
 void GpuResourceManager::dispatch_batched(const std::string& key,
     const std::array<uint32_t, 3>& groups,
-    const std::vector<GpuBufferBinding>& bindings,
     size_t push_constant_size,
     const ExecutionContext& ctx)
 {
@@ -689,10 +685,9 @@ void GpuResourceManager::dispatch_batched(const std::string& key,
     auto& compute_press = Portal::Graphics::get_compute_press();
 
     const uint32_t workgroups_per_pass = groups[0] * groups[1] * groups[2];
-
     const uint32_t default_passes = std::max(1U, 65536U / std::max(1U, workgroups_per_pass));
-
     const uint32_t effective_passes_per_batch = params.passes_per_batch.value_or(default_passes);
+
     for (uint32_t base = 0; base < params.pass_count; base += effective_passes_per_batch) {
         const uint32_t batch_end = std::min(base + effective_passes_per_batch, params.pass_count);
         auto cmd_id = begin_dispatch_commands();
@@ -704,59 +699,10 @@ void GpuResourceManager::dispatch_batched(const std::string& key,
                 cmd_id, unit.pipeline_id, unit.descriptor_set_ids,
                 pc_data.data(), push_constant_size);
             compute_press.dispatch(cmd_id, groups[0], groups[1], groups[2]);
-
-            for (const auto& b : bindings) {
-                if (b.direction != GpuBufferBinding::Direction::INPUT_OUTPUT)
-                    continue;
-
-                const bool is_image = b.element_type == GpuBufferBinding::ElementType::IMAGE_STORAGE
-                    || b.element_type == GpuBufferBinding::ElementType::IMAGE_SAMPLED;
-                const bool is_shared = m_shared->slots.contains({ b.set, static_cast<size_t>(b.binding) });
-
-                if (is_image) {
-                    if (static_cast<size_t>(b.binding) < unit.image_slots.size() && unit.image_slots[b.binding]) {
-                        foundry.image_barrier(
-                            cmd_id,
-                            unit.image_slots[b.binding]->get_image(),
-                            vk::ImageLayout::eGeneral,
-                            vk::ImageLayout::eGeneral,
-                            vk::AccessFlagBits2::eShaderWrite | vk::AccessFlagBits2::eShaderRead,
-                            vk::AccessFlagBits2::eShaderWrite | vk::AccessFlagBits2::eShaderRead,
-                            vk::PipelineStageFlagBits2::eComputeShader,
-                            vk::PipelineStageFlagBits2::eComputeShader);
-                    }
-                } else if (!is_shared && static_cast<size_t>(b.binding) < unit.impl->buffers.size()
-                    && unit.impl->buffers[b.binding].buffer) {
-                    foundry.buffer_barrier(
-                        cmd_id,
-                        unit.impl->buffers[b.binding].buffer,
-                        vk::AccessFlagBits2::eShaderWrite | vk::AccessFlagBits2::eShaderRead,
-                        vk::AccessFlagBits2::eShaderWrite | vk::AccessFlagBits2::eShaderRead,
-                        vk::PipelineStageFlagBits2::eComputeShader,
-                        vk::PipelineStageFlagBits2::eComputeShader);
-                }
-            }
+            record_pass_barrier(foundry, cmd_id);
         }
 
-        for (const auto& b : bindings) {
-            if (b.direction == GpuBufferBinding::Direction::OUTPUT
-                || b.direction == GpuBufferBinding::Direction::INPUT_OUTPUT) {
-                const bool is_image = b.element_type == GpuBufferBinding::ElementType::IMAGE_STORAGE
-                    || b.element_type == GpuBufferBinding::ElementType::IMAGE_SAMPLED;
-                const bool is_shared = m_shared->slots.contains({ b.set, static_cast<size_t>(b.binding) });
-                if (!is_image && !is_shared && static_cast<size_t>(b.binding) < unit.impl->buffers.size()
-                    && unit.impl->buffers[b.binding].buffer) {
-                    foundry.buffer_barrier(
-                        cmd_id,
-                        unit.impl->buffers[b.binding].buffer,
-                        vk::AccessFlagBits2::eShaderWrite,
-                        vk::AccessFlagBits2::eHostRead,
-                        vk::PipelineStageFlagBits2::eComputeShader,
-                        vk::PipelineStageFlagBits2::eHost);
-                }
-            }
-        }
-
+        record_trailing_barrier(foundry, cmd_id);
         foundry.submit_and_wait(cmd_id);
     }
 }
@@ -764,7 +710,6 @@ void GpuResourceManager::dispatch_batched(const std::string& key,
 void GpuResourceManager::dispatch_batched_indirect(const std::string& key,
     uint32_t indirect_set, size_t indirect_binding,
     const std::array<uint32_t, 3>& groups,
-    const std::vector<GpuBufferBinding>& bindings,
     size_t push_constant_size,
     const ExecutionContext& ctx)
 {
@@ -792,34 +737,16 @@ void GpuResourceManager::dispatch_batched_indirect(const std::string& key,
             params.pc_updater(pass, 1, pc_data.data());
             compute_press.bind_all(cmd_id, unit.pipeline_id, unit.descriptor_set_ids, pc_data.data(), push_constant_size);
             compute_press.dispatch_indirect(cmd_id, indirect_buffer);
-
-            for (const auto& b : bindings) {
-                const auto et = b.element_type;
-                const bool is_image = et == GpuBufferBinding::ElementType::IMAGE_STORAGE
-                    || et == GpuBufferBinding::ElementType::IMAGE_SAMPLED;
-                const bool is_output = b.direction == GpuBufferBinding::Direction::OUTPUT
-                    || b.direction == GpuBufferBinding::Direction::INPUT_OUTPUT;
-                const bool is_shared = m_shared->slots.contains({ b.set, static_cast<size_t>(b.binding) });
-                if (is_output && !is_image && !is_shared
-                    && static_cast<size_t>(b.binding) < unit.impl->buffers.size()
-                    && unit.impl->buffers[b.binding].buffer) {
-                    foundry.buffer_barrier(
-                        cmd_id,
-                        unit.impl->buffers[b.binding].buffer,
-                        vk::AccessFlagBits2::eShaderWrite,
-                        vk::AccessFlagBits2::eShaderRead | vk::AccessFlagBits2::eShaderWrite,
-                        vk::PipelineStageFlagBits2::eComputeShader,
-                        vk::PipelineStageFlagBits2::eComputeShader);
-                }
-            }
+            record_pass_barrier(foundry, cmd_id);
         }
+
+        record_trailing_barrier(foundry, cmd_id);
         foundry.submit_and_wait(cmd_id);
     }
 }
 
 Portal::Graphics::FenceID GpuResourceManager::dispatch_async(const std::string& key,
     const std::array<uint32_t, 3>& groups,
-    const std::vector<GpuBufferBinding>& bindings,
     const uint8_t* push_constant_data,
     size_t push_constant_size)
 {
@@ -832,29 +759,8 @@ Portal::Graphics::FenceID GpuResourceManager::dispatch_async(const std::string& 
     compute_press.bind_all(
         cmd_id, unit.pipeline_id, unit.descriptor_set_ids,
         push_constant_data, push_constant_size);
-
     compute_press.dispatch(cmd_id, groups[0], groups[1], groups[2]);
-
-    for (const auto& b : bindings) {
-        const auto et = b.element_type;
-        const bool is_image = et == GpuBufferBinding::ElementType::IMAGE_STORAGE
-            || et == GpuBufferBinding::ElementType::IMAGE_SAMPLED;
-        const bool is_output = b.direction == GpuBufferBinding::Direction::OUTPUT
-            || b.direction == GpuBufferBinding::Direction::INPUT_OUTPUT;
-        const bool is_shared = m_shared->slots.contains({ b.set, static_cast<size_t>(b.binding) });
-
-        if (is_output && !is_image && !is_shared
-            && static_cast<size_t>(b.binding) < unit.impl->buffers.size()
-            && unit.impl->buffers[b.binding].buffer) {
-            foundry.buffer_barrier(
-                cmd_id,
-                unit.impl->buffers[b.binding].buffer,
-                vk::AccessFlagBits2::eShaderWrite,
-                vk::AccessFlagBits2::eHostRead,
-                vk::PipelineStageFlagBits2::eComputeShader,
-                vk::PipelineStageFlagBits2::eHost);
-        }
-    }
+    record_trailing_barrier(foundry, cmd_id);
 
     return foundry.submit_async(cmd_id);
 }
@@ -863,7 +769,6 @@ Portal::Graphics::CommandBufferID GpuResourceManager::record_sequence_commands(
     const std::vector<std::string>& keys,
     const std::vector<std::array<uint32_t, 3>>& groups_per_key,
     const std::vector<std::vector<uint8_t>>& push_constants_per_key,
-    const std::vector<std::vector<Portal::Graphics::HazardResource>>& hazards_per_key,
     const std::vector<Portal::Graphics::IndirectDispatch>& indirect_per_key)
 {
     auto& foundry = Portal::Graphics::get_shader_foundry();
@@ -879,13 +784,13 @@ Portal::Graphics::CommandBufferID GpuResourceManager::record_sequence_commands(
             .descriptor_set_ids = unit.descriptor_set_ids,
             .groups = groups_per_key[i],
             .push_constant_data = push_constants_per_key[i],
-            .hazard_resources = hazards_per_key[i],
             .indirect = i < indirect_per_key.size() ? indirect_per_key[i] : Portal::Graphics::IndirectDispatch {},
         });
     }
 
     auto cmd_id = begin_dispatch_commands();
     compute_press.record_sequence(cmd_id, stages);
+    record_trailing_barrier(foundry, cmd_id);
     return cmd_id;
 }
 
@@ -893,24 +798,22 @@ void GpuResourceManager::dispatch_sequence(
     const std::vector<std::string>& keys,
     const std::vector<std::array<uint32_t, 3>>& groups_per_key,
     const std::vector<std::vector<uint8_t>>& push_constants_per_key,
-    const std::vector<std::vector<Portal::Graphics::HazardResource>>& hazards_per_key,
     const std::vector<Portal::Graphics::IndirectDispatch>& indirect_per_key)
 {
     auto& foundry = Portal::Graphics::get_shader_foundry();
     foundry.submit_and_wait(
-        record_sequence_commands(keys, groups_per_key, push_constants_per_key, hazards_per_key, indirect_per_key));
+        record_sequence_commands(keys, groups_per_key, push_constants_per_key, indirect_per_key));
 }
 
 Portal::Graphics::FenceID GpuResourceManager::dispatch_sequence_async(
     const std::vector<std::string>& keys,
     const std::vector<std::array<uint32_t, 3>>& groups_per_key,
     const std::vector<std::vector<uint8_t>>& push_constants_per_key,
-    const std::vector<std::vector<Portal::Graphics::HazardResource>>& hazards_per_key,
     const std::vector<Portal::Graphics::IndirectDispatch>& indirect_per_key)
 {
     auto& foundry = Portal::Graphics::get_shader_foundry();
     return foundry.submit_async(
-        record_sequence_commands(keys, groups_per_key, push_constants_per_key, hazards_per_key, indirect_per_key));
+        record_sequence_commands(keys, groups_per_key, push_constants_per_key, indirect_per_key));
 }
 
 } // namespace MayaFlux::Yantra

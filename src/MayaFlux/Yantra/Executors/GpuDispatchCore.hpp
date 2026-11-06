@@ -48,17 +48,12 @@ struct IndirectGroupsSource {
  * dispatch_core — stage_image_at, set_binding_data, stage_passthrough,
  * set_push_constants all apply normally inside stage_fn. Works identically
  * for image-bearing and buffer-only shaders; nothing about this struct is
- * image-specific.
- *
- * hazard_fn runs immediately after stage_fn, once this stage's resources
- * (e.g. an image just allocated inside stage_fn) actually exist. Returns
- * the hazard list for this stage; may be empty if nothing downstream in
- * the same dependency call depends on this stage's output.
+ * image-specific. Every stage is followed by a barrier, so a stage sees the
+ * writes of every earlier stage in the same call.
  */
 struct DependencyStage {
     GpuComputeConfig config;
     std::function<void(GpuDispatchCore&)> stage_fn;
-    std::function<std::vector<Portal::Graphics::HazardResource>(GpuDispatchCore&)> hazard_fn;
     std::optional<std::array<uint32_t, 3>> explicit_groups;
 
     /**
@@ -157,12 +152,6 @@ public:
     void download_shared(uint32_t set, size_t binding_index, void* dest, size_t byte_size)
     {
         m_resources.download_shared(set, binding_index, dest, byte_size);
-    }
-
-    [[nodiscard]] Portal::Graphics::HazardResource shared_buffer_hazard(
-        const GpuBufferBinding& spec) const
-    {
-        return m_resources.make_shared_buffer_hazard(spec);
     }
 
     /**
@@ -403,8 +392,7 @@ protected:
      * For each stage, in order: applies its shader config (swap_shader
      * equivalent), invokes stage_fn to perform whatever staging that stage
      * needs, ensures its GpuResourceManager unit exists, binds its
-     * descriptors, invokes hazard_fn to resolve hazard resources now that
-     * this stage's data exists, then accumulates a Portal::Graphics::ComputeStage.
+     * descriptors, then accumulates a Portal::Graphics::ComputeStage.
      * After every stage is prepared, records and submits the full sequence in
      * one command buffer via GpuResourceManager::dispatch_sequence.
      *
@@ -427,14 +415,8 @@ protected:
      * stages' shader keys must not be rebound until the returned fence has
      * signaled.
      *
-     * The barrier owed to the final stage's INPUT_OUTPUT hazards is still
-     * recorded, which orders anything submitted afterwards behind this
-     * sequence's writes.
-     *
-     * Unlike dispatch_core_async, no shader-write to host-read barrier is
-     * recorded for the stages' buffers. As with dispatch_core_dependency,
-     * host reads after the fence has signaled rely on the fence's own
-     * visibility guarantee and on the buffers being host coherent.
+     * The sequence ends with a barrier that orders anything submitted
+     * afterwards, and host reads once the fence has signaled, behind its writes.
      *
      * @param stages Ordered stage descriptions, as for DependencyParams.
      * @return FenceID to poll with ShaderFoundry::is_fence_signaled and to
@@ -524,7 +506,6 @@ private:
         std::vector<std::string> keys;
         std::vector<std::array<uint32_t, 3>> groups;
         std::vector<std::vector<uint8_t>> push_constants;
-        std::vector<std::vector<Portal::Graphics::HazardResource>> hazards;
         std::vector<Portal::Graphics::IndirectDispatch> indirect;
     };
 
