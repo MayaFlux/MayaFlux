@@ -173,7 +173,7 @@ private:
             for (size_t i = 0; i < channels.size(); ++i)
                 std::ranges::copy(m_working_buffer[i], channels[i].begin());
         return create_output(
-            OperationHelper::reconstruct_from_double<InputType>(m_working_buffer, structure_info));
+            OperationHelper::reconstruct_from_double<input_type>(m_working_buffer, structure_info));
     }
 
     output_type create_output(const input_type& input)

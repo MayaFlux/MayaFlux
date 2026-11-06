@@ -656,7 +656,7 @@ public:
      * @brief Reconstruct ComputeData type from double vector and structure info
      * @tparam T Target ComputeData type
      * @param double_data Processed double vector
-     * @param structure_info Original structure metadata
+     * @param structure_info Source structure; recognized extents follow the result
      * @return Reconstructed data of type T
      */
     template <ComputeData T>
@@ -667,7 +667,7 @@ public:
         if constexpr (std::is_same_v<T, std::vector<std::vector<double>>>) {
             return double_data;
         } else if constexpr (std::is_same_v<T, Eigen::MatrixXd>) {
-            return recreate_eigen_matrix(double_data, structure_info);
+            return recreate_eigen_matrix(double_data, reconcile_structure(double_data, structure_info));
         } else if constexpr (std::is_same_v<T, std::vector<Kakshya::DataVariant>>) {
             std::vector<Kakshya::DataVariant> variants;
             variants.reserve(double_data.size());
@@ -688,7 +688,7 @@ public:
      * @brief Reconstruct Datum type from double vector and structure info
      * @tparam T Target Datum type
      * @param double_data Processed double vector
-     * @param structure_info Original structure metadata
+     * @param structure_info Source structure; recognized extents follow the result
      * @return Reconstructed data of type T
      */
     template <typename T>
@@ -698,11 +698,22 @@ public:
     {
         using UnderlyingType = std::decay_t<decltype(std::declval<T>().data)>;
 
+        auto result_info = reconcile_structure(double_data, structure_info);
         T io_data;
-        io_data.dimensions = structure_info.dimensions;
-        io_data.modality = structure_info.modality;
+        io_data.dimensions = result_info.dimensions;
+        io_data.modality = result_info.modality;
 
-        io_data.data = reconstruct_from_double<UnderlyingType>(double_data, structure_info);
+        if constexpr (std::is_same_v<UnderlyingType, Eigen::MatrixXd>)
+            io_data.data = recreate_eigen_matrix(double_data, result_info);
+        else
+            io_data.data = reconstruct_from_double<UnderlyingType>(double_data, result_info);
+
+        if (io_data.dimensions.empty()) {
+            auto [dimensions, modality] = infer_structure(io_data.data);
+            io_data.dimensions = std::move(dimensions);
+            if (io_data.modality == Kakshya::DataModality::UNKNOWN)
+                io_data.modality = modality;
+        }
 
         return io_data;
     }
@@ -736,6 +747,9 @@ public:
     }
 
 private:
+    static DataStructureInfo reconcile_structure(
+        const std::vector<std::vector<double>>& channels, const DataStructureInfo& source);
+
     static inline Kakshya::ComplexConversionStrategy s_complex_strategy = Kakshya::ComplexConversionStrategy::MAGNITUDE;
 
     /**

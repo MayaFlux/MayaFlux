@@ -8,6 +8,16 @@ namespace MayaFlux::Yantra {
 
 namespace detail {
 
+    std::pair<uint64_t, uint64_t> matrix_shape(const DataStructureInfo& info)
+    {
+        const auto& dimensions = info.dimensions;
+        const bool channel_first = dimensions.size() == 2
+            && dimensions[0].role == Kakshya::DataDimension::Role::CHANNEL
+            && dimensions[1].role != Kakshya::DataDimension::Role::CHANNEL;
+        return { dimensions[channel_first ? 1 : 0].size,
+            dimensions[channel_first ? 0 : 1].size };
+    }
+
     Kakshya::MatrixInterpretation modality_to_interpretation(
         Kakshya::DataModality modality,
         std::type_index original_type)
@@ -78,6 +88,74 @@ namespace detail {
 
 } // namespace detail
 
+DataStructureInfo OperationHelper::reconcile_structure(
+    const std::vector<std::vector<double>>& channels, const DataStructureInfo& source)
+{
+    using Dimension = Kakshya::DataDimension;
+    using Role = Dimension::Role;
+    auto result = source;
+    const uint64_t count = channels.size();
+    const uint64_t length = channels.empty() ? 0 : channels.front().size();
+    const bool rectangular = std::ranges::all_of(channels,
+        [length](const auto& channel) { return channel.size() == length; });
+
+    if (!rectangular) {
+        const int channel_axis = Kakshya::find_dimension_by_role(result.dimensions, Role::CHANNEL);
+        auto dimension = channel_axis >= 0 ? result.dimensions[channel_axis] : Dimension::channel(count);
+        dimension.size = count;
+        dimension.stride = 1;
+        result.dimensions = { std::move(dimension) };
+        result.modality = Kakshya::DataModality::TENSOR_ND;
+        return result;
+    }
+
+    if (result.dimensions.empty()) {
+        return result;
+    }
+
+    int channel_axis = Kakshya::find_dimension_by_role(result.dimensions, Role::CHANNEL);
+    int sample_axis = -1;
+    if (result.dimensions.size() == 1 && result.dimensions[0].role != Role::CHANNEL
+        && result.dimensions[0].role != Role::CUSTOM) {
+        sample_axis = 0;
+    } else if (result.dimensions.size() == 2 && channel_axis >= 0) {
+        const int other = channel_axis == 0 ? 1 : 0;
+        if (result.dimensions[other].role != Role::CHANNEL && result.dimensions[other].role != Role::CUSTOM)
+            sample_axis = other;
+    }
+
+    if (sample_axis < 0)
+        return result;
+
+    auto& sample_dimension = result.dimensions[sample_axis];
+    const uint64_t components = sample_dimension.grouping ? sample_dimension.grouping->count : 1;
+    if (components == 0 || length % components != 0) {
+        error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::Runtime,
+            std::source_location::current(), "Result length does not match the dimension's component grouping");
+    }
+    const uint64_t elements = length / components;
+    const uint64_t old_elements = sample_dimension.size;
+    sample_dimension.size = elements;
+
+    if (channel_axis >= 0) {
+        auto& channel_dimension = result.dimensions[channel_axis];
+        const uint64_t old_count = channel_dimension.size;
+        const uint64_t old_sample_stride = sample_dimension.stride;
+        const uint64_t old_channel_stride = channel_dimension.stride;
+        if (old_elements > 1 && old_channel_stride == old_elements * old_sample_stride)
+            channel_dimension.stride = elements * old_sample_stride;
+        if (old_count > 1 && old_sample_stride == old_count * old_channel_stride)
+            sample_dimension.stride = count * old_channel_stride;
+        channel_dimension.size = count;
+    } else if (count > 1) {
+        result.dimensions.emplace_back(Dimension::channel(count));
+        if (result.modality == Kakshya::DataModality::AUDIO_1D)
+            result.modality = Kakshya::DataModality::AUDIO_MULTICHANNEL;
+    }
+
+    return result;
+}
+
 Eigen::MatrixXd OperationHelper::recreate_eigen_matrix(
     const std::vector<std::vector<double>>& columns,
     const DataStructureInfo& structure_info)
@@ -87,8 +165,7 @@ Eigen::MatrixXd OperationHelper::recreate_eigen_matrix(
     }
 
     if (structure_info.dimensions.size() >= 2) {
-        int expected_rows = static_cast<int>(structure_info.dimensions[0].size);
-        int expected_cols = static_cast<int>(structure_info.dimensions[1].size);
+        const auto [expected_rows, expected_cols] = detail::matrix_shape(structure_info);
 
         if (columns.size() != expected_cols) {
             error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::Runtime, std::source_location::current(),
@@ -114,8 +191,7 @@ Eigen::MatrixXd OperationHelper::recreate_eigen_matrix(
     }
 
     if (structure_info.dimensions.size() >= 2) {
-        int expected_rows = static_cast<int>(structure_info.dimensions[0].size);
-        int expected_cols = static_cast<int>(structure_info.dimensions[1].size);
+        const auto [expected_rows, expected_cols] = detail::matrix_shape(structure_info);
 
         if (spans.size() != expected_cols) {
             error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::Runtime, std::source_location::current(),

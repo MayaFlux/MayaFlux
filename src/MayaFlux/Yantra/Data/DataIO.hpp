@@ -65,7 +65,7 @@ struct Datum {
         : data(d)
         , container(cont)
     {
-        auto [dims, mod] = infer_structure(d);
+        auto [dims, mod] = infer_structure(data, cont);
         dimensions = std::move(dims);
         modality = mod;
     }
@@ -99,7 +99,7 @@ struct Datum {
         : data(std::move(d))
         , container(cont)
     {
-        auto [dims, mod] = infer_structure(data);
+        auto [dims, mod] = infer_structure(data, cont);
         dimensions = std::move(dims);
         modality = mod;
     }
@@ -230,7 +230,7 @@ struct Datum {
         size_t min_dimensions = 1) const
     {
         if constexpr (RequiresContainer<T>) {
-            if (!container.has_value()) {
+            if (!container.has_value() || !*container) {
                 return false;
             }
         }

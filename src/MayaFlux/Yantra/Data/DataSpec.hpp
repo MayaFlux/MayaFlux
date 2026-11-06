@@ -260,6 +260,12 @@ namespace detail {
         using type = double;
     };
 
+    template <typename T>
+        requires std::constructible_from<Kakshya::DataVariant, std::vector<T>>
+    struct native_element<std::vector<T>> {
+        using type = T;
+    };
+
     template <>
     struct native_element<std::vector<Kakshya::DataVariant>> {
         using type = void; ///< Heterogeneous -- visit the variant at runtime.
