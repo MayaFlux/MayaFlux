@@ -161,8 +161,7 @@ void GpuDispatchCore::prepare_gpu_inputs(
                 continue;
             auto& img = m_image_bindings[idx].image;
             if (img->get_current_layout() != vk::ImageLayout::eGeneral) {
-                m_resources.transition_image(img, img->get_current_layout(),
-                    vk::ImageLayout::eGeneral);
+                m_resources.transition_image(img, vk::ImageLayout::eGeneral);
             }
             image_binds.push_back({ .index = idx, .image = img, .sampler = nullptr, .spec = b });
         } break;
@@ -173,8 +172,7 @@ void GpuDispatchCore::prepare_gpu_inputs(
             auto& img = m_image_bindings[idx].image;
             auto sampler = m_image_bindings[idx].sampler;
             if (img->get_current_layout() != vk::ImageLayout::eShaderReadOnlyOptimal) {
-                m_resources.transition_image(img, img->get_current_layout(),
-                    vk::ImageLayout::eShaderReadOnlyOptimal);
+                m_resources.transition_image(img, vk::ImageLayout::eShaderReadOnlyOptimal);
             }
             image_binds.push_back({ .index = idx, .image = img, .sampler = sampler, .spec = b });
         } break;

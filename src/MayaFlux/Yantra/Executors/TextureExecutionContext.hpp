@@ -507,7 +507,7 @@ protected:
         }
 
         Portal::Graphics::TextureLoom::instance().transition_layout(
-            img, vk::ImageLayout::eGeneral, vk::ImageLayout::eShaderReadOnlyOptimal);
+            img, vk::ImageLayout::eShaderReadOnlyOptimal);
 
         if (m_output_mode == OutputMode::IMAGE)
             return output_type {};

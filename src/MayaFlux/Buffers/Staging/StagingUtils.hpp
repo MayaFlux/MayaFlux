@@ -49,8 +49,9 @@ MAYAFLUX_API void upload_host_visible(const std::shared_ptr<VKBuffer>& target, c
  *
  * This function handles uploading data from a Kakshya::DataVariant into a
  * device-local VKBuffer by utilizing a staging buffer. It copies the data
- * into the staging buffer, flushes it, and then issues a command to copy
- * from the staging buffer to the target device-local buffer.
+ * into the staging buffer, flushes it, and then submits a copy to the target
+ * without waiting. Later GPU work is ordered after the copy, and the next
+ * write to @p staging_buffer waits for it.
  *
  * @param dst_offset Byte offset into @p target the staging copy lands at.
  *        The default 0 reproduces the whole-buffer overwrite exactly; a
@@ -220,9 +221,9 @@ MAYAFLUX_API void resolve_back_buffer_read(
  *        leaving the rest of @p target as it was.
  * @param awaited True when the caller has already waited for work using
  *        @p target, which skips the library-wide wait before a host write.
- *        A device-local @p target with a caller-supplied @p staging buffer is
- *        then copied without blocking; the next write to @p staging waits for
- *        that copy only.
+ *        Applies to host-visible targets only. A device-local @p target is
+ *        always copied without blocking; the next write to @p staging waits
+ *        for that copy only.
  */
 MAYAFLUX_API void upload_to_gpu(
     const void* data,
@@ -237,8 +238,9 @@ MAYAFLUX_API void upload_to_gpu(
  * @param target Buffer to clear
  * @return True if the buffer was cleared
  *
- * Mapped buffers are cleared on the host. Unmapped buffers are filled on the
- * GPU with no staging allocation, and the call blocks until the fill is done.
+ * Mapped buffers are cleared on the host after their last recorded GPU use.
+ * Unmapped buffers are filled on the GPU with no staging allocation and
+ * without waiting; later GPU work is ordered after the fill.
  * Handles and device addresses are unchanged. Logs an error and returns false
  * if the buffer is null or unregistered, lacks transfer destination usage, or
  * the BufferService is unavailable. Never throws.
@@ -545,7 +547,8 @@ MAYAFLUX_API void ensure_gpu_capacity(
  *
  * Host-visible targets are written straight from @p base with one flush per
  * merged range. Device-local targets pack the ranges into @p staging and
- * record every copy in one blocking submit, so N ranges cost one submit, not N.
+ * record every copy in one submit that does not wait, so N ranges cost one
+ * submit, not N. The next call waits for that copy before reusing @p staging.
  * Source and destination share offsets, which is what lets a CPU mirror of the
  * target be the source.
  */

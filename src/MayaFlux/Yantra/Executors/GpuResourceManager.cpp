@@ -576,17 +576,9 @@ void GpuResourceManager::bind_images_batch(const std::string& key, const std::ve
 
 void GpuResourceManager::transition_image(
     const std::shared_ptr<Core::VKImage>& image,
-    vk::ImageLayout old_layout,
     vk::ImageLayout new_layout)
 {
-    auto& foundry = Portal::Graphics::get_shader_foundry();
-    auto& backend = Portal::Graphics::get_texture_manager(); // TextureLoom -> backend ref
-
-    backend.transition_layout(
-        image,
-        old_layout,
-        new_layout,
-        1, 1, vk::ImageAspectFlagBits::eColor);
+    Portal::Graphics::get_texture_manager().transition_layout(image, new_layout);
 }
 
 //==============================================================================

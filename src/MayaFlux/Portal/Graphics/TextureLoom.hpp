@@ -367,25 +367,19 @@ public:
         vk::PipelineStageFlags2 restore_stage = vk::PipelineStageFlagBits2::eFragmentShader);
 
     /**
-     * @brief Transition a VKImage to a new Vulkan layout via an immediate submission.
-     * @param image       Image to transition. Must be initialised.
-     * @param old_layout  Current layout of the image.
-     * @param new_layout  Target layout.
-     * @param mip_levels  Number of mip levels covered by the transition.
-     * @param array_layers Number of array layers covered by the transition.
-     * @param aspect_mask Image aspect flags (colour, depth, stencil).
+     * @brief Transition every mip level and layer of a VKImage to a new layout.
+     * @param image      Image to transition. Must be initialised.
+     * @param new_layout Target layout.
+     * @param mode       DEFERRED records the barrier for the next submission. ASYNC
+     *                   submits it at once without waiting. IMMEDIATE waits for it.
      *
-     * Delegates to BackendResourceManager and updates the image's tracked layout.
-     * Use before binding an image to a compute shader descriptor or before
-     * upload/download operations that require a specific layout.
+     * Later GPU work and host image copies are ordered after the transition in
+     * every mode, and the image's tracked layout changes at once.
      */
     void transition_layout(
         const std::shared_ptr<Core::VKImage>& image,
-        vk::ImageLayout old_layout,
         vk::ImageLayout new_layout,
-        uint32_t mip_levels = 1,
-        uint32_t array_layers = 1,
-        vk::ImageAspectFlags aspect_mask = vk::ImageAspectFlagBits::eColor);
+        SubmitMode mode = SubmitMode::DEFERRED);
 
     /**
      * @brief Upload pixels into one layer of an array image.

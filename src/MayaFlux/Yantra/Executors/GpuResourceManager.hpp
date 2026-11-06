@@ -126,15 +126,13 @@ public:
     void bind_images_batch(const std::string& key, const std::vector<ImageBind>& images);
 
     /**
-     * @brief Transition a VKImage layout via an immediate command submission.
+     * @brief Transition a VKImage to a new layout, ordered before the next dispatch.
      *
      * Not tied to any pipeline unit; operates on the image directly.
      * @param image      Image to transition.
-     * @param old_layout Source layout.
      * @param new_layout Target layout.
      */
     void transition_image(const std::shared_ptr<Core::VKImage>& image,
-        vk::ImageLayout old_layout,
         vk::ImageLayout new_layout);
 
     void dispatch(const std::string& key,

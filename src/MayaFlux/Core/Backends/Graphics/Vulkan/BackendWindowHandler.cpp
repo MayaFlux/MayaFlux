@@ -789,12 +789,7 @@ void BackendWindowHandler::ensure_depth_image(WindowRenderContext& ctx)
     }
 
     m_resource_manager->transition_image_layout(
-        ctx.depth_image->get_image(),
-        vk::ImageLayout::eUndefined,
-        vk::ImageLayout::eDepthStencilAttachmentOptimal,
-        1, 1,
-        vk::ImageAspectFlagBits::eDepth);
-    ctx.depth_image->set_current_layout(vk::ImageLayout::eDepthStencilAttachmentOptimal);
+        ctx.depth_image, vk::ImageLayout::eDepthStencilAttachmentOptimal);
 
     MF_INFO(Journal::Component::Core, Journal::Context::GraphicsBackend,
         "Created depth image for window '{}': {}x{}, D32_SFLOAT",
