@@ -254,8 +254,8 @@ public:
     /**
      * @brief Configure multi-pass (CHAINED) dispatch.
      *
-     * Stores pass count and push constant updater so the caller never
-     * touches ExecutionContext::execution_metadata by string key.
+     * Stores pass count and push constant updater on the executor, so the
+     * caller never has to carry them in the ExecutionContext.
      * The CHAINED mode is activated automatically in execute() when
      * a multipass configuration is present.
      *

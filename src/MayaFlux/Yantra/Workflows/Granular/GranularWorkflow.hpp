@@ -343,6 +343,7 @@ struct GranularConfig {
             FacetMember<&GranularConfig::channel> {},
             FacetMember<&GranularConfig::ascending> {},
             FacetMember<&GranularConfig::gpu_sort_threshold> {},
+            FacetMember<&GranularConfig::taper> {},
         };
     }
 
@@ -353,6 +354,16 @@ struct GranularConfig {
     uint32_t gpu_sort_threshold = 0;
     GrainTaper taper;
 };
+
+/**
+ * @brief Key under which a context carries the reconstruction taper.
+ *
+ * make_granular_context stores GranularConfig::taper here when it is set, and the
+ * additive reconstruct executors read it, so a taper given in the config reaches
+ * reconstruction without further wiring. Set it directly on a context with
+ * `ctx.facets.set(taper_facet, taper)` to supply one by hand.
+ */
+inline constexpr FacetMember<&GranularConfig::taper> taper_facet {};
 
 /**
  * @brief Construct an ExecutionContext for the granular pipeline using a built-in AnalysisType.
@@ -383,6 +394,9 @@ struct GranularConfig {
     attribute.analysis_type = analysis_type;
     attribute.qualifier = qualifier;
     ctx.facets.set(std::move(attribute));
+    if (config.taper) {
+        ctx.facets.set(taper_facet, config.taper);
+    }
     return ctx;
 }
 
@@ -419,6 +433,9 @@ template <ComputeData InputType, ComputeData OutputType>
     attribute.qualifier = qualifier;
     attribute.analyzer = std::static_pointer_cast<void>(analyzer);
     ctx.facets.set(std::move(attribute));
+    if (config.taper) {
+        ctx.facets.set(taper_facet, config.taper);
+    }
     return ctx;
 }
 
@@ -448,6 +465,9 @@ template <ComputeData InputType, ComputeData OutputType>
     attribute.channel = config.channel;
     attribute.executor = std::move(executor);
     ctx.facets.set(std::move(attribute));
+    if (config.taper) {
+        ctx.facets.set(taper_facet, config.taper);
+    }
     return ctx;
 }
 
@@ -616,8 +636,6 @@ void process_to_container_async(
 {
     auto ctx = make_granular_context(config, analysis_type, qualifier);
 
-    if (config.taper)
-        ctx.execution_metadata["grain_taper"] = config.taper;
 
     auto seg_op = matrix->get_operation<SegmentOp>("segment");
     auto attr_op = matrix->get_operation<AttributeOp>("attribute");
@@ -663,8 +681,6 @@ void process_to_container_async(
 {
     auto ctx = make_granular_context(config, std::move(executor));
 
-    if (config.taper)
-        ctx.execution_metadata["grain_taper"] = config.taper;
 
     auto seg_op = matrix->get_operation<SegmentOp>("segment");
     auto attr_op = matrix->get_operation<AttributeOp>("attribute");
@@ -719,8 +735,6 @@ void process_to_stream_async(
     GranularOutput output = GranularOutput::STREAM)
 {
     auto ctx = make_granular_context(config, analysis_type, qualifier);
-    if (config.taper)
-        ctx.execution_metadata["grain_taper"] = config.taper;
 
     auto seg_op = matrix->get_operation<SegmentOp>("segment");
     auto attr_op = matrix->get_operation<AttributeOp>("attribute");
@@ -773,8 +787,6 @@ void process_to_stream_async(
     GranularOutput output = GranularOutput::STREAM)
 {
     auto ctx = make_granular_context(config, std::move(executor));
-    if (config.taper)
-        ctx.execution_metadata["grain_taper"] = config.taper;
 
     auto seg_op = matrix->get_operation<SegmentOp>("segment");
     auto attr_op = matrix->get_operation<AttributeOp>("attribute");

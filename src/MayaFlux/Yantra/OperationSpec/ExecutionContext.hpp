@@ -120,25 +120,18 @@ struct Permit {
  * @struct ExecutionContext
  * @brief Context information controlling how a compute operation executes.
  *
- * ExecutionContext provides execution metadata, dependency hints, and hooks
+ * ExecutionContext provides typed settings, dependency hints, and hooks
  * that influence how a Yantra operation is scheduled and run.
  *
- * The `execution_metadata` map allows arbitrary user-defined parameters
- * to be passed into operations. All reads should be performed using the
- * provided accessors (`get`, `get_or`, `get_or_throw`) which internally
- * use `safe_any_cast` to provide robust type conversion and diagnostics.
- * The `facets` bag carries typed settings structs for the call instead.
+ * Settings for a call are described structs in `facets`, read back by type.
  *
  * Typical usage:
  *
  * @code
  * ExecutionContext ctx;
  *
- * ctx.set("grain_size", 1024)
- *    .set("hop_size", 512)
- *    .depends_on<MyAnalyzer>();
- *
- * auto grain = ctx.get_or<uint32_t>("grain_size", 512);
+ * ctx.facets.set(SegmentConfig { .grain_size = 1024, .hop_size = 512 });
+ * ctx.depends_on<MyAnalyzer>();
  * @endcode
  */
 struct MAYAFLUX_API ExecutionContext {
@@ -179,21 +172,10 @@ struct MAYAFLUX_API ExecutionContext {
     ExecutionParams parameters;
 
     /**
-     * @brief Arbitrary metadata parameters used by operations.
-     *
-     * This key/value store carries runtime configuration such as
-     * algorithm parameters, flags, thresholds, or domain-specific values.
-     *
-     * Values are stored as `std::any` and should be retrieved via
-     * `get()` or `get_or()` to ensure safe casting.
-     */
-    std::unordered_map<std::string, std::any> execution_metadata;
-
-    /**
      * @brief Typed settings for this call, stored as described structs and read by type.
      *
-     * Unlike `execution_metadata`, entries are not looked up by name. They
-     * belong to the call and do not travel with the data.
+     * Entries are looked up by type, not by name. They belong to the call and
+     * do not travel with the data.
      */
     Facets facets;
 
@@ -211,103 +193,6 @@ struct MAYAFLUX_API ExecutionContext {
      * @brief Optional callback used for custom reconstruction of results.
      */
     ReconstructionCallback reconstruction_callback = nullptr;
-
-    //=====================================================================
-    // Metadata helpers
-    //=====================================================================
-
-    /**
-     * @brief Insert or update metadata value.
-     *
-     * Adds or replaces a value in the metadata store.
-     *
-     * @tparam T Value type
-     * @param key Metadata key
-     * @param value Value to store
-     * @return Reference to this context for fluent chaining
-     */
-    template <typename T>
-    ExecutionContext& set(std::string key, T&& value)
-    {
-        execution_metadata[std::move(key)] = std::forward<T>(value);
-        return *this;
-    }
-
-    /**
-     * @brief Retrieve metadata value using safe casting.
-     *
-     * Uses `safe_any_cast` internally, allowing numeric conversions
-     * and providing detailed error reporting.
-     *
-     * @tparam T Expected type
-     * @param key Metadata key
-     * @return CastResult containing the value or error details
-     */
-    template <typename T>
-    CastResult<T> get(const std::string& key) const
-    {
-        auto it = execution_metadata.find(key);
-
-        if (it == execution_metadata.end()) {
-            CastResult<T> result;
-            result.error = "ExecutionContext missing key: " + key;
-            return result;
-        }
-
-        return safe_any_cast<T>(it->second);
-    }
-
-    /**
-     * @brief Retrieve metadata value or return a default.
-     *
-     * @tparam T Expected type
-     * @param key Metadata key
-     * @param default_value Value returned if key missing or conversion fails
-     * @return Retrieved or default value
-     */
-    template <typename T>
-    T get_or(const std::string& key, const T& default_value) const
-    {
-        auto it = execution_metadata.find(key);
-
-        if (it == execution_metadata.end())
-            return default_value;
-
-        return safe_any_cast<T>(it->second).value_or(default_value);
-    }
-
-    /**
-     * @brief Retrieve metadata value or throw if unavailable.
-     *
-     * Uses `safe_any_cast_or_throw`.
-     *
-     * @tparam T Expected type
-     * @param key Metadata key
-     * @return Retrieved value
-     *
-     * @throws std::runtime_error if key missing or conversion fails
-     */
-    template <typename T>
-    T get_or_throw(const std::string& key) const
-    {
-        auto it = execution_metadata.find(key);
-
-        if (it == execution_metadata.end())
-            error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::Runtime, std::source_location::current(), "ExecutionContext missing key: {}", key);
-
-        return safe_any_cast_or_throw<T>(it->second);
-    }
-
-    /**
-     * @brief Check whether a metadata key exists.
-     *
-     * @param key Metadata key
-     * @return True if key is present
-     */
-    bool contains(const std::string& key) const
-    {
-        return execution_metadata.contains(key);
-    }
 
     //=====================================================================
     // Dependency helpers

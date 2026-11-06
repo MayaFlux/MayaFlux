@@ -35,7 +35,7 @@ namespace {
         if (output == GranularOutput::CONTAINER_ADDITIVE) {
             ExecutionContext patched = ctx;
             if (taper) {
-                patched.execution_metadata["grain_taper"] = taper;
+                patched.facets.set(taper_facet, taper);
             }
             result_any = reconstruct_grains_additive(std::any(sorted), patched);
         } else {
@@ -71,7 +71,7 @@ namespace {
         if (output == GranularOutput::STREAM_ADDITIVE) {
             ExecutionContext patched = ctx;
             if (taper)
-                patched.execution_metadata["grain_taper"] = taper;
+                patched.facets.set(taper_facet, taper);
             result_any = reconstruct_grains_additive_stream(std::any(sorted), patched);
         } else {
             result_any = reconstruct_grains_stream(std::any(sorted), ctx);
@@ -154,11 +154,8 @@ const ComputationGrammar::Rule::Executor reconstruct_grains_additive =
     const auto grain_sz = (datum.data.get(grain_size_setting) ? *datum.data.get(grain_size_setting) : 1024U);
     const auto hop_sz = (datum.data.get(hop_size_setting) ? *datum.data.get(hop_size_setting) : grain_sz);
 
-    const auto taper = safe_any_cast_or_default<GrainTaper>(
-        ctx.execution_metadata.contains("grain_taper")
-            ? ctx.execution_metadata.at("grain_taper")
-            : std::any {},
-        GrainTaper {});
+    const auto* supplied = ctx.facets.get(taper_facet);
+    const GrainTaper taper = supplied ? *supplied : GrainTaper {};
 
     const size_t out_len = (regions.size() - 1) * hop_sz + grain_sz;
     std::vector<std::vector<double>> channel_data(num_ch, std::vector<double>(out_len, 0.0));
@@ -252,11 +249,8 @@ const ComputationGrammar::Rule::Executor reconstruct_grains_additive_stream =
     const auto grain_sz = (datum.data.get(grain_size_setting) ? *datum.data.get(grain_size_setting) : 1024U);
     const auto hop_sz = (datum.data.get(hop_size_setting) ? *datum.data.get(hop_size_setting) : grain_sz);
 
-    const auto taper = safe_any_cast_or_default<GrainTaper>(
-        ctx.execution_metadata.contains("grain_taper")
-            ? ctx.execution_metadata.at("grain_taper")
-            : std::any {},
-        GrainTaper {});
+    const auto* supplied = ctx.facets.get(taper_facet);
+    const GrainTaper taper = supplied ? *supplied : GrainTaper {};
 
     const uint64_t out_frames = hop_sz * regions.size() + grain_sz;
     std::vector<std::vector<double>> channel_data(num_ch, std::vector<double>(out_frames, 0.0));
@@ -538,7 +532,7 @@ std::shared_ptr<GranularMatrix> make_granular_matrix(
             [t = std::move(taper)](const std::any& in, const ExecutionContext& ctx) -> std::any {
             ExecutionContext patched = ctx;
             if (t) {
-                patched.execution_metadata["grain_taper"] = t;
+                patched.facets.set(taper_facet, t);
             }
             return reconstruct_grains_additive(in, patched);
         };
@@ -561,7 +555,7 @@ std::shared_ptr<GranularMatrix> make_granular_matrix(
             [t = std::move(taper)](const std::any& in, const ExecutionContext& ctx) -> std::any {
             ExecutionContext patched = ctx;
             if (t)
-                patched.execution_metadata["grain_taper"] = t;
+                patched.facets.set(taper_facet, t);
             return reconstruct_grains_additive_stream(in, patched);
         };
 

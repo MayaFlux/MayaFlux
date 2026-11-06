@@ -47,7 +47,7 @@ namespace MayaFlux::Yantra {
  * ```cpp
  * // Pipeline automatically applies grammar rules before operation chain
  * ExecutionContext context;
- * context.execution_metadata["processing_mode"] = std::string("high_quality");
+ * context.facets.set(QualitySettings { .mode = "high_quality" });
  *
  * auto result = pipeline->process(input_data, context);
  * // Grammar rules are evaluated first, then operation chain executes
@@ -455,11 +455,10 @@ namespace PipelineFactory {
  * ```cpp
  * // Grammar rules can dynamically select operations based on data properties
  * ExecutionContext context;
- * context.execution_metadata["processing_quality"] = std::string("high");
- * context.execution_metadata["data_size"] = input_data.size();
+ * context.facets.set(QualitySettings { .mode = "high" });
  *
  * auto processed_data = matrix->execute_with_grammar(input_data, context);
- * // Appropriate operations selected based on quality requirements and data size
+ * // Appropriate operations selected based on quality settings and the data itself
  * ```
  */
 class MAYAFLUX_API GrammarAwareComputeMatrix : public ComputeMatrix {

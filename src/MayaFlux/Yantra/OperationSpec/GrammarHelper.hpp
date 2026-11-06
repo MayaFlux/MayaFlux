@@ -63,19 +63,6 @@ public:
     }
 
     /**
-     * @brief Creates a matcher that checks for specific parameter values
-     * @param param_name Name of the parameter to check
-     * @param expected_value Expected value (type-checked)
-     * @return Matcher function that returns true if parameter matches
-     */
-    static MatcherFunc create_parameter_matcher(const std::string& param_name, const std::any& expected_value)
-    {
-        return [param_name, expected_value](const std::any& /*input*/, const ExecutionContext& ctx) -> bool {
-            return ctx.execution_metadata.contains(param_name) && ctx.execution_metadata.at(param_name).type() == expected_value.type();
-        };
-    }
-
-    /**
      * @brief Combines multiple matchers with AND logic
      * @param matchers Vector of matcher functions to combine
      * @return Matcher that returns true only if all matchers pass

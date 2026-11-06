@@ -48,7 +48,7 @@ namespace MayaFlux::Yantra {
  * ```cpp
  * auto complex_matcher = Matcher::combine_and({
  *     Matcher::create_type_matcher<std::vector<Kakshya::DataVariant>>(),
- *     Matcher::create_parameter_matcher("frequency_range", std::string("audio"))
+ *     [](const std::any& input, const ExecutionContext& ctx) { return ctx.facets.get<AudioRange>() != nullptr; }
  * });
  *
  * grammar.create_rule("spectral_filter")
