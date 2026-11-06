@@ -50,8 +50,13 @@ void sort_compute_data_inplace(Datum<T>& data,
         return;
     }
 
-    auto channels = OperationHelper::extract_numeric_data(data.data, data.needs_processig());
-    Kinesis::Discrete::sort_channels(channels, direction, algorithm);
+    if constexpr (requires { OperationHelper::extract_numeric_data(data.data, data.needs_processig()); }) {
+        auto channels = OperationHelper::extract_numeric_data(data.data, data.needs_processig());
+        Kinesis::Discrete::sort_channels(channels, direction, algorithm);
+    } else {
+        auto channels = OperationHelper::extract_numeric_data(data.data);
+        Kinesis::Discrete::sort_channels(channels, direction, algorithm);
+    }
 }
 
 /**

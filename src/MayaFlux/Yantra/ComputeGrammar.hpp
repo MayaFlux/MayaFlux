@@ -84,6 +84,13 @@ public:
         std::shared_ptr<const OperationRegistry> registry,
         ComputationSignature signature, std::initializer_list<OperationConfig> configs);
 
+    /** @brief Assemble from the library's own operations, in `make_default_registry()`. */
+    static std::shared_ptr<ComputationGrammar> assemble(
+        ComputationSignature signature, std::span<const OperationConfig> configs = {});
+
+    static std::shared_ptr<ComputationGrammar> assemble(
+        ComputationSignature signature, std::initializer_list<OperationConfig> configs);
+
     /** @brief The ordered signature established by the fluent builder or assembly. */
     [[nodiscard]] const ComputationSignature& signature() const { return m_signature; }
 
@@ -655,6 +662,12 @@ private:
 /** @brief Construct a grammar from registered implementations and optional rule refinements. */
 class ComputationGrammar::Builder {
 public:
+    /** @brief Build from the library's own operations, in `make_default_registry()`. */
+    Builder()
+        : Builder(std::make_shared<const OperationRegistry>(make_default_registry()))
+    {
+    }
+
     explicit Builder(std::shared_ptr<const OperationRegistry> registry)
         : m_registry(std::move(registry))
     {
@@ -746,6 +759,14 @@ private:
 
     void finish()
     {
+        for (const auto& rule : m_pending) {
+            if (!rule.m_rule.executor) {
+                error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::Runtime,
+                    std::source_location::current(),
+                    "No registered operation implements the selection at stage {}; supply one with uses() or build from a registry that contains it",
+                    rule.m_rule.position.value_or(0));
+            }
+        }
         for (auto& rule : m_pending) {
             rule.build();
         }
@@ -793,6 +814,20 @@ inline std::shared_ptr<ComputationGrammar> ComputationGrammar::assemble(
     ComputationSignature signature, std::initializer_list<OperationConfig> configs)
 {
     return assemble(std::move(registry), std::move(signature),
+        std::span<const OperationConfig>(configs.begin(), configs.size()));
+}
+
+inline std::shared_ptr<ComputationGrammar> ComputationGrammar::assemble(
+    ComputationSignature signature, std::span<const OperationConfig> configs)
+{
+    return assemble(std::make_shared<const OperationRegistry>(make_default_registry()),
+        std::move(signature), configs);
+}
+
+inline std::shared_ptr<ComputationGrammar> ComputationGrammar::assemble(
+    ComputationSignature signature, std::initializer_list<OperationConfig> configs)
+{
+    return assemble(std::move(signature),
         std::span<const OperationConfig>(configs.begin(), configs.size()));
 }
 

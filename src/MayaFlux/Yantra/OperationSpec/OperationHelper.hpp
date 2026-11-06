@@ -298,7 +298,7 @@ public:
      *         result owns, and the container is not modified.
      */
     template <typename T>
-        requires(MultiVariant<T> || EigenMatrixLike<T>)
+        requires((MultiVariant<T> || EigenMatrixLike<T>) && !SingleVariant<T>)
     static NumericChannels extract_numeric_data(const T& compute_data, bool needs_processig = false)
     {
         if constexpr (std::is_same_v<T, std::vector<Kakshya::DataVariant>>) {

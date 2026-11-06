@@ -79,33 +79,16 @@ enum class SortingStrategy : uint8_t {
 
 /**
  * @struct SorterConfig
- * @brief Settings every sorter family accepts.
+ * @brief Parent of every sorter's config struct.
  *
- * Stored whole, keyed by type, in the operation's facets. Each family's
- * config struct inherits these fields and adds its own fields.
+ * Holds no settings. Each sorter's config struct adds the fields that sorter reads,
+ * and is stored whole, keyed by type, in the operation's facets.
  */
 struct SorterConfig : OperationConfig {
     static constexpr auto describe_facets()
     {
-        return std::tuple {
-            FacetMember<&SorterConfig::algorithm> {},
-            FacetMember<&SorterConfig::direction> {},
-            FacetMember<&SorterConfig::strategy> {},
-            FacetMember<&SorterConfig::keys> {},
-            FacetMember<&SorterConfig::comparator> {},
-        };
+        return std::tuple<> {};
     }
-
-    /** Sorting algorithm to use, as a SortingAlgorithm value. */
-    Reflect::EnumByte<SortingAlgorithm> algorithm { SortingAlgorithm::STANDARD };
-    /** Order of the sorted result. CUSTOM takes its order from comparator. */
-    SortingDirection direction { SortingDirection::ASCENDING };
-    /** Comparator used when direction is CUSTOM. Ignored otherwise. */
-    Kinesis::Discrete::DoubleComparator comparator;
-    /** How the input is handled during sorting. */
-    SortingStrategy strategy { SortingStrategy::COPY_SORT };
-    /** Terms of the weighted sort score. Applied by RegionKeySorter; StandardSorter rejects them. */
-    std::vector<SortKey> keys;
 };
 
 /**

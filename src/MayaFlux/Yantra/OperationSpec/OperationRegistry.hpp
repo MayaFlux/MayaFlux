@@ -1,9 +1,41 @@
 #pragma once
 
 #include "GrammarHelper.hpp"
+#include "MayaFlux/Transitive/Reflect/EnumReflect.hpp"
 #include "MayaFlux/Yantra/ComputeOperation.hpp"
 
 namespace MayaFlux::Yantra {
+
+namespace detail {
+    template <typename T>
+    struct UnwrapEnum {
+        using type = T;
+    };
+
+    template <typename E>
+    struct UnwrapEnum<Reflect::EnumByte<E>> {
+        using type = E;
+    };
+
+    template <typename Config>
+    constexpr auto selector_field()
+    {
+        if constexpr (requires { std::declval<Config&>().method; }) {
+            return std::type_identity<decltype(std::declval<Config&>().method)> {};
+        } else if constexpr (requires { std::declval<Config&>().operation; }) {
+            return std::type_identity<decltype(std::declval<Config&>().operation)> {};
+        } else if constexpr (requires { std::declval<Config&>().algorithm; }) {
+            return std::type_identity<decltype(std::declval<Config&>().algorithm)> {};
+        } else {
+            return std::type_identity<void> {};
+        }
+    }
+}
+
+/** @brief The enum a config selects its method from, or void when it has no selector. */
+template <typename Config>
+using selection_t = typename detail::UnwrapEnum<
+    typename decltype(detail::selector_field<Config>())::type>::type;
 
 /** @brief Explicitly owned registrations connecting enum vocabularies, configs, and implementations. */
 class OperationRegistry {
@@ -32,6 +64,24 @@ public:
         std::type_identity_t<std::function<std::shared_ptr<Op>(Config)>> factory = {}, int priority = 50)
     {
         return catalog_impl<E, Op, Config>(selection, std::move(factory), priority);
+    }
+
+    /**
+     * @brief Catalog an implementation for every config it supports.
+     *
+     * Each config of Op::supports is registered under the enum its selector field takes.
+     * Implementations built from their config are constructed by it.
+     */
+    template <typename Op>
+        requires requires { typename Op::supports; }
+    OperationRegistry& add(int priority = 50)
+    {
+        Op::supports::each([&]<typename Config>() {
+            using Selection = selection_t<Config>;
+            static_assert(!std::is_void_v<Selection>, "The config has no method, operation or algorithm selector");
+            catalog_impl<Selection, Op, Config>(std::nullopt, {}, priority);
+        });
+        return *this;
     }
 
     /** @brief Construct all registered implementations accepting this signature and config type. */
@@ -121,5 +171,13 @@ private:
     using Registration = std::function<std::optional<Binding>(const ComputationSignature&, const OperationConfig*)>;
     std::vector<Registration> m_registrations;
 };
+
+/**
+ * @brief A registry holding the library's own operations, each in its standard instantiations.
+ *
+ * RegionKeySorter shares its selector with StandardSorter and the granular operations have
+ * none, so they are not listed. Add your own operations to the returned registry with add().
+ */
+[[nodiscard]] MAYAFLUX_API OperationRegistry make_default_registry();
 
 }

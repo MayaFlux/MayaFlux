@@ -39,10 +39,22 @@ struct StandardSorterConfig : SorterConfig {
         return std::tuple_cat(
             SorterConfig::describe_facets(),
             std::tuple {
+                FacetMember<&StandardSorterConfig::algorithm> {},
+                FacetMember<&StandardSorterConfig::direction> {},
+                FacetMember<&StandardSorterConfig::strategy> {},
+                FacetMember<&StandardSorterConfig::comparator> {},
                 FacetMember<&StandardSorterConfig::chunk_size> {},
             });
     }
 
+    /** Sorting algorithm to use, as a SortingAlgorithm value. */
+    Reflect::EnumByte<SortingAlgorithm> algorithm { SortingAlgorithm::STANDARD };
+    /** Order of the sorted result. CUSTOM takes its order from comparator. */
+    SortingDirection direction { SortingDirection::ASCENDING };
+    /** Comparator used when direction is CUSTOM. Ignored otherwise. */
+    Kinesis::Discrete::DoubleComparator comparator;
+    /** How the input is handled during sorting. */
+    SortingStrategy strategy { SortingStrategy::COPY_SORT };
     /** Number of elements per chunk for chunked sorting. Must be greater than 0. */
     size_t chunk_size { 1024 };
 };
@@ -158,9 +170,6 @@ private:
     {
         if (cfg.chunk_size == 0) {
             error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(), "Chunk size must be greater than 0");
-        }
-        if (!cfg.keys.empty()) {
-            error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(), "StandardSorter does not apply sort keys");
         }
     }
 
