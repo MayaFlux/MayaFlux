@@ -123,17 +123,23 @@ public:
     /**
      * @brief Record deferred commands for later submission
      * @param recorder Command recording function that takes a command buffer
+     * @param keep_alive Objects the commands read or write, released once the batch's submission completes
      *
      * The recorder gets an open batch to itself. One thread recording at a time
      * reuses a single batch; threads recording at once each get their own, and
      * flush_deferred() submits them together.
      */
-    void record_deferred_commands(const std::function<void(vk::CommandBuffer)>& recorder);
+    void record_deferred_commands(
+        const std::function<void(vk::CommandBuffer)>& recorder,
+        std::vector<std::shared_ptr<void>> keep_alive = {});
 
     /**
      * @brief Submit the pending deferred batches and retire their buffers
      * @param queue Queue to submit to
      * @return Point of the submission, or an empty point when nothing was pending or the submit failed
+     *
+     * The batches end with a memory barrier, so every later submission to the
+     * queue sees their writes.
      */
     TimelinePoint flush_deferred(vk::Queue queue);
 
@@ -146,8 +152,10 @@ public:
      * @param fence Optional fence signaled with the submission
      * @return Point signaled when the submission completes, or an empty point if the submit failed
      *
-     * The point orders strictly with every other submission to the same queue
-     * and is unordered against submissions to other queues.
+     * Pending deferred batches are flushed to the graphics queue first, so the
+     * submission runs after them. The point orders strictly with every other
+     * submission to the same queue and is unordered against submissions to
+     * other queues.
      */
     TimelinePoint submit(
         vk::Queue queue,
@@ -274,7 +282,19 @@ private:
         PoolKind kind {};
     };
 
+    struct OpenBatch {
+        vk::CommandBuffer command_buffer;
+        std::vector<std::shared_ptr<void>> keep_alive;
+    };
+
     using Owners = Memory::FlatMap<VkCommandBuffer, PoolRef>;
+
+    TimelinePoint submit_now(
+        vk::Queue queue,
+        std::span<const vk::CommandBuffer> commands,
+        std::span<const vk::SemaphoreSubmitInfo> waits,
+        std::span<const vk::SemaphoreSubmitInfo> signals,
+        vk::Fence fence);
 
     bool create_timeline(vk::Queue queue);
     vk::CommandPool create_pool(PoolKind kind);
@@ -283,6 +303,7 @@ private:
     Memory::SweepList<vk::CommandPool>& idle_pools(PoolKind kind);
 
     vk::Device m_device;
+    vk::Queue m_graphics_queue;
     uint32_t m_graphics_queue_family {};
     uint32_t m_compute_queue_family {};
 
@@ -296,7 +317,7 @@ private:
     Memory::SweepList<vk::CommandPool> m_idle_graphics;
     Memory::SweepList<vk::CommandPool> m_idle_compute;
 
-    Memory::SweepList<vk::CommandBuffer> m_open_batches;
+    Memory::SweepList<OpenBatch> m_open_batches;
     std::atomic<uint32_t> m_open_batch_count { 0 };
 
     Memory::SweepList<RetiredCommand> m_retired;

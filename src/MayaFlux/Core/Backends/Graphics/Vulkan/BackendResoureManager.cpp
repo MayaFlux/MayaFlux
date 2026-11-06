@@ -1216,7 +1216,7 @@ void BackendResourceManager::upload_image_data(
         record_barrier(cmd, barrier, vk::PipelineStageFlagBits2::eTransfer, vk::PipelineStageFlagBits2::eFragmentShader);
     };
 
-    record_deferred_commands(record_command);
+    record_deferred_commands(record_command, { image, staging });
 
     image->set_current_layout(vk::ImageLayout::eShaderReadOnlyOptimal);
 
@@ -1459,7 +1459,7 @@ bool BackendResourceManager::blit_image(
 
     switch (mode) {
     case SubmitMode::DEFERRED:
-        record_deferred_commands(record_command);
+        record_deferred_commands(record_command, { src, dst });
         break;
     case SubmitMode::ASYNC:
         if (!execute_async(record_command, { src, dst })) {
@@ -1602,9 +1602,11 @@ TimelinePoint BackendResourceManager::execute_async(
     return point;
 }
 
-void BackendResourceManager::record_deferred_commands(const std::function<void(vk::CommandBuffer)>& recorder)
+void BackendResourceManager::record_deferred_commands(
+    const std::function<void(vk::CommandBuffer)>& recorder,
+    std::vector<std::shared_ptr<void>> keep_alive)
 {
-    m_command_manager.record_deferred_commands(recorder);
+    m_command_manager.record_deferred_commands(recorder, std::move(keep_alive));
 }
 
 TimelinePoint BackendResourceManager::flush_deferred_commands()

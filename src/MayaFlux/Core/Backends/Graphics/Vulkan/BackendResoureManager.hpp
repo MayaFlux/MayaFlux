@@ -267,8 +267,11 @@ public:
     /**
      * @brief Record deferred command recording for buffer operations
      * @param recorder Command recording function
+     * @param keep_alive Objects the commands read or write, released once the batch's submission completes
      */
-    void record_deferred_commands(const std::function<void(vk::CommandBuffer)>& recorder);
+    void record_deferred_commands(
+        const std::function<void(vk::CommandBuffer)>& recorder,
+        std::vector<std::shared_ptr<void>> keep_alive = {});
 
     /**
      * @brief Submit the pending deferred commands
