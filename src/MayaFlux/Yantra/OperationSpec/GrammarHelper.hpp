@@ -6,6 +6,28 @@
 
 namespace MayaFlux::Yantra {
 
+/** @brief How well a candidate suits an input. Larger wins; zero or less declines. */
+using Fitness = std::function<float(const std::any&)>;
+
+/**
+ * @brief The candidate's fitness for an erased input.
+ *
+ * Calls `static float Op::fitness(const input_type&)` when the class has one.
+ * Returns an empty function otherwise, which the grammar counts as neutral (1).
+ */
+template <typename Op>
+Fitness fitness_of()
+{
+    if constexpr (requires(const typename Op::input_type& in) { { Op::fitness(in) } -> std::convertible_to<float>; }) {
+        return [](const std::any& input) -> float {
+            const auto* typed = std::any_cast<typename Op::input_type>(&input);
+            return typed ? static_cast<float>(Op::fitness(*typed)) : 0.0F;
+        };
+    } else {
+        return {};
+    }
+}
+
 /**
  * @class Matcher
  * @brief Type-agnostic pattern matching for computation rules

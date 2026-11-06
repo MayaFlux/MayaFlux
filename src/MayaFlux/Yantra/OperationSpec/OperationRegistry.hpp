@@ -46,6 +46,8 @@ public:
         Matcher::MatcherFunc matcher;
         std::function<std::any(const std::any&, const ExecutionContext&)> executor;
         int priority { 50 };
+        Target target { targets::cpu };
+        Fitness fitness;
     };
 
     /** @brief Catalog an implementation for an enum vocabulary. A factory may supply its dependencies. */
@@ -163,6 +165,8 @@ private:
                         return base->apply_operation(safe_any_cast_or_throw<typename Op::input_type>(input));
                     },
                     .priority = priority,
+                    .target = target_of_v<Op>,
+                    .fitness = fitness_of<Op>(),
                 };
             });
         return *this;

@@ -127,12 +127,24 @@ public:
 
         std::type_index target_operation_type = std::type_index(typeid(void)); ///< Type of operation this rule creates (for type-based queries)
 
+        Target target { targets::cpu }; ///< Where the rule's operation runs
+        Fitness fitness; ///< How well the rule suits an input; empty counts as neutral
+
         std::vector<std::string> tags; ///< Arbitrary tags for categorization and search
 
-        /** @brief Match the declared work and any additional input conditions. */
+        /** @brief Match the declared work, the permitted targets and any additional input conditions. */
         [[nodiscard]] bool accepts(const std::any& input, const ExecutionContext& context) const
         {
+            if (const auto* permit = context.facets.get<Permit>(); permit && !target.meets(permit->allowed)) {
+                return false;
+            }
             return signature == context.signature && (!matcher || matcher(input, context));
+        }
+
+        /** @brief Suitability for an input the rule accepts. Larger wins; zero or less declines. */
+        [[nodiscard]] float score(const std::any& input) const
+        {
+            return fitness ? fitness(input) : 1.0F;
         }
     };
 
@@ -167,12 +179,18 @@ public:
      */
     std::optional<Rule> find_best_match(const std::any& input, const ExecutionContext& context) const
     {
+        const Rule* best = nullptr;
+        float best_score = 0.0F;
         for (const auto& rule : m_rules) {
-            if (rule.accepts(input, context)) {
-                return rule;
+            if (!rule.accepts(input, context)) {
+                continue;
+            }
+            if (const float score = rule.score(input); score > best_score) {
+                best = &rule;
+                best_score = score;
             }
         }
-        return std::nullopt;
+        return best ? std::optional<Rule>(*best) : std::nullopt;
     }
 
     /**
@@ -213,17 +231,22 @@ public:
         while (!signature.empty()) {
             std::optional<Rule> selected;
             ExecutionContext stage = context;
+            float best_score = 0.0F;
             for (const auto& rule : m_rules) {
                 if ((rule.position && *rule.position != resolved)
                     || rule.signature.empty() || !signature.starts_with(rule.signature)) {
                     continue;
                 }
                 stage.signature = rule.signature;
-                if (rule.accepts(current, stage)) {
+                if (!rule.accepts(current, stage)) {
+                    continue;
+                }
+                if (const float score = rule.score(current); score > best_score) {
                     selected = rule;
-                    break;
+                    best_score = score;
                 }
             }
+            stage.signature = selected ? selected->signature : stage.signature;
             if (!selected) {
                 error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::Runtime,
                     std::source_location::current(),
@@ -384,6 +407,8 @@ public:
                     std::source_location::current(), "Grammar rule requires an operation instance");
             }
             m_rule.target_operation_type = std::type_index(typeid(Op));
+            m_rule.target = target_of_v<Op>;
+            m_rule.fitness = fitness_of<Op>();
             using Input = std::remove_cvref_t<decltype(std::declval<typename Op::input_type>().data)>;
             using Output = std::remove_cvref_t<decltype(std::declval<typename Op::output_type>().data)>;
             std::shared_ptr<ComputeOperation<Input, Output>> base = std::move(operation);
@@ -698,6 +723,25 @@ public:
         return *this;
     }
 
+    /**
+     * @brief Restrict the current stage to candidates whose target meets @p target.
+     *
+     * Throws when no candidate does. An instance given to uses() must meet it too.
+     */
+    Builder& on(Target target)
+    {
+        require_rule();
+        const auto stage = m_pending.front().m_rule.position.value_or(0);
+        std::erase_if(m_pending, [&](const auto& rule) { return rule.m_rule.executor && !rule.m_rule.target.meets(target); });
+        if (m_pending.empty()) {
+            error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::Runtime,
+                std::source_location::current(),
+                "No registered operation at stage {} runs on the requested target", stage);
+        }
+        m_pin = target;
+        return *this;
+    }
+
     Builder& priority(int value)
     {
         require_rule();
@@ -717,6 +761,10 @@ public:
         }
         if (m_config) {
             m_config->apply_to(*operation);
+        }
+        if (m_pin && !target_of_v<Op>.meets(*m_pin)) {
+            error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::Runtime,
+                std::source_location::current(), "The supplied operation does not run on the requested target");
         }
         m_pending.erase(m_pending.begin() + 1, m_pending.end());
         m_pending.front().uses(std::move(operation));
@@ -750,6 +798,8 @@ private:
                 rule.m_operation_matcher = std::move(bindings[i].matcher);
                 rule.m_rule.executor = std::move(bindings[i].executor);
                 rule.m_rule.target_operation_type = bindings[i].type;
+                rule.m_rule.target = bindings[i].target;
+                rule.m_rule.fitness = std::move(bindings[i].fitness);
                 rule.with_priority(bindings[i].priority);
             }
         }
@@ -772,6 +822,7 @@ private:
         }
         m_pending.clear();
         m_config.reset();
+        m_pin.reset();
     }
 
     void require_rule() const
@@ -786,6 +837,7 @@ private:
     std::shared_ptr<ComputationGrammar> m_grammar { std::make_shared<ComputationGrammar>() };
     std::vector<RuleBuilder> m_pending;
     std::optional<OperationConfig> m_config;
+    std::optional<Target> m_pin;
     ComputationSignature m_signature;
     size_t m_position {};
 };

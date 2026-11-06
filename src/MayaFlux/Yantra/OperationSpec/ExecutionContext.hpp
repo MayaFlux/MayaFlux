@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ComputationSignature.hpp"
+#include "ExecutionTarget.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Transitive/Facet/Facets.hpp"
@@ -98,6 +99,22 @@ using ExecutionParams = std::variant<
     ChainedParams,
     ChainedIndirectParams,
     DependencyParams>;
+
+/**
+ * @struct Permit
+ * @brief Targets a call may run on. Stored by type in ExecutionContext::facets.
+ *
+ * Without a Permit every target is allowed. A rule whose target does not meet
+ * the permitted one is skipped.
+ */
+struct Permit {
+    static constexpr auto describe_facets()
+    {
+        return std::tuple { FacetMember<&Permit::allowed> {} };
+    }
+
+    Target allowed;
+};
 
 /**
  * @struct ExecutionContext
