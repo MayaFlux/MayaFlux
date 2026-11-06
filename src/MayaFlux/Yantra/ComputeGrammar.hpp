@@ -115,7 +115,6 @@ public:
         /** @brief Stage position for a rule bound by grammar assembly. */
         std::optional<size_t> position;
         int priority = 0; ///< Execution priority (higher values evaluated first)
-        std::optional<Portal::Graphics::ShaderSpec> gpu_spec; ///< When set, executor receives a GPU-backed operation
 
         Matcher::MatcherFunc matcher; ///< Function that determines if rule applies
         Executor executor; ///< Function that performs the computation
@@ -496,36 +495,14 @@ public:
          * The executor function receives the input data and execution context,
          * and returns the result of the computation. This is where the actual
          * work of the rule is performed.
-         *
-         * If with_gpu_backend() was called, the executor wrapper attaches a
-         * ShaderExecutionContext to the operation before invoking the user
-         * lambda. The user lambda receives the already-GPU-backed operation
-         * transparently and serves as the CPU fallback if GPU setup fails.
          */
         template <typename Func>
         RuleBuilder& executes(Func&& executor)
         {
-            if (m_rule.gpu_spec.has_value()) {
-                auto spec = *m_rule.gpu_spec;
-                m_rule.executor = [func = std::forward<Func>(executor), spec = std::move(spec)](
-                                      const std::any& input, const ExecutionContext& ctx) -> std::any {
-                    const auto cfg = config_from_spec(spec);
-                    const auto bindings = bindings_from_spec(spec);
-
-                    if (cfg.shader_id != Portal::Graphics::INVALID_SHADER) {
-                        auto gpu_exec = std::make_shared<ShaderExecutionContext<>>(cfg, bindings);
-                        ExecutionContext patched = ctx;
-                        patched.execution_metadata["_gpu_exec"] = gpu_exec;
-                        return func(input, patched);
-                    }
-                    return func(input, ctx);
-                };
-            } else {
-                m_rule.executor = [func = std::forward<Func>(executor)](
-                                      const std::any& input, const ExecutionContext& ctx) -> std::any {
-                    return func(input, ctx);
-                };
-            }
+            m_rule.executor = [func = std::forward<Func>(executor)](
+                                  const std::any& input, const ExecutionContext& ctx) -> std::any {
+                return func(input, ctx);
+            };
             return *this;
         }
 
@@ -556,25 +533,6 @@ public:
         RuleBuilder& with_tags(std::vector<std::string> tags)
         {
             m_rule.tags = std::move(tags);
-            return *this;
-        }
-
-        /**
-         * @brief Attach a ShaderSpec GPU backend to this rule.
-         *
-         * When set, the executor wrapper builds a ShaderExecutionContext from
-         * the spec via config_from_spec() and bindings_from_spec() and calls
-         * set_gpu_backend() on the operation before dispatching. Falls back to
-         * the CPU executor if shader compilation fails.
-         *
-         * Must be called before executes() to take effect, as executes() reads
-         * the stored spec when wrapping the user lambda.
-         *
-         * @param spec ShaderSpec produced by ShaderSpec::Assemble::build().
-         */
-        RuleBuilder& with_gpu_backend(Portal::Graphics::ShaderSpec spec)
-        {
-            m_rule.gpu_spec = std::move(spec);
             return *this;
         }
 

@@ -8,10 +8,9 @@ namespace MayaFlux::Yantra {
  * @class ShaderExecutionContext
  * @brief Concrete GpuExecutionContext for a single fixed shader with fixed bindings.
  *
- * The standard path for attaching GPU dispatch to any ComputeOperation via
- * ComputeOperation::set_gpu_backend(). Bindings are declared at construction
- * or built incrementally through the fluent API. The owning ComputeOperation
- * provides category identity, parameter system, and CPU fallback.
+ * The standard way to run a shader as an operation: hand it to GpuTransformer
+ * or GpuSorter, which dispatch through it and have no CPU path. Bindings are
+ * declared at construction or built incrementally through the fluent API.
  *
  * Construction followed by fluent configuration:
  * @code
@@ -23,7 +22,7 @@ namespace MayaFlux::Yantra {
  *          .output(sizeof(uint32_t), GpuBufferBinding::ElementType::UINT32)
  *          .push(pc);
  *
- * my_operation->set_gpu_backend(executor);
+ * auto operation = std::make_shared<GpuTransformer<>>(executor);
  * @endcode
  *
  * Or with explicit binding indices when order cannot be inferred:
@@ -431,7 +430,7 @@ private:
  *       GpuBufferBinding::output(0, 1) },
  *     "spectral_blur"
  * );
- * my_operation->set_gpu_backend(executor);
+ * auto operation = std::make_shared<GpuTransformer<>>(executor);
  * @endcode
  */
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>,

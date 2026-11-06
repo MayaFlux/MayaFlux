@@ -10,10 +10,10 @@ namespace MayaFlux::Yantra {
  * @brief Concrete Transformer that dispatches entirely via a
  *        GpuExecutionContext. CPU path is a hard error.
  *
- * Use when no CPU fallback exists or is needed. Attach a configured
- * GpuExecutionContext at construction. For operations where a CPU
- * fallback is available, prefer attaching a GpuExecutionContext to
- * an existing concrete transformer via set_gpu_backend() instead.
+ * Use to run a shader as an operation. Hand it a configured
+ * GpuExecutionContext at construction. It declares no target and is not in the
+ * default registry; an operation with both a CPU and a GPU implementation is two
+ * classes, each a registered candidate on its own target.
  *
  * @code
  * auto op = std::make_shared<GpuTransformer<>>(
@@ -41,8 +41,7 @@ public:
         std::shared_ptr<GpuExecutionContext<InputType, OutputType>> executor)
     {
         assert(executor && "GpuTransformer: executor must not be null");
-        m_executor = executor;
-        this->set_gpu_backend(std::move(executor));
+        m_executor = std::move(executor);
     }
 
     /**
@@ -58,6 +57,18 @@ public:
 
 
 protected:
+    /**
+     * @brief Dispatches through the executor when the GPU is ready. Otherwise the
+     *        base path runs and reaches the hard error below: there is no CPU fallback.
+     */
+    output_type apply_operation_internal(const input_type& input, const ExecutionContext& context) override
+    {
+        if (m_executor->ensure_gpu_ready()) {
+            return m_executor->execute(input, context);
+        }
+        return Transformer<InputType, OutputType>::apply_operation_internal(input, context);
+    }
+
     output_type transform_implementation(input_type&) override
     {
         error<std::runtime_error>(

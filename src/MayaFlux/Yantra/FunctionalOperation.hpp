@@ -15,7 +15,7 @@ namespace MayaFlux::Yantra {
  * callable supplied at construction time carries no inherent verb
  * category. Fully interchangeable with any hand-written
  * ComputeOperation<InputType, OutputType> subclass everywhere
- * ComputeMatrix, GPU backend attachment, and dependency graphs are
+ * ComputeMatrix and dependency graphs are
  * concerned: none of that machinery keys off get_operation_type().
  *
  * @tparam InputType  ComputeData type accepted.
@@ -32,24 +32,6 @@ public:
     explicit FunctionalOperation(Fn fn)
         : m_fn(std::move(fn))
     {
-    }
-
-    /**
-     * @brief Construct GPU-only: dispatches entirely via gpu_backend, no
-     *        callable, no CPU fallback. Matches GpuAnalyzer's contract.
-     * @param gpu_backend Configured executor. Must not be null.
-     */
-    explicit FunctionalOperation(std::shared_ptr<GpuExecutionContext<InputType, OutputType>> gpu_backend)
-        : m_fn([](const input_type&) -> output_type {
-            error<std::runtime_error>(
-                Journal::Component::Yantra,
-                Journal::Context::BufferProcessing,
-                std::source_location::current(),
-                "FunctionalOperation: GPU unavailable and no CPU fallback provided");
-        })
-    {
-        assert(gpu_backend && "FunctionalOperation: gpu_backend must not be null");
-        this->set_gpu_backend(std::move(gpu_backend));
     }
 
     [[nodiscard]] OperationType get_operation_type() const override

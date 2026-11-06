@@ -45,9 +45,7 @@ using namespace MayaFlux::Yantra;
 #endif
 
 #ifndef MAYAFLUX_COMPUTE_NO_GPU
-#include "MayaFlux/Yantra/Analyzers/GpuAnalyzer.hpp"
 #include "MayaFlux/Yantra/Executors/ShaderExecutionContext.hpp"
-#include "MayaFlux/Yantra/Extractors/GpuExtractor.hpp"
 #include "MayaFlux/Yantra/Sorters/GpuSorter.hpp"
 #include "MayaFlux/Yantra/Transformers/GpuTransformer.hpp"
 using namespace MayaFlux::Yantra;

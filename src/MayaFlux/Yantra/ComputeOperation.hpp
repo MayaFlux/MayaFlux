@@ -249,23 +249,6 @@ public:
     }
 
     /**
-     * @brief Attach a GPU execution backend.
-     *
-     * When set and ready, apply_operation_internal delegates to the backend
-     * instead of operation_function. The CPU implementation in operation_function
-     * remains the automatic fallback when no backend is attached or GPU
-     * initialisation has not yet succeeded.
-     *
-     * @param backend Configured GpuExecutionContext instance.
-     */
-    void set_gpu_backend(std::shared_ptr<GpuExecutionContext<InputType, OutputType>> backend)
-    {
-        m_gpu_backend = std::move(backend);
-    }
-
-    [[nodiscard]] bool has_gpu_backend() const { return m_gpu_backend != nullptr; }
-
-    /**
      * @brief Stores a described config struct, whole, under its own type.
      * @tparam Config A struct deriving from OperationConfig with describe_facets().
      */
@@ -352,10 +335,6 @@ protected:
      */
     virtual output_type apply_operation_internal(const input_type& input, const ExecutionContext& context)
     {
-        if (m_gpu_backend && m_gpu_backend->ensure_gpu_ready()) {
-            return m_gpu_backend->execute(input, context);
-        }
-
         switch (context.mode) {
         case ExecutionMode::ASYNC:
             // Return the result of the future (this might need different handling)
@@ -443,7 +422,6 @@ protected:
 
     std::shared_ptr<Kakshya::SignalSourceContainer> m_container;
     ExecutionContext m_last_execution_context;
-    std::shared_ptr<GpuExecutionContext<InputType, OutputType>> m_gpu_backend;
 
 private:
     std::vector<std::shared_ptr<ComputeOperation>> m_dependencies;
