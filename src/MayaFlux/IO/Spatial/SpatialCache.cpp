@@ -53,8 +53,14 @@ namespace {
             || topology == PrimitiveTopology::LINE_STRIP;
     }
 
+    /** @brief A float GeomParam declared with array extent 4, kept apart from a scalar float param. */
+    struct OFloat4GeomParam {
+        OFloatGeomParam param;
+    };
+
     using GeomParamVariant = std::variant<
-        OFloatGeomParam, OV2fGeomParam, OV3fGeomParam, OC3fGeomParam, ON3fGeomParam, OUInt32GeomParam>;
+        OFloatGeomParam, OV2fGeomParam, OV3fGeomParam, OC3fGeomParam, ON3fGeomParam, OUInt32GeomParam,
+        OC4fGeomParam, OFloat4GeomParam>;
 
     struct VertexStream {
         OPoints object;
@@ -78,6 +84,9 @@ namespace {
      * normal data rather than an arbitrary vector. Any other vec3 name
      * (e.g. "tangent") stays a generic vector, matching what Alembic
      * itself offers no dedicated type for.
+     *
+     * A vec4 "color" is declared as OC4fGeomParam (RGBA). Any other vec4
+     * name is a float GeomParam with array extent 4.
      *
      * @return False if @p attr.values holds a DataVariant alternative with no
      *         Alembic GeomParam counterpart, its size doesn't match
@@ -150,6 +159,33 @@ namespace {
             if (auto* vector_param = std::get_if<OV3fGeomParam>(&it->second)) {
                 vector_param->set(OV3fGeomParam::Sample(
                     V3fArraySample(reinterpret_cast<const V3f*>(vecs->data()), vecs->size()), scope));
+                return true;
+            }
+            return false;
+        }
+        if (const auto* quads = std::get_if<std::vector<glm::vec4>>(&attr.values)) {
+            if (quads->size() != expected_count) {
+                return false;
+            }
+
+            if (it == params.end()) {
+                if (attr.name == "color") {
+                    it = params.emplace(attr.name, OC4fGeomParam(arb_params, attr.name, false, scope, 1)).first;
+                } else {
+                    it = params.emplace(attr.name,
+                                   OFloat4GeomParam { OFloatGeomParam(arb_params, attr.name, false, scope, 4) })
+                             .first;
+                }
+            }
+
+            if (auto* color_param = std::get_if<OC4fGeomParam>(&it->second)) {
+                color_param->set(OC4fGeomParam::Sample(
+                    C4fArraySample(reinterpret_cast<const C4f*>(quads->data()), quads->size()), scope));
+                return true;
+            }
+            if (auto* vector_param = std::get_if<OFloat4GeomParam>(&it->second)) {
+                vector_param->param.set(OFloatGeomParam::Sample(
+                    FloatArraySample(reinterpret_cast<const float*>(quads->data()), quads->size() * 4), scope));
                 return true;
             }
             return false;

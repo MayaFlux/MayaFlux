@@ -34,7 +34,9 @@ namespace {
         Float,
         Vec2,
         Vec3,
+        Vec4,
         Color,
+        Color4,
         Normal,
         UInt32,
     };
@@ -82,13 +84,16 @@ namespace {
         const Alembic::AbcCoreAbstract::PropertyHeader& header)
     {
         if (IFloatGeomParam::matches(header)) {
-            return AttributeKind::Float;
+            return header.getMetaData().get("arrayExtent") == "4" ? AttributeKind::Vec4 : AttributeKind::Float;
         }
         if (IV2fGeomParam::matches(header)) {
             return AttributeKind::Vec2;
         }
         if (IC3fGeomParam::matches(header)) {
             return AttributeKind::Color;
+        }
+        if (IC4fGeomParam::matches(header)) {
+            return AttributeKind::Color4;
         }
         if (IN3fGeomParam::matches(header)) {
             return AttributeKind::Normal;
@@ -140,6 +145,29 @@ namespace {
         };
     }
 
+    std::optional<SpatialAttribute> read_float4_param(
+        const ICompoundProperty& arb,
+        const AttributeDecl& decl,
+        const ISampleSelector& selector)
+    {
+        const IFloatGeomParam param(arb, decl.name);
+        const auto sample = param.getExpandedValue(selector);
+        const auto values = sample.getVals();
+        const auto scope = from_alembic_scope(sample.getScope());
+        if (!values || !scope || values->size() % 4 != 0) {
+            return std::nullopt;
+        }
+
+        std::vector<glm::vec4> quads(values->size() / 4);
+        std::memcpy(quads.data(), values->get(), values->size() * sizeof(float));
+
+        return SpatialAttribute {
+            .name = decl.name,
+            .scope = *scope,
+            .values = Kakshya::DataVariant { std::move(quads) }
+        };
+    }
+
     std::optional<SpatialAttribute> read_attribute(
         const ICompoundProperty& arb,
         const AttributeDecl& decl,
@@ -152,8 +180,12 @@ namespace {
             return read_param<IV2fGeomParam, glm::vec2>(arb, decl, selector);
         case AttributeKind::Vec3:
             return read_param<IV3fGeomParam, glm::vec3>(arb, decl, selector);
+        case AttributeKind::Vec4:
+            return read_float4_param(arb, decl, selector);
         case AttributeKind::Color:
             return read_param<IC3fGeomParam, glm::vec3>(arb, decl, selector);
+        case AttributeKind::Color4:
+            return read_param<IC4fGeomParam, glm::vec4>(arb, decl, selector);
         case AttributeKind::Normal:
             return read_param<IN3fGeomParam, glm::vec3>(arb, decl, selector);
         case AttributeKind::UInt32:
