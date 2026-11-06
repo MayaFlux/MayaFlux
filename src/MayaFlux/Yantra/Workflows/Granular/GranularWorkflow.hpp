@@ -40,18 +40,11 @@ inline const Facet<double> grain_secondary_feature {};
 inline const Facet<uint32_t> grain_size_setting {};
 /** @brief Hop between grain onsets in samples, stored once per group. */
 inline const Facet<uint32_t> hop_size_setting {};
-/** @brief Source channel the grains were cut from, stored once per group. */
-inline const Facet<uint32_t> channel_setting {};
 
 /**
  * @brief Datum specialisation for granular processing pipelines.
  */
 using GranularDatum = Datum<Kakshya::RegionGroup>;
-
-/**
- * @brief Datum specialisation for container-output granular pipelines.
- */
-using GranularContainerDatum = Datum<std::shared_ptr<Kakshya::SignalSourceContainer>>;
 
 /**
  * @enum GranularOutput
@@ -67,7 +60,7 @@ using GranularContainerDatum = Datum<std::shared_ptr<Kakshya::SignalSourceContai
  *
  * CONTAINER_ADDITIVE — overlap-add reconstruct: grains accumulated at hop_size
  *                      intervals with optional per-grain tapering.
-
+ *
  * STREAM    — appends a reconstruct rule that stitches sorted grains into
  *               a DynamicSoundStream. Use for sampling pipelines, StreamSlicing
  *                and similar real-time workflows
@@ -81,7 +74,6 @@ enum class GranularOutput : uint8_t {
     CONTAINER_ADDITIVE,
     STREAM,
     STREAM_ADDITIVE
-
 };
 
 /**
@@ -93,7 +85,7 @@ using GranularMatrix = GrammarAwareComputeMatrix;
  * @brief Span-level escape hatch for fully custom per-grain feature computation.
  *
  * Receives the raw grain samples and the current ExecutionContext.
- * Returns a single double that is written as a named Region attribute.
+ * Returns a single double that is written to the region's grain_feature facet.
  * For common attribution tasks prefer the AnalysisType + qualifier path
  * via make_granular_context.
  */
@@ -246,7 +238,7 @@ public:
 
     [[nodiscard]] AnalysisType get_analysis_type() const override
     {
-        return AnalysisType::FEATURE;
+        return config<AttributeConfig>().analysis_type;
     }
 
     /**
@@ -279,25 +271,6 @@ private:
         const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
         const ExecutionContext& ctx) const;
 
-    /**
-     * @brief Construct a default-configured analyzer for the given AnalysisType.
-     * @param type Analysis category.
-     * @return Heap-allocated analyzer with sensible defaults.
-     */
-    static std::shared_ptr<RegionGroupAnalyzer<Kakshya::RegionGroup>>
-    make_default_analyzer(AnalysisType type);
-
-    /**
-     * @brief Extract a named scalar from a typed analysis result.
-     * @param analysis_result std::any holding the concrete analysis struct.
-     * @param type Analysis category used to select the correct cast path.
-     * @param qualifier Names the specific scalar to extract.
-     * @return Extracted double value.
-     */
-    static double extract_scalar(const std::any& analysis_result,
-        AnalysisType type,
-        Qualifier qualifier);
-
     mutable VariantEnergyAnalyzer<> m_energy_analyzer;
     mutable VariantStatisticalAnalyzer<> m_stat_analyzer;
 };
@@ -314,13 +287,13 @@ using SortOp = Yantra::RegionKeySorter;
 // ============================================================================
 
 /// @brief Grammar rule executor for the segmentation step.
-extern const ComputationGrammar::Rule::Executor segment_grains;
+extern MAYAFLUX_API const ComputationGrammar::Rule::Executor segment_grains;
 
 /// @brief Grammar rule executor for the attribution step.
-extern const ComputationGrammar::Rule::Executor attribute_grains;
+extern MAYAFLUX_API const ComputationGrammar::Rule::Executor attribute_grains;
 
 /// @brief Grammar rule executor for the sort step.
-extern const ComputationGrammar::Rule::Executor sort_grains;
+extern MAYAFLUX_API const ComputationGrammar::Rule::Executor sort_grains;
 
 // ============================================================================
 // Context construction
@@ -365,6 +338,30 @@ struct GranularConfig {
  */
 inline constexpr FacetMember<&GranularConfig::taper> taper_facet {};
 
+namespace detail {
+
+    /**
+     * @brief The context part shared by every attribution path: segmentation, the sort key and the taper.
+     */
+    inline ExecutionContext granular_base_context(const GranularConfig& config)
+    {
+        ExecutionContext ctx;
+        SegmentConfig segment;
+        segment.grain_size = config.grain_size;
+        segment.hop_size = config.hop_size;
+        segment.channel = config.channel;
+        ctx.facets.set(std::move(segment));
+        RegionKeySorterConfig sort;
+        sort.keys = { SortKey { grain_feature, config.ascending ? SortingDirection::ASCENDING : SortingDirection::DESCENDING, 1.0, false } };
+        sort.gpu_sort_threshold = config.gpu_sort_threshold;
+        ctx.facets.set(std::move(sort));
+        if (config.taper) {
+            ctx.facets.set(taper_facet, config.taper);
+        }
+        return ctx;
+    }
+}
+
 /**
  * @brief Construct an ExecutionContext for the granular pipeline using a built-in AnalysisType.
  *
@@ -378,25 +375,12 @@ inline constexpr FacetMember<&GranularConfig::taper> taper_facet {};
     AnalysisType analysis_type,
     Qualifier qualifier = 0)
 {
-    ExecutionContext ctx;
-    SegmentConfig segment;
-    segment.grain_size = config.grain_size;
-    segment.hop_size = config.hop_size;
-    segment.channel = config.channel;
-    ctx.facets.set(std::move(segment));
-    RegionKeySorterConfig sort;
-    sort.keys = { SortKey { grain_feature, config.ascending ? SortingDirection::ASCENDING : SortingDirection::DESCENDING, 1.0, false } };
-    sort.gpu_sort_threshold = config.gpu_sort_threshold;
-    ctx.facets.set(std::move(sort));
-
+    auto ctx = detail::granular_base_context(config);
     AttributeConfig attribute;
     attribute.channel = config.channel;
     attribute.analysis_type = analysis_type;
     attribute.qualifier = qualifier;
     ctx.facets.set(std::move(attribute));
-    if (config.taper) {
-        ctx.facets.set(taper_facet, config.taper);
-    }
     return ctx;
 }
 
@@ -416,26 +400,13 @@ template <ComputeData InputType, ComputeData OutputType>
     std::shared_ptr<Analyzer<InputType, OutputType>> analyzer,
     Qualifier qualifier = 0)
 {
-    ExecutionContext ctx;
-    SegmentConfig segment;
-    segment.grain_size = config.grain_size;
-    segment.hop_size = config.hop_size;
-    segment.channel = config.channel;
-    ctx.facets.set(std::move(segment));
-    RegionKeySorterConfig sort;
-    sort.keys = { SortKey { grain_feature, config.ascending ? SortingDirection::ASCENDING : SortingDirection::DESCENDING, 1.0, false } };
-    sort.gpu_sort_threshold = config.gpu_sort_threshold;
-    ctx.facets.set(std::move(sort));
-
+    auto ctx = detail::granular_base_context(config);
     AttributeConfig attribute;
     attribute.channel = config.channel;
     attribute.analysis_type = analyzer->get_analysis_type();
     attribute.qualifier = qualifier;
     attribute.analyzer = std::static_pointer_cast<void>(analyzer);
     ctx.facets.set(std::move(attribute));
-    if (config.taper) {
-        ctx.facets.set(taper_facet, config.taper);
-    }
     return ctx;
 }
 
@@ -450,24 +421,11 @@ template <ComputeData InputType, ComputeData OutputType>
     const GranularConfig& config,
     AttributeExecutor executor)
 {
-    ExecutionContext ctx;
-    SegmentConfig segment;
-    segment.grain_size = config.grain_size;
-    segment.hop_size = config.hop_size;
-    segment.channel = config.channel;
-    ctx.facets.set(std::move(segment));
-    RegionKeySorterConfig sort;
-    sort.keys = { SortKey { grain_feature, config.ascending ? SortingDirection::ASCENDING : SortingDirection::DESCENDING, 1.0, false } };
-    sort.gpu_sort_threshold = config.gpu_sort_threshold;
-    ctx.facets.set(std::move(sort));
-
+    auto ctx = detail::granular_base_context(config);
     AttributeConfig attribute;
     attribute.channel = config.channel;
     attribute.executor = std::move(executor);
     ctx.facets.set(std::move(attribute));
-    if (config.taper) {
-        ctx.facets.set(taper_facet, config.taper);
-    }
     return ctx;
 }
 
@@ -636,7 +594,6 @@ void process_to_container_async(
 {
     auto ctx = make_granular_context(config, analysis_type, qualifier);
 
-
     auto seg_op = matrix->get_operation<SegmentOp>("segment");
     auto attr_op = matrix->get_operation<AttributeOp>("attribute");
     auto sort_op = matrix->get_operation<SortOp>("sort");
@@ -644,20 +601,24 @@ void process_to_container_async(
     apply_context_parameters(attr_op, ctx);
     apply_context_parameters(sort_op, ctx);
 
-    matrix->with_async(make_granular_input(container), [seg_op, attr_op, sort_op, ctx, output](auto chain) {
+    matrix->with_async(
+        make_granular_input(container),
+        [ctx, output](auto chain) {
             auto sorted = chain
-                .template then<SegmentOp>("segment")
-                .template then<AttributeOp>("attribute")
-                .template then<SortOp>("sort")
-                .to_io();
+                              .template then<SegmentOp>("segment")
+                              .template then<AttributeOp>("attribute")
+                              .template then<SortOp>("sort")
+                              .to_io();
             if (output == GranularOutput::CONTAINER_ADDITIVE) {
                 return safe_any_cast_or_throw<
                     Datum<std::shared_ptr<Kakshya::SignalSourceContainer>>>(
-                        reconstruct_grains_additive(std::any(sorted), ctx));
+                    reconstruct_grains_additive(std::any(sorted), ctx));
             }
             return safe_any_cast_or_throw<
                 Datum<std::shared_ptr<Kakshya::SignalSourceContainer>>>(
-                    reconstruct_grains(std::any(sorted), ctx)); }, std::forward<CompleteFn>(on_complete));
+                reconstruct_grains(std::any(sorted), ctx));
+        },
+        std::forward<CompleteFn>(on_complete));
 }
 
 /**
@@ -681,7 +642,6 @@ void process_to_container_async(
 {
     auto ctx = make_granular_context(config, std::move(executor));
 
-
     auto seg_op = matrix->get_operation<SegmentOp>("segment");
     auto attr_op = matrix->get_operation<AttributeOp>("attribute");
     auto sort_op = matrix->get_operation<SortOp>("sort");
@@ -689,20 +649,24 @@ void process_to_container_async(
     apply_context_parameters(attr_op, ctx);
     apply_context_parameters(sort_op, ctx);
 
-    matrix->with_async(make_granular_input(container), [seg_op, attr_op, sort_op, ctx, output](auto chain) {
+    matrix->with_async(
+        make_granular_input(container),
+        [ctx, output](auto chain) {
             auto sorted = chain
-                .template then<SegmentOp>("segment")
-                .template then<AttributeOp>("attribute")
-                .template then<SortOp>("sort")
-                .to_io();
+                              .template then<SegmentOp>("segment")
+                              .template then<AttributeOp>("attribute")
+                              .template then<SortOp>("sort")
+                              .to_io();
             if (output == GranularOutput::CONTAINER_ADDITIVE) {
                 return safe_any_cast_or_throw<
                     Datum<std::shared_ptr<Kakshya::SignalSourceContainer>>>(
-                        reconstruct_grains_additive(std::any(sorted), ctx));
+                    reconstruct_grains_additive(std::any(sorted), ctx));
             }
             return safe_any_cast_or_throw<
                 Datum<std::shared_ptr<Kakshya::SignalSourceContainer>>>(
-                    reconstruct_grains(std::any(sorted), ctx)); }, std::forward<CompleteFn>(on_complete));
+                reconstruct_grains(std::any(sorted), ctx));
+        },
+        std::forward<CompleteFn>(on_complete));
 }
 
 /**
