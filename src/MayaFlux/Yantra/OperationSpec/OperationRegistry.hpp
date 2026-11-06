@@ -48,6 +48,7 @@ public:
         int priority { 50 };
         Target target { targets::cpu };
         Fitness fitness;
+        bool sticky { false };
     };
 
     /** @brief Catalog an implementation for an enum vocabulary. A factory may supply its dependencies. */
@@ -167,6 +168,7 @@ private:
                     .priority = priority,
                     .target = target_of_v<Op>,
                     .fitness = fitness_of<Op>(),
+                    .sticky = stateful_v<Op>,
                 };
             });
         return *this;

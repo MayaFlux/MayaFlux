@@ -2,7 +2,7 @@
 
 /**
  * @file ExecutionTarget.hpp
- * @brief Where and on what an operation can run, as sets that compose.
+ * @brief Where and on what an operation can run, as sets of pairs that compose.
  *
  * @experimental The shape of Target and its use in resolution are not settled.
  */
@@ -66,32 +66,74 @@ template <FlagEnum E>
 
 /**
  * @struct Target
- * @brief A device set and a runtime set. Two targets meet when both axes intersect.
+ * @brief A set of (device, runtime) pairs. Two targets meet when they share a pair.
  *
- * Composes with `|` per axis. The result can admit a pair neither input named
- * (CPU+Native joined with GPU+Vulkan admits GPU+Native).
+ * Built from a device set and a runtime set, which gives every combination of
+ * the two (CPU|GPU with ONNX is CPU+ONNX and GPU+ONNX). Joining with `|` is a
+ * union of pairs, so CPU+Native joined with GPU+Vulkan names exactly those two
+ * and does not admit GPU+Native.
  */
 struct Target {
-    Device devices { Device::NONE };
-    Runtime runtimes { Runtime::NONE };
+    constexpr Target() noexcept = default;
+
+    /** @brief Every pairing of a device in @p device_set with a runtime in @p runtime_set. */
+    constexpr Target(Device device_set, Runtime runtime_set) noexcept
+    {
+        for (unsigned device = 0; device < 8; ++device) {
+            if (((static_cast<unsigned>(device_set) >> device) & 1U) != 0U) {
+                m_pairs |= uint64_t { static_cast<uint8_t>(runtime_set) } << (device * 8U);
+            }
+        }
+    }
 
     [[nodiscard]] constexpr Target operator|(Target other) const noexcept
     {
-        return { devices | other.devices, runtimes | other.runtimes };
+        Target joined;
+        joined.m_pairs = m_pairs | other.m_pairs;
+        return joined;
     }
 
-    /** @brief True when both axes share a member. */
+    /** @brief True when the two targets share a (device, runtime) pair. */
     [[nodiscard]] constexpr bool meets(Target other) const noexcept
     {
-        return intersects(devices, other.devices) && intersects(runtimes, other.runtimes);
+        return (m_pairs & other.m_pairs) != 0U;
     }
 
-    [[nodiscard]] constexpr bool empty() const noexcept
+    /** @brief True when the pair (@p device, @p runtime) is in the set. Both must be single members. */
+    [[nodiscard]] constexpr bool has(Device device, Runtime runtime) const noexcept
     {
-        return devices == Device::NONE || runtimes == Runtime::NONE;
+        return meets(Target { device, runtime });
+    }
+
+    [[nodiscard]] constexpr bool empty() const noexcept { return m_pairs == 0U; }
+
+    /** @brief Devices that appear in any pair. */
+    [[nodiscard]] constexpr Device devices() const noexcept
+    {
+        uint8_t result = 0;
+        for (unsigned device = 0; device < 8; ++device) {
+            if (((m_pairs >> (device * 8U)) & 0xFFU) != 0U) {
+                result |= static_cast<uint8_t>(1U << device);
+            }
+        }
+        return static_cast<Device>(result);
+    }
+
+    /** @brief Runtimes that appear in any pair. */
+    [[nodiscard]] constexpr Runtime runtimes() const noexcept
+    {
+        uint8_t result = 0;
+        for (unsigned device = 0; device < 8; ++device) {
+            result |= static_cast<uint8_t>((m_pairs >> (device * 8U)) & 0xFFU);
+        }
+        return static_cast<Runtime>(result);
     }
 
     [[nodiscard]] constexpr bool operator==(const Target&) const noexcept = default;
+
+private:
+    /** One byte per device bit; each byte is the runtime set paired with that device. */
+    uint64_t m_pairs { 0 };
 };
 
 namespace targets {

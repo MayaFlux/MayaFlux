@@ -91,6 +91,9 @@ public:
     /** @brief A chain keeps its container and merges this step's facets, as for a FunctionalOperation. */
     static constexpr bool annotates = true;
 
+    /** @brief Tracks and flow atlases persist between calls, so a grammar keeps this candidate. */
+    static constexpr bool stateful = true;
+
     /**
      * @brief Construct from the settings, as EnergyAnalyzer does.
      * @param config Intents, their parameters and the filtering context.

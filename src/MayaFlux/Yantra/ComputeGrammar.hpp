@@ -129,6 +129,7 @@ public:
 
         Target target { targets::cpu }; ///< Where the rule's operation runs
         Fitness fitness; ///< How well the rule suits an input; empty counts as neutral
+        bool sticky { false }; ///< Keeps its place once chosen while it still accepts input (stateful operations)
 
         std::vector<std::string> tags; ///< Arbitrary tags for categorization and search
 
@@ -229,9 +230,10 @@ public:
         std::any current = input;
         size_t resolved = 0;
         while (!signature.empty()) {
-            std::optional<Rule> selected;
             ExecutionContext stage = context;
+            const Rule* best = nullptr;
             float best_score = 0.0F;
+            std::vector<std::pair<const Rule*, float>> candidates;
             for (const auto& rule : m_rules) {
                 if ((rule.position && *rule.position != resolved)
                     || rule.signature.empty() || !signature.starts_with(rule.signature)) {
@@ -241,17 +243,23 @@ public:
                 if (!rule.accepts(current, stage)) {
                     continue;
                 }
-                if (const float score = rule.score(current); score > best_score) {
-                    selected = rule;
+                const float score = rule.score(current);
+                if (score <= 0.0F) {
+                    continue;
+                }
+                candidates.emplace_back(&rule, score);
+                if (score > best_score) {
+                    best = &rule;
                     best_score = score;
                 }
             }
-            stage.signature = selected ? selected->signature : stage.signature;
+            const Rule* selected = remembered_choice(resolved, candidates, best, best_score);
             if (!selected) {
                 error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::Runtime,
                     std::source_location::current(),
                     "No grammar rule accepts operation signature at stage {}", resolved);
             }
+            stage.signature = selected->signature;
             current = selected->executor(current, stage);
             resolved += selected->signature.size();
             signature = signature.after(selected->signature.size());
@@ -409,6 +417,7 @@ public:
             m_rule.target_operation_type = std::type_index(typeid(Op));
             m_rule.target = target_of_v<Op>;
             m_rule.fitness = fitness_of<Op>();
+            m_rule.sticky = stateful_v<Op>;
             using Input = std::remove_cvref_t<decltype(std::declval<typename Op::input_type>().data)>;
             using Output = std::remove_cvref_t<decltype(std::declval<typename Op::output_type>().data)>;
             std::shared_ptr<ComputeOperation<Input, Output>> base = std::move(operation);
@@ -679,9 +688,69 @@ public:
         m_rules.clear();
     }
 
+    /**
+     * @brief How much better a challenger must score before a stateless stage leaves its
+     *        last choice. Zero (the default) always takes the best score.
+     */
+    void set_switch_margin(float margin) { m_switch_margin = std::max(0.0F, margin); }
+    [[nodiscard]] float switch_margin() const { return m_switch_margin; }
+
+    /**
+     * @brief Forget every stage's last choice.
+     *
+     * A stateful rule stays on its candidate until it stops accepting its input
+     * or until this is called, so call it when the source changes (a seek, a
+     * camera switch) and the next call may choose again.
+     */
+    void reset_choices()
+    {
+        const std::scoped_lock lock(m_choices.mutex);
+        m_choices.last.clear();
+    }
+
 private:
+    /**
+     * @brief The rule a stage runs, given the candidates that accept and score above zero.
+     *
+     * A stateful incumbent is kept while it remains a candidate. A stateless one is
+     * kept unless the best candidate beats it by the switch margin; with no margin
+     * the best candidate always wins. The choice is remembered per stage.
+     */
+    const Rule* remembered_choice(size_t stage,
+        const std::vector<std::pair<const Rule*, float>>& candidates,
+        const Rule* best, float best_score) const
+    {
+        const std::scoped_lock lock(m_choices.mutex);
+        const Rule* chosen = best;
+        if (const auto last = m_choices.last.find(stage); last != m_choices.last.end() && best) {
+            const auto incumbent = std::ranges::find_if(candidates,
+                [&](const auto& candidate) { return candidate.first->name == last->second; });
+            if (incumbent != candidates.end()
+                && (incumbent->first->sticky
+                    || (m_switch_margin > 0.0F && best_score <= incumbent->second + m_switch_margin))) {
+                chosen = incumbent->first;
+            }
+        }
+        if (chosen) {
+            m_choices.last.insert_or_assign(stage, chosen->name);
+        }
+        return chosen;
+    }
+
+    /** @brief Last rule run at each stage. Copies of a grammar start with none. */
+    struct Choices {
+        Choices() = default;
+        Choices(const Choices&) { }
+        Choices& operator=(const Choices&) { return *this; }
+
+        mutable std::mutex mutex;
+        mutable std::unordered_map<size_t, std::string> last;
+    };
+
     ComputationSignature m_signature;
     std::vector<Rule> m_rules; ///< All rules sorted by priority (highest first)
+    float m_switch_margin { 0.0F };
+    Choices m_choices;
 };
 
 /** @brief Construct a grammar from registered implementations and optional rule refinements. */
@@ -739,6 +808,13 @@ public:
                 "No registered operation at stage {} runs on the requested target", stage);
         }
         m_pin = target;
+        return *this;
+    }
+
+    /** @brief Set the grammar's switch margin: see ComputationGrammar::set_switch_margin. */
+    Builder& switch_margin(float margin)
+    {
+        m_grammar->set_switch_margin(margin);
         return *this;
     }
 
@@ -800,6 +876,7 @@ private:
                 rule.m_rule.target_operation_type = bindings[i].type;
                 rule.m_rule.target = bindings[i].target;
                 rule.m_rule.fitness = std::move(bindings[i].fitness);
+                rule.m_rule.sticky = bindings[i].sticky;
                 rule.with_priority(bindings[i].priority);
             }
         }

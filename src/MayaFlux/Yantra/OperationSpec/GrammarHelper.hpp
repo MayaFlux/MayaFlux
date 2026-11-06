@@ -29,6 +29,16 @@ Fitness fitness_of()
 }
 
 /**
+ * @brief Whether the class keeps state between calls and must stay on its candidate.
+ *
+ * A class says so with `static constexpr bool stateful = true`. The grammar then keeps
+ * running it, instead of switching to a better-scoring candidate, until it stops
+ * accepting its input or the grammar's choices are reset.
+ */
+template <typename Op>
+inline constexpr bool stateful_v = requires { requires Op::stateful; };
+
+/**
  * @class Matcher
  * @brief Type-agnostic pattern matching for computation rules
  *
