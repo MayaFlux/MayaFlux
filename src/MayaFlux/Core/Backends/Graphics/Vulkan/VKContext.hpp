@@ -128,6 +128,9 @@ public:
      */
     [[nodiscard]] const GraphicsSurfaceInfo& get_surface_info() const { return m_graphics_config.surface_info; }
 
+    /** @brief Directory configured for shader and pipeline caches. */
+    [[nodiscard]] const std::filesystem::path& get_shader_cache_dir() const { return m_graphics_config.backend_info.shader_cache_dir; }
+
 private:
     VKInstance m_instance;
     VKDevice m_device;

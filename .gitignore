@@ -30,6 +30,7 @@ mayaflux.json
 planning/
 data/out/
 data/log/
+data/cache/
 
 # Media and 3D assets
 *.jpg

@@ -783,6 +783,9 @@ public:
      */
     [[nodiscard]] vk::PhysicalDevice get_physical_device() const;
 
+    /** @brief Cache shared by graphics and compute pipeline creation. */
+    [[nodiscard]] vk::PipelineCache get_pipeline_cache() const { return m_pipeline_cache; }
+
 private:
     /**
      * @enum DetectedSourceType
@@ -800,6 +803,11 @@ private:
 
     std::shared_ptr<Core::VulkanBackend> m_backend;
     ShaderCompilerConfig m_config;
+    vk::PipelineCache m_pipeline_cache {};
+    std::filesystem::path m_pipeline_cache_path;
+
+    void initialize_pipeline_cache();
+    void save_pipeline_cache();
 
     std::unordered_map<std::string, std::shared_ptr<Core::VKShaderModule>> m_shader_cache;
     std::unordered_map<ShaderID, ShaderState> m_shaders;

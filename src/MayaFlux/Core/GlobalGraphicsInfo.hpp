@@ -101,8 +101,8 @@ struct MAYAFLUX_API GraphicsBackendInfo {
         CACHED ///< Cache compiled shaders
     } shader_compilation = ShaderCompilation::CACHED;
 
-    /** @brief Shader cache directory (if caching enabled) */
-    std::filesystem::path shader_cache_dir = "cache/shaders";
+    /** @brief Shader and pipeline cache directory, relative to the project root unless absolute. */
+    std::filesystem::path shader_cache_dir = "data/cache";
 
     /** @brief Backend-specific extensions to request */
     std::vector<std::string> required_extensions;

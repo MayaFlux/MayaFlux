@@ -156,6 +156,7 @@ ComputePipelineID ComputePress::create_pipeline(
     Core::ComputePipelineConfig pipeline_config;
     pipeline_config.shader = shader_module;
     pipeline_config.set_layouts = state.layouts;
+    pipeline_config.cache = m_shader_foundry->get_pipeline_cache();
 
     if (push_constant_size > 0) {
         pipeline_config.add_push_constant(
