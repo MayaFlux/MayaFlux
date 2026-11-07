@@ -40,10 +40,12 @@ void GpuDispatchCore::set_output_size(size_t index, size_t byte_size)
 
 bool GpuDispatchCore::ensure_gpu_ready()
 {
-    if (m_resources.is_ready(dispatch_key()))
-        return true;
-    m_bindings = declare_buffer_bindings();
-    return m_resources.initialise(dispatch_key(), m_gpu_config, m_bindings);
+    if (!m_resources.is_ready(dispatch_key())
+        && !m_resources.initialise(dispatch_key(), m_gpu_config, declare_buffer_bindings())) {
+        return false;
+    }
+    m_bindings = declared_bindings();
+    return true;
 }
 
 bool GpuDispatchCore::is_gpu_ready() const
@@ -391,7 +393,7 @@ GpuChannelResult GpuDispatchCore::dispatch_core_chained_indirect(
             "GpuDispatchCore: dispatch_core_chained_indirect GPU initialisation failed");
     }
 
-    m_bindings = declare_buffer_bindings();
+    m_bindings = declared_bindings();
     if (!inputs_accepted())
         return {};
     prepare_gpu_inputs(channels, structure_info);
@@ -456,11 +458,11 @@ void GpuDispatchCore::for_each_stage(const std::vector<DependencyStage>& stages,
     for (const auto& stage : stages) {
         m_gpu_config = stage.config;
         update_dispatch_key_cache();
-        m_bindings = declare_buffer_bindings();
         m_image_bindings.clear();
         m_binding_data.clear();
         m_passthrough_bytes.clear();
         m_push_constants.clear();
+        m_bindings = declared_bindings();
 
         stage.stage_fn(*this);
 
@@ -679,6 +681,15 @@ void GpuDispatchCore::update_dispatch_key_cache()
     m_cached_dispatch_key = m_gpu_config.shader_path.empty()
         ? std::to_string(m_gpu_config.shader_id)
         : m_gpu_config.shader_path;
+}
+
+std::vector<GpuBufferBinding> GpuDispatchCore::declared_bindings() const
+{
+    auto bindings = declare_buffer_bindings();
+    std::erase_if(bindings, [this](const GpuBufferBinding& b) {
+        return !m_resources.holds_binding(dispatch_key(), b.set, b.binding);
+    });
+    return bindings;
 }
 
 void GpuDispatchCore::bind_all_descriptors()

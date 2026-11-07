@@ -100,6 +100,7 @@ struct VulkanBufferSlot {
     vk::DeviceMemory memory;
     void* mapped_ptr { nullptr };
     size_t allocated_bytes {};
+    uint64_t address {};
 };
 
 //==============================================================================
@@ -172,6 +173,7 @@ namespace {
             slot.memory = vk::DeviceMemory {};
         }
         slot.allocated_bytes = 0;
+        slot.address = 0;
     }
 
     /**
@@ -232,7 +234,7 @@ namespace {
 
         vk::BufferCreateInfo bi;
         bi.size = byte_size;
-        bi.usage = extra_usage | vk::BufferUsageFlagBits::eTransferDst;
+        bi.usage = extra_usage | vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eShaderDeviceAddress;
         bi.sharingMode = vk::SharingMode::eExclusive;
         slot.buffer = device.createBuffer(bi);
 
@@ -270,6 +272,7 @@ namespace {
         }
 
         device.bindBufferMemory(slot.buffer, slot.memory, 0);
+        slot.address = device.getBufferAddress(vk::BufferDeviceAddressInfo { slot.buffer });
         slot.mapped_ptr = device.mapMemory(slot.memory, 0, VK_WHOLE_SIZE);
         slot.allocated_bytes = byte_size;
     }
@@ -478,8 +481,15 @@ bool GpuResourceManager::initialise(const std::string& key,
     for (const auto& used : foundry.get_active_descriptor_bindings(unit->shader_id))
         unit->active_bindings.emplace_back(used.set, used.binding);
 
-    std::map<uint32_t, std::vector<Portal::Graphics::DescriptorBindingInfo>> by_set;
+    std::vector<GpuBufferBinding> held;
+    held.reserve(bindings.size());
     for (const auto& b : bindings) {
+        if (b.set == 0U || std::ranges::find(unit->active_bindings, std::pair { b.set, b.binding }) != unit->active_bindings.end())
+            held.push_back(b);
+    }
+
+    std::map<uint32_t, std::vector<Portal::Graphics::DescriptorBindingInfo>> by_set;
+    for (const auto& b : held) {
         const auto et = b.element_type;
         const bool is_image = et == GpuBufferBinding::ElementType::IMAGE_STORAGE
             || et == GpuBufferBinding::ElementType::IMAGE_SAMPLED;
@@ -492,7 +502,7 @@ bool GpuResourceManager::initialise(const std::string& key,
         }
     }
 
-    for (const auto& b : bindings) {
+    for (const auto& b : held) {
         const auto et = b.element_type;
         const bool is_image = et == GpuBufferBinding::ElementType::IMAGE_STORAGE
             || et == GpuBufferBinding::ElementType::IMAGE_SAMPLED;
@@ -506,11 +516,13 @@ bool GpuResourceManager::initialise(const std::string& key,
     }
 
     std::vector<std::vector<Portal::Graphics::DescriptorBindingInfo>> descriptor_sets;
-    descriptor_sets.reserve(by_set.size());
-    for (auto& [set_idx, set_bindings] : by_set)
-        descriptor_sets.push_back(std::move(set_bindings));
+    if (!by_set.empty()) {
+        descriptor_sets.resize(static_cast<size_t>(by_set.rbegin()->first) + 1U);
+        for (auto& [set_idx, set_bindings] : by_set)
+            descriptor_sets[set_idx] = std::move(set_bindings);
+    }
 
-    const bool push_set_zero = !by_set.empty() && by_set.begin()->first == 0;
+    const bool push_set_zero = !descriptor_sets.empty();
 
     unit->pipeline_id = compute_press.create_pipeline(
         unit->shader_id, descriptor_sets, config.push_constant_size,
@@ -536,9 +548,9 @@ bool GpuResourceManager::initialise(const std::string& key,
     unit->impl = std::make_unique<GpuResourceManagerImpl>();
     unit->impl->push_set_zero = push_set_zero;
     size_t max_binding = 0;
-    for (const auto& b : bindings)
+    for (const auto& b : held)
         max_binding = std::max(max_binding, static_cast<size_t>(b.binding));
-    const size_t capacity = bindings.empty() ? 0 : max_binding + 1;
+    const size_t capacity = held.empty() ? 0 : max_binding + 1;
     unit->impl->buffers.resize(capacity);
     unit->buffer_slots.resize(capacity);
     unit->image_slots.resize(capacity);
@@ -667,6 +679,9 @@ void GpuResourceManager::bind_descriptors_batch(const std::string& key, const st
             continue;
         }
 
+        if (!holds_binding(key, b.set, b.binding))
+            continue;
+
         const auto shared_it = m_shared->slots.find({ b.set, static_cast<size_t>(b.binding) });
         vk::Buffer buffer;
         size_t allocated_bytes = 0;
@@ -764,6 +779,12 @@ Portal::Graphics::GpuBufferHandle GpuResourceManager::shared_buffer_handle(uint3
     return { .buffer = it->second.buffer, .mapped_ptr = it->second.mapped_ptr, .size_bytes = it->second.allocated_bytes };
 }
 
+uint64_t GpuResourceManager::shared_buffer_address(uint32_t set, size_t binding_index) const
+{
+    const auto it = m_shared->slots.find({ set, binding_index });
+    return it == m_shared->slots.end() ? 0U : it->second.address;
+}
+
 void GpuResourceManager::download_shared(uint32_t set, size_t binding_index, void* dest, size_t byte_size)
 {
     read_slot(m_recording.get(), m_shared->slots.at({ set, binding_index }), dest, byte_size);
@@ -801,6 +822,9 @@ void GpuResourceManager::bind_images_batch(const std::string& key, const std::ve
     writes.reserve(images.size());
 
     for (const auto& entry : images) {
+        if (!holds_binding(key, entry.spec.set, entry.spec.binding))
+            continue;
+
         if (entry.index >= unit.image_slots.size())
             unit.image_slots.resize(entry.index + 1);
         unit.image_slots[entry.index] = entry.image;
@@ -936,6 +960,14 @@ void GpuResourceManager::dispatch(const std::string& key,
     const auto cmd_id = open_commands();
     record_unit(cmd_id, unit, groups, push_constant_data, push_constant_size);
     finish_commands(cmd_id);
+}
+
+bool GpuResourceManager::holds_binding(const std::string& key, uint32_t set, uint32_t binding) const
+{
+    const auto* unit = find_unit(key);
+    if (!unit || !unit->ready || set == 0U)
+        return true;
+    return uses_binding(key, set, binding);
 }
 
 bool GpuResourceManager::uses_binding(const std::string& key, uint32_t set, uint32_t binding) const

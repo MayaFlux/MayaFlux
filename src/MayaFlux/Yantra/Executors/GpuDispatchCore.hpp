@@ -255,6 +255,7 @@ public:
         if (shader_changed)
             m_push_constants.clear();
         update_dispatch_key_cache();
+        m_bindings = declared_bindings();
     }
 
     /**
@@ -285,6 +286,12 @@ public:
     [[nodiscard]] Portal::Graphics::GpuBufferHandle shared_buffer_handle(uint32_t set, size_t binding_index) const
     {
         return m_resources.shared_buffer_handle(set, binding_index);
+    }
+
+    /** @brief Device address of the shared buffer at (set, binding_index), or zero when absent. */
+    [[nodiscard]] uint64_t shared_buffer_address(uint32_t set, size_t binding_index) const
+    {
+        return m_resources.shared_buffer_address(set, binding_index);
     }
 
     /**
@@ -556,6 +563,10 @@ private:
     /// Element count of the dispatch most recently prepared. Set by
     /// prepare_gpu_inputs; the dispatch size and readback count come from it.
     size_t m_prepared_elements {};
+
+
+    /** declare_buffer_bindings less the bindings the current unit's layout does not hold. */
+    [[nodiscard]] std::vector<GpuBufferBinding> declared_bindings() const;
 
     void update_dispatch_key_cache();
     void bind_all_descriptors();

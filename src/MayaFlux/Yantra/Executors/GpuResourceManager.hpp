@@ -171,6 +171,15 @@ public:
      * grows the slot.
      */
     [[nodiscard]] Portal::Graphics::GpuBufferHandle shared_buffer_handle(uint32_t set, size_t binding_index) const;
+
+    /**
+     * @brief Device address of the shared buffer at (set, binding_index), or
+     *        zero when no such buffer exists.
+     *
+     * Valid until ensure_shared_buffer grows the slot, so read it when the
+     * dispatch is staged.
+     */
+    [[nodiscard]] uint64_t shared_buffer_address(uint32_t set, size_t binding_index) const;
     void download_shared(uint32_t set, size_t binding_index, void* dest, size_t byte_size);
     void upload_shared_raw(uint32_t set, size_t binding_index, const uint8_t* data, size_t byte_size);
 
@@ -210,6 +219,17 @@ public:
      * shader returns false.
      */
     [[nodiscard]] bool uses_binding(const std::string& key, uint32_t set, uint32_t binding) const;
+
+    /**
+     * @brief True when the unit's layout holds (set, binding).
+     *
+     * Set 0 is the push set and holds every binding declared on the unit. A
+     * later set holds only the bindings the shader uses, so a shader that
+     * reads its buffers through device addresses, or uses none outside set 0,
+     * has a layout of the push set alone. True as well for a key with no unit
+     * yet, since nothing has been dropped.
+     */
+    [[nodiscard]] bool holds_binding(const std::string& key, uint32_t set, uint32_t binding) const;
 
     /**
      * @brief Record one dispatch of a unit with its current bindings, push
