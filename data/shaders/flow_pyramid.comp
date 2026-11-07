@@ -1,4 +1,5 @@
 #version 460
+#extension GL_EXT_buffer_reference : require
 
 #extension GL_KHR_shader_subgroup_basic : require
 #extension GL_KHR_shader_subgroup_arithmetic : require
@@ -11,11 +12,12 @@ layout(set = 0, binding = 0, rgba32f) uniform readonly image2D src_image;
 layout(set = 0, binding = 3, rgba16f) uniform image2D atlas_a;
 layout(set = 0, binding = 4, rgba16f) uniform image2D atlas_b;
 
-layout(set = 1, binding = 3, std430) buffer MetaBuf {
-    uint meta[];
+layout(buffer_reference, std430) buffer MetaBufRef {
+    uint v[];
 };
 
 layout(push_constant) uniform PC {
+    MetaBufRef meta;
     uint target_atlas;
     uint level;
     uint src_w;
@@ -128,7 +130,7 @@ void main()
         const float before = pc.target_atlas == 0u ? imageLoad(atlas_b, out_coord).r : imageLoad(atlas_a, out_coord).r;
         const uint energy = subgroupAdd(uint(clamp(abs(stored - before), 0.0, 1.0) * 1024.0));
         if (subgroupElect() && energy > 0u)
-            atomicAdd(meta[1], energy);
+            atomicAdd(pc.meta.v[1], energy);
     }
     if (pc.target_atlas == 0u)
         imageStore(atlas_a, out_coord, texel);

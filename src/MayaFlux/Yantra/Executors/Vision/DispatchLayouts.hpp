@@ -244,6 +244,7 @@ struct ContourTopKPC {
 };
 
 struct FlowPyramidPC {
+    uint64_t meta;
     uint32_t target_atlas;
     uint32_t level;
     uint32_t src_w;
@@ -257,6 +258,10 @@ struct FlowPyramidPC {
     uint32_t src_channel;
 };
 struct FlowLkPC {
+    uint64_t prev_count;
+    uint64_t prev_points;
+    uint64_t tracks;
+    uint64_t meta;
     uint32_t curr_atlas;
     uint32_t level;
     uint32_t coarsest;
@@ -277,6 +282,12 @@ struct FlowLkPC {
     float forward_backward_threshold;
 };
 
+struct FlowResetPC {
+    uint64_t prev_count;
+    uint64_t meta;
+    uint64_t ctr;
+};
+
 enum class FlowSelectPhase : uint8_t {
     CLEAR = 0,
     SURVIVORS = 1,
@@ -290,6 +301,17 @@ enum class FlowSelectPhase : uint8_t {
 };
 
 struct FlowSelectPC {
+    uint64_t prev_count;
+    uint64_t prev_points;
+    uint64_t tracks;
+    uint64_t meta;
+    uint64_t next_points;
+    uint64_t ctr;
+    uint64_t hist;
+    uint64_t grid;
+    uint64_t export_a;
+    uint64_t export_b;
+    uint64_t args;
     uint32_t phase;
     uint32_t max_points;
     uint32_t have_prev;
@@ -321,6 +343,7 @@ enum class FlowDensePhase : uint8_t {
 };
 
 struct FlowDensePC {
+    uint64_t meta;
     uint32_t phase;
     uint32_t curr_atlas;
     uint32_t out_parity;

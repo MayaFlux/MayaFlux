@@ -283,7 +283,11 @@ namespace {
             flow.ensure_shared_buffer(spec.set, spec.binding, k_flow_export_vec4 * 4, spec.type, Portal::Graphics::BufferUsageHint::COMPUTE);
         flow.ensure_shared_buffer(k_flow_args.set, k_flow_args.binding, k_flow_args_count * 3, k_flow_args.type, Portal::Graphics::BufferUsageHint::INDIRECT);
 
-        flow.swap_shader({ .shader_path = "flow_reset.comp.spv", .workgroup_size = { 64, 1, 1 } });
+        flow.swap_shader({ .shader_path = "flow_reset.comp.spv", .workgroup_size = { 64, 1, 1 }, .push_constant_size = sizeof(FlowResetPC) });
+        flow.set_push_constants(FlowResetPC {
+            .prev_count = flow.shared_buffer_address(1, 0),
+            .meta = flow.shared_buffer_address(1, 3),
+            .ctr = flow.shared_buffer_address(1, 5) });
         flow.set_output_dimensions(1, 1);
         (void)flow.dispatch_async({});
         flow.clear_output_dimensions();
@@ -297,6 +301,10 @@ bool VisionGpuExecutor::op_track_keypoints(VisionGpuContexts& contexts, const Vi
 {
     auto& state = contexts.flow_state;
     auto& flow = contexts.flow;
+
+    const auto address = [&flow](uint32_t set, uint32_t binding) {
+        return flow.shared_buffer_address(set, binding);
+    };
 
     contexts.pass.result.structured = std::vector<Kinesis::Vision::TrackResult> {};
     contexts.pass.result.w = 0;
@@ -375,6 +383,17 @@ bool VisionGpuExecutor::op_track_keypoints(VisionGpuContexts& contexts, const Vi
 
     const auto add_select = [&](FlowSelectPhase phase, uint32_t groups, std::optional<FlowArgs> args = std::nullopt) {
         const FlowSelectPC pc {
+            .prev_count = address(1, 0),
+            .prev_points = address(1, 1),
+            .tracks = address(1, 2),
+            .meta = address(1, 3),
+            .next_points = address(1, 4),
+            .ctr = address(1, 5),
+            .hist = address(1, 6),
+            .grid = address(1, 7),
+            .export_a = address(1, 8),
+            .export_b = address(1, 9),
+            .args = address(1, 10),
             .phase = static_cast<uint32_t>(phase),
             .max_points = max_points,
             .have_prev = have_prev,
@@ -402,6 +421,10 @@ bool VisionGpuExecutor::op_track_keypoints(VisionGpuContexts& contexts, const Vi
             const PyramidLevel lv = layout.level[level];
 
             const FlowLkPC pc {
+                .prev_count = address(1, 0),
+                .prev_points = address(1, 1),
+                .tracks = address(1, 2),
+                .meta = address(1, 3),
                 .curr_atlas = state.curr,
                 .level = level,
                 .coarsest = level + 1U == layout.levels ? 1U : 0U,
@@ -467,6 +490,10 @@ bool VisionGpuExecutor::op_dense_flow(VisionGpuContexts& contexts, const VisionS
 {
     auto& state = contexts.flow_state;
     auto& flow = contexts.flow;
+
+    const auto address = [&flow](uint32_t set, uint32_t binding) {
+        return flow.shared_buffer_address(set, binding);
+    };
 
     if (!state.curr_ready || !state.atlas[0]) {
         MF_ERROR(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
@@ -554,6 +581,7 @@ bool VisionGpuExecutor::op_dense_flow(VisionGpuContexts& contexts, const VisionS
         const PyramidLevel coarse = coarsest ? PyramidLevel {} : layout.level[level + 1];
 
         FlowDensePC pc {
+            .meta = address(1, 3),
             .phase = 0,
             .curr_atlas = state.curr,
             .out_parity = out_parity,
@@ -593,6 +621,7 @@ bool VisionGpuExecutor::op_dense_flow(VisionGpuContexts& contexts, const VisionS
 
     const PyramidLevel finest = layout.level[0];
     const FlowDensePC hold_pc {
+        .meta = address(1, 3),
         .phase = static_cast<uint32_t>(FlowDensePhase::HOLD),
         .curr_atlas = state.curr,
         .out_parity = out_parity,
@@ -618,6 +647,7 @@ bool VisionGpuExecutor::op_dense_flow(VisionGpuContexts& contexts, const VisionS
 
     if (p.visualize) {
         const FlowDensePC vis_pc {
+            .meta = address(1, 3),
             .phase = static_cast<uint32_t>(FlowDensePhase::VISUALIZE),
             .curr_atlas = state.curr,
             .out_parity = out_parity,
@@ -695,6 +725,10 @@ void VisionGpuExecutor::build_flow_pyramid(VisionGpuContexts& contexts, uint32_t
     auto& state = contexts.flow_state;
     const auto gray = contexts.pass.current;
 
+    const auto address = [&flow](uint32_t set, uint32_t binding) {
+        return flow.shared_buffer_address(set, binding);
+    };
+
     if (!gray || !gray->is_initialized())
         return;
 
@@ -728,6 +762,7 @@ void VisionGpuExecutor::build_flow_pyramid(VisionGpuContexts& contexts, uint32_t
         const PyramidLevel src = level == 0 ? PyramidLevel { .ox = 0, .oy = 0, .w = w, .h = h } : layout.level[level - 1];
 
         const FlowPyramidPC pc {
+            .meta = address(1, 3),
             .target_atlas = state.curr,
             .level = level,
             .src_w = src.w,

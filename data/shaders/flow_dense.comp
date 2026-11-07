@@ -1,4 +1,5 @@
 #version 460
+#extension GL_EXT_buffer_reference : require
 
 #include "include/vision_colorspace.glsl"
 #include "include/vision_sampling.glsl"
@@ -15,11 +16,12 @@ layout(set = 0, binding = 9, rgba32f) uniform image2D scratch_b;
 layout(set = 0, binding = 10, rgba32f) uniform image2D tensor_img;
 layout(set = 0, binding = 11, rgba32f) uniform writeonly image2D flow_vis;
 
-layout(set = 1, binding = 3, std430) buffer MetaBuf {
-    uint meta[];
+layout(buffer_reference, std430) buffer MetaBufRef {
+    uint v[];
 };
 
 layout(push_constant) uniform PC {
+    MetaBufRef meta;
     uint phase;
     uint curr_atlas;
     uint out_parity;
@@ -334,7 +336,7 @@ void main()
         }
         case PHASE_HOLD:
         {
-            if (pc.hold_previous == 0u || meta[1] > DUPLICATE_ENERGY)
+            if (pc.hold_previous == 0u || pc.meta.v[1] > DUPLICATE_ENERGY)
                 break;
 
             const vec4 previous = pc.out_parity == 0u ? imageLoad(flow_out_b, c) : imageLoad(flow_out_a, c);
@@ -343,7 +345,7 @@ void main()
         }
         case PHASE_VISUALIZE:
         {
-            if (meta[1] <= DUPLICATE_ENERGY) {
+            if (pc.meta.v[1] <= DUPLICATE_ENERGY) {
                 imageStore(flow_vis, c, vec4(0.0, 0.0, 0.0, 1.0));
                 break;
             }
