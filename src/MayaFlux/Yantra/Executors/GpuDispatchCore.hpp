@@ -235,6 +235,12 @@ public:
      * Switching back to a previously-used shader is free. Preserves all
      * staged image and buffer bindings, same as before.
      *
+     * Push constant data belongs to the shader that was bound when it was
+     * set. When the shader changes, the staged push data is dropped so the
+     * next dispatch cannot carry bytes from the previous shader into a
+     * pipeline whose push range is different (or absent). Setting the push
+     * data after the swap is the expected order.
+     *
      * Use to drive a multi-op sequence through one context: stage the input
      * image, call swap_shader + dispatch_core per op, pipe get_output_image(0)
      * back in via stage_image between steps.
@@ -243,7 +249,11 @@ public:
      */
     void swap_shader(GpuComputeConfig config)
     {
+        const bool shader_changed = config.shader_id != m_gpu_config.shader_id
+            || config.shader_path != m_gpu_config.shader_path;
         m_gpu_config = std::move(config);
+        if (shader_changed)
+            m_push_constants.clear();
         update_dispatch_key_cache();
     }
 
