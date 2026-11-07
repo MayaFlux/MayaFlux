@@ -190,10 +190,9 @@ public:
      *
      * Given once, by whoever owns the recording, before the first dispatch.
      * While attached:
-     * - dispatch_async, dispatch_sequence_async, record_stage and the batched
-     *   dispatches append to the recording and return INVALID_FENCE where a
-     *   fence is returned;
-     * - dispatch and dispatch_sequence append, then submit and wait;
+     * - dispatch_async, record_stage and the batched dispatches append to the
+     *   recording and return INVALID_FENCE where a fence is returned;
+     * - dispatch appends, then submits and waits;
      * - uploads and fills are recorded in order with the dispatches;
      * - downloads submit and wait for the recording before reading;
      * - image transitions are recorded into it;
@@ -302,40 +301,6 @@ public:
         const uint8_t* push_constant_data,
         size_t push_constant_size);
 
-    /**
-     * @brief Record a dispatch for each requested key into one command
-     *        buffer via ComputePress::record_sequence, submitted once.
-     *
-     * Each key must already be initialise()'d. Vectors are parallel,
-     * indexed by position, one entry per key in the same order as keys.
-     * indirect_per_key is either empty or parallel too; a stage whose entry
-     * has a buffer dispatches with the counts stored there instead of its
-     * fixed groups. push_writes_per_key is parallel too and holds each
-     * stage's set 0 push descriptor writes. Every stage is followed by a
-     * barrier, so each stage sees the writes of all earlier ones.
-     */
-    void dispatch_sequence(
-        const std::vector<std::string>& keys,
-        const std::vector<std::array<uint32_t, 3>>& groups_per_key,
-        const std::vector<std::vector<uint8_t>>& push_constants_per_key,
-        const std::vector<std::vector<Portal::Graphics::PushDescriptorWrite>>& push_writes_per_key,
-        const std::vector<Portal::Graphics::IndirectDispatch>& indirect_per_key = {});
-
-    /**
-     * @brief Non-blocking counterpart of dispatch_sequence.
-     *
-     * Records the identical command buffer and submits it via
-     * ShaderFoundry::submit_async instead of submit_and_wait.
-     *
-     * @return FenceID to poll with ShaderFoundry::is_fence_signaled and to
-     *         release once signaled.
-     */
-    [[nodiscard]] Portal::Graphics::FenceID dispatch_sequence_async(
-        const std::vector<std::string>& keys,
-        const std::vector<std::array<uint32_t, 3>>& groups_per_key,
-        const std::vector<std::vector<uint8_t>>& push_constants_per_key,
-        const std::vector<std::vector<Portal::Graphics::PushDescriptorWrite>>& push_writes_per_key,
-        const std::vector<Portal::Graphics::IndirectDispatch>& indirect_per_key = {});
 
     /**
      * @brief Destroy the pipeline, shader, descriptor sets, and buffers
@@ -379,20 +344,6 @@ private:
 
         bool ready {};
     };
-
-    /**
-     * @brief Record one command buffer holding a dispatch per key, a barrier
-     *        after each, and the trailing barrier.
-     *
-     * Shared by dispatch_sequence and dispatch_sequence_async, which differ
-     * only in how they submit the returned buffer.
-     */
-    [[nodiscard]] Portal::Graphics::CommandBufferID record_sequence_commands(
-        const std::vector<std::string>& keys,
-        const std::vector<std::array<uint32_t, 3>>& groups_per_key,
-        const std::vector<std::vector<uint8_t>>& push_constants_per_key,
-        const std::vector<std::vector<Portal::Graphics::PushDescriptorWrite>>& push_writes_per_key,
-        const std::vector<Portal::Graphics::IndirectDispatch>& indirect_per_key);
 
     /**
      * @brief The attached recording's command buffer, or a new one when none

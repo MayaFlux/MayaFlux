@@ -41,7 +41,7 @@ struct IndirectGroupsSource {
 
 /**
  * @struct DependencyStage
- * @brief One stage in a dispatch_core_dependency call.
+ * @brief One stage in a record_stages call.
  *
  * stage_fn is invoked with this context as the active target, exactly as
  * if the caller had just called swap_shader(config) and were about to call
@@ -175,9 +175,9 @@ public:
     /**
      * @brief Stage and record each stage in order, one dispatch per stage.
      *
-     * Each stage is prepared as in dispatch_core_dependency and recorded at
-     * once, so its uploads and fills land between the dispatches before and
-     * after it. With a recording attached nothing is submitted; without one,
+     * Each stage is staged and recorded in turn, so its uploads and fills land
+     * between the dispatches before and after it. With a recording attached
+     * nothing is submitted; without one,
      * each stage is submitted and awaited on its own. The context's own
      * shader config, bindings and staged data are restored before this
      * returns.
@@ -423,44 +423,6 @@ protected:
         const DataStructureInfo& structure_info);
 
     /**
-     * @brief Multi-pipeline dependency dispatch.
-     *
-     * For each stage, in order: applies its shader config (swap_shader
-     * equivalent), invokes stage_fn to perform whatever staging that stage
-     * needs, ensures its GpuResourceManager unit exists, binds its
-     * descriptors, then accumulates a Portal::Graphics::ComputeStage.
-     * After every stage is prepared, records and submits the full sequence in
-     * one command buffer via GpuResourceManager::dispatch_sequence.
-     *
-     * Restores the context's original shader config, bindings, and staged
-     * data after the sequence runs, so a subsequent unrelated dispatch_core
-     * call on this context is unaffected.
-     *
-     * @param stages Ordered list of stage descriptions.
-     */
-    void dispatch_core_dependency(const std::vector<DependencyStage>& stages);
-
-    /**
-     * @brief Non-blocking variant of dispatch_core_dependency.
-     *
-     * Stages are prepared exactly as in dispatch_core_dependency, then the
-     * whole sequence is recorded into one command buffer and submitted
-     * without waiting. The context's own shader config, bindings and staged
-     * data are restored before this returns, so the caller may reconfigure
-     * the context immediately. With a recording attached the sequence is
-     * appended to it instead and INVALID_FENCE is returned.
-     *
-     * The sequence ends with a barrier that orders anything submitted
-     * afterwards, and host reads once the fence has signaled, behind its writes.
-     *
-     * @param stages Ordered stage descriptions, as for DependencyParams.
-     * @return FenceID to poll with ShaderFoundry::is_fence_signaled and to
-     *         release once signaled. INVALID_FENCE on submission failure.
-     */
-    [[nodiscard]] Portal::Graphics::FenceID dispatch_core_dependency_async(
-        const std::vector<DependencyStage>& stages);
-
-    /**
      * @brief Effective element count used by the last dispatch_core or
      *        dispatch_core_async call.
      *
@@ -537,16 +499,6 @@ protected:
     std::vector<ImageBinding> m_image_bindings;
 
 private:
-    struct DependencyPlan {
-        std::vector<std::string> keys;
-        std::vector<std::array<uint32_t, 3>> groups;
-        std::vector<std::vector<uint8_t>> push_constants;
-        std::vector<std::vector<Portal::Graphics::PushDescriptorWrite>> push_writes;
-        std::vector<Portal::Graphics::IndirectDispatch> indirect;
-    };
-
-    [[nodiscard]] DependencyPlan prepare_dependency(const std::vector<DependencyStage>& stages);
-
     /**
      * @brief Stage each of stages in turn and hand its dispatch key, groups,
      *        push constants and indirect source to on_stage, then restore the

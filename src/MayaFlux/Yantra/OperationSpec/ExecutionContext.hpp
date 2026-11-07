@@ -68,37 +68,10 @@ struct ChainedIndirectParams {
     std::optional<uint32_t> passes_per_batch;
 };
 
-/**
- * @brief Parameters for ExecutionMode::DEPENDENCY.
- */
-struct MAYAFLUX_API DependencyParams {
-    std::vector<DependencyStage> stages;
-
-    /**
-     * @brief Submit the sequence without waiting for it to complete.
-     *
-     * When true, execute() returns immediately after submission with the
-     * resulting FenceID in the output Datum's metadata under "gpu_fence"
-     * (Portal::Graphics::INVALID_FENCE on submission failure). The caller
-     * polls or waits on that fence and releases it once signaled. When
-     * false (default), execute() blocks until the sequence completes and
-     * returns an empty Datum, as dispatch_core_dependency always has.
-     */
-    bool async { false };
-
-    ~DependencyParams();
-    DependencyParams();
-    DependencyParams(const DependencyParams&);
-    DependencyParams(DependencyParams&&) noexcept;
-    DependencyParams& operator=(const DependencyParams&);
-    DependencyParams& operator=(DependencyParams&&) noexcept;
-};
-
 using ExecutionParams = std::variant<
     std::monostate,
     ChainedParams,
-    ChainedIndirectParams,
-    DependencyParams>;
+    ChainedIndirectParams>;
 
 /**
  * @struct Permit
@@ -166,8 +139,7 @@ struct MAYAFLUX_API ExecutionContext {
      * @brief Optional parameters specific to the execution mode.
      *
      * For example, `ChainedParams` for ExecutionMode::CHAINED,
-     * `ChainedIndirectParams` for ExecutionMode::CHAINED_INDIRECT,
-     * or `DependencyParams` for ExecutionMode::DEPENDENCY.
+     * `ChainedIndirectParams` for ExecutionMode::CHAINED_INDIRECT.
      */
     ExecutionParams parameters;
 

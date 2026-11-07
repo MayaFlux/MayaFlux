@@ -54,25 +54,11 @@ public:
      *
      * @param input Input Datum to process.
      * @param ctx ExecutionContext; CHAINED mode requires ChainedParams, CHAINED_INDIRECT requires
-     *            ChainedIndirectParams, DEPENDENCY requires DependencyParams in parameters.
+     *            ChainedIndirectParams in parameters.
      * @throws std::runtime_error If GPU initialisation fails.
      */
     virtual output_type execute(const input_type& input, const ExecutionContext& ctx)
     {
-        if (ctx.mode == ExecutionMode::DEPENDENCY) {
-            const auto& dependency_params = safe_variant_get_or_throw<DependencyParams>(ctx.parameters,
-                "GpuExecutionContext: DEPENDENCY mode requires DependencyParams");
-
-            if (dependency_params.async) {
-                output_type result;
-                result.set_metadata("gpu_fence", dispatch_core_dependency_async(dependency_params.stages));
-                return result;
-            }
-
-            dispatch_core_dependency(dependency_params.stages);
-            return output_type {};
-        }
-
         if (!ensure_gpu_ready()) {
             error<std::runtime_error>(
                 Journal::Component::Yantra,
