@@ -1,25 +1,30 @@
 #version 460
+#extension GL_EXT_buffer_reference : require
 #include "include/vision_cc.glsl"
 
 layout(local_size_x = 256) in;
 
-layout(set = 1, binding = 4, std430) buffer TraceOwnerBuf {
-    uint trace_owner[];
+layout(buffer_reference, std430) buffer TraceOwnerBufRef {
+    uint v[];
 };
 
-layout(set = 1, binding = 5, std430) buffer HoleOwnerBuf {
-    uint hole_owner[];
+layout(buffer_reference, std430) buffer HoleOwnerBufRef {
+    uint v[];
 };
 
-layout(set = 1, binding = 6, std430) buffer CompactedOwnersBuf {
-    uvec2 compacted_owners[];
+layout(buffer_reference, std430) buffer CompactedOwnersBufRef {
+    uvec2 v[];
 };
 
-layout(set = 1, binding = 7, std430) buffer CompactedCountBuf {
-    uint compacted_count[];
+layout(buffer_reference, std430) buffer CompactedCountBufRef {
+    uint v[];
 };
 
 layout(push_constant) uniform PushConstants {
+    TraceOwnerBufRef trace_owner;
+    HoleOwnerBufRef hole_owner;
+    CompactedOwnersBufRef compacted_owners;
+    CompactedCountBufRef compacted_count;
     uint max_components;
     uint max_holes_per_label;
 } pc;
@@ -41,22 +46,22 @@ void main()
 
     if (idx < pc.max_components) {
         const uint label = idx + 1u;
-        const uint owner = trace_owner[label];
+        const uint owner = pc.trace_owner.v[label];
         if (owner == CC_UNCLAIMED)
             return;
 
-        const uint slot = atomicAdd(compacted_count[0], 1u);
-        compacted_owners[slot] = uvec2(owner, idx);
+        const uint slot = atomicAdd(pc.compacted_count.v[0], 1u);
+        pc.compacted_owners.v[slot] = uvec2(owner, idx);
         return;
     }
 
     const uint hole_idx = idx - pc.max_components;
-    const uint owner = hole_owner[hole_idx];
+    const uint owner = pc.hole_owner.v[hole_idx];
     if (owner == CC_UNCLAIMED)
         return;
 
     const uint label = hole_idx / pc.max_holes_per_label;
     const uint hole_slot = hole_idx % pc.max_holes_per_label;
-    const uint slot = atomicAdd(compacted_count[0], 1u);
-    compacted_owners[slot] = uvec2(owner, HOLE_FLAG | (hole_slot << 12) | label);
+    const uint slot = atomicAdd(pc.compacted_count.v[0], 1u);
+    pc.compacted_owners.v[slot] = uvec2(owner, HOLE_FLAG | (hole_slot << 12) | label);
 }

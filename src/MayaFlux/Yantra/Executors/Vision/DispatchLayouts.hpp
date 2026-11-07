@@ -199,6 +199,9 @@ struct ContourClearPC {
     uint32_t height;
 };
 struct ContourRenderPC {
+    uint64_t flat_points;
+    uint64_t contour_meta;
+    uint64_t sort_indices;
     uint32_t width;
     uint32_t height;
     uint32_t max_components;
@@ -206,6 +209,16 @@ struct ContourRenderPC {
     uint32_t max_contours;
 };
 struct ContourMarchPC {
+    uint64_t trace_owner;
+    uint64_t hole_owner;
+    uint64_t compacted_owners;
+    uint64_t compacted_count_buf;
+    uint64_t flat_points;
+    uint64_t point_cursor;
+    uint64_t contour_meta;
+    uint64_t contour_area_perim;
+    uint64_t sort_keys;
+    uint64_t sort_indices;
     uint32_t width;
     uint32_t height;
     uint32_t max_components;
@@ -216,10 +229,16 @@ struct ContourMarchPC {
     uint32_t compacted_count;
 };
 struct ContourCompactPC {
+    uint64_t trace_owner;
+    uint64_t hole_owner;
+    uint64_t compacted_owners;
+    uint64_t compacted_count;
     uint32_t max_components;
     uint32_t max_holes_per_label;
 };
 struct ContourTopKPC {
+    uint64_t sort_keys;
+    uint64_t sort_indices;
     uint32_t round;
     uint32_t count;
 };

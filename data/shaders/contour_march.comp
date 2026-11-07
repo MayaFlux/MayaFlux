@@ -1,4 +1,5 @@
 #version 460
+#extension GL_EXT_buffer_reference : require
 #include "include/vision_cc.glsl"
 
 layout(local_size_x = 8, local_size_y = 8) in;
@@ -15,8 +16,12 @@ layout(set = 0, binding = 8, std430) buffer BoundsMaxBuf {
     uvec2 bounds_max[];
 };
 
-layout(set = 1, binding = 4, std430) buffer TraceOwnerBuf {
-    uint trace_owner[];
+layout(set = 0, binding = 10, std430) buffer TraceArgsBuf {
+    uint trace_args[];
+};
+
+layout(buffer_reference, std430) buffer TraceOwnerBufRef {
+    uint v[];
 };
 
 /**
@@ -26,47 +31,53 @@ layout(set = 1, binding = 4, std430) buffer TraceOwnerBuf {
  *        holes on the same component land in distinct slots without
  *        needing dynamic allocation.
  */
-layout(set = 1, binding = 5, std430) buffer HoleOwnerBuf {
-    uint hole_owner[];
+layout(buffer_reference, std430) buffer HoleOwnerBufRef {
+    uint v[];
 };
 
-layout(set = 1, binding = 6, std430) buffer CompactedOwnersBuf {
-    uvec2 compacted_owners[];
+layout(buffer_reference, std430) buffer CompactedOwnersBufRef {
+    uvec2 v[];
 };
 
-layout(set = 1, binding = 7, std430) buffer CompactedCountBuf {
-    uint compacted_count_buf[];
+layout(buffer_reference, std430) buffer CompactedCountBufRef {
+    uint v[];
 };
 
-layout(set = 1, binding = 8, std430) buffer FlatPointsBuf {
-    vec2 flat_points[];
+layout(buffer_reference, std430) buffer FlatPointsBufRef {
+    vec2 v[];
 };
 
-layout(set = 1, binding = 9, std430) buffer PointCursorBuf {
-    uint point_cursor[];
+layout(buffer_reference, std430) buffer PointCursorBufRef {
+    uint v[];
 };
 
-layout(set = 1, binding = 10, std430) buffer ContourMetaBuf {
-    uvec4 contour_meta[];
+layout(buffer_reference, std430) buffer ContourMetaBufRef {
+    uvec4 v[];
 };
 
-layout(set = 1, binding = 11, std430) buffer ContourAreaPerimBuf {
-    vec2 contour_area_perim[];
+layout(buffer_reference, std430) buffer ContourAreaPerimBufRef {
+    vec2 v[];
 };
 
-layout(set = 2, binding = 0, std430) buffer SortKeysBuf {
-    float sort_keys[];
+layout(buffer_reference, std430) buffer SortKeysBufRef {
+    float v[];
 };
 
-layout(set = 2, binding = 1, std430) buffer SortIndicesBuf {
-    float sort_indices[];
-};
-
-layout(set = 0, binding = 10, std430) buffer TraceArgsBuf {
-    uint trace_args[];
+layout(buffer_reference, std430) buffer SortIndicesBufRef {
+    float v[];
 };
 
 layout(push_constant) uniform PushConstants {
+    TraceOwnerBufRef trace_owner;
+    HoleOwnerBufRef hole_owner;
+    CompactedOwnersBufRef compacted_owners;
+    CompactedCountBufRef compacted_count_buf;
+    FlatPointsBufRef flat_points;
+    PointCursorBufRef point_cursor;
+    ContourMetaBufRef contour_meta;
+    ContourAreaPerimBufRef contour_area_perim;
+    SortKeysBufRef sort_keys;
+    SortIndicesBufRef sort_indices;
     uint width;
     uint height;
     uint max_components;
@@ -109,8 +120,8 @@ void claim_outer_phase()
     const uint linear_idx = gl_GlobalInvocationID.y * pc.width + gl_GlobalInvocationID.x;
 
     if (linear_idx < pc.max_components) {
-        sort_keys[linear_idx] = NEG_INFINITY;
-        sort_indices[linear_idx] = float(linear_idx);
+        pc.sort_keys.v[linear_idx] = NEG_INFINITY;
+        pc.sort_indices.v[linear_idx] = float(linear_idx);
     }
 
     if (coord.x >= int(pc.width) || coord.y >= int(pc.height))
@@ -127,7 +138,7 @@ void claim_outer_phase()
     if (left == here)
         return;
 
-    atomicCompSwap(trace_owner[here], CC_UNCLAIMED, linear_idx);
+    atomicCompSwap(pc.trace_owner.v[here], CC_UNCLAIMED, linear_idx);
 }
 
 /**
@@ -155,7 +166,7 @@ void claim_hole_phase()
     if (is_background(here) || here > pc.max_components)
         return;
 
-    if (trace_owner[here] == linear_idx)
+    if (pc.trace_owner.v[here] == linear_idx)
         return;
 
     const uvec2 bmin = bounds_min[here - 1u];
@@ -176,7 +187,7 @@ void claim_hole_phase()
 
     const uint base_slot = (here - 1u) * pc.max_holes_per_label;
     for (uint s = 0u; s < pc.max_holes_per_label; ++s) {
-        if (atomicCompSwap(hole_owner[base_slot + s], CC_UNCLAIMED, linear_idx) == CC_UNCLAIMED) {
+        if (atomicCompSwap(pc.hole_owner.v[base_slot + s], CC_UNCLAIMED, linear_idx) == CC_UNCLAIMED) {
             return;
         }
     }
@@ -231,7 +242,7 @@ void walk_boundary(
                 continue;
 
             if (count < max_points) {
-                flat_points[out_base + count] = vec2(float(cx) / float(pc.width), float(cy) / float(pc.height));
+                pc.flat_points.v[out_base + count] = vec2(float(cx) / float(pc.width), float(cy) / float(pc.height));
             }
             ++count;
 
@@ -259,8 +270,8 @@ void shoelace_area_perimeter(uint out_base, uint n, out float area_out, out floa
     float area = 0.0;
     float perim = 0.0;
     for (uint j = 0u; j < n; ++j) {
-        const vec2 a = flat_points[out_base + j] * vec2(float(pc.width), float(pc.height));
-        const vec2 b = flat_points[out_base + ((j + 1u) % n)] * vec2(float(pc.width), float(pc.height));
+        const vec2 a = pc.flat_points.v[out_base + j] * vec2(float(pc.width), float(pc.height));
+        const vec2 b = pc.flat_points.v[out_base + ((j + 1u) % n)] * vec2(float(pc.width), float(pc.height));
         area += a.x * b.y - b.x * a.y;
         perim += length(b - a);
     }
@@ -281,7 +292,7 @@ void write_trace_args()
     if (gl_LocalInvocationIndex != 0u)
         return;
 
-    trace_args[TRACE_ARGS_OFFSET] = max((compacted_count_buf[0] + TRACE_LOCAL_SIZE - 1u) / TRACE_LOCAL_SIZE, 1u);
+    trace_args[TRACE_ARGS_OFFSET] = max((pc.compacted_count_buf.v[0] + TRACE_LOCAL_SIZE - 1u) / TRACE_LOCAL_SIZE, 1u);
     trace_args[TRACE_ARGS_OFFSET + 1u] = 1u;
     trace_args[TRACE_ARGS_OFFSET + 2u] = 1u;
 }
@@ -296,17 +307,17 @@ void write_trace_args()
 void trace_phase_compacted()
 {
     const uint i = gl_WorkGroupID.x * TRACE_LOCAL_SIZE + gl_LocalInvocationIndex;
-    if (i >= compacted_count_buf[0])
+    if (i >= pc.compacted_count_buf.v[0])
         return;
 
-    const uvec2 entry = compacted_owners[i];
+    const uvec2 entry = pc.compacted_owners.v[i];
     const uint linear_idx = entry.x;
     const uint meta = entry.y;
 
     const int cx = int(linear_idx % pc.width);
     const int cy = int(linear_idx / pc.width);
 
-    const uint out_base = atomicAdd(point_cursor[0], pc.max_points_per_contour);
+    const uint out_base = atomicAdd(pc.point_cursor.v[0], pc.max_points_per_contour);
     uint n = 0u;
     uint parent = 0xFFFFFFFFu;
     uint own_label = 0u;
@@ -327,17 +338,17 @@ void trace_phase_compacted()
         shoelace_area_perimeter(out_base, n, area, perimeter);
         ok = area >= pc.min_area;
         if (ok) {
-            contour_area_perim[i] = vec2(area, perimeter);
-            sort_keys[i] = area;
+            pc.contour_area_perim.v[i] = vec2(area, perimeter);
+            pc.sort_keys.v[i] = area;
         } else {
-            sort_keys[i] = NEG_INFINITY;
+            pc.sort_keys.v[i] = NEG_INFINITY;
         }
     } else {
-        sort_keys[i] = NEG_INFINITY;
+        pc.sort_keys.v[i] = NEG_INFINITY;
     }
-    sort_indices[i] = float(i);
+    pc.sort_indices.v[i] = float(i);
 
-    contour_meta[i] = uvec4(out_base, ok ? n : 0u, parent, ok ? own_label : 0u);
+    pc.contour_meta.v[i] = uvec4(out_base, ok ? n : 0u, parent, ok ? own_label : 0u);
 }
 
 void main()

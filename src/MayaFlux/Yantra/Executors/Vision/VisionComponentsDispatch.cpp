@@ -182,40 +182,28 @@ bool VisionGpuExecutor::op_find_contours(
     component_contours.fill_shared(1, 7, 0U);
     component_contours.fill_shared(1, 9, 0U);
 
+    const auto address = [&component_contours](uint32_t set, uint32_t binding) {
+        return component_contours.shared_buffer_address(set, binding);
+    };
+
     auto max_points = p.max_points_per_contour > 0 ? std::min<uint32_t>(p.max_points_per_contour, k_max_points_per_contour) : k_max_points_per_contour;
-    component_contours.swap_shader({ .shader_path = "contour_march.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(ContourMarchPC) });
-    component_contours.stage_image_at(1, contexts.source, GpuBufferBinding::ElementType::IMAGE_SAMPLED,
-        Portal::Graphics::SamplerForge::instance().get_default_linear());
-    component_contours.prepare_output_image(w, h);
-    component_contours.set_push_constants(ContourMarchPC {
-        .width = w,
-        .height = h,
-        .max_components = k_max_components,
-        .max_points_per_contour = max_points,
-        .max_holes_per_label = k_max_holes_per_label,
-        .phase = 0U,
-        .min_area = p.min_area,
-        .compacted_count = 0U });
-
-    component_contours.set_output_dimensions(w, h);
-    (void)component_contours.dispatch_async({});
-
-    component_contours.set_push_constants(ContourMarchPC {
-        .width = w,
-        .height = h,
-        .max_components = k_max_components,
-        .max_points_per_contour = max_points,
-        .max_holes_per_label = k_max_holes_per_label,
-        .phase = 1U,
-        .min_area = p.min_area,
-        .compacted_count = 0U });
-    (void)component_contours.dispatch_async({});
-
-    component_contours.clear_output_dimensions();
-
-    const uint32_t total_owner_slots = k_max_components * (1U + k_max_holes_per_label);
-    const auto trace_pc = [&](uint32_t phase) {
+    const GpuComputeConfig march_config {
+        .shader_path = "contour_march.comp.spv",
+        .workgroup_size = k_wg2d,
+        .push_constant_size = sizeof(ContourMarchPC)
+    };
+    const auto march_pc = [&](uint32_t phase) {
         return ContourMarchPC {
+            .trace_owner = address(1, 4),
+            .hole_owner = address(1, 5),
+            .compacted_owners = address(1, 6),
+            .compacted_count_buf = address(1, 7),
+            .flat_points = address(1, 8),
+            .point_cursor = address(1, 9),
+            .contour_meta = address(1, 10),
+            .contour_area_perim = address(1, 11),
+            .sort_keys = address(2, 0),
+            .sort_indices = address(2, 1),
             .width = w,
             .height = h,
             .max_components = k_max_components,
@@ -226,26 +214,47 @@ bool VisionGpuExecutor::op_find_contours(
             .compacted_count = 0U
         };
     };
-    const GpuComputeConfig march_config { .shader_path = "contour_march.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(ContourMarchPC) };
+    component_contours.swap_shader(march_config);
+    component_contours.stage_image_at(1, contexts.source, GpuBufferBinding::ElementType::IMAGE_SAMPLED,
+        Portal::Graphics::SamplerForge::instance().get_default_linear());
+    component_contours.prepare_output_image(w, h);
+    component_contours.set_push_constants(march_pc(0U));
+
+    component_contours.set_output_dimensions(w, h);
+    (void)component_contours.dispatch_async({});
+
+    component_contours.set_push_constants(march_pc(1U));
+    (void)component_contours.dispatch_async({});
+
+    component_contours.clear_output_dimensions();
+
+    const uint32_t total_owner_slots = k_max_components * (1U + k_max_holes_per_label);
+
+    const ContourCompactPC compact_pc {
+        .trace_owner = address(1, 4),
+        .hole_owner = address(1, 5),
+        .compacted_owners = address(1, 6),
+        .compacted_count = address(1, 7),
+        .max_components = k_max_components,
+        .max_holes_per_label = k_max_holes_per_label
+    };
 
     std::vector<DependencyStage> trace_stages;
     trace_stages.push_back({
         .config = { .shader_path = "contour_compact.comp.spv", .workgroup_size = { 256, 1, 1 }, .push_constant_size = sizeof(ContourCompactPC) },
-        .stage_fn = [](GpuDispatchCore& ctx) {
-            ctx.set_push_constants(ContourCompactPC { .max_components = k_max_components, .max_holes_per_label = k_max_holes_per_label });
-        },
+        .stage_fn = [compact_pc](GpuDispatchCore& ctx) { ctx.set_push_constants(compact_pc); },
         .explicit_groups = std::array<uint32_t, 3> { (total_owner_slots + 255U) / 256U, 1U, 1U },
     });
     trace_stages.push_back({
         .config = march_config,
-        .stage_fn = [pc = trace_pc(3U)](GpuDispatchCore& ctx) { ctx.set_push_constants(pc); },
+        .stage_fn = [pc = march_pc(3U)](GpuDispatchCore& ctx) { ctx.set_push_constants(pc); },
         .explicit_groups = std::array<uint32_t, 3> { 1U, 1U, 1U },
     });
     const bool sort_requested = p.max_contours > 0U;
 
     DependencyStage trace_stage {
         .config = march_config,
-        .stage_fn = [pc = trace_pc(2U)](GpuDispatchCore& ctx) { ctx.set_push_constants(pc); },
+        .stage_fn = [pc = march_pc(2U)](GpuDispatchCore& ctx) { ctx.set_push_constants(pc); },
         .explicit_groups = std::array<uint32_t, 3> { 1U, 1U, 1U },
         .indirect_groups = IndirectGroupsSource { .set = 0, .binding = 10, .offset_bytes = 3U * sizeof(uint32_t) },
     };
@@ -260,7 +269,7 @@ bool VisionGpuExecutor::op_find_contours(
         };
 
         for (uint32_t round = 0; round < rounds; ++round) {
-            const ContourTopKPC topk_pc { .round = round, .count = k_max_components };
+            const ContourTopKPC topk_pc { .sort_keys = address(2, 0), .sort_indices = address(2, 1), .round = round, .count = k_max_components };
             trace_stages.push_back({
                 .config = topk_config,
                 .stage_fn = [topk_pc](GpuDispatchCore& ctx) { ctx.set_push_constants(topk_pc); },
@@ -274,6 +283,9 @@ bool VisionGpuExecutor::op_find_contours(
         const uint32_t render_slots = sort_requested ? std::min(p.max_contours, k_max_components) : k_max_trace_slots;
         const ContourClearPC clear_pc { .width = w, .height = h };
         const ContourRenderPC render_pc {
+            .flat_points = address(1, 8),
+            .contour_meta = address(1, 10),
+            .sort_indices = address(2, 1),
             .width = w,
             .height = h,
             .max_components = k_max_components,

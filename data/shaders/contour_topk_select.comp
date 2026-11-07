@@ -1,16 +1,19 @@
 #version 460
+#extension GL_EXT_buffer_reference : require
 
 layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 
-layout(set = 2, binding = 0, std430) buffer SortKeysBuf {
-    float sort_keys[];
+layout(buffer_reference, std430) buffer SortKeysBufRef {
+    float v[];
 };
 
-layout(set = 2, binding = 1, std430) buffer SortIndicesBuf {
-    float sort_indices[];
+layout(buffer_reference, std430) buffer SortIndicesBufRef {
+    float v[];
 };
 
 layout(push_constant) uniform PushConstants {
+    SortKeysBufRef sort_keys;
+    SortIndicesBufRef sort_indices;
     uint round;
     uint count;
 } pc;
@@ -42,7 +45,7 @@ void main()
     float best_val = -1.0 / 0.0;
     uint best_idx = 0u;
     for (uint i = tid; i < pc.count; i += 256u) {
-        const float v = sort_keys[i];
+        const float v = pc.sort_keys.v[i];
         if (v > best_val) {
             best_val = v;
             best_idx = i;
@@ -62,7 +65,7 @@ void main()
 
     if (tid == 0u) {
         const uint winner = s_idx[0];
-        sort_indices[pc.round] = float(winner);
-        sort_keys[winner] = -1.0 / 0.0;
+        pc.sort_indices.v[pc.round] = float(winner);
+        pc.sort_keys.v[winner] = -1.0 / 0.0;
     }
 }
