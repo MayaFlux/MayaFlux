@@ -474,6 +474,10 @@ bool GpuResourceManager::initialise(const std::string& key,
         return false;
     }
 
+    unit->active_bindings.clear();
+    for (const auto& used : foundry.get_active_descriptor_bindings(unit->shader_id))
+        unit->active_bindings.emplace_back(used.set, used.binding);
+
     std::map<uint32_t, std::vector<Portal::Graphics::DescriptorBindingInfo>> by_set;
     for (const auto& b : bindings) {
         const auto et = b.element_type;
@@ -932,6 +936,15 @@ void GpuResourceManager::dispatch(const std::string& key,
     const auto cmd_id = open_commands();
     record_unit(cmd_id, unit, groups, push_constant_data, push_constant_size);
     finish_commands(cmd_id);
+}
+
+bool GpuResourceManager::uses_binding(const std::string& key, uint32_t set, uint32_t binding) const
+{
+    const auto* unit = find_unit(key);
+    if (!unit)
+        return false;
+    return std::ranges::any_of(unit->active_bindings,
+        [set, binding](const auto& used) { return used.first == set && used.second == binding; });
 }
 
 void GpuResourceManager::record_stage(const std::string& key,

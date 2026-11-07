@@ -94,10 +94,13 @@ protected:
      * active DataSpanVariant alternative (which is already determined by visiting
      * the source variants -- no separate original_type inspection needed).
      *
-     * - float / uint8_t / uint16_t / uint32_t: stages raw bytes natively via
-     *   flatten_native_variants_to_staging. Returns ({}, structure_info).
-     * - double / complex / anything else: converts spans to vector<vector<double>>
-     *   for the standard double staging path. Unchanged from previous behaviour.
+     * - float / uint32_t: copies raw bytes natively via
+     *   flatten_native_variants_to_staging, uploaded unchanged to the binding
+     *   of the same element type. Returns ({}, structure_info).
+     * - uint8_t / uint16_t / double / complex / anything else: converts spans to
+     *   vector<vector<double>> for the standard double staging path, where each
+     *   integer value is cast to double and then to float. Pixel data belongs in
+     *   an image binding, not here.
      *
      * Override to return ({}, {}) when channel extraction is not needed
      * (e.g. image-only shaders that stage via on_before_gpu_dispatch).
@@ -122,7 +125,7 @@ protected:
             return typeid(double);
         }();
 
-        const bool is_native_non_double = native_type == typeid(float) || native_type == typeid(uint8_t) || native_type == typeid(uint16_t) || native_type == typeid(uint32_t);
+        const bool is_native_non_double = native_type == typeid(float) || native_type == typeid(uint32_t);
 
         if (is_native_non_double) {
             if constexpr (std::is_same_v<

@@ -338,22 +338,21 @@ protected:
     void stage_passthrough(size_t binding_index, const void* data, size_t byte_size);
 
     /**
-     * @brief Stage a flat native-typed byte buffer for FLOAT32 bindings,
-     *        bypassing the double-to-float cast in flatten_channels_to_staging.
+     * @brief Stage raw input bytes of one element type for the next dispatch.
      *
-     * Intended for pixel data (uint8_t, uint16_t) and pre-converted float
-     * buffers that should reach the GPU without an intermediate double widening.
-     * Once staged, prepare_gpu_inputs will upload these bytes directly via
-     * upload_raw rather than the float staging path.
+     * The staging belongs to the next dispatch only: prepare_gpu_inputs
+     * consumes it, whether that dispatch succeeds or throws. It is uploaded
+     * raw, without conversion, to every INPUT FLOAT32 binding when element is
+     * FLOAT32, or every INPUT UINT32 binding when element is UINT32. Such a
+     * binding must have no binding data of its own. When native input is
+     * staged, it takes the place of channel input, and its element count sets
+     * the dispatch size.
      *
-     * Calling this clears any previously staged native bytes for the slot.
-     * It does not affect m_binding_data (PASSTHROUGH) or m_staging_floats.
-     *
-     * @param binding_index Binding slot. Must match a FLOAT32 INPUT binding.
-     * @param data          Raw bytes in the element type the shader expects.
-     * @param byte_size     Total byte count.
+     * @param format    Element format of data, a Kakshya::GpuDataFormat.
+     * @param data      Raw bytes in that format.
+     * @param byte_size Total byte count, a multiple of gpu_data_format_bytes(format).
      */
-    void stage_native_bytes(size_t binding_index, const void* data, size_t byte_size);
+    void stage_native_bytes(Kakshya::GpuDataFormat format, const void* data, size_t byte_size);
 
     [[nodiscard]] const GpuComputeConfig& gpu_config() const;
 
@@ -467,11 +466,11 @@ protected:
      * @brief Flatten native-typed DataVariant channels into m_native_staging_bytes
      *        without any conversion.
      *
-     * Called by prepare_gpu_inputs when structure_info.original_type indicates
-     * a non-double native type and no explicit stage_native_bytes call has been
-     * made. Visits the variant's active alternative and memcpys bytes directly.
+     * Called by GpuExecutionContext::extract_inputs for float and uint32 input.
+     * Copies each variant's bytes unchanged and records their element type. All
+     * variants must share one element type, or the call throws.
      *
-     * No-ops when channels is empty or the modality is structured.
+     * No-ops when variants is empty or the modality is structured.
      *
      * @param variants      Per-channel DataVariants from the container.
      * @param structure_info Dimension/modality metadata.
@@ -500,6 +499,33 @@ protected:
 
 private:
     /**
+     * @brief True when a binding the shader statically uses has no staged image.
+     *
+     * Declared-but-unused image bindings are ignored.
+     */
+    [[nodiscard]] bool has_unstaged_active_image();
+
+    /**
+     * @brief True when native input is staged and no data-less INPUT FLOAT32
+     *        or UINT32 binding accepts its element type.
+     */
+    [[nodiscard]] bool native_input_unreceivable();
+
+    /**
+     * @brief Gate for the single-dispatch paths, called before prepare_gpu_inputs.
+     *
+     * False when the dispatch cannot be fed: native input was rejected while
+     * staging, native input has no receiving binding, or a used image binding
+     * has no staged image. On false the staged native input is discarded, so
+     * it cannot reach a later dispatch, and nothing is bound or recorded. Logs
+     * once per episode and re-arms after a dispatch that proceeds. Never throws.
+     */
+    [[nodiscard]] bool inputs_accepted();
+
+    bool m_native_rejected {};
+    bool m_input_warned {};
+
+    /**
      * @brief Stage each of stages in turn and hand its dispatch key, groups,
      *        push constants and indirect source to on_stage, then restore the
      *        context's own config, bindings and staged data.
@@ -512,10 +538,14 @@ private:
 
     size_t m_last_effective_element_count {};
 
-    /// Native-typed staging buffer. Non-empty when stage_native_bytes() has
-    /// been called or flatten_native_variants_to_staging() produced output.
-    /// Takes precedence over m_staging_floats in prepare_gpu_inputs.
+    /// Native input for the next dispatch, set by stage_native_bytes() or
+    /// flatten_native_variants_to_staging(). Consumed by prepare_gpu_inputs.
     std::vector<uint8_t> m_native_staging_bytes;
+    std::optional<Kakshya::GpuDataFormat> m_native_format;
+
+    /// Element count of the dispatch most recently prepared. Set by
+    /// prepare_gpu_inputs; the dispatch size and readback count come from it.
+    size_t m_prepared_elements {};
 
     void update_dispatch_key_cache();
     void bind_all_descriptors();

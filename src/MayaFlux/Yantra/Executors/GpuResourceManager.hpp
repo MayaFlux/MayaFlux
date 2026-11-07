@@ -204,6 +204,14 @@ public:
     [[nodiscard]] bool has_recording() const { return m_recording != nullptr; }
 
     /**
+     * @brief True when the unit's shader statically uses (set, binding).
+     *
+     * Reflection-based: a binding declared on the unit but never read by its
+     * shader returns false.
+     */
+    [[nodiscard]] bool uses_binding(const std::string& key, uint32_t set, uint32_t binding) const;
+
+    /**
      * @brief Record one dispatch of a unit with its current bindings, push
      *        constants and optional indirect counts.
      *
@@ -341,6 +349,7 @@ private:
         };
         std::vector<BufferSlot> buffer_slots;
         std::vector<std::shared_ptr<Core::VKImage>> image_slots;
+        std::vector<std::pair<uint32_t, uint32_t>> active_bindings;
 
         bool ready {};
     };
