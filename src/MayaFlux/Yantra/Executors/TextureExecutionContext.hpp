@@ -89,7 +89,7 @@ public:
         std::vector<GpuBufferBinding> aux_bindings = {},
         GpuBufferBinding::ElementType image_access = GpuBufferBinding::ElementType::IMAGE_SAMPLED,
         uint32_t output_binding = 0)
-        : Base(std::move(config))
+        : Base(std::move(config), false)
         , m_output_format(output_format)
         , m_output_mode(mode)
         , m_aux_bindings(std::move(aux_bindings))
@@ -124,7 +124,7 @@ public:
         GpuComputeConfig config,
         const std::vector<GpuBufferBinding>& bindings,
         OutputMode mode = OutputMode::SCALAR)
-        : Base(std::move(config))
+        : Base(std::move(config), false)
         , m_output_format(Portal::Graphics::ImageFormat::RGBA8)
         , m_output_mode(mode)
     {

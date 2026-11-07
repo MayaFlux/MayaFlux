@@ -68,7 +68,7 @@ namespace {
 } // namespace
 
 VisionGpuContexts::VisionGpuContexts()
-    : recording { std::make_shared<GpuDispatchRecorder>() }
+    : recording { std::make_shared<GpuDispatchRecorder>(false) }
     , pixel {
         GpuComputeConfig {},
         Portal::Graphics::ImageFormat::RGBA32F,

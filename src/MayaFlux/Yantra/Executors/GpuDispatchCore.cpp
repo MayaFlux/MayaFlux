@@ -4,8 +4,9 @@
 
 namespace MayaFlux::Yantra {
 
-GpuDispatchCore::GpuDispatchCore(GpuComputeConfig config)
-    : m_gpu_config(std::move(config))
+GpuDispatchCore::GpuDispatchCore(GpuComputeConfig config, bool compute_isolated)
+    : m_resources(compute_isolated)
+    , m_gpu_config(std::move(config))
 {
     update_dispatch_key_cache();
 }

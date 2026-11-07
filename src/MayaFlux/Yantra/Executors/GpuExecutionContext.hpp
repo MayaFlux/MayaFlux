@@ -34,8 +34,8 @@ public:
     using input_type = Datum<InputType>;
     using output_type = Datum<OutputType>;
 
-    explicit GpuExecutionContext(GpuComputeConfig config)
-        : GpuDispatchCore(std::move(config))
+    explicit GpuExecutionContext(GpuComputeConfig config, bool compute_isolated = true)
+        : GpuDispatchCore(std::move(config), compute_isolated)
     {
     }
 

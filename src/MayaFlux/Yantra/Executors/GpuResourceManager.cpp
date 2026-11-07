@@ -18,7 +18,7 @@ GpuDispatchRecorder::~GpuDispatchRecorder()
 Portal::Graphics::CommandBufferID GpuDispatchRecorder::command()
 {
     if (!is_open())
-        m_cmd = GpuResourceManager::begin_dispatch_commands();
+        m_cmd = GpuResourceManager::begin_dispatch_commands(m_compute_isolated);
     return m_cmd;
 }
 
@@ -402,8 +402,9 @@ struct GpuResourceManager::SharedBuffers {
 // Lifecycle
 //==============================================================================
 
-GpuResourceManager::GpuResourceManager()
-    : m_shared(std::make_unique<SharedBuffers>())
+GpuResourceManager::GpuResourceManager(bool compute_isolated)
+    : m_compute_isolated(compute_isolated)
+    , m_shared(std::make_unique<SharedBuffers>())
 {
 }
 
@@ -443,6 +444,17 @@ bool GpuResourceManager::initialise(const std::string& key,
 {
     if (const auto* existing = find_unit(key); existing && existing->ready)
         return true;
+
+    if (m_compute_isolated && std::ranges::any_of(bindings, [](const GpuBufferBinding& binding) {
+            return binding.element_type == GpuBufferBinding::ElementType::IMAGE_STORAGE
+                || binding.element_type == GpuBufferBinding::ElementType::IMAGE_SAMPLED;
+        })) {
+        error<std::invalid_argument>(
+            Journal::Component::Yantra,
+            Journal::Context::BufferProcessing,
+            std::source_location::current(),
+            "GpuResourceManager: image bindings require compute_isolated=false until image transitions support the compute queue");
+    }
 
     auto& foundry = Portal::Graphics::get_shader_foundry();
     auto& compute_press = Portal::Graphics::get_compute_press();
@@ -765,6 +777,13 @@ void GpuResourceManager::fill_shared(uint32_t set, size_t binding_index, uint32_
 
 void GpuResourceManager::set_recording(std::shared_ptr<GpuDispatchRecorder> recording)
 {
+    if (recording && recording->compute_isolated() != m_compute_isolated) {
+        error<std::invalid_argument>(
+            Journal::Component::Yantra,
+            Journal::Context::BufferProcessing,
+            std::source_location::current(),
+            "GpuResourceManager: recording and context must agree on compute isolation");
+    }
     m_recording = std::move(recording);
 }
 
@@ -813,6 +832,14 @@ void GpuResourceManager::transition_image(
     const std::shared_ptr<Core::VKImage>& image,
     vk::ImageLayout new_layout)
 {
+    if (m_compute_isolated) {
+        error<std::invalid_argument>(
+            Journal::Component::Yantra,
+            Journal::Context::BufferProcessing,
+            std::source_location::current(),
+            "GpuResourceManager: image transitions require compute_isolated=false until they support the compute queue");
+    }
+
     if (!m_recording) {
         Portal::Graphics::get_texture_manager().transition_layout(image, new_layout);
         return;
@@ -851,15 +878,19 @@ void GpuResourceManager::transition_image(
 // Dispatch
 //==============================================================================
 
-Portal::Graphics::CommandBufferID GpuResourceManager::begin_dispatch_commands()
+Portal::Graphics::CommandBufferID GpuResourceManager::begin_dispatch_commands(bool compute_isolated)
 {
-    return Portal::Graphics::get_shader_foundry().begin_commands(
-        Portal::Graphics::ShaderFoundry::CommandBufferType::GRAPHICS);
+    auto& foundry = Portal::Graphics::get_shader_foundry();
+    const bool dedicated_compute = compute_isolated
+        && foundry.get_compute_queue() != foundry.get_graphics_queue();
+    return foundry.begin_commands(dedicated_compute
+            ? Portal::Graphics::ShaderFoundry::CommandBufferType::COMPUTE
+            : Portal::Graphics::ShaderFoundry::CommandBufferType::GRAPHICS);
 }
 
 Portal::Graphics::CommandBufferID GpuResourceManager::open_commands()
 {
-    return m_recording ? m_recording->command() : begin_dispatch_commands();
+    return m_recording ? m_recording->command() : begin_dispatch_commands(m_compute_isolated);
 }
 
 void GpuResourceManager::record_unit(Portal::Graphics::CommandBufferID cmd_id, const PipelineUnit& unit,

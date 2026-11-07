@@ -78,7 +78,7 @@ struct DependencyStage {
  */
 class MAYAFLUX_API GpuDispatchCore {
 public:
-    explicit GpuDispatchCore(GpuComputeConfig config);
+    explicit GpuDispatchCore(GpuComputeConfig config, bool compute_isolated = true);
     virtual ~GpuDispatchCore() = default;
 
     GpuDispatchCore(const GpuDispatchCore&) = delete;

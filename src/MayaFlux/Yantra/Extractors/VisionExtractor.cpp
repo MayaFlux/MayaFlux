@@ -217,7 +217,7 @@ VisionExtractor::VisionExtractor(VisionExtractorConfig config)
 GpuDispatchRecorder& VisionExtractor::recording()
 {
     if (!m_recording)
-        m_recording = std::make_shared<GpuDispatchRecorder>();
+        m_recording = std::make_shared<GpuDispatchRecorder>(false);
     return *m_recording;
 }
 

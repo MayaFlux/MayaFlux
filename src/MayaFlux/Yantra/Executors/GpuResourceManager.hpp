@@ -11,15 +11,23 @@ using GpuBufferBinding = Portal::Graphics::GpuBufferBinding;
 struct GpuResourceManagerImpl;
 /**
  * @class GpuDispatchRecorder
- * @brief Shared graphics command buffer for GPU dispatch work.
+ * @brief Shared command buffer for GPU dispatch work.
  *
- * Several GpuResourceManagers can append to one recorder. Submission happens
- * at a readback, an owner-defined handoff, or an explicit submit(). Pending
- * releases remain alive through the submission that uses them.
+ * Several GpuResourceManagers can append to one recorder when their compute
+ * isolation setting agrees. Submission happens at a readback, an owner-defined
+ * handoff, or an explicit submit(). Pending releases remain alive through it.
  */
 class MAYAFLUX_API GpuDispatchRecorder {
 public:
-    GpuDispatchRecorder() = default;
+    /**
+     * @param compute_isolated True for work confined to this compute workflow;
+     *        false for resources shared with graphics. Isolated work uses the
+     *        graphics queue when no distinct compute queue is available.
+     */
+    explicit GpuDispatchRecorder(bool compute_isolated = true)
+        : m_compute_isolated(compute_isolated)
+    {
+    }
     ~GpuDispatchRecorder();
 
     GpuDispatchRecorder(const GpuDispatchRecorder&) = delete;
@@ -36,6 +44,7 @@ public:
      * @brief True while commands are recorded and not yet submitted.
      */
     [[nodiscard]] bool is_open() const { return m_cmd != Portal::Graphics::INVALID_COMMAND_BUFFER; }
+    [[nodiscard]] bool compute_isolated() const { return m_compute_isolated; }
 
     /**
      * @brief Run release once everything recorded so far has completed.
@@ -60,7 +69,7 @@ public:
     /**
      * @brief True once the submission behind fence has completed.
      *
-     * Every submission goes to the graphics queue in order and ends with the
+     * Every submission goes to the selected queue in order and ends with the
      * closing barrier, so the latest one completes after all earlier ones.
      * Only the latest fence is kept; an earlier fence counts as complete once
      * the latest has signaled.
@@ -82,6 +91,7 @@ public:
     static void record_closing_barrier(Portal::Graphics::CommandBufferID cmd_id);
 
 private:
+    bool m_compute_isolated;
     Portal::Graphics::CommandBufferID m_cmd { Portal::Graphics::INVALID_COMMAND_BUFFER };
     Portal::Graphics::FenceID m_last { Portal::Graphics::INVALID_FENCE };
     std::vector<std::function<void()>> m_releases;
@@ -98,7 +108,11 @@ private:
  */
 class MAYAFLUX_API GpuResourceManager {
 public:
-    GpuResourceManager();
+    /**
+     * @param compute_isolated True when GPU resources stay within this compute
+     *        workflow. False when work shares GPU resources with graphics.
+     */
+    explicit GpuResourceManager(bool compute_isolated = true);
     ~GpuResourceManager();
 
     GpuResourceManager(const GpuResourceManager&) = delete;
@@ -171,8 +185,8 @@ public:
     void fill_shared(uint32_t set, size_t binding_index, uint32_t value);
 
     /**
-     * @brief Append this manager's work to a recording shared with other
-     *        managers instead of submitting it, or pass null to submit again.
+     * @brief Append this manager's work to a recording with the same compute
+     *        isolation setting, or pass null to submit again.
      *
      * Given once, by whoever owns the recording, before the first dispatch.
      * While attached:
@@ -341,12 +355,12 @@ public:
     [[nodiscard]] bool is_ready(const std::string& key) const;
 
     /**
-     * @brief Begin a command buffer for Yantra dispatch work.
+     * @brief Begin Yantra dispatch work on the selected queue.
      *
-     * Dispatches record on the graphics queue, where the images and buffers
-     * they write are consumed, so no queue family ownership transfer is needed.
+     * Isolated work uses a distinct compute queue when available. Shared work
+     * and devices without a distinct compute queue use the graphics queue.
      */
-    [[nodiscard]] static Portal::Graphics::CommandBufferID begin_dispatch_commands();
+    [[nodiscard]] static Portal::Graphics::CommandBufferID begin_dispatch_commands(bool compute_isolated);
     [[nodiscard]] size_t buffer_allocated_bytes(const std::string& key, size_t index) const;
 
 private:
@@ -402,6 +416,7 @@ private:
      */
     void finish_commands(Portal::Graphics::CommandBufferID cmd_id);
 
+    bool m_compute_isolated;
     std::shared_ptr<GpuDispatchRecorder> m_recording;
 
     struct SharedBuffers;

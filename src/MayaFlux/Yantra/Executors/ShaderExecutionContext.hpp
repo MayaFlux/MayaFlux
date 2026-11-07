@@ -57,12 +57,15 @@ public:
      * @param config   Shader path, workgroup size, push constant size.
      * @param bindings Pre-built descriptor layout. Empty by default.
      * @param name     Executor name for logging and error messages.
+     * @param compute_isolated True when this context's GPU resources are not
+     *                         shared with graphics.
      */
     explicit ShaderExecutionContext(
         GpuComputeConfig config,
         std::vector<GpuBufferBinding> bindings = {},
-        std::string name = "ShaderExecutionContext")
-        : GpuExecutionContext<InputType, OutputType>(std::move(config))
+        std::string name = "ShaderExecutionContext",
+        bool compute_isolated = true)
+        : GpuExecutionContext<InputType, OutputType>(std::move(config), compute_isolated)
         , m_bindings(std::move(bindings))
         , m_name(std::move(name))
     {
