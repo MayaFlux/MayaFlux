@@ -169,7 +169,10 @@ struct MAYAFLUX_API VisionGpuContexts {
                                                 ///< component bounds, trace
                                                 ///< points, and contour
                                                 ///< metadata across the two
-                                                ///< steps.
+                                                ///< steps. Its trace and
+                                                ///< contour buffers are shared
+                                                ///< buffers read through device
+                                                ///< addresses.
     TextureExecutionContext ingest; ///< Sampled-in, rgba32f-storage-out.
                                     ///< IMAGE mode. Runs vision_ingest.comp
                                     ///< at the top of a fresh run to convert
@@ -179,7 +182,8 @@ struct MAYAFLUX_API VisionGpuContexts {
                                   ///< gray source image, two rgba16f pyramid
                                   ///< atlases, the dense flow images, and
                                   ///< shared buffers for detections, retained
-                                  ///< points, tracks, and selection state.
+                                  ///< points, tracks, and selection state
+                                  ///< (read through device addresses).
                                   ///< Drives TrackKeypoints and
                                   ///< OpticalFlowDense, and reuses the
                                   ///< extract_peaks layout unchanged.
