@@ -1,13 +1,95 @@
 #include "GpuResourceManager.hpp"
 
-#include "DispatchRecording.hpp"
-
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
 #include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Yantra {
+
+GpuDispatchRecorder::~GpuDispatchRecorder()
+{
+    if (!Portal::Graphics::get_shader_foundry().is_initialized())
+        return;
+
+    wait();
+}
+
+Portal::Graphics::CommandBufferID GpuDispatchRecorder::command()
+{
+    if (!is_open())
+        m_cmd = GpuResourceManager::begin_dispatch_commands();
+    return m_cmd;
+}
+
+void GpuDispatchRecorder::release_after(std::function<void()> release)
+{
+    if (!release)
+        return;
+
+    if (is_open()) {
+        m_releases.push_back(std::move(release));
+        return;
+    }
+
+    Portal::Graphics::get_shader_foundry().release_after_submit(std::move(release));
+}
+
+Portal::Graphics::FenceID GpuDispatchRecorder::submit()
+{
+    if (!is_open())
+        return m_last;
+
+    auto& foundry = Portal::Graphics::get_shader_foundry();
+
+    record_closing_barrier(m_cmd);
+    const auto fence = foundry.submit_async(m_cmd);
+    m_cmd = Portal::Graphics::INVALID_COMMAND_BUFFER;
+
+    for (auto& release : m_releases)
+        foundry.release_after_submit(std::move(release));
+    m_releases.clear();
+
+    if (fence == Portal::Graphics::INVALID_FENCE) {
+        MF_ERROR(Journal::Component::Yantra, Journal::Context::BufferProcessing,
+            "GpuDispatchRecorder: failed to submit recorded dispatches");
+        return m_last;
+    }
+
+    foundry.release_fence(m_last);
+    m_last = fence;
+    return m_last;
+}
+
+bool GpuDispatchRecorder::is_complete(Portal::Graphics::FenceID fence)
+{
+    if (fence == Portal::Graphics::INVALID_FENCE || m_last == Portal::Graphics::INVALID_FENCE)
+        return true;
+    return Portal::Graphics::get_shader_foundry().is_fence_signaled(m_last);
+}
+
+void GpuDispatchRecorder::wait()
+{
+    submit();
+
+    if (m_last == Portal::Graphics::INVALID_FENCE)
+        return;
+
+    auto& foundry = Portal::Graphics::get_shader_foundry();
+    foundry.wait_for_fence(m_last);
+    foundry.release_fence(m_last);
+    m_last = Portal::Graphics::INVALID_FENCE;
+}
+
+void GpuDispatchRecorder::record_closing_barrier(Portal::Graphics::CommandBufferID cmd_id)
+{
+    Portal::Graphics::get_shader_foundry().memory_barrier(
+        cmd_id,
+        vk::AccessFlagBits2::eShaderWrite | vk::AccessFlagBits2::eTransferWrite,
+        vk::AccessFlagBits2::eMemoryRead | vk::AccessFlagBits2::eMemoryWrite | vk::AccessFlagBits2::eHostRead,
+        vk::PipelineStageFlagBits2::eComputeShader | vk::PipelineStageFlagBits2::eTransfer,
+        vk::PipelineStageFlagBits2::eAllCommands | vk::PipelineStageFlagBits2::eHost);
+}
 
 //==============================================================================
 // Buffer slot
@@ -97,7 +179,7 @@ namespace {
      *
      * With a recording, work it holds but has not submitted counts too.
      */
-    void release_after_use(DispatchRecording* recording, std::function<void()> release)
+    void release_after_use(GpuDispatchRecorder* recording, std::function<void()> release)
     {
         if (recording) {
             recording->release_after(std::move(release));
@@ -109,7 +191,7 @@ namespace {
     /**
      * @brief Detach a slot's buffer and free it once work using it has completed.
      */
-    void retire_slot(VulkanBufferSlot& slot, DispatchRecording* recording)
+    void retire_slot(VulkanBufferSlot& slot, GpuDispatchRecorder* recording)
     {
         if (!slot.buffer && !slot.memory) {
             slot = VulkanBufferSlot {};
@@ -140,7 +222,7 @@ namespace {
      * so recorded writes and fills can cover any slot.
      */
     void allocate_slot(vk::Device device, vk::PhysicalDevice phys,
-        VulkanBufferSlot& slot, size_t byte_size, DispatchRecording* recording,
+        VulkanBufferSlot& slot, size_t byte_size, GpuDispatchRecorder* recording,
         vk::BufferUsageFlags extra_usage = vk::BufferUsageFlagBits::eStorageBuffer,
         bool prefer_device_local = false)
     {
@@ -251,7 +333,7 @@ namespace {
      * lands in memory a recorded or earlier submitted dispatch still reads. The
      * byte count is rounded up to four, which allocate_slot leaves room for.
      */
-    void write_slot(DispatchRecording* recording, VulkanBufferSlot& slot, const void* data, size_t byte_size)
+    void write_slot(GpuDispatchRecorder* recording, VulkanBufferSlot& slot, const void* data, size_t byte_size)
     {
         if (byte_size == 0)
             return;
@@ -280,7 +362,7 @@ namespace {
     /**
      * @brief Fill a whole slot with one 32-bit value, from the host or recorded.
      */
-    void fill_slot(DispatchRecording* recording, VulkanBufferSlot& slot, uint32_t value)
+    void fill_slot(GpuDispatchRecorder* recording, VulkanBufferSlot& slot, uint32_t value)
     {
         if (!slot.buffer)
             return;
@@ -303,7 +385,7 @@ namespace {
      *
      * With a recording, it is submitted and waited for first.
      */
-    void read_slot(DispatchRecording* recording, const VulkanBufferSlot& slot, void* dest, size_t byte_size)
+    void read_slot(GpuDispatchRecorder* recording, const VulkanBufferSlot& slot, void* dest, size_t byte_size)
     {
         if (recording)
             recording->wait();
@@ -681,7 +763,7 @@ void GpuResourceManager::fill_shared(uint32_t set, size_t binding_index, uint32_
     fill_slot(m_recording.get(), m_shared->slots.at({ set, binding_index }), value);
 }
 
-void GpuResourceManager::set_recording(std::shared_ptr<DispatchRecording> recording)
+void GpuResourceManager::set_recording(std::shared_ptr<GpuDispatchRecorder> recording)
 {
     m_recording = std::move(recording);
 }
@@ -806,7 +888,7 @@ void GpuResourceManager::finish_commands(Portal::Graphics::CommandBufferID cmd_i
         return;
     }
 
-    DispatchRecording::record_closing_barrier(cmd_id);
+    GpuDispatchRecorder::record_closing_barrier(cmd_id);
     Portal::Graphics::get_shader_foundry().submit_and_wait(cmd_id);
 }
 
@@ -910,7 +992,7 @@ Portal::Graphics::FenceID GpuResourceManager::dispatch_async(const std::string& 
     if (m_recording)
         return Portal::Graphics::INVALID_FENCE;
 
-    DispatchRecording::record_closing_barrier(cmd_id);
+    GpuDispatchRecorder::record_closing_barrier(cmd_id);
     return Portal::Graphics::get_shader_foundry().submit_async(cmd_id);
 }
 
@@ -964,7 +1046,7 @@ Portal::Graphics::FenceID GpuResourceManager::dispatch_sequence_async(
     if (m_recording)
         return Portal::Graphics::INVALID_FENCE;
 
-    DispatchRecording::record_closing_barrier(cmd_id);
+    GpuDispatchRecorder::record_closing_barrier(cmd_id);
     return Portal::Graphics::get_shader_foundry().submit_async(cmd_id);
 }
 

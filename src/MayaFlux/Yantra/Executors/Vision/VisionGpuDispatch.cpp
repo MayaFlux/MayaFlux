@@ -17,8 +17,8 @@ namespace {
      *        recording was already submitted, as at a deferred step.
      */
     struct SubmitOnExit {
-        DispatchRecording& recording;
-        explicit SubmitOnExit(DispatchRecording& r)
+        GpuDispatchRecorder& recording;
+        explicit SubmitOnExit(GpuDispatchRecorder& r)
             : recording(r)
         {
         }
@@ -68,7 +68,7 @@ namespace {
 } // namespace
 
 VisionGpuContexts::VisionGpuContexts()
-    : recording { std::make_shared<DispatchRecording>() }
+    : recording { std::make_shared<GpuDispatchRecorder>() }
     , pixel {
         GpuComputeConfig {},
         Portal::Graphics::ImageFormat::RGBA32F,

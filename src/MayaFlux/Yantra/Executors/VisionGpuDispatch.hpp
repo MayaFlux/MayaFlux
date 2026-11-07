@@ -148,7 +148,7 @@ struct MAYAFLUX_API VisionGpuContexts {
      * needs, at a deferred step, before a Snapshot copy, and at the end of
      * the run. Declared first so it outlives the contexts that hold it.
      */
-    std::shared_ptr<DispatchRecording> recording;
+    std::shared_ptr<GpuDispatchRecorder> recording;
 
     TextureExecutionContext pixel; ///< Image pipeline. IMAGE mode. Drives
                                    ///< every op that reads/writes the

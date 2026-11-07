@@ -167,7 +167,7 @@ public:
      * @brief Append this context's work to a recording shared with other
      *        contexts. See GpuResourceManager::set_recording.
      */
-    void set_recording(std::shared_ptr<DispatchRecording> recording)
+    void set_recording(std::shared_ptr<GpuDispatchRecorder> recording)
     {
         m_resources.set_recording(std::move(recording));
     }

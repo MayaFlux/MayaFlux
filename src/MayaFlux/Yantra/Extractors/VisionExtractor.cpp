@@ -5,7 +5,6 @@
 #include "MayaFlux/Kakshya/Source/WindowContainer.hpp"
 #include "MayaFlux/Kakshya/Utils/DataUtils.hpp"
 #include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
-#include "MayaFlux/Yantra/Executors/DispatchRecording.hpp"
 
 #include <numeric>
 
@@ -132,7 +131,7 @@ namespace {
      * @brief Record a dispatch into a fresh output image and submit it without
      *        waiting; the image is consumed on the GPU, in submission order.
      */
-    [[nodiscard]] std::shared_ptr<Core::VKImage> dispatch_image(TextureExecutionContext& ctx, DispatchRecording& recording, uint32_t w, uint32_t h)
+    [[nodiscard]] std::shared_ptr<Core::VKImage> dispatch_image(TextureExecutionContext& ctx, GpuDispatchRecorder& recording, uint32_t w, uint32_t h)
     {
         ctx.prepare_output_image(w, h);
         ctx.set_output_dimensions(w, h);
@@ -215,10 +214,10 @@ VisionExtractor::VisionExtractor(VisionExtractorConfig config)
     set_config(std::move(config));
 }
 
-DispatchRecording& VisionExtractor::recording()
+GpuDispatchRecorder& VisionExtractor::recording()
 {
     if (!m_recording)
-        m_recording = std::make_shared<DispatchRecording>();
+        m_recording = std::make_shared<GpuDispatchRecorder>();
     return *m_recording;
 }
 

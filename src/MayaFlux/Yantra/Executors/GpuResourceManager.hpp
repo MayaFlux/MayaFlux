@@ -9,7 +9,83 @@ using GpuComputeConfig = Portal::Graphics::GpuComputeConfig;
 using GpuBufferBinding = Portal::Graphics::GpuBufferBinding;
 
 struct GpuResourceManagerImpl;
-class DispatchRecording;
+/**
+ * @class GpuDispatchRecorder
+ * @brief Shared graphics command buffer for GPU dispatch work.
+ *
+ * Several GpuResourceManagers can append to one recorder. Submission happens
+ * at a readback, an owner-defined handoff, or an explicit submit(). Pending
+ * releases remain alive through the submission that uses them.
+ */
+class MAYAFLUX_API GpuDispatchRecorder {
+public:
+    GpuDispatchRecorder() = default;
+    ~GpuDispatchRecorder();
+
+    GpuDispatchRecorder(const GpuDispatchRecorder&) = delete;
+    GpuDispatchRecorder& operator=(const GpuDispatchRecorder&) = delete;
+    GpuDispatchRecorder(GpuDispatchRecorder&&) = delete;
+    GpuDispatchRecorder& operator=(GpuDispatchRecorder&&) = delete;
+
+    /**
+     * @brief The command buffer to record into, begun on first use.
+     */
+    [[nodiscard]] Portal::Graphics::CommandBufferID command();
+
+    /**
+     * @brief True while commands are recorded and not yet submitted.
+     */
+    [[nodiscard]] bool is_open() const { return m_cmd != Portal::Graphics::INVALID_COMMAND_BUFFER; }
+
+    /**
+     * @brief Run release once everything recorded so far has completed.
+     *
+     * Held until the next submit while the recorder is open; otherwise handed
+     * to ShaderFoundry::release_after_submit at once.
+     */
+    void release_after(std::function<void()> release);
+
+    /**
+     * @brief Submit what has been recorded, without waiting.
+     *
+     * Ends the recording with a barrier that orders later commands and host
+     * reads behind its writes. Does nothing when nothing is recorded.
+     *
+     * @return The fence of the most recent submission, owned by the
+     *         recorder: poll it with is_complete(), never release it.
+     *         INVALID_FENCE when nothing is outstanding.
+     */
+    Portal::Graphics::FenceID submit();
+
+    /**
+     * @brief True once the submission behind fence has completed.
+     *
+     * Every submission goes to the graphics queue in order and ends with the
+     * closing barrier, so the latest one completes after all earlier ones.
+     * Only the latest fence is kept; an earlier fence counts as complete once
+     * the latest has signaled.
+     */
+    [[nodiscard]] bool is_complete(Portal::Graphics::FenceID fence);
+
+    /**
+     * @brief Submit what has been recorded and wait until every submission of
+     *        this recorder has completed.
+     */
+    void wait();
+
+    /**
+     * @brief Record the barrier every submission of Yantra dispatch work ends with.
+     *
+     * Orders every later command, and host reads after completion, behind the
+     * compute and transfer writes recorded so far.
+     */
+    static void record_closing_barrier(Portal::Graphics::CommandBufferID cmd_id);
+
+private:
+    Portal::Graphics::CommandBufferID m_cmd { Portal::Graphics::INVALID_COMMAND_BUFFER };
+    Portal::Graphics::FenceID m_last { Portal::Graphics::INVALID_FENCE };
+    std::vector<std::function<void()>> m_releases;
+};
 
 /**
  * @class GpuResourceManager
@@ -110,7 +186,7 @@ public:
      * - retired buffers and pipelines are freed only after the recording's
      *   next submission completes.
      */
-    void set_recording(std::shared_ptr<DispatchRecording> recording);
+    void set_recording(std::shared_ptr<GpuDispatchRecorder> recording);
 
     [[nodiscard]] bool has_recording() const { return m_recording != nullptr; }
 
@@ -326,7 +402,7 @@ private:
      */
     void finish_commands(Portal::Graphics::CommandBufferID cmd_id);
 
-    std::shared_ptr<DispatchRecording> m_recording;
+    std::shared_ptr<GpuDispatchRecorder> m_recording;
 
     struct SharedBuffers;
     std::unique_ptr<SharedBuffers> m_shared;

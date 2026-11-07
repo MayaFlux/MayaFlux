@@ -391,9 +391,9 @@ private:
      *        first context. Image methods submit it without waiting; methods
      *        that read numbers back submit and wait at the read.
      */
-    [[nodiscard]] DispatchRecording& recording();
+    [[nodiscard]] GpuDispatchRecorder& recording();
 
-    std::shared_ptr<DispatchRecording> m_recording;
+    std::shared_ptr<GpuDispatchRecorder> m_recording;
     std::shared_ptr<TextureExecutionContext> m_image_ctx;
     std::shared_ptr<TextureExecutionContext> m_reduce_ctx;
 };
