@@ -247,9 +247,9 @@ classDiagram
 
 `CompositeLayout` describes named numeric, text, binary, or dynamic fields. `CompositeArray` packs records that share that layout while keeping variable-length text and binary data in separate stores. `Composite` provides a borrowed record view; `CompositeContainer` exposes insertion, slices, and traversal through the Kakshya container interface.
 
-`Region` and `RegionGroup` describe spans of container data without copying them. Segments and organized regions add subdivisions and attribution. `RegionSequencer` chooses which region of a group comes next by the group's selection pattern, and `RegionWalkProcessor` walks a group on a container, delivering blocks or whole regions and recording which region each came from.
+`Region` and `RegionGroup` describe spans of container data without copying them. Segments and organized regions add subdivisions and attribution. `RegionSequencer` chooses which region of a group comes next by the group's selection pattern, and `RegionWalkProcessor` walks a group on a container, delivering blocks or whole regions and recording which region each came from. `WindowContainer::region_crops` crops a registered group's regions out of the latest capture, in group order, each with its region.
 
-`DataProcessingChain` applies `DataProcessor` instances on demand. The Processors subdirectory provides: `ContiguousAccessProcessor`, `CursorAccessProcessor`, `FrameAccessProcessor`, `WindowAccessProcessor`, `SpatialRegionProcessor`, `RegionWalkProcessor`, `AudioOutputAccessProcessor`.
+`DataProcessingChain` applies `DataProcessor` instances on demand. The Processors subdirectory provides: `ContiguousAccessProcessor`, `CursorAccessProcessor`, `FrameAccessProcessor`, `WindowAccessProcessor`, `RegionWalkProcessor`, `AudioOutputAccessProcessor`.
 
 The relationship between Kakshya and Buffers is a one-way bridge. Buffers consume from Kakshya containers through container buffers; Kakshya never asks Buffers for anything.
 
