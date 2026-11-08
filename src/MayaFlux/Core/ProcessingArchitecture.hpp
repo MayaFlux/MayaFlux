@@ -101,6 +101,15 @@ public:
     BufferProcessingHandle(BufferProcessingHandle&&) = default;
     BufferProcessingHandle& operator=(BufferProcessingHandle&&) = default;
 
+    /**
+     * @brief Handle for another buffer token on the same buffer manager
+     * @param token Buffer token the returned handle is scoped to
+     */
+    [[nodiscard]] BufferProcessingHandle for_token(Buffers::ProcessingToken token) const;
+
+    /** @brief Number of channels the handle's token currently has */
+    [[nodiscard]] uint32_t channel_count() const;
+
     /** @brief Process all channels in token domain */
     void process(uint32_t processing_units);
 

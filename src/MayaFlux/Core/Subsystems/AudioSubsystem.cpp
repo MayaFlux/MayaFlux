@@ -22,8 +22,9 @@ AudioSubsystem::AudioSubsystem(GlobalStreamInfo& stream_info)
 void AudioSubsystem::initialize(SubsystemProcessingHandle& handle)
 {
     m_handle = &handle;
+    m_parallel_buffers.emplace(handle.buffers.for_token(Buffers::ProcessingToken::AUDIO_PARALLEL));
 
-    m_audio_stream = m_audiobackend->create_stream(
+    m_audio_stream =m_audiobackend->create_stream(
         m_audio_device->get_default_output_device(),
         m_audio_device->get_default_input_device(),
         m_stream_info,
@@ -38,6 +39,23 @@ void AudioSubsystem::initialize(SubsystemProcessingHandle& handle)
 
     m_notify_thread = std::thread(&AudioSubsystem::notify_loop, this);
     m_is_ready = true;
+}
+
+bool AudioSubsystem::supports_external(const SubsystemTokens& tokens) const
+{
+    return tokens.Buffer == Buffers::ProcessingToken::AUDIO_PARALLEL;
+}
+
+bool AudioSubsystem::process_external(const SubsystemTokens& tokens, uint32_t, const ExternalSink& sink)
+{
+    if (!m_parallel_buffers || !supports_external(tokens)) {
+        return false;
+    }
+
+    if (sink) {
+        sink();
+    }
+    return true;
 }
 
 void AudioSubsystem::register_callbacks()
@@ -111,6 +129,25 @@ int AudioSubsystem::process_output(double* output_buffer, unsigned int num_frame
 
         m_handle->tasks.process_buffer_cycle();
 
+        struct ParallelFill {
+            std::vector<std::span<const double>>* data;
+            uint32_t channel;
+        } fill_state { .data = &buffer_data, .channel = 0 };
+
+        const ExternalSink fill = [this, &fill_state] {
+            (*fill_state.data)[fill_state.channel] = m_parallel_buffers->read_channel_data(fill_state.channel);
+        };
+
+        const uint32_t parallel_channels = m_parallel_buffers
+            ? std::min(m_parallel_buffers->channel_count(), num_channels)
+            : 0U;
+
+        const SubsystemTokens parallel_tokens {
+            .Buffer = Buffers::ProcessingToken::AUDIO_PARALLEL,
+            .Node = m_subsystem_tokens.Node,
+            .Task = m_subsystem_tokens.Task
+        };
+
         for (uint32_t channel = 0; channel < num_channels; channel++) {
             m_handle->buffers.process_channel(channel, num_frames);
             all_network_outputs[channel] = m_handle->nodes.process_audio_networks(num_frames, channel);
@@ -125,6 +162,11 @@ int AudioSubsystem::process_output(double* output_buffer, unsigned int num_frame
                 buffer_data[channel] = std::span<const double>();
             } else {
                 buffer_data[channel] = channel_data;
+            }
+
+            if (channel < parallel_channels) {
+                fill_state.channel = channel;
+                process_external(parallel_tokens, num_frames, fill);
             }
         }
 

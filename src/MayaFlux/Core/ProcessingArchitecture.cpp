@@ -37,6 +37,18 @@ void BufferProcessingHandle::acquire_write_lock()
     }
 }
 
+BufferProcessingHandle BufferProcessingHandle::for_token(Buffers::ProcessingToken token) const
+{
+    ensure_valid();
+    return BufferProcessingHandle(m_manager, token);
+}
+
+uint32_t BufferProcessingHandle::channel_count() const
+{
+    ensure_valid();
+    return m_manager->get_num_channels(m_token);
+}
+
 void BufferProcessingHandle::process(uint32_t processing_units)
 {
     ensure_valid();

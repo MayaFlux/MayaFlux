@@ -49,6 +49,7 @@ void GraphicsSubsystem::initialize(SubsystemProcessingHandle& handle)
         "Initializing Graphics Subsystem...");
 
     m_handle = &handle;
+    m_parallel_buffers.emplace(handle.buffers.for_token(Buffers::ProcessingToken::AUDIO_PARALLEL));
 
     if (!m_backend || !m_backend->initialize(m_graphics_config)) {
         error<std::runtime_error>(
@@ -295,6 +296,13 @@ void GraphicsSubsystem::process()
 
     m_handle->buffers.process(1);
 
+    process_external(
+        SubsystemTokens {
+            .Buffer = Buffers::ProcessingToken::AUDIO_PARALLEL,
+            .Node = m_subsystem_tokens.Node,
+            .Task = m_subsystem_tokens.Task },
+        1, ExternalSink {});
+
     register_windows_for_processing();
     m_backend->handle_window_resize();
     render_all_windows();
@@ -306,6 +314,25 @@ void GraphicsSubsystem::process()
     for (auto& [name, hook] : m_handle->post_process_hooks) {
         hook(1);
     }
+}
+
+bool GraphicsSubsystem::supports_external(const SubsystemTokens& tokens) const
+{
+    return tokens.Buffer == Buffers::ProcessingToken::AUDIO_PARALLEL;
+}
+
+bool GraphicsSubsystem::process_external(const SubsystemTokens& tokens, uint32_t processing_units, const ExternalSink& sink)
+{
+    if (!m_parallel_buffers || !supports_external(tokens)) {
+        return false;
+    }
+
+    m_parallel_buffers->process(processing_units);
+
+    if (sink) {
+        sink();
+    }
+    return true;
 }
 
 void GraphicsSubsystem::register_windows_for_processing()
