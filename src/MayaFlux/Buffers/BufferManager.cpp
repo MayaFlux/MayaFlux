@@ -33,6 +33,8 @@ BufferManager::BufferManager(
     s_preferred_buffer_size = default_buffer_size;
     s_preferred_frame_rate = default_frame_rate;
     validate_num_channels(default_audio_token, default_out_channels, default_buffer_size);
+    validate_num_channels(ProcessingToken::AUDIO_PARALLEL, default_out_channels, default_buffer_size);
+    m_processor_control->set_audio_final_processor(std::make_shared<FinalLimiterProcessor>(), ProcessingToken::AUDIO_PARALLEL);
 
     if (default_in_channels) {
         m_input_control->setup_audio_input_buffers(default_in_channels, default_buffer_size);

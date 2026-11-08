@@ -1,5 +1,7 @@
 #include "RootAudioBuffer.hpp"
 
+#include "MayaFlux/Kinesis/Scalar.hpp"
+
 namespace MayaFlux::Buffers {
 
 ChannelProcessor::ChannelProcessor(const std::shared_ptr<Buffer>& root_buffer)
@@ -174,20 +176,8 @@ void FinalLimiterProcessor::processing_function(const std::shared_ptr<Buffer>& b
         return;
     }
 
-    auto& data = audio_buffer->get_data();
-
-    constexpr double threshold = 0.95;
-    constexpr double headroom = 1.0 - threshold;
-
-    for (double& sample : data) {
-        const double abs_sample = std::abs(sample);
-
-        if (abs_sample > threshold) {
-            const double excess = abs_sample - threshold;
-            const double limited_abs = threshold + headroom * std::tanh(excess / headroom);
-
-            sample = (sample >= 0.0) ? limited_abs : -limited_abs;
-        }
+    for (double& sample : audio_buffer->get_data()) {
+        sample = Kinesis::soft_limit(sample);
     }
 }
 }

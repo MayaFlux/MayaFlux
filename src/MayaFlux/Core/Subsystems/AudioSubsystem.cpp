@@ -4,6 +4,7 @@
 #include "MayaFlux/Registry/Service/AudioBackendService.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
+#include "MayaFlux/Kinesis/Scalar.hpp"
 
 namespace MayaFlux::Core {
 
@@ -107,6 +108,7 @@ int AudioSubsystem::process_output(double* output_buffer, unsigned int num_frame
         m_handle->buffers.update_routing_states();
 
         std::vector<std::span<const double>> buffer_data(num_channels);
+        std::vector<std::span<const double>> parallel_data(num_channels);
         std::vector<std::vector<std::vector<double>>> all_network_outputs(num_channels);
         bool has_underrun = false;
 
@@ -133,7 +135,7 @@ int AudioSubsystem::process_output(double* output_buffer, unsigned int num_frame
             }
 
             if (channel < parallel_channels) {
-                buffer_data[channel] = m_parallel_buffers->read_channel_block(channel);
+                parallel_data[channel] = m_parallel_buffers->read_channel_block(channel);
             }
         }
 
@@ -146,6 +148,9 @@ int AudioSubsystem::process_output(double* output_buffer, unsigned int num_frame
                 if (!buffer_data[j].empty() && i < buffer_data[j].size()) {
                     buffer_sample = buffer_data[j][i];
                 }
+                if (!parallel_data[j].empty() && i < parallel_data[j].size()) {
+                    buffer_sample += parallel_data[j][i];
+                }
 
                 double sample = m_handle->nodes.process_sample(j) + buffer_sample;
 
@@ -156,7 +161,7 @@ int AudioSubsystem::process_output(double* output_buffer, unsigned int num_frame
                 }
 
                 size_t index = i * num_channels + j;
-                output_span[index] = std::clamp(sample, -1., 1.);
+                output_span[index] = std::clamp(Kinesis::soft_limit(sample), -1., 1.);
             }
         }
 
