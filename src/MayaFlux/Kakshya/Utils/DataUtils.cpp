@@ -307,7 +307,7 @@ DataModality detect_data_modality(
 
 std::vector<DataDimension> detect_data_dimensions(const DataVariant& data)
 {
-    MF_WARN(Journal::Component::Kakshya, Journal::Context::Runtime,
+    MF_WARN_ONCE(Journal::Component::Kakshya, Journal::Context::Runtime,
         "{}",
         "Inferring structure from single DataVariant is not advisable as the method makes naive assumptions that can lead to massive computational errors. "
         "If the variant is part of a container, region, or segment, please use the appropriate method instead. "
@@ -358,7 +358,7 @@ std::vector<DataDimension> detect_data_dimensions(const DataVariant& data)
 std::vector<DataDimension> detect_data_dimensions(
     const std::vector<DataVariant>& variants)
 {
-    MF_WARN(Journal::Component::Kakshya, Journal::Context::Runtime,
+    MF_WARN_ONCE(Journal::Component::Kakshya, Journal::Context::Runtime,
         "{}",
         "Inferring structure from DataVariant vector is not advisable as the method makes naive assumptions that can lead to massive computational errors. "
         "If the variants are part of a container, region, or segment, please use the appropriate method instead. "

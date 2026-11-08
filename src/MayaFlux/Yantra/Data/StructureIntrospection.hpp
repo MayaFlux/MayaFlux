@@ -11,10 +11,19 @@ MAYAFLUX_API std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModalit
 infer_from_data_variant(const Kakshya::DataVariant& data);
 
 /**
- * @brief Infer structure from vector of DataVariants (NEW)
+ * @brief Infer structure from vector of DataVariants
+ *
+ * With a container whose element count equals the variants' total, the
+ * container's own structure is returned. Otherwise the shape is guessed from
+ * the variants, which logs a warning once.
+ *
+ * @param data Variants to describe.
+ * @param container Container the variants came from, if known.
  */
 MAYAFLUX_API std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
-infer_from_data_variant_vector(const std::vector<Kakshya::DataVariant>& data);
+infer_from_data_variant_vector(
+    const std::vector<Kakshya::DataVariant>& data,
+    const std::shared_ptr<Kakshya::SignalSourceContainer>& container = nullptr);
 
 /**
  * @brief Infer structure from SignalSourceContainer
@@ -154,7 +163,7 @@ infer_structure(const T& data, const std::shared_ptr<Kakshya::SignalSourceContai
     } else if constexpr (std::is_same_v<T, Kakshya::DataVariant>) {
         return infer_from_data_variant(data);
     } else if constexpr (std::is_same_v<T, std::vector<Kakshya::DataVariant>>) {
-        return infer_from_data_variant_vector(data);
+        return infer_from_data_variant_vector(data, container);
     } else if constexpr (std::is_same_v<T, std::shared_ptr<Kakshya::SignalSourceContainer>>) {
         return infer_from_container(data);
     } else if constexpr (std::is_same_v<T, Kakshya::Region>) {

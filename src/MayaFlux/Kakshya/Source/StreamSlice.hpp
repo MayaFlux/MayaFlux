@@ -24,9 +24,8 @@ namespace MayaFlux::Kakshya {
  * The slice does not own a processor. The region is the contract; whatever
  * drives this slice resolves the appropriate processor at activation time.
  * Currently that is CursorAccessProcessor for sequential bounded reads, but
- * the region descriptor is equally valid input to RegionOrganizationProcessor
- * (non-linear navigation, selection patterns, transitions) or any future
- * region-aware processor against a DynamicSoundStream.
+ * the region descriptor is equally valid input to any other region-aware
+ * processor against a DynamicSoundStream.
  *
  * speed is a playback rate: 2.0 plays twice as fast and an octave up, read with
  * linear interpolation, and it can change while the voice plays. scale is a
