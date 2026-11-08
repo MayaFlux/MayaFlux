@@ -133,6 +133,19 @@ public:
         const std::shared_ptr<AudioBuffer>& buffer);
 
     /**
+     * @brief Adds a processor to an audio buffer's own chain
+     * @param processor Processor to add
+     * @param buffer Target audio buffer
+     * @param token Processing domain the buffer is registered under
+     *
+     * The unit's root chain is not touched; use the channel and token variants for root scope.
+     */
+    void add_audio_processor(
+        const std::shared_ptr<BufferProcessor>& processor,
+        const std::shared_ptr<AudioBuffer>& buffer,
+        ProcessingToken token);
+
+    /**
      * @brief Adds a processor to a specific audio token and channel
      * @param processor Processor to add
      * @param token Processing domain
@@ -160,6 +173,17 @@ public:
     void remove_audio_processor(
         const std::shared_ptr<BufferProcessor>& processor,
         const std::shared_ptr<AudioBuffer>& buffer);
+
+    /**
+     * @brief Removes a processor from an audio buffer within a specific token's unit
+     * @param processor Processor to remove
+     * @param buffer Target audio buffer
+     * @param token Processing domain whose unit chain holds the processor
+     */
+    void remove_audio_processor(
+        const std::shared_ptr<BufferProcessor>& processor,
+        const std::shared_ptr<AudioBuffer>& buffer,
+        ProcessingToken token);
 
     /**
      * @brief Removes a processor from a specific audio token and channel
