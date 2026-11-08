@@ -435,6 +435,8 @@ Kinesis::Vision::VisionAnalysis VisionAnalyzer::analyze_vision(
 Kinesis::Vision::VisionAnalysis VisionAnalyzer::analyze_vision(
     const std::shared_ptr<Core::VKImage>& image)
 {
+    if (!image)
+        return {};
     return analyze_resolved(image);
 }
 
@@ -490,8 +492,24 @@ std::shared_ptr<Core::VKImage> VisionAnalyzer::hold_frame(const std::shared_ptr<
                                                          });
 
     constexpr auto filter = Portal::Graphics::FilterMode::NEAREST;
-    if (!held || !loom.can_blit(image, held, filter) || !loom.blit_layer(image, held, { .filter = filter }))
+    const auto fail = [this, &image](const char* reason) -> std::shared_ptr<Core::VKImage> {
+        if (!m_hold_failing) {
+            MF_ERROR(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+                "VisionAnalyzer: advance() cannot copy a {}x{} frame: {}",
+                image->get_width(), image->get_height(), reason);
+            m_hold_failing = true;
+        }
         return nullptr;
+    };
+
+    if (!held)
+        return fail("no cached image for the frame's size");
+    if (!loom.can_blit(image, held, filter))
+        return fail("the device cannot blit the frame");
+    if (!loom.blit_layer(image, held, { .filter = filter }))
+        return fail("the copy failed");
+
+    m_hold_failing = false;
     return held;
 }
 

@@ -1,11 +1,11 @@
 #pragma once
 
+#include "Analyzer.hpp"
 #include "MayaFlux/Kinesis/Vision/VisionInsight.hpp"
 #include "MayaFlux/Kinesis/Vision/VisionQuery.hpp"
 #include "MayaFlux/Yantra/Executors/ShaderExecutionContext.hpp"
 #include "MayaFlux/Yantra/Executors/TextureExecutionContext.hpp"
 #include "MayaFlux/Yantra/Executors/VisionGpuDispatch.hpp"
-#include "Analyzer.hpp"
 
 /**
  * @file VisionAnalyzer.hpp
@@ -155,7 +155,8 @@ public:
      * and polled on later calls; other steps still wait inline.
      *
      * @return The analysis once every sequence has completed, otherwise
-     *         nullopt.
+     *         nullopt. When the frame cannot be copied the first failure is
+     *         logged and nullopt is returned until a later copy succeeds.
      */
     [[nodiscard]] std::optional<Kinesis::Vision::VisionAnalysis> advance(
         const std::shared_ptr<Core::VKImage>& image);
@@ -338,6 +339,7 @@ private:
     uint32_t m_upload_w { 0 };
     uint32_t m_upload_h { 0 };
 
+    bool m_hold_failing { false };
     StepRun m_run;
     std::shared_ptr<const std::vector<Kinesis::Vision::VisionResult>> m_results {
         std::make_shared<const std::vector<Kinesis::Vision::VisionResult>>()
