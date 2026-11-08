@@ -49,12 +49,6 @@ public:
     /** @brief Get audio subsystem token configuration */
     inline SubsystemTokens get_tokens() const override { return m_subsystem_tokens; }
 
-    /** @brief True for the AUDIO_PARALLEL buffer token */
-    [[nodiscard]] bool supports_external(const SubsystemTokens& tokens) const override;
-
-    /** @brief Accepts the AUDIO_PARALLEL token and calls the sink; its data is already in the token's roots */
-    bool process_external(const SubsystemTokens& tokens, uint32_t processing_units, const ExternalSink& sink) override;
-
     /** @brief Check if audio subsystem is ready for operation */
     inline bool is_ready() const override { return m_is_ready; }
 

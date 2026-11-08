@@ -296,12 +296,9 @@ void GraphicsSubsystem::process()
 
     m_handle->buffers.process(1);
 
-    process_external(
-        SubsystemTokens {
-            .Buffer = Buffers::ProcessingToken::AUDIO_PARALLEL,
-            .Node = m_subsystem_tokens.Node,
-            .Task = m_subsystem_tokens.Task },
-        1, ExternalSink {});
+    if (m_parallel_buffers) {
+        m_parallel_buffers->process(1);
+    }
 
     register_windows_for_processing();
     m_backend->handle_window_resize();
@@ -314,25 +311,6 @@ void GraphicsSubsystem::process()
     for (auto& [name, hook] : m_handle->post_process_hooks) {
         hook(1);
     }
-}
-
-bool GraphicsSubsystem::supports_external(const SubsystemTokens& tokens) const
-{
-    return tokens.Buffer == Buffers::ProcessingToken::AUDIO_PARALLEL;
-}
-
-bool GraphicsSubsystem::process_external(const SubsystemTokens& tokens, uint32_t processing_units, const ExternalSink& sink)
-{
-    if (!m_parallel_buffers || !supports_external(tokens)) {
-        return false;
-    }
-
-    m_parallel_buffers->process(processing_units);
-
-    if (sink) {
-        sink();
-    }
-    return true;
 }
 
 void GraphicsSubsystem::register_windows_for_processing()

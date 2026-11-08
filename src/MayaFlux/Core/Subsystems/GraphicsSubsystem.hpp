@@ -55,12 +55,6 @@ public:
 
     [[nodiscard]] SubsystemTokens get_tokens() const override { return m_subsystem_tokens; }
 
-    /** @brief True for the AUDIO_PARALLEL buffer token */
-    [[nodiscard]] bool supports_external(const SubsystemTokens& tokens) const override;
-
-    /** @brief Processes the buffers of a supported external token, then calls the sink */
-    bool process_external(const SubsystemTokens& tokens, uint32_t processing_units, const ExternalSink& sink) override;
-
     /**
      * @brief Get frame clock
      *

@@ -12,15 +12,6 @@ enum class SubsystemType : uint8_t {
 };
 
 /**
- * @typedef ExternalSink
- * @brief Callable a subsystem builds for itself and hands to process_external
- *
- * It takes no arguments. What it reads and where it writes is decided by its
- * captures, and process_external decides when it is called.
- */
-using ExternalSink = std::function<void()>;
-
-/**
  * @class ISubsystem
  * @brief Base interface for all subsystems in the MayaFlux processing architecture
  *
@@ -95,24 +86,6 @@ public:
      * Should remain constant throughout the subsystem's lifetime.
      */
     [[nodiscard]] virtual SubsystemTokens get_tokens() const = 0;
-
-    /**
-     * @brief Check whether this subsystem takes part in processing a domain it does not own
-     * @param tokens Processing domain being requested
-     */
-    [[nodiscard]] virtual bool supports_external(const SubsystemTokens&) const { return false; }
-
-    /**
-     * @brief Process an external domain and call the sink when its results are ready
-     * @param tokens Processing domain
-     * @param processing_units Units of work to process
-     * @param sink Called by the subsystem when results are ready; may be empty
-     * @return True if the subsystem handled the domain
-     *
-     * Never waits for work in flight. Subsystems that do not support the
-     * domain return false and never call the sink.
-     */
-    virtual bool process_external(const SubsystemTokens&, uint32_t, const ExternalSink&) { return false; }
 
     /** @brief Check if subsystem is ready for operation */
     [[nodiscard]] virtual bool is_ready() const = 0;

@@ -41,23 +41,6 @@ void AudioSubsystem::initialize(SubsystemProcessingHandle& handle)
     m_is_ready = true;
 }
 
-bool AudioSubsystem::supports_external(const SubsystemTokens& tokens) const
-{
-    return tokens.Buffer == Buffers::ProcessingToken::AUDIO_PARALLEL;
-}
-
-bool AudioSubsystem::process_external(const SubsystemTokens& tokens, uint32_t, const ExternalSink& sink)
-{
-    if (!m_parallel_buffers || !supports_external(tokens)) {
-        return false;
-    }
-
-    if (sink) {
-        sink();
-    }
-    return true;
-}
-
 void AudioSubsystem::register_callbacks()
 {
     if (!m_is_ready || !m_audio_stream) {
@@ -129,24 +112,9 @@ int AudioSubsystem::process_output(double* output_buffer, unsigned int num_frame
 
         m_handle->tasks.process_buffer_cycle();
 
-        struct ParallelFill {
-            std::vector<std::span<const double>>* data;
-            uint32_t channel;
-        } fill_state { .data = &buffer_data, .channel = 0 };
-
-        const ExternalSink fill = [this, &fill_state] {
-            (*fill_state.data)[fill_state.channel] = m_parallel_buffers->read_channel_data(fill_state.channel);
-        };
-
         const uint32_t parallel_channels = m_parallel_buffers
             ? std::min(m_parallel_buffers->channel_count(), num_channels)
             : 0U;
-
-        const SubsystemTokens parallel_tokens {
-            .Buffer = Buffers::ProcessingToken::AUDIO_PARALLEL,
-            .Node = m_subsystem_tokens.Node,
-            .Task = m_subsystem_tokens.Task
-        };
 
         for (uint32_t channel = 0; channel < num_channels; channel++) {
             m_handle->buffers.process_channel(channel, num_frames);
@@ -165,8 +133,7 @@ int AudioSubsystem::process_output(double* output_buffer, unsigned int num_frame
             }
 
             if (channel < parallel_channels) {
-                fill_state.channel = channel;
-                process_external(parallel_tokens, num_frames, fill);
+                buffer_data[channel] = m_parallel_buffers->read_channel_data(channel);
             }
         }
 
