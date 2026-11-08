@@ -611,6 +611,14 @@ std::vector<DataVariant> TextureContainer::get_region_data(const Region& region)
 
     ensure_cpu(static_cast<uint32_t>(layer));
 
+    Region plane = region;
+    std::vector<DataDimension> plane_dimensions = m_structure.dimensions;
+    if (m_data.size() > 1 && !plane.start_coordinates.empty() && !plane.end_coordinates.empty()) {
+        plane.start_coordinates.erase(plane.start_coordinates.begin());
+        plane.end_coordinates.erase(plane.end_coordinates.begin());
+        plane_dimensions.erase(plane_dimensions.begin());
+    }
+
     std::optional<std::vector<DataVariant>> result;
     seqlock_read_void(m_slot_locks[layer], 8, [&] {
         result = std::visit(
@@ -621,8 +629,8 @@ std::vector<DataVariant> TextureContainer::get_region_data(const Region& region)
                     || std::is_same_v<T, float>) {
                     auto extracted = extract_region_data<T>(
                         std::span<const T>(vec.data(), vec.size()),
-                        region,
-                        m_structure.dimensions);
+                        plane,
+                        plane_dimensions);
                     return { DataVariant(std::move(extracted)) };
                 } else {
                     return {};

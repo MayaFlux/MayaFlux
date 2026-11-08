@@ -122,6 +122,9 @@ std::vector<T> extract_region_data(const std::span<const T>& source_data, const 
 
 /**
  * @brief Extract region data from planar storage (separate per channel/variant)
+ *
+ * A full-rank region selects channels by its channel coordinates; a region
+ * without a channel coordinate reads every channel.
  * @tparam T Data type
  * @param source_variants Vector of data spans (one per channel/variant)
  * @param region Region to extract
@@ -136,18 +139,26 @@ std::vector<std::vector<T>> extract_region_data(
     const std::vector<DataDimension>& dimensions,
     bool flatten = false)
 {
+    size_t first_channel = 0;
+    size_t end_channel = source_data.size();
+
+    if (region.start_coordinates.size() == dimensions.size() && region.end_coordinates.size() == dimensions.size()) {
+        const auto channel_dim = std::ranges::find_if(dimensions, [](const DataDimension& dim) {
+            return dim.role == DataDimension::Role::CHANNEL;
+        });
+        if (channel_dim != dimensions.end()) {
+            const auto channel_index = static_cast<size_t>(channel_dim - dimensions.begin());
+            first_channel = std::min<size_t>(region.start_coordinates[channel_index], source_data.size());
+            end_channel = std::min<size_t>(region.end_coordinates[channel_index] + 1, source_data.size());
+        }
+    }
+
+    const Region channel_region = remove_channel_dimension(region, dimensions);
+    const auto channel_dimensions = get_non_channel_dimensions(dimensions);
+
     std::vector<std::vector<T>> results;
-
-    for (size_t idx = 0; idx < source_data.size(); ++idx) {
-
-        Region channel_region = remove_channel_dimension(region, dimensions);
-
-        auto channel_data = extract_region_data(
-            source_data[idx],
-            channel_region,
-            get_non_channel_dimensions(dimensions));
-
-        results.push_back(std::move(channel_data));
+    for (size_t idx = first_channel; idx < end_channel; ++idx) {
+        results.push_back(extract_region_data(source_data[idx], channel_region, channel_dimensions));
     }
 
     if (flatten) {
@@ -224,7 +235,7 @@ std::vector<std::vector<T>> extract_segments_data(
     const std::vector<DataDimension>& dimensions,
     OrganizationStrategy organization)
 {
-    if (source_spans.size() != 1) {
+    if (source_spans.empty()) {
         error<std::invalid_argument>(
             Journal::Component::Kakshya, Journal::Context::Runtime,
             std::source_location::current(),
@@ -235,6 +246,7 @@ std::vector<std::vector<T>> extract_segments_data(
 
     for (const auto& segment : segments) {
         if (segment.is_cached && !segment.cache.data.empty()) {
+            size_t channel = 0;
             for (const auto& variant : segment.cache.data) {
                 std::vector<T> converted;
                 auto span = extract_from_variant<T>(variant, converted);
@@ -245,9 +257,10 @@ std::vector<std::vector<T>> extract_segments_data(
                         result.resize(1);
                     std::ranges::copy(cached_data, std::back_inserter(result[0]));
                 } else {
-                    if (result.size() <= result.size())
-                        result.resize(result.size() + 1);
-                    result.back() = std::move(cached_data);
+                    if (result.size() <= channel)
+                        result.resize(channel + 1);
+                    std::ranges::copy(cached_data, std::back_inserter(result[channel]));
+                    ++channel;
                 }
             }
         } else {

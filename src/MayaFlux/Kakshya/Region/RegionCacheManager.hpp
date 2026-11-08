@@ -1,4 +1,5 @@
 #pragma once
+
 #include "RegionSegment.hpp"
 
 namespace MayaFlux::Kakshya {
@@ -9,49 +10,42 @@ struct MAYAFLUX_API RegionHash {
 
 /**
  * @class RegionCacheManager
- * @brief Manages caching of region data for efficient access and eviction.
+ * @brief Bounded store of extracted region data, least recently used evicted first.
  *
- * Provides LRU-based caching for RegionCache and RegionSegment objects,
- * supporting efficient repeated/random access to region data.
+ * The budget is in bytes of cached data. An entry larger than the whole budget
+ * is not stored, and storing a region again replaces its entry. A manager
+ * belongs to one processor and is touched only from that processor's thread,
+ * so it holds no lock. Nothing here knows whether the container behind a region
+ * has changed since it was cached.
  */
 class MAYAFLUX_API RegionCacheManager {
-    std::unordered_map<Region, RegionCache, RegionHash> m_cache;
-    std::list<Region> m_lru_list;
-    size_t m_max_cache_size;
-    size_t m_current_size = 0;
-    bool m_initialized = false;
-    mutable std::recursive_mutex m_mutex;
-
-    void evict_lru_if_needed();
-    std::optional<RegionCache> get_cached_region_internal(const Region& region);
-    void update_lru(const Region& region);
-
 public:
-    explicit RegionCacheManager(size_t max_size);
-    ~RegionCacheManager() = default;
-
-    RegionCacheManager(const RegionCacheManager&) = delete;
-    RegionCacheManager& operator=(const RegionCacheManager&) = delete;
-
-    RegionCacheManager(RegionCacheManager&&) noexcept = delete;
-    RegionCacheManager& operator=(RegionCacheManager&&) noexcept = delete;
+    /**
+     * @param max_bytes Total bytes of cached data to keep.
+     */
+    explicit RegionCacheManager(size_t max_bytes);
 
     /**
-     * @brief Initialize the cache manager.
+     * @brief Store @p cache under its source region, evicting older entries to fit.
      */
-    inline void initialize() { m_initialized = true; }
-    /**
-     * @brief Check if the cache manager is initialized.
-     */
-    inline bool is_initialized() const { return m_initialized; }
+    void cache_region(RegionCache cache);
 
-    void cache_region(const RegionCache& cache);
-    void cache_segment(const RegionSegment& segment);
-    std::optional<RegionCache> get_cached_region(const Region& region);
-    std::optional<RegionCache> get_cached_segment(const RegionSegment& segment);
-    std::optional<RegionSegment> get_segment_with_cache(const RegionSegment& segment);
-    void clear();
-    size_t size() const;
-    size_t max_size() const;
+    /**
+     * @brief The entry cached for the segment's source region, marked as used.
+     * @return The entry, or null. Valid until the next cache_region call.
+     */
+    [[nodiscard]] const RegionCache* get_cached_segment(const RegionSegment& segment);
+
+private:
+    struct Entry {
+        RegionCache cache;
+        size_t bytes {};
+    };
+
+    std::list<Entry> m_entries;
+    std::unordered_map<Region, std::list<Entry>::iterator, RegionHash> m_index;
+    size_t m_max_bytes;
+    size_t m_bytes {};
 };
+
 }

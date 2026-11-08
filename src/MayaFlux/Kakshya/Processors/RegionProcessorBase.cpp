@@ -16,7 +16,6 @@ void RegionProcessorBase::on_attach(const std::shared_ptr<SignalSourceContainer>
     m_structure = container->get_structure();
 
     m_cache_manager = std::make_unique<RegionCacheManager>(m_max_cache_size);
-    m_cache_manager->initialize();
 
     m_current_position.resize(m_structure.get_frame_size());
 
@@ -50,7 +49,7 @@ void RegionProcessorBase::cache_region_if_needed(const RegionSegment& segment, c
             cache.source_region = segment.source_region;
             cache.load_time = std::chrono::steady_clock::now();
 
-            m_cache_manager->cache_region(cache);
+            m_cache_manager->cache_region(std::move(cache));
         } catch (const std::exception& e) {
             MF_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
                 "Failed to cache region segment: {}", e.what());
