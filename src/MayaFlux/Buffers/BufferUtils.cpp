@@ -9,65 +9,34 @@ namespace MayaFlux::Buffers {
 
 bool are_tokens_compatible(ProcessingToken preferred, ProcessingToken current)
 {
-    bool preferred_sample = preferred & SAMPLE_RATE;
-    bool preferred_frame = preferred & FRAME_RATE;
-    bool current_sample = current & SAMPLE_RATE;
-    bool current_frame = current & FRAME_RATE;
+    const bool current_frame = current & FRAME_RATE;
 
-    // If preferred is FRAME_RATE, only FRAME_RATE is compatible
-    if (preferred_frame && !current_frame)
+    if (preferred & FRAME_RATE) {
+        return current_frame;
+    }
+
+    const bool preferred_cpu = preferred & CPU_PROCESS;
+    const bool preferred_gpu = preferred & GPU_PROCESS;
+    const bool current_cpu = current & CPU_PROCESS;
+    const bool current_gpu = current & GPU_PROCESS;
+
+    if (preferred_gpu && current_cpu) {
         return false;
-    // If preferred is SAMPLE_RATE, FRAME_RATE can be compatible (sample can "delay" to frame)
-    if (preferred_sample && current_frame)
-        return true;
-    // If both are SAMPLE_RATE or both are FRAME_RATE, compatible
-    if ((preferred_sample && current_sample) || (preferred_frame && current_frame))
-        return true;
-
-    // Device compatibility: SAMPLE_RATE can't run on GPU, but FRAME_RATE can run on CPU
-    bool preferred_cpu = preferred & CPU_PROCESS;
-    bool preferred_gpu = preferred & GPU_PROCESS;
-    bool current_cpu = current & CPU_PROCESS;
-    bool current_gpu = current & GPU_PROCESS;
-
-    if (preferred_sample && current_gpu)
-        return false; // Can't run sample rate on GPU
-    if (preferred_gpu && current_cpu)
-        return false; // If preferred is GPU, but current is CPU, not compatible
-    // If preferred is CPU, but current is GPU, allow only for FRAME_RATE
-    if (preferred_cpu && current_gpu && !current_frame)
-        return false;
-
-    // Sequential/Parallel compatibility: allow if rates align
-    bool preferred_seq = preferred & SEQUENTIAL;
-    bool preferred_par = preferred & PARALLEL;
-    bool current_seq = current & SEQUENTIAL;
-    bool current_par = current & PARALLEL;
-
-    if ((preferred_seq && current_par) || (preferred_par && current_seq)) {
-        // Allow if rates align (already checked above)
-        if ((preferred_sample && current_sample) || (preferred_frame && current_frame)) {
-            return true;
-        }
-        // If preferred is SAMPLE_RATE and current is FRAME_RATE, already handled above
-        // Otherwise, not compatible
+    }
+    if (preferred_cpu && current_gpu && !current_frame) {
         return false;
     }
 
-    // If all checks pass, compatible
-    return true;
+    const bool preferred_seq = preferred & SEQUENTIAL;
+    const bool preferred_par = preferred & PARALLEL;
+    const bool current_seq = current & SEQUENTIAL;
+    const bool current_par = current & PARALLEL;
+
+    return !((preferred_seq && current_par) || (preferred_par && current_seq));
 }
 
 void validate_token(ProcessingToken token)
 {
-    if ((token & SAMPLE_RATE) && (token & FRAME_RATE)) {
-        error<std::invalid_argument>(
-            Journal::Component::Buffers,
-            Journal::Context::BufferProcessing,
-            std::source_location::current(),
-            "SAMPLE_RATE and FRAME_RATE are mutually exclusive.");
-    }
-
     if ((token & CPU_PROCESS) && (token & GPU_PROCESS)) {
         error<std::invalid_argument>(Journal::Component::Buffers,
             Journal::Context::BufferProcessing,
