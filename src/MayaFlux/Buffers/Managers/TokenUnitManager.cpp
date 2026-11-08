@@ -1,5 +1,6 @@
 #include "TokenUnitManager.hpp"
 #include "MayaFlux/Buffers/BufferProcessingChain.hpp"
+#include "MayaFlux/Buffers/Root/RootParallelAudioBuffer.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
@@ -18,7 +19,11 @@ void RootAudioUnit::resize_channels(uint32_t new_count, uint32_t new_buffer_size
     processing_chains.resize(new_count);
 
     for (uint32_t i = old_count; i < new_count; ++i) {
-        root_buffers[i] = std::make_shared<RootAudioBuffer>(i, buffer_size);
+        if (token == ProcessingToken::AUDIO_PARALLEL) {
+            root_buffers[i] = std::make_shared<RootParallelAudioBuffer>(i, buffer_size);
+        } else {
+            root_buffers[i] = std::make_shared<RootAudioBuffer>(i, buffer_size);
+        }
         root_buffers[i]->resize(buffer_size);
         root_buffers[i]->initialize();
         root_buffers[i]->set_token_active(true);
