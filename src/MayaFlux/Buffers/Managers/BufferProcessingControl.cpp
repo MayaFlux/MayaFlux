@@ -81,17 +81,24 @@ void BufferProcessingControl::remove_processor(
     }
 }
 
-void BufferProcessingControl::remove_processor_from_token(
+void BufferProcessingControl::remove_processor_from_channel(
     const std::shared_ptr<BufferProcessor>& processor,
     ProcessingToken token,
     uint32_t channel)
 {
     if (token == ProcessingToken::AUDIO_BACKEND || token == ProcessingToken::AUDIO_PARALLEL) {
-        if (channel == 0) {
-            remove_audio_processor_from_token(processor, token);
-        } else {
-            remove_audio_processor_from_channel(processor, token, channel);
-        }
+        remove_audio_processor_from_channel(processor, token, channel);
+    } else if (token == ProcessingToken::GRAPHICS_BACKEND) {
+        remove_graphics_processor(processor, token);
+    }
+}
+
+void BufferProcessingControl::remove_processor_from_token(
+    const std::shared_ptr<BufferProcessor>& processor,
+    ProcessingToken token)
+{
+    if (token == ProcessingToken::AUDIO_BACKEND || token == ProcessingToken::AUDIO_PARALLEL) {
+        remove_audio_processor_from_token(processor, token);
     } else if (token == ProcessingToken::GRAPHICS_BACKEND) {
         remove_graphics_processor(processor, token);
     }

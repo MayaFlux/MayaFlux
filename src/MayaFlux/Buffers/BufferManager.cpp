@@ -276,14 +276,14 @@ void BufferManager::remove_processor_from_channel(
     ProcessingToken token,
     uint32_t channel)
 {
-    m_processor_control->remove_processor_from_token(processor, token, channel);
+    m_processor_control->remove_processor_from_channel(processor, token, channel);
 }
 
 void BufferManager::remove_processor_from_token(
     const std::shared_ptr<BufferProcessor>& processor,
     ProcessingToken token)
 {
-    m_processor_control->remove_processor_from_token(processor, token, 0);
+    m_processor_control->remove_processor_from_token(processor, token);
 }
 
 void BufferManager::set_final_processor(

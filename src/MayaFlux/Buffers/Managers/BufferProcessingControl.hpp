@@ -89,15 +89,24 @@ public:
         ProcessingToken token = ProcessingToken::AUDIO_BACKEND);
 
     /**
-     * @brief Removes a processor from a token (dispatches based on token)
+     * @brief Removes a processor from one channel of a token (dispatches based on token)
      * @param processor Processor to remove
      * @param token Processing domain
-     * @param channel Channel index (optional, used for audio tokens)
+     * @param channel Channel index, used for audio tokens only
      */
-    void remove_processor_from_token(
+    void remove_processor_from_channel(
         const std::shared_ptr<BufferProcessor>& processor,
         ProcessingToken token,
         uint32_t channel = 0);
+
+    /**
+     * @brief Removes a processor from every channel of a token (dispatches based on token)
+     * @param processor Processor to remove
+     * @param token Processing domain
+     */
+    void remove_processor_from_token(
+        const std::shared_ptr<BufferProcessor>& processor,
+        ProcessingToken token);
 
     /**
      * @brief Sets a final processor for a token (dispatches based on token)
