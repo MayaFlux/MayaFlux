@@ -454,10 +454,12 @@ protected:
      * @brief Read back the primary output buffer into a float vector.
      *
      * Selects the first OUTPUT or INPUT_OUTPUT binding.  Caps readback to
-     * the lesser of the requested float count and the allocated buffer size.
+     * the lesser of the requested element count, at the binding's element
+     * width, and the allocated buffer size.  The bytes are returned as is,
+     * so a wider element fills several floats.
      *
-     * @param float_count Number of float elements to attempt to read.
-     * @return Float vector of length min(float_count, allocated / sizeof(float)).
+     * @param float_count Number of elements of the primary binding to attempt to read.
+     * @return Float vector of length min(float_count * element width, allocated) / sizeof(float).
      */
     [[nodiscard]] std::vector<float> readback_primary(size_t float_count);
 

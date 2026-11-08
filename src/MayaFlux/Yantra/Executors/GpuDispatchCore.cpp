@@ -520,17 +520,20 @@ std::vector<float> GpuDispatchCore::readback_primary(size_t float_count)
 {
     const size_t idx = find_first_output_index();
 
+    size_t element_bytes = sizeof(float);
     for (const auto& b : m_bindings) {
         if (b.binding != idx)
             continue;
         if (b.element_type == GpuBufferBinding::ElementType::IMAGE_STORAGE
             || b.element_type == GpuBufferBinding::ElementType::IMAGE_SAMPLED)
             return {};
+        if (const size_t width = Portal::Graphics::element_type_bytes(b.element_type); width > 0)
+            element_bytes = width;
         break;
     }
 
     const size_t allocated = m_resources.buffer_allocated_bytes(dispatch_key(), idx);
-    const size_t byte_size = std::min(float_count * sizeof(float), allocated);
+    const size_t byte_size = std::min(float_count * element_bytes, allocated);
     std::vector<float> out(byte_size / sizeof(float));
     m_resources.download(dispatch_key(), idx, out.data(), byte_size);
     return out;
@@ -674,15 +677,17 @@ size_t GpuDispatchCore::find_first_output_index() const
 
 size_t GpuDispatchCore::largest_binding_data_element_count() const
 {
-    size_t max_bytes = 0;
+    size_t max_elements = 0;
     for (const auto& b : m_bindings) {
         if (b.direction == GpuBufferBinding::Direction::OUTPUT)
             continue;
         const size_t idx = b.binding;
-        if (idx < m_binding_data.size() && !m_binding_data[idx].empty())
-            max_bytes = std::max(max_bytes, m_binding_data[idx].size());
+        if (idx < m_binding_data.size() && !m_binding_data[idx].empty()) {
+            const size_t width = Portal::Graphics::element_type_bytes(b.element_type);
+            max_elements = std::max(max_elements, m_binding_data[idx].size() / (width > 0 ? width : sizeof(float)));
+        }
     }
-    return max_bytes / sizeof(float);
+    return max_elements;
 }
 
 void GpuDispatchCore::update_dispatch_key_cache()
