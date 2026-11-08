@@ -19,6 +19,7 @@ void RootAudioUnit::resize_channels(uint32_t new_count, uint32_t new_buffer_size
 
     for (uint32_t i = old_count; i < new_count; ++i) {
         root_buffers[i] = std::make_shared<RootAudioBuffer>(i, buffer_size);
+        root_buffers[i]->resize(buffer_size);
         root_buffers[i]->initialize();
         root_buffers[i]->set_token_active(true);
 
