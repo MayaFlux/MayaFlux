@@ -103,6 +103,17 @@ public:
     [[nodiscard]] inline bool is_mix_normalized() const { return m_normalize_mix; }
 
     /**
+     * @brief Called by the buffer manager once this root has finished a processing cycle
+     */
+    virtual void handle_cycle_complete() { }
+
+    /**
+     * @brief The block a reader on another thread should consume
+     * @return The root's data by default
+     */
+    [[nodiscard]] virtual std::span<const double> read_block() { return get_data(); }
+
+    /**
      * @brief Activates/deactivates processing for the current token
      * @param active Whether this buffer should process when its token is active
      *

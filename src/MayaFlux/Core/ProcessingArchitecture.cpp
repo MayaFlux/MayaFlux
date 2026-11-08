@@ -87,6 +87,12 @@ std::span<const double> BufferProcessingHandle::read_channel_data(uint32_t chann
     return m_manager->get_buffer_data(m_token, channel);
 }
 
+std::span<const double> BufferProcessingHandle::read_channel_block(uint32_t channel) const
+{
+    ensure_valid();
+    return m_manager->get_root_audio_buffer(m_token, channel)->read_block();
+}
+
 std::span<double> BufferProcessingHandle::write_channel_data(uint32_t channel)
 {
     ensure_valid();

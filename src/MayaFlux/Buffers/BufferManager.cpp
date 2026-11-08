@@ -116,6 +116,8 @@ void BufferManager::process_channel(
     if (auto chain = root_buffer->get_processing_chain()) {
         chain->process_final(root_buffer);
     }
+
+    root_buffer->handle_cycle_complete();
 }
 
 std::vector<ProcessingToken> BufferManager::get_active_tokens() const

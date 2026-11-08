@@ -133,7 +133,7 @@ int AudioSubsystem::process_output(double* output_buffer, unsigned int num_frame
             }
 
             if (channel < parallel_channels) {
-                buffer_data[channel] = m_parallel_buffers->read_channel_data(channel);
+                buffer_data[channel] = m_parallel_buffers->read_channel_block(channel);
             }
         }
 
