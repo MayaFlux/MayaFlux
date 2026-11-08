@@ -19,13 +19,16 @@ namespace MayaFlux::Yantra {
  * The GPU candidate for the settings StandardSorter takes. Values are ordered
  * through their order keys, so every double sorts exactly and the result
  * matches a stable CPU sort: equal values keep their input order, -0.0 equals
- * +0.0 and NaN sorts last, or first when descending. Every algorithm and
- * strategy is satisfied by the full sort, and the result is a sorted copy.
+ * +0.0 and NaN sorts last, or first when descending. Every SortingAlgorithm is
+ * satisfied by the full sort, as are the in place, partial, parallel and index
+ * strategies, and the result is a sorted copy. The bidirectional order is the
+ * ascending sort laid out by Kinesis mountain_positions, and chunked sorting
+ * sorts each chunk on its own and concatenates them, as the CPU sorter does.
  * order() gives the permutation of one channel.
  *
- * Custom comparators, the bidirectional order and chunked sorting are not
- * offered: validate_input declines them, so another candidate takes the call.
- * fitness grows with the channel length and is zero while no device is up.
+ * A custom comparator is host code and cannot run in a shader, so
+ * validate_input declines it and another candidate takes the call. fitness
+ * grows with the channel length and is zero while no device is up.
  */
 template <ComputeData OutputType = std::vector<Kakshya::DataVariant>>
 class BitonicSorter : public Sorter<std::vector<Kakshya::DataVariant>, OutputType> {
@@ -73,23 +76,24 @@ public:
     }
 
     /**
-     * @brief False for the orders and strategies this sorter does not offer.
+     * @brief False for a custom comparator, which cannot run on the device, and for chunked sorting with no chunk size.
      */
     bool validate_input(const input_type& /*input*/) const override
     {
         const auto& config = this->template config<StandardSorterConfig>();
-        const bool ordered = config.direction == SortingDirection::ASCENDING
-            || config.direction == SortingDirection::DESCENDING;
-        return ordered && config.strategy != SortingStrategy::CHUNKED_SORT;
+        const bool chunk_ok = config.strategy != SortingStrategy::CHUNKED_SORT || config.chunk_size > 0;
+        return config.direction != SortingDirection::CUSTOM && chunk_ok;
     }
 
     /**
      * @brief The indices that order one channel, computed on the GPU in the configured direction.
-     * @return result[i] is the index in values of the i-th value in order.
+     * @return result[i] is the index in values of the i-th value in order. For the
+     *         bidirectional order, result[i] is the value placed at position i.
      */
     [[nodiscard]] std::vector<size_t> order(std::span<const double> values)
     {
-        const bool descending = this->template config<StandardSorterConfig>().direction == SortingDirection::DESCENDING;
+        const auto direction = this->template config<StandardSorterConfig>().direction;
+        const bool descending = direction == SortingDirection::DESCENDING;
         const size_t count = values.size();
         std::vector<size_t> result(count);
         std::iota(result.begin(), result.end(), size_t { 0 });
@@ -132,6 +136,15 @@ public:
                 sorted.size(), count);
         }
         std::copy_n(sorted.begin(), count, result.begin());
+
+        if (direction == SortingDirection::BIDIRECTIONAL) {
+            const auto positions = Kinesis::Discrete::mountain_positions(count);
+            std::vector<size_t> placed(count);
+            for (size_t rank = 0; rank < count; ++rank) {
+                placed[positions[rank]] = result[rank];
+            }
+            return placed;
+        }
         return result;
     }
 
@@ -142,11 +155,12 @@ protected:
         auto [channels, structure_info] = OperationHelper::setup_operation_buffer(
             const_cast<input_type&>(input), working);
 
+        const auto& config = this->template config<StandardSorterConfig>();
+        const bool chunked = config.strategy == SortingStrategy::CHUNKED_SORT;
         for (auto& channel : channels) {
-            const auto permutation = order(channel);
-            const std::vector<double> original(channel.begin(), channel.end());
-            for (size_t i = 0; i < permutation.size(); ++i) {
-                channel[i] = original[permutation[i]];
+            const size_t segment = std::max<size_t>(chunked ? config.chunk_size : channel.size(), 1);
+            for (size_t start = 0; start < channel.size(); start += segment) {
+                arrange(channel.subspan(start, std::min(segment, channel.size() - start)));
             }
         }
 
@@ -154,7 +168,7 @@ protected:
         result.metadata = input.metadata;
         result.facets = input.facets;
         result.container = input.container;
-        record_sort(result, SortPath::COPY);
+        record_sort(result, chunked ? SortPath::CHUNKED_MERGED : SortPath::COPY);
         return result;
     }
 
@@ -168,6 +182,18 @@ private:
 
     static constexpr uint32_t k_keys_binding = 0;
     static constexpr uint32_t k_indices_binding = 1;
+
+    /**
+     * @brief Reorders a segment in place by its GPU permutation.
+     */
+    void arrange(std::span<double> segment)
+    {
+        const auto permutation = order(segment);
+        const std::vector<double> original(segment.begin(), segment.end());
+        for (size_t i = 0; i < permutation.size(); ++i) {
+            segment[i] = original[permutation[i]];
+        }
+    }
 
     void record_sort(output_type& out, SortPath path) const
     {

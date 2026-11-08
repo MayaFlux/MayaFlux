@@ -5,29 +5,6 @@ namespace MayaFlux::Kinesis::Discrete {
 namespace {
 
 /**
- * Target position of each rank in a mountain arrangement of n values.
- *
- * Ranks alternate between the left and right ends and fill inward, so the
- * ascending sequence is laid out rising from the first position to the centre
- * and falling to the last. Rank 0 (smallest) goes to position 0, rank 1 to the
- * last position, rank 2 to position 1, and so on.
- */
-std::vector<size_t> mountain_positions(size_t n)
-{
-    std::vector<size_t> positions(n);
-    size_t left = 0;
-    size_t right_taken = 0;
-    for (size_t rank = 0; rank < n; ++rank) {
-        if (rank % 2 == 0) {
-            positions[rank] = left++;
-        } else {
-            positions[rank] = n - 1 - right_taken++;
-        }
-    }
-    return positions;
-}
-
-/**
  * The mountain arrangement needs every element in its sorted position.
  * PARTIAL and NTH_ELEMENT only place some elements, so they run as a
  * complete sort here. Every other algorithm is already a complete sort.
@@ -41,6 +18,21 @@ SortingAlgorithm full_sort_algorithm(SortingAlgorithm algorithm)
 }
 
 } // namespace
+
+std::vector<size_t> mountain_positions(size_t count)
+{
+    std::vector<size_t> positions(count);
+    size_t left = 0;
+    size_t right_taken = 0;
+    for (size_t rank = 0; rank < count; ++rank) {
+        if (rank % 2 == 0) {
+            positions[rank] = left++;
+        } else {
+            positions[rank] = count - 1 - right_taken++;
+        }
+    }
+    return positions;
+}
 
 void sort_span(std::span<double> data, const SortOrder& order, SortingAlgorithm algorithm)
 {
