@@ -189,7 +189,6 @@ flowchart TD
 |---|---|
 | **`DataWriteProcessor`** | For a plain `VKBuffer`. `set_data` and `set_vertices` are thread-safe, dirty-gated (nothing re-uploads unless you supplied new data) and applied on the graphics thread through a lock-free double buffer. Device-local targets get a persistent staging buffer at attach time. Its `write_*` requests reach other targets (section 6). |
 | **`BufferUploadProcessor`** | The mirror of `BufferDownloadProcessor`. Copies a CPU-side source buffer into a target `VKBuffer` every cycle. |
-| **`TransferProcessor`** | Moves audio between an `AudioBuffer` and a `VKBuffer`: `connect_audio_to_gpu`, `connect_gpu_to_audio`, and `setup_staging` for device-local targets. `TransferDirection::BIDIRECTIONAL` is declared but marked future. |
 
 ---
 
@@ -564,7 +563,7 @@ flowchart TD
 | Read presented pixels from a window | `DisplayService::readback_swapchain_region` / `get_last_frame` |
 | React to every captured window frame | `DisplayService::register_frame_observer` |
 | Pull GPU-written vertices back into the node graph | `GeometryReadbackNode`, driven manually |
-| Move audio between an `AudioBuffer` and a `VKBuffer` | `TransferProcessor` |
+| Move audio between an `AudioBuffer` and a `VKBuffer` | None yet. `TransferProcessor` was removed; the replacement is planned in `planning/audio-gpu-compute.md` |
 | Read the live geometry of a `ComputeMeshBuffer` | `DataReadProcessor::read_mesh` or `download_compute_mesh` |
 | Save an image, volume or mesh to disk | `IO::save_*` (synchronous) or `IOManager::save_*` (queued encode) |
 | Record a volume, spatial stream or window over time | `IOManager::capture_volume` / `capture_spatial` / `capture_window` |
