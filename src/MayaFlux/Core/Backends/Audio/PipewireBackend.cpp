@@ -761,6 +761,9 @@ void PipewireStream::close()
     m_is_running.store(false, std::memory_order_release);
     m_is_paused.store(false, std::memory_order_release);
 
+    if (m_thread_loop) {
+        pw_thread_loop_lock(m_thread_loop);
+    }
     if (m_input_stream) {
         pw_stream_destroy(m_input_stream);
         m_input_stream = nullptr;
@@ -770,6 +773,7 @@ void PipewireStream::close()
         m_output_stream = nullptr;
     }
     if (m_thread_loop) {
+        pw_thread_loop_unlock(m_thread_loop);
         pw_thread_loop_destroy(m_thread_loop);
         m_thread_loop = nullptr;
     }
