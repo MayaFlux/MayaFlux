@@ -50,6 +50,8 @@ namespace {
             return "vec4";
         case Kakshya::GpuDataFormat::MAT4_F32:
             return "mat4";
+        case Kakshya::GpuDataFormat::VEC2_U32:
+            return "uvec2";
         case Kakshya::GpuDataFormat::INT32:
             return "int";
         case Kakshya::GpuDataFormat::UINT32:
@@ -73,6 +75,8 @@ namespace {
             return "%v3f32";
         case Kakshya::GpuDataFormat::VEC4_F32:
             return "%v4f32";
+        case Kakshya::GpuDataFormat::VEC2_U32:
+            return "%v2u32";
         case Kakshya::GpuDataFormat::UINT32:
         case Kakshya::GpuDataFormat::UINT8:
         case Kakshya::GpuDataFormat::UINT16:
@@ -92,6 +96,7 @@ namespace {
     {
         switch (fmt) {
         case Kakshya::GpuDataFormat::VEC2_F32:
+        case Kakshya::GpuDataFormat::VEC2_U32:
             return 2;
         case Kakshya::GpuDataFormat::VEC3_F32:
             return 3;
@@ -242,6 +247,7 @@ namespace {
         bool need_v2f32 = false;
         bool need_v3f32 = false;
         bool need_v4f32 = false;
+        bool need_v2u32 = false;
 
         for (const auto& b : spec.bindings) {
             if (b.modality == Kakshya::DataModality::TEXTURE_2D
@@ -257,6 +263,9 @@ namespace {
             case Kakshya::GpuDataFormat::VEC4_F32:
                 need_v4f32 = true;
                 break;
+            case Kakshya::GpuDataFormat::VEC2_U32:
+                need_v2u32 = true;
+                break;
             default:
                 break;
             }
@@ -266,6 +275,8 @@ namespace {
             o += "%v2f32 = OpTypeVector %f32 2\n";
         if (need_v3f32)
             o += "%v3f32 = OpTypeVector %f32 3\n";
+        if (need_v2u32)
+            o += "%v2u32 = OpTypeVector %u32 2\n";
 
         bool need_i32 = false;
         for (const auto& b : spec.bindings) {
@@ -1429,7 +1440,23 @@ namespace {
         o += "%dir_shift      = OpShiftRightLogical %u32 %i %stage\n";
         o += "%dir_bit        = OpBitwiseAnd %u32 %dir_shift %c1u\n\n";
 
-        o += "%gt             = OpFOrdGreaterThan %bool %key_i %key_p\n";
+        if (bkeys.format == Kakshya::GpuDataFormat::VEC2_U32) {
+            o += "%ki_lo          = OpCompositeExtract %u32 %key_i 0\n";
+            o += "%ki_hi          = OpCompositeExtract %u32 %key_i 1\n";
+            o += "%kp_lo          = OpCompositeExtract %u32 %key_p 0\n";
+            o += "%kp_hi          = OpCompositeExtract %u32 %key_p 1\n";
+            o += "%hi_gt          = OpUGreaterThan %bool %ki_hi %kp_hi\n";
+            o += "%hi_eq          = OpIEqual %bool %ki_hi %kp_hi\n";
+            o += "%lo_gt          = OpUGreaterThan %bool %ki_lo %kp_lo\n";
+            o += "%lo_eq          = OpIEqual %bool %ki_lo %kp_lo\n";
+            o += "%idx_gt         = OpUGreaterThan %bool %idx_i %idx_p\n";
+            o += "%tie_gt         = OpLogicalAnd %bool %lo_eq %idx_gt\n";
+            o += "%lo_or_tie      = OpLogicalOr %bool %lo_gt %tie_gt\n";
+            o += "%hi_lo_gt       = OpLogicalAnd %bool %hi_eq %lo_or_tie\n";
+            o += "%gt             = OpLogicalOr %bool %hi_gt %hi_lo_gt\n";
+        } else {
+            o += "%gt             = OpFOrdGreaterThan %bool %key_i %key_p\n";
+        }
         o += "%gt_u           = OpSelect %u32 %gt %c1u %c0u\n";
         o += "%xor1           = OpBitwiseXor %u32 %gt_u %dir_bit\n";
         o += "%xor2           = OpBitwiseXor %u32 %xor1 %descending\n";

@@ -20,7 +20,8 @@ namespace {
     constexpr bool native_accepts(GpuBufferBinding::ElementType binding, Kakshya::GpuDataFormat native)
     {
         return (binding == GpuBufferBinding::ElementType::FLOAT32 && native == Kakshya::GpuDataFormat::FLOAT32)
-            || (binding == GpuBufferBinding::ElementType::UINT32 && native == Kakshya::GpuDataFormat::UINT32);
+            || (binding == GpuBufferBinding::ElementType::UINT32 && native == Kakshya::GpuDataFormat::UINT32)
+            || (binding == GpuBufferBinding::ElementType::VEC2_U32 && native == Kakshya::GpuDataFormat::VEC2_U32);
     }
 
 } // namespace
@@ -213,6 +214,13 @@ void GpuDispatchCore::prepare_gpu_inputs(
             }
             break;
 
+        case GpuBufferBinding::ElementType::VEC2_U32:
+            if (native_staged && native_accepts(b.element_type, native_element)) {
+                m_resources.ensure_buffer(key, idx, native_bytes.size());
+                m_resources.upload_raw(key, idx, native_bytes.data(), native_bytes.size());
+            }
+            break;
+
         case GpuBufferBinding::ElementType::FLOAT32:
         default:
             if (native_staged && native_accepts(b.element_type, native_element)) {
@@ -296,7 +304,8 @@ bool GpuDispatchCore::native_input_unreceivable()
         if (b.direction == GpuBufferBinding::Direction::OUTPUT)
             return false;
         const bool float_or_uint = b.element_type == GpuBufferBinding::ElementType::FLOAT32
-            || b.element_type == GpuBufferBinding::ElementType::UINT32;
+            || b.element_type == GpuBufferBinding::ElementType::UINT32
+            || b.element_type == GpuBufferBinding::ElementType::VEC2_U32;
         if (!float_or_uint)
             return false;
         if (b.binding < m_binding_data.size() && !m_binding_data[b.binding].empty())

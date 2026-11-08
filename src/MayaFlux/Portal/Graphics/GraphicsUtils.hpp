@@ -185,6 +185,8 @@ struct GpuBufferBinding {
      * FLOAT32: cast double channels to float (default).
      * UINT32: reinterpret variant bytes as uint32_t.
      * INT32: reinterpret variant bytes as int32_t.
+     * VEC2_U32: two uint32_t words per element, low word then high word
+     * (a uvec2). Accepts only native VEC2_U32 input or binding data.
      * PASSTHROUGH: upload raw variant bytes with no cast. INPUT and
      * INPUT_OUTPUT callers must pre-stage.
      * IMAGE_STORAGE: writeonly/readonly image2D, storage image descriptor.
@@ -196,7 +198,8 @@ struct GpuBufferBinding {
         INT32,
         PASSTHROUGH,
         IMAGE_STORAGE,
-        IMAGE_SAMPLED
+        IMAGE_SAMPLED,
+        VEC2_U32
     } element_type { ElementType::FLOAT32 };
 
     BufferUsageHint usage_hint { BufferUsageHint::COMPUTE_STORAGE }; ///< Hint for buffer allocation and memory properties.

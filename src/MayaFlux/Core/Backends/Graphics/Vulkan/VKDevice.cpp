@@ -677,6 +677,7 @@ bool VKDevice::create_logical_device(vk::Instance /*instance*/, const GraphicsBa
     device_features.multiViewport = backend_info.required_features.multi_viewport;
     device_features.fillModeNonSolid = m_physical_device.getFeatures().fillModeNonSolid;
     device_features.shaderSampledImageArrayDynamicIndexing = m_physical_device.getFeatures().shaderSampledImageArrayDynamicIndexing;
+    device_features.shaderFloat64 = m_physical_device.getFeatures().shaderFloat64;
 
     std::vector<const char*> device_extensions;
 

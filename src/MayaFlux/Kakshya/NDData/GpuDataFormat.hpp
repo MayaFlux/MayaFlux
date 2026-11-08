@@ -26,6 +26,8 @@ enum class GpuDataFormat : uint8_t {
     UINT16, ///< uint16_t, R16F raw half-float storage, packed formats
 
     MAT4_F32, ///< glm::mat4 (column-major), not a sampled image format
+
+    VEC2_U32, ///< glm::uvec2: a 64-bit value as low word (x) and high word (y), not a sampled image format
 };
 
 /**
@@ -86,7 +88,7 @@ MAYAFLUX_API GpuBlockLayout gpu_block_layout(std::span<const GpuDataFormat> fiel
  * @brief Maps a C++ type to its GpuDataFormat.
  *
  * Specialised for float, double, int32_t, uint32_t, uint8_t, uint16_t,
- * glm::vec2/3/4, glm::dvec2/3/4 and glm::mat4. Unspecialised types have no
+ * glm::vec2/3/4, glm::dvec2/3/4, glm::mat4 and glm::uvec2. Unspecialised types have no
  * `value` member.
  */
 template <typename T>
@@ -157,6 +159,11 @@ struct gpu_data_format_of<glm::mat4> {
     static constexpr GpuDataFormat value = GpuDataFormat::MAT4_F32;
 };
 
+template <>
+struct gpu_data_format_of<glm::uvec2> {
+    static constexpr GpuDataFormat value = GpuDataFormat::VEC2_U32;
+};
+
 /**
  * @concept GpuFormatElement
  * @brief A type with a GpuDataFormat mapping.
@@ -186,7 +193,8 @@ using GpuValue = std::variant<
     double, glm::dvec2, glm::dvec3, glm::dvec4,
     int32_t, uint32_t,
     uint8_t, uint16_t,
-    glm::mat4>;
+    glm::mat4,
+    glm::uvec2>;
 
 namespace detail {
 

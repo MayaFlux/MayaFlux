@@ -15,6 +15,7 @@ size_t gpu_data_format_bytes(GpuDataFormat fmt) noexcept
         return 4;
     case GpuDataFormat::FLOAT64:
     case GpuDataFormat::VEC2_F32:
+    case GpuDataFormat::VEC2_U32:
         return 8;
     case GpuDataFormat::VEC3_F32:
         return 12;
@@ -45,6 +46,7 @@ size_t gpu_data_format_align(GpuDataFormat fmt) noexcept
         return 4;
     case GpuDataFormat::FLOAT64:
     case GpuDataFormat::VEC2_F32:
+    case GpuDataFormat::VEC2_U32:
         return 8;
     case GpuDataFormat::VEC3_F32:
     case GpuDataFormat::VEC4_F32:
@@ -71,6 +73,7 @@ size_t gpu_data_format_components(GpuDataFormat fmt) noexcept
         return 1;
     case GpuDataFormat::VEC2_F32:
     case GpuDataFormat::VEC2_F64:
+    case GpuDataFormat::VEC2_U32:
         return 2;
     case GpuDataFormat::VEC3_F32:
     case GpuDataFormat::VEC3_F64:
@@ -161,6 +164,7 @@ bool pack_gpu_components(
         store_components<int32_t>(components, out.data());
         return true;
     case GpuDataFormat::UINT32:
+    case GpuDataFormat::VEC2_U32:
         store_components<uint32_t>(components, out.data());
         return true;
     case GpuDataFormat::UINT8:
