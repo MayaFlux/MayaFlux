@@ -19,9 +19,9 @@ namespace MayaFlux::Yantra {
  * a VEC2_U32 binding and needs neither shaderFloat64 nor lossy narrowing to
  * float. The word is the double's order key, whose unsigned order is the
  * numeric order, or its IEEE 754 bits unchanged. The context stages any
- * binding from a span of doubles and keeps the primary output of a dispatch
- * as raw words for the caller to interpret. Bindings, push constants and multipass come from
- * ShaderExecutionContext.
+ * binding from a span of doubles. The primary output of a dispatch is kept as
+ * raw words, and in IEEE mode also decoded to doubles. Element types are set by
+ * the caller. Bindings, push constants and multipass come from ShaderExecutionContext.
  */
 class WordPairExecutionContext : public ShaderExecutionContext<> {
 public:
@@ -60,6 +60,28 @@ public:
      */
     [[nodiscard]] std::span<const uint32_t> primary_words() const noexcept { return m_primary_words; }
 
+    /**
+     * @brief The primary output of the last dispatch decoded to doubles.
+     *
+     * Empty when the context stages order keys, because its words are not
+     * samples, or when the dispatch produced no output.
+     */
+    [[nodiscard]] std::span<const double> primary_values() const noexcept { return m_primary_values; }
+
+    /**
+     * @brief Decode a dispatch result, as returned by an asynchronous collect, to doubles.
+     * @param result Result whose primary output holds word pairs.
+     * @return The decoded doubles, or empty when the context stages order keys.
+     */
+    [[nodiscard]] std::vector<double> decode_primary(const GpuChannelResult& result) const
+    {
+        if (m_order_key) {
+            return {};
+        }
+        const auto* bytes = reinterpret_cast<const uint8_t*>(result.primary.data());
+        return OperationHelper::decode_word_pairs(std::span<const uint8_t>(bytes, result.primary.size() * sizeof(float)));
+    }
+
 protected:
     /**
      * @brief Keeps the primary output as words; the context returns no Datum.
@@ -75,12 +97,14 @@ protected:
         for (size_t i = 0; i < count; ++i) {
             m_primary_words[i] = Transitive::Protocol::load_le_u32(src + i * sizeof(uint32_t));
         }
+        m_primary_values = decode_primary(raw);
         return output_type {};
     }
 
 private:
     bool m_order_key;
     std::vector<uint32_t> m_primary_words;
+    std::vector<double> m_primary_values;
 };
 
 } // namespace MayaFlux::Yantra
