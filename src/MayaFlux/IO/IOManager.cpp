@@ -47,6 +47,9 @@
 #include "Model/ModelExport.hpp"
 #include "Model/ModelReader.hpp"
 
+#include "Tensor/SafetensorsFormat.hpp"
+#include "Tensor/TensorFormat.hpp"
+
 #include "Volume/VDBWriter.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -94,6 +97,7 @@ IOManager::IOManager(Core::GlobalStreamInfo& stream_info, uint32_t frame_rate, c
     EXRWriter::register_with_registry();
     VDBWriter::register_with_registry();
     AssimpModelWriter::register_with_registry();
+    SafetensorsReader::register_with_registry();
 
     MF_INFO(Journal::Component::Core, Journal::Context::Init, "IOManager initialised");
 }
@@ -889,6 +893,87 @@ bool IOManager::save_composite(
     MF_INFO(Journal::Component::API, Journal::Context::FileIO,
         "IOManager::save_composite: wrote '{}'",
         std::filesystem::path(filepath).filename().string());
+
+    return true;
+}
+
+std::shared_ptr<TensorReader>
+IOManager::open_tensor_reader(const std::string& filepath, const std::string& format)
+{
+    std::shared_ptr<TensorReader> reader = TensorFormatRegistry::instance().create_reader(filepath, format);
+    if (!reader) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "IOManager::open_tensor_reader: no tensor format for '{}'", filepath);
+        return nullptr;
+    }
+
+    if (!reader->open(filepath)) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "IOManager::open_tensor_reader: failed to open '{}' because {}",
+            filepath, reader->get_last_error());
+        return nullptr;
+    }
+
+    return reader;
+}
+
+std::shared_ptr<TensorReader>
+IOManager::open_raw_tensor_reader(const std::string& filepath, std::vector<RawTensorEntry> entries)
+{
+    auto reader = std::make_shared<RawTensorReader>();
+    if (!reader->set_layout(std::move(entries)) || !reader->open(filepath)) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "IOManager::open_raw_tensor_reader: failed to open '{}' because {}",
+            filepath, reader->get_last_error());
+        return nullptr;
+    }
+    return reader;
+}
+
+std::optional<Kakshya::TensorSet>
+IOManager::load_tensors(const std::string& filepath, const TensorReadOptions& options,
+    const std::string& format)
+{
+    auto reader = open_tensor_reader(filepath, format);
+    if (!reader) {
+        return std::nullopt;
+    }
+
+    auto tensors = reader->read_tensors(options);
+    if (!tensors) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "IOManager::load_tensors: failed to read '{}' because {}",
+            filepath, reader->get_last_error());
+        return std::nullopt;
+    }
+
+    MF_INFO(Journal::Component::API, Journal::Context::FileIO,
+        "IOManager::load_tensors: loaded {} tensors from '{}'",
+        tensors->tensors.size(), std::filesystem::path(filepath).filename().string());
+
+    return tensors;
+}
+
+bool IOManager::save_tensors(const Kakshya::TensorSet& tensors, const std::string& filepath,
+    const std::string& format)
+{
+    auto writer = TensorFormatRegistry::instance().create_writer(filepath, format);
+    if (!writer) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "IOManager::save_tensors: no tensor format to write '{}'", filepath);
+        return false;
+    }
+
+    if (!writer->write(filepath, tensors)) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "IOManager::save_tensors: failed to write '{}' because {}",
+            filepath, writer->get_last_error());
+        return false;
+    }
+
+    MF_INFO(Journal::Component::API, Journal::Context::FileIO,
+        "IOManager::save_tensors: wrote {} tensors to '{}'",
+        tensors.tensors.size(), std::filesystem::path(filepath).filename().string());
 
     return true;
 }

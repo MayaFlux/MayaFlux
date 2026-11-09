@@ -9,6 +9,8 @@
 
 #include "Spatial/SpatialTransfer.hpp"
 
+#include "Tensor/RawTensorReader.hpp"
+
 #include "Video/VideoFileReader.hpp"
 
 #include "Volume/VolumeReader.hpp"
@@ -650,6 +652,62 @@ public:
     bool save_composite(
         const std::shared_ptr<Kakshya::CompositeContainer>& container,
         const std::string& filepath);
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Tensors
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * @brief Open a tensor file for inspection and selective reading.
+     *
+     * The format is chosen by name when given, otherwise by file content and
+     * then extension (safetensors is built in). The reader
+     * parses only the file's index; describe() lists the tensors without
+     * reading data. IOManager does not retain the reader.
+     *
+     * @param filepath Path to a supported tensor file.
+     * @param format Optional registered format name that overrides detection.
+     * @return Open reader, or nullptr for an unknown format or an unreadable file.
+     */
+    [[nodiscard]] std::shared_ptr<TensorReader>
+    open_tensor_reader(const std::string& filepath, const std::string& format = {});
+
+    /**
+     * @brief Open a headerless binary file whose tensor layout the caller supplies.
+     *
+     * @param filepath Path to the raw file.
+     * @param entries Name, spec and optional file offset of every tensor.
+     * @return Open reader, or nullptr for an invalid layout or a file too short for it.
+     */
+    [[nodiscard]] std::shared_ptr<TensorReader>
+    open_raw_tensor_reader(const std::string& filepath, std::vector<RawTensorEntry> entries);
+
+    /**
+     * @brief Read tensors from a file into an owning set.
+     *
+     * @param filepath Path to a supported tensor file.
+     * @param options Tensors to read; empty reads all of them.
+     * @param format Optional registered format name that overrides detection.
+     * @return The tensors and the file's metadata, or std::nullopt on failure.
+     */
+    [[nodiscard]] std::optional<Kakshya::TensorSet>
+    load_tensors(const std::string& filepath, const TensorReadOptions& options = {},
+        const std::string& format = {});
+
+    /**
+     * @brief Write a tensor set to a file, synchronously.
+     *
+     * The format is chosen by name when given, otherwise by the extension.
+     * Tensors are written at their native element type; a format that cannot
+     * represent one refuses the whole set. A partial file may remain on failure.
+     *
+     * @param tensors Tensors with unique, non-empty names.
+     * @param filepath Destination path.
+     * @param format Optional registered format name that overrides the extension.
+     * @return True only if the complete file was written.
+     */
+    bool save_tensors(const Kakshya::TensorSet& tensors, const std::string& filepath,
+        const std::string& format = {});
 
     // ─────────────────────────────────────────────────────────────────────────
     // Mesh — load
