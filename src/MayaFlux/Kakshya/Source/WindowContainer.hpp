@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Core/GlobalGraphicsInfo.hpp"
+#include "MayaFlux/Kakshya/Region/OrganizedRegion.hpp"
 #include "MayaFlux/Kakshya/SignalSourceContainer.hpp"
 #include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 
@@ -40,13 +41,12 @@ namespace MayaFlux::Kakshya {
  *   (add_region_group / get_all_region_groups / remove_region_group).
  *   Coordinates are [y, x] or [y, x, channel], inclusive. A region with no
  *   channel range covers every channel. load_region() and unload_region()
- *   are no-ops: region selection is a processor concern.
+ *   are no-ops. region_crops() reads a registered group's regions out of the
+ *   latest capture.
  *
  * Processing model:
  *   - The default processor (WindowAccessProcessor) performs one full-surface
  *     readback per process() call into processed_data[0].
- *   - The processing chain (SpatialRegionProcessor) extracts registered
- *     regions from the readback as separate DataVariant entries.
  *   - has_data() is false and get_region_data() is empty until the first
  *     capture, and again after clear() or a resize.
  *   - The container never calls process() itself; callers drive the chain.
@@ -193,6 +193,21 @@ public:
      * @return VKImage sized to the region, or nullptr on failure.
      */
     [[nodiscard]] std::shared_ptr<Core::VKImage> region_to_image(const Region& region) const;
+
+    /**
+     * @brief Crop every region of a registered group out of the latest capture.
+     *
+     * One OrganizedRegion per region that could be cropped, in group order. It
+     * carries the group name, the region's index and the group's and region's
+     * facets, and its single segment is cached with the pixels of the crop, in
+     * the surface's element type. The crops come from the capture history, so
+     * they do not depend on processed_data, and nothing is retained between
+     * calls. No GPU work. Empty before the first capture, for an unknown or
+     * empty group, and for a window that has not captured since a resize.
+     *
+     * @param group_name Name of a group registered with add_region_group.
+     */
+    [[nodiscard]] std::vector<OrganizedRegion> region_crops(const std::string& group_name) const;
 
     void set_region_data(const Region& region, const std::vector<DataVariant>& data) override;
 

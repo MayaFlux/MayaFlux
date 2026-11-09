@@ -1,21 +1,25 @@
 #version 460
+#extension GL_EXT_buffer_reference : require
 layout(local_size_x = 256) in;
 
 layout(set = 0, binding = 0, rgba32f) uniform writeonly image2D out_image;
 
-layout(set = 1, binding = 8, std430) buffer FlatPointsBuf {
-    vec2 flat_points[];
+layout(buffer_reference, std430) readonly buffer FlatPointsBufRef {
+    vec2 v[];
 };
 
-layout(set = 1, binding = 10, std430) buffer ContourMetaBuf {
-    uvec4 contour_meta[];
+layout(buffer_reference, std430) readonly buffer ContourMetaBufRef {
+    uvec4 v[];
 };
 
-layout(set = 2, binding = 1, std430) buffer SortIndicesBuf {
-    float sort_indices[];
+layout(buffer_reference, std430) readonly buffer SortIndicesBufRef {
+    float v[];
 };
 
 layout(push_constant) uniform PushConstants {
+    FlatPointsBufRef flat_points;
+    ContourMetaBufRef contour_meta;
+    SortIndicesBufRef sort_indices;
     uint width;
     uint height;
     uint max_components;
@@ -62,19 +66,19 @@ void main()
         return;
 
     const uint contour_idx = pc.max_contours > 0u
-        ? uint(sort_indices[slot]) : slot;
+        ? uint(pc.sort_indices.v[slot]) : slot;
 
     if (contour_idx >= pc.max_components)
         return;
 
-    const uvec4 m = contour_meta[contour_idx];
+    const uvec4 m = pc.contour_meta.v[contour_idx];
     const uint n = m.y;
     if (n < 3u || edge >= n)
         return;
 
     const uint base = m.x;
-    const vec2 a = flat_points[base + edge];
-    const vec2 b = flat_points[base + ((edge + 1u) % n)];
+    const vec2 a = pc.flat_points.v[base + edge];
+    const vec2 b = pc.flat_points.v[base + ((edge + 1u) % n)];
     const ivec2 pa = ivec2(a.x * float(pc.width), a.y * float(pc.height));
     const ivec2 pb = ivec2(b.x * float(pc.width), b.y * float(pc.height));
     draw_line(pa, pb);

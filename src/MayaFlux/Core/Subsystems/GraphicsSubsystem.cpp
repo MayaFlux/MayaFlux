@@ -49,6 +49,7 @@ void GraphicsSubsystem::initialize(SubsystemProcessingHandle& handle)
         "Initializing Graphics Subsystem...");
 
     m_handle = &handle;
+    m_parallel_buffers.emplace(handle.buffers.for_token(Buffers::ProcessingToken::AUDIO_PARALLEL));
 
     if (!m_backend || !m_backend->initialize(m_graphics_config)) {
         error<std::runtime_error>(
@@ -295,9 +296,14 @@ void GraphicsSubsystem::process()
 
     m_handle->buffers.process(1);
 
+    if (m_parallel_buffers) {
+        m_parallel_buffers->process(1);
+    }
+
     register_windows_for_processing();
     m_backend->handle_window_resize();
     render_all_windows();
+    m_backend->flush_deferred();
 
     m_handle->windows.process();
 

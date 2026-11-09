@@ -4,6 +4,7 @@
 #include "MayaFlux/Registry/Service/AudioBackendService.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
+#include "MayaFlux/Kinesis/Scalar.hpp"
 
 namespace MayaFlux::Core {
 
@@ -22,8 +23,9 @@ AudioSubsystem::AudioSubsystem(GlobalStreamInfo& stream_info)
 void AudioSubsystem::initialize(SubsystemProcessingHandle& handle)
 {
     m_handle = &handle;
+    m_parallel_buffers.emplace(handle.buffers.for_token(Buffers::ProcessingToken::AUDIO_PARALLEL));
 
-    m_audio_stream = m_audiobackend->create_stream(
+    m_audio_stream =m_audiobackend->create_stream(
         m_audio_device->get_default_output_device(),
         m_audio_device->get_default_input_device(),
         m_stream_info,
@@ -106,10 +108,15 @@ int AudioSubsystem::process_output(double* output_buffer, unsigned int num_frame
         m_handle->buffers.update_routing_states();
 
         std::vector<std::span<const double>> buffer_data(num_channels);
+        std::vector<std::span<const double>> parallel_data(num_channels);
         std::vector<std::vector<std::vector<double>>> all_network_outputs(num_channels);
         bool has_underrun = false;
 
         m_handle->tasks.process_buffer_cycle();
+
+        const uint32_t parallel_channels = m_parallel_buffers
+            ? std::min(m_parallel_buffers->channel_count(), num_channels)
+            : 0U;
 
         for (uint32_t channel = 0; channel < num_channels; channel++) {
             m_handle->buffers.process_channel(channel, num_frames);
@@ -126,6 +133,10 @@ int AudioSubsystem::process_output(double* output_buffer, unsigned int num_frame
             } else {
                 buffer_data[channel] = channel_data;
             }
+
+            if (channel < parallel_channels) {
+                parallel_data[channel] = m_parallel_buffers->read_channel_block(channel);
+            }
         }
 
         for (size_t i = 0; i < num_frames; ++i) {
@@ -137,6 +148,9 @@ int AudioSubsystem::process_output(double* output_buffer, unsigned int num_frame
                 if (!buffer_data[j].empty() && i < buffer_data[j].size()) {
                     buffer_sample = buffer_data[j][i];
                 }
+                if (!parallel_data[j].empty() && i < parallel_data[j].size()) {
+                    buffer_sample += parallel_data[j][i];
+                }
 
                 double sample = m_handle->nodes.process_sample(j) + buffer_sample;
 
@@ -147,7 +161,7 @@ int AudioSubsystem::process_output(double* output_buffer, unsigned int num_frame
                 }
 
                 size_t index = i * num_channels + j;
-                output_span[index] = std::clamp(sample, -1., 1.);
+                output_span[index] = std::clamp(Kinesis::soft_limit(sample), -1., 1.);
             }
         }
 

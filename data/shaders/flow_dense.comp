@@ -1,4 +1,5 @@
 #version 460
+#extension GL_EXT_buffer_reference : require
 
 #include "include/vision_colorspace.glsl"
 #include "include/vision_sampling.glsl"
@@ -15,11 +16,12 @@ layout(set = 0, binding = 9, rgba32f) uniform image2D scratch_b;
 layout(set = 0, binding = 10, rgba32f) uniform image2D tensor_img;
 layout(set = 0, binding = 11, rgba32f) uniform writeonly image2D flow_vis;
 
-layout(set = 1, binding = 3, std430) buffer MetaBuf {
-    uint meta[];
+layout(buffer_reference, std430) buffer MetaBufRef {
+    uint v[];
 };
 
 layout(push_constant) uniform PC {
+    MetaBufRef meta;
     uint phase;
     uint curr_atlas;
     uint out_parity;
@@ -39,6 +41,7 @@ layout(push_constant) uniform PC {
     float visual_range;
     float visual_min_motion;
     uint last_iteration;
+    uint hold_previous;
 } pc;
 
 const uint PHASE_TENSOR_H = 0u;
@@ -48,6 +51,7 @@ const uint PHASE_WARP = 3u;
 const uint PHASE_BOX_H = 4u;
 const uint PHASE_SOLVE = 5u;
 const uint PHASE_VISUALIZE = 6u;
+const uint PHASE_HOLD = 7u;
 const float TWO_PI = 6.28318530718;
 
 const uint DUPLICATE_ENERGY = 16u;
@@ -222,6 +226,12 @@ vec4 scratch_b_at(ivec2 c)
  * is kept in the z and w channels of the flow until the last iteration, which
  * replaces them with confidence (the undamped minimum eigenvalue) and residual.
  *
+ * HOLD runs over the finest level after its last SOLVE. When the pyramid build
+ * marked the frame as a repeat of the one before (meta[1] at or below
+ * DUPLICATE_ENERGY) and hold_previous says the other output holds the last
+ * flow, it copies that flow into this frame's output, so a repeated camera
+ * frame carries the last distinct motion instead of a field of zeros.
+ *
  * The visualization tone maps magnitude with a square root and desaturates,
  * rather than blackens, pixels of low confidence, so edges and smooth regions
  * that carry only partial or propagated flow are still visible.
@@ -324,9 +334,18 @@ void main()
                 flow_store(c, vec4(v, v0));
             break;
         }
+        case PHASE_HOLD:
+        {
+            if (pc.hold_previous == 0u || pc.meta.v[1] > DUPLICATE_ENERGY)
+                break;
+
+            const vec4 previous = pc.out_parity == 0u ? imageLoad(flow_out_b, c) : imageLoad(flow_out_a, c);
+            flow_store(c, previous);
+            break;
+        }
         case PHASE_VISUALIZE:
         {
-            if (meta[1] <= DUPLICATE_ENERGY) {
+            if (pc.meta.v[1] <= DUPLICATE_ENERGY) {
                 imageStore(flow_vis, c, vec4(0.0, 0.0, 0.0, 1.0));
                 break;
             }

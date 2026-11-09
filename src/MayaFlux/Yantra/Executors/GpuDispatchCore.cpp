@@ -4,8 +4,9 @@
 
 namespace MayaFlux::Yantra {
 
-GpuDispatchCore::GpuDispatchCore(GpuComputeConfig config)
-    : m_gpu_config(std::move(config))
+GpuDispatchCore::GpuDispatchCore(GpuComputeConfig config, bool compute_isolated)
+    : m_resources(compute_isolated)
+    , m_gpu_config(std::move(config))
 {
     update_dispatch_key_cache();
 }
@@ -13,6 +14,18 @@ GpuDispatchCore::GpuDispatchCore(GpuComputeConfig config)
 //==============================================================================
 // Public interface
 //==============================================================================
+
+namespace {
+
+    constexpr bool native_accepts(GpuBufferBinding::ElementType binding, Kakshya::GpuDataFormat native)
+    {
+        return (binding == GpuBufferBinding::ElementType::FLOAT32 && native == Kakshya::GpuDataFormat::FLOAT32)
+            || (binding == GpuBufferBinding::ElementType::UINT32 && native == Kakshya::GpuDataFormat::UINT32)
+            || (binding == GpuBufferBinding::ElementType::VEC2_U32 && native == Kakshya::GpuDataFormat::VEC2_U32)
+            || (binding == GpuBufferBinding::ElementType::FLOAT64 && native == Kakshya::GpuDataFormat::FLOAT64);
+    }
+
+} // namespace
 
 void GpuDispatchCore::set_push_constants(const void* data, size_t bytes)
 {
@@ -29,10 +42,12 @@ void GpuDispatchCore::set_output_size(size_t index, size_t byte_size)
 
 bool GpuDispatchCore::ensure_gpu_ready()
 {
-    if (m_resources.is_ready(dispatch_key()))
-        return true;
-    m_bindings = declare_buffer_bindings();
-    return m_resources.initialise(dispatch_key(), m_gpu_config, m_bindings);
+    if (!m_resources.is_ready(dispatch_key())
+        && !m_resources.initialise(dispatch_key(), m_gpu_config, declare_buffer_bindings())) {
+        return false;
+    }
+    m_bindings = declared_bindings();
+    return true;
 }
 
 bool GpuDispatchCore::is_gpu_ready() const
@@ -79,13 +94,12 @@ void GpuDispatchCore::stage_image_at(size_t binding_index,
     };
 }
 
-void GpuDispatchCore::stage_native_bytes(size_t binding_index, const void* data, size_t byte_size)
+void GpuDispatchCore::stage_native_bytes(Kakshya::GpuDataFormat format, const void* data, size_t byte_size)
 {
-    if (binding_index >= m_native_staging_bytes.size())
-        m_native_staging_bytes.resize(binding_index + 1);
-
+    m_native_format = format;
     m_native_staging_bytes.resize(byte_size);
-    std::memcpy(m_native_staging_bytes.data(), data, byte_size);
+    if (byte_size > 0)
+        std::memcpy(m_native_staging_bytes.data(), data, byte_size);
 }
 
 //==============================================================================
@@ -111,6 +125,11 @@ void GpuDispatchCore::prepare_gpu_inputs(
     const DataStructureInfo& structure_info)
 {
     const auto& key = dispatch_key();
+
+    const auto native_format = std::exchange(m_native_format, std::nullopt);
+    const std::vector<uint8_t> native_bytes = std::exchange(m_native_staging_bytes, {});
+    const bool native_staged = native_format.has_value();
+    const Kakshya::GpuDataFormat native_element = native_format.value_or(Kakshya::GpuDataFormat::FLOAT32);
 
     flatten_channels_to_staging(channels, structure_info);
     const size_t float_byte_size = m_staging_floats.size() * sizeof(float);
@@ -161,8 +180,7 @@ void GpuDispatchCore::prepare_gpu_inputs(
                 continue;
             auto& img = m_image_bindings[idx].image;
             if (img->get_current_layout() != vk::ImageLayout::eGeneral) {
-                m_resources.transition_image(img, img->get_current_layout(),
-                    vk::ImageLayout::eGeneral);
+                m_resources.transition_image(img, vk::ImageLayout::eGeneral);
             }
             image_binds.push_back({ .index = idx, .image = img, .sampler = nullptr, .spec = b });
         } break;
@@ -173,14 +191,18 @@ void GpuDispatchCore::prepare_gpu_inputs(
             auto& img = m_image_bindings[idx].image;
             auto sampler = m_image_bindings[idx].sampler;
             if (img->get_current_layout() != vk::ImageLayout::eShaderReadOnlyOptimal) {
-                m_resources.transition_image(img, img->get_current_layout(),
-                    vk::ImageLayout::eShaderReadOnlyOptimal);
+                m_resources.transition_image(img, vk::ImageLayout::eShaderReadOnlyOptimal);
             }
             image_binds.push_back({ .index = idx, .image = img, .sampler = sampler, .spec = b });
         } break;
 
         case GpuBufferBinding::ElementType::UINT32:
         case GpuBufferBinding::ElementType::INT32:
+            if (native_staged && native_accepts(b.element_type, native_element)) {
+                m_resources.ensure_buffer(key, idx, native_bytes.size());
+                m_resources.upload_raw(key, idx, native_bytes.data(), native_bytes.size());
+                break;
+            }
             if (!channels.empty()) {
                 const size_t raw_bytes = channels[0].size()
                     * (b.element_type == GpuBufferBinding::ElementType::UINT32
@@ -193,17 +215,33 @@ void GpuDispatchCore::prepare_gpu_inputs(
             }
             break;
 
+        case GpuBufferBinding::ElementType::VEC2_U32:
+        case GpuBufferBinding::ElementType::FLOAT64:
+            if (native_staged && native_accepts(b.element_type, native_element)) {
+                m_resources.ensure_buffer(key, idx, native_bytes.size());
+                m_resources.upload_raw(key, idx, native_bytes.data(), native_bytes.size());
+            }
+            break;
+
         case GpuBufferBinding::ElementType::FLOAT32:
         default:
-            if (!m_native_staging_bytes.empty()) {
-                m_resources.ensure_buffer(key, idx, m_native_staging_bytes.size());
-                m_resources.upload_raw(key, idx, m_native_staging_bytes.data(), m_native_staging_bytes.size());
+            if (native_staged && native_accepts(b.element_type, native_element)) {
+                m_resources.ensure_buffer(key, idx, native_bytes.size());
+                m_resources.upload_raw(key, idx, native_bytes.data(), native_bytes.size());
             } else {
                 m_resources.ensure_buffer(key, idx, float_byte_size);
                 m_resources.upload(key, idx, m_staging_floats.data(), float_byte_size);
             }
             break;
         }
+    }
+
+    if (native_staged) {
+        m_prepared_elements = native_bytes.size() / Kakshya::gpu_data_format_bytes(native_element);
+    } else if (!m_staging_floats.empty()) {
+        m_prepared_elements = m_staging_floats.size();
+    } else {
+        m_prepared_elements = largest_binding_data_element_count();
     }
 
     if (!image_binds.empty())
@@ -246,22 +284,77 @@ std::array<uint32_t, 3> GpuDispatchCore::calculate_dispatch_size(
 // Dispatch
 //==============================================================================
 
+bool GpuDispatchCore::has_unstaged_active_image()
+{
+    const auto key = dispatch_key();
+    return std::ranges::any_of(m_bindings, [&](const auto& b) {
+        const bool is_image = b.element_type == GpuBufferBinding::ElementType::IMAGE_STORAGE
+            || b.element_type == GpuBufferBinding::ElementType::IMAGE_SAMPLED;
+        if (!is_image || !m_resources.uses_binding(key, b.set, b.binding))
+            return false;
+        const auto idx = static_cast<size_t>(b.binding);
+        return idx >= m_image_bindings.size() || !m_image_bindings[idx].image;
+    });
+}
+
+bool GpuDispatchCore::native_input_unreceivable()
+{
+    if (!m_native_format)
+        return false;
+
+    const bool receivable = std::ranges::any_of(m_bindings, [&](const auto& b) {
+        if (b.direction == GpuBufferBinding::Direction::OUTPUT)
+            return false;
+        const bool float_or_uint = b.element_type == GpuBufferBinding::ElementType::FLOAT32
+            || b.element_type == GpuBufferBinding::ElementType::UINT32
+            || b.element_type == GpuBufferBinding::ElementType::VEC2_U32
+            || b.element_type == GpuBufferBinding::ElementType::FLOAT64;
+        if (!float_or_uint)
+            return false;
+        if (b.binding < m_binding_data.size() && !m_binding_data[b.binding].empty())
+            return false;
+        return native_accepts(b.element_type, *m_native_format);
+    });
+    return !receivable;
+}
+
+bool GpuDispatchCore::inputs_accepted()
+{
+    const bool rejected = m_native_rejected || native_input_unreceivable() || has_unstaged_active_image();
+
+    if (!rejected) {
+        m_input_warned = false;
+        return true;
+    }
+
+    if (!m_input_warned) {
+        MF_WARN(Journal::Component::Yantra, Journal::Context::BufferProcessing,
+            "GpuDispatchCore: key '{}' dispatch skipped; its input cannot be fed to the shader (native input rejected or without a receiving binding, or a used image binding has no staged image)",
+            dispatch_key());
+        m_input_warned = true;
+    }
+
+    m_native_staging_bytes.clear();
+    m_native_format.reset();
+    m_native_rejected = false;
+    return false;
+}
+
 GpuChannelResult GpuDispatchCore::dispatch_core(
     const std::vector<std::vector<double>>& channels,
     const DataStructureInfo& structure_info)
 {
     on_before_gpu_dispatch(channels, structure_info);
+    if (!inputs_accepted())
+        return {};
     prepare_gpu_inputs(channels, structure_info);
-
     bind_all_descriptors();
 
-    const size_t effective = m_staging_floats.empty()
-        ? largest_binding_data_element_count()
-        : m_staging_floats.size();
+    const size_t effective = m_prepared_elements;
     const auto groups = calculate_dispatch_size(effective, structure_info);
 
     m_resources.dispatch(
-        dispatch_key(), groups, m_bindings,
+        dispatch_key(), groups,
         m_push_constants.empty() ? nullptr : m_push_constants.data(),
         m_push_constants.size());
 
@@ -277,18 +370,20 @@ GpuChannelResult GpuDispatchCore::dispatch_core_chained(
     const ExecutionContext& ctx)
 {
     on_before_gpu_dispatch(channels, structure_info);
+    if (!inputs_accepted())
+        return {};
     prepare_gpu_inputs(channels, structure_info);
-
     bind_all_descriptors();
 
-    const size_t effective = m_staging_floats.empty()
-        ? largest_binding_data_element_count()
-        : m_staging_floats.size();
+    const size_t effective = m_prepared_elements;
     const auto groups = calculate_dispatch_size(effective, structure_info);
 
     m_resources.dispatch_batched(
-        dispatch_key(), groups, m_bindings,
+        dispatch_key(), groups,
         m_gpu_config.push_constant_size, ctx);
+
+    if (m_resources.has_recording())
+        return {};
 
     GpuChannelResult result;
     result.primary = readback_primary(effective);
@@ -302,9 +397,7 @@ GpuChannelResult GpuDispatchCore::dispatch_core_chained_indirect(
     const ExecutionContext& ctx)
 {
     on_before_gpu_dispatch(channels, structure_info);
-    prepare_gpu_inputs(channels, structure_info);
 
-    m_bindings = declare_buffer_bindings();
     if (!ensure_gpu_ready()) {
         error<std::runtime_error>(Journal::Component::Yantra,
             Journal::Context::BufferProcessing,
@@ -312,11 +405,13 @@ GpuChannelResult GpuDispatchCore::dispatch_core_chained_indirect(
             "GpuDispatchCore: dispatch_core_chained_indirect GPU initialisation failed");
     }
 
+    m_bindings = declared_bindings();
+    if (!inputs_accepted())
+        return {};
+    prepare_gpu_inputs(channels, structure_info);
     bind_all_descriptors();
 
-    const size_t effective = m_staging_floats.empty()
-        ? largest_binding_data_element_count()
-        : m_staging_floats.size();
+    const size_t effective = m_prepared_elements;
     const auto groups = calculate_dispatch_size(effective, structure_info);
 
     const auto indirect_it = std::ranges::find_if(m_bindings, [](const auto& b) {
@@ -329,8 +424,11 @@ GpuChannelResult GpuDispatchCore::dispatch_core_chained_indirect(
     }
 
     m_resources.dispatch_batched_indirect(
-        dispatch_key(), indirect_it->set, indirect_it->binding, groups, m_bindings,
+        dispatch_key(), indirect_it->set, indirect_it->binding, groups,
         m_gpu_config.push_constant_size, ctx);
+
+    if (m_resources.has_recording())
+        return {};
 
     GpuChannelResult result;
     result.primary = readback_primary(effective);
@@ -343,36 +441,24 @@ Portal::Graphics::FenceID GpuDispatchCore::dispatch_core_async(
     const DataStructureInfo& structure_info)
 {
     on_before_gpu_dispatch(channels, structure_info);
+    if (!inputs_accepted())
+        return Portal::Graphics::INVALID_FENCE;
     prepare_gpu_inputs(channels, structure_info);
-
     bind_all_descriptors();
 
-    const size_t effective = m_staging_floats.empty()
-        ? largest_binding_data_element_count()
-        : m_staging_floats.size();
+    const size_t effective = m_prepared_elements;
     const auto groups = calculate_dispatch_size(effective, structure_info);
 
     m_last_effective_element_count = effective;
 
     return m_resources.dispatch_async(
-        dispatch_key(), groups, m_bindings,
+        dispatch_key(), groups,
         m_push_constants.empty() ? nullptr : m_push_constants.data(),
         m_push_constants.size());
 }
 
-void GpuDispatchCore::dispatch_core_dependency(const std::vector<DependencyStage>& stages)
-{
-    const auto plan = prepare_dependency(stages);
-    m_resources.dispatch_sequence(plan.keys, plan.groups, plan.push_constants, plan.hazards, plan.indirect);
-}
-
-Portal::Graphics::FenceID GpuDispatchCore::dispatch_core_dependency_async(const std::vector<DependencyStage>& stages)
-{
-    const auto plan = prepare_dependency(stages);
-    return m_resources.dispatch_sequence_async(plan.keys, plan.groups, plan.push_constants, plan.hazards, plan.indirect);
-}
-
-GpuDispatchCore::DependencyPlan GpuDispatchCore::prepare_dependency(const std::vector<DependencyStage>& stages)
+void GpuDispatchCore::for_each_stage(const std::vector<DependencyStage>& stages,
+    const std::function<void(const std::array<uint32_t, 3>&, const Portal::Graphics::IndirectDispatch&)>& on_stage)
 {
     const GpuComputeConfig original_config = m_gpu_config;
     const auto original_bindings = m_bindings;
@@ -381,27 +467,14 @@ GpuDispatchCore::DependencyPlan GpuDispatchCore::prepare_dependency(const std::v
     const auto original_passthrough_bytes = m_passthrough_bytes;
     const auto original_push_constants = m_push_constants;
 
-    DependencyPlan plan;
-    auto& keys = plan.keys;
-    auto& groups_per_key = plan.groups;
-    auto& pc_per_key = plan.push_constants;
-    auto& hazards_per_key = plan.hazards;
-    auto& indirect_per_key = plan.indirect;
-
-    keys.reserve(stages.size());
-    groups_per_key.reserve(stages.size());
-    pc_per_key.reserve(stages.size());
-    hazards_per_key.reserve(stages.size());
-    indirect_per_key.reserve(stages.size());
-
     for (const auto& stage : stages) {
         m_gpu_config = stage.config;
         update_dispatch_key_cache();
-        m_bindings = declare_buffer_bindings();
         m_image_bindings.clear();
         m_binding_data.clear();
         m_passthrough_bytes.clear();
         m_push_constants.clear();
+        m_bindings = declared_bindings();
 
         stage.stage_fn(*this);
 
@@ -409,7 +482,7 @@ GpuDispatchCore::DependencyPlan GpuDispatchCore::prepare_dependency(const std::v
             error<std::runtime_error>(Journal::Component::Yantra,
                 Journal::Context::BufferProcessing,
                 std::source_location::current(),
-                "GpuDispatchCore: dispatch_core_dependency failed to initialise key '{}'",
+                "GpuDispatchCore: failed to initialise key '{}' for a dependency stage",
                 stage.config.shader_path);
         }
 
@@ -417,17 +490,13 @@ GpuDispatchCore::DependencyPlan GpuDispatchCore::prepare_dependency(const std::v
 
         bind_all_descriptors();
 
-        keys.push_back(dispatch_key());
-        groups_per_key.push_back(stage.explicit_groups ? *stage.explicit_groups : calculate_dispatch_size(largest_binding_data_element_count(), {}));
-        pc_per_key.push_back(m_push_constants);
-        hazards_per_key.push_back(stage.hazard_fn ? stage.hazard_fn(*this) : std::vector<Portal::Graphics::HazardResource> {});
-
         Portal::Graphics::IndirectDispatch indirect;
         if (stage.indirect_groups) {
             indirect.buffer = m_resources.shared_buffer_handle(stage.indirect_groups->set, stage.indirect_groups->binding).buffer;
             indirect.offset = stage.indirect_groups->offset_bytes;
         }
-        indirect_per_key.push_back(indirect);
+
+        on_stage(stage.explicit_groups ? *stage.explicit_groups : calculate_dispatch_size(m_prepared_elements, {}), indirect);
     }
 
     m_gpu_config = original_config;
@@ -437,8 +506,13 @@ GpuDispatchCore::DependencyPlan GpuDispatchCore::prepare_dependency(const std::v
     m_binding_data = original_binding_data;
     m_passthrough_bytes = original_passthrough_bytes;
     m_push_constants = original_push_constants;
+}
 
-    return plan;
+void GpuDispatchCore::record_stages(const std::vector<DependencyStage>& stages)
+{
+    for_each_stage(stages, [this](const std::array<uint32_t, 3>& groups, const Portal::Graphics::IndirectDispatch& indirect) {
+        m_resources.record_stage(dispatch_key(), groups, m_push_constants, indirect);
+    });
 }
 
 //==============================================================================
@@ -449,17 +523,23 @@ std::vector<float> GpuDispatchCore::readback_primary(size_t float_count)
 {
     const size_t idx = find_first_output_index();
 
+    size_t element_bytes = sizeof(float);
     for (const auto& b : m_bindings) {
         if (b.binding != idx)
             continue;
         if (b.element_type == GpuBufferBinding::ElementType::IMAGE_STORAGE
             || b.element_type == GpuBufferBinding::ElementType::IMAGE_SAMPLED)
             return {};
+        if (const size_t width = Portal::Graphics::element_type_bytes(b.element_type); width > 0)
+            element_bytes = width;
         break;
     }
 
     const size_t allocated = m_resources.buffer_allocated_bytes(dispatch_key(), idx);
-    const size_t byte_size = std::min(float_count * sizeof(float), allocated);
+    size_t byte_size = std::min(float_count * element_bytes, allocated);
+    if (idx < m_output_size_overrides.size() && m_output_size_overrides[idx] > 0) {
+        byte_size = std::min(m_output_size_overrides[idx], allocated);
+    }
     std::vector<float> out(byte_size / sizeof(float));
     m_resources.download(dispatch_key(), idx, out.data(), byte_size);
     return out;
@@ -502,7 +582,6 @@ void GpuDispatchCore::flatten_channels_to_staging(
     const DataStructureInfo& structure_info)
 {
     m_staging_floats.clear();
-    m_native_staging_bytes.clear();
 
     if (Kakshya::is_structured_modality(structure_info.modality))
         return;
@@ -536,20 +615,39 @@ void GpuDispatchCore::flatten_native_variants_to_staging(
     const DataStructureInfo& structure_info)
 {
     m_native_staging_bytes.clear();
+    m_native_format.reset();
+    m_native_rejected = false;
 
     if (variants.empty() || Kakshya::is_structured_modality(structure_info.modality))
         return;
 
+    std::optional<Kakshya::GpuDataFormat> element;
     size_t total_bytes = 0;
     for (const auto& v : variants) {
-        std::visit([&](const auto& vec) {
-            total_bytes += vec.size() * sizeof(typename std::decay_t<decltype(vec)>::value_type);
+        const auto variant_element = std::visit([](const auto& vec) -> std::optional<Kakshya::GpuDataFormat> {
+            using T = typename std::decay_t<decltype(vec)>::value_type;
+            if constexpr (requires { Kakshya::gpu_data_format_of<T>::value; }) {
+                return Kakshya::gpu_data_format_of<T>::value;
+            } else {
+                return std::nullopt;
+            }
+        },
+            v);
+
+        if (!variant_element || (element && element != variant_element)) {
+            m_native_staging_bytes.clear();
+            m_native_rejected = true;
+            return;
+        }
+        element = variant_element;
+
+        total_bytes += std::visit([](const auto& vec) {
+            return vec.size() * sizeof(typename std::decay_t<decltype(vec)>::value_type);
         },
             v);
     }
 
     m_native_staging_bytes.reserve(total_bytes);
-
     for (const auto& v : variants) {
         std::visit([&](const auto& vec) {
             using T = typename std::decay_t<decltype(vec)>::value_type;
@@ -561,6 +659,7 @@ void GpuDispatchCore::flatten_native_variants_to_staging(
         },
             v);
     }
+    m_native_format = element;
 }
 
 size_t GpuDispatchCore::find_first_output_index() const
@@ -584,15 +683,17 @@ size_t GpuDispatchCore::find_first_output_index() const
 
 size_t GpuDispatchCore::largest_binding_data_element_count() const
 {
-    size_t max_bytes = 0;
+    size_t max_elements = 0;
     for (const auto& b : m_bindings) {
         if (b.direction == GpuBufferBinding::Direction::OUTPUT)
             continue;
         const size_t idx = b.binding;
-        if (idx < m_binding_data.size() && !m_binding_data[idx].empty())
-            max_bytes = std::max(max_bytes, m_binding_data[idx].size());
+        if (idx < m_binding_data.size() && !m_binding_data[idx].empty()) {
+            const size_t width = Portal::Graphics::element_type_bytes(b.element_type);
+            max_elements = std::max(max_elements, m_binding_data[idx].size() / (width > 0 ? width : sizeof(float)));
+        }
     }
-    return max_bytes / sizeof(float);
+    return max_elements;
 }
 
 void GpuDispatchCore::update_dispatch_key_cache()
@@ -600,6 +701,15 @@ void GpuDispatchCore::update_dispatch_key_cache()
     m_cached_dispatch_key = m_gpu_config.shader_path.empty()
         ? std::to_string(m_gpu_config.shader_id)
         : m_gpu_config.shader_path;
+}
+
+std::vector<GpuBufferBinding> GpuDispatchCore::declared_bindings() const
+{
+    auto bindings = declare_buffer_bindings();
+    std::erase_if(bindings, [this](const GpuBufferBinding& b) {
+        return !m_resources.holds_binding(dispatch_key(), b.set, b.binding);
+    });
+    return bindings;
 }
 
 void GpuDispatchCore::bind_all_descriptors()

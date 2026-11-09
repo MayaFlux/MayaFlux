@@ -179,4 +179,85 @@ inline void write_blob(
     out.resize(out.size() + (padded - blob.size()), 0);
 }
 
+//=============================================================================
+// Little-endian words
+//=============================================================================
+
+/**
+ * @brief Store a uint64 as eight little-endian bytes.
+ *
+ * Byte shifts give the same layout on any host, so no byte-order branch is needed.
+ *
+ * @param dst Destination, at least 8 bytes.
+ * @param val Value to store.
+ */
+inline void store_le_u64(uint8_t* dst, uint64_t val) noexcept
+{
+    for (size_t k = 0; k < 8; ++k) {
+        dst[k] = static_cast<uint8_t>((val >> (8 * k)) & 0xFFU);
+    }
+}
+
+/**
+ * @brief Load a uint64 from eight little-endian bytes.
+ *
+ * @param src Source, at least 8 bytes.
+ */
+[[nodiscard]] inline uint64_t load_le_u64(const uint8_t* src) noexcept
+{
+    uint64_t val = 0;
+    for (size_t k = 0; k < 8; ++k) {
+        val |= static_cast<uint64_t>(src[k]) << (8 * k);
+    }
+    return val;
+}
+
+/**
+ * @brief Store a uint32 as four little-endian bytes.
+ *
+ * @param dst Destination, at least 4 bytes.
+ * @param val Value to store.
+ */
+inline void store_le_u32(uint8_t* dst, uint32_t val) noexcept
+{
+    for (size_t k = 0; k < 4; ++k) {
+        dst[k] = static_cast<uint8_t>((val >> (8 * k)) & 0xFFU);
+    }
+}
+
+/**
+ * @brief Load a uint32 from four little-endian bytes.
+ *
+ * @param src Source, at least 4 bytes.
+ */
+[[nodiscard]] inline uint32_t load_le_u32(const uint8_t* src) noexcept
+{
+    uint32_t val = 0;
+    for (size_t k = 0; k < 4; ++k) {
+        val |= static_cast<uint32_t>(src[k]) << (8 * k);
+    }
+    return val;
+}
+
+/**
+ * @brief Store a double as eight little-endian bytes of its IEEE 754 bits.
+ *
+ * @param dst Destination, at least 8 bytes.
+ * @param val Value to store.
+ */
+inline void store_le_double(uint8_t* dst, double val) noexcept
+{
+    store_le_u64(dst, std::bit_cast<uint64_t>(val));
+}
+
+/**
+ * @brief Load a double from eight little-endian bytes of its IEEE 754 bits.
+ *
+ * @param src Source, at least 8 bytes.
+ */
+[[nodiscard]] inline double load_le_double(const uint8_t* src) noexcept
+{
+    return std::bit_cast<double>(load_le_u64(src));
+}
+
 } // namespace MayaFlux::Transitive::Protocol

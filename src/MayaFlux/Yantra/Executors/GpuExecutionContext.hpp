@@ -34,8 +34,8 @@ public:
     using input_type = Datum<InputType>;
     using output_type = Datum<OutputType>;
 
-    explicit GpuExecutionContext(GpuComputeConfig config)
-        : GpuDispatchCore(std::move(config))
+    explicit GpuExecutionContext(GpuComputeConfig config, bool compute_isolated = true)
+        : GpuDispatchCore(std::move(config), compute_isolated)
     {
     }
 
@@ -54,25 +54,11 @@ public:
      *
      * @param input Input Datum to process.
      * @param ctx ExecutionContext; CHAINED mode requires ChainedParams, CHAINED_INDIRECT requires
-     *            ChainedIndirectParams, DEPENDENCY requires DependencyParams in parameters.
+     *            ChainedIndirectParams in parameters.
      * @throws std::runtime_error If GPU initialisation fails.
      */
     virtual output_type execute(const input_type& input, const ExecutionContext& ctx)
     {
-        if (ctx.mode == ExecutionMode::DEPENDENCY) {
-            const auto& dependency_params = safe_variant_get_or_throw<DependencyParams>(ctx.parameters,
-                "GpuExecutionContext: DEPENDENCY mode requires DependencyParams");
-
-            if (dependency_params.async) {
-                output_type result;
-                result.set_metadata("gpu_fence", dispatch_core_dependency_async(dependency_params.stages));
-                return result;
-            }
-
-            dispatch_core_dependency(dependency_params.stages);
-            return output_type {};
-        }
-
         if (!ensure_gpu_ready()) {
             error<std::runtime_error>(
                 Journal::Component::Yantra,
@@ -108,10 +94,13 @@ protected:
      * active DataSpanVariant alternative (which is already determined by visiting
      * the source variants -- no separate original_type inspection needed).
      *
-     * - float / uint8_t / uint16_t / uint32_t: stages raw bytes natively via
-     *   flatten_native_variants_to_staging. Returns ({}, structure_info).
-     * - double / complex / anything else: converts spans to vector<vector<double>>
-     *   for the standard double staging path. Unchanged from previous behaviour.
+     * - float / uint32_t: copies raw bytes natively via
+     *   flatten_native_variants_to_staging, uploaded unchanged to the binding
+     *   of the same element type. Returns ({}, structure_info).
+     * - uint8_t / uint16_t / double / complex / anything else: converts spans to
+     *   vector<vector<double>> for the standard double staging path, where each
+     *   integer value is cast to double and then to float. Pixel data belongs in
+     *   an image binding, not here.
      *
      * Override to return ({}, {}) when channel extraction is not needed
      * (e.g. image-only shaders that stage via on_before_gpu_dispatch).
@@ -136,7 +125,7 @@ protected:
             return typeid(double);
         }();
 
-        const bool is_native_non_double = native_type == typeid(float) || native_type == typeid(uint8_t) || native_type == typeid(uint16_t) || native_type == typeid(uint32_t);
+        const bool is_native_non_double = native_type == typeid(float) || native_type == typeid(uint32_t);
 
         if (is_native_non_double) {
             if constexpr (std::is_same_v<

@@ -308,25 +308,27 @@ MAYAFLUX_API void remove_processor(const std::shared_ptr<Buffers::BufferProcesso
  * @brief Registers an AudioBuffer with the default engine's buffer manager
  * @param buffer AudioBuffer to register
  * @param channel Channel index to associate with the buffer (default: 0)
+ * @param token Audio processing token to register under (default: AUDIO_BACKEND)
  *
  * Adds the buffer to the default engine's buffer management system, enabling
  * it to participate in the audio processing pipeline. The buffer will be
  * processed during each audio cycle according to its configuration.
  * Multiple buffers can be registered to the same channel for layered processing.
  */
-MAYAFLUX_API void register_audio_buffer(const std::shared_ptr<Buffers::AudioBuffer>& buffer, uint32_t channel = 0);
+MAYAFLUX_API void register_audio_buffer(const std::shared_ptr<Buffers::AudioBuffer>& buffer, uint32_t channel = 0, Buffers::ProcessingToken token = Buffers::ProcessingToken::AUDIO_BACKEND);
 
 /**
  * @brief Unregisters an AudioBuffer from the default engine's buffer manager
  * @param buffer AudioBuffer to unregister
  * @param channel Channel index the buffer was associated with (default: 0)
+ * @param token Audio processing token it was registered under (default: AUDIO_BACKEND)
  *
  * Removes the buffer from the default engine's buffer management system.
  * The buffer will no longer participate in audio processing cycles.
  * This is essential for clean shutdown and preventing processing of
  * destroyed or invalid buffers.
  */
-MAYAFLUX_API void unregister_audio_buffer(const std::shared_ptr<Buffers::AudioBuffer>& buffer, uint32_t channel = 0);
+MAYAFLUX_API void unregister_audio_buffer(const std::shared_ptr<Buffers::AudioBuffer>& buffer, uint32_t channel = 0, Buffers::ProcessingToken token = Buffers::ProcessingToken::AUDIO_BACKEND);
 
 /**
  * @brief creates a new buffer of the specified type and registers it

@@ -644,8 +644,10 @@ inline size_t hash_vision_step(VisionOp op, const VisionParams& params)
         } else if constexpr (std::is_same_v<T, GaussianBlurParams>) {
             hash_combine(seed, std::hash<float> {}(p.sigma));
         } else if constexpr (std::is_same_v<T, FilterSeparableParams>) {
+            hash_combine(seed, std::hash<size_t> {}(p.kernel_x.size()));
             for (float v : p.kernel_x)
                 hash_combine(seed, std::hash<float> {}(v));
+            hash_combine(seed, std::hash<size_t> {}(p.kernel_y.size()));
             for (float v : p.kernel_y)
                 hash_combine(seed, std::hash<float> {}(v));
         } else if constexpr (std::is_same_v<T, CannyParams>) {

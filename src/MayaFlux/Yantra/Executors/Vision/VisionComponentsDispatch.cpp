@@ -14,7 +14,6 @@ void VisionGpuExecutor::op_connected_components(
     auto& cc_pipeline = contexts.component_contours;
     auto w = contexts.pass.w;
     auto h = contexts.pass.h;
-    auto& foundry = Portal::Graphics::get_shader_foundry();
 
     const auto seed_input = contexts.pass.current;
 
@@ -54,15 +53,6 @@ void VisionGpuExecutor::op_connected_components(
     };
 
     const uint32_t reset_elements = std::max(block_width * block_height, k_max_components);
-    const auto buffer_hazards = [](GpuDispatchCore& ctx, std::initializer_list<size_t> bindings) {
-        std::vector<HazardResource> hazards;
-        hazards.reserve(bindings.size());
-        for (const size_t binding : bindings) {
-            hazards.push_back(ctx.shared_buffer_hazard(
-                { .set = 0, .binding = static_cast<uint32_t>(binding), .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 }));
-        }
-        return hazards;
-    };
 
     std::shared_ptr<Core::VKImage> cc_image;
     std::vector<DependencyStage> cc_stages;
@@ -71,7 +61,6 @@ void VisionGpuExecutor::op_connected_components(
     cc_stages.push_back({
         .config = { .shader_path = "cc_reset.comp.spv", .workgroup_size = { 256, 1, 1 }, .push_constant_size = sizeof(CCResetPC) },
         .stage_fn = [=](GpuDispatchCore& ctx) { ctx.set_push_constants(CCResetPC { .lut_size = block_width * block_height, .max_components = k_max_components }); },
-        .hazard_fn = [=](GpuDispatchCore& ctx) { return buffer_hazards(ctx, { 4, 5, 7, 8, 9 }); },
         .explicit_groups = std::array<uint32_t, 3> { (reset_elements + 255U) / 256U, 1U, 1U },
     });
 
@@ -80,7 +69,6 @@ void VisionGpuExecutor::op_connected_components(
         .stage_fn = [seed_input, init_pc](GpuDispatchCore& ctx) {
                 ctx.stage_image_at(1, seed_input, GpuBufferBinding::ElementType::IMAGE_STORAGE);
                 ctx.set_push_constants(init_pc); },
-        .hazard_fn = [=](GpuDispatchCore& ctx) { return buffer_hazards(ctx, { 2 }); },
         .explicit_groups = block_groups,
     });
 
@@ -89,14 +77,12 @@ void VisionGpuExecutor::op_connected_components(
         .stage_fn = [seed_input, merge_pc](GpuDispatchCore& ctx) {
                 ctx.stage_image_at(1, seed_input, GpuBufferBinding::ElementType::IMAGE_STORAGE);
                 ctx.set_push_constants(merge_pc); },
-        .hazard_fn = [=](GpuDispatchCore& ctx) { return buffer_hazards(ctx, { 2 }); },
         .explicit_groups = block_groups,
     });
 
     cc_stages.push_back({
         .config = { .shader_path = "cc_compress.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(CCCompressPC) },
         .stage_fn = [=](GpuDispatchCore& ctx) { ctx.set_push_constants(CCCompressPC { .block_width = block_width, .block_height = block_height }); },
-        .hazard_fn = [=](GpuDispatchCore& ctx) { return buffer_hazards(ctx, { 2, 4 }); },
         .explicit_groups = block_groups,
     });
 
@@ -111,16 +97,7 @@ void VisionGpuExecutor::op_connected_components(
         .explicit_groups = std::array<uint32_t, 3> { (w + k_wg2d[0] - 1U) / k_wg2d[0], (h + k_wg2d[1] - 1U) / k_wg2d[1], 1U },
     });
 
-    ExecutionContext cc_ctx;
-    cc_ctx.mode = ExecutionMode::DEPENDENCY;
-    DependencyParams cc_params;
-    cc_params.stages = cc_stages;
-    cc_params.async = true;
-    cc_ctx.parameters = cc_params;
-    const auto cc_dispatch_result = cc_pipeline.execute(Datum<> {}, cc_ctx);
-    const auto fence = cc_dispatch_result.get_metadata<FenceID>("gpu_fence").value_or(INVALID_FENCE);
-    foundry.wait_for_fence(fence);
-    foundry.release_fence(fence);
+    cc_pipeline.record_stages(cc_stages);
     cc_pipeline.clear_output_dimensions();
 
     contexts.pass.result.images.component_colors = p.with_colors ? cc_image : nullptr;
@@ -187,7 +164,6 @@ bool VisionGpuExecutor::op_find_contours(
     auto& component_contours = contexts.component_contours;
     auto w = contexts.pass.w;
     auto h = contexts.pass.h;
-    auto& foundry = Portal::Graphics::get_shader_foundry();
 
     component_contours.ensure_shared_buffer(1, 4, static_cast<size_t>(k_max_components) + 1U, GpuBufferBinding::ElementType::UINT32);
     component_contours.ensure_shared_buffer(1, 5, static_cast<size_t>(k_max_components) * k_max_holes_per_label, GpuBufferBinding::ElementType::UINT32);
@@ -201,65 +177,33 @@ bool VisionGpuExecutor::op_find_contours(
     component_contours.ensure_shared_buffer(2, 0, k_max_components, GpuBufferBinding::ElementType::FLOAT32);
     component_contours.ensure_shared_buffer(2, 1, k_max_components, GpuBufferBinding::ElementType::FLOAT32);
 
-    {
-        std::vector<uint32_t> owner_reset(static_cast<size_t>(k_max_components) + 1U, CC_UNCLAIMED_HOST);
-        component_contours.upload_shared_raw(1, 4, reinterpret_cast<const uint8_t*>(owner_reset.data()), owner_reset.size() * sizeof(uint32_t));
+    component_contours.fill_shared(1, 4, CC_UNCLAIMED_HOST);
+    component_contours.fill_shared(1, 5, CC_UNCLAIMED_HOST);
+    component_contours.fill_shared(1, 7, 0U);
+    component_contours.fill_shared(1, 9, 0U);
 
-        std::vector<uint32_t> hole_owner_reset(static_cast<size_t>(k_max_components) * k_max_holes_per_label, CC_UNCLAIMED_HOST);
-        component_contours.upload_shared_raw(1, 5, reinterpret_cast<const uint8_t*>(hole_owner_reset.data()), hole_owner_reset.size() * sizeof(uint32_t));
-
-        const uint32_t zero = 0;
-        component_contours.upload_shared_raw(1, 7, reinterpret_cast<const uint8_t*>(&zero), sizeof(uint32_t));
-        component_contours.upload_shared_raw(1, 9, reinterpret_cast<const uint8_t*>(&zero), sizeof(uint32_t));
-    }
+    const auto address = [&component_contours](uint32_t set, uint32_t binding) {
+        return component_contours.shared_buffer_address(set, binding);
+    };
 
     auto max_points = p.max_points_per_contour > 0 ? std::min<uint32_t>(p.max_points_per_contour, k_max_points_per_contour) : k_max_points_per_contour;
-    component_contours.swap_shader({ .shader_path = "contour_march.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(ContourMarchPC) });
-    component_contours.stage_image_at(1, contexts.source, GpuBufferBinding::ElementType::IMAGE_SAMPLED);
-    component_contours.prepare_output_image(w, h);
-    component_contours.set_push_constants(ContourMarchPC {
-        .width = w,
-        .height = h,
-        .max_components = k_max_components,
-        .max_points_per_contour = max_points,
-        .max_holes_per_label = k_max_holes_per_label,
-        .phase = 0U,
-        .min_area = p.min_area,
-        .compacted_count = 0U });
-
-    component_contours.set_output_dimensions(w, h);
-    {
-        const auto fence = component_contours.dispatch_async({});
-        foundry.wait_for_fence(fence);
-        foundry.release_fence(fence);
-    }
-
-    component_contours.set_push_constants(ContourMarchPC {
-        .width = w,
-        .height = h,
-        .max_components = k_max_components,
-        .max_points_per_contour = max_points,
-        .max_holes_per_label = k_max_holes_per_label,
-        .phase = 1U,
-        .min_area = p.min_area,
-        .compacted_count = 0U });
-    {
-        const auto fence = component_contours.dispatch_async({});
-        foundry.wait_for_fence(fence);
-        foundry.release_fence(fence);
-    }
-
-    component_contours.clear_output_dimensions();
-
-    const uint32_t total_owner_slots = k_max_components * (1U + k_max_holes_per_label);
-    const auto owner_hazards = [](GpuDispatchCore& ctx) {
-        return std::vector<HazardResource> {
-            ctx.shared_buffer_hazard({ .set = 1, .binding = 6, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 }),
-            ctx.shared_buffer_hazard({ .set = 1, .binding = 7, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 }),
-        };
+    const GpuComputeConfig march_config {
+        .shader_path = "contour_march.comp.spv",
+        .workgroup_size = k_wg2d,
+        .push_constant_size = sizeof(ContourMarchPC)
     };
-    const auto trace_pc = [&](uint32_t phase) {
+    const auto march_pc = [&](uint32_t phase) {
         return ContourMarchPC {
+            .trace_owner = address(1, 4),
+            .hole_owner = address(1, 5),
+            .compacted_owners = address(1, 6),
+            .compacted_count_buf = address(1, 7),
+            .flat_points = address(1, 8),
+            .point_cursor = address(1, 9),
+            .contour_meta = address(1, 10),
+            .contour_area_perim = address(1, 11),
+            .sort_keys = address(2, 0),
+            .sort_indices = address(2, 1),
             .width = w,
             .height = h,
             .max_components = k_max_components,
@@ -270,49 +214,50 @@ bool VisionGpuExecutor::op_find_contours(
             .compacted_count = 0U
         };
     };
-    const GpuComputeConfig march_config { .shader_path = "contour_march.comp.spv", .workgroup_size = k_wg2d, .push_constant_size = sizeof(ContourMarchPC) };
+    component_contours.swap_shader(march_config);
+    component_contours.stage_image_at(1, contexts.source, GpuBufferBinding::ElementType::IMAGE_SAMPLED,
+        Portal::Graphics::SamplerForge::instance().get_default_linear());
+    component_contours.prepare_output_image(w, h);
+    component_contours.set_push_constants(march_pc(0U));
+
+    component_contours.set_output_dimensions(w, h);
+    (void)component_contours.dispatch_async({});
+
+    component_contours.set_push_constants(march_pc(1U));
+    (void)component_contours.dispatch_async({});
+
+    component_contours.clear_output_dimensions();
+
+    const uint32_t total_owner_slots = k_max_components * (1U + k_max_holes_per_label);
+
+    const ContourCompactPC compact_pc {
+        .trace_owner = address(1, 4),
+        .hole_owner = address(1, 5),
+        .compacted_owners = address(1, 6),
+        .compacted_count = address(1, 7),
+        .max_components = k_max_components,
+        .max_holes_per_label = k_max_holes_per_label
+    };
 
     std::vector<DependencyStage> trace_stages;
     trace_stages.push_back({
         .config = { .shader_path = "contour_compact.comp.spv", .workgroup_size = { 256, 1, 1 }, .push_constant_size = sizeof(ContourCompactPC) },
-        .stage_fn = [](GpuDispatchCore& ctx) {
-            ctx.set_push_constants(ContourCompactPC { .max_components = k_max_components, .max_holes_per_label = k_max_holes_per_label });
-        },
-        .hazard_fn = owner_hazards,
+        .stage_fn = [compact_pc](GpuDispatchCore& ctx) { ctx.set_push_constants(compact_pc); },
         .explicit_groups = std::array<uint32_t, 3> { (total_owner_slots + 255U) / 256U, 1U, 1U },
     });
     trace_stages.push_back({
         .config = march_config,
-        .stage_fn = [pc = trace_pc(3U)](GpuDispatchCore& ctx) { ctx.set_push_constants(pc); },
+        .stage_fn = [pc = march_pc(3U)](GpuDispatchCore& ctx) { ctx.set_push_constants(pc); },
         .explicit_groups = std::array<uint32_t, 3> { 1U, 1U, 1U },
     });
     const bool sort_requested = p.max_contours > 0U;
-    const auto contour_hazard = [](GpuDispatchCore& ctx, uint32_t set, uint32_t binding, GpuBufferBinding::ElementType type) {
-        return ctx.shared_buffer_hazard({ .set = set, .binding = binding, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = type });
-    };
-    const auto sort_hazards = [contour_hazard](GpuDispatchCore& ctx) {
-        return std::vector<HazardResource> {
-            contour_hazard(ctx, 2, 0, GpuBufferBinding::ElementType::FLOAT32),
-            contour_hazard(ctx, 2, 1, GpuBufferBinding::ElementType::FLOAT32),
-        };
-    };
 
     DependencyStage trace_stage {
         .config = march_config,
-        .stage_fn = [pc = trace_pc(2U)](GpuDispatchCore& ctx) { ctx.set_push_constants(pc); },
+        .stage_fn = [pc = march_pc(2U)](GpuDispatchCore& ctx) { ctx.set_push_constants(pc); },
         .explicit_groups = std::array<uint32_t, 3> { 1U, 1U, 1U },
         .indirect_groups = IndirectGroupsSource { .set = 0, .binding = 10, .offset_bytes = 3U * sizeof(uint32_t) },
     };
-    if (sort_requested || p.as_image) {
-        trace_stage.hazard_fn = [contour_hazard](GpuDispatchCore& ctx) {
-            return std::vector<HazardResource> {
-                contour_hazard(ctx, 1, 8, GpuBufferBinding::ElementType::FLOAT32),
-                contour_hazard(ctx, 1, 10, GpuBufferBinding::ElementType::UINT32),
-                contour_hazard(ctx, 2, 0, GpuBufferBinding::ElementType::FLOAT32),
-                contour_hazard(ctx, 2, 1, GpuBufferBinding::ElementType::FLOAT32),
-            };
-        };
-    }
     trace_stages.push_back(std::move(trace_stage));
 
     if (sort_requested) {
@@ -324,11 +269,10 @@ bool VisionGpuExecutor::op_find_contours(
         };
 
         for (uint32_t round = 0; round < rounds; ++round) {
-            const ContourTopKPC topk_pc { .round = round, .count = k_max_components };
+            const ContourTopKPC topk_pc { .sort_keys = address(2, 0), .sort_indices = address(2, 1), .round = round, .count = k_max_components };
             trace_stages.push_back({
                 .config = topk_config,
                 .stage_fn = [topk_pc](GpuDispatchCore& ctx) { ctx.set_push_constants(topk_pc); },
-                .hazard_fn = sort_hazards,
                 .explicit_groups = std::array<uint32_t, 3> { 1U, 1U, 1U },
             });
         }
@@ -339,6 +283,9 @@ bool VisionGpuExecutor::op_find_contours(
         const uint32_t render_slots = sort_requested ? std::min(p.max_contours, k_max_components) : k_max_trace_slots;
         const ContourClearPC clear_pc { .width = w, .height = h };
         const ContourRenderPC render_pc {
+            .flat_points = address(1, 8),
+            .contour_meta = address(1, 10),
+            .sort_indices = address(2, 1),
             .width = w,
             .height = h,
             .max_components = k_max_components,
@@ -352,10 +299,6 @@ bool VisionGpuExecutor::op_find_contours(
                     component_contours.prepare_output_image(w, h);
                     contour_image = component_contours.get_output_image(0);
                     ctx.set_push_constants(clear_pc); },
-            .hazard_fn = [&contour_image](GpuDispatchCore&) { return std::vector<HazardResource> {
-                                                                  { .binding = { .set = 0, .binding = 0, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::IMAGE_STORAGE },
-                                                                      .image = contour_image->get_image() },
-                                                              }; },
             .explicit_groups = std::array<uint32_t, 3> { (w + k_wg2d[0] - 1U) / k_wg2d[0], (h + k_wg2d[1] - 1U) / k_wg2d[1], 1U },
         });
         trace_stages.push_back({
@@ -367,12 +310,7 @@ bool VisionGpuExecutor::op_find_contours(
         });
     }
 
-    ExecutionContext trace_ctx;
-    trace_ctx.mode = ExecutionMode::DEPENDENCY;
-    DependencyParams trace_params;
-    trace_params.stages = trace_stages;
-    trace_ctx.parameters = trace_params;
-    component_contours.execute(Datum<> {}, trace_ctx);
+    component_contours.record_stages(trace_stages);
 
     if (p.as_image) {
         contexts.pass.result.images.contour_image = contour_image;
@@ -454,23 +392,21 @@ std::shared_ptr<Core::VKImage> VisionGpuExecutor::select_label(
     uint32_t w, uint32_t h)
 {
     auto& component_contours = contexts.component_contours;
-    auto& foundry = Portal::Graphics::get_shader_foundry();
 
     component_contours.swap_shader({
         .shader_path = "vision_label_select.comp.spv",
         .workgroup_size = k_wg2d,
         .push_constant_size = sizeof(SelectLabelPC),
     });
-    component_contours.stage_image_at(1, source, GpuBufferBinding::ElementType::IMAGE_SAMPLED);
+    component_contours.stage_image_at(1, source, GpuBufferBinding::ElementType::IMAGE_SAMPLED,
+        Portal::Graphics::SamplerForge::instance().get_default_linear());
     component_contours.set_push_constants(SelectLabelPC {
         .target_label = target_label, .width = w, .height = h });
     component_contours.prepare_output_image(w, h);
     component_contours.set_output_dimensions(w, h);
 
-    const auto fence = component_contours.dispatch_async({});
+    (void)component_contours.dispatch_async({});
     component_contours.clear_output_dimensions();
-    foundry.wait_for_fence(fence);
-    foundry.release_fence(fence);
 
     return component_contours.get_output_image(0);
 }
@@ -483,12 +419,16 @@ std::shared_ptr<Core::VKImage> VisionGpuExecutor::select_label(
     if (!m_contexts)
         m_contexts = std::make_unique<VisionGpuContexts>();
 
-    return select_label(*m_contexts, source, target_label, w, h);
+    auto selected = select_label(*m_contexts, source, target_label, w, h);
+    m_contexts->recording->submit();
+    return selected;
 }
 
 std::vector<Kinesis::Vision::Contour> VisionGpuExecutor::read_exported_contours(
     const Kinesis::Vision::VisionResult& result)
 {
+    Portal::Graphics::get_shader_foundry().wait_submitted();
+
     const auto& view = result.buffers.contours;
     if (!view.meta || !view.meta->mapped_ptr || !view.points || !view.points->mapped_ptr
         || !view.area_perim || !view.area_perim->mapped_ptr) {

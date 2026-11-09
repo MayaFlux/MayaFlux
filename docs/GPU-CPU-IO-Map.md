@@ -48,7 +48,7 @@ flowchart TD
 
 `ComputeMeshBuffer` rendering is tier 0. A counter read through `mapped_ptr` is tier 1. `RelaxationGridBuffer` is request-gated and, because its state is host-visible, tier 1 in practice.
 
-Tier 2 as `download_from_gpu_async` performs it:
+Tier 2 as `download_back_buffer` performs it:
 
 ```mermaid
 sequenceDiagram
@@ -57,7 +57,7 @@ sequenceDiagram
     participant B as BufferService
     participant Q as GPU queue
 
-    C->>S: download_from_gpu_async(source, data, size, staging)
+    C->>S: download_back_buffer(slot, data, size, staging)
     S->>B: copy_buffer_fenced(source to staging)
     B->>Q: submit the copy with a fence
     S->>B: wait_fenced(handle)
@@ -97,7 +97,7 @@ On every synchronous path (`dispatch_core` and the chained variants), `execute` 
 
 - **Opt out per auxiliary output** with `ShaderExecutionContext::set_skip_readback(binding, true)`. Use it for results another GPU stage consumes. The primary result is always read back on this path.
 
-- **`ExecutionMode::DEPENDENCY`** runs its stages with no readback.
+- **`record_stages`** runs its stages with no readback. Read the buffers you need afterwards through the paths in section 3.
 
 - **Asynchronous use:** `ShaderExecutionContext::dispatch_async(input)` returns a `FenceID`. Poll it with `ShaderFoundry::is_fence_signaled`, then call `collect_result()` to read back, which returns a `GpuChannelResult` (`primary` floats, `aux` bytes keyed by binding). Release the fence afterward with `ShaderFoundry::release_fence`, or it leaks a `VkFence` and a command buffer slot per dispatch.
 
@@ -128,7 +128,7 @@ flowchart LR
     end
     subgraph P["VKBuffer processors: cheap by default"]
         p1["execute_shader"] --> p2["buffer_barrier<br/>shader read, transfer read"] --> p3["submit_and_wait<br/><b>no readback</b>"]
-        p3 -. "you ask" .-> p4["DataReadProcessor, StagingUtils,<br/>or BufferDownloadProcessor"]
+        p3 -. "you ask" .-> p4["DataReadProcessor or StagingUtils"]
     end
 ```
 
@@ -156,8 +156,7 @@ Texture creation, upload and sampler binding belong to `TextureLoom` and are out
 | Option | What it is | Use it for |
 |---|---|---|
 | **`DataReadProcessor`** | Each `read_*` call arms one request for the next graphics cycle. `resolve_*` finishes it on the consuming thread, waiting for a device-local copy if one is in flight. | The general case. Reach for it first. Section 6 lists what it reads. |
-| **`StagingUtils`** | `download_from_gpu` detects host-visible versus device-local. `download_host_visible` and `download_device_local` are the specific forms. `download_from_gpu_async` does not stall the graphics queue. | Direct calls against a `VKBuffer`, off the graphics thread. |
-| **`BufferDownloadProcessor`** | Copies a source `VKBuffer` into a CPU-side target buffer every cycle. | A continuous per-cycle copy. Section 6 covers its `back_buffers` form. |
+| **`StagingUtils`** | `download_from_gpu` detects host-visible versus device-local. `download_host_visible` and `download_device_local` are the specific forms. `download_back_buffer_async` records a copy and `resolve_back_buffer_read` finishes it later, so a read can span frames. | Direct calls against a `VKBuffer`, off the graphics thread. |
 
 Rendered pixels are a different case. `RenderProcessor` draws to an image, so none of the above applies:
 
@@ -167,7 +166,7 @@ Rendered pixels are a different case. `RenderProcessor` draws to an image, so no
 
 - `IOManager::capture_window` records those frames to a video file (section 8).
 
-Vertex data written by compute and consumed again as geometry goes through `GeometryReadbackNode` (in `Nodes::GpuSync`). It downloads with `download_from_gpu_async` and re-emits the result as a `GeometryWriterNode`. The transfer is synchronous and submits to the queue itself, so its `process_sample` does nothing. Drive `compute_frame()` yourself from a `FRAME_ACCURATE` metro, never from the graphics thread.
+Vertex data written by compute and consumed again as geometry goes through `GeometryReadbackNode` (in `Nodes::GpuSync`). It records a download with `download_back_buffer_async` and re-emits the previous call's result as a `GeometryWriterNode`, so device-local vertices arrive one call behind. It submits its own transfers, so its `process_sample` does nothing. Drive `compute_frame()` yourself from a `FRAME_ACCURATE` metro, never from the graphics thread.
 
 ```mermaid
 flowchart TD
@@ -175,9 +174,9 @@ flowchart TD
     B -- "a buffer, field, vertices, mesh or pixels, once" --> R["DataReadProcessor<br/>read_*, then resolve_*"]
     B -- "a named descriptor" --> C["ShaderProcessor::download_bound(name, ...)<br/>false if unbound"]
     B -- "any VKBuffer, directly, off the graphics thread" --> D["StagingUtils::download_from_gpu"]
-    B -- "a copy every cycle, in a chain" --> E["BufferDownloadProcessor::configure_target"]
+    B -- "a copy every cycle, in a chain" --> E["DataReadProcessor::read_buffer, re-armed each cycle"]
     B -- "one raw back_buffers slot" --> F["StagingUtils::download_back_buffer"]
-    B -- "a whole back_buffers set, every cycle" --> G["BufferDownloadProcessor::configure_back_buffers"]
+    B -- "several back_buffers slots, every cycle" --> G["DataReadProcessor::read_back_buffer, one per slot"]
     B -- "rendered pixels" --> H["DisplayService::readback_swapchain_region<br/>or get_last_frame"]
     B -- "vertices back into the node graph" --> I["GeometryReadbackNode"]
 ```
@@ -188,8 +187,6 @@ flowchart TD
 | Option | What it does |
 |---|---|
 | **`DataWriteProcessor`** | For a plain `VKBuffer`. `set_data` and `set_vertices` are thread-safe, dirty-gated (nothing re-uploads unless you supplied new data) and applied on the graphics thread through a lock-free double buffer. Device-local targets get a persistent staging buffer at attach time. Its `write_*` requests reach other targets (section 6). |
-| **`BufferUploadProcessor`** | The mirror of `BufferDownloadProcessor`. Copies a CPU-side source buffer into a target `VKBuffer` every cycle. |
-| **`TransferProcessor`** | Moves audio between an `AudioBuffer` and a `VKBuffer`: `connect_audio_to_gpu`, `connect_gpu_to_audio`, and `setup_staging` for device-local targets. `TransferDirection::BIDIRECTIONAL` is declared but marked future. |
 
 ---
 
@@ -209,7 +206,7 @@ flowchart TB
     subgraph L3["Section 3: VKBuffer processors, real-time chain"]
         CP["ComputeProcessor"]
         RP["RenderProcessor"]
-        DR["DataReadProcessor, DataWriteProcessor<br/>BufferDownloadProcessor, BufferUploadProcessor"]
+        DR["DataReadProcessor, DataWriteProcessor"]
         NB["NodeBindingsProcessor<br/>DescriptorBindingsProcessor"]
     end
     subgraph L4["Section 4: Portal, raw"]
@@ -278,7 +275,7 @@ The right path depends on where the data comes from and whether it must move eve
 | Raw data in hand, to a push constant | Yes | `ShaderProcessor::set_push_constant_data` |
 | Raw data in hand, to a named UBO/SSBO | Yes | `ShaderProcessor::bind_buffer` against a `VKBuffer` you populate |
 | Data from another thread into a plain `VKBuffer`, only when new | Yes | `DataWriteProcessor::set_data` / `set_vertices` |
-| A full CPU-side buffer onto a specific `VKBuffer` | Yes | `BufferUploadProcessor::configure_source` (section 6 for `back_buffers`) |
+| A full CPU-side buffer onto a specific `VKBuffer` | Yes | `DataWriteProcessor::write_buffer` (section 6 for `back_buffers`) |
 | Data assembled once or rarely, outside the chain, for Yantra | No | Extract the bytes, then Yantra `upload` / `upload_raw` / `upload_shared_raw` |
 
 ```mermaid
@@ -291,7 +288,7 @@ flowchart TD
     C -- "yes, a push constant" --> R1["ShaderProcessor::set_push_constant_data"]
     C -- "yes, a named UBO or SSBO" --> R2["ShaderProcessor::bind_buffer<br/>you populate the VKBuffer"]
     C -- "yes, from another thread, only when new" --> R5["DataWriteProcessor::set_data, set_vertices"]
-    C -- "yes, a full CPU buffer onto a VKBuffer" --> R3["BufferUploadProcessor::configure_source"]
+    C -- "yes, a full CPU buffer onto a VKBuffer" --> R3["DataWriteProcessor::write_buffer"]
     C -- "no, once or rarely, for Yantra" --> R4["Yantra upload, upload_raw, upload_shared_raw"]
 ```
 
@@ -312,7 +309,7 @@ Inside the chain, push constant versus UBO/SSBO is a size and frequency question
 
 ## 6. Reading and writing raw storage
 
-Everything that is not a named descriptor goes through one of three families: the request processors (`DataReadProcessor`, `DataWriteProcessor`), the `StagingUtils` primitives they are built on, and the per-cycle `BufferDownloadProcessor` / `BufferUploadProcessor` pair.
+Everything that is not a named descriptor goes through one of three families: the request processors (`DataReadProcessor`, `DataWriteProcessor`), and the `StagingUtils` primitives they are built on.
 
 ### DataReadProcessor and DataWriteProcessor
 
@@ -382,25 +379,20 @@ download_back_buffer(slot, data_ptr, byte_count, staging);
 
 Both directions use `slot.mapped_ptr` directly when the slot is host-visible, which is true for every current `back_buffers` user (tier 1, no transfer). Otherwise they copy through the staging buffer with a fence. Keep `staging` alive across calls, or a device-local slot reallocates every time. For the async forms the staging buffer is busy until the returned handle is resolved, so resolve before reusing it.
 
-### Whole back_buffers sets, every cycle
+### Several back_buffers slots, every cycle
 
-`BufferDownloadProcessor::configure_back_buffers(source, targets)` and `BufferUploadProcessor::configure_back_buffers(target, sources)` move an entire `back_buffers` vector, one CPU buffer per entry, every cycle. `remove_back_buffers` undoes it.
+There is no processor that moves a whole `back_buffers` vector every cycle. The per-cycle copy processors were removed, since nothing in the library used them. Address the slots one at a time with the request processors, from the cycle that needs them:
 
 ```cpp
-download_processor->configure_back_buffers(grid, { target_slot_0, target_slot_1 });
-chain->add_processor(download_processor, grid);
+read_processor->read_back_buffer(0, byte_count);   // DataReadProcessor, one request per slot
+read_processor->read_back_buffer(1, byte_count);
 
-upload_processor->configure_back_buffers(grid, { source_slot_0, source_slot_1 });
-chain->add_processor(upload_processor, grid);
+write_processor->write_back_buffer(0, data_0);     // DataWriteProcessor
 ```
 
-- The target or source count must equal `back_buffers.size()` at process time. It is checked every cycle, and a mismatch skips the call with an error rather than partially applying it.
-
-- Entries move strictly in `back_buffers` order. Which one is "front" or "current" is the caller's concern (`front_index()` or equivalent). These processors only move bytes.
-
-- Download writes each entry into a raw byte buffer with `download_back_buffer`, then `VKBuffer::set_data`. Upload memcpys into `entry.mapped_ptr`, so it supports host-visible entries only (section 10).
-
-- `configure_target` and `configure_source` are separate. `back_buffers` registration lives in a parallel map checked first in `processing_function`, falling through to the original path when a buffer is not registered there.
+- A read arms one request for the next graphics cycle, so re-arm it on each cycle that needs the data.
+- Slots are addressed by index into `back_buffers`. Which one is "front" or "current" is the caller's concern (`front_index()` or equivalent).
+- Host-visible slots are read and written through `mapped_ptr` directly. Device-local slots go through staging (section 10).
 
 ---
 
@@ -549,7 +541,7 @@ flowchart TD
 | Auto-download a texture result | `TextureExecutionContext::OutputMode::CONTAINER` |
 | Send a node's scalar to a shader every cycle | `NodeBindingsProcessor::bind_node` (push constant) or `DescriptorBindingsProcessor::bind_scalar_node` (UBO/SSBO) |
 | Supply data from another thread into a plain `VKBuffer` | `DataWriteProcessor::set_data` / `set_vertices` |
-| Upload a CPU buffer onto a specific `VKBuffer` every cycle | `BufferUploadProcessor::configure_source` |
+| Upload a CPU buffer onto a specific `VKBuffer` every cycle | `DataWriteProcessor::write_buffer` |
 | Upload once or rarely, outside the chain, into Yantra | Extract the bytes, then Yantra `upload` / `upload_raw` / `upload_shared_raw` |
 | Bind an SSBO/UBO under a name I can look up | `ShaderProcessor::bind_buffer`, then `get_bound_buffer` |
 | Download a named descriptor's contents | `ShaderProcessor::download_bound` |
@@ -557,14 +549,15 @@ flowchart TD
 | Read one scalar from a host-visible buffer | Dereference `mapped_ptr` directly |
 | Read a buffer, field, vertices, mesh or pixels once | `DataReadProcessor::read_*`, then `resolve_*` |
 | Write into a buffer, field, `back_buffers` slot, mesh or pixels | `DataWriteProcessor::write_*` |
-| Copy a source buffer to a CPU target every cycle | `BufferDownloadProcessor::configure_target` |
+| Copy a source buffer to a CPU target every cycle | `DataReadProcessor::read_buffer`, re-armed each cycle |
 | Get occasional full-state snapshots without a per-frame cost | A request flag served after the dispatch and delivered by `BroadcastSource`, as in `RelaxationGridBuffer::request_snapshot` |
 | Move a raw `back_buffers` slot once | `StagingUtils::download_back_buffer` / `upload_back_buffer`, or the `_async` forms with `resolve_*` |
-| Move a whole `back_buffers` set every cycle | `BufferDownloadProcessor` / `BufferUploadProcessor::configure_back_buffers` |
+| Move several `back_buffers` slots every cycle | `DataReadProcessor::read_back_buffer` / `DataWriteProcessor::write_back_buffer`, one per slot |
 | Read presented pixels from a window | `DisplayService::readback_swapchain_region` / `get_last_frame` |
 | React to every captured window frame | `DisplayService::register_frame_observer` |
 | Pull GPU-written vertices back into the node graph | `GeometryReadbackNode`, driven manually |
-| Move audio between an `AudioBuffer` and a `VKBuffer` | `TransferProcessor` |
+| Run a compute shader over an audio block on the GPU, synchronously | `AudioComputeProcessor` as the default processor of a child `AudioBuffer` under `AUDIO_PARALLEL` |
+| Run a word-pair shader over audio without waiting for the GPU | `AudioContextProcessor`, which lags its input by `depth` blocks |
 | Read the live geometry of a `ComputeMeshBuffer` | `DataReadProcessor::read_mesh` or `download_compute_mesh` |
 | Save an image, volume or mesh to disk | `IO::save_*` (synchronous) or `IOManager::save_*` (queued encode) |
 | Record a volume, spatial stream or window over time | `IOManager::capture_volume` / `capture_spatial` / `capture_window` |
@@ -581,13 +574,13 @@ A boundary is a place two concerns were deliberately kept apart, so asking why t
 
 - **`ComputeProcessor` and `RenderProcessor` do not read back their own output.** A tier 2 transfer costs a fence round trip, and paying it every cycle whether or not anyone asked is the wrong default for a layer called every buffer or frame. `RelaxationGridBuffer` is the model: a request flag, so the cost is paid only when a snapshot is wanted. `download_bound`, `DataReadProcessor` and `configure_back_buffers` make the manual step cheaper to write, not automatic. Yantra's `GpuExecutionContext` chooses the opposite, readback by default, because a node graph values correctness by default.
 
-- **`configure_target` / `configure_source` take only a `VKBuffer`, and `back_buffers` has its own parallel entry point.** One target versus a vector that must match `back_buffers.size()` at process time is different enough that one overloaded signature would make the common case harder to read for no benefit.
+- **Per-cycle transfers are explicit requests.** `DataReadProcessor` and `DataWriteProcessor` take one request per call, so the cost of each transfer is visible where it is made. A `back_buffers` slot is one request, like any other buffer.
 
 - **`MeshData` has no GPU download step.** For `MeshBuffer` and its relatives every mutation writes the CPU copy first and the GPU is upload-only, so mesh export and `read_mesh()` copy CPU data. Only `ComputeMeshBuffer` and a `VolumeGridBuffer` surface need a real readback.
 
 ### Genuine gaps
 
-- **`BufferUploadProcessor::configure_back_buffers` supports host-visible entries only.** It memcpys into `mapped_ptr` and logs an error for an entry without one. The fenced primitive it needs now exists (`upload_back_buffer` and `upload_back_buffer_async`), and `DataWriteProcessor::write_back_buffer` already uses it, so the one-shot path handles device-local slots and the per-cycle processor does not. Worth closing when a device-local `back_buffers` user appears. Nothing exercises it today.
+- **Audio to and from a `VKBuffer` has no general transfer processor.** `TransferProcessor` was removed. The audio GPU path is the two processors in section 3, `AudioComputeProcessor` and `AudioContextProcessor`, each of which owns its own block buffers. A reusable audio-to-`VKBuffer` copy would be new work.
 
 - **`back_buffers` transfers cannot validate size.** `GenerationSlot` has no size field, so `upload_back_buffer`, `read_back_buffer` and the per-cycle upload trust the byte count they are given, and a misconfigured source silently short-writes instead of erroring. Callers get the right size out of band (`RelaxationGridBuffer::get_state_bytes()`). Fixing it properly means adding a size to `GenerationSlot`, a struct change, to be weighed against how many call sites assume its current shape.
 

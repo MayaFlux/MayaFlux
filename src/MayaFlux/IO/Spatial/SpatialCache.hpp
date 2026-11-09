@@ -32,18 +32,16 @@ enum class SpatialScope : uint8_t {
  * @brief One named, scoped channel of already-typed values.
  *
  * values holds one of Kakshya::DataVariant's float/glm::vec2/glm::vec3/
- * uint32_t vectors, sized per SpatialScope against the sample it is
- * attached to (1 for Constant, curve count for Uniform, point/vertex count
- * for Varying). Any other DataVariant alternative is rejected: those are
- * the only four with a native Alembic GeomParam counterpart
- * (OFloatGeomParam/OV2fGeomParam/OV3fGeomParam/OUInt32GeomParam).
+ * glm::vec4/uint32_t vectors, sized per SpatialScope against the sample it
+ * is attached to (1 for Constant, curve count for Uniform, point/vertex
+ * count for Varying). Any other DataVariant alternative is rejected.
  *
  * A vec3 named exactly "color" or "normal" is declared through Alembic's
  * dedicated color/normal GeomParam types instead of a plain vector one, so
- * an importer recognizes it as such rather than an arbitrary direction;
- * every other name, vec3 or otherwise, stays generic. MayaFlux's own
- * vertex fields already use these two names for these two roles, so this
- * costs a caller nothing to opt into.
+ * an importer recognizes it as such rather than an arbitrary direction. A
+ * vec4 "color" is written as an RGBA color. Every other vec4 is a float
+ * GeomParam with array extent 4, and every other name stays generic.
+ * MayaFlux's own vertex fields already use these names for these roles.
  */
 struct SpatialAttribute {
     std::string name;

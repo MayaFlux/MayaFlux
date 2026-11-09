@@ -101,6 +101,15 @@ public:
     BufferProcessingHandle(BufferProcessingHandle&&) = default;
     BufferProcessingHandle& operator=(BufferProcessingHandle&&) = default;
 
+    /**
+     * @brief Handle for another buffer token on the same buffer manager
+     * @param token Buffer token the returned handle is scoped to
+     */
+    [[nodiscard]] BufferProcessingHandle for_token(Buffers::ProcessingToken token) const;
+
+    /** @brief Number of channels the handle's token currently has */
+    [[nodiscard]] uint32_t channel_count() const;
+
     /** @brief Process all channels in token domain */
     void process(uint32_t processing_units);
 
@@ -124,6 +133,14 @@ public:
 
     /** @brief Get read-only access to channel data */
     [[nodiscard]] std::span<const double> read_channel_data(uint32_t channel) const;
+
+    /**
+     * @brief Read the block a reader on another thread should consume
+     *
+     * For an AUDIO_PARALLEL token this is the latest complete block of the
+     * channel's root. The span is valid until the next call for that channel.
+     */
+    [[nodiscard]] std::span<const double> read_channel_block(uint32_t channel) const;
 
     /** @brief Get write access to channel data with automatic locking */
     std::span<double> write_channel_data(uint32_t channel);

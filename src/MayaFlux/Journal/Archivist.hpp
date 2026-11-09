@@ -458,6 +458,17 @@ template <typename... Args>
     MayaFlux::Journal::scribe(MayaFlux::Journal::Severity::WARN, comp, ctx, \
         std::source_location::current(), __VA_ARGS__)
 
+/**
+ * @brief MF_WARN that logs once per call site for the life of the process.
+ */
+#define MF_WARN_ONCE(comp, ctx, ...)                                        \
+    do {                                                                    \
+        static std::atomic_flag mf_warned_here;                             \
+        if (!mf_warned_here.test_and_set(std::memory_order_relaxed)) {      \
+            MF_WARN(comp, ctx, __VA_ARGS__);                                \
+        }                                                                   \
+    } while (false)
+
 #define MF_ERROR(comp, ctx, ...)                                             \
     MayaFlux::Journal::scribe(MayaFlux::Journal::Severity::ERROR, comp, ctx, \
         std::source_location::current(), __VA_ARGS__)

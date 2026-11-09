@@ -162,4 +162,32 @@ using SpectrumProcessor = std::function<void(std::vector<std::complex<double>>&,
     uint32_t window_size = 2048,
     uint32_t analysis_hop = 512);
 
+// ============================================================================
+// Spectral projections
+// ============================================================================
+
+/**
+ * @brief Linear projections of the windowed power spectrum of each frame
+ *
+ * Frames the input at @p hop_size, multiplies each frame by @p taper, zero
+ * pads it to @p window_size and takes the power spectrum |X[k]|^2 of bins
+ * 0..window_size/2. Row r of @p weights holds one weight per bin, and the
+ * result of row r for a frame is the sum over bins of weight * power. Band
+ * energies, spectral moments and filterbank outputs are all such rows.
+ * Frames are whole: a trailing partial frame is not analysed.
+ *
+ * @param src          Input samples
+ * @param window_size  FFT frame size
+ * @param hop_size     Distance between frame starts
+ * @param weights      Rows of window_size/2+1 weights, row major
+ * @param taper        window_size coefficients applied to each frame; empty is rectangular
+ * @return             frames * rows values, row major; empty when the arguments do not fit
+ */
+[[nodiscard]] MAYAFLUX_API std::vector<double> spectral_projection(
+    std::span<const double> src,
+    uint32_t window_size,
+    uint32_t hop_size,
+    std::span<const double> weights,
+    std::span<const double> taper = {});
+
 } // namespace MayaFlux::Kinesis::Discrete

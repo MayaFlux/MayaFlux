@@ -39,7 +39,6 @@ GpuVisionPass::Completed VisionGpuExecutor::op_threshold_otsu(VisionGpuContexts&
     auto& pixel_ctx = contexts.pixel;
     auto w = contexts.pass.w;
     auto h = contexts.pass.h;
-    auto& foundry = Portal::Graphics::get_shader_foundry();
 
     const auto otsu_input = contexts.pass.current;
 
@@ -48,20 +47,12 @@ GpuVisionPass::Completed VisionGpuExecutor::op_threshold_otsu(VisionGpuContexts&
     pixel_ctx.ensure_shared_buffer(0, 4, 3, GpuBufferBinding::ElementType::UINT32,
         Portal::Graphics::BufferUsageHint::COMPUTE);
 
-    const std::array<uint32_t, 768> histogram_reset {};
-    pixel_ctx.upload_shared_raw(0, 3, reinterpret_cast<const uint8_t*>(histogram_reset.data()), sizeof(histogram_reset));
+    pixel_ctx.fill_shared(0, 3, 0U);
 
     const auto channels = static_cast<uint32_t>(p.channels);
     const OtsuHistPC hist_pc { .width = w, .height = h, .channels = channels };
     const OtsuApplyPC apply_pc { .channels = channels };
     const uint32_t select_groups = channels == 0U ? 1U : 3U;
-    const auto otsu_hazard = [](uint32_t binding) {
-        return [binding](GpuDispatchCore& ctx) {
-            return std::vector<HazardResource> {
-                ctx.shared_buffer_hazard({ .set = 0, .binding = binding, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 }),
-            };
-        };
-    };
     const std::array<uint32_t, 3> image_groups { (w + k_wg2d[0] - 1U) / k_wg2d[0], (h + k_wg2d[1] - 1U) / k_wg2d[1], 1U };
 
     std::shared_ptr<Core::VKImage> thresholded;
@@ -72,13 +63,11 @@ GpuVisionPass::Completed VisionGpuExecutor::op_threshold_otsu(VisionGpuContexts&
         .stage_fn = [&pixel_ctx, otsu_input, hist_pc](GpuDispatchCore& ctx) {
                 pixel_ctx.stage_image(otsu_input);
                 ctx.set_push_constants(hist_pc); },
-        .hazard_fn = otsu_hazard(3),
         .explicit_groups = image_groups,
     });
     otsu_stages.push_back({
         .config = { .shader_path = "otsu_select.comp.spv", .workgroup_size = { 256, 1, 1 } },
         .stage_fn = [&pixel_ctx, otsu_input](GpuDispatchCore&) { pixel_ctx.stage_image(otsu_input); },
-        .hazard_fn = otsu_hazard(4),
         .explicit_groups = std::array<uint32_t, 3> { select_groups, 1U, 1U },
     });
     otsu_stages.push_back({
@@ -91,18 +80,7 @@ GpuVisionPass::Completed VisionGpuExecutor::op_threshold_otsu(VisionGpuContexts&
         .explicit_groups = image_groups,
     });
 
-    {
-        ExecutionContext otsu_ctx;
-        otsu_ctx.mode = ExecutionMode::DEPENDENCY;
-        DependencyParams otsu_params;
-        otsu_params.stages = otsu_stages;
-        otsu_params.async = true;
-        otsu_ctx.parameters = otsu_params;
-        const auto result = pixel_ctx.execute(Datum<> {}, otsu_ctx);
-        const auto f = result.get_metadata<FenceID>("gpu_fence").value_or(INVALID_FENCE);
-        foundry.wait_for_fence(f);
-        foundry.release_fence(f);
-    }
+    pixel_ctx.record_stages(otsu_stages);
 
     contexts.pass.result.images.threshold_otsu = thresholded;
     contexts.pass.current = thresholded;
@@ -118,7 +96,6 @@ GpuVisionPass::Completed VisionGpuExecutor::op_confine(
     auto& pixel_ctx = contexts.pixel;
     auto w = contexts.pass.w;
     auto h = contexts.pass.h;
-    auto& foundry = Portal::Graphics::get_shader_foundry();
 
     const auto confine_input = contexts.pass.current;
 
@@ -142,10 +119,8 @@ GpuVisionPass::Completed VisionGpuExecutor::op_confine(
     pixel_ctx.prepare_output_image(out_w, out_h);
     pixel_ctx.set_output_dimensions(out_w, out_h);
 
-    const auto fence = pixel_ctx.dispatch_async({});
+    (void)pixel_ctx.dispatch_async({});
     pixel_ctx.clear_output_dimensions();
-    foundry.wait_for_fence(fence);
-    foundry.release_fence(fence);
 
     auto confined = pixel_ctx.get_output_image(0);
 
@@ -169,7 +144,6 @@ GpuVisionPass::Completed VisionGpuExecutor::op_open_close(
     auto& pixel_ctx = contexts.pixel;
     auto w = contexts.pass.w;
     auto h = contexts.pass.h;
-    auto& foundry = Portal::Graphics::get_shader_foundry();
 
     const auto morph_input = contexts.pass.current;
     const auto radius = p.radius;
@@ -200,10 +174,6 @@ GpuVisionPass::Completed VisionGpuExecutor::op_open_close(
                 pixel_ctx.prepare_output_image(w, h);
                 intermediate = pixel_ctx.get_output_image(0);
                 ctx.set_push_constants(morph_pc); },
-        .hazard_fn = [&intermediate](GpuDispatchCore&) { return std::vector<HazardResource> {
-                                                             { .binding = { .set = 0, .binding = 1, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::IMAGE_STORAGE },
-                                                                 .image = intermediate->get_image() },
-                                                         }; },
         .explicit_groups = image_groups,
     });
     morph_stages.push_back({
@@ -216,18 +186,7 @@ GpuVisionPass::Completed VisionGpuExecutor::op_open_close(
         .explicit_groups = image_groups,
     });
 
-    {
-        ExecutionContext morph_ctx;
-        morph_ctx.mode = ExecutionMode::DEPENDENCY;
-        DependencyParams morph_params;
-        morph_params.stages = morph_stages;
-        morph_params.async = true;
-        morph_ctx.parameters = morph_params;
-        const auto result = pixel_ctx.execute(Datum<> {}, morph_ctx);
-        const auto f = result.get_metadata<FenceID>("gpu_fence").value_or(INVALID_FENCE);
-        foundry.wait_for_fence(f);
-        foundry.release_fence(f);
-    }
+    pixel_ctx.record_stages(morph_stages);
 
     if (is_open) {
         contexts.pass.result.images.open = opened_closed;
@@ -249,7 +208,6 @@ GpuVisionPass::Completed VisionGpuExecutor::op_canny(
     auto& label_ctx = contexts.labels;
     auto w = contexts.pass.w;
     auto h = contexts.pass.h;
-    auto& foundry = Portal::Graphics::get_shader_foundry();
 
     const auto canny_input = contexts.pass.current;
 
@@ -261,22 +219,14 @@ GpuVisionPass::Completed VisionGpuExecutor::op_canny(
     pixel_ctx.set_binding_data(2, std::span<const float>(weights));
     pixel_ctx.set_push_constants(GaussianPC { .radius = radius, .width = w, .height = h });
     pixel_ctx.prepare_output_image(w, h);
-    {
-        const auto f = pixel_ctx.dispatch_async({});
-        foundry.wait_for_fence(f);
-        foundry.release_fence(f);
-    }
+    (void)pixel_ctx.dispatch_async({});
     const auto blurred = pixel_ctx.get_output_image(0);
 
     const auto sobel_cfg = VisionGpuExecutor::config(VisionOp::Sobel, std::monostate {});
     pixel_ctx.swap_shader(sobel_cfg);
     pixel_ctx.stage_image(blurred);
     pixel_ctx.prepare_output_image(w, h);
-    {
-        const auto f = pixel_ctx.dispatch_async({});
-        foundry.wait_for_fence(f);
-        foundry.release_fence(f);
-    }
+    (void)pixel_ctx.dispatch_async({});
     const auto grad = pixel_ctx.get_output_image(0);
 
     const GpuComputeConfig nms_cfg {
@@ -286,11 +236,7 @@ GpuVisionPass::Completed VisionGpuExecutor::op_canny(
     pixel_ctx.swap_shader(nms_cfg);
     pixel_ctx.stage_image(grad);
     pixel_ctx.prepare_output_image(w, h);
-    {
-        const auto f = pixel_ctx.dispatch_async({});
-        foundry.wait_for_fence(f);
-        foundry.release_fence(f);
-    }
+    (void)pixel_ctx.dispatch_async({});
     auto suppressed = pixel_ctx.get_output_image(0);
 
     const auto classify_cfg = VisionGpuExecutor::config(VisionOp::Canny, params);
@@ -298,21 +244,13 @@ GpuVisionPass::Completed VisionGpuExecutor::op_canny(
     pixel_ctx.stage_image(suppressed);
     pixel_ctx.set_push_constants(ClassifyPC { .threshold = p.low_threshold, .value = 0.5F });
     pixel_ctx.prepare_output_image(w, h);
-    {
-        const auto f = pixel_ctx.dispatch_async({});
-        foundry.wait_for_fence(f);
-        foundry.release_fence(f);
-    }
+    (void)pixel_ctx.dispatch_async({});
     auto classified_weak = pixel_ctx.get_output_image(0);
 
     pixel_ctx.stage_image(classified_weak);
     pixel_ctx.set_push_constants(ClassifyPC { .threshold = p.high_threshold, .value = 1.0F });
     pixel_ctx.prepare_output_image(w, h);
-    {
-        const auto f = pixel_ctx.dispatch_async({});
-        foundry.wait_for_fence(f);
-        foundry.release_fence(f);
-    }
+    (void)pixel_ctx.dispatch_async({});
     auto classified = pixel_ctx.get_output_image(0);
 
     constexpr uint32_t k_max_hysteresis_rounds = 64;
@@ -353,11 +291,7 @@ GpuVisionPass::Completed VisionGpuExecutor::op_canny(
     pixel_ctx.stage_image(hysteresis_result);
     pixel_ctx.set_push_constants(FinalizePC { .threshold = 1.0F });
     pixel_ctx.prepare_output_image(w, h);
-    {
-        const auto f = pixel_ctx.dispatch_async({});
-        foundry.wait_for_fence(f);
-        foundry.release_fence(f);
-    }
+    (void)pixel_ctx.dispatch_async({});
     auto finalized = pixel_ctx.get_output_image(0);
 
     contexts.pass.result.images.canny = finalized;

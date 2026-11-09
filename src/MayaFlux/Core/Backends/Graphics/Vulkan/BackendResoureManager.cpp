@@ -103,6 +103,11 @@ void BackendResourceManager::setup_backend_service(const std::shared_ptr<Registr
         });
     };
 
+    buffer_service->flush_deferred = [this]() -> std::pair<uint32_t, uint64_t> {
+        const TimelinePoint point = this->flush_deferred_commands();
+        return { point.timeline, point.value };
+    };
+
     buffer_service->flush_range = [this](void* memory, size_t offset, size_t size) {
         vk::DeviceMemory mem(reinterpret_cast<VkDeviceMemory>(memory));
         auto range = mapped_memory_range(mem, offset, size);
@@ -384,6 +389,8 @@ void BackendResourceManager::cleanup_buffer(const std::shared_ptr<Buffers::VKBuf
     if (it == m_managed_buffers.end()) {
         return;
     }
+
+    buffer->await_use();
 
     auto& res = it->get()->get_buffer_resources();
 
@@ -751,11 +758,12 @@ bool BackendResourceManager::host_copy_dst_layout(vk::ImageLayout layout) const
 }
 
 void BackendResourceManager::transition_host_image(
-    vk::Image image,
+    const std::shared_ptr<VKImage>& image,
     vk::ImageLayout old_layout,
     vk::ImageLayout new_layout,
     vk::ImageSubresourceRange range,
-    vk::PipelineStageFlags2 restore_stage)
+    vk::PipelineStageFlags2 restore_stage,
+    SubmitMode mode)
 {
     if (old_layout == new_layout) {
         return;
@@ -766,7 +774,7 @@ void BackendResourceManager::transition_host_image(
 
     if (can_transition_on_host) {
         vk::HostImageLayoutTransitionInfo transition {};
-        transition.image = image;
+        transition.image = image->get_image();
         transition.oldLayout = old_layout;
         transition.newLayout = new_layout;
         transition.subresourceRange = range;
@@ -805,9 +813,10 @@ void BackendResourceManager::transition_host_image(
         ? vk::PipelineStageFlags2(vk::PipelineStageFlagBits2::eHost)
         : restore_stage;
 
-    execute_immediate_commands([&](vk::CommandBuffer cmd) {
+    const auto record_command = [handle = image->get_image(), old_layout, new_layout, range,
+                                    source_access, destination_access, source_stage, destination_stage](vk::CommandBuffer cmd) {
         vk::ImageMemoryBarrier2 barrier {};
-        barrier.image = image;
+        barrier.image = handle;
         barrier.oldLayout = old_layout;
         barrier.newLayout = new_layout;
         barrier.subresourceRange = range;
@@ -817,7 +826,19 @@ void BackendResourceManager::transition_host_image(
         barrier.dstAccessMask = destination_access;
 
         record_barrier(cmd, barrier, source_stage, destination_stage);
-    });
+    };
+
+    switch (mode) {
+    case SubmitMode::DEFERRED:
+        record_deferred_commands(record_command, { image });
+        break;
+    case SubmitMode::ASYNC:
+        execute_async(record_command, { image });
+        break;
+    case SubmitMode::IMMEDIATE:
+        execute_immediate_commands(record_command);
+        break;
+    }
 }
 
 void BackendResourceManager::await_host_image_inputs()
@@ -896,7 +917,7 @@ void BackendResourceManager::upload_image_host(
     const auto transition_range = preserve_untouched ? target : all;
 
     transition_host_image(
-        image->get_image(),
+        image,
         preserve_untouched ? vk::ImageLayout::eUndefined : old_layout,
         vk::ImageLayout::eGeneral,
         transition_range);
@@ -924,12 +945,13 @@ void BackendResourceManager::upload_image_host(
     }
 
     transition_host_image(
-        image->get_image(),
+        image,
         vk::ImageLayout::eGeneral,
         vk::ImageLayout::eShaderReadOnlyOptimal,
         transition_range,
         vk::PipelineStageFlagBits2::eFragmentShader
-            | vk::PipelineStageFlagBits2::eComputeShader);
+            | vk::PipelineStageFlagBits2::eComputeShader,
+        SubmitMode::ASYNC);
 
     image->set_current_layout(vk::ImageLayout::eShaderReadOnlyOptimal);
 }
@@ -1026,35 +1048,58 @@ void BackendResourceManager::download_image_host(
     }
 
     transition_host_image(
-        image->get_image(),
+        image,
         copy_layout,
         restore_layout,
         range,
-        restore_stage);
+        restore_stage,
+        SubmitMode::ASYNC);
 
     image->set_current_layout(restore_layout);
 }
 
 void BackendResourceManager::transition_image_layout(
-    vk::Image image,
-    vk::ImageLayout old_layout,
+    const std::shared_ptr<VKImage>& image,
     vk::ImageLayout new_layout,
-    uint32_t mip_levels,
-    uint32_t array_layers,
-    vk::ImageAspectFlags aspect_flags)
+    SubmitMode mode)
 {
-    execute_immediate_commands([&](vk::CommandBuffer cmd) {
+    if (!image || !image->is_initialized()) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "transition_image_layout: image is null or not initialized");
+        return;
+    }
+
+    const vk::ImageLayout old_layout = image->get_current_layout();
+    if (old_layout == new_layout) {
+        return;
+    }
+
+    const vk::ImageSubresourceRange range {
+        image->get_aspect_flags(),
+        0,
+        image->get_mip_levels(),
+        0,
+        image->get_array_layers()
+    };
+
+    if (old_layout == vk::ImageLayout::eUndefined && image->supports_host_transfer()) {
+        load_host_copy_layouts();
+        if (host_copy_dst_layout(new_layout)) {
+            transition_host_image(image, old_layout, new_layout, range);
+            image->set_current_layout(new_layout);
+            return;
+        }
+    }
+
+    const vk::Image handle = image->get_image();
+    const auto record_command = [handle, old_layout, new_layout, range](vk::CommandBuffer cmd) {
         vk::ImageMemoryBarrier2 barrier {};
         barrier.oldLayout = old_layout;
         barrier.newLayout = new_layout;
         barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        barrier.image = image;
-        barrier.subresourceRange.aspectMask = aspect_flags;
-        barrier.subresourceRange.baseMipLevel = 0;
-        barrier.subresourceRange.levelCount = mip_levels;
-        barrier.subresourceRange.baseArrayLayer = 0;
-        barrier.subresourceRange.layerCount = array_layers;
+        barrier.image = handle;
+        barrier.subresourceRange = range;
 
         vk::PipelineStageFlags2 src_stage;
         vk::PipelineStageFlags2 dst_stage;
@@ -1110,7 +1155,23 @@ void BackendResourceManager::transition_image_layout(
         }
 
         record_barrier(cmd, barrier, src_stage, dst_stage);
-    });
+    };
+
+    switch (mode) {
+    case SubmitMode::DEFERRED:
+        record_deferred_commands(record_command, { image });
+        break;
+    case SubmitMode::ASYNC:
+        if (!execute_async(record_command, { image })) {
+            return;
+        }
+        break;
+    case SubmitMode::IMMEDIATE:
+        execute_immediate_commands(record_command);
+        break;
+    }
+
+    image->set_current_layout(new_layout);
 
     MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
         "Image layout transitioned: {} -> {}",
@@ -1216,7 +1277,7 @@ void BackendResourceManager::upload_image_data(
         record_barrier(cmd, barrier, vk::PipelineStageFlagBits2::eTransfer, vk::PipelineStageFlagBits2::eFragmentShader);
     };
 
-    record_deferred_commands(record_command);
+    record_deferred_commands(record_command, { image, staging });
 
     image->set_current_layout(vk::ImageLayout::eShaderReadOnlyOptimal);
 
@@ -1459,7 +1520,7 @@ bool BackendResourceManager::blit_image(
 
     switch (mode) {
     case SubmitMode::DEFERRED:
-        record_deferred_commands(record_command);
+        record_deferred_commands(record_command, { src, dst });
         break;
     case SubmitMode::ASYNC:
         if (!execute_async(record_command, { src, dst })) {
@@ -1602,9 +1663,11 @@ TimelinePoint BackendResourceManager::execute_async(
     return point;
 }
 
-void BackendResourceManager::record_deferred_commands(const std::function<void(vk::CommandBuffer)>& recorder)
+void BackendResourceManager::record_deferred_commands(
+    const std::function<void(vk::CommandBuffer)>& recorder,
+    std::vector<std::shared_ptr<void>> keep_alive)
 {
-    m_command_manager.record_deferred_commands(recorder);
+    m_command_manager.record_deferred_commands(recorder, std::move(keep_alive));
 }
 
 TimelinePoint BackendResourceManager::flush_deferred_commands()

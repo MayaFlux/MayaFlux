@@ -435,6 +435,16 @@ std::shared_ptr<T> operator|(std::shared_ptr<T> obj, const CreationContext& ctx)
 static constexpr DomainSpec Audio { .value = Domain::AUDIO };
 
 /**
+ * @brief Domain constant for GPU parallel audio.
+ *
+ * Supports the same subscript syntax for channel binding:
+ * @code
+ * auto buf = vega.AudioBuffer() | AudioParallel[0];
+ * @endcode
+ */
+static constexpr DomainSpec AudioParallel { .value = Domain::AUDIO_PARALLEL };
+
+/**
  * @brief Domain constant for Graphics domain.
  *
  * @code

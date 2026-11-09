@@ -93,6 +93,7 @@ void VulkanBackend::cleanup()
     if (!m_is_initialized) {
         return;
     }
+    flush_deferred();
     m_context->wait_idle();
 
     if (m_resource_manager) {
@@ -150,6 +151,13 @@ void VulkanBackend::handle_window_resize()
 void VulkanBackend::wait_idle()
 {
     m_context->wait_idle();
+}
+
+void VulkanBackend::flush_deferred()
+{
+    if (m_resource_manager) {
+        m_resource_manager->flush_deferred_commands();
+    }
 }
 
 void* VulkanBackend::get_native_context()

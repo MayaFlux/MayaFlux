@@ -12,31 +12,31 @@ namespace {
     constexpr size_t k_snapshot_cache_budget_bytes = size_t { 256 } << 20;
 
     /**
-     * @brief Release fences of submissions that were not awaited: the ingest
-     *        pair and the flow pyramid build. Waits when one is still pending,
-     *        so any descriptor those submissions used is safe to rewrite once
-     *        this returns.
+     * @brief Submits the run's recording when a run returns, so every return
+     *        path hands its recorded work to the GPU. A no-op when the
+     *        recording was already submitted, as at a deferred step.
      */
-    void reap_fences(VisionGpuContexts& contexts)
-    {
-        auto& foundry = Portal::Graphics::get_shader_foundry();
-        for (auto* slot : { &contexts.ingest_fence, &contexts.ingest_barrier_fence, &contexts.flow_state.build_fence }) {
-            if (*slot != Portal::Graphics::INVALID_FENCE) {
-                foundry.wait_for_fence(*slot);
-                foundry.release_fence(*slot);
-                *slot = Portal::Graphics::INVALID_FENCE;
-            }
+    struct SubmitOnExit {
+        GpuDispatchRecorder& recording;
+        explicit SubmitOnExit(GpuDispatchRecorder& r)
+            : recording(r)
+        {
         }
-    }
+        SubmitOnExit(const SubmitOnExit&) = delete;
+        SubmitOnExit& operator=(const SubmitOnExit&) = delete;
+        SubmitOnExit(SubmitOnExit&&) = delete;
+        SubmitOnExit& operator=(SubmitOnExit&&) = delete;
+        ~SubmitOnExit() { recording.submit(); }
+    };
 
     /**
      * @brief Convert a non-storage seed frame to an rgba32f storage image.
      *
      * Frames already carrying storage usage pass through. Otherwise
      * vision_ingest.comp samples the frame as a texture (sampler does the
-     * unorm/sRGB decode) into contexts.ingest's rgba32f output. The dispatch
-     * is not awaited — a trailing compute barrier gives the memory
-     * dependency, fences are reaped on the next run.
+     * unorm/sRGB decode) into contexts.ingest's rgba32f output. Recorded
+     * into the run's command buffer; the barrier after every recorded
+     * dispatch orders the ops that read the output.
      */
     std::shared_ptr<Core::VKImage> op_ingest(
         VisionGpuContexts& contexts,
@@ -48,7 +48,6 @@ namespace {
         if (static_cast<bool>(frame->get_usage_flags() & vk::ImageUsageFlagBits::eStorage))
             return frame;
 
-        auto& foundry = Portal::Graphics::get_shader_foundry();
         auto& ingest = contexts.ingest;
 
         ingest.swap_shader({
@@ -60,29 +59,17 @@ namespace {
         ingest.set_push_constants(IngestPC { .width = w, .height = h });
         ingest.prepare_output_image(w, h);
         ingest.set_output_dimensions(w, h);
-        contexts.ingest_fence = ingest.dispatch_async({});
+        (void)ingest.dispatch_async({});
         ingest.clear_output_dimensions();
 
-        auto out = ingest.get_output_image(0);
-
-        if (out) {
-            const auto bcmd = foundry.begin_commands(
-                Portal::Graphics::ShaderFoundry::CommandBufferType::COMPUTE);
-            foundry.image_barrier(bcmd, out->get_image(),
-                vk::ImageLayout::eGeneral, vk::ImageLayout::eGeneral,
-                vk::AccessFlagBits2::eShaderWrite, vk::AccessFlagBits2::eShaderRead,
-                vk::PipelineStageFlagBits2::eComputeShader,
-                vk::PipelineStageFlagBits2::eComputeShader);
-            contexts.ingest_barrier_fence = foundry.submit_async(bcmd);
-        }
-
-        return out;
+        return ingest.get_output_image(0);
     }
 
 } // namespace
 
 VisionGpuContexts::VisionGpuContexts()
-    : pixel {
+    : recording { std::make_shared<GpuDispatchRecorder>(false) }
+    , pixel {
         GpuComputeConfig {},
         Portal::Graphics::ImageFormat::RGBA32F,
         TextureExecutionContext::OutputMode::IMAGE,
@@ -104,8 +91,6 @@ VisionGpuContexts::VisionGpuContexts()
             { .set = 0, .binding = 2, .direction = GpuBufferBinding::Direction::OUTPUT, .element_type = GpuBufferBinding::ElementType::FLOAT32 },
             { .set = 0, .binding = 3, .direction = GpuBufferBinding::Direction::OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
             { .set = 0, .binding = 4, .direction = GpuBufferBinding::Direction::OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
-            { .set = 1, .binding = 0, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::FLOAT32 },
-            { .set = 1, .binding = 1, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::FLOAT32 },
         },
         GpuBufferBinding::ElementType::IMAGE_STORAGE,
         0,
@@ -136,20 +121,6 @@ VisionGpuContexts::VisionGpuContexts()
             { .set = 0, .binding = 8, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
             { .set = 0, .binding = 9, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
             { .set = 0, .binding = 10, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
-            { .set = 1, .binding = 0, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
-            { .set = 1, .binding = 1, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
-            { .set = 1, .binding = 2, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
-            { .set = 1, .binding = 3, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
-            { .set = 1, .binding = 4, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
-            { .set = 1, .binding = 5, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
-            { .set = 1, .binding = 6, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
-            { .set = 1, .binding = 7, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
-            { .set = 1, .binding = 8, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::FLOAT32 },
-            { .set = 1, .binding = 9, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
-            { .set = 1, .binding = 10, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
-            { .set = 1, .binding = 11, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::FLOAT32 },
-            { .set = 2, .binding = 0, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::FLOAT32 },
-            { .set = 2, .binding = 1, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::FLOAT32 },
         },
         GpuBufferBinding::ElementType::IMAGE_STORAGE,
         0,
@@ -171,17 +142,6 @@ VisionGpuContexts::VisionGpuContexts()
             { .set = 0, .binding = 2, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::FLOAT32 },
             { .set = 0, .binding = 3, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::IMAGE_STORAGE },
             { .set = 0, .binding = 4, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::IMAGE_STORAGE },
-            { .set = 1, .binding = 0, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
-            { .set = 1, .binding = 1, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::FLOAT32 },
-            { .set = 1, .binding = 2, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::FLOAT32 },
-            { .set = 1, .binding = 3, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
-            { .set = 1, .binding = 4, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::FLOAT32 },
-            { .set = 1, .binding = 5, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
-            { .set = 1, .binding = 6, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
-            { .set = 1, .binding = 7, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
-            { .set = 1, .binding = 8, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::FLOAT32 },
-            { .set = 1, .binding = 9, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::FLOAT32 },
-            { .set = 1, .binding = 10, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::UINT32 },
             { .set = 0, .binding = 5, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::IMAGE_STORAGE },
             { .set = 0, .binding = 6, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::IMAGE_STORAGE },
             { .set = 0, .binding = 7, .direction = GpuBufferBinding::Direction::INPUT_OUTPUT, .element_type = GpuBufferBinding::ElementType::IMAGE_STORAGE },
@@ -193,6 +153,9 @@ VisionGpuContexts::VisionGpuContexts()
         TextureExecutionContext::OutputMode::SCALAR,
     }
 {
+    for (auto* ctx : { &pixel, &structured, &labels, &component_contours, &ingest, &flow })
+        ctx->set_recording(recording);
+
     pixel.set_avoid_output_alias(true);
     structured.set_output_size(1, sizeof(uint32_t));
     structured.set_output_size(2, static_cast<size_t>(4096) * 4 * sizeof(float));
@@ -336,15 +299,9 @@ void VisionGpuExecutor::reset()
 
     auto& contexts = *m_contexts;
 
-    reap_fences(contexts);
-
-    if (contexts.suspended.is_active()) {
-        auto& foundry = Portal::Graphics::get_shader_foundry();
-        foundry.wait_for_fence(contexts.suspended.fence);
-        foundry.release_fence(contexts.suspended.fence);
-        contexts.suspended.fence = Portal::Graphics::INVALID_FENCE;
-        contexts.suspended.finalize = nullptr;
-    }
+    contexts.recording->wait();
+    contexts.suspended.fence = Portal::Graphics::INVALID_FENCE;
+    contexts.suspended.finalize = nullptr;
 
     contexts.flow_state.have_prev = false;
     contexts.flow_state.curr_ready = false;
@@ -353,6 +310,9 @@ void VisionGpuExecutor::reset()
     contexts.flow_state.last_track_count = 0;
     contexts.flow_state.last_export.reset();
     contexts.flow_state.export_pending = false;
+    contexts.flow_state.dense_pending.reset();
+    contexts.flow_state.flow_written = false;
+    contexts.flow_state.prev_flow_valid = false;
 
     contexts.pass.sequence = nullptr;
     contexts.pass.index = 0;
@@ -421,6 +381,8 @@ void VisionGpuExecutor::op_snapshot(VisionGpuContexts& contexts)
     const uint32_t w = current->get_width();
     const uint32_t h = current->get_height();
     auto& loom = Portal::Graphics::TextureLoom::instance();
+
+    contexts.recording->submit();
     auto image = contexts.snapshot_images[ordinal].acquire(loom, {
                                                                      .width = w,
                                                                      .height = h,
@@ -458,9 +420,9 @@ VisionResult VisionGpuExecutor::run(
     auto& label_ctx = contexts.labels;
     auto& cc_pipeline = contexts.component_contours;
 
-    auto& foundry = Portal::Graphics::get_shader_foundry();
     std::unordered_map<size_t, CompletedOp> completed_ops;
     size_t begin = 0;
+    const SubmitOnExit submit_on_exit(*contexts.recording);
 
     if (contexts.suspended.is_active()) {
         if (&sequence != contexts.pass.sequence) {
@@ -469,14 +431,13 @@ VisionResult VisionGpuExecutor::run(
                 "the walk continues on the sequence the run started from");
         }
 
-        if (!foundry.is_fence_signaled(contexts.suspended.fence)) {
+        if (!contexts.recording->is_complete(contexts.suspended.fence)) {
             VisionResult pending;
             pending.status = VisionStatus::SUSPENDED;
             pending.suspended_at = contexts.pass.index;
             return pending;
         }
 
-        foundry.release_fence(contexts.suspended.fence);
         contexts.suspended.fence = Portal::Graphics::INVALID_FENCE;
 
         if (auto finalize = std::move(contexts.suspended.finalize)) {
@@ -486,9 +447,9 @@ VisionResult VisionGpuExecutor::run(
 
         begin = contexts.pass.index + 1;
     } else {
-        reap_fences(contexts);
         contexts.flow_state.curr_ready = false;
         contexts.pass.begin(sequence, w, h);
+        capture_pending_dense(contexts);
         contexts.pass.storage_w = 0;
         contexts.pass.storage_h = 0;
         contexts.bound_staged.reset();
@@ -541,11 +502,7 @@ VisionResult VisionGpuExecutor::run(
 
             pixel_ctx.prepare_output_image(new_w, new_h);
             pixel_ctx.set_output_dimensions(new_w, new_h);
-            {
-                const auto f = pixel_ctx.dispatch_async({});
-                foundry.wait_for_fence(f);
-                foundry.release_fence(f);
-            }
+            (void)pixel_ctx.dispatch_async({});
             pixel_ctx.clear_output_dimensions();
 
             auto downsampled = pixel_ctx.get_output_image(0);
@@ -665,7 +622,7 @@ VisionResult VisionGpuExecutor::run(
         }
 
         auto dispatch_input = contexts.pass.current;
-        const auto fence = pixel_ctx.dispatch_async({});
+        (void)pixel_ctx.dispatch_async({});
 
         if (step.deferred) {
             pixel_ctx.clear_output_dimensions();
@@ -678,7 +635,7 @@ VisionResult VisionGpuExecutor::run(
             };
             contexts.pass.completed[Kinesis::Vision::hash_vision_step(step.op, step.params)] = done;
 
-            contexts.suspended.fence = fence;
+            contexts.suspended.fence = contexts.recording->submit();
             contexts.suspended.finalize = [](VisionGpuContexts& c) { after_step(c, c.pass.index); };
 
             VisionResult pending;
@@ -686,9 +643,6 @@ VisionResult VisionGpuExecutor::run(
             pending.suspended_at = contexts.pass.index;
             return pending;
         }
-
-        foundry.wait_for_fence(fence);
-        foundry.release_fence(fence);
 
         pixel_ctx.clear_output_dimensions();
         contexts.pass.current = pixel_ctx.get_output_image(0);

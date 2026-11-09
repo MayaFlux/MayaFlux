@@ -175,12 +175,6 @@ bool RenderFlow::initialize()
 
     m_shader_foundry = foundry;
     m_display_service = display_service;
-    try {
-        m_pipeline_cache = foundry->get_device().createPipelineCache({});
-    } catch (const std::exception& e) {
-        MF_WARN(Journal::Component::Portal, Journal::Context::Rendering,
-            "Vulkan pipeline cache unavailable, continuing without it: {}", e.what());
-    }
     s_initialized = true;
 
     MF_INFO(Journal::Component::Portal, Journal::Context::Rendering,
@@ -222,11 +216,6 @@ void RenderFlow::shutdown()
     }
 
     cleanup_pipelines();
-
-    if (m_pipeline_cache) {
-        device.destroyPipelineCache(m_pipeline_cache);
-        m_pipeline_cache = nullptr;
-    }
 
     m_window_associations.clear();
 
@@ -588,7 +577,7 @@ RenderPipelineID RenderFlow::create_pipeline(
         vk::DynamicState::eViewport,
         vk::DynamicState::eScissor
     };
-    vk_config.cache = m_pipeline_cache;
+    vk_config.cache = m_shader_foundry->get_pipeline_cache();
 
     std::vector<std::pair<uint32_t, uint32_t>> sorted_specialization(
         specialization_constants.begin(), specialization_constants.end());

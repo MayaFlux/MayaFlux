@@ -34,7 +34,7 @@ void BufferProcessingControl::add_processor(
 {
     if (token == ProcessingToken::AUDIO_BACKEND || token == ProcessingToken::AUDIO_PARALLEL) {
         if (auto audio_buffer = std::dynamic_pointer_cast<AudioBuffer>(buffer)) {
-            add_audio_processor(processor, audio_buffer);
+            add_audio_processor(processor, audio_buffer, token);
         }
     } else if (token == ProcessingToken::GRAPHICS_BACKEND) {
         add_graphics_processor(processor, buffer, token);
@@ -69,7 +69,7 @@ void BufferProcessingControl::remove_processor(
 {
     if (token == ProcessingToken::AUDIO_BACKEND || token == ProcessingToken::AUDIO_PARALLEL) {
         if (auto audio_buffer = std::dynamic_pointer_cast<AudioBuffer>(buffer)) {
-            remove_audio_processor(processor, audio_buffer);
+            remove_audio_processor(processor, audio_buffer, token);
         }
     } else if (token == ProcessingToken::GRAPHICS_BACKEND) {
         if (buffer) {
@@ -81,17 +81,24 @@ void BufferProcessingControl::remove_processor(
     }
 }
 
-void BufferProcessingControl::remove_processor_from_token(
+void BufferProcessingControl::remove_processor_from_channel(
     const std::shared_ptr<BufferProcessor>& processor,
     ProcessingToken token,
     uint32_t channel)
 {
     if (token == ProcessingToken::AUDIO_BACKEND || token == ProcessingToken::AUDIO_PARALLEL) {
-        if (channel == 0) {
-            remove_audio_processor_from_token(processor, token);
-        } else {
-            remove_audio_processor_from_channel(processor, token, channel);
-        }
+        remove_audio_processor_from_channel(processor, token, channel);
+    } else if (token == ProcessingToken::GRAPHICS_BACKEND) {
+        remove_graphics_processor(processor, token);
+    }
+}
+
+void BufferProcessingControl::remove_processor_from_token(
+    const std::shared_ptr<BufferProcessor>& processor,
+    ProcessingToken token)
+{
+    if (token == ProcessingToken::AUDIO_BACKEND || token == ProcessingToken::AUDIO_PARALLEL) {
+        remove_audio_processor_from_token(processor, token);
     } else if (token == ProcessingToken::GRAPHICS_BACKEND) {
         remove_graphics_processor(processor, token);
     }
@@ -135,6 +142,23 @@ void BufferProcessingControl::add_audio_processor(
         "Could not find matching token for audio buffer with channel ID {}", channel_id);
 }
 
+void BufferProcessingControl::add_audio_processor(
+    const std::shared_ptr<BufferProcessor>& processor,
+    const std::shared_ptr<AudioBuffer>& buffer,
+    ProcessingToken token)
+{
+    const uint32_t channel_id = buffer->get_channel_id();
+
+    if (!m_unit_manager.has_audio_unit(token)
+        || channel_id >= m_unit_manager.get_audio_unit(token).channel_count) {
+        MF_WARN(Journal::Component::Core, Journal::Context::BufferManagement,
+            "No unit for audio buffer with channel ID {} under the requested token", channel_id);
+        return;
+    }
+
+    buffer->get_processing_chain()->add_processor(processor, buffer);
+}
+
 void BufferProcessingControl::add_audio_processor_to_channel(
     const std::shared_ptr<BufferProcessor>& processor,
     ProcessingToken token,
@@ -173,6 +197,24 @@ void BufferProcessingControl::remove_audio_processor(
             }
             return;
         }
+    }
+}
+
+void BufferProcessingControl::remove_audio_processor(
+    const std::shared_ptr<BufferProcessor>& processor,
+    const std::shared_ptr<AudioBuffer>& buffer,
+    ProcessingToken token)
+{
+    const uint32_t channel_id = buffer->get_channel_id();
+
+    if (!m_unit_manager.has_audio_unit(token)
+        || channel_id >= m_unit_manager.get_audio_unit(token).channel_count) {
+        return;
+    }
+
+    m_unit_manager.get_audio_unit(token).get_chain(channel_id)->remove_processor(processor, buffer);
+    if (auto buf_chain = buffer->get_processing_chain()) {
+        buf_chain->remove_processor(processor, buffer);
     }
 }
 

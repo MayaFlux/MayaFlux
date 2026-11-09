@@ -18,6 +18,7 @@ bool VKCommandManager::initialize(
     vk::Queue transfer_queue)
 {
     m_device = device;
+    m_graphics_queue = graphics_queue;
     m_graphics_queue_family = graphics_queue_family;
     m_compute_queue_family = compute_queue_family;
 
@@ -72,7 +73,7 @@ void VKCommandManager::cleanup()
 
     m_retired.drain([](RetiredCommand&) { });
     m_retired_resources.drain([](RetiredResource&) { });
-    m_open_batches.drain([](vk::CommandBuffer&) { });
+    m_open_batches.drain([](OpenBatch&) { });
     m_open_batch_count.store(0, std::memory_order_release);
     m_idle_graphics.drain([](vk::CommandPool&) { });
     m_idle_compute.drain([](vk::CommandPool&) { });
@@ -257,33 +258,37 @@ TimelinePoint VKCommandManager::end_single_time_commands_async(vk::CommandBuffer
 }
 
 void VKCommandManager::record_deferred_commands(
-    const std::function<void(vk::CommandBuffer)>& recorder)
+    const std::function<void(vk::CommandBuffer)>& recorder,
+    std::vector<std::shared_ptr<void>> keep_alive)
 {
-    vk::CommandBuffer batch;
+    OpenBatch batch;
     if (auto open = m_open_batches.try_take()) {
-        batch = *open;
+        batch = std::move(*open);
     } else {
-        batch = begin_single_time_commands();
-        if (!batch) {
+        batch.command_buffer = begin_single_time_commands();
+        if (!batch.command_buffer) {
             return;
         }
         m_open_batch_count.fetch_add(1, std::memory_order_acq_rel);
     }
 
+    batch.keep_alive.insert(batch.keep_alive.end(),
+        std::make_move_iterator(keep_alive.begin()), std::make_move_iterator(keep_alive.end()));
+
     try {
-        recorder(batch);
+        recorder(batch.command_buffer);
     } catch (...) {
-        m_open_batches.push(batch);
+        m_open_batches.push(std::move(batch));
         throw;
     }
 
-    m_open_batches.push(batch);
+    m_open_batches.push(std::move(batch));
 }
 
 TimelinePoint VKCommandManager::flush_deferred(vk::Queue queue)
 {
-    std::vector<vk::CommandBuffer> batches;
-    m_open_batches.drain([&batches](vk::CommandBuffer& batch) { batches.push_back(batch); });
+    std::vector<OpenBatch> batches;
+    m_open_batches.drain([&batches](OpenBatch& batch) { batches.push_back(std::move(batch)); });
 
     if (batches.empty()) {
         return {};
@@ -291,18 +296,59 @@ TimelinePoint VKCommandManager::flush_deferred(vk::Queue queue)
 
     m_open_batch_count.fetch_sub(static_cast<uint32_t>(batches.size()), std::memory_order_acq_rel);
 
-    for (const vk::CommandBuffer batch : batches) {
-        batch.end();
+    const vk::MemoryBarrier2 barrier {
+        vk::PipelineStageFlagBits2::eAllCommands,
+        vk::AccessFlagBits2::eMemoryWrite,
+        vk::PipelineStageFlagBits2::eAllCommands,
+        vk::AccessFlagBits2::eMemoryRead | vk::AccessFlagBits2::eMemoryWrite
+    };
+    vk::DependencyInfo dependency {};
+    dependency.memoryBarrierCount = 1;
+    dependency.pMemoryBarriers = &barrier;
+    batches.back().command_buffer.pipelineBarrier2(dependency);
+
+    std::vector<vk::CommandBuffer> commands;
+    std::vector<std::shared_ptr<void>> keep_alive;
+    commands.reserve(batches.size());
+    for (auto& batch : batches) {
+        batch.command_buffer.end();
+        commands.push_back(batch.command_buffer);
+        keep_alive.insert(keep_alive.end(),
+            std::make_move_iterator(batch.keep_alive.begin()), std::make_move_iterator(batch.keep_alive.end()));
     }
 
-    const TimelinePoint point = submit(queue, batches);
-    for (const vk::CommandBuffer batch : batches) {
-        retire(batch, point);
+    const TimelinePoint point = submit_now(queue, commands, {}, {}, {});
+    for (const vk::CommandBuffer command : commands) {
+        retire(command, point);
+    }
+    if (!keep_alive.empty()) {
+        retire_resource([held = std::move(keep_alive)]() mutable { held.clear(); }, point);
     }
     return point;
 }
 
 TimelinePoint VKCommandManager::submit(
+    vk::Queue queue,
+    std::span<const vk::CommandBuffer> commands,
+    std::span<const vk::SemaphoreSubmitInfo> waits,
+    std::span<const vk::SemaphoreSubmitInfo> signals,
+    vk::Fence fence)
+{
+    if (!has_deferred_commands()) {
+        return submit_now(queue, commands, waits, signals, fence);
+    }
+
+    const TimelinePoint flushed = flush_deferred(m_graphics_queue);
+    if (!flushed || timeline_index(queue) == flushed.timeline) {
+        return submit_now(queue, commands, waits, signals, fence);
+    }
+
+    std::vector<vk::SemaphoreSubmitInfo> ordered(waits.begin(), waits.end());
+    ordered.emplace_back(m_timelines[flushed.timeline]->semaphore, flushed.value, vk::PipelineStageFlagBits2::eAllCommands);
+    return submit_now(queue, commands, ordered, signals, fence);
+}
+
+TimelinePoint VKCommandManager::submit_now(
     vk::Queue queue,
     std::span<const vk::CommandBuffer> commands,
     std::span<const vk::SemaphoreSubmitInfo> waits,

@@ -85,15 +85,19 @@ void register_buffer(const std::shared_ptr<Buffers::Buffer>& buffer, const Creat
     auto token = get_buffer_token(ctx.domain.value());
 
     if (auto audio_buffer = std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer)) {
+        const auto audio_token = token == Buffers::ProcessingToken::AUDIO_PARALLEL
+            ? token
+            : Buffers::ProcessingToken::AUDIO_BACKEND;
+
         if (ctx.channel.has_value()) {
-            register_audio_buffer(audio_buffer, ctx.channel.value());
+            register_audio_buffer(audio_buffer, ctx.channel.value(), audio_token);
         } else if (ctx.channels.has_value()) {
-            register_audio_buffer(audio_buffer, ctx.channels.value()[0]);
+            register_audio_buffer(audio_buffer, ctx.channels.value()[0], audio_token);
             for (size_t i = 1; i < ctx.channels.value().size(); ++i) {
                 clone_buffer_to_channels(audio_buffer, { static_cast<uint32_t>(i) }, token);
             }
         } else {
-            register_audio_buffer(audio_buffer, audio_buffer->get_channel_id());
+            register_audio_buffer(audio_buffer, audio_buffer->get_channel_id(), audio_token);
         }
         return;
     }

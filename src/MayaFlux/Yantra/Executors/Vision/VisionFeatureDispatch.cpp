@@ -14,7 +14,6 @@ GpuVisionPass::Completed VisionGpuExecutor::op_harris_response(
     auto& pixel_ctx = contexts.pixel;
     auto w = contexts.pass.w;
     auto h = contexts.pass.h;
-    auto& foundry = Portal::Graphics::get_shader_foundry();
 
     const auto radius = static_cast<uint32_t>(std::ceil(p.sigma * 3.0F));
     const auto& weights = gaussian_kernel_2d(radius, p.sigma);
@@ -24,11 +23,7 @@ GpuVisionPass::Completed VisionGpuExecutor::op_harris_response(
     pixel_ctx.swap_shader({ .shader_path = "harris_grad_pack.comp.spv", .workgroup_size = k_wg2d });
     pixel_ctx.stage_image(harris_input);
     pixel_ctx.prepare_output_image(w, h);
-    {
-        const auto f = pixel_ctx.dispatch_async({});
-        foundry.wait_for_fence(f);
-        foundry.release_fence(f);
-    }
+    (void)pixel_ctx.dispatch_async({});
     auto packed = pixel_ctx.get_output_image(0);
 
     const auto blur_cfg = VisionGpuExecutor::config(VisionOp::GaussianBlur, GaussianBlurParams { .sigma = p.sigma });
@@ -37,11 +32,7 @@ GpuVisionPass::Completed VisionGpuExecutor::op_harris_response(
     pixel_ctx.set_binding_data(2, std::span<const float>(weights));
     pixel_ctx.set_push_constants(GaussianPC { .radius = radius, .width = w, .height = h });
     pixel_ctx.prepare_output_image(w, h);
-    {
-        const auto f = pixel_ctx.dispatch_async({});
-        foundry.wait_for_fence(f);
-        foundry.release_fence(f);
-    }
+    (void)pixel_ctx.dispatch_async({});
     auto smoothed = pixel_ctx.get_output_image(0);
 
     const GpuComputeConfig harris_resp_cfg {
@@ -59,19 +50,11 @@ GpuVisionPass::Completed VisionGpuExecutor::op_harris_response(
     const auto rect = region_rect(p.region, w, h);
     pixel_ctx.set_push_constants(HarrisPC { .k = p.k, .pass = 0U, .width = w, .height = h, .rect = rect });
     pixel_ctx.prepare_output_image(w, h);
-    {
-        const auto f = pixel_ctx.dispatch_async({});
-        foundry.wait_for_fence(f);
-        foundry.release_fence(f);
-    }
+    (void)pixel_ctx.dispatch_async({});
 
     pixel_ctx.set_binding_data(2, std::span<const uint32_t>(&peak_reset, 0));
     pixel_ctx.set_push_constants(HarrisPC { .k = p.k, .pass = 1U, .width = w, .height = h, .rect = rect });
-    {
-        const auto f = pixel_ctx.dispatch_async({});
-        foundry.wait_for_fence(f);
-        foundry.release_fence(f);
-    }
+    (void)pixel_ctx.dispatch_async({});
 
     contexts.pass.current = pixel_ctx.get_output_image(0);
     contexts.pass.result.structured = std::monostate {};
@@ -90,7 +73,6 @@ void VisionGpuExecutor::op_extract_peaks(
     auto& structured_ctx = contexts.structured;
     auto w = contexts.pass.w;
     auto h = contexts.pass.h;
-    auto& foundry = Portal::Graphics::get_shader_foundry();
 
     constexpr uint32_t k_max_kp = 4096;
 
@@ -124,10 +106,8 @@ void VisionGpuExecutor::op_extract_peaks(
     });
 
     structured_ctx.set_output_dimensions(w, h);
-    const auto fence = structured_ctx.dispatch_async({});
+    (void)structured_ctx.dispatch_async({});
     structured_ctx.clear_output_dimensions();
-    foundry.wait_for_fence(fence);
-    foundry.release_fence(fence);
 
     const auto gpu_result = structured_ctx.collect_result();
 
@@ -170,6 +150,8 @@ void VisionGpuExecutor::op_extract_peaks(
 std::vector<Kinesis::Vision::Keypoint> VisionGpuExecutor::read_exported_keypoints(
     const Kinesis::Vision::VisionResult& result)
 {
+    Portal::Graphics::get_shader_foundry().wait_submitted();
+
     const auto& handle = result.buffers.keypoints;
     const auto count = exported_record_count(handle, 1);
     if (!count)

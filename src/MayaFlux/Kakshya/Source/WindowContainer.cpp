@@ -455,6 +455,47 @@ std::shared_ptr<Core::VKImage> WindowContainer::region_to_image(const Region& re
         m_region_images[std::pair { rw, rh }], sampled_image_key(rw, rh, format), bytes);
 }
 
+std::vector<OrganizedRegion> WindowContainer::region_crops(const std::string& group_name) const
+{
+    if (m_frames_written.load(std::memory_order_acquire) == 0) {
+        return {};
+    }
+
+    const RegionGroup group = get_region_group(group_name);
+    if (group.regions.empty()) {
+        return {};
+    }
+
+    const uint32_t head = m_write_head.load(std::memory_order_acquire);
+    const auto snapshot = snapshot_pixels((head + m_frame_capacity - 1U) % m_frame_capacity);
+    if (!snapshot) {
+        return {};
+    }
+
+    std::vector<OrganizedRegion> crops;
+    crops.reserve(group.regions.size());
+    for (size_t i = 0; i < group.regions.size(); ++i) {
+        const Region& region = group.regions[i];
+        try {
+            auto cropped = crop_variant(snapshot->data, region, snapshot->dimensions);
+            if (!cropped) {
+                continue;
+            }
+
+            OrganizedRegion crop(group_name, i);
+            crop.merge(group);
+            crop.merge(region);
+            crop.state = RegionState::READY;
+            crop.segments.emplace_back(region).mark_cached({ std::move(*cropped) });
+            crops.push_back(std::move(crop));
+        } catch (const std::exception& e) {
+            MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+                "WindowContainer::region_crops : region {} of '{}' not cropped: {}", i, group_name, e.what());
+        }
+    }
+    return crops;
+}
+
 std::optional<WindowContainer::PixelSnapshot> WindowContainer::snapshot_pixels(
     std::optional<uint32_t> frame_index) const
 {

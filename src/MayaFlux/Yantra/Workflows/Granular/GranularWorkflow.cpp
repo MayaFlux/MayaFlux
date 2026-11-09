@@ -97,17 +97,9 @@ namespace {
         GranularOutput output = GranularOutput::CONTAINER)
     {
         auto matrix = make_granular_matrix(output);
-        auto seg_op = matrix->get_operation<SegmentOp>("segment");
-        auto attr_op = matrix->get_operation<AttributeOp>("attribute");
-        auto sort_op = matrix->get_operation<SortOp>("sort");
-        apply_context_parameters(seg_op, ctx);
-        apply_context_parameters(attr_op, ctx);
-        apply_context_parameters(sort_op, ctx);
+        detail::apply_granular_context(matrix, ctx);
 
-        auto input = make_granular_input(container);
-        auto seg = seg_op->apply_operation(input);
-        auto attr = attr_op->apply_operation(seg);
-        auto sorted = sort_op->apply_operation(attr);
+        auto sorted = detail::run_grain_stages(matrix, make_granular_input(container));
 
         const auto result_any = output == GranularOutput::CONTAINER_ADDITIVE
             ? reconstruct_grains_additive(std::any(sorted), ctx)
@@ -125,17 +117,9 @@ namespace {
         GranularOutput output = GranularOutput::STREAM)
     {
         auto matrix = make_granular_matrix(output);
-        auto seg_op = matrix->get_operation<SegmentOp>("segment");
-        auto attr_op = matrix->get_operation<AttributeOp>("attribute");
-        auto sort_op = matrix->get_operation<SortOp>("sort");
-        apply_context_parameters(seg_op, ctx);
-        apply_context_parameters(attr_op, ctx);
-        apply_context_parameters(sort_op, ctx);
+        detail::apply_granular_context(matrix, ctx);
 
-        auto input = make_granular_input(container);
-        auto seg = seg_op->apply_operation(input);
-        auto attr = attr_op->apply_operation(seg);
-        auto sorted = sort_op->apply_operation(attr);
+        auto sorted = detail::run_grain_stages(matrix, make_granular_input(container));
 
         const auto result_any = output == GranularOutput::STREAM_ADDITIVE
             ? reconstruct_grains_additive_stream(std::any(sorted), ctx)
@@ -196,6 +180,13 @@ Datum<Kakshya::RegionGroup> SegmentOp::extract_implementation(
     const auto hop_size = cfg.hop_size;
     const auto channel = cfg.channel;
 
+    if (hop_size == 0) {
+        error<std::invalid_argument>(
+            Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+            std::source_location::current(),
+            "SegmentOp: hop size must be greater than 0");
+    }
+
     const auto& structure = container->get_structure();
 
     if (channel >= structure.get_channel_count()) {
@@ -229,7 +220,7 @@ Datum<Kakshya::RegionGroup> SegmentOp::extract_implementation(
 }
 
 // ============================================================================
-// AttributeOp — private helpers
+// AttributeOp
 // ============================================================================
 
 double AttributeOp::compute_grain_attribute(
@@ -244,20 +235,24 @@ double AttributeOp::compute_grain_attribute(
         return cfg.executor(std::span<const double>(samples.data(), samples.size()), ctx);
     }
 
-    const auto grain_variants = container->get_region_data(grain);
+    auto grain_variants = container->get_region_data(grain);
+    auto [grain_dims, grain_modality] = infer_from_region(grain, container);
+    Datum<std::vector<Kakshya::DataVariant>> grain_input {
+        std::move(grain_variants), container, std::move(grain_dims), grain_modality
+    };
 
     if (cfg.analyzer) {
         if (cfg.analysis_type == AnalysisType::FEATURE) {
             return extract_scalar_energy(
                 std::static_pointer_cast<VariantEnergyAnalyzer<>>(cfg.analyzer)
-                    ->analyze_energy(grain_variants),
+                    ->analyze_energy(grain_input),
                 static_cast<EnergyMethod>(cfg.qualifier));
         }
 
         if (cfg.analysis_type == AnalysisType::STATISTICAL) {
             return extract_scalar_statistics(
                 std::static_pointer_cast<VariantStatisticalAnalyzer<>>(cfg.analyzer)
-                    ->analyze_statistics(grain_variants),
+                    ->analyze_statistics(grain_input),
                 static_cast<StatisticalMethod>(cfg.qualifier));
         }
         return 0.0;
@@ -265,22 +260,18 @@ double AttributeOp::compute_grain_attribute(
 
     if (cfg.analysis_type == AnalysisType::FEATURE) {
         return extract_scalar_energy(
-            m_energy_analyzer.analyze_energy(grain_variants),
+            m_energy_analyzer.analyze_energy(grain_input),
             static_cast<EnergyMethod>(cfg.qualifier));
     }
 
     if (cfg.analysis_type == AnalysisType::STATISTICAL) {
         return extract_scalar_statistics(
-            m_stat_analyzer.analyze_statistics(grain_variants),
+            m_stat_analyzer.analyze_statistics(grain_input),
             static_cast<StatisticalMethod>(cfg.qualifier));
     }
 
     return 0.0;
 }
-
-// ============================================================================
-// AttributeOp::analyze_implementation
-// ============================================================================
 
 Datum<Kakshya::RegionGroup> AttributeOp::analyze_implementation(
     const Datum<Kakshya::RegionGroup>& input)
@@ -312,7 +303,50 @@ Datum<Kakshya::RegionGroup> AttributeOp::analyze_implementation(
 }
 
 // ============================================================================
-// Grammar rule executors
+// GrainReconstructOp
+// ============================================================================
+
+GrainReconstructOp::GrainReconstructOp(GranularOutput output, GrainTaper taper)
+    : m_output(output)
+    , m_taper(std::move(taper))
+{
+    if (output == GranularOutput::REGION_GROUP) {
+        error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+            std::source_location::current(), "GrainReconstructOp: REGION_GROUP has no reconstruction");
+    }
+}
+
+Datum<std::shared_ptr<Kakshya::SignalSourceContainer>> GrainReconstructOp::operation_function(
+    const Datum<Kakshya::RegionGroup>& input)
+{
+    ExecutionContext ctx = m_last_execution_context;
+    if (m_taper) {
+        ctx.facets.set(taper_facet, m_taper);
+    }
+
+    std::any result;
+    switch (m_output) {
+    case GranularOutput::CONTAINER:
+        result = reconstruct_grains(std::any(input), ctx);
+        break;
+    case GranularOutput::CONTAINER_ADDITIVE:
+        result = reconstruct_grains_additive(std::any(input), ctx);
+        break;
+    case GranularOutput::STREAM:
+        result = reconstruct_grains_stream(std::any(input), ctx);
+        break;
+    case GranularOutput::STREAM_ADDITIVE:
+        result = reconstruct_grains_additive_stream(std::any(input), ctx);
+        break;
+    case GranularOutput::REGION_GROUP:
+        break;
+    }
+
+    return safe_any_cast_or_throw<Datum<std::shared_ptr<Kakshya::SignalSourceContainer>>>(result);
+}
+
+// ============================================================================
+// Grammar rule executors (compatibility)
 // ============================================================================
 
 const ComputationGrammar::Rule::Executor segment_grains =
@@ -334,98 +368,43 @@ const ComputationGrammar::Rule::Executor attribute_grains =
 const ComputationGrammar::Rule::Executor sort_grains =
     [](const std::any& input, const ExecutionContext& ctx) -> std::any {
     auto datum = safe_any_cast_or_throw<Datum<Kakshya::RegionGroup>>(input);
-    auto op = std::make_shared<SortOp>();
+    auto op = std::make_shared<RegionKeySorter>();
     apply_context_parameters(op, ctx);
     return op->apply_operation(datum);
 };
 
 // ============================================================================
-// make_granular_matrix
+// GranularMatrix
 // ============================================================================
+
+GranularMatrix::GranularMatrix(GranularOutput output, GrainTaper taper)
+    : m_segment(std::make_shared<SegmentOp>())
+    , m_attribute(std::make_shared<AttributeOp>())
+    , m_sort(std::make_shared<RegionKeySorter>())
+{
+    auto builder = ComputationGrammar::Builder(std::make_shared<const OperationRegistry>());
+    builder.rule(GranularStage::Segment).priority(100).uses(m_segment)
+        .rule(GranularStage::Attribute).priority(75).uses(m_attribute)
+        .rule(GranularStage::Sort).priority(50).uses(m_sort);
+
+    if (output != GranularOutput::REGION_GROUP) {
+        builder.rule(GranularStage::Reconstruct)
+            .priority(25)
+            .uses(std::make_shared<GrainReconstructOp>(output, std::move(taper)));
+    }
+
+    set_grammar(builder.build());
+}
 
 std::shared_ptr<GranularMatrix> make_granular_matrix(
     GranularOutput output,
     GrainTaper taper)
 {
-    auto matrix = std::make_shared<GranularMatrix>();
-
-    matrix->create_operation<SegmentOp>("segment");
-    matrix->create_operation<AttributeOp>("attribute");
-    matrix->create_operation<SortOp>("sort");
-
-    matrix->get_grammar()->create_rule("segment") //
-        .with_priority(100)
-        .with_description("Fixed hop-size grain segmentation")
-        .matches_type<Kakshya::RegionGroup>()
-        .executes(segment_grains)
-        .build();
-
-    matrix->get_grammar()->create_rule("attribute") //
-        .with_priority(75)
-        .with_description("Per-grain feature attribution via analyzer or lambda")
-        .matches_type<Kakshya::RegionGroup>()
-        .executes(attribute_grains)
-        .build();
-
-    matrix->get_grammar()->create_rule("sort") //
-        .with_priority(50)
-        .with_description("Attribute-keyed grain sort, CPU or GPU")
-        .matches_type<Kakshya::RegionGroup>()
-        .executes(sort_grains)
-        .build();
-
-    if (output == GranularOutput::CONTAINER) {
-        matrix->get_grammar()->create_rule("reconstruct") //
-            .with_priority(25)
-            .with_description("Stitch sorted grains into a SoundFileContainer")
-            .matches_type<Kakshya::RegionGroup>()
-            .executes(reconstruct_grains)
-            .build();
-    } else if (output == GranularOutput::CONTAINER_ADDITIVE) {
-        auto ola_executor =
-            [t = std::move(taper)](const std::any& in, const ExecutionContext& ctx) -> std::any {
-            ExecutionContext patched = ctx;
-            if (t) {
-                patched.facets.set(taper_facet, t);
-            }
-            return reconstruct_grains_additive(in, patched);
-        };
-
-        matrix->get_grammar()->create_rule("reconstruct") //
-            .with_priority(25)
-            .with_description("Additive grain reconstruction into SoundFileContainer")
-            .matches_type<Kakshya::RegionGroup>()
-            .executes(ola_executor)
-            .build();
-    } else if (output == GranularOutput::STREAM) {
-        matrix->get_grammar()->create_rule("reconstruct") //
-            .with_priority(25)
-            .with_description("Stitch sorted grains into a DynamicSoundStream")
-            .matches_type<Kakshya::RegionGroup>()
-            .executes(reconstruct_grains_stream)
-            .build();
-    } else if (output == GranularOutput::STREAM_ADDITIVE) {
-        auto ola_executor =
-            [t = std::move(taper)](const std::any& in, const ExecutionContext& ctx) -> std::any {
-            ExecutionContext patched = ctx;
-            if (t)
-                patched.facets.set(taper_facet, t);
-            return reconstruct_grains_additive_stream(in, patched);
-        };
-
-        matrix->get_grammar()->create_rule("reconstruct") //
-            .with_priority(25)
-            .with_description("Additive grain reconstruction into DynamicSoundStream")
-            .matches_type<Kakshya::RegionGroup>()
-            .executes(ola_executor)
-            .build();
-    }
-
-    return matrix;
+    return std::make_shared<GranularMatrix>(output, std::move(taper));
 }
 
 // ============================================================================
-// process — AnalysisType path
+// process
 // ============================================================================
 
 GranularDatum process(
@@ -435,26 +414,10 @@ GranularDatum process(
     Qualifier qualifier)
 {
     auto matrix = make_granular_matrix();
-
     auto ctx = make_granular_context(config, analysis_type, qualifier);
-
-    auto seg_op = matrix->get_operation<SegmentOp>("segment");
-    auto attr_op = matrix->get_operation<AttributeOp>("attribute");
-    auto sort_op = matrix->get_operation<SortOp>("sort");
-    apply_context_parameters(seg_op, ctx);
-    apply_context_parameters(attr_op, ctx);
-    apply_context_parameters(sort_op, ctx);
-
-    return matrix->with(make_granular_input(container))
-        .template then<SegmentOp>("segment")
-        .template then<AttributeOp>("attribute")
-        .template then<SortOp>("sort")
-        .to_io();
+    detail::apply_granular_context(matrix, ctx);
+    return detail::run_grain_stages(matrix, make_granular_input(container));
 }
-
-// ============================================================================
-// process — AttributeExecutor path
-// ============================================================================
 
 GranularDatum process(
     const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
@@ -462,25 +425,13 @@ GranularDatum process(
     const GranularConfig& config)
 {
     auto matrix = make_granular_matrix();
-
     auto ctx = make_granular_context(config, std::move(executor));
-
-    auto seg_op = matrix->get_operation<SegmentOp>("segment");
-    auto attr_op = matrix->get_operation<AttributeOp>("attribute");
-    auto sort_op = matrix->get_operation<SortOp>("sort");
-    apply_context_parameters(seg_op, ctx);
-    apply_context_parameters(attr_op, ctx);
-    apply_context_parameters(sort_op, ctx);
-
-    return matrix->with(make_granular_input(container))
-        .template then<SegmentOp>("segment")
-        .template then<AttributeOp>("attribute")
-        .template then<SortOp>("sort")
-        .to_io();
+    detail::apply_granular_context(matrix, ctx);
+    return detail::run_grain_stages(matrix, make_granular_input(container));
 }
 
 // ============================================================================
-// process_to_container — AnalysisType path
+// process_to_container
 // ============================================================================
 
 std::shared_ptr<Kakshya::SoundFileContainer> process_to_container(
@@ -491,13 +442,8 @@ std::shared_ptr<Kakshya::SoundFileContainer> process_to_container(
     GranularOutput output)
 {
     auto ctx = make_granular_context(config, analysis_type, qualifier);
-
     return run_to_container(container, ctx, output);
 }
-
-// ============================================================================
-// process_to_container — AttributeExecutor path
-// ============================================================================
 
 std::shared_ptr<Kakshya::SoundFileContainer> process_to_container(
     const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
@@ -506,12 +452,11 @@ std::shared_ptr<Kakshya::SoundFileContainer> process_to_container(
     GranularOutput output)
 {
     auto ctx = make_granular_context(config, std::move(executor));
-
     return run_to_container(container, ctx, output);
 }
 
 // ============================================================================
-// process_to_stream — AnalysisType path
+// process_to_stream
 // ============================================================================
 
 std::shared_ptr<Kakshya::DynamicSoundStream> process_to_stream(
@@ -522,14 +467,9 @@ std::shared_ptr<Kakshya::DynamicSoundStream> process_to_stream(
     GranularOutput output)
 {
     auto ctx = make_granular_context(config, analysis_type, qualifier);
-
     return run_to_stream(container, ctx, output);
 }
 
-// ============================================================================
-// process_to_stream — AttributeExecutor path
-// ============================================================================
-
 std::shared_ptr<Kakshya::DynamicSoundStream> process_to_stream(
     const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
     AttributeExecutor executor,
@@ -537,7 +477,6 @@ std::shared_ptr<Kakshya::DynamicSoundStream> process_to_stream(
     GranularOutput output)
 {
     auto ctx = make_granular_context(config, std::move(executor));
-
     return run_to_stream(container, ctx, output);
 }
 

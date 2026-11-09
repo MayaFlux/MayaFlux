@@ -156,6 +156,7 @@ ComputePipelineID ComputePress::create_pipeline(
     Core::ComputePipelineConfig pipeline_config;
     pipeline_config.shader = shader_module;
     pipeline_config.set_layouts = state.layouts;
+    pipeline_config.cache = m_shader_foundry->get_pipeline_cache();
 
     if (push_constant_size > 0) {
         pipeline_config.add_push_constant(
@@ -547,6 +548,10 @@ void ComputePress::record_sequence(
             stage.push_constant_data.empty() ? nullptr : stage.push_constant_data.data(),
             stage.push_constant_data.size());
 
+        if (!stage.push_writes.empty()) {
+            push_descriptors(cmd_id, stage.pipeline_id, stage.push_writes);
+        }
+
         if (stage.indirect.buffer) {
             foundry.buffer_barrier(
                 cmd_id,
@@ -560,37 +565,15 @@ void ComputePress::record_sequence(
             dispatch(cmd_id, stage.groups[0], stage.groups[1], stage.groups[2]);
         }
 
-        for (const auto& hazard : stage.hazard_resources) {
-            if (hazard.binding.direction != GpuBufferBinding::Direction::INPUT_OUTPUT)
-                continue;
-
-            const bool is_image = hazard.binding.element_type == GpuBufferBinding::ElementType::IMAGE_STORAGE
-                || hazard.binding.element_type == GpuBufferBinding::ElementType::IMAGE_SAMPLED;
-
-            if (is_image) {
-                foundry.image_barrier(
-                    cmd_id,
-                    hazard.image,
-                    vk::ImageLayout::eGeneral,
-                    vk::ImageLayout::eGeneral,
-                    vk::AccessFlagBits2::eShaderWrite | vk::AccessFlagBits2::eShaderRead,
-                    vk::AccessFlagBits2::eShaderWrite | vk::AccessFlagBits2::eShaderRead,
-                    vk::PipelineStageFlagBits2::eComputeShader,
-                    vk::PipelineStageFlagBits2::eComputeShader);
-            } else {
-                foundry.buffer_barrier(
-                    cmd_id,
-                    hazard.buffer,
-                    vk::AccessFlagBits2::eShaderWrite | vk::AccessFlagBits2::eShaderRead,
-                    vk::AccessFlagBits2::eShaderWrite | vk::AccessFlagBits2::eShaderRead,
-                    vk::PipelineStageFlagBits2::eComputeShader,
-                    vk::PipelineStageFlagBits2::eComputeShader);
-            }
-        }
+        foundry.memory_barrier(
+            cmd_id,
+            vk::AccessFlagBits2::eShaderWrite,
+            vk::AccessFlagBits2::eShaderRead | vk::AccessFlagBits2::eShaderWrite | vk::AccessFlagBits2::eIndirectCommandRead,
+            vk::PipelineStageFlagBits2::eComputeShader,
+            vk::PipelineStageFlagBits2::eComputeShader | vk::PipelineStageFlagBits2::eDrawIndirect);
 
         MF_DEBUG(Journal::Component::Portal, Journal::Context::GPUCompute,
-            "record_sequence: stage {} of {} recorded ({} hazard barriers)",
-            i + 1, stages.size(), stage.hazard_resources.size());
+            "record_sequence: stage {} of {} recorded", i + 1, stages.size());
     }
 }
 

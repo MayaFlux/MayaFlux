@@ -80,6 +80,11 @@ public:
     virtual void wait_idle() = 0;
 
     /**
+     * @brief Submit commands recorded for deferred submission
+     */
+    virtual void flush_deferred() = 0;
+
+    /**
      * @brief Handle window resize event for the specified window
      */
     virtual void handle_window_resize() = 0;

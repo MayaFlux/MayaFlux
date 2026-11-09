@@ -1,7 +1,6 @@
 #pragma once
 
-#include "GpuSorter.hpp"
-#include "MayaFlux/Yantra/Executors/ShaderExecutionContext.hpp"
+#include "BitonicSorter.hpp"
 #include "Sorter.hpp"
 
 /**
@@ -44,8 +43,9 @@ struct RegionKeySorterConfig : SorterConfig {
  * direction lives in the keys. Empty keys leave the group unchanged. A region
  * that lacks any key's feature is a hard error.
  *
- * The GPU path sorts the scores with the bitonic shader, which sorts one float
- * per element and so needs no change for multi-key scores.
+ * The GPU path orders the scores with BitonicSorter over order keys. It returns
+ * the same permutation as the CPU path: ascending, with equal scores in input
+ * order and NaN last.
  */
 class RegionKeySorter : public Sorter<Kakshya::RegionGroup, Kakshya::RegionGroup> {
 public:
@@ -80,7 +80,7 @@ protected:
 
 private:
     /**
-     * @brief Ascending order of the scores, computed by the bitonic shader.
+     * @brief Ascending order of the scores, computed exactly on the GPU.
      */
     static std::vector<size_t> gpu_order(const std::vector<double>& scores);
 };
@@ -126,88 +126,10 @@ inline Datum<Kakshya::RegionGroup> RegionKeySorter::sort_implementation(
 
 inline std::vector<size_t> RegionKeySorter::gpu_order(const std::vector<double>& scores)
 {
-    const auto n = static_cast<uint32_t>(scores.size());
-
-    struct SortPC {
-        uint32_t element_count;
-        uint32_t step;
-        uint32_t stage;
-        uint32_t ascending;
-    };
-
-    std::vector<float> values(n);
-    for (uint32_t i = 0; i < n; ++i) {
-        values[i] = static_cast<float>(scores[i]);
-    }
-
-    std::vector<uint32_t> indices(n);
-    std::iota(indices.begin(), indices.end(), 0U);
-
-    /// @brief Pad element count to next power of two for bitonic correctness.
-    ///        Out-of-range threads early-exit in the shader via element_count.
-    uint32_t n_padded = 1U;
-    while (n_padded < n) {
-        n_padded <<= 1U;
-    }
-
-    /// @brief Total bitonic passes: sum of (stage+1) for stage in [0, stage_count).
-    uint32_t stage_count = 0U;
-    {
-        uint32_t tmp = n_padded;
-        while (tmp > 1U) {
-            ++stage_count;
-            tmp >>= 1U;
-        }
-    }
-    const uint32_t n_passes = stage_count * (stage_count + 1U) / 2U;
-
-    auto executor = std::make_shared<ShaderExecutionContext<>>(
-        GpuComputeConfig {
-            .shader_path = "sort_by_attribute.comp.spv",
-            .workgroup_size = { 256, 1, 1 },
-            .push_constant_size = sizeof(SortPC) });
-
-    executor->in_out(0, values, GpuBufferBinding::ElementType::FLOAT32)
-        .in_out(1, indices, GpuBufferBinding::ElementType::UINT32)
-        .set_output_size(1, n * sizeof(uint32_t));
-
-    executor->set_multipass(n_passes,
-        [n](uint32_t pass, void* pc_data) {
-            /// @brief Recover (stage, step) from the flat pass index.
-            ///        Passes enumerate: stage=0 step=0,
-            ///                          stage=1 step=0,1,
-            ///                          stage=2 step=0,1,2, ...
-            uint32_t stage = 0U;
-            uint32_t remaining = pass;
-            while (remaining >= stage + 1U) {
-                remaining -= stage + 1U;
-                ++stage;
-            }
-            const uint32_t step = stage - remaining;
-
-            const SortPC pc {
-                .element_count = n,
-                .step = step,
-                .stage = stage,
-                .ascending = 1U,
-            };
-            std::memcpy(pc_data, &pc, sizeof(SortPC));
-        });
-
-    auto gpu_sorter = std::make_shared<GpuSorter<>>(executor);
-
-    Datum<std::vector<Kakshya::DataVariant>> sort_input {
-        { Kakshya::DataVariant(std::vector<double>(values.begin(), values.end())) }
-    };
-
-    auto result = gpu_sorter->apply_operation(sort_input);
-    const auto sorted_indices = ShaderExecutionContext<>::read_output<uint32_t>(result, 1);
-
-    std::vector<size_t> order(n);
-    for (uint32_t i = 0; i < n; ++i) {
-        order[i] = sorted_indices[i];
-    }
-    return order;
+    StandardSorterConfig config;
+    config.direction = SortingDirection::ASCENDING;
+    BitonicSorter<> sorter(config);
+    return sorter.order(scores);
 }
 
 } // namespace MayaFlux::Yantra

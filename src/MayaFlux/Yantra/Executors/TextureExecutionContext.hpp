@@ -89,7 +89,7 @@ public:
         std::vector<GpuBufferBinding> aux_bindings = {},
         GpuBufferBinding::ElementType image_access = GpuBufferBinding::ElementType::IMAGE_SAMPLED,
         uint32_t output_binding = 0)
-        : Base(std::move(config))
+        : Base(std::move(config), false)
         , m_output_format(output_format)
         , m_output_mode(mode)
         , m_aux_bindings(std::move(aux_bindings))
@@ -124,7 +124,7 @@ public:
         GpuComputeConfig config,
         const std::vector<GpuBufferBinding>& bindings,
         OutputMode mode = OutputMode::SCALAR)
-        : Base(std::move(config))
+        : Base(std::move(config), false)
         , m_output_format(Portal::Graphics::ImageFormat::RGBA8)
         , m_output_mode(mode)
     {
@@ -218,6 +218,8 @@ public:
      *
      * @param input DataIO whose container field drives optional image staging.
      * @return FenceID to poll with ShaderFoundry::is_fence_signaled.
+     *         INVALID_FENCE with a recording attached: the dispatch is
+     *         appended to it, and collect_result() submits and waits.
      */
     [[nodiscard]] Portal::Graphics::FenceID dispatch_async(const input_type& input)
     {
@@ -506,8 +508,7 @@ protected:
                 "TextureExecutionContext: no output image at declared output binding after dispatch");
         }
 
-        Portal::Graphics::TextureLoom::instance().transition_layout(
-            img, vk::ImageLayout::eGeneral, vk::ImageLayout::eShaderReadOnlyOptimal);
+        m_resources.transition_image(img, vk::ImageLayout::eShaderReadOnlyOptimal);
 
         if (m_output_mode == OutputMode::IMAGE)
             return output_type {};

@@ -73,6 +73,18 @@ namespace detail {
      * pc.<name>. SSBO arrays are accessible as <name>[i].
      */
     MAYAFLUX_API std::string emit_glsl_kernel(const ShaderSpec& spec);
+
+    /**
+     * @brief Name the first binding or push constant field with a 64-bit float format.
+     * @param spec ShaderSpec to check.
+     * @return Empty when no field uses FLOAT64, VEC2_F64, VEC3_F64 or VEC4_F64,
+     *         otherwise a message naming the field.
+     *
+     * The library's own generated kernels are word-pair only and refuse these
+     * formats. A user kernel supplied through MF_KERNEL may use them when the
+     * selected device reports shaderFloat64.
+     */
+    MAYAFLUX_API std::string double_field_reason(const ShaderSpec& spec);
 }
 
 /**
@@ -558,6 +570,11 @@ public:
     void release_after_submit(std::function<void()> release);
 
     /**
+     * @brief Block until every submission made so far has completed
+     */
+    void wait_submitted();
+
+    /**
      * @brief Keep a slot claimed until the work recorded in a command buffer completes
      * @param cmd_id Command buffer that reads the slot
      * @param hold Lease on the slot; ignored if empty or the command buffer is unknown
@@ -590,6 +607,14 @@ public:
      * @return Semaphore ID to wait on later
      */
     SemaphoreID submit_with_signal(CommandBufferID cmd_id);
+
+    /**
+     * @brief Submit the commands recorded for deferred submission
+     * @return Point on the graphics queue timeline, or an empty point when nothing was pending
+     *
+     * Any later submission flushes them as well. Externally synchronized like every submit.
+     */
+    Core::TimelinePoint flush_deferred();
 
     /**
      * @brief Wait for fence to be signaled
@@ -770,6 +795,9 @@ public:
      */
     [[nodiscard]] vk::PhysicalDevice get_physical_device() const;
 
+    /** @brief Cache shared by graphics and compute pipeline creation. */
+    [[nodiscard]] vk::PipelineCache get_pipeline_cache() const { return m_pipeline_cache; }
+
 private:
     /**
      * @enum DetectedSourceType
@@ -787,6 +815,11 @@ private:
 
     std::shared_ptr<Core::VulkanBackend> m_backend;
     ShaderCompilerConfig m_config;
+    vk::PipelineCache m_pipeline_cache {};
+    std::filesystem::path m_pipeline_cache_path;
+
+    void initialize_pipeline_cache();
+    void save_pipeline_cache();
 
     std::unordered_map<std::string, std::shared_ptr<Core::VKShaderModule>> m_shader_cache;
     std::unordered_map<ShaderID, ShaderState> m_shaders;

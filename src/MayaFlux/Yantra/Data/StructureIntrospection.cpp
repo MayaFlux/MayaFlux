@@ -16,8 +16,20 @@ infer_from_data_variant(const Kakshya::DataVariant& data)
 }
 
 std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
-infer_from_data_variant_vector(const std::vector<Kakshya::DataVariant>& data)
+infer_from_data_variant_vector(
+    const std::vector<Kakshya::DataVariant>& data,
+    const std::shared_ptr<Kakshya::SignalSourceContainer>& container)
 {
+    if (container && !container->get_structure().dimensions.empty()) {
+        uint64_t elements = 0;
+        for (const auto& variant : data) {
+            elements += std::visit([](const auto& values) -> uint64_t { return values.size(); }, variant);
+        }
+        if (elements == container->get_total_elements()) {
+            return infer_from_container(container);
+        }
+    }
+
     auto dimensions = Kakshya::detect_data_dimensions(data);
     auto modality = Kakshya::detect_data_modality(dimensions);
 

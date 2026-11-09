@@ -72,6 +72,8 @@ public:
     /**
      * @brief Cleanup a buffer and release associated resources
      * @param buffer Shared pointer to the buffer to cleanup
+     *
+     * Waits for the buffer's last recorded GPU use, then destroys it.
      */
     void cleanup_buffer(const std::shared_ptr<Buffers::VKBuffer>& buffer);
 
@@ -121,23 +123,20 @@ public:
     void cleanup_image(const std::shared_ptr<VKImage>& image);
 
     /**
-     * @brief Transition image layout using a pipeline barrier
-     * @param image VkImage handle
-     * @param old_layout Current layout
+     * @brief Transition every mip level and layer of an image to a new layout
+     * @param image Initialized image; its tracked layout is the old layout
      * @param new_layout Target layout
-     * @param mip_levels Number of mip levels to transition
-     * @param array_layers Number of array layers to transition
+     * @param mode How the barrier is submitted
      *
-     * Executes immediately on graphics queue. Use for initial setup and
-     * one-off transitions. For rendering, prefer manual barriers.
+     * An image that has never been transitioned changes layout on the host when
+     * the device allows it, with no GPU work. Otherwise a barrier is recorded,
+     * and later submissions and host image copies are ordered after it. The
+     * tracked layout is updated when the barrier is recorded.
      */
     void transition_image_layout(
-        vk::Image image,
-        vk::ImageLayout old_layout,
+        const std::shared_ptr<VKImage>& image,
         vk::ImageLayout new_layout,
-        uint32_t mip_levels = 1,
-        uint32_t array_layers = 1,
-        vk::ImageAspectFlags aspect_flags = vk::ImageAspectFlagBits::eColor);
+        SubmitMode mode = SubmitMode::DEFERRED);
 
     /**
      * @brief Upload a whole color image from host memory.
@@ -267,8 +266,11 @@ public:
     /**
      * @brief Record deferred command recording for buffer operations
      * @param recorder Command recording function
+     * @param keep_alive Objects the commands read or write, released once the batch's submission completes
      */
-    void record_deferred_commands(const std::function<void(vk::CommandBuffer)>& recorder);
+    void record_deferred_commands(
+        const std::function<void(vk::CommandBuffer)>& recorder,
+        std::vector<std::shared_ptr<void>> keep_alive = {});
 
     /**
      * @brief Submit the pending deferred commands
@@ -287,11 +289,12 @@ private:
     [[nodiscard]] bool host_copy_src_layout(vk::ImageLayout layout) const;
     [[nodiscard]] bool host_copy_dst_layout(vk::ImageLayout layout) const;
     void transition_host_image(
-        vk::Image image,
+        const std::shared_ptr<VKImage>& image,
         vk::ImageLayout old_layout,
         vk::ImageLayout new_layout,
         vk::ImageSubresourceRange range,
-        vk::PipelineStageFlags2 restore_stage = vk::PipelineStageFlagBits2::eAllCommands);
+        vk::PipelineStageFlags2 restore_stage = vk::PipelineStageFlagBits2::eAllCommands,
+        SubmitMode mode = SubmitMode::IMMEDIATE);
     void upload_image_host(
         const std::shared_ptr<VKImage>& image,
         uint32_t base_layer,

@@ -789,12 +789,7 @@ void BackendWindowHandler::ensure_depth_image(WindowRenderContext& ctx)
     }
 
     m_resource_manager->transition_image_layout(
-        ctx.depth_image->get_image(),
-        vk::ImageLayout::eUndefined,
-        vk::ImageLayout::eDepthStencilAttachmentOptimal,
-        1, 1,
-        vk::ImageAspectFlagBits::eDepth);
-    ctx.depth_image->set_current_layout(vk::ImageLayout::eDepthStencilAttachmentOptimal);
+        ctx.depth_image, vk::ImageLayout::eDepthStencilAttachmentOptimal);
 
     MF_INFO(Journal::Component::Core, Journal::Context::GraphicsBackend,
         "Created depth image for window '{}': {}x{}, D32_SFLOAT",
@@ -1148,17 +1143,8 @@ TimelinePoint BackendWindowHandler::submit_and_present(
     auto& image_available = ctx->image_available[frame_index];
     auto& render_finished = ctx->render_finished[frame_index];
 
-    const TimelinePoint deferred_point = m_resource_manager
-        ? m_resource_manager->flush_deferred_commands()
-        : TimelinePoint {};
-
     std::vector<vk::SemaphoreSubmitInfo> wait_infos;
     wait_infos.emplace_back(image_available, 0, vk::PipelineStageFlagBits2::eColorAttachmentOutput);
-
-    if (deferred_point) {
-        wait_infos.emplace_back(
-            m_command_manager.get_timeline(graphics_queue), deferred_point.value, vk::PipelineStageFlagBits2::eFragmentShader);
-    }
 
     const auto produced_waits = m_command_manager.produced_waits(
         vk::PipelineStageFlagBits2::eVertexInput | vk::PipelineStageFlagBits2::eVertexShader | vk::PipelineStageFlagBits2::eFragmentShader);

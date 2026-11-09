@@ -59,6 +59,10 @@ void MixProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
     if (auto root_buffer = std::dynamic_pointer_cast<RootAudioBuffer>(buffer)) {
         validate_sources();
 
+        if (m_sources.empty()) {
+            return;
+        }
+
         auto& data = root_buffer->get_data();
         const bool normalize = root_buffer->is_mix_normalized();
 

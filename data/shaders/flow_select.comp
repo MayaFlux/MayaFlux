@@ -1,4 +1,5 @@
 #version 460
+#extension GL_EXT_buffer_reference : require
 
 layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 
@@ -10,51 +11,62 @@ layout(set = 0, binding = 2, std430) buffer DetPointsBuf {
     vec4 det_points[];
 };
 
-layout(set = 1, binding = 0, std430) buffer PrevCountBuf {
-    uint prev_count[];
+layout(buffer_reference, std430) buffer PrevCountBufRef {
+    uint v[];
 };
 
-layout(set = 1, binding = 1, std430) buffer PrevPointsBuf {
-    vec4 prev_points[];
+layout(buffer_reference, std430) buffer PrevPointsBufRef {
+    vec4 v[];
 };
 
-layout(set = 1, binding = 2, std430) buffer TracksBuf {
-    vec4 tracks[];
+layout(buffer_reference, std430) buffer TracksBufRef {
+    vec4 v[];
 };
 
-layout(set = 1, binding = 3, std430) buffer MetaBuf {
-    uint meta[];
+layout(buffer_reference, std430) buffer MetaBufRef {
+    uint v[];
 };
 
-layout(set = 1, binding = 4, std430) buffer NextPointsBuf {
-    vec4 next_points[];
+layout(buffer_reference, std430) buffer NextPointsBufRef {
+    vec4 v[];
 };
 
-layout(set = 1, binding = 5, std430) buffer CounterBuf {
-    uint ctr[];
+layout(buffer_reference, std430) buffer CounterBufRef {
+    uint v[];
 };
 
-layout(set = 1, binding = 6, std430) buffer HistogramBuf {
-    uint hist[];
+layout(buffer_reference, std430) buffer HistogramBufRef {
+    uint v[];
 };
 
-layout(set = 1, binding = 7, std430) buffer GridBuf {
-    uint grid[];
+layout(buffer_reference, std430) buffer GridBufRef {
+    uint v[];
 };
 
-layout(set = 1, binding = 8, std430) buffer ExportBufA {
-    vec4 export_a[];
+layout(buffer_reference, std430) buffer ExportBufARef {
+    vec4 v[];
 };
 
-layout(set = 1, binding = 9, std430) buffer ExportBufB {
-    vec4 export_b[];
+layout(buffer_reference, std430) buffer ExportBufBRef {
+    vec4 v[];
 };
 
-layout(set = 1, binding = 10, std430) buffer DispatchArgsBuf {
-    uint args[];
+layout(buffer_reference, std430) buffer DispatchArgsBufRef {
+    uint v[];
 };
 
 layout(push_constant) uniform PC {
+    PrevCountBufRef prev_count;
+    PrevPointsBufRef prev_points;
+    TracksBufRef tracks;
+    MetaBufRef meta;
+    NextPointsBufRef next_points;
+    CounterBufRef ctr;
+    HistogramBufRef hist;
+    GridBufRef grid;
+    ExportBufARef export_a;
+    ExportBufBRef export_b;
+    DispatchArgsBufRef args;
     uint phase;
     uint max_points;
     uint have_prev;
@@ -109,16 +121,16 @@ uint response_bin(float response)
  */
 void add_detection(vec4 d)
 {
-    if (atomicCompSwap(grid[cell_of(d.xy)], 0u, 1u) != 0u)
+    if (atomicCompSwap(pc.grid.v[cell_of(d.xy)], 0u, 1u) != 0u)
         return;
 
-    const uint slot = atomicAdd(ctr[CTR_NEXT_COUNT], 1u);
+    const uint slot = atomicAdd(pc.ctr.v[CTR_NEXT_COUNT], 1u);
     if (slot >= pc.max_points)
         return;
 
-    const uint id = atomicAdd(ctr[CTR_NEXT_ID], 1u);
-    next_points[2u * slot] = vec4(d.xy, d.z, uintBitsToFloat(id));
-    next_points[2u * slot + 1u] = vec4(0.0);
+    const uint id = atomicAdd(pc.ctr.v[CTR_NEXT_ID], 1u);
+    pc.next_points.v[2u * slot] = vec4(d.xy, d.z, uintBitsToFloat(id));
+    pc.next_points.v[2u * slot + 1u] = vec4(0.0);
 }
 
 /**
@@ -158,34 +170,34 @@ void main()
     switch (pc.phase) {
     case PHASE_CLEAR: {
         if (i < pc.grid_cells)
-            grid[i] = 0u;
+            pc.grid.v[i] = 0u;
         if (i < BINS)
-            hist[i] = 0u;
+            pc.hist.v[i] = 0u;
         if (i == 0u)
-            ctr[CTR_NEXT_COUNT] = 0u;
+            pc.ctr.v[CTR_NEXT_COUNT] = 0u;
         break;
     }
     case PHASE_SURVIVORS: {
         if (pc.have_prev == 0u)
             break;
-        if (i >= min(prev_count[0], pc.max_points))
+        if (i >= min(pc.prev_count.v[0], pc.max_points))
             break;
 
-        const vec4 status = tracks[2u * i + 1u];
+        const vec4 status = pc.tracks.v[2u * i + 1u];
         if (status.y < 0.5)
             break;
 
-        const vec4 pose = tracks[2u * i];
-        const vec4 old_point = prev_points[2u * i];
-        const vec4 old_meta = prev_points[2u * i + 1u];
+        const vec4 pose = pc.tracks.v[2u * i];
+        const vec4 old_point = pc.prev_points.v[2u * i];
+        const vec4 old_meta = pc.prev_points.v[2u * i + 1u];
 
-        const uint slot = atomicAdd(ctr[CTR_NEXT_COUNT], 1u);
+        const uint slot = atomicAdd(pc.ctr.v[CTR_NEXT_COUNT], 1u);
         if (slot >= pc.max_points)
             break;
 
-        next_points[2u * slot] = vec4(pose.xy, old_point.z, old_point.w);
-        next_points[2u * slot + 1u] = vec4(uintBitsToFloat(floatBitsToUint(old_meta.x) + 1u), 0.0, 0.0, 0.0);
-        grid[cell_of(pose.xy)] = 1u;
+        pc.next_points.v[2u * slot] = vec4(pose.xy, old_point.z, old_point.w);
+        pc.next_points.v[2u * slot + 1u] = vec4(uintBitsToFloat(floatBitsToUint(old_meta.x) + 1u), 0.0, 0.0, 0.0);
+        pc.grid.v[cell_of(pose.xy)] = 1u;
         break;
     }
     case PHASE_HISTOGRAM: {
@@ -193,27 +205,27 @@ void main()
             break;
 
         const vec4 d = det_points[i];
-        if (grid[cell_of(d.xy)] != 0u)
+        if (pc.grid.v[cell_of(d.xy)] != 0u)
             break;
 
-        atomicAdd(hist[response_bin(d.z)], 1u);
+        atomicAdd(pc.hist.v[response_bin(d.z)], 1u);
         break;
     }
     case PHASE_THRESHOLD: {
         if (i != 0u)
             break;
 
-        const uint free_slots = pc.max_points - min(ctr[CTR_NEXT_COUNT], pc.max_points);
+        const uint free_slots = pc.max_points - min(pc.ctr.v[CTR_NEXT_COUNT], pc.max_points);
         uint cumulative = 0u;
         uint full_from = BINS;
         for (int b = int(BINS) - 1; b >= 0; --b) {
-            const uint h = hist[b];
+            const uint h = pc.hist.v[b];
             if (cumulative + h > free_slots)
                 break;
             cumulative += h;
             full_from = uint(b);
         }
-        ctr[CTR_FULL_FROM] = full_from;
+        pc.ctr.v[CTR_FULL_FROM] = full_from;
         break;
     }
     case PHASE_ADD_STRONG: {
@@ -221,13 +233,13 @@ void main()
             break;
 
         const vec4 d = det_points[i];
-        if (response_bin(d.z) < ctr[CTR_FULL_FROM])
+        if (response_bin(d.z) < pc.ctr.v[CTR_FULL_FROM])
             break;
         add_detection(d);
         break;
     }
     case PHASE_ADD_MARGINAL: {
-        const uint full_from = ctr[CTR_FULL_FROM];
+        const uint full_from = pc.ctr.v[CTR_FULL_FROM];
         if (full_from == 0u || i >= min(det_count[0], MAX_DETECTIONS))
             break;
 
@@ -238,18 +250,18 @@ void main()
         break;
     }
     case PHASE_COMMIT: {
-        const uint n = min(ctr[CTR_NEXT_COUNT], pc.max_points);
+        const uint n = min(pc.ctr.v[CTR_NEXT_COUNT], pc.max_points);
         memoryBarrierBuffer();
         barrier();
 
         for (uint k = lid; k < n * 2u; k += 256u)
-            prev_points[k] = next_points[k];
+            pc.prev_points.v[k] = pc.next_points.v[k];
 
         memoryBarrierBuffer();
         barrier();
 
         if (lid == 0u) {
-            prev_count[0] = n;
+            pc.prev_count.v[0] = n;
             det_count[0] = 0u;
         }
         break;
@@ -258,44 +270,44 @@ void main()
         if (i != 0u)
             break;
 
-        const uint retained = pc.have_prev != 0u ? min(prev_count[0], pc.max_points) : 0u;
+        const uint retained = pc.have_prev != 0u ? min(pc.prev_count.v[0], pc.max_points) : 0u;
         const uint detected = min(det_count[0], MAX_DETECTIONS);
         const uint retained_groups = (retained + LOCAL_SIZE - 1u) / LOCAL_SIZE;
         const uint detected_groups = (detected + LOCAL_SIZE - 1u) / LOCAL_SIZE;
 
-        args[0] = retained;
-        args[1] = 1u;
-        args[2] = 1u;
-        args[3] = retained_groups;
-        args[4] = 1u;
-        args[5] = 1u;
-        args[6] = detected_groups;
-        args[7] = 1u;
-        args[8] = 1u;
-        args[9] = max(retained_groups, 1u);
-        args[10] = 1u;
-        args[11] = 1u;
+        pc.args.v[0] = retained;
+        pc.args.v[1] = 1u;
+        pc.args.v[2] = 1u;
+        pc.args.v[3] = retained_groups;
+        pc.args.v[4] = 1u;
+        pc.args.v[5] = 1u;
+        pc.args.v[6] = detected_groups;
+        pc.args.v[7] = 1u;
+        pc.args.v[8] = 1u;
+        pc.args.v[9] = max(retained_groups, 1u);
+        pc.args.v[10] = 1u;
+        pc.args.v[11] = 1u;
         break;
     }
     case PHASE_PUBLISH: {
-        if (pc.have_prev != 0u && meta[1] < pc.duplicate_cutoff)
+        if (pc.have_prev != 0u && pc.meta.v[1] < pc.duplicate_cutoff)
             break;
 
-        const uint count = pc.have_prev != 0u ? min(meta[0], pc.max_points) : 0u;
+        const uint count = pc.have_prev != 0u ? min(pc.meta.v[0], pc.max_points) : 0u;
 
         if (pc.publish_slot == 0u) {
             if (i == 0u)
-                export_a[0] = vec4(uintBitsToFloat(count), 0.0, 0.0, 0.0);
+                pc.export_a.v[0] = vec4(uintBitsToFloat(count), 0.0, 0.0, 0.0);
             if (i < count) {
-                export_a[1u + 2u * i] = tracks[2u * i];
-                export_a[2u + 2u * i] = tracks[2u * i + 1u];
+                pc.export_a.v[1u + 2u * i] = pc.tracks.v[2u * i];
+                pc.export_a.v[2u + 2u * i] = pc.tracks.v[2u * i + 1u];
             }
         } else {
             if (i == 0u)
-                export_b[0] = vec4(uintBitsToFloat(count), 0.0, 0.0, 0.0);
+                pc.export_b.v[0] = vec4(uintBitsToFloat(count), 0.0, 0.0, 0.0);
             if (i < count) {
-                export_b[1u + 2u * i] = tracks[2u * i];
-                export_b[2u + 2u * i] = tracks[2u * i + 1u];
+                pc.export_b.v[1u + 2u * i] = pc.tracks.v[2u * i];
+                pc.export_b.v[2u + 2u * i] = pc.tracks.v[2u * i + 1u];
             }
         }
         break;

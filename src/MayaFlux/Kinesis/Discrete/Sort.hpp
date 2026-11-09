@@ -253,6 +253,19 @@ MAYAFLUX_API void sort_channels(
     const SortOrder& order,
     SortingAlgorithm algorithm = SortingAlgorithm::STANDARD);
 
+/**
+ * @brief Target position of each rank in a mountain arrangement of count values
+ *
+ * Ranks alternate between the two ends and fill inward, so an ascending
+ * sequence laid out by these positions rises from the first position to the
+ * centre and falls to the last: rank 0 goes to position 0, rank 1 to the last
+ * position, rank 2 to position 1, and so on. BIDIRECTIONAL sorting applies it.
+ *
+ * @param count Number of values
+ * @return One position per rank, a permutation of 0 to count - 1
+ */
+[[nodiscard]] MAYAFLUX_API std::vector<size_t> mountain_positions(size_t count);
+
 // ============================================================================
 // Index generation
 // ============================================================================

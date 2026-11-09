@@ -1,6 +1,7 @@
 #include "TextureLoom.hpp"
 
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/BackendResoureManager.hpp"
+#include "MayaFlux/Core/Backends/Graphics/Vulkan/VKCommandManager.hpp"
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VulkanBackend.hpp"
 
@@ -73,6 +74,10 @@ void TextureLoom::shutdown()
     MF_INFO(Journal::Component::Portal, Journal::Context::ImageProcessing,
         "Shutting down TextureLoom...");
 
+    m_resource_manager->flush_deferred_commands();
+    auto& commands = m_backend->get_command_manager();
+    commands.wait(commands.submitted());
+
     for (auto& texture : m_textures) {
         if (texture && texture->is_initialized()) {
             m_resource_manager->cleanup_image(texture);
@@ -122,12 +127,7 @@ std::shared_ptr<Core::VKImage> TextureLoom::create_2d(
         size_t data_size = calculate_image_size(width, height, 1, format);
         upload_data(image, data, data_size);
     } else {
-        m_resource_manager->transition_image_layout(
-            image->get_image(),
-            vk::ImageLayout::eUndefined,
-            vk::ImageLayout::eShaderReadOnlyOptimal,
-            mip_levels, 1, vk::ImageAspectFlagBits::eColor);
-        image->set_current_layout(vk::ImageLayout::eShaderReadOnlyOptimal);
+        m_resource_manager->transition_image_layout(image, vk::ImageLayout::eShaderReadOnlyOptimal);
     }
 
     m_textures.push_back(image);
@@ -199,12 +199,7 @@ std::shared_ptr<Core::VKImage> TextureLoom::create_3d(
         size_t data_size = calculate_image_size(width, height, depth, format);
         upload_data(image, data, data_size);
     } else {
-        m_resource_manager->transition_image_layout(
-            image->get_image(),
-            vk::ImageLayout::eUndefined,
-            vk::ImageLayout::eShaderReadOnlyOptimal,
-            1, 1, vk::ImageAspectFlagBits::eColor);
-        image->set_current_layout(vk::ImageLayout::eShaderReadOnlyOptimal);
+        m_resource_manager->transition_image_layout(image, vk::ImageLayout::eShaderReadOnlyOptimal);
     }
 
     m_textures.push_back(image);
@@ -243,12 +238,7 @@ std::shared_ptr<Core::VKImage> TextureLoom::create_cubemap(
         size_t total_size = face_size * 6;
         upload_data(image, data, total_size);
     } else {
-        m_resource_manager->transition_image_layout(
-            image->get_image(),
-            vk::ImageLayout::eUndefined,
-            vk::ImageLayout::eShaderReadOnlyOptimal,
-            1, 6, vk::ImageAspectFlagBits::eColor);
-        image->set_current_layout(vk::ImageLayout::eShaderReadOnlyOptimal);
+        m_resource_manager->transition_image_layout(image, vk::ImageLayout::eShaderReadOnlyOptimal);
     }
 
     m_textures.push_back(image);
@@ -294,12 +284,7 @@ std::shared_ptr<Core::VKImage> TextureLoom::create_2d_array(
         const size_t total = calculate_image_size(width, height, 1, format) * layers;
         upload_data(image, data, total);
     } else {
-        m_resource_manager->transition_image_layout(
-            image->get_image(),
-            vk::ImageLayout::eUndefined,
-            vk::ImageLayout::eShaderReadOnlyOptimal,
-            1, layers, vk::ImageAspectFlagBits::eColor);
-        image->set_current_layout(vk::ImageLayout::eShaderReadOnlyOptimal);
+        m_resource_manager->transition_image_layout(image, vk::ImageLayout::eShaderReadOnlyOptimal);
     }
 
     m_textures.push_back(image);
@@ -333,12 +318,7 @@ std::shared_ptr<Core::VKImage> TextureLoom::create_render_target(
         return nullptr;
     }
 
-    m_resource_manager->transition_image_layout(
-        image->get_image(),
-        vk::ImageLayout::eUndefined,
-        vk::ImageLayout::eColorAttachmentOptimal,
-        1, 1, vk::ImageAspectFlagBits::eColor);
-    image->set_current_layout(vk::ImageLayout::eColorAttachmentOptimal);
+    m_resource_manager->transition_image_layout(image, vk::ImageLayout::eColorAttachmentOptimal);
 
     m_textures.push_back(image);
     MF_INFO(Journal::Component::Portal, Journal::Context::ImageProcessing,
@@ -374,16 +354,7 @@ std::shared_ptr<Core::VKImage> TextureLoom::create_depth_buffer(
         return nullptr;
     }
 
-    vk::ImageAspectFlags aspect = with_stencil
-        ? (vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil)
-        : vk::ImageAspectFlagBits::eDepth;
-
-    m_resource_manager->transition_image_layout(
-        image->get_image(),
-        vk::ImageLayout::eUndefined,
-        vk::ImageLayout::eDepthStencilAttachmentOptimal,
-        1, 1, aspect);
-    image->set_current_layout(vk::ImageLayout::eDepthStencilAttachmentOptimal);
+    m_resource_manager->transition_image_layout(image, vk::ImageLayout::eDepthStencilAttachmentOptimal);
 
     m_textures.push_back(image);
     MF_INFO(Journal::Component::Portal, Journal::Context::ImageProcessing,
@@ -416,12 +387,7 @@ std::shared_ptr<Core::VKImage> TextureLoom::create_storage_image(
         return nullptr;
     }
 
-    m_resource_manager->transition_image_layout(
-        image->get_image(),
-        vk::ImageLayout::eUndefined,
-        vk::ImageLayout::eGeneral,
-        1, 1, vk::ImageAspectFlagBits::eColor);
-    image->set_current_layout(vk::ImageLayout::eGeneral);
+    m_resource_manager->transition_image_layout(image, vk::ImageLayout::eGeneral);
 
     m_textures.push_back(image);
     MF_INFO(Journal::Component::Portal, Journal::Context::ImageProcessing,
@@ -649,25 +615,16 @@ std::optional<Kakshya::ImageData> TextureLoom::download_image(
 
 void TextureLoom::transition_layout(
     const std::shared_ptr<Core::VKImage>& image,
-    vk::ImageLayout old_layout,
     vk::ImageLayout new_layout,
-    uint32_t mip_levels,
-    uint32_t array_layers,
-    vk::ImageAspectFlags aspect_mask)
+    SubmitMode mode)
 {
     if (!is_initialized() || !image) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
-            "Invalid parameters for transition_vk_image_layout");
+            "Invalid parameters for transition_layout");
         return;
     }
 
-    m_resource_manager->transition_image_layout(
-        image->get_image(),
-        old_layout,
-        new_layout,
-        mip_levels, array_layers, aspect_mask);
-
-    image->set_current_layout(new_layout);
+    m_resource_manager->transition_image_layout(image, new_layout, mode);
 }
 
 namespace {

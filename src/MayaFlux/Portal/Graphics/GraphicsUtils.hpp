@@ -169,10 +169,8 @@ struct GpuBufferBinding {
      * @enum Direction
      * @brief Data flow direction for this binding.
      *
-     * INPUT_OUTPUT bindings receive a cross-pass memory barrier when used
-     * across multiple recorded dispatches in one command buffer (see
-     * ComputePress::record_sequence), since the same resource is both
-     * read and written by consecutive stages.
+     * Controls host staging and automatic readback. ComputePress records a
+     * memory barrier after every stage regardless of binding direction.
      */
     enum class Direction : uint8_t {
         INPUT,
@@ -184,13 +182,17 @@ struct GpuBufferBinding {
      * @enum ElementType
      * @brief Element type the shader expects in this binding.
      *
-     * FLOAT32          — cast double channels to float (default).
-     * UINT32           — reinterpret variant bytes as uint32_t.
-     * INT32            — reinterpret variant bytes as int32_t.
-     * PASSTHROUGH      — upload raw variant bytes with no cast; caller
-     *                    must pre-stage for INPUT / INPUT_OUTPUT bindings.
-     * IMAGE_STORAGE    — writeonly/readonly image2D, storage image descriptor.
-     * IMAGE_SAMPLED    — sampler2D, combined image sampler descriptor.
+     * FLOAT32: cast double channels to float (default).
+     * UINT32: reinterpret variant bytes as uint32_t.
+     * INT32: reinterpret variant bytes as int32_t.
+     * VEC2_U32: two uint32_t words per element, low word then high word
+     * (a uvec2). Accepts only native VEC2_U32 input or binding data.
+     * FLOAT64: one IEEE 754 double per element (eight bytes). Accepts only
+     * native FLOAT64 input or binding data.
+     * PASSTHROUGH: upload raw variant bytes with no cast. INPUT and
+     * INPUT_OUTPUT callers must pre-stage.
+     * IMAGE_STORAGE: writeonly/readonly image2D, storage image descriptor.
+     * IMAGE_SAMPLED: sampler2D, combined image sampler descriptor.
      */
     enum class ElementType : uint8_t {
         FLOAT32,
@@ -198,7 +200,9 @@ struct GpuBufferBinding {
         INT32,
         PASSTHROUGH,
         IMAGE_STORAGE,
-        IMAGE_SAMPLED
+        IMAGE_SAMPLED,
+        VEC2_U32,
+        FLOAT64
     } element_type { ElementType::FLOAT32 };
 
     BufferUsageHint usage_hint { BufferUsageHint::COMPUTE_STORAGE }; ///< Hint for buffer allocation and memory properties.

@@ -133,6 +133,7 @@ private:
 
     SubsystemTokens m_subsystem_tokens; ///< Processing token configuration
     SubsystemProcessingHandle* m_handle; ///< Reference to processing handle
+    std::optional<BufferProcessingHandle> m_parallel_buffers; ///< Handle for the accepted AUDIO_PARALLEL token
 
     bool m_is_ready {}; ///< Subsystem ready state
     bool m_is_paused {}; ///< Subsystem paused state

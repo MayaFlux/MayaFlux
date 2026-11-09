@@ -237,14 +237,14 @@ void route_network(
 // Audio Processing
 //-------------------------------------------------------------------------
 
-void register_audio_buffer(const std::shared_ptr<Buffers::AudioBuffer>& buffer, uint32_t channel)
+void register_audio_buffer(const std::shared_ptr<Buffers::AudioBuffer>& buffer, uint32_t channel, Buffers::ProcessingToken token)
 {
-    get_buffer_manager()->add_buffer(buffer, Buffers::ProcessingToken::AUDIO_BACKEND, channel);
+    get_buffer_manager()->add_buffer(buffer, token, channel);
 }
 
-void unregister_audio_buffer(const std::shared_ptr<Buffers::AudioBuffer>& buffer, uint32_t channel)
+void unregister_audio_buffer(const std::shared_ptr<Buffers::AudioBuffer>& buffer, uint32_t channel, Buffers::ProcessingToken token)
 {
-    get_buffer_manager()->remove_buffer(buffer, Buffers::ProcessingToken::AUDIO_BACKEND, channel);
+    get_buffer_manager()->remove_buffer(buffer, token, channel);
 }
 
 void register_graphics_buffer(const std::shared_ptr<Buffers::VKBuffer>& buffer, Buffers::ProcessingToken token)

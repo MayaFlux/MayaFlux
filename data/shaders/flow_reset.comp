@@ -1,4 +1,5 @@
 #version 460
+#extension GL_EXT_buffer_reference : require
 
 layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
 
@@ -6,17 +7,23 @@ layout(set = 0, binding = 1, std430) buffer DetCountBuf {
     uint det_count[];
 };
 
-layout(set = 1, binding = 0, std430) buffer PrevCountBuf {
-    uint prev_count[];
+layout(buffer_reference, std430) buffer PrevCountBufRef {
+    uint v[];
 };
 
-layout(set = 1, binding = 3, std430) buffer MetaBuf {
-    uint meta[];
+layout(buffer_reference, std430) buffer MetaBufRef {
+    uint v[];
 };
 
-layout(set = 1, binding = 5, std430) buffer CounterBuf {
-    uint ctr[];
+layout(buffer_reference, std430) buffer CounterBufRef {
+    uint v[];
 };
+
+layout(push_constant) uniform PC {
+    PrevCountBufRef prev_count;
+    MetaBufRef meta;
+    CounterBufRef ctr;
+} pc;
 
 /**
  * @brief Initializes the flow context's GPU-resident counters, including the
@@ -28,10 +35,10 @@ void main()
     const uint i = gl_GlobalInvocationID.x;
     if (i == 0u) {
         det_count[0] = 0u;
-        prev_count[0] = 0u;
+        pc.prev_count.v[0] = 0u;
     }
     if (i < 4u)
-        meta[i] = 0u;
+        pc.meta.v[i] = 0u;
     if (i < 16u)
-        ctr[i] = 0u;
+        pc.ctr.v[i] = 0u;
 }

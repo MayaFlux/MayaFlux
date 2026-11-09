@@ -8,6 +8,8 @@
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VulkanBackend.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 
+#include <fstream>
+
 namespace MayaFlux::Portal::Graphics {
 
 bool ShaderFoundry::s_initialized = false;
@@ -64,6 +66,8 @@ bool ShaderFoundry::initialize(
     m_graphics_queue = m_backend->get_context().get_graphics_queue();
     m_compute_queue = m_backend->get_context().get_compute_queue();
     m_transfer_queue = m_backend->get_context().get_transfer_queue();
+
+    initialize_pipeline_cache();
 
     s_initialized = true;
 
@@ -124,6 +128,13 @@ void ShaderFoundry::shutdown()
 
     cleanup_shader_modules();
 
+    save_pipeline_cache();
+    if (m_pipeline_cache) {
+        get_device().destroyPipelineCache(m_pipeline_cache);
+        m_pipeline_cache = nullptr;
+    }
+    m_pipeline_cache_path.clear();
+
     m_finished_timestamps.reset();
 
     m_backend = nullptr;
@@ -131,6 +142,117 @@ void ShaderFoundry::shutdown()
 
     MF_INFO(Journal::Component::Portal, Journal::Context::ShaderCompilation,
         "ShaderFoundry shutdown complete");
+}
+
+void ShaderFoundry::initialize_pipeline_cache()
+{
+    const auto& directory = m_backend->get_context().get_shader_cache_dir();
+    if (!directory.empty()) {
+        const auto resolved_directory = directory.is_absolute()
+            ? directory
+            : std::filesystem::path(Config::project_root()) / directory;
+        m_pipeline_cache_path = resolved_directory / "vulkan_pipeline_cache.bin";
+    }
+
+    std::vector<uint8_t> initial_data;
+    if (!m_pipeline_cache_path.empty()) {
+        std::ifstream input(m_pipeline_cache_path, std::ios::binary | std::ios::ate);
+        if (input) {
+            const auto size = static_cast<std::streamoff>(input.tellg());
+            if (size >= static_cast<std::streamoff>(sizeof(vk::PipelineCacheHeaderVersionOne))
+                && size <= std::numeric_limits<std::streamsize>::max()) {
+                initial_data.resize(static_cast<size_t>(size));
+                input.seekg(0);
+                if (!input.read(reinterpret_cast<char*>(initial_data.data()), static_cast<std::streamsize>(size))) {
+                    initial_data.clear();
+                }
+            }
+        }
+    }
+
+    if (!initial_data.empty()) {
+        vk::PipelineCacheHeaderVersionOne header;
+        std::memcpy(&header, initial_data.data(), sizeof(header));
+        const auto properties = get_physical_device().getProperties();
+        if (header.headerSize < sizeof(header)
+            || header.headerSize > initial_data.size()
+            || header.headerVersion != vk::PipelineCacheHeaderVersion::eOne
+            || header.vendorID != properties.vendorID
+            || header.deviceID != properties.deviceID
+            || std::memcmp(header.pipelineCacheUUID.data(), properties.pipelineCacheUUID.data(), VK_UUID_SIZE) != 0) {
+            initial_data.clear();
+        }
+    }
+
+    try {
+        vk::PipelineCacheCreateInfo create_info({}, initial_data.size(), initial_data.data());
+        m_pipeline_cache = get_device().createPipelineCache(create_info);
+    } catch (const std::exception& e) {
+        std::string failure = e.what();
+        if (!initial_data.empty()) {
+            try {
+                m_pipeline_cache = get_device().createPipelineCache({});
+                return;
+            } catch (const std::exception& retry_error) {
+                failure = retry_error.what();
+            }
+        }
+        MF_WARN(Journal::Component::Portal, Journal::Context::ShaderCompilation,
+            "Vulkan pipeline cache unavailable: {}", failure);
+    }
+}
+
+void ShaderFoundry::save_pipeline_cache()
+{
+    if (!m_pipeline_cache || m_pipeline_cache_path.empty()) {
+        return;
+    }
+
+    try {
+        const auto data = get_device().getPipelineCacheData(m_pipeline_cache);
+        if (data.empty()) {
+            return;
+        }
+
+        std::error_code ec;
+        std::filesystem::create_directories(m_pipeline_cache_path.parent_path(), ec);
+        if (ec) {
+            MF_WARN(Journal::Component::Portal, Journal::Context::ShaderCompilation,
+                "Cannot create pipeline cache directory: {}", ec.message());
+            return;
+        }
+
+        auto temporary_path = m_pipeline_cache_path;
+        temporary_path += ".tmp";
+        std::ofstream output(temporary_path, std::ios::binary | std::ios::trunc);
+        output.write(reinterpret_cast<const char*>(data.data()), static_cast<std::streamsize>(data.size()));
+        output.close();
+        if (!output) {
+            std::filesystem::remove(temporary_path, ec);
+            MF_WARN(Journal::Component::Portal, Journal::Context::ShaderCompilation,
+                "Cannot write Vulkan pipeline cache");
+            return;
+        }
+
+        std::filesystem::rename(temporary_path, m_pipeline_cache_path, ec);
+        if (ec) {
+            std::error_code remove_error;
+            std::filesystem::remove(m_pipeline_cache_path, remove_error);
+            if (!remove_error) {
+                std::filesystem::rename(temporary_path, m_pipeline_cache_path, ec);
+            }
+        }
+        if (ec) {
+            const auto message = ec.message();
+            std::error_code remove_error;
+            std::filesystem::remove(temporary_path, remove_error);
+            MF_WARN(Journal::Component::Portal, Journal::Context::ShaderCompilation,
+                "Cannot replace Vulkan pipeline cache: {}", message);
+        }
+    } catch (const std::exception& e) {
+        MF_WARN(Journal::Component::Portal, Journal::Context::ShaderCompilation,
+            "Cannot save Vulkan pipeline cache: {}", e.what());
+    }
 }
 
 //==============================================================================
@@ -410,6 +532,13 @@ ShaderID ShaderFoundry::load_shader(const ShaderSpec& spec)
     }
 
     if (spec.kernel.has_value()) {
+        if (const std::string reason = detail::double_field_reason(spec);
+            !reason.empty() && !get_physical_device().getFeatures().shaderFloat64) {
+            MF_ERROR(Journal::Component::Portal, Journal::Context::ShaderCompilation,
+                "Rejected shader spec: {}; the selected device does not report shaderFloat64", reason);
+            return INVALID_SHADER;
+        }
+
         const std::string glsl = detail::emit_glsl_kernel(spec);
         const std::string key = generate_source_cache_key(glsl, ShaderStage::COMPUTE);
 
@@ -436,6 +565,12 @@ ShaderID ShaderFoundry::load_shader(const ShaderSpec& spec)
         MF_INFO(Journal::Component::Portal, Journal::Context::ShaderCompilation,
             "Compiled kernel shader (ID: {}, key: {})", id, key);
         return id;
+    }
+
+    if (const std::string reason = detail::double_field_reason(spec); !reason.empty()) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ShaderCompilation,
+            "Rejected shader spec: {}; library kernels are word-pair only", reason);
+        return INVALID_SHADER;
     }
 
     const std::string asm_text = detail::emit_spirv_asm(spec);
@@ -1069,10 +1204,21 @@ void ShaderFoundry::retire_after_submit(std::span<const CommandBufferID> cmd_ids
     }
 }
 
+Core::TimelinePoint ShaderFoundry::flush_deferred()
+{
+    return m_backend->get_command_manager().flush_deferred(m_graphics_queue);
+}
+
 void ShaderFoundry::release_after_submit(std::function<void()> release)
 {
     auto& cmd_manager = m_backend->get_command_manager();
     cmd_manager.retire_resource(std::move(release), cmd_manager.submitted());
+}
+
+void ShaderFoundry::wait_submitted()
+{
+    auto& cmd_manager = m_backend->get_command_manager();
+    cmd_manager.wait(cmd_manager.submitted());
 }
 
 void ShaderFoundry::hold_until_complete(CommandBufferID cmd_id, SlotLease hold)

@@ -41,24 +41,19 @@ struct IndirectGroupsSource {
 
 /**
  * @struct DependencyStage
- * @brief One stage in a dispatch_core_dependency call.
+ * @brief One stage in a record_stages call.
  *
  * stage_fn is invoked with this context as the active target, exactly as
  * if the caller had just called swap_shader(config) and were about to call
  * dispatch_core — stage_image_at, set_binding_data, stage_passthrough,
  * set_push_constants all apply normally inside stage_fn. Works identically
  * for image-bearing and buffer-only shaders; nothing about this struct is
- * image-specific.
- *
- * hazard_fn runs immediately after stage_fn, once this stage's resources
- * (e.g. an image just allocated inside stage_fn) actually exist. Returns
- * the hazard list for this stage; may be empty if nothing downstream in
- * the same dependency call depends on this stage's output.
+ * image-specific. Every stage is followed by a barrier, so a stage sees the
+ * writes of every earlier stage in the same call.
  */
 struct DependencyStage {
     GpuComputeConfig config;
     std::function<void(GpuDispatchCore&)> stage_fn;
-    std::function<std::vector<Portal::Graphics::HazardResource>(GpuDispatchCore&)> hazard_fn;
     std::optional<std::array<uint32_t, 3>> explicit_groups;
 
     /**
@@ -83,7 +78,7 @@ struct DependencyStage {
  */
 class MAYAFLUX_API GpuDispatchCore {
 public:
-    explicit GpuDispatchCore(GpuComputeConfig config);
+    explicit GpuDispatchCore(GpuComputeConfig config, bool compute_isolated = true);
     virtual ~GpuDispatchCore() = default;
 
     GpuDispatchCore(const GpuDispatchCore&) = delete;
@@ -159,11 +154,37 @@ public:
         m_resources.download_shared(set, binding_index, dest, byte_size);
     }
 
-    [[nodiscard]] Portal::Graphics::HazardResource shared_buffer_hazard(
-        const GpuBufferBinding& spec) const
+    /**
+     * @brief Fill the whole shared buffer at (set, binding_index) with one
+     *        32-bit value, in order with the recorded dispatches.
+     */
+    void fill_shared(uint32_t set, size_t binding_index, uint32_t value)
     {
-        return m_resources.make_shared_buffer_hazard(spec);
+        m_resources.fill_shared(set, binding_index, value);
     }
+
+    /**
+     * @brief Append this context's work to a recording shared with other
+     *        contexts. See GpuResourceManager::set_recording.
+     */
+    void set_recording(std::shared_ptr<GpuDispatchRecorder> recording)
+    {
+        m_resources.set_recording(std::move(recording));
+    }
+
+    /**
+     * @brief Stage and record each stage in order, one dispatch per stage.
+     *
+     * Each stage is staged and recorded in turn, so its uploads and fills land
+     * between the dispatches before and after it. With a recording attached
+     * nothing is submitted; without one,
+     * each stage is submitted and awaited on its own. The context's own
+     * shader config, bindings and staged data are restored before this
+     * returns.
+     *
+     * @param stages Ordered stage descriptions.
+     */
+    void record_stages(const std::vector<DependencyStage>& stages);
 
     /**
      * @brief Declare the byte capacity of an output binding independently
@@ -214,6 +235,12 @@ public:
      * Switching back to a previously-used shader is free. Preserves all
      * staged image and buffer bindings, same as before.
      *
+     * Push constant data belongs to the shader that was bound when it was
+     * set. When the shader changes, the staged push data is dropped so the
+     * next dispatch cannot carry bytes from the previous shader into a
+     * pipeline whose push range is different (or absent). Setting the push
+     * data after the swap is the expected order.
+     *
      * Use to drive a multi-op sequence through one context: stage the input
      * image, call swap_shader + dispatch_core per op, pipe get_output_image(0)
      * back in via stage_image between steps.
@@ -222,8 +249,13 @@ public:
      */
     void swap_shader(GpuComputeConfig config)
     {
+        const bool shader_changed = config.shader_id != m_gpu_config.shader_id
+            || config.shader_path != m_gpu_config.shader_path;
         m_gpu_config = std::move(config);
+        if (shader_changed)
+            m_push_constants.clear();
         update_dispatch_key_cache();
+        m_bindings = declared_bindings();
     }
 
     /**
@@ -254,6 +286,12 @@ public:
     [[nodiscard]] Portal::Graphics::GpuBufferHandle shared_buffer_handle(uint32_t set, size_t binding_index) const
     {
         return m_resources.shared_buffer_handle(set, binding_index);
+    }
+
+    /** @brief Device address of the shared buffer at (set, binding_index), or zero when absent. */
+    [[nodiscard]] uint64_t shared_buffer_address(uint32_t set, size_t binding_index) const
+    {
+        return m_resources.shared_buffer_address(set, binding_index);
     }
 
     /**
@@ -317,28 +355,27 @@ protected:
     void stage_passthrough(size_t binding_index, const void* data, size_t byte_size);
 
     /**
-     * @brief Stage a flat native-typed byte buffer for FLOAT32 bindings,
-     *        bypassing the double-to-float cast in flatten_channels_to_staging.
+     * @brief Stage raw input bytes of one element type for the next dispatch.
      *
-     * Intended for pixel data (uint8_t, uint16_t) and pre-converted float
-     * buffers that should reach the GPU without an intermediate double widening.
-     * Once staged, prepare_gpu_inputs will upload these bytes directly via
-     * upload_raw rather than the float staging path.
+     * The staging belongs to the next dispatch only: prepare_gpu_inputs
+     * consumes it, whether that dispatch succeeds or throws. It is uploaded
+     * raw, without conversion, to every INPUT FLOAT32 binding when element is
+     * FLOAT32, or every INPUT UINT32 binding when element is UINT32. Such a
+     * binding must have no binding data of its own. When native input is
+     * staged, it takes the place of channel input, and its element count sets
+     * the dispatch size.
      *
-     * Calling this clears any previously staged native bytes for the slot.
-     * It does not affect m_binding_data (PASSTHROUGH) or m_staging_floats.
-     *
-     * @param binding_index Binding slot. Must match a FLOAT32 INPUT binding.
-     * @param data          Raw bytes in the element type the shader expects.
-     * @param byte_size     Total byte count.
+     * @param format    Element format of data, a Kakshya::GpuDataFormat.
+     * @param data      Raw bytes in that format.
+     * @param byte_size Total byte count, a multiple of gpu_data_format_bytes(format).
      */
-    void stage_native_bytes(size_t binding_index, const void* data, size_t byte_size);
+    void stage_native_bytes(Kakshya::GpuDataFormat format, const void* data, size_t byte_size);
 
     [[nodiscard]] const GpuComputeConfig& gpu_config() const;
 
     /**
      * @brief Full single-pass dispatch.  Drives prepare_gpu_inputs,
-     *        on_before_gpu_dispatch, bind_descriptor, and GpuResourceManager::dispatch.
+     *        on_before_gpu_dispatch, bind_all_descriptors, and GpuResourceManager::dispatch.
      *
      * @param channels       Extracted double channels from the input Datum.
      * @param structure_info Dimension/modality metadata from OperationHelper.
@@ -355,7 +392,8 @@ protected:
      * @param channels       Extracted double channels.
      * @param structure_info Dimension/modality metadata.
      * @param ctx            ExecutionContext carrying pass_count and pc_updater.
-     * @return GpuChannelResult containing primary float readback and aux buffers.
+     * @return GpuChannelResult containing primary float readback and aux
+     *         buffers; empty with a recording attached, which reads nothing back.
      */
     GpuChannelResult dispatch_core_chained(
         const std::vector<std::vector<double>>& channels,
@@ -373,7 +411,8 @@ protected:
      * @param structure_info Dimension/modality metadata.
      * @param ctx            ExecutionContext carrying pass_count, pc_updater,
      *                        and indirect_dispatch_binding.
-     * @return GpuChannelResult containing primary float readback and aux buffers.
+     * @return GpuChannelResult containing primary float readback and aux
+     *         buffers; empty with a recording attached, which reads nothing back.
      */
     GpuChannelResult dispatch_core_chained_indirect(
         const std::vector<std::vector<double>>& channels,
@@ -384,64 +423,20 @@ protected:
      * @brief Non-blocking variant of dispatch_core.
      *
      * Performs the full setup (on_before_gpu_dispatch, prepare_gpu_inputs,
-     * bind_descriptor) then calls GpuResourceManager::dispatch_async.
+     * bind_all_descriptors) then calls GpuResourceManager::dispatch_async.
      * Returns immediately with a FenceID. The caller must poll
      * ShaderFoundry::is_fence_signaled on the returned ID, and once
      * signaled call readback_primary / readback_aux to collect results.
      *
      * @param channels       Extracted double channels from the input Datum.
      * @param structure_info Dimension/modality metadata from OperationHelper.
-     * @return FenceID to poll. INVALID_FENCE if dispatch fails.
+     * @return FenceID to poll. INVALID_FENCE if dispatch fails, and always
+     *         with a recording attached, which holds the dispatch until it
+     *         is submitted.
      */
     [[nodiscard]] Portal::Graphics::FenceID dispatch_core_async(
         const std::vector<std::vector<double>>& channels,
         const DataStructureInfo& structure_info);
-
-    /**
-     * @brief Multi-pipeline dependency dispatch.
-     *
-     * For each stage, in order: applies its shader config (swap_shader
-     * equivalent), invokes stage_fn to perform whatever staging that stage
-     * needs, ensures its GpuResourceManager unit exists, binds its
-     * descriptors, invokes hazard_fn to resolve hazard resources now that
-     * this stage's data exists, then accumulates a Portal::Graphics::ComputeStage.
-     * After every stage is prepared, records and submits the full sequence in
-     * one command buffer via GpuResourceManager::dispatch_sequence.
-     *
-     * Restores the context's original shader config, bindings, and staged
-     * data after the sequence runs, so a subsequent unrelated dispatch_core
-     * call on this context is unaffected.
-     *
-     * @param stages Ordered list of stage descriptions.
-     */
-    void dispatch_core_dependency(const std::vector<DependencyStage>& stages);
-
-    /**
-     * @brief Non-blocking variant of dispatch_core_dependency.
-     *
-     * Stages are prepared exactly as in dispatch_core_dependency, then the
-     * whole sequence is recorded into one command buffer and submitted
-     * without waiting. The context's own shader config, bindings and staged
-     * data are restored before this returns, so the caller may reconfigure
-     * the context immediately. Descriptor sets already written for the
-     * stages' shader keys must not be rebound until the returned fence has
-     * signaled.
-     *
-     * The barrier owed to the final stage's INPUT_OUTPUT hazards is still
-     * recorded, which orders anything submitted afterwards behind this
-     * sequence's writes.
-     *
-     * Unlike dispatch_core_async, no shader-write to host-read barrier is
-     * recorded for the stages' buffers. As with dispatch_core_dependency,
-     * host reads after the fence has signaled rely on the fence's own
-     * visibility guarantee and on the buffers being host coherent.
-     *
-     * @param stages Ordered stage descriptions, as for DependencyParams.
-     * @return FenceID to poll with ShaderFoundry::is_fence_signaled and to
-     *         release once signaled. INVALID_FENCE on submission failure.
-     */
-    [[nodiscard]] Portal::Graphics::FenceID dispatch_core_dependency_async(
-        const std::vector<DependencyStage>& stages);
 
     /**
      * @brief Effective element count used by the last dispatch_core or
@@ -459,10 +454,12 @@ protected:
      * @brief Read back the primary output buffer into a float vector.
      *
      * Selects the first OUTPUT or INPUT_OUTPUT binding.  Caps readback to
-     * the lesser of the requested float count and the allocated buffer size.
+     * the lesser of the requested element count, at the binding's element
+     * width, and the allocated buffer size.  The bytes are returned as is,
+     * so a wider element fills several floats.
      *
-     * @param float_count Number of float elements to attempt to read.
-     * @return Float vector of length min(float_count, allocated / sizeof(float)).
+     * @param float_count Number of elements of the primary binding to attempt to read.
+     * @return Float vector of length min(float_count * element width, allocated) / sizeof(float).
      */
     [[nodiscard]] std::vector<float> readback_primary(size_t float_count);
 
@@ -488,11 +485,11 @@ protected:
      * @brief Flatten native-typed DataVariant channels into m_native_staging_bytes
      *        without any conversion.
      *
-     * Called by prepare_gpu_inputs when structure_info.original_type indicates
-     * a non-double native type and no explicit stage_native_bytes call has been
-     * made. Visits the variant's active alternative and memcpys bytes directly.
+     * Called by GpuExecutionContext::extract_inputs for float and uint32 input.
+     * Copies each variant's bytes unchanged and records their element type. All
+     * variants must share one element type, or the call throws.
      *
-     * No-ops when channels is empty or the modality is structured.
+     * No-ops when variants is empty or the modality is structured.
      *
      * @param variants      Per-channel DataVariants from the container.
      * @param structure_info Dimension/modality metadata.
@@ -520,25 +517,58 @@ protected:
     std::vector<ImageBinding> m_image_bindings;
 
 private:
-    struct DependencyPlan {
-        std::vector<std::string> keys;
-        std::vector<std::array<uint32_t, 3>> groups;
-        std::vector<std::vector<uint8_t>> push_constants;
-        std::vector<std::vector<Portal::Graphics::HazardResource>> hazards;
-        std::vector<Portal::Graphics::IndirectDispatch> indirect;
-    };
+    /**
+     * @brief True when a binding the shader statically uses has no staged image.
+     *
+     * Declared-but-unused image bindings are ignored.
+     */
+    [[nodiscard]] bool has_unstaged_active_image();
 
-    [[nodiscard]] DependencyPlan prepare_dependency(const std::vector<DependencyStage>& stages);
+    /**
+     * @brief True when native input is staged and no data-less INPUT FLOAT32
+     *        or UINT32 binding accepts its element type.
+     */
+    [[nodiscard]] bool native_input_unreceivable();
+
+    /**
+     * @brief Gate for the single-dispatch paths, called before prepare_gpu_inputs.
+     *
+     * False when the dispatch cannot be fed: native input was rejected while
+     * staging, native input has no receiving binding, or a used image binding
+     * has no staged image. On false the staged native input is discarded, so
+     * it cannot reach a later dispatch, and nothing is bound or recorded. Logs
+     * once per episode and re-arms after a dispatch that proceeds. Never throws.
+     */
+    [[nodiscard]] bool inputs_accepted();
+
+    bool m_native_rejected {};
+    bool m_input_warned {};
+
+    /**
+     * @brief Stage each of stages in turn and hand its dispatch key, groups,
+     *        push constants and indirect source to on_stage, then restore the
+     *        context's own config, bindings and staged data.
+     */
+    void for_each_stage(const std::vector<DependencyStage>& stages,
+        const std::function<void(const std::array<uint32_t, 3>&, const Portal::Graphics::IndirectDispatch&)>& on_stage);
 
     GpuComputeConfig m_gpu_config;
     std::string m_cached_dispatch_key;
 
     size_t m_last_effective_element_count {};
 
-    /// Native-typed staging buffer. Non-empty when stage_native_bytes() has
-    /// been called or flatten_native_variants_to_staging() produced output.
-    /// Takes precedence over m_staging_floats in prepare_gpu_inputs.
+    /// Native input for the next dispatch, set by stage_native_bytes() or
+    /// flatten_native_variants_to_staging(). Consumed by prepare_gpu_inputs.
     std::vector<uint8_t> m_native_staging_bytes;
+    std::optional<Kakshya::GpuDataFormat> m_native_format;
+
+    /// Element count of the dispatch most recently prepared. Set by
+    /// prepare_gpu_inputs; the dispatch size and readback count come from it.
+    size_t m_prepared_elements {};
+
+
+    /** declare_buffer_bindings less the bindings the current unit's layout does not hold. */
+    [[nodiscard]] std::vector<GpuBufferBinding> declared_bindings() const;
 
     void update_dispatch_key_cache();
     void bind_all_descriptors();

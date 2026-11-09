@@ -118,29 +118,37 @@ namespace {
         ctx.stage_image_at(2, nullptr, ElementType::IMAGE_SAMPLED);
     }
 
-    void dispatch_and_wait(TextureExecutionContext& ctx)
+    /**
+     * @brief Record one dispatch of ctx's current shader into its recording.
+     */
+    void record_dispatch(TextureExecutionContext& ctx)
     {
-        auto& foundry = Portal::Graphics::get_shader_foundry();
-        const auto fence = ctx.dispatch_async({});
+        (void)ctx.dispatch_async({});
         ctx.clear_output_dimensions();
-        foundry.wait_for_fence(fence);
-        foundry.release_fence(fence);
     }
 
-    [[nodiscard]] std::shared_ptr<Core::VKImage> dispatch_image(TextureExecutionContext& ctx, uint32_t w, uint32_t h)
+    /**
+     * @brief Record a dispatch into a fresh output image and submit it without
+     *        waiting; the image is consumed on the GPU, in submission order.
+     */
+    [[nodiscard]] std::shared_ptr<Core::VKImage> dispatch_image(TextureExecutionContext& ctx, GpuDispatchRecorder& recording, uint32_t w, uint32_t h)
     {
         ctx.prepare_output_image(w, h);
         ctx.set_output_dimensions(w, h);
-        dispatch_and_wait(ctx);
+        record_dispatch(ctx);
+        recording.submit();
         return ctx.get_output_image(0);
     }
 
-    /** @brief Run a reduce-context dispatch of x invocations and return output buffer 6 as floats. */
+    /**
+     * @brief Run a reduce-context dispatch of x invocations and return output
+     *        buffer 6 as floats. Reading the result submits and waits.
+     */
     [[nodiscard]] std::vector<float> dispatch_reduce(TextureExecutionContext& ctx, uint32_t invocations, size_t output_bytes)
     {
         ctx.set_output_size(6, output_bytes);
         ctx.set_output_dimensions(invocations, 1);
-        dispatch_and_wait(ctx);
+        record_dispatch(ctx);
 
         const auto result = ctx.collect_result();
         const auto it = result.aux.find(6);
@@ -206,17 +214,30 @@ VisionExtractor::VisionExtractor(VisionExtractorConfig config)
     set_config(std::move(config));
 }
 
+GpuDispatchRecorder& VisionExtractor::recording()
+{
+    if (!m_recording)
+        m_recording = std::make_shared<GpuDispatchRecorder>(false);
+    return *m_recording;
+}
+
 TextureExecutionContext& VisionExtractor::image_context()
 {
-    if (!m_image_ctx)
+    if (!m_image_ctx) {
         m_image_ctx = make_image_context();
+        recording();
+        m_image_ctx->set_recording(m_recording);
+    }
     return *m_image_ctx;
 }
 
 TextureExecutionContext& VisionExtractor::reduce_context()
 {
-    if (!m_reduce_ctx)
+    if (!m_reduce_ctx) {
         m_reduce_ctx = make_reduce_context();
+        recording();
+        m_reduce_ctx->set_recording(m_recording);
+    }
     return *m_reduce_ctx;
 }
 
@@ -355,7 +376,7 @@ std::shared_ptr<Core::VKImage> VisionExtractor::crop(
     ctx.set_push_constants(CropPC {
         .src_x = region->x, .src_y = region->y, .src_w = region->w, .src_h = region->h,
         .out_w = out_w, .out_h = out_h });
-    return dispatch_image(ctx, out_w, out_h);
+    return dispatch_image(ctx, recording(), out_w, out_h);
 }
 
 std::shared_ptr<Core::VKImage> VisionExtractor::crops(
@@ -379,7 +400,7 @@ std::shared_ptr<Core::VKImage> VisionExtractor::crops(
     ctx.stage_image(source);
     ctx.set_binding_data(3, std::span<const float>(rects));
     ctx.set_push_constants(AtlasPC { .tile_w = tile_w, .tile_h = tile_h, .count = count });
-    return dispatch_image(ctx, tile_w * count, tile_h);
+    return dispatch_image(ctx, recording(), tile_w * count, tile_h);
 }
 
 std::shared_ptr<Core::VKImage> VisionExtractor::mask(
@@ -451,7 +472,7 @@ std::shared_ptr<Core::VKImage> VisionExtractor::fill_elements(
     ctx.set_binding_data(4, std::span<const uint32_t>(polygons));
     ctx.set_binding_data(5, std::span<const uint32_t>(table));
     ctx.set_push_constants(AtlasPC { .tile_w = tile_w, .tile_h = tile_h, .count = count });
-    return dispatch_image(ctx, tile_w * count, tile_h);
+    return dispatch_image(ctx, recording(), tile_w * count, tile_h);
 }
 
 std::shared_ptr<Core::VKImage> VisionExtractor::silhouettes(
@@ -585,7 +606,7 @@ std::shared_ptr<Core::VKImage> VisionExtractor::patches(
     ctx.set_push_constants(PatchExtractPC {
         .patch_w = patch_w, .patch_h = patch_h, .count = count,
         .src_w = source_w, .src_h = source_h });
-    return dispatch_image(ctx, patch_w * count, patch_h);
+    return dispatch_image(ctx, recording(), patch_w * count, patch_h);
 }
 
 std::shared_ptr<Core::VKImage> VisionExtractor::tone(
@@ -599,7 +620,7 @@ std::shared_ptr<Core::VKImage> VisionExtractor::tone(
     ctx.stage_image(source);
     ctx.set_binding_data(3, std::span<const uint32_t>(appearance.histogram.data(), appearance.histogram.size()));
     ctx.set_push_constants(TonePC { .mode = mode, .gain = gain, .width = source_w, .height = source_h });
-    return dispatch_image(ctx, source_w, source_h);
+    return dispatch_image(ctx, recording(), source_w, source_h);
 }
 
 std::shared_ptr<Core::VKImage> VisionExtractor::equalize(
@@ -640,7 +661,7 @@ std::shared_ptr<Core::VKImage> VisionExtractor::edges(
     ctx.stage_image(source);
     ctx.stage_image_at(2, analysis.detect_edges, ElementType::IMAGE_SAMPLED, default_sampler());
     ctx.set_push_constants(EdgePC { .threshold = settings().edge_threshold, .out_w = source_w, .out_h = source_h });
-    return dispatch_image(ctx, source_w, source_h);
+    return dispatch_image(ctx, recording(), source_w, source_h);
 }
 
 std::shared_ptr<Core::VKImage> VisionExtractor::motion_mask(
@@ -660,7 +681,7 @@ std::shared_ptr<Core::VKImage> VisionExtractor::motion_mask(
     ctx.set_push_constants(MotionPC {
         .min_speed = settings().min_speed, .min_confidence = settings().min_confidence,
         .out_w = source_w, .out_h = source_h });
-    return dispatch_image(ctx, source_w, source_h);
+    return dispatch_image(ctx, recording(), source_w, source_h);
 }
 
 std::shared_ptr<Core::VKImage> VisionExtractor::annotate(
@@ -715,7 +736,7 @@ std::shared_ptr<Core::VKImage> VisionExtractor::annotate(
     ctx.set_push_constants(CropPC {
         .src_x = 0.0F, .src_y = 0.0F, .src_w = 1.0F, .src_h = 1.0F,
         .out_w = source_w, .out_h = source_h });
-    auto image = dispatch_image(ctx, source_w, source_h);
+    auto image = dispatch_image(ctx, recording(), source_w, source_h);
 
     if (count == 0)
         return image;
@@ -727,7 +748,8 @@ std::shared_ptr<Core::VKImage> VisionExtractor::annotate(
     });
     ctx.set_push_constants(SegmentsPC { .count = count, .width = source_w, .height = source_h });
     ctx.set_output_dimensions(source_w, source_h);
-    dispatch_and_wait(ctx);
+    record_dispatch(ctx);
+    recording().submit();
 
     return ctx.get_output_image(0);
 }

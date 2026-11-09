@@ -157,6 +157,15 @@ struct MAYAFLUX_API BufferService {
     std::function<std::pair<uint32_t, uint64_t>(std::function<void(void*)>, std::vector<std::shared_ptr<void>>)> execute_async;
 
     /**
+     * @brief Submit the commands recorded with record_deferred.
+     * @return Timeline index and value of the submission, or {0, 0} when nothing was pending.
+     *
+     * Any later submission flushes them as well. Use await_point to wait.
+     * Submission is externally synchronized.
+     */
+    std::function<std::pair<uint32_t, uint64_t>()> flush_deferred;
+
+    /**
      * @brief Submit commands with a fence. Non-blocking.
      * @param recorder Lambda that records commands into command buffer.
      * @return Opaque handle tracking the submission.

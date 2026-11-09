@@ -98,8 +98,7 @@ namespace {
         const std::shared_ptr<VKBuffer>& staging_buffer,
         size_t bytes,
         size_t dst_offset,
-        const Fill& fill,
-        bool asynchronous = false)
+        const Fill& fill)
     {
         if (dst_offset + bytes > target->get_size_bytes()) {
             error<std::runtime_error>(
@@ -121,23 +120,21 @@ namespace {
                 "Staging buffer has no mapped pointer");
         }
 
-        if (asynchronous) {
-            staging_buffer->await_use();
-        }
-
-        fill(staging_mapped);
-        staging_buffer->mark_dirty_range(0, bytes);
-
         auto buffer_service = Registry::BackendRegistry::instance()
                                   .get_service<Registry::Service::BufferService>();
 
-        if (!buffer_service) {
+        if (!buffer_service || !buffer_service->execute_async) {
             error<std::runtime_error>(
                 Journal::Component::Buffers,
                 Journal::Context::BufferProcessing,
                 std::source_location::current(),
-                "upload_host_visible requires a valid buffer service");
+                "upload_device_local requires a valid buffer service");
         }
+
+        staging_buffer->await_use();
+
+        fill(staging_mapped);
+        staging_buffer->mark_dirty_range(0, bytes);
 
         auto dirty_ranges = staging_buffer->get_and_clear_dirty_ranges();
         for (auto& [offset, size] : dirty_ranges) {
@@ -147,31 +144,28 @@ namespace {
                 size);
         }
 
-        if (asynchronous && buffer_service->execute_fenced && buffer_service->release_fenced
-            && buffer_service->fenced_point) {
-            const vk::Buffer source = staging_resources.buffer;
-            const vk::Buffer destination = target->get_buffer_resources().buffer;
+        const vk::Buffer source = staging_resources.buffer;
+        const vk::Buffer destination = target->get_buffer_resources().buffer;
 
-            const auto handle = buffer_service->execute_fenced([&](void* command_buffer) {
+        const auto [timeline, value] = buffer_service->execute_async(
+            [source, destination, bytes, dst_offset](void* command_buffer) {
                 vk::CommandBuffer cmd(static_cast<VkCommandBuffer>(command_buffer));
                 const vk::BufferCopy region { 0, dst_offset, bytes };
                 cmd.copyBuffer(source, destination, 1, &region);
                 record_transfer_visibility(cmd);
-            });
+            },
+            { staging_buffer, target });
 
-            if (handle) {
-                const auto [timeline, value] = buffer_service->fenced_point(handle);
-                staging_buffer->note_use(timeline, value);
-                target->note_use(timeline, value);
-                buffer_service->release_fenced(handle);
-                return;
-            }
+        if (value == 0) {
+            error<std::runtime_error>(
+                Journal::Component::Buffers,
+                Journal::Context::BufferProcessing,
+                std::source_location::current(),
+                "upload_device_local: copy submission failed");
         }
 
-        buffer_service->copy_buffer(
-            static_cast<void*>(staging_buffer->get_buffer()),
-            static_cast<void*>(target->get_buffer()),
-            bytes, 0, dst_offset);
+        staging_buffer->note_use(timeline, value);
+        target->note_use(timeline, value);
     }
 
 } // namespace
@@ -569,7 +563,7 @@ std::optional<Kakshya::MeshData> download_compute_mesh(
 
     std::vector<uint8_t> bytes(static_cast<size_t>(*vertex_count) * sizeof(Kakshya::MeshVertex));
     std::shared_ptr<VKBuffer> staging;
-    download_from_gpu_async(buffer, bytes.data(), bytes.size(), staging);
+    download_back_buffer(generation_slot(gpu_buffer_handle(buffer)), bytes.data(), bytes.size(), staging);
 
     return triangle_soup_mesh(bytes);
 }
@@ -709,12 +703,12 @@ void upload_intervals(
         return;
     }
 
-    if (!buffer_service->execute_immediate) {
+    if (!buffer_service->execute_async) {
         error<std::runtime_error>(
             Journal::Component::Buffers,
             Journal::Context::BufferProcessing,
             std::source_location::current(),
-            "upload_intervals requires execute_immediate for device-local targets");
+            "upload_intervals requires execute_async for device-local targets");
     }
 
     size_t packed_bytes = 0;
@@ -725,6 +719,7 @@ void upload_intervals(
     if (!staging || staging->get_size_bytes() < packed_bytes) {
         staging = create_staging_buffer(packed_bytes);
     }
+    staging->await_use();
 
     auto* staged = static_cast<uint8_t*>(staging->get_mapped_ptr());
     if (!staged) {
@@ -750,10 +745,24 @@ void upload_intervals(
 
     const vk::Buffer source = staging_resources.buffer;
     const vk::Buffer destination = target->get_buffer_resources().buffer;
-    buffer_service->execute_immediate([&](void* command_buffer) {
-        vk::CommandBuffer cmd(static_cast<VkCommandBuffer>(command_buffer));
-        cmd.copyBuffer(source, destination, regions);
-    });
+    const auto [timeline, value] = buffer_service->execute_async(
+        [source, destination, regions = std::move(regions)](void* command_buffer) {
+            vk::CommandBuffer cmd(static_cast<VkCommandBuffer>(command_buffer));
+            cmd.copyBuffer(source, destination, regions);
+            record_transfer_visibility(cmd);
+        },
+        { staging, target });
+
+    if (value == 0) {
+        error<std::runtime_error>(
+            Journal::Component::Buffers,
+            Journal::Context::BufferProcessing,
+            std::source_location::current(),
+            "upload_intervals: copy submission failed");
+    }
+
+    staging->note_use(timeline, value);
+    target->note_use(timeline, value);
 }
 
 void upload_to_gpu(
@@ -789,7 +798,7 @@ void upload_to_gpu(
             staging_buf = create_staging_buffer(size);
         }
 
-        write_device_local(target, staging_buf, size, dst_offset, copy, awaited && staging != nullptr);
+        write_device_local(target, staging_buf, size, dst_offset, copy);
     }
 }
 
@@ -816,18 +825,28 @@ bool clear_gpu_buffer(const std::shared_ptr<VKBuffer>& target)
     auto* buffer_service = Registry::BackendRegistry::instance()
                                .get_service<Registry::Service::BufferService>();
 
-    if (!buffer_service || !buffer_service->execute_immediate) {
+    if (!buffer_service || !buffer_service->execute_async) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             "clear_gpu_buffer: BufferService unavailable");
         return false;
     }
 
     const vk::Buffer buffer = target->get_buffer_resources().buffer;
-    buffer_service->execute_immediate([buffer](void* command_buffer) {
-        vk::CommandBuffer cmd(static_cast<VkCommandBuffer>(command_buffer));
-        cmd.fillBuffer(buffer, 0, VK_WHOLE_SIZE, 0);
-    });
+    const auto [timeline, value] = buffer_service->execute_async(
+        [buffer](void* command_buffer) {
+            vk::CommandBuffer cmd(static_cast<VkCommandBuffer>(command_buffer));
+            cmd.fillBuffer(buffer, 0, VK_WHOLE_SIZE, 0);
+            record_transfer_visibility(cmd);
+        },
+        { target });
 
+    if (value == 0) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "clear_gpu_buffer: fill submission failed");
+        return false;
+    }
+
+    target->note_use(timeline, value);
     return true;
 }
 
@@ -911,65 +930,6 @@ void download_from_gpu(
     auto [ptr, bytes, format_hint] = accessor.gpu_buffer();
 
     std::memcpy(data, ptr, std::min(size, bytes));
-}
-
-void download_from_gpu_async(
-    const std::shared_ptr<VKBuffer>& source,
-    void* data,
-    size_t size,
-    std::shared_ptr<VKBuffer>& staging)
-{
-    if (!source || !data || size == 0)
-        return;
-
-    auto buffer_service = Registry::BackendRegistry::instance()
-                              .get_service<Registry::Service::BufferService>();
-
-    if (!buffer_service
-        || !buffer_service->execute_fenced
-        || !buffer_service->wait_fenced
-        || !buffer_service->release_fenced
-        || !buffer_service->invalidate_range) {
-        error<std::runtime_error>(
-            Journal::Component::Buffers,
-            Journal::Context::BufferProcessing,
-            std::source_location::current(),
-            "download_from_gpu_async: BufferService unavailable");
-    }
-
-    if (!staging || staging->get_size_bytes() < size)
-        staging = create_staging_buffer(size);
-
-    auto handle = buffer_service->copy_buffer_fenced(
-        static_cast<void*>(source->get_buffer()),
-        static_cast<void*>(staging->get_buffer()),
-        size, 0, 0);
-
-    if (!handle) {
-        error<std::runtime_error>(
-            Journal::Component::Buffers,
-            Journal::Context::BufferProcessing,
-            std::source_location::current(),
-            "download_from_gpu_async: execute_fenced returned null");
-    }
-
-    buffer_service->wait_fenced(handle);
-
-    auto& resources = staging->get_buffer_resources();
-    buffer_service->invalidate_range(resources.memory, 0, size);
-
-    void* ptr = staging->get_mapped_ptr();
-    if (!ptr) {
-        buffer_service->release_fenced(handle);
-        error<std::runtime_error>(
-            Journal::Component::Buffers,
-            Journal::Context::BufferProcessing,
-            std::source_location::current(),
-            "download_from_gpu_async: staging buffer has no mapped pointer");
-    }
-
-    std::memcpy(data, ptr, size);
-    buffer_service->release_fenced(handle);
 }
 
 std::span<const float> download_and_normalise(

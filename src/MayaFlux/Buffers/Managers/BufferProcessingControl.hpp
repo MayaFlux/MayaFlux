@@ -89,15 +89,24 @@ public:
         ProcessingToken token = ProcessingToken::AUDIO_BACKEND);
 
     /**
-     * @brief Removes a processor from a token (dispatches based on token)
+     * @brief Removes a processor from one channel of a token (dispatches based on token)
      * @param processor Processor to remove
      * @param token Processing domain
-     * @param channel Channel index (optional, used for audio tokens)
+     * @param channel Channel index, used for audio tokens only
      */
-    void remove_processor_from_token(
+    void remove_processor_from_channel(
         const std::shared_ptr<BufferProcessor>& processor,
         ProcessingToken token,
         uint32_t channel = 0);
+
+    /**
+     * @brief Removes a processor from every channel of a token (dispatches based on token)
+     * @param processor Processor to remove
+     * @param token Processing domain
+     */
+    void remove_processor_from_token(
+        const std::shared_ptr<BufferProcessor>& processor,
+        ProcessingToken token);
 
     /**
      * @brief Sets a final processor for a token (dispatches based on token)
@@ -122,6 +131,19 @@ public:
     void add_audio_processor(
         const std::shared_ptr<BufferProcessor>& processor,
         const std::shared_ptr<AudioBuffer>& buffer);
+
+    /**
+     * @brief Adds a processor to an audio buffer's own chain
+     * @param processor Processor to add
+     * @param buffer Target audio buffer
+     * @param token Processing domain the buffer is registered under
+     *
+     * The unit's root chain is not touched; use the channel and token variants for root scope.
+     */
+    void add_audio_processor(
+        const std::shared_ptr<BufferProcessor>& processor,
+        const std::shared_ptr<AudioBuffer>& buffer,
+        ProcessingToken token);
 
     /**
      * @brief Adds a processor to a specific audio token and channel
@@ -151,6 +173,17 @@ public:
     void remove_audio_processor(
         const std::shared_ptr<BufferProcessor>& processor,
         const std::shared_ptr<AudioBuffer>& buffer);
+
+    /**
+     * @brief Removes a processor from an audio buffer within a specific token's unit
+     * @param processor Processor to remove
+     * @param buffer Target audio buffer
+     * @param token Processing domain whose unit chain holds the processor
+     */
+    void remove_audio_processor(
+        const std::shared_ptr<BufferProcessor>& processor,
+        const std::shared_ptr<AudioBuffer>& buffer,
+        ProcessingToken token);
 
     /**
      * @brief Removes a processor from a specific audio token and channel

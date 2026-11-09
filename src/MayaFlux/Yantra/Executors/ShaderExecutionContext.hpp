@@ -8,8 +8,8 @@ namespace MayaFlux::Yantra {
  * @class ShaderExecutionContext
  * @brief Concrete GpuExecutionContext for a single fixed shader with fixed bindings.
  *
- * The standard way to run a shader as an operation: hand it to GpuTransformer
- * or GpuSorter, which dispatch through it and have no CPU path. Bindings are
+ * The standard way to run a shader as an operation: hand it to GpuTransformer,
+ * which dispatches through it and has no CPU path. Bindings are
  * declared at construction or built incrementally through the fluent API.
  *
  * Construction followed by fluent configuration:
@@ -57,12 +57,15 @@ public:
      * @param config   Shader path, workgroup size, push constant size.
      * @param bindings Pre-built descriptor layout. Empty by default.
      * @param name     Executor name for logging and error messages.
+     * @param compute_isolated True when this context's GPU resources are not
+     *                         shared with graphics.
      */
     explicit ShaderExecutionContext(
         GpuComputeConfig config,
         std::vector<GpuBufferBinding> bindings = {},
-        std::string name = "ShaderExecutionContext")
-        : GpuExecutionContext<InputType, OutputType>(std::move(config))
+        std::string name = "ShaderExecutionContext",
+        bool compute_isolated = true)
+        : GpuExecutionContext<InputType, OutputType>(std::move(config), compute_isolated)
         , m_bindings(std::move(bindings))
         , m_name(std::move(name))
     {

@@ -29,6 +29,39 @@ enum class KernelTemplate : uint8_t {
     Convolve2D, ///< 2D separable or non-separable convolution; kernel weights in SSBO, radius in PC
     Scan, ///< Inclusive prefix scan over one InOut SSBO, double-buffered
           ///< Hillis-Steele in shared memory. Op selects the combine function.
+    SegmentedReduction, ///< One workgroup per segment over word-pair doubles.
+                        ///< Input VEC2_U32 binding, Output VEC2_U32 binding, three UINT32
+                        ///< push constants: length, stride, offset. Segment s covers
+                        ///< length elements starting at offset + s * stride. Op is the
+                        ///< combine (Sum, Max, Min); ReductionMap is applied first.
+    FFT, ///< Radix 2 FFT of word-pair doubles, one workgroup per window, points a
+         ///< power of two up to 2048. Bindings in order: values (interleaved re, im),
+         ///< twiddle (cos, sin per k below points / 2), window (points reals), result,
+         ///< and weights for a projection.
+         ///< Five UINT32 push constants: length, stride, offset in complex elements,
+         ///< then the low and high word of a double scale applied to the output.
+};
+
+/**
+ * @enum SpectrumOutput
+ * @brief What an FFT template writes for each window.
+ */
+enum class SpectrumOutput : uint8_t {
+    Complex, ///< points complex bins, interleaved re, im, scaled
+    Power, ///< points / 2 + 1 bins of re * re + im * im, after scaling
+    Projection, ///< descriptors values per window: row r of a weights binding, one weight
+                ///< per power bin, summed against the power spectrum. Needs a fifth binding,
+                ///< weights, of descriptors rows of points / 2 + 1 entries.
+};
+
+/**
+ * @enum ReductionMap
+ * @brief Pointwise map applied to each element before a SegmentedReduction combines it.
+ */
+enum class ReductionMap : uint8_t {
+    Identity, ///< x
+    Abs, ///< |x|
+    Square, ///< x * x
 };
 
 /**
@@ -222,6 +255,7 @@ struct KernelSource {
  * Reduction operations (one InOut SSBO, shared memory):
  *   Sum          accumulate + into shared[lid], tree reduce
  *   Max          accumulate max into shared[lid], tree reduce
+ *   Min          as the combine of SegmentedReduction, where it is the minimum
  *   IndexScale   sig[i] = float(i) * sig[i]
  */
 enum class KernelOp : uint8_t {
@@ -372,6 +406,10 @@ struct FunctionDef {
 struct ShaderSpec {
     KernelTemplate tmpl { KernelTemplate::Elementwise };
     KernelOp op { KernelOp::Scale };
+    ReductionMap map { ReductionMap::Identity }; ///< SegmentedReduction only.
+    uint32_t points { 0 }; ///< FFT only. Points per window.
+    SpectrumOutput spectrum { SpectrumOutput::Complex }; ///< FFT only.
+    uint32_t descriptors { 0 }; ///< FFT with SpectrumOutput::Projection only. Rows of weights.
     std::vector<BindingSlot> bindings;
     std::vector<PushConstantField> pc_fields;
     std::array<uint32_t, 3> workgroup_size { 256, 1, 1 };
@@ -403,6 +441,34 @@ struct ShaderSpec {
         Assemble& op(KernelOp o)
         {
             m_op = o;
+            return *this;
+        }
+
+        /** @brief Set the pointwise map of a SegmentedReduction. */
+        Assemble& map(ReductionMap m)
+        {
+            m_map = m;
+            return *this;
+        }
+
+        /** @brief Set the points per window of an FFT. */
+        Assemble& points(uint32_t n)
+        {
+            m_points = n;
+            return *this;
+        }
+
+        /** @brief Set what an FFT writes for each window. */
+        Assemble& spectrum(SpectrumOutput s)
+        {
+            m_spectrum = s;
+            return *this;
+        }
+
+        /** @brief Set the rows of weights of a projecting FFT. */
+        Assemble& descriptors(uint32_t n)
+        {
+            m_descriptors = n;
             return *this;
         }
 
@@ -543,6 +609,10 @@ struct ShaderSpec {
             return ShaderSpec {
                 .tmpl = m_tmpl,
                 .op = m_op,
+                .map = m_map,
+                .points = m_points,
+                .spectrum = m_spectrum,
+                .descriptors = m_descriptors,
                 .bindings = std::move(m_bindings),
                 .pc_fields = std::move(m_pc_fields),
                 .workgroup_size = m_workgroup,
@@ -555,6 +625,10 @@ struct ShaderSpec {
     private:
         KernelTemplate m_tmpl { KernelTemplate::Elementwise };
         KernelOp m_op { KernelOp::Scale };
+        ReductionMap m_map { ReductionMap::Identity };
+        uint32_t m_points { 0 };
+        SpectrumOutput m_spectrum { SpectrumOutput::Complex };
+        uint32_t m_descriptors { 0 };
         std::vector<BindingSlot> m_bindings;
         std::vector<PushConstantField> m_pc_fields;
         std::array<uint32_t, 3> m_workgroup { 256, 1, 1 };
@@ -581,5 +655,63 @@ struct ShaderSpec {
  */
 #define MF_KERNEL(lambda) \
     MayaFlux::Portal::Graphics::KernelSource::parse(#lambda)
+
+namespace detail {
+
+    /**
+     * @brief Which soft-double functions a generated module needs.
+     *
+     * The functions are IEEE 754 double arithmetic on word pairs (uvec2, x the
+     * low word, y the high word) built from 32-bit integer ops, so they need
+     * neither shaderFloat64 nor shaderInt64.
+     */
+    struct SoftDoubleUse {
+        bool add { false };
+        bool mul { false };
+        bool less { false };
+    };
+
+    /**
+     * @brief Assembly text for the requested soft-double functions.
+     *
+     * declarations holds the types and constants for the global section.
+     * functions holds the OpFunction bodies and follows every global
+     * declaration. Both rely on %u32, %bool, %v2u32 and the %glsl import
+     * already being declared by the module.
+     */
+    struct SoftDoubleModule {
+        std::string declarations;
+        std::string functions;
+    };
+
+    /** @brief Function adding two doubles held as uvec2. Rounds to nearest even. */
+    inline constexpr std::string_view soft_double_add = "%sd_f64_add";
+
+    /** @brief Function multiplying two doubles held as uvec2. Rounds to nearest even. */
+    inline constexpr std::string_view soft_double_mul = "%sd_f64_mul";
+
+    /**
+     * @brief Function returning bool, true when the first double orders before the second.
+     *
+     * The order is the library order key: -0.0 equals +0.0 and every NaN is the largest.
+     */
+    inline constexpr std::string_view soft_double_less = "%sd_f64_less";
+
+    /**
+     * @brief Emit the requested soft-double functions.
+     */
+    [[nodiscard]] SoftDoubleModule emit_soft_double(const SoftDoubleUse& use);
+
+    /**
+     * @brief Emit the globals, soft-double functions and entry point of the FFT template.
+     *
+     * Returns an empty string when the spec does not have the template's shape:
+     * four VEC2_U32 bindings (five for a projection, with descriptors of at least
+     * one), five UINT32 push constants, points a power of two from 2 to 2048 and a
+     * power of two workgroup size of at most points / 2.
+     */
+    [[nodiscard]] std::string emit_fft(const ShaderSpec& spec);
+
+} // namespace detail
 
 } // namespace MayaFlux::Portal::Graphics

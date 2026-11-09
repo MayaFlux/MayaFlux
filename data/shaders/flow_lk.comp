@@ -1,4 +1,5 @@
 #version 460
+#extension GL_EXT_buffer_reference : require
 
 #extension GL_KHR_shader_subgroup_basic : require
 #extension GL_KHR_shader_subgroup_arithmetic : require
@@ -10,23 +11,27 @@ layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
 layout(set = 0, binding = 3, rgba16f) uniform readonly image2D atlas_a;
 layout(set = 0, binding = 4, rgba16f) uniform readonly image2D atlas_b;
 
-layout(set = 1, binding = 0, std430) buffer PrevCountBuf {
-    uint prev_count[];
+layout(buffer_reference, std430) buffer PrevCountBufRef {
+    uint v[];
 };
 
-layout(set = 1, binding = 1, std430) buffer PrevPointsBuf {
-    vec4 prev_points[];
+layout(buffer_reference, std430) buffer PrevPointsBufRef {
+    vec4 v[];
 };
 
-layout(set = 1, binding = 2, std430) buffer TracksBuf {
-    vec4 tracks[];
+layout(buffer_reference, std430) buffer TracksBufRef {
+    vec4 v[];
 };
 
-layout(set = 1, binding = 3, std430) buffer MetaBuf {
-    uint meta[];
+layout(buffer_reference, std430) buffer MetaBufRef {
+    uint v[];
 };
 
 layout(push_constant) uniform PC {
+    PrevCountBufRef prev_count;
+    PrevPointsBufRef prev_points;
+    TracksBufRef tracks;
+    MetaBufRef meta;
     uint curr_atlas;
     uint level;
     uint coarsest;
@@ -111,21 +116,21 @@ void main()
     const uint gid = gl_WorkGroupID.x;
     const uint lid = gl_LocalInvocationIndex;
 
-    const uint count = min(prev_count[0], pc.max_points);
+    const uint count = min(pc.prev_count.v[0], pc.max_points);
 
     if (pc.backward == 0u && pc.level == 0u && gid == 0u && lid == 0u)
-        meta[0] = count;
+        pc.meta.v[0] = count;
 
     if (gid >= count)
         return;
 
-    const vec4 point = prev_points[2u * gid];
-    const vec4 point_meta = prev_points[2u * gid + 1u];
-    if (pc.backward != 0u && tracks[2u * gid + 1u].y < 0.5)
+    const vec4 point = pc.prev_points.v[2u * gid];
+    const vec4 point_meta = pc.prev_points.v[2u * gid + 1u];
+    if (pc.backward != 0u && pc.tracks.v[2u * gid + 1u].y < 0.5)
         return;
 
     const vec2 base = vec2(float(pc.base_w), float(pc.base_h));
-    const vec2 p0 = (pc.backward != 0u ? tracks[2u * gid].xy : point.xy) * base - vec2(0.5);
+    const vec2 p0 = (pc.backward != 0u ? pc.tracks.v[2u * gid].xy : point.xy) * base - vec2(0.5);
     const float scale = 1.0 / float(1u << pc.level);
     const vec2 pl = (p0 + vec2(0.5)) * scale - vec2(0.5);
     const uint prev_atlas = 1u - pc.curr_atlas;
@@ -134,7 +139,7 @@ void main()
 
     vec2 v = vec2(0.0);
     if (pc.coarsest == 0u)
-        v = tracks[2u * gid].zw * scale;
+        v = pc.tracks.v[2u * gid].zw * scale;
 
     const int r = int(min(pc.window_radius, uint(MAX_RADIUS)));
     const int side = 2 * r + 1;
@@ -185,9 +190,9 @@ void main()
 
     if (pc.level != 0u) {
         if (lid == 0u) {
-            tracks[2u * gid].zw = v / scale;
+            pc.tracks.v[2u * gid].zw = v / scale;
             if (pc.backward == 0u)
-                tracks[2u * gid + 1u].y = 1.0;
+                pc.tracks.v[2u * gid + 1u].y = 1.0;
         }
         return;
     }
@@ -214,13 +219,13 @@ void main()
     if (pc.backward != 0u) {
         const vec2 source_px = point.xy * base - vec2(0.5);
         const bool consistent = ok && distance(tracked_px, source_px) <= pc.forward_backward_threshold;
-        tracks[2u * gid] = vec4(consistent ? tracks[2u * gid].xy : point.xy, point.xy);
-        tracks[2u * gid + 1u].x = consistent ? tracks[2u * gid + 1u].x : 1.0;
-        tracks[2u * gid + 1u].y = consistent ? 1.0 : 0.0;
+        pc.tracks.v[2u * gid] = vec4(consistent ? pc.tracks.v[2u * gid].xy : point.xy, point.xy);
+        pc.tracks.v[2u * gid + 1u].x = consistent ? pc.tracks.v[2u * gid + 1u].x : 1.0;
+        pc.tracks.v[2u * gid + 1u].y = consistent ? 1.0 : 0.0;
         return;
     }
 
     const vec2 position = ok ? (tracked_px + vec2(0.5)) / base : point.xy;
-    tracks[2u * gid] = vec4(position, point.xy);
-    tracks[2u * gid + 1u] = vec4(ok ? residual : 1.0, ok ? 1.0 : 0.0, point.w, point_meta.x);
+    pc.tracks.v[2u * gid] = vec4(position, point.xy);
+    pc.tracks.v[2u * gid + 1u] = vec4(ok ? residual : 1.0, ok ? 1.0 : 0.0, point.w, point_meta.x);
 }

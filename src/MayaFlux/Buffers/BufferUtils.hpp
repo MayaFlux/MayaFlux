@@ -108,29 +108,14 @@ MAYAFLUX_API void validate_token(ProcessingToken token);
  * @param current The current processing token configuration being evaluated
  * @return true if the tokens are compatible, false otherwise
  *
- * This function implements sophisticated compatibility logic that goes beyond simple equality
- * checking to determine if processors with different token requirements can work together
- * in the same processing pipeline. The compatibility rules are designed to maximize
- * processing flexibility while maintaining system stability and performance.
+ * **Rules, in order:**
+ * - A FRAME_RATE preferred token accepts only FRAME_RATE tokens, whatever the device or concurrency.
+ * - Otherwise a GPU preferred token rejects CPU tokens, and a CPU preferred token rejects GPU
+ *   tokens unless the current token is FRAME_RATE.
+ * - Otherwise SEQUENTIAL against PARALLEL, in either direction, is rejected.
+ * - Anything else is compatible.
  *
- * **Rate Compatibility Rules:**
- * - FRAME_RATE processors require FRAME_RATE execution contexts (strict requirement)
- * - SAMPLE_RATE processors can adapt to FRAME_RATE contexts (flexible upward compatibility)
- * - Same-rate combinations are always compatible
- *
- * **Device Compatibility Rules:**
- * - SAMPLE_RATE processing cannot execute on GPU hardware (hardware limitation)
- * - GPU-preferred processors cannot fall back to CPU execution (performance requirement)
- * - CPU-preferred processors can use GPU for FRAME_RATE processing only
- *
- * **Concurrency Compatibility Rules:**
- * - Sequential/Parallel differences are acceptable if rate requirements align
- * - Mismatched concurrency with incompatible rates is rejected
- * - Same concurrency patterns are always compatible
- *
- * This flexibility enables the system to optimize processing chains by allowing compatible
- * processors to share execution contexts while preventing configurations that would result
- * in poor performance or execution failures.
+ * EVENT_RATE is not considered; event tokens are judged by the device and concurrency rules only.
  */
 MAYAFLUX_API bool are_tokens_compatible(ProcessingToken preferred, ProcessingToken current);
 

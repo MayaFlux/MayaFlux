@@ -46,7 +46,7 @@ using namespace MayaFlux::Yantra;
 
 #ifndef MAYAFLUX_COMPUTE_NO_GPU
 #include "MayaFlux/Yantra/Executors/ShaderExecutionContext.hpp"
-#include "MayaFlux/Yantra/Sorters/GpuSorter.hpp"
+#include "MayaFlux/Yantra/Sorters/BitonicSorter.hpp"
 #include "MayaFlux/Yantra/Transformers/GpuTransformer.hpp"
 using namespace MayaFlux::Yantra;
 #endif

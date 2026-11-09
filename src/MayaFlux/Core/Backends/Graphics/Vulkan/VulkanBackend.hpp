@@ -110,6 +110,11 @@ public:
     void wait_idle() override;
 
     /**
+     * @brief Submit commands recorded for deferred submission
+     */
+    void flush_deferred() override;
+
+    /**
      * @brief Handle window resize event for the specified window
      */
     void handle_window_resize() override;

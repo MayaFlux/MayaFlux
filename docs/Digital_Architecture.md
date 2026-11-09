@@ -136,7 +136,7 @@ Audio processors bring streams into the cycle and combine them for output. `Stre
 
 Graphics processors prepare resources before drawing or compute. `GeometryBindingsProcessor` uploads changed node geometry, `MeshProcessor` updates mesh vertices and indices, and `InstanceSSBOProcessor` supplies per-instance transforms. `DescriptorBindingsProcessor` stages shader resources; `UVFieldProcessor` projects texture coordinates on the GPU. `RenderProcessor` records draws and `ComputeProcessor` dispatches compute. At the root, `GraphicsBatchProcessor` gathers child work and `PresentProcessor` submits it to the target windows.
 
-Transfer processors connect these paths. `DataWriteProcessor` writes typed values into GPU buffers, while `FormaBindingsProcessor` routes Forma state into shader bindings. `BufferUploadProcessor` and `BufferDownloadProcessor` move buffer data across CPU and GPU memory; `TransferProcessor` specifically bridges audio and GPU buffers.
+Staging processors connect these paths. `DataWriteProcessor` writes typed values into GPU buffers, while `FormaBindingsProcessor` routes Forma state into shader bindings. `DataReadProcessor` and `DataWriteProcessor` move buffer data across CPU and GPU memory. `AudioComputeProcessor` and `AudioContextProcessor` run audio blocks through the GPU under `AUDIO_PARALLEL`.
 
 `SDFMeshProcessor` runs GPU signed-distance evaluation and marching cubes into a `ComputeMeshBuffer`, whose generated geometry can be rendered or exported.
 
@@ -247,9 +247,9 @@ classDiagram
 
 `CompositeLayout` describes named numeric, text, binary, or dynamic fields. `CompositeArray` packs records that share that layout while keeping variable-length text and binary data in separate stores. `Composite` provides a borrowed record view; `CompositeContainer` exposes insertion, slices, and traversal through the Kakshya container interface.
 
-`Region` and `RegionGroup` describe spans of container data without copying them. Segments and organized regions add subdivisions and attribution.
+`Region` and `RegionGroup` describe spans of container data without copying them. Segments and organized regions add subdivisions and attribution. `RegionSequencer` chooses which region of a group comes next by the group's selection pattern, and `RegionWalkProcessor` walks a group on a container, delivering blocks or whole regions and recording which region each came from. `WindowContainer::region_crops` crops a registered group's regions out of the latest capture, in group order, each with its region.
 
-`DataProcessingChain` applies `DataProcessor` instances on demand. The Processors subdirectory provides: `ContiguousAccessProcessor`, `CursorAccessProcessor`, `FrameAccessProcessor`, `WindowAccessProcessor`, `SpatialRegionProcessor`, `AudioOutputAccessProcessor`.
+`DataProcessingChain` applies `DataProcessor` instances on demand. The Processors subdirectory provides: `ContiguousAccessProcessor`, `CursorAccessProcessor`, `FrameAccessProcessor`, `WindowAccessProcessor`, `RegionWalkProcessor`, `AudioOutputAccessProcessor`.
 
 The relationship between Kakshya and Buffers is a one-way bridge. Buffers consume from Kakshya containers through container buffers; Kakshya never asks Buffers for anything.
 
@@ -261,15 +261,17 @@ Yantra provides typed computation, analysis, composition, and GPU execution. Its
 
 The type system begins with `Datum<T>`. Where the real-time side works with raw doubles flowing through buffers, Yantra wraps everything in `Datum`. A `Datum` carries the data, optional container context, and metadata. `ComputeData` is the concept constraining what `T` can be. `StructureIntrospection` infers the shape of any `ComputeData` value.
 
-**Analyzers** extract information: `EnergyAnalyzer`, `StatisticalAnalyzer`, `Analyzer`, `GpuAnalyzer`.
+**Analyzers** extract information: `EnergyAnalyzer`, `StatisticalAnalyzer`, `SpectralAnalyzer` (GPU), and `VisionAnalyzer`, all built on `Analyzer`.
 
-**Transformers** modify data: `MathematicalTransformer`, `SpectralTransformer`, `TemporalTransformer`, `ConvolutionTransformer`, `Transformer`, `GpuTransformer`.
+**Transformers** modify data: `MathematicalTransformer`, `SpectralTransformer`, `TemporalTransformer`, `ConvolutionTransformer`, all built on `Transformer`. `GpuTransformer` is a GPU-only transformer that is not registered by default.
 
-**Sorters** reorder data: `StandardSorter`, `Sorter`, `GpuSorter`.
+**Sorters** reorder data: `StandardSorter` on the CPU and the exact GPU sort `BitonicSorter`, both registered by default.
 
-**Extractors** pull features: `FeatureExtractor`, `Extractor`, `GpuExtractor`.
+**Extractors** pull features: `FeatureExtractor`, built on `Extractor`.
 
-**Executors** bridge typed operations to Vulkan compute. `ShaderExecutionContext<>` handles buffer shaders, `TextureExecutionContext` handles images, and `GpuDispatchCore` with `GpuResourceManager` coordinates dispatch and resource reuse. GPU work can also be dispatched asynchronously.
+Each operation declares the target it runs on, `targets::cpu` by default or `targets::vulkan` for GPU classes. The grammar chooses between candidates for the same selection by target, permit and fitness, so a GPU implementation sits beside its CPU one rather than attached to it.
+
+**Executors** bridge typed operations to Vulkan compute. `ShaderExecutionContext<>` handles buffer shaders, `WordPairExecutionContext` runs doubles as 32-bit word pairs on devices without fp64, `TextureExecutionContext` handles images, and `GpuDispatchCore` with `GpuResourceManager` coordinates dispatch and resource reuse. GPU work can also be dispatched asynchronously. See [GPGPU-Guide.md](GPGPU-Guide.md) for the full picture.
 
 **Composition** is where the system becomes expressive beyond individual operations.
 

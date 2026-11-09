@@ -281,7 +281,8 @@ namespace {
 
         std::vector<uint8_t> raw(vertex_count * layout.stride_bytes);
         std::shared_ptr<Buffers::VKBuffer> staging;
-        Buffers::download_from_gpu_async(buffer, raw.data(), raw.size(), staging);
+        Buffers::download_back_buffer(
+            Buffers::generation_slot(Buffers::gpu_buffer_handle(buffer)), raw.data(), raw.size(), staging);
 
         std::vector<glm::vec3> positions;
         std::vector<SpatialAttribute> attributes;

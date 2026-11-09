@@ -39,8 +39,8 @@ The raw dispatch capability is comparable. Everything else is not.
 | `CL_MEM_READ_WRITE` | `GpuBufferBinding::Direction::INPUT_OUTPUT` | |
 | `clCreateImage2D` / image kernel args | `TextureExecutionContext` | Manages `VkImage` lifecycle, staging and layout transitions |
 | Multiple kernels in sequence | `ComputationPipeline` or the `ComputeMatrix` fluent chain | |
-| Several different kernels, one submission, with barriers | `ExecutionMode::DEPENDENCY` with `DependencyParams` stages | Each `DependencyStage` carries its own config and hazard list; `async` returns a fence |
-| Multi-pass loop with per-pass kernel arg updates | `set_multipass(count, updater)` | Batched through `GpuResourceManager::dispatch_batched`; `CHAINED_INDIRECT` takes pass counts from a GPU buffer |
+| Several different kernels, one submission, with barriers | `GpuDispatchCore::record_stages(stages)` with `DependencyStage` values | Each `DependencyStage` carries its own config and `stage_fn`, and every stage is followed by a barrier. Workgroup counts come from `explicit_groups` or a GPU-written `indirect_groups` |
+| Multi-pass loop with per-pass kernel arg updates | `set_multipass(count, updater)` | Batched through `GpuResourceManager::dispatch_batched`. `CHAINED_INDIRECT` gates each pass's workgroup count with a GPU-written buffer of `INDIRECT` usage |
 | Event dependencies between kernels | `ComputeMatrix` async chain | `with_async(input, chain_lambda, on_complete)` |
 | `clReleaseMemObject` / `clReleaseKernel` | RAII, nothing to release by hand | Fences from `dispatch_async` are the exception |
 
@@ -127,7 +127,7 @@ The builder takes:
 
 - **`ssbo(name, direction, format)`** for a storage buffer, **`texture(name)`** for a sampled image and **`storage_image(name, direction)`** for a storage image. Bindings are numbered in declaration order.
 - **`pc(name)`** or **`pc(name, format)`** for a push constant field. The default format is float, and fields are consumed in declaration order as operands.
-- **`tmpl(KernelTemplate)`** for the shape of the kernel: `Elementwise` (the default), `Reduction`, `Stencil`, `GeometryEmit`, `BitonicSort`, `Convolve2D` or `Scan`.
+- **`tmpl(KernelTemplate)`** for the shape of the kernel: `Elementwise` (the default), `Reduction`, `Stencil`, `GeometryEmit`, `BitonicSort`, `Convolve2D`, `Scan`, `SegmentedReduction` (word-pair doubles, one workgroup per segment) or `FFT` (radix-2 transform of word-pair doubles, one workgroup per window). The last two use `points`, `spectrum`, `map` and `descriptors` on the builder.
 - **`op(KernelOp)`** for the operation. The families are arithmetic (`Scale`, `ScaleOffset`, `Fma`, `Clip`, `Abs`, `Sqrt`, ...), transcendental (`Sin`, `Exp`, `Log`, `Tanh`, ...), two-buffer (`Add`, `Multiply`, `Mix`, `Pow`, `SmoothStep`, ...), reductions and scans (`Sum`, `Max`, `MaxIndex`, `ScanSum`), image operations (`CompareGE`, `ChannelDot`, ...) and the stencil blend `WeightedBlend`.
 - **`workgroup(x, y, z)`** to override the default `{ 256, 1, 1 }`.
 
@@ -217,7 +217,7 @@ exec->input(input_data, GpuBufferBinding::ElementType::FLOAT32)
      .push(pc);
 ```
 
-`ElementType` controls how the staging layer interprets the data before upload: `FLOAT32`, `UINT32`, `INT32`, `PASSTHROUGH`, `IMAGE_STORAGE` and `IMAGE_SAMPLED`. There is no vec-typed `ElementType`. For `glm::vec3` positions or other structured types, use `PASSTHROUGH` and pre-stage the raw bytes directly to bypass the double-conversion path.
+`ElementType` controls how the staging layer interprets the data before upload: `FLOAT32`, `UINT32`, `INT32`, `PASSTHROUGH`, `IMAGE_STORAGE`, `IMAGE_SAMPLED`, `VEC2_U32` and `FLOAT64`. `VEC2_U32` stages each double as two 32-bit words, which is how doubles reach a device without `shaderFloat64`. `FLOAT64` is a raw double binding. There is no `ElementType` for `vec3` or `vec4`. For `glm::vec3` positions or other structured types, use `PASSTHROUGH` and pre-stage the raw bytes directly to bypass the double-conversion path.
 
 For in-place modification, replace an `input` and `output` pair with `in_out`:
 
@@ -311,8 +311,9 @@ clEnqueueNDRangeKernel(queue, kernel_b, ..., 1, &event_a, &event_b);
 ```cpp
 // Yantra: ComputationPipeline (sequential, fixed order)
 auto pipeline = std::make_shared<ComputationPipeline<>>();
-pipeline->create_operation<GpuTransformer<>>("pass_a")
-         .create_operation<GpuTransformer<>>("pass_b");
+// GpuTransformer takes the configured executor for its pass
+pipeline->add_operation(std::make_shared<GpuTransformer<>>(pass_a_exec), "pass_a")
+         .add_operation(std::make_shared<GpuTransformer<>>(pass_b_exec), "pass_b");
 auto result = pipeline->process(input, ExecutionContext {});
 
 // Or: ComputeMatrix fluent chain (composable, async-capable)
@@ -322,14 +323,14 @@ auto result = matrix->with(input)
                      .to_io();
 ```
 
-When the passes are different shaders that should run back to back in one submission, with barriers between them, use `ExecutionMode::DEPENDENCY` instead. It takes a list of `DependencyStage`s, each with its own `GpuComputeConfig`, a `stage_fn` that sets up bindings and data, and a `hazard_fn` that names the resources the next stage depends on.
+When the passes are different shaders that should run back to back on one executor, with barriers between them, use `GpuDispatchCore::record_stages`. It takes a list of `DependencyStage`s, each with its own `GpuComputeConfig` and a `stage_fn` that sets up bindings, data and push constants. Every stage is followed by a barrier, so each sees the writes of the stages before it. Workgroup counts come from `explicit_groups`, or from `indirect_groups` when an earlier stage writes them on the GPU. With a recording attached, the stages join it; otherwise each is submitted and awaited on its own.
 
 ```mermaid
 flowchart TD
     Q{"More than one dispatch?"}
     Q -- "the same shader, new arguments each pass" --> MP["set_multipass(count, updater)<br/>batched through dispatch_batched"]
-    MP -- "pass count held in a GPU buffer" --> CI["CHAINED_INDIRECT"]
-    Q -- "different shaders, one submission,<br/>barriers between them" --> DEP["ExecutionMode::DEPENDENCY<br/>a list of DependencyStage"]
+    MP -- "workgroup count written by the GPU" --> CI["CHAINED_INDIRECT"]
+    Q -- "different shaders on one executor,<br/>barriers between them" --> DEP["record_stages<br/>a list of DependencyStage"]
     Q -- "separate operations, each with its own result" --> OPS{"Shape?"}
     OPS -- "fixed order" --> CP["ComputationPipeline"]
     OPS -- "composable, or async with a callback" --> CM["ComputeMatrix fluent chain, with_async"]
@@ -355,7 +356,7 @@ exec->in_out(data, GpuBufferBinding::ElementType::FLOAT32)
 auto result = exec->execute(input_datum, ExecutionContext {});
 ```
 
-`set_multipass` switches the context to `ExecutionMode::CHAINED`, which dispatches through `GpuResourceManager::dispatch_batched`. Passes are grouped according to `ChainedParams::passes_per_batch` rather than issued one at a time from your loop. `CHAINED_INDIRECT` is the variant that takes its pass count from a GPU-side buffer.
+`set_multipass` switches the context to `ExecutionMode::CHAINED`, which dispatches through `GpuResourceManager::dispatch_batched`. Passes are grouped according to `ChainedParams::passes_per_batch` rather than issued one at a time from your loop. `CHAINED_INDIRECT` is the variant where a GPU-written buffer of `INDIRECT` usage supplies the workgroup count for each pass, so the GPU can decide how much work the next pass does.
 
 ### Image processing
 

@@ -33,6 +33,8 @@ BufferManager::BufferManager(
     s_preferred_buffer_size = default_buffer_size;
     s_preferred_frame_rate = default_frame_rate;
     validate_num_channels(default_audio_token, default_out_channels, default_buffer_size);
+    validate_num_channels(ProcessingToken::AUDIO_PARALLEL, default_out_channels, default_buffer_size);
+    m_processor_control->set_audio_final_processor(std::make_shared<FinalLimiterProcessor>(), ProcessingToken::AUDIO_PARALLEL);
 
     if (default_in_channels) {
         m_input_control->setup_audio_input_buffers(default_in_channels, default_buffer_size);
@@ -116,6 +118,8 @@ void BufferManager::process_channel(
     if (auto chain = root_buffer->get_processing_chain()) {
         chain->process_final(root_buffer);
     }
+
+    root_buffer->handle_cycle_complete();
 }
 
 std::vector<ProcessingToken> BufferManager::get_active_tokens() const
@@ -276,14 +280,14 @@ void BufferManager::remove_processor_from_channel(
     ProcessingToken token,
     uint32_t channel)
 {
-    m_processor_control->remove_processor_from_token(processor, token, channel);
+    m_processor_control->remove_processor_from_channel(processor, token, channel);
 }
 
 void BufferManager::remove_processor_from_token(
     const std::shared_ptr<BufferProcessor>& processor,
     ProcessingToken token)
 {
-    m_processor_control->remove_processor_from_token(processor, token, 0);
+    m_processor_control->remove_processor_from_token(processor, token);
 }
 
 void BufferManager::set_final_processor(

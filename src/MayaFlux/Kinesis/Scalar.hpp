@@ -63,6 +63,25 @@ template <typename T>
     return lo + t * (hi - lo);
 }
 
+/**
+ * @brief Soft knee limit: identity below @p threshold, then eases toward @p ceiling.
+ *
+ * Magnitudes above the threshold follow threshold + headroom * tanh(excess / headroom),
+ * where headroom is ceiling - threshold. The curve is continuous and monotonic,
+ * and never exceeds the ceiling. It approaches the ceiling asymptotically, so in
+ * double precision it reaches it exactly for large inputs. Sign is preserved.
+ */
+[[nodiscard]] inline double soft_limit(double x, double threshold = 0.95, double ceiling = 1.0) noexcept
+{
+    const double abs_x = std::abs(x);
+    if (abs_x <= threshold)
+        return x;
+
+    const double headroom = ceiling - threshold;
+    const double limited = threshold + headroom * std::tanh((abs_x - threshold) / headroom);
+    return std::copysign(limited, x);
+}
+
 // =============================================================================
 // Tables
 // =============================================================================
