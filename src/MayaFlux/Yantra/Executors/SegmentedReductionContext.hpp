@@ -61,15 +61,26 @@ public:
         if (geometry.count == 0) {
             return {};
         }
-        m_segments = geometry.count;
-
-        stage_words(0, values);
-        set_output_size(1, static_cast<size_t>(geometry.count) * sizeof(uint64_t));
-        push(Push { .length = geometry.length, .stride = geometry.stride, .offset = geometry.offset });
+        stage(values, geometry);
         execute(Datum<std::vector<Kakshya::DataVariant>> {}, ExecutionContext {});
 
         const auto result = primary_values();
         return { result.begin(), result.end() };
+    }
+
+    /**
+     * @brief Stage values and geometry for the next dispatch without running it.
+     *
+     * Follow with dispatch_async and collect_result, then decode_primary, to
+     * run the reduction without blocking. reduce is stage followed by a
+     * synchronous execute.
+     */
+    void stage(std::span<const double> values, const SegmentGeometry& geometry)
+    {
+        m_segments = geometry.count;
+        stage_words(0, values);
+        set_output_size(1, static_cast<size_t>(geometry.count) * sizeof(uint64_t));
+        push(Push { .length = geometry.length, .stride = geometry.stride, .offset = geometry.offset });
     }
 
     /**
