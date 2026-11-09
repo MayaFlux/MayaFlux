@@ -81,7 +81,42 @@ void AudioComputeProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
     if (!m_block) {
         resize_block(static_cast<uint32_t>(audio->get_data().size()));
     }
+    if (m_block) {
+        prepare_for(m_block);
+        validate_shader();
+    }
     m_attached.store(true, std::memory_order_seq_cst);
+}
+
+void AudioComputeProcessor::validate_shader()
+{
+    if (!is_shader_loaded()) {
+        return;
+    }
+
+    const auto reflection = Portal::Graphics::get_shader_foundry().get_shader_reflection(m_shader_id);
+
+    const auto block_binding = std::ranges::find_if(
+        reflection.descriptor_bindings,
+        [](const auto& binding) { return binding.set == 0 && binding.binding == 0; });
+
+    if (block_binding == reflection.descriptor_bindings.end()) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "AudioComputeProcessor shader declares no binding at set 0, binding 0 for 'block'");
+    } else if (block_binding->type != vk::DescriptorType::eStorageBuffer) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "AudioComputeProcessor shader binding set 0, binding 0 is not a storage buffer");
+    }
+
+    if (reflection.workgroup_size) {
+        const auto& size = *reflection.workgroup_size;
+        const auto& dispatch = get_dispatch_config();
+        if (size[0] != dispatch.workgroup_x || size[1] != dispatch.workgroup_y || size[2] != dispatch.workgroup_z) {
+            MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "AudioComputeProcessor shader workgroup {}x{}x{} does not match dispatch workgroup {}x{}x{}",
+                size[0], size[1], size[2], dispatch.workgroup_x, dispatch.workgroup_y, dispatch.workgroup_z);
+        }
+    }
 }
 
 void AudioComputeProcessor::on_detach(const std::shared_ptr<Buffer>& buffer)

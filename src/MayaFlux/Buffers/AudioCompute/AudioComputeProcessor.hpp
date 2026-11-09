@@ -65,6 +65,7 @@ private:
     uint32_t m_frames {};
 
     void configure();
+    void validate_shader();
     void resize_block(uint32_t frames);
     void process_block(const std::shared_ptr<Buffer>& buffer);
     void release(const std::shared_ptr<Buffer>& buffer);
