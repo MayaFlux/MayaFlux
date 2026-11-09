@@ -34,6 +34,20 @@ enum class KernelTemplate : uint8_t {
                         ///< push constants: length, stride, offset. Segment s covers
                         ///< length elements starting at offset + s * stride. Op is the
                         ///< combine (Sum, Max, Min); ReductionMap is applied first.
+    FFT, ///< Radix 2 FFT of word-pair doubles, one workgroup per window, points a
+         ///< power of two up to 2048. Bindings in order: values (interleaved re, im),
+         ///< twiddle (cos, sin per k below points / 2), window (points reals), result.
+         ///< Five UINT32 push constants: length, stride, offset in complex elements,
+         ///< then the low and high word of a double scale applied to the output.
+};
+
+/**
+ * @enum SpectrumOutput
+ * @brief What an FFT template writes for each window.
+ */
+enum class SpectrumOutput : uint8_t {
+    Complex, ///< points complex bins, interleaved re, im, scaled
+    Power, ///< points / 2 + 1 bins of re * re + im * im, after scaling
 };
 
 /**
@@ -389,6 +403,8 @@ struct ShaderSpec {
     KernelTemplate tmpl { KernelTemplate::Elementwise };
     KernelOp op { KernelOp::Scale };
     ReductionMap map { ReductionMap::Identity }; ///< SegmentedReduction only.
+    uint32_t points { 0 }; ///< FFT only. Points per window.
+    SpectrumOutput spectrum { SpectrumOutput::Complex }; ///< FFT only.
     std::vector<BindingSlot> bindings;
     std::vector<PushConstantField> pc_fields;
     std::array<uint32_t, 3> workgroup_size { 256, 1, 1 };
@@ -427,6 +443,20 @@ struct ShaderSpec {
         Assemble& map(ReductionMap m)
         {
             m_map = m;
+            return *this;
+        }
+
+        /** @brief Set the points per window of an FFT. */
+        Assemble& points(uint32_t n)
+        {
+            m_points = n;
+            return *this;
+        }
+
+        /** @brief Set what an FFT writes for each window. */
+        Assemble& spectrum(SpectrumOutput s)
+        {
+            m_spectrum = s;
             return *this;
         }
 
@@ -568,6 +598,8 @@ struct ShaderSpec {
                 .tmpl = m_tmpl,
                 .op = m_op,
                 .map = m_map,
+                .points = m_points,
+                .spectrum = m_spectrum,
                 .bindings = std::move(m_bindings),
                 .pc_fields = std::move(m_pc_fields),
                 .workgroup_size = m_workgroup,
@@ -581,6 +613,8 @@ struct ShaderSpec {
         KernelTemplate m_tmpl { KernelTemplate::Elementwise };
         KernelOp m_op { KernelOp::Scale };
         ReductionMap m_map { ReductionMap::Identity };
+        uint32_t m_points { 0 };
+        SpectrumOutput m_spectrum { SpectrumOutput::Complex };
         std::vector<BindingSlot> m_bindings;
         std::vector<PushConstantField> m_pc_fields;
         std::array<uint32_t, 3> m_workgroup { 256, 1, 1 };
@@ -653,6 +687,15 @@ namespace detail {
      * @brief Emit the requested soft-double functions.
      */
     [[nodiscard]] SoftDoubleModule emit_soft_double(const SoftDoubleUse& use);
+
+    /**
+     * @brief Emit the globals, soft-double functions and entry point of the FFT template.
+     *
+     * Returns an empty string when the spec does not have the template's shape:
+     * four VEC2_U32 bindings, five UINT32 push constants, points a power of two
+     * from 2 to 2048 and a power of two workgroup size of at most points / 2.
+     */
+    [[nodiscard]] std::string emit_fft(const ShaderSpec& spec);
 
 } // namespace detail
 

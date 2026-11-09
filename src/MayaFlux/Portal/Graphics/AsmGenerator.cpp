@@ -31,6 +31,10 @@
  * IEEE double arithmetic emulated with 32-bit integer ops (AsmSoftDouble), so
  * no device float64 or int64 feature is used.
  *
+ * KernelTemplate::FFT — emit_fft (AsmSoftDouble.cpp) runs a radix 2 FFT of
+ * word-pair doubles with one workgroup per window, using the same soft-double
+ * functions. Twiddle factors come from a binding filled by the host.
+ *
  * GLSL kernel path (emit_glsl_kernel) handles all three binding modalities
  * when spec.kernel is set via MF_KERNEL.
  */
@@ -167,6 +171,8 @@ namespace {
             iface += " %lid_var %shared_a %shared_b";
         } else if (spec.tmpl == KernelTemplate::SegmentedReduction) {
             iface += " %lid_var %wgid_var %sr_shared";
+        } else if (spec.tmpl == KernelTemplate::FFT) {
+            iface += " %lid_var %wgid_var %fft_re %fft_im";
         }
 
         std::string o;
@@ -236,7 +242,7 @@ namespace {
 
         if (spec.tmpl == KernelTemplate::Reduction || spec.tmpl == KernelTemplate::Scan) {
             o += "OpDecorate %lid_var BuiltIn LocalInvocationId\n";
-        } else if (spec.tmpl == KernelTemplate::SegmentedReduction) {
+        } else if (spec.tmpl == KernelTemplate::SegmentedReduction || spec.tmpl == KernelTemplate::FFT) {
             o += "OpDecorate %lid_var BuiltIn LocalInvocationId\n";
             o += "OpDecorate %wgid_var BuiltIn WorkgroupId\n";
         }
@@ -1903,6 +1909,9 @@ std::string emit_spirv_asm(const ShaderSpec& spec)
         break;
     case KernelTemplate::SegmentedReduction:
         src += emit_segmented_reduction(spec);
+        break;
+    case KernelTemplate::FFT:
+        src += emit_fft(spec);
         break;
     case KernelTemplate::BitonicSort:
         src += emit_bitonic_body(spec);

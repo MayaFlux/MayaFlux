@@ -43,20 +43,188 @@ namespace {
             }
 
             SoftDoubleModule out;
-            out.declarations += "%sd_pair = OpTypeStruct %u32 %u32\n";
-            out.declarations += "%sd_fn_bin = OpTypeFunction %v2u32 %v2u32 %v2u32\n";
-            out.declarations += "%sd_fn_less = OpTypeFunction %bool %v2u32 %v2u32\n";
-            for (const uint32_t value : m_constants) {
-                out.declarations += "%sd_k" + std::to_string(value) + " = OpConstant %u32 " + std::to_string(value) + "\n";
-            }
+            out.declarations = declarations();
             out.functions = std::move(m_text);
             return out;
+        }
+
+        [[nodiscard]] std::string fft(const ShaderSpec& spec)
+        {
+            const uint32_t points = spec.points;
+            const uint32_t local = spec.workgroup_size[0];
+            uint32_t stages = 0;
+            while ((1U << stages) < points) {
+                ++stages;
+            }
+            const bool power = spec.spectrum == SpectrumOutput::Power;
+            const std::string& values = spec.bindings[0].name;
+            const std::string& twiddle = spec.bindings[1].name;
+            const std::string& window = spec.bindings[2].name;
+            const std::string& result = spec.bindings[3].name;
+
+            k(points);
+            emit_add();
+            emit_mul();
+
+            const auto load_global = [this](const std::string& binding, const Id& index) {
+                const Id pointer = ins("%pelem_" + binding, "OpAccessChain", { "%buf_" + binding, "%c0u", index });
+                return ins("%v2u32", "OpLoad", { pointer });
+            };
+            const auto store_global = [this](const std::string& binding, const Id& index, const Id& value) {
+                const Id pointer = ins("%pelem_" + binding, "OpAccessChain", { "%buf_" + binding, "%c0u", index });
+                m_text += "OpStore " + pointer + " " + value + "\n";
+            };
+            const auto load_shared = [this](std::string_view array, const Id& index) {
+                const Id pointer = ins("%fft_p_sh", "OpAccessChain", { array, index });
+                return ins("%v2u32", "OpLoad", { pointer });
+            };
+            const auto store_shared = [this](std::string_view array, const Id& index, const Id& value) {
+                const Id pointer = ins("%fft_p_sh", "OpAccessChain", { array, index });
+                m_text += "OpStore " + pointer + " " + value + "\n";
+            };
+            const auto mulf = [this](const Id& a, const Id& b) {
+                return ins("%v2u32", "OpFunctionCall", { soft_double_mul, a, b });
+            };
+            const auto addf = [this](const Id& a, const Id& b) {
+                return ins("%v2u32", "OpFunctionCall", { soft_double_add, a, b });
+            };
+            const auto negf = [this](const Id& a) {
+                const Word64 w = unpack(a);
+                return pair(w.lo, bxor(w.hi, k(2147483648)));
+            };
+            const auto selv = [this](const Id& condition, const Id& a, const Id& b) {
+                const Word64 wa = unpack(a);
+                const Word64 wb = unpack(b);
+                return pair(sel(condition, wa.lo, wb.lo), sel(condition, wa.hi, wb.hi));
+            };
+            const auto barrier = [this] {
+                m_text += "OpControlBarrier " + k(2) + " " + k(2) + " " + k(264) + "\n";
+            };
+            const auto push_constant = [this](uint32_t member) {
+                const Id pointer = ins("%ppc_u32", "OpAccessChain", { "%pc", k(member) });
+                return ins("%u32", "OpLoad", { pointer });
+            };
+            const auto bit_reverse = [this, stages](const Id& index) {
+                Id reversed = k(0);
+                for (uint32_t bit = 0; bit < stages; ++bit) {
+                    reversed = bor(reversed, shl(band(shr(index, k(bit)), k(1)), k(stages - 1 - bit)));
+                }
+                return reversed;
+            };
+
+            m_text += "%main = OpFunction %void None %voidfn\n";
+            m_text += "%entry = OpLabel\n";
+
+            const Id local_id = ins("%u32", "OpCompositeExtract", { ins("%v3u32", "OpLoad", { "%lid_var" }), "0" });
+            const Id window_id = ins("%u32", "OpCompositeExtract", { ins("%v3u32", "OpLoad", { "%wgid_var" }), "0" });
+            const Id length = push_constant(0);
+            const Id stride = push_constant(1);
+            const Id offset = push_constant(2);
+            const Id scale = pair(push_constant(3), push_constant(4));
+            const Id base = word("OpIAdd", offset, word("OpIMul", window_id, stride));
+            const Id zero = pair(k(0), k(0));
+
+            for (uint32_t round = 0; round < points / local; ++round) {
+                const Id index = add(local_id, k(round * local));
+                const Id valid = ult(index, length);
+                const Id element = word("OpIMul", add(base, index), k(2));
+                const Id re_index = sel(valid, element, k(0));
+                const Id im_index = sel(valid, add(element, k(1)), k(1));
+                const Id coefficient = load_global(window, index);
+                const Id re = selv(valid, mulf(load_global(values, re_index), coefficient), zero);
+                const Id im = selv(valid, mulf(load_global(values, im_index), coefficient), zero);
+                const Id destination = bit_reverse(index);
+                store_shared("%fft_re", destination, re);
+                store_shared("%fft_im", destination, im);
+            }
+            barrier();
+
+            for (uint32_t stage = 1; stage <= stages; ++stage) {
+                const uint32_t half = 1U << (stage - 1);
+                for (uint32_t round = 0; round < (points / 2) / local; ++round) {
+                    const Id pair_index = add(local_id, k(round * local));
+                    const Id within = band(pair_index, k(half - 1));
+                    const Id first = add(shl(shr(pair_index, k(stage - 1)), k(stage)), within);
+                    const Id second = add(first, k(half));
+                    const Id twiddle_element = shl(shl(within, k(stages - stage)), k(1));
+                    const Id wr = load_global(twiddle, twiddle_element);
+                    const Id wi = load_global(twiddle, add(twiddle_element, k(1)));
+
+                    const Id x0r = load_shared("%fft_re", first);
+                    const Id x0i = load_shared("%fft_im", first);
+                    const Id x1r = load_shared("%fft_re", second);
+                    const Id x1i = load_shared("%fft_im", second);
+
+                    const Id tr = addf(mulf(wr, x1r), negf(mulf(wi, x1i)));
+                    const Id ti = addf(mulf(wr, x1i), mulf(wi, x1r));
+
+                    store_shared("%fft_re", first, addf(x0r, tr));
+                    store_shared("%fft_im", first, addf(x0i, ti));
+                    store_shared("%fft_re", second, addf(x0r, negf(tr)));
+                    store_shared("%fft_im", second, addf(x0i, negf(ti)));
+                }
+                barrier();
+            }
+
+            if (!power) {
+                const Id out_base = word("OpIMul", window_id, k(points * 2));
+                for (uint32_t round = 0; round < points / local; ++round) {
+                    const Id bin = add(local_id, k(round * local));
+                    const Id re = mulf(load_shared("%fft_re", bin), scale);
+                    const Id im = mulf(load_shared("%fft_im", bin), scale);
+                    const Id element = add(out_base, shl(bin, k(1)));
+                    store_global(result, element, re);
+                    store_global(result, add(element, k(1)), im);
+                }
+            } else {
+                const uint32_t bins = points / 2 + 1;
+                const uint32_t rounds = (bins + local - 1) / local;
+                const Id out_base = word("OpIMul", window_id, k(bins));
+                for (uint32_t round = 0; round < rounds; ++round) {
+                    const std::string tag = std::to_string(round);
+                    const Id bin = add(local_id, k(round * local));
+                    const Id inside = ult(bin, k(bins));
+                    m_text += "OpSelectionMerge %fft_pm" + tag + " None\n";
+                    m_text += "OpBranchConditional " + inside + " %fft_pw" + tag + " %fft_pm" + tag + "\n";
+                    m_text += "%fft_pw" + tag + " = OpLabel\n";
+                    const Id re = mulf(load_shared("%fft_re", bin), scale);
+                    const Id im = mulf(load_shared("%fft_im", bin), scale);
+                    store_global(result, add(out_base, bin), addf(mulf(re, re), mulf(im, im)));
+                    m_text += "OpBranch %fft_pm" + tag + "\n";
+                    m_text += "%fft_pm" + tag + " = OpLabel\n";
+                }
+            }
+
+            m_text += "OpReturn\n";
+            m_text += "OpFunctionEnd\n";
+
+            std::string globals;
+            globals += "%lid_var = OpVariable %ptr_in_v3u32 Input\n";
+            globals += "%wgid_var = OpVariable %ptr_in_v3u32 Input\n";
+            globals += "%fft_arr_t = OpTypeArray %v2u32 %sd_k" + std::to_string(points) + "\n";
+            globals += "%fft_p_arr = OpTypePointer Workgroup %fft_arr_t\n";
+            globals += "%fft_re = OpVariable %fft_p_arr Workgroup\n";
+            globals += "%fft_im = OpVariable %fft_p_arr Workgroup\n";
+            globals += "%fft_p_sh = OpTypePointer Workgroup %v2u32\n\n";
+            return declarations() + globals + m_text;
         }
 
     private:
         std::string m_text;
         std::set<uint32_t> m_constants;
         uint32_t m_next { 0 };
+
+        [[nodiscard]] std::string declarations() const
+        {
+            std::string out;
+            out += "%sd_pair = OpTypeStruct %u32 %u32\n";
+            out += "%sd_fn_bin = OpTypeFunction %v2u32 %v2u32 %v2u32\n";
+            out += "%sd_fn_less = OpTypeFunction %bool %v2u32 %v2u32\n";
+            for (const uint32_t value : m_constants) {
+                out += "%sd_k" + std::to_string(value) + " = OpConstant %u32 " + std::to_string(value) + "\n";
+            }
+            return out;
+        }
 
         Id k(uint32_t value)
         {
@@ -387,6 +555,27 @@ SoftDoubleModule emit_soft_double(const SoftDoubleUse& use)
 {
     Builder builder;
     return builder.finish(use);
+}
+
+std::string emit_fft(const ShaderSpec& spec)
+{
+    const uint32_t points = spec.points;
+    const uint32_t local = spec.workgroup_size[0];
+    const bool shaped = spec.bindings.size() == 4 && spec.pc_fields.size() == 5
+        && std::ranges::all_of(spec.bindings, [](const BindingSlot& b) {
+               return b.format == Kakshya::GpuDataFormat::VEC2_U32;
+           })
+        && std::ranges::all_of(spec.pc_fields, [](const PushConstantField& f) {
+               return f.format == Kakshya::GpuDataFormat::UINT32;
+           });
+    const bool sized = points >= 2 && points <= 2048 && (points & (points - 1)) == 0
+        && local >= 1 && local <= points / 2 && (local & (local - 1)) == 0;
+    if (!shaped || !sized) {
+        return {};
+    }
+
+    Builder builder;
+    return builder.fft(spec);
 }
 
 } // namespace MayaFlux::Portal::Graphics::detail

@@ -1,7 +1,9 @@
 #pragma once
 
-#include "ShaderSpecBinding.hpp"
-#include "WordPairExecutionContext.hpp"
+#include "MayaFlux/Yantra/Executors/ShaderSpecBinding.hpp"
+#include "MayaFlux/Yantra/Executors/WordPairExecutionContext.hpp"
+
+#include "SegmentGeometry.hpp"
 
 /**
  * @file SegmentedReductionContext.hpp
@@ -9,20 +11,6 @@
  */
 
 namespace MayaFlux::Yantra {
-
-/**
- * @struct SegmentGeometry
- * @brief Where the segments of a reduction sit in the value array.
- *
- * Segment s covers length elements starting at offset + s * stride. A stride
- * equal to length tiles the array; a smaller stride overlaps segments.
- */
-struct SegmentGeometry {
-    uint32_t length { 0 };
-    uint32_t stride { 0 };
-    uint32_t offset { 0 };
-    uint32_t count { 0 };
-};
 
 /**
  * @class SegmentedReductionContext

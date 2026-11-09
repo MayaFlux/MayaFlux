@@ -538,7 +538,7 @@ std::vector<float> GpuDispatchCore::readback_primary(size_t float_count)
     const size_t allocated = m_resources.buffer_allocated_bytes(dispatch_key(), idx);
     size_t byte_size = std::min(float_count * element_bytes, allocated);
     if (idx < m_output_size_overrides.size() && m_output_size_overrides[idx] > 0) {
-        byte_size = std::min(byte_size, m_output_size_overrides[idx]);
+        byte_size = std::min(m_output_size_overrides[idx], allocated);
     }
     std::vector<float> out(byte_size / sizeof(float));
     m_resources.download(dispatch_key(), idx, out.data(), byte_size);
