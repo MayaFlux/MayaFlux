@@ -1,5 +1,10 @@
 #pragma once
 
+/**
+ * @file GranularWorkflow.hpp
+ * @brief Compatibility granular workflow on typed stages. The rebuilt workflow is written beside it.
+ */
+
 #include "MayaFlux/Yantra/ComputeGrammar.hpp"
 #include "MayaFlux/Yantra/ComputePipeline.hpp"
 
@@ -29,7 +34,7 @@ using Qualifier = uint8_t;
 /**
  * @brief The computed feature value of one grain, stored on the region.
  *
- * AttributeOp writes it and SortOp (RegionKeySorter) orders regions by it through a sort key.
+ * AttributeOp writes it and the sorter orders regions by it through a sort key.
  */
 inline const Facet<double> grain_feature {};
 
@@ -48,25 +53,13 @@ using GranularDatum = Datum<Kakshya::RegionGroup>;
 
 /**
  * @enum GranularOutput
- * @brief Selects the terminal output type produced by make_granular_matrix.
+ * @brief Selects the terminal output of a granular matrix.
  *
- * REGION_GROUP — pipeline terminates with a sorted RegionGroup (default).
- *               Use when you need to inspect, analyse, or further transform
- *               the grain pool before committing to audio.
- *
- * CONTAINER    — appends a reconstruct rule that stitches sorted grains into
- *               a SoundFileContainer. Use for the offline playback workflow
- *               where container-in container-out is all that is needed.
- *
- * CONTAINER_ADDITIVE — overlap-add reconstruct: grains accumulated at hop_size
- *                      intervals with optional per-grain tapering.
- *
- * STREAM    — appends a reconstruct rule that stitches sorted grains into
- *               a DynamicSoundStream. Use for sampling pipelines, StreamSlicing
- *                and similar real-time workflows
- *
- * STREAM_ADDITIVE — overlap-add reconstruct into a DynamicSoundStream.
- *                   grains accumulated at hop_size intervals with optional per-grain tapering.
+ * REGION_GROUP: the pipeline ends with a sorted RegionGroup (default).
+ * CONTAINER: sorted grains are concatenated into a SoundFileContainer.
+ * CONTAINER_ADDITIVE: grains are overlap-added at hop_size intervals into a SoundFileContainer.
+ * STREAM: sorted grains are concatenated into a DynamicSoundStream.
+ * STREAM_ADDITIVE: grains are overlap-added at hop_size intervals into a DynamicSoundStream.
  */
 enum class GranularOutput : uint8_t {
     REGION_GROUP,
@@ -77,30 +70,18 @@ enum class GranularOutput : uint8_t {
 };
 
 /**
- * @brief Matrix type used throughout the granular subsystem.
- */
-using GranularMatrix = GrammarAwareComputeMatrix;
-
-/**
  * @brief Span-level escape hatch for fully custom per-grain feature computation.
  *
  * Receives the raw grain samples and the current ExecutionContext.
  * Returns a single double that is written to the region's grain_feature facet.
- * For common attribution tasks prefer the AnalysisType + qualifier path
- * via make_granular_context.
  */
 using AttributeExecutor = std::function<double(std::span<const double>, const ExecutionContext&)>;
 
 /**
- * @brief Per-grain taper applied before accumulation in OLA reconstruction.
+ * @brief Per-grain taper applied before accumulation in overlap-add reconstruction.
  *
  * Receives a mutable span covering exactly one grain's samples for one channel.
- * Applied in-place before the grain is added to the output buffer.
  * Pass {} or nullptr to skip tapering entirely.
- *
- * Common use:
- *   [](std::span<double> g){ Kinesis::Discrete::apply_hann(g); }
- *   [](std::span<double> g){ Kinesis::Discrete::apply_trapezoid(g, g.size() / 8); }
  */
 using GrainTaper = Kakshya::RegionTaper;
 
@@ -110,11 +91,22 @@ extern MAYAFLUX_API const ComputationGrammar::Rule::Executor reconstruct_grains;
 /// @brief Grammar rule executor for additive grain reconstruction.
 extern MAYAFLUX_API const ComputationGrammar::Rule::Executor reconstruct_grains_additive;
 
-/// @brief Grammar rule executor — concatenative reconstruct into DynamicSoundStream.
+/// @brief Grammar rule executor for concatenative reconstruction into DynamicSoundStream.
 extern MAYAFLUX_API const ComputationGrammar::Rule::Executor reconstruct_grains_stream;
 
-/// @brief Grammar rule executor — OLA reconstruct into DynamicSoundStream.
+/// @brief Grammar rule executor for overlap-add reconstruction into DynamicSoundStream.
 extern MAYAFLUX_API const ComputationGrammar::Rule::Executor reconstruct_grains_additive_stream;
+
+/**
+ * @enum GranularStage
+ * @brief The stages of a granular pipeline, as grammar selections.
+ */
+enum class GranularStage : uint8_t {
+    Segment,
+    Attribute,
+    Sort,
+    Reconstruct
+};
 
 // ============================================================================
 // Concrete operations
@@ -148,8 +140,6 @@ struct SegmentConfig : OperationConfig {
 /**
  * @class SegmentOp
  * @brief Segments container audio into fixed hop-size grain windows.
- *
- * Configured by a SegmentConfig carried in the operation's facets.
  */
 class MAYAFLUX_API SegmentOp final
     : public Extractor<Kakshya::RegionGroup, Kakshya::RegionGroup> {
@@ -181,21 +171,8 @@ protected:
  * Attribution is resolved in the following priority order:
  *
  * 1. executor : a span lambda for fully custom math.
- * 2. analyzer : a pre-configured analyzer, paired with qualifier. analysis_type
- *    states which family it belongs to.
+ * 2. analyzer : a pre-configured analyzer, paired with qualifier.
  * 3. analysis_type : AttributeOp uses a default-configured analyzer of that family.
- *
- * Qualifier values select one scalar field of the analysis result struct.
- *
- * FEATURE qualifiers (EnergyMethod values, read from EnergyAnalysis):
- * - RMS (default; mean of channel energy)
- * - PEAK (max energy)
- * - ZERO_CROSSING (event count)
- * - DYNAMIC_RANGE (max minus min energy)
- *
- * STATISTICAL qualifiers (StatisticalMethod values, read from StatisticalAnalysis):
- * - MEAN (default)
- * - MAX, MIN, VARIANCE, STD_DEV, SKEWNESS, KURTOSIS, MEDIAN
  */
 struct AttributeConfig : OperationConfig {
     static constexpr auto describe_facets()
@@ -228,8 +205,7 @@ struct AttributeConfig : OperationConfig {
  * @class AttributeOp
  * @brief Computes a scalar attribute per grain and writes it onto each Region.
  *
- * Configured by an AttributeConfig. The per-grain value is stored in the
- * grain_feature facet of each region.
+ * The per-grain value is stored in the grain_feature facet of each region.
  */
 class MAYAFLUX_API AttributeOp final
     : public RegionGroupAnalyzer<Kakshya::RegionGroup> {
@@ -276,11 +252,68 @@ private:
 };
 
 /**
- * @brief Grain ordering. Sorts region groups by the keys in its RegionKeySorterConfig.
+ * @class GrainReconstructOp
+ * @brief Stitches sorted grains into a container or a stream.
  *
- * make_granular_context writes the key on grain_feature and the GPU threshold.
+ * Built with the output selection and, for the additive outputs, the taper applied
+ * to each grain before it is accumulated.
  */
-using SortOp = Yantra::RegionKeySorter;
+class MAYAFLUX_API GrainReconstructOp final
+    : public ComputeOperation<Kakshya::RegionGroup, std::shared_ptr<Kakshya::SignalSourceContainer>> {
+public:
+    /**
+     * @brief Construct a reconstruction operation.
+     * @param output Concatenative or additive, into a container or a stream. REGION_GROUP is rejected.
+     * @param taper Per-grain taper for the additive outputs. Empty skips tapering.
+     */
+    explicit GrainReconstructOp(GranularOutput output, GrainTaper taper = {});
+
+    [[nodiscard]] OperationType get_operation_type() const override
+    {
+        return OperationType::CUSTOM;
+    }
+
+    [[nodiscard]] std::string get_name() const override
+    {
+        return "Granular::GrainReconstructOp";
+    }
+
+protected:
+    Datum<std::shared_ptr<Kakshya::SignalSourceContainer>> operation_function(
+        const Datum<Kakshya::RegionGroup>& input) override;
+
+private:
+    GranularOutput m_output;
+    GrainTaper m_taper;
+};
+
+/**
+ * @class GranularMatrix
+ * @brief The granular pipeline as a compute matrix with typed stages.
+ *
+ * Built once per pipeline. Each stage is a typed member, reached through segment(),
+ * attribute() and sort(), and the grammar holds the same operations under
+ * GranularStage selections. Rules added to the grammar by name still override stages
+ * through execute_with_grammar().
+ */
+class MAYAFLUX_API GranularMatrix : public GrammarAwareComputeMatrix {
+public:
+    /**
+     * @brief Build the stages and their grammar for an output.
+     * @param output Terminal output. REGION_GROUP leaves out the reconstruct stage.
+     * @param taper Per-grain taper for the additive outputs.
+     */
+    explicit GranularMatrix(GranularOutput output = GranularOutput::REGION_GROUP, GrainTaper taper = {});
+
+    [[nodiscard]] std::shared_ptr<SegmentOp> segment() const { return m_segment; }
+    [[nodiscard]] std::shared_ptr<AttributeOp> attribute() const { return m_attribute; }
+    [[nodiscard]] std::shared_ptr<RegionKeySorter> sort() const { return m_sort; }
+
+private:
+    std::shared_ptr<SegmentOp> m_segment;
+    std::shared_ptr<AttributeOp> m_attribute;
+    std::shared_ptr<RegionKeySorter> m_sort;
+};
 
 // ============================================================================
 // Grammar rule executors
@@ -302,10 +335,6 @@ extern MAYAFLUX_API const ComputationGrammar::Rule::Executor sort_grains;
 /**
  * @struct GranularConfig
  * @brief Scalar parameters shared across all granular pipeline entry points.
- *
- * Replaces the repeated positional argument lists on process, process_to_container,
- * and their async variants. Attribution type and output mode are kept as explicit
- * parameters since they affect overload resolution and return type respectively.
  */
 struct GranularConfig {
     static constexpr auto describe_facets()
@@ -332,9 +361,7 @@ struct GranularConfig {
  * @brief Key under which a context carries the reconstruction taper.
  *
  * make_granular_context stores GranularConfig::taper here when it is set, and the
- * additive reconstruct executors read it, so a taper given in the config reaches
- * reconstruction without further wiring. Set it directly on a context with
- * `ctx.facets.set(taper_facet, taper)` to supply one by hand.
+ * additive reconstruct executors read it.
  */
 inline constexpr FacetMember<&GranularConfig::taper> taper_facet {};
 
@@ -447,25 +474,37 @@ template <ComputeData InputType, ComputeData OutputType>
 }
 
 // ============================================================================
-// Matrix factory
+// Matrix factory and stage runners
 // ============================================================================
 
 /**
- * @brief Construct a GranularMatrix with grammar rules appropriate for the
- *        requested output type.
+ * @brief Construct a GranularMatrix for the requested output.
  *
- * REGION_GROUP: registers segment, attribute, sort (existing behaviour).
- * CONTAINER: registers segment, attribute, sort, then appends reconstruct.
- *            The reconstruct rule reads the source container from the Datum
- *            and writes stitched per-channel audio into a SoundFileContainer.
- * CONTAINER_ADDITIVE: same as CONTAINER but uses an overlap-add reconstruct rule
- *
- * @param output              Terminal output type for this pipeline.
- * @param taper               Optional per-grain taper for OLA output.
+ * @param output Terminal output type for this pipeline.
+ * @param taper  Optional per-grain taper for the additive outputs.
  * @return Configured GranularMatrix instance.
  */
 [[nodiscard]] MAYAFLUX_API std::shared_ptr<GranularMatrix> make_granular_matrix(
     GranularOutput output = GranularOutput::REGION_GROUP, GrainTaper taper = {});
+
+namespace detail {
+
+    /** @brief Apply one context's settings to every stage of a matrix. */
+    inline void apply_granular_context(const std::shared_ptr<GranularMatrix>& matrix, const ExecutionContext& ctx)
+    {
+        apply_context_parameters(matrix->segment(), ctx);
+        apply_context_parameters(matrix->attribute(), ctx);
+        apply_context_parameters(matrix->sort(), ctx);
+    }
+
+    /** @brief Run segment, attribute and sort on a datum. */
+    inline GranularDatum run_grain_stages(const std::shared_ptr<GranularMatrix>& matrix, const GranularDatum& input)
+    {
+        auto segmented = matrix->segment()->apply_operation(input);
+        auto attributed = matrix->attribute()->apply_operation(segmented);
+        return matrix->sort()->apply_operation(attributed);
+    }
+}
 
 // ============================================================================
 // Free process function
@@ -506,7 +545,7 @@ template <ComputeData InputType, ComputeData OutputType>
  * @param analysis_type Attribution category.
  * @param config        Pipeline scalar parameters.
  * @param qualifier     Scalar to extract. Empty uses type default.
- * @param output        CONTAINER for concatenative, CONTAINER_ADDITIVE for OLA.
+ * @param output        CONTAINER for concatenative, CONTAINER_ADDITIVE for overlap-add.
  * @return Populated SoundFileContainer.
  */
 [[nodiscard]] MAYAFLUX_API std::shared_ptr<Kakshya::SoundFileContainer> process_to_container(
@@ -522,7 +561,7 @@ template <ComputeData InputType, ComputeData OutputType>
  * @param container Source signal data.
  * @param executor  Lambda receiving grain samples and context, returning a scalar.
  * @param config    Pipeline scalar parameters.
- * @param output    CONTAINER for concatenative, CONTAINER_ADDITIVE for OLA.
+ * @param output    CONTAINER for concatenative, CONTAINER_ADDITIVE for overlap-add.
  * @return Populated SoundFileContainer.
  */
 [[nodiscard]] MAYAFLUX_API std::shared_ptr<Kakshya::SoundFileContainer> process_to_container(
@@ -542,7 +581,7 @@ template <ComputeData InputType, ComputeData OutputType>
  * @param analysis_type Attribution category.
  * @param config        Pipeline scalar parameters.
  * @param qualifier     Scalar to extract. Empty uses type default.
- * @param output        STREAM for concatenative, STREAM_ADDITIVE for OLA.
+ * @param output        STREAM for concatenative, STREAM_ADDITIVE for overlap-add.
  * @return Populated DynamicSoundStream.
  */
 [[nodiscard]] MAYAFLUX_API std::shared_ptr<Kakshya::DynamicSoundStream> process_to_stream(
@@ -559,7 +598,7 @@ template <ComputeData InputType, ComputeData OutputType>
  * @param container Source signal data.
  * @param executor  Lambda receiving grain samples and context, returning a scalar.
  * @param config    Pipeline scalar parameters.
- * @param output    STREAM for concatenative, STREAM_ADDITIVE for OLA.
+ * @param output    STREAM for concatenative, STREAM_ADDITIVE for overlap-add.
  * @return Populated DynamicSoundStream.
  */
 [[nodiscard]] MAYAFLUX_API std::shared_ptr<Kakshya::DynamicSoundStream> process_to_stream(
@@ -574,13 +613,13 @@ template <ComputeData InputType, ComputeData OutputType>
  * Runs the full pipeline on a background thread owned by @p matrix and
  * invokes @p on_complete with the result. Returns immediately.
  *
- * @param matrix        ComputeMatrix that owns the async future.
+ * @param matrix        Matrix that owns the async future.
  * @param container     Source signal data.
  * @param analysis_type Attribution category.
  * @param on_complete   Called on the worker thread with the finished container.
  * @param config        Pipeline scalar parameters.
  * @param qualifier     Scalar to extract. Empty uses type default.
- * @param output        CONTAINER for concatenative, CONTAINER_ADDITIVE for OLA.
+ * @param output        CONTAINER for concatenative, CONTAINER_ADDITIVE for overlap-add.
  */
 template <typename CompleteFn>
 void process_to_container_async(
@@ -593,22 +632,12 @@ void process_to_container_async(
     GranularOutput output = GranularOutput::CONTAINER)
 {
     auto ctx = make_granular_context(config, analysis_type, qualifier);
-
-    auto seg_op = matrix->get_operation<SegmentOp>("segment");
-    auto attr_op = matrix->get_operation<AttributeOp>("attribute");
-    auto sort_op = matrix->get_operation<SortOp>("sort");
-    apply_context_parameters(seg_op, ctx);
-    apply_context_parameters(attr_op, ctx);
-    apply_context_parameters(sort_op, ctx);
+    detail::apply_granular_context(matrix, ctx);
 
     matrix->with_async(
         make_granular_input(container),
-        [ctx, output](auto chain) {
-            auto sorted = chain
-                              .template then<SegmentOp>("segment")
-                              .template then<AttributeOp>("attribute")
-                              .template then<SortOp>("sort")
-                              .to_io();
+        [matrix, ctx, output](auto chain) {
+            auto sorted = detail::run_grain_stages(matrix, chain.to_io());
             if (output == GranularOutput::CONTAINER_ADDITIVE) {
                 return safe_any_cast_or_throw<
                     Datum<std::shared_ptr<Kakshya::SignalSourceContainer>>>(
@@ -624,12 +653,12 @@ void process_to_container_async(
 /**
  * @brief Async offline granular pipeline (AttributeExecutor path).
  *
- * @param matrix      ComputeMatrix that owns the async future.
+ * @param matrix      Matrix that owns the async future.
  * @param container   Source signal data.
  * @param executor    Lambda receiving grain samples and context, returning a scalar.
  * @param on_complete Called on the worker thread with the finished container.
  * @param config      Pipeline scalar parameters.
- * @param output      CONTAINER for concatenative, CONTAINER_ADDITIVE for OLA.
+ * @param output      CONTAINER for concatenative, CONTAINER_ADDITIVE for overlap-add.
  */
 template <typename CompleteFn>
 void process_to_container_async(
@@ -641,22 +670,12 @@ void process_to_container_async(
     GranularOutput output = GranularOutput::CONTAINER)
 {
     auto ctx = make_granular_context(config, std::move(executor));
-
-    auto seg_op = matrix->get_operation<SegmentOp>("segment");
-    auto attr_op = matrix->get_operation<AttributeOp>("attribute");
-    auto sort_op = matrix->get_operation<SortOp>("sort");
-    apply_context_parameters(seg_op, ctx);
-    apply_context_parameters(attr_op, ctx);
-    apply_context_parameters(sort_op, ctx);
+    detail::apply_granular_context(matrix, ctx);
 
     matrix->with_async(
         make_granular_input(container),
-        [ctx, output](auto chain) {
-            auto sorted = chain
-                              .template then<SegmentOp>("segment")
-                              .template then<AttributeOp>("attribute")
-                              .template then<SortOp>("sort")
-                              .to_io();
+        [matrix, ctx, output](auto chain) {
+            auto sorted = detail::run_grain_stages(matrix, chain.to_io());
             if (output == GranularOutput::CONTAINER_ADDITIVE) {
                 return safe_any_cast_or_throw<
                     Datum<std::shared_ptr<Kakshya::SignalSourceContainer>>>(
@@ -673,20 +692,17 @@ void process_to_container_async(
  * @brief Async offline granular pipeline terminating in a DynamicSoundStream
  *        (AnalysisType path).
  *
- * Runs the full pipeline on a background thread owned by @p matrix and
- * invokes @p on_complete with the finished stream. Returns immediately.
- *
  * The callback receives a @c shared_ptr<DynamicSoundStream> which is null
  * if reconstruction produced an unexpected type. The caller is responsible
  * for thread-safe installation of the stream into any downstream pipeline.
  *
- * @param matrix        ComputeMatrix that owns the async future.
+ * @param matrix        Matrix that owns the async future.
  * @param container     Source signal data.
  * @param analysis_type Attribution category.
  * @param on_complete   Called on the worker thread with the finished stream.
  * @param config        Pipeline scalar parameters.
  * @param qualifier     Scalar to extract. Empty uses type default.
- * @param output        STREAM for concatenative, STREAM_ADDITIVE for OLA.
+ * @param output        STREAM for concatenative, STREAM_ADDITIVE for overlap-add.
  */
 template <typename CompleteFn>
 void process_to_stream_async(
@@ -699,22 +715,12 @@ void process_to_stream_async(
     GranularOutput output = GranularOutput::STREAM)
 {
     auto ctx = make_granular_context(config, analysis_type, qualifier);
-
-    auto seg_op = matrix->get_operation<SegmentOp>("segment");
-    auto attr_op = matrix->get_operation<AttributeOp>("attribute");
-    auto sort_op = matrix->get_operation<SortOp>("sort");
-    apply_context_parameters(seg_op, ctx);
-    apply_context_parameters(attr_op, ctx);
-    apply_context_parameters(sort_op, ctx);
+    detail::apply_granular_context(matrix, ctx);
 
     matrix->with_async(
         make_granular_input(container),
-        [ctx, output](auto chain) {
-            auto sorted = chain
-                              .template then<SegmentOp>("segment")
-                              .template then<AttributeOp>("attribute")
-                              .template then<SortOp>("sort")
-                              .to_io();
+        [matrix, ctx, output](auto chain) {
+            auto sorted = detail::run_grain_stages(matrix, chain.to_io());
             if (output == GranularOutput::STREAM_ADDITIVE) {
                 return safe_any_cast_or_throw<
                     Datum<std::shared_ptr<Kakshya::SignalSourceContainer>>>(
@@ -734,12 +740,12 @@ void process_to_stream_async(
  * @brief Async offline granular pipeline terminating in a DynamicSoundStream
  *        (AttributeExecutor path).
  *
- * @param matrix      ComputeMatrix that owns the async future.
+ * @param matrix      Matrix that owns the async future.
  * @param container   Source signal data.
  * @param executor    Lambda receiving grain samples and context, returning a scalar.
  * @param on_complete Called on the worker thread with the finished stream.
  * @param config      Pipeline scalar parameters.
- * @param output      STREAM for concatenative, STREAM_ADDITIVE for OLA.
+ * @param output      STREAM for concatenative, STREAM_ADDITIVE for overlap-add.
  */
 template <typename CompleteFn>
 void process_to_stream_async(
@@ -751,22 +757,12 @@ void process_to_stream_async(
     GranularOutput output = GranularOutput::STREAM)
 {
     auto ctx = make_granular_context(config, std::move(executor));
-
-    auto seg_op = matrix->get_operation<SegmentOp>("segment");
-    auto attr_op = matrix->get_operation<AttributeOp>("attribute");
-    auto sort_op = matrix->get_operation<SortOp>("sort");
-    apply_context_parameters(seg_op, ctx);
-    apply_context_parameters(attr_op, ctx);
-    apply_context_parameters(sort_op, ctx);
+    detail::apply_granular_context(matrix, ctx);
 
     matrix->with_async(
         make_granular_input(container),
-        [ctx, output](auto chain) {
-            auto sorted = chain
-                              .template then<SegmentOp>("segment")
-                              .template then<AttributeOp>("attribute")
-                              .template then<SortOp>("sort")
-                              .to_io();
+        [matrix, ctx, output](auto chain) {
+            auto sorted = detail::run_grain_stages(matrix, chain.to_io());
             if (output == GranularOutput::STREAM_ADDITIVE) {
                 return safe_any_cast_or_throw<
                     Datum<std::shared_ptr<Kakshya::SignalSourceContainer>>>(
