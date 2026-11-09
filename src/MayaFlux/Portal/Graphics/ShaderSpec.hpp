@@ -29,6 +29,21 @@ enum class KernelTemplate : uint8_t {
     Convolve2D, ///< 2D separable or non-separable convolution; kernel weights in SSBO, radius in PC
     Scan, ///< Inclusive prefix scan over one InOut SSBO, double-buffered
           ///< Hillis-Steele in shared memory. Op selects the combine function.
+    SegmentedReduction, ///< One workgroup per segment over word-pair doubles.
+                        ///< Input VEC2_U32 binding, Output VEC2_U32 binding, three UINT32
+                        ///< push constants: length, stride, offset. Segment s covers
+                        ///< length elements starting at offset + s * stride. Op is the
+                        ///< combine (Sum, Max, Min); ReductionMap is applied first.
+};
+
+/**
+ * @enum ReductionMap
+ * @brief Pointwise map applied to each element before a SegmentedReduction combines it.
+ */
+enum class ReductionMap : uint8_t {
+    Identity, ///< x
+    Abs, ///< |x|
+    Square, ///< x * x
 };
 
 /**
@@ -222,6 +237,7 @@ struct KernelSource {
  * Reduction operations (one InOut SSBO, shared memory):
  *   Sum          accumulate + into shared[lid], tree reduce
  *   Max          accumulate max into shared[lid], tree reduce
+ *   Min          as the combine of SegmentedReduction, where it is the minimum
  *   IndexScale   sig[i] = float(i) * sig[i]
  */
 enum class KernelOp : uint8_t {
@@ -372,6 +388,7 @@ struct FunctionDef {
 struct ShaderSpec {
     KernelTemplate tmpl { KernelTemplate::Elementwise };
     KernelOp op { KernelOp::Scale };
+    ReductionMap map { ReductionMap::Identity }; ///< SegmentedReduction only.
     std::vector<BindingSlot> bindings;
     std::vector<PushConstantField> pc_fields;
     std::array<uint32_t, 3> workgroup_size { 256, 1, 1 };
@@ -403,6 +420,13 @@ struct ShaderSpec {
         Assemble& op(KernelOp o)
         {
             m_op = o;
+            return *this;
+        }
+
+        /** @brief Set the pointwise map of a SegmentedReduction. */
+        Assemble& map(ReductionMap m)
+        {
+            m_map = m;
             return *this;
         }
 
@@ -543,6 +567,7 @@ struct ShaderSpec {
             return ShaderSpec {
                 .tmpl = m_tmpl,
                 .op = m_op,
+                .map = m_map,
                 .bindings = std::move(m_bindings),
                 .pc_fields = std::move(m_pc_fields),
                 .workgroup_size = m_workgroup,
@@ -555,6 +580,7 @@ struct ShaderSpec {
     private:
         KernelTemplate m_tmpl { KernelTemplate::Elementwise };
         KernelOp m_op { KernelOp::Scale };
+        ReductionMap m_map { ReductionMap::Identity };
         std::vector<BindingSlot> m_bindings;
         std::vector<PushConstantField> m_pc_fields;
         std::array<uint32_t, 3> m_workgroup { 256, 1, 1 };
@@ -581,5 +607,53 @@ struct ShaderSpec {
  */
 #define MF_KERNEL(lambda) \
     MayaFlux::Portal::Graphics::KernelSource::parse(#lambda)
+
+namespace detail {
+
+    /**
+     * @brief Which soft-double functions a generated module needs.
+     *
+     * The functions are IEEE 754 double arithmetic on word pairs (uvec2, x the
+     * low word, y the high word) built from 32-bit integer ops, so they need
+     * neither shaderFloat64 nor shaderInt64.
+     */
+    struct SoftDoubleUse {
+        bool add { false };
+        bool mul { false };
+        bool less { false };
+    };
+
+    /**
+     * @brief Assembly text for the requested soft-double functions.
+     *
+     * declarations holds the types and constants for the global section.
+     * functions holds the OpFunction bodies and follows every global
+     * declaration. Both rely on %u32, %bool, %v2u32 and the %glsl import
+     * already being declared by the module.
+     */
+    struct SoftDoubleModule {
+        std::string declarations;
+        std::string functions;
+    };
+
+    /** @brief Function adding two doubles held as uvec2. Rounds to nearest even. */
+    inline constexpr std::string_view soft_double_add = "%sd_f64_add";
+
+    /** @brief Function multiplying two doubles held as uvec2. Rounds to nearest even. */
+    inline constexpr std::string_view soft_double_mul = "%sd_f64_mul";
+
+    /**
+     * @brief Function returning bool, true when the first double orders before the second.
+     *
+     * The order is the library order key: -0.0 equals +0.0 and every NaN is the largest.
+     */
+    inline constexpr std::string_view soft_double_less = "%sd_f64_less";
+
+    /**
+     * @brief Emit the requested soft-double functions.
+     */
+    [[nodiscard]] SoftDoubleModule emit_soft_double(const SoftDoubleUse& use);
+
+} // namespace detail
 
 } // namespace MayaFlux::Portal::Graphics

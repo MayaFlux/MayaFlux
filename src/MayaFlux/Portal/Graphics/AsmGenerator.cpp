@@ -26,6 +26,11 @@
  * OpULessThan active-thread guard, and two OpControlBarrier synchronisation
  * points per iteration. Supports KernelOp::Sum and KernelOp::Max.
  *
+ * KernelTemplate::SegmentedReduction — emit_segmented_reduction reduces one
+ * segment of word-pair doubles per workgroup. Sum, Max and Min combine in
+ * IEEE double arithmetic emulated with 32-bit integer ops (AsmSoftDouble), so
+ * no device float64 or int64 feature is used.
+ *
  * GLSL kernel path (emit_glsl_kernel) handles all three binding modalities
  * when spec.kernel is set via MF_KERNEL.
  */
@@ -153,8 +158,16 @@ namespace {
         if (!spec.pc_fields.empty())
             iface += " %pc";
 
-        if (spec.tmpl == KernelTemplate::Reduction || spec.tmpl == KernelTemplate::Scan)
-            iface += " %lid_var";
+        if (spec.tmpl == KernelTemplate::Reduction) {
+            iface += " %lid_var %shared_a";
+            if (spec.op == KernelOp::MaxIndex) {
+                iface += " %shared_idx";
+            }
+        } else if (spec.tmpl == KernelTemplate::Scan) {
+            iface += " %lid_var %shared_a %shared_b";
+        } else if (spec.tmpl == KernelTemplate::SegmentedReduction) {
+            iface += " %lid_var %wgid_var %sr_shared";
+        }
 
         std::string o;
         o += "OpCapability Shader\n";
@@ -221,8 +234,12 @@ namespace {
                 + std::to_string(b.binding_index) + "\n";
         }
 
-        if (spec.tmpl == KernelTemplate::Reduction || spec.tmpl == KernelTemplate::Scan)
+        if (spec.tmpl == KernelTemplate::Reduction || spec.tmpl == KernelTemplate::Scan) {
             o += "OpDecorate %lid_var BuiltIn LocalInvocationId\n";
+        } else if (spec.tmpl == KernelTemplate::SegmentedReduction) {
+            o += "OpDecorate %lid_var BuiltIn LocalInvocationId\n";
+            o += "OpDecorate %wgid_var BuiltIn WorkgroupId\n";
+        }
 
         if (!spec.pc_fields.empty()) {
             o += "OpDecorate %pc_blk Block\n";
@@ -371,7 +388,6 @@ namespace {
             const std::string ls = std::to_string(local);
             const bool is_max_index = (spec.op == KernelOp::MaxIndex);
 
-            o += "%bool        = OpTypeBool\n";
             o += "%lid_var  = OpVariable %ptr_in_v3u32 Input\n";
             o += "%arr_sh_t    = OpTypeArray %f32 %c" + ls + "u\n";
             o += "%psh_arr     = OpTypePointer Workgroup %arr_sh_t\n";
@@ -393,7 +409,6 @@ namespace {
             const uint32_t local = spec.workgroup_size[0];
             const std::string ls = std::to_string(local);
 
-            o += "%bool        = OpTypeBool\n";
             o += "%lid_var     = OpVariable %ptr_in_v3u32 Input\n";
             o += "%arr_sh_t    = OpTypeArray %f32 %c" + ls + "u\n";
             o += "%psh_arr     = OpTypePointer Workgroup %arr_sh_t\n";
@@ -1621,6 +1636,207 @@ namespace {
         return o;
     }
 
+    /**
+     * Combine two word-pair doubles held in ids a and b into id result.
+     * Sum adds. Max and Min pick the second operand when the order key says so.
+     */
+    std::string emit_segmented_combine(
+        KernelOp op, const std::string& tag, const std::string& a, const std::string& b)
+    {
+        const std::string result = "%sr_" + tag + "_res";
+        std::string o;
+        if (op == KernelOp::Sum) {
+            o += result + " = OpFunctionCall %v2u32 " + std::string(soft_double_add) + " " + a + " " + b + "\n";
+            return o;
+        }
+        const std::string& first = (op == KernelOp::Max) ? a : b;
+        const std::string& second = (op == KernelOp::Max) ? b : a;
+        o += "%sr_" + tag + "_lt = OpFunctionCall %bool " + std::string(soft_double_less) + " " + first + " " + second + "\n";
+        o += "%sr_" + tag + "_alo = OpCompositeExtract %u32 " + a + " 0\n";
+        o += "%sr_" + tag + "_ahi = OpCompositeExtract %u32 " + a + " 1\n";
+        o += "%sr_" + tag + "_blo = OpCompositeExtract %u32 " + b + " 0\n";
+        o += "%sr_" + tag + "_bhi = OpCompositeExtract %u32 " + b + " 1\n";
+        o += "%sr_" + tag + "_lo = OpSelect %u32 %sr_" + tag + "_lt %sr_" + tag + "_blo %sr_" + tag + "_alo\n";
+        o += "%sr_" + tag + "_hi = OpSelect %u32 %sr_" + tag + "_lt %sr_" + tag + "_bhi %sr_" + tag + "_ahi\n";
+        o += result + " = OpCompositeConstruct %v2u32 %sr_" + tag + "_lo %sr_" + tag + "_hi\n";
+        return o;
+    }
+
+    /**
+     * Emit the globals, soft-double functions and entry point for the
+     * SegmentedReduction template.
+     *
+     * One workgroup reduces one segment of word-pair doubles. Each invocation
+     * folds a strided share of the segment into a private accumulator, then a
+     * shared-memory tree combines the accumulators and invocation 0 stores the
+     * segment result at the workgroup index. Returns an empty string when the
+     * spec does not have the template's shape.
+     */
+    std::string emit_segmented_reduction(const ShaderSpec& spec)
+    {
+        const uint32_t local = spec.workgroup_size[0];
+        const bool combine_ok = spec.op == KernelOp::Sum || spec.op == KernelOp::Max || spec.op == KernelOp::Min;
+        const bool shaped = spec.bindings.size() == 2 && spec.pc_fields.size() == 3
+            && spec.bindings[0].format == Kakshya::GpuDataFormat::VEC2_U32
+            && spec.bindings[1].format == Kakshya::GpuDataFormat::VEC2_U32
+            && std::ranges::all_of(spec.pc_fields, [](const PushConstantField& f) {
+                   return f.format == Kakshya::GpuDataFormat::UINT32;
+               });
+        if (!combine_ok || !shaped || local < 2 || (local & (local - 1)) != 0) {
+            return {};
+        }
+
+        const auto& in = spec.bindings[0];
+        const auto& out = spec.bindings[1];
+        const std::string ls = std::to_string(local);
+
+        SoftDoubleUse use;
+        use.add = spec.op == KernelOp::Sum;
+        use.less = spec.op != KernelOp::Sum;
+        use.mul = spec.map == ReductionMap::Square;
+        const SoftDoubleModule soft = emit_soft_double(use);
+
+        uint32_t identity_hi = 0;
+        if (spec.op == KernelOp::Max) {
+            identity_hi = 0xFFF00000U;
+        } else if (spec.op == KernelOp::Min) {
+            identity_hi = 0x7FF80000U;
+        }
+
+        std::string o;
+        o += "%lid_var = OpVariable %ptr_in_v3u32 Input\n";
+        o += "%wgid_var = OpVariable %ptr_in_v3u32 Input\n";
+        o += "%sr_local = OpConstant %u32 " + ls + "\n";
+        o += "%sr_two = OpConstant %u32 2\n";
+        o += "%sr_sem = OpConstant %u32 264\n";
+        o += "%sr_abs = OpConstant %u32 2147483647\n";
+        o += "%sr_id_lo = OpConstant %u32 0\n";
+        o += "%sr_id_hi = OpConstant %u32 " + std::to_string(identity_hi) + "\n";
+        o += "%sr_identity = OpConstantComposite %v2u32 %sr_id_lo %sr_id_hi\n";
+        o += "%sr_arr_t = OpTypeArray %v2u32 %sr_local\n";
+        o += "%sr_p_arr = OpTypePointer Workgroup %sr_arr_t\n";
+        o += "%sr_shared = OpVariable %sr_p_arr Workgroup\n";
+        o += "%sr_p_sh = OpTypePointer Workgroup %v2u32\n";
+        o += "%sr_pf_v2 = OpTypePointer Function %v2u32\n";
+        o += "%sr_pf_u32 = OpTypePointer Function %u32\n";
+        o += soft.declarations;
+        o += "\n";
+        o += soft.functions;
+
+        o += "%main = OpFunction %void None %voidfn\n";
+        o += "%entry = OpLabel\n";
+        o += "%sr_acc = OpVariable %sr_pf_v2 Function\n";
+        o += "%sr_k = OpVariable %sr_pf_u32 Function\n";
+        o += "%sr_lid3 = OpLoad %v3u32 %lid_var\n";
+        o += "%sr_lid = OpCompositeExtract %u32 %sr_lid3 0\n";
+        o += "%sr_wg3 = OpLoad %v3u32 %wgid_var\n";
+        o += "%sr_seg = OpCompositeExtract %u32 %sr_wg3 0\n";
+        o += "%sr_len_p = OpAccessChain %ppc_u32 %pc %c0u\n";
+        o += "%sr_len = OpLoad %u32 %sr_len_p\n";
+        o += "%sr_stride_p = OpAccessChain %ppc_u32 %pc %c1u\n";
+        o += "%sr_stride_pc = OpLoad %u32 %sr_stride_p\n";
+        o += "%sr_off_p = OpAccessChain %ppc_u32 %pc %sr_two\n";
+        o += "%sr_off = OpLoad %u32 %sr_off_p\n";
+        o += "%sr_seg_off = OpIMul %u32 %sr_seg %sr_stride_pc\n";
+        o += "%sr_base = OpIAdd %u32 %sr_seg_off %sr_off\n";
+        o += "OpStore %sr_acc %sr_identity\n";
+        o += "OpStore %sr_k %sr_lid\n";
+        o += "OpBranch %sr_hdr\n\n";
+
+        o += "%sr_hdr = OpLabel\n";
+        o += "OpLoopMerge %sr_merge %sr_cont None\n";
+        o += "OpBranch %sr_cond\n\n";
+
+        o += "%sr_cond = OpLabel\n";
+        o += "%sr_kv = OpLoad %u32 %sr_k\n";
+        o += "%sr_inside = OpULessThan %bool %sr_kv %sr_len\n";
+        o += "OpBranchConditional %sr_inside %sr_body %sr_merge\n\n";
+
+        o += "%sr_body = OpLabel\n";
+        o += "%sr_idx = OpIAdd %u32 %sr_base %sr_kv\n";
+        o += "%sr_gep = OpAccessChain %pelem_" + in.name + " %buf_" + in.name + " %c0u %sr_idx\n";
+        o += "%sr_x0 = OpLoad %v2u32 %sr_gep\n";
+        switch (spec.map) {
+        case ReductionMap::Abs:
+            o += "%sr_x0lo = OpCompositeExtract %u32 %sr_x0 0\n";
+            o += "%sr_x0hi = OpCompositeExtract %u32 %sr_x0 1\n";
+            o += "%sr_x0ha = OpBitwiseAnd %u32 %sr_x0hi %sr_abs\n";
+            o += "%sr_x = OpCompositeConstruct %v2u32 %sr_x0lo %sr_x0ha\n";
+            break;
+        case ReductionMap::Square:
+            o += "%sr_x = OpFunctionCall %v2u32 " + std::string(soft_double_mul) + " %sr_x0 %sr_x0\n";
+            break;
+        case ReductionMap::Identity:
+        default:
+            o += "%sr_x = OpCopyObject %v2u32 %sr_x0\n";
+            break;
+        }
+        o += "%sr_a = OpLoad %v2u32 %sr_acc\n";
+        o += emit_segmented_combine(spec.op, "acc", "%sr_a", "%sr_x");
+        o += "OpStore %sr_acc %sr_acc_res\n";
+        o += "OpBranch %sr_cont\n\n";
+
+        o += "%sr_cont = OpLabel\n";
+        o += "%sr_kv2 = OpLoad %u32 %sr_k\n";
+        o += "%sr_kn = OpIAdd %u32 %sr_kv2 %sr_local\n";
+        o += "OpStore %sr_k %sr_kn\n";
+        o += "OpBranch %sr_hdr\n\n";
+
+        o += "%sr_merge = OpLabel\n";
+        o += "%sr_final = OpLoad %v2u32 %sr_acc\n";
+        o += "%sr_own = OpAccessChain %sr_p_sh %sr_shared %sr_lid\n";
+        o += "OpStore %sr_own %sr_final\n";
+        o += "OpControlBarrier %sr_two %sr_two %sr_sem\n";
+        o += "%sr_s_init = OpShiftRightLogical %u32 %sr_local %c1u\n";
+        o += "OpBranch %sr_t_hdr\n\n";
+
+        o += "%sr_t_hdr = OpLabel\n";
+        o += "%sr_stride = OpPhi %u32 %sr_s_init %sr_merge %sr_s_next %sr_t_cont\n";
+        o += "OpLoopMerge %sr_t_merge %sr_t_cont None\n";
+        o += "OpBranch %sr_t_body\n\n";
+
+        o += "%sr_t_body = OpLabel\n";
+        o += "%sr_active = OpULessThan %bool %sr_lid %sr_stride\n";
+        o += "OpSelectionMerge %sr_sel_merge None\n";
+        o += "OpBranchConditional %sr_active %sr_do %sr_sel_merge\n\n";
+
+        o += "%sr_do = OpLabel\n";
+        o += "%sr_pa = OpAccessChain %sr_p_sh %sr_shared %sr_lid\n";
+        o += "%sr_va = OpLoad %v2u32 %sr_pa\n";
+        o += "%sr_lb = OpIAdd %u32 %sr_lid %sr_stride\n";
+        o += "%sr_pb = OpAccessChain %sr_p_sh %sr_shared %sr_lb\n";
+        o += "%sr_vb = OpLoad %v2u32 %sr_pb\n";
+        o += emit_segmented_combine(spec.op, "tree", "%sr_va", "%sr_vb");
+        o += "OpStore %sr_pa %sr_tree_res\n";
+        o += "OpBranch %sr_sel_merge\n\n";
+
+        o += "%sr_sel_merge = OpLabel\n";
+        o += "OpBranch %sr_t_cont\n\n";
+
+        o += "%sr_t_cont = OpLabel\n";
+        o += "OpControlBarrier %sr_two %sr_two %sr_sem\n";
+        o += "%sr_s_next = OpShiftRightLogical %u32 %sr_stride %c1u\n";
+        o += "%sr_done = OpIEqual %bool %sr_s_next %c0u\n";
+        o += "OpBranchConditional %sr_done %sr_t_merge %sr_t_hdr\n\n";
+
+        o += "%sr_t_merge = OpLabel\n";
+        o += "%sr_first = OpIEqual %bool %sr_lid %c0u\n";
+        o += "OpSelectionMerge %sr_w_merge None\n";
+        o += "OpBranchConditional %sr_first %sr_w_do %sr_w_merge\n\n";
+
+        o += "%sr_w_do = OpLabel\n";
+        o += "%sr_rp = OpAccessChain %sr_p_sh %sr_shared %c0u\n";
+        o += "%sr_result = OpLoad %v2u32 %sr_rp\n";
+        o += "%sr_op = OpAccessChain %pelem_" + out.name + " %buf_" + out.name + " %c0u %sr_seg\n";
+        o += "OpStore %sr_op %sr_result\n";
+        o += "OpBranch %sr_w_merge\n\n";
+
+        o += "%sr_w_merge = OpLabel\n";
+        o += "OpReturn\n";
+        o += "OpFunctionEnd\n";
+        return o;
+    }
+
 } // namespace
 
 namespace {
@@ -1684,6 +1900,9 @@ std::string emit_spirv_asm(const ShaderSpec& spec)
         break;
     case KernelTemplate::Scan:
         src += emit_scan_body(spec);
+        break;
+    case KernelTemplate::SegmentedReduction:
+        src += emit_segmented_reduction(spec);
         break;
     case KernelTemplate::BitonicSort:
         src += emit_bitonic_body(spec);
