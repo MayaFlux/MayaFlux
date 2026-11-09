@@ -563,7 +563,7 @@ flowchart TD
 | Read presented pixels from a window | `DisplayService::readback_swapchain_region` / `get_last_frame` |
 | React to every captured window frame | `DisplayService::register_frame_observer` |
 | Pull GPU-written vertices back into the node graph | `GeometryReadbackNode`, driven manually |
-| Move audio between an `AudioBuffer` and a `VKBuffer` | None yet. `TransferProcessor` was removed; the replacement is planned in `planning/audio-gpu-compute.md` |
+| Move audio between an `AudioBuffer` and a `VKBuffer` | None yet. `TransferProcessor` was removed. |
 | Read the live geometry of a `ComputeMeshBuffer` | `DataReadProcessor::read_mesh` or `download_compute_mesh` |
 | Save an image, volume or mesh to disk | `IO::save_*` (synchronous) or `IOManager::save_*` (queued encode) |
 | Record a volume, spatial stream or window over time | `IOManager::capture_volume` / `capture_spatial` / `capture_window` |

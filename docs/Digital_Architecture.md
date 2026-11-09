@@ -136,7 +136,7 @@ Audio processors bring streams into the cycle and combine them for output. `Stre
 
 Graphics processors prepare resources before drawing or compute. `GeometryBindingsProcessor` uploads changed node geometry, `MeshProcessor` updates mesh vertices and indices, and `InstanceSSBOProcessor` supplies per-instance transforms. `DescriptorBindingsProcessor` stages shader resources; `UVFieldProcessor` projects texture coordinates on the GPU. `RenderProcessor` records draws and `ComputeProcessor` dispatches compute. At the root, `GraphicsBatchProcessor` gathers child work and `PresentProcessor` submits it to the target windows.
 
-Staging processors connect these paths. `DataWriteProcessor` writes typed values into GPU buffers, while `FormaBindingsProcessor` routes Forma state into shader bindings. `BufferUploadProcessor` and `BufferDownloadProcessor` move buffer data across CPU and GPU memory. Audio to GPU transfer has no processor yet; it is planned in `planning/audio-gpu-compute.md`.
+Staging processors connect these paths. `DataWriteProcessor` writes typed values into GPU buffers, while `FormaBindingsProcessor` routes Forma state into shader bindings. `BufferUploadProcessor` and `BufferDownloadProcessor` move buffer data across CPU and GPU memory. Audio to GPU transfer has no processor yet.
 
 `SDFMeshProcessor` runs GPU signed-distance evaluation and marching cubes into a `ComputeMeshBuffer`, whose generated geometry can be rendered or exported.
 
