@@ -562,7 +562,7 @@ classDiagram
     Transformer <|-- ConvolutionTransformer
     Transformer <|-- GpuTransformer
     Sorter <|-- StandardSorter
-    Sorter <|-- GpuSorter
+    Sorter <|-- BitonicSorter
     Extractor <|-- FeatureExtractor
     Extractor <|-- GpuExtractor
     Analyzer <|-- EnergyAnalyzer
@@ -597,7 +597,7 @@ auto op = std::make_shared<GpuTransformer<>>(exec);
 auto result = op->apply_operation(input_datum);
 ```
 
-Equivalents exist for other categories: `GpuSorter`, `GpuExtractor`, `GpuAnalyzer`.
+Equivalents exist for other categories: `GpuExtractor`, `GpuAnalyzer`. The GPU sort is `BitonicSorter`, which the default registry lists beside `StandardSorter`.
 
 ---
 
@@ -791,7 +791,7 @@ flowchart LR
     RG --> ATT["attribute, priority 75<br/>feature_key"]
     ATT --> SORT["sort, priority 50"]
     SORT --> T{"gpu_sort_threshold above 0<br/>and grains at or above it?"}
-    T -- yes --> GS["GPU bitonic sort<br/>GpuSorter, multipass"]
+    T -- yes --> GS["GPU bitonic sort<br/>BitonicSorter, multipass"]
     T -- no --> CS["CPU sort"]
     GS --> OUT{"GranularOutput"}
     CS --> OUT
@@ -973,7 +973,7 @@ void main() {
 | Situation | Type |
 |---|---|
 | CPU fallback exists or is wanted during development | Subclass `Transformer`; attach executor via `set_gpu_backend()`. |
-| GPU-only; hard error on CPU path | `GpuTransformer` (or `GpuSorter`, `GpuExtractor`, `GpuAnalyzer`). |
+| GPU-only; hard error on CPU path | `GpuTransformer` (or `GpuExtractor`, `GpuAnalyzer`). The GPU sort is `BitonicSorter`. |
 | Multiple passes over the same dispatch (bitonic sort, iterative refinement) | Any operation + `set_multipass(count, updater)` on the executor. |
 
 **Which orchestrator?**

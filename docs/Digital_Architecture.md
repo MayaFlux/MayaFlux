@@ -265,7 +265,7 @@ The type system begins with `Datum<T>`. Where the real-time side works with raw 
 
 **Transformers** modify data: `MathematicalTransformer`, `SpectralTransformer`, `TemporalTransformer`, `ConvolutionTransformer`, `Transformer`, `GpuTransformer`.
 
-**Sorters** reorder data: `StandardSorter`, `Sorter`, `GpuSorter`.
+**Sorters** reorder data: `StandardSorter`, `Sorter`, and the GPU sort `BitonicSorter`.
 
 **Extractors** pull features: `FeatureExtractor`, `Extractor`, `GpuExtractor`.
 

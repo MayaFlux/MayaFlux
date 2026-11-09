@@ -8,8 +8,8 @@ namespace MayaFlux::Yantra {
  * @class ShaderExecutionContext
  * @brief Concrete GpuExecutionContext for a single fixed shader with fixed bindings.
  *
- * The standard way to run a shader as an operation: hand it to GpuTransformer
- * or GpuSorter, which dispatch through it and have no CPU path. Bindings are
+ * The standard way to run a shader as an operation: hand it to GpuTransformer,
+ * which dispatches through it and has no CPU path. Bindings are
  * declared at construction or built incrementally through the fluent API.
  *
  * Construction followed by fluent configuration:
