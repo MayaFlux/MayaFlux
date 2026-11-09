@@ -4,39 +4,13 @@
 #include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
 #include "MayaFlux/Registry/BackendRegistry.hpp"
 #include "MayaFlux/Registry/Service/BufferService.hpp"
+#include "MayaFlux/Transitive/Protocol/BinaryBuffer.hpp"
 
 namespace MayaFlux::Buffers {
 
 namespace {
-
     constexpr const char* k_block_name = "block";
     constexpr size_t k_word_bytes = sizeof(uint64_t);
-
-    /**
-     * @brief Writes one sample as eight little-endian bytes.
-     *
-     * Byte shifts give the device layout on any host, so no byte-order branch is needed.
-     */
-    void store_device_word(unsigned char* dst, double sample) noexcept
-    {
-        const auto bits = std::bit_cast<uint64_t>(sample);
-        for (size_t k = 0; k < k_word_bytes; ++k) {
-            dst[k] = static_cast<unsigned char>((bits >> (8 * k)) & 0xFFU);
-        }
-    }
-
-    /**
-     * @brief Reads one sample from eight little-endian bytes.
-     */
-    double load_device_word(const unsigned char* src) noexcept
-    {
-        uint64_t bits = 0;
-        for (size_t k = 0; k < k_word_bytes; ++k) {
-            bits |= static_cast<uint64_t>(src[k]) << (8 * k);
-        }
-        return std::bit_cast<double>(bits);
-    }
-
 }
 
 //==============================================================================
@@ -208,7 +182,7 @@ void AudioComputeProcessor::process_block(const std::shared_ptr<Buffer>& buffer)
     }
 
     for (size_t i = 0; i < frames; ++i) {
-        store_device_word(words + i * k_word_bytes, samples[i]);
+        Transitive::Protocol::store_le_double(words + i * k_word_bytes, samples[i]);
     }
     upload_to_gpu(words, bytes, m_block, nullptr, 0, true);
 
@@ -231,7 +205,7 @@ void AudioComputeProcessor::process_block(const std::shared_ptr<Buffer>& buffer)
 
     const auto* out = static_cast<const unsigned char*>(resources.mapped_ptr);
     for (size_t i = 0; i < frames; ++i) {
-        samples[i] = load_device_word(out + i * k_word_bytes);
+        samples[i] = Transitive::Protocol::load_le_double(out + i * k_word_bytes);
     }
 }
 

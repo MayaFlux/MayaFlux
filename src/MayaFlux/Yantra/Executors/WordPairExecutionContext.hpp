@@ -3,6 +3,7 @@
 #include "ShaderExecutionContext.hpp"
 
 #include "MayaFlux/Kinesis/Discrete/OrderKey.hpp"
+#include "MayaFlux/Transitive/Protocol/BinaryBuffer.hpp"
 
 /**
  * @file WordPairExecutionContext.hpp
@@ -52,14 +53,19 @@ public:
      */
     void stage_words(uint32_t binding, std::span<const double> values, size_t padded_count = 0, bool complement = false)
     {
-        std::vector<uint64_t> words(std::max(padded_count, values.size()), ~uint64_t { 0 });
-        for (size_t i = 0; i < values.size(); ++i) {
-            const uint64_t word = m_order_key
-                ? Kinesis::Discrete::order_key(values[i])
-                : std::bit_cast<uint64_t>(values[i]);
-            words[i] = complement ? ~word : word;
+        const size_t count = std::max(padded_count, values.size());
+        std::vector<uint8_t> bytes(count * sizeof(uint64_t));
+        for (size_t i = 0; i < count; ++i) {
+            uint64_t word = ~uint64_t { 0 };
+            if (i < values.size()) {
+                word = m_order_key
+                    ? Kinesis::Discrete::order_key(values[i])
+                    : std::bit_cast<uint64_t>(values[i]);
+                word = complement ? ~word : word;
+            }
+            Transitive::Protocol::store_le_u64(bytes.data() + i * sizeof(uint64_t), word);
         }
-        set_binding_data(binding, words);
+        set_binding_data(binding, bytes);
     }
 
     /**
@@ -76,8 +82,12 @@ protected:
         const std::vector<std::vector<double>>& /*channels*/,
         const DataStructureInfo& /*structure_info*/) override
     {
-        m_primary_words.resize(raw.primary.size());
-        std::memcpy(m_primary_words.data(), raw.primary.data(), raw.primary.size() * sizeof(float));
+        const size_t count = raw.primary.size();
+        m_primary_words.resize(count);
+        const auto* src = reinterpret_cast<const uint8_t*>(raw.primary.data());
+        for (size_t i = 0; i < count; ++i) {
+            m_primary_words[i] = Transitive::Protocol::load_le_u32(src + i * sizeof(uint32_t));
+        }
         return output_type {};
     }
 
