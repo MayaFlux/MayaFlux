@@ -709,6 +709,11 @@ protected:
     virtual void update_descriptors(const std::shared_ptr<VKBuffer>& buffer);
     virtual void cleanup();
 
+    /**
+     * @brief Creates or rebuilds the shader, pipeline and descriptors that the next dispatch needs.
+     */
+    void prepare_for(const std::shared_ptr<VKBuffer>& vk_buffer);
+
 private:
     //==========================================================================
     // Internal Implementation

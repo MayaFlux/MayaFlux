@@ -59,6 +59,14 @@ void ShaderProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
         return;
     }
 
+    prepare_for(vk_buffer);
+
+    execute_shader(vk_buffer);
+    on_after_execute(m_last_command_buffer, vk_buffer);
+}
+
+void ShaderProcessor::prepare_for(const std::shared_ptr<VKBuffer>& vk_buffer)
+{
     if (m_initialized && m_created_layout && *m_created_layout != layout_fingerprint(vk_buffer)) {
         m_needs_pipeline_rebuild = true;
     }
@@ -82,9 +90,6 @@ void ShaderProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
     } else {
         update_descriptors(vk_buffer);
     }
-
-    execute_shader(vk_buffer);
-    on_after_execute(m_last_command_buffer, vk_buffer);
 }
 
 void ShaderProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
