@@ -272,6 +272,13 @@ if(NOT TARGET magic_enum)
     )
 endif()
 
+if(NOT TARGET dlpack)
+    add_library(dlpack INTERFACE IMPORTED)
+    set_target_properties(dlpack PROPERTIES
+        INTERFACE_INCLUDE_DIRECTORIES "${PACKAGE_PREFIX_DIR}/include/MayaFlux/thirdparty/dlpack"
+    )
+endif()
+
 # ============================================================================
 # MayaFluxLib Target (Shared Library)
 # ============================================================================
@@ -357,6 +364,7 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
             tinyexr
             tinyvdb
             magic_enum
+            dlpack
             nlohmann_json::nlohmann_json
             freetype
             gdi32
@@ -385,6 +393,7 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
             tinyexr
             tinyvdb
             magic_enum
+            dlpack
             glm::glm
             spirv-cross-core
             spirv-cross-cpp

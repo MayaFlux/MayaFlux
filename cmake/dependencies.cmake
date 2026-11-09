@@ -128,3 +128,9 @@ target_include_directories(magic_enum INTERFACE
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/third_party/magic_enum>
     $<INSTALL_INTERFACE:include/MayaFlux/thirdparty/magic_enum>
 )
+
+add_library(dlpack INTERFACE)
+target_include_directories(dlpack INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/third_party/dlpack>
+    $<INSTALL_INTERFACE:include/MayaFlux/thirdparty/dlpack>
+)
