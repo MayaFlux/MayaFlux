@@ -57,10 +57,13 @@ namespace {
                 ++stages;
             }
             const bool power = spec.spectrum == SpectrumOutput::Power;
+            const bool projection = spec.spectrum == SpectrumOutput::Projection;
+            const uint32_t descriptors = spec.descriptors;
             const std::string& values = spec.bindings[0].name;
             const std::string& twiddle = spec.bindings[1].name;
             const std::string& window = spec.bindings[2].name;
             const std::string& result = spec.bindings[3].name;
+            const std::string weights = projection ? spec.bindings[4].name : std::string {};
 
             k(points);
             emit_add();
@@ -114,6 +117,10 @@ namespace {
 
             m_text += "%main = OpFunction %void None %voidfn\n";
             m_text += "%entry = OpLabel\n";
+            if (projection) {
+                m_text += "%fft_acc = OpVariable %fft_pf_v2 Function\n";
+                m_text += "%fft_kidx = OpVariable %fft_pf_u32 Function\n";
+            }
 
             const Id local_id = ins("%u32", "OpCompositeExtract", { ins("%v3u32", "OpLoad", { "%lid_var" }), "0" });
             const Id window_id = ins("%u32", "OpCompositeExtract", { ins("%v3u32", "OpLoad", { "%wgid_var" }), "0" });
@@ -166,7 +173,59 @@ namespace {
                 barrier();
             }
 
-            if (!power) {
+            if (projection) {
+                const uint32_t bins = points / 2 + 1;
+                const uint32_t power_rounds = (bins + local - 1) / local;
+                for (uint32_t round = 0; round < power_rounds; ++round) {
+                    const std::string tag = std::to_string(round);
+                    const Id bin = add(local_id, k(round * local));
+                    const Id inside = ult(bin, k(bins));
+                    m_text += "OpSelectionMerge %fft_pm" + tag + " None\n";
+                    m_text += "OpBranchConditional " + inside + " %fft_pw" + tag + " %fft_pm" + tag + "\n";
+                    m_text += "%fft_pw" + tag + " = OpLabel\n";
+                    const Id re = mulf(load_shared("%fft_re", bin), scale);
+                    const Id im = mulf(load_shared("%fft_im", bin), scale);
+                    store_shared("%fft_re", bin, addf(mulf(re, re), mulf(im, im)));
+                    m_text += "OpBranch %fft_pm" + tag + "\n";
+                    m_text += "%fft_pm" + tag + " = OpLabel\n";
+                }
+                barrier();
+
+                const uint32_t rows_rounds = (descriptors + local - 1) / local;
+                const Id result_base = word("OpIMul", window_id, k(descriptors));
+                for (uint32_t round = 0; round < rows_rounds; ++round) {
+                    const std::string tag = std::to_string(round);
+                    const Id row = add(local_id, k(round * local));
+                    const Id inside = ult(row, k(descriptors));
+                    m_text += "OpSelectionMerge %fft_dm" + tag + " None\n";
+                    m_text += "OpBranchConditional " + inside + " %fft_dw" + tag + " %fft_dm" + tag + "\n";
+                    m_text += "%fft_dw" + tag + " = OpLabel\n";
+                    m_text += "OpStore %fft_acc " + zero + "\n";
+                    m_text += "OpStore %fft_kidx " + k(0) + "\n";
+                    m_text += "OpBranch %fft_lh" + tag + "\n";
+                    m_text += "%fft_lh" + tag + " = OpLabel\n";
+                    m_text += "OpLoopMerge %fft_lm" + tag + " %fft_lc" + tag + " None\n";
+                    m_text += "OpBranch %fft_lt" + tag + "\n";
+                    m_text += "%fft_lt" + tag + " = OpLabel\n";
+                    const Id bin_now = ins("%u32", "OpLoad", { "%fft_kidx" });
+                    const Id more = ult(bin_now, k(bins));
+                    m_text += "OpBranchConditional " + more + " %fft_lb" + tag + " %fft_lm" + tag + "\n";
+                    m_text += "%fft_lb" + tag + " = OpLabel\n";
+                    const Id weight = load_global(weights, add(word("OpIMul", row, k(bins)), bin_now));
+                    const Id power_now = load_shared("%fft_re", bin_now);
+                    const Id running = ins("%v2u32", "OpLoad", { "%fft_acc" });
+                    m_text += "OpStore %fft_acc " + addf(running, mulf(weight, power_now)) + "\n";
+                    m_text += "OpBranch %fft_lc" + tag + "\n";
+                    m_text += "%fft_lc" + tag + " = OpLabel\n";
+                    const Id next = add(ins("%u32", "OpLoad", { "%fft_kidx" }), k(1));
+                    m_text += "OpStore %fft_kidx " + next + "\n";
+                    m_text += "OpBranch %fft_lh" + tag + "\n";
+                    m_text += "%fft_lm" + tag + " = OpLabel\n";
+                    store_global(result, add(result_base, row), ins("%v2u32", "OpLoad", { "%fft_acc" }));
+                    m_text += "OpBranch %fft_dm" + tag + "\n";
+                    m_text += "%fft_dm" + tag + " = OpLabel\n";
+                }
+            } else if (!power) {
                 const Id out_base = word("OpIMul", window_id, k(points * 2));
                 for (uint32_t round = 0; round < points / local; ++round) {
                     const Id bin = add(local_id, k(round * local));
@@ -205,7 +264,12 @@ namespace {
             globals += "%fft_p_arr = OpTypePointer Workgroup %fft_arr_t\n";
             globals += "%fft_re = OpVariable %fft_p_arr Workgroup\n";
             globals += "%fft_im = OpVariable %fft_p_arr Workgroup\n";
-            globals += "%fft_p_sh = OpTypePointer Workgroup %v2u32\n\n";
+            globals += "%fft_p_sh = OpTypePointer Workgroup %v2u32\n";
+            if (projection) {
+                globals += "%fft_pf_v2 = OpTypePointer Function %v2u32\n";
+                globals += "%fft_pf_u32 = OpTypePointer Function %u32\n";
+            }
+            globals += "\n";
             return declarations() + globals + m_text;
         }
 
@@ -561,7 +625,9 @@ std::string emit_fft(const ShaderSpec& spec)
 {
     const uint32_t points = spec.points;
     const uint32_t local = spec.workgroup_size[0];
-    const bool shaped = spec.bindings.size() == 4 && spec.pc_fields.size() == 5
+    const bool projecting = spec.spectrum == SpectrumOutput::Projection;
+    const bool shaped = spec.bindings.size() == (projecting ? 5U : 4U) && spec.pc_fields.size() == 5
+        && (!projecting || spec.descriptors >= 1)
         && std::ranges::all_of(spec.bindings, [](const BindingSlot& b) {
                return b.format == Kakshya::GpuDataFormat::VEC2_U32;
            })

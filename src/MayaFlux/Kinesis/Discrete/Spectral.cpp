@@ -1,5 +1,7 @@
 #include "Spectral.hpp"
 
+#include <execution>
+
 #include <Eigen/Dense>
 #include <unsupported/Eigen/FFT>
 
@@ -308,6 +310,55 @@ std::vector<double> pitch_shift(
         const double frac = pos - static_cast<double>(idx);
         out[i] = stretched[idx] + frac * (stretched[idx1] - stretched[idx]);
     }
+
+    return out;
+}
+
+std::vector<double> spectral_projection(
+    std::span<const double> src,
+    uint32_t window_size,
+    uint32_t hop_size,
+    std::span<const double> weights,
+    std::span<const double> taper)
+{
+    const size_t bins = static_cast<size_t>(window_size) / 2 + 1;
+    if (window_size < 2 || hop_size == 0 || weights.empty() || weights.size() % bins != 0
+        || (!taper.empty() && taper.size() != window_size)) {
+        return {};
+    }
+
+    const size_t rows = weights.size() / bins;
+    const size_t frames = src.size() < window_size ? 0 : (src.size() - window_size) / hop_size + 1;
+    std::vector<double> out(frames * rows, 0.0);
+
+    std::vector<size_t> indices(frames);
+    std::iota(indices.begin(), indices.end(), size_t { 0 });
+
+    std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
+        [&](size_t frame) {
+            const size_t start = frame * hop_size;
+            Eigen::VectorXd buffer = Eigen::VectorXd::Zero(static_cast<Eigen::Index>(window_size));
+            for (size_t j = 0; j < window_size; ++j) {
+                buffer(static_cast<Eigen::Index>(j)) = src[start + j] * (taper.empty() ? 1.0 : taper[j]);
+            }
+
+            Eigen::FFT<double> fft;
+            Eigen::VectorXcd spectrum;
+            fft.fwd(spectrum, buffer);
+
+            std::vector<double> power(bins);
+            for (size_t k = 0; k < bins; ++k) {
+                power[k] = std::norm(spectrum(static_cast<Eigen::Index>(k)));
+            }
+
+            for (size_t r = 0; r < rows; ++r) {
+                double sum = 0.0;
+                for (size_t k = 0; k < bins; ++k) {
+                    sum += weights[r * bins + k] * power[k];
+                }
+                out[frame * rows + r] = sum;
+            }
+        });
 
     return out;
 }

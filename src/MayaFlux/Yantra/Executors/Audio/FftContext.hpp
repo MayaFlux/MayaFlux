@@ -27,7 +27,10 @@ namespace MayaFlux::Yantra {
  *
  * Complex output is points bins per window as interleaved re, im. Power output
  * is points / 2 + 1 bins per window of re * re + im * im, which is the
- * non-redundant half for a real signal.
+ * non-redundant half for a real signal. A projection context takes rows of
+ * weights, one per power bin, and returns one value per row and window: the
+ * weights summed against the power spectrum, so band energies, spectral
+ * moments and filterbank outputs leave the device as a few doubles per window.
  *
  * The point count is a power of two from 2 to 2048. The input must hold at
  * least one complex element.
@@ -47,13 +50,33 @@ public:
     {
     }
 
+    /**
+     * @brief A projecting context.
+     * @param points Points per window.
+     * @param weights Rows of points / 2 + 1 weights, row major. The row count is weights.size() divided by that.
+     */
+    FftContext(uint32_t points, std::span<const double> weights)
+        : FftContext(
+              fft_spec(points, Portal::Graphics::SpectrumOutput::Projection, row_count(points, weights.size())),
+              points, Portal::Graphics::SpectrumOutput::Projection, false, weights)
+    {
+    }
+
     [[nodiscard]] uint32_t points() const noexcept { return m_points; }
+
+    /**
+     * @brief Rows of weights of a projecting context, zero otherwise.
+     */
+    [[nodiscard]] uint32_t descriptors() const noexcept { return m_descriptors; }
 
     /**
      * @brief Doubles in the result of one window.
      */
     [[nodiscard]] size_t values_per_window() const noexcept
     {
+        if (m_projection) {
+            return m_descriptors;
+        }
         return m_power ? static_cast<size_t>(m_points) / 2 + 1 : static_cast<size_t>(m_points) * 2;
     }
 
@@ -108,6 +131,9 @@ public:
         stage_words(0, interleaved);
         stage_words(1, m_twiddle);
         stage_words(2, coefficients);
+        if (m_projection) {
+            stage_words(4, m_weights);
+        }
         set_output_size(3, static_cast<size_t>(geometry.count) * values_per_window() * sizeof(uint64_t));
 
         const auto scale_bits = std::bit_cast<uint64_t>(m_scale);
@@ -123,17 +149,22 @@ public:
      * @brief The spec of the template instance this context drives.
      */
     [[nodiscard]] static Portal::Graphics::ShaderSpec fft_spec(
-        uint32_t points, Portal::Graphics::SpectrumOutput output)
+        uint32_t points, Portal::Graphics::SpectrumOutput output, uint32_t descriptors = 0)
     {
         using Portal::Graphics::BindingDirection;
-        return Portal::Graphics::ShaderSpec::Assemble {}
-            .tmpl(Portal::Graphics::KernelTemplate::FFT)
+        auto assemble = Portal::Graphics::ShaderSpec::Assemble {};
+        assemble.tmpl(Portal::Graphics::KernelTemplate::FFT)
             .points(points)
             .spectrum(output)
+            .descriptors(descriptors)
             .ssbo("values", BindingDirection::Input, Kakshya::GpuDataFormat::VEC2_U32)
             .ssbo("twiddle", BindingDirection::Input, Kakshya::GpuDataFormat::VEC2_U32)
             .ssbo("window", BindingDirection::Input, Kakshya::GpuDataFormat::VEC2_U32)
-            .ssbo("result", BindingDirection::Output, Kakshya::GpuDataFormat::VEC2_U32)
+            .ssbo("result", BindingDirection::Output, Kakshya::GpuDataFormat::VEC2_U32);
+        if (output == Portal::Graphics::SpectrumOutput::Projection) {
+            assemble.ssbo("weights", BindingDirection::Input, Kakshya::GpuDataFormat::VEC2_U32);
+        }
+        return assemble
             .pc("length", Kakshya::GpuDataFormat::UINT32)
             .pc("stride", Kakshya::GpuDataFormat::UINT32)
             .pc("offset", Kakshya::GpuDataFormat::UINT32)
@@ -162,12 +193,21 @@ private:
         uint32_t scale_hi;
     };
 
+    static uint32_t row_count(uint32_t points, size_t weights) noexcept
+    {
+        const size_t bins = static_cast<size_t>(points) / 2 + 1;
+        return weights != 0 && weights % bins == 0 ? static_cast<uint32_t>(weights / bins) : 0U;
+    }
+
     FftContext(const Portal::Graphics::ShaderSpec& spec, uint32_t points,
-        Portal::Graphics::SpectrumOutput output, bool inverse)
+        Portal::Graphics::SpectrumOutput output, bool inverse, std::span<const double> weights = {})
         : WordPairExecutionContext(config_from_spec(spec), bindings_from_spec(spec), false, "FftContext")
         , m_points(points)
         , m_power(output == Portal::Graphics::SpectrumOutput::Power)
+        , m_projection(output == Portal::Graphics::SpectrumOutput::Projection)
+        , m_descriptors(spec.descriptors)
         , m_scale(inverse && points > 0 ? 1.0 / static_cast<double>(points) : 1.0)
+        , m_weights(weights.begin(), weights.end())
     {
         const uint32_t half = points / 2;
         m_twiddle.reserve(static_cast<size_t>(half) * 2);
@@ -180,7 +220,10 @@ private:
 
     uint32_t m_points;
     bool m_power;
+    bool m_projection;
+    uint32_t m_descriptors;
     double m_scale;
+    std::vector<double> m_weights;
     uint32_t m_windows { 1 };
     std::vector<double> m_twiddle;
 };

@@ -1,6 +1,7 @@
 #include "OperationRegistry.hpp"
 
 #include "MayaFlux/Yantra/Analyzers/EnergyAnalyzer.hpp"
+#include "MayaFlux/Yantra/Analyzers/SpectralAnalyzer.hpp"
 #include "MayaFlux/Yantra/Analyzers/StatisticalAnalyzer.hpp"
 #include "MayaFlux/Yantra/Analyzers/VisionAnalyzer.hpp"
 #include "MayaFlux/Yantra/Extractors/FeatureExtractor.hpp"
@@ -22,6 +23,8 @@ OperationRegistry make_default_registry()
         .add<ContainerStatisticalAnalyzer>()
         .add<StandardEnergyAnalyzer>()
         .add<ContainerEnergyAnalyzer>()
+        .add<StandardSpectralAnalyzer>()
+        .add<ContainerSpectralAnalyzer>()
         .add<StandardFeatureExtractor>()
         .add<ContainerFeatureExtractor>()
         .add<VisionAnalyzer>()
