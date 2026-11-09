@@ -661,7 +661,7 @@ public:
      * @brief Open a tensor file for inspection and selective reading.
      *
      * The format is chosen by name when given, otherwise by file content and
-     * then extension (safetensors is built in). The reader
+     * then extension (safetensors, npy and npz are built in). The reader
      * parses only the file's index; describe() lists the tensors without
      * reading data. IOManager does not retain the reader.
      *

@@ -47,6 +47,8 @@
 #include "Model/ModelExport.hpp"
 #include "Model/ModelReader.hpp"
 
+#include "Tensor/NpyFormat.hpp"
+#include "Tensor/NpzFormat.hpp"
 #include "Tensor/SafetensorsFormat.hpp"
 #include "Tensor/TensorFormat.hpp"
 
@@ -98,6 +100,8 @@ IOManager::IOManager(Core::GlobalStreamInfo& stream_info, uint32_t frame_rate, c
     VDBWriter::register_with_registry();
     AssimpModelWriter::register_with_registry();
     SafetensorsReader::register_with_registry();
+    NpyReader::register_with_registry();
+    NpzReader::register_with_registry();
 
     MF_INFO(Journal::Component::Core, Journal::Context::Init, "IOManager initialised");
 }
