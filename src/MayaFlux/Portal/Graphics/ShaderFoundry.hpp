@@ -75,15 +75,16 @@ namespace detail {
     MAYAFLUX_API std::string emit_glsl_kernel(const ShaderSpec& spec);
 
     /**
-     * @brief Name the first binding or push constant field the generator cannot emit.
-     * @param spec ShaderSpec to check before emission.
-     * @return Empty when every format in the spec is emitted, otherwise a message naming the field.
+     * @brief Name the first binding or push constant field with a 64-bit float format.
+     * @param spec ShaderSpec to check.
+     * @return Empty when no field uses FLOAT64, VEC2_F64, VEC3_F64 or VEC4_F64,
+     *         otherwise a message naming the field.
      *
-     * The 64-bit float formats (FLOAT64, VEC2_F64, VEC3_F64, VEC4_F64) are not
-     * emitted: the generator has no 64-bit float type, so such a field would
-     * silently become float. Word-pair staging is the supported path.
+     * The library's own generated kernels are word-pair only and refuse these
+     * formats. A user kernel supplied through MF_KERNEL may use them when the
+     * selected device reports shaderFloat64.
      */
-    MAYAFLUX_API std::string unsupported_spec_reason(const ShaderSpec& spec);
+    MAYAFLUX_API std::string double_field_reason(const ShaderSpec& spec);
 }
 
 /**

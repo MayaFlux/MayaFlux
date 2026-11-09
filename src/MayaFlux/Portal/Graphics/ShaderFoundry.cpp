@@ -531,13 +531,14 @@ ShaderID ShaderFoundry::load_shader(const ShaderSpec& spec)
         return INVALID_SHADER;
     }
 
-    if (const std::string reason = detail::unsupported_spec_reason(spec); !reason.empty()) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::ShaderCompilation,
-            "Rejected shader spec: {}", reason);
-        return INVALID_SHADER;
-    }
-
     if (spec.kernel.has_value()) {
+        if (const std::string reason = detail::double_field_reason(spec);
+            !reason.empty() && !get_physical_device().getFeatures().shaderFloat64) {
+            MF_ERROR(Journal::Component::Portal, Journal::Context::ShaderCompilation,
+                "Rejected shader spec: {}; the selected device does not report shaderFloat64", reason);
+            return INVALID_SHADER;
+        }
+
         const std::string glsl = detail::emit_glsl_kernel(spec);
         const std::string key = generate_source_cache_key(glsl, ShaderStage::COMPUTE);
 
@@ -564,6 +565,12 @@ ShaderID ShaderFoundry::load_shader(const ShaderSpec& spec)
         MF_INFO(Journal::Component::Portal, Journal::Context::ShaderCompilation,
             "Compiled kernel shader (ID: {}, key: {})", id, key);
         return id;
+    }
+
+    if (const std::string reason = detail::double_field_reason(spec); !reason.empty()) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ShaderCompilation,
+            "Rejected shader spec: {}; library kernels are word-pair only", reason);
+        return INVALID_SHADER;
     }
 
     const std::string asm_text = detail::emit_spirv_asm(spec);

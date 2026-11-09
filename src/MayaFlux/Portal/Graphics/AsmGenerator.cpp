@@ -52,6 +52,14 @@ namespace {
             return "mat4";
         case Kakshya::GpuDataFormat::VEC2_U32:
             return "uvec2";
+        case Kakshya::GpuDataFormat::FLOAT64:
+            return "double";
+        case Kakshya::GpuDataFormat::VEC2_F64:
+            return "dvec2";
+        case Kakshya::GpuDataFormat::VEC3_F64:
+            return "dvec3";
+        case Kakshya::GpuDataFormat::VEC4_F64:
+            return "dvec4";
         case Kakshya::GpuDataFormat::INT32:
             return "int";
         case Kakshya::GpuDataFormat::UINT32:
@@ -1630,16 +1638,16 @@ namespace {
     }
 }
 
-std::string unsupported_spec_reason(const ShaderSpec& spec)
+std::string double_field_reason(const ShaderSpec& spec)
 {
     for (const auto& b : spec.bindings) {
         if (is_double_format(b.format)) {
-            return "binding '" + b.name + "' uses a 64-bit float format, which the generator does not emit";
+            return "binding '" + b.name + "' uses a 64-bit float format";
         }
     }
     for (const auto& f : spec.pc_fields) {
         if (is_double_format(f.format)) {
-            return "push constant field '" + f.name + "' uses a 64-bit float format, which the generator does not emit";
+            return "push constant field '" + f.name + "' uses a 64-bit float format";
         }
     }
     return {};
