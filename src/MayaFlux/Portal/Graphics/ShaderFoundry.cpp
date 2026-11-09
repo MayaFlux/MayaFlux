@@ -531,6 +531,12 @@ ShaderID ShaderFoundry::load_shader(const ShaderSpec& spec)
         return INVALID_SHADER;
     }
 
+    if (const std::string reason = detail::unsupported_spec_reason(spec); !reason.empty()) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ShaderCompilation,
+            "Rejected shader spec: {}", reason);
+        return INVALID_SHADER;
+    }
+
     if (spec.kernel.has_value()) {
         const std::string glsl = detail::emit_glsl_kernel(spec);
         const std::string key = generate_source_cache_key(glsl, ShaderStage::COMPUTE);

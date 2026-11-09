@@ -73,6 +73,17 @@ namespace detail {
      * pc.<name>. SSBO arrays are accessible as <name>[i].
      */
     MAYAFLUX_API std::string emit_glsl_kernel(const ShaderSpec& spec);
+
+    /**
+     * @brief Name the first binding or push constant field the generator cannot emit.
+     * @param spec ShaderSpec to check before emission.
+     * @return Empty when every format in the spec is emitted, otherwise a message naming the field.
+     *
+     * The 64-bit float formats (FLOAT64, VEC2_F64, VEC3_F64, VEC4_F64) are not
+     * emitted: the generator has no 64-bit float type, so such a field would
+     * silently become float. Word-pair staging is the supported path.
+     */
+    MAYAFLUX_API std::string unsupported_spec_reason(const ShaderSpec& spec);
 }
 
 /**

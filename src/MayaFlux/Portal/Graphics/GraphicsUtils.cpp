@@ -18,6 +18,8 @@ size_t element_type_bytes(GpuBufferBinding::ElementType et) noexcept
         return Kakshya::gpu_data_format_bytes(Kakshya::GpuDataFormat::INT32);
     case GpuBufferBinding::ElementType::VEC2_U32:
         return Kakshya::gpu_data_format_bytes(Kakshya::GpuDataFormat::VEC2_U32);
+    case GpuBufferBinding::ElementType::FLOAT64:
+        return Kakshya::gpu_data_format_bytes(Kakshya::GpuDataFormat::FLOAT64);
     case GpuBufferBinding::ElementType::PASSTHROUGH:
     case GpuBufferBinding::ElementType::IMAGE_STORAGE:
     case GpuBufferBinding::ElementType::IMAGE_SAMPLED:

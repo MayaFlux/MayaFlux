@@ -45,6 +45,8 @@ namespace MayaFlux::Yantra {
         return GpuBufferBinding::ElementType::INT32;
     case Kakshya::GpuDataFormat::VEC2_U32:
         return GpuBufferBinding::ElementType::VEC2_U32;
+    case Kakshya::GpuDataFormat::FLOAT64:
+        return GpuBufferBinding::ElementType::FLOAT64;
     default:
         return GpuBufferBinding::ElementType::FLOAT32;
     }

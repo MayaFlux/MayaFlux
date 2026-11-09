@@ -1,6 +1,8 @@
 #include "OperationHelper.hpp"
 
 #include "MayaFlux/Kakshya/NDData/EigenInsertion.hpp"
+#include "MayaFlux/Kinesis/Discrete/OrderKey.hpp"
+#include "MayaFlux/Transitive/Protocol/BinaryBuffer.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
@@ -204,6 +206,33 @@ Eigen::MatrixXd OperationHelper::recreate_eigen_matrix(
     }
 
     return create_eigen_matrix(spans);
+}
+
+std::vector<uint8_t> OperationHelper::encode_word_pairs(std::span<const double> values,
+    size_t padded_words, bool order_key, bool complement)
+{
+    const size_t count = std::max(padded_words, values.size());
+    std::vector<uint8_t> bytes(count * sizeof(uint64_t));
+    for (size_t i = 0; i < count; ++i) {
+        uint64_t word = ~uint64_t { 0 };
+        if (i < values.size()) {
+            word = order_key
+                ? Kinesis::Discrete::order_key(values[i])
+                : std::bit_cast<uint64_t>(values[i]);
+            word = complement ? ~word : word;
+        }
+        Transitive::Protocol::store_le_u64(bytes.data() + i * sizeof(uint64_t), word);
+    }
+    return bytes;
+}
+
+std::vector<double> OperationHelper::decode_word_pairs(std::span<const uint8_t> bytes)
+{
+    std::vector<double> values(bytes.size() / sizeof(uint64_t));
+    for (size_t i = 0; i < values.size(); ++i) {
+        values[i] = Transitive::Protocol::load_le_double(bytes.data() + i * sizeof(uint64_t));
+    }
+    return values;
 }
 
 Kakshya::DataVariant OperationHelper::reconstruct_data_variant_from_double(const std::vector<double>& double_data,

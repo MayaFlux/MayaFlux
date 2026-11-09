@@ -746,6 +746,22 @@ public:
         return std::make_tuple(working_spans, structure_info);
     }
 
+    /**
+     * @brief Encode doubles as little-endian 64-bit words, two 32-bit lanes each
+     * @param values Doubles to encode
+     * @param padded_words Word count to return. Words past values are all ones
+     * @param order_key True to encode order keys, false to encode the IEEE 754 bits
+     * @param complement Complements every encoded word
+     */
+    static std::vector<uint8_t> encode_word_pairs(std::span<const double> values,
+        size_t padded_words = 0, bool order_key = false, bool complement = false);
+
+    /**
+     * @brief Decode little-endian 64-bit words as IEEE 754 doubles
+     * @param bytes Words to decode. A trailing partial word is ignored
+     */
+    static std::vector<double> decode_word_pairs(std::span<const uint8_t> bytes);
+
 private:
     static DataStructureInfo reconcile_structure(
         const std::vector<std::vector<double>>& channels, const DataStructureInfo& source);

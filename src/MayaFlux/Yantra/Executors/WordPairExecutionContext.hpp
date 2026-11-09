@@ -2,7 +2,6 @@
 
 #include "ShaderExecutionContext.hpp"
 
-#include "MayaFlux/Kinesis/Discrete/OrderKey.hpp"
 #include "MayaFlux/Transitive/Protocol/BinaryBuffer.hpp"
 
 /**
@@ -53,19 +52,7 @@ public:
      */
     void stage_words(uint32_t binding, std::span<const double> values, size_t padded_count = 0, bool complement = false)
     {
-        const size_t count = std::max(padded_count, values.size());
-        std::vector<uint8_t> bytes(count * sizeof(uint64_t));
-        for (size_t i = 0; i < count; ++i) {
-            uint64_t word = ~uint64_t { 0 };
-            if (i < values.size()) {
-                word = m_order_key
-                    ? Kinesis::Discrete::order_key(values[i])
-                    : std::bit_cast<uint64_t>(values[i]);
-                word = complement ? ~word : word;
-            }
-            Transitive::Protocol::store_le_u64(bytes.data() + i * sizeof(uint64_t), word);
-        }
-        set_binding_data(binding, bytes);
+        set_binding_data(binding, OperationHelper::encode_word_pairs(values, padded_count, m_order_key, complement));
     }
 
     /**

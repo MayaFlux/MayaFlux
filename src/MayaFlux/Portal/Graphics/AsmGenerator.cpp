@@ -1615,6 +1615,36 @@ namespace {
 
 } // namespace
 
+namespace {
+    bool is_double_format(Kakshya::GpuDataFormat fmt) noexcept
+    {
+        switch (fmt) {
+        case Kakshya::GpuDataFormat::FLOAT64:
+        case Kakshya::GpuDataFormat::VEC2_F64:
+        case Kakshya::GpuDataFormat::VEC3_F64:
+        case Kakshya::GpuDataFormat::VEC4_F64:
+            return true;
+        default:
+            return false;
+        }
+    }
+}
+
+std::string unsupported_spec_reason(const ShaderSpec& spec)
+{
+    for (const auto& b : spec.bindings) {
+        if (is_double_format(b.format)) {
+            return "binding '" + b.name + "' uses a 64-bit float format, which the generator does not emit";
+        }
+    }
+    for (const auto& f : spec.pc_fields) {
+        if (is_double_format(f.format)) {
+            return "push constant field '" + f.name + "' uses a 64-bit float format, which the generator does not emit";
+        }
+    }
+    return {};
+}
+
 std::string emit_spirv_asm(const ShaderSpec& spec)
 {
     std::string src;
