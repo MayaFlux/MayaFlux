@@ -47,7 +47,16 @@ enum class WaveformMethod : uint8_t {
  *
  * The repetition search covers periods from sample_rate / high_frequency to
  * sample_rate / low_frequency samples, truncated to whole samples. The window
- * must hold at least twice the longest period. The hop must divide 512.
+ * must hold at least twice the longest period. The hop is any length above 0.
+ *
+ * The strength of a lag is its correlation over the window divided by the
+ * correlation at lag 0, and a lag can pair only the samples that lie a lag
+ * apart, so a perfectly periodic signal reads at most (window - lag) / window:
+ * 0.84 at 200 Hz and 0.55 at 70 Hz for a 1536 sample window at 48 kHz. With
+ * unbiased_periodicity the lag is still chosen on that strength, which keeps
+ * the shortest of a signal's repeating lags, and the strength reported for it
+ * is divided by that share of pairs, so one threshold serves every pitch. A
+ * window whose level changes can then read slightly above 1.
  */
 struct WaveformAnalyzerConfig : AnalyzerConfig {
     static constexpr auto describe_facets()
@@ -60,6 +69,7 @@ struct WaveformAnalyzerConfig : AnalyzerConfig {
                 FacetMember<&WaveformAnalyzerConfig::low_frequency> {},
                 FacetMember<&WaveformAnalyzerConfig::high_frequency> {},
                 FacetMember<&WaveformAnalyzerConfig::keep_profiles> {},
+                FacetMember<&WaveformAnalyzerConfig::unbiased_periodicity> {},
             });
     }
 
@@ -79,6 +89,8 @@ struct WaveformAnalyzerConfig : AnalyzerConfig {
     double high_frequency { 400.0 };
     /** Keep the autocorrelation and mean difference profile of every window. They are large: one row of lags per window. */
     bool keep_profiles { false };
+    /** Report the strength of the chosen lag divided by the share of window pairs that lag has, so it does not fall with the period. */
+    bool unbiased_periodicity { false };
 };
 
 /**
@@ -309,7 +321,6 @@ protected:
 
 private:
     static constexpr size_t k_chunk_windows = 4096;
-    static constexpr uint32_t k_hop_divisor = 512;
     static constexpr double k_variance_floor = 1e-12;
     static constexpr double k_strength_ceiling = 1.0 - 1e-12;
 
@@ -324,6 +335,7 @@ private:
     };
 
     mutable LaggedPass m_crossings;
+    mutable LaggedPass m_zero;
     mutable LaggedPass m_correlation;
     mutable LaggedPass m_distance;
 
@@ -362,8 +374,8 @@ private:
         if (cfg.window_size < 2U * max_lag) {
             fail("The window must hold at least twice the longest period");
         }
-        if (cfg.hop_size == 0 || k_hop_divisor % cfg.hop_size != 0) {
-            fail("The hop size must divide 512");
+        if (cfg.hop_size == 0) {
+            fail("The hop size must be greater than 0");
         }
     }
 
@@ -381,10 +393,11 @@ private:
         m_sum = std::make_unique<SegmentedReductionContext>(KernelOp::Sum, ReductionMap::Identity);
         m_peak = std::make_unique<SegmentedReductionContext>(KernelOp::Max, ReductionMap::Abs);
         m_crossings = make_lagged(PairMap::SignChange, false);
+        m_zero = make_lagged(PairMap::Product, true);
         m_correlation = make_lagged(PairMap::Product, true);
         m_distance = make_lagged(PairMap::AbsDifference, false);
         for (GpuDispatchCore* context : std::initializer_list<GpuDispatchCore*> {
-                 m_energy.get(), m_sum.get(), m_peak.get(), m_crossings.context.get(),
+                 m_energy.get(), m_sum.get(), m_peak.get(), m_crossings.context.get(), m_zero.context.get(),
                  m_correlation.context.get(), m_distance.context.get() }) {
             context->set_recording(m_recording);
         }
@@ -422,7 +435,9 @@ private:
         const size_t end = (first + count - 1) * cfg.hop_size + cfg.window_size;
         const auto chunk = samples.subspan(begin, end - begin);
         const SegmentGeometry geometry { .length = cfg.window_size, .stride = cfg.hop_size, .offset = 0, .count = static_cast<uint32_t>(count) };
-        const uint32_t correlation_lags = max_lag + 1;
+        const bool full_row = cfg.keep_profiles;
+        const uint32_t first_lag = full_row ? 0 : min_lag;
+        const uint32_t correlation_lags = max_lag + 1 - first_lag;
         const uint32_t distance_lags = max_lag - min_lag + 1;
 
         m_energy->stage(chunk, geometry);
@@ -434,7 +449,10 @@ private:
         static_cast<void>(m_sum->dispatch_async(none));
         static_cast<void>(m_peak->dispatch_async(none));
         record_lagged(m_crossings, chunk, geometry, 1, 1);
-        record_lagged(m_correlation, chunk, geometry, 0, correlation_lags);
+        record_lagged(m_correlation, chunk, geometry, first_lag, correlation_lags);
+        if (!full_row) {
+            record_lagged(m_zero, chunk, geometry, 0, 1);
+        }
         if (cfg.keep_profiles) {
             record_lagged(m_distance, chunk, geometry, min_lag, distance_lags);
         }
@@ -444,6 +462,7 @@ private:
         const auto peak = collect(*m_peak);
         const auto crossings = download_lagged(m_crossings, count, 1);
         const auto correlation = download_lagged(m_correlation, count, correlation_lags);
+        const auto zero = full_row ? std::vector<double> {} : download_lagged(m_zero, count, 1);
         const auto distance = cfg.keep_profiles ? download_lagged(m_distance, count, distance_lags) : std::vector<double> {};
 
         const double window = static_cast<double>(cfg.window_size);
@@ -459,16 +478,20 @@ private:
             out.crest_factor.push_back(level > 0.0 ? peak[w] / level : 0.0);
 
             const double* row = correlation.data() + w * correlation_lags;
-            const bool varying = row[0] >= k_variance_floor;
+            const double at_zero = full_row ? row[0] : zero[w];
+            const bool varying = at_zero >= k_variance_floor;
             double best = 0.0;
             uint32_t best_lag = 0;
             if (varying) {
                 for (uint32_t lag = min_lag; lag <= max_lag; ++lag) {
-                    const double strength = row[lag] / row[0];
+                    const double strength = row[lag - first_lag] / at_zero;
                     if (strength > best) {
                         best = strength;
                         best_lag = lag;
                     }
+                }
+                if (cfg.unbiased_periodicity && best_lag > 0) {
+                    best *= window / (window - static_cast<double>(best_lag));
                 }
             }
             const double bounded = std::min(best, k_strength_ceiling);
