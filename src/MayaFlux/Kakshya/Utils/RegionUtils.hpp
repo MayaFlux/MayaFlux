@@ -245,9 +245,10 @@ std::vector<std::vector<T>> extract_segments_data(
     std::vector<std::vector<T>> result;
 
     for (const auto& segment : segments) {
-        if (segment.is_cached && !segment.cache.data.empty()) {
+        const auto* cached_variants = segment.is_cached ? segment.cache.get(variant_cache()) : nullptr;
+        if (cached_variants && !cached_variants->empty()) {
             size_t channel = 0;
-            for (const auto& variant : segment.cache.data) {
+            for (const auto& variant : *cached_variants) {
                 std::vector<T> converted;
                 auto span = extract_from_variant<T>(variant, converted);
                 std::vector<T> cached_data(span.begin(), span.end());

@@ -9,11 +9,31 @@ namespace MayaFlux::Kakshya {
  * @brief Stores cached data for a region, with metadata for cache management.
  */
 struct MAYAFLUX_API RegionCache {
-    std::vector<DataVariant> data; ///< Cached data
+    Facets payload; ///< Cached data, one typed entry per container element type
     Region source_region; ///< Region this cache corresponds to
     std::chrono::steady_clock::time_point load_time; ///< When cache was loaded
     size_t access_count = 0; ///< Number of times accessed
     bool is_dirty = false; ///< Whether cache is dirty
+
+    /** @brief Returns the cached entry under @p key, or nullptr when absent. */
+    template <typename T>
+    [[nodiscard]] const T* get(const Facet<T>& key) const
+    {
+        return payload.get(key);
+    }
+
+    /** @brief Stores a cached entry under @p key, replacing any previous one. */
+    template <typename T>
+    void set(const Facet<T>& key, std::type_identity_t<T> value)
+    {
+        payload.set(key, std::move(value));
+    }
+
+    /** @brief Whether no entry is cached. */
+    [[nodiscard]] bool empty() const
+    {
+        return payload.empty();
+    }
 
     void mark_accessed()
     {
@@ -30,6 +50,15 @@ struct MAYAFLUX_API RegionCache {
         return std::chrono::steady_clock::now() - load_time;
     }
 };
+
+/**
+ * @brief Key for a cached DataVariant vector, one variant per channel.
+ */
+inline const Facet<std::vector<DataVariant>>& variant_cache()
+{
+    static const Facet<std::vector<DataVariant>> key;
+    return key;
+}
 
 /**
  * @struct RegionSegment
@@ -168,7 +197,18 @@ struct MAYAFLUX_API RegionSegment {
      */
     void mark_cached(const std::vector<DataVariant>& data)
     {
-        cache.data = data;
+        mark_cached(variant_cache(), data);
+    }
+
+    /**
+     * @brief Mark this segment as cached under a typed key.
+     * @param key Key naming the cached element type.
+     * @param value The cached data.
+     */
+    template <typename T>
+    void mark_cached(const Facet<T>& key, std::type_identity_t<T> value)
+    {
+        cache.set(key, std::move(value));
         cache.source_region = source_region;
         is_cached = true;
         cache.load_time = std::chrono::steady_clock::now();
@@ -181,7 +221,7 @@ struct MAYAFLUX_API RegionSegment {
      */
     void clear_cache()
     {
-        cache.data.clear();
+        cache.payload.clear();
         is_cached = false;
         if (state == RegionState::READY) {
             state = RegionState::IDLE;
