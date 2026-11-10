@@ -24,14 +24,15 @@ layout(push_constant) uniform PC {
     StateRef state;
     ResultRef hs;
     uint steps;
-    uint reserved;
+    uint hidden;
 } pc;
 
-const uint H = 128u;
+const uint WORKGROUP = 512u;
+const uint MAX_HIDDEN = 256u;
 
-shared float h_shared[H];
-shared float h_next[H];
-shared float gates[4u * H];
+shared float h_shared[MAX_HIDDEN];
+shared float h_next[MAX_HIDDEN];
+shared float gates[4u * MAX_HIDDEN];
 
 float sigmoid(float v)
 {
@@ -39,17 +40,21 @@ float sigmoid(float v)
 }
 
 /**
- * @brief Runs an LSTM cell with hidden width 128 over a whole sequence in one workgroup.
+ * @brief Runs an LSTM cell over a whole sequence in one workgroup.
  *
- * x is [steps, 128]. One invocation owns one gate row (512 of them: input,
- * forget, cell and output blocks in that order) and the first 128 also own
- * one hidden unit. state holds h then c, 256 floats, read at the start and
- * written at the end so the recurrence continues across dispatches. hs
- * receives the hidden vector of every step, [steps, 128].
+ * The hidden width is pc.hidden, up to 256, and the input width equals it. x
+ * is [steps, hidden]. Gate rows (4 * hidden: input, forget, cell and output
+ * blocks in that order) are spread over the 512 invocations, each taking
+ * every 512th row, and the first hidden invocations also own one hidden unit.
+ * state holds h then c, 2 * hidden floats, read at the start and written at
+ * the end so the recurrence continues across dispatches. hs receives the
+ * hidden vector of every step, [steps, hidden].
  */
 void main()
 {
     const uint r = gl_LocalInvocationID.x;
+    const uint H = pc.hidden;
+    const uint rows = 4u * H;
 
     float c_reg = 0.0;
     if (r < H) {
@@ -59,12 +64,14 @@ void main()
     barrier();
 
     for (uint t = 0u; t < pc.steps; ++t) {
-        float acc = pc.b_ih.v[r] + pc.b_hh.v[r];
-        const uint row = r * H;
-        for (uint j = 0u; j < H; ++j) {
-            acc += pc.w_ih.v[row + j] * pc.x.v[t * H + j] + pc.w_hh.v[row + j] * h_shared[j];
+        for (uint row = r; row < rows; row += WORKGROUP) {
+            float acc = pc.b_ih.v[row] + pc.b_hh.v[row];
+            const uint base = row * H;
+            for (uint j = 0u; j < H; ++j) {
+                acc += pc.w_ih.v[base + j] * pc.x.v[t * H + j] + pc.w_hh.v[base + j] * h_shared[j];
+            }
+            gates[row] = acc;
         }
-        gates[r] = acc;
         barrier();
 
         if (r < H) {

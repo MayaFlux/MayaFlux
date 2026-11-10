@@ -25,7 +25,7 @@ layout(push_constant) uniform PC {
     uint stride;
     uint pad;
     uint flags;
-    uint reserved;
+    uint dilation;
 } pc;
 
 const uint FLAG_BIAS = 1u;
@@ -38,8 +38,9 @@ const uint ACT_SIGMOID = 2u;
  * @brief Strided one dimensional convolution over [batch, c_in, t_in] into [batch, c_out, t_out].
  *
  * weights are [c_out, c_in, kernel_size]. The input is zero padded by pad on
- * both sides. flags: bit 0 adds bias, bit 1 applies ReLU to the input, bits 2
- * and 3 pick the output activation (0 none, 1 ReLU, 2 sigmoid).
+ * both sides and tap k reads dilation * k samples past the window start; a
+ * dilation of 0 reads as 1. flags: bit 0 adds bias, bit 1 applies ReLU to the
+ * input, bits 2 and 3 pick the output activation (0 none, 1 ReLU, 2 sigmoid).
  */
 void main()
 {
@@ -57,12 +58,13 @@ void main()
 
     const bool relu_input = (pc.flags & FLAG_RELU_INPUT) != 0u;
     const int start = int(to * pc.stride) - int(pc.pad);
+    const uint dilation = max(pc.dilation, 1u);
 
     for (uint ci = 0u; ci < pc.c_in; ++ci) {
         const uint x_base = (n * pc.c_in + ci) * pc.t_in;
         const uint w_base = (co * pc.c_in + ci) * pc.kernel_size;
         for (uint k = 0u; k < pc.kernel_size; ++k) {
-            const int ti = start + int(k);
+            const int ti = start + int(k * dilation);
             if (ti < 0 || ti >= int(pc.t_in))
                 continue;
             float x = pc.src.v[x_base + uint(ti)];

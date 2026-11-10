@@ -3,6 +3,7 @@
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Kakshya/NDData/TensorConvert.hpp"
 #include "MayaFlux/Yantra/Executors/GpuDispatchCore.hpp"
+#include "MayaFlux/Yantra/Executors/TensorKernels/Stages.hpp"
 #include "MayaFlux/Yantra/Executors/ShaderExecutionContext.hpp"
 
 namespace MayaFlux::Yantra {
@@ -70,65 +71,10 @@ namespace {
         State
     };
 
-    constexpr uint32_t k_frame = SileroVadModel::context_samples + SileroVadModel::chunk_samples + 64;
+    constexpr uint32_t k_reflect_pad = 64;
+    constexpr uint32_t k_frame = SileroVadModel::context_samples + SileroVadModel::chunk_samples + k_reflect_pad;
     constexpr uint32_t k_hidden = 128;
     constexpr size_t k_max_chunks = 4096;
-    constexpr uint32_t k_flag_bias = 1;
-    constexpr uint32_t k_flag_relu_input = 2;
-    constexpr uint32_t k_relu = 1U << 2U;
-    constexpr uint32_t k_sigmoid = 2U << 2U;
-
-    struct FramePush {
-        uint64_t samples;
-        uint64_t frames;
-        uint32_t chunks;
-        uint32_t chunk_size;
-        uint32_t context;
-        uint32_t pad;
-    };
-
-    struct ConvPush {
-        uint64_t src;
-        uint64_t weights;
-        uint64_t bias;
-        uint64_t dst;
-        uint32_t batch;
-        uint32_t c_in;
-        uint32_t t_in;
-        uint32_t c_out;
-        uint32_t t_out;
-        uint32_t kernel_size;
-        uint32_t stride;
-        uint32_t pad;
-        uint32_t flags;
-        uint32_t reserved;
-    };
-
-    struct MagnitudePush {
-        uint64_t src;
-        uint64_t dst;
-        uint32_t batch;
-        uint32_t channels;
-        uint32_t time;
-        uint32_t reserved;
-    };
-
-    struct LstmPush {
-        uint64_t x;
-        uint64_t w_ih;
-        uint64_t w_hh;
-        uint64_t b_ih;
-        uint64_t b_hh;
-        uint64_t state;
-        uint64_t hs;
-        uint32_t steps;
-        uint32_t reserved;
-    };
-
-    static_assert(sizeof(FramePush) == 32);
-    static_assert(sizeof(ConvPush) == 72);
-    static_assert(sizeof(MagnitudePush) == 32);
-    static_assert(sizeof(LstmPush) == 64);
 
     std::string shape_text(const std::vector<uint64_t>& shape)
     {
@@ -137,11 +83,6 @@ namespace {
             text += (i > 0 ? ", " : "") + std::to_string(shape[i]);
         }
         return text + "]";
-    }
-
-    [[nodiscard]] uint32_t groups_for(size_t invocations, uint32_t local)
-    {
-        return static_cast<uint32_t>((invocations + local - 1) / local);
     }
 
 }
@@ -158,7 +99,7 @@ struct SileroVadModel::Impl {
     explicit Impl(const Kakshya::TensorSet& weights)
         : recording(std::make_shared<GpuDispatchRecorder>(true))
         , context(std::make_unique<ShaderExecutionContext<>>(
-              GpuComputeConfig { .shader_path = "nn_frame_audio.comp.spv", .workgroup_size = { 64, 1, 1 }, .push_constant_size = sizeof(FramePush) }))
+              GpuComputeConfig { .shader_path = TensorKernels::frame_audio_shader, .workgroup_size = { TensorKernels::element_workgroup, 1, 1 }, .push_constant_size = sizeof(TensorKernels::FrameAudioPC) }))
         , tail(context_samples, 0.0F)
     {
         context->set_recording(recording);
@@ -253,42 +194,6 @@ struct SileroVadModel::Impl {
         return address(Weights) + offsets[slot] * sizeof(float);
     }
 
-    [[nodiscard]] static DependencyStage stage(const char* shader, uint32_t local, size_t push_size,
-        uint32_t groups, std::function<void(GpuDispatchCore&)> fn)
-    {
-        return DependencyStage {
-            .config = GpuComputeConfig { .shader_path = shader, .workgroup_size = { local, 1, 1 }, .push_constant_size = push_size },
-            .stage_fn = std::move(fn),
-            .explicit_groups = std::array<uint32_t, 3> { groups, 1U, 1U },
-        };
-    }
-
-    [[nodiscard]] DependencyStage conv_stage(uint64_t src, size_t weight, std::optional<size_t> bias, uint64_t dst,
-        uint32_t batch, uint32_t c_in, uint32_t t_in, uint32_t c_out, uint32_t kernel, uint32_t stride, uint32_t pad,
-        uint32_t flags, uint32_t& t_out) const
-    {
-        t_out = (t_in + 2 * pad - kernel) / stride + 1;
-        const ConvPush push {
-            .src = src,
-            .weights = weight_address(weight),
-            .bias = bias ? weight_address(*bias) : 0,
-            .dst = dst,
-            .batch = batch,
-            .c_in = c_in,
-            .t_in = t_in,
-            .c_out = c_out,
-            .t_out = t_out,
-            .kernel_size = kernel,
-            .stride = stride,
-            .pad = pad,
-            .flags = flags | (bias ? k_flag_bias : 0U),
-            .reserved = 0,
-        };
-        return stage("nn_conv1d.comp.spv", 64, sizeof(ConvPush),
-            groups_for(static_cast<size_t>(batch) * c_out * t_out, 64),
-            [push](GpuDispatchCore& core) { core.set_push_constants(push); });
-    }
-
     [[nodiscard]] std::vector<float> run(std::span<const float> audio, size_t chunks)
     {
         ensure_capacity(chunks);
@@ -296,61 +201,29 @@ struct SileroVadModel::Impl {
         context->upload_shared_raw(0, Audio, reinterpret_cast<const uint8_t*>(audio.data()), audio.size_bytes());
 
         std::vector<DependencyStage> stages;
-        const FramePush frame {
-            .samples = address(Audio),
-            .frames = address(Frames),
-            .chunks = n,
-            .chunk_size = chunk_samples,
-            .context = context_samples,
-            .pad = 64,
+        stages.push_back(TensorKernels::frame_audio_stage(address(Audio), address(Frames), n, chunk_samples, context_samples, k_reflect_pad));
+
+        uint32_t t = k_frame;
+        const auto convolve = [&](const TensorKernels::Conv1d& layer, uint64_t src, size_t weight, std::optional<size_t> bias, uint64_t dst) {
+            stages.push_back(TensorKernels::conv1d_stage(layer, src, weight_address(weight), bias ? weight_address(*bias) : 0, dst, n, t));
+            t = TensorKernels::conv1d_length(layer, t);
         };
-        stages.push_back(stage("nn_frame_audio.comp.spv", 64, sizeof(FramePush),
-            groups_for(static_cast<size_t>(n) * k_frame, 64),
-            [frame](GpuDispatchCore& core) { core.set_push_constants(frame); }));
 
-        uint32_t t = 0;
-        stages.push_back(conv_stage(address(Frames), StftWeight, std::nullopt, address(Transform),
-            n, 1, k_frame, 258, 256, 128, 0, 0, t));
-        const uint32_t frames_out = t;
+        convolve({ .c_in = 1, .c_out = 258, .kernel = 256, .stride = 128 }, address(Frames), StftWeight, std::nullopt, address(Transform));
+        stages.push_back(TensorKernels::magnitude_stage(address(Transform), address(Magnitude), n, 129, t));
 
-        const MagnitudePush magnitude {
-            .src = address(Transform),
-            .dst = address(Magnitude),
-            .batch = n,
-            .channels = 129,
-            .time = frames_out,
-            .reserved = 0,
-        };
-        stages.push_back(stage("nn_magnitude.comp.spv", 64, sizeof(MagnitudePush),
-            groups_for(static_cast<size_t>(n) * 129 * frames_out, 64),
-            [magnitude](GpuDispatchCore& core) { core.set_push_constants(magnitude); }));
+        constexpr auto relu = TensorKernels::Activation::Relu;
+        convolve({ .c_in = 129, .c_out = 128, .kernel = 3, .pad = 1, .activation = relu }, address(Magnitude), Conv1Weight, Conv1Bias, address(Encoded1));
+        convolve({ .c_in = 128, .c_out = 64, .kernel = 3, .stride = 2, .pad = 1, .activation = relu }, address(Encoded1), Conv2Weight, Conv2Bias, address(Encoded2));
+        convolve({ .c_in = 64, .c_out = 64, .kernel = 3, .stride = 2, .pad = 1, .activation = relu }, address(Encoded2), Conv3Weight, Conv3Bias, address(Encoded3));
+        convolve({ .c_in = 64, .c_out = k_hidden, .kernel = 3, .pad = 1, .activation = relu }, address(Encoded3), Conv4Weight, Conv4Bias, address(Encoded4));
 
-        stages.push_back(conv_stage(address(Magnitude), Conv1Weight, Conv1Bias, address(Encoded1),
-            n, 129, frames_out, 128, 3, 1, 1, k_relu, t));
-        stages.push_back(conv_stage(address(Encoded1), Conv2Weight, Conv2Bias, address(Encoded2),
-            n, 128, t, 64, 3, 2, 1, k_relu, t));
-        stages.push_back(conv_stage(address(Encoded2), Conv3Weight, Conv3Bias, address(Encoded3),
-            n, 64, t, 64, 3, 2, 1, k_relu, t));
-        stages.push_back(conv_stage(address(Encoded3), Conv4Weight, Conv4Bias, address(Encoded4),
-            n, 64, t, k_hidden, 3, 1, 1, k_relu, t));
+        stages.push_back(TensorKernels::lstm_sequence_stage(address(Encoded4), weight_address(LstmInputWeight), weight_address(LstmHiddenWeight),
+            weight_address(LstmInputBias), weight_address(LstmHiddenBias), address(State), address(Hidden), n, k_hidden));
 
-        const LstmPush lstm {
-            .x = address(Encoded4),
-            .w_ih = weight_address(LstmInputWeight),
-            .w_hh = weight_address(LstmHiddenWeight),
-            .b_ih = weight_address(LstmInputBias),
-            .b_hh = weight_address(LstmHiddenBias),
-            .state = address(State),
-            .hs = address(Hidden),
-            .steps = n,
-            .reserved = 0,
-        };
-        stages.push_back(stage("nn_lstm_sequence.comp.spv", 512, sizeof(LstmPush), 1,
-            [lstm](GpuDispatchCore& core) { core.set_push_constants(lstm); }));
-
-        uint32_t head_t = 0;
-        stages.push_back(conv_stage(address(Hidden), HeadWeight, HeadBias, address(Probability),
-            n, k_hidden, 1, 1, 1, 1, 0, k_relu_input_sigmoid(), head_t));
+        t = 1;
+        convolve({ .c_in = k_hidden, .c_out = 1, .kernel = 1, .relu_input = true, .activation = TensorKernels::Activation::Sigmoid },
+            address(Hidden), HeadWeight, HeadBias, address(Probability));
 
         context->record_stages(stages);
 
@@ -358,8 +231,6 @@ struct SileroVadModel::Impl {
         context->download_shared(0, Probability, probabilities.data(), probabilities.size() * sizeof(float));
         return probabilities;
     }
-
-    static constexpr uint32_t k_relu_input_sigmoid() { return k_flag_relu_input | k_sigmoid; }
 
     [[nodiscard]] std::vector<float> consume(size_t chunks)
     {
