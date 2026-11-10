@@ -33,6 +33,8 @@ class MAYAFLUX_API SileroVadModel {
 public:
     static constexpr uint32_t chunk_samples = 512;
     static constexpr uint32_t context_samples = 64;
+    /** Sample rate in Hz the network was trained and runs at. */
+    static constexpr uint32_t sample_rate = 16000;
 
     /**
      * @brief Check that a tensor set holds the weights the network needs.

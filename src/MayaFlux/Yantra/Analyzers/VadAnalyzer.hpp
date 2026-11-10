@@ -21,7 +21,11 @@ namespace MayaFlux::Yantra {
  * @brief Settings of a VadAnalyzer.
  *
  * The network fixes the chunk at 512 samples of 16 kHz audio, so the window and
- * hop of the base config are both 512 and are not settings.
+ * hop of the base config are both 512 and are not settings. sample_rate states
+ * the rate of the input and exists so that a wrong one is refused with its
+ * reason instead of giving wrong probabilities: the analyzer does not convert.
+ * Input at another rate is converted first, for example with
+ * Kinesis::Discrete::Resampler.
  */
 struct VadAnalyzerConfig : AnalyzerConfig {
     static constexpr auto describe_facets()
@@ -30,6 +34,7 @@ struct VadAnalyzerConfig : AnalyzerConfig {
             AnalyzerConfig::describe_facets(),
             std::tuple {
                 FacetMember<&VadAnalyzerConfig::flush_tail> {},
+                FacetMember<&VadAnalyzerConfig::sample_rate> {},
             });
     }
 
@@ -41,6 +46,8 @@ struct VadAnalyzerConfig : AnalyzerConfig {
 
     /** Also run the partial chunk left at the end of each call, padded with zeros. Off for a stream, on for a whole clip. */
     bool flush_tail { false };
+    /** Sample rate in Hz of the input. The network runs at 16000 only, so any other value is refused. */
+    double sample_rate { static_cast<double>(SileroVadModel::sample_rate) };
 };
 
 /**
@@ -103,10 +110,14 @@ public:
      * @brief Construct from the network weights.
      * @param weights The tensors of the network. Silero VAD at 16 kHz is the one supported, as in silero_vad_16k.safetensors.
      * @param config Analysis settings.
-     * @throws std::invalid_argument When the weights are missing a tensor or one has the wrong shape.
+     * @throws std::invalid_argument When diagnose refuses the config, or the weights are missing a tensor or one has the wrong shape.
      */
     explicit VadAnalyzer(const Kakshya::TensorSet& weights, VadAnalyzerConfig config = {})
     {
+        if (const std::string reason = diagnose(config); !reason.empty()) {
+            error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+                std::source_location::current(), "VadAnalyzer: {}", reason);
+        }
         if (const std::string reason = SileroVadModel::diagnose(weights); !reason.empty()) {
             error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
                 std::source_location::current(), "VadAnalyzer: {}", reason);
@@ -118,6 +129,19 @@ public:
     [[nodiscard]] ConfigRefs configs() const override
     {
         return this->stored_configs(supports {});
+    }
+
+    /**
+     * @brief Why a config cannot be analysed.
+     * @return The reason, empty when the config is usable: its sample_rate is the 16000 Hz the network runs at.
+     */
+    [[nodiscard]] static std::string diagnose(const VadAnalyzerConfig& config)
+    {
+        if (config.sample_rate != static_cast<double>(SileroVadModel::sample_rate)) {
+            return std::format("sample_rate {} is not the {} Hz the network runs at; convert the input first, for example with Kinesis::Discrete::Resampler",
+                config.sample_rate, SileroVadModel::sample_rate);
+        }
+        return {};
     }
 
     /**
@@ -173,6 +197,10 @@ protected:
     {
         try {
             const auto& cfg = this->template config<VadAnalyzerConfig>();
+            if (const std::string reason = diagnose(cfg); !reason.empty()) {
+                error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+                    std::source_location::current(), "VadAnalyzer: {}", reason);
+            }
 
             auto [data_span, structure_info] = OperationHelper::extract_structured_double(
                 const_cast<input_type&>(input));
