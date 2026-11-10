@@ -46,7 +46,7 @@ public:
     /**
      * @brief Upload the weights and prepare the GPU resources.
      * @param weights A set that diagnose accepts. Other element types than float32 are converted.
-     * @throws std::invalid_argument When diagnose rejects the set.
+     * @throws std::invalid_argument When diagnose rejects the set, or a tensor cannot become float32. Raised before any device is touched.
      * @throws std::runtime_error When no device is available.
      */
     explicit SileroVadModel(const Kakshya::TensorSet& weights);

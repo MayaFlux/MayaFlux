@@ -83,7 +83,7 @@ struct SileroVadModel::Impl {
     std::vector<float> pending;
     std::vector<float> tail;
 
-    explicit Impl(const Kakshya::TensorSet& weights)
+    explicit Impl(TensorKernels::PackedWeights packed)
         : recording(std::make_shared<GpuDispatchRecorder>(true))
         , context(std::make_unique<ShaderExecutionContext<>>(
               GpuComputeConfig { .shader_path = TensorKernels::frame_audio_shader, .workgroup_size = { TensorKernels::element_workgroup, 1, 1 }, .push_constant_size = sizeof(TensorKernels::FrameAudioPC) }))
@@ -94,14 +94,9 @@ struct SileroVadModel::Impl {
             error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
                 std::source_location::current(), "SileroVadModel needs a graphics device and none is available");
         }
-        auto packed = TensorKernels::pack_weights(weights, slot_specs());
-        if (!packed) {
-            error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
-                std::source_location::current(), "SileroVadModel: {}", packed.error());
-        }
-        TensorKernels::upload_packed_weights(*context, 0, Weights, *packed);
-        packed->values = std::vector<float> {};
-        layout = std::move(*packed);
+        TensorKernels::upload_packed_weights(*context, 0, Weights, packed);
+        packed.values = std::vector<float> {};
+        layout = std::move(packed);
 
         context->ensure_shared_buffer(0, State, 2 * k_hidden, GpuBufferBinding::ElementType::FLOAT32, Portal::Graphics::BufferUsageHint::COMPUTE);
         clear_state();
@@ -203,11 +198,12 @@ std::string SileroVadModel::diagnose(const Kakshya::TensorSet& weights)
 
 SileroVadModel::SileroVadModel(const Kakshya::TensorSet& weights)
 {
-    if (const std::string reason = diagnose(weights); !reason.empty()) {
+    auto packed = TensorKernels::pack_weights(weights, slot_specs());
+    if (!packed) {
         error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
-            std::source_location::current(), "SileroVadModel: {}", reason);
+            std::source_location::current(), "SileroVadModel: {}", packed.error());
     }
-    m_impl = std::make_unique<Impl>(weights);
+    m_impl = std::make_unique<Impl>(std::move(*packed));
 }
 
 SileroVadModel::~SileroVadModel() = default;
