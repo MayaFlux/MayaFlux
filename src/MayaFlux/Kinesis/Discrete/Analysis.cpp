@@ -1,6 +1,8 @@
 
 #include "Analysis.hpp"
 
+#include "MayaFlux/Kinesis/TemporalMeasures.hpp"
+
 #include <execution>
 
 #include <Eigen/Dense>
@@ -128,6 +130,25 @@ std::vector<double> zero_crossing_rate(std::span<const double> data, size_t n_wi
         });
 
     return out;
+}
+
+std::pair<std::vector<double>, std::vector<size_t>> periodicity(std::span<const double> data, size_t n_windows, uint32_t hop_size, uint32_t window_size, uint32_t min_lag, uint32_t max_lag)
+{
+    std::vector<double> strengths(n_windows, 0.0);
+    std::vector<size_t> lags(n_windows, 0);
+    std::vector<size_t> idx(n_windows);
+    std::iota(idx.begin(), idx.end(), 0);
+
+    std::for_each(std::execution::par_unseq, idx.begin(), idx.end(),
+        [&](size_t i) {
+            const size_t start = i * hop_size;
+            auto w = data.subspan(start, std::min<size_t>(window_size, data.size() - start));
+            const auto best = estimate_period(w, 1.0, static_cast<double>(min_lag), static_cast<double>(max_lag));
+            strengths[i] = best.strength;
+            lags[i] = static_cast<size_t>(best.period);
+        });
+
+    return { std::move(strengths), std::move(lags) };
 }
 
 std::vector<double> spectral_energy(std::span<const double> data, size_t n_windows, uint32_t hop_size, uint32_t window_size)
