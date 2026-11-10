@@ -1,0 +1,82 @@
+#version 460
+#extension GL_EXT_buffer_reference : require
+
+layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
+
+layout(buffer_reference, std430) readonly buffer FloatRef {
+    float v[];
+};
+
+layout(buffer_reference, std430) buffer ResultRef {
+    float v[];
+};
+
+layout(push_constant) uniform PC {
+    FloatRef src;
+    FloatRef weights;
+    FloatRef bias;
+    ResultRef dst;
+    uint batch;
+    uint c_in;
+    uint t_in;
+    uint c_out;
+    uint t_out;
+    uint kernel_size;
+    uint stride;
+    uint pad;
+    uint flags;
+    uint reserved;
+} pc;
+
+const uint FLAG_BIAS = 1u;
+const uint FLAG_RELU_INPUT = 2u;
+const uint ACT_SHIFT = 2u;
+const uint ACT_RELU = 1u;
+const uint ACT_SIGMOID = 2u;
+
+/**
+ * @brief Strided one dimensional convolution over [batch, c_in, t_in] into [batch, c_out, t_out].
+ *
+ * weights are [c_out, c_in, kernel_size]. The input is zero padded by pad on
+ * both sides. flags: bit 0 adds bias, bit 1 applies ReLU to the input, bits 2
+ * and 3 pick the output activation (0 none, 1 ReLU, 2 sigmoid).
+ */
+void main()
+{
+    const uint idx = gl_GlobalInvocationID.x;
+    if (idx >= pc.batch * pc.c_out * pc.t_out)
+        return;
+
+    const uint to = idx % pc.t_out;
+    const uint co = (idx / pc.t_out) % pc.c_out;
+    const uint n = idx / (pc.t_out * pc.c_out);
+
+    float acc = 0.0;
+    if ((pc.flags & FLAG_BIAS) != 0u)
+        acc = pc.bias.v[co];
+
+    const bool relu_input = (pc.flags & FLAG_RELU_INPUT) != 0u;
+    const int start = int(to * pc.stride) - int(pc.pad);
+
+    for (uint ci = 0u; ci < pc.c_in; ++ci) {
+        const uint x_base = (n * pc.c_in + ci) * pc.t_in;
+        const uint w_base = (co * pc.c_in + ci) * pc.kernel_size;
+        for (uint k = 0u; k < pc.kernel_size; ++k) {
+            const int ti = start + int(k);
+            if (ti < 0 || ti >= int(pc.t_in))
+                continue;
+            float x = pc.src.v[x_base + uint(ti)];
+            if (relu_input)
+                x = max(x, 0.0);
+            acc += pc.weights.v[w_base + k] * x;
+        }
+    }
+
+    const uint activation = (pc.flags >> ACT_SHIFT) & 3u;
+    if (activation == ACT_RELU)
+        acc = max(acc, 0.0);
+    else if (activation == ACT_SIGMOID)
+        acc = 1.0 / (1.0 + exp(-acc));
+
+    pc.dst.v[idx] = acc;
+}

@@ -1,0 +1,42 @@
+#version 460
+#extension GL_EXT_buffer_reference : require
+
+layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
+
+layout(buffer_reference, std430) readonly buffer SamplesRef {
+    float v[];
+};
+
+layout(buffer_reference, std430) buffer FramesRef {
+    float v[];
+};
+
+layout(push_constant) uniform PC {
+    SamplesRef samples;
+    FramesRef frames;
+    uint chunks;
+    uint chunk_size;
+    uint context;
+    uint pad;
+} pc;
+
+/**
+ * @brief Cuts a sample stream into overlapping frames and reflect pads each on the right.
+ *
+ * samples holds context + chunks * chunk_size values. Frame n is the context +
+ * chunk_size values starting at n * chunk_size, followed by pad values that
+ * mirror the frame about its last value without repeating it.
+ */
+void main()
+{
+    const uint i = gl_GlobalInvocationID.x;
+    const uint sequence = pc.context + pc.chunk_size;
+    const uint frame = sequence + pc.pad;
+    if (i >= pc.chunks * frame)
+        return;
+
+    const uint n = i / frame;
+    const uint p = i % frame;
+    const uint k = p < sequence ? p : sequence - 2u - (p - sequence);
+    pc.frames.v[i] = pc.samples.v[n * pc.chunk_size + k];
+}
