@@ -1,0 +1,31 @@
+{
+  "$schema": "./assets.schema.json",
+  "schema_version": 1,
+  "assets": [
+    {
+      "id": "silero_vad",
+      "description": "Silero voice activity detection network at 16 kHz, used by VadAnalyzer.",
+      "source": {
+        "kind": "git",
+        "repo": "https://github.com/snakers4/silero-vad",
+        "ref": "fb7d7c7f5df63235f0afd037d8397593829aeb41"
+      },
+      "files": [
+        {
+          "from": "src/silero_vad/data/silero_vad_16k.safetensors",
+          "to": "tensors/silero/silero_vad_16k.safetensors",
+          "sha256": "c59271c284ae9c8335d795d60e0bfdb71aaaceec578d9bd9ffc1b8153c319ea1",
+          "size_bytes": 1239748
+        },
+        {
+          "from": "LICENSE",
+          "to": "tensors/silero/LICENSE"
+        }
+      ],
+      "license": {
+        "spdx": "MIT",
+        "notice": "tensors/silero/LICENSE"
+      }
+    }
+  ]
+}

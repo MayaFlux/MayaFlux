@@ -1,0 +1,202 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MayaFlux assets",
+  "description": "Files a MayaFlux project needs that are not part of the library: model weights and similar data. Each asset names where its files come from and where they go. The same asset definition is used by the list MayaFlux ships and by community module manifests, which may also use browser_asset.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "assets"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "schema_version": { "type": "integer", "const": 1 },
+    "assets": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/asset" }
+    }
+  },
+  "$defs": {
+    "text": {
+      "type": "string",
+      "not": { "pattern": "[\\u0000-\\u001f\\u007f]" }
+    },
+    "description": {
+      "allOf": [{ "$ref": "#/$defs/text" }, { "minLength": 1 }]
+    },
+    "identifier": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*(?![\\s\\S])"
+    },
+    "https_url": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https://[^\\s/@?#]+(?:[/?][^\\s#]*)?(?![\\s\\S])"
+    },
+    "general_https_url": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https://[^\\s/@?#]+(?:[/?][^\\s#]*)?(?:#[^\\s]*)?(?![\\s\\S])"
+    },
+    "relative_path": {
+      "type": "string",
+      "pattern": "^(?!.*(?:^|/)\\.{1,2}(?:/|$))[^/\\\\:<>\"|?*\\u0000-\\u001f\\u007f]+(?:/[^/\\\\:<>\"|?*\\u0000-\\u001f\\u007f]+)*(?![\\s\\S])"
+    },
+    "positive_size": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[A-Fa-f0-9]{64}(?![\\s\\S])"
+    },
+    "platforms": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "enum": ["linux", "macos", "windows"] }
+    },
+    "root": {
+      "description": "Where files go. data is the project's data directory. module is the requesting community module's directory and is not allowed in the list MayaFlux ships.",
+      "enum": ["data", "module"],
+      "default": "data"
+    },
+    "url_source": {
+      "description": "A file or a zip archive at an https URL. Without archive the URL is the one file and files names only its destination. With archive each file names the member to take.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "url"],
+      "properties": {
+        "kind": { "const": "url" },
+        "url": { "$ref": "#/$defs/https_url" },
+        "archive": { "const": "zip" },
+        "max_extracted_size_bytes": { "$ref": "#/$defs/positive_size" },
+        "max_files": { "$ref": "#/$defs/positive_size" }
+      },
+      "dependentRequired": {
+        "archive": ["max_extracted_size_bytes", "max_files"],
+        "max_extracted_size_bytes": ["archive"],
+        "max_files": ["archive"]
+      }
+    },
+    "git_source": {
+      "description": "Files of a git repository at one commit. The ref is a full commit SHA, never a branch or a tag, so the content is fixed.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "repo", "ref"],
+      "properties": {
+        "kind": { "const": "git" },
+        "repo": { "$ref": "#/$defs/https_url" },
+        "ref": { "type": "string", "pattern": "^[a-f0-9]{40}(?![\\s\\S])" }
+      }
+    },
+    "file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["to"],
+      "properties": {
+        "from": {
+          "description": "Path inside the repository or the archive. Absent for a plain url source.",
+          "$ref": "#/$defs/relative_path"
+        },
+        "to": {
+          "description": "Destination relative to the root.",
+          "$ref": "#/$defs/relative_path"
+        },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "size_bytes": { "$ref": "#/$defs/positive_size" }
+      }
+    },
+    "license": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["spdx", "notice"],
+      "properties": {
+        "spdx": {
+          "description": "SPDX identifier of the licence of the files.",
+          "allOf": [{ "$ref": "#/$defs/text" }, { "minLength": 1 }]
+        },
+        "notice": {
+          "description": "The destination of the licence file, which must be one of the entry's files so the notice accompanies every copy.",
+          "$ref": "#/$defs/relative_path"
+        }
+      }
+    },
+    "asset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "description", "source", "files", "license"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "description": { "$ref": "#/$defs/description" },
+        "platforms": { "$ref": "#/$defs/platforms" },
+        "optional": { "type": "boolean", "default": false },
+        "root": { "$ref": "#/$defs/root" },
+        "source": {
+          "oneOf": [
+            { "$ref": "#/$defs/url_source" },
+            { "$ref": "#/$defs/git_source" }
+          ]
+        },
+        "files": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/file" }
+        },
+        "license": { "$ref": "#/$defs/license" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": ["source"],
+            "properties": { "source": { "required": ["kind"], "properties": { "kind": { "const": "url" } } } }
+          },
+          "then": {
+            "properties": { "files": { "items": { "required": ["sha256", "size_bytes"] } } }
+          }
+        },
+        {
+          "if": {
+            "required": ["source"],
+            "properties": { "source": { "required": ["kind"], "properties": { "kind": { "const": "url" } }, "not": { "required": ["archive"] } } }
+          },
+          "then": {
+            "properties": { "files": { "maxItems": 1, "items": { "not": { "required": ["from"] } } } }
+          },
+          "else": {
+            "properties": { "files": { "items": { "required": ["from"] } } }
+          }
+        }
+      ]
+    },
+    "browser_asset": {
+      "description": "Community modules only. A page or file handed to the user's browser, for downloads that need the user, such as a login or an agreement. Weave does not wait for it or verify it. The optional files only tell the user where to put what they download.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "description", "source"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "description": { "$ref": "#/$defs/description" },
+        "platforms": { "$ref": "#/$defs/platforms" },
+        "optional": { "type": "boolean", "default": false },
+        "root": { "$ref": "#/$defs/root" },
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "url"],
+          "properties": {
+            "kind": { "const": "browser" },
+            "url": { "$ref": "#/$defs/general_https_url" }
+          }
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["to"],
+            "properties": { "to": { "$ref": "#/$defs/relative_path" } }
+          }
+        }
+      }
+    }
+  }
+}
