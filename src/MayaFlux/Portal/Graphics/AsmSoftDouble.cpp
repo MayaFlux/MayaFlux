@@ -273,6 +273,179 @@ namespace {
             return declarations() + globals + m_text;
         }
 
+        [[nodiscard]] std::string lagged_pair(const ShaderSpec& spec)
+        {
+            const uint32_t local = spec.workgroup_size[0];
+            const bool centred = spec.centred;
+            const PairMap map = spec.pair_map;
+            const std::string& values = spec.bindings[0].name;
+            const std::string& result = spec.bindings[1].name;
+
+            k(local);
+            emit_add();
+            if (centred || map == PairMap::Product) {
+                emit_mul();
+            }
+
+            const auto load_global = [this](const std::string& binding, const Id& index) {
+                const Id pointer = ins("%pelem_" + binding, "OpAccessChain", { "%buf_" + binding, "%c0u", index });
+                return ins("%v2u32", "OpLoad", { pointer });
+            };
+            const auto store_global = [this](const std::string& binding, const Id& index, const Id& value) {
+                const Id pointer = ins("%pelem_" + binding, "OpAccessChain", { "%buf_" + binding, "%c0u", index });
+                m_text += "OpStore " + pointer + " " + value + "\n";
+            };
+            const auto load_shared = [this](const Id& index) {
+                const Id pointer = ins("%lp_p_sh", "OpAccessChain", { "%lp_shared", index });
+                return ins("%v2u32", "OpLoad", { pointer });
+            };
+            const auto store_shared = [this](const Id& index, const Id& value) {
+                const Id pointer = ins("%lp_p_sh", "OpAccessChain", { "%lp_shared", index });
+                m_text += "OpStore " + pointer + " " + value + "\n";
+            };
+            const auto mulf = [this](const Id& a, const Id& b) {
+                return ins("%v2u32", "OpFunctionCall", { soft_double_mul, a, b });
+            };
+            const auto addf = [this](const Id& a, const Id& b) {
+                return ins("%v2u32", "OpFunctionCall", { soft_double_add, a, b });
+            };
+            const auto negf = [this](const Id& a) {
+                const Word64 w = unpack(a);
+                return pair(w.lo, bxor(w.hi, k(2147483648)));
+            };
+            const auto barrier = [this] {
+                m_text += "OpControlBarrier " + k(2) + " " + k(2) + " " + k(264) + "\n";
+            };
+            const auto push_constant = [this](uint32_t member) {
+                const Id pointer = ins("%ppc_u32", "OpAccessChain", { "%pc", k(member) });
+                return ins("%u32", "OpLoad", { pointer });
+            };
+            const auto non_negative = [this](const Id& value) {
+                const Word64 w = unpack(value);
+                const Id all_ones = eq(band(shr(w.hi, k(20)), k(2047)), k(2047));
+                const Id nan = land(all_ones, ne(bor(band(w.hi, k(1048575)), w.lo), k(0)));
+                const Id sign_clear = eq(band(w.hi, k(2147483648)), k(0));
+                const Id zero_value = eq(bor(shl(w.hi, k(1)), w.lo), k(0));
+                return lor(zero_value, land(sign_clear, ins("%bool", "OpLogicalNot", { nan })));
+            };
+
+            m_text += "%main = OpFunction %void None %voidfn\n";
+            m_text += "%entry = OpLabel\n";
+            m_text += "%lp_acc = OpVariable %lp_pf_v2 Function\n";
+            m_text += "%lp_k = OpVariable %lp_pf_u32 Function\n";
+
+            const Id local_id = ins("%u32", "OpCompositeExtract", { ins("%v3u32", "OpLoad", { "%lid_var" }), "0" });
+            const Id group = ins("%v3u32", "OpLoad", { "%wgid_var" });
+            const Id lag_slot = ins("%u32", "OpCompositeExtract", { group, "0" });
+            const Id window_id = ins("%u32", "OpCompositeExtract", { group, "1" });
+            const Id length = push_constant(0);
+            const Id stride = push_constant(1);
+            const Id offset = push_constant(2);
+            const Id first_lag = push_constant(3);
+            const Id lag_count = push_constant(4);
+            const Id scale = pair(push_constant(5), push_constant(6));
+            const Id lag = add(first_lag, lag_slot);
+            const Id base = add(offset, word("OpIMul", window_id, stride));
+            const Id terms = sel(ult(lag, length), sub(length, lag), k(0));
+            const Id zero = pair(k(0), k(0));
+
+            uint32_t counter = 0;
+            const auto accumulate = [&](const Id& bound, const auto& element) {
+                const std::string tag = std::to_string(counter++);
+                m_text += "OpStore %lp_acc " + zero + "\n";
+                m_text += "OpStore %lp_k " + local_id + "\n";
+                m_text += "OpBranch %lp_h" + tag + "\n";
+                m_text += "%lp_h" + tag + " = OpLabel\n";
+                m_text += "OpLoopMerge %lp_m" + tag + " %lp_c" + tag + " None\n";
+                m_text += "OpBranch %lp_t" + tag + "\n";
+                m_text += "%lp_t" + tag + " = OpLabel\n";
+                const Id index = ins("%u32", "OpLoad", { "%lp_k" });
+                m_text += "OpBranchConditional " + ult(index, bound) + " %lp_b" + tag + " %lp_m" + tag + "\n";
+                m_text += "%lp_b" + tag + " = OpLabel\n";
+                const Id term = element(index);
+                const Id running = ins("%v2u32", "OpLoad", { "%lp_acc" });
+                m_text += "OpStore %lp_acc " + addf(running, term) + "\n";
+                m_text += "OpBranch %lp_c" + tag + "\n";
+                m_text += "%lp_c" + tag + " = OpLabel\n";
+                const Id next = add(ins("%u32", "OpLoad", { "%lp_k" }), k(local));
+                m_text += "OpStore %lp_k " + next + "\n";
+                m_text += "OpBranch %lp_h" + tag + "\n";
+                m_text += "%lp_m" + tag + " = OpLabel\n";
+            };
+
+            const auto combine = [&] {
+                store_shared(local_id, ins("%v2u32", "OpLoad", { "%lp_acc" }));
+                barrier();
+                for (uint32_t span = local / 2; span >= 1; span /= 2) {
+                    const std::string tag = std::to_string(counter++);
+                    const Id active = ult(local_id, k(span));
+                    m_text += "OpSelectionMerge %lp_sm" + tag + " None\n";
+                    m_text += "OpBranchConditional " + active + " %lp_sw" + tag + " %lp_sm" + tag + "\n";
+                    m_text += "%lp_sw" + tag + " = OpLabel\n";
+                    const Id own = load_shared(local_id);
+                    const Id partner = load_shared(add(local_id, k(span)));
+                    store_shared(local_id, addf(own, partner));
+                    m_text += "OpBranch %lp_sm" + tag + "\n";
+                    m_text += "%lp_sm" + tag + " = OpLabel\n";
+                    barrier();
+                }
+            };
+
+            Id negative_mean = zero;
+            if (centred) {
+                accumulate(length, [&](const Id& index) { return load_global(values, add(base, index)); });
+                combine();
+                negative_mean = negf(mulf(load_shared(k(0)), scale));
+                barrier();
+            }
+
+            accumulate(terms, [&](const Id& index) {
+                const Id first_index = add(base, index);
+                Id a = load_global(values, first_index);
+                Id b = load_global(values, add(first_index, lag));
+                if (centred) {
+                    a = addf(a, negative_mean);
+                    b = addf(b, negative_mean);
+                }
+                switch (map) {
+                case PairMap::SignChange: {
+                    const Id differs = test("OpLogicalNotEqual", non_negative(a), non_negative(b));
+                    return pair(k(0), sel(differs, k(1072693248), k(0)));
+                }
+                case PairMap::AbsDifference: {
+                    const Word64 d = unpack(addf(a, negf(b)));
+                    return pair(d.lo, band(d.hi, k(2147483647)));
+                }
+                case PairMap::Product:
+                default:
+                    return mulf(a, b);
+                }
+            });
+            combine();
+
+            const Id first_invocation = eq(local_id, k(0));
+            m_text += "OpSelectionMerge %lp_wm None\n";
+            m_text += "OpBranchConditional " + first_invocation + " %lp_ww %lp_wm\n";
+            m_text += "%lp_ww = OpLabel\n";
+            store_global(result, add(word("OpIMul", window_id, lag_count), lag_slot), load_shared(k(0)));
+            m_text += "OpBranch %lp_wm\n";
+            m_text += "%lp_wm = OpLabel\n";
+            m_text += "OpReturn\n";
+            m_text += "OpFunctionEnd\n";
+
+            std::string globals;
+            globals += "%lid_var = OpVariable %ptr_in_v3u32 Input\n";
+            globals += "%wgid_var = OpVariable %ptr_in_v3u32 Input\n";
+            globals += "%lp_arr_t = OpTypeArray %v2u32 %sd_k" + std::to_string(local) + "\n";
+            globals += "%lp_p_arr = OpTypePointer Workgroup %lp_arr_t\n";
+            globals += "%lp_shared = OpVariable %lp_p_arr Workgroup\n";
+            globals += "%lp_p_sh = OpTypePointer Workgroup %v2u32\n";
+            globals += "%lp_pf_v2 = OpTypePointer Function %v2u32\n";
+            globals += "%lp_pf_u32 = OpTypePointer Function %u32\n";
+            globals += "\n";
+            return declarations() + globals + m_text;
+        }
+
     private:
         std::string m_text;
         std::set<uint32_t> m_constants;
@@ -642,6 +815,25 @@ std::string emit_fft(const ShaderSpec& spec)
 
     Builder builder;
     return builder.fft(spec);
+}
+
+std::string emit_lagged_pair(const ShaderSpec& spec)
+{
+    const uint32_t local = spec.workgroup_size[0];
+    const bool shaped = spec.bindings.size() == 2 && spec.pc_fields.size() == 7
+        && std::ranges::all_of(spec.bindings, [](const BindingSlot& b) {
+               return b.format == Kakshya::GpuDataFormat::VEC2_U32;
+           })
+        && std::ranges::all_of(spec.pc_fields, [](const PushConstantField& f) {
+               return f.format == Kakshya::GpuDataFormat::UINT32;
+           });
+    const bool sized = local >= 2 && local <= 1024 && (local & (local - 1)) == 0;
+    if (!shaped || !sized) {
+        return {};
+    }
+
+    Builder builder;
+    return builder.lagged_pair(spec);
 }
 
 } // namespace MayaFlux::Portal::Graphics::detail

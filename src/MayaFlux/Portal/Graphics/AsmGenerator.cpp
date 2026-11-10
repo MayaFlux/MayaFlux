@@ -35,6 +35,10 @@
  * word-pair doubles with one workgroup per window, using the same soft-double
  * functions. Twiddle factors come from a binding filled by the host.
  *
+ * KernelTemplate::LaggedPair — emit_lagged_pair (AsmSoftDouble.cpp) sums a
+ * pairwise map of x[i] and x[i + lag] over a window for every lag in a range,
+ * one workgroup per lag and window, optionally after removing the window mean.
+ *
  * GLSL kernel path (emit_glsl_kernel) handles all three binding modalities
  * when spec.kernel is set via MF_KERNEL.
  */
@@ -173,6 +177,8 @@ namespace {
             iface += " %lid_var %wgid_var %sr_shared";
         } else if (spec.tmpl == KernelTemplate::FFT) {
             iface += " %lid_var %wgid_var %fft_re %fft_im";
+        } else if (spec.tmpl == KernelTemplate::LaggedPair) {
+            iface += " %lid_var %wgid_var %lp_shared";
         }
 
         std::string o;
@@ -242,7 +248,8 @@ namespace {
 
         if (spec.tmpl == KernelTemplate::Reduction || spec.tmpl == KernelTemplate::Scan) {
             o += "OpDecorate %lid_var BuiltIn LocalInvocationId\n";
-        } else if (spec.tmpl == KernelTemplate::SegmentedReduction || spec.tmpl == KernelTemplate::FFT) {
+        } else if (spec.tmpl == KernelTemplate::SegmentedReduction || spec.tmpl == KernelTemplate::FFT
+            || spec.tmpl == KernelTemplate::LaggedPair) {
             o += "OpDecorate %lid_var BuiltIn LocalInvocationId\n";
             o += "OpDecorate %wgid_var BuiltIn WorkgroupId\n";
         }
@@ -1912,6 +1919,9 @@ std::string emit_spirv_asm(const ShaderSpec& spec)
         break;
     case KernelTemplate::FFT:
         src += emit_fft(spec);
+        break;
+    case KernelTemplate::LaggedPair:
+        src += emit_lagged_pair(spec);
         break;
     case KernelTemplate::BitonicSort:
         src += emit_bitonic_body(spec);

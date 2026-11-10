@@ -40,6 +40,24 @@ enum class KernelTemplate : uint8_t {
          ///< and weights for a projection.
          ///< Five UINT32 push constants: length, stride, offset in complex elements,
          ///< then the low and high word of a double scale applied to the output.
+    LaggedPair, ///< Sums a pairwise map of x[i] and x[i + lag] over a window, for every lag in
+                ///< a range, as word-pair doubles. One workgroup per (lag, window): group x
+                ///< is the lag index, group y the window. Bindings: values, result (VEC2_U32).
+                ///< Seven UINT32 push constants: length, stride, offset (window w starts at
+                ///< offset + w * stride and holds length elements), first_lag, lag_count,
+                ///< then the low and high word of the double 1 / length. Result element
+                ///< w * lag_count + l holds the sum for lag first_lag + l. A lag of length
+                ///< or more sums nothing. Needs PairMap and optionally centring.
+};
+
+/**
+ * @enum PairMap
+ * @brief Map of two elements, x[i] and x[i + lag], summed by a LaggedPair kernel.
+ */
+enum class PairMap : uint8_t {
+    Product, ///< a * b
+    SignChange, ///< 1 when exactly one of a, b is non-negative, else 0; NaN counts as negative
+    AbsDifference, ///< |a - b|
 };
 
 /**
@@ -410,6 +428,8 @@ struct ShaderSpec {
     uint32_t points { 0 }; ///< FFT only. Points per window.
     SpectrumOutput spectrum { SpectrumOutput::Complex }; ///< FFT only.
     uint32_t descriptors { 0 }; ///< FFT with SpectrumOutput::Projection only. Rows of weights.
+    PairMap pair_map { PairMap::Product }; ///< LaggedPair only.
+    bool centred { false }; ///< LaggedPair only. Subtract each window's mean from both operands first.
     std::vector<BindingSlot> bindings;
     std::vector<PushConstantField> pc_fields;
     std::array<uint32_t, 3> workgroup_size { 256, 1, 1 };
@@ -469,6 +489,20 @@ struct ShaderSpec {
         Assemble& descriptors(uint32_t n)
         {
             m_descriptors = n;
+            return *this;
+        }
+
+        /** @brief Set the pairwise map of a LaggedPair. */
+        Assemble& pair_map(PairMap m)
+        {
+            m_pair_map = m;
+            return *this;
+        }
+
+        /** @brief Subtract each window's mean from both operands of a LaggedPair before the map. */
+        Assemble& centred(bool c = true)
+        {
+            m_centred = c;
             return *this;
         }
 
@@ -613,6 +647,8 @@ struct ShaderSpec {
                 .points = m_points,
                 .spectrum = m_spectrum,
                 .descriptors = m_descriptors,
+                .pair_map = m_pair_map,
+                .centred = m_centred,
                 .bindings = std::move(m_bindings),
                 .pc_fields = std::move(m_pc_fields),
                 .workgroup_size = m_workgroup,
@@ -629,6 +665,8 @@ struct ShaderSpec {
         uint32_t m_points { 0 };
         SpectrumOutput m_spectrum { SpectrumOutput::Complex };
         uint32_t m_descriptors { 0 };
+        PairMap m_pair_map { PairMap::Product };
+        bool m_centred { false };
         std::vector<BindingSlot> m_bindings;
         std::vector<PushConstantField> m_pc_fields;
         std::array<uint32_t, 3> m_workgroup { 256, 1, 1 };
@@ -711,6 +749,15 @@ namespace detail {
      * power of two workgroup size of at most points / 2.
      */
     [[nodiscard]] std::string emit_fft(const ShaderSpec& spec);
+
+    /**
+     * @brief Emit the globals, soft-double functions and entry point of the LaggedPair template.
+     *
+     * Returns an empty string when the spec does not have the template's shape:
+     * two VEC2_U32 bindings, seven UINT32 push constants and a power of two
+     * workgroup size from 2 to 1024.
+     */
+    [[nodiscard]] std::string emit_lagged_pair(const ShaderSpec& spec);
 
 } // namespace detail
 
