@@ -3,6 +3,7 @@
 #include "Extractor.hpp"
 
 #include "MayaFlux/Transitive/Reflect/EnumReflect.hpp"
+#include "MayaFlux/Yantra/Executors/Audio/IntervalScanStage.hpp"
 #include "MayaFlux/Yantra/Executors/ShaderExecutionContext.hpp"
 #include "MayaFlux/Yantra/OperationSpec/OperationHelper.hpp"
 
@@ -147,6 +148,27 @@ struct MAYAFLUX_API ChannelIntervals {
 };
 
 /**
+ * @struct IntervalBuffers
+ * @brief Device views of one channel's results from the latest call, for a consumer that reads them on the GPU.
+ *
+ * runs holds start and end pairs and report holds interval_scan_report_words
+ * words that decode_interval_scan_report reads, all uint32. The addresses are
+ * device addresses for push constants. The extractor owns the
+ * memory and rewrites it on its next call, so a consumer recorded between two
+ * calls, in a submission made after the extractor's own, reads the latest
+ * results: submissions on one queue run in order. Addresses are 0 for a
+ * channel the call gave no scores.
+ */
+struct MAYAFLUX_API IntervalBuffers {
+    uint64_t runs_address { 0 };
+    uint64_t report_address { 0 };
+    /** Pairs the run list can hold. */
+    uint32_t capacity { 0 };
+    std::shared_ptr<Portal::Graphics::GpuBufferHandle> runs;
+    std::shared_ptr<Portal::Graphics::GpuBufferHandle> report;
+};
+
+/**
  * @struct IntervalExtraction
  * @brief Record of one IntervalExtractor run, stored on the output's facets.
  */
@@ -258,10 +280,110 @@ public:
     }
 
     /**
+     * @brief Record and submit an extraction without waiting for it.
+     *
+     * For a live caller that must not block: the work is on the queue when this
+     * returns. Poll ready, then collect the result. Only one submission can be
+     * outstanding, and a synchronous extract_intervals is refused while one is.
+     *
+     * @return False when an earlier submission has not been collected, or the
+     *         input could not be submitted.
+     */
+    bool submit(const input_type& data)
+    {
+        if (m_outstanding) {
+            return false;
+        }
+        try {
+            const auto& cfg = this->template config<IntervalExtractorConfig>();
+            [[maybe_unused]] auto [numeric_data, info] = OperationHelper::extract_structured_double(const_cast<input_type&>(data));
+            auto calls = record_all(numeric_data, cfg);
+            m_outstanding = Outstanding { .calls = std::move(calls), .config = cfg, .fence = m_recording->submit() };
+            return true;
+        } catch (const std::exception& e) {
+            MF_ERROR(Journal::Component::Yantra, Journal::Context::ComputeMatrix, "Interval submit failed: {}", e.what());
+            return false;
+        }
+    }
+
+    bool submit(const InputType& data)
+    {
+        return this->submit(input_type { data });
+    }
+
+    /**
+     * @brief True while a submission is outstanding and not yet collected.
+     */
+    [[nodiscard]] bool pending() const
+    {
+        return m_outstanding.has_value();
+    }
+
+    /**
+     * @brief True when nothing is outstanding or the outstanding submission has completed. Never waits.
+     */
+    [[nodiscard]] bool ready() const
+    {
+        return !m_outstanding || m_recording->is_complete(m_outstanding->fence);
+    }
+
+    /**
+     * @brief The result of the outstanding submission, once it has completed.
+     * @return The record, or nothing when none is outstanding or it has not completed yet. Never waits.
+     */
+    [[nodiscard]] std::optional<IntervalExtraction> collect()
+    {
+        if (!m_outstanding || !ready()) {
+            return std::nullopt;
+        }
+        IntervalExtraction record;
+        record.config = m_outstanding->config;
+        record.channels.resize(m_outstanding->calls.size());
+        for (size_t channel = 0; channel < m_outstanding->calls.size(); ++channel) {
+            record.channels[channel] = read_channel(channel, m_outstanding->calls[channel]);
+        }
+        m_outstanding.reset();
+        return record;
+    }
+
+    /**
+     * @brief Device views of the results of the latest call, one per channel.
+     *
+     * Valid as soon as the call has recorded, so after submit they can be
+     * handed to a consumer before the work completes. Empty before any call.
+     */
+    [[nodiscard]] std::vector<IntervalBuffers> buffers() const
+    {
+        std::vector<IntervalBuffers> views(m_last_calls.size());
+        for (size_t channel = 0; channel < m_last_calls.size(); ++channel) {
+            if (!m_last_calls[channel].ran) {
+                continue;
+            }
+            const size_t runs = binding_of(channel, Runs);
+            const size_t report = binding_of(channel, Report);
+            views[channel] = {
+                .runs_address = m_context->shared_buffer_address(0, runs),
+                .report_address = m_context->shared_buffer_address(0, report),
+                .capacity = m_last_calls[channel].capacity,
+                .runs = std::make_shared<Portal::Graphics::GpuBufferHandle>(m_context->shared_buffer_handle(0, runs)),
+                .report = std::make_shared<Portal::Graphics::GpuBufferHandle>(m_context->shared_buffer_handle(0, report)),
+            };
+        }
+        return views;
+    }
+
+    /**
      * @brief Start a new stream: forget the detector state of every channel.
+     *
+     * Waits for an outstanding submission and discards its result.
      */
     void reset()
     {
+        if (m_recording) {
+            m_recording->wait();
+        }
+        m_outstanding.reset();
+        m_last_calls.clear();
         m_seen.clear();
         m_started.clear();
     }
@@ -288,35 +410,19 @@ protected:
             auto [numeric_data, info] = OperationHelper::extract_structured_double(const_cast<input_type&>(input));
             DataStructureInfo structure_info = info;
 
-            ensure_context();
-            if (m_seen.size() != numeric_data.size()) {
-                m_seen.assign(numeric_data.size(), 0);
-                m_started.assign(numeric_data.size(), false);
+            if (m_outstanding) {
+                error<std::logic_error>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+                    std::source_location::current(), "An earlier submit has not been collected");
             }
+            const auto calls = record_all(numeric_data, cfg);
 
             IntervalExtraction record;
             record.config = cfg;
             record.channels.resize(numeric_data.size());
 
-            const bool gated = cfg.gate_channel != IntervalExtractorConfig::no_channel;
-            if (gated && cfg.gate_channel >= numeric_data.size()) {
-                error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
-                    std::source_location::current(), "Gate channel {} is not a column of the {} given", cfg.gate_channel, numeric_data.size());
-            }
-            std::span<const double> gate;
-            if (gated) {
-                gate = { numeric_data[cfg.gate_channel].data(), numeric_data[cfg.gate_channel].size() };
-            }
-
             std::vector<std::vector<double>> flat(numeric_data.size());
             for (size_t channel = 0; channel < numeric_data.size(); ++channel) {
-                const std::span<const double> scores { numeric_data[channel].data(), numeric_data[channel].size() };
-                const bool gates_this = gated && channel != cfg.gate_channel;
-                if (gates_this && gate.size() != scores.size()) {
-                    error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
-                        std::source_location::current(), "Gate column has {} scores and column {} has {}", gate.size(), channel, scores.size());
-                }
-                record.channels[channel] = run_channel(channel, scores, gates_this ? gate : std::span<const double> {}, cfg);
+                record.channels[channel] = read_channel(channel, calls[channel]);
                 for (const auto& [start, end] : record.channels[channel].intervals) {
                     flat[channel].push_back(static_cast<double>(start));
                     flat[channel].push_back(static_cast<double>(end));
@@ -341,46 +447,74 @@ private:
     enum Slot : uint32_t {
         Scores,
         Runs,
-        Count,
-        Gate,
-        State
+        Report,
+        State,
+        SlotsPerChannel
     };
 
-    static constexpr uint32_t k_state_words = 16;
-    static constexpr uint32_t k_flag_longest = 1;
-    static constexpr uint32_t k_flag_flush = 2;
-    static constexpr uint32_t k_flag_gated = 4;
-    static constexpr uint32_t k_flag_emit_on_close = 8;
-    static constexpr uint32_t k_report_words = 6;
+    static constexpr size_t k_gate_binding = 0;
 
-    struct Push {
-        uint64_t scores;
-        uint64_t state;
-        uint64_t runs;
-        uint64_t count;
-        uint64_t gate;
-        uint32_t n;
-        uint32_t first_index;
-        uint32_t hop;
-        uint32_t min_run;
-        uint32_t min_gap;
-        uint32_t pad;
-        uint32_t gap_at_limit;
-        uint32_t run_limit;
-        uint32_t flags;
-        uint32_t total;
-        uint32_t first_sample;
-        float enter;
-        float leave;
-        float gate_threshold;
+    struct ChannelCall {
+        bool ran { false };
+        uint32_t capacity { 0 };
     };
 
-    static_assert(sizeof(Push) == 96);
+    struct Outstanding {
+        std::vector<ChannelCall> calls;
+        IntervalExtractorConfig config;
+        Portal::Graphics::FenceID fence { Portal::Graphics::INVALID_FENCE };
+    };
+
+    [[nodiscard]] static size_t binding_of(size_t channel, Slot slot)
+    {
+        return 1 + channel * SlotsPerChannel + slot;
+    }
 
     mutable std::shared_ptr<GpuDispatchRecorder> m_recording;
     mutable std::unique_ptr<ShaderExecutionContext<>> m_context;
     std::vector<uint32_t> m_seen;
     std::vector<bool> m_started;
+    std::vector<ChannelCall> m_last_calls;
+    std::optional<Outstanding> m_outstanding;
+
+    template <typename Columns>
+    std::vector<ChannelCall> record_all(const Columns& columns, const IntervalExtractorConfig& cfg)
+    {
+        ensure_context();
+        if (m_seen.size() != columns.size()) {
+            m_seen.assign(columns.size(), 0);
+            m_started.assign(columns.size(), false);
+        }
+
+        const bool gated = cfg.gate_channel != IntervalExtractorConfig::no_channel;
+        if (gated && cfg.gate_channel >= columns.size()) {
+            error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+                std::source_location::current(), "Gate channel {} is not a column of the {} given", cfg.gate_channel, columns.size());
+        }
+        std::span<const double> gate;
+        if (gated) {
+            gate = { columns[cfg.gate_channel].data(), columns[cfg.gate_channel].size() };
+            upload_gate(gate);
+        }
+
+        const auto scan = scan_config(cfg);
+        std::vector<DependencyStage> stages;
+        std::vector<ChannelCall> calls(columns.size());
+        for (size_t channel = 0; channel < columns.size(); ++channel) {
+            const std::span<const double> scores { columns[channel].data(), columns[channel].size() };
+            const bool gates_this = gated && channel != cfg.gate_channel;
+            if (gates_this && gate.size() != scores.size()) {
+                error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+                    std::source_location::current(), "Gate column has {} scores and column {} has {}", gate.size(), channel, scores.size());
+            }
+            calls[channel] = record_channel(channel, scores, gates_this, scan, cfg.flush, stages);
+        }
+        if (!stages.empty()) {
+            m_context->record_stages(stages);
+        }
+        m_last_calls = calls;
+        return calls;
+    }
 
     static void validate_config(const IntervalExtractorConfig& cfg)
     {
@@ -388,27 +522,31 @@ private:
             error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
                 std::source_location::current(), "{}", message);
         };
-        if (!std::isfinite(cfg.enter_threshold) || !std::isfinite(cfg.leave_margin) || !std::isfinite(cfg.leave_floor)) {
+        if (!std::isfinite(cfg.leave_margin) || !std::isfinite(cfg.leave_floor)) {
             fail("Thresholds must be finite");
         }
-        if (!std::isfinite(cfg.gate_threshold)) {
-            fail("The gate threshold must be finite");
-        }
-        if (cfg.samples_per_score == 0) {
-            fail("Samples per score must be greater than 0");
-        }
-        if (cfg.max_run != 0 && cfg.max_run <= static_cast<uint64_t>(cfg.samples_per_score) + 2ULL * cfg.padding) {
-            fail("The run cap must exceed one score plus twice the padding");
+        if (const std::string reason = Kinesis::Discrete::diagnose_interval_scan(scan_config(cfg)); !reason.empty()) {
+            fail(reason);
         }
     }
 
-    static float ceil_float(double value)
+    static Kinesis::Discrete::IntervalScanConfig scan_config(const IntervalExtractorConfig& cfg)
     {
-        auto narrowed = static_cast<float>(value);
-        if (static_cast<double>(narrowed) < value) {
-            narrowed = std::nextafter(narrowed, std::numeric_limits<float>::infinity());
-        }
-        return narrowed;
+        return {
+            .enter = cfg.enter_threshold,
+            .leave = std::max(cfg.enter_threshold - cfg.leave_margin, cfg.leave_floor),
+            .gate_threshold = cfg.gate_threshold,
+            .hop = cfg.samples_per_score,
+            .first_sample = cfg.first_sample,
+            .min_run = cfg.min_run,
+            .min_gap = cfg.min_gap,
+            .padding = cfg.padding,
+            .gap_at_limit = cfg.gap_at_limit,
+            .max_run = cfg.max_run,
+            .use_longest_gap = cfg.use_longest_gap,
+            .length = cfg.length,
+            .emit_on_close = cfg.emit_on_close,
+        };
     }
 
     void ensure_context() const
@@ -418,7 +556,7 @@ private:
         }
         m_recording = std::make_shared<GpuDispatchRecorder>(true);
         m_context = std::make_unique<ShaderExecutionContext<>>(
-            GpuComputeConfig { .shader_path = "interval_scan.comp.spv", .workgroup_size = { 1, 1, 1 }, .push_constant_size = sizeof(Push) });
+            GpuComputeConfig { .shader_path = interval_scan_shader, .workgroup_size = { 1, 1, 1 }, .push_constant_size = sizeof(IntervalScanPC) });
         m_context->set_recording(m_recording);
         if (!m_context->ensure_gpu_ready()) {
             error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
@@ -426,99 +564,87 @@ private:
         }
     }
 
-    ChannelIntervals run_channel(
-        size_t channel, std::span<const double> scores, std::span<const double> gate, const IntervalExtractorConfig& cfg)
+    void upload_gate(std::span<const double> gate) const
     {
-        if (scores.empty() && !cfg.flush) {
+        constexpr auto type = GpuBufferBinding::ElementType::FLOAT32;
+        m_context->ensure_shared_buffer(0, k_gate_binding, std::max<size_t>(gate.size(), 1), type, Portal::Graphics::BufferUsageHint::COMPUTE);
+        if (!gate.empty()) {
+            const std::vector<float> floats(gate.begin(), gate.end());
+            m_context->upload_shared_raw(0, k_gate_binding, reinterpret_cast<const uint8_t*>(floats.data()), floats.size() * sizeof(float));
+        }
+    }
+
+    ChannelCall record_channel(size_t channel, std::span<const double> scores, bool gated,
+        const Kinesis::Discrete::IntervalScanConfig& scan, bool flush, std::vector<DependencyStage>& stages)
+    {
+        if (scores.empty() && !flush) {
             return {};
         }
 
         using Portal::Graphics::BufferUsageHint;
         constexpr auto word = GpuBufferBinding::ElementType::UINT32;
         const auto n = static_cast<uint32_t>(scores.size());
-        const auto state_binding = static_cast<size_t>(State + channel);
+        const size_t scores_binding = binding_of(channel, Scores);
+        const size_t runs_binding = binding_of(channel, Runs);
+        const size_t report_binding = binding_of(channel, Report);
+        const size_t state_binding = binding_of(channel, State);
 
-        std::vector<float> floats(scores.begin(), scores.end());
-
-        m_context->ensure_shared_buffer(0, Scores, std::max<size_t>(n, 1), GpuBufferBinding::ElementType::FLOAT32, BufferUsageHint::COMPUTE);
-        m_context->ensure_shared_buffer(0, Runs, (static_cast<size_t>(n) + 4) * 2, word);
-        m_context->ensure_shared_buffer(0, Count, k_report_words, word);
-        m_context->ensure_shared_buffer(0, Gate, std::max<size_t>(n, 1), GpuBufferBinding::ElementType::FLOAT32, BufferUsageHint::COMPUTE);
-        m_context->ensure_shared_buffer(0, state_binding, k_state_words, word, BufferUsageHint::COMPUTE);
+        m_context->ensure_shared_buffer(0, scores_binding, std::max<size_t>(n, 1), GpuBufferBinding::ElementType::FLOAT32, BufferUsageHint::COMPUTE);
+        m_context->ensure_shared_buffer(0, runs_binding, interval_scan_runs_words(n), word);
+        m_context->ensure_shared_buffer(0, report_binding, interval_scan_report_words, word);
+        m_context->ensure_shared_buffer(0, state_binding, interval_scan_state_words, word, BufferUsageHint::COMPUTE);
 
         if (!m_started[channel]) {
-            const std::vector<uint32_t> zeros(k_state_words, 0U);
+            const std::vector<uint32_t> zeros(interval_scan_state_words, 0U);
             m_context->upload_shared_raw(0, state_binding, reinterpret_cast<const uint8_t*>(zeros.data()), zeros.size() * sizeof(uint32_t));
             m_started[channel] = true;
         }
         if (n > 0) {
-            m_context->upload_shared_raw(0, Scores, reinterpret_cast<const uint8_t*>(floats.data()), floats.size() * sizeof(float));
-        }
-        if (!gate.empty()) {
-            const std::vector<float> gate_floats(gate.begin(), gate.end());
-            m_context->upload_shared_raw(0, Gate, reinterpret_cast<const uint8_t*>(gate_floats.data()), gate_floats.size() * sizeof(float));
+            const std::vector<float> floats(scores.begin(), scores.end());
+            m_context->upload_shared_raw(0, scores_binding, reinterpret_cast<const uint8_t*>(floats.data()), floats.size() * sizeof(float));
         }
         const uint32_t none = 0;
-        m_context->upload_shared_raw(0, Count, reinterpret_cast<const uint8_t*>(&none), sizeof(none));
+        m_context->upload_shared_raw(0, report_binding, reinterpret_cast<const uint8_t*>(&none), sizeof(none));
 
         const uint32_t first = m_seen[channel];
-        const uint64_t seen_end = static_cast<uint64_t>(first) + n;
-        const auto span_end = static_cast<uint32_t>(cfg.first_sample + seen_end * cfg.samples_per_score);
-        const double leave = std::max(cfg.enter_threshold - cfg.leave_margin, cfg.leave_floor);
+        stages.push_back(interval_scan_stage(scan,
+            m_context->shared_buffer_address(0, scores_binding),
+            gated ? m_context->shared_buffer_address(0, k_gate_binding) : 0U,
+            m_context->shared_buffer_address(0, state_binding),
+            m_context->shared_buffer_address(0, runs_binding),
+            m_context->shared_buffer_address(0, report_binding),
+            first, n, flush));
 
-        const Push push {
-            .scores = m_context->shared_buffer_address(0, Scores),
-            .state = m_context->shared_buffer_address(0, state_binding),
-            .runs = m_context->shared_buffer_address(0, Runs),
-            .count = m_context->shared_buffer_address(0, Count),
-            .gate = m_context->shared_buffer_address(0, Gate),
-            .n = n,
-            .first_index = first,
-            .hop = cfg.samples_per_score,
-            .min_run = cfg.min_run,
-            .min_gap = cfg.min_gap,
-            .pad = cfg.padding,
-            .gap_at_limit = cfg.gap_at_limit,
-            .run_limit = cfg.max_run == 0 ? std::numeric_limits<uint32_t>::max() : cfg.max_run - cfg.samples_per_score - 2 * cfg.padding,
-            .flags = (cfg.use_longest_gap ? k_flag_longest : 0U) | (cfg.flush ? k_flag_flush : 0U) | (gate.empty() ? 0U : k_flag_gated) | (cfg.emit_on_close ? k_flag_emit_on_close : 0U),
-            .total = cfg.length != 0 ? cfg.length : span_end,
-            .first_sample = cfg.first_sample,
-            .enter = ceil_float(cfg.enter_threshold),
-            .leave = ceil_float(leave),
-            .gate_threshold = ceil_float(cfg.gate_threshold),
-        };
-
-        m_context->record_stages({ DependencyStage {
-            .config = GpuComputeConfig { .shader_path = "interval_scan.comp.spv", .workgroup_size = { 1, 1, 1 }, .push_constant_size = sizeof(Push) },
-            .stage_fn = [push](GpuDispatchCore& core) { core.set_push_constants(push); },
-            .explicit_groups = std::array<uint32_t, 3> { 1U, 1U, 1U },
-        } });
-
-        std::array<uint32_t, k_report_words> report {};
-        m_context->download_shared(0, Count, report.data(), sizeof(report));
-        const uint32_t emitted = report[0];
-        ChannelIntervals result;
-        if (emitted > 0) {
-            std::vector<uint32_t> words(static_cast<size_t>(emitted) * 2);
-            m_context->download_shared(0, Runs, words.data(), words.size() * sizeof(uint32_t));
-            result.intervals.reserve(emitted);
-            for (uint32_t i = 0; i < emitted; ++i) {
-                result.intervals.emplace_back(words[2 * i], words[2 * i + 1]);
-            }
-        }
-        if (report[1] != 0) {
-            result.open_start = report[2];
-        }
-        if (report[3] != 0) {
-            result.pending = std::pair<size_t, size_t> { report[4], report[5] };
-        }
-
-        if (cfg.flush) {
+        if (flush) {
             m_seen[channel] = 0;
             m_started[channel] = false;
         } else {
-            m_seen[channel] = static_cast<uint32_t>(seen_end);
+            m_seen[channel] = first + n;
         }
+        return { .ran = true, .capacity = n + 4 };
+    }
+
+    ChannelIntervals read_channel(size_t channel, const ChannelCall& call) const
+    {
+        ChannelIntervals result;
+        if (!call.ran) {
+            return result;
+        }
+
+        std::array<uint32_t, interval_scan_report_words> words {};
+        m_context->download_shared(0, binding_of(channel, Report), words.data(), sizeof(words));
+        const auto report = decode_interval_scan_report(words);
+
+        if (report.emitted > 0) {
+            std::vector<uint32_t> runs(static_cast<size_t>(report.emitted) * 2);
+            m_context->download_shared(0, binding_of(channel, Runs), runs.data(), runs.size() * sizeof(uint32_t));
+            result.intervals.reserve(report.emitted);
+            for (uint32_t i = 0; i < report.emitted; ++i) {
+                result.intervals.emplace_back(runs[2 * i], runs[2 * i + 1]);
+            }
+        }
+        result.open_start = report.open_start;
+        result.pending = report.pending;
         return result;
     }
 };

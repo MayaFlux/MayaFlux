@@ -13,21 +13,26 @@ namespace {
 
 }
 
+std::string diagnose_interval_scan(const IntervalScanConfig& config)
+{
+    if (!std::isfinite(config.enter) || !std::isfinite(config.leave) || !std::isfinite(config.gate_threshold)) {
+        return "Interval scan thresholds must be finite";
+    }
+    if (config.hop == 0) {
+        return "Interval scan hop must be greater than 0";
+    }
+    if (config.max_run != 0 && config.max_run <= static_cast<uint64_t>(config.hop) + 2ULL * config.padding) {
+        return "Interval scan run cap must exceed one hop plus twice the padding";
+    }
+    return {};
+}
+
 IntervalScanner::IntervalScanner(const IntervalScanConfig& config)
     : m_config(config)
 {
-    const auto fail = [](std::string_view message) {
+    if (const std::string reason = diagnose_interval_scan(config); !reason.empty()) {
         error<std::invalid_argument>(Journal::Component::Kinesis, Journal::Context::Runtime,
-            std::source_location::current(), "{}", message);
-    };
-    if (!std::isfinite(config.enter) || !std::isfinite(config.leave) || !std::isfinite(config.gate_threshold)) {
-        fail("Interval scan thresholds must be finite");
-    }
-    if (config.hop == 0) {
-        fail("Interval scan hop must be greater than 0");
-    }
-    if (config.max_run != 0 && config.max_run <= static_cast<uint64_t>(config.hop) + 2ULL * config.padding) {
-        fail("Interval scan run cap must exceed one hop plus twice the padding");
+            std::source_location::current(), "{}", reason);
     }
     m_run_limit = config.max_run == 0
         ? std::numeric_limits<uint32_t>::max()

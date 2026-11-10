@@ -56,6 +56,12 @@ struct IntervalScanConfig {
 };
 
 /**
+ * @brief Why a config cannot be scanned.
+ * @return The reason, empty when the config is valid: thresholds finite, hop above 0, and max_run, when set, above hop plus twice the padding.
+ */
+[[nodiscard]] MAYAFLUX_API std::string diagnose_interval_scan(const IntervalScanConfig& config);
+
+/**
  * @class IntervalScanner
  * @brief The two threshold run detector as a stateful object
  *
@@ -72,7 +78,7 @@ public:
 
     /**
      * @brief Construct a scanner
-     * @throws std::invalid_argument When hop is 0, a threshold is not finite, or max_run does not exceed hop + 2 * padding
+     * @throws std::invalid_argument When diagnose_interval_scan gives a reason
      */
     explicit IntervalScanner(const IntervalScanConfig& config);
 
