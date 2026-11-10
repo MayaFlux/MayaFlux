@@ -1,0 +1,219 @@
+#version 460
+#extension GL_EXT_buffer_reference : require
+
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+
+layout(buffer_reference, std430) readonly buffer ScoreRef {
+    float v[];
+};
+
+layout(buffer_reference, std430) buffer StateRef {
+    uint v[];
+};
+
+layout(buffer_reference, std430) buffer RunRef {
+    uvec2 v[];
+};
+
+layout(buffer_reference, std430) buffer CountRef {
+    uint v[];
+};
+
+layout(push_constant) uniform PC {
+    ScoreRef scores;
+    StateRef state;
+    RunRef runs;
+    CountRef count;
+    uint n;
+    uint first_index;
+    uint hop;
+    uint min_run;
+    uint min_gap;
+    uint pad;
+    uint gap_at_limit;
+    uint run_limit;
+    uint flags;
+    uint total;
+    float enter;
+    float leave;
+} pc;
+
+const uint FLAG_LONGEST = 1u;
+const uint FLAG_FLUSH = 2u;
+
+const uint S_TRIGGERED = 0u;
+const uint S_START = 1u;
+const uint S_HAS_START = 2u;
+const uint S_TEMP_END = 3u;
+const uint S_PREV_END = 4u;
+const uint S_NEXT_START = 5u;
+const uint S_BEST_END = 6u;
+const uint S_BEST_DUR = 7u;
+const uint S_HAS_BEST = 8u;
+const uint S_PEND_VALID = 9u;
+const uint S_PEND_START = 10u;
+const uint S_PEND_END = 11u;
+
+uint clamped_sub(uint a, uint b)
+{
+    return a > b ? a - b : 0u;
+}
+
+void append(uint start, uint end)
+{
+    const uint slot = pc.count.v[0];
+    pc.runs.v[slot] = uvec2(start, end);
+    pc.count.v[0] = slot + 1u;
+}
+
+/**
+ * @brief Takes a closed run, pads it against its predecessor and emits the predecessor.
+ *
+ * A run's padded end depends on the gap to the next run, so the previous run
+ * waits in the state until the next one closes or the stream is flushed. The
+ * gap rule: a gap under twice the padding is split between the neighbours,
+ * otherwise each side takes the full padding.
+ */
+void close_run(uint start, uint end)
+{
+    uint padded_start;
+    if (pc.state.v[S_PEND_VALID] != 0u) {
+        const int gap = int(start) - int(pc.state.v[S_PEND_END]);
+        int half_gap;
+        uint padded_end;
+        if (gap < int(2u * pc.pad)) {
+            half_gap = gap >= 0 ? gap / 2 : -((-gap + 1) / 2);
+            padded_end = uint(int(pc.state.v[S_PEND_END]) + half_gap);
+            padded_start = half_gap >= 0 ? clamped_sub(start, uint(half_gap)) : start + uint(-half_gap);
+        } else {
+            padded_end = min(pc.total, pc.state.v[S_PEND_END] + pc.pad);
+            padded_start = clamped_sub(start, pc.pad);
+        }
+        append(pc.state.v[S_PEND_START], padded_end);
+    } else {
+        padded_start = clamped_sub(start, pc.pad);
+    }
+    pc.state.v[S_PEND_VALID] = 1u;
+    pc.state.v[S_PEND_START] = padded_start;
+    pc.state.v[S_PEND_END] = end;
+}
+
+void reset_gap_state()
+{
+    pc.state.v[S_PREV_END] = 0u;
+    pc.state.v[S_NEXT_START] = 0u;
+    pc.state.v[S_TEMP_END] = 0u;
+    pc.state.v[S_HAS_BEST] = 0u;
+}
+
+/**
+ * @brief Runs the two threshold run detector over a score sequence in order.
+ *
+ * Scores are read in order by one invocation because each step depends on the
+ * state the previous one left. The state buffer carries the detector across
+ * dispatches, so successive calls continue one stream. Runs are emitted
+ * padded, in order, into the run list; the newest run stays in the state until
+ * its successor closes or FLAG_FLUSH ends the stream.
+ */
+void main()
+{
+    const bool longest = (pc.flags & FLAG_LONGEST) != 0u;
+
+    for (uint i = 0u; i < pc.n; ++i) {
+        const float score = pc.scores.v[i];
+        const uint cur = (pc.first_index + i) * pc.hop;
+        const bool above = score >= pc.enter;
+
+        if (above && pc.state.v[S_TEMP_END] != 0u) {
+            const uint silence = cur - pc.state.v[S_TEMP_END];
+            if (silence > pc.gap_at_limit) {
+                if (pc.state.v[S_HAS_BEST] == 0u || silence > pc.state.v[S_BEST_DUR]) {
+                    pc.state.v[S_BEST_END] = pc.state.v[S_TEMP_END];
+                    pc.state.v[S_BEST_DUR] = silence;
+                    pc.state.v[S_HAS_BEST] = 1u;
+                }
+            }
+            pc.state.v[S_TEMP_END] = 0u;
+            if (pc.state.v[S_NEXT_START] < pc.state.v[S_PREV_END]) {
+                pc.state.v[S_NEXT_START] = cur;
+            }
+        }
+
+        if (above && pc.state.v[S_TRIGGERED] == 0u) {
+            pc.state.v[S_TRIGGERED] = 1u;
+            pc.state.v[S_START] = cur;
+            pc.state.v[S_HAS_START] = 1u;
+            continue;
+        }
+
+        if (pc.state.v[S_TRIGGERED] != 0u && cur > pc.state.v[S_START] && cur - pc.state.v[S_START] > pc.run_limit) {
+            if (longest && pc.state.v[S_HAS_BEST] != 0u) {
+                const uint cut = pc.state.v[S_BEST_END];
+                const uint dur = pc.state.v[S_BEST_DUR];
+                close_run(pc.state.v[S_START], cut);
+                pc.state.v[S_HAS_START] = 0u;
+                const uint resume = cut + dur;
+                if (resume < cut + cur) {
+                    pc.state.v[S_START] = resume;
+                    pc.state.v[S_HAS_START] = 1u;
+                } else {
+                    pc.state.v[S_TRIGGERED] = 0u;
+                }
+                reset_gap_state();
+            } else if (pc.state.v[S_PREV_END] != 0u) {
+                const uint cut = pc.state.v[S_PREV_END];
+                close_run(pc.state.v[S_START], cut);
+                pc.state.v[S_HAS_START] = 0u;
+                if (pc.state.v[S_NEXT_START] < cut) {
+                    pc.state.v[S_TRIGGERED] = 0u;
+                } else {
+                    pc.state.v[S_START] = pc.state.v[S_NEXT_START];
+                    pc.state.v[S_HAS_START] = 1u;
+                }
+                reset_gap_state();
+            } else {
+                close_run(pc.state.v[S_START], cur);
+                pc.state.v[S_HAS_START] = 0u;
+                reset_gap_state();
+                pc.state.v[S_TRIGGERED] = 0u;
+                continue;
+            }
+        }
+
+        if (score < pc.leave && pc.state.v[S_TRIGGERED] != 0u) {
+            if (pc.state.v[S_TEMP_END] == 0u) {
+                pc.state.v[S_TEMP_END] = cur;
+            }
+            const uint quiet = cur - pc.state.v[S_TEMP_END];
+
+            if (!longest && quiet > pc.gap_at_limit) {
+                pc.state.v[S_PREV_END] = pc.state.v[S_TEMP_END];
+            }
+            if (quiet < pc.min_gap) {
+                continue;
+            }
+
+            const uint end = pc.state.v[S_TEMP_END];
+            const uint start = pc.state.v[S_START];
+            if (end > start && end - start > pc.min_run) {
+                close_run(start, end);
+            }
+            pc.state.v[S_HAS_START] = 0u;
+            pc.state.v[S_TRIGGERED] = 0u;
+            reset_gap_state();
+            continue;
+        }
+    }
+
+    if ((pc.flags & FLAG_FLUSH) != 0u) {
+        if (pc.state.v[S_HAS_START] != 0u && pc.total > pc.state.v[S_START]
+            && pc.total - pc.state.v[S_START] > pc.min_run) {
+            close_run(pc.state.v[S_START], pc.total);
+        }
+        if (pc.state.v[S_PEND_VALID] != 0u) {
+            append(pc.state.v[S_PEND_START], min(pc.total, pc.state.v[S_PEND_END] + pc.pad));
+            pc.state.v[S_PEND_VALID] = 0u;
+        }
+        pc.state.v[S_HAS_START] = 0u;
+    }
+}

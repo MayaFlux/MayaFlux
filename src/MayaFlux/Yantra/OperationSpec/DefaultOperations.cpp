@@ -6,6 +6,7 @@
 #include "MayaFlux/Yantra/Analyzers/VisionAnalyzer.hpp"
 #include "MayaFlux/Yantra/Analyzers/WaveformAnalyzer.hpp"
 #include "MayaFlux/Yantra/Extractors/FeatureExtractor.hpp"
+#include "MayaFlux/Yantra/Extractors/IntervalExtractor.hpp"
 #include "MayaFlux/Yantra/Extractors/VisionExtractor.hpp"
 #include "MayaFlux/Yantra/Sorters/BitonicSorter.hpp"
 #include "MayaFlux/Yantra/Sorters/StandardSorter.hpp"
@@ -30,6 +31,8 @@ OperationRegistry make_default_registry()
         .add<ContainerWaveformAnalyzer>()
         .add<StandardFeatureExtractor>()
         .add<ContainerFeatureExtractor>()
+        .add<MatrixIntervalExtractor>()
+        .add<StandardIntervalExtractor>()
         .add<VisionAnalyzer>()
         .add<VisionExtractor>()
         .add<StandardDataSorter>()
