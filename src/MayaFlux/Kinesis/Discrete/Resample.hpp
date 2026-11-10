@@ -62,4 +62,63 @@ struct ResampleConfig {
     uint32_t to_rate,
     const ResampleConfig& config = {});
 
+/**
+ * @class Resampler
+ * @brief resample as a stream: block by block, with the filter history kept between calls
+ *
+ * Concatenating everything push returns and then flush returns gives exactly
+ * what resample returns for the concatenated input, however the input was cut
+ * into blocks, so no block edge restarts the filter. An output sample is
+ * produced as soon as the input samples it reads have arrived: each reads
+ * lookahead() input samples past its own time, which is the delay a live
+ * caller sees. flush ends the stream, supplying zeros past the last sample
+ * as resample does, and the next push starts a new stream. Equal rates pass
+ * the input through unchanged and with no delay.
+ *
+ * Only the input the next output still needs is retained, so memory is the
+ * length of the filter however long the stream runs. Not for concurrent use.
+ */
+class MAYAFLUX_API Resampler {
+public:
+    /**
+     * @brief Construct a resampler
+     * @param from_rate Rate of the input in Hz
+     * @param to_rate Rate of the output in Hz
+     * @param config Anti-aliasing filter design, as for resample
+     * @throws std::invalid_argument When either rate is 0
+     */
+    Resampler(uint32_t from_rate, uint32_t to_rate, const ResampleConfig& config = {});
+    ~Resampler();
+
+    Resampler(const Resampler&) = delete;
+    Resampler& operator=(const Resampler&) = delete;
+    Resampler(Resampler&&) noexcept;
+    Resampler& operator=(Resampler&&) noexcept;
+
+    /**
+     * @brief Continue the stream with more input
+     * @return The output samples that are complete, possibly none
+     */
+    [[nodiscard]] std::vector<double> push(std::span<const double> src);
+
+    /**
+     * @brief End the stream
+     * @return The remaining output samples, so that the stream's total is resampled_length of its input
+     */
+    [[nodiscard]] std::vector<double> flush();
+
+    /** @brief Start a new stream without releasing anything. */
+    void reset() noexcept;
+
+    /** @brief Input samples an output reads beyond its own time, 0 for equal rates. */
+    [[nodiscard]] size_t lookahead() const noexcept;
+
+    /** @brief Input samples currently held. */
+    [[nodiscard]] size_t retained() const noexcept;
+
+private:
+    struct Impl;
+    std::unique_ptr<Impl> m_impl;
+};
+
 } // namespace MayaFlux::Kinesis::Discrete

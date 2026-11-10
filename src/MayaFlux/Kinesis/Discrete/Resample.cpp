@@ -1,5 +1,7 @@
 #include "Resample.hpp"
 
+#include "MayaFlux/Journal/Archivist.hpp"
+
 #include <execution>
 
 namespace MayaFlux::Kinesis::Discrete {
@@ -73,8 +75,8 @@ namespace {
         return table;
     }
 
-    double output_sample(
-        std::span<const double> src, const Polyphase& table, size_t k, uint32_t up, uint32_t down) noexcept
+    double output_sample(std::span<const double> src, size_t origin, const Polyphase& table,
+        size_t k, uint32_t up, uint32_t down) noexcept
     {
         const size_t base = k * down + table.half;
         const size_t phase = base % up;
@@ -82,10 +84,11 @@ namespace {
 
         const double* coefficients = table.reversed.data() + table.offset[phase];
         const size_t count = table.offset[phase + 1] - table.offset[phase];
+        const size_t end = origin + src.size();
 
         double acc = 0.0;
-        if (newest + 1 >= count && newest < src.size()) {
-            const double* x = src.data() + (newest + 1 - count);
+        if (newest + 1 >= count + origin && newest < end) {
+            const double* x = src.data() + (newest + 1 - count - origin);
             for (size_t i = 0; i < count; ++i) {
                 acc += coefficients[i] * x[i];
             }
@@ -98,11 +101,24 @@ namespace {
                 continue;
             }
             const size_t sample = index - count;
-            if (sample < src.size()) {
-                acc += coefficients[i] * src[sample];
+            if (sample >= origin && sample < end) {
+                acc += coefficients[i] * src[sample - origin];
             }
         }
         return acc;
+    }
+
+    void fill_outputs(std::span<const double> src, size_t origin, const Polyphase& table,
+        size_t first, std::span<double> out, uint32_t up, uint32_t down)
+    {
+        const size_t blocks = (out.size() + k_block - 1) / k_block;
+        const auto ids = std::views::iota(size_t { 0 }, blocks);
+        std::for_each(std::execution::par_unseq, ids.begin(), ids.end(), [&](size_t block) {
+            const size_t stop = std::min(out.size(), (block + 1) * k_block);
+            for (size_t i = block * k_block; i < stop; ++i) {
+                out[i] = output_sample(src, origin, table, first + i, up, down);
+            }
+        });
     }
 
 }
@@ -132,17 +148,128 @@ std::vector<double> resample(
 
     const auto table = build_polyphase(design_filter(up, down, config), up);
     std::vector<double> out(resampled_length(src.size(), from_rate, to_rate));
-
-    const size_t blocks = (out.size() + k_block - 1) / k_block;
-    const auto ids = std::views::iota(size_t { 0 }, blocks);
-    std::for_each(std::execution::par_unseq, ids.begin(), ids.end(), [&](size_t block) {
-        const size_t end = std::min(out.size(), (block + 1) * k_block);
-        for (size_t k = block * k_block; k < end; ++k) {
-            out[k] = output_sample(src, table, k, up, down);
-        }
-    });
-
+    fill_outputs(src, 0, table, 0, out, up, down);
     return out;
+}
+
+struct Resampler::Impl {
+    uint32_t from_rate {};
+    uint32_t to_rate {};
+    uint32_t up {};
+    uint32_t down {};
+    bool passthrough {};
+    Polyphase table;
+    size_t max_taps {};
+    std::vector<double> history;
+    uint64_t origin {};
+    uint64_t seen {};
+    uint64_t emitted {};
+
+    [[nodiscard]] uint64_t newest_for(uint64_t k) const noexcept
+    {
+        return (k * down + table.half) / up;
+    }
+
+    [[nodiscard]] uint64_t ready_end() const noexcept
+    {
+        const uint64_t reach = seen * up;
+        return reach > table.half ? (reach - table.half - 1) / down + 1 : 0;
+    }
+
+    std::vector<double> produce(uint64_t end)
+    {
+        std::vector<double> out(end > emitted ? end - emitted : 0);
+        fill_outputs(history, origin, table, emitted, out, up, down);
+        emitted += out.size();
+        return out;
+    }
+
+    void trim()
+    {
+        const uint64_t newest = newest_for(emitted);
+        const uint64_t keep_from = newest + 1 > max_taps ? newest + 1 - max_taps : 0;
+        if (keep_from <= origin) {
+            return;
+        }
+        const uint64_t drop = std::min<uint64_t>(keep_from - origin, history.size());
+        history.erase(history.begin(), history.begin() + static_cast<std::ptrdiff_t>(drop));
+        origin += drop;
+    }
+
+    void clear() noexcept
+    {
+        history.clear();
+        origin = 0;
+        seen = 0;
+        emitted = 0;
+    }
+};
+
+Resampler::Resampler(uint32_t from_rate, uint32_t to_rate, const ResampleConfig& config)
+    : m_impl(std::make_unique<Impl>())
+{
+    if (from_rate == 0 || to_rate == 0) {
+        error<std::invalid_argument>(Journal::Component::Kinesis, Journal::Context::Runtime,
+            std::source_location::current(), "Resampler rates must be greater than 0");
+    }
+    auto& impl = *m_impl;
+    impl.from_rate = from_rate;
+    impl.to_rate = to_rate;
+    impl.passthrough = from_rate == to_rate;
+    if (impl.passthrough) {
+        return;
+    }
+    const uint32_t divisor = std::gcd(from_rate, to_rate);
+    impl.up = to_rate / divisor;
+    impl.down = from_rate / divisor;
+    const auto filter = design_filter(impl.up, impl.down, config);
+    impl.table = build_polyphase(filter, impl.up);
+    impl.max_taps = (filter.size() + impl.up - 1) / impl.up;
+}
+
+Resampler::~Resampler() = default;
+Resampler::Resampler(Resampler&&) noexcept = default;
+Resampler& Resampler::operator=(Resampler&&) noexcept = default;
+
+std::vector<double> Resampler::push(std::span<const double> src)
+{
+    auto& impl = *m_impl;
+    if (impl.passthrough) {
+        impl.seen += src.size();
+        return { src.begin(), src.end() };
+    }
+    impl.history.insert(impl.history.end(), src.begin(), src.end());
+    impl.seen += src.size();
+
+    auto out = impl.produce(impl.ready_end());
+    impl.trim();
+    return out;
+}
+
+std::vector<double> Resampler::flush()
+{
+    auto& impl = *m_impl;
+    std::vector<double> out;
+    if (!impl.passthrough) {
+        out = impl.produce(resampled_length(impl.seen, impl.from_rate, impl.to_rate));
+    }
+    impl.clear();
+    return out;
+}
+
+void Resampler::reset() noexcept
+{
+    m_impl->clear();
+}
+
+size_t Resampler::lookahead() const noexcept
+{
+    return m_impl->passthrough ? 0 : m_impl->table.half / m_impl->up;
+}
+
+size_t Resampler::retained() const noexcept
+{
+    return m_impl->history.size();
 }
 
 } // namespace MayaFlux::Kinesis::Discrete
