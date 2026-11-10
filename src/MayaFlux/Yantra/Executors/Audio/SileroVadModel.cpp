@@ -1,9 +1,9 @@
 #include "SileroVadModel.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
-#include "MayaFlux/Kakshya/NDData/TensorConvert.hpp"
 #include "MayaFlux/Yantra/Executors/GpuDispatchCore.hpp"
 #include "MayaFlux/Yantra/Executors/TensorKernels/Stages.hpp"
+#include "MayaFlux/Yantra/Executors/TensorKernels/Weights.hpp"
 #include "MayaFlux/Yantra/Executors/ShaderExecutionContext.hpp"
 
 namespace MayaFlux::Yantra {
@@ -29,14 +29,11 @@ namespace {
         SlotCount
     };
 
-    struct SlotSpec {
-        std::string_view name;
-        std::vector<uint64_t> shape;
-    };
+    using TensorKernels::TensorRequirement;
 
-    const std::array<SlotSpec, SlotCount>& slot_specs()
+    const std::array<TensorRequirement, SlotCount>& slot_specs()
     {
-        static const std::array<SlotSpec, SlotCount> specs { {
+        static const std::array<TensorRequirement, SlotCount> specs { {
             { "stft_conv.weight", { 258, 1, 256 } },
             { "conv1.weight", { 128, 129, 3 } },
             { "conv1.bias", { 128 } },
@@ -76,22 +73,12 @@ namespace {
     constexpr uint32_t k_hidden = 128;
     constexpr size_t k_max_chunks = 4096;
 
-    std::string shape_text(const std::vector<uint64_t>& shape)
-    {
-        std::string text = "[";
-        for (size_t i = 0; i < shape.size(); ++i) {
-            text += (i > 0 ? ", " : "") + std::to_string(shape[i]);
-        }
-        return text + "]";
-    }
-
 }
 
 struct SileroVadModel::Impl {
     std::shared_ptr<GpuDispatchRecorder> recording;
     std::unique_ptr<ShaderExecutionContext<>> context;
-    std::array<size_t, SlotCount> offsets {};
-    size_t total_weights {};
+    TensorKernels::PackedWeights layout;
     size_t capacity {};
     std::vector<float> pending;
     std::vector<float> tail;
@@ -107,55 +94,17 @@ struct SileroVadModel::Impl {
             error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
                 std::source_location::current(), "SileroVadModel needs a graphics device and none is available");
         }
-        upload_weights(weights);
+        auto packed = TensorKernels::pack_weights(weights, slot_specs());
+        if (!packed) {
+            error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+                std::source_location::current(), "SileroVadModel: {}", packed.error());
+        }
+        TensorKernels::upload_packed_weights(*context, 0, Weights, *packed);
+        packed->values = std::vector<float> {};
+        layout = std::move(*packed);
+
         context->ensure_shared_buffer(0, State, 2 * k_hidden, GpuBufferBinding::ElementType::FLOAT32, Portal::Graphics::BufferUsageHint::COMPUTE);
         clear_state();
-    }
-
-    void upload_weights(const Kakshya::TensorSet& weights)
-    {
-        size_t running = 0;
-        for (size_t i = 0; i < SlotCount; ++i) {
-            offsets[i] = running;
-            size_t count = 1;
-            for (const uint64_t extent : slot_specs()[i].shape) {
-                count *= extent;
-            }
-            running += count;
-        }
-        total_weights = running;
-
-        std::vector<float> floats;
-        floats.reserve(total_weights);
-        for (size_t i = 0; i < SlotCount; ++i) {
-            const auto* tensor = weights.find(slot_specs()[i].name);
-            std::optional<std::vector<float>> values;
-            if (tensor->spec().dtype == Kakshya::TensorDType::of<float>()) {
-                values = tensor->to_vector<float>();
-            } else if (const auto view = tensor->access()) {
-                auto converted = Kakshya::convert_tensor(*view, Kakshya::TensorDType::of<float>());
-                if (!converted) {
-                    error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
-                        std::source_location::current(), "SileroVadModel: tensor '{}' cannot become float32: {}",
-                        slot_specs()[i].name, converted.error());
-                }
-                values = converted->to_vector<float>();
-            }
-            if (!values || values->size() != offsets_count(i)) {
-                error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
-                    std::source_location::current(), "SileroVadModel: tensor '{}' could not be read as float32", slot_specs()[i].name);
-            }
-            floats.insert(floats.end(), values->begin(), values->end());
-        }
-
-        context->ensure_shared_buffer(0, Weights, total_weights, GpuBufferBinding::ElementType::FLOAT32, Portal::Graphics::BufferUsageHint::COMPUTE);
-        context->upload_shared_raw(0, Weights, reinterpret_cast<const uint8_t*>(floats.data()), floats.size() * sizeof(float));
-    }
-
-    [[nodiscard]] size_t offsets_count(size_t slot) const
-    {
-        const size_t end = slot + 1 < SlotCount ? offsets[slot + 1] : total_weights;
-        return end - offsets[slot];
     }
 
     void clear_state()
@@ -191,7 +140,7 @@ struct SileroVadModel::Impl {
 
     [[nodiscard]] uint64_t weight_address(size_t slot) const
     {
-        return address(Weights) + offsets[slot] * sizeof(float);
+        return layout.address(address(Weights), slot);
     }
 
     [[nodiscard]] std::vector<float> run(std::span<const float> audio, size_t chunks)
@@ -249,17 +198,7 @@ struct SileroVadModel::Impl {
 
 std::string SileroVadModel::diagnose(const Kakshya::TensorSet& weights)
 {
-    for (const auto& spec : slot_specs()) {
-        const auto* tensor = weights.find(spec.name);
-        if (tensor == nullptr) {
-            return std::format("missing tensor '{}'", spec.name);
-        }
-        if (tensor->spec().shape != spec.shape) {
-            return std::format("tensor '{}' has shape {} but {} is required",
-                spec.name, shape_text(tensor->spec().shape), shape_text(spec.shape));
-        }
-    }
-    return {};
+    return TensorKernels::check_tensors(weights, slot_specs());
 }
 
 SileroVadModel::SileroVadModel(const Kakshya::TensorSet& weights)
