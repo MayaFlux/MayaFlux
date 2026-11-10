@@ -82,6 +82,27 @@ public:
         return OperationHelper::decode_word_pairs(std::span<const uint8_t>(bytes, result.primary.size() * sizeof(float)));
     }
 
+    /**
+     * @brief Read a binding back as doubles after a recorded stage.
+     *
+     * For stages recorded with record_stages, which leave nothing in
+     * primary_values. The context must have been built with the config the
+     * stage ran under.
+     *
+     * @param binding Binding that holds word pairs.
+     * @param count Doubles to read.
+     * @return The decoded doubles, or empty when the context stages order keys.
+     */
+    [[nodiscard]] std::vector<double> download_words(size_t binding, size_t count)
+    {
+        if (m_order_key) {
+            return {};
+        }
+        std::vector<uint8_t> bytes(count * sizeof(uint64_t));
+        download_binding(binding, bytes.data(), bytes.size());
+        return OperationHelper::decode_word_pairs(bytes);
+    }
+
 protected:
     /**
      * @brief Keeps the primary output as words; the context returns no Datum.

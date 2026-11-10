@@ -7,7 +7,7 @@
 #include <Eigen/Dense>
 
 #include "MayaFlux/Kakshya/Source/TensorContainer.hpp"
-#include "MayaFlux/Yantra/Executors/Audio/LaggedPairContext.hpp"
+#include "MayaFlux/Yantra/Executors/Audio/LaggedPair.hpp"
 #include "MayaFlux/Yantra/Executors/Audio/SegmentedReductionContext.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -317,9 +317,15 @@ private:
     mutable std::unique_ptr<SegmentedReductionContext> m_energy;
     mutable std::unique_ptr<SegmentedReductionContext> m_sum;
     mutable std::unique_ptr<SegmentedReductionContext> m_peak;
-    mutable std::unique_ptr<LaggedPairContext> m_crossings;
-    mutable std::unique_ptr<LaggedPairContext> m_correlation;
-    mutable std::unique_ptr<LaggedPairContext> m_distance;
+
+    struct LaggedPass {
+        std::unique_ptr<WordPairExecutionContext> context;
+        GpuComputeConfig config;
+    };
+
+    mutable LaggedPass m_crossings;
+    mutable LaggedPass m_correlation;
+    mutable LaggedPass m_distance;
 
     static uint32_t shortest_lag(const WaveformAnalyzerConfig& cfg)
     {
@@ -374,13 +380,33 @@ private:
         m_energy = std::make_unique<SegmentedReductionContext>(KernelOp::Sum, ReductionMap::Square);
         m_sum = std::make_unique<SegmentedReductionContext>(KernelOp::Sum, ReductionMap::Identity);
         m_peak = std::make_unique<SegmentedReductionContext>(KernelOp::Max, ReductionMap::Abs);
-        m_crossings = std::make_unique<LaggedPairContext>(PairMap::SignChange, false);
-        m_correlation = std::make_unique<LaggedPairContext>(PairMap::Product, true);
-        m_distance = std::make_unique<LaggedPairContext>(PairMap::AbsDifference, false);
+        m_crossings = make_lagged(PairMap::SignChange, false);
+        m_correlation = make_lagged(PairMap::Product, true);
+        m_distance = make_lagged(PairMap::AbsDifference, false);
         for (GpuDispatchCore* context : std::initializer_list<GpuDispatchCore*> {
-                 m_energy.get(), m_sum.get(), m_peak.get(), m_crossings.get(), m_correlation.get(), m_distance.get() }) {
+                 m_energy.get(), m_sum.get(), m_peak.get(), m_crossings.context.get(),
+                 m_correlation.context.get(), m_distance.context.get() }) {
             context->set_recording(m_recording);
         }
+    }
+
+    static LaggedPass make_lagged(Portal::Graphics::PairMap map, bool centred)
+    {
+        const auto spec = lagged_pair_spec(map, centred);
+        auto config = config_from_spec(spec);
+        auto context = std::make_unique<WordPairExecutionContext>(config, bindings_from_spec(spec), false, "LaggedPair");
+        return { std::move(context), std::move(config) };
+    }
+
+    static void record_lagged(LaggedPass& pass, std::span<const double> chunk, const SegmentGeometry& geometry,
+        uint32_t first_lag, uint32_t lag_count)
+    {
+        pass.context->record_stages({ lagged_pair_stage(*pass.context, pass.config, chunk, geometry, first_lag, lag_count) });
+    }
+
+    static std::vector<double> download_lagged(LaggedPass& pass, size_t windows, uint32_t lag_count)
+    {
+        return pass.context->download_words(1, windows * lag_count);
     }
 
     template <typename Context>
@@ -402,28 +428,23 @@ private:
         m_energy->stage(chunk, geometry);
         m_sum->stage(chunk, geometry);
         m_peak->stage(chunk, geometry);
-        m_crossings->stage(chunk, geometry, 1, 1);
-        m_correlation->stage(chunk, geometry, 0, correlation_lags);
-        if (cfg.keep_profiles) {
-            m_distance->stage(chunk, geometry, min_lag, distance_lags);
-        }
 
         const Datum<std::vector<Kakshya::DataVariant>> none {};
         static_cast<void>(m_energy->dispatch_async(none));
         static_cast<void>(m_sum->dispatch_async(none));
         static_cast<void>(m_peak->dispatch_async(none));
-        static_cast<void>(m_crossings->dispatch_async(none));
-        static_cast<void>(m_correlation->dispatch_async(none));
+        record_lagged(m_crossings, chunk, geometry, 1, 1);
+        record_lagged(m_correlation, chunk, geometry, 0, correlation_lags);
         if (cfg.keep_profiles) {
-            static_cast<void>(m_distance->dispatch_async(none));
+            record_lagged(m_distance, chunk, geometry, min_lag, distance_lags);
         }
 
         const auto energy = collect(*m_energy);
         const auto sum = collect(*m_sum);
         const auto peak = collect(*m_peak);
-        const auto crossings = collect(*m_crossings);
-        const auto correlation = collect(*m_correlation);
-        const auto distance = cfg.keep_profiles ? collect(*m_distance) : std::vector<double> {};
+        const auto crossings = download_lagged(m_crossings, count, 1);
+        const auto correlation = download_lagged(m_correlation, count, correlation_lags);
+        const auto distance = cfg.keep_profiles ? download_lagged(m_distance, count, distance_lags) : std::vector<double> {};
 
         const double window = static_cast<double>(cfg.window_size);
         for (size_t w = 0; w < count; ++w) {
