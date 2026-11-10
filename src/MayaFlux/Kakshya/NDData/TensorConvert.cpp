@@ -1,5 +1,7 @@
 #include "TensorConvert.hpp"
 
+#include "SmallFloat.hpp"
+
 #include <bit>
 
 namespace MayaFlux::Kakshya {
@@ -87,63 +89,6 @@ namespace {
         return a->scale == b->scale && a->zero_point == b->zero_point && a->axis == b->axis;
     }
 
-    double decode_small(uint32_t bits, int exponent_bits, int mantissa_bits)
-    {
-        const int bias = (1 << (exponent_bits - 1)) - 1;
-        const uint32_t exponent_all = (1U << exponent_bits) - 1U;
-        const bool negative = ((bits >> (exponent_bits + mantissa_bits)) & 1U) != 0U;
-        const uint32_t exponent = (bits >> mantissa_bits) & exponent_all;
-        const uint32_t mantissa = bits & ((1U << mantissa_bits) - 1U);
-
-        double value {};
-        if (exponent == exponent_all) {
-            value = mantissa != 0U ? std::numeric_limits<double>::quiet_NaN() : std::numeric_limits<double>::infinity();
-        } else if (exponent == 0U) {
-            value = std::ldexp(static_cast<double>(mantissa), 1 - bias - mantissa_bits);
-        } else {
-            value = std::ldexp(static_cast<double>(mantissa | (1U << mantissa_bits)),
-                static_cast<int>(exponent) - bias - mantissa_bits);
-        }
-        return negative ? -value : value;
-    }
-
-    uint32_t encode_small(double value, int exponent_bits, int mantissa_bits)
-    {
-        const int bias = (1 << (exponent_bits - 1)) - 1;
-        const uint32_t exponent_all = (1U << exponent_bits) - 1U;
-        const uint32_t sign = std::signbit(value) ? (1U << (exponent_bits + mantissa_bits)) : 0U;
-
-        if (std::isnan(value))
-            return sign | (exponent_all << mantissa_bits) | (1U << (mantissa_bits - 1));
-
-        value = std::fabs(value);
-        if (std::isinf(value))
-            return sign | (exponent_all << mantissa_bits);
-        if (value == 0.0)
-            return sign;
-
-        int exponent = 0;
-        std::frexp(value, &exponent);
-        const int unbiased = exponent - 1;
-        const int min_exponent = 1 - bias;
-
-        if (unbiased < min_exponent) {
-            const auto steps = static_cast<uint32_t>(std::nearbyint(std::ldexp(value, mantissa_bits - min_exponent)));
-            return sign | steps;
-        }
-
-        auto steps = static_cast<uint32_t>(std::nearbyint(std::ldexp(value, mantissa_bits - unbiased)));
-        int biased = unbiased + bias;
-        if (steps == (2U << mantissa_bits)) {
-            steps = 1U << mantissa_bits;
-            ++biased;
-        }
-        if (std::cmp_greater_equal(biased, exponent_all))
-            return sign | (exponent_all << mantissa_bits);
-
-        return sign | (static_cast<uint32_t>(biased) << mantissa_bits) | (steps - (1U << mantissa_bits));
-    }
-
     double wide_real(const Scalar& value)
     {
         constexpr uint64_t exact_limit = uint64_t { 1 } << 53;
@@ -218,12 +163,12 @@ namespace {
 
     Scalar decode_f16(const std::byte* source)
     {
-        return Scalar { .real = decode_small(read<uint16_t>(source), 5, 10) };
+        return Scalar { .real = decode_small_float(read<uint16_t>(source), 5, 10) };
     }
 
     Scalar decode_bf16(const std::byte* source)
     {
-        return Scalar { .real = decode_small(read<uint16_t>(source), 8, 7) };
+        return Scalar { .real = decode_small_float(read<uint16_t>(source), 8, 7) };
     }
 
     template <typename T>
@@ -292,12 +237,12 @@ namespace {
 
     void encode_f16(std::byte* destination, const Scalar& value)
     {
-        write(destination, static_cast<uint16_t>(encode_small(wide_real(value), 5, 10)));
+        write(destination, static_cast<uint16_t>(encode_small_float(wide_real(value), 5, 10)));
     }
 
     void encode_bf16(std::byte* destination, const Scalar& value)
     {
-        write(destination, static_cast<uint16_t>(encode_small(wide_real(value), 8, 7)));
+        write(destination, static_cast<uint16_t>(encode_small_float(wide_real(value), 8, 7)));
     }
 
     Decoder decoder_for(Layout layout)

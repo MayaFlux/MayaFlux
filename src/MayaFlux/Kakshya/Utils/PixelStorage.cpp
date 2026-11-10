@@ -1,67 +1,9 @@
 #include "PixelStorage.hpp"
 
+#include "MayaFlux/Kakshya/NDData/SmallFloat.hpp"
 #include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 
 namespace MayaFlux::Kakshya {
-
-namespace {
-
-    float decode_half(uint16_t h)
-    {
-        const uint32_t sign = static_cast<uint32_t>(h & 0x8000U) << 16;
-        const uint32_t exp = (h >> 10) & 0x1FU;
-        const uint32_t mant = h & 0x3FFU;
-
-        uint32_t bits {};
-
-        if (exp == 0) {
-            if (mant == 0) {
-                bits = sign;
-            } else {
-                uint32_t e = 0;
-                uint32_t m = mant;
-                while ((m & 0x400U) == 0) {
-                    m <<= 1;
-                    ++e;
-                }
-                m &= 0x3FFU;
-                bits = sign | ((113U - e) << 23) | (m << 13);
-            }
-        } else if (exp == 0x1FU) {
-            bits = sign | 0x7F800000U | (mant << 13);
-        } else {
-            bits = sign | ((exp - 15U + 127U) << 23) | (mant << 13);
-        }
-
-        float out {};
-        std::memcpy(&out, &bits, sizeof(out));
-        return out;
-    }
-
-    uint16_t encode_half(float f)
-    {
-        uint32_t bits {};
-        std::memcpy(&bits, &f, sizeof(bits));
-
-        const auto sign = static_cast<uint16_t>((bits >> 16) & 0x8000U);
-        const int32_t exp = static_cast<int32_t>((bits >> 23) & 0xFFU) - 127 + 15;
-        uint32_t mant = bits & 0x7FFFFFU;
-
-        if (exp >= 0x1F)
-            return static_cast<uint16_t>(sign | 0x7C00U);
-
-        if (exp <= 0) {
-            if (exp < -10)
-                return sign;
-            mant |= 0x800000U;
-            return static_cast<uint16_t>(sign | (mant >> static_cast<uint32_t>(14 - exp)));
-        }
-
-        return static_cast<uint16_t>(
-            sign | (static_cast<uint32_t>(exp) << 10) | (mant >> 13));
-    }
-
-} // namespace
 
 size_t storage_element_size(ImageFormat format)
 {
@@ -187,7 +129,7 @@ double read_normalized_at(const DataVariant& v,
                     type_max = 255.0;
                 } else if constexpr (std::is_same_v<T, uint16_t>) {
                     if (is_float_format(format)) {
-                        raw = static_cast<double>(decode_half(vec[elem_index]));
+                        raw = static_cast<double>(half_to_float(vec[elem_index]));
                     } else {
                         raw = static_cast<double>(vec[elem_index]);
                         type_max = 65535.0;
@@ -261,7 +203,7 @@ void write_normalized_at(DataVariant& v,
                     vec[elem_index] = static_cast<uint8_t>(std::clamp(raw, 0.0, 255.0));
                 } else if constexpr (std::is_same_v<T, uint16_t>) {
                     if (is_float_format(format)) {
-                        vec[elem_index] = encode_half(static_cast<float>(raw));
+                        vec[elem_index] = float_to_half(static_cast<float>(raw));
                     } else {
                         vec[elem_index] = static_cast<uint16_t>(std::clamp(raw, 0.0, 65535.0));
                     }
