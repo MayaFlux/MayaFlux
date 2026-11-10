@@ -5,6 +5,8 @@
 
 namespace MayaFlux::Kakshya {
 
+struct Region;
+
 /**
  * @enum TensorDeviceType
  * @brief Where tensor memory lives. Values equal the DLPack device types.
@@ -127,6 +129,29 @@ struct MAYAFLUX_API TensorSpec {
 
     /** @brief One DataDimension per axis, with size and stride taken from shape and strides. */
     [[nodiscard]] std::vector<DataDimension> dimensions() const;
+
+    /**
+     * @brief Spec of the box that starts at @p origin and spans @p extent elements per axis.
+     *
+     * The result addresses the same storage with the same strides, so no data
+     * moves. Per-axis quantization is cut to the same range.
+     * @return The window, or std::nullopt when a rank differs, an extent is
+     * zero, the box leaves the shape, the offset leaves the addressable range,
+     * or the type is sub-byte and the box is not the whole tensor.
+     */
+    [[nodiscard]] std::optional<TensorSpec> window(
+        std::span<const uint64_t> origin, std::span<const uint64_t> extent) const;
+
+    /**
+     * @brief Spec of the box a Region selects.
+     *
+     * Bounds are inclusive. Trailing axes the region does not name span their
+     * full extent.
+     * @return The window, or std::nullopt when the region is empty, names more
+     * axes than the tensor, has mismatched bounds, or the box is not addressable
+     * as described for the span overload.
+     */
+    [[nodiscard]] std::optional<TensorSpec> window(const Region& region) const;
 };
 
 }

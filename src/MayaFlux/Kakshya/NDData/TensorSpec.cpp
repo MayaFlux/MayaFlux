@@ -1,5 +1,7 @@
 #include "TensorSpec.hpp"
 
+#include "MayaFlux/Kakshya/Region/Region.hpp"
+
 namespace MayaFlux::Kakshya {
 
 namespace {
@@ -12,6 +14,18 @@ namespace {
             return false;
         out = a * b;
         return true;
+    }
+
+    uint64_t stride_magnitude(int64_t stride)
+    {
+        return stride < 0 ? static_cast<uint64_t>(-(stride + 1)) + 1 : static_cast<uint64_t>(stride);
+    }
+
+    template <typename T>
+    std::vector<T> cut(const std::vector<T>& values, uint64_t first, uint64_t count)
+    {
+        return { values.begin() + static_cast<std::ptrdiff_t>(first),
+            values.begin() + static_cast<std::ptrdiff_t>(first + count) };
     }
 
 }
@@ -175,6 +189,82 @@ std::vector<DataDimension> TensorSpec::dimensions() const
         }
     }
     return result;
+}
+
+std::optional<TensorSpec> TensorSpec::window(
+    std::span<const uint64_t> origin, std::span<const uint64_t> extent) const
+{
+    if (origin.size() != shape.size() || extent.size() != shape.size())
+        return std::nullopt;
+
+    bool whole = true;
+    for (size_t i = 0; i < shape.size(); ++i) {
+        if (extent[i] == 0 || origin[i] >= shape[i] || extent[i] > shape[i] - origin[i])
+            return std::nullopt;
+        whole = whole && origin[i] == 0 && extent[i] == shape[i];
+    }
+    if (whole)
+        return *this;
+    if (dtype.is_sub_byte())
+        return std::nullopt;
+
+    const auto resolved = resolved_strides();
+    const uint64_t element = dtype.element_bytes();
+    uint64_t forward = 0;
+    uint64_t backward = 0;
+    for (size_t i = 0; i < shape.size(); ++i) {
+        if (origin[i] == 0)
+            continue;
+        uint64_t step = 0;
+        if (!magnitude_times(stride_magnitude(resolved[i]), element, step)
+            || !magnitude_times(step, origin[i], step))
+            return std::nullopt;
+        uint64_t& side = resolved[i] < 0 ? backward : forward;
+        if (step > max_signed - side)
+            return std::nullopt;
+        side += step;
+    }
+    if (byte_offset > max_signed || forward > max_signed - byte_offset)
+        return std::nullopt;
+    const uint64_t up = byte_offset + forward;
+    if (backward > up)
+        return std::nullopt;
+
+    TensorSpec result = *this;
+    result.shape.assign(extent.begin(), extent.end());
+    result.strides = resolved;
+    result.byte_offset = up - backward;
+
+    if (result.quantization && result.quantization->axis) {
+        const size_t axis = *result.quantization->axis;
+        auto& q = *result.quantization;
+        if (axis >= shape.size() || q.scale.size() != shape[axis]
+            || (!q.zero_point.empty() && q.zero_point.size() != shape[axis]))
+            return std::nullopt;
+        q.scale = cut(q.scale, origin[axis], extent[axis]);
+        if (!q.zero_point.empty())
+            q.zero_point = cut(q.zero_point, origin[axis], extent[axis]);
+    }
+    return result;
+}
+
+std::optional<TensorSpec> TensorSpec::window(const Region& region) const
+{
+    const size_t named = region.start_coordinates.size();
+    if (named == 0 || named != region.end_coordinates.size() || named > shape.size())
+        return std::nullopt;
+
+    std::vector<uint64_t> origin(shape.size(), 0);
+    std::vector<uint64_t> extent = shape;
+    for (size_t axis = 0; axis < named; ++axis) {
+        const uint64_t first = region.start_coordinates[axis];
+        const uint64_t last = region.end_coordinates[axis];
+        if (first > last || last >= shape[axis])
+            return std::nullopt;
+        origin[axis] = first;
+        extent[axis] = last - first + 1;
+    }
+    return window(origin, extent);
 }
 
 }

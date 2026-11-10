@@ -2,6 +2,30 @@
 
 namespace MayaFlux::Kakshya {
 
+namespace {
+
+    void scatter(std::byte* base, const TensorSpec& target, const std::byte* from)
+    {
+        const std::vector<int64_t> strides = target.resolved_strides();
+        const size_t element = target.dtype.element_bytes();
+        std::vector<uint64_t> index(target.shape.size(), 0);
+        const uint64_t count = target.element_count().value_or(0);
+
+        for (uint64_t n = 0; n < count; ++n) {
+            int64_t offset = 0;
+            for (size_t axis = 0; axis < index.size(); ++axis)
+                offset += strides[axis] * static_cast<int64_t>(index[axis]);
+            std::memcpy(base + offset * static_cast<int64_t>(element), from + n * element, element);
+            for (size_t axis = index.size(); axis-- > 0;) {
+                if (++index[axis] < target.shape[axis])
+                    break;
+                index[axis] = 0;
+            }
+        }
+    }
+
+}
+
 bool TensorInsertion::write_bytes(std::span<const std::byte> bytes, uint64_t byte_offset)
 {
     const auto& spec = m_tensor->m_spec;
@@ -35,24 +59,34 @@ bool TensorInsertion::assign(const TensorAccess& view)
     if (spec.is_contiguous())
         return write_bytes(source->bytes());
 
-    const std::vector<int64_t> strides = spec.resolved_strides();
-    const size_t element = spec.dtype.element_bytes();
-    const std::byte* from = source->element_data();
-    std::byte* base = m_tensor->m_data.get() + spec.byte_offset;
-    std::vector<uint64_t> index(spec.shape.size(), 0);
-    const uint64_t count = spec.element_count().value_or(0);
+    scatter(m_tensor->m_data.get() + spec.byte_offset, spec, source->element_data());
+    return true;
+}
 
-    for (uint64_t n = 0; n < count; ++n) {
-        int64_t offset = 0;
-        for (size_t axis = 0; axis < index.size(); ++axis)
-            offset += strides[axis] * static_cast<int64_t>(index[axis]);
-        std::memcpy(base + offset * static_cast<int64_t>(element), from + n * element, element);
-        for (size_t axis = index.size(); axis-- > 0;) {
-            if (++index[axis] < spec.shape[axis])
-                break;
-            index[axis] = 0;
-        }
-    }
+bool TensorInsertion::assign_window(const Region& region, const TensorAccess& view)
+{
+    const auto& spec = m_tensor->m_spec;
+    if (view.spec().dtype != spec.dtype || !m_tensor->is_valid())
+        return false;
+
+    const auto target = spec.window(region);
+    if (!target || target->shape != view.spec().shape)
+        return false;
+    if (spec.dtype.is_sub_byte())
+        return assign(view);
+
+    const auto range = target->byte_range();
+    if (!range || range->second > m_tensor->m_size)
+        return false;
+
+    const auto copy = TensorData::copy_of(view);
+    if (!copy)
+        return false;
+    const auto source = copy->access();
+    if (!source)
+        return false;
+
+    scatter(m_tensor->m_data.get() + target->byte_offset, *target, source->element_data());
     return true;
 }
 

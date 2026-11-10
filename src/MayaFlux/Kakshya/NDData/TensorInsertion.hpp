@@ -4,6 +4,8 @@
 
 namespace MayaFlux::Kakshya {
 
+struct Region;
+
 /**
  * @class TensorInsertion
  * @brief Mutable adapter for writing into a TensorData.
@@ -59,6 +61,16 @@ public:
      * Strided views are gathered into the tensor's own layout.
      */
     bool assign(const TensorAccess& view);
+
+    /**
+     * @brief Overwrite the box a Region selects with a view of the box's shape.
+     *
+     * Strided views are gathered first, so the source may alias this tensor.
+     * @return False for a dtype mismatch, a shape that differs from the box,
+     * an invalid region, or a sub-byte type unless the region covers the
+     * whole tensor.
+     */
+    bool assign_window(const Region& region, const TensorAccess& view);
 
     /**
      * @brief Change the shape without moving data.
