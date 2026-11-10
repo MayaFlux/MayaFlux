@@ -89,6 +89,16 @@ namespace detail {
     template <typename T>
     inline constexpr bool is_composite_operation_data_v = is_composite_operation_data<T>::value;
 
+    template <typename T>
+    struct is_structured_operation_data : std::bool_constant<CompositeData<T> || TensorContainerData<T>> { };
+
+    template <ComputeData T>
+    struct is_structured_operation_data<Datum<T>> : std::bool_constant<CompositeData<T> || TensorContainerData<T>> { };
+
+    /** @brief Composite or tensor data, which has no implicit numeric channel extraction. */
+    template <typename T>
+    inline constexpr bool is_structured_operation_data_v = is_structured_operation_data<T>::value;
+
 }
 
 /**
@@ -546,7 +556,7 @@ public:
      * @throws std::runtime_error if container required but not provided
      */
     template <OperationReadyData T>
-        requires(!detail::is_composite_operation_data_v<T>)
+        requires(!detail::is_structured_operation_data_v<T>)
     static std::tuple<NumericChannels, DataStructureInfo>
     extract_structured_double(T& compute_data)
     {
@@ -557,10 +567,11 @@ public:
             info.modality = compute_data.modality;
 
             if constexpr (RequiresContainer<std::decay_t<decltype(compute_data.data)>>) {
-                if (!compute_data.has_container()) {
+                const auto source = compute_data.get_container();
+                if (!source) {
                     error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::ContainerProcessing, std::source_location::current(), "Container is required for region-like data extraction but not provided");
                 }
-                NumericChannels double_data = extract_numeric_data(compute_data.data, compute_data.container.value());
+                NumericChannels double_data = extract_numeric_data(compute_data.data, source);
                 return std::make_tuple(std::move(double_data), info);
             } else if constexpr (requires { extract_numeric_data(compute_data.data, compute_data.needs_processig()); }) {
                 NumericChannels double_data = extract_numeric_data(compute_data.data, compute_data.needs_processig());
@@ -608,7 +619,7 @@ public:
      * @throws std::runtime_error if a container is required but absent.
      */
     template <OperationReadyData T>
-        requires(!detail::is_composite_operation_data_v<T>)
+        requires(!detail::is_structured_operation_data_v<T>)
     static std::tuple<std::vector<Kakshya::DataSpanVariant>, DataStructureInfo>
     extract_structured_native(T& compute_data)
     {
@@ -619,7 +630,8 @@ public:
             info.modality = compute_data.modality;
 
             if constexpr (RequiresContainer<std::decay_t<decltype(compute_data.data)>>) {
-                if (!compute_data.has_container()) {
+                const auto source = compute_data.get_container();
+                if (!source) {
                     error<std::runtime_error>(
                         Journal::Component::Yantra,
                         Journal::Context::ContainerProcessing,
@@ -629,11 +641,11 @@ public:
 
                 const auto region_variants = [&]() -> std::vector<Kakshya::DataVariant> {
                     if constexpr (std::is_same_v<std::decay_t<decltype(compute_data.data)>, Kakshya::Region>) {
-                        return compute_data.container.value()->get_region_data(compute_data.data);
+                        return source->get_region_data(compute_data.data);
                     } else if constexpr (std::is_same_v<std::decay_t<decltype(compute_data.data)>, Kakshya::RegionGroup>) {
-                        return compute_data.container.value()->get_region_group_data(compute_data.data);
+                        return source->get_region_group_data(compute_data.data);
                     } else {
-                        return compute_data.container.value()->get_segments_data(compute_data.data);
+                        return source->get_segments_data(compute_data.data);
                     }
                 }();
                 return { extract_native_data(region_variants), info };
@@ -660,7 +672,7 @@ public:
      * @return Reconstructed data of type T
      */
     template <ComputeData T>
-        requires(!is_IO<T>::value && !CompositeData<T>)
+        requires(!is_IO<T>::value && !CompositeData<T> && !TensorContainerData<T>)
     static T reconstruct_from_double(const std::vector<std::vector<double>>& double_data,
         const DataStructureInfo& structure_info)
     {
@@ -692,7 +704,7 @@ public:
      * @return Reconstructed data of type T
      */
     template <typename T>
-        requires(is_IO<T>::value && !detail::is_composite_operation_data_v<T>)
+        requires(is_IO<T>::value && !detail::is_structured_operation_data_v<T>)
     static T reconstruct_from_double(const std::vector<std::vector<double>>& double_data,
         const DataStructureInfo& structure_info)
     {
@@ -726,7 +738,7 @@ public:
      * @return Tuple of [working_spans, structure_info]
      */
     template <OperationReadyData T>
-        requires(!detail::is_composite_operation_data_v<T>)
+        requires(!detail::is_structured_operation_data_v<T>)
     static auto setup_operation_buffer(T& input, std::vector<std::vector<double>>& working_buffer)
     {
         auto [data_spans, structure_info] = extract_structured_double(input);

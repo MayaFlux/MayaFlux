@@ -8,6 +8,8 @@
 namespace MayaFlux::Kakshya {
 class CompositeArray;
 class CompositeContainer;
+class TensorContainer;
+class TensorData;
 }
 
 namespace MayaFlux::Yantra {
@@ -48,6 +50,10 @@ concept CompositeContainerData = std::same_as<T, std::shared_ptr<Kakshya::Compos
 template <typename T>
 concept CompositeData = CompositeArrayData<T> || CompositeContainerData<T>;
 
+/** @brief Shared ownership of a TensorContainer. */
+template <typename T>
+concept TensorContainerData = std::same_as<T, std::shared_ptr<Kakshya::TensorContainer>>;
+
 // =============================================================================
 // ComputeData concept
 // =============================================================================
@@ -62,6 +68,7 @@ concept CompositeData = CompositeArrayData<T> || CompositeContainerData<T>;
  * - std::shared_ptr<Kakshya::SignalSourceContainer>
  * - Kakshya::CompositeArray
  * - std::shared_ptr<Kakshya::CompositeContainer>
+ * - std::shared_ptr<Kakshya::TensorContainer>
  * - Kakshya::Region
  * - Kakshya::RegionGroup
  * - std::vector<Kakshya::RegionSegment>
@@ -73,6 +80,7 @@ concept CompositeData = CompositeArrayData<T> || CompositeContainerData<T>;
 template <typename T>
 concept ComputeData =
     CompositeData<T>                                               ||
+    TensorContainerData<T>                                         ||
     std::same_as<T, Kakshya::DataVariant>                          ||
     std::same_as<T, std::vector<Kakshya::DataVariant>>             ||
     std::same_as<T, std::shared_ptr<Kakshya::SignalSourceContainer>> ||
@@ -224,6 +232,16 @@ struct extraction_traits_d<T> {
     using variant_result_type = void;
 };
 
+/** @brief Tensor data has no implicit double or DataVariant extraction. */
+template <TensorContainerData T>
+struct extraction_traits_d<T> {
+    static constexpr bool is_multi_variant = false;
+    static constexpr bool requires_container = false;
+    static constexpr bool is_region_like = false;
+    using result_type = void;
+    using variant_result_type = void;
+};
+
 /**
  * @brief extraction_traits_d for any Eigen matrix type.
  *
@@ -346,6 +364,17 @@ struct extraction_traits<T> {
     using native_element_type = void;
     using algorithm_result_type = void;
     using native_result_type = const Kakshya::CompositeArray&;
+};
+
+/** @brief Declare the borrowed TensorData as the native result type. */
+template <TensorContainerData T>
+struct extraction_traits<T> {
+    static constexpr bool is_multi_variant = false;
+    static constexpr bool requires_container = false;
+    static constexpr bool is_region_like = false;
+    using native_element_type = void;
+    using algorithm_result_type = void;
+    using native_result_type = const Kakshya::TensorData&;
 };
 
 template <typename T>

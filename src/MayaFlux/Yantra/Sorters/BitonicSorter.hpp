@@ -167,7 +167,6 @@ protected:
         output_type result = this->convert_result(working, structure_info);
         result.metadata = input.metadata;
         result.facets = input.facets;
-        result.container = input.container;
         record_sort(result, chunked ? SortPath::CHUNKED_MERGED : SortPath::COPY);
         return result;
     }

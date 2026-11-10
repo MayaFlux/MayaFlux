@@ -2,10 +2,45 @@
 
 #include "MayaFlux/Kakshya/NDData/Composite.hpp"
 #include "MayaFlux/Kakshya/Source/CompositeContainer.hpp"
+#include "MayaFlux/Kakshya/Source/TensorContainer.hpp"
 #include "MayaFlux/Kakshya/Utils/DataUtils.hpp"
 #include "StructureIntrospection.hpp"
 
 namespace MayaFlux::Yantra {
+
+/**
+ * @concept SourceContainer
+ * @brief A container a Datum can carry: a SignalSourceContainer, a CompositeContainer,
+ *        a TensorContainer, or a type derived from one of them.
+ */
+template <typename C>
+concept SourceContainer = std::derived_from<C, Kakshya::SignalSourceContainer>
+    || std::derived_from<C, Kakshya::CompositeContainer>
+    || std::derived_from<C, Kakshya::TensorContainer>;
+
+/**
+ * @brief The container family a SourceContainer belongs to.
+ *
+ * Every SignalSourceContainer child maps to SignalSourceContainer; the other
+ * two families map to themselves.
+ */
+template <SourceContainer C>
+using container_family_t = std::conditional_t<std::derived_from<C, Kakshya::SignalSourceContainer>,
+    Kakshya::SignalSourceContainer,
+    std::conditional_t<std::derived_from<C, Kakshya::CompositeContainer>,
+        Kakshya::CompositeContainer,
+        Kakshya::TensorContainer>>;
+
+/**
+ * @brief Facet key under which a Datum carries a container of family @p F.
+ */
+template <SourceContainer F>
+    requires std::same_as<F, container_family_t<F>>
+const Facet<std::shared_ptr<F>>& container_key()
+{
+    static const Facet<std::shared_ptr<F>> key;
+    return key;
+}
 
 /**
  * @struct Datum
@@ -21,6 +56,7 @@ namespace MayaFlux::Yantra {
  * - Dimension and modality preservation through pipeline operations
  * - Flexible metadata storage for operation-specific information
  * - Facets carry described result structs through a chain, read by type
+ * - The container a Datum refers to rides in a facet, one key per container family
  * - Move semantics for efficiency with large data
  */
 template <ComputeData T = std::vector<Kakshya::DataVariant>>
@@ -31,8 +67,6 @@ struct Datum {
     std::unordered_map<std::string, std::any> metadata; ///< Associated metadata
     Facets facets; ///< Typed results that travel with the data, read by type
     bool b_container_processing {};
-
-    std::optional<std::shared_ptr<Kakshya::SignalSourceContainer>> container; ///< Optional reference to container, required for regions
 
     /** @brief Construct an empty datum when its data type has a valid default. */
     Datum() requires std::default_initializable<T> = default;
@@ -56,15 +90,17 @@ struct Datum {
     /**
      * @brief Construct from data by copy with container reference and automatic structure inference
      * @param d Data to copy into the container
-     * @param cont Shared pointer to the associated RegionLike Data
+     * @param cont Shared pointer to the container the data refers to
      *
      * This constructor is useful when the data is part of a larger container
      * and we want to maintain a reference to that container for context.
+     * The container is stored in the facet of its family.
      */
-    Datum(const T& d, const std::shared_ptr<Kakshya::SignalSourceContainer>& cont)
+    template <SourceContainer C>
+    Datum(const T& d, const std::shared_ptr<C>& cont)
         : data(d)
-        , container(cont)
     {
+        set_container(cont);
         auto [dims, mod] = infer_structure(data, cont);
         dimensions = std::move(dims);
         modality = mod;
@@ -90,15 +126,16 @@ struct Datum {
     /**
      * @brief Construct from data by move with automatic structure inference
      * @param d Data to move into the container
-     * @param cont Shared pointer to the associated RegionLike Data
+     * @param cont Shared pointer to the container the data refers to
      *
      * Automatically infers dimensions and modality before moving the data.
      * More efficient for large data structures.
      */
-    Datum(T&& d, const std::shared_ptr<Kakshya::SignalSourceContainer>& cont)
+    template <SourceContainer C>
+    Datum(T&& d, const std::shared_ptr<C>& cont)
         : data(std::move(d))
-        , container(cont)
     {
+        set_container(cont);
         auto [dims, mod] = infer_structure(data, cont);
         dimensions = std::move(dims);
         modality = mod;
@@ -118,18 +155,19 @@ struct Datum {
     }
 
     /**
-     * @brief Construct with move and explicit structure information
+     * @brief Construct with move, a container and explicit structure information
      * @param d Data to move
-     * @param container Shared pointer to the associated RegionLike Data
+     * @param cont Shared pointer to the container the data refers to
      * @param dims Explicit dimensional structure
      * @param mod Explicit data modality
      */
-    Datum(T&& d, const std::shared_ptr<Kakshya::SignalSourceContainer> container, std::vector<Kakshya::DataDimension> dims, Kakshya::DataModality mod)
+    template <SourceContainer C>
+    Datum(T&& d, const std::shared_ptr<C>& cont, std::vector<Kakshya::DataDimension> dims, Kakshya::DataModality mod)
         : data(std::move(d))
-        , container(container)
         , dimensions(std::move(dims))
         , modality(mod)
     {
+        set_container(cont);
     }
 
     /**
@@ -145,21 +183,67 @@ struct Datum {
     T& operator*() { return data; }
 
     /**
-     * @brief Set or update the associated container reference
-     * @param cont Shared pointer to the new container
+     * @brief Set or update the associated container of one family
+     * @tparam C A container type; derived signal containers share the signal family
+     * @param cont Shared pointer to the new container; null removes the family's container
      */
-    void set_container(const std::shared_ptr<Kakshya::SignalSourceContainer>& cont)
+    template <SourceContainer C>
+    void set_container(const std::shared_ptr<C>& cont)
     {
-        container = cont;
+        using Family = container_family_t<C>;
+        if (cont) {
+            facets.set(container_key<Family>(), std::shared_ptr<Family>(cont));
+        } else {
+            facets.erase(container_key<Family>());
+        }
+    }
+
+    /** @brief Remove the signal container. */
+    void set_container(std::nullptr_t)
+    {
+        reset_container();
     }
 
     /**
-     * @brief Check if a container reference is associated
-     * @return True if a container is set
+     * @brief Remove the container of one family
+     * @tparam C Family to clear; the signal family by default
+     */
+    template <SourceContainer C = Kakshya::SignalSourceContainer>
+    void reset_container()
+    {
+        facets.erase(container_key<container_family_t<C>>());
+    }
+
+    /**
+     * @brief The associated container of one family
+     * @tparam C Family to read; the signal family by default
+     * @return The container, or null when none is set
+     */
+    template <SourceContainer C = Kakshya::SignalSourceContainer>
+    [[nodiscard]] std::shared_ptr<container_family_t<C>> get_container() const
+    {
+        return facets.get(container_key<container_family_t<C>>());
+    }
+
+    /**
+     * @brief Check if a container of any family is associated
+     * @return True if a signal, composite or tensor container is set
      */
     [[nodiscard]] bool has_container() const
     {
-        return container.has_value();
+        return get_container<Kakshya::SignalSourceContainer>()
+            || get_container<Kakshya::CompositeContainer>()
+            || get_container<Kakshya::TensorContainer>();
+    }
+
+    /**
+     * @brief Check if a container of one family is associated
+     * @tparam C Family to check
+     */
+    template <SourceContainer C>
+    [[nodiscard]] bool has_container() const
+    {
+        return get_container<C>() != nullptr;
     }
 
     /**
@@ -230,7 +314,7 @@ struct Datum {
         size_t min_dimensions = 1) const
     {
         if constexpr (RequiresContainer<T>) {
-            if (!container.has_value() || !*container) {
+            if (!has_container()) {
                 return false;
             }
         }
@@ -375,17 +459,19 @@ std::vector<Datum<T>> as_io_batch(std::vector<T>&& inputs)
  * Ensures that types used in operation units are either:
  * - MultiVariant (data variant)
  * - CompositeData (schema-bearing records or their owning container)
+ * - TensorContainerData (a tensor container)
  * - RegionLike (regions or region groups)
  * - EigenMatrixLike (Eigen matrices/vectors)
  * - Datum (input/output containers with structure)
  */
 template <typename T>
-concept OperationReadyData = CompositeData<T> || MultiVariant<T> || RegionLike<T> || EigenMatrixLike<T> || is_IO<T>::value;
+concept OperationReadyData = CompositeData<T> || TensorContainerData<T> || MultiVariant<T> || RegionLike<T> || EigenMatrixLike<T> || is_IO<T>::value;
 
 using DataIO = Datum<std::vector<Kakshya::DataVariant>>; ///< IO for data variant
 using ContainerIO = Datum<std::shared_ptr<Kakshya::SignalSourceContainer>>; ///< IO for signal containers
 using CompositeIO = Datum<Kakshya::CompositeArray>; ///< IO for owning Composite records
 using CompositeContainerIO = Datum<std::shared_ptr<Kakshya::CompositeContainer>>; ///< IO for Composite containers
+using TensorContainerIO = Datum<std::shared_ptr<Kakshya::TensorContainer>>; ///< IO for Tensor containers
 using RegionIO = Datum<Kakshya::Region>; ///< IO for single regions
 using RegionGroupIO = Datum<Kakshya::RegionGroup>; ///< IO for region groups
 using SegmentIO = Datum<std::vector<Kakshya::RegionSegment>>; ///< IO for region segments

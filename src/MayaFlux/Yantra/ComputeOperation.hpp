@@ -213,16 +213,6 @@ public:
 
     const auto& get_dependencies() const { return m_dependencies; }
 
-    virtual void set_container_for_regions(const std::shared_ptr<Kakshya::SignalSourceContainer>& container)
-    {
-        m_container = container;
-    }
-
-    [[nodiscard]] virtual const std::shared_ptr<Kakshya::SignalSourceContainer>& get_container_for_regions() const
-    {
-        return m_container;
-    }
-
     void set_last_execution_context(const ExecutionContext& ctx)
     {
         m_last_execution_context = ctx;
@@ -420,7 +410,6 @@ protected:
         return result;
     }
 
-    std::shared_ptr<Kakshya::SignalSourceContainer> m_container;
     ExecutionContext m_last_execution_context;
 
 private:

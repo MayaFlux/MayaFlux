@@ -21,12 +21,12 @@ namespace {
                 std::source_location::current(), "{}: RegionGroup contains no grains", name);
         }
 
-        if (!datum.container || !*datum.container) {
+        const auto source = datum.get_container();
+        if (!source) {
             error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
                 std::source_location::current(), "{}: no source container in datum", name);
         }
 
-        auto source = *datum.container;
         const auto num_ch = static_cast<uint32_t>(source->get_structure().get_channel_count());
         const auto org = source->get_structure().organization;
         const uint32_t sample_rate = [&]() -> uint32_t {
@@ -66,7 +66,7 @@ namespace {
             });
 
         return Datum<std::shared_ptr<Kakshya::SignalSourceContainer>> {
-            sink(std::move(channel_data), num_ch, sample_rate, org), {}
+            sink(std::move(channel_data), num_ch, sample_rate, org)
         };
     }
 
@@ -162,10 +162,8 @@ Datum<Kakshya::RegionGroup> SegmentOp::extract_implementation(
 {
     const auto& cfg = config<SegmentConfig>();
 
-    std::shared_ptr<Kakshya::SignalSourceContainer> container;
-    if (input.container && *input.container) {
-        container = *input.container;
-    } else {
+    auto container = input.get_container();
+    if (!container) {
         container = cfg.container;
     }
 
@@ -281,8 +279,8 @@ Datum<Kakshya::RegionGroup> AttributeOp::analyze_implementation(
 
     const auto& cfg = config<AttributeConfig>();
 
-    const std::shared_ptr<Kakshya::SignalSourceContainer> container
-        = (input.container && *input.container) ? *input.container : cfg.container;
+    const auto input_container = input.get_container();
+    const std::shared_ptr<Kakshya::SignalSourceContainer> container = input_container ? input_container : cfg.container;
 
     if (!container) {
         error<std::runtime_error>(

@@ -42,10 +42,11 @@ void sort_compute_data_inplace(Datum<T>& data,
     SortingAlgorithm algorithm)
 {
     if constexpr (RequiresContainer<T>) {
-        if (!data.has_container()) {
+        const auto source = data.get_container();
+        if (!source) {
             error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::ComputeMatrix, std::source_location::current(), "Region-like types require container - use Sorter instead");
         }
-        auto channels = OperationHelper::extract_numeric_data(data.data, data.container.value());
+        auto channels = OperationHelper::extract_numeric_data(data.data, source);
         Kinesis::Discrete::sort_channels(channels, direction, algorithm);
         return;
     }
@@ -134,7 +135,7 @@ std::vector<std::vector<size_t>> generate_compute_data_indices(const Datum<T>& d
     SortOrder direction)
 {
     if constexpr (RequiresContainer<T>) {
-        auto channels = OperationHelper::extract_numeric_data(data.data, data.container.value());
+        auto channels = OperationHelper::extract_numeric_data(data.data, data.get_container());
         return Kinesis::Discrete::channels_sort_indices(channels, direction);
     }
 

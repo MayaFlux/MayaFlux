@@ -211,7 +211,6 @@ private:
             output_type result = this->convert_result(working_buffer, structure_info);
             result.metadata = input.metadata;
             result.facets = input.facets;
-            result.container = input.container;
             record_sort(result, path);
 
             return result;
@@ -221,7 +220,6 @@ private:
             output_type passthrough;
             passthrough.metadata = input.metadata;
             passthrough.facets = input.facets;
-            passthrough.container = input.container;
             return passthrough;
         }
     }
@@ -412,7 +410,7 @@ private:
     bool validate_input_type(const input_type& data) const
     {
         if constexpr (RequiresContainer<InputType>) {
-            return data.has_container();
+            return data.get_container() != nullptr;
         }
         return true;
     }

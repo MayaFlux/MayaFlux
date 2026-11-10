@@ -46,10 +46,35 @@ MAYAFLUX_API std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModalit
 infer_from_composite_container(const std::shared_ptr<Kakshya::CompositeContainer>& container);
 
 /**
+ * @brief Infer the axes and modality of a TensorContainer.
+ * @note Axes keep the names, roles and sizes of the tensor's own spec.
+ */
+MAYAFLUX_API std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
+infer_from_tensor_container(const std::shared_ptr<Kakshya::TensorContainer>& container);
+
+/**
  * @brief Infer structure from Region (placeholder since regions are markers)
  */
 MAYAFLUX_API std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
 infer_from_region(const Kakshya::Region& region, const std::shared_ptr<Kakshya::SignalSourceContainer>& container = nullptr);
+
+/**
+ * @brief Infer the axes of the box a Region selects in a tensor.
+ *
+ * The result keeps the tensor's own axes with the region's extents. Without
+ * coordinates the whole tensor is described.
+ * @throws std::invalid_argument If the region does not select a box of the tensor.
+ */
+MAYAFLUX_API std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
+infer_from_region(const Kakshya::Region& region, const std::shared_ptr<Kakshya::TensorContainer>& container);
+
+/**
+ * @brief Infer the element axis of the records a Region selects in a composite container.
+ *
+ * Without coordinates the whole container is described.
+ */
+MAYAFLUX_API std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
+infer_from_region(const Kakshya::Region& region, const std::shared_ptr<Kakshya::CompositeContainer>& container);
 
 /**
  * @brief Infer structure from RegionGroup
@@ -57,11 +82,27 @@ infer_from_region(const Kakshya::Region& region, const std::shared_ptr<Kakshya::
 MAYAFLUX_API std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
 infer_from_region_group(const Kakshya::RegionGroup& group, const std::shared_ptr<Kakshya::SignalSourceContainer>& container = nullptr);
 
+/** @brief Infer structure from the bounds of a RegionGroup over a tensor container. */
+MAYAFLUX_API std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
+infer_from_region_group(const Kakshya::RegionGroup& group, const std::shared_ptr<Kakshya::TensorContainer>& container);
+
+/** @brief Infer structure from the bounds of a RegionGroup over a composite container. */
+MAYAFLUX_API std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
+infer_from_region_group(const Kakshya::RegionGroup& group, const std::shared_ptr<Kakshya::CompositeContainer>& container);
+
 /**
  * @brief Infer structure from RegionSegments
  */
 MAYAFLUX_API std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
 infer_from_segments(const std::vector<Kakshya::RegionSegment>& segments, const std::shared_ptr<Kakshya::SignalSourceContainer>& container = nullptr);
+
+/** @brief Infer structure from RegionSegments over a tensor container. */
+MAYAFLUX_API std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
+infer_from_segments(const std::vector<Kakshya::RegionSegment>& segments, const std::shared_ptr<Kakshya::TensorContainer>& container);
+
+/** @brief Infer structure from RegionSegments over a composite container. */
+MAYAFLUX_API std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
+infer_from_segments(const std::vector<Kakshya::RegionSegment>& segments, const std::shared_ptr<Kakshya::CompositeContainer>& container);
 
 /**
  * @brief Infer structure from Eigen matrix/vector
@@ -160,6 +201,8 @@ infer_structure(const T& data, const std::shared_ptr<Kakshya::SignalSourceContai
         return infer_from_composite_array(data);
     } else if constexpr (CompositeContainerData<T>) {
         return infer_from_composite_container(data);
+    } else if constexpr (TensorContainerData<T>) {
+        return infer_from_tensor_container(data);
     } else if constexpr (std::is_same_v<T, Kakshya::DataVariant>) {
         return infer_from_data_variant(data);
     } else if constexpr (std::is_same_v<T, std::vector<Kakshya::DataVariant>>) {
@@ -176,6 +219,30 @@ infer_structure(const T& data, const std::shared_ptr<Kakshya::SignalSourceContai
         return infer_from_eigen(data);
     } else {
         return infer_generic_structure(data);
+    }
+}
+
+/**
+ * @brief Infer dimensions and modality of region-like data over a tensor or composite container.
+ * @tparam T ComputeData type
+ * @tparam C TensorContainer or CompositeContainer
+ * @param data Input data to analyze
+ * @param container Container the regions select from
+ * @return Pair of (dimensions, modality); data that is not region-like is inferred on its own
+ */
+template <ComputeData T, typename C>
+    requires(std::same_as<C, Kakshya::TensorContainer> || std::same_as<C, Kakshya::CompositeContainer>)
+static std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
+infer_structure(const T& data, const std::shared_ptr<C>& container)
+{
+    if constexpr (std::is_same_v<T, Kakshya::Region>) {
+        return infer_from_region(data, container);
+    } else if constexpr (std::is_same_v<T, Kakshya::RegionGroup>) {
+        return infer_from_region_group(data, container);
+    } else if constexpr (std::is_same_v<T, std::vector<Kakshya::RegionSegment>>) {
+        return infer_from_segments(data, container);
+    } else {
+        return infer_structure(data);
     }
 }
 
