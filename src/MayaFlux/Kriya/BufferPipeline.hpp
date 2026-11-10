@@ -570,4 +570,69 @@ inline std::shared_ptr<BufferPipeline> operator>>(
     return pipeline;
 }
 
+/**
+ * @brief Record a live input channel into one channel of a stream for a number of audio cycles.
+ *
+ * Registers a listener on @p input_channel, captures it once per audio cycle
+ * and appends each block to @p stream at the write head of @p stream_channel.
+ * The pipeline starts at once and ends when @p cycles blocks have been written,
+ * or when its end() is called. A linear stream grows and keeps the whole take;
+ * a circular one keeps the newest frames. With a monitor channel the listener is
+ * also mixed to that output channel, so the input is heard.
+ *
+ * The listener is released through the pipeline's on_complete, so setting
+ * another on_complete on the pipeline replaces the release and leaves the
+ * listener registered.
+ *
+ * @code
+ * auto [pipeline, listener] = Kriya::record(scheduler, buffer_manager, stream, 0, 500);
+ * @endcode
+ *
+ * To record again into the same listener once it has ended, use record_into,
+ * which registers the listener again. The stream keeps appending, so a linear
+ * stream then holds both takes.
+ *
+ * @code
+ * auto again = Kriya::record_into(scheduler, buffer_manager, stream, listener, 0, 500);
+ * @endcode
+ *
+ * @param scheduler Scheduler that runs the pipeline.
+ * @param buffer_manager Manager that owns the input channels.
+ * @param stream Destination.
+ * @param input_channel Input channel to record.
+ * @param cycles Audio cycles to record, 0 to record until the pipeline ends.
+ * @param monitor Output channel to also hear the input on, or none.
+ * @param stream_channel Channel of the stream that receives the signal.
+ * @return The running pipeline and the listener buffer, or two null pointers when the scheduler, manager or stream is null.
+ */
+MAYAFLUX_API std::pair<std::shared_ptr<BufferPipeline>, std::shared_ptr<Buffers::AudioBuffer>> record(
+    const std::shared_ptr<Vruta::TaskScheduler>& scheduler,
+    const std::shared_ptr<Buffers::BufferManager>& buffer_manager,
+    const std::shared_ptr<Kakshya::DynamicSoundStream>& stream,
+    uint32_t input_channel,
+    uint64_t cycles,
+    std::optional<uint32_t> monitor = std::nullopt,
+    uint32_t stream_channel = 0);
+
+/**
+ * @brief Record a live input channel into a stream through a listener buffer you supply.
+ *
+ * Like record, but for a listener that already exists, for example the one
+ * record returned: it registers @p listener on @p input_channel again, mixes it
+ * to @p monitor if given, and starts a new pipeline that ends after @p cycles
+ * blocks and releases the listener the same way.
+ *
+ * @param listener The buffer that receives the input.
+ * @return The running pipeline, or null when the listener, scheduler, manager or stream is null.
+ */
+MAYAFLUX_API std::shared_ptr<BufferPipeline> record_into(
+    const std::shared_ptr<Vruta::TaskScheduler>& scheduler,
+    const std::shared_ptr<Buffers::BufferManager>& buffer_manager,
+    const std::shared_ptr<Kakshya::DynamicSoundStream>& stream,
+    const std::shared_ptr<Buffers::AudioBuffer>& listener,
+    uint32_t input_channel,
+    uint64_t cycles,
+    std::optional<uint32_t> monitor = std::nullopt,
+    uint32_t stream_channel = 0);
+
 }

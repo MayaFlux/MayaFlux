@@ -330,6 +330,42 @@ MAYAFLUX_API std::vector<std::shared_ptr<Kriya::BufferPipeline>> record_into(
     std::vector<Kriya::CaptureBuilder> sources);
 
 /**
+ * @brief Record a live input channel into a stream for a number of seconds.
+ *
+ * Kriya::record on the engine's managers, with the length rounded up to
+ * whole audio cycles. The pipeline ends itself when the time is up.
+ *
+ * @code
+ * auto [pipeline, listener] = MayaFlux::record(take, 0, 8.0);
+ * @endcode
+ *
+ * To record again into the same listener once it has ended, use record_into
+ * with the listener. The stream keeps appending.
+ *
+ * @code
+ * auto again = MayaFlux::record_into(take, listener, 0, 8.0);
+ * @endcode
+ *
+ * @param monitor Output channel to also hear the input on, or none.
+ * @return The running pipeline and the listener buffer, or two null pointers if the stream is null or seconds is not positive.
+ */
+MAYAFLUX_API std::pair<std::shared_ptr<Kriya::BufferPipeline>, std::shared_ptr<Buffers::AudioBuffer>> record(
+    const std::shared_ptr<Kakshya::DynamicSoundStream>& stream,
+    uint32_t input_channel, double seconds, std::optional<uint32_t> monitor = std::nullopt, uint32_t channel = 0);
+
+/**
+ * @brief Record a live input channel into a stream for a number of seconds, through a listener buffer you supply.
+ *
+ * Like record, for a listener that already exists, such as the one record returned.
+ *
+ * @return The running pipeline, or null if the listener or stream is null or seconds is not positive.
+ */
+MAYAFLUX_API std::shared_ptr<Kriya::BufferPipeline> record_into(
+    const std::shared_ptr<Kakshya::DynamicSoundStream>& stream,
+    const std::shared_ptr<Buffers::AudioBuffer>& listener,
+    uint32_t input_channel, double seconds, std::optional<uint32_t> monitor = std::nullopt, uint32_t channel = 0);
+
+/**
  * @brief A vision workflow running on the engine's managers.
  *
  * Its live runs stop when the returned workflow is destroyed. Include

@@ -201,11 +201,13 @@ namespace Kriya {
          * Uses the existing CaptureBuilder pattern but with input buffer creation.
          * @param buffer_manager System buffer manager
          * @param input_channel Input channel to capture from
+         * @param monitor Output channel the input is also mixed to so it is heard, or none to capture silently
          * @return CaptureBuilder for fluent configuration
          */
         static CaptureBuilder capture_input_from(
             const std::shared_ptr<Buffers::BufferManager>& buffer_manager,
-            uint32_t input_channel);
+            uint32_t input_channel,
+            std::optional<uint32_t> monitor = std::nullopt);
 
         /**
          * @brief Open and capture a camera through IOManager.
