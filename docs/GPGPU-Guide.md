@@ -120,7 +120,7 @@ Notable values: `AUDIO_1D`, `AUDIO_MULTICHANNEL`, `IMAGE_2D`, `IMAGE_COLOR`, `IM
 
 ### DataDimension
 
-Single-axis descriptor with a `Role` (`TIME`, `CHANNEL`, `SPATIAL_X/Y/Z`, `FREQUENCY`, `POSITION`, `NORMAL`, `TANGENT`, `UV`, `COLOR`, `INDEX`, `MIP_LEVEL`, `CUSTOM`) and a `size`. Used by `OperationHelper` to determine dispatch element count and by grammar matchers to inspect structure.
+Single-axis descriptor with a `Role` (`TIME`, `CHANNEL`, `SPATIAL_X/Y/Z`, `FREQUENCY`, `POSITION`, `NORMAL`, `TANGENT`, `UV`, `COLOR`, `INDEX`, `MIP_LEVEL`, `INSTANCE`, `CUSTOM`) and a `size`. Used by `OperationHelper` to determine dispatch element count and by grammar matchers to inspect structure.
 
 Factory methods:
 ```cpp

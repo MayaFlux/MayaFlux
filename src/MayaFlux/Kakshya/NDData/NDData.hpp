@@ -219,6 +219,7 @@ struct MAYAFLUX_API DataDimension {
         DEPTH, ///< Distance from the observation point (depth, disparity, range)
         INDEX, ///< Index buffer data
         MIP_LEVEL, ///< Mipmap levels
+        INSTANCE, ///< Independent repeats of one structure; no operation mixes across it
         CUSTOM ///< User-defined or application-specific
     };
 
@@ -295,6 +296,20 @@ struct MAYAFLUX_API DataDimension {
      * @return DataDimension representing channels
      */
     static DataDimension channel(uint64_t count, uint64_t stride = 1);
+
+    /**
+     * @brief Convenience constructor for an instance dimension.
+     *
+     * An axis whose indices are independent repeats of the same structure, such
+     * as several clips or images run through a model together. It is not a
+     * progression (TIME) and not parallel streams of one signal (CHANNEL):
+     * nothing reads or reduces across it.
+     * @param count Number of instances
+     * @param stride Memory stride (default: 1)
+     * @param name Optional name (default: "instance")
+     * @return DataDimension representing independent instances
+     */
+    static DataDimension instance(uint64_t count, uint64_t stride = 1, std::string name = "instance");
 
     /**
      * @brief Convenience constructor for a depth dimension.
