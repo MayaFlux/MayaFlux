@@ -192,9 +192,6 @@ public:
      */
     void set_region_data(const Region& region, const std::vector<CompositeArray>& data) override;
 
-    /** @brief Composite elements have no single scalar value type. */
-    [[nodiscard]] std::type_index value_element_type() const override { return typeid(void); }
-
     /** @brief Store or replace a named region group. */
     void add_region_group(const RegionGroup& group) override;
 
@@ -242,22 +239,6 @@ public:
 
     /** @brief Replace dimensional metadata. */
     void set_structure(ContainerDataStructure structure) override { m_structure = std::move(structure); }
-
-protected:
-    /** @brief No frame span is available for composite elements. */
-    [[nodiscard]] auto get_frame_span_impl(uint64_t) const -> DataSpanVariant override
-    {
-        return std::span<const uint8_t> {};
-    }
-
-    /** @brief No frame copies are available for composite elements. */
-    void get_frames_impl(void*, size_t, uint64_t, uint64_t, const std::type_info&) const override { }
-
-    /** @brief Read fields through Composite::get() or Composite::text(). */
-    void get_value_impl(const std::vector<uint64_t>&, void*, const std::type_info&) const override { }
-
-    /** @brief Write fields through CompositeInsertion. */
-    void set_value_impl(const std::vector<uint64_t>&, const void*, const std::type_info&) override { }
 
 private:
     CompositeArray m_data;

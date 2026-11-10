@@ -283,7 +283,7 @@ MAYAFLUX_API uint64_t calculate_frame_size(const std::vector<DataDimension>& dim
  * @brief Return the native element type of a DataVariant as a type_index.
  *
  * Returns typeid(E) where E is the value_type of the active alternative,
- * consistent with NDDataContainer::value_element_type() and
+ * consistent with SignalSourceContainer::value_element_type() and
  * FrameView::element_type().
  *
  * @param data Source variant.

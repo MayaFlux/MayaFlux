@@ -630,7 +630,7 @@ using DataSpanVariant = typename detail::span_const_from_vector_variant<DataVari
  * @class FrameView
  * @brief Zero-copy typed view over one frame of container storage.
  *
- * FrameView is the return type of NDDataContainer::get_frame(). It holds a
+ * FrameView is the return type of SignalSourceContainer::get_frame(). It holds a
  * DataSpanVariant — a span into the container's live storage — without copying
  * or converting data. The active span alternative matches the container's native
  * element type: uint8_t for 8-bit image and video, uint16_t for 16-bit image,
@@ -651,7 +651,7 @@ using DataSpanVariant = typename detail::span_const_from_vector_variant<DataVari
  * during get_frame_span_impl(); it is released before FrameView is returned.
  * Callers must not access the view concurrently with container writes.
  *
- * @see NDDataContainer::get_frame(), DataSpanVariant, DataVariantElement
+ * @see SignalSourceContainer::get_frame(), DataSpanVariant, DataVariantElement
  */
 class FrameView {
 public:
