@@ -357,6 +357,11 @@ bool DelimitedTextWriter::write_element(
 {
     const auto& fields = m_layout->fields();
 
+    if (fields.size() == 1 && !element.has(fields.front().name)) {
+        m_last_error = "A single-column row without a value would be written as a blank line";
+        return false;
+    }
+
     for (size_t i = 0; i < fields.size(); ++i) {
         if (i != 0)
             m_file.put(m_active_delimiter);

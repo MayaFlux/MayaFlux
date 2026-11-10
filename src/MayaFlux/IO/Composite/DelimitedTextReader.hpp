@@ -33,6 +33,7 @@ struct DelimitedTextInfo {
  * arithmetic field types; header names must then match its field order.
  * Empty numeric cells and missing trailing cells remain absent. An
  * unquoted empty text cell is absent; a quoted empty cell is present.
+ * Blank lines are skipped and do not count as records.
  * char, signed char, and unsigned char fields parse as small integers via
  * from_chars, the same path as every other arithmetic type; a cell must
  * contain a number such as "65", not a literal character such as "A".
