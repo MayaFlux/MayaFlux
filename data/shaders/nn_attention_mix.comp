@@ -1,0 +1,53 @@
+#version 460
+#extension GL_EXT_buffer_reference : require
+
+layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
+
+layout(buffer_reference, std430) readonly buffer FloatRef {
+    float v[];
+};
+
+layout(buffer_reference, std430) buffer ResultRef {
+    float v[];
+};
+
+layout(push_constant) uniform PC {
+    FloatRef weights;
+    FloatRef v;
+    ResultRef dst;
+    uint heads;
+    uint dim;
+    uint time;
+    uint reserved;
+} pc;
+
+uint invocation_index()
+{
+    return gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * gl_NumWorkGroups.x * gl_WorkGroupSize.x;
+}
+
+/**
+ * @brief Mixes the values of every position by the attention weights of each query, per head.
+ *
+ * weights is [heads, time, time], row (h, tq) holding the weights of query tq
+ * over the positions. v and dst are [heads * dim, time]. dst[h * dim + d, tq]
+ * is the sum over tk of weights[h, tq, tk] * v[h * dim + d, tk].
+ */
+void main()
+{
+    const uint idx = invocation_index();
+    const uint channels = pc.heads * pc.dim;
+    if (idx >= channels * pc.time)
+        return;
+
+    const uint tq = idx % pc.time;
+    const uint c = idx / pc.time;
+    const uint h = c / pc.dim;
+
+    const uint w_base = (h * pc.time + tq) * pc.time;
+    const uint v_base = c * pc.time;
+    float acc = 0.0;
+    for (uint tk = 0u; tk < pc.time; ++tk)
+        acc += pc.weights.v[w_base + tk] * pc.v.v[v_base + tk];
+    pc.dst.v[idx] = acc;
+}

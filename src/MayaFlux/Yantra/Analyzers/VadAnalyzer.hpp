@@ -35,6 +35,7 @@ struct VadAnalyzerConfig : AnalyzerConfig {
             std::tuple {
                 FacetMember<&VadAnalyzerConfig::flush_tail> {},
                 FacetMember<&VadAnalyzerConfig::sample_rate> {},
+                FacetMember<&VadAnalyzerConfig::keep_embeddings> {},
             });
     }
 
@@ -48,6 +49,8 @@ struct VadAnalyzerConfig : AnalyzerConfig {
     bool flush_tail { false };
     /** Sample rate in Hz of the input. The network runs at 16000 only, so any other value is refused. */
     double sample_rate { static_cast<double>(SileroVadModel::sample_rate) };
+    /** Also read back the network's recurrent output of every chunk, SileroVadModel::hidden_width values each. */
+    bool keep_embeddings { false };
 };
 
 /**
@@ -61,6 +64,7 @@ struct MAYAFLUX_API VadAnalysis {
             FacetMember<&VadAnalysis::config> {},
             FacetMember<&VadAnalysis::probabilities> {},
             FacetMember<&VadAnalysis::chunk_positions> {},
+            FacetMember<&VadAnalysis::embeddings> {},
         };
     }
 
@@ -70,6 +74,11 @@ struct MAYAFLUX_API VadAnalysis {
     std::vector<float> probabilities;
     /** First and one past the last sample of each chunk, counted from the start of the stream. */
     std::vector<std::pair<size_t, size_t>> chunk_positions;
+    /**
+     * Recurrent output of the network for each chunk, SileroVadModel::hidden_width values each, kept on request.
+     * It is what the probability is derived from; the network was trained only to tell speech from other sound.
+     */
+    std::vector<float> embeddings;
 };
 
 /**
@@ -216,6 +225,14 @@ public:
         return network().probability_buffer();
     }
 
+    /**
+     * @brief Where the network's recurrent output of the latest run is on the device, SileroVadModel::hidden_width values per chunk.
+     */
+    [[nodiscard]] SileroVadModel::ProbabilityBuffer hidden_buffer()
+    {
+        return network().hidden_buffer();
+    }
+
     /** @brief Probabilities the latest run left in probability_buffer. */
     [[nodiscard]] size_t resident_count() const noexcept
     {
@@ -273,11 +290,13 @@ protected:
 
             VadAnalysis analysis;
             analysis.config = cfg;
+            network().keep_hidden(cfg.keep_embeddings);
             analysis.probabilities = network().process(samples);
             if (cfg.flush_tail) {
                 const auto tail = network().flush();
                 analysis.probabilities.insert(analysis.probabilities.end(), tail.begin(), tail.end());
             }
+            analysis.embeddings = network().take_hidden();
 
             analysis.chunk_positions.reserve(analysis.probabilities.size());
             for (size_t i = 0; i < analysis.probabilities.size(); ++i) {

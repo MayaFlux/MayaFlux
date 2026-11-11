@@ -88,6 +88,17 @@
         "ref": { "type": "string", "pattern": "^[a-f0-9]{40}(?![\\s\\S])" }
       }
     },
+    "huggingface_source": {
+      "description": "Files of a Hugging Face model repository at one commit, read over https so that large files arrive whole. The ref is a full commit SHA. A file without size_bytes may be at most 16 MiB.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "repo", "ref"],
+      "properties": {
+        "kind": { "const": "huggingface" },
+        "repo": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*/[A-Za-z0-9][A-Za-z0-9._-]*(?![\\s\\S])" },
+        "ref": { "type": "string", "pattern": "^[a-f0-9]{40}(?![\\s\\S])" }
+      }
+    },
     "file": {
       "type": "object",
       "additionalProperties": false,
@@ -133,7 +144,8 @@
         "source": {
           "oneOf": [
             { "$ref": "#/$defs/url_source" },
-            { "$ref": "#/$defs/git_source" }
+            { "$ref": "#/$defs/git_source" },
+            { "$ref": "#/$defs/huggingface_source" }
           ]
         },
         "files": {

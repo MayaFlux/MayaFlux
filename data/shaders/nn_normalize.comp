@@ -1,0 +1,115 @@
+#version 460
+#extension GL_EXT_buffer_reference : require
+
+layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
+
+layout(buffer_reference, std430) readonly buffer FloatRef {
+    float v[];
+};
+
+layout(buffer_reference, std430) buffer ResultRef {
+    float v[];
+};
+
+layout(push_constant) uniform PC {
+    FloatRef src;
+    ResultRef stats;
+    FloatRef weight;
+    FloatRef bias;
+    ResultRef dst;
+    uint outer;
+    uint extent;
+    uint inner;
+    float epsilon;
+    uint flags;
+    uint reserved;
+} pc;
+
+const uint FLAG_APPLY = 1u;
+const uint FLAG_AFFINE = 2u;
+const uint FLAG_AFFINE_OUTER = 4u;
+const uint ACT_SHIFT = 3u;
+const uint ACT_GELU = 3u;
+
+const float INV_SQRT2 = 0.70710678118654752;
+
+float gelu(float x)
+{
+    const float z = abs(x) * INV_SQRT2;
+    const float t = 1.0 / (1.0 + 0.3275911 * z);
+    const float poly = t * (0.254829592 + t * (-0.284496736 + t * (1.421413741 + t * (-1.453152027 + t * 1.061405429))));
+    const float tail = 0.5 * poly * exp(-z * z);
+    return x * (x >= 0.0 ? 1.0 - tail : tail);
+}
+
+uint invocation_index()
+{
+    return gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * gl_NumWorkGroups.x * gl_WorkGroupSize.x;
+}
+
+/**
+ * @brief Normalises a tensor [outer, extent, inner] to zero mean and unit variance along extent.
+ *
+ * Two dispatches. Without FLAG_APPLY one invocation per (outer, inner) row
+ * sums the row with compensation and writes its mean and 1 / sqrt(variance +
+ * epsilon) to stats, two floats per row, the variance being the mean squared
+ * deviation. With FLAG_APPLY one invocation per element writes (x - mean) *
+ * scale to dst, which may be src. FLAG_AFFINE then multiplies by weight and
+ * adds bias, indexed by the position along extent, or by the outer index with
+ * FLAG_AFFINE_OUTER. Bits 3 and 4 pick an activation applied last (0 none, 3
+ * GELU). Layer normalisation of [channels, time] is outer 1, extent channels,
+ * inner time; normalising each channel over time is outer channels, extent
+ * time, inner 1 with FLAG_AFFINE_OUTER.
+ */
+void main()
+{
+    const uint idx = invocation_index();
+    const uint rows = pc.outer * pc.inner;
+
+    if ((pc.flags & FLAG_APPLY) == 0u) {
+        if (idx >= rows)
+            return;
+        const uint o = idx / pc.inner;
+        const uint i = idx % pc.inner;
+        const uint base = o * pc.extent * pc.inner + i;
+
+        precise float sum = 0.0;
+        precise float carry = 0.0;
+        for (uint l = 0u; l < pc.extent; ++l) {
+            precise float y = pc.src.v[base + l * pc.inner] - carry;
+            precise float t = sum + y;
+            carry = (t - sum) - y;
+            sum = t;
+        }
+        const float mean = sum / float(pc.extent);
+
+        precise float square = 0.0;
+        carry = 0.0;
+        for (uint l = 0u; l < pc.extent; ++l) {
+            const float d = pc.src.v[base + l * pc.inner] - mean;
+            precise float y = d * d - carry;
+            precise float t = square + y;
+            carry = (t - square) - y;
+            square = t;
+        }
+        pc.stats.v[2u * idx] = mean;
+        pc.stats.v[2u * idx + 1u] = inversesqrt(square / float(pc.extent) + pc.epsilon);
+        return;
+    }
+
+    if (idx >= rows * pc.extent)
+        return;
+    const uint i = idx % pc.inner;
+    const uint l = (idx / pc.inner) % pc.extent;
+    const uint o = idx / (pc.inner * pc.extent);
+    const uint row = o * pc.inner + i;
+
+    float value = (pc.src.v[idx] - pc.stats.v[2u * row]) * pc.stats.v[2u * row + 1u];
+    if ((pc.flags & FLAG_AFFINE) != 0u) {
+        const uint a = (pc.flags & FLAG_AFFINE_OUTER) != 0u ? o : l;
+        value = value * pc.weight.v[a] + pc.bias.v[a];
+    }
+    if (((pc.flags >> ACT_SHIFT) & 3u) == ACT_GELU)
+        value = gelu(value);
+    pc.dst.v[idx] = value;
+}

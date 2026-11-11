@@ -1,0 +1,52 @@
+#version 460
+#extension GL_EXT_buffer_reference : require
+
+layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
+
+layout(buffer_reference, std430) buffer ResultRef {
+    float v[];
+};
+
+layout(push_constant) uniform PC {
+    ResultRef data;
+    uint outer;
+    uint extent;
+    uint inner;
+    uint reserved;
+} pc;
+
+uint invocation_index()
+{
+    return gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * gl_NumWorkGroups.x * gl_WorkGroupSize.x;
+}
+
+/**
+ * @brief Softmax of a tensor [outer, extent, inner] along extent, in place.
+ *
+ * One invocation per (outer, inner) row subtracts the row's largest value,
+ * exponentiates and divides by the sum, so every row ends up positive and
+ * summing to 1.
+ */
+void main()
+{
+    const uint idx = invocation_index();
+    if (idx >= pc.outer * pc.inner)
+        return;
+    const uint o = idx / pc.inner;
+    const uint i = idx % pc.inner;
+    const uint base = o * pc.extent * pc.inner + i;
+
+    float top = pc.data.v[base];
+    for (uint l = 1u; l < pc.extent; ++l)
+        top = max(top, pc.data.v[base + l * pc.inner]);
+
+    float sum = 0.0;
+    for (uint l = 0u; l < pc.extent; ++l) {
+        const float e = exp(pc.data.v[base + l * pc.inner] - top);
+        pc.data.v[base + l * pc.inner] = e;
+        sum += e;
+    }
+    const float inverse = 1.0 / sum;
+    for (uint l = 0u; l < pc.extent; ++l)
+        pc.data.v[base + l * pc.inner] *= inverse;
+}

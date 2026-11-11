@@ -38,6 +38,8 @@ public:
     static constexpr uint32_t context_samples = 64;
     /** Sample rate in Hz the network was trained and runs at. */
     static constexpr uint32_t sample_rate = 16000;
+    /** Width of the recurrent state the network holds for each chunk. */
+    static constexpr uint32_t hidden_width = 128;
 
     /**
      * @brief Check that a tensor set holds the weights the network needs.
@@ -112,6 +114,29 @@ public:
 
     /** @brief Probabilities the latest run left in probability_buffer. */
     [[nodiscard]] size_t resident_count() const noexcept;
+
+    /**
+     * @brief Where the recurrent output of the latest run is on the device.
+     *
+     * The buffer holds hidden_width float32 values per chunk, chunk after
+     * chunk: what the network knows about the stream at each chunk, from
+     * which its last layer derives the probability. It was trained only to
+     * tell speech from other sound, so nothing else is claimed of it. It is
+     * overwritten by the next run and follows the model when it grows.
+     */
+    [[nodiscard]] ProbabilityBuffer hidden_buffer();
+
+    /**
+     * @brief Keep the recurrent output of every chunk process and flush run, for take_hidden.
+     * @param keep Off by default. Turning it off discards what was kept.
+     */
+    void keep_hidden(bool keep);
+
+    /**
+     * @brief The recurrent output kept since the last call, hidden_width values per chunk, chunk after chunk.
+     * @return Empty unless keep_hidden is on. Chunks run by record are not kept.
+     */
+    [[nodiscard]] std::vector<float> take_hidden();
 
     /**
      * @brief Run the partial chunk, padded with zeros to a whole one.

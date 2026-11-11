@@ -33,6 +33,23 @@ const uint FLAG_RELU_INPUT = 2u;
 const uint ACT_SHIFT = 2u;
 const uint ACT_RELU = 1u;
 const uint ACT_SIGMOID = 2u;
+const uint ACT_GELU = 3u;
+
+const float INV_SQRT2 = 0.70710678118654752;
+
+float gelu(float x)
+{
+    const float z = abs(x) * INV_SQRT2;
+    const float t = 1.0 / (1.0 + 0.3275911 * z);
+    const float poly = t * (0.254829592 + t * (-0.284496736 + t * (1.421413741 + t * (-1.453152027 + t * 1.061405429))));
+    const float tail = 0.5 * poly * exp(-z * z);
+    return x * (x >= 0.0 ? 1.0 - tail : tail);
+}
+
+uint invocation_index()
+{
+    return gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * gl_NumWorkGroups.x * gl_WorkGroupSize.x;
+}
 
 /**
  * @brief Strided one dimensional convolution over [batch, c_in, t_in] into [batch, c_out, t_out].
@@ -40,11 +57,13 @@ const uint ACT_SIGMOID = 2u;
  * weights are [c_out, c_in, kernel_size]. The input is zero padded by pad on
  * both sides and tap k reads dilation * k samples past the window start; a
  * dilation of 0 reads as 1. flags: bit 0 adds bias, bit 1 applies ReLU to the
- * input, bits 2 and 3 pick the output activation (0 none, 1 ReLU, 2 sigmoid).
+ * input, bits 2 and 3 pick the output activation (0 none, 1 ReLU, 2 sigmoid,
+ * 3 GELU). Invocations are numbered along x and then y, so a dispatch too
+ * large for one axis is spread over two.
  */
 void main()
 {
-    const uint idx = gl_GlobalInvocationID.x;
+    const uint idx = invocation_index();
     if (idx >= pc.batch * pc.c_out * pc.t_out)
         return;
 
@@ -79,6 +98,8 @@ void main()
         acc = max(acc, 0.0);
     else if (activation == ACT_SIGMOID)
         acc = 1.0 / (1.0 + exp(-acc));
+    else if (activation == ACT_GELU)
+        acc = gelu(acc);
 
     pc.dst.v[idx] = acc;
 }

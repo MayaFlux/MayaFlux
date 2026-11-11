@@ -83,6 +83,8 @@ struct SileroVadModel::Impl {
     std::vector<float> pending;
     std::vector<float> tail;
     size_t resident { 0 };
+    bool keep_hidden { false };
+    std::vector<float> kept_hidden;
 
     Impl(TensorKernels::PackedWeights packed, std::shared_ptr<GpuDispatchRecorder> shared)
         : recording(shared ? std::move(shared) : std::make_shared<GpuDispatchRecorder>(true))
@@ -178,6 +180,11 @@ struct SileroVadModel::Impl {
 
         std::vector<float> probabilities(chunks);
         context->download_shared(0, Probability, probabilities.data(), probabilities.size() * sizeof(float));
+        if (keep_hidden) {
+            const size_t held = kept_hidden.size();
+            kept_hidden.resize(held + chunks * k_hidden);
+            context->download_shared(0, Hidden, kept_hidden.data() + held, chunks * k_hidden * sizeof(float));
+        }
         return probabilities;
     }
 
@@ -236,6 +243,25 @@ SileroVadModel::ProbabilityBuffer SileroVadModel::probability_buffer()
     return { .context = m_impl->context.get(), .set = 0, .binding = Probability };
 }
 
+SileroVadModel::ProbabilityBuffer SileroVadModel::hidden_buffer()
+{
+    m_impl->ensure_capacity(std::max<size_t>(m_impl->capacity, 1));
+    return { .context = m_impl->context.get(), .set = 0, .binding = Hidden };
+}
+
+void SileroVadModel::keep_hidden(bool keep)
+{
+    m_impl->keep_hidden = keep;
+    if (!keep) {
+        m_impl->kept_hidden.clear();
+    }
+}
+
+std::vector<float> SileroVadModel::take_hidden()
+{
+    return std::exchange(m_impl->kept_hidden, {});
+}
+
 size_t SileroVadModel::record(std::span<const float> samples)
 {
     m_impl->pending.insert(m_impl->pending.end(), samples.begin(), samples.end());
@@ -268,6 +294,7 @@ void SileroVadModel::reset()
     m_impl->tail.assign(context_samples, 0.0F);
     m_impl->clear_state();
     m_impl->resident = 0;
+    m_impl->kept_hidden.clear();
 }
 
 size_t SileroVadModel::pending() const noexcept

@@ -1,0 +1,53 @@
+#version 460
+#extension GL_EXT_buffer_reference : require
+
+layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
+
+layout(buffer_reference, std430) readonly buffer FloatRef {
+    float v[];
+};
+
+layout(buffer_reference, std430) buffer ResultRef {
+    float v[];
+};
+
+layout(push_constant) uniform PC {
+    FloatRef q;
+    FloatRef k;
+    ResultRef scores;
+    uint heads;
+    uint dim;
+    uint time;
+    float scale;
+} pc;
+
+uint invocation_index()
+{
+    return gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * gl_NumWorkGroups.x * gl_WorkGroupSize.x;
+}
+
+/**
+ * @brief Scaled dot products of every query with every key, per attention head.
+ *
+ * q and k are [heads * dim, time], head h owning channels h * dim onwards.
+ * scores is [heads, time, time]: scores[h, tq, tk] is scale times the dot
+ * product of query tq and key tk over the dim channels of head h.
+ */
+void main()
+{
+    const uint idx = invocation_index();
+    if (idx >= pc.heads * pc.time * pc.time)
+        return;
+
+    const uint tk = idx % pc.time;
+    const uint tq = (idx / pc.time) % pc.time;
+    const uint h = idx / (pc.time * pc.time);
+
+    float acc = 0.0;
+    const uint base = h * pc.dim * pc.time;
+    for (uint d = 0u; d < pc.dim; ++d) {
+        const uint row = base + d * pc.time;
+        acc += pc.q.v[row + tq] * pc.k.v[row + tk];
+    }
+    pc.scores.v[idx] = acc * pc.scale;
+}

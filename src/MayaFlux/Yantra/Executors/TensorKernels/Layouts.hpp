@@ -17,18 +17,35 @@ inline constexpr uint32_t element_workgroup = 64;
 inline constexpr uint32_t lstm_workgroup = 512;
 /** @brief Widest hidden state nn_lstm_sequence supports. */
 inline constexpr uint32_t lstm_max_hidden = 256;
+/** @brief Most workgroups the stages put on one axis; a larger dispatch continues along y. */
+inline constexpr uint32_t max_groups_per_axis = 32768;
 
 inline constexpr const char* frame_audio_shader = "nn_frame_audio.comp.spv";
 inline constexpr const char* conv1d_shader = "nn_conv1d.comp.spv";
 inline constexpr const char* magnitude_shader = "nn_magnitude.comp.spv";
 inline constexpr const char* lstm_sequence_shader = "nn_lstm_sequence.comp.spv";
+inline constexpr const char* grouped_conv1d_shader = "nn_conv1d_grouped.comp.spv";
+inline constexpr const char* normalize_shader = "nn_normalize.comp.spv";
+inline constexpr const char* add_shader = "nn_add.comp.spv";
+inline constexpr const char* attention_scores_shader = "nn_attention_scores.comp.spv";
+inline constexpr const char* softmax_shader = "nn_softmax.comp.spv";
+inline constexpr const char* attention_mix_shader = "nn_attention_mix.comp.spv";
 
 /** @brief nn_conv1d flag bit: add the bias. */
 inline constexpr uint32_t conv1d_flag_bias = 1;
 /** @brief nn_conv1d flag bit: apply ReLU to the input. */
 inline constexpr uint32_t conv1d_flag_relu_input = 2;
-/** @brief nn_conv1d flag bits 2 and 3: the output activation, 0 none, 1 ReLU, 2 sigmoid. */
+/** @brief nn_conv1d and nn_conv1d_grouped flag bits 2 and 3: the output activation, 0 none, 1 ReLU, 2 sigmoid, 3 GELU. */
 inline constexpr uint32_t conv1d_activation_shift = 2;
+
+/** @brief nn_normalize flag bit: write the normalised values instead of measuring the rows. */
+inline constexpr uint32_t normalize_flag_apply = 1;
+/** @brief nn_normalize flag bit: multiply by weight and add bias. */
+inline constexpr uint32_t normalize_flag_affine = 2;
+/** @brief nn_normalize flag bit: weight and bias are indexed by the outer index instead of the position along extent. */
+inline constexpr uint32_t normalize_flag_affine_outer = 4;
+/** @brief nn_normalize flag bits 3 and 4: the output activation, 0 none, 3 GELU. */
+inline constexpr uint32_t normalize_activation_shift = 3;
 
 /** @brief Push constants of nn_conv1d. */
 struct Conv1dPC {
@@ -81,7 +98,86 @@ struct LstmPC {
     uint32_t hidden;
 };
 
+/** @brief Push constants of nn_conv1d_grouped. */
+struct GroupedConv1dPC {
+    uint64_t src;
+    uint64_t weights;
+    uint64_t bias;
+    uint64_t dst;
+    uint32_t batch;
+    uint32_t c_in;
+    uint32_t t_in;
+    uint32_t c_out;
+    uint32_t t_out;
+    uint32_t kernel_size;
+    uint32_t stride;
+    uint32_t pad;
+    uint32_t flags;
+    uint32_t groups;
+};
+
+/** @brief Push constants of nn_normalize. */
+struct NormalizePC {
+    uint64_t src;
+    uint64_t stats;
+    uint64_t weight;
+    uint64_t bias;
+    uint64_t dst;
+    uint32_t outer;
+    uint32_t extent;
+    uint32_t inner;
+    float epsilon;
+    uint32_t flags;
+    uint32_t reserved;
+};
+
+/** @brief Push constants of nn_add. */
+struct AddPC {
+    uint64_t a;
+    uint64_t b;
+    uint64_t dst;
+    uint32_t count;
+    uint32_t reserved;
+};
+
+/** @brief Push constants of nn_attention_scores. */
+struct AttentionScoresPC {
+    uint64_t q;
+    uint64_t k;
+    uint64_t scores;
+    uint32_t heads;
+    uint32_t dim;
+    uint32_t time;
+    float scale;
+};
+
+/** @brief Push constants of nn_softmax. */
+struct SoftmaxPC {
+    uint64_t data;
+    uint32_t outer;
+    uint32_t extent;
+    uint32_t inner;
+    uint32_t reserved;
+};
+
+/** @brief Push constants of nn_attention_mix. */
+struct AttentionMixPC {
+    uint64_t weights;
+    uint64_t v;
+    uint64_t dst;
+    uint32_t heads;
+    uint32_t dim;
+    uint32_t time;
+    uint32_t reserved;
+};
+
 static_assert(sizeof(Conv1dPC) == 72);
+static_assert(sizeof(GroupedConv1dPC) == 72);
+static_assert(sizeof(NormalizePC) == 64);
+static_assert(sizeof(AddPC) == 32);
+static_assert(sizeof(AttentionScoresPC) == 40);
+static_assert(sizeof(SoftmaxPC) == 24);
+static_assert(sizeof(AttentionMixPC) == 40);
 static_assert(sizeof(FrameAudioPC) == 32);
 static_assert(sizeof(MagnitudePC) == 32);
 static_assert(sizeof(LstmPC) == 64);

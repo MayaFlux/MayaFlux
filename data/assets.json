@@ -26,6 +26,39 @@
         "spdx": "MIT",
         "notice": "tensors/silero/LICENSE"
       }
+    },
+    {
+      "id": "hubert_phoneme_en",
+      "description": "HuBERT base network fine tuned for English phoneme recognition at 16 kHz, used by PhonemeAnalyzer.",
+      "source": {
+        "kind": "huggingface",
+        "repo": "Peacockery/hubert-base-phoneme-en",
+        "ref": "132c3327b3150dc081f14035e1d31adb6db5074a"
+      },
+      "files": [
+        {
+          "from": "model.safetensors",
+          "to": "tensors/hubert_phoneme/hubert_base_phoneme_en.safetensors",
+          "sha256": "e7d96d8777cd5f6061851a38eab4f42526d14ffbb71b30419791e6dc6b7c4042",
+          "size_bytes": 377641332
+        },
+        {
+          "from": "config.json",
+          "to": "tensors/hubert_phoneme/config.json"
+        },
+        {
+          "from": "vocab.json",
+          "to": "tensors/hubert_phoneme/vocab.json"
+        },
+        {
+          "from": "README.md",
+          "to": "tensors/hubert_phoneme/MODEL_CARD.md"
+        }
+      ],
+      "license": {
+        "spdx": "Apache-2.0",
+        "notice": "tensors/hubert_phoneme/MODEL_CARD.md"
+      }
     }
   ]
 }
