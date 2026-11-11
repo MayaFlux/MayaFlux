@@ -13,6 +13,23 @@ class GpuDispatchCore;
 class GpuDispatchRecorder;
 
 /**
+ * @struct PhonemeVocabulary
+ * @brief The classes of a phoneme network: their names, how many are phonemes, the blank class, and the vowels.
+ *
+ * The views refer to static tables and stay valid for the program's lifetime.
+ */
+struct PhonemeVocabulary {
+    /** Name of each class, as HubertPhonemeModel::label gives it. */
+    std::span<const std::string_view> labels;
+    /** Classes 0 to phonemes - 1 are phonemes. */
+    uint32_t phonemes;
+    /** Class the network emits between phonemes. */
+    uint32_t blank;
+    /** Classes that are vowel phonemes, as HubertPhonemeModel::is_vowel gives them. */
+    std::span<const uint32_t> vowels;
+};
+
+/**
  * @class HubertPhonemeModel
  * @brief HuBERT base fine tuned for English phonemes at 16 kHz: an utterance in, a distribution over phonemes per frame out.
  *
@@ -69,6 +86,9 @@ public:
 
     /** @brief Whether a class is a vowel phoneme. Diphthongs and the r coloured vowel count. */
     [[nodiscard]] static bool is_vowel(uint32_t index) noexcept;
+
+    /** @brief The vocabulary of this network: the names, the phoneme count, the blank class and the vowels. */
+    [[nodiscard]] static PhonemeVocabulary vocabulary() noexcept;
 
     /** @brief Frames an utterance of this many samples gives, 0 below frame_span samples. */
     [[nodiscard]] static uint32_t frame_count(size_t samples) noexcept;

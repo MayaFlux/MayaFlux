@@ -41,14 +41,15 @@ struct VadAnalyzerConfig : AnalyzerConfig {
 
     VadAnalyzerConfig()
     {
-        window_size = SileroVadModel::chunk_samples;
-        hop_size = SileroVadModel::chunk_samples;
+        const auto framing = SileroVadModel::framing();
+        window_size = framing.chunk_samples;
+        hop_size = framing.chunk_samples;
     }
 
     /** Also run the partial chunk left at the end of each call, padded with zeros. Off for a stream, on for a whole clip. */
     bool flush_tail { false };
     /** Sample rate in Hz of the input. The network runs at 16000 only, so any other value is refused. */
-    double sample_rate { static_cast<double>(SileroVadModel::sample_rate) };
+    double sample_rate { static_cast<double>(SileroVadModel::framing().sample_rate) };
     /** Also read back the network's recurrent output of every chunk, SileroVadModel::hidden_width values each. */
     bool keep_embeddings { false };
 };
@@ -146,9 +147,10 @@ public:
      */
     [[nodiscard]] static std::string diagnose(const VadAnalyzerConfig& config)
     {
-        if (config.sample_rate != static_cast<double>(SileroVadModel::sample_rate)) {
+        const auto framing = SileroVadModel::framing();
+        if (config.sample_rate != static_cast<double>(framing.sample_rate)) {
             return std::format("sample_rate {} is not the {} Hz the network runs at; convert the input first, for example with Kinesis::Discrete::Resampler",
-                config.sample_rate, SileroVadModel::sample_rate);
+                config.sample_rate, framing.sample_rate);
         }
         return {};
     }

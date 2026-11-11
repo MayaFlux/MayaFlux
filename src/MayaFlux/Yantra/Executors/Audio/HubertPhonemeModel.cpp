@@ -403,6 +403,11 @@ bool HubertPhonemeModel::is_vowel(uint32_t index) noexcept
     return std::ranges::find(k_vowels, index) != k_vowels.end();
 }
 
+PhonemeVocabulary HubertPhonemeModel::vocabulary() noexcept
+{
+    return { k_labels, phonemes, blank_class, k_vowels };
+}
+
 uint32_t HubertPhonemeModel::frame_count(size_t samples) noexcept
 {
     if (samples < frame_span || samples > std::numeric_limits<uint32_t>::max()) {

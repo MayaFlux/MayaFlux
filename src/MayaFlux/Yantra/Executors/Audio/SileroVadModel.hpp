@@ -13,6 +13,21 @@ class GpuDispatchCore;
 class GpuDispatchRecorder;
 
 /**
+ * @struct StreamFraming
+ * @brief How a stream classifier cuts its input: sample rate, chunk length, the context carried into each chunk, and the recurrent state width.
+ */
+struct StreamFraming {
+    /** Sample rate in Hz the network runs at. */
+    uint32_t sample_rate;
+    /** Samples in one chunk, one output per chunk. */
+    uint32_t chunk_samples;
+    /** Samples before a chunk that are carried in as context. */
+    uint32_t context_samples;
+    /** Width of the recurrent state kept for each chunk. */
+    uint32_t hidden_width;
+};
+
+/**
  * @class SileroVadModel
  * @brief Silero VAD at 16 kHz as a stream: samples in, one speech probability per chunk out.
  *
@@ -40,6 +55,9 @@ public:
     static constexpr uint32_t sample_rate = 16000;
     /** Width of the recurrent state the network holds for each chunk. */
     static constexpr uint32_t hidden_width = 128;
+
+    /** @brief The framing of this network. VadAnalyzer reads its window, hop and rate from it. */
+    [[nodiscard]] static StreamFraming framing() noexcept;
 
     /**
      * @brief Check that a tensor set holds the weights the network needs.

@@ -208,6 +208,11 @@ std::string SileroVadModel::diagnose(const Kakshya::TensorSet& weights)
     return TensorKernels::check_tensors(weights, slot_specs());
 }
 
+StreamFraming SileroVadModel::framing() noexcept
+{
+    return { sample_rate, chunk_samples, context_samples, hidden_width };
+}
+
 SileroVadModel::SileroVadModel(const Kakshya::TensorSet& weights)
     : SileroVadModel(weights, nullptr)
 {
