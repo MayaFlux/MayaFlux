@@ -2001,6 +2001,10 @@ std::string emit_glsl_kernel(const ShaderSpec& spec)
         o += "} pc;\n";
     }
 
+    if (!spec.glsl_preamble.empty()) {
+        o += "\n" + spec.glsl_preamble + "\n";
+    }
+
     for (const auto& f : spec.functions) {
         o += "\n" + f.return_type + " " + f.name + "(" + f.params + ") {\n";
         o += f.body;

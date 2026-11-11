@@ -463,6 +463,7 @@ struct ShaderSpec {
     std::array<uint32_t, 3> workgroup_size { 256, 1, 1 };
     uint32_t push_constant_bytes { 0 };
     std::vector<FunctionDef> functions; ///< Emitted before main(). GLSL path only.
+    std::string glsl_preamble; ///< Global declarations emitted before the functions, such as shared arrays. GLSL path only.
     std::optional<KernelSource> kernel; ///< When set, KernelOp is ignored.
 
     /**
@@ -649,6 +650,18 @@ struct ShaderSpec {
         }
 
         /**
+         * @brief Declare global GLSL text emitted after the push constants and before the functions.
+         *
+         * For declarations a function cannot hold, such as shared memory arrays.
+         * Requires a kernel supplied via MF_KERNEL.
+         */
+        Assemble& preamble(std::string text)
+        {
+            m_preamble = std::move(text);
+            return *this;
+        }
+
+        /**
          * @brief Supply a user kernel via MF_KERNEL. When set, KernelOp is ignored.
          * @param ks KernelSource produced by MF_KERNEL. If its param_names is
          *        empty, build() fills it from the declared bindings, then the
@@ -690,6 +703,7 @@ struct ShaderSpec {
                 .workgroup_size = m_workgroup,
                 .push_constant_bytes = pc_bytes,
                 .functions = std::move(m_functions),
+                .glsl_preamble = std::move(m_preamble),
                 .kernel = std::move(m_kernel),
             };
         }
@@ -710,6 +724,7 @@ struct ShaderSpec {
         uint32_t m_set { 0 };
         uint32_t m_next_binding { 0 };
         std::vector<FunctionDef> m_functions;
+        std::string m_preamble;
         std::optional<KernelSource> m_kernel;
     };
 };
