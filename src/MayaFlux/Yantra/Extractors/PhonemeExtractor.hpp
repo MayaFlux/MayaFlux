@@ -28,6 +28,31 @@ enum class PhonemeSelection : uint8_t {
 };
 
 /**
+ * @struct VoicingGate
+ * @brief Trims vowel ranges to the stretches where the waveform is periodic.
+ *
+ * Vowels are periodic and most consonants are not, so a vowel range that
+ * strays into a burst or a fricative loses that part. A voiced consonant such
+ * as m or n is periodic too and is not removed. Off by default, because it
+ * runs a waveform analysis over the whole recording. It acts on the audio and
+ * region outputs when the selection is VOWELS; records, which describe what
+ * was recognised, and the other selections are not changed.
+ *
+ * A window is voiced when its periodicity, divided by the share of pairs its
+ * lag can pair, is at least threshold. A voiced window stands for the hop
+ * samples around its centre, so a smaller hop gives finer edges at more cost.
+ * The threshold is a starting choice, not a measured one.
+ */
+struct VoicingGate {
+    /** Trim vowel ranges to voiced stretches. */
+    bool enabled { false };
+    /** Periodicity at or above which a window is voiced. */
+    double threshold { 0.5 };
+    /** Samples between waveform windows. */
+    uint32_t hop { 64 };
+};
+
+/**
  * @struct PhonemeExtractorConfig
  * @brief Settings of a PhonemeExtractor.
  *
@@ -35,7 +60,7 @@ enum class PhonemeSelection : uint8_t {
  * as the networks run at that rate only. speech is passed to the
  * SpeechSegmenter, except that max_run is held to what one call of the phoneme
  * network accepts and measure is ignored. merge_adjacent joins output ranges
- * that touch, for slicing.
+ * that touch, for slicing. gate trims vowel ranges to voiced stretches.
  */
 struct PhonemeExtractorConfig : ExtractorConfig {
     static constexpr auto describe_facets()
@@ -47,6 +72,7 @@ struct PhonemeExtractorConfig : ExtractorConfig {
                 FacetMember<&PhonemeExtractorConfig::sample_rate> {},
                 FacetMember<&PhonemeExtractorConfig::merge_adjacent> {},
                 FacetMember<&PhonemeExtractorConfig::speech> {},
+                FacetMember<&PhonemeExtractorConfig::gate> {},
             });
     }
 
@@ -58,6 +84,8 @@ struct PhonemeExtractorConfig : ExtractorConfig {
     bool merge_adjacent { false };
     /** How speech is found. */
     SpeechSettings speech {};
+    /** Trims vowel ranges to voiced stretches. */
+    VoicingGate gate {};
 };
 
 /**
@@ -96,6 +124,7 @@ struct MAYAFLUX_API PhonemeExtraction {
             FacetMember<&PhonemeExtraction::speech> {},
             FacetMember<&PhonemeExtraction::events> {},
             FacetMember<&PhonemeExtraction::segments> {},
+            FacetMember<&PhonemeExtraction::voiced> {},
         };
     }
 
@@ -107,6 +136,8 @@ struct MAYAFLUX_API PhonemeExtraction {
     std::vector<PhonemeEvent> events;
     /** For each event, the index of the speech interval it lies in. */
     std::vector<uint32_t> segments;
+    /** Voiced stretches of the recording, filled only when the gate trimmed vowels. */
+    std::vector<std::pair<size_t, size_t>> voiced;
 };
 
 /**
@@ -180,6 +211,9 @@ public:
      */
     [[nodiscard]] static std::string diagnose(const PhonemeExtractorConfig& config)
     {
+        if (config.gate.enabled && (!std::isfinite(config.gate.threshold) || config.gate.threshold <= 0.0 || config.gate.hop == 0)) {
+            return "gate threshold must be finite and greater than 0, and its hop greater than 0";
+        }
         return SpeechSegmenter<>::diagnose(speech_segmenter_config(config));
     }
 
@@ -238,6 +272,9 @@ protected:
             if (!samples.empty()) {
                 record.speech = m_speech.segment(samples, speech_segmenter_config(cfg)).speech;
                 recognise_phonemes(samples, record);
+                if (gate_applies(cfg)) {
+                    record.voiced = find_voiced(samples, cfg);
+                }
             }
 
             const auto rows = selected_rows(record);
@@ -262,6 +299,46 @@ private:
         settings.method = PhonemeMethod::HELD_CLASSES;
         settings.sample_rate = config.sample_rate;
         return settings;
+    }
+
+    static bool gate_applies(const PhonemeExtractorConfig& cfg)
+    {
+        return cfg.gate.enabled && static_cast<PhonemeSelection>(cfg.method) == PhonemeSelection::VOWELS;
+    }
+
+    std::vector<std::pair<size_t, size_t>> find_voiced(std::span<const double> samples, const PhonemeExtractorConfig& cfg)
+    {
+        if (!m_waveform || m_waveform_hop != cfg.gate.hop) {
+            m_waveform.emplace(voicing_analyzer_config(cfg.sample_rate, cfg.gate.hop));
+            m_waveform_hop = cfg.gate.hop;
+        }
+        return voiced_intervals(*m_waveform, samples, cfg.gate.threshold, cfg.gate.hop);
+    }
+
+    struct Piece {
+        size_t start;
+        size_t end;
+        size_t row;
+    };
+
+    static std::vector<Piece> pieces_of(const PhonemeExtraction& record, const std::vector<size_t>& rows)
+    {
+        const bool gated = gate_applies(record.config);
+        std::vector<Piece> pieces;
+        for (const size_t row : rows) {
+            const auto& event = record.events[row];
+            if (event.end <= event.start) {
+                continue;
+            }
+            if (!gated) {
+                pieces.push_back({ event.start, event.end, row });
+                continue;
+            }
+            for (const auto& [start, end] : Kinesis::Discrete::intersect_intervals({ { event.start, event.end } }, record.voiced)) {
+                pieces.push_back({ start, end, row });
+            }
+        }
+        return pieces;
     }
 
     void recognise_phonemes(std::span<const double> samples, PhonemeExtraction& record)
@@ -342,12 +419,9 @@ private:
             return output;
         } else if constexpr (std::is_same_v<OutputType, Kakshya::RegionGroup>) {
             Kakshya::RegionGroup group("phonemes");
-            for (const size_t row : rows) {
-                const auto& event = record.events[row];
-                if (event.end <= event.start) {
-                    continue;
-                }
-                auto region = Kakshya::Region::audio_span(event.start, event.end - 1, 0, 0,
+            for (const auto& piece : pieces_of(record, rows)) {
+                const auto& event = record.events[piece.row];
+                auto region = Kakshya::Region::audio_span(piece.start, piece.end - 1, 0, 0,
                     std::string(HubertPhonemeModel::label(event.phoneme)));
                 region.set(phoneme_probability, static_cast<double>(event.probability));
                 region.set(phoneme_class, event.phoneme);
@@ -358,11 +432,8 @@ private:
             return output;
         } else {
             std::vector<std::pair<size_t, size_t>> ranges;
-            for (const size_t row : rows) {
-                const auto& event = record.events[row];
-                if (event.end > event.start) {
-                    ranges.emplace_back(event.start, event.end);
-                }
+            for (const auto& piece : pieces_of(record, rows)) {
+                ranges.emplace_back(piece.start, piece.end);
             }
             if (record.config.merge_adjacent) {
                 ranges = Kinesis::Discrete::merge_intervals(ranges);
@@ -374,6 +445,8 @@ private:
 
     RegionSpeechSegmenter m_speech;
     StandardPhonemeAnalyzer m_phonemes;
+    std::optional<StandardWaveformAnalyzer> m_waveform;
+    uint32_t m_waveform_hop { 0 };
 };
 
 /// Records: one Composite record per selected phoneme

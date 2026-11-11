@@ -43,6 +43,16 @@ namespace MayaFlux::Kinesis::Discrete {
     const std::vector<std::pair<size_t, size_t>>& intervals);
 
 /**
+ * @brief Parts covered by both of two sets of half-open intervals
+ * @param first Unsorted [start, end) pairs
+ * @param second Unsorted [start, end) pairs
+ * @return Sorted, non-overlapping [start, end) pairs, each inside both sets
+ */
+[[nodiscard]] MAYAFLUX_API std::vector<std::pair<size_t, size_t>> intersect_intervals(
+    const std::vector<std::pair<size_t, size_t>>& first,
+    const std::vector<std::pair<size_t, size_t>>& second);
+
+/**
  * @brief Copy data from a set of half-open intervals into a flat vector
  * @param data Source span
  * @param intervals Sorted, non-overlapping [start, end) pairs

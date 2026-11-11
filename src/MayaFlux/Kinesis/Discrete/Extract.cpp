@@ -36,6 +36,30 @@ std::vector<std::pair<size_t, size_t>> merge_intervals(
     return merged;
 }
 
+std::vector<std::pair<size_t, size_t>> intersect_intervals(
+    const std::vector<std::pair<size_t, size_t>>& first,
+    const std::vector<std::pair<size_t, size_t>>& second)
+{
+    const auto a = merge_intervals(first);
+    const auto b = merge_intervals(second);
+    std::vector<std::pair<size_t, size_t>> out;
+    size_t i = 0;
+    size_t j = 0;
+    while (i < a.size() && j < b.size()) {
+        const size_t lo = std::max(a[i].first, b[j].first);
+        const size_t hi = std::min(a[i].second, b[j].second);
+        if (lo < hi) {
+            out.emplace_back(lo, hi);
+        }
+        if (a[i].second < b[j].second) {
+            ++i;
+        } else {
+            ++j;
+        }
+    }
+    return out;
+}
+
 std::vector<double> slice_intervals(
     std::span<const double> data,
     const std::vector<std::pair<size_t, size_t>>& intervals)

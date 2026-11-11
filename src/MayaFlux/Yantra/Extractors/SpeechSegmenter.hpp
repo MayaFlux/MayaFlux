@@ -136,16 +136,50 @@ struct SpeechVoicing {
 };
 
 /**
- * @brief The waveform analyzer settings the voicing measure uses at the given rate.
+ * @brief The waveform analyzer settings the voicing measure uses at the given rate and hop.
  *
  * Unbiased periodicity, so that one voicing threshold serves every pitch.
  */
-[[nodiscard]] inline WaveformAnalyzerConfig voicing_analyzer_config(double sample_rate)
+[[nodiscard]] inline WaveformAnalyzerConfig voicing_analyzer_config(double sample_rate, uint32_t hop = 256)
 {
     WaveformAnalyzerConfig settings;
     settings.sample_rate = sample_rate;
+    settings.hop_size = hop;
     settings.unbiased_periodicity = true;
     return settings;
+}
+
+/**
+ * @brief The stretches of a recording where the waveform is voiced.
+ * @param analyzer Analyzer built from voicing_analyzer_config with the same hop.
+ * @param samples One channel of samples.
+ * @param threshold Periodicity at or above which a window is voiced.
+ * @param hop Hop of the analyzer. Each voiced window stands for the hop samples around its centre.
+ * @return Sorted [start, end) pairs, voiced windows that touch joined.
+ */
+[[nodiscard]] inline std::vector<std::pair<size_t, size_t>> voiced_intervals(StandardWaveformAnalyzer& analyzer,
+    std::span<const double> samples, double threshold, uint32_t hop)
+{
+    if (samples.size() < WaveformAnalyzerConfig {}.window_size || hop == 0) {
+        return {};
+    }
+    const auto analysis = analyzer.analyze_waveform(
+        std::vector<Kakshya::DataVariant> { std::vector<double>(samples.begin(), samples.end()) });
+    if (analysis.channels.empty()) {
+        return {};
+    }
+    const auto& waveform = analysis.channels[0];
+
+    std::vector<size_t> cells;
+    for (size_t window = 0; window < waveform.periodicity.size() && window < waveform.window_positions.size(); ++window) {
+        if (waveform.periodicity[window] >= threshold) {
+            const auto& [first, last] = waveform.window_positions[window];
+            const size_t centre = (first + last) / 2;
+            cells.push_back(centre >= hop / 2 ? centre - hop / 2 : 0);
+        }
+    }
+    return Kinesis::Discrete::merge_intervals(
+        Kinesis::Discrete::intervals_from_window_starts(cells, hop, samples.size()));
 }
 
 /**
