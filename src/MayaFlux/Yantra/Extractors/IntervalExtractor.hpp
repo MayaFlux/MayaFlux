@@ -312,6 +312,107 @@ public:
     }
 
     /**
+     * @brief Append to a recording the caller shares with other work.
+     *
+     * With a shared recording the extractor's scan goes to the device in the
+     * same submission as the work that produced its scores. Call it before
+     * anything creates the extractor's context, that is before the first
+     * extraction or bind. The recording must be compute isolated.
+     *
+     * @throws std::logic_error when the extractor has already started.
+     */
+    void share_recording(std::shared_ptr<GpuDispatchRecorder> recording)
+    {
+        if (m_context) {
+            error<std::logic_error>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+                std::source_location::current(), "The recording can only be shared before the extractor starts");
+        }
+        m_recording = std::move(recording);
+    }
+
+    /**
+     * @brief Read the scores of a channel from a device buffer instead of uploading them.
+     *
+     * The buffer holds float32 scores and belongs to a context on the same
+     * recording, for instance SileroVadModel::probability_buffer. The scan then
+     * reads it in place. Run it with submit_resident or extract_resident.
+     *
+     * @param channel Channel whose scores the buffer holds.
+     * @param source Context that owns the buffer.
+     * @param set Set of the buffer.
+     * @param binding Binding of the buffer.
+     * @throws std::invalid_argument when the buffer is missing, not float32 sized, or on another recording.
+     */
+    void bind_scores(size_t channel, const GpuDispatchCore& source, uint32_t set, size_t binding)
+    {
+        ensure_context();
+        m_context->import_shared(0, binding_of(channel, Scores), source, set, binding, GpuBufferBinding::ElementType::FLOAT32);
+        if (m_resident.size() <= channel) {
+            m_resident.resize(channel + 1, false);
+        }
+        m_resident[channel] = true;
+    }
+
+    /**
+     * @brief Read the gate scores from a device buffer, as bind_scores does for a channel.
+     */
+    void bind_gate(const GpuDispatchCore& source, uint32_t set, size_t binding)
+    {
+        ensure_context();
+        m_context->import_shared(0, k_gate_binding, source, set, binding, GpuBufferBinding::ElementType::FLOAT32);
+        m_resident_gate = true;
+    }
+
+    /**
+     * @brief Record and submit an extraction over scores already on the device, without waiting.
+     *
+     * Everything recorded so far on the shared recording goes in the same
+     * submission, so a network recorded just before this call and the scan run
+     * together. Poll ready and collect as for submit.
+     *
+     * @param counts Number of scores in each bound channel for this call.
+     * @return False when an earlier submission has not been collected, or the call could not be recorded.
+     */
+    bool submit_resident(std::span<const uint32_t> counts)
+    {
+        if (m_outstanding) {
+            return false;
+        }
+        try {
+            const auto& cfg = this->template config<IntervalExtractorConfig>();
+            auto calls = record_resident(counts, cfg);
+            m_outstanding = Outstanding { .calls = std::move(calls), .config = cfg, .fence = m_recording->submit() };
+            return true;
+        } catch (const std::exception& e) {
+            MF_ERROR(Journal::Component::Yantra, Journal::Context::ComputeMatrix, "Interval submit failed: {}", e.what());
+            return false;
+        }
+    }
+
+    /**
+     * @brief Extraction over scores already on the device, waiting for the result.
+     * @param counts Number of scores in each bound channel for this call.
+     * @return The intervals completed by this call.
+     */
+    IntervalExtraction extract_resident(std::span<const uint32_t> counts)
+    {
+        if (m_outstanding) {
+            error<std::logic_error>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+                std::source_location::current(), "An earlier submit has not been collected");
+        }
+        const auto& cfg = this->template config<IntervalExtractorConfig>();
+        const auto calls = record_resident(counts, cfg);
+
+        IntervalExtraction record;
+        record.config = cfg;
+        record.channels.resize(counts.size());
+        for (size_t channel = 0; channel < counts.size(); ++channel) {
+            record.channels[channel] = read_channel(channel, calls[channel]);
+        }
+        return record;
+    }
+
+    /**
      * @brief True while a submission is outstanding and not yet collected.
      */
     [[nodiscard]] bool pending() const
@@ -474,6 +575,8 @@ private:
     mutable std::unique_ptr<ShaderExecutionContext<>> m_context;
     std::vector<uint32_t> m_seen;
     std::vector<bool> m_started;
+    std::vector<bool> m_resident;
+    bool m_resident_gate { false };
     std::vector<ChannelCall> m_last_calls;
     std::optional<Outstanding> m_outstanding;
 
@@ -507,7 +610,45 @@ private:
                 error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
                     std::source_location::current(), "Gate column has {} scores and column {} has {}", gate.size(), channel, scores.size());
             }
-            calls[channel] = record_channel(channel, scores, gates_this, scan, cfg.flush, stages);
+            calls[channel] = record_channel(channel, scores, false, 0, gates_this, scan, cfg.flush, stages);
+        }
+        if (!stages.empty()) {
+            m_context->record_stages(stages);
+        }
+        m_last_calls = calls;
+        return calls;
+    }
+
+    std::vector<ChannelCall> record_resident(std::span<const uint32_t> counts, const IntervalExtractorConfig& cfg)
+    {
+        ensure_context();
+        if (m_seen.size() != counts.size()) {
+            m_seen.assign(counts.size(), 0);
+            m_started.assign(counts.size(), false);
+        }
+
+        for (size_t channel = 0; channel < counts.size(); ++channel) {
+            if (channel >= m_resident.size() || !m_resident[channel]) {
+                error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+                    std::source_location::current(), "Channel {} has no device scores bound", channel);
+            }
+        }
+        const bool gated = cfg.gate_channel != IntervalExtractorConfig::no_channel;
+        if (gated && cfg.gate_channel >= counts.size()) {
+            error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+                std::source_location::current(), "Gate channel {} is not a channel of the {} given", cfg.gate_channel, counts.size());
+        }
+        if (gated && !m_resident_gate) {
+            error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+                std::source_location::current(), "The gate has no device scores bound");
+        }
+
+        const auto scan = scan_config(cfg);
+        std::vector<DependencyStage> stages;
+        std::vector<ChannelCall> calls(counts.size());
+        for (size_t channel = 0; channel < counts.size(); ++channel) {
+            const bool gates_this = gated && channel != cfg.gate_channel;
+            calls[channel] = record_channel(channel, {}, true, counts[channel], gates_this, scan, cfg.flush, stages);
         }
         if (!stages.empty()) {
             m_context->record_stages(stages);
@@ -554,7 +695,9 @@ private:
         if (m_context) {
             return;
         }
-        m_recording = std::make_shared<GpuDispatchRecorder>(true);
+        if (!m_recording) {
+            m_recording = std::make_shared<GpuDispatchRecorder>(true);
+        }
         m_context = std::make_unique<ShaderExecutionContext<>>(
             GpuComputeConfig { .shader_path = interval_scan_shader, .workgroup_size = { 1, 1, 1 }, .push_constant_size = sizeof(IntervalScanPC) });
         m_context->set_recording(m_recording);
@@ -574,16 +717,16 @@ private:
         }
     }
 
-    ChannelCall record_channel(size_t channel, std::span<const double> scores, bool gated,
-        const Kinesis::Discrete::IntervalScanConfig& scan, bool flush, std::vector<DependencyStage>& stages)
+    ChannelCall record_channel(size_t channel, std::span<const double> scores, bool resident, uint32_t resident_count,
+        bool gated, const Kinesis::Discrete::IntervalScanConfig& scan, bool flush, std::vector<DependencyStage>& stages)
     {
-        if (scores.empty() && !flush) {
+        const auto n = resident ? resident_count : static_cast<uint32_t>(scores.size());
+        if (n == 0 && !flush) {
             return {};
         }
 
         using Portal::Graphics::BufferUsageHint;
         constexpr auto word = GpuBufferBinding::ElementType::UINT32;
-        const auto n = static_cast<uint32_t>(scores.size());
         const size_t scores_binding = binding_of(channel, Scores);
         const size_t runs_binding = binding_of(channel, Runs);
         const size_t report_binding = binding_of(channel, Report);
@@ -599,7 +742,7 @@ private:
             m_context->upload_shared_raw(0, state_binding, reinterpret_cast<const uint8_t*>(zeros.data()), zeros.size() * sizeof(uint32_t));
             m_started[channel] = true;
         }
-        if (n > 0) {
+        if (!resident && n > 0) {
             const std::vector<float> floats(scores.begin(), scores.end());
             m_context->upload_shared_raw(0, scores_binding, reinterpret_cast<const uint8_t*>(floats.data()), floats.size() * sizeof(float));
         }

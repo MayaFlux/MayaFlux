@@ -519,6 +519,144 @@ namespace {
             return declarations() + globals + m_text;
         }
 
+        [[nodiscard]] std::string segmented_argmax(const ShaderSpec& spec)
+        {
+            const uint32_t local = spec.workgroup_size[0];
+            const std::string& values = spec.bindings[0].name;
+            const std::string& result = spec.bindings[1].name;
+
+            k(local);
+
+            const auto load_global = [this](const std::string& binding, const Id& index) {
+                const Id pointer = ins("%pelem_" + binding, "OpAccessChain", { "%buf_" + binding, "%c0u", index });
+                return ins("%v2u32", "OpLoad", { pointer });
+            };
+            const auto store_global = [this](const std::string& binding, const Id& index, const Id& value) {
+                const Id pointer = ins("%pelem_" + binding, "OpAccessChain", { "%buf_" + binding, "%c0u", index });
+                m_text += "OpStore " + pointer + " " + value + "\n";
+            };
+            const auto load_value = [this](const Id& index) {
+                const Id pointer = ins("%am_p_sh_v2", "OpAccessChain", { "%am_shared_v", index });
+                return ins("%v2u32", "OpLoad", { pointer });
+            };
+            const auto store_value = [this](const Id& index, const Id& value) {
+                const Id pointer = ins("%am_p_sh_v2", "OpAccessChain", { "%am_shared_v", index });
+                m_text += "OpStore " + pointer + " " + value + "\n";
+            };
+            const auto load_at = [this](const Id& index) {
+                const Id pointer = ins("%am_p_sh_u32", "OpAccessChain", { "%am_shared_i", index });
+                return ins("%u32", "OpLoad", { pointer });
+            };
+            const auto store_at = [this](const Id& index, const Id& value) {
+                const Id pointer = ins("%am_p_sh_u32", "OpAccessChain", { "%am_shared_i", index });
+                m_text += "OpStore " + pointer + " " + value + "\n";
+            };
+            const auto push_constant = [this](uint32_t member) {
+                const Id pointer = ins("%ppc_u32", "OpAccessChain", { "%pc", k(member) });
+                return ins("%u32", "OpLoad", { pointer });
+            };
+            const auto barrier = [this] {
+                m_text += "OpControlBarrier " + k(2) + " " + k(2) + " " + k(264) + "\n";
+            };
+            const auto choose = [this](const Id& condition, const Id& a, const Id& b) {
+                const Word64 wa = unpack(a);
+                const Word64 wb = unpack(b);
+                return pair(sel(condition, wa.lo, wb.lo), sel(condition, wa.hi, wb.hi));
+            };
+
+            m_text += "%main = OpFunction %void None %voidfn\n";
+            m_text += "%entry = OpLabel\n";
+            m_text += "%am_best = OpVariable %am_pf_v2 Function\n";
+            m_text += "%am_at = OpVariable %am_pf_u32 Function\n";
+            m_text += "%am_k = OpVariable %am_pf_u32 Function\n";
+
+            const Id local_id = ins("%u32", "OpCompositeExtract", { ins("%v3u32", "OpLoad", { "%lid_var" }), "0" });
+            const Id segment = ins("%u32", "OpCompositeExtract", { ins("%v3u32", "OpLoad", { "%wgid_var" }), "0" });
+            const Id length = push_constant(0);
+            const Id stride = push_constant(1);
+            const Id offset = push_constant(2);
+            const Id base = add(offset, word("OpIMul", segment, stride));
+
+            m_text += "OpStore %am_best " + pair(k(0), k(2146959360)) + "\n";
+            m_text += "OpStore %am_at " + k(4294967295) + "\n";
+            m_text += "OpStore %am_k " + local_id + "\n";
+            m_text += "OpBranch %am_h\n";
+            m_text += "%am_h = OpLabel\n";
+            m_text += "OpLoopMerge %am_m %am_c None\n";
+            m_text += "OpBranch %am_t\n";
+            m_text += "%am_t = OpLabel\n";
+            const Id index = ins("%u32", "OpLoad", { "%am_k" });
+            const Id more = ult(index, length);
+            m_text += "OpBranchConditional " + more + " %am_b %am_m\n";
+            m_text += "%am_b = OpLabel\n";
+            const Id element = load_global(values, add(base, index));
+            const Id current = ins("%v2u32", "OpLoad", { "%am_best" });
+            const Id take = ult64(argmax_key(unpack(current)), argmax_key(unpack(element)));
+            m_text += "OpStore %am_best " + choose(take, element, current) + "\n";
+            m_text += "OpStore %am_at " + sel(take, index, ins("%u32", "OpLoad", { "%am_at" })) + "\n";
+            m_text += "OpBranch %am_c\n";
+            m_text += "%am_c = OpLabel\n";
+            const Id next = add(ins("%u32", "OpLoad", { "%am_k" }), k(local));
+            m_text += "OpStore %am_k " + next + "\n";
+            m_text += "OpBranch %am_h\n";
+            m_text += "%am_m = OpLabel\n";
+
+            store_value(local_id, ins("%v2u32", "OpLoad", { "%am_best" }));
+            store_at(local_id, ins("%u32", "OpLoad", { "%am_at" }));
+            barrier();
+
+            uint32_t counter = 0;
+            for (uint32_t span = local / 2; span >= 1; span /= 2) {
+                const std::string tag = std::to_string(counter++);
+                const Id active = ult(local_id, k(span));
+                m_text += "OpSelectionMerge %am_sm" + tag + " None\n";
+                m_text += "OpBranchConditional " + active + " %am_sw" + tag + " %am_sm" + tag + "\n";
+                m_text += "%am_sw" + tag + " = OpLabel\n";
+                const Id partner_slot = add(local_id, k(span));
+                const Id own = load_value(local_id);
+                const Id other = load_value(partner_slot);
+                const Id own_at = load_at(local_id);
+                const Id other_at = load_at(partner_slot);
+                const Word64 own_key = argmax_key(unpack(own));
+                const Word64 other_key = argmax_key(unpack(other));
+                const Id tied = land(eq(own_key.hi, other_key.hi), eq(own_key.lo, other_key.lo));
+                const Id replace = lor(ult64(own_key, other_key), land(tied, ult(other_at, own_at)));
+                store_value(local_id, choose(replace, other, own));
+                store_at(local_id, sel(replace, other_at, own_at));
+                m_text += "OpBranch %am_sm" + tag + "\n";
+                m_text += "%am_sm" + tag + " = OpLabel\n";
+                barrier();
+            }
+
+            const Id first = eq(local_id, k(0));
+            m_text += "OpSelectionMerge %am_wm None\n";
+            m_text += "OpBranchConditional " + first + " %am_ww %am_wm\n";
+            m_text += "%am_ww = OpLabel\n";
+            const Id slot = shl(segment, k(1));
+            store_global(result, slot, load_value(k(0)));
+            store_global(result, add(slot, k(1)), pair(load_at(k(0)), k(0)));
+            m_text += "OpBranch %am_wm\n";
+            m_text += "%am_wm = OpLabel\n";
+            m_text += "OpReturn\n";
+            m_text += "OpFunctionEnd\n";
+
+            std::string globals;
+            globals += "%lid_var = OpVariable %ptr_in_v3u32 Input\n";
+            globals += "%wgid_var = OpVariable %ptr_in_v3u32 Input\n";
+            globals += "%am_arr_v = OpTypeArray %v2u32 %sd_k" + std::to_string(local) + "\n";
+            globals += "%am_arr_i = OpTypeArray %u32 %sd_k" + std::to_string(local) + "\n";
+            globals += "%am_p_arr_v = OpTypePointer Workgroup %am_arr_v\n";
+            globals += "%am_p_arr_i = OpTypePointer Workgroup %am_arr_i\n";
+            globals += "%am_shared_v = OpVariable %am_p_arr_v Workgroup\n";
+            globals += "%am_shared_i = OpVariable %am_p_arr_i Workgroup\n";
+            globals += "%am_p_sh_v2 = OpTypePointer Workgroup %v2u32\n";
+            globals += "%am_p_sh_u32 = OpTypePointer Workgroup %u32\n";
+            globals += "%am_pf_v2 = OpTypePointer Function %v2u32\n";
+            globals += "%am_pf_u32 = OpTypePointer Function %u32\n";
+            globals += "\n";
+            return declarations() + globals + m_text;
+        }
+
     private:
         std::string m_text;
         std::set<uint32_t> m_constants;
@@ -942,6 +1080,14 @@ namespace {
             return { sel(is_nan, k(4294967295), key_lo), sel(is_nan, k(4294967295), key_hi) };
         }
 
+        Word64 argmax_key(const Word64& w)
+        {
+            const Id max_exp = eq(band(shr(w.hi, k(20)), k(2047)), k(2047));
+            const Id is_nan = land(max_exp, ne(bor(band(w.hi, k(1048575)), w.lo), k(0)));
+            const Word64 key = order_key(w);
+            return { sel(is_nan, k(0), key.lo), sel(is_nan, k(0), key.hi) };
+        }
+
         void emit_less()
         {
             begin("less", "%bool", "%sd_fn_less");
@@ -999,6 +1145,25 @@ std::string emit_lagged_pair(const ShaderSpec& spec)
 
     Builder builder;
     return builder.lagged_pair(spec);
+}
+
+std::string emit_segmented_argmax(const ShaderSpec& spec)
+{
+    const uint32_t local = spec.workgroup_size[0];
+    const bool shaped = spec.bindings.size() == 2 && spec.pc_fields.size() == 3
+        && std::ranges::all_of(spec.bindings, [](const BindingSlot& b) {
+               return b.format == Kakshya::GpuDataFormat::VEC2_U32;
+           })
+        && std::ranges::all_of(spec.pc_fields, [](const PushConstantField& f) {
+               return f.format == Kakshya::GpuDataFormat::UINT32;
+           });
+    const bool sized = local >= 2 && local <= 1024 && (local & (local - 1)) == 0;
+    if (!shaped || !sized) {
+        return {};
+    }
+
+    Builder builder;
+    return builder.segmented_argmax(spec);
 }
 
 std::string emit_word_pair_map(const ShaderSpec& spec)

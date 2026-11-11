@@ -87,7 +87,8 @@ public:
      *
      * For stages recorded with record_stages, which leave nothing in
      * primary_values. The context must have been built with the config the
-     * stage ran under.
+     * stage ran under. A binding that resolves to a shared buffer of set 0, its
+     * own or an imported one, is read from that buffer, as the shaders see it.
      *
      * @param binding Binding that holds word pairs.
      * @param count Doubles to read.
@@ -99,7 +100,11 @@ public:
             return {};
         }
         std::vector<uint8_t> bytes(count * sizeof(uint64_t));
-        download_binding(binding, bytes.data(), bytes.size());
+        if (shared_buffer_info(0, binding)) {
+            download_shared(0, binding, bytes.data(), bytes.size());
+        } else {
+            download_binding(binding, bytes.data(), bytes.size());
+        }
         return OperationHelper::decode_word_pairs(bytes);
     }
 

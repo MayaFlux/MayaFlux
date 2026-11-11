@@ -295,6 +295,42 @@ public:
     }
 
     /**
+     * @brief What the shared buffer at (set, binding_index) declares, or nothing when absent.
+     *
+     * The generation changes whenever the owner replaces the buffer, so a
+     * consumer holding an address or a handle compares it to know whether to
+     * read them again.
+     */
+    [[nodiscard]] std::optional<SharedBufferInfo> shared_buffer_info(uint32_t set, size_t binding_index) const
+    {
+        return m_resources.shared_buffer_info(set, binding_index);
+    }
+
+    /**
+     * @brief Resolve a binding of this context to a shared buffer owned by another context.
+     *
+     * Every shader of this context that binds (set, binding_index) then reads
+     * the source buffer, in the order of the shared recording and with no copy.
+     * Both contexts must have been given the same recording. The import follows
+     * the owner when it replaces the buffer. Treat it as read only: only the
+     * owner declares and grows the buffer.
+     *
+     * @param set Set of the binding to resolve here.
+     * @param binding_index Binding to resolve here.
+     * @param source Context that owns the buffer.
+     * @param source_set Set of the source buffer.
+     * @param source_binding_index Binding of the source buffer.
+     * @param element_type Element type expected here. Its width must equal the owner's.
+     * @throws std::invalid_argument when the source holds no such buffer, the recordings differ,
+     *         the widths differ, or the binding already holds a different buffer.
+     */
+    void import_shared(uint32_t set, size_t binding_index, const GpuDispatchCore& source,
+        uint32_t source_set, size_t source_binding_index, GpuBufferBinding::ElementType element_type)
+    {
+        m_resources.import_shared(set, binding_index, source.m_resources, source_set, source_binding_index, element_type);
+    }
+
+    /**
      * @brief The key used for this context's GpuResourceManager unit.
      *
      * shader_path when non-empty (named .comp files). Falls back to the

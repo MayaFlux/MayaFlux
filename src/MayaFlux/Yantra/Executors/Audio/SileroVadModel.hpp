@@ -9,6 +9,9 @@
 
 namespace MayaFlux::Yantra {
 
+class GpuDispatchCore;
+class GpuDispatchRecorder;
+
 /**
  * @class SileroVadModel
  * @brief Silero VAD at 16 kHz as a stream: samples in, one speech probability per chunk out.
@@ -50,6 +53,18 @@ public:
      * @throws std::runtime_error When no device is available.
      */
     explicit SileroVadModel(const Kakshya::TensorSet& weights);
+
+    /**
+     * @brief As above, appending to a recording the caller shares with other work.
+     *
+     * With a shared recording the network and a consumer such as the interval
+     * extractor go to the device in one submission. The recording must be
+     * compute isolated.
+     *
+     * @param weights A set that diagnose accepts.
+     * @param recording Recording the model records into. A null recording gives the model its own.
+     */
+    SileroVadModel(const Kakshya::TensorSet& weights, std::shared_ptr<GpuDispatchRecorder> recording);
     ~SileroVadModel();
 
     SileroVadModel(const SileroVadModel&) = delete;
@@ -63,6 +78,40 @@ public:
      * @return One probability per completed chunk, in order. Empty while a chunk is incomplete.
      */
     [[nodiscard]] std::vector<float> process(std::span<const float> samples);
+
+    /**
+     * @brief Where the probabilities of the latest run are on the device.
+     *
+     * The buffer holds float32 probabilities, one per chunk, and is overwritten
+     * by the next run. A consumer on the same recording imports it with
+     * import_shared. It follows the model when the buffer grows.
+     */
+    struct ProbabilityBuffer {
+        const GpuDispatchCore* context { nullptr };
+        uint32_t set { 0 };
+        size_t binding { 0 };
+    };
+
+    /** @brief The device buffer of the probabilities. It exists from this call on. */
+    [[nodiscard]] ProbabilityBuffer probability_buffer();
+
+    /**
+     * @brief Run every chunk the samples complete, without waiting for the result.
+     *
+     * The probabilities stay on the device, in probability_buffer, and are
+     * recorded into the model's recording; nothing is submitted. Submit the
+     * recording, for instance by recording a consumer into it and submitting
+     * that, then use resident_count for how many probabilities there are. At
+     * most 4096 chunks run per call and the rest stay pending, so a consumer
+     * must read the buffer before the next call.
+     *
+     * @param samples Mono samples at 16 kHz, continuing the previous call.
+     * @return The number of chunks recorded.
+     */
+    [[nodiscard]] size_t record(std::span<const float> samples);
+
+    /** @brief Probabilities the latest run left in probability_buffer. */
+    [[nodiscard]] size_t resident_count() const noexcept;
 
     /**
      * @brief Run the partial chunk, padded with zeros to a whole one.

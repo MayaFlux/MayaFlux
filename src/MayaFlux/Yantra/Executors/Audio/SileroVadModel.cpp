@@ -82,9 +82,10 @@ struct SileroVadModel::Impl {
     size_t capacity {};
     std::vector<float> pending;
     std::vector<float> tail;
+    size_t resident { 0 };
 
-    explicit Impl(TensorKernels::PackedWeights packed)
-        : recording(std::make_shared<GpuDispatchRecorder>(true))
+    Impl(TensorKernels::PackedWeights packed, std::shared_ptr<GpuDispatchRecorder> shared)
+        : recording(shared ? std::move(shared) : std::make_shared<GpuDispatchRecorder>(true))
         , context(std::make_unique<ShaderExecutionContext<>>(
               GpuComputeConfig { .shader_path = TensorKernels::frame_audio_shader, .workgroup_size = { TensorKernels::element_workgroup, 1, 1 }, .push_constant_size = sizeof(TensorKernels::FrameAudioPC) }))
         , tail(context_samples, 0.0F)
@@ -138,7 +139,7 @@ struct SileroVadModel::Impl {
         return layout.address(address(Weights), slot);
     }
 
-    [[nodiscard]] std::vector<float> run(std::span<const float> audio, size_t chunks)
+    [[nodiscard]] std::vector<float> run(std::span<const float> audio, size_t chunks, bool read = true)
     {
         ensure_capacity(chunks);
         const auto n = static_cast<uint32_t>(chunks);
@@ -170,20 +171,24 @@ struct SileroVadModel::Impl {
             address(Hidden), HeadWeight, HeadBias, address(Probability));
 
         context->record_stages(stages);
+        resident = chunks;
+        if (!read) {
+            return {};
+        }
 
         std::vector<float> probabilities(chunks);
         context->download_shared(0, Probability, probabilities.data(), probabilities.size() * sizeof(float));
         return probabilities;
     }
 
-    [[nodiscard]] std::vector<float> consume(size_t chunks)
+    [[nodiscard]] std::vector<float> consume(size_t chunks, bool read = true)
     {
         std::vector<float> audio;
         audio.reserve(context_samples + chunks * chunk_samples);
         audio.insert(audio.end(), tail.begin(), tail.end());
         audio.insert(audio.end(), pending.begin(), pending.begin() + static_cast<std::ptrdiff_t>(chunks * chunk_samples));
 
-        auto probabilities = run(audio, chunks);
+        auto probabilities = run(audio, chunks, read);
 
         tail.assign(audio.end() - static_cast<std::ptrdiff_t>(context_samples), audio.end());
         pending.erase(pending.begin(), pending.begin() + static_cast<std::ptrdiff_t>(chunks * chunk_samples));
@@ -197,13 +202,18 @@ std::string SileroVadModel::diagnose(const Kakshya::TensorSet& weights)
 }
 
 SileroVadModel::SileroVadModel(const Kakshya::TensorSet& weights)
+    : SileroVadModel(weights, nullptr)
+{
+}
+
+SileroVadModel::SileroVadModel(const Kakshya::TensorSet& weights, std::shared_ptr<GpuDispatchRecorder> recording)
 {
     auto packed = TensorKernels::pack_weights(weights, slot_specs());
     if (!packed) {
         error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
             std::source_location::current(), "SileroVadModel: {}", packed.error());
     }
-    m_impl = std::make_unique<Impl>(std::move(*packed));
+    m_impl = std::make_unique<Impl>(std::move(*packed), std::move(recording));
 }
 
 SileroVadModel::~SileroVadModel() = default;
@@ -220,6 +230,29 @@ std::vector<float> SileroVadModel::process(std::span<const float> samples)
     return probabilities;
 }
 
+SileroVadModel::ProbabilityBuffer SileroVadModel::probability_buffer()
+{
+    m_impl->ensure_capacity(std::max<size_t>(m_impl->capacity, 1));
+    return { .context = m_impl->context.get(), .set = 0, .binding = Probability };
+}
+
+size_t SileroVadModel::record(std::span<const float> samples)
+{
+    m_impl->pending.insert(m_impl->pending.end(), samples.begin(), samples.end());
+
+    const size_t chunks = std::min(m_impl->pending.size() / chunk_samples, k_max_chunks);
+    if (chunks == 0) {
+        return 0;
+    }
+    static_cast<void>(m_impl->consume(chunks, false));
+    return chunks;
+}
+
+size_t SileroVadModel::resident_count() const noexcept
+{
+    return m_impl->resident;
+}
+
 std::vector<float> SileroVadModel::flush()
 {
     if (m_impl->pending.empty()) {
@@ -234,6 +267,7 @@ void SileroVadModel::reset()
     m_impl->pending.clear();
     m_impl->tail.assign(context_samples, 0.0F);
     m_impl->clear_state();
+    m_impl->resident = 0;
 }
 
 size_t SileroVadModel::pending() const noexcept

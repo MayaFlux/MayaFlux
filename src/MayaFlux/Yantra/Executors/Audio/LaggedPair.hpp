@@ -53,6 +53,42 @@ namespace MayaFlux::Yantra {
 }
 
 /**
+ * @brief The stage that sums every window at every lag in a range, over values already on the device.
+ *
+ * The values are whatever binding 0 resolves to: a shared buffer of the
+ * context, or one imported from another context with import_shared. Nothing is
+ * staged from the host. Many passes over one input then share a single upload.
+ *
+ * @param context Context built with config.
+ * @param config Config of the spec the context was built from.
+ * @param geometry Window length, stride, first offset and count. Every window must lie inside the values.
+ * @param first_lag Shortest lag.
+ * @param lag_count Number of consecutive lags.
+ */
+[[nodiscard]] inline DependencyStage lagged_pair_stage(
+    WordPairExecutionContext& context, const GpuComputeConfig& config,
+    const SegmentGeometry& geometry, uint32_t first_lag, uint32_t lag_count)
+{
+    const auto length_bits = std::bit_cast<uint64_t>(static_cast<double>(geometry.length));
+    const std::array<uint32_t, 7> push {
+        geometry.length, geometry.stride, geometry.offset, first_lag, lag_count,
+        static_cast<uint32_t>(length_bits & 0xFFFFFFFFU), static_cast<uint32_t>(length_bits >> 32U)
+    };
+    const size_t result_bytes = static_cast<size_t>(geometry.count) * lag_count * sizeof(uint64_t);
+
+    return DependencyStage {
+        .config = config,
+        .stage_fn = [&context, result_bytes, push](GpuDispatchCore&) {
+            if (!context.shared_buffer_info(0, 1)) {
+                context.set_output_size(1, result_bytes);
+            }
+            context.set_push_constants(push);
+        },
+        .explicit_groups = std::array<uint32_t, 3> { lag_count, geometry.count, 1U },
+    };
+}
+
+/**
  * @brief The stage that sums every window at every lag in a range.
  *
  * One workgroup runs per lag and window, so the lag count and the window count
@@ -78,22 +114,12 @@ namespace MayaFlux::Yantra {
     WordPairExecutionContext& context, const GpuComputeConfig& config, std::span<const double> values,
     const SegmentGeometry& geometry, uint32_t first_lag, uint32_t lag_count)
 {
-    const auto length_bits = std::bit_cast<uint64_t>(static_cast<double>(geometry.length));
-    const std::array<uint32_t, 7> push {
-        geometry.length, geometry.stride, geometry.offset, first_lag, lag_count,
-        static_cast<uint32_t>(length_bits & 0xFFFFFFFFU), static_cast<uint32_t>(length_bits >> 32U)
+    auto stage = lagged_pair_stage(context, config, geometry, first_lag, lag_count);
+    stage.stage_fn = [&context, values, resident = std::move(stage.stage_fn)](GpuDispatchCore& core) {
+        context.stage_words(0, values);
+        resident(core);
     };
-    const size_t result_bytes = static_cast<size_t>(geometry.count) * lag_count * sizeof(uint64_t);
-
-    return DependencyStage {
-        .config = config,
-        .stage_fn = [&context, values, result_bytes, push](GpuDispatchCore&) {
-            context.stage_words(0, values);
-            context.set_output_size(1, result_bytes);
-            context.set_push_constants(push);
-        },
-        .explicit_groups = std::array<uint32_t, 3> { lag_count, geometry.count, 1U },
-    };
+    return stage;
 }
 
 } // namespace MayaFlux::Yantra

@@ -53,6 +53,14 @@ enum class KernelTemplate : uint8_t {
                  ///< element. Bindings: a, b, result (VEC2_U32); a unary operation has only
                  ///< a and result. One UINT32 push constant: count. Result i holds
                  ///< op(a[i], b[i]) rounded to nearest even. Needs WordPairOp.
+    SegmentedArgMax, ///< The first maximum of each segment of word-pair doubles, one workgroup per
+                     ///< segment. Bindings: values, result (VEC2_U32). Three UINT32 push
+                     ///< constants: length, stride, offset (segment s covers length elements
+                     ///< from offset + s * stride). Result words 2s and 2s + 1 hold the maximum
+                     ///< and its index, in the low word of a word pair with a zero high word.
+                     ///< Values compare by the library order key with every NaN smallest, so a
+                     ///< NaN never wins. A segment with no non-NaN value yields a NaN and the
+                     ///< index 0xFFFFFFFF.
 };
 
 /**
@@ -814,6 +822,15 @@ namespace detail {
      * push constant and a workgroup size from 1 to 1024.
      */
     [[nodiscard]] std::string emit_word_pair_map(const ShaderSpec& spec);
+
+    /**
+     * @brief Emit the globals and entry point of the SegmentedArgMax template.
+     *
+     * Returns an empty string when the spec does not have the template's shape:
+     * two VEC2_U32 bindings, three UINT32 push constants and a power of two
+     * workgroup size from 2 to 1024.
+     */
+    [[nodiscard]] std::string emit_segmented_argmax(const ShaderSpec& spec);
 
 } // namespace detail
 

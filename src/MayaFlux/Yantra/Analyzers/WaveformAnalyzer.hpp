@@ -8,6 +8,7 @@
 
 #include "MayaFlux/Kakshya/Source/TensorContainer.hpp"
 #include "MayaFlux/Yantra/Executors/Audio/LaggedPair.hpp"
+#include "MayaFlux/Yantra/Executors/Audio/SegmentedArgMax.hpp"
 #include "MayaFlux/Yantra/Executors/Audio/SegmentedReductionContext.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -186,8 +187,10 @@ struct MAYAFLUX_API WaveformAnalysis {
  * operations built on top of this one.
  *
  * Six device passes (energy, sum, peak, sign changes, centred correlation and
- * optionally mean difference) are recorded into one command buffer and
- * submitted once per chunk of windows. The method picks which descriptor
+ * optionally mean difference) read one shared upload of the chunk, and a
+ * selection pass picks the best lag from the correlation row on the device.
+ * The row is downloaded only with keep_profiles. They are recorded into one
+ * command buffer and submitted once per chunk of windows. The method picks which descriptor
  * becomes the output data; all of them are always in the analysis. Sums run
  * in emulated double arithmetic on word pairs, so results agree with the
  * Kinesis references (Discrete::rms, mean, peak, zero_crossing_rate and
@@ -321,6 +324,8 @@ protected:
 
 private:
     static constexpr size_t k_chunk_windows = 4096;
+    static constexpr uint32_t k_values_binding = 0;
+    static constexpr uint32_t k_row_binding = 1;
     static constexpr double k_variance_floor = 1e-12;
     static constexpr double k_strength_ceiling = 1.0 - 1e-12;
 
@@ -329,15 +334,16 @@ private:
     mutable std::unique_ptr<SegmentedReductionContext> m_sum;
     mutable std::unique_ptr<SegmentedReductionContext> m_peak;
 
-    struct LaggedPass {
+    struct WordPass {
         std::unique_ptr<WordPairExecutionContext> context;
         GpuComputeConfig config;
     };
 
-    mutable LaggedPass m_crossings;
-    mutable LaggedPass m_zero;
-    mutable LaggedPass m_correlation;
-    mutable LaggedPass m_distance;
+    mutable WordPass m_crossings;
+    mutable WordPass m_zero;
+    mutable WordPass m_correlation;
+    mutable WordPass m_distance;
+    mutable WordPass m_select;
 
     static uint32_t shortest_lag(const WaveformAnalyzerConfig& cfg)
     {
@@ -396,14 +402,33 @@ private:
         m_zero = make_lagged(PairMap::Product, true);
         m_correlation = make_lagged(PairMap::Product, true);
         m_distance = make_lagged(PairMap::AbsDifference, false);
+        m_select = make_select();
         for (GpuDispatchCore* context : std::initializer_list<GpuDispatchCore*> {
                  m_energy.get(), m_sum.get(), m_peak.get(), m_crossings.context.get(), m_zero.context.get(),
-                 m_correlation.context.get(), m_distance.context.get() }) {
+                 m_correlation.context.get(), m_distance.context.get(), m_select.context.get() }) {
             context->set_recording(m_recording);
         }
+
+        constexpr auto word = GpuBufferBinding::ElementType::VEC2_U32;
+        m_energy->ensure_shared_buffer(0, k_values_binding, 1, word);
+        for (GpuDispatchCore* context : std::initializer_list<GpuDispatchCore*> {
+                 m_sum.get(), m_peak.get(), m_crossings.context.get(), m_zero.context.get(),
+                 m_correlation.context.get(), m_distance.context.get() }) {
+            context->import_shared(0, k_values_binding, *m_energy, 0, k_values_binding, word);
+        }
+
+        m_correlation.context->ensure_shared_buffer(0, k_row_binding, 1, word);
+        m_select.context->import_shared(0, k_values_binding, *m_correlation.context, 0, k_row_binding, word);
     }
 
-    static LaggedPass make_lagged(Portal::Graphics::PairMap map, bool centred)
+    void upload_chunk(std::span<const double> chunk) const
+    {
+        const auto words = OperationHelper::encode_word_pairs(chunk, 0, false, false);
+        m_energy->ensure_shared_buffer(0, k_values_binding, chunk.size(), GpuBufferBinding::ElementType::VEC2_U32);
+        m_energy->upload_shared_raw(0, k_values_binding, words.data(), words.size());
+    }
+
+    static WordPass make_lagged(Portal::Graphics::PairMap map, bool centred)
     {
         const auto spec = lagged_pair_spec(map, centred);
         auto config = config_from_spec(spec);
@@ -411,13 +436,20 @@ private:
         return { std::move(context), std::move(config) };
     }
 
-    static void record_lagged(LaggedPass& pass, std::span<const double> chunk, const SegmentGeometry& geometry,
-        uint32_t first_lag, uint32_t lag_count)
+    static WordPass make_select()
     {
-        pass.context->record_stages({ lagged_pair_stage(*pass.context, pass.config, chunk, geometry, first_lag, lag_count) });
+        const auto spec = segmented_argmax_spec();
+        auto config = config_from_spec(spec);
+        auto context = std::make_unique<WordPairExecutionContext>(config, bindings_from_spec(spec), false, "SegmentedArgMax");
+        return { std::move(context), std::move(config) };
     }
 
-    static std::vector<double> download_lagged(LaggedPass& pass, size_t windows, uint32_t lag_count)
+    static void record_lagged(WordPass& pass, const SegmentGeometry& geometry, uint32_t first_lag, uint32_t lag_count)
+    {
+        pass.context->record_stages({ lagged_pair_stage(*pass.context, pass.config, geometry, first_lag, lag_count) });
+    }
+
+    static std::vector<double> download_lagged(WordPass& pass, size_t windows, uint32_t lag_count)
     {
         return pass.context->download_words(1, windows * lag_count);
     }
@@ -440,28 +472,38 @@ private:
         const uint32_t correlation_lags = max_lag + 1 - first_lag;
         const uint32_t distance_lags = max_lag - min_lag + 1;
 
-        m_energy->stage(chunk, geometry);
-        m_sum->stage(chunk, geometry);
-        m_peak->stage(chunk, geometry);
+        upload_chunk(chunk);
+        m_energy->stage(geometry);
+        m_sum->stage(geometry);
+        m_peak->stage(geometry);
 
         const Datum<std::vector<Kakshya::DataVariant>> none {};
         static_cast<void>(m_energy->dispatch_async(none));
         static_cast<void>(m_sum->dispatch_async(none));
         static_cast<void>(m_peak->dispatch_async(none));
-        record_lagged(m_crossings, chunk, geometry, 1, 1);
-        record_lagged(m_correlation, chunk, geometry, first_lag, correlation_lags);
+        record_lagged(m_crossings, geometry, 1, 1);
+        m_correlation.context->ensure_shared_buffer(0, k_row_binding, count * correlation_lags, GpuBufferBinding::ElementType::VEC2_U32);
+        record_lagged(m_correlation, geometry, first_lag, correlation_lags);
+        const SegmentGeometry searched {
+            .length = max_lag - min_lag + 1,
+            .stride = correlation_lags,
+            .offset = min_lag - first_lag,
+            .count = static_cast<uint32_t>(count)
+        };
+        m_select.context->record_stages({ segmented_argmax_stage(*m_select.context, m_select.config, searched) });
         if (!full_row) {
-            record_lagged(m_zero, chunk, geometry, 0, 1);
+            record_lagged(m_zero, geometry, 0, 1);
         }
         if (cfg.keep_profiles) {
-            record_lagged(m_distance, chunk, geometry, min_lag, distance_lags);
+            record_lagged(m_distance, geometry, min_lag, distance_lags);
         }
 
         const auto energy = collect(*m_energy);
         const auto sum = collect(*m_sum);
         const auto peak = collect(*m_peak);
         const auto crossings = download_lagged(m_crossings, count, 1);
-        const auto correlation = download_lagged(m_correlation, count, correlation_lags);
+        const auto picks = read_argmax(*m_select.context, count);
+        const auto rows = cfg.keep_profiles ? download_lagged(m_correlation, count, correlation_lags) : std::vector<double> {};
         const auto zero = full_row ? std::vector<double> {} : download_lagged(m_zero, count, 1);
         const auto distance = cfg.keep_profiles ? download_lagged(m_distance, count, distance_lags) : std::vector<double> {};
 
@@ -477,20 +519,15 @@ private:
             out.dc_offset.push_back(sum[w] / window);
             out.crest_factor.push_back(level > 0.0 ? peak[w] / level : 0.0);
 
-            const double* row = correlation.data() + w * correlation_lags;
+            const double* row = full_row ? rows.data() + w * correlation_lags : nullptr;
             const double at_zero = full_row ? row[0] : zero[w];
             const bool varying = at_zero >= k_variance_floor;
             double best = 0.0;
             uint32_t best_lag = 0;
-            if (varying) {
-                for (uint32_t lag = min_lag; lag <= max_lag; ++lag) {
-                    const double strength = row[lag - first_lag] / at_zero;
-                    if (strength > best) {
-                        best = strength;
-                        best_lag = lag;
-                    }
-                }
-                if (cfg.unbiased_periodicity && best_lag > 0) {
+            if (varying && picks[w].found() && picks[w].value > 0.0) {
+                best = picks[w].value / at_zero;
+                best_lag = min_lag + picks[w].index;
+                if (cfg.unbiased_periodicity) {
                     best *= window / (window - static_cast<double>(best_lag));
                 }
             }

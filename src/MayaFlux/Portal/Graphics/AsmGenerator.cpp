@@ -39,9 +39,13 @@
  * pairwise map of x[i] and x[i + lag] over a window for every lag in a range,
  * one workgroup per lag and window, optionally after removing the window mean.
  *
- * KernelTemplate::WordPairMap — emit_word_pair_map (AsmSoftDouble.cpp) applies
+ * KernelTemplate::WordPairMap: emit_word_pair_map (AsmSoftDouble.cpp) applies
  * one soft-double operation (add, mul, div or sqrt) to word-pair doubles, one
  * thread per element.
+ *
+ * KernelTemplate::SegmentedArgMax: emit_segmented_argmax (AsmSoftDouble.cpp) finds
+ * the first maximum of each segment of word-pair doubles and its index, one
+ * workgroup per segment, comparing by the library order key with NaN smallest.
  *
  * GLSL kernel path (emit_glsl_kernel) handles all three binding modalities
  * when spec.kernel is set via MF_KERNEL.
@@ -185,6 +189,8 @@ namespace {
             iface += " %lid_var %wgid_var %lp_shared";
         } else if (spec.tmpl == KernelTemplate::WordPairMap) {
             iface += " %lid_var %wgid_var";
+        } else if (spec.tmpl == KernelTemplate::SegmentedArgMax) {
+            iface += " %lid_var %wgid_var %am_shared_v %am_shared_i";
         }
 
         std::string o;
@@ -255,7 +261,8 @@ namespace {
         if (spec.tmpl == KernelTemplate::Reduction || spec.tmpl == KernelTemplate::Scan) {
             o += "OpDecorate %lid_var BuiltIn LocalInvocationId\n";
         } else if (spec.tmpl == KernelTemplate::SegmentedReduction || spec.tmpl == KernelTemplate::FFT
-            || spec.tmpl == KernelTemplate::LaggedPair || spec.tmpl == KernelTemplate::WordPairMap) {
+            || spec.tmpl == KernelTemplate::LaggedPair || spec.tmpl == KernelTemplate::WordPairMap
+            || spec.tmpl == KernelTemplate::SegmentedArgMax) {
             o += "OpDecorate %lid_var BuiltIn LocalInvocationId\n";
             o += "OpDecorate %wgid_var BuiltIn WorkgroupId\n";
         }
@@ -1931,6 +1938,9 @@ std::string emit_spirv_asm(const ShaderSpec& spec)
         break;
     case KernelTemplate::WordPairMap:
         src += emit_word_pair_map(spec);
+        break;
+    case KernelTemplate::SegmentedArgMax:
+        src += emit_segmented_argmax(spec);
         break;
     case KernelTemplate::BitonicSort:
         src += emit_bitonic_body(spec);

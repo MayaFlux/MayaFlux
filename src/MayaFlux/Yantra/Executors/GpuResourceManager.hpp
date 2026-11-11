@@ -9,6 +9,23 @@ using GpuComputeConfig = Portal::Graphics::GpuComputeConfig;
 using GpuBufferBinding = Portal::Graphics::GpuBufferBinding;
 
 struct GpuResourceManagerImpl;
+struct SharedAllocation;
+struct SharedOwnerToken;
+/**
+ * @struct SharedBufferInfo
+ * @brief What a shared buffer slot declares about itself.
+ *
+ * The element type is the one the owner last declared with ensure_shared_buffer.
+ * The generation increases each time the owner replaces the underlying buffer,
+ * so a consumer that holds a device address or a handle can tell it went stale.
+ */
+struct SharedBufferInfo {
+    GpuBufferBinding::ElementType element_type {};
+    size_t element_count { 0 };
+    size_t byte_size { 0 };
+    uint64_t generation { 0 };
+};
+
 /**
  * @class GpuDispatchRecorder
  * @brief Shared command buffer for GPU dispatch work.
@@ -180,6 +197,37 @@ public:
      * dispatch is staged.
      */
     [[nodiscard]] uint64_t shared_buffer_address(uint32_t set, size_t binding_index) const;
+
+    /**
+     * @brief What the shared buffer at (set, binding_index) declares, or nothing when absent.
+     */
+    [[nodiscard]] std::optional<SharedBufferInfo> shared_buffer_info(uint32_t set, size_t binding_index) const;
+
+    /**
+     * @brief Make the shared buffer of another manager readable at a binding of this one.
+     *
+     * The binding then resolves to the source buffer for every unit of this
+     * manager, exactly as it resolves to an own shared buffer. The import is
+     * live: when the owner replaces the buffer, the next bind here follows to
+     * the new one, and the old one stays alive until work recorded with it has
+     * completed. Both managers must append to the same recording, which orders
+     * their dispatches and gives the barrier between them.
+     *
+     * Reading only is by discipline, not enforcement. Growing an imported
+     * buffer is refused: only the owner allocates it.
+     *
+     * @param set Set of the binding to resolve here.
+     * @param binding_index Binding to resolve here.
+     * @param source Manager that owns the buffer.
+     * @param source_set Set of the source buffer.
+     * @param source_binding_index Binding of the source buffer.
+     * @param element_type Element type this side expects. Its width must equal the width the owner declared.
+     * @throws std::invalid_argument when there is no source buffer, the recordings differ, the widths differ,
+     *         or the binding already holds a different buffer.
+     */
+    void import_shared(uint32_t set, size_t binding_index, const GpuResourceManager& source,
+        uint32_t source_set, size_t source_binding_index, GpuBufferBinding::ElementType element_type);
+
     void download_shared(uint32_t set, size_t binding_index, void* dest, size_t byte_size);
     void upload_shared_raw(uint32_t set, size_t binding_index, const uint8_t* data, size_t byte_size);
 
@@ -401,6 +449,10 @@ private:
 
     struct SharedBuffers;
     std::unique_ptr<SharedBuffers> m_shared;
+    std::shared_ptr<SharedOwnerToken> m_owner;
+
+    [[nodiscard]] std::shared_ptr<SharedAllocation> shared_allocation(uint32_t set, size_t binding_index) const;
+    [[nodiscard]] std::shared_ptr<SharedAllocation> require_shared_allocation(uint32_t set, size_t binding_index) const;
 
     [[nodiscard]] PipelineUnit& unit_for(const std::string& key);
     [[nodiscard]] const PipelineUnit* find_unit(const std::string& key) const;
