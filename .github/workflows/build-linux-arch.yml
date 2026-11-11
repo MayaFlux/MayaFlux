@@ -90,6 +90,7 @@ jobs:
             libutf8proc \
             fontconfig \
             nlohmann-json \
+            pugixml \
             libpipewire \
             ninja \
             mold \

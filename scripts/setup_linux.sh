@@ -60,6 +60,7 @@ install_arch() {
         "libutf8proc"
         "fontconfig"
         "nlohmann-json"
+        "pugixml"
         "libpipewire"
     )
     if pacman -Qs jack >/dev/null 2>&1; then
@@ -119,6 +120,7 @@ install_fedora() {
         "utf8proc-devel"
         "fontconfig-devel"
         "json-devel"
+        "pugixml-devel"
         "pipewire-devel"
         "alsa-lib-devel"
         "dbus-devel"
@@ -177,6 +179,7 @@ install_ubuntu() {
         "libasound2-dev"
         "libdbus-1-dev"
         "nlohmann-json3-dev"
+        "libpugixml-dev"
     )
 
     echo -e "${YELLOW}Installing: ${PACKAGES[*]}${NC}"

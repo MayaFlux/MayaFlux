@@ -118,6 +118,7 @@ jobs:
             ffmpeg
             assimp
             alembic
+            pugixml
             shaderc
             googletest
             pkg-config

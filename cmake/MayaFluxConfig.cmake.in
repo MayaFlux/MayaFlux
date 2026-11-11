@@ -67,6 +67,7 @@ if(WIN32)
     find_dependency(freetype CONFIG)
     find_dependency(utf8proc CONFIG)
     find_dependency(nlohmann_json CONFIG)
+    find_dependency(pugixml CONFIG)
 
     find_library(SPIRV_CROSS_CORE_LIB NAMES spirv-cross-core 
         PATHS "$ENV{VULKAN_SDK}/Lib" REQUIRED NO_DEFAULT_PATH)
@@ -225,6 +226,7 @@ else()
     pkg_check_modules(LIBSWSCALE REQUIRED IMPORTED_TARGET libswscale)
     pkg_check_modules(LIBAVDEVICE REQUIRED IMPORTED_TARGET libavdevice)
     pkg_check_modules(nlohmann_json REQUIRED IMPORTED_TARGET nlohmann_json)
+    pkg_check_modules(PUGIXML REQUIRED IMPORTED_TARGET pugixml)
 
 endif()
 
@@ -366,6 +368,7 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
             magic_enum
             dlpack
             nlohmann_json::nlohmann_json
+            pugixml::pugixml
             freetype
             gdi32
             user32
@@ -390,6 +393,7 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
             Freetype::Freetype
             PkgConfig::UTF8PROC
             PkgConfig::nlohmann_json
+            PkgConfig::PUGIXML
             tinyexr
             tinyvdb
             magic_enum

@@ -474,6 +474,7 @@ jobs:
           Write-Host "  ✓ HidApi 0.15.0 (via vcpkg.json)" -ForegroundColor Green
           Write-Host "  ✓ FFmpeg 6.0+ (shared libs via vcpkg.json)" -ForegroundColor Green
           Write-Host "  ✓ Eigen3, GLM, magic_enum (via vcpkg.json)" -ForegroundColor Green
+          Write-Host "  ✓ pugixml (via vcpkg.json)" -ForegroundColor Green
           Write-Host "  [Tier 3 - Header-Only Direct]" -ForegroundColor Cyan
 
           if (Test-Path "${{ env.PACKAGE_NAME }}.7z") {
