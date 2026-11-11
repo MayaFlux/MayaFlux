@@ -127,12 +127,12 @@ struct MAYAFLUX_API PhonemeExtraction {
 [[nodiscard]] inline IntervalExtractorConfig speech_scan_settings(const PhonemeExtractorConfig& config, size_t samples)
 {
     IntervalExtractorConfig speech;
-    speech.enter_threshold = config.speech_threshold;
-    speech.samples_per_score = SileroVadModel::chunk_samples;
-    speech.min_run = config.min_speech;
-    speech.min_gap = config.min_silence;
-    speech.padding = config.speech_padding;
-    speech.max_run = HubertPhonemeModel::max_samples;
+    speech.scan.enter_threshold = config.speech_threshold;
+    speech.scan.samples_per_score = SileroVadModel::chunk_samples;
+    speech.scan.min_run = config.min_speech;
+    speech.scan.min_gap = config.min_silence;
+    speech.scan.padding = config.speech_padding;
+    speech.scan.max_run = HubertPhonemeModel::max_samples;
     speech.flush = true;
     speech.length = static_cast<uint32_t>(samples);
     return speech;
@@ -200,8 +200,8 @@ public:
             return std::format("sample_rate {} is not the {} Hz the networks run at; convert the input first, for example with Kinesis::Discrete::resample",
                 config.sample_rate, SileroVadModel::sample_rate);
         }
-        return Kinesis::Discrete::diagnose_interval_scan(
-            speech_scan(speech_scan_settings(config, 0)));
+        const auto speech = speech_scan_settings(config, 0);
+        return Kinesis::Discrete::diagnose_interval_scan(interval_scan_config(speech.scan, speech.length));
     }
 
     /**
@@ -291,25 +291,6 @@ private:
         settings.method = PhonemeMethod::HELD_CLASSES;
         settings.sample_rate = config.sample_rate;
         return settings;
-    }
-
-    static Kinesis::Discrete::IntervalScanConfig speech_scan(const IntervalExtractorConfig& speech)
-    {
-        return {
-            .enter = speech.enter_threshold,
-            .leave = std::max(speech.enter_threshold - speech.leave_margin, speech.leave_floor),
-            .gate_threshold = speech.gate_threshold,
-            .hop = speech.samples_per_score,
-            .first_sample = speech.first_sample,
-            .min_run = speech.min_run,
-            .min_gap = speech.min_gap,
-            .padding = speech.padding,
-            .gap_at_limit = speech.gap_at_limit,
-            .max_run = speech.max_run,
-            .use_longest_gap = speech.use_longest_gap,
-            .length = speech.length,
-            .emit_on_close = speech.emit_on_close,
-        };
     }
 
     void find_speech(std::span<const double> samples, const PhonemeExtractorConfig& cfg, PhonemeExtraction& record)

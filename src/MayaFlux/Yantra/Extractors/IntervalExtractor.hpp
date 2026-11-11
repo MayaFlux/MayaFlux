@@ -2,6 +2,7 @@
 
 #include "Extractor.hpp"
 
+#include "MayaFlux/Kinesis/Discrete/IntervalScan.hpp"
 #include "MayaFlux/Transitive/Reflect/EnumReflect.hpp"
 #include "MayaFlux/Yantra/Executors/Audio/IntervalScanStage.hpp"
 #include "MayaFlux/Yantra/Executors/ShaderExecutionContext.hpp"
@@ -15,8 +16,8 @@
  *
  * The scores can come from any per-window measurement: a probability, a level,
  * a flux. The extractor knows nothing about what they mean. It answers where
- * the sequence is engaged, as sample intervals that line up with the output of
- * merge_intervals and slice_intervals.
+ * each column is engaged, as sample intervals that line up with the output of
+ * merge_intervals and slice_intervals. Each column has its own settings.
  */
 
 namespace MayaFlux::Yantra {
@@ -30,70 +31,36 @@ enum class IntervalMethod : uint8_t {
 };
 
 /**
- * @struct IntervalExtractorConfig
- * @brief Settings of an IntervalExtractor.
+ * @struct IntervalScanSettings
+ * @brief How one score column is turned into intervals.
  *
- * Lengths are in samples and positions are 32 bit, so a stream is limited to
- * about 4.29 billion samples. Score i of a stream sits at sample
- * first_sample + i * samples_per_score. The leave threshold is max(enter_threshold -
- * leave_margin, leave_floor). A run shorter than min_run is dropped. A gap
- * shorter than min_gap does not end a run. Each interval is widened by padding
- * on both sides, and a gap between neighbours smaller than twice the padding
- * is split between them.
+ * Lengths are in samples and positions are 32 bit. Score i of the column sits
+ * at first_sample + i * samples_per_score. The leave threshold is
+ * max(enter_threshold - leave_margin, leave_floor). A run shorter than min_run
+ * is dropped. A gap shorter than min_gap does not end a run. Each interval is
+ * widened by padding on both sides, and a gap between neighbours smaller than
+ * twice the padding is split between them.
  *
- * max_run caps the length of one interval, 0 for no cap. A capped run is cut
- * at the longest gap seen inside it when use_longest_gap is set, else at the
- * last gap longer than gap_at_limit, else where the cap falls. It must exceed
- * samples_per_score + 2 * padding when set.
+ * max_run caps one interval, 0 for no cap. A capped run is cut at its longest
+ * gap when use_longest_gap is set, else at the last gap longer than
+ * gap_at_limit, else where the cap falls. It must exceed samples_per_score plus
+ * twice the padding when set.
  *
- * flush ends the stream: the open run is closed at length, or at the end of
- * the scores when length is 0, and the pending interval is emitted. Without
- * flush the newest interval stays pending until the next call.
+ * gate_channel names the column that gates this one, or no_channel for none.
+ * Where the gate's score is below gate_threshold this column is silent: an open
+ * run ends there at once whatever min_gap is, and a gap is bridged only while
+ * the gate stays at or above its threshold. The gate is another column of the
+ * same call, of the same length, and is scanned by its own settings. A column is
+ * never gated by itself.
  *
- * gate_channel names the column that gates all the others, or no_channel for
- * none. Where its score is below gate_threshold a position is silence: an open
- * run of another column ends there at once whatever min_gap is, the position is
- * never engaged, and a gap is bridged only while the gate stays at or above its
- * threshold. The gate column itself is scanned as it is. Padding is applied
- * after a gate break as everywhere else.
- *
- * emit_on_close releases each interval the moment it closes, when its trailing
- * gap reaches min_gap, padded by the full padding on both sides. Nothing waits
- * for a successor, so the gap between neighbours is not split and their
- * paddings may overlap. A padded end is clamped to length, or to the end of the
- * scores seen so far when length is 0.
+ * emit_on_close releases each interval when it closes, padded by the full
+ * padding on both sides. Nothing waits for a successor, so neighbouring paddings
+ * may overlap.
  */
-struct IntervalExtractorConfig : ExtractorConfig {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple_cat(
-            ExtractorConfig::describe_facets(),
-            std::tuple {
-                FacetMember<&IntervalExtractorConfig::method> {},
-                FacetMember<&IntervalExtractorConfig::enter_threshold> {},
-                FacetMember<&IntervalExtractorConfig::leave_margin> {},
-                FacetMember<&IntervalExtractorConfig::leave_floor> {},
-                FacetMember<&IntervalExtractorConfig::samples_per_score> {},
-                FacetMember<&IntervalExtractorConfig::min_run> {},
-                FacetMember<&IntervalExtractorConfig::min_gap> {},
-                FacetMember<&IntervalExtractorConfig::padding> {},
-                FacetMember<&IntervalExtractorConfig::gap_at_limit> {},
-                FacetMember<&IntervalExtractorConfig::max_run> {},
-                FacetMember<&IntervalExtractorConfig::use_longest_gap> {},
-                FacetMember<&IntervalExtractorConfig::flush> {},
-                FacetMember<&IntervalExtractorConfig::length> {},
-                FacetMember<&IntervalExtractorConfig::first_sample> {},
-                FacetMember<&IntervalExtractorConfig::gate_channel> {},
-                FacetMember<&IntervalExtractorConfig::gate_threshold> {},
-                FacetMember<&IntervalExtractorConfig::emit_on_close> {},
-            });
-    }
-
+struct IntervalScanSettings {
     /** Value of gate_channel for no gate. */
     static constexpr uint32_t no_channel { std::numeric_limits<uint32_t>::max() };
 
-    /** Selection method, as an IntervalMethod value. */
-    Reflect::EnumByte<IntervalMethod> method { IntervalMethod::HYSTERESIS_RUNS };
     /** Score at or above which a run starts. */
     double enter_threshold { 0.5 };
     /** How far below the enter threshold a score must fall to count as a gap. */
@@ -102,6 +69,8 @@ struct IntervalExtractorConfig : ExtractorConfig {
     double leave_floor { 0.01 };
     /** Samples between successive scores. */
     uint32_t samples_per_score { 512 };
+    /** Sample position of score 0. */
+    uint32_t first_sample { 0 };
     /** Shortest run kept, in samples. */
     uint32_t min_run { 4000 };
     /** Shortest gap that ends a run, in samples. */
@@ -114,19 +83,78 @@ struct IntervalExtractorConfig : ExtractorConfig {
     uint32_t max_run { 0 };
     /** Cut a capped run at its longest gap instead of the last one. */
     bool use_longest_gap { true };
-    /** End the stream with this call. */
-    bool flush { false };
-    /** Length of the stream in samples when it ends, 0 to use the scores seen. */
-    uint32_t length { 0 };
-    /** Sample position of score 0. */
-    uint32_t first_sample { 0 };
-    /** Column that gates the others, or no_channel. */
+    /** Column that gates this one, or no_channel. */
     uint32_t gate_channel { no_channel };
-    /** Gate score below which a position is silence. */
+    /** Gate score below which this column is silent. */
     double gate_threshold { 0.5 };
     /** Emit each interval as soon as it closes, with full padding on both sides. */
     bool emit_on_close { false };
 };
+
+/**
+ * @struct IntervalExtractorConfig
+ * @brief Settings of an IntervalExtractor.
+ *
+ * scan is the settings of every column. columns overrides them: column i uses
+ * columns[i] when the list has that entry, and scan otherwise. flush ends the
+ * stream: the open run of each column is closed at length, or at the end of its
+ * scores when length is 0, and the pending interval is emitted. Without flush
+ * the newest interval of each column stays pending until the next call. Both
+ * are the same for every column.
+ */
+struct IntervalExtractorConfig : ExtractorConfig {
+    static constexpr auto describe_facets()
+    {
+        return std::tuple_cat(
+            ExtractorConfig::describe_facets(),
+            std::tuple {
+                FacetMember<&IntervalExtractorConfig::method> {},
+                FacetMember<&IntervalExtractorConfig::scan> {},
+                FacetMember<&IntervalExtractorConfig::columns> {},
+                FacetMember<&IntervalExtractorConfig::flush> {},
+                FacetMember<&IntervalExtractorConfig::length> {},
+            });
+    }
+
+    /** Selection method, as an IntervalMethod value. */
+    Reflect::EnumByte<IntervalMethod> method { IntervalMethod::HYSTERESIS_RUNS };
+    /** Settings of every column not listed in columns. */
+    IntervalScanSettings scan {};
+    /** Per column overrides, column i for index i. */
+    std::vector<IntervalScanSettings> columns {};
+    /** End the stream with this call. */
+    bool flush { false };
+    /** Length of the stream in samples when it ends, 0 to use the scores seen. */
+    uint32_t length { 0 };
+
+    /** @brief Settings in force for a column. */
+    [[nodiscard]] const IntervalScanSettings& settings_of(size_t column) const noexcept
+    {
+        return column < columns.size() ? columns[column] : scan;
+    }
+};
+
+/**
+ * @brief The host scan configuration of one column's settings over a stream of the given length.
+ */
+[[nodiscard]] inline Kinesis::Discrete::IntervalScanConfig interval_scan_config(const IntervalScanSettings& settings, uint32_t length)
+{
+    return {
+        .enter = settings.enter_threshold,
+        .leave = std::max(settings.enter_threshold - settings.leave_margin, settings.leave_floor),
+        .gate_threshold = settings.gate_threshold,
+        .hop = settings.samples_per_score,
+        .first_sample = settings.first_sample,
+        .min_run = settings.min_run,
+        .min_gap = settings.min_gap,
+        .padding = settings.padding,
+        .gap_at_limit = settings.gap_at_limit,
+        .max_run = settings.max_run,
+        .use_longest_gap = settings.use_longest_gap,
+        .length = length,
+        .emit_on_close = settings.emit_on_close,
+    };
+}
 
 /**
  * @struct ChannelIntervals
@@ -153,11 +181,11 @@ struct MAYAFLUX_API ChannelIntervals {
  *
  * runs holds start and end pairs and report holds interval_scan_report_words
  * words that decode_interval_scan_report reads, all uint32. The addresses are
- * device addresses for push constants. The extractor owns the
- * memory and rewrites it on its next call, so a consumer recorded between two
- * calls, in a submission made after the extractor's own, reads the latest
- * results: submissions on one queue run in order. Addresses are 0 for a
- * channel the call gave no scores.
+ * device addresses for push constants. The extractor owns the memory and
+ * rewrites it on its next call, so a consumer recorded between two calls, in a
+ * submission made after the extractor's own, reads the latest results:
+ * submissions on one queue run in order. Addresses are 0 for a channel the call
+ * gave no scores.
  */
 struct MAYAFLUX_API IntervalBuffers {
     uint64_t runs_address { 0 };
@@ -208,25 +236,25 @@ struct MAYAFLUX_API IntervalExtraction {
 
 /**
  * @class IntervalExtractor
- * @brief Finds where a score sequence is engaged, on the GPU, as a stream.
+ * @brief Finds where each score sequence is engaged, on the GPU, as a stream.
  *
  * Every score depends on the state the previous one left, so one invocation
- * reads them in order. That state lives on the device and persists between
- * calls, so successive calls continue one stream. The newest interval waits in
- * the state until its successor closes, because its padded end depends on the
- * gap that follows; set flush on the last call to release it. A flush ends the
- * stream and the next call starts a new one. Call reset to start over without
- * flushing.
+ * reads a column's scores in order. Each column is its own scan with its own
+ * settings and its own state, and that state lives on the device and persists
+ * between calls, so successive calls continue one stream. The newest interval
+ * waits in the state until its successor closes, because its padded end depends
+ * on the gap that follows; set flush on the last call to release it. A flush
+ * ends the stream and the next call starts a new one. Call reset to start over
+ * without flushing.
  *
- * The input is the matrix an analyzer returns, one score channel per column,
- * so an analyzer such as VadAnalyzer chains into it directly. Other input
- * types are instantiations of the same template.
+ * The input is the matrix an analyzer returns, one score column per channel, so
+ * an analyzer such as VadAnalyzer or PhonemeAnalyzer chains into it directly.
+ * Other input types are instantiations of the same template.
  *
  * It is on the vulkan target. Kinesis::Discrete::IntervalScanner is its CPU
- * counterpart for scores in host memory and gives the same intervals. The output data is, per
- * channel, the start and end of each completed interval in turn; the
- * IntervalExtraction facet holds the same as pairs. Each channel of the input
- * is a separate score sequence with its own state.
+ * counterpart for scores in host memory and gives the same intervals, column by
+ * column. The output data is, per channel, the start and end of each completed
+ * interval in turn; the IntervalExtraction facet holds the same as pairs.
  */
 template <ComputeData InputType = Eigen::MatrixXd, ComputeData OutputType = std::vector<std::vector<double>>>
 class IntervalExtractor : public Extractor<InputType, OutputType> {
@@ -314,10 +342,10 @@ public:
     /**
      * @brief Append to a recording the caller shares with other work.
      *
-     * With a shared recording the extractor's scan goes to the device in the
-     * same submission as the work that produced its scores. Call it before
-     * anything creates the extractor's context, that is before the first
-     * extraction or bind. The recording must be compute isolated.
+     * With a shared recording the extractor's scans go to the device in the same
+     * submission as the work that produced their scores. Call it before anything
+     * creates the extractor's context, that is before the first extraction or
+     * bind. The recording must be compute isolated.
      *
      * @throws std::logic_error when the extractor has already started.
      */
@@ -335,7 +363,8 @@ public:
      *
      * The buffer holds float32 scores and belongs to a context on the same
      * recording, for instance SileroVadModel::probability_buffer. The scan then
-     * reads it in place. Run it with submit_resident or extract_resident.
+     * reads it in place. A channel that gates others is bound the same way: its
+     * scores are the gate. Run it with submit_resident or extract_resident.
      *
      * @param channel Channel whose scores the buffer holds.
      * @param source Context that owns the buffer.
@@ -354,20 +383,10 @@ public:
     }
 
     /**
-     * @brief Read the gate scores from a device buffer, as bind_scores does for a channel.
-     */
-    void bind_gate(const GpuDispatchCore& source, uint32_t set, size_t binding)
-    {
-        ensure_context();
-        m_context->import_shared(0, k_gate_binding, source, set, binding, GpuBufferBinding::ElementType::FLOAT32);
-        m_resident_gate = true;
-    }
-
-    /**
      * @brief Record and submit an extraction over scores already on the device, without waiting.
      *
      * Everything recorded so far on the shared recording goes in the same
-     * submission, so a network recorded just before this call and the scan run
+     * submission, so a network recorded just before this call and the scans run
      * together. Poll ready and collect as for submit.
      *
      * @param counts Number of scores in each bound channel for this call.
@@ -553,11 +572,11 @@ private:
         SlotsPerChannel
     };
 
-    static constexpr size_t k_gate_binding = 0;
-
     struct ChannelCall {
         bool ran { false };
         uint32_t capacity { 0 };
+        uint32_t first { 0 };
+        uint32_t count { 0 };
     };
 
     struct Outstanding {
@@ -568,7 +587,7 @@ private:
 
     [[nodiscard]] static size_t binding_of(size_t channel, Slot slot)
     {
-        return 1 + channel * SlotsPerChannel + slot;
+        return channel * SlotsPerChannel + slot;
     }
 
     mutable std::shared_ptr<GpuDispatchRecorder> m_recording;
@@ -576,7 +595,6 @@ private:
     std::vector<uint32_t> m_seen;
     std::vector<bool> m_started;
     std::vector<bool> m_resident;
-    bool m_resident_gate { false };
     std::vector<ChannelCall> m_last_calls;
     std::optional<Outstanding> m_outstanding;
 
@@ -584,37 +602,27 @@ private:
     std::vector<ChannelCall> record_all(const Columns& columns, const IntervalExtractorConfig& cfg)
     {
         ensure_context();
-        if (m_seen.size() != columns.size()) {
-            m_seen.assign(columns.size(), 0);
-            m_started.assign(columns.size(), false);
+        reset_state(columns.size());
+
+        for (size_t channel = 0; channel < columns.size(); ++channel) {
+            const auto& settings = cfg.settings_of(channel);
+            check_settings(settings, cfg.length);
+            if (gated_by_other(settings, channel)) {
+                check_gate(settings.gate_channel, columns.size(), columns[channel].size());
+                if (columns[settings.gate_channel].size() != columns[channel].size()) {
+                    error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+                        std::source_location::current(), "Gate column {} has {} scores and column {} has {}",
+                        settings.gate_channel, columns[settings.gate_channel].size(), channel, columns[channel].size());
+                }
+            }
         }
 
-        const bool gated = cfg.gate_channel != IntervalExtractorConfig::no_channel;
-        if (gated && cfg.gate_channel >= columns.size()) {
-            error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
-                std::source_location::current(), "Gate channel {} is not a column of the {} given", cfg.gate_channel, columns.size());
-        }
-        std::span<const double> gate;
-        if (gated) {
-            gate = { columns[cfg.gate_channel].data(), columns[cfg.gate_channel].size() };
-            upload_gate(gate);
-        }
-
-        const auto scan = scan_config(cfg);
-        std::vector<DependencyStage> stages;
         std::vector<ChannelCall> calls(columns.size());
         for (size_t channel = 0; channel < columns.size(); ++channel) {
             const std::span<const double> scores { columns[channel].data(), columns[channel].size() };
-            const bool gates_this = gated && channel != cfg.gate_channel;
-            if (gates_this && gate.size() != scores.size()) {
-                error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
-                    std::source_location::current(), "Gate column has {} scores and column {} has {}", gate.size(), channel, scores.size());
-            }
-            calls[channel] = record_channel(channel, scores, false, 0, gates_this, scan, cfg.flush, stages);
+            calls[channel] = prepare_channel(channel, scores, false, 0, cfg.flush);
         }
-        if (!stages.empty()) {
-            m_context->record_stages(stages);
-        }
+        record_scans(calls, cfg);
         m_last_calls = calls;
         return calls;
     }
@@ -622,72 +630,78 @@ private:
     std::vector<ChannelCall> record_resident(std::span<const uint32_t> counts, const IntervalExtractorConfig& cfg)
     {
         ensure_context();
-        if (m_seen.size() != counts.size()) {
-            m_seen.assign(counts.size(), 0);
-            m_started.assign(counts.size(), false);
-        }
+        reset_state(counts.size());
 
         for (size_t channel = 0; channel < counts.size(); ++channel) {
             if (channel >= m_resident.size() || !m_resident[channel]) {
                 error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
                     std::source_location::current(), "Channel {} has no device scores bound", channel);
             }
-        }
-        const bool gated = cfg.gate_channel != IntervalExtractorConfig::no_channel;
-        if (gated && cfg.gate_channel >= counts.size()) {
-            error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
-                std::source_location::current(), "Gate channel {} is not a channel of the {} given", cfg.gate_channel, counts.size());
-        }
-        if (gated && !m_resident_gate) {
-            error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
-                std::source_location::current(), "The gate has no device scores bound");
+            const auto& settings = cfg.settings_of(channel);
+            check_settings(settings, cfg.length);
+            if (gated_by_other(settings, channel)) {
+                check_gate(settings.gate_channel, counts.size(), counts[channel]);
+                if (counts[settings.gate_channel] != counts[channel]) {
+                    error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+                        std::source_location::current(), "Gate column {} has {} scores and column {} has {}",
+                        settings.gate_channel, counts[settings.gate_channel], channel, counts[channel]);
+                }
+                if (settings.gate_channel >= m_resident.size() || !m_resident[settings.gate_channel]) {
+                    error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+                        std::source_location::current(), "Gate column {} has no device scores bound", settings.gate_channel);
+                }
+            }
         }
 
-        const auto scan = scan_config(cfg);
-        std::vector<DependencyStage> stages;
         std::vector<ChannelCall> calls(counts.size());
         for (size_t channel = 0; channel < counts.size(); ++channel) {
-            const bool gates_this = gated && channel != cfg.gate_channel;
-            calls[channel] = record_channel(channel, {}, true, counts[channel], gates_this, scan, cfg.flush, stages);
+            calls[channel] = prepare_channel(channel, {}, true, counts[channel], cfg.flush);
         }
-        if (!stages.empty()) {
-            m_context->record_stages(stages);
-        }
+        record_scans(calls, cfg);
         m_last_calls = calls;
         return calls;
     }
 
-    static void validate_config(const IntervalExtractorConfig& cfg)
+    static bool gated_by_other(const IntervalScanSettings& settings, size_t channel)
     {
-        const auto fail = [](std::string_view message) {
+        return settings.gate_channel != IntervalScanSettings::no_channel && settings.gate_channel != channel;
+    }
+
+    static void check_gate(uint32_t gate, size_t columns, size_t length)
+    {
+        if (gate >= columns) {
             error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
-                std::source_location::current(), "{}", message);
-        };
-        if (!std::isfinite(cfg.leave_margin) || !std::isfinite(cfg.leave_floor)) {
-            fail("Thresholds must be finite");
-        }
-        if (const std::string reason = Kinesis::Discrete::diagnose_interval_scan(scan_config(cfg)); !reason.empty()) {
-            fail(reason);
+                std::source_location::current(), "Gate column {} is not a column of the {} given, for a column of {} scores",
+                gate, columns, length);
         }
     }
 
-    static Kinesis::Discrete::IntervalScanConfig scan_config(const IntervalExtractorConfig& cfg)
+    void reset_state(size_t channels)
     {
-        return {
-            .enter = cfg.enter_threshold,
-            .leave = std::max(cfg.enter_threshold - cfg.leave_margin, cfg.leave_floor),
-            .gate_threshold = cfg.gate_threshold,
-            .hop = cfg.samples_per_score,
-            .first_sample = cfg.first_sample,
-            .min_run = cfg.min_run,
-            .min_gap = cfg.min_gap,
-            .padding = cfg.padding,
-            .gap_at_limit = cfg.gap_at_limit,
-            .max_run = cfg.max_run,
-            .use_longest_gap = cfg.use_longest_gap,
-            .length = cfg.length,
-            .emit_on_close = cfg.emit_on_close,
-        };
+        if (m_seen.size() != channels) {
+            m_seen.assign(channels, 0);
+            m_started.assign(channels, false);
+        }
+    }
+
+    static void check_settings(const IntervalScanSettings& settings, uint32_t length)
+    {
+        if (!std::isfinite(settings.leave_margin) || !std::isfinite(settings.leave_floor)) {
+            error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+                std::source_location::current(), "Thresholds must be finite");
+        }
+        if (const std::string reason = Kinesis::Discrete::diagnose_interval_scan(interval_scan_config(settings, length)); !reason.empty()) {
+            error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+                std::source_location::current(), "{}", reason);
+        }
+    }
+
+    static void validate_config(const IntervalExtractorConfig& cfg)
+    {
+        check_settings(cfg.scan, cfg.length);
+        for (const auto& settings : cfg.columns) {
+            check_settings(settings, cfg.length);
+        }
     }
 
     void ensure_context() const
@@ -707,18 +721,12 @@ private:
         }
     }
 
-    void upload_gate(std::span<const double> gate) const
-    {
-        constexpr auto type = GpuBufferBinding::ElementType::FLOAT32;
-        m_context->ensure_shared_buffer(0, k_gate_binding, std::max<size_t>(gate.size(), 1), type, Portal::Graphics::BufferUsageHint::COMPUTE);
-        if (!gate.empty()) {
-            const std::vector<float> floats(gate.begin(), gate.end());
-            m_context->upload_shared_raw(0, k_gate_binding, reinterpret_cast<const uint8_t*>(floats.data()), floats.size() * sizeof(float));
-        }
-    }
-
-    ChannelCall record_channel(size_t channel, std::span<const double> scores, bool resident, uint32_t resident_count,
-        bool gated, const Kinesis::Discrete::IntervalScanConfig& scan, bool flush, std::vector<DependencyStage>& stages)
+    /**
+     * Makes a column's buffers, uploads its scores and state, and counts the call.
+     * Every column is prepared before any scan is recorded, so a gate column's
+     * scores exist when the scans that read them are recorded.
+     */
+    ChannelCall prepare_channel(size_t channel, std::span<const double> scores, bool resident, uint32_t resident_count, bool flush)
     {
         const auto n = resident ? resident_count : static_cast<uint32_t>(scores.size());
         if (n == 0 && !flush) {
@@ -750,21 +758,41 @@ private:
         m_context->upload_shared_raw(0, report_binding, reinterpret_cast<const uint8_t*>(&none), sizeof(none));
 
         const uint32_t first = m_seen[channel];
-        stages.push_back(interval_scan_stage(scan,
-            m_context->shared_buffer_address(0, scores_binding),
-            gated ? m_context->shared_buffer_address(0, k_gate_binding) : 0U,
-            m_context->shared_buffer_address(0, state_binding),
-            m_context->shared_buffer_address(0, runs_binding),
-            m_context->shared_buffer_address(0, report_binding),
-            first, n, flush));
-
         if (flush) {
             m_seen[channel] = 0;
             m_started[channel] = false;
         } else {
             m_seen[channel] = first + n;
         }
-        return { .ran = true, .capacity = n + 4 };
+        return { .ran = true, .capacity = n + 4, .first = first, .count = n };
+    }
+
+    /**
+     * Records one scan per column that ran, each with its own settings. A gated
+     * column reads its gate's scores from the gate column's own buffer.
+     */
+    void record_scans(const std::vector<ChannelCall>& calls, const IntervalExtractorConfig& cfg)
+    {
+        std::vector<DependencyStage> stages;
+        for (size_t channel = 0; channel < calls.size(); ++channel) {
+            if (!calls[channel].ran) {
+                continue;
+            }
+            const auto& settings = cfg.settings_of(channel);
+            const uint64_t gate = gated_by_other(settings, channel)
+                ? m_context->shared_buffer_address(0, binding_of(settings.gate_channel, Scores))
+                : uint64_t { 0 };
+            stages.push_back(interval_scan_stage(interval_scan_config(settings, cfg.length),
+                m_context->shared_buffer_address(0, binding_of(channel, Scores)),
+                gate,
+                m_context->shared_buffer_address(0, binding_of(channel, State)),
+                m_context->shared_buffer_address(0, binding_of(channel, Runs)),
+                m_context->shared_buffer_address(0, binding_of(channel, Report)),
+                calls[channel].first, calls[channel].count, cfg.flush));
+        }
+        if (!stages.empty()) {
+            m_context->record_stages(stages);
+        }
     }
 
     ChannelIntervals read_channel(size_t channel, const ChannelCall& call) const
