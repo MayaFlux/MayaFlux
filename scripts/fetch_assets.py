@@ -12,11 +12,11 @@ exists with different content is reported and kept unless --replace is given.
 A file with no recorded SHA-256 (a git file) is taken as present when it
 exists, because the pinned commit already fixes what a fetch would give.
 
-Sources: a file or zip at an https URL, a git repository at a full commit, or
-a Hugging Face model repository at a full commit, whose files are read over
-https so that large files arrive whole. Git needs the git executable. Only the Python standard library is used. When
-the jsonschema module is installed the list is also checked against
-data/assets.schema.json.
+Sources: files at https URLs, either one URL for the source (a single file or a
+zip archive) or one URL per file, so an asset may draw from several hosts; or a
+git repository at a full commit. Git needs the git executable. Only the Python
+standard library is used. When the jsonschema module is installed the list is
+also checked against data/assets.schema.json.
 
 Exit status is 0 when every selected file is in place, 1 otherwise.
 """
@@ -41,9 +41,6 @@ PLATFORMS = {'linux': 'linux', 'darwin': 'macos', 'win32': 'windows'}
 IDENTIFIER = re.compile(r'^[a-z][a-z0-9_]*$')
 SHA256 = re.compile(r'^[A-Fa-f0-9]{64}$')
 COMMIT = re.compile(r'^[a-f0-9]{40}$')
-HUB_REPO = re.compile(r'^[A-Za-z0-9][A-Za-z0-9._-]*/[A-Za-z0-9][A-Za-z0-9._-]*$')
-HUB_HOST = 'huggingface.co'
-HUB_UNSIZED_LIMIT = 1 << 24
 RELATIVE = re.compile(r'^(?!.*(?:^|/)\.{1,2}(?:/|$))[^/\\:<>"|?*\x00-\x1f\x7f]+(?:/[^/\\:<>"|?*\x00-\x1f\x7f]+)*$')
 CHUNK = 1 << 16
 
@@ -78,20 +75,23 @@ def check_rules(document):
             raise AssetError(f'{name}: the shipped list may only use root "data"')
         source = asset.get('source', {})
         kind = source.get('kind')
+        files = asset.get('files', [])
         if kind == 'url':
-            https_url(source.get('url', ''), f'{name}: url')
+            if 'url' in source:
+                https_url(source['url'], f'{name}: url')
+            if 'archive' in source and 'url' not in source:
+                raise AssetError(f'{name}: an archive needs a source url')
+            if 'url' in source and 'archive' not in source and len(files) != 1:
+                raise AssetError(f'{name}: a single url names one file, use one url per file for more')
+            if 'url' not in source and 'archive' not in source:
+                for entry in files:
+                    https_url(entry.get('url', ''), f'{name}: url of {entry.get("to", "?")}')
         elif kind == 'git':
             https_url(source.get('repo', ''), f'{name}: repo')
             if not COMMIT.match(source.get('ref', '')):
                 raise AssetError(f'{name}: ref must be a full commit SHA')
-        elif kind == 'huggingface':
-            if not HUB_REPO.match(source.get('repo', '')):
-                raise AssetError(f'{name}: repo must be an owner/name repository id')
-            if not COMMIT.match(source.get('ref', '')):
-                raise AssetError(f'{name}: ref must be a full commit SHA')
         else:
-            raise AssetError(f'{name}: the shipped list allows only url, git and huggingface sources, not {kind!r}')
-        files = asset.get('files', [])
+            raise AssetError(f'{name}: the shipped list allows only url and git sources, not {kind!r}')
         if not files:
             raise AssetError(f'{name}: no files')
         for entry in files:
@@ -103,11 +103,13 @@ def check_rules(document):
             destinations.add(target)
             if 'sha256' in entry and not SHA256.match(entry['sha256']):
                 raise AssetError(f'{name}: malformed sha256 for {target}')
-            needs_from = kind in ('git', 'huggingface') or 'archive' in source
+            needs_from = kind == 'git' or 'archive' in source
             if needs_from and not RELATIVE.match(entry.get('from', '')):
                 raise AssetError(f'{name}: {target} needs a "from" path')
             if kind == 'url' and (not entry.get('sha256') or not entry.get('size_bytes')):
                 raise AssetError(f'{name}: {target} needs sha256 and size_bytes')
+            if 'url' in entry and (kind != 'url' or 'archive' in source or 'url' in source):
+                raise AssetError(f'{name}: {target} may name its own url only in a url source with no source url')
         notice = asset.get('license', {}).get('notice')
         if notice not in {entry['to'] for entry in files}:
             raise AssetError(f'{name}: license notice {notice!r} is not one of the files')
@@ -242,11 +244,11 @@ def fetch_url(asset, wanted, data_root, replace, report):
     source = asset['source']
     name = asset['id']
     if 'archive' not in source:
-        entry = asset['files'][0]
-        data = download(source['url'], entry['size_bytes'])
-        verify(entry, data, name)
-        place(data, data_root / entry['to'], data_root)
-        report(f'fetched  {entry["to"]}')
+        for entry in wanted:
+            data = download(entry.get('url', source.get('url')), entry['size_bytes'])
+            verify(entry, data, name)
+            place(data, data_root / entry['to'], data_root)
+            report(f'fetched  {entry["to"]}')
         return
     limit = source['max_extracted_size_bytes']
     archive = download(source['url'], limit)
@@ -285,15 +287,15 @@ def fetch_git(asset, wanted, data_root, replace, report):
         repository.close()
 
 
-def fetch_hub(asset, wanted, data_root, replace, report):
+def origins(asset):
     source = asset['source']
-    for entry in wanted:
-        path = urllib.parse.quote(entry['from'])
-        url = f'https://{HUB_HOST}/{source["repo"]}/resolve/{source["ref"]}/{path}'
-        data = download(url, entry.get('size_bytes', HUB_UNSIZED_LIMIT))
-        verify(entry, data, asset['id'])
-        place(data, data_root / entry['to'], data_root)
-        report(f'fetched  {entry["to"]}')
+    if source['kind'] == 'git':
+        urls = [source['repo']]
+    elif 'url' in source:
+        urls = [source['url']]
+    else:
+        urls = [entry['url'] for entry in asset['files']]
+    return ', '.join(sorted({urllib.parse.urlsplit(url).hostname for url in urls}))
 
 
 def apply(asset, data_root, check, replace, report):
@@ -304,11 +306,7 @@ def apply(asset, data_root, check, replace, report):
         return True
     license_info = asset['license']
     source = asset['source']
-    if source['kind'] == 'huggingface':
-        host = HUB_HOST
-    else:
-        host = urllib.parse.urlsplit(source.get('url') or source.get('repo')).hostname
-    report(f'{name}: {asset["description"]} ({license_info["spdx"]}, from {host})')
+    report(f'{name}: {asset["description"]} ({license_info["spdx"]}, from {origins(asset)})')
 
     wanted = []
     complete = True
@@ -331,8 +329,6 @@ def apply(asset, data_root, check, replace, report):
     try:
         if source['kind'] == 'git':
             fetch_git(asset, wanted, data_root, replace, report)
-        elif source['kind'] == 'huggingface':
-            fetch_hub(asset, wanted, data_root, replace, report)
         else:
             fetch_url(asset, wanted, data_root, replace, report)
     except AssetError as error:

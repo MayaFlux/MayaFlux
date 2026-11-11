@@ -60,10 +60,10 @@
       "default": "data"
     },
     "url_source": {
-      "description": "A file or a zip archive at an https URL. Without archive the URL is the one file and files names only its destination. With archive each file names the member to take.",
+      "description": "Files at https URLs. Three forms: a single file at the source url, with one entry in files; a zip archive at the source url, with each file naming the member to take; or no source url, with each file naming its own url, so one entry may draw from any number of hosts. Every file carries sha256 and size_bytes.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["kind", "url"],
+      "required": ["kind"],
       "properties": {
         "kind": { "const": "url" },
         "url": { "$ref": "#/$defs/https_url" },
@@ -72,7 +72,7 @@
         "max_files": { "$ref": "#/$defs/positive_size" }
       },
       "dependentRequired": {
-        "archive": ["max_extracted_size_bytes", "max_files"],
+        "archive": ["url", "max_extracted_size_bytes", "max_files"],
         "max_extracted_size_bytes": ["archive"],
         "max_files": ["archive"]
       }
@@ -88,25 +88,18 @@
         "ref": { "type": "string", "pattern": "^[a-f0-9]{40}(?![\\s\\S])" }
       }
     },
-    "huggingface_source": {
-      "description": "Files of a Hugging Face model repository at one commit, read over https so that large files arrive whole. The ref is a full commit SHA. A file without size_bytes may be at most 16 MiB.",
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["kind", "repo", "ref"],
-      "properties": {
-        "kind": { "const": "huggingface" },
-        "repo": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*/[A-Za-z0-9][A-Za-z0-9._-]*(?![\\s\\S])" },
-        "ref": { "type": "string", "pattern": "^[a-f0-9]{40}(?![\\s\\S])" }
-      }
-    },
     "file": {
       "type": "object",
       "additionalProperties": false,
       "required": ["to"],
       "properties": {
         "from": {
-          "description": "Path inside the repository or the archive. Absent for a plain url source.",
+          "description": "Path inside the git repository or the zip archive. Absent for a plain url file.",
           "$ref": "#/$defs/relative_path"
+        },
+        "url": {
+          "description": "The https URL of this file, for a url source with no source url. Absent when the source has a url, or for git.",
+          "$ref": "#/$defs/https_url"
         },
         "to": {
           "description": "Destination relative to the root.",
@@ -144,8 +137,7 @@
         "source": {
           "oneOf": [
             { "$ref": "#/$defs/url_source" },
-            { "$ref": "#/$defs/git_source" },
-            { "$ref": "#/$defs/huggingface_source" }
+            { "$ref": "#/$defs/git_source" }
           ]
         },
         "files": {
@@ -168,13 +160,46 @@
         {
           "if": {
             "required": ["source"],
+            "properties": { "source": { "required": ["archive"] } }
+          },
+          "then": {
+            "properties": { "files": { "items": { "required": ["from"], "not": { "required": ["url"] } } } }
+          }
+        },
+        {
+          "if": {
+            "required": ["source"],
+            "properties": { "source": { "required": ["url"], "not": { "required": ["archive"] } } }
+          },
+          "then": {
+            "properties": { "files": { "maxItems": 1, "items": { "not": { "required": ["from", "url"] } } } }
+          }
+        },
+        {
+          "if": {
+            "required": ["source"],
+            "properties": { "source": { "required": ["kind"], "properties": { "kind": { "const": "url" } }, "not": { "required": ["url"] } } }
+          },
+          "then": {
+            "properties": { "files": { "items": { "required": ["url"], "not": { "required": ["from"] } } } }
+          }
+        },
+        {
+          "if": {
+            "required": ["source"],
             "properties": { "source": { "required": ["kind"], "properties": { "kind": { "const": "url" } }, "not": { "required": ["archive"] } } }
           },
           "then": {
-            "properties": { "files": { "maxItems": 1, "items": { "not": { "required": ["from"] } } } }
+            "properties": { "files": { "items": { "not": { "required": ["from"] } } } }
+          }
+        },
+        {
+          "if": {
+            "required": ["source"],
+            "properties": { "source": { "required": ["kind"], "properties": { "kind": { "const": "git" } } } }
           },
-          "else": {
-            "properties": { "files": { "items": { "required": ["from"] } } }
+          "then": {
+            "properties": { "files": { "items": { "required": ["from"], "not": { "required": ["url"] } } } }
           }
         }
       ]

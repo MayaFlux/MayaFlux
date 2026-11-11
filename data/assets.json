@@ -31,28 +31,32 @@
       "id": "hubert_phoneme_en",
       "description": "HuBERT base network fine tuned for English phoneme recognition at 16 kHz, used by PhonemeAnalyzer.",
       "source": {
-        "kind": "huggingface",
-        "repo": "Peacockery/hubert-base-phoneme-en",
-        "ref": "132c3327b3150dc081f14035e1d31adb6db5074a"
+        "kind": "url"
       },
       "files": [
         {
-          "from": "model.safetensors",
+          "url": "https://huggingface.co/Peacockery/hubert-base-phoneme-en/resolve/132c3327b3150dc081f14035e1d31adb6db5074a/model.safetensors",
           "to": "tensors/hubert_phoneme/hubert_base_phoneme_en.safetensors",
           "sha256": "e7d96d8777cd5f6061851a38eab4f42526d14ffbb71b30419791e6dc6b7c4042",
           "size_bytes": 377641332
         },
         {
-          "from": "config.json",
-          "to": "tensors/hubert_phoneme/config.json"
+          "url": "https://huggingface.co/Peacockery/hubert-base-phoneme-en/resolve/132c3327b3150dc081f14035e1d31adb6db5074a/config.json",
+          "to": "tensors/hubert_phoneme/config.json",
+          "sha256": "01f6b1a650c021b23a79448fa556c8d6f5373a74edeac546bda63ff291a94e88",
+          "size_bytes": 1565
         },
         {
-          "from": "vocab.json",
-          "to": "tensors/hubert_phoneme/vocab.json"
+          "url": "https://huggingface.co/Peacockery/hubert-base-phoneme-en/resolve/132c3327b3150dc081f14035e1d31adb6db5074a/vocab.json",
+          "to": "tensors/hubert_phoneme/vocab.json",
+          "sha256": "87cd52320966263acbc5c420bacce2f39e1e5afb6f8732d7e78824e76550ca20",
+          "size_bytes": 475
         },
         {
-          "from": "README.md",
-          "to": "tensors/hubert_phoneme/MODEL_CARD.md"
+          "url": "https://huggingface.co/Peacockery/hubert-base-phoneme-en/resolve/132c3327b3150dc081f14035e1d31adb6db5074a/README.md",
+          "to": "tensors/hubert_phoneme/MODEL_CARD.md",
+          "sha256": "b06ed78a1cb6c9fcab571dec07e729a4b8af1d8b6acd1b51e81ad1235fe32df4",
+          "size_bytes": 6064
         }
       ],
       "license": {
