@@ -589,13 +589,13 @@ public:
     /**
      * @brief Open a schema-bearing reader selected by file format.
      *
-     * CSV and TSV currently use DelimitedTextReader. The returned reader is
-     * owned by the caller and can inspect its layout or read bounded batches.
+     * CSV and TSV use DelimitedTextReader; XML uses XmlReader.
+     * The caller owns the reader and can inspect its layout or read bounded batches.
      * IOManager does not retain it or register it with IOService.
      *
      * @param filepath Path to a supported Composite file.
      * @param layout Optional exact field layout. Without one, CSV/TSV fields
-     * are preserved as UTF-8 text.
+     * are preserved as UTF-8 text. XML uses xml_composite_layout().
      * @return Open reader, or nullptr for an unsupported or invalid file.
      */
     [[nodiscard]] std::shared_ptr<CompositeReader>
@@ -623,8 +623,8 @@ public:
     /**
      * @brief Open a Composite writer selected by the output file format.
      *
-     * CSV and TSV currently use DelimitedTextWriter. The caller owns the
-     * returned writer and must call write_rows() and close(). IOManager
+     * CSV and TSV use DelimitedTextWriter; XML uses XmlWriter.
+     * The caller owns the returned writer and must call write_rows() and close(). IOManager
      * does not retain it or enqueue its writes.
      *
      * @param filepath Destination path with a supported extension.
@@ -646,7 +646,7 @@ public:
      * may remain on failure.
      *
      * @param container Source container.
-     * @param filepath Destination CSV or TSV path.
+     * @param filepath Destination CSV, TSV, or XML path.
      * @return True only if every element was written and the file closed.
      */
     bool save_composite(

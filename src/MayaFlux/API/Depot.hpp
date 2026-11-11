@@ -200,21 +200,21 @@ MAYAFLUX_API std::shared_ptr<Buffers::TextureBuffer> choose_image(
     std::optional<Kakshya::Region> region = std::nullopt);
 
 /**
- * @brief Choose a CSV or TSV file and load it as a CompositeContainer.
+ * @brief Choose a CSV, TSV, or XML file and load it as a CompositeContainer.
  *
- * Every field is UTF-8 text. For bounded reading of large files, use
- * IOManager directly.
+ * CSV and TSV fields are UTF-8 text. XML uses the preorder node layout from
+ * xml_composite_layout(). For bounded reading, use IOManager directly.
  *
  * @return Loaded container, or nullptr on cancellation or failure.
  */
 MAYAFLUX_API std::shared_ptr<Kakshya::CompositeContainer> choose_composite();
 
 /**
- * @brief Choose a CSV or TSV file and load it with an exact field layout.
+ * @brief Choose a Composite file and load it with an exact field layout.
  *
  * Mirrors IOManager::load_composite(path, layout, batch_size).
  *
- * @param layout     Field layout for typed CSV/TSV values.
+ * @param layout     Field layout for typed CSV/TSV values, or the XML node layout.
  * @param batch_size Container materialization batch size.
  * @return Loaded container, or nullptr on cancellation or failure.
  */
