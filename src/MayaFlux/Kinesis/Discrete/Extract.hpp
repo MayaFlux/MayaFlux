@@ -53,6 +53,32 @@ namespace MayaFlux::Kinesis::Discrete {
     const std::vector<std::pair<size_t, size_t>>& intervals);
 
 /**
+ * @brief Share of the values inside each interval that are at or above a threshold
+ * @param values One value per position
+ * @param positions Sample position of each value, ascending
+ * @param intervals [start, end) pairs; a value belongs to an interval holding its position
+ * @param threshold Value at or above which a value counts
+ * @return One share in [0, 1] per interval, 0 for an interval holding no values
+ */
+[[nodiscard]] MAYAFLUX_API std::vector<double> interval_share_above(
+    std::span<const double> values,
+    std::span<const size_t> positions,
+    const std::vector<std::pair<size_t, size_t>>& intervals,
+    double threshold);
+
+/**
+ * @brief Median of the values inside each interval
+ * @param values One value per position
+ * @param positions Sample position of each value, ascending
+ * @param intervals [start, end) pairs; a value belongs to an interval holding its position
+ * @return One median per interval, the mean of the two middle values for an even count, 0 for an interval holding no values
+ */
+[[nodiscard]] MAYAFLUX_API std::vector<double> interval_median(
+    std::span<const double> values,
+    std::span<const size_t> positions,
+    const std::vector<std::pair<size_t, size_t>>& intervals);
+
+/**
  * @brief Build [start, end) intervals centred on a set of positions
  * @param positions Sample indices of region centres
  * @param half_region Radius in samples on each side

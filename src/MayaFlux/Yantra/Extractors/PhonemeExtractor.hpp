@@ -3,11 +3,9 @@
 #include "Extractor.hpp"
 
 #include "MayaFlux/Kinesis/Discrete/Extract.hpp"
-#include "MayaFlux/Kinesis/Discrete/IntervalScan.hpp"
 #include "MayaFlux/Transitive/Reflect/EnumReflect.hpp"
 #include "MayaFlux/Yantra/Analyzers/PhonemeAnalyzer.hpp"
-#include "MayaFlux/Yantra/Analyzers/VadAnalyzer.hpp"
-#include "MayaFlux/Yantra/Extractors/IntervalExtractor.hpp"
+#include "MayaFlux/Yantra/Extractors/SpeechSegmenter.hpp"
 #include "MayaFlux/Yantra/OperationSpec/OperationHelper.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -34,11 +32,10 @@ enum class PhonemeSelection : uint8_t {
  * @brief Settings of a PhonemeExtractor.
  *
  * sample_rate states the rate of the input and is refused unless it is 16000,
- * as the networks run at that rate only. The speech_* fields are passed to the
- * speech scan with the rule of Silero's get_speech_timestamps: a speech run
- * starts at speech_threshold, ends after min_silence without speech, and is
- * widened by speech_padding on both sides. Runs shorter than min_speech are
- * dropped. merge_adjacent joins output ranges that touch, for slicing.
+ * as the networks run at that rate only. speech is passed to the
+ * SpeechSegmenter, except that max_run is held to what one call of the phoneme
+ * network accepts and measure is ignored. merge_adjacent joins output ranges
+ * that touch, for slicing.
  */
 struct PhonemeExtractorConfig : ExtractorConfig {
     static constexpr auto describe_facets()
@@ -49,10 +46,7 @@ struct PhonemeExtractorConfig : ExtractorConfig {
                 FacetMember<&PhonemeExtractorConfig::method> {},
                 FacetMember<&PhonemeExtractorConfig::sample_rate> {},
                 FacetMember<&PhonemeExtractorConfig::merge_adjacent> {},
-                FacetMember<&PhonemeExtractorConfig::speech_threshold> {},
-                FacetMember<&PhonemeExtractorConfig::min_speech> {},
-                FacetMember<&PhonemeExtractorConfig::min_silence> {},
-                FacetMember<&PhonemeExtractorConfig::speech_padding> {},
+                FacetMember<&PhonemeExtractorConfig::speech> {},
             });
     }
 
@@ -62,15 +56,27 @@ struct PhonemeExtractorConfig : ExtractorConfig {
     double sample_rate { static_cast<double>(SileroVadModel::sample_rate) };
     /** Join output ranges that touch, so a run of phonemes is one range. */
     bool merge_adjacent { false };
-    /** Speech probability at or above which speech starts. */
-    double speech_threshold { 0.5 };
-    /** Shortest speech run kept, in samples. */
-    uint32_t min_speech { 4000 };
-    /** Shortest silence that ends a speech run, in samples. */
-    uint32_t min_silence { 1600 };
-    /** Samples added on each side of a speech run. */
-    uint32_t speech_padding { 480 };
+    /** How speech is found. */
+    SpeechSettings speech {};
 };
+
+/**
+ * @brief The segmenter settings a PhonemeExtractorConfig implies.
+ *
+ * Runs are capped at HubertPhonemeModel::max_samples so that each speech
+ * interval fits one call of the phoneme network, and measures are off.
+ */
+[[nodiscard]] inline SpeechSegmenterConfig speech_segmenter_config(const PhonemeExtractorConfig& config)
+{
+    SpeechSegmenterConfig segmenter;
+    segmenter.sample_rate = config.sample_rate;
+    segmenter.speech = config.speech;
+    segmenter.speech.measure = false;
+    if (segmenter.speech.max_run == 0 || segmenter.speech.max_run > HubertPhonemeModel::max_samples) {
+        segmenter.speech.max_run = HubertPhonemeModel::max_samples;
+    }
+    return segmenter;
+}
 
 /**
  * @struct PhonemeExtraction
@@ -117,32 +123,10 @@ struct MAYAFLUX_API PhonemeExtraction {
 }
 
 /**
- * @brief The speech scan settings a PhonemeExtractor uses, for a recording of the given length.
- *
- * Scores are the probabilities of 512 sample chunks. The leave threshold is
- * the one IntervalExtractorConfig gives by default, as in Silero. Runs are
- * capped at HubertPhonemeModel::max_samples so that each speech interval fits
- * one call of the phoneme network.
- */
-[[nodiscard]] inline IntervalExtractorConfig speech_scan_settings(const PhonemeExtractorConfig& config, size_t samples)
-{
-    IntervalExtractorConfig speech;
-    speech.scan.enter_threshold = config.speech_threshold;
-    speech.scan.samples_per_score = SileroVadModel::chunk_samples;
-    speech.scan.min_run = config.min_speech;
-    speech.scan.min_gap = config.min_silence;
-    speech.scan.padding = config.speech_padding;
-    speech.scan.max_run = HubertPhonemeModel::max_samples;
-    speech.flush = true;
-    speech.length = static_cast<uint32_t>(samples);
-    return speech;
-}
-
-/**
  * @class PhonemeExtractor
  * @brief The phonemes of a whole mono 16 kHz recording, with the pauses between speech taken out.
  *
- * Finds speech with VadAnalyzer, then runs the phoneme network once on each
+ * Finds speech with a SpeechSegmenter, then runs the phoneme network once on each
  * speech interval, so no call exceeds its 30 s limit and nothing runs on
  * silence. Phoneme ranges are estimates (PhonemeEvent). Pauses shorter than
  * min_silence stay inside a range.
@@ -170,7 +154,7 @@ public:
      * @throws std::invalid_argument When diagnose refuses the config, or either weight set is refused by its network.
      */
     PhonemeExtractor(const Kakshya::TensorSet& vad_weights, const Kakshya::TensorSet& phoneme_weights, PhonemeExtractorConfig config = {})
-        : m_vad(vad_weights, vad_settings(config))
+        : m_speech(vad_weights, speech_segmenter_config(config))
         , m_phonemes(phoneme_weights, phoneme_settings(config))
     {
         if (const std::string reason = diagnose(config); !reason.empty()) {
@@ -196,12 +180,7 @@ public:
      */
     [[nodiscard]] static std::string diagnose(const PhonemeExtractorConfig& config)
     {
-        if (config.sample_rate != static_cast<double>(SileroVadModel::sample_rate)) {
-            return std::format("sample_rate {} is not the {} Hz the networks run at; convert the input first, for example with Kinesis::Discrete::resample",
-                config.sample_rate, SileroVadModel::sample_rate);
-        }
-        const auto speech = speech_scan_settings(config, 0);
-        return Kinesis::Discrete::diagnose_interval_scan(interval_scan_config(speech.scan, speech.length));
+        return SpeechSegmenter<>::diagnose(speech_segmenter_config(config));
     }
 
     /**
@@ -257,7 +236,7 @@ protected:
             PhonemeExtraction record;
             record.config = cfg;
             if (!samples.empty()) {
-                find_speech(samples, cfg, record);
+                record.speech = m_speech.segment(samples, speech_segmenter_config(cfg)).speech;
                 recognise_phonemes(samples, record);
             }
 
@@ -277,41 +256,12 @@ protected:
     }
 
 private:
-    static VadAnalyzerConfig vad_settings(const PhonemeExtractorConfig& config)
-    {
-        VadAnalyzerConfig settings;
-        settings.flush_tail = true;
-        settings.sample_rate = config.sample_rate;
-        return settings;
-    }
-
     static PhonemeAnalyzerConfig phoneme_settings(const PhonemeExtractorConfig& config)
     {
         PhonemeAnalyzerConfig settings;
         settings.method = PhonemeMethod::HELD_CLASSES;
         settings.sample_rate = config.sample_rate;
         return settings;
-    }
-
-    void find_speech(std::span<const double> samples, const PhonemeExtractorConfig& cfg, PhonemeExtraction& record)
-    {
-        m_vad.reset();
-        const auto probabilities = m_vad.analyze_speech(
-            std::vector<Kakshya::DataVariant> { std::vector<double>(samples.begin(), samples.end()) })
-                                       .probabilities;
-        if (probabilities.empty()) {
-            return;
-        }
-
-        Eigen::MatrixXd scores(static_cast<Eigen::Index>(probabilities.size()), 1);
-        for (size_t chunk = 0; chunk < probabilities.size(); ++chunk) {
-            scores(static_cast<Eigen::Index>(chunk), 0) = probabilities[chunk];
-        }
-        m_intervals.set_config(speech_scan_settings(cfg, samples.size()));
-        const auto intervals = m_intervals.extract_intervals(scores);
-        if (!intervals.channels.empty()) {
-            record.speech = intervals.channels[0].intervals;
-        }
     }
 
     void recognise_phonemes(std::span<const double> samples, PhonemeExtraction& record)
@@ -422,9 +372,8 @@ private:
         }
     }
 
-    StandardVadAnalyzer m_vad;
+    RegionSpeechSegmenter m_speech;
     StandardPhonemeAnalyzer m_phonemes;
-    MatrixIntervalExtractor m_intervals;
 };
 
 /// Records: one Composite record per selected phoneme
