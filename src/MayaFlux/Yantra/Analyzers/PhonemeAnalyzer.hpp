@@ -94,7 +94,7 @@ struct MAYAFLUX_API PhonemeEvent {
  * @struct PhonemeAnalysis
  * @brief Analysis result of a PhonemeAnalyzer.
  */
-struct MAYAFLUX_API PhonemeAnalysis {
+struct PhonemeAnalysis {
     static constexpr auto describe_facets()
     {
         return std::tuple {

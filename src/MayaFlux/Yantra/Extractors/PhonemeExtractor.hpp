@@ -116,7 +116,7 @@ struct PhonemeExtractorConfig : ExtractorConfig {
  * interval. The sample, start and end of an event count from the start of the
  * recording; its frame counts from the start of its speech interval.
  */
-struct MAYAFLUX_API PhonemeExtraction {
+struct PhonemeExtraction {
     static constexpr auto describe_facets()
     {
         return std::tuple {

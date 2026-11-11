@@ -52,7 +52,7 @@ namespace MayaFlux::Yantra {
  * TextureLoom::acquire_cached_image are not synchronized here. Do not invoke
  * dispatch or image staging concurrently on the same context.
  */
-class MAYAFLUX_API TextureExecutionContext
+class TextureExecutionContext
     : public GpuExecutionContext<
           std::vector<Kakshya::DataVariant>,
           std::vector<Kakshya::DataVariant>> {

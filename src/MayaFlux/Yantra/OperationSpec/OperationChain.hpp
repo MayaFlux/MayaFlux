@@ -67,7 +67,7 @@ concept AnnotatingOn = std::same_as<typename OpClass::input_type, Datum<DataType
  * ```
  */
 template <typename Executor, ComputeData DataType>
-class MAYAFLUX_API FluentExecutor {
+class FluentExecutor {
 public:
     using executor_type = Executor;
     using data_type = DataType;

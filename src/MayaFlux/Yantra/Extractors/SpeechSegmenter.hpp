@@ -83,7 +83,7 @@ struct SpeechSegmenterConfig : ExtractorConfig {
  * share of its windows that are voiced, and the median frequency in Hz of the
  * voiced ones, 0 when none is.
  */
-struct MAYAFLUX_API SpeechSegmentation {
+struct SpeechSegmentation {
     static constexpr auto describe_facets()
     {
         return std::tuple {

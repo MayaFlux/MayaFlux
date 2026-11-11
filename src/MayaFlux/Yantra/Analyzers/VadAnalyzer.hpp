@@ -58,7 +58,7 @@ struct VadAnalyzerConfig : AnalyzerConfig {
  * @struct VadAnalysis
  * @brief Analysis result of a VadAnalyzer.
  */
-struct MAYAFLUX_API VadAnalysis {
+struct VadAnalysis {
     static constexpr auto describe_facets()
     {
         return std::tuple {
