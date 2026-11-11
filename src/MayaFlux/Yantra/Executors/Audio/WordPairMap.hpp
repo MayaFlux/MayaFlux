@@ -15,12 +15,29 @@
 namespace MayaFlux::Yantra {
 
 /**
+ * @brief True for an operation that takes no second operand.
+ */
+[[nodiscard]] constexpr bool word_pair_unary(Portal::Graphics::WordPairOp op) noexcept
+{
+    return op == Portal::Graphics::WordPairOp::Sqrt || op == Portal::Graphics::WordPairOp::ToFloat32;
+}
+
+/**
+ * @brief Bytes of one result element: a word pair, or a float32 for ToFloat32.
+ */
+[[nodiscard]] constexpr size_t word_pair_result_bytes(Portal::Graphics::WordPairOp op) noexcept
+{
+    return op == Portal::Graphics::WordPairOp::ToFloat32 ? sizeof(float) : sizeof(uint64_t);
+}
+
+/**
  * @brief The spec of a WordPairMap kernel.
  *
  * Result i is op(a[i], b[i]) in the template's emulated IEEE 754 binary64
  * arithmetic, rounded to nearest even, with the IEEE results for signed zeros,
- * infinities, NaN and subnormals. Sqrt takes only a. Bindings: a 0, b 1, result 2,
- * or a 0 and result 1 for Sqrt.
+ * infinities, NaN and subnormals. Sqrt and ToFloat32 take only a. Bindings: a 0,
+ * b 1, result 2, or a 0 and result 1 for Sqrt and ToFloat32. The result of ToFloat32
+ * is float32, the double rounded to nearest even, so it can feed a network.
  *
  * @param op Operation applied to every element.
  * @param workgroup Invocations per group, from 1 to 1024.
@@ -33,10 +50,11 @@ namespace MayaFlux::Yantra {
     assemble.tmpl(Portal::Graphics::KernelTemplate::WordPairMap)
         .word_op(op)
         .ssbo("a", BindingDirection::Input, Kakshya::GpuDataFormat::VEC2_U32);
-    if (op != Portal::Graphics::WordPairOp::Sqrt) {
+    if (!word_pair_unary(op)) {
         assemble.ssbo("b", BindingDirection::Input, Kakshya::GpuDataFormat::VEC2_U32);
     }
-    return assemble.ssbo("result", BindingDirection::Output, Kakshya::GpuDataFormat::VEC2_U32)
+    const auto result = op == Portal::Graphics::WordPairOp::ToFloat32 ? Kakshya::GpuDataFormat::FLOAT32 : Kakshya::GpuDataFormat::VEC2_U32;
+    return assemble.ssbo("result", BindingDirection::Output, result)
         .pc("count", Kakshya::GpuDataFormat::UINT32)
         .workgroup(workgroup)
         .build();
@@ -69,15 +87,15 @@ namespace MayaFlux::Yantra {
     WordPairExecutionContext& context, const GpuComputeConfig& config, Portal::Graphics::WordPairOp op,
     size_t count, uint32_t workgroup = 256)
 {
-    const uint32_t result_binding = op == Portal::Graphics::WordPairOp::Sqrt ? 1U : 2U;
+    const uint32_t result_binding = word_pair_unary(op) ? 1U : 2U;
     const std::array<uint32_t, 1> push { static_cast<uint32_t>(count) };
     const uint32_t groups = std::max<uint32_t>(1U, static_cast<uint32_t>((count + workgroup - 1) / workgroup));
 
     return DependencyStage {
         .config = config,
-        .stage_fn = [&context, count, result_binding, push](GpuDispatchCore&) {
+        .stage_fn = [&context, count, result_binding, element_bytes = word_pair_result_bytes(op), push](GpuDispatchCore&) {
             if (!context.shared_buffer_info(0, result_binding)) {
-                context.set_output_size(result_binding, count * sizeof(uint64_t));
+                context.set_output_size(result_binding, count * element_bytes);
             }
             context.set_push_constants(push);
         },
@@ -138,7 +156,7 @@ struct WordPairOperand {
     WordPairExecutionContext& context, const GpuComputeConfig& config, Portal::Graphics::WordPairOp op,
     size_t count, const WordPairOperand& a, const WordPairOperand& b, uint32_t workgroup = 256)
 {
-    const bool unary = op == Portal::Graphics::WordPairOp::Sqrt;
+    const bool unary = word_pair_unary(op);
     const auto check = [count](const WordPairOperand& operand) {
         if (!operand.resident && operand.host.size() < count) {
             error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::BufferProcessing,
@@ -189,10 +207,33 @@ struct WordPairOperand {
     WordPairExecutionContext& context, const GpuComputeConfig& config, Portal::Graphics::WordPairOp op,
     std::span<const double> a, std::span<const double> b, uint32_t workgroup = 256)
 {
-    const bool unary = op == Portal::Graphics::WordPairOp::Sqrt;
+    const bool unary = word_pair_unary(op);
     const size_t count = unary ? a.size() : std::min(a.size(), b.size());
 
     return word_pair_map_stage(context, config, op, count, WordPairOperand(a), WordPairOperand(b), workgroup);
+}
+
+/**
+ * @brief Read the float32 results of a ToFloat32 stage recorded on the context.
+ *
+ * Reads the shared buffer of the result binding when it has one, otherwise the
+ * context's own.
+ *
+ * @param context The context the stage was recorded on.
+ * @param count Elements the stage converted.
+ */
+[[nodiscard]] inline std::vector<float> read_float_results(WordPairExecutionContext& context, size_t count)
+{
+    std::vector<float> out(count);
+    if (count == 0) {
+        return out;
+    }
+    if (context.shared_buffer_info(0, 1)) {
+        context.download_shared(0, 1, out.data(), count * sizeof(float));
+    } else {
+        context.download_binding(1, out.data(), count * sizeof(float));
+    }
+    return out;
 }
 
 } // namespace MayaFlux::Yantra

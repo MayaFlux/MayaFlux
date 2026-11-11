@@ -75,6 +75,8 @@ enum class WordPairOp : uint8_t {
     Mul, ///< a * b
     Div, ///< a / b
     Sqrt, ///< sqrt(a). Unary: no b binding.
+    ToFloat32, ///< float32(a) rounded to nearest even, with IEEE results for zeros, infinities, NaN, overflow and
+               ///< float subnormals. Unary: no b binding, and the result binding is FLOAT32.
 };
 
 /**
@@ -761,6 +763,7 @@ namespace detail {
         bool less { false };
         bool div { false };
         bool sqrt { false };
+        bool to_float32 { false };
     };
 
     /**
@@ -799,6 +802,13 @@ namespace detail {
     inline constexpr std::string_view soft_double_sqrt = "%sd_f64_sqrt";
 
     /**
+     * @brief Function converting a double held as uvec2 to the bits of a float32, as a u32.
+     *
+     * Rounded to nearest even. The second parameter is unused. Bitcast the result to store a float.
+     */
+    inline constexpr std::string_view soft_double_to_float32 = "%sd_f64_to_f32";
+
+    /**
      * @brief Function returning bool, true when the first double orders before the second.
      *
      * The order is the library order key: -0.0 equals +0.0 and every NaN is the largest.
@@ -833,8 +843,9 @@ namespace detail {
      * @brief Emit the globals, soft-double function and entry point of the WordPairMap template.
      *
      * Returns an empty string when the spec does not have the template's shape:
-     * VEC2_U32 bindings (a, b and result, or a and result for Sqrt), one UINT32
-     * push constant and a workgroup size from 1 to 1024.
+     * VEC2_U32 bindings (a, b and result, or a and result for Sqrt and ToFloat32),
+     * a FLOAT32 result for ToFloat32, one UINT32 push constant and a workgroup
+     * size from 1 to 1024.
      */
     [[nodiscard]] std::string emit_word_pair_map(const ShaderSpec& spec);
 

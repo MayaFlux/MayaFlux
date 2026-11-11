@@ -164,6 +164,65 @@ public:
     }
 
     /**
+     * @brief Append to a recording the caller shares with other work.
+     *
+     * With a shared recording the network goes to the device in the same
+     * submission as the work recorded around it, and analyze_speech submits
+     * and waits for all of it. Call it before the first analysis or record. The
+     * recording must be compute isolated.
+     *
+     * @throws std::logic_error when the network has already been created.
+     */
+    void share_recording(std::shared_ptr<GpuDispatchRecorder> recording)
+    {
+        if (m_model) {
+            error<std::logic_error>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+                std::source_location::current(), "The recording can only be shared before the network starts");
+        }
+        m_recording = std::move(recording);
+    }
+
+    /**
+     * @brief Run every chunk the samples complete without waiting for the result.
+     *
+     * The probabilities stay on the device, in probability_buffer, and are
+     * recorded into the analyzer's recording without a submission. A consumer
+     * on the same recording, such as an IntervalExtractor, reads them in place
+     * and submits. Whole chunks only: a partial chunk stays pending, and
+     * flush_tail does not apply. At most 4096 chunks run per call, so read the
+     * buffer before the next call.
+     *
+     * @param samples Mono samples at 16 kHz, continuing the stream.
+     * @return The number of chunks recorded.
+     * @throws std::invalid_argument when the config cannot be analysed.
+     */
+    [[nodiscard]] size_t record(std::span<const float> samples)
+    {
+        const auto& cfg = this->template config<VadAnalyzerConfig>();
+        if (const std::string reason = diagnose(cfg); !reason.empty()) {
+            error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+                std::source_location::current(), "VadAnalyzer: {}", reason);
+        }
+        const size_t chunks = network().record(samples);
+        m_chunks_done += chunks;
+        return chunks;
+    }
+
+    /**
+     * @brief Where the probabilities of the latest run are on the device, for a consumer on the same recording.
+     */
+    [[nodiscard]] SileroVadModel::ProbabilityBuffer probability_buffer()
+    {
+        return network().probability_buffer();
+    }
+
+    /** @brief Probabilities the latest run left in probability_buffer. */
+    [[nodiscard]] size_t resident_count() const noexcept
+    {
+        return m_model ? m_model->resident_count() : 0;
+    }
+
+    /**
      * @brief Start a new signal: forget the recurrent state, the context and any partial chunk.
      */
     void reset()
@@ -210,17 +269,13 @@ protected:
                     std::source_location::current(), "VadAnalyzer analyses one channel and was given {}", data_span.size());
             }
 
-            if (!m_model) {
-                m_model = std::make_unique<SileroVadModel>(*m_weights);
-            }
-
             const std::vector<float> samples(data_span[0].begin(), data_span[0].end());
 
             VadAnalysis analysis;
             analysis.config = cfg;
-            analysis.probabilities = m_model->process(samples);
+            analysis.probabilities = network().process(samples);
             if (cfg.flush_tail) {
-                const auto tail = m_model->flush();
+                const auto tail = network().flush();
                 analysis.probabilities.insert(analysis.probabilities.end(), tail.begin(), tail.end());
             }
 
@@ -251,7 +306,16 @@ protected:
     }
 
 private:
+    SileroVadModel& network() const
+    {
+        if (!m_model) {
+            m_model = std::make_unique<SileroVadModel>(*m_weights, m_recording);
+        }
+        return *m_model;
+    }
+
     std::shared_ptr<const Kakshya::TensorSet> m_weights;
+    std::shared_ptr<GpuDispatchRecorder> m_recording;
     mutable std::unique_ptr<SileroVadModel> m_model;
     size_t m_chunks_done { 0 };
 };

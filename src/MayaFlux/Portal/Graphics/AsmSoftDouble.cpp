@@ -44,6 +44,9 @@ namespace {
             if (use.sqrt) {
                 emit_sqrt();
             }
+            if (use.to_float32) {
+                emit_to_float32();
+            }
             if (use.less) {
                 emit_less();
             }
@@ -462,7 +465,7 @@ namespace {
         {
             const uint32_t local = spec.workgroup_size[0];
             const WordPairOp op = spec.word_op;
-            const bool unary = op == WordPairOp::Sqrt;
+            const bool unary = op == WordPairOp::Sqrt || op == WordPairOp::ToFloat32;
             const std::string& first = spec.bindings[0].name;
             const std::string& second = unary ? first : spec.bindings[1].name;
             const std::string& result = spec.bindings.back().name;
@@ -481,11 +484,15 @@ namespace {
             case WordPairOp::Sqrt:
                 emit_sqrt();
                 break;
+            case WordPairOp::ToFloat32:
+                emit_to_float32();
+                break;
             }
             const std::string_view function = op == WordPairOp::Add ? soft_double_add
                 : op == WordPairOp::Mul                               ? soft_double_mul
                 : op == WordPairOp::Div                               ? soft_double_div
-                                                                      : soft_double_sqrt;
+                : op == WordPairOp::Sqrt                              ? soft_double_sqrt
+                                                                      : soft_double_to_float32;
 
             const auto load_global = [this](const std::string& binding, const Id& index) {
                 const Id pointer = ins("%pelem_" + binding, "OpAccessChain", { "%buf_" + binding, "%c0u", index });
@@ -505,7 +512,9 @@ namespace {
             m_text += "%wm_body = OpLabel\n";
             const Id a = load_global(first, index);
             const Id b = unary ? a : load_global(second, index);
-            const Id value = ins("%v2u32", "OpFunctionCall", { function, a, b });
+            const Id value = op == WordPairOp::ToFloat32
+                ? ins("%f32", "OpBitcast", { ins("%u32", "OpFunctionCall", { function, a, b }) })
+                : ins("%v2u32", "OpFunctionCall", { function, a, b });
             const Id pointer = ins("%pelem_" + result, "OpAccessChain", { "%buf_" + result, "%c0u", index });
             m_text += "OpStore " + pointer + " " + value + "\n";
             m_text += "OpBranch %wm_end\n";
@@ -668,6 +677,7 @@ namespace {
             out += "%sd_pair = OpTypeStruct %u32 %u32\n";
             out += "%sd_fn_bin = OpTypeFunction %v2u32 %v2u32 %v2u32\n";
             out += "%sd_fn_less = OpTypeFunction %bool %v2u32 %v2u32\n";
+            out += "%sd_fn_tof32 = OpTypeFunction %u32 %v2u32 %v2u32\n";
             for (const uint32_t value : m_constants) {
                 out += "%sd_k" + std::to_string(value) + " = OpConstant %u32 " + std::to_string(value) + "\n";
             }
@@ -1067,6 +1077,35 @@ namespace {
             end(pair(lo, hi));
         }
 
+        void emit_to_float32()
+        {
+            begin("to_f32", "%u32", "%sd_fn_tof32");
+            const Word64 w = unpack("%sd_f64_to_f32_a");
+
+            const Id sign = band(w.hi, k(2147483648));
+            const Id e = band(shr(w.hi, k(20)), k(2047));
+            const Id fraction_hi = band(w.hi, k(1048575));
+            const Id max_exp = eq(e, k(2047));
+            const Id is_nan = land(max_exp, ne(bor(fraction_hi, w.lo), k(0)));
+            const Id tiny = eq(e, k(0));
+
+            const Word64 full { w.lo, bor(fraction_hi, k(1048576)) };
+            const Id normal = uge(e, k(897));
+            const Id drop = sel(normal, k(29), sub(k(926), e));
+            const Shifted shifted = shr64_sticky(full, umin(sub(drop, k(1)), k(60)));
+            const Id guard = band(shifted.value.lo, k(1));
+            const Id quotient = shr(shifted.value.lo, k(1));
+            const Id up = land(ne(guard, k(0)), lor(shifted.sticky, ne(band(quotient, k(1)), k(0))));
+            const Id rounded = add(quotient, sel(up, k(1), k(0)));
+            const Id base = sel(normal, shl(sub(e, k(897)), k(23)), k(0));
+            const Id bits = add(base, rounded);
+
+            const Id overflow = lor(uge(e, k(1151)), uge(bits, k(2139095040)));
+            const Id finite = sel(tiny, k(0), sel(overflow, k(2139095040), bits));
+            const Id special = sel(is_nan, k(2143289344), k(2139095040));
+            end(bor(sign, sel(max_exp, special, finite)));
+        }
+
         Word64 order_key(const Word64& w)
         {
             const Id max_exp = eq(band(shr(w.hi, k(20)), k(2047)), k(2047));
@@ -1169,11 +1208,16 @@ std::string emit_segmented_argmax(const ShaderSpec& spec)
 std::string emit_word_pair_map(const ShaderSpec& spec)
 {
     const uint32_t local = spec.workgroup_size[0];
-    const size_t bindings = spec.word_op == WordPairOp::Sqrt ? 2U : 3U;
-    const bool shaped = spec.bindings.size() == bindings && spec.pc_fields.size() == 1
-        && std::ranges::all_of(spec.bindings, [](const BindingSlot& b) {
-               return b.format == Kakshya::GpuDataFormat::VEC2_U32;
-           })
+    const bool to_float = spec.word_op == WordPairOp::ToFloat32;
+    const size_t bindings = spec.word_op == WordPairOp::Sqrt || to_float ? 2U : 3U;
+    const auto expected = [&](size_t index) {
+        return to_float && index + 1 == bindings ? Kakshya::GpuDataFormat::FLOAT32 : Kakshya::GpuDataFormat::VEC2_U32;
+    };
+    bool formats = spec.bindings.size() == bindings;
+    for (size_t i = 0; formats && i < spec.bindings.size(); ++i) {
+        formats = spec.bindings[i].format == expected(i);
+    }
+    const bool shaped = formats && spec.pc_fields.size() == 1
         && spec.pc_fields[0].format == Kakshya::GpuDataFormat::UINT32;
     const bool sized = local >= 1 && local <= 1024;
     if (!shaped || !sized) {

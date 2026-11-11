@@ -9,6 +9,7 @@
 #include "MayaFlux/Kakshya/Source/TensorContainer.hpp"
 #include "MayaFlux/Yantra/Executors/Audio/LaggedPair.hpp"
 #include "MayaFlux/Yantra/Executors/Audio/SegmentedArgMax.hpp"
+#include "WindowedKernelAnalyzer.hpp"
 #include "MayaFlux/Yantra/Executors/Audio/SegmentedReductionContext.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -46,6 +47,14 @@ enum class WaveformMethod : uint8_t {
  * @struct WaveformAnalyzerConfig
  * @brief Settings of a WaveformAnalyzer.
  *
+ * The passes are double, as every path of the library is. The device runs them
+ * on word pairs because 64 bit floats are not guaranteed, and they agree with
+ * the Kinesis references to rounding. native_float is a fallback to float32 for
+ * a stream that cannot afford them: every pass of a window runs in one float32
+ * kernel, with the lanes of a workgroup sharing the lag search. It keeps no
+ * profiles, and a lag whose correlation differs from the best by less than
+ * float rounding may be chosen instead of it.
+ *
  * The repetition search covers periods from sample_rate / high_frequency to
  * sample_rate / low_frequency samples, truncated to whole samples. The window
  * must hold at least twice the longest period. The hop is any length above 0.
@@ -71,6 +80,7 @@ struct WaveformAnalyzerConfig : AnalyzerConfig {
                 FacetMember<&WaveformAnalyzerConfig::high_frequency> {},
                 FacetMember<&WaveformAnalyzerConfig::keep_profiles> {},
                 FacetMember<&WaveformAnalyzerConfig::unbiased_periodicity> {},
+                FacetMember<&WaveformAnalyzerConfig::native_float> {},
             });
     }
 
@@ -92,7 +102,74 @@ struct WaveformAnalyzerConfig : AnalyzerConfig {
     bool keep_profiles { false };
     /** Report the strength of the chosen lag divided by the share of window pairs that lag has, so it does not fall with the period. */
     bool unbiased_periodicity { false };
+    /** Fallback: run the device passes in float32 instead of double. Faster, accurate only to float precision, no profiles. */
+    bool native_float { false };
 };
+
+namespace detail {
+
+    /**
+     * Body of the native kernel in the windowed kernel layout, 128 lanes per window. Outputs per window: energy,
+     * sum, peak, sign changes, centred energy at lag 0, the best raw correlation over the searched lags and its
+     * lag. Parameters: the first and last lag.
+     */
+    inline constexpr const char* waveform_native_kernel = R"(
+    float acc_sum = 0.0;
+    float acc_square = 0.0;
+    float acc_peak = 0.0;
+    float acc_cross = 0.0;
+    for (uint k = lane; k < window_length; k += lanes) {
+        float v = sample_at(window, k);
+        acc_sum += v;
+        acc_square += v * v;
+        acc_peak = max(acc_peak, abs(v));
+        if (k + 1u < window_length) {
+            float w = sample_at(window, k + 1u);
+            acc_cross += ((v >= 0.0) != (w >= 0.0)) ? 1.0 : 0.0;
+        }
+    }
+    float total = lane_reduce_sum(acc_sum);
+    float energy = lane_reduce_sum(acc_square);
+    float peak = lane_reduce_max(acc_peak);
+    float crossings = lane_reduce_sum(acc_cross);
+    float mean = total / float(window_length);
+
+    float acc_zero = 0.0;
+    for (uint k = lane; k < window_length; k += lanes) {
+        float c = sample_at(window, k) - mean;
+        acc_zero += c * c;
+    }
+    float at_zero = lane_reduce_sum(acc_zero);
+
+    uint first_lag = uint(parameters[0]);
+    uint last_lag = uint(parameters[1]);
+    float best = 0.0;
+    uint best_lag = 0u;
+    for (uint lag = first_lag + lane; lag <= last_lag; lag += lanes) {
+        float acc = 0.0;
+        for (uint k = 0u; k + lag < window_length; ++k) {
+            acc += (sample_at(window, k) - mean) * (sample_at(window, k + lag) - mean);
+        }
+        if (acc > best) {
+            best = acc;
+            best_lag = lag;
+        }
+    }
+    float top = lane_reduce_max(best);
+    float mine = (best == top && best > 0.0) ? float(best_lag) : 3.0e38;
+    float chosen = lane_reduce_min(mine);
+    if (lane == 0u) {
+        results[result_base] = energy;
+        results[result_base + 1u] = total;
+        results[result_base + 2u] = peak;
+        results[result_base + 3u] = crossings;
+        results[result_base + 4u] = at_zero;
+        results[result_base + 5u] = top;
+        results[result_base + 6u] = top > 0.0 ? chosen : 0.0;
+    }
+)";
+
+} // namespace detail
 
 /**
  * @struct LagProfile
@@ -273,7 +350,11 @@ protected:
             auto [data_span, structure_info] = OperationHelper::extract_structured_double(
                 const_cast<input_type&>(input));
 
-            ensure_contexts();
+            if (cfg.native_float) {
+                ensure_native();
+            } else {
+                ensure_contexts();
+            }
             const uint32_t min_lag = shortest_lag(cfg);
             const uint32_t max_lag = longest_lag(cfg);
 
@@ -299,7 +380,11 @@ protected:
                 }
                 for (size_t first = 0; first < windows; first += k_chunk_windows) {
                     const size_t count = std::min(k_chunk_windows, windows - first);
-                    measure_chunk(result, samples, first, count, min_lag, max_lag, cfg);
+                    if (cfg.native_float) {
+                        measure_chunk_native(result, samples, first, count, min_lag, max_lag, cfg);
+                    } else {
+                        measure_chunk(result, samples, first, count, min_lag, max_lag, cfg);
+                    }
                 }
                 derive_changes(result);
                 select_values(result, static_cast<WaveformMethod>(cfg.method));
@@ -345,6 +430,43 @@ private:
     mutable WordPass m_distance;
     mutable WordPass m_select;
 
+    static constexpr uint32_t k_native_lanes = 128;
+    static constexpr uint32_t k_native_outputs = 7;
+    mutable std::unique_ptr<ShaderExecutionContext<>> m_native;
+    mutable GpuComputeConfig m_native_config;
+
+    struct ChunkMeasures {
+        std::vector<double> energy;
+        std::vector<double> sum;
+        std::vector<double> peak;
+        std::vector<double> crossings;
+        std::vector<double> zero;
+        std::vector<double> rows;
+        std::vector<double> distance;
+        std::vector<ArgMaxResult> picks;
+        uint32_t correlation_lags { 0 };
+        uint32_t distance_lags { 0 };
+    };
+
+    static WindowedKernelShape native_shape() noexcept
+    {
+        return { .lanes = k_native_lanes, .inputs = 1 };
+    }
+
+    void ensure_native() const
+    {
+        if (m_native) {
+            return;
+        }
+        auto config = windowed_kernel_config(detail::waveform_native_kernel, native_shape());
+        if (config.shader_id == Portal::Graphics::INVALID_SHADER) {
+            error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+                std::source_location::current(), "The native waveform kernel did not compile; the shader log has the compiler's message");
+        }
+        m_native = std::make_unique<ShaderExecutionContext<>>(config, windowed_kernel_layout(native_shape()), "WaveformNative");
+        m_native_config = std::move(config);
+    }
+
     static uint32_t shortest_lag(const WaveformAnalyzerConfig& cfg)
     {
         return std::max<uint32_t>(1, static_cast<uint32_t>(cfg.sample_rate / cfg.high_frequency));
@@ -382,6 +504,9 @@ private:
         }
         if (cfg.hop_size == 0) {
             fail("The hop size must be greater than 0");
+        }
+        if (cfg.native_float && cfg.keep_profiles) {
+            fail("Profiles are kept only by the double passes, not with native_float");
         }
     }
 
@@ -498,35 +623,78 @@ private:
             record_lagged(m_distance, geometry, min_lag, distance_lags);
         }
 
-        const auto energy = collect(*m_energy);
-        const auto sum = collect(*m_sum);
-        const auto peak = collect(*m_peak);
-        const auto crossings = download_lagged(m_crossings, count, 1);
-        const auto picks = read_argmax(*m_select.context, count);
-        const auto rows = cfg.keep_profiles ? download_lagged(m_correlation, count, correlation_lags) : std::vector<double> {};
-        const auto zero = full_row ? std::vector<double> {} : download_lagged(m_zero, count, 1);
-        const auto distance = cfg.keep_profiles ? download_lagged(m_distance, count, distance_lags) : std::vector<double> {};
+        ChunkMeasures measures;
+        measures.energy = collect(*m_energy);
+        measures.sum = collect(*m_sum);
+        measures.peak = collect(*m_peak);
+        measures.crossings = download_lagged(m_crossings, count, 1);
+        measures.picks = read_argmax(*m_select.context, count);
+        measures.rows = cfg.keep_profiles ? download_lagged(m_correlation, count, correlation_lags) : std::vector<double> {};
+        measures.zero = full_row ? std::vector<double> {} : download_lagged(m_zero, count, 1);
+        measures.distance = cfg.keep_profiles ? download_lagged(m_distance, count, distance_lags) : std::vector<double> {};
+        measures.correlation_lags = correlation_lags;
+        measures.distance_lags = distance_lags;
 
+        append_windows(out, first, count, min_lag, cfg, measures);
+    }
+
+    void measure_chunk_native(ChannelWaveform& out, std::span<const double> samples, size_t first, size_t count,
+        uint32_t min_lag, uint32_t max_lag, const WaveformAnalyzerConfig& cfg) const
+    {
+        ensure_native();
+        const size_t begin = first * cfg.hop_size;
+        const size_t end = (first + count - 1) * cfg.hop_size + cfg.window_size;
+        const auto chunk = samples.subspan(begin, end - begin);
+        const std::vector<float> floats(chunk.begin(), chunk.end());
+        const std::array<float, 2> parameters { static_cast<float>(min_lag), static_cast<float>(max_lag) };
+        const WindowedInput input { .samples = floats, .stride = cfg.hop_size, .offset = 0 };
+
+        const auto results = run_windowed_kernel(*m_native, m_native_config, native_shape(),
+            std::span<const WindowedInput>(&input, 1), cfg.window_size, static_cast<uint32_t>(count), k_native_outputs, parameters);
+
+        ChunkMeasures measures;
+        for (size_t w = 0; w < count; ++w) {
+            const float* r = results.data() + w * k_native_outputs;
+            measures.energy.push_back(r[0]);
+            measures.sum.push_back(r[1]);
+            measures.peak.push_back(r[2]);
+            measures.crossings.push_back(r[3]);
+            measures.zero.push_back(r[4]);
+            const auto lag = static_cast<uint32_t>(r[6]);
+            measures.picks.push_back({ .value = r[5], .index = lag >= min_lag && r[5] > 0.0F ? lag - min_lag : no_argmax_index });
+        }
+        measures.correlation_lags = max_lag + 1 - min_lag;
+        measures.distance_lags = max_lag - min_lag + 1;
+
+        append_windows(out, first, count, min_lag, cfg, measures);
+    }
+
+    void append_windows(ChannelWaveform& out, size_t first, size_t count, uint32_t min_lag,
+        const WaveformAnalyzerConfig& cfg, const ChunkMeasures& m) const
+    {
+        const bool full_row = cfg.keep_profiles;
+        const uint32_t correlation_lags = m.correlation_lags;
+        const uint32_t distance_lags = m.distance_lags;
         const double window = static_cast<double>(cfg.window_size);
         for (size_t w = 0; w < count; ++w) {
             const size_t start = (first + w) * cfg.hop_size;
             out.window_positions.emplace_back(start, start + cfg.window_size);
 
-            const double level = std::sqrt(energy[w] / window);
+            const double level = std::sqrt(m.energy[w] / window);
             out.level.push_back(level);
-            out.crossing_rate.push_back(crossings[w] / (window - 1.0));
-            out.peak.push_back(peak[w]);
-            out.dc_offset.push_back(sum[w] / window);
-            out.crest_factor.push_back(level > 0.0 ? peak[w] / level : 0.0);
+            out.crossing_rate.push_back(m.crossings[w] / (window - 1.0));
+            out.peak.push_back(m.peak[w]);
+            out.dc_offset.push_back(m.sum[w] / window);
+            out.crest_factor.push_back(level > 0.0 ? m.peak[w] / level : 0.0);
 
-            const double* row = full_row ? rows.data() + w * correlation_lags : nullptr;
-            const double at_zero = full_row ? row[0] : zero[w];
+            const double* row = full_row ? m.rows.data() + w * correlation_lags : nullptr;
+            const double at_zero = full_row ? row[0] : m.zero[w];
             const bool varying = at_zero >= k_variance_floor;
             double best = 0.0;
             uint32_t best_lag = 0;
-            if (varying && picks[w].found() && picks[w].value > 0.0) {
-                best = picks[w].value / at_zero;
-                best_lag = min_lag + picks[w].index;
+            if (varying && m.picks[w].found() && m.picks[w].value > 0.0) {
+                best = m.picks[w].value / at_zero;
+                best_lag = min_lag + m.picks[w].index;
                 if (cfg.unbiased_periodicity) {
                     best *= window / (window - static_cast<double>(best_lag));
                 }
@@ -541,7 +709,7 @@ private:
                 for (uint32_t lag = 0; lag < correlation_lags; ++lag) {
                     out.autocorrelation.values.push_back(varying ? row[lag] / row[0] : 0.0);
                 }
-                const double* gaps = distance.data() + w * distance_lags;
+                const double* gaps = m.distance.data() + w * distance_lags;
                 for (uint32_t column = 0; column < distance_lags; ++column) {
                     out.mean_difference.values.push_back(gaps[column] / (window - static_cast<double>(min_lag + column)));
                 }

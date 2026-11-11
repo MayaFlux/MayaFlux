@@ -15,8 +15,9 @@
  * @file WindowedKernelAnalyzer.hpp
  * @brief Runs a supplied compute kernel over every window of a sequence.
  *
- * The extension counterpart of the library's exact analyzers: the kernel is
- * written by the caller, in GLSL, and runs on native float.
+ * The extension counterpart of the library's double analyzers: the kernel is
+ * written by the caller, in GLSL, and runs in float32, a fallback from the
+ * library's double, so its results are accurate only to float precision.
  */
 
 namespace MayaFlux::Yantra {
@@ -27,8 +28,9 @@ namespace MayaFlux::Yantra {
  * The kernel runs once per window of a float sequence. Window w covers
  * window_length samples starting at offset + w * stride. It is either a GLSL
  * body, wrapped by windowed_kernel_config, or a whole .comp file that follows
- * the same layout. Both run on native float, so results are float32 and not
- * exact against a double reference.
+ * the same layout. Both run in float32, the usual precision of GLSL and not the
+ * library's double, so results agree with a double reference only to float
+ * precision.
  *
  * Layout, set 0: bindings 0 to inputs - 1 are the samples (float, read), then
  * the parameters (float, read; one zero when none are given), then the results
@@ -399,11 +401,12 @@ struct MAYAFLUX_API WindowedKernelAnalysis {
  * @brief Runs a caller's compute kernel once per window of every channel.
  *
  * Where WaveformAnalyzer and SpectralAnalyzer are fixed measurements computed
- * exactly, this is the place for a measurement the library does not have. The
+ * in double, this is the place for a measurement the library does not have. The
  * kernel reads the window through sample_at and writes its results to the
  * result array; see the layout described above windowed_kernel_workgroup for the names it sees. Samples are
- * converted to float, the kernel runs in native float, and results are float,
- * so they agree with a double reference only to float precision.
+ * converted to float, the kernel runs in float32 as a fallback from double, and
+ * results are float, so they agree with a double reference only to float
+ * precision.
  *
  * Nothing about the windows is specific to audio: a window is a run of
  * consecutive values of any one-dimensional sequence. It is on the vulkan
