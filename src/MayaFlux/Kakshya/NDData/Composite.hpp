@@ -4,24 +4,31 @@
 
 namespace MayaFlux::Kakshya {
 
+class CompositeLayout;
+class CompositeArray;
+
 /**
  * @struct CompositeField
  * @brief Description of one named value in a Composite.
  *
  * Numeric fields use their exact C++ scalar type. Text and binary fields
  * store offsets and lengths into separate byte stores. Dynamic fields also
- * store a value kind per element. Offsets are assigned when a CompositeArray
- * finalizes its layout.
+ * store a value kind per element. Compound and list fields refer to nested
+ * arrays described by nested_layout. Offsets are assigned when a
+ * CompositeArray finalizes its layout.
  */
 struct CompositeField {
     std::string name;
     std::type_index type { typeid(void) };
     size_t offset_bytes {};
     size_t size_bytes {};
+    std::shared_ptr<const CompositeLayout> nested_layout;
 };
 
 namespace detail {
 struct CompositeDynamic { };
+struct CompositeCompound { };
+struct CompositeList { };
 }
 
 /** @brief Borrowed value of a present dynamic field; monostate represents NULL. */
@@ -35,7 +42,8 @@ using CompositeValue = std::variant<std::monostate, int64_t, double,
  * Declare fields before constructing an array. Construction finalizes the
  * layout, placing a presence bitmap before the fields in each element.
  * Field order determines byte offsets. A field may be an arithmetic type,
- * std::string, binary bytes, or a dynamic value.
+ * std::string, binary bytes, a dynamic value, a compound, or a list.
+ * Every field may be absent in an individual element.
  *
  * Usage:
  * @code
@@ -78,8 +86,34 @@ public:
         return add_field_impl(std::move(name), typeid(detail::CompositeDynamic), 3 * sizeof(uint64_t));
     }
 
+    /**
+     * @brief Declare a compound field containing one nested record.
+     * @param name Nonempty unique field name.
+     * @param layout Layout of the nested record; must contain a field.
+     * @return True if added; false for an invalid name, empty layout, or
+     * finalized parent layout.
+     */
+    bool add_compound_field(std::string name, CompositeLayout layout);
+
+    /**
+     * @brief Declare a list field containing ordered nested records.
+     * @param name Nonempty unique field name.
+     * @param item_layout Layout shared by the list's records.
+     * @return True if added; false for an invalid name, empty item layout,
+     * or finalized parent layout.
+     */
+    bool add_list_field(std::string name, CompositeLayout item_layout);
+
     /** @brief Declared fields in element order, with finalized byte offsets. */
     [[nodiscard]] const std::vector<CompositeField>& fields() const noexcept { return m_fields; }
+
+    /**
+     * @brief Compare declared field names, kinds, and nested layouts.
+     * @param other Layout to compare recursively.
+    * @return True when both layouts describe the same record structure.
+     */
+    [[nodiscard]] bool same_structure(const CompositeLayout& other) const noexcept;
+
     /** @brief Find a field index by name, or std::nullopt if absent. */
     [[nodiscard]] std::optional<size_t> find_field(std::string_view name) const noexcept;
     /** @brief Bytes per packed element after finalization. */
@@ -96,10 +130,10 @@ private:
     bool m_finalized {};
 
     bool add_field_impl(std::string name, std::type_index type, size_t size_bytes);
+    bool add_nested_field(std::string name, CompositeLayout layout, std::type_index type);
     void finalize();
 };
 
-class CompositeArray;
 class CompositeAccess;
 class CompositeSlice;
 class CompositeInsertion;
@@ -110,8 +144,8 @@ struct Region;
  * @class Composite
  * @brief Read view of one value in a CompositeArray.
  *
- * Borrows a layout and three DataVariant stores. Arithmetic access copies one
- * value from packed bytes, so the field need not be naturally aligned.
+ * Borrows a layout, byte stores, and any nested arrays. Arithmetic access
+ * copies one value from packed bytes, so the field need not be naturally aligned.
  * Numeric getters require an exact declared type, except dynamic INTEGER
  * and REAL fields which accept int64_t and double respectively. Missing
  * and mismatched fields return std::nullopt.
@@ -159,17 +193,36 @@ public:
     /** @brief Borrow the bytes of a fixed or dynamic BLOB field. */
     [[nodiscard]] std::optional<std::span<const uint8_t>> blob(std::string_view field_name) const noexcept;
 
+    /**
+     * @brief Borrow a present compound member as a one-record array.
+     * @param field_name Compound field to read.
+     * @return Nested array, or nullptr for an absent or mismatched field.
+     * @note The parent array owns the returned value.
+     */
+    [[nodiscard]] const CompositeArray* compound(std::string_view field_name) const noexcept;
+
+    /**
+     * @brief Borrow a present ordered list of nested records.
+     * @param field_name List field to read.
+     * @return Nested array, or nullptr for an absent or mismatched field.
+     * An empty array is a present list.
+     * @note The parent array owns the returned value.
+     */
+    [[nodiscard]] const CompositeArray* list(std::string_view field_name) const noexcept;
+
 private:
     friend class CompositeArray;
     friend class CompositeAccess;
     friend class CompositeInsertion;
 
     Composite(const CompositeLayout& layout, const DataVariant& rows,
-        const DataVariant& text, const DataVariant& blob, size_t index) noexcept
+        const DataVariant& text, const DataVariant& blob,
+        const std::vector<std::shared_ptr<CompositeArray>>* nested, size_t index) noexcept
         : m_layout(&layout)
         , m_rows(&rows)
         , m_text(&text)
         , m_blob(&blob)
+        , m_nested(nested)
         , m_index(index)
     {
     }
@@ -178,6 +231,7 @@ private:
     const DataVariant* m_rows;
     const DataVariant* m_text;
     const DataVariant* m_blob;
+    const std::vector<std::shared_ptr<CompositeArray>>* m_nested;
     size_t m_index;
 };
 
@@ -185,10 +239,9 @@ private:
  * @class CompositeArray
  * @brief Owns a sequence of values that share a CompositeLayout.
  *
- * Owns three uint8_t DataVariants: fixed-stride packed elements, variable-
- * length UTF-8 text, and binary bytes. The layout carries field names, types, offsets, and
- * stride; the presence bitmap distinguishes absent fields from zero or
- * empty values.
+ * Owns packed elements, text and binary byte stores, and any nested arrays.
+ * The layout carries field names, types, offsets, and stride. Presence bits
+ * distinguish absent fields from zero and empty values.
  *
  * Usage:
  * @code
@@ -216,6 +269,14 @@ public:
      */
     explicit CompositeArray(CompositeLayout layout);
 
+    /** @brief Copy the packed rows and all nested values into independent storage. */
+    CompositeArray(const CompositeArray& other);
+
+    /** @brief Replace this array with an independent copy of another array. */
+    CompositeArray& operator=(const CompositeArray& other);
+    CompositeArray(CompositeArray&&) noexcept = default;
+    CompositeArray& operator=(CompositeArray&&) noexcept = default;
+
     /** @brief Finalized layout shared by all elements. */
     [[nodiscard]] const CompositeLayout& layout() const noexcept { return m_layout; }
     /** @brief Number of packed elements. */
@@ -229,8 +290,8 @@ public:
      */
     [[nodiscard]] std::optional<Composite> at(size_t index) const noexcept;
     /**
-     * @brief Validate and borrow the packed NDData stores and layout.
-     * @return Access view, or std::nullopt if storage is incompatible.
+     * @brief Borrow this array's packed stores and layout.
+     * @return Access view over this array's storage.
      */
     [[nodiscard]] std::optional<CompositeAccess> access() const;
     /**
@@ -314,6 +375,25 @@ public:
     /** @brief Write binary bytes to a fixed or dynamic BLOB field. */
     bool set_blob(size_t index, std::string_view field_name, std::span<const uint8_t> value);
     /**
+     * @brief Copy one record into a compound field.
+     * @param index Parent element index.
+     * @param field_name Compound field to write.
+     * @param value Record with the field's declared nested layout.
+     * @return True on success; false for an invalid index, field, or layout.
+     */
+    bool set_compound(size_t index, std::string_view field_name, const Composite& value);
+
+    /**
+     * @brief Copy ordered records into a list field.
+     * @param index Parent element index.
+     * @param field_name List field to write.
+     * @param values Records with the field's declared item layout.
+     * @return True on success; false for an invalid index, field, or layout.
+     * An empty array becomes a present empty list.
+     */
+    bool set_list(size_t index, std::string_view field_name, const CompositeArray& values);
+
+    /**
      * @brief Mark a field absent without removing its stored bytes.
      * @param index Element index.
      * @param field_name Field to clear.
@@ -336,6 +416,7 @@ private:
     DataVariant m_rows { std::vector<uint8_t> {} };
     DataVariant m_text { std::vector<uint8_t> {} };
     DataVariant m_blob { std::vector<uint8_t> {} };
+    std::vector<std::shared_ptr<CompositeArray>> m_nested;
 
     [[nodiscard]] bool is_present(size_t index, size_t field_index) const noexcept;
     void set_present(size_t index, size_t field_index, bool present) noexcept;
@@ -345,6 +426,8 @@ private:
         size_t index, std::string_view field_name) const;
     bool set_integer(size_t index, std::string_view field_name, int64_t value);
     bool set_real(size_t index, std::string_view field_name, double value);
+    bool set_nested(size_t index, std::string_view field_name,
+        const CompositeArray& value, std::type_index type);
 };
 
 template <typename T>

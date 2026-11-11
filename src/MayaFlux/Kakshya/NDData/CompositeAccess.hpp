@@ -43,12 +43,29 @@ struct CompositeProjection {
     const CompositeLayout& layout);
 
 /**
+ * @brief Validate and borrow packed storage with nested fields.
+ * @param elements DataVariant holding vector<uint8_t> packed elements.
+ * @param text DataVariant holding vector<uint8_t> UTF-8 bytes.
+ * @param blob DataVariant holding vector<uint8_t> binary bytes.
+ * @param nested Arrays referenced by present compound and list fields.
+ * @param layout Finalized layout for the packed elements.
+ * @return Access view, or std::nullopt for incompatible storage, nested
+ * layouts, or compound record counts.
+ * @note The stores, nested arrays, and layout must outlive the view.
+ */
+[[nodiscard]] MAYAFLUX_API std::optional<CompositeAccess> as_composite_access(
+    const DataVariant& elements, const DataVariant& text, const DataVariant& blob,
+    const std::vector<std::shared_ptr<CompositeArray>>& nested,
+    const CompositeLayout& layout);
+
+/**
  * @class CompositeAccess
  * @brief Validated, non-owning access to packed Composite NDData storage.
  *
  * The element, text, and binary stores remain DataVariant instances holding
  * vector<uint8_t>. The layout interprets field offsets within each packed
- * element. No byte or field conversion occurs when creating this view.
+ * element, while nested fields borrow arrays from a separate store. No byte
+ * or field conversion occurs when creating this view.
  *
  * Usage:
  * @code
@@ -111,14 +128,20 @@ public:
     [[nodiscard]] std::optional<CompositeSlice> slice(const Region& region) const;
 
 private:
+    friend class CompositeArray;
     friend MAYAFLUX_API std::optional<CompositeAccess> as_composite_access(
         const DataVariant&, const DataVariant&, const DataVariant&, const CompositeLayout&);
+    friend MAYAFLUX_API std::optional<CompositeAccess> as_composite_access(
+        const DataVariant&, const DataVariant&, const DataVariant&,
+        const std::vector<std::shared_ptr<CompositeArray>>&, const CompositeLayout&);
 
     CompositeAccess(const DataVariant& elements, const DataVariant& text, const DataVariant& blob,
+        const std::vector<std::shared_ptr<CompositeArray>>& nested,
         const CompositeLayout& layout) noexcept
         : m_elements(&elements)
         , m_text(&text)
         , m_blob(&blob)
+        , m_nested(&nested)
         , m_layout(&layout)
     {
     }
@@ -126,6 +149,7 @@ private:
     const DataVariant* m_elements;
     const DataVariant* m_text;
     const DataVariant* m_blob;
+    const std::vector<std::shared_ptr<CompositeArray>>* m_nested;
     const CompositeLayout* m_layout;
 };
 

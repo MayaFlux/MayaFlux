@@ -10,21 +10,10 @@ std::optional<size_t> CompositeInsertion::append(const Composite& source)
     const auto& target_layout = m_array->m_layout;
 
     if (source_layout.stride_bytes() != target_layout.stride_bytes()
-        || source_layout.fields().size() != target_layout.fields().size()) {
+        || !source_layout.same_structure(target_layout)) {
         MF_WARN(Journal::Component::Kakshya, Journal::Context::Runtime,
             "CompositeInsertion: incompatible layout");
         return std::nullopt;
-    }
-
-    for (size_t i = 0; i < target_layout.fields().size(); ++i) {
-        const auto& src = source_layout.fields()[i];
-        const auto& dst = target_layout.fields()[i];
-        if (src.name != dst.name || src.type != dst.type
-            || src.offset_bytes != dst.offset_bytes || src.size_bytes != dst.size_bytes) {
-            MF_WARN(Journal::Component::Kakshya, Journal::Context::Runtime,
-                "CompositeInsertion: incompatible field '{}'", dst.name);
-            return std::nullopt;
-        }
     }
 
     const auto& source_elements = std::get<std::vector<uint8_t>>(*source.m_rows);
@@ -34,6 +23,7 @@ std::optional<size_t> CompositeInsertion::append(const Composite& source)
     std::vector<uint8_t> element(element_begin, element_begin + static_cast<ptrdiff_t>(stride));
     std::vector<std::pair<size_t, std::string>> texts;
     std::vector<std::pair<size_t, std::vector<uint8_t>>> blobs;
+    std::vector<std::pair<size_t, std::shared_ptr<CompositeArray>>> nested;
     size_t additional_text = 0;
     size_t additional_blob = 0;
 
@@ -57,6 +47,18 @@ std::optional<size_t> CompositeInsertion::append(const Composite& source)
                 return std::nullopt;
             additional_blob += value->size();
             blobs.emplace_back(i, std::vector<uint8_t>(value->begin(), value->end()));
+        } else if (field.type == typeid(detail::CompositeList)) {
+            const auto* value = source.list(field.name);
+            if (!value)
+                return std::nullopt;
+
+            nested.emplace_back(i, std::make_shared<CompositeArray>(*value));
+        } else if (field.type == typeid(detail::CompositeCompound)) {
+            const auto* value = source.compound(field.name);
+            if (!value)
+                return std::nullopt;
+
+            nested.emplace_back(i, std::make_shared<CompositeArray>(*value));
         }
     }
 
@@ -66,12 +68,14 @@ std::optional<size_t> CompositeInsertion::append(const Composite& source)
 
     if (stride > target_elements.max_size() - target_elements.size()
         || additional_text > target_text.max_size() - target_text.size()
-        || additional_blob > target_blob.max_size() - target_blob.size())
+        || additional_blob > target_blob.max_size() - target_blob.size()
+        || nested.size() > m_array->m_nested.max_size() - m_array->m_nested.size())
         return std::nullopt;
 
     target_elements.reserve(target_elements.size() + stride);
     target_text.reserve(target_text.size() + additional_text);
     target_blob.reserve(target_blob.size() + additional_blob);
+    m_array->m_nested.reserve(m_array->m_nested.size() + nested.size());
 
     const size_t index = m_array->append();
     std::memcpy(target_elements.data() + index * stride, element.data(), stride);
@@ -80,6 +84,15 @@ std::optional<size_t> CompositeInsertion::append(const Composite& source)
         m_array->set_text(index, target_layout.fields()[field_index].name, value);
     for (const auto& [field_index, value] : blobs)
         m_array->set_blob(index, target_layout.fields()[field_index].name, value);
+
+    for (auto& [field_index, value] : nested) {
+        const auto& field = target_layout.fields()[field_index];
+        const uint64_t payload_index = static_cast<uint64_t>(m_array->m_nested.size());
+
+        m_array->m_nested.push_back(std::move(value));
+        std::memcpy(target_elements.data() + index * stride + field.offset_bytes,
+            &payload_index, sizeof(payload_index));
+    }
 
     return index;
 }

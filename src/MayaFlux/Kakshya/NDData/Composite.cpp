@@ -1,4 +1,5 @@
 #include "Composite.hpp"
+#include "CompositeInsertion.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
@@ -51,6 +52,52 @@ bool CompositeLayout::add_field_impl(std::string name, std::type_index type, siz
     return true;
 }
 
+bool CompositeLayout::add_nested_field(
+    std::string name, CompositeLayout layout, std::type_index type)
+{
+    if (layout.fields().empty())
+        return false;
+
+    layout.finalize();
+    auto nested_layout = std::make_shared<const CompositeLayout>(std::move(layout));
+
+    if (!add_field_impl(std::move(name), type, sizeof(uint64_t)))
+        return false;
+
+    m_fields.back().nested_layout = std::move(nested_layout);
+    return true;
+}
+
+bool CompositeLayout::same_structure(const CompositeLayout& other) const noexcept
+{
+    if (m_fields.size() != other.m_fields.size())
+        return false;
+
+    for (size_t i = 0; i < m_fields.size(); ++i) {
+        const auto& left = m_fields[i];
+        const auto& right = other.m_fields[i];
+
+        if (left.name != right.name || left.type != right.type
+            || left.size_bytes != right.size_bytes
+            || static_cast<bool>(left.nested_layout) != static_cast<bool>(right.nested_layout))
+            return false;
+
+        if (left.nested_layout && !left.nested_layout->same_structure(*right.nested_layout))
+            return false;
+    }
+    return true;
+}
+
+bool CompositeLayout::add_compound_field(std::string name, CompositeLayout layout)
+{
+    return add_nested_field(std::move(name), std::move(layout), typeid(detail::CompositeCompound));
+}
+
+bool CompositeLayout::add_list_field(std::string name, CompositeLayout item_layout)
+{
+    return add_nested_field(std::move(name), std::move(item_layout), typeid(detail::CompositeList));
+}
+
 std::optional<size_t> CompositeLayout::find_field(std::string_view name) const noexcept
 {
     for (size_t i = 0; i < m_fields.size(); ++i) {
@@ -98,6 +145,27 @@ CompositeArray::CompositeArray(CompositeLayout layout)
     m_layout.finalize();
 }
 
+CompositeArray::CompositeArray(const CompositeArray& other)
+    : m_layout(other.m_layout)
+    , m_rows(other.m_rows)
+    , m_text(other.m_text)
+    , m_blob(other.m_blob)
+{
+    m_nested.reserve(other.m_nested.size());
+    for (const auto& value : other.m_nested) {
+        m_nested.push_back(value ? std::make_shared<CompositeArray>(*value) : nullptr);
+    }
+}
+
+CompositeArray& CompositeArray::operator=(const CompositeArray& other)
+{
+    if (this != &other) {
+        CompositeArray copy(other);
+        *this = std::move(copy);
+    }
+    return *this;
+}
+
 size_t CompositeArray::size() const noexcept
 {
     const auto& rows = std::get<std::vector<uint8_t>>(m_rows);
@@ -109,7 +177,7 @@ std::optional<Composite> CompositeArray::at(size_t index) const noexcept
     if (index >= size())
         return std::nullopt;
 
-    return Composite(m_layout, m_rows, m_text, m_blob, index);
+    return Composite(m_layout, m_rows, m_text, m_blob, &m_nested, index);
 }
 
 size_t CompositeArray::append()
@@ -292,6 +360,54 @@ bool CompositeArray::set_blob(size_t index, std::string_view field_name, std::sp
     return true;
 }
 
+bool CompositeArray::set_nested(size_t index, std::string_view field_name,
+    const CompositeArray& value, std::type_index type)
+{
+    const auto field_index = validate_write(index, field_name, type);
+    if (!field_index)
+        return false;
+    const auto& field = m_layout.fields()[*field_index];
+    if (!field.nested_layout || !field.nested_layout->same_structure(value.layout())
+        || (type == typeid(detail::CompositeCompound) && value.size() != 1))
+        return false;
+
+    if (m_nested.size() == m_nested.max_size())
+        return false;
+
+    auto owned = std::make_shared<CompositeArray>(*field.nested_layout);
+    CompositeInsertion insertion(*owned);
+
+    for (size_t i = 0; i < value.size(); ++i) {
+        const auto row = value.at(i);
+        if (!row || !insertion.append(*row))
+            return false;
+    }
+
+    const uint64_t payload_index = static_cast<uint64_t>(m_nested.size());
+    m_nested.push_back(std::move(owned));
+
+    auto& rows = std::get<std::vector<uint8_t>>(m_rows);
+    std::memcpy(rows.data() + index * m_layout.stride_bytes() + field.offset_bytes,
+        &payload_index, sizeof(payload_index));
+
+    set_present(index, *field_index, true);
+    return true;
+}
+
+bool CompositeArray::set_compound(size_t index, std::string_view field_name, const Composite& value)
+{
+    CompositeArray one(value.layout());
+    CompositeInsertion insertion(one);
+
+    return insertion.append(value)
+        && set_nested(index, field_name, one, typeid(detail::CompositeCompound));
+}
+
+bool CompositeArray::set_list(size_t index, std::string_view field_name, const CompositeArray& values)
+{
+    return set_nested(index, field_name, values, typeid(detail::CompositeList));
+}
+
 bool CompositeArray::clear(size_t index, std::string_view field_name)
 {
     if (index >= size()) {
@@ -322,6 +438,51 @@ bool Composite::has(std::string_view field_name) const noexcept
     const size_t byte_index = m_index * m_layout->stride_bytes() + *field_index / 8;
 
     return (rows[byte_index] & static_cast<uint8_t>(1U << (*field_index % 8))) != 0;
+}
+
+const CompositeArray* Composite::list(std::string_view field_name) const noexcept
+{
+    const auto field_index = m_layout->find_field(field_name);
+    if (!field_index || !has(field_name) || !m_nested)
+        return nullptr;
+
+    const auto& field = m_layout->fields()[*field_index];
+    if (field.type != typeid(detail::CompositeList))
+        return nullptr;
+
+    const auto& rows = std::get<std::vector<uint8_t>>(*m_rows);
+    uint64_t payload_index {};
+    std::memcpy(&payload_index,
+        rows.data() + m_index * m_layout->stride_bytes() + field.offset_bytes,
+        sizeof(payload_index));
+
+    if (payload_index >= m_nested->size() || !(*m_nested)[payload_index])
+        return nullptr;
+
+    return (*m_nested)[payload_index].get();
+}
+
+const CompositeArray* Composite::compound(std::string_view field_name) const noexcept
+{
+    const auto field_index = m_layout->find_field(field_name);
+    if (!field_index || !has(field_name) || !m_nested)
+        return nullptr;
+
+    const auto& field = m_layout->fields()[*field_index];
+    if (field.type != typeid(detail::CompositeCompound))
+        return nullptr;
+
+    const auto& rows = std::get<std::vector<uint8_t>>(*m_rows);
+    uint64_t payload_index {};
+    std::memcpy(&payload_index,
+        rows.data() + m_index * m_layout->stride_bytes() + field.offset_bytes,
+        sizeof(payload_index));
+
+    if (payload_index >= m_nested->size() || !(*m_nested)[payload_index])
+        return nullptr;
+
+    return (*m_nested)[payload_index]->size() == 1
+        ? (*m_nested)[payload_index].get() : nullptr;
 }
 
 const CompositeLayout& Composite::layout() const noexcept
