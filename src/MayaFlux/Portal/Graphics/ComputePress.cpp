@@ -302,7 +302,9 @@ void ComputePress::bind_descriptor_sets(
         vk_sets.push_back(m_shader_foundry->get_descriptor_set(ds_id));
     }
 
-    if (vk_sets.empty() && pipeline_it->second.push_set) {
+    const auto& layouts = pipeline_it->second.layouts;
+    const size_t bindable_layouts = layouts.size() - (pipeline_it->second.push_set.has_value() ? 1U : 0U);
+    if (vk_sets.empty() && (pipeline_it->second.push_set.has_value() || bindable_layouts == 0)) {
         return;
     }
 
