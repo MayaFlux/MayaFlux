@@ -1,6 +1,6 @@
 # Yantra Compute Guide
 
-Yantra is MayaFlux's offline compute and grammar pipeline substrate. It is the layer you reach for when computation needs to be composed, orchestrated, and reasoned about as a data transformation graph rather than executed as a one-shot callback. The scope is deliberately broad: audio analysis, GPU image processing, spectral transforms, spatial sorting, granular reconstruction, and arbitrary GPGPU work all use the same types and the same execution machinery.
+Yantra is MayaFlux's offline compute and grammar pipeline substrate. It is the layer you reach for when computation needs to be composed, orchestrated, and reasoned about as a data transformation graph rather than executed as a one-shot callback. The scope is deliberately broad: audio analysis, GPU image processing, spectral transforms, spatial sorting, granular reconstruction, speech analysis and arbitrary GPGPU work all use the same types and the same execution machinery.
 
 The central premise is that audio samples, vertex positions, image pixels, spectral bins, and region descriptors are all just numbers with metadata. Yantra does not special-case any of them. All data flows through the same `Datum<T>` envelope, crosses every operation boundary in that envelope, and is processed by the same executor, operation, and matrix types regardless of what the numbers represent. Domain (audio, visual, spatial) is a routing annotation carried by `DataModality` on the `Datum`, not an architectural boundary in the system.
 
@@ -45,11 +45,11 @@ An operation is not a thin wrapper around a shader. It is the unit of algorithmi
 
 Before the individual components, it helps to see how they connect end to end.
 
-Data enters Yantra as a `Datum<T>`, where `T` is any type satisfying the `ComputeData` concept: flat vectors, `DataVariant` collections, region descriptors, or container handles. The `Datum` carries not just the data but its dimensional structure (`DataDimension`), its semantic role (`DataModality`), its typed facets, and an optional `SignalSourceContainer` for cases where the data lives in a resident or streaming source rather than a flat buffer. This envelope is the only thing that crosses operation boundaries. Nothing is extracted, flattened, or converted until an executor needs to stage it for GPU dispatch.
+Data enters Yantra as a `Datum<T>`, where `T` is any type satisfying the `ComputeData` concept: flat vectors, `DataVariant` collections, region descriptors, or container handles. The `Datum` carries not just the data but its dimensional structure (`DataDimension`), its semantic role (`DataModality`), its typed facets, and, for data that lives in a resident or streaming source rather than a flat buffer, a container. This envelope is the only thing that crosses operation boundaries. Nothing is extracted, flattened, or converted until an executor needs to stage it for GPU dispatch.
 
 A `ComputeOperation` consumes a `Datum<InputType>` and produces a `Datum<OutputType>`. Its settings are typed config structs (`OperationConfig`, read with `config<T>()`), and each call may carry typed facets in its `ExecutionContext`. Its implementation is `operation_function` on the CPU, or `apply_operation_internal` in a GPU class that dispatches through its own executor. The caller does not choose the implementation by name. The grammar chooses it by target and fitness; see [Targets, permits and fitness](#targets-permits-and-fitness).
 
-Signatures replace the older `ComputationContext` tag. A grammar stage is selected by an enum signature such as `MathematicalOperation::GAIN | TemporalOperation::TIME_REVERSE`, and the signature is resolved against an `OperationRegistry`.
+A grammar stage is selected by an enum signature such as `MathematicalOperation::GAIN | TemporalOperation::TIME_REVERSE`, and the signature is resolved against an `OperationRegistry`.
 
 Operations are composed by the orchestration layer. Three shapes are available:
 
@@ -73,8 +73,6 @@ Where an operation runs is described by a `Target`, which is a set of (device, r
 |---|---|---|
 | `CPU` | `NATIVE` (compiled C++ in this library) | `targets::cpu` |
 | `GPU` | `VULKAN` (Vulkan compute shaders) | `targets::vulkan` |
-| `CPU` | `ONNX` | `targets::onnx_cpu` |
-| `GPU` | `ONNX` | `targets::onnx_gpu` |
 
 `Device` and `Runtime` are flag sets. `Target` built from a device set and a runtime set names every combination of the two, and `|` joins targets as a union of pairs. `CPU | GPU` with `NATIVE` is therefore CPU+Native and GPU+Native, while `targets::cpu | targets::vulkan` names exactly CPU+Native and GPU+Vulkan. Two targets meet when they share a pair.
 
@@ -142,12 +140,10 @@ struct Datum {
     DataModality modality;
     std::unordered_map<std::string, std::any> metadata;
     Facets facets;                       // typed results, read by type
-    bool b_container_processing;
-    std::optional<std::shared_ptr<SignalSourceContainer>> container;
 };
 ```
 
-`facets` is the typed store. `metadata` is the older string-keyed bag and is kept for existing callers. New code should put typed values in facets.
+`facets` is the typed store: results such as an analysis or an interval list, and the container a `Datum` refers to, are read back by type. A container is set with `set_container` and read with `get_container<C>()`, with one slot per container family (signal, composite, tensor). `metadata` is a string-keyed bag for untyped values. Prefer facets.
 
 ```mermaid
 classDiagram
@@ -157,7 +153,6 @@ classDiagram
         +DataModality modality
         +map metadata
         +Facets facets
-        +optional container
     }
     class DataDimension {
         +Role role
@@ -175,7 +170,7 @@ classDiagram
     }
     Datum *-- DataDimension
     Datum --> DataModality
-    Datum o-- SignalSourceContainer : optional
+    Datum o-- SignalSourceContainer : in a facet
 ```
 
 Common aliases (`Yantra/Data/DataIO.hpp`):
@@ -184,6 +179,8 @@ Common aliases (`Yantra/Data/DataIO.hpp`):
 |---|---|
 | `DataIO` | `Datum<std::vector<Kakshya::DataVariant>>` |
 | `ContainerIO` | `Datum<std::shared_ptr<Kakshya::SignalSourceContainer>>` |
+| `CompositeIO` | `Datum<Kakshya::CompositeArray>` |
+| `TensorContainerIO` | `Datum<std::shared_ptr<Kakshya::TensorContainer>>` |
 | `RegionIO` | `Datum<Kakshya::Region>` |
 | `SegmentIO` | `Datum<std::vector<Kakshya::RegionSegment>>` |
 
@@ -199,6 +196,8 @@ d.set_metadata("sample_rate", 48000);
 Containers are pure storage with processing state and optional reader support. They sit in `Datum::container` and are resolved by executors and operations that need access to structured data beyond flat channels.
 
 `SignalSourceContainer` - abstract base. Covers streaming, file-backed, and in-memory sources. Subclasses: `SoundFileContainer`, `SoundStreamContainer`, `AudioOutputContainer`, `DynamicSoundStream`, `VideoFileContainer`, `VideoStreamContainer`, `CameraContainer`, `PlotContainer`, `WindowContainer`, `TextureContainer`.
+
+`TensorContainer` - one N-dimensional tensor, for model weights, activations and other numeric arrays that are not signals. Tensors are read from safetensors and NumPy files with `IOManager::load_tensors`, and `TensorConverter` changes their element type (half, bfloat16, float, double, integers with optional quantization).
 
 `TextureContainer` - layer-aware image data. Key methods: `get_layer_count()`, `to_image(layer)`, `from_image(layer, img)`, `set_pixels(...)`, `pixel_bytes()`. Used as the input/output carrier for `TextureExecutionContext` and for array shaders.
 
@@ -229,21 +228,7 @@ struct GpuBufferBinding {
 
 `skip_auto_readback` skips the automatic CPU readback after dispatch for this binding. Use for bindings that stay GPU-resident and are never needed on CPU.
 
-`usage_hint` (`BufferUsageHint`) controls allocation and memory properties:
-
-| Value | Meaning |
-|---|---|
-| `STAGING` | Host-visible staging buffer, transfer src/dst. |
-| `DEVICE` | Device-local GPU-only buffer. |
-| `COMPUTE` | Storage buffer for compute shaders, device-local. |
-| `VERTEX` | Vertex buffer. |
-| `INDEX` | Index buffer. |
-| `UNIFORM` | Uniform buffer, host-visible. |
-| `UNIFORM_BDA` | Uniform buffer with device address query support. |
-| `STORAGE_BDA` | Storage buffer with device address query support. |
-| `INDIRECT` | Indirect draw/dispatch buffer, device-local. |
-| `HOST_STORAGE` | Host-visible storage buffer, host visible and coherent. |
-| `COMPUTE_STORAGE` | Bare storage buffer, no transfer flags. Default for `GpuResourceManager` host-visible compute buffers. |
+`usage_hint` (`BufferUsageHint`) selects how the buffer is allocated: staging, device-local, compute storage, vertex, index, uniform, indirect, host-visible, or storage with a device address. The default suits compute shaders.
 
 `INPUT_OUTPUT` bindings receive a cross-pass memory barrier automatically when used across multiple recorded dispatches in one command buffer (`ComputePress::record_sequence`), since the same resource is read and written by consecutive stages.
 
@@ -255,13 +240,8 @@ Bridges `Datum<T>` to Vulkan SSBO and image dispatch. Executors own buffer stagi
 classDiagram
     class GpuDispatchCore {
         +execute()
-        +dispatch_core_async() FenceID
-        +dispatch_core_chained(channels, info, ctx)
-        +dispatch_core_chained_indirect(channels, info, ctx)
+        +dispatch_async() FenceID
         +record_stages(stages)
-        declare_buffer_bindings()
-        prepare_gpu_inputs()
-        on_before_gpu_dispatch()
         calculate_dispatch_size()
     }
     class GpuExecutionContext {
@@ -307,27 +287,39 @@ Abstract type-parameterised shell over `GpuDispatchCore`. Handles the two type b
 
 Subclass this only for custom channel layout or non-numeric input (e.g. image-only shaders). All standard buffer and image shaders use the concrete subclasses.
 
-`GpuDispatchCore` virtual hooks (override in subclasses):
-- `declare_buffer_bindings()` - return the `GpuBufferBinding` list.
-- `prepare_gpu_inputs()` - upload staging data before dispatch.
-- `on_before_gpu_dispatch()` - per-dispatch mutation hook.
-- `calculate_dispatch_size()` - override for 2D/3D grids; default derives from element count.
+To size a dispatch other than one thread per element, such as a 2D or 3D grid, override `calculate_dispatch_size()`.
 
 ### Queues
 
 `GpuDispatchCore` takes a `compute_isolated` flag, which defaults to `true`. Isolated work runs on a distinct compute queue when the device has one, and otherwise on the graphics queue. Shared work always uses the graphics queue. `GpuResourceManager` enforces the rule that matters in practice: **image bindings and image transitions require `compute_isolated=false`**. It throws otherwise, because image transitions do not yet run on the compute queue. `TextureExecutionContext` sets this for you. Pure buffer contexts keep the default.
 
-### Multi-stage and chained dispatch (GpuDispatchCore)
+### Multi-stage dispatch
 
-Beyond the single-shot `execute()` / `dispatch_async()` pair, `GpuDispatchCore` exposes three additional entry points for cases where a single executor instance needs to run more than one distinct shader configuration or feed a batched pipeline.
+Beyond the single-shot `execute()` / `dispatch_async()` pair, `GpuDispatchCore` runs several shader passes together.
 
-`record_stages(stages)` runs an ordered sequence of `DependencyStage` values on one core instance. Each stage supplies its own `GpuComputeConfig` and a `stage_fn` that stages data and push constants, and every stage is followed by a barrier, so a stage sees the writes of every earlier one. Each stage is recorded in turn, with its uploads and fills landing between the dispatches before and after it. With a recording attached, nothing is submitted; without one, each stage is submitted and awaited on its own. The context's own config, bindings and staged data are restored before the call returns. Use this when several shader passes with different configs need to run back-to-back on shared core state without allocating a separate executor per pass.
+`record_stages(stages)` runs an ordered sequence of `DependencyStage` values on one core instance. Each stage supplies its own `GpuComputeConfig` and a `stage_fn` that stages data and push constants, and every stage is followed by a barrier, so a stage sees the writes of every earlier one. With a recording attached (see [Sharing a recording and its buffers](#sharing-a-recording-and-its-buffers)), nothing is submitted until the recording is; without one, each stage is submitted and awaited on its own. Use it when several shader passes with different configs need to run back to back without allocating a separate executor per pass.
 
-`dispatch_core_chained(channels, structure_info, ctx)` dispatches through `m_resources.dispatch_batched(...)` rather than a single `dispatch()`/`dispatch_async()` call, for use inside a `ComputeMatrix` chain where dispatch batching against the matrix's own scheduling is desired.
+`set_multipass(count, updater)` repeats one shader for `count` passes with the push constants updated between them.
 
-`dispatch_core_chained_indirect(channels, structure_info, ctx)` is the same batched path but re-declares bindings and re-checks GPU readiness on every call rather than relying on a stable cached binding set, for indirect dispatch scenarios where binding shape can change between calls in the chain.
+### Sharing a recording and its buffers
 
-None of these replace `execute()` for the common single-shader case. They exist for multi-config sequences (`record_stages`) and matrix-driven batched dispatch (`dispatch_core_chained*`).
+Contexts that cooperate on one result can share a `GpuDispatchRecorder`, one command buffer that every context appends to. It is submitted at a readback or an explicit `submit()`, and nothing waits between stages: a barrier after each recorded dispatch keeps the order. Contexts that share a recording must agree on `compute_isolated`.
+
+A buffer written by one context can be read by another with no copy and no CPU hop. The owner declares it with `ensure_shared_buffer`, and the reader makes its own binding resolve to it with `import_shared(set, binding, source, source_set, source_binding, element_type)`. The import is a live alias: if the owner reallocates, the reader follows it. `shared_buffer_info` reports the element type, size and a generation that increases on each reallocation, for a consumer that holds a device address and needs to know it went stale. Sharing is read-only by convention, and the reader cannot grow the buffer.
+
+```mermaid
+flowchart LR
+    subgraph REC["one GpuDispatchRecorder, one command buffer"]
+        direction LR
+        A["context A<br/>owns the buffer<br/>ensure_shared_buffer"] -- "barrier" --> B["context B<br/>import_shared<br/>reads the same buffer"] -- "barrier" --> C["context C"]
+    end
+    REC --> S["submit(), or a readback"]
+    S --> H["the host sees only what a context reads back"]
+```
+
+A shared binding is uploaded with `upload_shared_raw`. Staging host data into a binding that resolves to a shared buffer writes the context's own buffer, which the shader does not read.
+
+Several operations use this. `WaveformAnalyzer` uploads each chunk once for all of its passes, and `VadAnalyzer::record` leaves its probabilities on the device for `IntervalExtractor::submit_resident`. See [GPU operations in the library](#gpu-operations-in-the-library).
 
 ### ShaderExecutionContext\<InputType, OutputType\>
 
@@ -395,24 +387,18 @@ while (!Portal::Graphics::ShaderFoundry::is_fence_signaled(fence)) {}
 auto raw = exec->collect_result();
 ```
 
-One synchronous dispatch, inside `GpuExecutionContext::execute`:
+`execute()` stages the inputs, sizes and submits the dispatch, waits, and reads back each binding unless `skip_auto_readback` is set:
 
 ```mermaid
 sequenceDiagram
     participant U as Caller
     participant X as Executor
-    participant R as GpuResourceManager
-    participant F as ShaderFoundry and ComputePress
+    participant G as GPU
 
     U->>X: execute(datum, ctx)
-    X->>X: ensure_gpu_ready, extract_inputs
-    X->>X: on_before_gpu_dispatch, prepare_gpu_inputs
-    X->>X: bind_all_descriptors, calculate_dispatch_size
-    X->>R: dispatch(key, groups, bindings, push constants)
-    R->>F: begin_commands, bind_all, dispatch, buffer barriers
-    R->>F: submit_and_wait
-    X->>R: readback of each binding unless skip_auto_readback
-    X->>X: collect_gpu_outputs
+    X->>G: stage inputs, dispatch, wait
+    G-->>X: results
+    X->>X: read back each binding unless skip_auto_readback
     X-->>U: Datum
 ```
 
@@ -505,12 +491,14 @@ auto exec = std::make_shared<WordPairExecutionContext>(
 - `order_key = true` stages each double's **order key**, a 64-bit word whose unsigned order is the numeric order. A shader can compare keys with integer operations and get exact double ordering.
 - `order_key = false` stages the IEEE 754 bits unchanged, for arithmetic shaders that decode them.
 
-The primary output of a dispatch is kept as raw words, and in IEEE mode it is also decoded to doubles. `OperationHelper::encode_word_pairs` and `decode_word_pairs` hold the codec, and the context delegates to them.
+The primary output of a dispatch is kept as raw words, and in IEEE mode it is also decoded to doubles.
+
+Arithmetic on word pairs is exactly rounded: addition, multiplication, division and square root (`WordPairMap` with `WordPairOp`) return the IEEE 754 binary64 result rounded to nearest even. `WordPairOp::ToFloat32` converts a result to a float32 buffer, so a double-precision stage can feed a float32 consumer, such as a network, on the device with no host copy.
 
 Two rules follow from this:
 
 - `ShaderSpec` cannot declare a double. `ShaderFoundry::load_shader` rejects any spec with a `FLOAT64` or `VEC*_F64` binding or push constant, returning `INVALID_SHADER` rather than emitting a float shader. Double-precision work uses the word-pair path.
-- The library's own kernels are written as SPIR-V assembly emitted from `ShaderSpec`, not GLSL. The word pair is the only internal double path.
+- The library's exact kernels are written as SPIR-V assembly emitted from `ShaderSpec`, not GLSL, and the word pair is the only double path. The float32 kernels that run neural networks (see [Speech and model operations](#speech-and-model-operations)) are the one exception, shipped as `.comp` files in `data/shaders`.
 
 ---
 
@@ -551,6 +539,9 @@ struct BindingSlot {
 - `Scan` - inclusive prefix scan, double-buffered.
 - `SegmentedReduction` - one workgroup per segment over word-pair doubles. Input and output are `VEC2_U32`, with push constants for length, stride and offset. The combine is `Sum`, `Max` or `Min`, applied after a `ReductionMap` (`Identity`, `Abs`, `Square`).
 - `FFT` - radix-2 transform of word-pair doubles, one workgroup per window, up to 2048 points. The output is complex bins, power bins, or a projection onto weight rows (`SpectrumOutput`).
+- `LaggedPair` - for every lag in a range, the sum over a window of a pairwise map of `x[i]` and `x[i + lag]` (`Product`, `SignChange`, `AbsDifference`, optionally mean-centred), as word-pair doubles. This is the autocorrelation pass.
+- `WordPairMap` - one IEEE double operation per element on word-pair doubles: `Add`, `Mul`, `Div`, `Sqrt`, or `ToFloat32`, each rounded to nearest even.
+- `SegmentedArgMax` - the first maximum of each segment of word-pair doubles and its index, one workgroup per segment.
 
 `KernelOp` selects a named operation the emitter lowers to SPIR-V opcodes deterministically:
 
@@ -578,7 +569,7 @@ For a custom kernel body not covered by `KernelOp`, `MF_KERNEL` stringifies a la
 auto bindings = bindings_from_spec(spec);   // std::vector<GpuBufferBinding>
 ```
 
-`to_binding_direction` maps `BindingDirection::Input/Output` to `GpuBufferBinding::Direction::INPUT/OUTPUT`, anything else to `INPUT_OUTPUT`. `to_element_type` maps `DataModality::TEXTURE_2D` to `IMAGE_SAMPLED` and `IMAGE_2D` to `IMAGE_STORAGE`. Other bindings follow their `GpuDataFormat`: `UINT8`, `UINT16` and `UINT32` to `UINT32`, `INT32` to `INT32`, `VEC2_U32` to `VEC2_U32`, `FLOAT64` to `FLOAT64`, and everything else to `FLOAT32`.
+Directions and element types follow the spec's `BindingDirection` and `GpuDataFormat`.
 
 Use `bindings_from_spec` alongside a `GpuComputeConfig` derived from the compiled `ShaderSpec` to configure any concrete executor without depending on a specific executor type or writing GLSL.
 
@@ -677,7 +668,7 @@ Each family base has one override point for its CPU path:
 | `Extractor<In, Out>` | `extract_implementation()` |
 | `Analyzer<In, Out>` | `analyze_implementation()` |
 
-Built-in CPU transformers: `MathematicalTransformer`, `SpectralTransformer`, `TemporalTransformer`, `ConvolutionTransformer`. Built-in CPU analyzers: `EnergyAnalyzer`, `StatisticalAnalyzer`. Built-in extractor: `FeatureExtractor`. Built-in sorter: `StandardSorter`.
+Built-in CPU transformers: `MathematicalTransformer`, `SpectralTransformer`, `TemporalTransformer`, `ConvolutionTransformer`, and `TensorConverter` for tensor element types. Built-in CPU analyzers: `EnergyAnalyzer`, `StatisticalAnalyzer`. Built-in extractor: `FeatureExtractor`. Built-in sorter: `StandardSorter`.
 
 A CPU operation is configured through its config struct:
 
@@ -696,14 +687,73 @@ GPU work is a class on a GPU target, not a flag on a CPU class. These are the on
 | Class | Target | What it does |
 |---|---|---|
 | `BitonicSorter` | `targets::vulkan` | Exact GPU sort of numeric channels. Orders by order key, so it matches a stable CPU sort, with `-0.0 == +0.0` and NaN last (first when descending). Declines custom comparators, which are host code. Registered beside `StandardSorter`. |
-| `SpectralAnalyzer` | `targets::vulkan` | Windowed spectral descriptors per window: `TOTAL_POWER`, `CENTROID`, `FLUX`. Tapers, transforms and reduces on the device, so only a few doubles per window return. Window size is a power of two from 2 to 2048. |
+| `SpectralAnalyzer` | `targets::vulkan` | Windowed spectral descriptors per window: `TOTAL_POWER`, `CENTROID`, `FLUX`. Tapers, transforms and reduces on the device, so only a few doubles per window return. Window size is a power of two from 2 to 2048. `record` leaves the descriptors on the device for a following stage. |
+| `WaveformAnalyzer` | `targets::vulkan` | Time-domain descriptors per window, exact in double: level, crossing rate, peak, DC offset, crest factor, and the strength, period and frequency of the best repetition lag in a searched range. It measures the waveform and claims nothing about what the sound is. Can keep the full autocorrelation rows as a tensor. |
+| `IntervalExtractor` | `targets::vulkan` | Where a score sequence stays engaged: hysteresis thresholds, minimum run and gap, padding, a maximum run, and a gate column, with each column's settings of its own. Gives half-open sample intervals. It is stateful, so successive calls continue one stream, and `submit`, `ready` and `collect` run it without blocking. |
+| `WindowedKernelAnalyzer` | `targets::vulkan` | Runs your own kernel once per window of one to four float sequences, either as a GLSL body or a whole `.comp`, optionally with a workgroup of lanes per window. Float32. Not registered by default. |
 | `FftContext` | (executor) | Batched exact FFT of doubles, one dispatch of the `FFT` template. Outputs complex bins, power bins, or a projection. An inverse context scales by one over the point count. |
 | `SegmentedReductionContext` | (executor) | One workgroup per segment, over word-pair doubles, with `Sum`, `Max` or `Min`. |
+| `SegmentedArgMax` | (executor) | The first maximum of each segment and its index, over word-pair doubles. |
 | `GpuTransformer` | `targets::vulkan` | GPU-only transformer. It dispatches through its own executor by overriding `apply_operation_internal`, has no CPU path, and errors if the executor is not ready. It is not registered by default. |
 
 `BitonicSorter` is what the granular workflow's GPU sort uses. `RegionKeySorter::gpu_order` builds a `BitonicSorter` and runs it whenever a `gpu_sort_threshold` is set and the grain count reaches it.
 
 The spectral analyzer's output is a plain `Datum` of descriptors, so grammar rules can choose it by fitness exactly as they choose a CPU analyzer.
+
+---
+
+## Speech and model operations
+
+Some operations run a trained network. A network is a set of weights read as a `Kakshya::TensorSet` and a graph that the library runs with its own float32 Vulkan kernels (convolution, normalisation, attention, LSTM, softmax and others, in `Yantra/Executors/TensorKernels`). There is no external runtime. The weights are not part of the library: they arrive with a Weave project, and `IOManager::load_tensors` reads them. The operations below take the weights in their constructor, are not in the default registry because they need them, and refuse weights of the wrong shape with the reason.
+
+| Class | What it does |
+|---|---|
+| `VadAnalyzer` | Silero voice activity: one speech probability per 512 samples of 16 kHz audio. A stream, so state carries between calls; `reset()` starts a new recording and `flush_tail` includes the last partial chunk. |
+| `PhonemeAnalyzer` | A HuBERT network with an English phoneme head: a distribution over 39 phonemes per 20 ms frame, with the recognised phonemes as events. One call takes an utterance of up to 30 s. |
+| `SpeechSegmenter` | The speech intervals of a whole recording, from `VadAnalyzer` and `IntervalExtractor`. With `SpeechSettings::measure` it also gives each interval's voiced fraction and median pitch. |
+| `PhonemeExtractor` | The phonemes of a whole recording: finds speech, then runs the phoneme network on each speech interval. Outputs records (`CompositeArray`), regions (`RegionGroup`) or the audio of the selected phonemes. |
+
+```mermaid
+flowchart LR
+    IN["a recording<br/>MayaFlux::record, or a file"] --> RS["resample to 16 kHz"]
+    RS --> SEG["SpeechSegmenter<br/>VadAnalyzer, IntervalExtractor"]
+    SEG --> SP["speech intervals"]
+    SP --> PH["PhonemeExtractor<br/>one phoneme run per interval"]
+    PH --> EV["recognised phonemes, each with a range"]
+    EV --> REC["records, CompositeArray"]
+    EV --> G{"gate on, selection VOWELS?"}
+    G -- yes --> TR["vowel ranges trimmed<br/>to voiced stretches"] --> OUT["regions, or audio"]
+    G -- no --> OUT
+```
+
+The networks run at 16 kHz and refuse other rates. Convert first with `Kinesis::Discrete::resample`, or `Resampler` for a stream.
+
+```cpp
+auto weights = get_io_manager()->load_tensors("data/tensors/silero/silero_vad_16k.safetensors");
+
+SpeechSegmenterConfig config;
+config.speech.padding = 160;
+AudioSpeechSegmenter voices(*weights, config);
+
+auto speech = voices.extract_data(samples_at_16k);
+```
+
+`SpeechSettings` holds the thresholds, minimum run and silence, padding and maximum run of the speech scan, all in samples. Padding, threshold and `min_silence` are what tighten or loosen the edges.
+
+`PhonemeExtractor` selects with `config.method` (`ALL`, `VOWELS` or `CONSONANTS`). Phoneme ranges are estimates: the network emits a phoneme on one frame, so a range runs from one recognised phoneme to the next. The boundary between two phonemes was measured against forced alignments at a median error of about 12 ms, and the range of a phoneme the network missed is absorbed by its neighbours. `config.gate` trims vowel ranges to the stretches where the waveform is periodic, which drops bursts and hiss that the boundaries let in. It is off by default, applies to the audio and region outputs, and does not remove voiced consonants such as m or n.
+
+```cpp
+PhonemeExtractorConfig config;
+config.method = PhonemeSelection::VOWELS;
+config.gate.enabled = true;
+
+AudioPhonemeExtractor vowels(*vad_weights, *phoneme_weights, config);
+auto audio = vowels.extract_data(samples_at_16k);
+```
+
+Both extractors block until the result is ready and must not run on the audio thread. To record the input first, see `MayaFlux::record` in `API/Rigs.hpp`: it captures a live input channel into a `DynamicSoundStream` for a set time.
+
+To keep a result on the device instead, `VadAnalyzer::record` leaves the probabilities in a device buffer, and an `IntervalExtractor` on the same recording reads them with `bind_scores` and `submit_resident`, so no probability returns to the host.
 
 ---
 

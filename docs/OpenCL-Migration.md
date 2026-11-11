@@ -34,6 +34,7 @@ The raw dispatch capability is comparable. Everything else is not.
 | `clEnqueueNDRangeKernel` (non-blocking) | `exec->dispatch_async(datum)` | Returns a `FenceID` |
 | Events / fences | `ShaderFoundry::is_fence_signaled(fence)`, then `release_fence(fence)` | Poll until signaled, call `collect_result()`, release the fence |
 | `clEnqueueReadBuffer` | Automatic in `execute()`; `collect_result()` after `dispatch_async` | `execute()`: primary output in `result.data`, named bindings via `read_output<T>(result, binding)`. `collect_result()`: `GpuChannelResult` with `primary` floats and `aux` bytes keyed by binding. |
+| `double` kernels (`cl_khr_fp64`) | `VEC2_U32` word pairs | A double travels as two 32-bit words and the shader computes on them with exactly rounded add, multiply, divide and square root, so it needs no `shaderFloat64`. See the [Yantra Compute Guide](GPGPU-Guide.md) |
 | `CL_MEM_READ_ONLY` | `GpuBufferBinding::Direction::INPUT` | |
 | `CL_MEM_WRITE_ONLY` | `GpuBufferBinding::Direction::OUTPUT` | |
 | `CL_MEM_READ_WRITE` | `GpuBufferBinding::Direction::INPUT_OUTPUT` | |
@@ -42,6 +43,7 @@ The raw dispatch capability is comparable. Everything else is not.
 | Several different kernels, one submission, with barriers | `GpuDispatchCore::record_stages(stages)` with `DependencyStage` values | Each `DependencyStage` carries its own config and `stage_fn`, and every stage is followed by a barrier. Workgroup counts come from `explicit_groups` or a GPU-written `indirect_groups` |
 | Multi-pass loop with per-pass kernel arg updates | `set_multipass(count, updater)` | Batched through `GpuResourceManager::dispatch_batched`. `CHAINED_INDIRECT` gates each pass's workgroup count with a GPU-written buffer of `INDIRECT` usage |
 | Event dependencies between kernels | `ComputeMatrix` async chain | `with_async(input, chain_lambda, on_complete)` |
+| One queue, several operations feeding each other | A shared `GpuDispatchRecorder` and `import_shared` | Contexts append to one command buffer with a barrier after each dispatch, and a reader aliases the owner's buffer with no copy. See the [CPU-GPU IO map](GPU-CPU-IO-Map.md) |
 | `clReleaseMemObject` / `clReleaseKernel` | RAII, nothing to release by hand | Fences from `dispatch_async` are the exception |
 
 The five steps below, and what each replaces:
@@ -127,7 +129,7 @@ The builder takes:
 
 - **`ssbo(name, direction, format)`** for a storage buffer, **`texture(name)`** for a sampled image and **`storage_image(name, direction)`** for a storage image. Bindings are numbered in declaration order.
 - **`pc(name)`** or **`pc(name, format)`** for a push constant field. The default format is float, and fields are consumed in declaration order as operands.
-- **`tmpl(KernelTemplate)`** for the shape of the kernel: `Elementwise` (the default), `Reduction`, `Stencil`, `GeometryEmit`, `BitonicSort`, `Convolve2D`, `Scan`, `SegmentedReduction` (word-pair doubles, one workgroup per segment) or `FFT` (radix-2 transform of word-pair doubles, one workgroup per window). The last two use `points`, `spectrum`, `map` and `descriptors` on the builder.
+- **`tmpl(KernelTemplate)`** for the shape of the kernel: `Elementwise` (the default), `Reduction`, `Stencil`, `GeometryEmit`, `BitonicSort`, `Convolve2D`, `Scan`, `SegmentedReduction` (word-pair doubles, one workgroup per segment) `FFT` (radix-2 transform of word-pair doubles, one workgroup per window), `LaggedPair` (a pairwise map summed over a window for a range of lags, the autocorrelation pass), `WordPairMap` (one exactly rounded double operation per element) or `SegmentedArgMax` (the maximum of each segment and its index). The word-pair templates use `points`, `spectrum` and `descriptors` (`FFT`), `map` (`SegmentedReduction`), `pair_map` and `centred` (`LaggedPair`) and `word_op` (`WordPairMap`) on the builder.
 - **`op(KernelOp)`** for the operation. The families are arithmetic (`Scale`, `ScaleOffset`, `Fma`, `Clip`, `Abs`, `Sqrt`, ...), transcendental (`Sin`, `Exp`, `Log`, `Tanh`, ...), two-buffer (`Add`, `Multiply`, `Mix`, `Pow`, `SmoothStep`, ...), reductions and scans (`Sum`, `Max`, `MaxIndex`, `ScanSum`), image operations (`CompareGE`, `ChannelDot`, ...) and the stencil blend `WeightedBlend`.
 - **`workgroup(x, y, z)`** to override the default `{ 256, 1, 1 }`.
 
