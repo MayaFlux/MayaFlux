@@ -243,7 +243,7 @@ protected:
         m_current_analysis = std::forward<AnalysisResultType>(result);
     }
 
-    output_type m_current_output;
+    std::optional<output_type> m_current_output;
 };
 
 /// Analyzer that takes DataVariant and produces DataVariant

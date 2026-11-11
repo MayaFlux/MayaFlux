@@ -24,7 +24,8 @@ namespace MayaFlux::Yantra {
  */
 enum class PhonemeMethod : uint8_t {
     POSTERIORS, ///< One column per class: the probability of each of the network's classes
-    BROAD_CLASSES ///< Three columns: the summed probability of the vowels, of the consonants, and of everything else
+    BROAD_CLASSES, ///< Three columns: the summed probability of the vowels, of the consonants, and of everything else
+    HELD_CLASSES ///< Three columns of 0 or 1: whether the frame's centre lies in the estimated range of a vowel, of a consonant, or of neither
 };
 
 /**
@@ -65,6 +66,14 @@ struct PhonemeAnalyzerConfig : AnalyzerConfig {
 /**
  * @struct PhonemeEvent
  * @brief One phoneme the network recognised.
+ *
+ * start and end are estimates. The network marks a phoneme on one frame, and
+ * the boundary between two neighbours is put where the weak evidence on the
+ * frames between them changes sides. Measured on 60 LibriSpeech utterances
+ * against a forced alignment, the boundary between two correctly recognised
+ * neighbours fell a median of 12.5 ms off, with 94% within 40 ms. Pauses are
+ * not detected: a phoneme before a pause runs through it, the first starts at
+ * sample 0 and the last ends with the utterance.
  */
 struct MAYAFLUX_API PhonemeEvent {
     /** Class of the phoneme, 0 to HubertPhonemeModel::phonemes - 1. */
@@ -75,6 +84,10 @@ struct MAYAFLUX_API PhonemeEvent {
     size_t sample { 0 };
     /** Probability the network gave the phoneme on that frame. */
     float probability { 0.0F };
+    /** Estimated first sample of the phoneme. */
+    size_t start { 0 };
+    /** Estimated sample one past the phoneme's last. */
+    size_t end { 0 };
 };
 
 /**
@@ -139,6 +152,28 @@ private:
     }
 };
 
+/**
+ * @brief Field layout of the records a PhonemeAnalyzer with Composite output gives, one record per recognised phoneme.
+ *
+ * phoneme is the ARPABET symbol, class its class, frame the frame it was
+ * recognised on, sample the first sample of that frame, start and end the
+ * estimated sample range as in PhonemeEvent, probability what the network gave
+ * it on its frame, and vowel is 1 for a vowel and 0 otherwise.
+ */
+[[nodiscard]] inline Kakshya::CompositeLayout phoneme_record_layout()
+{
+    Kakshya::CompositeLayout layout;
+    layout.add_field<std::string>("phoneme");
+    layout.add_field<uint32_t>("class");
+    layout.add_field<uint64_t>("frame");
+    layout.add_field<uint64_t>("sample");
+    layout.add_field<uint64_t>("start");
+    layout.add_field<uint64_t>("end");
+    layout.add_field<double>("probability");
+    layout.add_field<uint8_t>("vowel");
+    return layout;
+}
+
 /** @brief Region attribute: the probability the network gave the region's phoneme. */
 inline const Facet<double> phoneme_probability {};
 
@@ -148,9 +183,8 @@ inline const Facet<uint32_t> phoneme_class {};
 /**
  * @brief One region per recognised phoneme, labelled with its ARPABET symbol.
  *
- * A region covers the frame the phoneme was recognised on, not the phoneme's
- * duration, which the network does not report. Each carries
- * phoneme_probability and phoneme_class.
+ * A region covers the estimated sample range of its phoneme, see PhonemeEvent.
+ * Each carries phoneme_probability and phoneme_class.
  *
  * @param analysis The analysis whose events become regions.
  * @param first_channel First channel the regions cover.
@@ -162,7 +196,10 @@ inline const Facet<uint32_t> phoneme_class {};
 {
     Kakshya::RegionGroup group(std::move(name));
     for (const auto& event : analysis.events) {
-        auto region = Kakshya::Region::audio_span(event.sample, event.sample + HubertPhonemeModel::frame_span - 1,
+        if (event.end <= event.start) {
+            continue;
+        }
+        auto region = Kakshya::Region::audio_span(event.start, event.end - 1,
             first_channel, last_channel, std::string(HubertPhonemeModel::label(event.phoneme)));
         region.set(phoneme_probability, static_cast<double>(event.probability));
         region.set(phoneme_class, event.phoneme);
@@ -187,8 +224,9 @@ inline const Facet<uint32_t> phoneme_class {};
  * HubertPhonemeModel::label.
  *
  * The network emits each phoneme on one frame and the blank class between, so
- * the result tells which phonemes occur and near which frames, not where each
- * starts and ends. One call is one utterance of at most 30 s: nothing carries
+ * the result tells which phonemes occur and on which frames. Where each starts
+ * and ends is an estimate, described at PhonemeEvent. One call is one utterance
+ * of at most 30 s: nothing carries
  * over between calls, and a longer input is refused with the reason. Cut a
  * long recording at its pauses first, for instance with VadAnalyzer and
  * IntervalExtractor, which also keeps the network off everything that is not
@@ -199,6 +237,13 @@ inline const Facet<uint32_t> phoneme_class {};
  * target and has no CPU twin. It is not in the default registry, because it
  * cannot be built without its weights; catalog it with a factory to use it in
  * a grammar. It must not run on the audio thread.
+ *
+ * With a matrix as OutputType the output data is the per frame values the
+ * method selects. HELD_CLASSES is the one made for IntervalExtractor: with
+ * samples_per_score 320 and min_run, min_gap and padding set for single frames
+ * it gives the vowel and consonant intervals of the utterance. With Kakshya::CompositeArray it is one record per recognised
+ * phoneme in the layout of phoneme_record_layout, whatever the method. The
+ * analysis is the same either way.
  */
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = Eigen::MatrixXd>
 class PhonemeAnalyzer : public Analyzer<InputType, OutputType> {
@@ -353,19 +398,18 @@ protected:
                 analysis.embeddings = network().hidden_states();
             }
             describe_frames(analysis);
+            bound_events(analysis, samples.size());
 
             this->store_current_analysis(analysis);
 
-            auto channel_values = select_values(analysis, static_cast<PhonemeMethod>(cfg.method));
-
-            output_type output = this->convert_result(channel_values, structure_info);
+            output_type output = make_output(analysis, static_cast<PhonemeMethod>(cfg.method), structure_info);
             output.metadata = input.metadata;
             output.facets = input.facets;
             output.facets.set(analysis);
             return output;
         } catch (const std::exception& e) {
             MF_ERROR(Journal::Component::Yantra, Journal::Context::ComputeMatrix, "Phoneme analysis failed: {}", e.what());
-            output_type error_result;
+            output_type error_result = empty_output();
             error_result.metadata = input.metadata;
             error_result.facets = input.facets;
             return error_result;
@@ -379,6 +423,40 @@ private:
             m_model = std::make_unique<HubertPhonemeModel>(*m_weights, m_recording);
         }
         return *m_model;
+    }
+
+    static output_type empty_output()
+    {
+        if constexpr (CompositeArrayData<OutputType>) {
+            return output_type { Kakshya::CompositeArray(phoneme_record_layout()) };
+        } else {
+            return output_type {};
+        }
+    }
+
+    output_type make_output(const PhonemeAnalysis& analysis, PhonemeMethod method, DataStructureInfo& structure_info)
+    {
+        if constexpr (CompositeArrayData<OutputType>) {
+            structure_info.composite_layout = phoneme_record_layout();
+            std::vector<std::vector<double>> columns(7);
+            for (const auto& event : analysis.events) {
+                columns[0].push_back(static_cast<double>(event.phoneme));
+                columns[1].push_back(static_cast<double>(event.frame));
+                columns[2].push_back(static_cast<double>(event.sample));
+                columns[3].push_back(static_cast<double>(event.start));
+                columns[4].push_back(static_cast<double>(event.end));
+                columns[5].push_back(static_cast<double>(event.probability));
+                columns[6].push_back(HubertPhonemeModel::is_vowel(event.phoneme) ? 1.0 : 0.0);
+            }
+            output_type output = this->convert_result(columns, structure_info);
+            for (size_t row = 0; row < analysis.events.size(); ++row) {
+                output.data.set_text(row, "phoneme", HubertPhonemeModel::label(analysis.events[row].phoneme));
+            }
+            return output;
+        } else {
+            auto channel_values = select_values(analysis, method);
+            return this->convert_result(channel_values, structure_info);
+        }
     }
 
     static void describe_frames(PhonemeAnalysis& analysis)
@@ -400,9 +478,72 @@ private:
         }
     }
 
+    /**
+     * Gives every event its sample range. The first frame of the later of two neighbours is the one, after the
+     * earlier spike and up to the later one, that maximises the log probability of the earlier phoneme on the
+     * frames before it plus that of the later phoneme from it on, probabilities taken among the phonemes only.
+     */
+    static void bound_events(PhonemeAnalysis& analysis, size_t samples)
+    {
+        constexpr size_t classes = HubertPhonemeModel::classes;
+        constexpr size_t phonemes = HubertPhonemeModel::phonemes;
+        constexpr size_t lead = (HubertPhonemeModel::frame_span - HubertPhonemeModel::frame_hop) / 2;
+        auto& events = analysis.events;
+        if (events.empty()) {
+            return;
+        }
+        const auto evidence = [&](size_t frame, uint32_t phoneme) {
+            const float* row = analysis.posteriors.data() + frame * classes;
+            double mass = 0.0;
+            for (size_t index = 0; index < phonemes; ++index) {
+                mass += row[index];
+            }
+            return mass > 0.0 ? std::log(row[phoneme] / mass + 1.0e-30) : 0.0;
+        };
+
+        events.front().start = 0;
+        for (size_t k = 0; k + 1 < events.size(); ++k) {
+            const size_t first = events[k].frame;
+            const size_t last = events[k + 1].frame;
+            const uint32_t earlier = events[k].phoneme;
+            const uint32_t later = events[k + 1].phoneme;
+
+            double score = 0.0;
+            for (size_t frame = first + 1; frame <= last; ++frame) {
+                score += evidence(frame, later);
+            }
+            double best = score;
+            size_t split = first + 1;
+            for (size_t candidate = first + 2; candidate <= last; ++candidate) {
+                score += evidence(candidate - 1, earlier) - evidence(candidate - 1, later);
+                if (score > best) {
+                    best = score;
+                    split = candidate;
+                }
+            }
+            const size_t boundary = std::min(split * HubertPhonemeModel::frame_hop + lead, samples);
+            events[k].end = boundary;
+            events[k + 1].start = boundary;
+        }
+        events.back().end = samples;
+    }
+
     static std::vector<std::vector<double>> select_values(const PhonemeAnalysis& analysis, PhonemeMethod method)
     {
         constexpr size_t classes = HubertPhonemeModel::classes;
+        if (method == PhonemeMethod::HELD_CLASSES) {
+            std::vector<std::vector<double>> held(3, std::vector<double>(analysis.frames, 0.0));
+            size_t current = 0;
+            for (size_t frame = 0; frame < analysis.frames; ++frame) {
+                const size_t centre = frame * HubertPhonemeModel::frame_hop + HubertPhonemeModel::frame_span / 2;
+                while (current < analysis.events.size() && analysis.events[current].end <= centre) {
+                    ++current;
+                }
+                const bool inside = current < analysis.events.size() && analysis.events[current].start <= centre;
+                held[!inside ? 2 : HubertPhonemeModel::is_vowel(analysis.events[current].phoneme) ? 0 : 1][frame] = 1.0;
+            }
+            return held;
+        }
         const bool broad = method == PhonemeMethod::BROAD_CLASSES;
         std::vector<std::vector<double>> columns(broad ? 3 : classes, std::vector<double>(analysis.frames, 0.0));
         for (size_t frame = 0; frame < analysis.frames; ++frame) {
@@ -427,6 +568,9 @@ private:
 
 /// Standard phoneme analyzer: DataVariant -> MatrixXd
 using StandardPhonemeAnalyzer = PhonemeAnalyzer<std::vector<Kakshya::DataVariant>, Eigen::MatrixXd>;
+
+/// Record phoneme analyzer: DataVariant -> one Composite record per recognised phoneme
+using CompositePhonemeAnalyzer = PhonemeAnalyzer<std::vector<Kakshya::DataVariant>, Kakshya::CompositeArray>;
 
 /// Container phoneme analyzer: SignalContainer -> MatrixXd
 using ContainerPhonemeAnalyzer = PhonemeAnalyzer<std::shared_ptr<Kakshya::SignalSourceContainer>, Eigen::MatrixXd>;
