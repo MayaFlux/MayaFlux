@@ -39,6 +39,10 @@
  * pairwise map of x[i] and x[i + lag] over a window for every lag in a range,
  * one workgroup per lag and window, optionally after removing the window mean.
  *
+ * KernelTemplate::WordPairMap — emit_word_pair_map (AsmSoftDouble.cpp) applies
+ * one soft-double operation (add, mul, div or sqrt) to word-pair doubles, one
+ * thread per element.
+ *
  * GLSL kernel path (emit_glsl_kernel) handles all three binding modalities
  * when spec.kernel is set via MF_KERNEL.
  */
@@ -179,6 +183,8 @@ namespace {
             iface += " %lid_var %wgid_var %fft_re %fft_im";
         } else if (spec.tmpl == KernelTemplate::LaggedPair) {
             iface += " %lid_var %wgid_var %lp_shared";
+        } else if (spec.tmpl == KernelTemplate::WordPairMap) {
+            iface += " %lid_var %wgid_var";
         }
 
         std::string o;
@@ -249,7 +255,7 @@ namespace {
         if (spec.tmpl == KernelTemplate::Reduction || spec.tmpl == KernelTemplate::Scan) {
             o += "OpDecorate %lid_var BuiltIn LocalInvocationId\n";
         } else if (spec.tmpl == KernelTemplate::SegmentedReduction || spec.tmpl == KernelTemplate::FFT
-            || spec.tmpl == KernelTemplate::LaggedPair) {
+            || spec.tmpl == KernelTemplate::LaggedPair || spec.tmpl == KernelTemplate::WordPairMap) {
             o += "OpDecorate %lid_var BuiltIn LocalInvocationId\n";
             o += "OpDecorate %wgid_var BuiltIn WorkgroupId\n";
         }
@@ -1922,6 +1928,9 @@ std::string emit_spirv_asm(const ShaderSpec& spec)
         break;
     case KernelTemplate::LaggedPair:
         src += emit_lagged_pair(spec);
+        break;
+    case KernelTemplate::WordPairMap:
+        src += emit_word_pair_map(spec);
         break;
     case KernelTemplate::BitonicSort:
         src += emit_bitonic_body(spec);

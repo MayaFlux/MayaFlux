@@ -48,6 +48,24 @@ enum class KernelTemplate : uint8_t {
                 ///< then the low and high word of the double 1 / length. Result element
                 ///< w * lag_count + l holds the sum for lag first_lag + l. A lag of length
                 ///< or more sums nothing. Needs PairMap and optionally centring.
+    WordPairMap, ///< Applies one IEEE double operation to word-pair doubles, one thread per
+                 ///< element. Bindings: a, b, result (VEC2_U32); a unary operation has only
+                 ///< a and result. One UINT32 push constant: count. Result i holds
+                 ///< op(a[i], b[i]) rounded to nearest even. Needs WordPairOp.
+};
+
+/**
+ * @enum WordPairOp
+ * @brief Operation applied by a WordPairMap kernel.
+ *
+ * Results are the IEEE 754 binary64 results rounded to nearest even, including
+ * signed zeros, infinities, NaN and subnormals.
+ */
+enum class WordPairOp : uint8_t {
+    Add, ///< a + b
+    Mul, ///< a * b
+    Div, ///< a / b
+    Sqrt, ///< sqrt(a). Unary: no b binding.
 };
 
 /**
@@ -430,6 +448,7 @@ struct ShaderSpec {
     uint32_t descriptors { 0 }; ///< FFT with SpectrumOutput::Projection only. Rows of weights.
     PairMap pair_map { PairMap::Product }; ///< LaggedPair only.
     bool centred { false }; ///< LaggedPair only. Subtract each window's mean from both operands first.
+    WordPairOp word_op { WordPairOp::Add }; ///< WordPairMap only.
     std::vector<BindingSlot> bindings;
     std::vector<PushConstantField> pc_fields;
     std::array<uint32_t, 3> workgroup_size { 256, 1, 1 };
@@ -503,6 +522,13 @@ struct ShaderSpec {
         Assemble& centred(bool c = true)
         {
             m_centred = c;
+            return *this;
+        }
+
+        /** @brief Set the operation of a WordPairMap. */
+        Assemble& word_op(WordPairOp o)
+        {
+            m_word_op = o;
             return *this;
         }
 
@@ -649,6 +675,7 @@ struct ShaderSpec {
                 .descriptors = m_descriptors,
                 .pair_map = m_pair_map,
                 .centred = m_centred,
+                .word_op = m_word_op,
                 .bindings = std::move(m_bindings),
                 .pc_fields = std::move(m_pc_fields),
                 .workgroup_size = m_workgroup,
@@ -667,6 +694,7 @@ struct ShaderSpec {
         uint32_t m_descriptors { 0 };
         PairMap m_pair_map { PairMap::Product };
         bool m_centred { false };
+        WordPairOp m_word_op { WordPairOp::Add };
         std::vector<BindingSlot> m_bindings;
         std::vector<PushConstantField> m_pc_fields;
         std::array<uint32_t, 3> m_workgroup { 256, 1, 1 };
@@ -707,6 +735,8 @@ namespace detail {
         bool add { false };
         bool mul { false };
         bool less { false };
+        bool div { false };
+        bool sqrt { false };
     };
 
     /**
@@ -727,6 +757,22 @@ namespace detail {
 
     /** @brief Function multiplying two doubles held as uvec2. Rounds to nearest even. */
     inline constexpr std::string_view soft_double_mul = "%sd_f64_mul";
+
+    /**
+     * @brief Function dividing the first double by the second, held as uvec2.
+     *
+     * Exactly rounded to nearest even, with IEEE results for zeros, infinities,
+     * NaN and subnormals.
+     */
+    inline constexpr std::string_view soft_double_div = "%sd_f64_div";
+
+    /**
+     * @brief Function taking the square root of the first double, held as uvec2.
+     *
+     * Exactly rounded to nearest even. The second parameter is unused. The root of
+     * a negative non-zero value is NaN and the root of -0.0 is -0.0.
+     */
+    inline constexpr std::string_view soft_double_sqrt = "%sd_f64_sqrt";
 
     /**
      * @brief Function returning bool, true when the first double orders before the second.
@@ -758,6 +804,15 @@ namespace detail {
      * workgroup size from 2 to 1024.
      */
     [[nodiscard]] std::string emit_lagged_pair(const ShaderSpec& spec);
+
+    /**
+     * @brief Emit the globals, soft-double function and entry point of the WordPairMap template.
+     *
+     * Returns an empty string when the spec does not have the template's shape:
+     * VEC2_U32 bindings (a, b and result, or a and result for Sqrt), one UINT32
+     * push constant and a workgroup size from 1 to 1024.
+     */
+    [[nodiscard]] std::string emit_word_pair_map(const ShaderSpec& spec);
 
 } // namespace detail
 

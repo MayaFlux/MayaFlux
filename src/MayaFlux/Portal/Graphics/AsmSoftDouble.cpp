@@ -38,6 +38,12 @@ namespace {
             if (use.mul) {
                 emit_mul();
             }
+            if (use.div) {
+                emit_div();
+            }
+            if (use.sqrt) {
+                emit_sqrt();
+            }
             if (use.less) {
                 emit_less();
             }
@@ -446,6 +452,67 @@ namespace {
             return declarations() + globals + m_text;
         }
 
+        [[nodiscard]] std::string word_pair_map(const ShaderSpec& spec)
+        {
+            const uint32_t local = spec.workgroup_size[0];
+            const WordPairOp op = spec.word_op;
+            const bool unary = op == WordPairOp::Sqrt;
+            const std::string& first = spec.bindings[0].name;
+            const std::string& second = unary ? first : spec.bindings[1].name;
+            const std::string& result = spec.bindings.back().name;
+
+            k(local);
+            switch (op) {
+            case WordPairOp::Add:
+                emit_add();
+                break;
+            case WordPairOp::Mul:
+                emit_mul();
+                break;
+            case WordPairOp::Div:
+                emit_div();
+                break;
+            case WordPairOp::Sqrt:
+                emit_sqrt();
+                break;
+            }
+            const std::string_view function = op == WordPairOp::Add ? soft_double_add
+                : op == WordPairOp::Mul                               ? soft_double_mul
+                : op == WordPairOp::Div                               ? soft_double_div
+                                                                      : soft_double_sqrt;
+
+            const auto load_global = [this](const std::string& binding, const Id& index) {
+                const Id pointer = ins("%pelem_" + binding, "OpAccessChain", { "%buf_" + binding, "%c0u", index });
+                return ins("%v2u32", "OpLoad", { pointer });
+            };
+
+            m_text += "%main = OpFunction %void None %voidfn\n";
+            m_text += "%entry = OpLabel\n";
+            const Id local_id = ins("%u32", "OpCompositeExtract", { ins("%v3u32", "OpLoad", { "%lid_var" }), "0" });
+            const Id group = ins("%u32", "OpCompositeExtract", { ins("%v3u32", "OpLoad", { "%wgid_var" }), "0" });
+            const Id count = ins("%u32", "OpLoad", { ins("%ppc_u32", "OpAccessChain", { "%pc", k(0) }) });
+            const Id index = add(word("OpIMul", group, k(local)), local_id);
+
+            const Id inside = ult(index, count);
+            m_text += "OpSelectionMerge %wm_end None\n";
+            m_text += "OpBranchConditional " + inside + " %wm_body %wm_end\n";
+            m_text += "%wm_body = OpLabel\n";
+            const Id a = load_global(first, index);
+            const Id b = unary ? a : load_global(second, index);
+            const Id value = ins("%v2u32", "OpFunctionCall", { function, a, b });
+            const Id pointer = ins("%pelem_" + result, "OpAccessChain", { "%buf_" + result, "%c0u", index });
+            m_text += "OpStore " + pointer + " " + value + "\n";
+            m_text += "OpBranch %wm_end\n";
+            m_text += "%wm_end = OpLabel\n";
+            m_text += "OpReturn\n";
+            m_text += "OpFunctionEnd\n";
+
+            std::string globals;
+            globals += "%lid_var = OpVariable %ptr_in_v3u32 Input\n";
+            globals += "%wgid_var = OpVariable %ptr_in_v3u32 Input\n\n";
+            return declarations() + globals + m_text;
+        }
+
     private:
         std::string m_text;
         std::set<uint32_t> m_constants;
@@ -573,6 +640,15 @@ namespace {
         {
             return lor(ult(a.hi, b.hi), land(eq(a.hi, b.hi), ult(a.lo, b.lo)));
         }
+
+        Id lnot(const Id& a) { return ins("%bool", "OpLogicalNot", { a }); }
+
+        Word64 shl1(const Word64& w)
+        {
+            return { shl(w.lo, k(1)), bor(shl(w.hi, k(1)), shr(w.lo, k(31))) };
+        }
+
+        Id nonzero64(const Word64& w) { return lor(ne(w.lo, k(0)), ne(w.hi, k(0))); }
 
         Id msb64(const Word64& w)
         {
@@ -764,6 +840,89 @@ namespace {
             end(pair(lo, hi));
         }
 
+        void emit_div()
+        {
+            begin("div", "%v2u32", "%sd_fn_bin");
+            const Word64 wa = unpack("%sd_f64_div_a");
+            const Word64 wb = unpack("%sd_f64_div_b");
+            const Unpacked a = unpack_normalised(wa);
+            const Unpacked b = unpack_normalised(wb);
+
+            const Id sign = band(bxor(wa.hi, wb.hi), k(2147483648));
+            const Id invalid = lor(lor(a.is_nan, b.is_nan), lor(land(a.is_zero, b.is_zero), land(a.is_inf, b.is_inf)));
+            const Id inf = lor(a.is_inf, b.is_zero);
+            const Id zero = lor(a.is_zero, b.is_inf);
+
+            Word64 remainder = a.mant;
+            Word64 quotient { k(0), k(0) };
+            for (uint32_t step = 0; step < 63; ++step) {
+                const Id fits = lnot(ult64(remainder, b.mant));
+                const Word64 reduced = select64(fits, sub64(remainder, b.mant), remainder);
+                const Word64 shifted = shl1(quotient);
+                quotient = Word64 { bor(shifted.lo, sel(fits, k(1), k(0))), shifted.hi };
+                remainder = shl1(reduced);
+            }
+
+            const Id whole = ne(band(quotient.hi, k(1073741824)), k(0));
+            const Word64 m = select64(whole, quotient, shl1(quotient));
+            const Id base = sub(add(a.exp, k(1023)), b.exp);
+            const Id e = sel(whole, base, sub(base, k(1)));
+            const Word64 packed = unpack(round_pack(sign, e, m, nonzero64(remainder)));
+
+            const Id inf_hi = bor(sign, k(2146435072));
+            const Id lo = sel(lor(invalid, lor(inf, zero)), k(0), packed.lo);
+            const Id hi = sel(invalid, k(2146959360), sel(inf, inf_hi, sel(zero, sign, packed.hi)));
+            end(pair(lo, hi));
+        }
+
+        Id pair_bits(const Word64& w, uint32_t position)
+        {
+            if (position >= 32) {
+                return band(shr(w.hi, k(position - 32)), k(3));
+            }
+            return band(shr(w.lo, k(position)), k(3));
+        }
+
+        void emit_sqrt()
+        {
+            begin("sqrt", "%v2u32", "%sd_fn_bin");
+            const Word64 wa = unpack("%sd_f64_sqrt_a");
+            const Unpacked a = unpack_normalised(wa);
+
+            const Id negative = ne(band(wa.hi, k(2147483648)), k(0));
+            const Id invalid = lor(a.is_nan, land(negative, lnot(a.is_zero)));
+            const Id passes = lor(a.is_zero, a.is_inf);
+
+            const Id odd_exponent = eq(band(a.exp, k(1)), k(0));
+            const Word64 radicand = select64(odd_exponent, shl1(a.mant), a.mant);
+
+            Word64 root { k(0), k(0) };
+            Word64 remainder { k(0), k(0) };
+            for (uint32_t step = 0; step < 56; ++step) {
+                const Id incoming = step < 27 ? pair_bits(radicand, 52 - 2 * step) : k(0);
+                const Word64 widened = shl1(shl1(remainder));
+                const Word64 brought { bor(widened.lo, incoming), widened.hi };
+                const Word64 doubled = shl1(shl1(root));
+                const Word64 trial { bor(doubled.lo, k(1)), doubled.hi };
+                const Id fits = lnot(ult64(brought, trial));
+                remainder = select64(fits, sub64(brought, trial), brought);
+                const Word64 grown = shl1(root);
+                root = Word64 { bor(grown.lo, sel(fits, k(1), k(0))), grown.hi };
+            }
+
+            Word64 m = root;
+            for (uint32_t i = 0; i < 7; ++i) {
+                m = shl1(m);
+            }
+            const Id parity = sel(odd_exponent, k(1), k(0));
+            const Id e = shr(sub(add(a.exp, k(1023)), parity), k(1));
+            const Word64 packed = unpack(round_pack(k(0), e, m, nonzero64(remainder)));
+
+            const Id lo = sel(invalid, k(0), sel(passes, wa.lo, packed.lo));
+            const Id hi = sel(invalid, k(2146959360), sel(passes, wa.hi, packed.hi));
+            end(pair(lo, hi));
+        }
+
         Word64 order_key(const Word64& w)
         {
             const Id max_exp = eq(band(shr(w.hi, k(20)), k(2047)), k(2047));
@@ -834,6 +993,24 @@ std::string emit_lagged_pair(const ShaderSpec& spec)
 
     Builder builder;
     return builder.lagged_pair(spec);
+}
+
+std::string emit_word_pair_map(const ShaderSpec& spec)
+{
+    const uint32_t local = spec.workgroup_size[0];
+    const size_t bindings = spec.word_op == WordPairOp::Sqrt ? 2U : 3U;
+    const bool shaped = spec.bindings.size() == bindings && spec.pc_fields.size() == 1
+        && std::ranges::all_of(spec.bindings, [](const BindingSlot& b) {
+               return b.format == Kakshya::GpuDataFormat::VEC2_U32;
+           })
+        && spec.pc_fields[0].format == Kakshya::GpuDataFormat::UINT32;
+    const bool sized = local >= 1 && local <= 1024;
+    if (!shaped || !sized) {
+        return {};
+    }
+
+    Builder builder;
+    return builder.word_pair_map(spec);
 }
 
 } // namespace MayaFlux::Portal::Graphics::detail
