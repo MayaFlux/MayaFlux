@@ -289,8 +289,11 @@ namespace {
 
             k(local);
             emit_add();
-            if (centred || map == PairMap::Product) {
+            if (map == PairMap::Product) {
                 emit_mul();
+            }
+            if (centred) {
+                emit_div();
             }
 
             const auto load_global = [this](const std::string& binding, const Id& index) {
@@ -314,6 +317,9 @@ namespace {
             };
             const auto addf = [this](const Id& a, const Id& b) {
                 return ins("%v2u32", "OpFunctionCall", { soft_double_add, a, b });
+            };
+            const auto divf = [this](const Id& a, const Id& b) {
+                return ins("%v2u32", "OpFunctionCall", { soft_double_div, a, b });
             };
             const auto negf = [this](const Id& a) {
                 const Word64 w = unpack(a);
@@ -349,7 +355,7 @@ namespace {
             const Id offset = push_constant(2);
             const Id first_lag = push_constant(3);
             const Id lag_count = push_constant(4);
-            const Id scale = pair(push_constant(5), push_constant(6));
+            const Id length_value = pair(push_constant(5), push_constant(6));
             const Id lag = add(first_lag, lag_slot);
             const Id base = add(offset, word("OpIMul", window_id, stride));
             const Id terms = sel(ult(lag, length), sub(length, lag), k(0));
@@ -401,7 +407,7 @@ namespace {
             if (centred) {
                 accumulate(length, [&](const Id& index) { return load_global(values, add(base, index)); });
                 combine();
-                negative_mean = negf(mulf(load_shared(k(0)), scale));
+                negative_mean = negf(divf(load_shared(k(0)), length_value));
                 barrier();
             }
 

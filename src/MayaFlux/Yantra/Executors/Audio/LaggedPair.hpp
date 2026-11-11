@@ -23,9 +23,9 @@ namespace MayaFlux::Yantra {
  * For window w and lag l the kernel sums map(x[i], x[i + l]) over the window,
  * with i + l inside it, in the template's emulated IEEE double arithmetic on
  * word pairs. A centred kernel subtracts each window's mean from both operands
- * first; the mean is the window sum times the double 1 / length, which may
- * differ from a host quotient in the last bit. A lag of the window length or
- * more sums nothing. Bindings: values 0, result 1.
+ * first; the mean is the window sum divided by the window length, exactly
+ * rounded like a host quotient. A lag of the window length or more sums
+ * nothing. Bindings: values 0, result 1.
  *
  * @param map Pairwise map summed over the window.
  * @param centred True to remove each window's mean before the map.
@@ -46,8 +46,8 @@ namespace MayaFlux::Yantra {
         .pc("offset", Kakshya::GpuDataFormat::UINT32)
         .pc("first_lag", Kakshya::GpuDataFormat::UINT32)
         .pc("lag_count", Kakshya::GpuDataFormat::UINT32)
-        .pc("scale_lo", Kakshya::GpuDataFormat::UINT32)
-        .pc("scale_hi", Kakshya::GpuDataFormat::UINT32)
+        .pc("length_lo", Kakshya::GpuDataFormat::UINT32)
+        .pc("length_hi", Kakshya::GpuDataFormat::UINT32)
         .workgroup(workgroup)
         .build();
 }
@@ -78,11 +78,10 @@ namespace MayaFlux::Yantra {
     WordPairExecutionContext& context, const GpuComputeConfig& config, std::span<const double> values,
     const SegmentGeometry& geometry, uint32_t first_lag, uint32_t lag_count)
 {
-    const double inverse_length = geometry.length > 0 ? 1.0 / static_cast<double>(geometry.length) : 0.0;
-    const auto scale_bits = std::bit_cast<uint64_t>(inverse_length);
+    const auto length_bits = std::bit_cast<uint64_t>(static_cast<double>(geometry.length));
     const std::array<uint32_t, 7> push {
         geometry.length, geometry.stride, geometry.offset, first_lag, lag_count,
-        static_cast<uint32_t>(scale_bits & 0xFFFFFFFFU), static_cast<uint32_t>(scale_bits >> 32U)
+        static_cast<uint32_t>(length_bits & 0xFFFFFFFFU), static_cast<uint32_t>(length_bits >> 32U)
     };
     const size_t result_bytes = static_cast<size_t>(geometry.count) * lag_count * sizeof(uint64_t);
 

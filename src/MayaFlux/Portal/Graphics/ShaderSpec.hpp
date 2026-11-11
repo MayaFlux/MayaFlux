@@ -45,7 +45,8 @@ enum class KernelTemplate : uint8_t {
                 ///< is the lag index, group y the window. Bindings: values, result (VEC2_U32).
                 ///< Seven UINT32 push constants: length, stride, offset (window w starts at
                 ///< offset + w * stride and holds length elements), first_lag, lag_count,
-                ///< then the low and high word of the double 1 / length. Result element
+                ///< then the low and high word of the double length, which a centred kernel
+                ///< divides the window sum by. Result element
                 ///< w * lag_count + l holds the sum for lag first_lag + l. A lag of length
                 ///< or more sums nothing. Needs PairMap and optionally centring.
     WordPairMap, ///< Applies one IEEE double operation to word-pair doubles, one thread per
