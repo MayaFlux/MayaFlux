@@ -154,6 +154,7 @@ if(WIN32)
         utf8proc::utf8proc
         tinyexr
         tinyvdb
+        dlpack
         winmm
         avrt
         ole32
@@ -209,5 +210,6 @@ else()
         PkgConfig::UTF8PROC
         tinyexr
         tinyvdb
+        dlpack
     )
 endif()

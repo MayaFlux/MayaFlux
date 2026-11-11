@@ -219,6 +219,7 @@ struct MAYAFLUX_API DataDimension {
         DEPTH, ///< Distance from the observation point (depth, disparity, range)
         INDEX, ///< Index buffer data
         MIP_LEVEL, ///< Mipmap levels
+        INSTANCE, ///< Independent repeats of one structure; no operation mixes across it
         CUSTOM ///< User-defined or application-specific
     };
 
@@ -295,6 +296,20 @@ struct MAYAFLUX_API DataDimension {
      * @return DataDimension representing channels
      */
     static DataDimension channel(uint64_t count, uint64_t stride = 1);
+
+    /**
+     * @brief Convenience constructor for an instance dimension.
+     *
+     * An axis whose indices are independent repeats of the same structure, such
+     * as several clips or images run through a model together. It is not a
+     * progression (TIME) and not parallel streams of one signal (CHANNEL):
+     * nothing reads or reduces across it.
+     * @param count Number of instances
+     * @param stride Memory stride (default: 1)
+     * @param name Optional name (default: "instance")
+     * @return DataDimension representing independent instances
+     */
+    static DataDimension instance(uint64_t count, uint64_t stride = 1, std::string name = "instance");
 
     /**
      * @brief Convenience constructor for a depth dimension.
@@ -630,7 +645,7 @@ using DataSpanVariant = typename detail::span_const_from_vector_variant<DataVari
  * @class FrameView
  * @brief Zero-copy typed view over one frame of container storage.
  *
- * FrameView is the return type of NDDataContainer::get_frame(). It holds a
+ * FrameView is the return type of SignalSourceContainer::get_frame(). It holds a
  * DataSpanVariant — a span into the container's live storage — without copying
  * or converting data. The active span alternative matches the container's native
  * element type: uint8_t for 8-bit image and video, uint16_t for 16-bit image,
@@ -651,7 +666,7 @@ using DataSpanVariant = typename detail::span_const_from_vector_variant<DataVari
  * during get_frame_span_impl(); it is released before FrameView is returned.
  * Callers must not access the view concurrently with container writes.
  *
- * @see NDDataContainer::get_frame(), DataSpanVariant, DataVariantElement
+ * @see SignalSourceContainer::get_frame(), DataSpanVariant, DataVariantElement
  */
 class FrameView {
 public:

@@ -1,9 +1,11 @@
 #include "BufferPipeline.hpp"
 
+#include "MayaFlux/Buffers/AudioBuffer.hpp"
 #include "MayaFlux/Buffers/BufferManager.hpp"
 #include "MayaFlux/Buffers/BufferProcessingChain.hpp"
 #include "MayaFlux/Buffers/Staging/DataReadProcessor.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
+#include "MayaFlux/Kakshya/Source/DynamicSoundStream.hpp"
 
 namespace MayaFlux::Kriya {
 
@@ -276,6 +278,87 @@ Vruta::SoundRoutine BufferPipeline::execute_internal(uint64_t max_cycles, uint64
             std::source_location::current(),
             "Unknown execution strategy in BufferPipeline");
     }
+}
+
+namespace {
+
+    bool recording_arguments_valid(
+        const std::shared_ptr<Vruta::TaskScheduler>& scheduler,
+        const std::shared_ptr<Buffers::BufferManager>& buffer_manager,
+        const std::shared_ptr<Kakshya::DynamicSoundStream>& stream)
+    {
+        if (scheduler && buffer_manager && stream) {
+            return true;
+        }
+        MF_ERROR(Journal::Component::Kriya, Journal::Context::BufferManagement,
+            "recording requires a scheduler, a buffer manager and a stream");
+        return false;
+    }
+
+    std::shared_ptr<BufferPipeline> run_recording(
+        const std::shared_ptr<Vruta::TaskScheduler>& scheduler,
+        const std::shared_ptr<Buffers::BufferManager>& buffer_manager,
+        const std::shared_ptr<Kakshya::DynamicSoundStream>& stream,
+        const std::shared_ptr<Buffers::AudioBuffer>& listener,
+        uint32_t input_channel,
+        uint64_t cycles,
+        std::optional<uint32_t> monitor,
+        uint32_t stream_channel)
+    {
+        auto pipeline = BufferPipeline::create(*scheduler, buffer_manager);
+        pipeline >> BufferOperation::capture_from(listener).for_cycles(1)
+            >> BufferOperation::route_to_container(stream, stream_channel);
+        pipeline->on_complete([buffer_manager, listener, input_channel, monitor] {
+            buffer_manager->unregister_input_listener(listener, input_channel);
+            if (monitor) {
+                buffer_manager->remove_buffer(listener, Buffers::ProcessingToken::AUDIO_BACKEND, *monitor);
+            }
+        });
+        pipeline->execute_buffer_rate(cycles);
+        return pipeline;
+    }
+
+}
+
+std::pair<std::shared_ptr<BufferPipeline>, std::shared_ptr<Buffers::AudioBuffer>> record(
+    const std::shared_ptr<Vruta::TaskScheduler>& scheduler,
+    const std::shared_ptr<Buffers::BufferManager>& buffer_manager,
+    const std::shared_ptr<Kakshya::DynamicSoundStream>& stream,
+    uint32_t input_channel,
+    uint64_t cycles,
+    std::optional<uint32_t> monitor,
+    uint32_t stream_channel)
+{
+    if (!recording_arguments_valid(scheduler, buffer_manager, stream)) {
+        return { nullptr, nullptr };
+    }
+
+    auto listener = BufferOperation::capture_input_from(buffer_manager, input_channel, monitor).get_audio_buffer();
+    auto pipeline = run_recording(scheduler, buffer_manager, stream, listener, input_channel, cycles, monitor, stream_channel);
+
+    return { std::move(pipeline), std::move(listener) };
+}
+
+std::shared_ptr<BufferPipeline> record_into(
+    const std::shared_ptr<Vruta::TaskScheduler>& scheduler,
+    const std::shared_ptr<Buffers::BufferManager>& buffer_manager,
+    const std::shared_ptr<Kakshya::DynamicSoundStream>& stream,
+    const std::shared_ptr<Buffers::AudioBuffer>& listener,
+    uint32_t input_channel,
+    uint64_t cycles,
+    std::optional<uint32_t> monitor,
+    uint32_t stream_channel)
+{
+    if (!listener || !recording_arguments_valid(scheduler, buffer_manager, stream)) {
+        return nullptr;
+    }
+
+    buffer_manager->register_input_listener(listener, input_channel);
+    if (monitor) {
+        buffer_manager->add_buffer(listener, Buffers::ProcessingToken::AUDIO_BACKEND, *monitor);
+    }
+
+    return run_recording(scheduler, buffer_manager, stream, listener, input_channel, cycles, monitor, stream_channel);
 }
 
 }

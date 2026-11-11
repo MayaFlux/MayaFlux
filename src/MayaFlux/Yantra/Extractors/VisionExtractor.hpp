@@ -185,7 +185,7 @@ struct VisionExtractorConfig : ExtractorConfig {
  * valid only until the next call that produces an image of the same size.
  * Hold on to a result by using it (display, copy) before extracting again.
  */
-class MAYAFLUX_API VisionExtractor
+class VisionExtractor
     : public Extractor<std::shared_ptr<Kakshya::SignalSourceContainer>, std::vector<Kakshya::DataVariant>> {
 public:
     using supports = Supports<VisionExtractorConfig>;
@@ -196,7 +196,7 @@ public:
     /** @brief A chain keeps its container and merges this step's facets, as for a FunctionalOperation. */
     static constexpr bool annotates = true;
 
-    explicit VisionExtractor(VisionExtractorConfig config = {});
+    MAYAFLUX_API explicit VisionExtractor(VisionExtractorConfig config = {});
 
     /** @brief The stored settings, or defaults when none were set. */
     [[nodiscard]] ConfigRefs configs() const override
@@ -210,7 +210,7 @@ public:
     }
 
     /** @brief Crop of source at the focused element, or track/keypoint bounds. Null with nothing to crop. */
-    [[nodiscard]] std::shared_ptr<Core::VKImage> crop(
+    MAYAFLUX_API [[nodiscard]] std::shared_ptr<Core::VKImage> crop(
         const std::shared_ptr<Core::VKImage>& source,
         const Kinesis::Vision::VisionAnalysis& analysis,
         uint32_t out_w, uint32_t out_h);
@@ -219,7 +219,7 @@ public:
      * @brief Every find_elements box resampled to tile_w x tile_h, side by
      *        side in one atlas (tile_w * count, tile_h), in box order.
      */
-    [[nodiscard]] std::shared_ptr<Core::VKImage> crops(
+    MAYAFLUX_API [[nodiscard]] std::shared_ptr<Core::VKImage> crops(
         const std::shared_ptr<Core::VKImage>& source,
         const Kinesis::Vision::VisionAnalysis& analysis,
         uint32_t tile_w, uint32_t tile_h);
@@ -229,7 +229,7 @@ public:
      *        executor's label buffer. The executor must be the one that ran
      *        the analysis, with export_label_buffer set.
      */
-    [[nodiscard]] std::shared_ptr<Core::VKImage> mask(
+    MAYAFLUX_API [[nodiscard]] std::shared_ptr<Core::VKImage> mask(
         VisionGpuExecutor& executor,
         const std::shared_ptr<Core::VKImage>& source,
         const Kinesis::Vision::VisionAnalysis& analysis,
@@ -242,25 +242,25 @@ public:
      *        earlier. Same atlas layout as crops(). Contours truncated by
      *        max_points_per_contour fill wrongly.
      */
-    [[nodiscard]] std::shared_ptr<Core::VKImage> silhouettes(
+    MAYAFLUX_API [[nodiscard]] std::shared_ptr<Core::VKImage> silhouettes(
         const std::shared_ptr<Core::VKImage>& source,
         const Kinesis::Vision::VisionAnalysis& analysis,
         uint32_t tile_w, uint32_t tile_h);
 
     /** @brief silhouettes() for the focused element only. */
-    [[nodiscard]] std::shared_ptr<Core::VKImage> silhouette(
+    MAYAFLUX_API [[nodiscard]] std::shared_ptr<Core::VKImage> silhouette(
         const std::shared_ptr<Core::VKImage>& source,
         const Kinesis::Vision::VisionAnalysis& analysis,
         uint32_t tile_w, uint32_t tile_h);
 
     /** @brief Mean, min and max over the focused element or track/keypoint bounds. */
-    [[nodiscard]] Kinesis::Vision::FieldSample sample(
+    MAYAFLUX_API [[nodiscard]] Kinesis::Vision::FieldSample sample(
         const std::shared_ptr<Core::VKImage>& source,
         const Kinesis::Vision::VisionAnalysis& analysis,
         uint32_t source_w, uint32_t source_h);
 
     /** @brief sample() for every find_elements box in one dispatch, in box order. */
-    [[nodiscard]] std::vector<Kinesis::Vision::FieldSample> sample_regions(
+    MAYAFLUX_API [[nodiscard]] std::vector<Kinesis::Vision::FieldSample> sample_regions(
         const std::shared_ptr<Core::VKImage>& source,
         const Kinesis::Vision::VisionAnalysis& analysis,
         uint32_t source_w, uint32_t source_h);
@@ -271,14 +271,14 @@ public:
      *        the source this is the motion under each point, with the frame
      *        the colour under it.
      */
-    [[nodiscard]] std::vector<glm::vec4> sample_points(
+    MAYAFLUX_API [[nodiscard]] std::vector<glm::vec4> sample_points(
         const std::shared_ptr<Core::VKImage>& source,
         const Kinesis::Vision::VisionAnalysis& analysis,
         uint32_t radius,
         uint32_t source_w, uint32_t source_h);
 
     /** @brief One fixed-size crop per keypoint, else per track, side by side in one atlas. */
-    [[nodiscard]] std::shared_ptr<Core::VKImage> patches(
+    MAYAFLUX_API [[nodiscard]] std::shared_ptr<Core::VKImage> patches(
         const std::shared_ptr<Core::VKImage>& source,
         const Kinesis::Vision::VisionAnalysis& analysis,
         uint32_t patch_w, uint32_t patch_h,
@@ -289,7 +289,7 @@ public:
      *        focus, chosen on the GPU from the analyzer's own area, shape and
      *        nearest-neighbour results. Empty without find_elements boxes.
      */
-    [[nodiscard]] std::optional<size_t> select_element(
+    MAYAFLUX_API [[nodiscard]] std::optional<size_t> select_element(
         const Kinesis::Vision::VisionAnalysis& analysis,
         const ElementFocus& focus);
 
@@ -297,7 +297,7 @@ public:
      * @brief Histogram equalisation of source from the histogram
      *        measure_appearance measured. Null without measure_appearance.
      */
-    [[nodiscard]] std::shared_ptr<Core::VKImage> equalize(
+    MAYAFLUX_API [[nodiscard]] std::shared_ptr<Core::VKImage> equalize(
         const std::shared_ptr<Core::VKImage>& source,
         const Kinesis::Vision::VisionAnalysis& analysis,
         uint32_t source_w, uint32_t source_h);
@@ -306,14 +306,14 @@ public:
      * @brief source scaled so its measured mean brightness reaches
      *        target. Null without measure_appearance.
      */
-    [[nodiscard]] std::shared_ptr<Core::VKImage> expose(
+    MAYAFLUX_API [[nodiscard]] std::shared_ptr<Core::VKImage> expose(
         const std::shared_ptr<Core::VKImage>& source,
         const Kinesis::Vision::VisionAnalysis& analysis,
         float target,
         uint32_t source_w, uint32_t source_h);
 
     /** @brief source kept where analysis.detect_edges reaches the edge threshold, transparent elsewhere. */
-    [[nodiscard]] std::shared_ptr<Core::VKImage> edges(
+    MAYAFLUX_API [[nodiscard]] std::shared_ptr<Core::VKImage> edges(
         const std::shared_ptr<Core::VKImage>& source,
         const Kinesis::Vision::VisionAnalysis& analysis,
         uint32_t source_w, uint32_t source_h);
@@ -323,7 +323,7 @@ public:
      *        the motion limits with enough confidence. Null when no flow was
      *        computed or motion_activity is below the activity limit.
      */
-    [[nodiscard]] std::shared_ptr<Core::VKImage> motion_mask(
+    MAYAFLUX_API [[nodiscard]] std::shared_ptr<Core::VKImage> motion_mask(
         const std::shared_ptr<Core::VKImage>& source,
         const Kinesis::Vision::VisionAnalysis& analysis,
         uint32_t source_w, uint32_t source_h);
@@ -334,39 +334,39 @@ public:
      *        to current position (green tracked, red lost) with their bounds
      *        and centroid (white), keypoints (magenta) with their bounds.
      */
-    [[nodiscard]] std::shared_ptr<Core::VKImage> annotate(
+    MAYAFLUX_API [[nodiscard]] std::shared_ptr<Core::VKImage> annotate(
         const std::shared_ptr<Core::VKImage>& source,
         const Kinesis::Vision::VisionAnalysis& analysis,
         uint32_t source_w, uint32_t source_h);
 
 private:
-    output_type extract_implementation(const input_type& input) override;
+    MAYAFLUX_API output_type extract_implementation(const input_type& input) override;
 
     [[nodiscard]] const VisionExtractorConfig& settings() const { return config<VisionExtractorConfig>(); }
 
-    [[nodiscard]] std::shared_ptr<Core::VKImage> resolve_image(
+    MAYAFLUX_API [[nodiscard]] std::shared_ptr<Core::VKImage> resolve_image(
         const std::shared_ptr<Kakshya::SignalSourceContainer>& source,
         size_t index);
 
     /** @brief Box index of the element the single-element methods act on. */
-    [[nodiscard]] std::optional<size_t> focus_box_index(const Kinesis::Vision::VisionAnalysis& analysis);
+    MAYAFLUX_API [[nodiscard]] std::optional<size_t> focus_box_index(const Kinesis::Vision::VisionAnalysis& analysis);
 
-    [[nodiscard]] std::optional<Kinesis::Vision::BoundingBox> region_for_analysis(
+    MAYAFLUX_API [[nodiscard]] std::optional<Kinesis::Vision::BoundingBox> region_for_analysis(
         const Kinesis::Vision::VisionAnalysis& analysis);
 
-    [[nodiscard]] std::optional<uint32_t> label_for_analysis(
+    MAYAFLUX_API [[nodiscard]] std::optional<uint32_t> label_for_analysis(
         const Kinesis::Vision::VisionAnalysis& analysis);
 
-    [[nodiscard]] std::vector<glm::vec2> points_for_analysis(
+    MAYAFLUX_API [[nodiscard]] std::vector<glm::vec2> points_for_analysis(
         const Kinesis::Vision::VisionAnalysis& analysis) const;
 
-    [[nodiscard]] std::shared_ptr<Core::VKImage> fill_elements(
+    MAYAFLUX_API [[nodiscard]] std::shared_ptr<Core::VKImage> fill_elements(
         const std::shared_ptr<Core::VKImage>& source,
         const Kinesis::Vision::FindElementsAnalysis& elements,
         const std::vector<size_t>& indices,
         uint32_t tile_w, uint32_t tile_h);
 
-    [[nodiscard]] std::shared_ptr<Core::VKImage> tone(
+    MAYAFLUX_API [[nodiscard]] std::shared_ptr<Core::VKImage> tone(
         const std::shared_ptr<Core::VKImage>& source,
         const Kinesis::Vision::MeasureAppearanceAnalysis& appearance,
         uint32_t mode, float gain,
@@ -383,15 +383,15 @@ private:
      *        output buffer. m_image_ctx serves the image-producing methods,
      *        m_reduce_ctx the ones that read back numbers.
      */
-    [[nodiscard]] TextureExecutionContext& image_context();
-    [[nodiscard]] TextureExecutionContext& reduce_context();
+    MAYAFLUX_API [[nodiscard]] TextureExecutionContext& image_context();
+    MAYAFLUX_API [[nodiscard]] TextureExecutionContext& reduce_context();
 
     /**
      * @brief The command buffer both contexts record into, created with the
      *        first context. Image methods submit it without waiting; methods
      *        that read numbers back submit and wait at the read.
      */
-    [[nodiscard]] GpuDispatchRecorder& recording();
+    MAYAFLUX_API [[nodiscard]] GpuDispatchRecorder& recording();
 
     std::shared_ptr<GpuDispatchRecorder> m_recording;
     std::shared_ptr<TextureExecutionContext> m_image_ctx;

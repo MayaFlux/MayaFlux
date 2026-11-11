@@ -80,7 +80,7 @@ struct VisionAnalyzerConfig : AnalyzerConfig {
  * cross-frame state (retained optical flow atlases and detections) lives
  * on the executor's contexts and must survive between calls.
  */
-class MAYAFLUX_API VisionAnalyzer
+class VisionAnalyzer
     : public Analyzer<std::shared_ptr<Kakshya::SignalSourceContainer>, std::vector<Kakshya::DataVariant>> {
 public:
     using supports = Supports<VisionAnalyzerConfig>;
@@ -98,7 +98,7 @@ public:
      * @brief Construct from the settings, as EnergyAnalyzer does.
      * @param config Intents, their parameters and the filtering context.
      */
-    explicit VisionAnalyzer(VisionAnalyzerConfig config = {});
+    MAYAFLUX_API explicit VisionAnalyzer(VisionAnalyzerConfig config = {});
 
     VisionAnalyzer(const VisionAnalyzer&) = delete;
     VisionAnalyzer& operator=(const VisionAnalyzer&) = delete;
@@ -132,7 +132,7 @@ public:
      *               no multi-index concept and always give their current
      *               frame.
      */
-    [[nodiscard]] Kinesis::Vision::VisionAnalysis analyze_vision(
+    MAYAFLUX_API [[nodiscard]] Kinesis::Vision::VisionAnalysis analyze_vision(
         const std::shared_ptr<Kakshya::SignalSourceContainer>& source,
         size_t index = 0);
 
@@ -142,7 +142,7 @@ public:
      *        container. Skips container resolution entirely; otherwise
      *        identical.
      */
-    [[nodiscard]] Kinesis::Vision::VisionAnalysis analyze_vision(
+    MAYAFLUX_API [[nodiscard]] Kinesis::Vision::VisionAnalysis analyze_vision(
         const std::shared_ptr<Core::VKImage>& image);
 
     /**
@@ -158,7 +158,7 @@ public:
      *         nullopt. When the frame cannot be copied the first failure is
      *         logged and nullopt is returned until a later copy succeeds.
      */
-    [[nodiscard]] std::optional<Kinesis::Vision::VisionAnalysis> advance(
+    MAYAFLUX_API [[nodiscard]] std::optional<Kinesis::Vision::VisionAnalysis> advance(
         const std::shared_ptr<Core::VKImage>& image);
 
     /**
@@ -191,7 +191,7 @@ public:
      *
      * Call when the pixel source changes (camera switch, video seek).
      */
-    void reset();
+    MAYAFLUX_API void reset();
 
     /**
      * @brief The executor that ran the FindElements sequence, or the first
@@ -204,7 +204,7 @@ public:
      *
      * Valid after at least one analyze_vision() call; null before that.
      */
-    [[nodiscard]] VisionGpuExecutor* get_executor() const;
+    MAYAFLUX_API [[nodiscard]] VisionGpuExecutor* get_executor() const;
 
 private:
     friend class Vision::VisionMatrix;
@@ -215,7 +215,7 @@ private:
      *        from this instance's config, not from the Datum, matching every
      *        other Analyzer-family operation.
      */
-    output_type analyze_implementation(const input_type& input) override;
+    MAYAFLUX_API output_type analyze_implementation(const input_type& input) override;
 
     /**
      * @brief Resolve source/index to a GPU image, the same way
@@ -224,7 +224,7 @@ private:
      *        persistent m_upload_image for VideoStreamContainer/
      *        WindowContainer. Null on an unsupported container type.
      */
-    [[nodiscard]] std::shared_ptr<Core::VKImage> resolve_image(
+    MAYAFLUX_API [[nodiscard]] std::shared_ptr<Core::VKImage> resolve_image(
         const std::shared_ptr<Kakshya::SignalSourceContainer>& source,
         size_t index);
 
@@ -234,7 +234,7 @@ private:
      *        resolved VisionSequence, apply context filtering, run the
      *        GPU reductions. w/h are the image's own dimensions.
      */
-    [[nodiscard]] Kinesis::Vision::VisionAnalysis analyze_resolved(
+    MAYAFLUX_API [[nodiscard]] Kinesis::Vision::VisionAnalysis analyze_resolved(
         const std::shared_ptr<Core::VKImage>& image);
 
     /**
@@ -242,7 +242,7 @@ private:
      * @return False while the sequence is suspended on deferred work; true
      *         once its result is appended to @p results.
      */
-    bool run_lane(
+    MAYAFLUX_API bool run_lane(
         size_t lane,
         const std::vector<Kinesis::Vision::ResolvedSequence>& resolved,
         std::vector<Kinesis::Vision::VisionResult>& results,
@@ -252,13 +252,13 @@ private:
      * @brief Route every completed sequence result into one VisionAnalysis,
      *        apply context filtering and run the GPU reductions.
      */
-    [[nodiscard]] Kinesis::Vision::VisionAnalysis assemble(
+    MAYAFLUX_API [[nodiscard]] Kinesis::Vision::VisionAnalysis assemble(
         const std::vector<Kinesis::Vision::ResolvedSequence>& resolved,
         const std::vector<Kinesis::Vision::VisionResult>& results,
         uint32_t w, uint32_t h);
 
     /** @brief Copy @p image into this analyzer's own frame image. Null on failure. */
-    [[nodiscard]] std::shared_ptr<Core::VKImage> hold_frame(const std::shared_ptr<Core::VKImage>& image);
+    MAYAFLUX_API [[nodiscard]] std::shared_ptr<Core::VKImage> hold_frame(const std::shared_ptr<Core::VKImage>& image);
 
     /**
      * @brief State of the run advance() is stepping through.
@@ -279,7 +279,7 @@ private:
      *        centroid/velocity/bounds/mean_speed_px/age stats on the
      *        result. No-op (default fields) when tracks is empty.
      */
-    [[nodiscard]] Kinesis::Vision::TrackObjectsAnalysis reduce_tracks(
+    MAYAFLUX_API [[nodiscard]] Kinesis::Vision::TrackObjectsAnalysis reduce_tracks(
         const std::vector<Kinesis::Vision::TrackResult>& tracks, uint32_t w, uint32_t h);
 
     /**
@@ -292,7 +292,7 @@ private:
      *        bounds and centroid are the same min/max/sum reduction either
      *        way.
      */
-    [[nodiscard]] Kinesis::Vision::DetectFeaturesAnalysis reduce_keypoints(
+    MAYAFLUX_API [[nodiscard]] Kinesis::Vision::DetectFeaturesAnalysis reduce_keypoints(
         const std::vector<Kinesis::Vision::Keypoint>& keypoints);
 
     /**
@@ -300,7 +300,7 @@ private:
      *        distances (nearest_neighbor.comp) over fe.boxes, filled in
      *        place. No-op when fe.boxes is empty.
      */
-    void compute_shapes(Kinesis::Vision::FindElementsAnalysis& fe, uint32_t w, uint32_t h);
+    MAYAFLUX_API void compute_shapes(Kinesis::Vision::FindElementsAnalysis& fe, uint32_t w, uint32_t h);
 
     /**
      * @brief MeasureAppearance's whole-frame gradient sample (region_sample.comp
@@ -310,21 +310,21 @@ private:
      *        produce itself, so the caller supplies it. Empty fields for
      *        whichever input image is null.
      */
-    [[nodiscard]] Kinesis::Vision::MeasureAppearanceAnalysis measure_appearance(
+    MAYAFLUX_API [[nodiscard]] Kinesis::Vision::MeasureAppearanceAnalysis measure_appearance(
         const Kinesis::Vision::VisionResult& result,
         const std::shared_ptr<Core::VKImage>& gray,
         uint32_t w, uint32_t h);
 
     /** @brief Dispatch region_sample.comp over the whole image (no region concept for MeasureAppearance). */
-    [[nodiscard]] Kinesis::Vision::FieldSample sample_full_frame(
+    MAYAFLUX_API [[nodiscard]] Kinesis::Vision::FieldSample sample_full_frame(
         const std::shared_ptr<Core::VKImage>& image, uint32_t w, uint32_t h);
 
     /** @brief Dispatch otsu_histogram.comp over image, zeroing the buffer first. */
-    [[nodiscard]] std::array<uint32_t, 256> compute_histogram(
+    MAYAFLUX_API [[nodiscard]] std::array<uint32_t, 256> compute_histogram(
         const std::shared_ptr<Core::VKImage>& image, uint32_t w, uint32_t h);
 
     /** @brief Dispatch histogram_reduce.comp over an already-computed histogram. */
-    [[nodiscard]] float compute_mean_brightness(const std::array<uint32_t, 256>& histogram);
+    MAYAFLUX_API [[nodiscard]] float compute_mean_brightness(const std::array<uint32_t, 256>& histogram);
 
     std::vector<std::unique_ptr<VisionGpuExecutor>> m_executors;
     size_t m_label_lane { 0 };

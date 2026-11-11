@@ -194,6 +194,15 @@ DataModality detect_data_modality(const std::vector<DataDimension>& dimensions)
         }
     }
 
+    const auto is_instance = [](const DataDimension& dim) { return dim.role == DataDimension::Role::INSTANCE; };
+    if (std::ranges::any_of(dimensions, is_instance)) {
+        std::vector<DataDimension> item;
+        std::ranges::copy_if(dimensions, std::back_inserter(item), std::not_fn(is_instance));
+        return detect_data_modality(item) == DataModality::IMAGE_COLOR
+            ? DataModality::IMAGE_COLOR_ARRAY
+            : DataModality::TENSOR_ND;
+    }
+
     for (const auto& dim : dimensions) {
         switch (dim.role) {
         case DataDimension::Role::TIME:

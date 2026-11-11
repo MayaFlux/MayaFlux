@@ -349,6 +349,38 @@ namespace MayaFlux::Kinesis::Discrete {
     bool sample_variance = true);
 
 // ============================================================================
+// Periodicity
+// ============================================================================
+
+/**
+ * @brief Strongest repetition lag per window over a bounded lag range
+ *
+ * Applies estimate_period (TemporalMeasures.hpp) to each window with one
+ * second per sample, so lags are in samples and the semantics are its own:
+ * direct sums, strictly positive correlations only, normalised by the
+ * window's variance, zero strength for a near-constant window. The longest
+ * lag is capped at half the window, and a range that ends up empty gives
+ * no estimate.
+ *
+ * @param data Input span
+ * @param n_windows Pre-computed window count from num_windows()
+ * @param hop_size Samples between window starts
+ * @param window_size Samples per window
+ * @param min_lag Shortest lag searched, in samples
+ * @param max_lag Longest lag searched, in samples
+ * @return Parallel vectors, strengths then lags. Strength is the normalised
+ *         autocorrelation at the best lag and the lag is in samples; both
+ *         are zero when no lag qualified.
+ */
+[[nodiscard]] MAYAFLUX_API std::pair<std::vector<double>, std::vector<size_t>> periodicity(
+    std::span<const double> data,
+    size_t n_windows,
+    uint32_t hop_size,
+    uint32_t window_size,
+    uint32_t min_lag,
+    uint32_t max_lag);
+
+// ============================================================================
 // Position finders
 // ============================================================================
 

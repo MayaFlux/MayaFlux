@@ -346,6 +346,11 @@ namespace Kriya {
         inline std::string get_tag() { return m_capture.get_tag(); }
 
         /**
+         * @brief Get the audio buffer this capture reads, or null for a graphics capture.
+         */
+        [[nodiscard]] inline std::shared_ptr<Buffers::AudioBuffer> get_audio_buffer() const { return m_capture.get_audio_buffer(); }
+
+        /**
          * @brief Convert to BufferOperation for pipeline integration.
          * @return BufferOperation containing this capture configuration
          */

@@ -1,0 +1,36 @@
+#version 460
+#extension GL_EXT_buffer_reference : require
+
+layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
+
+layout(buffer_reference, std430) readonly buffer FloatRef {
+    float v[];
+};
+
+layout(buffer_reference, std430) buffer ResultRef {
+    float v[];
+};
+
+layout(push_constant) uniform PC {
+    FloatRef a;
+    FloatRef b;
+    ResultRef dst;
+    uint count;
+    uint reserved;
+} pc;
+
+uint invocation_index()
+{
+    return gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * gl_NumWorkGroups.x * gl_WorkGroupSize.x;
+}
+
+/**
+ * @brief Element-wise sum of two float sequences of count values. dst may be a or b.
+ */
+void main()
+{
+    const uint idx = invocation_index();
+    if (idx >= pc.count)
+        return;
+    pc.dst.v[idx] = pc.a.v[idx] + pc.b.v[idx];
+}

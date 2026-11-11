@@ -24,6 +24,11 @@ DataDimension DataDimension::channel(uint64_t count, uint64_t stride)
     return { "channel", count, stride, Role::CHANNEL };
 }
 
+DataDimension DataDimension::instance(uint64_t count, uint64_t stride, std::string name)
+{
+    return { std::move(name), count, stride, Role::INSTANCE };
+}
+
 DataDimension DataDimension::depth(uint64_t count, uint64_t stride)
 {
     return { "depth", count, stride, Role::DEPTH };

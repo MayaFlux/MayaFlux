@@ -130,6 +130,82 @@ public:
     }
 
     /**
+     * @struct SpectralBuffer
+     * @brief Where the descriptors of the latest record are on the device.
+     *
+     * Word pair doubles, window major: values_per_window of them per window, the
+     * total power, the first moment, then the power of each band.
+     */
+    struct SpectralBuffer {
+        const GpuDispatchCore* context { nullptr };
+        uint32_t set { 0 };
+        size_t binding { 0 };
+        size_t windows { 0 };
+        size_t values_per_window { 0 };
+    };
+
+    /**
+     * @brief Append to a recording the caller shares with other work.
+     *
+     * With a shared recording the transform goes to the device in the same
+     * submission as the work recorded around it. Call it before the first
+     * analysis or record. The recording must be compute isolated.
+     *
+     * @throws std::logic_error when the analyzer has already started.
+     */
+    void share_recording(std::shared_ptr<GpuDispatchRecorder> recording)
+    {
+        if (m_context) {
+            error<std::logic_error>(Journal::Component::Yantra, Journal::Context::ComputeMatrix,
+                std::source_location::current(), "The recording can only be shared before the analyzer starts");
+        }
+        m_recording = std::move(recording);
+    }
+
+    /**
+     * @brief Transform the windows of one channel without waiting for the result.
+     *
+     * The descriptors stay on the device, in descriptor_buffer, recorded into
+     * the analyzer's recording with no submission and no read back. A consumer
+     * on the same recording, for instance a WordPairMap ToFloat32 stage that
+     * hands them to a network, reads them in place. Bind the consumer after the
+     * analyzer's settings are final, since a change of window or bands makes a
+     * new context.
+     *
+     * @param channel Samples of one channel.
+     * @return The number of windows recorded.
+     */
+    [[nodiscard]] size_t record(std::span<const double> channel)
+    {
+        const auto& cfg = this->template config<SpectralAnalyzerConfig>();
+        auto& context = this->context(cfg);
+        const size_t windows = channel.size() < cfg.window_size
+            ? 0
+            : (channel.size() - cfg.window_size) / cfg.hop_size + 1;
+        m_resident_windows = windows;
+        if (windows == 0) {
+            return 0;
+        }
+        const std::vector<double> taper = cfg.taper ? Kinesis::Discrete::hann(cfg.window_size) : std::vector<double> {};
+        context.ensure_shared_buffer(0, FftContext::result_binding, windows * context.descriptors(), GpuBufferBinding::ElementType::VEC2_U32);
+        context.record_real(channel,
+            { .length = cfg.window_size, .stride = cfg.hop_size, .offset = 0, .count = static_cast<uint32_t>(windows) }, taper);
+        return windows;
+    }
+
+    /**
+     * @brief The device buffer of the descriptors of the latest record. It exists from this call on.
+     */
+    [[nodiscard]] SpectralBuffer descriptor_buffer()
+    {
+        const auto& cfg = this->template config<SpectralAnalyzerConfig>();
+        auto& context = this->context(cfg);
+        context.ensure_shared_buffer(0, FftContext::result_binding, 1, GpuBufferBinding::ElementType::VEC2_U32);
+        return { .context = &context, .set = 0, .binding = FftContext::result_binding,
+            .windows = m_resident_windows, .values_per_window = context.descriptors() };
+    }
+
+    /**
      * @brief Type-safe spectral analysis
      */
     SpectralAnalysis analyze_spectrum(const input_type& data)
@@ -228,6 +304,8 @@ private:
 
     mutable std::unique_ptr<FftContext> m_context;
     mutable ContextKey m_key;
+    std::shared_ptr<GpuDispatchRecorder> m_recording;
+    size_t m_resident_windows { 0 };
 
     static void validate_config(const SpectralAnalyzerConfig& cfg)
     {
@@ -280,6 +358,9 @@ private:
         if (!m_context || !(m_key == key)) {
             const auto weights = weights_for(cfg);
             m_context = std::make_unique<FftContext>(cfg.window_size, weights);
+            if (m_recording) {
+                m_context->set_recording(m_recording);
+            }
             m_key = key;
         }
         return *m_context;

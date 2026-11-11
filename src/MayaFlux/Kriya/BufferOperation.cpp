@@ -66,11 +66,14 @@ BufferOperation BufferOperation::capture_input(
 
 CaptureBuilder BufferOperation::capture_input_from(
     const std::shared_ptr<Buffers::BufferManager>& buffer_manager,
-    uint32_t input_channel)
+    uint32_t input_channel,
+    std::optional<uint32_t> monitor)
 {
     auto input_buffer = std::make_shared<Buffers::AudioBuffer>(input_channel);
     buffer_manager->register_input_listener(input_buffer, input_channel);
-    buffer_manager->add_buffer(input_buffer, Buffers::ProcessingToken::AUDIO_BACKEND, input_channel);
+    if (monitor) {
+        buffer_manager->add_buffer(input_buffer, Buffers::ProcessingToken::AUDIO_BACKEND, *monitor);
+    }
     return CaptureBuilder(input_buffer);
 }
 

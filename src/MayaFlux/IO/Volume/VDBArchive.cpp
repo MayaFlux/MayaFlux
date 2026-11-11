@@ -1,5 +1,7 @@
 #include "VDBArchive.hpp"
 
+#include "MayaFlux/Kakshya/NDData/SmallFloat.hpp"
+
 extern "C" {
 #include "tinyvdb_ray.h"
 #include "tinyvdb_sparse_tree.h"
@@ -146,42 +148,6 @@ namespace {
     }
 
     /**
-     * @brief IEEE 754 binary16 to binary32. tinyvdb decompresses on-disk half
-     *        storage transparently, so this path is defensive: it only fires
-     *        if a leaf's own declared value type is half, which no format
-     *        this reader has seen in practice produces.
-     */
-    float half_to_float(uint16_t h)
-    {
-        const uint32_t sign = static_cast<uint32_t>(h & 0x8000U) << 16;
-        uint32_t exp = (h >> 10) & 0x1FU;
-        uint32_t mant = h & 0x3FFU;
-        uint32_t bits {};
-
-        if (exp == 0) {
-            if (mant == 0) {
-                bits = sign;
-            } else {
-                exp = 1;
-                while ((mant & 0x400U) == 0) {
-                    mant <<= 1;
-                    --exp;
-                }
-                mant &= 0x3FFU;
-                bits = sign | ((exp + 112U) << 23) | (mant << 13);
-            }
-        } else if (exp == 0x1FU) {
-            bits = sign | 0x7F800000U | (mant << 13);
-        } else {
-            bits = sign | ((exp + 112U) << 23) | (mant << 13);
-        }
-
-        float f {};
-        std::memcpy(&f, &bits, sizeof(f));
-        return f;
-    }
-
-    /**
      * @brief Convert one raw scalar element to float via MayaFlux::try_convert.
      *
      * HALF is the one source type try_convert cannot see: it is a bit
@@ -222,7 +188,7 @@ namespace {
             uint16_t v {};
             std::memcpy(&v, bytes, sizeof(v));
             CastResult<float> result;
-            result.value = half_to_float(v);
+            result.value = Kakshya::half_to_float(v);
             return result;
         }
         default: {

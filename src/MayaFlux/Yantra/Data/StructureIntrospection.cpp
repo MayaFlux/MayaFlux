@@ -2,9 +2,37 @@
 
 #include "MayaFlux/Kakshya/NDData/Composite.hpp"
 #include "MayaFlux/Kakshya/Source/CompositeContainer.hpp"
+#include "MayaFlux/Kakshya/Source/TensorContainer.hpp"
 #include "MayaFlux/Kakshya/Utils/DataUtils.hpp"
 
 namespace MayaFlux::Yantra {
+
+namespace {
+
+    const Kakshya::Region& representative_region(const std::vector<Kakshya::RegionSegment>& segments)
+    {
+        const bool consistent_coords = std::ranges::all_of(segments,
+            [&](const auto& seg) {
+                return seg.source_region.end_coordinates.size() == segments[0].source_region.end_coordinates.size();
+            });
+
+        if (consistent_coords) {
+            return segments[0].source_region;
+        }
+
+        return std::ranges::max_element(segments,
+            [](const auto& a, const auto& b) {
+                return a.source_region.end_coordinates.size() < b.source_region.end_coordinates.size();
+            })
+            ->source_region;
+    }
+
+    std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality> no_container_structure()
+    {
+        return { { { Kakshya::DataDimension::time(0) } }, Kakshya::DataModality::UNKNOWN };
+    }
+
+}
 
 std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
 infer_from_data_variant(const Kakshya::DataVariant& data)
@@ -126,30 +154,17 @@ std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
 infer_from_segments(const std::vector<Kakshya::RegionSegment>& segments, const std::shared_ptr<Kakshya::SignalSourceContainer>& container)
 {
     if (segments.empty() || !container) {
-        return { { { Kakshya::DataDimension::time(0) } }, Kakshya::DataModality::UNKNOWN };
+        return no_container_structure();
     }
 
-    bool consistent_coords = std::ranges::all_of(segments,
-        [&](const auto& seg) {
-            return seg.source_region.end_coordinates.size() == segments[0].source_region.end_coordinates.size();
-        });
-
-    if (consistent_coords) {
-        return infer_from_region(segments[0].source_region, container);
-    }
-
-    auto max_coord_segment = std::ranges::max_element(segments,
-        [](const auto& a, const auto& b) {
-            return a.source_region.end_coordinates.size() < b.source_region.end_coordinates.size();
-        });
-    return infer_from_region(max_coord_segment->source_region, container);
+    return infer_from_region(representative_region(segments), container);
 }
 
 std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
 infer_from_region_group(const Kakshya::RegionGroup& group, const std::shared_ptr<Kakshya::SignalSourceContainer>& container)
 {
     if (!container || group.regions.empty()) {
-        return { { { Kakshya::DataDimension::time(0) } }, Kakshya::DataModality::UNKNOWN };
+        return no_container_structure();
     }
 
     auto bounds = group.get_bounding_region();
@@ -159,6 +174,111 @@ infer_from_region_group(const Kakshya::RegionGroup& group, const std::shared_ptr
     bounds.modality = (uniform && first) ? *first : container->get_structure().modality;
 
     return infer_from_region(bounds, container);
+}
+
+std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
+infer_from_tensor_container(const std::shared_ptr<Kakshya::TensorContainer>& container)
+{
+    if (!container) {
+        error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::Runtime,
+            std::source_location::current(), "Cannot infer structure from null TensorContainer");
+    }
+
+    auto dimensions = container->get_dimensions();
+    auto modality = container->get_structure().modality;
+    if (modality == Kakshya::DataModality::UNKNOWN)
+        modality = Kakshya::DataModality::TENSOR_ND;
+
+    return { std::move(dimensions), modality };
+}
+
+std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
+infer_from_region(const Kakshya::Region& region, const std::shared_ptr<Kakshya::TensorContainer>& container)
+{
+    if (!container) {
+        return { { { Kakshya::DataDimension::time(1) } }, Kakshya::DataModality::UNKNOWN };
+    }
+
+    if (region.start_coordinates.empty() && region.end_coordinates.empty()) {
+        return infer_from_tensor_container(container);
+    }
+
+    const auto window = container->get_data().spec().window(region);
+    if (!window) {
+        error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::Runtime,
+            std::source_location::current(), "Region does not select a box of the tensor");
+    }
+
+    auto modality = container->get_structure().modality;
+    if (modality == Kakshya::DataModality::UNKNOWN)
+        modality = Kakshya::DataModality::TENSOR_ND;
+
+    return { window->dimensions(), region.modality.value_or(modality) };
+}
+
+std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
+infer_from_region(const Kakshya::Region& region, const std::shared_ptr<Kakshya::CompositeContainer>& container)
+{
+    if (!container) {
+        return { { { Kakshya::DataDimension::time(1) } }, Kakshya::DataModality::UNKNOWN };
+    }
+
+    if (region.start_coordinates.empty() && region.end_coordinates.empty()) {
+        return infer_from_composite_container(container);
+    }
+
+    if (region.start_coordinates.size() != region.end_coordinates.size()) {
+        error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::Runtime,
+            std::source_location::current(), "Region start and end coordinates must have equal dimensionality");
+    }
+
+    const auto first = region.start_coordinates.front();
+    const auto last = region.end_coordinates.front();
+    const auto span = std::max(first, last) - std::min(first, last) + 1;
+
+    auto modality = container->get_structure().modality;
+    if (modality == Kakshya::DataModality::UNKNOWN)
+        modality = Kakshya::DataModality::TENSOR_ND;
+
+    std::vector<Kakshya::DataDimension> dimensions;
+    dimensions.emplace_back("elements", span, 1, Kakshya::DataDimension::Role::CUSTOM);
+    return { std::move(dimensions), region.modality.value_or(modality) };
+}
+
+std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
+infer_from_region_group(const Kakshya::RegionGroup& group, const std::shared_ptr<Kakshya::TensorContainer>& container)
+{
+    if (!container || group.regions.empty()) {
+        return no_container_structure();
+    }
+    return infer_from_region(group.get_bounding_region(), container);
+}
+
+std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
+infer_from_region_group(const Kakshya::RegionGroup& group, const std::shared_ptr<Kakshya::CompositeContainer>& container)
+{
+    if (!container || group.regions.empty()) {
+        return no_container_structure();
+    }
+    return infer_from_region(group.get_bounding_region(), container);
+}
+
+std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
+infer_from_segments(const std::vector<Kakshya::RegionSegment>& segments, const std::shared_ptr<Kakshya::TensorContainer>& container)
+{
+    if (segments.empty() || !container) {
+        return no_container_structure();
+    }
+    return infer_from_region(representative_region(segments), container);
+}
+
+std::pair<std::vector<Kakshya::DataDimension>, Kakshya::DataModality>
+infer_from_segments(const std::vector<Kakshya::RegionSegment>& segments, const std::shared_ptr<Kakshya::CompositeContainer>& container)
+{
+    if (segments.empty() || !container) {
+        return no_container_structure();
+    }
+    return infer_from_region(representative_region(segments), container);
 }
 
 }

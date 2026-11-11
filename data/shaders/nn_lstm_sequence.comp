@@ -1,0 +1,98 @@
+#version 460
+#extension GL_EXT_buffer_reference : require
+
+layout(local_size_x = 512, local_size_y = 1, local_size_z = 1) in;
+
+layout(buffer_reference, std430) readonly buffer WeightRef {
+    float v[];
+};
+
+layout(buffer_reference, std430) buffer StateRef {
+    float v[];
+};
+
+layout(buffer_reference, std430) buffer ResultRef {
+    float v[];
+};
+
+layout(push_constant) uniform PC {
+    WeightRef x;
+    WeightRef w_ih;
+    WeightRef w_hh;
+    WeightRef b_ih;
+    WeightRef b_hh;
+    StateRef state;
+    ResultRef hs;
+    uint steps;
+    uint hidden;
+} pc;
+
+const uint WORKGROUP = 512u;
+const uint MAX_HIDDEN = 256u;
+
+shared float h_shared[MAX_HIDDEN];
+shared float h_next[MAX_HIDDEN];
+shared float gates[4u * MAX_HIDDEN];
+
+float sigmoid(float v)
+{
+    return 1.0 / (1.0 + exp(-v));
+}
+
+/**
+ * @brief Runs an LSTM cell over a whole sequence in one workgroup.
+ *
+ * The hidden width is pc.hidden, up to 256, and the input width equals it. x
+ * is [steps, hidden]. Gate rows (4 * hidden: input, forget, cell and output
+ * blocks in that order) are spread over the 512 invocations, each taking
+ * every 512th row, and the first hidden invocations also own one hidden unit.
+ * state holds h then c, 2 * hidden floats, read at the start and written at
+ * the end so the recurrence continues across dispatches. hs receives the
+ * hidden vector of every step, [steps, hidden].
+ */
+void main()
+{
+    const uint r = gl_LocalInvocationID.x;
+    const uint H = pc.hidden;
+    const uint rows = 4u * H;
+
+    float c_reg = 0.0;
+    if (r < H) {
+        h_shared[r] = pc.state.v[r];
+        c_reg = pc.state.v[H + r];
+    }
+    barrier();
+
+    for (uint t = 0u; t < pc.steps; ++t) {
+        for (uint row = r; row < rows; row += WORKGROUP) {
+            float acc = pc.b_ih.v[row] + pc.b_hh.v[row];
+            const uint base = row * H;
+            for (uint j = 0u; j < H; ++j) {
+                acc += pc.w_ih.v[base + j] * pc.x.v[t * H + j] + pc.w_hh.v[base + j] * h_shared[j];
+            }
+            gates[row] = acc;
+        }
+        barrier();
+
+        if (r < H) {
+            const float i_gate = sigmoid(gates[r]);
+            const float f_gate = sigmoid(gates[H + r]);
+            const float g_gate = tanh(gates[2u * H + r]);
+            const float o_gate = sigmoid(gates[3u * H + r]);
+            c_reg = f_gate * c_reg + i_gate * g_gate;
+            const float h_value = o_gate * tanh(c_reg);
+            h_next[r] = h_value;
+            pc.hs.v[t * H + r] = h_value;
+        }
+        barrier();
+
+        if (r < H)
+            h_shared[r] = h_next[r];
+        barrier();
+    }
+
+    if (r < H) {
+        pc.state.v[r] = h_shared[r];
+        pc.state.v[H + r] = c_reg;
+    }
+}

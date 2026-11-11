@@ -411,6 +411,19 @@ bool DelimitedTextReader::read_record(
     fields.clear();
     at_end = false;
 
+    while (true) {
+        const int next = m_file.peek();
+        if (next == '\n') {
+            m_file.get();
+        } else if (next == '\r') {
+            m_file.get();
+            if (m_file.peek() == '\n')
+                m_file.get();
+        } else {
+            break;
+        }
+    }
+
     std::string value;
     bool quoted = false;
     bool closed_quote = false;

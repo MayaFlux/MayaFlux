@@ -43,6 +43,16 @@ namespace MayaFlux::Kinesis::Discrete {
     const std::vector<std::pair<size_t, size_t>>& intervals);
 
 /**
+ * @brief Parts covered by both of two sets of half-open intervals
+ * @param first Unsorted [start, end) pairs
+ * @param second Unsorted [start, end) pairs
+ * @return Sorted, non-overlapping [start, end) pairs, each inside both sets
+ */
+[[nodiscard]] MAYAFLUX_API std::vector<std::pair<size_t, size_t>> intersect_intervals(
+    const std::vector<std::pair<size_t, size_t>>& first,
+    const std::vector<std::pair<size_t, size_t>>& second);
+
+/**
  * @brief Copy data from a set of half-open intervals into a flat vector
  * @param data Source span
  * @param intervals Sorted, non-overlapping [start, end) pairs
@@ -50,6 +60,32 @@ namespace MayaFlux::Kinesis::Discrete {
  */
 [[nodiscard]] MAYAFLUX_API std::vector<double> slice_intervals(
     std::span<const double> data,
+    const std::vector<std::pair<size_t, size_t>>& intervals);
+
+/**
+ * @brief Share of the values inside each interval that are at or above a threshold
+ * @param values One value per position
+ * @param positions Sample position of each value, ascending
+ * @param intervals [start, end) pairs; a value belongs to an interval holding its position
+ * @param threshold Value at or above which a value counts
+ * @return One share in [0, 1] per interval, 0 for an interval holding no values
+ */
+[[nodiscard]] MAYAFLUX_API std::vector<double> interval_share_above(
+    std::span<const double> values,
+    std::span<const size_t> positions,
+    const std::vector<std::pair<size_t, size_t>>& intervals,
+    double threshold);
+
+/**
+ * @brief Median of the values inside each interval
+ * @param values One value per position
+ * @param positions Sample position of each value, ascending
+ * @param intervals [start, end) pairs; a value belongs to an interval holding its position
+ * @return One median per interval, the mean of the two middle values for an even count, 0 for an interval holding no values
+ */
+[[nodiscard]] MAYAFLUX_API std::vector<double> interval_median(
+    std::span<const double> values,
+    std::span<const size_t> positions,
     const std::vector<std::pair<size_t, size_t>>& intervals);
 
 /**

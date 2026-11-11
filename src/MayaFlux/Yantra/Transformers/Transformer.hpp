@@ -172,10 +172,11 @@ protected:
     bool validate_input(const input_type& input) const override
     {
         if constexpr (RequiresContainer<InputType>) {
-            if (!input.has_container()) {
+            const auto source = input.get_container();
+            if (!source) {
                 return false;
             }
-            auto numeric_data = OperationHelper::extract_numeric_data(input.data, input.container.value());
+            auto numeric_data = OperationHelper::extract_numeric_data(input.data, source);
             return validate_multi_channel_data(numeric_data);
         } else {
             auto numeric_data = OperationHelper::extract_numeric_data(input.data);
@@ -195,13 +196,6 @@ private:
         if constexpr (std::is_same_v<InputType, OutputType>) {
             result.data = input.data;
         } else {
-            if constexpr (RequiresContainer<InputType>) {
-                if (!input.has_container()) {
-                    result.container = std::make_shared<Kakshya::SignalSourceContainer>();
-                } else {
-                    result.container = input.container;
-                }
-            }
             result.data = {};
         }
         return result;

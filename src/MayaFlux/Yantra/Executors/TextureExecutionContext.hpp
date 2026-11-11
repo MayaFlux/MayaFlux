@@ -17,14 +17,14 @@ namespace MayaFlux::Yantra {
  *
  * Accepts DataIO (Datum<vector<DataVariant>>) as both input and output,
  * matching the standard ComputeOperation contract.  Image staging is driven
- * by the optional container field on the input Datum:
+ * by the signal container the input Datum carries:
  *
- *   - When datum.container holds a TextureContainer, extract_inputs() stashes
+ *   - When the datum's container is a TextureContainer, extract_inputs() stashes
  *     it and on_before_gpu_dispatch() uploads it to a VKImage staged at the
  *     declared image input binding.  This is the preferred path: the container
  *     carries format, layer count, mip metadata, and sampler config.
  *
- *   - When datum.container is absent or not a TextureContainer, no image
+ *   - When the datum carries no container or not a TextureContainer, no image
  *     staging occurs.  The shader receives whatever bindings the caller
  *     declared via set_binding_data / stage_passthrough / stage_image_sampled
  *     directly.  dispatch_async still works; it is a no-op on the image side.
@@ -52,7 +52,7 @@ namespace MayaFlux::Yantra {
  * TextureLoom::acquire_cached_image are not synchronized here. Do not invoke
  * dispatch or image staging concurrently on the same context.
  */
-class MAYAFLUX_API TextureExecutionContext
+class TextureExecutionContext
     : public GpuExecutionContext<
           std::vector<Kakshya::DataVariant>,
           std::vector<Kakshya::DataVariant>> {
@@ -211,7 +211,7 @@ public:
     /**
      * @brief Non-blocking dispatch.
      *
-     * If datum.container holds a TextureContainer it is uploaded and staged
+     * If the datum's container is a TextureContainer it is uploaded and staged
      * before submission.  Fence becomes signaled when GPU work completes.
      * Call collect_result() (SCALAR mode) or retrieve the output Datum via
      * execute() (CONTAINER mode) once signaled.
@@ -335,7 +335,7 @@ public:
      * @brief Stage a TextureContainer layer at the declared input image binding.
      *
      * Convenience for callers that hold a container and want explicit control
-     * over layer and sampler rather than relying on Datum.container resolution.
+     * over layer and sampler rather than relying on the Datum's container.
      * Always stages as IMAGE_SAMPLED regardless of the input slot's declared
      * access mode.
      *
@@ -411,7 +411,7 @@ protected:
     }
 
     /**
-     * @brief Stashes the TextureContainer from datum.container for use in
+     * @brief Stashes the TextureContainer from the datum's container for use in
      *        on_before_gpu_dispatch; returns empty channels (image shaders
      *        do not use the numeric channel path).
      */
@@ -488,7 +488,7 @@ protected:
 
     /**
      * @brief In CONTAINER mode: downloads the storage image at the declared
-     *        output binding into a new TextureContainer placed in output.container.
+     *        output binding into a new TextureContainer carried by the output Datum.
      *        In SCALAR mode: returns an empty DataIO (use collect_result() instead).
      */
     output_type collect_gpu_outputs(
@@ -528,8 +528,7 @@ protected:
         m_output_container->from_image(img, 0);
 
         output_type result;
-        result.container = std::static_pointer_cast<Kakshya::SignalSourceContainer>(
-            m_output_container);
+        result.set_container(m_output_container);
         return result;
     }
 
@@ -684,16 +683,14 @@ private:
     }
 
     /**
-     * @brief Extracts a TextureContainer pointer from datum.container if present.
+     * @brief Extracts a TextureContainer pointer from the datum's signal container if present.
      *
-     * Returns nullptr when the container field is absent or holds a different
+     * Returns nullptr when the datum carries no signal container or one of a different
      * SignalSourceContainer subtype.
      */
     static std::shared_ptr<Kakshya::TextureContainer> resolve_texture_container(const input_type& input)
     {
-        if (!input.container || !*input.container)
-            return nullptr;
-        return std::dynamic_pointer_cast<Kakshya::TextureContainer>(input.container.value());
+        return std::dynamic_pointer_cast<Kakshya::TextureContainer>(input.get_container());
     }
 };
 

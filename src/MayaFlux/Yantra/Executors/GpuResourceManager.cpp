@@ -397,8 +397,40 @@ namespace {
 
 } // anonymous namespace
 
+struct SharedAllocation {
+    VulkanBufferSlot slot;
+    std::shared_ptr<GpuDispatchRecorder> recording;
+
+    SharedAllocation() = default;
+    SharedAllocation(const SharedAllocation&) = delete;
+    SharedAllocation& operator=(const SharedAllocation&) = delete;
+
+    ~SharedAllocation()
+    {
+        if (!slot.buffer && !slot.memory)
+            return;
+
+        auto& foundry = Portal::Graphics::get_shader_foundry();
+        if (!foundry.is_initialized())
+            return;
+
+        release_after_use(recording.get(), [device = foundry.get_device(), retired = slot]() mutable {
+            free_slot(device, retired);
+        });
+    }
+};
+
+struct SharedOwnerToken { };
+
+struct SharedCell {
+    std::shared_ptr<SharedAllocation> allocation;
+    GpuBufferBinding::ElementType element_type { GpuBufferBinding::ElementType::FLOAT32 };
+    uint64_t generation { 0 };
+    std::weak_ptr<SharedOwnerToken> owner;
+};
+
 struct GpuResourceManager::SharedBuffers {
-    std::map<std::pair<uint32_t, size_t>, VulkanBufferSlot> slots;
+    std::map<std::pair<uint32_t, size_t>, std::shared_ptr<SharedCell>> cells;
 };
 
 //==============================================================================
@@ -408,6 +440,7 @@ struct GpuResourceManager::SharedBuffers {
 GpuResourceManager::GpuResourceManager(bool compute_isolated)
     : m_compute_isolated(compute_isolated)
     , m_shared(std::make_unique<SharedBuffers>())
+    , m_owner(std::make_shared<SharedOwnerToken>())
 {
 }
 
@@ -597,7 +630,7 @@ void GpuResourceManager::release(const std::string& key)
 
 void GpuResourceManager::cleanup()
 {
-    if (m_units.empty() && m_shared->slots.empty())
+    if (m_units.empty() && m_shared->cells.empty())
         return;
 
     auto& foundry = Portal::Graphics::get_shader_foundry();
@@ -622,9 +655,11 @@ void GpuResourceManager::cleanup()
     }
     m_units.clear();
 
-    for (auto& [index, slot] : m_shared->slots)
-        free_slot(device, slot);
-    m_shared->slots.clear();
+    for (auto& [index, cell] : m_shared->cells) {
+        if (cell.use_count() == 1 && cell->allocation && cell->allocation.use_count() == 1)
+            free_slot(device, cell->allocation->slot);
+    }
+    m_shared->cells.clear();
 }
 
 //==============================================================================
@@ -682,12 +717,12 @@ void GpuResourceManager::bind_descriptors_batch(const std::string& key, const st
         if (!holds_binding(key, b.set, b.binding))
             continue;
 
-        const auto shared_it = m_shared->slots.find({ b.set, static_cast<size_t>(b.binding) });
+        const auto shared = shared_allocation(b.set, static_cast<size_t>(b.binding));
         vk::Buffer buffer;
         size_t allocated_bytes = 0;
-        if (shared_it != m_shared->slots.end()) {
-            buffer = shared_it->second.buffer;
-            allocated_bytes = shared_it->second.allocated_bytes;
+        if (shared) {
+            buffer = shared->slot.buffer;
+            allocated_bytes = shared->slot.allocated_bytes;
         } else {
             if (static_cast<size_t>(b.binding) >= impl.buffers.size()) {
                 continue;
@@ -759,45 +794,140 @@ void GpuResourceManager::ensure_shared_buffer(uint32_t set, size_t binding_index
             "GpuResourceManager: ensure_shared_buffer requires a sized element_type");
     }
 
-    auto& slot = m_shared->slots[{ set, binding_index }];
+    auto& entry = m_shared->cells[{ set, binding_index }];
+    if (!entry) {
+        entry = std::make_shared<SharedCell>();
+        entry->owner = m_owner;
+    }
+    auto& cell = *entry;
     const size_t required_bytes = element_count * width;
-    if (slot.allocated_bytes >= required_bytes)
+    const size_t held_bytes = cell.allocation ? cell.allocation->slot.allocated_bytes : 0;
+
+    if (cell.owner.lock() != m_owner) {
+        if (held_bytes < required_bytes) {
+            error<std::invalid_argument>(
+                Journal::Component::Yantra,
+                Journal::Context::BufferProcessing,
+                std::source_location::current(),
+                "GpuResourceManager: the shared buffer at ({}, {}) is imported and holds {} bytes, {} are required; only its owner can grow it",
+                set, binding_index, held_bytes, required_bytes);
+        }
+        return;
+    }
+
+    cell.element_type = element_type;
+    if (held_bytes >= required_bytes)
         return;
 
     auto& foundry = Portal::Graphics::get_shader_foundry();
     const bool gpu_resident = usage_hint == Portal::Graphics::BufferUsageHint::DEVICE
         || usage_hint == Portal::Graphics::BufferUsageHint::COMPUTE;
+    auto next = std::make_shared<SharedAllocation>();
+    next->recording = m_recording;
     allocate_slot(foundry.get_device(), foundry.get_physical_device(),
-        slot, required_bytes, m_recording.get(), Portal::Graphics::to_buffer_usage_flags(usage_hint), gpu_resident);
+        next->slot, required_bytes, m_recording.get(), Portal::Graphics::to_buffer_usage_flags(usage_hint), gpu_resident);
+    cell.allocation = std::move(next);
+    ++cell.generation;
+}
+
+std::shared_ptr<SharedAllocation> GpuResourceManager::shared_allocation(uint32_t set, size_t binding_index) const
+{
+    const auto it = m_shared->cells.find({ set, binding_index });
+    if (it == m_shared->cells.end())
+        return nullptr;
+    return it->second->allocation;
+}
+
+std::shared_ptr<SharedAllocation> GpuResourceManager::require_shared_allocation(uint32_t set, size_t binding_index) const
+{
+    auto allocation = shared_allocation(set, binding_index);
+    if (!allocation) {
+        error<std::out_of_range>(
+            Journal::Component::Yantra,
+            Journal::Context::BufferProcessing,
+            std::source_location::current(),
+            "GpuResourceManager: no shared buffer at ({}, {})", set, binding_index);
+    }
+    return allocation;
+}
+
+std::optional<SharedBufferInfo> GpuResourceManager::shared_buffer_info(uint32_t set, size_t binding_index) const
+{
+    const auto it = m_shared->cells.find({ set, binding_index });
+    if (it == m_shared->cells.end() || !it->second->allocation)
+        return std::nullopt;
+
+    const auto& cell = *it->second;
+    const size_t width = Portal::Graphics::element_type_bytes(cell.element_type);
+    const size_t bytes = cell.allocation->slot.allocated_bytes;
+    return SharedBufferInfo {
+        .element_type = cell.element_type,
+        .element_count = width > 0 ? bytes / width : 0,
+        .byte_size = bytes,
+        .generation = cell.generation,
+    };
+}
+
+void GpuResourceManager::import_shared(uint32_t set, size_t binding_index, const GpuResourceManager& source,
+    uint32_t source_set, size_t source_binding_index, GpuBufferBinding::ElementType element_type)
+{
+    const auto fail = [&](std::string_view reason) {
+        error<std::invalid_argument>(
+            Journal::Component::Yantra,
+            Journal::Context::BufferProcessing,
+            std::source_location::current(),
+            "GpuResourceManager: cannot import ({}, {}) as ({}, {}): {}",
+            source_set, source_binding_index, set, binding_index, reason);
+    };
+
+    const auto found = source.m_shared->cells.find({ source_set, source_binding_index });
+    if (found == source.m_shared->cells.end() || !found->second->allocation) {
+        fail("the source holds no shared buffer there");
+    }
+    if (!m_recording || m_recording != source.m_recording) {
+        fail("both managers must append to the same recording");
+    }
+
+    const auto& cell = found->second;
+    if (Portal::Graphics::element_type_bytes(element_type) != Portal::Graphics::element_type_bytes(cell->element_type)) {
+        fail("the element widths differ");
+    }
+
+    auto& entry = m_shared->cells[{ set, binding_index }];
+    if (entry && entry != cell) {
+        fail("the binding already holds a different buffer");
+    }
+    entry = cell;
 }
 
 Portal::Graphics::GpuBufferHandle GpuResourceManager::shared_buffer_handle(uint32_t set, size_t binding_index) const
 {
-    const auto it = m_shared->slots.find({ set, binding_index });
-    if (it == m_shared->slots.end())
+    const auto allocation = shared_allocation(set, binding_index);
+    if (!allocation)
         return {};
-    return { .buffer = it->second.buffer, .mapped_ptr = it->second.mapped_ptr, .size_bytes = it->second.allocated_bytes };
+    const auto& slot = allocation->slot;
+    return { .buffer = slot.buffer, .mapped_ptr = slot.mapped_ptr, .size_bytes = slot.allocated_bytes };
 }
 
 uint64_t GpuResourceManager::shared_buffer_address(uint32_t set, size_t binding_index) const
 {
-    const auto it = m_shared->slots.find({ set, binding_index });
-    return it == m_shared->slots.end() ? 0U : it->second.address;
+    const auto allocation = shared_allocation(set, binding_index);
+    return allocation ? allocation->slot.address : 0U;
 }
 
 void GpuResourceManager::download_shared(uint32_t set, size_t binding_index, void* dest, size_t byte_size)
 {
-    read_slot(m_recording.get(), m_shared->slots.at({ set, binding_index }), dest, byte_size);
+    read_slot(m_recording.get(), require_shared_allocation(set, binding_index)->slot, dest, byte_size);
 }
 
 void GpuResourceManager::upload_shared_raw(uint32_t set, size_t binding_index, const uint8_t* data, size_t byte_size)
 {
-    write_slot(m_recording.get(), m_shared->slots.at({ set, binding_index }), data, byte_size);
+    write_slot(m_recording.get(), require_shared_allocation(set, binding_index)->slot, data, byte_size);
 }
 
 void GpuResourceManager::fill_shared(uint32_t set, size_t binding_index, uint32_t value)
 {
-    fill_slot(m_recording.get(), m_shared->slots.at({ set, binding_index }), value);
+    fill_slot(m_recording.get(), require_shared_allocation(set, binding_index)->slot, value);
 }
 
 void GpuResourceManager::set_recording(std::shared_ptr<GpuDispatchRecorder> recording)
@@ -1033,7 +1163,8 @@ void GpuResourceManager::dispatch_batched_indirect(const std::string& key,
 
     auto& unit = unit_for(key);
 
-    auto& indirect_slot = m_shared->slots.at({ indirect_set, indirect_binding });
+    const auto indirect_allocation = require_shared_allocation(indirect_set, indirect_binding);
+    auto& indirect_slot = indirect_allocation->slot;
     const Portal::Graphics::IndirectDispatch indirect { .buffer = indirect_slot.buffer };
     const uint32_t init_cmd[3] = { groups[0], groups[1], groups[2] };
     write_slot(m_recording.get(), indirect_slot, init_cmd, sizeof(init_cmd));

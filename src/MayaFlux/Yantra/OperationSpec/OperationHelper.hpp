@@ -89,6 +89,16 @@ namespace detail {
     template <typename T>
     inline constexpr bool is_composite_operation_data_v = is_composite_operation_data<T>::value;
 
+    template <typename T>
+    struct is_structured_operation_data : std::bool_constant<CompositeData<T> || TensorContainerData<T>> { };
+
+    template <ComputeData T>
+    struct is_structured_operation_data<Datum<T>> : std::bool_constant<CompositeData<T> || TensorContainerData<T>> { };
+
+    /** @brief Composite or tensor data, which has no implicit numeric channel extraction. */
+    template <typename T>
+    inline constexpr bool is_structured_operation_data_v = is_structured_operation_data<T>::value;
+
 }
 
 /**
@@ -546,7 +556,7 @@ public:
      * @throws std::runtime_error if container required but not provided
      */
     template <OperationReadyData T>
-        requires(!detail::is_composite_operation_data_v<T>)
+        requires(!detail::is_structured_operation_data_v<T>)
     static std::tuple<NumericChannels, DataStructureInfo>
     extract_structured_double(T& compute_data)
     {
@@ -557,10 +567,11 @@ public:
             info.modality = compute_data.modality;
 
             if constexpr (RequiresContainer<std::decay_t<decltype(compute_data.data)>>) {
-                if (!compute_data.has_container()) {
+                const auto source = compute_data.get_container();
+                if (!source) {
                     error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::ContainerProcessing, std::source_location::current(), "Container is required for region-like data extraction but not provided");
                 }
-                NumericChannels double_data = extract_numeric_data(compute_data.data, compute_data.container.value());
+                NumericChannels double_data = extract_numeric_data(compute_data.data, source);
                 return std::make_tuple(std::move(double_data), info);
             } else if constexpr (requires { extract_numeric_data(compute_data.data, compute_data.needs_processig()); }) {
                 NumericChannels double_data = extract_numeric_data(compute_data.data, compute_data.needs_processig());
@@ -608,7 +619,7 @@ public:
      * @throws std::runtime_error if a container is required but absent.
      */
     template <OperationReadyData T>
-        requires(!detail::is_composite_operation_data_v<T>)
+        requires(!detail::is_structured_operation_data_v<T>)
     static std::tuple<std::vector<Kakshya::DataSpanVariant>, DataStructureInfo>
     extract_structured_native(T& compute_data)
     {
@@ -619,7 +630,8 @@ public:
             info.modality = compute_data.modality;
 
             if constexpr (RequiresContainer<std::decay_t<decltype(compute_data.data)>>) {
-                if (!compute_data.has_container()) {
+                const auto source = compute_data.get_container();
+                if (!source) {
                     error<std::runtime_error>(
                         Journal::Component::Yantra,
                         Journal::Context::ContainerProcessing,
@@ -629,11 +641,11 @@ public:
 
                 const auto region_variants = [&]() -> std::vector<Kakshya::DataVariant> {
                     if constexpr (std::is_same_v<std::decay_t<decltype(compute_data.data)>, Kakshya::Region>) {
-                        return compute_data.container.value()->get_region_data(compute_data.data);
+                        return source->get_region_data(compute_data.data);
                     } else if constexpr (std::is_same_v<std::decay_t<decltype(compute_data.data)>, Kakshya::RegionGroup>) {
-                        return compute_data.container.value()->get_region_group_data(compute_data.data);
+                        return source->get_region_group_data(compute_data.data);
                     } else {
-                        return compute_data.container.value()->get_segments_data(compute_data.data);
+                        return source->get_segments_data(compute_data.data);
                     }
                 }();
                 return { extract_native_data(region_variants), info };
@@ -660,7 +672,7 @@ public:
      * @return Reconstructed data of type T
      */
     template <ComputeData T>
-        requires(!is_IO<T>::value && !CompositeData<T>)
+        requires(!is_IO<T>::value && !CompositeData<T> && !TensorContainerData<T>)
     static T reconstruct_from_double(const std::vector<std::vector<double>>& double_data,
         const DataStructureInfo& structure_info)
     {
@@ -692,7 +704,7 @@ public:
      * @return Reconstructed data of type T
      */
     template <typename T>
-        requires(is_IO<T>::value && !detail::is_composite_operation_data_v<T>)
+        requires(is_IO<T>::value && !detail::is_structured_operation_data_v<T>)
     static T reconstruct_from_double(const std::vector<std::vector<double>>& double_data,
         const DataStructureInfo& structure_info)
     {
@@ -719,6 +731,69 @@ public:
     }
 
     /**
+     * @brief Build Composite records from double columns and the field layout in the structure info
+     * @tparam T Kakshya::CompositeArray
+     * @param double_data One column per numeric field, all of one length: the number of records
+     * @param structure_info Carries the layout of the records in composite_layout
+     * @return Records in which column i fills the i-th numeric field of the layout, cast to its declared
+     *         type. Text, binary and dynamic fields are left absent for the caller to fill, as are
+     *         numeric fields beyond the columns given.
+     * @throws std::runtime_error Without a layout, with columns of unequal length or more columns than numeric fields
+     * @throws std::invalid_argument When a value does not fit the integer field it is meant for
+     */
+    template <typename T>
+        requires CompositeArrayData<T>
+    static T reconstruct_from_double(const std::vector<std::vector<double>>& double_data,
+        const DataStructureInfo& structure_info)
+    {
+        if (!structure_info.composite_layout) {
+            error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::Runtime, std::source_location::current(),
+                "Composite records cannot be built from columns without a field layout");
+        }
+        Kakshya::CompositeArray records(*structure_info.composite_layout);
+
+        const size_t rows = double_data.empty() ? 0 : double_data.front().size();
+        for (const auto& column : double_data) {
+            if (column.size() != rows) {
+                error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::Runtime, std::source_location::current(),
+                    "Composite records need columns of one length, got {} and {}", rows, column.size());
+            }
+        }
+        for (size_t row = 0; row < rows; ++row) {
+            records.append();
+        }
+
+        size_t column = 0;
+        for (const auto& field : records.layout().fields()) {
+            if (column == double_data.size()) {
+                break;
+            }
+            if (fill_composite_numeric<int8_t, int16_t, int32_t, int64_t, uint8_t, uint16_t, uint32_t, uint64_t, float, double>(
+                    records, field, double_data[column])) {
+                ++column;
+            }
+        }
+        if (column != double_data.size()) {
+            error<std::runtime_error>(Journal::Component::Yantra, Journal::Context::Runtime, std::source_location::current(),
+                "{} columns were given for a layout with {} numeric fields", double_data.size(), column);
+        }
+        return records;
+    }
+
+    /**
+     * @brief Build a Datum of Composite records from double columns and the field layout in the structure info
+     * @tparam T Datum<Kakshya::CompositeArray>
+     * @return The records of the CompositeArray overload, with their own inferred structure
+     */
+    template <typename T>
+        requires(is_IO<T>::value && CompositeArrayData<std::decay_t<decltype(std::declval<T>().data)>>)
+    static T reconstruct_from_double(const std::vector<std::vector<double>>& double_data,
+        const DataStructureInfo& structure_info)
+    {
+        return T { reconstruct_from_double<Kakshya::CompositeArray>(double_data, structure_info) };
+    }
+
+    /**
      * @brief Setup operation buffer from Datum or ComputeData type
      * @tparam T Datum or ComputeData type
      * @param input Datum container or direct ComputeData
@@ -726,7 +801,7 @@ public:
      * @return Tuple of [working_spans, structure_info]
      */
     template <OperationReadyData T>
-        requires(!detail::is_composite_operation_data_v<T>)
+        requires(!detail::is_structured_operation_data_v<T>)
     static auto setup_operation_buffer(T& input, std::vector<std::vector<double>>& working_buffer)
     {
         auto [data_spans, structure_info] = extract_structured_double(input);
@@ -763,6 +838,35 @@ public:
     static std::vector<double> decode_word_pairs(std::span<const uint8_t> bytes);
 
 private:
+    template <typename ValueT>
+    static bool fill_composite_field(Kakshya::CompositeArray& records, const Kakshya::CompositeField& field,
+        const std::vector<double>& column)
+    {
+        if (field.type != std::type_index(typeid(ValueT))) {
+            return false;
+        }
+        for (size_t row = 0; row < column.size(); ++row) {
+            const double value = column[row];
+            if constexpr (std::integral<ValueT>) {
+                if (!std::isfinite(value) || std::trunc(value) != value
+                    || value < static_cast<double>(std::numeric_limits<ValueT>::lowest())
+                    || value > static_cast<double>(std::numeric_limits<ValueT>::max())) {
+                    error<std::invalid_argument>(Journal::Component::Yantra, Journal::Context::Runtime, std::source_location::current(),
+                        "Value {} of record {} does not fit the integer field '{}'", value, row, field.name);
+                }
+            }
+            records.set(row, field.name, static_cast<ValueT>(value));
+        }
+        return true;
+    }
+
+    template <typename... ValueT>
+    static bool fill_composite_numeric(Kakshya::CompositeArray& records, const Kakshya::CompositeField& field,
+        const std::vector<double>& column)
+    {
+        return (fill_composite_field<ValueT>(records, field, column) || ...);
+    }
+
     static DataStructureInfo reconcile_structure(
         const std::vector<std::vector<double>>& channels, const DataStructureInfo& source);
 

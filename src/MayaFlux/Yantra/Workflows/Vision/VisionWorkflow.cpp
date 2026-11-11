@@ -66,7 +66,7 @@ namespace {
         const std::shared_ptr<Core::VKImage>& image)
     {
         VisionIO frame { source };
-        frame.container = source;
+        frame.set_container(source);
         frame.facets.set(analysis);
         frame.facets.set(Kinesis::Vision::vision_frame(), image);
         return frame;

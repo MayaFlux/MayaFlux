@@ -4,6 +4,7 @@
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Kakshya/DataProcessingChain.hpp"
 #include "MayaFlux/Kakshya/NDData/DataAccess.hpp"
+#include "MayaFlux/Kakshya/NDData/SmallFloat.hpp"
 #include "MayaFlux/Kakshya/Processors/WindowAccessProcessor.hpp"
 #include "MayaFlux/Kakshya/Utils/CoordUtils.hpp"
 #include "MayaFlux/Kakshya/Utils/DataUtils.hpp"
@@ -87,34 +88,6 @@ namespace {
         }
     }
 
-    uint16_t float_to_half_bits(float value)
-    {
-        uint32_t x = 0;
-        std::memcpy(&x, &value, sizeof(x));
-
-        const uint32_t sign = (x >> 16U) & 0x8000U;
-        const int32_t exponent = static_cast<int32_t>((x >> 23U) & 0xFFU) - 127 + 15;
-        uint32_t mantissa = x & 0x7FFFFFU;
-
-        if (exponent <= 0) {
-            if (exponent < -10)
-                return static_cast<uint16_t>(sign);
-            mantissa |= 0x800000U;
-            const auto shift = static_cast<uint32_t>(14 - exponent);
-            uint32_t half = mantissa >> shift;
-            if ((mantissa >> (shift - 1U)) & 1U)
-                ++half;
-            return static_cast<uint16_t>(sign | half);
-        }
-        if (exponent >= 31)
-            return static_cast<uint16_t>(sign | 0x7C00U);
-
-        auto half = static_cast<uint32_t>(sign | (static_cast<uint32_t>(exponent) << 10U) | (mantissa >> 13U));
-        if (mantissa & 0x1000U)
-            ++half;
-        return static_cast<uint16_t>(half);
-    }
-
     /**
      * @brief Bytes to upload for an image: the capture as it is, or packed
      *        10-bit words unpacked to RGBA16F.
@@ -127,7 +100,7 @@ namespace {
                 unpack_a2b10g10r10(*words, rgba);
 
                 std::vector<uint16_t> halves(rgba.size());
-                std::ranges::transform(rgba, halves.begin(), float_to_half_bits);
+                std::ranges::transform(rgba, halves.begin(), float_to_half);
 
                 std::vector<uint8_t> bytes(halves.size() * sizeof(uint16_t));
                 std::memcpy(bytes.data(), halves.data(), bytes.size());

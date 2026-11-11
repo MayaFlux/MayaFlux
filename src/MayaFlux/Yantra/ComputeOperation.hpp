@@ -213,16 +213,6 @@ public:
 
     const auto& get_dependencies() const { return m_dependencies; }
 
-    virtual void set_container_for_regions(const std::shared_ptr<Kakshya::SignalSourceContainer>& container)
-    {
-        m_container = container;
-    }
-
-    [[nodiscard]] virtual const std::shared_ptr<Kakshya::SignalSourceContainer>& get_container_for_regions() const
-    {
-        return m_container;
-    }
-
     void set_last_execution_context(const ExecutionContext& ctx)
     {
         m_last_execution_context = ctx;
@@ -384,24 +374,39 @@ protected:
      */
     output_type convert_result(std::vector<std::vector<double>>& result_data, DataStructureInfo& metadata)
     {
-        std::any any_data = metadata;
+        constexpr bool can_reconstruct_from_double =
+            (ComputeData<output_type> && !is_IO<output_type>::value && !CompositeData<output_type> && !TensorContainerData<output_type>)
+            || (is_IO<output_type>::value && !detail::is_structured_operation_data_v<output_type>)
+            || CompositeArrayData<output_type>
+            || (is_IO<output_type>::value && CompositeArrayData<std::decay_t<decltype(std::declval<output_type>().data)>>);
 
-        if (m_last_execution_context.reconstruction_callback) {
-            auto reconstructed = m_last_execution_context.reconstruction_callback(result_data, any_data);
-            auto result = safe_any_cast<output_type>(reconstructed);
-            if (result) {
-                return *result.value;
-            }
-
-            MF_WARN(
+        if constexpr (!can_reconstruct_from_double) {
+            error<std::runtime_error>(
                 Journal::Component::Yantra,
                 Journal::Context::Runtime,
-                "Reconstruction callback type mismatch: {}",
-                result.error);
+                std::source_location::current(),
+                "Reconstruction from double is not available for this output type");
+            return output_type {};
+        } else {
+            std::any any_data = metadata;
+
+            if (m_last_execution_context.reconstruction_callback) {
+                auto reconstructed = m_last_execution_context.reconstruction_callback(result_data, any_data);
+                auto result = safe_any_cast<output_type>(reconstructed);
+                if (result) {
+                    return *result.value;
+                }
+
+                MF_WARN(
+                    Journal::Component::Yantra,
+                    Journal::Context::Runtime,
+                    "Reconstruction callback type mismatch: {}",
+                    result.error);
+                return OperationHelper::reconstruct_from_double<output_type>(result_data, metadata);
+            }
+
             return OperationHelper::reconstruct_from_double<output_type>(result_data, metadata);
         }
-
-        return OperationHelper::reconstruct_from_double<output_type>(result_data, metadata);
     }
 
     output_type apply_hooks(const input_type& input, const ExecutionContext& context)
@@ -420,7 +425,6 @@ protected:
         return result;
     }
 
-    std::shared_ptr<Kakshya::SignalSourceContainer> m_container;
     ExecutionContext m_last_execution_context;
 
 private:

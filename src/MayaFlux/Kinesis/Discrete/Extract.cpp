@@ -36,6 +36,30 @@ std::vector<std::pair<size_t, size_t>> merge_intervals(
     return merged;
 }
 
+std::vector<std::pair<size_t, size_t>> intersect_intervals(
+    const std::vector<std::pair<size_t, size_t>>& first,
+    const std::vector<std::pair<size_t, size_t>>& second)
+{
+    const auto a = merge_intervals(first);
+    const auto b = merge_intervals(second);
+    std::vector<std::pair<size_t, size_t>> out;
+    size_t i = 0;
+    size_t j = 0;
+    while (i < a.size() && j < b.size()) {
+        const size_t lo = std::max(a[i].first, b[j].first);
+        const size_t hi = std::min(a[i].second, b[j].second);
+        if (lo < hi) {
+            out.emplace_back(lo, hi);
+        }
+        if (a[i].second < b[j].second) {
+            ++i;
+        } else {
+            ++j;
+        }
+    }
+    return out;
+}
+
 std::vector<double> slice_intervals(
     std::span<const double> data,
     const std::vector<std::pair<size_t, size_t>>& intervals)
@@ -45,6 +69,61 @@ std::vector<double> slice_intervals(
         if (s < data.size() && e <= data.size() && s < e) {
             out.insert(out.end(), data.begin() + s, data.begin() + e);
         }
+    }
+    return out;
+}
+
+namespace {
+
+    std::span<const double> values_inside(
+        std::span<const double> values,
+        std::span<const size_t> positions,
+        const std::pair<size_t, size_t>& interval)
+    {
+        const size_t count = std::min(values.size(), positions.size());
+        const auto first = std::ranges::lower_bound(positions.first(count), interval.first);
+        const auto last = std::ranges::lower_bound(positions.first(count), interval.second);
+        if (first >= last) {
+            return {};
+        }
+        return values.subspan(static_cast<size_t>(first - positions.begin()), static_cast<size_t>(last - first));
+    }
+
+}
+
+std::vector<double> interval_share_above(
+    std::span<const double> values,
+    std::span<const size_t> positions,
+    const std::vector<std::pair<size_t, size_t>>& intervals,
+    double threshold)
+{
+    std::vector<double> out;
+    out.reserve(intervals.size());
+    for (const auto& interval : intervals) {
+        const auto inside = values_inside(values, positions, interval);
+        const auto above = std::ranges::count_if(inside, [threshold](double v) { return v >= threshold; });
+        out.push_back(inside.empty() ? 0.0 : static_cast<double>(above) / static_cast<double>(inside.size()));
+    }
+    return out;
+}
+
+std::vector<double> interval_median(
+    std::span<const double> values,
+    std::span<const size_t> positions,
+    const std::vector<std::pair<size_t, size_t>>& intervals)
+{
+    std::vector<double> out;
+    out.reserve(intervals.size());
+    for (const auto& interval : intervals) {
+        const auto inside = values_inside(values, positions, interval);
+        if (inside.empty()) {
+            out.push_back(0.0);
+            continue;
+        }
+        std::vector<double> sorted(inside.begin(), inside.end());
+        std::ranges::sort(sorted);
+        const size_t mid = sorted.size() / 2;
+        out.push_back(sorted.size() % 2 == 1 ? sorted[mid] : 0.5 * (sorted[mid - 1] + sorted[mid]));
     }
     return out;
 }

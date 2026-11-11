@@ -40,6 +40,53 @@ enum class KernelTemplate : uint8_t {
          ///< and weights for a projection.
          ///< Five UINT32 push constants: length, stride, offset in complex elements,
          ///< then the low and high word of a double scale applied to the output.
+    LaggedPair, ///< Sums a pairwise map of x[i] and x[i + lag] over a window, for every lag in
+                ///< a range, as word-pair doubles. One workgroup per (lag, window): group x
+                ///< is the lag index, group y the window. Bindings: values, result (VEC2_U32).
+                ///< Seven UINT32 push constants: length, stride, offset (window w starts at
+                ///< offset + w * stride and holds length elements), first_lag, lag_count,
+                ///< then the low and high word of the double length, which a centred kernel
+                ///< divides the window sum by. Result element
+                ///< w * lag_count + l holds the sum for lag first_lag + l. A lag of length
+                ///< or more sums nothing. Needs PairMap and optionally centring.
+    WordPairMap, ///< Applies one IEEE double operation to word-pair doubles, one thread per
+                 ///< element. Bindings: a, b, result (VEC2_U32); a unary operation has only
+                 ///< a and result. One UINT32 push constant: count. Result i holds
+                 ///< op(a[i], b[i]) rounded to nearest even. Needs WordPairOp.
+    SegmentedArgMax, ///< The first maximum of each segment of word-pair doubles, one workgroup per
+                     ///< segment. Bindings: values, result (VEC2_U32). Three UINT32 push
+                     ///< constants: length, stride, offset (segment s covers length elements
+                     ///< from offset + s * stride). Result words 2s and 2s + 1 hold the maximum
+                     ///< and its index, in the low word of a word pair with a zero high word.
+                     ///< Values compare by the library order key with every NaN smallest, so a
+                     ///< NaN never wins. A segment with no non-NaN value yields a NaN and the
+                     ///< index 0xFFFFFFFF.
+};
+
+/**
+ * @enum WordPairOp
+ * @brief Operation applied by a WordPairMap kernel.
+ *
+ * Results are the IEEE 754 binary64 results rounded to nearest even, including
+ * signed zeros, infinities, NaN and subnormals.
+ */
+enum class WordPairOp : uint8_t {
+    Add, ///< a + b
+    Mul, ///< a * b
+    Div, ///< a / b
+    Sqrt, ///< sqrt(a). Unary: no b binding.
+    ToFloat32, ///< float32(a) rounded to nearest even, with IEEE results for zeros, infinities, NaN, overflow and
+               ///< float subnormals. Unary: no b binding, and the result binding is FLOAT32.
+};
+
+/**
+ * @enum PairMap
+ * @brief Map of two elements, x[i] and x[i + lag], summed by a LaggedPair kernel.
+ */
+enum class PairMap : uint8_t {
+    Product, ///< a * b
+    SignChange, ///< 1 when exactly one of a, b is non-negative, else 0; NaN counts as negative
+    AbsDifference, ///< |a - b|
 };
 
 /**
@@ -410,11 +457,15 @@ struct ShaderSpec {
     uint32_t points { 0 }; ///< FFT only. Points per window.
     SpectrumOutput spectrum { SpectrumOutput::Complex }; ///< FFT only.
     uint32_t descriptors { 0 }; ///< FFT with SpectrumOutput::Projection only. Rows of weights.
+    PairMap pair_map { PairMap::Product }; ///< LaggedPair only.
+    bool centred { false }; ///< LaggedPair only. Subtract each window's mean from both operands first.
+    WordPairOp word_op { WordPairOp::Add }; ///< WordPairMap only.
     std::vector<BindingSlot> bindings;
     std::vector<PushConstantField> pc_fields;
     std::array<uint32_t, 3> workgroup_size { 256, 1, 1 };
     uint32_t push_constant_bytes { 0 };
     std::vector<FunctionDef> functions; ///< Emitted before main(). GLSL path only.
+    std::string glsl_preamble; ///< Global declarations emitted before the functions, such as shared arrays. GLSL path only.
     std::optional<KernelSource> kernel; ///< When set, KernelOp is ignored.
 
     /**
@@ -469,6 +520,27 @@ struct ShaderSpec {
         Assemble& descriptors(uint32_t n)
         {
             m_descriptors = n;
+            return *this;
+        }
+
+        /** @brief Set the pairwise map of a LaggedPair. */
+        Assemble& pair_map(PairMap m)
+        {
+            m_pair_map = m;
+            return *this;
+        }
+
+        /** @brief Subtract each window's mean from both operands of a LaggedPair before the map. */
+        Assemble& centred(bool c = true)
+        {
+            m_centred = c;
+            return *this;
+        }
+
+        /** @brief Set the operation of a WordPairMap. */
+        Assemble& word_op(WordPairOp o)
+        {
+            m_word_op = o;
             return *this;
         }
 
@@ -580,6 +652,18 @@ struct ShaderSpec {
         }
 
         /**
+         * @brief Declare global GLSL text emitted after the push constants and before the functions.
+         *
+         * For declarations a function cannot hold, such as shared memory arrays.
+         * Requires a kernel supplied via MF_KERNEL.
+         */
+        Assemble& preamble(std::string text)
+        {
+            m_preamble = std::move(text);
+            return *this;
+        }
+
+        /**
          * @brief Supply a user kernel via MF_KERNEL. When set, KernelOp is ignored.
          * @param ks KernelSource produced by MF_KERNEL. If its param_names is
          *        empty, build() fills it from the declared bindings, then the
@@ -613,11 +697,15 @@ struct ShaderSpec {
                 .points = m_points,
                 .spectrum = m_spectrum,
                 .descriptors = m_descriptors,
+                .pair_map = m_pair_map,
+                .centred = m_centred,
+                .word_op = m_word_op,
                 .bindings = std::move(m_bindings),
                 .pc_fields = std::move(m_pc_fields),
                 .workgroup_size = m_workgroup,
                 .push_constant_bytes = pc_bytes,
                 .functions = std::move(m_functions),
+                .glsl_preamble = std::move(m_preamble),
                 .kernel = std::move(m_kernel),
             };
         }
@@ -629,12 +717,16 @@ struct ShaderSpec {
         uint32_t m_points { 0 };
         SpectrumOutput m_spectrum { SpectrumOutput::Complex };
         uint32_t m_descriptors { 0 };
+        PairMap m_pair_map { PairMap::Product };
+        bool m_centred { false };
+        WordPairOp m_word_op { WordPairOp::Add };
         std::vector<BindingSlot> m_bindings;
         std::vector<PushConstantField> m_pc_fields;
         std::array<uint32_t, 3> m_workgroup { 256, 1, 1 };
         uint32_t m_set { 0 };
         uint32_t m_next_binding { 0 };
         std::vector<FunctionDef> m_functions;
+        std::string m_preamble;
         std::optional<KernelSource> m_kernel;
     };
 };
@@ -669,6 +761,9 @@ namespace detail {
         bool add { false };
         bool mul { false };
         bool less { false };
+        bool div { false };
+        bool sqrt { false };
+        bool to_float32 { false };
     };
 
     /**
@@ -691,6 +786,29 @@ namespace detail {
     inline constexpr std::string_view soft_double_mul = "%sd_f64_mul";
 
     /**
+     * @brief Function dividing the first double by the second, held as uvec2.
+     *
+     * Exactly rounded to nearest even, with IEEE results for zeros, infinities,
+     * NaN and subnormals.
+     */
+    inline constexpr std::string_view soft_double_div = "%sd_f64_div";
+
+    /**
+     * @brief Function taking the square root of the first double, held as uvec2.
+     *
+     * Exactly rounded to nearest even. The second parameter is unused. The root of
+     * a negative non-zero value is NaN and the root of -0.0 is -0.0.
+     */
+    inline constexpr std::string_view soft_double_sqrt = "%sd_f64_sqrt";
+
+    /**
+     * @brief Function converting a double held as uvec2 to the bits of a float32, as a u32.
+     *
+     * Rounded to nearest even. The second parameter is unused. Bitcast the result to store a float.
+     */
+    inline constexpr std::string_view soft_double_to_float32 = "%sd_f64_to_f32";
+
+    /**
      * @brief Function returning bool, true when the first double orders before the second.
      *
      * The order is the library order key: -0.0 equals +0.0 and every NaN is the largest.
@@ -711,6 +829,34 @@ namespace detail {
      * power of two workgroup size of at most points / 2.
      */
     [[nodiscard]] std::string emit_fft(const ShaderSpec& spec);
+
+    /**
+     * @brief Emit the globals, soft-double functions and entry point of the LaggedPair template.
+     *
+     * Returns an empty string when the spec does not have the template's shape:
+     * two VEC2_U32 bindings, seven UINT32 push constants and a power of two
+     * workgroup size from 2 to 1024.
+     */
+    [[nodiscard]] std::string emit_lagged_pair(const ShaderSpec& spec);
+
+    /**
+     * @brief Emit the globals, soft-double function and entry point of the WordPairMap template.
+     *
+     * Returns an empty string when the spec does not have the template's shape:
+     * VEC2_U32 bindings (a, b and result, or a and result for Sqrt and ToFloat32),
+     * a FLOAT32 result for ToFloat32, one UINT32 push constant and a workgroup
+     * size from 1 to 1024.
+     */
+    [[nodiscard]] std::string emit_word_pair_map(const ShaderSpec& spec);
+
+    /**
+     * @brief Emit the globals and entry point of the SegmentedArgMax template.
+     *
+     * Returns an empty string when the spec does not have the template's shape:
+     * two VEC2_U32 bindings, three UINT32 push constants and a power of two
+     * workgroup size from 2 to 1024.
+     */
+    [[nodiscard]] std::string emit_segmented_argmax(const ShaderSpec& spec);
 
 } // namespace detail
 

@@ -79,6 +79,12 @@ install(FILES
     DESTINATION share/MayaFlux/report
 )
 
+install(FILES
+    ${CMAKE_SOURCE_DIR}/data/assets.json
+    ${CMAKE_SOURCE_DIR}/data/assets.schema.json
+    DESTINATION share/MayaFlux/assets
+)
+
 install(TARGETS Lila
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -125,6 +131,11 @@ install(DIRECTORY ${CMAKE_SOURCE_DIR}/third_party/magic_enum/
     FILES_MATCHING PATTERN "*.hpp"
 )
 
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/third_party/dlpack/
+    DESTINATION include/MayaFlux/thirdparty/dlpack
+    FILES_MATCHING PATTERN "*.h"
+)
+
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/third_party/tinyvdb/
     DESTINATION include/MayaFlux/thirdparty/tinyvdb
     FILES_MATCHING PATTERN "*.h"
@@ -155,6 +166,14 @@ install(FILES ${CMAKE_SOURCE_DIR}/third_party/tinyexr/LICENSE
 
 install(FILES ${CMAKE_SOURCE_DIR}/third_party/magic_enum/LICENSE
     DESTINATION share/MayaFlux/licenses/magic_enum)
+
+install(FILES ${CMAKE_SOURCE_DIR}/third_party/dlpack/LICENSE
+    DESTINATION share/MayaFlux/licenses/dlpack)
+
+if(EXISTS ${CMAKE_SOURCE_DIR}/third_party/dlpack/NOTICE)
+    install(FILES ${CMAKE_SOURCE_DIR}/third_party/dlpack/NOTICE
+        DESTINATION share/MayaFlux/licenses/dlpack)
+endif()
 
 # ============================================================================
 # CMake Config Files

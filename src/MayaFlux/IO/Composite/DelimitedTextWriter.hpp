@@ -13,7 +13,9 @@ namespace MayaFlux::IO {
  * The output delimiter defaults to the file extension. A header is
  * written by default, and every record ends with LF. Missing fields
  * become unquoted empty cells; present empty text becomes a quoted empty
- * cell so DelimitedTextReader can restore its presence bit. Numbers use
+ * cell so DelimitedTextReader can restore its presence bit. A single-column
+ * row without a value is refused, since it would read back as a blank line.
+ * Numbers use
  * the shortest decimal form that parses back to the same value, and text
  * is quoted when CSV/TSV syntax requires it. A non-finite floating-point
  * value has no CSV form and fails the write.

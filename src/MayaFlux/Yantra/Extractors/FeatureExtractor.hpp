@@ -197,7 +197,7 @@ public:
     {
         try {
             if constexpr (RequiresContainer<input_type>) {
-                if (!input.has_container())
+                if (!input.get_container())
                     return false;
             }
             auto numeric_data = OperationHelper::extract_numeric_data(input.data);

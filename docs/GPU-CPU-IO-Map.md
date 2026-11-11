@@ -1,6 +1,6 @@
 # CPU-GPU IO in MayaFlux
 
-A map of every way data crosses the CPU-GPU boundary in MayaFlux, current as of 0.5. It describes what exists today, not a target design. Each section names the exact call, what it requires, and what it does not do. Gaps are named as gaps.
+A map of every way data crosses the CPU-GPU boundary in MayaFlux, current as of the 1.0 development line. It describes what exists today, not a target design. Each section names the exact call, what it requires, and what it does not do. Gaps are named as gaps.
 
 ## Pick a layer
 
@@ -91,6 +91,8 @@ This is the layer node authors touch. `Datum<T>` goes in, `Datum<T>` comes out, 
 
 Shared slots let several pipeline units use the same GPU state with no CPU round trip. Downloads are a direct memcpy from `mapped_ptr`, so they assume host-visible memory (tier 1). There is no staging path at this layer.
 
+A context can also read a buffer that another context owns, with `import_shared(set, binding, source, source_set, source_binding, element_type)`. The binding then resolves to the owner's buffer, and follows it if the owner reallocates, so the data never leaves the GPU. Both contexts must share one `GpuDispatchRecorder`, described below. `shared_buffer_info` gives the element type, size and a generation that increases on each reallocation, for a consumer that holds a device address. Upload to a shared binding with `upload_shared_raw`: `upload` writes the context's own buffer, which the shader does not read.
+
 ### GpuExecutionContext
 
 On every synchronous path (`dispatch_core` and the chained variants), `execute` runs `readback_primary` and `readback_aux` before it returns. You get your data without asking.
@@ -98,6 +100,10 @@ On every synchronous path (`dispatch_core` and the chained variants), `execute` 
 - **Opt out per auxiliary output** with `ShaderExecutionContext::set_skip_readback(binding, true)`. Use it for results another GPU stage consumes. The primary result is always read back on this path.
 
 - **`record_stages`** runs its stages with no readback. Read the buffers you need afterwards through the paths in section 3.
+
+- **A shared recording.** Contexts that share a `GpuDispatchRecorder` append to one command buffer, with a barrier after each dispatch. Nothing is submitted until a readback or an explicit `submit()`, so a chain of stages costs one submission. This is how an analyzer's result reaches the next operation without returning to the host, which makes it tier 0 inside Yantra: `VadAnalyzer::record` leaves speech probabilities in a device buffer that an `IntervalExtractor` reads with `bind_scores` and `submit_resident`, and `SpectralAnalyzer::record` leaves descriptors that a `WordPairOp::ToFloat32` stage converts for a float32 consumer.
+
+- **Non-blocking results.** `IntervalExtractor::submit` starts a scan and returns, `ready()` reports completion and `collect()` takes the result.
 
 - **Asynchronous use:** `ShaderExecutionContext::dispatch_async(input)` returns a `FenceID`. Poll it with `ShaderFoundry::is_fence_signaled`, then call `collect_result()` to read back, which returns a `GpuChannelResult` (`primary` floats, `aux` bytes keyed by binding). Release the fence afterward with `ShaderFoundry::release_fence`, or it leaks a `VkFence` and a command buffer slot per dispatch.
 
@@ -381,7 +387,7 @@ Both directions use `slot.mapped_ptr` directly when the slot is host-visible, wh
 
 ### Several back_buffers slots, every cycle
 
-There is no processor that moves a whole `back_buffers` vector every cycle. The per-cycle copy processors were removed, since nothing in the library used them. Address the slots one at a time with the request processors, from the cycle that needs them:
+There is no processor that moves a whole `back_buffers` vector every cycle. Address the slots one at a time with the request processors, from the cycle that needs them:
 
 ```cpp
 read_processor->read_back_buffer(0, byte_count);   // DataReadProcessor, one request per slot
@@ -536,6 +542,7 @@ flowchart TD
 | Move a node graph value to the GPU and back | Yantra `ensure_buffer` / `upload` / `download` |
 | Share GPU state across pipeline units without a CPU hop | Yantra `ensure_shared_buffer` / `upload_shared_raw` / `download_shared` |
 | Dispatch a Yantra shader without blocking, then collect | `ShaderExecutionContext::dispatch_async`, poll `is_fence_signaled`, `collect_result`, then `release_fence` |
+| Feed one Yantra operation's result to the next without a host copy | A shared `GpuDispatchRecorder`, then `import_shared`, or `record` on the analyzer and `bind_scores` or `submit_resident` on the consumer |
 | Keep a Yantra auxiliary output on the GPU | `ShaderExecutionContext::set_skip_readback(binding, true)` |
 | Keep a texture result GPU-resident for the next shader | `TextureExecutionContext::OutputMode::IMAGE` |
 | Auto-download a texture result | `TextureExecutionContext::OutputMode::CONTAINER` |
@@ -580,7 +587,7 @@ A boundary is a place two concerns were deliberately kept apart, so asking why t
 
 ### Genuine gaps
 
-- **Audio to and from a `VKBuffer` has no general transfer processor.** `TransferProcessor` was removed. The audio GPU path is the two processors in section 3, `AudioComputeProcessor` and `AudioContextProcessor`, each of which owns its own block buffers. A reusable audio-to-`VKBuffer` copy would be new work.
+- **Audio to and from a `VKBuffer` has no general transfer processor.** The audio GPU path is the two processors in section 3, `AudioComputeProcessor` and `AudioContextProcessor`, each of which owns its own block buffers. A reusable audio-to-`VKBuffer` copy would be new work.
 
 - **`back_buffers` transfers cannot validate size.** `GenerationSlot` has no size field, so `upload_back_buffer`, `read_back_buffer` and the per-cycle upload trust the byte count they are given, and a misconfigured source silently short-writes instead of erroring. Callers get the right size out of band (`RelaxationGridBuffer::get_state_bytes()`). Fixing it properly means adding a size to `GenerationSlot`, a struct change, to be weighed against how many call sites assume its current shape.
 

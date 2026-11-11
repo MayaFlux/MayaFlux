@@ -1,0 +1,44 @@
+#version 460
+#extension GL_EXT_buffer_reference : require
+
+layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
+
+layout(buffer_reference, std430) readonly buffer SourceRef {
+    float v[];
+};
+
+layout(buffer_reference, std430) buffer ResultRef {
+    float v[];
+};
+
+layout(push_constant) uniform PC {
+    SourceRef src;
+    ResultRef dst;
+    uint batch;
+    uint channels;
+    uint time;
+    uint reserved;
+} pc;
+
+/**
+ * @brief Magnitude of a complex signal stored as two channel halves.
+ *
+ * src is [batch, 2 * channels, time] with the real parts in the first half of
+ * the channels and the imaginary parts in the second. dst is
+ * [batch, channels, time].
+ */
+void main()
+{
+    const uint idx = gl_GlobalInvocationID.x;
+    if (idx >= pc.batch * pc.channels * pc.time)
+        return;
+
+    const uint t = idx % pc.time;
+    const uint c = (idx / pc.time) % pc.channels;
+    const uint n = idx / (pc.time * pc.channels);
+
+    const uint base = n * 2u * pc.channels * pc.time;
+    const float re = pc.src.v[base + c * pc.time + t];
+    const float im = pc.src.v[base + (pc.channels + c) * pc.time + t];
+    pc.dst.v[idx] = sqrt(re * re + im * im);
+}

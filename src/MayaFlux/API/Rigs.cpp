@@ -259,6 +259,33 @@ std::vector<std::shared_ptr<Kriya::BufferPipeline>> record_into(
     return pipelines;
 }
 
+std::pair<std::shared_ptr<Kriya::BufferPipeline>, std::shared_ptr<Buffers::AudioBuffer>> record(
+    const std::shared_ptr<Kakshya::DynamicSoundStream>& stream,
+    uint32_t input_channel, double seconds, std::optional<uint32_t> monitor, uint32_t channel)
+{
+    if (!(seconds > 0.0)) {
+        return { nullptr, nullptr };
+    }
+
+    const double blocks = seconds * Config::get_sample_rate() / Config::get_buffer_size();
+    return Kriya::record(get_scheduler(), get_buffer_manager(), stream, input_channel,
+        std::max<uint64_t>(1, static_cast<uint64_t>(std::ceil(blocks))), monitor, channel);
+}
+
+std::shared_ptr<Kriya::BufferPipeline> record_into(
+    const std::shared_ptr<Kakshya::DynamicSoundStream>& stream,
+    const std::shared_ptr<Buffers::AudioBuffer>& listener,
+    uint32_t input_channel, double seconds, std::optional<uint32_t> monitor, uint32_t channel)
+{
+    if (!(seconds > 0.0)) {
+        return nullptr;
+    }
+
+    const double blocks = seconds * Config::get_sample_rate() / Config::get_buffer_size();
+    return Kriya::record_into(get_scheduler(), get_buffer_manager(), stream, listener, input_channel,
+        std::max<uint64_t>(1, static_cast<uint64_t>(std::ceil(blocks))), monitor, channel);
+}
+
 std::shared_ptr<Yantra::Vision::VisionWorkflow> create_vision_workflow()
 {
     return std::make_shared<Yantra::Vision::VisionWorkflow>(

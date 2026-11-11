@@ -38,6 +38,15 @@ namespace {
             if (use.mul) {
                 emit_mul();
             }
+            if (use.div) {
+                emit_div();
+            }
+            if (use.sqrt) {
+                emit_sqrt();
+            }
+            if (use.to_float32) {
+                emit_to_float32();
+            }
             if (use.less) {
                 emit_less();
             }
@@ -273,6 +282,390 @@ namespace {
             return declarations() + globals + m_text;
         }
 
+        [[nodiscard]] std::string lagged_pair(const ShaderSpec& spec)
+        {
+            const uint32_t local = spec.workgroup_size[0];
+            const bool centred = spec.centred;
+            const PairMap map = spec.pair_map;
+            const std::string& values = spec.bindings[0].name;
+            const std::string& result = spec.bindings[1].name;
+
+            k(local);
+            emit_add();
+            if (map == PairMap::Product) {
+                emit_mul();
+            }
+            if (centred) {
+                emit_div();
+            }
+
+            const auto load_global = [this](const std::string& binding, const Id& index) {
+                const Id pointer = ins("%pelem_" + binding, "OpAccessChain", { "%buf_" + binding, "%c0u", index });
+                return ins("%v2u32", "OpLoad", { pointer });
+            };
+            const auto store_global = [this](const std::string& binding, const Id& index, const Id& value) {
+                const Id pointer = ins("%pelem_" + binding, "OpAccessChain", { "%buf_" + binding, "%c0u", index });
+                m_text += "OpStore " + pointer + " " + value + "\n";
+            };
+            const auto load_shared = [this](const Id& index) {
+                const Id pointer = ins("%lp_p_sh", "OpAccessChain", { "%lp_shared", index });
+                return ins("%v2u32", "OpLoad", { pointer });
+            };
+            const auto store_shared = [this](const Id& index, const Id& value) {
+                const Id pointer = ins("%lp_p_sh", "OpAccessChain", { "%lp_shared", index });
+                m_text += "OpStore " + pointer + " " + value + "\n";
+            };
+            const auto mulf = [this](const Id& a, const Id& b) {
+                return ins("%v2u32", "OpFunctionCall", { soft_double_mul, a, b });
+            };
+            const auto addf = [this](const Id& a, const Id& b) {
+                return ins("%v2u32", "OpFunctionCall", { soft_double_add, a, b });
+            };
+            const auto divf = [this](const Id& a, const Id& b) {
+                return ins("%v2u32", "OpFunctionCall", { soft_double_div, a, b });
+            };
+            const auto negf = [this](const Id& a) {
+                const Word64 w = unpack(a);
+                return pair(w.lo, bxor(w.hi, k(2147483648)));
+            };
+            const auto barrier = [this] {
+                m_text += "OpControlBarrier " + k(2) + " " + k(2) + " " + k(264) + "\n";
+            };
+            const auto push_constant = [this](uint32_t member) {
+                const Id pointer = ins("%ppc_u32", "OpAccessChain", { "%pc", k(member) });
+                return ins("%u32", "OpLoad", { pointer });
+            };
+            const auto non_negative = [this](const Id& value) {
+                const Word64 w = unpack(value);
+                const Id all_ones = eq(band(shr(w.hi, k(20)), k(2047)), k(2047));
+                const Id nan = land(all_ones, ne(bor(band(w.hi, k(1048575)), w.lo), k(0)));
+                const Id sign_clear = eq(band(w.hi, k(2147483648)), k(0));
+                const Id zero_value = eq(bor(shl(w.hi, k(1)), w.lo), k(0));
+                return lor(zero_value, land(sign_clear, ins("%bool", "OpLogicalNot", { nan })));
+            };
+
+            m_text += "%main = OpFunction %void None %voidfn\n";
+            m_text += "%entry = OpLabel\n";
+            m_text += "%lp_acc = OpVariable %lp_pf_v2 Function\n";
+            m_text += "%lp_k = OpVariable %lp_pf_u32 Function\n";
+
+            const Id local_id = ins("%u32", "OpCompositeExtract", { ins("%v3u32", "OpLoad", { "%lid_var" }), "0" });
+            const Id group = ins("%v3u32", "OpLoad", { "%wgid_var" });
+            const Id lag_slot = ins("%u32", "OpCompositeExtract", { group, "0" });
+            const Id window_id = ins("%u32", "OpCompositeExtract", { group, "1" });
+            const Id length = push_constant(0);
+            const Id stride = push_constant(1);
+            const Id offset = push_constant(2);
+            const Id first_lag = push_constant(3);
+            const Id lag_count = push_constant(4);
+            const Id length_value = pair(push_constant(5), push_constant(6));
+            const Id lag = add(first_lag, lag_slot);
+            const Id base = add(offset, word("OpIMul", window_id, stride));
+            const Id terms = sel(ult(lag, length), sub(length, lag), k(0));
+            const Id zero = pair(k(0), k(0));
+
+            uint32_t counter = 0;
+            const auto accumulate = [&](const Id& bound, const auto& element) {
+                const std::string tag = std::to_string(counter++);
+                m_text += "OpStore %lp_acc " + zero + "\n";
+                m_text += "OpStore %lp_k " + local_id + "\n";
+                m_text += "OpBranch %lp_h" + tag + "\n";
+                m_text += "%lp_h" + tag + " = OpLabel\n";
+                m_text += "OpLoopMerge %lp_m" + tag + " %lp_c" + tag + " None\n";
+                m_text += "OpBranch %lp_t" + tag + "\n";
+                m_text += "%lp_t" + tag + " = OpLabel\n";
+                const Id index = ins("%u32", "OpLoad", { "%lp_k" });
+                m_text += "OpBranchConditional " + ult(index, bound) + " %lp_b" + tag + " %lp_m" + tag + "\n";
+                m_text += "%lp_b" + tag + " = OpLabel\n";
+                const Id term = element(index);
+                const Id running = ins("%v2u32", "OpLoad", { "%lp_acc" });
+                m_text += "OpStore %lp_acc " + addf(running, term) + "\n";
+                m_text += "OpBranch %lp_c" + tag + "\n";
+                m_text += "%lp_c" + tag + " = OpLabel\n";
+                const Id next = add(ins("%u32", "OpLoad", { "%lp_k" }), k(local));
+                m_text += "OpStore %lp_k " + next + "\n";
+                m_text += "OpBranch %lp_h" + tag + "\n";
+                m_text += "%lp_m" + tag + " = OpLabel\n";
+            };
+
+            const auto combine = [&] {
+                store_shared(local_id, ins("%v2u32", "OpLoad", { "%lp_acc" }));
+                barrier();
+                for (uint32_t span = local / 2; span >= 1; span /= 2) {
+                    const std::string tag = std::to_string(counter++);
+                    const Id active = ult(local_id, k(span));
+                    m_text += "OpSelectionMerge %lp_sm" + tag + " None\n";
+                    m_text += "OpBranchConditional " + active + " %lp_sw" + tag + " %lp_sm" + tag + "\n";
+                    m_text += "%lp_sw" + tag + " = OpLabel\n";
+                    const Id own = load_shared(local_id);
+                    const Id partner = load_shared(add(local_id, k(span)));
+                    store_shared(local_id, addf(own, partner));
+                    m_text += "OpBranch %lp_sm" + tag + "\n";
+                    m_text += "%lp_sm" + tag + " = OpLabel\n";
+                    barrier();
+                }
+            };
+
+            Id negative_mean = zero;
+            if (centred) {
+                accumulate(length, [&](const Id& index) { return load_global(values, add(base, index)); });
+                combine();
+                negative_mean = negf(divf(load_shared(k(0)), length_value));
+                barrier();
+            }
+
+            accumulate(terms, [&](const Id& index) {
+                const Id first_index = add(base, index);
+                Id a = load_global(values, first_index);
+                Id b = load_global(values, add(first_index, lag));
+                if (centred) {
+                    a = addf(a, negative_mean);
+                    b = addf(b, negative_mean);
+                }
+                switch (map) {
+                case PairMap::SignChange: {
+                    const Id differs = test("OpLogicalNotEqual", non_negative(a), non_negative(b));
+                    return pair(k(0), sel(differs, k(1072693248), k(0)));
+                }
+                case PairMap::AbsDifference: {
+                    const Word64 d = unpack(addf(a, negf(b)));
+                    return pair(d.lo, band(d.hi, k(2147483647)));
+                }
+                case PairMap::Product:
+                default:
+                    return mulf(a, b);
+                }
+            });
+            combine();
+
+            const Id first_invocation = eq(local_id, k(0));
+            m_text += "OpSelectionMerge %lp_wm None\n";
+            m_text += "OpBranchConditional " + first_invocation + " %lp_ww %lp_wm\n";
+            m_text += "%lp_ww = OpLabel\n";
+            store_global(result, add(word("OpIMul", window_id, lag_count), lag_slot), load_shared(k(0)));
+            m_text += "OpBranch %lp_wm\n";
+            m_text += "%lp_wm = OpLabel\n";
+            m_text += "OpReturn\n";
+            m_text += "OpFunctionEnd\n";
+
+            std::string globals;
+            globals += "%lid_var = OpVariable %ptr_in_v3u32 Input\n";
+            globals += "%wgid_var = OpVariable %ptr_in_v3u32 Input\n";
+            globals += "%lp_arr_t = OpTypeArray %v2u32 %sd_k" + std::to_string(local) + "\n";
+            globals += "%lp_p_arr = OpTypePointer Workgroup %lp_arr_t\n";
+            globals += "%lp_shared = OpVariable %lp_p_arr Workgroup\n";
+            globals += "%lp_p_sh = OpTypePointer Workgroup %v2u32\n";
+            globals += "%lp_pf_v2 = OpTypePointer Function %v2u32\n";
+            globals += "%lp_pf_u32 = OpTypePointer Function %u32\n";
+            globals += "\n";
+            return declarations() + globals + m_text;
+        }
+
+        [[nodiscard]] std::string word_pair_map(const ShaderSpec& spec)
+        {
+            const uint32_t local = spec.workgroup_size[0];
+            const WordPairOp op = spec.word_op;
+            const bool unary = op == WordPairOp::Sqrt || op == WordPairOp::ToFloat32;
+            const std::string& first = spec.bindings[0].name;
+            const std::string& second = unary ? first : spec.bindings[1].name;
+            const std::string& result = spec.bindings.back().name;
+
+            k(local);
+            switch (op) {
+            case WordPairOp::Add:
+                emit_add();
+                break;
+            case WordPairOp::Mul:
+                emit_mul();
+                break;
+            case WordPairOp::Div:
+                emit_div();
+                break;
+            case WordPairOp::Sqrt:
+                emit_sqrt();
+                break;
+            case WordPairOp::ToFloat32:
+                emit_to_float32();
+                break;
+            }
+            const std::string_view function = op == WordPairOp::Add ? soft_double_add
+                : op == WordPairOp::Mul                               ? soft_double_mul
+                : op == WordPairOp::Div                               ? soft_double_div
+                : op == WordPairOp::Sqrt                              ? soft_double_sqrt
+                                                                      : soft_double_to_float32;
+
+            const auto load_global = [this](const std::string& binding, const Id& index) {
+                const Id pointer = ins("%pelem_" + binding, "OpAccessChain", { "%buf_" + binding, "%c0u", index });
+                return ins("%v2u32", "OpLoad", { pointer });
+            };
+
+            m_text += "%main = OpFunction %void None %voidfn\n";
+            m_text += "%entry = OpLabel\n";
+            const Id local_id = ins("%u32", "OpCompositeExtract", { ins("%v3u32", "OpLoad", { "%lid_var" }), "0" });
+            const Id group = ins("%u32", "OpCompositeExtract", { ins("%v3u32", "OpLoad", { "%wgid_var" }), "0" });
+            const Id count = ins("%u32", "OpLoad", { ins("%ppc_u32", "OpAccessChain", { "%pc", k(0) }) });
+            const Id index = add(word("OpIMul", group, k(local)), local_id);
+
+            const Id inside = ult(index, count);
+            m_text += "OpSelectionMerge %wm_end None\n";
+            m_text += "OpBranchConditional " + inside + " %wm_body %wm_end\n";
+            m_text += "%wm_body = OpLabel\n";
+            const Id a = load_global(first, index);
+            const Id b = unary ? a : load_global(second, index);
+            const Id value = op == WordPairOp::ToFloat32
+                ? ins("%f32", "OpBitcast", { ins("%u32", "OpFunctionCall", { function, a, b }) })
+                : ins("%v2u32", "OpFunctionCall", { function, a, b });
+            const Id pointer = ins("%pelem_" + result, "OpAccessChain", { "%buf_" + result, "%c0u", index });
+            m_text += "OpStore " + pointer + " " + value + "\n";
+            m_text += "OpBranch %wm_end\n";
+            m_text += "%wm_end = OpLabel\n";
+            m_text += "OpReturn\n";
+            m_text += "OpFunctionEnd\n";
+
+            std::string globals;
+            globals += "%lid_var = OpVariable %ptr_in_v3u32 Input\n";
+            globals += "%wgid_var = OpVariable %ptr_in_v3u32 Input\n\n";
+            return declarations() + globals + m_text;
+        }
+
+        [[nodiscard]] std::string segmented_argmax(const ShaderSpec& spec)
+        {
+            const uint32_t local = spec.workgroup_size[0];
+            const std::string& values = spec.bindings[0].name;
+            const std::string& result = spec.bindings[1].name;
+
+            k(local);
+
+            const auto load_global = [this](const std::string& binding, const Id& index) {
+                const Id pointer = ins("%pelem_" + binding, "OpAccessChain", { "%buf_" + binding, "%c0u", index });
+                return ins("%v2u32", "OpLoad", { pointer });
+            };
+            const auto store_global = [this](const std::string& binding, const Id& index, const Id& value) {
+                const Id pointer = ins("%pelem_" + binding, "OpAccessChain", { "%buf_" + binding, "%c0u", index });
+                m_text += "OpStore " + pointer + " " + value + "\n";
+            };
+            const auto load_value = [this](const Id& index) {
+                const Id pointer = ins("%am_p_sh_v2", "OpAccessChain", { "%am_shared_v", index });
+                return ins("%v2u32", "OpLoad", { pointer });
+            };
+            const auto store_value = [this](const Id& index, const Id& value) {
+                const Id pointer = ins("%am_p_sh_v2", "OpAccessChain", { "%am_shared_v", index });
+                m_text += "OpStore " + pointer + " " + value + "\n";
+            };
+            const auto load_at = [this](const Id& index) {
+                const Id pointer = ins("%am_p_sh_u32", "OpAccessChain", { "%am_shared_i", index });
+                return ins("%u32", "OpLoad", { pointer });
+            };
+            const auto store_at = [this](const Id& index, const Id& value) {
+                const Id pointer = ins("%am_p_sh_u32", "OpAccessChain", { "%am_shared_i", index });
+                m_text += "OpStore " + pointer + " " + value + "\n";
+            };
+            const auto push_constant = [this](uint32_t member) {
+                const Id pointer = ins("%ppc_u32", "OpAccessChain", { "%pc", k(member) });
+                return ins("%u32", "OpLoad", { pointer });
+            };
+            const auto barrier = [this] {
+                m_text += "OpControlBarrier " + k(2) + " " + k(2) + " " + k(264) + "\n";
+            };
+            const auto choose = [this](const Id& condition, const Id& a, const Id& b) {
+                const Word64 wa = unpack(a);
+                const Word64 wb = unpack(b);
+                return pair(sel(condition, wa.lo, wb.lo), sel(condition, wa.hi, wb.hi));
+            };
+
+            m_text += "%main = OpFunction %void None %voidfn\n";
+            m_text += "%entry = OpLabel\n";
+            m_text += "%am_best = OpVariable %am_pf_v2 Function\n";
+            m_text += "%am_at = OpVariable %am_pf_u32 Function\n";
+            m_text += "%am_k = OpVariable %am_pf_u32 Function\n";
+
+            const Id local_id = ins("%u32", "OpCompositeExtract", { ins("%v3u32", "OpLoad", { "%lid_var" }), "0" });
+            const Id segment = ins("%u32", "OpCompositeExtract", { ins("%v3u32", "OpLoad", { "%wgid_var" }), "0" });
+            const Id length = push_constant(0);
+            const Id stride = push_constant(1);
+            const Id offset = push_constant(2);
+            const Id base = add(offset, word("OpIMul", segment, stride));
+
+            m_text += "OpStore %am_best " + pair(k(0), k(2146959360)) + "\n";
+            m_text += "OpStore %am_at " + k(4294967295) + "\n";
+            m_text += "OpStore %am_k " + local_id + "\n";
+            m_text += "OpBranch %am_h\n";
+            m_text += "%am_h = OpLabel\n";
+            m_text += "OpLoopMerge %am_m %am_c None\n";
+            m_text += "OpBranch %am_t\n";
+            m_text += "%am_t = OpLabel\n";
+            const Id index = ins("%u32", "OpLoad", { "%am_k" });
+            const Id more = ult(index, length);
+            m_text += "OpBranchConditional " + more + " %am_b %am_m\n";
+            m_text += "%am_b = OpLabel\n";
+            const Id element = load_global(values, add(base, index));
+            const Id current = ins("%v2u32", "OpLoad", { "%am_best" });
+            const Id take = ult64(argmax_key(unpack(current)), argmax_key(unpack(element)));
+            m_text += "OpStore %am_best " + choose(take, element, current) + "\n";
+            m_text += "OpStore %am_at " + sel(take, index, ins("%u32", "OpLoad", { "%am_at" })) + "\n";
+            m_text += "OpBranch %am_c\n";
+            m_text += "%am_c = OpLabel\n";
+            const Id next = add(ins("%u32", "OpLoad", { "%am_k" }), k(local));
+            m_text += "OpStore %am_k " + next + "\n";
+            m_text += "OpBranch %am_h\n";
+            m_text += "%am_m = OpLabel\n";
+
+            store_value(local_id, ins("%v2u32", "OpLoad", { "%am_best" }));
+            store_at(local_id, ins("%u32", "OpLoad", { "%am_at" }));
+            barrier();
+
+            uint32_t counter = 0;
+            for (uint32_t span = local / 2; span >= 1; span /= 2) {
+                const std::string tag = std::to_string(counter++);
+                const Id active = ult(local_id, k(span));
+                m_text += "OpSelectionMerge %am_sm" + tag + " None\n";
+                m_text += "OpBranchConditional " + active + " %am_sw" + tag + " %am_sm" + tag + "\n";
+                m_text += "%am_sw" + tag + " = OpLabel\n";
+                const Id partner_slot = add(local_id, k(span));
+                const Id own = load_value(local_id);
+                const Id other = load_value(partner_slot);
+                const Id own_at = load_at(local_id);
+                const Id other_at = load_at(partner_slot);
+                const Word64 own_key = argmax_key(unpack(own));
+                const Word64 other_key = argmax_key(unpack(other));
+                const Id tied = land(eq(own_key.hi, other_key.hi), eq(own_key.lo, other_key.lo));
+                const Id replace = lor(ult64(own_key, other_key), land(tied, ult(other_at, own_at)));
+                store_value(local_id, choose(replace, other, own));
+                store_at(local_id, sel(replace, other_at, own_at));
+                m_text += "OpBranch %am_sm" + tag + "\n";
+                m_text += "%am_sm" + tag + " = OpLabel\n";
+                barrier();
+            }
+
+            const Id first = eq(local_id, k(0));
+            m_text += "OpSelectionMerge %am_wm None\n";
+            m_text += "OpBranchConditional " + first + " %am_ww %am_wm\n";
+            m_text += "%am_ww = OpLabel\n";
+            const Id slot = shl(segment, k(1));
+            store_global(result, slot, load_value(k(0)));
+            store_global(result, add(slot, k(1)), pair(load_at(k(0)), k(0)));
+            m_text += "OpBranch %am_wm\n";
+            m_text += "%am_wm = OpLabel\n";
+            m_text += "OpReturn\n";
+            m_text += "OpFunctionEnd\n";
+
+            std::string globals;
+            globals += "%lid_var = OpVariable %ptr_in_v3u32 Input\n";
+            globals += "%wgid_var = OpVariable %ptr_in_v3u32 Input\n";
+            globals += "%am_arr_v = OpTypeArray %v2u32 %sd_k" + std::to_string(local) + "\n";
+            globals += "%am_arr_i = OpTypeArray %u32 %sd_k" + std::to_string(local) + "\n";
+            globals += "%am_p_arr_v = OpTypePointer Workgroup %am_arr_v\n";
+            globals += "%am_p_arr_i = OpTypePointer Workgroup %am_arr_i\n";
+            globals += "%am_shared_v = OpVariable %am_p_arr_v Workgroup\n";
+            globals += "%am_shared_i = OpVariable %am_p_arr_i Workgroup\n";
+            globals += "%am_p_sh_v2 = OpTypePointer Workgroup %v2u32\n";
+            globals += "%am_p_sh_u32 = OpTypePointer Workgroup %u32\n";
+            globals += "%am_pf_v2 = OpTypePointer Function %v2u32\n";
+            globals += "%am_pf_u32 = OpTypePointer Function %u32\n";
+            globals += "\n";
+            return declarations() + globals + m_text;
+        }
+
     private:
         std::string m_text;
         std::set<uint32_t> m_constants;
@@ -284,6 +677,7 @@ namespace {
             out += "%sd_pair = OpTypeStruct %u32 %u32\n";
             out += "%sd_fn_bin = OpTypeFunction %v2u32 %v2u32 %v2u32\n";
             out += "%sd_fn_less = OpTypeFunction %bool %v2u32 %v2u32\n";
+            out += "%sd_fn_tof32 = OpTypeFunction %u32 %v2u32 %v2u32\n";
             for (const uint32_t value : m_constants) {
                 out += "%sd_k" + std::to_string(value) + " = OpConstant %u32 " + std::to_string(value) + "\n";
             }
@@ -400,6 +794,15 @@ namespace {
         {
             return lor(ult(a.hi, b.hi), land(eq(a.hi, b.hi), ult(a.lo, b.lo)));
         }
+
+        Id lnot(const Id& a) { return ins("%bool", "OpLogicalNot", { a }); }
+
+        Word64 shl1(const Word64& w)
+        {
+            return { shl(w.lo, k(1)), bor(shl(w.hi, k(1)), shr(w.lo, k(31))) };
+        }
+
+        Id nonzero64(const Word64& w) { return lor(ne(w.lo, k(0)), ne(w.hi, k(0))); }
 
         Id msb64(const Word64& w)
         {
@@ -591,6 +994,118 @@ namespace {
             end(pair(lo, hi));
         }
 
+        void emit_div()
+        {
+            begin("div", "%v2u32", "%sd_fn_bin");
+            const Word64 wa = unpack("%sd_f64_div_a");
+            const Word64 wb = unpack("%sd_f64_div_b");
+            const Unpacked a = unpack_normalised(wa);
+            const Unpacked b = unpack_normalised(wb);
+
+            const Id sign = band(bxor(wa.hi, wb.hi), k(2147483648));
+            const Id invalid = lor(lor(a.is_nan, b.is_nan), lor(land(a.is_zero, b.is_zero), land(a.is_inf, b.is_inf)));
+            const Id inf = lor(a.is_inf, b.is_zero);
+            const Id zero = lor(a.is_zero, b.is_inf);
+
+            Word64 remainder = a.mant;
+            Word64 quotient { k(0), k(0) };
+            for (uint32_t step = 0; step < 63; ++step) {
+                const Id fits = lnot(ult64(remainder, b.mant));
+                const Word64 reduced = select64(fits, sub64(remainder, b.mant), remainder);
+                const Word64 shifted = shl1(quotient);
+                quotient = Word64 { bor(shifted.lo, sel(fits, k(1), k(0))), shifted.hi };
+                remainder = shl1(reduced);
+            }
+
+            const Id whole = ne(band(quotient.hi, k(1073741824)), k(0));
+            const Word64 m = select64(whole, quotient, shl1(quotient));
+            const Id base = sub(add(a.exp, k(1023)), b.exp);
+            const Id e = sel(whole, base, sub(base, k(1)));
+            const Word64 packed = unpack(round_pack(sign, e, m, nonzero64(remainder)));
+
+            const Id inf_hi = bor(sign, k(2146435072));
+            const Id lo = sel(lor(invalid, lor(inf, zero)), k(0), packed.lo);
+            const Id hi = sel(invalid, k(2146959360), sel(inf, inf_hi, sel(zero, sign, packed.hi)));
+            end(pair(lo, hi));
+        }
+
+        Id pair_bits(const Word64& w, uint32_t position)
+        {
+            if (position >= 32) {
+                return band(shr(w.hi, k(position - 32)), k(3));
+            }
+            return band(shr(w.lo, k(position)), k(3));
+        }
+
+        void emit_sqrt()
+        {
+            begin("sqrt", "%v2u32", "%sd_fn_bin");
+            const Word64 wa = unpack("%sd_f64_sqrt_a");
+            const Unpacked a = unpack_normalised(wa);
+
+            const Id negative = ne(band(wa.hi, k(2147483648)), k(0));
+            const Id invalid = lor(a.is_nan, land(negative, lnot(a.is_zero)));
+            const Id passes = lor(a.is_zero, a.is_inf);
+
+            const Id odd_exponent = eq(band(a.exp, k(1)), k(0));
+            const Word64 radicand = select64(odd_exponent, shl1(a.mant), a.mant);
+
+            Word64 root { k(0), k(0) };
+            Word64 remainder { k(0), k(0) };
+            for (uint32_t step = 0; step < 56; ++step) {
+                const Id incoming = step < 27 ? pair_bits(radicand, 52 - 2 * step) : k(0);
+                const Word64 widened = shl1(shl1(remainder));
+                const Word64 brought { bor(widened.lo, incoming), widened.hi };
+                const Word64 doubled = shl1(shl1(root));
+                const Word64 trial { bor(doubled.lo, k(1)), doubled.hi };
+                const Id fits = lnot(ult64(brought, trial));
+                remainder = select64(fits, sub64(brought, trial), brought);
+                const Word64 grown = shl1(root);
+                root = Word64 { bor(grown.lo, sel(fits, k(1), k(0))), grown.hi };
+            }
+
+            Word64 m = root;
+            for (uint32_t i = 0; i < 7; ++i) {
+                m = shl1(m);
+            }
+            const Id parity = sel(odd_exponent, k(1), k(0));
+            const Id e = shr(sub(add(a.exp, k(1023)), parity), k(1));
+            const Word64 packed = unpack(round_pack(k(0), e, m, nonzero64(remainder)));
+
+            const Id lo = sel(invalid, k(0), sel(passes, wa.lo, packed.lo));
+            const Id hi = sel(invalid, k(2146959360), sel(passes, wa.hi, packed.hi));
+            end(pair(lo, hi));
+        }
+
+        void emit_to_float32()
+        {
+            begin("to_f32", "%u32", "%sd_fn_tof32");
+            const Word64 w = unpack("%sd_f64_to_f32_a");
+
+            const Id sign = band(w.hi, k(2147483648));
+            const Id e = band(shr(w.hi, k(20)), k(2047));
+            const Id fraction_hi = band(w.hi, k(1048575));
+            const Id max_exp = eq(e, k(2047));
+            const Id is_nan = land(max_exp, ne(bor(fraction_hi, w.lo), k(0)));
+            const Id tiny = eq(e, k(0));
+
+            const Word64 full { w.lo, bor(fraction_hi, k(1048576)) };
+            const Id normal = uge(e, k(897));
+            const Id drop = sel(normal, k(29), sub(k(926), e));
+            const Shifted shifted = shr64_sticky(full, umin(sub(drop, k(1)), k(60)));
+            const Id guard = band(shifted.value.lo, k(1));
+            const Id quotient = shr(shifted.value.lo, k(1));
+            const Id up = land(ne(guard, k(0)), lor(shifted.sticky, ne(band(quotient, k(1)), k(0))));
+            const Id rounded = add(quotient, sel(up, k(1), k(0)));
+            const Id base = sel(normal, shl(sub(e, k(897)), k(23)), k(0));
+            const Id bits = add(base, rounded);
+
+            const Id overflow = lor(uge(e, k(1151)), uge(bits, k(2139095040)));
+            const Id finite = sel(tiny, k(0), sel(overflow, k(2139095040), bits));
+            const Id special = sel(is_nan, k(2143289344), k(2139095040));
+            end(bor(sign, sel(max_exp, special, finite)));
+        }
+
         Word64 order_key(const Word64& w)
         {
             const Id max_exp = eq(band(shr(w.hi, k(20)), k(2047)), k(2047));
@@ -602,6 +1117,14 @@ namespace {
             const Id key_lo = sel(negative, bnot(lo), lo);
             const Id key_hi = sel(negative, bnot(hi), bor(hi, k(2147483648)));
             return { sel(is_nan, k(4294967295), key_lo), sel(is_nan, k(4294967295), key_hi) };
+        }
+
+        Word64 argmax_key(const Word64& w)
+        {
+            const Id max_exp = eq(band(shr(w.hi, k(20)), k(2047)), k(2047));
+            const Id is_nan = land(max_exp, ne(bor(band(w.hi, k(1048575)), w.lo), k(0)));
+            const Word64 key = order_key(w);
+            return { sel(is_nan, k(0), key.lo), sel(is_nan, k(0), key.hi) };
         }
 
         void emit_less()
@@ -642,6 +1165,67 @@ std::string emit_fft(const ShaderSpec& spec)
 
     Builder builder;
     return builder.fft(spec);
+}
+
+std::string emit_lagged_pair(const ShaderSpec& spec)
+{
+    const uint32_t local = spec.workgroup_size[0];
+    const bool shaped = spec.bindings.size() == 2 && spec.pc_fields.size() == 7
+        && std::ranges::all_of(spec.bindings, [](const BindingSlot& b) {
+               return b.format == Kakshya::GpuDataFormat::VEC2_U32;
+           })
+        && std::ranges::all_of(spec.pc_fields, [](const PushConstantField& f) {
+               return f.format == Kakshya::GpuDataFormat::UINT32;
+           });
+    const bool sized = local >= 2 && local <= 1024 && (local & (local - 1)) == 0;
+    if (!shaped || !sized) {
+        return {};
+    }
+
+    Builder builder;
+    return builder.lagged_pair(spec);
+}
+
+std::string emit_segmented_argmax(const ShaderSpec& spec)
+{
+    const uint32_t local = spec.workgroup_size[0];
+    const bool shaped = spec.bindings.size() == 2 && spec.pc_fields.size() == 3
+        && std::ranges::all_of(spec.bindings, [](const BindingSlot& b) {
+               return b.format == Kakshya::GpuDataFormat::VEC2_U32;
+           })
+        && std::ranges::all_of(spec.pc_fields, [](const PushConstantField& f) {
+               return f.format == Kakshya::GpuDataFormat::UINT32;
+           });
+    const bool sized = local >= 2 && local <= 1024 && (local & (local - 1)) == 0;
+    if (!shaped || !sized) {
+        return {};
+    }
+
+    Builder builder;
+    return builder.segmented_argmax(spec);
+}
+
+std::string emit_word_pair_map(const ShaderSpec& spec)
+{
+    const uint32_t local = spec.workgroup_size[0];
+    const bool to_float = spec.word_op == WordPairOp::ToFloat32;
+    const size_t bindings = spec.word_op == WordPairOp::Sqrt || to_float ? 2U : 3U;
+    const auto expected = [&](size_t index) {
+        return to_float && index + 1 == bindings ? Kakshya::GpuDataFormat::FLOAT32 : Kakshya::GpuDataFormat::VEC2_U32;
+    };
+    bool formats = spec.bindings.size() == bindings;
+    for (size_t i = 0; formats && i < spec.bindings.size(); ++i) {
+        formats = spec.bindings[i].format == expected(i);
+    }
+    const bool shaped = formats && spec.pc_fields.size() == 1
+        && spec.pc_fields[0].format == Kakshya::GpuDataFormat::UINT32;
+    const bool sized = local >= 1 && local <= 1024;
+    if (!shaped || !sized) {
+        return {};
+    }
+
+    Builder builder;
+    return builder.word_pair_map(spec);
 }
 
 } // namespace MayaFlux::Portal::Graphics::detail

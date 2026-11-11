@@ -65,8 +65,20 @@ public:
      */
     void stage(std::span<const double> values, const SegmentGeometry& geometry)
     {
-        m_segments = geometry.count;
         stage_words(0, values);
+        stage(geometry);
+    }
+
+    /**
+     * @brief Stage the geometry for values that are already on the device.
+     *
+     * The values are whatever binding 0 resolves to: a shared buffer of this
+     * context, or one imported from another with import_shared. Nothing is
+     * staged from the host.
+     */
+    void stage(const SegmentGeometry& geometry)
+    {
+        m_segments = geometry.count;
         set_output_size(1, static_cast<size_t>(geometry.count) * sizeof(uint64_t));
         push(Push { .length = geometry.length, .stride = geometry.stride, .offset = geometry.offset });
     }

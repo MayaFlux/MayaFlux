@@ -62,6 +62,9 @@ public:
     {
     }
 
+    /** @brief The binding that holds the result of a dispatch. */
+    static constexpr uint32_t result_binding = 3;
+
     [[nodiscard]] uint32_t points() const noexcept { return m_points; }
 
     /**
@@ -117,6 +120,32 @@ public:
     }
 
     /**
+     * @brief Record the transform of windows of a real signal without waiting for it.
+     *
+     * The context needs a recording (set_recording), which the dispatch appends
+     * to. The result stays on the device, in the result binding: make it a
+     * shared buffer with ensure_shared_buffer(0, result_binding, windows *
+     * values_per_window(), VEC2_U32) before this call and a consumer on the
+     * same recording reads it in place with import_shared.
+     *
+     * @param real Samples the windows index into.
+     * @param geometry Window length, stride, first offset and count, in samples.
+     * @param window Coefficients applied to each window, points of them. Empty is rectangular.
+     */
+    void record_real(std::span<const double> real, const SegmentGeometry& geometry, std::span<const double> window = {})
+    {
+        if (geometry.count == 0) {
+            return;
+        }
+        std::vector<double> interleaved(real.size() * 2, 0.0);
+        for (size_t i = 0; i < real.size(); ++i) {
+            interleaved[2 * i] = real[i];
+        }
+        stage(interleaved, geometry, window);
+        static_cast<void>(dispatch_async(Datum<std::vector<Kakshya::DataVariant>> {}));
+    }
+
+    /**
      * @brief Stage input, window and geometry for the next dispatch without running it.
      *
      * Follow with dispatch_async and collect_result, then decode_primary.
@@ -134,7 +163,9 @@ public:
         if (m_projection) {
             stage_words(4, m_weights);
         }
-        set_output_size(3, static_cast<size_t>(geometry.count) * values_per_window() * sizeof(uint64_t));
+        if (!shared_buffer_info(0, result_binding)) {
+            set_output_size(result_binding, static_cast<size_t>(geometry.count) * values_per_window() * sizeof(uint64_t));
+        }
 
         const auto scale_bits = std::bit_cast<uint64_t>(m_scale);
         push(Push {
