@@ -69,6 +69,35 @@ namespace MayaFlux::Kinesis {
     glm::vec4 color = glm::vec4(1.F));
 
 /**
+ * @brief Ear-clipping triangulation of a simple polygon as index triples.
+ *
+ * Each triple indexes @p pts in the caller's order. Depends only on the point
+ * positions, so the result can be cached and reused while the positions are
+ * unchanged, or scaled along one axis by a positive factor. Winding may be
+ * either direction. Work is O(n^2) per clipped ear. Fewer than three points,
+ * or an outline that cannot be triangulated, yields an empty vector.
+ *
+ * @param pts Outline vertices in order around the polygon.
+ */
+[[nodiscard]] MAYAFLUX_API std::vector<std::array<uint32_t, 3>> triangulate_polygon(
+    std::span<const glm::vec2> pts);
+
+/**
+ * @brief Filled simple polygon from an arbitrary point list, TRIANGLE_LIST.
+ *
+ * Triangulates by ear clipping, so concave outlines are supported. Winding
+ * may be either direction. Work is O(n^2) per clipped ear, so large outlines
+ * cost more. Fewer than three points, or an outline that cannot be
+ * triangulated (self-intersecting or collinear), yields an empty vector.
+ *
+ * @param pts   Outline vertices in NDC, in order around the polygon.
+ * @param color Uniform fill color.
+ */
+[[nodiscard]] MAYAFLUX_API std::vector<Kakshya::Vertex> fill_polygon(
+    std::span<const glm::vec2> pts,
+    glm::vec4 color = glm::vec4(1.F));
+
+/**
  * @brief Filled rect with per-corner colors, TRIANGLE_STRIP (4 vertices).
  *
  * Vertex order matches filled_rect: BL, BL-top, BR, BR-top (TRIANGLE_STRIP).
