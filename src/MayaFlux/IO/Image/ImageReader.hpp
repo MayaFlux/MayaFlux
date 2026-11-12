@@ -61,6 +61,7 @@ public:
     [[nodiscard]] std::optional<FileMetadata> get_metadata() const override;
     [[nodiscard]] std::vector<FileRegion> get_regions() const override;
     std::vector<Kakshya::DataVariant> read_all() override;
+    /** @brief Read a pixel rectangle with exclusive end coordinates. */
     std::vector<Kakshya::DataVariant> read_region(const FileRegion& region) override;
     std::shared_ptr<Kakshya::SignalSourceContainer> create_container() override;
     bool load_into_container(std::shared_ptr<Kakshya::SignalSourceContainer> container) override;

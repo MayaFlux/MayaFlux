@@ -363,32 +363,33 @@ std::vector<Kakshya::DataVariant> ImageReader::read_region(const FileRegion& reg
         return {};
     }
 
-    auto x_start = static_cast<uint32_t>(region.start_coordinates[0]);
-    auto y_start = static_cast<uint32_t>(region.start_coordinates[1]);
-    auto x_end = static_cast<uint32_t>(region.end_coordinates[0]);
-    auto y_end = static_cast<uint32_t>(region.end_coordinates[1]);
+    const auto x_start = region.start_coordinates[0];
+    const auto y_start = region.start_coordinates[1];
+    const auto x_end = region.end_coordinates[0];
+    const auto y_end = region.end_coordinates[1];
 
-    if (x_end > m_image_data->width || y_end > m_image_data->height) {
+    if (x_start > x_end || y_start > y_end
+        || x_end > m_image_data->width || y_end > m_image_data->height) {
         m_last_error = "Region out of bounds";
         return {};
     }
 
-    uint32_t region_width = x_end - x_start;
-    uint32_t region_height = y_end - y_start;
+    const size_t region_width = static_cast<size_t>(x_end - x_start);
+    const size_t region_height = static_cast<size_t>(y_end - y_start);
 
-    const size_t bytes_per_pixel = m_image_data->byte_size() / m_image_data->element_count() * m_image_data->channels;
     const size_t bytes_per_elem = m_image_data->byte_size() / m_image_data->element_count();
     const size_t pixel_stride_bytes = bytes_per_elem * m_image_data->channels;
 
-    std::vector<uint8_t> region_data(
-        static_cast<size_t>(region_width) * region_height * pixel_stride_bytes);
+    std::vector<uint8_t> region_data(region_width * region_height * pixel_stride_bytes);
 
     const auto* src = static_cast<const uint8_t*>(m_image_data->data());
 
-    for (uint32_t y = 0; y < region_height; ++y) {
-        size_t src_offset = (static_cast<size_t>((y_start + y) * m_image_data->width + x_start)) * pixel_stride_bytes;
-        size_t dst_offset = static_cast<size_t>(y * region_width) * pixel_stride_bytes;
-        size_t row_size = static_cast<size_t>(region_width) * pixel_stride_bytes;
+    for (size_t y = 0; y < region_height && region_width != 0; ++y) {
+        size_t src_offset = ((static_cast<size_t>(y_start) + y) * m_image_data->width
+                                + static_cast<size_t>(x_start))
+            * pixel_stride_bytes;
+        size_t dst_offset = y * region_width * pixel_stride_bytes;
+        size_t row_size = region_width * pixel_stride_bytes;
         std::memcpy(
             region_data.data() + dst_offset,
             src + src_offset,
