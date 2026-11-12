@@ -81,8 +81,12 @@ install(FILES
 
 install(FILES
     ${CMAKE_SOURCE_DIR}/data/assets.json
-    ${CMAKE_SOURCE_DIR}/data/assets.schema.json
     DESTINATION share/MayaFlux/assets
+)
+
+install(FILES
+    ${SCHEMA_DIR}/assets.schema.json
+    DESTINATION share/MayaFlux/schema
 )
 
 install(TARGETS Lila

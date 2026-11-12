@@ -16,7 +16,7 @@ Sources: files at https URLs, either one URL for the source (a single file or a
 zip archive) or one URL per file, so an asset may draw from several hosts; or a
 git repository at a full commit. Git needs the git executable. Only the Python
 standard library is used. When the jsonschema module is installed the list is
-also checked against data/assets.schema.json.
+also checked against data/schema/assets.schema.json.
 
 Exit status is 0 when every selected file is in place, 1 otherwise.
 """
@@ -120,7 +120,7 @@ def check_schema(document, list_path):
         import jsonschema
     except ImportError:
         return False
-    schema_path = list_path.with_name('assets.schema.json')
+    schema_path = list_path.parent / 'schema' / 'assets.schema.json'
     if not schema_path.is_file():
         return False
     schema = json.loads(schema_path.read_text(encoding='utf-8'))

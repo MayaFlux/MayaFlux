@@ -56,6 +56,7 @@ else()
 endif()
 
 set(DATA_DIR "${CMAKE_SOURCE_DIR}/data")
+set(SCHEMA_DIR "${DATA_DIR}/schema")
 set(OUT_DIR "${DATA_DIR}/out")
 set(LOG_DIR "${DATA_DIR}/log")
 file(MAKE_DIRECTORY "${OUT_DIR}" "${LOG_DIR}")

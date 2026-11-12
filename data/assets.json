@@ -1,5 +1,5 @@
 {
-  "$schema": "./assets.schema.json",
+  "$schema": "./schema/assets.schema.json",
   "schema_version": 1,
   "assets": [
     {
