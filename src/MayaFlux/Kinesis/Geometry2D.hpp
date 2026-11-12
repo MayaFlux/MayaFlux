@@ -69,18 +69,26 @@ namespace MayaFlux::Kinesis {
     glm::vec4 color = glm::vec4(1.F));
 
 /**
- * @brief Ear-clipping triangulation of a simple polygon as index triples.
+ * @brief Ear-clipping triangulation of a polygon with optional holes, as index triples.
  *
- * Each triple indexes @p pts in the caller's order. Depends only on the point
- * positions, so the result can be cached and reused while the positions are
- * unchanged, or scaled along one axis by a positive factor. Winding may be
- * either direction. Work is O(n^2) per clipped ear. Fewer than three points,
- * or an outline that cannot be triangulated, yields an empty vector.
+ * @p pts holds the outer ring first, then each hole ring in turn. @p hole_starts
+ * gives the index of the first point of each hole, in increasing order. Each
+ * triple indexes @p pts. Depends only on the point positions, so the result can
+ * be cached and reused while the positions are unchanged, or scaled along one
+ * axis by a positive factor. Winding may be either direction.
  *
- * @param pts Outline vertices in order around the polygon.
+ * Every ring must be simple, rings must not cross or touch one another, and
+ * each hole must lie inside the outer ring and outside the others. Holes are
+ * joined to the outer ring by bridges to visible vertices, then the merged ring
+ * is clipped. Work is O(n^2) per clipped ear, plus O(n^2) per hole for bridging.
+ * Any violation, or fewer than three points in a ring, yields an empty vector.
+ *
+ * @param pts         Ring points in NDC: outer ring, then holes.
+ * @param hole_starts Index of the first point of each hole. Empty for no holes.
  */
 [[nodiscard]] MAYAFLUX_API std::vector<std::array<uint32_t, 3>> triangulate_polygon(
-    std::span<const glm::vec2> pts);
+    std::span<const glm::vec2> pts,
+    std::span<const uint32_t> hole_starts = {});
 
 /**
  * @brief Filled simple polygon from an arbitrary point list, TRIANGLE_LIST.

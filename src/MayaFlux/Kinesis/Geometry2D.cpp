@@ -400,62 +400,241 @@ std::vector<Kakshya::LineVertex> polygon_outline(
     return out;
 }
 
-std::vector<std::array<uint32_t, 3>> triangulate_polygon(std::span<const glm::vec2> pts)
-{
-    std::vector<std::array<uint32_t, 3>> tris;
-    if (pts.size() < 3 || !is_simple(pts)) {
+namespace {
+
+    struct Bridge {
+        size_t a;
+        size_t b;
+    };
+
+    [[nodiscard]] size_t next_in_ring(const std::vector<size_t>& bounds, size_t ring, size_t i) noexcept
+    {
+        return i + 1 < bounds[ring + 1] ? i + 1 : bounds[ring];
+    }
+
+    [[nodiscard]] bool inside_range(glm::vec2 p, std::span<const glm::vec2> pts, size_t begin, size_t end) noexcept
+    {
+        bool inside = false;
+        for (size_t i = begin, j = end - 1; i < end; j = i++) {
+            const glm::vec2 a = pts[i];
+            const glm::vec2 b = pts[j];
+            if ((a.y > p.y) != (b.y > p.y)
+                && p.x < (b.x - a.x) * (p.y - a.y) / (b.y - a.y) + a.x) {
+                inside = !inside;
+            }
+        }
+        return inside;
+    }
+
+    [[nodiscard]] bool rings_valid(std::span<const glm::vec2> pts, const std::vector<size_t>& bounds) noexcept
+    {
+        const size_t rings = bounds.size() - 1;
+
+        for (size_t r = 0; r < rings; ++r) {
+            if (!is_simple(pts.subspan(bounds[r], bounds[r + 1] - bounds[r]))) {
+                return false;
+            }
+        }
+
+        for (size_t r = 0; r < rings; ++r) {
+            for (size_t s = r + 1; s < rings; ++s) {
+                for (size_t i = bounds[r]; i < bounds[r + 1]; ++i) {
+                    const size_t ni = next_in_ring(bounds, r, i);
+                    for (size_t j = bounds[s]; j < bounds[s + 1]; ++j) {
+                        const size_t nj = next_in_ring(bounds, s, j);
+                        if (segments_meet(pts[i], pts[ni], pts[j], pts[nj])) {
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+
+        for (size_t h = 1; h < rings; ++h) {
+            const glm::vec2 probe = pts[bounds[h]];
+            if (!inside_range(probe, pts, bounds[0], bounds[1])) {
+                return false;
+            }
+            for (size_t g = 1; g < rings; ++g) {
+                if (g != h && inside_range(probe, pts, bounds[g], bounds[g + 1])) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    [[nodiscard]] bool bridge_visible(std::span<const glm::vec2> pts, const std::vector<size_t>& bounds,
+        size_t m, size_t v, const std::vector<Bridge>& bridges) noexcept
+    {
+        const size_t rings = bounds.size() - 1;
+
+        for (size_t r = 0; r < rings; ++r) {
+            for (size_t i = bounds[r]; i < bounds[r + 1]; ++i) {
+                const size_t ni = next_in_ring(bounds, r, i);
+                if (i == m || i == v || ni == m || ni == v) {
+                    continue;
+                }
+                if (segments_meet(pts[m], pts[v], pts[i], pts[ni])) {
+                    return false;
+                }
+            }
+        }
+
+        for (const Bridge& bridge : bridges) {
+            if (bridge.a == m || bridge.a == v || bridge.b == m || bridge.b == v) {
+                continue;
+            }
+            if (segments_meet(pts[m], pts[v], pts[bridge.a], pts[bridge.b])) {
+                return false;
+            }
+        }
+
+        const glm::vec2 mid = 0.5F * (pts[m] + pts[v]);
+        if (!inside_range(mid, pts, bounds[0], bounds[1])) {
+            return false;
+        }
+        for (size_t h = 1; h < rings; ++h) {
+            if (inside_range(mid, pts, bounds[h], bounds[h + 1])) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    [[nodiscard]] std::vector<std::array<uint32_t, 3>> clip_ears(
+        std::span<const glm::vec2> pts, std::vector<uint32_t> ring)
+    {
+        std::vector<std::array<uint32_t, 3>> tris;
+        if (ring.size() < 3) {
+            return tris;
+        }
+        tris.reserve(ring.size() - 2);
+
+        while (ring.size() > 3) {
+            const size_t n = ring.size();
+            bool clipped = false;
+
+            for (size_t i = 0; i < n && !clipped; ++i) {
+                const size_t prev = (i + n - 1) % n;
+                const size_t next = (i + 1) % n;
+                const glm::vec2 a = pts[ring[prev]];
+                const glm::vec2 b = pts[ring[i]];
+                const glm::vec2 c = pts[ring[next]];
+                if (turn(a, b, c) <= 0.F) {
+                    continue;
+                }
+
+                bool blocked = false;
+                for (size_t j = 0; j < n && !blocked; ++j) {
+                    if (j == prev || j == i || j == next) {
+                        continue;
+                    }
+                    const glm::vec2 q = pts[ring[j]];
+                    if (q == a || q == b || q == c) {
+                        continue;
+                    }
+                    blocked = inside_ccw(q, a, b, c);
+                }
+                if (blocked) {
+                    continue;
+                }
+
+                tris.push_back({ ring[prev], ring[i], ring[next] });
+                ring.erase(ring.begin() + static_cast<std::ptrdiff_t>(i));
+                clipped = true;
+            }
+
+            if (!clipped) {
+                return {};
+            }
+        }
+
+        if (turn(pts[ring[0]], pts[ring[1]], pts[ring[2]]) <= 0.F) {
+            return {};
+        }
+        tris.push_back({ ring[0], ring[1], ring[2] });
         return tris;
     }
 
-    std::vector<uint32_t> ring(pts.size());
-    for (uint32_t i = 0; i < ring.size(); ++i) {
-        ring[i] = i;
+} // namespace
+
+std::vector<std::array<uint32_t, 3>> triangulate_polygon(
+    std::span<const glm::vec2> pts, std::span<const uint32_t> hole_starts)
+{
+    std::vector<size_t> bounds { 0 };
+    for (const uint32_t start : hole_starts) {
+        bounds.push_back(start);
     }
-    if (signed_area(pts, ring) < 0.F) {
-        std::ranges::reverse(ring);
-    }
+    bounds.push_back(pts.size());
 
-    tris.reserve(pts.size() - 2);
-    while (ring.size() > 3) {
-        const size_t n = ring.size();
-        bool clipped = false;
-
-        for (size_t i = 0; i < n && !clipped; ++i) {
-            const size_t prev = (i + n - 1) % n;
-            const size_t next = (i + 1) % n;
-            const glm::vec2 a = pts[ring[prev]];
-            const glm::vec2 b = pts[ring[i]];
-            const glm::vec2 c = pts[ring[next]];
-            if (turn(a, b, c) <= 0.F) {
-                continue;
-            }
-
-            bool blocked = false;
-            for (size_t j = 0; j < n && !blocked; ++j) {
-                if (j == prev || j == i || j == next) {
-                    continue;
-                }
-                blocked = inside_ccw(pts[ring[j]], a, b, c);
-            }
-            if (blocked) {
-                continue;
-            }
-
-            tris.push_back({ ring[prev], ring[i], ring[next] });
-            ring.erase(ring.begin() + static_cast<std::ptrdiff_t>(i));
-            clipped = true;
-        }
-
-        if (!clipped) {
+    for (size_t r = 0; r + 1 < bounds.size(); ++r) {
+        if (bounds[r + 1] < bounds[r] + 3) {
             return {};
         }
     }
-
-    if (turn(pts[ring[0]], pts[ring[1]], pts[ring[2]]) <= 0.F) {
+    if (!rings_valid(pts, bounds)) {
         return {};
     }
-    tris.push_back({ ring[0], ring[1], ring[2] });
-    return tris;
+
+    const size_t rings = bounds.size() - 1;
+    std::vector<std::vector<uint32_t>> ring_idx(rings);
+    for (size_t r = 0; r < rings; ++r) {
+        for (size_t i = bounds[r]; i < bounds[r + 1]; ++i) {
+            ring_idx[r].push_back(static_cast<uint32_t>(i));
+        }
+    }
+    if (signed_area(pts, ring_idx[0]) < 0.F) {
+        std::ranges::reverse(ring_idx[0]);
+    }
+    for (size_t r = 1; r < rings; ++r) {
+        if (signed_area(pts, ring_idx[r]) > 0.F) {
+            std::ranges::reverse(ring_idx[r]);
+        }
+    }
+
+    std::vector<uint32_t> merged = ring_idx[0];
+    std::vector<Bridge> bridges;
+    for (size_t r = 1; r < rings; ++r) {
+        const std::vector<uint32_t>& hole = ring_idx[r];
+
+        size_t m = 0;
+        for (size_t t = 1; t < hole.size(); ++t) {
+            if (pts[hole[t]].x > pts[hole[m]].x) {
+                m = t;
+            }
+        }
+        const size_t anchor = hole[m];
+
+        std::optional<size_t> best;
+        float best_d2 = std::numeric_limits<float>::max();
+        for (size_t p = 0; p < merged.size(); ++p) {
+            const glm::vec2 d = pts[anchor] - pts[merged[p]];
+            const float d2 = glm::dot(d, d);
+            if (d2 < best_d2 && bridge_visible(pts, bounds, anchor, merged[p], bridges)) {
+                best_d2 = d2;
+                best = p;
+            }
+        }
+        if (!best) {
+            return {};
+        }
+
+        const size_t p = *best;
+        bridges.push_back({ .a = anchor, .b = merged[p] });
+
+        std::vector<uint32_t> out;
+        out.reserve(merged.size() + hole.size() + 2);
+        out.insert(out.end(), merged.begin(), merged.begin() + static_cast<std::ptrdiff_t>(p) + 1);
+        for (size_t t = 0; t <= hole.size(); ++t) {
+            out.push_back(hole[(m + t) % hole.size()]);
+        }
+        out.push_back(merged[p]);
+        out.insert(out.end(), merged.begin() + static_cast<std::ptrdiff_t>(p) + 1, merged.end());
+        merged = std::move(out);
+    }
+
+    return clip_ears(pts, std::move(merged));
 }
 
 std::vector<Kakshya::Vertex> fill_polygon(std::span<const glm::vec2> pts, glm::vec4 color)
