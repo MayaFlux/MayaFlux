@@ -523,9 +523,10 @@ std::optional<ImageData> ImageReader::load(
         desired_channels);
 
     if (!pixels) {
+        const auto* reason = stbi_failure_reason();
         MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
             "Failed to decode image: {} - {}",
-            path.string(), stbi_failure_reason());
+            path.string(), reason ? reason : "failure details unavailable");
         return std::nullopt;
     }
 
@@ -607,9 +608,10 @@ std::optional<ImageData> ImageReader::load_from_memory(const void* data, size_t 
         load_as);
 
     if (!pixels) {
+        const auto* reason = stbi_failure_reason();
         MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
             "Failed to decode image from memory: {}",
-            stbi_failure_reason());
+            reason ? reason : "failure details unavailable");
         return std::nullopt;
     }
 
