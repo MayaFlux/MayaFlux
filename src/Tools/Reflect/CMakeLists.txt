@@ -1,5 +1,6 @@
 add_executable(mayaflux_reflect
     MayaFluxReflect.cpp
+    Check.cpp
     Collector.cpp
     Discovery.cpp
     Scan.cpp

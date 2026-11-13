@@ -7,6 +7,9 @@ namespace MayaFlux::Reflect::Tool {
 /** @brief Path of the sidecar for @p header: Name.hpp becomes Name.describe.hpp beside it. */
 [[nodiscard]] std::filesystem::path sidecar_path(const std::filesystem::path& header);
 
+/** @brief The whole content of @p path, or nullopt when it cannot be read. */
+[[nodiscard]] std::optional<std::string> read_text(const std::filesystem::path& path);
+
 /** @brief Text of the sidecar for one header, with its records sorted by name. */
 [[nodiscard]] std::string render_sidecar(const HeaderRequests& requests);
 

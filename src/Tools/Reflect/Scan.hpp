@@ -15,6 +15,7 @@ struct ScanInput {
     std::vector<std::filesystem::path> headers;
     std::string resource_dir;
     std::vector<std::string> extra_args;
+    std::vector<std::string> stubs;
 };
 
 /**
@@ -24,6 +25,10 @@ struct ScanInput {
  * or of the first database entry under a root, then the first entry overall.
  * Its source is replaced in memory by the marker definitions and an include of
  * each header. Precompiled-header inputs are dropped from the command.
+ *
+ * Each name in input.stubs is written as an empty header into the scan's
+ * temporary directory, which is added as an include path. A header whose
+ * sidecar does not exist yet still parses, and the source tree is not touched.
  *
  * @return false with @p error set when the database, the command or Clang fails.
  */

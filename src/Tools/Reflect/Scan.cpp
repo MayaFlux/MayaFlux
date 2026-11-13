@@ -189,6 +189,19 @@ bool scan(const ScanInput& input, RequestCollector& collector, std::string& erro
         }
     }
 
+    ScanInput effective = input;
+    if (!input.stubs.empty()) {
+        for (const std::string& stub : input.stubs) {
+            std::ofstream file(cleanup.path / stub, std::ios::binary | std::ios::trunc);
+            file << "#pragma once\n";
+            if (!file) {
+                error = "cannot write " + (cleanup.path / stub).string();
+                return false;
+            }
+        }
+        effective.extra_args.push_back("-I" + cleanup.path.generic_string());
+    }
+
     clang::tooling::CompileCommand command = commands.front();
     if (!retarget(command, unit, scan_file)) {
         error = "the compile command of " + unit.string() + " does not name its source file";
@@ -199,7 +212,7 @@ bool scan(const ScanInput& input, RequestCollector& collector, std::string& erro
 
     const ScanDatabase scan_database(std::move(command));
     clang::tooling::ClangTool tool(scan_database, { scan_file.string() });
-    tool.appendArgumentsAdjuster(make_adjuster(input));
+    tool.appendArgumentsAdjuster(make_adjuster(effective));
 
     clang::ast_matchers::MatchFinder finder;
     collector.attach(finder);

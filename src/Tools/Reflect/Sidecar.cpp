@@ -6,17 +6,6 @@ namespace {
 
     constexpr const char* stub_text = "#pragma once\n";
 
-    std::optional<std::string> read_text(const std::filesystem::path& path)
-    {
-        std::ifstream stream(path, std::ios::binary);
-        if (!stream) {
-            return std::nullopt;
-        }
-        std::ostringstream content;
-        content << stream.rdbuf();
-        return content.str();
-    }
-
     std::vector<unsigned> include_lines(const std::string& text, const std::string& quoted)
     {
         std::vector<unsigned> includes;
@@ -36,6 +25,17 @@ namespace {
         return includes;
     }
 
+}
+
+std::optional<std::string> read_text(const std::filesystem::path& path)
+{
+    std::ifstream stream(path, std::ios::binary);
+    if (!stream) {
+        return std::nullopt;
+    }
+    std::ostringstream content;
+    content << stream.rdbuf();
+    return content.str();
 }
 
 bool insert_include(const HeaderRequests& requests, bool& inserted, std::string& error)

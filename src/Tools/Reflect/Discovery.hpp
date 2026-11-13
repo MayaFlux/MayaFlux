@@ -11,4 +11,7 @@ namespace MayaFlux::Reflect::Tool {
  */
 [[nodiscard]] std::vector<std::filesystem::path> discover_headers(const std::vector<std::filesystem::path>& roots);
 
+/** @brief Every Name.describe.hpp under the directories among @p roots, canonical and sorted. */
+[[nodiscard]] std::vector<std::filesystem::path> discover_sidecars(const std::vector<std::filesystem::path>& roots);
+
 }

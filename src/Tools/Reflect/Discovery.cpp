@@ -66,4 +66,26 @@ std::vector<std::filesystem::path> discover_headers(const std::vector<std::files
     return found;
 }
 
+std::vector<std::filesystem::path> discover_sidecars(const std::vector<std::filesystem::path>& roots)
+{
+    std::vector<std::filesystem::path> found;
+    std::error_code code;
+    for (const auto& root : roots) {
+        if (!std::filesystem::is_directory(root, code)) {
+            continue;
+        }
+        for (std::filesystem::recursive_directory_iterator it(root, code), end; it != end; it.increment(code)) {
+            if (code) {
+                break;
+            }
+            if (it->is_regular_file(code) && it->path().filename().string().ends_with(".describe.hpp")) {
+                found.push_back(std::filesystem::canonical(it->path(), code));
+            }
+        }
+    }
+    std::ranges::sort(found);
+    found.erase(std::ranges::unique(found).begin(), found.end());
+    return found;
+}
+
 }

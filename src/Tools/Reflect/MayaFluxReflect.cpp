@@ -1,3 +1,4 @@
+#include "Check.hpp"
 #include "Discovery.hpp"
 #include "Scan.hpp"
 #include "Sidecar.hpp"
@@ -18,6 +19,7 @@ struct Config {
     std::string resource_dir;
     std::vector<std::string> extra_args;
     bool insert_includes { true };
+    bool check { false };
 };
 
 int fail(const std::string& message)
@@ -44,13 +46,18 @@ int generate(const Config& config)
     }
 
     std::string error;
+    ScanInput input;
     for (const auto& header : headers) {
-        if (!ensure_stub(sidecar_path(header), error)) {
+        const std::filesystem::path sidecar = sidecar_path(header);
+        if (config.check) {
+            if (!std::filesystem::exists(sidecar)) {
+                input.stubs.push_back(sidecar.filename().string());
+            }
+        } else if (!ensure_stub(sidecar, error)) {
             return fail(error);
         }
     }
 
-    ScanInput input;
     input.build_path = config.build_path;
     input.translation_unit = config.translation_unit;
     input.roots = config.roots;
@@ -71,6 +78,20 @@ int generate(const Config& config)
     if (collector.requests().empty()) {
         return fail("no MF_DESCRIBE requests were recognised in the selected headers (marker aliases matched: "
             + std::to_string(collector.matched()) + ", skipped: " + std::to_string(collector.skipped()) + ")");
+    }
+
+    if (config.check) {
+        const auto existing = config.roots.empty() ? std::vector<std::filesystem::path> {} : discover_sidecars(config.roots);
+        const auto problems = check_sidecars(collector.requests(), headers, existing);
+        for (const auto& problem : problems) {
+            std::cerr << problem << '\n';
+        }
+        if (problems.empty()) {
+            std::cout << "All " << collector.requests().size() << " sidecars are current\n";
+            return 0;
+        }
+        std::cout << problems.size() << " problem(s) found\n";
+        return 1;
     }
 
     bool clean = true;
@@ -134,6 +155,10 @@ int main(int argc, const char** argv)
         llvm::cl::desc("Report a missing sidecar include instead of inserting it"),
         llvm::cl::cat(category));
 
+    llvm::cl::opt<bool> check("check",
+        llvm::cl::desc("Write nothing; exit 1 when a sidecar, its include or a marker is out of date"),
+        llvm::cl::cat(category));
+
     llvm::cl::HideUnrelatedOptions(category);
     llvm::cl::ParseCommandLineOptions(argc, argv,
         "Writes a Name.describe.hpp sidecar beside each header that holds MF_DESCRIBE requests.\n");
@@ -146,6 +171,7 @@ int main(int argc, const char** argv)
     config.resource_dir = resource_dir.getValue();
     config.extra_args.assign(extra_args.begin(), extra_args.end());
     config.insert_includes = !no_insert_include;
+    config.check = check;
 
     if (config.roots.empty() && config.headers.empty()) {
         config.roots.emplace_back(std::filesystem::is_directory("src/MayaFlux") ? "src/MayaFlux" : "src");
