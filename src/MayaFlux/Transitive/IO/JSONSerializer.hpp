@@ -21,10 +21,8 @@ namespace MayaFlux::IO {
  * through its members, keyed by member name. A std::optional member is omitted
  * when empty. A std::any member, or a container of it, is never persisted and
  * is left out of both directions. Any other member without an encoding fails to
- * compile, so a missing Serializer specialization is never skipped silently. A type with a static
- * constexpr describe() returning Property / OptionalProperty descriptors is
- * handled the same way, and the generated description wins when a type has
- * both. Other types fall through to nlohmann's native converters (arithmetic,
+ * compile, so a missing Serializer specialization is never skipped silently.
+ * Other types fall through to nlohmann's native converters (arithmetic,
  * std::string, bool) or to the built-in dispatchers for std::vector,
  * std::optional and std::unordered_map / std::map
  *
@@ -50,7 +48,7 @@ public:
 
     /**
      * @brief Serialize @p value to a JSON string.
-     * @tparam T Any Reflectable struct, std::vector<Reflectable>, arithmetic
+     * @tparam T Any described struct, std::vector of one, arithmetic
      *           type, std::string, std::optional<T> or std::unordered_map
      * @param indent Spaces per indentation level (-1 for compact).
      */
@@ -178,7 +176,7 @@ private:
     template <typename T>
     static constexpr bool encodable()
     {
-        if constexpr (Reflect::Described<T> || Reflect::Reflectable<T>) {
+        if constexpr (Reflect::Described<T>) {
             return true;
         } else if constexpr (Reflect::is_optional_v<T>) {
             return encodable<typename Reflect::is_optional<T>::inner>();
@@ -238,14 +236,6 @@ private:
                 },
                 Reflect::Generated::Description<T>::members());
             return j;
-        } else if constexpr (Reflect::Reflectable<T>) {
-            nlohmann::json j = nlohmann::json::object();
-            std::apply(
-                [&](const auto&... props) {
-                    (encode_property(j, val, props), ...);
-                },
-                T::describe());
-            return j;
         } else if constexpr (Reflect::is_optional_v<T>) {
             if (!val.has_value()) {
                 return nullptr;
@@ -273,27 +263,6 @@ private:
         }
     }
 
-    template <typename Class, typename T>
-    static void encode_property(
-        nlohmann::json& j,
-        const Class& obj,
-        const Reflect::Property<Class, T>& prop)
-    {
-        j[prop.key] = to_json(obj.*prop.member);
-    }
-
-    template <typename Class, typename T>
-    static void encode_property(
-        nlohmann::json& j,
-        const Class& obj,
-        const Reflect::OptionalProperty<Class, T>& prop)
-    {
-        const auto& opt = obj.*prop.member;
-        if (opt.has_value()) {
-            j[prop.key] = to_json(*opt);
-        }
-    }
-
     // -----------------------------------------------------------------------
     // Decoding engine
     // -----------------------------------------------------------------------
@@ -310,15 +279,6 @@ private:
                     (decode_member(j, out, members), ...);
                 },
                 Reflect::Generated::Description<T>::members());
-        } else if constexpr (Reflect::Reflectable<T>) {
-            if (!j.is_object()) {
-                throw nlohmann::json::type_error::create(302, "expected object for Reflectable type", &j);
-            }
-            std::apply(
-                [&](const auto&... props) {
-                    (decode_property(j, out, props), ...);
-                },
-                T::describe());
         } else if constexpr (Reflect::is_optional_v<T>) {
             using Inner = typename Reflect::is_optional<T>::inner;
             if (j.is_null()) {
@@ -358,32 +318,6 @@ private:
 
         } else {
             Serializer<T>::from_json(j, out);
-        }
-    }
-
-    template <typename Class, typename T>
-    static void decode_property(
-        const nlohmann::json& j,
-        Class& obj,
-        const Reflect::Property<Class, T>& prop)
-    {
-        if (j.contains(prop.key)) {
-            from_json(j.at(prop.key), obj.*prop.member);
-        }
-    }
-
-    template <typename Class, typename T>
-    static void decode_property(
-        const nlohmann::json& j,
-        Class& obj,
-        const Reflect::OptionalProperty<Class, T>& prop)
-    {
-        if (!j.contains(prop.key) || j.at(prop.key).is_null()) {
-            obj.*prop.member = std::nullopt;
-        } else {
-            T inner {};
-            from_json(j.at(prop.key), inner);
-            obj.*prop.member = std::move(inner);
         }
     }
 };

@@ -13,48 +13,6 @@
 
 namespace MayaFlux {
 
-namespace {
-    struct JournalConfig {
-        std::string severity; // "TRACE" "DEBUG" "INFO" "WARN" "ERROR" "FATAL"
-        bool sink_to_console { false };
-        std::string log_file; // empty = no file sink
-        std::vector<std::string> disable_components; // names from Journal::Component enum
-        std::vector<std::string> disable_contexts; // names from Journal::Context enum
-        std::vector<std::string> include_components;
-        std::vector<std::string> include_contexts;
-
-        static constexpr auto describe()
-        {
-            return std::make_tuple(
-                Reflect::member("severity", &JournalConfig::severity),
-                Reflect::member("sink_to_console", &JournalConfig::sink_to_console),
-                Reflect::member("log_file", &JournalConfig::log_file),
-                Reflect::member("disable_components", &JournalConfig::disable_components),
-                Reflect::member("disable_contexts", &JournalConfig::disable_contexts),
-                Reflect::member("include_components", &JournalConfig::include_components),
-                Reflect::member("include_contexts", &JournalConfig::include_contexts));
-        }
-    };
-
-    struct EngineConfig {
-        Core::GlobalStreamInfo stream;
-        Core::GlobalGraphicsConfig graphics;
-        Core::GlobalInputConfig input;
-        Core::GlobalNetworkConfig network;
-        JournalConfig journal;
-
-        static constexpr auto describe()
-        {
-            return std::make_tuple(
-                Reflect::member("stream", &EngineConfig::stream),
-                Reflect::member("graphics", &EngineConfig::graphics),
-                Reflect::member("input", &EngineConfig::input),
-                Reflect::member("network", &EngineConfig::network),
-                Reflect::member("journal", &EngineConfig::journal));
-        }
-    };
-}
-
 bool is_engine_configured()
 {
     return is_configured();
@@ -189,7 +147,7 @@ void sink_journal_to_console()
 bool load_config_from_file(const std::string& path)
 {
     IO::JSONSerializer ser;
-    auto result = ser.read<EngineConfig>(path);
+    auto result = ser.read<Core::ConfigFileSchema>(path);
     if (!result) {
         MF_ERROR(Journal::Component::API, Journal::Context::Configuration,
             "Failed to load config from {}: {}", path, ser.last_error());

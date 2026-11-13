@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Transitive/Reflect/Describe.hpp"
 #include "MayaFlux/Transitive/Reflect/EnumReflect.hpp"
 
 #include "chrono"
@@ -153,6 +154,25 @@ enum class Context : uint8_t {
 };
 
 /**
+ * @struct Settings
+ * @brief Journal settings as a config file spells them.
+ *
+ * Severity and the component and context lists are enumerator names, resolved
+ * to Severity, Component and Context by whoever applies the settings.
+ */
+struct Settings {
+    std::string severity; ///< Severity enumerator name, empty to leave it unchanged
+    bool sink_to_console { false };
+    std::string log_file; ///< Empty for no file sink
+    std::vector<std::string> disable_components; ///< Component enumerator names to silence
+    std::vector<std::string> disable_contexts; ///< Context enumerator names to silence
+    std::vector<std::string> include_components; ///< Component enumerator names to keep, others are dropped
+    std::vector<std::string> include_contexts; ///< Context enumerator names to keep, others are dropped
+};
+
+MF_DESCRIBE(Settings)
+
+/**
  * @brief A log entry structure to encapsulate log message details.
  */
 struct MAYAFLUX_API JournalEntry {
@@ -192,3 +212,4 @@ struct MAYAFLUX_API JournalEntry {
 };
 
 }
+#include "JournalEntry.describe.hpp"
