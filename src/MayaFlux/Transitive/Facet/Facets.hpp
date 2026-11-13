@@ -76,8 +76,8 @@ namespace detail {
  * @class FacetMember
  * @brief Key for one data member of a struct, identified by its member pointer.
  *
- * A struct declares its keys with a static describe_facets() returning a tuple
- * of FacetMember values. Every instance of the struct produces the same keys.
+ * Facets::from builds one of these for every member of a struct described with
+ * MF_DESCRIBE. Every instance of the struct produces the same keys.
  *
  * @tparam Member Pointer to a non-static data member.
  */
@@ -98,7 +98,7 @@ struct FacetMember {
  * Values are held as shared immutable entries, so copying a Facets copies
  * pointers and never the values. Writing replaces an entry; get() returns a
  * const view that stays valid until that entry is replaced or erased.
- * Described structs may also be stored by type, separately from Facet keys.
+ * Any struct may also be stored whole by its type, separately from Facet keys.
  */
 class Facets {
 public:
@@ -149,24 +149,6 @@ public:
                     ...);
             },
             Reflect::Generated::Description<S>::members());
-        return bag;
-    }
-
-    /**
-     * @brief Builds a bag holding every data member of @p value, from describe_facets().
-     * @tparam S A struct with a static describe_facets() returning a tuple of FacetMember.
-     */
-    template <typename S>
-        requires(!requires { Reflect::Generated::Description<S>::members(); }
-            && requires { S::describe_facets(); })
-    [[nodiscard]] static Facets from(const S& value)
-    {
-        Facets bag;
-        std::apply(
-            [&](auto... keys) {
-                (bag.set(keys, value.*(decltype(keys)::member)), ...);
-            },
-            S::describe_facets());
         return bag;
     }
 

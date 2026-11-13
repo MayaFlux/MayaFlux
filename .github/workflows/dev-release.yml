@@ -61,6 +61,7 @@ jobs:
       is_dev: "1"
       run_tests: false
       create_distribution: true
+      run_reflect_check: true
 
   build_linux_arch:
     needs: [determine_version, should_run]
@@ -75,6 +76,7 @@ jobs:
       create_distribution: true
       artifact_name: MayaFlux-${{ needs.determine_version.outputs.VERSION }}-linux-arch
       distribution_name: linux-arch
+      run_reflect_check: true
       os_display_name: Arch Linux
 
   build_windows:

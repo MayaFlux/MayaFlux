@@ -19,6 +19,10 @@ on:
         required: false
         type: boolean
         default: true
+      run_reflect_check:
+        required: false
+        type: boolean
+        default: false
       artifact_name:
         required: true
         type: string
@@ -119,6 +123,11 @@ jobs:
       - name: Build
         shell: bash
         run: cmake --build --preset "${{ env.PRESET }}"
+
+      - name: Check reflection sidecars
+        if: ${{ inputs.run_reflect_check }}
+        shell: bash
+        run: ./build/mayaflux_reflect --check
 
       - name: Install to staging directory
         if: ${{ inputs.create_distribution != false }}
