@@ -13,6 +13,12 @@
 #include <utility>
 #include <vector>
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4291)
+#pragma warning(disable : 4805)
+#endif
+
 #include <clang/AST/Decl.h>
 #include <clang/AST/DeclCXX.h>
 #include <clang/AST/DeclTemplate.h>
@@ -26,3 +32,7 @@
 #include <llvm/ADT/SmallString.h>
 #include <llvm/Support/CommandLine.h>
 #include <llvm/Support/FileSystem.h>
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
