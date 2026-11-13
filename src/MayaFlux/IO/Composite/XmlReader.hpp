@@ -15,6 +15,92 @@ namespace MayaFlux::IO {
  */
 [[nodiscard]] MAYAFLUX_API Kakshya::CompositeLayout xml_composite_layout();
 
+enum class XmlFieldKind { Attribute, Element };
+
+struct XmlFieldView;
+
+/**
+ * @brief Borrowed XML element with named attributes and immediate child elements.
+ * @note The view and its strings are invalid after the reader is closed,
+ * reopened, moved, or destroyed.
+ */
+class MAYAFLUX_API XmlElementView {
+public:
+    [[nodiscard]] uint64_t row() const noexcept { return m_row; }
+    [[nodiscard]] std::string_view name() const noexcept;
+    [[nodiscard]] std::optional<std::string_view> attribute(std::string_view name) const noexcept;
+
+    /**
+     * @brief Visit attributes and immediate child elements in document order.
+     * @return False if a boolean visitor stops traversal; true otherwise.
+     */
+    template <typename Fn>
+    bool for_each_field(Fn&& visitor) const;
+
+private:
+    friend class XmlReader;
+
+    XmlElementView(const Kakshya::CompositeArray& rows,
+        const std::vector<size_t>& subtree_end, size_t row) noexcept
+        : m_rows(&rows)
+        , m_subtree_end(&subtree_end)
+        , m_row(row)
+    {
+    }
+
+    const Kakshya::CompositeArray* m_rows;
+    const std::vector<size_t>* m_subtree_end;
+    size_t m_row;
+};
+
+/**
+ * @brief One attribute or immediate child element borrowed from an XML element.
+ * Attribute value is text; element is present only for a child element.
+ */
+struct XmlFieldView {
+    XmlFieldKind kind;
+    std::string_view name;
+    std::string_view value;
+    uint64_t row;
+    std::optional<XmlElementView> element;
+};
+
+template <typename Fn>
+bool XmlElementView::for_each_field(Fn&& visitor) const
+{
+    for (size_t index = m_row + 1; index < (*m_subtree_end)[m_row];
+         index = (*m_subtree_end)[index]) {
+        const auto source = m_rows->at(index);
+        if (!source)
+            continue;
+
+        const auto kind = source->text("kind");
+        if (!kind || (*kind != "attribute" && *kind != "element"))
+            continue;
+
+        const auto field_name = source->text("name");
+        if (!field_name)
+            continue;
+
+        const XmlFieldView field {
+            .kind = *kind == "attribute" ? XmlFieldKind::Attribute : XmlFieldKind::Element,
+            .name = *field_name,
+            .value = source->text("value").value_or(std::string_view {}),
+            .row = static_cast<uint64_t>(index),
+            .element = *kind == "element"
+                ? std::optional<XmlElementView>(XmlElementView(*m_rows, *m_subtree_end, index))
+                : std::nullopt,
+        };
+        if constexpr (std::same_as<std::invoke_result_t<Fn&, const XmlFieldView&>, bool>) {
+            if (!std::invoke(visitor, field))
+                return false;
+        } else {
+            std::invoke(visitor, field);
+        }
+    }
+    return true;
+}
+
 /**
  * @class XmlReader
  * @brief Read an XML document into preorder Composite rows.
@@ -75,6 +161,18 @@ public:
     /** @brief Copy the finalized node layout while open. */
     [[nodiscard]] std::optional<Kakshya::CompositeLayout> get_layout() const override;
 
+    /** @brief Borrow the document root element, independent of the row read position. */
+    [[nodiscard]] std::optional<XmlElementView> root_element() const noexcept;
+
+    /** @brief Borrow an element by its global XML row index. */
+    [[nodiscard]] std::optional<XmlElementView> element_at(uint64_t row) const noexcept;
+
+    /** @brief Borrow the parsed XML rows while the reader remains open. */
+    [[nodiscard]] const Kakshya::CompositeArray* rows_view() const noexcept
+    {
+        return m_rows ? &*m_rows : nullptr;
+    }
+
     /** @brief Global index of the next row. */
     [[nodiscard]] std::vector<uint64_t> get_read_position() const override { return { m_position }; }
 
@@ -98,6 +196,7 @@ public:
 
 private:
     std::optional<Kakshya::CompositeArray> m_rows;
+    std::vector<size_t> m_subtree_end;
     std::string m_filepath;
     uint64_t m_position {};
 };

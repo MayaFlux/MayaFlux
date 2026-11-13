@@ -20,6 +20,24 @@ Kakshya::CompositeLayout xml_composite_layout()
     return layout;
 }
 
+std::string_view XmlElementView::name() const noexcept
+{
+    const auto source = m_rows->at(m_row);
+    return source ? source->text("name").value_or(std::string_view {}) : std::string_view {};
+}
+
+std::optional<std::string_view> XmlElementView::attribute(std::string_view name) const noexcept
+{
+    for (size_t index = m_row + 1; index < (*m_subtree_end)[m_row]; ++index) {
+        const auto source = m_rows->at(index);
+        if (!source || source->text("kind") != std::string_view("attribute"))
+            break;
+        if (source->text("name") == name)
+            return source->text("value");
+    }
+    return std::nullopt;
+}
+
 namespace {
 
     constexpr uintmax_t max_xml_file_bytes = static_cast<const uintmax_t>(64 * 1024 * 1024);
@@ -183,6 +201,22 @@ bool XmlReader::open(const std::string& filepath, FileReadOptions)
         push_children(pending, entry.node, static_cast<uint64_t>(row), entry.depth + 1);
     }
 
+    std::vector<size_t> subtree_end(rows.size(), rows.size());
+    std::vector<size_t> ancestry;
+    ancestry.reserve(max_xml_depth + 2);
+    for (size_t index = 0; index < rows.size(); ++index) {
+        const auto source = rows.at(index);
+        const auto parent = source->get<uint64_t>("parent");
+        while (!ancestry.empty() && (!parent || ancestry.back() != *parent)) {
+            subtree_end[ancestry.back()] = index;
+            ancestry.pop_back();
+        }
+        ancestry.push_back(index);
+    }
+    for (const size_t index : ancestry)
+        subtree_end[index] = rows.size();
+
+    m_subtree_end = std::move(subtree_end);
     m_rows.emplace(std::move(rows));
     m_position = 0;
 
@@ -192,6 +226,7 @@ bool XmlReader::open(const std::string& filepath, FileReadOptions)
 void XmlReader::close()
 {
     m_rows.reset();
+    m_subtree_end.clear();
     m_filepath.clear();
     m_position = 0;
 }
@@ -250,6 +285,31 @@ std::optional<Kakshya::CompositeLayout> XmlReader::get_layout() const
         return std::nullopt;
 
     return m_rows->layout();
+}
+
+std::optional<XmlElementView> XmlReader::root_element() const noexcept
+{
+    if (!m_rows)
+        return std::nullopt;
+
+    for (size_t index = 0; index < m_rows->size(); index = m_subtree_end[index]) {
+        const auto source = m_rows->at(index);
+        if (source && source->text("kind") == std::string_view("element"))
+            return XmlElementView(*m_rows, m_subtree_end, index);
+    }
+    return std::nullopt;
+}
+
+std::optional<XmlElementView> XmlReader::element_at(uint64_t row) const noexcept
+{
+    if (!m_rows || row >= m_rows->size())
+        return std::nullopt;
+
+    const auto source = m_rows->at(static_cast<size_t>(row));
+    if (!source || source->text("kind") != std::string_view("element"))
+        return std::nullopt;
+
+    return XmlElementView(*m_rows, m_subtree_end, static_cast<size_t>(row));
 }
 
 bool XmlReader::seek(const std::vector<uint64_t>& position)
