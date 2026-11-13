@@ -114,6 +114,8 @@ install(FILES
 
 install(TARGETS lila_server RUNTIME DESTINATION bin)
 
+install(TARGETS mayaflux_reflect RUNTIME DESTINATION bin)
+
 install(TARGETS MayaFluxHost
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
