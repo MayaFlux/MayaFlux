@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Transitive/Reflect/Describe.hpp"
 #include "Analyzer.hpp"
 #include "MayaFlux/Kinesis/Vision/VisionInsight.hpp"
 #include "MayaFlux/Kinesis/Vision/VisionQuery.hpp"
@@ -39,18 +40,6 @@ namespace MayaFlux::Yantra {
  * DetectAnomaly, Register) resolve to nothing and add nothing to the analysis.
  */
 struct VisionAnalyzerConfig : AnalyzerConfig {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple_cat(
-            AnalyzerConfig::describe_facets(),
-            std::tuple {
-                FacetMember<&VisionAnalyzerConfig::method> {},
-                FacetMember<&VisionAnalyzerConfig::query> {},
-                FacetMember<&VisionAnalyzerConfig::context> {},
-                FacetMember<&VisionAnalyzerConfig::frame_index> {},
-            });
-    }
-
     /** Intents to satisfy. */
     Kinesis::Vision::VisionIntent method { Kinesis::Vision::VisionIntent::NONE };
     /** Per-intent parameters. Its own intents field is ignored in favour of method. */
@@ -68,6 +57,8 @@ struct VisionAnalyzerConfig : AnalyzerConfig {
         return resolved;
     }
 };
+
+MF_DESCRIBE(VisionAnalyzerConfig)
 
 /**
  * @class VisionAnalyzer
@@ -349,3 +340,4 @@ private:
 };
 
 } // namespace MayaFlux::Yantra
+#include "VisionAnalyzer.describe.hpp"

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Transitive/Reflect/Describe.hpp"
 #include "FFmpegDemuxContext.hpp"
 
 extern "C" {
@@ -16,19 +17,6 @@ namespace MayaFlux::IO {
  * Stored on FileMetadata for audio files.
  */
 struct AudioStreamInfo {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple {
-            FacetMember<&AudioStreamInfo::codec> {},
-            FacetMember<&AudioStreamInfo::codec_long_name> {},
-            FacetMember<&AudioStreamInfo::total_frames> {},
-            FacetMember<&AudioStreamInfo::sample_rate> {},
-            FacetMember<&AudioStreamInfo::channels> {},
-            FacetMember<&AudioStreamInfo::bit_rate> {},
-            FacetMember<&AudioStreamInfo::channel_layout> {},
-        };
-    }
-
     std::string codec; ///< Codec name (e.g., "pcm_s16le")
     std::string codec_long_name; ///< Codec long name
     uint64_t total_frames = 0; ///< Total sample frames in the stream
@@ -38,6 +26,8 @@ struct AudioStreamInfo {
     std::string channel_layout; ///< Human-readable channel layout description
 };
 
+MF_DESCRIBE(AudioStreamInfo)
+
 /**
  * @struct AudioStreamTags
  * @brief Metadata tags of one audio stream, in file order.
@@ -45,15 +35,10 @@ struct AudioStreamInfo {
  * Stored on FileMetadata for audio files. Keys and values are data read from the file.
  */
 struct AudioStreamTags {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple {
-            FacetMember<&AudioStreamTags::entries> {},
-        };
-    }
-
     std::vector<std::pair<std::string, std::string>> entries; ///< Tag key and value pairs
 };
+
+MF_DESCRIBE(AudioStreamTags)
 
 /**
  * @class AudioStreamContext
@@ -179,3 +164,4 @@ private:
 };
 
 } // namespace MayaFlux::IO
+#include "AudioStreamContext.describe.hpp"

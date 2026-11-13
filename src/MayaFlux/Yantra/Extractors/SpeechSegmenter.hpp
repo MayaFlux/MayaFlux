@@ -4,6 +4,7 @@
 
 #include "MayaFlux/Kinesis/Discrete/Extract.hpp"
 #include "MayaFlux/Kinesis/Discrete/IntervalScan.hpp"
+#include "MayaFlux/Transitive/Reflect/Describe.hpp"
 #include "MayaFlux/Yantra/Analyzers/VadAnalyzer.hpp"
 #include "MayaFlux/Yantra/Analyzers/WaveformAnalyzer.hpp"
 #include "MayaFlux/Yantra/Extractors/IntervalExtractor.hpp"
@@ -58,16 +59,6 @@ struct SpeechSettings {
  * as the network runs at that rate only.
  */
 struct SpeechSegmenterConfig : ExtractorConfig {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple_cat(
-            ExtractorConfig::describe_facets(),
-            std::tuple {
-                FacetMember<&SpeechSegmenterConfig::sample_rate> {},
-                FacetMember<&SpeechSegmenterConfig::speech> {},
-            });
-    }
-
     /** Sample rate in Hz of the input. Only 16000 is accepted. */
     double sample_rate { static_cast<double>(SileroVadModel::sample_rate) };
     /** How speech is found and measured. */
@@ -84,16 +75,6 @@ struct SpeechSegmenterConfig : ExtractorConfig {
  * voiced ones, 0 when none is.
  */
 struct SpeechSegmentation {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple {
-            FacetMember<&SpeechSegmentation::config> {},
-            FacetMember<&SpeechSegmentation::speech> {},
-            FacetMember<&SpeechSegmentation::voiced_fraction> {},
-            FacetMember<&SpeechSegmentation::f0> {},
-        };
-    }
-
     /** Settings the segmentation was produced under. */
     SpeechSegmenterConfig config;
     /** Speech intervals, half open sample ranges. */
@@ -103,6 +84,8 @@ struct SpeechSegmentation {
     /** Median frequency of each interval's voiced windows, empty unless measured. */
     std::vector<double> f0;
 };
+
+MF_DESCRIBE(SpeechSegmentation)
 
 /**
  * @brief The interval scan settings of speech runs, for a recording of the given length.
@@ -451,3 +434,4 @@ using RegionSpeechSegmenter = SpeechSegmenter<std::vector<Kakshya::DataVariant>,
 using AudioSpeechSegmenter = SpeechSegmenter<std::vector<Kakshya::DataVariant>, std::vector<Kakshya::DataVariant>>;
 
 } // namespace MayaFlux::Yantra
+#include "SpeechSegmenter.describe.hpp"

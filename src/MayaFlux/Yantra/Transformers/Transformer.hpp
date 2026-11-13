@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Transitive/Reflect/Describe.hpp"
 #include "MayaFlux/Transitive/Reflect/EnumReflect.hpp"
 #include "MayaFlux/Yantra/ComputeOperation.hpp"
 
@@ -9,8 +10,8 @@
  * @file Transformer.hpp
  * @brief Base for transformers. Settings are held in a config struct per family.
  *
- * Each family's config extends TransformerConfig and builds its facet list with
- * std::tuple_cat over the parent's describe_facets(). The config is set through
+ * Each family's config extends TransformerConfig and is described with
+ * MF_DESCRIBE, which includes the inherited settings. The config is set through
  * set_config and read through config().
  */
 
@@ -79,16 +80,6 @@ enum class TransformationScope : uint8_t {
  * Family configs extend this struct and add their own fields.
  */
 struct TransformerConfig : OperationConfig {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple {
-            FacetMember<&TransformerConfig::strategy> {},
-            FacetMember<&TransformerConfig::quality> {},
-            FacetMember<&TransformerConfig::scope> {},
-            FacetMember<&TransformerConfig::intensity> {},
-        };
-    }
-
     /** How the input is handled. */
     TransformationStrategy strategy { TransformationStrategy::BUFFERED };
     /** Requested quality level. */
@@ -98,6 +89,8 @@ struct TransformerConfig : OperationConfig {
     /** Amount of transformation, 0.0 to 2.0. */
     double intensity { 1.0 };
 };
+
+MF_DESCRIBE(TransformerConfig)
 
 /**
  * @class Transformer
@@ -224,3 +217,4 @@ private:
 };
 
 }
+#include "Transformer.describe.hpp"

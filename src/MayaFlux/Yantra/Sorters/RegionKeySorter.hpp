@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Transitive/Reflect/Describe.hpp"
 #include "BitonicSorter.hpp"
 #include "Sorter.hpp"
 
@@ -17,22 +18,14 @@ namespace MayaFlux::Yantra {
  * The keys are the terms of the score. The GPU threshold selects the dispatch path.
  */
 struct RegionKeySorterConfig : SorterConfig {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple_cat(
-            SorterConfig::describe_facets(),
-            std::tuple {
-                FacetMember<&RegionKeySorterConfig::keys> {},
-                FacetMember<&RegionKeySorterConfig::gpu_sort_threshold> {},
-            });
-    }
-
     /** Terms of the weighted sort score. Weights are validated on construction. */
     std::vector<SortKey> keys;
 
     /** Region count at or above which the GPU path is used. 0 keeps the sort on the CPU. */
     uint32_t gpu_sort_threshold { 0 };
 };
+
+MF_DESCRIBE(RegionKeySorterConfig)
 
 /**
  * @class RegionKeySorter
@@ -133,3 +126,4 @@ inline std::vector<size_t> RegionKeySorter::gpu_order(const std::vector<double>&
 }
 
 } // namespace MayaFlux::Yantra
+#include "RegionKeySorter.describe.hpp"

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Transitive/Reflect/Describe.hpp"
 #include "MayaFlux/Yantra/ComputeOperation.hpp"
 
 /**
@@ -59,16 +60,6 @@ enum class AnalysisGranularity : uint8_t {
  * config struct inherits these fields and adds its own method field, typed by its own enum.
  */
 struct AnalyzerConfig : OperationConfig {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple {
-            FacetMember<&AnalyzerConfig::window_size> {},
-            FacetMember<&AnalyzerConfig::hop_size> {},
-            FacetMember<&AnalyzerConfig::granularity> {},
-            FacetMember<&AnalyzerConfig::classification_enabled> {},
-        };
-    }
-
     /** Analysis window length in samples. */
     uint32_t window_size { 256 };
     /** Distance between successive windows in samples. */
@@ -78,6 +69,8 @@ struct AnalyzerConfig : OperationConfig {
     /** Whether to classify energy or value levels. */
     bool classification_enabled { false };
 };
+
+MF_DESCRIBE(AnalyzerConfig)
 
 /**
  * @class Analyzer
@@ -275,3 +268,4 @@ template <ComputeData InputType = std::vector<Kakshya::DataVariant>>
 using VectorAnalyzer = Analyzer<InputType, Eigen::VectorXd>;
 
 } // namespace MayaFlux::Yantra
+#include "Analyzer.describe.hpp"

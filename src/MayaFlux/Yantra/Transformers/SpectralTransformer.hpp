@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Transitive/Reflect/Describe.hpp"
 #include "MayaFlux/Kinesis/Discrete/Spectral.hpp"
 #include "Transformer.hpp"
 
@@ -24,24 +25,6 @@ enum class SpectralOperation : uint8_t {
  * @brief Settings of SpectralTransformer, stored whole in the operation's facets.
  */
 struct SpectralTransformerConfig : TransformerConfig {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple_cat(
-            TransformerConfig::describe_facets(),
-            std::tuple {
-                FacetMember<&SpectralTransformerConfig::operation> {},
-                FacetMember<&SpectralTransformerConfig::shift_hz> {},
-                FacetMember<&SpectralTransformerConfig::pitch_ratio> {},
-                FacetMember<&SpectralTransformerConfig::low_freq> {},
-                FacetMember<&SpectralTransformerConfig::high_freq> {},
-                FacetMember<&SpectralTransformerConfig::enhancement_factor> {},
-                FacetMember<&SpectralTransformerConfig::threshold> {},
-                FacetMember<&SpectralTransformerConfig::sample_rate> {},
-                FacetMember<&SpectralTransformerConfig::window_size> {},
-                FacetMember<&SpectralTransformerConfig::hop_size> {},
-            });
-    }
-
     /** Spectral operation to apply. */
     Reflect::EnumByte<SpectralOperation> operation { SpectralOperation::FREQUENCY_SHIFT };
     /** FREQUENCY_SHIFT: shift applied to the passband, in Hz. */
@@ -63,6 +46,8 @@ struct SpectralTransformerConfig : TransformerConfig {
     /** STFT hop length in samples. */
     uint32_t hop_size { 512 };
 };
+
+MF_DESCRIBE(SpectralTransformerConfig)
 
 /**
  * @class SpectralTransformer
@@ -178,3 +163,4 @@ private:
 };
 
 }
+#include "SpectralTransformer.describe.hpp"

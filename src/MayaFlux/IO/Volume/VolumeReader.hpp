@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Transitive/Reflect/Describe.hpp"
 #include "MayaFlux/IO/FileReader.hpp"
 #include "MayaFlux/Kakshya/NDData/VolumeData.hpp"
 
@@ -16,15 +17,10 @@ namespace MayaFlux::IO {
  * Stored on FileMetadata by VolumeReader.
  */
 struct VolumeInfo {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple {
-            FacetMember<&VolumeInfo::grid_count> {},
-        };
-    }
-
     uint64_t grid_count = 0; ///< Number of grids in the archive
 };
+
+MF_DESCRIBE(VolumeInfo)
 
 /**
  * @struct VolumeReadOptions
@@ -263,3 +259,4 @@ private:
 };
 
 } // namespace MayaFlux::IO
+#include "VolumeReader.describe.hpp"

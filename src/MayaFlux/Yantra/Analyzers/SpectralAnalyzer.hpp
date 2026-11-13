@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Transitive/Reflect/Describe.hpp"
 #include "MayaFlux/Transitive/Reflect/EnumReflect.hpp"
 #include "MayaFlux/Yantra/OperationSpec/OperationHelper.hpp"
 
@@ -39,17 +40,6 @@ enum class SpectralMethod : uint8_t {
  * window_size is the transform length: a power of two from 2 to 2048.
  */
 struct SpectralAnalyzerConfig : AnalyzerConfig {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple_cat(
-            AnalyzerConfig::describe_facets(),
-            std::tuple {
-                FacetMember<&SpectralAnalyzerConfig::method> {},
-                FacetMember<&SpectralAnalyzerConfig::band_edges> {},
-                FacetMember<&SpectralAnalyzerConfig::taper> {},
-            });
-    }
-
     /** Value reported as the output data, as a SpectralMethod value. */
     Reflect::EnumByte<SpectralMethod> method { SpectralMethod::TOTAL_POWER };
     /** Ascending band boundaries as fractions of the Nyquist frequency, 0 to 1. N edges make N - 1 bands. */
@@ -57,6 +47,8 @@ struct SpectralAnalyzerConfig : AnalyzerConfig {
     /** Multiply each window by a Hann taper before the transform. */
     bool taper { true };
 };
+
+MF_DESCRIBE(SpectralAnalyzerConfig)
 
 /**
  * @struct ChannelSpectrum
@@ -76,18 +68,12 @@ struct MAYAFLUX_API ChannelSpectrum {
  * @brief Analysis result of a SpectralAnalyzer.
  */
 struct MAYAFLUX_API SpectralAnalysis {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple {
-            FacetMember<&SpectralAnalysis::config> {},
-            FacetMember<&SpectralAnalysis::channels> {},
-        };
-    }
-
     /** Settings the analysis was produced under. */
     SpectralAnalyzerConfig config;
     std::vector<ChannelSpectrum> channels;
 };
+
+MF_DESCRIBE(SpectralAnalysis)
 
 /**
  * @class SpectralAnalyzer
@@ -409,3 +395,4 @@ using StandardSpectralAnalyzer = SpectralAnalyzer<std::vector<Kakshya::DataVaria
 using ContainerSpectralAnalyzer = SpectralAnalyzer<std::shared_ptr<Kakshya::SignalSourceContainer>, Eigen::MatrixXd>;
 
 } // namespace MayaFlux::Yantra
+#include "SpectralAnalyzer.describe.hpp"

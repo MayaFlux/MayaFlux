@@ -7,6 +7,7 @@ struct AVDictionaryEntry;
 struct AVDictionary;
 }
 
+#include "MayaFlux/Transitive/Reflect/Describe.hpp"
 #include "MayaFlux/IO/FileReader.hpp"
 
 namespace MayaFlux::IO {
@@ -18,17 +19,11 @@ namespace MayaFlux::IO {
  * Stored on FileMetadata. Duration is absent when the container does not report it.
  */
 struct ContainerInfo {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple {
-            FacetMember<&ContainerInfo::duration_seconds> {},
-            FacetMember<&ContainerInfo::bit_rate> {},
-        };
-    }
-
     std::optional<double> duration_seconds; ///< Container duration in seconds, when known
     int64_t bit_rate = 0; ///< Container bit rate in bits per second
 };
+
+MF_DESCRIBE(ContainerInfo)
 
 /**
  * @struct ContainerTags
@@ -37,15 +32,10 @@ struct ContainerInfo {
  * Stored on FileMetadata. Keys and values are data read from the file.
  */
 struct ContainerTags {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple {
-            FacetMember<&ContainerTags::entries> {},
-        };
-    }
-
     std::vector<std::pair<std::string, std::string>> entries; ///< Tag key and value pairs
 };
+
+MF_DESCRIBE(ContainerTags)
 
 /**
  * @struct ChapterInfo
@@ -54,15 +44,10 @@ struct ContainerTags {
  * Stored on FileRegion for regions of type "chapter".
  */
 struct ChapterInfo {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple {
-            FacetMember<&ChapterInfo::chapter_index> {},
-        };
-    }
-
     uint32_t chapter_index = 0; ///< Zero-based index into the container's chapter list
 };
+
+MF_DESCRIBE(ChapterInfo)
 
 /**
  * @class FFmpegDemuxContext
@@ -224,3 +209,4 @@ private:
 };
 
 } // namespace MayaFlux::IO
+#include "FFmpegDemuxContext.describe.hpp"

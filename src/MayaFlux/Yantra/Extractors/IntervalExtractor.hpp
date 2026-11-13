@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Transitive/Reflect/Describe.hpp"
 #include "Extractor.hpp"
 
 #include "MayaFlux/Kinesis/Discrete/IntervalScan.hpp"
@@ -103,19 +104,6 @@ struct IntervalScanSettings {
  * are the same for every column.
  */
 struct IntervalExtractorConfig : ExtractorConfig {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple_cat(
-            ExtractorConfig::describe_facets(),
-            std::tuple {
-                FacetMember<&IntervalExtractorConfig::method> {},
-                FacetMember<&IntervalExtractorConfig::scan> {},
-                FacetMember<&IntervalExtractorConfig::columns> {},
-                FacetMember<&IntervalExtractorConfig::flush> {},
-                FacetMember<&IntervalExtractorConfig::length> {},
-            });
-    }
-
     /** Selection method, as an IntervalMethod value. */
     Reflect::EnumByte<IntervalMethod> method { IntervalMethod::HYSTERESIS_RUNS };
     /** Settings of every column not listed in columns. */
@@ -133,6 +121,8 @@ struct IntervalExtractorConfig : ExtractorConfig {
         return column < columns.size() ? columns[column] : scan;
     }
 };
+
+MF_DESCRIBE(IntervalExtractorConfig)
 
 /**
  * @brief The host scan configuration of one column's settings over a stream of the given length.
@@ -201,19 +191,13 @@ struct MAYAFLUX_API IntervalBuffers {
  * @brief Record of one IntervalExtractor run, stored on the output's facets.
  */
 struct MAYAFLUX_API IntervalExtraction {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple {
-            FacetMember<&IntervalExtraction::config> {},
-            FacetMember<&IntervalExtraction::channels> {},
-        };
-    }
-
     /** Settings the extraction was produced under. */
     IntervalExtractorConfig config;
     /** Intervals completed by this call, per score channel. */
     std::vector<ChannelIntervals> channels;
 };
+
+MF_DESCRIBE(IntervalExtraction)
 
 /**
  * @brief One region per interval, spanning the given channels.
@@ -827,3 +811,4 @@ using MatrixIntervalExtractor = IntervalExtractor<Eigen::MatrixXd, std::vector<s
 using StandardIntervalExtractor = IntervalExtractor<std::vector<Kakshya::DataVariant>, std::vector<std::vector<double>>>;
 
 } // namespace MayaFlux::Yantra
+#include "IntervalExtractor.describe.hpp"

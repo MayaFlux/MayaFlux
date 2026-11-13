@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Transitive/Reflect/Describe.hpp"
 #include "MayaFlux/Kinesis/Discrete/Convolution.hpp"
 #include "Transformer.hpp"
 
@@ -24,20 +25,6 @@ enum class ConvolutionOperation : uint8_t {
  * @brief Settings of ConvolutionTransformer, stored whole in the operation's facets.
  */
 struct ConvolutionTransformerConfig : TransformerConfig {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple_cat(
-            TransformerConfig::describe_facets(),
-            std::tuple {
-                FacetMember<&ConvolutionTransformerConfig::operation> {},
-                FacetMember<&ConvolutionTransformerConfig::impulse_response> {},
-                FacetMember<&ConvolutionTransformerConfig::template_signal> {},
-                FacetMember<&ConvolutionTransformerConfig::reference_signal> {},
-                FacetMember<&ConvolutionTransformerConfig::normalize> {},
-                FacetMember<&ConvolutionTransformerConfig::regularization> {},
-            });
-    }
-
     /** Convolution-family operation to apply. */
     Reflect::EnumByte<ConvolutionOperation> operation { ConvolutionOperation::DIRECT_CONVOLUTION };
     /** DIRECT_CONVOLUTION and DECONVOLUTION: impulse response. */
@@ -51,6 +38,8 @@ struct ConvolutionTransformerConfig : TransformerConfig {
     /** DECONVOLUTION: Tikhonov regularisation factor. */
     double regularization { 1e-6 };
 };
+
+MF_DESCRIBE(ConvolutionTransformerConfig)
 
 /**
  * @class ConvolutionTransformer
@@ -162,3 +151,4 @@ private:
 };
 
 }
+#include "ConvolutionTransformer.describe.hpp"

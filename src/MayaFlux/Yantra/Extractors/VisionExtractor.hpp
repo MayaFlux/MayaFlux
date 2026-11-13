@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Transitive/Reflect/Describe.hpp"
 #include "MayaFlux/Kinesis/Vision/Features.hpp"
 #include "MayaFlux/Kinesis/Vision/VisionInsight.hpp"
 #include "MayaFlux/Yantra/Executors/TextureExecutionContext.hpp"
@@ -84,18 +85,6 @@ struct ElementFocus {
  * means the run found nothing to sample.
  */
 struct VisionExtraction {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple {
-            FacetMember<&VisionExtraction::mode> {},
-            FacetMember<&VisionExtraction::image> {},
-            FacetMember<&VisionExtraction::sample> {},
-            FacetMember<&VisionExtraction::samples> {},
-            FacetMember<&VisionExtraction::points> {},
-            FacetMember<&VisionExtraction::element> {},
-        };
-    }
-
     VisionExtractMode mode {};
     std::shared_ptr<Core::VKImage> image;
     std::optional<Kinesis::Vision::FieldSample> sample;
@@ -103,6 +92,8 @@ struct VisionExtraction {
     std::optional<std::vector<glm::vec4>> points;
     std::optional<size_t> element;
 };
+
+MF_DESCRIBE(VisionExtraction)
 
 /**
  * @struct VisionExtractorConfig
@@ -113,29 +104,6 @@ struct VisionExtraction {
  * methods take only the data and the dimensions of what they read or write.
  */
 struct VisionExtractorConfig : ExtractorConfig {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple_cat(
-            ExtractorConfig::describe_facets(),
-            std::tuple {
-                FacetMember<&VisionExtractorConfig::method> {},
-                FacetMember<&VisionExtractorConfig::element_index> {},
-                FacetMember<&VisionExtractorConfig::focus> {},
-                FacetMember<&VisionExtractorConfig::output_width> {},
-                FacetMember<&VisionExtractorConfig::output_height> {},
-                FacetMember<&VisionExtractorConfig::patch_width> {},
-                FacetMember<&VisionExtractorConfig::patch_height> {},
-                FacetMember<&VisionExtractorConfig::tile_width> {},
-                FacetMember<&VisionExtractorConfig::tile_height> {},
-                FacetMember<&VisionExtractorConfig::sample_radius> {},
-                FacetMember<&VisionExtractorConfig::edge_threshold> {},
-                FacetMember<&VisionExtractorConfig::min_speed> {},
-                FacetMember<&VisionExtractorConfig::min_confidence> {},
-                FacetMember<&VisionExtractorConfig::min_activity> {},
-                FacetMember<&VisionExtractorConfig::exposure_target> {},
-            });
-    }
-
     /** Which method the operation path dispatches to. */
     Reflect::EnumByte<VisionExtractMode> method { VisionExtractMode::Crop };
     /** Element the single-element methods use when no focus is set: index into contours, else boxes. */
@@ -161,6 +129,8 @@ struct VisionExtractorConfig : ExtractorConfig {
     /** Mean brightness expose() scales the frame to. */
     float exposure_target { 0.5F };
 };
+
+MF_DESCRIBE(VisionExtractorConfig)
 
 /**
  * @class VisionExtractor
@@ -399,3 +369,4 @@ private:
 };
 
 } // namespace MayaFlux::Yantra
+#include "VisionExtractor.describe.hpp"

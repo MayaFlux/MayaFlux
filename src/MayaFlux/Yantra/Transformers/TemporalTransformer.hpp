@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Transitive/Reflect/Describe.hpp"
 #include "MayaFlux/Kinesis/Discrete/Transform.hpp"
 #include "Transformer.hpp"
 
@@ -25,24 +26,6 @@ enum class TemporalOperation : uint8_t {
  * @brief Settings of TemporalTransformer, stored whole in the operation's facets.
  */
 struct TemporalTransformerConfig : TransformerConfig {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple_cat(
-            TransformerConfig::describe_facets(),
-            std::tuple {
-                FacetMember<&TemporalTransformerConfig::operation> {},
-                FacetMember<&TemporalTransformerConfig::stretch_factor> {},
-                FacetMember<&TemporalTransformerConfig::delay_samples> {},
-                FacetMember<&TemporalTransformerConfig::fill_value> {},
-                FacetMember<&TemporalTransformerConfig::fade_in_ratio> {},
-                FacetMember<&TemporalTransformerConfig::fade_out_ratio> {},
-                FacetMember<&TemporalTransformerConfig::start_ratio> {},
-                FacetMember<&TemporalTransformerConfig::end_ratio> {},
-                FacetMember<&TemporalTransformerConfig::target_size> {},
-                FacetMember<&TemporalTransformerConfig::use_cubic> {},
-            });
-    }
-
     /** Temporal operation to apply. */
     Reflect::EnumByte<TemporalOperation> operation { TemporalOperation::TIME_REVERSE };
     /** TIME_STRETCH: length multiplier, above 1 is slower. */
@@ -64,6 +47,8 @@ struct TemporalTransformerConfig : TransformerConfig {
     /** INTERPOLATE: use cubic rather than linear interpolation. */
     bool use_cubic { false };
 };
+
+MF_DESCRIBE(TemporalTransformerConfig)
 
 /**
  * @class TemporalTransformer
@@ -188,3 +173,4 @@ private:
 };
 
 }
+#include "TemporalTransformer.describe.hpp"

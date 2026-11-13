@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Transitive/Reflect/Describe.hpp"
 #include "MayaFlux/Yantra/ComputeOperation.hpp"
 
 /**
@@ -72,16 +73,11 @@ enum class ExtractionScope : uint8_t {
  * typed by its own enum.
  */
 struct ExtractorConfig : OperationConfig {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple {
-            FacetMember<&ExtractorConfig::scope> {},
-        };
-    }
-
     /** Portion of the input to extract from. */
     ExtractionScope scope { ExtractionScope::FULL_DATA };
 };
+
+MF_DESCRIBE(ExtractorConfig)
 
 /**
  * @class Extractor
@@ -316,3 +312,4 @@ template <ComputeData InputType = std::vector<Kakshya::DataVariant>>
 using NumericExtractor = Extractor<InputType, std::vector<double>>;
 
 } // namespace MayaFlux::Yantra
+#include "Extractor.describe.hpp"

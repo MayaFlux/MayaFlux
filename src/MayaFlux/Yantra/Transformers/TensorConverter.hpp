@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Transitive/Reflect/Describe.hpp"
 #include "MayaFlux/Yantra/ComputeOperation.hpp"
 
 namespace MayaFlux::Yantra {
@@ -9,19 +10,13 @@ namespace MayaFlux::Yantra {
  * @brief Settings of TensorConverter, stored whole in the operation's facets.
  */
 struct TensorConversionConfig : OperationConfig {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple {
-            FacetMember<&TensorConversionConfig::target> {},
-            FacetMember<&TensorConversionConfig::quantization> {},
-        };
-    }
-
     /** Element type of the result. */
     Kakshya::TensorDType target { Kakshya::TensorDType::of<float>() };
     /** Quantization the result carries; the target must be an integer type of at most 32 bits. */
     std::optional<Kakshya::TensorQuantization> quantization;
 };
+
+MF_DESCRIBE(TensorConversionConfig)
 
 /**
  * @class TensorConverter
@@ -70,3 +65,4 @@ protected:
 };
 
 }
+#include "TensorConverter.describe.hpp"

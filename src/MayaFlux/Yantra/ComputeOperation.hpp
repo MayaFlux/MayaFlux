@@ -12,9 +12,9 @@ class ComputeMatrix;
  * @struct OperationConfig
  * @brief Base of every operation's config struct.
  *
- * Config structs derive from it, declare describe_facets(), and are stored
- * whole by ComputeOperation::set_config, keyed by their own type. No string
- * keys are used.
+ * Config structs derive from it and are stored whole by
+ * ComputeOperation::set_config, keyed by their own type. No string keys are
+ * used. MF_DESCRIBE on a config is only needed to read it member by member.
  */
 struct OperationConfig {
     OperationConfig() = default;
@@ -26,24 +26,21 @@ struct OperationConfig {
     /** @brief Retain a concrete config whole when placed in a parent-config collection. */
     template <typename Config>
         requires(!std::same_as<std::remove_cvref_t<Config>, OperationConfig>
-            && std::derived_from<std::remove_cvref_t<Config>, OperationConfig>
-            && requires { std::remove_cvref_t<Config>::describe_facets(); })
+            && std::derived_from<std::remove_cvref_t<Config>, OperationConfig>)
     OperationConfig(Config&& config)
     {
         m_facets.set(std::forward<Config>(config));
     }
 
-    /** @brief Stores a described struct under its type identity. */
+    /** @brief Stores a struct under its type identity. */
     template <typename T>
-        requires requires { T::describe_facets(); }
     void set(T value)
     {
         m_facets.set(std::move(value));
     }
 
-    /** @brief The described struct of this type, or nullptr when absent. */
+    /** @brief The struct of this type, or nullptr when absent. */
     template <typename T>
-        requires requires { T::describe_facets(); }
     [[nodiscard]] const T* get() const
     {
         return m_facets.get<T>();
@@ -239,11 +236,11 @@ public:
     }
 
     /**
-     * @brief Stores a described config struct, whole, under its own type.
-     * @tparam Config A struct deriving from OperationConfig with describe_facets().
+     * @brief Stores a config struct, whole, under its own type.
+     * @tparam Config A struct deriving from OperationConfig.
      */
     template <typename Config>
-        requires std::derived_from<Config, OperationConfig> && requires { Config::describe_facets(); }
+        requires std::derived_from<Config, OperationConfig>
     void set_config(Config config)
     {
         m_facets.set(std::move(config));
@@ -253,7 +250,7 @@ public:
      * @brief The stored config struct of type Config, or nullptr when absent.
      */
     template <typename Config>
-        requires std::derived_from<Config, OperationConfig> && requires { Config::describe_facets(); }
+        requires std::derived_from<Config, OperationConfig>
     [[nodiscard]] const Config* resolved_config() const
     {
         return m_facets.get<Config>();
@@ -263,7 +260,7 @@ public:
      * @brief The stored config struct of type Config, or its defaults when none was set.
      */
     template <typename Config>
-        requires std::derived_from<Config, OperationConfig> && requires { Config::describe_facets(); }
+        requires std::derived_from<Config, OperationConfig>
     [[nodiscard]] const Config& config() const
     {
         if (const auto* stored = m_facets.get<Config>()) {

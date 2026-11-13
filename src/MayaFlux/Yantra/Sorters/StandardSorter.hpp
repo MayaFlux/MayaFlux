@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Transitive/Reflect/Describe.hpp"
 #include "Sorter.hpp"
 
 /**
@@ -34,19 +35,6 @@ enum class SortPath : uint8_t {
  * to the settings every sorter family accepts.
  */
 struct StandardSorterConfig : SorterConfig {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple_cat(
-            SorterConfig::describe_facets(),
-            std::tuple {
-                FacetMember<&StandardSorterConfig::algorithm> {},
-                FacetMember<&StandardSorterConfig::direction> {},
-                FacetMember<&StandardSorterConfig::strategy> {},
-                FacetMember<&StandardSorterConfig::comparator> {},
-                FacetMember<&StandardSorterConfig::chunk_size> {},
-            });
-    }
-
     /** Sorting algorithm to use, as a SortingAlgorithm value. */
     Reflect::EnumByte<SortingAlgorithm> algorithm { SortingAlgorithm::STANDARD };
     /** Order of the sorted result. CUSTOM takes its order from comparator. */
@@ -59,24 +47,20 @@ struct StandardSorterConfig : SorterConfig {
     size_t chunk_size { 1024 };
 };
 
+MF_DESCRIBE(StandardSorterConfig)
+
 /**
  * @struct SortRecord
  * @brief Record of one StandardSorter run, stored on the output's facets.
  */
 struct SortRecord {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple {
-            FacetMember<&SortRecord::config> {},
-            FacetMember<&SortRecord::path> {},
-        };
-    }
-
     /** Settings the sort was produced under. */
     StandardSorterConfig config;
     /** The sorting path that produced the result. */
     Reflect::EnumByte<SortPath> path { SortPath::COPY };
 };
+
+MF_DESCRIBE(SortRecord)
 
 /**
  * @class StandardSorter
@@ -439,3 +423,4 @@ template <ComputeData InputType = std::vector<Kakshya::DataVariant>>
 using StandardIndexSorter = StandardSorter<InputType, std::vector<std::vector<size_t>>>;
 
 } // namespace MayaFlux::Yantra
+#include "StandardSorter.describe.hpp"
