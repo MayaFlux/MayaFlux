@@ -431,13 +431,7 @@ bool CompositeArray::clear(size_t index, std::string_view field_name)
 bool Composite::has(std::string_view field_name) const noexcept
 {
     const auto field_index = m_layout->find_field(field_name);
-    if (!field_index)
-        return false;
-
-    const auto& rows = std::get<std::vector<uint8_t>>(*m_rows);
-    const size_t byte_index = m_index * m_layout->stride_bytes() + *field_index / 8;
-
-    return (rows[byte_index] & static_cast<uint8_t>(1U << (*field_index % 8))) != 0;
+    return field_index && is_present(*field_index);
 }
 
 const CompositeArray* Composite::list(std::string_view field_name) const noexcept

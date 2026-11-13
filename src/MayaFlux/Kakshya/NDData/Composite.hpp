@@ -11,7 +11,7 @@ class CompositeArray;
  * @struct CompositeField
  * @brief Description of one named value in a Composite.
  *
- * Numeric fields use their exact C++ scalar type. Text and binary fields
+ * Fixed value fields use their exact C++ type. Text and binary fields
  * store offsets and lengths into separate byte stores. Dynamic fields also
  * store a value kind per element. Compound and list fields refer to nested
  * arrays described by nested_layout. Offsets are assigned when a
@@ -41,7 +41,7 @@ using CompositeValue = std::variant<std::monostate, int64_t, double,
  *
  * Declare fields before constructing an array. Construction finalizes the
  * layout, placing a presence bitmap before the fields in each element.
- * Field order determines byte offsets. A field may be an arithmetic type,
+ * Field order determines byte offsets. A field may be an arithmetic or GLM type,
  * std::string, binary bytes, a dynamic value, a compound, or a list.
  * Every field may be absent in an individual element.
  *
@@ -60,7 +60,7 @@ using CompositeValue = std::variant<std::monostate, int64_t, double,
 class MAYAFLUX_API CompositeLayout {
 public:
     /**
-     * @brief Declare a named arithmetic, text, or binary field.
+     * @brief Declare a named arithmetic, GLM, text, or binary field.
      * @tparam T Exact stored type; use std::string for text or
      * std::vector<uint8_t> for binary bytes.
      * @param name Nonempty unique field name.
@@ -68,7 +68,8 @@ public:
      * the layout has already been finalized.
      */
     template <typename T>
-        requires(ArithmeticData<T> || std::same_as<std::remove_cvref_t<T>, std::string>
+        requires(ArithmeticData<T> || GlmType<T>
+            || std::same_as<std::remove_cvref_t<T>, std::string>
             || std::same_as<std::remove_cvref_t<T>, std::vector<uint8_t>>)
     bool add_field(std::string name)
     {
@@ -76,6 +77,7 @@ public:
             || std::same_as<std::remove_cvref_t<T>, std::vector<uint8_t>>) {
             return add_field_impl(std::move(name), typeid(T), 2 * sizeof(uint64_t));
         } else {
+            static_assert(std::is_trivially_copyable_v<T>);
             return add_field_impl(std::move(name), typeid(T), sizeof(T));
         }
     }
@@ -144,9 +146,9 @@ struct Region;
  * @class Composite
  * @brief Read view of one value in a CompositeArray.
  *
- * Borrows a layout, byte stores, and any nested arrays. Arithmetic access
+ * Borrows a layout, byte stores, and any nested arrays. Fixed value access
  * copies one value from packed bytes, so the field need not be naturally aligned.
- * Numeric getters require an exact declared type, except dynamic INTEGER
+ * Fixed value getters require an exact declared type, except dynamic INTEGER
  * and REAL fields which accept int64_t and double respectively. Missing
  * and mismatched fields return std::nullopt.
  *
@@ -172,13 +174,35 @@ public:
     [[nodiscard]] bool has(std::string_view field_name) const noexcept;
 
     /**
-     * @brief Read a present arithmetic field by exact value type.
-     * @tparam T Declared arithmetic type, or int64_t/double for a dynamic field.
+     * @brief Visit present fields in layout order without converting their values.
+     * @return False if a boolean visitor stops traversal; true otherwise.
+     */
+    template <typename Fn>
+    bool for_each_present_field(Fn&& visitor) const
+    {
+        const auto& fields = m_layout->fields();
+        for (size_t index = 0; index < fields.size(); ++index) {
+            if (!is_present(index))
+                continue;
+            const CompositeField& field = fields[index];
+            if constexpr (std::same_as<std::invoke_result_t<Fn&, const CompositeField&>, bool>) {
+                if (!std::invoke(visitor, field))
+                    return false;
+            } else {
+                std::invoke(visitor, field);
+            }
+        }
+        return true;
+    }
+
+    /**
+     * @brief Read a present arithmetic or GLM field by exact value type.
+     * @tparam T Declared fixed value type, or int64_t/double for a dynamic field.
      * @param field_name Field to read.
      * @return Copied value, or std::nullopt for an absent field or type mismatch.
      */
     template <typename T>
-        requires ArithmeticData<T>
+        requires(ArithmeticData<T> || GlmType<T>)
     [[nodiscard]] std::optional<T> get(std::string_view field_name) const noexcept;
 
     /**
@@ -214,6 +238,13 @@ private:
     friend class CompositeArray;
     friend class CompositeAccess;
     friend class CompositeInsertion;
+
+    [[nodiscard]] bool is_present(size_t field_index) const noexcept
+    {
+        const auto& rows = std::get<std::vector<uint8_t>>(*m_rows);
+        const size_t byte_index = m_index * m_layout->stride_bytes() + field_index / 8;
+        return (rows[byte_index] & static_cast<uint8_t>(1U << (field_index % 8))) != 0;
+    }
 
     Composite(const CompositeLayout& layout, const DataVariant& rows,
         const DataVariant& text, const DataVariant& blob,
@@ -329,15 +360,15 @@ public:
     size_t append();
 
     /**
-     * @brief Write an arithmetic field of an existing element.
-     * @tparam T Declared arithmetic type, or int64_t/double for a dynamic field.
+     * @brief Write an arithmetic or GLM field of an existing element.
+     * @tparam T Declared fixed value type, or int64_t/double for a dynamic field.
      * @param index Element index.
      * @param field_name Field to write.
      * @param value Value to store.
      * @return True on success; false for an invalid index, name, or type.
      */
     template <typename T>
-        requires ArithmeticData<T>
+        requires(ArithmeticData<T> || GlmType<T>)
     bool set(size_t index, std::string_view field_name, T value)
     {
         if constexpr (std::same_as<T, int64_t> || std::same_as<T, double>) {
@@ -431,7 +462,7 @@ private:
 };
 
 template <typename T>
-    requires ArithmeticData<T>
+    requires(ArithmeticData<T> || GlmType<T>)
 std::optional<T> Composite::get(std::string_view field_name) const noexcept
 {
     const auto field_index = m_layout->find_field(field_name);

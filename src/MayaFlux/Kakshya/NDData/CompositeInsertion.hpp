@@ -57,7 +57,7 @@ public:
     [[nodiscard]] std::optional<size_t> append(const Composite& source);
 
     /**
-     * @brief Write an arithmetic field of an existing element.
+     * @brief Write an arithmetic or GLM field of an existing element.
      * @tparam T Exact type declared for the field.
      * @param index Element index.
      * @param field_name Field to write.
@@ -65,7 +65,7 @@ public:
      * @return True on success; false for an invalid index, name, or type.
      */
     template <typename T>
-        requires ArithmeticData<T>
+        requires(ArithmeticData<T> || GlmType<T>)
     bool set(size_t index, std::string_view field_name, T value)
     {
         return m_array->set(index, field_name, value);
