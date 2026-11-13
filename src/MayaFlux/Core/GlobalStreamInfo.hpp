@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MayaFlux/Transitive/Reflect/Mirror.hpp"
+#include "MayaFlux/Transitive/Reflect/Describe.hpp"
 
 namespace MayaFlux::Core {
 
@@ -76,15 +76,6 @@ struct GlobalStreamInfo {
 
         /** @brief Human-readable identifier for the associated device */
         std::string device_name;
-
-        static constexpr auto describe()
-        {
-            return std::make_tuple(
-                Reflect::member("enabled", &ChannelConfig::enabled),
-                Reflect::member("channels", &ChannelConfig::channels),
-                Reflect::member("device_id", &ChannelConfig::device_id),
-                Reflect::member("device_name", &ChannelConfig::device_name));
-        }
     };
 
     /** @brief Configuration for output signal channels */
@@ -166,21 +157,8 @@ struct GlobalStreamInfo {
      * @return Number of output channels configured in the stream
      */
     uint32_t get_num_channels() const { return output.channels; }
-
-    static constexpr auto describe()
-    {
-        return std::make_tuple(
-            Reflect::member("sample_rate", &GlobalStreamInfo::sample_rate),
-            Reflect::member("buffer_size", &GlobalStreamInfo::buffer_size),
-            Reflect::member("format", &GlobalStreamInfo::format),
-            Reflect::member("non_interleaved", &GlobalStreamInfo::non_interleaved),
-            Reflect::member("output", &GlobalStreamInfo::output),
-            Reflect::member("input", &GlobalStreamInfo::input),
-            Reflect::member("priority", &GlobalStreamInfo::priority),
-            Reflect::member("auto_convert_format", &GlobalStreamInfo::auto_convert_format),
-            Reflect::member("handle_xruns", &GlobalStreamInfo::handle_xruns),
-            Reflect::member("use_callback", &GlobalStreamInfo::use_callback),
-            Reflect::member("stream_latency_ms", &GlobalStreamInfo::stream_latency_ms));
-    }
 };
+
+MF_DESCRIBE(GlobalStreamInfo)
 }
+#include "GlobalStreamInfo.describe.hpp"

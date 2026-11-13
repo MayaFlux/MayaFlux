@@ -1,8 +1,7 @@
 #pragma once
 
+#include "MayaFlux/Transitive/Reflect/Describe.hpp"
 #include "MayaFlux/Core/Input/InputBinding.hpp"
-
-#include "MayaFlux/Transitive/Reflect/Mirror.hpp"
 
 namespace MayaFlux::Core {
 
@@ -100,15 +99,9 @@ struct MAYAFLUX_API HIDDeviceFilter {
         };
     }
 
-    static constexpr auto describe()
-    {
-        return std::make_tuple(
-            Reflect::opt_member("vendor_id", &HIDDeviceFilter::vendor_id),
-            Reflect::opt_member("product_id", &HIDDeviceFilter::product_id),
-            Reflect::opt_member("usage_page", &HIDDeviceFilter::usage_page),
-            Reflect::opt_member("usage", &HIDDeviceFilter::usage));
-    }
 };
+
+MF_DESCRIBE(HIDDeviceFilter)
 
 /**
  * @brief HID backend configuration
@@ -122,18 +115,9 @@ struct MAYAFLUX_API HIDBackendInfo {
     bool auto_reconnect { true }; ///< Auto-reconnect disconnected devices
     uint32_t reconnect_interval_ms { 1000 }; ///< Reconnection attempt interval
 
-    static constexpr auto describe()
-    {
-        return std::make_tuple(
-            Reflect::member("enabled", &HIDBackendInfo::enabled),
-            Reflect::member("filters", &HIDBackendInfo::filters),
-            Reflect::member("auto_open", &HIDBackendInfo::auto_open),
-            Reflect::member("read_buffer_size", &HIDBackendInfo::read_buffer_size),
-            Reflect::member("poll_timeout_ms", &HIDBackendInfo::poll_timeout_ms),
-            Reflect::member("auto_reconnect", &HIDBackendInfo::auto_reconnect),
-            Reflect::member("reconnect_interval_ms", &HIDBackendInfo::reconnect_interval_ms));
-    }
 };
+
+MF_DESCRIBE(HIDBackendInfo)
 
 /**
  * @brief Tablet backend configuration
@@ -144,15 +128,9 @@ struct MAYAFLUX_API TabletBackendInfo {
     int poll_timeout_ms { 2 }; ///< Timeout for hid_read_timeout
     bool split_eraser { true }; ///< Report the eraser end as its own tool
 
-    static constexpr auto describe()
-    {
-        return std::make_tuple(
-            Reflect::member("enabled", &TabletBackendInfo::enabled),
-            Reflect::member("read_buffer_size", &TabletBackendInfo::read_buffer_size),
-            Reflect::member("poll_timeout_ms", &TabletBackendInfo::poll_timeout_ms),
-            Reflect::member("split_eraser", &TabletBackendInfo::split_eraser));
-    }
 };
+
+MF_DESCRIBE(TabletBackendInfo)
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MIDI Configuration (Future)
@@ -170,18 +148,9 @@ struct MAYAFLUX_API MIDIBackendInfo {
     bool enable_virtual_port { false }; ///< Create a virtual MIDI port
     std::string virtual_port_name { "MayaFlux" }; ///< Name for virtual port
 
-    static constexpr auto describe()
-    {
-        return std::make_tuple(
-            Reflect::member("enabled", &MIDIBackendInfo::enabled),
-            Reflect::member("auto_open_inputs", &MIDIBackendInfo::auto_open_inputs),
-            Reflect::member("auto_open_outputs", &MIDIBackendInfo::auto_open_outputs),
-            Reflect::member("input_port_filters", &MIDIBackendInfo::input_port_filters),
-            Reflect::member("output_port_filters", &MIDIBackendInfo::output_port_filters),
-            Reflect::member("enable_virtual_port", &MIDIBackendInfo::enable_virtual_port),
-            Reflect::member("virtual_port_name", &MIDIBackendInfo::virtual_port_name));
-    }
 };
+
+MF_DESCRIBE(MIDIBackendInfo)
 
 // ─────────────────────────────────────────────────────────────────────────────
 // OSC Configuration (Future)
@@ -199,18 +168,9 @@ struct MAYAFLUX_API OSCConfigInfo {
     std::string multicast_group; ///< Multicast group address
     size_t receive_buffer_size { 65536 }; ///< UDP receive buffer size
 
-    static constexpr auto describe()
-    {
-        return std::make_tuple(
-            Reflect::member("enabled", &OSCConfigInfo::enabled),
-            Reflect::member("receive_port", &OSCConfigInfo::receive_port),
-            Reflect::member("send_port", &OSCConfigInfo::send_port),
-            Reflect::member("send_address", &OSCConfigInfo::send_address),
-            Reflect::member("enable_multicast", &OSCConfigInfo::enable_multicast),
-            Reflect::member("multicast_group", &OSCConfigInfo::multicast_group),
-            Reflect::member("receive_buffer_size", &OSCConfigInfo::receive_buffer_size));
-    }
 };
+
+MF_DESCRIBE(OSCConfigInfo)
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Serial Configuration (Future)
@@ -227,16 +187,9 @@ struct MAYAFLUX_API SerialPortConfig {
     char parity { 'N' }; ///< Parity: 'N'one, 'E'ven, 'O'dd
     bool flow_control { false }; ///< Hardware flow control
 
-    static constexpr auto describe()
-    {
-        return std::make_tuple(
-            Reflect::member("port_name", &SerialPortConfig::port_name),
-            Reflect::member("baud_rate", &SerialPortConfig::baud_rate),
-            Reflect::member("data_bits", &SerialPortConfig::data_bits),
-            Reflect::member("stop_bits", &SerialPortConfig::stop_bits),
-            Reflect::member("flow_control", &SerialPortConfig::flow_control));
-    }
 };
+
+MF_DESCRIBE(SerialPortConfig)
 
 /**
  * @brief Serial backend configuration
@@ -247,15 +200,9 @@ struct MAYAFLUX_API SerialBackendInfo {
     bool auto_detect_arduino { false }; ///< Auto-detect Arduino devices
     uint32_t default_baud_rate { 115200 }; ///< Default baud for auto-detected devices
 
-    static constexpr auto describe()
-    {
-        return std::make_tuple(
-            Reflect::member("enabled", &SerialBackendInfo::enabled),
-            Reflect::member("ports", &SerialBackendInfo::ports),
-            Reflect::member("auto_detect_arduino", &SerialBackendInfo::auto_detect_arduino),
-            Reflect::member("default_baud_rate", &SerialBackendInfo::default_baud_rate));
-    }
 };
+
+MF_DESCRIBE(SerialBackendInfo)
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Global Input Configuration
@@ -358,15 +305,9 @@ struct MAYAFLUX_API GlobalInputConfig {
             || tablet.enabled;
     }
 
-    static constexpr auto describe()
-    {
-        return std::make_tuple(
-            Reflect::member("hid", &GlobalInputConfig::hid),
-            Reflect::member("midi", &GlobalInputConfig::midi),
-            Reflect::member("osc", &GlobalInputConfig::osc),
-            Reflect::member("serial", &GlobalInputConfig::serial),
-            Reflect::member("tablet", &GlobalInputConfig::tablet));
-    }
 };
 
+MF_DESCRIBE(GlobalInputConfig)
+
 } // namespace MayaFlux::Core
+#include "GlobalInputConfig.describe.hpp"

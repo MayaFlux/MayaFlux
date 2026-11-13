@@ -9,7 +9,8 @@ namespace MayaFlux::IO {
  * @brief Extension point for JSONSerializer.
  *
  * Specialize this struct for any type that JSONSerializer does not
- * handle natively. The specialization must provide:
+ * handle natively. The primary template serves the types nlohmann converts by
+ * itself. A specialization must provide:
  *   static nlohmann::json to_json(const T&);
  *   static void from_json(const nlohmann::json&, T&);
  *
