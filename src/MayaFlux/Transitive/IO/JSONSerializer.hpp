@@ -4,6 +4,7 @@
 
 #include "MayaFlux/IO/FileWriter.hpp"
 
+#include "MayaFlux/Transitive/Reflect/Describe.hpp"
 #include "MayaFlux/Transitive/Reflect/Mirror.hpp"
 
 #include <nlohmann/json.hpp>
@@ -16,10 +17,14 @@ namespace MayaFlux::IO {
  * @class JSONSerializer
  * @brief Converts arbitrary C++ types to/from JSON strings and disk files.
  *
- * Encoding and decoding are driven by the Reflectable concept: any type that
- * provides a static constexpr describe() returning a tuple of Property /
- * OptionalProperty descriptors is handled recursively.  Types without a
- * describe() fall through to nlohmann's native converters (arithmetic,
+ * A type with a generated description (MF_DESCRIBE) is handled recursively
+ * through its members, keyed by member name. A std::optional member is omitted
+ * when empty. A std::any member, or a container of it, is never persisted and
+ * is left out of both directions. Any other member without an encoding fails to
+ * compile, so a missing Serializer specialization is never skipped silently. A type with a static
+ * constexpr describe() returning Property / OptionalProperty descriptors is
+ * handled the same way, and the generated description wins when a type has
+ * both. Other types fall through to nlohmann's native converters (arithmetic,
  * std::string, bool) or to the built-in dispatchers for std::vector,
  * std::optional and std::unordered_map / std::map
  *
@@ -109,6 +114,18 @@ public:
     template <typename T>
     [[nodiscard]] std::optional<T> read(const std::string& path)
     {
+        return read<T>(path, [](nlohmann::json&) { });
+    }
+
+    /**
+     * @brief Read @p path, let @p transform rewrite the parsed JSON, then deserialize into T.
+     *
+     * Lets a reader migrate an older layout before decoding. @p transform
+     * receives the parsed document and may change it in place.
+     */
+    template <typename T, typename Transform>
+    [[nodiscard]] std::optional<T> read(const std::string& path, Transform&& transform)
+    {
         m_last_error.clear();
         const auto resolved = resolve_path(path);
         std::ifstream file(resolved);
@@ -118,6 +135,7 @@ public:
         }
         try {
             auto j = nlohmann::json::parse(file);
+            std::forward<Transform>(transform)(j);
             T out {};
             from_json(j, out);
             return out;
@@ -158,9 +176,69 @@ private:
     // -----------------------------------------------------------------------
 
     template <typename T>
+    static constexpr bool encodable()
+    {
+        if constexpr (Reflect::Described<T> || Reflect::Reflectable<T>) {
+            return true;
+        } else if constexpr (Reflect::is_optional_v<T>) {
+            return encodable<typename Reflect::is_optional<T>::inner>();
+        } else if constexpr (Reflect::is_vector_v<T>) {
+            return encodable<typename Reflect::is_vector<T>::element>();
+        } else if constexpr (Reflect::is_string_map_v<T>) {
+            return encodable<typename Reflect::is_string_map<T>::element>();
+        } else {
+            return !std::is_same_v<T, std::any>;
+        }
+    }
+
+    template <typename Member, typename Class>
+    static void encode_member(nlohmann::json& j, const Class& obj, const Member& member)
+    {
+        using Value = typename Member::value_type;
+        if constexpr (encodable<Value>()) {
+            const auto& value = obj.*Member::pointer;
+            if constexpr (Reflect::is_optional_v<Value>) {
+                if (value.has_value()) {
+                    j[std::string(member.name)] = to_json(*value);
+                }
+            } else {
+                j[std::string(member.name)] = to_json(value);
+            }
+        }
+    }
+
+    template <typename Member, typename Class>
+    static void decode_member(const nlohmann::json& j, Class& obj, const Member& member)
+    {
+        using Value = typename Member::value_type;
+        if constexpr (encodable<Value>()) {
+            const std::string key(member.name);
+            if constexpr (Reflect::is_optional_v<Value>) {
+                if (!j.contains(key) || j.at(key).is_null()) {
+                    obj.*Member::pointer = std::nullopt;
+                } else {
+                    typename Reflect::is_optional<Value>::inner inner {};
+                    from_json(j.at(key), inner);
+                    obj.*Member::pointer = std::move(inner);
+                }
+            } else if (j.contains(key)) {
+                from_json(j.at(key), obj.*Member::pointer);
+            }
+        }
+    }
+
+    template <typename T>
     static nlohmann::json to_json(const T& val)
     {
-        if constexpr (Reflect::Reflectable<T>) {
+        if constexpr (Reflect::Described<T>) {
+            nlohmann::json j = nlohmann::json::object();
+            std::apply(
+                [&](const auto&... members) {
+                    (encode_member(j, val, members), ...);
+                },
+                Reflect::Generated::Description<T>::members());
+            return j;
+        } else if constexpr (Reflect::Reflectable<T>) {
             nlohmann::json j = nlohmann::json::object();
             std::apply(
                 [&](const auto&... props) {
@@ -223,7 +301,16 @@ private:
     template <typename T>
     static void from_json(const nlohmann::json& j, T& out)
     {
-        if constexpr (Reflect::Reflectable<T>) {
+        if constexpr (Reflect::Described<T>) {
+            if (!j.is_object()) {
+                throw nlohmann::json::type_error::create(302, "expected object for described type", &j);
+            }
+            std::apply(
+                [&](const auto&... members) {
+                    (decode_member(j, out, members), ...);
+                },
+                Reflect::Generated::Description<T>::members());
+        } else if constexpr (Reflect::Reflectable<T>) {
             if (!j.is_object()) {
                 throw nlohmann::json::type_error::create(302, "expected object for Reflectable type", &j);
             }
