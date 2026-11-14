@@ -130,6 +130,26 @@ namespace internal {
             Graphics::RenderConfig render);
 
         /**
+         * @brief The buffer Forma draws shared content into.
+         *
+         * Plain geometry, text and plot series draw as slices of it. Its
+         * fragment shader reads a negative vertex weight as glyph coverage and
+         * every other weight as nothing, so line widths and point sizes in the
+         * weight slot are safe. The "text" slot is bound at creation to the
+         * default glyph atlas image, or to an empty one-pixel image when there
+         * is no default atlas yet, because a draw is skipped while a binding
+         * the shader uses has nothing to write. TextSlice binds the real image
+         * on first use.
+         *
+         * Callers that need their own shader, textures or priority build a
+         * buffer with create_buffer instead.
+         *
+         * @param surface Surface whose window the buffer draws to.
+         */
+        [[nodiscard]] std::shared_ptr<Buffers::FormaBuffer> create_batch(
+            const Surface& surface);
+
+        /**
          * @brief Construct a Layer and a Context wired to @p window.
          *
          * The Context is stored so its event coroutines outlive the call.
@@ -273,9 +293,10 @@ namespace internal {
          * @param surface   Surface to place on.
          * @param spec      Series spec carrying the adornment declarations.
          * @param relate_to Element id the adornments are related to.
-         * @param batch     Shared plot buffer for swatches and labels. With
-         *                  labels, it needs a text slot and forma_plot.frag.
-         *                  When empty, one buffer is created for all adornments.
+         * @param batch     Buffer for swatches and labels. One made by
+         *                  create_buffer needs a text slot and forma_plot.frag
+         *                  for labels. When empty, create_batch makes one for
+         *                  all adornments.
          */
         void place_adornments(
             Surface& surface,
@@ -287,6 +308,8 @@ namespace internal {
         Atelier();
         ~Atelier();
 
+        [[nodiscard]] std::shared_ptr<Core::VKImage> text_image();
+
         std::shared_ptr<Nodes::NodeGraphManager> m_node_graph_manager;
         std::shared_ptr<Buffers::BufferManager> m_buffer_manager;
         std::shared_ptr<Vruta::TaskScheduler> m_scheduler;
@@ -296,6 +319,7 @@ namespace internal {
         std::unique_ptr<Bridge> m_bridge;
         std::unique_ptr<Inspector> m_inspect;
         std::unordered_map<const Text::GlyphAtlas*, Text::AtlasImage> m_atlas_images;
+        std::shared_ptr<Core::VKImage> m_text_fallback;
 
         bool m_initialized {};
     };

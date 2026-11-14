@@ -4,9 +4,12 @@
 
 #include "MayaFlux/Buffers/BufferManager.hpp"
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
+#include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
 #include "MayaFlux/Core/Windowing/WindowManager.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
+#include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
+#include "MayaFlux/Portal/Text/TypeFaceFoundry.hpp"
 #include "MayaFlux/Transitive/Memory/Persist.hpp"
 #include "MayaFlux/Vruta/EventManager.hpp"
 #include "MayaFlux/Vruta/Scheduler.hpp"
@@ -64,6 +67,7 @@ void Atelier::shutdown()
     m_bridge.reset();
     m_inspect.reset();
     m_atlas_images.clear();
+    m_text_fallback.reset();
 
     m_node_graph_manager = nullptr;
     m_buffer_manager = nullptr;
@@ -146,6 +150,32 @@ std::shared_ptr<Buffers::FormaBuffer> Atelier::create_buffer(Graphics::RenderCon
     return buf;
 }
 
+std::shared_ptr<Core::VKImage> Atelier::text_image()
+{
+    if (auto* atlas = Text::TypeFaceFoundry::instance().get_default_glyph_atlas()) {
+        if (auto image = atlas_image(*atlas).sync(*atlas)) {
+            return image;
+        }
+    }
+
+    if (!m_text_fallback || !m_text_fallback->is_initialized()) {
+        auto& loom = Graphics::get_texture_manager();
+        if (loom.is_initialized()) {
+            constexpr uint8_t k_empty = 0;
+            m_text_fallback = loom.create_2d(1, 1, Graphics::ImageFormat::R8, &k_empty, 1);
+        }
+    }
+    return m_text_fallback;
+}
+
+std::shared_ptr<Buffers::FormaBuffer> Atelier::create_batch(const Surface& surface)
+{
+    Graphics::RenderConfig render = surface.render_config();
+    render.fragment_shader = "forma_plot.frag.spv";
+    render.additional_textures.push_back({ .name = "text", .image = text_image() });
+    return create_buffer(std::move(render));
+}
+
 std::pair<std::shared_ptr<Layer>, std::shared_ptr<Context>>
 Atelier::create_layer(const std::shared_ptr<Core::Window>& window, std::string name)
 {
@@ -186,17 +216,10 @@ void Atelier::place_adornments(
     uint32_t relate_to,
     const std::shared_ptr<Buffers::FormaBuffer>& batch)
 {
-    const bool has_labels = !spec.labels.empty() || !spec.tick_labels.empty()
-        || (spec.legend && !spec.legend->entries.empty());
     std::shared_ptr<Buffers::FormaBuffer> owned_batch;
     const auto target_of = [&](Graphics::PrimitiveTopology topology) -> FormaTarget {
         if (!batch && !owned_batch) {
-            Graphics::RenderConfig render = surface.render_config();
-            if (has_labels) {
-                render.fragment_shader = "forma_plot.frag.spv";
-                render.additional_textures.push_back({ "text", nullptr });
-            }
-            owned_batch = create_buffer(std::move(render));
+            owned_batch = create_batch(surface);
         }
         const auto& target_batch = batch ? batch : owned_batch;
         return FormaTarget::slice_of(target_batch, topology);

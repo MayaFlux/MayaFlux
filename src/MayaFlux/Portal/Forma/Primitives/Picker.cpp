@@ -86,8 +86,7 @@ void pick(
         .on_close = [state] { state->finish(std::nullopt); },
     });
 
-    const auto text_batch = atelier.create_buffer(
-        surface.render_config({ .additional_textures = { { "text", nullptr } } }));
+    const auto text_batch = atelier.create_batch(surface);
 
     std::optional<Scrollable> panel;
     std::function<void(uint32_t, glm::vec2, double, double)> wheel;

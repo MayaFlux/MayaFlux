@@ -34,8 +34,7 @@ std::pair<uint32_t, std::shared_ptr<Element>> add_text_row(
 {
     FormaTarget buf = batch
         ? FormaTarget::slice_of(batch, Graphics::PrimitiveTopology::TRIANGLE_LIST)
-        : FormaTarget(atelier().create_buffer(
-              surface.render_config({ .additional_textures = { { "text", nullptr } } })));
+        : FormaTarget(atelier().create_batch(surface));
 
     auto row = std::make_shared<Element>();
     row->with_name(std::string(label))
