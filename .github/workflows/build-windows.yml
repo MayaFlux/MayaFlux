@@ -20,6 +20,10 @@ on:
         required: false
         type: boolean
         default: true
+      run_reflect_check:
+        required: false
+        type: boolean
+        default: false
       artifact_name:
         required: true
         type: string
@@ -40,7 +44,7 @@ env:
 jobs:
   build:
     runs-on: windows-2025-vs2026
-    name: "Windows 2025 (MSVC 26, x64)"
+    name: "Windows 2025 (Ninja + MSVC 26, x64)"
 
     steps:
       # ============================================
@@ -95,11 +99,17 @@ jobs:
           }
 
       - name: Setup MSVC environment
-        shell: cmd
+        shell: pwsh
         run: |
-          echo "Setting up Visual Studio 2026 environment..."
-          call "C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
-          echo "MSVC environment ready"
+          $compilerEnvironment = & $env:ComSpec /d /c ('call "{0}" x64 >nul && set' -f $env:VCVARS_PATH)
+          if ($LASTEXITCODE -ne 0) {
+            throw "MSVC environment setup failed with exit code $LASTEXITCODE."
+          }
+          foreach ($line in $compilerEnvironment) {
+            if ($line -match '^(PATH|INCLUDE|LIB|LIBPATH|VSINSTALLDIR|VCINSTALLDIR|VCToolsInstallDir|WindowsSdkDir|WindowsSDKVersion|UniversalCRTSdkDir|UCRTVersion|VisualStudioVersion|VSCMD_ARG_HOST_ARCH|VSCMD_ARG_TGT_ARCH)=') {
+              $line >> $env:GITHUB_ENV
+            }
+          }
 
       - name: Optimize build environment for performance
         shell: pwsh
@@ -277,10 +287,13 @@ jobs:
           # vcpkg environment
           echo "VCPKG_INSTALLED_DIR=${{ env.VCPKG_ROOT }}\installed" >> $env:GITHUB_ENV
           echo "CMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}\scripts\buildsystems\vcpkg.cmake" >> $env:GITHUB_ENV
+          echo "MAYAFLUX_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}\scripts\buildsystems\vcpkg.cmake" >> $env:GITHUB_ENV
+          echo "${{ env.VCPKG_ROOT }}/installed/x64-windows/bin" >> $env:GITHUB_PATH
 
           # LLVM environment
           echo "LLVM_DEV_DIR=${{ env.LLVM_ROOT }}/lib/cmake/llvm" >> $env:GITHUB_ENV
           echo "Clang_DEV_DIR=${{ env.LLVM_ROOT }}/lib/cmake/clang" >> $env:GITHUB_ENV
+          echo "${{ env.LLVM_ROOT }}/bin" >> $env:GITHUB_PATH
 
           # FFmpeg environment
           echo "FFMPEG_ROOT=C:\Program Files\FFmpeg" >> $env:GITHUB_ENV
@@ -295,15 +308,9 @@ jobs:
           $cores = [System.Environment]::ProcessorCount
 
           $cmakeArgs = @(
-            "-B", "build",
-            "-G", "Visual Studio 18 2026",
-            "-A", "x64",
+            "--preset", "msvc-ninja-dev",
             "-DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}",
-            "-DCMAKE_CONFIGURATION_TYPES=${{ env.BUILD_TYPE }}",
-            "-DCMAKE_CXX_STANDARD=23",
             "-DMAYAFLUX_ENABLE_LTO=ON",
-            "-DCMAKE_VS_GLOBALS=UseMultiToolTask=true;EnforceProcessCountAcrossBuilds=true",
-            "-DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}\scripts\buildsystems\vcpkg.cmake",
             "-DCMAKE_CXX_FLAGS_RELEASE=/O2 /DNDEBUG /Z7",
             "-DCMAKE_EXE_LINKER_FLAGS=/DEBUG:FASTLINK /CGTHREADS:$cores"
           )
@@ -321,7 +328,12 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "=== Building MayaFlux ===" -ForegroundColor Cyan
-          cmake --build build --config ${{ env.BUILD_TYPE }} --parallel $([System.Environment]::ProcessorCount)
+          cmake --build --preset msvc-ninja-dev --parallel $([System.Environment]::ProcessorCount)
+
+      - name: Check reflection sidecars
+        if: ${{ inputs.run_reflect_check }}
+        shell: pwsh
+        run: ./build/mayaflux_reflect.exe --check
 
       # - name: Run Tests (optional)
       #   if: ${{ inputs.run_tests != false }}

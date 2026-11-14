@@ -103,6 +103,7 @@ jobs:
       create_distribution: true
       artifact_name: MayaFlux-${{ needs.determine_version.outputs.VERSION }}-windows-x64
       distribution_name: windows-x64
+      run_reflect_check: true
       os_display_name: Windows
 
   create_release:
