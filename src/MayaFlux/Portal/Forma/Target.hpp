@@ -14,8 +14,8 @@ namespace MayaFlux::Portal::Forma {
  * a slice of one. A shared_ptr<FormaBuffer> converts to it implicitly and means
  * the whole buffer, so code that creates its own buffer is unchanged.
  *
- * Copies of one handle share their state: when a slice moves to another
- * buffer, every copy follows. operator-> reaches the underlying buffer for
+ * Copies of one handle share their state: when move_to takes a slice to
+ * another buffer, every copy follows. operator-> reaches the underlying buffer for
  * buffer-level state such as the render processor or vertex layout; content
  * and visibility go through the methods below.
  */
@@ -78,6 +78,21 @@ public:
         const auto* src = reinterpret_cast<const uint8_t*>(&vertex);
         submit(std::vector<uint8_t>(src, src + sizeof(V)));
     }
+
+    /**
+     * @brief Move this slice into @p destination, drawn after the destination's others.
+     *
+     * Copies the slice's vertices, topology and visibility into a new slice of
+     * @p destination, then removes it here and retires this buffer if that was
+     * its last slice. Every copy of this handle follows. Priority, scissor and
+     * textures belong to a buffer and stay: @p destination must already be set
+     * up for what the slice draws, such as a text slot for glyphs.
+     *
+     * @return False, with nothing changed, for an empty or whole-buffer handle,
+     *         the buffer it is already in, a slice that is no longer live, or a
+     *         destination that cannot take slices yet.
+     */
+    [[nodiscard]] bool move_to(const std::shared_ptr<Buffers::FormaBuffer>& destination) const;
 
     /** @brief Bind a texture in the buffer's texture array. */
     void bind_texture(uint32_t array_index, const std::shared_ptr<Core::VKImage>& image) const;

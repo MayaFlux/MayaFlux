@@ -201,6 +201,14 @@ bool FormaBuffer::has_slice(SliceId id) const noexcept
     return m_processor && m_processor->has_slice(id);
 }
 
+std::optional<SliceSet::Snapshot> FormaBuffer::read_slice(SliceId id) const
+{
+    if (!m_processor) {
+        return std::nullopt;
+    }
+    return m_processor->read_slice(id);
+}
+
 void FormaBuffer::remove_slice(SliceId id)
 {
     if (m_processor)

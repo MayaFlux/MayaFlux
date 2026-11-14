@@ -130,6 +130,22 @@ void SliceSet::send_to_back(SliceId id)
     m_runs_changed = true;
 }
 
+std::optional<SliceSet::Snapshot> SliceSet::read(SliceId id) const
+{
+    const auto it = m_slices.find(id);
+    if (it == m_slices.end()) {
+        return std::nullopt;
+    }
+
+    const auto& slice = it->second;
+    const auto first = m_mirror.begin() + static_cast<std::ptrdiff_t>(slice.byte_offset);
+    return Snapshot {
+        .bytes = std::vector<uint8_t>(first, first + static_cast<std::ptrdiff_t>(slice.byte_size)),
+        .topology = slice.topology,
+        .visible = slice.visible,
+    };
+}
+
 uint32_t SliceSet::vertex_count() const noexcept
 {
     return static_cast<uint32_t>(m_mirror.size() / m_stride);

@@ -70,6 +70,9 @@ public:
     /** @brief True when @p id names a live slice. */
     [[nodiscard]] bool has_slice(SliceId id) const noexcept { return m_slices.contains(id); }
 
+    /** @brief A copy of a slice's vertices, topology and visibility; nullopt for an unknown id. */
+    [[nodiscard]] std::optional<SliceSet::Snapshot> read_slice(SliceId id) const { return m_slices.read(id); }
+
     /** @brief True when geometry or slice changes await the next tick. */
     [[nodiscard]] bool has_pending() const noexcept;
 

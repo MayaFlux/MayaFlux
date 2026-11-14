@@ -60,6 +60,32 @@ void FormaTarget::submit(const std::vector<uint8_t>& bytes) const
     m_state->buffer->submit(bytes);
 }
 
+bool FormaTarget::move_to(const std::shared_ptr<Buffers::FormaBuffer>& destination) const
+{
+    if (!m_state || !destination || m_state->slice == 0 || destination == m_state->buffer)
+        return false;
+
+    const auto source = m_state->buffer;
+    const auto snapshot = source->read_slice(m_state->slice);
+    if (!snapshot)
+        return false;
+
+    const auto moved = destination->add_slice(snapshot->bytes, snapshot->topology);
+    if (moved == 0)
+        return false;
+
+    if (!snapshot->visible)
+        destination->set_slice_visible(moved, false);
+
+    source->remove_slice(m_state->slice);
+    if (source->slice_count() == 0)
+        source->mark_for_removal();
+
+    m_state->buffer = destination;
+    m_state->slice = moved;
+    return true;
+}
+
 void FormaTarget::bind_texture(uint32_t array_index, const std::shared_ptr<Core::VKImage>& image) const
 {
     if (m_state)

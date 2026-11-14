@@ -124,6 +124,9 @@ public:
     /** @brief True when @p id names a live block. */
     [[nodiscard]] bool has_slice(SliceId id) const noexcept;
 
+    /** @brief A copy of a block's vertices, topology and visibility; nullopt for an unknown id or before setup_processors(). */
+    [[nodiscard]] std::optional<SliceSet::Snapshot> read_slice(SliceId id) const;
+
     /** @brief Remove a block; later blocks shift down. */
     void remove_slice(SliceId id);
 
