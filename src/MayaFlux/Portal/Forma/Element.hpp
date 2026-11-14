@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Kinesis/Spatial/Bounds.hpp"
+#include "MayaFlux/Kinesis/Spatial/HitRegion.hpp"
 #include "MayaFlux/Portal/Forma/Target.hpp"
 
 namespace MayaFlux::Core {
@@ -126,6 +127,34 @@ struct MAYAFLUX_API Element {
     {
         contains = std::move(fn);
         return *this;
+    }
+
+    /**
+     * @brief Set bounds_hint and contains from one hit region.
+     *
+     * The clip is written only when the region carries one, so a clip set by
+     * a container such as Scrollable survives. For one field alone use
+     * with_bounds or with_contains.
+     */
+    Element& with_containment(const Kinesis::HitRegion2D& region)
+    {
+        bounds_hint = region.bounds;
+        contains = region.contains;
+        if (region.clip)
+            clip = region.clip;
+        return *this;
+    }
+
+    /**
+     * @brief Whether an NDC point hits this element's spatial fields.
+     *
+     * Applies clip, bounds_hint and contains in the order of
+     * Kinesis::HitRegion::hits. Ignores interactive and visible, which
+     * Layer checks first.
+     */
+    [[nodiscard]] bool hits(glm::vec2 ndc) const
+    {
+        return Kinesis::HitRegion2D::test(clip, bounds_hint, contains, ndc);
     }
 
     /**

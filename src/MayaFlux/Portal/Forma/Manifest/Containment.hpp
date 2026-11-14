@@ -25,10 +25,7 @@ using Containment = Kinesis::HitRegion2D;
  */
 inline void apply_containment(Element& element, const Containment& hit)
 {
-    element.bounds_hint = hit.bounds;
-    element.contains = hit.contains;
-    if (hit.clip)
-        element.clip = hit.clip;
+    element.with_containment(hit);
 }
 
 /**

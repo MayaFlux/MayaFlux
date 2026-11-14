@@ -45,6 +45,18 @@ struct HitRegion {
     /** @brief Whether a point hits this region. */
     [[nodiscard]] bool hits(Point p) const
     {
+        return test(clip, bounds, contains, p);
+    }
+
+    /**
+     * @brief hits() over three parts held elsewhere, without copying them.
+     *
+     * For owners that keep the clip, bounds and containment test as separate
+     * fields and cannot build a HitRegion per query.
+     */
+    [[nodiscard]] static bool test(const std::optional<Box>& clip,
+        const std::optional<Box>& bounds, const std::function<bool(Point)>& contains, Point p)
+    {
         if (clip && !clip->contains(p))
             return false;
         if (bounds && !bounds->contains(p))
