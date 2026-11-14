@@ -21,11 +21,11 @@ class Surface;
  *
  * Before place() is called, the struct carries no state. After place(),
  * element_id, state, params, and field_bounds are populated. This mirrors
- * the Scrollable/Collapsible pattern: place() takes a pre-built buffer
- * (Portal::Forma::create_buffer at the call site) and does not itself
- * depend on Forma.hpp - no file under Portal/Forma/ may, except Forma.cpp
- * itself. Portal::Forma::create_text_field (in Forma.hpp) is the one-call
- * convenience that builds the buffer and delegates here, the same split
+ * the Scrollable/Collapsible pattern: place() takes the target the text is
+ * drawn into and does not itself depend on Forma.hpp - no file under
+ * Portal/Forma/ may, except Forma.cpp itself. Portal::Forma::create_text_field
+ * (in Forma.hpp) is the one-call convenience that places the field in the
+ * surface's shared buffer and delegates here, the same split
  * Portal::Forma::create<T> already has between itself and a Form<T>.
  *
  * Editing state lives in a Portal::Text::EditableText, mutated through
@@ -185,6 +185,21 @@ struct TextField {
      */
     MAYAFLUX_API TextField& scrollable(
         FormaTarget in_buf,
+        Surface& surface,
+        Scrollable& scroller,
+        std::shared_ptr<Portal::Text::PressParams> in_params,
+        std::string initial_text = {},
+        float content_multiplier = 3.F);
+
+    /**
+     * @brief scrollable() with the text drawn into the scroller's own buffer.
+     *
+     * Needs no buffer from the caller: the field is a slice of the buffer the
+     * viewport already draws into, so it is clipped with the rest. Does
+     * nothing, with a warning, when @p scroller has not been placed. A
+     * scroller placed on a buffer without a text slot draws no glyphs.
+     */
+    MAYAFLUX_API TextField& scrollable(
         Surface& surface,
         Scrollable& scroller,
         std::shared_ptr<Portal::Text::PressParams> in_params,

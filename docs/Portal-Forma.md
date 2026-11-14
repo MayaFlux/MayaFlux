@@ -65,26 +65,29 @@ Anything that works against a bare `Layer` or `Context` works against these.
 
 ---
 
-## Buffers, slices and batches
+## Buffers and slices
 
-`Forma::create_buffer(RenderConfig)` registers a render-ready buffer. Build
-the config with `Surface::render_config`, which sets the window and preserves
-other fields you pass:
+Everything placed on a surface draws into one buffer the surface's layer keeps.
+There is nothing to create: `create`, `create_element`, `Tend`,
+`create_text_field`, `plot`, `Dropdown`, `pick` and the other primitives each
+take a slice of it. Every slice has its own input topology, and the buffer
+triangulates them all into one draw. Capacity grows on flush. Line and point
+slices are milled into NDC ribbons using widths measured in pixels against the
+window height.
+
+Slices draw in the order they were placed, so hit order and draw order agree,
+and `Layer::bring_to_front` moves an element's slice with it. A `Scrollable`
+draws in a buffer of its own, scissored to its viewport, and moves the elements
+it tracks into it.
+
+### Drawing by hand
+
+`Forma::slice(surface, topology)` returns a place to draw. Use it for an
+element you assemble yourself, or for a second shape a Form draws:
 
 ```cpp
-auto buf = Portal::Forma::create_buffer(surface.render_config());
-```
-
-The buffer triangulates slices into a `TRIANGLE_LIST`. Capacity grows on flush
-from a fixed initial size. Each slice specifies its input topology; line and
-point slices are milled into NDC ribbons using widths measured in pixels
-against the window height at buffer creation.
-
-### Drawing into a slice
-
-```cpp
-auto target = Portal::Forma::FormaTarget::slice_of(
-    buf, Portal::Graphics::PrimitiveTopology::POINT_LIST);
+auto target = Portal::Forma::slice(
+    surface, Portal::Graphics::PrimitiveTopology::POINT_LIST);
 
 target.submit(Kakshya::PointVertex {
     .position = { 0.0F, 0.0F, 0.0F },
@@ -100,36 +103,51 @@ const uint32_t id = surface.layer().add(
         .with_buffer(target));
 ```
 
-`slice_of` returns an empty handle if the buffer is not ready for slices.
-Several elements can use slices of the same buffer as one batch. Retiring the
-last slice retires that buffer.
+Removing an element retires its slice, and the buffer is retired with the last
+one. It is made again the next time something is placed.
 
 ### Texture slots
 
-With `forma_multi.frag`, a positive vertex `weight` selects an image slot,
-zero draws flat colour, and a negative weight selects glyph coverage from a
-slot. Custom shaders can use different semantics; the plot shader does.
-Allocate an `additional_textures` slot only when the batch needs one. See
-`Portal-Text.md` for glyph coverage.
+The shared buffer has one texture slot, `text`, bound to the glyph atlas. Its
+fragment shader draws a negative vertex `weight` as glyph coverage from that
+slot and every other weight as flat colour, so line widths and point sizes in
+the weight slot are safe. See `Portal-Text.md` for glyph coverage.
 
-### Elements with their own buffer
+### Placing an element
 
-`create_element` and `create(Surface&, Form, ...)` create one buffer for their
-element, with its geometry in a slice:
+`create_element` and `create(Surface&, Form, ...)` draw the element as a slice
+of that buffer:
 
 ```cpp
 auto el = Portal::Forma::create_element<float>(surface, geom_fn, 0.5F);
 ```
 
-Pass a `FormaTarget` to the explicit overload to share a buffer with others.
+### When an element cannot share
+
+A custom shader or render config, GPU bindings on a buffer, user images, or an
+element's own draw priority need a buffer of their own. This is an escape
+hatch: nothing in Forma chooses it for you.
+
+```cpp
+auto own = Portal::Forma::create_buffer(
+    surface.render_config({ .fragment_shader = "my_shader.frag" }));
+auto target = Portal::Forma::FormaTarget::slice_of(
+    own, Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP);
+```
+
+Pass the buffer to the explicit overloads, `create(surface, own, form, ...)` and
+`create_element(surface, target, ...)`, or set `Tend::batch`. With the default
+multi-texture shader of such a buffer, a positive vertex `weight` selects an
+image slot, zero draws flat colour, and a negative weight selects glyph
+coverage; give it an `additional_textures` slot only when it needs one.
 
 ---
 
 ## Kinesis::Geometry2D : static vertex data
 
 `Kinesis::Geometry2D.hpp` produces raw vertex arrays in NDC (z = 0). Submit
-them to a `FormaTarget::slice_of(buf, topology)`, or return them from a
-geometry function. Match the slice topology to the returned vertices:
+them to a `Forma::slice(surface, topology)`, or return them from a geometry
+function. Match the slice topology to the returned vertices:
 `TRIANGLE_STRIP` for four-vertex filled rectangles, `TRIANGLE_LIST` for other
 filled shapes, and `LINE_LIST` for outlines.
 
@@ -166,12 +184,11 @@ useful as input to `polyline` or `stroke_slider`:
 auto path = Kinesis::arc_path({ 0.F, 0.F }, 0.4F, 0.4F,
     glm::radians(200.F), glm::radians(-20.F), 64);
 
-auto handle_buf = Portal::Forma::FormaTarget::slice_of(
-    Portal::Forma::create_buffer(surface.render_config()),
-    Portal::Graphics::PrimitiveTopology::POINT_LIST);
+auto handle = Portal::Forma::slice(
+    surface, Portal::Graphics::PrimitiveTopology::POINT_LIST);
 
 auto el = Portal::Forma::create(
-    surface, Portal::Forma::Geometry::stroke_slider(path, handle_buf), 0.5F);
+    surface, Portal::Forma::Geometry::stroke_slider(path, handle), 0.5F);
 ```
 
 ---
@@ -194,7 +211,7 @@ struct Form {
 };
 ```
 
-`Portal::Forma::create` realizes one: builds a growing buffer, adds a slice
+`Portal::Forma::create` realizes one: adds a slice of the surface's buffer
 with the Form's topology, registers the element, syncs so `bounds_hint` and
 `contains` from the geometry function reach the Layer before the first frame,
 then runs the wiring. The legacy `Form::capacity` field does not size this
@@ -395,20 +412,14 @@ surface.ctx().on_held(el.element.id, IO::Keys::ArrowLeft,
 
 `with_text`, `set_text`, and `retarget` draw glyph quads into the element's
 `FormaTarget`. Text slices in one buffer share a glyph atlas image at texture
-slot 0. Set up that slot in `RenderConfig` before creating the buffer:
+slot 0, which the surface's buffer already has:
 
 ```cpp
 constexpr Kinesis::AABB2D box { glm::vec2(-0.3F, -0.1F), glm::vec2(0.3F, 0.1F) };
 
-auto render = surface.render_config();
-render.additional_textures.emplace_back("text", nullptr);
-auto text_buf = Portal::Forma::create_buffer(std::move(render));
-auto target = Portal::Forma::FormaTarget::slice_of(
-    text_buf, Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST);
-
 auto el = Portal::Forma::Element {}
     .non_interactive()
-    .with_buffer(target)
+    .with_buffer(Portal::Forma::slice(surface))
     .with_text("Click me",
         Portal::Text::PressParams { .color = { 1.F, 1.F, 1.F, 1.F },
                                     .render_bounds = { 256, 48 } },
@@ -423,9 +434,11 @@ that atlas grows. A buffer's texture bindings belong to the whole buffer, so
 its text slices must use the same atlas and reserve slot 0 for it. A row
 shorter than one line squeezes its text to fit (`TextRun::extent`).
 
-`with_texture` still draws a loaded or render-target image. Give its buffer
-an `additional_textures` slot and use a separate slice for each image quad.
-Several slices of one buffer can share an image bound at the same slot:
+`with_texture` still draws a loaded or render-target image. Images are not part
+of the surface's buffer, so this is a case for a buffer of your own, see "When
+an element cannot share". Give it an `additional_textures` slot and use a
+separate slice for each image quad. Several slices of one buffer can share an
+image bound at the same slot:
 
 ```cpp
 auto image_render = surface.render_config();
@@ -681,9 +694,9 @@ Portal::Forma::LayoutCursor cursor { panel.max.y, panel.min.x, panel.max.x };
 `top_left`, `top_right`, `bottom_left`, `bottom_right`, `top_strip`,
 `bottom_strip`, `left_strip`, `right_strip`, `center_rect`, and `full`.
 
-`Scrollable` scissors its buffer to the viewport. Give the viewport and its
-tracked children slices of one buffer to clip them as one batch; keep content
-that must draw outside the viewport on another buffer.
+`Scrollable::place(surface, viewport)` draws in a buffer of its own, scissored
+to the viewport. Elements you `track` move into it and are clipped with it;
+everything else on the surface keeps drawing unclipped.
 
 ## Quick examples
 
@@ -743,15 +756,9 @@ constexpr glm::vec4 k_rest  { 0.2F, 0.2F, 0.2F, 1.F };
 constexpr glm::vec4 k_hover { 0.4F, 0.4F, 0.4F, 1.F };
 constexpr glm::vec4 k_press { 0.8F, 0.3F, 0.2F, 1.F };
 
-auto render = surface.render_config();
-render.additional_textures.emplace_back("text", nullptr);
-auto text_buf = Portal::Forma::create_buffer(std::move(render));
-auto target = Portal::Forma::FormaTarget::slice_of(
-    text_buf, Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST);
-
 auto el = Portal::Forma::Element {}
     .with_bounds(box)
-    .with_buffer(target)
+    .with_buffer(Portal::Forma::slice(surface))
     .with_text("Click me",
         Portal::Text::PressParams { .color = { 1.F, 1.F, 1.F, 1.F }, .background = k_rest, .render_bounds = { 256, 48 } },
         box);

@@ -71,15 +71,9 @@ ImGui::Text("Cutoff: %.2f Hz", freq);
 Forma: construct once, update via `set_text`.
 
 ```cpp
-auto render = surface.render_config();
-render.additional_textures.emplace_back("text", nullptr);
-auto text_buf = Portal::Forma::create_buffer(std::move(render));
-auto target = Portal::Forma::FormaTarget::slice_of(
-    text_buf, Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST);
-
 auto el = Portal::Forma::Element {}
     .non_interactive()
-    .with_buffer(target)
+    .with_buffer(Portal::Forma::slice(surface))
     .with_text("Cutoff: 440.00 Hz",
         Portal::Text::PressParams {
             .color = { 0.85F, 0.85F, 0.85F, 1.F },
@@ -99,13 +93,7 @@ For live-updating readouts driven by a reader function, `make_entry` (from
 label share that slice.
 
 ```cpp
-auto row_render = surface.render_config();
-row_render.additional_textures.emplace_back("text", nullptr);
-auto row_batch = Portal::Forma::create_buffer(std::move(row_render));
-EntryBuffer row_buf {
-    .buf = Portal::Forma::FormaTarget::slice_of(
-        row_batch, Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST),
-};
+EntryBuffer row_buf { .buf = Portal::Forma::slice(surface) };
 
 auto row = make_entry(
     EntrySpec {
@@ -137,15 +125,9 @@ constexpr glm::vec4 k_rest  { 0.2F, 0.2F, 0.2F, 1.F };
 constexpr glm::vec4 k_press { 0.7F, 0.3F, 0.2F, 1.F };
 constexpr glm::vec4 k_hover { 0.35F, 0.35F, 0.35F, 1.F };
 
-auto render = surface.render_config();
-render.additional_textures.emplace_back("text", nullptr);
-auto buf = Portal::Forma::create_buffer(std::move(render));
-auto target = Portal::Forma::FormaTarget::slice_of(
-    buf, Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST);
-
 auto el = Portal::Forma::Element {}
     .with_bounds(box)
-    .with_buffer(target)
+    .with_buffer(Portal::Forma::slice(surface))
     .with_text("Trigger",
         Portal::Text::PressParams { .color = { 1.F, 1.F, 1.F, 1.F }, .background = k_rest, .render_bounds = { 256, 48 } },
         box);
@@ -247,13 +229,12 @@ comment:
 auto path = Kinesis::arc_path({ 0.F, 0.F }, 0.3F, 0.3F,
     glm::radians(215.F), glm::radians(-35.F), 64);
 
-auto handle_buf = Portal::Forma::FormaTarget::slice_of(
-    Portal::Forma::create_buffer(surface.render_config()),
-    Portal::Graphics::PrimitiveTopology::POINT_LIST);
+auto handle = Portal::Forma::slice(
+    surface, Portal::Graphics::PrimitiveTopology::POINT_LIST);
 
 auto el = Portal::Forma::create(
     surface,
-    Portal::Forma::Geometry::stroke_slider(path, handle_buf,
+    Portal::Forma::Geometry::stroke_slider(path, handle,
         0.02F, { 0.2F, 0.2F, 0.25F }, { 0.3F, 0.6F, 1.0F }),
     0.5F);
 ```
@@ -287,11 +268,7 @@ Forma: `Collapsible` + `attach` for each body element.
 constexpr float row_h = 0.055F;
 LayoutCursor cursor { 1.F, -0.95F, 0.95F };
 
-auto header_render = surface.render_config();
-header_render.additional_textures.emplace_back("text", nullptr);
-auto header_buf = Portal::Forma::create_buffer(std::move(header_render));
-auto hbuf = Portal::Forma::FormaTarget::slice_of(
-    header_buf, Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST);
+auto hbuf = Portal::Forma::slice(surface);
 
 auto col = Collapsible {}
     .initially_open(true)
@@ -402,19 +379,12 @@ under collapsible headers. This is the pattern the internal Inspector uses.
 constexpr float row_h = 0.05F;
 LayoutCursor cursor { 1.F, -0.95F, 0.95F };
 
-auto render = surface.render_config();
-render.additional_textures.emplace_back("text", nullptr);
-auto batch = Portal::Forma::create_buffer(std::move(render));
-auto hdr_buf = Portal::Forma::FormaTarget::slice_of(
-    batch, Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST);
+auto hdr_buf = Portal::Forma::slice(surface);
 
 std::array<EntryBuffer, 3> row_bufs {
-    EntryBuffer { .buf = Portal::Forma::FormaTarget::slice_of(
-        batch, Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST) },
-    EntryBuffer { .buf = Portal::Forma::FormaTarget::slice_of(
-        batch, Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST) },
-    EntryBuffer { .buf = Portal::Forma::FormaTarget::slice_of(
-        batch, Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST) },
+    EntryBuffer { .buf = Portal::Forma::slice(surface) },
+    EntryBuffer { .buf = Portal::Forma::slice(surface) },
+    EntryBuffer { .buf = Portal::Forma::slice(surface) },
 };
 
 std::array<EntrySpec, 3> specs { {
@@ -429,7 +399,7 @@ auto group = make_entry_group(
 ```
 
 Call `row.link.tap()` for each row from the graphics tick to refresh its
-readout. The header and rows draw as slices of one text-capable buffer.
+readout. The header and rows draw as slices of the surface's buffer.
 
 For deeply nested trees (node graph inspection, buffer chains), use
 `InspectResult` which nests `EntryGroup` recursively and exposes `tap_all()`.
@@ -540,30 +510,31 @@ element id plus your own reposition callback, invoked with that element's
 scrolled bounds on every scroll, the same shape as `Collapsible::attach()`.
 
 ```cpp
-auto batch = Portal::Forma::create_buffer(surface.render_config());
-auto viewport_target = Portal::Forma::FormaTarget::slice_of(
-    batch, Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP);
-
 auto panel = Scrollable {}
     .background_color({ 0.08F, 0.08F, 0.1F })
-    .place(viewport_target, surface, viewport_bounds);
+    .place(surface, viewport_bounds);
 
 const auto row_bounds = panel.cursor_out.advance(row_h);
-auto row_target = Portal::Forma::FormaTarget::slice_of(
-    batch, Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP);
-row_target.submit(Kinesis::filled_rect(row_bounds, color));
-const uint32_t row_id = surface.layer().add(
-    Portal::Forma::Element {}.with_bounds(row_bounds).with_buffer(row_target).non_interactive());
+const auto base = row_bounds.translated(-panel.offset->value);
 
-panel.track(surface.layer(), row_id, row_bounds,
-    [row_target, color](Kinesis::AABB2D shifted) {
-        row_target.submit(Kinesis::filled_rect(shifted, color));
-    },
-    row_target);
+Portal::Forma::Tend<float> {
+    .form = Portal::Forma::Geometry::Form<float> {
+        [base, color, offset = panel.offset](float, std::vector<uint8_t>& out, Portal::Forma::Element& el) {
+            const auto shifted = base.translated(offset->value);
+            Portal::Forma::Geometry::write_verts(out, Kinesis::filled_rect(shifted, color));
+            el.bounds_hint = shifted;
+        },
+        Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP,
+        4096 },
+}
+    .place(surface)
+    .track(panel, surface.layer(), row_bounds);
 ```
 
-The viewport and row share one scissored batch. Keep anything that draws
-outside the viewport on a different buffer.
+The viewport draws in a buffer of its own, scissored to it. `track` moves the
+row into that buffer, so it is clipped with the viewport while everything else
+on the surface keeps drawing unclipped. The geometry function reads the live
+offset itself, so `track` needs no reposition callback.
 
 `indicator()` attaches a caller-drawn `Mapped<glm::vec2>` as a live, draggable
 scrollbar. Scrollable drives it with `(position_frac, extent_frac)` and draws

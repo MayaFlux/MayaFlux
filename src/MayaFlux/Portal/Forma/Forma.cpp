@@ -97,6 +97,15 @@ void destroy(Surface& surface, uint32_t id)
 }
 
 // =============================================================================
+// Draw target
+// =============================================================================
+
+FormaTarget slice(Surface& surface, Graphics::PrimitiveTopology topology)
+{
+    return internal::atelier().batch_slice(surface, topology);
+}
+
+// =============================================================================
 // Standalone buffer
 // =============================================================================
 

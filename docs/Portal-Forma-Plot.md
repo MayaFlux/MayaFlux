@@ -61,7 +61,7 @@ anything else. It affects how `process_default()` acquires from node bindings.
 
 `Plot::series()` accumulates axis role mappings and an optional global palette,
 then terminals produce a `SeriesSpec` carrying the geometry function and slice
-topology. The batch grows to fit the generated geometry.
+topology. The surface's buffer grows to fit the generated geometry.
 
 ### Waveform (LINE_STRIP)
 
@@ -74,7 +74,7 @@ auto spec = Plot::series()
 ```
 
 Y series from the container are joined by degenerate vertices in one
-LINE_STRIP plot slice. The batch triangulates that slice for rendering.
+LINE_STRIP plot slice. The buffer triangulates that slice for rendering.
 X positions are uniform when no `SPATIAL_X` series is present.
 
 ### Scatter (POINT_LIST)
@@ -153,17 +153,16 @@ auto spec = Plot::series()
     .y(Role::SPATIAL_Y, AxisRange{}.range(-1.F, 1.F), { glm::vec3(0.2F, 0.9F, 0.6F) })
     .as_waveform().thickness(1.5F).done();
 
-auto batch = Portal::Forma::create_buffer(surface.render_config());
-auto target = Portal::Forma::FormaTarget::slice_of(batch, spec.topology);
-
-auto el = Plot::place(surface, target, std::move(spec), std::move(container));
+auto el = Plot::place(surface,
+    Portal::Forma::slice(surface, spec.topology),
+    std::move(spec), std::move(container));
 
 schedule_metro(1.0 / 60.0, [el = std::move(el)]() mutable { el.sync(); });
 ```
 
-`spec.topology` selects the slice's input primitive type. `create_buffer()`
-creates a triangulating batch that grows as geometry is submitted. Pass the
-same batch to other Forma elements when they should draw together.
+`spec.topology` selects the slice's input primitive type. The slice is part of
+the buffer every other element on the surface already draws into, so a grid or
+cursor placed on the same surface draws together with the plot.
 
 `sync()` reruns the geometry function unconditionally for plot elements
 (`force_redraw_on_sync` is set by `Plot::place`). Call it as often as you
@@ -183,8 +182,9 @@ auto [el, surface] = Portal::Forma::plot("Plot Window", 1280, 720,
 schedule_metro(1.0 / 60.0, [el = std::move(el)]() mutable { el.sync(); });
 ```
 
-Creates the window, shows it, builds the surface, places the plot in a geometry
-batch, and runs the first sync. Returns the `Mapped` and the `Surface`.
+Creates the window, shows it, builds the surface, places the plot in the
+surface's buffer, and runs the first sync. Returns the `Mapped` and the
+`Surface`; anything you add to that surface joins the same buffer.
 
 ---
 
@@ -246,9 +246,8 @@ For a live audio source that must stay in sync with actual buffer output, call
 plot shares a window with other Forma elements:
 
 ```cpp
-auto batch = Portal::Forma::create_buffer(surface.render_config());
 auto el = Plot::place(surface,
-    Portal::Forma::FormaTarget::slice_of(batch, spec.topology),
+    Portal::Forma::slice(surface, spec.topology),
     std::move(spec), std::move(container));
 ```
 
@@ -359,30 +358,26 @@ schedule_metro(1.0 / 60.0, [el = std::move(el)]() mutable { el.sync(); });
 ```
 
 Adornments are only materialized automatically when using `Portal::Forma::plot()`.
-It places the background, series, legend swatches, and labels in one batch.
-When labels are present, the batch has a `"text"` texture slot for the glyph
-atlas. The plot shader draws nonnegative vertex weights as plain color and
-negative weights as glyph coverage, leaving point size and line thickness
-available to the geometry mill.
+It places the background, series, legend swatches, and labels in the
+surface's buffer. That buffer has a `"text"` texture slot for the glyph atlas,
+and its shader draws negative vertex weights as glyph coverage and every other
+weight as plain color, leaving point size and line thickness available to the
+geometry mill.
 
 On the manual path (`Plot::place()` directly), place adornments explicitly.
 Give each rectangle a `TRIANGLE_STRIP` slice and each label a `TRIANGLE_LIST`
-slice of the same text-capable plot batch:
+slice:
 
 ```cpp
-auto batch = Portal::Forma::create_buffer(surface.render_config({
-    .fragment_shader = "forma_plot.frag.spv",
-    .additional_textures = { { "text", nullptr } },
-}));
 auto el = Plot::place(surface,
-    Portal::Forma::FormaTarget::slice_of(batch, spec.topology),
+    Portal::Forma::slice(surface, spec.topology),
     std::move(spec), std::move(container));
 
 (void)Plot::place_rect(surface,
-    Portal::Forma::FormaTarget::slice_of(batch, Graphics::PrimitiveTopology::TRIANGLE_STRIP),
+    Portal::Forma::slice(surface, Graphics::PrimitiveTopology::TRIANGLE_STRIP),
     swatch, el.element.id);
 (void)Plot::place_label(surface,
-    Portal::Forma::FormaTarget::slice_of(batch, Graphics::PrimitiveTopology::TRIANGLE_LIST),
+    Portal::Forma::slice(surface, Graphics::PrimitiveTopology::TRIANGLE_LIST),
     label, el.element.id);
 ```
 
@@ -495,7 +490,7 @@ schedule_metro(1.0 / 60.0, [el = std::move(el)]() mutable { el.sync(); });
 Each `.x()` and `.y()` call appends an independent axis mapping with its own
 `AxisRange`. The geometry function pairs them by mapping index: first `.x()`
 against first `.y()`, second `.x()` against second `.y()`, and so on. All
-pairs land in the same plot slice of the geometry batch.
+pairs land in the same plot slice of the surface's buffer.
 
 **Two Lissajous figures, one scatter, different frequencies**
 
@@ -650,9 +645,8 @@ SeriesSpec spec {
     .topology     = Graphics::PrimitiveTopology::POINT_LIST,
 };
 
-auto batch = Portal::Forma::create_buffer(surface.render_config());
 auto el = Plot::place(surface,
-    Portal::Forma::FormaTarget::slice_of(batch, spec.topology),
+    Portal::Forma::slice(surface, spec.topology),
     std::move(spec), std::move(container));
 schedule_metro(1.0 / 60.0, [el = std::move(el)]() mutable { el.sync(); });
 ```
