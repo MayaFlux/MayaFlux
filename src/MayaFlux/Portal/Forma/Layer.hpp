@@ -316,6 +316,14 @@ public:
     [[nodiscard]] const Element* get(uint32_t id) const;
     [[nodiscard]] Element* get(uint32_t id);
 
+    /**
+     * @brief The id of the first element with this name, or nullopt.
+     *
+     * Names are labels and are not required to be unique, so the first match
+     * in registration order wins. An empty name never matches.
+     */
+    [[nodiscard]] std::optional<uint32_t> find(std::string_view name) const;
+
     [[nodiscard]] const std::vector<Element>& elements() const { return m_elements; }
     [[nodiscard]] size_t size() const { return m_elements.size(); }
     [[nodiscard]] bool empty() const { return m_elements.empty(); }

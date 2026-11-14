@@ -48,6 +48,18 @@ public:
         return *this;
     }
 
+    /**
+     * @brief Leave every attribute whose name begins with a prefix to other readers.
+     *
+     * Like ignore, a matching attribute is neither decoded nor rejected, so a
+     * reader can own a whole family of names without listing each one.
+     */
+    RecordBinding& ignore_prefix(std::string prefix)
+    {
+        m_ignored_prefixes.push_back(std::move(prefix));
+        return *this;
+    }
+
     template <auto Pointer>
     RecordBinding& repeated(std::string child_name,
         std::string defaults_name = {},
@@ -149,8 +161,7 @@ public:
             [&](const auto& visit) {
                 return Access::for_each_attribute(source,
                     [&](std::string_view name, std::string_view value) {
-                        return std::ranges::find(m_ignored, name) != m_ignored.end()
-                            || visit(name, value);
+                        return is_ignored(name) || visit(name, value);
                     });
             }, label(source), error);
         if (!overlaid)
@@ -210,8 +221,17 @@ private:
         std::function<bool(Input&, const Source&, std::string&, uint64_t*)> decode;
     };
 
+    [[nodiscard]] bool is_ignored(std::string_view name) const
+    {
+        return std::ranges::find(m_ignored, name) != m_ignored.end()
+            || std::ranges::any_of(m_ignored_prefixes, [name](const std::string& prefix) {
+                   return name.starts_with(prefix);
+               });
+    }
+
     std::vector<std::string> m_required;
     std::vector<std::string> m_ignored;
+    std::vector<std::string> m_ignored_prefixes;
     std::vector<ChildBinding> m_children;
 };
 

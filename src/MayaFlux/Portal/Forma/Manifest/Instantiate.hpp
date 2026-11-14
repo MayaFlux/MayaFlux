@@ -7,14 +7,52 @@ namespace MayaFlux::Portal::Forma {
 /** @brief Surfaces by the document name a host binds them to. */
 using SurfaceMap = std::map<std::string, Surface, std::less<>>;
 
+/**
+ * @struct PlacedInstance
+ * @brief Where an instance of a document ended up.
+ */
+struct PlacedInstance {
+    /// @brief The document's surface id, a key of the SurfaceMap that was given.
+    std::string surface;
+
+    /// @brief The id of the element the instance is anchored on, in that surface's Layer.
+    uint32_t element {};
+};
+
+/** @brief The placed instances of a document by the id the document gave them. */
+using PlacedInstances = std::map<std::string, PlacedInstance, std::less<>>;
+
 namespace Detail {
+
+    /**
+     * The document's own attributes on an instance, all beginning with the
+     * reserved prefix. They are applied to the placed element through its Layer.
+     */
+    struct LayerAttributes {
+        bool hidden {};
+        std::optional<bool> interactive;
+        std::optional<std::string> relate;
+        bool front {};
+        bool back {};
+        std::optional<Kinesis::AABB2D> clip;
+    };
 
     template <typename Source, typename Access>
     class DocumentWalk {
     public:
         using Table = FactoryTable<Source, Access>;
         using Placer = typename Table::Placer;
-        using Prepared = std::vector<std::pair<Surface*, Placer>>;
+
+        struct PreparedInstance {
+            std::string surface_id;
+            Surface* surface {};
+            std::string id;
+            uint64_t row {};
+            Placer placer;
+            LayerAttributes layer;
+        };
+
+        using Prepared = std::vector<PreparedInstance>;
 
         DocumentWalk(const Table& table, const Source& root, std::string& error)
             : m_table(table)
@@ -55,9 +93,10 @@ namespace Detail {
                     fail(entry.element, "surface " + entry.id + " is not bound by the host");
                     return std::nullopt;
                 }
-                for (const Source& instance : entry.instances) {
-                    const std::string reference(*Access::attribute(instance, reserved_template_attribute));
-                    const Source& factory_element = m_templates.at(reference);
+                for (size_t i = 0; i < entry.instances.size(); ++i) {
+                    const Source& instance = entry.instances[i];
+                    const InstanceInfo& info = entry.info[i];
+                    const Source& factory_element = m_templates.at(info.template_id);
                     const typename Table::Instantiator* decode = m_table.find(Access::name(factory_element));
                     auto placer = std::invoke(*decode, factory_element, instance, m_error);
                     if (!placer) {
@@ -65,7 +104,14 @@ namespace Detail {
                             fail(instance, "could not prepare the instance");
                         return std::nullopt;
                     }
-                    prepared.emplace_back(&bound->second, std::move(*placer));
+                    prepared.push_back(PreparedInstance {
+                        .surface_id = entry.id,
+                        .surface = &bound->second,
+                        .id = info.id,
+                        .row = Access::location(instance),
+                        .placer = std::move(*placer),
+                        .layer = info.layer,
+                    });
                 }
             }
             return prepared;
@@ -91,11 +137,69 @@ namespace Detail {
             return placers;
         }
 
+        /**
+         * Names every placed element after its instance, then applies the
+         * document's Layer attributes: relations first, so a later front or back
+         * moves the whole group, then visibility, interaction and clip.
+         */
+        static bool apply(const Prepared& prepared, const std::vector<uint32_t>& elements,
+            std::string& error)
+        {
+            for (size_t i = 0; i < prepared.size(); ++i) {
+                Element* element = prepared[i].surface->layer().get(elements[i]);
+                if (!element) {
+                    error = Table::located(prepared[i].row, "instance " + prepared[i].id
+                            + " placed an element the surface does not hold");
+                    return false;
+                }
+                element->name = prepared[i].id;
+            }
+
+            for (size_t i = 0; i < prepared.size(); ++i) {
+                const auto& relate = prepared[i].layer.relate;
+                if (!relate)
+                    continue;
+                const auto target = std::ranges::find_if(prepared, [&](const PreparedInstance& other) {
+                    return other.surface_id == prepared[i].surface_id && other.id == *relate;
+                });
+                const size_t j = static_cast<size_t>(target - prepared.begin());
+                if (target == prepared.end()
+                    || !prepared[i].surface->layer().relate(elements[j], elements[i])) {
+                    error = Table::located(prepared[i].row, "could not relate " + prepared[i].id
+                            + " to " + *relate);
+                    return false;
+                }
+            }
+
+            for (size_t i = 0; i < prepared.size(); ++i) {
+                Layer& layer = prepared[i].surface->layer();
+                const LayerAttributes& attributes = prepared[i].layer;
+                if (attributes.hidden)
+                    layer.set_visible(elements[i], false);
+                if (attributes.interactive)
+                    layer.set_interactive(elements[i], *attributes.interactive);
+                if (attributes.clip)
+                    layer.set_clip(elements[i], attributes.clip);
+                if (attributes.front)
+                    layer.bring_to_front(elements[i]);
+                if (attributes.back)
+                    layer.send_to_back(elements[i]);
+            }
+            return true;
+        }
+
     private:
+        struct InstanceInfo {
+            std::string id;
+            std::string template_id;
+            LayerAttributes layer;
+        };
+
         struct SurfaceInstances {
             std::string id;
             Source element;
             std::vector<Source> instances;
+            std::vector<InstanceInfo> info;
         };
 
         const Table& m_table;
@@ -196,7 +300,7 @@ namespace Detail {
             if (!id)
                 return false;
 
-            SurfaceInstances entry { .id = *id, .element = surface, .instances = {} };
+            SurfaceInstances entry { .id = *id, .element = surface, .instances = {}, .info = {} };
             const bool traversed = Access::for_each_child(surface, [&](const Source& instance) {
                 if (Access::name(instance) != "instance") {
                     return fail(instance, "<" + std::string(Access::name(instance))
@@ -210,17 +314,101 @@ namespace Detail {
             return traversed;
         }
 
+        bool read_flag(const Source& instance, std::string_view name, std::string_view value, bool& out)
+        {
+            Reflect::TextError reason = Reflect::TextError::Invalid;
+            if (!Reflect::TextCodec<bool>::decode(value, out, reason))
+                return fail(instance, "<instance> has an invalid " + std::string(name) + " attribute");
+            return true;
+        }
+
+        bool read_layer_attributes(const Source& instance, LayerAttributes& out)
+        {
+            const bool read = Access::for_each_attribute(instance,
+                [&](std::string_view name, std::string_view value) {
+                    if (!name.starts_with(reserved_prefix))
+                        return true;
+                    const std::string_view key = name.substr(reserved_prefix.size());
+                    if (key == "hidden")
+                        return read_flag(instance, name, value, out.hidden);
+                    if (key == "front")
+                        return read_flag(instance, name, value, out.front);
+                    if (key == "back")
+                        return read_flag(instance, name, value, out.back);
+                    if (key == "interactive") {
+                        bool flag {};
+                        if (!read_flag(instance, name, value, flag))
+                            return false;
+                        out.interactive = flag;
+                        return true;
+                    }
+                    if (key == "relate") {
+                        if (value.empty())
+                            return fail(instance, "<instance> needs an instance id in " + std::string(name));
+                        out.relate = std::string(value);
+                        return true;
+                    }
+                    if (key == "clip") {
+                        glm::vec4 rect {};
+                        Reflect::TextError reason = Reflect::TextError::Invalid;
+                        if (!Reflect::TextCodec<glm::vec4>::decode(value, rect, reason))
+                            return fail(instance, "<instance> needs four numbers in " + std::string(name));
+                        if (!(rect.z > 0.F) || !(rect.w > 0.F))
+                            return fail(instance, std::string(name) + " needs a positive width and height");
+                        out.clip = Kinesis::AABB2D::from_origin_size({ rect.x, rect.y }, { rect.z, rect.w });
+                        return true;
+                    }
+                    return fail(instance, "<instance> has an unsupported attribute " + std::string(name));
+                });
+            if (!read)
+                return false;
+            if (out.front && out.back) {
+                return fail(instance, std::string(reserved_prefix) + "front and "
+                        + std::string(reserved_prefix) + "back cannot both be set");
+            }
+            return true;
+        }
+
         bool check_instances()
         {
-            for (const SurfaceInstances& entry : m_surfaces) {
+            for (SurfaceInstances& entry : m_surfaces) {
                 for (const Source& instance : entry.instances) {
-                    if (!claim_id(instance))
+                    const auto id = claim_id(instance);
+                    if (!id)
                         return false;
                     const auto reference = Access::attribute(instance, reserved_template_attribute);
                     if (!reference)
                         return fail(instance, "<instance> needs a template attribute");
                     if (!m_templates.contains(std::string(*reference)))
                         return fail(instance, "<instance> refers to unknown template " + std::string(*reference));
+
+                    InstanceInfo info { .id = *id, .template_id = std::string(*reference), .layer = {} };
+                    if (!read_layer_attributes(instance, info.layer))
+                        return false;
+                    entry.info.push_back(std::move(info));
+                }
+                if (!check_relations(entry))
+                    return false;
+            }
+            return true;
+        }
+
+        bool check_relations(const SurfaceInstances& entry)
+        {
+            for (size_t i = 0; i < entry.info.size(); ++i) {
+                const auto& relate = entry.info[i].layer.relate;
+                if (!relate)
+                    continue;
+                if (*relate == entry.info[i].id) {
+                    return fail(entry.instances[i], std::string(reserved_prefix)
+                            + "relate may not name the instance itself");
+                }
+                const bool known = std::ranges::any_of(entry.info, [&](const InstanceInfo& other) {
+                    return other.id == *relate;
+                });
+                if (!known) {
+                    return fail(entry.instances[i], std::string(reserved_prefix) + "relate refers to "
+                            + *relate + ", which is not an instance of surface " + entry.id);
                 }
             }
             return true;
@@ -239,20 +427,32 @@ namespace Detail {
  * the placement attributes the factory describes. Ids are unique across the
  * document. A surface id is a name the host binds in @p surfaces.
  *
+ * An instance may also carry attributes of the document's own, all beginning
+ * with mf: and applied to the placed element through its Layer:
+ * - mf:hidden and mf:interactive take true or false.
+ * - mf:relate names another instance of the same surface that this one belongs
+ *   with, so hiding, moving or removing that one reaches this one.
+ * - mf:front and mf:back move the element, and its relations, to the top or
+ *   the bottom of the paint and hit order. They exclude each other.
+ * - mf:clip takes x y width height and confines hit testing to that region.
+ * Every placed element is also named after its instance, so Layer::find
+ * reaches it by the id the document gave it.
+ *
  * Placement is two phases. The structure is checked and every instance is
  * decoded first, so a bad document fails before any Surface is touched. Then
- * each prepared instance is placed in document order.
+ * each prepared instance is placed in document order and the Layer attributes
+ * are applied.
  *
  * @tparam Source Element type of the document tree, with a Reflect::RecordAccess.
  * @param table Factories by name.
  * @param root Root element of the document.
  * @param surfaces Surfaces by the name the document's surface elements use.
  * @param error Receives the reason, with a row, when nullopt is returned.
- * @return The number of instances placed.
+ * @return Each placed instance by id, with its surface and element.
  * @note A failure while placing may leave earlier instances on their Surface.
  */
 template <typename Source, typename Access = Reflect::RecordAccess<Source>>
-[[nodiscard]] std::optional<size_t> instantiate_document(
+[[nodiscard]] std::optional<PlacedInstances> instantiate_document(
     const FactoryTable<Source, Access>& table, const Source& root,
     SurfaceMap& surfaces, std::string& error)
 {
@@ -260,17 +460,23 @@ template <typename Source, typename Access = Reflect::RecordAccess<Source>>
     Detail::DocumentWalk<Source, Access> walk(table, root, error);
     if (!walk.read_structure())
         return std::nullopt;
-    auto prepared = walk.prepare(surfaces);
+    const auto prepared = walk.prepare(surfaces);
     if (!prepared)
         return std::nullopt;
 
-    size_t count = 0;
-    for (const auto& [surface, placer] : *prepared) {
-        if (!placer(*surface, error))
+    PlacedInstances placed;
+    std::vector<uint32_t> elements;
+    elements.reserve(prepared->size());
+    for (const auto& item : *prepared) {
+        const auto element = item.placer(*item.surface, error);
+        if (!element)
             return std::nullopt;
-        ++count;
+        elements.push_back(*element);
+        placed.emplace(item.id, PlacedInstance { .surface = item.surface_id, .element = *element });
     }
-    return count;
+    if (!Detail::DocumentWalk<Source, Access>::apply(*prepared, elements, error))
+        return std::nullopt;
+    return placed;
 }
 
 /**
@@ -279,14 +485,15 @@ template <typename Source, typename Access = Reflect::RecordAccess<Source>>
  * The template's factory must have been registered with expose_typed. Its
  * inputs are decoded once and each row, laid out as the described composite
  * layout of the factory's placement type, becomes one element on @p surface.
- * Everything is prepared before anything is placed.
+ * Everything is prepared before anything is placed. Rows carry no ids, so the
+ * elements are not named.
  *
  * @param template_id Id of a template in the document.
  * @param rows One row of placement values per element.
- * @return The number placed, or nullopt with the reason in error.
+ * @return The element id of each row in row order, or nullopt with the reason in error.
  */
 template <typename Source, typename Access = Reflect::RecordAccess<Source>>
-[[nodiscard]] std::optional<size_t> instantiate_rows(
+[[nodiscard]] std::optional<std::vector<uint32_t>> instantiate_rows(
     const FactoryTable<Source, Access>& table, const Source& root,
     std::string_view template_id, const Kakshya::CompositeArray& rows,
     Surface& surface, std::string& error)
@@ -299,13 +506,15 @@ template <typename Source, typename Access = Reflect::RecordAccess<Source>>
     if (!placers)
         return std::nullopt;
 
-    size_t count = 0;
+    std::vector<uint32_t> elements;
+    elements.reserve(placers->size());
     for (const auto& placer : *placers) {
-        if (!placer(surface, error))
+        const auto element = placer(surface, error);
+        if (!element)
             return std::nullopt;
-        ++count;
+        elements.push_back(*element);
     }
-    return count;
+    return elements;
 }
 
 }

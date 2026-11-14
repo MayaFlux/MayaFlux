@@ -287,6 +287,17 @@ Element* Layer::get(uint32_t id)
     return const_cast<Element*>(std::as_const(*this).get(id));
 }
 
+std::optional<uint32_t> Layer::find(std::string_view name) const
+{
+    if (name.empty())
+        return std::nullopt;
+    const auto found = std::ranges::find_if(m_elements,
+        [name](const Element& element) { return element.name == name; });
+    if (found == m_elements.end())
+        return std::nullopt;
+    return found->id;
+}
+
 // =============================================================================
 // Internal
 // =============================================================================

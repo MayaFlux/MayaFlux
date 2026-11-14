@@ -11,11 +11,13 @@ namespace MayaFlux::Portal::Forma {
 /**
  * @brief Attribute names a document owns on an instance.
  *
- * A table skips them when it decodes a placement, so a factory never
- * lists them.
+ * A table skips the two names and every attribute beginning with the prefix
+ * when it decodes a placement, so a factory never lists them. The driver
+ * reads the prefixed attributes itself.
  */
 inline constexpr std::string_view reserved_id_attribute { "id" };
 inline constexpr std::string_view reserved_template_attribute { "template" };
+inline constexpr std::string_view reserved_prefix { "mf:" };
 
 /**
  * @class FactoryTable
@@ -52,8 +54,14 @@ inline constexpr std::string_view reserved_template_attribute { "template" };
 template <typename Source, typename Access = Reflect::RecordAccess<Source>>
 class FactoryTable {
 public:
-    /** @brief Places one prepared element, or several, onto a Surface. May be run more than once. */
-    using Placer = std::function<bool(Surface&, std::string&)>;
+    /**
+     * @brief Places one prepared element, or several, onto a Surface.
+     *
+     * May be run more than once. Returns the id of the element the instance is
+     * anchored on, or nullopt with an error. A placement of several elements
+     * returns the one the others belong with.
+     */
+    using Placer = std::function<std::optional<uint32_t>(Surface&, std::string&)>;
 
     /** @brief Decodes a factory element and an instance into a Placer, or nullopt with an error. */
     using Instantiator = std::function<std::optional<Placer>(
@@ -103,6 +111,7 @@ public:
         std::type_identity_t<std::function<void(const Input&, const Placement&, Tend<T>&)>> placed = {})
     {
         placement.ignore({ reserved_id_attribute, reserved_template_attribute });
+        placement.ignore_prefix(std::string(reserved_prefix));
 
         using Maker = std::function<std::optional<Placer>(
             const Input&, const Placement&, std::string&)>;
@@ -257,7 +266,7 @@ private:
         std::function<void(Tend<T>&)> after)
     {
         return [form = std::move(form), initial = std::move(initial),
-                   after = std::move(after)](Surface& surface, std::string& error) {
+                   after = std::move(after)](Surface& surface, std::string& error) -> std::optional<uint32_t> {
             Tend<T> tend {
                 .form = form,
                 .initial = initial,
@@ -265,11 +274,11 @@ private:
             tend.place(surface);
             if (!tend.result) {
                 error = "could not place the element";
-                return false;
+                return std::nullopt;
             }
             if (after)
                 after(tend);
-            return true;
+            return tend.result->element.id;
         };
     }
 
