@@ -292,6 +292,20 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
         INTERFACE_INCLUDE_DIRECTORIES "${PACKAGE_PREFIX_DIR}/include;${PACKAGE_PREFIX_DIR}/share/MayaFlux/runtime"
     )
 
+    if(@MAYAFLUX_X86_AVX2_ENABLED@)
+        if(MSVC)
+            target_compile_options(MayaFlux::MayaFluxLib INTERFACE
+                "$<$<COMPILE_LANGUAGE:CXX>:/arch:AVX2>"
+            )
+        elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+            target_compile_options(MayaFlux::MayaFluxLib INTERFACE
+                "$<$<COMPILE_LANGUAGE:CXX>:-mavx;-mavx2;-mfma>"
+            )
+        else()
+            message(FATAL_ERROR "This MayaFlux package requires AVX2/FMA compiler options for ${CMAKE_CXX_COMPILER_ID}, which is unsupported.")
+        endif()
+    endif()
+
     # Platform-specific import lib (Windows only)
     if(WIN32)
         set_target_properties(MayaFlux::MayaFluxLib PROPERTIES
