@@ -132,6 +132,45 @@ public:
      */
     void on_scroll(uint32_t id, ScrollFn fn);
 
+    // =========================================================================
+    // Additive subscriptions
+    // =========================================================================
+
+    /**
+     * @brief Subscribe to presses of @p btn over an element without replacing
+     *        its on_press callback.
+     *
+     * on_press and its siblings keep one callback per element and slot, so a
+     * second registration replaces the first. A subscription is added beside
+     * it: the element's own callback runs first, then every subscriber in the
+     * order they subscribed. unbind(id) removes the callback and every
+     * subscriber of the element together.
+     */
+    void subscribe_press(uint32_t id, IO::MouseButtons btn, PressFn fn);
+
+    /// @brief Additive counterpart of on_release. See subscribe_press().
+    void subscribe_release(uint32_t id, IO::MouseButtons btn, PressFn fn);
+
+    /**
+     * @brief Additive counterpart of on_drag. See subscribe_press().
+     *
+     * A drag subscriber starts drag tracking on press the same way an on_drag
+     * callback does.
+     */
+    void subscribe_drag(uint32_t id, IO::MouseButtons btn, MoveFn fn);
+
+    /// @brief Additive counterpart of on_move. See subscribe_press().
+    void subscribe_move(uint32_t id, MoveFn fn);
+
+    /// @brief Additive counterpart of on_enter. See subscribe_press().
+    void subscribe_enter(uint32_t id, EnterFn fn);
+
+    /// @brief Additive counterpart of on_leave. See subscribe_press().
+    void subscribe_leave(uint32_t id, LeaveFn fn);
+
+    /// @brief Additive counterpart of on_scroll. See subscribe_press().
+    void subscribe_scroll(uint32_t id, ScrollFn fn);
+
     /**
      * @brief Remove all callbacks registered for an element id.
      *
@@ -337,6 +376,14 @@ private:
         EnterFn enter;
         LeaveFn leave;
         ScrollFn scroll;
+
+        std::unordered_map<int, std::vector<PressFn>> press_subscribers;
+        std::unordered_map<int, std::vector<PressFn>> release_subscribers;
+        std::unordered_map<int, std::vector<MoveFn>> drag_subscribers;
+        std::vector<MoveFn> move_subscribers;
+        std::vector<EnterFn> enter_subscribers;
+        std::vector<LeaveFn> leave_subscribers;
+        std::vector<ScrollFn> scroll_subscribers;
 
         EnterFn focus_gained;
         LeaveFn focus_lost;

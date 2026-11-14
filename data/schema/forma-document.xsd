@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:mf="urn:mayaflux:forma">
+
+  <xs:annotation>
+    <xs:documentation>
+      Forma document, version 1: the structure only. A document holds templates, each
+      naming one factory by the name of its single child, and surfaces holding
+      instances of those templates. What a factory accepts is decided by what the
+      host registered, so the factory element and an instance's placement attributes
+      are not described here. Not enforced by this schema and checked on load: a
+      second templates element, and that a factory or action name is registered.
+      Ids are unique across templates, surfaces and instances.
+    </xs:documentation>
+  </xs:annotation>
+
+  <xs:import namespace="urn:mayaflux:forma" schemaLocation="forma-layer.xsd"/>
+
+  <xs:complexType name="FormaTemplateType">
+    <xs:sequence>
+      <xs:any namespace="##local" processContents="skip"/>
+    </xs:sequence>
+    <xs:attribute name="id" type="xs:string" use="required"/>
+  </xs:complexType>
+
+  <xs:complexType name="FormaTemplatesType">
+    <xs:sequence>
+      <xs:element name="template" type="FormaTemplateType" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:simpleType name="FormaEventType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="Press"/>
+      <xs:enumeration value="Release"/>
+      <xs:enumeration value="Drag"/>
+      <xs:enumeration value="Move"/>
+      <xs:enumeration value="Enter"/>
+      <xs:enumeration value="Leave"/>
+      <xs:enumeration value="Scroll"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="FormaButtonType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="Left"/>
+      <xs:enumeration value="Right"/>
+      <xs:enumeration value="Middle"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:complexType name="FormaOnType">
+    <xs:annotation>
+      <xs:documentation>
+        Attaches a host action to a pointer event of the instance. event and button are the C++ enumerator names. button applies to
+        press, release and drag only, and is Left by default. Further attributes are
+        the action's own parameters.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:attribute name="event" type="FormaEventType" use="required"/>
+    <xs:attribute name="button" type="FormaButtonType"/>
+    <xs:attribute name="action" type="xs:string" use="required"/>
+    <xs:anyAttribute namespace="##local" processContents="skip"/>
+  </xs:complexType>
+
+  <xs:complexType name="FormaInstanceType">
+    <xs:annotation>
+      <xs:documentation>
+        One placement of a template. Attributes in no namespace other than id and
+        template are the placement attributes the template's factory describes.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="on" type="FormaOnType" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute name="id" type="xs:string" use="required"/>
+    <xs:attribute name="template" type="xs:string" use="required"/>
+    <xs:attribute ref="mf:hidden"/>
+    <xs:attribute ref="mf:interactive"/>
+    <xs:attribute ref="mf:front"/>
+    <xs:attribute ref="mf:back"/>
+    <xs:attribute ref="mf:relate"/>
+    <xs:attribute ref="mf:clip"/>
+    <xs:anyAttribute namespace="##local" processContents="skip"/>
+  </xs:complexType>
+
+  <xs:complexType name="FormaSurfaceType">
+    <xs:sequence>
+      <xs:element name="instance" type="FormaInstanceType" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute name="id" type="xs:string" use="required"/>
+  </xs:complexType>
+
+  <xs:element name="forma">
+    <xs:complexType>
+      <xs:choice minOccurs="0" maxOccurs="unbounded">
+        <xs:element name="templates" type="FormaTemplatesType"/>
+        <xs:element name="surface" type="FormaSurfaceType">
+          <xs:key name="instanceInSurface">
+            <xs:selector xpath="instance"/>
+            <xs:field xpath="@id"/>
+          </xs:key>
+          <xs:keyref name="relateInSurface" refer="instanceInSurface">
+            <xs:selector xpath="instance"/>
+            <xs:field xpath="@mf:relate"/>
+          </xs:keyref>
+        </xs:element>
+      </xs:choice>
+      <xs:attribute name="version" type="xs:string" use="required" fixed="1"/>
+    </xs:complexType>
+
+    <xs:unique name="documentId">
+      <xs:selector xpath="templates/template|surface|surface/instance"/>
+      <xs:field xpath="@id"/>
+    </xs:unique>
+    <xs:key name="templateId">
+      <xs:selector xpath="templates/template"/>
+      <xs:field xpath="@id"/>
+    </xs:key>
+    <xs:keyref name="instanceTemplate" refer="templateId">
+      <xs:selector xpath="surface/instance"/>
+      <xs:field xpath="@template"/>
+    </xs:keyref>
+  </xs:element>
+
+</xs:schema>

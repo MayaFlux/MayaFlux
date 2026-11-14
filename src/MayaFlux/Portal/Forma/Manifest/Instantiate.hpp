@@ -1,6 +1,6 @@
 #pragma once
 
-#include "FactoryTable.hpp"
+#include "ActionTable.hpp"
 
 namespace MayaFlux::Portal::Forma {
 
@@ -37,10 +37,21 @@ namespace Detail {
         std::optional<Kinesis::AABB2D> clip;
     };
 
+    /**
+     * An action prepared for one event of one instance: the event and button
+     * to subscribe to, and the action a host registered, already decoded.
+     */
+    struct ActionBinding {
+        PointerEvent event {};
+        IO::MouseButtons button { IO::MouseButtons::Left };
+        Action action;
+    };
+
     template <typename Source, typename Access>
     class DocumentWalk {
     public:
         using Table = FactoryTable<Source, Access>;
+        using Actions = ActionTable<Source, Access>;
         using Placer = typename Table::Placer;
 
         struct PreparedInstance {
@@ -50,14 +61,17 @@ namespace Detail {
             uint64_t row {};
             Placer placer;
             LayerAttributes layer;
+            std::vector<ActionBinding> actions;
         };
 
         using Prepared = std::vector<PreparedInstance>;
 
-        DocumentWalk(const Table& table, const Source& root, std::string& error)
+        DocumentWalk(const Table& table, const Source& root, std::string& error,
+            const Actions* actions = nullptr)
             : m_table(table)
             , m_root(root)
             , m_error(error)
+            , m_actions(actions)
         {
         }
 
@@ -65,7 +79,7 @@ namespace Detail {
         {
             if (Access::name(m_root) != "forma")
                 return fail(m_root, "root element must be <forma>");
-            if (!only_attributes(m_root, { "version" }) || !check_version())
+            if (!only_attributes(m_root, { "version", "xmlns" }, "xmlns:") || !check_version())
                 return false;
 
             bool templates_seen = false;
@@ -104,6 +118,18 @@ namespace Detail {
                             fail(instance, "could not prepare the instance");
                         return std::nullopt;
                     }
+                    std::vector<ActionBinding> actions;
+                    for (const ActionSpec& spec : info.actions) {
+                        const typename Actions::Maker* make = m_actions->find(spec.action);
+                        auto action = std::invoke(*make, spec.element, m_error);
+                        if (!action) {
+                            if (m_error.empty())
+                                fail(spec.element, "could not prepare the action " + spec.action);
+                            return std::nullopt;
+                        }
+                        actions.push_back(ActionBinding {
+                            .event = spec.event, .button = spec.button, .action = std::move(*action) });
+                    }
                     prepared.push_back(PreparedInstance {
                         .surface_id = entry.id,
                         .surface = &bound->second,
@@ -111,6 +137,7 @@ namespace Detail {
                         .row = Access::location(instance),
                         .placer = std::move(*placer),
                         .layer = info.layer,
+                        .actions = std::move(actions),
                     });
                 }
             }
@@ -185,14 +212,27 @@ namespace Detail {
                 if (attributes.back)
                     layer.send_to_back(elements[i]);
             }
+
+            for (size_t i = 0; i < prepared.size(); ++i) {
+                for (const ActionBinding& binding : prepared[i].actions)
+                    wire(*prepared[i].surface, elements[i], prepared[i].id, binding);
+            }
             return true;
         }
 
     private:
+        struct ActionSpec {
+            Source element;
+            PointerEvent event {};
+            IO::MouseButtons button { IO::MouseButtons::Left };
+            std::string action;
+        };
+
         struct InstanceInfo {
             std::string id;
             std::string template_id;
             LayerAttributes layer;
+            std::vector<ActionSpec> actions;
         };
 
         struct SurfaceInstances {
@@ -205,7 +245,8 @@ namespace Detail {
         const Table& m_table;
         const Source& m_root;
         std::string& m_error;
-        std::unordered_map<std::string, uint64_t> m_ids;
+        const Actions* m_actions;
+        Reflect::AttributeIndex<Source, Access> m_ids { std::string(reserved_id_attribute) };
         std::unordered_map<std::string, Source> m_templates;
         std::vector<SurfaceInstances> m_surfaces;
 
@@ -215,11 +256,14 @@ namespace Detail {
             return false;
         }
 
-        bool only_attributes(const Source& source, std::initializer_list<std::string_view> allowed)
+        bool only_attributes(const Source& source, std::initializer_list<std::string_view> allowed,
+            std::string_view allowed_prefix = {})
         {
             return Access::for_each_attribute(source, [&](std::string_view name, std::string_view) {
-                if (std::ranges::find(allowed, name) != allowed.end())
+                if (std::ranges::find(allowed, name) != allowed.end()
+                    || (!allowed_prefix.empty() && name.starts_with(allowed_prefix))) {
                     return true;
+                }
                 return fail(source, "<" + std::string(Access::name(source))
                         + "> has an unsupported attribute " + std::string(name));
             });
@@ -239,18 +283,9 @@ namespace Detail {
 
         std::optional<std::string> claim_id(const Source& source)
         {
-            const auto id = Access::attribute(source, reserved_id_attribute);
-            if (!id || id->empty()) {
-                fail(source, "<" + std::string(Access::name(source)) + "> needs a non-empty id");
+            if (!m_ids.claim(source, m_error))
                 return std::nullopt;
-            }
-            const auto [slot, inserted] = m_ids.emplace(std::string(*id), Access::location(source));
-            if (!inserted) {
-                fail(source, "id " + std::string(*id) + " is already used at row "
-                        + std::to_string(slot->second));
-                return std::nullopt;
-            }
-            return std::string(*id);
+            return std::string(*Access::attribute(source, reserved_id_attribute));
         }
 
         bool read_templates(const Source& section)
@@ -369,6 +404,95 @@ namespace Detail {
             return true;
         }
 
+        bool read_actions(const Source& instance, InstanceInfo& info)
+        {
+            return Access::for_each_child(instance, [&](const Source& child) {
+                if (Access::name(child) != reserved_action_element) {
+                    return fail(child, "<" + std::string(Access::name(child))
+                            + "> is not allowed in <instance>");
+                }
+                return read_action(child, info);
+            });
+        }
+
+        bool read_action(const Source& on, InstanceInfo& info)
+        {
+            if (!m_actions)
+                return fail(on, "<on> needs an action table, and none was given");
+
+            const auto event_text = Access::attribute(on, action_event_attribute);
+            if (!event_text)
+                return fail(on, "<on> needs an event attribute");
+            PointerEvent event {};
+            Reflect::TextError reason = Reflect::TextError::Invalid;
+            if (!Reflect::TextCodec<PointerEvent>::decode(*event_text, event, reason))
+                return fail(on, "<on> has an unsupported event " + std::string(*event_text));
+
+            IO::MouseButtons button = IO::MouseButtons::Left;
+            if (const auto button_text = Access::attribute(on, action_button_attribute)) {
+                if (event != PointerEvent::Press && event != PointerEvent::Release && event != PointerEvent::Drag)
+                    return fail(on, "<on> takes a button only for press, release and drag");
+                if (!Reflect::TextCodec<IO::MouseButtons>::decode(*button_text, button, reason)
+                    || button == IO::MouseButtons::Unknown) {
+                    return fail(on, "<on> has an unsupported button " + std::string(*button_text));
+                }
+            }
+
+            const auto name = Access::attribute(on, action_name_attribute);
+            if (!name)
+                return fail(on, "<on> needs an action attribute");
+            if (!m_actions->contains(*name))
+                return fail(on, "no registered action " + std::string(*name));
+
+            info.actions.push_back(ActionSpec {
+                .element = on, .event = event, .button = button, .action = std::string(*name) });
+            return true;
+        }
+
+        static void wire(Surface& surface, uint32_t element, const std::string& instance,
+            const ActionBinding& binding)
+        {
+            Layer* layer = &surface.layer();
+            Context* context = &surface.ctx();
+            const auto fire = [layer, context, element, instance, action = binding.action,
+                                  event = binding.event](glm::vec2 position, glm::vec2 scroll) {
+                action(ActionEvent { *layer, *context, element, instance, event, position, scroll });
+            };
+
+            switch (binding.event) {
+            case PointerEvent::Press:
+                context->subscribe_press(element, binding.button,
+                    [fire](uint32_t, glm::vec2 ndc) { fire(ndc, glm::vec2(0.F)); });
+                break;
+            case PointerEvent::Release:
+                context->subscribe_release(element, binding.button,
+                    [fire](uint32_t, glm::vec2 ndc) { fire(ndc, glm::vec2(0.F)); });
+                break;
+            case PointerEvent::Drag:
+                context->subscribe_drag(element, binding.button,
+                    [fire](uint32_t, glm::vec2 ndc) { fire(ndc, glm::vec2(0.F)); });
+                break;
+            case PointerEvent::Move:
+                context->subscribe_move(element,
+                    [fire](uint32_t, glm::vec2 ndc) { fire(ndc, glm::vec2(0.F)); });
+                break;
+            case PointerEvent::Enter:
+                context->subscribe_enter(element,
+                    [fire](uint32_t) { fire(glm::vec2(0.F), glm::vec2(0.F)); });
+                break;
+            case PointerEvent::Leave:
+                context->subscribe_leave(element,
+                    [fire](uint32_t) { fire(glm::vec2(0.F), glm::vec2(0.F)); });
+                break;
+            case PointerEvent::Scroll:
+                context->subscribe_scroll(element,
+                    [fire](uint32_t, glm::vec2 ndc, double dx, double dy) {
+                        fire(ndc, glm::vec2(static_cast<float>(dx), static_cast<float>(dy)));
+                    });
+                break;
+            }
+        }
+
         bool check_instances()
         {
             for (SurfaceInstances& entry : m_surfaces) {
@@ -376,14 +500,15 @@ namespace Detail {
                     const auto id = claim_id(instance);
                     if (!id)
                         return false;
-                    const auto reference = Access::attribute(instance, reserved_template_attribute);
+                    const auto reference = Reflect::check_reference<Source, Access>(instance,
+                        reserved_template_attribute,
+                        [this](std::string_view value) { return m_templates.contains(std::string(value)); },
+                        m_error);
                     if (!reference)
-                        return fail(instance, "<instance> needs a template attribute");
-                    if (!m_templates.contains(std::string(*reference)))
-                        return fail(instance, "<instance> refers to unknown template " + std::string(*reference));
+                        return false;
 
-                    InstanceInfo info { .id = *id, .template_id = std::string(*reference), .layer = {} };
-                    if (!read_layer_attributes(instance, info.layer))
+                    InstanceInfo info { .id = *id, .template_id = std::string(*reference), .layer = {}, .actions = {} };
+                    if (!read_layer_attributes(instance, info.layer) || !read_actions(instance, info))
                         return false;
                     entry.info.push_back(std::move(info));
                 }
@@ -417,10 +542,44 @@ namespace Detail {
 
 }
 
+namespace Detail {
+
+    template <typename Source, typename Access>
+    std::optional<PlacedInstances> instantiate(const FactoryTable<Source, Access>& table,
+        const ActionTable<Source, Access>* actions, const Source& root,
+        SurfaceMap& surfaces, std::string& error)
+    {
+        error.clear();
+        DocumentWalk<Source, Access> walk(table, root, error, actions);
+        if (!walk.read_structure())
+            return std::nullopt;
+        const auto prepared = walk.prepare(surfaces);
+        if (!prepared)
+            return std::nullopt;
+
+        PlacedInstances placed;
+        std::vector<uint32_t> elements;
+        elements.reserve(prepared->size());
+        for (const auto& item : *prepared) {
+            const auto element = item.placer(*item.surface, error);
+            if (!element)
+                return std::nullopt;
+            elements.push_back(*element);
+            placed.emplace(item.id, PlacedInstance { .surface = item.surface_id, .element = *element });
+        }
+        if (!DocumentWalk<Source, Access>::apply(*prepared, elements, error))
+            return std::nullopt;
+        return placed;
+    }
+
+}
+
 /**
  * @brief Place every instance of a document through a table.
  *
  * The document is a tree of a root element named forma carrying a version of 1.
+ * The root may also carry xmlns declarations, which are ignored, so the mf:
+ * prefix below can be declared for tools that validate namespaces.
  * Its templates element holds template elements, each with an id and exactly one
  * child, the factory, whose name is looked up in the table. Its surface
  * elements hold instance elements with an id, a template naming a template, and
@@ -456,27 +615,28 @@ template <typename Source, typename Access = Reflect::RecordAccess<Source>>
     const FactoryTable<Source, Access>& table, const Source& root,
     SurfaceMap& surfaces, std::string& error)
 {
-    error.clear();
-    Detail::DocumentWalk<Source, Access> walk(table, root, error);
-    if (!walk.read_structure())
-        return std::nullopt;
-    const auto prepared = walk.prepare(surfaces);
-    if (!prepared)
-        return std::nullopt;
+    return Detail::instantiate<Source, Access>(table, nullptr, root, surfaces, error);
+}
 
-    PlacedInstances placed;
-    std::vector<uint32_t> elements;
-    elements.reserve(prepared->size());
-    for (const auto& item : *prepared) {
-        const auto element = item.placer(*item.surface, error);
-        if (!element)
-            return std::nullopt;
-        elements.push_back(*element);
-        placed.emplace(item.id, PlacedInstance { .surface = item.surface_id, .element = *element });
-    }
-    if (!Detail::DocumentWalk<Source, Access>::apply(*prepared, elements, error))
-        return std::nullopt;
-    return placed;
+/**
+ * @brief Place a document whose instances attach host actions to events.
+ *
+ * As the overload without actions, and an instance may also hold on children.
+ * Each names an event (press, release, drag, move, enter, leave or scroll), a
+ * button for press, release and drag (left by default), and an action
+ * registered in @p actions, with that action's own parameters as further
+ * attributes. The names and parameters are resolved with the rest of the
+ * document, so an unknown action fails before anything is placed. The actions
+ * are subscribed beside the element's own wiring, so they never replace it.
+ *
+ * @param actions Actions by name.
+ */
+template <typename Source, typename Access = Reflect::RecordAccess<Source>>
+[[nodiscard]] std::optional<PlacedInstances> instantiate_document(
+    const FactoryTable<Source, Access>& table, const ActionTable<Source, Access>& actions,
+    const Source& root, SurfaceMap& surfaces, std::string& error)
+{
+    return Detail::instantiate<Source, Access>(table, &actions, root, surfaces, error);
 }
 
 /**

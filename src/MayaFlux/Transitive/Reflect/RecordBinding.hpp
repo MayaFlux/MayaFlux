@@ -60,6 +60,19 @@ public:
         return *this;
     }
 
+    /**
+     * @brief Leave every child element of this name to another reader.
+     *
+     * Children that no repeated collection and no ignore names are rejected, so
+     * a reader that shares an element with another one lists the other's
+     * children here.
+     */
+    RecordBinding& ignore_child(std::string child_name)
+    {
+        m_ignored_children.push_back(std::move(child_name));
+        return *this;
+    }
+
     template <auto Pointer>
     RecordBinding& repeated(std::string child_name,
         std::string defaults_name = {},
@@ -168,10 +181,11 @@ public:
             return std::nullopt;
         const bool known_children = Access::for_each_child(source, [&](const Source& child) {
             const auto child_name = Access::name(child);
-            const bool known = std::ranges::any_of(m_children, [&](const ChildBinding& binding) {
-                return child_name == binding.name
-                    || (!binding.defaults_name.empty() && child_name == binding.defaults_name);
-            });
+            const bool known = std::ranges::find(m_ignored_children, child_name) != m_ignored_children.end()
+                || std::ranges::any_of(m_children, [&](const ChildBinding& binding) {
+                       return child_name == binding.name
+                           || (!binding.defaults_name.empty() && child_name == binding.defaults_name);
+                   });
             if (known)
                 return true;
             if (error_location)
@@ -232,6 +246,7 @@ private:
     std::vector<std::string> m_required;
     std::vector<std::string> m_ignored;
     std::vector<std::string> m_ignored_prefixes;
+    std::vector<std::string> m_ignored_children;
     std::vector<ChildBinding> m_children;
 };
 

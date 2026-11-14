@@ -9,6 +9,38 @@
 
 namespace MayaFlux::Portal::Forma {
 
+namespace {
+
+    template <typename Fn>
+    std::vector<Fn> subscribers_for(const std::unordered_map<int, std::vector<Fn>>& subscribers, int button)
+    {
+        const auto found = subscribers.find(button);
+        return found == subscribers.end() ? std::vector<Fn> {} : found->second;
+    }
+
+    template <typename Fn>
+    Fn callback_for(const std::unordered_map<int, Fn>& callbacks, int button)
+    {
+        const auto found = callbacks.find(button);
+        return found == callbacks.end() ? Fn {} : found->second;
+    }
+
+    /**
+     * Runs an element's own callback and then its subscribers. Both are taken
+     * by value, so a callback that subscribes, replaces a callback or unbinds
+     * the element does not invalidate what is still being called.
+     */
+    template <typename Primary, typename Subscribers, typename... Args>
+    void notify(Primary primary, Subscribers subscribers, Args... args)
+    {
+        if (primary)
+            primary(args...);
+        for (const auto& subscriber : subscribers)
+            subscriber(args...);
+    }
+
+}
+
 Context::Context(std::shared_ptr<Layer> layer,
     std::shared_ptr<Core::Window> window,
     Vruta::EventManager& event_manager,
@@ -68,6 +100,41 @@ void Context::on_leave(uint32_t id, LeaveFn fn)
 void Context::on_scroll(uint32_t id, ScrollFn fn)
 {
     m_callbacks[id].scroll = std::move(fn);
+}
+
+void Context::subscribe_press(uint32_t id, IO::MouseButtons btn, PressFn fn)
+{
+    m_callbacks[id].press_subscribers[static_cast<int>(btn)].push_back(std::move(fn));
+}
+
+void Context::subscribe_release(uint32_t id, IO::MouseButtons btn, PressFn fn)
+{
+    m_callbacks[id].release_subscribers[static_cast<int>(btn)].push_back(std::move(fn));
+}
+
+void Context::subscribe_drag(uint32_t id, IO::MouseButtons btn, MoveFn fn)
+{
+    m_callbacks[id].drag_subscribers[static_cast<int>(btn)].push_back(std::move(fn));
+}
+
+void Context::subscribe_move(uint32_t id, MoveFn fn)
+{
+    m_callbacks[id].move_subscribers.push_back(std::move(fn));
+}
+
+void Context::subscribe_enter(uint32_t id, EnterFn fn)
+{
+    m_callbacks[id].enter_subscribers.push_back(std::move(fn));
+}
+
+void Context::subscribe_leave(uint32_t id, LeaveFn fn)
+{
+    m_callbacks[id].leave_subscribers.push_back(std::move(fn));
+}
+
+void Context::subscribe_scroll(uint32_t id, ScrollFn fn)
+{
+    m_callbacks[id].scroll_subscribers.push_back(std::move(fn));
 }
 
 void Context::on_press(uint32_t id, IO::Keys key, KeyFn fn)
@@ -357,22 +424,25 @@ void Context::handle_move(double px, double py)
 
     if (hit != m_hovered) {
         if (m_hovered) {
-            auto it = m_callbacks.find(*m_hovered);
-            if (it != m_callbacks.end() && it->second.leave)
-                it->second.leave(*m_hovered);
+            const uint32_t left = *m_hovered;
+            const auto it = m_callbacks.find(left);
+            if (it != m_callbacks.end())
+                notify(it->second.leave, it->second.leave_subscribers, left);
         }
         if (hit) {
-            auto it = m_callbacks.find(*hit);
-            if (it != m_callbacks.end() && it->second.enter)
-                it->second.enter(*hit);
+            const uint32_t entered = *hit;
+            const auto it = m_callbacks.find(entered);
+            if (it != m_callbacks.end())
+                notify(it->second.enter, it->second.enter_subscribers, entered);
         }
         m_hovered = hit;
     }
 
     if (hit) {
-        auto it = m_callbacks.find(*hit);
-        if (it != m_callbacks.end() && it->second.move)
-            it->second.move(*hit, ndc);
+        const uint32_t over = *hit;
+        const auto it = m_callbacks.find(over);
+        if (it != m_callbacks.end())
+            notify(it->second.move, it->second.move_subscribers, over, ndc);
     }
 }
 
@@ -400,14 +470,21 @@ void Context::handle_press(double px, double py, IO::MouseButtons btn)
         }
     }
 
-    if (hit && m_callbacks.contains(*hit) && m_callbacks[*hit].drag.contains(btn_idx)) {
-        m_dragging[btn_idx] = hit;
+    if (hit) {
+        const auto found = m_callbacks.find(*hit);
+        if (found != m_callbacks.end()
+            && (found->second.drag.contains(btn_idx) || found->second.drag_subscribers.contains(btn_idx))) {
+            m_dragging[btn_idx] = hit;
+        }
     }
 
     if (hit) {
-        auto it = m_callbacks.find(*hit);
-        if (it != m_callbacks.end() && it->second.press.count(btn_idx))
-            it->second.press[btn_idx](*hit, ndc);
+        const uint32_t pressed = *hit;
+        const auto it = m_callbacks.find(pressed);
+        if (it != m_callbacks.end()) {
+            notify(callback_for(it->second.press, btn_idx),
+                subscribers_for(it->second.press_subscribers, btn_idx), pressed, ndc);
+        }
     }
 }
 
@@ -421,13 +498,13 @@ void Context::handle_release(double px, double py, IO::MouseButtons btn)
     if (!hit)
         return;
 
-    auto it = m_callbacks.find(*hit);
+    const uint32_t released = *hit;
+    const auto it = m_callbacks.find(released);
     if (it == m_callbacks.end())
         return;
 
-    auto btn_it = it->second.release.find(static_cast<int>(btn));
-    if (btn_it != it->second.release.end() && btn_it->second)
-        btn_it->second(*hit, ndc);
+    notify(callback_for(it->second.release, btn_idx),
+        subscribers_for(it->second.release_subscribers, btn_idx), released, ndc);
 }
 
 void Context::handle_drags(double px, double py)
@@ -452,9 +529,13 @@ void Context::handle_drag(double px, double py, IO::MouseButtons btn)
             return;
     }
 
-    auto it = m_callbacks.find(*m_dragging[btn_idx]);
-    if (it != m_callbacks.end() && it->second.drag.count(btn_idx))
-        it->second.drag[btn_idx](*m_dragging[btn_idx], ndc);
+    const uint32_t target = *m_dragging[btn_idx];
+    const auto it = m_callbacks.find(target);
+    if (it == m_callbacks.end())
+        return;
+
+    notify(callback_for(it->second.drag, btn_idx),
+        subscribers_for(it->second.drag_subscribers, btn_idx), target, ndc);
 }
 
 void Context::handle_scroll(double dx, double dy)
@@ -463,12 +544,13 @@ void Context::handle_scroll(double dx, double dy)
     if (!m_hovered)
         return;
 
-    auto it = m_callbacks.find(*m_hovered);
-    if (it == m_callbacks.end() || !it->second.scroll)
+    const uint32_t over = *m_hovered;
+    const auto it = m_callbacks.find(over);
+    if (it == m_callbacks.end() || (!it->second.scroll && it->second.scroll_subscribers.empty()))
         return;
 
     const auto [px, py] = m_window->get_event_source().get_mouse_position();
-    it->second.scroll(*m_hovered, to_ndc(px, py), dx, dy);
+    notify(it->second.scroll, it->second.scroll_subscribers, over, to_ndc(px, py), dx, dy);
 }
 
 // =============================================================================
