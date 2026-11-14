@@ -20,6 +20,7 @@ namespace MayaFlux::IO {
 enum class XmlFieldKind { Attribute, Element };
 
 struct XmlFieldView;
+class XmlDocument;
 
 /**
  * @brief Borrowed XML element with named attributes and immediate child elements.
@@ -41,6 +42,7 @@ public:
 
 private:
     friend class XmlReader;
+    friend class XmlDocument;
 
     XmlElementView(const Kakshya::CompositeArray& rows,
         const Kakshya::ForestIndex& forest, size_t row) noexcept
@@ -174,6 +176,13 @@ public:
     {
         return m_rows ? &*m_rows : nullptr;
     }
+
+    /**
+     * @brief Move the parsed rows out and close the reader.
+     * @return The rows, or nullopt when no document is open. Borrowed views
+     * and rows_view() are invalid afterwards.
+     */
+    [[nodiscard]] std::optional<Kakshya::CompositeArray> take_rows();
 
     /** @brief Global index of the next row. */
     [[nodiscard]] std::vector<uint64_t> get_read_position() const override { return { m_position }; }

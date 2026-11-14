@@ -225,6 +225,13 @@ void XmlReader::close()
     m_position = 0;
 }
 
+std::optional<Kakshya::CompositeArray> XmlReader::take_rows()
+{
+    std::optional<Kakshya::CompositeArray> rows = std::move(m_rows);
+    close();
+    return rows;
+}
+
 std::optional<FileMetadata> XmlReader::get_metadata() const
 {
     if (!m_rows)
