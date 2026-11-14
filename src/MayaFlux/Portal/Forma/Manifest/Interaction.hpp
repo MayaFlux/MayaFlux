@@ -17,7 +17,7 @@ struct InteractionSource {
 
 /** @brief The interaction registration of a Form, run once after its element exists. */
 template <typename T>
-using InteractionFn = std::function<void(Context&, uint32_t, std::shared_ptr<MappedState<T>>)>;
+using InteractionFn = typename Geometry::Form<T>::Wire;
 
 /** @brief Produces the interaction of a Form of state type T, or nullopt with an error. */
 template <typename T>

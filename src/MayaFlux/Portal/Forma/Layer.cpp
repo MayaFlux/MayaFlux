@@ -312,13 +312,7 @@ bool Layer::test_element(const Element& el, glm::vec2 ndc) noexcept
 {
     if (!el.interactive || !el.visible)
         return false;
-    if (el.clip && !el.clip->contains(ndc))
-        return false;
-    if (el.bounds_hint && !el.bounds_hint->contains(ndc))
-        return false;
-    if (el.contains)
-        return el.contains(ndc);
-    return el.bounds_hint.has_value();
+    return el.hits(ndc);
 }
 
 } // namespace MayaFlux::Portal::Forma

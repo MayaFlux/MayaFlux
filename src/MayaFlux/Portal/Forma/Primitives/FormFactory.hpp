@@ -436,6 +436,43 @@ template <typename T>
     size_t samples = 0);
 
 // =============================================================================
+// Handle path
+//
+// Value is a vector of glm::vec2 in [0,1]x[0,1], each mapped to a point
+// inside bounds. The points are drawn as a connected open stroke with a small
+// box at each one. A press grabs the nearest point within grab_radius, a
+// drag moves it clamped to bounds, and the release lets go.
+//
+// Hit region: bounds, so a press anywhere in the area reaches the wire.
+// Topology: LINE_LIST (LineVertex).
+// =============================================================================
+
+/**
+ * @brief Geometry function for a path of draggable points in NDC space.
+ *
+ * The state holds the points in unit space, so any writer sees positions
+ * independent of where the area sits on the surface.
+ *
+ * @param bounds       NDC region the unit square is mapped onto.
+ * @param handles      Point count the buffer is sized for.
+ * @param path_color   Stroke color.
+ * @param handle_color Color of the box drawn at each point.
+ * @param thickness    LineVertex thickness of the stroke and the boxes.
+ * @param handle_size  Side of each box in NDC units.
+ * @param grab_radius  Largest NDC distance from a point at which a press grabs it.
+ * @param live_offset  Optional. Current translation of the drawn area.
+ */
+[[nodiscard]] MAYAFLUX_API Form<std::vector<glm::vec2>> handle_path(
+    Kinesis::AABB2D bounds,
+    size_t handles,
+    glm::vec3 path_color = glm::vec3(0.3F, 0.7F, 1.F),
+    glm::vec3 handle_color = glm::vec3(0.95F),
+    float thickness = 1.5F,
+    float handle_size = 0.03F,
+    float grab_radius = 0.1F,
+    const std::function<glm::vec2()>& live_offset = {});
+
+// =============================================================================
 // Scroll indicator
 //
 // Value type: glm::vec2, matching Scrollable::indicator()'s

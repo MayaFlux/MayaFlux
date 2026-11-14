@@ -442,6 +442,84 @@ Form<std::vector<float>> drawable_canvas(
     return form;
 }
 
+Form<std::vector<glm::vec2>> handle_path(
+    Kinesis::AABB2D bounds,
+    size_t handles,
+    glm::vec3 path_color,
+    glm::vec3 handle_color,
+    float thickness,
+    float handle_size,
+    float grab_radius,
+    const std::function<glm::vec2()>& live_offset)
+{
+    using Points = std::vector<glm::vec2>;
+
+    GeometryFn<Points> fn = [bounds, path_color, handle_color, thickness, handle_size, live_offset](
+                                const Points& v, std::vector<uint8_t>& out, Element& el) {
+        const glm::vec2 shift = live_offset ? live_offset() : glm::vec2(0.F);
+        const Kinesis::AABB2D live = bounds.translated(shift);
+
+        std::vector<glm::vec2> ndc;
+        ndc.reserve(v.size());
+        for (const glm::vec2 p : v)
+            ndc.push_back(live.point_at(p));
+
+        auto verts = Kinesis::polyline(ndc, glm::vec4(path_color, 1.F), thickness);
+        for (const glm::vec2 c : ndc) {
+            const auto box = Kinesis::rect_outline(
+                Kinesis::AABB2D::from_ndc(c, glm::vec2(handle_size * 0.5F)),
+                glm::vec4(handle_color, 1.F), thickness);
+            verts.insert(verts.end(), box.begin(), box.end());
+        }
+
+        write_verts(out, verts);
+
+        el.bounds_hint = live;
+        el.contains = {};
+    };
+
+    Form<Points>::Wire wire = [bounds, grab_radius, live_offset](
+                                  Context& ctx, uint32_t id, const std::shared_ptr<MappedState<Points>>& state) {
+        const auto held = std::make_shared<std::optional<size_t>>();
+        const auto project = Kinesis::unit_square(bounds, live_offset);
+
+        ctx.on_press(id, IO::MouseButtons::Left,
+            [state, held, bounds, grab_radius, live_offset](uint32_t, glm::vec2 ndc) {
+                const glm::vec2 shift = live_offset ? live_offset() : glm::vec2(0.F);
+                const Kinesis::AABB2D live = bounds.translated(shift);
+                float nearest = grab_radius * grab_radius;
+                held->reset();
+                for (size_t i = 0; i < state->value.size(); ++i) {
+                    const glm::vec2 offset = live.point_at(state->value[i]) - ndc;
+                    const float distance = glm::dot(offset, offset);
+                    if (distance <= nearest) {
+                        nearest = distance;
+                        *held = i;
+                    }
+                }
+            });
+
+        ctx.on_drag(id, IO::MouseButtons::Left,
+            [state, held, project](uint32_t, glm::vec2 ndc) {
+                if (!*held || **held >= state->value.size())
+                    return;
+                Points moved = state->value;
+                moved[**held] = project(ndc);
+                state->write(std::move(moved));
+            });
+
+        ctx.on_release(id, IO::MouseButtons::Left, [held](uint32_t, glm::vec2) {
+            held->reset();
+        });
+    };
+
+    Form<Points> form { std::move(fn) };
+    form.topology = Graphics::PrimitiveTopology::LINE_LIST;
+    form.capacity = (handles > 0 ? (handles - 1) * 2 + handles * 8 : 0) * sizeof(Kakshya::LineVertex);
+    form.wire = std::move(wire);
+    return form;
+}
+
 void wire_canvas_drag(
     Context& ctx,
     uint32_t id,
