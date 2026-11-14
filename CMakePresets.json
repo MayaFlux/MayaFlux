@@ -160,7 +160,7 @@
     {
       "name": "msvc-ninja-base",
       "hidden": true,
-      "inherits": "base-dev",
+      "inherits": "base",
       "toolchainFile": "$env{MAYAFLUX_TOOLCHAIN_FILE}",
       "cacheVariables": {
         "CMAKE_C_COMPILER": "cl",
@@ -169,7 +169,7 @@
     },
     {
       "name": "msvc-ninja-dev",
-      "inherits": "msvc-ninja-base",
+      "inherits": [ "base-dev", "msvc-ninja-base" ],
       "displayName": "Windows : Ninja + MSVC Development",
       "description": "Uses the x64 MSVC and Windows SDK environment configured by scripts/win64/setup_windows.ps1.",
       "condition": {
@@ -183,6 +183,33 @@
         "MAYAFLUX_DEV": "ON",
         "MAYAFLUX_BUILD_PROJECT": "ON",
         "EXAMPLE_SHADER_DIR": "${sourceDir}/src/examples/shaders"
+      }
+    },
+    {
+      "name": "windows-ship-dev",
+      "inherits": [ "base-dev", "msvc-ninja-base" ],
+      "displayName": "Windows : Shipping with Debug Info",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "C:/MayaFlux",
+        "MAYAFLUX_ENABLE_LTO": "ON"
+      }
+    },
+    {
+      "name": "windows-ship-rel",
+      "inherits": [ "base-rel", "msvc-ninja-base" ],
+      "displayName": "Windows : Shipping Release",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "C:/MayaFlux"
       }
     },
     {
@@ -224,7 +251,7 @@
       }
     },
     {
-      "name": "windows-ship-rel",
+      "name": "windows-vs-ship-rel",
       "inherits": [ "base-rel", "windows-base" ],
       "binaryDir": "${sourceDir}/build-vs",
       "displayName": "Windows - Shipping Release",
@@ -250,9 +277,11 @@
     { "name": "launchpad-rel",    "configurePreset": "launchpad-rel", "jobs": 0 },
     { "name": "macos-ship-rel",    "configurePreset": "macos-ship-rel", "jobs": 0 },
     { "name": "msvc-ninja-dev", "configurePreset": "msvc-ninja-dev", "jobs": 0 },
+    { "name": "windows-ship-dev", "configurePreset": "windows-ship-dev", "jobs": 0 },
+    { "name": "windows-ship-rel", "configurePreset": "windows-ship-rel", "jobs": 0 },
     { "name": "win26-dev",       "configurePreset": "windows-vs2026-dev" },
     { "name": "win22-dev",       "configurePreset": "windows-vs2022-dev" },
-    { "name": "windows-ship-rel", "configurePreset": "windows-ship-rel"}
+    { "name": "windows-vs-ship-rel", "configurePreset": "windows-vs-ship-rel"}
   ],
   "testPresets": [
     {

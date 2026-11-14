@@ -35,7 +35,7 @@ on:
         type: string
 
 env:
-  BUILD_TYPE: RelWithDebInfo
+  BUILD_TYPE: ${{ inputs.is_dev == '0' && 'Release' || 'RelWithDebInfo' }}
   VCVARS_PATH: 'C:\Program Files\Microsoft Visual
     Studio\18\Enterprise\VC\Auxiliary\Build\vcvarsall.bat'
   VCPKG_ROOT: ${{ github.workspace }}/vcpkg
@@ -307,10 +307,15 @@ jobs:
 
           $cores = [System.Environment]::ProcessorCount
 
+          $preset = if ($env:BUILD_TYPE -eq "Release") {
+            "windows-ship-rel"
+          } else {
+            "windows-ship-dev"
+          }
+          "PRESET=$preset" >> $env:GITHUB_ENV
+
           $cmakeArgs = @(
-            "--preset", "msvc-ninja-dev",
-            "-DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}",
-            "-DMAYAFLUX_ENABLE_LTO=ON",
+            "--preset", $preset,
             "-DCMAKE_CXX_FLAGS_RELEASE=/O2 /DNDEBUG /Z7",
             "-DCMAKE_EXE_LINKER_FLAGS=/DEBUG:FASTLINK /CGTHREADS:$cores"
           )
@@ -328,7 +333,7 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "=== Building MayaFlux ===" -ForegroundColor Cyan
-          cmake --build --preset msvc-ninja-dev --parallel $([System.Environment]::ProcessorCount)
+          cmake --build --preset "${{ env.PRESET }}"
 
       - name: Check reflection sidecars
         if: ${{ inputs.run_reflect_check }}
