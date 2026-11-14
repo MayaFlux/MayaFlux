@@ -46,6 +46,19 @@ public:
         return *this;
     }
 
+    /**
+     * @brief Leave these attributes to other readers of the same element.
+     *
+     * Listed names are neither decoded nor rejected. Described members still
+     * decode strictly, so do not list one.
+     */
+    XmlRecordBinding& ignore(std::initializer_list<std::string_view> names)
+    {
+        for (const auto name : names)
+            m_ignored.emplace_back(name);
+        return *this;
+    }
+
     template <auto Pointer>
     XmlRecordBinding& repeated(std::string child_name,
         std::string defaults_name = {},
@@ -139,7 +152,15 @@ public:
         }
 
         Input input {};
-        if (!overlay(input, node, error))
+        const bool overlaid = overlay_xml_attributes(input,
+            [&](const auto& visit) {
+                return Access::for_each_attribute(node,
+                    [&](std::string_view name, std::string_view value) {
+                        return std::ranges::find(m_ignored, name) != m_ignored.end()
+                            || visit(name, value);
+                    });
+            }, label(node), error);
+        if (!overlaid)
             return std::nullopt;
         const bool known_children = Access::for_each_child(node, [&](const Node& child) {
             const auto child_name = Access::name(child);
@@ -197,6 +218,7 @@ private:
     };
 
     std::vector<std::string> m_required;
+    std::vector<std::string> m_ignored;
     std::vector<ChildBinding> m_children;
 };
 

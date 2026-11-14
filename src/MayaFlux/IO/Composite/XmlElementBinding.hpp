@@ -1,8 +1,9 @@
 #pragma once
 
-#include "XmlAttributeBinding.hpp"
+#include "XmlReader.hpp"
 
 #include "MayaFlux/Transitive/Reflect/Mirror.hpp"
+#include "MayaFlux/Transitive/Reflect/TextBinding.hpp"
 
 namespace MayaFlux::IO {
 
@@ -74,7 +75,7 @@ bool overlay_xml_element(T& target, const XmlElementView& element,
         [&](std::string_view name, const XmlFieldView& field, auto& value) {
             using Value = std::remove_cvref_t<decltype(value)>;
             if (field.kind == XmlFieldKind::Attribute)
-                return decode_xml_attribute(name, field.value, value, element.name(), error);
+                return Reflect::decode_text_field(name, field.value, value, element.name(), error);
             if constexpr (XmlElementDecodable<Value>)
                 return XmlElementCodec<Value>::decode(*field.element, value, error, error_row);
             error = "<" + std::string(element.name()) + "> has an unsupported child <"
