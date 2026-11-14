@@ -5,6 +5,7 @@
 #include "MayaFlux/Portal/Forma/Primitives/Geometry.hpp"
 #include "MayaFlux/Portal/Forma/Tend.hpp"
 #include "MayaFlux/Transitive/Memory/FlatMap.hpp"
+#include "MayaFlux/Transitive/Reflect/AttributeChecks.hpp"
 
 namespace MayaFlux::Portal::Forma {
 
@@ -18,6 +19,13 @@ namespace MayaFlux::Portal::Forma {
 inline constexpr std::string_view reserved_id_attribute { "id" };
 inline constexpr std::string_view reserved_template_attribute { "template" };
 inline constexpr std::string_view reserved_prefix { "mf:" };
+
+/**
+ * @brief The child element of an instance that attaches an action to an event.
+ *
+ * A table skips it when it decodes a placement. The driver reads it.
+ */
+inline constexpr std::string_view reserved_action_element { "on" };
 
 /**
  * @class FactoryTable
@@ -112,6 +120,7 @@ public:
     {
         placement.ignore({ reserved_id_attribute, reserved_template_attribute });
         placement.ignore_prefix(std::string(reserved_prefix));
+        placement.ignore_child(std::string(reserved_action_element));
 
         using Maker = std::function<std::optional<Placer>(
             const Input&, const Placement&, std::string&)>;
@@ -257,7 +266,7 @@ public:
     /** @brief The message prefixed with the row it concerns. */
     [[nodiscard]] static std::string located(uint64_t row, std::string_view message)
     {
-        return "row " + std::to_string(row) + ": " + std::string(message);
+        return Reflect::located_message(row, message);
     }
 
 private:

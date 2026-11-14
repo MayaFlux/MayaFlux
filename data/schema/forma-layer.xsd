@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="urn:mayaflux:forma"
+           elementFormDefault="qualified">
+
+  <xs:annotation>
+    <xs:documentation>
+      Attributes the Forma document owns on an instance, in the namespace
+      urn:mayaflux:forma, conventionally bound to the prefix mf. They are applied to
+      the placed element through its Layer. Declare the prefix on the root element:
+      xmlns:mf="urn:mayaflux:forma".
+    </xs:documentation>
+  </xs:annotation>
+
+  <xs:attribute name="hidden" type="xs:boolean">
+    <xs:annotation>
+      <xs:documentation>The element starts hidden, together with every element related to it.</xs:documentation>
+    </xs:annotation>
+  </xs:attribute>
+
+  <xs:attribute name="interactive" type="xs:boolean">
+    <xs:annotation>
+      <xs:documentation>False excludes the element from hit testing.</xs:documentation>
+    </xs:annotation>
+  </xs:attribute>
+
+  <xs:attribute name="front" type="xs:boolean">
+    <xs:annotation>
+      <xs:documentation>Moves the element and its relations to the top of the paint and hit order. Excludes back.</xs:documentation>
+    </xs:annotation>
+  </xs:attribute>
+
+  <xs:attribute name="back" type="xs:boolean">
+    <xs:annotation>
+      <xs:documentation>Moves the element and its relations to the bottom of the paint and hit order. Excludes front.</xs:documentation>
+    </xs:annotation>
+  </xs:attribute>
+
+  <xs:attribute name="relate" type="xs:string">
+    <xs:annotation>
+      <xs:documentation>
+        Id of another instance of the same surface that this one belongs with, so
+        hiding, moving or removing that one reaches this one.
+      </xs:documentation>
+    </xs:annotation>
+  </xs:attribute>
+
+  <xs:attribute name="clip">
+    <xs:annotation>
+      <xs:documentation>x y width height. Confines hit testing of the element to that region.</xs:documentation>
+    </xs:annotation>
+    <xs:simpleType>
+      <xs:restriction>
+        <xs:simpleType>
+          <xs:list itemType="xs:float"/>
+        </xs:simpleType>
+        <xs:length value="4"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:attribute>
+
+</xs:schema>

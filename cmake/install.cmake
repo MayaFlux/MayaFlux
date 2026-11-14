@@ -86,6 +86,8 @@ install(FILES
 
 install(FILES
     ${SCHEMA_DIR}/assets.schema.json
+    ${SCHEMA_DIR}/forma-document.xsd
+    ${SCHEMA_DIR}/forma-layer.xsd
     DESTINATION share/MayaFlux/schema
 )
 
