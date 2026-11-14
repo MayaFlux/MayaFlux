@@ -143,6 +143,31 @@ struct TextCodec<T> {
     }
 };
 
+/**
+ * @brief A sequence of numbers: every whitespace separated token is one element.
+ *
+ * Marked with sequence so diagnostics speak of groups. Vectors of GLM vectors
+ * group their numbers in IO/GlmTextCodec.hpp.
+ */
+template <typename T>
+    requires((std::is_integral_v<T> || std::is_floating_point_v<T>)
+        && !std::same_as<T, bool>)
+struct TextCodec<std::vector<T>> {
+    static constexpr size_t extent = 1;
+    static constexpr bool sequence = true;
+
+    static bool decode(std::string_view source, std::vector<T>& value, TextError& error)
+    {
+        auto decoded = parse_numbers<T>(source);
+        if (!decoded) {
+            error = TextError::Invalid;
+            return false;
+        }
+        value = std::move(*decoded);
+        return true;
+    }
+};
+
 template <typename T>
 concept TextDecodable = requires(std::string_view source, T& value, TextError& error) {
     { TextCodec<T>::decode(source, value, error) } -> std::same_as<bool>;

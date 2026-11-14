@@ -18,8 +18,11 @@ bool decode_text_field(std::string_view name, std::string_view source,
         if (TextCodec<T>::decode(source, value, reason))
             return true;
         if (reason == TextError::Cardinality) {
+            const char* shape = " numbers in ";
+            if constexpr (requires { TextCodec<T>::sequence; })
+                shape = " numbers per group in ";
             error = "<" + std::string(label) + "> needs "
-                + std::to_string(TextCodec<T>::extent) + " numbers in "
+                + std::to_string(TextCodec<T>::extent) + shape
                 + std::string(name);
         } else if (reason == TextError::Unsupported) {
             error = "<" + std::string(label) + "> has an unsupported "
