@@ -4,6 +4,10 @@
 
 namespace MayaFlux::Portal::Forma {
 
+namespace internal {
+    class Atelier;
+}
+
 /**
  * @class Layer
  * @brief Flat registry of Elements on a surface.
@@ -172,9 +176,16 @@ public:
     bool remove(uint32_t id);
 
     /**
-     * @brief Remove all elements.
+     * @brief Remove all elements and release the buffer they drew into.
+     *        Each element's slice is retired, so nothing stays drawn.
      */
     void clear();
+
+    /**
+     * @brief The buffer elements placed without a buffer of their own draw
+     *        into, or null before the first one. Made and replaced by Forma.
+     */
+    [[nodiscard]] const std::shared_ptr<Buffers::FormaBuffer>& batch() const noexcept { return m_batch; }
 
     // =========================================================================
     // Element mutation
@@ -310,6 +321,8 @@ public:
     [[nodiscard]] bool empty() const { return m_elements.empty(); }
 
 private:
+    friend class internal::Atelier;
+
     std::vector<Element> m_elements;
     mutable std::unordered_map<uint32_t, size_t> m_index;
     mutable bool m_index_stale {};
@@ -317,6 +330,10 @@ private:
 
     int64_t m_next_front_priority {};
     int64_t m_next_back_priority {};
+
+    std::shared_ptr<Buffers::FormaBuffer> m_batch;
+
+    [[nodiscard]] int64_t claim_front_priority() noexcept { return ++m_next_front_priority; }
 
     std::unordered_map<uint32_t, std::vector<uint32_t>> m_relations;
 

@@ -42,6 +42,11 @@ bool Layer::remove(uint32_t id)
 
 void Layer::clear()
 {
+    for (auto& el : m_elements) {
+        if (el.buffer)
+            el.buffer.retire();
+    }
+    m_batch.reset();
     m_elements.clear();
     m_index.clear();
     m_index_stale = false;

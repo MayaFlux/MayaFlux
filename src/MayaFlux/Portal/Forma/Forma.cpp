@@ -127,7 +127,7 @@ plot(
         .name = window->get_create_info().title,
     });
 
-    const auto batch = atelier.create_batch(surface);
+    const auto batch = atelier.surface_batch(surface);
 
     std::optional<uint32_t> background_id;
     if (spec.background_fn) {

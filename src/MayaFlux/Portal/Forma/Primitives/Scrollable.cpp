@@ -1,8 +1,10 @@
 #include "Scrollable.hpp"
 
+#include "MayaFlux/Portal/Forma/Internal/Atelier.hpp"
 #include "MayaFlux/Portal/Forma/Surface.hpp"
 
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
+#include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Kinesis/GeometryPrimitives.hpp"
 
 namespace MayaFlux::Portal::Forma {
@@ -83,6 +85,15 @@ Scrollable& Scrollable::place(
     return *this;
 }
 
+Scrollable& Scrollable::place(Surface& surface, Kinesis::AABB2D viewport)
+{
+    return place(
+        FormaTarget::slice_of(
+            internal::atelier().create_scroll_batch(surface),
+            Graphics::PrimitiveTopology::TRIANGLE_STRIP),
+        surface, viewport);
+}
+
 std::function<void(uint32_t, glm::vec2, double, double)>
 Scrollable::wheel_handler(Surface& surface) const
 {
@@ -111,8 +122,14 @@ Scrollable& Scrollable::track(
     scroll->content_bounds.max = glm::max(scroll->content_bounds.max, base_bounds.max);
 
     if (clip_buf) {
-        if (auto render = clip_buf->get_render_processor())
+        const bool shared = buf && clip_buf.buffer() == layer.batch();
+        const bool clipped = !shared || clip_buf.move_to(buf.buffer());
+        if (!clipped) {
+            MF_WARN(Journal::Component::Portal, Journal::Context::API,
+                "Scrollable::track: element {} could not move into the viewport's buffer and is not clipped when drawn", id);
+        } else if (auto render = clip_buf->get_render_processor()) {
             render->set_scissor(Kinesis::Scissor::from(viewport_bounds));
+        }
     }
 
     layer.relate(viewport_id, id);
@@ -179,6 +196,18 @@ Scrollable make_scrollable(
         .background_color(background_color)
         .wheel_speed(wheel_speed)
         .place(std::move(buf), surface, viewport);
+}
+
+Scrollable make_scrollable(
+    Surface& surface,
+    Kinesis::AABB2D viewport,
+    glm::vec3 background_color,
+    float wheel_speed)
+{
+    return Scrollable {}
+        .background_color(background_color)
+        .wheel_speed(wheel_speed)
+        .place(surface, viewport);
 }
 
 } // namespace MayaFlux::Portal::Forma

@@ -168,12 +168,32 @@ std::shared_ptr<Core::VKImage> Atelier::text_image()
     return m_text_fallback;
 }
 
-std::shared_ptr<Buffers::FormaBuffer> Atelier::create_batch(const Surface& surface)
+std::shared_ptr<Buffers::FormaBuffer> Atelier::create_batch(const Surface& surface, int64_t priority)
 {
     Graphics::RenderConfig render = surface.render_config();
     render.fragment_shader = "forma_plot.frag.spv";
     render.additional_textures.push_back({ .name = "text", .image = text_image() });
+    render.draw_priority = priority;
     return create_buffer(std::move(render));
+}
+
+std::shared_ptr<Buffers::FormaBuffer> Atelier::surface_batch(Surface& surface)
+{
+    auto& layer = surface.layer();
+    if (!layer.m_batch || layer.m_batch->needs_removal()) {
+        layer.m_batch = create_batch(surface);
+    }
+    return layer.m_batch;
+}
+
+FormaTarget Atelier::batch_slice(Surface& surface, Graphics::PrimitiveTopology topology)
+{
+    return FormaTarget::slice_of(surface_batch(surface), topology);
+}
+
+std::shared_ptr<Buffers::FormaBuffer> Atelier::create_scroll_batch(Surface& surface)
+{
+    return create_batch(surface, surface.layer().claim_front_priority());
 }
 
 std::pair<std::shared_ptr<Layer>, std::shared_ptr<Context>>
@@ -216,13 +236,8 @@ void Atelier::place_adornments(
     uint32_t relate_to,
     const std::shared_ptr<Buffers::FormaBuffer>& batch)
 {
-    std::shared_ptr<Buffers::FormaBuffer> owned_batch;
     const auto target_of = [&](Graphics::PrimitiveTopology topology) -> FormaTarget {
-        if (!batch && !owned_batch) {
-            owned_batch = create_batch(surface);
-        }
-        const auto& target_batch = batch ? batch : owned_batch;
-        return FormaTarget::slice_of(target_batch, topology);
+        return FormaTarget::slice_of(batch ? batch : surface_batch(surface), topology);
     };
 
     const auto legend = spec.legend

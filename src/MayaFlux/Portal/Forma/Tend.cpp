@@ -11,10 +11,11 @@ TextField create_text_field(
 {
     if (!scrollable) {
         return TextField {}.place(
-            internal::atelier().create_batch(surface), surface, bounds, std::move(params), std::move(initial_text));
+            internal::atelier().batch_slice(surface, Graphics::PrimitiveTopology::TRIANGLE_LIST),
+            surface, bounds, std::move(params), std::move(initial_text));
     }
 
-    const auto batch = internal::atelier().create_batch(surface);
+    const auto batch = internal::atelier().create_scroll_batch(surface);
     auto viewport_target = FormaTarget::slice_of(batch, Graphics::PrimitiveTopology::TRIANGLE_STRIP);
     auto viewport = Scrollable {}.place(std::move(viewport_target), surface, bounds);
 

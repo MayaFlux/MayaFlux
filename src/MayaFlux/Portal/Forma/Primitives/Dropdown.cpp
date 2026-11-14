@@ -79,12 +79,12 @@ Dropdown& Dropdown::place(
     const uint32_t visible = std::min(count, m_max_visible);
     const float list_top = header_rect.min.y;
 
-    const auto text_batch = internal::atelier().create_batch(surface);
-
+    std::shared_ptr<Buffers::FormaBuffer> scroll_batch;
     std::optional<Scrollable> panel;
     std::function<void(uint32_t, glm::vec2, double, double)> wheel;
     if (count > visible) {
-        auto panel_buf = FormaTarget::slice_of(text_batch, Graphics::PrimitiveTopology::TRIANGLE_STRIP);
+        scroll_batch = internal::atelier().create_scroll_batch(surface);
+        auto panel_buf = FormaTarget::slice_of(scroll_batch, Graphics::PrimitiveTopology::TRIANGLE_STRIP);
         panel = make_scrollable(
             std::move(panel_buf), surface,
             { .min = { x_min, list_top - row_h * static_cast<float>(visible) }, .max = { x_max, list_top } },
@@ -99,7 +99,7 @@ Dropdown& Dropdown::place(
         const float top = list_top - row_h * static_cast<float>(i);
         const Kinesis::AABB2D row_rect { .min = { x_min, top - row_h }, .max = { x_max, top } };
 
-        auto made = internal::add_text_row(surface, labels->at(i), row_rect, *dims, text_batch);
+        auto made = internal::add_text_row(surface, labels->at(i), row_rect, *dims, scroll_batch);
         const uint32_t id = made.first;
         const auto& row = made.second;
         rows->push_back(row);

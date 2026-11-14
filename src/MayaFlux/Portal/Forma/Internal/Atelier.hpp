@@ -130,7 +130,8 @@ namespace internal {
             Graphics::RenderConfig render);
 
         /**
-         * @brief The buffer Forma draws shared content into.
+         * @brief A new buffer for shared Forma content, not registered with
+         *        any Layer.
          *
          * Plain geometry, text and plot series draw as slices of it. Its
          * fragment shader reads a negative vertex weight as glyph coverage and
@@ -141,13 +142,38 @@ namespace internal {
          * the shader uses has nothing to write. TextSlice binds the real image
          * on first use.
          *
-         * Callers that need their own shader, textures or priority build a
-         * buffer with create_buffer instead.
+         * Callers that need their own shader or textures build a buffer with
+         * create_buffer instead.
          *
-         * @param surface Surface whose window the buffer draws to.
+         * @param surface  Surface whose window the buffer draws to.
+         * @param priority Draw priority of the buffer; higher draws later.
          */
         [[nodiscard]] std::shared_ptr<Buffers::FormaBuffer> create_batch(
-            const Surface& surface);
+            const Surface& surface, int64_t priority = 0);
+
+        /**
+         * @brief The buffer everything placed on @p surface without a buffer
+         *        of its own draws into.
+         *
+         * Held by the surface's Layer and made on first use, and again when
+         * the last slice of the previous one was retired. Elements draw in the
+         * order they were placed, so hit order and draw order agree.
+         */
+        [[nodiscard]] std::shared_ptr<Buffers::FormaBuffer> surface_batch(Surface& surface);
+
+        /**
+         * @brief A new slice of surface_batch(), of @p topology.
+         */
+        [[nodiscard]] FormaTarget batch_slice(Surface& surface, Graphics::PrimitiveTopology topology);
+
+        /**
+         * @brief A new buffer for content a Scrollable clips, drawn above the
+         *        surface's shared buffer and anything raised before it.
+         *
+         * Not registered with the Layer: the scissor belongs to its render
+         * processor, so nothing else may draw into it.
+         */
+        [[nodiscard]] std::shared_ptr<Buffers::FormaBuffer> create_scroll_batch(Surface& surface);
 
         /**
          * @brief Construct a Layer and a Context wired to @p window.
@@ -176,7 +202,7 @@ namespace internal {
             const Core::WindowCreateInfo& window_info, std::string name);
 
         /**
-         * @brief create_element on a buffer of its own, as a slice of
+         * @brief create_element as a slice of the surface's shared buffer, of
          *        @p topology, followed by one sync so bounds_hint and contains
          *        from the geometry function reach the Layer before the first
          *        frame.
@@ -190,8 +216,7 @@ namespace internal {
             std::function<float(T)> project = {})
         {
             return create_element<T>(
-                surface,
-                FormaTarget::slice_of(create_buffer(surface.render_config()), topology),
+                surface, batch_slice(surface, topology),
                 std::move(geom), std::move(initial), std::move(project));
         }
 
@@ -295,8 +320,7 @@ namespace internal {
          * @param relate_to Element id the adornments are related to.
          * @param batch     Buffer for swatches and labels. One made by
          *                  create_buffer needs a text slot and forma_plot.frag
-         *                  for labels. When empty, create_batch makes one for
-         *                  all adornments.
+         *                  for labels. When empty, the surface's shared buffer.
          */
         void place_adornments(
             Surface& surface,
