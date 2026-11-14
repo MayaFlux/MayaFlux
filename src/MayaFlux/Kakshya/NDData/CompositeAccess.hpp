@@ -194,6 +194,16 @@ public:
      * @return Element view, or std::nullopt if out of range.
      */
     [[nodiscard]] std::optional<Composite> at(size_t index) const noexcept;
+    /**
+     * @brief Borrow @p count consecutive elements starting at a slice-relative index.
+     * @param start First element index within this slice.
+     * @param count Number of elements to select.
+     * @return Slice of the same stores, including an empty slice, or
+     * std::nullopt if the range leaves this slice. Any Region is not retained.
+     * @note A slice that can be sliced satisfies FieldArray, so a
+     * DataFieldTraversal can window a selection such as a subtree.
+     */
+    [[nodiscard]] std::optional<CompositeSlice> slice(size_t start, size_t count) const noexcept;
     /** @brief Borrow the selected contiguous packed bytes. */
     [[nodiscard]] std::span<const uint8_t> element_bytes() const noexcept;
     /** @brief Borrow the full text store used by selected elements. */

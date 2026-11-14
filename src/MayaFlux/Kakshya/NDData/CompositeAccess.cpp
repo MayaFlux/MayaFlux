@@ -135,6 +135,13 @@ std::optional<CompositeSlice> CompositeAccess::slice(const Region& region) const
         static_cast<size_t>(end - start + 1), region);
 }
 
+std::optional<CompositeSlice> CompositeSlice::slice(size_t start, size_t count) const noexcept
+{
+    if (start > m_count || count > m_count - start)
+        return std::nullopt;
+    return CompositeSlice(m_access, m_start + start, count);
+}
+
 std::optional<Composite> CompositeSlice::at(size_t index) const noexcept
 {
     if (index >= m_count)

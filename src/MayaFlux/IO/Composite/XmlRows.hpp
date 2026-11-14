@@ -2,6 +2,7 @@
 
 #include "XmlReader.hpp"
 
+#include "MayaFlux/Kakshya/NDData/CompositeForest.hpp"
 #include "MayaFlux/Kakshya/NDData/CompositeInsertion.hpp"
 
 namespace MayaFlux::IO {
@@ -18,27 +19,11 @@ class XmlRowIndex {
 public:
     explicit XmlRowIndex(const Kakshya::CompositeArray& rows)
         : m_rows(rows)
+        , m_forest(Kakshya::index_composite_forest(rows, "parent", m_error, &m_error_row))
     {
-        m_children.resize(rows.size());
-        for (size_t i = 0; i < rows.size(); ++i) {
-            const auto source = rows.at(i);
-            if (!source) {
-                m_error_row = i;
-                m_error = "Composite row is unreadable";
-                return;
-            }
-            const auto parent = source->get<uint64_t>("parent");
-            if (parent && *parent >= i) {
-                m_error_row = i;
-                m_error = "row parent must precede its child in document order";
-                return;
-            }
-            if (parent)
-                m_children[*parent].push_back(i);
-        }
     }
 
-    [[nodiscard]] bool valid() const noexcept { return m_error.empty(); }
+    [[nodiscard]] bool valid() const noexcept { return m_forest.has_value(); }
     [[nodiscard]] uint64_t error_row() const noexcept { return m_error_row; }
     [[nodiscard]] const std::string& error() const noexcept { return m_error; }
     [[nodiscard]] size_t size() const noexcept { return m_rows.size(); }
@@ -54,16 +39,16 @@ public:
         };
     }
 
-    [[nodiscard]] const std::vector<uint64_t>& children(size_t index) const
+    [[nodiscard]] std::span<const uint64_t> children(size_t index) const noexcept
     {
-        return m_children[index];
+        return m_forest ? m_forest->children(index) : std::span<const uint64_t> {};
     }
 
 private:
     const Kakshya::CompositeArray& m_rows;
-    std::vector<std::vector<uint64_t>> m_children;
     std::string m_error;
     uint64_t m_error_row {};
+    std::optional<Kakshya::ForestIndex> m_forest;
 };
 
 /** @brief Append elements and attributes in the XML Composite row layout. */

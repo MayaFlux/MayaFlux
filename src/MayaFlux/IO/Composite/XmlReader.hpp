@@ -2,6 +2,8 @@
 
 #include "CompositeReader.hpp"
 
+#include "MayaFlux/Kakshya/ForestIndex.hpp"
+
 namespace MayaFlux::IO {
 
 /**
@@ -41,15 +43,15 @@ private:
     friend class XmlReader;
 
     XmlElementView(const Kakshya::CompositeArray& rows,
-        const std::vector<size_t>& subtree_end, size_t row) noexcept
+        const Kakshya::ForestIndex& forest, size_t row) noexcept
         : m_rows(&rows)
-        , m_subtree_end(&subtree_end)
+        , m_forest(&forest)
         , m_row(row)
     {
     }
 
     const Kakshya::CompositeArray* m_rows;
-    const std::vector<size_t>* m_subtree_end;
+    const Kakshya::ForestIndex* m_forest;
     size_t m_row;
 };
 
@@ -68,8 +70,8 @@ struct XmlFieldView {
 template <typename Fn>
 bool XmlElementView::for_each_field(Fn&& visitor) const
 {
-    for (size_t index = m_row + 1; index < (*m_subtree_end)[m_row];
-         index = (*m_subtree_end)[index]) {
+    const size_t end = m_row + m_forest->subtree_size(m_row);
+    for (size_t index = m_row + 1; index < end; index += m_forest->subtree_size(index)) {
         const auto source = m_rows->at(index);
         if (!source)
             continue;
@@ -88,7 +90,7 @@ bool XmlElementView::for_each_field(Fn&& visitor) const
             .value = source->text("value").value_or(std::string_view {}),
             .row = static_cast<uint64_t>(index),
             .element = *kind == "element"
-                ? std::optional<XmlElementView>(XmlElementView(*m_rows, *m_subtree_end, index))
+                ? std::optional<XmlElementView>(XmlElementView(*m_rows, *m_forest, index))
                 : std::nullopt,
         };
         if constexpr (std::same_as<std::invoke_result_t<Fn&, const XmlFieldView&>, bool>) {
@@ -196,7 +198,7 @@ public:
 
 private:
     std::optional<Kakshya::CompositeArray> m_rows;
-    std::vector<size_t> m_subtree_end;
+    std::optional<Kakshya::ForestIndex> m_forest;
     std::string m_filepath;
     uint64_t m_position {};
 };
