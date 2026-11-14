@@ -63,6 +63,17 @@ bool CompositeContainer::materialize_next()
     return true;
 }
 
+bool CompositeContainer::materialize_subtree(const ForestIndex& index,
+    std::string_view parent_field, size_t row, std::string& error)
+{
+    auto branch = copy_forest_subtree(m_data, index, parent_field, row, error);
+    if (!branch)
+        return false;
+
+    m_materialized_data = std::move(*branch);
+    return true;
+}
+
 std::vector<DataDimension> CompositeContainer::get_dimensions() const
 {
     return { DataDimension("elements", m_data.size(), 1, DataDimension::Role::CUSTOM) };
