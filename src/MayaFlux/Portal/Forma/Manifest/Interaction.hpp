@@ -76,9 +76,60 @@ public:
         return std::invoke(provider->second, source, error);
     }
 
+    /**
+     * @brief Resolve a name onto a Form's interaction.
+     *
+     * An empty name leaves the Form as it is and succeeds, so an input that
+     * does not name an interaction needs no check by the caller.
+     *
+     * @param placement Bounds the provider may use, when the placement has any.
+     * @param error Receives the reason when false is returned.
+     */
+    bool attach(Geometry::Form<T>& form, std::string_view name,
+        std::optional<Kinesis::AABB2D> placement, std::string& error) const
+    {
+        if (name.empty())
+            return true;
+        const auto interaction = resolve(name, InteractionSource { .placement = placement }, error);
+        if (!interaction)
+            return false;
+        form.wire = *interaction;
+        return true;
+    }
+
 private:
     Memory::FlatMap<std::string, InteractionProvider<T>, std::less<>> m_providers;
 };
+
+/** @brief Provider for an interaction that needs nothing from the placement. */
+template <typename T>
+[[nodiscard]] InteractionProvider<T> fixed_interaction(InteractionFn<T> interaction)
+{
+    return [interaction = std::move(interaction)](const InteractionSource&, std::string&)
+               -> std::optional<InteractionFn<T>> { return interaction; };
+}
+
+/**
+ * @brief Provider for an interaction made from the placement bounds.
+ *
+ * The provider reports an error when the placement has no bounds, so the
+ * callable never has to check.
+ *
+ * @param make Callable taking the bounds and returning the interaction.
+ */
+template <typename T>
+[[nodiscard]] InteractionProvider<T> bounded_interaction(
+    std::function<InteractionFn<T>(const Kinesis::AABB2D&)> make)
+{
+    return [make = std::move(make)](const InteractionSource& source, std::string& error)
+               -> std::optional<InteractionFn<T>> {
+        if (!source.placement) {
+            error = "interaction needs placement bounds";
+            return std::nullopt;
+        }
+        return make(*source.placement);
+    };
+}
 
 /** @brief Provider whose handler flips a bool on a left press. Register it under any name. */
 [[nodiscard]] inline InteractionProvider<bool> press_flip_interaction()

@@ -6,17 +6,6 @@ namespace MayaFlux::Portal::Forma {
 
 namespace {
 
-    std::optional<Kinesis::AABB2D> placement_region(
-        const RectPlacementInputs& placement, std::string& error)
-    {
-        const glm::vec4 rect = placement.rect;
-        if (!(rect.z > 0.F) || !(rect.w > 0.F)) {
-            error = "rect needs a positive width and height";
-            return std::nullopt;
-        }
-        return Kinesis::AABB2D::from_origin_size({ rect.x, rect.y }, { rect.z, rect.w });
-    }
-
     std::vector<uint8_t> polygon_bytes(std::span<const glm::vec2> ndc,
         std::span<const uint32_t> starts,
         std::span<const std::array<uint32_t, 3>> triangles,
@@ -76,7 +65,7 @@ std::optional<Geometry::Form<std::monostate>> vertex_geometry_form(
         error = "vertex count does not match the topology";
         return std::nullopt;
     }
-    const auto region = placement_region(placement, error);
+    const auto region = region_of(placement, error);
     if (!region)
         return std::nullopt;
 
@@ -91,11 +80,11 @@ std::optional<Geometry::Form<std::monostate>> vertex_geometry_form(
 
     const Containment hit = containment_of(positions, input.topology);
     const size_t capacity = vertices.size() * sizeof(Kakshya::Vertex);
-    GeometryFn<std::monostate> fn = [vertices = std::move(vertices), hit](
-                                        std::monostate, std::vector<uint8_t>& out, Element& element) {
-        Geometry::write_verts(out, vertices);
-        apply_containment(element, hit);
-    };
+    auto fn = geometry_with_containment<std::monostate>(
+        [vertices = std::move(vertices)](const std::monostate&, std::vector<uint8_t>& out) {
+            Geometry::write_verts(out, vertices);
+        },
+        hit);
     return Geometry::Form<std::monostate> { std::move(fn), input.topology, capacity };
 }
 
@@ -135,7 +124,7 @@ std::optional<Geometry::Form<bool>> PolygonFactory::operator()(
     if (!per_vertex)
         vertex_colors.assign(unit.size(), input.color);
 
-    const auto region = placement_region(placement, error);
+    const auto region = region_of(placement, error);
     if (!region)
         return std::nullopt;
 
@@ -174,31 +163,22 @@ std::optional<Geometry::Form<bool>> PolygonFactory::operator()(
         }
     }
 
-    Containment hit = containment_of(drawn, topology);
-    if (!input.containment.empty()) {
-        const auto chosen = containments.resolve(input.containment,
-            ContainmentSource { .positions = drawn, .topology = topology, .placement = region }, error);
-        if (!chosen)
-            return std::nullopt;
-        hit = *chosen;
-    }
+    const auto hit = containments.resolve_or(input.containment,
+        ContainmentSource { .positions = drawn, .topology = topology, .placement = region },
+        containment_of(drawn, topology), error);
+    if (!hit)
+        return std::nullopt;
 
     const size_t capacity = stroke
         ? ndc.size() * 2 * sizeof(Kakshya::LineVertex)
         : triangles.size() * 3 * sizeof(Kakshya::MeshVertex);
-    GeometryFn<bool> fn = [base, active, hit](
-                              bool on, std::vector<uint8_t>& out, Element& element) {
-        out = on ? active : base;
-        apply_containment(element, hit);
-    };
+    auto fn = geometry_with_containment<bool>(
+        [base, active](const bool& on, std::vector<uint8_t>& out) { out = on ? active : base; },
+        *hit);
 
     Geometry::Form<bool> form { std::move(fn), topology, capacity };
-    if (!input.interaction.empty()) {
-        const auto wire = interactions.resolve(input.interaction, InteractionSource { .placement = region }, error);
-        if (!wire)
-            return std::nullopt;
-        form.wire = *wire;
-    }
+    if (!interactions.attach(form, input.interaction, region, error))
+        return std::nullopt;
     return form;
 }
 

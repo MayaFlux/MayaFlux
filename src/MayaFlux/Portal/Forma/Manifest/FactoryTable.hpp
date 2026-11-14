@@ -90,7 +90,8 @@ public:
      * @param factory Callable (const Input&, const Placement&, error) returning
      * std::optional of Geometry::Form of T.
      * @param initial Callable (const Input&, const Placement&, error) returning
-     * std::optional of T.
+     * std::optional of T, or a pointer to a member of Input or Placement whose
+     * value is the initial state.
      * @param placed Optional hook called with the decoded values and the placed Tend.
      */
     template <typename T, Reflect::Described Input, Reflect::Described Placement,
@@ -116,7 +117,15 @@ public:
                     error = "could not create the geometry";
                 return std::nullopt;
             }
-            std::optional<T> value = std::invoke(initial, decoded_input, decoded_placement, error);
+            std::optional<T> value;
+            if constexpr (std::is_member_object_pointer_v<Initial>) {
+                if constexpr (std::is_invocable_v<Initial, const Input&>)
+                    value = static_cast<T>(std::invoke(initial, decoded_input));
+                else
+                    value = static_cast<T>(std::invoke(initial, decoded_placement));
+            } else {
+                value = std::invoke(initial, decoded_input, decoded_placement, error);
+            }
             if (!value) {
                 if (error.empty())
                     error = "could not create the initial state";

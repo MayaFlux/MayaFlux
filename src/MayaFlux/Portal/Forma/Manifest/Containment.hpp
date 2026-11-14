@@ -4,6 +4,7 @@
 #include "MayaFlux/Kinesis/Spatial/Bounds.hpp"
 #include "MayaFlux/Kinesis/Spatial/HitRegion.hpp"
 #include "MayaFlux/Portal/Forma/Element.hpp"
+#include "MayaFlux/Portal/Forma/Primitives/Mapped.hpp"
 #include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
 #include "MayaFlux/Transitive/Memory/FlatMap.hpp"
 
@@ -28,6 +29,24 @@ inline void apply_containment(Element& element, const Containment& hit)
     element.contains = hit.contains;
     if (hit.clip)
         element.clip = hit.clip;
+}
+
+/**
+ * @brief A geometry function that draws a value and claims a fixed containment.
+ *
+ * @tparam T State type the draw callable reads.
+ * @param draw Writes the vertex bytes for a value.
+ * @param region Written onto the element on every draw.
+ */
+template <typename T>
+[[nodiscard]] GeometryFn<T> geometry_with_containment(
+    std::function<void(const T&, std::vector<uint8_t>&)> draw, Containment region)
+{
+    return [draw = std::move(draw), region = std::move(region)](
+               T value, std::vector<uint8_t>& out, Element& element) {
+        draw(value, out);
+        apply_containment(element, region);
+    };
 }
 
 /** @brief The rectangle itself as bounds, with no containment test. */
@@ -137,6 +156,22 @@ public:
             return std::nullopt;
         }
         return std::invoke(provider->second, source, error);
+    }
+
+    /**
+     * @brief The named containment, or the fallback when the name is empty.
+     *
+     * A factory derives its own containment from its geometry and lets an
+     * input name replace it, so the fallback is that derived value.
+     *
+     * @param error Receives the reason when nullopt is returned.
+     */
+    [[nodiscard]] std::optional<Containment> resolve_or(std::string_view name,
+        const ContainmentSource& source, Containment fallback, std::string& error) const
+    {
+        if (name.empty())
+            return fallback;
+        return resolve(name, source, error);
     }
 
 private:

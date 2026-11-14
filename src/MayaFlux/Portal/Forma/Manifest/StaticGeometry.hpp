@@ -48,11 +48,8 @@ void expose_vertex_geometry(FactoryTable<Source, Access>& table, std::string nam
     input.required("topology")
         .template repeated<&VertexGeometryInputs::vertices>("vertex", "defaults", "position", 1);
 
-    Reflect::RecordBinding<RectPlacementInputs, Source, Access> placement;
-    placement.required("rect");
-
     table.template expose_typed<std::monostate>(std::move(name),
-        std::move(input), std::move(placement), vertex_geometry_form,
+        std::move(input), rect_placement_binding<Source, Access>(), vertex_geometry_form,
         [](const VertexGeometryInputs&, const RectPlacementInputs&, std::string&)
             -> std::optional<std::monostate> { return std::monostate {}; });
 }
@@ -71,13 +68,9 @@ void expose_polygon(FactoryTable<Source, Access>& table, std::string name,
     input.required("points")
         .template repeated<&PolygonInputs::holes>("hole", {}, "points");
 
-    Reflect::RecordBinding<RectPlacementInputs, Source, Access> placement;
-    placement.required("rect");
-
     table.template expose_typed<bool>(std::move(name),
-        std::move(input), std::move(placement), std::move(factory),
-        [](const PolygonInputs& decoded, const RectPlacementInputs&, std::string&)
-            -> std::optional<bool> { return decoded.on; });
+        std::move(input), rect_placement_binding<Source, Access>(), std::move(factory),
+        &PolygonInputs::on);
 }
 
 }

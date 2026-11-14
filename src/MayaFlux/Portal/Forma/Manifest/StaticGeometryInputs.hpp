@@ -1,5 +1,7 @@
 #pragma once
 
+#include "PlacementInputs.hpp"
+
 #include "MayaFlux/IO/GlmTextCodec.hpp"
 #include "MayaFlux/Kakshya/NDData/VertexFormats.hpp"
 #include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
@@ -17,16 +19,6 @@ struct VertexGeometryInputs {
 };
 
 MF_DESCRIBE(VertexGeometryInputs)
-
-/**
- * @struct RectPlacementInputs
- * @brief A placement by origin and size: x, y, width, height.
- */
-struct RectPlacementInputs {
-    glm::vec4 rect {};
-};
-
-MF_DESCRIBE(RectPlacementInputs)
 
 /**
  * @struct PolygonHole

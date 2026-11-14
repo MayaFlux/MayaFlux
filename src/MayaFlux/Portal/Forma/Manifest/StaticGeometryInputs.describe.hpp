@@ -40,18 +40,6 @@ struct Description<::MayaFlux::Portal::Forma::PolygonInputs> {
 };
 
 template <>
-struct Description<::MayaFlux::Portal::Forma::RectPlacementInputs> {
-    static constexpr std::string_view name = "MayaFlux::Portal::Forma::RectPlacementInputs";
-
-    static constexpr auto members()
-    {
-        return std::tuple {
-            Member<&::MayaFlux::Portal::Forma::RectPlacementInputs::rect> { "rect" },
-        };
-    }
-};
-
-template <>
 struct Description<::MayaFlux::Portal::Forma::VertexGeometryInputs> {
     static constexpr std::string_view name = "MayaFlux::Portal::Forma::VertexGeometryInputs";
 
