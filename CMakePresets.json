@@ -32,7 +32,7 @@
       "name": "windows-base",
       "hidden": true,
       "toolchainFile": "$env{MAYAFLUX_TOOLCHAIN_FILE}",
-      "binaryDir": "${sourceDir}/build",
+      "binaryDir": "${sourceDir}/build-vs",
       "architecture": {
         "value": "x64",
         "strategy": "external"
@@ -158,6 +158,34 @@
       }
     },
     {
+      "name": "msvc-ninja-base",
+      "hidden": true,
+      "inherits": "base-dev",
+      "toolchainFile": "$env{MAYAFLUX_TOOLCHAIN_FILE}",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "cl",
+        "CMAKE_CXX_COMPILER": "cl"
+      }
+    },
+    {
+      "name": "msvc-ninja-dev",
+      "inherits": "msvc-ninja-base",
+      "displayName": "Windows : Ninja + MSVC Development",
+      "description": "Uses the x64 MSVC and Windows SDK environment configured by scripts/win64/setup_windows.ps1.",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "C:/MayaFlux",
+        "CMAKE_PREFIX_PATH": "",
+        "MAYAFLUX_DEV": "ON",
+        "MAYAFLUX_BUILD_PROJECT": "ON",
+        "EXAMPLE_SHADER_DIR": "${sourceDir}/src/examples/shaders"
+      }
+    },
+    {
       "name": "windows-vs2026-dev",
       "inherits": "windows-base",
       "displayName": "Windows (VS 2026) - Development",
@@ -198,6 +226,7 @@
     {
       "name": "windows-ship-rel",
       "inherits": [ "base-rel", "windows-base" ],
+      "binaryDir": "${sourceDir}/build-vs",
       "displayName": "Windows - Shipping Release",
       "generator": "Visual Studio 18 2026",
       "condition": {
@@ -220,6 +249,7 @@
     { "name": "launchpad-dev",    "configurePreset": "launchpad-dev", "jobs": 0 },
     { "name": "launchpad-rel",    "configurePreset": "launchpad-rel", "jobs": 0 },
     { "name": "macos-ship-rel",    "configurePreset": "macos-ship-rel", "jobs": 0 },
+    { "name": "msvc-ninja-dev", "configurePreset": "msvc-ninja-dev", "jobs": 0 },
     { "name": "win26-dev",       "configurePreset": "windows-vs2026-dev" },
     { "name": "win22-dev",       "configurePreset": "windows-vs2022-dev" },
     { "name": "windows-ship-rel", "configurePreset": "windows-ship-rel"}

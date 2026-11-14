@@ -7,6 +7,12 @@ add_executable(mayaflux_reflect
     Sidecar.cpp
 )
 
+if(WIN32)
+    set_target_properties(mayaflux_reflect PROPERTIES
+        MSVC_RUNTIME_LIBRARY MultiThreaded
+    )
+endif()
+
 set(MAYAFLUX_REFLECT_RESOURCE_DIR "")
 foreach(_llvm_dir IN LISTS LLVM_LIBRARY_DIRS ITEMS "${LLVM_INSTALL_PREFIX}/lib")
     if(NOT MAYAFLUX_REFLECT_RESOURCE_DIR AND IS_DIRECTORY "${_llvm_dir}/clang/${LLVM_VERSION_MAJOR}")

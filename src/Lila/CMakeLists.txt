@@ -22,6 +22,7 @@ if(WIN32)
     target_compile_definitions(Lila PRIVATE LILA_EXPORTS MAYAFLUX_EXPORTS)
     set_target_properties(Lila PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+        MSVC_RUNTIME_LIBRARY MultiThreaded
     )
 endif()
 

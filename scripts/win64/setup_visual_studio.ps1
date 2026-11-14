@@ -88,7 +88,7 @@ Write-Host "All core dependencies verified" -ForegroundColor Green
 Write-Host ""
 
 # Generate solution
-$BUILD_DIR = Join-Path $PROJECT_ROOT "build"
+$BUILD_DIR = Join-Path $PROJECT_ROOT "build-vs"
 if (-not (Test-Path $BUILD_DIR)) {
     New-Item -ItemType Directory -Path $BUILD_DIR -Force | Out-Null
 }
@@ -119,20 +119,20 @@ finally {
 $LaunchBat = Join-Path $PROJECT_ROOT "launch.bat"
 @"
 @echo off
-start "" "$VS_PATH\Common7\IDE\devenv.exe" "%~dp0build\MayaFlux.slnx"
+start "" "$VS_PATH\Common7\IDE\devenv.exe" "%~dp0build-vs\MayaFlux.slnx"
 "@ | Set-Content $LaunchBat
 Write-Host "launch.bat generated at project root" -ForegroundColor Green
 
 Write-Host ""
 Write-Host "=== Solution Generated ===" -ForegroundColor Green
 Write-Host ""
-Write-Host "Solution: build\MayaFlux.sln" -ForegroundColor Cyan
+Write-Host "Solution: build-vs\MayaFlux.sln" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Build from Visual Studio:" -ForegroundColor Yellow
-Write-Host "  1. Open build\MayaFlux.sln"
+Write-Host "  1. Open build-vs\MayaFlux.sln"
 Write-Host "  2. Set startup project"
 Write-Host "  3. Build -> Build Solution (or press F7)"
 Write-Host ""
 Write-Host "Or build from command line:" -ForegroundColor Yellow
-Write-Host "  cmake --build build --config Release"
+Write-Host "  cmake --build build-vs --config Release"
 Write-Host ""

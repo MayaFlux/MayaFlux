@@ -18,8 +18,11 @@ if(WIN32)
 
     cmake_path(CONVERT "$ENV{LLVM_DEV_DIR}" TO_CMAKE_PATH_LIST _llvm_hint NORMALIZE)
     cmake_path(CONVERT "$ENV{Clang_DEV_DIR}" TO_CMAKE_PATH_LIST _clang_hint NORMALIZE)
+    set(_mayaflux_runtime "${CMAKE_MSVC_RUNTIME_LIBRARY}")
     find_package(LLVM CONFIG REQUIRED HINTS "${_llvm_hint}")
     find_package(Clang CONFIG REQUIRED HINTS "${_clang_hint}")
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "${_mayaflux_runtime}")
+    unset(_mayaflux_runtime)
 
     cmake_path(CONVERT "$ENV{FFMPEG_ROOT}" TO_CMAKE_PATH_LIST _ffmpeg_root NORMALIZE)
     foreach(component avcodec avformat avutil swresample swscale avdevice)

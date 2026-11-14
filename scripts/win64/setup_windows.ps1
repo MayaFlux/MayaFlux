@@ -128,7 +128,45 @@ if (Test-Path $vswhere) {
     if (-not $diaFound) {
         Write-Warning "DIA SDK not found - LLVM may have linking issues"
     }
+
+    $msvcInstall = & $vswhere -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+    if (-not $msvcInstall) {
+        throw "Visual Studio or Build Tools with the C++ workload not found."
+    }
+    $vcRoot = Join-Path $msvcInstall "VC"
+    $msvcVersionFile = Join-Path $vcRoot "Auxiliary\Build\Microsoft.VCToolsVersion.default.txt"
+    $msvcVersion = (Get-Content -Raw -LiteralPath $msvcVersionFile).Trim()
+    $msvcRoot = Join-Path $vcRoot "Tools\MSVC\$msvcVersion"
+    Add-EnvPath -Name "PATH" -Value (Join-Path $msvcRoot "bin\Hostx64\x64")
+    Add-EnvPath -Name "INCLUDE" -Value (Join-Path $msvcRoot "include")
+    Add-EnvPath -Name "LIB" -Value (Join-Path $msvcRoot "lib\x64")
+    Write-Host "[MSVC] Configured x64 tools: $msvcRoot" -ForegroundColor Green
 }
+
+$sdkRoot = Get-ItemPropertyValue -LiteralPath 'HKLM:\SOFTWARE\Microsoft\Windows Kits\Installed Roots' -Name KitsRoot10
+$sdkVersion = Get-ChildItem -LiteralPath (Join-Path $sdkRoot "Include") -Directory |
+    Where-Object {
+        $version = $null
+        [version]::TryParse($_.Name, [ref]$version) -and
+        (Test-Path -LiteralPath (Join-Path $sdkRoot "Lib\$($_.Name)\um\x64\kernel32.lib")) -and
+        (Test-Path -LiteralPath (Join-Path $sdkRoot "Lib\$($_.Name)\ucrt\x64\ucrt.lib")) -and
+        (Test-Path -LiteralPath (Join-Path $sdkRoot "bin\$($_.Name)\x64\rc.exe")) -and
+        (Test-Path -LiteralPath (Join-Path $sdkRoot "bin\$($_.Name)\x64\mt.exe"))
+    } |
+    Sort-Object { [version]$_.Name } -Descending |
+    Select-Object -First 1 -ExpandProperty Name
+if (-not $sdkVersion) {
+    throw "A Windows SDK with x64 headers, libraries, rc.exe and mt.exe is required."
+}
+
+foreach ($subdir in @("ucrt", "shared", "um", "winrt", "cppwinrt")) {
+    Add-EnvPath -Name "INCLUDE" -Value (Join-Path $sdkRoot "Include\$sdkVersion\$subdir")
+}
+foreach ($subdir in @("ucrt", "um")) {
+    Add-EnvPath -Name "LIB" -Value (Join-Path $sdkRoot "Lib\$sdkVersion\$subdir\x64")
+}
+Add-EnvPath -Name "PATH" -Value (Join-Path $sdkRoot "bin\$sdkVersion\x64")
+Write-Host "[Windows SDK] Configured x64 SDK: $sdkVersion" -ForegroundColor Green
 
 # LLVM/Clang
 $llvmVersion = "22.1.6"
