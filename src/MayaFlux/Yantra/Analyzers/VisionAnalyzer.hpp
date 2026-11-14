@@ -123,7 +123,7 @@ public:
      *               no multi-index concept and always give their current
      *               frame.
      */
-    MAYAFLUX_API [[nodiscard]] Kinesis::Vision::VisionAnalysis analyze_vision(
+    [[nodiscard]] MAYAFLUX_API Kinesis::Vision::VisionAnalysis analyze_vision(
         const std::shared_ptr<Kakshya::SignalSourceContainer>& source,
         size_t index = 0);
 
@@ -133,7 +133,7 @@ public:
      *        container. Skips container resolution entirely; otherwise
      *        identical.
      */
-    MAYAFLUX_API [[nodiscard]] Kinesis::Vision::VisionAnalysis analyze_vision(
+    [[nodiscard]] MAYAFLUX_API Kinesis::Vision::VisionAnalysis analyze_vision(
         const std::shared_ptr<Core::VKImage>& image);
 
     /**
@@ -149,7 +149,7 @@ public:
      *         nullopt. When the frame cannot be copied the first failure is
      *         logged and nullopt is returned until a later copy succeeds.
      */
-    MAYAFLUX_API [[nodiscard]] std::optional<Kinesis::Vision::VisionAnalysis> advance(
+    [[nodiscard]] MAYAFLUX_API std::optional<Kinesis::Vision::VisionAnalysis> advance(
         const std::shared_ptr<Core::VKImage>& image);
 
     /**
@@ -195,7 +195,7 @@ public:
      *
      * Valid after at least one analyze_vision() call; null before that.
      */
-    MAYAFLUX_API [[nodiscard]] VisionGpuExecutor* get_executor() const;
+    [[nodiscard]] MAYAFLUX_API VisionGpuExecutor* get_executor() const;
 
 private:
     friend class Vision::VisionMatrix;
@@ -215,7 +215,7 @@ private:
      *        persistent m_upload_image for VideoStreamContainer/
      *        WindowContainer. Null on an unsupported container type.
      */
-    MAYAFLUX_API [[nodiscard]] std::shared_ptr<Core::VKImage> resolve_image(
+    [[nodiscard]] MAYAFLUX_API std::shared_ptr<Core::VKImage> resolve_image(
         const std::shared_ptr<Kakshya::SignalSourceContainer>& source,
         size_t index);
 
@@ -225,7 +225,7 @@ private:
      *        resolved VisionSequence, apply context filtering, run the
      *        GPU reductions. w/h are the image's own dimensions.
      */
-    MAYAFLUX_API [[nodiscard]] Kinesis::Vision::VisionAnalysis analyze_resolved(
+    [[nodiscard]] MAYAFLUX_API Kinesis::Vision::VisionAnalysis analyze_resolved(
         const std::shared_ptr<Core::VKImage>& image);
 
     /**
@@ -243,13 +243,13 @@ private:
      * @brief Route every completed sequence result into one VisionAnalysis,
      *        apply context filtering and run the GPU reductions.
      */
-    MAYAFLUX_API [[nodiscard]] Kinesis::Vision::VisionAnalysis assemble(
+    [[nodiscard]] MAYAFLUX_API Kinesis::Vision::VisionAnalysis assemble(
         const std::vector<Kinesis::Vision::ResolvedSequence>& resolved,
         const std::vector<Kinesis::Vision::VisionResult>& results,
         uint32_t w, uint32_t h);
 
     /** @brief Copy @p image into this analyzer's own frame image. Null on failure. */
-    MAYAFLUX_API [[nodiscard]] std::shared_ptr<Core::VKImage> hold_frame(const std::shared_ptr<Core::VKImage>& image);
+    [[nodiscard]] MAYAFLUX_API std::shared_ptr<Core::VKImage> hold_frame(const std::shared_ptr<Core::VKImage>& image);
 
     /**
      * @brief State of the run advance() is stepping through.
@@ -270,7 +270,7 @@ private:
      *        centroid/velocity/bounds/mean_speed_px/age stats on the
      *        result. No-op (default fields) when tracks is empty.
      */
-    MAYAFLUX_API [[nodiscard]] Kinesis::Vision::TrackObjectsAnalysis reduce_tracks(
+    [[nodiscard]] MAYAFLUX_API Kinesis::Vision::TrackObjectsAnalysis reduce_tracks(
         const std::vector<Kinesis::Vision::TrackResult>& tracks, uint32_t w, uint32_t h);
 
     /**
@@ -283,7 +283,7 @@ private:
      *        bounds and centroid are the same min/max/sum reduction either
      *        way.
      */
-    MAYAFLUX_API [[nodiscard]] Kinesis::Vision::DetectFeaturesAnalysis reduce_keypoints(
+    [[nodiscard]] MAYAFLUX_API Kinesis::Vision::DetectFeaturesAnalysis reduce_keypoints(
         const std::vector<Kinesis::Vision::Keypoint>& keypoints);
 
     /**
@@ -301,21 +301,21 @@ private:
      *        produce itself, so the caller supplies it. Empty fields for
      *        whichever input image is null.
      */
-    MAYAFLUX_API [[nodiscard]] Kinesis::Vision::MeasureAppearanceAnalysis measure_appearance(
+    [[nodiscard]] MAYAFLUX_API Kinesis::Vision::MeasureAppearanceAnalysis measure_appearance(
         const Kinesis::Vision::VisionResult& result,
         const std::shared_ptr<Core::VKImage>& gray,
         uint32_t w, uint32_t h);
 
     /** @brief Dispatch region_sample.comp over the whole image (no region concept for MeasureAppearance). */
-    MAYAFLUX_API [[nodiscard]] Kinesis::Vision::FieldSample sample_full_frame(
+    [[nodiscard]] MAYAFLUX_API Kinesis::Vision::FieldSample sample_full_frame(
         const std::shared_ptr<Core::VKImage>& image, uint32_t w, uint32_t h);
 
     /** @brief Dispatch otsu_histogram.comp over image, zeroing the buffer first. */
-    MAYAFLUX_API [[nodiscard]] std::array<uint32_t, 256> compute_histogram(
+    [[nodiscard]] MAYAFLUX_API std::array<uint32_t, 256> compute_histogram(
         const std::shared_ptr<Core::VKImage>& image, uint32_t w, uint32_t h);
 
     /** @brief Dispatch histogram_reduce.comp over an already-computed histogram. */
-    MAYAFLUX_API [[nodiscard]] float compute_mean_brightness(const std::array<uint32_t, 256>& histogram);
+    [[nodiscard]] MAYAFLUX_API float compute_mean_brightness(const std::array<uint32_t, 256>& histogram);
 
     std::vector<std::unique_ptr<VisionGpuExecutor>> m_executors;
     size_t m_label_lane { 0 };

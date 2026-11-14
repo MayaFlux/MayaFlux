@@ -66,6 +66,20 @@ namespace {
                     ++i;
                     continue;
                 }
+#ifdef _WIN32
+                if (argument.size() >= 3 && (argument.front() == '/' || argument.front() == '-')) {
+                    const std::string_view option = std::string_view(argument).substr(1);
+                    if (option.starts_with("Yu") || option.starts_with("Yc") || option.starts_with("Fp")) {
+                        if (option.size() == 2 && i + 1 < arguments.size()
+                            && !arguments[i + 1].empty()
+                            && arguments[i + 1].front() != '/'
+                            && arguments[i + 1].front() != '-') {
+                            ++i;
+                        }
+                        continue;
+                    }
+                }
+#endif
                 has_resource = has_resource || argument == "-resource-dir";
                 adjusted.push_back(argument);
             }
