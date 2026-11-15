@@ -6,11 +6,14 @@
     <xs:documentation>
       Forma document, version 1: the structure only. A document holds templates, each
       naming one factory by the name of its single child, and surfaces holding
-      instances of those templates. What a factory accepts is decided by what the
-      host registered, so the factory element and an instance's placement attributes
-      are not described here. Not enforced by this schema and checked on load: a
-      second templates element, and that a factory or action name is registered.
-      Ids are unique across templates, surfaces and instances.
+      instances of those templates and elements. An element declares one placed form:
+      its name, its state, the Layer calls as plain names and a form that calls a
+      function by name with that function's own parameter names. What a factory or a
+      function accepts is decided by what the host registered, so the factory element,
+      an instance's placement attributes and a form's arguments are not described here.
+      Not enforced by this schema and checked on load: a second templates element, and
+      that a factory, call or action name is registered. Ids are unique across
+      templates, surfaces, instances and element names.
     </xs:documentation>
   </xs:annotation>
 
@@ -97,10 +100,48 @@
     <xs:anyAttribute namespace="##local" processContents="skip"/>
   </xs:complexType>
 
-  <xs:complexType name="FormaSurfaceType">
+  <xs:complexType name="FormaFormType">
+    <xs:annotation>
+      <xs:documentation>
+        Calls a function the host registered. call names it, and every other attribute is
+        one of the function's own parameters, written by name. The leading parameters are
+        given and a trailing run may be left to the function's defaults.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:attribute name="call" type="xs:string" use="required"/>
+    <xs:anyAttribute namespace="##local" processContents="skip"/>
+  </xs:complexType>
+
+  <xs:complexType name="FormaElementType">
+    <xs:annotation>
+      <xs:documentation>
+        One placed form, declared as C++ declares it. name shares the namespace of ids.
+        state is the initial value in the text form of the type the function's form
+        carries. visible, interactive, relate, front, back and clip are the Layer calls
+        that follow placement, with clip as min.x min.y max.x max.y. Exactly one form,
+        and any number of on elements.
+      </xs:documentation>
+    </xs:annotation>
     <xs:sequence>
-      <xs:element name="instance" type="FormaInstanceType" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="on" type="FormaOnType" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="form" type="FormaFormType"/>
+      <xs:element name="on" type="FormaOnType" minOccurs="0" maxOccurs="unbounded"/>
     </xs:sequence>
+    <xs:attribute name="name" type="xs:string" use="required"/>
+    <xs:attribute name="state" type="xs:string"/>
+    <xs:attribute name="visible" type="xs:boolean"/>
+    <xs:attribute name="interactive" type="xs:boolean"/>
+    <xs:attribute name="front" type="xs:boolean"/>
+    <xs:attribute name="back" type="xs:boolean"/>
+    <xs:attribute name="relate" type="xs:string"/>
+    <xs:attribute name="clip" type="xs:string"/>
+  </xs:complexType>
+
+  <xs:complexType name="FormaSurfaceType">
+    <xs:choice minOccurs="0" maxOccurs="unbounded">
+      <xs:element name="instance" type="FormaInstanceType"/>
+      <xs:element name="element" type="FormaElementType"/>
+    </xs:choice>
     <xs:attribute name="id" type="xs:string" use="required"/>
   </xs:complexType>
 
@@ -110,12 +151,12 @@
         <xs:element name="templates" type="FormaTemplatesType"/>
         <xs:element name="surface" type="FormaSurfaceType">
           <xs:key name="instanceInSurface">
-            <xs:selector xpath="instance"/>
-            <xs:field xpath="@id"/>
+            <xs:selector xpath="instance|element"/>
+            <xs:field xpath="@id|@name"/>
           </xs:key>
           <xs:keyref name="relateInSurface" refer="instanceInSurface">
-            <xs:selector xpath="instance"/>
-            <xs:field xpath="@mf:relate"/>
+            <xs:selector xpath="instance|element"/>
+            <xs:field xpath="@mf:relate|@relate"/>
           </xs:keyref>
         </xs:element>
       </xs:choice>
@@ -123,8 +164,8 @@
     </xs:complexType>
 
     <xs:unique name="documentId">
-      <xs:selector xpath="templates/template|surface|surface/instance"/>
-      <xs:field xpath="@id"/>
+      <xs:selector xpath="templates/template|surface|surface/instance|surface/element"/>
+      <xs:field xpath="@id|@name"/>
     </xs:unique>
     <xs:key name="templateId">
       <xs:selector xpath="templates/template"/>
