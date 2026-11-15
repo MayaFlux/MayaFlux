@@ -95,7 +95,7 @@ struct RadiationState {
  * @brief Prepare the coefficients of a radiating end.
  * @param spec Network constants, end radius, air constants and time step
  * @param end_area Area of the bore at the end plane, pi a^2 of the end radius
- * @param end_pressure_gain Gain of the last pressure point from BoreGrid
+ * @param end_pressure_gain Gain of the last pressure point from DuctGrid
  * @return The coefficients, or nothing when any value is not positive and finite
  */
 [[nodiscard]] MAYAFLUX_API std::optional<RadiationCoefficients> make_radiation_coefficients(

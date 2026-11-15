@@ -108,4 +108,48 @@ std::tuple<double, double, double, RootStatus> reed_mouth_step(
     };
 }
 
+std::tuple<double, double, double> dynamic_reed_mouth_step(
+    const ReedChannel& reed,
+    double resonance,
+    double damping,
+    double time_step,
+    std::array<double, 2>& motion,
+    double end_pressure_gain,
+    double mouth_pressure,
+    double end_pressure,
+    double downstream_flow) noexcept
+{
+    const double gain = flow_coupling_gain(end_pressure_gain);
+    const double target = flow_coupling_target(mouth_pressure, end_pressure, gain, downstream_flow);
+
+    if (!channel_valid(reed) || !positive_finite(resonance) || !positive_finite(time_step)
+        || !std::isfinite(damping) || damping < 0.0 || !std::isfinite(target) || !positive_finite(gain)) {
+        motion = { 0.0, 0.0 };
+        return { centred_end_pressure(mouth_pressure, target, end_pressure), 0.0, target };
+    }
+
+    const double opening = std::max(0.0, reed.rest_opening + motion[0]);
+    const double coefficient = reed.width * opening * std::sqrt(2.0 / reed.air_density);
+    const double reach = gain * coefficient;
+    const double magnitude = std::abs(target);
+
+    const double root = magnitude > 0.0 ? 2.0 * magnitude / (reach + std::sqrt(reach * reach + 4.0 * magnitude)) : 0.0;
+    const double sign = target >= 0.0 ? 1.0 : -1.0;
+    const double difference = sign * root * root;
+    const double flow = sign * coefficient * root;
+
+    const double omega = 2.0 * std::numbers::pi * resonance;
+    const double stiffness = omega * omega;
+    const double inverse_square = 1.0 / (time_step * time_step);
+    const double half_damping = damping / (2.0 * time_step);
+    const double force = -stiffness * reed.rest_opening * difference / reed.closing_pressure;
+
+    const double next = (force + 2.0 * inverse_square * motion[0]
+                            - (inverse_square - half_damping + 0.5 * stiffness) * motion[1])
+        / (inverse_square + half_damping + 0.5 * stiffness);
+
+    motion = { std::max(next, -reed.rest_opening), motion[0] };
+    return { centred_end_pressure(mouth_pressure, difference, end_pressure), flow, difference };
+}
+
 } // namespace MayaFlux::Kinesis::Acoustics

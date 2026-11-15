@@ -34,7 +34,7 @@ using FlowSample = std::pair<double, double>;
 
 /**
  * @brief Gain of a time centred coupling at an end cell.
- * @param end_pressure_gain rho c^2 k / V of the end cell, from BoreGrid
+ * @param end_pressure_gain rho c^2 k / V of the end cell, from DuctGrid
  */
 [[nodiscard]] constexpr double flow_coupling_gain(double end_pressure_gain) noexcept
 {

@@ -23,7 +23,7 @@ namespace MayaFlux::Kinesis::Acoustics {
  * @brief Advance the half step velocities from the pressure.
  * @param velocity N volume velocities, updated in place
  * @param pressure N + 1 pressures at the start of the sample
- * @param velocity_gain N gains from BoreGrid
+ * @param velocity_gain N gains from DuctGrid
  *
  * Each velocity falls by its gain times the pressure rise across it.
  */
@@ -36,7 +36,7 @@ MAYAFLUX_API void advance_velocity(
  * @brief Advance the interior pressures from the new velocities.
  * @param pressure N + 1 pressures, points 1 to N - 1 updated in place
  * @param velocity N volume velocities from advance_velocity
- * @param pressure_gain N + 1 gains from BoreGrid
+ * @param pressure_gain N + 1 gains from DuctGrid
  *
  * The two end points are left alone for the end laws.
  */
@@ -48,7 +48,7 @@ MAYAFLUX_API void advance_pressure(
 /**
  * @brief New pressure of an end cell from the flow into it.
  * @param pressure Pressure of the cell
- * @param pressure_gain Gain of the cell from BoreGrid
+ * @param pressure_gain Gain of the cell from DuctGrid
  * @param net_inflow Flow in through one face minus flow out through the other
  *
  * With no flow through the outer face this is a rigid wall: pass only the
@@ -64,8 +64,8 @@ MAYAFLUX_API void advance_pressure(
  * @param pressure N + 1 pressures at step n
  * @param velocity_previous N velocities at step n - 1/2
  * @param velocity_current N velocities at step n + 1/2
- * @param pressure_gain N + 1 gains from BoreGrid
- * @param velocity_gain N gains from BoreGrid
+ * @param pressure_gain N + 1 gains from DuctGrid
+ * @param velocity_gain N gains from DuctGrid
  * @param time_step Time step in seconds
  *
  * The sum of cell compliance times pressure squared and section inertance

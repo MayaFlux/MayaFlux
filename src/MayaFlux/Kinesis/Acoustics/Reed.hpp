@@ -75,7 +75,7 @@ struct ReedChannel {
  *        Newton steps approach the root monotonically, which is every case
  *        but a root straddling the inflection of the equation, where it
  *        begins here.
- * @param end_pressure_gain Gain of the first pressure point from BoreGrid
+ * @param end_pressure_gain Gain of the first pressure point from DuctGrid
  * @param mouth_pressure Blowing pressure at the half step
  * @param end_pressure Pressure of the first point at the start of the sample
  * @param downstream_flow Volume velocity of the first half section, from the
@@ -92,6 +92,44 @@ struct ReedChannel {
 [[nodiscard]] MAYAFLUX_API std::tuple<double, double, double, RootStatus> reed_mouth_step(
     const ReedChannel& reed,
     double& warm_start,
+    double end_pressure_gain,
+    double mouth_pressure,
+    double end_pressure,
+    double downstream_flow) noexcept;
+
+/**
+ * @brief Couple a reed with its own dynamics to the first cell of the bore.
+ * @param reed Channel. closing_pressure sets the static compliance, so the
+ *        reed settles at H (1 - d / pM) under a steady difference d.
+ * @param resonance Resonance of the reed in Hz, positive
+ * @param damping Damping of the reed in 1/s, not negative
+ * @param time_step Time step in seconds
+ * @param motion Displacement of the reed from rest, then the previous one, in
+ *        metres, updated here; start both at zero
+ * @param end_pressure_gain Gain of the first pressure point from DuctGrid
+ * @param mouth_pressure Blowing pressure at the half step
+ * @param end_pressure Pressure of the first point at the start of the sample
+ * @param downstream_flow Volume velocity of the first half section, from the
+ *        same sample
+ * @return The first point's pressure after the sample, the flow into the bore
+ *         at the half step, and the pressure difference across the reed
+ *
+ * The reed is a damped oscillator, y'' + damping y' + w0^2 y = -w0^2 H d / pM,
+ * stepped by a centred scheme that is stable for any step. The opening during
+ * a sample is the one the previous sample left, which makes the coupling an
+ * exact closed form, s |s| + a s = target with s = sign(d) sqrt|d|, solved by
+ * its stable root. The solution is unique for every parameter, with no
+ * condition to check. The lag is half a sample, small beside the period of a
+ * reed resonance. A reed driven past the lay is held there without bouncing,
+ * and the flow it carries by its own motion is left out. An invalid channel
+ * or resonance acts as a wall.
+ */
+[[nodiscard]] MAYAFLUX_API std::tuple<double, double, double> dynamic_reed_mouth_step(
+    const ReedChannel& reed,
+    double resonance,
+    double damping,
+    double time_step,
+    std::array<double, 2>& motion,
     double end_pressure_gain,
     double mouth_pressure,
     double end_pressure,

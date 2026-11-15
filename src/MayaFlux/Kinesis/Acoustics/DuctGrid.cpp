@@ -1,4 +1,4 @@
-#include "BoreGrid.hpp"
+#include "DuctGrid.hpp"
 
 namespace MayaFlux::Kinesis::Acoustics {
 
@@ -12,7 +12,7 @@ namespace {
         return std::isfinite(value) && value > 0.0;
     }
 
-    [[nodiscard]] std::optional<double> interval_count(const BoreSpec& spec) noexcept
+    [[nodiscard]] std::optional<double> interval_count(const DuctSpec& spec) noexcept
     {
         if (!positive_finite(spec.length) || !positive_finite(spec.sample_rate)
             || !positive_finite(spec.sound_speed) || !positive_finite(spec.air_density)) {
@@ -25,26 +25,26 @@ namespace {
 
 }
 
-size_t bore_intervals(const BoreSpec& spec) noexcept
+size_t duct_intervals(const DuctSpec& spec) noexcept
 {
     return static_cast<size_t>(interval_count(spec).value_or(0.0));
 }
 
 namespace detail {
 
-    std::expected<BoreGrid, BoreError> begin_bore_grid(const BoreSpec& spec)
+    std::expected<DuctGrid, DuctError> begin_duct_grid(const DuctSpec& spec)
     {
         const std::optional<double> count = interval_count(spec);
         if (!count) {
-            return std::unexpected(BoreError::INVALID_SPEC);
+            return std::unexpected(DuctError::INVALID_SPEC);
         }
 
         const auto intervals = static_cast<size_t>(*count);
         if (intervals < minimum_intervals) {
-            return std::unexpected(BoreError::TOO_SHORT);
+            return std::unexpected(DuctError::TOO_SHORT);
         }
 
-        BoreGrid grid;
+        DuctGrid grid;
         grid.intervals = intervals;
         grid.spacing = spec.length / static_cast<double>(intervals);
         grid.time_step = 1.0 / spec.sample_rate;
@@ -54,12 +54,12 @@ namespace detail {
         return grid;
     }
 
-    std::expected<BoreGrid, BoreError> finish_bore_grid(BoreGrid grid, const BoreSpec& spec)
+    std::expected<DuctGrid, DuctError> finish_duct_grid(DuctGrid grid, const DuctSpec& spec)
     {
         const bool profile_valid = positive_finite(grid.start_radius) && positive_finite(grid.end_radius)
             && std::ranges::all_of(grid.area, positive_finite);
         if (!profile_valid) {
-            return std::unexpected(BoreError::INVALID_PROFILE);
+            return std::unexpected(DuctError::INVALID_PROFILE);
         }
 
         const size_t intervals = grid.intervals;
@@ -86,18 +86,18 @@ namespace detail {
 
 }
 
-std::expected<BoreGrid, BoreError> make_bore_grid(const BoreSpec& spec, std::span<const double> radii)
+std::expected<DuctGrid, DuctError> make_duct_grid(const DuctSpec& spec, std::span<const double> radii)
 {
-    auto begun = detail::begin_bore_grid(spec);
+    auto begun = detail::begin_duct_grid(spec);
     if (!begun) {
         return begun;
     }
 
     if (radii.size() < 2 || !std::ranges::all_of(radii, positive_finite)) {
-        return std::unexpected(BoreError::INVALID_PROFILE);
+        return std::unexpected(DuctError::INVALID_PROFILE);
     }
 
-    BoreGrid grid = std::move(*begun);
+    DuctGrid grid = std::move(*begun);
     const double last = static_cast<double>(radii.size() - 1);
     for (size_t l = 0; l < grid.intervals; ++l) {
         const double position = (static_cast<double>(l) + 0.5) / static_cast<double>(grid.intervals) * last;
@@ -109,7 +109,7 @@ std::expected<BoreGrid, BoreError> make_bore_grid(const BoreSpec& spec, std::spa
     grid.start_radius = radii.front();
     grid.end_radius = radii.back();
 
-    return detail::finish_bore_grid(std::move(grid), spec);
+    return detail::finish_duct_grid(std::move(grid), spec);
 }
 
 } // namespace MayaFlux::Kinesis::Acoustics

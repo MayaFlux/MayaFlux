@@ -3,7 +3,7 @@
 #include <expected>
 
 /**
- * @file BoreGrid.hpp
+ * @file DuctGrid.hpp
  * @brief Interleaved grid of a one dimensional acoustic bore.
  *
  * Pressure sits at N + 1 points and volume velocity at the N half points
@@ -19,10 +19,10 @@
 namespace MayaFlux::Kinesis::Acoustics {
 
 /**
- * @struct BoreSpec
+ * @struct DuctSpec
  * @brief Physical and sampling constants a grid is built from.
  */
-struct BoreSpec {
+struct DuctSpec {
     double length {};
     double sample_rate {};
     double sound_speed { 343.0 };
@@ -30,7 +30,7 @@ struct BoreSpec {
 };
 
 /**
- * @enum BoreError
+ * @enum DuctError
  * @brief Why no grid was built.
  *
  * INVALID_SPEC covers a length, rate, sound speed or density that is not
@@ -39,14 +39,14 @@ struct BoreSpec {
  * than two samples. TOO_SHORT is a valid spec that gives fewer than two
  * intervals.
  */
-enum class BoreError : uint8_t {
+enum class DuctError : uint8_t {
     INVALID_SPEC,
     INVALID_PROFILE,
     TOO_SHORT
 };
 
 /**
- * @struct BoreGrid
+ * @struct DuctGrid
  * @brief Prepared grid and update gains of one bore.
  *
  * With N = intervals, area and velocity_gain hold N values at the half points
@@ -56,7 +56,7 @@ enum class BoreError : uint8_t {
  * most one, and bandwidth is the highest frequency the grid carries,
  * fs asin(courant) / pi.
  */
-struct BoreGrid {
+struct DuctGrid {
     size_t intervals {};
     double spacing {};
     double time_step {};
@@ -74,7 +74,7 @@ struct BoreGrid {
  * @return floor(length / (c k)), the most that keeps c k / h at most one, or
  *         zero when the spec is invalid
  */
-[[nodiscard]] MAYAFLUX_API size_t bore_intervals(const BoreSpec& spec) noexcept;
+[[nodiscard]] MAYAFLUX_API size_t duct_intervals(const DuctSpec& spec) noexcept;
 
 /**
  * @brief Build a grid from radii sampled evenly along the bore.
@@ -87,15 +87,15 @@ struct BoreGrid {
  * Courant number at most one. A length that is not a whole number of
  * intervals leaves it a little under one, which lowers the bandwidth.
  */
-[[nodiscard]] MAYAFLUX_API std::expected<BoreGrid, BoreError> make_bore_grid(
-    const BoreSpec& spec, std::span<const double> radii);
+[[nodiscard]] MAYAFLUX_API std::expected<DuctGrid, DuctError> make_duct_grid(
+    const DuctSpec& spec, std::span<const double> radii);
 
 namespace detail {
 
-    [[nodiscard]] MAYAFLUX_API std::expected<BoreGrid, BoreError> begin_bore_grid(const BoreSpec& spec);
+    [[nodiscard]] MAYAFLUX_API std::expected<DuctGrid, DuctError> begin_duct_grid(const DuctSpec& spec);
 
-    [[nodiscard]] MAYAFLUX_API std::expected<BoreGrid, BoreError> finish_bore_grid(
-        BoreGrid grid, const BoreSpec& spec);
+    [[nodiscard]] MAYAFLUX_API std::expected<DuctGrid, DuctError> finish_duct_grid(
+        DuctGrid grid, const DuctSpec& spec);
 
 }
 
@@ -108,14 +108,14 @@ namespace detail {
  */
 template <typename Radius>
     requires std::is_invocable_r_v<double, Radius&, double>
-[[nodiscard]] std::expected<BoreGrid, BoreError> make_bore_grid(const BoreSpec& spec, Radius radius)
+[[nodiscard]] std::expected<DuctGrid, DuctError> make_duct_grid(const DuctSpec& spec, Radius radius)
 {
-    auto begun = detail::begin_bore_grid(spec);
+    auto begun = detail::begin_duct_grid(spec);
     if (!begun) {
         return begun;
     }
 
-    BoreGrid grid = std::move(*begun);
+    DuctGrid grid = std::move(*begun);
     for (size_t l = 0; l < grid.intervals; ++l) {
         const double r = radius((static_cast<double>(l) + 0.5) * grid.spacing);
         grid.area[l] = std::numbers::pi * r * r;
@@ -123,7 +123,7 @@ template <typename Radius>
     grid.start_radius = radius(0.0);
     grid.end_radius = radius(spec.length);
 
-    return detail::finish_bore_grid(std::move(grid), spec);
+    return detail::finish_duct_grid(std::move(grid), spec);
 }
 
 } // namespace MayaFlux::Kinesis::Acoustics
