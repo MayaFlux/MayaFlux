@@ -6,7 +6,7 @@ A `RelationNetwork` is a table of numbers and an ordered list of rules that rewr
 
 The document has two halves, and they are different kinds of thing. Part 1 is the starter tutorial: what each piece does, mostly as code, small enough to read in order and try one at a time. Part 2 is not a tutorial. It is five complete pieces, written to be run, listened to and watched, then changed: every number in them is a first guess meant to be tuned by ear and eye. Read Part 1 to learn the parts; open Part 2 to play.
 
-Sources: [RelationNetwork.hpp](../src/MayaFlux/Nodes/Network/RelationNetwork.hpp), [RelationSlot.hpp](../src/MayaFlux/Nodes/Network/RelationSlot.hpp), [RelationOperators.hpp](../src/MayaFlux/Nodes/Network/Operators/RelationOperators.hpp), [WalkOperator.hpp](../src/MayaFlux/Nodes/Network/Operators/WalkOperator.hpp).
+Sources: [RelationNetwork.hpp](../src/MayaFlux/Nodes/Network/RelationNetwork.hpp), [RelationSlot.hpp](../src/MayaFlux/Nodes/Network/RelationSlot.hpp), [RelationOperators.hpp](../src/MayaFlux/Nodes/Network/Operators/RelationOperators.hpp), [WalkOperator.hpp](../src/MayaFlux/Nodes/Network/Operators/WalkOperator.hpp), [RewriteOperator.hpp](../src/MayaFlux/Nodes/Network/Operators/RewriteOperator.hpp).
 
 ## Where it sits
 
@@ -72,7 +72,7 @@ flowchart LR
     D --> E["network buffer<br/>output 0"]
 ```
 
-The order operators are added in is the program. Usual order: `Step`/`Walk`, `Advance`, `Derive`s, `Combine`. Every mapped source is read before any rule runs, so it shows state as of the end of the previous block.
+The order operators are added in is the program. Usual order: `Rewrite`, `Step`/`Walk`, `Advance`, `Derive`s, `Combine`. Every mapped source is read before any rule runs, so it shows state as of the end of the previous block.
 
 ## 1.2 Slots
 
@@ -241,7 +241,86 @@ flowchart LR
 
 Slots are the states, one active at a time. A step reads the current slot's row, picks a successor, then deactivates the current slot and activates the next, so `on_leave` and `on_enter` fire. A one-hot row is deterministic; a row summing to zero stays put. The table is shared: rewrite it from anywhere.
 
-## 1.10 Other networks
+## 1.10 RewriteOperator
+
+A grammar inside the network. It holds a word, a sequence of typed symbols, and replacements that rewrite every symbol of it at once, as an L-system does. It is the one operator that touches no slots: the word sits beside the table, and other operators read it.
+
+```cpp
+using Rewrite = RewriteOperator;
+
+auto g = n->add<Rewrite>(Rewrite::Config {
+    .axiom = Rewrite::symbols_from_text("A"),     // the starting word
+    .max_word_length = 4096,                      // every bound is explicit
+    .max_generations = 8 });
+
+g->replace('A', "AB");                     // a character is its own symbol id
+g->replace('B', "A");
+
+if (g->rewrite(4) == Rewrite::RewriteResult::REWRITTEN) {   // ABAABABA, built off the audio path
+    (void)g->submit();                                       // becomes the active word at the next block
+}
+```
+
+A symbol is an id and up to eight numbers: `Rewrite::Symbol { 'A', 1.0, 90.0 }`. Ids are numbers, so a character literal works and so does any other value. Symbols no replacement names, brackets and turtle commands among them, copy through unchanged.
+
+```cpp
+// a successor is a callable: numbers in, symbols out
+g->replace('A', [](const Rewrite::Symbol& s, Rewrite::Environment, const Rewrite::EmitSymbol& emit) {
+    emit(Rewrite::Symbol { 'A', s.parameters[0] * 0.5 });
+    emit(Rewrite::Symbol { 'N', s.parameters[0] });
+});
+
+// a full replacement: left < predecessor > right, if predicate, with a weight
+g->replace(Rewrite::Replacement {
+    .predecessor = 'F',
+    .left = { '+' },                              // the symbols before it, in word order
+    .right = { ']' },                             // and after it
+    .predicate = [](const Rewrite::Symbol&, Rewrite::Environment e) { return e.coefficients[0] > 0.5; },
+    .successor = Rewrite::text_successor("L") });
+
+// stochastic: a positive weight makes a choice among the matching weighted replacements
+g->replace('F', "F[+F]F[-F]F", 1.0);
+g->replace('F', "F[+F]F", 1.0);
+g->replace('F', "F[-F]F", 2.0);
+g->generator().seed(7);                           // a Kinesis::Stochastic::Stochastic; seed it to repeat a word
+```
+
+```mermaid
+flowchart LR
+    subgraph P["producer lane, never process_batch"]
+        R["rewrite steps<br/>draft word"] --> S["submit"]
+    end
+    S -->|"one word, at a block boundary"| A["active word<br/>read by active_symbols"]
+    A --> ST["Step, or any code on the network lane<br/>reads it"]
+    A -->|"old word handed back"| R
+```
+
+Replacements apply in the order they were added:
+
+- The first replacement whose predecessor, context and predicate match wins. Unless it has a positive weight: then one of the matching weighted replacements of that symbol is drawn in proportion to its weight.
+- Context is the symbols next to the predecessor in word order, skipping the ids in `Config::ignore`. It does not follow brackets.
+- A callback receives `Environment`: `coefficients`, `inputs`, the whole `word` and the symbol's `position`, so a replacement can read a neighbour's numbers.
+- Every symbol is rewritten from the word as it was, so a generation is parallel. `rewrite(n)` makes `n` generations and keeps none of them if a bound refuses one.
+
+Three words for three places:
+
+- The draft is what `rewrite()` builds and `restore_axiom()` resets. It lives on the producer lane.
+- A submitted draft waits for the network. `submit()` returns `BUSY` while one is waiting.
+- The active word is what the network reads, through `active_symbols()`, from an operator added after the Rewrite. `active_generation()` tells another thread which one is active.
+
+```cpp
+n->add<StepOperator>([g](const std::shared_ptr<StepOperator>&, std::span<RelationSlot>, uint32_t) {
+    for (const auto& symbol : g->active_symbols()) { /* a score, a path, a table of targets */ }
+});
+
+g->set_coefficient(0, 0.7);                       // "c0", read by callbacks as e.coefficients[0]
+g->map("c0", Source(n, 3));                       // or driven every block, like any operator parameter
+g->restore_axiom();                               // the draft only; submit() to make it active
+```
+
+`rewrite()` allocates and takes time in proportion to the word, so it never runs inside a block. Call it from setup, a worker, or any thread that is not the audio thread, and only one thread at a time. The block does one thing: it swaps the submitted word in, and it frees nothing.
+
+## 1.11 Other networks
 
 ```cpp
 // out, element by element (one slot per mode, exactly): ModalNetwork "amplitude" multiplies each mode, "detune" moves each by level * 100 cents
@@ -256,9 +335,11 @@ net->set_output_mode(OutputMode::GRAPHICS_BIND);     // state exposed to rendere
 
 A network that only computes still needs to be registered (`| Audio[0]` or equivalent) to be processed.
 
-## 1.11 Limits
+## 1.12 Limits
 
 - Slots, operators, nodes and mappings change outside `process_batch()`.
+- `rewrite()`, `submit()` and `restore_axiom()` run on one non-audio thread. The network never calls them.
+- A word has a fixed maximum length and generation count, and a symbol at most eight numbers.
 - `Step` bodies, `Source` callables and callbacks run on the processing thread.
 - Sources and mapped parameters have a one-block lag; only `Derive` is per frame.
 - `Combine` weights do not grow with slots.
@@ -270,7 +351,7 @@ A network that only computes still needs to be registered (`| Audio[0]` or equiv
 
 These are pieces, not API examples. Each is a complete program that makes something to hear or see, and each is meant to be run first, understood second and then bent: change the gestures, the weights, the maps and the timings, and the piece becomes yours. They assume Part 1 and use it freely, without stopping to explain.
 
-Five pieces. Each takes something built for one thing and uses it for another: a bit-crusher as a climb, a cellular automaton as a spectrum, a resonator with no strike as a drone, a coefficient rule as a fractal. The relation is what makes that a decision instead of a hack.
+Six pieces. Each takes something built for one thing and uses it for another: a bit-crusher as a climb, a cellular automaton as a spectrum, a resonator with no strike as a drone, a coefficient rule as a fractal, a model of plant growth as a score. The relation is what makes that a decision instead of a hack.
 
 ## 2.1 A climb of noise, written as a table
 
@@ -706,7 +787,136 @@ The contrast: a coefficient rule was built to hold a filter's numbers or a seque
 
 The array layout: `[x, y, window left, right, bottom, top, canvas width, height, six numbers for each of four maps, four cumulative odds]`. The window and canvas size are part of the array on purpose, so they morph too. The windows and the fade and increment on the canvas (0.992 and 0.06) are set by eye and are the first things to tune. The canvas is plain floats written on the audio thread and read on the graphics side, so a pixel can be seen half updated, and it is not visible.
 
-## 2.6 Which interaction points each piece uses
+## 2.6 A plant that is heard
+
+Lindenmayer wrote his grammars to describe how algae and plants grow: a word, a replacement for every letter, all letters rewritten at once. Prusinkiewicz drew the words with a turtle and got trees. Here the same grammar is read as music instead of drawn.
+
+The word is a plant. `F` is a stem, `[` and `]` are a fork and the return to it, `+` and `-` bend the climb two steps of a scale up or down. Three stochastic replacements say how a stem grows: with two side shoots, with one on the left, or with one on the right. Three generations grow the plant. Then the replacements are cleared and one with context takes their place, and one more generation ripens it: a stem that is directly followed by `]` is a tip, and a tip becomes a leaf, `L`.
+
+The word is read depth first, one symbol at a time, by a turtle that keeps a height and a stack. A stem strikes the body for its depth, trunk, branch or twig, at its height, and then grows one step of a three octave pentatonic scale higher, so the trunk climbs and wraps. A leaf strikes a separate, higher body. A fork remembers the height, the return restores it, so every branch is heard starting from the note it left. Each launch grows a different plant, because the generator is not seeded.
+
+```mermaid
+flowchart LR
+    AX["axiom F"] --> GROW["3 generations<br/>F: three weighted text replacements"]
+    GROW --> RIPEN["new replacement with context<br/>F right of ]: tip becomes L"]
+    RIPEN --> SUB["submit"]
+    SUB --> TURTLE["Step: turtle<br/>pitch, stack of forks"]
+    TURTLE -->|"F, by depth"| STEMS["trunk, branch, twig bodies"]
+    TURTLE -->|"L"| LEAVES["leaf body"]
+```
+
+```cpp
+void plant_that_is_heard()
+{
+    using Rewrite = RewriteOperator;
+
+    constexpr Rewrite::SymbolId stem = 'F';
+    constexpr Rewrite::SymbolId leaf = 'L';
+    constexpr Rewrite::SymbolId fork = '[';
+    constexpr Rewrite::SymbolId back = ']';
+    constexpr Rewrite::SymbolId rise = '+';
+    constexpr Rewrite::SymbolId fall = '-';
+
+    constexpr std::array<double, 5> scale { 1.0, 9.0 / 8.0, 5.0 / 4.0, 3.0 / 2.0, 5.0 / 3.0 };
+
+    const auto make_body = [](uint32_t channel, double scale_out) {
+        auto body = vega.ModalNetwork(8, 110.0, ModalNetwork::Spectrum::INHARMONIC) | Audio[channel];
+        body->set_output_scale(scale_out);
+        return body;
+    };
+    const std::array bodies { make_body(0, 0.10), make_body(1, 0.08), make_body(0, 0.06) };
+    const auto leaves = make_body(1, 0.05);
+
+    auto n = std::make_shared<RelationNetwork>() | Audio[0];
+    auto plant = n->add<Rewrite>(Rewrite::Config {
+        .axiom = Rewrite::symbols_from_text("F"),
+        .max_word_length = 1024,
+        .max_generations = 5 });
+
+    plant->replace(stem, "F[+F]F[-F]F", 1.0);
+    plant->replace(stem, "F[+F]F", 1.0);
+    plant->replace(stem, "F[-F]F", 1.0);
+    if (plant->rewrite(3) != Rewrite::RewriteResult::REWRITTEN) {
+        return;
+    }
+
+    plant->clear_replacements();
+    plant->replace(Rewrite::Replacement {
+        .predecessor = stem,
+        .right = { back },
+        .successor = Rewrite::text_successor("L") });
+    if (plant->rewrite(1) != Rewrite::RewriteResult::REWRITTEN || plant->submit() != Rewrite::SubmitResult::SUBMITTED) {
+        return;
+    }
+
+    const auto step_frames = static_cast<uint64_t>(Config::get_sample_rate() * 0.11);
+    n->add<StepOperator>([plant, bodies, leaves, scale, step_frames, elapsed = uint64_t {}, cursor = size_t {},
+                             height = 0, depth = size_t {}, forks = std::array<int, 8> {}](
+                             const std::shared_ptr<StepOperator>&, std::span<RelationSlot>, uint32_t frames) mutable {
+        const auto word = plant->active_symbols();
+        if (word.empty()) {
+            return;
+        }
+
+        elapsed += frames;
+        if (elapsed < step_frames) {
+            return;
+        }
+
+        elapsed %= step_frames;
+        if (cursor >= word.size()) {
+            cursor = 0;
+            height = 0;
+            depth = 0;
+        }
+
+        const int span = static_cast<int>(scale.size()) * 3;
+        const auto step = static_cast<size_t>(((height % span) + span) % span);
+        const double pitch = 110.0 * scale[step % scale.size()] * std::ldexp(1.0, static_cast<int>(step / scale.size()));
+        switch (word[cursor++].id) {
+        case stem: {
+            const auto& body = bodies[std::min<size_t>(depth, bodies.size() - 1)];
+            body->set_fundamental(pitch);
+            body->excite(0.6 / (1.0 + 0.5 * static_cast<double>(depth)));
+            ++height;
+            break;
+        }
+        case leaf:
+            leaves->set_fundamental(pitch * 2.0);
+            leaves->excite(0.3);
+            break;
+        case fork:
+            if (depth < forks.size()) {
+                forks[depth] = height;
+            }
+            ++depth;
+            break;
+        case back:
+            if (depth > 0) {
+                --depth;
+                if (depth < forks.size()) {
+                    height = forks[depth];
+                }
+            }
+            break;
+        case rise:
+            height += 2;
+            break;
+        case fall:
+            height -= 2;
+            break;
+        default:
+            break;
+        }
+    });
+}
+```
+
+What the relation decides: what the plant is. The grammar holds the whole piece as a word before the first block, and the network hands it to the audio path in one move, with nothing allocated or freed inside a block. The turtle in the `Step` is the only thing that runs per block, and all it does is read.
+
+The contrast: a grammar made to describe growth, used as a score. Depth is register, because a fork sends the stem to a different body. A branch is heard in its turn, depth first, so a plant that forks three times plays as one long line with its returns. Change the three stem replacements and the plant changes character: a trunk with rare side shoots is a slow melody, an even `F[+F]F[-F]F` is a thicket. The ripening replacement is the only one with context. The length of the line, `0.11`, and the scale are the first numbers to tune.
+
+## 2.7 Which interaction points each piece uses
 
 | Piece | Decision | Interaction points |
 |---|---|---|
@@ -715,3 +925,4 @@ The array layout: `[x, y, window left, right, bottom, top, canvas width, height,
 | 2.3 cloud | flow and overlap | gates driving `excite` and `route_network`, one-input truth table as a sign detector |
 | 2.4 written drone | spectrum of a sustained sound | one slot per mode, `Step` calling `excite_mode`, ONE_TO_ONE detune, three relations talking through `Source` |
 | 2.5 fractals | which fractal, and its every number | per-frame coefficient rule with state in the array, `Walk` choosing a target, `set_coefficients` easing as a morph, canvas into a `ProceduralTextureNode` |
+| 2.6 plant | what the plant is, symbol by symbol | `Rewrite` with weighted text replacements and a context replacement, `submit` to the block boundary, a `Step` turtle with a fork stack over three bodies |
