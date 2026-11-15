@@ -8,6 +8,28 @@
 namespace MayaFlux::Portal::Forma {
 
 /**
+ * @brief A Form with no state that draws ordered vertices exactly as written.
+ *
+ * Positions are NDC, as Forma::slice and submit take them, so nothing maps them. The hit
+ * region is derived from the vertices: inside the triangles for triangle topologies, the
+ * circumscribing box otherwise.
+ */
+[[nodiscard]] MAYAFLUX_API Geometry::Form<std::monostate> vertex_form(const VertexGeometryInputs& input);
+
+/**
+ * @brief The binding of a vertex form: a topology and one or more vertex children, with an
+ *        optional defaults child before them.
+ */
+template <typename Source, typename Access = Reflect::RecordAccess<Source>>
+[[nodiscard]] Reflect::RecordBinding<VertexGeometryInputs, Source, Access> vertex_binding()
+{
+    Reflect::RecordBinding<VertexGeometryInputs, Source, Access> input;
+    input.required("topology")
+        .template repeated<&VertexGeometryInputs::vertices>("vertex", "defaults", "position", 1);
+    return input;
+}
+
+/**
  * @brief A Form with no state that draws ordered vertices.
  *
  * Positions are x y in the unit square, mapped through the placement's rect
@@ -44,12 +66,8 @@ struct MAYAFLUX_API PolygonFactory {
 template <typename Source, typename Access>
 void expose_vertex_geometry(FactoryTable<Source, Access>& table, std::string name)
 {
-    Reflect::RecordBinding<VertexGeometryInputs, Source, Access> input;
-    input.required("topology")
-        .template repeated<&VertexGeometryInputs::vertices>("vertex", "defaults", "position", 1);
-
     table.template expose_typed<std::monostate>(std::move(name),
-        std::move(input), rect_placement_binding<Source, Access>(), vertex_geometry_form,
+        vertex_binding<Source, Access>(), rect_placement_binding<Source, Access>(), vertex_geometry_form,
         [](const VertexGeometryInputs&, const RectPlacementInputs&, std::string&)
             -> std::optional<std::monostate> { return std::monostate {}; });
 }

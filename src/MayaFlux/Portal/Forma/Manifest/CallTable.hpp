@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ElementHit.hpp"
 #include "FactoryTable.hpp"
 
 namespace MayaFlux::Portal::Forma {
@@ -37,6 +38,25 @@ namespace Detail {
     struct FormState<Geometry::Form<T>> {
         using type = T;
     };
+
+    /** A Placer that places a form with an initial state on a Surface and returns its element id. */
+    template <typename Placer, typename State>
+    Placer form_placer(Geometry::Form<State> form, State initial)
+    {
+        return Placer([form = std::move(form), initial = std::move(initial)](
+                          Surface& surface, std::string& error) -> std::optional<uint32_t> {
+            Tend<State> tend {
+                .form = form,
+                .initial = initial,
+            };
+            tend.place(surface);
+            if (!tend.result) {
+                error = "could not place the element";
+                return std::nullopt;
+            }
+            return tend.result->element.id;
+        });
+    }
 
     template <auto Function, typename Source, typename Access, size_t Index, typename Values>
     bool decode_parameter(const Source& call, Values& values, std::array<bool, std::tuple_size_v<Values>>& given,
@@ -165,9 +185,11 @@ public:
     /**
      * @brief Decodes a form element and the element holding it into a Placer, or nullopt with an error.
      *
-     * The element supplies the state, and the form element its call and arguments.
+     * The element supplies the state, and the form element its call and arguments. The hit is what
+     * the element's own spatial children say, written after the form's.
      */
-    using Maker = std::function<std::optional<Placer>(const Source&, const Source&, std::string&)>;
+    using Maker = std::function<std::optional<Placer>(
+        const Source&, const Source&, const ElementHit&, std::string&)>;
 
     /**
      * @brief Register a described function that returns a Geometry::Form.
@@ -187,7 +209,8 @@ public:
         }
 
         m_makers.insert_or_assign(std::move(name),
-            Maker([](const Source& call, const Source& element, std::string& error) -> std::optional<Placer> {
+            Maker([](const Source& call, const Source& element, const ElementHit& hit,
+                      std::string& error) -> std::optional<Placer> {
                 auto form = Detail::call_described<Function, Source, Access>(call, error);
                 if (!form)
                     return std::nullopt;
@@ -202,19 +225,8 @@ public:
                     }
                 }
 
-                return Placer([form = std::move(*form), initial = std::move(initial)](
-                                  Surface& surface, std::string& place_error) -> std::optional<uint32_t> {
-                    Tend<State> tend {
-                        .form = form,
-                        .initial = initial,
-                    };
-                    tend.place(surface);
-                    if (!tend.result) {
-                        place_error = "could not place the element";
-                        return std::nullopt;
-                    }
-                    return tend.result->element.id;
-                });
+                apply_hit(*form, hit);
+                return Detail::form_placer<Placer, State>(std::move(*form), std::move(initial));
             }));
     }
 

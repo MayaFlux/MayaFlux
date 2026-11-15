@@ -2,11 +2,15 @@
 
 #include "ActionTable.hpp"
 #include "CallTable.hpp"
+#include "StaticGeometry.hpp"
 
 namespace MayaFlux::Portal::Forma {
 
 /** @brief Attribute that names an element, which shares the namespace of ids. */
 inline constexpr std::string_view element_name_attribute { "name" };
+
+/** @brief Attribute of a form element that gives vertices to draw instead of a call. */
+inline constexpr std::string_view vertex_topology_attribute { "topology" };
 
 /** @brief Surfaces by the document name a host binds them to. */
 using SurfaceMap = std::map<std::string, Surface, std::less<>>;
@@ -117,9 +121,12 @@ namespace Detail {
                     const InstanceInfo& info = entry.info[i];
                     std::optional<Placer> placer;
                     if (info.form) {
-                        const typename Calls::Maker* make
-                            = m_calls->find(*Access::attribute(*info.form, reserved_call_attribute));
-                        placer = std::invoke(*make, *info.form, instance, m_error);
+                        if (const auto call = Access::attribute(*info.form, reserved_call_attribute)) {
+                            const typename Calls::Maker* make = m_calls->find(*call);
+                            placer = std::invoke(*make, *info.form, instance, info.hit, m_error);
+                        } else {
+                            placer = vertex_placer(*info.form, instance, info.hit);
+                        }
                     } else {
                         const Source& factory_element = m_templates.at(info.template_id);
                         const typename Table::Instantiator* decode = m_table.find(Access::name(factory_element));
@@ -245,6 +252,7 @@ namespace Detail {
             LayerAttributes layer;
             std::vector<ActionSpec> actions;
             std::optional<Source> form;
+            ElementHit hit;
         };
 
         struct SurfaceInstances {
@@ -613,6 +621,8 @@ namespace Detail {
                 }
                 if (kind == reserved_action_element)
                     return read_action(child, info);
+                if (is_hit_child(kind))
+                    return read_hit_child<Source, Access>(child, info.hit, m_error);
                 return fail(child, "<" + std::string(kind) + "> is not allowed in <element>");
             });
             if (!traversed)
@@ -622,16 +632,51 @@ namespace Detail {
             return true;
         }
 
+        /**
+         * A form either calls a registered function or gives vertices to draw, as C++ either
+         * passes a function's Form to Tend or submits vertices to a slice.
+         */
         bool check_form(const Source& form)
         {
+            const auto call = Access::attribute(form, reserved_call_attribute);
+            const auto topology = Access::attribute(form, vertex_topology_attribute);
+            if (call && topology)
+                return fail(form, "<form> may call a function or give a topology, not both");
+            if (!call) {
+                if (!topology)
+                    return fail(form, "<form> needs a call or a topology attribute");
+                return true;
+            }
             if (!m_calls)
                 return fail(form, "<form> needs a call table, and none was given");
-            const auto call = Access::attribute(form, reserved_call_attribute);
-            if (!call)
-                return fail(form, "<form> needs a call attribute");
             if (!m_calls->contains(*call))
                 return fail(form, "no registered call " + std::string(*call));
+            bool has_child = false;
+            Access::for_each_child(form, [&](const Source&) {
+                has_child = true;
+                return false;
+            });
+            if (has_child)
+                return fail(form, "<form> that calls a function takes no children");
             return true;
+        }
+
+        /** The placement of vertices written in a form element, which have no state. */
+        std::optional<Placer> vertex_placer(const Source& form, const Source& element, const ElementHit& hit)
+        {
+            if (Access::attribute(element, reserved_state_attribute)) {
+                fail(element, "a form of vertices has no state, so <element> may not give one");
+                return std::nullopt;
+            }
+            uint64_t where {};
+            const auto input = vertex_binding<Source, Access>().read(form, m_error, &where);
+            if (!input) {
+                m_error = Table::located(where, m_error);
+                return std::nullopt;
+            }
+            auto vertices = vertex_form(*input);
+            apply_hit(vertices, hit);
+            return Detail::form_placer<Placer, std::monostate>(std::move(vertices), std::monostate {});
         }
 
         bool check_relations(const SurfaceInstances& entry)

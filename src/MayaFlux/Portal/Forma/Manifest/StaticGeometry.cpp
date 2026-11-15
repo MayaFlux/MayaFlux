@@ -58,6 +58,23 @@ namespace {
 
 }
 
+Geometry::Form<std::monostate> vertex_form(const VertexGeometryInputs& input)
+{
+    std::vector<glm::vec2> positions;
+    positions.reserve(input.vertices.size());
+    for (const Kakshya::Vertex& vertex : input.vertices)
+        positions.emplace_back(vertex.position.x, vertex.position.y);
+
+    const Containment hit = containment_of(positions, input.topology);
+    const size_t capacity = input.vertices.size() * sizeof(Kakshya::Vertex);
+    auto fn = geometry_with_containment<std::monostate>(
+        [vertices = input.vertices](const std::monostate&, std::vector<uint8_t>& out) {
+            Geometry::write_verts(out, vertices);
+        },
+        hit);
+    return Geometry::Form<std::monostate> { std::move(fn), input.topology, capacity };
+}
+
 std::optional<Geometry::Form<std::monostate>> vertex_geometry_form(
     const VertexGeometryInputs& input, const RectPlacementInputs& placement, std::string& error)
 {
@@ -65,23 +82,12 @@ std::optional<Geometry::Form<std::monostate>> vertex_geometry_form(
     if (!region)
         return std::nullopt;
 
-    std::vector<Kakshya::Vertex> vertices = input.vertices;
-    std::vector<glm::vec2> positions;
-    positions.reserve(vertices.size());
-    for (Kakshya::Vertex& vertex : vertices) {
+    VertexGeometryInputs mapped { .topology = input.topology, .vertices = input.vertices };
+    for (Kakshya::Vertex& vertex : mapped.vertices) {
         const glm::vec2 ndc = region->point_at({ vertex.position.x, vertex.position.y });
         vertex.position = { ndc.x, ndc.y, vertex.position.z };
-        positions.push_back(ndc);
     }
-
-    const Containment hit = containment_of(positions, input.topology);
-    const size_t capacity = vertices.size() * sizeof(Kakshya::Vertex);
-    auto fn = geometry_with_containment<std::monostate>(
-        [vertices = std::move(vertices)](const std::monostate&, std::vector<uint8_t>& out) {
-            Geometry::write_verts(out, vertices);
-        },
-        hit);
-    return Geometry::Form<std::monostate> { std::move(fn), input.topology, capacity };
+    return vertex_form(mapped);
 }
 
 std::optional<Geometry::Form<bool>> PolygonFactory::operator()(
