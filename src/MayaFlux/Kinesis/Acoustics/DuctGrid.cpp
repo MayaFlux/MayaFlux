@@ -15,7 +15,8 @@ namespace {
     [[nodiscard]] std::optional<double> interval_count(const DuctSpec& spec) noexcept
     {
         if (!positive_finite(spec.length) || !positive_finite(spec.sample_rate)
-            || !positive_finite(spec.sound_speed) || !positive_finite(spec.air_density)) {
+            || !positive_finite(spec.sound_speed) || !positive_finite(spec.air_density)
+            || !std::isfinite(spec.mouth_volume) || spec.mouth_volume < 0.0) {
             return std::nullopt;
         }
 
@@ -75,7 +76,7 @@ namespace detail {
             grid.velocity_gain[l] = k * grid.area[l] / (rho * h);
         }
 
-        grid.pressure_gain[0] = stiffness / (0.5 * h * grid.area[0]);
+        grid.pressure_gain[0] = stiffness / (0.5 * h * grid.area[0] + spec.mouth_volume);
         for (size_t l = 1; l < intervals; ++l) {
             grid.pressure_gain[l] = stiffness / (0.5 * h * (grid.area[l - 1] + grid.area[l]));
         }

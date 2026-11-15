@@ -26,6 +26,10 @@ namespace {
         return std::isfinite(value) && value > 0.0;
     }
 
+    constexpr double lip_stiffening = 0.4;
+    constexpr double lip_narrowing = 0.2;
+    constexpr double lip_damping = 1.0;
+
 }
 
 //-----------------------------------------------------------------------------
@@ -60,10 +64,14 @@ ReedOperator::ReedOperator(double width, double rest_opening, double closing_pre
 
 Acoustics::ReedChannel ReedOperator::channel() const noexcept
 {
+    const double lip = std::clamp(m_lip.load(std::memory_order_relaxed), 0.0, 1.0);
+    const double stiffening = 1.0 + lip_stiffening * lip;
+    const double narrowing = 1.0 - lip_narrowing * lip;
+
     return {
         .width = m_width.load(std::memory_order_relaxed),
-        .rest_opening = m_rest_opening.load(std::memory_order_relaxed),
-        .closing_pressure = m_closing_pressure.load(std::memory_order_relaxed),
+        .rest_opening = m_rest_opening.load(std::memory_order_relaxed) * narrowing,
+        .closing_pressure = m_closing_pressure.load(std::memory_order_relaxed) * stiffening,
         .air_density = m_density
     };
 }
@@ -91,6 +99,8 @@ void ReedOperator::reset()
     m_pressure = 0.0;
     m_warm_start = 0.0;
     m_motion = { 0.0, 0.0 };
+    m_noise_state = 0.0;
+    m_last_flow = 0.0;
     m_random = 0x9E3779B97F4A7C15ULL;
 }
 
@@ -107,6 +117,10 @@ void ReedOperator::process(float /*frames*/)
 {
     const double smoothing = m_smoothing.load(std::memory_order_relaxed);
     m_alpha = smoothing > 0.0 ? 1.0 - std::exp(-m_time_step / smoothing) : 1.0;
+
+    const double cutoff = m_noise_cutoff.load(std::memory_order_relaxed);
+    m_noise_alpha = cutoff > 0.0 ? 1.0 - std::exp(-2.0 * std::numbers::pi * cutoff * m_time_step) : 1.0;
+    m_noise_scale = std::sqrt(3.0 * (2.0 - m_noise_alpha) / m_noise_alpha);
     m_unique.store(
         m_resonance.load(std::memory_order_relaxed) > 0.0
             || Acoustics::reed_coupling_is_unique(channel(), Acoustics::flow_coupling_gain(m_end_gain)),
@@ -117,25 +131,34 @@ std::pair<double, double> ReedOperator::couple(double end_pressure, double inter
 {
     m_pressure += m_alpha * (m_target_pressure.load(std::memory_order_relaxed) - m_pressure);
 
-    double blow = m_pressure;
+    double breath = 0.0;
     const double noise = m_noise.load(std::memory_order_relaxed);
     if (noise > 0.0) {
-        blow *= 1.0 + noise * next_white();
+        m_noise_state += m_noise_alpha * (next_white() - m_noise_state);
+        breath = noise * std::abs(m_last_flow) * m_noise_scale * m_noise_state;
     }
 
     const double resonance = m_resonance.load(std::memory_order_relaxed);
+    double pressure = 0.0;
+    double flow = 0.0;
     if (resonance > 0.0) {
-        const auto [pressure, flow, difference] = Acoustics::dynamic_reed_mouth_step(
-            channel(), resonance, m_reed_damping.load(std::memory_order_relaxed), m_time_step,
-            m_motion, m_end_gain, blow, end_pressure, interior_flow);
-
-        return { pressure, flow };
+        const double lip = std::clamp(m_lip.load(std::memory_order_relaxed), 0.0, 1.0);
+        const auto [dynamic_pressure, dynamic_flow, difference] = Acoustics::dynamic_reed_mouth_step(
+            channel(), resonance * (1.0 + lip_stiffening * lip),
+            m_reed_damping.load(std::memory_order_relaxed) * (1.0 + lip_damping * lip),
+            m_reed_area.load(std::memory_order_relaxed), m_time_step,
+            m_motion, m_end_gain, m_pressure, end_pressure, interior_flow - breath);
+        pressure = dynamic_pressure;
+        flow = dynamic_flow;
+    } else {
+        const auto [static_pressure, static_flow, difference, status] = Acoustics::reed_mouth_step(
+            channel(), m_warm_start, m_end_gain, m_pressure, end_pressure, interior_flow - breath);
+        pressure = static_pressure;
+        flow = static_flow;
     }
 
-    const auto [pressure, flow, difference, status] = Acoustics::reed_mouth_step(
-        channel(), m_warm_start, m_end_gain, blow, end_pressure, interior_flow);
-
-    return { pressure, flow };
+    m_last_flow = flow;
+    return { pressure, flow + breath };
 }
 
 void ReedOperator::set_parameter(std::string_view param, double value)
@@ -154,6 +177,12 @@ void ReedOperator::set_parameter(std::string_view param, double value)
         m_reed_damping.store(std::max(0.0, value), std::memory_order_relaxed);
     } else if (param == "noise") {
         m_noise.store(std::max(0.0, value), std::memory_order_relaxed);
+    } else if (param == "noise_cutoff") {
+        m_noise_cutoff.store(std::max(0.0, value), std::memory_order_relaxed);
+    } else if (param == "reed_area") {
+        m_reed_area.store(std::max(0.0, value), std::memory_order_relaxed);
+    } else if (param == "lip") {
+        m_lip.store(std::clamp(value, 0.0, 1.0), std::memory_order_relaxed);
     } else if (value > 0.0) {
         if (param == "closing_pressure") {
             m_closing_pressure.store(value, std::memory_order_relaxed);
@@ -190,6 +219,15 @@ std::optional<double> ReedOperator::query_state(std::string_view query) const
     }
     if (query == "noise") {
         return m_noise.load(std::memory_order_relaxed);
+    }
+    if (query == "noise_cutoff") {
+        return m_noise_cutoff.load(std::memory_order_relaxed);
+    }
+    if (query == "reed_area") {
+        return m_reed_area.load(std::memory_order_relaxed);
+    }
+    if (query == "lip") {
+        return m_lip.load(std::memory_order_relaxed);
     }
     if (query == "unique") {
         return m_unique.load(std::memory_order_relaxed) ? 1.0 : 0.0;

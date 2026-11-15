@@ -21,12 +21,19 @@ namespace MayaFlux::Kinesis::Acoustics {
 /**
  * @struct DuctSpec
  * @brief Physical and sampling constants a grid is built from.
+ *
+ * mouth_volume is extra air behind the first cell in cubic metres, which adds
+ * compliance there. It stands for a mouthpiece cavity, or for the tip a
+ * truncated cone lacks, whose volume is pi r^2 x / 3 for the apex radius r and
+ * the distance x to the apex. Without it the modes of a truncated cone are
+ * stretched away from a whole number series.
  */
 struct DuctSpec {
     double length {};
     double sample_rate {};
     double sound_speed { 343.0 };
     double air_density { 1.2 };
+    double mouth_volume { 0.0 };
 };
 
 /**

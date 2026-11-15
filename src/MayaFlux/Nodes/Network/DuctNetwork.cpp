@@ -65,7 +65,7 @@ void DuctNetwork::setup(double length, Profile profile, double sample_rate)
     m_operator_chain->add(m_mouth);
     m_operator_chain->add(m_bell);
 
-    if (auto prepared = build(m_length, m_profile, m_losses, m_mouth, m_bell)) {
+    if (auto prepared = build(m_length, m_profile, m_losses, m_mouth_volume, m_mouth, m_bell)) {
         m_applied_friction = prepared->friction;
         m_applied_viscosity = prepared->viscosity;
         m_intervals = prepared->grid.intervals;
@@ -85,10 +85,11 @@ std::shared_ptr<DuctNetwork::Prepared> DuctNetwork::build(
     double length,
     const Profile& profile,
     const Losses& losses,
+    double mouth_volume,
     const std::shared_ptr<TerminationOperator>& mouth,
     const std::shared_ptr<TerminationOperator>& bell) const
 {
-    const Acoustics::DuctSpec spec { .length = length, .sample_rate = m_rate };
+    const Acoustics::DuctSpec spec { .length = length, .sample_rate = m_rate, .mouth_volume = mouth_volume };
 
     std::expected<Acoustics::DuctGrid, Acoustics::DuctError> grid = std::unexpected(Acoustics::DuctError::INVALID_PROFILE);
     if (!profile.radii.empty()) {
@@ -203,7 +204,7 @@ void DuctNetwork::initialize()
 void DuctNetwork::reset()
 {
     std::scoped_lock lock(m_producer_mutex);
-    if (auto next = build(m_length, m_profile, m_losses, m_mouth, m_bell)) {
+    if (auto next = build(m_length, m_profile, m_losses, m_mouth_volume, m_mouth, m_bell)) {
         publish(std::move(next));
     }
 }
@@ -215,7 +216,7 @@ void DuctNetwork::reset()
 bool DuctNetwork::set_length(double length)
 {
     std::scoped_lock lock(m_producer_mutex);
-    auto next = build(length, m_profile, m_losses, m_mouth, m_bell);
+    auto next = build(length, m_profile, m_losses, m_mouth_volume, m_mouth, m_bell);
     if (!next) {
         return false;
     }
@@ -234,7 +235,7 @@ bool DuctNetwork::set_profile(const std::vector<double>& radii)
 {
     std::scoped_lock lock(m_producer_mutex);
     Profile profile { .radii = radii, .function = {} };
-    auto next = build(m_length, profile, m_losses, m_mouth, m_bell);
+    auto next = build(m_length, profile, m_losses, m_mouth_volume, m_mouth, m_bell);
     if (!next) {
         return false;
     }
@@ -248,7 +249,7 @@ bool DuctNetwork::set_profile(std::function<double(double)> radius)
 {
     std::scoped_lock lock(m_producer_mutex);
     Profile profile { .radii = {}, .function = std::move(radius) };
-    auto next = build(m_length, profile, m_losses, m_mouth, m_bell);
+    auto next = build(m_length, profile, m_losses, m_mouth_volume, m_mouth, m_bell);
     if (!next) {
         return false;
     }
@@ -258,11 +259,24 @@ bool DuctNetwork::set_profile(std::function<double(double)> radius)
     return true;
 }
 
+bool DuctNetwork::set_mouth_volume(double volume)
+{
+    std::scoped_lock lock(m_producer_mutex);
+    auto next = build(m_length, m_profile, m_losses, volume, m_mouth, m_bell);
+    if (!next) {
+        return false;
+    }
+
+    m_mouth_volume = volume;
+    publish(std::move(next));
+    return true;
+}
+
 bool DuctNetwork::set_wall_losses(double friction, double viscosity)
 {
     std::scoped_lock lock(m_producer_mutex);
     const Losses losses { .automatic = false, .friction = friction, .viscosity = viscosity };
-    auto next = build(m_length, m_profile, losses, m_mouth, m_bell);
+    auto next = build(m_length, m_profile, losses, m_mouth_volume, m_mouth, m_bell);
     if (!next) {
         return false;
     }
@@ -276,7 +290,7 @@ bool DuctNetwork::use_viscothermal_losses()
 {
     std::scoped_lock lock(m_producer_mutex);
     const Losses losses { .automatic = true };
-    auto next = build(m_length, m_profile, losses, m_mouth, m_bell);
+    auto next = build(m_length, m_profile, losses, m_mouth_volume, m_mouth, m_bell);
     if (!next) {
         return false;
     }
@@ -289,7 +303,7 @@ bool DuctNetwork::use_viscothermal_losses()
 bool DuctNetwork::set_mouth(std::shared_ptr<TerminationOperator> termination)
 {
     std::scoped_lock lock(m_producer_mutex);
-    auto next = build(m_length, m_profile, m_losses, termination, m_bell);
+    auto next = build(m_length, m_profile, m_losses, m_mouth_volume, termination, m_bell);
     if (!next) {
         return false;
     }
@@ -304,7 +318,7 @@ bool DuctNetwork::set_mouth(std::shared_ptr<TerminationOperator> termination)
 bool DuctNetwork::set_bell(std::shared_ptr<TerminationOperator> termination)
 {
     std::scoped_lock lock(m_producer_mutex);
-    auto next = build(m_length, m_profile, m_losses, m_mouth, termination);
+    auto next = build(m_length, m_profile, m_losses, m_mouth_volume, m_mouth, termination);
     if (!next) {
         return false;
     }

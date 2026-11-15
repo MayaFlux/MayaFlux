@@ -107,15 +107,29 @@ private:
  * checked at the start of each block. When it is 0 the solution follows the
  * branch of the previous sample.
  *
- * Three more give the reed a life of its own. "resonance" (Hz) turns the
+ * Four more give the reed a life of its own. "resonance" (Hz) turns the
  * rigid reed into a damped oscillator at that frequency, with "reed_damping"
  * (1/s, 15000 by default) as its loss; zero resonance, the default, keeps the
- * quasi-static reed. With the damping below about 5000 and a resonance near
- * 2500 the reed sustains its own oscillation, a squeal near the resonance,
- * instead of the note of the duct. A reed
- * with dynamics puts a formant at its resonance, shapes the attack, and is
- * unique for every value. "noise" is the relative amplitude of white noise
- * on the blowing pressure, a stand-in for the turbulence of the jet.
+ * quasi-static reed. A reed with dynamics puts a formant at its resonance,
+ * shapes the attack, and is unique for every value. With the damping below
+ * about 5000 and a resonance near 2500 the reed sustains its own oscillation,
+ * a squeal near the resonance, instead of the note of the duct.
+ *
+ * "reed_area" (m^2, zero by default) adds the air the moving reed pushes,
+ * minus that area times the reed's velocity, to the flow into the duct;
+ * 1.46e-4 is the value used by Avanzini and Rocchesso for a clarinet. "lip"
+ * (0 to 1) is the embouchure, a lip pressed against the reed: at 1 the rest
+ * opening is reduced by a fifth, the resonance and the closing pressure rise by
+ * 40 percent and the damping doubles. A narrower opening lowers the loop gain,
+ * so a note near its threshold goes quiet as the lip closes unless the blowing
+ * pressure rises with it.
+ * The coefficients are a first approximation.
+ *
+ * "noise" is the breath: an extra flow into the duct, with an rms of that
+ * fraction of the reed's own flow, so it swells and fades with the note and is
+ * silent when the reed is shut. Its colour is a one pole low-pass at
+ * "noise_cutoff" (Hz, 3000 by default). A few hundredths is a hint of breath,
+ * a few tenths a breathy note. The noise is a fixed, repeatable sequence.
  */
 class MAYAFLUX_API ReedOperator final : public TerminationOperator {
 public:
@@ -145,12 +159,19 @@ private:
     std::atomic<double> m_resonance { 0.0 };
     std::atomic<double> m_reed_damping { 15000.0 };
     std::atomic<double> m_noise { 0.0 };
+    std::atomic<double> m_noise_cutoff { 3000.0 };
+    std::atomic<double> m_reed_area { 0.0 };
+    std::atomic<double> m_lip { 0.0 };
     std::atomic<bool> m_unique { true };
 
     double m_end_gain {};
     double m_density { 1.2 };
     double m_time_step {};
     double m_alpha { 1.0 };
+    double m_noise_alpha { 1.0 };
+    double m_noise_scale { 1.0 };
+    double m_noise_state {};
+    double m_last_flow {};
     double m_pressure {};
     double m_warm_start {};
     std::array<double, 2> m_motion {};

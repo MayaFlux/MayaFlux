@@ -128,6 +128,16 @@ public:
     /** @brief Replace the profile with a radius function of distance from the mouth. */
     [[nodiscard]] bool set_profile(std::function<double(double)> radius);
 
+    /**
+     * @brief Add air behind the mouth end, in cubic metres.
+     * @return False, changing nothing, for a volume that is negative or not finite
+     *
+     * A mouthpiece cavity, or the tip a truncated cone lacks: pi r^2 x / 3 for
+     * apex radius r and distance x to the apex. It lets a cone keep its whole
+     * number series of modes.
+     */
+    [[nodiscard]] bool set_mouth_volume(double volume);
+
     //-------------------------------------------------------------------------
     // Wall losses
     //-------------------------------------------------------------------------
@@ -199,6 +209,7 @@ private:
         double length,
         const Profile& profile,
         const Losses& losses,
+        double mouth_volume,
         const std::shared_ptr<TerminationOperator>& mouth,
         const std::shared_ptr<TerminationOperator>& bell) const;
 
@@ -213,6 +224,7 @@ private:
     double m_rate {};
     Profile m_profile;
     Losses m_losses;
+    double m_mouth_volume {};
     double m_applied_friction {};
     double m_applied_viscosity {};
     std::shared_ptr<TerminationOperator> m_mouth;

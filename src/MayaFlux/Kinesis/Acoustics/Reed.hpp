@@ -103,6 +103,8 @@ struct ReedChannel {
  *        reed settles at H (1 - d / pM) under a steady difference d.
  * @param resonance Resonance of the reed in Hz, positive
  * @param damping Damping of the reed in 1/s, not negative
+ * @param reed_area Effective area in square metres over which the reed moves
+ *        air, not negative; zero leaves the reed's own flow out
  * @param time_step Time step in seconds
  * @param motion Displacement of the reed from rest, then the previous one, in
  *        metres, updated here; start both at zero
@@ -120,14 +122,17 @@ struct ReedChannel {
  * exact closed form, s |s| + a s = target with s = sign(d) sqrt|d|, solved by
  * its stable root. The solution is unique for every parameter, with no
  * condition to check. The lag is half a sample, small beside the period of a
- * reed resonance. A reed driven past the lay is held there without bouncing,
- * and the flow it carries by its own motion is left out. An invalid channel
- * or resonance acts as a wall.
+ * reed resonance. A reed driven past the lay is held there without bouncing.
+ * With a reed_area the moving reed also pushes air, a flow of -reed_area times
+ * its velocity into the bore, which is added to the flow returned and enters
+ * the coupling like any other known flow (Avanzini and Rocchesso). An invalid
+ * channel or resonance acts as a wall.
  */
 [[nodiscard]] MAYAFLUX_API std::tuple<double, double, double> dynamic_reed_mouth_step(
     const ReedChannel& reed,
     double resonance,
     double damping,
+    double reed_area,
     double time_step,
     std::array<double, 2>& motion,
     double end_pressure_gain,
