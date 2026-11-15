@@ -258,7 +258,7 @@ int main(int argc, const char** argv)
         llvm::cl::cat(category));
     llvm::cl::opt<bool> functions("functions",
         llvm::cl::desc("Write a Name.signatures.hpp sidecar beside each header that holds MF_DESCRIBE_FUNCTION "
-                       "requests, instead of the Creator methods"),
+                       "requests, instead of the Creator methods. A header with requests must not use its own sidecar"),
         llvm::cl::cat(category));
     llvm::cl::opt<bool> no_insert_include("no-insert-include",
         llvm::cl::desc("With --functions, report a missing sidecar include instead of inserting it"),

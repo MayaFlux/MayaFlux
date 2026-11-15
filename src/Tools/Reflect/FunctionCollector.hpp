@@ -11,6 +11,9 @@ namespace MayaFlux::Reflect::Tool {
  * Attach it to a MatchFinder, run the finder, then read requests() and errors(). Requests are
  * grouped by the header holding the marker. A function that is a member, still a template, or
  * has a parameter without a name is an error, since a parameter name is what a caller refers to.
+ *
+ * The scan switches sidecars off, so a header that holds requests must not use what its own
+ * sidecar generates. Keep the described functions in a header of their own.
  */
 class FunctionCollector : public clang::ast_matchers::MatchFinder::MatchCallback {
 public:
