@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Transitive/Reflect/Describe.hpp"
 #include "MayaFlux/Kakshya/Region/RegionGroup.hpp"
 #include "MayaFlux/Transitive/Facet/Facets.hpp"
 #include "VertexLayout.hpp"
@@ -24,20 +25,6 @@ struct MAYAFLUX_API MeshSubrange {
     std::string diffuse_path;
     bool diffuse_embedded {};
 
-    /** @brief Describes the fields of a submesh as typed Facet keys. */
-    static constexpr auto describe_facets()
-    {
-        return std::tuple {
-            FacetMember<&MeshSubrange::index_start> {},
-            FacetMember<&MeshSubrange::index_count> {},
-            FacetMember<&MeshSubrange::vertex_offset> {},
-            FacetMember<&MeshSubrange::name> {},
-            FacetMember<&MeshSubrange::material_name> {},
-            FacetMember<&MeshSubrange::diffuse_path> {},
-            FacetMember<&MeshSubrange::diffuse_embedded> {},
-        };
-    }
-
     /**
      * @brief Convert this subrange to a Region for use in RegionGroup.
      *
@@ -46,6 +33,8 @@ struct MAYAFLUX_API MeshSubrange {
      */
     [[nodiscard]] Region to_region() const;
 };
+
+MF_DESCRIBE(MeshSubrange)
 
 /**
  * @struct MeshAccess
@@ -166,3 +155,4 @@ struct MAYAFLUX_API MeshAccess {
     std::optional<RegionGroup> submeshes = std::nullopt);
 
 } // namespace MayaFlux::Kakshya
+#include "MeshAccess.describe.hpp"

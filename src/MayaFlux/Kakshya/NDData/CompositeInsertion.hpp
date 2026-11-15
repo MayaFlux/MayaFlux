@@ -10,8 +10,8 @@ namespace MayaFlux::Kakshya {
  *
  * Appends empty elements, writes fields by name, and copies compatible
  * Composite values from another array. Copying an element also copies its
- * present text values and rebases their offsets into the destination's text
- * store. The adapter borrows its destination array and does not own storage.
+ * present text, blob, compound, and list values into destination storage.
+ * The adapter borrows its destination array and does not own storage.
  *
  * Usage:
  * @code
@@ -50,14 +50,14 @@ public:
     [[nodiscard]] size_t append() { return m_array->append(); }
     /**
      * @brief Copy one Composite with a matching layout into this array.
-     * @param source Element to copy, including its present text fields.
+     * @param source Element to copy, including present nested values.
      * @return New element index, or std::nullopt for incompatible layout,
-     * invalid source text bounds, or insufficient storage capacity.
+     * invalid source payloads, or insufficient storage capacity.
      */
     [[nodiscard]] std::optional<size_t> append(const Composite& source);
 
     /**
-     * @brief Write an arithmetic field of an existing element.
+     * @brief Write an arithmetic or GLM field of an existing element.
      * @tparam T Exact type declared for the field.
      * @param index Element index.
      * @param field_name Field to write.
@@ -65,7 +65,7 @@ public:
      * @return True on success; false for an invalid index, name, or type.
      */
     template <typename T>
-        requires ArithmeticData<T>
+        requires(ArithmeticData<T> || GlmType<T>)
     bool set(size_t index, std::string_view field_name, T value)
     {
         return m_array->set(index, field_name, value);
@@ -93,6 +93,30 @@ public:
     bool set_blob(size_t index, std::string_view field_name, std::span<const uint8_t> value)
     {
         return m_array->set_blob(index, field_name, value);
+    }
+
+    /**
+     * @brief Copy one record into a compound field.
+     * @param index Parent element index.
+     * @param field_name Compound field to write.
+     * @param value Record with the field's declared nested layout.
+     * @return True if the array accepts the record.
+     */
+    bool set_compound(size_t index, std::string_view field_name, const Composite& value)
+    {
+        return m_array->set_compound(index, field_name, value);
+    }
+
+    /**
+     * @brief Copy ordered records into a list field.
+     * @param index Parent element index.
+     * @param field_name List field to write.
+     * @param values Records with the field's declared item layout.
+     * @return True if the array accepts the list, including an empty list.
+     */
+    bool set_list(size_t index, std::string_view field_name, const CompositeArray& values)
+    {
+        return m_array->set_list(index, field_name, values);
     }
 
     /**

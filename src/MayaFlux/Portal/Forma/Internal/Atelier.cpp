@@ -4,9 +4,12 @@
 
 #include "MayaFlux/Buffers/BufferManager.hpp"
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
+#include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
 #include "MayaFlux/Core/Windowing/WindowManager.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
+#include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
+#include "MayaFlux/Portal/Text/TypeFaceFoundry.hpp"
 #include "MayaFlux/Transitive/Memory/Persist.hpp"
 #include "MayaFlux/Vruta/EventManager.hpp"
 #include "MayaFlux/Vruta/Scheduler.hpp"
@@ -64,6 +67,7 @@ void Atelier::shutdown()
     m_bridge.reset();
     m_inspect.reset();
     m_atlas_images.clear();
+    m_text_fallback.reset();
 
     m_node_graph_manager = nullptr;
     m_buffer_manager = nullptr;
@@ -146,6 +150,52 @@ std::shared_ptr<Buffers::FormaBuffer> Atelier::create_buffer(Graphics::RenderCon
     return buf;
 }
 
+std::shared_ptr<Core::VKImage> Atelier::text_image()
+{
+    if (auto* atlas = Text::TypeFaceFoundry::instance().get_default_glyph_atlas()) {
+        if (auto image = atlas_image(*atlas).sync(*atlas)) {
+            return image;
+        }
+    }
+
+    if (!m_text_fallback || !m_text_fallback->is_initialized()) {
+        auto& loom = Graphics::get_texture_manager();
+        if (loom.is_initialized()) {
+            constexpr uint8_t k_empty = 0;
+            m_text_fallback = loom.create_2d(1, 1, Graphics::ImageFormat::R8, &k_empty, 1);
+        }
+    }
+    return m_text_fallback;
+}
+
+std::shared_ptr<Buffers::FormaBuffer> Atelier::create_batch(const Surface& surface, int64_t priority)
+{
+    Graphics::RenderConfig render = surface.render_config();
+    render.fragment_shader = "forma_plot.frag.spv";
+    render.additional_textures.push_back({ .name = "text", .image = text_image() });
+    render.draw_priority = priority;
+    return create_buffer(std::move(render));
+}
+
+std::shared_ptr<Buffers::FormaBuffer> Atelier::surface_batch(Surface& surface)
+{
+    auto& layer = surface.layer();
+    if (!layer.m_batch || layer.m_batch->needs_removal()) {
+        layer.m_batch = create_batch(surface);
+    }
+    return layer.m_batch;
+}
+
+FormaTarget Atelier::batch_slice(Surface& surface, Graphics::PrimitiveTopology topology)
+{
+    return FormaTarget::slice_of(surface_batch(surface), topology);
+}
+
+std::shared_ptr<Buffers::FormaBuffer> Atelier::create_scroll_batch(Surface& surface)
+{
+    return create_batch(surface, surface.layer().claim_front_priority());
+}
+
 std::pair<std::shared_ptr<Layer>, std::shared_ptr<Context>>
 Atelier::create_layer(const std::shared_ptr<Core::Window>& window, std::string name)
 {
@@ -186,20 +236,8 @@ void Atelier::place_adornments(
     uint32_t relate_to,
     const std::shared_ptr<Buffers::FormaBuffer>& batch)
 {
-    const bool has_labels = !spec.labels.empty() || !spec.tick_labels.empty()
-        || (spec.legend && !spec.legend->entries.empty());
-    std::shared_ptr<Buffers::FormaBuffer> owned_batch;
     const auto target_of = [&](Graphics::PrimitiveTopology topology) -> FormaTarget {
-        if (!batch && !owned_batch) {
-            Graphics::RenderConfig render = surface.render_config();
-            if (has_labels) {
-                render.fragment_shader = "forma_plot.frag.spv";
-                render.additional_textures.push_back({ "text", nullptr });
-            }
-            owned_batch = create_buffer(std::move(render));
-        }
-        const auto& target_batch = batch ? batch : owned_batch;
-        return FormaTarget::slice_of(target_batch, topology);
+        return FormaTarget::slice_of(batch ? batch : surface_batch(surface), topology);
     };
 
     const auto legend = spec.legend

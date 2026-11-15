@@ -4,6 +4,37 @@
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
+#define MINIZ_NO_ZLIB_COMPATIBLE_NAMES
+#include <miniz.h>
+
+namespace {
+
+    thread_local int png_compression_level = 6;
+
+    unsigned char* compress_png(unsigned char* data, int size, int* output_size, int)
+    {
+        mz_ulong compressed_size = mz_compressBound(static_cast<mz_ulong>(size));
+        if (compressed_size > static_cast<mz_ulong>(std::numeric_limits<int>::max() - 57)) {
+            return nullptr;
+        }
+        auto* compressed = static_cast<unsigned char*>(std::malloc(compressed_size));
+        if (!compressed) {
+            return nullptr;
+        }
+        if (mz_compress2(compressed, &compressed_size, data,
+                static_cast<mz_ulong>(size), png_compression_level)
+            != MZ_OK) {
+            std::free(compressed);
+            return nullptr;
+        }
+        *output_size = static_cast<int>(compressed_size);
+        return compressed;
+    }
+
+}
+
+#define STBIW_ZLIB_COMPRESS compress_png
+#define STB_IMAGE_WRITE_STATIC
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 // #define STBI_WRITE_NO_STDIO
 
@@ -30,6 +61,18 @@ namespace {
         std::ranges::transform(ext, ext.begin(),
             [](unsigned char c) { return std::tolower(c); });
         return ext;
+    }
+
+    template <typename T>
+    std::vector<T> flipped_rows(const std::vector<T>& pixels, uint32_t width, uint32_t height, uint32_t channels)
+    {
+        const size_t row_size = static_cast<size_t>(width) * channels;
+        std::vector<T> result(row_size * height);
+        for (size_t y = 0; y < height; ++y) {
+            std::copy_n(pixels.data() + (height - 1 - y) * row_size, row_size,
+                result.data() + y * row_size);
+        }
+        return result;
     }
 
     /**
@@ -113,18 +156,50 @@ bool STBImageWriter::write(
         return false;
     }
 
+    const auto max_int = static_cast<uint32_t>(std::numeric_limits<int>::max());
+    if (data.channels > 4 || data.width > max_int / data.channels || data.height > max_int) {
+        m_last_error = "ImageData dimensions or channels exceed STB limits";
+        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO, m_last_error);
+        return false;
+    }
+
+    const size_t row_elements = static_cast<size_t>(data.width) * data.channels;
+    if (data.height > std::numeric_limits<size_t>::max() / row_elements) {
+        m_last_error = "ImageData dimensions exceed addressable storage";
+        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO, m_last_error);
+        return false;
+    }
+    const size_t expected_elements = row_elements * data.height;
+    if (expected_elements > max_int) {
+        m_last_error = "ImageData dimensions exceed STB limits";
+        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO, m_last_error);
+        return false;
+    }
+    if (data.element_count() < expected_elements) {
+        m_last_error = "ImageData source buffer too small: expected "
+            + std::to_string(expected_elements) + " got " + std::to_string(data.element_count());
+        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO, m_last_error);
+        return false;
+    }
+
     const auto ext = extension_of(filepath);
+
+    if (ext == "png" && data.height > max_int / (row_elements + 1)) {
+        m_last_error = "PNG dimensions exceed STB limits";
+        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO, m_last_error);
+        return false;
+    }
 
     if (ext == "png")
         return write_png(filepath, data, options);
     if (ext == "jpg" || ext == "jpeg")
         return write_jpg(filepath, data, options);
     if (ext == "bmp")
-        return write_bmp(filepath, data);
+        return write_bmp(filepath, data, options);
     if (ext == "tga")
-        return write_tga(filepath, data);
+        return write_tga(filepath, data, options);
     if (ext == "hdr")
-        return write_hdr(filepath, data);
+        return write_hdr(filepath, data, options);
 
     m_last_error = "Unsupported extension: " + ext;
     MF_ERROR(Journal::Component::IO, Journal::Context::FileIO, m_last_error);
@@ -150,20 +225,21 @@ bool STBImageWriter::write_png(
     const int compression = (options.compression >= 0 && options.compression <= 9)
         ? options.compression
         : 6;
-    stbi_write_png_compression_level = compression;
-    stbi_flip_vertically_on_write(options.flip_vertically ? 1 : 0);
-
     std::vector<uint8_t> encoded;
     encoded.reserve(static_cast<size_t>(data.width) * data.height * data.channels);
-
+    const auto flipped = options.flip_vertically
+        ? flipped_rows(*src, data.width, data.height, data.channels)
+        : std::vector<uint8_t> {};
+    const auto* pixels = options.flip_vertically ? flipped.data() : src->data();
     const int stride = static_cast<int>(data.width * data.channels);
+    png_compression_level = compression;
     const int ok = stbi_write_png_to_func(
         &stbi_memory_writer,
         &encoded,
         static_cast<int>(data.width),
         static_cast<int>(data.height),
         static_cast<int>(data.channels),
-        src->data(),
+        pixels,
         stride);
 
     if (!ok || encoded.empty()) {
@@ -204,16 +280,18 @@ bool STBImageWriter::write_jpg(
     }
 
     const int quality = std::clamp(options.quality, 1, 100);
-    stbi_flip_vertically_on_write(options.flip_vertically ? 1 : 0);
-
     std::vector<uint8_t> encoded;
+    const auto flipped = options.flip_vertically
+        ? flipped_rows(*src, data.width, data.height, data.channels)
+        : std::vector<uint8_t> {};
+    const auto* pixels = options.flip_vertically ? flipped.data() : src->data();
     const int ok = stbi_write_jpg_to_func(
         &stbi_memory_writer,
         &encoded,
         static_cast<int>(data.width),
         static_cast<int>(data.height),
         static_cast<int>(data.channels),
-        src->data(),
+        pixels,
         quality);
 
     if (!ok || encoded.empty()) {
@@ -234,7 +312,8 @@ bool STBImageWriter::write_jpg(
     return true;
 }
 
-bool STBImageWriter::write_bmp(const std::string& filepath, const ImageData& data)
+bool STBImageWriter::write_bmp(
+    const std::string& filepath, const ImageData& data, const ImageWriteOptions& options)
 {
     const auto* src = data.as_uint8();
     if (!src) {
@@ -244,13 +323,17 @@ bool STBImageWriter::write_bmp(const std::string& filepath, const ImageData& dat
     }
 
     std::vector<uint8_t> encoded;
+    const auto flipped = options.flip_vertically
+        ? flipped_rows(*src, data.width, data.height, data.channels)
+        : std::vector<uint8_t> {};
+    const auto* pixels = options.flip_vertically ? flipped.data() : src->data();
     const int ok = stbi_write_bmp_to_func(
         &stbi_memory_writer,
         &encoded,
         static_cast<int>(data.width),
         static_cast<int>(data.height),
         static_cast<int>(data.channels),
-        src->data());
+        pixels);
 
     if (!ok || encoded.empty()) {
         m_last_error = "stbi_write_bmp_to_func failed";
@@ -269,7 +352,8 @@ bool STBImageWriter::write_bmp(const std::string& filepath, const ImageData& dat
     return true;
 }
 
-bool STBImageWriter::write_tga(const std::string& filepath, const ImageData& data)
+bool STBImageWriter::write_tga(
+    const std::string& filepath, const ImageData& data, const ImageWriteOptions& options)
 {
     const auto* src = data.as_uint8();
     if (!src) {
@@ -279,13 +363,17 @@ bool STBImageWriter::write_tga(const std::string& filepath, const ImageData& dat
     }
 
     std::vector<uint8_t> encoded;
+    const auto flipped = options.flip_vertically
+        ? flipped_rows(*src, data.width, data.height, data.channels)
+        : std::vector<uint8_t> {};
+    const auto* pixels = options.flip_vertically ? flipped.data() : src->data();
     const int ok = stbi_write_tga_to_func(
         &stbi_memory_writer,
         &encoded,
         static_cast<int>(data.width),
         static_cast<int>(data.height),
         static_cast<int>(data.channels),
-        src->data());
+        pixels);
 
     if (!ok || encoded.empty()) {
         m_last_error = "stbi_write_tga_to_func failed";
@@ -304,7 +392,8 @@ bool STBImageWriter::write_tga(const std::string& filepath, const ImageData& dat
     return true;
 }
 
-bool STBImageWriter::write_hdr(const std::string& filepath, const ImageData& data)
+bool STBImageWriter::write_hdr(
+    const std::string& filepath, const ImageData& data, const ImageWriteOptions& options)
 {
     const auto* src = data.as_float();
     if (!src) {
@@ -321,13 +410,17 @@ bool STBImageWriter::write_hdr(const std::string& filepath, const ImageData& dat
     }
 
     std::vector<uint8_t> encoded;
+    const auto flipped = options.flip_vertically
+        ? flipped_rows(*src, data.width, data.height, data.channels)
+        : std::vector<float> {};
+    const auto* pixels = options.flip_vertically ? flipped.data() : src->data();
     const int ok = stbi_write_hdr_to_func(
         &stbi_memory_writer,
         &encoded,
         static_cast<int>(data.width),
         static_cast<int>(data.height),
         static_cast<int>(data.channels),
-        src->data());
+        pixels);
 
     if (!ok || encoded.empty()) {
         m_last_error = "stbi_write_hdr_to_func failed";

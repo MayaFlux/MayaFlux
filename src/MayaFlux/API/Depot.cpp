@@ -62,7 +62,7 @@ namespace {
     };
 
     const std::vector<Portal::System::Dialog::ChooserFilter> k_composite_filters {
-        { .name = "Composite data", .extensions = { "csv", "tsv" } },
+        { .name = "Composite data", .extensions = { "csv", "tsv", "xml" } },
         { .name = "All Files", .extensions = { "*" } }
     };
 

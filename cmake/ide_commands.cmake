@@ -39,4 +39,16 @@ if(UNIX)
     COMMAND ${CMAKE_COMMAND} -E create_symlink
     ${CMAKE_BINARY_DIR}/compile_commands.json
     ${CMAKE_SOURCE_DIR}/compile_commands.json)
+elseif(WIN32 AND CMAKE_GENERATOR MATCHES "^Ninja" AND CMAKE_EXPORT_COMPILE_COMMANDS)
+    add_custom_command(
+        OUTPUT "${CMAKE_SOURCE_DIR}/compile_commands.json"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_BINARY_DIR}/compile_commands.json"
+            "${CMAKE_SOURCE_DIR}/compile_commands.json"
+        DEPENDS "${CMAKE_BINARY_DIR}/compile_commands.json"
+        VERBATIM
+    )
+    add_custom_target(copy_compile_commands ALL
+        DEPENDS "${CMAKE_SOURCE_DIR}/compile_commands.json"
+    )
 endif()

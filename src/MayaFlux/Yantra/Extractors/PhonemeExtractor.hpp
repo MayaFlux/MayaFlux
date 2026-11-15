@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Transitive/Reflect/Describe.hpp"
 #include "Extractor.hpp"
 
 #include "MayaFlux/Kinesis/Discrete/Extract.hpp"
@@ -63,19 +64,6 @@ struct VoicingGate {
  * that touch, for slicing. gate trims vowel ranges to voiced stretches.
  */
 struct PhonemeExtractorConfig : ExtractorConfig {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple_cat(
-            ExtractorConfig::describe_facets(),
-            std::tuple {
-                FacetMember<&PhonemeExtractorConfig::method> {},
-                FacetMember<&PhonemeExtractorConfig::sample_rate> {},
-                FacetMember<&PhonemeExtractorConfig::merge_adjacent> {},
-                FacetMember<&PhonemeExtractorConfig::speech> {},
-                FacetMember<&PhonemeExtractorConfig::gate> {},
-            });
-    }
-
     /** Which phonemes the output holds, as a PhonemeSelection value. */
     Reflect::EnumByte<PhonemeSelection> method { PhonemeSelection::ALL };
     /** Sample rate in Hz of the input. Only 16000 is accepted. */
@@ -87,6 +75,8 @@ struct PhonemeExtractorConfig : ExtractorConfig {
     /** Trims vowel ranges to voiced stretches. */
     VoicingGate gate {};
 };
+
+MF_DESCRIBE(PhonemeExtractorConfig)
 
 /**
  * @brief The segmenter settings a PhonemeExtractorConfig implies.
@@ -117,17 +107,6 @@ struct PhonemeExtractorConfig : ExtractorConfig {
  * recording; its frame counts from the start of its speech interval.
  */
 struct PhonemeExtraction {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple {
-            FacetMember<&PhonemeExtraction::config> {},
-            FacetMember<&PhonemeExtraction::speech> {},
-            FacetMember<&PhonemeExtraction::events> {},
-            FacetMember<&PhonemeExtraction::segments> {},
-            FacetMember<&PhonemeExtraction::voiced> {},
-        };
-    }
-
     /** Settings the extraction was produced under. */
     PhonemeExtractorConfig config;
     /** Speech intervals, half open sample ranges of the recording. */
@@ -139,6 +118,8 @@ struct PhonemeExtraction {
     /** Voiced stretches of the recording, filled only when the gate trimmed vowels. */
     std::vector<std::pair<size_t, size_t>> voiced;
 };
+
+MF_DESCRIBE(PhonemeExtraction)
 
 /**
  * @brief Field layout of the records a PhonemeExtractor gives: the phoneme record layout with the speech interval index added.
@@ -459,3 +440,4 @@ using RegionPhonemeExtractor = PhonemeExtractor<std::vector<Kakshya::DataVariant
 using AudioPhonemeExtractor = PhonemeExtractor<std::vector<Kakshya::DataVariant>, std::vector<Kakshya::DataVariant>>;
 
 } // namespace MayaFlux::Yantra
+#include "PhonemeExtractor.describe.hpp"

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Transitive/Reflect/Describe.hpp"
 #include "MayaFlux/Yantra/OperationSpec/OperationHelper.hpp"
 
 #include "Analyzer.hpp"
@@ -28,17 +29,6 @@ namespace MayaFlux::Yantra {
  * Kinesis::Discrete::Resampler.
  */
 struct VadAnalyzerConfig : AnalyzerConfig {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple_cat(
-            AnalyzerConfig::describe_facets(),
-            std::tuple {
-                FacetMember<&VadAnalyzerConfig::flush_tail> {},
-                FacetMember<&VadAnalyzerConfig::sample_rate> {},
-                FacetMember<&VadAnalyzerConfig::keep_embeddings> {},
-            });
-    }
-
     VadAnalyzerConfig()
     {
         const auto framing = SileroVadModel::framing();
@@ -54,21 +44,13 @@ struct VadAnalyzerConfig : AnalyzerConfig {
     bool keep_embeddings { false };
 };
 
+MF_DESCRIBE(VadAnalyzerConfig)
+
 /**
  * @struct VadAnalysis
  * @brief Analysis result of a VadAnalyzer.
  */
 struct VadAnalysis {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple {
-            FacetMember<&VadAnalysis::config> {},
-            FacetMember<&VadAnalysis::probabilities> {},
-            FacetMember<&VadAnalysis::chunk_positions> {},
-            FacetMember<&VadAnalysis::embeddings> {},
-        };
-    }
-
     /** Settings the analysis was produced under. */
     VadAnalyzerConfig config;
     /** Speech probability of each chunk completed by this call, 0 to 1. */
@@ -81,6 +63,8 @@ struct VadAnalysis {
      */
     std::vector<float> embeddings;
 };
+
+MF_DESCRIBE(VadAnalysis)
 
 /**
  * @class VadAnalyzer
@@ -348,3 +332,4 @@ using StandardVadAnalyzer = VadAnalyzer<std::vector<Kakshya::DataVariant>, Eigen
 using ContainerVadAnalyzer = VadAnalyzer<std::shared_ptr<Kakshya::SignalSourceContainer>, Eigen::MatrixXd>;
 
 } // namespace MayaFlux::Yantra
+#include "VadAnalyzer.describe.hpp"

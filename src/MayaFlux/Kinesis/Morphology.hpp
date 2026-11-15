@@ -273,4 +273,25 @@ template <PositionCarrying T>
     return box;
 }
 
+/**
+ * @brief Axis-aligned bounding box of a plain 2D position span.
+ *
+ * The planar counterpart of the 3D overload, for positions already placed in NDC.
+ *
+ * @param  pts Non-owning span of positions.
+ * @return Tightest box, or AABB2D{zero, zero} for an empty span.
+ */
+[[nodiscard]] inline AABB2D aabb(std::span<const glm::vec2> pts) noexcept
+{
+    if (pts.empty())
+        return AABB2D { .min = glm::vec2(0.0F), .max = glm::vec2(0.0F) };
+    constexpr float inf = std::numeric_limits<float>::max();
+    AABB2D box { .min = glm::vec2(inf), .max = glm::vec2(-inf) };
+    for (const auto& p : pts) {
+        box.min = glm::min(box.min, p);
+        box.max = glm::max(box.max, p);
+    }
+    return box;
+}
+
 } // namespace MayaFlux::Kinesis

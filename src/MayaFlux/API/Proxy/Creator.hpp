@@ -195,8 +195,8 @@ public:
     /**
      * @brief Load a supported Composite file into an owning container.
      *
-     * CSV and TSV are supported now. Without a supplied layout, fields
-     * remain UTF-8 text. This does not register the container as a signal.
+     * CSV and TSV use text fields when no layout is supplied. XML uses a
+     * fixed preorder node layout. This does not register the container as a signal.
      *
      * @param filepath Source file path.
      * @param layout Optional exact field layout for typed values.
@@ -214,7 +214,7 @@ public:
     }
 
     /**
-     * @brief Choose a CSV or TSV file and load it as Composite data.
+     * @brief Choose a CSV, TSV, or XML file and load it as Composite data.
      * @return Loaded container, or nullptr on cancellation or failure.
      */
     auto read_file() -> std::shared_ptr<Kakshya::CompositeContainer>

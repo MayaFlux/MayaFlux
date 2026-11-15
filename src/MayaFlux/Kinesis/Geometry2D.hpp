@@ -69,6 +69,43 @@ namespace MayaFlux::Kinesis {
     glm::vec4 color = glm::vec4(1.F));
 
 /**
+ * @brief Ear-clipping triangulation of a polygon with optional holes, as index triples.
+ *
+ * @p pts holds the outer ring first, then each hole ring in turn. @p hole_starts
+ * gives the index of the first point of each hole, in increasing order. Each
+ * triple indexes @p pts. Depends only on the point positions, so the result can
+ * be cached and reused while the positions are unchanged, or scaled along one
+ * axis by a positive factor. Winding may be either direction.
+ *
+ * Every ring must be simple, rings must not cross or touch one another, and
+ * each hole must lie inside the outer ring and outside the others. Holes are
+ * joined to the outer ring by bridges to visible vertices, then the merged ring
+ * is clipped. Work is O(n^2) per clipped ear, plus O(n^2) per hole for bridging.
+ * Any violation, or fewer than three points in a ring, yields an empty vector.
+ *
+ * @param pts         Ring points in NDC: outer ring, then holes.
+ * @param hole_starts Index of the first point of each hole. Empty for no holes.
+ */
+[[nodiscard]] MAYAFLUX_API std::vector<std::array<uint32_t, 3>> triangulate_polygon(
+    std::span<const glm::vec2> pts,
+    std::span<const uint32_t> hole_starts = {});
+
+/**
+ * @brief Filled simple polygon from an arbitrary point list, TRIANGLE_LIST.
+ *
+ * Triangulates by ear clipping, so concave outlines are supported. Winding
+ * may be either direction. Work is O(n^2) per clipped ear, so large outlines
+ * cost more. Fewer than three points, or an outline that cannot be
+ * triangulated (self-intersecting or collinear), yields an empty vector.
+ *
+ * @param pts   Outline vertices in NDC, in order around the polygon.
+ * @param color Uniform fill color.
+ */
+[[nodiscard]] MAYAFLUX_API std::vector<Kakshya::Vertex> fill_polygon(
+    std::span<const glm::vec2> pts,
+    glm::vec4 color = glm::vec4(1.F));
+
+/**
  * @brief Filled rect with per-corner colors, TRIANGLE_STRIP (4 vertices).
  *
  * Vertex order matches filled_rect: BL, BL-top, BR, BR-top (TRIANGLE_STRIP).

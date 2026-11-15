@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Transitive/Reflect/Describe.hpp"
 #include "MayaFlux/Transitive/Reflect/EnumReflect.hpp"
 #include "MayaFlux/Yantra/OperationSpec/OperationHelper.hpp"
 
@@ -80,39 +81,25 @@ enum EnergyMethod : uint8_t {
  * Pass it to the constructor or to set_config.
  */
 struct EnergyAnalyzerConfig : AnalyzerConfig {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple_cat(
-            AnalyzerConfig::describe_facets(),
-            std::tuple {
-                FacetMember<&EnergyAnalyzerConfig::method> {},
-                FacetMember<&EnergyAnalyzerConfig::thresholds> {},
-            });
-    }
-
     /** Energy calculation to perform, as an EnergyMethod value. */
     Reflect::EnumByte<EnergyMethod> method { EnergyMethod::RMS };
     /** Silent, quiet, moderate, and loud boundaries, in that order. */
     std::array<double, 4> thresholds { 0.01, 0.1, 0.5, 0.8 };
 };
 
+MF_DESCRIBE(EnergyAnalyzerConfig)
+
 /**
  * @struct EnergyAnalysis
  * @brief Analysis result structure for energy analysis
  */
 struct MAYAFLUX_API EnergyAnalysis {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple {
-            FacetMember<&EnergyAnalysis::config> {},
-            FacetMember<&EnergyAnalysis::channels> {},
-        };
-    }
-
     /** Settings the analysis was produced under. */
     EnergyAnalyzerConfig config;
     std::vector<ChannelEnergy> channels;
 };
+
+MF_DESCRIBE(EnergyAnalysis)
 
 /**
  * @class EnergyAnalyzer
@@ -486,3 +473,4 @@ using VariantEnergyAnalyzer = EnergyAnalyzer<InputType, std::vector<Kakshya::Dat
 }
 
 } // namespace MayaFlux::Yantra
+#include "EnergyAnalyzer.describe.hpp"

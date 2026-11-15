@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Transitive/Reflect/Describe.hpp"
 #include "MayaFlux/Transitive/Reflect/EnumReflect.hpp"
 #include "MayaFlux/Yantra/ComputeOperation.hpp"
 
@@ -85,11 +86,9 @@ enum class SortingStrategy : uint8_t {
  * and is stored whole, keyed by type, in the operation's facets.
  */
 struct SorterConfig : OperationConfig {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple<> {};
-    }
 };
+
+MF_DESCRIBE(SorterConfig)
 
 /**
  * @class Sorter
@@ -212,3 +211,4 @@ using IndexSorter = Sorter<InputType, std::vector<std::vector<size_t>>>;
 // ============================================================================
 
 } // namespace MayaFlux::Yantra
+#include "Sorter.describe.hpp"

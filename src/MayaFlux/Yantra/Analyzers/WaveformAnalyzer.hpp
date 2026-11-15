@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Transitive/Reflect/Describe.hpp"
 #include "MayaFlux/Transitive/Reflect/EnumReflect.hpp"
 #include "MayaFlux/Yantra/OperationSpec/OperationHelper.hpp"
 
@@ -69,21 +70,6 @@ enum class WaveformMethod : uint8_t {
  * window whose level changes can then read slightly above 1.
  */
 struct WaveformAnalyzerConfig : AnalyzerConfig {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple_cat(
-            AnalyzerConfig::describe_facets(),
-            std::tuple {
-                FacetMember<&WaveformAnalyzerConfig::method> {},
-                FacetMember<&WaveformAnalyzerConfig::sample_rate> {},
-                FacetMember<&WaveformAnalyzerConfig::low_frequency> {},
-                FacetMember<&WaveformAnalyzerConfig::high_frequency> {},
-                FacetMember<&WaveformAnalyzerConfig::keep_profiles> {},
-                FacetMember<&WaveformAnalyzerConfig::unbiased_periodicity> {},
-                FacetMember<&WaveformAnalyzerConfig::native_float> {},
-            });
-    }
-
     WaveformAnalyzerConfig()
     {
         window_size = 512;
@@ -105,6 +91,8 @@ struct WaveformAnalyzerConfig : AnalyzerConfig {
     /** Fallback: run the device passes in float32 instead of double. Faster, accurate only to float precision, no profiles. */
     bool native_float { false };
 };
+
+MF_DESCRIBE(WaveformAnalyzerConfig)
 
 namespace detail {
 
@@ -240,18 +228,12 @@ struct MAYAFLUX_API ChannelWaveform {
  * @brief Analysis result of a WaveformAnalyzer.
  */
 struct MAYAFLUX_API WaveformAnalysis {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple {
-            FacetMember<&WaveformAnalysis::config> {},
-            FacetMember<&WaveformAnalysis::channels> {},
-        };
-    }
-
     /** Settings the analysis was produced under. */
     WaveformAnalyzerConfig config;
     std::vector<ChannelWaveform> channels;
 };
+
+MF_DESCRIBE(WaveformAnalysis)
 
 /**
  * @class WaveformAnalyzer
@@ -778,3 +760,4 @@ using StandardWaveformAnalyzer = WaveformAnalyzer<std::vector<Kakshya::DataVaria
 using ContainerWaveformAnalyzer = WaveformAnalyzer<std::shared_ptr<Kakshya::SignalSourceContainer>, Eigen::MatrixXd>;
 
 } // namespace MayaFlux::Yantra
+#include "WaveformAnalyzer.describe.hpp"

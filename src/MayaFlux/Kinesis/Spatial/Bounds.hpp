@@ -97,6 +97,36 @@ struct AABB2D {
     }
 
     /**
+     * @brief Construct from a minimum corner and a size.
+     * @param origin Corner with the smallest coordinates.
+     * @param size   Width and height, in the same units as origin.
+     */
+    [[nodiscard]] static AABB2D from_origin_size(glm::vec2 origin, glm::vec2 size) noexcept
+    {
+        return { .min = origin, .max = origin + size };
+    }
+
+    /**
+     * @brief The point at a unit-space position: (0, 0) is min and (1, 1) is max.
+     *
+     * Positions outside [0, 1] extrapolate. A degenerate extent maps every
+     * position to min along that axis.
+     */
+    [[nodiscard]] glm::vec2 point_at(glm::vec2 unit) const noexcept
+    {
+        return min + unit * (max - min);
+    }
+
+    /**
+     * @brief Inverse of point_at: the unit-space position of a point.
+     * @note An axis with zero extent yields a non-finite component.
+     */
+    [[nodiscard]] glm::vec2 unit_of(glm::vec2 point) const noexcept
+    {
+        return (point - min) / (max - min);
+    }
+
+    /**
      * @brief Construct from pixel-space top-left rect, converted to NDC.
      * @param x     Left edge in pixels.
      * @param y     Top edge in pixels (top-left origin, +Y down).
@@ -472,6 +502,49 @@ subtract_bounds(
 {
     return [a = std::move(a), b = std::move(b)](glm::vec2 p) {
         return a(p) && !b(p);
+    };
+}
+
+/**
+ * @brief Whether a point lies inside or on a triangle, whichever way it winds.
+ * @note A degenerate triangle with collinear corners contains only points on its line.
+ */
+[[nodiscard]] inline bool triangle_contains(
+    glm::vec2 p, glm::vec2 a, glm::vec2 b, glm::vec2 c) noexcept
+{
+    const auto cross = [](glm::vec2 u, glm::vec2 v) { return u.x * v.y - u.y * v.x; };
+    const float d1 = cross(b - a, p - a);
+    const float d2 = cross(c - b, p - b);
+    const float d3 = cross(a - c, p - c);
+    const bool negative = d1 < 0.0F || d2 < 0.0F || d3 < 0.0F;
+    const bool positive = d1 > 0.0F || d2 > 0.0F || d3 > 0.0F;
+    return !(negative && positive);
+}
+
+/**
+ * @brief Containment test for a triangle list: inside any triangle.
+ *
+ * Consecutive groups of three positions are one triangle each; a trailing
+ * partial group is ignored. Triangles with zero area are dropped, so a
+ * degenerate triangle never makes the whole plane hit. Strips and fans are
+ * expanded to a list by the caller.
+ *
+ * @param positions Triangle corners in NDC. Copied into the closure.
+ */
+[[nodiscard]] inline std::function<bool(glm::vec2)>
+triangle_list_bounds(std::span<const glm::vec2> positions)
+{
+    std::vector<std::array<glm::vec2, 3>> triangles;
+    for (size_t i = 0; i + 2 < positions.size(); i += 3) {
+        const glm::vec2 u = positions[i + 1] - positions[i];
+        const glm::vec2 v = positions[i + 2] - positions[i];
+        if (std::abs(u.x * v.y - u.y * v.x) > 1e-12F)
+            triangles.push_back({ positions[i], positions[i + 1], positions[i + 2] });
+    }
+    return [triangles = std::move(triangles)](glm::vec2 p) {
+        return std::ranges::any_of(triangles, [&](const std::array<glm::vec2, 3>& t) {
+            return triangle_contains(p, t[0], t[1], t[2]);
+        });
     };
 }
 

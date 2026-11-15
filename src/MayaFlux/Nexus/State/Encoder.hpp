@@ -4,6 +4,10 @@
 
 #include "Schema.hpp"
 
+namespace MayaFlux::IO {
+class StagedFileSet;
+}
+
 namespace MayaFlux::Nexus {
 
 /**
@@ -44,10 +48,13 @@ public:
      * @brief Encode all Fabrics in @p tapestry to @p base_dir.
      *
      * Writes one EXR+JSON pair per Fabric under base_dir/{fabric_name_or_id},
-     * then writes base_dir/tapestry.json as the envelope.
+     * then base_dir/tapestry.json as the envelope. Every file is staged first and
+     * promoted together with tapestry.json last, so a failed encode leaves an
+     * earlier snapshot in base_dir untouched. A fabric name must be a plain file
+     * name. Files of fabrics dropped since the last snapshot are not removed.
      *
      * @param tapestry  Source Tapestry.
-     * @param base_dir  Directory path. Must exist.
+     * @param base_dir  Directory path, resolved as IO::resolve_write_path does.
      * @return True on success.
      */
     [[nodiscard]] bool encode(const Tapestry& tapestry, const std::string& base_dir, nlohmann::json user_state = {});
@@ -61,7 +68,8 @@ private:
     [[nodiscard]] bool encode_fabric(
         const Fabric& fabric,
         const std::string& base_path,
-        const std::unordered_set<const Expanse*>& tapestry_owned);
+        const std::unordered_set<const Expanse*>& tapestry_owned,
+        IO::StagedFileSet* staged = nullptr);
 
     [[nodiscard]] static State::WiringRecord build_wiring(const Fabric& fabric, uint32_t id);
 

@@ -38,6 +38,8 @@
 
 #include "Composite/DelimitedTextReader.hpp"
 #include "Composite/DelimitedTextWriter.hpp"
+#include "Composite/XmlReader.hpp"
+#include "Composite/XmlWriter.hpp"
 
 #include "Image/EXRWriter.hpp"
 #include "Image/ImageExport.hpp"
@@ -795,27 +797,41 @@ IOManager::open_composite_reader(
     const std::string& filepath,
     std::optional<Kakshya::CompositeLayout> layout)
 {
-    auto delimited = std::make_shared<DelimitedTextReader>();
-    if (!delimited->can_read(filepath)) {
+    std::shared_ptr<CompositeReader> reader;
+    auto xml = std::make_shared<XmlReader>();
+    if (xml->can_read(filepath)) {
+        if (layout && !layout->same_structure(xml_composite_layout())) {
+            MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+                "IOManager::open_composite_reader: XML requires xml_composite_layout() for '{}'", filepath);
+            return nullptr;
+        }
+        reader = std::move(xml);
+    } else {
+        auto delimited = std::make_shared<DelimitedTextReader>();
+        if (delimited->can_read(filepath)) {
+            if (layout && !delimited->set_layout(std::move(*layout))) {
+                MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+                    "IOManager::open_composite_reader: failed to set layout for '{}'", filepath);
+                return nullptr;
+            }
+            reader = std::move(delimited);
+        }
+    }
+
+    if (!reader) {
         MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
             "IOManager::open_composite_reader: unsupported format '{}'", filepath);
         return nullptr;
     }
 
-    if (layout && !delimited->set_layout(std::move(*layout))) {
-        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
-            "IOManager::open_composite_reader: failed to set layout for '{}'", filepath);
-        return nullptr;
-    }
-
-    if (!delimited->open(filepath)) {
+    if (!reader->open(filepath)) {
         MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
             "IOManager::open_composite_reader: failed to open '{}' because {}",
-            filepath, delimited->get_last_error());
+            filepath, reader->get_last_error());
         return nullptr;
     }
 
-    return delimited;
+    return reader;
 }
 
 std::shared_ptr<Kakshya::CompositeContainer>
@@ -848,8 +864,17 @@ IOManager::open_composite_writer(
     const std::string& filepath,
     const Kakshya::CompositeLayout& layout)
 {
-    auto writer = std::make_shared<DelimitedTextWriter>();
-    if (!writer->can_write(filepath)) {
+    std::shared_ptr<CompositeWriter> writer;
+    auto xml = std::make_shared<XmlWriter>();
+    if (xml->can_write(filepath))
+        writer = std::move(xml);
+    else {
+        auto delimited = std::make_shared<DelimitedTextWriter>();
+        if (delimited->can_write(filepath))
+            writer = std::move(delimited);
+    }
+
+    if (!writer) {
         MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
             "IOManager::open_composite_writer: unsupported format '{}'", filepath);
         return nullptr;

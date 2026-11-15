@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Transitive/Reflect/Describe.hpp"
 #include "ComputationSignature.hpp"
 #include "ExecutionTarget.hpp"
 
@@ -81,13 +82,10 @@ using ExecutionParams = std::variant<
  * the permitted one is skipped.
  */
 struct Permit {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple { FacetMember<&Permit::allowed> {} };
-    }
-
     Target allowed;
 };
+
+MF_DESCRIBE(Permit)
 
 /**
  * @struct ExecutionContext
@@ -249,3 +247,4 @@ struct MAYAFLUX_API ExecutionContext {
 };
 
 }
+#include "ExecutionContext.describe.hpp"

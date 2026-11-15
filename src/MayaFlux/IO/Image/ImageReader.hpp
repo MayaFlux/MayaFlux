@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Transitive/Reflect/Describe.hpp"
 #include "MayaFlux/IO/FileReader.hpp"
 #include "MayaFlux/Kakshya/NDData/ImageData.hpp"
 #include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
@@ -18,19 +19,12 @@ namespace MayaFlux::IO {
  * Stored on FileMetadata by ImageReader.
  */
 struct ImageInfo {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple {
-            FacetMember<&ImageInfo::width> {},
-            FacetMember<&ImageInfo::height> {},
-            FacetMember<&ImageInfo::modality> {},
-        };
-    }
-
     uint32_t width = 0; ///< Image width in pixels
     uint32_t height = 0; ///< Image height in pixels
     Kakshya::DataModality modality = Kakshya::DataModality::IMAGE_COLOR; ///< Data modality of the image
 };
+
+MF_DESCRIBE(ImageInfo)
 
 using ImageData = Kakshya::ImageData;
 
@@ -61,6 +55,7 @@ public:
     [[nodiscard]] std::optional<FileMetadata> get_metadata() const override;
     [[nodiscard]] std::vector<FileRegion> get_regions() const override;
     std::vector<Kakshya::DataVariant> read_all() override;
+    /** @brief Read a pixel rectangle with exclusive end coordinates. */
     std::vector<Kakshya::DataVariant> read_region(const FileRegion& region) override;
     std::shared_ptr<Kakshya::SignalSourceContainer> create_container() override;
     bool load_into_container(std::shared_ptr<Kakshya::SignalSourceContainer> container) override;
@@ -150,3 +145,4 @@ private:
 };
 
 } // namespace MayaFlux::IO
+#include "ImageReader.describe.hpp"

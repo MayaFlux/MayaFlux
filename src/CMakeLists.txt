@@ -2,6 +2,8 @@ add_subdirectory(MayaFlux)
 
 add_subdirectory(Lila)
 
+add_subdirectory(Tools/Reflect)
+
 include(Host/Host.cmake)
 
 add_executable(lila_server lila_server.cpp)

@@ -91,9 +91,8 @@ struct MAYAFLUX_API Region {
         return m_facets.get(key);
     }
 
-    /** @brief Returns the described struct stored under its type, or nullptr. */
+    /** @brief Returns the struct stored under its type, or nullptr. */
     template <typename T>
-    requires requires { T::describe_facets(); }
     [[nodiscard]] const T* get() const
     {
         return m_facets.get<T>();
@@ -106,9 +105,8 @@ struct MAYAFLUX_API Region {
         m_facets.set(key, std::move(value));
     }
 
-    /** @brief Stores a described struct under its type identity. */
+    /** @brief Stores a struct under its type identity. */
     template <typename T>
-    requires requires { T::describe_facets(); }
     void set(T value)
     {
         m_facets.set(std::move(value));

@@ -87,6 +87,7 @@ jobs:
             freetype-devel \
             fontconfig-devel \
             json-devel \
+            pugixml-devel \
             ninja-build \
             mold \
             wayland-devel \

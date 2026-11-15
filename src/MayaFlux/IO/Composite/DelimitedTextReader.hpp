@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Transitive/Reflect/Describe.hpp"
 #include "CompositeReader.hpp"
 
 #include <fstream>
@@ -13,15 +14,10 @@ namespace MayaFlux::IO {
  * Stored on FileMetadata by DelimitedTextReader.
  */
 struct DelimitedTextInfo {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple {
-            FacetMember<&DelimitedTextInfo::fields> {},
-        };
-    }
-
     std::vector<std::string> fields; ///< Column names in file order
 };
+
+MF_DESCRIBE(DelimitedTextInfo)
 
 /**
  * @class DelimitedTextReader
@@ -196,3 +192,4 @@ private:
 };
 
 }
+#include "DelimitedTextReader.describe.hpp"

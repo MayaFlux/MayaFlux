@@ -42,6 +42,11 @@ bool Layer::remove(uint32_t id)
 
 void Layer::clear()
 {
+    for (auto& el : m_elements) {
+        if (el.buffer)
+            el.buffer.retire();
+    }
+    m_batch.reset();
     m_elements.clear();
     m_index.clear();
     m_index_stale = false;
@@ -282,6 +287,17 @@ Element* Layer::get(uint32_t id)
     return const_cast<Element*>(std::as_const(*this).get(id));
 }
 
+std::optional<uint32_t> Layer::find(std::string_view name) const
+{
+    if (name.empty())
+        return std::nullopt;
+    const auto found = std::ranges::find_if(m_elements,
+        [name](const Element& element) { return element.name == name; });
+    if (found == m_elements.end())
+        return std::nullopt;
+    return found->id;
+}
+
 // =============================================================================
 // Internal
 // =============================================================================
@@ -296,13 +312,7 @@ bool Layer::test_element(const Element& el, glm::vec2 ndc) noexcept
 {
     if (!el.interactive || !el.visible)
         return false;
-    if (el.clip && !el.clip->contains(ndc))
-        return false;
-    if (el.bounds_hint && !el.bounds_hint->contains(ndc))
-        return false;
-    if (el.contains)
-        return el.contains(ndc);
-    return el.bounds_hint.has_value();
+    return el.hits(ndc);
 }
 
 } // namespace MayaFlux::Portal::Forma

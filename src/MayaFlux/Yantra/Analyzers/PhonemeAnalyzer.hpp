@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Transitive/Reflect/Describe.hpp"
 #include "MayaFlux/Transitive/Reflect/EnumReflect.hpp"
 #include "MayaFlux/Yantra/OperationSpec/OperationHelper.hpp"
 
@@ -38,17 +39,6 @@ enum class PhonemeMethod : uint8_t {
  * its reason: the analyzer does not convert.
  */
 struct PhonemeAnalyzerConfig : AnalyzerConfig {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple_cat(
-            AnalyzerConfig::describe_facets(),
-            std::tuple {
-                FacetMember<&PhonemeAnalyzerConfig::method> {},
-                FacetMember<&PhonemeAnalyzerConfig::sample_rate> {},
-                FacetMember<&PhonemeAnalyzerConfig::keep_embeddings> {},
-            });
-    }
-
     PhonemeAnalyzerConfig()
     {
         window_size = HubertPhonemeModel::frame_span;
@@ -62,6 +52,8 @@ struct PhonemeAnalyzerConfig : AnalyzerConfig {
     /** Also read back the network's state of every frame. They are large: 768 values per frame. */
     bool keep_embeddings { false };
 };
+
+MF_DESCRIBE(PhonemeAnalyzerConfig)
 
 /**
  * @struct PhonemeEvent
@@ -95,19 +87,6 @@ struct MAYAFLUX_API PhonemeEvent {
  * @brief Analysis result of a PhonemeAnalyzer.
  */
 struct PhonemeAnalysis {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple {
-            FacetMember<&PhonemeAnalysis::config> {},
-            FacetMember<&PhonemeAnalysis::frames> {},
-            FacetMember<&PhonemeAnalysis::posteriors> {},
-            FacetMember<&PhonemeAnalysis::best> {},
-            FacetMember<&PhonemeAnalysis::events> {},
-            FacetMember<&PhonemeAnalysis::frame_positions> {},
-            FacetMember<&PhonemeAnalysis::embeddings> {},
-        };
-    }
-
     /** Settings the analysis was produced under. */
     PhonemeAnalyzerConfig config;
     /** Frames of the utterance. */
@@ -151,6 +130,8 @@ private:
         return data ? std::make_shared<Kakshya::TensorContainer>(std::move(*data)) : nullptr;
     }
 };
+
+MF_DESCRIBE(PhonemeAnalysis)
 
 /**
  * @brief Field layout of the records a PhonemeAnalyzer with Composite output gives, one record per recognised phoneme.
@@ -576,3 +557,4 @@ using CompositePhonemeAnalyzer = PhonemeAnalyzer<std::vector<Kakshya::DataVarian
 using ContainerPhonemeAnalyzer = PhonemeAnalyzer<std::shared_ptr<Kakshya::SignalSourceContainer>, Eigen::MatrixXd>;
 
 } // namespace MayaFlux::Yantra
+#include "PhonemeAnalyzer.describe.hpp"

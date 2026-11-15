@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Transitive/Reflect/Describe.hpp"
 #include "MayaFlux/Transitive/Reflect/EnumReflect.hpp"
 
 #include "Analyzer.hpp"
@@ -97,17 +98,6 @@ enum StatisticalMethod : uint8_t {
  * Pass it to the constructor or to set_config.
  */
 struct StatisticalAnalyzerConfig : AnalyzerConfig {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple_cat(
-            AnalyzerConfig::describe_facets(),
-            std::tuple {
-                FacetMember<&StatisticalAnalyzerConfig::method> {},
-                FacetMember<&StatisticalAnalyzerConfig::percentile> {},
-                FacetMember<&StatisticalAnalyzerConfig::sample_variance> {},
-            });
-    }
-
     /** Statistic to compute, as a StatisticalMethod value. */
     Reflect::EnumByte<StatisticalMethod> method { StatisticalMethod::MEAN };
     /** Percentile to compute when method is PERCENTILE, from 0 to 100. */
@@ -116,23 +106,19 @@ struct StatisticalAnalyzerConfig : AnalyzerConfig {
     bool sample_variance { true };
 };
 
+MF_DESCRIBE(StatisticalAnalyzerConfig)
+
 /**
  * @struct StatisticalAnalysis
  * @brief Analysis result structure for statistical analysis
  */
 struct MAYAFLUX_API StatisticalAnalysis {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple {
-            FacetMember<&StatisticalAnalysis::config> {},
-            FacetMember<&StatisticalAnalysis::channel_statistics> {},
-        };
-    }
-
     /** Settings the analysis was produced under. */
     StatisticalAnalyzerConfig config;
     std::vector<ChannelStatistics> channel_statistics;
 };
+
+MF_DESCRIBE(StatisticalAnalysis)
 
 /**
  * @class StatisticalAnalyzer
@@ -512,3 +498,4 @@ using VariantStatisticalAnalyzer = StatisticalAnalyzer<InputType, Kakshya::DataV
 }
 
 } // namespace MayaFlux::Yantra
+#include "StatisticalAnalyzer.describe.hpp"

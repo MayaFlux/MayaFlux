@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MayaFlux/Transitive/Reflect/Mirror.hpp"
+#include "MayaFlux/Transitive/Reflect/Describe.hpp"
 
 namespace MayaFlux::Core {
 
@@ -26,15 +26,18 @@ struct MAYAFLUX_API GraphicsBackendInfo {
     /** @brief Enable GPU debug markers (for profiling tools) */
     bool enable_debug_markers = false;
 
-    /** @brief Required device features (Vulkan-specific) */
-    struct {
+    /** @brief Device features a Vulkan device must provide */
+    struct RequiredFeatures {
         bool compute_shaders = true;
         bool geometry_shaders = false;
         bool tessellation_shaders = false;
         bool multi_viewport = false;
         bool sampler_anisotropy = true;
         bool fill_mode_non_solid = false;
-    } required_features;
+    };
+
+    /** @brief Required device features (Vulkan-specific) */
+    RequiredFeatures required_features;
 
     /**
      * @brief Preferred physical device class when no explicit selector matches.
@@ -108,28 +111,9 @@ struct MAYAFLUX_API GraphicsBackendInfo {
     std::vector<std::string> required_extensions;
     std::vector<std::string> optional_extensions;
 
-    static constexpr auto describe()
-    {
-        return std::make_tuple(
-            Reflect::member("enable_validation", &GraphicsBackendInfo::enable_validation),
-            Reflect::member("enable_debug_markers", &GraphicsBackendInfo::enable_debug_markers),
-            Reflect::member("device_preference", &GraphicsBackendInfo::device_preference),
-            Reflect::member("device_index", &GraphicsBackendInfo::device_index),
-            Reflect::member("device_uuid", &GraphicsBackendInfo::device_uuid),
-            Reflect::member("device_name", &GraphicsBackendInfo::device_name),
-            Reflect::member("require_presentation", &GraphicsBackendInfo::require_presentation),
-            Reflect::member("strict_device_selection", &GraphicsBackendInfo::strict_device_selection),
-            // Reflect::member("required_features", &GraphicsBackendInfo::required_features),
-            Reflect::member("memory_strategy", &GraphicsBackendInfo::memory_strategy),
-            Reflect::member("command_pooling", &GraphicsBackendInfo::command_pooling),
-            Reflect::member("enable_compute_queue", &GraphicsBackendInfo::enable_compute_queue),
-            Reflect::member("enable_transfer_queue", &GraphicsBackendInfo::enable_transfer_queue),
-            Reflect::member("shader_compilation", &GraphicsBackendInfo::shader_compilation),
-            Reflect::member("shader_cache_dir", &GraphicsBackendInfo::shader_cache_dir),
-            Reflect::member("required_extensions", &GraphicsBackendInfo::required_extensions),
-            Reflect::member("optional_extensions", &GraphicsBackendInfo::optional_extensions));
-    }
 };
+
+MF_DESCRIBE(GraphicsBackendInfo)
 
 /**
  * @struct GraphicsResourceLimits
@@ -156,17 +140,9 @@ struct MAYAFLUX_API GraphicsResourceLimits {
     /** @brief Maximum number of pipeline state objects */
     uint32_t max_pipelines = 256;
 
-    static constexpr auto describe()
-    {
-        return std::make_tuple(
-            Reflect::member("max_windows", &GraphicsResourceLimits::max_windows),
-            Reflect::member("max_staging_buffer_mb", &GraphicsResourceLimits::max_staging_buffer_mb),
-            Reflect::member("max_compute_buffer_mb", &GraphicsResourceLimits::max_compute_buffer_mb),
-            Reflect::member("max_texture_cache_mb", &GraphicsResourceLimits::max_texture_cache_mb),
-            Reflect::member("max_descriptor_sets", &GraphicsResourceLimits::max_descriptor_sets),
-            Reflect::member("max_pipelines", &GraphicsResourceLimits::max_pipelines));
-    }
 };
+
+MF_DESCRIBE(GraphicsResourceLimits)
 
 //==============================================================================
 // GLOBAL VISUAL STREAM INFO (Parallel to GlobalStreamInfo)
@@ -245,19 +221,9 @@ struct MAYAFLUX_API GraphicsSurfaceInfo {
     /** @brief Backend-specific configuration parameters */
     std::unordered_map<std::string, std::any> backend_options;
 
-    static constexpr auto describe()
-    {
-        return std::make_tuple(
-            Reflect::member("format", &GraphicsSurfaceInfo::format),
-            Reflect::member("color_space", &GraphicsSurfaceInfo::color_space),
-            Reflect::member("present_mode", &GraphicsSurfaceInfo::present_mode),
-            Reflect::member("image_count", &GraphicsSurfaceInfo::image_count),
-            Reflect::member("enable_regions", &GraphicsSurfaceInfo::enable_regions),
-            Reflect::member("max_regions_per_window", &GraphicsSurfaceInfo::max_regions_per_window),
-            Reflect::member("enable_hdr", &GraphicsSurfaceInfo::enable_hdr),
-            Reflect::member("measure_frame_time", &GraphicsSurfaceInfo::measure_frame_time));
-    }
 };
+
+MF_DESCRIBE(GraphicsSurfaceInfo)
 
 /**
  * @struct KeyRepeatConfig
@@ -281,16 +247,9 @@ struct KeyRepeatConfig {
     /** @brief If true, compositor-reported repeat_info overrides these values. */
     bool allow_compositor_override { false };
 
-    static constexpr auto describe()
-    {
-        return std::make_tuple(
-            Reflect::member("initial_delay_ms", &KeyRepeatConfig::initial_delay_ms),
-            Reflect::member("interval_ms", &KeyRepeatConfig::interval_ms),
-            Reflect::member("text_initial_delay_ms", &KeyRepeatConfig::text_initial_delay_ms),
-            Reflect::member("text_interval_ms", &KeyRepeatConfig::text_interval_ms),
-            Reflect::member("allow_compositor_override", &KeyRepeatConfig::allow_compositor_override));
-    }
 };
+
+MF_DESCRIBE(KeyRepeatConfig)
 
 /**
  * @struct TextConfig
@@ -318,15 +277,9 @@ struct TextConfig {
     /** @brief Atlas texture dimension (power of two). */
     uint32_t atlas_size { 512 };
 
-    static constexpr auto describe()
-    {
-        return std::make_tuple(
-            Reflect::member("family", &TextConfig::family),
-            Reflect::member("style", &TextConfig::style),
-            Reflect::member("pixel_size", &TextConfig::pixel_size),
-            Reflect::member("atlas_size", &TextConfig::atlas_size));
-    }
 };
+
+MF_DESCRIBE(TextConfig)
 
 struct MAYAFLUX_API GlobalGraphicsConfig {
     /** @brief Key repeat timing for native Wayland, Win32 and Cocoa backends. */
@@ -399,19 +352,9 @@ struct MAYAFLUX_API GlobalGraphicsConfig {
 #endif
     };
 
-    static constexpr auto describe()
-    {
-        return std::make_tuple(
-            Reflect::member("key_repeat_config", &GlobalGraphicsConfig::key_repeat_config),
-            Reflect::member("surface_info", &GlobalGraphicsConfig::surface_info),
-            Reflect::member("backend_info", &GlobalGraphicsConfig::backend_info),
-            Reflect::member("resource_limits", &GlobalGraphicsConfig::resource_limits),
-            Reflect::member("target_frame_rate", &GlobalGraphicsConfig::target_frame_rate),
-            Reflect::member("windowing_backend", &GlobalGraphicsConfig::windowing_backend),
-            Reflect::member("requested_api", &GlobalGraphicsConfig::requested_api),
-            Reflect::member("text_config", &GlobalGraphicsConfig::text_config));
-    }
 };
+
+MF_DESCRIBE(GlobalGraphicsConfig)
 
 //==============================================================================
 // PER-WINDOW CREATION INFO (Parallel to audio ChannelConfig)
@@ -647,3 +590,4 @@ struct MonitorInfo {
 };
 
 } // namespace MayaFlux::Core
+#include "GlobalGraphicsInfo.describe.hpp"

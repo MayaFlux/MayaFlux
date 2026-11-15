@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Transitive/Reflect/Describe.hpp"
 #include "MayaFlux/Yantra/OperationSpec/OperationHelper.hpp"
 
 #include "Analyzer.hpp"
@@ -335,20 +336,6 @@ struct WindowedInput {
  * one channel; windows run while every input has them.
  */
 struct WindowedKernelConfig : AnalyzerConfig {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple_cat(
-            AnalyzerConfig::describe_facets(),
-            std::tuple {
-                FacetMember<&WindowedKernelConfig::outputs> {},
-                FacetMember<&WindowedKernelConfig::kernel> {},
-                FacetMember<&WindowedKernelConfig::shader_path> {},
-                FacetMember<&WindowedKernelConfig::parameters> {},
-                FacetMember<&WindowedKernelConfig::lanes> {},
-                FacetMember<&WindowedKernelConfig::inputs> {},
-            });
-    }
-
     [[nodiscard]] WindowedKernelShape shape() const noexcept { return { .lanes = lanes, .inputs = inputs }; }
 
     /** Results the kernel writes for each window. */
@@ -364,6 +351,8 @@ struct WindowedKernelConfig : AnalyzerConfig {
     /** Sequences the kernel reads. */
     uint32_t inputs { 1 };
 };
+
+MF_DESCRIBE(WindowedKernelConfig)
 
 /**
  * @struct ChannelWindowedKernel
@@ -383,18 +372,12 @@ struct MAYAFLUX_API ChannelWindowedKernel {
  * @brief Analysis result of a WindowedKernelAnalyzer.
  */
 struct MAYAFLUX_API WindowedKernelAnalysis {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple {
-            FacetMember<&WindowedKernelAnalysis::config> {},
-            FacetMember<&WindowedKernelAnalysis::channels> {},
-        };
-    }
-
     /** Settings the analysis was produced under. */
     WindowedKernelConfig config;
     std::vector<ChannelWindowedKernel> channels;
 };
+
+MF_DESCRIBE(WindowedKernelAnalysis)
 
 /**
  * @class WindowedKernelAnalyzer
@@ -625,3 +608,4 @@ using StandardWindowedKernelAnalyzer = WindowedKernelAnalyzer<std::vector<Kakshy
 using ContainerWindowedKernelAnalyzer = WindowedKernelAnalyzer<std::shared_ptr<Kakshya::SignalSourceContainer>, Eigen::MatrixXd>;
 
 } // namespace MayaFlux::Yantra
+#include "WindowedKernelAnalyzer.describe.hpp"

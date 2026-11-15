@@ -42,6 +42,7 @@ Build-Depends:
     libfreetype-dev,
     libfontconfig1-dev,
     nlohmann-json3-dev,
+    libpugixml-dev,
     libpipewire-0.3-dev,
     libasound2-dev,
     libdbus-1-dev,
@@ -92,6 +93,7 @@ Depends:
     libutf8proc-dev,
     libfontconfig1-dev,
     nlohmann-json3-dev,
+    libpugixml-dev,
     libpipewire-0.3-dev,
     libasound2-dev,
     libfreetype-dev

@@ -29,12 +29,67 @@ namespace {
             + " to " + std::to_string(State::k_schema_version) + ")";
     }
 
+    constexpr uint32_t k_member_keys_version = 7;
+
+    void rename_key(nlohmann::json& object, const char* from, const char* to)
+    {
+        if (object.is_object() && object.contains(from) && !object.contains(to)) {
+            object[to] = std::move(object[from]);
+            object.erase(from);
+        }
+    }
+
+    void migrate_schema(nlohmann::json& document)
+    {
+        if (!document.is_object() || document.value("version", k_member_keys_version) >= k_member_keys_version) {
+            return;
+        }
+
+        if (const auto ranges = document.find("ranges"); ranges != document.end()) {
+            rename_key(*ranges, "position.x", "pos_x");
+            rename_key(*ranges, "position.y", "pos_y");
+            rename_key(*ranges, "position.z", "pos_z");
+            rename_key(*ranges, "color.r", "color_r");
+            rename_key(*ranges, "color.g", "color_g");
+            rename_key(*ranges, "color.b", "color_b");
+        }
+
+        if (const auto entities = document.find("entities"); entities != document.end() && entities->is_array()) {
+            for (auto& entity : *entities) {
+                rename_key(entity, "falloff_curve", "falloff_curve_name");
+                if (const auto nav = entity.find("locus_nav"); nav != entity.end()) {
+                    rename_key(*nav, "near", "near_plane");
+                    rename_key(*nav, "far", "far_plane");
+                }
+                const auto wiring = entity.find("wiring");
+                if (wiring == entity.end() || !wiring->is_object()) {
+                    continue;
+                }
+                if (const auto steps = wiring->find("steps"); steps != wiring->end() && steps->is_array()) {
+                    for (auto& step : *steps) {
+                        rename_key(step, "delay", "delay_seconds");
+                    }
+                }
+            }
+        }
+
+        if (const auto expanses = document.find("expanses"); expanses != document.end() && expanses->is_array()) {
+            for (auto& expanse : *expanses) {
+                rename_key(expanse, "fit", "fit_name");
+            }
+        }
+    }
+
     void note_older_version(uint32_t version, std::vector<std::string>& warnings)
     {
         if (version < State::k_schema_version) {
             warnings.push_back("Schema version " + std::to_string(version)
                 + " predates " + std::to_string(State::k_schema_version)
                 + ": fields added since are absent and take their defaults");
+        }
+        if (version < k_member_keys_version) {
+            warnings.push_back("Schema version " + std::to_string(version)
+                + ": member keys renamed in " + std::to_string(k_member_keys_version) + " were migrated");
         }
     }
 
@@ -656,7 +711,7 @@ namespace {
     std::optional<float> read_cell_size(const std::string& json_path)
     {
         IO::JSONSerializer ser;
-        auto schema = ser.read<State::FabricSchema>(json_path);
+        auto schema = ser.read<State::FabricSchema>(json_path, migrate_schema);
         return schema ? schema->cell_size : std::nullopt;
     }
 
@@ -683,7 +738,7 @@ bool StateDecoder::decode(Fabric& fabric, const std::string& base_path)
     const std::string exr_path = base_path + ".exr";
 
     IO::JSONSerializer ser;
-    auto schema_opt = ser.read<State::FabricSchema>(json_path);
+    auto schema_opt = ser.read<State::FabricSchema>(json_path, migrate_schema);
     if (!schema_opt) {
         m_last_error = "Failed to load schema: " + ser.last_error();
         MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
@@ -759,7 +814,7 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(Fabric& fabric, con
     const std::string exr_path = base_path + ".exr";
 
     IO::JSONSerializer ser;
-    auto schema_opt = ser.read<State::FabricSchema>(json_path);
+    auto schema_opt = ser.read<State::FabricSchema>(json_path, migrate_schema);
     if (!schema_opt) {
         m_last_error = "Failed to load schema: " + ser.last_error();
         MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
@@ -844,7 +899,7 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(
 
     const std::string tapestry_path = base_dir + "/tapestry.json";
     IO::JSONSerializer ser;
-    auto schema_opt = ser.read<State::TapestrySchema>(tapestry_path);
+    auto schema_opt = ser.read<State::TapestrySchema>(tapestry_path, migrate_schema);
     if (!schema_opt) {
         m_last_error = "Failed to load tapestry schema: " + ser.last_error();
         MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);

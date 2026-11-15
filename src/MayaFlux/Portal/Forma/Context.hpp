@@ -3,6 +3,7 @@
 #include "Layer.hpp"
 
 #include "MayaFlux/IO/Keys.hpp"
+#include "MayaFlux/Vruta/WindowEventSource.hpp"
 
 namespace MayaFlux::Core {
 class Window;
@@ -10,7 +11,6 @@ class Window;
 
 namespace MayaFlux::Vruta {
 class EventManager;
-class WindowEventSource;
 }
 
 namespace MayaFlux::Portal::Forma {
@@ -49,6 +49,13 @@ public:
     using TextFn = std::function<void(uint32_t id, uint32_t codepoint)>;
     using ResizeFn = std::function<void(uint32_t width, uint32_t height)>;
     using CloseFn = std::function<void()>;
+
+    /**
+     * @brief Receives a window event that reached an element.
+     *
+     * ndc is the pointer in NDC for pointer events and zero for the others.
+     */
+    using SubscriberFn = std::function<void(uint32_t id, const Core::WindowEvent& event, glm::vec2 ndc)>;
 
     /**
      * @brief Construct and immediately register event coroutines.
@@ -131,6 +138,50 @@ public:
      * @brief Called on scroll while the cursor is over an element.
      */
     void on_scroll(uint32_t id, ScrollFn fn);
+
+    // =========================================================================
+    // Additive subscriptions
+    // =========================================================================
+
+    /**
+     * @brief Subscribe to the window events that reach an element, without
+     *        replacing any of its own callbacks.
+     *
+     * The on_* callbacks keep one callback per element and slot, so a second
+     * registration replaces the first. A subscription is added beside them:
+     * the element's own callback runs first, then every matching subscriber in
+     * the order they subscribed. unbind(id) removes the callbacks and every
+     * subscriber of the element together.
+     *
+     * The filter is the one the window's event source uses, and an unset field
+     * matches anything. Events reach an element as follows:
+     * - MOUSE_BUTTON_PRESSED and MOUSE_BUTTON_RELEASED when the pointer is over
+     *   it, with the button.
+     * - MOUSE_MOTION while the pointer is over it. A filter with no button
+     *   receives this hover motion. A filter with a button receives the drag of
+     *   that button, which continues outside the element until the release and
+     *   starts on press, as on_drag does.
+     * - MOUSE_ENTERED and MOUSE_EXITED when the pointer enters or leaves it.
+     * - MOUSE_SCROLLED while the pointer is over it.
+     * - KEY_PRESSED, KEY_RELEASED and KEY_REPEAT of a key, while it has focus.
+     *   A filter for these must name the key.
+     * - TEXT_INPUT while it has focus.
+     * - WINDOW_FOCUS_GAINED and WINDOW_FOCUS_LOST when it gains or loses focus.
+     *
+     * @param filter What to receive.
+     * @param fn     Called for each matching event.
+     * @return False, subscribing nothing, when receives() refuses the filter or
+     *         fn is empty.
+     */
+    bool subscribe(uint32_t id, Vruta::WindowEventFilter filter, SubscriberFn fn);
+
+    /**
+     * @brief Whether an element can receive what a filter asks for.
+     *
+     * False for a key event without a key and for an event an element never
+     * receives, such as a window resize.
+     */
+    [[nodiscard]] static bool receives(const Vruta::WindowEventFilter& filter) noexcept;
 
     /**
      * @brief Remove all callbacks registered for an element id.
@@ -338,6 +389,12 @@ private:
         LeaveFn leave;
         ScrollFn scroll;
 
+        struct Subscription {
+            Vruta::WindowEventFilter filter;
+            SubscriberFn fn;
+        };
+        std::vector<Subscription> subscribers;
+
         EnterFn focus_gained;
         LeaveFn focus_lost;
         TextFn text;
@@ -351,6 +408,7 @@ private:
         bool has_held = false;
     };
     std::unordered_map<int, KeyHandlerState> m_registered_keys;
+    std::unordered_set<int> m_subscribed_keys;
 
     std::shared_ptr<Layer> m_layer;
     std::shared_ptr<Core::Window> m_window;
@@ -371,6 +429,11 @@ private:
     void handle_scroll(double dx, double dy);
     void handle_drag(double px, double py, IO::MouseButtons btn);
     void handle_drags(double px, double py);
+    void dispatch(uint32_t id, Core::WindowEventType type, glm::vec2 ndc,
+        Core::WindowEvent::EventData data = {},
+        std::optional<IO::MouseButtons> button = std::nullopt,
+        std::optional<IO::Keys> key = std::nullopt);
+    void handle_subscribed_key(IO::Keys key, Core::WindowEventType type);
     void handle_key_press(IO::Keys key);
     void handle_key_release(IO::Keys key);
     void handle_key_held(IO::Keys key);

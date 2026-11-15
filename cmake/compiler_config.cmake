@@ -4,6 +4,7 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
+set(MAYAFLUX_X86_AVX2_ENABLED OFF)
 
 if(MAYAFLUX_ENABLE_LTO)
     include(CheckIPOSupported)
@@ -50,10 +51,17 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
 
     if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
         add_compile_options(-mavx -mavx2 -mfma)
+        set(MAYAFLUX_X86_AVX2_ENABLED ON)
         message(STATUS
                 "AVX, AVX2 and FMA support enabled for x86_64 architecture")
     endif()
 
 elseif(MSVC)
     add_compile_options(/MP /bigobj)
+    if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
+        add_compile_options(/arch:AVX2)
+        set(MAYAFLUX_X86_AVX2_ENABLED ON)
+        message(STATUS
+                "AVX, AVX2 and FMA support enabled for x86_64 architecture")
+    endif()
 endif()

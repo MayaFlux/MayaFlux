@@ -130,6 +130,52 @@ namespace internal {
             Graphics::RenderConfig render);
 
         /**
+         * @brief A new buffer for shared Forma content, not registered with
+         *        any Layer.
+         *
+         * Plain geometry, text and plot series draw as slices of it. Its
+         * fragment shader reads a negative vertex weight as glyph coverage and
+         * every other weight as nothing, so line widths and point sizes in the
+         * weight slot are safe. The "text" slot is bound at creation to the
+         * default glyph atlas image, or to an empty one-pixel image when there
+         * is no default atlas yet, because a draw is skipped while a binding
+         * the shader uses has nothing to write. TextSlice binds the real image
+         * on first use.
+         *
+         * Callers that need their own shader or textures build a buffer with
+         * create_buffer instead.
+         *
+         * @param surface  Surface whose window the buffer draws to.
+         * @param priority Draw priority of the buffer; higher draws later.
+         */
+        [[nodiscard]] std::shared_ptr<Buffers::FormaBuffer> create_batch(
+            const Surface& surface, int64_t priority = 0);
+
+        /**
+         * @brief The buffer everything placed on @p surface without a buffer
+         *        of its own draws into.
+         *
+         * Held by the surface's Layer and made on first use, and again when
+         * the last slice of the previous one was retired. Elements draw in the
+         * order they were placed, so hit order and draw order agree.
+         */
+        [[nodiscard]] std::shared_ptr<Buffers::FormaBuffer> surface_batch(Surface& surface);
+
+        /**
+         * @brief A new slice of surface_batch(), of @p topology.
+         */
+        [[nodiscard]] FormaTarget batch_slice(Surface& surface, Graphics::PrimitiveTopology topology);
+
+        /**
+         * @brief A new buffer for content a Scrollable clips, drawn above the
+         *        surface's shared buffer and anything raised before it.
+         *
+         * Not registered with the Layer: the scissor belongs to its render
+         * processor, so nothing else may draw into it.
+         */
+        [[nodiscard]] std::shared_ptr<Buffers::FormaBuffer> create_scroll_batch(Surface& surface);
+
+        /**
          * @brief Construct a Layer and a Context wired to @p window.
          *
          * The Context is stored so its event coroutines outlive the call.
@@ -156,7 +202,7 @@ namespace internal {
             const Core::WindowCreateInfo& window_info, std::string name);
 
         /**
-         * @brief create_element on a buffer of its own, as a slice of
+         * @brief create_element as a slice of the surface's shared buffer, of
          *        @p topology, followed by one sync so bounds_hint and contains
          *        from the geometry function reach the Layer before the first
          *        frame.
@@ -170,8 +216,7 @@ namespace internal {
             std::function<float(T)> project = {})
         {
             return create_element<T>(
-                surface,
-                FormaTarget::slice_of(create_buffer(surface.render_config()), topology),
+                surface, batch_slice(surface, topology),
                 std::move(geom), std::move(initial), std::move(project));
         }
 
@@ -273,9 +318,9 @@ namespace internal {
          * @param surface   Surface to place on.
          * @param spec      Series spec carrying the adornment declarations.
          * @param relate_to Element id the adornments are related to.
-         * @param batch     Shared plot buffer for swatches and labels. With
-         *                  labels, it needs a text slot and forma_plot.frag.
-         *                  When empty, one buffer is created for all adornments.
+         * @param batch     Buffer for swatches and labels. One made by
+         *                  create_buffer needs a text slot and forma_plot.frag
+         *                  for labels. When empty, the surface's shared buffer.
          */
         void place_adornments(
             Surface& surface,
@@ -287,6 +332,8 @@ namespace internal {
         Atelier();
         ~Atelier();
 
+        [[nodiscard]] std::shared_ptr<Core::VKImage> text_image();
+
         std::shared_ptr<Nodes::NodeGraphManager> m_node_graph_manager;
         std::shared_ptr<Buffers::BufferManager> m_buffer_manager;
         std::shared_ptr<Vruta::TaskScheduler> m_scheduler;
@@ -296,6 +343,7 @@ namespace internal {
         std::unique_ptr<Bridge> m_bridge;
         std::unique_ptr<Inspector> m_inspect;
         std::unordered_map<const Text::GlyphAtlas*, Text::AtlasImage> m_atlas_images;
+        std::shared_ptr<Core::VKImage> m_text_fallback;
 
         bool m_initialized {};
     };

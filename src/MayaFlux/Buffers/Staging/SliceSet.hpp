@@ -81,6 +81,20 @@ public:
     /** @brief True when @p id names a live block. */
     [[nodiscard]] bool contains(SliceId id) const noexcept { return m_slices.contains(id); }
 
+    /** @brief A copy of one block's vertices and state. */
+    struct Snapshot {
+        std::vector<uint8_t> bytes;
+        Portal::Graphics::PrimitiveTopology topology {};
+        bool visible { true };
+    };
+
+    /**
+     * @brief Copy a block out of the mirror, for adding it to another set.
+     * @return The block's whole vertices, topology and visibility, or nullopt
+     *         for an unknown id.
+     */
+    [[nodiscard]] std::optional<Snapshot> read(SliceId id) const;
+
     /**
      * @brief Runs for the visible blocks in draw order, if they changed.
      * @return The new run list once after each change, then nullopt.

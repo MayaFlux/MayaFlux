@@ -6,7 +6,9 @@
 #include "GlobalInputConfig.hpp"
 #include "GlobalNetworkConfig.hpp"
 #include "GlobalStreamInfo.hpp"
+#include "MayaFlux/Journal/JournalEntry.hpp"
 #include "MayaFlux/Nodes/NodeSpec.hpp"
+#include "MayaFlux/Transitive/Reflect/Describe.hpp"
 
 namespace MayaFlux::Kinesis::Stochastic {
 class Stochastic;
@@ -24,6 +26,23 @@ namespace MayaFlux::Core {
 
 class WindowManager;
 class InputManager;
+
+/**
+ * @struct ConfigFileSchema
+ * @brief The contents of a config file: stream, graphics, input, network and journal sections.
+ *
+ * Its member names are the keys of the file, read by JSONSerializer. It is the
+ * file format only; the settings in force live in the Engine's own Global* configs.
+ */
+struct ConfigFileSchema {
+    GlobalStreamInfo stream;
+    GlobalGraphicsConfig graphics;
+    GlobalInputConfig input;
+    GlobalNetworkConfig network;
+    Journal::Settings journal;
+};
+
+MF_DESCRIBE(ConfigFileSchema)
 
 /**
  * @class Engine
@@ -417,3 +436,4 @@ private:
 };
 
 } // namespace MayaFlux::Core
+#include "Engine.describe.hpp"

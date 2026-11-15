@@ -152,6 +152,7 @@ if(WIN32)
         assimp::assimp
         Alembic::Alembic
         utf8proc::utf8proc
+        pugixml::pugixml
         tinyexr
         tinyvdb
         dlpack
@@ -208,6 +209,7 @@ else()
         PkgConfig::LIBAVDEVICE
         Freetype::Freetype
         PkgConfig::UTF8PROC
+        PkgConfig::PUGIXML
         tinyexr
         tinyvdb
         dlpack

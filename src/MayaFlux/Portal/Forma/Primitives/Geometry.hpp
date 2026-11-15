@@ -97,7 +97,9 @@ struct Form {
      * owns its callbacks, the element id, and the state to write. Empty
      * for non-interactive geometry.
      */
-    std::function<void(Context&, uint32_t, std::shared_ptr<MappedState<T>>)> wire;
+    using Wire = std::function<void(Context&, uint32_t, std::shared_ptr<MappedState<T>>)>;
+
+    Wire wire;
 
     Form() = default;
 
@@ -111,7 +113,7 @@ struct Form {
     }
 
     Form(GeometryFn<T> fn, Graphics::PrimitiveTopology topo, size_t cap,
-        std::function<void(Context&, uint32_t, std::shared_ptr<MappedState<T>>)> w = {})
+        Wire w = {})
         : geometry(std::move(fn))
         , topology(topo)
         , capacity(cap)

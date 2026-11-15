@@ -97,6 +97,15 @@ void destroy(Surface& surface, uint32_t id)
 }
 
 // =============================================================================
+// Draw target
+// =============================================================================
+
+FormaTarget slice(Surface& surface, Graphics::PrimitiveTopology topology)
+{
+    return internal::atelier().batch_slice(surface, topology);
+}
+
+// =============================================================================
 // Standalone buffer
 // =============================================================================
 
@@ -127,14 +136,7 @@ plot(
         .name = window->get_create_info().title,
     });
 
-    const bool has_labels = !spec.labels.empty() || !spec.tick_labels.empty()
-        || (spec.legend && !spec.legend->entries.empty());
-    Graphics::RenderConfig render = surface.render_config();
-    if (has_labels) {
-        render.fragment_shader = "forma_plot.frag.spv";
-        render.additional_textures.push_back({ "text", nullptr });
-    }
-    const auto batch = atelier.create_buffer(std::move(render));
+    const auto batch = atelier.surface_batch(surface);
 
     std::optional<uint32_t> background_id;
     if (spec.background_fn) {

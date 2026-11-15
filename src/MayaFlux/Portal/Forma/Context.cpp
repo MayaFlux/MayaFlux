@@ -3,11 +3,66 @@
 #include "Primitives/Mapped.hpp"
 
 #include "MayaFlux/Core/Backends/Windowing/Window.hpp"
+#include "MayaFlux/Kriya/Awaiters/EventAwaiter.hpp"
+#include "MayaFlux/Kriya/Awaiters/GetPromise.hpp"
 #include "MayaFlux/Kriya/InputEvents.hpp"
+#include "MayaFlux/Vruta/Event.hpp"
 #include "MayaFlux/Vruta/EventManager.hpp"
-#include "MayaFlux/Vruta/WindowEventSource.hpp"
 
 namespace MayaFlux::Portal::Forma {
+
+namespace {
+
+    template <typename Fn>
+    Fn callback_for(const std::unordered_map<int, Fn>& callbacks, int button)
+    {
+        const auto found = callbacks.find(button);
+        return found == callbacks.end() ? Fn {} : found->second;
+    }
+
+    /**
+     * Runs an element's own callback. It is taken by value, so a callback that
+     * subscribes, replaces a callback or unbinds the element does not
+     * invalidate what is still being called.
+     */
+    template <typename Primary, typename... Args>
+    void notify(Primary primary, Args... args)
+    {
+        if (primary)
+            primary(args...);
+    }
+
+    bool matches(const Vruta::WindowEventFilter& filter, Core::WindowEventType type,
+        std::optional<IO::MouseButtons> button, std::optional<IO::Keys> key)
+    {
+        const bool button_matches = type == Core::WindowEventType::MOUSE_MOTION
+            ? filter.button == button
+            : (!filter.button || filter.button == button);
+        return (!filter.event_type || *filter.event_type == type)
+            && button_matches
+            && (!filter.key_code || filter.key_code == key);
+    }
+
+    Vruta::Event subscribed_key_events(std::shared_ptr<Core::Window> window, IO::Keys key,
+        std::function<void(Core::WindowEventType)> callback)
+    {
+        auto& promise = co_await Kriya::GetEventPromise {};
+        auto& source = window->get_event_source();
+
+        Vruta::WindowEventFilter filter;
+        filter.key_code = key;
+
+        while (true) {
+            if (promise.should_terminate)
+                break;
+            const auto event = co_await Kriya::WindowEventAwaiter(source, filter);
+            if (promise.should_terminate)
+                break;
+            callback(event.type);
+        }
+    }
+
+}
 
 Context::Context(std::shared_ptr<Layer> layer,
     std::shared_ptr<Core::Window> window,
@@ -68,6 +123,54 @@ void Context::on_leave(uint32_t id, LeaveFn fn)
 void Context::on_scroll(uint32_t id, ScrollFn fn)
 {
     m_callbacks[id].scroll = std::move(fn);
+}
+
+bool Context::receives(const Vruta::WindowEventFilter& filter) noexcept
+{
+    using Type = Core::WindowEventType;
+
+    if (!filter.event_type)
+        return true;
+
+    switch (*filter.event_type) {
+    case Type::KEY_PRESSED:
+    case Type::KEY_RELEASED:
+    case Type::KEY_REPEAT:
+        return filter.key_code.has_value();
+    case Type::MOUSE_MOTION:
+    case Type::MOUSE_BUTTON_PRESSED:
+    case Type::MOUSE_BUTTON_RELEASED:
+    case Type::MOUSE_SCROLLED:
+    case Type::MOUSE_ENTERED:
+    case Type::MOUSE_EXITED:
+    case Type::TEXT_INPUT:
+    case Type::WINDOW_FOCUS_GAINED:
+    case Type::WINDOW_FOCUS_LOST:
+        return true;
+    default:
+        return false;
+    }
+}
+
+bool Context::subscribe(uint32_t id, Vruta::WindowEventFilter filter, SubscriberFn fn)
+{
+    if (!fn || !receives(filter))
+        return false;
+
+    if (filter.key_code) {
+        const IO::Keys key = *filter.key_code;
+        const int key_code = static_cast<int>(key);
+        if (m_subscribed_keys.insert(key_code).second) {
+            m_event_manager.add_event(
+                std::make_shared<Vruta::Event>(
+                    subscribed_key_events(m_window, key,
+                        [this, key](Core::WindowEventType type) { handle_subscribed_key(key, type); })),
+                m_name + "_subscribed_key_" + std::to_string(key_code));
+        }
+    }
+
+    m_callbacks[id].subscribers.push_back({ .filter = filter, .fn = std::move(fn) });
+    return true;
 }
 
 void Context::on_press(uint32_t id, IO::Keys key, KeyFn fn)
@@ -147,6 +250,7 @@ void Context::detach_window(bool cancel_close)
     for (auto& drag : m_dragging)
         drag.reset();
     m_registered_keys.clear();
+    m_subscribed_keys.clear();
     m_callbacks.clear();
 }
 
@@ -320,6 +424,9 @@ void Context::cancel_handlers(bool cancel_close)
     if (cancel_close)
         m_event_manager.cancel_event(m_name + "_close");
 
+    for (const int key_code : m_subscribed_keys)
+        m_event_manager.cancel_event(m_name + "_subscribed_key_" + std::to_string(key_code));
+
     for (const auto& [key_code, handlers] : m_registered_keys) {
         const std::string key_name = std::to_string(key_code);
         if (handlers.has_press)
@@ -357,22 +464,29 @@ void Context::handle_move(double px, double py)
 
     if (hit != m_hovered) {
         if (m_hovered) {
-            auto it = m_callbacks.find(*m_hovered);
-            if (it != m_callbacks.end() && it->second.leave)
-                it->second.leave(*m_hovered);
+            const uint32_t left = *m_hovered;
+            const auto it = m_callbacks.find(left);
+            if (it != m_callbacks.end())
+                notify(it->second.leave, left);
+            dispatch(left, Core::WindowEventType::MOUSE_EXITED, ndc);
         }
         if (hit) {
-            auto it = m_callbacks.find(*hit);
-            if (it != m_callbacks.end() && it->second.enter)
-                it->second.enter(*hit);
+            const uint32_t entered = *hit;
+            const auto it = m_callbacks.find(entered);
+            if (it != m_callbacks.end())
+                notify(it->second.enter, entered);
+            dispatch(entered, Core::WindowEventType::MOUSE_ENTERED, ndc);
         }
         m_hovered = hit;
     }
 
     if (hit) {
-        auto it = m_callbacks.find(*hit);
-        if (it != m_callbacks.end() && it->second.move)
-            it->second.move(*hit, ndc);
+        const uint32_t over = *hit;
+        const auto it = m_callbacks.find(over);
+        if (it != m_callbacks.end())
+            notify(it->second.move, over, ndc);
+        dispatch(over, Core::WindowEventType::MOUSE_MOTION, ndc,
+            Core::WindowEvent::MousePosData { px, py });
     }
 }
 
@@ -386,28 +500,45 @@ void Context::handle_press(double px, double py, IO::MouseButtons btn)
 
     if (hit != m_focused) {
         if (m_focused) {
-            auto it = m_callbacks.find(*m_focused);
+            const uint32_t lost = *m_focused;
+            auto it = m_callbacks.find(lost);
             if (it != m_callbacks.end() && it->second.focus_lost)
-                it->second.focus_lost(*m_focused);
+                it->second.focus_lost(lost);
+            dispatch(lost, Core::WindowEventType::WINDOW_FOCUS_LOST, ndc);
         }
 
         m_focused = hit;
 
         if (hit) {
-            auto it = m_callbacks.find(*hit);
+            const uint32_t gained = *hit;
+            auto it = m_callbacks.find(gained);
             if (it != m_callbacks.end() && it->second.focus_gained)
-                it->second.focus_gained(*hit);
+                it->second.focus_gained(gained);
+            dispatch(gained, Core::WindowEventType::WINDOW_FOCUS_GAINED, ndc);
         }
     }
 
-    if (hit && m_callbacks.contains(*hit) && m_callbacks[*hit].drag.contains(btn_idx)) {
-        m_dragging[btn_idx] = hit;
+    if (hit) {
+        const auto found = m_callbacks.find(*hit);
+        if (found != m_callbacks.end()) {
+            const auto drags = [&](const Vruta::WindowEventFilter& filter) {
+                return filter.event_type == Core::WindowEventType::MOUSE_MOTION && filter.button == btn;
+            };
+            const bool dragged = found->second.drag.contains(btn_idx)
+                || std::ranges::any_of(found->second.subscribers,
+                    [&](const auto& subscription) { return drags(subscription.filter); });
+            if (dragged)
+                m_dragging[btn_idx] = hit;
+        }
     }
 
     if (hit) {
-        auto it = m_callbacks.find(*hit);
-        if (it != m_callbacks.end() && it->second.press.count(btn_idx))
-            it->second.press[btn_idx](*hit, ndc);
+        const uint32_t pressed = *hit;
+        const auto it = m_callbacks.find(pressed);
+        if (it != m_callbacks.end())
+            notify(callback_for(it->second.press, btn_idx), pressed, ndc);
+        dispatch(pressed, Core::WindowEventType::MOUSE_BUTTON_PRESSED, ndc,
+            Core::WindowEvent::MouseButtonData { static_cast<int8_t>(btn), 0 }, btn);
     }
 }
 
@@ -421,13 +552,12 @@ void Context::handle_release(double px, double py, IO::MouseButtons btn)
     if (!hit)
         return;
 
-    auto it = m_callbacks.find(*hit);
-    if (it == m_callbacks.end())
-        return;
-
-    auto btn_it = it->second.release.find(static_cast<int>(btn));
-    if (btn_it != it->second.release.end() && btn_it->second)
-        btn_it->second(*hit, ndc);
+    const uint32_t released = *hit;
+    const auto it = m_callbacks.find(released);
+    if (it != m_callbacks.end())
+        notify(callback_for(it->second.release, btn_idx), released, ndc);
+    dispatch(released, Core::WindowEventType::MOUSE_BUTTON_RELEASED, ndc,
+        Core::WindowEvent::MouseButtonData { static_cast<int8_t>(btn), 0 }, btn);
 }
 
 void Context::handle_drags(double px, double py)
@@ -452,9 +582,14 @@ void Context::handle_drag(double px, double py, IO::MouseButtons btn)
             return;
     }
 
-    auto it = m_callbacks.find(*m_dragging[btn_idx]);
-    if (it != m_callbacks.end() && it->second.drag.count(btn_idx))
-        it->second.drag[btn_idx](*m_dragging[btn_idx], ndc);
+    const uint32_t target = *m_dragging[btn_idx];
+    const auto it = m_callbacks.find(target);
+    if (it == m_callbacks.end())
+        return;
+
+    notify(callback_for(it->second.drag, btn_idx), target, ndc);
+    dispatch(target, Core::WindowEventType::MOUSE_MOTION, ndc,
+        Core::WindowEvent::MousePosData { px, py }, btn);
 }
 
 void Context::handle_scroll(double dx, double dy)
@@ -463,12 +598,16 @@ void Context::handle_scroll(double dx, double dy)
     if (!m_hovered)
         return;
 
-    auto it = m_callbacks.find(*m_hovered);
-    if (it == m_callbacks.end() || !it->second.scroll)
+    const uint32_t over = *m_hovered;
+    const auto it = m_callbacks.find(over);
+    if (it == m_callbacks.end())
         return;
 
     const auto [px, py] = m_window->get_event_source().get_mouse_position();
-    it->second.scroll(*m_hovered, to_ndc(px, py), dx, dy);
+    const glm::vec2 ndc = to_ndc(px, py);
+    notify(it->second.scroll, over, ndc, dx, dy);
+    dispatch(over, Core::WindowEventType::MOUSE_SCROLLED, ndc,
+        Core::WindowEvent::ScrollData { dx, dy });
 }
 
 // =============================================================================
@@ -527,11 +666,42 @@ void Context::handle_text(uint32_t codepoint)
     if (!m_focused)
         return;
 
-    auto it = m_callbacks.find(*m_focused);
-    if (it == m_callbacks.end() || !it->second.text)
+    const uint32_t focused = *m_focused;
+    auto it = m_callbacks.find(focused);
+    if (it == m_callbacks.end())
         return;
 
-    it->second.text(*m_focused, codepoint);
+    notify(it->second.text, focused, codepoint);
+    dispatch(focused, Core::WindowEventType::TEXT_INPUT, glm::vec2(0.F),
+        Core::WindowEvent::TextData { codepoint });
+}
+
+void Context::handle_subscribed_key(IO::Keys key, Core::WindowEventType type)
+{
+    sync_size();
+    if (!m_focused)
+        return;
+
+    dispatch(*m_focused, type, glm::vec2(0.F),
+        Core::WindowEvent::KeyData { static_cast<int16_t>(key), 0, 0 }, std::nullopt, key);
+}
+
+void Context::dispatch(uint32_t id, Core::WindowEventType type, glm::vec2 ndc,
+    Core::WindowEvent::EventData data, std::optional<IO::MouseButtons> button,
+    std::optional<IO::Keys> key)
+{
+    const auto found = m_callbacks.find(id);
+    if (found == m_callbacks.end())
+        return;
+
+    const auto subscribers = found->second.subscribers;
+    Core::WindowEvent event;
+    event.type = type;
+    event.data = std::move(data);
+    for (const auto& subscription : subscribers) {
+        if (matches(subscription.filter, type, button, key))
+            subscription.fn(id, event, ndc);
+    }
 }
 
 void Context::sync_size()

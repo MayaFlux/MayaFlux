@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Transitive/Reflect/Describe.hpp"
 #include "FFmpegDemuxContext.hpp"
 #include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
 
@@ -19,26 +20,6 @@ namespace MayaFlux::IO {
  * are absent rather than defaulted.
  */
 struct VideoStreamInfo {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple {
-            FacetMember<&VideoStreamInfo::codec> {},
-            FacetMember<&VideoStreamInfo::codec_long_name> {},
-            FacetMember<&VideoStreamInfo::width> {},
-            FacetMember<&VideoStreamInfo::height> {},
-            FacetMember<&VideoStreamInfo::frame_rate> {},
-            FacetMember<&VideoStreamInfo::total_frames> {},
-            FacetMember<&VideoStreamInfo::bit_rate> {},
-            FacetMember<&VideoStreamInfo::pixel_format> {},
-            FacetMember<&VideoStreamInfo::color_range> {},
-            FacetMember<&VideoStreamInfo::colorspace> {},
-            FacetMember<&VideoStreamInfo::color_trc> {},
-            FacetMember<&VideoStreamInfo::color_primaries> {},
-            FacetMember<&VideoStreamInfo::sar_num> {},
-            FacetMember<&VideoStreamInfo::sar_den> {},
-        };
-    }
-
     std::string codec; ///< Codec name (e.g., "h264")
     std::optional<std::string> codec_long_name; ///< Codec long name, when the codec is known
     uint32_t width = 0; ///< Source width in pixels
@@ -55,6 +36,8 @@ struct VideoStreamInfo {
     std::optional<int> sar_den; ///< Sample aspect ratio denominator, when positive
 };
 
+MF_DESCRIBE(VideoStreamInfo)
+
 /**
  * @struct VideoStreamTags
  * @brief Metadata tags of one video stream, in file order.
@@ -62,15 +45,10 @@ struct VideoStreamInfo {
  * Stored on FileMetadata for video files. Keys and values are data read from the file.
  */
 struct VideoStreamTags {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple {
-            FacetMember<&VideoStreamTags::entries> {},
-        };
-    }
-
     std::vector<std::pair<std::string, std::string>> entries; ///< Tag key and value pairs
 };
+
+MF_DESCRIBE(VideoStreamTags)
 
 /**
  * @struct KeyframeInfo
@@ -79,19 +57,12 @@ struct VideoStreamTags {
  * Stored on FileRegion for regions of type "keyframe".
  */
 struct KeyframeInfo {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple {
-            FacetMember<&KeyframeInfo::pts> {},
-            FacetMember<&KeyframeInfo::timestamp_seconds> {},
-            FacetMember<&KeyframeInfo::keyframe_index> {},
-        };
-    }
-
     int64_t pts = 0; ///< Presentation timestamp in stream time-base units
     double timestamp_seconds = 0.0; ///< Presentation time in seconds
     int keyframe_index = 0; ///< Zero-based index among the stream's keyframes
 };
+
+MF_DESCRIBE(KeyframeInfo)
 
 /**
  * @class VideoStreamContext
@@ -298,3 +269,4 @@ private:
 [[nodiscard]] MAYAFLUX_API std::optional<Portal::Graphics::ImageFormat> to_image_format(int av_pixel_format);
 
 } // namespace MayaFlux::IO
+#include "VideoStreamContext.describe.hpp"

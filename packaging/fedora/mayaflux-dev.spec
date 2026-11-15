@@ -51,6 +51,7 @@ BuildRequires:  freetype-devel
 BuildRequires:  utf8proc-devel
 BuildRequires:  fontconfig-devel
 BuildRequires:  json-devel
+BuildRequires:  pugixml-devel
 BuildRequires:  pipewire-devel
 BuildRequires:  alsa-lib-devel
 BuildRequires:  dbus-devel
@@ -95,6 +96,7 @@ Requires:       fontconfig-devel
 Requires:       pipewire-devel
 Requires:       alsa-lib-devel
 Requires:       json-devel
+Requires:       pugixml-devel
 
 Provides:       mayaflux = %{version}-%{release}
 Provides:       bundled(tinyvdb)

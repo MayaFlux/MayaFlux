@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Kakshya/NDData/CompositeAccess.hpp"
+#include "MayaFlux/Kakshya/NDData/CompositeForest.hpp"
 #include "MayaFlux/Kakshya/NDData/CompositeInsertion.hpp"
 #include "MayaFlux/Kakshya/DataFieldTraversal.hpp"
 #include "MayaFlux/Kakshya/NDimensionalContainer.hpp"
@@ -88,6 +89,54 @@ public:
     {
         return DataFieldTraversal<CompositeArray>(m_data, batch_size);
     }
+
+    /**
+     * @brief Index the parent links of the array.
+     * @param parent_field Name of a uint64_t parent field; a row without it is a root.
+     * @param error Receives the reason when nullopt is returned.
+     * @param error_row Receives the failing row when given.
+     * @return A snapshot of the links and row count, or nullopt for a missing
+     * or mistyped field or a parent that does not precede its child.
+     * @note The index is not kept in the container. Insertion or edits to the
+     * parent field make it stale, so build it again after changing the array.
+     */
+    [[nodiscard]] std::optional<ForestIndex> index_forest(
+        std::string_view parent_field, std::string& error,
+        uint64_t* error_row = nullptr) const
+    {
+        return index_composite_forest(m_data, parent_field, error, error_row);
+    }
+
+    /**
+     * @brief Create a traversal over the array's parent links.
+     * @param index Index from index_forest(); it must outlive the traversal.
+     * @return Traversal borrowing this container's array, the forest
+     * counterpart of traverse(). In preorder, subtree() is a slice that
+     * traverse()-style windows and projections apply to directly.
+     */
+    [[nodiscard]] DataForestTraversal<CompositeArray> traverse_forest(
+        const ForestIndex& index) const noexcept
+    {
+        return DataForestTraversal<CompositeArray>(m_data, index);
+    }
+
+    /**
+     * @brief Copy a subtree into the materialized window with its parent links rebased.
+     *
+     * The window then holds a self-contained forest: the subtree root has no
+     * parent and every other row points at its parent's position in the
+     * window. materialize_next() copies rows verbatim and keeps global links,
+     * which suits bounded reads but not a standalone branch.
+     *
+     * @param index Index from index_forest() of the current array.
+     * @param parent_field Name of the uint64_t parent field.
+     * @param row Root of the subtree.
+     * @param error Receives the reason when false is returned.
+     * @return True on success. On failure the prior window is preserved. The
+     * materialization position is not changed either way.
+     */
+    [[nodiscard]] bool materialize_subtree(const ForestIndex& index,
+        std::string_view parent_field, size_t row, std::string& error);
 
     /**
      * @brief Borrow consecutive elements without copying.

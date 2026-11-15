@@ -11,6 +11,7 @@
 #include "MayaFlux/Nexus/Principals/Presence.hpp"
 
 #include "MayaFlux/IO/Image/ImageWriter.hpp"
+#include "MayaFlux/IO/StagedFileSet.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 
 #include "MayaFlux/Transitive/IO/JSONSerializer.hpp"
@@ -199,7 +200,8 @@ bool StateEncoder::encode(const Fabric& fabric, const std::string& base_path)
 bool StateEncoder::encode_fabric(
     const Fabric& fabric,
     const std::string& base_path,
-    const std::unordered_set<const Expanse*>& tapestry_owned)
+    const std::unordered_set<const Expanse*>& tapestry_owned,
+    IO::StagedFileSet* staged)
 {
     m_last_error.clear();
 
@@ -409,19 +411,41 @@ bool StateEncoder::encode_fabric(
     // Write EXR.
     // -------------------------------------------------------------------------
     const std::string exr_path = base_path + ".exr";
-    if (!records.empty()) {
-        auto writer = IO::ImageWriterRegistry::instance().create_writer(exr_path);
-        if (!writer) {
-            m_last_error = "No ImageWriter registered for .exr";
-            MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
-            return false;
+    const std::string json_path = base_path + ".json";
+
+    const auto emit = [&](const std::string& path, const IO::StagedFileSet::WriteFn& writer) {
+        bool written = false;
+        if (staged == nullptr) {
+            written = writer(path);
+        } else {
+            std::string error;
+            written = staged->write(path, writer, error);
+            if (!written && m_last_error.empty()) {
+                m_last_error = error;
+            }
         }
-
-        IO::ImageWriteOptions options;
-
-        if (!writer->write(exr_path, image, options)) {
-            m_last_error = "EXR write failed: " + writer->get_last_error();
+        if (!written) {
             MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
+        }
+        return written;
+    };
+
+    if (!records.empty()) {
+        const bool exr_written = emit(exr_path, [&](const std::string& path) {
+            auto writer = IO::ImageWriterRegistry::instance().create_writer(path);
+            if (!writer) {
+                m_last_error = "No ImageWriter registered for .exr";
+                return false;
+            }
+
+            IO::ImageWriteOptions options;
+            if (!writer->write(path, image, options)) {
+                m_last_error = "EXR write failed: " + writer->get_last_error();
+                return false;
+            }
+            return true;
+        });
+        if (!exr_written) {
             return false;
         }
     }
@@ -505,10 +529,14 @@ bool StateEncoder::encode_fabric(
     }
 
     IO::JSONSerializer ser;
-    const std::string json_path = base_path + ".json";
-    if (!ser.write(json_path, schema)) {
-        m_last_error = "Failed to write schema: " + ser.last_error();
-        MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
+    const bool json_written = emit(json_path, [&](const std::string& path) {
+        if (!ser.write(path, schema)) {
+            m_last_error = "Failed to write schema: " + ser.last_error();
+            return false;
+        }
+        return true;
+    });
+    if (!json_written) {
         return false;
     }
 
@@ -523,6 +551,8 @@ bool StateEncoder::encode(const Tapestry& tapestry, const std::string& base_dir,
 {
     m_last_error.clear();
 
+    IO::StagedFileSet set(base_dir);
+
     State::TapestrySchema schema;
 
     std::unordered_set<const Expanse*> tapestry_owned;
@@ -535,15 +565,13 @@ bool StateEncoder::encode(const Tapestry& tapestry, const std::string& base_dir,
             ? std::to_string(fabric->id())
             : fabric->name();
 
-        const std::string base_path = base_dir + "/" + fabric_id;
-
-        if (!encode_fabric(*fabric, base_path, tapestry_owned)) {
+        if (!encode_fabric(*fabric, fabric_id, tapestry_owned, &set)) {
             return false;
         }
 
         schema.fabrics.push_back(State::FabricRef {
             .name = fabric_id,
-            .base_path = base_path,
+            .base_path = (std::filesystem::path(set.directory()) / fabric_id).string(),
         });
     }
 
@@ -567,12 +595,31 @@ bool StateEncoder::encode(const Tapestry& tapestry, const std::string& base_dir,
     schema.user_state = std::move(user_state);
 
     IO::JSONSerializer ser;
-    const std::string tapestry_path = base_dir + "/tapestry.json";
-    if (!ser.write(tapestry_path, schema)) {
-        m_last_error = "Failed to write tapestry schema: " + ser.last_error();
+    std::string error;
+    const bool schema_staged = set.write(
+        "tapestry.json",
+        [&](const std::string& path) {
+            if (!ser.write(path, schema)) {
+                m_last_error = "Failed to write tapestry schema: " + ser.last_error();
+                return false;
+            }
+            return true;
+        },
+        error);
+    if (!schema_staged) {
+        if (m_last_error.empty()) {
+            m_last_error = error;
+        }
         MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
         return false;
     }
+
+    if (!set.commit(m_last_error)) {
+        MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
+        return false;
+    }
+
+    const std::string tapestry_path = (std::filesystem::path(set.directory()) / "tapestry.json").string();
 
     MF_INFO(Journal::Component::Nexus, Journal::Context::FileIO,
         "StateEncoder: wrote {} fabrics to {}", schema.fabrics.size(), tapestry_path);

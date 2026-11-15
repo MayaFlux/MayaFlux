@@ -81,8 +81,14 @@ install(FILES
 
 install(FILES
     ${CMAKE_SOURCE_DIR}/data/assets.json
-    ${CMAKE_SOURCE_DIR}/data/assets.schema.json
     DESTINATION share/MayaFlux/assets
+)
+
+install(FILES
+    ${SCHEMA_DIR}/assets.schema.json
+    ${SCHEMA_DIR}/forma-document.xsd
+    ${SCHEMA_DIR}/forma-layer.xsd
+    DESTINATION share/MayaFlux/schema
 )
 
 install(TARGETS Lila
@@ -109,6 +115,8 @@ install(FILES
 )
 
 install(TARGETS lila_server RUNTIME DESTINATION bin)
+
+install(TARGETS mayaflux_reflect RUNTIME DESTINATION bin)
 
 install(TARGETS MayaFluxHost
     RUNTIME DESTINATION bin

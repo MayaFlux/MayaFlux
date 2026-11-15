@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Transitive/Memory/FlatMap.hpp"
+#include "MayaFlux/Transitive/Reflect/Describe.hpp"
 
 #include <typeindex>
 
@@ -75,8 +76,8 @@ namespace detail {
  * @class FacetMember
  * @brief Key for one data member of a struct, identified by its member pointer.
  *
- * A struct declares its keys with a static describe_facets() returning a tuple
- * of FacetMember values. Every instance of the struct produces the same keys.
+ * Facets::from builds one of these for every member of a struct described with
+ * MF_DESCRIBE. Every instance of the struct produces the same keys.
  *
  * @tparam Member Pointer to a non-static data member.
  */
@@ -97,13 +98,12 @@ struct FacetMember {
  * Values are held as shared immutable entries, so copying a Facets copies
  * pointers and never the values. Writing replaces an entry; get() returns a
  * const view that stays valid until that entry is replaced or erased.
- * Described structs may also be stored by type, separately from Facet keys.
+ * Any struct may also be stored whole by its type, separately from Facet keys.
  */
 class Facets {
 public:
-    /** @brief Stores a described struct under its type identity. */
+    /** @brief Stores a struct under its type identity. */
     template <typename T>
-        requires requires { T::describe_facets(); }
     void set(T value)
     {
         m_struct_entries.insert_or_assign(std::type_index(typeid(T)),
@@ -134,19 +134,21 @@ public:
 
     /**
      * @brief Builds a bag holding every data member of @p value.
-     * @tparam S A struct with a static describe_facets() returning a tuple of FacetMember.
+     * @tparam S A struct with a generated description (MF_DESCRIBE).
      * @return One entry per member, keyed by the member, with its current value.
      */
     template <typename S>
-        requires requires { S::describe_facets(); }
+        requires requires { Reflect::Generated::Description<S>::members(); }
     [[nodiscard]] static Facets from(const S& value)
     {
         Facets bag;
         std::apply(
-            [&](auto... keys) {
-                (bag.set(keys, value.*(decltype(keys)::member)), ...);
+            [&](auto... member) {
+                (bag.set(FacetMember<std::remove_cvref_t<decltype(member)>::pointer> {},
+                     value.*(std::remove_cvref_t<decltype(member)>::pointer)),
+                    ...);
             },
-            S::describe_facets());
+            Reflect::Generated::Description<S>::members());
         return bag;
     }
 
@@ -172,9 +174,8 @@ public:
         return static_cast<const Entry<std::shared_ptr<U>>*>(it->second.get())->value;
     }
 
-    /** @brief Returns the described struct stored under its type, or nullptr. */
+    /** @brief Returns the struct stored under its type, or nullptr. */
     template <typename T>
-        requires requires { T::describe_facets(); }
     [[nodiscard]] const T* get() const
     {
         const auto it = m_struct_entries.find(std::type_index(typeid(T)));

@@ -13,6 +13,7 @@
     "stb",
     "utf8proc",
     "freetype",
-    "nlohmann-json"
+    "nlohmann-json",
+    "pugixml"
   ]
 }

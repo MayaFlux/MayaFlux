@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Transitive/Reflect/Describe.hpp"
 #include "VertexLayout.hpp"
 
 namespace MayaFlux::Kakshya {
@@ -37,6 +38,8 @@ struct Vertex {
     glm::vec3 normal { 0.0F, 0.0F, 1.0F };
     glm::vec4 tangent { 1.0F, 0.0F, 0.0F, 1.0F };
 };
+
+MF_DESCRIBE(Vertex)
 
 static_assert(sizeof(Vertex) == 68,
     "Vertex layout changed — must match VertexLayout::for_raw() stride and the other 68-byte vertex types");
@@ -266,3 +269,4 @@ VertexLayout vertex_layout_for()
     glm::vec2 weight_range = { 0.0F, 1.0F });
 
 } // namespace MayaFlux::Kakshya
+#include "VertexFormats.describe.hpp"

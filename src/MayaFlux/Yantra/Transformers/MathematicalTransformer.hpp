@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Transitive/Reflect/Describe.hpp"
 #include "MayaFlux/Kinesis/Discrete/Transform.hpp"
 #include "MayaFlux/Nodes/Generators/Polynomial.hpp"
 #include "Transformer.hpp"
@@ -39,32 +40,6 @@ enum class TrigFunction : uint8_t {
  * @brief Settings of MathematicalTransformer, stored whole in the operation's facets.
  */
 struct MathematicalTransformerConfig : TransformerConfig {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple_cat(
-            TransformerConfig::describe_facets(),
-            std::tuple {
-                FacetMember<&MathematicalTransformerConfig::operation> {},
-                FacetMember<&MathematicalTransformerConfig::gain_factor> {},
-                FacetMember<&MathematicalTransformerConfig::offset_value> {},
-                FacetMember<&MathematicalTransformerConfig::exponent> {},
-                FacetMember<&MathematicalTransformerConfig::log_scale> {},
-                FacetMember<&MathematicalTransformerConfig::log_input_scale> {},
-                FacetMember<&MathematicalTransformerConfig::log_offset> {},
-                FacetMember<&MathematicalTransformerConfig::log_base> {},
-                FacetMember<&MathematicalTransformerConfig::exp_scale> {},
-                FacetMember<&MathematicalTransformerConfig::exp_rate> {},
-                FacetMember<&MathematicalTransformerConfig::exp_base> {},
-                FacetMember<&MathematicalTransformerConfig::trig_function> {},
-                FacetMember<&MathematicalTransformerConfig::frequency> {},
-                FacetMember<&MathematicalTransformerConfig::amplitude> {},
-                FacetMember<&MathematicalTransformerConfig::phase> {},
-                FacetMember<&MathematicalTransformerConfig::bits> {},
-                FacetMember<&MathematicalTransformerConfig::target_peak> {},
-                FacetMember<&MathematicalTransformerConfig::coefficients> {},
-            });
-    }
-
     /** Pointwise map to apply. */
     Reflect::EnumByte<MathematicalOperation> operation { MathematicalOperation::GAIN };
     /** GAIN: multiplier. */
@@ -102,6 +77,8 @@ struct MathematicalTransformerConfig : TransformerConfig {
     /** POLYNOMIAL: coefficients, highest order first, as Polynomial::power_sum evaluates them. */
     std::vector<double> coefficients { 0.0, 1.0 };
 };
+
+MF_DESCRIBE(MathematicalTransformerConfig)
 
 /**
  * @class MathematicalTransformer
@@ -251,3 +228,4 @@ private:
 };
 
 }
+#include "MathematicalTransformer.describe.hpp"

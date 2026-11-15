@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Transitive/Reflect/Describe.hpp"
 #include "ExtractionHelper.hpp"
 #include "MayaFlux/Kinesis/Discrete/Extract.hpp"
 #include "MayaFlux/Transitive/Reflect/EnumReflect.hpp"
@@ -54,33 +55,6 @@ enum ExtractionMethod : uint8_t {
  * each keeps its own default. Pass this to the constructor or to set_config.
  */
 struct FeatureExtractorConfig : ExtractorConfig {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple_cat(
-            ExtractorConfig::describe_facets(),
-            std::tuple {
-                FacetMember<&FeatureExtractorConfig::window_size> {},
-                FacetMember<&FeatureExtractorConfig::hop_size> {},
-                FacetMember<&FeatureExtractorConfig::method> {},
-                FacetMember<&FeatureExtractorConfig::energy_threshold> {},
-                FacetMember<&FeatureExtractorConfig::peak_threshold> {},
-                FacetMember<&FeatureExtractorConfig::peak_min_distance> {},
-                FacetMember<&FeatureExtractorConfig::peak_region_size> {},
-                FacetMember<&FeatureExtractorConfig::std_dev_threshold> {},
-                FacetMember<&FeatureExtractorConfig::spectral_threshold> {},
-                FacetMember<&FeatureExtractorConfig::mean_multiplier> {},
-                FacetMember<&FeatureExtractorConfig::overlap> {},
-                FacetMember<&FeatureExtractorConfig::zero_crossing_threshold> {},
-                FacetMember<&FeatureExtractorConfig::zero_crossing_min_distance> {},
-                FacetMember<&FeatureExtractorConfig::zero_crossing_region_size> {},
-                FacetMember<&FeatureExtractorConfig::silence_threshold> {},
-                FacetMember<&FeatureExtractorConfig::silence_min_duration> {},
-                FacetMember<&FeatureExtractorConfig::onset_threshold> {},
-                FacetMember<&FeatureExtractorConfig::onset_region_size> {},
-                FacetMember<&FeatureExtractorConfig::onset_fft_window_size> {},
-            });
-    }
-
     /** Analysis window length in samples. */
     uint32_t window_size { 512 };
     /** Distance between successive windows in samples. */
@@ -130,24 +104,20 @@ struct FeatureExtractorConfig : ExtractorConfig {
     uint32_t onset_fft_window_size { 1024 };
 };
 
+MF_DESCRIBE(FeatureExtractorConfig)
+
 /**
  * @struct FeatureExtraction
  * @brief Record of one FeatureExtractor run, stored on the output's facets.
  */
 struct FeatureExtraction {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple {
-            FacetMember<&FeatureExtraction::config> {},
-            FacetMember<&FeatureExtraction::extracted_samples> {},
-        };
-    }
-
     /** Settings the extraction was produced under. */
     FeatureExtractorConfig config;
     /** Total samples across all channels in the extracted output. */
     size_t extracted_samples {};
 };
+
+MF_DESCRIBE(FeatureExtraction)
 
 /**
  * @class FeatureExtractor
@@ -345,3 +315,4 @@ using RegionFeatureExtractor = FeatureExtractor<Kakshya::Region, std::vector<std
 using VariantFeatureExtractor = FeatureExtractor<std::vector<Kakshya::DataVariant>, std::vector<Kakshya::DataVariant>>;
 
 } // namespace MayaFlux::Yantra
+#include "FeatureExtractor.describe.hpp"

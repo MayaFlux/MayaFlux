@@ -19,6 +19,8 @@ namespace MayaFlux::IO {
  *   - ImageWriteOptions::compression : PNG deflate level [0..9]
  *   - ImageWriteOptions::quality     : JPG quality [1..100]
  *   - ImageWriteOptions::flip_vertically : vertical flip before encode
+ *
+ * Separate writer instances can encode concurrently.
  */
 class MAYAFLUX_API STBImageWriter : public ImageWriter {
 public:
@@ -47,9 +49,9 @@ private:
 
     bool write_png(const std::string& filepath, const ImageData& data, const ImageWriteOptions& options);
     bool write_jpg(const std::string& filepath, const ImageData& data, const ImageWriteOptions& options);
-    bool write_bmp(const std::string& filepath, const ImageData& data);
-    bool write_tga(const std::string& filepath, const ImageData& data);
-    bool write_hdr(const std::string& filepath, const ImageData& data);
+    bool write_bmp(const std::string& filepath, const ImageData& data, const ImageWriteOptions& options);
+    bool write_tga(const std::string& filepath, const ImageData& data, const ImageWriteOptions& options);
+    bool write_hdr(const std::string& filepath, const ImageData& data, const ImageWriteOptions& options);
 };
 
 } // namespace MayaFlux::IO

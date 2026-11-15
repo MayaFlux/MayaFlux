@@ -5,6 +5,7 @@
  * @brief Compatibility granular workflow on typed stages. The rebuilt workflow is written beside it.
  */
 
+#include "MayaFlux/Transitive/Reflect/Describe.hpp"
 #include "MayaFlux/Yantra/ComputeGrammar.hpp"
 #include "MayaFlux/Yantra/ComputePipeline.hpp"
 
@@ -117,16 +118,6 @@ enum class GranularStage : uint8_t {
  * @brief Settings of SegmentOp, stored whole in the operation's facets.
  */
 struct SegmentConfig : OperationConfig {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple {
-            FacetMember<&SegmentConfig::grain_size> {},
-            FacetMember<&SegmentConfig::hop_size> {},
-            FacetMember<&SegmentConfig::channel> {},
-            FacetMember<&SegmentConfig::container> {},
-        };
-    }
-
     /** Samples per grain. */
     uint32_t grain_size { 1024 };
     /** Samples between successive grain onsets. */
@@ -136,6 +127,8 @@ struct SegmentConfig : OperationConfig {
     /** Source used when the Datum carries no container. */
     std::shared_ptr<Kakshya::SignalSourceContainer> container;
 };
+
+MF_DESCRIBE(SegmentConfig)
 
 /**
  * @class SegmentOp
@@ -175,18 +168,6 @@ protected:
  * 3. analysis_type : AttributeOp uses a default-configured analyzer of that family.
  */
 struct AttributeConfig : OperationConfig {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple {
-            FacetMember<&AttributeConfig::channel> {},
-            FacetMember<&AttributeConfig::analysis_type> {},
-            FacetMember<&AttributeConfig::qualifier> {},
-            FacetMember<&AttributeConfig::analyzer> {},
-            FacetMember<&AttributeConfig::executor> {},
-            FacetMember<&AttributeConfig::container> {},
-        };
-    }
-
     /** Source channel index. */
     uint32_t channel { 0 };
     /** Analyzer family used when no executor is set. */
@@ -200,6 +181,8 @@ struct AttributeConfig : OperationConfig {
     /** Source used when the Datum carries no container. */
     std::shared_ptr<Kakshya::SignalSourceContainer> container;
 };
+
+MF_DESCRIBE(AttributeConfig)
 
 /**
  * @class AttributeOp
@@ -337,18 +320,6 @@ extern MAYAFLUX_API const ComputationGrammar::Rule::Executor sort_grains;
  * @brief Scalar parameters shared across all granular pipeline entry points.
  */
 struct GranularConfig {
-    static constexpr auto describe_facets()
-    {
-        return std::tuple {
-            FacetMember<&GranularConfig::grain_size> {},
-            FacetMember<&GranularConfig::hop_size> {},
-            FacetMember<&GranularConfig::channel> {},
-            FacetMember<&GranularConfig::ascending> {},
-            FacetMember<&GranularConfig::gpu_sort_threshold> {},
-            FacetMember<&GranularConfig::taper> {},
-        };
-    }
-
     uint32_t grain_size = 1024;
     uint32_t hop_size = 512;
     uint32_t channel = 0;
@@ -356,6 +327,8 @@ struct GranularConfig {
     uint32_t gpu_sort_threshold = 0;
     GrainTaper taper;
 };
+
+MF_DESCRIBE(GranularConfig)
 
 /**
  * @brief Key under which a context carries the reconstruction taper.
@@ -779,3 +752,4 @@ void process_to_stream_async(
 }
 
 } // namespace MayaFlux::Yantra::Granular
+#include "GranularWorkflow.describe.hpp"

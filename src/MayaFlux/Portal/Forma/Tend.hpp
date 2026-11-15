@@ -10,11 +10,11 @@ namespace MayaFlux::Portal::Forma {
 /**
  * @brief Realize a Form on @p surface as a slice of @p batch.
  *
- * Like create(), but the element draws into a slice of the shared buffer
- * instead of a buffer of its own, with the Form's topology. Make the buffer
- * with create_buffer() and pass it to every Form that should draw together;
- * the Form's capacity is not used, the batch grows. A Form that needs its own
- * buffer, such as one scissored by a Scrollable, uses create() instead.
+ * The escape hatch for a Form that needs a buffer of its own, such as one with
+ * a custom shader or render config: make it with create_buffer() and pass it
+ * here. create() already draws into a shared buffer, so a Form only needs this
+ * when it cannot share. The element is a slice of @p batch with the Form's
+ * topology; the Form's capacity is not used, the buffer grows.
  *
  * @tparam T       MappedState value type.
  * @param surface  Canvas to register on.
@@ -45,8 +45,8 @@ template <typename T>
 /**
  * @brief Realize a Form on @p surface.
  *
- * Builds a buffer of its own and draws the Form as a slice of it with the
- * Form's topology, registers the element, syncs so the geometry function's
+ * Draws the Form as a slice of the surface's shared buffer with the Form's
+ * topology, registers the element, syncs so the geometry function's
  * bounds_hint and contains reach the Layer before the first frame, then runs
  * the Form's interaction wiring.
  *
@@ -78,9 +78,9 @@ template <typename T>
 }
 
 /**
- * @brief Build a FormaBuffer, register it, construct a Mapped<T>, add the
- *        element to @p surface's layer, and register it with the
- *        application Bridge.
+ * @brief Construct a Mapped<T> drawing as a slice of the surface's shared
+ *        buffer, add the element to @p surface's layer, and register it
+ *        with the application Bridge.
  *
  * Reads the layer and window from @p surface.
  *
@@ -117,10 +117,11 @@ template <typename T>
 }
 
 /**
- * @brief create_element drawing into @p target instead of a buffer of its own.
+ * @brief create_element drawing into @p target instead of the surface's
+ *        shared buffer.
  *
- * Give several elements slices of one buffer, from FormaTarget::slice_of on a
- * create_buffer buffer, and they draw together. Otherwise matches the
+ * The escape hatch for an element that cannot share, such as one with a
+ * custom shader: a slice of a create_buffer buffer. Otherwise matches the
  * Surface overload above.
  *
  * @param target  Where the element's geometry is written.
@@ -142,11 +143,10 @@ template <typename T>
  *        text editing onto it in one call.
  *
  * The one-call convenience over TextField::place(), the same split
- * Portal::Forma::create<T> already has with a bare Form<T>. This builds
- * the buffer (create_buffer, which TextField.cpp itself may never call;
- * see TextField.hpp) and delegates. Build the buffer and TextField by hand
- * instead for anything needing a non-default buffer setup (a shared
- * texture slot alongside a background quad, for instance).
+ * Portal::Forma::create<T> already has with a bare Form<T>. The field is a
+ * slice of the surface's shared buffer. Build the buffer and TextField by
+ * hand instead for anything needing a non-default buffer setup (a custom
+ * shader, for instance).
  *
  * @p scrollable composes a second primitive in, the same way: false (the
  * default) matches every prior call exactly, and @p bounds is the field's
@@ -224,8 +224,9 @@ struct Tend {
     /// @brief Starting value written into MappedState. Consumed by place().
     T initial {};
 
-    /// @brief Optional shared buffer from create_buffer(). When set, place()
-    ///        draws the element as a slice of it instead of a buffer of its own.
+    /// @brief Optional buffer from create_buffer(), the escape hatch for a Form
+    ///        that cannot share. When set, place() draws the element as a slice
+    ///        of it instead of the surface's shared buffer.
     std::shared_ptr<Buffers::FormaBuffer> batch;
 
     /// @brief Populated by place(). The real, fully wired element.

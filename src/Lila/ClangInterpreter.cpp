@@ -117,6 +117,12 @@ bool ClangInterpreter::initialize(bool skip_host_library_load)
     m_impl->compile_flags.clear();
     m_impl->compile_flags.emplace_back("-std=c++23");
 
+#if defined(MAYAFLUX_ARCH_X64) && defined(__AVX2__)
+    m_impl->compile_flags.emplace_back("-mavx");
+    m_impl->compile_flags.emplace_back("-mavx2");
+    m_impl->compile_flags.emplace_back("-mfma");
+#endif
+
 #ifdef MAYAFLUX_PLATFORM_LINUX
     m_impl->compile_flags.emplace_back("-mcmodel=large");
     m_impl->compile_flags.emplace_back("-fPIC");

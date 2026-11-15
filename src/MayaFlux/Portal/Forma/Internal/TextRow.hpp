@@ -33,14 +33,15 @@ namespace MayaFlux::Portal::Forma::internal {
  * @brief Register a clickable text row on @p surface.
  *
  * Draws @p label over the idle background and adds the element to the
- * surface's layer. The row is a slice of @p batch when one is given, so rows
- * that share a buffer draw together; otherwise it gets a buffer of its own.
+ * surface's layer. The row is a slice of @p batch when one is given, otherwise
+ * of the surface's shared buffer.
  *
  * @param surface Surface to register on.
  * @param label   Row text.
  * @param bounds  NDC region of the row.
  * @param dims    Pixel size to lay the text out at.
- * @param batch   Text-capable buffer to draw into as a slice, or empty.
+ * @param batch   Text-capable buffer to draw into as a slice, or empty for
+ *                the surface's shared buffer.
  * @return Element id on the layer, and the row element for later set_text().
  */
 [[nodiscard]] MAYAFLUX_API std::pair<uint32_t, std::shared_ptr<Element>> add_text_row(

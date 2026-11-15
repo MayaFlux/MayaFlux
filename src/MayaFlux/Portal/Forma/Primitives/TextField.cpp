@@ -6,6 +6,7 @@
 #include "MayaFlux/Portal/Text/Text.hpp"
 
 #include "MayaFlux/Buffers/Forma/FormaBuffer.hpp"
+#include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Kinesis/GeometryPrimitives.hpp"
 
 namespace MayaFlux::Portal::Forma {
@@ -272,6 +273,24 @@ TextField& TextField::scrollable(
     surface.ctx().on_scroll(element_id, scroller.wheel_handler(surface));
 
     return *this;
+}
+
+TextField& TextField::scrollable(
+    Surface& surface,
+    Scrollable& scroller,
+    std::shared_ptr<Portal::Text::PressParams> in_params,
+    std::string initial_text,
+    float content_multiplier)
+{
+    if (!scroller.buf) {
+        MF_WARN(Journal::Component::Portal, Journal::Context::API,
+            "TextField::scrollable: the scroller has not been placed");
+        return *this;
+    }
+
+    return scrollable(
+        FormaTarget::slice_of(scroller.buf.buffer(), Graphics::PrimitiveTopology::TRIANGLE_LIST),
+        surface, scroller, std::move(in_params), std::move(initial_text), content_multiplier);
 }
 
 void TextField::reposition(Kinesis::AABB2D new_bounds)

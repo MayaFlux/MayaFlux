@@ -132,14 +132,14 @@ struct Scrollable {
      * @brief Register the viewport element, wire wheel scrolling, and
      *        populate scroll, offset, buf, and cursor_out.
      *
-     * @param in_buf   Pre-created buffer for the viewport background. Its
-     *                 render processor is scissored to @p viewport, so give a
-     *                 slice of a create_buffer() buffer and create the tracked
-     *                 elements as slices of the same buffer: one scissor then
-     *                 clips them all. Elements on buffers of their own are
-     *                 scissored individually by track(), as before. Do not
-     *                 share this buffer with anything that must draw outside
-     *                 the viewport.
+     * @param in_buf   Buffer for the viewport background, the escape hatch for
+     *                 a viewport that needs its own render setup. Its render
+     *                 processor is scissored to @p viewport, so give a slice
+     *                 of a create_buffer() buffer and do not share it with
+     *                 anything that must draw outside the viewport. Elements
+     *                 tracked from the surface's shared buffer move into it;
+     *                 elements on buffers of their own are scissored
+     *                 individually by track().
      * @param surface  Surface to register the viewport on.
      * @param viewport NDC region: hit-test bounds, wheel-scroll trigger
      *                 region, background quad, and the Scissor clip every
@@ -150,6 +150,15 @@ struct Scrollable {
         FormaTarget in_buf,
         Surface& surface,
         Kinesis::AABB2D viewport);
+
+    /**
+     * @brief place() with a buffer of its own, scissored to @p viewport and
+     *        drawn above the surface's shared buffer.
+     *
+     * Tracked elements move into it, so nothing needs to be created on it by
+     * hand.
+     */
+    MAYAFLUX_API Scrollable& place(Surface& surface, Kinesis::AABB2D viewport);
 
     // =========================================================================
     // Post-placement
@@ -185,8 +194,11 @@ struct Scrollable {
      * @param base_bounds This element's current on-screen NDC bounds - the
      *                    direct return of cursor_out.advance(), scrolled or not.
      * @param reposition  Called with the scrolled bounds on every scroll.
-     * @param clip_buf    Optional. When given, Kinesis::Scissor::from(viewport_bounds)
-     *                    is set on its render processor immediately, so the
+     * @param clip_buf    Optional. When it is a slice of the Layer's shared
+     *                    buffer, the slice moves into the viewport's buffer,
+     *                    which is already scissored. Otherwise
+     *                    Kinesis::Scissor::from(viewport_bounds) is set on its
+     *                    own render processor immediately. Either way the
      *                    element is clipped to the viewport from the start.
      * @return *this, so place()/track()/indicator() can chain into one
      *         expression for the common case of a single tracked item -
@@ -295,6 +307,15 @@ private:
  */
 [[nodiscard]] MAYAFLUX_API Scrollable make_scrollable(
     FormaTarget buf,
+    Surface& surface,
+    Kinesis::AABB2D viewport,
+    glm::vec3 background_color = glm::vec3(0.08F, 0.08F, 0.1F),
+    float wheel_speed = 0.05F);
+
+/**
+ * @brief make_scrollable with a buffer of its own, see Scrollable::place(Surface&, Kinesis::AABB2D).
+ */
+[[nodiscard]] MAYAFLUX_API Scrollable make_scrollable(
     Surface& surface,
     Kinesis::AABB2D viewport,
     glm::vec3 background_color = glm::vec3(0.08F, 0.08F, 0.1F),

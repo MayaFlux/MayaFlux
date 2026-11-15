@@ -113,11 +113,35 @@ MAYAFLUX_API bool is_initialized();
         std::string name);
 
 // =============================================================================
+// Draw target
+// =============================================================================
+
+/**
+ * @brief A place for an element on @p surface to draw, with no buffer to make.
+ *
+ * A new slice of @p topology in the buffer the surface's elements already
+ * share, drawn after the others. Hand it to Element::with_buffer for an
+ * element built by hand, or to a Form factory that draws a second shape, such
+ * as the handle of Geometry::stroke_slider. The slice carries the text slot,
+ * so Element::with_text works on it.
+ *
+ * @param surface  Surface whose layer holds the shared buffer.
+ * @param topology Topology of the slice.
+ */
+[[nodiscard]] MAYAFLUX_API FormaTarget slice(
+    Surface& surface,
+    Graphics::PrimitiveTopology topology = Graphics::PrimitiveTopology::TRIANGLE_LIST);
+
+// =============================================================================
 // Standalone buffer
 // =============================================================================
 
 /**
  * @brief Construct and register a FormaBuffer without creating a Mapped<T>.
+ *
+ * The escape hatch for content that cannot share the surface's buffer: a
+ * custom shader or render config, GPU bindings, or images. Everything else
+ * is placed with no buffer at all.
  *
  * The buffer triangulates, so slices of any topology draw together as one
  * batch. Elements draw into slices of it, made with FormaTarget::slice_of,

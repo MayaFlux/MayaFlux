@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:mf="urn:mayaflux:forma">
+
+  <xs:annotation>
+    <xs:documentation>
+      Forma document, version 1: the structure only. A document holds templates, each
+      naming one factory by the name of its single child, and surfaces holding
+      instances of those templates and elements. An element declares one placed form:
+      its name, its state, the Layer calls as plain names and a form that calls a
+      function by name with that function's own parameter names. What a factory or a
+      function accepts is decided by what the host registered, so the factory element,
+      an instance's placement attributes and a form's arguments are not described here.
+      Not enforced by this schema and checked on load: a second templates element, and
+      that a factory, call or action name is registered. Ids are unique across
+      templates, surfaces, instances and element names.
+    </xs:documentation>
+  </xs:annotation>
+
+  <xs:import namespace="urn:mayaflux:forma" schemaLocation="forma-layer.xsd"/>
+
+  <xs:complexType name="FormaTemplateType">
+    <xs:sequence>
+      <xs:any namespace="##local" processContents="skip"/>
+    </xs:sequence>
+    <xs:attribute name="id" type="xs:string" use="required"/>
+  </xs:complexType>
+
+  <xs:complexType name="FormaTemplatesType">
+    <xs:sequence>
+      <xs:element name="template" type="FormaTemplateType" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:simpleType name="FormaEventType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="MOUSE_BUTTON_PRESSED"/>
+      <xs:enumeration value="MOUSE_BUTTON_RELEASED"/>
+      <xs:enumeration value="MOUSE_MOTION"/>
+      <xs:enumeration value="MOUSE_ENTERED"/>
+      <xs:enumeration value="MOUSE_EXITED"/>
+      <xs:enumeration value="MOUSE_SCROLLED"/>
+      <xs:enumeration value="KEY_PRESSED"/>
+      <xs:enumeration value="KEY_RELEASED"/>
+      <xs:enumeration value="KEY_REPEAT"/>
+      <xs:enumeration value="TEXT_INPUT"/>
+      <xs:enumeration value="WINDOW_FOCUS_GAINED"/>
+      <xs:enumeration value="WINDOW_FOCUS_LOST"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="FormaButtonType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="Left"/>
+      <xs:enumeration value="Right"/>
+      <xs:enumeration value="Middle"/>
+      <xs:enumeration value="Button4"/>
+      <xs:enumeration value="Button5"/>
+      <xs:enumeration value="Button6"/>
+      <xs:enumeration value="Button7"/>
+      <xs:enumeration value="Button8"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:complexType name="FormaOnType">
+    <xs:annotation>
+      <xs:documentation>
+        Attaches a host action to a window event that reaches the instance. event is a window event type and button an
+        IO::MouseButtons enumerator, both by their C++ names. button applies to MOUSE_BUTTON_PRESSED, MOUSE_BUTTON_RELEASED and
+        MOUSE_MOTION. Without it a press or release comes from any button and MOUSE_MOTION is hover motion; with it MOUSE_MOTION
+        is the drag of that button. key names an IO::Keys key and is required exactly for KEY_PRESSED, KEY_RELEASED and KEY_REPEAT.
+        Further attributes are the action's own parameters.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:attribute name="event" type="FormaEventType" use="required"/>
+    <xs:attribute name="button" type="FormaButtonType"/>
+    <xs:attribute name="key" type="xs:string"/>
+    <xs:attribute name="action" type="xs:string" use="required"/>
+    <xs:anyAttribute namespace="##local" processContents="skip"/>
+  </xs:complexType>
+
+  <xs:complexType name="FormaInstanceType">
+    <xs:annotation>
+      <xs:documentation>
+        One placement of a template. Attributes in no namespace other than id and
+        template are the placement attributes the template's factory describes.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="on" type="FormaOnType" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute name="id" type="xs:string" use="required"/>
+    <xs:attribute name="template" type="xs:string" use="required"/>
+    <xs:attribute ref="mf:hidden"/>
+    <xs:attribute ref="mf:interactive"/>
+    <xs:attribute ref="mf:front"/>
+    <xs:attribute ref="mf:back"/>
+    <xs:attribute ref="mf:relate"/>
+    <xs:attribute ref="mf:clip"/>
+    <xs:anyAttribute namespace="##local" processContents="skip"/>
+  </xs:complexType>
+
+  <xs:complexType name="FormaFormType">
+    <xs:annotation>
+      <xs:documentation>
+        Either calls a function the host registered or gives vertices to draw. With call, every
+        other attribute is one of the function's own parameters, written by name: the leading
+        parameters are given and a trailing run may be left to the function's defaults, and the
+        form has no children. With topology, the children are vertex elements in the fields of a
+        Kakshya vertex, after an optional defaults element, written in NDC. Which of the two,
+        and what each accepts, is checked on load.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:any namespace="##local" processContents="skip" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute name="call" type="xs:string"/>
+    <xs:attribute name="topology" type="xs:string"/>
+    <xs:anyAttribute namespace="##local" processContents="skip"/>
+  </xs:complexType>
+
+  <xs:complexType name="FormaBoundsType">
+    <xs:annotation>
+      <xs:documentation>Element::with_bounds: the fast reject box, as min and max.</xs:documentation>
+    </xs:annotation>
+    <xs:attribute name="min" type="xs:string" use="required"/>
+    <xs:attribute name="max" type="xs:string" use="required"/>
+  </xs:complexType>
+
+  <xs:complexType name="FormaCircleType">
+    <xs:attribute name="center" type="xs:string" use="required"/>
+    <xs:attribute name="radius" type="xs:string" use="required"/>
+  </xs:complexType>
+
+  <xs:complexType name="FormaPolygonType">
+    <xs:attribute name="points" type="xs:string" use="required"/>
+  </xs:complexType>
+
+  <xs:complexType name="FormaStrokeType">
+    <xs:attribute name="points" type="xs:string" use="required"/>
+    <xs:attribute name="half_thickness" type="xs:string" use="required"/>
+  </xs:complexType>
+
+  <xs:group name="FormaRegion">
+    <xs:annotation>
+      <xs:documentation>
+        A containment test, named as the Element call or the Kinesis function. The three
+        combinations hold exactly two regions.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:choice>
+      <xs:element name="circle" type="FormaCircleType"/>
+      <xs:element name="polygon" type="FormaPolygonType"/>
+      <xs:element name="stroke" type="FormaStrokeType"/>
+      <xs:element name="union_bounds" type="FormaCombineType"/>
+      <xs:element name="intersect_bounds" type="FormaCombineType"/>
+      <xs:element name="subtract_bounds" type="FormaCombineType"/>
+    </xs:choice>
+  </xs:group>
+
+  <xs:complexType name="FormaCombineType">
+    <xs:sequence>
+      <xs:group ref="FormaRegion"/>
+      <xs:group ref="FormaRegion"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:group name="FormaElementPart">
+    <xs:choice>
+      <xs:element name="on" type="FormaOnType"/>
+      <xs:element name="bounds" type="FormaBoundsType"/>
+      <xs:group ref="FormaRegion"/>
+    </xs:choice>
+  </xs:group>
+
+  <xs:complexType name="FormaElementType">
+    <xs:annotation>
+      <xs:documentation>
+        One placed form, declared as C++ declares it. name shares the namespace of ids.
+        state is the initial value in the text form of the type the function's form
+        carries. visible, interactive, relate, front, back and clip are the Layer calls
+        that follow placement, with clip as min.x min.y max.x max.y. Exactly one form, any
+        number of on elements, at most one bounds and at most one region, which set the
+        element's spatial fields after the form's own.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:group ref="FormaElementPart" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="form" type="FormaFormType"/>
+      <xs:group ref="FormaElementPart" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute name="name" type="xs:string" use="required"/>
+    <xs:attribute name="state" type="xs:string"/>
+    <xs:attribute name="visible" type="xs:boolean"/>
+    <xs:attribute name="interactive" type="xs:boolean"/>
+    <xs:attribute name="front" type="xs:boolean"/>
+    <xs:attribute name="back" type="xs:boolean"/>
+    <xs:attribute name="relate" type="xs:string"/>
+    <xs:attribute name="clip" type="xs:string"/>
+  </xs:complexType>
+
+  <xs:complexType name="FormaSurfaceType">
+    <xs:choice minOccurs="0" maxOccurs="unbounded">
+      <xs:element name="instance" type="FormaInstanceType"/>
+      <xs:element name="element" type="FormaElementType"/>
+    </xs:choice>
+    <xs:attribute name="id" type="xs:string" use="required"/>
+  </xs:complexType>
+
+  <xs:element name="forma">
+    <xs:complexType>
+      <xs:choice minOccurs="0" maxOccurs="unbounded">
+        <xs:element name="templates" type="FormaTemplatesType"/>
+        <xs:element name="surface" type="FormaSurfaceType">
+          <xs:key name="instanceInSurface">
+            <xs:selector xpath="instance|element"/>
+            <xs:field xpath="@id|@name"/>
+          </xs:key>
+          <xs:keyref name="relateInSurface" refer="instanceInSurface">
+            <xs:selector xpath="instance|element"/>
+            <xs:field xpath="@mf:relate|@relate"/>
+          </xs:keyref>
+        </xs:element>
+      </xs:choice>
+      <xs:attribute name="version" type="xs:string" use="required" fixed="1"/>
+    </xs:complexType>
+
+    <xs:unique name="documentId">
+      <xs:selector xpath="templates/template|surface|surface/instance|surface/element"/>
+      <xs:field xpath="@id|@name"/>
+    </xs:unique>
+    <xs:key name="templateId">
+      <xs:selector xpath="templates/template"/>
+      <xs:field xpath="@id"/>
+    </xs:key>
+    <xs:keyref name="instanceTemplate" refer="templateId">
+      <xs:selector xpath="surface/instance"/>
+      <xs:field xpath="@template"/>
+    </xs:keyref>
+  </xs:element>
+
+</xs:schema>
