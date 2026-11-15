@@ -62,6 +62,20 @@ public:
         = 0;
 
     /**
+     * @brief Bind to a new grid of the same duct while it keeps sounding.
+     * @note Allocates nothing. Called instead of prepare when the shape,
+     *       losses or mouth volume change, so a slide of length does not
+     *       restart the sound. The default is prepare, which resets.
+     */
+    virtual void retarget(
+        const Kinesis::Acoustics::DuctGrid& grid,
+        const Kinesis::Acoustics::DuctSpec& spec,
+        DuctEnd end)
+    {
+        prepare(grid, spec, end);
+    }
+
+    /**
      * @brief Advance the end cell and its coupling by one sample.
      * @param end_pressure Pressure of the end cell at the start of the sample
      * @param interior_flow Volume velocity leaving the end cell into the duct,
@@ -139,6 +153,8 @@ public:
         const Kinesis::Acoustics::DuctSpec& spec, DuctEnd end) const override;
     void prepare(const Kinesis::Acoustics::DuctGrid& grid,
         const Kinesis::Acoustics::DuctSpec& spec, DuctEnd end) override;
+    void retarget(const Kinesis::Acoustics::DuctGrid& grid,
+        const Kinesis::Acoustics::DuctSpec& spec, DuctEnd end) override;
     [[nodiscard]] std::pair<double, double> couple(double end_pressure, double interior_flow) override;
     void reset() override;
 
@@ -194,6 +210,8 @@ public:
         const Kinesis::Acoustics::DuctSpec& spec, DuctEnd end) const override;
     void prepare(const Kinesis::Acoustics::DuctGrid& grid,
         const Kinesis::Acoustics::DuctSpec& spec, DuctEnd end) override;
+    void retarget(const Kinesis::Acoustics::DuctGrid& grid,
+        const Kinesis::Acoustics::DuctSpec& spec, DuctEnd end) override;
     [[nodiscard]] std::pair<double, double> couple(double end_pressure, double interior_flow) override;
     void reset() override;
 
@@ -237,6 +255,8 @@ public:
     [[nodiscard]] bool accepts(const Kinesis::Acoustics::DuctGrid& grid,
         const Kinesis::Acoustics::DuctSpec& spec, DuctEnd end) const override;
     void prepare(const Kinesis::Acoustics::DuctGrid& grid,
+        const Kinesis::Acoustics::DuctSpec& spec, DuctEnd end) override;
+    void retarget(const Kinesis::Acoustics::DuctGrid& grid,
         const Kinesis::Acoustics::DuctSpec& spec, DuctEnd end) override;
     [[nodiscard]] std::pair<double, double> couple(double end_pressure, double interior_flow) override;
     void reset() override;

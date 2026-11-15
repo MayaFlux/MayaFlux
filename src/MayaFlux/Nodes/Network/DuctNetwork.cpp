@@ -24,6 +24,7 @@ struct DuctNetwork::Prepared {
     double viscosity {};
     std::vector<double> pressure;
     std::vector<double> velocity;
+    bool keep_state { false };
     std::shared_ptr<TerminationOperator> mouth;
     std::shared_ptr<TerminationOperator> bell;
 };
@@ -160,6 +161,7 @@ void DuctNetwork::publish(std::shared_ptr<Prepared> next)
             m_handoff.store(k_empty, std::memory_order_release);
         } else if (state == k_ready) {
             if (m_handoff.compare_exchange_strong(state, k_busy, std::memory_order_acq_rel)) {
+                next->keep_state = next->keep_state && m_slot->keep_state;
                 m_slot = std::move(next);
                 m_handoff.store(k_ready, std::memory_order_release);
                 return;
@@ -183,21 +185,32 @@ void DuctNetwork::install_pending()
 
     std::swap(m_active, m_slot);
     m_handoff.store(k_retired, std::memory_order_release);
-    bind(*m_active);
+
+    const bool carry = m_active->keep_state && m_slot && !m_slot->pressure.empty();
+    if (carry) {
+        Acoustics::resample_line(m_slot->pressure, m_active->pressure, 0.0);
+        Acoustics::resample_line(m_slot->velocity, m_active->velocity, 0.5);
+    }
+    bind(*m_active, carry);
 }
 
-void DuctNetwork::bind(Prepared& prepared)
+void DuctNetwork::bind(Prepared& prepared, bool keep)
 {
-    prepared.mouth->prepare(prepared.grid, prepared.spec, DuctEnd::MOUTH);
-    prepared.bell->prepare(prepared.grid, prepared.spec, DuctEnd::BELL);
-    m_previous_outflow = 0.0;
+    if (keep) {
+        prepared.mouth->retarget(prepared.grid, prepared.spec, DuctEnd::MOUTH);
+        prepared.bell->retarget(prepared.grid, prepared.spec, DuctEnd::BELL);
+    } else {
+        prepared.mouth->prepare(prepared.grid, prepared.spec, DuctEnd::MOUTH);
+        prepared.bell->prepare(prepared.grid, prepared.spec, DuctEnd::BELL);
+        m_previous_outflow = 0.0;
+    }
     m_field_points.store(prepared.grid.intervals + 1, std::memory_order_relaxed);
 }
 
 void DuctNetwork::initialize()
 {
     if (m_active) {
-        bind(*m_active);
+        bind(*m_active, false);
     }
 }
 
@@ -221,6 +234,8 @@ bool DuctNetwork::set_length(double length)
         return false;
     }
 
+    next->keep_state = true;
+
     m_length = length;
     publish(std::move(next));
     return true;
@@ -240,6 +255,8 @@ bool DuctNetwork::set_profile(const std::vector<double>& radii)
         return false;
     }
 
+    next->keep_state = true;
+
     m_profile = std::move(profile);
     publish(std::move(next));
     return true;
@@ -254,6 +271,8 @@ bool DuctNetwork::set_profile(std::function<double(double)> radius)
         return false;
     }
 
+    next->keep_state = true;
+
     m_profile = std::move(profile);
     publish(std::move(next));
     return true;
@@ -266,6 +285,8 @@ bool DuctNetwork::set_mouth_volume(double volume)
     if (!next) {
         return false;
     }
+
+    next->keep_state = true;
 
     m_mouth_volume = volume;
     publish(std::move(next));
@@ -281,6 +302,8 @@ bool DuctNetwork::set_wall_losses(double friction, double viscosity)
         return false;
     }
 
+    next->keep_state = true;
+
     m_losses = losses;
     publish(std::move(next));
     return true;
@@ -295,6 +318,8 @@ bool DuctNetwork::use_viscothermal_losses()
         return false;
     }
 
+    next->keep_state = true;
+
     m_losses = losses;
     publish(std::move(next));
     return true;
@@ -307,6 +332,8 @@ bool DuctNetwork::set_mouth(std::shared_ptr<TerminationOperator> termination)
     if (!next) {
         return false;
     }
+
+    next->keep_state = true;
 
     m_operator_chain->remove(m_mouth);
     m_mouth = std::move(termination);
@@ -322,6 +349,8 @@ bool DuctNetwork::set_bell(std::shared_ptr<TerminationOperator> termination)
     if (!next) {
         return false;
     }
+
+    next->keep_state = true;
 
     m_operator_chain->remove(m_bell);
     m_bell = std::move(termination);

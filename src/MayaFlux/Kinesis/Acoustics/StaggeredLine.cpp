@@ -70,4 +70,28 @@ double sample_pressure(std::span<const double> pressure, double position) noexce
     return pressure[index] + fraction * (pressure[index + 1] - pressure[index]);
 }
 
+void resample_line(
+    std::span<const double> source,
+    std::span<double> target,
+    double offset) noexcept
+{
+    if (source.empty()) {
+        std::ranges::fill(target, 0.0);
+        return;
+    }
+
+    const double from_span = static_cast<double>(source.size()) - 1.0 + 2.0 * offset;
+    const double to_span = static_cast<double>(target.size()) - 1.0 + 2.0 * offset;
+    const double last = static_cast<double>(source.size() - 1);
+
+    for (size_t i = 0; i < target.size(); ++i) {
+        const double position = to_span > 0.0 ? (static_cast<double>(i) + offset) / to_span : 0.0;
+        const double index = std::clamp(position * from_span - offset, 0.0, last);
+        const auto below = static_cast<size_t>(index);
+        const size_t above = std::min(below + 1, source.size() - 1);
+        const double fraction = index - static_cast<double>(below);
+        target[i] = source[below] + fraction * (source[above] - source[below]);
+    }
+}
+
 } // namespace MayaFlux::Kinesis::Acoustics

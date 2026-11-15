@@ -215,7 +215,7 @@ private:
 
     void publish(std::shared_ptr<Prepared> next);
     void install_pending();
-    void bind(Prepared& prepared);
+    void bind(Prepared& prepared, bool keep);
     void update_mapped_parameters();
     void publish_block(std::span<const double> block);
 

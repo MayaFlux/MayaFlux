@@ -94,6 +94,14 @@ void ReedOperator::prepare(const Acoustics::DuctGrid& grid, const Acoustics::Duc
     process(0.0F);
 }
 
+void ReedOperator::retarget(const Acoustics::DuctGrid& grid, const Acoustics::DuctSpec& spec, DuctEnd end)
+{
+    m_end_gain = end_gain_of(grid, end);
+    m_density = spec.air_density;
+    m_time_step = grid.time_step;
+    process(0.0F);
+}
+
 void ReedOperator::reset()
 {
     m_pressure = 0.0;
@@ -278,6 +286,16 @@ void RadiationOperator::prepare(const Acoustics::DuctGrid& grid, const Acoustics
     m_state = {};
 }
 
+void RadiationOperator::retarget(const Acoustics::DuctGrid& grid, const Acoustics::DuctSpec& spec, DuctEnd end)
+{
+    const auto coefficients = coefficients_for(grid, spec, end);
+    m_ready = coefficients.has_value();
+    if (m_ready) {
+        m_coefficients = *coefficients;
+    }
+    m_end_gain = end_gain_of(grid, end);
+}
+
 void RadiationOperator::reset()
 {
     m_state = {};
@@ -314,6 +332,11 @@ void JunctionOperator::prepare(const Acoustics::DuctGrid& grid, const Acoustics:
 {
     m_end_gain = end_gain_of(grid, end);
     reset();
+}
+
+void JunctionOperator::retarget(const Acoustics::DuctGrid& grid, const Acoustics::DuctSpec& /*spec*/, DuctEnd end)
+{
+    m_end_gain = end_gain_of(grid, end);
 }
 
 void JunctionOperator::reset()

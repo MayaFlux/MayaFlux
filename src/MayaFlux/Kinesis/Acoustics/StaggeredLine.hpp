@@ -90,4 +90,22 @@ MAYAFLUX_API void advance_pressure(
  */
 [[nodiscard]] MAYAFLUX_API double sample_pressure(std::span<const double> pressure, double position) noexcept;
 
+/**
+ * @brief Linearly interpolate a line of values onto another of a different size
+ *        by relative position.
+ * @param source Values on the old line
+ * @param target Receives the values on the new line, every element is written
+ * @param offset Where the first value sits in units of the spacing: 0 for the
+ *        N + 1 pressures, which lie on the grid points, and 0.5 for the N
+ *        velocities, which lie on the half points
+ *
+ * The i-th of m values lies at (i + offset) / (m - 1 + 2 offset) of the
+ * length. Positions outside the source are clamped to its ends. An empty
+ * source leaves the target zero. Allocates nothing.
+ */
+MAYAFLUX_API void resample_line(
+    std::span<const double> source,
+    std::span<double> target,
+    double offset = 0.0) noexcept;
+
 } // namespace MayaFlux::Kinesis::Acoustics
