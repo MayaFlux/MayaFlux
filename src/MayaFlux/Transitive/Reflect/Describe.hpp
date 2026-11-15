@@ -14,6 +14,21 @@
 #define MF_DESCRIBE(...)
 #endif
 
+/**
+ * @def MF_DESCRIBE_FUNCTION(Function)
+ * @brief Requests the parameter names of a function at namespace scope.
+ *
+ * Name the function as an expression: &Geometry::horizontal_fader, an explicit
+ * specialization such as &drag_with<float>, or a cast that picks one overload.
+ * Include the header's generated sidecar (Name.signatures.hpp) once after the
+ * last request. The mayaflux_signatures tool reads the request in its functions
+ * mode and writes MayaFlux::Reflect::Generated::Signature<Function> into that
+ * sidecar. In ordinary compilation the macro expands to nothing.
+ */
+#ifndef MF_DESCRIBE_FUNCTION
+#define MF_DESCRIBE_FUNCTION(...)
+#endif
+
 namespace MayaFlux::Reflect::Generated {
 
 template <typename T>
@@ -21,6 +36,18 @@ struct Description;
 
 template <auto Pointer>
 struct Member;
+
+/**
+ * @struct Signature
+ * @brief The parameter names of a described function, which C++ cannot supply itself.
+ *
+ * A generated specialization holds name, required (how many leading parameters
+ * have no default, so a call needs at least that many arguments) and parameters
+ * (every parameter name in order). The parameter types and the call come from the
+ * function's own type, as Function is a pointer to it.
+ */
+template <auto Function>
+struct Signature;
 
 /**
  * @struct Member

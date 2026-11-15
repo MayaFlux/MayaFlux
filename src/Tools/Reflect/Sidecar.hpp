@@ -7,6 +7,9 @@ namespace MayaFlux::Reflect::Tool {
 /** @brief Path of the sidecar for @p header: Name.hpp becomes Name.describe.hpp beside it. */
 [[nodiscard]] std::filesystem::path sidecar_path(const std::filesystem::path& header);
 
+/** @brief sidecar_path() with another suffix, such as ".signatures.hpp": Name.hpp becomes Name.signatures.hpp. */
+[[nodiscard]] std::filesystem::path sidecar_path(const std::filesystem::path& header, std::string_view suffix);
+
 /** @brief The whole content of @p path, or nullopt when it cannot be read. */
 [[nodiscard]] std::optional<std::string> read_text(const std::filesystem::path& path);
 
@@ -35,5 +38,16 @@ namespace MayaFlux::Reflect::Tool {
  * @return A diagnostic, or nullopt when the placement is correct.
  */
 [[nodiscard]] std::optional<std::string> check_include(const HeaderRequests& requests);
+
+/**
+ * @brief insert_include() for any marker, given the header, the line of its last marker and the sidecar suffix.
+ * @param last_marker The line after which the include may appear.
+ */
+[[nodiscard]] bool insert_include(const std::filesystem::path& header, unsigned last_marker,
+    std::string_view suffix, bool& inserted, std::string& error);
+
+/** @brief check_include() for any marker, given the header, the line of its last marker and the sidecar suffix. */
+[[nodiscard]] std::optional<std::string> check_include(
+    const std::filesystem::path& header, unsigned last_marker, std::string_view suffix);
 
 }

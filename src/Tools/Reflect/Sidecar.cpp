@@ -40,20 +40,25 @@ std::optional<std::string> read_text(const std::filesystem::path& path)
 
 bool insert_include(const HeaderRequests& requests, bool& inserted, std::string& error)
 {
+    unsigned last_marker = 0;
+    for (const RecordRequest& record : requests.records) {
+        last_marker = std::max(last_marker, record.line);
+    }
+    return insert_include(requests.header, last_marker, ".describe.hpp", inserted, error);
+}
+
+bool insert_include(const std::filesystem::path& header, unsigned last_marker,
+    std::string_view suffix, bool& inserted, std::string& error)
+{
     inserted = false;
-    const std::string file = sidecar_path(requests.header).filename().string();
-    auto text = read_text(requests.header);
+    const std::string file = sidecar_path(header, suffix).filename().string();
+    auto text = read_text(header);
     if (!text) {
-        error = "cannot read " + requests.header.string();
+        error = "cannot read " + header.string();
         return false;
     }
     if (!include_lines(*text, file + "\"").empty()) {
         return true;
-    }
-
-    unsigned last_marker = 0;
-    for (const RecordRequest& record : requests.records) {
-        last_marker = std::max(last_marker, record.line);
     }
 
     const std::string newline = text->find("\r\n") != std::string::npos ? "\r\n" : "\n";
@@ -70,7 +75,7 @@ bool insert_include(const HeaderRequests& requests, bool& inserted, std::string&
         text->insert(offset, line);
     }
 
-    if (!write_if_changed(requests.header, *text, error)) {
+    if (!write_if_changed(header, *text, error)) {
         return false;
     }
     inserted = true;
@@ -79,7 +84,12 @@ bool insert_include(const HeaderRequests& requests, bool& inserted, std::string&
 
 std::filesystem::path sidecar_path(const std::filesystem::path& header)
 {
-    return header.parent_path() / (header.stem().string() + ".describe.hpp");
+    return sidecar_path(header, ".describe.hpp");
+}
+
+std::filesystem::path sidecar_path(const std::filesystem::path& header, std::string_view suffix)
+{
+    return header.parent_path() / (header.stem().string() + std::string(suffix));
 }
 
 std::string render_sidecar(const HeaderRequests& requests)
@@ -150,22 +160,27 @@ bool write_if_changed(const std::filesystem::path& path, const std::string& cont
 
 std::optional<std::string> check_include(const HeaderRequests& requests)
 {
-    const std::string file = sidecar_path(requests.header).filename().string();
-    const std::string quoted = file + "\"";
-
     unsigned last_marker = 0;
     for (const RecordRequest& record : requests.records) {
         last_marker = std::max(last_marker, record.line);
     }
+    return check_include(requests.header, last_marker, ".describe.hpp");
+}
 
-    const auto text = read_text(requests.header);
+std::optional<std::string> check_include(
+    const std::filesystem::path& header, unsigned last_marker, std::string_view suffix)
+{
+    const std::string file = sidecar_path(header, suffix).filename().string();
+    const std::string quoted = file + "\"";
+
+    const auto text = read_text(header);
     if (!text) {
-        return requests.header.string() + ": cannot read the header to check its sidecar include";
+        return header.string() + ": cannot read the header to check its sidecar include";
     }
 
     const std::vector<unsigned> includes = include_lines(*text, quoted);
 
-    const std::string where = requests.header.string() + ": ";
+    const std::string where = header.string() + ": ";
     if (includes.empty()) {
         return where + "add #include \"" + file + "\" after line " + std::to_string(last_marker);
     }

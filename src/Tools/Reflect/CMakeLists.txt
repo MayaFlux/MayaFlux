@@ -106,6 +106,9 @@ mayaflux_clang_tool(mayaflux_reflect)
 add_executable(mayaflux_signatures
     MayaFluxSignatures.cpp
     Collector.cpp
+    Discovery.cpp
+    FunctionCollector.cpp
+    FunctionSidecar.cpp
     Scan.cpp
     Sidecar.cpp
     SignatureCollector.cpp

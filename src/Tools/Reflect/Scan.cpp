@@ -11,6 +11,10 @@ namespace {
 #define MF_REFLECT_JOIN_IMPL(a, b) a##b
 #define MF_REFLECT_JOIN(a, b) MF_REFLECT_JOIN_IMPL(a, b)
 #define MF_DESCRIBE(...) using MF_REFLECT_JOIN(mf_reflection_request_, __COUNTER__) = __VA_ARGS__;
+#ifdef MF_DESCRIBE_FUNCTION
+#undef MF_DESCRIBE_FUNCTION
+#endif
+#define MF_DESCRIBE_FUNCTION(...) inline constexpr auto MF_REFLECT_JOIN(mf_signature_request_, __COUNTER__) = __VA_ARGS__;
 )";
 
     std::filesystem::path absolute_of(const std::string& file)

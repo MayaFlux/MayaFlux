@@ -29,6 +29,7 @@
 #include <clang/AST/DeclTemplate.h>
 #include <clang/AST/QualTypeNames.h>
 #include <clang/AST/RecursiveASTVisitor.h>
+#include <clang/AST/TemplateBase.h>
 #include <clang/ASTMatchers/ASTMatchFinder.h>
 #include <clang/ASTMatchers/ASTMatchers.h>
 #include <clang/Basic/SourceManager.h>
