@@ -379,14 +379,8 @@ public:
     virtual bool has_operator() const { return false; }
 
     /**
-     * @brief Access the secondary operator chain.
-     *
-     * The chain holds operators that run after the primary operator each
-     * process_batch() cycle. Subclasses call get_operator_chain()->process(dt)
-     * at the appropriate point in their process_batch() implementation.
-     *
-     * Returned shared_ptr is never null -- the chain is created in NodeNetwork's
-     * constructor and lives for the lifetime of the network.
+     * @brief Access this network's operator chain.
+     * @note Each subclass determines when to process the chain.
      */
     [[nodiscard]] std::shared_ptr<OperatorChain> get_operator_chain() const
     {
@@ -472,7 +466,7 @@ protected:
     uint32_t m_frame_rate { 60 };
     std::optional<float> m_timestep;
 
-    std::shared_ptr<OperatorChain> m_operator_chain;
+    std::shared_ptr<OperatorChain> m_operator_chain = std::make_shared<OperatorChain>();
 
     /**
      * @brief Ensure initialize() is called exactly once

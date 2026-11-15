@@ -11,7 +11,6 @@ PointCloudNetwork::PointCloudNetwork()
 {
     set_topology(Topology::INDEPENDENT);
     set_output_mode(OutputMode::GRAPHICS_BIND);
-    m_operator_chain = std::make_shared<OperatorChain>();
 
     MF_INFO(Journal::Component::Nodes, Journal::Context::NodeProcessing,
         "Created empty PointCloudNetwork");
@@ -28,7 +27,6 @@ PointCloudNetwork::PointCloudNetwork(
 {
     set_topology(Topology::INDEPENDENT);
     set_output_mode(OutputMode::GRAPHICS_BIND);
-    m_operator_chain = std::make_shared<OperatorChain>();
 
     MF_INFO(Journal::Component::Nodes, Journal::Context::NodeProcessing,
         "Created PointCloudNetwork with {} points, bounds [{:.2f}, {:.2f}, {:.2f}] to [{:.2f}, {:.2f}, {:.2f}]",
