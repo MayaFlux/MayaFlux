@@ -321,7 +321,7 @@ void SignatureCollector::run(const clang::ast_matchers::MatchFinder::MatchResult
                     m_errors.push_back(entry->name + ": cannot recover default for parameter " + std::to_string(number));
                     return;
                 }
-                item.default_value = qualify_nested(text, qualified, nested);
+                item.default_value = qualify_nested(text, relative_to_root(qualified), nested);
                 DefaultArgumentVisitor visitor(headers);
                 visitor.TraverseStmt(const_cast<clang::Expr*>(parameter->getDefaultArg()));
             }
