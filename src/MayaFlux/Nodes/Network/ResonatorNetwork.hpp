@@ -425,14 +425,14 @@ private:
      * @param param "frequency", "q", "gain", "retune" or "decay"
      * @param value Scalar value from source node
      */
-    void apply_broadcast_parameter(const std::string& param, double value);
+    void apply_broadcast_parameter(ParameterKey param, double value);
 
     /**
      * @brief Apply ONE_TO_ONE values from a source network to the named parameter
      * @param param "frequency", "q", "gain", "retune" or "decay"
      * @param source NodeNetwork providing one value per resonator
      */
-    void apply_one_to_one_parameter(const std::string& param,
+    void apply_one_to_one_parameter(ParameterKey param,
         const std::shared_ptr<NodeNetwork>& source);
 
     //-------------------------------------------------------------------------
@@ -452,6 +452,7 @@ private:
     struct ParameterMapping {
         std::string param_name;
         MappingMode mode;
+        uint64_t param_hash {};
         std::shared_ptr<Node> broadcast_source;
         std::shared_ptr<NodeNetwork> network_source;
     };

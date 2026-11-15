@@ -272,6 +272,7 @@ void ResonatorNetwork::map_parameter(const std::string& param_name,
     ParameterMapping m;
     m.param_name = param_name;
     m.mode = mode;
+    m.param_hash = parameter_hash(param_name);
     m.broadcast_source = source;
     m_parameter_mappings.push_back(std::move(m));
 }
@@ -284,6 +285,7 @@ void ResonatorNetwork::map_parameter(const std::string& param_name,
     ParameterMapping m;
     m.param_name = param_name;
     m.mode = MappingMode::ONE_TO_ONE;
+    m.param_hash = parameter_hash(param_name);
     m.network_source = source_network;
     m_parameter_mappings.push_back(std::move(m));
 }
@@ -297,40 +299,41 @@ void ResonatorNetwork::unmap_parameter(const std::string& param_name)
 void ResonatorNetwork::update_mapped_parameters()
 {
     for (const auto& mapping : m_parameter_mappings) {
+        const ParameterKey key { mapping.param_name, mapping.param_hash };
         if (mapping.mode == MappingMode::BROADCAST && mapping.broadcast_source) {
             apply_broadcast_parameter(
-                mapping.param_name,
+                key,
                 mapping.broadcast_source->get_last_output());
         } else if (mapping.mode == MappingMode::ONE_TO_ONE && mapping.network_source) {
-            apply_one_to_one_parameter(mapping.param_name, mapping.network_source);
+            apply_one_to_one_parameter(key, mapping.network_source);
         }
     }
 }
 
-void ResonatorNetwork::apply_broadcast_parameter(const std::string& param, double value)
+void ResonatorNetwork::apply_broadcast_parameter(ParameterKey param, double value)
 {
-    if (param == "frequency") {
+    if (param.matches("frequency")) {
         set_all_frequencies(value);
-    } else if (param == "q") {
+    } else if (param.matches("q")) {
         set_all_q(value);
-    } else if (param == "gain") {
+    } else if (param.matches("gain")) {
         for (auto& r : m_resonators) {
             r.gain = value;
         }
-    } else if (param == "scale") {
+    } else if (param.matches("scale")) {
         m_output_scale = std::max(0.0, value);
-    } else if (param == "retune") {
+    } else if (param.matches("retune")) {
         for (size_t i = 0; i < m_resonators.size(); ++i) {
             retune(i, value);
         }
-    } else if (param == "decay") {
+    } else if (param.matches("decay")) {
         for (size_t i = 0; i < m_resonators.size(); ++i) {
             set_decay(i, value);
         }
     }
 }
 
-void ResonatorNetwork::apply_one_to_one_parameter(const std::string& param,
+void ResonatorNetwork::apply_one_to_one_parameter(ParameterKey param,
     const std::shared_ptr<NodeNetwork>& source)
 {
     const size_t count = std::min(m_resonators.size(), source->get_node_count());
@@ -340,15 +343,15 @@ void ResonatorNetwork::apply_one_to_one_parameter(const std::string& param,
         if (!val.has_value()) {
             continue;
         }
-        if (param == "frequency") {
+        if (param.matches("frequency")) {
             set_frequency(i, *val);
-        } else if (param == "q") {
+        } else if (param.matches("q")) {
             set_q(i, *val);
-        } else if (param == "gain") {
+        } else if (param.matches("gain")) {
             m_resonators[i].gain = *val;
-        } else if (param == "retune") {
+        } else if (param.matches("retune")) {
             retune(i, *val);
-        } else if (param == "decay") {
+        } else if (param.matches("decay")) {
             set_decay(i, *val);
         }
     }

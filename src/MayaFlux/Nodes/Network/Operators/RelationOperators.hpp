@@ -134,7 +134,14 @@ public:
     void begin_block()
     {
         for (const auto& binding : m_bindings) {
-            set_parameter(binding.parameter, binding.source.evaluate());
+            const double value = binding.source.evaluate();
+            if (binding.slot) {
+                *binding.slot = value;
+            } else if (binding.index) {
+                set_indexed_parameter(*binding.index, value);
+            } else {
+                set_mapped_parameter({ binding.parameter, binding.parameter_hash }, value);
+            }
         }
     }
 
@@ -152,7 +159,14 @@ public:
         if (it != m_bindings.end()) {
             it->source = std::move(source);
         } else {
-            m_bindings.push_back({ .parameter = std::move(parameter), .source = std::move(source) });
+            const auto hash = parameter_hash(parameter);
+            auto slot = mapped_parameter_slot(parameter);
+            const auto index = mapped_parameter_index(parameter);
+            m_bindings.push_back({ .parameter = std::move(parameter),
+                .parameter_hash = hash,
+                .slot = slot,
+                .index = index,
+                .source = std::move(source) });
         }
     }
 
@@ -170,6 +184,18 @@ public:
     [[nodiscard]] virtual std::span<const double> get_output_block(size_t /*index*/) const { return {}; }
 
 protected:
+    [[nodiscard]] virtual std::shared_ptr<std::optional<double>> mapped_parameter_slot(std::string_view)
+    {
+        return {};
+    }
+
+    [[nodiscard]] virtual std::optional<size_t> mapped_parameter_index(std::string_view) const
+    {
+        return std::nullopt;
+    }
+
+    virtual void set_indexed_parameter(size_t, double) { }
+
     [[nodiscard]] std::span<RelationSlot> slots() const noexcept
     {
         return m_slots ? std::span<RelationSlot>(*m_slots) : std::span<RelationSlot> {};
@@ -178,6 +204,9 @@ protected:
 private:
     struct Binding {
         std::string parameter;
+        uint64_t parameter_hash;
+        std::shared_ptr<std::optional<double>> slot;
+        std::optional<size_t> index;
         Source source;
     };
 
@@ -224,7 +253,10 @@ public:
 
 private:
     Body m_body;
-    std::map<std::string, double, std::less<>> m_parameters;
+    std::map<std::string, std::shared_ptr<std::optional<double>>, std::less<>> m_parameters;
+
+protected:
+    [[nodiscard]] std::shared_ptr<std::optional<double>> mapped_parameter_slot(std::string_view name) override;
 };
 
 /**
@@ -362,6 +394,11 @@ private:
 
     [[nodiscard]] static std::optional<size_t> coefficient_index(std::string_view param);
 
+protected:
+    [[nodiscard]] std::optional<size_t> mapped_parameter_index(std::string_view name) const override;
+    void set_indexed_parameter(size_t index, double value) override;
+
+private:
     size_t m_target;
     std::vector<size_t> m_inputs;
     std::vector<double> m_values;

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "ParameterResolver.hpp"
+
 namespace MayaFlux::Nodes::Network {
 
 class NodeNetwork;
@@ -26,6 +28,19 @@ public:
      * @brief Set operator parameter
      */
     virtual void set_parameter(std::string_view param, double value) = 0;
+
+    /** @brief Apply a cached mapping key, delegating to set_parameter by default. */
+    virtual void set_mapped_parameter(ParameterKey key, double value)
+    {
+        set_parameter(key.name, value);
+    }
+
+    /** @brief Apply a cached per-element key, delegating to apply_one_to_one by default. */
+    virtual void apply_mapped_one_to_one(
+        ParameterKey key, const std::shared_ptr<NodeNetwork>& source)
+    {
+        apply_one_to_one(key.name, source);
+    }
 
     /**
      * @brief Query operator internal state

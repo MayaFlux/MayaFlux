@@ -360,10 +360,12 @@ void PointCloudNetwork::update_mapped_parameters()
     for (const auto& mapping : m_parameter_mappings) {
         if (mapping.mode == MappingMode::BROADCAST && mapping.broadcast_source) {
             double value = mapping.broadcast_source->get_last_output();
-            m_operator->set_parameter(mapping.param_name, value);
+            m_operator->set_mapped_parameter(
+                { mapping.param_name, mapping.param_hash }, value);
 
         } else if (mapping.mode == MappingMode::ONE_TO_ONE && mapping.network_source) {
-            m_operator->apply_one_to_one(mapping.param_name, mapping.network_source);
+            m_operator->apply_mapped_one_to_one(
+                { mapping.param_name, mapping.param_hash }, mapping.network_source);
         }
     }
 }

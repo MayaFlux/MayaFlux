@@ -435,46 +435,47 @@ void ModalNetwork::process_batch(unsigned int num_samples)
 void ModalNetwork::update_mapped_parameters()
 {
     for (const auto& mapping : m_parameter_mappings) {
+        const ParameterKey key { mapping.param_name, mapping.param_hash };
         if (mapping.mode == MappingMode::BROADCAST && mapping.broadcast_source) {
             double value = mapping.broadcast_source->get_last_output();
-            apply_broadcast_parameter(mapping.param_name, value);
+            apply_broadcast_parameter(key, value);
         } else if (mapping.mode == MappingMode::ONE_TO_ONE && mapping.network_source) {
-            apply_one_to_one_parameter(mapping.param_name, mapping.network_source);
+            apply_one_to_one_parameter(key, mapping.network_source);
         }
     }
 }
 
-void ModalNetwork::apply_broadcast_parameter(const std::string& param,
+void ModalNetwork::apply_broadcast_parameter(ParameterKey param,
     double value)
 {
-    if (param == "frequency") {
+    if (param.matches("frequency")) {
         set_fundamental(value);
-    } else if (param == "decay") {
+    } else if (param.matches("decay")) {
         set_decay_multiplier(value);
-    } else if (param == "amplitude") {
+    } else if (param.matches("amplitude")) {
         for (auto& mode : m_modes) {
             mode.amplitude *= value;
         }
-    } else if (param == "scale") {
+    } else if (param.matches("scale")) {
         m_output_scale = std::max(0.0, value);
     }
 }
 
 void ModalNetwork::apply_one_to_one_parameter(
-    const std::string& param, const std::shared_ptr<NodeNetwork>& source)
+    ParameterKey param, const std::shared_ptr<NodeNetwork>& source)
 {
     if (source->get_node_count() != m_modes.size()) {
         return;
     }
 
-    if (param == "amplitude") {
+    if (param.matches("amplitude")) {
         for (size_t i = 0; i < m_modes.size(); ++i) {
             auto val = source->get_node_output(i);
             if (val) {
                 m_modes[i].amplitude *= *val;
             }
         }
-    } else if (param == "detune") {
+    } else if (param.matches("detune")) {
         for (size_t i = 0; i < m_modes.size(); ++i) {
             auto val = source->get_node_output(i);
             if (val) {
@@ -496,6 +497,7 @@ void ModalNetwork::map_parameter(const std::string& param_name,
     ParameterMapping mapping;
     mapping.param_name = param_name;
     mapping.mode = mode;
+    mapping.param_hash = parameter_hash(param_name);
     mapping.broadcast_source = source;
     mapping.network_source = nullptr;
 
@@ -511,6 +513,7 @@ void ModalNetwork::map_parameter(
     ParameterMapping mapping;
     mapping.param_name = param_name;
     mapping.mode = MappingMode::ONE_TO_ONE;
+    mapping.param_hash = parameter_hash(param_name);
     mapping.broadcast_source = nullptr;
     mapping.network_source = source_network;
 

@@ -29,22 +29,39 @@ void StepOperator::process(float frames)
 
 void StepOperator::set_parameter(std::string_view param, double value)
 {
-    m_parameters.insert_or_assign(std::string(param), value);
+    auto it = m_parameters.find(param);
+    if (it != m_parameters.end()) {
+        *it->second = value;
+    } else {
+        m_parameters.emplace(std::string(param),
+            std::make_shared<std::optional<double>>(value));
+    }
+}
+
+std::shared_ptr<std::optional<double>> StepOperator::mapped_parameter_slot(std::string_view name)
+{
+    auto it = m_parameters.find(name);
+    if (it != m_parameters.end()) {
+        return it->second;
+    }
+    auto slot = std::make_shared<std::optional<double>>();
+    m_parameters.emplace(std::string(name), slot);
+    return slot;
 }
 
 std::optional<double> StepOperator::query_state(std::string_view query) const
 {
     auto it = m_parameters.find(query);
-    if (it == m_parameters.end()) {
+    if (it == m_parameters.end() || !*it->second) {
         return std::nullopt;
     }
-    return it->second;
+    return **it->second;
 }
 
 double StepOperator::parameter(std::string_view name) const
 {
     auto it = m_parameters.find(name);
-    return it == m_parameters.end() ? 0.0 : it->second;
+    return it == m_parameters.end() || !*it->second ? 0.0 : **it->second;
 }
 
 void AdvanceOperator::process(float frames)
@@ -113,8 +130,20 @@ std::optional<size_t> DeriveOperator::coefficient_index(std::string_view param)
 void DeriveOperator::set_parameter(std::string_view param, double value)
 {
     const auto index = coefficient_index(param);
-    if (index && *index < m_coefficients.size()) {
-        m_coefficients[*index] = value;
+    if (index) {
+        set_indexed_parameter(*index, value);
+    }
+}
+
+std::optional<size_t> DeriveOperator::mapped_parameter_index(std::string_view name) const
+{
+    return coefficient_index(name);
+}
+
+void DeriveOperator::set_indexed_parameter(size_t index, double value)
+{
+    if (index < m_coefficients.size()) {
+        m_coefficients[index] = value;
     }
 }
 

@@ -32,16 +32,6 @@ enum class OutputMode : uint8_t {
 };
 
 /**
- * @enum MappingMode
- * @brief Defines how nodes map to external entities (e.g., audio channels,
- * graphics objects)
- */
-enum class MappingMode : uint8_t {
-    BROADCAST, ///< One node → all network nodes
-    ONE_TO_ONE ///< Node array/network → network nodes (must match count)
-};
-
-/**
  * @class NodeNetwork
  * @brief Abstract base class for structured collections of nodes with defined
  * relationships
@@ -538,6 +528,7 @@ protected:
     struct ParameterMapping {
         std::string param_name;
         MappingMode mode;
+        uint64_t param_hash {};
 
         // Storage for mapped sources
         std::shared_ptr<Node> broadcast_source; // For BROADCAST

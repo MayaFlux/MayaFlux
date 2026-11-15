@@ -455,12 +455,12 @@ private:
     /**
      * @brief Apply broadcast parameter to all modes
      */
-    void apply_broadcast_parameter(const std::string& param, double value);
+    void apply_broadcast_parameter(ParameterKey param, double value);
 
     /**
      * @brief Apply one-to-one parameter from another network
      */
-    void apply_one_to_one_parameter(const std::string& param,
+    void apply_one_to_one_parameter(ParameterKey param,
         const std::shared_ptr<NodeNetwork>& source);
 };
 

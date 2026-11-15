@@ -602,30 +602,31 @@ double WaveguideNetwork::get_pickup_position() const
 void WaveguideNetwork::update_mapped_parameters()
 {
     for (const auto& mapping : m_parameter_mappings) {
+        const ParameterKey key { mapping.param_name, mapping.param_hash };
         if (mapping.mode == MappingMode::BROADCAST && mapping.broadcast_source) {
             double value = mapping.broadcast_source->get_last_output();
-            apply_broadcast_parameter(mapping.param_name, value);
+            apply_broadcast_parameter(key, value);
         } else if (mapping.mode == MappingMode::ONE_TO_ONE && mapping.network_source) {
-            apply_one_to_one_parameter(mapping.param_name, mapping.network_source);
+            apply_one_to_one_parameter(key, mapping.network_source);
         }
     }
 }
 
-void WaveguideNetwork::apply_broadcast_parameter(const std::string& param, double value)
+void WaveguideNetwork::apply_broadcast_parameter(ParameterKey param, double value)
 {
-    if (param == "frequency") {
+    if (param.matches("frequency")) {
         set_fundamental(value);
-    } else if (param == "damping" || param == "loss") {
+    } else if (param.matches("damping") || param.matches("loss")) {
         set_loss_factor(value);
-    } else if (param == "position") {
+    } else if (param.matches("position")) {
         set_pickup_position(value);
-    } else if (param == "scale") {
+    } else if (param.matches("scale")) {
         m_output_scale = std::max(0.0, value);
     }
 }
 
 void WaveguideNetwork::apply_one_to_one_parameter(
-    const std::string& /*param*/,
+    ParameterKey /*param*/,
     const std::shared_ptr<NodeNetwork>& /*source*/)
 {
 }
@@ -640,6 +641,7 @@ void WaveguideNetwork::map_parameter(
     ParameterMapping mapping;
     mapping.param_name = param_name;
     mapping.mode = mode;
+    mapping.param_hash = parameter_hash(param_name);
     mapping.broadcast_source = source;
     mapping.network_source = nullptr;
 
@@ -655,6 +657,7 @@ void WaveguideNetwork::map_parameter(
     ParameterMapping mapping;
     mapping.param_name = param_name;
     mapping.mode = MappingMode::ONE_TO_ONE;
+    mapping.param_hash = parameter_hash(param_name);
     mapping.broadcast_source = nullptr;
     mapping.network_source = source_network;
 
