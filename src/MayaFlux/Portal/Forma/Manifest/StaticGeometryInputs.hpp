@@ -58,26 +58,3 @@ MF_DESCRIBE(PolygonInputs)
 }
 
 #include "StaticGeometryInputs.describe.hpp"
-
-namespace MayaFlux::Portal::Forma::Detail {
-
-inline bool vertex_count_matches_topology(Graphics::PrimitiveTopology topology, size_t count)
-{
-    using Graphics::PrimitiveTopology;
-    switch (topology) {
-    case PrimitiveTopology::POINT_LIST:
-        return count >= 1;
-    case PrimitiveTopology::LINE_LIST:
-        return count >= 2 && count % 2 == 0;
-    case PrimitiveTopology::LINE_STRIP:
-        return count >= 2;
-    case PrimitiveTopology::TRIANGLE_LIST:
-        return count >= 3 && count % 3 == 0;
-    case PrimitiveTopology::TRIANGLE_STRIP:
-    case PrimitiveTopology::TRIANGLE_FAN:
-        return count >= 3;
-    }
-    return false;
-}
-
-}

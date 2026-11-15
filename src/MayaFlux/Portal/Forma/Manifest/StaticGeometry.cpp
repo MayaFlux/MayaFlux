@@ -61,10 +61,6 @@ namespace {
 std::optional<Geometry::Form<std::monostate>> vertex_geometry_form(
     const VertexGeometryInputs& input, const RectPlacementInputs& placement, std::string& error)
 {
-    if (!Detail::vertex_count_matches_topology(input.topology, input.vertices.size())) {
-        error = "vertex count does not match the topology";
-        return std::nullopt;
-    }
     const auto region = region_of(placement, error);
     if (!region)
         return std::nullopt;

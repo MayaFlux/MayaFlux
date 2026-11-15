@@ -1,8 +1,12 @@
 #pragma once
 
 #include "ActionTable.hpp"
+#include "CallTable.hpp"
 
 namespace MayaFlux::Portal::Forma {
+
+/** @brief Attribute that names an element, which shares the namespace of ids. */
+inline constexpr std::string_view element_name_attribute { "name" };
 
 /** @brief Surfaces by the document name a host binds them to. */
 using SurfaceMap = std::map<std::string, Surface, std::less<>>;
@@ -51,6 +55,7 @@ namespace Detail {
     public:
         using Table = FactoryTable<Source, Access>;
         using Actions = ActionTable<Source, Access>;
+        using Calls = CallTable<Source, Access>;
         using Placer = typename Table::Placer;
 
         struct PreparedInstance {
@@ -66,11 +71,12 @@ namespace Detail {
         using Prepared = std::vector<PreparedInstance>;
 
         DocumentWalk(const Table& table, const Source& root, std::string& error,
-            const Actions* actions = nullptr)
+            const Actions* actions = nullptr, const Calls* calls = nullptr)
             : m_table(table)
             , m_root(root)
             , m_error(error)
             , m_actions(actions)
+            , m_calls(calls)
         {
         }
 
@@ -109,9 +115,16 @@ namespace Detail {
                 for (size_t i = 0; i < entry.instances.size(); ++i) {
                     const Source& instance = entry.instances[i];
                     const InstanceInfo& info = entry.info[i];
-                    const Source& factory_element = m_templates.at(info.template_id);
-                    const typename Table::Instantiator* decode = m_table.find(Access::name(factory_element));
-                    auto placer = std::invoke(*decode, factory_element, instance, m_error);
+                    std::optional<Placer> placer;
+                    if (info.form) {
+                        const typename Calls::Maker* make
+                            = m_calls->find(*Access::attribute(*info.form, reserved_call_attribute));
+                        placer = std::invoke(*make, *info.form, instance, m_error);
+                    } else {
+                        const Source& factory_element = m_templates.at(info.template_id);
+                        const typename Table::Instantiator* decode = m_table.find(Access::name(factory_element));
+                        placer = std::invoke(*decode, factory_element, instance, m_error);
+                    }
                     if (!placer) {
                         if (m_error.empty())
                             fail(instance, "could not prepare the instance");
@@ -231,12 +244,14 @@ namespace Detail {
             std::string template_id;
             LayerAttributes layer;
             std::vector<ActionSpec> actions;
+            std::optional<Source> form;
         };
 
         struct SurfaceInstances {
             std::string id;
             Source element;
             std::vector<Source> instances;
+            std::vector<bool> direct;
             std::vector<InstanceInfo> info;
         };
 
@@ -244,7 +259,9 @@ namespace Detail {
         const Source& m_root;
         std::string& m_error;
         const Actions* m_actions;
+        const Calls* m_calls;
         Reflect::AttributeIndex<Source, Access> m_ids { std::string(reserved_id_attribute) };
+        Reflect::AttributeIndex<Source, Access> m_names { std::string(element_name_attribute) };
         std::unordered_map<std::string, Source> m_templates;
         std::vector<SurfaceInstances> m_surfaces;
 
@@ -283,7 +300,24 @@ namespace Detail {
         {
             if (!m_ids.claim(source, m_error))
                 return std::nullopt;
-            return std::string(*Access::attribute(source, reserved_id_attribute));
+            const std::string id(*Access::attribute(source, reserved_id_attribute));
+            if (const auto held = m_names.location_of(id)) {
+                fail(source, "id " + id + " is already used by an element at row " + std::to_string(*held));
+                return std::nullopt;
+            }
+            return id;
+        }
+
+        std::optional<std::string> claim_name(const Source& source)
+        {
+            if (!m_names.claim(source, m_error))
+                return std::nullopt;
+            const std::string name(*Access::attribute(source, element_name_attribute));
+            if (const auto held = m_ids.location_of(name)) {
+                fail(source, "name " + name + " is already used as an id at row " + std::to_string(*held));
+                return std::nullopt;
+            }
+            return name;
         }
 
         bool read_templates(const Source& section)
@@ -333,13 +367,14 @@ namespace Detail {
             if (!id)
                 return false;
 
-            SurfaceInstances entry { .id = *id, .element = surface, .instances = {}, .info = {} };
+            SurfaceInstances entry { .id = *id, .element = surface, .instances = {}, .direct = {}, .info = {} };
             const bool traversed = Access::for_each_child(surface, [&](const Source& instance) {
-                if (Access::name(instance) != "instance") {
-                    return fail(instance, "<" + std::string(Access::name(instance))
-                            + "> is not allowed in <surface>");
+                const auto kind = Access::name(instance);
+                if (kind != "instance" && kind != "element") {
+                    return fail(instance, "<" + std::string(kind) + "> is not allowed in <surface>");
                 }
                 entry.instances.push_back(instance);
+                entry.direct.push_back(kind == "element");
                 return true;
             });
             if (traversed)
@@ -351,7 +386,8 @@ namespace Detail {
         {
             Reflect::TextError reason = Reflect::TextError::Invalid;
             if (!Reflect::TextCodec<bool>::decode(value, out, reason))
-                return fail(instance, "<instance> has an invalid " + std::string(name) + " attribute");
+                return fail(instance, "<" + std::string(Access::name(instance)) + "> has an invalid "
+                        + std::string(name) + " attribute");
             return true;
         }
 
@@ -483,25 +519,118 @@ namespace Detail {
         bool check_instances()
         {
             for (SurfaceInstances& entry : m_surfaces) {
-                for (const Source& instance : entry.instances) {
-                    const auto id = claim_id(instance);
-                    if (!id)
-                        return false;
-                    const auto reference = Reflect::check_reference<Source, Access>(instance,
-                        reserved_template_attribute,
-                        [this](std::string_view value) { return m_templates.contains(std::string(value)); },
-                        m_error);
-                    if (!reference)
-                        return false;
+                for (size_t k = 0; k < entry.instances.size(); ++k) {
+                    const Source& instance = entry.instances[k];
+                    InstanceInfo info;
+                    if (entry.direct[k]) {
+                        if (!read_element(instance, info))
+                            return false;
+                    } else {
+                        const auto id = claim_id(instance);
+                        if (!id)
+                            return false;
+                        const auto reference = Reflect::check_reference<Source, Access>(instance,
+                            reserved_template_attribute,
+                            [this](std::string_view value) { return m_templates.contains(std::string(value)); },
+                            m_error);
+                        if (!reference)
+                            return false;
 
-                    InstanceInfo info { .id = *id, .template_id = std::string(*reference), .layer = {}, .actions = {} };
-                    if (!read_layer_attributes(instance, info.layer) || !read_actions(instance, info))
-                        return false;
+                        info = InstanceInfo { .id = *id, .template_id = std::string(*reference), .layer = {}, .actions = {}, .form = std::nullopt };
+                        if (!read_layer_attributes(instance, info.layer) || !read_actions(instance, info))
+                            return false;
+                    }
                     entry.info.push_back(std::move(info));
                 }
                 if (!check_relations(entry))
                     return false;
             }
+            return true;
+        }
+
+        /**
+         * An element declares what C++ declares for one placed form: its name, the initial
+         * state, the Layer calls that follow placement (visible, interactive, relate, front, back,
+         * clip, spelled as the Layer and Element members are), one form that calls a registered
+         * function, and the actions on its events.
+         */
+        bool read_element(const Source& element, InstanceInfo& info)
+        {
+            const auto name = claim_name(element);
+            if (!name)
+                return false;
+            info.id = *name;
+
+            bool visible = true;
+            const bool read = Access::for_each_attribute(element,
+                [&](std::string_view attribute, std::string_view value) {
+                    if (attribute == element_name_attribute || attribute == reserved_state_attribute)
+                        return true;
+                    if (attribute == "visible")
+                        return read_flag(element, attribute, value, visible);
+                    if (attribute == "front")
+                        return read_flag(element, attribute, value, info.layer.front);
+                    if (attribute == "back")
+                        return read_flag(element, attribute, value, info.layer.back);
+                    if (attribute == "interactive") {
+                        bool flag {};
+                        if (!read_flag(element, attribute, value, flag))
+                            return false;
+                        info.layer.interactive = flag;
+                        return true;
+                    }
+                    if (attribute == "relate") {
+                        if (value.empty())
+                            return fail(element, "<element> needs an element name in relate");
+                        info.layer.relate = std::string(value);
+                        return true;
+                    }
+                    if (attribute == "clip") {
+                        Kinesis::AABB2D region {};
+                        Reflect::TextError reason = Reflect::TextError::Invalid;
+                        if (!Reflect::TextCodec<Kinesis::AABB2D>::decode(value, region, reason))
+                            return fail(element, "<element> needs four numbers in clip");
+                        if (!(region.max.x > region.min.x) || !(region.max.y > region.min.y))
+                            return fail(element, "clip needs a positive width and height");
+                        info.layer.clip = region;
+                        return true;
+                    }
+                    return fail(element, "<element> has an unsupported attribute " + std::string(attribute));
+                });
+            if (!read)
+                return false;
+            info.layer.hidden = !visible;
+            if (info.layer.front && info.layer.back)
+                return fail(element, "front and back cannot both be set");
+
+            const bool traversed = Access::for_each_child(element, [&](const Source& child) {
+                const auto kind = Access::name(child);
+                if (kind == "form") {
+                    if (info.form)
+                        return fail(child, "<element> may hold only one <form>");
+                    info.form = child;
+                    return check_form(child);
+                }
+                if (kind == reserved_action_element)
+                    return read_action(child, info);
+                return fail(child, "<" + std::string(kind) + "> is not allowed in <element>");
+            });
+            if (!traversed)
+                return false;
+            if (!info.form)
+                return fail(element, "<element> needs a <form>");
+            return true;
+        }
+
+        bool check_form(const Source& form)
+        {
+            if (!m_calls)
+                return fail(form, "<form> needs a call table, and none was given");
+            const auto call = Access::attribute(form, reserved_call_attribute);
+            if (!call)
+                return fail(form, "<form> needs a call attribute");
+            if (!m_calls->contains(*call))
+                return fail(form, "no registered call " + std::string(*call));
             return true;
         }
 
@@ -511,16 +640,18 @@ namespace Detail {
                 const auto& relate = entry.info[i].layer.relate;
                 if (!relate)
                     continue;
+                const std::string attribute = entry.direct[i] ? "relate" : std::string(reserved_prefix) + "relate";
                 if (*relate == entry.info[i].id) {
-                    return fail(entry.instances[i], std::string(reserved_prefix)
-                            + "relate may not name the instance itself");
+                    return fail(entry.instances[i], attribute + " may not name the "
+                            + (entry.direct[i] ? "element" : "instance") + " itself");
                 }
                 const bool known = std::ranges::any_of(entry.info, [&](const InstanceInfo& other) {
                     return other.id == *relate;
                 });
                 if (!known) {
-                    return fail(entry.instances[i], std::string(reserved_prefix) + "relate refers to "
-                            + *relate + ", which is not an instance of surface " + entry.id);
+                    return fail(entry.instances[i], attribute + " refers to "
+                            + *relate + ", which is not an " + (entry.direct[i] ? "element or instance" : "instance")
+                            + " of surface " + entry.id);
                 }
             }
             return true;
@@ -533,11 +664,11 @@ namespace Detail {
 
     template <typename Source, typename Access>
     std::optional<PlacedInstances> instantiate(const FactoryTable<Source, Access>& table,
-        const ActionTable<Source, Access>* actions, const Source& root,
-        SurfaceMap& surfaces, std::string& error)
+        const ActionTable<Source, Access>* actions, const CallTable<Source, Access>* calls,
+        const Source& root, SurfaceMap& surfaces, std::string& error)
     {
         error.clear();
-        DocumentWalk<Source, Access> walk(table, root, error, actions);
+        DocumentWalk<Source, Access> walk(table, root, error, actions, calls);
         if (!walk.read_structure())
             return std::nullopt;
         const auto prepared = walk.prepare(surfaces);
@@ -602,7 +733,7 @@ template <typename Source, typename Access = Reflect::RecordAccess<Source>>
     const FactoryTable<Source, Access>& table, const Source& root,
     SurfaceMap& surfaces, std::string& error)
 {
-    return Detail::instantiate<Source, Access>(table, nullptr, root, surfaces, error);
+    return Detail::instantiate<Source, Access>(table, nullptr, nullptr, root, surfaces, error);
 }
 
 /**
@@ -623,7 +754,40 @@ template <typename Source, typename Access = Reflect::RecordAccess<Source>>
     const FactoryTable<Source, Access>& table, const ActionTable<Source, Access>& actions,
     const Source& root, SurfaceMap& surfaces, std::string& error)
 {
-    return Detail::instantiate<Source, Access>(table, &actions, root, surfaces, error);
+    return Detail::instantiate<Source, Access>(table, &actions, nullptr, root, surfaces, error);
+}
+
+/**
+ * @struct ManifestTables
+ * @brief The three tables a document is placed through, as one plain value.
+ *
+ * factories serve instances of templates, calls serve elements whose form calls a described
+ * function, and actions serve the on children of either. Each holds only what its builder
+ * registers.
+ */
+template <typename Source, typename Access = Reflect::RecordAccess<Source>>
+struct ManifestTables {
+    FactoryTable<Source, Access> factories;
+    CallTable<Source, Access> calls;
+    ActionTable<Source, Access> actions;
+};
+
+/**
+ * @brief Place a document through all three tables.
+ *
+ * As instantiate_document, and a surface may also hold element children. An element has a
+ * name that shares the namespace of ids, a state, the Layer attributes visible, interactive,
+ * relate, front, back and clip, one form that names a registered call and gives its arguments
+ * by parameter name, and on children. The checks run before anything is placed, as for an
+ * instance.
+ */
+template <typename Source, typename Access = Reflect::RecordAccess<Source>>
+[[nodiscard]] std::optional<PlacedInstances> instantiate_document(
+    const ManifestTables<Source, Access>& tables, const Source& root,
+    SurfaceMap& surfaces, std::string& error)
+{
+    return Detail::instantiate<Source, Access>(
+        tables.factories, &tables.actions, &tables.calls, root, surfaces, error);
 }
 
 /**
@@ -647,6 +811,37 @@ template <typename Source, typename Access = Reflect::RecordAccess<Source>>
 {
     error.clear();
     Detail::DocumentWalk<Source, Access> walk(table, root, error);
+    if (!walk.read_structure())
+        return std::nullopt;
+    const auto placers = walk.prepare_bulk(template_id, rows);
+    if (!placers)
+        return std::nullopt;
+
+    std::vector<uint32_t> elements;
+    elements.reserve(placers->size());
+    for (const auto& placer : *placers) {
+        const auto element = placer(surface, error);
+        if (!element)
+            return std::nullopt;
+        elements.push_back(*element);
+    }
+    return elements;
+}
+
+/**
+ * @brief instantiate_rows for a document that uses all three tables.
+ *
+ * The whole document is checked again before the rows are placed, so a document with elements
+ * or on children needs the calls and actions that check reads, and this overload gives them.
+ */
+template <typename Source, typename Access = Reflect::RecordAccess<Source>>
+[[nodiscard]] std::optional<std::vector<uint32_t>> instantiate_rows(
+    const ManifestTables<Source, Access>& tables, const Source& root,
+    std::string_view template_id, const Kakshya::CompositeArray& rows,
+    Surface& surface, std::string& error)
+{
+    error.clear();
+    Detail::DocumentWalk<Source, Access> walk(tables.factories, root, error, &tables.actions, &tables.calls);
     if (!walk.read_structure())
         return std::nullopt;
     const auto placers = walk.prepare_bulk(template_id, rows);

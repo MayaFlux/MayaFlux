@@ -42,9 +42,11 @@ struct Member;
  * @brief The parameter names of a described function, which C++ cannot supply itself.
  *
  * A generated specialization holds name, required (how many leading parameters
- * have no default, so a call needs at least that many arguments) and parameters
- * (every parameter name in order). The parameter types and the call come from the
- * function's own type, as Function is a pointer to it.
+ * have no default, so a call needs at least that many arguments), parameters
+ * (every parameter name in order) and call<K>(values), which calls the function
+ * by name with the first K elements of a tuple. The call is by name and not
+ * through Function so the function's own default arguments apply to the ones
+ * left out. The parameter types come from the function's own type.
  */
 template <auto Function>
 struct Signature;
@@ -82,5 +84,12 @@ namespace MayaFlux::Reflect {
  */
 template <typename T>
 concept Described = requires { Generated::Description<std::remove_cv_t<T>>::members(); };
+
+/**
+ * @concept DescribedFunction
+ * @brief A function pointer whose generated sidecar defines Generated::Signature<Function>.
+ */
+template <auto Function>
+concept DescribedFunction = requires { Generated::Signature<Function>::parameters; };
 
 }

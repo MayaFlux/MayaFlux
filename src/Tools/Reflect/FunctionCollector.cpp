@@ -54,6 +54,19 @@ namespace {
         return policy;
     }
 
+    /** The name a call is written with: qualified, with the template arguments of a specialization. */
+    std::string callee_of(const clang::FunctionDecl* function, const clang::ASTContext& context)
+    {
+        const std::string name = "::" + function->getQualifiedNameAsString();
+        if (const clang::TemplateArgumentList* arguments = function->getTemplateSpecializationArgs()) {
+            std::string text;
+            llvm::raw_string_ostream stream(text);
+            clang::printTemplateArgumentList(stream, arguments->asArray(), qualified_policy(context));
+            return name + text;
+        }
+        return name;
+    }
+
     /**
      * How the function is written as a template argument: its address, with the template
      * arguments of a specialization, or cast to its own type when the name is overloaded.
@@ -62,11 +75,8 @@ namespace {
     {
         const std::string name = "::" + function->getQualifiedNameAsString();
 
-        if (const clang::TemplateArgumentList* arguments = function->getTemplateSpecializationArgs()) {
-            std::string text;
-            llvm::raw_string_ostream stream(text);
-            clang::printTemplateArgumentList(stream, arguments->asArray(), qualified_policy(context));
-            return "&" + name + text;
+        if (function->getTemplateSpecializationArgs() != nullptr) {
+            return "&" + callee_of(function, context);
         }
         if (!overloaded(function)) {
             return "&" + name;
@@ -148,6 +158,7 @@ void FunctionCollector::run(const clang::ast_matchers::MatchFinder::MatchResult&
     }
 
     request.expression = expression_of(function, *result.Context);
+    request.callee = callee_of(function, *result.Context);
 
     unsigned anchor = line;
     const clang::NamespaceDecl* outermost = nullptr;

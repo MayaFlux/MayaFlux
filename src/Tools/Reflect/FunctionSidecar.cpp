@@ -32,6 +32,22 @@ std::string render_function_sidecar(const HeaderFunctions& functions)
             out += "\"" + function->parameters[i] + "\"";
         }
         out += function->parameters.empty() ? "};\n" : " };\n";
+        out += "\n    template <std::size_t K, typename Values>\n";
+        out += "    static decltype(auto) call(Values& values)\n    {\n";
+        for (std::size_t count = function->required; count <= function->parameters.size(); ++count) {
+            out += count == function->required ? "        if constexpr (K == " : "        } else if constexpr (K == ";
+            out += std::to_string(count) + ") {\n";
+            out += "            return " + function->callee + "(";
+            for (std::size_t i = 0; i < count; ++i) {
+                out += i == 0 ? "" : ", ";
+                out += "std::get<" + std::to_string(i) + ">(values)";
+            }
+            out += ");\n";
+        }
+        out += "        } else {\n";
+        out += "            static_assert(K != K, \"the sidecar has no call with that many arguments\");\n";
+        out += "        }\n";
+        out += "    }\n";
         out += "};\n\n";
     }
     out += "}\n\n#endif\n";
