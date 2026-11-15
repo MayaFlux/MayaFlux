@@ -8,7 +8,7 @@ export CXX=g++-15
 
 override_dh_auto_configure:
 	export CCACHE_SLOPPINESS=pch_defines,time_macros,include_file_mtime,include_file_ctime && \
-	cmake --preset launchpad-dev
+ 	PATH=/usr/lib/llvm-22/bin:$$PATH cmake --preset launchpad-dev
 
 override_dh_auto_build-arch:
 	cmake --build --preset launchpad-dev

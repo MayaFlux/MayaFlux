@@ -163,8 +163,8 @@ jobs:
       # ============================================
       # PHASE 2: Dependency Management (Parallelizable)
       # ============================================
-      - name: Cache vcpkg
-        uses: actions/cache@v4
+      - name: Restore vcpkg cache
+        uses: actions/cache/restore@v4
         id: vcpkg-cache
         with:
           path: ${{ env.VCPKG_ROOT }}
@@ -172,16 +172,16 @@ jobs:
           restore-keys: |
             vcpkg-${{ runner.os }}-
 
-      - name: Cache LLVM
-        uses: actions/cache@v4
+      - name: Restore LLVM cache
+        uses: actions/cache/restore@v4
         id: llvm-cache
         with:
           path: ${{ env.LLVM_ROOT }}
           key: llvm-22.1.6-windows-x64
           restore-keys: llvm-22.1.6-windows-x64
 
-      - name: Cache FFmpeg
-        uses: actions/cache@v4
+      - name: Restore FFmpeg cache
+        uses: actions/cache/restore@v4
         id: ffmpeg-cache
         with:
           path: C:\Program Files\FFmpeg
@@ -194,23 +194,37 @@ jobs:
       # ============================================
 
       - name: Install vcpkg and dependencies
+        id: install-vcpkg
         if: steps.vcpkg-cache.outputs.cache-hit != 'true'
         shell: pwsh
         run: |
           Write-Host "=== Installing vcpkg and dependencies ===" -ForegroundColor Magenta
 
-          git clone https://github.com/Microsoft/vcpkg.git ${{ env.VCPKG_ROOT }}
+          if (-not (Test-Path "${{ env.VCPKG_ROOT }}\.git")) {
+            git clone https://github.com/Microsoft/vcpkg.git ${{ env.VCPKG_ROOT }}
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
           & "${{ env.VCPKG_ROOT }}\bootstrap-vcpkg.bat"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
           cd ${{ github.workspace }}/.github/workflows
           & "${{ env.VCPKG_ROOT }}\vcpkg.exe" install `
             --triplet x64-windows `
             --x-install-root=${{ env.VCPKG_ROOT }}/installed `
             --clean-buildtrees-after-build
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
           Write-Host "✓ vcpkg setup complete" -ForegroundColor Green
 
+      - name: Save vcpkg cache
+        if: ${{ always() && steps.install-vcpkg.outcome == 'success' && steps.vcpkg-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.VCPKG_ROOT }}
+          key: ${{ steps.vcpkg-cache.outputs.cache-primary-key }}
+
       - name: Install LLVM 22 (Lila JIT)
+        id: install-llvm
         if: steps.llvm-cache.outputs.cache-hit != 'true'
         shell: pwsh
         run: |
@@ -244,7 +258,15 @@ jobs:
 
           Remove-Item $tempDir -Recurse -Force -ErrorAction SilentlyContinue
 
+      - name: Save LLVM cache
+        if: ${{ always() && steps.install-llvm.outcome == 'success' && steps.llvm-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.LLVM_ROOT }}
+          key: ${{ steps.llvm-cache.outputs.cache-primary-key }}
+
       - name: Install FFmpeg
+        id: install-ffmpeg
         if: steps.ffmpeg-cache.outputs.cache-hit != 'true'
         shell: pwsh
         run: |
@@ -268,6 +290,13 @@ jobs:
           } else {
             throw "FFmpeg installation verification failed"
           }
+
+      - name: Save FFmpeg cache
+        if: ${{ always() && steps.install-ffmpeg.outcome == 'success' && steps.ffmpeg-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: C:\Program Files\FFmpeg
+          key: ${{ steps.ffmpeg-cache.outputs.cache-primary-key }}
 
       - name: Install Vulkan SDK
         uses: jakoch/install-vulkan-sdk-action@v1

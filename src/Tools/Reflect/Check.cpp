@@ -119,7 +119,10 @@ std::vector<std::string> check_sidecars(
         const std::string where = sidecar.string() + ": ";
         const std::string want = render_sidecar(found->second);
 
-        if (const auto have = read_text(sidecar)) {
+        if (auto have = read_text(sidecar)) {
+            for (auto at = have->find("\r\n"); at != std::string::npos; at = have->find("\r\n", at + 1)) {
+                have->erase(at, 1);
+            }
             if (*have != want) {
                 const auto messages = drift(where, *have, want);
                 problems.insert(problems.end(), messages.begin(), messages.end());

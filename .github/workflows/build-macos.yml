@@ -115,9 +115,19 @@ jobs:
           ccache-options: |
             sloppiness = pch_defines,time_macros,include_file_mtime,include_file_ctime
 
-      - name: Install Homebrew tools (cached)
+      - name: Restore Homebrew cache
+        uses: actions/cache/restore@v4
+        id: homebrew-cache
+        with:
+          path: /opt/homebrew
+          key: homebrew-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.github/workflows/build-macos.yml') }}
+
+      - name: Install Homebrew tools
+        id: install-homebrew
+        if: steps.homebrew-cache.outputs.cache-hit != 'true'
         uses: tecolicom/actions-use-homebrew-tools@v1
         with:
+          cache: 'no'
           tools: >
             ffmpeg
             assimp
@@ -143,6 +153,13 @@ jobs:
             hidapi
             utf8proc
             freetype
+
+      - name: Save Homebrew cache
+        if: ${{ always() && steps.install-homebrew.outcome == 'success' && steps.homebrew-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: /opt/homebrew
+          key: ${{ steps.homebrew-cache.outputs.cache-primary-key }}
 
       - name: Install ASIO and JSON (header-only, always ensure)
         run: |

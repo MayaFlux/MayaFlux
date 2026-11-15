@@ -87,6 +87,7 @@ function(mayaflux_clang_tool target)
             legacy_stdio_definitions
         )
         target_link_options(${target} PRIVATE
+            /STACK:16777216
             /DEFAULTLIB:vcruntime.lib
             /DEFAULTLIB:msvcrt.lib
         )
