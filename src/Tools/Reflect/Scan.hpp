@@ -18,6 +18,18 @@ struct ScanInput {
     std::vector<std::string> stubs;
 };
 
+/** @brief Registers the matchers of one tool on the MatchFinder a scan runs. */
+using AttachMatchers = std::function<void(clang::ast_matchers::MatchFinder&)>;
+
+/**
+ * @brief Parses every header of @p input in one translation unit and runs the matchers @p attach registers.
+ *
+ * The translation unit and the arguments are chosen as scan() below describes.
+ *
+ * @return false with @p error set when the database, the command or Clang fails.
+ */
+[[nodiscard]] bool scan(const ScanInput& input, const AttachMatchers& attach, std::string& error);
+
 /**
  * @brief Parses every header of @p input in one translation unit and fills @p collector.
  *

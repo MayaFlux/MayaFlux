@@ -166,6 +166,11 @@ namespace {
 
 bool scan(const ScanInput& input, RequestCollector& collector, std::string& error)
 {
+    return scan(input, [&collector](clang::ast_matchers::MatchFinder& finder) { collector.attach(finder); }, error);
+}
+
+bool scan(const ScanInput& input, const AttachMatchers& attach, std::string& error)
+{
     if (input.build_path.empty()) {
         error = "a compile database directory is required (-p)";
         return false;
@@ -229,7 +234,7 @@ bool scan(const ScanInput& input, RequestCollector& collector, std::string& erro
     tool.appendArgumentsAdjuster(make_adjuster(effective));
 
     clang::ast_matchers::MatchFinder finder;
-    collector.attach(finder);
+    attach(finder);
 
     if (tool.run(clang::tooling::newFrontendActionFactory(&finder).get()) != 0) {
         error = "Clang could not scan the selected headers (translation unit " + unit.string() + ")";
