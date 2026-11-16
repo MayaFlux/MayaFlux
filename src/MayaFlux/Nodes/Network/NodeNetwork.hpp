@@ -292,8 +292,9 @@ public:
      * untouched, so `net->set({ .decay = lfo })` changes only decay.
      * Designators follow the struct's declaration order. A node source maps in
      * BROADCAST and a network source in ONE_TO_ONE. The string based
-     * map_parameter stays for names a user invents. Call outside process_batch,
-     * as with the operator chain.
+     * map_parameter stays for names a user invents. A number may be set from
+     * any thread while a block renders. Attaching or removing a node or network
+     * source belongs outside process_batch, as with the operator chain.
      */
     template <typename Self>
     void set(this Self& self, const typename Self::Controls& incoming)
@@ -717,7 +718,7 @@ inline std::optional<double> Control::at(size_t index) const
     if (m_network) {
         return m_network->get_node_output(index);
     }
-    return m_set ? std::optional<double> { m_value } : std::nullopt;
+    return has_value() ? std::optional<double> { value() } : std::nullopt;
 }
 
 } // namespace MayaFlux::Nodes::Network
