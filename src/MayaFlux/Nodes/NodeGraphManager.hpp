@@ -545,11 +545,12 @@ private:
     void unregister_global(const std::shared_ptr<Node>& node);
 
     /**
-     * @brief Normalizes a sample to the range [-1, 1] based on the number of nodes
+     * @brief Scales a sample by the root of the node count, then softens its magnitude
      * @param sample Reference to the sample value to normalize
      * @param num_nodes Number of nodes in the processing chain
      *
-     * Ensures that the sample value is within the valid range for audio processing.
+     * Magnitudes above 0.95 ease toward a ceiling of 1.05 along a knee of width 0.1,
+     * so the result can exceed 1.0. Values at or below 0.95 are unchanged.
      */
     void normalize_sample(double& sample, uint32_t num_nodes);
 
