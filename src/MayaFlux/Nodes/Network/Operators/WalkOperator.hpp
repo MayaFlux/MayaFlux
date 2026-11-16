@@ -5,6 +5,21 @@
 namespace MayaFlux::Nodes::Network {
 
 /**
+ * @struct WalkControls
+ * @brief Controls of a WalkOperator, a number or a mapped node.
+ *
+ * current is the slot index the walk jumps to when it differs from where it
+ * is. every_n_blocks is the self-stepping rate, 0 for none. A network source is
+ * per element and is not used.
+ */
+struct WalkControls {
+    Control current;
+    Control every_n_blocks;
+};
+
+MF_DESCRIBE(WalkControls)
+
+/**
  * @class WalkOperator
  * @brief Moves a single active slot along the rows of a weight table
  *
@@ -50,6 +65,8 @@ namespace MayaFlux::Nodes::Network {
  */
 class MAYAFLUX_API WalkOperator final : public RelationOperator {
 public:
+    using Controls = WalkControls;
+
     /**
      * @brief Chooses a successor from a row of weights
      * @param row Outgoing weights of the current slot. Values need not sum to one.
@@ -112,12 +129,10 @@ public:
      * @param every_n_blocks 0 disables self-stepping; a positive value steps
      *                        that often, resetting the internal block counter
      * @note The block counter itself is not atomic. Calling this concurrently
-     *       with process() (i.e. while the owning network is being processed
-     *       on another thread, such as the audio thread) is a data race. Call
-     *       it from the same thread that drives process_batch(), or before
-     *       the network is registered for processing.
+     *       with process() is a data race. The every_n_blocks control applies
+     *       on process()'s own thread and has no such restriction.
      */
-    void set_every_n_blocks(uint32_t every_n_blocks) noexcept;
+    [[deprecated("use set({ .every_n_blocks = ... })")]] void set_every_n_blocks(uint32_t every_n_blocks) noexcept;
 
     void set_parameter(std::string_view param, double value) override;
 
@@ -129,7 +144,15 @@ public:
 
     [[nodiscard]] std::string_view get_type_name() const override { return "Walk"; }
 
+    /** @brief Fills the controls whose value the walk holds outside the struct. */
+    void read_controls(WalkControls& controls) const;
+
 private:
+    WalkControls& m_controls;
+
+    void move_to(double index);
+    void apply_every_n_blocks(uint32_t every_n_blocks) noexcept;
+
     /**
      * @brief Activate slot m_current and deactivate every other slot that
      *        currently exists. No-op after the first call, and no-op if no
@@ -147,3 +170,4 @@ private:
 };
 
 } // namespace MayaFlux::Nodes::Network
+#include "WalkOperator.describe.hpp"

@@ -11,7 +11,6 @@ namespace MayaFlux::Nodes::Network {
 InstanceNetwork::InstanceNetwork()
 {
     set_output_mode(OutputMode::GRAPHICS_BIND);
-    m_operator_chain = std::make_shared<OperatorChain>();
 }
 
 uint32_t InstanceNetwork::add_slot(

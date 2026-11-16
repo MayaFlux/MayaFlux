@@ -11,6 +11,26 @@
 namespace MayaFlux::Nodes::Network {
 
 /**
+ * @struct PointCloudControls
+ * @brief Controls of a PointCloudNetwork, forwarded to its operator each block.
+ *
+ * A TopologyOperator takes all of them but tension. A PathOperator takes
+ * line_color, line_thickness (as its thickness), samples_per_segment and
+ * tension. A control the operator has no use for is dropped with a warning.
+ * line_color is a glm::vec4. A network source is per element and is not used.
+ */
+struct PointCloudControls {
+    Control line_color;
+    Control connection_radius;
+    Control k_neighbors;
+    Control line_thickness;
+    Control samples_per_segment;
+    Control tension;
+};
+
+MF_DESCRIBE(PointCloudControls)
+
+/**
  * @class PointCloudNetwork
  * @brief Spatial relational network operating on unordered point sets.
  *
@@ -116,6 +136,8 @@ public:
      */
     PointCloudNetwork();
 
+    using Controls = PointCloudControls;
+
     /**
      * @brief Create network with initial point count and bounds
      * @param num_points Number of points to generate
@@ -197,37 +219,37 @@ public:
      * @brief Set global line color for topology/path rendering
      * @param color RGB color
      */
-    void set_line_color(const glm::vec4& color);
+    [[deprecated("use set({ .line_color = ... })")]] void set_line_color(const glm::vec4& color);
 
     /**
      * @brief Set connection radius for topology generation (TopologyOperator only)
      * @param radius Maximum distance for connections
      */
-    void set_connection_radius(float radius);
+    [[deprecated("use set({ .connection_radius = ... })")]] void set_connection_radius(float radius);
 
     /**
      * @brief Set K value for K-nearest neighbors (TopologyOperator only)
      * @param k Number of nearest neighbors
      */
-    void set_k_neighbors(size_t k);
+    [[deprecated("use set({ .k_neighbors = ... })")]] void set_k_neighbors(size_t k);
 
     /**
      * @brief Set line thickness for topology/path rendering
      * @param thickness Line thickness in pixels
      */
-    void set_line_thickness(float thickness);
+    [[deprecated("use set({ .line_thickness = ... })")]] void set_line_thickness(float thickness);
 
     /**
      * @brief Set samples per segment for path interpolation (PathOperator only)
      * @param samples Number of samples between control points
      */
-    void set_samples_per_segment(size_t samples);
+    [[deprecated("use set({ .samples_per_segment = ... })")]] void set_samples_per_segment(size_t samples);
 
     /**
      * @brief Set tension for Catmull-Rom interpolation (PathOperator only)
      * @param tension Tension parameter (0.0 = loose, 1.0 = tight)
      */
-    void set_tension(double tension);
+    [[deprecated("use set({ .tension = ... })")]] void set_tension(double tension);
 
     NetworkOperator* get_operator() override { return m_operator.get(); }
     const NetworkOperator* get_operator() const override { return m_operator.get(); }
@@ -266,6 +288,11 @@ private:
      * @brief Update mapped parameters before path/topology processing
      */
     void update_mapped_parameters();
+
+    PointCloudControls& m_controls;
+
+    void apply_controls();
 };
 
 } // namespace MayaFlux::Nodes::Network
+#include "PointCloudNetwork.describe.hpp"

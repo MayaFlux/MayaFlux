@@ -76,7 +76,8 @@ WaveguideNetwork::WaveguideNetwork(
     WaveguideType type,
     double fundamental_freq,
     double sample_rate)
-    : m_type(type)
+    : m_controls(declare_controls<WaveguideControls>())
+    , m_type(type)
     , m_fundamental(fundamental_freq)
 {
     m_sample_rate = static_cast<uint32_t>(sample_rate);
@@ -218,6 +219,8 @@ void WaveguideNetwork::process_batch(unsigned int num_samples)
     }
 
     update_mapped_parameters();
+    refresh_controls();
+    apply_controls();
 
     thread_local std::vector<double> scratch;
     scratch.assign(num_samples, 0.0);
@@ -417,6 +420,7 @@ void WaveguideNetwork::release()
 
 void WaveguideNetwork::set_exciter_duration(double seconds)
 {
+    m_controls.exciter_duration.settle();
     m_exciter_duration = std::max(0.001, seconds);
 }
 
@@ -498,6 +502,12 @@ double WaveguideNetwork::generate_exciter_sample()
 
 void WaveguideNetwork::set_fundamental(double freq)
 {
+    m_controls.frequency.settle();
+    apply_fundamental(freq);
+}
+
+void WaveguideNetwork::apply_fundamental(double freq)
+{
     m_fundamental = std::max(20.0, freq);
     compute_delay_length();
 
@@ -513,6 +523,12 @@ void WaveguideNetwork::set_fundamental(double freq)
 
 void WaveguideNetwork::set_loss_factor(double loss)
 {
+    m_controls.damping.settle();
+    apply_loss_factor(loss);
+}
+
+void WaveguideNetwork::apply_loss_factor(double loss)
+{
     loss = std::clamp(loss, 0.0, 1.0);
     for (auto& seg : m_segments) {
         seg.loss_factor = loss;
@@ -520,6 +536,11 @@ void WaveguideNetwork::set_loss_factor(double loss)
 }
 
 double WaveguideNetwork::get_loss_factor() const
+{
+    return loss_factor();
+}
+
+double WaveguideNetwork::loss_factor() const
 {
     return m_segments.empty() ? 0.996 : m_segments[0].loss_factor;
 }
@@ -582,12 +603,23 @@ void WaveguideNetwork::set_loop_filters(const std::shared_ptr<Filters::Filter>& 
 
 void WaveguideNetwork::set_pickup_position(double position)
 {
+    m_controls.position.settle();
+    apply_pickup_position(position);
+}
+
+void WaveguideNetwork::apply_pickup_position(double position)
+{
     m_pickup_position = std::clamp(position, 0.0, 1.0);
     m_pickup_sample = static_cast<size_t>(m_pickup_position * static_cast<double>(m_delay_length_integer));
     m_pickup_sample = std::clamp(m_pickup_sample, size_t { 0 }, m_delay_length_integer);
 }
 
 double WaveguideNetwork::get_pickup_position() const
+{
+    return pickup_position();
+}
+
+double WaveguideNetwork::pickup_position() const
 {
     if (m_delay_length_integer == 0) {
         return 0.5;
@@ -602,30 +634,59 @@ double WaveguideNetwork::get_pickup_position() const
 void WaveguideNetwork::update_mapped_parameters()
 {
     for (const auto& mapping : m_parameter_mappings) {
+        const ParameterKey key { mapping.param_name, mapping.param_hash };
         if (mapping.mode == MappingMode::BROADCAST && mapping.broadcast_source) {
             double value = mapping.broadcast_source->get_last_output();
-            apply_broadcast_parameter(mapping.param_name, value);
+            apply_broadcast_parameter(key, value);
         } else if (mapping.mode == MappingMode::ONE_TO_ONE && mapping.network_source) {
-            apply_one_to_one_parameter(mapping.param_name, mapping.network_source);
+            apply_one_to_one_parameter(key, mapping.network_source);
         }
     }
 }
 
-void WaveguideNetwork::apply_broadcast_parameter(const std::string& param, double value)
+void WaveguideNetwork::read_controls(WaveguideControls& controls) const
 {
-    if (param == "frequency") {
-        set_fundamental(value);
-    } else if (param == "damping" || param == "loss") {
-        set_loss_factor(value);
-    } else if (param == "position") {
-        set_pickup_position(value);
-    } else if (param == "scale") {
+    controls.frequency.observe(m_fundamental);
+    controls.damping.observe(loss_factor());
+    controls.position.observe(pickup_position());
+    controls.exciter_duration.observe(m_exciter_duration);
+    controls.measurement_mode.observe(m_measurement_mode == MeasurementMode::VELOCITY ? 1.0 : 0.0);
+}
+
+void WaveguideNetwork::apply_controls()
+{
+    if (const auto frequency = m_controls.frequency.pending()) {
+        apply_fundamental(*frequency);
+    }
+    if (const auto damping = m_controls.damping.pending()) {
+        apply_loss_factor(*damping);
+    }
+    if (const auto position = m_controls.position.pending()) {
+        apply_pickup_position(*position);
+    }
+    if (const auto duration = m_controls.exciter_duration.pending()) {
+        m_exciter_duration = std::max(0.001, *duration);
+    }
+    if (const auto mode = m_controls.measurement_mode.pending()) {
+        m_measurement_mode = *mode > 0.5 ? MeasurementMode::VELOCITY : MeasurementMode::PRESSURE;
+    }
+}
+
+void WaveguideNetwork::apply_broadcast_parameter(ParameterKey param, double value)
+{
+    if (param.matches("frequency")) {
+        apply_fundamental(value);
+    } else if (param.matches("damping") || param.matches("loss")) {
+        apply_loss_factor(value);
+    } else if (param.matches("position")) {
+        apply_pickup_position(value);
+    } else if (param.matches("scale")) {
         m_output_scale = std::max(0.0, value);
     }
 }
 
 void WaveguideNetwork::apply_one_to_one_parameter(
-    const std::string& /*param*/,
+    ParameterKey /*param*/,
     const std::shared_ptr<NodeNetwork>& /*source*/)
 {
 }
@@ -640,6 +701,7 @@ void WaveguideNetwork::map_parameter(
     ParameterMapping mapping;
     mapping.param_name = param_name;
     mapping.mode = mode;
+    mapping.param_hash = parameter_hash(param_name);
     mapping.broadcast_source = source;
     mapping.network_source = nullptr;
 
@@ -655,6 +717,7 @@ void WaveguideNetwork::map_parameter(
     ParameterMapping mapping;
     mapping.param_name = param_name;
     mapping.mode = MappingMode::ONE_TO_ONE;
+    mapping.param_hash = parameter_hash(param_name);
     mapping.broadcast_source = nullptr;
     mapping.network_source = source_network;
 
@@ -680,8 +743,8 @@ WaveguideNetwork::get_metadata() const
     metadata["fundamental"] = std::to_string(m_fundamental) + " Hz";
     metadata["delay_length"] = std::to_string(m_delay_length_integer)
         + " + " + std::to_string(m_delay_length_fraction) + " samples";
-    metadata["loss_factor"] = std::to_string(get_loss_factor());
-    metadata["pickup_position"] = std::to_string(get_pickup_position());
+    metadata["loss_factor"] = std::to_string(loss_factor());
+    metadata["pickup_position"] = std::to_string(pickup_position());
 
     metadata["exciter_type"] = std::string(Reflect::enum_to_string(m_exciter_type));
 

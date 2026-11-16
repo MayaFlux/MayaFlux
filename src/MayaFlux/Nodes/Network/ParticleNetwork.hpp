@@ -7,6 +7,21 @@
 namespace MayaFlux::Nodes::Network {
 
 /**
+ * @struct ParticleControls
+ * @brief Controls of a ParticleNetwork, each a value or a mapped node.
+ *
+ * bounds is a Kinesis::SamplerBounds, `.bounds = Kinesis::SamplerBounds { .min = lo, .max = hi }`.
+ * It is the domain the particles are generated in and the bounds a physics
+ * operator is given when the network next initializes or resets. A network
+ * source is per element and is not used.
+ */
+struct ParticleControls {
+    Control bounds;
+};
+
+MF_DESCRIBE(ParticleControls)
+
+/**
  * @class ParticleNetwork
  * @brief Motion-focused point network with swappable operators
  *
@@ -39,8 +54,7 @@ namespace MayaFlux::Nodes::Network {
  * ```cpp
  * auto particles = vega.ParticleNetwork(1000);
  * auto physics = particles->create_operator<PhysicsOperator>();
- * physics->set_gravity(glm::vec3(0, -9.81, 0));
- * physics->set_interaction_radius(2.0F);
+ * physics->set({ .gravity = glm::vec3(0, -9.81, 0), .interaction_radius = 2.0 });
  *
  * // Audio-reactive turbulence
  * auto chaos = vega.Random() | Audio;
@@ -165,7 +179,12 @@ public:
     //-------------------------------------------------------------------------
 
 
-    void set_bounds(const glm::vec3& min, const glm::vec3& max)
+    using Controls = ParticleControls;
+
+    /** @brief Fills the controls whose value the network holds outside the struct. */
+    void read_controls(ParticleControls& controls) const;
+
+    [[deprecated("use set({ .bounds = ... })")]] void set_bounds(const glm::vec3& min, const glm::vec3& max)
     {
         m_bounds = Kinesis::SamplerBounds(min, max);
     }
@@ -206,6 +225,9 @@ private:
     Kinesis::SamplerBounds m_bounds;
     Kinesis::SpatialDistribution m_init_mode;
 
+    ParticleControls& m_controls;
+
+    void apply_controls();
     void ensure_initialized();
     std::vector<PointVertex> generate_initial_vertices();
     PointVertex generate_single_vertex(Kinesis::SpatialDistribution mode, size_t index, size_t total);
@@ -233,3 +255,4 @@ private:
 };
 
 } // namespace MayaFlux::Nodes::Network
+#include "ParticleNetwork.describe.hpp"

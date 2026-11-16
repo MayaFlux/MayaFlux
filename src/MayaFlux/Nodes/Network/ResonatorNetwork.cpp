@@ -118,6 +118,7 @@ void ResonatorNetwork::preset_to_vectors(FormantPreset preset,
 
 ResonatorNetwork::ResonatorNetwork(size_t num_resonators,
     FormantPreset preset)
+    : m_controls(declare_controls<ResonatorControls>())
 {
     set_output_mode(OutputMode::AUDIO_SINK);
     std::vector<double> freqs, qs;
@@ -127,6 +128,7 @@ ResonatorNetwork::ResonatorNetwork(size_t num_resonators,
 
 ResonatorNetwork::ResonatorNetwork(const std::vector<double>& frequencies,
     const std::vector<double>& q_values)
+    : m_controls(declare_controls<ResonatorControls>())
 {
     set_output_mode(OutputMode::AUDIO_SINK);
     if (frequencies.size() != q_values.size()) {
@@ -188,6 +190,8 @@ void ResonatorNetwork::process_batch(unsigned int num_samples)
     }
 
     update_mapped_parameters();
+    refresh_controls();
+    apply_controls();
 
     thread_local std::vector<double> scratch;
     scratch.assign(num_samples, 0.0);
@@ -272,6 +276,7 @@ void ResonatorNetwork::map_parameter(const std::string& param_name,
     ParameterMapping m;
     m.param_name = param_name;
     m.mode = mode;
+    m.param_hash = parameter_hash(param_name);
     m.broadcast_source = source;
     m_parameter_mappings.push_back(std::move(m));
 }
@@ -284,6 +289,7 @@ void ResonatorNetwork::map_parameter(const std::string& param_name,
     ParameterMapping m;
     m.param_name = param_name;
     m.mode = MappingMode::ONE_TO_ONE;
+    m.param_hash = parameter_hash(param_name);
     m.network_source = source_network;
     m_parameter_mappings.push_back(std::move(m));
 }
@@ -297,40 +303,96 @@ void ResonatorNetwork::unmap_parameter(const std::string& param_name)
 void ResonatorNetwork::update_mapped_parameters()
 {
     for (const auto& mapping : m_parameter_mappings) {
+        const ParameterKey key { mapping.param_name, mapping.param_hash };
         if (mapping.mode == MappingMode::BROADCAST && mapping.broadcast_source) {
             apply_broadcast_parameter(
-                mapping.param_name,
+                key,
                 mapping.broadcast_source->get_last_output());
         } else if (mapping.mode == MappingMode::ONE_TO_ONE && mapping.network_source) {
-            apply_one_to_one_parameter(mapping.param_name, mapping.network_source);
+            apply_one_to_one_parameter(key, mapping.network_source);
         }
     }
 }
 
-void ResonatorNetwork::apply_broadcast_parameter(const std::string& param, double value)
+void ResonatorNetwork::apply_controls()
 {
-    if (param == "frequency") {
-        set_all_frequencies(value);
-    } else if (param == "q") {
-        set_all_q(value);
-    } else if (param == "gain") {
+    const auto each = [this](Control& control, auto&& broadcast, auto&& element) {
+        if (!control.due()) {
+            return;
+        }
+        control.settle();
+
+        if (!control.per_element()) {
+            broadcast(control.value());
+            return;
+        }
+
+        const size_t count = std::min(m_resonators.size(), control.element_count());
+        for (size_t index = 0; index < count; ++index) {
+            if (const auto value = control.at(index)) {
+                element(index, *value);
+            }
+        }
+    };
+
+    each(
+        m_controls.frequency,
+        [this](double value) { apply_all_frequencies(value); },
+        [this](size_t index, double value) { set_frequency(index, value); });
+    each(
+        m_controls.q,
+        [this](double value) { apply_all_q(value); },
+        [this](size_t index, double value) { set_q(index, value); });
+    each(
+        m_controls.gain,
+        [this](double value) {
+            for (auto& resonator : m_resonators) {
+                resonator.gain = value;
+            }
+        },
+        [this](size_t index, double value) { m_resonators[index].gain = value; });
+    each(
+        m_controls.retune,
+        [this](double value) {
+            for (size_t index = 0; index < m_resonators.size(); ++index) {
+                retune(index, value);
+            }
+        },
+        [this](size_t index, double value) { retune(index, value); });
+    each(
+        m_controls.decay,
+        [this](double value) {
+            for (size_t index = 0; index < m_resonators.size(); ++index) {
+                set_decay(index, value);
+            }
+        },
+        [this](size_t index, double value) { set_decay(index, value); });
+}
+
+void ResonatorNetwork::apply_broadcast_parameter(ParameterKey param, double value)
+{
+    if (param.matches("frequency")) {
+        apply_all_frequencies(value);
+    } else if (param.matches("q")) {
+        apply_all_q(value);
+    } else if (param.matches("gain")) {
         for (auto& r : m_resonators) {
             r.gain = value;
         }
-    } else if (param == "scale") {
+    } else if (param.matches("scale")) {
         m_output_scale = std::max(0.0, value);
-    } else if (param == "retune") {
+    } else if (param.matches("retune")) {
         for (size_t i = 0; i < m_resonators.size(); ++i) {
             retune(i, value);
         }
-    } else if (param == "decay") {
+    } else if (param.matches("decay")) {
         for (size_t i = 0; i < m_resonators.size(); ++i) {
             set_decay(i, value);
         }
     }
 }
 
-void ResonatorNetwork::apply_one_to_one_parameter(const std::string& param,
+void ResonatorNetwork::apply_one_to_one_parameter(ParameterKey param,
     const std::shared_ptr<NodeNetwork>& source)
 {
     const size_t count = std::min(m_resonators.size(), source->get_node_count());
@@ -340,15 +402,15 @@ void ResonatorNetwork::apply_one_to_one_parameter(const std::string& param,
         if (!val.has_value()) {
             continue;
         }
-        if (param == "frequency") {
+        if (param.matches("frequency")) {
             set_frequency(i, *val);
-        } else if (param == "q") {
+        } else if (param.matches("q")) {
             set_q(i, *val);
-        } else if (param == "gain") {
+        } else if (param.matches("gain")) {
             m_resonators[i].gain = *val;
-        } else if (param == "retune") {
+        } else if (param.matches("retune")) {
             retune(i, *val);
-        } else if (param == "decay") {
+        } else if (param.matches("decay")) {
             set_decay(i, *val);
         }
     }
@@ -498,12 +560,24 @@ void ResonatorNetwork::write_biquad_in_place(ResonatorNode& r)
 
 void ResonatorNetwork::set_all_frequencies(double frequency)
 {
+    m_controls.frequency.settle();
+    apply_all_frequencies(frequency);
+}
+
+void ResonatorNetwork::apply_all_frequencies(double frequency)
+{
     for (size_t i = 0; i < m_resonators.size(); ++i) {
         set_frequency(i, frequency);
     }
 }
 
 void ResonatorNetwork::set_all_q(double q)
+{
+    m_controls.q.settle();
+    apply_all_q(q);
+}
+
+void ResonatorNetwork::apply_all_q(double q)
 {
     for (size_t i = 0; i < m_resonators.size(); ++i) {
         set_q(i, q);

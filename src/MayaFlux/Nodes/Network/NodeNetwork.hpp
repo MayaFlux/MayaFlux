@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Nodes/Network/ControlStore.hpp"
 #include "MayaFlux/Nodes/Network/Operators/OperatorChain.hpp"
 #include "MayaFlux/Nodes/Node.hpp"
 
@@ -29,16 +30,6 @@ enum class OutputMode : uint8_t {
     AUDIO_COMPUTE, ///< processed each cycle but not sent to output
     GRAPHICS_BIND, ///< State available for visualization (read-only)
     CUSTOM ///< User-defined output handling via callbacks
-};
-
-/**
- * @enum MappingMode
- * @brief Defines how nodes map to external entities (e.g., audio channels,
- * graphics objects)
- */
-enum class MappingMode : uint8_t {
-    BROADCAST, ///< One node → all network nodes
-    ONE_TO_ONE ///< Node array/network → network nodes (must match count)
 };
 
 /**
@@ -111,7 +102,7 @@ enum class MappingMode : uint8_t {
  * auto geom = std::make_shared<NetworkGeometryNode>(particles);
  * ```
  */
-class MAYAFLUX_API NodeNetwork {
+class MAYAFLUX_API NodeNetwork : public std::enable_shared_from_this<NodeNetwork> {
 public:
     virtual ~NodeNetwork() = default;
 
@@ -286,6 +277,47 @@ public:
      */
     virtual void unmap_parameter(const std::string& param_name);
 
+    //-------------------------------------------------------------------------
+    // Typed Controls
+    //-------------------------------------------------------------------------
+
+    /**
+     * @brief Apply the members of this network's Controls struct that hold a value.
+     *
+     * A network opts in with `using Controls = ...`, a struct of Control members
+     * declared with MF_DESCRIBE, and holds the reference declare_controls()
+     * returns. A member named `scale` is applied to the output scale by the
+     * base, so an audio network lists it first. Members left empty are
+     * untouched, so `net->set({ .decay = lfo })` changes only decay.
+     * Designators follow the struct's declaration order. A node source maps in
+     * BROADCAST and a network source in ONE_TO_ONE. The string based
+     * map_parameter stays for names a user invents. A number may be set from
+     * any thread while a block renders. Attaching or removing a node or network
+     * source belongs outside process_batch, as with the operator chain.
+     */
+    template <typename Self>
+    void set(this Self& self, const typename Self::Controls& incoming)
+    {
+        static_cast<NodeNetwork&>(self).m_controls_store.merge(incoming);
+    }
+
+    /**
+     * @brief The controls with the values the network holds now.
+     *
+     * A mapped member still reports its source. A network may offer
+     * read_controls(Controls&) to fill members whose value lives elsewhere.
+     */
+    template <typename Self>
+    [[nodiscard]] typename Self::Controls get(this const Self& self)
+    {
+        const NodeNetwork& base = self;
+        auto current = base.m_controls_store.snapshot<typename Self::Controls>(&base.m_output_scale);
+        if constexpr (requires { self.read_controls(current); }) {
+            self.read_controls(current);
+        }
+        return current;
+    }
+
     /**
      * @brief Set the scalar multiplier applied to the network's output buffer after processing
      * @param scale Linear scale factor (1.0 = unity relative to the network's own output normalization, 0.0 = silence, >1.0 = amplify)
@@ -389,18 +421,37 @@ public:
     virtual bool has_operator() const { return false; }
 
     /**
-     * @brief Access the secondary operator chain.
-     *
-     * The chain holds operators that run after the primary operator each
-     * process_batch() cycle. Subclasses call get_operator_chain()->process(dt)
-     * at the appropriate point in their process_batch() implementation.
-     *
-     * Returned shared_ptr is never null -- the chain is created in NodeNetwork's
-     * constructor and lives for the lifetime of the network.
+     * @brief Access this network's operator chain.
+     * @note Each subclass determines when to process the chain.
      */
     [[nodiscard]] std::shared_ptr<OperatorChain> get_operator_chain() const
     {
         return m_operator_chain;
+    }
+
+    /**
+     * @brief Construct an operator, append it to this network's chain and return it.
+     *
+     * An operator that is constructible from a shared_ptr to this concrete
+     * network followed by the arguments receives the network as its first
+     * argument; any other operator is built from the arguments alone.
+     * `gong->add<ModalDampingOperator>()` therefore needs no network argument,
+     * and a host of the wrong type does not compile. The network must be owned
+     * by a shared_ptr. Call outside process_batch.
+     */
+    template <typename Op, typename Self, typename... Args>
+    std::shared_ptr<Op> add(this Self& self, Args&&... args)
+    {
+        std::shared_ptr<Op> op;
+        if constexpr (std::constructible_from<Op, std::shared_ptr<Self>, Args...>) {
+            op = std::make_shared<Op>(
+                std::static_pointer_cast<Self>(self.shared_from_this()),
+                std::forward<Args>(args)...);
+        } else {
+            op = std::make_shared<Op>(std::forward<Args>(args)...);
+        }
+        self.m_operator_chain->add(op);
+        return op;
     }
 
     /**
@@ -482,12 +533,33 @@ protected:
     uint32_t m_frame_rate { 60 };
     std::optional<float> m_timestep;
 
-    std::shared_ptr<OperatorChain> m_operator_chain;
+    std::shared_ptr<OperatorChain> m_operator_chain = std::make_shared<OperatorChain>();
 
     /**
      * @brief Ensure initialize() is called exactly once
      */
     void ensure_initialized();
+
+    /**
+     * @brief Create the network's controls struct and keep it alive.
+     * @return The struct, owned by this network, for the child to read.
+     *
+     * Call once from the constructor's initializer list and hold the result in
+     * a reference member. The struct must be described and every member a
+     * Control.
+     */
+    template <typename C>
+    [[nodiscard]] C& declare_controls()
+    {
+        return m_controls_store.declare<C>();
+    }
+
+    /**
+     * @brief Read node sources and apply the shared `scale`.
+     *
+     * Call once per block before reading the controls struct.
+     */
+    void refresh_controls();
 
     //-------------------------------------------------------------------------
     // Utility Functions (Helper methods for subclasses)
@@ -538,6 +610,7 @@ protected:
     struct ParameterMapping {
         std::string param_name;
         MappingMode mode;
+        uint64_t param_hash {};
 
         // Storage for mapped sources
         std::shared_ptr<Node> broadcast_source; // For BROADCAST
@@ -564,6 +637,8 @@ protected:
     double m_output_scale { 1.0 }; ///< Post-processing scalar applied to m_last_audio_buffer each batch
 
 private:
+    ControlStore m_controls_store;
+
     //-------------------------------------------------------------------------
     // String Conversion (For metadata/debugging)
     //-------------------------------------------------------------------------
@@ -589,5 +664,18 @@ MAYAFLUX_API void extract_node_samples(
     std::vector<double>& buffer,
     size_t& buffer_pos,
     size_t num_samples);
+
+inline size_t Control::element_count() const
+{
+    return m_network ? m_network->get_node_count() : 0;
+}
+
+inline std::optional<double> Control::at(size_t index) const
+{
+    if (m_network) {
+        return m_network->get_node_output(index);
+    }
+    return has_value() ? std::optional<double> { value() } : std::nullopt;
+}
 
 } // namespace MayaFlux::Nodes::Network

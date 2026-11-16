@@ -8,10 +8,10 @@ namespace MayaFlux::Nodes::Network {
 
 PointCloudNetwork::PointCloudNetwork()
     : m_init_mode(Kinesis::SpatialDistribution::EMPTY)
+    , m_controls(declare_controls<PointCloudControls>())
 {
     set_topology(Topology::INDEPENDENT);
     set_output_mode(OutputMode::GRAPHICS_BIND);
-    m_operator_chain = std::make_shared<OperatorChain>();
 
     MF_INFO(Journal::Component::Nodes, Journal::Context::NodeProcessing,
         "Created empty PointCloudNetwork");
@@ -25,10 +25,10 @@ PointCloudNetwork::PointCloudNetwork(
     : m_num_points(num_points)
     , m_bounds(bounds_min, bounds_max)
     , m_init_mode(init_mode)
+    , m_controls(declare_controls<PointCloudControls>())
 {
     set_topology(Topology::INDEPENDENT);
     set_output_mode(OutputMode::GRAPHICS_BIND);
-    m_operator_chain = std::make_shared<OperatorChain>();
 
     MF_INFO(Journal::Component::Nodes, Journal::Context::NodeProcessing,
         "Created PointCloudNetwork with {} points, bounds [{:.2f}, {:.2f}, {:.2f}] to [{:.2f}, {:.2f}, {:.2f}]",
@@ -143,6 +143,8 @@ void PointCloudNetwork::process_batch(unsigned int num_samples)
         return;
     }
 
+    refresh_controls();
+    apply_controls();
     update_mapped_parameters();
 
     for (unsigned int frame = 0; frame < num_samples; ++frame) {
@@ -293,61 +295,87 @@ void PointCloudNetwork::update_vertex([[maybe_unused]] size_t index, [[maybe_unu
 
 void PointCloudNetwork::set_connection_radius(float radius)
 {
-    if (auto* topology_op = dynamic_cast<TopologyOperator*>(m_operator.get())) {
-        topology_op->set_connection_radius(radius);
-    } else {
-        MF_WARN(Journal::Component::Nodes, Journal::Context::NodeProcessing,
-            "set_connection_radius requires TopologyOperator");
-    }
+    set({ .connection_radius = radius });
 }
 
 void PointCloudNetwork::set_k_neighbors(size_t k)
 {
-    if (auto* topology_op = dynamic_cast<TopologyOperator*>(m_operator.get())) {
-        topology_op->set_parameter("k_neighbors", static_cast<double>(k));
-    } else {
-        MF_WARN(Journal::Component::Nodes, Journal::Context::NodeProcessing,
-            "set_k_neighbors requires TopologyOperator");
-    }
+    set({ .k_neighbors = static_cast<double>(k) });
 }
 
 void PointCloudNetwork::set_line_thickness(float thickness)
 {
-    if (auto* topology_op = dynamic_cast<TopologyOperator*>(m_operator.get())) {
-        topology_op->set_global_line_thickness(thickness);
-    } else if (auto* path_op = dynamic_cast<PathOperator*>(m_operator.get())) {
-        path_op->set_global_thickness(thickness);
-    }
+    set({ .line_thickness = thickness });
 }
 
 void PointCloudNetwork::set_line_color(const glm::vec4& color)
 {
-    if (auto* topology_op = dynamic_cast<TopologyOperator*>(m_operator.get())) {
-        topology_op->set_global_line_color(color);
-    } else if (auto* path_op = dynamic_cast<PathOperator*>(m_operator.get())) {
-        path_op->set_global_color(color);
-    }
+    set({ .line_color = color });
 }
 
 void PointCloudNetwork::set_samples_per_segment(size_t samples)
 {
-    if (auto* path_op = dynamic_cast<PathOperator*>(m_operator.get())) {
-        path_op->set_samples_per_segment(static_cast<Eigen::Index>(samples));
-    } else if (auto* topo_op = dynamic_cast<TopologyOperator*>(m_operator.get())) {
-        topo_op->set_samples_per_segment(samples);
-    } else {
-        MF_WARN(Journal::Component::Nodes, Journal::Context::NodeProcessing,
-            "set_samples_per_segment requires PathOperator or TopologyOperator");
-    }
+    set({ .samples_per_segment = static_cast<double>(samples) });
 }
 
 void PointCloudNetwork::set_tension(double tension)
 {
-    if (auto* path_op = dynamic_cast<PathOperator*>(m_operator.get())) {
-        path_op->set_tension(tension);
-    } else {
+    set({ .tension = tension });
+}
+
+void PointCloudNetwork::apply_controls()
+{
+    auto* topology = dynamic_cast<TopologyOperator*>(m_operator.get());
+    auto* path = dynamic_cast<PathOperator*>(m_operator.get());
+
+    const auto unsupported = [](std::string_view control, std::string_view needs) {
         MF_WARN(Journal::Component::Nodes, Journal::Context::NodeProcessing,
-            "set_tension requires PathOperator");
+            "PointCloudNetwork control '{}' requires {}", control, needs);
+    };
+
+    if (const auto color = m_controls.line_color.pending<glm::vec4>()) {
+        if (topology) {
+            topology->set({ .line_color = *color });
+        } else if (path) {
+            path->set({ .color = *color });
+        }
+    }
+    if (const auto radius = m_controls.connection_radius.pending()) {
+        if (topology) {
+            topology->set({ .connection_radius = *radius });
+        } else {
+            unsupported("connection_radius", "TopologyOperator");
+        }
+    }
+    if (const auto neighbors = m_controls.k_neighbors.pending()) {
+        if (topology) {
+            topology->set({ .k_neighbors = *neighbors });
+        } else {
+            unsupported("k_neighbors", "TopologyOperator");
+        }
+    }
+    if (const auto thickness = m_controls.line_thickness.pending()) {
+        if (topology) {
+            topology->set({ .line_thickness = *thickness });
+        } else if (path) {
+            path->set({ .thickness = *thickness });
+        }
+    }
+    if (const auto samples = m_controls.samples_per_segment.pending()) {
+        if (path) {
+            path->set({ .samples_per_segment = *samples });
+        } else if (topology) {
+            topology->set({ .samples_per_segment = *samples });
+        } else {
+            unsupported("samples_per_segment", "PathOperator or TopologyOperator");
+        }
+    }
+    if (const auto tension = m_controls.tension.pending()) {
+        if (path) {
+            path->set({ .tension = *tension });
+        } else {
+            unsupported("tension", "PathOperator");
+        }
     }
 }
 
@@ -360,10 +388,12 @@ void PointCloudNetwork::update_mapped_parameters()
     for (const auto& mapping : m_parameter_mappings) {
         if (mapping.mode == MappingMode::BROADCAST && mapping.broadcast_source) {
             double value = mapping.broadcast_source->get_last_output();
-            m_operator->set_parameter(mapping.param_name, value);
+            m_operator->set_mapped_parameter(
+                { mapping.param_name, mapping.param_hash }, value);
 
         } else if (mapping.mode == MappingMode::ONE_TO_ONE && mapping.network_source) {
-            m_operator->apply_one_to_one(mapping.param_name, mapping.network_source);
+            m_operator->apply_mapped_one_to_one(
+                { mapping.param_name, mapping.param_hash }, mapping.network_source);
         }
     }
 }

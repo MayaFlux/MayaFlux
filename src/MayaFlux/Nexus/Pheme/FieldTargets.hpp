@@ -127,12 +127,13 @@ template <typename Region>
  * @param op GpuFieldOperator, raw pointer or shared_ptr; retained by the target.
  *
  * The influence's value is the vec4 parametric fields receive as their third
- * argument. It is pushed every dispatch, so nothing is rebound or recompiled.
+ * argument. It is held as the operator's params control and pushed every
+ * dispatch, so nothing is rebound or recompiled.
  */
 template <typename Operator>
 [[nodiscard]] Influence<glm::vec4>::Target bind_params(const Operator& op)
 {
-    return [op](const glm::vec4& params) { op->set_params(params); };
+    return [op](const glm::vec4& params) { op->set({ .params = params }); };
 }
 
 /**

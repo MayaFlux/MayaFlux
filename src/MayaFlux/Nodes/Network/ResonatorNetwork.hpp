@@ -7,6 +7,24 @@
 namespace MayaFlux::Nodes::Network {
 
 /**
+ * @struct ResonatorControls
+ * @brief Controls of a ResonatorNetwork, each a number or a mapped source.
+ *
+ * A node source or a number applies to every resonator. A network source
+ * applies one value per resonator.
+ */
+struct ResonatorControls {
+    Control scale; ///< Output scale
+    Control frequency; ///< Centre frequency in Hz
+    Control q; ///< Quality factor
+    Control gain; ///< Linear gain
+    Control retune; ///< Centre frequency in Hz, keeping the ring
+    Control decay; ///< Ring time in seconds, keeping the ring
+};
+
+MF_DESCRIBE(ResonatorControls)
+
+/**
  * @class ResonatorNetwork
  * @brief Network of IIR biquad bandpass filters driven by external excitation
  *
@@ -85,6 +103,8 @@ namespace MayaFlux::Nodes::Network {
  */
 class MAYAFLUX_API ResonatorNetwork : public NodeNetwork {
 public:
+    using Controls = ResonatorControls;
+
     //-------------------------------------------------------------------------
     // Presets
     //-------------------------------------------------------------------------
@@ -331,13 +351,13 @@ public:
      * @brief Set centre frequency of all resonators uniformly
      * @param frequency New centre frequency in Hz
      */
-    void set_all_frequencies(double frequency);
+    [[deprecated("use set({ .frequency = ... })")]] void set_all_frequencies(double frequency);
 
     /**
      * @brief Set Q factor of all resonators uniformly
      * @param q New quality factor
      */
-    void set_all_q(double q);
+    [[deprecated("use set({ .q = ... })")]] void set_all_q(double q);
 
     /**
      * @brief Apply a FormantPreset to the current network
@@ -425,15 +445,24 @@ private:
      * @param param "frequency", "q", "gain", "retune" or "decay"
      * @param value Scalar value from source node
      */
-    void apply_broadcast_parameter(const std::string& param, double value);
+    void apply_broadcast_parameter(ParameterKey param, double value);
 
     /**
      * @brief Apply ONE_TO_ONE values from a source network to the named parameter
      * @param param "frequency", "q", "gain", "retune" or "decay"
      * @param source NodeNetwork providing one value per resonator
      */
-    void apply_one_to_one_parameter(const std::string& param,
+    void apply_one_to_one_parameter(ParameterKey param,
         const std::shared_ptr<NodeNetwork>& source);
+
+    /**
+     * @brief Apply the typed controls that are due
+     */
+    void apply_controls();
+    void apply_all_frequencies(double frequency);
+    void apply_all_q(double q);
+
+    ResonatorControls& m_controls;
 
     //-------------------------------------------------------------------------
     // Data
@@ -452,6 +481,7 @@ private:
     struct ParameterMapping {
         std::string param_name;
         MappingMode mode;
+        uint64_t param_hash {};
         std::shared_ptr<Node> broadcast_source;
         std::shared_ptr<NodeNetwork> network_source;
     };
@@ -460,3 +490,4 @@ private:
 };
 
 } // namespace MayaFlux::Nodes::Network
+#include "ResonatorNetwork.describe.hpp"

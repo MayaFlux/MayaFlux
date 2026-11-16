@@ -6,7 +6,8 @@
 namespace MayaFlux::Nodes::Network {
 
 FieldOperator::FieldOperator(FieldMode mode)
-    : m_mode(mode)
+    : m_controls(declare_controls<FieldControls>())
+    , m_mode(mode)
 {
 }
 
@@ -101,6 +102,11 @@ void FieldOperator::seed_from_upstream(const GraphicsOperator* upstream)
 
 void FieldOperator::process(float)
 {
+    refresh_controls();
+    if (const auto mode = m_controls.mode.pending()) {
+        m_mode = *mode > 0.5 ? FieldMode::ACCUMULATE : FieldMode::ABSOLUTE;
+    }
+
     if (m_count == 0)
         return;
 
@@ -366,6 +372,7 @@ std::vector<MeshVertex> FieldOperator::extract_mesh_vertices() const
 
 void FieldOperator::set_parameter(std::string_view param, double value)
 {
+    settle_named_control(param);
     if (param == "mode") {
         m_mode = value > 0.5 ? FieldMode::ACCUMULATE : FieldMode::ABSOLUTE;
     }

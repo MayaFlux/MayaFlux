@@ -157,6 +157,8 @@ EOF
 %license LICENSE
 %doc README.md
 %{_bindir}/lila_server
+%{_bindir}/mayaflux_reflect
+%{_bindir}/mayaflux_signatures
 %{_libdir}/libMayaFluxLib.so*
 %{_libdir}/libMayaFluxHost.so*
 %{_libdir}/libLila.so*

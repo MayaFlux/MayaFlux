@@ -2,6 +2,7 @@
 
 #include "MayaFlux/Kinesis/Stochastic/Stochastic.hpp"
 #include "NodeNetwork.hpp"
+#include "Operators/ModalDampingOperator.hpp"
 
 namespace MayaFlux::Nodes::Generator {
 class Generator;
@@ -12,6 +13,22 @@ class Filter;
 }
 
 namespace MayaFlux::Nodes::Network {
+
+/**
+ * @struct ModalControls
+ * @brief Controls of a ModalNetwork, each a number or a mapped source.
+ */
+struct ModalControls {
+    Control scale; ///< Output scale
+    Control frequency; ///< Fundamental in Hz
+    Control decay; ///< Global decay multiplier
+    Control amplitude; ///< Scales mode amplitudes; a source scales them every block
+    Control detune; ///< Per-mode offset in hundreds of cents, from a number, node or network
+    Control coupling_enabled; ///< Above one half, the defined couplings act
+    Control exciter_duration; ///< Noise burst duration in seconds
+};
+
+MF_DESCRIBE(ModalControls)
 
 /**
  * @class ModalNetwork
@@ -59,9 +76,17 @@ namespace MayaFlux::Nodes::Network {
  * - "decay": Global decay multiplier (BROADCAST)
  * - "amplitude": Per-mode amplitude (ONE_TO_ONE)
  * - "detune": Per-mode frequency offset (ONE_TO_ONE)
+ *
+ * The same controls are typed members of ModalControls:
+ * @code{.cpp}
+ * bell->set({ .scale = 0.3, .decay = 0.6 });
+ * bell->set({ .decay = lfo, .amplitude = other_network });
+ * @endcode
  */
 class MAYAFLUX_API ModalNetwork : public NodeNetwork {
 public:
+    using Controls = ModalControls;
+
     /**
      * @enum Spectrum
      * @brief Predefined frequency relationship patterns
@@ -201,12 +226,12 @@ public:
      *
      * Updates all mode frequencies proportionally to maintain spectrum shape.
      */
-    void set_fundamental(double frequency);
+    [[deprecated("use set({ .frequency = ... })")]] void set_fundamental(double frequency);
 
     /**
      * @brief Get current fundamental frequency
      */
-    [[nodiscard]] double get_fundamental() const { return m_fundamental; }
+    [[nodiscard, deprecated("use get().frequency")]] double get_fundamental() const { return m_fundamental; }
 
     /**
      * @brief Set global decay multiplier
@@ -214,7 +239,19 @@ public:
      * shorter). Floored at 0.01. Applies to the ring in progress and to every
      * later excitation.
      */
-    void set_decay_multiplier(double multiplier);
+    [[deprecated("use set({ .decay = ... })")]] void set_decay_multiplier(double multiplier);
+
+    /**
+     * @brief Set the decay time of one mode without clearing its current ring
+     * @return False for an invalid index or a nonpositive, nonfinite time
+     *
+     * The global decay multiplier continues to scale this time. The value
+     * persists until changed again, including after an operator is removed.
+     */
+    [[nodiscard]] bool set_mode_decay_time(size_t index, double seconds);
+
+    /** @brief Get the decay time currently used for one mode, before the global multiplier. */
+    [[nodiscard]] std::optional<double> get_mode_decay_time(size_t index) const;
 
     /**
      * @brief Get mode data (read-only access for visualization)
@@ -253,7 +290,7 @@ public:
      * @brief Set noise burst duration
      * @param seconds Duration in seconds (for NOISE_BURST and FILTERED_NOISE)
      */
-    void set_exciter_duration(double seconds);
+    [[deprecated("use set({ .exciter_duration = ... })")]] void set_exciter_duration(double seconds);
 
     /**
      * @brief Set filter for shaped noise excitation
@@ -319,7 +356,11 @@ public:
      * @brief Enable/disable modal coupling
      * @param enable Coupling state
      */
-    void set_coupling_enabled(bool enable) { m_coupling_enabled = enable; }
+    [[deprecated("use set({ .coupling_enabled = ... })")]] void set_coupling_enabled(bool enable)
+    {
+        m_controls.coupling_enabled.settle();
+        m_coupling_enabled = enable;
+    }
 
     /**
      * @brief Define bidirectional coupling between two modes
@@ -351,19 +392,24 @@ public:
     /**
      * @brief Check if coupling is enabled
      */
-    [[nodiscard]] bool is_coupling_enabled() const { return m_coupling_enabled; }
+    [[nodiscard, deprecated("use get().coupling_enabled")]] bool is_coupling_enabled() const { return m_coupling_enabled; }
+
+    /** @brief Fills the controls whose value the network holds outside the struct. */
+    void read_controls(ModalControls& controls) const;
 
 private:
     //-------------------------------------------------------------------------
     // Internal State
     //-------------------------------------------------------------------------
 
+    ModalControls& m_controls;
+
     std::vector<ModalNode> m_modes;
+    std::vector<double> m_mode_decay_times;
     Kinesis::Stochastic::Stochastic m_random_generator;
     Spectrum m_spectrum;
     double m_fundamental;
     double m_decay_multiplier = 1.0;
-    double m_base_decay {};
 
     std::vector<std::vector<double>> m_node_buffers; ///< Per-mode sample buffers populated each process_batch()
 
@@ -448,6 +494,13 @@ private:
     void refresh_decay();
 
     /**
+     * @brief Apply the typed controls that are due
+     */
+    void apply_controls();
+    void apply_fundamental(double frequency);
+    void apply_decay_multiplier(double multiplier);
+
+    /**
      * @brief Update mapped parameters before processing
      */
     void update_mapped_parameters();
@@ -455,13 +508,14 @@ private:
     /**
      * @brief Apply broadcast parameter to all modes
      */
-    void apply_broadcast_parameter(const std::string& param, double value);
+    void apply_broadcast_parameter(ParameterKey param, double value);
 
     /**
      * @brief Apply one-to-one parameter from another network
      */
-    void apply_one_to_one_parameter(const std::string& param,
+    void apply_one_to_one_parameter(ParameterKey param,
         const std::shared_ptr<NodeNetwork>& source);
 };
 
 } // namespace MayaFlux::Nodes::Network
+#include "ModalNetwork.describe.hpp"

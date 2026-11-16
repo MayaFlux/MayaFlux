@@ -16,6 +16,21 @@ class Filter;
 namespace MayaFlux::Nodes::Network {
 
 /**
+ * @struct WaveguideControls
+ * @brief Controls of a WaveguideNetwork, each a number or a mapped source.
+ */
+struct WaveguideControls {
+    Control scale; ///< Output scale
+    Control frequency; ///< Fundamental in Hz
+    Control damping; ///< Loop loss factor
+    Control position; ///< Pickup position along the delay line
+    Control exciter_duration; ///< Noise burst duration in seconds
+    Control measurement_mode; ///< Above one half the output is velocity, not pressure
+};
+
+MF_DESCRIBE(WaveguideControls)
+
+/**
  * @class WaveguideNetwork
  * @brief Digital waveguide synthesis via uni- and bidirectional delay-line architectures
  *
@@ -84,6 +99,8 @@ namespace MayaFlux::Nodes::Network {
  */
 class MAYAFLUX_API WaveguideNetwork : public NodeNetwork {
 public:
+    using Controls = WaveguideControls;
+
     /**
      * @enum WaveguideType
      * @brief Physical structure being modeled
@@ -268,7 +285,7 @@ public:
      * @brief Set noise burst duration for exciter
      * @param seconds Duration in seconds
      */
-    void set_exciter_duration(double seconds);
+    [[deprecated("use set({ .exciter_duration = ... })")]] void set_exciter_duration(double seconds);
 
     /**
      * @brief Set filter for shaped noise excitation
@@ -310,12 +327,15 @@ public:
      * ring with the default filters repeats at this frequency. A replacement
      * filter with its own group delay shifts the pitch by that delay on every pass.
      */
-    void set_fundamental(double freq);
+    [[deprecated("use set({ .frequency = ... })")]] void set_fundamental(double freq);
 
     /**
      * @brief Get current fundamental frequency
      */
-    [[nodiscard]] double get_fundamental() const { return m_fundamental; }
+    [[nodiscard, deprecated("use get().frequency")]] double get_fundamental() const { return m_fundamental; }
+
+    /** @brief Fills the controls whose value the network holds outside the struct. */
+    void read_controls(WaveguideControls& controls) const;
 
     /**
      * @brief Set per-sample energy loss factor
@@ -323,12 +343,12 @@ public:
      *
      * Controls overall decay time. Values closer to 1.0 sustain longer.
      */
-    void set_loss_factor(double loss);
+    [[deprecated("use set({ .damping = ... })")]] void set_loss_factor(double loss);
 
     /**
      * @brief Get current loss factor
      */
-    [[nodiscard]] double get_loss_factor() const;
+    [[nodiscard, deprecated("use get().damping")]] double get_loss_factor() const;
 
     /**
      * @brief Replace the loop filter at one termination
@@ -367,12 +387,12 @@ public:
      * Determines where the output is read from the delay line.
      * Different positions emphasize different harmonics.
      */
-    void set_pickup_position(double position);
+    [[deprecated("use set({ .position = ... })")]] void set_pickup_position(double position);
 
     /**
      * @brief Get current pickup position
      */
-    [[nodiscard]] double get_pickup_position() const;
+    [[nodiscard, deprecated("use get().position")]] double get_pickup_position() const;
 
     /**
      * @brief Get waveguide type
@@ -388,18 +408,23 @@ public:
      * @brief Set measurement mode for output
      * @param mode Whether outputs represent pressure or velocity
      */
-    void set_measurement_mode(MeasurementMode mode) { m_measurement_mode = mode; }
+    [[deprecated("use set({ .measurement_mode = ... })")]] void set_measurement_mode(MeasurementMode mode)
+    {
+        m_controls.measurement_mode.settle();
+        m_measurement_mode = mode;
+    }
 
     /**
      * @brief Get current measurement mode
      */
-    [[nodiscard]] MeasurementMode get_measurement_mode() const { return m_measurement_mode; }
+    [[nodiscard, deprecated("use get().measurement_mode")]] MeasurementMode get_measurement_mode() const { return m_measurement_mode; }
 
 private:
     //-------------------------------------------------------------------------
     // Internal State
     //-------------------------------------------------------------------------
 
+    WaveguideControls& m_controls;
     WaveguideType m_type;
     double m_fundamental;
 
@@ -460,8 +485,15 @@ private:
     void initialize_exciter();
 
     void update_mapped_parameters();
-    void apply_broadcast_parameter(const std::string& param, double value);
-    void apply_one_to_one_parameter(const std::string& param, const std::shared_ptr<NodeNetwork>& source);
+    void apply_broadcast_parameter(ParameterKey param, double value);
+    void apply_one_to_one_parameter(ParameterKey param, const std::shared_ptr<NodeNetwork>& source);
+
+    void apply_controls();
+    void apply_fundamental(double freq);
+    void apply_loss_factor(double loss);
+    void apply_pickup_position(double position);
+    [[nodiscard]] double loss_factor() const;
+    [[nodiscard]] double pickup_position() const;
 
     void process_unidirectional(WaveguideSegment& seg, unsigned int num_samples, std::vector<double>& out);
     void process_bidirectional(WaveguideSegment& seg, unsigned int num_samples, std::vector<double>& out);
@@ -469,3 +501,4 @@ private:
 };
 
 } // namespace MayaFlux::Nodes::Network
+#include "WaveguideNetwork.describe.hpp"

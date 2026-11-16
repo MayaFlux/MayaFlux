@@ -14,7 +14,6 @@ MeshNetwork::MeshNetwork()
 {
     set_output_mode(OutputMode::GRAPHICS_BIND);
     set_topology(Topology::CUSTOM);
-    m_operator_chain = std::make_shared<OperatorChain>();
 }
 
 // =============================================================================

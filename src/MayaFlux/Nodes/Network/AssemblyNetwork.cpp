@@ -8,7 +8,6 @@ AssemblyNetwork::AssemblyNetwork()
 {
     set_topology(Topology::INDEPENDENT);
     set_output_mode(OutputMode::GRAPHICS_BIND);
-    m_operator_chain = std::make_shared<OperatorChain>();
 
     MF_INFO(Journal::Component::Nodes, Journal::Context::NodeProcessing,
         "Created empty AssemblyNetwork");

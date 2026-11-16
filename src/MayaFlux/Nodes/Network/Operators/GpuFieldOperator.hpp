@@ -228,6 +228,32 @@ struct SpatialFieldConfig {
 };
 
 /**
+ * @struct GpuFieldControls
+ * @brief The live tuning of a GpuFieldOperator, each a number or a mapped node.
+ *
+ * Every member but params is a SpatialFieldConfig tuning value and is read by a
+ * processor that exists whatever its value, so a change reloads a few floats at
+ * the next dispatch and never rebuilds a pipeline. params is the vec4 pushed
+ * with every dispatch to parametric fields. cross_cluster is on above one half.
+ * The structural SpatialFieldConfig fields, the bindings, the workgroup size
+ * and the vertex binding are not controls: they decide what is built. A network
+ * source is per element and is not used.
+ */
+struct GpuFieldControls {
+    Control params;
+    Control density_saturation_count;
+    Control capture_growth;
+    Control swallow_base_size;
+    Control swallow_growth_rate;
+    Control swallow_max_size;
+    Control swallow_dim_factor;
+    Control cross_cluster;
+    Control spawn_density_threshold;
+};
+
+MF_DESCRIBE(GpuFieldControls)
+
+/**
  * @class GpuFieldOperator
  * @brief Chain operator that declares Tendency field deformation as a compute
  *        shader rather than evaluating it on the CPU.
@@ -283,6 +309,8 @@ public:
      *               population stages to build, plus their live-tunable values.
      *               Defaulted empty, meaning field displacement only.
      */
+    using Controls = GpuFieldControls;
+
     explicit GpuFieldOperator(Kakshya::VertexLayout layout, SpatialFieldConfig config = {});
 
     ~GpuFieldOperator() override = default;
@@ -390,7 +418,11 @@ public:
      * Pushed with every dispatch, so it takes effect on the next cycle and
      * costs no pipeline rebuild. Written and read on the same tick domain.
      */
-    void set_params(const glm::vec4& params) noexcept { m_params = params; }
+    [[deprecated("use set({ .params = ... })")]] void set_params(const glm::vec4& params) noexcept
+    {
+        m_controls.params.settle();
+        m_params = params;
+    }
 
     /** @brief The parameter block parametric fields currently receive. */
     [[nodiscard]] const glm::vec4& get_params() const noexcept { return m_params; }
@@ -452,6 +484,16 @@ public:
      */
     [[nodiscard]] uint64_t revision() const noexcept { return m_revision; }
 
+    /**
+     * @brief Monotonic counter incremented whenever a SpatialFieldConfig tuning value changes.
+     *
+     * Kept apart from revision() because no tuning value reaches the emitted
+     * shader: a consumer that only reloads values, such as the spatial hash, the
+     * claim and the population processors, watches this one and never causes
+     * the compute pipeline to be rebuilt.
+     */
+    [[nodiscard]] uint64_t config_revision() const noexcept { return m_config_revision; }
+
     // -------------------------------------------------------------------------
     // Spatial-field configuration
     // -------------------------------------------------------------------------
@@ -469,28 +511,28 @@ public:
     [[nodiscard]] const SpatialFieldConfig& get_field_config() const { return m_field_config; }
 
     /** @brief Live-update HashDensityColorProcessor's saturation point. */
-    void set_density_saturation_count(float count);
+    [[deprecated("use set({ .density_saturation_count = ... })")]] void set_density_saturation_count(float count);
 
     /** @brief Live-update ClaimProcessor's size-to-capture-radius scaling. */
-    void set_capture_growth(float growth);
+    [[deprecated("use set({ .capture_growth = ... })")]] void set_capture_growth(float growth);
 
     /** @brief Live-update ClaimSwallowProcessor's base survivor size. */
-    void set_swallow_base_size(float size);
+    [[deprecated("use set({ .swallow_base_size = ... })")]] void set_swallow_base_size(float size);
 
     /** @brief Live-update ClaimSwallowProcessor's per-swallow size increase. */
-    void set_swallow_growth_rate(float rate);
+    [[deprecated("use set({ .swallow_growth_rate = ... })")]] void set_swallow_growth_rate(float rate);
 
     /** @brief Live-update ClaimSwallowProcessor's survivor size ceiling. */
-    void set_swallow_max_size(float size);
+    [[deprecated("use set({ .swallow_max_size = ... })")]] void set_swallow_max_size(float size);
 
     /** @brief Live-update ClaimSwallowProcessor's absorbed-particle dimming. */
-    void set_swallow_dim_factor(float factor);
+    [[deprecated("use set({ .swallow_dim_factor = ... })")]] void set_swallow_dim_factor(float factor);
 
     /** @brief Live-update whether claims and density see across cluster boundaries. */
-    void set_cross_cluster(bool enabled);
+    [[deprecated("use set({ .cross_cluster = ... })")]] void set_cross_cluster(bool enabled);
 
     /** @brief Live-update PopulationSpawnProcessor's spawn density threshold. */
-    void set_spawn_density_threshold(float threshold);
+    [[deprecated("use set({ .spawn_density_threshold = ... })")]] void set_spawn_density_threshold(float threshold);
 
     // -------------------------------------------------------------------------
     // Shader
@@ -533,23 +575,24 @@ public:
     // -------------------------------------------------------------------------
 
     /**
-     * @brief No per-cycle work.
+     * @brief Take the controls: node sources are read and pending values applied.
      *
-     * The operator holds only declarations. Dispatch, push constants and the
-     * vertex range all belong to the VertexFieldProcessor that consumes
-     * build_spec(). Present because NetworkOperator requires it.
+     * Dispatch, push constants and the vertex range belong to the
+     * VertexFieldProcessor that consumes build_spec(), and the tuning values
+     * are read by the state-field processors. This only moves control values
+     * into the config and bumps config_revision() for each that changed.
      */
     void process(float dt) override;
 
     /**
-     * @brief No settable parameters.
+     * @brief Set a control by its name, as set() would.
      *
-     * dt is owned by process() and rewritten every cycle, so accepting it here
-     * would silently discard the value. When mapped parameters reach chain
-     * operators, they land as new push constant fields rather than as writes to
-     * this one.
+     * An unknown name is ignored.
      */
     void set_parameter(std::string_view param, double value) override;
+
+    /** @brief Fills the controls whose value the operator holds outside the struct. */
+    void read_controls(GpuFieldControls& controls) const;
 
     [[nodiscard]] std::optional<double> query_state(std::string_view query) const override;
 
@@ -572,10 +615,11 @@ protected:
     /**
      * @brief Clear the cached spec and bump revision().
      *
-     * Used by this class's own SpatialFieldConfig setters. Protected rather
-     * than private so a subclass with additional config surface can signal a
-     * change through the same revision a consumer already checks, rather than
-     * needing a second, parallel change-notification mechanism.
+     * For a change that alters build_spec(): bindings, the vertex binding, the
+     * workgroup size. Tuning values bump config_revision() instead, so they
+     * never cost a pipeline rebuild. Protected rather than private so a
+     * subclass with additional spec surface can signal a change through the
+     * same revision a consumer already checks.
      */
     void invalidate();
 
@@ -601,6 +645,10 @@ private:
     std::vector<Binding> m_bindings;
     glm::vec4 m_params {};
     uint64_t m_revision {};
+    uint64_t m_config_revision {};
+    GpuFieldControls& m_controls;
+
+    void apply_controls();
 
     mutable std::optional<Portal::Graphics::ShaderSpec> m_spec_cache;
 
@@ -625,3 +673,4 @@ private:
 };
 
 } // namespace MayaFlux::Nodes::Network
+#include "GpuFieldOperator.describe.hpp"

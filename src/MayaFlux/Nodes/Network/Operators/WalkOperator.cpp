@@ -4,7 +4,8 @@ namespace MayaFlux::Nodes::Network {
 
 WalkOperator::WalkOperator(std::shared_ptr<Kinesis::Stochastic::Weights> table, Pick pick,
     uint32_t every_n_blocks, size_t starting_index)
-    : m_table(std::move(table))
+    : m_controls(declare_controls<WalkControls>())
+    , m_table(std::move(table))
     , m_pick(std::move(pick))
     , m_current(starting_index)
     , m_blocks_until(every_n_blocks)
@@ -28,9 +29,31 @@ void WalkOperator::ensure_established()
     m_established = true;
 }
 
+void WalkOperator::move_to(double index)
+{
+    const auto target = static_cast<size_t>(index);
+    if (target != m_current.load(std::memory_order_relaxed)) {
+        jump(target);
+    }
+}
+
+void WalkOperator::read_controls(WalkControls& controls) const
+{
+    controls.current.observe(static_cast<double>(current()));
+    controls.every_n_blocks.observe(static_cast<double>(m_every_n_blocks.load(std::memory_order_relaxed)));
+}
+
 void WalkOperator::process(float /*frames*/)
 {
     ensure_established();
+
+    refresh_controls();
+    if (const auto index = m_controls.current.pending()) {
+        move_to(*index);
+    }
+    if (const auto every = m_controls.every_n_blocks.pending()) {
+        apply_every_n_blocks(static_cast<uint32_t>(std::max(0.0, *every)));
+    }
 
     const uint32_t every = m_every_n_blocks.load(std::memory_order_relaxed);
     if (every == 0) {
@@ -46,6 +69,12 @@ void WalkOperator::process(float /*frames*/)
 }
 
 void WalkOperator::set_every_n_blocks(uint32_t every_n_blocks) noexcept
+{
+    m_controls.every_n_blocks.settle();
+    apply_every_n_blocks(every_n_blocks);
+}
+
+void WalkOperator::apply_every_n_blocks(uint32_t every_n_blocks) noexcept
 {
     m_every_n_blocks.store(every_n_blocks, std::memory_order_relaxed);
     m_blocks_until = every_n_blocks;
@@ -88,11 +117,11 @@ void WalkOperator::jump(size_t index)
 
 void WalkOperator::set_parameter(std::string_view param, double value)
 {
+    settle_named_control(param);
     if (param == "current") {
-        const auto index = static_cast<size_t>(value);
-        if (index != m_current.load(std::memory_order_relaxed)) {
-            jump(index);
-        }
+        move_to(value);
+    } else if (param == "every_n_blocks") {
+        apply_every_n_blocks(static_cast<uint32_t>(std::max(0.0, value)));
     }
 }
 

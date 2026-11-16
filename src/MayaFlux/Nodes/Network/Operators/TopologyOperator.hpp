@@ -4,8 +4,27 @@
 
 namespace MayaFlux::Nodes::Network {
 
+/**
+ * @struct TopologyControls
+ * @brief Controls of a TopologyOperator, each a number or a mapped node.
+ *
+ * They apply to every topology. A network source is per element and is not used.
+ * line_color is a glm::vec4.
+ */
+struct TopologyControls {
+    Control connection_radius;
+    Control k_neighbors;
+    Control line_thickness;
+    Control samples_per_segment;
+    Control line_color;
+};
+
+MF_DESCRIBE(TopologyControls)
+
 class MAYAFLUX_API TopologyOperator : public GraphicsOperator {
 public:
+    using Controls = TopologyControls;
+
     explicit TopologyOperator(
         Kinesis::ProximityMode mode = Kinesis::ProximityMode::K_NEAREST);
 
@@ -129,19 +148,19 @@ public:
      * @brief Set the connection radius for topology generation.
      * @param radius Connection radius.
      */
-    void set_connection_radius(float radius);
+    [[deprecated("use set({ .connection_radius = ... })")]] void set_connection_radius(float radius);
 
     /**
      * @brief Set the number of neighbors (k) for K-Nearest topology mode.
      * @param k Number of neighbors.
      */
-    void set_global_line_thickness(float thickness);
+    [[deprecated("use set({ .line_thickness = ... })")]] void set_global_line_thickness(float thickness);
 
     /**
      * @brief Set the line color for all topologies.
      * @param color RGB color.
      */
-    void set_global_line_color(const glm::vec4& color);
+    [[deprecated("use set({ .line_color = ... })")]] void set_global_line_color(const glm::vec4& color);
 
     /**
      * @brief Replace every point, in extract_vertices() order, keeping the topologies.
@@ -157,7 +176,7 @@ public:
      *
      * Higher values produce smoother curves but increase vertex count.
      */
-    void set_samples_per_segment(size_t samples);
+    [[deprecated("use set({ .samples_per_segment = ... })")]] void set_samples_per_segment(size_t samples);
 
     /**
      * @brief Get number of topologies currently stored
@@ -171,6 +190,10 @@ protected:
     void* get_data_at(size_t global_index) override;
 
 private:
+    TopologyControls& m_controls;
+
+    void apply_controls();
+
     std::vector<std::shared_ptr<GpuSync::TopologyGeneratorNode>> m_topologies;
 
     mutable std::vector<uint8_t> m_vertex_data_aggregate;
@@ -182,3 +205,4 @@ private:
 };
 
 } // namespace MayaFlux::Nodes::Network
+#include "TopologyOperator.describe.hpp"

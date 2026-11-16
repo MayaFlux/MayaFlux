@@ -580,7 +580,7 @@ HashDensityColorProcessor::HashDensityColorProcessor(
         .cross_cluster = particle_op->get_field_config().cross_cluster ? 1U : 0U,
     }
     , m_particle_op(std::move(particle_op))
-    , m_built_revision(m_particle_op->revision())
+    , m_built_revision(m_particle_op->config_revision())
 {
 }
 
@@ -593,7 +593,7 @@ bool HashDensityColorProcessor::on_before_execute(
     Portal::Graphics::CommandBufferID cmd_id,
     const std::shared_ptr<VKBuffer>& buffer)
 {
-    return guard_and_resync(cmd_id, buffer, m_particle_op->revision(), m_built_revision, [this] {
+    return guard_and_resync(cmd_id, buffer, m_particle_op->config_revision(), m_built_revision, [this] {
         const auto& pconfig = m_particle_op->get_field_config();
         m_params.density_saturation_count = pconfig.density_saturation_count;
         m_params.cross_cluster = pconfig.cross_cluster ? 1U : 0U;

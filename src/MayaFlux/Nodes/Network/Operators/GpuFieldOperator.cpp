@@ -124,6 +124,7 @@ namespace {
 GpuFieldOperator::GpuFieldOperator(Kakshya::VertexLayout layout, SpatialFieldConfig config)
     : m_layout(std::move(layout))
     , m_field_config(config)
+    , m_controls(declare_controls<GpuFieldControls>())
 {
     if (m_layout.stride_bytes == 0 || m_layout.stride_bytes % 4 != 0) {
         MF_ERROR(Journal::Component::Nodes, Journal::Context::NodeProcessing,
@@ -138,52 +139,103 @@ GpuFieldOperator::GpuFieldOperator(Kakshya::VertexLayout layout, SpatialFieldCon
     m_stride_words = m_layout.stride_bytes / 4;
 }
 
+namespace {
+
+    template <typename T>
+    void tune(T& slot, T value, uint64_t& revision)
+    {
+        if (slot == value) {
+            return;
+        }
+        slot = value;
+        ++revision;
+    }
+
+}
+
 void GpuFieldOperator::set_density_saturation_count(float count)
 {
-    m_field_config.density_saturation_count = count;
-    invalidate();
+    m_controls.density_saturation_count.settle();
+    tune(m_field_config.density_saturation_count, count, m_config_revision);
 }
 
 void GpuFieldOperator::set_capture_growth(float growth)
 {
-    m_field_config.capture_growth = growth;
-    invalidate();
+    m_controls.capture_growth.settle();
+    tune(m_field_config.capture_growth, growth, m_config_revision);
 }
 
 void GpuFieldOperator::set_swallow_base_size(float size)
 {
-    m_field_config.swallow_base_size = size;
-    invalidate();
+    m_controls.swallow_base_size.settle();
+    tune(m_field_config.swallow_base_size, size, m_config_revision);
 }
 
 void GpuFieldOperator::set_swallow_growth_rate(float rate)
 {
-    m_field_config.swallow_growth_rate = rate;
-    invalidate();
+    m_controls.swallow_growth_rate.settle();
+    tune(m_field_config.swallow_growth_rate, rate, m_config_revision);
 }
 
 void GpuFieldOperator::set_swallow_max_size(float size)
 {
-    m_field_config.swallow_max_size = size;
-    invalidate();
+    m_controls.swallow_max_size.settle();
+    tune(m_field_config.swallow_max_size, size, m_config_revision);
 }
 
 void GpuFieldOperator::set_swallow_dim_factor(float factor)
 {
-    m_field_config.swallow_dim_factor = factor;
-    invalidate();
+    m_controls.swallow_dim_factor.settle();
+    tune(m_field_config.swallow_dim_factor, factor, m_config_revision);
 }
 
 void GpuFieldOperator::set_cross_cluster(bool enabled)
 {
-    m_field_config.cross_cluster = enabled;
-    invalidate();
+    m_controls.cross_cluster.settle();
+    tune(m_field_config.cross_cluster, enabled, m_config_revision);
 }
 
 void GpuFieldOperator::set_spawn_density_threshold(float threshold)
 {
-    m_field_config.spawn_density_threshold = threshold;
-    invalidate();
+    m_controls.spawn_density_threshold.settle();
+    tune(m_field_config.spawn_density_threshold, threshold, m_config_revision);
+}
+
+void GpuFieldOperator::apply_controls()
+{
+    const auto number = [this](Control& control, float& slot) {
+        if (const auto value = control.pending()) {
+            tune(slot, static_cast<float>(*value), m_config_revision);
+        }
+    };
+
+    number(m_controls.density_saturation_count, m_field_config.density_saturation_count);
+    number(m_controls.capture_growth, m_field_config.capture_growth);
+    number(m_controls.swallow_base_size, m_field_config.swallow_base_size);
+    number(m_controls.swallow_growth_rate, m_field_config.swallow_growth_rate);
+    number(m_controls.swallow_max_size, m_field_config.swallow_max_size);
+    number(m_controls.swallow_dim_factor, m_field_config.swallow_dim_factor);
+    number(m_controls.spawn_density_threshold, m_field_config.spawn_density_threshold);
+
+    if (const auto enabled = m_controls.cross_cluster.pending()) {
+        tune(m_field_config.cross_cluster, *enabled > 0.5, m_config_revision);
+    }
+    if (const auto params = m_controls.params.pending<glm::vec4>()) {
+        m_params = *params;
+    }
+}
+
+void GpuFieldOperator::read_controls(GpuFieldControls& controls) const
+{
+    controls.params.observe(m_params);
+    controls.density_saturation_count.observe(m_field_config.density_saturation_count);
+    controls.capture_growth.observe(m_field_config.capture_growth);
+    controls.swallow_base_size.observe(m_field_config.swallow_base_size);
+    controls.swallow_growth_rate.observe(m_field_config.swallow_growth_rate);
+    controls.swallow_max_size.observe(m_field_config.swallow_max_size);
+    controls.swallow_dim_factor.observe(m_field_config.swallow_dim_factor);
+    controls.cross_cluster.observe(m_field_config.cross_cluster ? 1.0 : 0.0);
+    controls.spawn_density_threshold.observe(m_field_config.spawn_density_threshold);
 }
 
 std::optional<std::pair<uint32_t, uint32_t>>
@@ -492,12 +544,16 @@ void GpuFieldOperator::invalidate()
 
 void GpuFieldOperator::process(float /*dt*/)
 {
+    refresh_controls();
+    apply_controls();
 }
 
 void GpuFieldOperator::set_parameter(std::string_view param, double value)
 {
-    MF_RT_TRACE(Journal::Component::Nodes, Journal::Context::NodeProcessing,
-        "GpuFieldOperator: unknown parameter '{}' ({})", param, value);
+    if (!set_named_control(param, value)) {
+        MF_RT_TRACE(Journal::Component::Nodes, Journal::Context::NodeProcessing,
+            "GpuFieldOperator: unknown parameter '{}' ({})", param, value);
+    }
 }
 
 bool GpuFieldOperator::needs_cluster_id() const

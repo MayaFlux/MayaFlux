@@ -501,7 +501,7 @@ std::shared_ptr<Nodes::Network::ParticleNetwork> make_swarm(const std::shared_pt
     using namespace Nodes::Network;
 
     auto swarm = vega.ParticleNetwork(200000, glm::vec3(-3.0F), glm::vec3(3.0F), Kinesis::SpatialDistribution::RANDOM_SPHERE);
-    swarm->create_operator<PhysicsOperator>()->set_gravity(glm::vec3(0.0F));
+    swarm->create_operator<PhysicsOperator>()->set({ .gravity = glm::vec3(0.0F) });
     vega.evolve(swarm, {}, [](const auto& field) {
         field->bind(FieldTarget::POSITION, Fields::flock);
         field->bind(FieldTarget::COLOR, Fields::voiced);

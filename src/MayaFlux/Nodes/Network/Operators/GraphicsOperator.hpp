@@ -270,6 +270,12 @@ public:
     void set_force_internal_dt(bool value) { m_force_internal_dt = value; }
     [[nodiscard]] bool uses_force_internal_dt() const { return m_force_internal_dt; }
 
+    /** @brief A per-point attribute that apply_point_control writes. */
+    enum class PointAttribute : uint8_t {
+        COLOR, ///< 0 to 1 blends from blue to red
+        SIZE ///< Ten times the value, between 1 and 50
+    };
+
 protected:
     /**
      * @brief Get mutable access to point at global index
@@ -278,6 +284,16 @@ protected:
      * Subclasses must implement to provide per-point access
      */
     virtual void* get_data_at(size_t global_index) = 0;
+
+    /**
+     * @brief Write a control into every point's color or size when it is due.
+     *
+     * For an operator whose data is PointVertex. A number or node applies to
+     * every point, and a network source gives one value per point and is
+     * skipped unless its node count matches the point count, as with
+     * apply_one_to_one.
+     */
+    void apply_point_control(Control& control, PointAttribute attribute);
 
     bool m_participates_in_rendering { true };
     bool m_consumes_upstream {};

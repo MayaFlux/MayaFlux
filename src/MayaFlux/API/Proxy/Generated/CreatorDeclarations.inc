@@ -51,6 +51,9 @@
     std::shared_ptr<Nodes::Network::WaveguideNetwork> WaveguideNetwork(Nodes::Network::WaveguideNetwork::WaveguideType type, double fundamental_freq, double sample_rate = 48000.0);
     std::shared_ptr<Nodes::Network::ResonatorNetwork> ResonatorNetwork(size_t num_resonators, Nodes::Network::ResonatorNetwork::FormantPreset preset = Nodes::Network::ResonatorNetwork::FormantPreset::NONE);
     std::shared_ptr<Nodes::Network::ResonatorNetwork> ResonatorNetwork(const std::vector<double> & frequencies, const std::vector<double> & q_values);
+    std::shared_ptr<Nodes::Network::DuctNetwork> DuctNetwork(double length, double radius, double sample_rate = 48000.0);
+    std::shared_ptr<Nodes::Network::DuctNetwork> DuctNetwork(double length, const std::vector<double> & radii, double sample_rate = 48000.0);
+    std::shared_ptr<Nodes::Network::DuctNetwork> DuctNetwork(double length, std::function<double (double)> radius, double sample_rate = 48000.0);
     std::shared_ptr<Nodes::Network::RelationNetwork> RelationNetwork();
     std::shared_ptr<Nodes::Network::ParticleNetwork> ParticleNetwork(size_t num_particles, const glm::vec3 & bounds_min = glm::vec3(-10.0F), const glm::vec3 & bounds_max = glm::vec3(10.0F), Kinesis::SpatialDistribution init_mode = Kinesis::SpatialDistribution::RANDOM_VOLUME);
     std::shared_ptr<Nodes::Network::PointCloudNetwork> PointCloudNetwork();

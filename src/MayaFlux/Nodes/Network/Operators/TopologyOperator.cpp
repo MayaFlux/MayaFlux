@@ -8,7 +8,8 @@ namespace MayaFlux::Nodes::Network {
 //-----------------------------------------------------------------------------
 
 TopologyOperator::TopologyOperator(Kinesis::ProximityMode mode)
-    : m_default_mode(mode)
+    : m_controls(declare_controls<TopologyControls>())
+    , m_default_mode(mode)
 {
     MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
         "TopologyOperator created with mode {}", static_cast<int>(mode));
@@ -88,6 +89,35 @@ void TopologyOperator::add_topology(
 // Processing
 //-----------------------------------------------------------------------------
 
+void TopologyOperator::apply_controls()
+{
+    if (const auto radius = m_controls.connection_radius.pending()) {
+        for (auto& topology : m_topologies) {
+            topology->set_connection_radius(static_cast<float>(*radius));
+        }
+    }
+    if (const auto neighbors = m_controls.k_neighbors.pending()) {
+        for (auto& topology : m_topologies) {
+            topology->set_k_neighbors(static_cast<size_t>(*neighbors));
+        }
+    }
+    if (const auto thickness = m_controls.line_thickness.pending()) {
+        for (auto& topology : m_topologies) {
+            topology->set_line_thickness(static_cast<float>(*thickness));
+        }
+    }
+    if (const auto samples = m_controls.samples_per_segment.pending()) {
+        for (auto& topology : m_topologies) {
+            topology->set_samples_per_segment(static_cast<size_t>(*samples));
+        }
+    }
+    if (const auto color = m_controls.line_color.pending<glm::vec4>()) {
+        for (auto& topology : m_topologies) {
+            topology->set_line_color(*color);
+        }
+    }
+}
+
 void TopologyOperator::process(float /*dt*/)
 {
     uint32_t expected = 0;
@@ -97,6 +127,9 @@ void TopologyOperator::process(float /*dt*/)
             return;
         expected = 0;
     }
+
+    refresh_controls();
+    apply_controls();
 
     for (auto& topology : m_topologies) {
         topology->compute_frame();
@@ -267,6 +300,7 @@ std::vector<uint32_t> TopologyOperator::build_cluster_ids() const
 
 void TopologyOperator::set_parameter(std::string_view param, double value)
 {
+    settle_named_control(param);
     if (param == "connection_radius") {
         for (auto& topology : m_topologies) {
             topology->set_connection_radius(static_cast<float>(value));

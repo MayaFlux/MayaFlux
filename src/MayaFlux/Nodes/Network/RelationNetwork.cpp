@@ -5,7 +5,6 @@ namespace MayaFlux::Nodes::Network {
 RelationNetwork::RelationNetwork()
 {
     set_output_mode(OutputMode::AUDIO_SINK);
-    m_operator_chain = std::make_shared<OperatorChain>();
 }
 
 uint32_t RelationNetwork::add_slot(RelationSlot slot)

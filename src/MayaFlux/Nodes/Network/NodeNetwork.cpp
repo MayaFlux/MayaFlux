@@ -29,6 +29,11 @@ std::optional<std::vector<double>> NodeNetwork::get_audio_buffer() const
     return result;
 }
 
+void NodeNetwork::refresh_controls()
+{
+    m_controls_store.refresh(&m_output_scale);
+}
+
 void NodeNetwork::apply_output_scale()
 {
     if (m_output_scale == 1.0)
@@ -107,6 +112,7 @@ void NodeNetwork::map_parameter(const std::string& param_name,
 {
     m_parameter_mappings.push_back({ .param_name = param_name,
         .mode = mode,
+        .param_hash = parameter_hash(param_name),
         .broadcast_source = source,
         .network_source = nullptr });
 }
@@ -117,6 +123,7 @@ void NodeNetwork::map_parameter(const std::string& param_name,
     m_parameter_mappings.push_back(
         { .param_name = param_name,
             .mode = MappingMode::ONE_TO_ONE,
+            .param_hash = parameter_hash(param_name),
             .broadcast_source = nullptr,
             .network_source = source_network });
 }

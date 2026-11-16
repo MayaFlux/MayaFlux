@@ -44,6 +44,7 @@
 #include "Nodes/NodeGraphManager.hpp"
 
 #include "Nodes/Network/AssemblyNetwork.hpp"
+#include "Nodes/Network/DuctNetwork.hpp"
 #include "Nodes/Network/InstanceNetwork.hpp"
 #include "Nodes/Network/MeshNetwork.hpp"
 #include "Nodes/Network/ModalNetwork.hpp"

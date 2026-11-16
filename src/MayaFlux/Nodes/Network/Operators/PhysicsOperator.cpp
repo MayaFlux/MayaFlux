@@ -10,6 +10,7 @@
 namespace MayaFlux::Nodes::Network {
 
 PhysicsOperator::PhysicsOperator()
+    : m_controls(declare_controls<PhysicsControls>())
 {
     MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
         "PhysicsOperator created");
@@ -131,6 +132,9 @@ void PhysicsOperator::process(float dt)
         expected = 0;
     }
 
+    refresh_controls();
+    apply_controls();
+
     if (m_collections.empty()) {
         m_access_token.store(0, std::memory_order_release);
         return;
@@ -175,7 +179,28 @@ void PhysicsOperator::set_parameter(std::string_view param, double value)
         return;
     }
 
-    switch (*param_enum) {
+    adopt_pending(param, *param_enum);
+    apply_parameter(*param_enum, value);
+}
+
+void PhysicsOperator::adopt_pending(std::string_view param, PhysicsParameter parameter)
+{
+    if (parameter == PhysicsParameter::GRAVITY_X || parameter == PhysicsParameter::GRAVITY_Y
+        || parameter == PhysicsParameter::GRAVITY_Z) {
+        if (const auto gravity = m_controls.gravity.pending<glm::vec3>()) {
+            m_gravity = *gravity;
+        }
+        return;
+    }
+
+    std::string name(param);
+    std::ranges::transform(name, name.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    settle_named_control(name);
+}
+
+void PhysicsOperator::apply_parameter(PhysicsParameter parameter, double value)
+{
+    switch (parameter) {
     case PhysicsParameter::GRAVITY_X:
         m_gravity.x = static_cast<float>(value);
         break;
@@ -216,6 +241,110 @@ void PhysicsOperator::set_parameter(std::string_view param, double value)
         m_turbulence_strength = static_cast<float>(value);
         break;
     }
+}
+
+void PhysicsOperator::read_controls(PhysicsControls& controls) const
+{
+    controls.gravity.observe(m_gravity);
+    controls.drag.observe(m_drag);
+    controls.interaction_radius.observe(m_interaction_radius);
+    controls.spring_stiffness.observe(m_spring_stiffness);
+    controls.repulsion_strength.observe(m_repulsion_strength);
+    controls.spatial_interactions.observe(m_spatial_interactions_enabled ? 1.0 : 0.0);
+    controls.point_size.observe(m_point_size);
+    controls.attraction_strength.observe(m_attraction_strength);
+    controls.turbulence.observe(m_turbulence_strength);
+    if (m_has_attraction_point) {
+        controls.attraction_point.observe(m_attraction_point);
+    }
+    controls.bounds.observe(m_bounds);
+    controls.bounds_mode.observe(m_bounds_mode);
+    controls.bond_stiffness.observe(m_bond_stiffness);
+    controls.bond_rest_length.observe(m_bond_rest_length);
+    controls.bonds_enabled.observe(m_bonds_enabled ? 1.0 : 0.0);
+    controls.internal_dt.observe(m_internal_dt);
+    controls.force_internal_dt.observe(m_force_internal_dt ? 1.0 : 0.0);
+}
+
+void PhysicsOperator::apply_controls()
+{
+    const auto scalar = [this](Control& control, PhysicsParameter parameter) {
+        if (const auto value = control.pending()) {
+            apply_parameter(parameter, *value);
+        }
+    };
+
+    if (const auto gravity = m_controls.gravity.pending<glm::vec3>()) {
+        m_gravity = *gravity;
+    }
+    scalar(m_controls.drag, PhysicsParameter::DRAG);
+    scalar(m_controls.interaction_radius, PhysicsParameter::INTERACTION_RADIUS);
+    scalar(m_controls.spring_stiffness, PhysicsParameter::SPRING_STIFFNESS);
+    scalar(m_controls.repulsion_strength, PhysicsParameter::REPULSION_STRENGTH);
+    scalar(m_controls.spatial_interactions, PhysicsParameter::SPATIAL_INTERACTIONS);
+    scalar(m_controls.point_size, PhysicsParameter::POINT_SIZE);
+    scalar(m_controls.attraction_strength, PhysicsParameter::ATTRACTION_STRENGTH);
+    scalar(m_controls.turbulence, PhysicsParameter::TURBULENCE);
+
+    if (const auto point = m_controls.attraction_point.pending<glm::vec3>()) {
+        m_attraction_point = *point;
+        m_has_attraction_point = true;
+    }
+    if (const auto bounds = m_controls.bounds.pending<Kinesis::SamplerBounds>()) {
+        m_bounds = *bounds;
+    }
+    if (const auto mode = m_controls.bounds_mode.pending<BoundsMode>()) {
+        m_bounds_mode = *mode;
+    }
+    if (const auto stiffness = m_controls.bond_stiffness.pending()) {
+        m_bond_stiffness = static_cast<float>(*stiffness);
+    }
+    if (const auto rest_length = m_controls.bond_rest_length.pending()) {
+        m_bond_rest_length = static_cast<float>(*rest_length);
+    }
+    if (const auto enabled = m_controls.bonds_enabled.pending()) {
+        apply_bonds_enabled(*enabled > 0.5);
+    }
+    if (const auto dt = m_controls.internal_dt.pending()) {
+        m_internal_dt = static_cast<float>(*dt);
+    }
+    if (const auto forced = m_controls.force_internal_dt.pending()) {
+        m_force_internal_dt = *forced > 0.5;
+    }
+
+    const auto per_particle = [this](Control& control, auto&& apply) {
+        if (!control.due()) {
+            return;
+        }
+        control.settle();
+
+        if (control.per_element() && control.element_count() != get_point_count()) {
+            return;
+        }
+
+        size_t index = 0;
+        for (auto& group : m_collections) {
+            for (auto& state : group.physics_state) {
+                if (const auto value = control.at(index)) {
+                    apply(state, static_cast<float>(*value));
+                }
+                ++index;
+            }
+        }
+    };
+
+    if (const auto force = m_controls.force.pending<glm::vec3>()) {
+        for (auto& group : m_collections) {
+            for (auto& state : group.physics_state) {
+                state.force += *force;
+            }
+        }
+    }
+
+    per_particle(m_controls.mass, [](PhysicsState& state, float value) { state.mass = std::max(0.1F, value); });
+
+    apply_point_control(m_controls.color, PointAttribute::COLOR);
+    apply_point_control(m_controls.size, PointAttribute::SIZE);
 }
 
 std::optional<double> PhysicsOperator::query_state(std::string_view query) const
@@ -634,6 +763,11 @@ void PhysicsOperator::clear_bonds()
 }
 
 void PhysicsOperator::enable_bonds(bool enable)
+{
+    apply_bonds_enabled(enable);
+}
+
+void PhysicsOperator::apply_bonds_enabled(bool enable)
 {
     m_bonds_enabled = enable;
     if (!enable) {

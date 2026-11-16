@@ -25,10 +25,10 @@ ParticleNetwork::ParticleNetwork(
     : m_num_points(num_particles)
     , m_bounds(bounds_min, bounds_max)
     , m_init_mode(init_mode)
+    , m_controls(declare_controls<ParticleControls>())
 {
     set_topology(Topology::INDEPENDENT);
     set_output_mode(OutputMode::GRAPHICS_BIND);
-    m_operator_chain = std::make_shared<OperatorChain>();
 
     MF_INFO(Journal::Component::Nodes, Journal::Context::NodeProcessing,
         "Created ParticleNetwork with {} points, bounds [{:.2f}, {:.2f}, {:.2f}] to [{:.2f}, {:.2f}, {:.2f}]",
@@ -51,7 +51,7 @@ void ParticleNetwork::initialize()
 
     if (!m_operator && m_default_operator) {
         auto physics = std::make_unique<PhysicsOperator>();
-        physics->set_bounds(m_bounds.min, m_bounds.max);
+        physics->set({ .bounds = m_bounds });
         physics->initialize(positions);
         m_operator = std::move(physics);
     }
@@ -84,13 +84,13 @@ void ParticleNetwork::reset()
     if (m_operator) {
         if (auto* physics = dynamic_cast<PhysicsOperator*>(m_operator.get())) {
             physics->initialize(vertices);
-            physics->set_bounds(m_bounds.min, m_bounds.max);
+            physics->set({ .bounds = m_bounds });
         } else if (auto* field = dynamic_cast<FieldOperator*>(m_operator.get())) {
             field->initialize(vertices);
         }
     } else {
         auto physics = std::make_unique<PhysicsOperator>();
-        physics->set_bounds(m_bounds.min, m_bounds.max);
+        physics->set({ .bounds = m_bounds });
         physics->initialize(vertices);
         m_operator = std::move(physics);
     }
@@ -107,6 +107,8 @@ void ParticleNetwork::process_batch(unsigned int num_samples)
         return;
     }
 
+    refresh_controls();
+    apply_controls();
     update_mapped_parameters();
 
     if (m_operator) {
@@ -131,8 +133,7 @@ void ParticleNetwork::set_topology(Topology topology)
     NodeNetwork::set_topology(topology);
 
     if (auto* physics = dynamic_cast<PhysicsOperator*>(m_operator.get())) {
-        bool should_interact = topology_interacts(topology);
-        physics->enable_spatial_interactions(should_interact);
+        physics->set({ .spatial_interactions = topology_interacts(topology) ? 1.0 : 0.0 });
     }
 }
 
@@ -176,11 +177,10 @@ std::unordered_map<std::string, std::string> ParticleNetwork::get_metadata() con
 
     if (m_operator) {
         if (auto* physics = dynamic_cast<PhysicsOperator*>(m_operator.get())) {
-            metadata["gravity"] = std::format("({:.2f}, {:.2f}, {:.2f})",
-                physics->get_gravity().x,
-                physics->get_gravity().y,
-                physics->get_gravity().z);
-            metadata["drag"] = std::to_string(physics->get_drag());
+            const auto controls = physics->get();
+            const auto gravity = controls.gravity.value<glm::vec3>();
+            metadata["gravity"] = std::format("({:.2f}, {:.2f}, {:.2f})", gravity.x, gravity.y, gravity.z);
+            metadata["drag"] = std::to_string(controls.drag.value());
 
             auto avg_vel = physics->query_state("avg_velocity");
             if (avg_vel) {
@@ -241,7 +241,7 @@ void ParticleNetwork::set_operator(std::unique_ptr<NetworkOperator> op)
         new_graphics->initialize(vertices);
 
         if (auto* physics = dynamic_cast<PhysicsOperator*>(op.get())) {
-            physics->set_bounds(m_bounds.min, m_bounds.max);
+            physics->set({ .bounds = m_bounds });
         }
 
         MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
@@ -260,8 +260,7 @@ void ParticleNetwork::set_operator(std::unique_ptr<NetworkOperator> op)
     m_operator = std::move(op);
 
     if (auto* physics = dynamic_cast<PhysicsOperator*>(m_operator.get())) {
-        bool should_interact = topology_interacts(get_topology());
-        physics->enable_spatial_interactions(should_interact);
+        physics->set({ .spatial_interactions = topology_interacts(get_topology()) ? 1.0 : 0.0 });
     }
 
     MF_INFO(Journal::Component::Nodes, Journal::Context::NodeProcessing,
@@ -294,10 +293,12 @@ void ParticleNetwork::update_mapped_parameters()
     for (const auto& mapping : m_parameter_mappings) {
         if (mapping.mode == MappingMode::BROADCAST && mapping.broadcast_source) {
             double value = mapping.broadcast_source->get_last_output();
-            m_operator->set_parameter(mapping.param_name, value);
+            m_operator->set_mapped_parameter(
+                { mapping.param_name, mapping.param_hash }, value);
 
         } else if (mapping.mode == MappingMode::ONE_TO_ONE && mapping.network_source) {
-            m_operator->apply_one_to_one(mapping.param_name, mapping.network_source);
+            m_operator->apply_mapped_one_to_one(
+                { mapping.param_name, mapping.param_hash }, mapping.network_source);
         }
     }
 }
@@ -305,6 +306,18 @@ void ParticleNetwork::update_mapped_parameters()
 //-----------------------------------------------------------------------------
 // Internal Helpers
 //-----------------------------------------------------------------------------
+
+void ParticleNetwork::read_controls(ParticleControls& controls) const
+{
+    controls.bounds.observe(m_bounds);
+}
+
+void ParticleNetwork::apply_controls()
+{
+    if (const auto bounds = m_controls.bounds.pending<Kinesis::SamplerBounds>()) {
+        m_bounds = *bounds;
+    }
+}
 
 void ParticleNetwork::ensure_initialized()
 {

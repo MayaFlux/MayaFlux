@@ -369,6 +369,27 @@ std::shared_ptr<Nodes::Network::ResonatorNetwork> Creator::ResonatorNetwork(cons
     return obj;
 }
 
+std::shared_ptr<Nodes::Network::DuctNetwork> Creator::DuctNetwork(double length, double radius, double sample_rate)
+{
+    auto obj = std::make_shared<MayaFlux::Nodes::Network::DuctNetwork>(std::forward<decltype(length)>(length), std::forward<decltype(radius)>(radius), std::forward<decltype(sample_rate)>(sample_rate));
+    MF_LIVE_EXPOSE_NAMED("DuctNetwork", obj);
+    return obj;
+}
+
+std::shared_ptr<Nodes::Network::DuctNetwork> Creator::DuctNetwork(double length, const std::vector<double> & radii, double sample_rate)
+{
+    auto obj = std::make_shared<MayaFlux::Nodes::Network::DuctNetwork>(std::forward<decltype(length)>(length), std::forward<decltype(radii)>(radii), std::forward<decltype(sample_rate)>(sample_rate));
+    MF_LIVE_EXPOSE_NAMED("DuctNetwork", obj);
+    return obj;
+}
+
+std::shared_ptr<Nodes::Network::DuctNetwork> Creator::DuctNetwork(double length, std::function<double (double)> radius, double sample_rate)
+{
+    auto obj = std::make_shared<MayaFlux::Nodes::Network::DuctNetwork>(std::forward<decltype(length)>(length), std::forward<decltype(radius)>(radius), std::forward<decltype(sample_rate)>(sample_rate));
+    MF_LIVE_EXPOSE_NAMED("DuctNetwork", obj);
+    return obj;
+}
+
 std::shared_ptr<Nodes::Network::RelationNetwork> Creator::RelationNetwork()
 {
     auto obj = std::make_shared<MayaFlux::Nodes::Network::RelationNetwork>();

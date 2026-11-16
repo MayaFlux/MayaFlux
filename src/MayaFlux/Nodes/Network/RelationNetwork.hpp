@@ -4,6 +4,7 @@
 #include "RelationSlot.hpp"
 
 #include "Operators/RelationOperators.hpp"
+#include "Operators/RewriteOperator.hpp"
 
 namespace MayaFlux::Nodes::Network {
 
