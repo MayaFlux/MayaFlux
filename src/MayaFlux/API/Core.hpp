@@ -104,24 +104,29 @@ MAYAFLUX_API void Pause();
 MAYAFLUX_API void Resume();
 
 /**
- * @brief Blocks launcher until Ctrl-C is pressed (optional convenience function)
+ * @brief Blocks the calling thread until Ctrl-C or Unblock() ends the wait
  *
- * Use this only in launcher applications that need to block the main
- * thread until shutdown is requested.
- *
- * Gates on SIGINT (Ctrl-C) alone, on every platform. Never reads or
- * consumes stdin, so stdin-driven backends (unix pipe, fileio) remain free
- * to use it while this call blocks.
+ * Returns on Ctrl-C, SIGINT or SIGTERM, on closing the console on Windows,
+ * or after Unblock() is called. Other threads keep running. Never reads
+ * stdin, so stdin-driven backends remain free to use it while this call blocks.
  *
  * Usage (optional):
  * ```cpp
- * engine->start_graphics();
+ * MayaFlux::Start();
  * std::cout << "Press Ctrl-C to stop...\n";
- * MayaFlux::Await();  // Blocks here (optional)
- * engine->stop_graphics();
+ * MayaFlux::Await();
+ * MayaFlux::End();
  * ```
  */
 MAYAFLUX_API void Await();
+
+/**
+ * @brief Releases a blocked Await() so the application can proceed to End()
+ *
+ * Does not stop processing or release resources, and does not allow restarting.
+ * Call End() afterwards to shut down. Does nothing if no engine exists.
+ */
+MAYAFLUX_API void Unblock();
 
 /**
  * @brief Stops and cleans up the default engine

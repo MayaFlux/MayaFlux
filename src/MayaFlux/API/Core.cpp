@@ -153,6 +153,13 @@ void Await()
     }
 }
 
+void Unblock()
+{
+    if (internal::initialized.load(std::memory_order_acquire)) {
+        get_context().request_shutdown();
+    }
+}
+
 void End()
 {
     internal::terminating.store(true, std::memory_order_release);

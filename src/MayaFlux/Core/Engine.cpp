@@ -32,6 +32,14 @@
 
 namespace MayaFlux::Core {
 
+namespace {
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+    HANDLE s_shutdown_event { nullptr };
+#elif !defined(MAYAFLUX_PLATFORM_MACOS)
+    std::atomic<pthread_t> s_await_thread { 0 };
+#endif
+}
+
 //-------------------------------------------------------------------------
 // Initialization and Lifecycle
 //-------------------------------------------------------------------------
@@ -206,7 +214,9 @@ void Engine::await_shutdown()
 #ifdef MAYAFLUX_PLATFORM_MACOS
     run_macos_event_loop();
 #elif defined(MAYAFLUX_PLATFORM_WINDOWS)
-    static HANDLE s_shutdown_event = CreateEventW(nullptr, TRUE, FALSE, nullptr);
+    if (!s_shutdown_event) {
+        s_shutdown_event = CreateEventW(nullptr, TRUE, FALSE, nullptr);
+    }
     if (!s_shutdown_event) {
         MF_ERROR(Journal::Component::Core, Journal::Context::Runtime,
             "Failed to create shutdown event (GetLastError={}), cannot await Ctrl-C", GetLastError());
@@ -240,10 +250,13 @@ void Engine::await_shutdown()
     sigaction(SIGINT, &sa, nullptr);
     sigaction(SIGTERM, &sa, nullptr);
 
+    s_await_thread.store(pthread_self(), std::memory_order_release);
+
     while (!s_signal_received.load(std::memory_order_acquire)) {
         sigsuspend(&orig_mask);
     }
 
+    s_await_thread.store(0, std::memory_order_release);
     pthread_sigmask(SIG_SETMASK, &orig_mask, nullptr);
 #endif
 
@@ -259,6 +272,14 @@ void Engine::request_shutdown()
 
 #ifdef MAYAFLUX_PLATFORM_MACOS
     CFRunLoopStop(CFRunLoopGetMain());
+#elif defined(MAYAFLUX_PLATFORM_WINDOWS)
+    if (s_shutdown_event) {
+        SetEvent(s_shutdown_event);
+    }
+#else
+    if (pthread_t waiter = s_await_thread.load(std::memory_order_acquire); waiter) {
+        pthread_kill(waiter, SIGTERM);
+    }
 #endif
 }
 
