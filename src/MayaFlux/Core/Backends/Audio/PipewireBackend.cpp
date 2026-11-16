@@ -406,6 +406,11 @@ void PipewireStream::on_output_process(void* userdata)
         ? self->m_rate_match->size
         : self->m_negotiated_frames.load(std::memory_order_relaxed);
 
+    const auto capacity_frames = static_cast<uint32_t>(sb->datas[0].maxsize / (ch * sizeof(double)));
+    if (frames > capacity_frames) {
+        frames = capacity_frames;
+    }
+
     spa_meta_header* h = static_cast<spa_meta_header*>(
         spa_buffer_find_meta_data(pb->buffer, SPA_META_Header, sizeof(*h)));
 
