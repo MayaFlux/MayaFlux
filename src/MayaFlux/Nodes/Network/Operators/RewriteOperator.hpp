@@ -146,6 +146,16 @@ public:
     [[nodiscard]] bool restore_axiom();
 
     [[nodiscard]] uint64_t draft_generation() const noexcept { return m_draft->generation; }
+
+    /**
+     * @brief The draft word on the producer lane: the axiom, or what rewrite() last built.
+     *
+     * It is the word submit() would hand over, so a producer can read what it
+     * has just rewritten before submitting it. A rewrite that a bound refused
+     * leaves it unchanged. The word is immutable and stays valid after it is
+     * submitted or replaced.
+     */
+    [[nodiscard]] std::shared_ptr<const Word> draft_word() const noexcept { return m_draft; }
     [[nodiscard]] uint64_t active_generation() const noexcept
     {
         return m_active_generation.load(std::memory_order_acquire);

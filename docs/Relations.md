@@ -304,7 +304,7 @@ Replacements apply in the order they were added:
 
 Three words for three places:
 
-- The draft is what `rewrite()` builds and `restore_axiom()` resets. It lives on the producer lane.
+- The draft is what `rewrite()` builds and `restore_axiom()` resets. It lives on the producer lane, and `draft_word()` returns it, so a producer can read what it has just rewritten before it submits.
 - A submitted draft waits for the network. `submit()` returns `BUSY` while one is waiting.
 - The active word is what the network reads, through `active_symbols()`, from an operator added after the Rewrite. `active_generation()` tells another thread which one is active.
 
