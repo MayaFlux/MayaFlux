@@ -27,8 +27,9 @@ class NodeNetwork;
  *
  * A value may be set from any thread while a block renders. Numbers are atomic,
  * and a vector is written and read under a sequence lock, so it is never seen
- * half written. A value is never lost, only possibly applied twice with the
- * same content. Integers are carried exactly up to 2^53. Attaching, replacing
+ * half written. A value is never lost to a race, only possibly applied twice
+ * with the same content. A Control holds one pending value, so a later value
+ * replaces one that no block has applied yet. Integers are carried exactly up to 2^53. Attaching, replacing
  * or removing a node or network source belongs outside the block, as with the
  * operator chain. A consumer calls settle() before it reads the value.
  */
@@ -104,6 +105,9 @@ public:
 
     /** @brief True once a value or a source was given. */
     [[nodiscard]] bool has_value() const noexcept { return m_set.load(std::memory_order_acquire); }
+
+    /** @brief Components held: 0 when empty, 1 for a number, flag or enum, 2 to 4 for a vector. */
+    [[nodiscard]] size_t width() const noexcept { return m_width.load(std::memory_order_acquire); }
 
     /** @brief True when a node or a network feeds this control. */
     [[nodiscard]] bool sourced() const noexcept { return m_node || m_network; }

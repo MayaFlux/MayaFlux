@@ -18,6 +18,12 @@ namespace MayaFlux::Nodes::Network {
  * it to its output scale and an operator, which has none, passes nothing.
  * Every member of the struct must be a Control. What a Control holds, a number,
  * a flag, an enum or a glm vector, is the Control's own business.
+ *
+ * A member is also reachable by its name, the one the struct declares, through
+ * set_named() and read_named(). That is what the string based set_parameter and
+ * query_state of an operator use, so a name resolves through the controls and
+ * not through a table of its own, and a string set and a typed set meet in the
+ * same Control.
  */
 class MAYAFLUX_API ControlStore {
 public:
@@ -98,8 +104,8 @@ public:
      */
     void refresh(double* scale = nullptr)
     {
-        for (Control* control : m_slots) {
-            control->refresh();
+        for (const Slot& slot : m_slots) {
+            slot.control->refresh();
         }
 
         if (scale && m_scale) {
@@ -109,7 +115,52 @@ public:
         }
     }
 
+    /**
+     * @brief Sets the member called @p name to the number @p value.
+     * @return False when no member has that name.
+     *
+     * The same as set() with that one member, so it applies at the next block.
+     * A member that holds a vector is left alone, so a number cannot retype it.
+     */
+    bool set_named(std::string_view name, double value)
+    {
+        for (const Slot& slot : m_slots) {
+            if (slot.name == name) {
+                if (slot.control->width() > 1) {
+                    return false;
+                }
+                slot.control->assign(Control(value));
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @brief The number held by the member called @p name, or nullopt for none or a vector.
+     * @param controls A copy from get(), so values the owner holds outside the struct are real.
+     */
+    template <typename C>
+    [[nodiscard]] static std::optional<double> read_named(const C& controls, std::string_view name)
+    {
+        std::optional<double> found;
+        std::apply(
+            [&](const auto&... member) {
+                ((member.name == name && member.get(controls).has_value() && member.get(controls).width() == 1
+                     ? (found = member.get(controls).value(), void())
+                     : void()),
+                    ...);
+            },
+            Reflect::Generated::Description<C>::members());
+        return found;
+    }
+
 private:
+    struct Slot {
+        std::string_view name;
+        Control* control {};
+    };
+
     template <typename C>
     [[nodiscard]] static const void* tag() noexcept
     {
@@ -119,7 +170,7 @@ private:
 
     void add(std::string_view name, Control& control)
     {
-        m_slots.push_back(&control);
+        m_slots.push_back({ name, &control });
         if (name == "scale") {
             m_scale = &control;
         }
@@ -127,7 +178,7 @@ private:
 
     std::shared_ptr<void> m_storage;
     const void* m_tag = nullptr;
-    std::vector<Control*> m_slots;
+    std::vector<Slot> m_slots;
     Control* m_scale = nullptr;
 };
 

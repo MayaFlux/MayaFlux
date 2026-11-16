@@ -2,6 +2,7 @@
 
 #include "MayaFlux/Kinesis/Stochastic/Stochastic.hpp"
 #include "NodeNetwork.hpp"
+#include "Operators/ModalDampingOperator.hpp"
 
 namespace MayaFlux::Nodes::Generator {
 class Generator;

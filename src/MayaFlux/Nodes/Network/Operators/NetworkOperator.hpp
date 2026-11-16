@@ -141,6 +141,18 @@ protected:
      */
     void refresh_controls() { m_controls_store.refresh(); }
 
+    /**
+     * @brief Sets the control called @p name, the way set() would.
+     * @return False when no control has that name.
+     *
+     * For an operator's string based set_parameter, so a name resolves through
+     * its controls and not through a table of its own.
+     */
+    bool set_named_control(std::string_view name, double value)
+    {
+        return m_controls_store.set_named(name, value);
+    }
+
 private:
     ControlStore m_controls_store;
 };
