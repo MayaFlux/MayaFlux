@@ -206,6 +206,7 @@ std::pair<double, double> ReedOperator::couple(double end_pressure, double inter
 
 void ReedOperator::set_parameter(std::string_view param, double value)
 {
+    settle_named_control(param);
     if (param == "pressure") {
         put(m_target_pressure, value, Rule::ANY);
     } else if (param == "smoothing") {
@@ -439,6 +440,7 @@ void JunctionOperator::process(float /*frames*/)
 
 void JunctionOperator::set_parameter(std::string_view param, double value)
 {
+    settle_named_control(param);
     if (param == "driving_pressure") {
         put(m_driving_pressure, value, Rule::ANY);
     } else if (param == "maximum_flow") {

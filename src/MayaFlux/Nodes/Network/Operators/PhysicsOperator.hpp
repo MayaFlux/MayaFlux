@@ -553,6 +553,7 @@ private:
     void apply_parameter(PhysicsParameter parameter, double value);
     void apply_controls();
     void apply_bonds_enabled(bool enable);
+    void adopt_pending(std::string_view param, PhysicsParameter parameter);
 
     void apply_forces();
     void apply_spatial_interactions();

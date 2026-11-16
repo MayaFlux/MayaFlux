@@ -372,6 +372,7 @@ std::vector<MeshVertex> FieldOperator::extract_mesh_vertices() const
 
 void FieldOperator::set_parameter(std::string_view param, double value)
 {
+    settle_named_control(param);
     if (param == "mode") {
         m_mode = value > 0.5 ? FieldMode::ACCUMULATE : FieldMode::ABSOLUTE;
     }

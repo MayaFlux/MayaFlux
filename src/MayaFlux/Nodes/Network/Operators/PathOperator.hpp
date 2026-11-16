@@ -8,12 +8,14 @@ namespace MayaFlux::Nodes::Network {
  * @struct PathControls
  * @brief Controls of a PathOperator, each a number or a mapped node.
  *
- * They apply to every path. A network source is per element and is not used.
+ * They apply to every path. color is a glm::vec4 tint. A network source is per
+ * element and is not used.
  */
 struct PathControls {
     Control tension;
     Control samples_per_segment;
     Control thickness;
+    Control color;
 };
 
 MF_DESCRIBE(PathControls)
@@ -157,25 +159,25 @@ public:
      * @brief Set the number of samples per segment for all paths.
      * @param samples Number of samples to generate per segment between control points.
      */
-    void set_samples_per_segment(Eigen::Index samples);
+    [[deprecated("use set({ .samples_per_segment = ... })")]] void set_samples_per_segment(Eigen::Index samples);
 
     /**
      * @brief Set the tension parameter for all paths (if supported by mode).
      * @param tension Tension value (e.g., for cubic Hermite interpolation).
      */
-    void set_tension(double tension);
+    [[deprecated("use set({ .tension = ... })")]] void set_tension(double tension);
 
     /**
      * @brief Set the global thickness for all paths.
      * @param thickness Thickness value to apply to all paths.
      */
-    void set_global_thickness(float thickness);
+    [[deprecated("use set({ .thickness = ... })")]] void set_global_thickness(float thickness);
 
     /**
      * @brief Set the global color tint for all paths.
      * @param color Color tint to apply to all paths (multiplied with individual tints).
      */
-    void set_global_color(const glm::vec4& color);
+    [[deprecated("use set({ .color = ... })")]] void set_global_color(const glm::vec4& color);
 
     /**
      * @brief Replace every control point, in extract_vertices() order, keeping the paths.
@@ -200,6 +202,10 @@ private:
     PathControls& m_controls;
 
     void apply_controls();
+    void apply_samples_per_segment(Eigen::Index samples);
+    void apply_tension(double tension);
+    void apply_thickness(float thickness);
+    void apply_color(const glm::vec4& color);
 
     std::vector<std::shared_ptr<GpuSync::PathGeneratorNode>> m_paths;
 

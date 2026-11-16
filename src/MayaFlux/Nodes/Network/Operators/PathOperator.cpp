@@ -127,13 +127,16 @@ void PathOperator::add_node(std::shared_ptr<GpuSync::PathGeneratorNode> node)
 void PathOperator::apply_controls()
 {
     if (const auto tension = m_controls.tension.pending()) {
-        set_tension(*tension);
+        apply_tension(*tension);
     }
     if (const auto samples = m_controls.samples_per_segment.pending()) {
-        set_samples_per_segment(static_cast<Eigen::Index>(*samples));
+        apply_samples_per_segment(static_cast<Eigen::Index>(*samples));
     }
     if (const auto thickness = m_controls.thickness.pending()) {
-        set_global_thickness(static_cast<float>(*thickness));
+        apply_thickness(static_cast<float>(*thickness));
+    }
+    if (const auto color = m_controls.color.pending<glm::vec4>()) {
+        apply_color(*color);
     }
 }
 
@@ -319,6 +322,7 @@ std::vector<uint32_t> PathOperator::build_cluster_ids() const
 
 void PathOperator::set_parameter(std::string_view param, double value)
 {
+    settle_named_control(param);
     if (param == "tension") {
         for (auto& path : m_paths) {
             path->set_tension(value);
@@ -360,6 +364,12 @@ std::optional<double> PathOperator::query_state(std::string_view query) const
 
 void PathOperator::set_samples_per_segment(Eigen::Index samples)
 {
+    m_controls.samples_per_segment.settle();
+    apply_samples_per_segment(samples);
+}
+
+void PathOperator::apply_samples_per_segment(Eigen::Index samples)
+{
     m_default_samples_per_segment = samples;
     for (auto& path : m_paths) {
         path->set_samples_per_segment(samples);
@@ -368,12 +378,24 @@ void PathOperator::set_samples_per_segment(Eigen::Index samples)
 
 void PathOperator::set_tension(double tension)
 {
+    m_controls.tension.settle();
+    apply_tension(tension);
+}
+
+void PathOperator::apply_tension(double tension)
+{
     for (auto& path : m_paths) {
         path->set_tension(tension);
     }
 }
 
 void PathOperator::set_global_thickness(float thickness)
+{
+    m_controls.thickness.settle();
+    apply_thickness(thickness);
+}
+
+void PathOperator::apply_thickness(float thickness)
 {
     m_default_thickness = thickness;
     for (auto& path : m_paths) {
@@ -382,6 +404,12 @@ void PathOperator::set_global_thickness(float thickness)
 }
 
 void PathOperator::set_global_color(const glm::vec4& color)
+{
+    m_controls.color.settle();
+    apply_color(color);
+}
+
+void PathOperator::apply_color(const glm::vec4& color)
 {
     for (auto& path : m_paths) {
         path->set_path_color(color);

@@ -337,7 +337,7 @@ void PointCloudNetwork::apply_controls()
         if (topology) {
             topology->set({ .line_color = *color });
         } else if (path) {
-            path->set_global_color(*color);
+            path->set({ .color = *color });
         }
     }
     if (const auto radius = m_controls.connection_radius.pending()) {

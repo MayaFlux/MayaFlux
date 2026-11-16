@@ -300,6 +300,7 @@ std::vector<uint32_t> TopologyOperator::build_cluster_ids() const
 
 void TopologyOperator::set_parameter(std::string_view param, double value)
 {
+    settle_named_control(param);
     if (param == "connection_radius") {
         for (auto& topology : m_topologies) {
             topology->set_connection_radius(static_cast<float>(value));

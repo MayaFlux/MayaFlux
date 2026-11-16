@@ -40,6 +40,7 @@ void WalkOperator::move_to(double index)
 void WalkOperator::read_controls(WalkControls& controls) const
 {
     controls.current.observe(static_cast<double>(current()));
+    controls.every_n_blocks.observe(static_cast<double>(m_every_n_blocks.load(std::memory_order_relaxed)));
 }
 
 void WalkOperator::process(float /*frames*/)
@@ -49,6 +50,9 @@ void WalkOperator::process(float /*frames*/)
     refresh_controls();
     if (const auto index = m_controls.current.pending()) {
         move_to(*index);
+    }
+    if (const auto every = m_controls.every_n_blocks.pending()) {
+        apply_every_n_blocks(static_cast<uint32_t>(std::max(0.0, *every)));
     }
 
     const uint32_t every = m_every_n_blocks.load(std::memory_order_relaxed);
@@ -65,6 +69,12 @@ void WalkOperator::process(float /*frames*/)
 }
 
 void WalkOperator::set_every_n_blocks(uint32_t every_n_blocks) noexcept
+{
+    m_controls.every_n_blocks.settle();
+    apply_every_n_blocks(every_n_blocks);
+}
+
+void WalkOperator::apply_every_n_blocks(uint32_t every_n_blocks) noexcept
 {
     m_every_n_blocks.store(every_n_blocks, std::memory_order_relaxed);
     m_blocks_until = every_n_blocks;
@@ -107,8 +117,11 @@ void WalkOperator::jump(size_t index)
 
 void WalkOperator::set_parameter(std::string_view param, double value)
 {
+    settle_named_control(param);
     if (param == "current") {
         move_to(value);
+    } else if (param == "every_n_blocks") {
+        apply_every_n_blocks(static_cast<uint32_t>(std::max(0.0, value)));
     }
 }
 

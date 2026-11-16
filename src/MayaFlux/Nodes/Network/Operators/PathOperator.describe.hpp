@@ -16,6 +16,7 @@ struct Description<::MayaFlux::Nodes::Network::PathControls> {
             Member<&::MayaFlux::Nodes::Network::PathControls::tension> { "tension" },
             Member<&::MayaFlux::Nodes::Network::PathControls::samples_per_segment> { "samples_per_segment" },
             Member<&::MayaFlux::Nodes::Network::PathControls::thickness> { "thickness" },
+            Member<&::MayaFlux::Nodes::Network::PathControls::color> { "color" },
         };
     }
 };

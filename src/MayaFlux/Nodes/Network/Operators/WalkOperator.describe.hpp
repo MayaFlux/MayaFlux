@@ -14,6 +14,7 @@ struct Description<::MayaFlux::Nodes::Network::WalkControls> {
     {
         return std::tuple {
             Member<&::MayaFlux::Nodes::Network::WalkControls::current> { "current" },
+            Member<&::MayaFlux::Nodes::Network::WalkControls::every_n_blocks> { "every_n_blocks" },
         };
     }
 };

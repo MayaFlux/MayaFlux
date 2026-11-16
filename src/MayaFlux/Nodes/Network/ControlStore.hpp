@@ -137,6 +137,24 @@ public:
     }
 
     /**
+     * @brief Drops the pending value of the member called @p name.
+     * @return False when no member has that name.
+     *
+     * For an immediate write made by name: a typed value set earlier would
+     * otherwise be applied at the next block over it.
+     */
+    bool settle_named(std::string_view name)
+    {
+        for (const Slot& slot : m_slots) {
+            if (slot.name == name) {
+                slot.control->settle();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * @brief The number held by the member called @p name, or nullopt for none or a vector.
      * @param controls A copy from get(), so values the owner holds outside the struct are real.
      */

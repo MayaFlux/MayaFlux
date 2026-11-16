@@ -179,7 +179,23 @@ void PhysicsOperator::set_parameter(std::string_view param, double value)
         return;
     }
 
+    adopt_pending(param, *param_enum);
     apply_parameter(*param_enum, value);
+}
+
+void PhysicsOperator::adopt_pending(std::string_view param, PhysicsParameter parameter)
+{
+    if (parameter == PhysicsParameter::GRAVITY_X || parameter == PhysicsParameter::GRAVITY_Y
+        || parameter == PhysicsParameter::GRAVITY_Z) {
+        if (const auto gravity = m_controls.gravity.pending<glm::vec3>()) {
+            m_gravity = *gravity;
+        }
+        return;
+    }
+
+    std::string name(param);
+    std::ranges::transform(name, name.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    settle_named_control(name);
 }
 
 void PhysicsOperator::apply_parameter(PhysicsParameter parameter, double value)

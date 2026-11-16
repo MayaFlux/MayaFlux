@@ -153,6 +153,18 @@ protected:
         return m_controls_store.set_named(name, value);
     }
 
+    /**
+     * @brief Drops the pending typed value of the control called @p name.
+     *
+     * Call at the top of an immediate string write, so a typed set made
+     * earlier does not override it at the next block. A name that is not a
+     * control is ignored.
+     */
+    bool settle_named_control(std::string_view name)
+    {
+        return m_controls_store.settle_named(name);
+    }
+
 private:
     ControlStore m_controls_store;
 };

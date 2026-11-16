@@ -134,12 +134,16 @@ public:
      * @brief Set field application mode
      * @param mode ABSOLUTE (reset each frame) or ACCUMULATE (stack displacements)
      */
-    void set_mode(FieldMode mode) { m_mode = mode; }
+    [[deprecated("use set({ .mode = ... })")]] void set_mode(FieldMode mode)
+    {
+        m_controls.mode.settle();
+        m_mode = mode;
+    }
 
     /**
      * @brief Get current field mode
      */
-    [[nodiscard]] FieldMode get_mode() const { return m_mode; }
+    [[nodiscard, deprecated("use get().mode")]] FieldMode get_mode() const { return m_mode; }
 
     /** @brief Fills the controls whose value the operator holds outside the struct. */
     void read_controls(FieldControls& controls) const
