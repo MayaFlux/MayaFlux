@@ -28,6 +28,7 @@ struct Description<::MayaFlux::Nodes::Network::DuctControls> {
             Member<&::MayaFlux::Nodes::Network::DuctControls::width> { "width" },
             Member<&::MayaFlux::Nodes::Network::DuctControls::driving_pressure> { "driving_pressure" },
             Member<&::MayaFlux::Nodes::Network::DuctControls::maximum_flow> { "maximum_flow" },
+            Member<&::MayaFlux::Nodes::Network::DuctControls::output> { "output" },
         };
     }
 };

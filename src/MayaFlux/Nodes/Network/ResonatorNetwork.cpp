@@ -337,11 +337,11 @@ void ResonatorNetwork::apply_controls()
 
     each(
         m_controls.frequency,
-        [this](double value) { set_all_frequencies(value); },
+        [this](double value) { apply_all_frequencies(value); },
         [this](size_t index, double value) { set_frequency(index, value); });
     each(
         m_controls.q,
-        [this](double value) { set_all_q(value); },
+        [this](double value) { apply_all_q(value); },
         [this](size_t index, double value) { set_q(index, value); });
     each(
         m_controls.gain,
@@ -372,9 +372,9 @@ void ResonatorNetwork::apply_controls()
 void ResonatorNetwork::apply_broadcast_parameter(ParameterKey param, double value)
 {
     if (param.matches("frequency")) {
-        set_all_frequencies(value);
+        apply_all_frequencies(value);
     } else if (param.matches("q")) {
-        set_all_q(value);
+        apply_all_q(value);
     } else if (param.matches("gain")) {
         for (auto& r : m_resonators) {
             r.gain = value;
@@ -560,12 +560,24 @@ void ResonatorNetwork::write_biquad_in_place(ResonatorNode& r)
 
 void ResonatorNetwork::set_all_frequencies(double frequency)
 {
+    m_controls.frequency.settle();
+    apply_all_frequencies(frequency);
+}
+
+void ResonatorNetwork::apply_all_frequencies(double frequency)
+{
     for (size_t i = 0; i < m_resonators.size(); ++i) {
         set_frequency(i, frequency);
     }
 }
 
 void ResonatorNetwork::set_all_q(double q)
+{
+    m_controls.q.settle();
+    apply_all_q(q);
+}
+
+void ResonatorNetwork::apply_all_q(double q)
 {
     for (size_t i = 0; i < m_resonators.size(); ++i) {
         set_q(i, q);

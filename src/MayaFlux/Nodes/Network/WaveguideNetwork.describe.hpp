@@ -17,6 +17,8 @@ struct Description<::MayaFlux::Nodes::Network::WaveguideControls> {
             Member<&::MayaFlux::Nodes::Network::WaveguideControls::frequency> { "frequency" },
             Member<&::MayaFlux::Nodes::Network::WaveguideControls::damping> { "damping" },
             Member<&::MayaFlux::Nodes::Network::WaveguideControls::position> { "position" },
+            Member<&::MayaFlux::Nodes::Network::WaveguideControls::exciter_duration> { "exciter_duration" },
+            Member<&::MayaFlux::Nodes::Network::WaveguideControls::measurement_mode> { "measurement_mode" },
         };
     }
 };

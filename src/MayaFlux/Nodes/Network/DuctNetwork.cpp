@@ -373,7 +373,7 @@ std::shared_ptr<TerminationOperator> DuctNetwork::get_bell() const
     return m_bell;
 }
 
-void DuctNetwork::set_pickup_position(double position)
+void DuctNetwork::apply_pickup_position(double position)
 {
     m_pickup.store(std::clamp(position, 0.0, 1.0), std::memory_order_relaxed);
 }
@@ -459,7 +459,7 @@ void DuctNetwork::update_mapped_parameters()
         const double value = mapping.broadcast_source->get_last_output();
 
         if (key.matches("pickup")) {
-            set_pickup_position(value);
+            apply_pickup_position(value);
         } else if (key.matches("scale")) {
             m_output_scale = std::max(0.0, value);
         } else {
@@ -472,11 +472,14 @@ void DuctNetwork::update_mapped_parameters()
 void DuctNetwork::apply_controls()
 {
     if (const auto pickup = m_controls.pickup.pending()) {
-        set_pickup_position(*pickup);
+        apply_pickup_position(*pickup);
+    }
+    if (const auto output = m_controls.output.pending()) {
+        m_output.store(*output > 0.5 ? Output::PICKUP : Output::RADIATED, std::memory_order_relaxed);
     }
 
     const auto forward = [this](std::string_view name, Control& control) {
-        if (name == "scale" || name == "pickup") {
+        if (name == "scale" || name == "pickup" || name == "output") {
             return;
         }
         if (const auto value = control.pending()) {

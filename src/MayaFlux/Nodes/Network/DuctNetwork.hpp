@@ -12,8 +12,8 @@ namespace MayaFlux::Nodes::Network {
  * @struct DuctControls
  * @brief Controls of a DuctNetwork, each a number or a mapped node.
  *
- * Every member after pickup is offered to both terminations, as the string
- * names of the same spelling always were. A termination that does not know a
+ * Every member but scale, pickup and output is offered to both terminations,
+ * as the string names of the same spelling always were. A termination that does not know a
  * name ignores it. A network source is not used by any of them.
  */
 struct DuctControls {
@@ -32,6 +32,7 @@ struct DuctControls {
     Control width; ///< Reed width
     Control driving_pressure; ///< Junction driving pressure
     Control maximum_flow; ///< Junction maximum flow
+    Control output; ///< Above one half the output is the pickup pressure, not the radiated one
 };
 
 MF_DESCRIBE(DuctControls)
@@ -205,21 +206,11 @@ public:
     [[nodiscard]] std::shared_ptr<TerminationOperator> get_mouth() const;
     [[nodiscard]] std::shared_ptr<TerminationOperator> get_bell() const;
 
-    //-------------------------------------------------------------------------
-    // Output
-    //-------------------------------------------------------------------------
-
-    void set_output(Output output) { m_output.store(output, std::memory_order_relaxed); }
-    [[nodiscard]] Output get_output() const { return m_output.load(std::memory_order_relaxed); }
-
-    /** @brief Pickup position as a fraction of the length, clamped to 0 to 1. */
-    void set_pickup_position(double position);
-    [[nodiscard]] double get_pickup_position() const { return m_pickup.load(std::memory_order_relaxed); }
-
     /** @brief Fills the controls whose value the network holds outside the struct. */
     void read_controls(DuctControls& controls) const
     {
-        controls.pickup.observe(get_pickup_position());
+        controls.pickup.observe(m_pickup.load(std::memory_order_relaxed));
+        controls.output.observe(m_output.load(std::memory_order_relaxed) == Output::PICKUP ? 1.0 : 0.0);
     }
 
     /** @brief Copy of the pressures along the duct from the last block. */
@@ -256,6 +247,7 @@ private:
     void bind(Prepared& prepared, bool keep);
     void update_mapped_parameters();
     void apply_controls();
+    void apply_pickup_position(double position);
     void publish_block(std::span<const double> block);
 
     mutable std::mutex m_producer_mutex;

@@ -24,6 +24,8 @@ struct ModalControls {
     Control decay; ///< Global decay multiplier
     Control amplitude; ///< Scales mode amplitudes; a source scales them every block
     Control detune; ///< Per-mode offset in hundreds of cents, from a number, node or network
+    Control coupling_enabled; ///< Above one half, the defined couplings act
+    Control exciter_duration; ///< Noise burst duration in seconds
 };
 
 MF_DESCRIBE(ModalControls)
@@ -224,12 +226,12 @@ public:
      *
      * Updates all mode frequencies proportionally to maintain spectrum shape.
      */
-    void set_fundamental(double frequency);
+    [[deprecated("use set({ .frequency = ... })")]] void set_fundamental(double frequency);
 
     /**
      * @brief Get current fundamental frequency
      */
-    [[nodiscard]] double get_fundamental() const { return m_fundamental; }
+    [[nodiscard, deprecated("use get().frequency")]] double get_fundamental() const { return m_fundamental; }
 
     /**
      * @brief Set global decay multiplier
@@ -237,7 +239,7 @@ public:
      * shorter). Floored at 0.01. Applies to the ring in progress and to every
      * later excitation.
      */
-    void set_decay_multiplier(double multiplier);
+    [[deprecated("use set({ .decay = ... })")]] void set_decay_multiplier(double multiplier);
 
     /**
      * @brief Set the decay time of one mode without clearing its current ring
@@ -288,7 +290,7 @@ public:
      * @brief Set noise burst duration
      * @param seconds Duration in seconds (for NOISE_BURST and FILTERED_NOISE)
      */
-    void set_exciter_duration(double seconds);
+    [[deprecated("use set({ .exciter_duration = ... })")]] void set_exciter_duration(double seconds);
 
     /**
      * @brief Set filter for shaped noise excitation
@@ -354,7 +356,11 @@ public:
      * @brief Enable/disable modal coupling
      * @param enable Coupling state
      */
-    void set_coupling_enabled(bool enable) { m_coupling_enabled = enable; }
+    [[deprecated("use set({ .coupling_enabled = ... })")]] void set_coupling_enabled(bool enable)
+    {
+        m_controls.coupling_enabled.settle();
+        m_coupling_enabled = enable;
+    }
 
     /**
      * @brief Define bidirectional coupling between two modes
@@ -386,7 +392,7 @@ public:
     /**
      * @brief Check if coupling is enabled
      */
-    [[nodiscard]] bool is_coupling_enabled() const { return m_coupling_enabled; }
+    [[nodiscard, deprecated("use get().coupling_enabled")]] bool is_coupling_enabled() const { return m_coupling_enabled; }
 
     /** @brief Fills the controls whose value the network holds outside the struct. */
     void read_controls(ModalControls& controls) const;
@@ -491,6 +497,8 @@ private:
      * @brief Apply the typed controls that are due
      */
     void apply_controls();
+    void apply_fundamental(double frequency);
+    void apply_decay_multiplier(double multiplier);
 
     /**
      * @brief Update mapped parameters before processing

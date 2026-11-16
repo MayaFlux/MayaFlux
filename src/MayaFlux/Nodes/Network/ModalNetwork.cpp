@@ -129,6 +129,12 @@ void ModalNetwork::refresh_decay()
 
 void ModalNetwork::set_decay_multiplier(double multiplier)
 {
+    m_controls.decay.settle();
+    apply_decay_multiplier(multiplier);
+}
+
+void ModalNetwork::apply_decay_multiplier(double multiplier)
+{
     multiplier = std::max(0.01, multiplier);
     if (multiplier == m_decay_multiplier) {
         return;
@@ -175,6 +181,7 @@ void ModalNetwork::reset()
 
 void ModalNetwork::set_exciter_duration(double seconds)
 {
+    m_controls.exciter_duration.settle();
     m_exciter_duration = std::max(0.001, seconds);
 }
 
@@ -477,15 +484,23 @@ void ModalNetwork::read_controls(ModalControls& controls) const
 {
     controls.frequency.observe(m_fundamental);
     controls.decay.observe(m_decay_multiplier);
+    controls.coupling_enabled.observe(m_coupling_enabled ? 1.0 : 0.0);
+    controls.exciter_duration.observe(m_exciter_duration);
 }
 
 void ModalNetwork::apply_controls()
 {
     if (const auto frequency = m_controls.frequency.pending()) {
-        set_fundamental(*frequency);
+        apply_fundamental(*frequency);
     }
     if (const auto decay = m_controls.decay.pending()) {
-        set_decay_multiplier(*decay);
+        apply_decay_multiplier(*decay);
+    }
+    if (const auto enabled = m_controls.coupling_enabled.pending()) {
+        m_coupling_enabled = *enabled > 0.5;
+    }
+    if (const auto duration = m_controls.exciter_duration.pending()) {
+        m_exciter_duration = std::max(0.001, *duration);
     }
 
     const auto per_mode = [this](Control& control, auto&& apply) {
@@ -516,9 +531,9 @@ void ModalNetwork::apply_broadcast_parameter(ParameterKey param,
     double value)
 {
     if (param.matches("frequency")) {
-        set_fundamental(value);
+        apply_fundamental(value);
     } else if (param.matches("decay")) {
-        set_decay_multiplier(value);
+        apply_decay_multiplier(value);
     } else if (param.matches("amplitude")) {
         for (auto& mode : m_modes) {
             mode.amplitude *= value;
@@ -621,6 +636,12 @@ void ModalNetwork::damp(double damping_factor)
 }
 
 void ModalNetwork::set_fundamental(double frequency)
+{
+    m_controls.frequency.settle();
+    apply_fundamental(frequency);
+}
+
+void ModalNetwork::apply_fundamental(double frequency)
 {
     m_fundamental = frequency;
 

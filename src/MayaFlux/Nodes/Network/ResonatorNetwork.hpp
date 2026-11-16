@@ -351,13 +351,13 @@ public:
      * @brief Set centre frequency of all resonators uniformly
      * @param frequency New centre frequency in Hz
      */
-    void set_all_frequencies(double frequency);
+    [[deprecated("use set({ .frequency = ... })")]] void set_all_frequencies(double frequency);
 
     /**
      * @brief Set Q factor of all resonators uniformly
      * @param q New quality factor
      */
-    void set_all_q(double q);
+    [[deprecated("use set({ .q = ... })")]] void set_all_q(double q);
 
     /**
      * @brief Apply a FormantPreset to the current network
@@ -459,6 +459,8 @@ private:
      * @brief Apply the typed controls that are due
      */
     void apply_controls();
+    void apply_all_frequencies(double frequency);
+    void apply_all_q(double q);
 
     ResonatorControls& m_controls;
 

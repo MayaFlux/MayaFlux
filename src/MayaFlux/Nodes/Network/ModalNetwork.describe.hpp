@@ -18,6 +18,8 @@ struct Description<::MayaFlux::Nodes::Network::ModalControls> {
             Member<&::MayaFlux::Nodes::Network::ModalControls::decay> { "decay" },
             Member<&::MayaFlux::Nodes::Network::ModalControls::amplitude> { "amplitude" },
             Member<&::MayaFlux::Nodes::Network::ModalControls::detune> { "detune" },
+            Member<&::MayaFlux::Nodes::Network::ModalControls::coupling_enabled> { "coupling_enabled" },
+            Member<&::MayaFlux::Nodes::Network::ModalControls::exciter_duration> { "exciter_duration" },
         };
     }
 };
