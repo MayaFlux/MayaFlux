@@ -186,6 +186,9 @@ public:
     /**
      * @brief Remove all callbacks registered for an element id.
      *
+     * An element that has focus loses it first, with its focus-lost callback
+     * and WINDOW_FOCUS_LOST subscriptions, as clear_focus() does.
+     *
      * Also clears m_hovered/m_dragging entries pointing at @p id, so a
      * removed element cannot be left as the stale current hover or drag
      * target.
@@ -240,7 +243,8 @@ public:
     void on_text(uint32_t id, TextFn fn);
 
     /**
-     * @brief Called once when an element gains keyboard focus (via click).
+     * @brief Called once when an element gains keyboard focus (via click
+     *        or set_focus()).
      */
     void on_focus_gained(uint32_t id, EnterFn fn);
 
@@ -251,8 +255,36 @@ public:
 
     /**
      * @brief Clear keyboard focus (no element focused).
+     *
+     * The element that had focus gets its focus-lost callback and its
+     * WINDOW_FOCUS_LOST subscriptions, as when a press moves focus away.
      */
     void clear_focus();
+
+    /**
+     * @brief Give keyboard focus to an element from code.
+     *
+     * Runs the same focus-lost and focus-gained callbacks, and the
+     * WINDOW_FOCUS_LOST and WINDOW_FOCUS_GAINED subscriptions, as a press
+     * that moves focus. Key and text callbacks then reach the element, so a
+     * menu driven by keys or a controller works without the pointer.
+     *
+     * Refused for an id the Layer does not hold, or whose element is hidden
+     * or not interactive. Focusing the element that already has focus does
+     * nothing and returns true. Call it on the graphics thread, where the
+     * other callbacks run.
+     *
+     * A focus callback or subscriber may itself move focus, here or on a
+     * press, and the later move wins. An element whose focus-gained callback
+     * has run is always told when it loses focus, by its callback and its
+     * subscriptions. Its WINDOW_FOCUS_GAINED subscriptions are skipped if
+     * focus moved on before they were reached.
+     *
+     * @param id Element to focus.
+     * @return True if @p id has focus when the call returns: false if it was
+     *         refused, or if a focus callback moved focus elsewhere.
+     */
+    bool set_focus(uint32_t id);
 
     /**
      * @brief Called on every window resize.
@@ -286,6 +318,9 @@ public:
 
     /**
      * @brief Get currently focused element, if any.
+     *
+     * Inside a focus callback or subscriber this is already the element focus
+     * is moving to, or none when it is being cleared.
      */
     [[nodiscard]] std::optional<uint32_t> focused() const { return m_focused; }
 
@@ -425,6 +460,7 @@ private:
 
     void handle_move(double px, double py);
     void handle_press(double px, double py, IO::MouseButtons btn);
+    void move_focus(std::optional<uint32_t> target, glm::vec2 ndc);
     void handle_release(double px, double py, IO::MouseButtons btn);
     void handle_scroll(double dx, double dy);
     void handle_drag(double px, double py, IO::MouseButtons btn);
@@ -444,6 +480,22 @@ private:
 
     std::optional<uint32_t> m_dragging[3];
     std::optional<uint32_t> m_focused;
+
+    /**
+     * Focus notifications run user code that may move focus again, so
+     * move_focus() tracks what it has told apart from where focus is.
+     * m_focus_notified is the element last told it gained focus.
+     * m_focus_pending is the subscriber half of the notification whose own
+     * callback is running, which a nested move delivers or drops first.
+     */
+    struct FocusNotice {
+        uint32_t id;
+        Core::WindowEventType type;
+        glm::vec2 ndc;
+    };
+    std::optional<uint32_t> m_focus_notified;
+    std::optional<FocusNotice> m_focus_pending;
+
     uint32_t m_known_width {};
     uint32_t m_known_height {};
 };

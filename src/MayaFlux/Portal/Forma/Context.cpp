@@ -247,6 +247,8 @@ void Context::detach_window(bool cancel_close)
     m_window.reset();
     m_hovered.reset();
     m_focused.reset();
+    m_focus_notified.reset();
+    m_focus_pending.reset();
     for (auto& drag : m_dragging)
         drag.reset();
     m_registered_keys.clear();
@@ -261,22 +263,56 @@ void Context::on_close(uint32_t id, CloseFn fn)
 
 void Context::clear_focus()
 {
-    if (m_focused) {
-        auto it = m_callbacks.find(*m_focused);
-        if (it != m_callbacks.end() && it->second.focus_lost)
-            it->second.focus_lost(*m_focused);
-        m_focused = std::nullopt;
+    move_focus(std::nullopt, glm::vec2(0.0F));
+}
+
+bool Context::set_focus(uint32_t id)
+{
+    const Element* element = m_layer->get(id);
+    if (!element || !element->visible || !element->interactive)
+        return false;
+
+    move_focus(id, glm::vec2(0.0F));
+    return m_focused == id;
+}
+
+void Context::move_focus(std::optional<uint32_t> target, glm::vec2 ndc)
+{
+    using Type = Core::WindowEventType;
+
+    m_focused = target;
+
+    while (true) {
+        if (const auto pending = std::exchange(m_focus_pending, std::nullopt)) {
+            if (pending->type == Type::WINDOW_FOCUS_LOST || m_focused == pending->id)
+                dispatch(pending->id, pending->type, pending->ndc);
+            continue;
+        }
+
+        if (m_focus_notified == m_focused)
+            return;
+
+        if (m_focus_notified) {
+            const uint32_t lost = *std::exchange(m_focus_notified, std::nullopt);
+            m_focus_pending = FocusNotice { .id = lost, .type = Type::WINDOW_FOCUS_LOST, .ndc = ndc };
+            const auto it = m_callbacks.find(lost);
+            if (it != m_callbacks.end())
+                notify(it->second.focus_lost, lost);
+        } else {
+            const uint32_t gained = *m_focused;
+            m_focus_notified = gained;
+            m_focus_pending = FocusNotice { .id = gained, .type = Type::WINDOW_FOCUS_GAINED, .ndc = ndc };
+            const auto it = m_callbacks.find(gained);
+            if (it != m_callbacks.end())
+                notify(it->second.focus_gained, gained);
+        }
     }
 }
 
 void Context::unbind(uint32_t id)
 {
-    if (m_focused && *m_focused == id) {
-        auto it = m_callbacks.find(id);
-        if (it != m_callbacks.end() && it->second.focus_lost)
-            it->second.focus_lost(id);
-        m_focused = std::nullopt;
-    }
+    if (m_focused == id)
+        move_focus(std::nullopt, glm::vec2(0.0F));
 
     if (m_hovered && *m_hovered == id)
         m_hovered = std::nullopt;
@@ -498,25 +534,7 @@ void Context::handle_press(double px, double py, IO::MouseButtons btn)
 
     const int btn_idx = static_cast<int>(btn);
 
-    if (hit != m_focused) {
-        if (m_focused) {
-            const uint32_t lost = *m_focused;
-            auto it = m_callbacks.find(lost);
-            if (it != m_callbacks.end() && it->second.focus_lost)
-                it->second.focus_lost(lost);
-            dispatch(lost, Core::WindowEventType::WINDOW_FOCUS_LOST, ndc);
-        }
-
-        m_focused = hit;
-
-        if (hit) {
-            const uint32_t gained = *hit;
-            auto it = m_callbacks.find(gained);
-            if (it != m_callbacks.end() && it->second.focus_gained)
-                it->second.focus_gained(gained);
-            dispatch(gained, Core::WindowEventType::WINDOW_FOCUS_GAINED, ndc);
-        }
-    }
+    move_focus(hit, ndc);
 
     if (hit) {
         const auto found = m_callbacks.find(*hit);
