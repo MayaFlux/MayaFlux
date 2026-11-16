@@ -102,7 +102,7 @@ enum class OutputMode : uint8_t {
  * auto geom = std::make_shared<NetworkGeometryNode>(particles);
  * ```
  */
-class MAYAFLUX_API NodeNetwork {
+class MAYAFLUX_API NodeNetwork : public std::enable_shared_from_this<NodeNetwork> {
 public:
     virtual ~NodeNetwork() = default;
 
@@ -427,6 +427,31 @@ public:
     [[nodiscard]] std::shared_ptr<OperatorChain> get_operator_chain() const
     {
         return m_operator_chain;
+    }
+
+    /**
+     * @brief Construct an operator, append it to this network's chain and return it.
+     *
+     * An operator that is constructible from a shared_ptr to this concrete
+     * network followed by the arguments receives the network as its first
+     * argument; any other operator is built from the arguments alone.
+     * `gong->add<ModalDampingOperator>()` therefore needs no network argument,
+     * and a host of the wrong type does not compile. The network must be owned
+     * by a shared_ptr. Call outside process_batch.
+     */
+    template <typename Op, typename Self, typename... Args>
+    std::shared_ptr<Op> add(this Self& self, Args&&... args)
+    {
+        std::shared_ptr<Op> op;
+        if constexpr (std::constructible_from<Op, std::shared_ptr<Self>, Args...>) {
+            op = std::make_shared<Op>(
+                std::static_pointer_cast<Self>(self.shared_from_this()),
+                std::forward<Args>(args)...);
+        } else {
+            op = std::make_shared<Op>(std::forward<Args>(args)...);
+        }
+        self.m_operator_chain->add(op);
+        return op;
     }
 
     /**

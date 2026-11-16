@@ -34,7 +34,7 @@ MF_DESCRIBE(ModalDampingControls)
  * The network keeps the last applied decay when this operator is removed.
  *
  * @code{.cpp}
- * auto damping = gong->get_operator_chain()->emplace<ModalDampingOperator>(gong);
+ * auto damping = gong->add<ModalDampingOperator>();
  * damping->set({ .quiet_seconds = 3.5, .loud_seconds = 0.18 });
  * damping->set_mode(0, { .quiet_seconds = 7.0, .loud_seconds = 2.5 });
  * @endcode
