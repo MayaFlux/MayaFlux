@@ -1,6 +1,7 @@
 # Build directories and artifacts
 build/
 build-vs/
+build-coverage/
 install/
 package/
 out/

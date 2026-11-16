@@ -84,6 +84,7 @@ option(MAYAFLUX_PORTABLE "Build portable binaries with RPATH" OFF)
 option(MAYAFLUX_DEV
        "Build MayaFlux for development with debug symobls, rpath and tests" OFF)
 option(MAYAFLUX_BUILD_PROJECT "Build project_launcher binary" OFF)
+option(MAYAFLUX_COVERAGE "Instrument the library for gcov coverage; needs MAYAFLUX_BUILD_TESTS and GCC or Clang" OFF)
 
 if(MAYAFLUX_CONFIG_OVERRIDE)
     add_compile_definitions(MAYAFLUX_CONFIG_OVERRIDE)

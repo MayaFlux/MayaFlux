@@ -265,6 +265,39 @@
         "CMAKE_INSTALL_PREFIX": "C:/MayaFlux",
         "MAYAFLUX_ENABLE_LTO": "ON"
       }
+    },
+    {
+      "name": "unix-coverage",
+      "inherits": "unix-test",
+      "displayName": "Unix : Test coverage",
+      "binaryDir": "${sourceDir}/build-coverage",
+      "condition": {
+        "type": "notEquals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "cacheVariables": {
+        "MAYAFLUX_COVERAGE": "ON"
+      }
+    },
+    {
+      "name": "windows-ninja-coverage",
+      "inherits": [ "base-dev", "msvc-ninja-base" ],
+      "displayName": "Windows : Ninja + Clang test coverage",
+      "description": "gcov coverage needs Clang or GCC, so this overrides the MSVC compilers from msvc-ninja-base. clang and clang++ must be on PATH, with llvm-cov and gcovr.",
+      "binaryDir": "${sourceDir}/build-coverage",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_BUILD_TYPE": "Debug",
+        "MAYAFLUX_BUILD_TESTS": "ON",
+        "MAYAFLUX_COVERAGE": "ON"
+      }
     }
   ],
   "buildPresets": [
@@ -281,7 +314,9 @@
     { "name": "windows-ship-rel", "configurePreset": "windows-ship-rel", "jobs": 0 },
     { "name": "win26-dev",       "configurePreset": "windows-vs2026-dev" },
     { "name": "win22-dev",       "configurePreset": "windows-vs2022-dev" },
-    { "name": "windows-vs-ship-rel", "configurePreset": "windows-vs-ship-rel"}
+    { "name": "windows-vs-ship-rel", "configurePreset": "windows-vs-ship-rel"},
+    { "name": "unix-coverage", "configurePreset": "unix-coverage", "targets": [ "coverage" ], "jobs": 0 },
+    { "name": "windows-ninja-coverage", "configurePreset": "windows-ninja-coverage", "targets": [ "coverage" ], "jobs": 0 }
   ],
   "testPresets": [
     {
