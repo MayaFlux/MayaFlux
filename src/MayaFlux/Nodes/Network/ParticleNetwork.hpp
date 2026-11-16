@@ -39,8 +39,7 @@ namespace MayaFlux::Nodes::Network {
  * ```cpp
  * auto particles = vega.ParticleNetwork(1000);
  * auto physics = particles->create_operator<PhysicsOperator>();
- * physics->set_gravity(glm::vec3(0, -9.81, 0));
- * physics->set_interaction_radius(2.0F);
+ * physics->set({ .gravity = glm::vec3(0, -9.81, 0), .interaction_radius = 2.0 });
  *
  * // Audio-reactive turbulence
  * auto chaos = vega.Random() | Audio;

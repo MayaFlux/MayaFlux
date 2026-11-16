@@ -130,8 +130,7 @@ void ParticleNetwork::set_topology(Topology topology)
     NodeNetwork::set_topology(topology);
 
     if (auto* physics = dynamic_cast<PhysicsOperator*>(m_operator.get())) {
-        bool should_interact = topology_interacts(topology);
-        physics->enable_spatial_interactions(should_interact);
+        physics->set({ .spatial_interactions = topology_interacts(topology) ? 1.0 : 0.0 });
     }
 }
 
@@ -175,11 +174,10 @@ std::unordered_map<std::string, std::string> ParticleNetwork::get_metadata() con
 
     if (m_operator) {
         if (auto* physics = dynamic_cast<PhysicsOperator*>(m_operator.get())) {
-            metadata["gravity"] = std::format("({:.2f}, {:.2f}, {:.2f})",
-                physics->get_gravity().x,
-                physics->get_gravity().y,
-                physics->get_gravity().z);
-            metadata["drag"] = std::to_string(physics->get_drag());
+            const auto controls = physics->get();
+            const auto gravity = controls.gravity.value<glm::vec3>();
+            metadata["gravity"] = std::format("({:.2f}, {:.2f}, {:.2f})", gravity.x, gravity.y, gravity.z);
+            metadata["drag"] = std::to_string(controls.drag.value());
 
             auto avg_vel = physics->query_state("avg_velocity");
             if (avg_vel) {
@@ -259,8 +257,7 @@ void ParticleNetwork::set_operator(std::unique_ptr<NetworkOperator> op)
     m_operator = std::move(op);
 
     if (auto* physics = dynamic_cast<PhysicsOperator*>(m_operator.get())) {
-        bool should_interact = topology_interacts(get_topology());
-        physics->enable_spatial_interactions(should_interact);
+        physics->set({ .spatial_interactions = topology_interacts(get_topology()) ? 1.0 : 0.0 });
     }
 
     MF_INFO(Journal::Component::Nodes, Journal::Context::NodeProcessing,

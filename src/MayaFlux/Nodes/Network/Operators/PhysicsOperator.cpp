@@ -229,9 +229,7 @@ void PhysicsOperator::apply_parameter(PhysicsParameter parameter, double value)
 
 void PhysicsOperator::read_controls(PhysicsControls& controls) const
 {
-    controls.gravity_x.observe(m_gravity.x);
-    controls.gravity_y.observe(m_gravity.y);
-    controls.gravity_z.observe(m_gravity.z);
+    controls.gravity.observe(m_gravity);
     controls.drag.observe(m_drag);
     controls.interaction_radius.observe(m_interaction_radius);
     controls.spring_stiffness.observe(m_spring_stiffness);
@@ -250,9 +248,9 @@ void PhysicsOperator::apply_controls()
         }
     };
 
-    scalar(m_controls.gravity_x, PhysicsParameter::GRAVITY_X);
-    scalar(m_controls.gravity_y, PhysicsParameter::GRAVITY_Y);
-    scalar(m_controls.gravity_z, PhysicsParameter::GRAVITY_Z);
+    if (const auto gravity = m_controls.gravity.pending<glm::vec3>()) {
+        m_gravity = *gravity;
+    }
     scalar(m_controls.drag, PhysicsParameter::DRAG);
     scalar(m_controls.interaction_radius, PhysicsParameter::INTERACTION_RADIUS);
     scalar(m_controls.spring_stiffness, PhysicsParameter::SPRING_STIFFNESS);
@@ -283,9 +281,14 @@ void PhysicsOperator::apply_controls()
         }
     };
 
-    per_particle(m_controls.force_x, [](PhysicsState& state, float value) { state.force.x += value; });
-    per_particle(m_controls.force_y, [](PhysicsState& state, float value) { state.force.y += value; });
-    per_particle(m_controls.force_z, [](PhysicsState& state, float value) { state.force.z += value; });
+    if (const auto force = m_controls.force.pending<glm::vec3>()) {
+        for (auto& group : m_collections) {
+            for (auto& state : group.physics_state) {
+                state.force += *force;
+            }
+        }
+    }
+
     per_particle(m_controls.mass, [](PhysicsState& state, float value) { state.mass = std::max(0.1F, value); });
 
     apply_point_control(m_controls.color, PointAttribute::COLOR);

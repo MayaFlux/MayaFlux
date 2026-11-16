@@ -16,7 +16,8 @@ namespace MayaFlux::Nodes::Network {
  * struct for get(), and refresh() reads node sources once per block. A member
  * named `scale` is mirrored to a value the host passes in, so a network can map
  * it to its output scale and an operator, which has none, passes nothing.
- * Every member of the struct must be a Control.
+ * Every member of the struct must be a Control. What a Control holds, a number,
+ * a flag, an enum or a glm vector, is the Control's own business.
  */
 class MAYAFLUX_API ControlStore {
 public:

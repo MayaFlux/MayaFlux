@@ -29,18 +29,18 @@ enum class PhysicsParameter : uint8_t {
  * @struct PhysicsControls
  * @brief Controls of a PhysicsOperator, each a number or a mapped source.
  *
- * The first eleven are single values. A node or network source on them is read
- * every block. force_x, force_y, force_z and mass act on each particle: a number
- * applies to all of them once, a node source every block, and a network source
- * gives one value per particle and is skipped unless its node count matches.
- * Forces add to the particle's force and mass sets its mass, never below 0.1.
- * color and size follow the same rule: color from 0 to 1 runs from blue to
- * red, and size is ten times the value, between 1 and 50.
+ * gravity and force are glm::vec3, so `.gravity = glm::vec3(0, -9.8, 0)` sets
+ * gravity once. force adds that vector to every particle's force. Per-particle
+ * or mapped forces are still the string names force_x, force_y and force_z. The
+ * values from drag to turbulence are single values, and a node or network
+ * source on them is read every block. mass, color and size act on each
+ * particle: a number applies to all of them once, a node source every block,
+ * and a network source gives one value per particle and is skipped unless its
+ * node count matches. mass is never set below 0.1, color from 0 to 1 runs from
+ * blue to red, and size is ten times the value, between 1 and 50.
  */
 struct PhysicsControls {
-    Control gravity_x;
-    Control gravity_y;
-    Control gravity_z;
+    Control gravity;
     Control drag;
     Control interaction_radius;
     Control spring_stiffness;
@@ -49,9 +49,7 @@ struct PhysicsControls {
     Control point_size;
     Control attraction_strength;
     Control turbulence;
-    Control force_x;
-    Control force_y;
-    Control force_z;
+    Control force;
     Control mass;
     Control color;
     Control size;
@@ -157,31 +155,31 @@ public:
      * @brief Set the gravity vector.
      * @param gravity Gravity vector.
      */
-    void set_gravity(const glm::vec3& gravity) { m_gravity = gravity; }
+    [[deprecated("use set({ .gravity = ... })")]] void set_gravity(const glm::vec3& gravity) { m_gravity = gravity; }
 
     /**
      * @brief Set the drag coefficient.
      * @param drag Drag value.
      */
-    void set_drag(float drag) { m_drag = drag; }
+    [[deprecated("use set({ .drag = ... })")]] void set_drag(float drag) { m_drag = drag; }
 
     /**
      * @brief Set the interaction radius for physics calculations.
      * @param radius Interaction radius.
      */
-    void set_interaction_radius(float radius) { m_interaction_radius = radius; }
+    [[deprecated("use set({ .interaction_radius = ... })")]] void set_interaction_radius(float radius) { m_interaction_radius = radius; }
 
     /**
      * @brief Get the interaction radius for physics calculations.
      * @return Interaction radius.
      */
-    [[nodiscard]] float get_interaction_radius() const { return m_interaction_radius; }
+    [[nodiscard, deprecated("use get().interaction_radius")]] float get_interaction_radius() const { return m_interaction_radius; }
 
     /**
      * @brief Set the spring stiffness for interactions.
      * @param stiffness Spring stiffness value.
      */
-    void set_spring_stiffness(float stiffness) { m_spring_stiffness = stiffness; }
+    [[deprecated("use set({ .spring_stiffness = ... })")]] void set_spring_stiffness(float stiffness) { m_spring_stiffness = stiffness; }
 
     /**
      * @brief Set the simulation bounds.
@@ -194,7 +192,7 @@ public:
      * @brief Set the rendered point size.
      * @param size Point size.
      */
-    void set_point_size(float size) { m_point_size = size; }
+    [[deprecated("use set({ .point_size = ... })")]] void set_point_size(float size) { m_point_size = size; }
 
     /**
      * @brief Set the current bounds mode.
@@ -206,25 +204,25 @@ public:
      * @brief Enable or disable spatial interactions between particles.
      * @param enable True to enable, false to disable.
      */
-    void enable_spatial_interactions(bool enable) { m_spatial_interactions_enabled = enable; }
+    [[deprecated("use set({ .spatial_interactions = ... })")]] void enable_spatial_interactions(bool enable) { m_spatial_interactions_enabled = enable; }
 
     /**
      * @brief Set the strength of repulsion between particles when spatial interactions are enabled.
      * @param strength Repulsion strength value.
      */
-    void set_repulsion_strength(float strength) { m_repulsion_strength = strength; }
+    [[deprecated("use set({ .repulsion_strength = ... })")]] void set_repulsion_strength(float strength) { m_repulsion_strength = strength; }
 
     /**
      * @brief Set the strength of attraction towards the attraction point.
      * @param strength Attraction strength value.
      */
-    void set_attraction_strength(float strength) { m_attraction_strength = strength; }
+    [[deprecated("use set({ .attraction_strength = ... })")]] void set_attraction_strength(float strength) { m_attraction_strength = strength; }
 
     /**
      * @brief Set the strength of attraction towards the attraction point.
      * @param strength Attraction strength value.
      */
-    void set_turbulence_strength(float strength) { m_turbulence_strength = strength; }
+    [[deprecated("use set({ .turbulence = ... })")]] void set_turbulence_strength(float strength) { m_turbulence_strength = strength; }
 
     /**
      * @brief Get velocity magnitude for specific particle
@@ -236,13 +234,13 @@ public:
      * @brief Get the current gravity vector.
      * @return Gravity vector.
      */
-    [[nodiscard]] glm::vec3 get_gravity() const { return m_gravity; }
+    [[nodiscard, deprecated("use get().gravity")]] glm::vec3 get_gravity() const { return m_gravity; }
 
     /**
      * @brief Get the current drag coefficient.
      * @return Drag value.
      */
-    [[nodiscard]] float get_drag() const { return m_drag; }
+    [[nodiscard, deprecated("use get().drag")]] float get_drag() const { return m_drag; }
 
     /**
      * @brief Get the current bounds mode.
@@ -254,13 +252,13 @@ public:
      * @brief Check if spatial interactions between particles are enabled.
      * @return True if enabled, false otherwise.
      */
-    [[nodiscard]] bool spatial_interactions_enabled() const { return m_spatial_interactions_enabled; }
+    [[nodiscard, deprecated("use get().spatial_interactions")]] bool spatial_interactions_enabled() const { return m_spatial_interactions_enabled; }
 
     /**
      * @brief Get the current repulsion strength for spatial interactions.
      * @return Repulsion strength value.
      */
-    [[nodiscard]] float get_repulsion_strength() const { return m_repulsion_strength; }
+    [[nodiscard, deprecated("use get().repulsion_strength")]] float get_repulsion_strength() const { return m_repulsion_strength; }
 
     void set_attraction_point(const glm::vec3& point);
 
