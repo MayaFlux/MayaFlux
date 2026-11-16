@@ -16,7 +16,8 @@ class NodeNetwork;
  * @brief One named control of a network or operator: empty, a value, or a mapped source.
  *
  * A Control converts implicitly from a number, a bool, an enum, a glm::vec2,
- * glm::vec3 or glm::vec4, from a node (BROADCAST) and from a network
+ * glm::vec3 or glm::vec4, from a box (a struct of exactly a glm::vec3 `min` and
+ * a glm::vec3 `max`, such as Kinesis::SamplerBounds or Kinesis::AABB3D), from a node (BROADCAST) and from a network
  * (ONE_TO_ONE), so a controls struct reads as designated initializers:
  * `net->set({ .decay = 0.6, .amplitude = bell })` or
  * `op->set({ .gravity = glm::vec3(0, -9.8, 0) })`. An empty Control means
@@ -39,7 +40,13 @@ public:
     static constexpr bool is_vector = std::same_as<T, glm::vec2> || std::same_as<T, glm::vec3> || std::same_as<T, glm::vec4>;
 
     template <typename T>
-    static constexpr bool is_value = std::is_arithmetic_v<T> || std::is_enum_v<T> || is_vector<T>;
+    static constexpr bool is_box = requires(T box) {
+        requires std::same_as<decltype(box.min), glm::vec3>;
+        requires std::same_as<decltype(box.max), glm::vec3>;
+    } && sizeof(T) == 2 * sizeof(glm::vec3);
+
+    template <typename T>
+    static constexpr bool is_value = std::is_arithmetic_v<T> || std::is_enum_v<T> || is_vector<T> || is_box<T>;
 
     Control() = default;
 
@@ -106,7 +113,7 @@ public:
     /** @brief True once a value or a source was given. */
     [[nodiscard]] bool has_value() const noexcept { return m_set.load(std::memory_order_acquire); }
 
-    /** @brief Components held: 0 when empty, 1 for a number, flag or enum, 2 to 4 for a vector. */
+    /** @brief Components held: 0 when empty, 1 for a number, flag or enum, 2 to 4 for a vector, 6 for a box. */
     [[nodiscard]] size_t width() const noexcept { return m_width.load(std::memory_order_acquire); }
 
     /** @brief True when a node or a network feeds this control. */
@@ -202,7 +209,7 @@ public:
     }
 
 private:
-    static constexpr size_t k_lanes = 4;
+    static constexpr size_t k_lanes = 6;
 
     struct State {
         std::array<double, k_lanes> lanes {};
@@ -219,6 +226,8 @@ private:
             return 3;
         } else if constexpr (std::same_as<T, glm::vec4>) {
             return 4;
+        } else if constexpr (is_box<T>) {
+            return 6;
         } else {
             return 1;
         }
@@ -234,6 +243,8 @@ private:
             lanes = { value.x, value.y, value.z, 0.0 };
         } else if constexpr (std::same_as<T, glm::vec4>) {
             lanes = { value.x, value.y, value.z, value.w };
+        } else if constexpr (is_box<T>) {
+            lanes = { value.min.x, value.min.y, value.min.z, value.max.x, value.max.y, value.max.z };
         } else if constexpr (std::is_enum_v<T>) {
             lanes[0] = static_cast<double>(static_cast<std::underlying_type_t<T>>(value));
         } else {
@@ -251,6 +262,11 @@ private:
             return { static_cast<float>(lanes[0]), static_cast<float>(lanes[1]), static_cast<float>(lanes[2]) };
         } else if constexpr (std::same_as<T, glm::vec4>) {
             return { static_cast<float>(lanes[0]), static_cast<float>(lanes[1]), static_cast<float>(lanes[2]), static_cast<float>(lanes[3]) };
+        } else if constexpr (is_box<T>) {
+            T box {};
+            box.min = { static_cast<float>(lanes[0]), static_cast<float>(lanes[1]), static_cast<float>(lanes[2]) };
+            box.max = { static_cast<float>(lanes[3]), static_cast<float>(lanes[4]), static_cast<float>(lanes[5]) };
+            return box;
         } else if constexpr (std::is_enum_v<T>) {
             return static_cast<T>(static_cast<std::underlying_type_t<T>>(lanes[0]));
         } else if constexpr (std::same_as<T, bool>) {

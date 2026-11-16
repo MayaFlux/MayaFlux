@@ -38,6 +38,14 @@ enum class PhysicsParameter : uint8_t {
  * and a network source gives one value per particle and is skipped unless its
  * node count matches. mass is never set below 0.1, color from 0 to 1 runs from
  * blue to red, and size is ten times the value, between 1 and 50.
+ *
+ * attraction_point is a glm::vec3 and turns attraction on at that point;
+ * clear_attraction_point() turns it off. bounds is a Kinesis::SamplerBounds,
+ * `.bounds = Kinesis::SamplerBounds { .min = lo, .max = hi }`, and bounds_mode
+ * is a BoundsMode.
+ * bond_stiffness and bond_rest_length shape adopted bonds, and bonds_enabled
+ * false also drops the bonds held. force_internal_dt true replaces the
+ * incoming dt with internal_dt in seconds.
  */
 struct PhysicsControls {
     Control gravity;
@@ -53,6 +61,14 @@ struct PhysicsControls {
     Control mass;
     Control color;
     Control size;
+    Control attraction_point;
+    Control bounds;
+    Control bounds_mode;
+    Control bond_stiffness;
+    Control bond_rest_length;
+    Control bonds_enabled;
+    Control internal_dt;
+    Control force_internal_dt;
 };
 
 MF_DESCRIBE(PhysicsControls)
@@ -186,7 +202,7 @@ public:
      * @param min Minimum bounds.
      * @param max Maximum bounds.
      */
-    void set_bounds(const glm::vec3& min, const glm::vec3& max);
+    [[deprecated("use set({ .bounds = ... })")]] void set_bounds(const glm::vec3& min, const glm::vec3& max);
 
     /**
      * @brief Set the rendered point size.
@@ -198,7 +214,7 @@ public:
      * @brief Set the current bounds mode.
      * @param mode Bounds mode to set.
      */
-    void set_bounds_mode(BoundsMode mode) { m_bounds_mode = mode; }
+    [[deprecated("use set({ .bounds_mode = ... })")]] void set_bounds_mode(BoundsMode mode) { m_bounds_mode = mode; }
 
     /**
      * @brief Enable or disable spatial interactions between particles.
@@ -246,7 +262,7 @@ public:
      * @brief Get the current bounds mode.
      * @return Current bounds mode.
      */
-    [[nodiscard]] BoundsMode get_bounds_mode() const { return m_bounds_mode; }
+    [[nodiscard, deprecated("use get().bounds_mode")]] BoundsMode get_bounds_mode() const { return m_bounds_mode; }
 
     /**
      * @brief Check if spatial interactions between particles are enabled.
@@ -260,13 +276,13 @@ public:
      */
     [[nodiscard, deprecated("use get().repulsion_strength")]] float get_repulsion_strength() const { return m_repulsion_strength; }
 
-    void set_attraction_point(const glm::vec3& point);
+    [[deprecated("use set({ .attraction_point = ... })")]] void set_attraction_point(const glm::vec3& point);
 
     void clear_attraction_point() { m_has_attraction_point = false; }
 
     [[nodiscard]] bool has_attraction_point() const { return m_has_attraction_point; }
 
-    [[nodiscard]] glm::vec3 get_attraction_point() const { return m_attraction_point; }
+    [[nodiscard, deprecated("use get().attraction_point")]] glm::vec3 get_attraction_point() const { return m_attraction_point; }
 
     /**
      * @brief Apply impulse to all particles
@@ -329,8 +345,8 @@ public:
      * @brief Spring constant pulling a bonded particle toward its root.
      * @param stiffness Force per unit distance from bond_rest_length.
      */
-    void set_bond_stiffness(float stiffness) { m_bond_stiffness = stiffness; }
-    [[nodiscard]] float get_bond_stiffness() const { return m_bond_stiffness; }
+    [[deprecated("use set({ .bond_stiffness = ... })")]] void set_bond_stiffness(float stiffness) { m_bond_stiffness = stiffness; }
+    [[nodiscard, deprecated("use get().bond_stiffness")]] float get_bond_stiffness() const { return m_bond_stiffness; }
 
     /**
      * @brief Distance a bond settles at.
@@ -338,8 +354,8 @@ public:
      *        above it, the bond pulls together (attract). 0 pulls a bonded
      *        particle fully onto its root, matching the GPU cosmetic swallow.
      */
-    void set_bond_rest_length(float rest_length) { m_bond_rest_length = rest_length; }
-    [[nodiscard]] float get_bond_rest_length() const { return m_bond_rest_length; }
+    [[deprecated("use set({ .bond_rest_length = ... })")]] void set_bond_rest_length(float rest_length) { m_bond_rest_length = rest_length; }
+    [[nodiscard, deprecated("use get().bond_rest_length")]] float get_bond_rest_length() const { return m_bond_rest_length; }
 
     /** @brief Number of particles currently bonded to a root other than themselves. */
     [[nodiscard]] size_t bond_count() const;
@@ -355,9 +371,9 @@ public:
      * never reads this flag. Only apply_bond_forces (a real physics effect)
      * is gated by it.
      */
-    void enable_bonds(bool enable);
+    [[deprecated("use set({ .bonds_enabled = ... })")]] void enable_bonds(bool enable);
 
-    [[nodiscard]] bool bonds_enabled() const { return m_bonds_enabled; }
+    [[nodiscard, deprecated("use get().bonds_enabled")]] bool bonds_enabled() const { return m_bonds_enabled; }
 
     /**
      * @brief This particle's currently accreted mass.
@@ -401,8 +417,8 @@ public:
      * @brief Fixed dt substituted when set_force_internal_dt(true).
      * @param dt Timestep in seconds. Default 0.016F.
      */
-    void set_internal_dt(float dt) { m_internal_dt = dt; }
-    [[nodiscard]] float get_internal_dt() const { return m_internal_dt; }
+    [[deprecated("use set({ .internal_dt = ... })")]] void set_internal_dt(float dt) { m_internal_dt = dt; }
+    [[nodiscard, deprecated("use get().internal_dt")]] float get_internal_dt() const { return m_internal_dt; }
 
     /**
      * @brief Get number of active external force fields
@@ -536,6 +552,7 @@ private:
 
     void apply_parameter(PhysicsParameter parameter, double value);
     void apply_controls();
+    void apply_bonds_enabled(bool enable);
 
     void apply_forces();
     void apply_spatial_interactions();

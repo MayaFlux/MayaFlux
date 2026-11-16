@@ -26,6 +26,14 @@ struct Description<::MayaFlux::Nodes::Network::PhysicsControls> {
             Member<&::MayaFlux::Nodes::Network::PhysicsControls::mass> { "mass" },
             Member<&::MayaFlux::Nodes::Network::PhysicsControls::color> { "color" },
             Member<&::MayaFlux::Nodes::Network::PhysicsControls::size> { "size" },
+            Member<&::MayaFlux::Nodes::Network::PhysicsControls::attraction_point> { "attraction_point" },
+            Member<&::MayaFlux::Nodes::Network::PhysicsControls::bounds> { "bounds" },
+            Member<&::MayaFlux::Nodes::Network::PhysicsControls::bounds_mode> { "bounds_mode" },
+            Member<&::MayaFlux::Nodes::Network::PhysicsControls::bond_stiffness> { "bond_stiffness" },
+            Member<&::MayaFlux::Nodes::Network::PhysicsControls::bond_rest_length> { "bond_rest_length" },
+            Member<&::MayaFlux::Nodes::Network::PhysicsControls::bonds_enabled> { "bonds_enabled" },
+            Member<&::MayaFlux::Nodes::Network::PhysicsControls::internal_dt> { "internal_dt" },
+            Member<&::MayaFlux::Nodes::Network::PhysicsControls::force_internal_dt> { "force_internal_dt" },
         };
     }
 };

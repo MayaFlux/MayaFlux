@@ -106,6 +106,16 @@ void TopologyOperator::apply_controls()
             topology->set_line_thickness(static_cast<float>(*thickness));
         }
     }
+    if (const auto samples = m_controls.samples_per_segment.pending()) {
+        for (auto& topology : m_topologies) {
+            topology->set_samples_per_segment(static_cast<size_t>(*samples));
+        }
+    }
+    if (const auto color = m_controls.line_color.pending<glm::vec4>()) {
+        for (auto& topology : m_topologies) {
+            topology->set_line_color(*color);
+        }
+    }
 }
 
 void TopologyOperator::process(float /*dt*/)

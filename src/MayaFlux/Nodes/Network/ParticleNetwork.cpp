@@ -25,6 +25,7 @@ ParticleNetwork::ParticleNetwork(
     : m_num_points(num_particles)
     , m_bounds(bounds_min, bounds_max)
     , m_init_mode(init_mode)
+    , m_controls(declare_controls<ParticleControls>())
 {
     set_topology(Topology::INDEPENDENT);
     set_output_mode(OutputMode::GRAPHICS_BIND);
@@ -50,7 +51,7 @@ void ParticleNetwork::initialize()
 
     if (!m_operator && m_default_operator) {
         auto physics = std::make_unique<PhysicsOperator>();
-        physics->set_bounds(m_bounds.min, m_bounds.max);
+        physics->set({ .bounds = m_bounds });
         physics->initialize(positions);
         m_operator = std::move(physics);
     }
@@ -83,13 +84,13 @@ void ParticleNetwork::reset()
     if (m_operator) {
         if (auto* physics = dynamic_cast<PhysicsOperator*>(m_operator.get())) {
             physics->initialize(vertices);
-            physics->set_bounds(m_bounds.min, m_bounds.max);
+            physics->set({ .bounds = m_bounds });
         } else if (auto* field = dynamic_cast<FieldOperator*>(m_operator.get())) {
             field->initialize(vertices);
         }
     } else {
         auto physics = std::make_unique<PhysicsOperator>();
-        physics->set_bounds(m_bounds.min, m_bounds.max);
+        physics->set({ .bounds = m_bounds });
         physics->initialize(vertices);
         m_operator = std::move(physics);
     }
@@ -106,6 +107,8 @@ void ParticleNetwork::process_batch(unsigned int num_samples)
         return;
     }
 
+    refresh_controls();
+    apply_controls();
     update_mapped_parameters();
 
     if (m_operator) {
@@ -238,7 +241,7 @@ void ParticleNetwork::set_operator(std::unique_ptr<NetworkOperator> op)
         new_graphics->initialize(vertices);
 
         if (auto* physics = dynamic_cast<PhysicsOperator*>(op.get())) {
-            physics->set_bounds(m_bounds.min, m_bounds.max);
+            physics->set({ .bounds = m_bounds });
         }
 
         MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
@@ -303,6 +306,18 @@ void ParticleNetwork::update_mapped_parameters()
 //-----------------------------------------------------------------------------
 // Internal Helpers
 //-----------------------------------------------------------------------------
+
+void ParticleNetwork::read_controls(ParticleControls& controls) const
+{
+    controls.bounds.observe(m_bounds);
+}
+
+void ParticleNetwork::apply_controls()
+{
+    if (const auto bounds = m_controls.bounds.pending<Kinesis::SamplerBounds>()) {
+        m_bounds = *bounds;
+    }
+}
 
 void ParticleNetwork::ensure_initialized()
 {

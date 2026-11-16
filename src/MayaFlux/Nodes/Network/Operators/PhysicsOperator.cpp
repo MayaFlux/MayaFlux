@@ -238,6 +238,16 @@ void PhysicsOperator::read_controls(PhysicsControls& controls) const
     controls.point_size.observe(m_point_size);
     controls.attraction_strength.observe(m_attraction_strength);
     controls.turbulence.observe(m_turbulence_strength);
+    if (m_has_attraction_point) {
+        controls.attraction_point.observe(m_attraction_point);
+    }
+    controls.bounds.observe(m_bounds);
+    controls.bounds_mode.observe(m_bounds_mode);
+    controls.bond_stiffness.observe(m_bond_stiffness);
+    controls.bond_rest_length.observe(m_bond_rest_length);
+    controls.bonds_enabled.observe(m_bonds_enabled ? 1.0 : 0.0);
+    controls.internal_dt.observe(m_internal_dt);
+    controls.force_internal_dt.observe(m_force_internal_dt ? 1.0 : 0.0);
 }
 
 void PhysicsOperator::apply_controls()
@@ -259,6 +269,32 @@ void PhysicsOperator::apply_controls()
     scalar(m_controls.point_size, PhysicsParameter::POINT_SIZE);
     scalar(m_controls.attraction_strength, PhysicsParameter::ATTRACTION_STRENGTH);
     scalar(m_controls.turbulence, PhysicsParameter::TURBULENCE);
+
+    if (const auto point = m_controls.attraction_point.pending<glm::vec3>()) {
+        m_attraction_point = *point;
+        m_has_attraction_point = true;
+    }
+    if (const auto bounds = m_controls.bounds.pending<Kinesis::SamplerBounds>()) {
+        m_bounds = *bounds;
+    }
+    if (const auto mode = m_controls.bounds_mode.pending<BoundsMode>()) {
+        m_bounds_mode = *mode;
+    }
+    if (const auto stiffness = m_controls.bond_stiffness.pending()) {
+        m_bond_stiffness = static_cast<float>(*stiffness);
+    }
+    if (const auto rest_length = m_controls.bond_rest_length.pending()) {
+        m_bond_rest_length = static_cast<float>(*rest_length);
+    }
+    if (const auto enabled = m_controls.bonds_enabled.pending()) {
+        apply_bonds_enabled(*enabled > 0.5);
+    }
+    if (const auto dt = m_controls.internal_dt.pending()) {
+        m_internal_dt = static_cast<float>(*dt);
+    }
+    if (const auto forced = m_controls.force_internal_dt.pending()) {
+        m_force_internal_dt = *forced > 0.5;
+    }
 
     const auto per_particle = [this](Control& control, auto&& apply) {
         if (!control.due()) {
@@ -711,6 +747,11 @@ void PhysicsOperator::clear_bonds()
 }
 
 void PhysicsOperator::enable_bonds(bool enable)
+{
+    apply_bonds_enabled(enable);
+}
+
+void PhysicsOperator::apply_bonds_enabled(bool enable)
 {
     m_bonds_enabled = enable;
     if (!enable) {
