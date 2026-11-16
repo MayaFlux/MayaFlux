@@ -1,7 +1,9 @@
 #pragma once
 
+#include "MayaFlux/Nodes/Network/Control.hpp"
 #include "MayaFlux/Nodes/Network/Operators/OperatorChain.hpp"
 #include "MayaFlux/Nodes/Node.hpp"
+#include "MayaFlux/Transitive/Reflect/Describe.hpp"
 
 namespace MayaFlux::Nodes::Network {
 
@@ -276,6 +278,46 @@ public:
      */
     virtual void unmap_parameter(const std::string& param_name);
 
+    //-------------------------------------------------------------------------
+    // Typed Controls
+    //-------------------------------------------------------------------------
+
+    /**
+     * @brief Apply the members of this network's Controls struct that hold a value.
+     *
+     * A network opts in with `using Controls = ...`, a struct of Control members
+     * declared with MF_DESCRIBE, and holds the reference declare_controls()
+     * returns. A member named `scale` is applied to the output scale by the
+     * base, so an audio network lists it first. Members left empty are
+     * untouched, so `net->set({ .decay = lfo })` changes only decay.
+     * Designators follow the struct's declaration order. A node source maps in
+     * BROADCAST and a network source in ONE_TO_ONE. The string based
+     * map_parameter stays for names a user invents. Call outside process_batch,
+     * as with the operator chain.
+     */
+    template <typename Self>
+    void set(this Self& self, const typename Self::Controls& incoming)
+    {
+        static_cast<NodeNetwork&>(self).merge_controls(incoming);
+    }
+
+    /**
+     * @brief The controls with the values the network holds now.
+     *
+     * A mapped member still reports its source. A network may offer
+     * read_controls(Controls&) to fill members whose value lives elsewhere.
+     */
+    template <typename Self>
+    [[nodiscard]] typename Self::Controls get(this const Self& self)
+    {
+        auto current = static_cast<const NodeNetwork&>(self)
+                           .template snapshot_controls<typename Self::Controls>();
+        if constexpr (requires { self.read_controls(current); }) {
+            self.read_controls(current);
+        }
+        return current;
+    }
+
     /**
      * @brief Set the scalar multiplier applied to the network's output buffer after processing
      * @param scale Linear scale factor (1.0 = unity relative to the network's own output normalization, 0.0 = silence, >1.0 = amplify)
@@ -473,6 +515,43 @@ protected:
      */
     void ensure_initialized();
 
+    /**
+     * @brief Create the network's controls struct and keep it alive.
+     * @return The struct, owned by this network, for the child to read.
+     *
+     * Call once from the constructor's initializer list and hold the result in
+     * a reference member. The struct must be described and every member a
+     * Control.
+     */
+    template <typename C>
+    [[nodiscard]] C& declare_controls()
+    {
+        auto storage = std::make_shared<C>();
+        C& controls = *storage;
+
+        m_controls_storage = std::move(storage);
+        m_controls_tag = controls_tag<C>();
+        m_control_slots.clear();
+        m_scale_control = nullptr;
+
+        std::apply(
+            [&](const auto&... member) {
+                static_assert((std::same_as<typename std::remove_cvref_t<decltype(member)>::value_type, Control> && ...),
+                    "every member of a controls struct must be a Control");
+                (register_control(member.name, member.get(controls)), ...);
+            },
+            Reflect::Generated::Description<C>::members());
+
+        return controls;
+    }
+
+    /**
+     * @brief Read node sources and apply the shared `scale`.
+     *
+     * Call once per block before reading the controls struct.
+     */
+    void refresh_controls();
+
     //-------------------------------------------------------------------------
     // Utility Functions (Helper methods for subclasses)
     //-------------------------------------------------------------------------
@@ -549,6 +628,59 @@ protected:
     double m_output_scale { 1.0 }; ///< Post-processing scalar applied to m_last_audio_buffer each batch
 
 private:
+    template <typename C>
+    [[nodiscard]] static const void* controls_tag() noexcept
+    {
+        static constexpr char tag = 0;
+        return &tag;
+    }
+
+    void register_control(std::string_view name, Control& control)
+    {
+        m_control_slots.push_back(&control);
+        if (name == "scale") {
+            m_scale_control = &control;
+        }
+    }
+
+    template <typename C>
+    void merge_controls(const C& incoming)
+    {
+        if (m_controls_tag != controls_tag<C>()) {
+            return;
+        }
+
+        auto& live = *static_cast<C*>(m_controls_storage.get());
+        const auto merge_one = [&](const auto& member) {
+            const Control& given = member.get(incoming);
+            if (given.has_value()) {
+                member.get(live).assign(given);
+            }
+        };
+        std::apply(
+            [&](const auto&... member) { (merge_one(member), ...); },
+            Reflect::Generated::Description<C>::members());
+    }
+
+    template <typename C>
+    [[nodiscard]] C snapshot_controls() const
+    {
+        C current = m_controls_tag == controls_tag<C>()
+            ? *static_cast<const C*>(m_controls_storage.get())
+            : C {};
+        std::apply(
+            [&](const auto&... member) {
+                ((member.name == "scale" ? member.get(current).observe(m_output_scale) : void()), ...);
+            },
+            Reflect::Generated::Description<C>::members());
+        return current;
+    }
+
+    std::shared_ptr<void> m_controls_storage;
+    const void* m_controls_tag = nullptr;
+    std::vector<Control*> m_control_slots;
+    Control* m_scale_control = nullptr;
+
     //-------------------------------------------------------------------------
     // String Conversion (For metadata/debugging)
     //-------------------------------------------------------------------------
@@ -574,5 +706,18 @@ MAYAFLUX_API void extract_node_samples(
     std::vector<double>& buffer,
     size_t& buffer_pos,
     size_t num_samples);
+
+inline size_t Control::element_count() const
+{
+    return m_network ? m_network->get_node_count() : 0;
+}
+
+inline std::optional<double> Control::at(size_t index) const
+{
+    if (m_network) {
+        return m_network->get_node_output(index);
+    }
+    return m_set ? std::optional<double> { m_value } : std::nullopt;
+}
 
 } // namespace MayaFlux::Nodes::Network

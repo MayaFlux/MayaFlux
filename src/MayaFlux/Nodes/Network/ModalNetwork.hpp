@@ -14,6 +14,20 @@ class Filter;
 namespace MayaFlux::Nodes::Network {
 
 /**
+ * @struct ModalControls
+ * @brief Controls of a ModalNetwork, each a number or a mapped source.
+ */
+struct ModalControls {
+    Control scale; ///< Output scale
+    Control frequency; ///< Fundamental in Hz
+    Control decay; ///< Global decay multiplier
+    Control amplitude; ///< Scales mode amplitudes; a source scales them every block
+    Control detune; ///< Per-mode offset in hundreds of cents, from a number, node or network
+};
+
+MF_DESCRIBE(ModalControls)
+
+/**
  * @class ModalNetwork
  * @brief Network of resonant modes for modal synthesis
  *
@@ -59,9 +73,17 @@ namespace MayaFlux::Nodes::Network {
  * - "decay": Global decay multiplier (BROADCAST)
  * - "amplitude": Per-mode amplitude (ONE_TO_ONE)
  * - "detune": Per-mode frequency offset (ONE_TO_ONE)
+ *
+ * The same controls are typed members of ModalControls:
+ * @code{.cpp}
+ * bell->set({ .scale = 0.3, .decay = 0.6 });
+ * bell->set({ .decay = lfo, .amplitude = other_network });
+ * @endcode
  */
 class MAYAFLUX_API ModalNetwork : public NodeNetwork {
 public:
+    using Controls = ModalControls;
+
     /**
      * @enum Spectrum
      * @brief Predefined frequency relationship patterns
@@ -217,6 +239,18 @@ public:
     void set_decay_multiplier(double multiplier);
 
     /**
+     * @brief Set the decay time of one mode without clearing its current ring
+     * @return False for an invalid index or a nonpositive, nonfinite time
+     *
+     * The global decay multiplier continues to scale this time. The value
+     * persists until changed again, including after an operator is removed.
+     */
+    [[nodiscard]] bool set_mode_decay_time(size_t index, double seconds);
+
+    /** @brief Get the decay time currently used for one mode, before the global multiplier. */
+    [[nodiscard]] std::optional<double> get_mode_decay_time(size_t index) const;
+
+    /**
      * @brief Get mode data (read-only access for visualization)
      */
     [[nodiscard]] const std::vector<ModalNode>& get_modes() const
@@ -353,17 +387,22 @@ public:
      */
     [[nodiscard]] bool is_coupling_enabled() const { return m_coupling_enabled; }
 
+    /** @brief Fills the controls whose value the network holds outside the struct. */
+    void read_controls(ModalControls& controls) const;
+
 private:
     //-------------------------------------------------------------------------
     // Internal State
     //-------------------------------------------------------------------------
 
+    ModalControls& m_controls;
+
     std::vector<ModalNode> m_modes;
+    std::vector<double> m_mode_decay_times;
     Kinesis::Stochastic::Stochastic m_random_generator;
     Spectrum m_spectrum;
     double m_fundamental;
     double m_decay_multiplier = 1.0;
-    double m_base_decay {};
 
     std::vector<std::vector<double>> m_node_buffers; ///< Per-mode sample buffers populated each process_batch()
 
@@ -448,6 +487,11 @@ private:
     void refresh_decay();
 
     /**
+     * @brief Apply the typed controls that are due
+     */
+    void apply_controls();
+
+    /**
      * @brief Update mapped parameters before processing
      */
     void update_mapped_parameters();
@@ -465,3 +509,4 @@ private:
 };
 
 } // namespace MayaFlux::Nodes::Network
+#include "ModalNetwork.describe.hpp"

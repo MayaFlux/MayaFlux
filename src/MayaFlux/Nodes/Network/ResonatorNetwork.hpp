@@ -7,6 +7,24 @@
 namespace MayaFlux::Nodes::Network {
 
 /**
+ * @struct ResonatorControls
+ * @brief Controls of a ResonatorNetwork, each a number or a mapped source.
+ *
+ * A node source or a number applies to every resonator. A network source
+ * applies one value per resonator.
+ */
+struct ResonatorControls {
+    Control scale; ///< Output scale
+    Control frequency; ///< Centre frequency in Hz
+    Control q; ///< Quality factor
+    Control gain; ///< Linear gain
+    Control retune; ///< Centre frequency in Hz, keeping the ring
+    Control decay; ///< Ring time in seconds, keeping the ring
+};
+
+MF_DESCRIBE(ResonatorControls)
+
+/**
  * @class ResonatorNetwork
  * @brief Network of IIR biquad bandpass filters driven by external excitation
  *
@@ -85,6 +103,8 @@ namespace MayaFlux::Nodes::Network {
  */
 class MAYAFLUX_API ResonatorNetwork : public NodeNetwork {
 public:
+    using Controls = ResonatorControls;
+
     //-------------------------------------------------------------------------
     // Presets
     //-------------------------------------------------------------------------
@@ -435,6 +455,13 @@ private:
     void apply_one_to_one_parameter(ParameterKey param,
         const std::shared_ptr<NodeNetwork>& source);
 
+    /**
+     * @brief Apply the typed controls that are due
+     */
+    void apply_controls();
+
+    ResonatorControls& m_controls;
+
     //-------------------------------------------------------------------------
     // Data
     //-------------------------------------------------------------------------
@@ -461,3 +488,4 @@ private:
 };
 
 } // namespace MayaFlux::Nodes::Network
+#include "ResonatorNetwork.describe.hpp"

@@ -13,7 +13,8 @@ namespace MayaFlux::Nodes::Network {
 
 ModalNetwork::ModalNetwork(size_t num_modes, double fundamental,
     Spectrum spectrum, double base_decay)
-    : m_spectrum(spectrum)
+    : m_controls(declare_controls<ModalControls>())
+    , m_spectrum(spectrum)
     , m_fundamental(fundamental)
 {
     set_output_mode(OutputMode::AUDIO_SINK);
@@ -25,7 +26,8 @@ ModalNetwork::ModalNetwork(size_t num_modes, double fundamental,
 
 ModalNetwork::ModalNetwork(const std::vector<double>& frequency_ratios,
     double fundamental, double base_decay)
-    : m_spectrum(Spectrum::CUSTOM)
+    : m_controls(declare_controls<ModalControls>())
+    , m_spectrum(Spectrum::CUSTOM)
     , m_fundamental(fundamental)
 {
     set_output_mode(OutputMode::AUDIO_SINK);
@@ -92,9 +94,9 @@ std::vector<double> ModalNetwork::generate_spectrum_ratios(Spectrum spectrum,
 void ModalNetwork::initialize_modes(const std::vector<double>& ratios,
     double base_decay)
 {
-    m_base_decay = base_decay;
     m_modes.clear();
     m_modes.reserve(ratios.size());
+    m_mode_decay_times.assign(ratios.size(), base_decay);
 
     for (size_t i = 0; i < ratios.size(); ++i) {
         ModalNode mode;
@@ -119,11 +121,9 @@ void ModalNetwork::initialize_modes(const std::vector<double>& ratios,
 
 void ModalNetwork::refresh_decay()
 {
-    const double coefficient = Kinesis::Discrete::decay_per_sample(
-        m_base_decay * m_decay_multiplier, m_sample_rate);
-
-    for (auto& mode : m_modes) {
-        mode.decay_coefficient = coefficient;
+    for (size_t index = 0; index < m_modes.size(); ++index) {
+        m_modes[index].decay_coefficient = Kinesis::Discrete::decay_per_sample(
+            m_mode_decay_times[index] * m_decay_multiplier, m_sample_rate);
     }
 }
 
@@ -136,6 +136,28 @@ void ModalNetwork::set_decay_multiplier(double multiplier)
 
     m_decay_multiplier = multiplier;
     refresh_decay();
+}
+
+bool ModalNetwork::set_mode_decay_time(size_t index, double seconds)
+{
+    if (index >= m_modes.size() || !std::isfinite(seconds) || seconds <= 0.0) {
+        return false;
+    }
+
+    m_mode_decay_times[index] = seconds;
+    auto& mode = m_modes[index];
+    mode.decay_time = seconds;
+    mode.decay_coefficient = Kinesis::Discrete::decay_per_sample(
+        seconds * m_decay_multiplier, m_sample_rate);
+    return true;
+}
+
+std::optional<double> ModalNetwork::get_mode_decay_time(size_t index) const
+{
+    if (index >= m_mode_decay_times.size()) {
+        return std::nullopt;
+    }
+    return m_mode_decay_times[index];
 }
 
 void ModalNetwork::reset()
@@ -349,6 +371,12 @@ void ModalNetwork::process_batch(unsigned int num_samples)
     scratch.assign(num_samples, 0.0);
 
     update_mapped_parameters();
+    refresh_controls();
+    apply_controls();
+
+    if (m_operator_chain && !m_operator_chain->empty()) {
+        m_operator_chain->process(static_cast<float>(num_samples));
+    }
 
     m_node_buffers.assign(m_modes.size(), {});
     for (auto& nb : m_node_buffers)
@@ -443,6 +471,45 @@ void ModalNetwork::update_mapped_parameters()
             apply_one_to_one_parameter(key, mapping.network_source);
         }
     }
+}
+
+void ModalNetwork::read_controls(ModalControls& controls) const
+{
+    controls.frequency.observe(m_fundamental);
+    controls.decay.observe(m_decay_multiplier);
+}
+
+void ModalNetwork::apply_controls()
+{
+    if (const auto frequency = m_controls.frequency.pending()) {
+        set_fundamental(*frequency);
+    }
+    if (const auto decay = m_controls.decay.pending()) {
+        set_decay_multiplier(*decay);
+    }
+
+    const auto per_mode = [this](Control& control, auto&& apply) {
+        if (!control.due()) {
+            return;
+        }
+        control.settle();
+        if (control.per_element() && control.element_count() != m_modes.size()) {
+            return;
+        }
+        for (size_t index = 0; index < m_modes.size(); ++index) {
+            if (const auto value = control.at(index)) {
+                apply(m_modes[index], *value);
+            }
+        }
+    };
+
+    per_mode(m_controls.amplitude, [](ModalNode& mode, double value) {
+        mode.amplitude *= value;
+    });
+    per_mode(m_controls.detune, [](ModalNode& mode, double value) {
+        mode.current_frequency = mode.base_frequency * std::pow(2.0, value * 100.0 / 1200.0);
+        mode.oscillator->set_frequency(mode.current_frequency);
+    });
 }
 
 void ModalNetwork::apply_broadcast_parameter(ParameterKey param,

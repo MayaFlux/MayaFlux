@@ -76,7 +76,8 @@ WaveguideNetwork::WaveguideNetwork(
     WaveguideType type,
     double fundamental_freq,
     double sample_rate)
-    : m_type(type)
+    : m_controls(declare_controls<WaveguideControls>())
+    , m_type(type)
     , m_fundamental(fundamental_freq)
 {
     m_sample_rate = static_cast<uint32_t>(sample_rate);
@@ -218,6 +219,8 @@ void WaveguideNetwork::process_batch(unsigned int num_samples)
     }
 
     update_mapped_parameters();
+    refresh_controls();
+    apply_controls();
 
     thread_local std::vector<double> scratch;
     scratch.assign(num_samples, 0.0);
@@ -609,6 +612,26 @@ void WaveguideNetwork::update_mapped_parameters()
         } else if (mapping.mode == MappingMode::ONE_TO_ONE && mapping.network_source) {
             apply_one_to_one_parameter(key, mapping.network_source);
         }
+    }
+}
+
+void WaveguideNetwork::read_controls(WaveguideControls& controls) const
+{
+    controls.frequency.observe(m_fundamental);
+    controls.damping.observe(get_loss_factor());
+    controls.position.observe(get_pickup_position());
+}
+
+void WaveguideNetwork::apply_controls()
+{
+    if (const auto frequency = m_controls.frequency.pending()) {
+        set_fundamental(*frequency);
+    }
+    if (const auto damping = m_controls.damping.pending()) {
+        set_loss_factor(*damping);
+    }
+    if (const auto position = m_controls.position.pending()) {
+        set_pickup_position(*position);
     }
 }
 

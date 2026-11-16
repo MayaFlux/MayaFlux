@@ -16,6 +16,19 @@ class Filter;
 namespace MayaFlux::Nodes::Network {
 
 /**
+ * @struct WaveguideControls
+ * @brief Controls of a WaveguideNetwork, each a number or a mapped source.
+ */
+struct WaveguideControls {
+    Control scale; ///< Output scale
+    Control frequency; ///< Fundamental in Hz
+    Control damping; ///< Loop loss factor
+    Control position; ///< Pickup position along the delay line
+};
+
+MF_DESCRIBE(WaveguideControls)
+
+/**
  * @class WaveguideNetwork
  * @brief Digital waveguide synthesis via uni- and bidirectional delay-line architectures
  *
@@ -84,6 +97,8 @@ namespace MayaFlux::Nodes::Network {
  */
 class MAYAFLUX_API WaveguideNetwork : public NodeNetwork {
 public:
+    using Controls = WaveguideControls;
+
     /**
      * @enum WaveguideType
      * @brief Physical structure being modeled
@@ -317,6 +332,9 @@ public:
      */
     [[nodiscard]] double get_fundamental() const { return m_fundamental; }
 
+    /** @brief Fills the controls whose value the network holds outside the struct. */
+    void read_controls(WaveguideControls& controls) const;
+
     /**
      * @brief Set per-sample energy loss factor
      * @param loss Factor applied per sample (0.99-1.0 typical)
@@ -400,6 +418,7 @@ private:
     // Internal State
     //-------------------------------------------------------------------------
 
+    WaveguideControls& m_controls;
     WaveguideType m_type;
     double m_fundamental;
 
@@ -463,9 +482,12 @@ private:
     void apply_broadcast_parameter(ParameterKey param, double value);
     void apply_one_to_one_parameter(ParameterKey param, const std::shared_ptr<NodeNetwork>& source);
 
+    void apply_controls();
+
     void process_unidirectional(WaveguideSegment& seg, unsigned int num_samples, std::vector<double>& out);
     void process_bidirectional(WaveguideSegment& seg, unsigned int num_samples, std::vector<double>& out);
     double observe_sample(const WaveguideSegment& seg) const;
 };
 
 } // namespace MayaFlux::Nodes::Network
+#include "WaveguideNetwork.describe.hpp"

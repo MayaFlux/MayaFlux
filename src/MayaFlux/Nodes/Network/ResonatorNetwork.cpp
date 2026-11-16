@@ -118,6 +118,7 @@ void ResonatorNetwork::preset_to_vectors(FormantPreset preset,
 
 ResonatorNetwork::ResonatorNetwork(size_t num_resonators,
     FormantPreset preset)
+    : m_controls(declare_controls<ResonatorControls>())
 {
     set_output_mode(OutputMode::AUDIO_SINK);
     std::vector<double> freqs, qs;
@@ -127,6 +128,7 @@ ResonatorNetwork::ResonatorNetwork(size_t num_resonators,
 
 ResonatorNetwork::ResonatorNetwork(const std::vector<double>& frequencies,
     const std::vector<double>& q_values)
+    : m_controls(declare_controls<ResonatorControls>())
 {
     set_output_mode(OutputMode::AUDIO_SINK);
     if (frequencies.size() != q_values.size()) {
@@ -188,6 +190,8 @@ void ResonatorNetwork::process_batch(unsigned int num_samples)
     }
 
     update_mapped_parameters();
+    refresh_controls();
+    apply_controls();
 
     thread_local std::vector<double> scratch;
     scratch.assign(num_samples, 0.0);
@@ -308,6 +312,61 @@ void ResonatorNetwork::update_mapped_parameters()
             apply_one_to_one_parameter(key, mapping.network_source);
         }
     }
+}
+
+void ResonatorNetwork::apply_controls()
+{
+    const auto each = [this](Control& control, auto&& broadcast, auto&& element) {
+        if (!control.due()) {
+            return;
+        }
+        control.settle();
+
+        if (!control.per_element()) {
+            broadcast(control.value());
+            return;
+        }
+
+        const size_t count = std::min(m_resonators.size(), control.element_count());
+        for (size_t index = 0; index < count; ++index) {
+            if (const auto value = control.at(index)) {
+                element(index, *value);
+            }
+        }
+    };
+
+    each(
+        m_controls.frequency,
+        [this](double value) { set_all_frequencies(value); },
+        [this](size_t index, double value) { set_frequency(index, value); });
+    each(
+        m_controls.q,
+        [this](double value) { set_all_q(value); },
+        [this](size_t index, double value) { set_q(index, value); });
+    each(
+        m_controls.gain,
+        [this](double value) {
+            for (auto& resonator : m_resonators) {
+                resonator.gain = value;
+            }
+        },
+        [this](size_t index, double value) { m_resonators[index].gain = value; });
+    each(
+        m_controls.retune,
+        [this](double value) {
+            for (size_t index = 0; index < m_resonators.size(); ++index) {
+                retune(index, value);
+            }
+        },
+        [this](size_t index, double value) { retune(index, value); });
+    each(
+        m_controls.decay,
+        [this](double value) {
+            for (size_t index = 0; index < m_resonators.size(); ++index) {
+                set_decay(index, value);
+            }
+        },
+        [this](size_t index, double value) { set_decay(index, value); });
 }
 
 void ResonatorNetwork::apply_broadcast_parameter(ParameterKey param, double value)

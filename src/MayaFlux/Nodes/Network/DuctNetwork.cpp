@@ -39,11 +39,13 @@ DuctNetwork::DuctNetwork(double length, double radius, double sample_rate)
 }
 
 DuctNetwork::DuctNetwork(double length, const std::vector<double>& radii, double sample_rate)
+    : m_controls(declare_controls<DuctControls>())
 {
     setup(length, Profile { .radii = radii, .function = {} }, sample_rate);
 }
 
 DuctNetwork::DuctNetwork(double length, std::function<double(double)> radius, double sample_rate)
+    : m_controls(declare_controls<DuctControls>())
 {
     setup(length, Profile { .radii = {}, .function = std::move(radius) }, sample_rate);
 }
@@ -392,6 +394,8 @@ void DuctNetwork::process_batch(unsigned int num_samples)
     }
 
     update_mapped_parameters();
+    refresh_controls();
+    apply_controls();
 
     Prepared& state = *m_active;
     state.mouth->process(static_cast<float>(num_samples));
@@ -463,6 +467,28 @@ void DuctNetwork::update_mapped_parameters()
             m_active->bell->set_mapped_parameter(key, value);
         }
     }
+}
+
+void DuctNetwork::apply_controls()
+{
+    if (const auto pickup = m_controls.pickup.pending()) {
+        set_pickup_position(*pickup);
+    }
+
+    const auto forward = [this](std::string_view name, Control& control) {
+        if (name == "scale" || name == "pickup") {
+            return;
+        }
+        if (const auto value = control.pending()) {
+            const ParameterKey key = parameter_key(name);
+            m_active->mouth->set_mapped_parameter(key, *value);
+            m_active->bell->set_mapped_parameter(key, *value);
+        }
+    };
+
+    std::apply(
+        [&](const auto&... member) { (forward(member.name, member.get(m_controls)), ...); },
+        Reflect::Generated::Description<DuctControls>::members());
 }
 
 void DuctNetwork::map_parameter(

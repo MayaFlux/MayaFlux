@@ -9,6 +9,34 @@
 namespace MayaFlux::Nodes::Network {
 
 /**
+ * @struct DuctControls
+ * @brief Controls of a DuctNetwork, each a number or a mapped node.
+ *
+ * Every member after pickup is offered to both terminations, as the string
+ * names of the same spelling always were. A termination that does not know a
+ * name ignores it. A network source is not used by any of them.
+ */
+struct DuctControls {
+    Control scale; ///< Output scale
+    Control pickup; ///< Pickup position, 0 to 1 along the duct
+    Control pressure; ///< Reed blowing pressure
+    Control smoothing; ///< Reed pressure smoothing
+    Control resonance; ///< Reed resonance
+    Control reed_damping; ///< Reed damping
+    Control noise; ///< Reed breath noise
+    Control noise_cutoff; ///< Reed breath noise cutoff
+    Control reed_area; ///< Reed area
+    Control lip; ///< Lip pressure on the reed
+    Control closing_pressure; ///< Reed closing pressure
+    Control opening; ///< Reed rest opening
+    Control width; ///< Reed width
+    Control driving_pressure; ///< Junction driving pressure
+    Control maximum_flow; ///< Junction maximum flow
+};
+
+MF_DESCRIBE(DuctControls)
+
+/**
  * @class DuctNetwork
  * @brief A one dimensional acoustic duct of any bore shape, solved by finite
  *        differences, with a termination at each end.
@@ -46,6 +74,8 @@ namespace MayaFlux::Nodes::Network {
  */
 class MAYAFLUX_API DuctNetwork final : public NodeNetwork {
 public:
+    using Controls = DuctControls;
+
     /** @brief What the network publishes. */
     enum class Output : uint8_t {
         RADIATED, ///< Pressure radiated at one metre, from the flow out of the bell
@@ -186,10 +216,18 @@ public:
     void set_pickup_position(double position);
     [[nodiscard]] double get_pickup_position() const { return m_pickup.load(std::memory_order_relaxed); }
 
+    /** @brief Fills the controls whose value the network holds outside the struct. */
+    void read_controls(DuctControls& controls) const
+    {
+        controls.pickup.observe(get_pickup_position());
+    }
+
     /** @brief Copy of the pressures along the duct from the last block. */
     [[nodiscard]] std::vector<double> pressure_field() const;
 
 private:
+    DuctControls& m_controls;
+
     struct Prepared;
 
     struct Profile {
@@ -217,6 +255,7 @@ private:
     void install_pending();
     void bind(Prepared& prepared, bool keep);
     void update_mapped_parameters();
+    void apply_controls();
     void publish_block(std::span<const double> block);
 
     mutable std::mutex m_producer_mutex;
@@ -248,3 +287,4 @@ private:
 };
 
 } // namespace MayaFlux::Nodes::Network
+#include "DuctNetwork.describe.hpp"
