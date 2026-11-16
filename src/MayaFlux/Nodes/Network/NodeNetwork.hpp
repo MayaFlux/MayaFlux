@@ -1,9 +1,8 @@
 #pragma once
 
-#include "MayaFlux/Nodes/Network/Control.hpp"
+#include "MayaFlux/Nodes/Network/ControlStore.hpp"
 #include "MayaFlux/Nodes/Network/Operators/OperatorChain.hpp"
 #include "MayaFlux/Nodes/Node.hpp"
-#include "MayaFlux/Transitive/Reflect/Describe.hpp"
 
 namespace MayaFlux::Nodes::Network {
 
@@ -299,7 +298,7 @@ public:
     template <typename Self>
     void set(this Self& self, const typename Self::Controls& incoming)
     {
-        static_cast<NodeNetwork&>(self).merge_controls(incoming);
+        static_cast<NodeNetwork&>(self).m_controls_store.merge(incoming);
     }
 
     /**
@@ -311,8 +310,8 @@ public:
     template <typename Self>
     [[nodiscard]] typename Self::Controls get(this const Self& self)
     {
-        auto current = static_cast<const NodeNetwork&>(self)
-                           .template snapshot_controls<typename Self::Controls>();
+        const NodeNetwork& base = self;
+        auto current = base.m_controls_store.snapshot<typename Self::Controls>(&base.m_output_scale);
         if constexpr (requires { self.read_controls(current); }) {
             self.read_controls(current);
         }
@@ -527,23 +526,7 @@ protected:
     template <typename C>
     [[nodiscard]] C& declare_controls()
     {
-        auto storage = std::make_shared<C>();
-        C& controls = *storage;
-
-        m_controls_storage = std::move(storage);
-        m_controls_tag = controls_tag<C>();
-        m_control_slots.clear();
-        m_scale_control = nullptr;
-
-        std::apply(
-            [&](const auto&... member) {
-                static_assert((std::same_as<typename std::remove_cvref_t<decltype(member)>::value_type, Control> && ...),
-                    "every member of a controls struct must be a Control");
-                (register_control(member.name, member.get(controls)), ...);
-            },
-            Reflect::Generated::Description<C>::members());
-
-        return controls;
+        return m_controls_store.declare<C>();
     }
 
     /**
@@ -629,58 +612,7 @@ protected:
     double m_output_scale { 1.0 }; ///< Post-processing scalar applied to m_last_audio_buffer each batch
 
 private:
-    template <typename C>
-    [[nodiscard]] static const void* controls_tag() noexcept
-    {
-        static constexpr char tag = 0;
-        return &tag;
-    }
-
-    void register_control(std::string_view name, Control& control)
-    {
-        m_control_slots.push_back(&control);
-        if (name == "scale") {
-            m_scale_control = &control;
-        }
-    }
-
-    template <typename C>
-    void merge_controls(const C& incoming)
-    {
-        if (m_controls_tag != controls_tag<C>()) {
-            return;
-        }
-
-        auto& live = *static_cast<C*>(m_controls_storage.get());
-        const auto merge_one = [&](const auto& member) {
-            const Control& given = member.get(incoming);
-            if (given.has_value()) {
-                member.get(live).assign(given);
-            }
-        };
-        std::apply(
-            [&](const auto&... member) { (merge_one(member), ...); },
-            Reflect::Generated::Description<C>::members());
-    }
-
-    template <typename C>
-    [[nodiscard]] C snapshot_controls() const
-    {
-        C current = m_controls_tag == controls_tag<C>()
-            ? *static_cast<const C*>(m_controls_storage.get())
-            : C {};
-        std::apply(
-            [&](const auto&... member) {
-                ((member.name == "scale" ? member.get(current).observe(m_output_scale) : void()), ...);
-            },
-            Reflect::Generated::Description<C>::members());
-        return current;
-    }
-
-    std::shared_ptr<void> m_controls_storage;
-    const void* m_controls_tag = nullptr;
-    std::vector<Control*> m_control_slots;
-    Control* m_scale_control = nullptr;
+    ControlStore m_controls_store;
 
     //-------------------------------------------------------------------------
     // String Conversion (For metadata/debugging)

@@ -31,15 +31,7 @@ std::optional<std::vector<double>> NodeNetwork::get_audio_buffer() const
 
 void NodeNetwork::refresh_controls()
 {
-    for (Control* control : m_control_slots) {
-        control->refresh();
-    }
-
-    if (m_scale_control) {
-        if (const auto scale = m_scale_control->pending()) {
-            set_output_scale(std::max(0.0, *scale));
-        }
-    }
+    m_controls_store.refresh(&m_output_scale);
 }
 
 void NodeNetwork::apply_output_scale()

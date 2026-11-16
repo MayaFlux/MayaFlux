@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Nodes/Network/ControlStore.hpp"
 #include "ParameterResolver.hpp"
 
 namespace MayaFlux::Nodes::Network {
@@ -82,6 +83,66 @@ public:
      * lifts the restriction.
      */
     [[nodiscard]] virtual bool demands_full_vertex_restore() const { return false; }
+
+    /**
+     * @brief Apply the members of this operator's Controls struct that hold a value.
+     *
+     * An operator opts in with `using Controls = ...`, a struct of Control
+     * members declared with MF_DESCRIBE, and holds the reference
+     * declare_controls() returns. Members left empty are untouched, so
+     * `op->set({ .drag = 0.1 })` changes only drag. A node source maps in
+     * BROADCAST and a network source in ONE_TO_ONE. A number may be set from
+     * any thread while a block renders. Attaching or removing a node or network
+     * source belongs outside process. The string based set_parameter stays for
+     * names a user invents.
+     */
+    template <typename Self>
+    void set(this Self& self, const typename Self::Controls& incoming)
+    {
+        static_cast<NetworkOperator&>(self).m_controls_store.merge(incoming);
+    }
+
+    /**
+     * @brief The controls with the values the operator holds now.
+     *
+     * An operator may offer read_controls(Controls&) to fill members whose
+     * value lives elsewhere.
+     */
+    template <typename Self>
+    [[nodiscard]] typename Self::Controls get(this const Self& self)
+    {
+        const NetworkOperator& base = self;
+        auto current = base.m_controls_store.snapshot<typename Self::Controls>();
+        if constexpr (requires { self.read_controls(current); }) {
+            self.read_controls(current);
+        }
+        return current;
+    }
+
+protected:
+    /**
+     * @brief Create the operator's controls struct and keep it alive.
+     * @return The struct, owned by this operator, for the derived class to read.
+     *
+     * Call once from the constructor's initializer list and hold the result in
+     * a reference member. The struct must be described and every member a
+     * Control.
+     */
+    template <typename C>
+    [[nodiscard]] C& declare_controls()
+    {
+        return m_controls_store.declare<C>();
+    }
+
+    /**
+     * @brief Read node sources into their controls.
+     *
+     * Call once per block from process() before reading the controls struct.
+     */
+    void refresh_controls() { m_controls_store.refresh(); }
+
+private:
+    ControlStore m_controls_store;
 };
 
 } // namespace MayaFlux::Nodes::Network
