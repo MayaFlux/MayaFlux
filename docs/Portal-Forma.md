@@ -386,12 +386,13 @@ surface.ctx().on_held(id, IO::Keys::ArrowUp, [](uint32_t id) { });
 surface.ctx().on_focus_gained(id, [](uint32_t id) { /* highlight */ });
 surface.ctx().on_focus_lost  (id, [](uint32_t id) { /* unhighlight */ });
 
-// Query and clear focus
+// Query, set and clear focus
 auto focused_id = surface.ctx().focused(); // std::optional<uint32_t>
+surface.ctx().set_focus(id);               // true if id has focus afterwards
 surface.ctx().clear_focus();
 ```
 
-Focus transfers automatically on mouse press. `unbind(id)` clears focus if that element holds it. Multiple key codes can be registered on the same element; each is a separate `on_press`/`on_held`/`on_release` call.
+Focus transfers automatically on mouse press. `set_focus(id)` moves it from code, so a menu driven by arrow keys or a controller can walk its elements without the pointer. A press, `set_focus`, `clear_focus` and `unbind(id)` of the focused element all run the same focus-gained and focus-lost callbacks and `WINDOW_FOCUS_*` subscriptions. A focus callback may move focus again, for instance to skip an element or to keep focus where it is, and the later move wins: `set_focus` then returns false, and an element that was told it gained focus is told when it loses it. Multiple key codes can be registered on the same element; each is a separate `on_press`/`on_held`/`on_release` call.
 
 Arrow-key nudge on a fader:
 
