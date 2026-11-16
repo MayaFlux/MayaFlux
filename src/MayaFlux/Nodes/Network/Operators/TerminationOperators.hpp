@@ -111,6 +111,44 @@ private:
 };
 
 /**
+ * @struct ReedControls
+ * @brief Controls of a ReedOperator, each a number or a mapped node.
+ *
+ * Each is checked as the parameter of the same name always was: non negative
+ * where it cannot be negative, lip between 0 and 1, and closing_pressure,
+ * opening and width only when positive. A value that fails is left out. A
+ * network source is per element and is not used.
+ */
+struct ReedControls {
+    Control pressure;
+    Control smoothing;
+    Control resonance;
+    Control reed_damping;
+    Control noise;
+    Control noise_cutoff;
+    Control reed_area;
+    Control lip;
+    Control closing_pressure;
+    Control opening;
+    Control width;
+};
+
+MF_DESCRIBE(ReedControls)
+
+/**
+ * @struct JunctionControls
+ * @brief Controls of a JunctionOperator, each a number or a mapped node.
+ *
+ * maximum_flow is only taken when positive.
+ */
+struct JunctionControls {
+    Control driving_pressure;
+    Control maximum_flow;
+};
+
+MF_DESCRIBE(JunctionControls)
+
+/**
  * @class ReedOperator
  * @brief Quasi-static single reed driven by a blowing pressure.
  *
@@ -147,6 +185,8 @@ private:
  */
 class MAYAFLUX_API ReedOperator final : public TerminationOperator {
 public:
+    using Controls = ReedControls;
+
     explicit ReedOperator(double width = 0.012, double rest_opening = 4.0e-4, double closing_pressure = 3000.0);
 
     [[nodiscard]] bool accepts(const Kinesis::Acoustics::DuctGrid& grid,
@@ -163,7 +203,14 @@ public:
     [[nodiscard]] std::optional<double> query_state(std::string_view query) const override;
     [[nodiscard]] std::string_view get_type_name() const override { return "Reed"; }
 
+    /** @brief Fills every control with the value the reed holds now. */
+    void read_controls(ReedControls& controls) const;
+
 private:
+    ReedControls& m_controls;
+
+    void apply_controls();
+
     [[nodiscard]] Kinesis::Acoustics::ReedChannel channel() const noexcept;
     [[nodiscard]] double next_white() noexcept;
 
@@ -250,6 +297,8 @@ public:
      * @param maximum_flow Largest flow magnitude the law can give
      * @param driving_pressure Pressure on the far side of the junction
      */
+    using Controls = JunctionControls;
+
     JunctionOperator(FlowLaw law, double maximum_flow, double driving_pressure = 0.0);
 
     [[nodiscard]] bool accepts(const Kinesis::Acoustics::DuctGrid& grid,
@@ -261,11 +310,19 @@ public:
     [[nodiscard]] std::pair<double, double> couple(double end_pressure, double interior_flow) override;
     void reset() override;
 
+    void process(float frames) override;
     void set_parameter(std::string_view param, double value) override;
     [[nodiscard]] std::optional<double> query_state(std::string_view query) const override;
     [[nodiscard]] std::string_view get_type_name() const override { return "Junction"; }
 
+    /** @brief Fills every control with the value the junction holds now. */
+    void read_controls(JunctionControls& controls) const;
+
 private:
+    JunctionControls& m_controls;
+
+    void apply_controls();
+
     FlowLaw m_law;
     std::atomic<double> m_maximum_flow;
     std::atomic<double> m_driving_pressure;
@@ -276,3 +333,4 @@ private:
 };
 
 } // namespace MayaFlux::Nodes::Network
+#include "TerminationOperators.describe.hpp"

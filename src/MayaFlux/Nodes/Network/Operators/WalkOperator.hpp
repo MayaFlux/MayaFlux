@@ -5,6 +5,19 @@
 namespace MayaFlux::Nodes::Network {
 
 /**
+ * @struct WalkControls
+ * @brief Controls of a WalkOperator, a number or a mapped node.
+ *
+ * current is the slot index the walk jumps to when it differs from where it
+ * is. A network source is per element and is not used.
+ */
+struct WalkControls {
+    Control current;
+};
+
+MF_DESCRIBE(WalkControls)
+
+/**
  * @class WalkOperator
  * @brief Moves a single active slot along the rows of a weight table
  *
@@ -50,6 +63,8 @@ namespace MayaFlux::Nodes::Network {
  */
 class MAYAFLUX_API WalkOperator final : public RelationOperator {
 public:
+    using Controls = WalkControls;
+
     /**
      * @brief Chooses a successor from a row of weights
      * @param row Outgoing weights of the current slot. Values need not sum to one.
@@ -129,7 +144,14 @@ public:
 
     [[nodiscard]] std::string_view get_type_name() const override { return "Walk"; }
 
+    /** @brief Fills the controls whose value the walk holds outside the struct. */
+    void read_controls(WalkControls& controls) const;
+
 private:
+    WalkControls& m_controls;
+
+    void move_to(double index);
+
     /**
      * @brief Activate slot m_current and deactivate every other slot that
      *        currently exists. No-op after the first call, and no-op if no
@@ -147,3 +169,4 @@ private:
 };
 
 } // namespace MayaFlux::Nodes::Network
+#include "WalkOperator.describe.hpp"

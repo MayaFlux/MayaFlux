@@ -30,6 +30,37 @@ namespace {
     constexpr double lip_narrowing = 0.2;
     constexpr double lip_damping = 1.0;
 
+    enum class Rule : uint8_t {
+        ANY,
+        NON_NEGATIVE,
+        UNIT,
+        POSITIVE
+    };
+
+    void put(std::atomic<double>& slot, double value, Rule rule) noexcept
+    {
+        if (!std::isfinite(value)) {
+            return;
+        }
+
+        switch (rule) {
+        case Rule::ANY:
+            slot.store(value, std::memory_order_relaxed);
+            break;
+        case Rule::NON_NEGATIVE:
+            slot.store(std::max(0.0, value), std::memory_order_relaxed);
+            break;
+        case Rule::UNIT:
+            slot.store(std::clamp(value, 0.0, 1.0), std::memory_order_relaxed);
+            break;
+        case Rule::POSITIVE:
+            if (value > 0.0) {
+                slot.store(value, std::memory_order_relaxed);
+            }
+            break;
+        }
+    }
+
 }
 
 //-----------------------------------------------------------------------------
@@ -56,7 +87,8 @@ std::pair<double, double> WallOperator::couple(double end_pressure, double inter
 //-----------------------------------------------------------------------------
 
 ReedOperator::ReedOperator(double width, double rest_opening, double closing_pressure)
-    : m_width(width)
+    : m_controls(declare_controls<ReedControls>())
+    , m_width(width)
     , m_rest_opening(rest_opening)
     , m_closing_pressure(closing_pressure)
 {
@@ -123,6 +155,9 @@ double ReedOperator::next_white() noexcept
 
 void ReedOperator::process(float /*frames*/)
 {
+    refresh_controls();
+    apply_controls();
+
     const double smoothing = m_smoothing.load(std::memory_order_relaxed);
     m_alpha = smoothing > 0.0 ? 1.0 - std::exp(-m_time_step / smoothing) : 1.0;
 
@@ -171,35 +206,65 @@ std::pair<double, double> ReedOperator::couple(double end_pressure, double inter
 
 void ReedOperator::set_parameter(std::string_view param, double value)
 {
-    if (!std::isfinite(value)) {
-        return;
-    }
-
     if (param == "pressure") {
-        m_target_pressure.store(value, std::memory_order_relaxed);
+        put(m_target_pressure, value, Rule::ANY);
     } else if (param == "smoothing") {
-        m_smoothing.store(std::max(0.0, value), std::memory_order_relaxed);
+        put(m_smoothing, value, Rule::NON_NEGATIVE);
     } else if (param == "resonance") {
-        m_resonance.store(std::max(0.0, value), std::memory_order_relaxed);
+        put(m_resonance, value, Rule::NON_NEGATIVE);
     } else if (param == "reed_damping") {
-        m_reed_damping.store(std::max(0.0, value), std::memory_order_relaxed);
+        put(m_reed_damping, value, Rule::NON_NEGATIVE);
     } else if (param == "noise") {
-        m_noise.store(std::max(0.0, value), std::memory_order_relaxed);
+        put(m_noise, value, Rule::NON_NEGATIVE);
     } else if (param == "noise_cutoff") {
-        m_noise_cutoff.store(std::max(0.0, value), std::memory_order_relaxed);
+        put(m_noise_cutoff, value, Rule::NON_NEGATIVE);
     } else if (param == "reed_area") {
-        m_reed_area.store(std::max(0.0, value), std::memory_order_relaxed);
+        put(m_reed_area, value, Rule::NON_NEGATIVE);
     } else if (param == "lip") {
-        m_lip.store(std::clamp(value, 0.0, 1.0), std::memory_order_relaxed);
-    } else if (value > 0.0) {
-        if (param == "closing_pressure") {
-            m_closing_pressure.store(value, std::memory_order_relaxed);
-        } else if (param == "opening") {
-            m_rest_opening.store(value, std::memory_order_relaxed);
-        } else if (param == "width") {
-            m_width.store(value, std::memory_order_relaxed);
-        }
+        put(m_lip, value, Rule::UNIT);
+    } else if (param == "closing_pressure") {
+        put(m_closing_pressure, value, Rule::POSITIVE);
+    } else if (param == "opening") {
+        put(m_rest_opening, value, Rule::POSITIVE);
+    } else if (param == "width") {
+        put(m_width, value, Rule::POSITIVE);
     }
+}
+
+void ReedOperator::apply_controls()
+{
+    const auto apply = [](Control& control, std::atomic<double>& slot, Rule rule) {
+        if (const auto value = control.pending()) {
+            put(slot, *value, rule);
+        }
+    };
+
+    apply(m_controls.pressure, m_target_pressure, Rule::ANY);
+    apply(m_controls.smoothing, m_smoothing, Rule::NON_NEGATIVE);
+    apply(m_controls.resonance, m_resonance, Rule::NON_NEGATIVE);
+    apply(m_controls.reed_damping, m_reed_damping, Rule::NON_NEGATIVE);
+    apply(m_controls.noise, m_noise, Rule::NON_NEGATIVE);
+    apply(m_controls.noise_cutoff, m_noise_cutoff, Rule::NON_NEGATIVE);
+    apply(m_controls.reed_area, m_reed_area, Rule::NON_NEGATIVE);
+    apply(m_controls.lip, m_lip, Rule::UNIT);
+    apply(m_controls.closing_pressure, m_closing_pressure, Rule::POSITIVE);
+    apply(m_controls.opening, m_rest_opening, Rule::POSITIVE);
+    apply(m_controls.width, m_width, Rule::POSITIVE);
+}
+
+void ReedOperator::read_controls(ReedControls& controls) const
+{
+    controls.pressure.observe(m_target_pressure.load(std::memory_order_relaxed));
+    controls.smoothing.observe(m_smoothing.load(std::memory_order_relaxed));
+    controls.resonance.observe(m_resonance.load(std::memory_order_relaxed));
+    controls.reed_damping.observe(m_reed_damping.load(std::memory_order_relaxed));
+    controls.noise.observe(m_noise.load(std::memory_order_relaxed));
+    controls.noise_cutoff.observe(m_noise_cutoff.load(std::memory_order_relaxed));
+    controls.reed_area.observe(m_reed_area.load(std::memory_order_relaxed));
+    controls.lip.observe(m_lip.load(std::memory_order_relaxed));
+    controls.closing_pressure.observe(m_closing_pressure.load(std::memory_order_relaxed));
+    controls.opening.observe(m_rest_opening.load(std::memory_order_relaxed));
+    controls.width.observe(m_width.load(std::memory_order_relaxed));
 }
 
 std::optional<double> ReedOperator::query_state(std::string_view query) const
@@ -316,7 +381,8 @@ std::pair<double, double> RadiationOperator::couple(double end_pressure, double 
 //-----------------------------------------------------------------------------
 
 JunctionOperator::JunctionOperator(FlowLaw law, double maximum_flow, double driving_pressure)
-    : m_law(std::move(law))
+    : m_controls(declare_controls<JunctionControls>())
+    , m_law(std::move(law))
     , m_maximum_flow(maximum_flow)
     , m_driving_pressure(driving_pressure)
 {
@@ -365,17 +431,35 @@ std::pair<double, double> JunctionOperator::couple(double end_pressure, double i
     return { Acoustics::centred_end_pressure(driving, difference, end_pressure), flow };
 }
 
+void JunctionOperator::process(float /*frames*/)
+{
+    refresh_controls();
+    apply_controls();
+}
+
 void JunctionOperator::set_parameter(std::string_view param, double value)
 {
-    if (!std::isfinite(value)) {
-        return;
-    }
-
     if (param == "driving_pressure") {
-        m_driving_pressure.store(value, std::memory_order_relaxed);
-    } else if (param == "maximum_flow" && value > 0.0) {
-        m_maximum_flow.store(value, std::memory_order_relaxed);
+        put(m_driving_pressure, value, Rule::ANY);
+    } else if (param == "maximum_flow") {
+        put(m_maximum_flow, value, Rule::POSITIVE);
     }
+}
+
+void JunctionOperator::apply_controls()
+{
+    if (const auto driving = m_controls.driving_pressure.pending()) {
+        put(m_driving_pressure, *driving, Rule::ANY);
+    }
+    if (const auto largest = m_controls.maximum_flow.pending()) {
+        put(m_maximum_flow, *largest, Rule::POSITIVE);
+    }
+}
+
+void JunctionOperator::read_controls(JunctionControls& controls) const
+{
+    controls.driving_pressure.observe(m_driving_pressure.load(std::memory_order_relaxed));
+    controls.maximum_flow.observe(m_maximum_flow.load(std::memory_order_relaxed));
 }
 
 std::optional<double> JunctionOperator::query_state(std::string_view query) const

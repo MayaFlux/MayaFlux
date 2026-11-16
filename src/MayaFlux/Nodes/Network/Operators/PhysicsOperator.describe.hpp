@@ -28,6 +28,8 @@ struct Description<::MayaFlux::Nodes::Network::PhysicsControls> {
             Member<&::MayaFlux::Nodes::Network::PhysicsControls::force_y> { "force_y" },
             Member<&::MayaFlux::Nodes::Network::PhysicsControls::force_z> { "force_z" },
             Member<&::MayaFlux::Nodes::Network::PhysicsControls::mass> { "mass" },
+            Member<&::MayaFlux::Nodes::Network::PhysicsControls::color> { "color" },
+            Member<&::MayaFlux::Nodes::Network::PhysicsControls::size> { "size" },
         };
     }
 };

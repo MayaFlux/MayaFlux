@@ -287,6 +287,9 @@ void PhysicsOperator::apply_controls()
     per_particle(m_controls.force_y, [](PhysicsState& state, float value) { state.force.y += value; });
     per_particle(m_controls.force_z, [](PhysicsState& state, float value) { state.force.z += value; });
     per_particle(m_controls.mass, [](PhysicsState& state, float value) { state.mass = std::max(0.1F, value); });
+
+    apply_point_control(m_controls.color, PointAttribute::COLOR);
+    apply_point_control(m_controls.size, PointAttribute::SIZE);
 }
 
 std::optional<double> PhysicsOperator::query_state(std::string_view query) const

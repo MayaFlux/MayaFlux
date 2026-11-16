@@ -34,6 +34,8 @@ enum class PhysicsParameter : uint8_t {
  * applies to all of them once, a node source every block, and a network source
  * gives one value per particle and is skipped unless its node count matches.
  * Forces add to the particle's force and mass sets its mass, never below 0.1.
+ * color and size follow the same rule: color from 0 to 1 runs from blue to
+ * red, and size is ten times the value, between 1 and 50.
  */
 struct PhysicsControls {
     Control gravity_x;
@@ -51,6 +53,8 @@ struct PhysicsControls {
     Control force_y;
     Control force_z;
     Control mass;
+    Control color;
+    Control size;
 };
 
 MF_DESCRIBE(PhysicsControls)
