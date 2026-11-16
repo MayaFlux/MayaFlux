@@ -42,7 +42,6 @@ void VideoStreamContext::close()
     out_pixel_format = -1;
     out_bytes_per_pixel = 4;
     out_linesize = 0;
-    m_last_error.clear();
 }
 
 // =========================================================================
@@ -54,6 +53,7 @@ bool VideoStreamContext::open(const FFmpegDemuxContext& demux,
     uint32_t target_height,
     int target_format)
 {
+    m_last_error.clear();
     close();
     FFmpegDemuxContext::init_ffmpeg();
 
@@ -208,6 +208,7 @@ bool VideoStreamContext::open(const FFmpegDemuxContext& demux,
 bool VideoStreamContext::open_device(const FFmpegDemuxContext& demux,
     uint32_t tw, uint32_t th, int tf)
 {
+    m_last_error.clear();
     close();
     FFmpegDemuxContext::init_ffmpeg();
 
@@ -310,6 +311,11 @@ bool VideoStreamContext::setup_scaler(uint32_t target_width,
     out_pixel_format = target_format >= 0
         ? target_format
         : static_cast<int>(AV_PIX_FMT_RGBA);
+
+    if (!av_pix_fmt_desc_get(static_cast<AVPixelFormat>(out_pixel_format))) {
+        m_last_error = "setup_scaler: unknown target pixel format";
+        return false;
+    }
 
     sws_context = sws_getContext(
         static_cast<int>(width),

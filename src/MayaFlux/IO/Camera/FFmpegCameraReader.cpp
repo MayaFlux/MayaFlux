@@ -373,9 +373,6 @@ void FFmpegCameraReader::start_decode_thread()
 
 void FFmpegCameraReader::stop_decode_thread()
 {
-    if (!m_decode_active.load())
-        return;
-
     m_decode_stop.store(true);
     m_decode_cv.notify_all();
 

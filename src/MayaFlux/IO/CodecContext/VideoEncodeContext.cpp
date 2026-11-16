@@ -96,7 +96,6 @@ void VideoEncodeContext::close()
     m_pts = 0;
     m_width = 0;
     m_height = 0;
-    m_last_error.clear();
 }
 
 // =========================================================================
@@ -110,6 +109,7 @@ bool VideoEncodeContext::open(FFmpegMuxContext& mux,
     AVPixelFormat src_pixel_format,
     AVCodecID codec_id)
 {
+    m_last_error.clear();
     close();
 
     if (!mux.is_open()) {

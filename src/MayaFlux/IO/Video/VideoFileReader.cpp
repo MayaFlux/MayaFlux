@@ -8,7 +8,10 @@
 #include "MayaFlux/Kakshya/Source/VideoFileContainer.hpp"
 
 extern "C" {
+#include <cctype>
 #include <cstddef>
+#include <filesystem>
+#include <string>
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libswscale/swscale.h>
@@ -178,14 +181,43 @@ std::vector<FileRegion> VideoFileReader::get_regions() const
     return m_cached_regions;
 }
 
+namespace {
+
+    /**
+     * @brief IANA media type for a video file, chosen by its extension.
+     *
+     * ffmpeg's format name and MIME list describe a family of containers
+     * (e.g. "mov,mp4,m4a,..."), so the extension is what identifies the file.
+     */
+    std::string video_mime_type(const std::string& filepath)
+    {
+        std::string ext = std::filesystem::path(filepath).extension().string();
+        for (char& c : ext)
+            c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+
+        if (ext == ".mp4" || ext == ".m4v")
+            return "video/mp4";
+        if (ext == ".mov")
+            return "video/quicktime";
+        if (ext == ".mkv")
+            return "video/x-matroska";
+        if (ext == ".webm")
+            return "video/webm";
+        if (ext == ".avi")
+            return "video/x-msvideo";
+        return "application/octet-stream";
+    }
+
+}
+
 void VideoFileReader::build_metadata(
     const std::shared_ptr<FFmpegDemuxContext>& demux,
     const std::shared_ptr<VideoStreamContext>& video) const
 {
     FileMetadata meta;
-    meta.mime_type = "video";
     demux->extract_container_metadata(meta);
     video->extract_stream_metadata(*demux, meta);
+    meta.mime_type = video_mime_type(m_filepath);
 
     std::lock_guard lock(m_metadata_mutex);
     m_cached_metadata = std::move(meta);
@@ -502,9 +534,6 @@ void VideoFileReader::start_decode_thread()
 
 void VideoFileReader::stop_decode_thread()
 {
-    if (!m_decode_active.load())
-        return;
-
     m_decode_stop.store(true);
     m_decode_cv.notify_all();
 

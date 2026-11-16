@@ -34,7 +34,6 @@ void AudioStreamContext::close()
     total_frames = 0;
     sample_rate = 0;
     channels = 0;
-    m_last_error.clear();
 }
 
 // =========================================================================
@@ -45,6 +44,7 @@ bool AudioStreamContext::open(const FFmpegDemuxContext& demux,
     bool planar_output,
     uint32_t target_rate)
 {
+    m_last_error.clear();
     close();
     FFmpegDemuxContext::init_ffmpeg();
 

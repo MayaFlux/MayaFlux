@@ -79,7 +79,7 @@ VideoFileWriter::~VideoFileWriter()
 {
     if (m_observer_id.load(std::memory_order_acquire) != 0) {
         stop_recording().get();
-    } else if (m_open.load(std::memory_order_acquire) && !m_closing.exchange(true)) {
+    } else if (m_open.load(std::memory_order_acquire) && !m_closing.load(std::memory_order_acquire)) {
         auto fut = close();
         if (fut.wait_for(std::chrono::seconds(5)) == std::future_status::timeout) {
             MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
@@ -400,6 +400,8 @@ void VideoFileWriter::worker_loop(const std::string& filepath,
         "[VideoFileWriter] worker started: '{}' {}x{} @{:.3f}fps",
         filepath, width, height, frame_rate);
 
+    bool frames_ok = true;
+
     while (true) {
         auto item_opt = m_queue->pop();
         if (!item_opt) {
@@ -414,6 +416,7 @@ void VideoFileWriter::worker_loop(const std::string& filepath,
                 if (!enc.encode_frame(cmd.pixels.data(), cmd.pixels.size(),
                         cmd.width, cmd.height, mux)) {
                     set_error(enc.last_error());
+                    frames_ok = false;
                     MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
                         "[VideoFileWriter] encode_frame failed: {}", enc.last_error());
                 }
@@ -435,6 +438,7 @@ void VideoFileWriter::worker_loop(const std::string& filepath,
                     if (!enc.encode_frame(cpu.data(), cpu.size(),
                             cmd.buffer->get_width(), cmd.buffer->get_height(), mux)) {
                         set_error(enc.last_error());
+                        frames_ok = false;
                         MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
                             "[VideoFileWriter] encode_frame (cpu) failed: {}", enc.last_error());
                     }
@@ -463,6 +467,7 @@ void VideoFileWriter::worker_loop(const std::string& filepath,
                 if (!enc.encode_frame(pixels.data(), pixels.size(),
                         tex->get_width(), tex->get_height(), mux)) {
                     set_error(enc.last_error());
+                    frames_ok = false;
                     MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
                         "[VideoFileWriter] encode_frame (gpu) failed: {}", enc.last_error());
                 }
@@ -477,12 +482,13 @@ void VideoFileWriter::worker_loop(const std::string& filepath,
             break;
     }
 
-    bool ok = enc.drain(mux);
-    if (!ok) {
+    const bool drained = enc.drain(mux);
+    if (!drained) {
         set_error(enc.last_error());
         MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
             "[VideoFileWriter] drain failed: {}", enc.last_error());
     }
+    const bool ok = frames_ok && drained;
 
     mux.close();
     m_open.store(false, std::memory_order_release);

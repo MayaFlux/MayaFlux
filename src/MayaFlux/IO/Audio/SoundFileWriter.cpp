@@ -26,9 +26,9 @@ SoundFileWriter::SoundFileWriter()
 
 SoundFileWriter::~SoundFileWriter()
 {
-    if (m_open.load(std::memory_order_acquire) && !m_closing.exchange(true)) {
-        auto fut = close();
-        if (fut.wait_for(std::chrono::seconds(5)) == std::future_status::timeout) {
+    if (m_open.load(std::memory_order_acquire) && !m_closing.load(std::memory_order_acquire)) {
+        close();
+        if (m_close_future.wait_for(std::chrono::seconds(5)) == std::future_status::timeout) {
             MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
                 "SoundFileWriter destructor timed out; worker detached, file may be incomplete");
             m_worker.detach();

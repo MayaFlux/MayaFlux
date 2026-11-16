@@ -38,6 +38,11 @@ bool FFmpegDemuxContext::open(const std::string& filepath)
     close();
     init_ffmpeg();
 
+    if (filepath.find('\0') != std::string::npos) {
+        m_last_error = "open: path contains an embedded NUL byte";
+        return false;
+    }
+
     if (avformat_open_input(&format_context, filepath.c_str(), nullptr, nullptr) < 0) {
         m_last_error = "avformat_open_input failed: " + filepath;
         return false;
@@ -99,16 +104,16 @@ bool FFmpegDemuxContext::open_device(const std::string& device_name,
 
 int FFmpegDemuxContext::find_best_stream(int media_type, const void** out_codec) const
 {
-    if (!format_context)
-        return -1;
-
     const AVCodec* codec = nullptr;
-    int idx = av_find_best_stream(
-        format_context,
-        static_cast<AVMediaType>(media_type),
-        -1, -1,
-        &codec,
-        0);
+    int idx = -1;
+    if (format_context) {
+        idx = av_find_best_stream(
+            format_context,
+            static_cast<AVMediaType>(media_type),
+            -1, -1,
+            &codec,
+            0);
+    }
 
     if (out_codec)
         *out_codec = codec;
@@ -136,6 +141,11 @@ bool FFmpegDemuxContext::seek(int stream_index, int64_t timestamp)
 {
     if (!format_context)
         return false;
+
+    if (stream_index >= 0 && static_cast<unsigned>(stream_index) >= format_context->nb_streams) {
+        m_last_error = "seek: stream index out of range";
+        return false;
+    }
 
     int ret = av_seek_frame(format_context, stream_index, timestamp, AVSEEK_FLAG_BACKWARD);
     if (ret < 0) {

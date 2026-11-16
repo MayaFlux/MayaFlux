@@ -231,11 +231,16 @@ void SoundFileReader::build_metadata(
     demux->extract_container_metadata(meta);
     audio->extract_stream_metadata(*demux, meta);
 
-    meta.file_size = std::filesystem::file_size(m_filepath);
-    auto ftime = std::filesystem::last_write_time(m_filepath);
-    meta.modification_time = std::chrono::system_clock::time_point(
-        std::chrono::seconds(
-            std::chrono::duration_cast<std::chrono::seconds>(ftime.time_since_epoch())));
+    std::error_code ec;
+    const auto size = std::filesystem::file_size(m_filepath, ec);
+    meta.file_size = ec ? 0 : size;
+
+    const auto ftime = std::filesystem::last_write_time(m_filepath, ec);
+    if (!ec) {
+        meta.modification_time = std::chrono::system_clock::time_point(
+            std::chrono::seconds(
+                std::chrono::duration_cast<std::chrono::seconds>(ftime.time_since_epoch())));
+    }
 
     std::lock_guard<std::mutex> ml(m_metadata_mutex);
     m_cached_metadata = std::move(meta);
@@ -263,12 +268,27 @@ void SoundFileReader::build_regions(
 
 std::vector<Kakshya::DataVariant> SoundFileReader::read_all()
 {
-    std::shared_lock<std::shared_mutex> lock(m_context_mutex);
-    if (!m_demux || !m_audio) {
-        set_error("File not open");
-        return {};
+    uint64_t source_frames = 0;
+    uint32_t source_rate = 0;
+    uint32_t output_rate = 0;
+    {
+        std::shared_lock<std::shared_mutex> lock(m_context_mutex);
+        if (!m_demux || !m_audio) {
+            set_error("File not open");
+            return {};
+        }
+        source_frames = m_audio->total_frames;
+        source_rate = m_audio->sample_rate;
+        output_rate = m_target_sample_rate > 0 ? m_target_sample_rate : source_rate;
     }
-    return decode_frames(m_demux, m_audio, m_audio->total_frames, 0);
+
+    uint64_t output_frames = source_frames;
+    if (source_rate > 0 && output_rate != source_rate) {
+        output_frames = static_cast<uint64_t>(av_rescale_rnd(
+            static_cast<int64_t>(source_frames), output_rate, source_rate, AV_ROUND_UP));
+    }
+
+    return read_frames(output_frames, 0);
 }
 
 std::vector<Kakshya::DataVariant> SoundFileReader::read_region(const FileRegion& region)
@@ -646,7 +666,13 @@ bool SoundFileReader::load_into_container(
     if (m_demux && m_demux->format_context)
         sc->set_source_format(m_demux->format_context->iformat->name);
 
-    sc->setup(audio->total_frames, audio->sample_rate, audio->channels);
+    const uint32_t output_rate = m_target_sample_rate > 0 ? m_target_sample_rate : audio->sample_rate;
+    uint64_t output_frames = audio->total_frames;
+    if (audio->sample_rate > 0 && output_rate != audio->sample_rate) {
+        output_frames = static_cast<uint64_t>(av_rescale_rnd(
+            static_cast<int64_t>(audio->total_frames), output_rate, audio->sample_rate, AV_ROUND_UP));
+    }
+    sc->setup(output_frames, output_rate, audio->channels);
 
     bool planar = (m_audio_options & AudioReadOptions::DEINTERLEAVE) != AudioReadOptions::NONE;
     sc->get_structure().organization = planar

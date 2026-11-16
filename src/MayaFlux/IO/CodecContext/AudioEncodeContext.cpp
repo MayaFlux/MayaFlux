@@ -42,7 +42,6 @@ void AudioEncodeContext::close()
     m_sample_rate = 0;
     m_channels = 0;
     m_pts = 0;
-    m_last_error.clear();
 }
 
 // =========================================================================
@@ -54,6 +53,7 @@ bool AudioEncodeContext::open(FFmpegMuxContext& mux,
     uint32_t channels,
     AVCodecID codec_id)
 {
+    m_last_error.clear();
     close();
     FFmpegDemuxContext::init_ffmpeg();
 
@@ -231,6 +231,9 @@ bool AudioEncodeContext::encode_frames(std::span<const double> interleaved,
 {
     if (!is_valid())
         return false;
+
+    if (num_frames == 0)
+        return true;
 
     uint8_t** conv = nullptr;
     int linesize = 0;
