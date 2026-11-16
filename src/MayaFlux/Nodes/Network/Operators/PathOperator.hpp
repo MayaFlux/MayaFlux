@@ -4,8 +4,24 @@
 
 namespace MayaFlux::Nodes::Network {
 
+/**
+ * @struct PathControls
+ * @brief Controls of a PathOperator, each a number or a mapped node.
+ *
+ * They apply to every path. A network source is per element and is not used.
+ */
+struct PathControls {
+    Control tension;
+    Control samples_per_segment;
+    Control thickness;
+};
+
+MF_DESCRIBE(PathControls)
+
 class MAYAFLUX_API PathOperator : public GraphicsOperator {
 public:
+    using Controls = PathControls;
+
     explicit PathOperator(
         Kinesis::InterpolationMode mode = Kinesis::InterpolationMode::CATMULL_ROM,
         Eigen::Index samples_per_segment = 32);
@@ -181,6 +197,10 @@ protected:
     void* get_data_at(size_t global_index) override;
 
 private:
+    PathControls& m_controls;
+
+    void apply_controls();
+
     std::vector<std::shared_ptr<GpuSync::PathGeneratorNode>> m_paths;
 
     mutable std::vector<uint8_t> m_vertex_data_aggregate;
@@ -194,3 +214,4 @@ private:
 };
 
 } // namespace MayaFlux::Nodes::Network
+#include "PathOperator.describe.hpp"

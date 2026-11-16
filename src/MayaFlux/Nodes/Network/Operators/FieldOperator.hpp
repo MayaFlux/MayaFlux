@@ -12,6 +12,18 @@ using FieldTarget = Kinesis::FieldTarget;
 using FieldMode = Kinesis::FieldMode;
 
 /**
+ * @struct FieldControls
+ * @brief Controls of a FieldOperator, a number or a mapped node.
+ *
+ * mode above 0.5 is ACCUMULATE and anything else ABSOLUTE.
+ */
+struct FieldControls {
+    Control mode;
+};
+
+MF_DESCRIBE(FieldControls)
+
+/**
  * @class FieldOperator
  * @brief Pure field-driven vertex manipulation via Tendency evaluation
  *
@@ -50,6 +62,8 @@ using FieldMode = Kinesis::FieldMode;
  */
 class MAYAFLUX_API FieldOperator : public GraphicsOperator {
 public:
+    using Controls = FieldControls;
+
     explicit FieldOperator(FieldMode mode = FieldMode::ABSOLUTE);
 
     /**
@@ -127,6 +141,12 @@ public:
      */
     [[nodiscard]] FieldMode get_mode() const { return m_mode; }
 
+    /** @brief Fills the controls whose value the operator holds outside the struct. */
+    void read_controls(FieldControls& controls) const
+    {
+        controls.mode.observe(m_mode == FieldMode::ACCUMULATE ? 1.0 : 0.0);
+    }
+
     // -----------------------------------------------------------------
     // GraphicsOperator interface
     // -----------------------------------------------------------------
@@ -174,6 +194,7 @@ private:
         MESH
     };
 
+    FieldControls& m_controls;
     FieldMode m_mode;
     VertexType m_vertex_type { VertexType::NONE };
     size_t m_count { 0 };
@@ -205,3 +226,4 @@ private:
 };
 
 } // namespace MayaFlux::Nodes::Network
+#include "FieldOperator.describe.hpp"

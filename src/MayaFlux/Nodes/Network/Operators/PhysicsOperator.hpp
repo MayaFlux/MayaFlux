@@ -26,6 +26,36 @@ enum class PhysicsParameter : uint8_t {
 };
 
 /**
+ * @struct PhysicsControls
+ * @brief Controls of a PhysicsOperator, each a number or a mapped source.
+ *
+ * The first eleven are single values. A node or network source on them is read
+ * every block. force_x, force_y, force_z and mass act on each particle: a number
+ * applies to all of them once, a node source every block, and a network source
+ * gives one value per particle and is skipped unless its node count matches.
+ * Forces add to the particle's force and mass sets its mass, never below 0.1.
+ */
+struct PhysicsControls {
+    Control gravity_x;
+    Control gravity_y;
+    Control gravity_z;
+    Control drag;
+    Control interaction_radius;
+    Control spring_stiffness;
+    Control repulsion_strength;
+    Control spatial_interactions;
+    Control point_size;
+    Control attraction_strength;
+    Control turbulence;
+    Control force_x;
+    Control force_y;
+    Control force_z;
+    Control mass;
+};
+
+MF_DESCRIBE(PhysicsControls)
+
+/**
  * @struct PhysicsState
  * @brief Physics-specific data parallel to PointVertex array
  *
@@ -67,6 +97,8 @@ public:
         WRAP, ///< Teleport to opposite side
         CLAMP ///< Stop at boundary
     };
+
+    using Controls = PhysicsControls;
 
     PhysicsOperator();
 
@@ -112,6 +144,9 @@ public:
     void set_parameter(std::string_view param, double value) override;
     [[nodiscard]] std::optional<double> query_state(std::string_view query) const override;
     [[nodiscard]] std::string_view get_type_name() const override { return "Physics"; }
+
+    /** @brief Fills the controls whose value the operator holds outside the struct. */
+    void read_controls(PhysicsControls& controls) const;
     [[nodiscard]] size_t get_point_count() const override;
 
     /**
@@ -495,6 +530,11 @@ private:
 
     static std::optional<PhysicsParameter> string_to_parameter(std::string_view param);
 
+    PhysicsControls& m_controls;
+
+    void apply_parameter(PhysicsParameter parameter, double value);
+    void apply_controls();
+
     void apply_forces();
     void apply_spatial_interactions();
     void apply_attraction_forces();
@@ -528,3 +568,4 @@ private:
 };
 
 } // namespace MayaFlux::Nodes::Network
+#include "PhysicsOperator.describe.hpp"

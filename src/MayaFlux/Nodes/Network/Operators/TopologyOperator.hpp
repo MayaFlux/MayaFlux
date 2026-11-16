@@ -4,8 +4,24 @@
 
 namespace MayaFlux::Nodes::Network {
 
+/**
+ * @struct TopologyControls
+ * @brief Controls of a TopologyOperator, each a number or a mapped node.
+ *
+ * They apply to every topology. A network source is per element and is not used.
+ */
+struct TopologyControls {
+    Control connection_radius;
+    Control k_neighbors;
+    Control line_thickness;
+};
+
+MF_DESCRIBE(TopologyControls)
+
 class MAYAFLUX_API TopologyOperator : public GraphicsOperator {
 public:
+    using Controls = TopologyControls;
+
     explicit TopologyOperator(
         Kinesis::ProximityMode mode = Kinesis::ProximityMode::K_NEAREST);
 
@@ -171,6 +187,10 @@ protected:
     void* get_data_at(size_t global_index) override;
 
 private:
+    TopologyControls& m_controls;
+
+    void apply_controls();
+
     std::vector<std::shared_ptr<GpuSync::TopologyGeneratorNode>> m_topologies;
 
     mutable std::vector<uint8_t> m_vertex_data_aggregate;
@@ -182,3 +202,4 @@ private:
 };
 
 } // namespace MayaFlux::Nodes::Network
+#include "TopologyOperator.describe.hpp"

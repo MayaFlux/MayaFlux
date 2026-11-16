@@ -10,7 +10,8 @@ namespace MayaFlux::Nodes::Network {
 PathOperator::PathOperator(
     Kinesis::InterpolationMode mode,
     Eigen::Index samples_per_segment)
-    : m_default_mode(mode)
+    : m_controls(declare_controls<PathControls>())
+    , m_default_mode(mode)
     , m_default_samples_per_segment(samples_per_segment)
 {
     MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
@@ -123,6 +124,19 @@ void PathOperator::add_node(std::shared_ptr<GpuSync::PathGeneratorNode> node)
 // Processing
 //-----------------------------------------------------------------------------
 
+void PathOperator::apply_controls()
+{
+    if (const auto tension = m_controls.tension.pending()) {
+        set_tension(*tension);
+    }
+    if (const auto samples = m_controls.samples_per_segment.pending()) {
+        set_samples_per_segment(static_cast<Eigen::Index>(*samples));
+    }
+    if (const auto thickness = m_controls.thickness.pending()) {
+        set_global_thickness(static_cast<float>(*thickness));
+    }
+}
+
 void PathOperator::process(float /*dt*/)
 {
     uint32_t expected = 0;
@@ -132,6 +146,9 @@ void PathOperator::process(float /*dt*/)
             return;
         expected = 0;
     }
+
+    refresh_controls();
+    apply_controls();
 
     for (auto& path : m_paths) {
         path->compute_frame();

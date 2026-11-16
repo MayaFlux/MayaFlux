@@ -10,6 +10,7 @@
 namespace MayaFlux::Nodes::Network {
 
 PhysicsOperator::PhysicsOperator()
+    : m_controls(declare_controls<PhysicsControls>())
 {
     MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
         "PhysicsOperator created");
@@ -131,6 +132,9 @@ void PhysicsOperator::process(float dt)
         expected = 0;
     }
 
+    refresh_controls();
+    apply_controls();
+
     if (m_collections.empty()) {
         m_access_token.store(0, std::memory_order_release);
         return;
@@ -175,7 +179,12 @@ void PhysicsOperator::set_parameter(std::string_view param, double value)
         return;
     }
 
-    switch (*param_enum) {
+    apply_parameter(*param_enum, value);
+}
+
+void PhysicsOperator::apply_parameter(PhysicsParameter parameter, double value)
+{
+    switch (parameter) {
     case PhysicsParameter::GRAVITY_X:
         m_gravity.x = static_cast<float>(value);
         break;
@@ -216,6 +225,68 @@ void PhysicsOperator::set_parameter(std::string_view param, double value)
         m_turbulence_strength = static_cast<float>(value);
         break;
     }
+}
+
+void PhysicsOperator::read_controls(PhysicsControls& controls) const
+{
+    controls.gravity_x.observe(m_gravity.x);
+    controls.gravity_y.observe(m_gravity.y);
+    controls.gravity_z.observe(m_gravity.z);
+    controls.drag.observe(m_drag);
+    controls.interaction_radius.observe(m_interaction_radius);
+    controls.spring_stiffness.observe(m_spring_stiffness);
+    controls.repulsion_strength.observe(m_repulsion_strength);
+    controls.spatial_interactions.observe(m_spatial_interactions_enabled ? 1.0 : 0.0);
+    controls.point_size.observe(m_point_size);
+    controls.attraction_strength.observe(m_attraction_strength);
+    controls.turbulence.observe(m_turbulence_strength);
+}
+
+void PhysicsOperator::apply_controls()
+{
+    const auto scalar = [this](Control& control, PhysicsParameter parameter) {
+        if (const auto value = control.pending()) {
+            apply_parameter(parameter, *value);
+        }
+    };
+
+    scalar(m_controls.gravity_x, PhysicsParameter::GRAVITY_X);
+    scalar(m_controls.gravity_y, PhysicsParameter::GRAVITY_Y);
+    scalar(m_controls.gravity_z, PhysicsParameter::GRAVITY_Z);
+    scalar(m_controls.drag, PhysicsParameter::DRAG);
+    scalar(m_controls.interaction_radius, PhysicsParameter::INTERACTION_RADIUS);
+    scalar(m_controls.spring_stiffness, PhysicsParameter::SPRING_STIFFNESS);
+    scalar(m_controls.repulsion_strength, PhysicsParameter::REPULSION_STRENGTH);
+    scalar(m_controls.spatial_interactions, PhysicsParameter::SPATIAL_INTERACTIONS);
+    scalar(m_controls.point_size, PhysicsParameter::POINT_SIZE);
+    scalar(m_controls.attraction_strength, PhysicsParameter::ATTRACTION_STRENGTH);
+    scalar(m_controls.turbulence, PhysicsParameter::TURBULENCE);
+
+    const auto per_particle = [this](Control& control, auto&& apply) {
+        if (!control.due()) {
+            return;
+        }
+        control.settle();
+
+        if (control.per_element() && control.element_count() != get_point_count()) {
+            return;
+        }
+
+        size_t index = 0;
+        for (auto& group : m_collections) {
+            for (auto& state : group.physics_state) {
+                if (const auto value = control.at(index)) {
+                    apply(state, static_cast<float>(*value));
+                }
+                ++index;
+            }
+        }
+    };
+
+    per_particle(m_controls.force_x, [](PhysicsState& state, float value) { state.force.x += value; });
+    per_particle(m_controls.force_y, [](PhysicsState& state, float value) { state.force.y += value; });
+    per_particle(m_controls.force_z, [](PhysicsState& state, float value) { state.force.z += value; });
+    per_particle(m_controls.mass, [](PhysicsState& state, float value) { state.mass = std::max(0.1F, value); });
 }
 
 std::optional<double> PhysicsOperator::query_state(std::string_view query) const
