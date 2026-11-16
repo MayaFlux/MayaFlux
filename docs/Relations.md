@@ -326,6 +326,7 @@ g->restore_axiom();                               // the draft only; submit() to
 // out, element by element (one slot per mode, exactly): ModalNetwork "amplitude" multiplies each mode, "detune" moves each by level * 100 cents
 body->map_parameter("amplitude", damp);
 body->map_parameter("detune", bend);
+// the same two mappings, typed, in one call: body->set({ .amplitude = damp, .detune = bend });
 
 // output modes
 net->set_output_mode(OutputMode::AUDIO_SINK);        // default, routed with | Audio[...]
