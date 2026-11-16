@@ -117,7 +117,7 @@ private:
  * of which PhysicsOperator collection its particles came from.
  *
  * Reads spawn_density_threshold from the owning GpuFieldOperator
- * fresh whenever its revision() changes, the same on_before_execute check
+ * fresh whenever its config_revision() changes, the same on_before_execute check
  * every other tunable in this family uses.
  */
 class MAYAFLUX_API PopulationSpawnProcessor : public NetworkStateFieldProcessor {

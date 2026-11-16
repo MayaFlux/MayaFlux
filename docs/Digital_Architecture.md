@@ -83,7 +83,7 @@ All networks accept `NetworkOperator` instances that define behavioral layers. O
 
 The known parameters of a network or an operator are typed controls, not strings. Each declares a struct of controls, and `set` changes only the members you give: `swarm->create_operator<PhysicsOperator>()->set({ .gravity = glm::vec3(0.0F), .drag = 0.02 })`. A member takes a number, a flag, an enum or a `glm` vector, a node whose last output it follows every block, or, for members that act per element, another network. `get()` returns what the object holds now. A number can be set from any thread while a block renders, and a change takes effect at the next block. Attaching or removing a node or network source belongs outside the block. The designators follow the order the struct declares, and `set` and `get` need the concrete type, so a `shared_ptr<NodeNetwork>` cannot call them. The string based `map_parameter` and `set_parameter` remain for names a user invents.
 
-`GpuFieldOperator` evaluates spatial fields against network geometry on the GPU. The associated buffer processors manage spatial hashing, clusters, claims, population, and vertex field writes.
+`GpuFieldOperator` evaluates spatial fields against network geometry on the GPU. The associated buffer processors manage spatial hashing, clusters, claims, population, and vertex field writes. Its tuning values (`density_saturation_count`, `capture_growth`, the `swallow_*` values, `cross_cluster`, `spawn_density_threshold`, and the `params` block parametric fields receive) are typed controls, so `field->set({ .capture_growth = ... })` or a mapped node changes them at the next dispatch without rebuilding the compute pipeline.
 
 ### Buffers
 

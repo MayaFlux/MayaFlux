@@ -138,7 +138,7 @@ public:
     /**
      * @param config Grid/particle parameters shared with the claim stages.
      * @param particle_op Owning operator; only its capture_growth tuning
-     *        value and revision() are read, live, in on_before_execute.
+     *        value and config_revision() are read, live, in on_before_execute.
      * @param gate_alive When true, binds mutation_alive and refuses to let
      *        a dead particle claim anything: a candidate j can never be
      *        dead (HashCountProcessor/HashScatterProcessor already exclude
@@ -367,8 +367,8 @@ private:
  *
  * Reads swallow_base_size/swallow_growth_rate/swallow_max_size/
  * swallow_dim_factor from the owning GpuFieldOperator fresh whenever
- * its revision() changes (checked in on_before_execute, the same hook
- * VertexFieldProcessor::sync_revision() uses), so the matching setters on
+ * its config_revision() changes (checked in on_before_execute, the same hook
+ * VertexFieldProcessor::sync_revision() uses), so the matching controls on
  * GpuFieldOperator take effect on this processor's next dispatch with
  * no rebuild.
  */

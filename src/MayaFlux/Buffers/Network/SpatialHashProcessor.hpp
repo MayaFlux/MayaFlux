@@ -244,7 +244,7 @@ protected:
 
     /**
      * @brief Base on_before_execute guard, then a revision-gated tuning reload.
-     * @param current_revision The owning operator's revision() sampled now.
+     * @param current_revision The owning operator's config_revision() sampled now.
      * @param built_revision Revision the push constants were last built for;
      *        overwritten with current_revision when reload runs.
      * @param reload Called only on a revision change; must re-read the tuning
@@ -409,9 +409,9 @@ private:
  * one GPU dispatch. Must run after HashScatterProcessor.
  *
  * Reads density_saturation_count from the owning GpuFieldOperator
- * fresh whenever its revision() changes (checked in on_before_execute,
+ * fresh whenever its config_revision() changes (checked in on_before_execute,
  * the same hook VertexFieldProcessor::sync_revision() uses), so
- * GpuFieldOperator::set_density_saturation_count() takes effect on
+ * GpuFieldOperator::set({ .density_saturation_count = ... }) takes effect on
  * this processor's next dispatch with no rebuild.
  *
  * A candidate j is skipped when hash_cluster_id[j] differs from i's own
@@ -432,7 +432,7 @@ public:
      *        from its vertex layout (DataModality::VERTEX_COLORS_RGB) at
      *        construction; throws std::invalid_argument when the layout
      *        carries no colour attribute. density_saturation_count is
-     *        re-read from this operator's config whenever revision()
+     *        re-read from this operator's config whenever config_revision()
      *        changes.
      */
     HashDensityColorProcessor(
