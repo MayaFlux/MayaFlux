@@ -290,18 +290,6 @@ public:
     /** @brief True if the node's output is excluded from the graph. */
     [[nodiscard]] virtual bool is_output_excluded_from_graph() const;
 
-    /** @brief Old name of exclude_output_from_graph(). */
-    [[deprecated("use exclude_output_from_graph")]] void enable_mock_process(bool mock_process)
-    {
-        exclude_output_from_graph(mock_process);
-    }
-
-    /** @brief Old name of is_output_excluded_from_graph(). */
-    [[deprecated("use is_output_excluded_from_graph")]] [[nodiscard]] bool should_mock_process() const
-    {
-        return is_output_excluded_from_graph();
-    }
-
     /**
      * @brief Mark the specificed channel as a processor/user
      * @param channel_id The ID of the channel to register
