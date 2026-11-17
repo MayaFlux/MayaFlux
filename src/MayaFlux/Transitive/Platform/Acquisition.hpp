@@ -46,6 +46,20 @@ struct LibraryFromPrefix {
 };
 
 /**
+ * @brief A shared library given by name, searched directly inside each of several directories.
+ *
+ * For directories that hold libraries themselves, such as /usr/lib, where LibraryFromPrefix
+ * would look in lib, lib64 and bin below them. The names are the ones LibraryFromPrefix
+ * tries, in the same order, and each name is tried in every directory, in the order given,
+ * before the next name. Relative directories resolve against the working directory. Empty
+ * entries are ignored, and directories that do not exist are recorded as tried.
+ */
+struct LibraryFromDirectories {
+    std::vector<std::filesystem::path> directories;
+    std::string base_name;
+};
+
+/**
  * @brief A shared library the system loader resolves by its exact file name.
  *
  * Nothing is searched here. The name is passed to the loader unchanged.
@@ -54,7 +68,7 @@ struct LibraryFromSystem {
     std::string file_name;
 };
 
-using LibrarySource = std::variant<LibraryFromPath, LibraryFromPrefix, LibraryFromSystem>;
+using LibrarySource = std::variant<LibraryFromPath, LibraryFromPrefix, LibraryFromDirectories, LibraryFromSystem>;
 
 /**
  * @brief Where a library comes from after acquisition.
@@ -209,6 +223,40 @@ namespace detail {
         return std::unexpected(make_failure(AcquireFailure::Reason::Missing, from.base_name, std::move(tried)));
     }
 
+    inline Acquired<LibraryLocation> acquire_from_directories(const LibraryFromDirectories& from)
+    {
+        if (auto failure = check_file_name(from.base_name)) {
+            return std::unexpected(*failure);
+        }
+
+        std::vector<std::filesystem::path> directories;
+        for (const std::filesystem::path& directory : from.directories) {
+            if (directory.empty()) {
+                continue;
+            }
+            auto absolute = resolve_absolute(directory);
+            if (!absolute) {
+                return std::unexpected(absolute.error());
+            }
+            directories.push_back(std::move(*absolute));
+        }
+        if (directories.empty()) {
+            return std::unexpected(make_failure(AcquireFailure::Reason::EmptyRequest, from.base_name));
+        }
+
+        std::vector<std::filesystem::path> tried;
+        for (const std::string& file_name : prefix_file_names(from.base_name)) {
+            for (const std::filesystem::path& directory : directories) {
+                const std::filesystem::path candidate = directory / file_name;
+                tried.push_back(candidate);
+                if (path_is_regular_file(candidate)) {
+                    return LibraryLocation { .path = candidate, .file_name = file_name, .resolved_by_system = false };
+                }
+            }
+        }
+        return std::unexpected(make_failure(AcquireFailure::Reason::Missing, from.base_name, std::move(tried)));
+    }
+
     inline Acquired<LibraryLocation> acquire_from_system(const LibraryFromSystem& from)
     {
         if (auto failure = check_file_name(from.file_name)) {
@@ -234,6 +282,7 @@ namespace detail {
     return std::visit(detail::Overloaded {
                           [](const LibraryFromPath& from) { return detail::acquire_from_path(from); },
                           [](const LibraryFromPrefix& from) { return detail::acquire_from_prefix(from); },
+                          [](const LibraryFromDirectories& from) { return detail::acquire_from_directories(from); },
                           [](const LibraryFromSystem& from) { return detail::acquire_from_system(from); } },
         source);
 }

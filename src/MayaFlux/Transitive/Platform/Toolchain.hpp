@@ -3,6 +3,9 @@
 #include "Acquisition.hpp"
 #include "Process.hpp"
 
+#include "MayaFlux/Transitive/Memory/FlatMap.hpp"
+#include "MayaFlux/Transitive/Memory/SnapshotCell.hpp"
+
 namespace MayaFlux::Platform {
 
 namespace fs = std::filesystem;
@@ -121,22 +124,53 @@ inline const DependencyHint* find_dependency_hint(std::string_view name)
     return nullptr;
 }
 
+namespace detail {
+
+    template <typename T, typename Compute>
+    T memoize_nonempty(Memory::SnapshotCell<T>& cell, Compute&& compute)
+    {
+        if (auto view = cell.read(); view && !view->empty()) {
+            return *view;
+        }
+        T value = std::forward<Compute>(compute)();
+        if (!value.empty()) {
+            cell.publish(value);
+        }
+        return value;
+    }
+
+}
+
+/**
+ * @brief Host toolchain and dependency discovery.
+ *
+ * Every function returns by value. Results that cost a process spawn or a
+ * filesystem walk are remembered per module in a SnapshotCell, and only a
+ * non-empty answer is remembered, so a lookup that missed is retried on the
+ * next call. An empty result means nothing was found.
+ */
 class SystemConfig {
 public:
-    enum class LibraryType : uint8_t {
-        Static,
-        Shared
-    };
+    /** @brief The clang resource directory, from `clang -print-resource-dir`, or empty. */
+    static std::string get_clang_resource_dir();
 
-    static const std::string& get_clang_resource_dir();
+    /** @brief The system include directories, in search order. */
+    static std::vector<std::string> get_system_includes();
 
-    static const std::vector<std::string>& get_system_includes();
+    /** @brief The existing system library directories, in search order. */
+    static std::vector<std::string> get_system_libraries();
 
-    static const std::vector<std::string>& get_system_libraries();
+    /**
+     * @brief The absolute path of a shared library, or empty.
+     *
+     * A non-empty prefix is searched first, under its lib, lib64 and bin. Then the
+     * system library directories are searched directly. An empty prefix means no
+     * prefix, never the working directory. Names must be plain file names.
+     */
+    static std::string find_dep_library(const std::string& library_name, const std::string& prefix = "");
 
-    static const std::string& find_dep_library(const std::string& library_name, const std::string& prefix = "");
-
-    static const std::string& get_dep_includes(const std::string& library_name);
+    /** @brief The include directory of a named dependency, or empty. */
+    static std::string get_dep_includes(const std::string& library_name);
 
     static std::string resolve_dependency_include(const DependencyHint& hint);
 
@@ -145,8 +179,6 @@ public:
 #endif // MAYAFLUX_PLATFORM_MACOS
 
 private:
-    static std::string format_library_name(const std::string& library_name, LibraryType type = LibraryType::Static);
-
     static std::vector<std::string> get_clang_includes();
 
     static std::vector<std::string> parse_clang_search_paths(const std::string& output);
@@ -180,13 +212,12 @@ private:
 #endif // MAYAFLUX_PLATFORM_WINDOWS
 };
 
-inline const std::string& SystemConfig::get_clang_resource_dir()
+inline std::string SystemConfig::get_clang_resource_dir()
 {
-    static std::string cached_resource_dir;
+    static Memory::SnapshotCell<std::string> cache;
 
-    if (cached_resource_dir.empty()) {
-        const char* cmd = "clang -print-resource-dir";
-        auto result = exec_command(cmd);
+    return detail::memoize_nonempty(cache, [] {
+        auto result = exec_command("clang -print-resource-dir");
         trim_output(result);
 
         if (!result.empty()
@@ -194,20 +225,19 @@ inline const std::string& SystemConfig::get_clang_resource_dir()
             && (result.find("clang") != std::string::npos
                 || result.find("lib") != std::string::npos
                 || fs::exists(result))) {
-            {
-                cached_resource_dir = std::move(result);
-            }
+            return result;
         }
-    }
-
-    return cached_resource_dir;
+        return std::string {};
+    });
 }
 
-inline const std::vector<std::string>& SystemConfig::get_system_includes()
+inline std::vector<std::string> SystemConfig::get_system_includes()
 {
-    static std::vector<std::string> includes;
+    static Memory::SnapshotCell<std::vector<std::string>> cache;
 
-    if (includes.empty()) {
+    return detail::memoize_nonempty(cache, [] {
+        std::vector<std::string> includes;
+
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
         auto msvc_includes = get_msvc_includes();
         includes.insert(includes.end(), msvc_includes.begin(), msvc_includes.end());
@@ -229,16 +259,18 @@ inline const std::vector<std::string>& SystemConfig::get_system_includes()
             includes.push_back((*prefix / "include").string());
         }
 #endif // MAYAFLUX_PLATFORM_MACOS
-    }
 
-    return includes;
+        return includes;
+    });
 }
 
-inline const std::vector<std::string>& SystemConfig::get_system_libraries()
+inline std::vector<std::string> SystemConfig::get_system_libraries()
 {
-    static std::vector<std::string> lib_paths;
+    static Memory::SnapshotCell<std::vector<std::string>> cache;
 
-    if (lib_paths.empty()) {
+    return detail::memoize_nonempty(cache, [] {
+        std::vector<std::string> lib_paths;
+
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
         auto msvc_libs = get_msvc_libraries();
         lib_paths.insert(lib_paths.end(), msvc_libs.begin(), msvc_libs.end());
@@ -249,55 +281,50 @@ inline const std::vector<std::string>& SystemConfig::get_system_libraries()
         auto system_libs = get_unix_library_paths();
         lib_paths.insert(lib_paths.end(), system_libs.begin(), system_libs.end());
 #endif
-    }
 
-    return lib_paths;
+        return lib_paths;
+    });
 }
 
-inline const std::string& SystemConfig::find_dep_library(const std::string& library_name, const std::string& prefix)
+inline std::string SystemConfig::find_dep_library(const std::string& library_name, const std::string& prefix)
 {
-    static std::unordered_map<std::string, std::string> cache;
-
-    auto it = cache.find(library_name);
-    if (it != cache.end()) {
-        return it->second;
-    }
-
-    std::string& result = cache[library_name];
-    std::string search_name = format_library_name(library_name, LibraryType::Shared);
-
-    const fs::path resolved_prefix(prefix);
-    for (const auto& subdir : { "lib", "lib64", "bin" }) {
-        fs::path candidate = resolved_prefix / subdir / search_name;
-        if (fs::exists(candidate)) {
-            result = candidate.string();
-            return result;
+    if (!prefix.empty()) {
+        if (const auto found = acquire_library(LibraryFromPrefix { .prefix = prefix, .base_name = library_name })) {
+            return found->path.string();
         }
     }
 
-    for (const auto& lib_path : get_system_libraries()) {
-        fs::path candidate = fs::path(lib_path) / search_name;
-        if (fs::exists(candidate)) {
-            result = candidate.string();
-            return result;
+    std::vector<fs::path> directories;
+    for (const auto& directory : get_system_libraries()) {
+        directories.emplace_back(directory);
+    }
+
+    if (const auto found = acquire_library(LibraryFromDirectories { .directories = std::move(directories), .base_name = library_name })) {
+        return found->path.string();
+    }
+
+    return {};
+}
+
+inline std::string SystemConfig::get_dep_includes(const std::string& library_name)
+{
+    static Memory::SnapshotCell<Memory::FlatMap<std::string, std::string>> cache;
+
+    if (const auto view = cache.read()) {
+        if (const auto hit = view->find(library_name); hit != view->end()) {
+            return hit->second;
         }
     }
 
-    return result;
-}
-
-inline const std::string& SystemConfig::get_dep_includes(const std::string& library_name)
-{
-    static std::unordered_map<std::string, std::string> cache;
-
-    auto it = cache.find(library_name);
-    if (it != cache.end()) {
-        return it->second;
-    }
-
-    std::string& result = cache[library_name];
+    std::string result;
     if (const auto* hint = find_dependency_hint(library_name)) {
         result = resolve_dependency_include(*hint);
+    }
+
+    if (!result.empty()) {
+        cache.update([&](Memory::FlatMap<std::string, std::string>& entries) {
+            entries.insert_or_assign(library_name, result);
+        });
     }
 
     return result;
@@ -335,24 +362,6 @@ inline std::string SystemConfig::resolve_dependency_include(const DependencyHint
     }
 
     return {};
-}
-
-inline std::string SystemConfig::format_library_name(const std::string& library_name, LibraryType type)
-{
-#ifdef MAYAFLUX_PLATFORM_WINDOWS
-    const std::string ext = (type == LibraryType::Shared) ? ".dll" : ".lib";
-    if (library_name.find(ext) == std::string::npos)
-        return library_name + ext;
-#elif defined(MAYAFLUX_PLATFORM_MACOS)
-    const std::string ext = (type == LibraryType::Shared) ? ".dylib" : ".a";
-    if (library_name.find(ext) == std::string::npos && library_name.find("lib") != 0)
-        return "lib" + library_name + ext;
-#else
-    const std::string ext = (type == LibraryType::Shared) ? ".so" : ".a";
-    if (library_name.find(ext) == std::string::npos && library_name.find(".a") == std::string::npos)
-        return "lib" + library_name + ext;
-#endif
-    return library_name;
 }
 
 inline std::vector<std::string> SystemConfig::get_clang_includes()
