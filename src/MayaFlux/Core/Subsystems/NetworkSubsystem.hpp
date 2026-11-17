@@ -132,6 +132,8 @@ public:
 
     /**
      * @brief Close an endpoint
+     *
+     * Closing a listener also closes the connections it accepted.
      */
     void close_endpoint(uint64_t endpoint_id);
 
@@ -200,6 +202,14 @@ private:
      */
     mutable std::shared_mutex m_routing_mutex;
     std::unordered_map<uint64_t, NetworkTransport> m_endpoint_routing;
+
+    /**
+     * @brief Maps an accepted connection to the listener that accepted it.
+     *        Guarded by m_routing_mutex. A connection without a receive
+     *        callback of its own delivers to its listener's callback, and
+     *        closing the listener closes its connections.
+     */
+    std::unordered_map<uint64_t, uint64_t> m_endpoint_parents;
 
     /**
      * @brief Per-endpoint receive callbacks set by consumers via

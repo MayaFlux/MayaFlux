@@ -59,6 +59,9 @@ struct MAYAFLUX_API EndpointInfo {
     std::string remote_address;
     uint16_t remote_port {};
     uint16_t local_port {};
+
+    /// Listener that accepted this connection, or 0 for an endpoint opened directly.
+    uint64_t parent_id {};
 };
 
 /**

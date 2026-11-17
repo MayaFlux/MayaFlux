@@ -439,6 +439,7 @@ void TCPBackend::start_accept(ListenerState& listener)
             conn->info.remote_address = peer_addr;
             conn->info.remote_port = peer_port;
             conn->info.local_port = lst.info.local_port;
+            conn->info.parent_id = listener_id;
 
             auto* raw = conn.get();
 

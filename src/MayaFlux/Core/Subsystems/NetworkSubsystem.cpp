@@ -155,6 +155,7 @@ void NetworkSubsystem::shutdown()
     {
         std::unique_lock lock(m_routing_mutex);
         m_endpoint_routing.clear();
+        m_endpoint_parents.clear();
     }
 
     {
@@ -228,11 +229,9 @@ bool NetworkSubsystem::add_backend(std::unique_ptr<INetworkBackend> backend)
             on_backend_state_change(info, prev, curr);
         });
 
-    if (auto* tcp = dynamic_cast<TCPBackend*>(backend.get())) {
-        tcp->set_endpoint_id_allocator([this]() -> uint64_t {
-            return m_next_endpoint_id.fetch_add(1);
-        });
-    }
+    backend->set_endpoint_id_allocator([this]() -> uint64_t {
+        return m_next_endpoint_id.fetch_add(1);
+    });
 
     MF_INFO(Journal::Component::Core, Journal::Context::NetworkSubsystem,
         "Added network backend: {}", backend->get_name());
@@ -295,12 +294,23 @@ void NetworkSubsystem::close_endpoint(uint64_t endpoint_id)
         return;
     }
 
-    backend->close_endpoint(endpoint_id);
-
+    std::vector<uint64_t> accepted;
     {
         std::unique_lock lock(m_routing_mutex);
+        for (const auto& [child, parent] : m_endpoint_parents) {
+            if (parent == endpoint_id) {
+                accepted.push_back(child);
+            }
+        }
         m_endpoint_routing.erase(endpoint_id);
+        m_endpoint_parents.erase(endpoint_id);
     }
+
+    for (uint64_t child : accepted) {
+        close_endpoint(child);
+    }
+
+    backend->close_endpoint(endpoint_id);
 
     {
         std::unique_lock lock(m_callbacks_mutex);
@@ -428,6 +438,21 @@ void NetworkSubsystem::on_backend_receive(uint64_t endpoint_id, const uint8_t* d
 {
     std::shared_lock lock(m_callbacks_mutex);
     auto it = m_endpoint_callbacks.find(endpoint_id);
+
+    if (it == m_endpoint_callbacks.end()) {
+        uint64_t parent = 0;
+        {
+            std::shared_lock routing_lock(m_routing_mutex);
+            auto parent_it = m_endpoint_parents.find(endpoint_id);
+            if (parent_it != m_endpoint_parents.end()) {
+                parent = parent_it->second;
+            }
+        }
+        if (parent != 0) {
+            it = m_endpoint_callbacks.find(parent);
+        }
+    }
+
     if (it != m_endpoint_callbacks.end() && it->second) {
         it->second(endpoint_id, data, size, sender_addr);
     }
@@ -436,6 +461,15 @@ void NetworkSubsystem::on_backend_receive(uint64_t endpoint_id, const uint8_t* d
 void NetworkSubsystem::on_backend_state_change(const EndpointInfo& info,
     EndpointState previous, EndpointState current)
 {
+    if (info.parent_id != 0 && previous == EndpointState::CLOSED
+        && current == EndpointState::OPEN) {
+        std::unique_lock lock(m_routing_mutex);
+        if (m_endpoint_routing.contains(info.parent_id)) {
+            m_endpoint_routing[info.id] = info.transport;
+            m_endpoint_parents[info.id] = info.parent_id;
+        }
+    }
+
     MF_DEBUG(Journal::Component::Core, Journal::Context::NetworkSubsystem,
         "Endpoint {} state: {} -> {}",
         info.id, static_cast<int>(previous), static_cast<int>(current));

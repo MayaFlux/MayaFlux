@@ -241,7 +241,7 @@ public:
      * Required for listener-accepted connections that need globally
      * unique ids. Set before start().
      */
-    void set_endpoint_id_allocator(std::function<uint64_t()> allocator)
+    void set_endpoint_id_allocator(std::function<uint64_t()> allocator) override
     {
         m_allocate_endpoint_id = std::move(allocator);
     }
