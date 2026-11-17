@@ -30,13 +30,7 @@
 #pragma warning(pop)
 #endif
 
-#ifdef MAYAFLUX_PLATFORM_MACOS
-#include <dispatch/dispatch.h>
-#endif
-
-#ifdef MAYAFLUX_PLATFORM_WINDOWS
 #include "MayaFlux/Transitive/Parallel/Dispatch.hpp"
-#endif
 
 namespace Lila {
 
@@ -289,11 +283,7 @@ bool ClangInterpreter::initialize(bool skip_host_library_load)
 
 ClangInterpreter::EvalResult ClangInterpreter::eval(const std::string& code)
 {
-#ifdef MAYAFLUX_PLATFORM_MACOS
-    __block EvalResult result;
-#else
     EvalResult result;
-#endif
 
     if (!m_impl->interpreter) {
         result.error = "Interpreter not initialized";
@@ -303,8 +293,7 @@ ClangInterpreter::EvalResult ClangInterpreter::eval(const std::string& code)
 
     LILA_DEBUG(Emitter::INTERPRETER, "Evaluating code...");
 
-#ifdef MAYAFLUX_PLATFORM_MACOS
-    dispatch_sync(dispatch_get_main_queue(), ^{
+    const auto run = [&] {
         auto eval_result = m_impl->interpreter->ParseAndExecute(code);
 
         if (!eval_result) {
@@ -315,20 +304,9 @@ ClangInterpreter::EvalResult ClangInterpreter::eval(const std::string& code)
             result.error = "Execution failed: " + llvm::toString(std::move(eval_result));
             LILA_ERROR(Emitter::INTERPRETER, result.error);
         }
-    });
+    };
 
-#else
-    auto eval_result = m_impl->interpreter->ParseAndExecute(code);
-
-    if (!eval_result) {
-        result.success = true;
-        LILA_DEBUG(Emitter::INTERPRETER, "Code evaluation succeeded");
-    } else {
-        result.success = false;
-        result.error = "Execution failed: " + llvm::toString(std::move(eval_result));
-        LILA_ERROR(Emitter::INTERPRETER, result.error);
-    }
-#endif
+    MayaFlux::Parallel::dispatch_main_sync(run);
 
     m_impl->eval_counter++;
     return result;
