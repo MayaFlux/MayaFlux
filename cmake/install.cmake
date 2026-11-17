@@ -115,6 +115,10 @@ install(FILES
 
 install(TARGETS lila_server RUNTIME DESTINATION bin)
 
+if(WIN32)
+    install(PROGRAMS ${CMAKE_SOURCE_DIR}/scripts/lila.ps1 DESTINATION bin)
+endif()
+
 install(TARGETS mayaflux_reflect mayaflux_signatures RUNTIME DESTINATION bin)
 
 install(TARGETS MayaFluxHost

@@ -17,6 +17,20 @@ namespace Lila {
 
 namespace {
     constexpr auto k_poll_interval = std::chrono::milliseconds(100);
+
+    std::string connection_hint(const Address& address)
+    {
+        if (const auto* tcp = std::get_if<TcpAddress>(&address)) {
+            return "ncat " + tcp->host + " " + std::to_string(tcp->port);
+        }
+
+        const std::string path = std::get<UnixAddress>(address).path.value_or(std::filesystem::path {}).string();
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+        return "lila.ps1 -Path \"" + path + "\"";
+#else
+        return "ncat -U " + path;
+#endif
+    }
 }
 
 Lila::Lila()
@@ -66,6 +80,7 @@ Status Lila::listen(const Address& where)
 
     m_bound = listener->address();
     m_listener = std::move(listener);
+    LILA_INFO(Emitter::SERVER, "Connect with: " + connection_hint(*m_bound));
     return {};
 }
 
