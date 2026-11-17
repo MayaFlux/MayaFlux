@@ -6,19 +6,41 @@ namespace MayaFlux::Platform {
 
 namespace fs = std::filesystem;
 
-namespace {
+struct DependencyHint {
+    std::string vendored_root;
+    std::string_view env_hint;
+    std::vector<std::string> fallback_paths;
+    std::vector<std::string_view> aliases;
+    std::string_view marker_file;
+    std::vector<std::string_view> system_include_suffixes;
+};
 
-    inline const std::vector<std::string> eigen_includes = {
-        "/usr/include/eigen3",
-        "/usr/local/include/eigen3",
-        "/opt/homebrew/include/eigen3"
+inline const std::vector<DependencyHint>& dependency_hints()
+{
+    static const std::vector<DependencyHint> hints = {
+        { .env_hint = Config::EIGEN_HINT,
+            .fallback_paths = { "/usr/include/eigen3", "/usr/local/include/eigen3", "/opt/homebrew/include/eigen3" },
+            .aliases = { "eigen", "Eigen" } },
+        { .env_hint = Config::FREETYPE_HINT,
+            .fallback_paths = { "/usr/include/freetype2", "/usr/local/include/freetype2", "/opt/homebrew/include/freetype2" },
+            .aliases = { "freetype2", "freetype" } },
+        { .vendored_root = (fs::path(Config::SOURCE_DIR) / "third_party/magic_enum").string(),
+            .env_hint = Config::MAGIC_ENUM_HINT,
+            .aliases = { "magic_enum" },
+            .marker_file = "magic_enum.hpp",
+            .system_include_suffixes = { "", "MayaFlux/thirdparty/magic_enum", "magic_enum" } },
     };
+    return hints;
+}
 
-    inline const std::vector<std::string> freetype_includes = {
-        "/usr/include/freetype2",
-        "/usr/local/include/freetype2",
-        "/opt/homebrew/include/freetype2"
-    };
+inline const DependencyHint* find_dependency_hint(std::string_view name)
+{
+    for (const auto& hint : dependency_hints()) {
+        if (std::ranges::contains(hint.aliases, name)) {
+            return &hint;
+        }
+    }
+    return nullptr;
 }
 
 class SystemConfig {
@@ -37,6 +59,8 @@ public:
     static const std::string& find_dep_library(const std::string& library_name, const std::string& prefix = "");
 
     static const std::string& get_dep_includes(const std::string& library_name);
+
+    static std::string resolve_dependency_include(const DependencyHint& hint);
 
 #ifdef MAYAFLUX_PLATFORM_MACOS
     static std::string get_macos_sdk_path();
@@ -195,61 +219,45 @@ inline const std::string& SystemConfig::get_dep_includes(const std::string& libr
     }
 
     std::string& result = cache[library_name];
-    if (library_name == "Eigen" || library_name == "eigen") {
-        if (!Config::EIGEN_HINT.empty() && fs::exists(Config::EIGEN_HINT)) {
-            result = Config::EIGEN_HINT;
-        } else {
-            for (const auto& path : eigen_includes) {
-                if (std::filesystem::exists(path)) {
-                    result = path;
-                    break;
-                }
-            }
-        }
-    } else if (library_name == "freetype2" || library_name == "freetype") {
-        if (!Config::FREETYPE_HINT.empty() && fs::exists(Config::FREETYPE_HINT)) {
-            result = Config::FREETYPE_HINT;
-        } else {
-            for (const auto& path : freetype_includes) {
-                if (std::filesystem::exists(path)) {
-                    result = path;
-                    break;
-                }
-            }
-        }
-    } else if (library_name == "magic_enum") {
-        const auto try_include = [&result](const fs::path& path) {
-            if (fs::exists(path / "magic_enum.hpp")) {
-                result = path.string();
-            }
-        };
+    if (const auto* hint = find_dependency_hint(library_name)) {
+        result = resolve_dependency_include(*hint);
+    }
 
-        try_include(fs::path(Config::SOURCE_DIR) / "third_party/magic_enum");
+    return result;
+}
 
-        if (result.empty() && !Config::MAGIC_ENUM_HINT.empty()) {
-            try_include(fs::path(Config::MAGIC_ENUM_HINT));
+inline std::string SystemConfig::resolve_dependency_include(const DependencyHint& hint)
+{
+    const auto is_hit = [&hint](const fs::path& dir) {
+        return fs::exists(hint.marker_file.empty() ? dir : dir / hint.marker_file);
+    };
+
+    if (!hint.vendored_root.empty() && is_hit(fs::path(hint.vendored_root))) {
+        return hint.vendored_root;
+    }
+
+    if (!hint.env_hint.empty() && is_hit(fs::path(hint.env_hint))) {
+        return std::string(hint.env_hint);
+    }
+
+    for (const auto& path : hint.fallback_paths) {
+        if (is_hit(fs::path(path))) {
+            return path;
         }
+    }
 
-        if (result.empty()) {
-            for (const auto& include : get_system_includes()) {
-                const fs::path root(include);
-                for (const auto& candidate : {
-                         root,
-                         root / "MayaFlux/thirdparty/magic_enum",
-                         root / "magic_enum" }) {
-                    try_include(candidate);
-                    if (!result.empty()) {
-                        break;
-                    }
-                }
-                if (!result.empty()) {
-                    break;
-                }
+    for (const auto& include : get_system_includes()) {
+        for (const auto& suffix : hint.system_include_suffixes) {
+            const fs::path candidate = suffix.empty()
+                ? fs::path(include)
+                : fs::path(include) / suffix;
+            if (is_hit(candidate)) {
+                return candidate.string();
             }
         }
     }
 
-    return result;
+    return {};
 }
 
 inline std::string SystemConfig::format_library_name(const std::string& library_name, LibraryType type)
