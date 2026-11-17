@@ -154,9 +154,9 @@ bool ClangInterpreter::initialize(bool skip_host_library_load)
         LILA_DEBUG(Emitter::INTERPRETER,
             std::string("Using clang resource dir: ") + resource_dir);
     } else {
-        m_impl->compile_flags.emplace_back("-resource-dir=/usr/lib/clang/21");
+        m_impl->compile_flags.emplace_back("-resource-dir=/usr/lib/clang/22");
         LILA_WARN(Emitter::INTERPRETER,
-            "Using default clang resource dir: /usr/lib/clang/21");
+            "Using default clang resource dir: /usr/lib/clang/22");
     }
 
     const auto& system_includes = MayaFlux::Platform::SystemConfig::get_system_includes();

@@ -103,7 +103,6 @@ install(FILES
     ${CMAKE_SOURCE_DIR}/src/Lila/EventBus.hpp
     ${CMAKE_SOURCE_DIR}/src/Lila/Lila.hpp
     ${CMAKE_SOURCE_DIR}/src/Lila/Server.hpp
-    ${CMAKE_SOURCE_DIR}/src/Lila/LiveAid.hpp
     DESTINATION include/Lila
 )
 

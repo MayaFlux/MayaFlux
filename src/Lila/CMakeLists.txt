@@ -11,7 +11,6 @@ set(LILA_HEADERS
     ClangInterpreter.hpp
     Commentator.hpp
     EventBus.hpp
-    LiveAid.hpp
     Lila.hpp
     Server.hpp
 )
