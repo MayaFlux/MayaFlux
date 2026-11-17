@@ -1,107 +1,86 @@
 #pragma once
 
-#include <expected>
+#include "Address.hpp"
+#include "Result.hpp"
 
 namespace Lila {
 
 class ClangInterpreter;
-class Server;
-struct ClientInfo;
-
-enum class OperationMode : uint8_t {
-    Direct, ///< Only direct evaluation
-    Server, ///< Only server mode
-    Both ///< Both direct eval and server
-};
+class Listener;
 
 /**
  * @class Lila
  * @brief Central orchestrator and entry point for live coding in MayaFlux
  *
- * The Lila class provides a unified interface for interactive live coding in MayaFlux.
- * It manages the lifecycle and coordination of the embedded Clang interpreter and the TCP server,
- * enabling both direct code evaluation and networked live coding sessions.
- *
- * ## Core Responsibilities
- * - Initialize and configure the live coding environment (interpreter and/or server)
- * - Evaluate C++ code snippets and files at runtime
- * - Manage TCP server for remote live coding sessions
- * - Provide symbol lookup and introspection
- * - Allow customization of include paths and compile flags
- * - Expose event/callback hooks for success, error, and server events
+ * Lila owns the embedded Clang interpreter and, optionally, one listener that
+ * lets other processes send it code. The two are independent: initialize()
+ * brings up the interpreter, and listen() starts listening at an address.
+ * Code can always be evaluated in-process through eval(), with or without a
+ * listener. Every fallible call returns its reason.
  *
  * ## Usage Flow
  * 1. Construct a Lila instance
- * 2. Call initialize() with desired mode (Direct, Server, Both)
- * 3. For direct evaluation, use eval() or eval_file()
- * 4. For server mode, use start_server(), stop_server(), and event hooks
- * 5. Use get_symbol_address() and get_defined_symbols() for runtime introspection
- * 6. Optionally configure include paths and compile flags before initialization
- * 7. Register callbacks for success, error, and server/client events as needed
- *
- * Lila is intended as the main API for embedding live coding capabilities in MayaFlux.
- * End users interact with Lila via higher-level interfaces or the live_server binary,
- * not directly with its internal components.
+ * 2. Optionally add include paths and compile flags, then call initialize()
+ * 3. Load libraries and evaluate code
+ * 4. Call listen() with a TcpAddress or UnixAddress to accept remote clients
  */
 class LILA_API Lila {
 public:
-    /**
-     * @brief Constructs a Lila instance
-     */
     Lila();
-
-    /**
-     * @brief Destructor; cleans up interpreter and server resources
-     */
     ~Lila();
 
+    Lila(const Lila&) = delete;
+    Lila& operator=(const Lila&) = delete;
+    Lila(Lila&&) = delete;
+    Lila& operator=(Lila&&) = delete;
+
     /**
-     * @brief Initializes the live coding environment.
+     * @brief Brings up the interpreter. No server is started.
      *
-     * @param mode Operation mode (Direct, Server, Both).
-     * @param server_port TCP port for server mode (default: 9090).
      * @param skip_host_library_load If true, the interpreter will not call
-     *        LoadDynamicLibrary on MayaFluxLib at startup. Used by
-     *        in-process attach scenarios where MayaFluxLib is already
-     *        resident in the calling process. Default false preserves the
-     *        lila_server behaviour.
-     * @return True if initialization succeeded, false otherwise.
+     *        LoadDynamicLibrary on MayaFluxLib at startup. Used when MayaFluxLib
+     *        is already resident in the calling process.
      */
-    bool initialize(
-        OperationMode mode = OperationMode::Direct,
-        int server_port = 9090,
-        bool skip_host_library_load = false) noexcept;
+    Status initialize(bool skip_host_library_load = false);
 
     /**
-     * @brief Evaluates a C++ code snippet directly
+     * @brief Starts listening so remote clients can send code.
+     *
+     * A Lila listens at one address at most. Listening already is stopped first.
+     *
+     * @param where TcpAddress or UnixAddress.
+     */
+    Status listen(const Address& where);
+
+    /**
+     * @brief Stops listening and disconnects all clients
+     */
+    void stop_listening();
+
+    /**
+     * @brief Checks if a listener is running
+     */
+    [[nodiscard]] bool is_listening() const;
+
+    /**
+     * @brief Where this is listening, with anything resolved at start filled in.
+     * @return The address, or nullptr if not listening. Valid until the
+     *         listener stops or listen() is called again. Copy it to keep it.
+     */
+    [[nodiscard]] const Address* address() const;
+
+    /**
+     * @brief Evaluates a C++ code snippet
      * @param code Code to execute
-     * @return True if evaluation succeeded, false otherwise
+     * @return Success, or the compiler's or runtime's error text
      */
-    bool eval(const std::string& code);
+    Status eval(const std::string& code);
 
     /**
-     * @brief Evaluates a C++ code file directly
-     * @param filepath Path to the file to execute
-     * @return True if evaluation succeeded, false otherwise
+     * @brief Load a shared library into the JIT symbol table.
+     * @param path Full path to the shared library.
      */
-    bool eval_file(const std::string& filepath);
-
-    /**
-     * @brief Starts the TCP server for remote live coding
-     * @param port TCP port to listen on (default: 9090)
-     */
-    void start_server(int port = 9090);
-
-    /**
-     * @brief Stops the TCP server and disconnects all clients
-     */
-    void stop_server();
-
-    /**
-     * @brief Checks if the server is currently running
-     * @return True if running, false otherwise
-     */
-    [[nodiscard]] bool is_server_running() const;
+    Status load_library(const std::string& path);
 
     /**
      * @brief Gets the address of a symbol defined in the interpreter
@@ -111,128 +90,39 @@ public:
     void* get_symbol_address(const std::string& name);
 
     /**
-     * @brief Gets a list of all defined symbols
-     * @return Vector of symbol names
-     */
-    std::vector<std::string> get_defined_symbols();
-
-    /**
-     * @brief Adds an include path for code evaluation
-     * @param path Directory to add to the include search path
+     * @brief Adds an include path. Takes effect only before initialize().
      */
     void add_include_path(const std::string& path);
 
     /**
-     * @brief Adds a compile flag for code evaluation
-     * @param flag Compiler flag to add
+     * @brief Adds a compile flag. Takes effect only before initialize().
      */
     void add_compile_flag(const std::string& flag);
 
     /**
-     * @brief Load a shared library into the JIT symbol table.
-     * @param path Full path to the shared library.
-     */
-    void load_library(const std::string& path);
-
-    /**
-     * @brief Registers a callback for successful code evaluation
-     * @param callback Function to call on success
-     */
-    void on_success(std::function<void()> callback);
-
-    /**
-     * @brief Registers a callback for code evaluation errors
-     * @param callback Function to call on error (receives error string)
-     */
-    void on_error(std::function<void(const std::string&)> callback);
-
-    /**
-     * @brief Registers a callback for new client connections (server mode)
-     * @param callback Function to call when a client connects
-     */
-    void on_server_client_connected(std::function<void(const ClientInfo&)> callback);
-
-    /**
-     * @brief Registers a callback for client disconnections (server mode)
-     * @param callback Function to call when a client disconnects
-     */
-    void on_server_client_disconnected(std::function<void(const ClientInfo&)> callback);
-
-    /**
-     * @brief Registers a callback for server start events
-     * @param callback Function to call when the server starts
-     */
-    void on_server_started(std::function<void()> callback);
-
-    /**
-     * @brief Blocks until server shutdown (main thread event loop)
-     * @param external_flag std::atomic<bool> Whether to force shutdown externally
+     * @brief Blocks until shutdown is requested or the listener stops
+     * @param external_flag Optional flag that ends the wait when it becomes false
      *
-     * On macOS: Runs CFRunLoop to process main queue (required for JIT AppKit work)
-     * On other platforms: Simple blocking wait
-     *
-     * Should be called on main thread after initialize() in Server mode.
-     * Returns when stop_server() is called or server fails.
+     * On macOS this runs the main run loop, which the interpreter needs to
+     * service work that must run on the main thread. Call it on the main thread
+     * after listen().
      */
     void await_shutdown(const std::atomic<bool>* external_flag);
 
     /**
-     * @brief Request shutdown from any thread
-     *
-     * Signals await_shutdown() to return. Thread-safe.
+     * @brief Ends await_shutdown() from any thread
      */
     void request_shutdown();
 
-    /**
-     * @brief Gets the last error message
-     * @return String containing the last error
-     */
-    [[nodiscard]] std::string get_last_error() const;
-
-    /**
-     * @brief Gets the current operation mode
-     * @return OperationMode value
-     */
-    [[nodiscard]] OperationMode get_current_mode() const;
-
-    /**
-     * @brief Sets the server loop rate in seconds
-     * @param rate_seconds Loop rate in seconds
-     */
-    void set_server_loop_rate(float rate_seconds) { server_loop_rate = rate_seconds; }
-
-    /**
-     * @brief Gets the server loop rate in seconds
-     * @return Loop rate in seconds
-     */
-    [[nodiscard]]
-    float get_server_loop_rate() const
-    {
-        return server_loop_rate;
-    }
-
 private:
-    std::unique_ptr<ClangInterpreter> m_interpreter; ///< Embedded Clang interpreter
-    std::unique_ptr<Server> m_server; ///< TCP server for live coding
+    Result<std::string> handle_message(std::string_view message);
 
-    OperationMode m_current_mode; ///< Current operation mode
-    std::function<void()> m_success_callback; ///< Success callback
-    std::function<void(const std::string&)> m_error_callback; ///< Error callback
+    static Status refuse(std::string reason);
 
-    bool initialize_interpreter(bool skip_host_library_load);
-    bool initialize_server(int port);
+    std::unique_ptr<ClangInterpreter> m_interpreter;
+    std::unique_ptr<Listener> m_listener;
+    std::optional<Address> m_bound;
     std::atomic<bool> m_shutdown_requested { false };
-
-    float server_loop_rate; ///< Server loop rate in seconds
-
-    std::expected<std::string, std::string> handle_server_message(std::string_view message);
-
-    /**
-     * @brief Escapes a string for safe JSON encoding
-     * @param str Input string
-     * @return Escaped string
-     */
-    static std::string escape_json(const std::string& str);
 };
 
 } // namespace Lila

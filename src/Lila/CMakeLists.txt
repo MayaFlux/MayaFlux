@@ -3,17 +3,16 @@
 set(LILA_SOURCES
     Lila.cpp
     ClangInterpreter.cpp
-    EventBus.cpp
-    Server.cpp
+    Listener.cpp
 )
 
 set(LILA_HEADERS
     ClangInterpreter.hpp
     Commentator.hpp
-    EventBus.hpp
-    LiveAid.hpp
     Lila.hpp
-    Server.hpp
+    Address.hpp
+    Listener.hpp
+    Result.hpp
 )
 
 add_library(Lila SHARED ${LILA_SOURCES} ${LILA_HEADERS})

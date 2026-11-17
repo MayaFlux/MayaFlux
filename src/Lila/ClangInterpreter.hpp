@@ -114,8 +114,9 @@ public:
     /**
      * @brief Load a shared library into the JIT symbol table.
      * @param path Full path to the shared library.
+     * @return true if loaded. On failure get_last_error() holds the reason.
      */
-    void load_library(const std::string& path);
+    bool load_library(const std::string& path);
 
     /**
      * @brief Adds a compile flag for code evaluation

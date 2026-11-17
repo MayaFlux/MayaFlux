@@ -30,7 +30,7 @@ public:
     using SymbolId = uint32_t;
     static constexpr size_t max_symbol_parameters = 8;
 
-    struct Symbol {
+    struct MAYAFLUX_API Symbol {
         SymbolId id {};
         std::array<double, max_symbol_parameters> parameters {};
         uint8_t arity {};

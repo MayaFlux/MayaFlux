@@ -100,10 +100,9 @@ install(TARGETS Lila
 install(FILES
     ${CMAKE_SOURCE_DIR}/src/Lila/ClangInterpreter.hpp
     ${CMAKE_SOURCE_DIR}/src/Lila/Commentator.hpp
-    ${CMAKE_SOURCE_DIR}/src/Lila/EventBus.hpp
     ${CMAKE_SOURCE_DIR}/src/Lila/Lila.hpp
-    ${CMAKE_SOURCE_DIR}/src/Lila/Server.hpp
-    ${CMAKE_SOURCE_DIR}/src/Lila/LiveAid.hpp
+    ${CMAKE_SOURCE_DIR}/src/Lila/Address.hpp
+    ${CMAKE_SOURCE_DIR}/src/Lila/Result.hpp
     DESTINATION include/Lila
 )
 
@@ -116,6 +115,10 @@ install(FILES
 
 install(TARGETS lila_server RUNTIME DESTINATION bin)
 
+if(WIN32)
+    install(PROGRAMS ${CMAKE_SOURCE_DIR}/scripts/lila.ps1 DESTINATION bin)
+endif()
+
 install(TARGETS mayaflux_reflect mayaflux_signatures RUNTIME DESTINATION bin)
 
 install(TARGETS MayaFluxHost
@@ -125,8 +128,9 @@ install(TARGETS MayaFluxHost
 )
 
 install(FILES
-    ${CMAKE_SOURCE_DIR}/src/Host/Live/Runtime.hpp
-    DESTINATION include/MayaFlux/Host/Live
+    ${CMAKE_SOURCE_DIR}/src/Host/Session.hpp
+    ${CMAKE_SOURCE_DIR}/src/Host/Dependencies.hpp
+    DESTINATION include/MayaFlux/Host
 )
 
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/third_party/tinyexr/

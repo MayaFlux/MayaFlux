@@ -23,6 +23,7 @@
 
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
 #include <llvm/ExecutionEngine/Orc/AbsoluteSymbols.h>
+#include <llvm/ExecutionEngine/Orc/ExecutionUtils.h>
 #include <typeinfo>
 #endif
 
@@ -30,13 +31,7 @@
 #pragma warning(pop)
 #endif
 
-#ifdef MAYAFLUX_PLATFORM_MACOS
-#include <dispatch/dispatch.h>
-#endif
-
-#ifdef MAYAFLUX_PLATFORM_WINDOWS
 #include "MayaFlux/Transitive/Parallel/Dispatch.hpp"
-#endif
 
 namespace Lila {
 
@@ -60,7 +55,18 @@ namespace {
         add("??3@YAXPEAX_K@Z", static_cast<void (*)(void*, std::size_t) noexcept>(&::operator delete));
         add("?_Facet_Register@std@@YAXPEAV_Facet_base@1@@Z", &std::_Facet_Register);
 
-        return jit.getMainJITDylib().define(llvm::orc::absoluteSymbols(std::move(symbols)));
+        if (auto defined = jit.getMainJITDylib().define(llvm::orc::absoluteSymbols(std::move(symbols)))) {
+            return defined;
+        }
+
+        auto generator = llvm::orc::DynamicLibrarySearchGenerator::Load(
+            "ucrtbase.dll", jit.getDataLayout().getGlobalPrefix());
+        if (!generator) {
+            return generator.takeError();
+        }
+        jit.getMainJITDylib().addGenerator(std::move(*generator));
+
+        return llvm::Error::success();
     }
 
     std::unique_ptr<clang::IncrementalExecutorBuilder> make_executor_builder()
@@ -154,9 +160,9 @@ bool ClangInterpreter::initialize(bool skip_host_library_load)
         LILA_DEBUG(Emitter::INTERPRETER,
             std::string("Using clang resource dir: ") + resource_dir);
     } else {
-        m_impl->compile_flags.emplace_back("-resource-dir=/usr/lib/clang/21");
+        m_impl->compile_flags.emplace_back("-resource-dir=/usr/lib/clang/22");
         LILA_WARN(Emitter::INTERPRETER,
-            "Using default clang resource dir: /usr/lib/clang/21");
+            "Using default clang resource dir: /usr/lib/clang/22");
     }
 
     const auto& system_includes = MayaFlux::Platform::SystemConfig::get_system_includes();
@@ -282,18 +288,12 @@ bool ClangInterpreter::initialize(bool skip_host_library_load)
         LILA_INFO(Emitter::INTERPRETER, "MayaFlux headers loaded successfully");
     }
 
-    result = m_impl->interpreter->ParseAndExecute("std::cout << \"Ready for Live\" << std::flush;");
-
     return true;
 }
 
 ClangInterpreter::EvalResult ClangInterpreter::eval(const std::string& code)
 {
-#ifdef MAYAFLUX_PLATFORM_MACOS
-    __block EvalResult result;
-#else
     EvalResult result;
-#endif
 
     if (!m_impl->interpreter) {
         result.error = "Interpreter not initialized";
@@ -303,8 +303,7 @@ ClangInterpreter::EvalResult ClangInterpreter::eval(const std::string& code)
 
     LILA_DEBUG(Emitter::INTERPRETER, "Evaluating code...");
 
-#ifdef MAYAFLUX_PLATFORM_MACOS
-    dispatch_sync(dispatch_get_main_queue(), ^{
+    const auto run = [&] {
         auto eval_result = m_impl->interpreter->ParseAndExecute(code);
 
         if (!eval_result) {
@@ -315,20 +314,9 @@ ClangInterpreter::EvalResult ClangInterpreter::eval(const std::string& code)
             result.error = "Execution failed: " + llvm::toString(std::move(eval_result));
             LILA_ERROR(Emitter::INTERPRETER, result.error);
         }
-    });
+    };
 
-#else
-    auto eval_result = m_impl->interpreter->ParseAndExecute(code);
-
-    if (!eval_result) {
-        result.success = true;
-        LILA_DEBUG(Emitter::INTERPRETER, "Code evaluation succeeded");
-    } else {
-        result.success = false;
-        result.error = "Execution failed: " + llvm::toString(std::move(eval_result));
-        LILA_ERROR(Emitter::INTERPRETER, result.error);
-    }
-#endif
+    MayaFlux::Parallel::dispatch_main_sync(run);
 
     m_impl->eval_counter++;
     return result;
@@ -387,19 +375,20 @@ void ClangInterpreter::add_include_path(const std::string& path)
     }
 }
 
-void ClangInterpreter::load_library(const std::string& path)
+bool ClangInterpreter::load_library(const std::string& path)
 {
     if (!m_impl->interpreter) {
-        LILA_WARN(Emitter::INTERPRETER,
-            std::string("Cannot load library: interpreter not initialized: ") + path);
-        return;
+        m_last_error = "Cannot load library: interpreter not initialized: " + path;
+        LILA_WARN(Emitter::INTERPRETER, m_last_error);
+        return false;
     }
     if (auto err = m_impl->interpreter->LoadDynamicLibrary(path.c_str())) {
         m_last_error = "Failed to load " + path + ": " + llvm::toString(std::move(err));
         LILA_ERROR(Emitter::INTERPRETER, m_last_error);
-        return;
+        return false;
     }
     LILA_DEBUG(Emitter::INTERPRETER, std::string("Loaded library: ") + path);
+    return true;
 }
 
 void ClangInterpreter::add_compile_flag(const std::string& flag)

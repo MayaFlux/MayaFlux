@@ -1,50 +1,184 @@
 #pragma once
 
+#include "Acquisition.hpp"
 #include "Process.hpp"
+
+#include "MayaFlux/Transitive/Memory/FlatMap.hpp"
+#include "MayaFlux/Transitive/Memory/SnapshotCell.hpp"
 
 namespace MayaFlux::Platform {
 
 namespace fs = std::filesystem;
 
-namespace {
+#ifdef MAYAFLUX_PLATFORM_MACOS
+inline Acquired<std::filesystem::path> resolve_homebrew_prefix()
+{
+    std::string reported = exec_command("brew --prefix 2>/dev/null");
+    trim_output(reported);
+    if (!reported.empty() && detail::path_is_directory(reported)) {
+        return std::filesystem::path(reported);
+    }
 
-    inline const std::vector<std::string> eigen_includes = {
-        "/usr/include/eigen3",
-        "/usr/local/include/eigen3",
-        "/opt/homebrew/include/eigen3"
-    };
+    const std::filesystem::path standard = "/opt/homebrew";
+    if (detail::path_is_directory(standard)) {
+        return standard;
+    }
 
-    inline const std::vector<std::string> freetype_includes = {
-        "/usr/include/freetype2",
-        "/usr/local/include/freetype2",
-        "/opt/homebrew/include/freetype2"
-    };
+    return std::unexpected(AcquireFailure {
+        .reason = AcquireFailure::Reason::Missing,
+        .request = "brew --prefix",
+        .tried = { standard } });
 }
 
+inline Acquired<std::filesystem::path> homebrew_prefix()
+{
+    static const Acquired<std::filesystem::path> prefix = resolve_homebrew_prefix();
+    return prefix;
+}
+#endif
+
+struct PlatformCandidates {
+    std::vector<std::string> library_dirs;
+    std::vector<std::string> include_dirs;
+    std::vector<std::string> vswhere_paths;
+    std::vector<std::string> windows_kits_roots;
+    std::vector<std::string> macos_sdk_paths;
+};
+
+inline const PlatformCandidates& platform_candidates()
+{
+#if defined(MAYAFLUX_PLATFORM_WINDOWS)
+    static const PlatformCandidates table {
+        .vswhere_paths = {
+            "C:\\Program Files (x86)\\Microsoft Visual Studio\\Installer\\vswhere.exe",
+            "C:\\Program Files\\Microsoft Visual Studio\\Installer\\vswhere.exe" },
+        .windows_kits_roots = {
+            "C:\\Program Files (x86)\\Windows Kits\\10",
+            "C:\\Program Files\\Windows Kits\\10" },
+    };
+#elif defined(MAYAFLUX_PLATFORM_MACOS)
+    static const PlatformCandidates table {
+        .library_dirs = { "/usr/local/lib", "/usr/lib", "/lib", "/usr/local/lib64", "/usr/lib64", "/lib64" },
+        .include_dirs = { "/usr/include", "/usr/local/include" },
+        .macos_sdk_paths = {
+            "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk",
+            "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk" },
+    };
+#else
+    static const PlatformCandidates table {
+        .library_dirs = { "/usr/local/lib", "/usr/lib", "/lib", "/usr/local/lib64", "/usr/lib64", "/lib64" },
+        .include_dirs = { "/usr/include", "/usr/local/include" },
+    };
+#endif
+    return table;
+}
+
+inline std::vector<std::string> dependency_fallbacks(std::string_view leaf)
+{
+    std::vector<std::string> paths;
+#ifdef MAYAFLUX_PLATFORM_MACOS
+    if (const auto prefix = homebrew_prefix()) {
+        paths.push_back((*prefix / "include" / leaf).string());
+    }
+#endif
+    for (const auto& dir : platform_candidates().include_dirs) {
+        paths.push_back((fs::path(dir) / leaf).string());
+    }
+    return paths;
+}
+
+struct DependencyHint {
+    std::string vendored_root;
+    std::string_view env_hint;
+    std::vector<std::string> fallback_paths;
+    std::vector<std::string_view> aliases;
+    std::string_view marker_file;
+    std::vector<std::string_view> system_include_suffixes;
+};
+
+inline const std::vector<DependencyHint>& dependency_hints()
+{
+    static const std::vector<DependencyHint> hints = {
+        { .env_hint = Config::EIGEN_HINT,
+            .fallback_paths = dependency_fallbacks("eigen3"),
+            .aliases = { "eigen", "Eigen" } },
+        { .env_hint = Config::FREETYPE_HINT,
+            .fallback_paths = dependency_fallbacks("freetype2"),
+            .aliases = { "freetype2", "freetype" } },
+        { .vendored_root = (fs::path(Config::SOURCE_DIR) / "third_party/magic_enum").string(),
+            .env_hint = Config::MAGIC_ENUM_HINT,
+            .aliases = { "magic_enum" },
+            .marker_file = "magic_enum.hpp",
+            .system_include_suffixes = { "", "MayaFlux/thirdparty/magic_enum", "magic_enum" } },
+    };
+    return hints;
+}
+
+inline const DependencyHint* find_dependency_hint(std::string_view name)
+{
+    for (const auto& hint : dependency_hints()) {
+        if (std::ranges::contains(hint.aliases, name)) {
+            return &hint;
+        }
+    }
+    return nullptr;
+}
+
+namespace detail {
+
+    template <typename T, typename Compute>
+    T memoize_nonempty(Memory::SnapshotCell<T>& cell, Compute&& compute)
+    {
+        if (auto view = cell.read(); view && !view->empty()) {
+            return *view;
+        }
+        T value = std::forward<Compute>(compute)();
+        if (!value.empty()) {
+            cell.publish(value);
+        }
+        return value;
+    }
+
+}
+
+/**
+ * @brief Host toolchain and dependency discovery.
+ *
+ * Every function returns by value. Results that cost a process spawn or a
+ * filesystem walk are remembered per module in a SnapshotCell, and only a
+ * non-empty answer is remembered, so a lookup that missed is retried on the
+ * next call. An empty result means nothing was found.
+ */
 class SystemConfig {
 public:
-    enum class LibraryType : uint8_t {
-        Static,
-        Shared
-    };
+    /** @brief The clang resource directory, from `clang -print-resource-dir`, or empty. */
+    static std::string get_clang_resource_dir();
 
-    static const std::string& get_clang_resource_dir();
+    /** @brief The system include directories, in search order. */
+    static std::vector<std::string> get_system_includes();
 
-    static const std::vector<std::string>& get_system_includes();
+    /** @brief The existing system library directories, in search order. */
+    static std::vector<std::string> get_system_libraries();
 
-    static const std::vector<std::string>& get_system_libraries();
+    /**
+     * @brief The absolute path of a shared library, or empty.
+     *
+     * A non-empty prefix is searched first, under its lib, lib64 and bin. Then the
+     * system library directories are searched directly. An empty prefix means no
+     * prefix, never the working directory. Names must be plain file names.
+     */
+    static std::string find_dep_library(const std::string& library_name, const std::string& prefix = "");
 
-    static const std::string& find_dep_library(const std::string& library_name, const std::string& prefix = "");
+    /** @brief The include directory of a named dependency, or empty. */
+    static std::string get_dep_includes(const std::string& library_name);
 
-    static const std::string& get_dep_includes(const std::string& library_name);
+    static std::string resolve_dependency_include(const DependencyHint& hint);
 
 #ifdef MAYAFLUX_PLATFORM_MACOS
     static std::string get_macos_sdk_path();
 #endif // MAYAFLUX_PLATFORM_MACOS
 
 private:
-    static std::string format_library_name(const std::string& library_name, LibraryType type = LibraryType::Static);
-
     static std::vector<std::string> get_clang_includes();
 
     static std::vector<std::string> parse_clang_search_paths(const std::string& output);
@@ -78,13 +212,12 @@ private:
 #endif // MAYAFLUX_PLATFORM_WINDOWS
 };
 
-inline const std::string& SystemConfig::get_clang_resource_dir()
+inline std::string SystemConfig::get_clang_resource_dir()
 {
-    static std::string cached_resource_dir;
+    static Memory::SnapshotCell<std::string> cache;
 
-    if (cached_resource_dir.empty()) {
-        const char* cmd = "clang -print-resource-dir";
-        auto result = exec_command(cmd);
+    return detail::memoize_nonempty(cache, [] {
+        auto result = exec_command("clang -print-resource-dir");
         trim_output(result);
 
         if (!result.empty()
@@ -92,20 +225,19 @@ inline const std::string& SystemConfig::get_clang_resource_dir()
             && (result.find("clang") != std::string::npos
                 || result.find("lib") != std::string::npos
                 || fs::exists(result))) {
-            {
-                cached_resource_dir = std::move(result);
-            }
+            return result;
         }
-    }
-
-    return cached_resource_dir;
+        return std::string {};
+    });
 }
 
-inline const std::vector<std::string>& SystemConfig::get_system_includes()
+inline std::vector<std::string> SystemConfig::get_system_includes()
 {
-    static std::vector<std::string> includes;
+    static Memory::SnapshotCell<std::vector<std::string>> cache;
 
-    if (includes.empty()) {
+    return detail::memoize_nonempty(cache, [] {
+        std::vector<std::string> includes;
+
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
         auto msvc_includes = get_msvc_includes();
         includes.insert(includes.end(), msvc_includes.begin(), msvc_includes.end());
@@ -123,21 +255,22 @@ inline const std::vector<std::string>& SystemConfig::get_system_includes()
             includes.push_back(xcode_includes);
         }
 
-        std::string homebrew_includes = "/opt/homebrew/include";
-        if (fs::exists(homebrew_includes)) {
-            includes.push_back(homebrew_includes);
+        if (const auto prefix = homebrew_prefix(); prefix && fs::exists(*prefix / "include")) {
+            includes.push_back((*prefix / "include").string());
         }
 #endif // MAYAFLUX_PLATFORM_MACOS
-    }
 
-    return includes;
+        return includes;
+    });
 }
 
-inline const std::vector<std::string>& SystemConfig::get_system_libraries()
+inline std::vector<std::string> SystemConfig::get_system_libraries()
 {
-    static std::vector<std::string> lib_paths;
+    static Memory::SnapshotCell<std::vector<std::string>> cache;
 
-    if (lib_paths.empty()) {
+    return detail::memoize_nonempty(cache, [] {
+        std::vector<std::string> lib_paths;
+
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
         auto msvc_libs = get_msvc_libraries();
         lib_paths.insert(lib_paths.end(), msvc_libs.begin(), msvc_libs.end());
@@ -148,126 +281,87 @@ inline const std::vector<std::string>& SystemConfig::get_system_libraries()
         auto system_libs = get_unix_library_paths();
         lib_paths.insert(lib_paths.end(), system_libs.begin(), system_libs.end());
 #endif
-    }
 
-    return lib_paths;
+        return lib_paths;
+    });
 }
 
-inline const std::string& SystemConfig::find_dep_library(const std::string& library_name, const std::string& prefix)
+inline std::string SystemConfig::find_dep_library(const std::string& library_name, const std::string& prefix)
 {
-    static std::unordered_map<std::string, std::string> cache;
-
-    auto it = cache.find(library_name);
-    if (it != cache.end()) {
-        return it->second;
-    }
-
-    std::string& result = cache[library_name];
-    std::string search_name = format_library_name(library_name, LibraryType::Shared);
-
-    const fs::path resolved_prefix(prefix);
-    for (const auto& subdir : { "lib", "lib64", "bin" }) {
-        fs::path candidate = resolved_prefix / subdir / search_name;
-        if (fs::exists(candidate)) {
-            result = candidate.string();
-            return result;
+    if (!prefix.empty()) {
+        if (const auto found = acquire_library(LibraryFromPrefix { .prefix = prefix, .base_name = library_name })) {
+            return found->path.string();
         }
     }
 
-    for (const auto& lib_path : get_system_libraries()) {
-        fs::path candidate = fs::path(lib_path) / search_name;
-        if (fs::exists(candidate)) {
-            result = candidate.string();
-            return result;
+    std::vector<fs::path> directories;
+    for (const auto& directory : get_system_libraries()) {
+        directories.emplace_back(directory);
+    }
+
+    if (const auto found = acquire_library(LibraryFromDirectories { .directories = std::move(directories), .base_name = library_name })) {
+        return found->path.string();
+    }
+
+    return {};
+}
+
+inline std::string SystemConfig::get_dep_includes(const std::string& library_name)
+{
+    static Memory::SnapshotCell<Memory::FlatMap<std::string, std::string>> cache;
+
+    if (const auto view = cache.read()) {
+        if (const auto hit = view->find(library_name); hit != view->end()) {
+            return hit->second;
         }
+    }
+
+    std::string result;
+    if (const auto* hint = find_dependency_hint(library_name)) {
+        result = resolve_dependency_include(*hint);
+    }
+
+    if (!result.empty()) {
+        cache.update([&](Memory::FlatMap<std::string, std::string>& entries) {
+            entries.insert_or_assign(library_name, result);
+        });
     }
 
     return result;
 }
 
-inline const std::string& SystemConfig::get_dep_includes(const std::string& library_name)
+inline std::string SystemConfig::resolve_dependency_include(const DependencyHint& hint)
 {
-    static std::unordered_map<std::string, std::string> cache;
+    const auto is_hit = [&hint](const fs::path& dir) {
+        return fs::exists(hint.marker_file.empty() ? dir : dir / hint.marker_file);
+    };
 
-    auto it = cache.find(library_name);
-    if (it != cache.end()) {
-        return it->second;
+    if (!hint.vendored_root.empty() && is_hit(fs::path(hint.vendored_root))) {
+        return hint.vendored_root;
     }
 
-    std::string& result = cache[library_name];
-    if (library_name == "Eigen" || library_name == "eigen") {
-        if (!Config::EIGEN_HINT.empty() && fs::exists(Config::EIGEN_HINT)) {
-            result = Config::EIGEN_HINT;
-        } else {
-            for (const auto& path : eigen_includes) {
-                if (std::filesystem::exists(path)) {
-                    result = path;
-                    break;
-                }
-            }
-        }
-    } else if (library_name == "freetype2" || library_name == "freetype") {
-        if (!Config::FREETYPE_HINT.empty() && fs::exists(Config::FREETYPE_HINT)) {
-            result = Config::FREETYPE_HINT;
-        } else {
-            for (const auto& path : freetype_includes) {
-                if (std::filesystem::exists(path)) {
-                    result = path;
-                    break;
-                }
-            }
-        }
-    } else if (library_name == "magic_enum") {
-        const auto try_include = [&result](const fs::path& path) {
-            if (fs::exists(path / "magic_enum.hpp")) {
-                result = path.string();
-            }
-        };
+    if (!hint.env_hint.empty() && is_hit(fs::path(hint.env_hint))) {
+        return std::string(hint.env_hint);
+    }
 
-        try_include(fs::path(Config::SOURCE_DIR) / "third_party/magic_enum");
-
-        if (result.empty() && !Config::MAGIC_ENUM_HINT.empty()) {
-            try_include(fs::path(Config::MAGIC_ENUM_HINT));
+    for (const auto& path : hint.fallback_paths) {
+        if (is_hit(fs::path(path))) {
+            return path;
         }
+    }
 
-        if (result.empty()) {
-            for (const auto& include : get_system_includes()) {
-                const fs::path root(include);
-                for (const auto& candidate : {
-                         root,
-                         root / "MayaFlux/thirdparty/magic_enum",
-                         root / "magic_enum" }) {
-                    try_include(candidate);
-                    if (!result.empty()) {
-                        break;
-                    }
-                }
-                if (!result.empty()) {
-                    break;
-                }
+    for (const auto& include : get_system_includes()) {
+        for (const auto& suffix : hint.system_include_suffixes) {
+            const fs::path candidate = suffix.empty()
+                ? fs::path(include)
+                : fs::path(include) / suffix;
+            if (is_hit(candidate)) {
+                return candidate.string();
             }
         }
     }
 
-    return result;
-}
-
-inline std::string SystemConfig::format_library_name(const std::string& library_name, LibraryType type)
-{
-#ifdef MAYAFLUX_PLATFORM_WINDOWS
-    const std::string ext = (type == LibraryType::Shared) ? ".dll" : ".lib";
-    if (library_name.find(ext) == std::string::npos)
-        return library_name + ext;
-#elif defined(MAYAFLUX_PLATFORM_MACOS)
-    const std::string ext = (type == LibraryType::Shared) ? ".dylib" : ".a";
-    if (library_name.find(ext) == std::string::npos && library_name.find("lib") != 0)
-        return "lib" + library_name + ext;
-#else
-    const std::string ext = (type == LibraryType::Shared) ? ".so" : ".a";
-    if (library_name.find(ext) == std::string::npos && library_name.find(".a") == std::string::npos)
-        return "lib" + library_name + ext;
-#endif
-    return library_name;
+    return {};
 }
 
 inline std::vector<std::string> SystemConfig::get_clang_includes()
@@ -334,24 +428,55 @@ inline std::string SystemConfig::find_latest_sdk_version(const fs::path& base)
 
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
 
+inline bool is_vs_installation(const fs::path& candidate)
+{
+    std::error_code code;
+    return !candidate.empty()
+        && fs::is_directory(candidate, code)
+        && fs::is_directory(candidate / "VC" / "Tools" / "MSVC", code);
+}
+
+inline std::string query_vswhere(const std::string& vswhere_command)
+{
+    const std::string command = vswhere_command
+        + " -latest -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath 2>nul";
+    std::string output = exec_command(command.c_str());
+    trim_output(output);
+    return is_vs_installation(fs::path(output)) ? output : std::string {};
+}
+
 inline std::string SystemConfig::find_latest_vs_installation()
 {
-    std::vector<std::string> vswhere_paths = {
-        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Installer\\vswhere.exe",
-        "C:\\Program Files\\Microsoft Visual Studio\\Installer\\vswhere.exe"
-    };
+    std::vector<std::string> commands { "vswhere" };
 
-    for (const auto& path : vswhere_paths) {
-        if (fs::exists(path)) {
-            std::string cmd = "\"" + path + "\" -latest -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath";
-            std::string vs_path = exec_command(cmd.c_str());
-            if (!vs_path.empty()) {
-                trim_output(vs_path);
-                if (fs::exists(vs_path)) {
-                    return vs_path;
-                }
-            }
+    for (const char* name : { "ProgramFiles(x86)", "ProgramFiles", "ProgramW6432" }) {
+        const std::string root = safe_getenv(name);
+        if (root.empty()) {
+            continue;
         }
+        const fs::path exe = fs::path(root) / "Microsoft Visual Studio" / "Installer" / "vswhere.exe";
+        std::error_code code;
+        if (fs::is_regular_file(exe, code)) {
+            commands.push_back("\"" + exe.string() + "\"");
+        }
+    }
+
+    for (const auto& path : platform_candidates().vswhere_paths) {
+        std::error_code code;
+        if (fs::is_regular_file(path, code)) {
+            commands.push_back("\"" + path + "\"");
+        }
+    }
+
+    for (const auto& command : commands) {
+        if (auto found = query_vswhere(command); !found.empty()) {
+            return found;
+        }
+    }
+
+    const std::string developer_prompt = safe_getenv("VSINSTALLDIR");
+    if (is_vs_installation(fs::path(developer_prompt))) {
+        return developer_prompt;
     }
 
     return "";
@@ -504,12 +629,7 @@ inline std::vector<std::string> SystemConfig::probe_sdk_paths(const std::string&
     const std::string& arch)
 {
     std::vector<std::string> paths;
-    std::vector<fs::path> sdk_base_paths = {
-        "C:\\Program Files (x86)\\Windows Kits\\10",
-        "C:\\Program Files\\Windows Kits\\10"
-    };
-
-    for (const auto& base_path : sdk_base_paths) {
+    for (const auto& base_path : platform_candidates().windows_kits_roots) {
         if (fs::exists(base_path)) {
             fs::path search_dir = fs::path(base_path) / subpath;
             std::string version = find_latest_sdk_version(search_dir);
@@ -549,19 +669,13 @@ inline std::vector<std::string> SystemConfig::get_unix_library_paths()
         }
     }
 
-    std::vector<std::string> default_paths = {
 #if defined(MAYAFLUX_PLATFORM_MACOS)
-        "/opt/homebrew/lib",
+    if (const auto prefix = homebrew_prefix(); prefix && fs::exists(*prefix / "lib")) {
+        lib_paths.push_back((*prefix / "lib").string());
+    }
 #endif
-        "/usr/local/lib",
-        "/usr/lib",
-        "/lib",
-        "/usr/local/lib64",
-        "/usr/lib64",
-        "/lib64"
-    };
 
-    for (const auto& path : default_paths) {
+    for (const auto& path : platform_candidates().library_dirs) {
         if (fs::exists(path)) {
             lib_paths.push_back(path);
         }
@@ -582,12 +696,7 @@ inline std::string SystemConfig::get_macos_sdk_path()
         return sdk_path;
     }
 
-    std::vector<std::string> possible_paths = {
-        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk",
-        "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
-    };
-
-    for (const auto& path : possible_paths) {
+    for (const auto& path : platform_candidates().macos_sdk_paths) {
         if (fs::exists(path)) {
             return path;
         }

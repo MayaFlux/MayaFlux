@@ -57,6 +57,16 @@ if(WIN32)
             $<TARGET_FILE_DIR:project_launcher>
         COMMAND_EXPAND_LISTS
     )
+    add_custom_target(project_launcher_sync
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:MayaFluxLib>
+            $<TARGET_FILE:MayaFluxHost>
+            $<TARGET_FILE:Lila>
+            ${CMAKE_BINARY_DIR}
+        COMMENT "Refreshing project_launcher MayaFlux DLLs"
+    )
+    add_dependencies(project_launcher_sync MayaFluxLib MayaFluxHost Lila)
+    add_dependencies(project_launcher project_launcher_sync)
     set_target_properties(project_launcher PROPERTIES
         VS_DEBUGGER_ENVIRONMENT "PATH=$<TARGET_FILE_DIR:MayaFluxLib>;$<TARGET_FILE_DIR:MayaFluxHost>;$<TARGET_FILE_DIR:Lila>;$ENV{FFMPEG_ROOT}/bin;$ENV{PATH}"
     )

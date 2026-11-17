@@ -9,7 +9,7 @@
  * @note This binary is a reference implementation of the Lila server.
  *       Community module types are not available as they require the host
  *       process to have them linked in. For community module support, embed
- *       Lila via MayaFluxHost::start_lila() in your project binary instead.
+ *       Lila via MayaFlux::Host::start_session() in your project binary instead.
  *
  * Usage:
  *   lila_server [OPTIONS]
@@ -23,8 +23,6 @@
 
 #include "Lila/Commentator.hpp"
 #include "Lila/Lila.hpp"
-
-#include "Lila/EventBus.hpp"
 
 #include <atomic>
 #include <csignal>
@@ -180,45 +178,24 @@ int main(int argc, char** argv)
 
     Lila::Lila playground;
 
-    if (!playground.initialize(Lila::OperationMode::Server, port)) {
-        LILA_FATAL(Lila::Emitter::SYSTEM,
-            std::string("Failed to initialize: ") + playground.get_last_error());
+    if (const auto ready = playground.initialize(); !ready) {
+        LILA_FATAL(Lila::Emitter::SYSTEM, "Failed to initialize: " + std::string(ready.error()));
         return 1;
     }
 
-    playground.on_server_started([]() {
-        std::cout << "LILA_SERVER_READY\n"
-                  << std::flush;
-        LILA_INFO(Lila::Emitter::SYSTEM, "Server is ready to accept connections");
-    });
+    if (const auto listening = playground.listen(Lila::TcpAddress { .port = port }); !listening) {
+        LILA_FATAL(Lila::Emitter::SYSTEM, "Failed to listen: " + std::string(listening.error()));
+        return 1;
+    }
 
-    playground.on_success([]() {
-        LILA_INFO(Lila::Emitter::GENERAL, "Code evaluation succeeded");
-    });
-
-    /*
-    playground.on_error([](const std::string& error) {
-        LILA_ERROR(Lila::Emitter::GENERAL,
-            std::string("Evaluation error: ") + error);
-    });
-    */
-
-    playground.on_server_client_connected([](const Lila::ClientInfo& client) {
-        LILA_INFO(Lila::Emitter::SERVER,
-            std::string("New client connection (fd: ") + std::to_string(client.fd) + ", session: " + (client.session_id.empty() ? "none" : client.session_id) + ")");
-    });
-
-    playground.on_server_client_disconnected([](const Lila::ClientInfo& client) {
-        LILA_INFO(Lila::Emitter::SERVER,
-            std::string("Client disconnected (fd: ") + std::to_string(client.fd) + ", session: " + (client.session_id.empty() ? "none" : client.session_id) + ")");
-    });
-
+    std::cout << "LILA_SERVER_READY\n"
+              << std::flush;
     LILA_INFO(Lila::Emitter::SYSTEM, "Server running. Press Ctrl+C to stop.");
 
     playground.await_shutdown(&g_running);
 
     LILA_INFO(Lila::Emitter::SYSTEM, "Shutting down...");
-    playground.stop_server();
+    playground.stop_listening();
     LILA_INFO(Lila::Emitter::SYSTEM, "Goodbye!");
 
     return 0;
