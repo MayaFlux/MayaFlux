@@ -298,6 +298,33 @@
         "MAYAFLUX_BUILD_TESTS": "ON",
         "MAYAFLUX_COVERAGE": "ON"
       }
+    },
+    {
+      "name": "unix-tsan",
+      "inherits": "unix-test",
+      "displayName": "Unix : ThreadSanitizer tests",
+      "description": "Instruments the library and the tests with ThreadSanitizer. Needs its own build directory; cannot be combined with AddressSanitizer.",
+      "binaryDir": "${sourceDir}/build-tsan",
+      "environment": {
+        "CFLAGS": "-fsanitize=thread -fno-omit-frame-pointer",
+        "CXXFLAGS": "-fsanitize=thread -fno-omit-frame-pointer",
+        "LDFLAGS": "-fsanitize=thread"
+      }
+    },
+    {
+      "name": "windows-ninja-asan",
+      "inherits": "msvc-ninja-dev",
+      "displayName": "Windows : Ninja + MSVC AddressSanitizer tests",
+      "description": "Neither MSVC nor Clang on Windows ships ThreadSanitizer, so AddressSanitizer is the sanitizer available here. Needs its own build directory.",
+      "binaryDir": "${sourceDir}/build-asan",
+      "environment": {
+        "CFLAGS": "/fsanitize=address",
+        "CXXFLAGS": "/fsanitize=address",
+        "LDFLAGS": "/INCREMENTAL:NO"
+      },
+      "cacheVariables": {
+        "MAYAFLUX_BUILD_TESTS": "ON"
+      }
     }
   ],
   "buildPresets": [
@@ -315,6 +342,8 @@
     { "name": "win26-dev",       "configurePreset": "windows-vs2026-dev" },
     { "name": "win22-dev",       "configurePreset": "windows-vs2022-dev" },
     { "name": "windows-vs-ship-rel", "configurePreset": "windows-vs-ship-rel"},
+    { "name": "unix-tsan", "configurePreset": "unix-tsan", "jobs": 0 },
+    { "name": "windows-ninja-asan", "configurePreset": "windows-ninja-asan", "jobs": 0 },
     { "name": "unix-coverage", "configurePreset": "unix-coverage", "targets": [ "coverage" ], "jobs": 0 },
     { "name": "windows-ninja-coverage", "configurePreset": "windows-ninja-coverage", "targets": [ "coverage" ], "jobs": 0 }
   ],
@@ -322,6 +351,11 @@
     {
       "name": "unix-test",
       "configurePreset": "unix-test",
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "unix-tsan",
+      "configurePreset": "unix-tsan",
       "output": { "outputOnFailure": true }
     }
   ]
