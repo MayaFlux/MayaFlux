@@ -17,7 +17,8 @@ namespace MayaFlux::Core {
 enum class NetworkTransport : uint8_t {
     UDP,
     TCP,
-    SHARED_MEMORY
+    SHARED_MEMORY,
+    UDS
 };
 
 /**
@@ -59,6 +60,12 @@ struct MAYAFLUX_API EndpointInfo {
     std::string remote_address;
     uint16_t remote_port {};
     uint16_t local_port {};
+
+    /// UDS: socket to listen on. A bare file name is placed in the user's runtime directory.
+    std::string local_path;
+
+    /// UDS: socket to connect to, given the same way as local_path.
+    std::string remote_path;
 
     /// Listener that accepted this connection, or 0 for an endpoint opened directly.
     uint64_t parent_id {};
@@ -124,6 +131,22 @@ struct MAYAFLUX_API TCPBackendInfo {
 MF_DESCRIBE(TCPBackendInfo)
 
 /**
+ * @struct UDSBackendInfo
+ * @brief Configuration for the Unix domain socket transport backend
+ *
+ * Reliable, ordered, length-prefixed messages between processes on the same
+ * machine, addressed by a socket path instead of an IP address and port. A
+ * listener is owner-only on POSIX. Windows relies on the socket directory's ACL.
+ */
+struct MAYAFLUX_API UDSBackendInfo {
+    bool enabled { false };
+    bool auto_reconnect { true };
+    uint32_t reconnect_interval_ms { 2000 };
+};
+
+MF_DESCRIBE(UDSBackendInfo)
+
+/**
  * @struct SharedMemoryBackendInfo
  * @brief Configuration for local inter-process shared memory transport
  *
@@ -163,6 +186,14 @@ struct MAYAFLUX_API GlobalNetworkConfig {
     UDPBackendInfo udp;
     TCPBackendInfo tcp;
     SharedMemoryBackendInfo shared_memory;
+    UDSBackendInfo uds;
+
+    static GlobalNetworkConfig with_uds()
+    {
+        GlobalNetworkConfig config;
+        config.uds.enabled = true;
+        return config;
+    }
 
     static GlobalNetworkConfig with_udp(uint16_t recv_port = 8000, uint16_t send_port = 9000)
     {
@@ -188,7 +219,7 @@ struct MAYAFLUX_API GlobalNetworkConfig {
 
     [[nodiscard]] bool any_enabled() const
     {
-        return udp.enabled || tcp.enabled || shared_memory.enabled;
+        return udp.enabled || tcp.enabled || shared_memory.enabled || uds.enabled;
     }
 
 };

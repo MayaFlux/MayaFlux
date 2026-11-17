@@ -16,6 +16,7 @@ struct Description<::MayaFlux::Core::GlobalNetworkConfig> {
             Member<&::MayaFlux::Core::GlobalNetworkConfig::udp> { "udp" },
             Member<&::MayaFlux::Core::GlobalNetworkConfig::tcp> { "tcp" },
             Member<&::MayaFlux::Core::GlobalNetworkConfig::shared_memory> { "shared_memory" },
+            Member<&::MayaFlux::Core::GlobalNetworkConfig::uds> { "uds" },
         };
     }
 };
@@ -66,6 +67,20 @@ struct Description<::MayaFlux::Core::UDPBackendInfo> {
             Member<&::MayaFlux::Core::UDPBackendInfo::enable_broadcast> { "enable_broadcast" },
             Member<&::MayaFlux::Core::UDPBackendInfo::enable_multicast> { "enable_multicast" },
             Member<&::MayaFlux::Core::UDPBackendInfo::multicast_group> { "multicast_group" },
+        };
+    }
+};
+
+template <>
+struct Description<::MayaFlux::Core::UDSBackendInfo> {
+    static constexpr std::string_view name = "MayaFlux::Core::UDSBackendInfo";
+
+    static constexpr auto members()
+    {
+        return std::tuple {
+            Member<&::MayaFlux::Core::UDSBackendInfo::enabled> { "enabled" },
+            Member<&::MayaFlux::Core::UDSBackendInfo::auto_reconnect> { "auto_reconnect" },
+            Member<&::MayaFlux::Core::UDSBackendInfo::reconnect_interval_ms> { "reconnect_interval_ms" },
         };
     }
 };
