@@ -2,6 +2,7 @@
 build/
 build-vs/
 build-coverage/
+build-tsan
 install/
 package/
 out/

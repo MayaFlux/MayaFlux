@@ -2,6 +2,7 @@
 
 #include "MayaFlux/Core/GlobalInputConfig.hpp"
 #include "MayaFlux/Transitive/Memory/RingBuffer.hpp"
+#include "MayaFlux/Transitive/Memory/SnapshotCell.hpp"
 
 namespace MayaFlux::Nodes::Input {
 class InputNode;
@@ -20,6 +21,7 @@ namespace MayaFlux::Core {
  *
  * InputManager is the core processing entity for input. It:
  * - Owns the input processing thread
+ * - Holds its routing table as an immutable snapshot: registration replaces it, dispatch reads it without locking
  * - Maintains device→node routing table
  * - Receives InputValues from backends via thread-safe queue
  * - Dispatches input to registered nodes by calling process_input()
@@ -170,29 +172,12 @@ private:
     // ─────────────────────────────────────────────────────────────────────
 
     struct NodeRegistration {
-        std::weak_ptr<Nodes::Input::InputNode> node;
+        std::shared_ptr<Nodes::Input::InputNode> node;
         InputBinding binding;
     };
     using RegistrationList = std::vector<NodeRegistration>;
 
-    std::vector<std::shared_ptr<Nodes::Input::InputNode>> m_tracked_nodes; ///< To keep nodes alive
-
-    mutable std::mutex m_registry_mutex;
-
-#ifdef MAYAFLUX_PLATFORM_MACOS
-    // Apple's broken LLVM doesn't support std::atomic<std::shared_ptr<T>>
-    std::atomic<const RegistrationList*> m_registrations { nullptr };
-
-    // Hazard pointers for safe lock-free reads on macOS
-    static constexpr size_t MAX_READERS = 16;
-    mutable std::array<std::atomic<const RegistrationList*>, MAX_READERS> m_hazard_ptrs;
-    mutable std::atomic<size_t> m_hazard_counter { 0 };
-
-    void retire_list(const RegistrationList* list);
-#else
-    // Proper C++20 atomic shared_ptr on real toolchains
-    std::atomic<std::shared_ptr<const RegistrationList>> m_registrations;
-#endif
+    Memory::SnapshotCell<RegistrationList> m_registrations;
 
     Registry::Service::InputService* m_input_service { nullptr };
     Registry::Service::NetworkService* m_network_service { nullptr };
